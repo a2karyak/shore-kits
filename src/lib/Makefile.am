@@ -3,6 +3,11 @@
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/include/engine
 
+ENGINE = \
+   engine/packet.cpp \
+   engine/page.cpp \
+   engine/stage_container.cpp \
+   engine/tuple.cpp
 
 STAGES = \
    stages/fscan.cpp \
@@ -14,7 +19,7 @@ STAGES = \
    stages/sort.cpp
 
 DISPATCHER = \
-   dispatcher.cpp
+   dispatcher/dispatcher.cpp
 
 UTIL = \
    util/static_hash_map.cpp \
@@ -31,10 +36,7 @@ lib_LIBRARIES = libqpipe.a
 
 libqpipe_a_SOURCES = \
    thread.cpp \
-   page.cpp \
-   tuple.cpp \
-   packet.cpp \
-   stage_container.cpp \
+   $(ENGINE) \
    $(DISPATCHER) \
    $(UTIL)  \
    $(STAGES) 

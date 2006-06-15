@@ -1,1 +1,1 @@
-SUBDIRS = engine tests trace
+SUBDIRS = lib trace tests
