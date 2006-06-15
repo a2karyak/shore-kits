@@ -104,3 +104,52 @@ PACKET PROCESSING
     - If close() returns error, it means that the other side has sent
       EOF. Since no other thread is holding this buffer, the buffer
       should be deleted.
+
+
+
+
+include/
+
+Nothing except the module itself should touch .h files in its include
+sub-directory. For example, only .cpp files in src/engine are allowed
+to include .h files in include/engine, only .cpp files in src/trace
+are allowed to include .h files in include/trace, etc.
+
+dispatcher.h Exports basic dispatcher functionality. Currently
+provides a way for stage containers to register themselves with the
+dispatcher as well as a way to dispatch a packet using a specified
+packet type string. In the top level directory since it is used by
+unit tests and the server.
+
+functors.h Defines tuple functor base classes. Included in the top
+level directory since it is used by the engine and the generic
+functors module.
+
+packet.h Defines the packet base class. Included in the top level
+directory since it is used by the engine and by the workload
+submission code.
+
+qpipe_panic.h Defines the QPIPE_PANIC() macro which writes a TRACE
+message and aborts. Used by many modules when we hit software bugs and
+want to stop running so we can debug.
+
+stage_container.h Exports the stage_container_t class. Included in the
+top level directory since it is used by both the dispatcher and the
+engine.
+
+stage_factory.h Exports stage_factor_t class. Included in the top
+level directory since it is used by the stage_container_t class and
+the server.
+
+thread.h Exports the thread_t class which is the base of all other
+threads in the system. Also exports wrappers around pthread
+synchronization variables. Included in the top level directory since
+many modules contain classes which extend thread_t.
+
+trace.h Exports TRACE macro to other modules.
+
+tuple.h Exports tuple_t base class. Included in the top level
+directory since it is used by both the engine and the client code to
+read the final results.
+
+guard.h Exports generic guard datatypes to other modules.
