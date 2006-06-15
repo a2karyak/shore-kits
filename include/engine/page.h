@@ -4,10 +4,9 @@
 #define _page_h
 
 #include "thread.h"
+#include "guard.h"
 
 #include <new>
-
-#include "utils.h"
 
 
 

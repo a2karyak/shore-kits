@@ -16,6 +16,7 @@
 #include "qpipe_panic.h"
 #include "dispatcher.h"
 #include "tester_thread.h"
+#include "util/stopwatch.h"
 
 #include "db_cxx.h"
 

@@ -14,6 +14,7 @@
 #include "dispatcher.h"
 #include "tester_thread.h"
 #include "util/time_util.h"
+#include "util/stopwatch.h"
 #include "stages/tscan.h"
 #include "stages/aggregate.h"
 #include "stages/sort.h"

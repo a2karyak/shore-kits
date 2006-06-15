@@ -7,7 +7,7 @@
 #include "trace.h"
 #include "qpipe_panic.h"
 #include "util/tmpfile.h"
-#include "utils.h"
+#include "guard.h"
 #include <algorithm>
 #include <string>
 #include <cstdlib>

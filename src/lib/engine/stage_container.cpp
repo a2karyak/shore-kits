@@ -3,7 +3,7 @@
 #include "stage_container.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "utils.h"
+#include "guard.h"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE

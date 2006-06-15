@@ -2,7 +2,7 @@
 
 #include "stages/tscan.h"
 #include "qpipe_panic.h"
-#include "utils.h"
+#include "guard.h"
 
 
 
