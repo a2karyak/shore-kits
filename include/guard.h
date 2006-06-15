@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef __UTILS_H
-#define __UTILS_H
+#ifndef _GUARD_H
+#define _GUARD_H
 
 #include <cstdio>
 #include <cassert>
