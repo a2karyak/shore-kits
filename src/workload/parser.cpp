@@ -7,7 +7,7 @@
  6/11/2006: Initial version
 */ 
 
-# include "qpipe_parser.h"
+# include "workload/parser.h"
 
 
 /* CMD constants */

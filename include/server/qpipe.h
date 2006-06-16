@@ -27,13 +27,13 @@
 
 /* QPipe Engine */
 #include "thread.h"
-#include "trace/trace.h"
+#include "trace.h"
 #include "qpipe_panic.h"
 #include "dispatcher.h"
-#include "tester_thread.h"
+#include "tests/tester_thread.h"
 
 /* QPipe Server */
-#include "qpipe_wl.h"
+#include "workload/workload.h"
 
 #define QPIPE_VERSION "v2.0"
 #define QPIPE_PROMPT "(qpipe) "

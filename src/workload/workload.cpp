@@ -14,7 +14,7 @@
     client_t
 */
 
-#include "qpipe_wl.h"
+#include "workload/workload.h"
 
 /* Number of concurrent clients */
 const size_t STD_NUM_CLIENTS = 4;

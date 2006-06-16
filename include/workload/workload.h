@@ -21,22 +21,18 @@
 
 
 /* Standard */
-#include <unistd.h>
-#include <sys/types.h>
 #include <cstdlib>
 #include <string>
 
 /* QPipe Engine */
 #include "thread.h"
-#include "tester_thread.h"
-#include "trace/trace.h"
+#include "tests/tester_thread.h"
+#include "trace.h"
 #include "qpipe_panic.h"
 #include "util/shuffle.h"
 
 /* QPipe Server */
-#include "qpipe_parser.h"
-
-using namespace qpipe;
+#include "parser.h"
 
 using std::string;
 

@@ -12,22 +12,17 @@
 
 
 /* Standard */
-#include <unistd.h>
-#include <sys/types.h>
 #include <iostream>
 #include <cstdlib>
 #include <string>
 
 /* QPipe Engine */
-#include "thread.h"
-#include "trace/trace.h"
+#include "trace.h"
 #include "qpipe_panic.h"
 
 /* QPipe Server */
-#include "qpipe_parser.h"
-#include "qpipe_wl.h"
+#include "workload.h"
 
-using namespace qpipe;
 
 using std::string;
 
