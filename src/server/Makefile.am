@@ -4,7 +4,7 @@ INCLUDES = -I$(top_srcdir)/include \
            -I$(top_srcdir)/include/server \
            -I$(top_srcdir)/include/workload
 
-LDADD = ../lib/libqpipe.a ../trace/libtrace.a
+LDADD = ../engine/libqpipe.a ../trace/libtrace.a
 
 
 # define programs here
