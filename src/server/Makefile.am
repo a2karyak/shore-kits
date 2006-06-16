@@ -11,6 +11,4 @@ LDADD = ../engine/libqpipe.a ../trace/libtrace.a
 bin_PROGRAMS = \
    qpipe
 
-qpipe_SOURCES = qpipe.cpp ../workload/workload.cpp ../workload/parser.cpp
-
-
+qpipe_SOURCES = server.cpp ../workload/workload.cpp ../workload/parser.cpp

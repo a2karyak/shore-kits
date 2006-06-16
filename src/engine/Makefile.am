@@ -1,7 +1,8 @@
 # -*- makefile -*-
 
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/include/lib
+INCLUDES = -I$(top_srcdir)/include \
+           -I$(top_srcdir)/include/engine
 
 CORE = \
    core/page.cpp \

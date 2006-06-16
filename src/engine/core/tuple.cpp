@@ -6,7 +6,7 @@
 
 
 // include me last!
-#include "lib/namespace.h"
+#include "namespace.h"
 
 
 
@@ -189,4 +189,4 @@ int tuple_buffer_t::init(size_t _tuple_size, size_t page_size) {
 
 
 
-#include "lib/namespace.h"
+#include "namespace.h"

@@ -7,7 +7,7 @@
  6/11/2006: Initial version
 */ 
 
-#include "qpipe.h"
+#include "server.h"
 
 
 char BUFFER[255];
