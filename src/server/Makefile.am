@@ -6,10 +6,10 @@ INCLUDES = -I$(top_srcdir)/include \
 
 LDADD = ../lib/libqpipe.a ../trace/libtrace.a
 
+
 # define programs here
 bin_PROGRAMS = \
    qpipe
-
 
 qpipe_SOURCES = qpipe.cpp ../workload/workload.cpp ../workload/parser.cpp
 
