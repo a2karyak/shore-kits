@@ -40,7 +40,7 @@ struct tpch_lineitem_tuple {
 
 int main() {
 
-  struct tpch_lineitem_tuple tup;
+    //  struct tpch_lineitem_tuple tup;
 
   while (1);
   

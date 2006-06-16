@@ -11,7 +11,7 @@
 
 
 // include me last!!!
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 
 using std::list;
 
@@ -127,5 +127,5 @@ public:
 
 
 
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 #endif

@@ -72,9 +72,6 @@ stage_t::result_t write_ints(void* arg)
 
 
 struct int_tuple_comparator_t : public tuple_comparator_t {
-    virtual int compare(const key_tuple_pair_t &a, const key_tuple_pair_t &b) {
-        return a.key - b.key;
-    }
     virtual int make_key(const tuple_t &tuple) {
         return *(int*)tuple.data;
     }

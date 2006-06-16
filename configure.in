@@ -302,8 +302,8 @@ define([MY_AC_CONFIG_EXE_FILES],
   fi
 }])
 #MY_AC_CONFIG_FILES([Makefile src/Makefile])
-AC_CONFIG_FILES([Makefile src/Makefile src/lib/Makefile src/trace/Makefile src/tests/Makefile src/server/Makefile])
-
+AC_CONFIG_FILES([ Makefile src/Makefile src/lib/Makefile src/trace/Makefile \
+                  src/tests/Makefile src/server/Makefile ])
 
 AC_OUTPUT()
 

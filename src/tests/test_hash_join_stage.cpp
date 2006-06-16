@@ -5,17 +5,19 @@
 #include "tester_thread.h"
 #include "stages/func_call.h"
 #include "stages/hash_join.h"
-#include "trace/trace.h"
+#include "trace.h"
 #include "qpipe_panic.h"
 
+#include <vector>
+#include <algorithm>
 
+using std::vector;
 
 using namespace qpipe;
 
 
 
 int num_tuples = -1;
-
 
 
 /**
@@ -36,11 +38,17 @@ void* drive_stage(void* arg)
 stage_t::result_t write_ints(void* arg)
 {
     tuple_buffer_t* int_buffer = (tuple_buffer_t*)arg;
-
     
 
+    vector<int> tuples;
+
     for (int i = 0; i < num_tuples; i++) {
-	tuple_t in_tuple((char*)&i, sizeof(int));
+        for(int j=0; j < i; j++)
+            tuples.push_back(i);
+    }
+    std::random_shuffle(tuples.begin(), tuples.end());
+    for (int i=0; i < tuples.size(); i++) {
+	tuple_t in_tuple((char*)&tuples[i], sizeof(int));
 	if( int_buffer->put_tuple(in_tuple) ) {
 	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");
 	    TRACE(TRACE_ALWAYS, "Terminating loop...\n");

@@ -5,7 +5,7 @@
 
 #include "tuple.h"
 
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 
 
 
@@ -253,7 +253,7 @@ struct tuple_comparator_t {
 
 
 
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 
 
 

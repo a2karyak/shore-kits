@@ -33,7 +33,7 @@
 #include "tests/tester_thread.h"
 
 /* QPipe Server */
-#include "workload/workload.h"
+#include "qpipe_wl.h"
 
 #define QPIPE_VERSION "v2.0"
 #define QPIPE_PROMPT "(qpipe) "

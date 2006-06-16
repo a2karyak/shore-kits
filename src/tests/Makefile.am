@@ -16,6 +16,7 @@ bin_PROGRAMS = \
    test_aggregate_stage \
    test_merge_stage \
    test_sort_stage \
+   test_hash_join_stage \
    test_q6 \
    test_q6_2cl \
    test_q1
@@ -35,6 +36,7 @@ test_bnl_caching_join_stage_SOURCES = test_bnl_caching_join_stage.cpp
 test_tscan_stage_SOURCES = test_tscan_stage.cpp
 test_func_call_stage_SOURCES = test_func_call_stage.cpp
 test_aggregate_stage_SOURCES = test_aggregate_stage.cpp
+test_hash_join_stage_SOURCES = test_hash_join_stage.cpp
 lineitem_struct_sizes_SOURCES = lineitem_struct_sizes.cpp
 test_q6_SOURCES = test_q6.cpp
 test_q6_2cl_SOURCES = test_q6_2cl.cpp

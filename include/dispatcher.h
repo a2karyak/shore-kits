@@ -10,7 +10,7 @@
 
 
 // include me last!!!
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 
 
 
@@ -72,5 +72,5 @@ public:
 
 
 
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 #endif

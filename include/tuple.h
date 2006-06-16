@@ -9,7 +9,7 @@
 #include <cassert>
 #include <cstdio>
 
-#include "engine/page.h"
+#include "lib/page.h"
 #include "guard.h"
 
 
@@ -19,7 +19,7 @@
 
 
 // include me last!!!
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 
 
 
@@ -781,7 +781,7 @@ protected:
 
 
 
-#include "engine/namespace.h"
+#include "lib/namespace.h"
 
 
 
