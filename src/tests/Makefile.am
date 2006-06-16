@@ -21,16 +21,11 @@ bin_PROGRAMS = \
    test_q6_2cl \
    test_q1
 
-#\
-   test_bnl_caching_join_stage
-
-
-
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
+test_fdump_stage_SOURCES = test_fdump_stage.cpp
 test_merge_stage_SOURCES = test_merge_stage.cpp
 test_sort_stage_SOURCES = test_sort_stage.cpp
-test_fdump_stage_SOURCES = test_fdump_stage.cpp
 test_fscan_stage_SOURCES = test_fscan_stage.cpp
 test_bnl_caching_join_stage_SOURCES = test_bnl_caching_join_stage.cpp
 test_tscan_stage_SOURCES = test_tscan_stage.cpp

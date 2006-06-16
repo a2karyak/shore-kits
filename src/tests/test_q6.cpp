@@ -17,6 +17,7 @@
 #include "engine/dispatcher.h"
 #include "tests/tester_thread.h"
 #include "engine/util/stopwatch.h"
+#include "tests/tpch_struct.h"
 
 #include "db_cxx.h"
 
@@ -49,40 +50,6 @@ extern uint32_t trace_current_setting;
 size_t TPCH_BUFFER_POOL_SIZE_GB = 0; /* 0 GB */
 size_t TPCH_BUFFER_POOL_SIZE_BYTES = 450 * 1024 * 1024; /* 450 MB */
 
-
-/* tpch_l_shipmode.
-   TODO: Unnecessary */
-enum tpch_l_shipmode {
-    REG_AIR,
-    AIR,
-    RAIL,
-    TRUCK,
-    MAIL,
-    FOB,
-    SHIP
-};
-
-
-/* Lineitem tuple.
-   TODO: Catalog will provide this metadata info */
-struct tpch_lineitem_tuple {
-    int L_ORDERKEY;
-    int L_PARTKEY;
-    int L_SUPPKEY;
-    int L_LINENUMBER;
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
-    double L_TAX;
-    char L_RETURNFLAG;
-    char L_LINESTATUS;
-    time_t L_SHIPDATE;
-    time_t L_COMMITDATE;
-    time_t L_RECEIPTDATE;
-    char L_SHIPINSTRUCT[25];
-    tpch_l_shipmode L_SHIPMODE;
-    // char L_COMMENT[44];
-};
 
 
 int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {

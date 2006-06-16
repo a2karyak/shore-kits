@@ -13,9 +13,11 @@
 #include <sys/time.h>
 #include <math.h>
 
+#include "tests/tpch_struct.h"
+
+
 using namespace qpipe;
 
-extern uint32_t trace_current_setting;
 
 #define DATABASE_HOME	 "."
 #define CONFIG_DATA_DIR "./database"
@@ -32,63 +34,6 @@ size_t TPCH_BUFFER_POOL_SIZE_GB = 0; /* 0 GB */
 size_t TPCH_BUFFER_POOL_SIZE_BYTES = 450 * 1024 * 1024; /* 450 MB */
 
 
-
-/* tpch_l_shipmode.
-   TODO: Unnecessary */
-enum tpch_l_shipmode {
-    REG_AIR,
-    AIR,
-    RAIL,
-    TRUCK,
-    MAIL,
-    FOB,
-    SHIP
-};
-
-
-enum tpch_o_orderpriority {
-    URGENT_1,
-    HIGH_2,
-    MEDIUM_3,
-    NOT_SPECIFIED_4,
-    LOW_5
-};
-
-
-
-/* Lineitem tuple.
-   TODO: Catalog will provide this metadata info */
-struct tpch_lineitem_tuple {
-    int L_ORDERKEY;
-    int L_PARTKEY;
-    int L_SUPPKEY;
-    int L_LINENUMBER;
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
-    double L_TAX;
-    char L_RETURNFLAG;
-    char L_LINESTATUS;
-    time_t L_SHIPDATE;
-    time_t L_COMMITDATE;
-    time_t L_RECEIPTDATE;
-    char L_SHIPINSTRUCT[25];
-    tpch_l_shipmode L_SHIPMODE;
-    // char L_COMMENT[44];
-};
-
-
-struct tpch_orders_tuple {
-    int O_ORDERKEY;
-    int O_CUSTKEY;
-    char O_ORDERSTATUS;
-    double O_TOTALPRICE;
-    time_t O_ORDERDATE;
-    tpch_o_orderpriority O_ORDERPRIORITY;
-    char O_CLERK[15];
-    int O_SHIPPRIORITY;
-    char O_COMMENT[79];
-};
 
 
 tpch_o_orderpriority prioritystr_to_orderpriority(char* tmp) {
