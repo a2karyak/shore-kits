@@ -3,11 +3,11 @@
 #ifndef _STAGE_CONTAINTER_H
 #define _STAGE_CONTAINTER_H
 
-#include "thread.h"
-#include "packet.h"
-#include "stage_factory.h"
-#include "stage.h"
-#include "guard.h"
+#include "engine/thread.h"
+#include "engine/core/packet.h"
+#include "engine/core/stage_factory.h"
+#include "engine/core/stage.h"
+#include "engine/util/guard.h"
 
 
 

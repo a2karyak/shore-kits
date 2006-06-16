@@ -8,15 +8,15 @@
  5/25/2006: Initial version
 */ 
 
-#include "thread.h"
-#include "stage_container.h"
-#include "stages/tscan.h"
-#include "stages/aggregate.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
+#include "engine/stages/tscan.h"
+#include "engine/stages/aggregate.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "dispatcher.h"
-#include "tester_thread.h"
-#include "util/stopwatch.h"
+#include "engine/dispatcher.h"
+#include "tests/tester_thread.h"
+#include "engine/util/stopwatch.h"
 
 #include "db_cxx.h"
 

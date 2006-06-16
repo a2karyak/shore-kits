@@ -1,17 +1,17 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _page_h
-#define _page_h
+#ifndef _PAGE_H
+#define _PAGE_H
 
-#include "thread.h"
-#include "guard.h"
+#include "engine/thread.h"
+#include "engine/util/guard.h"
 
 #include <new>
 
 
 
 // include me last!!!
-#include "namespace.h"
+#include "engine/namespace.h"
 
 
 
@@ -258,7 +258,7 @@ private:
 
 
 
-#include "namespace.h"
+#include "engine/namespace.h"
 
 
 

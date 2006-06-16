@@ -7,20 +7,20 @@
  6/9/2006: Initial version
 */ 
 
-#include "thread.h"
-#include "stage_container.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "dispatcher.h"
-#include "tester_thread.h"
-#include "util/time_util.h"
-#include "util/stopwatch.h"
-#include "stages/tscan.h"
-#include "stages/aggregate.h"
-#include "stages/sort.h"
-#include "stages/fscan.h"
-#include "stages/fdump.h"
-#include "stages/merge.h"
+#include "engine/dispatcher.h"
+#include "tests/tester_thread.h"
+#include "engine/util/time_util.h"
+#include "engine/util/stopwatch.h"
+#include "engine/stages/tscan.h"
+#include "engine/stages/aggregate.h"
+#include "engine/stages/sort.h"
+#include "engine/stages/fscan.h"
+#include "engine/stages/fdump.h"
+#include "engine/stages/merge.h"
 
 #include <unistd.h>
 #include <sys/time.h>

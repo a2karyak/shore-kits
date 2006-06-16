@@ -3,8 +3,8 @@
 #include "stages/fdump.h"
 #include "qpipe_panic.h"
 #include "trace.h"
-#include "tuple.h"
-#include "guard.h"
+#include "core/tuple.h"
+#include "util/guard.h"
 
 
 

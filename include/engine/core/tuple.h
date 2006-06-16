@@ -5,12 +5,12 @@
 
 
 // must always be the first include
-#include "thread.h"
+#include "engine/thread.h"
 #include <cassert>
 #include <cstdio>
 
-#include "engine/page.h"
-#include "guard.h"
+#include "engine/core/page.h"
+#include "engine/util/guard.h"
 
 
 // for Dbt class

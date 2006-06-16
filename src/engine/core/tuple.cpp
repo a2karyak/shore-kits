@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "thread.h"
-#include "tuple.h"
+#include "core/tuple.h"
 
 
 

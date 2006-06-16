@@ -26,10 +26,10 @@
 #include "db_cxx.h"
 
 /* QPipe Engine */
-#include "thread.h"
+#include "engine/thread.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "dispatcher.h"
+#include "engine/dispatcher.h"
 #include "tests/tester_thread.h"
 
 /* QPipe Server */

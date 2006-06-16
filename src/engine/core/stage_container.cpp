@@ -1,9 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "stage_container.h"
+#include "core/stage_container.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "guard.h"
+#include "util/guard.h"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE

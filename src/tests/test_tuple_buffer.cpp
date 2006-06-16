@@ -1,10 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "thread.h"
-#include "tuple.h"
+#include "engine/thread.h"
+#include "engine/core/tuple.h"
 #include "qpipe_panic.h"
 
-#include "tester_thread.h"
+#include "tests/tester_thread.h"
 
 #include <stdlib.h>
 

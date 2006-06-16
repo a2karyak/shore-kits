@@ -4,8 +4,8 @@
 #include "qpipe_panic.h"
 #include "dispatcher.h"
 #include "trace.h"
-#include "tuple.h"
-#include "guard.h"
+#include "core/tuple.h"
+#include "util/guard.h"
 
 
 

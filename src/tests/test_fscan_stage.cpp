@@ -1,12 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "thread.h"
-#include "stage_container.h"
-#include "stages/fscan.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
+#include "engine/stages/fscan.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
-#include "tester_thread.h"
+#include "tests/tester_thread.h"
 
 #include <stdlib.h>
 

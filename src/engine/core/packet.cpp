@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "thread.h"
-#include "stage.h"
+#include "core/stage.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 

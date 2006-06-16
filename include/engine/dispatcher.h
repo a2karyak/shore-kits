@@ -3,9 +3,9 @@
 #ifndef _DISPATCHER_H
 #define _DISPATCHER_H
 
-#include "thread.h"
-#include "stage_container.h"
-#include "util/static_hash_map_struct.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
+#include "engine/util/static_hash_map_struct.h"
 
 
 

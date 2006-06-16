@@ -3,9 +3,9 @@
 #ifndef __SORT_H
 #define __SORT_H
 
-#include "stage.h"
-#include "stages/merge.h"
-#include "dispatcher.h"
+#include "engine/core/stage.h"
+#include "engine/stages/merge.h"
+#include "engine/dispatcher.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 #include <list>

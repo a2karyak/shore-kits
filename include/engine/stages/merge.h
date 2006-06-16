@@ -3,8 +3,8 @@
 #ifndef __MERGE_H
 #define __MERGE_H
 
-#include "stage.h"
-#include "dispatcher.h"
+#include "engine/core/stage.h"
+#include "engine/dispatcher.h"
 
 #include <vector>
 

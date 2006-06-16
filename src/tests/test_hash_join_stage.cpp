@@ -1,10 +1,10 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "thread.h"
-#include "stage_container.h"
-#include "tester_thread.h"
-#include "stages/func_call.h"
-#include "stages/hash_join.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
+#include "tests/tester_thread.h"
+#include "engine/stages/func_call.h"
+#include "engine/stages/hash_join.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 

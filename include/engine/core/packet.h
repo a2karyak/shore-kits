@@ -4,8 +4,8 @@
 #define __PACKET_H
 
 #include "db_cxx.h"
-#include "tuple.h"
-#include "functors.h"
+#include "engine/core/tuple.h"
+#include "engine/functors.h"
 #include <list>
 
 

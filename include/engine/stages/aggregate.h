@@ -5,9 +5,9 @@
 
 #include <cstdio>
 
-#include "tuple.h"
-#include "packet.h"
-#include "stage.h"
+#include "engine/core/tuple.h"
+#include "engine/core/packet.h"
+#include "engine/core/stage.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 

@@ -10,9 +10,9 @@
 #ifndef __HASH_JOIN_STAGE_H
 #define __HASH_JOIN_STAGE_H
 
-#include "thread.h"
+#include "engine/thread.h"
+#include "engine/core/stage.h"
 #include <ext/hash_set>
-#include "stage.h"
 
 
 using namespace qpipe;

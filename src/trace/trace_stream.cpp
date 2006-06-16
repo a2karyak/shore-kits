@@ -6,7 +6,7 @@
  *
  *  @bug None known.
  */
-#include "thread.h"                    /* for pthread_mutex_t */
+#include "engine/thread.h"             /* for pthread_mutex_t */
 #include "trace/trace_stream.h"        /* for prototypes */
 #include "trace/trace_force.h"         /* for TRACE_FORCE() */
 #include "trace/trace_print_pthread.h" /* for trace_print_pthread() */

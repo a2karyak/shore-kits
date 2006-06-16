@@ -9,13 +9,13 @@
  25/5/2006: Initial version
 */ 
 
-#include "thread.h"
-#include "stage_container.h"
-#include "stages/tscan.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
+#include "engine/stages/tscan.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "dispatcher.h"
-#include "tester_thread.h"
+#include "engine/dispatcher.h"
+#include "tests/tester_thread.h"
 
 #include <unistd.h>
 #include <sys/time.h>
