@@ -11,6 +11,8 @@
 #include "engine/core/stage_container.h"
 #include "engine/stages/tscan.h"
 #include "engine/stages/aggregate.h"
+#include "engine/stages/sort.h"
+#include "engine/stages/hash_join.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 #include "engine/dispatcher.h"
@@ -20,189 +22,6 @@
 #include "test_tpch_spec.h"
 
 using namespace qpipe;
-
-
-// Q4 LINEITEM TSCAN FILTER 
-
-class q4_lineitem_tscan_filter_t : public tuple_filter_t {
-private:
-    /* Our predicate is represented by these fields. The predicate stays
-       constant throughout the execution of the query. */
-
-    time_t t1;
-    time_t t2;
-
-    struct timeval tv;
-    uint mn;
-
-    /* Random predicates */
-    /* TPC-H specification 2.3.0 */
-
-    /* DATE is 1st Jan. of year [1993 .. 1997] */
-    int DATE;
-
-    /* DISCOUNT is random [0.02 .. 0.09] */
-    double DISCOUNT;
-
-    /* QUANTITY is randon [24 .. 25] */
-    double QUANTITY;
-
-public:
-    /* Initialize the predicates */
-    q4_lineitem_tscan_filter_t() : tuple_filter_t(sizeof(tpch_lineitem_tuple)) {
-	t1 = datestr_to_timet("1997-01-01");
-	t2 = datestr_to_timet("1998-01-01");
-
-	/* Calculate random predicates */
-	gettimeofday(&tv, 0);
-	mn = tv.tv_usec * getpid();
-	DATE = 1993 + abs((int)(5*(float)(rand_r(&mn))/(float)(RAND_MAX+1)));
-
-	gettimeofday(&tv, 0);
-	mn = tv.tv_usec * getpid();
-	DISCOUNT = 0.02 + (float)(fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1)))/(float)14.2857142857143;
-
-	gettimeofday(&tv, 0);
-	mn = tv.tv_usec * getpid();
-	QUANTITY = 24 + fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1));
-
-	TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT, QUANTITY);
-    }
-
-    /* Predication */
-    virtual bool select(const tuple_t &input) {
-
-	tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
-
-	if  ( ( tuple->L_SHIPDATE >= t1 ) &&
-	      ( tuple->L_SHIPDATE < t2 ) &&
-	      //	      ( tuple->L_DISCOUNT >= (DISCOUNT - 0.01)) &&
-	      ( tuple->L_DISCOUNT >= (DISCOUNT)) &&  // redure cardinality
-	      ( tuple->L_DISCOUNT <= (DISCOUNT + 0.01)) &&
-	      ( tuple->L_QUANTITY < (QUANTITY)) )
-	    {
-		//printf("+");
-		return (true);
-	    }
-	else {
-	    //printf(".");
-	    return (false);
-	}
-    }
-    
-    /* Projection */
-    virtual void project(tuple_t &dest, const tuple_t &src) {
-
-	/* Should project  L_ORDERKEY */
-	tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
-	memcpy(dest.data, &at->L_ORDERKEY, sizeof(int));
-    }
-};
-
-// END OF: Q4 LINEITEM TSCAN FILTER
-
-
-// Q4 ORDERS TSCAN FILTER
-
-class q4_orders_tscan_filter_t : public tuple_filter_t {
-private:
-    /* Our predicate is represented by these fields. The predicate stays                                                                                   
-       constant throughout the execution of the query. */
-
-    time_t t1;
-    time_t t2;
-
-    struct timeval tv;
-    uint mn;
-
-    /* Random predicates */
-    /* TPC-H specification 2.3.0 */
-
-public:
-    /* Initialize the predicates */
-    q4_orders_tscan_filter_t() : tuple_filter_t(sizeof(tpch_orders_tuple)) {
-        t1 = datestr_to_timet("1997-03-01");
-        t2 = datestr_to_timet("1998-06-01");
-    }
-
-
-    /* Predication */
-    virtual bool select(const tuple_t &input) {
-
-        tpch_orders_tuple *tuple = (tpch_orders_tuple*)input.data;
-
-        if  (( tuple->O_ORDERDATE >= t1 ) &&
-	     ( tuple->O_ORDERDATE < t2  ))
-            {
-                printf("+");
-                return (true);
-            }
-        else {
-            printf(".");
-            return (false);
-        }
-    }
-
-    /* Projection */
-    virtual void project(tuple_t &dest, const tuple_t &src) {
-
-        /* Should project  L_ORDERKEY */
-        tpch_orders_tuple *at = (tpch_orders_tuple*)(src.data);
-        memcpy(dest.data, &at->O_ORDERKEY, sizeof(int));
-        memcpy(dest.data, &at->O_ORDERPRIORITY, sizeof(tpch_o_orderpriority));
-    }
-}
-
-// EN OF: Q4 ORDERS TSCAN FILTER
-
-
-
-// Q4 JOIN
-
-
-// END OF: Q4 JOIN
-
-
-
-// Q4 AGG
-
-class count_aggregate_t : public tuple_aggregate_t {
-
-private:
-    int count;
-    int ORDER_PRIORITY;
-    
-public:  
-    count_aggregate_t() {
-	count = 0;
-	ORDER_PRIORITY = 0;
-    }
-  
-    bool aggregate(tuple_t &, const tuple_t & src) {
-
-	// update COUNT and ORDER_PRIORITY
-	count++;
-	int * i_op = (int*)src.data;
-	ORDER_PRIORITY = *i_op;
-    
-	if(count % 10 == 0) {
-	    TRACE(TRACE_DEBUG, "%d - %d\n", count, ORDER_PRIORITY);
-	    fflush(stdout);
-	}
-
-	return false;
-    }
-
-    bool eof(tuple_t &dest) {
-        int *output = (int*)dest.data;
-        output[0] = ORDER_PRIORITY;
-        output[1] = count;
-	return true;
-    }
-};
-
-// END OF: Q6 AGG
-
 
 
 /** @fn    : void * drive_stage(void *)
@@ -218,6 +37,219 @@ void *drive_stage(void *arg) {
     return NULL;
 }
 
+char *copy_string(const char *str) {
+    char* result;
+    int ret = asprintf(&result, str);
+    assert( ret != -1 );
+    return result;
+}
+
+struct int_comparator_t : public tuple_comparator_t {
+    virtual int make_key(const tuple_t &tuple) {
+        return *(int*)tuple.data;
+    }       
+};
+
+/**
+ * @brief select distinct l_orderkey from lineitem where l_commitdate < l_receiptdate
+ */
+packet_t *line_item_scan(Db* tpch_lineitem) {
+    struct lineitem_tscan_filter_t : public tuple_filter_t {
+        /* Initialize the predicates */
+        lineitem_tscan_filter_t()
+            : tuple_filter_t(sizeof(tpch_lineitem_tuple))
+        {
+        }
+
+        /* Predication */
+        virtual bool select(const tuple_t &input) {
+            tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
+            return tuple->L_COMMITDATE < tuple->L_RECEIPTDATE;
+        }
+    
+        /* Projection */
+        virtual void project(tuple_t &dest, const tuple_t &src) {
+            /* Should project  L_ORDERKEY */
+            tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
+            memcpy(dest.data, &at->L_ORDERKEY, sizeof(int));
+        }
+    };
+
+    struct int_distinct_t : public tuple_aggregate_t {
+        bool _first;
+        int _last_value;
+        int_distinct_t()
+            : _first(true), _last_value(-1)
+        {
+        }
+        virtual bool aggregate(tuple_t &d, const tuple_t &s) {
+            int value = *(int*)s.data;
+            bool broken = _first || value != _last_value;
+            return broken? break_group(d, value) : false;
+        }
+        virtual bool eof(tuple_t  &d) {
+            return break_group(d, -1);
+        }
+        bool break_group(tuple_t &d, int value) {
+            // no tuples read previously?
+            if(!_first) {
+                int* dest = (int*) d.data;
+                *dest = _last_value;
+            }
+            bool result = !_first;
+            _last_value = value;
+            _first = false;
+            return result;
+        }
+    };
+    
+    // LINEITEM TSCAN PACKET
+    // the output consists of 1 int (the
+    char* packet_id = copy_string("Lineitem TSCAN");
+    tuple_filter_t* filter = new lineitem_tscan_filter_t(); 
+    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+    packet_t *tscan_packet = new tscan_packet_t(packet_id,
+                                          buffer,
+                                          filter,
+                                          tpch_lineitem);
+    
+    // sort as a precursor to the distinct aggregate
+    packet_id = copy_string("Lineitem SORT");
+    filter = new tuple_filter_t(sizeof(int));
+    buffer = new tuple_buffer_t(sizeof(int));
+    tuple_comparator_t *compare = new int_comparator_t();
+    packet_t* sort_packet = new sort_packet_t(packet_id,
+                                              buffer,
+                                              filter,
+                                              compare,
+                                              tscan_packet);
+
+    // now select distinct
+    packet_id = copy_string("Lineitem DISTINCT");
+    filter = new tuple_filter_t(sizeof(int));
+    buffer = new tuple_buffer_t(sizeof(int));
+    tuple_aggregate_t *aggregate = new int_distinct_t();
+    packet_t* agg_packet = new aggregate_packet_t(packet_id,
+                                                  buffer,
+                                                  filter,
+                                                  aggregate,
+                                                  sort_packet);
+
+    return agg_packet;
+}
+
+/**
+ * @brief holds the results of an order scan after projection
+ */
+struct order_scan_tuple_t {
+    int O_ORDERKEY;
+    int O_ORDERPRIORITY;
+};
+
+packet_t* orders_scan(Db* tpch_orders) {
+    struct orders_tscan_filter_t : public tuple_filter_t {
+        time_t t1, t2;
+        
+        /* Initialize the predicates */
+        orders_tscan_filter_t()
+            : tuple_filter_t(sizeof(tpch_orders_tuple))
+        {
+            // TODO: random predicates per the TPCH spec...
+            t1 = datestr_to_timet("1993-07-01");
+            t2 = datestr_to_timet("1993-10-01");
+        }
+
+        /* Predication */
+        virtual bool select(const tuple_t &input) {
+            tpch_orders_tuple *tuple = (tpch_orders_tuple*)input.data;
+            return tuple->O_ORDERDATE >= t1 && tuple->O_ORDERDATE < t2;
+        }
+    
+        /* Projection */
+        virtual void project(tuple_t &d, const tuple_t &s) {
+            /* Should project  O_ORDERKEY and O_ORDERPRIORITY*/
+            tpch_orders_tuple* src = (tpch_orders_tuple*) s.data;
+            order_scan_tuple_t* dest = (order_scan_tuple_t*) d.data;
+            dest->O_ORDERKEY = src->O_ORDERKEY;
+            dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
+        }
+    };
+
+    char* packet_id = copy_string("Orders TSCAN");
+    tuple_filter_t* filter = new orders_tscan_filter_t(); 
+    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(order_scan_tuple_t));
+    packet_t *tscan_packet = new tscan_packet_t(packet_id,
+                                                buffer,
+                                                filter,
+                                                tpch_orders);
+    
+    return tscan_packet;
+}
+
+// left is lineitem, right is orders
+struct q4_join_t : public tuple_join_t {
+    q4_join_t()
+        : tuple_join_t(sizeof(order_scan_tuple_t),
+                       sizeof(int),
+                       sizeof(int),
+                       sizeof(int))
+    {
+    }
+    virtual void get_left_key(char* key, const tuple_t &t) {
+        order_scan_tuple_t* tuple = (order_scan_tuple_t*) t.data;
+        memcpy(key, &tuple->O_ORDERKEY, key_size());
+    }
+    virtual void get_right_key(char* key, const tuple_t &t) {
+        memcpy(key, t.data, key_size());
+    }
+    virtual void join(tuple_t &dest,
+                      const tuple_t &,
+                      const tuple_t &right)
+    {
+        // KLUDGE: this projection should go in a separate filter class
+        order_scan_tuple_t* tuple = (order_scan_tuple_t*) right.data;
+        memcpy(dest.data, &tuple->O_ORDERPRIORITY, sizeof(int));
+    }
+};
+
+struct q4_tuple_t {
+    int O_ORDERPRIORITY;
+    int ORDER_COUNT;
+};
+
+struct count_aggregate_t : public tuple_aggregate_t {
+    bool _first;
+    int _last_value;
+    int _count;
+    count_aggregate_t()
+        : _first(true), _last_value(-1), _count(0)
+    {
+    }
+    virtual bool aggregate(tuple_t &d, const tuple_t &s) {
+        int value = *(int*)s.data;
+        bool broken = _first || value != _last_value;
+        bool valid = broken? break_group(d, value) : false;
+        _count++;
+        return valid;
+    }
+    virtual bool eof(tuple_t  &d) {
+        return break_group(d, -1);
+    }
+    bool break_group(tuple_t &d, int value) {
+        // no tuples read previously?
+        if(!_first) {
+            q4_tuple_t* dest = (q4_tuple_t*) d.data;
+            dest->O_ORDERPRIORITY = _last_value;
+            dest->ORDER_COUNT = _count;
+        }
+        
+        bool result = !_first;
+        _last_value = value;
+        _count = 0;
+        _first = false;
+        return result;
+    }
+};
 
 /** @fn    : main
  *  @brief : TPC-H Q6
@@ -251,6 +283,8 @@ int main() {
 	}
     }
 
+    
+
     // OPENS THE LINEITEM TABLE
     Db* tpch_lineitem = NULL;
 
@@ -263,63 +297,80 @@ int main() {
 
     for(int i=0; i < 10; i++) {
         stopwatch_t timer;
+
+        /*
+         * Query 4 original:
+         *
+         * select o_orderpriority, count(*) as order_count
+         * from orders
+         * where o_order_data <in range> and exists
+         *      (select * from lineitem
+         *       where l_orderkey = o_orderkey and l_commitdate < l_receiptdate)
+         * group by o_orderpriority
+         * order by o_orderpriority
+         *
+         *
+         * Query 4 modified to make the nested query cleaner:
+         *
+         * select o_orderpriority, count(*) as order_count
+         * from orders natural join (
+         *      select distinct l_orderkey
+         *      from lineitem
+         *      where l_commitdate < l_receiptdate)
+         */
         
-        // LINEITEM TSCAN PACKET
-        // the output consists of 1 int
-        tuple_buffer_t* lineitem_tscan_out_buffer = new tuple_buffer_t(sizeof(int));
-        tuple_filter_t* lineitem_tscan_filter = new q4_lineitem_tscan_filter_t();
+        // First deal with the lineitem half
+        packet_t *line_item_packet = line_item_scan(tpch_lineitem);
 
-        char* lineitem_tscan_packet_id;
-        int lineitem_tscan_packet_id_ret = asprintf(&lineitem_tscan_packet_id, "Q4_LINEITEM_TSCAN_PACKET");
-        assert( lineitem_tscan_packet_id_ret != -1 );
-        tscan_packet_t *q4_lineitem_tscan_packet = new tscan_packet_t(lineitem_tscan_packet_id,
-								      lineitem_tscan_out_buffer,
-								      lineitem_tscan_filter,
-								      tpch_lineitem);
+        // Now, the orders half
+        packet_t* orders_packet = orders_scan(tpch_orders);
 
+        // join them...
+        char *packet_id = copy_string("Orders - Lineitem JOIN");
+        tuple_filter_t* filter = new tuple_filter_t(sizeof(int));
+        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+        tuple_join_t* join = new q4_join_t();
+        packet_t* join_packet = new hash_join_packet_t(packet_id,
+                                                       buffer,
+                                                       filter,
+                                                       line_item_packet,
+                                                       orders_packet,
+                                                       join);
 
-        // ORDERS TSCAN PACKET                                                                                                                         
-        // the output consists of 1 int
-	tuple_buffer_t* orders_tscan_out_buffer = new tuple_buffer_t(sizeof(int) + sizeof(tpch_o_orderpriority));
-        tuple_filter_t* orders_tscan_filter = new q4_orders_tscan_filter_t();
+        // sort as a precursor to the count aggregate
+        packet_id = copy_string("Orders.O_ORDERPRIORITY SORT");
+        filter = new tuple_filter_t(sizeof(int));
+        buffer = new tuple_buffer_t(sizeof(int));
+        tuple_comparator_t *compare = new int_comparator_t();
+        packet_t* sort_packet = new sort_packet_t(packet_id,
+                                                  buffer,
+                                                  filter,
+                                                  compare,
+                                                  join_packet);
 
-        char* orders_tscan_packet_id;
-        int orders_tscan_packet_id_ret = asprintf(&orders_tscan_packet_id, "Q4_ORDERS_TSCAN_PACKET");
-        assert( orders_tscan_packet_id_ret != -1 );
-        tscan_packet_t *q4_orders_tscan_packet = new tscan_packet_t(orders_tscan_packet_id,
-								    orders_tscan_out_buffer,
-								    orders_tscan_filter,
-								    tpch_orders);
-
-	// JOIN PACKET CREATION
-	join_packet_t q4_join_packet;
-
-        // AGG PACKET CREATION
-        // the output consists of 2 int
-        tuple_buffer_t* agg_output_buffer = new tuple_buffer_t(2*sizeof(int));
-        tuple_filter_t* agg_filter = new tuple_filter_t(agg_output_buffer->tuple_size);
-        count_aggregate_t*  q4_aggregator = new count_aggregate_t();
-    
-        char* agg_packet_id;
-        int agg_packet_id_ret = asprintf(&agg_packet_id, "Q6_AGGREGATE_PACKET");
-        assert( agg_packet_id_ret != -1 );
-        aggregate_packet_t* q4_agg_packet = new aggregate_packet_t(agg_packet_id,
-                                                                   agg_output_buffer,
-                                                                   agg_filter,
-                                                                   q4_aggregator,
-                                                                   q4_join_packet);
-
+        // count aggregate
+        packet_id = copy_string("O_ORDERPRIORITY COUNT");
+        filter = new tuple_filter_t(sizeof(int));
+        buffer = new tuple_buffer_t(sizeof(int));
+        tuple_aggregate_t *aggregate = new count_aggregate_t();
+        packet_t* agg_packet = new aggregate_packet_t(packet_id,
+                                                      buffer,
+                                                      filter,
+                                                      aggregate,
+                                                      sort_packet);
+        
         // Dispatch packet
-        dispatcher_t::dispatch_packet(q4_agg_packet);
+        dispatcher_t::dispatch_packet(agg_packet);
     
         tuple_t output;
-        int * r = NULL;
-        while(!agg_output_buffer->get_tuple(output)) {
-            r = (int*)output.data;
-            TRACE(TRACE_ALWAYS, "*** Q4 Count: %lf. Priority: %lf.  ***\n", r[0], r[1]);
+        q4_tuple_t * r = NULL;
+        while(!buffer->get_tuple(output)) {
+            r = (q4_tuple_t*) output.data;
+            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %lf. Count: %lf.  ***\n",
+                  r->O_ORDERPRIORITY, r->ORDER_COUNT);
         }
         
-        printf("Query executed in %lf ms\n", timer.time_ms());
+        printf("Query executed in %.3lf s\n", timer.time());
     }
 
     close_tables(dbenv, tpch_lineitem, tpch_orders);

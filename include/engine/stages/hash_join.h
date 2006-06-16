@@ -58,12 +58,12 @@ public:
      *  will be deleted in the packet destructor.
      *
      *  @param left Left side-input packet. This will be dispatched
-     *  first and become the outer relation of the join. This should
-     *  be the smaller input.
+     *  second and become the outer relation of the join. This should
+     *  be the larger input.
      *
-     *  @param right Right-side packet. This will be dispatched after
-     *  the partitioning stage and will become the inner relation of
-     *  the join. It should be the larger input.
+     *  @param right Right-side packet. This will be dispatched first
+     *  and will become the inner relation of the join. It should be
+     *  the smaller input.
      *
      *  @param join The joiner  we will be using for this
      *  packet. The packet OWNS this joiner. It will be deleted in

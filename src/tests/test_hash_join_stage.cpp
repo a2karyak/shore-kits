@@ -47,7 +47,7 @@ stage_t::result_t write_ints(void* arg)
             tuples.push_back(i);
     }
     std::random_shuffle(tuples.begin(), tuples.end());
-    for (int i=0; i < tuples.size(); i++) {
+    for (unsigned i=0; i < tuples.size(); i++) {
 	tuple_t in_tuple((char*)&tuples[i], sizeof(int));
 	if( int_buffer->put_tuple(in_tuple) ) {
 	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");

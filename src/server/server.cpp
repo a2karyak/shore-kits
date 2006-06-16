@@ -126,7 +126,7 @@ void closeQPipe() {
  *  @brief : Opens the configuration file and reads it. On error uses the default (STD_) values
  */
 
-void read_config(char* confFile) {
+void read_config(char* ) {
 
     /* @TODO: Should read configuration file */
     
