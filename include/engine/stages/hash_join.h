@@ -169,6 +169,8 @@ class hash_join_stage_t : public stage_t {
     tuple_join_t *_join;
 public:
 
+    static const char* DEFAULT_STAGE_NAME;
+    typedef hash_join_packet_t stage_packet_t;
     virtual result_t process_packet();
     
     // set up the partitions in memory

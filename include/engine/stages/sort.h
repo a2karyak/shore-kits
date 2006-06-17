@@ -188,6 +188,7 @@ private:
 public:
 
     static const char* DEFAULT_STAGE_NAME;
+    typedef sort_packet_t stage_packet_t;
 
 
     sort_stage_t() { }

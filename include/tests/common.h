@@ -12,6 +12,7 @@
 
 
 #include "tests/common/tpch_struct.h"
+#include "tests/common/register_stage.h"
 
 
 #endif

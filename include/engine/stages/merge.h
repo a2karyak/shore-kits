@@ -127,6 +127,7 @@ private:
 public:
 
     static const char* DEFAULT_STAGE_NAME;
+    typedef merge_packet_t stage_packet_t;
 
     merge_stage_t()
         : _head_list(NULL)

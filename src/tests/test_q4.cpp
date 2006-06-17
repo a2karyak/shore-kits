@@ -1,4 +1,4 @@
-// -*- mode:C++ c-basic-offset:4 -*-
+// -*- mode:C++; c-basic-offset:4 -*-
 
 /** @file    : test_q4.cpp
  *  @brief   : Unittest for Q4 (joins LINEITEM/ORDERS
@@ -7,11 +7,12 @@
  6/16/2006: Initial version
 */ 
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
 #include "engine/stages/tscan.h"
 #include "engine/stages/aggregate.h"
 #include "engine/stages/sort.h"
+#include "engine/stages/hash_join.h"
+#include "engine/stages/fdump.h"
+#include "engine/stages/fscan.h"
 #include "engine/stages/hash_join.h"
 #include "engine/dispatcher.h"
 #include "engine/util/stopwatch.h"
@@ -241,31 +242,14 @@ int main() {
     trace_current_setting = TRACE_ALWAYS;
     thread_init();
 
-    // creates a TSCAN stage
-    stage_container_t* tscan_sc = 
-	new stage_container_t("TSCAN_CONTAINER", new stage_factory<tscan_stage_t>);
-    dispatcher_t::register_stage_container(tscan_packet_t::PACKET_TYPE, tscan_sc);
-    for (int i = 0; i < 2; i++) {
-	tester_thread_t* tscan_thread = new tester_thread_t(drive_stage, tscan_sc, "TSCAN THREAD");
-	if ( thread_create(NULL, tscan_thread) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    // creates a AGG stage
-    stage_container_t* agg_sc = 
-	new stage_container_t("AGGREGATE_CONTAINER", new stage_factory<aggregate_stage_t>);
-    dispatcher_t::register_stage_container(aggregate_packet_t::PACKET_TYPE, agg_sc);
-    for (int i = 0; i < 2; i++) {
-	tester_thread_t* agg_thread = new tester_thread_t(drive_stage, agg_sc, "AGG THREAD");
-	if ( thread_create(NULL, agg_thread) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    
+    // line up the stages...
+    register_stage<tscan_stage_t>(2);
+    register_stage<aggregate_stage_t>(2);
+    register_stage<sort_stage_t>(2);
+    register_stage<merge_stage_t>(10);
+    register_stage<fdump_stage_t>(10);
+    register_stage<fscan_stage_t>(20);
+    register_stage<hash_join_stage_t>(1);
 
     // OPENS THE LINEITEM TABLE
     Db* tpch_lineitem = NULL;

@@ -89,7 +89,7 @@ int tpch_orders_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
  *  @brief : Opens the tpch tables
  */
 
-int open_tables(DbEnv* dbenv, Db* tpch_lineitem, Db* tpch_orders) {
+int open_tables(DbEnv* dbenv, Db* &tpch_lineitem, Db* &tpch_orders) {
 
     try {
 	// Create an environment object and initialize it for error

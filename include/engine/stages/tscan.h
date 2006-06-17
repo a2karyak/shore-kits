@@ -89,6 +89,7 @@ class tscan_stage_t : public stage_t {
 
 public:
 
+    typedef tscan_packet_t stage_packet_t;
     static const char* DEFAULT_STAGE_NAME;
 
     static const size_t TSCAN_BULK_READ_BUFFER_SIZE;
