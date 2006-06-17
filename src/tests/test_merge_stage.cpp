@@ -2,12 +2,12 @@
 
 #include "engine/thread.h"
 #include "engine/stages/func_call.h"
+#include "engine/core/stage_container.h"
 #include "engine/stages/merge.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "engine/core/stage_container.h"
 
-#include "tests/common/tester_thread.h"
+#include "tests/common.h"
 
 #include <utility>
 #include <vector>
@@ -17,20 +17,6 @@ using namespace qpipe;
 using std::vector;
 using std::pair;
 
-
-
-/**
- *  @brief Simulates a worker thread on the specified stage.
- *
- *  @param arg A stage_t* to work on.
- */
-void* drive_stage(void* arg)
-{
-  stage_container_t* sc = (stage_container_t*)arg;
-  sc->run();
-
-  return NULL;
-}
 
 
 typedef vector<int> input_list_t;

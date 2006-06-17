@@ -1,4 +1,4 @@
-// -*- mode:C++ c-basic-offset:4 -*-
+// -*- mode:C++; c-basic-offset:4 -*-
 
 /** @file    : test_q6.cpp
  *  @brief   : Unittest for Q6
@@ -16,7 +16,7 @@
 #include "engine/util/stopwatch.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "tests/common/tester_thread.h"
+#include "tests/common.h"
 
 #include "db_cxx.h"
 
@@ -50,39 +50,6 @@ size_t TPCH_BUFFER_POOL_SIZE_GB = 0; /* 0 GB */
 size_t TPCH_BUFFER_POOL_SIZE_BYTES = 450 * 1024 * 1024; /* 450 MB */
 
 
-/* tpch_l_shipmode.
-   TODO: Unnecessary */
-enum tpch_l_shipmode {
-    REG_AIR,
-    AIR,
-    RAIL,
-    TRUCK,
-    MAIL,
-    FOB,
-    SHIP
-};
-
-
-/* Lineitem tuple.
-   TODO: Catalog will provide this metadata info */
-struct tpch_lineitem_tuple {
-    int L_ORDERKEY;
-    int L_PARTKEY;
-    int L_SUPPKEY;
-    int L_LINENUMBER;
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
-    double L_TAX;
-    char L_RETURNFLAG;
-    char L_LINESTATUS;
-    time_t L_SHIPDATE;
-    time_t L_COMMITDATE;
-    time_t L_RECEIPTDATE;
-    char L_SHIPINSTRUCT[25];
-    tpch_l_shipmode L_SHIPMODE;
-    // char L_COMMENT[44];
-};
 
 
 int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
@@ -99,35 +66,6 @@ int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
     else
 	return 1;
 
-}
-
-
-/** @fn    : datestr_to_timet(char*)
- *  @brief : Converts a string to corresponding time_t
- */
-
-time_t datestr_to_timet(char* str) {
-    char buf[100];
-    strcpy(buf, str);
-
-    // str in yyyy-mm-dd format
-    char* year = buf;
-    char* month = buf + 5;
-    // char* day = buf + 8;
-
-    buf[4] = '\0';
-    buf[7] = '\0';
-
-    tm time_str;
-    time_str.tm_year = atoi(year) - 1900;
-    time_str.tm_mon = atoi(month) - 1;
-    time_str.tm_mday = 4;
-    time_str.tm_hour = 0;
-    time_str.tm_min = 0;
-    time_str.tm_sec = 1;
-    time_str.tm_isdst = -1;
-
-    return mktime(&time_str);
 }
 
 
@@ -291,20 +229,6 @@ public:
 
 // END OF: Q6 AGG
 
-
-
-/** @fn    : void * drive_stage(void *)
- *  @brief : Simulates a worker thread on the specified stage.
- *  @param : arg A stage_t* to work on.
- */
-
-void *drive_stage(void *arg) {
-
-    stage_container_t* sc = (stage_container_t*)arg;
-    sc->run();
-    
-    return NULL;
-}
 
 
 /** @fn    : main

@@ -21,8 +21,7 @@
 #include "engine/stages/fdump.h"
 #include "engine/stages/merge.h"
 
-#include "tests/common/tester_thread.h"
-#include "tests/common/tpch_struct.h"
+#include "tests/common.h"
 
 #include <unistd.h>
 #include <sys/time.h>
@@ -39,6 +38,7 @@ extern uint32_t trace_current_setting;
 #define DATABASE_HOME	 "."
 #define CONFIG_DATA_DIR "./database"
 #define TMP_DIR "./temp"
+
 
 #define TABLE_LINEITEM_NAME "LINEITEM"
 #define TABLE_LINEITEM_ID   "TBL_LITEM"
@@ -90,33 +90,6 @@ int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-/** @fn    : datestr_to_timet(char*)
- *  @brief : Converts a string to corresponding time_t
- */
-
-time_t datestr_to_timet(char* str) {
-    char buf[100];
-    strcpy(buf, str);
-
-    // str in yyyy-mm-dd format
-    char* year = buf;
-    char* month = buf + 5;
-    // char* day = buf + 8;
-
-    buf[4] = '\0';
-    buf[7] = '\0';
-
-    tm time_str;
-    time_str.tm_year = atoi(year) - 1900;
-    time_str.tm_mon = atoi(month) - 1;
-    time_str.tm_mday = 4;
-    time_str.tm_hour = 0;
-    time_str.tm_min = 0;
-    time_str.tm_sec = 1;
-    time_str.tm_isdst = -1;
-
-    return mktime(&time_str);
-}
 
 
 // END OF: Q1 SPECIFIC UTILS
@@ -305,20 +278,6 @@ public:
 
 // END OF: Q6 AGG
 
-
-
-/** @fn    : void * drive_stage(void *)
- *  @brief : Simulates a worker thread on the specified stage.
- *  @param : arg A stage_t* to work on.
- */
-
-void *drive_stage(void *arg) {
-
-    stage_container_t* sc = (stage_container_t*)arg;
-    sc->run();
-    
-    return NULL;
-}
 
 
 /** @fn    : main
