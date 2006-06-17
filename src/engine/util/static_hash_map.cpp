@@ -18,8 +18,8 @@
  *  @bug None known.
  */
 #include <cstdlib>                        /* for NULL */
-#include "util/static_hash_map.h"         /* for prototypes */
-#include "util/static_hash_map_struct.h"  /* for prototypes */
+#include "engine/util/static_hash_map.h"         /* for prototypes */
+#include "engine/util/static_hash_map_struct.h"  /* for prototypes */
 
 
 

@@ -7,11 +7,11 @@
  6/11/2006: Initial version
 */ 
 
-#include "util/shuffle.h"
+#include "engine/util/shuffle.h"
 
 unsigned int srand_seed;
 
-#  define RANDOM    rand_r(&srand_seed)
+#define RANDOM    rand_r(&srand_seed)
 
 
 /** @fn    : init_random(unsigned int)

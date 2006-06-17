@@ -1,7 +1,7 @@
 
-#include "dispatcher.h"
-#include "util/static_hash_map.h"
-#include "util/hash_functions.h"
+#include "engine/dispatcher.h"
+#include "engine/util/static_hash_map.h"
+#include "engine/util/hash_functions.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 

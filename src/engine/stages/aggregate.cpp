@@ -1,11 +1,11 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "stages/aggregate.h"
+#include "engine/stages/aggregate.h"
+#include "engine/core/tuple.h"
+#include "engine/util/guard.h"
+#include "engine/dispatcher.h"
 #include "qpipe_panic.h"
-#include "dispatcher.h"
 #include "trace.h"
-#include "core/tuple.h"
-#include "util/guard.h"
 
 
 

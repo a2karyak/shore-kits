@@ -1,12 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "thread.h"
-#include "core/page.h"
+#include "engine/thread.h"
+#include "engine/core/page.h"
 
 
 
 // include me last!
-#include "namespace.h"
+#include "engine/namespace.h"
 
 
 
@@ -422,4 +422,4 @@ page_buffer_t::~page_buffer_t() {
 
 
 
-#include "namespace.h"
+#include "engine/namespace.h"

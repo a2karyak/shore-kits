@@ -1,9 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "core/stage_container.h"
+#include "engine/core/stage_container.h"
+#include "engine/util/guard.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "util/guard.h"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -15,7 +15,7 @@
 
 
 // include me last!!!
-#include "namespace.h"
+#include "engine/namespace.h"
 
 
 
@@ -618,4 +618,4 @@ void stage_container_t::stage_adaptor_t::abort_queries() {
 
 
 
-#include "namespace.h"
+#include "engine/namespace.h"

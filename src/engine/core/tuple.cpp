@@ -1,12 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "thread.h"
-#include "core/tuple.h"
+#include "engine/thread.h"
+#include "engine/core/tuple.h"
 
 
 
 // include me last!
-#include "namespace.h"
+#include "engine/namespace.h"
 
 
 
@@ -189,4 +189,4 @@ int tuple_buffer_t::init(size_t _tuple_size, size_t page_size) {
 
 
 
-#include "namespace.h"
+#include "engine/namespace.h"

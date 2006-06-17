@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "thread.h"
-#include "core/stage.h"
+#include "engine/thread.h"
+#include "engine/core/stage.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
 
 
 // include me last!
-#include "namespace.h"
+#include "engine/namespace.h"
 
 
 
@@ -83,4 +83,4 @@ packet_t::~packet_t(void) {
 
 
 
-#include "namespace.h"
+#include "engine/namespace.h"

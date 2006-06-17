@@ -2,7 +2,7 @@
 
 SUBDIRS = common
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/include/tests
+INCLUDES = -I$(top_srcdir)/include
 
 LDADD = \
    ../trace/libtrace.a  \
