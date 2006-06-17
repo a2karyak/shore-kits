@@ -27,10 +27,10 @@
 
 /* QPipe Engine */
 #include "engine/thread.h"
+#include "engine/dispatcher.h"
+#include "tests/common/tester_thread.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "engine/dispatcher.h"
-#include "tests/tester_thread.h"
 
 /* QPipe Server */
 #include "workload.h"

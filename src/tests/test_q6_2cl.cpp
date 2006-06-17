@@ -12,11 +12,11 @@
 #include "engine/core/stage_container.h"
 #include "engine/stages/tscan.h"
 #include "engine/stages/aggregate.h"
+#include "engine/dispatcher.h"
+#include "engine/util/stopwatch.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "engine/dispatcher.h"
-#include "tests/tester_thread.h"
-#include "engine/util/stopwatch.h"
+#include "tests/common/tester_thread.h"
 
 #include "db_cxx.h"
 

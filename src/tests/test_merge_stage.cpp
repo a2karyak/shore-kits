@@ -1,17 +1,17 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
 #include "engine/thread.h"
-#include "tests/tester_thread.h"
 #include "engine/stages/func_call.h"
 #include "engine/stages/merge.h"
 #include "trace.h"
 #include "qpipe_panic.h"
+#include "engine/core/stage_container.h"
+
+#include "tests/common/tester_thread.h"
+
 #include <utility>
 #include <vector>
 #include <algorithm>
-#include "engine/core/stage_container.h"
-
-
 
 using namespace qpipe;
 using std::vector;

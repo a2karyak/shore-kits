@@ -1,0 +1,10 @@
+
+#ifndef _COMMON_H
+#define _COMMON_H
+
+#include "tests/common/drive_stage.h"
+#include "tests/common/tester_thread.h"
+#include "tests/common/int_tuple_writer.h"
+#include "tests/common/copy_string.h"
+
+#endif

@@ -6,7 +6,7 @@
 #include "trace.h"
 #include "qpipe_panic.h"
 
-#include "tests/tester_thread.h"
+#include "tests/common/tester_thread.h"
 
 #include <stdlib.h>
 

@@ -13,36 +13,18 @@
 #include "engine/stages/aggregate.h"
 #include "engine/stages/sort.h"
 #include "engine/stages/hash_join.h"
+#include "engine/dispatcher.h"
+#include "engine/util/stopwatch.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "engine/dispatcher.h"
-#include "tests/tester_thread.h"
-#include "engine/util/stopwatch.h"
 
+#include "tests/common.h"
 #include "test_tpch_spec.h"
 
 using namespace qpipe;
 
 
-/** @fn    : void * drive_stage(void *)
- *  @brief : Simulates a worker thread on the specified stage.
- *  @param : arg A stage_t* to work on.
- */
 
-void *drive_stage(void *arg) {
-
-    stage_container_t* sc = (stage_container_t*)arg;
-    sc->run();
-    
-    return NULL;
-}
-
-char *copy_string(const char *str) {
-    char* result;
-    int ret = asprintf(&result, str);
-    assert( ret != -1 );
-    return result;
-}
 
 struct int_comparator_t : public tuple_comparator_t {
     virtual int make_key(const tuple_t &tuple) {
@@ -109,9 +91,9 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
     tuple_filter_t* filter = new lineitem_tscan_filter_t(); 
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
     packet_t *tscan_packet = new tscan_packet_t(packet_id,
-                                          buffer,
-                                          filter,
-                                          tpch_lineitem);
+                                                buffer,
+                                                filter,
+                                                tpch_lineitem);
     
     // sort as a precursor to the distinct aggregate
     packet_id = copy_string("Lineitem SORT");

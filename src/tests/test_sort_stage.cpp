@@ -1,15 +1,16 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
 #include "engine/thread.h"
-#include "tests/tester_thread.h"
 #include "engine/stages/sort.h"
 #include "engine/stages/fscan.h"
 #include "engine/stages/fdump.h"
 #include "engine/stages/merge.h"
 #include "engine/stages/func_call.h"
+#include "engine/core/stage_container.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "engine/core/stage_container.h"
+
+#include "tests/common/tester_thread.h"
 
 #include <vector>
 #include <algorithm>

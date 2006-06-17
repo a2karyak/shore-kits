@@ -1,8 +1,14 @@
 # -*- makefile -*-
 
+SUBDIRS = common
+
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/include/tests
 
-LDADD = ../engine/libqpipe.a ../trace/libtrace.a $(BDB_HOME)/lib/libdb_cxx.a
+LDADD = \
+   ../engine/libqpipe.a \
+   ../trace/libtrace.a  \
+   common/libtestcommon.a \
+   $(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here
 bin_PROGRAMS = \

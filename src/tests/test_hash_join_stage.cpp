@@ -2,11 +2,12 @@
 
 #include "engine/thread.h"
 #include "engine/core/stage_container.h"
-#include "tests/tester_thread.h"
 #include "engine/stages/func_call.h"
 #include "engine/stages/hash_join.h"
 #include "trace.h"
 #include "qpipe_panic.h"
+
+#include "tests/common/tester_thread.h"
 
 #include <vector>
 #include <algorithm>

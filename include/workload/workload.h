@@ -26,10 +26,11 @@
 
 /* QPipe Engine */
 #include "engine/thread.h"
-#include "tests/tester_thread.h"
+#include "engine/util/shuffle.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "engine/util/shuffle.h"
+
+#include "tests/common/tester_thread.h"
 
 /* QPipe Server */
 #include "parser.h"

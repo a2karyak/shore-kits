@@ -3,59 +3,15 @@
 #include "engine/thread.h"
 #include "engine/core/stage_container.h"
 #include "engine/stages/fdump.h"
+#include "engine/dispatcher.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
-#include "engine/dispatcher.h"
-#include "tests/tester_thread.h"
+#include "tests/common.h"
 
 
 
 using namespace qpipe;
-
-
-
-int num_fdump_tuples = -1;
-
-
-
-/**
- *  @brief Simulates a worker thread on the specified stage.
- *
- *  @param arg A stage_t* to work on.
- */
-void* drive_stage(void* arg)
-{
-  stage_container_t* sc = (stage_container_t*)arg;
-  sc->run();
-
-  return NULL;
-}
-
-
-
-void* write_tuples(void* arg)
-{
-    tuple_buffer_t* int_buffer = (tuple_buffer_t*)arg;
-
-    for (int i = 0; i < num_fdump_tuples; i++) {
-	tuple_t in_tuple((char*)&i, sizeof(int));
-	if( int_buffer->put_tuple(in_tuple) ) {
-	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");
-	    TRACE(TRACE_ALWAYS, "Terminating loop...\n");
-	    break;
-	}
-    }
-    
-    if ( !int_buffer->send_eof() ) {
-        // Consumer has already terminated this buffer! We are now
-        // responsible for deleting it.
-        TRACE(TRACE_ALWAYS, "Detected buffer termination\n");
-        delete int_buffer;
-    }
-
-    return NULL;
-}
 
 
 
@@ -70,8 +26,8 @@ int main(int argc, char* argv[]) {
 	exit(-1);
     }
     const char* output_filename = argv[1];
-    num_fdump_tuples = atoi(argv[2]);
-    if ( num_fdump_tuples == 0 ) {
+    int num_tuples = atoi(argv[2]);
+    if ( num_tuples == 0 ) {
 	TRACE(TRACE_ALWAYS, "Invalid tuple count %s\n", argv[2]);
 	exit(-1);
     }
@@ -95,8 +51,9 @@ int main(int argc, char* argv[]) {
     tuple_buffer_t* signal_buffer = new tuple_buffer_t(sizeof(int));
 
 
+    struct int_tuple_writer_info_s info = { int_buffer, num_tuples };
     tester_thread_t* writer_thread =
-	new tester_thread_t(write_tuples, int_buffer, "WRITER_THREAD");
+	new tester_thread_t(int_tuple_writer_main, &info, "WRITER_THREAD");
     
     if ( thread_create( NULL, writer_thread ) ) {
 	TRACE(TRACE_ALWAYS, "thread_create() failed\n");

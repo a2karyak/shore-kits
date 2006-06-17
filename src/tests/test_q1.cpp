@@ -7,12 +7,11 @@
  6/9/2006: Initial version
 */ 
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
 #include "trace.h"
 #include "qpipe_panic.h"
+#include "engine/thread.h"
+#include "engine/core/stage_container.h"
 #include "engine/dispatcher.h"
-#include "tests/tester_thread.h"
 #include "engine/util/time_util.h"
 #include "engine/util/stopwatch.h"
 #include "engine/stages/tscan.h"
@@ -21,6 +20,9 @@
 #include "engine/stages/fscan.h"
 #include "engine/stages/fdump.h"
 #include "engine/stages/merge.h"
+
+#include "tests/common/tester_thread.h"
+#include "tests/common/tpch_struct.h"
 
 #include <unistd.h>
 #include <sys/time.h>
@@ -34,51 +36,18 @@ extern uint32_t trace_current_setting;
 // Q1 SPECIFIC UTILS
 /* Declaration of some constants */
 
-# define DATABASE_HOME	 "."
-# define CONFIG_DATA_DIR "./database"
-# define TMP_DIR "./temp"
+#define DATABASE_HOME	 "."
+#define CONFIG_DATA_DIR "./database"
+#define TMP_DIR "./temp"
 
-# define TABLE_LINEITEM_NAME "LINEITEM"
-# define TABLE_LINEITEM_ID   "TBL_LITEM"
+#define TABLE_LINEITEM_NAME "LINEITEM"
+#define TABLE_LINEITEM_ID   "TBL_LITEM"
 
 /* Set Bufferpool equal to 450 MB -- Maximum is 4GB in 32-bit platforms */
 size_t TPCH_BUFFER_POOL_SIZE_GB = 0; /* 0 GB */
 size_t TPCH_BUFFER_POOL_SIZE_BYTES = 450 * 1024 * 1024; /* 450 MB */
 
 
-/* tpch_l_shipmode.
-   TODO: Unnecessary */
-enum tpch_l_shipmode {
-    REG_AIR,
-    AIR,
-    RAIL,
-    TRUCK,
-    MAIL,
-    FOB,
-    SHIP
-};
-
-
-/* Lineitem tuple.
-   TODO: Catalog will provide this metadata info */
-struct tpch_lineitem_tuple {
-    int L_ORDERKEY;
-    int L_PARTKEY;
-    int L_SUPPKEY;
-    int L_LINENUMBER;
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
-    double L_TAX;
-    char L_RETURNFLAG;
-    char L_LINESTATUS;
-    time_t L_SHIPDATE;
-    time_t L_COMMITDATE;
-    time_t L_RECEIPTDATE;
-    char L_SHIPINSTRUCT[25];
-    tpch_l_shipmode L_SHIPMODE;
-    // char L_COMMENT[44];
-};
 
 // the tuples after tablescan projection
 struct projected_lineitem_tuple {

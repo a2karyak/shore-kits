@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#include "tests/tpch_struct.h"
+#include "tests/common/tpch_struct.h"
 
 
 using namespace qpipe;
