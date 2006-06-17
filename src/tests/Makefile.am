@@ -5,8 +5,8 @@ SUBDIRS = common
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/include/tests
 
 LDADD = \
-   ../engine/libqpipe.a \
    ../trace/libtrace.a  \
+   ../engine/libqpipe.a \
    common/libtestcommon.a \
    $(BDB_HOME)/lib/libdb_cxx.a
 
@@ -14,9 +14,9 @@ LDADD = \
 bin_PROGRAMS = \
    test_trace \
    test_tuple_buffer \
+   tpch_struct_sizes \
    test_fscan_stage \
    test_fdump_stage \
-   lineitem_struct_sizes \
    test_tscan_stage \
    test_func_call_stage \
    test_aggregate_stage \
@@ -39,7 +39,7 @@ test_tscan_stage_SOURCES = test_tscan_stage.cpp
 test_func_call_stage_SOURCES = test_func_call_stage.cpp
 test_aggregate_stage_SOURCES = test_aggregate_stage.cpp
 test_hash_join_stage_SOURCES = test_hash_join_stage.cpp
-lineitem_struct_sizes_SOURCES = lineitem_struct_sizes.cpp
+tpch_struct_sizes_SOURCES = tpch_struct_sizes.cpp
 test_q4_SOURCES = test_q4.cpp
 test_q6_SOURCES = test_q6.cpp
 test_q6_2cl_SOURCES = test_q6_2cl.cpp

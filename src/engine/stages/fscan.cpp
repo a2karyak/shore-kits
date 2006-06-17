@@ -1,9 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "stages/fscan.h"
+#include "engine/stages/fscan.h"
+#include "engine/core/tuple.h"
 #include "qpipe_panic.h"
 #include "trace.h"
-#include "core/tuple.h"
 
 
 

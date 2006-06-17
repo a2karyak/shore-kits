@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "stages/merge.h"
+#include "engine/stages/merge.h"
 #include <list>
 
 using std::list;

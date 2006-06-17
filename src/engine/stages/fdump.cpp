@@ -1,10 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "stages/fdump.h"
+#include "engine/stages/fdump.h"
+#include "engine/core/tuple.h"
+#include "engine/util/guard.h"
 #include "qpipe_panic.h"
 #include "trace.h"
-#include "core/tuple.h"
-#include "util/guard.h"
 
 
 

@@ -1,17 +1,17 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "stages/sort.h"
-#include "stages/merge.h"
-#include "stages/fdump.h"
-#include "stages/fscan.h"
+#include "engine/stages/sort.h"
+#include "engine/stages/merge.h"
+#include "engine/stages/fdump.h"
+#include "engine/stages/fscan.h"
+#include "engine/util/tmpfile.h"
+#include "engine/util/guard.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-#include "util/tmpfile.h"
-#include "util/guard.h"
+
 #include <algorithm>
 #include <string>
 #include <cstdlib>
-
 #include <deque>
 #include <map>
 #include <list>
@@ -41,10 +41,11 @@ const char* sort_packet_t::PACKET_TYPE = "SORT";
 
 const char* sort_stage_t::DEFAULT_STAGE_NAME = "SORT_STAGE";
 
-
 const unsigned int sort_stage_t::MERGE_FACTOR = 8;
 
 const unsigned int sort_stage_t::PAGES_PER_INITIAL_SORTED_RUN = 8 * 1024;
+
+
 
 static void flush_page(tuple_page_t* page, FILE* file, const string& file_name);
 

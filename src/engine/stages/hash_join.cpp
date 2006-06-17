@@ -6,17 +6,20 @@
 */
 
 
-#include "stages/hash_join.h"
-#include "functors.h"
-#include "util/fnv.h"
+#include "engine/stages/hash_join.h"
+#include "engine/functors.h"
+#include "engine/util/fnv.h"
+#include "engine/util/tmpfile.h"
+#include "engine/dispatcher.h"
+
 #include <cstring>
 #include <algorithm>
-#include "util/tmpfile.h"
-#include "dispatcher.h"
+
 
 const char *hash_join_packet_t::PACKET_TYPE = "Hash Join";
 
 const char* hash_join_stage_t::DEFAULT_STAGE_NAME = "Hash Join";
+
 struct hash_join_stage_t::hash_key_t {
     size_t _len;
     hash_key_t(size_t len)

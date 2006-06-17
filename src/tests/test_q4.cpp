@@ -313,7 +313,7 @@ int main() {
                                                   filter,
                                                   compare,
                                                   join_packet);
-
+        
         // count aggregate
         packet_id = copy_string("O_ORDERPRIORITY COUNT");
         filter = new tuple_filter_t(sizeof(int));
@@ -336,7 +336,7 @@ int main() {
                   r->O_ORDERPRIORITY, r->ORDER_COUNT);
         }
         
-        printf("Query executed in %.3lf s\n", timer.time());
+        TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
 
     close_tables(dbenv, tpch_lineitem, tpch_orders);
