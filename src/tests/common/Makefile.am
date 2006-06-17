@@ -7,7 +7,8 @@ TESTCOMMON = \
    drive_stage.cpp \
    int_tuple_writer.cpp \
    copy_string.cpp \
-   datestr_to_timet.cpp
+   tpch_compare.cpp \
+   tpch_type_convert.cpp
 
 # encapsulates all basic classes needed in qpipe
 lib_LIBRARIES = libtestcommon.a

@@ -111,7 +111,6 @@ stage_t::result_t tscan_stage_t::process_packet() {
         DbMultipleKeyDataIterator it = bulk_data;
 	for (int tuple_index = 0; it.next(key, data); tuple_index++) {
             tuple_t tuple(data);
-            TRACE(TRACE_ALWAYS, "Created a tuple of size %d\n", tuple.size);
 	    result_t output_ret = adaptor->output(tuple);
             if(output_ret)
                 return output_ret;

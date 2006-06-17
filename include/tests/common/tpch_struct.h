@@ -1,3 +1,5 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 
 /**
  *
@@ -15,49 +17,49 @@
 /* exported structures */
 
 enum tpch_l_shipmode {
-	REG_AIR,
-	AIR,
-	RAIL,
-	TRUCK,
-	MAIL,
-	FOB,
-	SHIP
+  REG_AIR,
+  AIR,
+  RAIL,
+  TRUCK,
+  MAIL,
+  FOB,
+  SHIP
 };
 
 enum tpch_o_orderpriority {
-	URGENT_1,
-	HIGH_2,
-	MEDIUM_3,
-	NOT_SPECIFIED_4,
-	LOW_5
+  URGENT_1,
+  HIGH_2,
+  MEDIUM_3,
+  NOT_SPECIFIED_4,
+  LOW_5
 };
 
 enum tpch_n_name{
-	ALGERIA,
-	ARGENTINA,
-	BRAZIL,
-	CANADA,
-	EGYPT,
-	ETHIOPIA,
-	FRANCE,
-	GERMANY,
-	INDIA,
-	INDONESIA,
-	IRAN,
-	IRAQ,
-	JAPAN,
-	JORDAN,
-	KENYA,
-	MOROCCO,
-	MOZAMBIQUE,
-	PERU,
-	CHINA,
-	ROMANIA,
-	SAUDI_ARABIA,
-	VIETNAM,
-	RUSSIA,
-	UNITED_KINGDOM,
-	UNITED_STATES
+  ALGERIA,
+  ARGENTINA,
+  BRAZIL,
+  CANADA,
+  EGYPT,
+  ETHIOPIA,
+  FRANCE,
+  GERMANY,
+  INDIA,
+  INDONESIA,
+  IRAN,
+  IRAQ,
+  JAPAN,
+  JORDAN,
+  KENYA,
+  MOROCCO,
+  MOZAMBIQUE,
+  PERU,
+  CHINA,
+  ROMANIA,
+  SAUDI_ARABIA,
+  VIETNAM,
+  RUSSIA,
+  UNITED_KINGDOM,
+  UNITED_STATES
 };
 
 struct tpch_customer_tuple {

@@ -73,24 +73,6 @@ struct aggregate_tuple {
     double L_COUNT_ORDER;
 };
 
-int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
-    // LINEITEM key has 3 integers
-    int u1[3];
-    int u2[3];
-    memcpy(u1, k1->get_data(), 3 * sizeof(int));
-    memcpy(u2, k2->get_data(), 3 * sizeof(int));
-
-    if ((u1[0] < u2[0]) || ((u1[0] == u2[0]) && (u1[1] < u2[1])) || ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] < u2[2])))
-	return -1;
-    else if ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] == u2[2]))
-	return 0;
-    else
-	return 1;
-
-}
-
-
-
 
 // END OF: Q1 SPECIFIC UTILS
 

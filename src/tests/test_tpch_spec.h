@@ -35,56 +35,6 @@ size_t TPCH_BUFFER_POOL_SIZE_BYTES = 450 * 1024 * 1024; /* 450 MB */
 
 
 
-
-tpch_o_orderpriority prioritystr_to_orderpriority(char* tmp) {
-
-    if (!strcmp(tmp, "1-URGENT"))
-	return URGENT_1;
-    else if (!strcmp(tmp, "2-HIGH"))
-	return HIGH_2;
-    else if (!strcmp(tmp, "3-MEDIUM"))
-	return MEDIUM_3;
-    else if (!strcmp(tmp, "4-NOT SPECIFIED"))
-	return NOT_SPECIFIED_4;
-    else // if (!strcmp(tmp, "5-LOW"))                                                                                                                 
-	return LOW_5;
-}
-
-int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
-    // LINEITEM key has 3 integers
-    int u1[3];
-    int u2[3];
-    memcpy(u1, k1->get_data(), 3 * sizeof(int));
-    memcpy(u2, k2->get_data(), 3 * sizeof(int));
-
-    if ((u1[0] < u2[0]) || ((u1[0] == u2[0]) && (u1[1] < u2[1])) || ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] < u2[2])))
-	return -1;
-    else if ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] == u2[2]))
-	return 0;
-    else
-	return 1;
-
-}
-
-
-int tpch_orders_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
-    // key has 2 integers                                                                                                                              
-    int u1[2];
-    int u2[2];
-    memcpy(u1, k1->get_data(), 2 * sizeof(int));
-    memcpy(u2, k2->get_data(), 2 * sizeof(int));
-
-    if ((u1[0] < u2[0]) || ((u1[0] == u2[0]) && (u1[1] < u2[1])))
-	return -1;
-    else if ((u1[0] == u2[0]) && (u1[1] == u2[1]))
-	return 0;
-    else
-	return 1;
-}
-
-
-
-
 /** @fn    : void open_tables()
  *  @brief : Opens the tpch tables
  */
