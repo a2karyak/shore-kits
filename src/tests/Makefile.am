@@ -14,6 +14,7 @@ LDADD = \
 bin_PROGRAMS = \
    test_trace \
    test_tuple_buffer \
+   test_tpch_load \
    tpch_struct_sizes \
    test_fscan_stage \
    test_fdump_stage \
@@ -30,6 +31,7 @@ bin_PROGRAMS = \
 
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
+test_tpch_load_SOURCES = test_tpch_load.cpp
 test_fdump_stage_SOURCES = test_fdump_stage.cpp
 test_merge_stage_SOURCES = test_merge_stage.cpp
 test_sort_stage_SOURCES = test_sort_stage.cpp

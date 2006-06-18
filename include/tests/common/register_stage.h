@@ -10,7 +10,11 @@
 
 #include <string>
 
+
+using namespace qpipe;
 using std::string;
+
+
 
 template <class Stage>
 void register_stage(int worker_threads=1) {
