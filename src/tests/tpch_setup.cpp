@@ -11,19 +11,6 @@
 #include <db_cxx.h>
 
 
-Db* tpch_customer = NULL;
-Db* tpch_lineitem = NULL;
-Db* tpch_nation = NULL;
-Db* tpch_orders = NULL;
-Db* tpch_part = NULL;
-Db* tpch_partsupp = NULL;
-Db* tpch_region = NULL;
-Db* tpch_supplier = NULL;
-
-
-
-
-
 /* Sets the size of the Bufferpool */
 
 /* Set Bufferpool equal to 450 MB -- Maximum is 4GB in 32-bit platforms */
@@ -478,103 +465,6 @@ int setup_tpch(const char *home, const char *data_dir) {
   return 0;
 }
 
-int init_tpch(const char *home, const char *data_dir) {
-
-  //
-  // Create an environment object and initialize it for error
-  // reporting.
-  //
-  dbenv = new DbEnv(0);
-  dbenv->set_errpfx("qpipe");
-  
-  //
-  // We want to specify the shared memory buffer pool cachesize,
-  // but everything else is the default.
-  //
-  
-  //dbenv->set_cachesize(0, TPCH_BUFFER_POOL_SIZE, 0);
-  if (dbenv->set_cachesize(TPCH_BUFFER_POOL_SIZE_GB, TPCH_BUFFER_POOL_SIZE_BYTES, 0)) {
-    fprintf(stdout, "*** Error while trying to set BUFFERPOOL size ***\n");
-  }
-  else {
-    fprintf(stdout, "*** BUFFERPOOL SIZE SET: %d GB + %d B ***\n", TPCH_BUFFER_POOL_SIZE_GB, TPCH_BUFFER_POOL_SIZE_BYTES);
-  }
-
-
-  // Databases are in a subdirectory.
-  dbenv->set_data_dir(data_dir);
-  
-
-  // set temporary directory
-  dbenv->set_tmp_dir(TMP_DIR);
-  
-  // Open the environment with no transactional support.
-  dbenv->open(home, DB_CREATE | DB_PRIVATE | DB_THREAD | DB_INIT_MPOOL, 0);
-  
-  tpch_customer = new Db(dbenv, 0);
-  tpch_lineitem = new Db(dbenv, 0);
-  tpch_nation = new Db(dbenv, 0);
-  tpch_orders = new Db(dbenv, 0);
-  tpch_part = new Db(dbenv, 0);
-  tpch_partsupp = new Db(dbenv, 0);
-  tpch_region = new Db(dbenv, 0);
-  tpch_supplier = new Db(dbenv, 0);
-
-
-
-  tpch_customer->set_bt_compare(tpch_customer_bt_compare_fcn);
-  tpch_customer->open(NULL, TABLE_CUSTOMER_NAME, NULL, DB_BTREE,
-                      DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_CUSTOMER_ID, TABLE_CUSTOMER_NAME);
-
-  tpch_lineitem->set_bt_compare(tpch_lineitem_bt_compare_fcn);
-  tpch_lineitem->open(NULL, TABLE_LINEITEM_NAME, NULL, DB_BTREE,
-                      DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_LINEITEM_ID, TABLE_LINEITEM_NAME);
-
-  tpch_nation->set_bt_compare(tpch_nation_bt_compare_fcn);
-  tpch_nation->open(NULL, TABLE_NATION_NAME, NULL, DB_BTREE,
-                    DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_NATION_ID, TABLE_NATION_NAME);
-
-  tpch_orders->set_bt_compare(tpch_orders_bt_compare_fcn);
-  tpch_orders->open(NULL, TABLE_ORDERS_NAME, NULL, DB_BTREE,
-                    DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_ORDERS_ID, TABLE_ORDERS_NAME);
-
-  tpch_part->set_bt_compare(tpch_part_bt_compare_fcn);
-  tpch_part->open(NULL, TABLE_PART_NAME, NULL, DB_BTREE,
-                  DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_PART_ID, TABLE_PART_NAME);
-
-  tpch_partsupp->set_bt_compare(tpch_partsupp_bt_compare_fcn);
-  tpch_partsupp->open(NULL, TABLE_PARTSUPP_NAME, NULL, DB_BTREE,
-                      DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_PARTSUPP_ID, TABLE_PARTSUPP_NAME);
-
-  tpch_region->set_bt_compare(tpch_region_bt_compare_fcn);
-  tpch_region->open(NULL, TABLE_REGION_NAME, NULL, DB_BTREE,
-                    DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_REGION_ID, TABLE_REGION_NAME);
-
-  tpch_supplier->set_bt_compare(tpch_supplier_bt_compare_fcn);
-  tpch_supplier->open(NULL, TABLE_SUPPLIER_NAME, NULL, DB_BTREE,
-                      DB_RDONLY | DB_THREAD, 0644);
-
-  MON_REGISTER_TABLE(data_dir, TABLE_SUPPLIER_ID, TABLE_SUPPLIER_NAME);
-
-  TRACE_DEBUG("TPCH Initialized\n");
-
-  
-  return 0;
-}
 
 
 /**

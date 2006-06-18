@@ -20,7 +20,7 @@
 #include "qpipe_panic.h"
 
 #include "tests/common.h"
-#include "test_tpch_spec.h"
+#include "tests/common/tpch_db.h"
 
 using namespace qpipe;
 
@@ -251,15 +251,12 @@ int main() {
     register_stage<fscan_stage_t>(20);
     register_stage<hash_join_stage_t>(1);
 
-    // OPENS THE LINEITEM TABLE
-    Db* tpch_lineitem = NULL;
 
-    // OPENS THE ORDERS TABLES
-    Db* tpch_orders= NULL;
+    if ( !db_open() ) {
+        TRACE(TRACE_ALWAYS, "db_open() failed\n");
+        QPIPE_PANIC();
+    }        
 
-    DbEnv* dbenv = NULL;
-
-    open_tables(dbenv, tpch_lineitem, tpch_orders);
 
     for(int i=0; i < 10; i++) {
         stopwatch_t timer;
@@ -339,6 +336,7 @@ int main() {
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
 
-    close_tables(dbenv, tpch_lineitem, tpch_orders);
+    if ( !db_close() )
+        TRACE(TRACE_ALWAYS, "db_close() failed\n");
     return 0;
 }
