@@ -9,7 +9,7 @@
 
 
 
-static bool open_db_table(Db*& table, int (*cmp) (Db*, const Dbt*, const Dbt*), const char* table_name);
+static bool open_db_table(Db*& table, u_int32_t flags, int (*cmp) (Db*, const Dbt*, const Dbt*), const char* table_name);
 static bool close_db_table(Db*& table, const char* table_name);
 
 
@@ -19,7 +19,7 @@ static bool close_db_table(Db*& table, const char* table_name);
  *
  *  @return true on success. false on error.
  */
-bool db_open() {
+bool db_open(u_int32_t flags) {
 
     // create environment
     try {
@@ -87,28 +87,28 @@ bool db_open() {
   
 
     // open tables
-    if ( !open_db_table(tpch_customer, tpch_customer_bt_compare_fcn, TABLE_CUSTOMER_NAME) )
+    if ( !open_db_table(tpch_customer, flags, tpch_customer_bt_compare_fcn, TABLE_CUSTOMER_NAME) )
         return false;
 
-    if ( !open_db_table(tpch_lineitem, tpch_lineitem_bt_compare_fcn, TABLE_LINEITEM_NAME) )
+    if ( !open_db_table(tpch_lineitem, flags, tpch_lineitem_bt_compare_fcn, TABLE_LINEITEM_NAME) )
         return false;
   
-    if ( !open_db_table(tpch_nation, tpch_nation_bt_compare_fcn, TABLE_NATION_NAME) )
+    if ( !open_db_table(tpch_nation, flags, tpch_nation_bt_compare_fcn, TABLE_NATION_NAME) )
         return false;
 
-    if ( !open_db_table(tpch_orders, tpch_orders_bt_compare_fcn, TABLE_ORDERS_NAME) )
+    if ( !open_db_table(tpch_orders, flags, tpch_orders_bt_compare_fcn, TABLE_ORDERS_NAME) )
         return false;
 
-    if ( !open_db_table(tpch_part, tpch_part_bt_compare_fcn, TABLE_PART_NAME) )
+    if ( !open_db_table(tpch_part, flags, tpch_part_bt_compare_fcn, TABLE_PART_NAME) )
         return false;
 
-    if ( !open_db_table(tpch_partsupp, tpch_partsupp_bt_compare_fcn, TABLE_PARTSUPP_NAME) )
+    if ( !open_db_table(tpch_partsupp, flags, tpch_partsupp_bt_compare_fcn, TABLE_PARTSUPP_NAME) )
         return false;
 
-    if ( !open_db_table(tpch_region, tpch_region_bt_compare_fcn, TABLE_REGION_NAME) )
+    if ( !open_db_table(tpch_region, flags, tpch_region_bt_compare_fcn, TABLE_REGION_NAME) )
         return false;
        
-    if ( !open_db_table(tpch_supplier, tpch_supplier_bt_compare_fcn, TABLE_SUPPLIER_NAME) )
+    if ( !open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, TABLE_SUPPLIER_NAME) )
         return false;
 
 
@@ -153,12 +153,12 @@ bool db_close() {
 
 
 
-static bool open_db_table(Db*& table, int (*cmp) (Db*, const Dbt*, const Dbt*), const char* table_name) {
+static bool open_db_table(Db*& table, u_int32_t flags, int (*cmp) (Db*, const Dbt*, const Dbt*), const char* table_name) {
 
     try {
         table = new Db(dbenv, 0);
         table->set_bt_compare(cmp);
-        table->open(NULL, table_name, NULL, DB_BTREE, DB_RDONLY | DB_THREAD, 0644);
+        table->open(NULL, table_name, NULL, DB_BTREE, flags, 0644);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException opening table \"%s\". Make sure database is set up properly\n",

@@ -18,6 +18,11 @@
 
 #define MAX_LINE_LENGTH 1024
 
+void progress_reset();
+void progress_update();
+void progress_done();
+
+
 
 
 void tpch_load_customer_table(Db* db, const char* fname) {
@@ -25,6 +30,7 @@ void tpch_load_customer_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating CUSTOMER...\n");
+    progress_reset();
     tpch_customer_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -59,9 +65,10 @@ void tpch_load_customer_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -71,6 +78,7 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating LINEITEM...\n");
+    progress_reset();
     tpch_lineitem_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -122,9 +130,10 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -134,6 +143,7 @@ void tpch_load_nation_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
  
     printf("Populating NATION...\n");
+    progress_reset();
     tpch_nation_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -160,9 +170,10 @@ void tpch_load_nation_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -172,6 +183,7 @@ void tpch_load_orders_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating ORDERS...\n");
+    progress_reset();
     tpch_orders_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -209,9 +221,10 @@ void tpch_load_orders_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -221,6 +234,7 @@ void tpch_load_part_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
  
     printf("Populating PART...\n");
+    progress_reset();
     tpch_part_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -257,9 +271,10 @@ void tpch_load_part_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -269,6 +284,7 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating PARTSUPP...\n");
+    progress_reset();
     tpch_partsupp_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -298,9 +314,10 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -310,6 +327,7 @@ void tpch_load_region_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating REGION...\n");
+    progress_reset();
     tpch_region_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -334,9 +352,10 @@ void tpch_load_region_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -346,6 +365,7 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating SUPPLIER...\n");
+    progress_reset();
     tpch_supplier_tuple tup;
 
     FILE* fd = fopen(fname, "r");
@@ -378,9 +398,10 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
+        progress_update();
     }
     fclose(fd);
-    printf("Done\n");
+    progress_done();
 }
 
 
@@ -398,5 +419,30 @@ bool db_load() {
   tpch_load_supplier_table(tpch_supplier, "supplier.tbl");
 
   return true;
+}
 
+
+
+// progress reporting
+// TODO move to another file?
+
+#define PROGRESS_INTERVAL 100000
+
+static unsigned long progress = 0;
+
+void progress_reset() {
+    progress = 0;
+}
+
+void progress_update() {
+    if ( (progress++ % PROGRESS_INTERVAL) == 0 ) {
+        printf(".");
+        fflush(stdout);
+        progress = 1; // prevent overflow
+    }
+}
+
+void progress_done() {
+    printf("done\n");
+    fflush(stdout);
 }
