@@ -1,57 +1,11 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "tests/common/tpch_db.h"
+#include "tests/common/tpch_tables.h"
 #include "tests/common/tpch_compare.h"
 #include "engine/bdb_config.h"
 #include "qpipe_panic.h"
 #include "trace.h"
-
-
-
-// BerekeleyDB table names
-
-#define TABLE_CUSTOMER_NAME "CUSTOMER"
-#define TABLE_CUSTOMER_ID   "TBL_CUST"
-
-#define TABLE_LINEITEM_NAME "LINEITEM"
-#define TABLE_LINEITEM_ID   "TBL_LITEM"
-
-#define TABLE_NATION_NAME   "NATION"
-#define TABLE_NATION_ID     "TBL_NAT"
-
-#define TABLE_ORDERS_NAME   "ORDERS"
-#define TABLE_ORDERS_ID     "TBL_ORD"
-
-#define TABLE_PART_NAME     "PART"
-#define TABLE_PART_ID       "TBL_PRT"
-
-#define TABLE_PARTSUPP_NAME "PARTSUPP"
-#define TABLE_PARTSUPP_ID   "TBL_PRTSUP"
-
-#define TABLE_REGION_NAME   "REGION"
-#define TABLE_REGION_ID     "TBL_REG"
-
-#define TABLE_SUPPLIER_NAME "SUPPLIER"
-#define TABLE_SUPPLIER_ID   "TBL_SUP"
-
-
-
-// environment
-
-DbEnv* dbenv;
-
-
-
-// tables
-
-Db* tpch_customer = NULL;
-Db* tpch_lineitem = NULL;
-Db* tpch_nation = NULL;
-Db* tpch_orders = NULL;
-Db* tpch_part = NULL;
-Db* tpch_partsupp = NULL;
-Db* tpch_region = NULL;
-Db* tpch_supplier = NULL;
 
 
 

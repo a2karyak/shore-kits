@@ -9,7 +9,9 @@ TESTCOMMON = \
    copy_string.cpp \
    tpch_compare.cpp \
    tpch_type_convert.cpp \
-   tpch_db.cpp
+   tpch_db.cpp \
+   tpch_env.cpp \
+   tpch_db_load.cpp
 
 # encapsulates all basic classes needed in qpipe
 lib_LIBRARIES = libtestcommon.a
