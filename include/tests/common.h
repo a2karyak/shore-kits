@@ -12,6 +12,7 @@
 #include "tests/common/tpch_type_convert.h"
 #include "tests/common/tpch_compare.h"
 #include "tests/common/register_stage.h"
+#include "tests/common/tpch_db.h"
 
 
 #endif

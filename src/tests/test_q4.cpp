@@ -239,8 +239,15 @@ struct count_aggregate_t : public tuple_aggregate_t {
  */
 
 int main() {
-    trace_current_setting = TRACE_ALWAYS;
+
     thread_init();
+    if ( !db_open() ) {
+        TRACE(TRACE_ALWAYS, "db_open() failed\n");
+        QPIPE_PANIC();
+    }        
+
+    trace_current_setting = TRACE_ALWAYS;
+
 
     // line up the stages...
     register_stage<tscan_stage_t>(2);
@@ -250,12 +257,6 @@ int main() {
     register_stage<fdump_stage_t>(10);
     register_stage<fscan_stage_t>(20);
     register_stage<hash_join_stage_t>(1);
-
-
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
 
 
     for(int i=0; i < 10; i++) {

@@ -21,24 +21,9 @@
 #include <sys/time.h>
 #include <math.h>
 
+
 using namespace qpipe;
 
-
-// Q6 SPECIFIC UTILS
-/* Declaration of some constants */
-
-#define DATABASE_HOME	 "."
-#define CONFIG_DATA_DIR "./database"
-#define TMP_DIR "./temp"
-
-#define TABLE_LINEITEM_NAME "LINEITEM"
-#define TABLE_LINEITEM_ID   "TBL_LITEM"
-
-/* Set Bufferpool equal to 450 MB -- Maximum is 4GB in 32-bit platforms */
-size_t TPCH_BUFFER_POOL_SIZE_GB = 0; /* 0 GB */
-size_t TPCH_BUFFER_POOL_SIZE_BYTES = 450 * 1024 * 1024; /* 450 MB */
-
-// END OF: Q6 SPECIFIC UTILS
 
 
 // Q6 TSCAN FILTER 
@@ -167,65 +152,21 @@ int main() {
 
     thread_init();
 
+    if ( !db_open() ) {
+        TRACE(TRACE_ALWAYS, "db_open() failed\n");
+        QPIPE_PANIC();
+    }        
+
+
     stage_container_t* tscan_sc = 
 	new stage_container_t("TSCAN_CONTAINER", new stage_factory<tscan_stage_t>);
-
     dispatcher_t::register_stage_container(tscan_packet_t::PACKET_TYPE, tscan_sc);
-
     tester_thread_t* tscan_thread = new tester_thread_t(drive_stage, tscan_sc, "TSCAN THREAD");
-
     if ( thread_create(NULL, tscan_thread) ) {
 	TRACE(TRACE_ALWAYS, "thread_create failed\n");
 	QPIPE_PANIC();
     }
 
-    // OPENS THE LINEITEM TABLE
-    Db* tpch_lineitem = NULL;
-    DbEnv* dbenv = NULL;
-
-    try {
-	// the tscan packet does not have an input buffer but a table
-
-	// Create an environment object and initialize it for error
-	// reporting.
-	dbenv = new DbEnv(0);
-	dbenv->set_errpfx("qpipe");
-	
-	// We want to specify the shared memory buffer pool cachesize,
-	// but everything else is the default.
-  
-	//dbenv->set_cachesize(0, TPCH_BUFFER_POOL_SIZE, 0);
-	if (dbenv->set_cachesize(TPCH_BUFFER_POOL_SIZE_GB, TPCH_BUFFER_POOL_SIZE_BYTES, 0)) {
-	    TRACE(TRACE_ALWAYS, "*** Error while trying to set BUFFERPOOL size ***\n");
-	}
-	else {
-	    TRACE(TRACE_ALWAYS, "*** BUFFERPOOL SIZE SET: %d GB + %d B ***\n", TPCH_BUFFER_POOL_SIZE_GB, TPCH_BUFFER_POOL_SIZE_BYTES);
-	}
-
-	// Databases are in a subdirectory.
-	dbenv->set_data_dir(CONFIG_DATA_DIR);
-  
-	// set temporary directory
-	dbenv->set_tmp_dir(TMP_DIR);
-
-	// Open the environment with no transactional support.
-	dbenv->open(DATABASE_HOME, DB_CREATE | DB_PRIVATE | DB_THREAD | DB_INIT_MPOOL, 0);
-
-	tpch_lineitem = new Db(dbenv, 0);
-
-
-	tpch_lineitem->set_bt_compare(tpch_lineitem_bt_compare_fcn);
-	tpch_lineitem->open(NULL, TABLE_LINEITEM_NAME, NULL, DB_BTREE,
-			    DB_RDONLY | DB_THREAD, 0644);
-
-	TRACE(TRACE_ALWAYS, "Lineitem table opened...\n");
-    }
-    catch ( DbException &e) {
-	TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-    }
-    catch ( std::exception &en) {
-	TRACE(TRACE_ALWAYS, "std::exception\n");
-    }
 
     // TSCAN PACKET
     // the output consists of 2 doubles
@@ -251,23 +192,8 @@ int main() {
 	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n", d[0], d[1]);
     }
 
-    try {    
-	// closes file and environment
-	TRACE(TRACE_DEBUG, "Closing Storage Manager...\n");
 
-	// Close tables
-	tpch_lineitem->close(0);
-    
-	// Close the handle.
-	dbenv->close(0);
-    }
-    catch ( DbException &e) {
-	TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-    }
-    catch ( std::exception &en) {
-	TRACE(TRACE_ALWAYS, "std::exception\n");
-    }
-
-
+    if ( !db_close() )
+        TRACE(TRACE_ALWAYS, "db_close() failed\n");
     return 0;
 }
