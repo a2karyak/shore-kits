@@ -172,8 +172,8 @@ packet_t* orders_scan(Db* tpch_orders) {
 // left is lineitem, right is orders
 struct q4_join_t : public tuple_join_t {
     q4_join_t()
-        : tuple_join_t(sizeof(order_scan_tuple_t),
-                       sizeof(int),
+        : tuple_join_t(sizeof(int),
+                       sizeof(order_scan_tuple_t),
                        sizeof(int),
                        sizeof(int))
     {
