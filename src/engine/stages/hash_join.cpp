@@ -301,7 +301,7 @@ stage_t::result_t hash_join_stage_t::process_packet() {
             tuple_t out(data, sizeof(data));
             for(tuple_hash_t::iterator it = range.first; it != range.second; ++it) {
                 right.data = *it;
-                _join->join(out, right, left);
+                _join->join(out, left, right);
                 result_t result = _adaptor->output(out);
                 if(result)
                     return result;

@@ -33,6 +33,8 @@ struct int_comparator_t : public tuple_comparator_t {
     }       
 };
 
+
+
 /**
  * @brief select distinct l_orderkey from lineitem where l_commitdate < l_receiptdate
  */
@@ -192,6 +194,13 @@ struct q4_join_t : public tuple_join_t {
         // KLUDGE: this projection should go in a separate filter class
         order_scan_tuple_t* tuple = (order_scan_tuple_t*) right.data;
         memcpy(dest.data, &tuple->O_ORDERPRIORITY, sizeof(int));
+#if 0
+        int* ltup = (int*)left.data;
+        TRACE(TRACE_ALWAYS, "Joined L_ORDERKEY %d with O_ORDERKEY = %d, O_ORDERPRIORITY = %d\n",
+              *ltup,
+              tuple->O_ORDERKEY,
+              tuple->O_ORDERPRIORITY);
+#endif
     }
 };
 
@@ -202,35 +211,49 @@ struct q4_tuple_t {
 
 struct count_aggregate_t : public tuple_aggregate_t {
     bool _first;
-    int _last_value;
-    int _count;
+    int  _last_value;
+    int  _count;
     count_aggregate_t()
         : _first(true), _last_value(-1), _count(0)
     {
     }
     virtual bool aggregate(tuple_t &d, const tuple_t &s) {
+
         int value = *(int*)s.data;
-        bool broken = _first || value != _last_value;
-        bool valid = broken? break_group(d, value) : false;
-        _count++;
-        return valid;
-    }
-    virtual bool eof(tuple_t  &d) {
-        return break_group(d, -1);
-    }
-    bool break_group(tuple_t &d, int value) {
-        // no tuples read previously?
-        if(!_first) {
-            q4_tuple_t* dest = (q4_tuple_t*) d.data;
-            dest->O_ORDERPRIORITY = _last_value;
-            dest->ORDER_COUNT = _count;
+
+        if ( _first ) {
+            // no tuple yet
+            _first = false;
+            _last_value = value;
+            _count = 1;
+            return false;
         }
         
-        bool result = !_first;
+        if ( value == _last_value ) {
+            // keep counting
+            _count++;
+            return false;
+        }
+
+        // Otherwise, we are seeing a group break. Produce the count
+        // and the value.
+        q4_tuple_t* dest = (q4_tuple_t*) d.data;
+        dest->O_ORDERPRIORITY = _last_value;
+        dest->ORDER_COUNT = _count;
         _last_value = value;
-        _count = 0;
-        _first = false;
-        return result;
+        _count = 1;
+        return true;
+    }
+
+    virtual bool eof(tuple_t  &d) {
+        if ( _first )
+            // we've seen no tuples!
+            return false;
+
+        q4_tuple_t* dest = (q4_tuple_t*) d.data;
+        dest->O_ORDERPRIORITY = _last_value;
+        dest->ORDER_COUNT = _count;
+        return true;
     }
 };
 
@@ -259,7 +282,8 @@ int main() {
     register_stage<hash_join_stage_t>(1);
 
 
-    for(int i=0; i < 10; i++) {
+    for(int i=0; i < 1; i++) {
+
         stopwatch_t timer;
 
         /*
@@ -283,16 +307,19 @@ int main() {
          *      where l_commitdate < l_receiptdate)
          */
         
-        // First deal with the lineitem half
-        packet_t *line_item_packet = line_item_scan(tpch_lineitem);
+        tuple_buffer_t* buffer;
 
+        // First deal with the lineitem half
+
+        packet_t *line_item_packet = line_item_scan(tpch_lineitem);
+        
         // Now, the orders half
         packet_t* orders_packet = orders_scan(tpch_orders);
 
         // join them...
         char *packet_id = copy_string("Orders - Lineitem JOIN");
         tuple_filter_t* filter = new tuple_filter_t(sizeof(int));
-        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+        buffer = new tuple_buffer_t(sizeof(int));
         tuple_join_t* join = new q4_join_t();
         packet_t* join_packet = new hash_join_packet_t(packet_id,
                                                        buffer,
@@ -314,8 +341,8 @@ int main() {
         
         // count aggregate
         packet_id = copy_string("O_ORDERPRIORITY COUNT");
-        filter = new tuple_filter_t(sizeof(int));
-        buffer = new tuple_buffer_t(sizeof(int));
+        filter = new tuple_filter_t(sizeof(q4_tuple_t));
+        buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
         tuple_aggregate_t *aggregate = new count_aggregate_t();
         packet_t* agg_packet = new aggregate_packet_t(packet_id,
                                                       buffer,
@@ -325,15 +352,17 @@ int main() {
         
         // Dispatch packet
         dispatcher_t::dispatch_packet(agg_packet);
-    
+        buffer = agg_packet->_output_buffer;
+        
         tuple_t output;
-        q4_tuple_t * r = NULL;
         while(!buffer->get_tuple(output)) {
-            r = (q4_tuple_t*) output.data;
-            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %lf. Count: %lf.  ***\n",
+            q4_tuple_t* r = (q4_tuple_t*) output.data;
+            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %d. Count: %d.  ***\n",
                   r->O_ORDERPRIORITY, r->ORDER_COUNT);
         }
         
+
+
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
 
