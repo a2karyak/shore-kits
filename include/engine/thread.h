@@ -78,9 +78,9 @@ public:
 
 // exported functions
 
-void  thread_init(void);
-const char* thread_get_self_name(void);
-int   thread_create(pthread_t* thread, thread_t* t);
+void      thread_init(void);
+thread_t* thread_get_self(void);
+int       thread_create(pthread_t* thread, thread_t* t);
 
 void pthread_mutex_init_wrapper(pthread_mutex_t* mutex,
 				const pthread_mutexattr_t* attr);

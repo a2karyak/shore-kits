@@ -7,7 +7,7 @@ int main(int, char**)
 {
   thread_init();
 
-  TRACE(TRACE_ALWAYS, "hello world from %s\n", thread_get_self_name());
+  TRACE(TRACE_ALWAYS, "hello world from %s\n", thread_get_self()->get_thread_name());
 
   return 0;
 }

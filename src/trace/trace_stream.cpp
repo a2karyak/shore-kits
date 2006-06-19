@@ -51,45 +51,45 @@ void trace_stream(FILE* out_stream,
 		  char* format, va_list ap)
 {
 
-  /* Any message we print should be prefixed by:
-     .
-     "<thread ID>: <filename>:<line num>:<function name>: "
+    /* Any message we print should be prefixed by:
+       .
+       "<thread ID>: <filename>:<line num>:<function name>: "
 
-     Even though individual fprintf() calls can be expected to execute
-     atomically, there is no such guarantee across multiple calls. We
-     use a mutex to synchronize access to the console.
-  */
-  const char* thread_name = thread_get_self_name();
+       Even though individual fprintf() calls can be expected to execute
+       atomically, there is no such guarantee across multiple calls. We
+       use a mutex to synchronize access to the console.
+    */
+    const char* thread_name = thread_get_self()->get_thread_name();
   
 
-  if ( pthread_mutex_lock( &stream_mutex ) )
-  {
-    TRACE_FORCE("pthread_mutex_lock() failed\n");
-    return;
-  }
+    if ( pthread_mutex_lock( &stream_mutex ) )
+    {
+        TRACE_FORCE("pthread_mutex_lock() failed\n");
+        return;
+    }
 
 
-  /* Try to print a meaningful (string) thread ID. If no ID is
-     registered, just use pthread_t returned by pthread_self(). */
-  if ( thread_name != NULL )
-    fprintf(out_stream, "%s", thread_name);
-  else
-    trace_print_pthread(out_stream, pthread_self());
+    /* Try to print a meaningful (string) thread ID. If no ID is
+       registered, just use pthread_t returned by pthread_self(). */
+    if ( thread_name != NULL )
+        fprintf(out_stream, "%s", thread_name);
+    else
+        trace_print_pthread(out_stream, pthread_self());
 
 
-  fprintf(out_stream, ": %s:%d:%s: ", filename, line_num, function_name);
-  vfprintf(out_stream, format, ap);
+    fprintf(out_stream, ": %s:%d:%s: ", filename, line_num, function_name);
+    vfprintf(out_stream, format, ap);
   
-  if ( pthread_mutex_unlock( &stream_mutex ) )
-  {
-    TRACE_FORCE("pthread_mutex_unlock() failed\n");
-    return;
-  }
+    if ( pthread_mutex_unlock( &stream_mutex ) )
+    {
+        TRACE_FORCE("pthread_mutex_unlock() failed\n");
+        return;
+    }
 
 
-  /* No need to flush in a critical section. Worst-case, someone else
-     prints between out print and our flush. Since fflush() is atomic
-     with respect to fprintf(), we end up simply flushing someone
-     else's data along with our own. */
-  fflush(out_stream);
+    /* No need to flush in a critical section. Worst-case, someone else
+       prints between out print and our flush. Since fflush() is atomic
+       with respect to fprintf(), we end up simply flushing someone
+       else's data along with our own. */
+    fflush(out_stream);
 }

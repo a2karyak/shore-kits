@@ -123,13 +123,12 @@ void thread_init(void)
  
 
 
-const char* thread_get_self_name(void)
+thread_t* thread_get_self(void)
 {
     // It would be nice to verify that the name returned is not
     // NULL. However, the name of the root thread can be NULL if we have
     // not yet completely initialized it.
-    thread_t* this_thread = (thread_t*)pthread_getspecific(THREAD_KEY_SELF);
-    return this_thread->get_thread_name();
+    return (thread_t*)pthread_getspecific(THREAD_KEY_SELF);
 }
 
 
