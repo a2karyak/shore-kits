@@ -22,7 +22,6 @@
 /* internal data structures */
 
 static pthread_key_t THREAD_KEY_SELF;
-static pthread_key_t THREAD_KEY_SELF_NAME;
 
 
 
@@ -59,15 +58,11 @@ thread_t::thread_t(const char* format, ...)
 
 thread_t::~thread_t(void)
 {
-  
-    // error checking
-    if ( thread_name == NULL ) {
-        TRACE(TRACE_ALWAYS, "NULL thread_name!\n");
-        TRACE(TRACE_ALWAYS, "Missing an init_thread_name() call in a subclass constructor?\n");
-    }
-    else
-        // thread_name was created with malloc()
-        free(thread_name);
+    // error checking... thread name should NEVER be NULL
+    assert(thread_name != NULL);
+    
+    // thread_name was created with asprintf()/malloc()
+    free(thread_name);
 }
 
 
@@ -118,18 +113,12 @@ void thread_init(void)
         TRACE(TRACE_ALWAYS, "pthread_key_create() failed on THREAD_KEY_SELF\n");
         QPIPE_PANIC();
     }
-    if ( pthread_key_create( &THREAD_KEY_SELF_NAME, NULL ) )
-    {
-        TRACE(TRACE_ALWAYS, "pthread_key_create() failed on THREAD_KEY_SELF_NAME\n");
-        QPIPE_PANIC();
-    }
+    thread_t* root_thread = new thread_t("root-thread");
 
     int err;
-    err = pthread_setspecific(THREAD_KEY_SELF_NAME, "root-thread");
+    err = pthread_setspecific(THREAD_KEY_SELF, root_thread);
     if (err)
         thread_fatal_error("pthread_setspecific()", err);
-
-    thread_t* root_thread = new thread_t("root-thread");
 }
  
 
@@ -139,9 +128,8 @@ const char* thread_get_self_name(void)
     // It would be nice to verify that the name returned is not
     // NULL. However, the name of the root thread can be NULL if we have
     // not yet completely initialized it.
-    const char* thread_name =
-        (const char*)pthread_getspecific(THREAD_KEY_SELF_NAME);
-    return thread_name;
+    thread_t* this_thread = (thread_t*)pthread_getspecific(THREAD_KEY_SELF);
+    return this_thread->get_thread_name();
 }
 
 
@@ -313,10 +301,6 @@ void* start_thread(void* thread_object)
     err = pthread_setspecific(THREAD_KEY_SELF, thread);
     if (err)
         thread_fatal_error("pthread_setspecific() on THREAD_KEY_SELF", err);
-  
-    err = pthread_setspecific(THREAD_KEY_SELF_NAME, thread->get_thread_name());
-    if (err)
-        thread_fatal_error("pthread_setspecific() on THREAD_KEY_SELF_NAME", err);
   
     return thread->run();
 }
