@@ -2,6 +2,7 @@
 #ifndef _TPCH_TABLES_H
 #define _TPCH_TABLES_H
 
+
 // BerekeleyDB table names
 
 #define TABLE_CUSTOMER_NAME         "CUSTOMER"
