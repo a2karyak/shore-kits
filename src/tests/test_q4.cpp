@@ -20,18 +20,11 @@
 #include "qpipe_panic.h"
 
 #include "tests/common.h"
-#include "tests/common/tpch_db.h"
 
 using namespace qpipe;
 
 
 
-
-struct int_comparator_t : public tuple_comparator_t {
-    virtual int make_key(const tuple_t &tuple) {
-        return *(int*)tuple.data;
-    }       
-};
 
 
 
