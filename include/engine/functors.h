@@ -127,6 +127,15 @@ public:
                       const tuple_t &left,
                       const tuple_t &right)=0;
 
+    /**
+     * @brief Performs a left outer join (right outer joins are not
+     * directly supported but can be achieved by reversing the meaning
+     * of "left" and "right")
+     */
+    virtual void outer_join(tuple_t &, const tuple_t &) {
+        assert(false);
+    }
+
     // TODO: implement a join function that tests the predicates first
     virtual ~tuple_join_t() { }
 };

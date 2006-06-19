@@ -26,6 +26,7 @@ bin_PROGRAMS = \
    test_hash_join_stage \
    test_q4 \
    test_q6 \
+   test_q13 \
    test_q6_2cl \
    test_q1
 
@@ -44,6 +45,7 @@ test_hash_join_stage_SOURCES = test_hash_join_stage.cpp
 tpch_struct_sizes_SOURCES = tpch_struct_sizes.cpp
 test_q4_SOURCES = test_q4.cpp
 test_q6_SOURCES = test_q6.cpp
+test_q13_SOURCES = test_q13.cpp
 test_q6_2cl_SOURCES = test_q6_2cl.cpp
 test_q6_mult_SOURCES = test_q6_mult.cpp
 test_q1_SOURCES = test_q1.cpp

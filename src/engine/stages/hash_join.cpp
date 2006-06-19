@@ -180,7 +180,7 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     hash_join_packet_t *packet = (hash_join_packet_t *)_adaptor->get_packet();
 
     // TODO: release partition resources!
-    
+    bool outer_join = packet->_outer;
     _join = packet->_join;
 
     // anything worth reading?
@@ -299,12 +299,20 @@ stage_t::result_t hash_join_stage_t::process_packet() {
 
             char data[_join->out_tuple_size()];
             tuple_t out(data, sizeof(data));
-            for(tuple_hash_t::iterator it = range.first; it != range.second; ++it) {
-                right.data = *it;
-                _join->join(out, left, right);
+            if(outer_join && range.first == range.second) {
+                _join->outer_join(out, left);
                 result_t result = _adaptor->output(out);
                 if(result)
                     return result;
+            }
+            else {
+                for(tuple_hash_t::iterator it = range.first; it != range.second; ++it) {
+                    right.data = *it;
+                    _join->join(out, left, right);
+                    result_t result = _adaptor->output(out);
+                    if(result)
+                        return result;
+                }
             }
         }
     }
