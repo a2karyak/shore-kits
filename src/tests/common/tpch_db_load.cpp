@@ -24,7 +24,16 @@ void progress_done();
 
 
 
+/* internal helper functions */
 
+static void store_string(char* dest, char* src);
+static bool db_table_load(void (*tbl_loader) (Db*, const char*),
+                          Db* db,
+                          const char* tbl_path, const char* tbl_filename);
+
+
+
+/* definitions of exported functions */
 
 void tpch_load_customer_table(Db* db, const char* fname) {
 
@@ -42,27 +51,23 @@ void tpch_load_customer_table(Db* db, const char* fname) {
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
-
         // split line into tab separated parts
         char* tmp = strtok(linebuffer, "|");
         tup.C_CUSTKEY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.C_NAME, tmp, strlen(tmp));
+        store_string(tup.C_NAME, tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.C_ADDRESS, tmp, strlen(tmp));
+        store_string(tup.C_ADDRESS, tmp);
         tmp = strtok(NULL, "|");
         tup.C_NATIONKEY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.C_PHONE, tmp, strlen(tmp));
+        store_string(tup.C_PHONE, tmp);
         tmp = strtok(NULL, "|");
         tup.C_ACCTBAL = atof(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.C_MKTSEGMENT, tmp, strlen(tmp));
+        store_string(tup.C_MKTSEGMENT, tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.C_COMMENT, tmp, comment_len);
-        tup.C_COMMENT[comment_len] = '\0';
+        store_string(tup.C_COMMENT, tmp);
 
         // insert tuple into database
         Dbt key(&tup.C_CUSTKEY, sizeof(int));
@@ -122,14 +127,11 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
         tmp = strtok(NULL, "|");
         tup.L_RECEIPTDATE = datestr_to_timet(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.L_SHIPINSTRUCT, tmp, strlen(tmp));
+        store_string(tup.L_SHIPINSTRUCT, tmp);
         tmp = strtok(NULL, "|");
         tup.L_SHIPMODE = modestr_to_shipmode(tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.L_COMMENT, tmp, comment_len);
-        tup.L_COMMENT[comment_len] = '\0';
+        store_string(tup.L_COMMENT, tmp);
 
         // insert tuple into database
         // key is composed of 3 fields 	L_ORDERKEY, L_PARTKEY, and L_SUPPKEY
@@ -170,10 +172,7 @@ void tpch_load_nation_table(Db* db, const char* fname) {
         tmp = strtok(NULL, "|");
         tup.N_REGIONKEY = atoi(tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.N_COMMENT, tmp, comment_len);
-        tup.N_COMMENT[comment_len] = '\0';
+        store_string(tup.N_COMMENT, tmp);
 
         // insert tuple into database
         Dbt key(&tup.N_NATIONKEY, sizeof(int));
@@ -219,14 +218,11 @@ void tpch_load_orders_table(Db* db, const char* fname) {
         tmp = strtok(NULL, "|");
         tup.O_ORDERPRIORITY = prioritystr_to_orderpriorty(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.O_CLERK, tmp, strlen(tmp));
+        store_string(tup.O_CLERK, tmp);
         tmp = strtok(NULL, "|");
         tup.O_SHIPPRIORITY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        
-        int comment_len = strlen(tmp);
-        strncpy(tup.O_COMMENT, tmp, comment_len);
-        tup.O_COMMENT[comment_len] = '\0';
+        store_string(tup.O_COMMENT, tmp);
 
         // insert tuple into database
         // key is composed of 2 fields 	O_ORDERKEY and O_CUSTKEY
@@ -263,24 +259,21 @@ void tpch_load_part_table(Db* db, const char* fname) {
         char* tmp = strtok(linebuffer, "|");
         tup.P_PARTKEY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.P_NAME, tmp, strlen(tmp));
+        store_string(tup.P_NAME, tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.P_MFGR, tmp, strlen(tmp));
+        store_string(tup.P_MFGR, tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.P_BRAND, tmp, strlen(tmp));
+        store_string(tup.P_BRAND, tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.P_TYPE, tmp, strlen(tmp));
+        store_string(tup.P_TYPE, tmp);
         tmp = strtok(NULL, "|");
         tup.P_SIZE = atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.P_CONTAINER, tmp, strlen(tmp));
+        store_string(tup.P_CONTAINER, tmp);
         tmp = strtok(NULL, "|");
         tup.P_RETAILPRICE = atof(tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.P_COMMENT, tmp, comment_len);
-        tup.P_COMMENT[comment_len] = '\0';
+        store_string(tup.P_COMMENT, tmp);
 
         // insert tuple into database
         Dbt key(&tup.P_PARTKEY, sizeof(int));
@@ -322,10 +315,7 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
         tmp = strtok(NULL, "|");
         tup.PS_SUPPLYCOST = atof(tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.PS_COMMENT, tmp, comment_len);
-        tup.PS_COMMENT[comment_len] = '\0';
+        store_string(tup.PS_COMMENT, tmp);
 	
         // insert tuple into database
         // key is composed of 2 fields 	PS_PARTKEY and PS_SUPPKEY
@@ -362,12 +352,9 @@ void tpch_load_region_table(Db* db, const char* fname) {
         char* tmp = strtok(linebuffer, "|");
         tup.R_REGIONKEY= atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.R_NAME, tmp, strlen(tmp));
+        store_string(tup.R_NAME, tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.R_COMMENT, tmp, comment_len);
-        tup.R_COMMENT[comment_len] = '\0';
+        store_string(tup.R_COMMENT, tmp);
 
         // insert tuple into database
         Dbt key(&tup.R_REGIONKEY, sizeof(int));
@@ -403,20 +390,17 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
         char* tmp = strtok(linebuffer, "|");
         tup.S_SUPPKEY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.S_NAME, tmp, strlen(tmp));
+        store_string(tup.S_NAME, tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.S_ADDRESS, tmp, strlen(tmp));
+        store_string(tup.S_ADDRESS, tmp);
         tmp = strtok(NULL, "|");
         tup.S_NATIONKEY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        memcpy(tup.S_PHONE, tmp, strlen(tmp));
+        store_string(tup.S_PHONE, tmp);
         tmp = strtok(NULL, "|");
         tup.S_ACCTBAL= atof(tmp);
         tmp = strtok(NULL, "|");
-
-        int comment_len = strlen(tmp);
-        strncpy(tup.S_COMMENT, tmp, comment_len);
-        tup.S_COMMENT[comment_len] = '\0';
+        store_string(tup.S_COMMENT, tmp);
 
         // insert tuple into database
         Dbt key(&tup.S_SUPPKEY, sizeof(int));
@@ -429,19 +413,6 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
     progress_done();
 }
 
-
-
-bool db_table_load(void (*tbl_loader) (Db*, const char*),
-                   Db* db,
-                   const char* tbl_path, const char* tbl_filename) {
-    
-    // prepend filename with common path
-    char path[MAX_FILENAME_SIZE];
-    snprintf(path, MAX_FILENAME_SIZE, "%s/%s", tbl_path, tbl_filename);
-    tbl_loader(db, path);
-    return true;
-}
-    
 
 
 bool db_load(const char* tbl_path) {
@@ -469,8 +440,29 @@ bool db_load(const char* tbl_path) {
 
 
 
+/* definitions of internal helper functions */
+
+static void store_string(char* dest, char* src) {
+    int len = strlen(src);
+    strncpy(dest, src, len);
+    dest[len] = '\0';
+}
+
+
+
+static bool db_table_load(void (*tbl_loader) (Db*, const char*),
+                          Db* db,
+                          const char* tbl_path, const char* tbl_filename) {
+    
+    // prepend filename with common path
+    char path[MAX_FILENAME_SIZE];
+    snprintf(path, MAX_FILENAME_SIZE, "%s/%s", tbl_path, tbl_filename);
+    tbl_loader(db, path);
+    return true;
+}
+    
+
 // progress reporting
-// TODO move to another file?
 
 #define PROGRESS_INTERVAL 100000
 
