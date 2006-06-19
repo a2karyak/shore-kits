@@ -38,9 +38,21 @@ extern "C" void* start_thread(void *);
 /* method definitions */
 
 
-const char* thread_t::get_thread_name(void)
+thread_t::thread_t(void)
 {
-    return thread_name;
+    thread_name = NULL;
+}
+
+
+
+thread_t::thread_t(const char* format, ...)
+{
+    int ret;
+    va_list ap;
+    va_start(ap, format);
+    ret = init_thread_name_v(format, ap);
+    va_end(ap);
+    assert( ret == 0 );
 }
 
 
@@ -60,9 +72,9 @@ thread_t::~thread_t(void)
 
 
 
-thread_t::thread_t(void)
+const char* thread_t::get_thread_name(void)
 {
-    thread_name = NULL;
+    return thread_name;
 }
 
 
@@ -116,6 +128,8 @@ void thread_init(void)
     err = pthread_setspecific(THREAD_KEY_SELF_NAME, "root-thread");
     if (err)
         thread_fatal_error("pthread_setspecific()", err);
+
+    thread_t* root_thread = new thread_t("root-thread");
 }
  
 

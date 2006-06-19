@@ -30,10 +30,18 @@ private:
 
 public:
 
-    virtual void* run()=0;
-    const char*   get_thread_name();
-    virtual       ~thread_t();
+    thread_t(const char* format, ...);
+    virtual ~thread_t();
 
+
+    virtual void* run() {
+        // should always be over-ridden, but never called for the root
+        // thread
+        assert(false);
+    }
+
+    const char* get_thread_name();
+    
 protected:
 
     thread_t(void);
