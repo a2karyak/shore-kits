@@ -37,6 +37,11 @@ extern "C" void* start_thread(void *);
 /* method definitions */
 
 
+/**
+ *  @brief thread_t base class constructor. Does nothing useful. Every
+ *  subclass should invoke the static initialization functions to set
+ *  up a new thread object.
+ */
 thread_t::thread_t(void)
 {
     thread_name = NULL;
@@ -44,6 +49,11 @@ thread_t::thread_t(void)
 
 
 
+/**
+ *  @brief This constructor should ONLY be used in thread_init() by
+ *  the root thread. All other subclasses of thread_t() should invoke
+ *  the thread_t(void) constructor and invoke init_thread_name().
+ */
 thread_t::thread_t(const char* format, ...)
 {
     int ret;

@@ -1,5 +1,14 @@
 
 
+QPIPE QUERIES:
+
+simulation: 1, 6, 13, 16
+SIGMOD2005: 1, 4, 6, 8, 12, 13, 14, 19
+old QPIPE src: 1, 4, 5, 6, 8, 9, 12, 13, 14, 16, 19
+
+
+
+
 Ryan suggested that we don't need the client buffer after all. A stage
 can terminate queries by invoking close() on the packets above him and
 invoking either dispatcher_t::remove_packet() or delete on the packets
