@@ -17,129 +17,8 @@
 #include "qpipe_panic.h"
 #include "tests/common.h"
 
-#include <unistd.h>
-#include <sys/time.h>
-#include <math.h>
-
 
 using namespace qpipe;
-
-
-
-// Q6 TSCAN FILTER 
-
-/* Specific filter for this client */
-
-class q6_tscan_filter_t : public tuple_filter_t {
-
-private:
-    /* Our predicate is represented by these fields. The predicate stays
-       constant throughout the execution of the query. */
-
-    time_t t1;
-    time_t t2;
-
-    struct timeval tv;
-    uint mn;
-
-    /* Random predicates */
-    /* TPC-H specification 2.3.0 */
-
-    /* DATE is 1st Jan. of year [1993 .. 1997] */
-    int DATE;
-
-    /* DISCOUNT is random [0.02 .. 0.09] */
-    double DISCOUNT;
-
-    /* QUANTITY is randon [24 .. 25] */
-    double QUANTITY;
-
-public:
-
-    /* Initialize the predicates */
-    q6_tscan_filter_t() : tuple_filter_t(sizeof(tpch_lineitem_tuple)) {
-	t1 = datestr_to_timet("1997-01-01");
-	t2 = datestr_to_timet("1998-01-01");
-
-	/* Calculate random predicates */
-	gettimeofday(&tv, 0);
-	mn = tv.tv_usec * getpid();
-	DATE = 1993 + abs((int)(5*(float)(rand_r(&mn))/(float)(RAND_MAX+1)));
-
-	gettimeofday(&tv, 0);
-	mn = tv.tv_usec * getpid();
-	DISCOUNT = 0.02 + (float)(fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1)))/(float)14.2857142857143;
-
-	gettimeofday(&tv, 0);
-	mn = tv.tv_usec * getpid();
-	QUANTITY = 24 + fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1));
-
-	TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT, QUANTITY);
-    }
-
-
-    /* Predication */
-    virtual bool select(const tuple_t &input) {
-
-	/* Predicate:
-	   L_SHIPDATE >= DATE AND
-	   L_SHIPDATE < DATE + 1 YEAR AND
-	   L_DISCOUNT BETWEEN DISCOUNT - 0.01 AND DISCOUNT + 0.01 AND
-	   L_QUANTITY < QUANTITY
-	*/
-
-	tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
-
-	/*
-	  printf("%d - %d\t", (int)tuple->L_SHIPDATE, (int)t1);
-	  printf("%d - %d\t", (int)tuple->L_SHIPDATE, (int)t2);
-	  printf("%.2f - %.2f\t", tuple->L_DISCOUNT, DISCOUNT - 0.01);
-	  printf("%.2f - %.2f\t", tuple->L_DISCOUNT, DISCOUNT + 0.01);
-	  printf("%.2f - %.2f\n", tuple->L_QUANTITY, QUANTITY);
-	*/
-
-	if  ( ( tuple->L_SHIPDATE >= t1 ) &&
-	    ( tuple->L_SHIPDATE < t2 ) &&
-	    ( tuple->L_DISCOUNT >= (DISCOUNT - 0.01)) &&
-	    ( tuple->L_DISCOUNT <= (DISCOUNT + 0.01)) &&
-	    ( tuple->L_QUANTITY < (QUANTITY)) )
-	    {
-		printf("+");
-		return (true);
-	    }
-	else {
-	    printf(".");
-	    return (false);
-	}
-
-	/*
-	// TODO: Should ask the Catalog
-	double* d_discount = (double*)(input.data + 4*sizeof(int)+3*sizeof(double));
-
-	// all the lineitems with discount > 0.04 pass the filter
-        if (*d_discount > 0.04) {
-	    //	    TRACE(TRACE_DEBUG, "Passed Filtering:\t %.2f\n", *d_discount);
-	    return (true);
-	}
-	*/
-    }
-    
-    /* Projection */
-    virtual void project(tuple_t &dest, const tuple_t &src) {
-
-	/* Should project L_EXTENDEDPRICE & L_DISCOUNT */
-
-	// Calculate L_EXTENDEDPRICE
-	tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
-
-	memcpy(dest.data,& at->L_EXTENDEDPRICE, sizeof(double));
-	memcpy(dest.data + sizeof(double), &at->L_DISCOUNT, sizeof(double));
-    }
-};
-
-
-// END OF: Q6 TSCAN FILTER
-
 
 
 
@@ -158,20 +37,13 @@ int main() {
     }        
 
 
-    stage_container_t* tscan_sc = 
-	new stage_container_t("TSCAN_CONTAINER", new stage_factory<tscan_stage_t>);
-    dispatcher_t::register_stage_container(tscan_packet_t::PACKET_TYPE, tscan_sc);
-    tester_thread_t* tscan_thread = new tester_thread_t(drive_stage, tscan_sc, "TSCAN THREAD");
-    if ( thread_create(NULL, tscan_thread) ) {
-	TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	QPIPE_PANIC();
-    }
+    register_stage<tscan_stage_t>(1);
 
 
     // TSCAN PACKET
     // the output consists of 2 doubles
     tuple_buffer_t* tscan_out_buffer = new tuple_buffer_t(2*sizeof(double));
-    tuple_filter_t* tscan_filter = new q6_tscan_filter_t();
+    tuple_filter_t* tscan_filter = new q6_tscan_filter_t(true);
 
 
     char* tscan_packet_id;

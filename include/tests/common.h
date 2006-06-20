@@ -20,5 +20,8 @@
 #include "tests/common/tpch_compare.h"
 #include "tests/common/tpch_db.h"
 
+#include "tests/common/q6_tscan_filter.h"
+#include "tests/common/q6_aggregate.h"
+
 
 #endif
