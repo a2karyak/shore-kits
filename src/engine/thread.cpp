@@ -66,6 +66,9 @@ thread_t::thread_t(const char* format, ...)
 
 
 
+/**
+ *  @brief thread_t destructor. Will 
+ */
 thread_t::~thread_t(void)
 {
     // error checking... thread name should NEVER be NULL

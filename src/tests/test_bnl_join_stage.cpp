@@ -3,7 +3,7 @@
 #include "engine/thread.h"
 #include "engine/core/stage_container.h"
 #include "engine/stages/func_call.h"
-#include "engine/stages/hash_join.h"
+#include "engine/stages/bnl_join.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
 
     register_stage<func_call_stage_t>(2);
-    register_stage<hash_join_stage_t>(1);
+    register_stage<bnl_join_stage_t>(1);
 
 
 
@@ -66,16 +66,15 @@ int main(int argc, char* argv[]) {
     
     tuple_buffer_t* join_buffer = new tuple_buffer_t(join->out_tuple_size());
 
-    
-    char* join_packet_id = copy_string("HASH_JOIN_PACKET_1");
-    hash_join_packet_t* join_packet =
-        new hash_join_packet_t( join_packet_id,
-                                join_buffer,
-                                new tuple_filter_t(sizeof(int)),
-                                left_packet,
-                                right_packet,
-                                join
-                                );
+
+    char* join_packet_id = copy_string("BNL_JOIN_PACKET_1");
+    bnl_join_packet_t* join_packet =
+        new bnl_join_packet_t( join_packet_id,
+                               join_buffer,
+                               new tuple_filter_t(sizeof(int)),
+                               left_packet,
+                               new tuple_source_once_t(right_packet),
+                               join);
     dispatcher_t::dispatch_packet(join_packet);
     
     
@@ -83,6 +82,6 @@ int main(int argc, char* argv[]) {
     while(!join_buffer->get_tuple(output))
         TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
-
+    
     return 0;
 }

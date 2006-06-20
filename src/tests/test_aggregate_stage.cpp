@@ -15,52 +15,6 @@ using namespace qpipe;
 
 
 
-int num_tuples = -1;
-
-
-
-stage_t::result_t write_ints(void* arg)
-{
-    tuple_buffer_t* int_buffer = (tuple_buffer_t*)arg;    
-
-    for (int i = 0; i < num_tuples; i++) {
-	tuple_t in_tuple((char*)&i, sizeof(int));
-	if( int_buffer->put_tuple(in_tuple) ) {
-	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");
-	    TRACE(TRACE_ALWAYS, "Terminating loop...\n");
-	    break;
-	}
-    }
-    
-    return stage_t::RESULT_STOP;
-}
-
-
-
-class count_aggregate_t : public tuple_aggregate_t {
-
-private:
-    int count;
-    
-public:
-  
-    count_aggregate_t() {
-        count = 0;
-    }
-  
-    bool aggregate(tuple_t &, const tuple_t &) {
-        count++;
-        return false;
-    }
-
-    bool eof(tuple_t &dest) {
-        *(int*)dest.data = count;
-        return true;
-    }
-};
-
-
-
 int main(int argc, char* argv[]) {
 
     thread_init();
@@ -71,7 +25,7 @@ int main(int argc, char* argv[]) {
 	TRACE(TRACE_ALWAYS, "Usage: %s <tuple count>\n", argv[0]);
 	exit(-1);
     }
-    num_tuples = atoi(argv[1]);
+    int num_tuples = atoi(argv[1]);
     if ( num_tuples == 0 ) {
 	TRACE(TRACE_ALWAYS, "Invalid tuple count %s\n", argv[1]);
 	exit(-1);
@@ -108,12 +62,14 @@ int main(int argc, char* argv[]) {
     assert( func_call_packet_id_ret != -1 );
 
 
+
+    struct int_tuple_writer_info_s writer_info = { int_buffer, num_tuples };
     func_call_packet_t* fc_packet = 
 	new func_call_packet_t(func_call_packet_id,
                                int_buffer, 
                                new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
-                               write_ints,
-                               int_buffer);
+                               increasing_int_tuple_writer_fc,
+                               &writer_info);
     
     
     tuple_buffer_t* count_buffer = new tuple_buffer_t(sizeof(int));

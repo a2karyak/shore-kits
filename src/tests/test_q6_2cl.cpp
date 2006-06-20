@@ -171,7 +171,7 @@ public:
 
 // Q6 AGG
 
-class count_aggregate_t : public tuple_aggregate_t {
+class q6_count_aggregate_t : public tuple_aggregate_t {
 
 private:
     int count;
@@ -179,7 +179,7 @@ private:
     
 public:
   
-    count_aggregate_t() {
+    q6_count_aggregate_t() {
 	count = 0;
 	sum = 0.0;
     }
@@ -277,7 +277,7 @@ int main() {
         // the output consists of 2 int
         tuple_buffer_t* cl_1_agg_output_buffer = new tuple_buffer_t(2*sizeof(double));
         tuple_filter_t* cl_1_agg_filter = new tuple_filter_t(cl_1_agg_output_buffer->tuple_size);
-        count_aggregate_t*  cl_1_q6_aggregator = new count_aggregate_t();
+        tuple_aggregate_t* cl_1_q6_aggregator = new q6_count_aggregate_t();
     
 
         char* cl_1_agg_packet_id;

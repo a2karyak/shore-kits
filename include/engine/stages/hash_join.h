@@ -79,10 +79,12 @@ public:
                        tuple_join_t *join,
                        bool outer=false)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter),
-          _left(left), _right(right),
+          _left(left),
+          _right(right),
           _left_buffer(left->_output_buffer),
           _right_buffer(right->_output_buffer),
-          _join(join), _outer(outer)
+          _join(join),
+          _outer(outer)
     {
     }
   

@@ -171,7 +171,7 @@ struct q1_tuple_comparator_t : public tuple_comparator_t {
 
 // Q6 AGG
 
-class count_aggregate_t : public tuple_aggregate_t {
+class q1_count_aggregate_t : public tuple_aggregate_t {
 
 private:
     // STATS
@@ -180,7 +180,7 @@ private:
 
 public:
   
-    count_aggregate_t() {
+    q1_count_aggregate_t() {
         first = true;
         tuple.L_RETURNFLAG = -1;
         tuple.L_LINESTATUS = -1;
@@ -384,7 +384,7 @@ int main() {
         aggregate_packet_t* q1_agg_packet = new aggregate_packet_t(agg_packet_id,
                                                                    agg_output_buffer,
                                                                    new tuple_filter_t(agg_output_buffer->tuple_size),
-                                                                   new count_aggregate_t(),
+                                                                   new q1_count_aggregate_t(),
                                                                    q1_sort_packet);
 
 

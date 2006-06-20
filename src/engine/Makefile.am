@@ -17,7 +17,8 @@ STAGES = \
    stages/hash_join.cpp \
    stages/func_call.cpp \
    stages/merge.cpp \
-   stages/sort.cpp
+   stages/sort.cpp \
+   stages/bnl_join.cpp
 
 DISPATCHER = \
    dispatcher/dispatcher.cpp

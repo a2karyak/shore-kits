@@ -100,6 +100,7 @@ class func_call_stage_t : public stage_t {
 public:
   
     static const char* DEFAULT_STAGE_NAME;
+    typedef func_call_packet_t stage_packet_t;
     
     func_call_stage_t() { }
     

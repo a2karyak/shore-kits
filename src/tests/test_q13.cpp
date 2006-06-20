@@ -44,11 +44,12 @@ struct int_desc_comparator_t : public tuple_comparator_t {
     }
 };
 
-struct count_aggregate_t : public tuple_aggregate_t {
+struct q13_count_aggregate_t : public tuple_aggregate_t {
     bool _first;
     int  _last_value;
     int  _count;
-    count_aggregate_t()
+    
+    q13_count_aggregate_t()
         : _first(true), _last_value(-1), _count(0)
     {
     }
@@ -191,7 +192,7 @@ packet_t* order_scan(Db* tpch_orders) {
     packet_id = copy_string("Orders COUNT");
     filter = new tuple_filter_t(sizeof(key_count_tuple_t));
     buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
-    tuple_aggregate_t* aggregator = new count_aggregate_t();
+    tuple_aggregate_t* aggregator = new q13_count_aggregate_t();
     packet_t* agg_packet = new aggregate_packet_t(packet_id,
                                                   buffer,
                                                   filter,
@@ -307,7 +308,7 @@ int main() {
         packet_id = copy_string("c_count COUNT");
         filter = new tuple_filter_t(sizeof(key_count_tuple_t));
         buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
-        tuple_aggregate_t* agg = new count_aggregate_t();
+        tuple_aggregate_t* agg = new q13_count_aggregate_t();
         packet_t *agg_packet = new aggregate_packet_t(packet_id,
                                                       buffer,
                                                       filter,

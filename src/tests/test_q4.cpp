@@ -202,11 +202,11 @@ struct q4_tuple_t {
     int ORDER_COUNT;
 };
 
-struct count_aggregate_t : public tuple_aggregate_t {
+struct q4_count_aggregate_t : public tuple_aggregate_t {
     bool _first;
     int  _last_value;
     int  _count;
-    count_aggregate_t()
+    q4_count_aggregate_t()
         : _first(true), _last_value(-1), _count(0)
     {
     }
@@ -336,7 +336,7 @@ int main() {
         packet_id = copy_string("O_ORDERPRIORITY COUNT");
         filter = new tuple_filter_t(sizeof(q4_tuple_t));
         buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
-        tuple_aggregate_t *aggregate = new count_aggregate_t();
+        tuple_aggregate_t *aggregate = new q4_count_aggregate_t();
         packet_t* agg_packet = new aggregate_packet_t(packet_id,
                                                       buffer,
                                                       filter,
