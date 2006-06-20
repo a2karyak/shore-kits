@@ -45,14 +45,6 @@ stage_t::result_t write_tuples(void* arg)
 }
 
 
-struct int_tuple_comparator_t : public tuple_comparator_t {
-    virtual int make_key(const tuple_t &tuple) {
-        return *(int*)tuple.data;
-    }
-};
-
-
-
 int main(int argc, char* argv[]) {
 
     thread_init();
@@ -153,7 +145,7 @@ int main(int argc, char* argv[]) {
         func_call_packet_t* fc_packet = 
             new func_call_packet_t(fc_packet_id,
                                    merge_info[i].first, 
-                                   new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
+                                   new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                    write_tuples,
                                    &merge_info[i]);
 
@@ -166,7 +158,6 @@ int main(int argc, char* argv[]) {
     
     // fire up the merge stage now
     tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
-    int_tuple_comparator_t comparator;
 
     char* merge_packet_id;
     int merge_packet_id_ret =
@@ -176,9 +167,10 @@ int main(int argc, char* argv[]) {
     
     merge_packet_t* packet = new merge_packet_t(merge_packet_id,
                                                 output_buffer,
-                                                new tuple_filter_t(input_buffers[0]->tuple_size),
+                                                new trivial_filter_t(input_buffers[0]->tuple_size),
                                                 input_buffers,
-                                                &comparator);
+                                                new int_key_extractor_t(),
+                                                new int_key_compare_t());
     dispatcher_t::dispatch_packet(packet);
     
    

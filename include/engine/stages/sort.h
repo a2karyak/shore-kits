@@ -34,9 +34,10 @@ public:
     static const char* PACKET_TYPE;
 
 
-    tuple_comparator_t* _comparator;
-    packet_t*           _input;
-    tuple_buffer_t*     _input_buffer;
+    pointer_guard_t<key_extractor_t> _extract;
+    pointer_guard_t<key_compare_t> _compare;
+    pointer_guard_t<packet_t>           _input;
+    pointer_guard_t<tuple_buffer_t>     _input_buffer;
 
 
     /**
@@ -71,10 +72,11 @@ public:
     sort_packet_t(char*               packet_id,
                   tuple_buffer_t*     output_buffer,
                   tuple_filter_t*     output_filter,
-                  tuple_comparator_t* comparator,
+                  key_extractor_t* extract,
+                  key_compare_t* compare,
                   packet_t*           input)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
-          _comparator(comparator),
+          _extract(extract), _compare(compare),
           _input(input),
           _input_buffer(input->_output_buffer)
     {
@@ -83,45 +85,21 @@ public:
     }
 
 
-    virtual ~sort_packet_t() {
-        assert(_input == NULL);
-        assert(_input_buffer == NULL);
-        delete _comparator;
-    }
-
-
     virtual void destroy_subpackets() {
-
-        delete _input_buffer;
-        _input_buffer = NULL;
-        
         _input->destroy_subpackets();
-        delete _input;
-        _input = NULL;
+        _input_buffer.done();
+        _input.done();
     }
     
     
     virtual void terminate_inputs() {
 
-        // input buffer
-        if ( !_input_buffer->terminate() ) {
-            // Producer has already terminated this buffer! We are now
-            // responsible for deleting it.
-            delete _input_buffer;
-        }
-        _input_buffer = NULL;
+        // Producer has not finished with this buffer! It is now
+        // responsible for deleting it.
+        if (_input_buffer->terminate() )
+            _input_buffer.release();
 
-
-        // TODO Ask the dispatcher to clear our input packet (_input)
-        // from system, if it still exists.
-        
-        // Now that we know _input is not in the system, remove our
-        // reference to it.
-        _input = NULL;
-
-
-        // TODO destroy any other packets we may have dispatched
-        // during our execution
+        _input.release();
     }
     
 };
@@ -143,7 +121,8 @@ private:
     
     // state provided by the packet
     tuple_buffer_t*     _input_buffer;
-    tuple_comparator_t* _comparator;
+    key_extractor_t* _extract;
+    key_compare_t* _compare;
     size_t              _tuple_size;
     
 
@@ -170,7 +149,7 @@ private:
     typedef list<merge_t> merge_list_t;
     typedef map<int, merge_list_t> merge_map_t;
     typedef merge_packet_t::buffer_list_t buffer_list_t;
-    typedef vector<key_tuple_pair_t> key_vector_t;
+    typedef vector<hint_tuple_pair_t> hint_vector_t;
 
 
     // used to communicate with the monitor thread

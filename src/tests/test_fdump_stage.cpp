@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     fdump_packet_t* packet = 
 	new fdump_packet_t(fdump_packet_id,
 			   signal_buffer, 
-                           new tuple_filter_t(int_buffer->tuple_size),
+                           new trivial_filter_t(int_buffer->tuple_size),
 			   int_buffer, 
 			   fdump_packet_filename);
     

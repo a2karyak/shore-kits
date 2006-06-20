@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* left_packet = 
 	new func_call_packet_t(left_packet_id,
                                left_int_buffer, 
-                               new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
+                               new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* right_packet = 
 	new func_call_packet_t(right_packet_id,
                                right_int_buffer, 
-                               new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
+                               new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                shuffled_triangle_int_tuple_writer_fc,
                                &right_writer_info);
     
@@ -69,10 +69,12 @@ int main(int argc, char* argv[]) {
     bnl_in_packet_t* in_packet =
         new bnl_in_packet_t( in_packet_id,
                              output_buffer,
-                             new tuple_filter_t(sizeof(int)),
+                             new trivial_filter_t(sizeof(int)),
                              left_packet,
                              new tuple_source_once_t(right_packet),
-                             new int_comparator_t(), true );
+                             new int_key_extractor_t(),
+                             new int_key_compare_t(),
+                             true );
     dispatcher_t::dispatch_packet(in_packet);
     
     

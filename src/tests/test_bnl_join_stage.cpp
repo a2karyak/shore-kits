@@ -49,7 +49,7 @@ public:
         return
             new func_call_packet_t(right_packet_id,
                                    right_int_buffer,
-                                   new tuple_filter_t(sizeof(int)),
+                                   new trivial_filter_t(sizeof(int)),
                                    shuffled_triangle_int_tuple_writer_fc,
                                    info,
                                    destroy_writer_info);
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* left_packet = 
 	new func_call_packet_t(left_packet_id,
                                left_int_buffer, 
-                               new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
+                               new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     bnl_join_packet_t* join_packet =
         new bnl_join_packet_t( join_packet_id,
                                join_buffer,
-                               new tuple_filter_t(sizeof(int)),
+                               new trivial_filter_t(sizeof(int)),
                                left_packet,
                                new write_ints_tuple_source_t(num_tuples),
                                //new tuple_source_once_t(right_packet),

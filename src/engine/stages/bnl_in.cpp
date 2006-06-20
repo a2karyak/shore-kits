@@ -34,7 +34,9 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
     // get ready...
     tuple_buffer_t* left_buffer  = packet->_left_buffer;
     tuple_source_t* right_source = packet->_right_source;
-    tuple_comparator_t* comparator = packet->_comparator;
+    key_compare_t* _compare = packet->_compare;
+    key_extractor_t* _extract = packet->_extract;
+    tuple_comparator_t compare(_extract, _compare);
     bool output_on_match = packet->_output_on_match;
     
     
@@ -69,7 +71,7 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
         tuple_buffer_t* right_buffer = right_packet->_output_buffer;
         dispatcher_t::dispatch_packet(right_packet);
         
-        
+
         while (1) {
             
             
@@ -96,8 +98,8 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
                 
                 // grab a tuple from the outer relation page
                 tuple_t outer_tuple = *o_it;
-                key_tuple_pair_t
-                    outer_ktpair(comparator->make_key(outer_tuple), outer_tuple.data);
+                hint_tuple_pair_t
+                    outer_ktpair(_extract->extract_hint(outer_tuple), outer_tuple.data);
 
                 
                 tuple_page_t::iterator i_it;
@@ -106,11 +108,11 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
                     
                     // grab a tuple from the inner relation page
                     tuple_t inner_tuple = *i_it;
-                    key_tuple_pair_t
-                        inner_ktpair(comparator->make_key(inner_tuple), inner_tuple.data);
+                    hint_tuple_pair_t
+                        inner_ktpair(_extract->extract_hint(inner_tuple), inner_tuple.data);
                     
 
-                    if ( comparator->compare(outer_ktpair, inner_ktpair) == 0 )
+                    if ( compare(outer_ktpair, inner_ktpair) == 0 )
                         // left and right match!
                         matches[o_index] = true;
                     

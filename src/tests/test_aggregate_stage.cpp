@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* fc_packet = 
 	new func_call_packet_t(func_call_packet_id,
                                int_buffer, 
-                               new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
+                               new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                increasing_int_tuple_writer_fc,
                                &writer_info);
     
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     aggregate_packet_t* agg_packet =
         new aggregate_packet_t( aggregate_packet_id,
                                 count_buffer,
-                                new tuple_filter_t(sizeof(int)),
+                                new trivial_filter_t(sizeof(int)),
                                 new count_aggregate_t(),
                                 fc_packet );
     dispatcher_t::dispatch_packet(agg_packet);

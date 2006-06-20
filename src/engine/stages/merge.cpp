@@ -43,10 +43,10 @@ const char *merge_stage_t::DEFAULT_STAGE_NAME = "MERGE_STAGE";
  * above.
  */
 bool merge_stage_t::buffer_head_t::init(tuple_buffer_t *buf,
-                                        tuple_comparator_t *c)
+                                        key_extractor_t* extract)
 {
     buffer = buf;
-    cmp = c;
+    _extract = extract;
     int size = buffer->tuple_size;
     data = new char[size];
     tuple = tuple_t(data, size);
@@ -75,11 +75,14 @@ int merge_stage_t::buffer_head_t::has_tuple() {
     tuple.assign(input);
     
     // update the head key
-    item.key = cmp->make_key(tuple);
+    item.hint = _extract->extract_hint(tuple);
     return 0;
 }
 
 
+int merge_stage_t::compare(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
+    return tuple_comparator_t(_extract, _compare)(a, b);
+}
 
 /**
  *  @brief Inserts an item into the list in ascending order.
@@ -87,7 +90,7 @@ int merge_stage_t::buffer_head_t::has_tuple() {
 void merge_stage_t::insert_sorted(buffer_head_t *head)
 {
     // beginning? (if so we have to change the list base pointer)
-    if(!_head_list || _comparator->compare(head->item, _head_list->item) <= 0) {
+    if(!_head_list || compare(head->item, _head_list->item) <= 0) {
         head->next = _head_list;
         _head_list = head;
         return;
@@ -95,7 +98,7 @@ void merge_stage_t::insert_sorted(buffer_head_t *head)
 
     // find the position, then
     buffer_head_t *prev = _head_list;
-    while(prev->next && _comparator->compare(prev->next->item, head->item) < 0)
+    while(prev->next && compare(prev->next->item, head->item) < 0)
         prev = prev->next;
     
     // insert
@@ -111,9 +114,9 @@ stage_t::result_t merge_stage_t::process_packet() {
 
 
     merge_packet_t *packet = (merge_packet_t *)_adaptor->get_packet();
-    
 
-    _comparator = packet->_comparator;
+    _compare = packet->_compare;
+    _extract = packet->_extract;
     buffer_list_t &inputs = packet->_input_buffers;
 
     
@@ -126,7 +129,7 @@ stage_t::result_t merge_stage_t::process_packet() {
     // get the input buffers and perform the initial sort
     for(int i=0; i < merge_factor; i++) {
         buffer_head_t &head = head_array[i];
-        switch (head.init(inputs[i], _comparator)) {
+        switch (head.init(inputs[i], _extract)) {
         case 0:
             insert_sorted(&head);
             continue;

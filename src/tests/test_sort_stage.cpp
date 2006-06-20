@@ -57,14 +57,6 @@ stage_t::result_t write_ints(void* arg)
 
 
 
-struct int_tuple_comparator_t : public tuple_comparator_t {
-    virtual int make_key(const tuple_t &tuple) {
-        return *(int*)tuple.data;
-    }
-};
-
-
-
 int main(int argc, char* argv[]) {
 
     thread_init();
@@ -154,7 +146,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* fc_packet = 
 	new func_call_packet_t(func_call_packet_id,
                                int_buffer, 
-                               new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
+                               new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                write_ints,
                                int_buffer);
 
@@ -164,12 +156,12 @@ int main(int argc, char* argv[]) {
     assert( sort_packet_id_ret != -1 );
 
     tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
-    tuple_filter_t* output_filter = new tuple_filter_t(int_buffer->tuple_size);
-    int_tuple_comparator_t* compare = new int_tuple_comparator_t;
+    tuple_filter_t* output_filter = new trivial_filter_t(int_buffer->tuple_size);
     sort_packet_t* packet = new sort_packet_t(sort_packet_id,
                                               output_buffer,
                                               output_filter,
-                                              compare,
+                                              new int_key_extractor_t(),
+                                              new int_key_compare_t(),
                                               fc_packet);
     dispatcher_t::dispatch_packet(packet);
 

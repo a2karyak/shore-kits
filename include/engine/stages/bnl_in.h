@@ -32,10 +32,11 @@ struct bnl_in_packet_t : public packet_t {
   
     static const char* PACKET_TYPE;
 
-    packet_t*           _left;
-    tuple_buffer_t*     _left_buffer;
-    tuple_source_t*     _right_source;
-    tuple_comparator_t* _comparator;
+    pointer_guard_t<packet_t>           _left;
+    pointer_guard_t<tuple_buffer_t>     _left_buffer;
+    pointer_guard_t<tuple_source_t>     _right_source;
+    pointer_guard_t<key_extractor_t> _extract;
+    pointer_guard_t<key_compare_t> _compare;
     bool                _output_on_match;
     
     
@@ -62,13 +63,14 @@ struct bnl_in_packet_t : public packet_t {
                     tuple_filter_t* output_filter,
                     packet_t* left,
                     tuple_source_t* right_source,
-                    tuple_comparator_t* comparator,
+                    key_extractor_t* extract,
+                    key_compare_t* compare,
                     bool output_on_match)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _left(left),
           _left_buffer(left->_output_buffer),
           _right_source(right_source),
-          _comparator(comparator),
+          _extract(extract), _compare(compare),
           _output_on_match(output_on_match)
     {
     }
@@ -76,39 +78,29 @@ struct bnl_in_packet_t : public packet_t {
     virtual ~bnl_in_packet_t() {
         assert(_left == NULL);
         assert(_left_buffer == NULL);
-        delete _right_source;
-        delete _comparator;
     }
 
 
     virtual void destroy_subpackets() {
-        
-        delete _left_buffer;
-        _left_buffer = NULL;
+        _left_buffer.done();
         
         _left->destroy_subpackets();
-        delete _left;
-        _left = NULL;
+        _left.done();
     }
     
     
     virtual void terminate_inputs() {
 
-        // input buffer
-        if ( !_left_buffer->terminate() ) {
-            // Producer has already terminated this buffer! We are now
-            // responsible for deleting it.
-            delete _left_buffer;
-        }
-        _left_buffer = NULL;
-
+        // Producer has not terminated this buffer. It is now
+        // responsible to delete it.
+        if ( _left_buffer->terminate() )
+            _left_buffer.release();
 
         // TODO Ask the dispatcher to clear our left packet (_left)
         // from system, if it still exists.
         
         // Now that we know _left is not in the system, remove our
         // reference to it.
-        _left = NULL;
 
 
         // TODO destroy any other packets we may have dispatched

@@ -147,6 +147,9 @@ public:
         dest->L_DISCOUNT = src->L_DISCOUNT;
         dest->L_TAX = src->L_TAX;
     }
+    virtual q1_tscan_filter_t* clone() {
+        return new q1_tscan_filter_t(*this);
+    }
 };
 
 
@@ -156,13 +159,18 @@ public:
 // Q1 SORT
 
 // "order by L_RETURNFLAG, L_LINESTATUS"
-struct q1_tuple_comparator_t : public tuple_comparator_t {
-    virtual int make_key(const tuple_t &tuple) {
+struct q1_key_extract_t : public key_extractor_t {
+    q1_key_extract_t() : key_extractor_t(sizeof(char)*2) { }
+    virtual void extract_key(void* k, const void* tuple_data) {
         // store the return flag and line status in the 
         projected_lineitem_tuple *item;
-        item = (projected_lineitem_tuple *) tuple.data;
-        int key = (item->L_RETURNFLAG << 8) | item->L_LINESTATUS;
-        return key;
+        item = (projected_lineitem_tuple *) tuple_data;
+        char* key = (char*) k;
+        key[0] = item->L_RETURNFLAG;
+        key[1] = item->L_LINESTATUS;
+    }
+    virtual q1_key_extract_t* clone() {
+        return new q1_key_extract_t(*this);
     }
 };
 
@@ -370,8 +378,9 @@ int main() {
         assert( sort_packet_id_ret != -1 );
 	sort_packet_t* q1_sort_packet = new sort_packet_t(sort_packet_id,
                                                           sort_out_buffer,
-                                                          new tuple_filter_t(tscan_out_buffer->tuple_size),
-                                                          new q1_tuple_comparator_t(),
+                                                          new trivial_filter_t(tscan_out_buffer->tuple_size),
+                                                          new q1_key_extract_t(),
+                                                          new int_key_compare_t(),
                                                           q1_tscan_packet);
 
         // AGG PACKET CREATION
@@ -383,7 +392,7 @@ int main() {
         assert( agg_packet_id_ret != -1 );
         aggregate_packet_t* q1_agg_packet = new aggregate_packet_t(agg_packet_id,
                                                                    agg_output_buffer,
-                                                                   new tuple_filter_t(agg_output_buffer->tuple_size),
+                                                                   new trivial_filter_t(agg_output_buffer->tuple_size),
                                                                    new q1_count_aggregate_t(),
                                                                    q1_sort_packet);
 

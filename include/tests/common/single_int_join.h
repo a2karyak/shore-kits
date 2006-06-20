@@ -12,18 +12,11 @@ using namespace qpipe;
 
 
 struct single_int_join_t : public tuple_join_t {
-
     single_int_join_t()
-        : tuple_join_t(sizeof(int), sizeof(int), sizeof(int), sizeof(int))
+        : tuple_join_t(sizeof(int), new int_key_extractor_t(),
+                       sizeof(int), new int_key_extractor_t(),
+                       new int_key_compare_t(), sizeof(int))
     {
-    }
-
-    virtual void get_left_key(char *key, const tuple_t &tuple) {
-        memcpy(key, tuple.data, left_tuple_size());
-    }
-
-    virtual void get_right_key(char *key, const tuple_t &tuple) {
-        memcpy(key, tuple.data, right_tuple_size());
     }
 
     virtual void join(tuple_t &dest,

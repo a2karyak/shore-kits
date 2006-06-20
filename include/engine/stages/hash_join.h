@@ -36,6 +36,7 @@ public:
 
     tuple_join_t *_join;
     bool _outer;
+    bool _distinct;
     
     int count_out;
     int count_left;
@@ -77,14 +78,15 @@ public:
                        packet_t* left,
                        packet_t* right,
                        tuple_join_t *join,
-                       bool outer=false)
+                       bool outer=false,
+                       bool distinct=false)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter),
           _left(left),
           _right(right),
           _left_buffer(left->_output_buffer),
           _right_buffer(right->_output_buffer),
           _join(join),
-          _outer(outer)
+          _outer(outer), _distinct(distinct)
     {
     }
   

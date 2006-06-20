@@ -24,12 +24,13 @@ using std::list;
 
 
 struct tuple_less_t {
-    tuple_comparator_t *cmp;
-    tuple_less_t(tuple_comparator_t *c) {
-        cmp = c;
+    tuple_comparator_t _compare;
+    tuple_less_t(key_extractor_t* e, key_compare_t *c)
+        : _compare(e, c)
+    {
     }
-    bool operator()(const key_tuple_pair_t &a, const key_tuple_pair_t &b) {
-        return (cmp->compare(a, b) < 0);
+    bool operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
+        return _compare(a, b) < 0;
     }
 };
 
@@ -132,7 +133,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
         
         p = new fscan_packet_t(fscan_packet_id,
 			       buf,
-                               new tuple_filter_t(_tuple_size),
+                               new trivial_filter_t(_tuple_size),
                                filename);
         dispatcher_t::dispatch_packet(p);
 
@@ -153,9 +154,9 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
     
     mp = new merge_packet_t(merge_packet_id,
                             merge_out,
-                            new tuple_filter_t(_tuple_size),
+                            new trivial_filter_t(_tuple_size),
                             fscan_buffers,
-                            _comparator);
+                            _extract->clone(), _compare->clone());
     dispatcher_t::dispatch_packet(mp);
 
 
@@ -190,7 +191,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
     
     fp = new fdump_packet_t(fdump_packet_id,
                             fdump_out,
-                            new tuple_filter_t(merge_out->tuple_size),
+                            new trivial_filter_t(merge_out->tuple_size),
                             merge_out,
                             fdump_filename,                            
                             &_monitor);
@@ -386,7 +387,8 @@ stage_t::result_t sort_stage_t::process_packet() {
 
     _input_buffer = packet->_input_buffer;
     _tuple_size = _input_buffer->tuple_size;
-    _comparator = packet->_comparator;
+    _compare = packet->_compare;
+    _extract = packet->_extract;
     _sorting_finished = false;
 
 
@@ -404,7 +406,7 @@ stage_t::result_t sort_stage_t::process_packet() {
     int capacity =
         tuple_page_t::capacity(_input_buffer->page_size(), _tuple_size);
     int tuple_count = PAGES_PER_INITIAL_SORTED_RUN * capacity;
-    key_vector_t array;
+    hint_vector_t array;
     array.reserve(tuple_count);
 
 
@@ -443,13 +445,13 @@ stage_t::result_t sort_stage_t::process_packet() {
 
             // add the tuples in the page into the key array
             for(tuple_page_t::iterator it=page->begin(); it != page->end(); ++it) {
-                int key = _comparator->make_key(*it);
-                array.push_back(key_tuple_pair_t(key, it->data));
+                int hint = _extract->extract_hint(*it);
+                array.push_back(hint_tuple_pair_t(hint, it->data));
             }
         }
 
         // sort the key array (gotta love the STL!)
-        std::sort(array.begin(), array.end(), tuple_less_t(_comparator));
+        std::sort(array.begin(), array.end(), tuple_less_t(_extract, _compare));
 
         // open a temp file to hold the run
         string file_name;
@@ -457,7 +459,7 @@ stage_t::result_t sort_stage_t::process_packet() {
 
         // dump the run to file
         //        for(int i=0; i < index; i++) {
-        for(key_vector_t::iterator it=array.begin(); it != array.end(); ++it) {
+        for(hint_vector_t::iterator it=array.begin(); it != array.end(); ++it) {
             // write the tuple
             tuple_t out(it->data, _tuple_size);
             out_page->append_init(out);

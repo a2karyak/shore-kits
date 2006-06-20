@@ -130,6 +130,7 @@ int hash_join_stage_t::test_overflow(int partition) {
         tuple_page_t *page = tuple_page_t::alloc(_join->right_tuple_size(), malloc);
         page->next = p.page;
         p.page = page;
+        page_count++;
     }
 
     // done!
@@ -182,6 +183,7 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     // TODO: release partition resources!
     bool outer_join = packet->_outer;
     _join = packet->_join;
+    bool distinct = packet->_distinct;
 
     // anything worth reading?
     tuple_buffer_t *right_buffer = packet->_right_buffer;
@@ -241,8 +243,12 @@ stage_t::result_t hash_join_stage_t::process_packet() {
         // build hash table out of in-memory partition
         else {
             while(page) {
-                for(tuple_page_t::iterator it=page->begin(); it != page->end(); ++it) 
-                    table.insert_equal_noresize(it->data);
+                for(tuple_page_t::iterator it=page->begin(); it != page->end(); ++it) {
+                    if(distinct)
+                        table.insert_unique_noresize(it->data);
+                    else
+                        table.insert_equal_noresize(it->data);
+                }
 
                 page = (tuple_page_t *)page->next;
             }

@@ -29,7 +29,6 @@ bin_PROGRAMS = \
    test_q4 \
    test_q6 \
    test_q13 \
-   test_q6_2cl \
    test_q1
 
 test_trace_SOURCES = test_trace.cpp

@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* packet = 
 	new func_call_packet_t(func_call_packet_id,
                                int_buffer, 
-                               new tuple_filter_t(int_buffer->tuple_size),
+                               new trivial_filter_t(int_buffer->tuple_size),
                                write_ints,
                                int_buffer);
     

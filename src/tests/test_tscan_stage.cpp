@@ -1,4 +1,4 @@
-// -*- mode:C++ c-basic-offset:4 -*-
+// -*- mode:C++; c-basic-offset:4 -*-
 
 /** @file    : test_tscan_stage.cpp
  *  @brief   : Unittest for the tscan stage

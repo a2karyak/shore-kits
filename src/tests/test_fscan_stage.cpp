@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     fscan_packet_t* packet = 
 	new fscan_packet_t(fscan_packet_id,
                            int_buffer,
-                           new tuple_filter_t(int_buffer->tuple_size),
+                           new trivial_filter_t(int_buffer->tuple_size),
                            fscan_packet_filename);
     
     

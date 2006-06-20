@@ -38,9 +38,13 @@ struct key_count_tuple_t {
 };
 
 // this comparator sorts its keys in descending order
-struct int_desc_comparator_t : public tuple_comparator_t {
-    virtual int make_key(const tuple_t &tuple) {
-        return -*(int*)tuple.data;
+struct int_desc_key_extractor_t : public key_extractor_t {
+    virtual void extract_key(void* key, const void* tuple_data) {
+        int value = -*(const int*)tuple_data;
+        *(int*)key = value;
+    }
+    virtual int_desc_key_extractor_t* clone() {
+        return new int_desc_key_extractor_t(*this);
     }
 };
 
@@ -108,6 +112,9 @@ packet_t* customer_scan(Db* tpch_customer) {
             int* dest = (int*) d.data;
             *dest = src->C_CUSTKEY;
         }
+        virtual customer_tscan_filter_t* clone() {
+            return new customer_tscan_filter_t(*this);
+        }
     };
 
     char* packet_id = copy_string("Customer TSCAN");
@@ -157,6 +164,10 @@ struct order_tscan_filter_t : public tuple_filter_t {
         int* dest = (int*) d.data;
         *dest = src->O_CUSTKEY;
     }
+
+    virtual order_tscan_filter_t* clone() {
+        return new order_tscan_filter_t(*this);
+    }
 };
 
 /**
@@ -179,18 +190,18 @@ packet_t* order_scan(Db* tpch_orders) {
 
     // sort into groups 
     packet_id = copy_string("Orders SORT");
-    filter = new tuple_filter_t(sizeof(int));
+    filter = new trivial_filter_t(sizeof(int));
     buffer = new tuple_buffer_t(sizeof(int));
-    tuple_comparator_t* comparator = new int_desc_comparator_t();
     packet_t* sort_packet = new sort_packet_t(packet_id,
                                               buffer,
                                               filter,
-                                              comparator,
+                                              new int_desc_key_extractor_t(),
+                                              new int_key_compare_t(),
                                               tscan_packet);
 
     // count over groups
     packet_id = copy_string("Orders COUNT");
-    filter = new tuple_filter_t(sizeof(key_count_tuple_t));
+    filter = new trivial_filter_t(sizeof(key_count_tuple_t));
     buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
     tuple_aggregate_t* aggregator = new q13_count_aggregate_t();
     packet_t* agg_packet = new aggregate_packet_t(packet_id,
@@ -222,7 +233,7 @@ int main() {
     register_stage<hash_join_stage_t>(2);
 
 
-    for(int i=0; i < 10; i++) {
+    for(int i=0; i < 1; i++) {
 
         stopwatch_t timer;
 
@@ -233,17 +244,31 @@ int main() {
          * order by custdist desc, c_count desc
          */
         struct q13_join_t : public tuple_join_t {
+            struct right_key_extractor_t : public key_extractor_t {
+                virtual void extract_key(void* key, const void* tuple_data) {
+                    const key_count_tuple_t* tuple = (const key_count_tuple_t*) tuple_data;
+                    memcpy(key, &tuple->KEY, key_size());
+                }
+                virtual right_key_extractor_t* clone() {
+                    return new right_key_extractor_t(*this);
+                }
+            };
+    
+            struct left_key_extractor_t : public key_extractor_t {
+                virtual void extract_key(void* key, const void* tuple_data) {
+                    memcpy(key, tuple_data, key_size());
+                }
+                virtual left_key_extractor_t* clone() {
+                    return new left_key_extractor_t(*this);
+                }
+            };
+    
+            
             q13_join_t()
-                : tuple_join_t(sizeof(int), sizeof(key_count_tuple_t),
-                               sizeof(int), sizeof(int))
+                : tuple_join_t(sizeof(int), new left_key_extractor_t(),
+                               sizeof(key_count_tuple_t), new right_key_extractor_t(),
+                               new int_key_compare_t(), sizeof(int))
             {
-            }
-            virtual void get_right_key(char* key, const tuple_t &t) {
-                key_count_tuple_t* tuple = (key_count_tuple_t*) t.data;
-                memcpy(key, &tuple->KEY, key_size());
-            }
-            virtual void get_left_key(char* key, const tuple_t &t) {
-                memcpy(key, t.data, key_size());
             }
             virtual void join(tuple_t &dest,
                               const tuple_t &,
@@ -259,18 +284,32 @@ int main() {
             }
         };
 
-        struct q13_comparator_t : public tuple_comparator_t {
-            virtual int make_key(const tuple_t &t) {
-                key_count_tuple_t* tuple = (key_count_tuple_t*) t.data;
+        struct q13_key_extract_t : public key_extractor_t {
+            q13_key_extract_t() : key_extractor_t(sizeof(key_count_tuple_t)) { }
+            
+            virtual int extract_hint(const void* tuple_data) {
+                key_count_tuple_t* tuple = (key_count_tuple_t*) tuple_data;
                 // confusing -- custdist is a count of counts...
                 return -tuple->COUNT;
             }
-            virtual int full_compare(const key_tuple_pair_t &pa, const key_tuple_pair_t &pb) {
+            virtual void extract_key(void* key, const void* tuple_data) {
+                // the whole tuple is the key
+                memcpy(key, tuple_data, key_size());
+            }
+            virtual q13_key_extract_t* clone() {
+                return new q13_key_extract_t(*this);
+            }
+        };
+        struct q13_key_compare_t : public key_compare_t {
+            virtual int operator()(const void* key1, const void* key2) {
                 // at this point we know the custdist (count) fields are
                 // different, so just check the c_count (key) fields
-                key_count_tuple_t* a = (key_count_tuple_t*) pa.data;
-                key_count_tuple_t* b = (key_count_tuple_t*) pb.data;
+                key_count_tuple_t* a = (key_count_tuple_t*) key1;
+                key_count_tuple_t* b = (key_count_tuple_t*) key2;
                 return b->KEY - a->KEY;
+            }
+            virtual q13_key_compare_t* clone() {
+                return new q13_key_compare_t(*this);
             }
         };
 
@@ -282,7 +321,7 @@ int main() {
         packet_t* order_packet = order_scan(tpch_orders);
 
         char* packet_id = copy_string("Orders - Customer JOIN");
-        tuple_filter_t* filter = new tuple_filter_t(sizeof(int));
+        tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
         tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
         tuple_join_t* join = new q13_join_t();
         packet_t* join_packet = new hash_join_packet_t(packet_id,
@@ -295,18 +334,18 @@ int main() {
 
         // sort to group by c_count
         packet_id = copy_string("c_count SORT");
-        filter = new tuple_filter_t(sizeof(int));
+        filter = new trivial_filter_t(sizeof(int));
         buffer = new tuple_buffer_t(sizeof(int));
-        tuple_comparator_t* compare = new int_desc_comparator_t();
         packet_t *sort_packet = new sort_packet_t(packet_id,
                                                   buffer,
                                                   filter,
-                                                  compare,
+                                                  new int_desc_key_extractor_t(),
+                                                  new int_key_compare_t(),
                                                   join_packet);
 
         // aggregate over c_count
         packet_id = copy_string("c_count COUNT");
-        filter = new tuple_filter_t(sizeof(key_count_tuple_t));
+        filter = new trivial_filter_t(sizeof(key_count_tuple_t));
         buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
         tuple_aggregate_t* agg = new q13_count_aggregate_t();
         packet_t *agg_packet = new aggregate_packet_t(packet_id,
@@ -317,13 +356,13 @@ int main() {
 
         // final sort of results
         packet_id = copy_string("custdist, c_count SORT");
-        filter = new tuple_filter_t(sizeof(key_count_tuple_t));
+        filter = new trivial_filter_t(sizeof(key_count_tuple_t));
         buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
-        compare = new q13_comparator_t();
         sort_packet = new sort_packet_t(packet_id,
                                         buffer,
                                         filter,
-                                        compare,
+                                        new q13_key_extract_t(),
+                                        new q13_key_compare_t(),
                                         agg_packet);
         
         // Dispatch packet

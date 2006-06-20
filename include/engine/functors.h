@@ -9,6 +9,8 @@
 
 #include "engine/namespace.h"
 
+// use this to force proper alignment of key arrays
+#define ALIGNED __attribute__ ((aligned))
 
 
 /** 
@@ -64,6 +66,9 @@ public:
         dest.assign(src);
     }
 
+    // should simply return new <child-class>(*this);
+    virtual tuple_filter_t* clone()=0;
+    
     tuple_filter_t(size_t input_tuple_size)
         : _tuple_size(input_tuple_size)
     {
@@ -73,7 +78,18 @@ public:
 
 };
 
-
+struct trivial_filter_t : public tuple_filter_t {
+    
+    virtual tuple_filter_t* clone() {
+        return new trivial_filter_t(*this);
+    };
+    
+    trivial_filter_t(size_t input_tuple_size)
+        : tuple_filter_t(input_tuple_size)
+    {
+    }
+    
+};
 
 /**
  * @brief A key-tuple pair used for operations such as hashing and
@@ -82,16 +98,16 @@ public:
  * accessed by following the pointer to the tuple's data.
  */
 
-struct key_tuple_pair_t {
-    int key;
+struct hint_tuple_pair_t {
+    int hint;
     char *data;
 
-    key_tuple_pair_t()
-        : key(0), data(NULL)
+    hint_tuple_pair_t()
+        : hint(0), data(NULL)
     {
     }
-    key_tuple_pair_t(int k, char *d)
-        : key(k), data(d)
+    hint_tuple_pair_t(int h, char *d)
+        : hint(h), data(d)
     {
     }
 };
@@ -103,62 +119,90 @@ struct key_tuple_pair_t {
  *  comparisons on tuple field(s).
  */
 
-struct tuple_comparator_t {
-
-
-    bool _extended;
-    
-  
-    /**
-     * @brief constructs a new tuple comparator.
-     *
-     * @param extended true if the key stored in a key/tuple pair is
-     * insufficient to determine equality. 
-     */
-    tuple_comparator_t(bool extended=false)
-        : _extended(extended)
-    {
-    }
-    
+struct key_compare_t {
     
     /**
-     * @brief Determines the lexicographical relationship between
-     * tuples (a) and (b). Ascending sorts based on this
-     * comparison will produce outputs ordered such that
-     * compare(tuple[i], tuple[i+1]) < 0 for every i.
+     * @brief Determines the lexicographical relationship between key1
+     * and key2. Ascending sorts based on this comparison will produce
+     * outputs ordered such that compare(key[i], key[i+1]) < 0 for
+     * every i.
      *
      * @return negative if a < b, positive if a > b, and zero if a == b
      */
     
-    int compare(const key_tuple_pair_t &a, const key_tuple_pair_t &b) {
-        int diff = a.key - b.key;
-        return (!_extended || diff)? diff : full_compare(a, b);
-    }
+    virtual int operator()(const void* key1, const void* key2)=0;
+    virtual key_compare_t* clone()=0;
 
-
-    /**
-     * @brief Completes a comparison between two key/tuple pairs with
-     * the same "key" value. This function will only be called if the
-     * keys of both key/tuple pairs are equal and extended key
-     * comparisons are required to break the tie.
-     */
-    virtual int full_compare(const key_tuple_pair_t &, const key_tuple_pair_t &) {
-        assert(false);
-    }   
-
-
-    /**
-     * @brief returns the 32-bit key this comparator uses for primary
-     * comparisons. See (key_tuple_pair_t).
-     */
-    
-    virtual int make_key(const tuple_t &tuple)=0;
-
-
-    virtual ~tuple_comparator_t() { }
+    virtual ~key_compare_t() { }
 };
 
+class key_extractor_t {
+    size_t _key_size;
+    
+public:
+    key_extractor_t(size_t key_size=sizeof(int))
+        : _key_size(key_size)
+    {
+    }
+    size_t key_size() { return _key_size; }
 
+    /**
+     * @brief extracts the full key of a tuple.
+     */
+    void extract_key(void* key, const tuple_t &tuple) {
+        extract_key(key, tuple.data);
+    }
+
+    virtual void extract_key(void* key, const void* tuple_data)=0;
+
+    /**
+     * @brief extracts an abbreviated key that represents the most
+     * significant 4 bytes of the full key. This allows quicker
+     * comparisons but equal shortcut keys require a full key compare
+     * to resolve the ambiguity.
+     */
+    int extract_hint(const tuple_t &tuple) {
+        return extract_hint(tuple.data);
+    }
+    
+    virtual int extract_hint(const void* tuple_data) {
+        // this guarantees that we're not doing something dangerous
+        assert(key_size() <= sizeof(int));
+        
+        // make sure the key is always big enough to hold an int
+        char key[key_size() + sizeof(int)] ALIGNED;
+
+        // clear out any padding that might result from smaller keys
+        *(int*) key = 0;
+        extract_key(key, tuple_data);
+        return *(int*) key;
+    }
+
+    // should simply return new <child-class>(*this);
+    virtual key_extractor_t* clone()=0;
+    virtual ~key_extractor_t() { }
+};
+
+struct tuple_comparator_t {
+    key_extractor_t* _extract;
+    key_compare_t* _compare;
+    tuple_comparator_t(key_extractor_t* extract, key_compare_t* compare)
+        : _extract(extract), _compare(compare)
+    {
+    }
+    
+    int operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
+        int diff = a.hint - b.hint;
+        if(_extract->key_size() <= sizeof(int) || diff)
+            return diff;
+
+        char akey[_extract->key_size()];
+        char bkey[_extract->key_size()];
+        _extract->extract_key(akey, a.data);
+        _extract->extract_key(bkey, b.data);
+        return (*_compare)(akey, bkey);
+    }
+};
 
 /** 
  * @brief Base join functor. Should be used by join stages to
@@ -169,28 +213,40 @@ struct tuple_comparator_t {
 class tuple_join_t {
 
     size_t _left_tuple_size;
+    pointer_guard_t<key_extractor_t> _left;
+    
     size_t _right_tuple_size;
+    pointer_guard_t<key_extractor_t> _right;
+
+    pointer_guard_t<key_compare_t> _compare;
+    
     size_t _out_tuple_size;
-    size_t _key_size;
 public:
 
     size_t left_tuple_size() { return _left_tuple_size; }
     size_t right_tuple_size() { return _right_tuple_size; }
     size_t out_tuple_size() { return _out_tuple_size; }
-    size_t key_size() { return _key_size; }
+    size_t key_size() { return _left->key_size(); }
 
-    tuple_join_t(size_t left_tuple_size,
-                 size_t right_tuple_size,
-                 size_t out_tuple_size,
-                 size_t key_size)
-        : _left_tuple_size(left_tuple_size),
-          _right_tuple_size(right_tuple_size),
-          _out_tuple_size(out_tuple_size),
-          _key_size(key_size)
+    tuple_join_t(size_t left_tuple_size, key_extractor_t *left,
+                 size_t right_tuple_size, key_extractor_t *right,
+                 key_compare_t* compare, size_t out_tuple_size)
+        : _left_tuple_size(left_tuple_size), _left(left),
+          _right_tuple_size(right_tuple_size), _right(right),
+          _compare(compare), _out_tuple_size(out_tuple_size)
     {
+        assert(left->key_size() == right->key_size());
     }
-    virtual void get_left_key(char *key, const tuple_t &tuple)=0;
-    virtual void get_right_key(char *key, const tuple_t &tuple)=0;
+    void get_left_key(void* key, const tuple_t &tuple) {
+        return _left->extract_key(key, tuple);
+    }
+    void get_right_key(void* key, const tuple_t &tuple) {
+        return _right->extract_key(key, tuple);
+    }
+
+    int compare(const void* left_key, const void* right_key) {
+        return (*_compare)(left_key, right_key);
+    }
     
     /**
      *  @brief Determine whether two tuples pass an internal set of join

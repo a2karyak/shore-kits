@@ -66,7 +66,7 @@ int main() {
         // AGG PACKET CREATION
         // the output consists of 2 int
         tuple_buffer_t* agg_output_buffer = new tuple_buffer_t(2*sizeof(double));
-        tuple_filter_t* agg_filter = new tuple_filter_t(agg_output_buffer->tuple_size);
+        tuple_filter_t* agg_filter = new trivial_filter_t(agg_output_buffer->tuple_size);
         tuple_aggregate_t*  q6_aggregator = new q6_count_aggregate_t();
     
 

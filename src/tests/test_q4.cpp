@@ -51,6 +51,9 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
             tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
             memcpy(dest.data, &at->L_ORDERKEY, sizeof(int));
         }
+        virtual lineitem_tscan_filter_t* clone() {
+            return new lineitem_tscan_filter_t(*this);
+        }
     };
 
     struct int_distinct_t : public tuple_aggregate_t {
@@ -90,7 +93,7 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
                                                 buffer,
                                                 filter,
                                                 tpch_lineitem);
-    
+#if 0    
     // sort as a precursor to the distinct aggregate
     packet_id = copy_string("Lineitem SORT");
     filter = new tuple_filter_t(sizeof(int));
@@ -112,8 +115,8 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
                                                   filter,
                                                   aggregate,
                                                   sort_packet);
-
-    return agg_packet;
+#endif
+    return tscan_packet;
 }
 
 /**
@@ -151,6 +154,9 @@ packet_t* orders_scan(Db* tpch_orders) {
             dest->O_ORDERKEY = src->O_ORDERKEY;
             dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
         }
+        virtual orders_tscan_filter_t* clone() {
+            return new orders_tscan_filter_t(*this);
+        }
     };
 
     char* packet_id = copy_string("Orders TSCAN");
@@ -166,26 +172,38 @@ packet_t* orders_scan(Db* tpch_orders) {
 
 // left is lineitem, right is orders
 struct q4_join_t : public tuple_join_t {
+    struct left_key_extractor_t : public key_extractor_t {
+        virtual void extract_key(void* key, const void* tuple_data) {
+            order_scan_tuple_t* tuple = (order_scan_tuple_t*) tuple_data;
+            memcpy(key, &tuple->O_ORDERKEY, key_size());
+        }
+        virtual left_key_extractor_t* clone() {
+            return new left_key_extractor_t(*this);
+        }
+    };
+    
+    struct right_key_extractor_t : public key_extractor_t {
+        virtual void extract_key(void* key, const void* tuple_data) {
+            memcpy(key, tuple_data, key_size());
+        }
+        virtual right_key_extractor_t* clone() {
+            return new right_key_extractor_t(*this);
+        }
+    };
+    
     q4_join_t()
-        : tuple_join_t(sizeof(int),
-                       sizeof(order_scan_tuple_t),
-                       sizeof(int),
+        : tuple_join_t(sizeof(order_scan_tuple_t), new left_key_extractor_t(),
+                       sizeof(int), new right_key_extractor_t(),
+                       new int_key_compare_t(),
                        sizeof(int))
     {
     }
-    virtual void get_left_key(char* key, const tuple_t &t) {
-        order_scan_tuple_t* tuple = (order_scan_tuple_t*) t.data;
-        memcpy(key, &tuple->O_ORDERKEY, key_size());
-    }
-    virtual void get_right_key(char* key, const tuple_t &t) {
-        memcpy(key, t.data, key_size());
-    }
     virtual void join(tuple_t &dest,
-                      const tuple_t &,
-                      const tuple_t &right)
+                      const tuple_t &left,
+                      const tuple_t &)
     {
         // KLUDGE: this projection should go in a separate filter class
-        order_scan_tuple_t* tuple = (order_scan_tuple_t*) right.data;
+        order_scan_tuple_t* tuple = (order_scan_tuple_t*) left.data;
         memcpy(dest.data, &tuple->O_ORDERPRIORITY, sizeof(int));
 #if 0
         int* ltup = (int*)left.data;
@@ -275,7 +293,7 @@ int main() {
     register_stage<hash_join_stage_t>(1);
 
 
-    for(int i=0; i < 2; i++) {
+    for(int i=0; i < 5; i++) {
 
         stopwatch_t timer;
 
@@ -311,16 +329,19 @@ int main() {
 
         // join them...
         char *packet_id = copy_string("Orders - Lineitem JOIN");
-        tuple_filter_t* filter = new tuple_filter_t(sizeof(int));
+        tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
         buffer = new tuple_buffer_t(sizeof(int));
         tuple_join_t* join = new q4_join_t();
         packet_t* join_packet = new hash_join_packet_t(packet_id,
                                                        buffer,
                                                        filter,
-                                                       line_item_packet,
                                                        orders_packet,
-                                                       join);
+                                                       line_item_packet,
+                                                       join,
+                                                       false,
+                                                       true);
 
+#if 0
         // sort as a precursor to the count aggregate
         packet_id = copy_string("Orders.O_ORDERPRIORITY SORT");
         filter = new tuple_filter_t(sizeof(int));
@@ -342,16 +363,15 @@ int main() {
                                                       filter,
                                                       aggregate,
                                                       sort_packet);
-        
+#endif   
         // Dispatch packet
-        dispatcher_t::dispatch_packet(agg_packet);
-        buffer = agg_packet->_output_buffer;
+        dispatcher_t::dispatch_packet(join_packet);
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
             q4_tuple_t* r = (q4_tuple_t*) output.data;
-            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %d. Count: %d.  ***\n",
-                  r->O_ORDERPRIORITY, r->ORDER_COUNT);
+            //            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %d. Count: %d.  ***\n",
+            //    r->O_ORDERPRIORITY, r->ORDER_COUNT);
         }
         
 
