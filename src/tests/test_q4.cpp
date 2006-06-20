@@ -1,7 +1,7 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
 /** @file    : test_q4.cpp
- *  @brief   : Unittest for Q4 (joins LINEITEM/ORDERS
+ *  @brief   : Unittest for Q4
  *  @version : 0.1
  *  @history :
  6/16/2006: Initial version
@@ -275,7 +275,7 @@ int main() {
     register_stage<hash_join_stage_t>(1);
 
 
-    for(int i=0; i < 1; i++) {
+    for(int i=0; i < 2; i++) {
 
         stopwatch_t timer;
 
