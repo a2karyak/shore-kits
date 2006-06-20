@@ -18,7 +18,8 @@ STAGES = \
    stages/func_call.cpp \
    stages/merge.cpp \
    stages/sort.cpp \
-   stages/bnl_join.cpp
+   stages/bnl_join.cpp \
+   stages/bnl_in.cpp
 
 DISPATCHER = \
    dispatcher/dispatcher.cpp

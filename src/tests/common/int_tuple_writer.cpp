@@ -18,7 +18,7 @@ void* int_tuple_writer_main(void* arg)
     tuple_buffer_t* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;
     
-    for (int i = 0; i < num_tuples; i++) {
+    for (int i = info->start_tuple; i < num_tuples; i++) {
 	tuple_t in_tuple((char*)&i, sizeof(int));
 	if( int_buffer->put_tuple(in_tuple) ) {
 	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");
@@ -51,7 +51,7 @@ stage_t::result_t shuffled_triangle_int_tuple_writer_fc(void* arg) {
 
 
     // create X copies of X
-    for (int i = 0; i < num_tuples; i++) {
+    for (int i = info->start_tuple; i < num_tuples; i++) {
         for(int j=0; j < i; j++)
             tuples.push_back(i);
     }
@@ -85,7 +85,7 @@ stage_t::result_t increasing_int_tuple_writer_fc(void* arg)
     int num_tuples = info->num_tuples;
 
 
-    for (int i = 0; i < num_tuples; i++) {
+    for (int i = info->start_tuple; i < num_tuples; i++) {
 	tuple_t in_tuple((char*)&i, sizeof(int));
 	if( int_buffer->put_tuple(in_tuple) ) {
 	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");

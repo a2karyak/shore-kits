@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     tuple_buffer_t* signal_buffer = new tuple_buffer_t(sizeof(int));
 
 
-    struct int_tuple_writer_info_s info = { int_buffer, num_tuples };
+    struct int_tuple_writer_info_s info(int_buffer, num_tuples);
     tester_thread_t* writer_thread =
 	new tester_thread_t(int_tuple_writer_main, &info, "WRITER_THREAD");
     

@@ -74,7 +74,8 @@ public:
     
     
     virtual void destroy_subpackets() {
-        // No input buffers or subpackets ... do nothing.
+        TRACE(TRACE_ALWAYS, "FSCAN is non-mergeable!\n");
+        QPIPE_PANIC();
     }
 
     virtual void terminate_inputs() {

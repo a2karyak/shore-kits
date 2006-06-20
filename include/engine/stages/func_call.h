@@ -34,6 +34,9 @@ public:
     void* _func_arg;
     
     
+    void (*_destructor) (void*);
+
+    
     /**
      *  @brief func_call_packet_t constructor.
      *
@@ -64,23 +67,28 @@ public:
                        tuple_buffer_t* output_buffer,
                        tuple_filter_t* output_filter,
                        stage_t::result_t (*func) (void*),
-                       void* func_arg)
-      : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
-      _func(func),
-      _func_arg(func_arg)
-      {
+                       void* func_arg,
+                       void (*destructor) (void*) = NULL)
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+          _func(func),
+          _func_arg(func_arg),
+          _destructor(destructor)
+    {
         // error checking
         assert(func != NULL);
-      }
+    }
 
     
     virtual ~func_call_packet_t() {
-      // This packet has nothing to destroy.
+        // if a destructor was specified, apply it to _func_arg field
+        if ( _destructor != NULL )
+            _destructor(_func_arg);
     }
     
     
     virtual void destroy_subpackets() {
-        // No input buffers or subpackets ... do nothing.
+        TRACE(TRACE_ALWAYS, "FSCAN is non-mergeable!\n");
+        QPIPE_PANIC();
     }
 
     virtual void terminate_inputs() {

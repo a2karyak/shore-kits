@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    struct int_tuple_writer_info_s writer_info = { int_buffer, num_tuples };
+    struct int_tuple_writer_info_s writer_info(int_buffer, num_tuples);
     func_call_packet_t* fc_packet = 
 	new func_call_packet_t(func_call_packet_id,
                                int_buffer, 

@@ -1,11 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-#ifndef __TSCAN_H
-#define __TSCAN_H
+#ifndef _TSCAN_H
+#define _TSCAN_H
 
 #include "db_cxx.h"
 #include "engine/core/tuple.h"
 #include "engine/core/packet.h"
 #include "engine/core/stage.h"
+#include "engine/tuple_source.h"
 
 
 
@@ -14,7 +15,7 @@ using namespace qpipe;
 
 
 /**
- *@brief Packet definition for the Tscan stage
+ *  @brief Packet definition for the TSCAN stage.
  */
 
 struct tscan_packet_t : public packet_t {
@@ -28,7 +29,7 @@ public:
 
    
     /**
-     *  @brief fscan_packet_t constructor.
+     *  @brief tscan_packet_t constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take

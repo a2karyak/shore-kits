@@ -64,7 +64,6 @@ public:
         dest.assign(src);
     }
 
-
     tuple_filter_t(size_t input_tuple_size)
         : _tuple_size(input_tuple_size)
     {
@@ -72,6 +71,91 @@ public:
     
     virtual ~tuple_filter_t() { }
 
+};
+
+
+
+/**
+ * @brief A key-tuple pair used for operations such as hashing and
+ * sorting. The first 32 bits of the key (or hash) are stored directly
+ * and should suffice for most comparisons; the full key can always be
+ * accessed by following the pointer to the tuple's data.
+ */
+
+struct key_tuple_pair_t {
+    int key;
+    char *data;
+
+    key_tuple_pair_t()
+        : key(0), data(NULL)
+    {
+    }
+    key_tuple_pair_t(int k, char *d)
+        : key(k), data(d)
+    {
+    }
+};
+
+
+
+/**
+ *  @brief Base comparison functor. Extend it to implement specific
+ *  comparisons on tuple field(s).
+ */
+
+struct tuple_comparator_t {
+
+
+    bool _extended;
+    
+  
+    /**
+     * @brief constructs a new tuple comparator.
+     *
+     * @param extended true if the key stored in a key/tuple pair is
+     * insufficient to determine equality. 
+     */
+    tuple_comparator_t(bool extended=false)
+        : _extended(extended)
+    {
+    }
+    
+    
+    /**
+     * @brief Determines the lexicographical relationship between
+     * tuples (a) and (b). Ascending sorts based on this
+     * comparison will produce outputs ordered such that
+     * compare(tuple[i], tuple[i+1]) < 0 for every i.
+     *
+     * @return negative if a < b, positive if a > b, and zero if a == b
+     */
+    
+    int compare(const key_tuple_pair_t &a, const key_tuple_pair_t &b) {
+        int diff = a.key - b.key;
+        return (!_extended || diff)? diff : full_compare(a, b);
+    }
+
+
+    /**
+     * @brief Completes a comparison between two key/tuple pairs with
+     * the same "key" value. This function will only be called if the
+     * keys of both key/tuple pairs are equal and extended key
+     * comparisons are required to break the tie.
+     */
+    virtual int full_compare(const key_tuple_pair_t &, const key_tuple_pair_t &) {
+        assert(false);
+    }   
+
+
+    /**
+     * @brief returns the 32-bit key this comparator uses for primary
+     * comparisons. See (key_tuple_pair_t).
+     */
+    
+    virtual int make_key(const tuple_t &tuple)=0;
+
+
+    virtual ~tuple_comparator_t() { }
 };
 
 
@@ -180,86 +264,6 @@ public:
   
     virtual ~tuple_aggregate_t() { }
 
-};
-
-
-/**
- * @brief A key-tuple pair used for operations such as hashing and
- * sorting. The first 32 bits of the key (or hash) are stored directly
- * and should suffice for most comparisons; the full key can always be
- * accessed by following the pointer to the tuple's data.
- */
-
-struct key_tuple_pair_t {
-    int key;
-    char *data;
-
-    key_tuple_pair_t()
-        : key(0), data(NULL)
-    {
-    }
-    key_tuple_pair_t(int k, char *d)
-        : key(k), data(d)
-    {
-    }
-};
-
-
-
-/**
- *@brief Base comparison functor. Extend it to implement specific
- *comparisons on tuple field(s). 
- */
-
-struct tuple_comparator_t {
-    bool _extended;
-
-    /**
-     * @brief constructs a new tuple comparator.
-     *
-     * @param extended true if the key stored in a key/tuple pair is
-     * insufficient to determine equality. 
-     */
-    tuple_comparator_t(bool extended=false)
-        : _extended(extended)
-    {
-    }
-    
-    /**
-     * @brief Determines the lexicographical relationship between
-     * tuples (a) and (b). Ascending sorts based on this
-     * comparison will produce outputs ordered such that
-     * compare(tuple[i], tuple[i+1]) < 0 for every i.
-     *
-     * @return negative if a < b, positive if a > b, and zero if a == b
-     */
-    
-    int compare(const key_tuple_pair_t &a, const key_tuple_pair_t &b) {
-        int diff = a.key - b.key;
-        return (!_extended || diff)? diff : full_compare(a, b);
-    }
-
-
-    /**
-     * @brief Completes a comparison between two key/tuple pairs with
-     * the same "key" value. This function will only be called if the
-     * keys of both key/tuple pairs are equal and extended key
-     * comparisons are required to break the tie.
-     */
-    virtual int full_compare(const key_tuple_pair_t &, const key_tuple_pair_t &) {
-        assert(false);
-    }   
-
-    /**
-     * @brief returns the 32-bit key this comparator uses for primary
-     * comparisons. See (key_tuple_pair_t).
-     */
-    
-    virtual int make_key(const tuple_t &tuple)=0;
-
-
-    
-    virtual ~tuple_comparator_t() { }
 };
 
 

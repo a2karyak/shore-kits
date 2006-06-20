@@ -88,13 +88,18 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
             // tuple on the inner relation page
             tuple_page_t::iterator o_it;
             for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it) {
+
                 
                 tuple_t outer_tuple = *o_it;
                 join->get_left_key(outer_key, outer_tuple);
 
+
                 tuple_page_t::iterator i_it;
                 for (i_it = inner_tuple_page->begin(); i_it != inner_tuple_page->end(); ++i_it) {
 
+
+                    // check for equality by extracting keys and using
+                    // memcmp() to check for byte-by-byte equality
                     tuple_t inner_tuple = *i_it;
                     join->get_right_key(inner_key, inner_tuple);
                     if ( memcmp( outer_key, inner_key, key_size ) == 0 ) {
@@ -104,12 +109,15 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
                         if (result)
                             return result;
                     }
+
+                    
                 } // endof loop over inner page
             } // endof loop over outer page
-
+            
+            
         } // endof loop over inner relation
     } // endof loop over outer relation
-
-
+    
+    
     return stage_t::RESULT_STOP;
 }

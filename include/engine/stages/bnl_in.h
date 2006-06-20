@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _BNL_JOIN_H
-#define _BNL_JOIN_H
+#ifndef _BNL_IN_H
+#define _BNL_IN_H
 
 #include <cstdio>
 #include <string>
@@ -28,18 +28,19 @@ using namespace qpipe;
 /**
  *  @brief
  */
-struct bnl_join_packet_t : public packet_t {
+struct bnl_in_packet_t : public packet_t {
   
     static const char* PACKET_TYPE;
 
-    packet_t*       _left;
-    tuple_buffer_t* _left_buffer;
-    tuple_source_t* _right_source;
-    tuple_join_t*   _join;
+    packet_t*           _left;
+    tuple_buffer_t*     _left_buffer;
+    tuple_source_t*     _right_source;
+    tuple_comparator_t* _comparator;
+    bool                _output_on_match;
     
     
     /**
-     *  @brief bnl_join_packet_t constructor.
+     *  @brief bnl_in_packet_t constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -54,26 +55,29 @@ struct bnl_join_packet_t : public packet_t {
      *  @param output_filter The filter that will be applied to any
      *  tuple sent to output_buffer. The packet OWNS this filter. It
      *  will be deleted in the packet destructor.
+     *
      */
-    bnl_join_packet_t(char* packet_id,
-                      tuple_buffer_t* output_buffer,
-                      tuple_filter_t* output_filter,
-                      packet_t* left,
-                      tuple_source_t* right_source,
-                      tuple_join_t* join)
+    bnl_in_packet_t(char* packet_id,
+                    tuple_buffer_t* output_buffer,
+                    tuple_filter_t* output_filter,
+                    packet_t* left,
+                    tuple_source_t* right_source,
+                    tuple_comparator_t* comparator,
+                    bool output_on_match)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _left(left),
           _left_buffer(left->_output_buffer),
           _right_source(right_source),
-          _join(join)
+          _comparator(comparator),
+          _output_on_match(output_on_match)
     {
     }
   
-    virtual ~bnl_join_packet_t() {
+    virtual ~bnl_in_packet_t() {
         assert(_left == NULL);
         assert(_left_buffer == NULL);
         delete _right_source;
-        delete _join;
+        delete _comparator;
     }
 
 
@@ -116,18 +120,19 @@ struct bnl_join_packet_t : public packet_t {
 
 
 /**
- *  @brief Block-nested loop join stage.
+ *  @brief Block-nested loop stage for processing the IN/NOT IN
+ *  operator.
  */
-class bnl_join_stage_t : public stage_t {
-
+class bnl_in_stage_t : public stage_t {
+    
 public:
-
+    
     static const char* DEFAULT_STAGE_NAME;
-    typedef bnl_join_packet_t stage_packet_t;
+    typedef bnl_in_packet_t stage_packet_t;
     
-    bnl_join_stage_t() { }
+    bnl_in_stage_t() { }
     
-    virtual ~bnl_join_stage_t() { }
+    virtual ~bnl_in_stage_t() { }
     
 protected:
 
