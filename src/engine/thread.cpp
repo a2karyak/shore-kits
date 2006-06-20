@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "engine/thread.h"
+#include "engine/util/fnv.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
@@ -38,30 +39,20 @@ extern "C" void* start_thread(void *);
 
 
 /**
- *  @brief thread_t base class constructor. Does nothing useful. Every
- *  subclass should invoke the static initialization functions to set
- *  up a new thread object.
+ *  @brief thread_t base class constructor. Every subclass constructor
+ *  goes through this. Subclass should invoke the thread_t static
+ *  initialization functions (init_thread_name() or
+ *  init_thread_name_v()) to set up a new thread object's name.
  */
 thread_t::thread_t(void)
 {
     thread_name = NULL;
-}
 
-
-
-/**
- *  @brief This constructor should ONLY be used in thread_init() by
- *  the root thread. All other subclasses of thread_t() should invoke
- *  the thread_t(void) constructor and invoke init_thread_name().
- */
-thread_t::thread_t(const char* format, ...)
-{
-    int ret;
-    va_list ap;
-    va_start(ap, format);
-    ret = init_thread_name_v(format, ap);
-    va_end(ap);
-    assert( ret == 0 );
+    // Set up random number generator. We will use the thread ID to
+    // create the seed. Hopefully, passing it through a hash function
+    // will provide enough if a uniform distribution.
+    pthread_t this_thread = pthread_self();
+    rand_seed = fnv_hash((const char*)&this_thread, sizeof(this_thread));
 }
 
 
@@ -76,13 +67,6 @@ thread_t::~thread_t(void)
     
     // thread_name was created with asprintf()/malloc()
     free(thread_name);
-}
-
-
-
-const char* thread_t::get_thread_name(void)
-{
-    return thread_name;
 }
 
 
@@ -113,6 +97,26 @@ int thread_t::init_thread_name_v(const char* format, va_list ap)
 
 
 
+class root_thread_t : public thread_t {
+    
+public:
+    
+    /**
+     *  @brief 
+     */
+    root_thread_t(const char* format, ...)
+    {
+        int ret;
+        va_list ap;
+        va_start(ap, format);
+        ret = init_thread_name_v(format, ap);
+        va_end(ap);
+        assert( ret == 0 );
+    }
+};
+
+
+
 /**
  *  @brief Initialize thread module.
  *
@@ -126,7 +130,7 @@ void thread_init(void)
         TRACE(TRACE_ALWAYS, "pthread_key_create() failed on THREAD_KEY_SELF\n");
         QPIPE_PANIC();
     }
-    thread_t* root_thread = new thread_t("root-thread");
+    root_thread_t* root_thread = new root_thread_t("root-thread");
 
     int err;
     err = pthread_setspecific(THREAD_KEY_SELF, root_thread);

@@ -92,19 +92,7 @@ int main(int argc, char* argv[]) {
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
-    tuple_buffer_t* right_int_buffer = new tuple_buffer_t(join->right_tuple_size());
-    char* right_packet_id = copy_string("RIGHT_PACKET");
-    struct int_tuple_writer_info_s right_writer_info(right_int_buffer, num_tuples);
-    func_call_packet_t* right_packet = 
-	new func_call_packet_t(right_packet_id,
-                               right_int_buffer, 
-                               new tuple_filter_t(sizeof(int)), // unused, cannot be NULL
-                               shuffled_triangle_int_tuple_writer_fc,
-                               &right_writer_info);
-    
-    
     tuple_buffer_t* join_buffer = new tuple_buffer_t(join->out_tuple_size());
-
 
     char* join_packet_id = copy_string("BNL_JOIN_PACKET_1");
     bnl_join_packet_t* join_packet =

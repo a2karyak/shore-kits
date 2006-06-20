@@ -27,10 +27,10 @@ class thread_t {
 private:
 
     char* thread_name;
+    unsigned int rand_seed;
 
 public:
 
-    thread_t(const char* format, ...);
     virtual ~thread_t();
 
 
@@ -40,7 +40,15 @@ public:
         assert(false);
     }
 
-    const char* get_thread_name();
+
+    const char* get_thread_name() {
+        return thread_name;
+    }
+
+
+    int get_rand() {
+        return rand_r(&rand_seed);
+    }
     
 protected:
 
