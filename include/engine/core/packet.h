@@ -61,7 +61,7 @@ public:
     /** Should be set to the stage's _stage_next_tuple field when this
 	packet is merged into the stage. Should be initialized to 0
 	when the packet is first created. */
-    unsigned int _stage_next_tuple_on_merge;
+    unsigned int _next_tuple_on_merge;
 
     /** Should be set to _stage_next_tuple_on_merge when a packet is
 	re-enqued. This lets the stage processing it know to
@@ -69,7 +69,7 @@ public:
 	this number. A value of 0 should indicate that the packet must
 	receive all tuples produced by the stage. Should be
 	initialized to 0. */
-    unsigned int _stage_next_tuple_needed;
+    unsigned int _next_tuple_needed;
 
 
     /* see packet.cpp for documentation */

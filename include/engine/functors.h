@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef __FUNCTORS_H
-#define __FUNCTORS_H
+#ifndef _FUNCTORS_H
+#define _FUNCTORS_H
 
 #include "engine/core/tuple.h"
 
@@ -9,8 +9,10 @@
 
 #include "engine/namespace.h"
 
+
 // use this to force proper alignment of key arrays
 #define ALIGNED __attribute__ ((aligned))
+
 
 
 /** 
@@ -19,12 +21,16 @@
  */
 
 class tuple_filter_t {
+
 private:
+
     size_t _tuple_size;
     
 public:
 
+
     size_t input_tuple_size() { return _tuple_size; }
+
     
     /**
      *  @brief Determine which attributes (if any) of a given source
@@ -66,17 +72,22 @@ public:
         dest.assign(src);
     }
 
+
     // should simply return new <child-class>(*this);
     virtual tuple_filter_t* clone()=0;
     
+
     tuple_filter_t(size_t input_tuple_size)
         : _tuple_size(input_tuple_size)
     {
     }
     
+
     virtual ~tuple_filter_t() { }
 
 };
+
+
 
 struct trivial_filter_t : public tuple_filter_t {
     
@@ -90,6 +101,8 @@ struct trivial_filter_t : public tuple_filter_t {
     }
     
 };
+
+
 
 /**
  * @brief A key-tuple pair used for operations such as hashing and
@@ -136,20 +149,27 @@ struct key_compare_t {
     virtual ~key_compare_t() { }
 };
 
+
+
 /**
  * @brief a key extractor class. Assumes the key is stored
  * contiguously somewhere in the tuple and returns a pointer to the
  * proper offset.
  */
 class key_extractor_t {
+
+private:
+
     size_t _key_size;
     
 public:
+
     key_extractor_t(size_t key_size=sizeof(int))
         : _key_size(key_size)
     {
     }
     size_t key_size() { return _key_size; }
+
 
     /**
      * @brief extracts the full key of a tuple. 
@@ -157,6 +177,7 @@ public:
     const char* extract_key(const tuple_t &tuple) {
         return extract_key(tuple.data);
     }
+
 
     /**
      * @brief extracts the full key from a tuple's data.
@@ -168,6 +189,7 @@ public:
         return tuple_data;
     }
 
+
     /**
      * @brief extracts an abbreviated key that represents the most
      * significant 4 bytes of the full key. This allows quicker
@@ -177,7 +199,8 @@ public:
     int extract_hint(const tuple_t &tuple) {
         return extract_hint(tuple.data);
     }
-    
+
+
     virtual int extract_hint(const char* tuple_data) {
         // this guarantees that we're not doing something dangerous
         assert(key_size() <= sizeof(int));
@@ -189,29 +212,42 @@ public:
         return hint;
     }
 
+
     // should simply return new <child-class>(*this);
     virtual key_extractor_t* clone()=0;
+
+
     virtual ~key_extractor_t() { }
 };
 
+
+
 struct default_key_extractor_t : public key_extractor_t {
+
     default_key_extractor_t(size_t key_size=sizeof(int))
         : key_extractor_t(key_size)
     {
     }
+
     virtual default_key_extractor_t* clone() {
         return new default_key_extractor_t(*this);
     }
 };
 
+
+
 struct tuple_comparator_t {
+
     key_extractor_t* _extract;
     key_compare_t* _compare;
+
+
     tuple_comparator_t(key_extractor_t* extract, key_compare_t* compare)
         : _extract(extract), _compare(compare)
     {
     }
-    
+
+
     int operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
         int diff = a.hint - b.hint;
         if(_extract->key_size() <= sizeof(int) || diff)
@@ -223,16 +259,23 @@ struct tuple_comparator_t {
     }
 };
 
+
+
 struct tuple_less_t {
+
     tuple_comparator_t _compare;
+
     tuple_less_t(key_extractor_t* e, key_compare_t *c)
         : _compare(e, c)
     {
     }
+
     bool operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
         return _compare(a, b) < 0;
     }
 };
+
+
 
 /** 
  * @brief Base join functor. Should be used by join stages to
@@ -251,41 +294,57 @@ class tuple_join_t {
     pointer_guard_t<key_compare_t> _compare;
     
     size_t _out_tuple_size;
+
 public:
 
-    size_t left_tuple_size() { return _left_tuple_size; }
+    size_t left_tuple_size()  { return _left_tuple_size; }
     size_t right_tuple_size() { return _right_tuple_size; }
-    size_t out_tuple_size() { return _out_tuple_size; }
-    size_t key_size() { return _left->key_size(); }
+    size_t out_tuple_size()   { return _out_tuple_size; }
+    size_t key_size()         { return _left->key_size(); }
 
-    tuple_join_t(size_t left_tuple_size, key_extractor_t *left,
-                 size_t right_tuple_size, key_extractor_t *right,
-                 key_compare_t* compare, size_t out_tuple_size)
-        : _left_tuple_size(left_tuple_size), _left(left),
-          _right_tuple_size(right_tuple_size), _right(right),
-          _compare(compare), _out_tuple_size(out_tuple_size)
+
+    tuple_join_t(size_t           left_tuple_size,
+                 key_extractor_t* left,
+                 size_t           right_tuple_size,
+                 key_extractor_t* right,
+                 key_compare_t*   compare,
+                 size_t           output_tuple_size)
+        : _left_tuple_size(left_tuple_size),
+          _left(left),
+          _right_tuple_size(right_tuple_size),
+          _right(right),
+          _compare(compare),
+          _out_tuple_size(output_tuple_size)
     {
         assert(left->key_size() == right->key_size());
     }
 
+
     const char* get_left_key(const char* tuple_data) {
         return _left->extract_key(tuple_data);
     }
+
+
     const char* get_right_key(const char* tuple_data) {
         return _right->extract_key(tuple_data);
     }
 
+
     const char* get_left_key(const tuple_t &tuple) {
         return get_left_key(tuple.data);
     }
+
+
     const char* get_right_key(const tuple_t &tuple) {
         return get_right_key(tuple.data);
     }
 
+
     int compare(const char* left_key, const char* right_key) {
         return (*_compare)(left_key, right_key);
     }
-    
+
+
     /**
      *  @brief Determine whether two tuples pass an internal set of join
      *  predicates. Should be applied within a join stage.
@@ -305,6 +364,7 @@ public:
                       const tuple_t &left,
                       const tuple_t &right)=0;
 
+
     /**
      * @brief Performs a left outer join (right outer joins are not
      * directly supported but can be achieved by reversing the meaning
@@ -313,6 +373,7 @@ public:
     virtual void outer_join(tuple_t &, const tuple_t &) {
         assert(false);
     }
+
 
     // TODO: implement a join function that tests the predicates first
     virtual ~tuple_join_t() { }
@@ -327,7 +388,6 @@ public:
 class tuple_aggregate_t {
 
 public:
-
     
     /**
      *  @brief Update the internal aggregate state and determine if a

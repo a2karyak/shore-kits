@@ -22,6 +22,10 @@
 
 
 
+const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
+const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
+
+
 
 // container methods
 
@@ -149,11 +153,6 @@ void stage_container_t::enqueue(packet_t* packet) {
     critical_section_t cs(&_container_lock);
 
 
-    if (TRACE_MERGING)
-        TRACE(TRACE_ALWAYS, "%s top of enqueue()\n",
-              packet->_packet_id);
-
-
     // check for non-mergeable packets
     if ( !packet->is_merge_enabled() )  {
 	// We are forcing the new packet to not merge with others.
@@ -175,8 +174,9 @@ void stage_container_t::enqueue(packet_t* packet) {
 	if ( ad->try_merge(packet) ) {
 	    /* packet was merged with this existing stage */
             if (TRACE_MERGING)
-                TRACE(TRACE_ALWAYS, "%s merged into a stage\n",
-                      packet->_packet_id);
+                TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
+                      packet->_packet_id,
+                      packet->_next_tuple_on_merge);
 	    return;
 	    // * * * END CRITICAL SECTION * * *
 	}
@@ -247,7 +247,7 @@ void stage_container_t::run() {
 	assert( !packets->empty() );
         if (TRACE_DEQUEUE) {
             packet_t* head_packet = *(packets->begin());
-            TRACE(TRACE_ALWAYS, "REMOVE packet %s from the container queue\n",
+            TRACE(TRACE_ALWAYS, "Processing %s\n",
                   head_packet->_packet_id);
         }
 
@@ -288,6 +288,45 @@ void stage_container_t::run() {
 
 
 // stage adaptor methods
+
+
+stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container,
+                                                    packet_list_t* packet_list,
+                                                    size_t tuple_size)
+    : adaptor_t(tuple_page_t::alloc(tuple_size, malloc)),
+      _container(container),
+      _packet_list(packet_list),
+      _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
+      _still_accepting_packets(true),
+      _cancelled(false)
+{
+    
+    assert( !packet_list->empty() );
+    
+    pthread_mutex_init_wrapper(&_stage_adaptor_lock, NULL);
+    
+    packet_list_t::iterator it;
+    
+    // We only need one packet to provide us with inputs. We
+    // will make the first packet in the list a "primary"
+    // packet. We can destroy the packet subtrees in the other
+    // packets in the list since they will NEVER be used.
+    it = packet_list->begin();
+    _packet = *it;
+    while(++it != packet_list->end()) {
+        packet_t* non_primary_packet = *it;
+        non_primary_packet->destroy_subpackets();
+    }
+
+    // Record next_tuple field in ALL packets, even the
+    // primary.
+    for (it = packet_list->begin(); it != packet_list->end(); ++it) {
+        packet_t* packet = *it;
+        packet->_next_tuple_on_merge = NEXT_TUPLE_INITIAL_VALUE;
+    }
+}
+
+
 
 /**
  *  @brief Try to merge the specified packet into this stage. This
@@ -331,8 +370,8 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
-    packet->_stage_next_tuple_on_merge = _next_tuple;
-    if ( _next_tuple == 1 ) {
+    packet->_next_tuple_on_merge = _next_tuple;
+    if ( _next_tuple == NEXT_TUPLE_INITIAL_VALUE ) {
 	// Stage has not produced any results yet. No difference
 	// between (1) merging the packet now and (2) if the packet
 	// had been with this stage's packet list from the beginning.
@@ -409,7 +448,7 @@ stage_t::result_t stage_container_t::stage_adaptor_t::output_page(tuple_page_t *
         
         // If this packet has run more than once, it may have received
         // all the tuples it needs. Check for this case.
-        if ( next_tuple == curr_packet->_stage_next_tuple_needed )
+        if ( next_tuple == curr_packet->_next_tuple_needed )
             // This packet has received all tuples it needs! Another
             // reason to terminate this packet!
             terminate_curr_packet = true;
@@ -543,8 +582,8 @@ void stage_container_t::stage_adaptor_t::run_stage(stage_t* stage) {
  *  @brief Cleanup after successful processing of a stage.
  *
  *  Walk through packet list. Invoke finish_packet() on packets that
- *  merged when _next_tuple == 1. Erase these packets from the packet
- *  list.
+ *  merged when _next_tuple == NEXT_TUPLE_INITIAL_VALUE. Erase these
+ *  packets from the packet list.
  *
  *  Take the remain packet list (of "unfinished" packets) and
  *  re-enqueue it.
@@ -552,7 +591,6 @@ void stage_container_t::stage_adaptor_t::run_stage(stage_t* stage) {
  *  Invoke terminate_inputs() on the primary packet and delete it.
  */
 void stage_container_t::stage_adaptor_t::cleanup() {
-
 
     // walk through our packet list
     packet_list_t::iterator it;
@@ -563,7 +601,7 @@ void stage_container_t::stage_adaptor_t::cleanup() {
         // Check for all packets that have been with this stage from
         // the beginning. If we haven't invoked finish_packet() on the
         // primary yet, we're going to do it now.
-        if ( curr_packet->_stage_next_tuple_on_merge == 1 ) {
+        if ( curr_packet->_next_tuple_on_merge == NEXT_TUPLE_INITIAL_VALUE ) {
 
             // The packet is finished. If it is not the primary
             // packet, finish_packet() will delete it.
@@ -574,10 +612,13 @@ void stage_container_t::stage_adaptor_t::cleanup() {
         }
         
         // The packet is not finished. Simply update its progress
-        // counter(s).
-        curr_packet->_stage_next_tuple_needed =
-            curr_packet->_stage_next_tuple_on_merge;
-        curr_packet->_stage_next_tuple_on_merge = 0; // reinitialize
+        // counter(s). The worker thread that picks up this packet
+        // list should set the _stage_next_tuple_on_merge fields to
+        // NEXT_TUPLE_INITIAL_VALUE.
+        curr_packet->_next_tuple_needed =
+            curr_packet->_next_tuple_on_merge;
+        curr_packet->_next_tuple_on_merge = NEXT_TUPLE_UNINITIALIZED;
+        ++it;
     }
 
 

@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "engine/thread.h"
-#include "engine/core/stage.h"
+#include "engine/core/stage_container.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
@@ -9,7 +9,6 @@
 
 // include me last!
 #include "engine/namespace.h"
-
 
 
 /**
@@ -46,8 +45,8 @@ packet_t::packet_t(char *          packet_id,
       _packet_type(packet_type),
       _output_buffer(output_buffer),
       _output_filter(output_filter),
-      _stage_next_tuple_on_merge(0),
-      _stage_next_tuple_needed(0)
+      _next_tuple_on_merge(stage_container_t::NEXT_TUPLE_UNINITIALIZED),
+      _next_tuple_needed  (stage_container_t::NEXT_TUPLE_INITIAL_VALUE)
 {
     // error checking
     assert(packet_id     != NULL);
