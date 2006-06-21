@@ -73,7 +73,7 @@ public:
 
 
     /* see packet.cpp for documentation */
-    packet_t::packet_t(char*           packet_id,
+    packet_t(char*           packet_id,
 		       const char*     packet_type,
                        tuple_buffer_t* output_buffer,
                        tuple_filter_t* output_filter,

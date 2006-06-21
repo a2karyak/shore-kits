@@ -421,7 +421,7 @@ stage_t::result_t sort_stage_t::process_packet() {
         for(unsigned int i=0; i < PAGES_PER_INITIAL_SORTED_RUN; i++) {
 
             // read in a run of pages
-            tuple_page_t* page;
+            tuple_page_t* page = NULL;
             int get_ret = _input_buffer->get_page(page);
             assert( get_ret != -1 ); // TODO do actual termination
             

@@ -56,7 +56,7 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
         _page_count = 0;
         _agg_page = NULL;
         while(_page_count < MAX_RUN_PAGES) {
-            tuple_page_t* page;
+            tuple_page_t* page = NULL;
             int ret = input_buffer->get_page(page);
             assert(ret != -1); // TODO: handle termination properly
 
