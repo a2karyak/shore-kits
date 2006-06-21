@@ -14,6 +14,7 @@ STAGES = \
    stages/fdump.cpp \
    stages/tscan.cpp \
    stages/aggregate.cpp \
+   stages/partial_aggregate.cpp \
    stages/hash_join.cpp \
    stages/func_call.cpp \
    stages/merge.cpp \

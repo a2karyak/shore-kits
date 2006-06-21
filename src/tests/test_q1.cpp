@@ -182,31 +182,21 @@ struct q1_key_extract_t : public key_extractor_t {
 class q1_count_aggregate_t : public tuple_aggregate_t {
 
 private:
-    // STATS
-    bool first;
-    aggregate_tuple tuple;
+    default_key_extractor_t _extractor;
 
 public:
   
-    q1_count_aggregate_t() {
-        first = true;
-        tuple.L_RETURNFLAG = -1;
-        tuple.L_LINESTATUS = -1;
+    q1_count_aggregate_t()
+        : tuple_aggregate_t(sizeof(aggregate_tuple)),
+          _extractor(sizeof(char)*2)
+    {
     }
-  
-    bool aggregate(tuple_t &d, const tuple_t &s) {
+    virtual key_extractor_t* key_extractor() { return &_extractor; }
+
+    virtual void aggregate(char* agg_data, const tuple_t &s) {
         projected_lineitem_tuple *src;
         src = (projected_lineitem_tuple *)s.data;
-
-        // break group?
-        bool broken = false;
-        bool valid = false;
-        broken |= (tuple.L_RETURNFLAG != src->L_RETURNFLAG);
-        broken |= (tuple.L_LINESTATUS != src->L_LINESTATUS);
-        if(broken)
-            valid = break_group(d, src->L_RETURNFLAG, src->L_LINESTATUS);
-        //        else
-        //            printf(".");
+        aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
 
         // cache resused values for convenience
         double L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
@@ -215,54 +205,40 @@ public:
         double L_DISC_PRICE = L_EXTENDEDPRICE * (1 - L_DISCOUNT);
 
         // update count
-        tuple.L_COUNT_ORDER++;
+        tuple->L_COUNT_ORDER++;
         
         // update sums
-        tuple.L_SUM_QTY += L_QUANTITY;
-        tuple.L_SUM_BASE_PRICE += L_EXTENDEDPRICE;
-        tuple.L_SUM_DISC_PRICE += L_DISC_PRICE;
-        tuple.L_SUM_CHARGE += L_DISC_PRICE * (1 + src->L_TAX);
-        tuple.L_AVG_QTY += L_QUANTITY;
-        tuple.L_AVG_PRICE += L_EXTENDEDPRICE;
-        tuple.L_AVG_DISC += L_DISCOUNT;
+        tuple->L_SUM_QTY += L_QUANTITY;
+        tuple->L_SUM_BASE_PRICE += L_EXTENDEDPRICE;
+        tuple->L_SUM_DISC_PRICE += L_DISC_PRICE;
+        tuple->L_SUM_CHARGE += L_DISC_PRICE * (1 + src->L_TAX);
+        tuple->L_AVG_QTY += L_QUANTITY;
+        tuple->L_AVG_PRICE += L_EXTENDEDPRICE;
+        tuple->L_AVG_DISC += L_DISCOUNT;
 
-	if (((int) tuple.L_COUNT_ORDER) % 100 == 0) {
-	    TRACE(TRACE_DEBUG, "%lf\n", tuple.L_COUNT_ORDER);
+	if (((int) tuple->L_COUNT_ORDER) % 100 == 0) {
+	    TRACE(TRACE_DEBUG, "%lf\n", tuple->L_COUNT_ORDER);
 	    fflush(stdout);
 	}
-
-        // output valid?
-        return valid;
     }
 
     
-    bool eof(tuple_t &d) {
-        return break_group(d, -1, -1);
-    }
-
-    bool break_group(tuple_t &d, char L_RETURNFLAG, char L_LINESTATUS) {
-        bool valid = !first;
-        first = false;
-        printf("+\n");
-        // output?
-        if(valid) {
+    virtual void finish(tuple_t &d, const char* agg_data) {
             aggregate_tuple *dest;
             dest = (aggregate_tuple *)d.data;
+            aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
                 
             // compute averages
-            tuple.L_AVG_QTY /= tuple.L_COUNT_ORDER;
-            tuple.L_AVG_PRICE /= tuple.L_COUNT_ORDER;
-            tuple.L_AVG_DISC /= tuple.L_COUNT_ORDER;
+            tuple->L_AVG_QTY /= tuple->L_COUNT_ORDER;
+            tuple->L_AVG_PRICE /= tuple->L_COUNT_ORDER;
+            tuple->L_AVG_DISC /= tuple->L_COUNT_ORDER;
 
             // assign the value to the output
-            *dest = tuple;
-        }
-            
-        // reset the aggregate values
-        memset(&tuple, 0, sizeof(aggregate_tuple));
-        tuple.L_RETURNFLAG = L_RETURNFLAG;
-        tuple.L_LINESTATUS = L_LINESTATUS;
-        return valid;
+            memcpy(d.data, agg_data, tuple_size());
+    }
+
+    virtual q1_count_aggregate_t* clone() {
+        return new q1_count_aggregate_t(*this);
     }
 };
 
@@ -394,6 +370,7 @@ int main() {
                                                                    agg_output_buffer,
                                                                    new trivial_filter_t(agg_output_buffer->tuple_size),
                                                                    new q1_count_aggregate_t(),
+                                                                   new default_key_extractor_t(sizeof(char)*2),
                                                                    q1_sort_packet);
 
 
@@ -410,7 +387,7 @@ int main() {
                   tuple->L_SUM_QTY, tuple->L_SUM_BASE_PRICE,
                   tuple->L_SUM_DISC_PRICE);
         }
-        TRACE(TRACE_ALWAYS, "Query executed in %lf ms\n", timer.time_ms());
+        TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
 
 

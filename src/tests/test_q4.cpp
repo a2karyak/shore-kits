@@ -55,7 +55,7 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
             return new lineitem_tscan_filter_t(*this);
         }
     };
-
+#if 0
     struct int_distinct_t : public tuple_aggregate_t {
         bool _first;
         int _last_value;
@@ -83,7 +83,7 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
             return result;
         }
     };
-    
+#endif
     // LINEITEM TSCAN PACKET
     // the output consists of 1 int (the
     char* packet_id = copy_string("Lineitem TSCAN");
@@ -221,50 +221,24 @@ struct q4_tuple_t {
 };
 
 struct q4_count_aggregate_t : public tuple_aggregate_t {
-    bool _first;
-    int  _last_value;
-    int  _count;
+    default_key_extractor_t _extractor;
+    
     q4_count_aggregate_t()
-        : _first(true), _last_value(-1), _count(0)
+        : tuple_aggregate_t(sizeof(q4_tuple_t))
     {
     }
-    virtual bool aggregate(tuple_t &d, const tuple_t &s) {
-
-        int value = *(int*)s.data;
-
-        if ( _first ) {
-            // no tuple yet
-            _first = false;
-            _last_value = value;
-            _count = 1;
-            return false;
-        }
-        
-        if ( value == _last_value ) {
-            // keep counting
-            _count++;
-            return false;
-        }
-
-        // Otherwise, we are seeing a group break. Produce the count
-        // and the value.
-        q4_tuple_t* dest = (q4_tuple_t*) d.data;
-        dest->O_ORDERPRIORITY = _last_value;
-        dest->ORDER_COUNT = _count;
-        _last_value = value;
-        _count = 1;
-        return true;
+    virtual key_extractor_t* key_extractor() { return &_extractor; }
+    
+    virtual void aggregate(char* agg_data, const tuple_t &s) {
+        q4_tuple_t* agg = (q4_tuple_t*) agg_data;
+        agg->ORDER_COUNT++;
     }
 
-    virtual bool eof(tuple_t  &d) {
-        if ( _first )
-            // we've seen no tuples!
-            return false;
-
-        q4_tuple_t* dest = (q4_tuple_t*) d.data;
-        dest->O_ORDERPRIORITY = _last_value;
-        dest->ORDER_COUNT = _count;
-        return true;
+    virtual void finish(tuple_t &d, const char* agg_data) {
+        memcpy(d.data, agg_data, tuple_size());
+    }
+    virtual q4_count_aggregate_t* clone() {
+        return new q4_count_aggregate_t(*this);
     }
 };
 

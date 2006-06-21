@@ -8,22 +8,28 @@
 class count_aggregate_t : public tuple_aggregate_t {
 
 private:
-    int count;
+    default_key_extractor_t _extractor;
     
 public:
   
-    count_aggregate_t() {
-        count = 0;
+    count_aggregate_t()
+        : tuple_aggregate_t(sizeof(int)),
+          _extractor(0)
+    {
     }
   
-    bool aggregate(tuple_t &, const tuple_t &) {
-        count++;
-        return false;
+    virtual key_extractor_t* key_extractor() { return &_extractor; }
+    
+    virtual void aggregate(char* agg_data, const tuple_t &) {
+        ++*(int*) agg_data;
     }
 
-    bool eof(tuple_t &dest) {
-        *(int*)dest.data = count;
-        return true;
+    virtual void finish(tuple_t &dest, const char* agg_data) {
+        memcpy(dest.data, agg_data, tuple_size());
+    }
+
+    virtual count_aggregate_t* clone() {
+        return new count_aggregate_t(*this);
     }
 };
 

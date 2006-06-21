@@ -360,6 +360,25 @@ public:
 
     
     /**
+     *  @brief Try to allocate space for a new tuple.
+     *
+     *  @return NULL if the page is full. Otherwise, the address of
+     *  the newly allocated tuple.
+     */
+
+    char *allocate_tuple() {
+
+        if(tuple_count() == capacity())
+	    // page is full!
+            return NULL;
+        
+        char *result = &_data[_end_offset];
+        _end_offset += tuple_size();
+        _tuple_count++;
+        return result;
+    }
+    
+    /**
      *  @brief Allocate a new tuple on this page and initializes
      *  'tuple' to point to it. This is a pre-assembly strategy; use
      *  it to obtain tuples in order to assemble data "in place"
@@ -473,25 +492,6 @@ public:
     
 protected:
 
-    /**
-     *  @brief Try to allocate space for a new tuple.
-     *
-     *  @return NULL if the page is full. Otherwise, the address of
-     *  the newly allocated tuple.
-     */
-
-    char *allocate_tuple() {
-
-        if(tuple_count() == capacity())
-	    // page is full!
-            return NULL;
-        
-        char *result = &_data[_end_offset];
-        _end_offset += tuple_size();
-        _tuple_count++;
-        return result;
-    }
-    
 
     tuple_page_t() {
         // sanity check

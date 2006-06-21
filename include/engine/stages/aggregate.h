@@ -25,7 +25,8 @@ struct aggregate_packet_t : public packet_t {
 
     static const char* PACKET_TYPE;
     
-    tuple_aggregate_t* _aggregator;
+    pointer_guard_t<tuple_aggregate_t> _aggregator;
+    pointer_guard_t<key_extractor_t> _extract;
     packet_t*          _input;
     tuple_buffer_t*    _input_buffer;
     
@@ -63,9 +64,10 @@ struct aggregate_packet_t : public packet_t {
 		       tuple_buffer_t*    output_buffer,
 		       tuple_filter_t*    output_filter,
 		       tuple_aggregate_t* aggregator,
+                       key_extractor_t*   extract,
                        packet_t*          input)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
-	  _aggregator(aggregator),
+	  _aggregator(aggregator), _extract(extract),
           _input(input),
           _input_buffer(input->_output_buffer)
     {
@@ -79,7 +81,6 @@ struct aggregate_packet_t : public packet_t {
         assert(_input == NULL);
         assert(_input_buffer == NULL);
 
-        delete _aggregator;
     }
 
 

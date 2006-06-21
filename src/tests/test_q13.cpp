@@ -48,53 +48,27 @@ struct int_desc_key_extractor_t : public key_extractor_t {
 };
 
 struct q13_count_aggregate_t : public tuple_aggregate_t {
-    bool _first;
-    int  _last_value;
-    int  _count;
+    default_key_extractor_t _extractor;
     
     q13_count_aggregate_t()
-        : _first(true), _last_value(-1), _count(0)
+        : tuple_aggregate_t(sizeof(key_count_tuple_t))
     {
     }
-    virtual bool aggregate(tuple_t &d, const tuple_t &s) {
-
-        int value = *(int*)s.data;
-
-        if ( _first ) {
-            // no tuple yet
-            _first = false;
-            _last_value = value;
-            _count = 1;
-            return false;
-        }
-        
-        if ( value == _last_value ) {
-            // keep counting
-            _count++;
-            return false;
-        }
-            
-        // Otherwise, we are seeing a group break. Produce the count
-        // and the value.
-        key_count_tuple_t* dest = (key_count_tuple_t*) d.data;
-        dest->KEY = _last_value;
-        dest->COUNT = _count;
-        _last_value = value;
-        _count = 1;
-        return true;
+    virtual key_extractor_t* key_extractor() { return &_extractor; }
+    
+    virtual void aggregate(char* agg_data, const tuple_t &) {
+        key_count_tuple_t* agg = (key_count_tuple_t*) agg_data;
+        agg->COUNT++;
     }
 
-    virtual bool eof(tuple_t  &d) {
-        if ( _first )
-            // we've seen no tuples!
-            return false;
-
-        key_count_tuple_t* dest = (key_count_tuple_t*) d.data;
-        dest->KEY = _last_value;
-        dest->COUNT = _count;
-        return true;
+    virtual void finish(tuple_t &d, const char* agg_data) {
+        memcpy(d.data, agg_data, tuple_size());
+    }
+    virtual q13_count_aggregate_t* clone() {
+        return new q13_count_aggregate_t(*this);
     }
 };
+
 
 /**
  * @brief select c_cust_key from customer
@@ -207,6 +181,7 @@ packet_t* order_scan(Db* tpch_orders) {
                                                   buffer,
                                                   filter,
                                                   aggregator,
+                                                  new default_key_extractor_t(),
                                                   sort_packet);
 
     return agg_packet;
@@ -348,6 +323,7 @@ int main() {
                                                       buffer,
                                                       filter,
                                                       agg,
+                                                      new default_key_extractor_t(),
                                                       sort_packet);
 
         // final sort of results

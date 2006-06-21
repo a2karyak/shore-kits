@@ -32,6 +32,7 @@ packet_t* create_q6_packet(const char* client_prefix) {
                                                                new tuple_buffer_t(2*sizeof(double)),
                                                                new trivial_filter_t(tscan_output->tuple_size),
                                                                new q6_count_aggregate_t(),
+                                                               new default_key_extractor_t(0),
                                                                q6_tscan_packet);
 
     return q6_agg_packet;

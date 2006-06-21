@@ -85,6 +85,7 @@ int main(int argc, char* argv[]) {
                                 count_buffer,
                                 new trivial_filter_t(sizeof(int)),
                                 new count_aggregate_t(),
+                                new default_key_extractor_t(),
                                 fc_packet );
     dispatcher_t::dispatch_packet(agg_packet);
     

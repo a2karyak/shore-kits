@@ -161,20 +161,23 @@ class key_extractor_t {
 private:
 
     size_t _key_size;
-    
+    size_t _key_offset;
 public:
-
-    key_extractor_t(size_t key_size=sizeof(int))
-        : _key_size(key_size)
+    key_extractor_t(size_t key_size=sizeof(int), size_t key_offset=0)
+        : _key_size(key_size), _key_offset(key_offset)
     {
     }
     size_t key_size() { return _key_size; }
+    size_t key_offset() { return _key_offset; }
 
 
     /**
      * @brief extracts the full key of a tuple. 
      */
     const char* extract_key(const tuple_t &tuple) {
+        return extract_key(tuple.data);
+    }
+    char* extract_key(tuple_t &tuple) {
         return extract_key(tuple.data);
     }
 
@@ -185,10 +188,13 @@ public:
      * The default implementation assumes the key is the first part of
      * the tuple and simply returns its argument.
      */
-    virtual const char* extract_key(const char* tuple_data) {
-        return tuple_data;
+    const char* extract_key(const char* tuple_data) {
+        return tuple_data + key_offset();
     }
 
+    char* extract_key(char* tuple_data) {
+        return tuple_data + key_offset();
+    }
 
     /**
      * @brief extracts an abbreviated key that represents the most
@@ -197,17 +203,32 @@ public:
      * to resolve the ambiguity.
      */
     int extract_hint(const tuple_t &tuple) {
-        return extract_hint(tuple.data);
+        return extract_hint(extract_key(tuple));
     }
 
+    /**
+     * @brief calculates an integer-sized "hint" to accelerate key
+     * comparisons.
+     *
+     * Hints should take values such that hint1 < hint2 implies key1 <
+     * key2 and hint1 > hint2 implies key1 > key2.
+     *
+     * hint1 == hint2 requires a full key comparison *EXCEPT* in the
+     * special case where key_size() <= sizeof(int) -- in this case
+     * the hint *is* the key (and can be automatically extracted from
+     * it by the default implementation).
+     *
+     * If key_size() > sizeof(int) the hint need not be meaningful, as
+     * long as it is not misleading.
+     */
+    
 
-    virtual int extract_hint(const char* tuple_data) {
+    virtual int extract_hint(const char* key) {
         // this guarantees that we're not doing something dangerous
         assert(key_size() <= sizeof(int));
         
         // clear out any padding that might result from smaller keys
         int hint = 0;
-        const char* key = extract_key(tuple_data);
         memcpy(&hint, key, key_size());
         return hint;
     }
@@ -223,9 +244,8 @@ public:
 
 
 struct default_key_extractor_t : public key_extractor_t {
-
-    default_key_extractor_t(size_t key_size=sizeof(int))
-        : key_extractor_t(key_size)
+    default_key_extractor_t(size_t key_size=sizeof(int), size_t key_offset=0)
+        : key_extractor_t(key_size, key_offset)
     {
     }
 
@@ -386,35 +406,67 @@ public:
  * other aggregation functors.
  */
 class tuple_aggregate_t {
-
+    size_t _tuple_size;
 public:
-    
-    /**
-     *  @brief Update the internal aggregate state and determine if a
-     *  new output tuple can be produced (if a group break occurred).
-     *
-     *  @param dest If an output tuple is produced, it is assigned to
-     *  this tuple.
-     *
-     *  @return True if an output tuple is produced. False otherwise.
-     */
-
-    virtual bool aggregate(tuple_t &dest, const tuple_t &src)=0;
-
+    tuple_aggregate_t(size_t tuple_size)
+        : _tuple_size(tuple_size)
+    {
+    }
 
     /**
-     *  @brief Do a final update of the internal aggregate state and
-     *  (possibly) produce a final output tuple. This method should be
-     *  invoked when there are no more source tuples to be aggregated.
+     * @brief size of an aggregate tuple (not necessarily the same as
+     * the stage's input or output tuple size!)
+     */
+     
+    size_t tuple_size() { return _tuple_size; }
+    
+    virtual key_extractor_t* key_extractor()=0;
+    
+    /**
+     * @brief "Zeros out" the data fields of an aggregate tuple,
+     * preparing it for first use. The stage will set the key field(s)
+     * after calling this function.
      *
-     *  @param dest If an output tuple is produced, it is assigned to
-     *  this tuple.
-     *
-     *  @return True if an output tuple is produced. False otherwise.
+     * The default implementation simply memsets the data to zeroes.
+     */
+    
+    virtual void init(char* agg_data) {
+        memset(agg_data, 0, tuple_size());
+    }
+    
+
+    
+    /**
+     *  @brief Applies a tuple to an aggregate's state
      */
 
-    virtual bool eof(tuple_t &dest)=0;
+    virtual void aggregate(char* agg_data, const tuple_t &tuple)=0;
+
+
     
+    /**
+     * @brief Merges (other_agg)'s internal state into (agg)
+     *
+     * This function allows partially aggregated runs to be merged.
+     */
+    
+    virtual void merge(char*, const char*) {
+        assert(false);
+    }
+
+    /**
+     *  @brief Convert the internal aggregate state into a final
+     *  output tuple. This method will be invoked when there are no
+     *  more tuples to be aggregated for this group.
+     *
+     * This function allows running totals (eg sum and count) to be
+     * converted into the desired results (eg avg).
+     */
+
+    virtual void finish(tuple_t &dest, const char* agg_data)=0;
+
+
+    virtual tuple_aggregate_t* clone()=0;
   
     virtual ~tuple_aggregate_t() { }
 
