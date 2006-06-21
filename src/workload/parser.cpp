@@ -10,6 +10,11 @@
 # include "workload/parser.h"
 
 
+
+// include me last!!!
+#include "engine/namespace.h"
+
+
 /* CMD constants */
 #define STD_DELIM " "
 #define MAX_ARGS 4
@@ -243,6 +248,10 @@ void parser_t::handle_msg_workload_info(char* ) {
 void parser_t::print_usage(FILE* out_stream) {
 
   fprintf(out_stream, "-----------\n");
-  fprintf(out_stream, "QPipe v0.4:\n");
+  fprintf(out_stream, "QPipe v2.0:\n");
   fprintf(out_stream, "-----------\n");
 }
+
+
+
+#include "engine/namespace.h" 

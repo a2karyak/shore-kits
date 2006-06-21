@@ -10,18 +10,6 @@
 # ifndef __QPIPE_H
 # define __QPIPE_H
 
-/* Standard */
-#include <unistd.h>
-#include <sys/time.h>
-#include <math.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <iostream>
-#include <stddef.h>
-#include <stdio.h>
-#include <cstdlib>
-#include <string>
-
 /* BerkeleyDB */
 #include "db_cxx.h"
 
@@ -34,7 +22,11 @@
 
 /* QPipe Server */
 #include "workload.h"
+#include "job.h"
 
+
+
+/* Configurable values */
 #define QPIPE_VERSION "v2.0"
 #define QPIPE_PROMPT "(qpipe) "
 
@@ -44,6 +36,7 @@
 #define STD_CONFIG_DATA_DIR "./database"
 
 using namespace qpipe;
+
 
 using std::string;
 using std::ostream;

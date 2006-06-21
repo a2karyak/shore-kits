@@ -32,8 +32,13 @@
 
 #include "tests/common/tester_thread.h"
 
-/* QPipe Server */
+/* QPipe Workload */
 #include "parser.h"
+
+
+// include me last!!!
+#include "engine/namespace.h"
+
 
 using std::string;
 
@@ -137,7 +142,7 @@ class workload_factory {
  * corresponding functions that initialize and start them.
  */
 
-class workload_t {
+class workload_t : public thread_t {
 
  private:
 
@@ -177,7 +182,7 @@ class workload_t {
                 const int selQuery, const string selSQL = NULL);
     
     /* creates the client threads and starts executing */
-    int run();
+    void* run();
 
     /* prints out the runtime information about the workload */
     void get_info();
@@ -228,7 +233,7 @@ class client_counter {
  * @brief : Class that represents a QPipe client
  */
 
-class client_t {
+class client_t : public thread_t {
  private:
 
     // client workload
@@ -263,7 +268,7 @@ class client_t {
     ~client_t();
 
     /* execute */
-    int run();
+    void* run();
     
     /* returns client unique ID */
     int get_unique_id() { return (clUniqueID); }
@@ -283,4 +288,7 @@ class client_t {
 };
 
 
-# endif	// __QPIPE_WL_H
+#include "engine/namespace.h"
+
+
+#endif	// __QPIPE_WL_H

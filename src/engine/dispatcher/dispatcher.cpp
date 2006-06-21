@@ -47,7 +47,9 @@ dispatcher_t::~dispatcher_t() {
  *  their constructors should execute in the context of the root
  *  thread.
  */
-void dispatcher_t::_register_stage_container(const char* packet_type, stage_container_t* sc) {
+void dispatcher_t::_register_stage_container(const char* packet_type,
+                                             stage_container_t* sc)
+{
 
   
   // We eventually want multiple stages willing to perform SORT's. But

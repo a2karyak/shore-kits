@@ -34,8 +34,9 @@
  *  declared, cast its address to a static_hash_map_t. Use the
  *  static_hash_map_t "datatype" for all manipulations.
  */
-struct static_hash_map_s
-{
+
+struct static_hash_map_s {
+    
   struct static_hash_node_s* table_entries;
   size_t table_size;
   
@@ -55,8 +56,9 @@ struct static_hash_map_s
  *  static_hash_node_t. Use the static_hash_node_t "datatype" for all
  *  manipulations.
  */
-struct static_hash_node_s
-{
+
+struct static_hash_node_s {
+    
   /** The previous node in the list. */
   struct static_hash_node_s* prev;
 

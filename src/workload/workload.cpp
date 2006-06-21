@@ -16,6 +16,12 @@
 
 #include "workload/workload.h"
 
+
+// include me last!!!
+#include "engine/namespace.h"
+
+
+
 /* Number of concurrent clients */
 const size_t STD_NUM_CLIENTS = 4;
 
@@ -36,53 +42,9 @@ const int MIX_SIZE = 4;
 
 
 ////////////////////////////////////
-// wrapper functions
-
-/** @fn     : void* start_wl(void*)
- *  @brief  : Starts the specified workload
- *  @param  : void* arg - A (workload*) to the specific workload
- *  @return : 0 on success, 1 otherwise
- */
-
-void* start_wl(void* arg) {
-
-    workload_t* wl = (workload_t*)arg;
-        
-    if (wl->isStarted()) {
-        TRACE( TRACE_ALWAYS, "Workload %d has already started\n",
-               wl->get_idx());
-        return ((void*)0);
-    }
-
-    /* start running the workload */
-    wl->run();
-    return ((void*)1);
-}
-
-
-
-/** @fn     : void* start_cl(void*)
- *  @brief  : Starts a specific client
- *  @param  : void* arg - An (clinet_t*) to the specific client
- *  @return : 0 on success, 1 otherwise
- */
-
-void* start_cl(void* arg) {
-
-    client_t* cl = (client_t*)arg;
-
-    /* start client */
-    cl->run();
-    return ((void*)1);
-}
-
-
-
-////////////////////////////////////
 // methods for workload_factory
 
 workload_factory* workload_factory::workloadFactoryInstance = NULL;
-
 pthread_mutex_t workload_factory::instance_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -263,12 +225,8 @@ int workload_factory::attach_clients(int noClients, client_t templ) {
     // gets the index of the newly created workload
     theWLs[theWLCounter]->set_idx( theWLCounter );
   
-    // starts the thread
-    tester_thread_t* wl_thread = new tester_thread_t(start_wl,
-                                                     (void*)&theWLs[theWLCounter],
-                                                     "START WL");
-
-    if ( thread_create( &theWLsHandles[theWLCounter], wl_thread) ) {
+    /* starts the workload thread */
+    if ( thread_create( &theWLsHandles[theWLCounter], theWLs[theWLCounter]) ) {
 	TRACE(TRACE_ALWAYS, "thread_create failed\n");
 	QPIPE_PANIC();
     }
@@ -514,10 +472,9 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
 /** @fn     : run()
  *  @brief  : Initializes the corresponding threads of clients, starts them, and then joins them.
  *            It will return only when all the clients have their requests completed.
- *  @return : 0 on success, -1 otherwise.
  */
 
-int workload_t::run() {
+void* workload_t::run() {
 
     // return immediately if workload already started
     pthread_mutex_lock(&workload_mutex);
@@ -525,6 +482,7 @@ int workload_t::run() {
     if (wlStarted) {
         TRACE( TRACE_ALWAYS, "Workload has already started TH=%x\n", pthread_self());
         pthread_mutex_unlock(&workload_mutex);
+        return ((void*)1);
     }
     else {
         wlStarted = 1;
@@ -558,12 +516,8 @@ int workload_t::run() {
         TRACE( TRACE_DEBUG, "Starting client %d of %d\n", i, wlNumClients);
 
         
-        // starts client thread
-        tester_thread_t* cl_thread = new tester_thread_t(start_cl,
-                                                         (void*)&runningClients[i],
-                                                         "START WL CLIENT");
-
-        if ( thread_create( &clientHandles[i], cl_thread) ) {
+        /* starts client thread */
+        if ( thread_create( &clientHandles[i], runningClients[i]) ) {
             TRACE(TRACE_ALWAYS, "thread_create failed\n");
             QPIPE_PANIC();
         }
@@ -609,7 +563,7 @@ int workload_t::run() {
     workload_factory* wf = workload_factory::instance();
     wf->update_wl_status(myIdx, 0);
 
-    return(0);
+    return ((void*)0);
 }
 
 
@@ -770,7 +724,7 @@ void client_t::init() {
  *  @brief : Calls the init function
  */
 
-client_t::client_t() {
+client_t::client_t() : thread_t() {
 
     // standard initialization
     init();
@@ -783,7 +737,7 @@ client_t::client_t() {
  *           and setting the various variables.
  */
 
-client_t::client_t(int query, int think, int iter, const string sql) {
+client_t::client_t(int query, int think, int iter, const string sql) : thread_t() {
 
     // standard initialization
     init();
@@ -812,7 +766,7 @@ client_t::client_t(int query, int think, int iter, const string sql) {
  *  @brief : Creates a new instance by copying each field of the passed instance. 
  */
 
-client_t::client_t(const client_t& rhs) {
+client_t::client_t(const client_t& rhs) : thread_t() {
 
     if (&rhs != NULL) {
 
@@ -862,18 +816,18 @@ void client_t::set_workload(workload_t* aWorkload) {
 
 
 /** @fn     : run()
- *  @brief  : Submits the specified query for a number of iterations and with a think time interval
- *  @return : 0 on success, 1 otherwise
+ *  @brief  : Submits the specified query for a number of iterations
+ *            and with a think time interval
  */
 
-int client_t::run() {
+void* client_t::run() {
     
     fprintf(stderr, "CL=%d Q=%d IT=%d TT=%d\n", clUniqueID, clSelQuery, clNumOfQueries, clThinkTime );
 
     /* return if corresponding client not properly initialized */
     if (clNumOfQueries <= 0) {
         TRACE( TRACE_ALWAYS, "Illegal client iterations = %d\n", clNumOfQueries);
-        return (1);
+        return ((void*)1);
     }
 
     float tpmC = 0.0;  
@@ -959,6 +913,8 @@ int client_t::run() {
     }
   
     free (deck);
-    return (0);
+    return ((void*)0);
 }
 
+
+#include "engine/namespace.h"

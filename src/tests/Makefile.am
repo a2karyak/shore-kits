@@ -30,7 +30,8 @@ bin_PROGRAMS = \
    test_q6 \
    test_q6_2cl \
    test_q13 \
-   test_q1
+   test_q1 \
+   test_q4
 
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
@@ -53,4 +54,4 @@ test_q13_SOURCES = test_q13.cpp
 test_q6_2cl_SOURCES = test_q6_2cl.cpp
 test_q6_mult_SOURCES = test_q6_mult.cpp
 test_q1_SOURCES = test_q1.cpp
-
+test_q4_SOURCES = test_q4.cpp

@@ -9,6 +9,7 @@
 
 #include "server.h"
 
+using namespace qpipe;
 
 char BUFFER[255];
 

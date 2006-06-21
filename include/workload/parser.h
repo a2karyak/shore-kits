@@ -24,6 +24,11 @@
 #include "workload.h"
 
 
+
+// include me last!!!
+#include "engine/namespace.h"
+
+
 using std::string;
 
 /**
@@ -60,4 +65,6 @@ class parser_t {
 };
 
 
-# endif // __QPIPE_PARSER_H
+#include "engine/namespace.h"
+
+#endif // __QPIPE_PARSER_H
