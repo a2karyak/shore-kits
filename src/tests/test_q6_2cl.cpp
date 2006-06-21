@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
 
 
     register_stage<tscan_stage_t>(1);
-    register_stage<aggregate_stage_t>(2);
+    register_stage<aggregate_stage_t>(num_clients);
    
 
     stopwatch_t timer;
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
     }    
 
     
-    TRACE(TRACE_ALWAYS, "Query executed in %lf ms\n", timer.time_ms());
+    TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     if ( !db_close() )
         TRACE(TRACE_ALWAYS, "db_close() failed\n");
     return 0;

@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
             TRACE(TRACE_ALWAYS, "*** Q6 Count: %lf. Sum: %lf.  ***\n", r[0], r[1]);
         }
         
-        TRACE(TRACE_ALWAYS, "Query executed in %lf ms\n", timer.time_ms());
+        TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
     
  
