@@ -162,7 +162,8 @@ bool page_buffer_t::check_readable() {
         // read.
         
         commit_reads();
-        read_size_guess = size;
+        if(size == 0 && stopped_writing())
+            read_size_guess = size;
     }
     
     // pages available?

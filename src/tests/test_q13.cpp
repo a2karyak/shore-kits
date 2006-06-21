@@ -344,7 +344,7 @@ int main() {
         tuple_t output;
         while(!buffer->get_tuple(output)) {
             key_count_tuple_t* r = (key_count_tuple_t*) output.data;
-            TRACE(TRACE_ALWAYS, "*** Q4 Count: %d. CustDist: %d.  ***\n",
+            TRACE(TRACE_ALWAYS, "*** Q13 Count: %d. CustDist: %d.  ***\n",
                   r->KEY, r->COUNT);
         }
         

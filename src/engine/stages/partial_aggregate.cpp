@@ -51,7 +51,7 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
     tuple_set_t run(less);
 
     // read in the tuples and aggregate them in the set
-    while(1) {
+    while(!input_buffer->eof()) {
         _page_list.done();
         _page_count = 0;
         _agg_page = NULL;
@@ -86,7 +86,7 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
                 tuple_set_t::iterator candidate = run.lower_bound(key);
                 if(candidate == run.end() || less(key, *candidate)) {
                     // initialize a blank aggregate tuple
-                    hint_tuple_pair_t agg;
+                    hint_tuple_pair_t agg(hint, NULL);
                     if(alloc_agg(agg, key_data))
                         break;
                     

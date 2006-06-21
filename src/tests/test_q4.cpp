@@ -14,6 +14,7 @@
 #include "engine/stages/fdump.h"
 #include "engine/stages/fscan.h"
 #include "engine/stages/hash_join.h"
+#include "engine/stages/partial_aggregate.h"
 #include "engine/dispatcher.h"
 #include "engine/util/stopwatch.h"
 #include "trace.h"
@@ -265,6 +266,7 @@ int main() {
     register_stage<fdump_stage_t>(10);
     register_stage<fscan_stage_t>(20);
     register_stage<hash_join_stage_t>(1);
+    register_stage<partial_aggregate_stage_t>(1);
 
 
     for(int i=0; i < 5; i++) {
@@ -315,37 +317,28 @@ int main() {
                                                        false,
                                                        true);
 
-#if 0
-        // sort as a precursor to the count aggregate
-        packet_id = copy_string("Orders.O_ORDERPRIORITY SORT");
-        filter = new tuple_filter_t(sizeof(int));
-        buffer = new tuple_buffer_t(sizeof(int));
-        tuple_comparator_t *compare = new int_comparator_t();
-        packet_t* sort_packet = new sort_packet_t(packet_id,
-                                                  buffer,
-                                                  filter,
-                                                  compare,
-                                                  join_packet);
-        
-        // count aggregate
+        // sort/aggregate in one step
         packet_id = copy_string("O_ORDERPRIORITY COUNT");
-        filter = new tuple_filter_t(sizeof(q4_tuple_t));
+        filter = new trivial_filter_t(sizeof(q4_tuple_t));
         buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
         tuple_aggregate_t *aggregate = new q4_count_aggregate_t();
-        packet_t* agg_packet = new aggregate_packet_t(packet_id,
-                                                      buffer,
-                                                      filter,
-                                                      aggregate,
-                                                      sort_packet);
-#endif   
+        packet_t* agg_packet;
+        agg_packet = new partial_aggregate_packet_t(packet_id,
+                                                    buffer,
+                                                    filter,
+                                                    join_packet,
+                                                    aggregate,
+                                                    new default_key_extractor_t(),
+                                                    new int_key_compare_t());
+                                                              
         // Dispatch packet
-        dispatcher_t::dispatch_packet(join_packet);
+        dispatcher_t::dispatch_packet(agg_packet);
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
             q4_tuple_t* r = (q4_tuple_t*) output.data;
-            //            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %d. Count: %d.  ***\n",
-            //    r->O_ORDERPRIORITY, r->ORDER_COUNT);
+            TRACE(TRACE_ALWAYS, "*** Q4 Priority: %d. Count: %d.  ***\n",
+                  r->O_ORDERPRIORITY, r->ORDER_COUNT);
         }
         
 
