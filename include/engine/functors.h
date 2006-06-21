@@ -136,6 +136,11 @@ struct key_compare_t {
     virtual ~key_compare_t() { }
 };
 
+/**
+ * @brief a key extractor class. Assumes the key is stored
+ * contiguously somewhere in the tuple and returns a pointer to the
+ * proper offset.
+ */
 class key_extractor_t {
     size_t _key_size;
     
@@ -147,13 +152,21 @@ public:
     size_t key_size() { return _key_size; }
 
     /**
-     * @brief extracts the full key of a tuple.
+     * @brief extracts the full key of a tuple. 
      */
-    void extract_key(void* key, const tuple_t &tuple) {
-        extract_key(key, tuple.data);
+    const char* extract_key(const tuple_t &tuple) {
+        return extract_key(tuple.data);
     }
 
-    virtual void extract_key(void* key, const void* tuple_data)=0;
+    /**
+     * @brief extracts the full key from a tuple's data.
+     *
+     * The default implementation assumes the key is the first part of
+     * the tuple and simply returns its argument.
+     */
+    virtual const char* extract_key(const char* tuple_data) {
+        return tuple_data;
+    }
 
     /**
      * @brief extracts an abbreviated key that represents the most
@@ -165,22 +178,30 @@ public:
         return extract_hint(tuple.data);
     }
     
-    virtual int extract_hint(const void* tuple_data) {
+    virtual int extract_hint(const char* tuple_data) {
         // this guarantees that we're not doing something dangerous
         assert(key_size() <= sizeof(int));
         
-        // make sure the key is always big enough to hold an int
-        char key[key_size() + sizeof(int)] ALIGNED;
-
         // clear out any padding that might result from smaller keys
-        *(int*) key = 0;
-        extract_key(key, tuple_data);
-        return *(int*) key;
+        int hint = 0;
+        const char* key = extract_key(tuple_data);
+        memcpy(&hint, key, key_size());
+        return hint;
     }
 
     // should simply return new <child-class>(*this);
     virtual key_extractor_t* clone()=0;
     virtual ~key_extractor_t() { }
+};
+
+struct default_key_extractor_t : public key_extractor_t {
+    default_key_extractor_t(size_t key_size=sizeof(int))
+        : key_extractor_t(key_size)
+    {
+    }
+    virtual default_key_extractor_t* clone() {
+        return new default_key_extractor_t(*this);
+    }
 };
 
 struct tuple_comparator_t {
@@ -196,11 +217,20 @@ struct tuple_comparator_t {
         if(_extract->key_size() <= sizeof(int) || diff)
             return diff;
 
-        char akey[_extract->key_size()];
-        char bkey[_extract->key_size()];
-        _extract->extract_key(akey, a.data);
-        _extract->extract_key(bkey, b.data);
+        const char* akey = _extract->extract_key(a.data);
+        const char* bkey = _extract->extract_key(b.data);
         return (*_compare)(akey, bkey);
+    }
+};
+
+struct tuple_less_t {
+    tuple_comparator_t _compare;
+    tuple_less_t(key_extractor_t* e, key_compare_t *c)
+        : _compare(e, c)
+    {
+    }
+    bool operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
+        return _compare(a, b) < 0;
     }
 };
 
@@ -237,14 +267,22 @@ public:
     {
         assert(left->key_size() == right->key_size());
     }
-    void get_left_key(void* key, const tuple_t &tuple) {
-        return _left->extract_key(key, tuple);
+
+    const char* get_left_key(const char* tuple_data) {
+        return _left->extract_key(tuple_data);
     }
-    void get_right_key(void* key, const tuple_t &tuple) {
-        return _right->extract_key(key, tuple);
+    const char* get_right_key(const char* tuple_data) {
+        return _right->extract_key(tuple_data);
     }
 
-    int compare(const void* left_key, const void* right_key) {
+    const char* get_left_key(const tuple_t &tuple) {
+        return get_left_key(tuple.data);
+    }
+    const char* get_right_key(const tuple_t &tuple) {
+        return get_right_key(tuple.data);
+    }
+
+    int compare(const char* left_key, const char* right_key) {
         return (*_compare)(left_key, right_key);
     }
     

@@ -39,8 +39,6 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
 
     // get ready...
     size_t key_size = join->key_size();
-    char outer_key[key_size];
-    char inner_key[key_size];
     char output_data[join->out_tuple_size()];
     tuple_t output_tuple(output_data, sizeof(output_data));
     
@@ -91,7 +89,7 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
 
                 
                 tuple_t outer_tuple = *o_it;
-                join->get_left_key(outer_key, outer_tuple);
+                const char* outer_key = join->get_left_key(outer_tuple);
 
 
                 tuple_page_t::iterator i_it;
@@ -101,7 +99,7 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
                     // check for equality by extracting keys and using
                     // memcmp() to check for byte-by-byte equality
                     tuple_t inner_tuple = *i_it;
-                    join->get_right_key(inner_key, inner_tuple);
+                    const char* inner_key = join->get_right_key(inner_tuple);
                     if ( memcmp( outer_key, inner_key, key_size ) == 0 ) {
                         // keys match!
                         join->join(output_tuple, outer_tuple, inner_tuple);

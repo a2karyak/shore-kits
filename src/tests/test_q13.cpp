@@ -39,9 +39,8 @@ struct key_count_tuple_t {
 
 // this comparator sorts its keys in descending order
 struct int_desc_key_extractor_t : public key_extractor_t {
-    virtual void extract_key(void* key, const void* tuple_data) {
-        int value = -*(const int*)tuple_data;
-        *(int*)key = value;
+    virtual int extract_hint(const char* tuple_data) {
+        return -*(int*)tuple_data;
     }
     virtual int_desc_key_extractor_t* clone() {
         return new int_desc_key_extractor_t(*this);
@@ -233,7 +232,7 @@ int main() {
     register_stage<hash_join_stage_t>(2);
 
 
-    for(int i=0; i < 1; i++) {
+    for(int i=0; i < 5; i++) {
 
         stopwatch_t timer;
 
@@ -245,9 +244,9 @@ int main() {
          */
         struct q13_join_t : public tuple_join_t {
             struct right_key_extractor_t : public key_extractor_t {
-                virtual void extract_key(void* key, const void* tuple_data) {
-                    const key_count_tuple_t* tuple = (const key_count_tuple_t*) tuple_data;
-                    memcpy(key, &tuple->KEY, key_size());
+                virtual int extract_hint(const char* tuple_data) {
+                    key_count_tuple_t* tuple = (key_count_tuple_t*) tuple_data;
+                    return tuple->KEY;
                 }
                 virtual right_key_extractor_t* clone() {
                     return new right_key_extractor_t(*this);
@@ -255,8 +254,8 @@ int main() {
             };
     
             struct left_key_extractor_t : public key_extractor_t {
-                virtual void extract_key(void* key, const void* tuple_data) {
-                    memcpy(key, tuple_data, key_size());
+                virtual int extract_hint(const char* tuple_data) {
+                    return *(int*) tuple_data;
                 }
                 virtual left_key_extractor_t* clone() {
                     return new left_key_extractor_t(*this);
@@ -287,14 +286,11 @@ int main() {
         struct q13_key_extract_t : public key_extractor_t {
             q13_key_extract_t() : key_extractor_t(sizeof(key_count_tuple_t)) { }
             
-            virtual int extract_hint(const void* tuple_data) {
+            virtual int extract_hint(const char* tuple_data) {
                 key_count_tuple_t* tuple = (key_count_tuple_t*) tuple_data;
-                // confusing -- custdist is a count of counts...
+                // confusing -- custdist is a count of counts... and
+                // descending sort
                 return -tuple->COUNT;
-            }
-            virtual void extract_key(void* key, const void* tuple_data) {
-                // the whole tuple is the key
-                memcpy(key, tuple_data, key_size());
             }
             virtual q13_key_extract_t* clone() {
                 return new q13_key_extract_t(*this);

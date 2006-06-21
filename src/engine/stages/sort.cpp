@@ -23,17 +23,6 @@ using std::list;
 
 
 
-struct tuple_less_t {
-    tuple_comparator_t _compare;
-    tuple_less_t(key_extractor_t* e, key_compare_t *c)
-        : _compare(e, c)
-    {
-    }
-    bool operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
-        return _compare(a, b) < 0;
-    }
-};
-
 
 
 const char* sort_packet_t::PACKET_TYPE = "SORT";

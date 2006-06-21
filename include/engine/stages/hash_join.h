@@ -138,7 +138,7 @@ class hash_join_stage_t : public stage_t {
      * The key equality test simply performs a bytewise comparison of
      * the two keys it is given.
      */
-    typedef hashtable<char *, char *,
+    typedef hashtable<char *, const char *,
                       hash_key_t,
                       extract_key_t<true>,
                       equal_key_t> tuple_hash_t;

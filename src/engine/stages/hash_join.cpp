@@ -33,45 +33,14 @@ struct hash_join_stage_t::hash_key_t {
 
 template <bool right>
 struct hash_join_stage_t::extract_key_t {
-    mutable tuple_join_t *_join;
-    mutable array_guard_t<char> _k1;
-    mutable array_guard_t<char> _k2;
-    mutable tuple_t _tuple;
+    tuple_join_t *_join;
 
     extract_key_t(tuple_join_t *join)
-        : _join(join),
-          _k1(new char[_join->key_size()]),
-          _k2(new char[_join->key_size()]),
-          _tuple(NULL, right? _join->right_tuple_size() : _join->left_tuple_size())
+        : _join(join)
     {
     }
-    extract_key_t(const extract_key_t &other)
-        : _join(other._join),
-          _k1(new char[_join->key_size()]),
-          _k2(new char[_join->key_size()]),
-          _tuple(NULL, right? _join->right_tuple_size() : _join->left_tuple_size())
-    {
-    }
-    extract_key_t &operator =(const extract_key_t &other) {
-        _join = other._join;
-        _k1 = new char[_join->key_size()];
-        _k2 = new char[_join->key_size()];
-        _tuple = other._tuple;
-    }
-    char* const operator()(char * value) const {
-        // alternate keys so we don't clobber a live value
-        array_guard_t<char> tmp = _k1.release();
-        _k1 = _k2.release();
-        _k2 = tmp.release();
-
-        // extract the key and return it
-        _tuple.data = value;
-        if(right)
-            _join->get_right_key(_k1, _tuple);
-        else
-            _join->get_left_key(_k1, _tuple);
-        
-        return _k1;
+    const char* const operator()(const char * value) const {
+        return right? _join->get_right_key(value) : _join->get_left_key(value);
     }
 };
 
@@ -274,7 +243,7 @@ stage_t::result_t hash_join_stage_t::process_packet() {
             break;
      
         // which partition?
-        char *left_key = extract_left_key(left.data);
+        const char* left_key = extract_left_key(left.data);
         int hash_code = hash_key(left_key);
         int partition = hash_code % partitions.size();
         partition_t &p = partitions[partition];

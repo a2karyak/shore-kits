@@ -10,11 +10,6 @@ struct int_key_compare_t : public key_compare_t {
     virtual key_compare_t* clone() { return new int_key_compare_t(*this); }
 };
 
-struct int_key_extractor_t : public key_extractor_t {
-  virtual void extract_key(void* key, const void* tuple_data) {
-      memcpy(key, tuple_data, key_size());
-  }       
-    virtual key_extractor_t* clone() { return new int_key_extractor_t(*this); }
-};
+typedef default_key_extractor_t int_key_extractor_t;
 
 #endif
