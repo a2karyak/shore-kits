@@ -148,6 +148,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/x86)
 
     ARCHOS=x86_LINUX
+    CPU_FLAGS="-march=pentium4"
     ;;
 
   # linux on itanium? (not implem)
@@ -155,6 +156,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/ia64)
 
     ARCHOS=IA64_LINUX
+    CPU_FLAGS="-mtune-arch=itanium"
     ;;
 
   # linux on power5? (not implem)
@@ -162,6 +164,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/power5)
 
     ARCHOS=PPC_LINUX
+    CPU_FLAGS="-mcpu=power5"
     ;;
 
 
@@ -170,6 +173,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/powerpc64)
 
     ARCHOS=PPC64_LINUX
+    CPU_FLAGS="-mcpu=powerpc64"
     ;;
     
   # Sparc Solaris
@@ -266,7 +270,7 @@ AC_SUBST(BDB_HOME)
 
 #PROFILE_FLAGS="-pg"
 OPT_FLAGS="-O3 -finline-limit=1200"
-CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
+CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
 	-Wconversion -Wno-system-headers -D_REENTRANT -I$BDB_HOME/include"
 
 LDFLAGS="-lnsl -ldl -lm -lpthread"
