@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #ifndef _TPCH_TABLES_H
 #define _TPCH_TABLES_H

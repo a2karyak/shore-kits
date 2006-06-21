@@ -5,9 +5,9 @@ SUBDIRS = common
 INCLUDES = -I$(top_srcdir)/include
 
 LDADD = \
+   common/libtestcommon.a \
    ../trace/libtrace.a  \
    ../engine/libqpipe.a \
-   common/libtestcommon.a \
    $(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here
@@ -28,6 +28,7 @@ bin_PROGRAMS = \
    test_bnl_in_stage \
    test_q4 \
    test_q6 \
+   test_q6_2cl \
    test_q13 \
    test_q1
 

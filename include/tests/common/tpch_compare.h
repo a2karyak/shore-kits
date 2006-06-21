@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #ifndef _TPCH_COMPARE_H
 #define _TPCH_COMPARE_H

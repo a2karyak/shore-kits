@@ -17,6 +17,9 @@
 // include me last!!!
 #include "engine/namespace.h"
 
+#define TRACE_MERGING 0
+#define TRACE_DEQUEUE 0
+
 
 
 
@@ -146,11 +149,19 @@ void stage_container_t::enqueue(packet_t* packet) {
     critical_section_t cs(&_container_lock);
 
 
+    if (TRACE_MERGING)
+        TRACE(TRACE_ALWAYS, "%s top of enqueue()\n",
+              packet->_packet_id);
+
+
     // check for non-mergeable packets
     if ( !packet->is_merge_enabled() )  {
 	// We are forcing the new packet to not merge with others.
 	container_queue_enqueue_no_merge(packet);
-	return; 
+        if (TRACE_MERGING)
+            TRACE(TRACE_ALWAYS, "%s merging disabled\n",
+                  packet->_packet_id);
+	return;
 	// * * * END CRITICAL SECTION * * *
     }
 
@@ -163,6 +174,9 @@ void stage_container_t::enqueue(packet_t* packet) {
 	stage_container_t::stage_adaptor_t* ad = *sit;
 	if ( ad->try_merge(packet) ) {
 	    /* packet was merged with this existing stage */
+            if (TRACE_MERGING)
+                TRACE(TRACE_ALWAYS, "%s merged into a stage\n",
+                      packet->_packet_id);
 	    return;
 	    // * * * END CRITICAL SECTION * * *
 	}
@@ -190,12 +204,20 @@ void stage_container_t::enqueue(packet_t* packet) {
 	    // add this packet to the list of already merged packets
 	    // in the container queue
 	    cq_plist->push_back(packet);
+            if (TRACE_MERGING)
+                TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
+                      packet->_packet_id);
 	    return;
 	    // * * * END CRITICAL SECTION * * *
 	}
     }
+    
 
-
+    if (TRACE_MERGING)
+        TRACE(TRACE_ALWAYS, "%s could not be merged\n",
+              packet->_packet_id);
+    
+    
     // No work sharing detected. We can now give up and insert the new
     // packet into the stage_queue.
     container_queue_enqueue_no_merge(packet);
@@ -212,25 +234,52 @@ void stage_container_t::run() {
 
     while (1) {
 	
-	// wait for a packet to become available
+
+	// Wait for a packet to become available. We release the
+	// _container_lock in container_queue_dequeue() if we end up
+	// actually waiting.
 	critical_section_t cs(&_container_lock);
 	packet_list_t* packets = container_queue_dequeue();
-	cs.exit();
 	
-	
+
 	// error checking
 	assert( packets != NULL );
 	assert( !packets->empty() );
+        if (TRACE_DEQUEUE) {
+            packet_t* head_packet = *(packets->begin());
+            TRACE(TRACE_ALWAYS, "REMOVE packet %s from the container queue\n",
+                  head_packet->_packet_id);
+        }
 
 
 	// TODO: process rebinding instructions here
 
-    
- 	pointer_guard_t <stage_t> stage = _stage_maker->create_stage();
-        size_t tuple_size = packets->front()->_output_filter->input_tuple_size();
-	stage_adaptor_t(this, packets, tuple_size).run_stage(stage);
-	
 
+        // Construct an adaptor to work with. If this is expensive, we
+        // can construct the adaptor before the dequeue and invoke
+        // some init() function to initialize the adaptor with the
+        // packet list.
+	stage_adaptor_t adaptor(this, packets, packets->front()->_output_filter->input_tuple_size());
+
+        
+	// Add new stage to the container's list of active stages. It
+	// is better to release the container lock and reacquire it
+	// here since stage construction can take a long time.
+        _container_current_stages.push_back( &adaptor );
+	cs.exit();
+
+        
+        // run stage
+ 	pointer_guard_t <stage_t> stage = _stage_maker->create_stage();
+        adaptor.run_stage(stage);
+
+	
+        // remove active stage
+	critical_section_t cs_remove_active_stage(&_container_lock);
+        _container_current_stages.remove(&adaptor);
+	cs_remove_active_stage.exit();
+        
+        
 	// TODO: check for container shutdown
     }
 }

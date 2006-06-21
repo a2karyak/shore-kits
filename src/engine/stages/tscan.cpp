@@ -3,6 +3,7 @@
 #include "engine/stages/tscan.h"
 #include "engine/util/guard.h"
 #include "qpipe_panic.h"
+#include <unistd.h>
 
 
 

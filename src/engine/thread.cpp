@@ -200,63 +200,63 @@ int thread_create(pthread_t* thread, thread_t* t)
 void pthread_mutex_init_wrapper(pthread_mutex_t* mutex, const pthread_mutexattr_t* attr)
 {
 
-  pthread_mutexattr_t        mutex_attr;
-  const pthread_mutexattr_t* ptr_mutex_attr;
-  int err;
+    pthread_mutexattr_t        mutex_attr;
+    const pthread_mutexattr_t* ptr_mutex_attr;
+    int err;
 
   
-  if (attr == NULL)
-  {
-    err = pthread_mutexattr_init(&mutex_attr);
-    if (err)
-      thread_fatal_error("pthread_mutexattr_init()", err);
+    if (attr == NULL)
+    {
+        err = pthread_mutexattr_init(&mutex_attr);
+        if (err)
+            thread_fatal_error("pthread_mutexattr_init()", err);
 
-    err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
-    if (err)
-      thread_fatal_error("pthread_mutexattr_settype()", err);
+        err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
+        if (err)
+            thread_fatal_error("pthread_mutexattr_settype()", err);
     
-    err = pthread_mutexattr_setpshared(&mutex_attr, PTHREAD_PROCESS_PRIVATE);
+        err = pthread_mutexattr_setpshared(&mutex_attr, PTHREAD_PROCESS_PRIVATE);
+        if (err)
+            thread_fatal_error("pthread_mutexattr_setpshared()", err);
+
+        ptr_mutex_attr = &mutex_attr;
+    }
+    else
+    {
+        ptr_mutex_attr = attr;
+    }
+
+
+    err = pthread_mutex_init(mutex, ptr_mutex_attr);
     if (err)
-      thread_fatal_error("pthread_mutexattr_setpshared()", err);
-
-    ptr_mutex_attr = &mutex_attr;
-  }
-  else
-  {
-    ptr_mutex_attr = attr;
-  }
-
-
-  err = pthread_mutex_init(mutex, ptr_mutex_attr);
-  if (err)
-    thread_fatal_error("pthread_mutex_init()", err);
+        thread_fatal_error("pthread_mutex_init()", err);
 }
 
 
 
 void pthread_mutex_lock_wrapper(pthread_mutex_t* mutex)
 {
-  int err = pthread_mutex_lock(mutex);
-  if (err)
-    thread_fatal_error("pthread_mutex_lock()", err);
+    int err = pthread_mutex_lock(mutex);
+    if (err)
+        thread_fatal_error("pthread_mutex_lock()", err);
 }
 
 
 
 void pthread_mutex_unlock_wrapper(pthread_mutex_t* mutex)
 {
-  int err = pthread_mutex_unlock(mutex);
-  if (err)
-    thread_fatal_error("pthread_mutex_unlock()", err);
+    int err = pthread_mutex_unlock(mutex);
+    if (err)
+        thread_fatal_error("pthread_mutex_unlock()", err);
 }
 
 
 
 void pthread_mutex_destroy_wrapper(pthread_mutex_t* mutex)
 {
-  int err = pthread_mutex_destroy(mutex);
-  if (err)
-    thread_fatal_error("pthread_mutex_destroy()", err);
+    int err = pthread_mutex_destroy(mutex);
+    if (err)
+        thread_fatal_error("pthread_mutex_destroy()", err);
 }
 
 
@@ -272,27 +272,27 @@ void pthread_cond_init_wrapper(pthread_cond_t* cond, const pthread_condattr_t* a
 
 void pthread_cond_destroy_wrapper(pthread_cond_t* cond)
 {
-  int err = pthread_cond_destroy(cond);
-  if (err)
-    thread_fatal_error("pthread_cond_destroy()", err);
+    int err = pthread_cond_destroy(cond);
+    if (err)
+        thread_fatal_error("pthread_cond_destroy()", err);
 }
 
 
 
 void pthread_cond_signal_wrapper(pthread_cond_t* cond)
 {
-  int err = pthread_cond_signal(cond);
-  if (err)
-    thread_fatal_error("pthread_cond_signal()", err);
+    int err = pthread_cond_signal(cond);
+    if (err)
+        thread_fatal_error("pthread_cond_signal()", err);
 }
 
 
 
 void pthread_cond_wait_wrapper(pthread_cond_t* cond, pthread_mutex_t* mutex)
 {
-  int err = pthread_cond_wait(cond, mutex);
-  if (err)
-    thread_fatal_error("pthread_cond_wait()", err);
+    int err = pthread_cond_wait(cond, mutex);
+    if (err)
+        thread_fatal_error("pthread_cond_wait()", err);
 }
 
 

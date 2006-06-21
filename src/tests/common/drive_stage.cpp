@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "tests/common/drive_stage.h"
 #include "engine/core/stage_container.h"
@@ -13,8 +14,8 @@ using namespace qpipe;
  */
 void* drive_stage(void* arg)
 {
-  stage_container_t* sc = (stage_container_t*)arg;
-  sc->run();
+    stage_container_t* sc = (stage_container_t*)arg;
+    sc->run();
 
-  return NULL;
+    return NULL;
 }

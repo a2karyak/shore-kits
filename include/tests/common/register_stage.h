@@ -1,6 +1,9 @@
 // -*- mode:C++; c-basic-offset:4 -*-
-#ifndef __REGISTER_STAGE_CPP
-#define __REGISTER_STAGE_CPP
+
+#ifndef _REGISTER_STAGE_H
+#define _REGISTER_STAGE_H
+
+
 
 #include "engine/thread.h"
 #include "engine/core/stage_container.h"
@@ -36,5 +39,7 @@ void register_stage(int worker_threads=1) {
 	}
     }
 }
+
+
 
 #endif

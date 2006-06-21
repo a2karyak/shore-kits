@@ -1,3 +1,4 @@
+// -*- mode:C++; c-basic-offset:4 -*-
 
 #include "engine/thread.h"
 #include "trace.h"

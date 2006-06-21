@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #ifndef _COMMON_H
 #define _COMMON_H
@@ -22,6 +23,7 @@
 
 #include "tests/common/q6_tscan_filter.h"
 #include "tests/common/q6_aggregate.h"
+#include "tests/common/q6_packet.h"
 
 
 #endif

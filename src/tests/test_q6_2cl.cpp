@@ -12,6 +12,7 @@
 #include "engine/core/stage_container.h"
 #include "engine/stages/tscan.h"
 #include "engine/stages/aggregate.h"
+#include "engine/stages/func_call.h"
 #include "engine/dispatcher.h"
 #include "engine/util/stopwatch.h"
 #include "trace.h"
@@ -26,15 +27,74 @@ extern uint32_t trace_current_setting;
 
 
 
+struct client_info_s {
+    int _client_id;
+    int _num_iterations;
+
+    client_info_s(int client_id, int num_iterations)
+        : _client_id(client_id),
+          _num_iterations(num_iterations)
+    {
+    }
+};
+
+void* client_main(void* arg) {
+    
+    
+    struct client_info_s* info = (struct client_info_s*)arg;
+
+    
+    for (int i = 0; i < info->_num_iterations; i++) {
+
+        char index_str[16];
+        sprintf(index_str, "%d_%d_", info->_client_id, i);
+    
+        packet_t* q6 = create_q6_packet( (string("Q6_CLIENT") + index_str).c_str() );
+        tuple_buffer_t* out = q6->_output_buffer;
+        
+        dispatcher_t::dispatch_packet(q6);
+
+        tuple_t output;
+        while( !out->get_tuple(output) ) {
+            double* r = (double*)output.data;
+            TRACE(TRACE_ALWAYS, "*** CL%d: Q6 Count: %lf. Sum: %lf.  ***\n", info->_client_id, r[0], r[1]);
+        }
+        
+    } // endof i-loop
+
+    
+    return NULL;
+}
+
+
 
 /** @fn    : main
  *  @brief : TPC-H Q6
  */
-
-int main() {
+int main(int argc, char* argv[]) {
 
     thread_init();
     trace_current_setting = TRACE_ALWAYS;
+
+
+
+    // parse command line args
+    if ( argc < 3 ) {
+	TRACE(TRACE_ALWAYS, "Usage: %s <num clients> <iterations per client>\n", argv[0]);
+	exit(-1);
+    }
+    int num_clients = atoi(argv[1]);
+    if ( num_clients == 0 ) {
+	TRACE(TRACE_ALWAYS, "Invalid num clients %s\n", argv[1]);
+	exit(-1);
+    }
+    int iterations_per_client = atoi(argv[2]);
+    if ( iterations_per_client == 0 ) {
+	TRACE(TRACE_ALWAYS, "Invalid iterations per client %s\n", argv[2]);
+	exit(-1);
+    }
+
+
 
     if ( !db_open() ) {
         TRACE(TRACE_ALWAYS, "db_open() failed\n");
@@ -43,108 +103,28 @@ int main() {
 
 
     register_stage<tscan_stage_t>(1);
-    register_stage<aggregate_stage_t>(1);
+    register_stage<aggregate_stage_t>(2);
    
 
-    for(int i=0; i < 10; i++) {
-        stopwatch_t timer;
+    stopwatch_t timer;
+    pthread_t clients[num_clients];
+    for (int i = 0; i < num_clients; i++) {
 
-
-        // 1-st CLIENT
-        // TSCAN PACKET
-        // the output consists of 2 doubles
-        tuple_buffer_t* cl_1_tscan_out_buffer = new tuple_buffer_t(2*sizeof(double));
-        tuple_filter_t *cl_1_tscan_filter = new q6_tscan_filter_t();
-
-
-        char* cl_1_tscan_packet_id;
-        int cl_1_tscan_packet_id_ret = asprintf(&cl_1_tscan_packet_id, "CL_1_Q6_TSCAN_PACKET");
-        assert( cl_1_tscan_packet_id_ret != -1 );
-        tscan_packet_t *cl_1_q6_tscan_packet = new tscan_packet_t(cl_1_tscan_packet_id,
-                                                                  cl_1_tscan_out_buffer,
-                                                                  cl_1_tscan_filter,
-                                                                  tpch_lineitem);
-
-        // AGG PACKET CREATION
-        // the output consists of 2 int
-        tuple_buffer_t* cl_1_agg_output_buffer = new tuple_buffer_t(2*sizeof(double));
-        tuple_filter_t* cl_1_agg_filter = new tuple_filter_t(cl_1_agg_output_buffer->tuple_size);
-        tuple_aggregate_t* cl_1_q6_aggregator = new q6_count_aggregate_t();
-    
-
-        char* cl_1_agg_packet_id;
-        int cl_1_agg_packet_id_ret = asprintf(&cl_1_agg_packet_id, "CL_1_Q6_AGGREGATE_PACKET");
-        assert( cl_1_agg_packet_id_ret != -1 );
-        aggregate_packet_t* cl_1_q6_agg_packet = new aggregate_packet_t(cl_1_agg_packet_id,
-                                                                        cl_1_agg_output_buffer,
-                                                                        cl_1_agg_filter,
-                                                                        cl_1_q6_aggregator,
-                                                                        cl_1_q6_tscan_packet);
-
-
-        // Dispatch 1-st CLIENT packet
-        dispatcher_t::dispatch_packet(cl_1_q6_agg_packet);
+        // allocate client state
+        struct client_info_s* cinfo = new client_info_s(i, iterations_per_client);
         
-
-        
-        // 2-nd CLIENT
-        // TSCAN PACKET
-        // the output consists of 2 doubles
-        tuple_buffer_t* cl_2_tscan_out_buffer = new tuple_buffer_t(2*sizeof(double));
-        tuple_filter_t *cl_2_tscan_filter = new q6_tscan_filter_t();
-
-
-        char* cl_2_tscan_packet_id;
-        int cl_2_tscan_packet_id_ret = asprintf(&cl_2_tscan_packet_id, "CL_2_Q6_TSCAN_PACKET");
-        assert( cl_2_tscan_packet_id_ret != -1 );
-        tscan_packet_t *cl_2_q6_tscan_packet = new tscan_packet_t(cl_2_tscan_packet_id,
-                                                                  cl_2_tscan_out_buffer,
-                                                                  cl_2_tscan_filter,
-                                                                  tpch_lineitem);
-
-        // AGG PACKET CREATION
-        // the output consists of 2 int
-        tuple_buffer_t* cl_2_agg_output_buffer = new tuple_buffer_t(2*sizeof(double));
-        tuple_filter_t* cl_2_agg_filter = new tuple_filter_t(cl_2_agg_output_buffer->tuple_size);
-        count_aggregate_t*  cl_2_q6_aggregator = new count_aggregate_t();
-    
-
-        char* cl_2_agg_packet_id;
-        int cl_2_agg_packet_id_ret = asprintf(&cl_2_agg_packet_id, "CL_2_Q6_AGGREGATE_PACKET");
-        assert( cl_2_agg_packet_id_ret != -1 );
-        aggregate_packet_t* cl_2_q6_agg_packet = new aggregate_packet_t(cl_2_agg_packet_id,
-                                                                        cl_2_agg_output_buffer,
-                                                                        cl_2_agg_filter,
-                                                                        cl_2_q6_aggregator,
-                                                                        cl_2_q6_tscan_packet);
-
-
-        // Dispatch 1-st CLIENT packet
-        dispatcher_t::dispatch_packet(cl_2_q6_agg_packet);
-        
-        
-        tuple_t output;
-        double * r = NULL;
-
-        //cl_1_agg_output_buffer->get_tuple(output);
-        //cl_2_agg_output_buffer->get_tuple(output);
-        
-        while(cl_1_agg_output_buffer->get_tuple(output)) {
-            r = (double*)output.data;
-            TRACE(TRACE_ALWAYS, "*** CL1: Q6 Count: %lf. Sum: %lf.  ***\n", r[0], r[1]);
-        }
-
-        while(cl_2_agg_output_buffer->get_tuple(output)) {
-            r = (double*)output.data;
-            TRACE(TRACE_ALWAYS, "*** CL2: Q6 Count: %lf. Sum: %lf.  ***\n", r[0], r[1]);
-        }
-        
-                
-        
-        TRACE(TRACE_ALWAYS, "Query executed in %lf ms\n", timer.time_ms());
+        // create client thread
+        thread_t* client = new tester_thread_t(client_main, cinfo, "CLIENT-%d", i);
+        int create_ret = thread_create( &clients[i], client );
+        assert(create_ret == 0);
     }
+    for (int i = 0; i < num_clients; i++) {
+        int join_ret = pthread_join( clients[i], NULL );
+        assert(join_ret == 0);
+    }    
 
-
+    
+    TRACE(TRACE_ALWAYS, "Query executed in %lf ms\n", timer.time_ms());
     if ( !db_close() )
         TRACE(TRACE_ALWAYS, "db_close() failed\n");
     return 0;
