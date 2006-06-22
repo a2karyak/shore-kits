@@ -13,6 +13,8 @@
 // include me last!!!
 #include "engine/namespace.h"
 
+extern void set_default_page_size(size_t page_size);
+extern size_t get_default_page_size();
 
 
 /**
@@ -34,49 +36,20 @@ class page_t {
 
  public:
 
+    /** overrides page memory management */
+    void* operator new(size_t n, size_t page_size=get_default_page_size());
+    void operator delete(void* p);
+
+    // leave initialization to the allocator
+    page_t() { }
+    
     size_t page_size() const {
         return _page_size;
     }
-    
-    template <class Alloc>
 
-
-    /**
-     *  @brief The only way to create page_t instances. Allocates
-     *  a new page and places the page_t as its header.
-     *
-     *  @param allocate Allocator for "raw" pages.
-     *
-     *  @param page_size The size of the new page (including
-     *  page_t header).
-     *
-     *  @return NULL on error (if the underlying allocator returns
-     *  NULL). An initialized page otherwise.
-     */
-    static page_t *alloc(Alloc allocate, size_t page_size=4096) {
-
-        char *raw_page = (char *) allocate(page_size);
-	if (raw_page == NULL)
-	    return NULL;
-
-        return new (raw_page) page_t(page_size);
-    }
-
- protected:
-    // called by subclass in-place constructors. No touchie fields!
-    page_t() { }
-
- private:
-
-    page_t(size_t page_size)
-        : _page_size(page_size), next(NULL)
-	{
-	}
-
-    // Prevent attempts to copy pages. The class MUST be constructed
-    // in place so we can use it to refer to the page that contains
-    // it. A naked set of header fields would probably result in us
-    // accessing invalid memory.
+private:
+    // Prevent attempts to copy pages. The class cannot be allocated
+    // on the stack because it needs more space than sizeof(page_t).
     page_t(const page_t &other);
     page_t &operator=(const page_t &other);
 };
@@ -219,8 +192,7 @@ private:
 
 
 /**
- *  @brief Ensures that a list of pages allocated with
- *  malloc+placement-new is freed.
+ *  @brief Ensures that a list of pages is freed.
  */
 struct page_list_guard_t : public pointer_guard_base_t<page_t, page_list_guard_t> {
 
@@ -234,7 +206,7 @@ struct page_list_guard_t : public pointer_guard_base_t<page_t, page_list_guard_t
             while(ptr) {
                 page_t *page = ptr;
                 ptr = page->next;
-                free(page);
+                delete page;
             }
         }
     };

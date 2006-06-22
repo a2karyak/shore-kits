@@ -98,8 +98,6 @@ private:
     }
 };
 
-
-
 /**
  *  @brief Represents a page of tuples of the same type.
  */
@@ -130,16 +128,10 @@ public:
      *  NULL). An initialized page otherwise.
      */
 
-    template<class Alloc>
     static tuple_page_t *alloc(size_t tuple_size,
-			       Alloc allocate,
-			       size_t page_size=4096) {
+			       size_t page_size=get_default_page_size()) {
 
-	page_t *page = page_t::alloc(allocate, page_size);
-	if (page == NULL)
-	    return NULL;
-
-        return tuple_page_t::init(page, tuple_size);
+        return new(page_size) tuple_page_t(tuple_size);
     }
 
 
@@ -158,7 +150,7 @@ public:
 	
 	// error checking
 	assert (page != NULL);
-        return new (page) tuple_page_t();
+        return ::new(page) tuple_page_t();
     }
     
 
@@ -177,9 +169,8 @@ public:
      */
 
     static tuple_page_t *init(page_t *page, size_t tuple_size) {
-	// error checking
-	assert (page != NULL);
-        return new (page) tuple_page_t(tuple_size);
+        assert(page != NULL);
+        return ::new(page) tuple_page_t(tuple_size);
     }
 
     
@@ -515,32 +506,7 @@ protected:
     
 };
 
-
-
-/**
- *  @brief Ensures that a page allocated with malloc+placement-new
- *  gets freed.
- */
-struct page_guard_t : public pointer_guard_base_t<tuple_page_t, page_guard_t> {
-    page_guard_t(tuple_page_t *ptr=NULL)
-        : pointer_guard_base_t<tuple_page_t, page_guard_t>(ptr)
-    {
-    }
-    
-    struct Action {
-        void operator()(tuple_page_t *ptr) {
-            free(ptr);
-        }
-    };
-
-    page_guard_t &operator=(const page_guard_t::temp_ref_t &ref) {
-        assign(ref._ptr);
-        return *this;
-    }
-private:
-    page_guard_t &operator=(page_guard_t &);
-};
-
+typedef pointer_guard_t<tuple_page_t> page_guard_t;
 
 
 /**
@@ -748,7 +714,7 @@ public:
 
     tuple_buffer_t(size_t tuple_size,
                    int num_pages=DEFAULT_BUFFER_PAGES,
-                   int page_size=4096)
+                   int page_size=get_default_page_size())
         : page_buffer(num_pages)
     {
         init(tuple_size, page_size);

@@ -44,7 +44,7 @@ stage_t::result_t fdump_stage_t::process_packet() {
     // read the file; make sure the buffer pages get deleted
     while (1) {
     
-        tuple_page_t* tuple_page;
+        tuple_page_t* tuple_page = NULL;
         switch (input_buffer->get_page(tuple_page)) {
 
         case 0:

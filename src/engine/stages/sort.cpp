@@ -389,7 +389,7 @@ stage_t::result_t sort_stage_t::process_packet() {
         return stage_t::RESULT_STOP;
     
     // create a buffer page for writing to file
-    page_guard_t out_page = tuple_page_t::alloc(_tuple_size, malloc);
+    page_guard_t out_page = tuple_page_t::alloc(_tuple_size);
     
     // create a key array 
     int capacity =

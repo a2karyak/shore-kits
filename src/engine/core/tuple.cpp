@@ -38,10 +38,8 @@ int tuple_buffer_t::check_page_full() {
             return -1;
         }
         
-        // TODO: something besides malloc
         // TODO: deal with memory errors
-        write_page = tuple_page_t::alloc(tuple_size, malloc, _page_size);
-        assert(write_page != NULL);
+        write_page = tuple_page_t::alloc(tuple_size, _page_size);
 
         // we now have space in the buffer
         return 0;
@@ -175,10 +173,7 @@ bool tuple_buffer_t::terminate() {
 
 int tuple_buffer_t::init(size_t _tuple_size, size_t page_size) {
 
-    write_page = tuple_page_t::alloc(_tuple_size, malloc, page_size);
-    if (write_page == NULL)
-	return -1;
-	
+    write_page = tuple_page_t::alloc(_tuple_size, page_size);
     input_arrived = false;
     tuple_size = _tuple_size;
     _page_size = page_size;

@@ -96,7 +96,7 @@ int hash_join_stage_t::test_overflow(int partition) {
     }
     else {
         // allocate another page
-        tuple_page_t *page = tuple_page_t::alloc(_join->right_tuple_size(), malloc);
+        tuple_page_t *page = tuple_page_t::alloc(_join->right_tuple_size());
         page->next = p.page;
         p.page = page;
         page_count++;
@@ -189,7 +189,8 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     }
 
     // create and fill the in-memory hash table
-    size_t page_capacity = tuple_page_t::capacity(4096, _join->right_tuple_size());
+    size_t page_capacity = tuple_page_t::capacity(get_default_page_size(),
+                                                  _join->right_tuple_size());
     tuple_hash_t table(page_count*page_capacity,
                        hash_key,
                        equal_key_t(_join->key_size()),

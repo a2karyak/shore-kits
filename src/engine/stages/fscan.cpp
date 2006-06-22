@@ -37,7 +37,7 @@ stage_t::result_t fscan_stage_t::process_packet() {
     
 
     page_guard_t tuple_page =
-	tuple_page_t::alloc(packet->_output_buffer->tuple_size, malloc);
+	tuple_page_t::alloc(packet->_output_buffer->tuple_size);
     if ( tuple_page == NULL ) {
 	TRACE(TRACE_ALWAYS, "tuple_page_t::alloc() failed\n");
 	return stage_t::RESULT_ERROR;

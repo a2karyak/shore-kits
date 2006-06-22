@@ -293,7 +293,7 @@ void stage_container_t::run() {
 stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container,
                                                     packet_list_t* packet_list,
                                                     size_t tuple_size)
-    : adaptor_t(tuple_page_t::alloc(tuple_size, malloc)),
+    : adaptor_t(tuple_page_t::alloc(tuple_size)),
       _container(container),
       _packet_list(packet_list),
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),

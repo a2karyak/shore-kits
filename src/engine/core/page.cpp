@@ -2,13 +2,54 @@
 
 #include "engine/thread.h"
 #include "engine/core/page.h"
-
+#include <cstring>
 
 
 // include me last!
 #include "engine/namespace.h"
 
+static size_t default_page_size = 4096;
+static bool initialized = false;
 
+void set_default_page_size(size_t page_size) {
+    assert(!initialized);
+    initialized = true;
+    default_page_size = page_size;
+}
+
+size_t get_default_page_size() { return default_page_size; }
+
+/**
+ * @brief allocates a new page of size (page_size), ignoring the
+ * requested size.
+ *
+ * This implementation uses a thread-specific trash stack to avoid
+ * calling the global memory allocator (and hopefully improve locality
+ * as well). Non-standard page sizes are not eligible for linking,
+ * however -- too complicated to be worth it.
+ */
+void* page_t::operator new(size_t, size_t page_size) {
+    union {
+        void* ptr;
+        page_t *page;
+    } pun;
+    pun.ptr = malloc(page_size);
+
+    // initialize the page header
+    pun.page->_page_size = page_size;
+    pun.page->next = NULL;
+    return pun.ptr;
+}
+
+/**
+ * @brief frees a page
+ *
+ * This implementation returns standard-sized pages to the trash
+ * stack, freeing non-standard pages immediately.
+ */
+void page_t::operator delete(void *ptr) {
+    free(ptr);
+}
 
 /**
  *  @brief Initialize a page buffer (can be invoked by subclasses).
@@ -417,7 +458,7 @@ page_buffer_t::~page_buffer_t() {
     while(head) {
         page_t *page = head;
         head = head->next;
-        free(page);
+        delete page;
     }
 }
 

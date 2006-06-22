@@ -17,7 +17,7 @@ int partial_aggregate_stage_t::alloc_agg(hint_tuple_pair_t &agg, const char* key
         if(_page_count >= MAX_RUN_PAGES)
             return 1;
 
-        _agg_page = tuple_page_t::alloc(_aggregate->tuple_size(), malloc);
+        _agg_page = tuple_page_t::alloc(_aggregate->tuple_size());
         _page_list.append(_agg_page);
         _page_count++;
     }
