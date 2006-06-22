@@ -413,6 +413,7 @@ stage_t::result_t sort_stage_t::process_packet() {
 
 
     // create sorted runs
+    bool first_run = true;
     do {
         // TODO: check for stage cancellation at regular intervals
         
@@ -442,6 +443,26 @@ stage_t::result_t sort_stage_t::process_packet() {
         // sort the key array (gotta love the STL!)
         std::sort(array.begin(), array.end(), tuple_less_t(_extract, _compare));
 
+         // are we done?
+        bool eof = _input_buffer->wait_for_input();
+
+        // shortcut if we fit in memory...
+        if(first_run && eof) {
+            _monitor.cancel();
+            tuple_t out(NULL, packet->_output_filter->input_tuple_size());
+            for(hint_vector_t::iterator it=array.begin(); it != array.end(); ++it) {
+                out.data = it->data;
+                result_t result = _adaptor->output(out);
+                if(result)
+                    return result;
+            }
+
+
+            return stage_t::RESULT_STOP;
+        }
+
+        first_run = false;
+        
         // open a temp file to hold the run
         string file_name;
         file_guard_t file = create_tmp_file(file_name, "sorted-run");
@@ -462,9 +483,6 @@ stage_t::result_t sort_stage_t::process_packet() {
         if(!out_page->empty())
             flush_page(out_page, file, file_name);
 
-        // are we done?
-        bool eof = _input_buffer->wait_for_input();
-        
         // notify the merge monitor thread that another run is ready
         critical_section_t cs(&_monitor._lock);
 	run_list_t &runs = _run_map[0];
