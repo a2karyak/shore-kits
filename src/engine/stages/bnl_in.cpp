@@ -6,9 +6,9 @@
 #include "trace.h"
 
 #include <cstring>
-#include <vector>
+#include <bitset>
 
-using std::vector;
+using std::bitset;
 
 
 
@@ -63,7 +63,8 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
         
         // Need a bitmap to track matches between outer relation page
         // and inner relation. So far, we've seen no matches.
-        vector<bool> matches(opage->tuple_count(), false);
+        bitset<2048> matches;
+        assert(opage->tuple_count() <= matches.size());
         
  
         // read the entire inner relation
@@ -114,7 +115,7 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
 
                     if ( compare(outer_ktpair, inner_ktpair) == 0 )
                         // left and right match!
-                        matches[o_index] = true;
+                        matches.set(o_index);
                     
                     
                 } // endof loop over inner page

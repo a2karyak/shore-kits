@@ -356,4 +356,5 @@ int main() {
     if ( !db_close() )
         TRACE(TRACE_ALWAYS, "db_close() failed\n");
     return 0;
+
 }

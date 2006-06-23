@@ -20,7 +20,7 @@ using std::string;
 
 
 template <class Stage>
-void register_stage(int worker_threads=1) {
+void register_stage(int worker_threads=10) {
     stage_container_t* sc;
     string name = string(Stage::DEFAULT_STAGE_NAME) + "_CONTAINER";
     sc = new stage_container_t(name.c_str(), new stage_factory<Stage>);
