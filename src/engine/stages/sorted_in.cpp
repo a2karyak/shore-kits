@@ -26,17 +26,28 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
     dispatcher_t::dispatch_packet(packet->_left);
     dispatcher_t::dispatch_packet(packet->_right);
 
-    // seed the process with the first left tuple
     tuple_t left;
+    const char* left_key;
+    int left_hint;
+
+    tuple_t right;
+    const char* right_key;
+    int right_hint;
+    
+    // seed the process
     if(left_input->get_tuple(left))
         return stage_t::RESULT_STOP;
-    
+
+    left_key = left_extractor->extract_key(left);
+    left_hint = left_extractor->extract_hint(left_key);
+
+    // loop until there are no more tuples left to read
     while(1) {
-        // try to match against a right tuple
-        tuple_t right;
-        const char* right_key;
-        int right_hint;
-        while(1) {
+        // process (ie discard) right side tuples that come before the
+        // current left tuple
+        int diff;
+        do {
+            // advance the right side
             if(right_input->get_tuple(right)) {
                 // no possible matches remain
                 if(reject_matches) {
@@ -44,12 +55,6 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
                         result_t result = _adaptor->output(left);
                         if(result)
                             return result;
-                    }
-                }
-                else {
-                    while(!left_input->get_tuple(left)) {
-                        int left_hint = left_extractor->extract_hint(left);
-                        printf("Rejected suppkey %d\n", left_hint);
                     }
                 }
             
@@ -60,48 +65,35 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
             right_key = right_extractor->extract_key(right);
             right_hint = right_extractor->extract_hint(right_key);
 
-            // match as many left tuples against this right as possible
-            while(1) {
-                const char* left_key = left_extractor->extract_key(left);
-                int left_hint = left_extractor->extract_hint(left_key);
-                int diff = left_hint - right_hint;
-                // break a tie?
-                if(!diff && left_extractor->key_size() > sizeof(int)) 
-                    diff = (*compare)(left_key, right_key);
+            diff = left_hint - right_hint;
+            if(!diff && left_extractor->key_size() > sizeof(int))
+                diff = (*compare)(left_key, right_key);
 
-                if(diff < 0) {
-                    // no match (advance the left side)
-                    if(reject_matches) {
-                        result_t result = _adaptor->output(left);
-                        if(result)
-                            return result;
-                    }
-                    else {
-                        printf("Rejected suppkey %d\n", left_hint);
-                    }
-                }
-                else if(diff > 0) {
-                    // need to advance the right side
-                    break;
-                }
-                else {
-                    // match! (advance the left side)
-                    if(!reject_matches) {
-                        result_t result = _adaptor->output(left);
-                        if(result)
-                            return result;
-                    }
-                    else {
-                        printf("Rejected suppkey %d\n", left_hint);
-                    }
-                }
+        } while(diff > 0);
 
-                // advance the left side
-                if(left_input->get_tuple(left))
-                    return stage_t::RESULT_STOP;
+        // now, process left side tuples until we pass the current
+        // right side tuple
+        while(diff <= 0) {
+            // output?
+            if((diff == 0) != reject_matches) {
+                result_t result = _adaptor->output(left);
+                if(result)
+                    return result;
             }
-        }
-    }
+            else {
+                printf("Rejected suppkey %d\n", left_hint);
+            }
+            
+            // advance the left side
+            if(left_input->get_tuple(left))
+                return stage_t::RESULT_STOP;
 
+            left_key = left_extractor->extract_key(left);
+            left_hint = left_extractor->extract_hint(left_key);
+            diff = left_hint - right_hint;
+            if(!diff && left_extractor->key_size() > sizeof(int))
+                diff = (*compare)(left_key, right_key);
+        } 
+    }
     // unreachable
 }

@@ -93,6 +93,9 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
                     // insert the new aggregate tuple
                     candidate = run.insert(candidate, agg);
                 }
+                else {
+                    TRACE(TRACE_DEBUG, "Merging a tuple\n");
+                }
 
                 // update an existing aggregate tuple (which may have
                 // just barely been inserted)

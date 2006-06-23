@@ -230,7 +230,7 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
     }
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     
-    virtual void aggregate(char* agg_data, const tuple_t &s) {
+    virtual void aggregate(char* agg_data, const tuple_t &) {
         q4_tuple_t* agg = (q4_tuple_t*) agg_data;
         agg->ORDER_COUNT++;
     }

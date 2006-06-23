@@ -132,7 +132,7 @@ public:
     int unregister_job();    
     
     /* Start executing */
-    virtual int start(void* arg) {
+    virtual int start(void*) {
         TRACE( TRACE_ALWAYS, "Executing Empty Job. id=%s\n", job_cmd.c_str());
         
         return (1);

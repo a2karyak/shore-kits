@@ -125,8 +125,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
 
         dest->p_partkey = src->P_PARTKEY;
         dest->p_size = src->P_SIZE;
-        strcpy(dest->p_brand, src->P_BRAND);
-        strcpy(dest->p_type, src->P_TYPE);
+        memcpy(dest->p_brand, src->P_BRAND, sizeof(src->P_BRAND));
+        memcpy(dest->p_type, src->P_TYPE, sizeof(src->P_TYPE));
     }
     virtual part_tscan_filter_t* clone() {
         return new part_tscan_filter_t(*this);
@@ -188,7 +188,7 @@ packet_t* partsupp_scan(Db* tpch_partsupp) {
     packet_t* sort_packet = new sort_packet_t(packet_id,
                                               buffer,
                                               filter,
-                                              new int_key_extractor_t(offset),
+                                              new int_key_extractor_t(sizeof(int), offset),
                                               new int_key_compare_t(),
                                               tscan_packet);
                                               
@@ -226,7 +226,8 @@ struct q16_join_t : public tuple_join_t {
         // also project out the real part key instead of using a
         // filter after the fact
         memcpy(dest, r.data, sizeof(part_scan_tuple_t));
-        dest->p_partkey = *(int*)l.data;
+        part_supp_tuple_t *left = (part_supp_tuple_t*) l.data;
+        dest->p_partkey = left->SUPP_KEY;
     }
 
     virtual q16_join_t* clone() {
@@ -248,11 +249,14 @@ struct q16_compare1_t : public key_compare_t {
         if(diff) return diff;
 
         // ... size ...
-        diff = a->p_type - b->p_type;
+        diff = a->p_size - b->p_size;
         if(diff) return diff;
 
         // ... suppkey
-        return a->p_partkey - b->p_partkey;
+        diff = a->p_partkey - b->p_partkey;
+        if(diff) return diff;
+
+        return 0;
     }
     virtual q16_compare1_t* clone() {
         return new q16_compare1_t(*this);
@@ -264,12 +268,15 @@ struct q16_extractor1_t : public key_extractor_t {
         : key_extractor_t(sizeof(part_scan_tuple_t))
     {
     }
+#if 1
     virtual int extract_hint(const char* key) {
+        return 0;
         part_scan_tuple_t* pst = (part_scan_tuple_t*) key;
         int result;
         memcpy(&result, pst->p_brand, sizeof(int));
         return result;
     }
+#endif
     virtual q16_extractor1_t* clone() {
         return new q16_extractor1_t(*this);
     }
@@ -365,7 +372,7 @@ struct q16_compare2_t : public key_compare_t {
         if(diff) return diff;
 
         // ... size 
-        diff = a->p_type - b->p_type;
+        diff = a->p_size - b->p_size;
         if(diff) return diff;
 
         return 0;
@@ -409,8 +416,8 @@ int main() {
         
         // ps_suppkey not in (select ... from supplier ...)
         char* packet_id = copy_string("ps_suppkey NOT IN");
-        tuple_filter_t* filter = new partsupp_filter_t();
-        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+        tuple_filter_t* filter = new trivial_filter_t(sizeof(part_supp_tuple_t));
+        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
         packet_t* not_in_packet;
         not_in_packet = new sorted_in_packet_t(packet_id,
                                                buffer,

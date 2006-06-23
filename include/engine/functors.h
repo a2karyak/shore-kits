@@ -225,7 +225,8 @@ public:
 
     virtual int extract_hint(const char* key) {
         // this guarantees that we're not doing something dangerous
-        assert(key_size() <= sizeof(int));
+        if(key_size() > sizeof(int))
+            return 0;
         
         // clear out any padding that might result from smaller keys
         int hint = 0;
