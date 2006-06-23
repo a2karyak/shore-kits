@@ -405,7 +405,7 @@ int main() {
     register_stage<sorted_in_stage_t>();
 
 
-    for(int i=0; i < 1; i++) {
+    for(int i=0; i < 5; i++) {
 
         stopwatch_t timer;
 
