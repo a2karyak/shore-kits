@@ -25,6 +25,9 @@
 
 #define STRSIZE(x)(x+1)
 
+// helper macro to calculate field offsets
+#define FIELD_OFFSET(type, field) ((size_t) &((type*)NULL)->field)
+
 
 
 /* exported structures */
