@@ -72,10 +72,8 @@ struct q12_tuple {
  * @brief select O_ORDERKEY, O_ORDERPRIORITY from ORDERS
  */
 struct order_tscan_filter_t : tuple_filter_t {
-    int count;
     order_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_orders_tuple))
-        , count(0)
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
@@ -87,13 +85,6 @@ struct order_tscan_filter_t : tuple_filter_t {
     virtual order_tscan_filter_t* clone() {
         return new order_tscan_filter_t(*this);
     }
-    virtual bool select(const tuple_t &) {
-        count++;
-        return true;
-    }
-    ~order_tscan_filter_t() {
-        printf("order_tscan_filter_t selected %d tuples\n", count);
-    }
 };
 
 /**
@@ -104,10 +95,8 @@ struct order_tscan_filter_t : tuple_filter_t {
  */
 struct lineitem_tscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
-    int count;
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
-        , count(0)
     {
         size_t offset;
         predicate_t* p;
@@ -119,7 +108,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         orp->add(p);
         p = new scalar_predicate_t<tpch_l_shipmode>(SHIP, offset);
         orp->add(p);
-        //_filter.add(orp);
+        _filter.add(orp);
 
         // ... and L_COMMITDATE < L_RECEIPTDATE ...
         size_t offset1 = FIELD_OFFSET(tpch_lineitem_tuple, L_COMMITDATE);
@@ -131,18 +120,18 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         offset1 = FIELD_OFFSET(tpch_lineitem_tuple, L_SHIPDATE);
         offset2 = FIELD_OFFSET(tpch_lineitem_tuple, L_COMMITDATE);
         p = new field_predicate_t<time_t, less>(offset1, offset2);
-        //_filter.add(p);
+        _filter.add(p);
 
         // ... and L_RECEIPTDATE >= [date] ...
         time_t date = datestr_to_timet("1994-01-01");
         offset = FIELD_OFFSET(tpch_lineitem_tuple, L_RECEIPTDATE);
         p = new scalar_predicate_t<time_t, greater_equal>(date, offset);
-        //_filter.add(p);
+        _filter.add(p);
 
         // ... and L_RECEIPTDATE < [date] + 1 year
         date = time_add_year(date, 1);
         p = new scalar_predicate_t<time_t, less>(date, offset);
-        //_filter.add(p);
+        _filter.add(p);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
         lineitem_scan_tuple *dest = (lineitem_scan_tuple*) d.data;
@@ -151,17 +140,10 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         dest->L_SHIPMODE = src->L_SHIPMODE;
     }
     virtual bool select(const tuple_t &t) {
-        //tpch_lineitem_tuple* tuple = (tpch_lineitem_tuple*) t.data;
-        //bool selected = tuple->L_COMMITDATE < tuple->L_RECEIPTDATE;
-        bool selected = _filter.select(t);
-        if(selected) count++;
-        return selected;
+        return _filter.select(t);
     }
     virtual lineitem_tscan_filter_t* clone() {
         return new lineitem_tscan_filter_t(*this);
-    }
-    ~lineitem_tscan_filter_t() {
-        printf("lineitem_tscan_filter_t selected %d tuples\n", count);
     }
 };
 
