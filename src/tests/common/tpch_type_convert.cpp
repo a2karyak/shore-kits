@@ -3,6 +3,8 @@
 #include "tests/common/tpch_type_convert.h"
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
+#include <cstdio>
 #include <time.h>
 
 
@@ -24,24 +26,16 @@ int datepart(char* str, const time_t *pt) {
  */
 
 time_t datestr_to_timet(char* str) {
-    char buf[100];
-    strcpy(buf, str);
-
     // str in yyyy-mm-dd format
-    char* year = buf;
-    char* month = buf + 5;
-    // char* day = buf + 8;
-
-    buf[4] = '\0';
-    buf[7] = '\0';
-
     tm time_str;
-    time_str.tm_year = atoi(year) - 1900;
-    time_str.tm_mon = atoi(month) - 1;
-    time_str.tm_mday = 4;
+    int count = sscanf(str, "%d-%d-%d", &time_str.tm_year,
+                       &time_str.tm_mon, &time_str.tm_mday);
+    assert(count == 3);
+    time_str.tm_year -= 1900;
+    time_str.tm_mon--;
     time_str.tm_hour = 0;
     time_str.tm_min = 0;
-    time_str.tm_sec = 1;
+    time_str.tm_sec = 0;
     time_str.tm_isdst = -1;
 
     return mktime(&time_str);

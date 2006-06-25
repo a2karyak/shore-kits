@@ -28,6 +28,7 @@
 /* Add or subtract a number of days, weeks or months. */
 time_t	time_add_day		(time_t time, int days);
 time_t	time_add_week		(time_t time, int weeks);
+time_t  time_add_year           (time_t time, int years);
 
 /* Returns the beginning or end of the day. */
 time_t	time_day_begin		(time_t t);

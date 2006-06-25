@@ -43,7 +43,7 @@ class scalar_predicate_t : public predicate_t {
     V _value;
     size_t _offset;
 public:
-    scalar_predicate_t(V value, size_t offset=0)
+    scalar_predicate_t(V value, size_t offset)
         : _value(value), _offset(offset)
     {
     }
@@ -70,7 +70,7 @@ class string_predicate_t : public predicate_t {
     string _value;
     size_t _offset;
 public:
-    string_predicate_t(const string &value, size_t offset=0)
+    string_predicate_t(const string &value, size_t offset)
         : _value(value), _offset(offset)
     {
     }
@@ -80,6 +80,25 @@ public:
     }
     virtual string_predicate_t* clone() {
         return new string_predicate_t(*this);
+    }
+};
+
+template <typename V, template<class> class T=equal_to>
+class field_predicate_t : public predicate_t {
+    size_t _offset1;
+    size_t _offset2;
+public:
+    field_predicate_t(size_t offset1, size_t offset2)
+        : _offset1(offset1), _offset2(offset2)
+    {
+    }
+    virtual bool select(const tuple_t &tuple) {
+        V* field1 = reinterpret_cast<V*>(tuple.data + _offset1);
+        V* field2 = reinterpret_cast<V*>(tuple.data + _offset2);
+        return T<V>()(*field1, *field2);
+    }
+    virtual field_predicate_t* clone() {
+        return new field_predicate_t(*this);
     }
 };
 

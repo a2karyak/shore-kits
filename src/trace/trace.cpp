@@ -28,7 +28,7 @@
  *  on and off. We initialize it here to enable all messages. That
  *  way, any messages we print during QPIPE startup will be printed.
  */
-uint32_t trace_current_setting = ~0;
+uint32_t trace_current_setting = ~0u;
 
 
 

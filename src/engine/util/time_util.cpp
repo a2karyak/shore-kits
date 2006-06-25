@@ -84,6 +84,25 @@ time_add_week (time_t time, int weeks)
 }
 
 /**
+ * time_add_year:
+ * @time: A time_t value.
+ * @years: Number of years to add.
+ *
+ * Adds the given number of years to a time value.
+ *
+ * Return value: a time_t value containing @time plus the years added.
+ */
+time_t
+time_add_year (time_t time, int years)
+{
+    struct tm tm;
+    localtime_r(&time, &tm);
+    tm.tm_year += years;
+    tm.tm_isdst = -1;
+    return mktime(&tm);
+}
+
+/**
  * time_day_begin:
  * @t: A time_t value.
  *
