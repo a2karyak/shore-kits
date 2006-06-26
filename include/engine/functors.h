@@ -256,7 +256,7 @@ struct default_key_extractor_t : public key_extractor_t {
     }
     virtual int extract_hint(const char* key) {
         int result = 0;
-        memcpy(&result, key, std::max(sizeof(int), key_size()));
+        memcpy(&result, key, std::min(sizeof(int), key_size()));
         return result;
     }
     

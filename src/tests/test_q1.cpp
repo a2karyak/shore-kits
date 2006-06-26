@@ -15,11 +15,7 @@
 #include "engine/util/time_util.h"
 #include "engine/util/stopwatch.h"
 #include "engine/stages/tscan.h"
-#include "engine/stages/aggregate.h"
-#include "engine/stages/sort.h"
-#include "engine/stages/fscan.h"
-#include "engine/stages/fdump.h"
-#include "engine/stages/merge.h"
+#include "engine/stages/partial_aggregate.h"
 
 #include "tests/common.h"
 
@@ -102,10 +98,14 @@ public:
 	t = datestr_to_timet("1998-12-01");
 
 	/* Calculate random predicates */
+#if 0
 	gettimeofday(&tv, 0);
 	mv = tv.tv_usec * getpid();
 
-	DELTA = 60 + abs((int)(60*(float)(rand_r(&mv))/(float)(RAND_MAX+1)));
+ 	DELTA = 60 + abs((int)(60*(float)(rand_r(&mv))/(float)(RAND_MAX+1)));
+#else
+        DELTA = 90;
+#endif
 
 	// Predicate: 1998-12-01 - DELTA days
 	t = time_add_day(t, -DELTA);
@@ -160,14 +160,20 @@ public:
 
 // "order by L_RETURNFLAG, L_LINESTATUS"
 struct q1_key_extract_t : public key_extractor_t {
-    q1_key_extract_t() : key_extractor_t(sizeof(char)*2) { }
-    virtual void extract_key(void* k, const void* tuple_data) {
+    q1_key_extract_t()
+        : key_extractor_t(sizeof(char)*2, 0)
+    {
+        assert(sizeof(char) == 1);
+    }
+    virtual int extract_hint(const char* tuple_data) {
         // store the return flag and line status in the 
         projected_lineitem_tuple *item;
         item = (projected_lineitem_tuple *) tuple_data;
-        char* key = (char*) k;
-        key[0] = item->L_RETURNFLAG;
-        key[1] = item->L_LINESTATUS;
+
+        int result = (item->L_RETURNFLAG << 8)
+            + item->L_LINESTATUS;
+
+        return result;
     }
     virtual q1_key_extract_t* clone() {
         return new q1_key_extract_t(*this);
@@ -182,13 +188,12 @@ struct q1_key_extract_t : public key_extractor_t {
 class q1_count_aggregate_t : public tuple_aggregate_t {
 
 private:
-    default_key_extractor_t _extractor;
+    q1_key_extract_t _extractor;
 
 public:
   
     q1_count_aggregate_t()
-        : tuple_aggregate_t(sizeof(aggregate_tuple)),
-          _extractor(sizeof(char)*2)
+        : tuple_aggregate_t(sizeof(aggregate_tuple))
     {
     }
     virtual key_extractor_t* key_extractor() { return &_extractor; }
@@ -227,14 +232,12 @@ public:
             aggregate_tuple *dest;
             dest = (aggregate_tuple *)d.data;
             aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
-                
-            // compute averages
-            tuple->L_AVG_QTY /= tuple->L_COUNT_ORDER;
-            tuple->L_AVG_PRICE /= tuple->L_COUNT_ORDER;
-            tuple->L_AVG_DISC /= tuple->L_COUNT_ORDER;
 
-            // assign the value to the output
-            memcpy(d.data, agg_data, tuple_size());
+            *dest = *tuple;
+            // compute averages
+            dest->L_AVG_QTY /= dest->L_COUNT_ORDER;
+            dest->L_AVG_PRICE /= dest->L_COUNT_ORDER;
+            dest->L_AVG_DISC /= dest->L_COUNT_ORDER;
     }
 
     virtual q1_count_aggregate_t* clone() {
@@ -262,79 +265,14 @@ int main() {
     
     
     trace_current_setting = TRACE_ALWAYS;
-    int THREAD_POOL_SIZE = 10;
-
-    // creates a TSCAN stage
-    stage_container_t* sc;
-
-    sc = new stage_container_t("TSCAN_CONTAINER", new stage_factory<tscan_stage_t>);
-    dispatcher_t::register_stage_container(tscan_packet_t::PACKET_TYPE, sc);
-    tester_thread_t* tscan_thread = new tester_thread_t(drive_stage, sc, "TSCAN THREAD");
-    if ( thread_create(NULL, tscan_thread) ) {
-	TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	QPIPE_PANIC();
-    }
-
-    // creates a FDUMP stage
-    sc = new stage_container_t("FDUMP_CONTAINER", new stage_factory<fdump_stage_t>);
-    dispatcher_t::register_stage_container(fdump_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* fdump_thread = new tester_thread_t(drive_stage, sc, "FDUMP THREAD");
-	if ( thread_create( NULL, fdump_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    // creates a FSCAN stage    
-    sc = new stage_container_t("FSCAN_CONTAINER", new stage_factory<fscan_stage_t>);
-    dispatcher_t::register_stage_container(fscan_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* fscan_thread = new tester_thread_t(drive_stage, sc, "FSCAN THREAD");
-	if ( thread_create( NULL, fscan_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    // creates a MERGE stage    
-    sc = new stage_container_t("MERGE_CONTAINER", new stage_factory<merge_stage_t>);
-    dispatcher_t::register_stage_container(merge_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* merge_thread = new tester_thread_t(drive_stage, sc, "MERGE THREAD");
-	if ( thread_create( NULL, merge_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    // creates a SORT stage
-    sc = new stage_container_t("SORT_CONTAINER", new stage_factory<sort_stage_t>);
-    dispatcher_t::register_stage_container(sort_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* sort_thread = new tester_thread_t(drive_stage, sc, "SORT THREAD");
-	if ( thread_create( NULL, sort_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    // creates a AGG stage
-    sc = new stage_container_t("AGG_CONTAINER", new stage_factory<aggregate_stage_t>);
-    dispatcher_t::register_stage_container(aggregate_packet_t::PACKET_TYPE, sc);
-    tester_thread_t* agg_thread = new tester_thread_t(drive_stage, sc, "AGG THREAD");
-    if ( thread_create(NULL, agg_thread) ) {
-	TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	QPIPE_PANIC();
-    }
-
     
+    register_stage<tscan_stage_t>();
+    register_stage<partial_aggregate_stage_t>();
 
     for(int i=0; i < 10; i++) {
         stopwatch_t timer;
         
         // TSCAN PACKET
-        // the output consists of 2 doubles
 	tuple_buffer_t* tscan_out_buffer = new tuple_buffer_t(sizeof(projected_lineitem_tuple));
 
         char* tscan_packet_id;
@@ -344,34 +282,21 @@ int main() {
                                                              tscan_out_buffer,
                                                              new q1_tscan_filter_t(),
                                                              tpch_lineitem);
-   
-	// SORT PACKET
-	// the output is always a single int
-        tuple_buffer_t* sort_out_buffer = new tuple_buffer_t(sizeof(projected_lineitem_tuple));
-
-        char* sort_packet_id;
-        int sort_packet_id_ret = asprintf(&sort_packet_id, "Q1_SORT_PACKET");
-        assert( sort_packet_id_ret != -1 );
-	sort_packet_t* q1_sort_packet = new sort_packet_t(sort_packet_id,
-                                                          sort_out_buffer,
-                                                          new trivial_filter_t(tscan_out_buffer->tuple_size),
-                                                          new q1_key_extract_t(),
-                                                          new int_key_compare_t(),
-                                                          q1_tscan_packet);
 
         // AGG PACKET CREATION
-        // the output consists of 2 int
         tuple_buffer_t* agg_output_buffer = new tuple_buffer_t(sizeof(aggregate_tuple));
 
         char* agg_packet_id;
         int agg_packet_id_ret = asprintf(&agg_packet_id, "Q1_AGG_PACKET");
         assert( agg_packet_id_ret != -1 );
-        aggregate_packet_t* q1_agg_packet = new aggregate_packet_t(agg_packet_id,
-                                                                   agg_output_buffer,
-                                                                   new trivial_filter_t(agg_output_buffer->tuple_size),
-                                                                   new q1_count_aggregate_t(),
-                                                                   new default_key_extractor_t(sizeof(char)*2),
-                                                                   q1_sort_packet);
+        packet_t* q1_agg_packet;
+        q1_agg_packet = new partial_aggregate_packet_t(agg_packet_id,
+                                                       agg_output_buffer,
+                                                       new trivial_filter_t(agg_output_buffer->tuple_size),
+                                                                   q1_tscan_packet,
+                                                       new q1_count_aggregate_t(),
+                                                       new q1_key_extract_t(),
+                                                       new int_key_compare_t());
 
 
         // Dispatch packet

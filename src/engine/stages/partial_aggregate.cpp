@@ -55,20 +55,18 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
         _page_list.done();
         _page_count = 0;
         _agg_page = NULL;
-        while(_page_count < MAX_RUN_PAGES) {
-            tuple_page_t* page = NULL;
-            int ret = input_buffer->get_page(page);
-            assert(ret != -1); // TODO: handle termination properly
+        while(_page_count < MAX_RUN_PAGES && !input_buffer->eof()) {
+            page_guard_t page = NULL;
+            tuple_t in;
+            while(1) {
+                int ret = input_buffer->get_tuple(in);
+                assert(ret != -1); // TODO: handle termination properly
 
-            // out of pages?
-            if(ret == 1)
-                break;
+                // out of pages?
+                if(ret == 1)
+                    break;
 
-            // add the new page to the list
-            _page_list.append(page);
-            _page_count++;
-            for(tuple_page_t::iterator it=page->begin(); it != page->end(); ++it) {
-                int hint = tup_key->extract_hint(*it);
+                int hint = tup_key->extract_hint(in);
 
                 // fool the aggregate's key extractor into thinking
                 // the tuple is an aggregate. Use pointer math to put
@@ -77,7 +75,7 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
                 // key bits anyway, which are guaranteed to be the
                 // same for both...)
                 size_t offset = agg_key->key_offset();
-                char* key_data = tup_key->extract_key(*it);
+                char* key_data = tup_key->extract_key(in);
                 hint_tuple_pair_t key(hint, key_data - offset);
                 
                 // find the lowest aggregate such that candidate >=
@@ -99,7 +97,7 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
 
                 // update an existing aggregate tuple (which may have
                 // just barely been inserted)
-                _aggregate->aggregate(candidate->data, *it);
+                _aggregate->aggregate(candidate->data, in);
             }
         }
 
