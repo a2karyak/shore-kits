@@ -83,6 +83,92 @@ public:
     }
 };
 
+
+/**
+ * @brief string predicate that performs 'like' comparisons.
+ */
+template <bool INVERTED=false>
+class like_predicate : public predicate_t {
+    size_t _offset;
+    
+    // the first fragment in tests without a leading '%' (eg "abc%")
+    string _bol;
+    // the last fragment in tests without a trailing '%' (eg "%abc")
+    string _eol;
+    // the fragments surrounded by '%' on both sides
+    typedef vector<string> fragment_list;
+    fragment_list _fragments;
+    void init(const string &value) {
+        size_t beg = 0;
+        size_t end = value.find('%');
+
+        // bol fragment?
+        if(beg != end)
+            _bol = value.substr(beg, end);
+
+        // inner fragments
+        while(1) {
+            beg = end;
+            end = value.find('%', end+1);
+            if(end == string::npos)
+                break;
+            
+            _fragments.push_back(value.substr(beg, end));
+        }
+
+        // eol fragment?
+        if((beg + 1) != value.size())
+            _eol = value.substr(beg, value.size());
+    }
+public:
+    like_predicate(const string &value, size_t offset)
+        : _offset(offset)
+    {
+        assert(value.size());
+        init(value);
+    }
+    virtual bool select(const tuple_t &tuple) {
+        const char* field = tuple.data + _offset;
+        const char* mark;
+
+        // check bol fragment
+        if(_bol.size()) {
+            mark = strstr(field, _bol.c_str());
+            if(mark != field)
+                return INVERTED;
+            
+            // bol match
+            field = mark + _bol.size();
+        }
+
+        // check inner fragments
+        for(fragment_list::iterator it=_fragments.begin(); it != _fragments.end(); ++it) {
+            mark = strstr(field, it->c_str());
+            if(!mark)
+                return INVERTED;
+            
+            field = mark + it->size();
+        }
+            
+        // check eol fragment
+        if(_eol.size()) {
+            mark = strstr(field, _eol.c_str());
+            // not found || not at the end (hit the '\0' terminator)
+            if(!mark || mark[_eol.size()])
+                return INVERTED;
+        }
+
+        // full match
+        return !INVERTED;
+    }
+    virtual like_predicate* clone() {
+        return new like_predicate(*this);
+    }
+};
+
+typedef like_predicate<false> like_predicate_t;
+typedef like_predicate<true> not_like_predicate_t;
+
 template <typename V, template<class> class T=equal_to>
 class field_predicate_t : public predicate_t {
     size_t _offset1;
@@ -101,6 +187,9 @@ public:
         return new field_predicate_t(*this);
     }
 };
+
+
+
 
 /**
  * @brief Conjunctive predicate. Selects a tuple only if all of its

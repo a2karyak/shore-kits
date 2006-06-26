@@ -30,6 +30,7 @@ bin_PROGRAMS = \
    test_q6 \
    test_q6_2cl \
    test_q13 \
+   test_q14 \
    test_q12 \
    test_q16 \
    test_q19 \
@@ -54,6 +55,7 @@ tpch_struct_sizes_SOURCES = tpch_struct_sizes.cpp
 test_q4_SOURCES = test_q4.cpp
 test_q6_SOURCES = test_q6.cpp
 test_q13_SOURCES = test_q13.cpp
+test_q14_SOURCES = test_q14.cpp
 test_q12_SOURCES = test_q12.cpp
 test_q16_SOURCES = test_q16.cpp
 test_q19_SOURCES = test_q19.cpp

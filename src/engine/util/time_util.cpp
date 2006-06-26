@@ -84,6 +84,25 @@ time_add_week (time_t time, int weeks)
 }
 
 /**
+ * time_add_month:
+ * @time: A time_t value.
+ * @months: Number of months to add.
+ *
+ * Adds the given number of months to a time value.
+ *
+ * Return value: a time_t value containing @time plus the months added.
+ */
+time_t
+time_add_month (time_t time, int months)
+{
+    struct tm tm;
+    localtime_r(&time, &tm);
+    tm.tm_mon += months;
+    tm.tm_isdst = -1;
+    return mktime(&tm);
+}
+
+/**
  * time_add_year:
  * @time: A time_t value.
  * @years: Number of years to add.

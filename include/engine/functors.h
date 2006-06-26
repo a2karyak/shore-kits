@@ -4,6 +4,7 @@
 #define _FUNCTORS_H
 
 #include "engine/core/tuple.h"
+#include <algorithm>
 
 
 
@@ -243,13 +244,22 @@ public:
 };
 
 
-
+/**
+ * @brief extracts hints from a key assuming that it (1) is at least
+ * sizeof(int) bytes long and (2) the first sizeof(int) bytes can be
+ * used directly as a key hint
+ */
 struct default_key_extractor_t : public key_extractor_t {
     default_key_extractor_t(size_t key_size=sizeof(int), size_t key_offset=0)
         : key_extractor_t(key_size, key_offset)
     {
     }
-
+    virtual int extract_hint(const char* key) {
+        int result = 0;
+        memcpy(&result, key, std::max(sizeof(int), key_size()));
+        return result;
+    }
+    
     virtual default_key_extractor_t* clone() {
         return new default_key_extractor_t(*this);
     }

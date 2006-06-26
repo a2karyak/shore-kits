@@ -1,3 +1,4 @@
+// -*- 
 /* Miscellaneous time-related utilities
  *
  * Copyright (C) 1998 The Free Software Foundation
@@ -28,6 +29,7 @@
 /* Add or subtract a number of days, weeks or months. */
 time_t	time_add_day		(time_t time, int days);
 time_t	time_add_week		(time_t time, int weeks);
+time_t  time_add_month           (time_t time, int months);
 time_t  time_add_year           (time_t time, int years);
 
 /* Returns the beginning or end of the day. */
