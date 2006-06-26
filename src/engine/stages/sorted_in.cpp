@@ -80,9 +80,6 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
                 if(result)
                     return result;
             }
-            else {
-                printf("Rejected suppkey %d\n", left_hint);
-            }
             
             // advance the left side
             if(left_input->get_tuple(left))
