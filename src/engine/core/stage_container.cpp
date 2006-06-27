@@ -17,7 +17,7 @@
 // include me last!!!
 #include "engine/namespace.h"
 
-#define TRACE_MERGING 0
+#define TRACE_MERGING 1
 #define TRACE_DEQUEUE 0
 
 

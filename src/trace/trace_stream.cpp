@@ -59,7 +59,8 @@ void trace_stream(FILE* out_stream,
        atomically, there is no such guarantee across multiple calls. We
        use a mutex to synchronize access to the console.
     */
-    const char* thread_name = thread_get_self()->get_thread_name();
+    thread_t* this_thread = thread_get_self();
+    const char* thread_name = (this_thread == NULL) ? NULL : this_thread->get_thread_name();
   
 
     if ( pthread_mutex_lock( &stream_mutex ) )

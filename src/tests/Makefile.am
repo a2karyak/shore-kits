@@ -35,10 +35,12 @@ bin_PROGRAMS = \
    test_q16 \
    test_q19 \
    test_q1 \
-   test_q4
+   test_q4 \
+   test_bitvector
 
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
+test_bitvector_SOURCES = test_bitvector.cpp
 test_tpch_load_SOURCES = test_tpch_load.cpp
 test_fdump_stage_SOURCES = test_fdump_stage.cpp
 test_merge_stage_SOURCES = test_merge_stage.cpp

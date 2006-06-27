@@ -26,18 +26,21 @@ using namespace qpipe;
 
 
 /**
- *  @brief
+ *  @brief This stage is used to implement IN/NOT IN using a
+ *  block-nested loop.
  */
 struct bnl_in_packet_t : public packet_t {
   
     static const char* PACKET_TYPE;
 
-    pointer_guard_t<packet_t>           _left;
-    pointer_guard_t<tuple_buffer_t>     _left_buffer;
-    pointer_guard_t<tuple_source_t>     _right_source;
+    pointer_guard_t<packet_t>        _left;
+    pointer_guard_t<tuple_buffer_t>  _left_buffer;
+    
+    // the following fields should always be deleted by the destructor
+    pointer_guard_t<tuple_source_t>  _right_source;
     pointer_guard_t<key_extractor_t> _extract;
-    pointer_guard_t<key_compare_t> _compare;
-    bool                _output_on_match;
+    pointer_guard_t<key_compare_t>   _compare;
+    bool _output_on_match;
     
     
     /**
@@ -70,20 +73,19 @@ struct bnl_in_packet_t : public packet_t {
           _left(left),
           _left_buffer(left->_output_buffer),
           _right_source(right_source),
-          _extract(extract), _compare(compare),
+          _extract(extract),
+          _compare(compare),
           _output_on_match(output_on_match)
     {
     }
   
     virtual ~bnl_in_packet_t() {
-        assert(_left == NULL);
-        assert(_left_buffer == NULL);
+        // do nothing
     }
 
 
     virtual void destroy_subpackets() {
         _left_buffer.done();
-        
         _left->destroy_subpackets();
         _left.done();
     }
@@ -91,18 +93,22 @@ struct bnl_in_packet_t : public packet_t {
     
     virtual void terminate_inputs() {
 
-        // Producer has not terminated this buffer. It is now
-        // responsible to delete it.
         if ( _left_buffer->terminate() )
+            // we have successfully given up ownership
             _left_buffer.release();
+        // else, the producer has already terminated this buffer. We
+        // are now responsible for deleting it.
+
 
         // TODO Ask the dispatcher to clear our left packet (_left)
         // from system, if it still exists.
         
-        // Now that we know _left is not in the system, remove our
-        // reference to it.
-
-
+        
+        // _left is no longer in the system. Our destructor is not
+        // responsible for freeing it.
+        _left.release();
+        
+        
         // TODO destroy any other packets we may have dispatched
         // during our execution. Hopefully they will be destroyed in
         // process_packet() since we are using a tuple_source_t.

@@ -4,12 +4,20 @@
 #include "engine/functors.h"
 #include "engine/dispatcher.h"
 
-const char* partial_aggregate_packet_t::PACKET_TYPE = "Partial Aggregate";
 
-const char* partial_aggregate_stage_t::DEFAULT_STAGE_NAME = "Partial Aggregate";
+
+const char* partial_aggregate_packet_t::PACKET_TYPE = "PARTIAL_AGGREGATE";
+
+
+
+const char* partial_aggregate_stage_t::DEFAULT_STAGE_NAME = "PARTIAL_AGGREGATE_STAGE";
+
+
 
 // the maximum number of pages allowed in a single run
 static const size_t MAX_RUN_PAGES = 10000;
+
+
 
 int partial_aggregate_stage_t::alloc_agg(hint_tuple_pair_t &agg, const char* key) {
     // out of space?
@@ -35,7 +43,10 @@ int partial_aggregate_stage_t::alloc_agg(hint_tuple_pair_t &agg, const char* key
     return 0;
 }
 
+
+
 stage_t::result_t partial_aggregate_stage_t::process_packet() {
+
     partial_aggregate_packet_t* packet;
     packet = (partial_aggregate_packet_t*) _adaptor->get_packet();
     tuple_buffer_t* input_buffer = packet->_input_buffer;

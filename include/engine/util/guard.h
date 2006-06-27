@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 
+
 /**
  * @brief A generic pointer guard base class. An action will be
  * performed exactly once on the stored pointer, either with an
@@ -91,6 +92,8 @@ public:
     }
 };
 
+
+
 /**
  * @brief Ensures that a pointer allocated with a call to operator
  * new() gets deleted
@@ -115,6 +118,8 @@ struct pointer_guard_t : public pointer_guard_base_t<T, pointer_guard_t<T> > {
 private:
     pointer_guard_t &operator=(pointer_guard_t &);
 };
+
+
 
 /**
  * @brief Ensures that an array allocated with a call to operator
@@ -141,6 +146,8 @@ private:
     array_guard_t &operator=(array_guard_t &);
 };
 
+
+
 /**
  * @brief Ensures that a file gets closed
  */
@@ -158,6 +165,8 @@ struct file_guard_t : public pointer_guard_base_t<FILE, file_guard_t> {
 private:
     file_guard_t &operator=(file_guard_t &);
 };
+
+
 
 /**
  * @brief Ensures that a file descriptor gets closed
@@ -224,5 +233,7 @@ public:
         done();
     }
 };
+
+
 
 #endif

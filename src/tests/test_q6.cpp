@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
         tuple_t output;
         while(!output_buffer->get_tuple(output)) {
             double* r = (double*)output.data;
-            TRACE(TRACE_ALWAYS, "*** Q6 Count: %lf. Sum: %lf.  ***\n", r[0], r[1]);
+            TRACE(TRACE_ALWAYS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
         }
         
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
