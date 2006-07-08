@@ -123,8 +123,7 @@ public:
     }
 
     string get_desc() { return (job_desc); }
-        
-    
+            
     /* Register to the workload repository */
     int register_job();
 
@@ -136,6 +135,11 @@ public:
         TRACE( TRACE_ALWAYS, "Executing Empty Job. id=%s\n", job_cmd.c_str());
         
         return (1);
+    }
+    
+    /* Print predicates */
+    virtual void print_predicate() {
+        TRACE( TRACE_DEBUG, "Printing Job Predicates\n");
     }
 };
  

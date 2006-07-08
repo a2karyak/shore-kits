@@ -19,16 +19,22 @@ char BUFFER[255];
  */
 
 //int main(int argc, char * argv[]) {
-int main(int, char *) {
+int main(int argc, char * argv[]) {
 
     fprintf(stdout, "QPipe Execution Engine\n");
 
     /* initialize stages */
     initQPipe();
-    
-    /* run in interactive mode */
-    prompt();
 
+    if (argc > 1) {
+        /* execute cmd and exit */
+        execute_cmd(argc, argv);
+    }
+    else {
+        /* run in interactive mode */
+        prompt();
+    }
+    
     /* closes the server */
     closeQPipe();
 
@@ -80,6 +86,42 @@ static void prompt () {
 
 
 
+
+/** @fn    : execute_cmd(int, char * [])
+ *  @brief : Executes the passed command
+ */
+
+static void execute_cmd(int argc, char* argv [] ) {
+    
+    if (argc > 2) {
+                
+        /* Get reference to workload factory parser */
+        workload_factory* wf = workload_factory::instance();
+        parser_t* parser = wf->get_parser();
+        
+        TRACE( TRACE_DEBUG, "CMD CLIENTS=%s QUERY=%s\n", argv[1], argv[2]);
+
+        string one_cmd;
+        for (int i=1; i<argc-1; i++) {
+            one_cmd += argv[i];
+            one_cmd += " ";
+        }
+        one_cmd += argv[argc-1];
+        
+        TRACE( TRACE_DEBUG, "ONE_CMD: %s\n", one_cmd.c_str());
+
+        
+        /* run command */
+        if ( parser->parse(one_cmd) ) {
+            
+            TRACE( TRACE_ALWAYS, "command: '%s' not understood\n", BUFFER);
+            parser->print_usage(stderr);
+        }
+    }    
+}
+
+
+
 /** @fn    : initQPipe() 
  *  @brief : Initializes the stages 
  */
@@ -120,6 +162,7 @@ void closeQPipe() {
     fprintf(stdout, "Thank you for using QPipe\nExiting...\n");
     fflush(stdout);
 }
+
 
 
 

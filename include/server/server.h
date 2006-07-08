@@ -62,7 +62,7 @@ void stop_stages();
 
 /* Shell function */
 static void prompt();
-
+static void execute_cmd(int argc, char* argv[]);
 
 #endif // __QPIPE_H
 

@@ -17,8 +17,14 @@
 
 /* CMD constants */
 #define STD_DELIM " "
-#define MAX_ARGS 4
-#define MAX_ARG_SIZE 20
+
+
+#define MSG_WORKLOAD       0
+#define MSG_SQL            1
+#define MSG_WORKLOAD_INFO  2
+
+
+
 #define SETUP_CMD "setup"
 #define HELP_CMD "help"
 #define TPCH_CMD "tpch"
@@ -31,20 +37,12 @@
 #define COMM_START_CMD "start"
 #define COMM_STOP_CMD "stop"
 #define COMM_STUPID "daemon"
-
 #define WORKLOAD_CMD "workload"
 
-#define REC_DELIM "|"
 #define QUEST_DELIM ";"
 #define QUEST_CHAR ';'
 #define EQ_DELIM "="
-#define BUF_SIZE 80
-
 #define MIN_SQL_TEXT 10
-
-#define MSG_WORKLOAD       0
-#define MSG_SQL            1
-#define MSG_WORKLOAD_INFO  2
 
 
 //////////////////////
@@ -73,27 +71,26 @@ int parser_t::parse(string std_cmd) {
     char* tmpbuf = NULL;
     
     // gets msg_type and msg_cmd
-    char* msg_type = strtok_r(cmd, REC_DELIM, &tmpbuf);
-    char* msg_cmd = strtok_r(NULL, REC_DELIM, &tmpbuf);
+    char* msg_type = strtok_r(cmd, STD_DELIM, &tmpbuf);
     
-    TRACE( TRACE_DEBUG, "TYPE = %s\tCMD = %s\n", msg_type, msg_cmd);
+    TRACE( TRACE_DEBUG, "TYPE = %s\tCMD = %s\n", msg_type, tmpbuf);
 
     switch (atoi(msg_type)) {
 
     case (MSG_WORKLOAD):
-        handle_msg_workload(msg_cmd);
+        handle_msg_workload(tmpbuf);
         break;
 
     case (MSG_SQL):
-        handle_msg_sql(msg_cmd);
+        handle_msg_sql(tmpbuf);
         break;
 
     case (MSG_WORKLOAD_INFO):
-        handle_msg_workload_info(msg_cmd);
+        handle_msg_workload_info(tmpbuf);
         break;
 
     default:
-        TRACE( TRACE_DEBUG, "+ NOT UNDERSTOOD COMMAND: %s\n", msg_cmd);
+        TRACE( TRACE_DEBUG, "+ NOT UNDERSTOOD COMMAND: %s\n", tmpbuf);
         return (1);
     }
 
@@ -110,6 +107,8 @@ int parser_t::parse(string std_cmd) {
 
 void parser_t::handle_msg_workload(char* cmd) {
 
+    TRACE( TRACE_DEBUG, "MSG_WORKLOAD: %s\n", cmd);
+    
     char* tmp;
     char* s_CL;
     char* s_Q;
@@ -122,27 +121,13 @@ void parser_t::handle_msg_workload(char* cmd) {
     int i_TT = 0;
 
     // CL=1;Q=0;IT=10;TT=0;
- 
-    s_CL = strtok_r(cmd, QUEST_DELIM, &tmp);
-    s_Q = strtok_r(NULL, QUEST_DELIM, &tmp);
-    s_IT = strtok_r(NULL, QUEST_DELIM, &tmp);
-    s_TT = strtok_r(NULL, QUEST_DELIM, &tmp);
 
-    // gets CL
-    s_CL = strtok(s_CL, EQ_DELIM);
-    s_CL = strtok(NULL, EQ_DELIM);
-
-    // gets Q
-    s_Q = strtok(s_Q, EQ_DELIM);
-    s_Q = strtok(NULL, EQ_DELIM);
-
-    // gets IT
-    s_IT = strtok(s_IT, EQ_DELIM);
-    s_IT = strtok(NULL, EQ_DELIM);
-
-    // gets TT
-    s_TT = strtok(s_TT, EQ_DELIM);
-    s_TT = strtok(NULL, EQ_DELIM);
+    // 1 0 10 0
+    
+    s_CL = strtok_r(cmd, STD_DELIM, &tmp);
+    s_Q = strtok_r(NULL, STD_DELIM, &tmp);
+    s_IT = strtok_r(NULL, STD_DELIM, &tmp);
+    s_TT = strtok_r(NULL, STD_DELIM, &tmp);
   
     fprintf(stdout, "WORKLOAD: CL=%d\tQ=%d\tIT=%d\tTT=%d\n", atoi(s_CL), atoi(s_Q), atoi(s_IT), atoi(s_TT));  
 
@@ -187,6 +172,8 @@ void parser_t::handle_msg_workload(char* cmd) {
 
 void parser_t::handle_msg_sql(char* cmd) {
 
+    TRACE( TRACE_DEBUG, "MSG_SQL: %s\n", cmd);
+    
     // get SQL text
     char* s_SQL;
 
@@ -233,6 +220,8 @@ void parser_t::handle_msg_sql(char* cmd) {
 
 void parser_t::handle_msg_workload_info(char* ) {
 
+    TRACE( TRACE_DEBUG, "MSG_WORKLOAD_INFO\n");
+    
     // get reference to workload factory
     workload_factory* wf = workload_factory::instance();
     wf->print_wls_info();
@@ -247,9 +236,9 @@ void parser_t::handle_msg_workload_info(char* ) {
 
 void parser_t::print_usage(FILE* out_stream) {
 
-  fprintf(out_stream, "-----------\n");
-  fprintf(out_stream, "QPipe v2.0:\n");
-  fprintf(out_stream, "-----------\n");
+        fprintf(out_stream, "-----------\n");
+        fprintf(out_stream, "QPipe v2.0:\n");
+        fprintf(out_stream, "-----------\n");
 }
 
 
