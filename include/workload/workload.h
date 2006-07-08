@@ -262,7 +262,9 @@ class client_t : public thread_t {
 
   
     client_t();
-    client_t(int query, int think, int iter, const string sql = NULL);
+
+    /* TODO: Add SQL support */
+    client_t(int query, int think, int iter); 
     client_t(const client_t& rhs);
 
     ~client_t();
@@ -284,6 +286,7 @@ class client_t : public thread_t {
     int get_sel_query() { return (clSelQuery); }
     int get_num_iter() { return (clNumOfQueries); }
     int get_think_time() { return (clThinkTime); }
+    void set_sql( const string aSQL );
     string get_sel_sql() { return (clSQL); }
 };
 

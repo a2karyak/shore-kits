@@ -224,13 +224,16 @@ int workload_factory::attach_clients(int noClients, client_t templ) {
 
     // gets the index of the newly created workload
     theWLs[theWLCounter]->set_idx( theWLCounter );
-  
+
+    TRACE( TRACE_DEBUG, "starting workload %d\n", theWLCounter);
+    
     /* starts the workload thread */
     if ( thread_create( &theWLsHandles[theWLCounter], theWLs[theWLCounter]) ) {
 	TRACE(TRACE_ALWAYS, "thread_create failed\n");
 	QPIPE_PANIC();
     }
 
+    TRACE( TRACE_DEBUG, "workload %d started\n", theWLCounter);
 
     // increases the workload counter
     theWLCounter++;
@@ -364,8 +367,6 @@ workload_t::workload_t() {
     wlNumQueries = STD_NUM_QUERIES;
     wlSelQuery = STD_SEL_QUERY;
 
-    wlSQLText = EMPTY_STRING;
-
     pthread_mutex_init(&workload_mutex, NULL);
 
     pthread_mutex_lock(&workload_mutex);
@@ -421,26 +422,26 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
                         const int selQuery, const string selSQL) {
 
     if ((noClients > 0) && (noClients < MAX_CLIENTS)) {
-        TRACE(TRACE_DEBUG, "Invalid number of clients %d\n", noClients);
         wlNumClients = noClients;
     }
     else {
+        TRACE(TRACE_DEBUG, "Invalid number of clients %d\n", noClients);
         return (-1);
     }
 
     if (!(thinkTime<0)) {
-        TRACE(TRACE_DEBUG, "Invalid think time interval %d\n", thinkTime);
         wlThinkTime = thinkTime;
     }
     else {
+        TRACE(TRACE_DEBUG, "Invalid think time interval %d\n", thinkTime);
         return (-1);
     }
 
     if (noQueries > 0) {
-        TRACE(TRACE_DEBUG, "Invalid number of queries %d\n", noQueries);
         wlNumQueries = noQueries;
     }
     else {
+        TRACE(TRACE_DEBUG, "Invalid number of queries %d\n", noQueries);
         return (-1);
     }
 
@@ -510,7 +511,10 @@ void* workload_t::run() {
 
         TRACE( TRACE_DEBUG, "Creating client %d of %d\n", (i+1), wlNumClients);
 
-        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries, wlSQLText);
+        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries);
+        if (wlSQLText.size() > 0) {
+            runningClients[i]->set_sql(wlSQLText);
+        }
         runningClients[i]->set_workload(this);
     
         TRACE( TRACE_DEBUG, "Starting client %d of %d\n", i, wlNumClients);
@@ -715,7 +719,7 @@ void client_t::init() {
     clEndTime = 0;
 
     clSQL = EMPTY_STRING;
-
+    
     myWorkload = NULL;  
 }
 
@@ -737,11 +741,11 @@ client_t::client_t() : thread_t() {
  *           and setting the various variables.
  */
 
-client_t::client_t(int query, int think, int iter, const string sql) : thread_t() {
+client_t::client_t(int query, int think, int iter) : thread_t() {
 
     // standard initialization
     init();
-
+    
     if (!(query<0)) {
         clSelQuery = query;
     }
@@ -752,11 +756,6 @@ client_t::client_t(int query, int think, int iter, const string sql) : thread_t(
 
     if (iter > 0) {
         clNumOfQueries = iter;
-    }
-
-    // copies the sql text, if not NULL
-    if (sql.size() > 0) {
-        clSQL = sql;
     }
 }
 
@@ -776,8 +775,6 @@ client_t::client_t(const client_t& rhs) : thread_t() {
         clNumOfQueries = rhs.clNumOfQueries;
         clStartTime = rhs.clStartTime;
         clEndTime = rhs.clEndTime;
-
-        clSQL = EMPTY_STRING;
 
         // copies the sql text, if any
         if (rhs.clSQL.size() > 0) {
@@ -802,7 +799,7 @@ client_t::~client_t() {
 
 
 
-/** @fn    : set_workload(_t*)
+/** @fn    : set_workload(workload_t*)
  *  @brief : Sets the corresponding workload for the client
  */
 
@@ -812,6 +809,20 @@ void client_t::set_workload(workload_t* aWorkload) {
         myWorkload = aWorkload;
     }
 }
+
+
+
+/** @fn    : set_sql(string)
+ *  @brief : Sets the corresponding workload for the client
+ */
+
+void client_t::set_sql(string aSQL) {
+
+    if (aSQL.size() > 0) {
+        clSQL = aSQL;
+    }
+}
+
 
 
 

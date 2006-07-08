@@ -154,8 +154,8 @@ int job_repos::_unregister_job(job_t* aJob) {
 
 
 
-/** @fn     : int _print_info()
- *  @brief  : Displays info about the registered jobs
+/** @fn    : int _print_info()
+ *  @brief : Displays info about the registered jobs
  */
 
 void job_repos::_print_info() {
@@ -194,9 +194,9 @@ void job_repos::print_info() {
 
 /* definitions of internal helper functions */
  
-/** @fn     : int string_comparator(const void*, const void*)
- *  @brief  : String comparison function that can be used as argument
- *            in the hash_map structure
+/** @fn    : int string_comparator(const void*, const void*)
+ *  @brief : String comparison function that can be used as argument
+ *           in the hash_map structure
  */
  
 int string_comparator(const void* key1, const void* key2) {
@@ -207,8 +207,8 @@ int string_comparator(const void* key1, const void* key2) {
 
 
 
-/** @fn     : size_t cmd_hash(const void*)
- *  @brief  : Hashing a string function that can be used as argument
+/** @fn    : size_t cmd_hash(const void*)
+ *  @brief : Hashing a string function that can be used as argument
  *            in the hash_map stucture
  */
  

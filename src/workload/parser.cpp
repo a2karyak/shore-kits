@@ -10,7 +10,6 @@
 # include "workload/parser.h"
 
 
-
 // include me last!!!
 #include "engine/namespace.h"
 
@@ -139,10 +138,11 @@ void parser_t::handle_msg_workload(char* cmd) {
     if ((i_CL > 0) && (i_IT > 0)) {
       
         /* attach new workload */
-
+        TRACE( TRACE_DEBUG, "Attaching new workload\n");
+        
         // create a template client
-        client_t t = client_t(i_Q, i_TT, i_IT, NULL);
-
+        client_t t = client_t(i_Q, i_TT, i_IT);
+ 
         // get reference to workload factory
         workload_factory* wf = workload_factory::instance();
 
@@ -155,7 +155,6 @@ void parser_t::handle_msg_workload(char* cmd) {
 
         // print workload factory info after operation
         wf->print_info();
-
     }
     else {
         TRACE( TRACE_ALWAYS, "Invalid Parameters for new workload. CL = %d AND IT = %d\n", i_CL, i_IT);
@@ -189,8 +188,9 @@ void parser_t::handle_msg_sql(char* cmd) {
         /* attach new workload */
 
         // create a template client
-        client_t t = client_t(0, 0, 1, s_SQL);
-
+        client_t t = client_t(0, 0, 1);
+        t.set_sql(s_SQL);
+        
         // get reference to workload factory
         workload_factory* wf = workload_factory::instance();
 
