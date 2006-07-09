@@ -73,7 +73,7 @@ static void prompt () {
         }
 
         /* run command */
-        if ( parser->parse(string(BUFFER)) ) {
+        if ( parser->parse(string(BUFFER))) {
             
             TRACE( TRACE_ALWAYS, "command: '%s' not understood\n", BUFFER);
             parser->print_usage(stderr);
@@ -98,9 +98,10 @@ static void execute_cmd(int argc, char* argv [] ) {
         /* Get reference to workload factory parser */
         workload_factory* wf = workload_factory::instance();
         parser_t* parser = wf->get_parser();
-        
-        TRACE( TRACE_DEBUG, "CMD CLIENTS=%s QUERY=%s\n", argv[1], argv[2]);
 
+        /* set not interactive */
+        wf->set_interactive(0);
+        
         string one_cmd;
         for (int i=1; i<argc-1; i++) {
             one_cmd += argv[i];
@@ -108,10 +109,7 @@ static void execute_cmd(int argc, char* argv [] ) {
         }
         one_cmd += argv[argc-1];
         
-        TRACE( TRACE_DEBUG, "ONE_CMD: %s\n", one_cmd.c_str());
-
-        
-        /* run command */
+        /* run a single command command */
         if ( parser->parse(one_cmd) ) {
             
             TRACE( TRACE_ALWAYS, "command: '%s' not understood\n", BUFFER);
@@ -128,6 +126,9 @@ static void execute_cmd(int argc, char* argv [] ) {
 
 void initQPipe( ) {
 
+    /* initialize thread module */
+    thread_init();
+    
     /* initialize random seed */
     init_srand((uint)pthread_self());
 

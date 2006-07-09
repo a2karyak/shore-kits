@@ -49,8 +49,8 @@
 
 
 
-/** @fn     : parse()
- *  @brief  : Parses the passed command and acts accordingly
+/** @fn     : parse(string)
+ *  @brief  : Parses the passed command and acts accordingly.
  *  @return : 0 if parsing successful, 1 otherwise
  */
 
@@ -98,16 +98,15 @@ int parser_t::parse(string std_cmd) {
 }
 
 
+
 /** @fn     : handle_msg_workload(char*)
  *  @brief  : Handler of the MSG_WORKLOAD messages
- *  @format : CL=int;Q=int;IT=int;TT=int
- *  @action : It instanciates a corresponding tpch_workload_t  
+ *  @format : <CL> <Q> <IT> <TT>
+ *  @action : It instanciates a corresponding workload_t  
  */
 
 void parser_t::handle_msg_workload(char* cmd) {
 
-    TRACE( TRACE_DEBUG, "MSG_WORKLOAD: %s\n", cmd);
-    
     char* tmp;
     char* s_CL;
     char* s_Q;
@@ -119,8 +118,6 @@ void parser_t::handle_msg_workload(char* cmd) {
     int i_IT = 0;
     int i_TT = 0;
 
-    // CL=1;Q=0;IT=10;TT=0;
-
     // 1 0 10 0
     
     s_CL = strtok_r(cmd, STD_DELIM, &tmp);
@@ -128,8 +125,6 @@ void parser_t::handle_msg_workload(char* cmd) {
     s_IT = strtok_r(NULL, STD_DELIM, &tmp);
     s_TT = strtok_r(NULL, STD_DELIM, &tmp);
   
-    fprintf(stdout, "WORKLOAD: CL=%d\tQ=%d\tIT=%d\tTT=%d\n", atoi(s_CL), atoi(s_Q), atoi(s_IT), atoi(s_TT));  
-
     i_CL = atoi(s_CL);
     i_Q = atoi(s_Q);
     i_IT = atoi(s_IT);
@@ -141,12 +136,12 @@ void parser_t::handle_msg_workload(char* cmd) {
         TRACE( TRACE_DEBUG, "Attaching new workload\n");
         
         // create a template client
-        client_t t = client_t(i_Q, i_TT, i_IT);
+        client_t * t = new client_t(i_Q, i_TT, i_IT, "CL_TEMPLATE");
  
         // get reference to workload factory
         workload_factory* wf = workload_factory::instance();
 
-        if ( wf->attach_clients(i_CL, t) == 0 ) {
+        if ( wf->attach_clients(i_CL, *t) == 0 ) {
             TRACE( TRACE_DEBUG, "Clients attached\n");
         }
         else {
@@ -165,7 +160,7 @@ void parser_t::handle_msg_workload(char* cmd) {
 
 /** @fn     : handle_msg_sql(char*)
  *  @brief  : Handler of the MSG_SQL messages
- *  @format : SQL=text
+ *  @format : <SQL>
  *  @action : It instanciates a workload_t consisting of one client and setting his SQL
  */
 
@@ -188,7 +183,7 @@ void parser_t::handle_msg_sql(char* cmd) {
         /* attach new workload */
 
         // create a template client
-        client_t t = client_t(0, 0, 1);
+        client_t t = client_t(0, 0, 1, "CL_SQL_TEMPLATE");
         t.set_sql(s_SQL);
         
         // get reference to workload factory
@@ -218,9 +213,7 @@ void parser_t::handle_msg_sql(char* cmd) {
  *  @action : Sends info about all the active workloads.
  */
 
-void parser_t::handle_msg_workload_info(char* ) {
-
-    TRACE( TRACE_DEBUG, "MSG_WORKLOAD_INFO\n");
+void parser_t::handle_msg_workload_info(char*) {
     
     // get reference to workload factory
     workload_factory* wf = workload_factory::instance();

@@ -82,7 +82,7 @@ workload_factory* workload_factory::instance() {
 workload_factory::workload_factory() {
 
     /* initialize status variables */
-    isInteractive = 1;
+    isInteractive = 1; // by default is interactive 
     
     /* initialize the workload creator mutex */
     pthread_mutex_init(&theWLCreation_mutex, NULL);
@@ -164,7 +164,7 @@ workload_factory::~workload_factory() {
 
 
 /** @fn     : attach_client(client_t)
- *  @brief  : Creates a new workload consisting only of one client.
+ *  @brief  : Creates a new workload consisting only of one client, and waits if not interactive
  *  @return : 0 on success, -1 otherwise.
  */ 
 
@@ -176,7 +176,7 @@ int workload_factory::attach_client(client_t new_client) {
 
 
 /** @fn     : attach_clients(int, client_t)
- *  @brief  : Adds a new workload consisting of  N new clients.
+ *  @brief  : Adds a new workload consisting of  N new clients, and waits if not interactive
  *  @return : 0 on success, -1 otherwise.
  */ 
 
@@ -215,7 +215,7 @@ int workload_factory::attach_clients(int noClients, client_t templ) {
            noClients, templ.get_sel_query(), templ.get_num_iter());
   
     // creates a new workload
-    theWLs[theWLCounter] = new workload_t();
+    theWLs[theWLCounter] = new workload_t("WORKLOAD-%d", theWLCounter);
 
     // sets the workload parameters
     theWLs[theWLCounter]->set_run(noClients, templ.get_think_time(),
@@ -225,22 +225,31 @@ int workload_factory::attach_clients(int noClients, client_t templ) {
     // gets the index of the newly created workload
     theWLs[theWLCounter]->set_idx( theWLCounter );
 
-    TRACE( TRACE_DEBUG, "starting workload %d\n", theWLCounter);
-    
     /* starts the workload thread */
     if ( thread_create( &theWLsHandles[theWLCounter], theWLs[theWLCounter]) ) {
 	TRACE(TRACE_ALWAYS, "thread_create failed\n");
 	QPIPE_PANIC();
     }
 
-    TRACE( TRACE_DEBUG, "workload %d started\n", theWLCounter);
-
+    // in case of not interactive copy the current WLCounter
+    int copyWLCounter = theWLCounter;
+    
     // increases the workload counter
     theWLCounter++;
-
+    
     // releases the lock
     pthread_mutex_unlock(&theWLCreation_mutex);
-		   
+
+    // if not interactive join the workload thread
+    if (!isInteractive) {
+        TRACE( TRACE_DEBUG, "Not Interactive mode joining workload %d thread\n", copyWLCounter);
+        void *wl_ret;
+        pthread_join(theWLsHandles[copyWLCounter], &wl_ret);
+        TRACE( TRACE_DEBUG, "workload %d joined\n", copyWLCounter);
+    }
+    
+    
+    
     return(0);
 }
 
@@ -261,7 +270,7 @@ int workload_factory::create_wl(const int noClients, const int thinkTime,
     TRACE( TRACE_DEBUG, "Creating workload %d\n", theWLCounter);
 
     // creates a new workload
-    theWLs[theWLCounter] = new workload_t();
+    theWLs[theWLCounter] = new workload_t("WORKLOAD-%d", theWLCounter);
 
     // sets the workload parameters
     theWLs[theWLCounter]->set_run(noClients, thinkTime, noCompleted,
@@ -302,7 +311,7 @@ void workload_factory::print_wls_info() {
 
     for (int i=0;i<theWLCounter;i++) {
         if (theWLsStatus[i]) {
-            theWLs[i]->get_info();
+            theWLs[i]->get_info(1);
         }
     }
 }
@@ -343,8 +352,8 @@ void workload_factory::update_wl_status(int iWLIdx, int iStatus) {
 
     // we check the execution mode and if not Interactive we exit
     if (!isInteractive) {
-        fprintf(stdout, "Executing in Batch mode.\nShould Exit...\n");
-        exit(0);
+        TRACE( TRACE_DEBUG, "Executing in Batch mode.\tShould Exit...\n");
+        // exit(0);
     }
 
     print_wls_info();
@@ -356,17 +365,22 @@ void workload_factory::update_wl_status(int iWLIdx, int iStatus) {
 // methods for workload_t
 
 
-/** @fn    : Constructor
+/** @fn    : init(const char*, va_list)
  *  @brief : Creates the mutex  and initializes the counters
  */
 
-workload_t::workload_t() {
+void workload_t::init(const char* format, va_list ap) {
 
+    // set thread name
+    init_thread_name_v(format, ap);
+
+    // member variables
     wlNumClients = STD_NUM_CLIENTS;
     wlThinkTime = STD_THINK_TIME;
     wlNumQueries = STD_NUM_QUERIES;
     wlSelQuery = STD_SEL_QUERY;
 
+    // initialization of mutex
     pthread_mutex_init(&workload_mutex, NULL);
 
     pthread_mutex_lock(&workload_mutex);
@@ -379,6 +393,21 @@ workload_t::workload_t() {
 
 
 
+/** @fn    : Constructor
+ *  @brief : Formats the thread name and initiliazes member variables
+ */
+
+workload_t::workload_t(const char* format, ...) {
+
+    // standard initialization
+    va_list ap;
+    va_start(ap, format);
+    init(format, ap);
+    va_end(ap);
+}
+
+
+
 /** @fn    : Destructor
  *  @brief : Deletes all the arrays and destroys the mutex
  */
@@ -386,7 +415,6 @@ workload_t::workload_t() {
 workload_t::~workload_t() {
 
     int i = 0;
-
   
     //  TRACE_DEBUG("Destructor Deleting clientHandles\n");
     if (clientHandles) {
@@ -396,19 +424,16 @@ workload_t::~workload_t() {
     
     //  TRACE_DEBUG("Destructor Deleting runningClients\n");
     if (runningClients) {
-
-        for (i=0;i<MAX_CLIENTS;i++) {
-            if (runningClients[i]) {
-                delete runningClients[i];
-                runningClients[i] = NULL;
-            }
-        }
-
         delete [] runningClients;
         runningClients = NULL;
     }
 
     pthread_mutex_destroy(&workload_mutex);
+    
+    // notify factory
+    TRACE( TRACE_DEBUG, "Notifying Factory Idx=%d\tStatus=0\n", myIdx);
+    workload_factory* wf = workload_factory::instance();
+    wf->update_wl_status(myIdx, 0);
 }
 
 
@@ -462,8 +487,6 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
         TRACE( TRACE_DEBUG, "Setting workload SQL = %s\n", wlSQLText.c_str());
     }
 
-    TRACE( TRACE_DEBUG, "Workload setup: %d %d %d %d\n", noClients, thinkTime, noQueries, selQuery);
-
     /* If reach this point, return success */
     return(0);
 }
@@ -477,6 +500,8 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
 
 void* workload_t::run() {
 
+    TRACE( TRACE_DEBUG, "Workload %d starts running\n", myIdx);
+    
     // return immediately if workload already started
     pthread_mutex_lock(&workload_mutex);
 
@@ -500,7 +525,7 @@ void* workload_t::run() {
     clientHandles = new pthread_t[wlNumClients];
 
     // print general info for the workload
-    get_info();
+    get_info(0);
   
     // record the starting time of the experiment
     wlStartTime = time(&wlStartTime);
@@ -511,7 +536,7 @@ void* workload_t::run() {
 
         TRACE( TRACE_DEBUG, "Creating client %d of %d\n", (i+1), wlNumClients);
 
-        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries);
+        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries, "WORK-%d-CL-%d", myIdx, i);
         if (wlSQLText.size() > 0) {
             runningClients[i]->set_sql(wlSQLText);
         }
@@ -536,7 +561,8 @@ void* workload_t::run() {
     }
 
     // THE WORKLOAD HAS FINISHED
-
+    TRACE( TRACE_DEBUG, "Workload has finished\n");
+    
     // update isStarted flag
     wlStarted = 0;
 
@@ -544,61 +570,41 @@ void* workload_t::run() {
     wlEndTime = time(&wlEndTime);
 
     // final end of workload info
-    get_info();
-  
-    // delete arrays
-
-    // TRACE_DEBUG("Deleting clientHandles\n");
-    delete [] clientHandles;
-    clientHandles = NULL;
-
-    // TRACE_DEBUG("Deleting runningClients\n");
-    for (i = 0; i < wlNumClients; i++) {
-        delete runningClients[i];
-        runningClients[i] = NULL;
-    }
-
-    delete [] runningClients;
-    runningClients = NULL;
-
-
-    /* notify factory */
-    TRACE( TRACE_DEBUG, "Notifying Factory Idx=%d\tStatus=0\n", myIdx);
-    workload_factory* wf = workload_factory::instance();
-    wf->update_wl_status(myIdx, 0);
+    get_info(1);
 
     return ((void*)0);
 }
 
 
 
-/** @fn    : get_info()
- *  @brief : Helper function, outputs information about the workload setup 
+/** @fn    : get_info(int)
+ *  @brief : Helper function, outputs information about the workload setup
+ *  @param : int show_stats - If show_stats is set then it displays throughput and other statistics
  */
 
-void workload_t::get_info() {
+void workload_t::get_info(int show_stats) {
 
     TRACE( TRACE_DEBUG, "RUN parameters: CLIENTS: %d\tTHINKTIME: %d\tNOCOMPLQUERIES: %d\t QUERY: %d\n", 
            wlNumClients, wlThinkTime, wlNumQueries, wlSelQuery);
 
-    
-    // print final statistics
-    queriesCompleted = wlNumClients * wlNumQueries;
-
-
-    /* queries per hour */      
-    float tpmC = (3600.0 * queriesCompleted) / (wlEndTime - wlStartTime);
-
-    fprintf(stdout, "~~~\n");
-    fprintf(stdout, "~~~ Clients           = %d \n", wlNumClients);
-    fprintf(stdout, "~~~ Think Time        = %d \n", wlThinkTime);
-    fprintf(stdout, "~~~ Iterations        = %d \n", wlNumQueries);
-    fprintf(stdout, "~~~ Query             = %d \n", wlSelQuery);  
-    fprintf(stdout, "~~~ Completed Queries = %d \n", queriesCompleted);
-    fprintf(stdout, "~~~ Duration          = %ld \n", (wlEndTime - wlStartTime));
-    fprintf(stdout, "~~~\n");
-    fprintf(stdout, "~~~ Throughput        = %.2f queries/hour \n", tpmC);
-    fprintf(stdout, "~~~\n");
+    if (show_stats) {
+        // print final statistics
+        queriesCompleted = wlNumClients * wlNumQueries;
+        
+        /* queries per hour */      
+        float tpmC = (3600.0 * queriesCompleted) / (wlEndTime - wlStartTime);
+        
+        fprintf(stdout, "~~~\n");
+        fprintf(stdout, "~~~ Clients           = %d \n", wlNumClients);
+        fprintf(stdout, "~~~ Think Time        = %d \n", wlThinkTime);
+        fprintf(stdout, "~~~ Iterations        = %d \n", wlNumQueries);
+        fprintf(stdout, "~~~ Query             = %d \n", wlSelQuery);  
+        fprintf(stdout, "~~~ Completed Queries = %d \n", queriesCompleted);
+        fprintf(stdout, "~~~ Duration          = %ld \n", (wlEndTime - wlStartTime));
+        fprintf(stdout, "~~~\n");
+        fprintf(stdout, "~~~ Throughput        = %.2f queries/hour \n", tpmC);
+        fprintf(stdout, "~~~\n");
+    }
 }
 
 
@@ -702,24 +708,26 @@ void client_counter::get_next_client_id(int* cl_id) {
 // class client_t
 
 
-/** @fn    : init()
+/** @fn    : init(const char*, va_list)
  *  @brief : Initialization function of a client
  */
 
-void client_t::init() {
+void client_t::init(const char* format, va_list ap) {
 
     // receives a unique id
     client_counter * tc = client_counter::instance();
     tc->get_next_client_id(&clUniqueID);
 
+    // set thread name
+    init_thread_name_v(format, ap);
+
+    // initializes variables
     clSelQuery = 0;
     clThinkTime = 0;
     clNumOfQueries = 1;
     clStartTime = 0;
     clEndTime = 0;
-
     clSQL = EMPTY_STRING;
-    
     myWorkload = NULL;  
 }
 
@@ -728,10 +736,13 @@ void client_t::init() {
  *  @brief : Calls the init function
  */
 
-client_t::client_t() : thread_t() {
-
+client_t::client_t(const char* format, ...) : thread_t() {
+    
     // standard initialization
-    init();
+    va_list ap;
+    va_start(ap, format);
+    init(format, ap);
+    va_end(ap);  
 }
 
 
@@ -741,10 +752,13 @@ client_t::client_t() : thread_t() {
  *           and setting the various variables.
  */
 
-client_t::client_t(int query, int think, int iter) : thread_t() {
-
+client_t::client_t(int query, int think, int iter, const char* format, ...) : thread_t() {
+    
     // standard initialization
-    init();
+    va_list ap;
+    va_start(ap, format);
+    init(format, ap);
+    va_end(ap);
     
     if (!(query<0)) {
         clSelQuery = query;
@@ -765,10 +779,16 @@ client_t::client_t(int query, int think, int iter) : thread_t() {
  *  @brief : Creates a new instance by copying each field of the passed instance. 
  */
 
-client_t::client_t(const client_t& rhs) : thread_t() {
+client_t::client_t(const client_t& rhs, const char* format, ...) : thread_t() {
 
     if (&rhs != NULL) {
-
+        
+        /* format thread name */
+        va_list ap;
+        va_start(ap, format);
+        init(format, ap);
+        va_end(ap);
+        
         clUniqueID = rhs.clUniqueID;
         clSelQuery = rhs.clSelQuery;
         clThinkTime = rhs.clThinkTime;
@@ -833,7 +853,7 @@ void client_t::set_sql(string aSQL) {
 
 void* client_t::run() {
     
-    fprintf(stderr, "CL=%d Q=%d IT=%d TT=%d\n", clUniqueID, clSelQuery, clNumOfQueries, clThinkTime );
+    TRACE( TRACE_ALWAYS, "CLIENT_ID=%d Q=%d IT=%d TT=%d\n", clUniqueID, clSelQuery, clNumOfQueries, clThinkTime );
 
     /* return if corresponding client not properly initialized */
     if (clNumOfQueries <= 0) {
@@ -900,9 +920,11 @@ void* client_t::run() {
             continue;
         }
 
-        /** @TODO: Should contact Parser and execute the query with the registered ID */
+        
+        /** @TODO: Should contact Jobs_Repos and execute the query with the registered ID */
+        TRACE( TRACE_DEBUG, " *** TODO: Execute registered job with ID=%d ***\n", toExecute); 
 
-	   
+        
         time_t cur_time = time(&cur_time);
 
         // increase the total number of completed queries

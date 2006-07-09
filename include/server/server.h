@@ -25,7 +25,6 @@
 #include "job.h"
 
 
-
 /* Configurable values */
 #define QPIPE_VERSION "v2.0"
 #define QPIPE_PROMPT "(qpipe) "
@@ -34,6 +33,9 @@
 #define STD_CONFIG_FILE "qpipe.conf"
 #define STD_DATABASE_HOME   "."
 #define STD_CONFIG_DATA_DIR "./database"
+
+#define SINGLE_CMD 1
+#define NOT_SINGLE_CMD 0
 
 using namespace qpipe;
 

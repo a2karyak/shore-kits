@@ -131,6 +131,10 @@ class workload_factory {
 
     /* returns a reference to the parser instance */
     parser_t* get_parser( ) { return (theParser); }
+
+    /* access methods */
+    void set_interactive(int aInter) { isInteractive = aInter; }
+    int is_interactive() { return (isInteractive); }
 };
 
 
@@ -163,6 +167,10 @@ class workload_t : public thread_t {
     /* flag if started */
     int wlStarted;
 
+    
+    /* initialization */
+    void init(const char* format, va_list ap);
+
  public:
 
     /* timekeeping variables */
@@ -174,9 +182,9 @@ class workload_t : public thread_t {
     pthread_mutex_t workload_mutex;
 
     /* constructor - destructor */
-    workload_t();
+    workload_t(const char* format, ...);
     ~workload_t();
-
+    
     /* set the workload parameters */
     int set_run(const int noClients, const int thinkTime, const int noQueries,
                 const int selQuery, const string selSQL = NULL);
@@ -185,7 +193,7 @@ class workload_t : public thread_t {
     void* run();
 
     /* prints out the runtime information about the workload */
-    void get_info();
+    void get_info(int show_stats);
 
     /* indicates if the workload has started */
     int isStarted() { return (wlStarted); }
@@ -234,7 +242,7 @@ class client_counter {
  */
 
 class client_t : public thread_t {
- private:
+private:
 
     // client workload
     int clUniqueID;
@@ -248,10 +256,10 @@ class client_t : public thread_t {
     // pointer to workload
     workload_t* myWorkload;
 
-    // initialization function for each instance
-    void init();
+    // initialization function for each client instance
+    void init(const char* format, va_list ap);
   
- public:
+public:
 
     // client statistics
     int clCompleted;
@@ -261,11 +269,11 @@ class client_t : public thread_t {
     time_t clEndTime;
 
   
-    client_t();
+    client_t(const char* format, ...);
 
     /* TODO: Add SQL support */
-    client_t(int query, int think, int iter); 
-    client_t(const client_t& rhs);
+    client_t(int query, int think, int iter, const char* format, ...); 
+    client_t(const client_t& rhs, const char* format, ...);
 
     ~client_t();
 
