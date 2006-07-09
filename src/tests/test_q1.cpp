@@ -31,18 +31,6 @@ extern uint32_t trace_current_setting;
 // Q1 SPECIFIC UTILS
 /* Declaration of some constants */
 
-#define DATABASE_HOME	 "."
-#define CONFIG_DATA_DIR "./database"
-#define TMP_DIR "./temp"
-
-
-#define TABLE_LINEITEM_NAME "LINEITEM"
-#define TABLE_LINEITEM_ID   "TBL_LITEM"
-
-/* Set Bufferpool equal to 450 MB -- Maximum is 4GB in 32-bit platforms */
-size_t TPCH_BUFFER_POOL_SIZE_GB = 0; /* 0 GB */
-size_t TPCH_BUFFER_POOL_SIZE_BYTES = 512 * 1024 * 1024; /* 512 MB */
-
 
 
 // the tuples after tablescan projection
