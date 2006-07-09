@@ -107,29 +107,19 @@ int parser_t::parse(string std_cmd) {
 
 void parser_t::handle_msg_workload(char* cmd) {
 
-    char* tmp;
-    char* s_CL;
-    char* s_Q;
-    char* s_IT;
-    char* s_TT;
-
-    int i_CL = 0;
-    int i_Q = 0;
-    int i_IT = 0;
-    int i_TT = 0;
-
-    // 1 0 10 0
+    // Example: 1 0 10 4
     
-    s_CL = strtok_r(cmd, STD_DELIM, &tmp);
-    s_Q = strtok_r(NULL, STD_DELIM, &tmp);
-    s_IT = strtok_r(NULL, STD_DELIM, &tmp);
-    s_TT = strtok_r(NULL, STD_DELIM, &tmp);
-  
-    i_CL = atoi(s_CL);
-    i_Q = atoi(s_Q);
-    i_IT = atoi(s_IT);
-    i_TT = atoi(s_TT);
+    char* tmp;
+    char* s_CL = strtok_r(cmd, STD_DELIM, &tmp);
+    char* s_Q = strtok_r(NULL, STD_DELIM, &tmp);
+    char* s_IT = strtok_r(NULL, STD_DELIM, &tmp);
+    char* s_TT = strtok_r(NULL, STD_DELIM, &tmp);
 
+    int i_CL = atoi(s_CL);
+    int i_Q = atoi(s_Q);
+    int i_IT = atoi(s_IT);
+    int i_TT = atoi(s_TT);
+  
     if ((i_CL > 0) && (i_IT > 0)) {
       
         /* attach new workload */

@@ -141,6 +141,9 @@ void initQPipe( ) {
     /* initialize stages */
     init_stages();
 
+    /* register jobs */
+    register_jobs();
+    
     /* get reference to workload factory - instanciates factory */
     workload_factory* wf = workload_factory::instance();
     wf->print_info();

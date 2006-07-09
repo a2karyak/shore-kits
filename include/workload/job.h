@@ -17,11 +17,14 @@
 #include <cstdlib>
 #include <string>
 #include <cstdio>
+#include <sys/time.h>
+#include <math.h>
 
 /* QPipe Engine */
 #include "trace.h"
 #include "qpipe_panic.h"
 #include "engine/util/static_hash_map_struct.h"
+#include "engine/util/time_util.h"
 
 
 // include me last!!!
@@ -33,57 +36,6 @@ using std::string;
 #define GEN_CMD "gen_job"
 #define GEN_CMD_DESC "Generic Job"
 
-#define JOB_REPOSITORY_HASH_MAP_BUCKETS 64
-
-
-class job_t;
-
-
-/**
- * class job_repos
- *
- * @brief: Singleton class that contains a hash table with identifiers
- *         to job and pointer to them
- */
-
-class job_repos {
-private:
-
-    /* instance and mutex */
-    static job_repos* jobReposInstance;
-    static pthread_mutex_t instance_mutex;
-
-    /* registered jobs directory */
-    struct static_hash_map_s jobs_directory;
-    struct static_hash_node_s jobs_directory_buckets[JOB_REPOSITORY_HASH_MAP_BUCKETS];
-    pthread_mutex_t map_mutex;    
-    
-    /* stats */
-    int jobCounter;
-    pthread_mutex_t stats_mutex;
-    
-    job_repos();
-    ~job_repos();
-    
-public:
-    /* instance call */
-    static job_repos* instance();
-
-    /* register a job */
-    int _register_job(job_t* aJob);
-
-    /* unregister a job */
-    int _unregister_job(job_t* aJob);
-
-    /* print info about the registered jobs */
-    void _print_info();
-
-    /* static wrapper functions */
-    static int register_job(job_t* aJob);
-    static int unregister_job(job_t* aJob);
-    static void print_info();
-};
-
 
 
 /**
@@ -93,9 +45,15 @@ public:
  */
 
 class job_t {
-private:
+protected:
+
+    /* Used for job definition */
     string job_cmd;
     string job_desc;
+
+    /* Used for the random predicates */
+    struct timeval tv;
+    uint mv;
     
 public:
     /* Construction - Destruction */
@@ -109,6 +67,7 @@ public:
     
     virtual ~job_t() { }
 
+    
     /* Access methods */
     void set_cmd(string a_cmd) {
         if (a_cmd.size() > 0)
@@ -123,26 +82,49 @@ public:
     }
 
     string get_desc() { return (job_desc); }
-            
-    /* Register to the workload repository */
-    int register_job();
-
-    /* Unregister */
-    int unregister_job();    
     
-    /* Start executing */
-    virtual int start(void*) {
-        TRACE( TRACE_ALWAYS, "Executing Empty Job. id=%s\n", job_cmd.c_str());
-        
-        return (1);
+    
+    /* Initialize */
+    virtual void init() {
+        TRACE( TRACE_DEBUG, "Initializing Empty Job. id=%s\n", job_cmd.c_str());
     }
     
     /* Print predicates */
-    virtual void print_predicate() {
+    virtual void print_predicates() {
         TRACE( TRACE_DEBUG, "Printing Job Predicates\n");
     }
+    
+    /* Start executing */
+    virtual void* start() {
+        TRACE( TRACE_ALWAYS, "Executing Empty Job. id=%s\n", job_cmd.c_str());
+
+        init();
+
+        print_predicates();
+        
+        return ((void*)0);
+    }
 };
- 
+
+
+
+
+/**
+ * class job_driver_t
+ *
+ * @brief: Class that acts as a driver for Jobs
+ */
+
+class job_driver_t {
+public:
+    job_driver_t() { }
+
+    virtual ~job_driver_t() { }
+
+    virtual void* drive( ) { return ((void*)0); }
+    virtual void print_info( ) { }    
+};
+
 
 
 #include "engine/namespace.h"
