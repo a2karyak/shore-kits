@@ -59,10 +59,14 @@ public:
     /* print info about the registered job drivers */
     void _print_info();
 
+    /* return the correct job driver */
+    job_driver_t* _get_job_driver(const char* sJobCmd);
+    
     /* static wrapper functions */
     static int register_job_driver(const char* sJobCmd, job_driver_t* aJobDriver);
     static int unregister_job_driver(const char* sJobCmd);
     static void print_info();
+    static job_driver_t* get_job_driver(const char* sJobCmd);
 };
 
 

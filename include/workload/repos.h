@@ -22,6 +22,10 @@
 void register_jobs() {
 
     TRACE( TRACE_ALWAYS, " ** SHOULD REGISTER JOBS ** \n");
+
+    
+    tpch_q1_driver* q1_driver = new tpch_q1_driver();
+    job_directory::register_job_driver("1", q1_driver);
 }
 
 

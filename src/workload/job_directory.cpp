@@ -99,7 +99,7 @@ job_directory::~job_directory() {
 int job_directory::_register_job_driver(const char* sJobCmd,
                                         job_driver_t* aJobDriver)
 {    
-    TRACE( TRACE_DEBUG, "Registrering Job Driver: %s\n", sJobCmd);
+    TRACE( TRACE_DEBUG, "Registering Job Driver: %s\n", sJobCmd);
     
     /* check for duplicates */
     if ( !static_hash_map_find( &jobs_directory,
@@ -161,6 +161,31 @@ void job_directory::_print_info() {
 }
 
 
+
+
+/** @fn     : job_driver_t* get_job_driver(const char*)
+ *  @brief  : Returns the corresponding job driver
+ *  @return : The job_driver_t if found, NULL otherwise
+ */
+
+job_driver_t* job_directory::_get_job_driver(const char* aJobCmd) {
+    
+    TRACE( TRACE_DEBUG, "Searching Job Driver: [%s]\n", aJobCmd);
+    
+    void* jd;
+
+    if (static_hash_map_find( &jobs_directory, aJobCmd, &jd, NULL)) {
+
+        TRACE( TRACE_ALWAYS, "No job: %s exists\n", aJobCmd);
+        return (NULL);
+    }
+
+    return ((job_driver_t*)jd);
+}
+
+
+
+
 /* static wrappers */
 int job_directory::register_job_driver(const char* sJobCmd, job_driver_t* aJobDriver) {
 
@@ -173,10 +198,18 @@ int job_directory::unregister_job_driver(const char* aJobCmd) {
     return (instance()->_unregister_job_driver(aJobCmd));
 }
 
+
 void job_directory::print_info() {
 
     instance()->_print_info();
 }
+
+
+job_driver_t* job_directory::get_job_driver(const char* aJobCmd) {
+    
+    return (instance()->_get_job_driver(aJobCmd));
+}
+
 
 
 

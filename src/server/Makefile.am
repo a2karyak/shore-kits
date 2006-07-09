@@ -13,6 +13,7 @@ bin_PROGRAMS = \
 
 qpipe_SOURCES = server.cpp \
 		../workload/workload.cpp \
+		../workload/client.cpp \
 		../workload/parser.cpp \
 		../workload/job.cpp \
 		../workload/job_directory.cpp

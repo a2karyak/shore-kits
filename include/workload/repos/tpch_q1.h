@@ -13,7 +13,7 @@
 using namespace qpipe;
 
 
-class tpch_q1 : job_t {
+class tpch_q1 : public job_t {
 private:
     int randtest;
 
@@ -48,9 +48,12 @@ public:
     /* Start executing */
     virtual void* start() {
         TRACE( TRACE_ALWAYS, "Executing %s. id=%s\n", job_desc.c_str(), job_cmd.c_str());
+
+        for (int i = 0; i < 5; i++) {
+            TRACE( TRACE_DEBUG, "Q1 SAYS %d ***\n", randtest);
+            sleep(1);
+        }
         
-        printf("Q1 SAYS %d ***\n", randtest);
-    
         return ((void*)0);
     }
 
@@ -58,7 +61,7 @@ public:
 
 
 
-class tpch_q1_driver : job_driver_t {
+class tpch_q1_driver : public job_driver_t {
  public:
   
     tpch_q1_driver() { }
