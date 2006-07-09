@@ -2,8 +2,8 @@
 
 #include "trace.h"
 #include "workload/job_directory.h"
-#include "workload/repos/tpch_q1.h"
-#include "workload/repos/tpch_q6.h"
+#include "workload/tpch/jobs/tpch_q1.h"
+#include "workload/tpch/jobs/tpch_q6.h"
 
 
 
