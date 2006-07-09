@@ -4,6 +4,8 @@
 #include "engine/core/stage_container.h"
 #include "engine/stages/func_call.h"
 #include "engine/stages/aggregate.h"
+#include "engine/dispatcher/dispatcher_policy_os.h"
+#include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
@@ -18,7 +20,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
-
+    dispatcher_policy_t* dp = new dispatcher_policy_rr_cpu_t();
 
     // parse output filename
     if ( argc < 2 ) {
@@ -33,26 +35,8 @@ int main(int argc, char* argv[]) {
 
 
     // create a FUNC_CALL stage to feed the AGGREGATE stage
-    stage_container_t* sc = new stage_container_t("FUNC_CALL_CONTAINER", new stage_factory<func_call_stage_t>);
-    dispatcher_t::register_stage_container(func_call_packet_t::PACKET_TYPE, sc);
-    
-    tester_thread_t* func_call_thread = 
-	new tester_thread_t(drive_stage, sc, "FUNC_CALL_THREAD");
-    
-    if ( thread_create( NULL, func_call_thread ) ) {
-	TRACE(TRACE_ALWAYS, "thread_create() failed\n");
-	QPIPE_PANIC();
-    }
-
-
-
-    stage_container_t* sc2 = new stage_container_t("AGGREGATE_CONTAINER", new stage_factory<aggregate_stage_t>);
-    dispatcher_t::register_stage_container(aggregate_packet_t::PACKET_TYPE, sc2);
-    tester_thread_t* aggregate_thread = new tester_thread_t(drive_stage, sc2, "AGGREGATE THREAD");
-    if ( thread_create( NULL, aggregate_thread ) ) {
-        TRACE(TRACE_ALWAYS, "thread_create failed\n");
-        QPIPE_PANIC();
-    }
+    register_stage<func_call_stage_t>(1);
+    register_stage<aggregate_stage_t>(1);
 
 
     tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
@@ -87,7 +71,14 @@ int main(int argc, char* argv[]) {
                                 new count_aggregate_t(),
                                 new default_key_extractor_t(),
                                 fc_packet );
+
+    // send packet tree
+    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    dp->assign_packet_to_cpu(fc_packet, qs);
+    dp->assign_packet_to_cpu(agg_packet, qs);
     dispatcher_t::dispatch_packet(agg_packet);
+    dp->query_state_destroy(qs);
+
     
     tuple_t output;
     while(!count_buffer->get_tuple(output))

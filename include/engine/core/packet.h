@@ -6,6 +6,7 @@
 #include "db_cxx.h"
 #include "engine/core/tuple.h"
 #include "engine/functors.h"
+#include "engine/dispatcher/dispatcher_cpu.h"
 #include <list>
 
 
@@ -71,13 +72,16 @@ public:
 	initialized to 0. */
     unsigned int _next_tuple_needed;
 
+    dispatcher_cpu_t _bind_cpu;
+    
+
 
     /* see packet.cpp for documentation */
     packet_t(char*           packet_id,
-		       const char*     packet_type,
-                       tuple_buffer_t* output_buffer,
-                       tuple_filter_t* output_filter,
-		       bool            merge_enabled=true);
+             const char*     packet_type,
+             tuple_buffer_t* output_buffer,
+             tuple_filter_t* output_filter,
+             bool            merge_enabled=true);
 
 
     virtual ~packet_t(void);

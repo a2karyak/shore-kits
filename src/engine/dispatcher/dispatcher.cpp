@@ -16,6 +16,8 @@ using namespace qpipe;
 
 dispatcher_t* dispatcher_t::_instance = NULL;
 
+pthread_mutex_t dispatcher_t::_instance_lock = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 /* internal helper functions */

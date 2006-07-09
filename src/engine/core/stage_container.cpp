@@ -17,7 +17,7 @@
 // include me last!!!
 #include "engine/namespace.h"
 
-#define TRACE_MERGING 1
+#define TRACE_MERGING 0
 #define TRACE_DEQUEUE 0
 
 
@@ -252,9 +252,6 @@ void stage_container_t::run() {
         }
 
 
-	// TODO: process rebinding instructions here
-
-
         // Construct an adaptor to work with. If this is expensive, we
         // can construct the adaptor before the dequeue and invoke
         // some init() function to initialize the adaptor with the
@@ -269,7 +266,7 @@ void stage_container_t::run() {
 	cs.exit();
 
         
-        // run stage
+        // create stage
  	pointer_guard_t <stage_t> stage = _stage_maker->create_stage();
         adaptor.run_stage(stage);
 

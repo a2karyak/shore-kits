@@ -14,7 +14,7 @@ using namespace qpipe;
 using std::string;
 
 
-packet_t* create_q6_packet(const char* client_prefix) {
+packet_t* create_q6_packet(const char* client_prefix, dispatcher_policy_t* dp) {
   
     string prefix(client_prefix);
 
@@ -34,6 +34,11 @@ packet_t* create_q6_packet(const char* client_prefix) {
                                                                new q6_count_aggregate_t(),
                                                                new default_key_extractor_t(0),
                                                                q6_tscan_packet);
+    
+    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    dp->assign_packet_to_cpu(q6_tscan_packet, qs);
+    dp->assign_packet_to_cpu(q6_agg_packet, qs);
+    dp->query_state_destroy(qs);
 
     return q6_agg_packet;
 }

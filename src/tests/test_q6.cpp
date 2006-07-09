@@ -12,6 +12,7 @@
 #include "engine/dispatcher.h"
 #include "engine/stages/tscan.h"
 #include "engine/stages/aggregate.h"
+#include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/util/stopwatch.h"
 #include "trace.h"
 #include "qpipe_panic.h"
@@ -33,9 +34,9 @@ extern uint32_t trace_current_setting;
 
 int main(int argc, char* argv[]) {
 
-    trace_current_setting = TRACE_ALWAYS;
     thread_init();
-
+    dispatcher_policy_t* dp = new dispatcher_policy_os_t();
+    trace_current_setting = TRACE_ALWAYS;
 
     
     // parse command line args
@@ -65,7 +66,7 @@ int main(int argc, char* argv[]) {
         stopwatch_t timer;
         
         
-        packet_t* q6_packet = create_q6_packet("Q6");
+        packet_t* q6_packet = create_q6_packet("Q6", dp);
 
         tuple_buffer_t* output_buffer = q6_packet->_output_buffer;
         dispatcher_t::dispatch_packet(q6_packet);

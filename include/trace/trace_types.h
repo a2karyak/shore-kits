@@ -26,6 +26,7 @@
 #define TRACE_THREAD_LIFE_CYCLE  (1 << 5)
 
 #define TRACE_TEMP_FILE          (1 << 6)
+#define TRACE_CPU_BINDING        (1 << 7)
 
 #define TRACE_DEBUG              (1 << 31)
 

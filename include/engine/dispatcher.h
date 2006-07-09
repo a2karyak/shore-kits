@@ -42,29 +42,43 @@ class dispatcher_t {
 protected:
 
     // synch vars
-    pthread_mutex_t directory_lock;
 
     // stage directory
     struct static_hash_map_s  stage_directory;
     struct static_hash_node_s stage_directory_buckets[DISPATCHER_NUM_STATIC_HASH_MAP_BUCKETS];
 
+   
     dispatcher_t();
     ~dispatcher_t();
+
     
     // methods
     void _register_stage_container(const char* packet_type, stage_container_t* sc);
     void _dispatch_packet(packet_t* packet);
     
     
-    static dispatcher_t* _instance;
+    static pthread_mutex_t _instance_lock;
+    static dispatcher_t*   _instance;
+
     static dispatcher_t* instance() {
-    	if ( _instance == NULL ) {
-	    _instance = new dispatcher_t();
-	}
+        
+        critical_section_t cs(&_instance_lock);
+        if ( _instance == NULL )
+            _instance = new dispatcher_t();
+        cs.exit();
+
+        // TODO Move over to a static init() function that is
+        // guaranteed to be called by the root thread on startup. Then
+        // this function can simply assert that _instance has been
+        // initialized.
 	return _instance;
     }
     
 public:
+
+    static void init() {
+        _instance = new dispatcher_t();
+    }
 
     static void register_stage_container(const char* packet_type, stage_container_t* sc);
     static void dispatch_packet(packet_t* packet);

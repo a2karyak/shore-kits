@@ -24,7 +24,9 @@ STAGES = \
    stages/bnl_in.cpp
 
 DISPATCHER = \
-   dispatcher/dispatcher.cpp
+   dispatcher/dispatcher.cpp \
+   dispatcher/dispatcher_cpu.cpp \
+   dispatcher/dispatcher_cpu_set.cpp
 
 UTIL = \
    util/static_hash_map.cpp \

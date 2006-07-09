@@ -5,11 +5,12 @@
 
 
 #include "engine/core/packet.h"
+#include "engine/dispatcher/dispatcher_policy.h"
 
 using namespace qpipe;
 
 
-packet_t* create_q6_packet(const char* client_prefix);
+packet_t* create_q6_packet(const char* client_prefix, dispatcher_policy_t* dp);
 
 
 #endif

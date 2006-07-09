@@ -12,7 +12,8 @@ TESTCOMMON = \
    tpch_db.cpp \
    tpch_env.cpp \
    tpch_db_load.cpp \
-   q6_packet.cpp
+   q6_packet.cpp \
+   q6_client.cpp
 
 # encapsulates all basic classes needed in qpipe
 lib_LIBRARIES = libtestcommon.a

@@ -46,7 +46,8 @@ packet_t::packet_t(char *          packet_id,
       _output_buffer(output_buffer),
       _output_filter(output_filter),
       _next_tuple_on_merge(stage_container_t::NEXT_TUPLE_UNINITIALIZED),
-      _next_tuple_needed  (stage_container_t::NEXT_TUPLE_INITIAL_VALUE)
+      _next_tuple_needed  (stage_container_t::NEXT_TUPLE_INITIAL_VALUE),
+      _bind_cpu(NULL)
 {
     // error checking
     assert(packet_id     != NULL);

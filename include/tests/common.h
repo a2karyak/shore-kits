@@ -24,6 +24,7 @@
 #include "tests/common/q6_tscan_filter.h"
 #include "tests/common/q6_aggregate.h"
 #include "tests/common/q6_packet.h"
+#include "tests/common/q6_client.h"
 
 
 #endif

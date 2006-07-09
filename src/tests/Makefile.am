@@ -29,6 +29,7 @@ bin_PROGRAMS = \
    test_q4 \
    test_q6 \
    test_q6_2cl \
+   test_q6_disp \
    test_q13 \
    test_q14 \
    test_q12 \
@@ -62,5 +63,5 @@ test_q12_SOURCES = test_q12.cpp
 test_q16_SOURCES = test_q16.cpp
 test_q19_SOURCES = test_q19.cpp
 test_q6_2cl_SOURCES = test_q6_2cl.cpp
-#test_q6_mult_SOURCES = test_q6_mult.cpp
+test_q6_disp_SOURCES = test_q6_disp.cpp
 test_q1_SOURCES = test_q1.cpp
