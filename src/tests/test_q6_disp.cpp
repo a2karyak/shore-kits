@@ -18,6 +18,7 @@
 #include "trace.h"
 #include "qpipe_panic.h"
 #include "tests/common.h"
+#include "workload/common.h"
 
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/dispatcher/dispatcher_policy_rr_cpu.h"

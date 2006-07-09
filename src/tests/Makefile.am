@@ -6,9 +6,9 @@ INCLUDES = -I$(top_srcdir)/include
 
 LDADD = \
    common/libtestcommon.a \
+   ../workload/libworkload.a \
    ../trace/libtrace.a  \
    ../engine/libqpipe.a \
-   ../workload/libworkload.a \
    $(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here

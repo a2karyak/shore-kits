@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/copy_string.h"
+#include "workload/common/copy_string.h"
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif

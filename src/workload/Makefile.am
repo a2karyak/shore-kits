@@ -4,13 +4,18 @@
 INCLUDES = -I$(top_srcdir)/include \
            -I$(top_srcdir)/include/workload
 
-WL_COMMON = \
+WL_BASE = \
    workload.cpp \
    client.cpp \
    parser.cpp \
    job.cpp \
    job_directory.cpp \
    register_job_drivers.cpp
+
+WL_COMMON = \
+   common/copy_string.cpp \
+   common/q6_packet.cpp \
+   common/q6_client.cpp
 
 WL_TPCH = \
    tpch/tpch_db.cpp \
@@ -23,5 +28,6 @@ WL_TPCH = \
 lib_LIBRARIES = libworkload.a
 
 libworkload_a_SOURCES = \
+   $(WL_BASE) \
    $(WL_COMMON) \
    $(WL_TPCH)

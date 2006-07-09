@@ -1,14 +1,14 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "tests/common/q6_client.h"
+#include "workload/common/q6_client.h"
 
 #include "engine/dispatcher.h"
-#include "tests/common/q6_packet.h"
 #include "engine/stages/aggregate.h"
 #include "engine/stages/tscan.h"
-#include "tests/common/q6_aggregate.h"
-#include "tests/common/q6_tscan_filter.h"
-#include "tests/common/copy_string.h"
+#include "workload/common/q6_packet.h"
+#include "workload/common/q6_aggregate.h"
+#include "workload/common/q6_tscan_filter.h"
+#include "workload/common/copy_string.h"
 #include "workload/tpch/tpch_db.h"
 
 

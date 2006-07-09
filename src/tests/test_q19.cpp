@@ -8,6 +8,7 @@
 #include "qpipe_panic.h"
 
 #include "tests/common.h"
+#include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
 
 // experimental!
