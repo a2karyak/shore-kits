@@ -19,7 +19,7 @@ static bool close_db_table(Db*& table, const char* table_name);
  *
  *  @return true on success. false on error.
  */
-bool db_open(u_int32_t flags) {
+bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_size_bytes) {
 
     // create environment
     try {
@@ -34,15 +34,15 @@ bool db_open(u_int32_t flags) {
   
     // specify buffer pool size
     try {
-        if (dbenv->set_cachesize(BDB_BUFFER_POOL_SIZE_GB, BDB_BUFFER_POOL_SIZE_BYTES, 0)) {
+        if (dbenv->set_cachesize(db_cache_size_gb, db_cache_size_bytes, 0)) {
             TRACE(TRACE_ALWAYS, "dbenv->set_cachesize() failed!\n");
             return false;
         }
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException setting buffer pool size to %d GB, %d B: %s\n",
-              BDB_BUFFER_POOL_SIZE_GB,
-              BDB_BUFFER_POOL_SIZE_BYTES,
+              db_cache_size_gb,
+              db_cache_size_bytes,
               e.what());
         return false;
     }
@@ -113,8 +113,8 @@ bool db_open(u_int32_t flags) {
 
 
     TRACE(TRACE_ALWAYS, "BerekeleyDB buffer pool set to %d GB, %d B\n",
-          BDB_BUFFER_POOL_SIZE_GB,
-          BDB_BUFFER_POOL_SIZE_BYTES);
+          db_cache_size_gb,
+          db_cache_size_bytes);
     TRACE(TRACE_ALWAYS, "TPCH database open\n");
     return true;
 }

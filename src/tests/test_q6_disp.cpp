@@ -66,11 +66,20 @@ int main(int argc, char* argv[]) {
 	TRACE(TRACE_ALWAYS, "Unrecognized dispatcher policy: %s\n", argv[3]);
 	exit(-1);
     }
-    
 
-
-
-    if ( !db_open() ) {
+    u_int32_t flags = DB_RDONLY|DB_THREAD;
+    u_int32_t db_cache_size_gb=BDB_BUFFER_POOL_SIZE_GB;
+    u_int32_t db_cache_size_bytes=BDB_BUFFER_POOL_SIZE_BYTES;
+    if ( argc > 4 ) {
+        db_cache_size_bytes = atoi(argv[4]);
+        if ( db_cache_size_bytes == 0 ) {
+            TRACE(TRACE_ALWAYS, "Invalid cache size bytes %s\n", argv[4]);
+            exit(-1);
+        }
+    }
+        
+        
+    if ( !db_open(flags, db_cache_size_gb, db_cache_size_bytes) ) {
         TRACE(TRACE_ALWAYS, "db_open() failed\n");
         QPIPE_PANIC();
     }        
