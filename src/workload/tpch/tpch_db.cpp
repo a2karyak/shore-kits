@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/tpch_db.h"
-#include "tests/common/tpch_tables.h"
-#include "tests/common/tpch_compare.h"
+#include "workload/tpch/tpch_db.h"
+#include "workload/tpch/tpch_tables.h"
+#include "workload/tpch/tpch_compare.h"
 #include "engine/bdb_config.h"
 #include "qpipe_panic.h"
 #include "trace.h"

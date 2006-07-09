@@ -16,11 +16,6 @@
 #include "tests/common/int_comparator.h"
 #include "tests/common/single_int_join.h"
 
-#include "tests/common/tpch_struct.h"
-#include "tests/common/tpch_type_convert.h"
-#include "tests/common/tpch_compare.h"
-#include "tests/common/tpch_db.h"
-
 #include "tests/common/q6_tscan_filter.h"
 #include "tests/common/q6_aggregate.h"
 #include "tests/common/q6_packet.h"

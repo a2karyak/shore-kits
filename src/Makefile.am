@@ -1,1 +1,1 @@
-SUBDIRS = engine trace tests server
+SUBDIRS = engine trace workload tests server

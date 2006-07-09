@@ -9,7 +9,7 @@
 #include "tests/common/q6_aggregate.h"
 #include "tests/common/q6_tscan_filter.h"
 #include "tests/common/copy_string.h"
-#include "tests/common/tpch_db.h"
+#include "workload/tpch/tpch_db.h"
 
 
 using namespace qpipe;

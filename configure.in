@@ -312,7 +312,8 @@ AC_CONFIG_FILES([ Makefile \
                   src/trace/Makefile \
                   src/tests/Makefile \
                   src/tests/common/Makefile \
-                  src/server/Makefile
+                  src/server/Makefile \
+                  src/workload/Makefile
                   ])
 
 AC_OUTPUT()

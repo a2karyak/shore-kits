@@ -9,7 +9,7 @@
 #include "qpipe_panic.h"
 
 #include "tests/common.h"
-#include "tests/common/tpch_db.h"
+#include "workload/tpch/tpch_db.h"
 
 // experimental!
 #include "predicates.h"

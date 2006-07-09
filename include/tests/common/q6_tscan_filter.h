@@ -4,8 +4,8 @@
 #define _Q6_TSCAN_FILTER_H
 
 #include "engine/functors.h"
-#include "tests/common/tpch_struct.h"
-#include "tests/common/tpch_type_convert.h"
+#include "workload/tpch/tpch_struct.h"
+#include "workload/tpch/tpch_type_convert.h"
 #include "trace.h"
 #include <math.h>
 

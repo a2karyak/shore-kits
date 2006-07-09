@@ -18,6 +18,7 @@
 #include "engine/stages/partial_aggregate.h"
 
 #include "tests/common.h"
+#include "workload/tpch/tpch_db.h"
 
 #include <unistd.h>
 #include <sys/time.h>

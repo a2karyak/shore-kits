@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/tpch_env.h"
+#include "workload/tpch/tpch_env.h"
 
 
 // environment

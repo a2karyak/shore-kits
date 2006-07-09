@@ -19,6 +19,7 @@
 #include "engine/util/stopwatch.h"
 #include "trace.h"
 #include "qpipe_panic.h"
+#include "workload/tpch/tpch_db.h"
 
 #include "tests/common.h"
 

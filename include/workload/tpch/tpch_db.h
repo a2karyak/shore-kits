@@ -2,8 +2,8 @@
 #ifndef _TPCH_DB_H
 #define _TPCH_DB_H
 
-#include "tests/common/tpch_env.h"
-#include "tests/common/tpch_db_load.h"
+#include "workload/tpch/tpch_env.h"
+#include "workload/tpch/tpch_db_load.h"
 #include "engine/bdb_config.h"
 #include <db_cxx.h>
 

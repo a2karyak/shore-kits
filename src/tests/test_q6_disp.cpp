@@ -22,6 +22,7 @@
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
 #include "engine/dispatcher/dispatcher_policy_query_cpu.h"
+#include "workload/tpch/tpch_db.h"
 #include "db_cxx.h"
 
 using namespace qpipe;

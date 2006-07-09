@@ -8,6 +8,7 @@ LDADD = \
    common/libtestcommon.a \
    ../trace/libtrace.a  \
    ../engine/libqpipe.a \
+   ../workload/libworkload.a \
    $(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here

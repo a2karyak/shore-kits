@@ -2,7 +2,7 @@
 #ifndef _DATASTR_TO_TIMET_H
 #define _DATASTR_TO_TIMET_H
 
-#include "tests/common/tpch_struct.h"
+#include "workload/tpch/tpch_struct.h"
 #include <sys/time.h>
 
 int datepart(char* str, const time_t *pt);

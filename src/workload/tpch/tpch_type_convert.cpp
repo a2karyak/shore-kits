@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/tpch_type_convert.h"
+#include "workload/tpch/tpch_type_convert.h"
 #include <cstdlib>
 #include <cstring>
 #include <cassert>

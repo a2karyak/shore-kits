@@ -1,10 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/tpch_db_load.h"
-#include "tests/common/tpch_compare.h"
-#include "tests/common/tpch_env.h"
-#include "tests/common/tpch_struct.h"
-#include "tests/common/tpch_type_convert.h"
+#include "workload/tpch/tpch_db_load.h"
+#include "workload/tpch/tpch_compare.h"
+#include "workload/tpch/tpch_env.h"
+#include "workload/tpch/tpch_struct.h"
+#include "workload/tpch/tpch_type_convert.h"
 
 #include "engine/bdb_config.h"
 #include "qpipe_panic.h"

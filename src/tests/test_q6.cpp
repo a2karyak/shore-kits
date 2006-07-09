@@ -17,6 +17,7 @@
 #include "trace.h"
 #include "qpipe_panic.h"
 #include "tests/common.h"
+#include "workload/tpch/tpch_db.h"
 
 #include "db_cxx.h"
 

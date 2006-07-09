@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/tpch_compare.h"
+#include "workload/tpch/tpch_compare.h"
 #include <stdlib.h>
 
 

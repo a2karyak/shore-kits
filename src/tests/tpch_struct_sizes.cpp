@@ -1,7 +1,7 @@
 
 #include <sys/time.h>
 
-#include "tests/common/tpch_struct.h"
+#include "workload/tpch/tpch_struct.h"
 #include "trace.h"
 
 

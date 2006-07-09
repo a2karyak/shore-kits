@@ -3,7 +3,7 @@
 #ifndef _TPCH_DB_LOAD_H
 #define _TPCH_DB_LOAD_H
 
-#include "tests/common/tpch_tables.h"
+#include "workload/tpch/tpch_tables.h"
 
 bool db_load(const char* tbl_path="tbl");
 
