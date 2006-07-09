@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 
     // parse command line args
     if ( argc < 4 ) {
-	TRACE(TRACE_ALWAYS, "Usage: %s <num clients> <iterations per client> OS|RR_CPU|QUERY_CPU\n", argv[0]);
+	TRACE(TRACE_ALWAYS, "Usage: %s <num clients> <iterations per client> OS|RR_CPU|QUERY_CPU [cachesize]\n", argv[0]);
 	exit(-1);
     }
     int num_clients = atoi(argv[1]);

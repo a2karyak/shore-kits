@@ -27,6 +27,7 @@
 
 #define TRACE_TEMP_FILE          (1 << 6)
 #define TRACE_CPU_BINDING        (1 << 7)
+#define TRACE_QUERY_RESULTS      (1 << 8)
 
 #define TRACE_DEBUG              (1 << 31)
 
