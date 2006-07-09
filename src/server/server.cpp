@@ -8,6 +8,8 @@
 */ 
 
 #include "server.h"
+#include "workload/register_job_drivers.h"
+
 
 using namespace qpipe;
 
@@ -142,7 +144,7 @@ void initQPipe( ) {
     init_stages();
 
     /* register jobs */
-    register_jobs();
+    register_job_drivers();
     
     /* get reference to workload factory - instanciates factory */
     workload_factory* wf = workload_factory::instance();

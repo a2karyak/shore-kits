@@ -9,7 +9,8 @@ WL_COMMON = \
    client.cpp \
    parser.cpp \
    job.cpp \
-   job_directory.cpp
+   job_directory.cpp \
+   register_job_drivers.cpp
 
 WL_TPCH = \
    tpch/tpch_db.cpp \

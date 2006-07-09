@@ -23,7 +23,6 @@
 /* QPipe Server */
 #include "workload.h"
 #include "job.h"
-#include "repos.h"
 
 /* Configurable values */
 #define QPIPE_VERSION "v2.0"
