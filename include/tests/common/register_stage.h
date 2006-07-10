@@ -10,6 +10,8 @@
 #include "engine/dispatcher.h"
 #include "qpipe_panic.h"
 #include "trace.h"
+#include "tests/common/tester_thread.h"
+#include "tests/common/drive_stage.h"
 
 #include <string>
 

@@ -9,11 +9,14 @@
 
 #include "server.h"
 #include "workload/register_job_drivers.h"
+#include "workload/register_stage_containers.h"
+#include "workload/tpch/tpch_db.h"
 
 
 using namespace qpipe;
 
 char BUFFER[255];
+extern uint32_t trace_current_setting;
 
 
 /** @fn    : main(int, char* [])
@@ -110,10 +113,9 @@ static void execute_cmd(int argc, char* argv [] ) {
             one_cmd += " ";
         }
         one_cmd += argv[argc-1];
-        
+
         /* run a single command command */
         if ( parser->parse(one_cmd) ) {
-            
             TRACE( TRACE_ALWAYS, "command: '%s' not understood\n", BUFFER);
             parser->print_usage(stderr);
         }
@@ -137,11 +139,15 @@ void initQPipe( ) {
     /* read configuration file */
     read_config(STD_CONFIG_FILE);
 
+
     /* open DB tables */
-    open_db_tables();
+    if ( !db_open() ) {
+        TRACE(TRACE_ALWAYS, "db_open() failed\n");
+        QPIPE_PANIC();
+    }        
     
     /* initialize stages */
-    init_stages();
+    register_stage_containers();
 
     /* register jobs */
     register_job_drivers();
@@ -149,6 +155,8 @@ void initQPipe( ) {
     /* get reference to workload factory - instanciates factory */
     workload_factory* wf = workload_factory::instance();
     wf->print_info();
+
+    trace_current_setting = TRACE_ALWAYS;
 }
 
 
@@ -160,7 +168,8 @@ void initQPipe( ) {
 void closeQPipe() {
 
     /* close DB tables */
-    close_db_tables();
+    if ( !db_close() )
+        TRACE(TRACE_ALWAYS, "db_close() failed\n");
     
     /* @TODO: Make the actuall close DB calls */
     
@@ -181,43 +190,6 @@ void read_config(char* ) {
     /* @TODO: Should read configuration file */
     
 }
-
-
-
-/** @fn    : open_db_tables()
- *  @brief : Opens DB tables
- */
-
-void open_db_tables() {
-
-    /* @TODO: Should contact Catalog */
-    
-}
-
-
-
-/** @fn    : close_db_tables()
- *  @brief : Closes DB tables
- */
-
-void close_db_tables() {
-
-    /* @TODO: Should contact Catalog */
-    
-}
-
-
-
-/** @fn    : init_stages()
- *  @brief : Initializes/Starts all the stages
- */
-
-void init_stages() {
-
-    /* @TODO: Should start only the configured stages */
-    
-}
-
 
 
 /** @fn    : stop_stages()

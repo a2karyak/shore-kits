@@ -9,6 +9,8 @@
 
 using namespace qpipe;
 
+#define TRACE_AGGREGATE 0
+
 
 
 class q6_count_aggregate_t : public tuple_aggregate_t {
@@ -37,7 +39,7 @@ public:
 	agg->count++;
 	agg->sum += d[0] * d[1];
     
-	if(agg->count % 10 == 0) {
+	if(TRACE_AGGREGATE && (agg->count % 10 == 0)) {
 	    TRACE(TRACE_DEBUG, "%d - %lf\n", agg->count, agg->sum);
 	    fflush(stdout);
 	}

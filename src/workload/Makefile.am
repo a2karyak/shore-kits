@@ -10,7 +10,9 @@ WL_BASE = \
    parser.cpp \
    job.cpp \
    job_directory.cpp \
-   register_job_drivers.cpp
+   register_job_drivers.cpp \
+   register_stage_containers.cpp \
+   dispatcher_globals.cpp
 
 WL_COMMON = \
    common/copy_string.cpp \

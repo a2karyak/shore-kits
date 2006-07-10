@@ -8,6 +8,7 @@
 */ 
 
 # include "workload/parser.h"
+#include "workload/dispatcher_globals.h"
 
 
 // include me last!!!
@@ -101,16 +102,20 @@ int parser_t::parse(string std_cmd) {
 
 /** @fn     : handle_msg_workload(char*)
  *  @brief  : Handler of the MSG_WORKLOAD messages
- *  @format : <CL> <Q> <IT> <TT>
+ *  @format : <POLICY> <NUM CLIENTS> <QUERY NUM> <ITERATIONS PER CLIENT> <THINK TIME>
  *  @action : It instanciates a corresponding workload_t  
  */
 
 void parser_t::handle_msg_workload(char* cmd) {
 
-    // Example: 1 0 10 4
+    // Example: OS 1 0 10 4
     
     char* tmp;
-    char* s_CL = strtok_r(cmd, STD_DELIM, &tmp);
+    char* s_POLICY = strtok_r(cmd, STD_DELIM, &tmp);
+    global_dispatcher_policy_set(s_POLICY);
+
+
+    char* s_CL = strtok_r(NULL, STD_DELIM, &tmp);
     char* s_Q = strtok_r(NULL, STD_DELIM, &tmp);
     char* s_IT = strtok_r(NULL, STD_DELIM, &tmp);
     char* s_TT = strtok_r(NULL, STD_DELIM, &tmp);
