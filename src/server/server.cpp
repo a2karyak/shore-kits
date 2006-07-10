@@ -156,6 +156,7 @@ void initQPipe( ) {
     workload_factory* wf = workload_factory::instance();
     wf->print_info();
 
+    // trace_current_setting = TRACE_ALWAYS | TRACE_CPU_BINDING;
     trace_current_setting = TRACE_ALWAYS;
 }
 

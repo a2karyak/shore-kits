@@ -17,5 +17,8 @@
 #include "workload/common/q6_packet.h"
 #include "workload/common/q6_client.h"
 
+#include "workload/common/q1_common.h"
+#include "workload/common/q4_common.h"
+
 
 #endif

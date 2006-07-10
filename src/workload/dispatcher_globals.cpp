@@ -6,6 +6,7 @@
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
 #include "engine/dispatcher/dispatcher_policy_query_cpu.h"
+#include "engine/dispatcher/dispatcher_policy_rr_module.h"
 
 using namespace qpipe;
 
@@ -25,6 +26,8 @@ void global_dispatcher_policy_set(const char* dpolicy) {
     global_policy = new dispatcher_policy_rr_cpu_t();
   if ( !strcmp(dpolicy, "QUERY_CPU") )
     global_policy = new dispatcher_policy_query_cpu_t();
+  if ( !strcmp(dpolicy, "RR_MODULE") )
+    global_policy = new dispatcher_policy_rr_module_t();
   if ( global_policy == NULL ) {
     TRACE(TRACE_ALWAYS, "Unrecognized dispatcher policy: %s\n", dpolicy);
     QPIPE_PANIC();

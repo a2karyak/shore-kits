@@ -9,6 +9,15 @@
 
 
 #include "workload/job.h"
+#include "engine/core/tuple.h"
+#include "engine/stages/tscan.h"
+#include "engine/stages/partial_aggregate.h"
+#include "engine/dispatcher/dispatcher_policy.h"
+
+#include "workload/common.h"
+#include "workload/dispatcher_globals.h"
+#include "engine/dispatcher.h"
+
 
 using namespace qpipe;
 
@@ -47,16 +56,10 @@ public:
     
     /* Start executing */
     virtual void* start() {
-        TRACE( TRACE_ALWAYS, "Executing %s. id=%s\n", job_desc.c_str(), job_cmd.c_str());
-
-        for (int i = 0; i < 5; i++) {
-            TRACE( TRACE_DEBUG, "Q1 SAYS %d ***\n", randtest);
-            sleep(1);
-        }
-        
-        return ((void*)0);
+        TPCH_Q1::run( global_dispatcher_policy_get() );
+        return NULL;
     }
-
+    
 }; // END OF CLASS: tpch_q1
 
 

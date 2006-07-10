@@ -443,7 +443,7 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
         wlNumClients = noClients;
     }
     else {
-        TRACE(TRACE_DEBUG, "Invalid number of clients %d\n", noClients);
+        TRACE(TRACE_ALWAYS, "Invalid number of clients %d\n", noClients);
         return (-1);
     }
 
@@ -451,7 +451,7 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
         wlThinkTime = thinkTime;
     }
     else {
-        TRACE(TRACE_DEBUG, "Invalid think time interval %d\n", thinkTime);
+        TRACE(TRACE_ALWAYS, "Invalid think time interval %d\n", thinkTime);
         return (-1);
     }
 
@@ -459,7 +459,7 @@ int workload_t::set_run(const int noClients, const int thinkTime, const int noQu
         wlNumQueries = noQueries;
     }
     else {
-        TRACE(TRACE_DEBUG, "Invalid number of queries %d\n", noQueries);
+        TRACE(TRACE_ALWAYS, "Invalid number of queries %d\n", noQueries);
         return (-1);
     }
 
@@ -585,7 +585,7 @@ void workload_t::get_info(int show_stats) {
         queriesCompleted = wlNumClients * wlNumQueries;
         
         /* queries per hour */      
-        float tpmC = (3600.0 * queriesCompleted) / (wlEndTime - wlStartTime);
+        float tpmC = (60.0 * queriesCompleted) / (wlEndTime - wlStartTime);
         
         fprintf(stdout, "~~~\n");
         fprintf(stdout, "~~~ Clients           = %d \n", wlNumClients);
@@ -595,7 +595,7 @@ void workload_t::get_info(int show_stats) {
         fprintf(stdout, "~~~ Completed Queries = %d \n", queriesCompleted);
         fprintf(stdout, "~~~ Duration          = %ld \n", (wlEndTime - wlStartTime));
         fprintf(stdout, "~~~\n");
-        fprintf(stdout, "~~~ Throughput        = %.2f queries/hour \n", tpmC);
+        fprintf(stdout, "~~~ Throughput        = %.2f queries/min\n", tpmC);
         fprintf(stdout, "~~~\n");
     }
 }

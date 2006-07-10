@@ -54,7 +54,7 @@ public:
 
 
     virtual query_state_t* query_state_create() {
-        // No state to maintina for RR-CPU policy. The value that we
+        // No state to maintain for RR-CPU policy. The value that we
         // return here should be opaquely passed to our own
         // assign_packet_to_cpu() method.
         return NULL;

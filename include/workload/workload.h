@@ -41,8 +41,8 @@ class parser_t;
 
 extern pthread_mutex_t stats_mutex;
 
-/* No more than 20 active clients on the same time */
-#define MAX_CLIENTS 20
+/* No more than 400 active clients on the same time */
+#define MAX_CLIENTS 400
 
 /* No more than 20 active workloads on the same time */
 #define MAX_WORKLOADS 20 

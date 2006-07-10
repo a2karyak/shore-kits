@@ -21,8 +21,8 @@
 
 
 // MIX OF QUERIES
-const int MIX[] = { 1, 6, 13 ,16 };
-const int MIX_SIZE = 4;
+const int MIX[] = { 1, 6, 4 };
+const int MIX_SIZE = sizeof(MIX)/sizeof(int);
 
 
 
@@ -348,8 +348,8 @@ void* client_t::run() {
         pthread_mutex_unlock(&get_workload()->workload_mutex);
 
         /* queries per hour */	  
-        tpmC = (3600.0 * (wf->theCOQueries - complWhenStarted)) / (cur_time - clStartTime); 
-        fprintf(stdout, "Queries completed - %d, current throughput - %.2f queries/hour\n", (wf->theCOQueries - complWhenStarted), tpmC);
+        tpmC = (60.0 * (wf->theCOQueries - complWhenStarted)) / (cur_time - clStartTime); 
+        fprintf(stdout, "Queries completed - %d, current throughput - %.2f queries/min\n", (wf->theCOQueries - complWhenStarted), tpmC);
 
         // sleep for the client specified client time
         sleep(clThinkTime);

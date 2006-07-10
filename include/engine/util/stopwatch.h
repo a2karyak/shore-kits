@@ -3,6 +3,9 @@
 #ifndef _STOPWATCH_H
 #define _STOPWATCH_H
 
+#include <sys/time.h>
+
+
 
 /**
  *  @brief a timer object.
