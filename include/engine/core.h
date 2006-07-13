@@ -8,5 +8,6 @@
 #include "engine/core/stage.h"
 #include "engine/core/stage_container.h"
 #include "engine/core/stage_factory.h"
+#include "engine/core/exception.h"
 
 #endif

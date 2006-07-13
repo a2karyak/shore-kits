@@ -2,6 +2,7 @@
 
 #include "thread.h"
 #include "core/page.h"
+#include "core/exception.h"
 
 
 
@@ -218,12 +219,13 @@ bool page_buffer_t::check_writable() {
  *  @param page If we read a page from the buffer, we assign it to
  *  this address.
  *
- *  @return 0 if we have read a page from the buffer. 1 if the buffer
- *  has been closed by the producer and no more pages are
- *  available. -1 if the buffer has been terminated.
+ *  @return true if a page is read from the buffer. false if the
+ *  buffer has been closed and no more pages are available.
+ *
+ *  @throw TerminatedBufferException if buffer has been terminated.
  */
 
-int page_buffer_t::read(page_t*& page) {
+bool page_buffer_t::read(page_t*& page) {
 
     // Treat the one-page-left case separately. We avoid the
     // head==tail corner case by never allowing the buffer to empty
@@ -235,7 +237,7 @@ int page_buffer_t::read(page_t*& page) {
 
         // check for close
         if (terminated)
-            return -1;
+            throw EXCEPTION(TerminatedBufferException, "");
 
         // We are probably going to wait for the buffer to fill
         // up. Before we deschedule ourselves, update the buffer size.
@@ -259,7 +261,7 @@ int page_buffer_t::read(page_t*& page) {
             // since we gave up the buffer lock when we waited, the
             // buffer could have been closed by now
             if (terminated)
-                return -1;
+                throw EXCEPTION(TerminatedBufferException, "");
 	}
 
 
@@ -273,7 +275,7 @@ int page_buffer_t::read(page_t*& page) {
 
     // empty (and therefore also done writing)?
     if(read_size_guess == 0) 
-        return 1;
+        return false;
     
     
     // proceed -- known not empty
@@ -304,7 +306,7 @@ int page_buffer_t::read(page_t*& page) {
         // * * * END CRITICAL SECTION * * *
     }
     
-    return 0;
+    return true;
 }
 
 
@@ -319,12 +321,12 @@ int page_buffer_t::read(page_t*& page) {
  *  page into the buffer, so the caller must give up its ownership of
  *  it.
  *
- *  @return 0 if the page has been written to the buffer. -1 if the
- *  buffer is closed. If the buffer is closed, the page will not be
- *  inserted.
+ *  @return true if the page has been written to the buffer. false if
+ *  the buffer has been terminated. If the buffer has been terminated,
+ *  the page will not be inserted.
  */
 
-int page_buffer_t::write(page_t *page) {
+bool page_buffer_t::write(page_t *page) {
     
     assert( page != NULL );
     
@@ -337,7 +339,7 @@ int page_buffer_t::write(page_t *page) {
 
         // check for close
         if (terminated)
-            return -1;
+            return false;
 
         // update the size and notify the consumer
         commit_writes();
@@ -366,7 +368,7 @@ int page_buffer_t::write(page_t *page) {
     // since we gave up the buffer lock when we waited, the
     // buffer could have been closed by now
     if (terminated)
-        return -1;
+        return false;
 
     // proceed -- known not full. Corner case: very first write is to
     // an empty buffer, meaning the head and tail pointers are both
@@ -401,7 +403,7 @@ int page_buffer_t::write(page_t *page) {
     }
     
 
-    return 0;
+    return true;
 }
 
 

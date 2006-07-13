@@ -10,7 +10,9 @@
 #include <cstdio>
 
 #include "engine/core/page.h"
+#include "engine/core/exception.h"
 #include "engine/util/guard.h"
+#include "trace.h"
 
 
 // for Dbt class
@@ -57,14 +59,17 @@ public:
         init(NULL, 0);
     }
 
+
     // construct a tuple from a BerkeleyDB tuple (a Dbt object)
     tuple_t(Dbt &data) {
         init((char *)data.get_data(), data.get_size());
     }
     
+
     tuple_t(char *d, size_t s) {
         init(d, s);
     }
+
 
     /**
      *  @brief Copy the specified tuple. This function performs a deep
@@ -76,12 +81,13 @@ public:
      *
      *  @param src The tuple we are creating a copy of.
      */
-
+    
     void assign(const tuple_t &src) {
         assert(size == src.size);
         memcpy(data, src.data, size);
     }
-
+    
+    
 private:
 
     /**
@@ -106,14 +112,15 @@ private:
 class tuple_page_t : public page_t {
 
 private:
+
     size_t _tuple_size;
     size_t _tuple_count;
     size_t _end_offset;
     char   _data[0];
 
+
 public:
-
-
+    
     /**
      *  @brief Allocate a new page and place a tuple_page_t as its
      *  header.
@@ -126,8 +133,9 @@ public:
      *  @param page_size The size of the new page (including
      *  tuple_page_t header).
      *
-     *  @return NULL on error (if the underlying allocator returns
-     *  NULL). An initialized page otherwise.
+     *  @return An initialized page otherwise.
+     *
+     *  @throw OutOfMemoryException If page_t::alloc() fails.
      */
 
     template<class Alloc>
@@ -137,7 +145,7 @@ public:
 
 	page_t *page = page_t::alloc(allocate, page_size);
 	if (page == NULL)
-	    return NULL;
+            throw EXCEPTION(OutOfMemoryException, "page_t::alloc() failed");
 
         return tuple_page_t::init(page, tuple_size);
     }
@@ -155,7 +163,7 @@ public:
      */
 
     static tuple_page_t *mount(page_t *page) {
-	
+
 	// error checking
 	assert (page != NULL);
         return new (page) tuple_page_t();
@@ -192,15 +200,16 @@ public:
         return (page_size - sizeof(tuple_page_t))/tuple_size;
     }
 
+
     /**
      *  @brief Returns the size of the tuples stored in this page.
      *
      *  @return See description.
      */
-
+    
     size_t tuple_size()  const { return _tuple_size; }
-
-
+    
+    
     /**
      *  @brief Returns the number of tuples stored in this page.
      *
@@ -208,8 +217,8 @@ public:
      */
 
     size_t tuple_count() const { return _tuple_count; }
-
-
+    
+    
     /**
      *  @brief Returns the total number of tuples that fit into this
      *  page.
@@ -283,6 +292,9 @@ public:
      *  @param file The file to read from.
      *
      *  @return The number of tuples read.
+     *
+     *  @throw FileException if no tuples can be read and feof()
+     *  returns false.
      */
 
     size_t fread(FILE *file) {
@@ -294,6 +306,10 @@ public:
         size_t max = capacity() - tuple_count();
 
         size_t count = ::fread(base, tuple_size(), max, file);
+        if ( (count == 0) && !feof(file) ) {
+            TRACE(TRACE_ALWAYS, "::fread() read 0 tuples, feof() returned 0\n");
+            throw EXCEPTION(FileException, "::fread() failed");
+        }
 
         _end_offset += count * tuple_size();
         _tuple_count += count;
@@ -307,11 +323,19 @@ public:
      *
      *  @param file The file to write to.
      *
-     *  @return The number of tuples written.
+     *  @return void
+     *
+     *  @throw FileException if the page cannot be written completely.
      */
     
-    size_t fwrite(FILE *file) {
-        return ::fwrite(_data, tuple_size(), tuple_count(), file);
+    void fwrite(FILE *file) {
+        size_t write_count = ::fwrite(_data, tuple_size(), tuple_count(), file);
+        if ( write_count != tuple_count() ) {
+            TRACE(TRACE_ALWAYS, "::fwrite() wrote %zd/%zd tuples\n",
+                  write_count,
+                  tuple_count());
+            throw EXCEPTION(FileException, "::fwrite() failed");
+        }
     }
 
     
@@ -322,26 +346,44 @@ public:
      *
      *  @param file The file to read from.
      *
-     *  @return 0 if a page was successfully read. 1 if there thare no
-     *  more pages to read. -1 on error.
+     *  @return true if a page was successfully read. false if there
+     *  thare no more pages to read.
+     *
+     *  @throw FileException if a read error occurs.
      */
     
-    int fread_full_page(FILE *file) {
+    bool fread_full_page(FILE *file) {
 
 	size_t size = page_size();
         size_t size_read = ::fread(this, 1, size, file);
 
-	if ( size_read == 0 )
-	    return 1;
+	if (size_read == 0) {
+            if ( feof(file) )
+                // end of file
+                return false;
 
-	if ( size_read != size )
+            // else: error!
+            TRACE(TRACE_ALWAYS, "::fread() returned 0 and feof() false\n");
+            throw EXCEPTION(FileException, "::fread() failed");
+        }
+
+	if ( size_read != size ) {
 	    // could not read enough data
-	    return -1;
-	if ( size_read != page_size() )
-	    // page on disk doesn't match
-	    return -1;
+            TRACE(TRACE_ALWAYS, "Read %zd/%zd tuples\n",
+                  size_read,
+                  size);
+            throw EXCEPTION(FileException, "::fread() could not read enough data");
+        }
 
-	return 0;
+        if ( size_read != page_size() ) {
+	    // page on disk doesn't match!
+            TRACE(TRACE_ALWAYS, "Read a page of size %zd. Expecting to read a page of size %zd\n",
+                  page_size(),
+                  size_read);
+            throw EXCEPTION(FileException, "::fread read a page of the wrong size");
+        }
+
+	return true;
     }
 
 
@@ -351,11 +393,19 @@ public:
      *
      *  @param file The file to write to.
      *
-     *  @return 0 if the page was successfully written, non-zero on error
+     *  @return void
+     *
+     *  @throw FileException if a write error occurs.
      */
     
-    int fwrite_full_page(FILE *file) {
-        return ::fwrite(this, 1, page_size(), file) != page_size();
+    void fwrite_full_page(FILE *file) {
+        size_t write_count = ::fwrite(this, 1, page_size(), file);
+        if ( write_count != page_size() ) {
+            TRACE(TRACE_ALWAYS, "::fwrite() wrote %zd/%zd page bytes\n",
+                  write_count,
+                  page_size());
+            throw EXCEPTION(FileException, "::fwrite() failed");
+        }
     }
 
     
@@ -389,7 +439,7 @@ public:
      *  size.
      *
      *  @return true on successful allocate and copy. False if the
-     *  page is full
+     *  page is full.
      */
 
     bool append_init(const tuple_t &tuple) {
@@ -589,15 +639,15 @@ public:
      *  @param tuple The tuple to insert. On successful insert, the
      *  data that this tuple points to will be copied into this page.
      *
-     *  @return 0 on successful insert. Non-zero if the buffer was
+     *  @return true on successful insert. false if the buffer was
      *  terminated by the consumer.
      */
 
-    int put_tuple (const tuple_t &tuple) {
+    bool put_tuple (const tuple_t &tuple) {
         if( check_page_full() )
-            // buffer was closed by consumer!
-            return -1;
-        return !write_page->append_init(tuple);
+            // buffer was terminated by consumer!
+            return false;
+        return write_page->append_init(tuple);
     }
 
 
@@ -614,11 +664,11 @@ public:
      *
      *  @param page The page of tuples to insert.
      * 
-     *  @return 0 on successful insert. Non-zero if the buffer was
+     *  @return true on successful insert. false if the buffer was
      *  terminated by the consumer.
      */
 
-    int put_page(tuple_page_t* page) {
+    bool put_page(tuple_page_t* page) {
         return page_buffer.write(page);
     }
 
@@ -636,19 +686,19 @@ public:
      *  operation to prevent uninitialized data from being fed to the
      *  consumer of this buffer.
      *
-     *  @return 0 on successful allocate. Non-zero if the consumer has
-     *  terminated the buffer.
+     *  @return true on successful insert. false if the buffer was
+     *  terminated by the consumer.
      */
 
-    int alloc_tuple(tuple_t &tuple) {
+    bool alloc_tuple(tuple_t &tuple) {
 	if ( check_page_full() )
-            // buffer was closed!
-	    return -1;
-        return !write_page->append_mount(tuple);
+            // buffer was terminated by consumer!
+	    return false;
+        return write_page->append_mount(tuple);
     };
   
     
-    int get_tuple(tuple_t &tuple);
+    bool get_tuple(tuple_t &tuple);
 
 
     /**
@@ -667,25 +717,27 @@ public:
      *  get_page() and get_tuple(), some of the tuples on the returned
      *  page may have been returned by previous calls to get_tuple()).
      *
-     *  @return 0 if a page is removed from the buffer. 1 if the
-     *  buffer is empty and the producer has invoked send_eof() on the
-     *  buffer. -1 if the buffer has been terminated.
+     *  @return NULL if the buffer is empty and the producer has
+     *  invoked send_eof() on the buffer.
+     *
+     *  @throw BufferTerminatedException if the producer has
+     *  terminated the buffer.
      */
 
-    int get_page(tuple_page_t*& pagep) {
+    tuple_page_t* get_page() {
 
         // make sure there's a valid page
-        int wait_ret = wait_for_input();
-        if (wait_ret)
-            return wait_ret;
-
+        if ( !wait_for_input() )
+            return NULL;
+        
         // steal the page (invalidate the tuple iterator)
-        pagep = read_page.release();
-        return 0;
+        tuple_page_t* page = read_page.release();
+        assert( page != NULL );
+        return page;
     }
 
 
-    int wait_for_input();
+    bool wait_for_input();
 
     
     /**
@@ -767,15 +819,22 @@ protected:
 
     int init(size_t tuple_size, size_t num_pages);
 
-    int flush_write_page() {
-        int result = page_buffer.write(write_page);
-        if(result)
-            // Buffer was terminated! Let guard free it.
+
+    /**
+     *
+     */
+    bool flush_write_page() {
+
+        // send write_page to our page buffer
+        if ( !page_buffer.write(write_page) ) {
+            // The buffer was terminated! Let our page guard free it.
             write_page = NULL;
-        else
+            return false;
+        }
+        else {
             write_page.release();
-        
-        return result;
+            return true;
+        }
     }
 };
 

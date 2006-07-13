@@ -7,6 +7,7 @@ LDADD = ../engine/libqpipe.a ../trace/libtrace.a $(BDB_HOME)/lib/libdb_cxx.a
 # define programs here
 bin_PROGRAMS = \
    test_trace \
+   test_exception \
    test_tuple_buffer \
    test_fscan_stage \
    test_fdump_stage \
@@ -22,6 +23,7 @@ bin_PROGRAMS = \
    test_q1
 
 test_trace_SOURCES = test_trace.cpp
+test_exception_SOURCES = test_exception.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
 test_fdump_stage_SOURCES = test_fdump_stage.cpp
 test_merge_stage_SOURCES = test_merge_stage.cpp

@@ -153,8 +153,8 @@ public:
     }
     
     
-    int  read(page_t*& page);
-    int  write(page_t* page);
+    bool read(page_t*& page);
+    bool write(page_t* page);
     bool check_readable();
     bool check_writable();
     

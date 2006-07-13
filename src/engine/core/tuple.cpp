@@ -33,7 +33,7 @@ int tuple_buffer_t::check_page_full() {
     if(write_page->full()) {
 
         // page is full
-        if(flush_write_page()) {
+        if(!flush_write_page()) {
             // buffer has been terminated
             return -1;
         }
