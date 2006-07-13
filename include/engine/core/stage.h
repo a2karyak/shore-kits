@@ -26,13 +26,6 @@ class stage_t {
 
 public:
 
-    typedef enum {
-	RESULT_CONTINUE = 0,
-	RESULT_STOP,
-	RESULT_ERROR
-    } result_t;
-
-
     /**
      *  @brief The purpose of a stage::adaptor_t is to provide a
      *  stage's process packet method with exactly the functionality
@@ -49,7 +42,7 @@ public:
         
 	virtual const char* get_container_name()=0;
         virtual packet_t* get_packet()=0;
-        virtual result_t output(tuple_page_t *page)=0;
+        virtual void output(tuple_page_t *page)=0;
 	virtual void stop_accepting_packets()=0;	
         virtual bool check_for_cancellation()=0;
         
@@ -57,22 +50,20 @@ public:
          *  @brief Write a tuple to each waiting output buffer in a
          *  chain of packets.
          *
-         *  @return OUTPUT_RETURN_CONTINUE to indicate that we should continue
-         *  processing the query. OUTPUT_RETURN_STOP if all packets have been
-         *  serviced, sent EOFs, and deleted. OUTPUT_RETURN_ERROR on
-         *  unrecoverable error. process() should probably propagate this
-         *  error up.
+         *  @throw an exception if we should stop processing the query
+         *  early for any reason. This may occur due to a non-error
+         *  condition (such as a partially-shared packet completing)
+         *  but is always an "exceptional" (ie unexpected) condition
+         *  for a stage implementation and therefore treated the same
+         *  way.
          */
-        result_t output(const tuple_t &tuple) {
+        void output(const tuple_t &tuple) {
             assert(!_page->full());
             _page->append_init(tuple);
             if(_page->full()) {
-                result_t result = output(_page);
+                output(_page);
                 _page->clear();
-                return result;
             }
-    
-            return stage_t::RESULT_CONTINUE;
         }
         
         adaptor_t(tuple_page_t *page)
@@ -90,11 +81,9 @@ public:
          * processing has completed (stage implementations need not
          * concern themselves with this).
          */
-        result_t flush() {
-            if(_page->empty())
-                return RESULT_STOP;
-
-            return output(_page);
+        void flush() {
+            if(!_page->empty())
+                output(_page);
         }
         
     };
@@ -104,7 +93,7 @@ protected:
 
     adaptor_t* _adaptor;
 
-    virtual result_t process_packet()=0;
+    virtual void process_packet()=0;
 
 public:
 
@@ -130,7 +119,7 @@ public:
      *  terminate all queries that it is currently involved in
      *  computing.
      */
-    result_t process() {
+    void process() {
 	assert(_adaptor != NULL);
         
         // process rebinding instructions here since we have access to
@@ -144,7 +133,7 @@ public:
             dispatcher_cpu_bind_self(bind_cpu);
         }
         
-	return process_packet();
+	process_packet();
     }
 };
 

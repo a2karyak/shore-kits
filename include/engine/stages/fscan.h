@@ -71,16 +71,6 @@ public:
     virtual ~fscan_packet_t() {
         free(_filename);
     }
-    
-    
-    virtual void destroy_subpackets() {
-        TRACE(TRACE_ALWAYS, "FSCAN is non-mergeable!\n");
-        QPIPE_PANIC();
-    }
-
-    virtual void terminate_inputs() {
-        // No input buffers ... do nothing.
-    }
 
 };
 
@@ -103,9 +93,9 @@ public:
     
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
     
-    result_t read_file(adaptor_t* adaptor, FILE* file, tuple_page_t* tuple_page);
+    void read_file(adaptor_t* adaptor, FILE* file, tuple_page_t* tuple_page);
 };
 
 

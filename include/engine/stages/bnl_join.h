@@ -32,10 +32,10 @@ struct bnl_join_packet_t : public packet_t {
   
     static const char* PACKET_TYPE;
 
-    packet_t*       _left;
-    tuple_buffer_t* _left_buffer;
-    tuple_source_t* _right_source;
-    tuple_join_t*   _join;
+    pointer_guard_t<packet_t>       _left;
+    buffer_guard_t                  _left_buffer;
+    pointer_guard_t<tuple_source_t> _right_source;
+    pointer_guard_t<tuple_join_t>   _join;
     
     
     /**
@@ -69,48 +69,6 @@ struct bnl_join_packet_t : public packet_t {
     {
     }
   
-    virtual ~bnl_join_packet_t() {
-        assert(_left == NULL);
-        assert(_left_buffer == NULL);
-        delete _right_source;
-        delete _join;
-    }
-
-
-    virtual void destroy_subpackets() {
-        
-        delete _left_buffer;
-        _left_buffer = NULL;
-        
-        _left->destroy_subpackets();
-        delete _left;
-        _left = NULL;
-    }
-    
-    
-    virtual void terminate_inputs() {
-
-        // input buffer
-        if ( !_left_buffer->terminate() ) {
-            // Producer has already terminated this buffer! We are now
-            // responsible for deleting it.
-            delete _left_buffer;
-        }
-        _left_buffer = NULL;
-
-
-        // TODO Ask the dispatcher to clear our left packet (_left)
-        // from system, if it still exists.
-        
-        // Now that we know _left is not in the system, remove our
-        // reference to it.
-        _left = NULL;
-
-
-        // TODO destroy any other packets we may have dispatched
-        // during our execution. Hopefully they will be destroyed in
-        // process_packet() since we are using a tuple_source_t.
-    }
 };
 
 
@@ -131,7 +89,7 @@ public:
     
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 

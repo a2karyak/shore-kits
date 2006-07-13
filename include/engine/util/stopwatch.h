@@ -31,7 +31,7 @@ public:
     }
     void reset() {
         gettimeofday(&tv, NULL);
-        mark = tv.tv_usec + tv.tv_sec*1000000;
+        mark = tv.tv_usec + tv.tv_sec*1000000ll;
     }
 };
 

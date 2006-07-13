@@ -25,6 +25,10 @@
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 
+// the "STOP" exception. Simply indicates that the stage should stop
+// (not necessarily an "error"). Thrown by the adaptor's output(),
+// caught by the container.
+struct stop_exception { };
 
 
 // container methods
@@ -267,7 +271,7 @@ void stage_container_t::run() {
 
         
         // create stage
- 	pointer_guard_t <stage_t> stage = _stage_maker->create_stage();
+        pointer_guard_t <stage_t> stage = _stage_maker->create_stage();
         adaptor.run_stage(stage);
 
 	
@@ -310,10 +314,6 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
     // packets in the list since they will NEVER be used.
     it = packet_list->begin();
     _packet = *it;
-    while(++it != packet_list->end()) {
-        packet_t* non_primary_packet = *it;
-        non_primary_packet->destroy_subpackets();
-    }
 
     // Record next_tuple field in ALL packets, even the
     // primary.
@@ -368,17 +368,6 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
     packet->_next_tuple_on_merge = _next_tuple;
-    if ( _next_tuple == NEXT_TUPLE_INITIAL_VALUE ) {
-	// Stage has not produced any results yet. No difference
-	// between (1) merging the packet now and (2) if the packet
-	// had been with this stage's packet list from the beginning.
-	packet->destroy_subpackets();
-    }
-    // else: Need to keep the packet's subtree alive until the stage
-    // is done. At that point, we need to combine the unfinished
-    // packets and resubmit them. We may end up choosing this packet
-    // as the primary for that packet set.
-    
 
     // * * * END CRITICAL SECTION * * *
     return true;
@@ -390,7 +379,7 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
  *  @brief Outputs a page of tuples to this stage's packet set. The
  *  caller retains ownership of the page.
  */
-stage_t::result_t stage_container_t::stage_adaptor_t::output_page(tuple_page_t *page) {
+void stage_container_t::stage_adaptor_t::output_page(tuple_page_t *page) {
 
     packet_list_t::iterator it, end;
     unsigned int next_tuple;
@@ -468,10 +457,9 @@ stage_t::result_t stage_container_t::stage_adaptor_t::output_page(tuple_page_t *
     }
     
     
-    if ( packets_remaining )
-        // still have packets that need tuples
-	return stage_t::RESULT_CONTINUE;
-    return stage_t::RESULT_STOP;
+    // no packets that need tuples?
+    if ( !packets_remaining )
+        throw stop_exception();
 }
 
 
@@ -488,31 +476,16 @@ void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
 
     
     // packet output buffer
-    tuple_buffer_t* output_buffer = packet->_output_buffer;
-    if ( !output_buffer->send_eof() ) {
-        // Consumer has already terminated this buffer! We are now
+    buffer_guard_t &output_buffer = packet->_output_buffer;
+    if ( output_buffer->send_eof() )
+        // Consumer has not already terminated this buffer! It is now
         // responsible for deleting it.
-        delete output_buffer;
-    }
-    // The producer should perform no other operations with this
-    // buffer. Setting the output buffer to NULL helps catch
-    // programming errors as well as detect when the primary packet's
-    // output buffer has been already closed.
-    packet->_output_buffer = NULL;
-   
+        output_buffer.release();
 
     // packet input buffer(s)
-    if ( packet == _packet ) {
-        // Trying to terminate this stage's primary
-        // packet. Terminating the output buffer was ok, but we cannot
-        // yet terminate the inputs because other packets in the stage
-        // may still be reading them.
-        return;
-    }
-    else {
+    if ( packet != _packet ) {
         // since we are not the primary, can happily destroy packet
         // subtrees
-        packet->destroy_subpackets();
         delete packet;
     }
 }
@@ -537,40 +510,27 @@ void stage_container_t::stage_adaptor_t::run_stage(stage_t* stage) {
 
     
     // run stage-specific processing function
-    stage->init(this);
-    stage_t::result_t process_ret = stage->process();
-
+    bool error = false;
+    try {
+        stage->init(this);
+        stage->process();
+        flush();
+    } catch(stop_exception &) {
+        // no error
+        TRACE(TRACE_DEBUG, "process() ended early\n");
+    } catch(...) {
+        // error!
+        TRACE(TRACE_DEBUG, "process() encountered an error\n");
+        error = true;
+    }
 
     // if we are still accepting packets, stop now
     stop_accepting_packets();
-
-    TRACE(TRACE_DEBUG, "process returned %d\n", process_ret);
-    
-    switch(process_ret) {
-
-    case stage_t::RESULT_STOP:
-        
-        // flush remaining tuples
-        if ( flush() == stage_t::RESULT_ERROR ) {
-            TRACE(TRACE_ALWAYS, "flush() returned error. Aborting queries...\n");
-            abort_queries();
-            return;
-        }
-
-        // done!
-        cleanup();
-        return;
-        
-    case stage_t::RESULT_ERROR:
-	TRACE(TRACE_ALWAYS, "process() returned error. Aborting queries...\n");
+    if(error)
         abort_queries();
-        return;
+    else
+        cleanup();
 
-    default:
-        TRACE(TRACE_ALWAYS, "process() returned an invalid result %d\n",
-	      process_ret);
-        QPIPE_PANIC();
-    }
 }
 
 
@@ -634,7 +594,6 @@ void stage_container_t::stage_adaptor_t::cleanup() {
     // Terminate inputs of primary packet. finish_packet() already
     // took care of its output buffer.
     assert(_packet != NULL);
-    _packet->terminate_inputs();
     delete _packet;
     _packet = NULL;
 }
@@ -664,42 +623,12 @@ void stage_container_t::stage_adaptor_t::abort_queries() {
 
         if ( curr_packet != _packet ) {
             // packet is non-primary
-
-            // output
-            if ( !curr_packet->_output_buffer->terminate() ) {
-                // Consumer has already terminated this buffer! We are
-                // now responsible for deleting it.
-                delete curr_packet->_output_buffer;
-            }
-
-            // input(s)
-            curr_packet->destroy_subpackets();
             delete curr_packet;
         }
     }
 
     
     // handle primary packet
-
-    // output
-    
-    //If the primary packet has been finished, its output
-    // buffer will be set to NULL. If this is the case, there is no
-    // reason to invoke terminate() on it.
-    if ( _packet->_output_buffer != NULL ) {
-        if ( !_packet->_output_buffer->terminate() ) {
-            // Consumer has already terminated this buffer! We are
-            // now responsible for deleting it.
-            delete _packet->_output_buffer;
-        }
-    }
-
-
-    // input(s)
-    
-    // Terminate inputs of primary packet. finish_packet() already
-    // took care of its output buffer.
-    _packet->terminate_inputs();
     delete _packet;
 }
 

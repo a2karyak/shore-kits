@@ -55,8 +55,8 @@ public:
     char* _packet_id;
     const char* _packet_type;
     
-    tuple_buffer_t* _output_buffer;
-    tuple_filter_t* _output_filter;
+    buffer_guard_t _output_buffer;
+    pointer_guard_t<tuple_filter_t> _output_filter;
 
     
     /** Should be set to the stage's _stage_next_tuple field when this
@@ -114,19 +114,6 @@ public:
 	_merge_enabled = false;	
     }
 
-
-    /**
-     *  @brief Destroy (delete) input buffers.
-     */
-    virtual void destroy_subpackets()=0;
-
-
-    /**
-     *  @brief Close input buffers, deleting them if close()
-     *  fails. This is invoked when this packet is merged with an
-     *  existing packet.
-     */
-    virtual void terminate_inputs()=0;
 };
 
 

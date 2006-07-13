@@ -17,7 +17,7 @@ const char* aggregate_stage_t::DEFAULT_STAGE_NAME = "AGGREGATE_STAGE";
 
 
 
-stage_t::result_t aggregate_stage_t::process_packet() {
+void aggregate_stage_t::process_packet() {
 
 
     adaptor_t* adaptor = _adaptor;
@@ -46,23 +46,12 @@ stage_t::result_t aggregate_stage_t::process_packet() {
     bool first = true;
     while (1) {
 
+        // No more tuples? Exit from loop, but can't return quite
+        // yet since we may still have one more aggregation to
+        // perform.
         tuple_t src;
-        int result = input_buffer->get_tuple(src);
-        
-        if(result) {
-            // No more tuples? Exit from loop, but can't return quite
-            // yet since we may still have one more aggregation to
-            // perform.
-            if(result == 1)
-                break;
-
-            // unknown error code?
-            assert(result == -1);
-            
-            // producer has terminated buffer!
-            TRACE(TRACE_DEBUG, "Detected input buffer termination. Halting aggregation\n");
-            return stage_t::RESULT_ERROR;
-        }
+        if(input_buffer->get_tuple(src))
+            break;
             
         // got another tuple
         const char* key = extract->extract_key(src);
@@ -71,9 +60,7 @@ stage_t::result_t aggregate_stage_t::process_packet() {
         if(first || (key_size && memcmp(last_key, key, key_size))) {
             if(!first) {
                 aggregate->finish(dest, agg.data);
-                result_t output_ret = adaptor->output(dest);
-                if (output_ret)
-                    return output_ret;
+                adaptor->output(dest);
             }
             aggregate->init(agg.data);
             memcpy(last_key, key, key_size);
@@ -86,10 +73,6 @@ stage_t::result_t aggregate_stage_t::process_packet() {
     // output the last group, if any
     if(!first) {
         aggregate->finish(dest, agg.data);
-        result_t output_ret = adaptor->output(dest);
-        if (output_ret)
-            return output_ret;
+        adaptor->output(dest);
     }
-
-    return stage_t::RESULT_STOP;
 }

@@ -26,7 +26,7 @@ const char* bnl_in_stage_t::DEFAULT_STAGE_NAME = "BNL_IN_STAGE";
  *  relations.
  */
 
-stage_t::result_t bnl_in_stage_t::process_packet() {
+void bnl_in_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
     bnl_in_packet_t* packet = (bnl_in_packet_t*)adaptor->get_packet();
@@ -49,22 +49,16 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
         
         
         // get another page of tuples from the outer relation
-        tuple_page_t* opage;
-        int outer_get_ret = left_buffer->get_page(opage);
-        assert( outer_get_ret != -1 );
-        if ( outer_get_ret )
+        page_guard_t outer_tuple_page = left_buffer->get_page();
+        if ( !outer_tuple_page )
             // done with outer relation... done with join
-            return stage_t::RESULT_STOP;
+            return;
     
-        
-        // free outer relation page when done
-        page_guard_t outer_tuple_page = opage;
-        
-        
+                
         // Need a bitmap to track matches between outer relation page
         // and inner relation. So far, we've seen no matches.
         bitset<2048> matches;
-        assert(opage->tuple_count() <= matches.size());
+        assert(outer_tuple_page->tuple_count() <= matches.size());
         
  
         // read the entire inner relation
@@ -77,17 +71,11 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            tuple_page_t* ipage;
-            int inner_get_ret = right_buffer->get_page(ipage);
-            assert( inner_get_ret != -1 );
-            if ( inner_get_ret )
+            page_guard_t inner_tuple_page = right_buffer->get_page();
+            if ( !inner_tuple_page )
                 // done with inner relation... time to output some
                 // tuples from opage
                 break;
-            
-            
-            // free inner relation page when done
-            page_guard_t inner_tuple_page = ipage;
             
             
             // compare each tuple on the outer relation page with each
@@ -134,11 +122,8 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
             tuple_page_t::iterator o_it;
             int o_index = 0;
             for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it, ++o_index) {
-                if ( matches[o_index] ) {
-                    result_t result = _adaptor->output(*o_it);
-                    if (result)
-                        return result;
-                }
+                if ( matches[o_index] ) 
+                    _adaptor->output(*o_it);
             }
         }
         else {
@@ -146,17 +131,12 @@ stage_t::result_t bnl_in_stage_t::process_packet() {
             tuple_page_t::iterator o_it;
             int o_index = 0;
             for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it, ++o_index) {
-                if ( !matches[o_index] ) {
-                    result_t result = _adaptor->output(*o_it);
-                    if (result)
-                        return result;
-                }
+                if ( !matches[o_index] ) 
+                    _adaptor->output(*o_it);
             }
         }
         
         
     } // endof loop over outer relation
     
-    
-    return stage_t::RESULT_STOP;
 }

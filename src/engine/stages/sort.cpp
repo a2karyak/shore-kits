@@ -37,7 +37,7 @@ const unsigned int sort_stage_t::PAGES_PER_INITIAL_SORTED_RUN = 8 * 1024;
 
 
 
-static void flush_page(tuple_page_t* page, FILE* file, const string& file_name);
+static void flush_page(tuple_page_t* page, FILE* file);
 
 
 
@@ -370,7 +370,7 @@ tuple_buffer_t *sort_stage_t::monitor_merge_packets() {
 
 
 
-stage_t::result_t sort_stage_t::process_packet() {
+void sort_stage_t::process_packet() {
 
     sort_packet_t *packet = (sort_packet_t *)_adaptor->get_packet();
 
@@ -386,7 +386,7 @@ stage_t::result_t sort_stage_t::process_packet() {
 
     // quick optimization: if no input tuples, simply return
     if(_input_buffer->wait_for_input())
-        return stage_t::RESULT_STOP;
+        return;
     
     // create a buffer page for writing to file
     page_guard_t out_page = tuple_page_t::alloc(_tuple_size);
@@ -422,12 +422,8 @@ stage_t::result_t sort_stage_t::process_packet() {
         for(unsigned int i=0; i < PAGES_PER_INITIAL_SORTED_RUN; i++) {
 
             // read in a run of pages
-            tuple_page_t* page = NULL;
-            int get_ret = _input_buffer->get_page(page);
-            assert( get_ret != -1 ); // TODO do actual termination
-            
-            if ( get_ret == 1 )
-                // no more pages
+            tuple_page_t* page = _input_buffer->get_page();
+            if(!page)
                 break;
 
             // add new page to the list
@@ -452,13 +448,10 @@ stage_t::result_t sort_stage_t::process_packet() {
             tuple_t out(NULL, packet->_output_filter->input_tuple_size());
             for(hint_vector_t::iterator it=array.begin(); it != array.end(); ++it) {
                 out.data = it->data;
-                result_t result = _adaptor->output(out);
-                if(result)
-                    return result;
+                _adaptor->output(out);
             }
 
-
-            return stage_t::RESULT_STOP;
+            return;
         }
 
         first_run = false;
@@ -476,12 +469,12 @@ stage_t::result_t sort_stage_t::process_packet() {
 
             // flush?
             if(out_page->full())
-                flush_page(out_page, file, file_name);
+                flush_page(out_page, file);
         }
 
         // make sure to pick up the stragglers
         if(!out_page->empty())
-            flush_page(out_page, file, file_name);
+            flush_page(out_page, file);
 
         // notify the merge monitor thread that another run is ready
         critical_section_t cs(&_monitor._lock);
@@ -494,34 +487,24 @@ stage_t::result_t sort_stage_t::process_packet() {
 
     } while(!_sorting_finished);
     
-    // TODO: skip fdump/merge completely if there is only one run
-
     // wait for the output buffer from the final merge to arrive
     tuple_buffer_t *merge_output;
     pthread_join_wrapper(_monitor_thread, merge_output);
     _monitor_thread = 0;
-    if(merge_output == NULL) {
-        TRACE(TRACE_ALWAYS, "Merge failed. Bailing out early.");
-        return stage_t::RESULT_ERROR;
-    }
+    if(merge_output == NULL)
+        throw qpipe_exception("Merge failed. Terminating Sort");
     
 
     // transfer the output of the last merge to the stage output
     tuple_t out;
     while (1) {
-        int get_ret = merge_output->get_tuple(out);
-        assert( get_ret != -1 );
-        if (get_ret == 1)
+        if(merge_output->get_tuple(out))
             // no more tuples
             break;
 
-        result_t result = _adaptor->output(out);
-        if(result)
-            return result;
+        _adaptor->output(out);
     }
 
-
-    return stage_t::RESULT_STOP;
 }
 
 
@@ -529,12 +512,8 @@ stage_t::result_t sort_stage_t::process_packet() {
 /**
  * @brief flush (page) to (file) and clear it. PANIC on error.
  */
-static void flush_page(tuple_page_t* page, FILE* file, const string& file_name) {
-    if(page->fwrite_full_page(file)) {
-        TRACE(TRACE_ALWAYS, "Error writing sorted run to file\n",
-              file_name.data());
-        QPIPE_PANIC();
-    }
+static void flush_page(tuple_page_t* page, FILE* file) {
+    page->fwrite_full_page(file);
     page->clear();
 }
 

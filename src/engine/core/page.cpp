@@ -33,7 +33,7 @@ void* page_t::operator new(size_t, size_t page_size) {
         void* ptr;
         page_t *page;
     } pun;
-    pun.ptr = malloc(page_size);
+    pun.ptr = ::operator new(page_size);
 
     // initialize the page header
     pun.page->_page_size = page_size;
@@ -48,7 +48,7 @@ void* page_t::operator new(size_t, size_t page_size) {
  * stack, freeing non-standard pages immediately.
  */
 void page_t::operator delete(void *ptr) {
-    free(ptr);
+    ::operator delete(ptr);
 }
 
 /**

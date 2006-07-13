@@ -19,19 +19,13 @@ int num_tuples = -1;
 
 
 
-stage_t::result_t write_ints(void* arg)
+void write_ints(void* arg)
 {
     tuple_buffer_t* int_buffer = (tuple_buffer_t*)arg;    
     for (int i = 0; i < num_tuples; i++) {
 	tuple_t in_tuple((char*)&i, sizeof(int));
-	if( int_buffer->put_tuple(in_tuple) ) {
-	    TRACE(TRACE_ALWAYS, "tuple_page->append_init() returned non-zero!\n");
-	    TRACE(TRACE_ALWAYS, "Terminating loop...\n");
-	    break;
-	}
+	int_buffer->put_tuple(in_tuple);
     }
-    
-    return stage_t::RESULT_STOP;
 }
 
 

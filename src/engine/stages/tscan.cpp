@@ -56,7 +56,7 @@ struct cursor_guard_t {
  *  should terminate all queries it is processing.
  */
 
-stage_t::result_t tscan_stage_t::process_packet() {
+void tscan_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
     tscan_packet_t* packet = (tscan_packet_t*)adaptor->get_packet();
@@ -69,8 +69,7 @@ stage_t::result_t tscan_stage_t::process_packet() {
     int ret = db->cursor(NULL, &dbcp, 0);
     if (ret) {
         db->err(ret, "db->cursor() failed: ");
-	TRACE(TRACE_ALWAYS, "db->cursor() failed\n");
-	return stage_t::RESULT_ERROR;
+        throw qpipe_exception("Unable to open DB cursor");
     }
     cursor_guard_t cursor_guard(db, dbcp);
     
@@ -97,12 +96,11 @@ stage_t::result_t tscan_stage_t::process_packet() {
 	if (err) {
 	    if (err != DB_NOTFOUND) {
 		db->err(err, "dbcp->get() failed: ");
-		TRACE(TRACE_ALWAYS, "dbcp->get failed\n");
-		return stage_t::RESULT_ERROR;
+                throw qpipe_exception("Unable to read rows from DB cursor");
 	    }
 	    
 	    // done reading table
-	    return stage_t::RESULT_STOP;
+	    return;
 	}
 
 
@@ -110,16 +108,10 @@ stage_t::result_t tscan_stage_t::process_packet() {
         // tuples
         Dbt key, data;
         DbMultipleKeyDataIterator it = bulk_data;
-	for (int tuple_index = 0; it.next(key, data); tuple_index++) {
-            tuple_t tuple(data);
-	    result_t output_ret = adaptor->output(tuple);
-            if(output_ret)
-                return output_ret;
-        }
+	for (int tuple_index = 0; it.next(key, data); tuple_index++) 
+	    adaptor->output(data);
     }
 
-    
     // control never reaches here
-    TRACE(TRACE_ALWAYS, "Should not be here!\n");
-    QPIPE_PANIC();
+    assert(false);
 }

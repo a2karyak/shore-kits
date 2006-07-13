@@ -55,12 +55,12 @@ struct hash_join_stage_t::equal_key_t {
     }
 };
 
-int hash_join_stage_t::test_overflow(int partition) {
+void hash_join_stage_t::test_overflow(int partition) {
     partition_t &p = partitions[partition];
 
     // room on the current page?
     if(p.page && !p.page->full())
-        return 0;
+        return ;
     
     // check the quota
     if(page_count == page_quota) {
@@ -75,22 +75,16 @@ int hash_join_stage_t::test_overflow(int partition) {
         // create a file
         partition_t &p = partitions[max];
         p.file = create_tmp_file(p.file_name1, "hash-join-right");
-        if(!p.file)
-            return 1;
 
         // send the partition to the file
         page_guard_t page;
         for(page = p.page; page->next; page = tuple_page_t::mount(page->next)) {
-            if(page->fwrite_full_page(p.file))
-                return 1;
-            
+            page->fwrite_full_page(p.file);
             page_count--;
         }
 
         // write the last page, but don't free it
-        if(page->fwrite_full_page(p.file))
-            return 1;
-
+        page->fwrite_full_page(p.file);
         page->clear();
         p.page = page.release();
     }
@@ -104,21 +98,19 @@ int hash_join_stage_t::test_overflow(int partition) {
 
     // done!
     p.size++;
-    return 0;
 }
 
 template <class Action>
-int hash_join_stage_t::close_file(partition_list_t::iterator it, Action action) {
+void hash_join_stage_t::close_file(partition_list_t::iterator it, Action action) {
     tuple_page_t *page = it->page;
 
     // file partition? (make sure the file gets closed)
     file_guard_t file = it->file;
     if(!page || page->empty())
-        return 0;
-    if(page->fwrite_full_page(file))
-        return 1;
-
-    return action(it);
+        return;
+    
+    page->fwrite_full_page(file);
+    action(it);
 }
 
 struct hash_join_stage_t::right_action_t {
@@ -127,26 +119,22 @@ struct hash_join_stage_t::right_action_t {
         : _left_tuple_size(left_tuple_size)
     {
     }
-    int operator()(partition_list_t::iterator it) {
+    void operator()(partition_list_t::iterator it) {
         // open a new file for the left side partition
         it->file = create_tmp_file(it->file_name2, "hash-join-left");
-        if(!it->file)
-            return RESULT_ERROR;
 
         // resize the page to match left-side tuples
         it->page = tuple_page_t::init(it->page, _left_tuple_size);
-        return 0;
     }
 };
 
 struct hash_join_stage_t::left_action_t {
-    int operator ()(partition_list_t::iterator it) {
+    void operator ()(partition_list_t::iterator it) {
         it->file = NULL;
-        return 0;
     }
 };
 
-stage_t::result_t hash_join_stage_t::process_packet() {
+void hash_join_stage_t::process_packet() {
     hash_join_packet_t *packet = (hash_join_packet_t *)_adaptor->get_packet();
 
     // TODO: release partition resources!
@@ -159,7 +147,7 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     dispatcher_t::dispatch_packet(packet->_right);
     // TODO: handle error condition properly
     if(right_buffer->wait_for_input())
-        return stage_t::RESULT_STOP;
+        return;
     
     
     // read in the right relation
@@ -167,22 +155,17 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     extract_key_t<true> extract_right_key(_join);
     tuple_t right;
     while(1) {
-        int result = right_buffer->get_tuple(right);
-        if(result < 0)
-           return stage_t::RESULT_ERROR;
-
         // eof?
-        if(result > 0)
-            break;
-        
+        if(right_buffer->get_tuple(right))
+           break;
+
         // use the "lazy mod" approach to reduce the hash range
         int hash_code = hash_key(extract_right_key(right.data));
         int partition = hash_code % partitions.size();
         tuple_page_t* &page = partitions[partition].page;
 
         // make sure the page isn't full before writing
-        if(test_overflow(partition))
-            return stage_t::RESULT_ERROR;
+        test_overflow(partition);
 
         // write to the page
         page->append_init(right);
@@ -205,10 +188,8 @@ stage_t::result_t hash_join_stage_t::process_packet() {
             continue;
 
         // file partition? (make sure the file gets closed)
-        if(it->file) {
-            if(close_file(it, right_action))
-                return RESULT_ERROR;
-        }
+        if(it->file) 
+            close_file(it, right_action);
         
         // build hash table out of in-memory partition
         else {
@@ -229,19 +210,15 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     tuple_buffer_t *left_buffer = packet->_left_buffer;
     dispatcher_t::dispatch_packet(packet->_left);
     if(left_buffer->wait_for_input())
-        return stage_t::RESULT_STOP;
+        return;
 
     // read in the left relation now
     extract_key_t<false> extract_left_key(_join);
     tuple_t left(NULL, _join->left_tuple_size());
     while(1) {
-        int result = left_buffer->get_tuple(left);
-        if(result < 0)
-           return stage_t::RESULT_ERROR;
-
         // eof?
-        if(result > 0)
-            break;
+        if(left_buffer->get_tuple(left))
+           break;
      
         // which partition?
         const char* left_key = extract_left_key(left.data);
@@ -259,8 +236,7 @@ stage_t::result_t hash_join_stage_t::process_packet() {
 
             // flush to disk?
             if(page->full()) {
-                if(page->fwrite_full_page(p.file))
-                    return RESULT_ERROR;
+                page->fwrite_full_page(p.file);
                 page->clear();
             }
 
@@ -277,17 +253,13 @@ stage_t::result_t hash_join_stage_t::process_packet() {
             tuple_t out(data, sizeof(data));
             if(outer_join && range.first == range.second) {
                 _join->outer_join(out, left);
-                result_t result = _adaptor->output(out);
-                if(result)
-                    return result;
+                _adaptor->output(out);
             }
             else {
                 for(tuple_hash_t::iterator it = range.first; it != range.second; ++it) {
                     right.data = *it;
                     _join->join(out, left, right);
-                    result_t result = _adaptor->output(out);
-                    if(result)
-                        return result;
+                    _adaptor->output(out);
                 }
             }
         }
@@ -298,12 +270,9 @@ stage_t::result_t hash_join_stage_t::process_packet() {
     for(partition_list_t::iterator it=partitions.begin(); it != partitions.end(); ++it) {
         // mark the page list for deletion...
         page_list_guard_t page = it->page;
-        if(it->file) {
-            if(close_file(it, left_action_t()))
-                return RESULT_ERROR;
-        }
+        if(it->file) 
+            close_file(it, left_action_t());
     }
 
-    // handle the file partitions now...
-    return RESULT_STOP;
+    // TODO: handle the file partitions now...
 }

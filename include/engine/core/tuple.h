@@ -11,6 +11,7 @@
 
 #include "engine/core/page.h"
 #include "engine/util/guard.h"
+#include "exceptions.h"
 
 
 // for Dbt class
@@ -313,8 +314,9 @@ public:
      *
      *  @param file The file to read from.
      *
-     *  @return 0 if a page was successfully read. 1 if there thare no
-     *  more pages to read. -1 on error.
+     *  @return non-zero if there thare no more pages to read
+     *
+     * @throw if the read failed
      */
     
     int fread_full_page(FILE *file) {
@@ -327,10 +329,10 @@ public:
 
 	if ( size_read != size )
 	    // could not read enough data
-	    return -1;
+	    throw qpipe_exception("fread_full_page() encountered a partial page on disk");
 	if ( size_read != page_size() )
 	    // page on disk doesn't match
-	    return -1;
+	    throw qpipe_exception("fread_full_page() read incompatible page from disk");
 
 	return 0;
     }
@@ -342,11 +344,12 @@ public:
      *
      *  @param file The file to write to.
      *
-     *  @return 0 if the page was successfully written, non-zero on error
+     *  @throw qpipe_exception on failure
      */
     
-    int fwrite_full_page(FILE *file) {
-        return ::fwrite(this, 1, page_size(), file) != page_size();
+    void fwrite_full_page(FILE *file) {
+        if(::fwrite(this, 1, page_size(), file) != page_size())
+            throw qpipe_exception("fwrite_full_page() failed");
     }
 
     
@@ -559,11 +562,12 @@ public:
      *  terminated by the consumer.
      */
 
-    int put_tuple (const tuple_t &tuple) {
+    void put_tuple (const tuple_t &tuple) {
         if( check_page_full() )
             // buffer was closed by consumer!
-            return -1;
-        return !write_page->append_init(tuple);
+            throw qpipe_exception("Consumer closed tuple buffer");
+        
+        write_page->append_init(tuple);
     }
 
 
@@ -638,16 +642,17 @@ public:
      *  buffer. -1 if the buffer has been terminated.
      */
 
-    int get_page(tuple_page_t*& pagep) {
+    tuple_page_t* get_page() {
 
         // make sure there's a valid page
         int wait_ret = wait_for_input();
-        if (wait_ret)
-            return wait_ret;
+        if(wait_ret == 1)
+            return NULL;
+        if(wait_ret == -1)
+            throw qpipe_exception("Input buffer terminated");
 
         // steal the page (invalidate the tuple iterator)
-        pagep = read_page.release();
-        return 0;
+        return read_page.release();
     }
 
 
@@ -745,7 +750,42 @@ protected:
     }
 };
 
+struct output_buffer_guard_t
+    : public pointer_guard_base_t<tuple_buffer_t, output_buffer_guard_t>
+{
+    output_buffer_guard_t(tuple_buffer_t* ptr=NULL)
+        : pointer_guard_base_t<tuple_buffer_t, output_buffer_guard_t>(ptr)
+    {
+    }
 
+    struct Action {
+        void operator()(tuple_buffer_t* ptr) {
+            // if send_eof() fails, the consumer has already finished
+            // with the buffer and we can safely delete it
+            if(ptr && !ptr->send_eof())
+                delete ptr;
+        }
+    };
+    
+};
+
+struct buffer_guard_t
+    : public pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>
+{
+    buffer_guard_t(tuple_buffer_t* ptr=NULL)
+        : pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>(ptr)
+    {
+    }
+
+    struct Action {
+        void operator()(tuple_buffer_t* ptr) {
+            // attempt to terminate the buffer, then delete it if the
+            // other side already terminated
+            if(ptr && !ptr->terminate())
+                delete ptr;
+        }
+    };
+};
 
 #include "engine/namespace.h"
 

@@ -57,17 +57,17 @@ bool merge_stage_t::buffer_head_t::init(tuple_buffer_t *buf,
 
 
 /**
- *  @return 0 if a tuple is removed from the buffer. 1 if the buffer
- *  is empty and the producer has sent EOF. -1 if the buffer has been
- *  terminated.
+ *  @return true if a tuple is removed from the buffer. 1 if the
+ *  buffer
+ *
+ * @throw if the buffer has been terminated.
  */
-int merge_stage_t::buffer_head_t::has_tuple() {
+bool merge_stage_t::buffer_head_t::has_tuple() {
 
     tuple_t input;
 
-    int get_ret = buffer->get_tuple(input);
-    if (get_ret)
-        return get_ret;
+    if(buffer->get_tuple(input))
+        return false;
 
     // otherwise, we got a tuple
     
@@ -76,7 +76,7 @@ int merge_stage_t::buffer_head_t::has_tuple() {
     
     // update the head key
     item.hint = _extract->extract_hint(tuple);
-    return 0;
+    return true;
 }
 
 
@@ -108,7 +108,7 @@ void merge_stage_t::insert_sorted(buffer_head_t *head)
 
 
 
-stage_t::result_t merge_stage_t::process_packet() {
+void merge_stage_t::process_packet() {
 
     typedef merge_packet_t::buffer_list_t buffer_list_t;
 
@@ -129,25 +129,13 @@ stage_t::result_t merge_stage_t::process_packet() {
     // get the input buffers and perform the initial sort
     for(int i=0; i < merge_factor; i++) {
         buffer_head_t &head = head_array[i];
-        switch (head.init(inputs[i], _extract)) {
-        case 0:
+        if(head.init(inputs[i], _extract)) 
             insert_sorted(&head);
-            continue;
-        case 1:
-            continue;
-        case -1:
-            // error!
-            return stage_t::RESULT_ERROR;
-        default:
-            // unrecognized value
-            QPIPE_PANIC();
-        }
     }
 
 
     // always output the smallest tuple
     for(int i=0; _head_list; i++) {
-
 
         // pop it off
         buffer_head_t *head = _head_list;
@@ -155,30 +143,13 @@ stage_t::result_t merge_stage_t::process_packet() {
 
 
         // output it
-        result_t result = _adaptor->output(head->tuple);
-	if (result)
-	    return result;
+        _adaptor->output(head->tuple);
         
         
         // put it back?
-        switch (head->has_tuple()) {
-        case 0:
-            // run has a tuple
+        if(head->has_tuple()) 
             insert_sorted(head);
-            continue;
-        case 1:
-            // run has no more tuples... do nothing
-            continue;
-        case -1:
-            // error!
-            return stage_t::RESULT_ERROR;
-        default:
-            // unrecognized value
-            QPIPE_PANIC();
-        }
     }
     
-    
     // done!
-    return stage_t::RESULT_STOP;
 }

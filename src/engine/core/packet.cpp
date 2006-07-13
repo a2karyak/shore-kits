@@ -77,8 +77,6 @@ packet_t::~packet_t(void) {
 
     // we own our packet_id and our filter
     free(_packet_id);
-
-    delete _output_filter;
 }
 
 

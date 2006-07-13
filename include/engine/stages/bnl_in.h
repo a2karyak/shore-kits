@@ -34,7 +34,7 @@ struct bnl_in_packet_t : public packet_t {
     static const char* PACKET_TYPE;
 
     pointer_guard_t<packet_t>        _left;
-    pointer_guard_t<tuple_buffer_t>  _left_buffer;
+    buffer_guard_t                   _left_buffer;
     
     // the following fields should always be deleted by the destructor
     pointer_guard_t<tuple_source_t>  _right_source;
@@ -79,40 +79,6 @@ struct bnl_in_packet_t : public packet_t {
     {
     }
   
-    virtual ~bnl_in_packet_t() {
-        // do nothing
-    }
-
-
-    virtual void destroy_subpackets() {
-        _left_buffer.done();
-        _left->destroy_subpackets();
-        _left.done();
-    }
-    
-    
-    virtual void terminate_inputs() {
-
-        if ( _left_buffer->terminate() )
-            // we have successfully given up ownership
-            _left_buffer.release();
-        // else, the producer has already terminated this buffer. We
-        // are now responsible for deleting it.
-
-
-        // TODO Ask the dispatcher to clear our left packet (_left)
-        // from system, if it still exists.
-        
-        
-        // _left is no longer in the system. Our destructor is not
-        // responsible for freeing it.
-        _left.release();
-        
-        
-        // TODO destroy any other packets we may have dispatched
-        // during our execution. Hopefully they will be destroyed in
-        // process_packet() since we are using a tuple_source_t.
-    }
 };
 
 
@@ -134,7 +100,7 @@ public:
     
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 

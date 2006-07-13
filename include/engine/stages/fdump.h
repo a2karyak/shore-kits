@@ -30,7 +30,7 @@ public:
     
     static const char* PACKET_TYPE;
 
-    tuple_buffer_t* _input_buffer;
+    buffer_guard_t _input_buffer;
     
     char* _filename;
 
@@ -84,41 +84,6 @@ public:
     {
     }
 
-
-    virtual ~fdump_packet_t() {
-
-        if ( _notifier != NULL )
-            _notifier->notify();
-
-        // input buffer should have been set to NULL by either
-        // destroy_subpackets() or terminate_inputs()
-        assert(_input_buffer == NULL);
-
-        free(_filename);
-    }
-
-
-    virtual void destroy_subpackets() {
-        // FDUMP has no subpackets. This should never be invoked
-        // anyway since an FDUMP is inherently non-mergeable.
-        TRACE(TRACE_ALWAYS, "FDUMP is non-mergeable!\n");
-        QPIPE_PANIC();
-    }    
-
-
-    virtual void terminate_inputs() {	
-
-        // input buffer
-        if ( !_input_buffer->terminate() ) {
-            // Producer has already terminated this buffer! We are now
-            // responsible for deleting it.
-            delete _input_buffer;
-        }
-        _input_buffer = NULL;
-
-        // We don't have an input packet(s) that we need to worry
-        // about. Nothing left to do.
-    }
 };
 
 
@@ -140,7 +105,7 @@ public:
 
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 

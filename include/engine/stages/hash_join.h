@@ -29,12 +29,12 @@ class hash_join_packet_t : public packet_t {
 public:
     static const char *PACKET_TYPE;
 
-    packet_t *_left;
-    packet_t *_right;
-    tuple_buffer_t *_left_buffer;
-    tuple_buffer_t *_right_buffer;
+    pointer_guard_t<packet_t> _left;
+    pointer_guard_t<packet_t> _right;
+    buffer_guard_t _left_buffer;
+    buffer_guard_t _right_buffer;
 
-    tuple_join_t *_join;
+    pointer_guard_t<tuple_join_t> _join;
     bool _outer;
     bool _distinct;
     
@@ -90,22 +90,6 @@ public:
     {
     }
   
-    virtual void terminate_inputs() {
-        if(!_left_buffer->terminate())
-            delete _left_buffer;
-        if(!_right_buffer->terminate())
-            delete _right_buffer;
-    }
-
-    virtual void destroy_subpackets() {
-        _left->destroy_subpackets();
-        delete _left_buffer;
-        delete _left;
-
-        _right->destroy_subpackets();
-        delete _right_buffer;
-        delete _right;
-    }
 };
 
 
@@ -177,7 +161,7 @@ public:
 
     static const char* DEFAULT_STAGE_NAME;
     typedef hash_join_packet_t stage_packet_t;
-    virtual result_t process_packet();
+    virtual void process_packet();
     
     // set up the partitions in memory
     hash_join_stage_t()
@@ -190,12 +174,12 @@ public:
     }
 
 private:
-    int test_overflow(int partition);
+    void test_overflow(int partition);
 
     struct left_action_t;
     struct right_action_t;
     template<class Action>
-    int close_file(partition_list_t::iterator it, Action a);
+    void close_file(partition_list_t::iterator it, Action a);
 };
 
 #endif	// __HASH_JOIN_H

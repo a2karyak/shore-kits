@@ -81,6 +81,9 @@ public:
     }
 
     static void register_stage_container(const char* packet_type, stage_container_t* sc);
+    static void dispatch_packet(pointer_guard_t<packet_t> &packet) {
+        dispatch_packet(packet.release());
+    }
     static void dispatch_packet(packet_t* packet);
 };
 

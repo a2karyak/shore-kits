@@ -23,9 +23,9 @@ const char* func_call_stage_t::DEFAULT_STAGE_NAME = "FUNC_CALL_STAGE";
  *  should terminate all queries it is processing.
  */
 
-stage_t::result_t func_call_stage_t::process_packet() {
+void func_call_stage_t::process_packet() {
    
     adaptor_t* adaptor = _adaptor;
     func_call_packet_t* packet = (func_call_packet_t*)adaptor->get_packet();
-    return packet->_func(packet->_func_arg);
+    packet->_func(packet->_func_arg);
 }

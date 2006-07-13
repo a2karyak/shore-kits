@@ -28,7 +28,7 @@ public:
     static const char* PACKET_TYPE;
     
     
-    stage_t::result_t (*_func) (void*);
+    void (*_func) (void*);
     
     
     void* _func_arg;
@@ -66,7 +66,7 @@ public:
     func_call_packet_t(char*           packet_id,
                        tuple_buffer_t* output_buffer,
                        tuple_filter_t* output_filter,
-                       stage_t::result_t (*func) (void*),
+                       void (*func) (void*),
                        void* func_arg,
                        void (*destructor) (void*) = NULL)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
@@ -85,16 +85,6 @@ public:
             _destructor(_func_arg);
     }
     
-    
-    virtual void destroy_subpackets() {
-        TRACE(TRACE_ALWAYS, "FSCAN is non-mergeable!\n");
-        QPIPE_PANIC();
-    }
-
-    virtual void terminate_inputs() {
-        // No input buffers ... do nothing.
-    }
-
 };
 
 
@@ -116,7 +106,7 @@ public:
     
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 

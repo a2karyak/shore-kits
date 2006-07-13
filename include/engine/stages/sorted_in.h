@@ -12,8 +12,8 @@ struct sorted_in_packet_t : public packet_t {
     static const char* PACKET_TYPE;
     pointer_guard_t<packet_t> _left;
     pointer_guard_t<packet_t> _right;
-    pointer_guard_t<tuple_buffer_t> _left_input;
-    pointer_guard_t<tuple_buffer_t> _right_input;
+    buffer_guard_t _left_input;
+    buffer_guard_t _right_input;
     pointer_guard_t<key_extractor_t> _left_extractor;
     pointer_guard_t<key_extractor_t> _right_extractor;
     pointer_guard_t<key_compare_t> _compare;
@@ -36,27 +36,13 @@ struct sorted_in_packet_t : public packet_t {
     {
     }
 
-    virtual void terminate_inputs() {
-        if(_left_input->terminate())
-            _left_input.release();
-        if(_right_input->terminate())
-            _right_input.release();
-
-        _left.release();
-        _right.release();
-    }
-
-    virtual void destroy_subpackets() {
-        _left->destroy_subpackets();
-        _right->destroy_subpackets();
-    }
 };
 
 struct sorted_in_stage_t : public stage_t {
     static const char* DEFAULT_STAGE_NAME;
     typedef sorted_in_packet_t stage_packet_t;
 protected:
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 #endif

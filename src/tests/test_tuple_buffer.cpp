@@ -83,10 +83,7 @@ int main(int argc, char* argv[]) {
 
         if (i <= index) {
             tuple_t tuple((char*)&i, sizeof(int));
-            int put_ret = int_buffer.put_tuple(tuple);
-            if (put_ret) {
-                TRACE(TRACE_ALWAYS, "put_tuple failed for i=%d\n", i);
-            }
+            int_buffer.put_tuple(tuple);
         }
 
         if ((i == index) && terminate)

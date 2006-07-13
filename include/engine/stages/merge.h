@@ -22,7 +22,7 @@ using namespace qpipe;
 struct merge_packet_t : public packet_t {
 
     static const char* PACKET_TYPE;
-    typedef vector<tuple_buffer_t*> buffer_list_t;
+    typedef vector<buffer_guard_t> buffer_list_t;
     
     buffer_list_t       _input_buffers;
     pointer_guard_t<key_extractor_t> _extract;
@@ -66,37 +66,11 @@ struct merge_packet_t : public packet_t {
                    key_extractor_t* extract,
                    key_compare_t*  compare)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
-          _input_buffers(input_buffers),
+          _input_buffers(input_buffers.begin(), input_buffers.end()),
           _extract(extract), _compare(compare)
     {
     }
 
-
-    virtual void destroy_subpackets() {
-        // MERGE has no subpackets. This should never be invoked
-        // anyway since an FDUMP is inherently non-mergeable.
-        TRACE(TRACE_ALWAYS, "MERGE is non-mergeable!\n");
-        QPIPE_PANIC();
-    }    
-    
-    
-    virtual void terminate_inputs() {	
-        
-        buffer_list_t::iterator it;
-        for (it= _input_buffers.begin(); it != _input_buffers.end(); ) {
-
-            tuple_buffer_t* _input_buffer = *it;
-
-            // terminate current input buffer
-            if ( !_input_buffer->terminate() ) {
-                // Producer has already terminated this buffer! We are now
-                // responsible for deleting it.
-                delete _input_buffer;
-            }
-
-            it = _input_buffers.erase(it);
-        }
-    }
 };
 
 
@@ -120,7 +94,7 @@ private:
         hint_tuple_pair_t item;
         buffer_head_t() { }
         bool init(tuple_buffer_t *buf, key_extractor_t *c);
-        int has_tuple();
+        bool has_tuple();
     };
     
     buffer_head_t *_head_list;
@@ -139,7 +113,7 @@ public:
     
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
     
 private:
 

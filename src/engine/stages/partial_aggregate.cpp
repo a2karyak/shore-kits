@@ -43,9 +43,7 @@ int partial_aggregate_stage_t::alloc_agg(hint_tuple_pair_t &agg, const char* key
     return 0;
 }
 
-
-
-stage_t::result_t partial_aggregate_stage_t::process_packet() {
+void partial_aggregate_stage_t::process_packet() {
 
     partial_aggregate_packet_t* packet;
     packet = (partial_aggregate_packet_t*) _adaptor->get_packet();
@@ -70,12 +68,9 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
             page_guard_t page = NULL;
             tuple_t in;
             while(1) {
-                int ret = input_buffer->get_tuple(in);
-                assert(ret != -1); // TODO: handle termination properly
-
                 // out of pages?
-                if(ret == 1)
-                    break;
+                if(input_buffer->get_tuple(in))
+                   break;
 
                 int hint = tup_key->extract_hint(in);
 
@@ -122,11 +117,7 @@ stage_t::result_t partial_aggregate_stage_t::process_packet() {
         for(tuple_set_t::iterator it=run.begin(); it != run.end(); ++it) {
             // convert the aggregate tuple to an output tuple
             _aggregate->finish(out, it->data);
-            result_t result = _adaptor->output(out);
-            if(result)
-                return result;
+            _adaptor->output(out);
         }
     }
-
-    return stage_t::RESULT_STOP;
 }

@@ -26,9 +26,9 @@ int num_copies;
 
 
 
-stage_t::result_t write_ints(void* arg)
+void write_ints(void* arg)
 {
-    tuple_buffer_t *buffer = (tuple_buffer_t *)arg;
+    output_buffer_guard_t buffer = (tuple_buffer_t *)arg;
 
     // produce a set of inputs, with duplicated values
     vector<int> inputs;
@@ -44,16 +44,10 @@ stage_t::result_t write_ints(void* arg)
     tuple_t input((char *)&value, sizeof(int));
     for(unsigned  i=0; i < inputs.size(); i++) {
         value = inputs[i];
-        if(buffer->put_tuple(input))
-        {
-            TRACE(TRACE_ALWAYS, "buffer->put_tuple() returned non-zero!\n");
-            TRACE(TRACE_ALWAYS, "Terminating loop...\n");
-            break;
-        }
+        buffer->put_tuple(input);
     }
 
     TRACE(TRACE_ALWAYS, "Finished inserting tuples\n", value);
-    return stage_t::RESULT_STOP;
 }
 
 

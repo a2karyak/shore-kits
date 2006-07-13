@@ -37,7 +37,7 @@ public:
     pointer_guard_t<key_extractor_t> _extract;
     pointer_guard_t<key_compare_t> _compare;
     pointer_guard_t<packet_t>           _input;
-    pointer_guard_t<tuple_buffer_t>     _input_buffer;
+    buffer_guard_t _input_buffer;
 
 
     /**
@@ -85,23 +85,6 @@ public:
     }
 
 
-    virtual void destroy_subpackets() {
-        _input->destroy_subpackets();
-        _input_buffer.done();
-        _input.done();
-    }
-    
-    
-    virtual void terminate_inputs() {
-
-        // Producer has not finished with this buffer! It is now
-        // responsible for deleting it.
-        if (_input_buffer->terminate() )
-            _input_buffer.release();
-
-        _input.release();
-    }
-    
 };
 
 
@@ -195,7 +178,7 @@ public:
 
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
     
 private:
 

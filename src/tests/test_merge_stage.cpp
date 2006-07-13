@@ -24,25 +24,20 @@ typedef vector<int> input_list_t;
 typedef pair<tuple_buffer_t*, input_list_t> write_info_t;
 
 
-stage_t::result_t write_tuples(void* arg)
+void write_tuples(void* arg)
 {
     write_info_t *info = (write_info_t *)arg;
-    tuple_buffer_t *buffer = info->first;
+    output_buffer_guard_t buffer = info->first;
     input_list_t &inputs = info->second;
 
     int value;
     tuple_t input((char *)&value, sizeof(int));
     for(input_list_t::iterator it=inputs.begin(); it != inputs.end(); ++it) {
         value = *it;
-        if(buffer->put_tuple(input)) {
-            TRACE(TRACE_ALWAYS, "buffer->put_tuple() returned non-zero!\n");
-            TRACE(TRACE_ALWAYS, "Terminating loop...\n");
-            break;
-        }
+        buffer->put_tuple(input);
     }
 
     TRACE(TRACE_ALWAYS, "Done inserting tuples\n");
-    return stage_t::RESULT_STOP;
 }
 
 

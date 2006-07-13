@@ -59,18 +59,6 @@ public:
         assert(db != NULL);
     }
     
-    virtual ~tscan_packet_t() {
-        // we don't own _db
-    }
-
-    virtual void destroy_subpackets() {
-        // No input buffers or subpackets ... do nothing.
-    }
-
-    virtual void terminate_inputs() {
-        // No input buffers ... do nothing.
-    }
-
     virtual bool is_compatible(packet_t* other) {
         // two TSCAN packets are compatible if they want to scan the
         // same table
@@ -101,7 +89,7 @@ public:
 
 protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 

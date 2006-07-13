@@ -27,8 +27,8 @@ struct aggregate_packet_t : public packet_t {
     
     pointer_guard_t<tuple_aggregate_t> _aggregator;
     pointer_guard_t<key_extractor_t> _extract;
-    packet_t*          _input;
-    tuple_buffer_t*    _input_buffer;
+    pointer_guard_t<packet_t>          _input;
+    buffer_guard_t    _input_buffer;
     
     
     /**
@@ -75,45 +75,6 @@ struct aggregate_packet_t : public packet_t {
         assert(_input_buffer != NULL);
     }
 
-
-    virtual ~aggregate_packet_t() {
-
-        assert(_input == NULL);
-        assert(_input_buffer == NULL);
-
-    }
-
-
-    virtual void destroy_subpackets() {
-
-        delete _input_buffer;
-        _input_buffer = NULL;
-        
-        _input->destroy_subpackets();
-        delete _input;
-        _input = NULL;
-    }    
-
-    virtual void terminate_inputs() {
-
-        // input buffer
-        if ( !_input_buffer->terminate() ) {
-            // Producer has already terminated this buffer! We are now
-            // responsible for deleting it.
-            delete _input_buffer;
-        }
-        _input_buffer = NULL;
-        
-        
-        // TODO Ask the dispatcher to clear our input packet (_input)
-        // from system, if it still exists.
-        
-        
-        // Now that we know _input is not in the system, remove our
-        // reference to it.
-        _input = NULL;
-    }
-
 };
 
 
@@ -137,7 +98,7 @@ public:
 
  protected:
 
-    virtual result_t process_packet();
+    virtual void process_packet();
 };
 
 

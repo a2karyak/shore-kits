@@ -27,7 +27,7 @@ const char* sorted_in_packet_t::PACKET_TYPE = "SORTED_IN";
  *  If we are computing NOT IN, we may not need to change the code
  *  below...
  */
-stage_t::result_t sorted_in_stage_t::process_packet() {
+void sorted_in_stage_t::process_packet() {
 
     // setup
     sorted_in_packet_t* packet;
@@ -53,7 +53,7 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
     
     // seed the process with the first left tuple
     if(left_input->get_tuple(left))
-        return stage_t::RESULT_STOP;
+        return;
     left_key = left_extractor->extract_key(left);
     left_hint = left_extractor->extract_hint(left_key);
 
@@ -81,15 +81,12 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
                 // we don't output them. If we are computing NOT IN,
                 // we output them all.
                 if(reject_matches) {
-                    while(!left_input->get_tuple(left)) {
-                        result_t result = _adaptor->output(left);
-                        if(result)
-                            return result;
-                    }
+                    while(!left_input->get_tuple(left)) 
+                        _adaptor->output(left);
                 }
                 
                 // done
-                return stage_t::RESULT_STOP;
+                return;
             }
 
             // if we are here, we got another right-side tuple
@@ -110,11 +107,8 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
         while(diff <= 0) {
 
             // output? The logic is strange, but it works.
-            if((diff == 0) != reject_matches) {
-                result_t result = _adaptor->output(left);
-                if(result)
-                    return result;
-            }
+            if((diff == 0) != reject_matches) 
+                _adaptor->output(left);
             
             // if we are here, it is because the right side tuple is
             // at least as large as the left side tuple. Advance the
@@ -122,7 +116,7 @@ stage_t::result_t sorted_in_stage_t::process_packet() {
             if(left_input->get_tuple(left))
                 // No more left tuples! See reasoning above to see why
                 // we can stop.
-                return stage_t::RESULT_STOP;
+                return;
 
             // if we are here, we got another left-side tuple
             left_key = left_extractor->extract_key(left);

@@ -30,18 +30,6 @@ struct partial_aggregate_packet_t : public packet_t {
     {
     }
 
-    virtual void terminate_inputs() {
-        // has the other side not let go yet?
-        if(_input_buffer->terminate())
-            _input_buffer.release();
-
-        // the stage container will delete this for us
-        _input.release();
-    }
-
-    virtual void destroy_subpackets() {
-        _input->destroy_subpackets();
-    }
 };
 
 class partial_aggregate_stage_t : public stage_t {
@@ -56,7 +44,7 @@ public:
     typedef partial_aggregate_packet_t stage_packet_t;
 
 protected:
-    virtual result_t process_packet();
+    virtual void process_packet();
     int alloc_agg(hint_tuple_pair_t &agg, const char* key);
 };
 

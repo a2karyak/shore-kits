@@ -23,7 +23,7 @@ const char* bnl_join_stage_t::DEFAULT_STAGE_NAME = "BNL_JOIN_STAGE";
  *  relation tuple, we do page-sized reads.
  */
 
-stage_t::result_t bnl_join_stage_t::process_packet() {
+void bnl_join_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
     bnl_join_packet_t* packet = (bnl_join_packet_t*)adaptor->get_packet();
@@ -47,17 +47,11 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
         
         
         // get another page of tuples from the outer relation
-        tuple_page_t* opage;
-        int outer_get_ret = left_buffer->get_page(opage);
-        assert( outer_get_ret != -1 );
-        if ( outer_get_ret )
+        page_guard_t outer_tuple_page = left_buffer->get_page();
+        if ( !outer_tuple_page )
             // done with outer relation... done with join
-            return stage_t::RESULT_STOP;
+            return;
     
-        
-        // free outer relation page when done
-        page_guard_t outer_tuple_page = opage;
-        
 
         // re-read the inner relation
         packet_t* right_packet = right_source->reset();
@@ -69,17 +63,11 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            tuple_page_t* ipage;
-            int inner_get_ret = right_buffer->get_page(ipage);
-            assert( inner_get_ret != -1 );
-            if ( inner_get_ret )
+            page_guard_t inner_tuple_page = right_buffer->get_page();
+            if ( !inner_tuple_page )
                 // done with inner relation... continue to next page
                 // of outer relation
                 break;
-            
-            
-            // free inner relation page when done
-            page_guard_t inner_tuple_page = ipage;
             
             
             // join each tuple on the outer relation page with each
@@ -103,9 +91,7 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
                     if ( memcmp( outer_key, inner_key, key_size ) == 0 ) {
                         // keys match!
                         join->join(output_tuple, outer_tuple, inner_tuple);
-                        result_t result = _adaptor->output(output_tuple);
-                        if (result)
-                            return result;
+                        _adaptor->output(output_tuple);
                     }
 
                     
@@ -116,6 +102,4 @@ stage_t::result_t bnl_join_stage_t::process_packet() {
         } // endof loop over inner relation
     } // endof loop over outer relation
     
-    
-    return stage_t::RESULT_STOP;
 }

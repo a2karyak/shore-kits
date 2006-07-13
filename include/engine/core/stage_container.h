@@ -89,8 +89,8 @@ protected:
          *  the compiler can optimize across the call to
          *  output_page, which is not virtual.
          */
-        virtual stage_t::result_t output(tuple_page_t *page) {
-            return output_page(page);
+        virtual void output(tuple_page_t *page) {
+            output_page(page);
         }
 	
 
@@ -116,7 +116,7 @@ protected:
 
     private:
 
-        stage_t::result_t output_page(tuple_page_t *page);
+        void output_page(tuple_page_t *page);
     };
     
     
