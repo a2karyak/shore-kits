@@ -72,12 +72,12 @@ int main(int argc, char* argv[]) {
                              new tuple_source_once_t(right_packet),
                              new int_key_extractor_t(),
                              new int_key_compare_t(),
-                             true );
+                             false );
     dispatcher_t::dispatch_packet(in_packet);
     
     
     tuple_t output;
-    while(!output_buffer->get_tuple(output))
+    while(output_buffer->get_tuple(output))
         TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     

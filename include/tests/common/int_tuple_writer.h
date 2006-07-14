@@ -38,6 +38,7 @@ struct int_tuple_writer_info_s {
 
 /* exported functions */
 
+void int_tuple_writer_void(void* arg);
 void* int_tuple_writer_main(void* arg);
 void shuffled_triangle_int_tuple_writer_fc(void* arg);
 void increasing_int_tuple_writer_fc(void* arg);

@@ -33,17 +33,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    stage_container_t* sc = new stage_container_t("FDUMP_CONTAINER", new stage_factory<fdump_stage_t>);
-    dispatcher_t::register_stage_container(fdump_packet_t::PACKET_TYPE, sc);
-
-    tester_thread_t* fdump_thread = 
-	new tester_thread_t(drive_stage, sc, "FDUMP_THREAD");
-    
-    if ( thread_create( NULL, fdump_thread ) ) {
-	TRACE(TRACE_ALWAYS, "thread_create() failed\n");
-	QPIPE_PANIC();
-    }
-    
+    register_stage<fdump_stage_t>(1);
     
     
     // just need to pass one int at a time to the counter

@@ -46,11 +46,11 @@ void aggregate_stage_t::process_packet() {
     bool first = true;
     while (1) {
 
-        // No more tuples? Exit from loop, but can't return quite
-        // yet since we may still have one more aggregation to
-        // perform.
+        // No more tuples?
         tuple_t src;
-        if(input_buffer->get_tuple(src))
+        if(!input_buffer->get_tuple(src))
+            // Exit from loop, but can't return quite yet since we may
+            // still have one more aggregation to perform.
             break;
             
         // got another tuple

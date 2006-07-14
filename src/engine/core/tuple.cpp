@@ -18,35 +18,35 @@
  *  function will block until more space becomes available or the
  *  buffer is closed.
  *
- *  @return 0 if the buffer can be written to. Non-zero if the buffer
- *  has been terminated.
+ *  @return true if the page is now ready for further writing. false
+ *  if the buffer has been terminated.
+ *
+ *  @throw Can throw exceptions on error.
  */
 
-int tuple_buffer_t::check_page_full() {
+bool tuple_buffer_t::drain_page_if_full() {
     
-    // write page will be NULL if we have already sent EOF
-    if ( write_page == NULL ) {
-        TRACE(TRACE_ALWAYS, "NULL write_page. Already sent EOF?\n");
-        QPIPE_PANIC();
-    }
+    // If write_page is NULL, some thing is seriously wrong. One
+    // possibility is that we have already called send_eof().
+    assert( write_page != NULL );
+
 
     if(write_page->full()) {
-
         // page is full
-        if(flush_write_page()) {
+        if(!flush_write_page()) {
             // buffer has been terminated
-            return -1;
+            return false;
         }
         
-        // TODO: deal with memory errors
+        // std::bad_alloc throw on out-of-memory error
         write_page = tuple_page_t::alloc(tuple_size, _page_size);
 
         // we now have space in the buffer
-        return 0;
+        return true;
     }
 
     // otherwise just test for cancellation
-    return page_buffer.is_terminated();
+    return !page_buffer.is_terminated();
 }
 
 
@@ -56,25 +56,28 @@ int tuple_buffer_t::check_page_full() {
  *  until either inputs become available or the producer closes the
  *  buffer (sending EOF).
  *
- *  @return 0 if input if available. 1 if the producer has sent EOF to
- *  this buffer and no more pages are available. -1 if the buffer has
- *  been terminated.
+ *  @return true if input is available. false otherwise.
+ *
+ *  @throw BufferTerminatedException if the producer has terminated
+ *  the buffer.
  */
 
-int tuple_buffer_t::wait_for_input() {
+bool tuple_buffer_t::wait_for_input() {
  
     if((read_page != NULL) && (read_iterator != read_page->end()))
-	return 0;
+        // more data available in current page
+	return true;
    
     // wait for the next page to arrive
     page_t* page;
-    int read_ret = page_buffer.read(page);
-    if (read_ret)
-        return read_ret;
-        
+    if ( !page_buffer.read(page) )
+        // no more pages coming
+        return false;
+    
+    // read a new page
     read_page = tuple_page_t::mount(page);
     read_iterator = read_page->begin();
-    return 0;
+    return true;
 }
 
 
@@ -88,20 +91,21 @@ int tuple_buffer_t::wait_for_input() {
  *  @param tuple On success, this tuple is set to point to the tuple
  *  most recently removed from this page.
  *
- *  @return 0 if a tuple is removed from the buffer. 1 if the buffer
- *  is empty and the producer has sent EOF. -1 if the buffer has been
- *  terminated.
+ *  @return true if a tuple is removed from the buffer. false if the
+ *  buffer is empty and the producer has sent EOF.
+ *
+ *  @throw BufferTerminatedException if the producer has terminated
+ *  the buffer.
  */
 
-int tuple_buffer_t::get_tuple(tuple_t &rec) {
+bool tuple_buffer_t::get_tuple(tuple_t &rec) {
 
     // make sure there is a valid page
-    int wait_ret = wait_for_input();
-    if (wait_ret)
-        return wait_ret;
+    if (!wait_for_input())
+        return false;
     
     rec = *read_iterator++;
-    return 0;
+    return true;
 }
 
 
@@ -122,14 +126,15 @@ int tuple_buffer_t::get_tuple(tuple_t &rec) {
 
 bool tuple_buffer_t::send_eof() {
 
-    // write page will be NULL if we have already sent EOF
+    // If write_page is NULL, some thing is seriously wrong. One
+    // possibility is that we have already called send_eof().
     if ( write_page == NULL ) {
-        TRACE(TRACE_ALWAYS, "NULL write_page. Sending EOF more than once?\n");
-        QPIPE_PANIC();
+        TRACE(TRACE_ALWAYS, "NULL write page\n");
+        assert(write_page != NULL);
     }
-
+    
     if (!write_page->empty()) {
-        if ( flush_write_page() )
+        if ( !flush_write_page() )
             // buffer has been terminated!
             return false;
     }

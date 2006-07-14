@@ -28,7 +28,7 @@ int num_copies;
 
 void write_ints(void* arg)
 {
-    output_buffer_guard_t buffer = (tuple_buffer_t *)arg;
+    tuple_buffer_t* buffer = (tuple_buffer_t *)arg;
 
     // produce a set of inputs, with duplicated values
     vector<int> inputs;
@@ -79,58 +79,11 @@ int main(int argc, char* argv[]) {
         do_echo = false;
 
 
-
-    stage_container_t* sc;
-
-    sc = new stage_container_t("FDUMP_CONTAINER", new stage_factory<fdump_stage_t>);
-    dispatcher_t::register_stage_container(fdump_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* fdump_thread = new tester_thread_t(drive_stage, sc, "FDUMP THREAD");
-	if ( thread_create( NULL, fdump_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-    
-    sc = new stage_container_t("FSCAN_CONTAINER", new stage_factory<fscan_stage_t>);
-    dispatcher_t::register_stage_container(fscan_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* fscan_thread = new tester_thread_t(drive_stage, sc, "FSCAN THREAD");
-	if ( thread_create( NULL, fscan_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-    
-    sc = new stage_container_t("MERGE_CONTAINER", new stage_factory<merge_stage_t>);
-    dispatcher_t::register_stage_container(merge_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* merge_thread = new tester_thread_t(drive_stage, sc, "MERGE THREAD");
-	if ( thread_create( NULL, merge_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-    sc = new stage_container_t("SORT_CONTAINER", new stage_factory<sort_stage_t>);
-    dispatcher_t::register_stage_container(sort_packet_t::PACKET_TYPE, sc);
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-	tester_thread_t* sort_thread = new tester_thread_t(drive_stage, sc, "SORT THREAD");
-	if ( thread_create( NULL, sort_thread ) ) {
-	    TRACE(TRACE_ALWAYS, "thread_create failed\n");
-	    QPIPE_PANIC();
-	}
-    }
-
-
-    // for now just sort ints
-    sc = new stage_container_t("FUNC_CALL_CONTAINER", new stage_factory<func_call_stage_t>);
-    dispatcher_t::register_stage_container(func_call_packet_t::PACKET_TYPE, sc);
-    tester_thread_t* func_call_thread =  new tester_thread_t(drive_stage, sc, "FUNC_CALL_THREAD");
-    if ( thread_create( NULL, func_call_thread ) ) {
-	TRACE(TRACE_ALWAYS, "thread_create() failed\n");
-	QPIPE_PANIC();
-    }
+    register_stage<fdump_stage_t>(THREAD_POOL_SIZE);
+    register_stage<fscan_stage_t>(THREAD_POOL_SIZE);
+    register_stage<merge_stage_t>(THREAD_POOL_SIZE);
+    register_stage<sort_stage_t>(THREAD_POOL_SIZE);
+    register_stage<func_call_stage_t>(1);
     
 
     tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
@@ -156,27 +109,7 @@ int main(int argc, char* argv[]) {
     tuple_t output;
 
 
-    while(1) {
-        int get_ret = output_buffer->get_tuple(output);
-        switch (get_ret) {
-
-        case 0:
-            if(do_echo)
-                TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
-            continue;
-
-        case 1:
-            TRACE(TRACE_ALWAYS, "No more tuples...\n");
-            TRACE(TRACE_ALWAYS, "TEST DONE\n");
-            return 0;
-            
-        case -1:
-            TRACE(TRACE_ALWAYS, "get_tuple() error!\n");
-            QPIPE_PANIC();
-
-        default:
-            // unrecognized return value
-            QPIPE_PANIC();
-        }
+    while (output_buffer->get_tuple(output)) {
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
     }
 }

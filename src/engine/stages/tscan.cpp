@@ -2,6 +2,7 @@
 
 #include "engine/stages/tscan.h"
 #include "engine/util/guard.h"
+#include "engine/core/exception.h"
 #include "qpipe_panic.h"
 #include <unistd.h>
 
@@ -69,7 +70,7 @@ void tscan_stage_t::process_packet() {
     int ret = db->cursor(NULL, &dbcp, 0);
     if (ret) {
         db->err(ret, "db->cursor() failed: ");
-        throw qpipe_exception("Unable to open DB cursor");
+        throw EXCEPTION(Berkeley_DB_Exception, "Unable to open DB cursor");
     }
     cursor_guard_t cursor_guard(db, dbcp);
     
@@ -96,7 +97,7 @@ void tscan_stage_t::process_packet() {
 	if (err) {
 	    if (err != DB_NOTFOUND) {
 		db->err(err, "dbcp->get() failed: ");
-                throw qpipe_exception("Unable to read rows from DB cursor");
+                throw EXCEPTION(Berkeley_DB_Exception, "Unable to read rows from DB cursor");
 	    }
 	    
 	    // done reading table

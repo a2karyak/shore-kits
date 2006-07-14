@@ -407,7 +407,7 @@ void stage_container_t::stage_adaptor_t::output_page(tuple_page_t *page) {
                 // this tuple selected by filter!
 
                 // allocate space in the output buffer
-                if ( curr_packet->_output_buffer->alloc_tuple(out_tup) ) {
+                if ( !curr_packet->_output_buffer->alloc_tuple(out_tup) ) {
                     // The consumer of the current packet's output
                     // buffer has terminated the buffer! No need to
                     // continue iterating over output page.

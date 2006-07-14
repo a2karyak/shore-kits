@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    single_int_join_t *join = new single_int_join_t();
+    single_int_join_t* join = new single_int_join_t();
     tuple_buffer_t* left_int_buffer = new tuple_buffer_t(join->left_tuple_size());
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples);
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     
     
     tuple_t output;
-    while(!join_buffer->get_tuple(output))
+    while(join_buffer->get_tuple(output))
         TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     

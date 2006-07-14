@@ -2,9 +2,9 @@
 
 #include "engine/stages/fscan.h"
 #include "engine/core/tuple.h"
+#include "engine/core/exception.h"
 #include "qpipe_panic.h"
 #include "trace.h"
-#include "exceptions.h"
 
 
 
@@ -19,8 +19,9 @@ const c_str fscan_stage_t::DEFAULT_STAGE_NAME = "FSCAN_STAGE";
 /**
  *  @brief Read the file specified by fscan_packet_t p.
  *
- *  @return 0 on success. Non-zero on unrecoverable error. The stage
- *  should terminate all queries it is processing.
+ *  @return void
+ *
+ *  @throw May throw exceptions on error.
  */
 
 void fscan_stage_t::process_packet() {
@@ -31,12 +32,13 @@ void fscan_stage_t::process_packet() {
 
     const c_str &filename = packet->_filename;
     file_guard_t file = fopen(filename, "r");
-    if ( file == NULL )
-        throw syscall_exception(string("fopen() failed on ") + filename.data());
+    if (file == NULL)
+        throw EXCEPTION(FileException, (string("fopen() failed on ") + filename).c_str());
 
+        
     page_guard_t tuple_page =
 	tuple_page_t::alloc(packet->_output_buffer->tuple_size);
-
+    
 
     // If we have FSCAN working sharing enabled, we could be accepting
     // packets now. We would like to avoid doing so when we start
@@ -46,7 +48,7 @@ void fscan_stage_t::process_packet() {
     while (1)
     {
 	// read the next page of tuples
-	if(tuple_page->fread_full_page(file))
+	if(!tuple_page->fread_full_page(file))
             return;
         
 	// We must stop accepting packets as soon as we output() any

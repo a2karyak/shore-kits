@@ -9,19 +9,31 @@ using namespace qpipe;
 
 
 
-void* int_tuple_writer_main(void* arg)
-{
+
+void int_tuple_writer_void(void* arg) {
 
     struct int_tuple_writer_info_s* info =
         (struct int_tuple_writer_info_s*)arg;
 
-    output_buffer_guard_t int_buffer = info->int_buffer;
+    tuple_buffer_t* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;
     
     for (int i = info->start_tuple; i < num_tuples; i++) {
 	tuple_t in_tuple((char*)&i, sizeof(int));
 	int_buffer->put_tuple(in_tuple);
     }
+}
+
+
+
+void* int_tuple_writer_main(void* arg) {
+
+    // let int_tuple_writer_void() do most of the work
+    int_tuple_writer_void(arg);
+
+    struct int_tuple_writer_info_s* info =
+        (struct int_tuple_writer_info_s*)arg;
+    info->int_buffer->send_eof();
     
     return NULL;
 }
@@ -33,7 +45,7 @@ void shuffled_triangle_int_tuple_writer_fc(void* arg) {
     struct int_tuple_writer_info_s* info =
         (struct int_tuple_writer_info_s*)arg;
 
-    output_buffer_guard_t int_buffer = info->int_buffer;
+    tuple_buffer_t* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;
     
     vector<int> tuples;
@@ -57,13 +69,14 @@ void shuffled_triangle_int_tuple_writer_fc(void* arg) {
 }
 
 
+
 void increasing_int_tuple_writer_fc(void* arg)
 {
 
     struct int_tuple_writer_info_s* info =
         (struct int_tuple_writer_info_s*)arg;
 
-    output_buffer_guard_t int_buffer = info->int_buffer;
+    tuple_buffer_t* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;
 
 

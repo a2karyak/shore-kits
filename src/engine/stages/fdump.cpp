@@ -3,6 +3,7 @@
 #include "engine/stages/fdump.h"
 #include "engine/core/tuple.h"
 #include "engine/util/guard.h"
+#include "engine/core/exception.h"
 #include "qpipe_panic.h"
 #include "trace.h"
 
@@ -33,7 +34,8 @@ void fdump_stage_t::process_packet() {
     // make sure the file gets closed when we're done
     file_guard_t file = fopen(filename, "w+");
     if ( file == NULL )
-        throw syscall_exception(string("fopen() failed on ") + filename.data());
+        throw EXCEPTION(FileException, (string("fopen() failed on ") + filename).c_str());
+
     
     tuple_buffer_t* input_buffer = packet->_input_buffer;
     
@@ -42,11 +44,12 @@ void fdump_stage_t::process_packet() {
     while (1) {
     
         page_guard_t tuple_page = input_buffer->get_page();
-        if(!tuple_page) {
+        if(tuple_page == NULL) {
             // no more pages
             TRACE(TRACE_DEBUG, "Finished dump to file %s\n", filename.data());
             return;
         }
+        TRACE(TRACE_ALWAYS, "Wrote page\n");
         
         tuple_page->fwrite_full_page(file);
     }

@@ -6,6 +6,7 @@
 #include "engine/stages/fscan.h"
 #include "engine/util/tmpfile.h"
 #include "engine/util/guard.h"
+#include "engine/core/exception.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 
@@ -399,7 +400,7 @@ void sort_stage_t::process_packet() {
 
             // read in a run of pages
             tuple_page_t* page = _input_buffer->get_page();
-            if(!page)
+            if(page == NULL)
                 break;
 
             // add new page to the list
@@ -464,17 +465,17 @@ void sort_stage_t::process_packet() {
     } while(!_sorting_finished);
     
     // wait for the output buffer from the final merge to arrive
-    tuple_buffer_t *merge_output;
+    tuple_buffer_t* merge_output;
     pthread_join_wrapper(_monitor_thread, merge_output);
     _monitor_thread = 0;
     if(merge_output == NULL)
-        throw qpipe_exception("Merge failed. Terminating Sort");
+        throw EXCEPTION(QPipeException, "Merge failed. Terminating Sort");
     
 
     // transfer the output of the last merge to the stage output
     tuple_t out;
     while (1) {
-        if(merge_output->get_tuple(out))
+        if(!merge_output->get_tuple(out))
             // no more tuples
             break;
 

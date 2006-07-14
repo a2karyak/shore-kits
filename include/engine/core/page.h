@@ -13,8 +13,11 @@
 // include me last!!!
 #include "engine/namespace.h"
 
+
+
 extern void set_default_page_size(size_t page_size);
 extern size_t get_default_page_size();
+
 
 
 /**
@@ -89,8 +92,8 @@ private:
     volatile bool done_writing;
 
     // the singly-linked page list this buffer manages
-    page_t *head;
-    page_t *tail;
+    page_t* head;
+    page_t* tail;
 
     // Conservative size estimates maintained by the reader and
     // writer, respectively. They are not necessarily accurate, but
@@ -126,8 +129,9 @@ public:
     }
     
     
-    int  read(page_t*& page);
-    int  write(page_t* page);
+    bool read(page_t*& page);
+    bool write(page_t* page);
+
     bool check_readable();
     bool check_writable();
     
@@ -196,13 +200,19 @@ private:
  */
 struct page_list_guard_t : public pointer_guard_base_t<page_t, page_list_guard_t> {
 
+
     page_list_guard_t(page_t *ptr=NULL)
         : pointer_guard_base_t<page_t, page_list_guard_t>(ptr)
     {
     }
 
+
+    /**
+     *  @brief pointer_guard_base_t Action class. Simply walk through
+     *  the page list list and invoke delete operator on each page_t*.
+     */
     struct Action {
-        void operator()(page_t *ptr) {
+        void operator()(page_t* ptr) {
             while(ptr) {
                 page_t *page = ptr;
                 ptr = page->next;
@@ -211,12 +221,26 @@ struct page_list_guard_t : public pointer_guard_base_t<page_t, page_list_guard_t
         }
     };
     
-    void append(page_t *ptr) {
-        assert(ptr);
+
+    /**
+     *  @brief Prepend the specified page to this list. Since a
+     *  page_list_guard_t keeps a reference to the head of the list,
+     *  we update this reference.
+     */
+    void append(page_t* ptr) {
+        assert(ptr != NULL);
+        // We are going to use assign() to replace our reference to
+        // the old head with a reference to the new head. We need to
+        // invoke release() on the old reference first so assign()
+        // does not invoke delete on the old head.
         ptr->next = release();
         assign(ptr);
     }
 
+    
+    /**
+     *  DO NOT USE THIS OPERATOR.
+     */
     page_list_guard_t &operator=(const page_list_guard_t::temp_ref_t &ref) {
         assign(ref._ptr);
         return *this;

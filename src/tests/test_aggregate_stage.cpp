@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
     
     tuple_t output;
-    while(!count_buffer->get_tuple(output))
+    while(count_buffer->get_tuple(output))
         TRACE(TRACE_ALWAYS, "Count: %d\n", *(int*)output.data);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
 
