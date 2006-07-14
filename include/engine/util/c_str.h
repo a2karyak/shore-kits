@@ -1,10 +1,11 @@
-// -*- mode:c++; c-basic-offset:4
+// -*- mode:c++; c-basic-offset:4 -*-
 #ifndef __C_STR_H
 #define __C_STR_H
 
 #include <stdarg.h>
 #include <new>
 
+#if 1
 class c_str {
     char* _str;
     
@@ -65,6 +66,61 @@ public:
         return *this;
     }
 };
+#else
+class c_str {
+    static c_str_data _seed;
+    
+    struct c_str_data {
+        pthread_mutex_t _lock;
+        unsigned _count;
+        char _str[0];
+    };
 
+    c_str_data* _data;
+    
+ public:
+    c_str(const char* str, ...) {
+        // copy the string
+        va_list args;
+        va_start(args, format);
+
+        int size = strlen(str) + 1;
+        char format[sizeof(c_str_data) + size];
+
+        // pad with space for the header, but don't copy it in quite yet
+        memset(format, '.', sizeof(c_str_data));
+        // copy over the format string
+        memcpy(&format[sizeof(c_str_data)], str, size);
+
+        // keep the compiler's memory analysis happy (type-punned access!)
+        union {
+            char* str;
+            c_str_data* data;
+        } pun;
+
+        // format the string
+        if(vasprintf(&pun.str, format, args) < 0)
+            throw std::bad_alloc();
+        
+        va_end(args);
+
+        // copy the header in
+        *pun.data = _seed;
+
+        // done!
+        _data = pun.data;
+    }
+
+    const char* data() {
+        // skip to the actual string
+        return _data->_str;
+    }
+    ~c_str() {
+        if(--_data->count == 0)
+            free(_data);
+    }
+private:
+};
+#endif
 
 #endif
