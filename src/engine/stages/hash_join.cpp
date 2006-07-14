@@ -17,9 +17,10 @@
 #include <algorithm>
 
 
-const c_str hash_join_packet_t::PACKET_TYPE = "Hash Join";
 
-const c_str hash_join_stage_t::DEFAULT_STAGE_NAME = "Hash Join";
+const c_str hash_join_packet_t::PACKET_TYPE = "HASH_JOIN";
+
+const c_str hash_join_stage_t::DEFAULT_STAGE_NAME = "HASH_JOIN";
 
 
 
