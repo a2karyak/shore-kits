@@ -216,22 +216,15 @@ public:
         // TSCAN PACKET
 	tuple_buffer_t* tscan_out_buffer = new tuple_buffer_t(sizeof(projected_lineitem_tuple));
 
-        char* tscan_packet_id;
-        int tscan_packet_id_ret = asprintf(&tscan_packet_id, "Q1_TSCAN_PACKET");
-        assert( tscan_packet_id_ret != -1 );
-        tscan_packet_t* q1_tscan_packet = new tscan_packet_t(tscan_packet_id,
+        tscan_packet_t* q1_tscan_packet = new tscan_packet_t("Q1_TSCAN_PACKET",
                                                              tscan_out_buffer,
                                                              new q1_tscan_filter_t(),
                                                              tpch_lineitem);
 
         // AGG PACKET CREATION
         tuple_buffer_t* agg_output_buffer = new tuple_buffer_t(sizeof(aggregate_tuple));
-
-        char* agg_packet_id;
-        int agg_packet_id_ret = asprintf(&agg_packet_id, "Q1_AGG_PACKET");
-        assert( agg_packet_id_ret != -1 );
         packet_t* q1_agg_packet;
-        q1_agg_packet = new partial_aggregate_packet_t(agg_packet_id,
+        q1_agg_packet = new partial_aggregate_packet_t("Q1_AGG_PACKET",
                                                        agg_output_buffer,
                                                        new trivial_filter_t(agg_output_buffer->tuple_size),
                                                        q1_tscan_packet,

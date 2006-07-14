@@ -38,10 +38,9 @@ packet_t *line_item_scan(Db* tpch_lineitem) {
 
     // LINEITEM TSCAN PACKET
     // the output consists of 1 int (the
-    char* packet_id = copy_string("Lineitem TSCAN");
     tuple_filter_t* filter = new lineitem_tscan_filter_t(); 
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
-    packet_t *tscan_packet = new tscan_packet_t(packet_id,
+    packet_t *tscan_packet = new tscan_packet_t("Lineitem TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_lineitem);
@@ -88,10 +87,9 @@ packet_t* orders_scan(Db* tpch_orders) {
         }
     };
 
-    char* packet_id = copy_string("Orders TSCAN");
     tuple_filter_t* filter = new orders_tscan_filter_t(); 
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(order_scan_tuple_t));
-    packet_t *tscan_packet = new tscan_packet_t(packet_id,
+    packet_t *tscan_packet = new tscan_packet_t("Orders TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_orders);
@@ -202,11 +200,10 @@ public:
         packet_t* orders_packet = orders_scan(tpch_orders);
 
         // join them...
-        char *packet_id = copy_string("Orders - Lineitem JOIN");
         tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
         buffer = new tuple_buffer_t(sizeof(int));
         tuple_join_t* join = new q4_join_t();
-        packet_t* join_packet = new hash_join_packet_t(packet_id,
+        packet_t* join_packet = new hash_join_packet_t("Orders - Lineitem JOIN",
                                                        buffer,
                                                        filter,
                                                        orders_packet,
@@ -216,12 +213,11 @@ public:
                                                        true);
 
         // sort/aggregate in one step
-        packet_id = copy_string("O_ORDERPRIORITY COUNT");
         filter = new trivial_filter_t(sizeof(q4_tuple_t));
         buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
         tuple_aggregate_t *aggregate = new q4_count_aggregate_t();
         packet_t* agg_packet;
-        agg_packet = new partial_aggregate_packet_t(packet_id,
+        agg_packet = new partial_aggregate_packet_t("O_ORDERPRIORITY COUNT",
                                                     buffer,
                                                     filter,
                                                     join_packet,

@@ -42,22 +42,11 @@ int main(int argc, char* argv[]) {
     
     // aggregate single count result (single int)
     tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
-
-    char* fscan_packet_id;
-    int fscan_packet_id_ret =
-        asprintf( &fscan_packet_id, "FSCAN_PACKET_1" );
-    assert( fscan_packet_id_ret != -1 );
-
-    char* fscan_packet_filename;
-    int fscan_packet_filename_ret =
-        asprintf( &fscan_packet_filename, "%s", input_filename );
-    assert( fscan_packet_filename_ret != -1 );
-    
     fscan_packet_t* packet = 
-	new fscan_packet_t(fscan_packet_id,
+	new fscan_packet_t("FSCAN_PACKET_1",
                            int_buffer,
                            new trivial_filter_t(int_buffer->tuple_size),
-                           fscan_packet_filename);
+                           input_filename);
     
     
     dispatcher_t::dispatch_packet(packet);

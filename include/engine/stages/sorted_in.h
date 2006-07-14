@@ -9,7 +9,7 @@
 using namespace qpipe;
 
 struct sorted_in_packet_t : public packet_t {
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
     pointer_guard_t<packet_t> _left;
     pointer_guard_t<packet_t> _right;
     buffer_guard_t _left_input;
@@ -19,7 +19,7 @@ struct sorted_in_packet_t : public packet_t {
     pointer_guard_t<key_compare_t> _compare;
     bool _reject_matches;
 
-    sorted_in_packet_t(char* packet_id,
+    sorted_in_packet_t(const char* packet_id,
                        tuple_buffer_t* out_buffer,
                        tuple_filter_t* out_filter,
                        packet_t* left, packet_t* right,
@@ -39,7 +39,7 @@ struct sorted_in_packet_t : public packet_t {
 };
 
 struct sorted_in_stage_t : public stage_t {
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef sorted_in_packet_t stage_packet_t;
 protected:
     virtual void process_packet();

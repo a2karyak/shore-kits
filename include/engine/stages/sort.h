@@ -31,7 +31,7 @@ struct sort_packet_t : public packet_t {
 
 public:
 
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
 
 
     pointer_guard_t<key_extractor_t> _extract;
@@ -69,7 +69,7 @@ public:
      *  takes ownership of this packet, but it will hand off ownership
      *  to a container as soon as this packet is dispatched.
      */
-    sort_packet_t(char*               packet_id,
+    sort_packet_t(const c_str        &packet_id,
                   tuple_buffer_t*     output_buffer,
                   tuple_filter_t*     output_filter,
                   key_extractor_t* extract,
@@ -149,7 +149,7 @@ private:
     
 public:
 
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef sort_packet_t stage_packet_t;
 
 

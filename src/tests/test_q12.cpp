@@ -255,36 +255,32 @@ int main() {
         stopwatch_t timer;
 
         // lineitem scan
-        char* packet_id = copy_string("lineitem TSCAN");
         tuple_filter_t* filter = new lineitem_tscan_filter_t();
         tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(lineitem_scan_tuple));
         packet_t* lineitem_packet;
-        lineitem_packet = new tscan_packet_t(packet_id,
+        lineitem_packet = new tscan_packet_t("lineitem TSCAN",
                                              buffer,
                                              filter,
                                              tpch_lineitem);
         // order scan
-        packet_id = copy_string("order TSCAN");
         filter = new order_tscan_filter_t();
         buffer = new tuple_buffer_t(sizeof(order_scan_tuple));
         packet_t* order_packet;
-        order_packet = new tscan_packet_t(packet_id,
+        order_packet = new tscan_packet_t("order TSCAN",
                                           buffer, filter,
                                           tpch_orders);
 
         // join
-        packet_id = copy_string("orders-lineitem HJOIN");
         filter = new trivial_filter_t(sizeof(join_tuple));
         buffer = new tuple_buffer_t(sizeof(join_tuple));
         packet_t* join_packet;
-        join_packet = new hash_join_packet_t(packet_id,
+        join_packet = new hash_join_packet_t("orders-lineitem HJOIN",
                                              buffer, filter,
                                              order_packet,
                                              lineitem_packet,
                                              new q12_join_t());
 
         // partial aggregation
-        packet_id = copy_string("sum AGG");
         filter = new trivial_filter_t(sizeof(q12_tuple));
         buffer = new tuple_buffer_t(sizeof(q12_tuple));
         size_t offset = FIELD_OFFSET(join_tuple, L_SHIPMODE);
@@ -292,7 +288,7 @@ int main() {
         key_compare_t* compare = new int_key_compare_t();
         tuple_aggregate_t* aggregate = new q12_aggregate_t();
         packet_t* agg_packet;
-        agg_packet = new partial_aggregate_packet_t(packet_id,
+        agg_packet = new partial_aggregate_packet_t("sum AGG",
                                                     buffer, filter,
                                                     join_packet,
                                                     aggregate,

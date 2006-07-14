@@ -1,3 +1,4 @@
+// -*- mode:c++; c-basic-offset:4 -*-
 /** @file    : workload.h
  *  @brief   : Header for workload related classes
  *  @version : 0.1
@@ -169,7 +170,7 @@ class workload_t : public thread_t {
     pthread_mutex_t workload_mutex;
 
     /* constructor - destructor */
-    workload_t(const char* format, ...);
+    workload_t(const c_str &name);
     ~workload_t();
     
     /* set the workload parameters */

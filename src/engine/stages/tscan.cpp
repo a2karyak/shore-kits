@@ -7,11 +7,11 @@
 
 
 
-const char* tscan_packet_t::PACKET_TYPE = "TSCAN";
+const c_str tscan_packet_t::PACKET_TYPE = "TSCAN";
 
 
 
-const char* tscan_stage_t::DEFAULT_STAGE_NAME = "TSCAN_STAGE";
+const c_str tscan_stage_t::DEFAULT_STAGE_NAME = "TSCAN_STAGE";
 
 
 

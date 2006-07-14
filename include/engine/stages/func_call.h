@@ -25,7 +25,7 @@ class func_call_packet_t : public packet_t {
   
 public:
 
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
     
     
     void (*_func) (void*);
@@ -63,7 +63,7 @@ public:
      *  @param func_arg func will be called with this value. This
      *  packet does not own this value.
      */
-    func_call_packet_t(char*           packet_id,
+    func_call_packet_t(const char*     packet_id,
                        tuple_buffer_t* output_buffer,
                        tuple_filter_t* output_filter,
                        void (*func) (void*),
@@ -97,7 +97,7 @@ class func_call_stage_t : public stage_t {
 
 public:
   
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef func_call_packet_t stage_packet_t;
     
     func_call_stage_t() { }

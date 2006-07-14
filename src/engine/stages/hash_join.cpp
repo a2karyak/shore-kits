@@ -16,9 +16,9 @@
 #include <algorithm>
 
 
-const char *hash_join_packet_t::PACKET_TYPE = "Hash Join";
+const c_str hash_join_packet_t::PACKET_TYPE = "Hash Join";
 
-const char* hash_join_stage_t::DEFAULT_STAGE_NAME = "Hash Join";
+const c_str hash_join_stage_t::DEFAULT_STAGE_NAME = "Hash Join";
 
 struct hash_join_stage_t::hash_key_t {
     size_t _len;

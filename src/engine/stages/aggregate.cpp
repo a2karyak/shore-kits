@@ -9,11 +9,11 @@
 
 
 
-const char* aggregate_packet_t::PACKET_TYPE = "AGGREGATE";
+const c_str aggregate_packet_t::PACKET_TYPE = "AGGREGATE";
 
 
 
-const char* aggregate_stage_t::DEFAULT_STAGE_NAME = "AGGREGATE_STAGE";
+const c_str aggregate_stage_t::DEFAULT_STAGE_NAME = "AGGREGATE_STAGE";
 
 
 

@@ -6,11 +6,11 @@
 
 
 
-const char* partial_aggregate_packet_t::PACKET_TYPE = "PARTIAL_AGGREGATE";
+const c_str partial_aggregate_packet_t::PACKET_TYPE = "PARTIAL_AGGREGATE";
 
 
 
-const char* partial_aggregate_stage_t::DEFAULT_STAGE_NAME = "PARTIAL_AGGREGATE_STAGE";
+const c_str partial_aggregate_stage_t::DEFAULT_STAGE_NAME = "PARTIAL_AGGREGATE_STAGE";
 
 
 

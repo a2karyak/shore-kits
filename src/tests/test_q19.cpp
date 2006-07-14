@@ -375,43 +375,39 @@ int main() {
         stopwatch_t timer;
 
         // lineitem scan
-        char* packet_id = copy_string("lineitem TSCAN");
         tuple_filter_t* filter = new lineitem_tscan_filter_t();
         tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(lineitem_scan_tuple));
         packet_t* lineitem_packet;
-        lineitem_packet = new tscan_packet_t(packet_id,
+        lineitem_packet = new tscan_packet_t("lineitem TSCAN",
                                              buffer,
                                              filter,
                                              tpch_lineitem);
 
         // part scan
-        packet_id = copy_string("part TSCAN");
         filter = new part_tscan_filter_t();
         buffer = new tuple_buffer_t(sizeof(part_scan_tuple));
         packet_t* part_packet;
-        part_packet = new tscan_packet_t(packet_id,
+        part_packet = new tscan_packet_t("part TSCAN",
                                          buffer,
                                          filter,
                                          tpch_part);
 
         // join
-        packet_id = copy_string("lineitem-part HJOIN");
         filter = new q19_filter_t();
         buffer = new tuple_buffer_t(sizeof(q19_tuple));
         packet_t* join_packet;
-        join_packet = new hash_join_packet_t(packet_id,
+        join_packet = new hash_join_packet_t("lineitem-part HJOIN",
                                              buffer, filter,
                                              lineitem_packet,
                                              part_packet,
                                              new q19_join_t());
 
         // sum
-        packet_id = copy_string("final SUM");
         filter = new trivial_filter_t(sizeof(double));
         buffer = new tuple_buffer_t(sizeof(double));
         key_extractor_t* extractor = new default_key_extractor_t(0, 0);
         packet_t* sum_packet;
-        sum_packet = new aggregate_packet_t(packet_id,
+        sum_packet = new aggregate_packet_t("final SUM",
                                             buffer, filter,
                                             new q19_sum_t(),
                                             extractor,

@@ -28,11 +28,11 @@ struct fdump_packet_t : public packet_t {
 
 public:
     
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
 
     buffer_guard_t _input_buffer;
     
-    char* _filename;
+    c_str _filename;
 
     notify_t* _notifier;
 
@@ -71,11 +71,11 @@ public:
      *  object. We will however, invoke notify() on this parameter in
      *  our destructor.
      */    
-    fdump_packet_t(char*           packet_id,
+    fdump_packet_t(const char*           packet_id,
 		   tuple_buffer_t* output_buffer,
                    tuple_filter_t* output_filter,
 		   tuple_buffer_t* input_buffer,
-		   char*           filename,
+		   const char*           filename,
                    notify_t*       notifier=NULL)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
 	  _input_buffer(input_buffer),
@@ -96,7 +96,7 @@ class fdump_stage_t : public stage_t {
 
 public:
 
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef fdump_packet_t stage_packet_t;
 
     fdump_stage_t() { }

@@ -41,16 +41,10 @@ int main(int argc, char* argv[]) {
 
 
     tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
-    char* func_call_packet_id;
-    int func_call_packet_id_ret =
-        asprintf( &func_call_packet_id, "FUNC_CALL_PACKET_1" );
-    assert( func_call_packet_id_ret != -1 );
-
-
 
     struct int_tuple_writer_info_s writer_info(int_buffer, num_tuples);
     func_call_packet_t* fc_packet = 
-	new func_call_packet_t(func_call_packet_id,
+	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
                                new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                increasing_int_tuple_writer_fc,
@@ -60,13 +54,8 @@ int main(int argc, char* argv[]) {
     tuple_buffer_t* count_buffer = new tuple_buffer_t(sizeof(int));
 
 
-    char* aggregate_packet_id;
-    int aggregate_packet_id_ret =
-        asprintf( &aggregate_packet_id, "AGGREGATE_PACKET_1" );
-    assert( aggregate_packet_id_ret != -1 );
- 
     aggregate_packet_t* agg_packet =
-        new aggregate_packet_t( aggregate_packet_id,
+        new aggregate_packet_t(  "AGGREGATE_PACKET_1",
                                 count_buffer,
                                 new trivial_filter_t(sizeof(int)),
                                 new count_aggregate_t(),

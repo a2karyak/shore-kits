@@ -25,10 +25,10 @@ class fscan_packet_t : public packet_t {
   
 public:
 
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
     
 
-    char* _filename;
+    c_str _filename;
 
 
     /**
@@ -56,22 +56,16 @@ public:
      *  Raw FSCANS should not be mergeable based on not
      *  mergeable. They should be merged at the meta-stage.
      */
-    fscan_packet_t(char*           packet_id,
+    fscan_packet_t(const c_str    &packet_id,
 		   tuple_buffer_t* output_buffer,
 		   tuple_filter_t* output_filter,
-		   char*           filename)
+		   const char*           filename)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _filename(filename)
     {
-        // error checking
-        assert(filename != NULL);
     }
 
     
-    virtual ~fscan_packet_t() {
-        free(_filename);
-    }
-
 };
 
 
@@ -84,7 +78,7 @@ class fscan_stage_t : public stage_t {
 
 public:
 
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef fscan_packet_t stage_packet_t;
 
     fscan_stage_t() { }

@@ -21,7 +21,7 @@ using namespace qpipe;
  */
 struct merge_packet_t : public packet_t {
 
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
     typedef vector<buffer_guard_t> buffer_list_t;
     
     buffer_list_t       _input_buffers;
@@ -59,7 +59,7 @@ struct merge_packet_t : public packet_t {
      *  @param comparator A comparator for the tuples in our input
      *  buffers. This packet owns this comparator.
      */
-    merge_packet_t(char*                packet_id,
+    merge_packet_t(const char*                packet_id,
                    tuple_buffer_t*      output_buffer,
                    tuple_filter_t*      output_filter,
                    const buffer_list_t& input_buffers,
@@ -103,7 +103,7 @@ private:
     
 public:
 
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef merge_packet_t stage_packet_t;
 
     merge_stage_t()

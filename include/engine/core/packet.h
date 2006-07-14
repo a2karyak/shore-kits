@@ -52,8 +52,8 @@ protected:
 
 public:
     
-    char* _packet_id;
-    const char* _packet_type;
+    c_str _packet_id;
+    c_str _packet_type;
     
     buffer_guard_t _output_buffer;
     pointer_guard_t<tuple_filter_t> _output_filter;
@@ -77,8 +77,8 @@ public:
 
 
     /* see packet.cpp for documentation */
-    packet_t(char*           packet_id,
-             const char*     packet_type,
+    packet_t(const c_str    &packet_id,
+             const c_str    &packet_type,
              tuple_buffer_t* output_buffer,
              tuple_filter_t* output_filter,
              bool            merge_enabled=true);

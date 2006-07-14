@@ -7,11 +7,11 @@ using std::list;
 
 
 
-const char *merge_packet_t::PACKET_TYPE = "MERGE";
+const c_str merge_packet_t::PACKET_TYPE = "MERGE";
 
 
 
-const char *merge_stage_t::DEFAULT_STAGE_NAME = "MERGE_STAGE";
+const c_str merge_stage_t::DEFAULT_STAGE_NAME = "MERGE_STAGE";
 
 
 

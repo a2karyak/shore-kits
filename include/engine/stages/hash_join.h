@@ -27,7 +27,7 @@ using namespace qpipe;
 
 class hash_join_packet_t : public packet_t {
 public:
-    static const char *PACKET_TYPE;
+    static const c_str PACKET_TYPE;
 
     pointer_guard_t<packet_t> _left;
     pointer_guard_t<packet_t> _right;
@@ -72,7 +72,7 @@ public:
      *  the packet destructor.
      *
      */
-    hash_join_packet_t(char *packet_id,
+    hash_join_packet_t(const char *packet_id,
                        tuple_buffer_t* out_buffer,
                        tuple_filter_t *output_filter,
                        packet_t* left,
@@ -159,7 +159,7 @@ class hash_join_stage_t : public stage_t {
     tuple_join_t *_join;
 public:
 
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef hash_join_packet_t stage_packet_t;
     virtual void process_packet();
     

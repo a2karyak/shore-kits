@@ -4,8 +4,6 @@
 #define _WORKLOAD_COMMON_H
 
 
-#include "workload/common/copy_string.h"
-
 #include "workload/common/tuple_source_once.h"
 #include "workload/common/count_aggregate.h"
 

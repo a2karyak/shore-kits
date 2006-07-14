@@ -210,7 +210,7 @@ int workload_factory::attach_clients(int noClients, client_t templ) {
            noClients, templ.get_sel_query(), templ.get_num_iter());
   
     // creates a new workload
-    theWLs[theWLCounter] = new workload_t("WORKLOAD-%d", theWLCounter);
+    theWLs[theWLCounter] = new workload_t(c_str::asprintf("WORKLOAD-%d", theWLCounter));
 
     // sets the workload parameters
     theWLs[theWLCounter]->set_run(noClients, templ.get_think_time(),
@@ -265,7 +265,7 @@ int workload_factory::create_wl(const int noClients, const int thinkTime,
     TRACE( TRACE_DEBUG, "Creating workload %d\n", theWLCounter);
 
     // creates a new workload
-    theWLs[theWLCounter] = new workload_t("WORKLOAD-%d", theWLCounter);
+    theWLs[theWLCounter] = new workload_t(c_str::asprintf("WORKLOAD-%d", theWLCounter));
 
     // sets the workload parameters
     theWLs[theWLCounter]->set_run(noClients, thinkTime, noCompleted,
@@ -364,11 +364,9 @@ void workload_factory::update_wl_status(int iWLIdx, int iStatus) {
  *  @brief : Creates the mutex  and initializes the counters
  */
 
-void workload_t::init(const char* format, va_list ap) {
-
-    // set thread name
-    init_thread_name_v(format, ap);
-
+workload_t::workload_t(const c_str &name)
+    : thread_t(name)
+{
     // member variables
     wlNumClients = STD_NUM_CLIENTS;
     wlThinkTime = STD_THINK_TIME;
@@ -384,21 +382,6 @@ void workload_t::init(const char* format, va_list ap) {
     pthread_mutex_unlock(&workload_mutex);
 
     myIdx = -1;
-}
-
-
-
-/** @fn    : Constructor
- *  @brief : Formats the thread name and initiliazes member variables
- */
-
-workload_t::workload_t(const char* format, ...) {
-
-    // standard initialization
-    va_list ap;
-    va_start(ap, format);
-    init(format, ap);
-    va_end(ap);
 }
 
 
@@ -529,7 +512,8 @@ void* workload_t::run() {
 
         TRACE( TRACE_DEBUG, "Creating client %d of %d\n", (i+1), wlNumClients);
 
-        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries, "WORK-%d-CL-%d", myIdx, i);
+        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries,
+                                         c_str::asprintf("WORK-%d-CL-%d", myIdx, i));
         if (wlSQLText.size() > 0) {
             runningClients[i]->set_sql(wlSQLText);
         }

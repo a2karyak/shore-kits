@@ -30,7 +30,7 @@ using namespace qpipe;
  */
 struct bnl_join_packet_t : public packet_t {
   
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
 
     pointer_guard_t<packet_t>       _left;
     buffer_guard_t                  _left_buffer;
@@ -55,7 +55,7 @@ struct bnl_join_packet_t : public packet_t {
      *  tuple sent to output_buffer. The packet OWNS this filter. It
      *  will be deleted in the packet destructor.
      */
-    bnl_join_packet_t(char* packet_id,
+    bnl_join_packet_t(const char*     packet_id,
                       tuple_buffer_t* output_buffer,
                       tuple_filter_t* output_filter,
                       packet_t* left,
@@ -80,7 +80,7 @@ class bnl_join_stage_t : public stage_t {
 
 public:
 
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef bnl_join_packet_t stage_packet_t;
     
     bnl_join_stage_t() { }

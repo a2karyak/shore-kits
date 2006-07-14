@@ -73,7 +73,7 @@ protected:
         }
 
 
-	virtual const char* get_container_name() {
+	virtual const c_str &get_container_name() {
 	    return _container->get_name();
 	}
 
@@ -125,7 +125,7 @@ protected:
     pthread_cond_t  _container_queue_nonempty;
 
 
-    char*                   _container_name;
+    c_str                   _container_name;
     list <packet_list_t*>   _container_queue;
     list <stage_adaptor_t*> _container_current_stages;
 
@@ -140,10 +140,10 @@ protected:
     
 public:
 
-    stage_container_t(const char* container_name, stage_factory_t* stage_maker);
+    stage_container_t(const c_str &container_name, stage_factory_t* stage_maker);
     ~stage_container_t();
   
-    const char* get_name(){ return _container_name; }
+    const c_str &get_name(){ return _container_name; }
 
     void enqueue(packet_t* packet);
 

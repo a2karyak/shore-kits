@@ -91,10 +91,9 @@ packet_t* customer_scan(Db* tpch_customer) {
         }
     };
 
-    char* packet_id = copy_string("Customer TSCAN");
     tuple_filter_t* filter = new customer_tscan_filter_t();
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
-    packet_t *packet = new tscan_packet_t(packet_id,
+    packet_t *packet = new tscan_packet_t("Customer TSCAN",
                                           buffer,
                                           filter,
                                           tpch_customer);
@@ -154,19 +153,17 @@ struct order_tscan_filter_t : public tuple_filter_t {
 packet_t* order_scan(Db* tpch_orders) {
 
     // Orders TSCAN
-    char* packet_id = copy_string("Orders TSCAN");
     tuple_filter_t* filter = new order_tscan_filter_t();
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
-    packet_t* tscan_packet = new tscan_packet_t(packet_id,
+    packet_t* tscan_packet = new tscan_packet_t("Orders TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_orders);
 
     // sort into groups 
-    packet_id = copy_string("Orders SORT");
     filter = new trivial_filter_t(sizeof(int));
     buffer = new tuple_buffer_t(sizeof(int));
-    packet_t* sort_packet = new sort_packet_t(packet_id,
+    packet_t* sort_packet = new sort_packet_t("Orders SORT",
                                               buffer,
                                               filter,
                                               new int_desc_key_extractor_t(),
@@ -174,11 +171,10 @@ packet_t* order_scan(Db* tpch_orders) {
                                               tscan_packet);
 
     // count over groups
-    packet_id = copy_string("Orders COUNT");
     filter = new trivial_filter_t(sizeof(key_count_tuple_t));
     buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
     tuple_aggregate_t* aggregator = new q13_count_aggregate_t();
-    packet_t* agg_packet = new aggregate_packet_t(packet_id,
+    packet_t* agg_packet = new aggregate_packet_t("Orders COUNT",
                                                   buffer,
                                                   filter,
                                                   aggregator,
@@ -292,11 +288,10 @@ int main() {
         packet_t* customer_packet = customer_scan(tpch_customer);
         packet_t* order_packet = order_scan(tpch_orders);
 
-        char* packet_id = copy_string("Orders - Customer JOIN");
         tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
         tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
         tuple_join_t* join = new q13_join_t();
-        packet_t* join_packet = new hash_join_packet_t(packet_id,
+        packet_t* join_packet = new hash_join_packet_t("Orders - Customer JOIN",
                                                        buffer,
                                                        filter,
                                                        customer_packet,
@@ -305,10 +300,9 @@ int main() {
                                                        true);
 
         // sort to group by c_count
-        packet_id = copy_string("c_count SORT");
         filter = new trivial_filter_t(sizeof(int));
         buffer = new tuple_buffer_t(sizeof(int));
-        packet_t *sort_packet = new sort_packet_t(packet_id,
+        packet_t *sort_packet = new sort_packet_t("c_count SORT",
                                                   buffer,
                                                   filter,
                                                   new int_desc_key_extractor_t(),
@@ -316,11 +310,10 @@ int main() {
                                                   join_packet);
 
         // aggregate over c_count
-        packet_id = copy_string("c_count COUNT");
         filter = new trivial_filter_t(sizeof(key_count_tuple_t));
         buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
         tuple_aggregate_t* agg = new q13_count_aggregate_t();
-        packet_t *agg_packet = new aggregate_packet_t(packet_id,
+        packet_t *agg_packet = new aggregate_packet_t("c_count COUNT",
                                                       buffer,
                                                       filter,
                                                       agg,
@@ -328,10 +321,9 @@ int main() {
                                                       sort_packet);
 
         // final sort of results
-        packet_id = copy_string("custdist, c_count SORT");
         filter = new trivial_filter_t(sizeof(key_count_tuple_t));
         buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
-        sort_packet = new sort_packet_t(packet_id,
+        sort_packet = new sort_packet_t("custdist, c_count SORT",
                                         buffer,
                                         filter,
                                         new q13_key_extract_t(),

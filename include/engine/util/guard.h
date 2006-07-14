@@ -7,6 +7,7 @@
 #include <cassert>
 #include <sys/time.h>
 #include "trace.h"
+#include "c_str.h"
 #include <unistd.h>
 
 
@@ -165,8 +166,6 @@ struct file_guard_t : public pointer_guard_base_t<FILE, file_guard_t> {
 private:
     file_guard_t &operator=(file_guard_t &);
 };
-
-
 
 /**
  * @brief Ensures that a file descriptor gets closed

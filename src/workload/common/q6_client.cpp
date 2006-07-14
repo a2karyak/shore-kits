@@ -8,7 +8,6 @@
 #include "workload/common/q6_packet.h"
 #include "workload/common/q6_aggregate.h"
 #include "workload/common/q6_tscan_filter.h"
-#include "workload/common/copy_string.h"
 #include "workload/tpch/tpch_db.h"
 
 
@@ -24,10 +23,8 @@ void* q6_client_main(void* arg) {
     
     for (int i = 0; i < info->_num_iterations; i++) {
 
-        char index_str[16];
-        sprintf(index_str, "%d_%d_", info->_client_id, i);
-    
-        packet_t* q6 = create_q6_packet( (string("Q6_CLIENT") + index_str).c_str(), info->_policy );
+        c_str prefix = c_str::asprintf("Q6_CLIENT%d_%d_", info->_client_id, i);
+        packet_t* q6 = create_q6_packet( prefix, info->_policy );
         tuple_buffer_t* out = q6->_output_buffer;
         
         dispatcher_t::dispatch_packet(q6);

@@ -8,11 +8,11 @@
 
 
 
-const char* fdump_packet_t::PACKET_TYPE = "FDUMP";
+const c_str fdump_packet_t::PACKET_TYPE = "FDUMP";
 
 
 
-const char* fdump_stage_t::DEFAULT_STAGE_NAME = "FDUMP_STAGE";
+const c_str fdump_stage_t::DEFAULT_STAGE_NAME = "FDUMP_STAGE";
 
 
 
@@ -29,11 +29,11 @@ void fdump_stage_t::process_packet() {
     fdump_packet_t* packet = (fdump_packet_t*)adaptor->get_packet();
 
 
-    char* filename = packet->_filename;
+    const c_str &filename = packet->_filename;
     // make sure the file gets closed when we're done
     file_guard_t file = fopen(filename, "w+");
     if ( file == NULL )
-        throw syscall_exception(string("fopen() failed on ") + filename);
+        throw syscall_exception(string("fopen() failed on ") + filename.data());
     
     tuple_buffer_t* input_buffer = packet->_input_buffer;
     
@@ -44,7 +44,7 @@ void fdump_stage_t::process_packet() {
         page_guard_t tuple_page = input_buffer->get_page();
         if(!tuple_page) {
             // no more pages
-            TRACE(TRACE_DEBUG, "Finished dump to file %s\n", filename);
+            TRACE(TRACE_DEBUG, "Finished dump to file %s\n", filename.data());
             return;
         }
         

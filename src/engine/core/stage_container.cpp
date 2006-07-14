@@ -40,17 +40,10 @@ struct stop_exception { };
  *  printing debug information. The constructor will create a copy of
  *  this string, so the caller should deallocate it if necessary.
  */
-stage_container_t::stage_container_t(const char* container_name,
+stage_container_t::stage_container_t(const c_str &container_name,
 				     stage_factory_t* stage_maker)
-    : _stage_maker(stage_maker)
+    : _container_name(container_name), _stage_maker(stage_maker)
 {
-
-    // copy container name
-    if ( asprintf(&_container_name, "%s", container_name) == -1 ) {
-	TRACE(TRACE_ALWAYS, "asprintf() failed on stage: %s\n",
-	      container_name);
-	QPIPE_PANIC();
-    }
   
     // mutex that serializes the creation of the worker threads
     pthread_mutex_init_wrapper(&_container_lock, NULL);
@@ -69,10 +62,6 @@ stage_container_t::stage_container_t(const char* container_name,
  *  queue.
  */
 stage_container_t::~stage_container_t(void) {
-
-    // the container owns its name
-    free(_container_name);
-
     // There should be no worker threads accessing the packet queue when
     // this function is called. Otherwise, we get race conditions and
     // invalid memory accesses.
@@ -163,7 +152,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 	container_queue_enqueue_no_merge(packet);
         if (TRACE_MERGING)
             TRACE(TRACE_ALWAYS, "%s merging disabled\n",
-                  packet->_packet_id);
+                  packet->_packet_id.data());
 	return;
 	// * * * END CRITICAL SECTION * * *
     }
@@ -179,7 +168,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 	    /* packet was merged with this existing stage */
             if (TRACE_MERGING)
                 TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
-                      packet->_packet_id,
+                      packet->_packet_id.data(),
                       packet->_next_tuple_on_merge);
 	    return;
 	    // * * * END CRITICAL SECTION * * *
@@ -210,7 +199,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 	    cq_plist->push_back(packet);
             if (TRACE_MERGING)
                 TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
-                      packet->_packet_id);
+                      packet->_packet_id.data());
 	    return;
 	    // * * * END CRITICAL SECTION * * *
 	}
@@ -219,7 +208,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 
     if (TRACE_MERGING)
         TRACE(TRACE_ALWAYS, "%s could not be merged\n",
-              packet->_packet_id);
+              packet->_packet_id.data());
     
     
     // No work sharing detected. We can now give up and insert the new
@@ -252,7 +241,7 @@ void stage_container_t::run() {
         if (TRACE_DEQUEUE) {
             packet_t* head_packet = *(packets->begin());
             TRACE(TRACE_ALWAYS, "Processing %s\n",
-                  head_packet->_packet_id);
+                  head_packet->_packet_id.data());
         }
 
 

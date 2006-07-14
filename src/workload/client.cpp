@@ -112,14 +112,18 @@ void client_counter::get_next_client_id(int* cl_id) {
  *  @brief : Initialization function of a client
  */
 
-void client_t::init(const char* format, va_list ap) {
+client_t::client_t(const c_str &name)
+    : thread_t(name)
+{
 
+    init();
+}
+
+void client_t::init() {
+    
     // receives a unique id
     client_counter * tc = client_counter::instance();
     tc->get_next_client_id(&clUniqueID);
-
-    // set thread name
-    init_thread_name_v(format, ap);
 
     // initializes variables
     clSelQuery = 0;
@@ -132,34 +136,17 @@ void client_t::init(const char* format, va_list ap) {
 }
 
 
-/** @fn    : Empty constructor
- *  @brief : Calls the init function
- */
-
-client_t::client_t(const char* format, ...) : thread_t() {
-    
-    // standard initialization
-    va_list ap;
-    va_start(ap, format);
-    init(format, ap);
-    va_end(ap);  
-}
-
-
-
 /** @fn    : Constructor
  *  @brief : Initializes a new instance, by getting a unique client id,
  *           and setting the various variables.
  */
 
-client_t::client_t(int query, int think, int iter, const char* format, ...) : thread_t() {
+client_t::client_t(int query, int think, int iter, const c_str &name)
+    : thread_t(name)
+{
+    init();
     
     // standard initialization
-    va_list ap;
-    va_start(ap, format);
-    init(format, ap);
-    va_end(ap);
-    
     if (!(query<0)) {
         clSelQuery = query;
     }
@@ -179,15 +166,13 @@ client_t::client_t(int query, int think, int iter, const char* format, ...) : th
  *  @brief : Creates a new instance by copying each field of the passed instance. 
  */
 
-client_t::client_t(const client_t& rhs, const char* format, ...) : thread_t() {
+client_t::client_t(const client_t& rhs, const c_str &name)
+    : thread_t(name) {
 
     if (&rhs != NULL) {
         
         /* format thread name */
-        va_list ap;
-        va_start(ap, format);
-        init(format, ap);
-        va_end(ap);
+        init();
         
         clUniqueID = rhs.clUniqueID;
         clSelQuery = rhs.clSelQuery;

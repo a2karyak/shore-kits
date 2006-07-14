@@ -43,21 +43,19 @@ int main(int argc, char* argv[]) {
 
     
     tuple_buffer_t* left_int_buffer = new tuple_buffer_t(sizeof(int));
-    char* left_packet_id = copy_string("LEFT_PACKET");
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples, 0);
 
     func_call_packet_t* left_packet = 
-	new func_call_packet_t(left_packet_id,
+	new func_call_packet_t("LEFT_PACKET",
                                left_int_buffer, 
                                new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
     tuple_buffer_t* right_int_buffer = new tuple_buffer_t(sizeof(int));
-    char* right_packet_id = copy_string("RIGHT_PACKET");
     struct int_tuple_writer_info_s right_writer_info(right_int_buffer, num_tuples, num_tuples/2);
     func_call_packet_t* right_packet = 
-	new func_call_packet_t(right_packet_id,
+	new func_call_packet_t("RIGHT_PACKET",
                                right_int_buffer, 
                                new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                shuffled_triangle_int_tuple_writer_fc,
@@ -66,9 +64,8 @@ int main(int argc, char* argv[]) {
     
     tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
 
-    char* in_packet_id = copy_string("BNL_IN_PACKET_1");
     bnl_in_packet_t* in_packet =
-        new bnl_in_packet_t( in_packet_id,
+        new bnl_in_packet_t( "BNL_IN_PACKET_1",
                              output_buffer,
                              new trivial_filter_t(sizeof(int)),
                              left_packet,

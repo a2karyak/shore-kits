@@ -25,11 +25,11 @@ using std::list;
 
 
 
-const char* sort_packet_t::PACKET_TYPE = "SORT";
+const c_str sort_packet_t::PACKET_TYPE = "SORT";
 
 
 
-const char* sort_stage_t::DEFAULT_STAGE_NAME = "SORT_STAGE";
+const c_str sort_stage_t::DEFAULT_STAGE_NAME = "SORT_STAGE";
 
 const unsigned int sort_stage_t::MERGE_FACTOR = 8;
 
@@ -109,21 +109,12 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
         tuple_buffer_t* buf = new tuple_buffer_t(_tuple_size);
 
 
-        char* fscan_packet_id;
-        int   fscan_packet_id_ret =
-            asprintf(&fscan_packet_id, "SORT_FSCAN_PACKET_%d", i);
-        assert( fscan_packet_id_ret != -1 );
+        c_str fscan_packet_id = c_str::asprintf("SORT_FSCAN_PACKET_%d", i);
 
-        char* filename;
-        int   filename_ret =
-            asprintf(&filename, "%s", run_filename.c_str());
-        assert( filename_ret != -1 );
-        
-        
         p = new fscan_packet_t(fscan_packet_id,
 			       buf,
                                new trivial_filter_t(_tuple_size),
-                               filename);
+                               run_filename.c_str());
         dispatcher_t::dispatch_packet(p);
 
 	merge._inputs.push_back(run_filename.c_str());
@@ -136,12 +127,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
     tuple_buffer_t* merge_out = new tuple_buffer_t(_tuple_size);
 
 
-    char* merge_packet_id;
-    int   merge_packet_id_ret = asprintf(&merge_packet_id, "SORT_MERGE_PACKET");
-    assert( merge_packet_id_ret != -1 );
-
-    
-    mp = new merge_packet_t(merge_packet_id,
+    mp = new merge_packet_t("SORT_MERGE_PACKET",
                             merge_out,
                             new trivial_filter_t(_tuple_size),
                             fscan_buffers,
@@ -167,22 +153,12 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
     // KLUDGE! the fdump stage will reopen the file
     fclose(create_tmp_file(file_name, "merged-run"));
     fdump_out = new tuple_buffer_t(_tuple_size);
-
     
-    char* fdump_packet_id;
-    int   fdump_packet_id_ret = asprintf(&fdump_packet_id, "SORT_FDUMP_PACKET");
-    assert( fdump_packet_id_ret != -1 );
-    
-    char* fdump_filename;
-    int   fdump_filename_ret = asprintf(&fdump_filename, file_name.c_str());
-    assert( fdump_filename_ret != -1 );
-
-    
-    fp = new fdump_packet_t(fdump_packet_id,
+    fp = new fdump_packet_t("SORT_FDUMP_PACKET",
                             fdump_out,
                             new trivial_filter_t(merge_out->tuple_size),
                             merge_out,
-                            fdump_filename,                            
+                            file_name.c_str(), 
                             &_monitor);
     dispatcher_t::dispatch_packet(fp);
 

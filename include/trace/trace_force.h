@@ -18,7 +18,7 @@
 /* exported functions */
 
 void trace_force_(const char* filename, int line_num, const char* function_name,
-		  char* format, ...);
+		  char* format, ...) __attribute__((format(printf, 4, 5)));;
 
 
 

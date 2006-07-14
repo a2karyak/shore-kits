@@ -35,8 +35,8 @@
  *  question of ownership.
  */
 
-packet_t::packet_t(char *          packet_id,
-		   const char*     packet_type,
+packet_t::packet_t(const c_str    &packet_id,
+		   const c_str    &packet_type,
 		   tuple_buffer_t* output_buffer,
 		   tuple_filter_t* output_filter,
                    bool            merge_enabled)
@@ -56,8 +56,8 @@ packet_t::packet_t(char *          packet_id,
     assert(output_filter != NULL);
 
     TRACE(TRACE_PACKET_FLOW, "Created %s packet with ID %s\n",
-	  _packet_type,
-	  _packet_id);
+	  _packet_type.data(),
+	  _packet_id.data());
 }
 
 
@@ -69,14 +69,8 @@ packet_t::packet_t(char *          packet_id,
 packet_t::~packet_t(void) {
     
     TRACE(TRACE_PACKET_FLOW, "Destroying %s packet with ID %s\n",
-	  _packet_type,
-	  _packet_id);
-
-    // output buffer should have already been dealt with
-    assert(_output_buffer == NULL);
-
-    // we own our packet_id and our filter
-    free(_packet_id);
+	  _packet_type.data(),
+	  _packet_id.data());
 }
 
 

@@ -8,11 +8,11 @@
 
 
 
-const char* fscan_packet_t::PACKET_TYPE = "FSCAN";
+const c_str fscan_packet_t::PACKET_TYPE = "FSCAN";
 
 
 
-const char* fscan_stage_t::DEFAULT_STAGE_NAME = "FSCAN_STAGE";
+const c_str fscan_stage_t::DEFAULT_STAGE_NAME = "FSCAN_STAGE";
 
 
 
@@ -29,10 +29,10 @@ void fscan_stage_t::process_packet() {
     fscan_packet_t* packet = (fscan_packet_t*)adaptor->get_packet();
 
 
-    char* filename = packet->_filename;
+    const c_str &filename = packet->_filename;
     file_guard_t file = fopen(filename, "r");
     if ( file == NULL )
-        throw syscall_exception(string("fopen() failed on ") + filename);
+        throw syscall_exception(string("fopen() failed on ") + filename.data());
 
     page_guard_t tuple_page =
 	tuple_page_t::alloc(packet->_output_buffer->tuple_size);

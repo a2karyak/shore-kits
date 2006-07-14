@@ -15,6 +15,7 @@
 
 #include "qpipe_panic.h"
 #include "trace.h"
+#include "util/guard.h"
 
 
 
@@ -26,13 +27,10 @@ class thread_t {
 
 private:
 
-    char* thread_name;
+    c_str thread_name;
     unsigned int rand_seed;
 
 public:
-
-    virtual ~thread_t();
-
 
     virtual void* run() {
         // should always be over-ridden, but never called for the root
@@ -49,13 +47,13 @@ public:
     int get_rand() {
         return rand_r(&rand_seed);
     }
+
+    virtual ~thread_t() { }
     
 protected:
 
-    thread_t(void);
-
-    int init_thread_name  (const char* format, ...);
-    int init_thread_name_v(const char* format, va_list ap);
+    thread_t(const c_str &name);
+        
 };
 
 
@@ -72,9 +70,9 @@ class member_func_thread_t : public thread_t {
 public:
     member_func_thread_t(Class *instance, Functor func,
                          const char *format, va_list args)
-        : _instance(instance), _func(func)
+        : thread_t(c_str::vasprintf(format, args)),
+          _instance(instance), _func(func)
     {
-        init_thread_name_v(format, args);
     }
     
     virtual void *run() {

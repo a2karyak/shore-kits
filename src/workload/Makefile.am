@@ -15,7 +15,6 @@ WL_BASE = \
    dispatcher_globals.cpp
 
 WL_COMMON = \
-   common/copy_string.cpp \
    common/q6_packet.cpp \
    common/q6_client.cpp
 

@@ -10,14 +10,14 @@
 using namespace qpipe;
 
 struct partial_aggregate_packet_t : public packet_t {
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
     pointer_guard_t<packet_t> _input;
     pointer_guard_t<tuple_buffer_t> _input_buffer;
     pointer_guard_t<tuple_aggregate_t> _aggregate;
     pointer_guard_t<key_extractor_t> _extractor;
     pointer_guard_t<key_compare_t> _compare;
 
-    partial_aggregate_packet_t(char* packet_id,
+    partial_aggregate_packet_t(const char*     packet_id,
                                tuple_buffer_t* out_buffer,
                                tuple_filter_t* out_filter,
                                packet_t* input,
@@ -40,7 +40,7 @@ class partial_aggregate_stage_t : public stage_t {
     tuple_aggregate_t* _aggregate;
     tuple_page_t* _agg_page;
 public:
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
     typedef partial_aggregate_packet_t stage_packet_t;
 
 protected:

@@ -63,13 +63,8 @@ int main(int argc, char* argv[]) {
     tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
     
     // aggregate single count result (single int)
-    char* func_call_packet_id;
-    int func_call_packet_id_ret =
-        asprintf( &func_call_packet_id, "FUNC_CALL_PACKET_1" );
-    assert( func_call_packet_id_ret != -1 );
-    
     func_call_packet_t* packet = 
-	new func_call_packet_t(func_call_packet_id,
+	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
                                new trivial_filter_t(int_buffer->tuple_size),
                                write_ints,

@@ -61,22 +61,12 @@ int main(int argc, char* argv[]) {
     }
     
     // aggregate single count result (single int)
-    char* fdump_packet_id;
-    int fdump_packet_id_ret =
-        asprintf( &fdump_packet_id, "FDUMP_PACKET_1" );
-    assert( fdump_packet_id_ret != -1 );
-    
-    char* fdump_packet_filename;
-    int fdump_packet_filename_ret =
-        asprintf( &fdump_packet_filename, "%s", output_filename );
-    assert( fdump_packet_filename_ret != -1 );
-
     fdump_packet_t* packet = 
-	new fdump_packet_t(fdump_packet_id,
+	new fdump_packet_t("FDUMP_PACKET_1",
 			   signal_buffer, 
                            new trivial_filter_t(int_buffer->tuple_size),
 			   int_buffer, 
-			   fdump_packet_filename);
+			   output_filename);
     
     
     dispatcher_t::dispatch_packet(packet);

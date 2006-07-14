@@ -10,6 +10,7 @@
 #include "workload/job_directory.h"
 #include "engine/util/static_hash_map.h"
 #include "engine/util/hash_functions.h"
+#include "engine/util/guard.h"
 
 
 // include me last!!!
@@ -115,12 +116,7 @@ int job_directory::_register_job_driver(const char* sJobCmd,
         QPIPE_PANIC();
     }
     
-    char* ptcopy;
-    if ( asprintf(&ptcopy, "%s", sJobCmd) == -1 ) {
-        TRACE(TRACE_ALWAYS, "asprintf() failed\n");
-        free(node);
-        QPIPE_PANIC();
-    }
+    char* ptcopy = c_str::copy(sJobCmd);
     
     /* add to hash map */
     static_hash_map_insert( &jobs_directory, ptcopy, aJobDriver, node );

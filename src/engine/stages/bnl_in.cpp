@@ -12,11 +12,11 @@ using std::bitset;
 
 
 
-const char* bnl_in_packet_t::PACKET_TYPE = "BNL_IN";
+const c_str bnl_in_packet_t::PACKET_TYPE = "BNL_IN";
 
 
 
-const char* bnl_in_stage_t::DEFAULT_STAGE_NAME = "BNL_IN_STAGE";
+const c_str bnl_in_stage_t::DEFAULT_STAGE_NAME = "BNL_IN_STAGE";
 
 
 

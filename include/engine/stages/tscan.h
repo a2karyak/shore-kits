@@ -22,7 +22,7 @@ struct tscan_packet_t : public packet_t {
 
 public:
 
-    static const char* PACKET_TYPE;
+    static const c_str PACKET_TYPE;
 
 
     Db* _db;
@@ -49,7 +49,7 @@ public:
      *  Db*'s can be shared among threads, we will not take ownership
      *  of this object.
      */
-    tscan_packet_t(char*           packet_id,
+    tscan_packet_t(const char*     packet_id,
 		   tuple_buffer_t* output_buffer,
 		   tuple_filter_t* output_filter,
 		   Db* db)
@@ -79,7 +79,7 @@ class tscan_stage_t : public stage_t {
 public:
 
     typedef tscan_packet_t stage_packet_t;
-    static const char* DEFAULT_STAGE_NAME;
+    static const c_str DEFAULT_STAGE_NAME;
 
     static const size_t TSCAN_BULK_READ_BUFFER_SIZE;
 

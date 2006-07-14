@@ -6,11 +6,11 @@
 
 
 
-const char* sorted_in_stage_t::DEFAULT_STAGE_NAME = "SORTED_IN_STAGE";
+const c_str sorted_in_stage_t::DEFAULT_STAGE_NAME = "SORTED_IN_STAGE";
 
 
 
-const char* sorted_in_packet_t::PACKET_TYPE = "SORTED_IN";
+const c_str sorted_in_packet_t::PACKET_TYPE = "SORTED_IN";
 
 
 

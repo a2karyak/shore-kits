@@ -44,11 +44,10 @@ public:
     
     packet_t* reset() {
         tuple_buffer_t* right_int_buffer = new tuple_buffer_t(sizeof(int));
-        char* right_packet_id = copy_string("RIGHT_PACKET");
         struct int_tuple_writer_info_s* info =
             new int_tuple_writer_info_s(right_int_buffer, _num_tuples);
         return
-            new func_call_packet_t(right_packet_id,
+            new func_call_packet_t("RIGHT_PACKET",
                                    right_int_buffer,
                                    new trivial_filter_t(sizeof(int)),
                                    shuffled_triangle_int_tuple_writer_fc,
@@ -83,11 +82,10 @@ int main(int argc, char* argv[]) {
 
     single_int_join_t *join = new single_int_join_t();
     tuple_buffer_t* left_int_buffer = new tuple_buffer_t(join->left_tuple_size());
-    char* left_packet_id = copy_string("LEFT_PACKET");
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples);
 
     func_call_packet_t* left_packet = 
-	new func_call_packet_t(left_packet_id,
+	new func_call_packet_t("LEFT_PACKET",
                                left_int_buffer, 
                                new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                shuffled_triangle_int_tuple_writer_fc,
@@ -95,9 +93,8 @@ int main(int argc, char* argv[]) {
     
     tuple_buffer_t* join_buffer = new tuple_buffer_t(join->out_tuple_size());
 
-    char* join_packet_id = copy_string("BNL_JOIN_PACKET_1");
     bnl_join_packet_t* join_packet =
-        new bnl_join_packet_t( join_packet_id,
+        new bnl_join_packet_t( "BNL_JOIN_PACKET_1",
                                join_buffer,
                                new trivial_filter_t(sizeof(int)),
                                left_packet,

@@ -62,10 +62,9 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
  * "%Customer%Complaints%"
  */
 packet_t *supplier_scan(Db* tpch_supplier) {
-    char* packet_id = copy_string("Supplier TSCAN");
     tuple_filter_t* filter = new supplier_tscan_filter_t();
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
-    packet_t* tscan_packet = new tscan_packet_t(packet_id,
+    packet_t* tscan_packet = new tscan_packet_t("Supplier TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_supplier);
@@ -140,10 +139,9 @@ struct part_tscan_filter_t : public tuple_filter_t {
  * (...)
  */
 packet_t* part_scan(Db* tpch_part) {
-    char* packet_id = copy_string("Part TSCAN");
     tuple_filter_t* filter = new part_tscan_filter_t();
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
-    packet_t* tscan_packet = new tscan_packet_t(packet_id,
+    packet_t* tscan_packet = new tscan_packet_t("Part TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_part);
@@ -173,20 +171,18 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
 };
 
 packet_t* partsupp_scan(Db* tpch_partsupp) {
-    char* packet_id = copy_string("Partsupp TSCAN");
     tuple_filter_t* filter = new partsupp_tscan_filter_t();
     tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
-    packet_t* tscan_packet = new tscan_packet_t(packet_id,
+    packet_t* tscan_packet = new tscan_packet_t("Partsupp TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_partsupp);
 
     // sort in preparation for the not-in test
-    packet_id = copy_string("Partsupp SORT");
     filter = new trivial_filter_t(sizeof(part_supp_tuple_t));
     buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
     size_t offset = (size_t) &((part_supp_tuple_t*)NULL)->SUPP_KEY;
-    packet_t* sort_packet = new sort_packet_t(packet_id,
+    packet_t* sort_packet = new sort_packet_t("Partsupp SORT",
                                               buffer,
                                               filter,
                                               new int_key_extractor_t(sizeof(int), offset),
@@ -416,11 +412,10 @@ int main() {
         size_t offset = (size_t) &pst->SUPP_KEY;
         
         // ps_suppkey not in (select ... from supplier ...)
-        char* packet_id = copy_string("ps_suppkey NOT IN");
         tuple_filter_t* filter = new trivial_filter_t(sizeof(part_supp_tuple_t));
         tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
         packet_t* not_in_packet;
-        not_in_packet = new sorted_in_packet_t(packet_id,
+        not_in_packet = new sorted_in_packet_t("ps_suppkey NOT IN",
                                                buffer,
                                                filter,
                                                partsupp_scan(tpch_partsupp),
@@ -431,10 +426,9 @@ int main() {
                                                true);
 
         // join with part
-        packet_id = copy_string("Part JOIN");
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
         buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
-        packet_t* join_packet = new hash_join_packet_t(packet_id,
+        packet_t* join_packet = new hash_join_packet_t("Part JOIN",
                                                        buffer,
                                                        filter,
                                                        not_in_packet,
@@ -442,7 +436,6 @@ int main() {
                                                        new q16_join_t());
                                                        
         // aggregate to make ps_suppkey distinct
-        packet_id = copy_string("Group by #1");
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
         buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
 
@@ -450,7 +443,7 @@ int main() {
         key_compare_t* compare = new q16_compare1_t();
         tuple_aggregate_t* aggregate = new q16_aggregate1_t();
         packet_t* pagg_packet;
-        pagg_packet = new partial_aggregate_packet_t(packet_id,
+        pagg_packet = new partial_aggregate_packet_t("Group by #1",
                                                      buffer,
                                                      filter,
                                                      join_packet,
@@ -459,13 +452,12 @@ int main() {
                                                      compare);
 
         // aggregate again to count ps_suppkey
-        packet_id = copy_string("Group by #2");
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
         buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
         extractor = new q16_extractor2_t();
         aggregate = new q16_aggregate2_t();
         packet_t* agg_packet;
-        agg_packet = new aggregate_packet_t(packet_id,
+        agg_packet = new aggregate_packet_t("Group by #2",
                                             buffer,
                                             filter,
                                             aggregate,
@@ -474,12 +466,11 @@ int main() {
                                             
 
         // sort the output
-        packet_id = copy_string("Final SORT");
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
         buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
         extractor = new q16_extractor3_t();
         compare = new q16_compare2_t();
-        packet_t* sort_packet = new sort_packet_t(packet_id,
+        packet_t* sort_packet = new sort_packet_t("Final SORT",
                                                   buffer,
                                                   filter,
                                                   extractor,

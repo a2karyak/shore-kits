@@ -9,11 +9,11 @@
 
 
 
-const char* bnl_join_packet_t::PACKET_TYPE = "BNL_JOIN";
+const c_str bnl_join_packet_t::PACKET_TYPE = "BNL_JOIN";
 
 
 
-const char* bnl_join_stage_t::DEFAULT_STAGE_NAME = "BNL_JOIN_STAGE";
+const c_str bnl_join_stage_t::DEFAULT_STAGE_NAME = "BNL_JOIN_STAGE";
 
 
 

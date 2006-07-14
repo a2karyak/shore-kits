@@ -44,55 +44,14 @@ extern "C" void* start_thread(void *);
  *  initialization functions (init_thread_name() or
  *  init_thread_name_v()) to set up a new thread object's name.
  */
-thread_t::thread_t(void)
+thread_t::thread_t(const c_str &name)
+    : thread_name(name)
 {
-    thread_name = NULL;
-
     // Set up random number generator. We will use the thread ID to
     // create the seed. Hopefully, passing it through a hash function
     // will provide enough if a uniform distribution.
     pthread_t this_thread = pthread_self();
     rand_seed = fnv_hash((const char*)&this_thread, sizeof(this_thread));
-}
-
-
-
-/**
- *  @brief thread_t destructor. Will 
- */
-thread_t::~thread_t(void)
-{
-    // error checking... thread name should NEVER be NULL
-    assert(thread_name != NULL);
-    
-    // thread_name was created with asprintf()/malloc()
-    free(thread_name);
-}
-
-
-
-int thread_t::init_thread_name(const char* format, ...)
-{
-    int ret;
-    va_list ap;
-    va_start(ap, format);
-    ret = init_thread_name_v(format, ap);
-    va_end(ap);
-    return ret;
-}
-
-
-
-int thread_t::init_thread_name_v(const char* format, va_list ap)
-{
-    // construct thread name
-    if ( vasprintf(&thread_name, format, ap) == -1 )
-    {
-        TRACE(TRACE_ALWAYS, "vasprintf() failed to initialize thread_name\n");
-        return -1;    
-    }
-  
-    return 0;
 }
 
 
@@ -104,14 +63,9 @@ public:
     /**
      *  @brief 
      */
-    root_thread_t(const char* format, ...)
+    root_thread_t(const c_str &name)
+        : thread_t(name)
     {
-        int ret;
-        va_list ap;
-        va_start(ap, format);
-        ret = init_thread_name_v(format, ap);
-        va_end(ap);
-        assert( ret == 0 );
     }
 };
 

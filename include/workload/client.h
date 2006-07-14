@@ -1,3 +1,4 @@
+// -*- mode:c++; c-basic-offset:4 -*-
 /** @file    : client.h
  *  @brief   : Definition of the client class
  *  @version : 0.1
@@ -98,9 +99,6 @@ private:
     // pointer to workload
     workload_t* myWorkload;
 
-    // initialization function for each client instance
-    void init(const char* format, va_list ap);
-  
 public:
 
     // client statistics
@@ -111,11 +109,12 @@ public:
     time_t clEndTime;
 
   
-    client_t(const char* format, ...);
+    client_t(const c_str &name);
 
     /* TODO: Add SQL support */
-    client_t(int query, int think, int iter, const char* format, ...); 
-    client_t(const client_t& rhs, const char* format, ...);
+    client_t(int query, int think, int iter, const c_str &name); 
+    client_t(const client_t& rhs, const c_str &name);
+    void init();
 
     ~client_t();
 

@@ -125,8 +125,7 @@ int main(int argc, char* argv[]) {
         input_buffers.push_back(input_buffer);
         merge_info[i].first = input_buffer;
 
-        char* writer_thread_name;
-        asprintf(&writer_thread_name, "WRITER_THREAD_%d", i);
+        c_str writer_thread_name = c_str::asprintf("WRITER_THREAD_%d", i);
         
         // We want to feed MERGE in parallel, so create a new
         // FUNC_CALL worker thread as well as a FUNC_CALL packet.
@@ -136,8 +135,7 @@ int main(int argc, char* argv[]) {
             QPIPE_PANIC();
         }
 
-        char* fc_packet_id;
-        asprintf(&fc_packet_id, "FUNC_CALL_PACKET_%d", i);
+        char* fc_packet_id = c_str::asprintf("FUNC_CALL_PACKET_%d", i);
         func_call_packet_t* fc_packet = 
             new func_call_packet_t(fc_packet_id,
                                    merge_info[i].first, 
@@ -154,14 +152,7 @@ int main(int argc, char* argv[]) {
     
     // fire up the merge stage now
     tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
-
-    char* merge_packet_id;
-    int merge_packet_id_ret =
-        asprintf( &merge_packet_id, "MERGE_PACKET_1" );
-    assert( merge_packet_id_ret != -1 );
-
-    
-    merge_packet_t* packet = new merge_packet_t(merge_packet_id,
+    merge_packet_t* packet = new merge_packet_t("MERGE_PACKET_1",
                                                 output_buffer,
                                                 new trivial_filter_t(input_buffers[0]->tuple_size),
                                                 input_buffers,

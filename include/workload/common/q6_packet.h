@@ -10,7 +10,7 @@
 using namespace qpipe;
 
 
-packet_t* create_q6_packet(const char* client_prefix, dispatcher_policy_t* dp);
+packet_t* create_q6_packet(const c_str &client_prefix, dispatcher_policy_t* dp);
 
 
 #endif
