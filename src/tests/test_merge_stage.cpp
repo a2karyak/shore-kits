@@ -72,18 +72,8 @@ int main(int argc, char* argv[]) {
 
 
     // create a FUNC_CALL stage to feed the MERGE stage
-    stage_container_t* fc_sc = new stage_container_t("FUNC_CALL_CONTAINER", new stage_factory<func_call_stage_t>);
-    dispatcher_t::register_stage_container(func_call_packet_t::PACKET_TYPE, fc_sc);
-    
-
-    stage_container_t* merge_sc = new stage_container_t("MERGE_CONTAINER", new stage_factory<merge_stage_t>);
-    dispatcher_t::register_stage_container(merge_packet_t::PACKET_TYPE, merge_sc);
-
-    tester_thread_t* merge_thread = new tester_thread_t(drive_stage, merge_sc, "MERGE THREAD");
-    if ( thread_create( NULL, merge_thread ) ) {
-        TRACE(TRACE_ALWAYS, "thread_create failed\n");
-        QPIPE_PANIC();
-    }
+    register_stage<func_call_stage_t>(1);
+    register_stage<merge_stage_t>(merge_factor);
 
 
 
@@ -125,19 +115,11 @@ int main(int argc, char* argv[]) {
         input_buffers.push_back(input_buffer);
         merge_info[i].first = input_buffer;
 
-        c_str writer_thread_name = c_str::asprintf("WRITER_THREAD_%d", i);
+        c_str writer_thread_name("WRITER_THREAD_%d", i);
         
-        // We want to feed MERGE in parallel, so create a new
-        // FUNC_CALL worker thread as well as a FUNC_CALL packet.
-        tester_thread_t* writer_thread = new tester_thread_t(drive_stage, fc_sc, writer_thread_name);
-        if ( thread_create( NULL, writer_thread ) ) {
-            TRACE(TRACE_ALWAYS, "thread_create failed\n");
-            QPIPE_PANIC();
-        }
-
-        char* fc_packet_id = c_str::asprintf("FUNC_CALL_PACKET_%d", i);
+        c_str fc_packet_id("FUNC_CALL_PACKET_%d", i);
         func_call_packet_t* fc_packet = 
-            new func_call_packet_t(fc_packet_id,
+            new func_call_packet_t(fc_packet_id.data(),
                                    merge_info[i].first, 
                                    new trivial_filter_t(sizeof(int)), // unused, cannot be NULL
                                    write_tuples,

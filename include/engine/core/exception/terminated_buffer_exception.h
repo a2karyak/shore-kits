@@ -12,9 +12,9 @@ class TerminatedBufferException : public QPipeException {
 
  public:
 
-  TerminatedBufferException(const string& m,
-                            const char* filename, int line_num, const char* function_name)
-    : QPipeException(m, filename, line_num, function_name)
+  TerminatedBufferException(const char* filename, int line_num, const char* function_name,
+                            const char* m)
+    : QPipeException(filename, line_num, function_name, m)
     {
     }
 };

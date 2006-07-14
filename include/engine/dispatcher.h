@@ -53,7 +53,7 @@ protected:
 
     
     // methods
-    void _register_stage_container(const c_str &packet_type, stage_container_t* sc);
+    void _register_stage_container(const char* packet_type, stage_container_t* sc);
     void _dispatch_packet(packet_t* packet);
     
     
@@ -80,7 +80,7 @@ public:
         _instance = new dispatcher_t();
     }
 
-    static void register_stage_container(const c_str &packet_type, stage_container_t* sc);
+    static void register_stage_container(const char* packet_type, stage_container_t* sc);
     static void dispatch_packet(pointer_guard_t<packet_t> &packet) {
         dispatch_packet(packet.release());
     }

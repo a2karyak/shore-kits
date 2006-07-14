@@ -34,7 +34,8 @@ UTIL = \
    util/shuffle.cpp \
    util/tmpfile.cpp \
    util/fnv.cpp \
-   util/time_util.cpp
+   util/time_util.cpp \
+   util/c_str.cpp
 
 
 

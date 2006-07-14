@@ -605,6 +605,7 @@ public:
      */
 
     bool put_tuple (const tuple_t &tuple) {
+        TRACE(TRACE_ALWAYS, "called...\n");
         if( !drain_page_if_full() )
             // buffer was terminated by consumer!
             return false;

@@ -50,8 +50,6 @@ packet_t::packet_t(const c_str    &packet_id,
       _bind_cpu(NULL)
 {
     // error checking
-    assert(packet_id     != NULL);
-    assert(packet_type   != NULL);
     assert(output_buffer != NULL);
     assert(output_filter != NULL);
 

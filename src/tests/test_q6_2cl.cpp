@@ -77,8 +77,7 @@ int main(int argc, char* argv[]) {
         struct q6_client_info_s* cinfo = new q6_client_info_s(i, iterations_per_client, dp);
         
         // create client thread
-        thread_t* client = new tester_thread_t(q6_client_main, cinfo,
-                                               c_str::asprintf("CLIENT-%d", i));
+        thread_t* client = new tester_thread_t(q6_client_main, cinfo, c_str("CLIENT-%d", i));
         int create_ret = thread_create( &clients[i], client );
         assert(create_ret == 0);
     }

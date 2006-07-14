@@ -16,7 +16,8 @@ WL_BASE = \
 
 WL_COMMON = \
    common/q6_packet.cpp \
-   common/q6_client.cpp
+   common/q6_client.cpp \
+   common/copy_string.cpp
 
 WL_TPCH = \
    tpch/tpch_db.cpp \

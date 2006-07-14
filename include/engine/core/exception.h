@@ -9,6 +9,6 @@
 #include "engine/core/exception/bdb_exception.h"
 
 #define EXCEPTION(type,m) \
-   type(m, __FILE__, __LINE__, __FUNCTION__)
+   type(__FILE__, __LINE__, __FUNCTION__, m)
 
 #endif

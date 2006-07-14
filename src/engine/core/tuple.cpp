@@ -25,11 +25,8 @@
  */
 
 bool tuple_buffer_t::drain_page_if_full() {
-    
-    // If write_page is NULL, some thing is seriously wrong. One
-    // possibility is that we have already called send_eof().
-    assert( write_page != NULL );
 
+    assert(write_page != NULL);
 
     if(write_page->full()) {
         // page is full

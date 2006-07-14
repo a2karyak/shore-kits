@@ -47,6 +47,7 @@ static void flush_page(tuple_page_t* page, FILE* file);
  *  merge map so their results can be merged in turn.
  */
 void sort_stage_t::check_finished_merges() {
+
     // check for finished merges and 
     merge_map_t::iterator level_it = _merge_map.begin();
     while(level_it != _merge_map.end()) {
@@ -110,7 +111,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
         tuple_buffer_t* buf = new tuple_buffer_t(_tuple_size);
 
 
-        c_str fscan_packet_id = c_str::asprintf("SORT_FSCAN_PACKET_%d", i);
+        c_str fscan_packet_id("SORT_FSCAN_PACKET_%d", i);
 
         p = new fscan_packet_t(fscan_packet_id,
 			       buf,
@@ -381,7 +382,7 @@ void sort_stage_t::process_packet() {
     thread_t *monitor;
     monitor = member_func_thread(this,
                                  &sort_stage_t::monitor_merge_packets,
-                                 "MERGE_MONITOR_THREAD");
+                                 c_str("MERGE_MONITOR_THREAD"));
     if(thread_create(&_monitor_thread, monitor)) {
         TRACE(TRACE_ALWAYS, "Unable to create MERGE_MONITOR_THREAD");
         QPIPE_PANIC();

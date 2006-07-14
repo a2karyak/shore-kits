@@ -210,7 +210,7 @@ int workload_factory::attach_clients(int noClients, client_t templ) {
            noClients, templ.get_sel_query(), templ.get_num_iter());
   
     // creates a new workload
-    theWLs[theWLCounter] = new workload_t(c_str::asprintf("WORKLOAD-%d", theWLCounter));
+    theWLs[theWLCounter] = new workload_t(c_str("WORKLOAD-%d", theWLCounter));
 
     // sets the workload parameters
     theWLs[theWLCounter]->set_run(noClients, templ.get_think_time(),
@@ -265,7 +265,7 @@ int workload_factory::create_wl(const int noClients, const int thinkTime,
     TRACE( TRACE_DEBUG, "Creating workload %d\n", theWLCounter);
 
     // creates a new workload
-    theWLs[theWLCounter] = new workload_t(c_str::asprintf("WORKLOAD-%d", theWLCounter));
+    theWLs[theWLCounter] = new workload_t(c_str("WORKLOAD-%d", theWLCounter));
 
     // sets the workload parameters
     theWLs[theWLCounter]->set_run(noClients, thinkTime, noCompleted,
@@ -512,8 +512,7 @@ void* workload_t::run() {
 
         TRACE( TRACE_DEBUG, "Creating client %d of %d\n", (i+1), wlNumClients);
 
-        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries,
-                                         c_str::asprintf("WORK-%d-CL-%d", myIdx, i));
+        runningClients[i] = new client_t(wlSelQuery, wlThinkTime, wlNumQueries, c_str("WORK-%d-CL-%d", myIdx, i));
         if (wlSQLText.size() > 0) {
             runningClients[i]->set_sql(wlSQLText);
         }

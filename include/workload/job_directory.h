@@ -11,6 +11,8 @@
 #define __JOB_DIRECTORY_H
 
 #include "workload/job.h"
+#include "engine/util/c_str.h"
+
 
 
 // include me last!!!
@@ -51,16 +53,13 @@ public:
     static job_directory* instance();
 
     /* register a job */
-    int _register_job_driver(const char* sJobCmd, job_driver_t* aJobDriver);
-
-    /* unregister a job */
-    int _unregister_job_driver(const char* aJobCmd);
+    int _register_job_driver(const c_str &sJobCmd, job_driver_t* aJobDriver);
 
     /* print info about the registered job drivers */
     void _print_info();
 
     /* return the correct job driver */
-    job_driver_t* _get_job_driver(const char* sJobCmd);
+    job_driver_t* _get_job_driver(const c_str &sJobCmd);
     
     /* static wrapper functions */
     static int register_job_driver(const char* sJobCmd, job_driver_t* aJobDriver);

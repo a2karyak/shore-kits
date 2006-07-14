@@ -1,88 +1,80 @@
-// -*- mode:c++; c-basic-offset:4 -*-
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __C_STR_H
 #define __C_STR_H
 
+
+#include "engine/sync.h"
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <cstdio>
+
 #include <stdarg.h>
 #include <new>
+#include <cstring>
 
-#if 1
-class c_str {
-    char* _str;
-    
-public:
-    // creates a copy of the input string that is safe to manage with
-    // a c_str (avoids delete/free mixups)
-    static char* copy(const char* str) {
-        return asprintf("%s", str);
-    }
-    // wraps up a call to asprintf to throw std::bad_alloc on error
-    static char* asprintf(const char* format, ...)
-        __attribute__((format(printf, 1, 2)))
-    {
-        va_list args;
-        va_start(args, format);
-        char* result = vasprintf(format, args);
-        va_end(args);
-        return result;
-    }
-    // wraps up a call to vasprintf to throw std::bad_alloc on error
-    static char* vasprintf(const char* format, va_list args) {
-        char* result;
-        if(::vasprintf(&result, format, args) < 0)
-            throw std::bad_alloc();
-        
-        return result;
-    }
-    
-    c_str(const char* str) {
-        assert(str);
-        _str = copy(str);
-    }
-    
-    ~c_str() {
-        free(_str);
-    }
+#define DEBUG_C_STR 0
 
-    operator const char*() const {
-        return _str;
-    }
-    const char* data() const {
-        return _str;
-    }
-    
-    char* clone() const {
-        return copy(_str);
-    }
-    
-    // force deep copy
-    c_str(const c_str &other)
-        : _str(other.clone())
-    {
-    }
-    
-    c_str &operator=(const c_str &other) {
-        free(_str);
-        _str = other.clone();
-        return *this;
-    }
-};
-#else
+
+
 class c_str {
-    static c_str_data _seed;
-    
+
     struct c_str_data {
-        pthread_mutex_t _lock;
-        unsigned _count;
+        mutable pthread_mutex_t _lock;
+        mutable unsigned _count;
         char _str[0];
     };
 
+    static c_str_data _seed;
+
     c_str_data* _data;
+
+
+    /**
+     *  Decrement reference count, freeing memory if count hits 0.
+     */
+    void release() {
+        // * * * BEGIN CRITICAL SECTION * * *
+        critical_section_t cs(&_data->_lock);
+        if(--_data->_count == 0) {
+            if(DEBUG_C_STR)
+                printf("Freeing %s\n", &_data->_str[0]);
+            free(_data);
+        }
+        // * * * END CRITICAL SECTION * * *
+    }    
     
- public:
+    
+    /**
+     *  @brief Just increment reference count of other. We are
+     *  guaranteed that other will remain allocated until we return
+     *  since other contributes exactly 1 to the total reference
+     *  count.
+     */
+    void assign(const c_str &other) {
+
+        // other._data won't disappear (see above)
+        _data = other._data;
+
+        // * * * BEGIN CRITICAL SECTION * * *
+        critical_section_t cs(&_data->_lock);
+        _data->_count++;
+        // * * * END CRITICAL SECTION * * *
+    }
+    
+
+public:
+
+    c_str (const c_str &other) {
+        if (DEBUG_C_STR)
+            printf("copy constructor with other = %s\n", other.data());
+        assign(other);
+    }
+    
+    
     c_str(const char* str, ...) {
-        // copy the string
-        va_list args;
-        va_start(args, format);
 
         int size = strlen(str) + 1;
         char format[sizeof(c_str_data) + size];
@@ -98,29 +90,53 @@ class c_str {
             c_str_data* data;
         } pun;
 
+
+        // copy the string
+        va_list args;
+        va_start(args, str);
+        
         // format the string
-        if(vasprintf(&pun.str, format, args) < 0)
+        if( vasprintf(&pun.str, format, args) < 0)
             throw std::bad_alloc();
         
         va_end(args);
 
-        // copy the header in
+        // Copy in initial header value. Let's hope that vasprintf()'s
+        // malloc() call return something 
         *pun.data = _seed;
 
         // done!
         _data = pun.data;
+        
+        if (DEBUG_C_STR)
+            printf("constructed new c_str = %s\n", data());
     }
 
-    const char* data() {
-        // skip to the actual string
+
+    const char* data() const {
+        // Return the actual string... whatever uses this string must
+        // copy it since it does not own it.
         return _data->_str;
     }
+    
+    
     ~c_str() {
-        if(--_data->count == 0)
-            free(_data);
+        if (DEBUG_C_STR)
+            printf("in c_str destructor for %s\n", data());
+        release();
     }
-private:
+    
+    
+    c_str &operator=(const c_str &other) {
+        if (DEBUG_C_STR)
+            printf("in c_str = operator, this = %s, other = %s\n", data(), other.data());
+        release();
+        assign(other);
+        return *this;
+    }
+    
 };
-#endif
+
+
 
 #endif

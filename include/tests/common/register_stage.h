@@ -24,11 +24,11 @@ using std::string;
 template <class Stage>
 void register_stage(int worker_threads=10) {
     stage_container_t* sc;
-    string name = string(Stage::DEFAULT_STAGE_NAME) + "_CONTAINER";
+    string name = string(Stage::DEFAULT_STAGE_NAME.data()) + "_CONTAINER";
     sc = new stage_container_t(name.c_str(), new stage_factory<Stage>);
-    dispatcher_t::register_stage_container(Stage::stage_packet_t::PACKET_TYPE, sc);
+    dispatcher_t::register_stage_container(Stage::stage_packet_t::PACKET_TYPE.data(), sc);
 
-    name = string(Stage::DEFAULT_STAGE_NAME) + "_THREAD_";
+    name = string(Stage::DEFAULT_STAGE_NAME.data()) + "_THREAD_";
     for(int i=0; i < worker_threads; i++) {
         char num[5];
         sprintf(num, "%d", i);

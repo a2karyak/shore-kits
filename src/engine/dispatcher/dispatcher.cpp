@@ -49,8 +49,7 @@ dispatcher_t::~dispatcher_t() {
  *  their constructors should execute in the context of the root
  *  thread.
  */
-void dispatcher_t::_register_stage_container(const c_str &packet_type,
-                                             stage_container_t* sc)
+void dispatcher_t::_register_stage_container(const char* packet_type, stage_container_t* sc)
 {
 
   
@@ -59,7 +58,7 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type,
   // use when. For now, restrict to one stage per type.
   if ( !static_hash_map_find( &stage_directory, packet_type, NULL, NULL ) ) {
     TRACE(TRACE_ALWAYS, "Trying to register duplicate stage for type %s\n",
-	  packet_type.data());
+	  packet_type);
     QPIPE_PANIC();
   }
 	  
@@ -71,8 +70,15 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type,
     QPIPE_PANIC();
   }
 
+  char* ptcopy;
+  if ( asprintf(&ptcopy, "%s", packet_type) == -1 ) {
+    TRACE(TRACE_ALWAYS, "asprintf() failed\n");
+    free(node);
+    QPIPE_PANIC();
+  }
+
+  
   // add to hash map
-  char* ptcopy = packet_type.clone();
   static_hash_map_insert( &stage_directory, ptcopy, sc, node );
 }
 
@@ -88,20 +94,19 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
 
   
   void* sc;
-  if ( static_hash_map_find( &stage_directory, packet->_packet_type, &sc, NULL ) ) {
+  if ( static_hash_map_find( &stage_directory, packet->_packet_type.data(), &sc, NULL ) ) {
     TRACE(TRACE_ALWAYS, "Packet type %s unregistered\n",
 	  packet->_packet_type.data());
     QPIPE_PANIC();
   }
-  
-  
+ 
   stage_container_t* stage_container = (stage_container_t*)sc;
   stage_container->enqueue(packet);
 }
 
 
 
-void dispatcher_t::register_stage_container(const c_str &packet_type, stage_container_t* sc) {
+void dispatcher_t::register_stage_container(const char* packet_type, stage_container_t* sc) {
   instance()->_register_stage_container(packet_type, sc);
 }
 

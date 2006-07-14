@@ -32,9 +32,9 @@ void fdump_stage_t::process_packet() {
 
     const c_str &filename = packet->_filename;
     // make sure the file gets closed when we're done
-    file_guard_t file = fopen(filename, "w+");
+    file_guard_t file = fopen(filename.data(), "w+");
     if ( file == NULL )
-        throw EXCEPTION(FileException, (string("fopen() failed on ") + filename).c_str());
+        throw EXCEPTION(FileException, (string("fopen() failed on ") + string(filename.data())).c_str());
 
     
     tuple_buffer_t* input_buffer = packet->_input_buffer;

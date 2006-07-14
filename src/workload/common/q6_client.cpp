@@ -22,8 +22,8 @@ void* q6_client_main(void* arg) {
 
     
     for (int i = 0; i < info->_num_iterations; i++) {
-
-        c_str prefix = c_str::asprintf("Q6_CLIENT%d_%d_", info->_client_id, i);
+        
+        c_str prefix("Q6_CLIENT%d_%d_", info->_client_id, i);
         packet_t* q6 = create_q6_packet( prefix, info->_policy );
         tuple_buffer_t* out = q6->_output_buffer;
         

@@ -31,9 +31,9 @@ void fscan_stage_t::process_packet() {
 
 
     const c_str &filename = packet->_filename;
-    file_guard_t file = fopen(filename, "r");
+    file_guard_t file = fopen(filename.data(), "r");
     if (file == NULL)
-        throw EXCEPTION(FileException, (string("fopen() failed on ") + filename).c_str());
+        throw EXCEPTION(FileException, (string("fopen() failed on ") + string(filename.data())).c_str());
 
         
     page_guard_t tuple_page =

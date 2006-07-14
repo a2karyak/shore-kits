@@ -66,7 +66,7 @@ bool merge_stage_t::buffer_head_t::has_tuple() {
 
     tuple_t input;
 
-    if(buffer->get_tuple(input))
+    if(!buffer->get_tuple(input))
         return false;
 
     // otherwise, we got a tuple

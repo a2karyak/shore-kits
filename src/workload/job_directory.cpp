@@ -11,6 +11,7 @@
 #include "engine/util/static_hash_map.h"
 #include "engine/util/hash_functions.h"
 #include "engine/util/guard.h"
+#include "workload/common/copy_string.h"
 
 
 // include me last!!!
@@ -97,15 +98,13 @@ job_directory::~job_directory() {
  *  @return : 0 on success, 1 otherwise
  */
  
-int job_directory::_register_job_driver(const char* sJobCmd,
-                                        job_driver_t* aJobDriver)
+int job_directory::_register_job_driver(const c_str &sJobCmd, job_driver_t* aJobDriver)
 {    
-    TRACE( TRACE_DEBUG, "Registering Job Driver: %s\n", sJobCmd);
+    TRACE(TRACE_DEBUG, "Registering Job Driver: %s\n", sJobCmd.data());
     
     /* check for duplicates */
-    if ( !static_hash_map_find( &jobs_directory,
-                                sJobCmd, NULL, NULL ) ) {
-        TRACE(TRACE_ALWAYS, "Trying to register duplicate job for command %s\n", sJobCmd);
+    if ( !static_hash_map_find( &jobs_directory, sJobCmd.data(), NULL, NULL ) ) {
+        TRACE(TRACE_ALWAYS, "Trying to register duplicate job for command %s\n", sJobCmd.data() );
         QPIPE_PANIC();
     }
     
@@ -116,26 +115,10 @@ int job_directory::_register_job_driver(const char* sJobCmd,
         QPIPE_PANIC();
     }
     
-    char* ptcopy = c_str::copy(sJobCmd);
-    
     /* add to hash map */
-    static_hash_map_insert( &jobs_directory, ptcopy, aJobDriver, node );
+    static_hash_map_insert( &jobs_directory, copy_string(sJobCmd.data()), aJobDriver, node );
   
     return (0);
-}
-
-
-
-/** @fn     : int _unregister_job_driver(const char*)
- *  @brief  : Removes the corresponding entry in the Jobs repository
- *  @return : 0 on success, 1 otherwise
- */
-
-int job_directory::_unregister_job_driver(const char* aJobCmd) {
-    
-    TRACE( TRACE_DEBUG, "Removing Job Driver: %s\n", aJobCmd);
-    
-    return (static_hash_map_remove( &jobs_directory, aJobCmd, NULL, NULL));
 }
 
 
@@ -164,15 +147,14 @@ void job_directory::_print_info() {
  *  @return : The job_driver_t if found, NULL otherwise
  */
 
-job_driver_t* job_directory::_get_job_driver(const char* aJobCmd) {
+job_driver_t* job_directory::_get_job_driver(const c_str &aJobCmd) {
     
-    TRACE( TRACE_DEBUG, "Searching Job Driver: [%s]\n", aJobCmd);
+    TRACE(TRACE_DEBUG, "Searching Job Driver: [%s]\n", aJobCmd.data());
     
     void* jd;
 
-    if (static_hash_map_find( &jobs_directory, aJobCmd, &jd, NULL)) {
-
-        TRACE( TRACE_ALWAYS, "No job: %s exists\n", aJobCmd);
+    if (static_hash_map_find(&jobs_directory, aJobCmd.data(), &jd, NULL)) {
+        TRACE( TRACE_ALWAYS, "No job: %s exists\n", aJobCmd.data());
         return (NULL);
     }
 
@@ -186,12 +168,6 @@ job_driver_t* job_directory::_get_job_driver(const char* aJobCmd) {
 int job_directory::register_job_driver(const char* sJobCmd, job_driver_t* aJobDriver) {
 
     return (instance()->_register_job_driver(sJobCmd, aJobDriver));
-}
-
-
-int job_directory::unregister_job_driver(const char* aJobCmd) {
-
-    return (instance()->_unregister_job_driver(aJobCmd));
 }
 
 
