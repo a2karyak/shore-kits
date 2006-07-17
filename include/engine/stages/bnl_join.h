@@ -55,7 +55,7 @@ struct bnl_join_packet_t : public packet_t {
      *  tuple sent to output_buffer. The packet OWNS this filter. It
      *  will be deleted in the packet destructor.
      */
-    bnl_join_packet_t(const char*     packet_id,
+    bnl_join_packet_t(const c_str    &packet_id,
                       tuple_buffer_t* output_buffer,
                       tuple_filter_t* output_filter,
                       packet_t* left,

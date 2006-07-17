@@ -17,7 +17,7 @@ struct partial_aggregate_packet_t : public packet_t {
     pointer_guard_t<key_extractor_t> _extractor;
     pointer_guard_t<key_compare_t> _compare;
 
-    partial_aggregate_packet_t(const char*     packet_id,
+    partial_aggregate_packet_t(const c_str    &packet_id,
                                tuple_buffer_t* out_buffer,
                                tuple_filter_t* out_filter,
                                packet_t* input,

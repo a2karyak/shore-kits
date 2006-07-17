@@ -129,7 +129,7 @@ public:
     }
     
     
-    bool read(page_t*& page);
+    page_t* read();
     bool write(page_t* page);
 
     bool check_readable();
@@ -211,15 +211,13 @@ struct page_list_guard_t : public pointer_guard_base_t<page_t, page_list_guard_t
      *  @brief pointer_guard_base_t Action class. Simply walk through
      *  the page list list and invoke delete operator on each page_t*.
      */
-    struct Action {
-        void operator()(page_t* ptr) {
-            while(ptr) {
-                page_t *page = ptr;
-                ptr = page->next;
-                delete page;
-            }
+    static void guard_action(page_t* ptr) {
+        while(ptr) {
+            page_t *page = ptr;
+            ptr = page->next;
+            delete page;
         }
-    };
+    }
     
 
     /**
@@ -236,20 +234,6 @@ struct page_list_guard_t : public pointer_guard_base_t<page_t, page_list_guard_t
         ptr->next = release();
         assign(ptr);
     }
-
-    
-    /**
-     *  DO NOT USE THIS OPERATOR.
-     */
-    page_list_guard_t &operator=(const page_list_guard_t::temp_ref_t &ref) {
-        assign(ref._ptr);
-        return *this;
-    }
-
-private:
-
-    page_list_guard_t &operator=(page_list_guard_t &);
-
 };
 
 

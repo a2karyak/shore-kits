@@ -277,16 +277,13 @@ bool page_buffer_t::check_writable() {
  *  wait for either the producer to finish or for at least threshold
  *  pages to appear in the buffer.
  *
- *  @param page If we read a page from the buffer, we assign it to
- *  this address.
- *
- *  @return true if a page is read from the buffer. false if the
- *  buffer has been closed and no more pages are available.
+ *  @return a page read from the buffer. NULL if the buffer has been
+ *  closed and no more pages are available.
  *
  *  @throw TerminatedBufferException if buffer has been terminated.
  */
 
-bool page_buffer_t::read(page_t*& page) {
+page_t* page_buffer_t::read() {
 
     // Treat the one-page-left case separately. We avoid the
     // head==tail corner case by never allowing the buffer to empty
@@ -336,11 +333,11 @@ bool page_buffer_t::read(page_t*& page) {
 
     // empty (and therefore also done writing)?
     if(read_size_guess == 0) 
-        return false;
+        return NULL;
     
     
     // proceed -- known not empty
-    page = (page_t *)head;
+    page_t* page = (page_t *)head;
     head = head->next;
 
 
@@ -367,7 +364,7 @@ bool page_buffer_t::read(page_t*& page) {
         // * * * END CRITICAL SECTION * * *
     }
     
-    return true;
+    return page;
 }
 
 

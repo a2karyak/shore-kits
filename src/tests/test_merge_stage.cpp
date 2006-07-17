@@ -27,7 +27,7 @@ typedef pair<tuple_buffer_t*, input_list_t> write_info_t;
 void write_tuples(void* arg)
 {
     write_info_t *info = (write_info_t *)arg;
-    output_buffer_guard_t buffer = info->first;
+    tuple_buffer_t* buffer = info->first;
     input_list_t &inputs = info->second;
 
     int value;
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
     
     
     // fire up the merge stage now
-    tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
+    buffer_guard_t output_buffer = new tuple_buffer_t(sizeof(int));
     merge_packet_t* packet = new merge_packet_t("MERGE_PACKET_1",
                                                 output_buffer,
                                                 new trivial_filter_t(input_buffers[0]->tuple_size),

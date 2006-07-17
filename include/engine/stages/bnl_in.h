@@ -61,14 +61,14 @@ struct bnl_in_packet_t : public packet_t {
      *  will be deleted in the packet destructor.
      *
      */
-    bnl_in_packet_t(const char* packet_id,
+    bnl_in_packet_t(const c_str    &packet_id,
                     tuple_buffer_t* output_buffer,
                     tuple_filter_t* output_filter,
-                    packet_t* left,
+                    packet_t*       left,
                     tuple_source_t* right_source,
                     key_extractor_t* extract,
-                    key_compare_t* compare,
-                    bool output_on_match)
+                    key_compare_t*  compare,
+                    bool            output_on_match)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _left(left),
           _left_buffer(left->_output_buffer),

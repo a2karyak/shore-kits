@@ -66,8 +66,8 @@ bool tuple_buffer_t::wait_for_input() {
 	return true;
    
     // wait for the next page to arrive
-    page_t* page;
-    if ( !page_buffer.read(page) )
+    page_t* page = page_buffer.read();
+    if ( !page )
         // no more pages coming
         return false;
     

@@ -63,7 +63,7 @@ public:
      *  @param func_arg func will be called with this value. This
      *  packet does not own this value.
      */
-    func_call_packet_t(const char*     packet_id,
+    func_call_packet_t(const c_str    &packet_id,
                        tuple_buffer_t* output_buffer,
                        tuple_filter_t* output_filter,
                        void (*func) (void*),

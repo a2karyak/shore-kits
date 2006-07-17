@@ -11,88 +11,118 @@
 #include <unistd.h>
 
 
-
 /**
  * @brief A generic pointer guard base class. An action will be
  * performed exactly once on the stored pointer, either with an
  * explicit call to done() or when the guard goes out of scope,
  * whichever comes first.
  *
- * This is very similar to the auto_ptr class except:
- * - the "auto" part is configurable.
- * - it is unknown whether passing to it functions by value is safe
+ * This class is much like the auto_ptr class, other than allowing
+ * actions besides delete upon destruct. In particular it is *NOT
+ * SAFE* to use it in STL containers because it does not fulfill the
+ * Assignable concept.
+ *
+ * This class *DOES NOT* support being cast as "const" in the
+ * traditional sense. Other than disallowing use of the assignment
+ * operator '=' it always allows modification of its contents so that
+ * it do its job properly. This should not be a problem in practice
+ * because a "const T" (with T = <pointer to some type>, eg int*) does
+ * not actually protect a pointer's contents from modification
+ * anyway. Use T = <pointer to some const type> for that, eg const
+ * int*.
+ *
  */
-template <class T, class Child>
-class pointer_guard_base_t {
-    T *_ptr;
+template <class T, class Impl>
+class guard_base_t {
+    mutable T _obj;
 
 public:
-    typedef pointer_guard_base_t<T, Child> Base;
-    struct temp_ref_t {
-        T *_ptr;
-        temp_ref_t(T *ptr)
-            : _ptr(ptr)
-        {
-        }
-    };
+    typedef guard_base_t<T, Impl> Base;
+
+    // The value that represents "null" for typename T. Impl usually
+    // descends from this class so this makes a handy default
+    // implmentation
+    static T null_value() {
+        return NULL;
+    }
     
-public:
-    pointer_guard_base_t(T *ptr)
-        : _ptr(ptr)
+    guard_base_t(T obj)
+        : _obj(obj)
     {
     }
-    pointer_guard_base_t(const temp_ref_t &other)
-        : _ptr(other._ptr)
+    guard_base_t(const guard_base_t &other)
+        : _obj(other.release())
     {
     }
-
-    pointer_guard_base_t &operator=(const temp_ref_t &other) {
-        assign(other._ptr);
+    guard_base_t &operator =(const guard_base_t &other) {
+        assign(other.release());
         return *this;
     }
-
-    T &operator *() {
-        return *_ptr;
-    }
-    operator T*() {
-        return _ptr;
-    }
-    T *operator ->() {
-        return _ptr;
-    }
     
-    /**
-     * @brief Notifies this guard that its action should be performed
-     * now rather than at destruct time.
-     */
-    void done() {
-        if(_ptr) {
-            typename Child::Action()(_ptr);
-            _ptr = NULL;
-        }
+    operator T() const {
+        return get();
+    }
+
+    T get() const {
+        return _obj;
     }
     
     /**
      * @brief Notifies this guard that its services are no longer
      * needed because some other entity has assumed ownership of the
-     * pointer. 
+     * pointer.
+     *
+     * NOTE: this function is marked const so that the assignment
+     * operator and copy constructor can work properly. 
      */
-    T *release() {
-        T *ptr = _ptr;
-        _ptr = NULL;
-        return ptr;
+    T release() const {
+        T obj = _obj;
+        _obj = Impl::null_value();
+        return obj;
     }
 
-    void assign(T *ptr) {
-        done();
-        _ptr = ptr;
+    /**
+     * @brief Notifies this guard that its action should be performed
+     * now rather than at destruct time.
+     */
+    void done() const {
+        assign(Impl::null_value());
     }
     
-    ~pointer_guard_base_t() {
+    
+    ~guard_base_t() {
         done();
     }
+    
+protected:
+    void assign(T obj) const {
+        if(_obj == obj)
+            return;
+        
+        // free the old object and set it NULL
+        Impl::guard_action(_obj);
+        _obj = obj;
+    }
+    
 };
 
+template <typename T, typename Impl>
+struct pointer_guard_base_t : guard_base_t<T*, Impl> {
+    typedef guard_base_t<T*, Impl> Base;
+    pointer_guard_base_t(T* ptr)
+        : Base(ptr)
+    {
+    }
+    T &operator *() const {
+        return *Base::get();
+    }
+    operator T*() const {
+        return Base::get();
+    }
+    T* operator ->() const {
+        return Base::get();
+    }
+};
 
 
 /**
@@ -100,24 +130,14 @@ public:
  * new() gets deleted
  */
 template <class T>
-struct pointer_guard_t : public pointer_guard_base_t<T, pointer_guard_t<T> > {
-    pointer_guard_t(T *ptr=NULL)
+struct pointer_guard_t : pointer_guard_base_t<T, pointer_guard_t<T> > {
+    pointer_guard_t(T* ptr=NULL)
         : pointer_guard_base_t<T, pointer_guard_t<T> >(ptr)
     {
     }
-    
-    struct Action {
-        void operator()(T *ptr) {
-            delete ptr;
-        }
-    };
-
-    pointer_guard_t &operator=(const typename pointer_guard_t::temp_ref_t &ref) {
-        assign(ref._ptr);
-        return *this;
+    static void guard_action(T* ptr) {
+        delete ptr;
     }
-private:
-    pointer_guard_t &operator=(pointer_guard_t &);
 };
 
 
@@ -127,24 +147,14 @@ private:
  * new() gets deleted
  */
 template <class T>
-struct array_guard_t : public pointer_guard_base_t<T, array_guard_t<T> > {
+struct array_guard_t : pointer_guard_base_t<T, array_guard_t<T> > {
     array_guard_t(T *ptr=NULL)
         : pointer_guard_base_t<T, array_guard_t<T> >(ptr)
     {
     }
-    
-    struct Action {
-        void operator()(T *ptr) {
-            delete [] ptr;
-        }
-    };
-
-    array_guard_t &operator=(const typename array_guard_t::temp_ref_t &ref) {
-        assign(ref._ptr);
-        return *this;
+    static void guard_action(T *ptr) {
+        delete [] ptr;
     }
-private:
-    array_guard_t &operator=(array_guard_t &);
 };
 
 
@@ -152,84 +162,31 @@ private:
 /**
  * @brief Ensures that a file gets closed
  */
-struct file_guard_t : public pointer_guard_base_t<FILE, file_guard_t> {
+struct file_guard_t : pointer_guard_base_t<FILE, file_guard_t> {
     file_guard_t(FILE *ptr=NULL)
         : pointer_guard_base_t<FILE, file_guard_t>(ptr)
     {
     }
-    struct Action {
-        void operator()(FILE *ptr) {
-            if(fclose(ptr)) 
-                TRACE(TRACE_ALWAYS, "fclose failed");
-        }
-    };
-private:
-    file_guard_t &operator=(file_guard_t &);
+    static void guard_action(FILE *ptr) {
+        if(ptr && fclose(ptr)) 
+            TRACE(TRACE_ALWAYS, "fclose failed");
+    }
 };
 
 /**
  * @brief Ensures that a file descriptor gets closed
  */
-class fd_guard_t {
-    int _fd;
-    
-public:
-    
-    struct temp_ref_t {
-        int _fd;
-        temp_ref_t(int fd)
-            : _fd(fd)
-        {
-        }
-    };
-    
+struct fd_guard_t : guard_base_t<int, fd_guard_t> {
     fd_guard_t(int fd)
-        : _fd(fd)
+        : guard_base_t<int, fd_guard_t>(fd)
     {
     }
-    fd_guard_t(const temp_ref_t &other)
-        : _fd(other._fd)
-    {
+    static void guard_action(int fd) {
+        if(fd >= 0 && close(fd)) 
+            TRACE(TRACE_ALWAYS, "close() failed");
     }
-
-    fd_guard_t &operator=(const temp_ref_t &other) {
-        assign(other._fd);
-        return *this;
-    }
-
-    operator int() {
-        return _fd;
-    }
-    
-    /**
-     * @brief Notifies this guard that its action should be performed
-     * now rather than at destruct time.
-     */
-    void done() {
-        if(_fd >= 0) {
-            close(_fd);
-            _fd = 0;
-        }
-    }
-    
-    /**
-     * @brief Notifies this guard that its services are no longer
-     * needed because some other entity has assumed ownership of the
-     * pointer. 
-     */
-    int release() {
-        int fd = _fd;
-        _fd = -1;
-        return fd;
-    }
-
-    void assign(int fd) {
-        done();
-        _fd = fd;
-    }
-    
-    ~fd_guard_t() {
-        done();
+    static int null_value() {
+        return -1;
     }
 };
 

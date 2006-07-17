@@ -72,7 +72,7 @@ public:
      *  the packet destructor.
      *
      */
-    hash_join_packet_t(const char *packet_id,
+    hash_join_packet_t(const c_str &packet_id,
                        tuple_buffer_t* out_buffer,
                        tuple_filter_t *output_filter,
                        packet_t* left,

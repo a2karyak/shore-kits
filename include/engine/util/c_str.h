@@ -39,6 +39,10 @@ class c_str {
         // * * * BEGIN CRITICAL SECTION * * *
         critical_section_t cs(&_data->_lock);
         if(--_data->_count == 0) {
+            // we were the last reference, so nobody else could
+            // possibly modify the data struct any more
+            cs.exit();
+            
             if(DEBUG_C_STR)
                 printf("Freeing %s\n", &_data->_str[0]);
             free(_data);
@@ -112,6 +116,9 @@ public:
             printf("constructed new c_str = %s\n", data());
     }
 
+    operator const char*() const {
+        return data();
+    }
 
     const char* data() const {
         // Return the actual string... whatever uses this string must

@@ -22,7 +22,7 @@ using namespace qpipe;
 struct merge_packet_t : public packet_t {
 
     static const c_str PACKET_TYPE;
-    typedef vector<buffer_guard_t> buffer_list_t;
+    typedef vector<tuple_buffer_t*> buffer_list_t;
     
     buffer_list_t       _input_buffers;
     pointer_guard_t<key_extractor_t> _extract;
@@ -59,16 +59,22 @@ struct merge_packet_t : public packet_t {
      *  @param comparator A comparator for the tuples in our input
      *  buffers. This packet owns this comparator.
      */
-    merge_packet_t(const char*                packet_id,
+    merge_packet_t(const c_str         &packet_id,
                    tuple_buffer_t*      output_buffer,
                    tuple_filter_t*      output_filter,
                    const buffer_list_t& input_buffers,
                    key_extractor_t* extract,
                    key_compare_t*  compare)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
-          _input_buffers(input_buffers.begin(), input_buffers.end()),
+          _input_buffers(input_buffers),
           _extract(extract), _compare(compare)
     {
+    }
+    
+    ~merge_packet_t() {
+        buffer_list_t::iterator it=_input_buffers.begin();
+        while(it != _input_buffers.end())
+            delete *it++;
     }
 
 };

@@ -71,11 +71,11 @@ public:
      *  object. We will however, invoke notify() on this parameter in
      *  our destructor.
      */    
-    fdump_packet_t(const char*           packet_id,
+    fdump_packet_t(const c_str    &packet_id,
 		   tuple_buffer_t* output_buffer,
                    tuple_filter_t* output_filter,
 		   tuple_buffer_t* input_buffer,
-		   const char*           filename,
+		   const c_str    &filename,
                    notify_t*       notifier=NULL)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
 	  _input_buffer(input_buffer),

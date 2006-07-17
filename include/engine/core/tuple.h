@@ -605,7 +605,7 @@ public:
      */
 
     bool put_tuple (const tuple_t &tuple) {
-        TRACE(TRACE_ALWAYS, "called...\n");
+        //        TRACE(TRACE_DEBUG, "called...\n");
         if( !drain_page_if_full() )
             // buffer was terminated by consumer!
             return false;
@@ -795,11 +795,9 @@ protected:
             return true;
         }
         
-        // The buffer was terminated! We can get the write_page page
-        // guard to free it now by overwriting it with
-        // something. Overwrite with NULL so we don't end up freeing
-        // some garbage address in tuple_buffer_t destructor.
-        write_page = NULL;
+        // The buffer was terminated! We need the write_page page
+        // guard to free it now so we don't get confused later.
+        write_page.done();
         return false;
     }
 };
@@ -807,42 +805,38 @@ protected:
 
 
 struct output_buffer_guard_t
-    : public pointer_guard_base_t<tuple_buffer_t, output_buffer_guard_t>
+    : pointer_guard_base_t<tuple_buffer_t, output_buffer_guard_t>
 {
     output_buffer_guard_t(tuple_buffer_t* ptr=NULL)
         : pointer_guard_base_t<tuple_buffer_t, output_buffer_guard_t>(ptr)
     {
     }
 
-    struct Action {
-        void operator()(tuple_buffer_t* ptr) {
-            // if send_eof() fails, the consumer has already finished
-            // with the buffer and we can safely delete it
-            if(ptr && !ptr->send_eof())
-                delete ptr;
-        }
-    };
+    static void guard_action(tuple_buffer_t* ptr) {
+        // if send_eof() fails, the consumer has already finished
+        // with the buffer and we can safely delete it
+        if(ptr && !ptr->send_eof())
+            delete ptr;
+    }
     
 };
 
 
 
 struct buffer_guard_t
-    : public pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>
+    : pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>
 {
     buffer_guard_t(tuple_buffer_t* ptr=NULL)
         : pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>(ptr)
     {
     }
 
-    struct Action {
-        void operator()(tuple_buffer_t* ptr) {
-            // attempt to terminate the buffer, then delete it if the
-            // other side already terminated
-            if(ptr && !ptr->terminate())
-                delete ptr;
-        }
-    };
+    static void guard_action(tuple_buffer_t* ptr) {
+        // attempt to terminate the buffer, then delete it if the
+        // other side already terminated
+        if(ptr && !ptr->terminate())
+            delete ptr;
+    }
 };
 
 

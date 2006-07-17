@@ -19,7 +19,7 @@ struct sorted_in_packet_t : public packet_t {
     pointer_guard_t<key_compare_t> _compare;
     bool _reject_matches;
 
-    sorted_in_packet_t(const char* packet_id,
+    sorted_in_packet_t(const c_str &packet_id,
                        tuple_buffer_t* out_buffer,
                        tuple_filter_t* out_filter,
                        packet_t* left, packet_t* right,
