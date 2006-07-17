@@ -24,9 +24,9 @@ struct merge_packet_t : public packet_t {
     static const c_str PACKET_TYPE;
     typedef vector<tuple_buffer_t*> buffer_list_t;
     
-    buffer_list_t       _input_buffers;
+    buffer_list_t _input_buffers;
     pointer_guard_t<key_extractor_t> _extract;
-    pointer_guard_t<key_compare_t> _compare;
+    pointer_guard_t<key_compare_t>   _compare;
 
 
     /**
@@ -67,7 +67,8 @@ struct merge_packet_t : public packet_t {
                    key_compare_t*  compare)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _input_buffers(input_buffers),
-          _extract(extract), _compare(compare)
+          _extract(extract),
+          _compare(compare)
     {
     }
     
@@ -91,20 +92,19 @@ private:
 
     struct buffer_head_t {
         // for the linked list
-        buffer_head_t *next;
-        
-        tuple_buffer_t *buffer;
-        key_extractor_t *_extract;
+        buffer_head_t*   next;
+        tuple_buffer_t*  buffer;
+        key_extractor_t* _extract;
         array_guard_t<char> data;
         tuple_t tuple;
         hint_tuple_pair_t item;
         buffer_head_t() { }
-        bool init(tuple_buffer_t *buf, key_extractor_t *c);
+        bool init(tuple_buffer_t* buf, key_extractor_t* c);
         bool has_tuple();
     };
     
-    buffer_head_t *_head_list;
-    key_compare_t *_compare;
+    buffer_head_t*   _head_list;
+    key_compare_t*   _compare;
     key_extractor_t* _extract;
     
 public:
@@ -123,7 +123,7 @@ protected:
     
 private:
 
-    void insert_sorted(buffer_head_t *head);
+    void insert_sorted(buffer_head_t* head);
     int compare(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b);
 };
 

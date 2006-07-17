@@ -19,7 +19,7 @@
 
 
 
-/* exported data structures */
+/* internal data structures */
 
 
 /**
@@ -28,7 +28,7 @@
  *  on and off. We initialize it here to enable all messages. That
  *  way, any messages we print during QPIPE startup will be printed.
  */
-uint32_t trace_current_setting = ~0u;
+static unsigned int trace_current_setting = ~0u;
 
 
 
@@ -57,26 +57,40 @@ uint32_t trace_current_setting = ~0u;
  *
  *  @param ... Optional arguments referenced by the format string.
  */
-
-void trace_(int trace_type,
+void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
 	    char* format, ...)
 {
 
-
-  /* Print if any trace_type bits match bits in the current trace
-     setting. */
-  int do_trace = trace_current_setting & trace_type;
-  if ( do_trace == 0 )
-    return;
+    /* Print if any trace_type bits match bits in the current trace
+       setting. */
+    unsigned int do_trace = trace_current_setting & trace_type;
+    if ( do_trace == 0 )
+        return;
 
     
-  va_list ap;
-  va_start(ap, format);
+    va_list ap;
+    va_start(ap, format);
   
-  /* currently, we only support printing to streams */
-  trace_stream(stdout, filename, line_num, function_name, format, ap);
+    /* currently, we only support printing to streams */
+    trace_stream(stdout, filename, line_num, function_name, format, ap);
 
-  va_end(ap);
-  return;
+    va_end(ap);
+    return;
+}
+
+
+
+/**
+ *  @brief Specify the set of trace types that are currently enabled.
+ *
+ *  @param trace_type_mask Bitmask used to specify the current set of
+ *  trace types.
+ */
+void trace_set(unsigned int trace_type_mask) {
+
+    /* avoid unnecessary synchronization here */
+    /* should really only be called once at the beginning of the
+       program */
+    trace_current_setting = trace_type_mask;        
 }

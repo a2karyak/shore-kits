@@ -1,4 +1,4 @@
-// -*- mode:C++; c-basic-offset:4 -*-
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file    : test_q6.cpp
  *  @brief   : Unittest for Q6
@@ -27,8 +27,6 @@
 
 using namespace qpipe;
 
-extern uint32_t trace_current_setting;
-
 
 
 /** @fn    : main
@@ -38,7 +36,7 @@ int main(int argc, char* argv[]) {
 
     thread_init();
     dispatcher_policy_t* dp = new dispatcher_policy_os_t();
-    trace_current_setting = TRACE_ALWAYS;
+    TRACE_SET(TRACE_ALWAYS);
 
 
     // parse command line args

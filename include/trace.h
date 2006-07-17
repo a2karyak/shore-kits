@@ -17,15 +17,11 @@
 
 /* exported functions */
 
-void trace_(int trace_type,
+void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
 	    char* format, ...);
 
-
-
-/* exported data structures */
-
-extern uint32_t trace_current_setting;
+void trace_set(unsigned int trace_type_mask);
 
 
 
@@ -53,8 +49,21 @@ extern uint32_t trace_current_setting;
  *
  * @return void
  */
-
 #define TRACE(type, format, rest...) trace_(type, __FILE__, __LINE__, __FUNCTION__, format, ##rest)
+
+
+
+/**
+ *  @def TRACE_SET
+ *
+ * @brief Macro wrapper for trace_set()
+ * 
+ * @param types Passed through as trace_type_mask parameter of
+ * trace_set().
+ *
+ * @return void
+ */
+#define TRACE_SET(types) trace_set(types)
 
 
 

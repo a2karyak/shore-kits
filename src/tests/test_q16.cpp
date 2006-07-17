@@ -1,4 +1,5 @@
-// -*- mode:C++; c-basic-offset:4 -*-
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 #include "engine/stages/tscan.h"
 #include "engine/stages/aggregate.h"
 #include "engine/stages/partial_aggregate.h"
@@ -387,7 +388,7 @@ int main() {
         QPIPE_PANIC();
     }        
 
-    trace_current_setting = TRACE_ALWAYS;
+    TRACE_SET(TRACE_ALWAYS);
 
 
     // line up the stages...

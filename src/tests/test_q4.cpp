@@ -1,4 +1,4 @@
-// -*- mode:C++; c-basic-offset:4 -*-
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file    : test_q4.cpp
  *  @brief   : Unittest for Q4
@@ -40,7 +40,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
-    trace_current_setting = TRACE_ALWAYS | TRACE_QUERY_RESULTS;
+    TRACE_SET(TRACE_ALWAYS | TRACE_QUERY_RESULTS);
 
 
     // parse command line args
