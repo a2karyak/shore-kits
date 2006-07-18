@@ -17,4 +17,5 @@ LDADD = ../engine/libqpipe.a \
 bin_PROGRAMS = qpipe
 
 qpipe_SOURCES = \
-   server.cpp
+   server.cpp \
+   register_commands.cpp
