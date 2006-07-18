@@ -142,6 +142,20 @@ public:
         return *this;
     }
     
+
+    bool operator<(const c_str &other) {
+        return strcmp(data(), other.data()) < 0;
+    }
+
+
+    bool operator>(const c_str &other) {
+        return strcmp(data(), other.data()) > 0;
+    }
+
+    
+    bool operator==(const c_str &other) {
+        return strcmp(data(), other.data()) == 0;
+    }
 };
 
 

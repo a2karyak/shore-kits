@@ -2,6 +2,10 @@
 
 /** @file trace_force.cpp
  *
+ *  @brief trace_force_() is no longer used since we started using
+ *  synchronization for our output streams. It should be removed from
+ *  the trace module soon.
+ *
  *  @brief Exports trace_force() function. trace_force() should only
  *  be invoked by code within the tracing module. All code outside the
  *  trace module should invoke TRACE().

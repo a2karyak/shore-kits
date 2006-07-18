@@ -14,7 +14,7 @@ LDADD = ../engine/libqpipe.a \
         $(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here
-bin_PROGRAMS = # qpipe
+bin_PROGRAMS = qpipe
 
 qpipe_SOURCES = \
    server.cpp

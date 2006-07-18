@@ -38,7 +38,8 @@ bin_PROGRAMS = \
    test_q19 \
    test_q1 \
    test_q4 \
-   test_bitvector
+   test_bitvector \
+   test_hash_map
 
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
@@ -48,7 +49,6 @@ test_fdump_stage_SOURCES = test_fdump_stage.cpp
 test_merge_stage_SOURCES = test_merge_stage.cpp
 test_sort_stage_SOURCES = test_sort_stage.cpp
 test_fscan_stage_SOURCES = test_fscan_stage.cpp
-#test_bnl_caching_join_stage_SOURCES = test_bnl_caching_join_stage.cpp
 test_tscan_stage_SOURCES = test_tscan_stage.cpp
 test_func_call_stage_SOURCES = test_func_call_stage.cpp
 test_aggregate_stage_SOURCES = test_aggregate_stage.cpp
@@ -66,3 +66,4 @@ test_q19_SOURCES = test_q19.cpp
 test_q6_2cl_SOURCES = test_q6_2cl.cpp
 test_q6_disp_SOURCES = test_q6_disp.cpp
 test_q1_SOURCES = test_q1.cpp
+test_hash_map_SOURCES = test_hash_map.cpp
