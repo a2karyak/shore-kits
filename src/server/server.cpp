@@ -3,6 +3,7 @@
 #include "engine/thread.h"
 #include "server/print.h"
 #include "server/config.h"
+#include "server/command_set.h"
 #include "workload/register_job_drivers.h"
 #include "workload/register_stage_containers.h"
 #include "workload/tpch/tpch_db.h"
@@ -17,10 +18,6 @@ void qpipe_shutdown(void);
 
 
 
-char BUFFER[SERVER_COMMAND_BUFFER_SIZE];
-
-
-
 int main(int argc, char* argv[]) {
 
 
@@ -30,7 +27,16 @@ int main(int argc, char* argv[]) {
 
     if ( run_interactive_mode ) {
         PRINT("Interactive mode...\n");
-    } 
+
+        while (1) {
+            char command_buf[SERVER_COMMAND_BUFFER_SIZE];
+            PRINT("%s", QPIPE_PROMPT);
+            if ( fgets(command_buf, sizeof(command_buf), stdin) == NULL )
+                break;
+           
+            dispatch_command(command_buf);
+        }   
+    }
 
 
     // qpipe_shutdown() panics on error
@@ -44,6 +50,8 @@ int qpipe_init(int argc, char* argv[]) {
 
     thread_init();
     PRINT("QPipe Execution Engine\n");
+
+    register_commands();
 
 
     /* open DB tables */

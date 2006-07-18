@@ -18,4 +18,4 @@ bin_PROGRAMS = qpipe
 
 qpipe_SOURCES = \
    server.cpp \
-   register_commands.cpp
+   command_set.cpp
