@@ -27,6 +27,7 @@ int main(int, char**)
   std::map<c_str, int> s_cstr;
   s_cstr[c_str(key)] = 5;
 
+  s_cstr.find(key);
   TRACE(TRACE_ALWAYS, "s_cstr[\"%s\"]   maps to %d\n",
         key,
         s_cstr[c_str(key)]);

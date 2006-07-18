@@ -27,7 +27,7 @@ class c_str {
         char _str[0];
     };
 
-    static c_str_data _seed;
+    static const c_str_data _seed;
 
     c_str_data* _data;
 
@@ -70,8 +70,9 @@ class c_str {
     
 
 public:
+    static const c_str empty_string;
 
-    c_str (const c_str &other) {
+    c_str (const c_str &other=empty_string) {
         if (DEBUG_C_STR)
             printf("copy constructor with other = %s\n", other.data());
         assign(other);
@@ -137,23 +138,25 @@ public:
     c_str &operator=(const c_str &other) {
         if (DEBUG_C_STR)
             printf("in c_str = operator, this = %s, other = %s\n", data(), other.data());
-        release();
-        assign(other);
+        if(_data != other._data) {
+            release();
+            assign(other);
+        }
         return *this;
     }
     
 
-    bool operator<(const c_str &other) {
+    bool operator<(const c_str &other) const {
         return strcmp(data(), other.data()) < 0;
     }
 
 
-    bool operator>(const c_str &other) {
+    bool operator>(const c_str &other) const {
         return strcmp(data(), other.data()) > 0;
     }
 
     
-    bool operator==(const c_str &other) {
+    bool operator==(const c_str &other) const {
         return strcmp(data(), other.data()) == 0;
     }
 };
