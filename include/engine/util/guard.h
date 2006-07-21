@@ -266,6 +266,7 @@ struct dbt_guard_t : guard_base_t<Dbt, dbt_guard_t> {
         : Base(Dbt(new int[len/sizeof(int)], len))
     {
         _obj.set_flags(DB_DBT_USERMEM);
+        _obj.set_ulen(_obj.get_size());
     }
     static void guard_action(const Dbt &dbt) {
         delete [] (int*) dbt.get_data();

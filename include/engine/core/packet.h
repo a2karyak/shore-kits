@@ -55,7 +55,7 @@ public:
     c_str _packet_id;
     c_str _packet_type;
     
-    buffer_guard_t _output_buffer;
+    output_buffer_guard_t _output_buffer;
     pointer_guard_t<tuple_filter_t> _output_filter;
 
     

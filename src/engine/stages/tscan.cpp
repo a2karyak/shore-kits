@@ -49,17 +49,12 @@ void tscan_stage_t::process_packet() {
     Dbt bulk_key;
     for (int bulk_read_index = 0; ; bulk_read_index++) {
 
-	int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
-	if (err) {
-	    if (err != DB_NOTFOUND) {
-		db->err(err, "cursor->get() failed: ");
-                throw EXCEPTION(Berkeley_DB_Exception, "Unable to read rows from DB cursor");
-	    }
-	    
-	    // done reading table
-	    return;
-	}
-
+        // any return code besides DB_NOTFOUND would throw an exception
+        int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
+        if(err) {
+            assert(err = DB_NOTFOUND);
+            return;
+        }
 
         // iterate over the blob we read and output the individual
         // tuples

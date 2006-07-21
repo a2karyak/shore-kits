@@ -34,7 +34,7 @@ struct bnl_in_packet_t : public packet_t {
     static const c_str PACKET_TYPE;
 
     pointer_guard_t<packet_t>        _left;
-    buffer_guard_t                   _left_buffer;
+    input_buffer_guard_t                   _left_buffer;
     
     // the following fields should always be deleted by the destructor
     pointer_guard_t<tuple_source_t>  _right_source;

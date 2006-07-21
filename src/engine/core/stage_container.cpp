@@ -465,7 +465,7 @@ void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
 
     
     // packet output buffer
-    buffer_guard_t &output_buffer = packet->_output_buffer;
+    output_buffer_guard_t &output_buffer = packet->_output_buffer;
     if ( output_buffer->send_eof() )
         // Consumer has not already terminated this buffer! It is now
         // responsible for deleting it.

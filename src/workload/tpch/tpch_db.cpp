@@ -201,7 +201,7 @@ static bool close_db_table(Db* &table, const char* table_name) {
     return true;
 }
 
-static bool open_db_index(Db* table, Db*& index, u_int32_t flags,
+static bool open_db_index(Db* table, Db*& index, u_int32_t,
                           bt_compare_func_t cmp,
                           idx_key_create_func_t key_create,
                           const char* index_name) {

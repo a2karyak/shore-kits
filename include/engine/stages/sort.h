@@ -37,7 +37,7 @@ public:
     pointer_guard_t<key_extractor_t> _extract;
     pointer_guard_t<key_compare_t> _compare;
     pointer_guard_t<packet_t>           _input;
-    buffer_guard_t _input_buffer;
+    input_buffer_guard_t _input_buffer;
 
 
     /**

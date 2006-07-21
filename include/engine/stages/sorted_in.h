@@ -12,8 +12,8 @@ struct sorted_in_packet_t : public packet_t {
     static const c_str PACKET_TYPE;
     pointer_guard_t<packet_t> _left;
     pointer_guard_t<packet_t> _right;
-    buffer_guard_t _left_input;
-    buffer_guard_t _right_input;
+    input_buffer_guard_t _left_input;
+    input_buffer_guard_t _right_input;
     pointer_guard_t<key_extractor_t> _left_extractor;
     pointer_guard_t<key_extractor_t> _right_extractor;
     pointer_guard_t<key_compare_t> _compare;

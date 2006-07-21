@@ -31,8 +31,8 @@ public:
 
     pointer_guard_t<packet_t> _left;
     pointer_guard_t<packet_t> _right;
-    buffer_guard_t _left_buffer;
-    buffer_guard_t _right_buffer;
+    input_buffer_guard_t _left_buffer;
+    input_buffer_guard_t _right_buffer;
 
     pointer_guard_t<tuple_join_t> _join;
     bool _outer;

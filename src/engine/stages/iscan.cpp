@@ -38,7 +38,7 @@ const c_str iscan_stage_t::DEFAULT_STAGE_NAME = "ISCAN_STAGE";
  *  and do bulk reading. The blob must be aligned for int accesses and
  *  a multiple of 1024 bytes long.
  */
-const size_t iscan_stage_t::ISCAN_BULK_READ_BUFFER_SIZE=256*KB;
+const size_t iscan_stage_t::ISCAN_READ_BUFFER_SIZE=256;
 
 
 
@@ -60,43 +60,20 @@ void iscan_stage_t::process_packet() {
 
     // BerkeleyDB cannot read into page_t's. Allocate a large blob and
     // do bulk reading.
-    dbt_guard_t bulk_data(ISCAN_BULK_READ_BUFFER_SIZE);
+    dbt_guard_t data(ISCAN_READ_BUFFER_SIZE);
     dbt_guard_t start_key = packet->_start_key;
     
     dbt_guard_t stop_key = packet->_stop_key;
-    bool first_time = true;
-    for (int bulk_read_index = 0; ; bulk_read_index++) {
+    int err = cursor->get(start_key, data, DB_SET_RANGE);
+    for (int bulk_read_index = 0; !err; bulk_read_index++) {
+        if(cmp(db, start_key, stop_key) >= 0)
+            break; // out of range!
 
-	int err;
-        if(first_time)
-            err = cursor->get(start_key, bulk_data, DB_MULTIPLE_KEY | DB_SET_RANGE);
-        else
-            err = cursor->get(start_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
-        
-	if (err) {
-	    if (err != DB_NOTFOUND) {
-		db->err(err, "dbcp->get() failed: ");
-                throw EXCEPTION(Berkeley_DB_Exception, "Unable to read rows from DB cursor");
-	    }
-	    
-	    // done reading table
-	    return;
-	}
-
-        first_time = false;
-
-        // iterate over the blob we read and output the individual
-        // tuples
-        Dbt key, data;
-        DbMultipleKeyDataIterator it = *bulk_data;
-	while(it.next(key, data)) {
-            if(cmp(db, &key, stop_key) >= 0)
-                return; // out of range!
-            
-	    adaptor->output(data);
-        }
+        adaptor->output(*data);
+        err = cursor->get(start_key, data, DB_NEXT);
     }
 
-    // control never reaches here
-    assert(false);
+    // any other error should have been wrapped up and thrown already
+    if(err)
+        assert(err == DB_NOTFOUND);
 }

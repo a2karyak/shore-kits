@@ -26,9 +26,8 @@ int tpch_lineitem_shipdate_key_fcn(Db*, const Dbt*, const Dbt* pd, Dbt* sk) {
 int tpch_lineitem_shipdate_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
     // extract the fields and compare
     TYPEOF(tpch_lineitem_tuple, L_SHIPDATE) t1, t2;
-    GET_FIELD(&t1, k1->get_data(), tpch_lineitem_tuple, L_SHIPDATE);
-    GET_FIELD(&t2, k2->get_data(), tpch_lineitem_tuple, L_SHIPDATE);
-           
+    memcpy(&t1, k1->get_data(), SIZEOF(tpch_lineitem_tuple, L_SHIPDATE));
+    memcpy(&t2, k2->get_data(), SIZEOF(tpch_lineitem_tuple, L_SHIPDATE));
     return t1 - t2;
 }
 

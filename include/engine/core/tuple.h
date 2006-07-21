@@ -803,6 +803,8 @@ protected:
 };
 
 
+// purposefully split up the (otherwise identical) types to ensure
+// that a buffer can be "owned" by both types of guard
 
 struct output_buffer_guard_t
     : pointer_guard_base_t<tuple_buffer_t, output_buffer_guard_t>
@@ -813,21 +815,20 @@ struct output_buffer_guard_t
     }
 
     static void guard_action(tuple_buffer_t* ptr) {
-        // if send_eof() fails, the consumer has already finished
+        // if terminate() fails, the consumer has already finished
         // with the buffer and we can safely delete it
-        if(ptr && !ptr->send_eof())
+        if(ptr && !ptr->terminate())
             delete ptr;
     }
     
 };
 
 
-
-struct buffer_guard_t
-    : pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>
+struct input_buffer_guard_t
+    : pointer_guard_base_t<tuple_buffer_t, input_buffer_guard_t>
 {
-    buffer_guard_t(tuple_buffer_t* ptr=NULL)
-        : pointer_guard_base_t<tuple_buffer_t, buffer_guard_t>(ptr)
+    input_buffer_guard_t(tuple_buffer_t* ptr=NULL)
+        : pointer_guard_base_t<tuple_buffer_t, input_buffer_guard_t>(ptr)
     {
     }
 

@@ -37,7 +37,7 @@ struct q6_iscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
 
     q6_iscan_filter_t(double discount, double qty)
-        : tuple_filter_t(sizeof(iscan_tuple))
+        : tuple_filter_t(sizeof(tpch_lineitem_tuple))
     {
         predicate_t* p;
         size_t offset;

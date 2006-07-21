@@ -30,7 +30,7 @@ public:
     
     static const c_str PACKET_TYPE;
 
-    buffer_guard_t _input_buffer;
+    input_buffer_guard_t _input_buffer;
     
     c_str _filename;
 

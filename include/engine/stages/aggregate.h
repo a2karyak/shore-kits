@@ -28,7 +28,7 @@ struct aggregate_packet_t : public packet_t {
     pointer_guard_t<tuple_aggregate_t> _aggregator;
     pointer_guard_t<key_extractor_t> _extract;
     pointer_guard_t<packet_t>          _input;
-    buffer_guard_t    _input_buffer;
+    input_buffer_guard_t    _input_buffer;
     
     
     /**

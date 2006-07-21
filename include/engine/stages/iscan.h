@@ -63,7 +63,7 @@ public:
         assert(db != NULL);
         
         // did the user pass in two guards pointing to the same array?
-        assert(start_key->get_data() != stop_key->get_data());
+        assert(_start_key != _stop_key);
         assert(bt_compare != NULL);
     }
     
@@ -87,7 +87,7 @@ public:
     typedef iscan_packet_t stage_packet_t;
     static const c_str DEFAULT_STAGE_NAME;
 
-    static const size_t ISCAN_BULK_READ_BUFFER_SIZE;
+    static const size_t ISCAN_READ_BUFFER_SIZE;
 
     iscan_stage_t() { }
 

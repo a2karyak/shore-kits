@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
     
     
     // fire up the merge stage now
-    buffer_guard_t output_buffer = new tuple_buffer_t(sizeof(int));
+    output_buffer_guard_t output_buffer = new tuple_buffer_t(sizeof(int));
     merge_packet_t* packet = new merge_packet_t("MERGE_PACKET_1",
                                                 output_buffer,
                                                 new trivial_filter_t(input_buffers[0]->tuple_size),
