@@ -125,12 +125,12 @@ struct part_tscan_filter_t : public tuple_filter_t {
             size_t offset;
             
             // brand = [brand]
-            offset = FIELD_OFFSET(tpch_part_tuple, P_BRAND);
+            offset = offsetof(tpch_part_tuple, P_BRAND);
             p = new string_predicate_t<>(brands[i], offset);
             andp->add(p);
                              
             // size between ...
-            offset = FIELD_OFFSET(tpch_part_tuple, P_SIZE);
+            offset = offsetof(tpch_part_tuple, P_SIZE);
             p = new scalar_predicate_t<int, greater_equal>(1, offset);
             andp->add(p);
             p = new scalar_predicate_t<int, less_equal>(sizes[i], offset);
@@ -173,12 +173,12 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         size_t offset;
 
         // l_shipinstruct = ...
-        offset = FIELD_OFFSET(tpch_lineitem_tuple, L_SHIPINSTRUCT);
+        offset = offsetof(tpch_lineitem_tuple, L_SHIPINSTRUCT);
         p = new string_predicate_t<>("DELIVER IN PERSON", offset);
         _filter.add(p);
 
         // l_shipmode in (...)
-        offset = FIELD_OFFSET(tpch_lineitem_tuple, L_SHIPMODE);
+        offset = offsetof(tpch_lineitem_tuple, L_SHIPMODE);
         orp = new or_predicate_t();
         p = new scalar_predicate_t<tpch_l_shipmode>(AIR, offset);
         orp->add(p);
@@ -190,7 +190,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         for(int i=0; i < 3; i++) {
             and_predicate_t* andp = new and_predicate_t();
             // l_quantity >= [quantity] and l_quantity <= [quantity]+10
-            offset = FIELD_OFFSET(tpch_lineitem_tuple, L_QUANTITY);
+            offset = offsetof(tpch_lineitem_tuple, L_QUANTITY);
             p = new scalar_predicate_t<double, greater_equal>(quantities[i], offset);
             andp->add(p);
             p = new scalar_predicate_t<double, less_equal>(quantities[i]+10, offset);
@@ -219,11 +219,11 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
 
 struct q19_join_t : tuple_join_t {
     static key_extractor_t* create_left_extractor() {
-        size_t offset = FIELD_OFFSET(lineitem_scan_tuple, L_PARTKEY);
+        size_t offset = offsetof(lineitem_scan_tuple, L_PARTKEY);
         return new int_key_extractor_t(sizeof(int), offset);
     }
     static key_extractor_t* create_right_extractor() {
-        size_t offset = FIELD_OFFSET(part_scan_tuple, P_PARTKEY);
+        size_t offset = offsetof(part_scan_tuple, P_PARTKEY);
         return new int_key_extractor_t(sizeof(int), offset);
     }
     q19_join_t()
@@ -284,12 +284,12 @@ struct q19_filter_t : tuple_filter_t {
             size_t offset;
             
             // p_brand = [brand]
-            offset = FIELD_OFFSET(join_tuple, P_BRAND);
+            offset = offsetof(join_tuple, P_BRAND);
             p = new string_predicate_t<>(brands[i], offset);
             andp->add(p);
 
             // p_container in (...)
-            offset = FIELD_OFFSET(join_tuple, P_CONTAINER);
+            offset = offsetof(join_tuple, P_CONTAINER);
             or_predicate_t* orp = new or_predicate_t();
             for(int j=0; j < 4; j++) {
                 p = new string_predicate_t<>(containers[i][j], offset);
@@ -298,14 +298,14 @@ struct q19_filter_t : tuple_filter_t {
             andp->add(orp);
             
             // p_size between ...
-            offset = FIELD_OFFSET(join_tuple, P_SIZE);
+            offset = offsetof(join_tuple, P_SIZE);
             p = new scalar_predicate_t<int, greater_equal>(1, offset);
             andp->add(p);
             p = new scalar_predicate_t<int, less_equal>(sizes[i], offset);
             andp->add(p);
 
             // l_quantity ...
-            offset = FIELD_OFFSET(join_tuple, L_QUANTITY);
+            offset = offsetof(join_tuple, L_QUANTITY);
             double q = quantities[i];
             p = new scalar_predicate_t<double, greater_equal>(q, offset);
             andp->add(p);

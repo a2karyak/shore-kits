@@ -42,8 +42,8 @@ private:
 
 public:
 
-    /* Initialize the predicates */
-    q6_tscan_filter_t(bool echo=false)
+    /* Initialize the predicates */ 
+   q6_tscan_filter_t(bool echo=false)
         : tuple_filter_t(sizeof(tpch_lineitem_tuple)),
           _echo(echo)
     {

@@ -60,7 +60,7 @@ struct aggregate_packet_t : public packet_t {
      *  takes ownership of this packet, but it will hand off ownership
      *  to a container as soon as this packet is dispatched.
      */
-    aggregate_packet_t(char*              packet_id,
+    aggregate_packet_t(const c_str       &packet_id,
 		       tuple_buffer_t*    output_buffer,
 		       tuple_filter_t*    output_filter,
 		       tuple_aggregate_t* aggregator,

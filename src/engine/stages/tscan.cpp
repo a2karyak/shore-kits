@@ -27,29 +27,6 @@ const c_str tscan_stage_t::DEFAULT_STAGE_NAME = "TSCAN_STAGE";
 const size_t tscan_stage_t::TSCAN_BULK_READ_BUFFER_SIZE=256*KB;
 
 
-
-/**
- * @brief A cursor guard that automatically closes the cursor when it
- * goes out of scope.
- */
-struct cursor_guard_t {
-    Db*  _db;
-    Dbc* _cursor;
-
-    cursor_guard_t(Db* db, Dbc* cursor)
-        : _db(db), _cursor(cursor)
-    {
-    }
-    
-    ~cursor_guard_t() {
-        int ret = _cursor->close();
-        if(ret)
-            _db->err(ret, "_cursor->close() failed: ");
-    }
-};
-
-
-
 /**
  *  @brief Read the specified table.
  *
@@ -62,41 +39,20 @@ void tscan_stage_t::process_packet() {
     adaptor_t* adaptor = _adaptor;
     tscan_packet_t* packet = (tscan_packet_t*)adaptor->get_packet();
 
-    Dbc* dbcp;
     Db*  db = packet->_db;
-    
-
-    // open a cursor to the table
-    int ret = db->cursor(NULL, &dbcp, 0);
-    if (ret) {
-        db->err(ret, "db->cursor() failed: ");
-        throw EXCEPTION(Berkeley_DB_Exception, "Unable to open DB cursor");
-    }
-    cursor_guard_t cursor_guard(db, dbcp);
+    cursor_guard_t cursor(db);
     
 
     // BerkeleyDB cannot read into page_t's. Allocate a large blob and
-    // do bulk reading. The blob must be aligned for int accesses and a
-    // multiple of 1024 bytes long.
-    size_t bufsize = TSCAN_BULK_READ_BUFFER_SIZE / sizeof(int);
-    array_guard_t<int> buffer = new int[bufsize];
-
-    
-    // initiates and sets the key and data variables for the bulk reading
-    Dbt bulk_key, bulk_data;
-    memset(&bulk_key,  0, sizeof(bulk_key));
-    memset(&bulk_data, 0, sizeof(bulk_data));
-    bulk_data.set_data(buffer);
-    bulk_data.set_ulen(bufsize);
-    bulk_data.set_flags(DB_DBT_USERMEM);
-
-
+    // do bulk reading.
+    dbt_guard_t bulk_data(TSCAN_BULK_READ_BUFFER_SIZE);
+    Dbt bulk_key;
     for (int bulk_read_index = 0; ; bulk_read_index++) {
 
-	int err = dbcp->get(&bulk_key, &bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
+	int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
 	if (err) {
 	    if (err != DB_NOTFOUND) {
-		db->err(err, "dbcp->get() failed: ");
+		db->err(err, "cursor->get() failed: ");
                 throw EXCEPTION(Berkeley_DB_Exception, "Unable to read rows from DB cursor");
 	    }
 	    
@@ -108,7 +64,7 @@ void tscan_stage_t::process_packet() {
         // iterate over the blob we read and output the individual
         // tuples
         Dbt key, data;
-        DbMultipleKeyDataIterator it = bulk_data;
+        DbMultipleKeyDataIterator it = bulk_data.get();
 	for (int tuple_index = 0; it.next(key, data); tuple_index++) 
 	    adaptor->output(data);
     }

@@ -16,3 +16,6 @@ Db* tpch_part = NULL;
 Db* tpch_partsupp = NULL;
 Db* tpch_region = NULL;
 Db* tpch_supplier = NULL;
+
+// indexes
+Db* tpch_lineitem_shipdate = NULL;

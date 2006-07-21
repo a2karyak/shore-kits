@@ -9,7 +9,13 @@
 
 
 
-static bool open_db_table(Db*& table, u_int32_t flags, int (*cmp) (Db*, const Dbt*, const Dbt*), const char* table_name);
+static bool open_db_table(Db*& table, u_int32_t flags,
+                          bt_compare_func_t cmp,
+                          const char* table_name);
+static bool open_db_index(Db* table, Db*& index, u_int32_t flags,
+                          bt_compare_func_t cmp,
+                          idx_key_create_func_t key_create,
+                          const char* index_name);
 static bool close_db_table(Db*& table, const char* table_name);
 
 
@@ -111,6 +117,11 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     if ( !open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, TABLE_SUPPLIER_NAME) )
         return false;
 
+    // open indexes
+    if( !open_db_index(tpch_lineitem, tpch_lineitem_shipdate, flags,
+                       tpch_lineitem_shipdate_compare_fcn,
+                       tpch_lineitem_shipdate_key_fcn,
+                       INDEX_LINEITEM_SHIPDATE_NAME))
 
     TRACE(TRACE_ALWAYS, "BerekeleyDB buffer pool set to %d GB, %d B\n",
           db_cache_size_gb,
@@ -126,6 +137,8 @@ bool db_close() {
 
     bool ret = true;
 
+    // close indexes
+    ret &= close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
 
     // close tables
     ret &= close_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
@@ -153,7 +166,8 @@ bool db_close() {
 
 
 
-static bool open_db_table(Db*& table, u_int32_t flags, int (*cmp) (Db*, const Dbt*, const Dbt*), const char* table_name) {
+static bool open_db_table(Db*& table, u_int32_t flags,
+                          bt_compare_func_t cmp, const char* table_name) {
 
     try {
         table = new Db(dbenv, 0);
@@ -172,7 +186,7 @@ static bool open_db_table(Db*& table, u_int32_t flags, int (*cmp) (Db*, const Db
 
 
 
-static bool close_db_table(Db*& table, const char* table_name) {
+static bool close_db_table(Db* &table, const char* table_name) {
 
     try {
         table->close(0);
@@ -184,6 +198,30 @@ static bool close_db_table(Db*& table, const char* table_name) {
         return false;
     }
     
+    return true;
+}
+
+static bool open_db_index(Db* table, Db*& index, u_int32_t flags,
+                          bt_compare_func_t cmp,
+                          idx_key_create_func_t key_create,
+                          const char* index_name) {
+
+    try {
+        index = new Db(dbenv, 0);
+        index->set_bt_compare(cmp);
+        // not necessarily unique...
+        index->set_flags(DB_DUP);
+        index->open(NULL, index_name, NULL, DB_BTREE, DB_THREAD | DB_CREATE, 0644);
+        table->associate(NULL, index, key_create, DB_CREATE);
+        
+    }
+    catch ( DbException &e) {
+        TRACE(TRACE_ALWAYS, "Caught DbException opening index \"%s\". Make sure database is set up properly\n",
+              index_name);
+        TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
+        return false;
+    }
+
     return true;
 }
 

@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 
 
 
-int qpipe_init(int argc, char* argv[]) {
+int qpipe_init(int, char*[]) {
 
     thread_init();
     PRINT("QPipe Execution Engine\n");

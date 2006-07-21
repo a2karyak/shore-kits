@@ -5,6 +5,8 @@
 
 #include <db_cxx.h>
 
+typedef int (*bt_compare_func_t)(Db*, const Dbt*, const Dbt*);
+typedef int (*idx_key_create_func_t)(Db*, const Dbt*, const Dbt*, Dbt*);
 
 // environment
 extern DbEnv* dbenv;
@@ -21,4 +23,6 @@ extern Db* tpch_region;
 extern Db* tpch_supplier;
 
 
+// indexes
+extern Db* tpch_lineitem_shipdate;
 #endif

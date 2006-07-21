@@ -26,7 +26,8 @@
 #define STRSIZE(x)(x+1)
 
 // helper macro to calculate field offsets
-#define FIELD_OFFSET(type, field) ((size_t) &((type*)NULL)->field)
+// DEPRECATED: use the equivalent standard lib offsetof() macro instead
+#define FIELD_OFFSET(type, field) offsetof(type, field)
 
 
 

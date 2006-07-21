@@ -9,6 +9,8 @@
 #include "trace.h"
 #include "c_str.h"
 #include <unistd.h>
+#include "db_cxx.h"
+#include "engine/core/exception.h"
 
 
 /**
@@ -34,6 +36,7 @@
  */
 template <class T, class Impl>
 class guard_base_t {
+protected:
     mutable T _obj;
 
 public:
@@ -44,6 +47,9 @@ public:
     // implmentation
     static T null_value() {
         return NULL;
+    }
+    static bool different(const T &a, const T &b) {
+        return a != b;
     }
     
     guard_base_t(T obj)
@@ -88,20 +94,18 @@ public:
     void done() const {
         assign(Impl::null_value());
     }
-    
-    
+
     ~guard_base_t() {
         done();
     }
     
 protected:
     void assign(T obj) const {
-        if(_obj == obj)
-            return;
-        
-        // free the old object and set it NULL
-        Impl::guard_action(_obj);
-        _obj = obj;
+        if(Impl::different(_obj, obj)) {
+            // free the old object and set it NULL
+            Impl::guard_action(_obj);
+            _obj = obj;
+        }
     }
     
 };
@@ -191,5 +195,96 @@ struct fd_guard_t : guard_base_t<int, fd_guard_t> {
 };
 
 
+/**
+ * @brief Support class for cursor_guard_t
+ */
+struct cursor_info_t {
+    Db* _db;
+    Dbc* _cursor;
+    cursor_info_t(Db* db, Dbc* cursor)
+        : _db(db), _cursor(cursor)
+    {
+    }
+};
+
+/**
+ * @brief Ensures that a BDB cursor gets closed. The Db* is necessary
+ * for error reporting
+ */
+struct cursor_guard_t : guard_base_t<cursor_info_t, cursor_guard_t> {
+    typedef guard_base_t<cursor_info_t, cursor_guard_t> Base;
+    static cursor_info_t open_cursor(Db* db) {
+        Dbc *dbc;
+        int ret = db->cursor(NULL, &dbc, 0);
+        if(ret) {
+            db->err(ret, "db->cursor() failed: ");
+            throw EXCEPTION(qpipe::Berkeley_DB_Exception, "Unable to open DB cursor");
+        }
+        
+        return cursor_info_t(db, dbc);
+    }
+    cursor_guard_t(Db* db)
+        : Base(open_cursor(db))
+    {
+    }
+    cursor_guard_t(Db* db, Dbc* cursor)
+        : Base(cursor_info_t(db, cursor))
+    {
+    }
+    cursor_guard_t(const cursor_info_t &info) 
+        : Base(info)
+    {
+    }
+    static void guard_action(cursor_info_t &info) {
+        int ret = info._cursor->close();
+        if(ret)
+            info._db->err(ret, "_cursor->close() failed: ");
+    }
+    static cursor_info_t null_value() {
+        return cursor_info_t(NULL, NULL);
+    }
+    static bool different(const cursor_info_t &a, const cursor_info_t &b) {
+        return a._cursor != b._cursor;
+    }
+    operator Dbc*() const {
+        return Base::get()._cursor;
+    }
+    Dbc &operator *() const {
+        return *Base::get()._cursor;
+    }
+    Dbc* operator ->() const {
+        return Base::get()._cursor;
+    }
+};
+
+struct dbt_guard_t : guard_base_t<Dbt, dbt_guard_t> {
+    typedef guard_base_t<Dbt, dbt_guard_t> Base;
+    
+    // The blob must be aligned for int accesses and a multiple of
+    // 1024 bytes long.
+    dbt_guard_t(size_t len)
+        : Base(Dbt(new int[len/sizeof(int)], len))
+    {
+        _obj.set_flags(DB_DBT_USERMEM);
+    }
+    static void guard_action(const Dbt &dbt) {
+        delete [] (int*) dbt.get_data();
+    }
+    static Dbt null_value() {
+        return Dbt();
+    }
+    static bool different(const Dbt &a, const Dbt &b) {
+        return a.get_data() != b.get_data();
+    }
+    operator Dbt*() const {
+        return &_obj;
+    }
+    Dbt &operator *() const {
+        return _obj;
+    }
+    Dbt* operator ->() const {
+        return &_obj;
+    }
+};
 
 #endif

@@ -104,7 +104,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         predicate_t* p;
 
         // where L_SHIPMODE in ('MAIL', 'SHIP') ...
-        offset = FIELD_OFFSET(tpch_lineitem_tuple, L_SHIPMODE);
+        offset = offsetof(tpch_lineitem_tuple, L_SHIPMODE);
         or_predicate_t* orp = new or_predicate_t();
         p = new scalar_predicate_t<tpch_l_shipmode>(MAIL, offset);
         orp->add(p);
@@ -113,20 +113,20 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(orp);
 
         // ... and L_COMMITDATE < L_RECEIPTDATE ...
-        size_t offset1 = FIELD_OFFSET(tpch_lineitem_tuple, L_COMMITDATE);
-        size_t offset2 = FIELD_OFFSET(tpch_lineitem_tuple, L_RECEIPTDATE);
+        size_t offset1 = offsetof(tpch_lineitem_tuple, L_COMMITDATE);
+        size_t offset2 = offsetof(tpch_lineitem_tuple, L_RECEIPTDATE);
         p = new field_predicate_t<time_t, less>(offset1, offset2);
         _filter.add(p);
 
         // ... and L_SHIPDATE < L_COMMITDATE ...
-        offset1 = FIELD_OFFSET(tpch_lineitem_tuple, L_SHIPDATE);
-        offset2 = FIELD_OFFSET(tpch_lineitem_tuple, L_COMMITDATE);
+        offset1 = offsetof(tpch_lineitem_tuple, L_SHIPDATE);
+        offset2 = offsetof(tpch_lineitem_tuple, L_COMMITDATE);
         p = new field_predicate_t<time_t, less>(offset1, offset2);
         _filter.add(p);
 
         // ... and L_RECEIPTDATE >= [date] ...
         time_t date = datestr_to_timet("1994-01-01");
-        offset = FIELD_OFFSET(tpch_lineitem_tuple, L_RECEIPTDATE);
+        offset = offsetof(tpch_lineitem_tuple, L_RECEIPTDATE);
         p = new scalar_predicate_t<time_t, greater_equal>(date, offset);
         _filter.add(p);
 
@@ -154,11 +154,11 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
  */
 struct q12_join_t : tuple_join_t {
     static key_extractor_t* create_left_extractor() {
-        size_t offset = FIELD_OFFSET(order_scan_tuple, O_ORDERKEY);
+        size_t offset = offsetof(order_scan_tuple, O_ORDERKEY);
         return new int_key_extractor_t(sizeof(int), offset);
     }
     static key_extractor_t* create_right_extractor() {
-        size_t offset = FIELD_OFFSET(lineitem_scan_tuple, L_ORDERKEY);
+        size_t offset = offsetof(lineitem_scan_tuple, L_ORDERKEY);
         return new int_key_extractor_t(sizeof(int), offset);
     }
     q12_join_t()
@@ -202,14 +202,14 @@ struct q12_aggregate_t : tuple_aggregate_t {
     q12_aggregate_t()
         : tuple_aggregate_t(sizeof(q12_tuple)),
           _extractor(sizeof(tpch_l_shipmode),
-                     FIELD_OFFSET(q12_tuple, L_SHIPMODE))
+                     offsetof(q12_tuple, L_SHIPMODE))
     {
         size_t offset;
         predicate_t* p;
 
         // case when O_ORDERPRIORITY = '1-URGENT' or O_ORDERPRIORITY =
         // '2-HIGH' then 1 else 0 end
-        offset = FIELD_OFFSET(join_tuple, O_ORDERPRIORITY);
+        offset = offsetof(join_tuple, O_ORDERPRIORITY);
         p = new scalar_predicate_t<tpch_o_orderpriority>(URGENT_1, offset);
         _filter.add(p);
         p = new scalar_predicate_t<tpch_o_orderpriority>(HIGH_2, offset);
@@ -284,7 +284,7 @@ int main() {
         // partial aggregation
         filter = new trivial_filter_t(sizeof(q12_tuple));
         buffer = new tuple_buffer_t(sizeof(q12_tuple));
-        size_t offset = FIELD_OFFSET(join_tuple, L_SHIPMODE);
+        size_t offset = offsetof(join_tuple, L_SHIPMODE);
         key_extractor_t* extractor = new default_key_extractor_t(sizeof(int), offset);
         key_compare_t* compare = new int_key_compare_t();
         tuple_aggregate_t* aggregate = new q12_aggregate_t();

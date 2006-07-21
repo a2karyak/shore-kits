@@ -87,7 +87,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
     {
-        size_t offset = FIELD_OFFSET(tpch_lineitem_tuple, L_SHIPDATE);
+        size_t offset = offsetof(tpch_lineitem_tuple, L_SHIPDATE);
         predicate_t* p;
 
         // L_SHIPDATE >= [date]
@@ -124,10 +124,10 @@ struct q14_join : tuple_join_t {
     q14_join()
         : tuple_join_t(sizeof(part_scan_tuple),
                        new int_key_extractor_t(sizeof(int),
-                                               FIELD_OFFSET(part_scan_tuple, P_PARTKEY)),
+                                               offsetof(part_scan_tuple, P_PARTKEY)),
                        sizeof(lineitem_scan_tuple),
                        new int_key_extractor_t(sizeof(int),
-                                               FIELD_OFFSET(lineitem_scan_tuple, L_PARTKEY)),
+                                               offsetof(lineitem_scan_tuple, L_PARTKEY)),
                        new int_key_compare_t(), sizeof(join_tuple))
     {
     }
@@ -160,7 +160,7 @@ struct q14_aggregate : tuple_aggregate_t {
     q14_aggregate()
         : tuple_aggregate_t(sizeof(q14_tuple)),
           _extractor(0, 0),
-          _filter("PROMO%", FIELD_OFFSET(join_tuple, P_TYPE))
+          _filter("PROMO%", offsetof(join_tuple, P_TYPE))
     {
     }
 
