@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
         dispatcher_t::dispatch_packet(q6_packet);
     
         tuple_t output;
-        while(!output_buffer->get_tuple(output)) {
+        while(output_buffer->get_tuple(output)) {
             double* r = (double*)output.data;
             TRACE(TRACE_ALWAYS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
         }

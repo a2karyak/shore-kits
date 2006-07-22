@@ -69,7 +69,7 @@ void partial_aggregate_stage_t::process_packet() {
             tuple_t in;
             while(1) {
                 // out of pages?
-                if(input_buffer->get_tuple(in))
+                if(!input_buffer->get_tuple(in))
                    break;
 
                 int hint = tup_key->extract_hint(in);

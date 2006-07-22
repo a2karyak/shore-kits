@@ -243,7 +243,7 @@ public:
         tuple_t output;
 	TRACE(TRACE_QUERY_RESULTS, "*** Q1 ANSWER ...\n");
 	TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
-        while(!agg_output_buffer->get_tuple(output)) {
+        while(agg_output_buffer->get_tuple(output)) {
             aggregate_tuple *tuple;
             tuple = (aggregate_tuple *) output.data;
             TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",

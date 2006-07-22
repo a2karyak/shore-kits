@@ -363,7 +363,7 @@ void sort_stage_t::process_packet() {
 
 
     // quick optimization: if no input tuples, simply return
-    if(_input_buffer->wait_for_input())
+    if(!_input_buffer->wait_for_input())
         return;
     
     // create a buffer page for writing to file
@@ -418,7 +418,7 @@ void sort_stage_t::process_packet() {
         std::sort(array.begin(), array.end(), tuple_less_t(_extract, _compare));
 
          // are we done?
-        bool eof = _input_buffer->wait_for_input();
+        bool eof = !_input_buffer->wait_for_input();
 
         // shortcut if we fit in memory...
         if(first_run && eof) {
