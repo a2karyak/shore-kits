@@ -12,10 +12,10 @@
 static bool open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp,
                           const char* table_name);
-static bool open_db_index(Db* table, Db*& index, u_int32_t flags,
+static bool open_db_index(Db* table, Db* &assoc, Db*& index, u_int32_t flags,
                           bt_compare_func_t cmp,
                           idx_key_create_func_t key_create,
-                          const char* index_name);
+                          const char* assoc_name, const char* index_name);
 static bool close_db_table(Db*& table, const char* table_name);
 
 
@@ -118,10 +118,13 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         return false;
 
     // open indexes
-    if( !open_db_index(tpch_lineitem, tpch_lineitem_shipdate, flags,
+    if( !open_db_index(tpch_lineitem, tpch_lineitem_shipdate,
+                       tpch_lineitem_shipdate_idx,
+                       flags,
                        tpch_lineitem_shipdate_compare_fcn,
                        tpch_lineitem_shipdate_key_fcn,
-                       INDEX_LINEITEM_SHIPDATE_NAME))
+                       INDEX_LINEITEM_SHIPDATE_NAME,
+                       INDEX_LINEITEM_SHIPDATE_NAME "_IDX"))
 
     TRACE(TRACE_ALWAYS, "BerekeleyDB buffer pool set to %d GB, %d B\n",
           db_cache_size_gb,
@@ -138,6 +141,7 @@ bool db_close() {
     bool ret = true;
 
     // close indexes
+    ret &= close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
     ret &= close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
 
     // close tables
@@ -201,18 +205,23 @@ static bool close_db_table(Db* &table, const char* table_name) {
     return true;
 }
 
-static bool open_db_index(Db* table, Db*& index, u_int32_t,
+static bool open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
                           bt_compare_func_t cmp,
                           idx_key_create_func_t key_create,
-                          const char* index_name) {
+                          const char* assoc_name, const char* index_name) {
 
     try {
+        assoc = new Db(dbenv, 0);
+        assoc->set_bt_compare(cmp);
+        // not necessarily unique...
+        assoc->set_flags(DB_DUP);
+        assoc->open(NULL, index_name, NULL, DB_BTREE, DB_THREAD | DB_CREATE, 0644);
+        table->associate(NULL, assoc, key_create, DB_CREATE);
+
         index = new Db(dbenv, 0);
         index->set_bt_compare(cmp);
-        // not necessarily unique...
         index->set_flags(DB_DUP);
-        index->open(NULL, index_name, NULL, DB_BTREE, DB_THREAD | DB_CREATE, 0644);
-        table->associate(NULL, index, key_create, DB_CREATE);
+        index->open(NULL, index_name, NULL, DB_BTREE, DB_THREAD, 0644);
         
     }
     catch ( DbException &e) {

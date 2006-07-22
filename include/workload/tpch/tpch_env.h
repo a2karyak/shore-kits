@@ -25,4 +25,5 @@ extern Db* tpch_supplier;
 
 // indexes
 extern Db* tpch_lineitem_shipdate;
+extern Db* tpch_lineitem_shipdate_idx;
 #endif

@@ -153,7 +153,10 @@ public:
     typedef sort_packet_t stage_packet_t;
 
 
-    sort_stage_t() { }
+    sort_stage_t()
+        : _monitor_thread(0)
+    {
+    }
 
     
     ~sort_stage_t() {

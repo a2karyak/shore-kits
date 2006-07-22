@@ -14,6 +14,7 @@ STAGES = \
    stages/fdump.cpp \
    stages/tscan.cpp \
    stages/iscan.cpp \
+   stages/iprobe.cpp \
    stages/aggregate.cpp \
    stages/partial_aggregate.cpp \
    stages/sorted_in.cpp \

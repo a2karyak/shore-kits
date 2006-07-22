@@ -11,6 +11,11 @@
 #include "engine/thread.h"
 #include "engine/dispatcher.h"
 #include "engine/stages/iscan.h"
+#include "engine/stages/sort.h"
+#include "engine/stages/iprobe.h"
+#include "engine/stages/fscan.h"
+#include "engine/stages/merge.h"
+#include "engine/stages/fdump.h"
 #include "engine/stages/aggregate.h"
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/util/stopwatch.h"
@@ -90,30 +95,49 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     
     
     // ISCAN
-    tuple_buffer_t* iscan_output = new tuple_buffer_t(2*sizeof(double));
+    tuple_buffer_t* iscan_output = new tuple_buffer_t(3*sizeof(int));
     iscan_packet_t *q6_iscan_packet;
     c_str id("%s_ISCAN_PACKET", client_prefix.data());
     q6_iscan_packet = new iscan_packet_t(id,
                                          iscan_output,
-                                         new q6_iscan_filter_t(discount, qty),
-                                         tpch_lineitem_shipdate,
+                                         //new q6_iscan_filter_t(discount, qty),
+                                         new trivial_filter_t(iscan_output->tuple_size),
+                                         tpch_lineitem_shipdate_idx,
                                          start_key, stop_key,
                                          tpch_lineitem_shipdate_compare_fcn
                                          );
-    
+
+    // SORT IDS
+    sort_packet_t* q6_sort_packet;
+    id = c_str("%s_SORT_PACKET", client_prefix.data());
+    q6_sort_packet = new sort_packet_t(id, new tuple_buffer_t(iscan_output->tuple_size),
+                                       new trivial_filter_t(iscan_output->tuple_size),
+                                       new int_key_extractor_t(),
+                                       new int_key_compare_t(),
+                                       q6_iscan_packet);
+
+    // PROBE IDS
+    iprobe_packet_t* q6_probe_packet;
+    id = c_str("%s_IPROBE_PACKET", client_prefix.data());
+    q6_probe_packet = new iprobe_packet_t(id, new tuple_buffer_t(sizeof(iscan_tuple)),
+                                          new q6_iscan_filter_t(discount, qty),
+                                          q6_sort_packet, tpch_lineitem);
+                                       
     // AGGREGATE
     id = c_str("%s_AGGREGATE_PACKET", client_prefix.data());
     aggregate_packet_t* q6_agg_packet;
     q6_agg_packet = new aggregate_packet_t(id,
                                            new tuple_buffer_t(2*sizeof(double)),
-                                           new trivial_filter_t(iscan_output->tuple_size),
+                                           new trivial_filter_t(2*sizeof(double)),
                                            new q6_count_aggregate_t(),
                                            new default_key_extractor_t(0),
-                                           q6_iscan_packet);
+                                           q6_probe_packet);
     
     dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(q6_agg_packet, qs);
     dp->assign_packet_to_cpu(q6_iscan_packet, qs);
+    dp->assign_packet_to_cpu(q6_sort_packet, qs);
+    dp->assign_packet_to_cpu(q6_probe_packet, qs);
     dp->query_state_destroy(qs);
 
     return q6_agg_packet;
@@ -152,6 +176,11 @@ int main(int argc, char* argv[]) {
 
     register_stage<iscan_stage_t>(1);
     register_stage<aggregate_stage_t>(1);
+    register_stage<sort_stage_t>();
+    register_stage<iprobe_stage_t>();
+    register_stage<fscan_stage_t>(10);
+    register_stage<merge_stage_t>(10);
+    register_stage<fdump_stage_t>(10);
     
 
     for(int i=0; i < num_iterations; i++) {
@@ -164,7 +193,7 @@ int main(int argc, char* argv[]) {
         dispatcher_t::dispatch_packet(q6_packet);
     
         tuple_t output;
-        while(!output_buffer->get_tuple(output)) {
+        while(output_buffer->get_tuple(output)) {
             double* r = (double*)output.data;
             TRACE(TRACE_ALWAYS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
         }

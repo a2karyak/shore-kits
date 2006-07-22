@@ -87,6 +87,8 @@ public:
           printf("%.2f - %.2f\n", tuple->L_QUANTITY, QUANTITY);
         */
 
+        DISCOUNT = .06;
+        QUANTITY = 24;
         if  ( ( tuple->L_SHIPDATE >= t1 ) &&
               ( tuple->L_SHIPDATE < t2 ) &&
               ( tuple->L_DISCOUNT >= (DISCOUNT - 0.01)) &&

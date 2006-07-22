@@ -43,7 +43,7 @@ const size_t iscan_stage_t::ISCAN_READ_BUFFER_SIZE=256;
 
 
 /**
- *  @brief Read the specified table.
+ *  @brief Scan the specified index for a given range of keys.
  *
  *  @return 0 on success. Non-zero on unrecoverable error. The stage
  *  should terminate all queries it is processing.

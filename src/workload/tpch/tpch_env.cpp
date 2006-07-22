@@ -17,5 +17,6 @@ Db* tpch_partsupp = NULL;
 Db* tpch_region = NULL;
 Db* tpch_supplier = NULL;
 
-// indexes
+// indexes (*_idx are unassociated and only return primary keys)
 Db* tpch_lineitem_shipdate = NULL;
+Db* tpch_lineitem_shipdate_idx = NULL;

@@ -236,9 +236,11 @@ struct cursor_guard_t : guard_base_t<cursor_info_t, cursor_guard_t> {
     {
     }
     static void guard_action(cursor_info_t &info) {
-        int ret = info._cursor->close();
-        if(ret)
-            info._db->err(ret, "_cursor->close() failed: ");
+        if(info._cursor) {
+            int ret = info._cursor->close();
+            if(ret)
+                info._db->err(ret, "_cursor->close() failed: ");
+        }
     }
     static cursor_info_t null_value() {
         return cursor_info_t(NULL, NULL);

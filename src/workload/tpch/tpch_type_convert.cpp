@@ -9,7 +9,6 @@
 
 
 
-
 int datepart(char* str, const time_t *pt) {
     tm tm_struct;
     tm_struct = *(localtime(pt));
@@ -41,6 +40,13 @@ time_t datestr_to_timet(char* str) {
     return mktime(&time_str);
 }
 
+char* timet_to_datestr(time_t time) {
+    struct tm tm;
+    localtime_r(&time, &tm);
+    char* result;
+    asprintf(&result, "%04d-%02d-%02d\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
+    return result;
+}
 
 tpch_l_shipmode modestr_to_shipmode(char* tmp) {
     if (!strcmp(tmp, "REG AIR"))
