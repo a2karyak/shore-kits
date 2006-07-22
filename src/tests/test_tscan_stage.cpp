@@ -32,12 +32,7 @@ using namespace qpipe;
 int main() {
 
     thread_init();
-
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
-
+    db_open();
 
     register_stage<tscan_stage_t>(1);
 
@@ -62,7 +57,6 @@ int main() {
     }
 
 
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_close();
     return 0;
 }

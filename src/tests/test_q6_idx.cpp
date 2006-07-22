@@ -151,6 +151,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
     dispatcher_policy_t* dp = new dispatcher_policy_os_t();
     TRACE_SET(TRACE_ALWAYS);
 
@@ -166,13 +167,6 @@ int main(int argc, char* argv[]) {
 	exit(-1);
     }
 
-
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
-
-    
 
     register_stage<iscan_stage_t>(1);
     register_stage<aggregate_stage_t>(1);
@@ -202,7 +196,6 @@ int main(int argc, char* argv[]) {
     }
     
  
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_close();
     return 0;
 }

@@ -5,6 +5,6 @@
 
 #include "workload/tpch/tpch_tables.h"
 
-bool db_load(const char* tbl_path="tbl");
+void db_load(const char* tbl_path="tbl");
 
 #endif

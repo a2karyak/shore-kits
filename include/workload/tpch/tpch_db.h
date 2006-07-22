@@ -8,10 +8,10 @@
 #include <db_cxx.h>
 
 
-bool db_open(u_int32_t flags=DB_RDONLY|DB_THREAD,
+void db_open(u_int32_t flags=DB_RDONLY|DB_THREAD,
              u_int32_t db_cache_size_gb=BDB_BUFFER_POOL_SIZE_GB,
              u_int32_t db_cache_size_bytes=BDB_BUFFER_POOL_SIZE_BYTES);
-bool db_close();
+void db_close();
 
 
 #endif

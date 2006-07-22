@@ -186,13 +186,11 @@ struct q14_aggregate : tuple_aggregate_t {
     }
 };
 
+
+
 int main() {
     thread_init();
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
-
+    db_open();
     TRACE_SET(TRACE_ALWAYS);
 
 
@@ -257,8 +255,6 @@ int main() {
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
     
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_close();
     return 0;
-
 }

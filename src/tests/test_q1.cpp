@@ -27,6 +27,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
     TRACE_SET(TRACE_ALWAYS | TRACE_QUERY_RESULTS);
 
 
@@ -40,13 +41,7 @@ int main(int argc, char* argv[]) {
 	TRACE(TRACE_ALWAYS, "Invalid iterations per client %s\n", argv[1]);
 	exit(-1);
     }
-
-
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
-    
+   
     
     register_stage<tscan_stage_t>(1);
     register_stage<partial_aggregate_stage_t>(1);
@@ -60,7 +55,6 @@ int main(int argc, char* argv[]) {
     }
 
     delete dp;
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_close();
     return 0;
 }

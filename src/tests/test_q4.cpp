@@ -25,10 +25,8 @@
 #include "workload/common.h"
 #include "tests/common.h"
 
+
 using namespace qpipe;
-
-
-
 
 
 
@@ -40,6 +38,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
     TRACE_SET(TRACE_ALWAYS | TRACE_QUERY_RESULTS);
 
 
@@ -55,10 +54,6 @@ int main(int argc, char* argv[]) {
     }
 
 
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
 
 
     // line up the stages...
@@ -75,7 +70,6 @@ int main(int argc, char* argv[]) {
     }
 
     delete dp;
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_close();
     return 0;
 }

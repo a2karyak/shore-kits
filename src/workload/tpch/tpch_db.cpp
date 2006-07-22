@@ -3,29 +3,34 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_tables.h"
 #include "workload/tpch/tpch_compare.h"
+#include "engine/core/exception.h"
 #include "engine/bdb_config.h"
 #include "qpipe_panic.h"
 #include "trace.h"
 
+using namespace qpipe;
 
 
-static bool open_db_table(Db*& table, u_int32_t flags,
+
+static void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp,
                           const char* table_name);
-static bool open_db_index(Db* table, Db* &assoc, Db*& index, u_int32_t flags,
+static void open_db_index(Db* table, Db* &assoc, Db*& index, u_int32_t flags,
                           bt_compare_func_t cmp,
                           idx_key_create_func_t key_create,
                           const char* assoc_name, const char* index_name);
-static bool close_db_table(Db*& table, const char* table_name);
+static void close_db_table(Db*& table, const char* table_name);
 
 
 
 /**
- *  @brief : Opens the tpch tables
+ *  @brief Open TPC-H tables.
  *
- *  @return true on success. false on error.
+ *  @return void
+ *
+ *  @throw Berkeley_DB_Exception on error.
  */
-bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_size_bytes) {
+void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_size_bytes) {
 
     // create environment
     try {
@@ -34,7 +39,7 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "Could not create new DbEnv");
     }
   
   
@@ -42,7 +47,7 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     try {
         if (dbenv->set_cachesize(db_cache_size_gb, db_cache_size_bytes, 0)) {
             TRACE(TRACE_ALWAYS, "dbenv->set_cachesize() failed!\n");
-            return false;
+            throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_cachesize() failed!\n");
         }
     }
     catch ( DbException &e) {
@@ -50,7 +55,7 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
               db_cache_size_gb,
               db_cache_size_bytes,
               e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_cachesize() threw DbException");
     }
   
   
@@ -63,7 +68,7 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "Caught DbException setting data directory to \"%s\". Make sure directory exists\n",
               BDB_DATA_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_data_dir() threw DbException");
     }
   
   
@@ -75,9 +80,9 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "Caught DbException setting temp directory to \"%s\". Make sure directory exists\n",
               BDB_TEMP_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_tmp_dir() threw DbException");
     }
-
+    
 
     // open home directory
     try {
@@ -88,71 +93,60 @@ bool db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "Caught DbException opening home directory \"%s\". Make sure directory exists\n",
               BDB_HOME_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->open() threw DbException");
     }
   
 
     // open tables
-    if ( !open_db_table(tpch_customer, flags, tpch_customer_bt_compare_fcn, TABLE_CUSTOMER_NAME) )
-        return false;
-
-    if ( !open_db_table(tpch_lineitem, flags, tpch_lineitem_bt_compare_fcn, TABLE_LINEITEM_NAME) )
-        return false;
-  
-    if ( !open_db_table(tpch_nation, flags, tpch_nation_bt_compare_fcn, TABLE_NATION_NAME) )
-        return false;
-
-    if ( !open_db_table(tpch_orders, flags, tpch_orders_bt_compare_fcn, TABLE_ORDERS_NAME) )
-        return false;
-
-    if ( !open_db_table(tpch_part, flags, tpch_part_bt_compare_fcn, TABLE_PART_NAME) )
-        return false;
-
-    if ( !open_db_table(tpch_partsupp, flags, tpch_partsupp_bt_compare_fcn, TABLE_PARTSUPP_NAME) )
-        return false;
-
-    if ( !open_db_table(tpch_region, flags, tpch_region_bt_compare_fcn, TABLE_REGION_NAME) )
-        return false;
-       
-    if ( !open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, TABLE_SUPPLIER_NAME) )
-        return false;
+    open_db_table(tpch_customer, flags, tpch_customer_bt_compare_fcn, TABLE_CUSTOMER_NAME);
+    open_db_table(tpch_lineitem, flags, tpch_lineitem_bt_compare_fcn, TABLE_LINEITEM_NAME);
+    open_db_table(tpch_nation, flags, tpch_nation_bt_compare_fcn, TABLE_NATION_NAME);
+    open_db_table(tpch_orders, flags, tpch_orders_bt_compare_fcn, TABLE_ORDERS_NAME);
+    open_db_table(tpch_part, flags, tpch_part_bt_compare_fcn, TABLE_PART_NAME);
+    open_db_table(tpch_partsupp, flags, tpch_partsupp_bt_compare_fcn, TABLE_PARTSUPP_NAME);
+    open_db_table(tpch_region, flags, tpch_region_bt_compare_fcn, TABLE_REGION_NAME);
+    open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, TABLE_SUPPLIER_NAME);
 
     // open indexes
-    if( !open_db_index(tpch_lineitem, tpch_lineitem_shipdate,
-                       tpch_lineitem_shipdate_idx,
-                       flags,
-                       tpch_lineitem_shipdate_compare_fcn,
-                       tpch_lineitem_shipdate_key_fcn,
-                       INDEX_LINEITEM_SHIPDATE_NAME,
-                       INDEX_LINEITEM_SHIPDATE_NAME "_IDX"))
+    open_db_index(tpch_lineitem, tpch_lineitem_shipdate,
+                  tpch_lineitem_shipdate_idx,
+                  flags,
+                  tpch_lineitem_shipdate_compare_fcn,
+                  tpch_lineitem_shipdate_key_fcn,
+                  INDEX_LINEITEM_SHIPDATE_NAME,
+                  INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
 
     TRACE(TRACE_ALWAYS, "BerekeleyDB buffer pool set to %d GB, %d B\n",
           db_cache_size_gb,
           db_cache_size_bytes);
     TRACE(TRACE_ALWAYS, "TPCH database open\n");
-    return true;
 }
 
 
 
-bool db_close() {
+/**
+ *  @brief Close TPC-H tables.
+ *
+ *  @return void
+ *
+ *  @throw Berkeley_DB_Exception on error.
+ */
+void db_close() {
 
-
-    bool ret = true;
 
     // close indexes
-    ret &= close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
-    ret &= close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
+    close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
+    close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
 
     // close tables
-    ret &= close_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
-    ret &= close_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
-    ret &= close_db_table(tpch_nation, TABLE_NATION_NAME);
-    ret &= close_db_table(tpch_orders, TABLE_ORDERS_NAME);
-    ret &= close_db_table(tpch_part, TABLE_PART_NAME);
-    ret &= close_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
-    ret &= close_db_table(tpch_region, TABLE_REGION_NAME);
-    ret &= close_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
+    close_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
+    close_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
+    close_db_table(tpch_nation, TABLE_NATION_NAME);
+    close_db_table(tpch_orders, TABLE_ORDERS_NAME);
+    close_db_table(tpch_part, TABLE_PART_NAME);
+    close_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
+    close_db_table(tpch_region, TABLE_REGION_NAME);
+    close_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
 
     
     // close environment
@@ -162,35 +156,45 @@ bool db_close() {
     catch ( DbException &e) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing environment\n");
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->close() threw DbException");
     }
 
-    return ret;
 }
 
 
 
-static bool open_db_table(Db*& table, u_int32_t flags,
+/**
+ *  @brief Open the specified table.
+ *
+ *  @return void
+ *
+ *  @throw Berkeley_DB_Exception on error.
+ */
+static void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp, const char* table_name) {
-
     try {
         table = new Db(dbenv, 0);
         table->set_bt_compare(cmp);
         table->open(NULL, table_name, NULL, DB_BTREE, flags, 0644);
     }
     catch ( DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException opening table \"%s\". Make sure database is set up properly\n",
+        TRACE(TRACE_ALWAYS, "Caught DbException opening table \"%s\". Make sure database is set up properly.\n",
               table_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "table->open() failed");
     }
-
-    return true;
 }
 
 
 
-static bool close_db_table(Db* &table, const char* table_name) {
+/**
+ *  @brief Close the specified table.
+ *
+ *  @return void
+ *
+ *  @throw Berkeley_DB_Exception on error.
+ */
+static void close_db_table(Db* &table, const char* table_name) {
 
     try {
         table->close(0);
@@ -199,13 +203,20 @@ static bool close_db_table(Db* &table, const char* table_name) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing table \"%s\"\n",
               table_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "table->close() failed");
     }
-    
-    return true;
 }
 
-static bool open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
+
+
+/**
+ *  @brief Open the specified table index.
+ *
+ *  @return void
+ *
+ *  @throw Berkeley_DB_Exception on error.
+ */
+static void open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
                           bt_compare_func_t cmp,
                           idx_key_create_func_t key_create,
                           const char* assoc_name, const char* index_name) {
@@ -228,9 +239,7 @@ static bool open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
         TRACE(TRACE_ALWAYS, "Caught DbException opening index \"%s\". Make sure database is set up properly\n",
               index_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        return false;
+        throw EXCEPTION(Berkeley_DB_Exception, "index->open() failed");
     }
-
-    return true;
 }
 

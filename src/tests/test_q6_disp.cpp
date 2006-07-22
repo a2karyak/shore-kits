@@ -79,10 +79,7 @@ int main(int argc, char* argv[]) {
     }
         
         
-    if ( !db_open(flags, db_cache_size_gb, db_cache_size_bytes) ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
+    db_open(flags, db_cache_size_gb, db_cache_size_bytes);
 
 
     register_stage<tscan_stage_t>(num_clients);
@@ -108,7 +105,6 @@ int main(int argc, char* argv[]) {
 
     
     TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_close();
     return 0;
 }

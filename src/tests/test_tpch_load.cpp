@@ -18,18 +18,8 @@
 int main() {
 
     thread_init();
-
-    if ( !db_open(DB_CREATE|DB_TRUNCATE|DB_THREAD) ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
-
-
-    if ( !db_load() )
-        TRACE(TRACE_ALWAYS, "db_load() failed\n");
-
-
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
+    db_open(DB_CREATE|DB_TRUNCATE|DB_THREAD);
+    db_load();
+    db_close();
     return 0;
 }
