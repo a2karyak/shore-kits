@@ -4,8 +4,11 @@
 #define _COMMAND_SET_H
 
 
-void register_commands(void);
-void dispatch_command(const char* command);
+void register_command_handlers(void);
+
+int process_command(const char* command);
+
+void shutdown_command_handlers(void);
 
 
 #endif

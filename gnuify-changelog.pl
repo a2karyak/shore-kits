@@ -13,7 +13,8 @@
 	     "ipandis"   => 'Ippokratis Pandis <ipandis@cs.cmu.edu>',
 	     "nhardave"  => 'Nikos Hardavellas <nhardave@andrew.cmu.edu>',
 	     "ddash"     => 'Debabrata Dash <ddash@andrew.cmu.edu>',
-	     "ngm"       => 'Naju Mancheril <naju@cmu.edu>' );
+	     "ngm"       => 'Naju Mancheril <naju@cmu.edu>',
+	     "root"      => 'root <>' );
 
 $parse_next_line = 0;
 

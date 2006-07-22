@@ -16,6 +16,13 @@ LDADD = ../engine/libqpipe.a \
 # define programs here
 bin_PROGRAMS = qpipe
 
+
+COMMANDS = \
+   command/printer.cpp \
+   command/tpch_handler.cpp
+
 qpipe_SOURCES = \
    server.cpp \
-   command_set.cpp
+   command_set.cpp \
+   interactive_mode.cpp \
+   $(COMMANDS)

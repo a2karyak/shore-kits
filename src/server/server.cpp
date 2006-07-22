@@ -2,12 +2,10 @@
 
 #include "engine/thread.h"
 #include "server/print.h"
-#include "server/config.h"
+#include "server/interactive_mode.h"
 #include "server/command_set.h"
 #include "workload/register_job_drivers.h"
 #include "workload/register_stage_containers.h"
-#include "workload/tpch/tpch_db.h"
-
 
 
 
@@ -20,23 +18,12 @@ void qpipe_shutdown(void);
 
 int main(int argc, char* argv[]) {
 
-
     // qpipe_init() panics on error
     int run_interactive_mode = qpipe_init(argc, argv);
 
 
-    if ( run_interactive_mode ) {
-        PRINT("Interactive mode...\n");
-
-        while (1) {
-            char command_buf[SERVER_COMMAND_BUFFER_SIZE];
-            PRINT("%s", QPIPE_PROMPT);
-            if ( fgets(command_buf, sizeof(command_buf), stdin) == NULL )
-                break;
-           
-            dispatch_command(command_buf);
-        }   
-    }
+    if ( run_interactive_mode )
+        interactive_mode();
 
 
     // qpipe_shutdown() panics on error
@@ -51,14 +38,8 @@ int qpipe_init(int, char*[]) {
     thread_init();
     PRINT("QPipe Execution Engine\n");
 
-    register_commands();
+    register_command_handlers();
 
-
-    /* open DB tables */
-    if ( !db_open() ) {
-        TRACE(TRACE_ALWAYS, "db_open() failed\n");
-        QPIPE_PANIC();
-    }        
     
     /* start up stages */
     register_stage_containers();
@@ -75,11 +56,6 @@ int qpipe_init(int, char*[]) {
 
 
 void qpipe_shutdown() {
-
-    /* close DB tables */
-    if ( !db_close() )
-        TRACE(TRACE_ALWAYS, "db_close() failed\n");
- 
-    PRINT("... closing db\n");
+    shutdown_command_handlers();
     PRINT("Thank you for using QPipe\nExiting...\n");
 }

@@ -8,7 +8,7 @@ int main(int, char**)
 {
   thread_init();
 
-  TRACE(TRACE_ALWAYS, "hello world from %s\n", thread_get_self()->get_thread_name().data());
+  TRACE(TRACE_ALWAYS, "hello world from %s\n", thread_get_self()->thread_name().data());
 
   c_str hm("hello moon");
 

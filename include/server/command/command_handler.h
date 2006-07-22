@@ -8,10 +8,18 @@
 class command_handler_t {
 
 public:
+    
+    virtual void init() {
+        // default implementation ... does nothing
+    }
 
-    virtual void init()=0;
-    virtual void handle(const char* command)=0;
+    virtual void handle_command(const char* command)=0;
+    
+    virtual void shutdown() {
+        // default implementation ... does nothing        
+    }
 
+    virtual ~command_handler_t() { }
 };
 
 

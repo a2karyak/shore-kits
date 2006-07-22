@@ -10,11 +10,6 @@
 # ifndef _SHUFFLE_UTIL_H
 # define _SHUFFLE_UTIL_H
 
-# include <stdlib.h>
-# include <stdio.h>
-# include <sys/time.h>
-# include <unistd.h>
-
 /* Exported Functions */
 
 unsigned int init_srand(unsigned int thid);

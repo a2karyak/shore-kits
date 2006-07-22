@@ -47,13 +47,7 @@ public:
         randtest = rand_r(&mv);
     }
     
-    /* Print predicates */
-    virtual void print_predicates() {
-        TRACE( TRACE_DEBUG, "Printing Job Predicates\n");
-
-        TRACE( TRACE_DEBUG, "%d\n", randtest);
-    }
-    
+   
     /* Start executing */
     virtual void* start() {
         TPCH_Q1::run( global_dispatcher_policy_get() );

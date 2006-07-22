@@ -45,13 +45,13 @@ extern "C" void* start_thread(void *);
  *  init_thread_name_v()) to set up a new thread object's name.
  */
 thread_t::thread_t(const c_str &name)
-    : thread_name(name)
+    : _thread_name(name)
 {
     // Set up random number generator. We will use the thread ID to
     // create the seed. Hopefully, passing it through a hash function
     // will provide enough if a uniform distribution.
     pthread_t this_thread = pthread_self();
-    rand_seed = fnv_hash((const char*)&this_thread, sizeof(this_thread));
+    _rand_seed = fnv_hash((const char*)&this_thread, sizeof(this_thread));
 }
 
 

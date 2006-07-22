@@ -29,8 +29,8 @@ class thread_t {
 
 private:
 
-    c_str thread_name;
-    unsigned int rand_seed;
+    c_str        _thread_name;
+    unsigned int _rand_seed;
 
 public:
 
@@ -41,13 +41,16 @@ public:
     }
 
 
-    c_str get_thread_name() {
-        return thread_name;
+    c_str thread_name() {
+        return _thread_name;
     }
 
 
-    int get_rand() {
-        return rand_r(&rand_seed);
+    /**
+     *  @brief Returns a pseudo-random integer between 0 and RAND_MAX.
+     */
+    int rand() {
+        return rand_r(&_rand_seed);
     }
 
     virtual ~thread_t() { }
@@ -72,11 +75,12 @@ class member_func_thread_t : public thread_t {
 public:
     member_func_thread_t(Class *instance, Functor func, const c_str &thread_name)
         : thread_t(thread_name),
-          _instance(instance), _func(func)
+          _instance(instance),
+          _func(func)
     {
     }
     
-    virtual void *run() {
+    virtual void* run() {
         return _func(_instance);
     }
 };

@@ -24,10 +24,6 @@ using namespace qpipe;
 
 
 
-/** @fn    : main
- *  @brief : TPC-H Q6
- */
-
 int main(int argc, char* argv[]) {
 
     thread_init();

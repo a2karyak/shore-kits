@@ -8,6 +8,10 @@
 */ 
 
 #include "engine/util/shuffle.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 unsigned int srand_seed;
 
