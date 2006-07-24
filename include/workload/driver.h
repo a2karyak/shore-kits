@@ -39,8 +39,7 @@ public:
 
     virtual ~driver_t() { }
 
-    virtual void submit()=0;
-    virtual driver_t* clone()=0;
+    virtual void submit(void* arg)=0;
 };
 
 

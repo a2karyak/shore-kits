@@ -2,6 +2,10 @@
 #ifndef _INT_COMPARATOR_H
 #define _INT_COMPARATOR_H
 
+#include "engine/functors.h"
+
+
+
 struct int_key_compare_t : public key_compare_t {
     virtual int operator()(const void*, const void*) {
         // should be unreachable!

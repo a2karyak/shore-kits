@@ -13,7 +13,18 @@ using namespace qpipe;
 
 
 /**
- *  @brief Wait for created clients to exit.
+ *  @brief Wait for created clients to exit. All clients are created
+ *  in the joinable state, so we just need to wait for them to
+ *  exit. This method should only be called AFTER invoking
+ *  signal_continue() or signal_error() on the client_wait_t instance
+ *  we passed the client threads. Otherwise, we will have
+ *  deadlock. The clients will be waiting to be signaled and the
+ *  runner will be waiting for them to exit.
+ *
+ *  @param thread_ids An array of thread IDs for the created clients.
+ *
+ *  @param num_thread_ids The number of valiid thread IDs in the
+ *  thread_ids array.
  */
 void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
 
@@ -29,9 +40,9 @@ void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
 
 
 /**
- *  @brief Initializes the corresponding threads of clients, starts
- *  them, and then joins them. It will return only when all the
- *  clients have their requests completed.
+ *  @brief Initialize the corresponding threads of clients, start
+ *  them, and then join on them. This method will return only when all
+ *  the clients have completed their runs.
  */
 
 bool workload_t::run(results_t &results) {
@@ -60,6 +71,7 @@ bool workload_t::run(results_t &results) {
                 new workload_client_t(client_name,
                                       &results.client_times[client_index],
                                       _driver,
+                                      _driver_arg,
                                       &client_sync,
                                       _num_iterations,
                                       _think_time);
@@ -104,38 +116,3 @@ bool workload_t::run(results_t &results) {
 
     return true;
 }
-
-
-
-
-#if 0
-/** @fn    : get_info(int)
- *  @brief : Helper function, outputs information about the workload setup
- *  @param : int show_stats - If show_stats is set then it displays throughput and other statistics
- */
-
-void workload_t::get_info(int show_stats) {
-
-    TRACE( TRACE_DEBUG, "RUN parameters: CLIENTS: %d\tTHINKTIME: %d\tNOCOMPLQUERIES: %d\t QUERY: %d\n", 
-           wlNumClients, wlThinkTime, wlNumQueries, wlSelQuery);
-
-    if (show_stats) {
-        // print final statistics
-        queriesCompleted = wlNumClients * wlNumQueries;
-        
-        /* queries per hour */      
-        float tpmC = (60.0 * queriesCompleted) / (wlEndTime - wlStartTime);
-        
-        fprintf(stdout, "~~~\n");
-        fprintf(stdout, "~~~ Clients           = %d \n", wlNumClients);
-        fprintf(stdout, "~~~ Think Time        = %d \n", wlThinkTime);
-        fprintf(stdout, "~~~ Iterations        = %d \n", wlNumQueries);
-        fprintf(stdout, "~~~ Query             = %d \n", wlSelQuery);  
-        fprintf(stdout, "~~~ Completed Queries = %d \n", queriesCompleted);
-        fprintf(stdout, "~~~ Duration          = %ld \n", (wlEndTime - wlStartTime));
-        fprintf(stdout, "~~~\n");
-        fprintf(stdout, "~~~ Throughput        = %.2f queries/min\n", tpmC);
-        fprintf(stdout, "~~~\n");
-    }
-}
-#endif

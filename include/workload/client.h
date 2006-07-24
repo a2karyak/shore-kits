@@ -28,6 +28,7 @@ private:
 
     execution_time_t* _etime;
     driver_t*         _driver;
+    void*             _driver_arg;
     client_wait_t*    _wait;
 
     int _num_iterations;
@@ -39,10 +40,10 @@ public:
     workload_client_t(const c_str      &name,
                       execution_time_t* etime,
                       driver_t*         driver,
+                      void*             driver_arg,
                       client_wait_t*    wait,
                       int               num_iterations,
                       int               think_time_sec);
-                     
                       
     virtual ~workload_client_t();
 

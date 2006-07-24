@@ -44,7 +44,7 @@ int qpipe_init(int, char*[]) {
     register_stage_containers();
 
     // TRACE_SET(TRACE_ALWAYS | TRACE_CPU_BINDING);
-    TRACE_SET(TRACE_ALWAYS);
+    TRACE_SET(TRACE_ALWAYS|TRACE_STATISTICS);
 
     return 1;
 }

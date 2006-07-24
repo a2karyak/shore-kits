@@ -35,12 +35,14 @@ private:
     c_str _name;
   
     // what the workload does
-    pointer_guard_t<driver_t> _driver;
+    driver_t* _driver;     // we don't own this...
+    void*     _driver_arg; // we don't own this...
 
     // other workload properties
     int _num_clients;
-    int _think_time;
     int _num_iterations;
+    int _think_time;
+
 
     void wait_for_clients(pthread_t* thread_ids, int num_thread_ids);
 
@@ -50,8 +52,8 @@ public:
 
         // store workload properties with the results
         int num_clients;
-        int think_time;
         int num_iterations;
+        int think_time;
 
         // total execution time
         execution_time_t total_time;
@@ -59,12 +61,18 @@ public:
         array_guard_t<execution_time_t> client_times;
     };
 
-    workload_t(const c_str &name, driver_t* driver, int num_clients, int think_time, int num_iterations)
+    workload_t(const c_str &name,
+               driver_t*    driver,
+               void*        driver_arg,
+               int          num_clients,
+               int          num_iterations,
+               int          think_time)
         : _name(name),
-          _driver(driver->clone()),
+          _driver(driver),
+          _driver_arg(driver_arg),
           _num_clients(num_clients),
-          _think_time(think_time),
-          _num_iterations(num_iterations)
+          _num_iterations(num_iterations),
+          _think_time(think_time)
     {
     }
 

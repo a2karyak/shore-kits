@@ -20,7 +20,8 @@ WL_TPCH = \
    tpch/tpch_db_load.cpp \
    tpch/tpch_compare.cpp \
    tpch/tpch_env.cpp \
-   tpch/tpch_type_convert.cpp
+   tpch/tpch_type_convert.cpp \
+   tpch/drivers/tpch_q1.cpp
 
 # encapsulates all basic classes needed in qpipe
 lib_LIBRARIES = libworkload.a
