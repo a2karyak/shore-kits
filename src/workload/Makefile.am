@@ -7,7 +7,6 @@ INCLUDES = -I$(top_srcdir)/include \
 WL_BASE = \
    workload.cpp \
    client.cpp \
-   register_job_drivers.cpp \
    register_stage_containers.cpp \
    dispatcher_globals.cpp
 

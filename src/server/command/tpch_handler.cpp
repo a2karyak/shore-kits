@@ -3,7 +3,6 @@
 #include "server/command/tpch_handler.h"
 #include "server/print.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/register_job_drivers.h"
 #include "qpipe_panic.h"
 
 
@@ -32,9 +31,8 @@ void tpch_handler_t::init() {
         /* open DB tables */
         db_open();
 
-        /* register jobs */
-        register_job_drivers();
-
+        /* TODO register drivers here... */
+        
         state = TPCH_HANDLER_INITIALIZED;
     }
 }
