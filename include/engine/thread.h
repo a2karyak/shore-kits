@@ -34,11 +34,7 @@ private:
 
 public:
 
-    virtual void* run() {
-        // should always be over-ridden, but never called for the root
-        // thread
-        assert(false);
-    }
+    virtual void* run()=0;
 
 
     c_str thread_name() {
@@ -58,7 +54,7 @@ public:
 protected:
     
     thread_t(const c_str &name);
-        
+       
 };
 
 

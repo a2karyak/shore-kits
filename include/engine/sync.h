@@ -13,19 +13,17 @@
 
 // exported functions
 
-void pthread_mutex_init_wrapper(pthread_mutex_t* mutex,
-				const pthread_mutexattr_t* attr);
+void pthread_mutex_init_wrapper(pthread_mutex_t* mutex, const pthread_mutexattr_t* attr);
 void pthread_mutex_lock_wrapper(pthread_mutex_t* mutex);
 void pthread_mutex_unlock_wrapper(pthread_mutex_t* mutex);
 void pthread_mutex_destroy_wrapper(pthread_mutex_t* mutex);
 
 
-void pthread_cond_init_wrapper(pthread_cond_t* cond,
-			       const pthread_condattr_t* attr);
+void pthread_cond_init_wrapper(pthread_cond_t* cond, const pthread_condattr_t* attr);
 void pthread_cond_destroy_wrapper(pthread_cond_t* cond);
 void pthread_cond_signal_wrapper(pthread_cond_t* cond);
-void pthread_cond_wait_wrapper(pthread_cond_t* cond,
-			       pthread_mutex_t* mutex);
+void pthread_cond_broadcast_wrapper(pthread_cond_t* cond);
+void pthread_cond_wait_wrapper(pthread_cond_t* cond, pthread_mutex_t* mutex);
 
 
 

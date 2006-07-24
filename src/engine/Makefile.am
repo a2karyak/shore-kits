@@ -37,7 +37,8 @@ UTIL = \
    util/tmpfile.cpp \
    util/fnv.cpp \
    util/time_util.cpp \
-   util/c_str.cpp
+   util/c_str.cpp \
+   util/rcounter.cpp
 
 
 

@@ -1,146 +1,58 @@
-// -*- mode:c++; c-basic-offset:4 -*-
-/** @file    : client.h
- *  @brief   : Definition of the client class
- *  @version : 0.1
- *  @history :
- 6/11/2006: Initial version
-*/ 
+/* -*- mode:c++; c-basic-offset:4 -*- */
 
-/* Definition of QPipe server workload related classes:
-   client_counter : Singleton class for unique client numbers.
-   client_t       : Corresponds to a qpipe client. Such a client is declared
-                    by the selected Query or SQL text, the number of queries to
-                    completed and the think time.
-*/
+#ifndef _WORKLOAD_CLIENT_H
+#define _WORKLOAD_CLIENT_H
 
-#ifndef __WL_CLIENT_H
-#define __WL_CLIENT_H
-
-
-/* Standard */
-#include <cstdlib>
-#include <string>
-
-/* QPipe Engine */
+#include "workload/driver.h"
+#include "workload/client_sync.h"
+#include "workload/measurements.h"
 #include "engine/thread.h"
-#include "engine/util/shuffle.h"
-#include "trace.h"
 
-/* QPipe WL */
-#include "workload/workload.h"
-#include "workload/job.h"
-#include "workload/job_directory.h"
 
-// include me last!!!
+
 #include "engine/namespace.h"
 
 
-#define EMPTY_STRING ""
-
-
-using std::string;
-
-class workload_factory;
-class workload_t;
-
-
-/* Wrapper functions for the creation of threads */
-
-/* starts a specific client */
-void* start_cl(void* arg);
-    
 
 /**
- * class client_counter
+ *  @class workload_client_t
  *
- * @brief : Singleton class that returns a unique identifier for all the
- * clients in the system
+ *  @brief A client thread created and run by a workload.
  */
 
-class client_counter {
+class workload_client_t : public thread_t {
 
- private:
-    /* counter and mutex */
-    int client_cnt;
-    pthread_mutex_t cnt_mutex;
-
-    /* instance and mutex */
-    static client_counter* clcInstance;
-    static pthread_mutex_t instance_mutex;
-
-    client_counter();
-    ~client_counter();
-
- public:
-    static client_counter* instance();
-    void get_next_client_id(int* packet_id);
-};
-
-
-
-/**
- * class client_t
- *
- * @brief : Class that represents a QPipe client
- */
-
-class client_t : public thread_t {
 private:
 
-    // client workload
-    int clUniqueID;
-    int clSelQuery;
-    int clThinkTime;
-    int clNumOfQueries;
+    c_str _name;
 
-    // SQL text
-    string clSQL;
+    execution_time_t* _etime;
+    driver_t*         _driver;
+    client_wait_t*    _wait;
 
-    // pointer to workload
-    workload_t* myWorkload;
+    int _num_iterations;
+    int _think_time_sec;
+    
 
 public:
 
-    // client statistics
-    int clCompleted;
+    workload_client_t(const c_str      &name,
+                      execution_time_t* etime,
+                      driver_t*         driver,
+                      client_wait_t*    wait,
+                      int               num_iterations,
+                      int               think_time_sec);
+                     
+                      
+    virtual ~workload_client_t();
 
-    // time variables
-    time_t clStartTime;
-    time_t clEndTime;
-
-  
-    client_t(const c_str &name);
-
-    /* TODO: Add SQL support */
-    client_t(int query, int think, int iter, const c_str &name); 
-    client_t(const client_t& rhs, const c_str &name);
-    void init();
-
-    ~client_t();
-
-    /* execute */
-    void* run();
-    
-    /* returns client unique ID */
-    int get_unique_id() { return (clUniqueID); }
-
-    // access workload variable
-    void set_workload(workload_t* aWorkload);
-    workload_t* get_workload() { return (myWorkload); }
-
-    // simple client description
-    void desc();
-
-    // members access methods
-    int get_sel_query() { return (clSelQuery); }
-    int get_num_iter() { return (clNumOfQueries); }
-    int get_think_time() { return (clThinkTime); }
-    void set_sql( const string aSQL );
-    string get_sel_sql() { return (clSQL); }
+    virtual void* run();
 };
 
 
+
 #include "engine/namespace.h"
+
 
 
 #endif	// __WL_CLIENT_H

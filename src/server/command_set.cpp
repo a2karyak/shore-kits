@@ -6,6 +6,7 @@
 #include "server/command/command_handler.h"
 #include "server/command/printer.h"
 #include "server/command/tpch_handler.h"
+#include "engine/util/c_str.h"
 
 #include <map>
 #include <string>
@@ -17,13 +18,14 @@ using std::string;
 
 /* internal data structures */
 
-static map<string, command_handler_t*> command_mappings;
+static map<c_str, command_handler_t*> command_mappings;
 
 
 
 /* internal helper functions */
 
-static void add_command(const char* command_tag, command_handler_t* handler);
+static void add_command(const c_str &command_tag, command_handler_t* handler);
+static void add_command(const char*  command_tag, command_handler_t* handler);
 static void dispatch_command(const char* command);
 
 
@@ -74,7 +76,7 @@ int process_command(const char* command) {
 
 void shutdown_command_handlers(void) {
     
-    map<string, command_handler_t*>::iterator iter;
+    map<c_str, command_handler_t*>::iterator iter;
     for (iter = command_mappings.begin(); iter != command_mappings.end(); ) {
         
         command_handler_t* handler = iter->second;
@@ -112,13 +114,29 @@ void shutdown_command_handlers(void) {
  *
  *  @return void
  */
-static void add_command(const char* command_tag, command_handler_t* handler) {
+static void add_command(const c_str &command_tag, command_handler_t* handler) {
 
     // error checking... make sure no previous mapping exists
     assert(command_mappings[command_tag] == NULL);
-
     handler->init();
     command_mappings[command_tag] = handler;
+}
+
+
+
+/**
+ *  @brief Same as add_command(), overloaded for char* command_tag.
+ *
+ *  @param command_tag The command tag to register the handler for.
+ *
+ *  @param handler The command handler to register. Handler will be
+ *  initialized.
+ *
+ *  @return void
+ */
+static void add_command(const char* command_tag, command_handler_t* handler) {
+    c_str tag("%s", command_tag);
+    add_command(tag, handler);
 }
 
 

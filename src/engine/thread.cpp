@@ -67,6 +67,13 @@ public:
         : thread_t(name)
     {
     }
+
+
+    virtual void* run() {
+        // must be overwridden, but never called for the root thread
+        assert(false);
+        return NULL;
+    }
 };
 
 
@@ -238,6 +245,15 @@ void pthread_cond_signal_wrapper(pthread_cond_t* cond)
     int err = pthread_cond_signal(cond);
     if (err)
         thread_fatal_error("pthread_cond_signal()", err);
+}
+
+
+
+void pthread_cond_broadcast_wrapper(pthread_cond_t* cond)
+{
+    int err = pthread_cond_broadcast(cond);
+    if (err)
+        thread_fatal_error("pthread_cond_broadcast()", err);
 }
 
 

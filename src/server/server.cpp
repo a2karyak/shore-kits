@@ -4,7 +4,6 @@
 #include "server/print.h"
 #include "server/interactive_mode.h"
 #include "server/command_set.h"
-#include "workload/register_job_drivers.h"
 #include "workload/register_stage_containers.h"
 
 
@@ -44,9 +43,6 @@ int qpipe_init(int, char*[]) {
     /* start up stages */
     register_stage_containers();
 
-    /* register jobs */
-    register_job_drivers();
-    
     // TRACE_SET(TRACE_ALWAYS | TRACE_CPU_BINDING);
     TRACE_SET(TRACE_ALWAYS);
 
