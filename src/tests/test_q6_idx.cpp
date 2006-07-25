@@ -19,6 +19,7 @@
 #include "engine/stages/aggregate.h"
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/util/stopwatch.h"
+#include "engine/util/time_util.h"
 #include "trace.h"
 #include "qpipe_panic.h"
 

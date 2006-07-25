@@ -80,16 +80,22 @@ void shutdown_command_handlers(void) {
     for (iter = command_mappings.begin(); iter != command_mappings.end(); ) {
         
         command_handler_t* handler = iter->second;
-        handler->shutdown();
 
-        // We would like to delete the command handlers, but we don't
-        // really own them. We don't know how many times this same
-        // handler has been registered with different tags. To avoid
-        // double-delete, allow memory leak. It doesn't "really"
-        // matter since the server is shutting down.
+        // TODO Get rid of this check by using non-mutating lookups in
+        // the map...
+        if (handler != NULL) {
 
-        // TODO Fix this by keeping a separate list where all handlers
-        // are stored exactly once. Delete every element of that list.
+            handler->shutdown();
+            
+            // We would like to delete the command handlers, but we don't
+            // really own them. We don't know how many times this same
+            // handler has been registered with different tags. To avoid
+            // double-delete, allow memory leak. It doesn't "really"
+            // matter since the server is shutting down.
+            
+            // TODO Fix this by keeping a separate list where all handlers
+            // are stored exactly once. Delete every element of that list.
+        }
 
         ++iter;
     }
@@ -117,7 +123,7 @@ void shutdown_command_handlers(void) {
 static void add_command(const c_str &command_tag, command_handler_t* handler) {
 
     // error checking... make sure no previous mapping exists
-    assert(command_mappings[command_tag] == NULL);
+    assert(command_mappings.find(command_tag) == command_mappings.end());
     handler->init();
     command_mappings[command_tag] = handler;
 }

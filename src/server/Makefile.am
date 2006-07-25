@@ -11,7 +11,9 @@ LDADD = ../engine/libqpipe.a \
         ../workload/libworkload.a \
         ../engine/libqpipe.a \
         ../tests/common/libtestcommon.a \
-        $(BDB_HOME)/lib/libdb_cxx.a
+        $(BDB_HOME)/lib/libdb_cxx.a \
+        -lreadline \
+        -lcurses
 
 # define programs here
 bin_PROGRAMS = qpipe

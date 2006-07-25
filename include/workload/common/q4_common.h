@@ -5,6 +5,8 @@
 
 #include "engine/stages/tscan.h"
 #include "engine/stages/hash_join.h"
+#include "engine/stages/partial_aggregate.h"
+#include "workload/tpch/tpch_db.h"
 
 
 

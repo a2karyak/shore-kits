@@ -15,6 +15,7 @@
 #include "tests/common.h"
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
+#include "workload/tpch/drivers/tpch_q1.h"
 
 #include <unistd.h>
 #include <sys/time.h>
@@ -49,8 +50,9 @@ int main(int argc, char* argv[]) {
     dispatcher_policy_t* dp = new dispatcher_policy_os_t();
 
     for(int i=0; i < iterations; i++) {
+        tpch_q1_driver driver(c_str("TPC-H Q1"));
         stopwatch_t timer;
-        TPCH_Q1::run(dp);
+        driver.submit(dp);
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
     }
 
