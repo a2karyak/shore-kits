@@ -1,19 +1,28 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _Q4_COMMON_H
-#define _Q4_COMMON_H
+#include "workload/tpch/drivers/tpch_q4.h"
 
+#include "workload/tpch/tpch_struct.h"
+#include "workload/tpch/tpch_type_convert.h"
+#include "workload/tpch/tpch_env.h"
+#include "workload/common/int_comparator.h"
+
+#include "engine/util/time_util.h"
+
+#include "engine/stages/partial_aggregate.h"
 #include "engine/stages/tscan.h"
 #include "engine/stages/hash_join.h"
-#include "engine/stages/partial_aggregate.h"
-#include "workload/tpch/tpch_db.h"
+
+#include "engine/dispatcher/dispatcher_policy.h"
+#include "engine/dispatcher.h"
 
 
 
 /**
- * @brief select distinct l_orderkey from lineitem where l_commitdate < l_receiptdate
+ * @brief select distinct l_orderkey from lineitem where l_commitdate
+ * < l_receiptdate
  */
-packet_t *line_item_scan(Db* tpch_lineitem) {
+packet_t* line_item_scan(Db* tpch_lineitem) {
     struct lineitem_tscan_filter_t : public tuple_filter_t {
         /* Initialize the predicates */
         lineitem_tscan_filter_t()
@@ -165,87 +174,82 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
 };
 
 
-class TPCH_Q4 {
 
-public:
+void tpch_q4_driver::submit(void* disp) {
 
-    static void run(dispatcher_policy_t* dp) {
+    dispatcher_policy_t* dp = (dispatcher_policy_t*)disp;
+  
+    /*
+     * Query 4 original:
+     *
+     * select o_orderpriority, count(*) as order_count
+     * from orders
+     * where o_order_data <in range> and exists
+     *      (select * from lineitem
+     *       where l_orderkey = o_orderkey and l_commitdate < l_receiptdate)
+     * group by o_orderpriority
+     * order by o_orderpriority
+     *
+     *
+     * Query 4 modified to make the nested query cleaner:
+     *
+     * select o_orderpriority, count(*) as order_count
+     * from orders natural join (
+     *      select distinct l_orderkey
+     *      from lineitem
+     *      where l_commitdate < l_receiptdate)
+     */
 
-        /*
-         * Query 4 original:
-         *
-         * select o_orderpriority, count(*) as order_count
-         * from orders
-         * where o_order_data <in range> and exists
-         *      (select * from lineitem
-         *       where l_orderkey = o_orderkey and l_commitdate < l_receiptdate)
-         * group by o_orderpriority
-         * order by o_orderpriority
-         *
-         *
-         * Query 4 modified to make the nested query cleaner:
-         *
-         * select o_orderpriority, count(*) as order_count
-         * from orders natural join (
-         *      select distinct l_orderkey
-         *      from lineitem
-         *      where l_commitdate < l_receiptdate)
-         */
+    tuple_buffer_t* buffer;
 
-        tuple_buffer_t* buffer;
+    // First deal with the lineitem half
 
-        // First deal with the lineitem half
-
-        packet_t *line_item_packet = line_item_scan(tpch_lineitem);
+    packet_t *line_item_packet = line_item_scan(tpch_lineitem);
         
-        // Now, the orders half
-        packet_t* orders_packet = orders_scan(tpch_orders);
+    // Now, the orders half
+    packet_t* orders_packet = orders_scan(tpch_orders);
 
-        // join them...
-        tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
-        buffer = new tuple_buffer_t(sizeof(int));
-        tuple_join_t* join = new q4_join_t();
-        packet_t* join_packet = new hash_join_packet_t("Orders - Lineitem JOIN",
-                                                       buffer,
-                                                       filter,
-                                                       orders_packet,
-                                                       line_item_packet,
-                                                       join,
-                                                       false,
-                                                       true);
+    // join them...
+    tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
+    buffer = new tuple_buffer_t(sizeof(int));
+    tuple_join_t* join = new q4_join_t();
+    packet_t* join_packet = new hash_join_packet_t("Orders - Lineitem JOIN",
+                                                   buffer,
+                                                   filter,
+                                                   orders_packet,
+                                                   line_item_packet,
+                                                   join,
+                                                   false,
+                                                   true);
 
-        // sort/aggregate in one step
-        filter = new trivial_filter_t(sizeof(q4_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
-        tuple_aggregate_t *aggregate = new q4_count_aggregate_t();
-        packet_t* agg_packet;
-        agg_packet = new partial_aggregate_packet_t("O_ORDERPRIORITY COUNT",
-                                                    buffer,
-                                                    filter,
-                                                    join_packet,
-                                                    aggregate,
-                                                    new default_key_extractor_t(),
-                                                    new int_key_compare_t());
+    // sort/aggregate in one step
+    filter = new trivial_filter_t(sizeof(q4_tuple_t));
+    buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
+    tuple_aggregate_t *aggregate = new q4_count_aggregate_t();
+    packet_t* agg_packet;
+    agg_packet = new partial_aggregate_packet_t("O_ORDERPRIORITY COUNT",
+                                                buffer,
+                                                filter,
+                                                join_packet,
+                                                aggregate,
+                                                new default_key_extractor_t(),
+                                                new int_key_compare_t());
                                                               
-        dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
-        dp->assign_packet_to_cpu(agg_packet, qs);
-        dp->assign_packet_to_cpu(join_packet, qs);
-        dp->assign_packet_to_cpu(orders_packet, qs);
-        dp->assign_packet_to_cpu(line_item_packet, qs);
-        dp->query_state_destroy(qs);
+    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    dp->assign_packet_to_cpu(agg_packet, qs);
+    dp->assign_packet_to_cpu(join_packet, qs);
+    dp->assign_packet_to_cpu(orders_packet, qs);
+    dp->assign_packet_to_cpu(line_item_packet, qs);
+    dp->query_state_destroy(qs);
 
-        // Dispatch packet
-        dispatcher_t::dispatch_packet(agg_packet);
-        
-        tuple_t output;
-        while(!buffer->get_tuple(output)) {
-            q4_tuple_t* r = (q4_tuple_t*) output.data;
-            TRACE(TRACE_QUERY_RESULTS, "*** Q4 Priority: %d. Count: %d.  ***\n",
-                  r->O_ORDERPRIORITY, r->ORDER_COUNT);
-        }
+    // Dispatch packet
+    dispatcher_t::dispatch_packet(agg_packet);
+    tuple_t output;
+    while(buffer->get_tuple(output)) {
+        q4_tuple_t* r = (q4_tuple_t*) output.data;
+        TRACE(TRACE_QUERY_RESULTS, "*** Q4 Priority: %d. Count: %d.  ***\n",
+              r->O_ORDERPRIORITY,
+              r->ORDER_COUNT);
     }
-};        
 
-
-
-#endif
+}

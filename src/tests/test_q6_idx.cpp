@@ -100,14 +100,43 @@ struct lineitem_key_extractor_t : key_extractor_t {
     }
 };
 
+
+
+
+
+// no need for the date range here because the index scan takes care of it
+struct print_filter_t : tuple_filter_t {
+
+    print_filter_t()
+        : tuple_filter_t(2*sizeof(int))
+    {
+    }
+
+    // use default project...
+    
+    virtual bool select(const tuple_t &t) {
+        int* data = (int*)t.data;
+        printf("%d\n", data[0]);
+        return true;
+    }
+
+    virtual print_filter_t* clone() {
+        return new print_filter_t();
+    }
+};
+
+
+
+
+
 packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* dp) {
 
     // choose a random year from 1993 to 1997 (inclusive)
     time_t date = datestr_to_timet("1993-01-01");
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    unsigned seed = tv.tv_usec * getpid();
-    //    int year = abs((int)(5*(float)(rand_r(&seed))/(float)(RAND_MAX+1)));
+
+    // thread_t* self = thread_get_self();
+    // int year = abs((int)(5*(float)(self->rand())/(float)(RAND_MAX+1)));
+
     date = time_add_year(date, 1); // 1994
 
     // now for a qty and discount
@@ -129,6 +158,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
                                          iscan_output,
                                          //new q6_iscan_filter_t(discount, qty),
                                          new trivial_filter_t(iscan_output->tuple_size),
+                                         //new print_filter_t(),
                                          tpch_lineitem_shipdate_idx,
                                          start_key, stop_key,
                                          tpch_lineitem_shipdate_compare_fcn
@@ -138,7 +168,8 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     sort_packet_t* q6_sort_packet;
     id = c_str("%s_SORT_PACKET", client_prefix.data());
     q6_sort_packet = new sort_packet_t(id, new tuple_buffer_t(iscan_output->tuple_size),
-                                       new trivial_filter_t(iscan_output->tuple_size),
+                                       //new trivial_filter_t(iscan_output->tuple_size),
+                                       new print_filter_t(),
                                        new lineitem_key_extractor_t(),
                                        new lineitem_key_compare_t(),
                                        q6_iscan_packet);

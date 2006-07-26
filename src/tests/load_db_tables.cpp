@@ -4,13 +4,11 @@
 #include "workload/tpch/tpch_db.h"
 
 int main() {
-    thread_init();
-    if(db_open(DB_CREATE))
-        printf("Tables opened\n");
+  thread_init();
+  db_open(DB_CREATE);
     
-    if (db_load("tbl")) 
-        printf("Tables populated!\n");
+  db_load("tbl");
 
-    db_close();
-    return 0;
+  db_close();
+  return 0;
 }

@@ -13,7 +13,7 @@ LDADD = \
 
 # define programs here
 bin_PROGRAMS = \
-	load_db_tables \
+  load_db_tables \
    test_trace \
    test_tuple_buffer \
    test_tpch_load \
@@ -31,7 +31,6 @@ bin_PROGRAMS = \
    test_q4 \
    test_q6 \
    test_q6_idx \
-   test_q6_2cl \
    test_q6_disp \
    test_q13 \
    test_q14 \
@@ -41,7 +40,8 @@ bin_PROGRAMS = \
    test_q1 \
    test_q4 \
    test_bitvector \
-   test_hash_map
+   test_hash_map \
+   grouper
 
 load_db_tables_SOURCES = load_db_tables.cpp
 test_trace_SOURCES = test_trace.cpp
@@ -71,3 +71,4 @@ test_q6_2cl_SOURCES = test_q6_2cl.cpp
 test_q6_disp_SOURCES = test_q6_disp.cpp
 test_q1_SOURCES = test_q1.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
+grouper_SOURCES = grouper.cpp

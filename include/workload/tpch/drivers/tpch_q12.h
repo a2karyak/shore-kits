@@ -6,11 +6,11 @@
 using namespace qpipe;
 
 
-class tpch_q4_driver : public driver_t {
+class tpch_q12_driver : public driver_t {
 
 public:
 
-    tpch_q4_driver(const c_str& description)
+    tpch_q12_driver(const c_str& description)
         : driver_t(description)
     {
     }
