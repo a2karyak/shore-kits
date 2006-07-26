@@ -7,6 +7,7 @@
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
 #include "trace.h"
+#include "workload/common/predicates.h"
 #include <math.h>
 
 using namespace qpipe;
@@ -17,6 +18,7 @@ class q6_tscan_filter_t : public tuple_filter_t {
 
 private:
 
+    and_predicate_t _filter;
     bool _echo;
 
     /* Our predicate is represented by these fields. The predicate stays
@@ -47,8 +49,8 @@ public:
         : tuple_filter_t(sizeof(tpch_lineitem_tuple)),
           _echo(echo)
     {
-        t1 = datestr_to_timet("1997-01-01");
-        t2 = datestr_to_timet("1998-01-01");
+        t1 = datestr_to_timet("1994-01-01");
+        t2 = datestr_to_timet("1995-01-01");
 
         /* Calculate random predicates */
         gettimeofday(&tv, 0);
@@ -64,11 +66,11 @@ public:
         QUANTITY = 24 + fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1));
 
         TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT, QUANTITY);
-    }
 
-
-    /* Predication */
-    virtual bool select(const tuple_t &input) {
+        QUANTITY = 24;
+        DISCOUNT = .06;
+        size_t offset;
+        predicate_t* p;
 
         /* Predicate:
            L_SHIPDATE >= DATE AND
@@ -76,43 +78,27 @@ public:
            L_DISCOUNT BETWEEN DISCOUNT - 0.01 AND DISCOUNT + 0.01 AND
            L_QUANTITY < QUANTITY
         */
+        offset = offsetof(tpch_lineitem_tuple, L_SHIPDATE);
+        p = new scalar_predicate_t<time_t, greater_equal>(t1, offset);
+        _filter.add(p);
+        p = new scalar_predicate_t<time_t, less>(t2, offset);
+        _filter.add(p);
 
-        tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
+        offset = offsetof(tpch_lineitem_tuple, L_DISCOUNT);
+        p = new scalar_predicate_t<double, greater_equal>(DISCOUNT-.01, offset);
+        _filter.add(p);
+        p = new scalar_predicate_t<double, less_equal>(DISCOUNT+.01, offset);
+        _filter.add(p);
+        
+        offset = offsetof(tpch_lineitem_tuple, L_QUANTITY);
+        p = new scalar_predicate_t<double, less>(QUANTITY, offset);
+        _filter.add(p);
+    }
 
-        /*
-          printf("%d - %d\t", (int)tuple->L_SHIPDATE, (int)t1);
-          printf("%d - %d\t", (int)tuple->L_SHIPDATE, (int)t2);
-          printf("%.2f - %.2f\t", tuple->L_DISCOUNT, DISCOUNT - 0.01);
-          printf("%.2f - %.2f\t", tuple->L_DISCOUNT, DISCOUNT + 0.01);
-          printf("%.2f - %.2f\n", tuple->L_QUANTITY, QUANTITY);
-        */
 
-        DISCOUNT = .06;
-        QUANTITY = 24;
-        if  ( ( tuple->L_SHIPDATE >= t1 ) &&
-              ( tuple->L_SHIPDATE < t2 ) &&
-              ( tuple->L_DISCOUNT >= (DISCOUNT - 0.01)) &&
-              ( tuple->L_DISCOUNT <= (DISCOUNT + 0.01)) &&
-              ( tuple->L_QUANTITY < (QUANTITY)) )
-        {
-            if (_echo) printf("+");
-            return (true);
-        }
-        else {
-            if (_echo) printf(".");
-            return (false);
-        }
-
-        /*
-        // TODO: Should ask the Catalog
-        double* d_discount = (double*)(input.data + 4*sizeof(int)+3*sizeof(double));
-
-        // all the lineitems with discount > 0.04 pass the filter
-        if (*d_discount > 0.04) {
-        //	    TRACE(TRACE_DEBUG, "Passed Filtering:\t %.2f\n", *d_discount);
-        return (true);
-        }
-        */
+    /* Predication */
+    virtual bool select(const tuple_t &input) {
+        return _filter.select(input);
     }
     
     /* Projection */

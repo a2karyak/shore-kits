@@ -36,5 +36,6 @@ packet_t* create_q6_packet(const c_str &client_prefix, dispatcher_policy_t* dp) 
     dp->assign_packet_to_cpu(q6_tscan_packet, qs);
     dp->query_state_destroy(qs);
 
-    return q6_agg_packet;
+    //    return q6_agg_packet;
+    return q6_tscan_packet;
 }

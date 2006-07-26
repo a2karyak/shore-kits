@@ -13,6 +13,7 @@ LDADD = \
 
 # define programs here
 bin_PROGRAMS = \
+	load_db_tables \
    test_trace \
    test_tuple_buffer \
    test_tpch_load \
@@ -42,6 +43,7 @@ bin_PROGRAMS = \
    test_bitvector \
    test_hash_map
 
+load_db_tables_SOURCES = load_db_tables.cpp
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
 test_bitvector_SOURCES = test_bitvector.cpp

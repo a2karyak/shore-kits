@@ -32,19 +32,20 @@ int tpch_lineitem_shipdate_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+    struct {
+        TYPEOF(tpch_lineitem_tuple, L_ORDERKEY) ok;
+        TYPEOF(tpch_lineitem_tuple, L_LINENUMBER) ln;
+    } key1, key2;
 
-    // key has 3 integers
-    int u1[3];
-    int u2[3];
-    memcpy(u1, k1->get_data(), 3 * sizeof(int));
-    memcpy(u2, k2->get_data(), 3 * sizeof(int));
+    memcpy(&key1, k1->get_data(), sizeof(key1));
+    memcpy(&key2, k2->get_data(), sizeof(key2));
 
-    if ((u1[0] < u2[0]) || ((u1[0] == u2[0]) && (u1[1] < u2[1])) || ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] < u2[2])))
-        return -1;
-    else if ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] == u2[2]))
-        return 0;
-    else
-        return 1;
+    TYPEOF(tpch_lineitem_tuple, L_ORDERKEY) ok_diff = key1.ok - key2.ok;
+    if(ok_diff != 0)
+        return ok_diff;
+
+    TYPEOF(tpch_lineitem_tuple, L_LINENUMBER) ln_diff = key1.ln - key2.ln;
+    return ln_diff;
 }
 
 

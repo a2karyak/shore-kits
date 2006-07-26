@@ -13,7 +13,7 @@
 #include "workload/tpch/tpch_db.h"
 
 // experimental!
-#include "predicates.h"
+#include "workload/common/predicates.h"
 
 using namespace qpipe;
 

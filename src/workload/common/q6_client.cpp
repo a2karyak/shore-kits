@@ -30,7 +30,11 @@ void* q6_client_main(void* arg) {
         dispatcher_t::dispatch_packet(q6);
 
         tuple_t output;
-        while( !out->get_tuple(output) ) {
+        int count;
+        for(count=0; out->get_tuple(output); count++);
+        printf("Count: %d\n", count);
+        if(0)
+        while( out->get_tuple(output) ) {
             double* r = (double*)output.data;
             TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
         }

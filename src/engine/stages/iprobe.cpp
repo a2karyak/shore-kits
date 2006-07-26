@@ -58,7 +58,7 @@ void iprobe_stage_t::process_packet() {
     Dbt tuple(tuple_data, tuple_size);
     tuple.set_flags(DB_DBT_USERMEM);
     tuple.set_ulen(tuple_size);
-
+    cursor_guard_t cursor(db);
     while(1) {
         // no more tuples?
         tuple_t src;
@@ -66,7 +66,7 @@ void iprobe_stage_t::process_packet() {
             return;
 
         Dbt key(src.data, src.size);
-        int err = db->get(NULL, &key, &tuple, 0);
+        int err = cursor->get(&key, &tuple, DB_SET);
         if(err) 
             assert(err == DB_NOTFOUND);
         else

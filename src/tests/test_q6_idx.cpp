@@ -29,7 +29,7 @@
 #include "workload/tpch/tpch_compare.h"
 
 #include "db_cxx.h"
-#include "predicates.h"
+#include "workload/common/predicates.h"
 
 using namespace qpipe;
 
@@ -74,6 +74,32 @@ struct q6_iscan_filter_t : tuple_filter_t {
     }
 };
 
+struct lineitem_key_compare_t : key_compare_t {
+    int operator()(const void* key1, const void* key2) {
+        Dbt k1((void*) key1, 2*sizeof(int));
+        Dbt k2((void*) key2, 2*sizeof(int));
+        return tpch_lineitem_bt_compare_fcn(NULL, &k1, &k2);
+    }
+    lineitem_key_compare_t* clone() {
+        return new lineitem_key_compare_t(*this);
+    }
+};
+
+struct lineitem_key_extractor_t : key_extractor_t {
+    lineitem_key_extractor_t()
+        : key_extractor_t(2*sizeof(int), 0)
+    {
+    }
+    int extract_hint(const char* key) {
+        int hint;
+        memcpy(&hint, key, sizeof(int));
+        return hint;
+    }
+    lineitem_key_extractor_t* clone() {
+        return new lineitem_key_extractor_t(*this);
+    }
+};
+
 packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* dp) {
 
     // choose a random year from 1993 to 1997 (inclusive)
@@ -96,7 +122,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     
     
     // ISCAN
-    tuple_buffer_t* iscan_output = new tuple_buffer_t(3*sizeof(int));
+    tuple_buffer_t* iscan_output = new tuple_buffer_t(2*sizeof(int));
     iscan_packet_t *q6_iscan_packet;
     c_str id("%s_ISCAN_PACKET", client_prefix.data());
     q6_iscan_packet = new iscan_packet_t(id,
@@ -113,8 +139,8 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     id = c_str("%s_SORT_PACKET", client_prefix.data());
     q6_sort_packet = new sort_packet_t(id, new tuple_buffer_t(iscan_output->tuple_size),
                                        new trivial_filter_t(iscan_output->tuple_size),
-                                       new int_key_extractor_t(),
-                                       new int_key_compare_t(),
+                                       new lineitem_key_extractor_t(),
+                                       new lineitem_key_compare_t(),
                                        q6_iscan_packet);
 
     // PROBE IDS
@@ -141,7 +167,10 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     dp->assign_packet_to_cpu(q6_probe_packet, qs);
     dp->query_state_destroy(qs);
 
-    return q6_agg_packet;
+    if(0)
+        return q6_iscan_packet;
+    else
+        return q6_agg_packet;
 }
 
 
@@ -188,6 +217,10 @@ int main(int argc, char* argv[]) {
         dispatcher_t::dispatch_packet(q6_packet);
     
         tuple_t output;
+        int count;
+        for(count=0; output_buffer->get_tuple(output); count++);
+        printf("Count: %d\n", count);
+        if(0)
         while(output_buffer->get_tuple(output)) {
             double* r = (double*)output.data;
             TRACE(TRACE_ALWAYS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);

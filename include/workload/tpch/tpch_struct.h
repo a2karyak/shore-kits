@@ -99,9 +99,9 @@ struct tpch_lineitem_tuple {
     time_t L_COMMITDATE;
     time_t L_RECEIPTDATE;
     int L_ORDERKEY;
+    int L_LINENUMBER;
     int L_PARTKEY;
     int L_SUPPKEY;
-    int L_LINENUMBER;
     tpch_l_shipmode L_SHIPMODE;
     char L_RETURNFLAG;
     char L_LINESTATUS;

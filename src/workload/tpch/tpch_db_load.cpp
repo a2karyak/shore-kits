@@ -143,8 +143,8 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
         store_string(tup.L_COMMENT, tmp);
 
         // insert tuple into database
-        // key is composed of 3 fields 	L_ORDERKEY, L_PARTKEY, and L_SUPPKEY
-        Dbt key(&tup.L_ORDERKEY, 3 * sizeof(int));
+        // key is composed of 2 fields 	L_ORDERKEY, L_LINENUMBER
+        Dbt key(&tup.L_ORDERKEY, 2 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
