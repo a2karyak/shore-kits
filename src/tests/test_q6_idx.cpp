@@ -116,7 +116,7 @@ struct print_filter_t : tuple_filter_t {
     
     virtual bool select(const tuple_t &t) {
         int* data = (int*)t.data;
-        printf("%d\n", data[0]);
+        //        printf("%d\n", data[0]);
         return true;
     }
 
@@ -212,7 +212,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    db_open(DB_RDONLY|DB_THREAD, 1, 600*1024*1024);
     dispatcher_policy_t* dp = new dispatcher_policy_os_t();
     TRACE_SET(TRACE_ALWAYS);
 

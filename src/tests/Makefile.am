@@ -41,6 +41,7 @@ bin_PROGRAMS = \
    test_q4 \
    test_bitvector \
    test_hash_map \
+   test_mpool \
    grouper
 
 load_db_tables_SOURCES = load_db_tables.cpp
@@ -71,4 +72,5 @@ test_q6_2cl_SOURCES = test_q6_2cl.cpp
 test_q6_disp_SOURCES = test_q6_disp.cpp
 test_q1_SOURCES = test_q1.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
+test_mpool_SOURCES = test_mpool.cpp
 grouper_SOURCES = grouper.cpp
