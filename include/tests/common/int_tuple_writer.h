@@ -15,14 +15,14 @@ using namespace qpipe;
 struct int_tuple_writer_info_s {
   
     // output tuple size should be sizeof(int)
-    tuple_buffer_t* int_buffer;
+    tuple_fifo* int_buffer;
 
     // the number of tuples to write;
     int num_tuples;
 
     int start_tuple;
     
-    int_tuple_writer_info_s(tuple_buffer_t* i_buffer, int n_tuples, int s_tuple=0)
+    int_tuple_writer_info_s(tuple_fifo* i_buffer, int n_tuples, int s_tuple=0)
         : int_buffer(i_buffer),
           num_tuples(n_tuples),
           start_tuple(s_tuple)

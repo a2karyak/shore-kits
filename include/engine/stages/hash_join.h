@@ -29,12 +29,12 @@ class hash_join_packet_t : public packet_t {
 public:
     static const c_str PACKET_TYPE;
 
-    pointer_guard_t<packet_t> _left;
-    pointer_guard_t<packet_t> _right;
-    input_buffer_guard_t _left_buffer;
-    input_buffer_guard_t _right_buffer;
+    guard<packet_t> _left;
+    guard<packet_t> _right;
+    guard<tuple_fifo> _left_buffer;
+    guard<tuple_fifo> _right_buffer;
 
-    pointer_guard_t<tuple_join_t> _join;
+    guard<tuple_join_t> _join;
     bool _outer;
     bool _distinct;
     
@@ -73,7 +73,7 @@ public:
      *
      */
     hash_join_packet_t(const c_str &packet_id,
-                       tuple_buffer_t* out_buffer,
+                       tuple_fifo* out_buffer,
                        tuple_filter_t *output_filter,
                        packet_t* left,
                        packet_t* right,
@@ -83,8 +83,8 @@ public:
         : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter),
           _left(left),
           _right(right),
-          _left_buffer(left->_output_buffer),
-          _right_buffer(right->_output_buffer),
+          _left_buffer(left->output_buffer()),
+          _right_buffer(right->output_buffer()),
           _join(join),
           _outer(outer), _distinct(distinct)
     {

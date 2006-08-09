@@ -32,10 +32,10 @@ struct bnl_join_packet_t : public packet_t {
   
     static const c_str PACKET_TYPE;
 
-    pointer_guard_t<packet_t>       _left;
-    input_buffer_guard_t                  _left_buffer;
-    pointer_guard_t<tuple_source_t> _right_source;
-    pointer_guard_t<tuple_join_t>   _join;
+    guard<packet_t>       _left;
+    guard<tuple_fifo>     _left_buffer;
+    guard<tuple_source_t> _right_source;
+    guard<tuple_join_t>   _join;
     
     
     /**
@@ -56,14 +56,14 @@ struct bnl_join_packet_t : public packet_t {
      *  will be deleted in the packet destructor.
      */
     bnl_join_packet_t(const c_str    &packet_id,
-                      tuple_buffer_t* output_buffer,
+                      tuple_fifo* output_buffer,
                       tuple_filter_t* output_filter,
                       packet_t* left,
                       tuple_source_t* right_source,
                       tuple_join_t* join)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _left(left),
-          _left_buffer(left->_output_buffer),
+          _left_buffer(left->output_buffer()),
           _right_source(right_source),
           _join(join)
     {

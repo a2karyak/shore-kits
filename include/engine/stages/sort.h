@@ -34,10 +34,10 @@ public:
     static const c_str PACKET_TYPE;
 
 
-    pointer_guard_t<key_extractor_t> _extract;
-    pointer_guard_t<key_compare_t> _compare;
-    pointer_guard_t<packet_t>           _input;
-    input_buffer_guard_t _input_buffer;
+    guard<key_extractor_t> _extract;
+    guard<key_compare_t>   _compare;
+    guard<packet_t>        _input;
+    guard<tuple_fifo>      _input_buffer;
 
 
     /**
@@ -70,7 +70,7 @@ public:
      *  to a container as soon as this packet is dispatched.
      */
     sort_packet_t(const c_str        &packet_id,
-                  tuple_buffer_t*     output_buffer,
+                  tuple_fifo*     output_buffer,
                   tuple_filter_t*     output_filter,
                   key_extractor_t* extract,
                   key_compare_t* compare,
@@ -78,7 +78,7 @@ public:
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _extract(extract), _compare(compare),
           _input(input),
-          _input_buffer(input->_output_buffer)
+          _input_buffer(input->output_buffer())
     {
         assert(_input != NULL);
         assert(_input_buffer != NULL);
@@ -103,10 +103,11 @@ private:
 
     
     // state provided by the packet
-    tuple_buffer_t*     _input_buffer;
+    tuple_fifo*     _input_buffer;
     key_extractor_t* _extract;
     key_compare_t* _compare;
     size_t              _tuple_size;
+    DbEnv* _dbenv;
     
 
     typedef list<string> run_list_t;
@@ -116,10 +117,10 @@ private:
     struct merge_t {
 	string _output; // name of output file
 	run_list_t _inputs;
-        tuple_buffer_t* _signal_buffer;
+        tuple_fifo* _signal_buffer;
 	
 	merge_t () { }
-        merge_t(const string &output, const run_list_t &inputs, tuple_buffer_t * signal_buffer)
+        merge_t(const string &output, const run_list_t &inputs, tuple_fifo * signal_buffer)
             : _output(output),
 	      _inputs(inputs),
 	      _signal_buffer(signal_buffer)
@@ -154,7 +155,8 @@ public:
 
 
     sort_stage_t()
-        : _monitor_thread(0)
+        : _input_buffer(NULL), _extract(NULL), _compare(NULL),
+          _tuple_size(0), _dbenv(NULL), _monitor_thread(0)
     {
     }
 
@@ -188,7 +190,7 @@ private:
     bool final_merge_ready();
     int create_sorted_run(int page_count);
 
-    tuple_buffer_t* monitor_merge_packets();
+    tuple_fifo* monitor_merge_packets();
 
     void check_finished_merges();
     void start_new_merges();

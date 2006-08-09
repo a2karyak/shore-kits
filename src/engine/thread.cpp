@@ -18,6 +18,10 @@
 
 #define MAX_STRERROR_STRING_SIZE 256
 
+// Work around the fact that PTHREAD_XXX_INITIALIZER can't be used in
+// class initialization lists
+const pthread_mutex_t DEFAULT_MUTEX_INITIALIZER = PTHREAD_MUTEX_INITIALIZER;
+const pthread_cond_t DEFAULT_COND_INITIALIZER = PTHREAD_COND_INITIALIZER;
 
 
 /* internal data structures */

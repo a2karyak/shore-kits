@@ -47,7 +47,7 @@ void partial_aggregate_stage_t::process_packet() {
 
     partial_aggregate_packet_t* packet;
     packet = (partial_aggregate_packet_t*) _adaptor->get_packet();
-    tuple_buffer_t* input_buffer = packet->_input_buffer;
+    tuple_fifo* input_buffer = packet->_input_buffer;
     dispatcher_t::dispatch_packet(packet->_input);
     _aggregate = packet->_aggregate;
     key_extractor_t* agg_key = _aggregate->key_extractor();

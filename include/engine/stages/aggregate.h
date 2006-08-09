@@ -25,10 +25,10 @@ struct aggregate_packet_t : public packet_t {
 
     static const c_str PACKET_TYPE;
     
-    pointer_guard_t<tuple_aggregate_t> _aggregator;
-    pointer_guard_t<key_extractor_t> _extract;
-    pointer_guard_t<packet_t>          _input;
-    input_buffer_guard_t    _input_buffer;
+    guard<tuple_aggregate_t> _aggregator;
+    guard<key_extractor_t>   _extract;
+    guard<packet_t>          _input;
+    guard<tuple_fifo>        _input_buffer;
     
     
     /**
@@ -61,7 +61,7 @@ struct aggregate_packet_t : public packet_t {
      *  to a container as soon as this packet is dispatched.
      */
     aggregate_packet_t(const c_str       &packet_id,
-		       tuple_buffer_t*    output_buffer,
+		       tuple_fifo*        output_buffer,
 		       tuple_filter_t*    output_filter,
 		       tuple_aggregate_t* aggregator,
                        key_extractor_t*   extract,
@@ -69,7 +69,7 @@ struct aggregate_packet_t : public packet_t {
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
 	  _aggregator(aggregator), _extract(extract),
           _input(input),
-          _input_buffer(input->_output_buffer)
+          _input_buffer(input->output_buffer())
     {
         assert(_input != NULL);
         assert(_input_buffer != NULL);

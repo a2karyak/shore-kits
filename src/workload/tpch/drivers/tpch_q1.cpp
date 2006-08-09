@@ -61,10 +61,10 @@ public:
     q1_tscan_filter_t() : tuple_filter_t(sizeof(tpch_lineitem_tuple)) {
 
 	t = datestr_to_timet("1998-12-01");
-        thread_t* self = thread_get_self();
 
 	/* Calculate random predicates */
 #if 0
+        thread_t* self = thread_get_self();
  	DELTA = 60 + abs((int)(60*(float)(self->rand())/(float)(RAND_MAX+1)));
 #else
         DELTA = 90;
@@ -110,7 +110,7 @@ public:
         dest->L_DISCOUNT = src->L_DISCOUNT;
         dest->L_TAX = src->L_TAX;
     }
-    virtual q1_tscan_filter_t* clone() {
+    virtual q1_tscan_filter_t* clone() const {
         return new q1_tscan_filter_t(*this);
     }
 };
@@ -134,7 +134,7 @@ struct q1_key_extract_t : public key_extractor_t {
 
         return result;
     }
-    virtual q1_key_extract_t* clone() {
+    virtual q1_key_extract_t* clone() const {
         return new q1_key_extract_t(*this);
     }
 };
@@ -197,7 +197,7 @@ public:
             dest->L_AVG_DISC /= dest->L_COUNT_ORDER;
     }
 
-    virtual q1_count_aggregate_t* clone() {
+    virtual q1_count_aggregate_t* clone() const {
         return new q1_count_aggregate_t(*this);
     }
 };
@@ -209,8 +209,8 @@ void tpch_q1_driver::submit(void* disp) {
     dispatcher_policy_t* dp = (dispatcher_policy_t*)disp;
   
     // TSCAN PACKET
-    tuple_buffer_t* tscan_out_buffer =
-        new tuple_buffer_t(sizeof(projected_lineitem_tuple));
+    tuple_fifo* tscan_out_buffer =
+        new tuple_fifo(sizeof(projected_lineitem_tuple), dbenv);
     tscan_packet_t* q1_tscan_packet =
         new tscan_packet_t("Q1_TSCAN_PACKET",
                            tscan_out_buffer,
@@ -218,13 +218,13 @@ void tpch_q1_driver::submit(void* disp) {
                            tpch_lineitem);
 
     // AGG PACKET CREATION
-    tuple_buffer_t* agg_output_buffer =
-        new tuple_buffer_t(sizeof(aggregate_tuple));
+    guard<tuple_fifo> agg_output_buffer =
+        new tuple_fifo(sizeof(aggregate_tuple), dbenv);
     packet_t* q1_agg_packet;
     q1_agg_packet = 
         new partial_aggregate_packet_t("Q1_AGG_PACKET",
                                        agg_output_buffer,
-                                       new trivial_filter_t(agg_output_buffer->tuple_size),
+                                       new trivial_filter_t(agg_output_buffer->tuple_size()),
                                        q1_tscan_packet,
                                        new q1_count_aggregate_t(),
                                        new q1_key_extract_t(),

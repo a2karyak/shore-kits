@@ -36,13 +36,13 @@ public:
 
     private:
 
-        page_guard_t _page;
+        guard<page> _page;
 
     public:
         
 	virtual const c_str &get_container_name()=0;
         virtual packet_t* get_packet()=0;
-        virtual void output(tuple_page_t *page)=0;
+        virtual void output(page* p)=0;
 	virtual void stop_accepting_packets()=0;	
         virtual bool check_for_cancellation()=0;
         
@@ -59,15 +59,15 @@ public:
          */
         void output(const tuple_t &tuple) {
             assert(!_page->full());
-            _page->append_init(tuple);
+            _page->append_tuple(tuple);
             if(_page->full()) {
                 output(_page);
                 _page->clear();
             }
         }
         
-        adaptor_t(tuple_page_t *page)
-            : _page(page)
+        adaptor_t(page* p)
+            : _page(p)
         {
             assert(_page);
         }

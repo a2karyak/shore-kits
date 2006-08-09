@@ -1,5 +1,4 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-
 #ifndef _GUARD_H
 #define _GUARD_H
 
@@ -11,6 +10,150 @@
 #include <unistd.h>
 #include "db_cxx.h"
 #include "engine/core/exception.h"
+
+
+/**
+ * @brief A generic RAII guard class.
+ *
+ * This class ensures that the object it encloses will be properly
+ * disposed of when it goes out of scope, or with an explicit call to
+ * done(), whichever comes first.
+ *
+ * This class is much like the auto_ptr class, other than allowing
+ * actions besides delete upon destruct. In particular it is *NOT
+ * SAFE* to use it in STL containers because it does not fulfill the
+ * Assignable concept.
+ *
+ * TODO: make generic and configurable (ie, use templates to determine
+ * what "null" and "action" are)
+ *
+ */
+template <typename T>
+class guard {
+private:
+    T* _ptr;
+
+private:
+    // Specialize this function as necessary
+    void action(T* ptr) {
+        delete ptr;
+    }
+public:
+    
+    guard(T* ptr=NULL)
+        : _ptr(ptr)
+    {
+    }
+    guard(guard &other)
+        : _ptr(other.release())
+    {
+    }
+
+    
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     * WARNING:
+     *
+     * The copy constructor must be declared public in order for
+     * initializations of the form "guard<foo> f = ..." to compile
+     * (even though the function never actually gets called).
+     *
+     * That said, this function's body cannot be safely defined
+     * because there is no way for a const guard to release() its
+     * pointer. By declaring -- but not defining -- the copy
+     * constructor and its matching assignment operator we prevent
+     * multiple guards from accidentally fighting over the same
+     * pointer. The only remaining case is where the user
+     * independently creates two guards for the same pointer (not much
+     * we can do about that).
+     */
+    guard(guard const &);
+    guard &operator =(const guard &);
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+    
+    guard &operator =(guard &other) {
+        assign(other.release());
+        return *this;
+    }
+    guard &operator =(T* ptr) {
+        assign(ptr);
+        return *this;
+    }
+
+    operator T*() {
+        return get();
+    }
+    operator T const*() const {
+        return get();
+    }
+
+    T &operator *() {
+        return *get();
+    }
+    T const &operator *() const {
+        return *get();
+    }
+    
+    T* operator ->() {
+        return get();
+    }
+    T const* operator ->() const {
+        return get();
+    }
+    
+    T* get() {
+        return _ptr;
+    }
+    T const* get() const {
+        return _ptr;
+    }
+    
+    /**
+     * @brief Notifies this guard that its services are no longer
+     * needed because some other entity has assumed ownership of the
+     * pointer.
+     *
+     * NOTE: this function is marked const so that the assignment
+     * operator and copy constructor can work properly. 
+     */
+    T* release() {
+        T* ptr = _ptr;
+        _ptr = NULL;
+        return ptr;
+    }
+
+    /**
+     * @brief Notifies this guard that its action should be performed
+     * now rather than at destruct time.
+     */
+    void done() {
+        assign(NULL);
+    }
+
+    ~guard() {
+        done();
+    }
+    
+private:
+    void assign(T* ptr) {
+        if(_ptr && _ptr != ptr)
+            action(_ptr);
+        _ptr = ptr;
+    }
+    
+};
+
+template<>
+inline void guard<FILE>::action(FILE* ptr) {
+    if(fclose(ptr))
+        TRACE(TRACE_ALWAYS, "fclose failed");
+}
+
+template<>
+inline void guard<Dbc>::action(Dbc* ptr) {
+    // could throw an exception inside a destructor, but we can live
+    // with the abort if it ever happens
+    ptr->close();
+}
 
 
 /**

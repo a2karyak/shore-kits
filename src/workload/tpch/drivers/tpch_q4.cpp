@@ -42,7 +42,7 @@ packet_t* line_item_scan(Db* tpch_lineitem) {
             tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
             memcpy(dest.data, &at->L_ORDERKEY, sizeof(int));
         }
-        virtual lineitem_tscan_filter_t* clone() {
+        virtual lineitem_tscan_filter_t* clone() const {
             return new lineitem_tscan_filter_t(*this);
         }
     };
@@ -50,7 +50,7 @@ packet_t* line_item_scan(Db* tpch_lineitem) {
     // LINEITEM TSCAN PACKET
     // the output consists of 1 int (the
     tuple_filter_t* filter = new lineitem_tscan_filter_t(); 
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
     packet_t *tscan_packet = new tscan_packet_t("Lineitem TSCAN",
                                                 buffer,
                                                 filter,
@@ -93,13 +93,13 @@ packet_t* orders_scan(Db* tpch_orders) {
             dest->O_ORDERKEY = src->O_ORDERKEY;
             dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
         }
-        virtual orders_tscan_filter_t* clone() {
+        virtual orders_tscan_filter_t* clone() const {
             return new orders_tscan_filter_t(*this);
         }
     };
 
     tuple_filter_t* filter = new orders_tscan_filter_t(); 
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(order_scan_tuple_t));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(order_scan_tuple_t), dbenv);
     packet_t *tscan_packet = new tscan_packet_t("Orders TSCAN",
                                                 buffer,
                                                 filter,
@@ -115,7 +115,7 @@ struct q4_join_t : public tuple_join_t {
             order_scan_tuple_t* tuple = (order_scan_tuple_t*) tuple_data;
             memcpy(key, &tuple->O_ORDERKEY, key_size());
         }
-        virtual left_key_extractor_t* clone() {
+        virtual left_key_extractor_t* clone() const {
             return new left_key_extractor_t(*this);
         }
     };
@@ -124,7 +124,7 @@ struct q4_join_t : public tuple_join_t {
         virtual void extract_key(void* key, const void* tuple_data) {
             memcpy(key, tuple_data, key_size());
         }
-        virtual right_key_extractor_t* clone() {
+        virtual right_key_extractor_t* clone() const {
             return new right_key_extractor_t(*this);
         }
     };
@@ -168,7 +168,7 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
     }
-    virtual q4_count_aggregate_t* clone() {
+    virtual q4_count_aggregate_t* clone() const {
         return new q4_count_aggregate_t(*this);
     }
 };
@@ -200,7 +200,7 @@ void tpch_q4_driver::submit(void* disp) {
      *      where l_commitdate < l_receiptdate)
      */
 
-    tuple_buffer_t* buffer;
+    tuple_fifo* buffer;
 
     // First deal with the lineitem half
 
@@ -211,7 +211,7 @@ void tpch_q4_driver::submit(void* disp) {
 
     // join them...
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
-    buffer = new tuple_buffer_t(sizeof(int));
+    buffer = new tuple_fifo(sizeof(int), dbenv);
     tuple_join_t* join = new q4_join_t();
     packet_t* join_packet = new hash_join_packet_t("Orders - Lineitem JOIN",
                                                    buffer,
@@ -224,7 +224,7 @@ void tpch_q4_driver::submit(void* disp) {
 
     // sort/aggregate in one step
     filter = new trivial_filter_t(sizeof(q4_tuple_t));
-    buffer = new tuple_buffer_t(sizeof(q4_tuple_t));
+    buffer = new tuple_fifo(sizeof(q4_tuple_t), dbenv);
     tuple_aggregate_t *aggregate = new q4_count_aggregate_t();
     packet_t* agg_packet;
     agg_packet = new partial_aggregate_packet_t("O_ORDERPRIORITY COUNT",

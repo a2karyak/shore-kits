@@ -22,11 +22,11 @@ using namespace qpipe;
 struct merge_packet_t : public packet_t {
 
     static const c_str PACKET_TYPE;
-    typedef vector<tuple_buffer_t*> buffer_list_t;
+    typedef vector<tuple_fifo*> buffer_list_t;
     
     buffer_list_t _input_buffers;
-    pointer_guard_t<key_extractor_t> _extract;
-    pointer_guard_t<key_compare_t>   _compare;
+    guard<key_extractor_t> _extract;
+    guard<key_compare_t>   _compare;
 
 
     /**
@@ -50,17 +50,17 @@ struct merge_packet_t : public packet_t {
      *  tuple sent to output_buffer. The packet OWNS this filter. It
      *  will be deleted in the packet destructor.
      *
-     *  @param input_buffers A list of tuple_buffer_t pointers. This
+     *  @param input_buffers A list of tuple_fifo pointers. This
      *  is the set of inputs that we are merging. This list should be
      *  set up by the meta-stage that creates this merge_packet_t. We
-     *  will take ownership of the tuple_buffer_t's, but not the list
+     *  will take ownership of the tuple_fifo's, but not the list
      *  itself. We will copy the list.
      *
      *  @param comparator A comparator for the tuples in our input
      *  buffers. This packet owns this comparator.
      */
     merge_packet_t(const c_str         &packet_id,
-                   tuple_buffer_t*      output_buffer,
+                   tuple_fifo*      output_buffer,
                    tuple_filter_t*      output_filter,
                    const buffer_list_t& input_buffers,
                    key_extractor_t* extract,
@@ -93,13 +93,13 @@ private:
     struct buffer_head_t {
         // for the linked list
         buffer_head_t*   next;
-        tuple_buffer_t*  buffer;
+        tuple_fifo*  buffer;
         key_extractor_t* _extract;
         array_guard_t<char> data;
         tuple_t tuple;
         hint_tuple_pair_t item;
         buffer_head_t() { }
-        bool init(tuple_buffer_t* buf, key_extractor_t* c);
+        bool init(tuple_fifo* buf, key_extractor_t* c);
         bool has_tuple();
     };
     

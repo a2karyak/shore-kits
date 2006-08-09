@@ -32,7 +32,7 @@ void bnl_in_stage_t::process_packet() {
     bnl_in_packet_t* packet = (bnl_in_packet_t*)adaptor->get_packet();
     
     // get ready...
-    tuple_buffer_t* left_buffer  = packet->_left_buffer;
+    tuple_fifo* left_buffer  = packet->_left_buffer;
     tuple_source_t* right_source = packet->_right_source;
     key_compare_t* _compare = packet->_compare;
     key_extractor_t* _extract = packet->_extract;
@@ -49,7 +49,7 @@ void bnl_in_stage_t::process_packet() {
         
         
         // get another page of tuples from the outer relation
-        page_guard_t outer_tuple_page = left_buffer->get_page();
+        guard<page> outer_tuple_page = left_buffer->get_page();
         if ( !outer_tuple_page )
             // done with outer relation... done with join
             return;
@@ -63,7 +63,7 @@ void bnl_in_stage_t::process_packet() {
  
         // read the entire inner relation
         packet_t* right_packet = right_source->reset();
-        tuple_buffer_t* right_buffer = right_packet->_output_buffer;
+        tuple_fifo* right_buffer = right_packet->output_buffer();
         dispatcher_t::dispatch_packet(right_packet);
         
 
@@ -71,7 +71,7 @@ void bnl_in_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            page_guard_t inner_tuple_page = right_buffer->get_page();
+            guard<page> inner_tuple_page = right_buffer->get_page();
             if ( !inner_tuple_page )
                 // done with inner relation... time to output some
                 // tuples from opage
@@ -80,23 +80,22 @@ void bnl_in_stage_t::process_packet() {
             
             // compare each tuple on the outer relation page with each
             // tuple on the inner relation page
-            tuple_page_t::iterator o_it;
-            int o_index = 0;
-            for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it, ++o_index) {
+            page::iterator o_it = outer_tuple_page->begin();
+            for (int o_index = 0; o_it != outer_tuple_page->end(); ++o_index) {
                 
                 
                 // grab a tuple from the outer relation page
-                tuple_t outer_tuple = *o_it;
+                tuple_t outer_tuple = o_it.advance();
                 hint_tuple_pair_t
                     outer_ktpair(_extract->extract_hint(outer_tuple), outer_tuple.data);
 
                 
-                tuple_page_t::iterator i_it;
-                for (i_it = inner_tuple_page->begin(); i_it != inner_tuple_page->end(); ++i_it) {
+                page::iterator i_it = inner_tuple_page->begin();
+                while(i_it != inner_tuple_page->end()) {
 
                     
                     // grab a tuple from the inner relation page
-                    tuple_t inner_tuple = *i_it;
+                    tuple_t inner_tuple = i_it.advance();
                     hint_tuple_pair_t
                         inner_ktpair(_extract->extract_hint(inner_tuple), inner_tuple.data);
                     
@@ -115,27 +114,11 @@ void bnl_in_stage_t::process_packet() {
         // now that we've scanned over the inner relation, we have
         // enough information to process the page of outer relation
         // tuples
-
-
-        if ( output_on_match ) {
-            // we are processing an IN operator
-            tuple_page_t::iterator o_it;
-            int o_index = 0;
-            for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it, ++o_index) {
-                if ( matches[o_index] ) 
-                    _adaptor->output(*o_it);
-            }
+        page::iterator o_it = outer_tuple_page->begin();
+        for (int o_index = 0; o_it != outer_tuple_page->end(); ++o_index) {
+            if ( matches[o_index] != output_on_match ) 
+                _adaptor->output(o_it.advance());
         }
-        else {
-            // we are processing a NOT IN operator
-            tuple_page_t::iterator o_it;
-            int o_index = 0;
-            for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it, ++o_index) {
-                if ( !matches[o_index] ) 
-                    _adaptor->output(*o_it);
-            }
-        }
-        
         
     } // endof loop over outer relation
     

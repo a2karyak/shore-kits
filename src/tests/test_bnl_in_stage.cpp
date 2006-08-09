@@ -6,7 +6,7 @@
 #include "engine/stages/bnl_in.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-
+#include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
 
@@ -23,7 +23,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
-
+    db_load();
 
     // parse output filename
     if ( argc < 2 ) {
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
 
     
-    tuple_buffer_t* left_int_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* left_int_buffer = new tuple_fifo(sizeof(int), dbenv);
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples, 0);
 
     func_call_packet_t* left_packet = 
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
-    tuple_buffer_t* right_int_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* right_int_buffer = new tuple_fifo(sizeof(int), dbenv);
     struct int_tuple_writer_info_s right_writer_info(right_int_buffer, num_tuples, num_tuples/2);
     func_call_packet_t* right_packet = 
 	new func_call_packet_t("RIGHT_PACKET",
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
                                &right_writer_info);
     
     
-    tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* output_buffer = new tuple_fifo(sizeof(int), dbenv);
 
     bnl_in_packet_t* in_packet =
         new bnl_in_packet_t( "BNL_IN_PACKET_1",

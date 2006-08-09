@@ -11,21 +11,21 @@ using namespace qpipe;
 
 struct partial_aggregate_packet_t : public packet_t {
     static const c_str PACKET_TYPE;
-    pointer_guard_t<packet_t> _input;
-    pointer_guard_t<tuple_buffer_t> _input_buffer;
-    pointer_guard_t<tuple_aggregate_t> _aggregate;
-    pointer_guard_t<key_extractor_t> _extractor;
-    pointer_guard_t<key_compare_t> _compare;
+    guard<packet_t> _input;
+    guard<tuple_fifo> _input_buffer;
+    guard<tuple_aggregate_t> _aggregate;
+    guard<key_extractor_t> _extractor;
+    guard<key_compare_t> _compare;
 
     partial_aggregate_packet_t(const c_str    &packet_id,
-                               tuple_buffer_t* out_buffer,
+                               tuple_fifo* out_buffer,
                                tuple_filter_t* out_filter,
                                packet_t* input,
                                tuple_aggregate_t *aggregate,
                                key_extractor_t* extractor,
                                key_compare_t* compare)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter),
-          _input(input), _input_buffer(input->_output_buffer),
+          _input(input), _input_buffer(input->output_buffer()),
           _aggregate(aggregate), _extractor(extractor), _compare(compare)
     {
     }

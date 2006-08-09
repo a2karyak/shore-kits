@@ -57,7 +57,7 @@ public:
      *  mergeable. They should be merged at the meta-stage.
      */
     fscan_packet_t(const c_str    &packet_id,
-		   tuple_buffer_t* output_buffer,
+		   tuple_fifo* output_buffer,
 		   tuple_filter_t* output_filter,
 		   const c_str    &filename)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),

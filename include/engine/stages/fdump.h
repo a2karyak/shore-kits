@@ -30,7 +30,7 @@ public:
     
     static const c_str PACKET_TYPE;
 
-    input_buffer_guard_t _input_buffer;
+    guard<tuple_fifo> _input_buffer;
     
     c_str _filename;
 
@@ -72,9 +72,9 @@ public:
      *  our destructor.
      */    
     fdump_packet_t(const c_str    &packet_id,
-		   tuple_buffer_t* output_buffer,
+		   tuple_fifo*     output_buffer,
                    tuple_filter_t* output_filter,
-		   tuple_buffer_t* input_buffer,
+		   tuple_fifo*     input_buffer,
 		   const c_str    &filename,
                    notify_t*       notifier=NULL)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),

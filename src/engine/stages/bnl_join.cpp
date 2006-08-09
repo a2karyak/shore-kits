@@ -28,7 +28,7 @@ void bnl_join_stage_t::process_packet() {
     adaptor_t* adaptor = _adaptor;
     bnl_join_packet_t* packet = (bnl_join_packet_t*)adaptor->get_packet();
     
-    tuple_buffer_t* left_buffer  = packet->_left_buffer;
+    tuple_fifo* left_buffer  = packet->_left_buffer;
     tuple_source_t* right_source = packet->_right_source;
     tuple_join_t*   join = packet->_join;
     
@@ -47,7 +47,7 @@ void bnl_join_stage_t::process_packet() {
         
         
         // get another page of tuples from the outer relation
-        page_guard_t outer_tuple_page = left_buffer->get_page();
+        guard<page> outer_tuple_page = left_buffer->get_page();
         if ( !outer_tuple_page )
             // done with outer relation... done with join
             return;
@@ -55,7 +55,7 @@ void bnl_join_stage_t::process_packet() {
 
         // re-read the inner relation
         packet_t* right_packet = right_source->reset();
-        tuple_buffer_t* right_buffer = right_packet->_output_buffer;
+        tuple_fifo* right_buffer = right_packet->output_buffer();
         dispatcher_t::dispatch_packet(right_packet);
         
         
@@ -63,7 +63,7 @@ void bnl_join_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            page_guard_t inner_tuple_page = right_buffer->get_page();
+            guard<page> inner_tuple_page = right_buffer->get_page();
             if ( !inner_tuple_page )
                 // done with inner relation... continue to next page
                 // of outer relation
@@ -72,21 +72,21 @@ void bnl_join_stage_t::process_packet() {
             
             // join each tuple on the outer relation page with each
             // tuple on the inner relation page
-            tuple_page_t::iterator o_it;
-            for (o_it = outer_tuple_page->begin(); o_it != outer_tuple_page->end(); ++o_it) {
+            page::iterator o_it = outer_tuple_page->begin();
+            while(o_it != outer_tuple_page->end()) {
 
                 
-                tuple_t outer_tuple = *o_it;
+                tuple_t outer_tuple = o_it.advance();
                 const char* outer_key = join->get_left_key(outer_tuple);
 
 
-                tuple_page_t::iterator i_it;
-                for (i_it = inner_tuple_page->begin(); i_it != inner_tuple_page->end(); ++i_it) {
+                page::iterator i_it = inner_tuple_page->begin();
+                while(i_it != inner_tuple_page->end()) {
 
 
                     // check for equality by extracting keys and using
                     // memcmp() to check for byte-by-byte equality
-                    tuple_t inner_tuple = *i_it;
+                    tuple_t inner_tuple = i_it.advance();
                     const char* inner_key = join->get_right_key(inner_tuple);
                     if ( memcmp( outer_key, inner_key, key_size ) == 0 ) {
                         // keys match!

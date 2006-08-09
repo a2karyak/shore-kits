@@ -113,7 +113,7 @@ public:
         memcpy(dest.data + sizeof(double), &at->L_DISCOUNT, sizeof(double));
     }
 
-    virtual q6_tscan_filter_t* clone() {
+    virtual q6_tscan_filter_t* clone() const {
         return new q6_tscan_filter_t(*this);
     }
 };

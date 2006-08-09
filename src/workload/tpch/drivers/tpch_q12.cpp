@@ -85,7 +85,7 @@ struct order_tscan_filter_t : tuple_filter_t {
         dest->O_ORDERKEY = src->O_ORDERKEY;
         dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
     }
-    virtual order_tscan_filter_t* clone() {
+    virtual order_tscan_filter_t* clone() const {
         return new order_tscan_filter_t(*this);
     }
 };
@@ -145,7 +145,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
     }
-    virtual lineitem_tscan_filter_t* clone() {
+    virtual lineitem_tscan_filter_t* clone() const {
         return new lineitem_tscan_filter_t(*this);
     }
 };
@@ -177,7 +177,7 @@ struct q12_join_t : tuple_join_t {
         dest->L_SHIPMODE = right->L_SHIPMODE;
         dest->O_ORDERPRIORITY = left->O_ORDERPRIORITY;
     }
-    virtual q12_join_t* clone() {
+    virtual q12_join_t* clone() const {
         return new q12_join_t(*this);
     }
 };
@@ -231,7 +231,7 @@ struct q12_aggregate_t : tuple_aggregate_t {
     virtual void finish(tuple_t &dest, const char* agg_data) {
         memcpy(dest.data, agg_data, dest.size);
     }
-    virtual q12_aggregate_t* clone() {
+    virtual q12_aggregate_t* clone() const {
         return new q12_aggregate_t(*this);
     }
 };
@@ -245,7 +245,7 @@ void tpch_q12_driver::submit(void* disp) {
 
     // lineitem scan
     tuple_filter_t* filter = new lineitem_tscan_filter_t();
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(lineitem_scan_tuple));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(lineitem_scan_tuple), dbenv);
     packet_t* lineitem_packet =
         new tscan_packet_t("lineitem TSCAN",
                            buffer,
@@ -253,7 +253,7 @@ void tpch_q12_driver::submit(void* disp) {
                            tpch_lineitem);
     // order scan
     filter = new order_tscan_filter_t();
-    buffer = new tuple_buffer_t(sizeof(order_scan_tuple));
+    buffer = new tuple_fifo(sizeof(order_scan_tuple), dbenv);
     packet_t* order_packet =
         new tscan_packet_t("order TSCAN",
                            buffer, filter,
@@ -261,7 +261,7 @@ void tpch_q12_driver::submit(void* disp) {
     
     // join
     filter = new trivial_filter_t(sizeof(join_tuple));
-    buffer = new tuple_buffer_t(sizeof(join_tuple));
+    buffer = new tuple_fifo(sizeof(join_tuple), dbenv);
     packet_t* join_packet;
     join_packet =
         new hash_join_packet_t("orders-lineitem HJOIN",
@@ -272,7 +272,7 @@ void tpch_q12_driver::submit(void* disp) {
 
     // partial aggregation
     filter = new trivial_filter_t(sizeof(q12_tuple));
-    buffer = new tuple_buffer_t(sizeof(q12_tuple));
+    buffer = new tuple_fifo(sizeof(q12_tuple), dbenv);
     size_t offset = offsetof(join_tuple, L_SHIPMODE);
     key_extractor_t* extractor = new default_key_extractor_t(sizeof(int), offset);
     key_compare_t* compare = new int_key_compare_t();

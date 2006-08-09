@@ -6,6 +6,7 @@
 #include "engine/dispatcher.h"
 #include "trace.h"
 #include "qpipe_panic.h"
+#include "workload/tpch/tpch_db.h"
 
 #include "tests/common.h"
 
@@ -39,7 +40,7 @@ int main(int argc, char* argv[]) {
     
     
     // just need to pass one int at a time to the counter
-    tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
     
     // aggregate single count result (single int)
     int_tuple_writer_info_s info(int_buffer, num_tuples, 0);
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]) {
     func_call_packet_t* packet = 
 	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
-                               new trivial_filter_t(int_buffer->tuple_size),
+                               new trivial_filter_t(int_buffer->tuple_size()),
                                int_tuple_writer_void,
                                &info);
     

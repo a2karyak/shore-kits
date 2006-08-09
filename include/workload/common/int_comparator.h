@@ -11,7 +11,9 @@ struct int_key_compare_t : public key_compare_t {
         // should be unreachable!
         assert(false);
     }
-    virtual key_compare_t* clone() { return new int_key_compare_t(*this); }
+    virtual key_compare_t* clone() const {
+        return new int_key_compare_t(*this);
+    }
 };
 
 typedef default_key_extractor_t int_key_extractor_t;

@@ -26,12 +26,12 @@ void aggregate_stage_t::process_packet() {
     
     tuple_aggregate_t* aggregate = packet->_aggregator;
     key_extractor_t* extract = packet->_extract;
-    tuple_buffer_t* input_buffer = packet->_input_buffer;
+    tuple_fifo* input_buffer = packet->_input_buffer;
     dispatcher_t::dispatch_packet(packet->_input);
 
 
     // "I" own dest, so allocate space for it on the stack
-    size_t dest_size = packet->_output_buffer->tuple_size;
+    size_t dest_size = packet->output_buffer()->tuple_size();
     char dest_data[dest_size];
     tuple_t dest(dest_data, dest_size);
 

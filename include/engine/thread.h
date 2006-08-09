@@ -20,6 +20,8 @@
 #include "engine/util/c_str.h"
 
 
+extern const pthread_mutex_t DEFAULT_MUTEX_INITIALIZER;
+extern const pthread_cond_t DEFAULT_COND_INITIALIZER;
 
 /**
  *  @brief QPIPE thread base class. Basically a thin wrapper around an

@@ -8,7 +8,7 @@
 #include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-
+#include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
 
@@ -21,6 +21,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
     dispatcher_policy_t* dp = new dispatcher_policy_rr_cpu_t();
 
     // parse output filename
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
     register_stage<aggregate_stage_t>(1);
 
 
-    tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
 
     struct int_tuple_writer_info_s writer_info(int_buffer, num_tuples);
     func_call_packet_t* fc_packet = 
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
                                &writer_info);
     
     
-    tuple_buffer_t* count_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* count_buffer = new tuple_fifo(sizeof(int), dbenv);
 
 
     aggregate_packet_t* agg_packet =

@@ -108,7 +108,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
         it = runs.erase(it);
 	
         fscan_packet_t* p;
-        tuple_buffer_t* buf = new tuple_buffer_t(_tuple_size);
+        tuple_fifo* buf = new tuple_fifo(_tuple_size, _dbenv);
 
 
         c_str fscan_packet_id("SORT_FSCAN_PACKET_%d", i);
@@ -126,7 +126,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
 
     // create a merge packet to consume the fscans
     merge_packet_t* mp;
-    tuple_buffer_t* merge_out = new tuple_buffer_t(_tuple_size);
+    tuple_fifo* merge_out = new tuple_fifo(_tuple_size, _dbenv);
 
 
     mp = new merge_packet_t("SORT_MERGE_PACKET",
@@ -148,17 +148,17 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
     // otherwise, redirect merge to an FDUMP so we create a new run on
     // disk
     fdump_packet_t* fp;
-    tuple_buffer_t* fdump_out;
+    tuple_fifo* fdump_out;
     string file_name;
 
 
     // KLUDGE! the fdump stage will reopen the file
     fclose(create_tmp_file(file_name, "merged-run"));
-    fdump_out = new tuple_buffer_t(_tuple_size);
+    fdump_out = new tuple_fifo(_tuple_size, _dbenv);
     
     fp = new fdump_packet_t("SORT_FDUMP_PACKET",
                             fdump_out,
-                            new trivial_filter_t(merge_out->tuple_size),
+                            new trivial_filter_t(merge_out->tuple_size()),
                             merge_out,
                             file_name.c_str(), 
                             &_monitor);
@@ -324,7 +324,7 @@ void sort_stage_t::start_new_merges() {
  * we just need a way to detect asynchronous merge completions and
  * handle them.
  */
-tuple_buffer_t *sort_stage_t::monitor_merge_packets() {
+tuple_fifo *sort_stage_t::monitor_merge_packets() {
     // always in a critical section, but usually blocked on cond_wait
     critical_section_t cs(&_monitor._lock);
     while(1) {
@@ -353,9 +353,10 @@ void sort_stage_t::process_packet() {
     sort_packet_t *packet = (sort_packet_t *)_adaptor->get_packet();
 
     _input_buffer = packet->_input_buffer;
-    _tuple_size = _input_buffer->tuple_size;
+    _tuple_size = _input_buffer->tuple_size();
     _compare = packet->_compare;
     _extract = packet->_extract;
+    _dbenv = packet->output_buffer()->dbenv();
     _sorting_finished = false;
 
 
@@ -363,7 +364,7 @@ void sort_stage_t::process_packet() {
 
 
     // quick optimization: if no input tuples, simply return
-    if(!_input_buffer->wait_for_input())
+    if(!_input_buffer->ensure_read_ready())
         return;
     
     // create a buffer page for writing to file
@@ -395,20 +396,20 @@ void sort_stage_t::process_packet() {
     do {
         // TODO: check for stage cancellation at regular intervals
         
-        page_list_guard_t page_list;
+        page_trash_stack pages;
         array.clear();
         for(unsigned int i=0; i < PAGES_PER_INITIAL_SORTED_RUN; i++) {
 
             // read in a run of pages
-            tuple_page_t* page = _input_buffer->get_page();
-            if(page == NULL)
+            page* p = _input_buffer->get_page();
+            if(p == NULL)
                 break;
 
             // add new page to the list
-            page_list.append(page);
+            pages.add(p);
 
             // add the tuples in the page into the key array
-            for(tuple_page_t::iterator it=page->begin(); it != page->end(); ++it) {
+            for(page::iterator it=p->begin(); it != p->end(); ++it) {
                 int hint = _extract->extract_hint(*it);
                 array.push_back(hint_tuple_pair_t(hint, it->data));
             }
@@ -418,7 +419,7 @@ void sort_stage_t::process_packet() {
         std::sort(array.begin(), array.end(), tuple_less_t(_extract, _compare));
 
          // are we done?
-        bool eof = !_input_buffer->wait_for_input();
+        bool eof = !_input_buffer->ensure_read_ready();
 
         // shortcut if we fit in memory...
         if(first_run && eof) {
@@ -436,7 +437,7 @@ void sort_stage_t::process_packet() {
         
         // open a temp file to hold the run
         string file_name;
-        file_guard_t file = create_tmp_file(file_name, "sorted-run");
+        guard<FILE> file = create_tmp_file(file_name, "sorted-run");
 
         // dump the run to file
         //        for(int i=0; i < index; i++) {
@@ -466,7 +467,7 @@ void sort_stage_t::process_packet() {
     } while(!_sorting_finished);
     
     // wait for the output buffer from the final merge to arrive
-    tuple_buffer_t* merge_output;
+    tuple_fifo* merge_output;
     pthread_join_wrapper(_monitor_thread, merge_output);
     _monitor_thread = 0;
     if(merge_output == NULL)
@@ -475,14 +476,8 @@ void sort_stage_t::process_packet() {
 
     // transfer the output of the last merge to the stage output
     tuple_t out;
-    while (1) {
-        if(!merge_output->get_tuple(out))
-            // no more tuples
-            break;
-
+    while (merge_output->get_tuple(out))
         _adaptor->output(out);
-    }
-
 }
 
 

@@ -52,7 +52,7 @@ public:
         output[1] = agg->count;
     }
 
-    virtual q6_count_aggregate_t* clone() {
+    virtual q6_count_aggregate_t* clone() const {
         return new q6_count_aggregate_t(*this);
     }
 };

@@ -6,7 +6,7 @@
 #include "engine/stages/merge.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-
+#include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
 
@@ -21,20 +21,20 @@ using std::pair;
 
 
 typedef vector<int> input_list_t;
-typedef pair<tuple_buffer_t*, input_list_t> write_info_t;
+typedef pair<tuple_fifo*, input_list_t> write_info_t;
 
 
 void write_tuples(void* arg)
 {
     write_info_t *info = (write_info_t *)arg;
-    tuple_buffer_t* buffer = info->first;
+    tuple_fifo* buffer = info->first;
     input_list_t &inputs = info->second;
 
     int value;
     tuple_t input((char *)&value, sizeof(int));
     for(input_list_t::iterator it=inputs.begin(); it != inputs.end(); ++it) {
         value = *it;
-        buffer->put_tuple(input);
+        buffer->append(input);
     }
 
     TRACE(TRACE_ALWAYS, "Done inserting tuples\n");
@@ -44,6 +44,7 @@ void write_tuples(void* arg)
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
 
     int merge_factor;
     int count;
@@ -111,7 +112,7 @@ int main(int argc, char* argv[]) {
     merge_packet_t::buffer_list_t input_buffers;
     for(int i=0; i < merge_factor; i++) {
 
-        tuple_buffer_t *input_buffer = new tuple_buffer_t(sizeof(int));
+        tuple_fifo *input_buffer = new tuple_fifo(sizeof(int), dbenv);
         input_buffers.push_back(input_buffer);
         merge_info[i].first = input_buffer;
 
@@ -133,10 +134,10 @@ int main(int argc, char* argv[]) {
     
     
     // fire up the merge stage now
-    output_buffer_guard_t output_buffer = new tuple_buffer_t(sizeof(int));
+    guard<tuple_fifo> output_buffer = new tuple_fifo(sizeof(int), dbenv);
     merge_packet_t* packet = new merge_packet_t("MERGE_PACKET_1",
                                                 output_buffer,
-                                                new trivial_filter_t(input_buffers[0]->tuple_size),
+                                                new trivial_filter_t(input_buffers[0]->tuple_size()),
                                                 input_buffers,
                                                 new int_key_extractor_t(),
                                                 new int_key_compare_t());

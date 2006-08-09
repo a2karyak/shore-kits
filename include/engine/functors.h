@@ -63,7 +63,7 @@ public:
      *  @param src Our source tuple.
      *
      *  @param dest We copy the necessary attributes here. This tuple
-     *  should already point into a tuple_buffer_t where we can store
+     *  should already point into valid memory where we can store
      *  data.
      *
      *  @return void
@@ -75,7 +75,7 @@ public:
 
 
     // should simply return new <child-class>(*this);
-    virtual tuple_filter_t* clone()=0;
+    virtual tuple_filter_t* clone() const=0;
     
 
     tuple_filter_t(size_t input_tuple_size)
@@ -92,7 +92,7 @@ public:
 
 struct trivial_filter_t : public tuple_filter_t {
     
-    virtual tuple_filter_t* clone() {
+    virtual tuple_filter_t* clone() const {
         return new trivial_filter_t(*this);
     };
     
@@ -145,7 +145,7 @@ struct key_compare_t {
      */
     
     virtual int operator()(const void* key1, const void* key2)=0;
-    virtual key_compare_t* clone()=0;
+    virtual key_compare_t* clone() const=0;
 
     virtual ~key_compare_t() { }
 };
@@ -237,7 +237,7 @@ public:
 
 
     // should simply return new <child-class>(*this);
-    virtual key_extractor_t* clone()=0;
+    virtual key_extractor_t* clone() const=0;
 
 
     virtual ~key_extractor_t() { }
@@ -260,7 +260,7 @@ struct default_key_extractor_t : public key_extractor_t {
         return result;
     }
     
-    virtual default_key_extractor_t* clone() {
+    virtual default_key_extractor_t* clone() const {
         return new default_key_extractor_t(*this);
     }
 };
@@ -317,12 +317,12 @@ struct tuple_less_t {
 class tuple_join_t {
 
     size_t _left_tuple_size;
-    pointer_guard_t<key_extractor_t> _left;
+    guard<key_extractor_t> _left;
     
     size_t _right_tuple_size;
-    pointer_guard_t<key_extractor_t> _right;
+    guard<key_extractor_t> _right;
 
-    pointer_guard_t<key_compare_t> _compare;
+    guard<key_compare_t> _compare;
     
     size_t _out_tuple_size;
 
@@ -348,6 +348,16 @@ public:
           _out_tuple_size(output_tuple_size)
     {
         assert(left->key_size() == right->key_size());
+    }
+
+    tuple_join_t(tuple_join_t const &other)
+        : _left_tuple_size(other._left_tuple_size),
+          _left(other._left->clone()),
+          _right_tuple_size(other._right_tuple_size),
+          _right(other._right->clone()),
+          _compare(other._compare->clone()),
+          _out_tuple_size(other._out_tuple_size)
+    {
     }
 
 
@@ -477,7 +487,7 @@ public:
     virtual void finish(tuple_t &dest, const char* agg_data)=0;
 
 
-    virtual tuple_aggregate_t* clone()=0;
+    virtual tuple_aggregate_t* clone() const=0;
   
     virtual ~tuple_aggregate_t() { }
 

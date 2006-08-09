@@ -44,7 +44,7 @@ struct int_desc_key_extractor_t : public key_extractor_t {
     virtual int extract_hint(const char* tuple_data) {
         return -*(int*)tuple_data;
     }
-    virtual int_desc_key_extractor_t* clone() {
+    virtual int_desc_key_extractor_t* clone() const {
         return new int_desc_key_extractor_t(*this);
     }
 };
@@ -66,7 +66,7 @@ struct q13_count_aggregate_t : public tuple_aggregate_t {
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
     }
-    virtual q13_count_aggregate_t* clone() {
+    virtual q13_count_aggregate_t* clone() const {
         return new q13_count_aggregate_t(*this);
     }
 };
@@ -87,13 +87,13 @@ packet_t* customer_scan(Db* tpch_customer) {
             int* dest = (int*) d.data;
             *dest = src->C_CUSTKEY;
         }
-        virtual customer_tscan_filter_t* clone() {
+        virtual customer_tscan_filter_t* clone() const {
             return new customer_tscan_filter_t(*this);
         }
     };
 
     tuple_filter_t* filter = new customer_tscan_filter_t();
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
     packet_t *packet = new tscan_packet_t("Customer TSCAN",
                                           buffer,
                                           filter,
@@ -139,7 +139,7 @@ struct order_tscan_filter_t : public tuple_filter_t {
         *dest = src->O_CUSTKEY;
     }
 
-    virtual order_tscan_filter_t* clone() {
+    virtual order_tscan_filter_t* clone() const {
         return new order_tscan_filter_t(*this);
     }
 };
@@ -155,7 +155,7 @@ packet_t* order_scan(Db* tpch_orders) {
 
     // Orders TSCAN
     tuple_filter_t* filter = new order_tscan_filter_t();
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
     packet_t* tscan_packet = new tscan_packet_t("Orders TSCAN",
                                                 buffer,
                                                 filter,
@@ -163,7 +163,7 @@ packet_t* order_scan(Db* tpch_orders) {
 
     // sort into groups 
     filter = new trivial_filter_t(sizeof(int));
-    buffer = new tuple_buffer_t(sizeof(int));
+    buffer = new tuple_fifo(sizeof(int), dbenv);
     packet_t* sort_packet = new sort_packet_t("Orders SORT",
                                               buffer,
                                               filter,
@@ -173,7 +173,7 @@ packet_t* order_scan(Db* tpch_orders) {
 
     // count over groups
     filter = new trivial_filter_t(sizeof(key_count_tuple_t));
-    buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
+    buffer = new tuple_fifo(sizeof(key_count_tuple_t), dbenv);
     tuple_aggregate_t* aggregator = new q13_count_aggregate_t();
     packet_t* agg_packet = new aggregate_packet_t("Orders COUNT",
                                                   buffer,
@@ -217,7 +217,7 @@ int main() {
                     key_count_tuple_t* tuple = (key_count_tuple_t*) tuple_data;
                     return tuple->KEY;
                 }
-                virtual right_key_extractor_t* clone() {
+                virtual right_key_extractor_t* clone() const {
                     return new right_key_extractor_t(*this);
                 }
             };
@@ -226,7 +226,7 @@ int main() {
                 virtual int extract_hint(const char* tuple_data) {
                     return *(int*) tuple_data;
                 }
-                virtual left_key_extractor_t* clone() {
+                virtual left_key_extractor_t* clone() const {
                     return new left_key_extractor_t(*this);
                 }
             };
@@ -261,7 +261,7 @@ int main() {
                 // descending sort
                 return -tuple->COUNT;
             }
-            virtual q13_key_extract_t* clone() {
+            virtual q13_key_extract_t* clone() const {
                 return new q13_key_extract_t(*this);
             }
         };
@@ -273,7 +273,7 @@ int main() {
                 key_count_tuple_t* b = (key_count_tuple_t*) key2;
                 return b->KEY - a->KEY;
             }
-            virtual q13_key_compare_t* clone() {
+            virtual q13_key_compare_t* clone() const {
                 return new q13_key_compare_t(*this);
             }
         };
@@ -286,7 +286,7 @@ int main() {
         packet_t* order_packet = order_scan(tpch_orders);
 
         tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
-        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+        tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
         tuple_join_t* join = new q13_join_t();
         packet_t* join_packet = new hash_join_packet_t("Orders - Customer JOIN",
                                                        buffer,
@@ -298,7 +298,7 @@ int main() {
 
         // sort to group by c_count
         filter = new trivial_filter_t(sizeof(int));
-        buffer = new tuple_buffer_t(sizeof(int));
+        buffer = new tuple_fifo(sizeof(int), dbenv);
         packet_t *sort_packet = new sort_packet_t("c_count SORT",
                                                   buffer,
                                                   filter,
@@ -308,7 +308,7 @@ int main() {
 
         // aggregate over c_count
         filter = new trivial_filter_t(sizeof(key_count_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
+        buffer = new tuple_fifo(sizeof(key_count_tuple_t), dbenv);
         tuple_aggregate_t* agg = new q13_count_aggregate_t();
         packet_t *agg_packet = new aggregate_packet_t("c_count COUNT",
                                                       buffer,
@@ -319,7 +319,7 @@ int main() {
 
         // final sort of results
         filter = new trivial_filter_t(sizeof(key_count_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(key_count_tuple_t));
+        buffer = new tuple_fifo(sizeof(key_count_tuple_t), dbenv);
         sort_packet = new sort_packet_t("custdist, c_count SORT",
                                         buffer,
                                         filter,
@@ -329,7 +329,7 @@ int main() {
         
         // Dispatch packet
         dispatcher_t::dispatch_packet(sort_packet);
-        buffer = sort_packet->_output_buffer;
+        buffer = sort_packet->output_buffer();
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {

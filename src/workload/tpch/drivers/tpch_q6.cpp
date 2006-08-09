@@ -15,7 +15,7 @@ void tpch_q6_driver::submit(void* disp) {
   
     packet_t* q6 =
         create_q6_packet( "Q6_CLIENT_", dp );
-    tuple_buffer_t* out = q6->_output_buffer;
+    tuple_fifo* out = q6->output_buffer();
         
     dispatcher_t::dispatch_packet(q6);
     tuple_t output;

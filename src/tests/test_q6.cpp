@@ -9,7 +9,7 @@
 
 
 int main(int argc, char* argv[]) {
-    
+
     query_info_t info = query_init(argc, argv);
     
     register_stage<tscan_stage_t>(1);

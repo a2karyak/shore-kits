@@ -44,12 +44,12 @@ void iprobe_stage_t::process_packet() {
     iprobe_packet_t* packet = (iprobe_packet_t*)adaptor->get_packet();
 
     Db*  db = packet->_db;
-    tuple_buffer_t* input_buffer = packet->_input_buffer;
+    tuple_fifo* input_buffer = packet->_input_buffer;
     dispatcher_t::dispatch_packet(packet->_input);
 
 
     // "I" own dest, so allocate space for it on the stack
-    size_t dest_size = packet->_output_buffer->tuple_size;
+    size_t dest_size = packet->output_buffer()->tuple_size();
     char dest_data[dest_size];
     tuple_t dest(dest_data, dest_size);
     

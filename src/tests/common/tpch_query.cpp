@@ -38,12 +38,14 @@ query_info_t query_init(int argc, char* argv[]) {
 
 void query_main(query_info_t& info, driver_t* driver) {
 
-    TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS);
+    TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS);
 
     for(int i=0; i < info.num_iterations; i++) {
         stopwatch_t timer;
         driver->submit(info.dispatcher_policy);
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
+
+        dbenv->memp_stat_print(0);
     }
 
     db_close();

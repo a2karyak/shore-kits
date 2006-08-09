@@ -260,7 +260,7 @@ void stage_container_t::run() {
 
         
         // create stage
-        pointer_guard_t <stage_t> stage = _stage_maker->create_stage();
+        guard<stage_t> stage = _stage_maker->create_stage();
         adaptor.run_stage(stage);
 
 	
@@ -283,7 +283,7 @@ void stage_container_t::run() {
 stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container,
                                                     packet_list_t* packet_list,
                                                     size_t tuple_size)
-    : adaptor_t(tuple_page_t::alloc(tuple_size)),
+    : adaptor_t(page::alloc(tuple_size)),
       _container(container),
       _packet_list(packet_list),
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
@@ -368,7 +368,7 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
  *  @brief Outputs a page of tuples to this stage's packet set. The
  *  caller retains ownership of the page.
  */
-void stage_container_t::stage_adaptor_t::output_page(tuple_page_t *page) {
+void stage_container_t::stage_adaptor_t::output_page(page* p) {
 
     packet_list_t::iterator it, end;
     unsigned int next_tuple;
@@ -377,7 +377,7 @@ void stage_container_t::stage_adaptor_t::output_page(tuple_page_t *page) {
     critical_section_t cs(&_stage_adaptor_lock);
     it  = _packet_list->begin();
     end = _packet_list->end();
-    _next_tuple += page->tuple_count();
+    _next_tuple += p->tuple_count();
     next_tuple = _next_tuple;
     cs.exit();
 
@@ -387,48 +387,45 @@ void stage_container_t::stage_adaptor_t::output_page(tuple_page_t *page) {
     
 
     bool packets_remaining = false;
-    tuple_t out_tup;
-
     while (it != end) {
 
 
         packet_t* curr_packet = *it;
         bool terminate_curr_packet = false;
+        try {
+            // Drain all tuples in output page into the current packet's
+            // output buffer.
+            page::iterator page_it = p->begin();
+            while(page_it != p->end()) {
 
+                // apply current packet's filter to this tuple
+                tuple_t in_tup = page_it.advance();
+                if(curr_packet->_output_filter->select(in_tup)) {
 
-        // Drain all tuples in output page into the current packet's
-        // output buffer.
-        tuple_page_t::iterator page_it;
-        for( page_it = page->begin();  page_it != page->end(); ++page_it) {
+                    // this tuple selected by filter!
 
-            // apply current packet's filter to this tuple
-            if(curr_packet->_output_filter->select(*page_it)) {
-
-                // this tuple selected by filter!
-
-                // allocate space in the output buffer
-                if ( !curr_packet->_output_buffer->alloc_tuple(out_tup) ) {
-                    // The consumer of the current packet's output
-                    // buffer has terminated the buffer! No need to
-                    // continue iterating over output page.
-                    terminate_curr_packet = true;
-                    break;
+                    // allocate space in the output buffer and project into it
+                    tuple_t out_tup = curr_packet->output_buffer()->allocate();
+                    curr_packet->_output_filter->project(out_tup, in_tup);
                 }
-        
-                // write tuple to allocated space
-                curr_packet->_output_filter->project(out_tup, *page_it);
             }
+            
+            // If this packet has run more than once, it may have received
+            // all the tuples it needs. Check for this case.
+            if ( next_tuple == curr_packet->_next_tuple_needed )
+                // This packet has received all tuples it needs! Another
+                // reason to terminate this packet!
+                terminate_curr_packet = true;
+        
+
+        } catch(TerminatedBufferException &e) {
+            // The consumer of the current packet's output
+            // buffer has terminated the buffer! No need to
+            // continue iterating over output page.
+            terminate_curr_packet = true;
         }
         
         
-        // If this packet has run more than once, it may have received
-        // all the tuples it needs. Check for this case.
-        if ( next_tuple == curr_packet->_next_tuple_needed )
-            // This packet has received all tuples it needs! Another
-            // reason to terminate this packet!
-            terminate_curr_packet = true;
-        
-
         // check for packet termination
         if (terminate_curr_packet) {
             // Finishing up a stage packet is tricky. We must treat
@@ -465,7 +462,7 @@ void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
 
     
     // packet output buffer
-    output_buffer_guard_t &output_buffer = packet->_output_buffer;
+    guard<tuple_fifo> output_buffer = packet->release_output_buffer();
     if ( output_buffer->send_eof() )
         // Consumer has not already terminated this buffer! It is now
         // responsible for deleting it.
@@ -604,7 +601,7 @@ void stage_container_t::stage_adaptor_t::abort_queries() {
 
     // handle non-primary packets in packet list
     packet_list_t::iterator it;
-    for (it = _packet_list->begin(); it != _packet_list->end(); ) {
+    for (it = _packet_list->begin(); it != _packet_list->end(); ++it) {
         
 
 	packet_t* curr_packet = *it;

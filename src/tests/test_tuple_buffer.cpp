@@ -2,7 +2,9 @@
 
 #include "engine/thread.h"
 #include "engine/core/tuple.h"
+#include "engine/core/tuple_fifo.h"
 #include "qpipe_panic.h"
+#include "workload/tpch/tpch_db.h"
 
 #include "tests/common/tester_thread.h"
 
@@ -24,14 +26,14 @@ void usage(const char* program_name) {
     exit(-1);
 }
 
-void do_terminate(tuple_buffer_t &buf, int i) {
+void do_terminate(tuple_fifo &buf, int i) {
     bool ret = buf.terminate();
     TRACE(TRACE_ALWAYS, "i = %d: terminate() returned %s\n",
           i,
           ret ? "TRUE" : "FALSE");
 }
 
-void do_send_eof(tuple_buffer_t &buf, int i) {
+void do_send_eof(tuple_fifo &buf, int i) {
     bool ret = buf.send_eof();
     TRACE(TRACE_ALWAYS, "i = %d: send_eof() returned %s\n",
           i,
@@ -43,6 +45,7 @@ void do_send_eof(tuple_buffer_t &buf, int i) {
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
 
 
     // command-line args
@@ -72,7 +75,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    tuple_buffer_t int_buffer(sizeof(int));
+    tuple_fifo int_buffer(sizeof(int), dbenv);
 
     // can only send EOF once, although we can terminate multiple
     // times
@@ -83,7 +86,7 @@ int main(int argc, char* argv[]) {
 
         if (i <= index) {
             tuple_t tuple((char*)&i, sizeof(int));
-            int_buffer.put_tuple(tuple);
+            int_buffer.append(tuple);
         }
 
         if ((i == index) && terminate)

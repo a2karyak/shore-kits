@@ -42,12 +42,12 @@ const c_str merge_stage_t::DEFAULT_STAGE_NAME = "MERGE_STAGE";
  * the heap by up to 2x and make it even less attractive than shown
  * above.
  */
-bool merge_stage_t::buffer_head_t::init(tuple_buffer_t *buf,
+bool merge_stage_t::buffer_head_t::init(tuple_fifo *buf,
                                         key_extractor_t* extract)
 {
     buffer = buf;
     _extract = extract;
-    int size = buffer->tuple_size;
+    int size = buffer->tuple_size();
     data = new char[size];
     tuple = tuple_t(data, size);
     item.data = data;

@@ -50,7 +50,7 @@ protected:
 
         // Group many output() tuples into a page before "sending"
         // entire page to packet list
-        page_guard_t out_page;
+        guard<page> out_page;
 	
 	// Checked independently of other variables. Don't need to
 	// protect this with _stage_adaptor_mutex.
@@ -89,8 +89,8 @@ protected:
          *  the compiler can optimize across the call to
          *  output_page, which is not virtual.
          */
-        virtual void output(tuple_page_t *page) {
-            output_page(page);
+        virtual void output(page* p) {
+            output_page(p);
         }
 	
 
@@ -116,7 +116,7 @@ protected:
 
     private:
 
-        void output_page(tuple_page_t *page);
+        void output_page(page* p);
     };
     
     

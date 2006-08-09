@@ -37,7 +37,7 @@
 
 packet_t::packet_t(const c_str    &packet_id,
 		   const c_str    &packet_type,
-		   tuple_buffer_t* output_buffer,
+		   tuple_fifo*     output_buffer,
 		   tuple_filter_t* output_filter,
                    bool            merge_enabled)
     : _merge_enabled(merge_enabled),

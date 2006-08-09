@@ -24,7 +24,7 @@ using std::not_equal_to;
 struct predicate_t {
     virtual bool select(const tuple_t &tuple)=0;
 
-    virtual predicate_t* clone()=0;
+    virtual predicate_t* clone() const=0;
     
     virtual ~predicate_t() { }
 };
@@ -52,7 +52,7 @@ public:
         V* field = reinterpret_cast<V*>(tuple.data + _offset);
         return T<V>()(*field, _value);
     }
-    virtual scalar_predicate_t* clone() {
+    virtual scalar_predicate_t* clone() const {
         return new scalar_predicate_t(*this);
     }
 };
@@ -138,7 +138,7 @@ public:
         const char* field = tuple.data + _offset;
         return T<int>()(strcmp(field, _value.c_str()), 0);
     }
-    virtual string_predicate_t* clone() {
+    virtual string_predicate_t* clone() const {
         return new string_predicate_t(*this);
     }
 };
@@ -221,7 +221,7 @@ public:
         // full match
         return !INVERTED;
     }
-    virtual like_predicate* clone() {
+    virtual like_predicate* clone() const {
         return new like_predicate(*this);
     }
 };
@@ -243,7 +243,7 @@ public:
         V* field2 = reinterpret_cast<V*>(tuple.data + _offset2);
         return T<V>()(*field1, *field2);
     }
-    virtual field_predicate_t* clone() {
+    virtual field_predicate_t* clone() const {
         return new field_predicate_t(*this);
     }
 };
@@ -303,7 +303,7 @@ public:
         // the list; else success means we did
         return DISJUNCTION? result != _list.end() : result == _list.end();
     }
-    virtual compound_predicate_t* clone() {
+    virtual compound_predicate_t* clone() const {
         return new compound_predicate_t(*this);
     }
     compound_predicate_t(const compound_predicate_t &other)

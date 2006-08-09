@@ -69,7 +69,7 @@ struct q6_iscan_filter_t : tuple_filter_t {
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
     }
-    virtual q6_iscan_filter_t* clone() {
+    virtual q6_iscan_filter_t* clone() const {
         return new q6_iscan_filter_t(*this);
     }
 };
@@ -80,7 +80,7 @@ struct lineitem_key_compare_t : key_compare_t {
         Dbt k2((void*) key2, 2*sizeof(int));
         return tpch_lineitem_bt_compare_fcn(NULL, &k1, &k2);
     }
-    lineitem_key_compare_t* clone() {
+    lineitem_key_compare_t* clone() const {
         return new lineitem_key_compare_t(*this);
     }
 };
@@ -95,7 +95,7 @@ struct lineitem_key_extractor_t : key_extractor_t {
         memcpy(&hint, key, sizeof(int));
         return hint;
     }
-    lineitem_key_extractor_t* clone() {
+    lineitem_key_extractor_t* clone() const {
         return new lineitem_key_extractor_t(*this);
     }
 };
@@ -115,12 +115,14 @@ struct print_filter_t : tuple_filter_t {
     // use default project...
     
     virtual bool select(const tuple_t &t) {
-        int* data = (int*)t.data;
-        //        printf("%d\n", data[0]);
+        if(0) {
+            int* data = (int*)t.data;
+            printf("%d\n", data[0]);
+        }
         return true;
     }
 
-    virtual print_filter_t* clone() {
+    virtual print_filter_t* clone() const {
         return new print_filter_t();
     }
 };
@@ -151,13 +153,13 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     
     
     // ISCAN
-    tuple_buffer_t* iscan_output = new tuple_buffer_t(2*sizeof(int));
+    tuple_fifo* iscan_output = new tuple_fifo(2*sizeof(int), dbenv);
     iscan_packet_t *q6_iscan_packet;
     c_str id("%s_ISCAN_PACKET", client_prefix.data());
     q6_iscan_packet = new iscan_packet_t(id,
                                          iscan_output,
                                          //new q6_iscan_filter_t(discount, qty),
-                                         new trivial_filter_t(iscan_output->tuple_size),
+                                         new trivial_filter_t(iscan_output->tuple_size()),
                                          //new print_filter_t(),
                                          tpch_lineitem_shipdate_idx,
                                          start_key, stop_key,
@@ -167,7 +169,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     // SORT IDS
     sort_packet_t* q6_sort_packet;
     id = c_str("%s_SORT_PACKET", client_prefix.data());
-    q6_sort_packet = new sort_packet_t(id, new tuple_buffer_t(iscan_output->tuple_size),
+    q6_sort_packet = new sort_packet_t(id, new tuple_fifo(iscan_output->tuple_size(), dbenv),
                                        //new trivial_filter_t(iscan_output->tuple_size),
                                        new print_filter_t(),
                                        new lineitem_key_extractor_t(),
@@ -177,7 +179,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     // PROBE IDS
     iprobe_packet_t* q6_probe_packet;
     id = c_str("%s_IPROBE_PACKET", client_prefix.data());
-    q6_probe_packet = new iprobe_packet_t(id, new tuple_buffer_t(sizeof(iscan_tuple)),
+    q6_probe_packet = new iprobe_packet_t(id, new tuple_fifo(sizeof(iscan_tuple), dbenv),
                                           new q6_iscan_filter_t(discount, qty),
                                           q6_sort_packet, tpch_lineitem);
                                        
@@ -185,7 +187,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
     id = c_str("%s_AGGREGATE_PACKET", client_prefix.data());
     aggregate_packet_t* q6_agg_packet;
     q6_agg_packet = new aggregate_packet_t(id,
-                                           new tuple_buffer_t(2*sizeof(double)),
+                                           new tuple_fifo(2*sizeof(double), dbenv),
                                            new trivial_filter_t(2*sizeof(double)),
                                            new q6_count_aggregate_t(),
                                            new default_key_extractor_t(0),
@@ -244,7 +246,7 @@ int main(int argc, char* argv[]) {
         
         packet_t* q6_packet = create_q6_idx_packet("Q6", dp);
 
-        tuple_buffer_t* output_buffer = q6_packet->_output_buffer;
+        tuple_fifo* output_buffer = q6_packet->output_buffer();
         dispatcher_t::dispatch_packet(q6_packet);
     
         tuple_t output;

@@ -32,18 +32,18 @@ void fdump_stage_t::process_packet() {
 
     const c_str &filename = packet->_filename;
     // make sure the file gets closed when we're done
-    file_guard_t file = fopen(filename.data(), "w+");
+    guard<FILE> file = fopen(filename.data(), "w+");
     if ( file == NULL )
         throw EXCEPTION(FileException, (string("fopen() failed on ") + string(filename.data())).c_str());
 
     
-    tuple_buffer_t* input_buffer = packet->_input_buffer;
+    tuple_fifo* input_buffer = packet->_input_buffer;
     
     
     // read the file; make sure the buffer pages get deleted
     while (1) {
     
-        page_guard_t tuple_page = input_buffer->get_page();
+        guard<page> tuple_page = input_buffer->get_page();
         if(tuple_page == NULL) {
             // no more pages
             TRACE(TRACE_DEBUG, "Finished dump to file %s\n", filename.data());

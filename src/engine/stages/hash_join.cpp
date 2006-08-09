@@ -162,11 +162,11 @@ void hash_join_stage_t::process_packet() {
     bool distinct = packet->_distinct;
 
     // anything worth reading?
-    tuple_buffer_t *right_buffer = packet->_right_buffer;
+    tuple_fifo *right_buffer = packet->_right_buffer;
     dispatcher_t::dispatch_packet(packet->_right);
 
 
-    if(!right_buffer->wait_for_input())
+    if(!right_buffer->ensure_read_ready())
         // No right-side tuples... no join tuples.
         return;
     
@@ -233,9 +233,9 @@ void hash_join_stage_t::process_packet() {
 
 
     // start building left side hash partitions
-    tuple_buffer_t *left_buffer = packet->_left_buffer;
+    tuple_fifo *left_buffer = packet->_left_buffer;
     dispatcher_t::dispatch_packet(packet->_left);
-    if(!left_buffer->wait_for_input())
+    if(!left_buffer->ensure_read_ready())
         // No left-side tuples... no join tuples.
         return;
 

@@ -22,8 +22,8 @@ public:
     static const c_str PACKET_TYPE;
 
     Db* _db;
-    pointer_guard_t<packet_t> _input;
-    input_buffer_guard_t _input_buffer;
+    guard<packet_t> _input;
+    guard<tuple_fifo> _input_buffer;
    
     /**
      *  @brief iprobe_packet_t constructor.
@@ -47,11 +47,11 @@ public:
      *  of this object.
      */
     iprobe_packet_t(const c_str    &packet_id,
-                    tuple_buffer_t* output_buffer,
+                    tuple_fifo* output_buffer,
                     tuple_filter_t* output_filter,
                     packet_t* input, Db* db)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
-	  _db(db), _input(input), _input_buffer(input->_output_buffer)
+	  _db(db), _input(input), _input_buffer(input->output_buffer())
     {
         assert(db != NULL);
     }

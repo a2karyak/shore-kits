@@ -51,7 +51,7 @@ public:
      *  of this object.
      */
     iscan_packet_t(const c_str    &packet_id,
-		   tuple_buffer_t* output_buffer,
+		   tuple_fifo* output_buffer,
 		   tuple_filter_t* output_filter,
 		   Db* db,
                    dbt_guard_t start_key,

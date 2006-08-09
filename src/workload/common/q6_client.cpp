@@ -25,15 +25,17 @@ void* q6_client_main(void* arg) {
         
         c_str prefix("Q6_CLIENT%d_%d_", info->_client_id, i);
         packet_t* q6 = create_q6_packet( prefix, info->_policy );
-        tuple_buffer_t* out = q6->_output_buffer;
+        tuple_fifo* out = q6->output_buffer();
         
         dispatcher_t::dispatch_packet(q6);
 
         tuple_t output;
         int count;
-        for(count=0; out->get_tuple(output); count++);
-        printf("Count: %d\n", count);
-        if(0)
+        if(0) {
+            for(count=0; out->get_tuple(output); count++);
+            printf("Count: %d\n", count);
+        }
+        if(1)
         while( out->get_tuple(output) ) {
             double* r = (double*)output.data;
             TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);

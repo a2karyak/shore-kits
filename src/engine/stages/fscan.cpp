@@ -14,8 +14,6 @@ const c_str fscan_packet_t::PACKET_TYPE = "FSCAN";
 
 const c_str fscan_stage_t::DEFAULT_STAGE_NAME = "FSCAN_STAGE";
 
-
-
 /**
  *  @brief Read the file specified by fscan_packet_t p.
  *
@@ -31,13 +29,12 @@ void fscan_stage_t::process_packet() {
 
 
     const c_str &filename = packet->_filename;
-    file_guard_t file = fopen(filename.data(), "r");
+    guard<FILE> file = fopen(filename.data(), "r");
     if (file == NULL)
         throw EXCEPTION(FileException, (string("fopen() failed on ") + string(filename.data())).c_str());
 
         
-    page_guard_t tuple_page =
-	tuple_page_t::alloc(packet->_output_buffer->tuple_size);
+    guard<page> tuple_page = page::alloc(packet->output_buffer()->tuple_size());
     
 
     // If we have FSCAN working sharing enabled, we could be accepting
@@ -58,10 +55,9 @@ void fscan_stage_t::process_packet() {
 	    adaptor->stop_accepting_packets();
 	    accepting_packets = false;
 	}
-	   
 
 	// output() each tuple in the page
-	tuple_page_t::iterator it = tuple_page->begin();
+	page::iterator it = tuple_page->begin();
         while(it != tuple_page->end())
 	    adaptor->output(*it++);
 

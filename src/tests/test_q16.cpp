@@ -53,7 +53,7 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
         int* dest = (int*) d.data;
         *dest = src->S_SUPPKEY;
     }
-    virtual supplier_tscan_filter_t* clone() {
+    virtual supplier_tscan_filter_t* clone() const {
         return new supplier_tscan_filter_t(*this);
     }
 };
@@ -64,7 +64,7 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
  */
 packet_t *supplier_scan(Db* tpch_supplier) {
     tuple_filter_t* filter = new supplier_tscan_filter_t();
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
     packet_t* tscan_packet = new tscan_packet_t("Supplier TSCAN",
                                                 buffer,
                                                 filter,
@@ -129,7 +129,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
         memcpy(dest->p_brand, src->P_BRAND, sizeof(src->P_BRAND));
         memcpy(dest->p_type, src->P_TYPE, sizeof(src->P_TYPE));
     }
-    virtual part_tscan_filter_t* clone() {
+    virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
     }
 };
@@ -141,7 +141,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
  */
 packet_t* part_scan(Db* tpch_part) {
     tuple_filter_t* filter = new part_tscan_filter_t();
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(part_scan_tuple_t), dbenv);
     packet_t* tscan_packet = new tscan_packet_t("Part TSCAN",
                                                 buffer,
                                                 filter,
@@ -166,14 +166,14 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
         dest->PART_KEY = src->PS_PARTKEY;
         dest->SUPP_KEY = src->PS_SUPPKEY;
     }
-    virtual partsupp_tscan_filter_t* clone() {
+    virtual partsupp_tscan_filter_t* clone() const {
         return new partsupp_tscan_filter_t(*this);
     }
 };
 
 packet_t* partsupp_scan(Db* tpch_partsupp) {
     tuple_filter_t* filter = new partsupp_tscan_filter_t();
-    tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(part_supp_tuple_t), dbenv);
     packet_t* tscan_packet = new tscan_packet_t("Partsupp TSCAN",
                                                 buffer,
                                                 filter,
@@ -181,7 +181,7 @@ packet_t* partsupp_scan(Db* tpch_partsupp) {
 
     // sort in preparation for the not-in test
     filter = new trivial_filter_t(sizeof(part_supp_tuple_t));
-    buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
+    buffer = new tuple_fifo(sizeof(part_supp_tuple_t), dbenv);
     size_t offset = (size_t) &((part_supp_tuple_t*)NULL)->SUPP_KEY;
     packet_t* sort_packet = new sort_packet_t("Partsupp SORT",
                                               buffer,
@@ -202,7 +202,7 @@ struct partsupp_filter_t : public tuple_filter_t {
         part_supp_tuple_t* src = (part_supp_tuple_t*) s.data;
         memcpy(dest.data, &src->PART_KEY, sizeof(int));
     }
-    virtual partsupp_filter_t* clone() {
+    virtual partsupp_filter_t* clone() const {
         return new partsupp_filter_t(*this);
     }
 };
@@ -228,7 +228,7 @@ struct q16_join_t : public tuple_join_t {
         dest->p_partkey = left->SUPP_KEY;
     }
 
-    virtual q16_join_t* clone() {
+    virtual q16_join_t* clone() const {
         return new q16_join_t(*this);
     }
 };
@@ -256,7 +256,7 @@ struct q16_compare1_t : public key_compare_t {
 
         return 0;
     }
-    virtual q16_compare1_t* clone() {
+    virtual q16_compare1_t* clone() const {
         return new q16_compare1_t(*this);
     }
 };
@@ -275,7 +275,7 @@ struct q16_extractor1_t : public key_extractor_t {
         return result;
     }
 #endif
-    virtual q16_extractor1_t* clone() {
+    virtual q16_extractor1_t* clone() const {
         return new q16_extractor1_t(*this);
     }
 };
@@ -293,7 +293,7 @@ struct q16_aggregate1_t : public tuple_aggregate_t {
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
     }
-    virtual q16_aggregate1_t* clone() {
+    virtual q16_aggregate1_t* clone() const {
         return new q16_aggregate1_t(*this);
     }
 };
@@ -314,7 +314,7 @@ struct q16_extractor2_t : public key_extractor_t {
         memcpy(&result, pst->p_brand, sizeof(int));
         return result;
     }
-    virtual q16_extractor2_t* clone() {
+    virtual q16_extractor2_t* clone() const {
         return new q16_extractor2_t(*this);
     }
 };
@@ -336,7 +336,7 @@ struct q16_aggregate2_t : public tuple_aggregate_t {
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
     }
-    virtual q16_aggregate2_t* clone() {
+    virtual q16_aggregate2_t* clone() const {
         return new q16_aggregate2_t(*this);
     }
 };
@@ -349,7 +349,7 @@ struct q16_extractor3_t : public key_extractor_t {
     virtual int extract_hint(const char* key) {
         return -*(int*)key;
     }
-    virtual q16_extractor3_t* clone() {
+    virtual q16_extractor3_t* clone() const {
         return new q16_extractor3_t(*this);
     }
 };
@@ -375,7 +375,7 @@ struct q16_compare2_t : public key_compare_t {
 
         return 0;
     }
-    virtual q16_compare2_t* clone() {
+    virtual q16_compare2_t* clone() const {
         return new q16_compare2_t(*this);
     }
 };
@@ -410,7 +410,7 @@ int main() {
         
         // ps_suppkey not in (select ... from supplier ...)
         tuple_filter_t* filter = new trivial_filter_t(sizeof(part_supp_tuple_t));
-        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(part_supp_tuple_t));
+        tuple_fifo* buffer = new tuple_fifo(sizeof(part_supp_tuple_t), dbenv);
         packet_t* not_in_packet;
         not_in_packet = new sorted_in_packet_t("ps_suppkey NOT IN",
                                                buffer,
@@ -424,7 +424,7 @@ int main() {
 
         // join with part
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
+        buffer = new tuple_fifo(sizeof(part_scan_tuple_t), dbenv);
         packet_t* join_packet = new hash_join_packet_t("Part JOIN",
                                                        buffer,
                                                        filter,
@@ -434,7 +434,7 @@ int main() {
                                                        
         // aggregate to make ps_suppkey distinct
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
+        buffer = new tuple_fifo(sizeof(part_scan_tuple_t), dbenv);
 
         key_extractor_t* extractor = new q16_extractor1_t();
         key_compare_t* compare = new q16_compare1_t();
@@ -450,7 +450,7 @@ int main() {
 
         // aggregate again to count ps_suppkey
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
+        buffer = new tuple_fifo(sizeof(part_scan_tuple_t), dbenv);
         extractor = new q16_extractor2_t();
         aggregate = new q16_aggregate2_t();
         packet_t* agg_packet;
@@ -464,7 +464,7 @@ int main() {
 
         // sort the output
         filter = new trivial_filter_t(sizeof(part_scan_tuple_t));
-        buffer = new tuple_buffer_t(sizeof(part_scan_tuple_t));
+        buffer = new tuple_fifo(sizeof(part_scan_tuple_t), dbenv);
         extractor = new q16_extractor3_t();
         compare = new q16_compare2_t();
         packet_t* sort_packet = new sort_packet_t("Final SORT",
@@ -476,7 +476,7 @@ int main() {
         
         // Dispatch packet
         dispatcher_t::dispatch_packet(sort_packet);
-        buffer = sort_packet->_output_buffer;
+        buffer = sort_packet->output_buffer();
         
         tuple_t output;
         TRACE(TRACE_ALWAYS,

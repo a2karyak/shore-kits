@@ -28,7 +28,7 @@ public:
         memcpy(dest.data, agg_data, tuple_size());
     }
 
-    virtual count_aggregate_t* clone() {
+    virtual count_aggregate_t* clone() const {
         return new count_aggregate_t(*this);
     }
 };

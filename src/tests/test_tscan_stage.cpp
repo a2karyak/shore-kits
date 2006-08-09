@@ -39,7 +39,7 @@ int main() {
 
     // TSCAN PACKET
     // the output consists of 2 doubles
-    tuple_buffer_t* tscan_out_buffer = new tuple_buffer_t(2*sizeof(double));
+    tuple_fifo* tscan_out_buffer = new tuple_fifo(2*sizeof(double), dbenv);
     tuple_filter_t* tscan_filter = new q6_tscan_filter_t(true);
 
 

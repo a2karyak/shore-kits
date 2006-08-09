@@ -7,6 +7,7 @@ CORE = \
    core/page.cpp \
    core/packet.cpp \
    core/tuple.cpp \
+   core/tuple_fifo.cpp \
    core/stage_container.cpp
 
 STAGES = \

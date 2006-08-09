@@ -6,7 +6,7 @@
 #include "engine/dispatcher.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-
+#include "workload/tpch/tpch_db.h"
 #include "tests/common.h"
 
 
@@ -18,6 +18,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
     
     
     // parse output filename
@@ -37,8 +38,8 @@ int main(int argc, char* argv[]) {
     
     
     // just need to pass one int at a time to the counter
-    tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
-    tuple_buffer_t* signal_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* signal_buffer = new tuple_fifo(sizeof(int), dbenv);
 
 
     struct int_tuple_writer_info_s info(int_buffer, num_tuples);
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
     fdump_packet_t* packet = 
 	new fdump_packet_t("FDUMP_PACKET_1",
 			   signal_buffer, 
-                           new trivial_filter_t(int_buffer->tuple_size),
+                           new trivial_filter_t(int_buffer->tuple_size()),
 			   int_buffer, 
 			   output_filename);
     

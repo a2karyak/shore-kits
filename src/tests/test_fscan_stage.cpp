@@ -5,7 +5,7 @@
 #include "engine/stages/fscan.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-
+#include "workload/tpch/tpch_db.h"
 #include "tests/common.h"
 
 #include <stdlib.h>
@@ -18,6 +18,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
 
     // parse input filename
     if ( argc < 2 ) {
@@ -31,11 +32,11 @@ int main(int argc, char* argv[]) {
     
     
     // aggregate single count result (single int)
-    tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
     fscan_packet_t* packet = 
 	new fscan_packet_t("FSCAN_PACKET_1",
                            int_buffer,
-                           new trivial_filter_t(int_buffer->tuple_size),
+                           new trivial_filter_t(int_buffer->tuple_size()),
                            input_filename);
     
     

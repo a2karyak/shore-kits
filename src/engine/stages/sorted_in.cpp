@@ -32,8 +32,8 @@ void sorted_in_stage_t::process_packet() {
     // setup
     sorted_in_packet_t* packet;
     packet = (sorted_in_packet_t*) _adaptor->get_packet();
-    tuple_buffer_t* left_input = packet->_left_input;
-    tuple_buffer_t* right_input = packet->_right_input;
+    tuple_fifo* left_input = packet->_left_input;
+    tuple_fifo* right_input = packet->_right_input;
     key_extractor_t* left_extractor = packet->_left_extractor;
     key_extractor_t* right_extractor = packet->_right_extractor;
     key_compare_t* compare = packet->_compare;

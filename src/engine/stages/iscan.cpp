@@ -60,7 +60,7 @@ void iscan_stage_t::process_packet() {
 
     // BerkeleyDB cannot read into page_t's. Allocate a large blob and
     // do bulk reading.
-    dbt_guard_t probe_data(packet->_output_buffer->tuple_size);
+    dbt_guard_t probe_data(packet->output_buffer()->tuple_size());
     dbt_guard_t bulk_data(ISCAN_READ_BUFFER_SIZE);
     dbt_guard_t start_key = packet->_start_key;
     

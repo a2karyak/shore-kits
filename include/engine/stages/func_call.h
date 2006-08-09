@@ -49,7 +49,7 @@ public:
      *  is not used directly. The container will send_eof() and close
      *  this buffer when process_packet() returns. However, this will
      *  not be done until func is called with func_arg. So a test
-     *  program may pass in a tuple_buffer_t for both output_buffer
+     *  program may pass in a tuple_fifo for both output_buffer
      *  and func_arg. A packet DOES NOT own its output buffer (we will
      *  not invoke delete or free() on this field in our packet
      *  destructor).
@@ -64,7 +64,7 @@ public:
      *  packet does not own this value.
      */
     func_call_packet_t(const c_str    &packet_id,
-                       tuple_buffer_t* output_buffer,
+                       tuple_fifo* output_buffer,
                        tuple_filter_t* output_filter,
                        void (*func) (void*),
                        void* func_arg,

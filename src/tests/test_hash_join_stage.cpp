@@ -6,7 +6,7 @@
 #include "engine/stages/hash_join.h"
 #include "trace.h"
 #include "qpipe_panic.h"
-
+#include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
 
@@ -23,6 +23,7 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
 
 
     // parse output filename
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
 
 
     single_int_join_t* join = new single_int_join_t();
-    tuple_buffer_t* left_int_buffer = new tuple_buffer_t(join->left_tuple_size());
+    tuple_fifo* left_int_buffer = new tuple_fifo(join->left_tuple_size(), dbenv);
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples);
 
     func_call_packet_t* left_packet = 
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
-    tuple_buffer_t* right_int_buffer = new tuple_buffer_t(join->right_tuple_size());
+    tuple_fifo* right_int_buffer = new tuple_fifo(join->right_tuple_size(), dbenv);
     struct int_tuple_writer_info_s right_writer_info(right_int_buffer, num_tuples);
     func_call_packet_t* right_packet = 
 	new func_call_packet_t("RIGHT_PACKET",
@@ -63,7 +64,7 @@ int main(int argc, char* argv[]) {
                                &right_writer_info);
     
     
-    tuple_buffer_t* join_buffer = new tuple_buffer_t(join->out_tuple_size());
+    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size(), dbenv);
 
     
     hash_join_packet_t* join_packet =

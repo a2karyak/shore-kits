@@ -12,7 +12,7 @@
 
 #include "workload/common.h"
 #include "tests/common.h"
-
+#include "workload/tpch/tpch_db.h"
 #include <vector>
 #include <algorithm>
 
@@ -28,7 +28,7 @@ int num_copies;
 
 void write_ints(void* arg)
 {
-    tuple_buffer_t* buffer = (tuple_buffer_t *)arg;
+    tuple_fifo* buffer = (tuple_fifo *)arg;
 
     // produce a set of inputs, with duplicated values
     vector<int> inputs;
@@ -44,7 +44,7 @@ void write_ints(void* arg)
     tuple_t input((char *)&value, sizeof(int));
     for(unsigned  i=0; i < inputs.size(); i++) {
         value = inputs[i];
-        buffer->put_tuple(input);
+        buffer->append(input);
     }
 
     TRACE(TRACE_ALWAYS, "Finished inserting tuples\n", value);
@@ -55,6 +55,7 @@ void write_ints(void* arg)
 int main(int argc, char* argv[]) {
 
     thread_init();
+    db_open();
     int THREAD_POOL_SIZE = 20;
 
     bool do_echo = true;
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
     register_stage<func_call_stage_t>(1);
     
 
-    tuple_buffer_t* int_buffer = new tuple_buffer_t(sizeof(int));
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
     func_call_packet_t* fc_packet = 
 	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
@@ -95,8 +96,8 @@ int main(int argc, char* argv[]) {
                                int_buffer);
 
 
-    tuple_buffer_t* output_buffer = new tuple_buffer_t(sizeof(int));
-    tuple_filter_t* output_filter = new trivial_filter_t(int_buffer->tuple_size);
+    tuple_fifo* output_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_filter_t* output_filter = new trivial_filter_t(int_buffer->tuple_size());
     sort_packet_t* packet = new sort_packet_t("SORT_PACKET_1",
                                               output_buffer,
                                               output_filter,

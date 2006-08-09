@@ -72,7 +72,7 @@ struct part_tscan_filter_t : tuple_filter_t {
         dest->P_PARTKEY = src->P_PARTKEY;
         memcpy(dest->P_TYPE, src->P_TYPE, sizeof(dest->P_TYPE));
     }
-    virtual part_tscan_filter_t* clone() {
+    virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
     }
 };
@@ -111,7 +111,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
     }
-    virtual lineitem_tscan_filter_t* clone() {
+    virtual lineitem_tscan_filter_t* clone() const {
         return new lineitem_tscan_filter_t(*this);
     }
 };
@@ -140,7 +140,7 @@ struct q14_join : tuple_join_t {
         dest->L_DISCOUNT = right->L_DISCOUNT;
         memcpy(dest->P_TYPE, left->P_TYPE, sizeof(dest->P_TYPE));
     }
-    virtual q14_join* clone() {
+    virtual q14_join* clone() const {
         return new q14_join(*this);
     }
 };
@@ -180,7 +180,7 @@ struct q14_aggregate : tuple_aggregate_t {
         q14_tuple* agg = (q14_tuple*) agg_data;
         *dest = 100.*agg->PROMO_SUM/agg->TOTAL_SUM;
     }
-    virtual q14_aggregate* clone() {
+    virtual q14_aggregate* clone() const {
         return new q14_aggregate(*this);
     }
 };
@@ -205,7 +205,7 @@ int main() {
 
         // lineitem scan
         tuple_filter_t* filter = new lineitem_tscan_filter_t();
-        tuple_buffer_t* buffer = new tuple_buffer_t(sizeof(lineitem_scan_tuple));
+        tuple_fifo* buffer = new tuple_fifo(sizeof(lineitem_scan_tuple), dbenv);
         packet_t* lineitem_packet;
         lineitem_packet = new tscan_packet_t("lineitem TSCAN",
                                              buffer,
@@ -214,7 +214,7 @@ int main() {
 
         // part scan
         filter = new part_tscan_filter_t();
-        buffer = new tuple_buffer_t(sizeof(part_scan_tuple));
+        buffer = new tuple_fifo(sizeof(part_scan_tuple), dbenv);
         packet_t* part_packet;
         part_packet = new tscan_packet_t("part TSCAN",
                                          buffer, filter,
@@ -222,7 +222,7 @@ int main() {
     
         // join
         filter = new trivial_filter_t(sizeof(join_tuple));
-        buffer = new tuple_buffer_t(sizeof(join_tuple));
+        buffer = new tuple_fifo(sizeof(join_tuple), dbenv);
         packet_t* join_packet;
         join_packet = new hash_join_packet_t("part-lineitem HJOIN",
                                              buffer, filter,
@@ -232,7 +232,7 @@ int main() {
 
         // aggregation
         filter = new trivial_filter_t(sizeof(double));
-        buffer = new tuple_buffer_t(sizeof(double));
+        buffer = new tuple_fifo(sizeof(double), dbenv);
         key_extractor_t* extractor = new default_key_extractor_t(0, 0);
         tuple_aggregate_t* aggregate = new q14_aggregate();
         packet_t* agg_packet;

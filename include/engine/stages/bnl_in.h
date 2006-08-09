@@ -33,13 +33,13 @@ struct bnl_in_packet_t : public packet_t {
   
     static const c_str PACKET_TYPE;
 
-    pointer_guard_t<packet_t>        _left;
-    input_buffer_guard_t                   _left_buffer;
+    guard<packet_t>        _left;
+    guard<tuple_fifo>      _left_buffer;
     
     // the following fields should always be deleted by the destructor
-    pointer_guard_t<tuple_source_t>  _right_source;
-    pointer_guard_t<key_extractor_t> _extract;
-    pointer_guard_t<key_compare_t>   _compare;
+    guard<tuple_source_t>  _right_source;
+    guard<key_extractor_t> _extract;
+    guard<key_compare_t>   _compare;
     bool _output_on_match;
     
     
@@ -62,7 +62,7 @@ struct bnl_in_packet_t : public packet_t {
      *
      */
     bnl_in_packet_t(const c_str    &packet_id,
-                    tuple_buffer_t* output_buffer,
+                    tuple_fifo* output_buffer,
                     tuple_filter_t* output_filter,
                     packet_t*       left,
                     tuple_source_t* right_source,
@@ -71,7 +71,7 @@ struct bnl_in_packet_t : public packet_t {
                     bool            output_on_match)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
           _left(left),
-          _left_buffer(left->_output_buffer),
+          _left_buffer(left->output_buffer()),
           _right_source(right_source),
           _extract(extract),
           _compare(compare),

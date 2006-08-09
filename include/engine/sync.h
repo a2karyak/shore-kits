@@ -52,6 +52,11 @@ void pthread_join_wrapper(pthread_t tid, T* &rval) {
 
 struct critical_section_t {
     pthread_mutex_t* _mutex;
+    critical_section_t(pthread_mutex_t &mutex)
+        : _mutex(&mutex)
+    {
+        pthread_mutex_lock_wrapper(_mutex);
+    }
     critical_section_t(pthread_mutex_t* mutex)
         : _mutex(mutex)
     {

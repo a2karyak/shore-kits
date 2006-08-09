@@ -9,6 +9,7 @@
 #include "engine/namespace.h"
 
 
+malloc_page_pool malloc_page_pool::_instance;
 
 /**
  *  @brief This function can only be called by the producer. If the
