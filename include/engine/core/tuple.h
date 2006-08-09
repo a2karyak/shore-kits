@@ -168,7 +168,7 @@ class page {
 
     page_pool* _pool;
     size_t _tuple_size;
-    size_t _tuple_count;
+    size_t _free_count;
     size_t _end_offset;
 public:
     page* next;
@@ -215,14 +215,14 @@ private:
     }
 
     size_t tuple_count() const {
-        return _tuple_count;
+        return _end_offset/tuple_size();
     }
 
     /**
      *  @brief Empty this page of its tuples.
      */
     void clear() {
-        _tuple_count = 0;
+        _free_count = capacity();
         _end_offset = 0;
     }
     
@@ -233,7 +233,7 @@ private:
      */
 
     bool empty() const {
-        return tuple_count() == 0;
+        return _end_offset == 0;
     }
     
 
@@ -243,7 +243,7 @@ private:
      */
 
     bool full() const {
-        return tuple_count() == capacity();
+        return _free_count == 0;
     }
 
     /**
@@ -334,13 +334,13 @@ private:
 
     char* allocate() {
 
-        if(tuple_count() == capacity())
+        if(full())
 	    // page is full!
             throw std::out_of_range("Cannot allocate from a full page");
         
         char *result = &_data[_end_offset];
         _end_offset += tuple_size();
-        _tuple_count++;
+        _free_count--;
         return result;
     }
     
@@ -452,10 +452,9 @@ private:
     page(page_pool* pool, size_t tuple_size)
         : _pool(pool),
           _tuple_size(tuple_size),
-          _tuple_count(0),
-          _end_offset(0),
           next(NULL)
     {
+        clear();
     }
     
 

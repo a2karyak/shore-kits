@@ -178,10 +178,12 @@ public:
         tuple->L_AVG_PRICE += L_EXTENDEDPRICE;
         tuple->L_AVG_DISC += L_DISCOUNT;
 
+        if(0) {
 	if (((int) tuple->L_COUNT_ORDER) % 100 == 0) {
 	    TRACE(TRACE_DEBUG, "%lf\n", tuple->L_COUNT_ORDER);
 	    fflush(stdout);
 	}
+        }
     }
 
     
