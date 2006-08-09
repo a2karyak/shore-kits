@@ -42,7 +42,6 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         throw EXCEPTION(Berkeley_DB_Exception, "Could not create new DbEnv");
     }
   
-  
     // specify buffer pool size
     try {
         if (dbenv->set_cachesize(db_cache_size_gb, db_cache_size_bytes, 0)) {
@@ -82,12 +81,19 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_tmp_dir() threw DbException");
     }
+
+    dbenv->set_msgfile(stderr);
+    dbenv->set_errfile(stderr);
+    // TODO: DB_NOMMAP?
+    dbenv->set_flags(DB_NOMMAP, true);
     
 
     // open home directory
     try {
         // open environment with no transactional support.
-        dbenv->open(BDB_HOME_DIRECTORY, DB_CREATE | DB_PRIVATE | DB_THREAD | DB_INIT_MPOOL, 0);
+        dbenv->open(BDB_HOME_DIRECTORY,
+                    DB_CREATE | DB_PRIVATE | DB_THREAD | DB_INIT_CDB | DB_INIT_MPOOL,
+                    0);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException opening home directory \"%s\". Make sure directory exists\n",
@@ -175,6 +181,7 @@ static void open_db_table(Db*& table, u_int32_t flags,
     try {
         table = new Db(dbenv, 0);
         table->set_bt_compare(cmp);
+        table->set_pagesize(4096);
         table->open(NULL, table_name, NULL, DB_BTREE, flags, 0644);
     }
     catch ( DbException &e) {
