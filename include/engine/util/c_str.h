@@ -24,7 +24,7 @@ class c_str {
     struct c_str_data {
         mutable pthread_mutex_t _lock;
         mutable unsigned _count;
-        char _str[0];
+        char _str[0] __attribute__ ((aligned));
     };
 
     static const c_str_data _seed;

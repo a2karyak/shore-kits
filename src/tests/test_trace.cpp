@@ -13,7 +13,7 @@ int main(int, char**)
   c_str hm("hello moon");
 
   for (int i = 0; i < 10; i++) {
-      printf("i = %d: \n", i);
+      printf("i = %d: %s %d\n", i, hm.data(), strlen(hm.data()));
       c_str hm2(hm);
       c_str gnm("good night moon");
       c_str hm3(hm);
