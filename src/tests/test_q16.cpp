@@ -399,7 +399,7 @@ int main() {
     register_stage<sorted_in_stage_t>();
 
 
-    for(int i=0; i < 5; i++) {
+    for(int i=0; i < 10; i++) {
 
         stopwatch_t timer;
 
@@ -482,7 +482,7 @@ int main() {
         TRACE(TRACE_ALWAYS,
               "*** Q16 %10s %25s %10s %10s\n",
               "Brand", "Type", "Size", "Suppliers");
-        while(!buffer->get_tuple(output)) {
+        while(buffer->get_tuple(output)) {
             part_scan_tuple_t* r = (part_scan_tuple_t*) output.data;
             TRACE(TRACE_ALWAYS,
                   "*** Q16 %10s %25s %10d %10d\n",
