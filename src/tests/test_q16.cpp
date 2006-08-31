@@ -56,6 +56,10 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
     virtual supplier_tscan_filter_t* clone() const {
         return new supplier_tscan_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return c_str("select S_SUPPKEY where S_COMMENT like %%%s%%%s%%",
+                     word1, word2);
+    }
 };
 
 /**
@@ -132,6 +136,11 @@ struct part_tscan_filter_t : public tuple_filter_t {
     virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return c_str("select P_PARTKEY, P_SIZE, P_BRAND, P_TYPE "
+                     "where P_BRAND <> %s and P_TYPE not like %s%%",
+                     brand, type);
+    }
 };
 
 /**
@@ -169,6 +178,9 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
     virtual partsupp_tscan_filter_t* clone() const {
         return new partsupp_tscan_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return "select PS_PARTKEY, PS_SUPPKEY";
+    }
 };
 
 packet_t* partsupp_scan(Db* tpch_partsupp) {
@@ -205,6 +217,9 @@ struct partsupp_filter_t : public tuple_filter_t {
     virtual partsupp_filter_t* clone() const {
         return new partsupp_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return "select PART_KEY";
+    }
 };
 
 struct q16_join_t : public tuple_join_t {
@@ -230,6 +245,9 @@ struct q16_join_t : public tuple_join_t {
 
     virtual q16_join_t* clone() const {
         return new q16_join_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "q16_join, select SUPP_KEY";
     }
 };
 
@@ -296,6 +314,9 @@ struct q16_aggregate1_t : public tuple_aggregate_t {
     virtual q16_aggregate1_t* clone() const {
         return new q16_aggregate1_t(*this);
     }
+    virtual c_str to_string() const {
+        return "q16_aggregate1_t";
+    }
 };
 
 struct q16_extractor2_t : public key_extractor_t {
@@ -338,6 +359,9 @@ struct q16_aggregate2_t : public tuple_aggregate_t {
     }
     virtual q16_aggregate2_t* clone() const {
         return new q16_aggregate2_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "q16_aggregate2_t";
     }
 };
 

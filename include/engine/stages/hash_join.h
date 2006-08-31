@@ -80,7 +80,8 @@ public:
                        tuple_join_t *join,
                        bool outer=false,
                        bool distinct=false)
-        : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter),
+        : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter,
+                   create_plan(output_filter, join, outer, distinct, left, right)),
           _left(left),
           _right(right),
           _left_buffer(left->output_buffer()),
@@ -90,6 +91,18 @@ public:
     {
     }
   
+    static query_plan* create_plan(tuple_filter_t* filter, tuple_join_t* join,
+                                   bool outer, bool distinct,
+                                   packet_t* left, packet_t* right)
+    {
+        c_str action("%s:%s:%d:%d", PACKET_TYPE.data(),
+                     join->to_string().data(), outer, distinct);
+
+        query_plan const** children = new query_plan const*[2];
+        children[0] = left->plan();
+        children[1] = right->plan();
+        return new query_plan(action, filter->to_string(), children, 2);
+    }
 };
 
 

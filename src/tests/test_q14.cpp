@@ -75,6 +75,9 @@ struct part_tscan_filter_t : tuple_filter_t {
     virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return "select P_PARTKEY, P_TYPE";
+    }
 };
 
 /**
@@ -83,6 +86,7 @@ struct part_tscan_filter_t : tuple_filter_t {
  */
 struct lineitem_tscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
+    time_t date1, date2;
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
     {
@@ -90,13 +94,13 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         predicate_t* p;
 
         // L_SHIPDATE >= [date]
-        time_t date = datestr_to_timet("1995-09-01");
-        p = new scalar_predicate_t<time_t, greater_equal>(date, offset);
+        date1 = datestr_to_timet("1995-09-01");
+        p = new scalar_predicate_t<time_t, greater_equal>(date1, offset);
         _filter.add(p);
 
         // L_SHIPDATE < [date] + 1 month
-        date = time_add_month(date, 1);
-        p = new scalar_predicate_t<time_t, less>(date, offset);
+        date2 = time_add_month(date1, 1);
+        p = new scalar_predicate_t<time_t, less>(date2, offset);
         _filter.add(p);
     }
 
@@ -113,6 +117,16 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     }
     virtual lineitem_tscan_filter_t* clone() const {
         return new lineitem_tscan_filter_t(*this);
+    }
+    virtual c_str to_string() const {
+        char* d1 = timet_to_datestr(date1);
+        char* d2 = timet_to_datestr(date2);
+        c_str result("select L_EXTENDEDPRICE, L_DISCOUNT, L_PARTKEY "
+                     "where L_SHIPDATE >= %s and L_SHIPDATE < %s",
+                     d1, d2);
+        free(d1);
+        free(d2);
+        return result;
     }
 };
 
@@ -142,6 +156,9 @@ struct q14_join : tuple_join_t {
     }
     virtual q14_join* clone() const {
         return new q14_join(*this);
+    }
+    virtual c_str to_string() const {
+        return "PART join LINEITEM";
     }
 };
 
@@ -182,6 +199,9 @@ struct q14_aggregate : tuple_aggregate_t {
     }
     virtual q14_aggregate* clone() const {
         return new q14_aggregate(*this);
+    }
+    virtual c_str to_string() const {
+        return "q14_aggregate";
     }
 };
 

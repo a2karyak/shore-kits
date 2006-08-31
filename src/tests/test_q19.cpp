@@ -110,6 +110,8 @@ struct q19_tuple {
  */
 struct part_tscan_filter_t : public tuple_filter_t {
     or_predicate_t _filter;
+    char* _brands[3];
+    int _sizes[3];
 
     part_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_part_tuple))
@@ -118,6 +120,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
         
         // TODO: randomize these
         char* brands[] = {"Brand#12", "Brand#23", "Brand#34"};
+        memcpy(_brands, brands, sizeof(brands));
+        memcpy(_sizes, sizes, sizeof(sizes));
 
         for(int i=0; i < 3; i++) {
             and_predicate_t* andp = new and_predicate_t();
@@ -153,6 +157,15 @@ struct part_tscan_filter_t : public tuple_filter_t {
     virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return c_str("select P_PARTKEY, P_SIZE, P_CONTAINER, P_BRAND "
+                     "where (brand = %s and size between 1 and %d) "
+                     "or (brand = %s and size between 1 and %d) "
+                     "or (brand = %s and size between 1 and %d) ",
+                     _brands[0], _sizes[0],
+                     _brands[1], _sizes[1],
+                     _brands[2], _sizes[2]);
+    }
 };
 
 /**
@@ -162,11 +175,13 @@ struct part_tscan_filter_t : public tuple_filter_t {
  */
 struct lineitem_tscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
+    int _quantities[3];
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
     {
         // TODO: randomize these
         int quantities[] = {1, 10, 20};
+        memcpy(_quantities, quantities, sizeof(quantities));
 
         predicate_t* p;
         or_predicate_t* orp;
@@ -182,7 +197,7 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         orp = new or_predicate_t();
         p = new scalar_predicate_t<tpch_l_shipmode>(AIR, offset);
         orp->add(p);
-        p = new scalar_predicate_t<tpch_l_shipmode>(AIR, offset);
+        p = new scalar_predicate_t<tpch_l_shipmode>(REG_AIR, offset);
         orp->add(p);
         _filter.add(orp);
         
@@ -214,6 +229,19 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     }
     virtual lineitem_tscan_filter_t* clone() const {
         return new lineitem_tscan_filter_t(*this);
+    }
+    virtual c_str to_string() const {
+        return c_str("select L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, "
+                     "L_PARTKEY, L_SHIPMODE, L_SHIPINSTRUCT "
+                     "where L_SHIPINSTRUCT = 'DELIVER IN PERSON' "
+                     "and L_SHIPMODE in (REG_AIR, AIR) "
+                     "and ((L_QUANTITY >= %d and L_QUANTITY <= %d) "
+                     "or (L_QUANTITY >= %d and L_QUANTITY <= %d) "
+                     "or (L_QUANTITY >= %d and L_QUANTITY <= %d)) ",
+                     _quantities[0], _quantities[0] + 10,
+                     _quantities[1], _quantities[1] + 10,
+                     _quantities[2], _quantities[2] + 10);
+                     
     }
 };
 
@@ -254,6 +282,11 @@ struct q19_join_t : tuple_join_t {
 
     virtual q19_join_t* clone() const {
         return new q19_join_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "LINEITEM join PART, "
+            "select L_QUANTITY, L_EXTENDEDPRICE, L_PARTKEY, P_SIZE, "
+            "L_SHIPINSTRUCT, P_CONTAINER, P_BRAND, L_SHIPINSTRUCT";
     }
                         
 };
@@ -327,6 +360,9 @@ struct q19_filter_t : tuple_filter_t {
     virtual q19_filter_t* clone() const {
         return new q19_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return "q19_filter_t";
+    }
 };
 
 struct q19_sum_t : tuple_aggregate_t {
@@ -352,6 +388,9 @@ struct q19_sum_t : tuple_aggregate_t {
     }
     virtual q19_sum_t* clone() const {
         return new q19_sum_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "q19_sum_t";
     }
 };
 

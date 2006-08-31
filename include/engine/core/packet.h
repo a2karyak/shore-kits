@@ -24,6 +24,17 @@ using std::list;
 class   packet_t;
 typedef list<packet_t*> packet_list_t;
 
+struct query_plan {
+    c_str action;
+    c_str filter;
+    query_plan const** child_plans;
+    int child_count;
+    
+    query_plan(const c_str &a, const c_str &f, query_plan const** children, int count)
+        : action(a), filter(f), child_plans(children), child_count(count)
+    {
+    }
+};
 
 
 /**
@@ -40,15 +51,34 @@ typedef list<packet_t*> packet_list_t;
  *  be merged with an existing one that is already being processed.
  */
 
+
 class packet_t
 {
 
 protected:
+    query_plan* _plan; 
 
     bool _merge_enabled;
 
-    virtual bool is_compatible(packet_t*) {
-	return false;
+    static bool is_compatible(query_plan const* a, query_plan const* b) {
+        if(!a || !b || strcmp(a->action, b->action))
+            return false;
+
+        assert(a->child_count == b->child_count);
+        for(int i=0; i < a->child_count; i++) {
+            query_plan const* ca = a->child_plans[i];
+            query_plan const* cb = b->child_plans[i];
+            if(!ca || !cb)
+                return false;
+            if(strcmp(ca->filter, cb->filter) || !is_compatible(ca, cb))
+                return false;
+        }
+
+        return true;
+    }
+    
+    virtual bool is_compatible(packet_t* other) {
+        return is_compatible(plan(), other->plan());
     }
 
 public:
@@ -81,8 +111,9 @@ public:
     /* see packet.cpp for documentation */
     packet_t(const c_str    &packet_id,
              const c_str    &packet_type,
-             tuple_fifo* output_buffer,
+             tuple_fifo*     output_buffer,
              tuple_filter_t* output_filter,
+             query_plan*     plan,
              bool            merge_enabled=true);
 
 
@@ -104,6 +135,10 @@ public:
     
     bool is_merge_enabled() {
 	return _merge_enabled;
+    }
+
+    query_plan const* plan() const {
+        return _plan;
     }
 
     /**

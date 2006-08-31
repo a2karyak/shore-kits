@@ -75,7 +75,8 @@ public:
                   key_extractor_t* extract,
                   key_compare_t* compare,
                   packet_t*           input)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                   create_plan(output_filter, extract, input)),
           _extract(extract), _compare(compare),
           _input(input),
           _input_buffer(input->output_buffer())
@@ -84,6 +85,16 @@ public:
         assert(_input_buffer != NULL);
     }
 
+    static query_plan* create_plan(tuple_filter_t* filter,
+                                   key_extractor_t* key, packet_t* input)
+    {
+        c_str action("%s:%s", PACKET_TYPE.data(), key->to_string().data());
+
+        query_plan const** children = new query_plan const*[1];
+        children[0] = input->plan();
+        return new query_plan(action, filter->to_string(), children, 1);
+    }
+    
 
 };
 

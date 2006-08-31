@@ -31,6 +31,10 @@ public:
     virtual count_aggregate_t* clone() const {
         return new count_aggregate_t(*this);
     }
+
+    virtual c_str to_string() const {
+        return "count_aggregate_t";
+    }
 };
 
 

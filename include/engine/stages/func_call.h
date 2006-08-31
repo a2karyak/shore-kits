@@ -69,7 +69,7 @@ public:
                        void (*func) (void*),
                        void* func_arg,
                        void (*destructor) (void*) = NULL)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
           _func(func),
           _func_arg(func_arg),
           _destructor(destructor)

@@ -116,6 +116,13 @@ public:
     virtual q6_tscan_filter_t* clone() const {
         return new q6_tscan_filter_t(*this);
     }
+
+    virtual c_str to_string() const {
+        char* date = timet_to_datestr(DATE);
+        c_str result("q6_tscan_filter_t(%s, %f, %f)", date, QUANTITY, DISCOUNT);
+        free(date);
+        return result;
+    }
 };
 
 

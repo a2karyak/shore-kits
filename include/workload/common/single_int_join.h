@@ -25,6 +25,9 @@ struct single_int_join_t : public tuple_join_t {
     {
         dest.assign(left);
     }
+    virtual c_str to_string() const {
+        return "single_int_join_t";
+    }
 };      
 
 

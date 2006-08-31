@@ -24,12 +24,25 @@ struct partial_aggregate_packet_t : public packet_t {
                                tuple_aggregate_t *aggregate,
                                key_extractor_t* extractor,
                                key_compare_t* compare)
-        : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter),
+        : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter,
+                   create_plan(out_filter, aggregate, extractor, input->plan())),
           _input(input), _input_buffer(input->output_buffer()),
           _aggregate(aggregate), _extractor(extractor), _compare(compare)
     {
     }
 
+    // TODO: consider the key comparator as well
+    static query_plan* create_plan(tuple_filter_t* filter, tuple_aggregate_t* agg,
+                                   key_extractor_t* key, query_plan const* child)
+    {
+        c_str action("%s:%s:%s", PACKET_TYPE.data(),
+                     agg->to_string().data(), key->to_string().data());
+
+        query_plan const** children = new query_plan const*[1];
+        children[0] = child;
+        return new query_plan(action, filter->to_string(), children, 1);
+    }
+    
 };
 
 class partial_aggregate_stage_t : public stage_t {

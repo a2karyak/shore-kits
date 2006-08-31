@@ -60,12 +60,16 @@ public:
 		   tuple_fifo* output_buffer,
 		   tuple_filter_t* output_filter,
 		   const c_str    &filename)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                   create_plan(output_filter, filename)),
           _filename(filename)
     {
     }
 
-    
+    static query_plan* create_plan(tuple_filter_t* filter, const c_str &file_name) {
+        c_str action("%s:%s", PACKET_TYPE.data(), file_name.data());
+        return new query_plan(action, filter->to_string(), NULL, 0);
+    }
 };
 
 

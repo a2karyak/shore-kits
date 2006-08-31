@@ -39,8 +39,10 @@ packet_t::packet_t(const c_str    &packet_id,
 		   const c_str    &packet_type,
 		   tuple_fifo*     output_buffer,
 		   tuple_filter_t* output_filter,
+                   query_plan*     plan,
                    bool            merge_enabled)
-    : _merge_enabled(merge_enabled),
+    : _plan(plan),
+    _merge_enabled(merge_enabled),
       _packet_id(packet_id),
       _packet_type(packet_type),
       _output_buffer(output_buffer),
@@ -52,6 +54,7 @@ packet_t::packet_t(const c_str    &packet_id,
     // error checking
     assert(output_buffer != NULL);
     assert(output_filter != NULL);
+    assert(!merge_enabled || plan != NULL);
 
     TRACE(TRACE_PACKET_FLOW, "Created %s packet with ID %s\n",
 	  _packet_type.data(),

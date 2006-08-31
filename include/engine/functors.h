@@ -76,6 +76,9 @@ public:
 
     // should simply return new <child-class>(*this);
     virtual tuple_filter_t* clone() const=0;
+
+    // return a canonical representation of this filter
+    virtual c_str to_string() const=0;
     
 
     tuple_filter_t(size_t input_tuple_size)
@@ -95,6 +98,11 @@ struct trivial_filter_t : public tuple_filter_t {
     virtual tuple_filter_t* clone() const {
         return new trivial_filter_t(*this);
     };
+
+    virtual c_str to_string() const {
+        // nothing happens
+        return "";
+    }
     
     trivial_filter_t(size_t input_tuple_size)
         : tuple_filter_t(input_tuple_size)
@@ -168,8 +176,8 @@ public:
         : _key_size(key_size), _key_offset(key_offset)
     {
     }
-    size_t key_size() { return _key_size; }
-    size_t key_offset() { return _key_offset; }
+    size_t key_size() const { return _key_size; }
+    size_t key_offset() const { return _key_offset; }
 
 
     /**
@@ -239,6 +247,11 @@ public:
     // should simply return new <child-class>(*this);
     virtual key_extractor_t* clone() const=0;
 
+    // return a canonical string representation of this key extractor
+    virtual c_str to_string() const {
+        return c_str("key(%d, %d)", key_size(), key_offset());
+    }
+
 
     virtual ~key_extractor_t() { }
 };
@@ -263,6 +276,7 @@ struct default_key_extractor_t : public key_extractor_t {
     virtual default_key_extractor_t* clone() const {
         return new default_key_extractor_t(*this);
     }
+
 };
 
 
@@ -415,6 +429,7 @@ public:
         assert(false);
     }
 
+    virtual c_str to_string() const=0;
 
     // TODO: implement a join function that tests the predicates first
     virtual ~tuple_join_t() { }
@@ -488,6 +503,8 @@ public:
 
 
     virtual tuple_aggregate_t* clone() const=0;
+
+    virtual c_str to_string() const=0;
   
     virtual ~tuple_aggregate_t() { }
 

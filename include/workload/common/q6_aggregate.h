@@ -55,6 +55,10 @@ public:
     virtual q6_count_aggregate_t* clone() const {
         return new q6_count_aggregate_t(*this);
     }
+
+    virtual c_str to_string() const {
+        return "q6_count_aggregate_t";
+    }
 };
 
 

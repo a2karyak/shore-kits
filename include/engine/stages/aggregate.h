@@ -66,7 +66,8 @@ struct aggregate_packet_t : public packet_t {
 		       tuple_aggregate_t* aggregator,
                        key_extractor_t*   extract,
                        packet_t*          input)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                   create_plan(output_filter, aggregator, extract, input->plan())),
 	  _aggregator(aggregator), _extract(extract),
           _input(input),
           _input_buffer(input->output_buffer())
@@ -75,6 +76,17 @@ struct aggregate_packet_t : public packet_t {
         assert(_input_buffer != NULL);
     }
 
+    static query_plan* create_plan(tuple_filter_t* filter, tuple_aggregate_t* agg,
+                                   key_extractor_t* key, query_plan const* child)
+    {
+        c_str action("%s:%s:%s", PACKET_TYPE.data(),
+                     agg->to_string().data(), key->to_string().data());
+
+        query_plan const** children = new query_plan const*[1];
+        children[0] = child;
+        return new query_plan(action, filter->to_string(), children, 1);
+    }
+    
 };
 
 

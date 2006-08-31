@@ -88,6 +88,9 @@ struct order_tscan_filter_t : tuple_filter_t {
     virtual order_tscan_filter_t* clone() const {
         return new order_tscan_filter_t(*this);
     }
+    virtual c_str to_string() const {
+        return "select O_ORDERKEY, O_ORDERPRIORITY";
+    }
 };
 
 /**
@@ -98,6 +101,8 @@ struct order_tscan_filter_t : tuple_filter_t {
  */
 struct lineitem_tscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
+    time_t date1, date2;
+    
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
     {
@@ -126,14 +131,14 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(p);
 
         // ... and L_RECEIPTDATE >= [date] ...
-        time_t date = datestr_to_timet("1994-01-01");
+        date1 = datestr_to_timet("1994-01-01");
         offset = offsetof(tpch_lineitem_tuple, L_RECEIPTDATE);
-        p = new scalar_predicate_t<time_t, greater_equal>(date, offset);
+        p = new scalar_predicate_t<time_t, greater_equal>(date1, offset);
         _filter.add(p);
 
         // ... and L_RECEIPTDATE < [date] + 1 year
-        date = time_add_year(date, 1);
-        p = new scalar_predicate_t<time_t, less>(date, offset);
+        date2 = time_add_year(date1, 1);
+        p = new scalar_predicate_t<time_t, less>(date2, offset);
         _filter.add(p);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
@@ -147,6 +152,18 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     }
     virtual lineitem_tscan_filter_t* clone() const {
         return new lineitem_tscan_filter_t(*this);
+    }
+    virtual c_str to_string() const {
+        char* d1 = timet_to_datestr(date1);
+        char* d2 = timet_to_datestr(date2);
+        c_str result("select L_ORDERKEY, L_SHIPMODE "
+                     "where L_SHIPMODE in ('MAIL', 'SHIP') "
+                     "and L_COMMITDATE < L_RECEIPTDATE "
+                     "and L_RECEIPTDATE >= %s and L_RECEIPTDATE < %s",
+                     d1, d2);
+        free(d1);
+        free(d2);
+        return result;
     }
 };
 
@@ -179,6 +196,9 @@ struct q12_join_t : tuple_join_t {
     }
     virtual q12_join_t* clone() const {
         return new q12_join_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "join LINEITEM, ORDERS, select L_SHIPMODE, O_ORDERPRIORITY";
     }
 };
 
@@ -233,6 +253,9 @@ struct q12_aggregate_t : tuple_aggregate_t {
     }
     virtual q12_aggregate_t* clone() const {
         return new q12_aggregate_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "q12_aggregate_t";
     }
 };
 

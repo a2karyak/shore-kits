@@ -53,19 +53,27 @@ public:
 		   tuple_fifo* output_buffer,
 		   tuple_filter_t* output_filter,
 		   Db* db)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                   create_plan(output_filter, db)),
 	  _db(db)
     {
         assert(db != NULL);
     }
+
+    static query_plan* create_plan(tuple_filter_t* filter, Db* db) {
+        c_str action("%s:%p", PACKET_TYPE.data(), db);
+        return new query_plan(action, filter->to_string(), NULL, 0);
+    }
     
+#if 0
+    // FRJ: should be covered by the new plan checker
     virtual bool is_compatible(packet_t* other) {
         // two TSCAN packets are compatible if they want to scan the
         // same table
         tscan_packet_t* packet = dynamic_cast<tscan_packet_t*>(other);
         return _db == packet->_db;
     }
-
+#endif
 };
 
 

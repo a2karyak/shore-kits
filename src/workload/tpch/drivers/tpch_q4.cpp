@@ -45,6 +45,9 @@ packet_t* line_item_scan(Db* tpch_lineitem) {
         virtual lineitem_tscan_filter_t* clone() const {
             return new lineitem_tscan_filter_t(*this);
         }
+        virtual c_str to_string() const {
+            return "select L_ORDERKEY where L_COMMITDATE < L_RECEIPTDATE";
+        }
     };
 
     // LINEITEM TSCAN PACKET
@@ -96,6 +99,17 @@ packet_t* orders_scan(Db* tpch_orders) {
         virtual orders_tscan_filter_t* clone() const {
             return new orders_tscan_filter_t(*this);
         }
+
+        virtual c_str to_string() const {
+            char* date1 = timet_to_datestr(t1);
+            char* date2 = timet_to_datestr(t2);
+            c_str result("select O_ORDERKEY, O_ORDERPRIORITY "
+                         "where O_ORDERDATE >= %s and O_ORDERDATE < %s",
+                         date1, date2);
+            free(date1);
+            free(date2);
+            return result;
+        }
     };
 
     tuple_filter_t* filter = new orders_tscan_filter_t(); 
@@ -144,6 +158,9 @@ struct q4_join_t : public tuple_join_t {
         order_scan_tuple_t* tuple = (order_scan_tuple_t*) left.data;
         memcpy(dest.data, &tuple->O_ORDERPRIORITY, sizeof(int));
     }
+    virtual c_str to_string() const {
+        return "join LINEITEM and ORDERS, select O_ORDERPRIORITY";
+    }
 };
 
 struct q4_tuple_t {
@@ -170,6 +187,9 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
     }
     virtual q4_count_aggregate_t* clone() const {
         return new q4_count_aggregate_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "q4_count_aggregate_t";
     }
 };
 

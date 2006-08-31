@@ -57,7 +57,7 @@ public:
                    dbt_guard_t start_key,
                    dbt_guard_t stop_key,
                    bt_compare_func_t bt_compare)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
 	  _db(db), _start_key(start_key), _stop_key(stop_key), _bt_compare(bt_compare)
     {
         assert(db != NULL);
@@ -67,11 +67,6 @@ public:
         assert(bt_compare != NULL);
     }
     
-    virtual bool is_compatible(packet_t*) {
-        // TODO: detect overlapping/dominating ranges
-        return false;
-    }
-
 };
 
 

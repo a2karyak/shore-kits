@@ -26,7 +26,7 @@ struct sorted_in_packet_t : public packet_t {
                        key_extractor_t* left_extractor,
                        key_extractor_t* right_extractor,
                        key_compare_t* compare, bool reject_matches)
-        : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter),
+        : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter, NULL, false),
           _left(left), _right(right),
           _left_input(left->output_buffer()),
           _right_input(right->output_buffer()),

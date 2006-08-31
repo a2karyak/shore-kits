@@ -50,17 +50,12 @@ public:
                     tuple_fifo* output_buffer,
                     tuple_filter_t* output_filter,
                     packet_t* input, Db* db)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
 	  _db(db), _input(input), _input_buffer(input->output_buffer())
     {
         assert(db != NULL);
     }
     
-    virtual bool is_compatible(packet_t*) {
-        // TODO: detect overlapping/dominating ranges
-        return false;
-    }
-
 };
 
 

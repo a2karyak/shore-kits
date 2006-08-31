@@ -77,7 +77,7 @@ public:
 		   tuple_fifo*     input_buffer,
 		   const c_str    &filename,
                    notify_t*       notifier=NULL)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
 	  _input_buffer(input_buffer),
           _filename(filename),
           _notifier(notifier)

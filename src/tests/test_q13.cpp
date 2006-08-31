@@ -69,6 +69,9 @@ struct q13_count_aggregate_t : public tuple_aggregate_t {
     virtual q13_count_aggregate_t* clone() const {
         return new q13_count_aggregate_t(*this);
     }
+    virtual c_str to_string() const {
+        return "q13_count_aggregate_t";
+    }
 };
 
 
@@ -89,6 +92,9 @@ packet_t* customer_scan(Db* tpch_customer) {
         }
         virtual customer_tscan_filter_t* clone() const {
             return new customer_tscan_filter_t(*this);
+        }
+        virtual c_str to_string() const {
+            return "select C_CUSTKEY";
         }
     };
 
@@ -141,6 +147,11 @@ struct order_tscan_filter_t : public tuple_filter_t {
 
     virtual order_tscan_filter_t* clone() const {
         return new order_tscan_filter_t(*this);
+    }
+    virtual c_str to_string() const {
+        return c_str("select O_CUSTKEY "
+                     "where O_COMMENT like %%%s%%%s%%",
+                     word1, word2);
     }
 };
 
@@ -249,6 +260,9 @@ int main() {
             virtual void outer_join(tuple_t &dest, const tuple_t &) {
                 int zero = 0;
                 memcpy(dest.data, &zero, sizeof(int));
+            }
+            virtual c_str to_string() const {
+                return "CUSTOMER left outer join CUST_ORDER_COUNT, select COUNT";
             }
         };
 

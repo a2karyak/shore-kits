@@ -113,6 +113,10 @@ public:
     virtual q1_tscan_filter_t* clone() const {
         return new q1_tscan_filter_t(*this);
     }
+
+    virtual c_str to_string() const {
+        return c_str("q1_tscan_filter_t(%d)", DELTA);
+    }
 };
 
 
@@ -201,6 +205,10 @@ public:
 
     virtual q1_count_aggregate_t* clone() const {
         return new q1_count_aggregate_t(*this);
+    }
+
+    virtual c_str to_string() const {
+        return "q1_count_aggregate_t";
     }
 };
 
