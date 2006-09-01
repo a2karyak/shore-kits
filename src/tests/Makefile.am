@@ -9,11 +9,13 @@ LDADD = \
    ../workload/libworkload.a \
    ../trace/libtrace.a  \
    ../engine/libqpipe.a \
+   ../trace/libtrace.a  \
    $(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here
 bin_PROGRAMS = \
-  load_db_tables \
+   test_cpu_binding \
+   load_db_tables \
    test_trace \
    test_tuple_buffer \
    test_tpch_load \
@@ -44,6 +46,7 @@ bin_PROGRAMS = \
    test_mpool \
    grouper
 
+test_cpu_binding_SOURCES = test_cpu_binding.cpp
 load_db_tables_SOURCES = load_db_tables.cpp
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp
@@ -68,7 +71,6 @@ test_q14_SOURCES = test_q14.cpp
 test_q12_SOURCES = test_q12.cpp
 test_q16_SOURCES = test_q16.cpp
 test_q19_SOURCES = test_q19.cpp
-test_q6_2cl_SOURCES = test_q6_2cl.cpp
 test_q6_disp_SOURCES = test_q6_disp.cpp
 test_q1_SOURCES = test_q1.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
