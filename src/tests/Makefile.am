@@ -15,6 +15,7 @@ LDADD = \
 # define programs here
 bin_PROGRAMS = \
    test_cpu_binding \
+   test_rand_array_access \
    load_db_tables \
    test_trace \
    test_tuple_buffer \
@@ -47,6 +48,7 @@ bin_PROGRAMS = \
    grouper
 
 test_cpu_binding_SOURCES = test_cpu_binding.cpp
+test_rand_array_access_SOURCES = test_rand_array_access.cpp
 load_db_tables_SOURCES = load_db_tables.cpp
 test_trace_SOURCES = test_trace.cpp
 test_tuple_buffer_SOURCES = test_tuple_buffer.cpp

@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 
     thread_init();
 
-    // parse output filename
+    // parse index of CPU to bind to
     if ( argc < 2 ) {
 	TRACE(TRACE_ALWAYS, "Usage: %s <cpu index>\n", argv[0]);
 	exit(-1);
