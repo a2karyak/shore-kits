@@ -3,39 +3,12 @@
 #include "workload/workload.h"
 #include "engine/core/exception.h"
 #include "workload/client_sync.h"
-#include "workload/client.h"
+#include "workload/workload_client.h"
 #include "engine/thread.h"
 
 
 
 using namespace qpipe;
-
-
-
-/**
- *  @brief Wait for created clients to exit. All clients are created
- *  in the joinable state, so we just need to wait for them to
- *  exit. This method should only be called AFTER invoking
- *  signal_continue() or signal_error() on the client_wait_t instance
- *  we passed the client threads. Otherwise, we will have
- *  deadlock. The clients will be waiting to be signaled and the
- *  runner will be waiting for them to exit.
- *
- *  @param thread_ids An array of thread IDs for the created clients.
- *
- *  @param num_thread_ids The number of valiid thread IDs in the
- *  thread_ids array.
- */
-void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
-
-    // wait for client threads to receive error message
-    for (int i = 0; i < num_thread_ids; i++) {
-        // join should not really fail unless we are doing
-        // something seriously wrong...
-        int join_ret = pthread_join(thread_ids[i], NULL);
-        assert(join_ret == 0);
-    }
-}
 
 
 
@@ -115,4 +88,31 @@ bool workload_t::run(results_t &results) {
 
 
     return true;
+}
+
+
+
+/**
+ *  @brief Wait for created clients to exit. All clients are created
+ *  in the joinable state, so we just need to wait for them to
+ *  exit. This method should only be called AFTER invoking
+ *  signal_continue() or signal_error() on the client_wait_t instance
+ *  we passed the client threads. Otherwise, we will have
+ *  deadlock. The clients will be waiting to be signaled and the
+ *  runner will be waiting for them to exit.
+ *
+ *  @param thread_ids An array of thread IDs for the created clients.
+ *
+ *  @param num_thread_ids The number of valiid thread IDs in the
+ *  thread_ids array.
+ */
+void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
+
+    // wait for client threads to receive error message
+    for (int i = 0; i < num_thread_ids; i++) {
+        // join should not really fail unless we are doing
+        // something seriously wrong...
+        int join_ret = pthread_join(thread_ids[i], NULL);
+        assert(join_ret == 0);
+    }
 }

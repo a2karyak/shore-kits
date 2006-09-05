@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "workload/client.h"
+#include "workload/workload_client.h"
 #include <unistd.h>
 
 
