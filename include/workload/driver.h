@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _WORKLOAD_DRIVER_H
-#define _WORKLOAD_DRIVER_H
+#ifndef _DRIVER_H
+#define _DRIVER_H
 
 #include "engine/util/c_str.h"
 

@@ -8,6 +8,7 @@
 #include "engine/dispatcher/dispatcher_policy.h"
 #include "server/command/command_handler.h"
 #include "workload/driver.h"
+#include "workload/driver_directory.h"
 #include "workload/workload.h"
 #include <map>
 
@@ -16,7 +17,7 @@ using qpipe::driver_t;
 
 
 
-class tpch_handler_t : public command_handler_t {
+class tpch_handler_t : public command_handler_t, public driver_directory_t {
 
     
     // database fields
@@ -50,6 +51,8 @@ public:
     virtual void shutdown();
 
     virtual ~tpch_handler_t() { }
+
+    driver_t* lookup_driver(const c_str &tag);
 };
 
 

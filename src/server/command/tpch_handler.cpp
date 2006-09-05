@@ -4,7 +4,13 @@
 #include "server/print.h"
 #include "server/config.h"
 #include "workload/tpch/tpch_db.h"
+
 #include "workload/tpch/drivers/tpch_q1.h"
+#include "workload/tpch/drivers/tpch_q4.h"
+#include "workload/tpch/drivers/tpch_q6.h"
+#include "workload/tpch/drivers/tpch_q12.h"
+
+#include "workload/tpch/drivers/tpch_m146.h"
 
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
@@ -42,7 +48,17 @@ void tpch_handler_t::init() {
         db_open();
 
         // register drivers...
-        add_driver("1", new tpch_q1_driver(c_str("TPCH-Q1")));
+        add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
+        add_driver("q4", new tpch_q4_driver(c_str("TPCH-Q4")));
+        add_driver("q6", new tpch_q6_driver(c_str("TPCH-Q6")));
+        add_driver("q12", new tpch_q12_driver(c_str("TPCH-Q12")));
+
+        // Need to pass a mix driver like m146 a directory... We are
+        // the directory since we implement a lookup_driver
+        // method. TODO change this so we pass down one of our data
+        // fields.
+        add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-146"), this));
+
 
         // register dispatcher policies...
         add_dispatcher_policy("OS",        new dispatcher_policy_os_t());
@@ -118,7 +134,7 @@ void tpch_handler_t::handle_command(const char* command) {
     
 
     // lookup driver
-    driver_t* driver = _drivers[c_str(driver_tag)];
+    driver_t* driver = lookup_driver(c_str(driver_tag));
     if ( driver == NULL ) {
         // no such driver registered!
         PRINT("No driver registered for %s\n", driver_tag);
@@ -193,3 +209,10 @@ void tpch_handler_t::add_dispatcher_policy(const c_str &tag, dispatcher_policy_t
     assert( _dispatcher_policies.find(tag) == _dispatcher_policies.end() );
     _dispatcher_policies[tag] = dp;
 }
+
+
+
+driver_t* tpch_handler_t::lookup_driver(const c_str &tag) {
+    return _drivers[tag];
+}
+
