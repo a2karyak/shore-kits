@@ -34,6 +34,6 @@ void tpch_m146_driver::submit(void* disp) {
         QPIPE_PANIC();
     }
 
-    TRACE(TRACE_ALWAYS, "rand = %d, selection = %d\n", rand, selection);
+    TRACE(TRACE_DEBUG, "rand = %d, selection = %d\n", rand, selection);
     driver->submit(disp);
 }

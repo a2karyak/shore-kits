@@ -44,7 +44,7 @@ void* workload_client_t::run() {
         // error! return immediately...
         return NULL;
     }
-    
+
     // record client start time...
     _etime->start();
 

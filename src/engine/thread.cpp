@@ -5,6 +5,10 @@
 #include "trace.h"
 #include "qpipe_panic.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -51,13 +55,20 @@ extern "C" void* start_thread(void *);
 thread_t::thread_t(const c_str &name)
     : _thread_name(name)
 {
-    // Set up random number generator. We will use the thread ID to
-    // create the seed. Hopefully, passing it through a hash function
-    // will provide enough if a uniform distribution.
-    pthread_t this_thread = pthread_self();
-    _rand_seed = fnv_hash((const char*)&this_thread, sizeof(this_thread));
+    // do nothing...
 }
 
+
+void thread_t::reset_rand() {
+
+    int fd = open("/dev/urandom", O_RDONLY);
+    assert(fd != -1);
+    
+    int read_size = read(fd, &_rand_seed, sizeof(int));
+    assert(read_size == sizeof(int));
+
+    close(fd);
+}
 
 
 class root_thread_t : public thread_t {
@@ -292,6 +303,7 @@ void* start_thread(void* thread_object)
     if (err)
         thread_fatal_error("pthread_setspecific() on THREAD_KEY_SELF", err);
   
+    thread->reset_rand();
     return thread->run();
 }
 

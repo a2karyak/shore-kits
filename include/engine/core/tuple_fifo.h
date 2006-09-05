@@ -324,7 +324,6 @@ private:
 template<>
 inline void guard<qpipe::tuple_fifo>::action(qpipe::tuple_fifo* ptr) {
     if(!ptr->terminate()) {
-        printf(">>> Deleting a fifo\n");
         delete ptr;
     }
 }

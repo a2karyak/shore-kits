@@ -77,7 +77,7 @@ bool workload_t::run(results_t &results) {
     // record start time
     results.total_time.start();
 
-    
+   
     // run workload and wait for clients to finish
     client_sync.signal_continue();
     wait_for_clients(client_ids, clients_created);

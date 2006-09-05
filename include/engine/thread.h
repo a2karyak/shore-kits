@@ -47,6 +47,12 @@ public:
     /**
      *  @brief Returns a pseudo-random integer between 0 and RAND_MAX.
      */
+    void reset_rand();
+
+
+    /**
+     *  @brief Returns a pseudo-random integer between 0 and RAND_MAX.
+     */
     int rand() {
         return rand_r(&_rand_seed);
     }
