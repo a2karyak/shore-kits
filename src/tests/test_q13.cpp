@@ -212,7 +212,7 @@ int main() {
     register_stage<hash_join_stage_t>(2);
 
 
-    for(int i=0; i < 5; i++) {
+    for(int i=0; i < 10; i++) {
 
         stopwatch_t timer;
 

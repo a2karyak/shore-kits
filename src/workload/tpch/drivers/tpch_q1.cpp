@@ -63,9 +63,10 @@ public:
 	t = datestr_to_timet("1998-12-01");
 
 	/* Calculate random predicates */
-#if 0
+#if 1
+        // TPCH spec: "DELTA is randomly selected within [60. 120]"
         thread_t* self = thread_get_self();
- 	DELTA = 60 + abs((int)(60*(float)(self->rand())/(float)(RAND_MAX+1)));
+        DELTA = 60 + self->rand(61);
 #else
         DELTA = 90;
 #endif
@@ -84,7 +85,6 @@ public:
 
 	tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
 
-        // FIXME: reversed on purpose to reduce selectivity...
 	if  ( tuple->L_SHIPDATE <= t ) {
             //TRACE(TRACE_ALWAYS, "+");
 	    return (true);

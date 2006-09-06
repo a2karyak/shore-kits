@@ -77,9 +77,12 @@ packet_t* orders_scan(Db* tpch_orders) {
         orders_tscan_filter_t()
             : tuple_filter_t(sizeof(tpch_orders_tuple))
         {
-            // TODO: random predicates per the TPCH spec...
-            t1 = datestr_to_timet("1993-07-01");
-            t2 = datestr_to_timet("1993-10-01");
+            // TPCH Spec: "DATE is the first day of a randomly
+            // selected month between the first month of 1993 and the
+            // 10th month of 1997."
+            t1 = datestr_to_timet("1993-01-01");
+            t1 = time_add_month(t1, thread_get_self()->rand(59));
+            t2 = time_add_month(t1, 3);
         }
 
         /* Predication */

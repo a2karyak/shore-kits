@@ -6,6 +6,7 @@
 #include "engine/functors.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
+#include "engine/util/time_util.h"
 #include "trace.h"
 #include "workload/common/predicates.h"
 #include <math.h>
@@ -49,26 +50,27 @@ public:
         : tuple_filter_t(sizeof(tpch_lineitem_tuple)),
           _echo(echo)
     {
-        t1 = datestr_to_timet("1994-01-01");
-        t2 = datestr_to_timet("1995-01-01");
+        thread_t* self = thread_get_self();
 
-        /* Calculate random predicates */
-        gettimeofday(&tv, 0);
-        mn = tv.tv_usec * getpid();
-        DATE = 1993 + abs((int)(5*(float)(rand_r(&mn))/(float)(RAND_MAX+1)));
+        // DATE
+        t1 = datestr_to_timet("1993-01-01");
+        t1 = time_add_year(t1, self->rand(5));
+        t2 = time_add_year(t1, 1);
 
-        gettimeofday(&tv, 0);
-        mn = tv.tv_usec * getpid();
-        DISCOUNT = 0.02 + (float)(fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1)))/(float)14.2857142857143;
+        // DISCOUNT
+        DISCOUNT = .02 + self->rand(8)*.01;
 
-        gettimeofday(&tv, 0);
-        mn = tv.tv_usec * getpid();
-        QUANTITY = 24 + fabs((float)(rand_r(&mn))/(float)(RAND_MAX+1));
+        // QUANTITY
+        QUANTITY = 24 + .01*self->rand(101);
 
         TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT, QUANTITY);
 
-        QUANTITY = 24;
-        DISCOUNT = .06;
+        if(0) {
+            // override for validation run
+            DATE = datestr_to_timet("1994-01-01");
+            QUANTITY = 24;
+            DISCOUNT = .06;
+        }
         size_t offset;
         predicate_t* p;
 
