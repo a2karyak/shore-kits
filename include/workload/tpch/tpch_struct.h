@@ -40,7 +40,8 @@ enum tpch_l_shipmode {
     TRUCK,
     MAIL,
     FOB,
-    SHIP
+    SHIP,
+    END_SHIPMODE
 };
 
 enum tpch_o_orderpriority {

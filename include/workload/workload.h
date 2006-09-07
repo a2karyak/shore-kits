@@ -56,7 +56,7 @@ public:
         int think_time;
 
         // total execution time
-        execution_time_t total_time;
+        double total_time;
         
         array_guard_t<execution_time_t> client_times;
     };

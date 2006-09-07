@@ -101,7 +101,8 @@ struct order_tscan_filter_t : tuple_filter_t {
  */
 struct lineitem_tscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
-    time_t date1, date2;
+    int year;
+    int mode1, mode2;
     
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
@@ -110,11 +111,28 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         predicate_t* p;
 
         // where L_SHIPMODE in ('MAIL', 'SHIP') ...
+        thread_t* self = thread_get_self();
+        // pick a random ship mode
+        mode1 = self->rand(END_SHIPMODE);
+        // and another that must be different -- add a random number
+        // that is neither 0 or END_SHIPMODE and take the modulus.
+        mode2 = (mode1 + self->rand(END_SHIPMODE-1) + 1) % END_SHIPMODE;
+
+        // 5 possible years to choose from
+        year = self->rand(5);
+
+        if(0) {
+            // validation run
+            mode1 = MAIL;
+            mode2 = SHIP;
+            year = 1; // 1994
+        }
+        
         offset = offsetof(tpch_lineitem_tuple, L_SHIPMODE);
         or_predicate_t* orp = new or_predicate_t();
-        p = new scalar_predicate_t<tpch_l_shipmode>(MAIL, offset);
+        p = new scalar_predicate_t<int>(mode1, offset);
         orp->add(p);
-        p = new scalar_predicate_t<tpch_l_shipmode>(SHIP, offset);
+        p = new scalar_predicate_t<int>(mode2, offset);
         orp->add(p);
         _filter.add(orp);
 
@@ -131,13 +149,14 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(p);
 
         // ... and L_RECEIPTDATE >= [date] ...
-        date1 = datestr_to_timet("1994-01-01");
+        time_t date1 = datestr_to_timet("1993-01-01");
+        date1 = time_add_year(date1, year);
+        time_t date2 = time_add_year(date1, 1);
         offset = offsetof(tpch_lineitem_tuple, L_RECEIPTDATE);
         p = new scalar_predicate_t<time_t, greater_equal>(date1, offset);
         _filter.add(p);
 
         // ... and L_RECEIPTDATE < [date] + 1 year
-        date2 = time_add_year(date1, 1);
         p = new scalar_predicate_t<time_t, less>(date2, offset);
         _filter.add(p);
     }
@@ -154,16 +173,8 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         return new lineitem_tscan_filter_t(*this);
     }
     virtual c_str to_string() const {
-        char* d1 = timet_to_datestr(date1);
-        char* d2 = timet_to_datestr(date2);
-        c_str result("select L_ORDERKEY, L_SHIPMODE "
-                     "where L_SHIPMODE in ('MAIL', 'SHIP') "
-                     "and L_COMMITDATE < L_RECEIPTDATE "
-                     "and L_RECEIPTDATE >= %s and L_RECEIPTDATE < %s",
-                     d1, d2);
-        free(d1);
-        free(d2);
-        return result;
+        return c_str("SHIPMODE1 = %d, SHIPMODE2 = %d, YEAR = %d",
+                     mode1, mode2, year);
     }
 };
 
@@ -295,14 +306,14 @@ void tpch_q12_driver::submit(void* disp) {
 
     // partial aggregation
     filter = new trivial_filter_t(sizeof(q12_tuple));
-    buffer = new tuple_fifo(sizeof(q12_tuple), dbenv);
+    guard<tuple_fifo> result = new tuple_fifo(sizeof(q12_tuple), dbenv);
     size_t offset = offsetof(join_tuple, L_SHIPMODE);
     key_extractor_t* extractor = new default_key_extractor_t(sizeof(int), offset);
     key_compare_t* compare = new int_key_compare_t();
     tuple_aggregate_t* aggregate = new q12_aggregate_t();
     packet_t* agg_packet =
         new partial_aggregate_packet_t("sum AGG",
-                                       buffer, filter,
+                                       result, filter,
                                        join_packet,
                                        aggregate,
                                        extractor,
@@ -321,7 +332,7 @@ void tpch_q12_driver::submit(void* disp) {
     tuple_t output;
     TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10s %10s\n",
           "Shipmode", "High_Count", "Low_Count");
-    while(buffer->get_tuple(output)) {
+    while(result->get_tuple(output)) {
         q12_tuple* r = (q12_tuple*) output.data;
         TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10d %10d\n",
               (r->L_SHIPMODE == MAIL) ? "MAIL" : "SHIP",

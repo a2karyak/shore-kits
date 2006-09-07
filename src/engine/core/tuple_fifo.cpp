@@ -6,12 +6,20 @@
 
 static const int PAGE_SIZE = 4096;
 
+pthread_mutex_t open_fifo_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int open_fifo_count = 0;
+
 /*
  * Creates a new (temporary) file in the BDB bufferpool for the FIFO
  * to use as a backing store. The file will be deleted automatically
  * when the FIFO is destroyed.
  */
 void tuple_fifo::init() {
+    // stats
+    critical_section_t cs(open_fifo_mutex);
+    open_fifo_count++;
+    cs.exit();
+    
     DbMpoolFile* pool;
     dbenv()->memp_fcreate(&pool, 0);
     _pool = pool;
@@ -26,6 +34,17 @@ void tuple_fifo::init() {
         _pool->set_flags(DB_MPOOL_UNLINK, true);
         _pool->open(strstr(temp, "fifo"), 0, 0644, PAGE_SIZE);
     }
+}
+
+void tuple_fifo::destroy() {
+    // stats
+    critical_section_t cs(open_fifo_mutex);
+    open_fifo_count--;
+}
+
+int tuple_fifo::open_fifos() {
+    critical_section_t cs(open_fifo_mutex);
+    return open_fifo_count;
 }
 
 /*

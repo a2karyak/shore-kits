@@ -89,6 +89,13 @@ public:
     {
         init();
     }
+
+    ~tuple_fifo() {
+        destroy();
+    }
+
+    // the number of FIFOs currently open
+    static int open_fifos();
     
     // requird by page_pool
     virtual void* alloc();
@@ -304,6 +311,7 @@ private:
     bool _purge(bool stolen);
 
     void init();
+    void destroy();
 
     void _unpin(page* p, bool keep);
 

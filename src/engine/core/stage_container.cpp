@@ -17,7 +17,7 @@
 // include me last!!!
 #include "engine/namespace.h"
 
-#define TRACE_MERGING 0
+#define TRACE_MERGING 1
 #define TRACE_DEQUEUE 0
 
 
@@ -597,7 +597,7 @@ void stage_container_t::stage_adaptor_t::cleanup() {
  *  terminate_inputs() to terminate its input buffers, and delete it.
  */
 void stage_container_t::stage_adaptor_t::abort_queries() {
-
+    TRACE(TRACE_ALWAYS, "Aborting query: %s", _packet->_packet_id.data());
 
     // handle non-primary packets in packet list
     packet_list_t::iterator it;
@@ -613,9 +613,12 @@ void stage_container_t::stage_adaptor_t::abort_queries() {
         }
     }
 
+    delete _packet_list;
+    _packet_list = NULL;
     
     // handle primary packet
     delete _packet;
+    _packet = NULL;
 }
 
 

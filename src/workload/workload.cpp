@@ -5,7 +5,8 @@
 #include "workload/client_sync.h"
 #include "workload/workload_client.h"
 #include "engine/thread.h"
-
+#include "engine/core/tuple_fifo.h"
+#include "engine/util/stopwatch.h"
 
 
 using namespace qpipe;
@@ -25,7 +26,6 @@ bool workload_t::run(results_t &results) {
     results.num_clients    = _num_clients;
     results.think_time     = _think_time;
     results.num_iterations = _num_iterations;
-    execution_time_t::reset(&results.total_time);
     results.client_times   = new execution_time_t[_num_clients];
 
 
@@ -75,7 +75,7 @@ bool workload_t::run(results_t &results) {
 
 
     // record start time
-    results.total_time.start();
+    stopwatch_t timer;
 
    
     // run workload and wait for clients to finish
@@ -84,9 +84,10 @@ bool workload_t::run(results_t &results) {
 
     
     // record finish time
-    results.total_time.stop();
+    results.total_time = timer.time();
 
 
+    TRACE(TRACE_ALWAYS, "Open Fifo count: %d\n", tuple_fifo::open_fifos());
     return true;
 }
 

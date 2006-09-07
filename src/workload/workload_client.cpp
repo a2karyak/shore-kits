@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "workload/workload_client.h"
+#include "engine/core/tuple_fifo.h"
 #include <unistd.h>
 
 
@@ -52,6 +53,7 @@ void* workload_client_t::run() {
         _driver->submit(_driver_arg);
         if (_think_time_sec > 0)
             sleep(_think_time_sec);
+        TRACE(TRACE_ALWAYS, "Open Fifos: %d\n", tuple_fifo::open_fifos());
     }    
 
     // record client end time...

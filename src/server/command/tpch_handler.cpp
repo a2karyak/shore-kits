@@ -44,8 +44,8 @@ void tpch_handler_t::init() {
 
     if ( state == TPCH_HANDLER_UNINITIALIZED ) {
 
-        // open DB tables
-        db_open();
+        // open DB tables (1.25 GB bpool)
+        db_open(DB_RDONLY|DB_THREAD, 1, 256*1024*1024);
 
         // register drivers...
         add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
@@ -170,13 +170,13 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
         results.num_clients * results.num_iterations;
     
     // queries per hour
-    float tpmC = (60.0 * queries_completed) / results.total_time.time();
+    float tpmC = (60.0 * queries_completed) / results.total_time;
     
     TRACE(TRACE_STATISTICS, "~~~\n");
     TRACE(TRACE_STATISTICS, "~~~ Clients           = %d \n", results.num_clients);
     TRACE(TRACE_STATISTICS, "~~~ Iterations        = %d \n", results.num_iterations);
     TRACE(TRACE_STATISTICS, "~~~ Think Time        = %d \n", results.think_time);
-    TRACE(TRACE_STATISTICS, "~~~ Duration          = %.2f \n", results.total_time.time());
+    TRACE(TRACE_STATISTICS, "~~~ Duration          = %.2f \n", results.total_time);
     TRACE(TRACE_STATISTICS, "~~~\n");
     TRACE(TRACE_STATISTICS, "~~~ Throughput        = %.2f queries/min\n", tpmC);
     TRACE(TRACE_STATISTICS, "~~~\n");
