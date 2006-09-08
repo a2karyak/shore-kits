@@ -14,6 +14,7 @@ LDADD = \
 
 # define programs here
 bin_PROGRAMS = \
+   test_odirect \
    test_cpu_binding \
    test_rand_array_access \
    load_db_tables \
@@ -47,6 +48,7 @@ bin_PROGRAMS = \
    test_mpool \
    grouper
 
+test_odirect_SOURCES = test_odirect.cpp
 test_cpu_binding_SOURCES = test_cpu_binding.cpp
 test_rand_array_access_SOURCES = test_rand_array_access.cpp
 load_db_tables_SOURCES = load_db_tables.cpp
