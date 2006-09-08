@@ -25,7 +25,8 @@ WL_TPCH = \
    tpch/drivers/tpch_q4.cpp  \
    tpch/drivers/tpch_q6.cpp  \
    tpch/drivers/tpch_q12.cpp \
-   tpch/drivers/tpch_m146.cpp
+   tpch/drivers/tpch_m146.cpp \
+   tpch/drivers/tpch_m14612.cpp
 
 # encapsulates all basic classes needed in qpipe
 lib_LIBRARIES = libworkload.a

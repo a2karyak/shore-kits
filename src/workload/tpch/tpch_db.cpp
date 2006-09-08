@@ -122,7 +122,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
                   INDEX_LINEITEM_SHIPDATE_NAME,
                   INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
 
-    TRACE(TRACE_ALWAYS, "BerekeleyDB buffer pool set to %d GB, %d B\n",
+    TRACE(TRACE_ALWAYS, "BerkeleyDB buffer pool set to %d GB, %d B\n",
           db_cache_size_gb,
           db_cache_size_bytes);
     TRACE(TRACE_ALWAYS, "TPCH database open\n");

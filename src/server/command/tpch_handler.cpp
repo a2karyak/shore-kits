@@ -11,6 +11,7 @@
 #include "workload/tpch/drivers/tpch_q12.h"
 
 #include "workload/tpch/drivers/tpch_m146.h"
+#include "workload/tpch/drivers/tpch_m14612.h"
 
 #include "engine/dispatcher/dispatcher_policy_os.h"
 #include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
@@ -58,6 +59,7 @@ void tpch_handler_t::init() {
         // method. TODO change this so we pass down one of our data
         // fields.
         add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-146"), this));
+        add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-14612"), this));
 
 
         // register dispatcher policies...
