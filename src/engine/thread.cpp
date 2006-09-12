@@ -53,7 +53,7 @@ extern "C" void* start_thread(void *);
  *  init_thread_name_v()) to set up a new thread object's name.
  */
 thread_t::thread_t(const c_str &name)
-    : _thread_name(name)
+    : _thread_name(name), _delete_me(true)
 {
     // do nothing...
 }
@@ -336,5 +336,6 @@ static void thread_fatal_error(const char* function_name, int err)
 static void thread_destroy(void* thread_object)
 {
     thread_t* thread = (thread_t*)thread_object;
-    delete thread;
+    if(thread && thread->delete_me())
+        delete thread;
 }

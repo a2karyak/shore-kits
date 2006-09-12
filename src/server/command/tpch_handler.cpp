@@ -11,6 +11,7 @@
 #include "workload/tpch/drivers/tpch_q12.h"
 
 #include "workload/tpch/drivers/tpch_m146.h"
+#include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
 #include "workload/tpch/drivers/tpch_m14612.h"
 
 #include "engine/dispatcher/dispatcher_policy_os.h"
@@ -46,7 +47,7 @@ void tpch_handler_t::init() {
     if ( state == TPCH_HANDLER_UNINITIALIZED ) {
 
         // open DB tables (1.25 GB bpool)
-        db_open(DB_RDONLY|DB_THREAD, 1, 256*1024*1024);
+        db_open(DB_RDONLY|DB_THREAD, 1, 625*1024*1024);
 
         // register drivers...
         add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
@@ -59,6 +60,7 @@ void tpch_handler_t::init() {
         // method. TODO change this so we pass down one of our data
         // fields.
         add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-146"), this));
+        add_driver("m_1_4_6_12", new tpch_m_1_4_6_12_driver(c_str("TPCH-MIX 1,4,6,12"), this));
         add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-14612"), this));
 
 
@@ -167,6 +169,38 @@ void tpch_handler_t::handle_command(const char* command) {
 
 void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
 
+    if(1) {
+        DB_MPOOL_STAT *gsp;
+        DB_MPOOL_FSTAT **fsp;
+
+        dbenv->memp_stat(&gsp, &fsp, DB_STAT_CLEAR);
+
+        int requests = gsp->st_cache_hit + gsp->st_cache_miss;
+        double hit_rate = 100.*gsp->st_cache_hit/requests;
+        TRACE(TRACE_STATISTICS, "***\n");
+        TRACE(TRACE_STATISTICS, "*** Memory Pool statistics:\n");
+        TRACE(TRACE_STATISTICS, "***\tCapacity: %d\n", gsp->st_pages);
+        TRACE(TRACE_STATISTICS, "***\tRequests: %d\n", requests);
+        TRACE(TRACE_STATISTICS, "***\tHit rate: %.1f%%\n", hit_rate);
+        TRACE(TRACE_STATISTICS, "***\t\n");
+        for(int i=0; fsp[i]; i++) {
+            DB_MPOOL_FSTAT *fs = fsp[i];
+            if(fs->st_cache_hit + fs->st_cache_miss + fs->st_page_create
+               + fs->st_page_in + fs->st_page_out == 0)
+                continue;
+            requests = fs->st_cache_hit + fs->st_cache_miss;
+            hit_rate = 100.*fs->st_cache_hit/requests;
+            TRACE(TRACE_STATISTICS, "***\t ---File: %s\n", fs->file_name);
+            TRACE(TRACE_STATISTICS, "***\t\tPages created: %d\n", fs->st_page_create);
+            TRACE(TRACE_STATISTICS, "***\t\tPages read   : %d\n", fs->st_page_in);
+            TRACE(TRACE_STATISTICS, "***\t\tPages written: %d\n", fs->st_page_out);
+            TRACE(TRACE_STATISTICS, "***\t\tPage requests: %d\n", requests);
+            TRACE(TRACE_STATISTICS, "***\t\tHit rate     : %.1f%%\n", hit_rate);
+            TRACE(TRACE_STATISTICS, "***\t\t\n");
+        }
+        TRACE(TRACE_STATISTICS, "***\t\n");
+    }
+    
     // print final statistics
     int queries_completed =
         results.num_clients * results.num_iterations;

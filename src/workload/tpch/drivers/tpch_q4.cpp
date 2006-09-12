@@ -54,7 +54,7 @@ packet_t* line_item_scan(Db* tpch_lineitem) {
     // the output consists of 1 int (the
     tuple_filter_t* filter = new lineitem_tscan_filter_t(); 
     tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
-    packet_t *tscan_packet = new tscan_packet_t("Lineitem TSCAN",
+    packet_t *tscan_packet = new tscan_packet_t("lineitem TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_lineitem);
@@ -117,7 +117,7 @@ packet_t* orders_scan(Db* tpch_orders) {
 
     tuple_filter_t* filter = new orders_tscan_filter_t(); 
     tuple_fifo* buffer = new tuple_fifo(sizeof(order_scan_tuple_t), dbenv);
-    packet_t *tscan_packet = new tscan_packet_t("Orders TSCAN",
+    packet_t *tscan_packet = new tscan_packet_t("order TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_orders);

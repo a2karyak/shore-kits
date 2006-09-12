@@ -33,12 +33,15 @@ private:
 
     c_str        _thread_name;
     unsigned int _rand_seed;
+protected:
+    bool _delete_me;
 
 public:
 
     virtual void* run()=0;
-
-
+    
+    bool delete_me() { return _delete_me; }
+    
     c_str thread_name() {
         return _thread_name;
     }

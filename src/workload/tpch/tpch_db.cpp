@@ -85,7 +85,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     dbenv->set_msgfile(stderr);
     dbenv->set_errfile(stderr);
     // TODO: DB_NOMMAP?
-    dbenv->set_flags(DB_NOMMAP, true);
+    dbenv->set_flags(DB_NOMMAP|DB_DIRECT_DB, true);
+    dbenv->set_verbose(DB_VERB_REGISTER, true);
     
 
     // open home directory

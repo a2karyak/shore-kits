@@ -24,8 +24,115 @@ const c_str tscan_stage_t::DEFAULT_STAGE_NAME = "TSCAN_STAGE";
  *  and do bulk reading. The blob must be aligned for int accesses and
  *  a multiple of 1024 bytes long.
  */
-const size_t tscan_stage_t::TSCAN_BULK_READ_BUFFER_SIZE=256*KB;
+const size_t tscan_stage_t::TSCAN_BULK_READ_BUFFER_SIZE=4*KB*KB;
 
+struct buffer {
+    volatile bool full;
+    pthread_cond_t cond;
+    dbt_guard_t data;
+    buffer()
+        : full(false),
+          cond(DEFAULT_COND_INITIALIZER),
+          data(tscan_stage_t::TSCAN_BULK_READ_BUFFER_SIZE)
+    {
+    }
+};
+
+// forward declarations
+class slave_thread;
+template <class Action>
+void double_buffer(slave_thread &slave, Action action, bool sense);
+
+// created by a master thread, destroyed/joined when it goes out of scope
+struct slave_thread : thread_t {
+    pthread_t tid;
+    cursor_guard_t cursor;
+    pthread_mutex_t lock;
+    volatile bool done;
+    buffer buffers[2];
+    
+    struct WriteAction {
+        Dbc* cursor;
+        WriteAction(Dbc* c)
+            : cursor(c)
+        {
+        }
+        int operator()(buffer &b) {
+            Dbt bulk_key;
+            return cursor->get(&bulk_key, b.data, DB_MULTIPLE_KEY | DB_NEXT);
+        }
+    };
+
+    virtual void* run() {
+        double_buffer(*this, WriteAction(cursor), true);
+        return NULL;
+    }
+        
+    slave_thread(Db* db)
+        : thread_t("TSCAN slave"),
+          tid(0),
+          cursor(db),
+          lock(DEFAULT_MUTEX_INITIALIZER),
+          done(false)
+    {
+        _delete_me = false;
+    }
+    ~slave_thread() {
+        critical_section_t cs(lock);
+        done = true;
+        cs.exit();
+        pthread_join(tid, NULL);
+    }
+};
+
+template <class Action>
+void double_buffer(slave_thread &slave, Action action, bool sense) {
+    // start with buffer 0
+    int err = 0;
+    critical_section_t cs(slave.lock);
+    for(int which=0; !err; which = ~which) {
+        // 'which' alternates between 0 and -1, so 'which+1' follows 1, 0, 1, 0...
+        buffer &b = slave.buffers[which+1];
+        while(b.full == sense && !slave.done)
+            pthread_cond_wait(&b.cond, &slave.lock);
+            
+        if(slave.done)
+            break;
+
+        // leave the critical section before performing the action
+        cs.exit();
+
+        err = action(b);
+
+        // re-enter after writing, then set the full flag
+        cs = critical_section_t(slave.lock);
+        b.full = sense;
+        pthread_cond_signal(&b.cond);
+    }
+
+    // must be DB_NOTFOUND or no error
+    assert(err == 0 || err == DB_NOTFOUND);
+    slave.done = true;
+}
+
+struct ReadAction {
+    stage_t::adaptor_t* adaptor;
+    ReadAction(stage_t::adaptor_t* a)
+        : adaptor(a)
+    {
+    }
+    int operator()(buffer &b) {
+
+        // iterate over the blob we read and output the individual
+        // tuples
+        Dbt key, data;
+        DbMultipleKeyDataIterator it = b.data.get();
+        for (int tuple_index = 0; it.next(key, data); tuple_index++) 
+            adaptor->output(data);
+            
+        return 0;
+    }
+};
 
 /**
  *  @brief Read the specified table.
@@ -39,31 +146,10 @@ void tscan_stage_t::process_packet() {
     adaptor_t* adaptor = _adaptor;
     tscan_packet_t* packet = (tscan_packet_t*)adaptor->get_packet();
 
-    Db*  db = packet->_db;
-    cursor_guard_t cursor(db);
-    
+    // create a slave thread and run it
+    slave_thread slave(packet->_db);
+    thread_create(&slave.tid, &slave);
 
-    // BerkeleyDB cannot read into page_t's. Allocate a large blob and
-    // do bulk reading.
-    dbt_guard_t bulk_data(TSCAN_BULK_READ_BUFFER_SIZE);
-    Dbt bulk_key;
-    for (int bulk_read_index = 0; ; bulk_read_index++) {
-
-        // any return code besides DB_NOTFOUND would throw an exception
-        int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
-        if(err) {
-            assert(err = DB_NOTFOUND);
-            return;
-        }
-
-        // iterate over the blob we read and output the individual
-        // tuples
-        Dbt key, data;
-        DbMultipleKeyDataIterator it = bulk_data.get();
-	for (int tuple_index = 0; it.next(key, data); tuple_index++) 
-	    adaptor->output(data);
-    }
-
-    // control never reaches here
-    assert(false);
+    // now process the data the slave buffers up
+    double_buffer(slave, ReadAction(adaptor), false);
 }

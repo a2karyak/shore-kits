@@ -25,7 +25,7 @@ void tuple_fifo::init() {
     _pool = pool;
     if(1) {
         // *should* work...
-        _pool->open(NULL, DB_CREATE, 0644, PAGE_SIZE);
+        _pool->open(NULL, DB_CREATE|DB_DIRECT, 0644, PAGE_SIZE);
     }
     else {
         // ...but if not
@@ -74,7 +74,7 @@ void tuple_fifo::free(void* p) {
  * file is deleted.
  */
 void tuple_fifo::_unpin(page* p, bool keep) {
-    int flags = keep? DB_MPOOL_DIRTY : DB_MPOOL_CLEAN | DB_MPOOL_DISCARD;
+    int flags = keep? DB_MPOOL_DIRTY : DB_MPOOL_TRASH;
     _pool->put(p, flags);
 }
 

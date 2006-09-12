@@ -222,7 +222,7 @@ void tpch_q1_driver::submit(void* disp) {
     tuple_fifo* tscan_out_buffer =
         new tuple_fifo(sizeof(projected_lineitem_tuple), dbenv);
     tscan_packet_t* q1_tscan_packet =
-        new tscan_packet_t("Q1_TSCAN_PACKET",
+        new tscan_packet_t("lineitem TSCAN",
                            tscan_out_buffer,
                            new q1_tscan_filter_t(),
                            tpch_lineitem);
