@@ -1,13 +1,16 @@
 #include "engine/core/tuple_fifo.h"
 #include "engine/sync.h"
-
+#include <vector>
 
 #include "engine/namespace.h"
 
 static const int PAGE_SIZE = 4096;
 
+typedef std::vector<DbMpoolFile*> handle_list;
+
 pthread_mutex_t open_fifo_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int open_fifo_count = 0;
+static handle_list dead_handles;
 
 /*
  * Creates a new (temporary) file in the BDB bufferpool for the FIFO
@@ -19,10 +22,8 @@ void tuple_fifo::init() {
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
     cs.exit();
-    
-    DbMpoolFile* pool;
-    dbenv()->memp_fcreate(&pool, 0);
-    _pool = pool;
+
+    dbenv()->memp_fcreate(&_pool, 0);
     if(1) {
         // *should* work...
         _pool->open(NULL, DB_CREATE|DB_DIRECT, 0644, PAGE_SIZE);
@@ -39,12 +40,20 @@ void tuple_fifo::init() {
 void tuple_fifo::destroy() {
     // stats
     critical_section_t cs(open_fifo_mutex);
+    dead_handles.push_back(_pool);
     open_fifo_count--;
 }
 
 int tuple_fifo::open_fifos() {
     critical_section_t cs(open_fifo_mutex);
     return open_fifo_count;
+}
+
+void tuple_fifo::cleanup_pool() {
+    critical_section_t cs(open_fifo_mutex);
+    for(size_t i=0; i < dead_handles.size(); i++)
+        dead_handles[i]->close(0);
+    dead_handles.clear();
 }
 
 /*

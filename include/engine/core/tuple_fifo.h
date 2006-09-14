@@ -32,7 +32,7 @@ class tuple_fifo : public page_pool {
 
 private:
 
-    guard<DbMpoolFile> _pool;
+    DbMpoolFile* _pool;
     DbEnv* _dbenv;
     size_t _tuple_size;
     size_t _capacity;
@@ -54,7 +54,6 @@ private:
     pthread_mutex_t _lock;
     pthread_cond_t _reader_notify;
     pthread_cond_t _writer_notify;
-
 
 public:
 
@@ -96,6 +95,10 @@ public:
 
     // the number of FIFOs currently open
     static int open_fifos();
+
+    // closes all memory pool file handles (which are left open to
+    // preserve their statistics)
+    static void cleanup_pool();
     
     // requird by page_pool
     virtual void* alloc();

@@ -200,6 +200,7 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
         }
         TRACE(TRACE_STATISTICS, "***\t\n");
     }
+    tuple_fifo::cleanup_pool();
     
     // print final statistics
     int queries_completed =
