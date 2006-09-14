@@ -62,6 +62,12 @@ struct critical_section_t {
     {
         pthread_mutex_lock_wrapper(_mutex);
     }
+    
+    void enter(pthread_mutex_t &mutex) {
+        exit();
+        _mutex = &mutex;
+        pthread_mutex_lock_wrapper(_mutex);
+    }
     void exit() {
         if(_mutex) {
             pthread_mutex_unlock_wrapper(_mutex);
@@ -71,6 +77,9 @@ struct critical_section_t {
     ~critical_section_t() {
         exit();
     }
+private:
+    critical_section_t(critical_section_t const &);
+    critical_section_t &operator =(critical_section_t const &);
 };
 
 

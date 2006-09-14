@@ -5,9 +5,12 @@
 #include "engine/core/tuple.h"
 #include "engine/core/exception.h"
 #include "db_cxx.h"
+#include <vector>
 
 // include me last!
 #include "engine/namespace.h"
+
+typedef std::vector<DB_MPOOL_FSTAT> stats_list;
 
 template<>
 inline void guard<DbMpoolFile>::action(DbMpoolFile* ptr) {
@@ -32,7 +35,7 @@ class tuple_fifo : public page_pool {
 
 private:
 
-    DbMpoolFile* _pool;
+    guard<DbMpoolFile> _pool;
     DbEnv* _dbenv;
     size_t _tuple_size;
     size_t _capacity;
@@ -96,9 +99,11 @@ public:
     // the number of FIFOs currently open
     static int open_fifos();
 
+    static stats_list get_stats();
+    
     // closes all memory pool file handles (which are left open to
     // preserve their statistics)
-    static void cleanup_pool();
+    static void clear_stats();
     
     // requird by page_pool
     virtual void* alloc();

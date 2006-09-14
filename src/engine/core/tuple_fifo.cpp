@@ -1,16 +1,19 @@
 #include "engine/core/tuple_fifo.h"
 #include "engine/sync.h"
-#include <vector>
 
 #include "engine/namespace.h"
 
 static const int PAGE_SIZE = 4096;
 
-typedef std::vector<DbMpoolFile*> handle_list;
+struct strlt {
+    bool operator()(char* const a, char* const b) {
+        return strcmp(a, b) < 0;
+    }
+};
 
 pthread_mutex_t open_fifo_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int open_fifo_count = 0;
-static handle_list dead_handles;
+static stats_list file_stats;
 
 /*
  * Creates a new (temporary) file in the BDB bufferpool for the FIFO
@@ -23,24 +26,22 @@ void tuple_fifo::init() {
     open_fifo_count++;
     cs.exit();
 
-    dbenv()->memp_fcreate(&_pool, 0);
-    if(1) {
-        // *should* work...
-        _pool->open(NULL, DB_CREATE|DB_DIRECT, 0644, PAGE_SIZE);
-    }
-    else {
-        // ...but if not
-        char temp[] = "database/fifo.XXXXXX";
-        close(mkstemp(temp));
-        _pool->set_flags(DB_MPOOL_UNLINK, true);
-        _pool->open(strstr(temp, "fifo"), 0, 0644, PAGE_SIZE);
-    }
+    DbMpoolFile* pool;
+    dbenv()->memp_fcreate(&pool, 0);
+    _pool = pool;
+    _pool->open(NULL, DB_CREATE|DB_DIRECT, 0644, PAGE_SIZE);
 }
 
 void tuple_fifo::destroy() {
     // stats
     critical_section_t cs(open_fifo_mutex);
-    dead_handles.push_back(_pool);
+    
+    // store the stats for later...
+    file_stats.push_back(_pool->get_stats());
+    DB_MPOOL_FSTAT &stat = file_stats.back();
+
+    // canonicalize the name so we don't have dangling pointers
+    stat.file_name = "FIFO";
     open_fifo_count--;
 }
 
@@ -49,11 +50,14 @@ int tuple_fifo::open_fifos() {
     return open_fifo_count;
 }
 
-void tuple_fifo::cleanup_pool() {
+stats_list tuple_fifo::get_stats() {
     critical_section_t cs(open_fifo_mutex);
-    for(size_t i=0; i < dead_handles.size(); i++)
-        dead_handles[i]->close(0);
-    dead_handles.clear();
+    return file_stats;
+}
+
+void tuple_fifo::clear_stats() {
+    critical_section_t cs(open_fifo_mutex);
+    file_stats.clear();
 }
 
 /*
@@ -117,7 +121,7 @@ void tuple_fifo::_flush(bool force) {
     _unpin(_write_page.release(), true);
 
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs = _lock;
+    critical_section_t cs(_lock);
     _termination_check();
 
     // update state 
@@ -135,7 +139,7 @@ void tuple_fifo::ensure_write_ready() {
         return;
 
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs = _lock;
+    critical_section_t cs(_lock);
     _termination_check();
     
     // Wait for space to open up? Once we've slept because of empty,
@@ -167,7 +171,7 @@ bool tuple_fifo::_purge(bool stolen) {
         return false;
 
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs = _lock;
+    critical_section_t cs(_lock);
     _termination_check();
 
     // update state 
@@ -206,7 +210,7 @@ bool tuple_fifo::_attempt_tuple_read() {
 bool tuple_fifo::_attempt_page_read(bool block) {
     
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs = _lock;
+    critical_section_t cs(_lock);
     _termination_check();
 
     
@@ -249,7 +253,7 @@ bool tuple_fifo::send_eof() {
     _flush(true);
     
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs = _lock;
+    critical_section_t cs(_lock);
     if(_terminated)
         return false;
 
@@ -264,7 +268,7 @@ bool tuple_fifo::send_eof() {
 bool tuple_fifo::terminate() {
     
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs = _lock;
+    critical_section_t cs(_lock);
 
 
     // did the other end beat me to it? Note: if _done_writing is true

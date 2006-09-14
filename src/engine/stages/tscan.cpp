@@ -43,6 +43,25 @@ class slave_thread;
 template <class Action>
 void double_buffer(slave_thread &slave, Action action, bool sense);
 
+struct ReadAction {
+    stage_t::adaptor_t* adaptor;
+    ReadAction(stage_t::adaptor_t* a)
+        : adaptor(a)
+    {
+    }
+    int operator()(buffer &b) {
+
+        // iterate over the blob we read and output the individual
+        // tuples
+        Dbt key, data;
+        DbMultipleKeyDataIterator it = b.data.get();
+        for (int tuple_index = 0; it.next(key, data); tuple_index++) 
+            adaptor->output(data);
+            
+        return 0;
+    }
+};
+
 // created by a master thread, destroyed/joined when it goes out of scope
 struct slave_thread : thread_t {
     pthread_t tid;
@@ -77,9 +96,16 @@ struct slave_thread : thread_t {
     {
         _delete_me = false;
     }
+    // MUST be called while holding the mutex!
+    void signal_done() {
+        done = true;
+        pthread_cond_signal(&buffers[0].cond);
+        pthread_cond_signal(&buffers[1].cond);
+    }
+    
     ~slave_thread() {
         critical_section_t cs(lock);
-        done = true;
+        signal_done();
         cs.exit();
         pthread_join(tid, NULL);
     }
@@ -96,43 +122,23 @@ void double_buffer(slave_thread &slave, Action action, bool sense) {
         while(b.full == sense && !slave.done)
             pthread_cond_wait(&b.cond, &slave.lock);
             
-        if(slave.done)
+        if(b.full == sense)
             break;
 
         // leave the critical section before performing the action
         cs.exit();
-
         err = action(b);
 
         // re-enter after writing, then set the full flag
-        cs = critical_section_t(slave.lock);
+        cs.enter(slave.lock);
         b.full = sense;
         pthread_cond_signal(&b.cond);
     }
 
     // must be DB_NOTFOUND or no error
+    slave.signal_done();
     assert(err == 0 || err == DB_NOTFOUND);
-    slave.done = true;
 }
-
-struct ReadAction {
-    stage_t::adaptor_t* adaptor;
-    ReadAction(stage_t::adaptor_t* a)
-        : adaptor(a)
-    {
-    }
-    int operator()(buffer &b) {
-
-        // iterate over the blob we read and output the individual
-        // tuples
-        Dbt key, data;
-        DbMultipleKeyDataIterator it = b.data.get();
-        for (int tuple_index = 0; it.next(key, data); tuple_index++) 
-            adaptor->output(data);
-            
-        return 0;
-    }
-};
 
 /**
  *  @brief Read the specified table.

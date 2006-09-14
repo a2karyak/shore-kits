@@ -166,6 +166,20 @@ void tpch_handler_t::handle_command(const char* command) {
 }
 
 
+static void print_file_stats(DB_MPOOL_FSTAT fs) {
+    if(fs.st_cache_miss == 0)
+        return;
+    
+    int requests = fs.st_cache_hit + fs.st_cache_miss;
+    double hit_rate = 100.*fs.st_cache_hit/requests;
+    TRACE(TRACE_STATISTICS, "***\t ---File: %s\n", fs.file_name);
+    TRACE(TRACE_STATISTICS, "***\t\tPages created: %d\n", fs.st_page_create);
+    TRACE(TRACE_STATISTICS, "***\t\tPages read   : %d\n", fs.st_page_in);
+    TRACE(TRACE_STATISTICS, "***\t\tPages written: %d\n", fs.st_page_out);
+    TRACE(TRACE_STATISTICS, "***\t\tPage requests: %d\n", requests);
+    TRACE(TRACE_STATISTICS, "***\t\tHit rate     : %.1f%%\n", hit_rate);
+    TRACE(TRACE_STATISTICS, "***\t\t\n");
+ }
 
 void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
 
@@ -183,24 +197,21 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
         TRACE(TRACE_STATISTICS, "***\tRequests: %d\n", requests);
         TRACE(TRACE_STATISTICS, "***\tHit rate: %.1f%%\n", hit_rate);
         TRACE(TRACE_STATISTICS, "***\t\n");
-        for(int i=0; fsp[i]; i++) {
-            DB_MPOOL_FSTAT *fs = fsp[i];
-            if(fs->st_cache_hit + fs->st_cache_miss + fs->st_page_create
-               + fs->st_page_in + fs->st_page_out == 0)
-                continue;
-            requests = fs->st_cache_hit + fs->st_cache_miss;
-            hit_rate = 100.*fs->st_cache_hit/requests;
-            TRACE(TRACE_STATISTICS, "***\t ---File: %s\n", fs->file_name);
-            TRACE(TRACE_STATISTICS, "***\t\tPages created: %d\n", fs->st_page_create);
-            TRACE(TRACE_STATISTICS, "***\t\tPages read   : %d\n", fs->st_page_in);
-            TRACE(TRACE_STATISTICS, "***\t\tPages written: %d\n", fs->st_page_out);
-            TRACE(TRACE_STATISTICS, "***\t\tPage requests: %d\n", requests);
-            TRACE(TRACE_STATISTICS, "***\t\tHit rate     : %.1f%%\n", hit_rate);
-            TRACE(TRACE_STATISTICS, "***\t\t\n");
-        }
+
+        // grab the temp file stats
+        stats_list fifo_stats = tuple_fifo::get_stats();
+        for(size_t i=0; i < fifo_stats.size(); i++)
+            print_file_stats(fifo_stats[i]);
+
+        // and the normal files
+        for(int i=0; fsp[i]; i++)
+            print_file_stats(*fsp[i]);
+        
         TRACE(TRACE_STATISTICS, "***\t\n");
+        free(gsp);
+        free(fsp);
     }
-    tuple_fifo::cleanup_pool();
+    tuple_fifo::clear_stats();
     
     // print final statistics
     int queries_completed =
@@ -217,6 +228,7 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
     TRACE(TRACE_STATISTICS, "~~~\n");
     TRACE(TRACE_STATISTICS, "~~~ Throughput        = %.2f queries/min\n", tpmC);
     TRACE(TRACE_STATISTICS, "~~~\n");
+
 }
 
 

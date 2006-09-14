@@ -227,7 +227,7 @@ static void close_db_table(Db* &table, const char* table_name) {
 static void open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
                           bt_compare_func_t cmp,
                           idx_key_create_func_t key_create,
-                          const char* assoc_name, const char* index_name) {
+                          const char* , const char* index_name) {
 
     try {
         assoc = new Db(dbenv, 0);

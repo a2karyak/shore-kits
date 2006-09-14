@@ -257,7 +257,7 @@ void tpch_q4_driver::submit(void* disp) {
                                                 aggregate,
                                                 new default_key_extractor_t(),
                                                 new int_key_compare_t());
-                                                              
+
     dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(agg_packet, qs);
     dp->assign_packet_to_cpu(join_packet, qs);
@@ -266,9 +266,10 @@ void tpch_q4_driver::submit(void* disp) {
     dp->query_state_destroy(qs);
 
     // Dispatch packet
+    guard<tuple_fifo> result = agg_packet->output_buffer();
     dispatcher_t::dispatch_packet(agg_packet);
     tuple_t output;
-    while(buffer->get_tuple(output)) {
+    while(result->get_tuple(output)) {
         q4_tuple_t* r = (q4_tuple_t*) output.data;
         TRACE(TRACE_QUERY_RESULTS, "*** Q4 Priority: %d. Count: %d.  ***\n",
               r->O_ORDERPRIORITY,
