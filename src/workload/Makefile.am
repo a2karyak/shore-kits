@@ -25,6 +25,7 @@ WL_TPCH = \
    tpch/drivers/tpch_q4.cpp  \
    tpch/drivers/tpch_q6.cpp  \
    tpch/drivers/tpch_q12.cpp \
+   tpch/drivers/tpch_q13.cpp \
    tpch/drivers/tpch_m_1_4_6_12.cpp \
    tpch/drivers/tpch_m146.cpp \
    tpch/drivers/tpch_m14612.cpp
