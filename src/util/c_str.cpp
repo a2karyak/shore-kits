@@ -6,7 +6,7 @@
 #include "util/exception.h"
 #include "util/sync.h"
 
-const c_str c_str::empty_string = "";
+const c_str c_str::EMPTY_STRING = "";
 
 struct c_str::c_str_data {
     mutable pthread_mutex_t _lock;

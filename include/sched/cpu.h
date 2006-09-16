@@ -11,9 +11,9 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include "util.h"
+#include "util/namespace.h"
 
-ENTER_NAMESPACE(sched);
+ENTER_NAMESPACE(scheduler);
 
 /* exported datatypes */
 
@@ -25,6 +25,6 @@ typedef struct cpu_s* cpu_t;
 void cpu_bind_self(cpu_t cpu);
 int  cpu_get_unique_id(cpu_t cpu);
 
-EXIT_NAMESPACE(sched);
+EXIT_NAMESPACE(scheduler);
 
 #endif

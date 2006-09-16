@@ -34,16 +34,16 @@ class c_str {
     void assign(const c_str &other);    
 
 public:
-    static const c_str empty_string;
+    static const c_str EMPTY_STRING;
 
-    c_str (const c_str &other=empty_string) {
+    c_str (const c_str &other=EMPTY_STRING) {
         if (DEBUG_C_STR)
             printf("copy constructor with other = %s\n", other.data());
         assign(other);
     }
     
-    
-    c_str(const char* str, ...);
+    // start counting params at 2 instead of 1 -- non-static member function
+    c_str(const char* str, ...) __attribute__((format(printf, 2, 3)));
     
     operator const char*() const {
         return data();

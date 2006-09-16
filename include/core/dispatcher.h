@@ -16,21 +16,6 @@ ENTER_NAMESPACE(qpipe);
 static const int DISPATCHER_NUM_STATIC_HASH_MAP_BUCKETS = 64;
 
 
-
-typedef struct dispatcher_cpu_s* dispatcher_cpu_t;
-
-
-/* exported functions */
-/**
- *  @brief Exports dispatcher_cpu_t datatype. QPIPE worker threads may
- *  invoke dispatcher_cpu_bind_self() to bind themselves to the
- *  specified CPU.
- */
-void dispatcher_cpu_bind_self(dispatcher_cpu_t cpu);
-int  dispatcher_cpu_get_unique_id(dispatcher_cpu_t cpu);
-
-
-
 /* exported datatypes */
 
 /**

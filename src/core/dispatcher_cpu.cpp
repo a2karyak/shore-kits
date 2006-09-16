@@ -96,7 +96,7 @@ struct dispatcher_cpu_s
       binding in Linux using the hard affinity library functions
       provided by glibc. This cpu_set_t should be initialized to
       contain a single CPU (this one). */
-  cpu_set_t cpu_set;
+  os_cpu_set_t cpu_set;
  
 #endif
 
@@ -178,7 +178,7 @@ void dispatcher_cpu_bind_self(dispatcher_cpu_t cpu)
      used. We really want to bind the current THREAD, but in Linux, a
      THREAD is a processor with its own pid_t. */
   
-  if ( sched_setaffinity(0, sizeof(cpu_set_t), &cpu->cpu_set) )
+  if ( sched_setaffinity(0, sizeof(os_cpu_set_t), &cpu->cpu_set) )
       throw EXCEPTION(QPipeException,
                       "Caught %s in call to sched_setaffinity()",
                       errno_to_str().data());

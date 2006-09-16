@@ -39,7 +39,7 @@
 
 void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
-	    char* format, ...);
+	    char* format, ...) __attribute__((format(printf, 5, 6)));
 
 void trace_set(unsigned int trace_type_mask);
 

@@ -100,7 +100,7 @@ struct trivial_filter_t : public tuple_filter_t {
 
     virtual c_str to_string() const {
         // nothing happens
-        return "";
+        return c_str::EMPTY_STRING;
     }
     
     trivial_filter_t(size_t input_tuple_size)
@@ -248,7 +248,7 @@ public:
 
     // return a canonical string representation of this key extractor
     virtual c_str to_string() const {
-        return c_str("key(%d, %d)", key_size(), key_offset());
+        return c_str("key(%zd, %zd)", key_size(), key_offset());
     }
 
 

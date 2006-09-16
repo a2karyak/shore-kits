@@ -4,11 +4,10 @@
 #define __PACKET_H
 
 #include <list>
-#include <db_cxx.h>
 #include "core/tuple.h"
 #include "core/tuple_fifo.h"
 #include "core/functors.h"
-#include "core/dispatcher_cpu.h"
+#include "core/cpu_bind.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -102,7 +101,7 @@ public:
 	initialized to 0. */
     unsigned int _next_tuple_needed;
 
-    dispatcher_cpu_t _bind_cpu;
+    cpu_bind* _cpu_bind;
     
 
 

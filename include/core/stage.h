@@ -122,13 +122,8 @@ public:
         // process rebinding instructions here since we have access to
         // the primary packet
         packet_t* packet = _adaptor->get_packet();
-        dispatcher_cpu_t bind_cpu = packet->_bind_cpu;
-        if ( bind_cpu != NULL ) {
-            TRACE(TRACE_CPU_BINDING, "Binding to cpu %d for packet %s\n",
-                  dispatcher_cpu_get_unique_id(bind_cpu),
-                  packet->_packet_id.data());
-            dispatcher_cpu_bind_self(bind_cpu);
-        }
+        if(packet->_cpu_bind)
+            packet->_cpu_bind->bind(packet);
         
 	process_packet();
     }
