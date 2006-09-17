@@ -8,23 +8,12 @@
  5/25/2006: Initial version
 */ 
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/tscan.h"
-#include "engine/stages/aggregate.h"
-#include "engine/stages/func_call.h"
-#include "engine/dispatcher.h"
-#include "engine/util/stopwatch.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
+#include "scheduler.h"
 #include "tests/common.h"
 #include "workload/common.h"
 
-#include "engine/dispatcher/dispatcher_policy_os.h"
-#include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
-#include "engine/dispatcher/dispatcher_policy_query_cpu.h"
 #include "workload/tpch/tpch_db.h"
-#include "db_cxx.h"
 
 using namespace qpipe;
 
@@ -54,14 +43,14 @@ int main(int argc, char* argv[]) {
 	TRACE(TRACE_ALWAYS, "Invalid iterations per client %s\n", argv[2]);
 	exit(-1);
     }
-    dispatcher_policy_t* dp = NULL;
+    scheduler::policy_t* dp = NULL;
     char* dpolicy = argv[3];
     if ( !strcmp(dpolicy, "OS") )
-        dp = new dispatcher_policy_os_t();
+        dp = new scheduler::policy_os_t();
     if ( !strcmp(dpolicy, "RR_CPU") )
-        dp = new dispatcher_policy_rr_cpu_t();
+        dp = new scheduler::policy_rr_cpu_t();
     if ( !strcmp(dpolicy, "QUERY_CPU") )
-        dp = new dispatcher_policy_query_cpu_t();
+        dp = new scheduler::policy_query_cpu_t();
     if ( dp == NULL ) {
 	TRACE(TRACE_ALWAYS, "Unrecognized dispatcher policy: %s\n", argv[3]);
 	exit(-1);
@@ -95,13 +84,10 @@ int main(int argc, char* argv[]) {
         
         // create client thread
         thread_t* client = new tester_thread_t(q6_client_main, cinfo, c_str("CLIENT-%d", i));
-        int create_ret = thread_create( &clients[i], client );
-        assert(create_ret == 0);
+        clients[i] = thread_create(client );
     }
-    for (int i = 0; i < num_clients; i++) {
-        int join_ret = pthread_join( clients[i], NULL );
-        assert(join_ret == 0);
-    }    
+    for (int i = 0; i < num_clients; i++) 
+        thread_join<void>(clients[i]);
 
     
     TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());

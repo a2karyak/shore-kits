@@ -1,12 +1,11 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "scheduler.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
 
 #include "workload/common.h"
-#include "engine/dispatcher.h"
 
-using namespace qpipe;
-
+ENTER_NAMESPACE(workload);
 
 
 void tpch_m_1_4_6_12_driver::submit(void* disp) {
@@ -33,9 +32,11 @@ void tpch_m_1_4_6_12_driver::submit(void* disp) {
         break;
 
     default:
-        QPIPE_PANIC();
+        assert(false);
     }
 
     TRACE(TRACE_DEBUG, "selection = %d\n", selection);
     driver->submit(disp);
 }
+
+EXIT_NAMESPACE(workload);

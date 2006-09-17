@@ -7,7 +7,7 @@
 #include "util/c_str.h"
 
 
-FILE* create_tmp_file(const c_str &name, const c_str &prefix);
+FILE* create_tmp_file(c_str &name, const c_str &prefix);
 
 
 

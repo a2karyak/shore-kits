@@ -2,9 +2,9 @@
 #ifndef _INT_COMPARATOR_H
 #define _INT_COMPARATOR_H
 
-#include "engine/functors.h"
+#include "core.h"
 
-
+using namespace qpipe;
 
 struct int_key_compare_t : public key_compare_t {
     virtual int operator()(const void*, const void*) {

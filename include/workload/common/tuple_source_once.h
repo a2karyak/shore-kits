@@ -3,9 +3,11 @@
 #ifndef _TUPLE_SOURCE_ONCE_H
 #define _TUPLE_SOURCE_ONCE_H
 
-#include "engine/tuple_source.h"
+#include "stages.h"
 
 using namespace qpipe;
+
+ENTER_NAMESPACE(workload);
 
 
 /**
@@ -35,5 +37,6 @@ class tuple_source_once_t : public tuple_source_t {
 
 };
 
+EXIT_NAMESPACE(workload);
 
 #endif

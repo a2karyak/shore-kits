@@ -4,7 +4,7 @@
 
 #include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_db_load.h"
-#include "engine/bdb_config.h"
+#include "workload/tpch/bdb_config.h"
 #include <db_cxx.h>
 
 

@@ -1,4 +1,4 @@
 # -*- makefile -*-
 
-SUBDIRS = src
+SUBDIRS = include src
 

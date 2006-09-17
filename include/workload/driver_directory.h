@@ -3,12 +3,12 @@
 #ifndef _DRIVER_DIRECTORY_H
 #define _DRIVER_DIRECTORY_H
 
-#include "engine/util/c_str.h"
+#include "util.h"
 #include "workload/driver.h"
 
 
 
-#include "engine/namespace.h"
+ENTER_NAMESPACE(workload);
 
 
 
@@ -30,7 +30,7 @@ public:
 
 
 
-#include "engine/namespace.h"
+EXIT_NAMESPACE(workload);
 
 
 

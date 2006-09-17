@@ -1,11 +1,6 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/func_call.h"
-#include "engine/stages/bnl_join.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
@@ -80,7 +75,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    single_int_join_t* join = new single_int_join_t();
+    tuple_join_t* join = new workload::single_int_join_t();
     tuple_fifo* left_int_buffer = new tuple_fifo(join->left_tuple_size(), dbenv);
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples);
 

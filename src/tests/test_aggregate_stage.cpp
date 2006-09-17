@@ -1,16 +1,11 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/func_call.h"
-#include "engine/stages/aggregate.h"
-#include "engine/dispatcher/dispatcher_policy_os.h"
-#include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
+#include "scheduler.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
+#include "workload/common/register_stage.h"
 
 
 
@@ -22,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     thread_init();
     db_open();
-    dispatcher_policy_t* dp = new dispatcher_policy_rr_cpu_t();
+    scheduler::policy_t* dp = new scheduler::policy_rr_cpu_t();
 
     // parse output filename
     if ( argc < 2 ) {
@@ -64,7 +59,7 @@ int main(int argc, char* argv[]) {
                                 fc_packet );
 
     // send packet tree
-    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(fc_packet, qs);
     dp->assign_packet_to_cpu(agg_packet, qs);
     dispatcher_t::dispatch_packet(agg_packet);

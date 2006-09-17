@@ -11,18 +11,6 @@
 
 
 
-static size_t default_page_size = 4096;
-static bool initialized = false;
-
-void set_default_page_size(size_t page_size) {
-    assert(!initialized);
-    initialized = true;
-    default_page_size = page_size;
-}
-
-size_t get_default_page_size() { return default_page_size; }
-
-
 
 /**
  *  @brief Allocates a new page of size (page_size), ignoring the

@@ -1,19 +1,19 @@
 # -*- makefile -*-
 
-INCLUDES = -I$(top_srcdir)/include \
-           -I$(top_srcdir)/include/server \
-           -I$(top_srcdir)/include/workload
+INCLUDES = -I$(top_srcdir)/include 
 
 # libtestcommon temporarily added so we can use register_stage()
+LDBASE = $(top_srcdir)/src
 
-LDADD = ../engine/libqpipe.a \
-        ../trace/libtrace.a  \
-        ../workload/libworkload.a \
-        ../engine/libqpipe.a \
-        ../tests/common/libtestcommon.a \
-        $(BDB_HOME)/lib/libdb_cxx.a \
-        -lreadline \
-        -lcurses
+LDADD = \
+	$(LDBASE)/workload/libworkload.a \
+	$(LDBASE)/scheduler/libscheduler.a \
+	$(LDBASE)/stages/libstages.a \
+	$(LDBASE)/core/libcore.a \
+	$(LDBASE)/util/libutil.a \
+	$(BDB_HOME)/lib/libdb_cxx.a \
+	-lreadline \
+	-lcurses
 
 # define programs here
 bin_PROGRAMS = qpipe

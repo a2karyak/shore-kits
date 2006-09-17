@@ -1,11 +1,6 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/func_call.h"
-#include "engine/stages/bnl_in.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
@@ -69,7 +64,7 @@ int main(int argc, char* argv[]) {
                              output_buffer,
                              new trivial_filter_t(sizeof(int)),
                              left_packet,
-                             new tuple_source_once_t(right_packet),
+                             new workload::tuple_source_once_t(right_packet),
                              new int_key_extractor_t(),
                              new int_key_compare_t(),
                              false );

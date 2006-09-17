@@ -2,10 +2,7 @@
 
 #include "tests/common/tpch_query.h"
 
-#include "trace.h"
-#include "engine/thread.h"
-#include "engine/util/stopwatch.h"
-#include "engine/dispatcher/dispatcher_policy_os.h"
+#include "scheduler.h"
 #include "workload/tpch/tpch_db.h"
 
 
@@ -29,20 +26,20 @@ query_info_t query_init(int argc, char* argv[]) {
 
     query_info_t info;
     info.num_iterations = num_iterations;
-    info.dispatcher_policy = new dispatcher_policy_os_t();
+    info._policy = new scheduler::policy_os_t();
 
     return info;
 }
 
 
 
-void query_main(query_info_t& info, driver_t* driver) {
+void query_main(query_info_t& info, workload::driver_t* driver) {
 
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS);
 
     for(int i=0; i < info.num_iterations; i++) {
         stopwatch_t timer;
-        driver->submit(info.dispatcher_policy);
+        driver->submit(info._policy);
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
 
         //        dbenv->memp_stat_print(0);

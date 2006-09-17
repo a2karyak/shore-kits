@@ -1,9 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 
+#include "util.h"
 #include "server/command/printer.h"
 #include "server/print.h"
-#include "trace.h"
 #include <cstring>
 #include <cstdio>
 

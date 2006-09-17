@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/thread.h"
+#include "util.h"
 #include "server/print.h"
 #include "server/interactive_mode.h"
 #include "server/command_set.h"

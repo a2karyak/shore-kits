@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "workload/workload_client.h"
-#include "engine/core/tuple_fifo.h"
+#include "core.h"
 #include <unistd.h>
 
 
 
 using namespace qpipe;
 
-
+ENTER_NAMESPACE(workload);
 
 workload_client_t::workload_client_t(const c_str      &name,
                                      execution_time_t* etime,
@@ -60,3 +60,5 @@ void* workload_client_t::run() {
     _etime->stop();
     return NULL;
 }
+
+EXIT_NAMESPACE(workload);

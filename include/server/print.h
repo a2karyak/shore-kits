@@ -3,7 +3,7 @@
 #ifndef _PRINT_H
 #define _PRINT_H
 
-#include "trace.h"
+#include "util.h"
 
 #define PRINT(format, rest...) TRACE(TRACE_ALWAYS, format, ##rest)
 

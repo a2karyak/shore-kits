@@ -1,11 +1,7 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "engine/thread.h"
-#include "engine/stages/func_call.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/merge.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
+#include "workload/common/register_stage.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
@@ -145,27 +141,10 @@ int main(int argc, char* argv[]) {
     
    
     tuple_t output;
-    while(1) {
-        int get_ret = output_buffer->get_tuple(output);
-        switch (get_ret) {
-
-        case 0:
-            if(do_echo)
-                TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
-            continue;
-
-        case 1:
-            TRACE(TRACE_ALWAYS, "No more tuples...\n");
-            TRACE(TRACE_ALWAYS, "TEST DONE\n");
-            return 0;
-            
-        case -1:
-            TRACE(TRACE_ALWAYS, "get_tuple() error!\n");
-            QPIPE_PANIC();
-
-        default:
-            // unrecognized return value
-            QPIPE_PANIC();
-        }
+    while(output_buffer->get_tuple(output)) {
+        if(do_echo)
+            TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
     }
+    TRACE(TRACE_ALWAYS, "No more tuples...\n");
+    TRACE(TRACE_ALWAYS, "TEST DONE\n");
 }

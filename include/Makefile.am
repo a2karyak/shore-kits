@@ -35,7 +35,6 @@ UTIL_H = \
 CORE_H = \
 	core/cpu_bind.h \
         core/dispatcher.h \
-        core/dispatcher_cpu.h \
         core/functors.h \
         core/packet.h \
         core/stage.h \
@@ -46,9 +45,6 @@ CORE_H = \
 SCHED_H = \
         scheduler/cpu.h \
         scheduler/cpu_set.h \
-        scheduler/cpu_set_struct.h \
-        scheduler/cpu_struct.h \
-        scheduler/os_support.h \
         scheduler/policy.h \
         scheduler/policy_os.h \
         scheduler/policy_query_cpu.h \

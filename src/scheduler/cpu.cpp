@@ -1,46 +1,17 @@
 
-/** @file dispatcher_cpu.cpp
+/** @file cpu.cpp
  *
- *  @brief Implements dispatcher_cpu_t functions.
+ *  @brief Implements cpu_t functions.
  *
  *  @bug None known.
  */
-#include "engine/dispatcher/dispatcher_cpu.h"
-#include "engine/dispatcher/dispatcher_cpu_struct.h"
-
-#include "trace.h"
-#include "qpipe_panic.h"
-
-
-/* operating system specific */
-
-/* GNU Linux */
-#if defined(linux) || defined(__linux)
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
-
-/* detected GNU Linux */
-#include <sched.h>
-
-#endif
+#include "util.h"
+#include "scheduler/cpu.h"
+#include "scheduler/cpu_struct.h"
+#include "scheduler/os_support.h"
 
 
-/* Sun Solaris */
-#if defined(sun) || defined(__sun)
-#if defined(__SVR4) || defined(__svr4__)
-
-/* detected Sun Solaris */
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-
-#endif
-#endif
-
-
-
-
+ENTER_NAMESPACE(scheduler);
 
 /* definitions of exported functions */
 
@@ -51,16 +22,16 @@
  *  fails, so we deal with errors by invoking QPIPE_PANIC().
  *
  *  @param cpu_info The cpu. Should be initialized by
- *  dispatcher_init_info().
+ *  init_info().
  *
  *  @return void
  */
-void dispatcher_cpu_bind_self(dispatcher_cpu_t cpu)
+void cpu_bind_self(cpu_t cpu)
 {
 
 
   /* GNU Linux */
-#if defined(linux) || defined(__linux)
+#ifdef FOUND_LINUX
 
   /* detected GNU Linux */
   /* sched_setaffinity() sets the CPU affinity mask of the process
@@ -68,11 +39,11 @@ void dispatcher_cpu_bind_self(dispatcher_cpu_t cpu)
      used. We really want to bind the current THREAD, but in Linux, a
      THREAD is a processor with its own pid_t. */
   
-  if ( sched_setaffinity(0, sizeof(cpu_set_t), &cpu->cpu_set) )
-  {
-    TRACE(TRACE_ALWAYS, "sched_setaffinity() failed\n");
-    QPIPE_PANIC();
-  }
+  if ( sched_setaffinity(0, sizeof(os_cpu_set_t), &cpu->cpu_set) )
+      throw EXCEPTION(QPipeException,
+                      "Caught %s in call to sched_setaffinity()",
+                      errno_to_str().data());
+
   return;
 
 #endif
@@ -80,8 +51,7 @@ void dispatcher_cpu_bind_self(dispatcher_cpu_t cpu)
   
   
   /* Sun Solaris */
-#if defined(sun) || defined(__sun)
-#if defined(__SVR4) || defined(__svr4__)
+#ifdef FOUND_SOLARIS
   
   /* detected Sun Solaris */
   /* The processor_bind() function binds the LWP (lightweight process)
@@ -93,24 +63,23 @@ void dispatcher_cpu_bind_self(dispatcher_cpu_t cpu)
 
      If id is P_MYID, the specified LWP, process, or task is the
      current one. */
-  
+
   if ( processor_bind(P_LWPID, P_MYID, cpu->cpu_id, NULL) )
-  {
-    TRACE(TRACE_ALWAYS, "processor_bind() failed\n");
-    QPIPE_PANIC();
-  }
+      throw EXCEPTION(QPipeException,
+                      "Caught %s while binding processor",
+                      errno_to_str().data());
   return;
 
 #endif
-#endif
   
 
-
-  TRACE(TRACE_ALWAYS, "Unsupported operating system\n");
-  QPIPE_PANIC();
+  throw EXCEPTION(QPipeException, 
+                  "Unsupported operating system\n");
 }
 
 
-int  dispatcher_cpu_get_unique_id(dispatcher_cpu_t cpu) {
+int  cpu_get_unique_id(cpu_t cpu) {
   return cpu->cpu_unique_id;
 }
+
+EXIT_NAMESPACE(scheduler);

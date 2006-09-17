@@ -1,13 +1,12 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "util.h"
 #include "tests/common.h"
 #include "workload/tpch/tpch_db.h"
 
 #include <unistd.h>
 #include <sys/time.h>
-#include <math.h>
+#include <cmath>
 
 
 

@@ -3,12 +3,10 @@
 #ifndef _DRIVER_H
 #define _DRIVER_H
 
-#include "engine/util/c_str.h"
+#include "util.h"
 
 
-
-#include "engine/namespace.h"
-
+ENTER_NAMESPACE(workload);
 
 
 /**
@@ -43,9 +41,6 @@ public:
 };
 
 
-
-#include "engine/namespace.h"
-
-
+EXIT_NAMESPACE(workload);
 
 #endif // _DRIVER_H

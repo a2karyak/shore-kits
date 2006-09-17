@@ -1,13 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/fdump.h"
-#include "engine/dispatcher.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "tests/common.h"
+#include "workload/common/register_stage.h"
 
 
 
@@ -46,10 +42,7 @@ int main(int argc, char* argv[]) {
     tester_thread_t* writer_thread =
 	new tester_thread_t(int_tuple_writer_main, &info, "WRITER_THREAD");
     
-    if ( thread_create( NULL, writer_thread ) ) {
-	TRACE(TRACE_ALWAYS, "thread_create() failed\n");
-	QPIPE_PANIC();
-    }
+    thread_create(writer_thread);
     
     // aggregate single count result (single int)
     fdump_packet_t* packet = 

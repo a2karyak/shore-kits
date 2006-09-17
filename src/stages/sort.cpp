@@ -173,7 +173,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
 void sort_stage_t::start_new_merges() {
 
     
-    TRACE(TRACE_DEBUG, "_run_map has size %d\n",
+    TRACE(TRACE_DEBUG, "_run_map has size %zd\n",
 	  _run_map.size());
     
 

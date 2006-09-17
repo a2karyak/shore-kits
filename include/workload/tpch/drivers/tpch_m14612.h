@@ -1,10 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+#ifndef __TPCH_M14612_H
+#define __TPCH_M14612_H
 
 #include "workload/driver.h"
 #include "workload/driver_directory.h"
 
 
-using namespace qpipe;
+ENTER_NAMESPACE(workload);
 
 
 class tpch_m14612_driver : public driver_t {
@@ -24,3 +26,7 @@ public:
     virtual void submit(void* disp);
     
 };
+
+EXIT_NAMESPACE(workload);
+
+#endif

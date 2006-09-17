@@ -10,6 +10,9 @@
 
 ENTER_NAMESPACE(qpipe);
 
+DEFINE_EXCEPTION(DispatcherException);
+
+
 
 /* exported constants */
 

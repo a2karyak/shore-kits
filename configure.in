@@ -308,12 +308,15 @@ define([MY_AC_CONFIG_EXE_FILES],
 #MY_AC_CONFIG_FILES([Makefile src/Makefile])
 AC_CONFIG_FILES([ Makefile \
                   src/Makefile \
-                  src/engine/Makefile \
-                  src/trace/Makefile \
                   src/tests/Makefile \
                   src/tests/common/Makefile \
                   src/server/Makefile \
-                  src/workload/Makefile
+                  src/workload/Makefile \
+                  src/util/Makefile \
+                  src/core/Makefile \
+                  src/scheduler/Makefile \
+                  src/stages/Makefile \
+                  include/Makefile \
                   ])
 
 AC_OUTPUT()

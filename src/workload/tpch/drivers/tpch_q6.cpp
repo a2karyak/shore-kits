@@ -3,15 +3,17 @@
 #include "workload/tpch/drivers/tpch_q6.h"
 
 #include "workload/common.h"
-#include "engine/dispatcher.h"
+#include "core.h"
 
 using namespace qpipe;
+
+ENTER_NAMESPACE(workload);
 
 
 
 void tpch_q6_driver::submit(void* disp) {
  
-    dispatcher_policy_t* dp = (dispatcher_policy_t*)disp;
+    scheduler::policy_t* dp = (scheduler::policy_t*)disp;
   
     packet_t* q6 =
         create_q6_packet( "Q6_CLIENT_", dp );
@@ -24,3 +26,5 @@ void tpch_q6_driver::submit(void* disp) {
         TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
     }
 }
+
+EXIT_NAMESPACE(workload);

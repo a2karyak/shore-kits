@@ -1,4 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+#include "stages.h"
+#include "scheduler.h"
 
 #include "workload/tpch/drivers/tpch_q4.h"
 
@@ -7,14 +9,8 @@
 #include "workload/tpch/tpch_env.h"
 #include "workload/common/int_comparator.h"
 
-#include "engine/util/time_util.h"
 
-#include "engine/stages/partial_aggregate.h"
-#include "engine/stages/tscan.h"
-#include "engine/stages/hash_join.h"
-
-#include "engine/dispatcher/dispatcher_policy.h"
-#include "engine/dispatcher.h"
+ENTER_NAMESPACE(workload);
 
 
 
@@ -200,7 +196,7 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
 
 void tpch_q4_driver::submit(void* disp) {
 
-    dispatcher_policy_t* dp = (dispatcher_policy_t*)disp;
+    scheduler::policy_t* dp = (scheduler::policy_t*)disp;
   
     /*
      * Query 4 original:
@@ -258,7 +254,7 @@ void tpch_q4_driver::submit(void* disp) {
                                                 new default_key_extractor_t(),
                                                 new int_key_compare_t());
 
-    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(agg_packet, qs);
     dp->assign_packet_to_cpu(join_packet, qs);
     dp->assign_packet_to_cpu(orders_packet, qs);
@@ -277,3 +273,5 @@ void tpch_q4_driver::submit(void* disp) {
     }
 
 }
+
+EXIT_NAMESPACE(workload);

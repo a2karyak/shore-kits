@@ -1,18 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/stages/tscan.h"
-#include "engine/stages/aggregate.h"
-#include "engine/stages/partial_aggregate.h"
-#include "engine/stages/sort.h"
-#include "engine/stages/hash_join.h"
-#include "engine/stages/fdump.h"
-#include "engine/stages/fscan.h"
-#include "engine/stages/hash_join.h"
-#include "engine/stages/sorted_in.h"
-#include "engine/dispatcher.h"
-#include "engine/util/stopwatch.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 
 #include "tests/common.h"
 #include "workload/common.h"

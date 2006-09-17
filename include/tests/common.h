@@ -6,7 +6,6 @@
 
 #include "tests/common/drive_stage.h"
 #include "tests/common/tester_thread.h"
-#include "tests/common/register_stage.h"
 
 #include "tests/common/int_tuple_writer.h"
 

@@ -3,13 +3,11 @@
 #ifndef _Q6_TSCAN_FILTER_H
 #define _Q6_TSCAN_FILTER_H
 
-#include "engine/functors.h"
+#include "core.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
-#include "engine/util/time_util.h"
-#include "trace.h"
 #include "workload/common/predicates.h"
-#include <math.h>
+#include <cmath>
 
 using namespace qpipe;
 

@@ -8,28 +8,14 @@
  5/25/2006: Initial version
 */ 
 
-#include "engine/thread.h"
-#include "engine/dispatcher.h"
-#include "engine/stages/iscan.h"
-#include "engine/stages/sort.h"
-#include "engine/stages/iprobe.h"
-#include "engine/stages/fscan.h"
-#include "engine/stages/merge.h"
-#include "engine/stages/fdump.h"
-#include "engine/stages/aggregate.h"
-#include "engine/dispatcher/dispatcher_policy_os.h"
-#include "engine/util/stopwatch.h"
-#include "engine/util/time_util.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
+#include "scheduler.h"
 
 #include "workload/common.h"
 #include "tests/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_compare.h"
 
-#include "db_cxx.h"
-#include "workload/common/predicates.h"
 
 using namespace qpipe;
 
@@ -141,7 +127,7 @@ struct print_filter_t : tuple_filter_t {
 
 
 
-packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* dp) {
+packet_t* create_q6_idx_packet(const c_str &client_prefix, scheduler::policy_t* dp) {
 
     // choose a random year from 1993 to 1997 (inclusive)
     time_t date = datestr_to_timet("1993-01-01");
@@ -203,7 +189,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, dispatcher_policy_t* 
                                            new default_key_extractor_t(0),
                                            q6_probe_packet);
     
-    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(q6_agg_packet, qs);
     dp->assign_packet_to_cpu(q6_iscan_packet, qs);
     dp->assign_packet_to_cpu(q6_sort_packet, qs);
@@ -225,7 +211,7 @@ int main(int argc, char* argv[]) {
 
     thread_init();
     db_open(DB_RDONLY|DB_THREAD, 1, 600*1024*1024);
-    dispatcher_policy_t* dp = new dispatcher_policy_os_t();
+    scheduler::policy_t* dp = new scheduler::policy_os_t();
     TRACE_SET(TRACE_ALWAYS);
 
     

@@ -1,14 +1,11 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "util.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_tables.h"
 #include "workload/tpch/tpch_compare.h"
-#include "engine/core/exception.h"
-#include "engine/bdb_config.h"
-#include "qpipe_panic.h"
-#include "trace.h"
+#include "workload/tpch/bdb_config.h"
 
-using namespace qpipe;
 
 
 
@@ -28,7 +25,7 @@ static void close_db_table(Db*& table, const char* table_name);
  *
  *  @return void
  *
- *  @throw Berkeley_DB_Exception on error.
+ *  @throw BdbException on error.
  */
 void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_size_bytes) {
 
@@ -39,14 +36,14 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "Could not create new DbEnv");
+        throw EXCEPTION(BdbException, "Could not create new DbEnv");
     }
   
     // specify buffer pool size
     try {
         if (dbenv->set_cachesize(db_cache_size_gb, db_cache_size_bytes, 0)) {
             TRACE(TRACE_ALWAYS, "dbenv->set_cachesize() failed!\n");
-            throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_cachesize() failed!\n");
+            throw EXCEPTION(BdbException, "dbenv->set_cachesize() failed!\n");
         }
     }
     catch ( DbException &e) {
@@ -54,7 +51,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
               db_cache_size_gb,
               db_cache_size_bytes,
               e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_cachesize() threw DbException");
+        throw EXCEPTION(BdbException, "dbenv->set_cachesize() threw DbException");
     }
   
   
@@ -67,7 +64,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "Caught DbException setting data directory to \"%s\". Make sure directory exists\n",
               BDB_DATA_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_data_dir() threw DbException");
+        throw EXCEPTION(BdbException, "dbenv->set_data_dir() threw DbException");
     }
   
   
@@ -79,7 +76,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "Caught DbException setting temp directory to \"%s\". Make sure directory exists\n",
               BDB_TEMP_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->set_tmp_dir() threw DbException");
+        throw EXCEPTION(BdbException, "dbenv->set_tmp_dir() threw DbException");
     }
 
     dbenv->set_msgfile(stderr);
@@ -100,7 +97,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         TRACE(TRACE_ALWAYS, "Caught DbException opening home directory \"%s\". Make sure directory exists\n",
               BDB_HOME_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->open() threw DbException");
+        throw EXCEPTION(BdbException, "dbenv->open() threw DbException");
     }
   
 
@@ -136,7 +133,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
  *
  *  @return void
  *
- *  @throw Berkeley_DB_Exception on error.
+ *  @throw BdbException on error.
  */
 void db_close() {
 
@@ -163,7 +160,7 @@ void db_close() {
     catch ( DbException &e) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing environment\n");
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "dbenv->close() threw DbException");
+        throw EXCEPTION(BdbException, "dbenv->close() threw DbException");
     }
 
 }
@@ -175,7 +172,7 @@ void db_close() {
  *
  *  @return void
  *
- *  @throw Berkeley_DB_Exception on error.
+ *  @throw BdbException on error.
  */
 static void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp, const char* table_name) {
@@ -189,7 +186,7 @@ static void open_db_table(Db*& table, u_int32_t flags,
         TRACE(TRACE_ALWAYS, "Caught DbException opening table \"%s\". Make sure database is set up properly.\n",
               table_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "table->open() failed");
+        throw EXCEPTION(BdbException, "table->open() failed");
     }
 }
 
@@ -200,7 +197,7 @@ static void open_db_table(Db*& table, u_int32_t flags,
  *
  *  @return void
  *
- *  @throw Berkeley_DB_Exception on error.
+ *  @throw BdbException on error.
  */
 static void close_db_table(Db* &table, const char* table_name) {
 
@@ -211,7 +208,7 @@ static void close_db_table(Db* &table, const char* table_name) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing table \"%s\"\n",
               table_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "table->close() failed");
+        throw EXCEPTION(BdbException, "table->close() failed");
     }
 }
 
@@ -222,7 +219,7 @@ static void close_db_table(Db* &table, const char* table_name) {
  *
  *  @return void
  *
- *  @throw Berkeley_DB_Exception on error.
+ *  @throw BdbException on error.
  */
 static void open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
                           bt_compare_func_t cmp,
@@ -247,7 +244,7 @@ static void open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
         TRACE(TRACE_ALWAYS, "Caught DbException opening index \"%s\". Make sure database is set up properly\n",
               index_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
-        throw EXCEPTION(Berkeley_DB_Exception, "index->open() failed");
+        throw EXCEPTION(BdbException, "index->open() failed");
     }
 }
 

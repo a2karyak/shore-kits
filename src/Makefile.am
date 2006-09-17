@@ -1,1 +1,1 @@
-SUBDIRS = engine trace workload tests server
+SUBDIRS = util core scheduler stages workload tests server

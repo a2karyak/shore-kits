@@ -3,10 +3,9 @@
 #ifndef _CLIENT_SYNC_H
 #define _CLIENT_SYNC_H
 
+#include "util.h"
 
-
-// include me last!!!
-#include "engine/namespace.h"
+ENTER_NAMESPACE(workload);
 
 
 
@@ -52,56 +51,51 @@ private:
 
 public:
 
-    client_sync_t() :
-        _state(CLIENT_SYNC_STATE_WAIT)
+    client_sync_t()
+        : _state(CLIENT_SYNC_STATE_WAIT),
+          _state_mutex(thread_mutex_create()),
+          _state_cond(thread_cond_create())
     {
-        pthread_mutex_init_wrapper(&_state_mutex, NULL);
-        pthread_cond_init_wrapper (&_state_cond,  NULL);
     }
 
     
     virtual ~client_sync_t() {
-        pthread_mutex_destroy_wrapper(&_state_mutex);
-        pthread_cond_destroy_wrapper (&_state_cond);
+        thread_mutex_destroy(_state_mutex);
+        thread_cond_destroy(_state_cond);
     }
     
     
     virtual bool wait_for_runner() {
         
         // wait for state to change from WAIT
-        pthread_mutex_lock_wrapper(&_state_mutex);
+        critical_section_t cs(_state_mutex);
         while ( _state == CLIENT_SYNC_STATE_WAIT ) {
-            pthread_cond_wait_wrapper(&_state_cond, &_state_mutex);
+            thread_cond_wait(_state_cond, _state_mutex);
         }
         
         // success (true) if and only if state changed to CONTINUE
-        bool ret = _state == CLIENT_SYNC_STATE_CONTINUE;
-        pthread_mutex_unlock_wrapper(&_state_mutex);
-     
-        return ret;
+        return _state == CLIENT_SYNC_STATE_CONTINUE;
     }
 
 
     void signal_continue() {
-        critical_section_t cs(&_state_mutex);
+        critical_section_t cs(_state_mutex);
         _state = CLIENT_SYNC_STATE_CONTINUE;
-        pthread_cond_broadcast_wrapper(&_state_cond);
+        thread_cond_broadcast(_state_cond);
     }
     
     
     void signal_error() {
-        critical_section_t cs(&_state_mutex);
+        critical_section_t cs(_state_mutex);
         _state = CLIENT_SYNC_STATE_ERROR;
-        pthread_cond_broadcast_wrapper(&_state_cond);
+        thread_cond_broadcast(_state_cond);
     }
 
 };
 
 
 
-// include me last!!!
-#include "engine/namespace.h"
-
+EXIT_NAMESPACE(workload);
 
 
 #endif

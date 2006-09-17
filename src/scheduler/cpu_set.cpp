@@ -13,24 +13,15 @@
 #include "util.h"
 #include "scheduler/cpu_set.h"
 #include "scheduler/cpu_set_struct.h"
+#include "scheduler/os_support.h"
 
-
+ENTER_NAMESPACE(scheduler);
 
 
 /* operating system specific */
 
 /* GNU Linux */
-#if defined(linux) || defined(__linux)
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
-
-/* detected GNU Linux */
-#include <sched.h>
-
-
-ENTER_NAMESPACE(scheduler);
-
+#ifdef FOUND_LINUX
 
 static void cpu_set_copy( os_cpu_set_t* dst, os_cpu_set_t* src );
 static void cpu_set_init_Linux(cpu_set_p cpu_set);
@@ -39,19 +30,10 @@ static void cpu_set_init_Linux(cpu_set_p cpu_set);
 
 
 /* Sun Solaris */
-#if defined(sun) || defined(__sun)
-#if defined(__SVR4) || defined(__svr4__)
-
-/* detected Sun Solaris */
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-
-ENTER_NAMESPACE(scheduler);
+#ifdef FOUND_SOLARIS
 
 static void cpu_set_init_Solaris(cpu_set_p cpu_set);
 
-#endif
 #endif
 
 
@@ -75,26 +57,23 @@ void cpu_set_init(cpu_set_p cpu_set)
 {
 
   /* GNU Linux */
-#if defined(linux) || defined(__linux)
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
+#ifdef FOUND_LINUX
 
   /* detected GNU Linux */
   cpu_set_init_Linux( cpu_set );
+  return;
 
 #endif
   
 
   
   /* Sun Solaris */
-#if defined(sun) || defined(__sun)
-#if defined(__SVR4) || defined(__svr4__)
+#ifdef FOUND_SOLARIS
   
   /* detected Sun Solaris Linux */
   cpu_set_init_Solaris( cpu_set );
+  return;
 
-#endif
 #endif
 
 

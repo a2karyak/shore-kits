@@ -1,15 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "trace.h"
-#include "tests/common/register_stage.h"
-
-#include "engine/stages/tscan.h"
-#include "engine/stages/aggregate.h"
-#include "engine/stages/partial_aggregate.h"
-#include "engine/stages/hash_join.h"
-#include "engine/stages/sort.h"
-#include "engine/stages/fdump.h"
-#include "engine/stages/fscan.h"
+#include "stages.h"
+#include "workload/common/register_stage.h"
 
 #define MAX_NUM_CLIENTS 32
 

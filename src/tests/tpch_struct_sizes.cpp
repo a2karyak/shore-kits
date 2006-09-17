@@ -2,7 +2,7 @@
 #include <sys/time.h>
 
 #include "workload/tpch/tpch_struct.h"
-#include "trace.h"
+#include "util.h"
 
 
 int main() {

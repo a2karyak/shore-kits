@@ -6,6 +6,7 @@
 #include "util/exception.h"
 #include "util/sync.h"
 
+// Ignore the warning: printf("") is valid!
 const c_str c_str::EMPTY_STRING = "";
 
 struct c_str::c_str_data {

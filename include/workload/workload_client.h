@@ -6,12 +6,10 @@
 #include "workload/driver.h"
 #include "workload/client_sync.h"
 #include "workload/measurements.h"
-#include "engine/thread.h"
 
 
 
-#include "engine/namespace.h"
-
+ENTER_NAMESPACE(workload);
 
 
 /**
@@ -52,8 +50,7 @@ public:
 
 
 
-#include "engine/namespace.h"
-
+EXIT_NAMESPACE(workload);
 
 
 #endif	// __WL_CLIENT_H

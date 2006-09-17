@@ -6,17 +6,12 @@
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
 
-#include "engine/core/exception.h"
-#include "engine/bdb_config.h"
-#include "qpipe_panic.h"
-#include "trace.h"
+#include "util.h"
 
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-using namespace qpipe;
 
 
 
@@ -51,7 +46,7 @@ void tpch_load_customer_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -84,7 +79,7 @@ void tpch_load_customer_table(Db* db, const char* fname) {
 
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -102,7 +97,7 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -152,7 +147,7 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -170,7 +165,7 @@ void tpch_load_nation_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -195,7 +190,7 @@ void tpch_load_nation_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -213,7 +208,7 @@ void tpch_load_orders_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -249,7 +244,7 @@ void tpch_load_orders_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -267,7 +262,7 @@ void tpch_load_part_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -302,7 +297,7 @@ void tpch_load_part_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -320,7 +315,7 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -348,7 +343,7 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -366,7 +361,7 @@ void tpch_load_region_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -389,7 +384,7 @@ void tpch_load_region_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -407,7 +402,7 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
     FILE* fd = fopen(fname, "r");
     if (fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fopen() failed");
+        throw EXCEPTION(BdbException, "fopen() failed");
     }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
@@ -438,7 +433,7 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
     }
     if ( fclose(fd) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(Berkeley_DB_Exception, "fclose() failed");
+        throw EXCEPTION(BdbException, "fclose() failed");
     }
     progress_done();
 }
@@ -450,7 +445,7 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
  *
  *  @return void
  *
- *  @throw Berkeley_DB_Exception on error.
+ *  @throw BdbException on error.
  */
 void db_load(const char* tbl_path) {
 

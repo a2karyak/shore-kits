@@ -1,11 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/thread.h"
-#include "trace.h"
+#include "util.h"
 #include "tests/common/cpu_bind.h"
 
-
-using namespace qpipe;
 
 
 int access_random_entries(int* array, int size) {

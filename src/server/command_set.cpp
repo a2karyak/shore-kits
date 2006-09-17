@@ -1,12 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "util.h"
 #include "server/command_set.h"
 #include "server/print.h"
 #include "server/config.h"
 #include "server/command/command_handler.h"
 #include "server/command/printer.h"
 #include "server/command/tpch_handler.h"
-#include "engine/util/c_str.h"
 
 #include <map>
 #include <string>

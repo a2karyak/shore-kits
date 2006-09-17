@@ -1,5 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "core.h"
 #include "server/command/tpch_handler.h"
 #include "server/print.h"
 #include "server/config.h"
@@ -15,15 +16,11 @@
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
 #include "workload/tpch/drivers/tpch_m14612.h"
 
-#include "engine/dispatcher/dispatcher_policy_os.h"
-#include "engine/dispatcher/dispatcher_policy_rr_cpu.h"
-#include "engine/dispatcher/dispatcher_policy_rr_module.h"
-#include "engine/dispatcher/dispatcher_policy_query_cpu.h"
-
-#include "qpipe_panic.h"
+#include "scheduler.h"
 
 
-
+using namespace workload;
+using qpipe::tuple_fifo;
 
 pthread_mutex_t tpch_handler_t::state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -43,7 +40,7 @@ void tpch_handler_t::init() {
     // use a global thread-safe state machine to ensure that db_open()
     // is called exactly once
 
-    critical_section_t cs(&state_mutex);
+    critical_section_t cs(state_mutex);
 
     if ( state == TPCH_HANDLER_UNINITIALIZED ) {
 
@@ -67,10 +64,10 @@ void tpch_handler_t::init() {
 
 
         // register dispatcher policies...
-        add_dispatcher_policy("OS",        new dispatcher_policy_os_t());
-        add_dispatcher_policy("RR_CPU",    new dispatcher_policy_rr_cpu_t());
-        add_dispatcher_policy("RR_MODULE", new dispatcher_policy_rr_module_t());
-        add_dispatcher_policy("QUERY_CPU", new dispatcher_policy_query_cpu_t());
+        add_scheduler_policy("OS",        new scheduler::policy_os_t());
+        add_scheduler_policy("RR_CPU",    new scheduler::policy_rr_cpu_t());
+        add_scheduler_policy("RR_MODULE", new scheduler::policy_rr_module_t());
+        add_scheduler_policy("QUERY_CPU", new scheduler::policy_query_cpu_t());
         
         state = TPCH_HANDLER_INITIALIZED;
     }
@@ -86,7 +83,7 @@ void tpch_handler_t::shutdown() {
     // use a global thread-safe state machine to ensure that
     // db_close() is called exactly once
 
-    critical_section_t cs(&state_mutex);
+    critical_section_t cs(state_mutex);
 
     if ( state == TPCH_HANDLER_INITIALIZED ) {
         
@@ -108,13 +105,13 @@ void tpch_handler_t::handle_command(const char* command) {
 
     // parse command
     char driver_tag[SERVER_COMMAND_BUFFER_SIZE];
-    char dispatcher_policy_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char scheduler_policy_tag[SERVER_COMMAND_BUFFER_SIZE];
     if ( sscanf(command, "%*s %s %d %d %d %s",
                 driver_tag,
                 &num_clients,
                 &num_iterations,
                 &think_time,
-                dispatcher_policy_tag) < 5 ) {
+                scheduler_policy_tag) < 5 ) {
         
         char command_tag[SERVER_COMMAND_BUFFER_SIZE];
         int command_found = sscanf(command, "%s", command_tag);
@@ -124,7 +121,7 @@ void tpch_handler_t::handle_command(const char* command) {
               " <num_clients>"
               " <num_iterations>"
               " <think_time>"
-              " <dispatcher_policy_tag>"
+              " <scheduler_policy_tag>"
               "\n",
               command_tag);
         return;
@@ -132,11 +129,11 @@ void tpch_handler_t::handle_command(const char* command) {
 
 
     // debugging
-    TRACE(TRACE_ALWAYS, "num_clients = %d, num_iterations = %d, think_time = %d, dispatcher_policy = %s\n",
+    TRACE(TRACE_ALWAYS, "num_clients = %d, num_iterations = %d, think_time = %d, scheduler_policy = %s\n",
           num_clients,
           num_iterations,
           think_time,
-          dispatcher_policy_tag);
+          scheduler_policy_tag);
     
 
     // lookup driver
@@ -148,17 +145,17 @@ void tpch_handler_t::handle_command(const char* command) {
     }
 
     // lookup dispatcher policy
-    dispatcher_policy_t* dp = _dispatcher_policies[c_str(dispatcher_policy_tag)];
+    scheduler::policy_t* dp = _scheduler_policies[c_str(scheduler_policy_tag)];
     if ( dp == NULL ) {
         // no such policy registered!
-        PRINT("%s is not a valid dispatcher policy\n", dispatcher_policy_tag);
+        PRINT("%s is not a valid dispatcher policy\n", scheduler_policy_tag);
         return;
     }
     
 
     // run new workload...
     workload_t::results_t results;
-    c_str workload_name("%s + %s", driver_tag, dispatcher_policy_tag);
+    c_str workload_name("%s + %s", driver_tag, scheduler_policy_tag);
     workload_t w(workload_name, driver, dp, num_clients, num_iterations, think_time);
     w.run(results);
 
@@ -201,7 +198,7 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
         TRACE(TRACE_STATISTICS, "***\t\n");
 
         // grab the temp file stats
-        stats_list fifo_stats = tuple_fifo::get_stats();
+        qpipe::stats_list fifo_stats = tuple_fifo::get_stats();
         for(size_t i=0; i < fifo_stats.size(); i++)
             print_file_stats(fifo_stats[i]);
 
@@ -249,16 +246,16 @@ void tpch_handler_t::add_driver(const c_str &tag, driver_t* driver) {
 
 
 
-void tpch_handler_t::add_dispatcher_policy(const char* tag, dispatcher_policy_t* dp) {
-    add_dispatcher_policy(c_str(tag), dp);
+void tpch_handler_t::add_scheduler_policy(const char* tag, scheduler::policy_t* dp) {
+    add_scheduler_policy(c_str(tag), dp);
 }
 
 
 
-void tpch_handler_t::add_dispatcher_policy(const c_str &tag, dispatcher_policy_t* dp) {
+void tpch_handler_t::add_scheduler_policy(const c_str &tag, scheduler::policy_t* dp) {
     // make sure no mapping currently exists
-    assert( _dispatcher_policies.find(tag) == _dispatcher_policies.end() );
-    _dispatcher_policies[tag] = dp;
+    assert( _scheduler_policies.find(tag) == _scheduler_policies.end() );
+    _scheduler_policies[tag] = dp;
 }
 
 

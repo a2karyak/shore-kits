@@ -7,8 +7,7 @@
 #include <cassert>
 
 
-
-#include "engine/namespace.h"
+ENTER_NAMESPACE(workload);
 
 
 
@@ -76,9 +75,7 @@ public:
 };
 
 
-
-#include "engine/namespace.h"
-
+EXIT_NAMESPACE(workload);
 
 
 #endif	// _MEASUREMENTS_H

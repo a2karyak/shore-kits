@@ -46,7 +46,7 @@ packet_t::packet_t(const c_str    &packet_id,
       _output_filter(output_filter),
       _next_tuple_on_merge(stage_container_t::NEXT_TUPLE_UNINITIALIZED),
       _next_tuple_needed  (stage_container_t::NEXT_TUPLE_INITIAL_VALUE),
-      _sched(NULL)
+      _cpu_bind(NULL)
 {
     // error checking
     assert(output_buffer != NULL);

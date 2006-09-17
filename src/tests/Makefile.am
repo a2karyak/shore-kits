@@ -4,13 +4,16 @@ SUBDIRS = common
 
 INCLUDES = -I$(top_srcdir)/include
 
+LDBASE = $(top_srcdir)/src
+
 LDADD = \
-   common/libtestcommon.a \
-   ../workload/libworkload.a \
-   ../trace/libtrace.a  \
-   ../engine/libqpipe.a \
-   ../trace/libtrace.a  \
-   $(BDB_HOME)/lib/libdb_cxx.a
+	common/libtestcommon.a \
+	$(LDBASE)/workload/libworkload.a \
+	$(LDBASE)/scheduler/libscheduler.a \
+	$(LDBASE)/stages/libstages.a \
+	$(LDBASE)/core/libcore.a \
+	$(LDBASE)/util/libutil.a \
+	$(BDB_HOME)/lib/libdb_cxx.a
 
 # define programs here
 bin_PROGRAMS = \

@@ -5,7 +5,7 @@
 #define _POLICY_H
 
 #include "core/packet.h"
-
+#include "scheduler/cpu.h"
 
 ENTER_NAMESPACE(scheduler);
 

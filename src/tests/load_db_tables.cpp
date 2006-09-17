@@ -1,5 +1,5 @@
 #include <cstdio>
-#include "engine/thread.h"
+#include "util.h"
 #include "workload/tpch/tpch_db_load.h"
 #include "workload/tpch/tpch_db.h"
 

@@ -1,14 +1,11 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/thread.h"
-#include "engine/core/stage_container.h"
-#include "engine/stages/fscan.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "tests/common.h"
+#include "workload/common/register_stage.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 
 

@@ -2,9 +2,7 @@
 
 #include "workload/common/q6_client.h"
 
-#include "engine/dispatcher.h"
-#include "engine/stages/aggregate.h"
-#include "engine/stages/tscan.h"
+#include "stages.h"
 #include "workload/common/q6_packet.h"
 #include "workload/common/q6_aggregate.h"
 #include "workload/common/q6_tscan_filter.h"
@@ -12,7 +10,6 @@
 
 
 using namespace qpipe;
-using std::string;
 
 
 void* q6_client_main(void* arg) {

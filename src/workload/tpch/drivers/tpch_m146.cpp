@@ -3,9 +3,8 @@
 #include "workload/tpch/drivers/tpch_m146.h"
 
 #include "workload/common.h"
-#include "engine/dispatcher.h"
 
-using namespace qpipe;
+ENTER_NAMESPACE(workload);
 
 
 
@@ -31,9 +30,11 @@ void tpch_m146_driver::submit(void* disp) {
         break;
 
     default:
-        QPIPE_PANIC();
+        assert(false);
     }
 
     TRACE(TRACE_DEBUG, "rand = %d, selection = %d\n", rand, selection);
     driver->submit(disp);
 }
+
+EXIT_NAMESPACE(workload);

@@ -3,7 +3,7 @@
 #ifndef __TESTER_THREAD_H
 #define __TESTER_THREAD_H
 
-#include "engine/thread.h"
+#include "util.h"
 
 
 

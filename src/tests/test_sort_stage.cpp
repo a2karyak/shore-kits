@@ -1,18 +1,11 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "engine/thread.h"
-#include "engine/stages/sort.h"
-#include "engine/stages/fscan.h"
-#include "engine/stages/fdump.h"
-#include "engine/stages/merge.h"
-#include "engine/stages/func_call.h"
-#include "engine/core/stage_container.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 
 #include "workload/common.h"
 #include "tests/common.h"
 #include "workload/tpch/tpch_db.h"
+#include "workload/common/register_stage.h"
 #include <vector>
 #include <algorithm>
 
@@ -47,7 +40,7 @@ void write_ints(void* arg)
         buffer->append(input);
     }
 
-    TRACE(TRACE_ALWAYS, "Finished inserting tuples\n", value);
+    TRACE(TRACE_ALWAYS, "Finished inserting '%d' tuples\n", value);
 }
 
 

@@ -1,4 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+#include "stages.h"
+#include "scheduler.h"
 
 #include "workload/tpch/drivers/tpch_q1.h"
 
@@ -7,14 +9,8 @@
 #include "workload/tpch/tpch_env.h"
 #include "workload/common/int_comparator.h"
 
-#include "engine/util/time_util.h"
 
-#include "engine/stages/partial_aggregate.h"
-#include "engine/stages/tscan.h"
-
-#include "engine/dispatcher/dispatcher_policy.h"
-#include "engine/dispatcher.h"
-
+ENTER_NAMESPACE(workload);
 
 
 // the tuples after tablescan projection
@@ -216,7 +212,7 @@ public:
 
 void tpch_q1_driver::submit(void* disp) {
 
-    dispatcher_policy_t* dp = (dispatcher_policy_t*)disp;
+    scheduler::policy_t* dp = (scheduler::policy_t*)disp;
   
     // TSCAN PACKET
     tuple_fifo* tscan_out_buffer =
@@ -240,7 +236,7 @@ void tpch_q1_driver::submit(void* disp) {
                                        new q1_key_extract_t(),
                                        new int_key_compare_t());
 
-    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(q1_agg_packet, qs);
     dp->assign_packet_to_cpu(q1_tscan_packet, qs);
     dp->query_state_destroy(qs);
@@ -261,3 +257,5 @@ void tpch_q1_driver::submit(void* disp) {
     }
 
 }
+
+EXIT_NAMESPACE(workload);

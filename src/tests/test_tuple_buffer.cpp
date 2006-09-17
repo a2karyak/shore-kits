@@ -1,14 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/thread.h"
-#include "engine/core/tuple.h"
-#include "engine/core/tuple_fifo.h"
-#include "qpipe_panic.h"
+#include "util.h"
+#include "core.h"
 #include "workload/tpch/tpch_db.h"
 
 #include "tests/common/tester_thread.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 
 

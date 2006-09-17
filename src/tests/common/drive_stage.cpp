@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "tests/common/drive_stage.h"
-#include "engine/core/stage_container.h"
+#include "core.h"
 
 
 using namespace qpipe;

@@ -3,8 +3,7 @@
 #ifndef _INT_TUPLE_WRITER_H
 #define _INT_TUPLE_WRITER_H
 
-#include "engine/core/tuple.h"
-#include "engine/core/stage.h"
+#include "core.h"
 
 using namespace qpipe;
 

@@ -19,8 +19,10 @@
 
 
 /* internal data structures */
+#if 0
 static void trace_force_(const char* filename, int line_num, const char* function_name,
-		  char* format, ...) __attribute__((format(printf, 4, 5)));;
+		  char* format, ...) __attribute__((format(printf, 4, 5)));
+#endif
 
 /**
  *  @def TRACE_FORCE
@@ -128,7 +130,7 @@ static const int FORCE_BUFFER_SIZE = 256;
 
 /* definitions of exported functions */
 
-
+#if 0
 static void trace_force_(const char* filename, int line_num, const char* function_name,
 		  char* format, ...)
 {
@@ -150,7 +152,7 @@ static void trace_force_(const char* filename, int line_num, const char* functio
   fprintf(stderr, buf);
   va_end(ap);
 }
-
+#endif
 
 /**
  *  @brief Print the specified pthread_t to the specified stream. This

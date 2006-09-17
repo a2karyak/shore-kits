@@ -3,21 +3,14 @@
 #ifndef _WORKLOAD_H
 #define _WORKLOAD_H
 
-#include "engine/util/c_str.h"
-#include "engine/util/guard.h"
+#include "util.h"
 #include "workload/measurements.h"
 #include "workload/driver.h"
 
 
 
-using namespace qpipe;
 
-
-
-// include me last!!!
-#include "engine/namespace.h"
-
-
+ENTER_NAMESPACE(workload);
 
 /**
  *  @class workload_t
@@ -82,10 +75,6 @@ public:
     bool run(results_t &results);
 };
 
-
-
-#include "engine/namespace.h"
-
-
+EXIT_NAMESPACE(workload);
 
 #endif	// _WORKLOAD_H

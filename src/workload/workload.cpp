@@ -1,15 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "core.h"
 #include "workload/workload.h"
-#include "engine/core/exception.h"
 #include "workload/client_sync.h"
 #include "workload/workload_client.h"
-#include "engine/thread.h"
-#include "engine/core/tuple_fifo.h"
-#include "engine/util/stopwatch.h"
 
 
-using namespace qpipe;
+ENTER_NAMESPACE(workload);
 
 
 
@@ -48,12 +45,7 @@ bool workload_t::run(results_t &results) {
                                       &client_sync,
                                       _num_iterations,
                                       _think_time);
-            if ( thread_create( &client_ids[client_index], client) ) {
-                // raise an exception and let catch statement deal
-                // with it...
-                TRACE(TRACE_ALWAYS, "thread_create() failed\n");
-                throw EXCEPTION(QPipeException, "thread_create() failed");
-            }
+            client_ids[client_index] = thread_create(client);
         }
         catch (QPipeException &e) {
 
@@ -87,7 +79,7 @@ bool workload_t::run(results_t &results) {
     results.total_time = timer.time();
 
 
-    TRACE(TRACE_ALWAYS, "Open Fifo count: %d\n", tuple_fifo::open_fifos());
+    TRACE(TRACE_ALWAYS, "Open Fifo count: %d\n", qpipe::tuple_fifo::open_fifos());
     return true;
 }
 
@@ -117,3 +109,5 @@ void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
         assert(join_ret == 0);
     }
 }
+
+EXIT_NAMESPACE(workload);

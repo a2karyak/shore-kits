@@ -10,8 +10,6 @@
 ENTER_NAMESPACE(qpipe);
 
 
-DEFINE_EXCEPTION(DispatcherException);
-
 dispatcher_t* dispatcher_t::_instance = NULL;
 
 pthread_mutex_t dispatcher_t::_instance_lock = thread_mutex_create();

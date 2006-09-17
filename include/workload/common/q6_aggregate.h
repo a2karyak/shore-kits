@@ -3,9 +3,8 @@
 #ifndef _Q6_AGGREGATE_H
 #define _Q6_AGGREGATE_H
 
-#include "engine/functors.h"
-#include "trace.h"
-#include <math.h>
+#include "core.h"
+#include <cmath>
 
 using namespace qpipe;
 

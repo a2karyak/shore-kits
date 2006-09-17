@@ -1,17 +1,16 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/thread.h"
-#include "trace.h"
+#include "util.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdlib.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cerrno>
 
 
 
-int main(int, char**)
+int main()
 {
 
   thread_init();

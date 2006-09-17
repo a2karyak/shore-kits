@@ -3,11 +3,11 @@
 #ifndef _SINGLE_INT_JOIN_H
 #define _SINGLE_INT_JOIN_H
 
-#include "engine/core/tuple.h"
-#include "engine/core/stage.h"
-#include <cstring>
+#include "core.h"
 
 using namespace qpipe;
+
+ENTER_NAMESPACE(workload);
 
 
 
@@ -30,6 +30,7 @@ struct single_int_join_t : public tuple_join_t {
     }
 };      
 
+EXIT_NAMESPACE(workload);
 
 
 #endif

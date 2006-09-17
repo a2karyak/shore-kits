@@ -1,19 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "engine/stages/tscan.h"
-#include "engine/stages/aggregate.h"
-#include "engine/stages/hash_join.h"
-#include "engine/dispatcher.h"
-#include "engine/util/stopwatch.h"
-#include "trace.h"
-#include "qpipe_panic.h"
+#include "stages.h"
 
 #include "tests/common.h"
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
-
-// experimental!
-#include "workload/common/predicates.h"
 
 using namespace qpipe;
 

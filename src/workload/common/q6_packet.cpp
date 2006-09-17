@@ -2,19 +2,16 @@
 
 #include "workload/common/q6_packet.h"
 
-#include "engine/stages/aggregate.h"
-#include "engine/stages/tscan.h"
+#include "stages.h"
 #include "workload/common/q6_aggregate.h"
 #include "workload/common/q6_tscan_filter.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/common/copy_string.h"
 
 
 using namespace qpipe;
-using std::string;
 
 
-packet_t* create_q6_packet(const c_str &client_prefix, dispatcher_policy_t* dp) {
+packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) {
 
     // TSCAN
     tuple_fifo* tscan_output = new tuple_fifo(2*sizeof(double), dbenv);
@@ -33,7 +30,7 @@ packet_t* create_q6_packet(const c_str &client_prefix, dispatcher_policy_t* dp) 
                                            new default_key_extractor_t(0),
                                            q6_tscan_packet);
     
-    dispatcher_policy_t::query_state_t* qs = dp->query_state_create();
+    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
     dp->assign_packet_to_cpu(q6_agg_packet, qs);
     dp->assign_packet_to_cpu(q6_tscan_packet, qs);
     dp->query_state_destroy(qs);

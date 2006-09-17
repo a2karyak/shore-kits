@@ -46,7 +46,6 @@ void tuple_fifo::destroy() {
 }
 
 int tuple_fifo::open_fifos() {
-    critical_section_t cs(open_fifo_mutex);
     return open_fifo_count;
 }
 
