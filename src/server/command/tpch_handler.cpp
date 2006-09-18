@@ -14,6 +14,7 @@
 
 #include "workload/tpch/drivers/tpch_m146.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
+#include "workload/tpch/drivers/tpch_m_1_4_6_12_13.h"
 #include "workload/tpch/drivers/tpch_m14612.h"
 
 #include "scheduler.h"
@@ -60,6 +61,7 @@ void tpch_handler_t::init() {
         // fields.
         add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-146"), this));
         add_driver("m_1_4_6_12", new tpch_m_1_4_6_12_driver(c_str("TPCH-MIX 1,4,6,12"), this));
+        add_driver("m_1_4_6_12_13", new tpch_m_1_4_6_12_13_driver(c_str("TPCH-MIX 1,4,6,12,13"), this));
         add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-14612"), this));
 
 
