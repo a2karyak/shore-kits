@@ -9,8 +9,11 @@
 #define QPIPE_VERSION "v2.0"
 #define QPIPE_PROMPT  "(qpipe) "
 
+#define USE_READLINE 1
+
 /* Default configuration values */
-#define QPIPE_CONFIG_FILENAME "qpipe.conf"
+#define QPIPE_DIRECTORY_NAME ".qpipe"
+#define QPIPE_HISTORY_FILE QPIPE_DIRECTORY_NAME "/history"
 
 
 #endif

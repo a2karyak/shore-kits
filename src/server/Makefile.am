@@ -27,4 +27,5 @@ qpipe_SOURCES = \
    server.cpp \
    command_set.cpp \
    interactive_mode.cpp \
+   history.cpp \
    $(COMMANDS)

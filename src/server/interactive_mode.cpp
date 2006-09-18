@@ -3,16 +3,16 @@
 #include "server/command_set.h"
 #include "server/config.h"
 #include "server/print.h"
+#include "server/history.h"
 
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 
-#define USE_READLINE 1
-
 
 
 #if USE_READLINE
+
 
 #include <stdio.h>
 #include <readline/readline.h>
@@ -56,7 +56,9 @@ static bool next_readline() {
     return true;
 }
 
+
 #else
+
 
 static bool next_fgets() {
 
@@ -82,28 +84,31 @@ static bool next_fgets() {
     return true;
 }
 
+
 #endif
-
-
-
-
 
 
 
 void interactive_mode(void) {
 
-
     PRINT("Interactive mode...\n");
 
+#if USE_READLINE
+    bool save_history = history_open();
+#endif
 
     bool running = true;
     while (running) {
-
 #if USE_READLINE
         running = next_readline();
 #else
         running = next_fgets();
 #endif
+    }
 
-    }   
+#if USE_READLINE
+    if (save_history)
+        history_close();
+#endif
+
 }
