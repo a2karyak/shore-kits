@@ -6,7 +6,13 @@
 
 void register_command_handlers(void);
 
+
+#define PROCESS_NEXT_CONTINUE 1
+#define PROCESS_NEXT_QUIT     2
+#define PROCESS_NEXT_SHUTDOWN 3
+
 int process_command(const char* command);
+
 
 void shutdown_command_handlers(void);
 

@@ -9,5 +9,7 @@ libutil_a_SOURCES = \
 	thread.cpp \
 	time.cpp \
 	tmpfile.cpp \
-	trace.cpp
-
+	trace.cpp \
+	tcp.cpp \
+	rio.cpp \
+	chomp.cpp

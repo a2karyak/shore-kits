@@ -56,6 +56,14 @@ void register_command_handlers(void) {
  *  input of an fgets() or a list of command line args concatenated
  *  together.
  *
+ *  We now distinguish between a QUIT command and a SHUTDOWN
+ *  command. The two are equivalent when QPIPE is being run from the
+ *  command line, since they terminate the server process. When QPIPE
+ *  is being run in network mode, QUIT will terminate the current
+ *  connection and let the server accept a new connection. SHUTDOWN
+ *  will terminate the current connection and force the server process
+ *  to exit.
+ *
  *  @param command The command to run. This command may be mutated.
  *
  *  @return 0 to continue executing if called from interactive
@@ -66,10 +74,15 @@ int process_command(const char* command) {
     // check for quit...
     if ( strcasecmp(command, "quit") == 0 )
         // quit command!
-        return 1;
+        return PROCESS_NEXT_QUIT;
+
+    // check for shutdown...
+    if ( strcasecmp(command, "shutdown") == 0 )
+        // quit command!
+        return PROCESS_NEXT_SHUTDOWN;
            
     dispatch_command(command);
-    return 0;
+    return PROCESS_NEXT_CONTINUE;
 }
 
 

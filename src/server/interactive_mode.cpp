@@ -1,9 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "server/command_set.h"
 #include "server/config.h"
 #include "server/print.h"
+#include "server/command_set.h"
 #include "server/history.h"
+#include "server/process_next_command_using_fgets.h"
 
 #include <cstdlib>
 #include <cstdio>
@@ -19,7 +20,7 @@
 #include <readline/history.h>
 
 
-static bool next_readline() {
+static int process_next_command_using_readline() {
 
 
     static char *command = (char*)NULL;
@@ -34,10 +35,10 @@ static bool next_readline() {
 
 
     // Get a line from the user.
-    command = readline (QPIPE_PROMPT);
+    command = readline(QPIPE_PROMPT);
     if (command == NULL) {
         // EOF
-        return false;
+        return PROCESS_NEXT_QUIT;
     }
 
 
@@ -47,41 +48,7 @@ static bool next_readline() {
         add_history(command);
     
 
-    if ( process_command(command) )
-        // quit/exit command
-        return false;
-
-
-    // continue...
-    return true;
-}
-
-
-#else
-
-
-static bool next_fgets() {
-
-
-    char command[SERVER_COMMAND_BUFFER_SIZE];
-    PRINT("%s", QPIPE_PROMPT);
-    if ( fgets(command, sizeof(command), stdin) == NULL )
-        // EOF
-        return false;
-
-
-    // chomp off trailing '\n', if it exists
-    int len = strlen(command);
-    if ( command[len-1] == '\n' )
-        command[len-1] = '\0';
-    
-
-    if ( process_command(command) )
-        // quit/exit command
-        return false;
-
-    // continue...
-    return true;
+    return process_command(command);
 }
 
 
@@ -93,22 +60,31 @@ void interactive_mode(void) {
 
     PRINT("Interactive mode...\n");
 
+    
 #if USE_READLINE
     bool save_history = history_open();
 #endif
 
-    bool running = true;
-    while (running) {
+
+    /* Interactive mode only distinguishes between a
+       PROCESS_NEXT_CONTINUE and everything else (quit, shutdown,
+       etc). Everything else results in a termination of interactive
+       mode. */
+    
+    int state = PROCESS_NEXT_CONTINUE;
+    while (state == PROCESS_NEXT_CONTINUE) {
 #if USE_READLINE
-        running = next_readline();
+        state = process_next_command_using_readline();
 #else
-        running = next_fgets();
+        state = process_next_command_using_fgets(stdin, true);
 #endif
     }
+
 
 #if USE_READLINE
     if (save_history)
         history_close();
 #endif
+
 
 }

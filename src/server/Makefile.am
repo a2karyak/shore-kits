@@ -28,4 +28,6 @@ qpipe_SOURCES = \
    command_set.cpp \
    interactive_mode.cpp \
    history.cpp \
+   process_next_command_using_fgets.cpp \
+   network_mode.cpp \
    $(COMMANDS)

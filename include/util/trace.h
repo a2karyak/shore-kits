@@ -31,6 +31,8 @@
 
 #define TRACE_STATISTICS         (1 << 9)
 
+#define TRACE_NETWORK            (1 << 10)
+
 #define TRACE_DEBUG              (1 << 31)
 
 
