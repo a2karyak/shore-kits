@@ -11,11 +11,13 @@
 #include "workload/tpch/drivers/tpch_q6.h"
 #include "workload/tpch/drivers/tpch_q12.h"
 #include "workload/tpch/drivers/tpch_q13.h"
+#include "workload/tpch/drivers/tpch_q16.h"
 
 #include "workload/tpch/drivers/tpch_m146.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12_13.h"
 #include "workload/tpch/drivers/tpch_m14612.h"
+#include "workload/tpch/drivers/tpch_sim_mix.h"
 
 #include "scheduler.h"
 
@@ -54,6 +56,7 @@ void tpch_handler_t::init() {
         add_driver("q6", new tpch_q6_driver(c_str("TPCH-Q6")));
         add_driver("q12", new tpch_q12_driver(c_str("TPCH-Q12")));
         add_driver("q13", new tpch_q13_driver(c_str("TPCH-Q13")));
+        add_driver("q16", new tpch_q16_driver(c_str("TPCH-Q16")));
 
         // Need to pass a mix driver like m146 a directory... We are
         // the directory since we implement a lookup_driver
@@ -63,7 +66,8 @@ void tpch_handler_t::init() {
         add_driver("m_1_4_6_12", new tpch_m_1_4_6_12_driver(c_str("TPCH-MIX 1,4,6,12"), this));
         add_driver("m_1_4_6_12_13", new tpch_m_1_4_6_12_13_driver(c_str("TPCH-MIX 1,4,6,12,13"), this));
         add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-14612"), this));
-
+        add_driver("sim_mix", new tpch_sim_mix_driver(c_str("TPCH-SIM-MIX"), this));
+        
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());
