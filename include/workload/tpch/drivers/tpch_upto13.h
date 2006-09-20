@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-#ifndef __TPCH_M_1_4_6_12_13_H
-#define __TPCH_M_1_4_6_12_13_H
+#ifndef __TPCH_UPTO13_H
+#define __TPCH_UPTO13_H
 
 #include "workload/driver.h"
 #include "workload/driver_directory.h"
@@ -9,7 +9,7 @@
 ENTER_NAMESPACE(workload);
 
 
-class tpch_m_1_4_6_12_13_driver : public driver_t {
+class tpch_upto13_driver : public driver_t {
 
 private:
 
@@ -17,7 +17,7 @@ private:
 
 public:
 
-    tpch_m_1_4_6_12_13_driver(const c_str& description, driver_directory_t* directory)
+    tpch_upto13_driver(const c_str& description, driver_directory_t* directory)
         : driver_t(description),
           _directory(directory)
     {

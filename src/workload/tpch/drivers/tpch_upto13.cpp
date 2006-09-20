@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "scheduler.h"
-#include "workload/tpch/drivers/tpch_m_1_4_6_12_13.h"
+#include "workload/tpch/drivers/tpch_upto13.h"
 
 #include "workload/common.h"
 
 ENTER_NAMESPACE(workload);
 
 
-void tpch_m_1_4_6_12_13_driver::submit(void* disp) {
+void tpch_upto13_driver::submit(void* disp) {
  
     thread_t* this_thread = thread_get_self();
     int selection = this_thread->rand(5);
