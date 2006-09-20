@@ -64,7 +64,7 @@ void tpch_handler_t::init() {
         // fields.
         add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-146"), this));
         add_driver("m_1_4_6_12", new tpch_m_1_4_6_12_driver(c_str("TPCH-MIX 1,4,6,12"), this));
-        add_driver("m_upto13", new tpch_upto13_driver(c_str("TPCH-MIX 1,4,6,12,13"), this));
+        add_driver("upto13", new tpch_upto13_driver(c_str("TPCH-MIX 1,4,6,12,13"), this));
         add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-14612"), this));
         add_driver("sim_mix", new tpch_sim_mix_driver(c_str("TPCH-SIM-MIX"), this));
         
