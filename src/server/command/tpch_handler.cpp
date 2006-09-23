@@ -71,10 +71,11 @@ void tpch_handler_t::init() {
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());
+        if(0) {
         add_scheduler_policy("RR_CPU",    new scheduler::policy_rr_cpu_t());
         add_scheduler_policy("RR_MODULE", new scheduler::policy_rr_module_t());
         add_scheduler_policy("QUERY_CPU", new scheduler::policy_query_cpu_t());
-        
+        }
         state = TPCH_HANDLER_INITIALIZED;
     }
 
