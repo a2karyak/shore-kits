@@ -56,6 +56,8 @@ static aiocb aio_request;
 static aiocb* aio_list[] = {&aio_request};
 static stream_key aio_marker;
 static size_t aio_block;
+ int prefetch_success_count;
+ int prefetch_fail_count;
 
 static const int LOCKED = -1;
 
@@ -117,21 +119,26 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
             while(i > 0)
                 std::swap(cache[i--], cache[i]);
         }
-        else if(0) {
+        else if(1) {
+            // copy now, before giving away the memory
             cache_entry &old_entry = cache[i];
+            memcpy(dest, &old_entry.second[byte_offset], PAGE_SIZE);
+
+            // can we prefetch?
+            bool aio_was_active = aio_active;
             if(check_aio_ready()) {
-                aio_request.aio_fildes = fd;
-                aio_request.aio_lio_opcode = LIO_READ;
-                aio_request.aio_reqprio = 0;
-                aio_request.aio_buf = old_entry.second;
-                aio_request.aio_nbytes = stream_size*PAGE_SIZE;
-                aio_request.aio_sigevent.sigev_notify = SIGEV_NONE;
-                
+                if(aio_was_active)
+                    prefetch_fail_count++;
                 aio_marker = stream_key(LOCKED, i);
                 aio_block = block+stream_size;
 
-                // copy now, before giving away the memory
-                memcpy(dest, &old_entry.second[byte_offset], PAGE_SIZE);
+                memset(&aio_request, 0, sizeof(aio_request));
+                aio_request.aio_fildes = fd;
+                aio_request.aio_lio_opcode = LIO_READ;
+                aio_request.aio_buf = old_entry.second;
+                aio_request.aio_nbytes = stream_size*PAGE_SIZE;
+                aio_request.aio_sigevent.sigev_notify = SIGEV_NONE;
+                aio_request.aio_offset = aio_block*PAGE_SIZE;
                 
                 if(aio_read(&aio_request)) {
                     // problem?
@@ -156,7 +163,7 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
     }
 
     // what about pending prefetch?
-    else if(aio_active && aio_request.aio_fildes == fd) {
+    else if(aio_active && aio_request.aio_fildes == fd && aio_block == block) {
         // try to wait for it
         cs.exit();
         int result = aio_suspend(aio_list, 1, NULL);
@@ -167,8 +174,10 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
             perror("aio_suspend");
             goto fetch;
         }
-        else if(check_aio_ready())
+        else if(check_aio_ready()) {
+            prefetch_success_count++;
             goto lookup;
+        }
         else
             goto fetch;
     }
