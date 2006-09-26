@@ -56,8 +56,9 @@ static aiocb aio_request;
 static aiocb* aio_list[] = {&aio_request};
 static stream_key aio_marker;
 static size_t aio_block;
- int prefetch_success_count;
- int prefetch_fail_count;
+volatile int prefetch_success_count;
+volatile int prefetch_count;
+volatile int prefetch_fail_pages;
 
 static const int LOCKED = -1;
 
@@ -95,6 +96,22 @@ static bool check_aio_ready() {
     return true;
 }
 
+static int indexof(stream_key const &request) {
+    int i;
+    for(i=0; i < (int) cache.size() && cache[i].first != request; i++);
+    return i;
+}
+
+static bool exists(stream_key const &request) {
+    return indexof(request) != (int) cache.size();
+}
+
+static int indexof_victim(int min_index=0) {
+    int i = cache.size();
+    while(i-- > min_index && cache[i].first.fd == LOCKED);
+    return i;
+}
+
 extern "C"
 int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
         
@@ -110,60 +127,56 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
 
     // hit?
  lookup:
-    int i;
-    for(i=0; i < (int) cache.size() && cache[i].first != request; i++);
+    int i = indexof(request);
     if(i < (int) cache.size()) {
 
-        // bubble the entry to the front to preserve LRU ordering
+        // bubble the to the front to preserve LRU ordering
         if(block_offset < (int) stream_size-1) {
             while(i > 0)
                 std::swap(cache[i--], cache[i]);
         }
-        else if(1) {
-            // copy now, before giving away the memory
-            cache_entry &old_entry = cache[i];
-            memcpy(dest, &old_entry.second[byte_offset], PAGE_SIZE);
+        
+        // this is not the first touch to this block (or was a
+        // successful prefetch). Either way, initiate a prefetch if we
+        // haven't already...
+        stream_key prefetch_request(fd, block+stream_size);
+        int victim;
+        int mindex = cache.size()/2;
+        bool can_prefetch = check_aio_ready()
+            && !exists(prefetch_request)
+            && !exists(stream_key(LOCKED, fd))
+            && (victim = indexof_victim(mindex)) >= mindex;
+        
+        if(can_prefetch) {
+            // not already prefetched, no fetch in progress on this file, buffer available
+            cache_entry &entry = cache[victim];
 
-            // can we prefetch?
-            bool aio_was_active = aio_active;
-            if(check_aio_ready()) {
-                if(aio_was_active)
-                    prefetch_fail_count++;
-                aio_marker = stream_key(LOCKED, i);
-                aio_block = block+stream_size;
+            aio_marker = stream_key(LOCKED, i);
+            aio_block = block+stream_size;
 
-                memset(&aio_request, 0, sizeof(aio_request));
-                aio_request.aio_fildes = fd;
-                aio_request.aio_lio_opcode = LIO_READ;
-                aio_request.aio_buf = old_entry.second;
-                aio_request.aio_nbytes = stream_size*PAGE_SIZE;
-                aio_request.aio_sigevent.sigev_notify = SIGEV_NONE;
-                aio_request.aio_offset = aio_block*PAGE_SIZE;
+            memset(&aio_request, 0, sizeof(aio_request));
+            aio_request.aio_fildes = fd;
+            aio_request.aio_lio_opcode = LIO_READ;
+            aio_request.aio_buf = entry.second;
+            aio_request.aio_nbytes = stream_size*PAGE_SIZE;
+            aio_request.aio_sigevent.sigev_notify = SIGEV_NONE;
+            aio_request.aio_offset = aio_block*PAGE_SIZE;
                 
-                if(aio_read(&aio_request)) {
-                    // problem?
-                    perror("aio_read");
-                    old_entry.first = stream_key();
-                }
-                else {
-                    // successfully queued up
-                    aio_active = true;
-                    old_entry.first = aio_marker;
-                }
+            if(aio_read(&aio_request)) {
+                // problem? never mind, then
+                perror("aio_read");
             }
             else {
-                // clear it out for someone else to use
-                old_entry.first = stream_key();
-                while(++i < (int) cache.size())
-                    std::swap(cache[i], cache[i-1]);
+                // successfully queued up
+                aio_active = true;
+                prefetch_count++;
+                entry.first = aio_marker;
             }
-            
-            return 0;
         }
     }
 
     // what about pending prefetch?
-    else if(aio_active && aio_request.aio_fildes == fd && aio_block == block) {
+    else if(aio_active && aio_request.aio_fildes == fd && (int) aio_block == block) {
         // try to wait for it
         cs.exit();
         int result = aio_suspend(aio_list, 1, NULL);
@@ -172,6 +185,7 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
         if(result) {
             errno = myerrno;
             perror("aio_suspend");
+            aio_active = false;
             goto fetch;
         }
         else if(check_aio_ready()) {
@@ -186,10 +200,10 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
     else {
     fetch:
         // find the oldest unlocked entry to use as a victim
-        i = cache.size();
-        while(i-- > 0 && cache[i].first.fd == LOCKED);
+        i = indexof_victim();
         if(i < 0) {
             // too many prefetches in progress. Drop this one on the floor.
+            prefetch_fail_pages++;
             return -1;
         }
 
@@ -208,8 +222,8 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
         // re-acquire the lock, then find our entry again (LRU could have
         // moved it while we were gone)
         cs.enter(cache_lock);
-        for(i=cache.size(); i-- > 0 && cache[i].first != marker; );
-        assert(i >= 0);
+        i = indexof(marker);
+        assert(i < (int) cache.size());
 
         cache_entry &entry = cache[i];
         // sanity check
@@ -220,7 +234,8 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
                 struct stat stat;
                 fstat(fd, &stat);
             }
-            
+
+            prefetch_fail_pages++;
             // TODO: mask out invalid pages instead of failing outright
             // set the entry to a bogus value so it gets replaced
             entry.first = stream_key();
@@ -245,6 +260,7 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
         
 extern "C"
 int disk_cache_init(size_t size, int streams) {
+    size = streams*PAGE_SIZE*64;
     cache_size = size;
     // must be at least 1 stream
     assert(streams >= 1);
