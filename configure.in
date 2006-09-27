@@ -152,7 +152,7 @@ case "$target" in
     ;;
 
   # linux on itanium? (not implem)
-  *IA64*linux*)
+  *ia64*linux*)
     AC_MSG_RESULT(configuring for linux/ia64)
 
     ARCHOS=IA64_LINUX

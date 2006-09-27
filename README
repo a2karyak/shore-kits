@@ -2,6 +2,7 @@
 
 QPIPE QUERIES:
 
+current_mix: 1, 4, 6, 12
 simulation: 1, 6, 13, 16
 SIGMOD2005: 1, 4, 6, 8, 12, 13, 14, 19
 old QPIPE src: 1, 4, 5, 6, 8, 9, 12, 13, 14, 16, 19
