@@ -53,7 +53,8 @@ bin_PROGRAMS = \
    test_bitvector \
    test_hash_map \
    test_mpool \
-   grouper
+   grouper \
+   test_busy_wait
 
 test_odirect_SOURCES = test_odirect.cpp
 test_cpu_binding_SOURCES = test_cpu_binding.cpp
@@ -88,3 +89,4 @@ test_q1_SOURCES = test_q1.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
 test_mpool_SOURCES = test_mpool.cpp
 grouper_SOURCES = grouper.cpp
+test_busy_wait_SOURCES = test_busy_wait.cpp

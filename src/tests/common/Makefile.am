@@ -6,7 +6,8 @@ TESTCOMMON = \
    drive_stage.cpp \
    int_tuple_writer.cpp \
    tpch_query.cpp \
-   cpu_bind.cpp
+   cpu_bind.cpp \
+   busy_wait.cpp
 
 # encapsulates all basic classes needed in qpipe
 lib_LIBRARIES = libtestcommon.a

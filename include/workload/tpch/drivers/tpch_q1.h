@@ -7,6 +7,9 @@
 
 ENTER_NAMESPACE(workload);
 
+
+DECLARE_DRIVER(tpch_q1);
+/*
 class tpch_q1_driver : public driver_t {
 
 public:
@@ -19,6 +22,9 @@ public:
     virtual void submit(void* disp);
     
 };
+*/
+
+
 
 EXIT_NAMESPACE(workload);
 

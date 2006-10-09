@@ -41,6 +41,25 @@ public:
 };
 
 
+
+#define DECLARE_DRIVER(dname) \
+   class dname##_driver : public driver_t { \
+   \
+   public: \
+   \
+     dname ## _driver(const c_str& description) \
+         : driver_t(description) \
+     { \
+     } \
+   \
+     virtual void submit(void* arg); \
+   \
+  };
+
+
+
+
 EXIT_NAMESPACE(workload);
+
 
 #endif // _DRIVER_H
