@@ -61,15 +61,12 @@ public:
         return new query_plan(action, filter->to_string(), NULL, 0);
     }
     
-#if 0
-    // FRJ: should be covered by the new plan checker
     virtual bool is_compatible(packet_t* other) {
-        // two TSCAN packets are compatible if they want to scan the
-        // same table
-        tscan_packet_t* packet = dynamic_cast<tscan_packet_t*>(other);
-        return _db == packet->_db;
+        // enforce the OSP_SCAN policy (attempt to merge compatible
+        // packets unless OSP_NONE prevents this from being called in
+        // the first place)
+        return packet_t::is_compatible(plan(), other->plan());
     }
-#endif
 };
 
 

@@ -15,6 +15,8 @@ ENTER_NAMESPACE(qpipe);
 using std::list;
 
 
+// change this variable to set the style of sharing we use...
+static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_NONE;
 
 /* exported datatypes */
 
@@ -75,7 +77,7 @@ protected:
     }
     
     virtual bool is_compatible(packet_t* other) {
-        return is_compatible(plan(), other->plan());
+        return (osp_policy != OSP_FULL)? false : is_compatible(plan(), other->plan());
     }
 
 public:
@@ -131,7 +133,7 @@ public:
      */  
     
     bool is_merge_enabled() {
-	return _merge_enabled;
+	return (osp_policy == OSP_NONE)? false : _merge_enabled;
     }
 
     query_plan const* plan() const {
