@@ -15,7 +15,8 @@ LDADD = \
 	$(LDBASE)/util/libutil.a \
 	$(BDB_HOME)/lib/libdb_cxx.a \
 	$(LDBASE)/bdb-ext/libbdbext.a \
-	$(LDBASE)/util/libutil.a 
+	$(LDBASE)/util/libutil.a \
+	-lrt -laio
 
 
 # define programs here

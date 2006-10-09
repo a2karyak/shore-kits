@@ -15,7 +15,7 @@
 #undef PAGE_SIZE
 #endif
 
-static const size_t PAGE_SIZE = 4096;
+static const size_t PAGE_SIZE = 4096l;
 
 class prefetcher {
     
@@ -216,7 +216,7 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
         // release the lock during the I/O
         int target_count = stream_size*PAGE_SIZE;
         cs.exit();
-        int count = pread(fd, buf, target_count, block*PAGE_SIZE);
+        int count = pread64(fd, buf, target_count, block*PAGE_SIZE);
         int myerrno = errno;
 
         // re-acquire the lock, then find our entry again (LRU could have
