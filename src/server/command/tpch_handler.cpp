@@ -29,7 +29,7 @@ pthread_mutex_t tpch_handler_t::state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 tpch_handler_t::state_t tpch_handler_t::state = TPCH_HANDLER_UNINITIALIZED;
 
-
+tpch_handler_t *tpch_handler = NULL;
 
 /**
  *  @brief Initialize TPC-H handler. We must invoke db_open() to
@@ -76,6 +76,7 @@ void tpch_handler_t::init() {
         add_scheduler_policy("RR_MODULE", new scheduler::policy_rr_module_t());
         add_scheduler_policy("QUERY_CPU", new scheduler::policy_query_cpu_t());
         }
+        tpch_handler = this;
         state = TPCH_HANDLER_INITIALIZED;
     }
 

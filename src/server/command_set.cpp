@@ -7,6 +7,7 @@
 #include "server/command/command_handler.h"
 #include "server/command/printer.h"
 #include "server/command/tpch_handler.h"
+#include "server/command/load_handler.h"
 
 #include <map>
 #include <string>
@@ -25,7 +26,7 @@ static map<c_str, command_handler_t*> command_mappings;
 /* internal helper functions */
 
 static void add_command(const c_str &command_tag, command_handler_t* handler);
-static void add_command(const char*  command_tag, command_handler_t* handler);
+void add_command(const char*  command_tag, command_handler_t* handler);
 static void dispatch_command(const char* command);
 
 
@@ -47,6 +48,7 @@ void register_command_handlers(void) {
 
     add_command("print", new printer_t());
     add_command("tpch",  new tpch_handler_t());
+    add_command("load", new load_handler_t());
 }
 
 
@@ -153,7 +155,7 @@ static void add_command(const c_str &command_tag, command_handler_t* handler) {
  *
  *  @return void
  */
-static void add_command(const char* command_tag, command_handler_t* handler) {
+void add_command(const char* command_tag, command_handler_t* handler) {
     c_str tag("%s", command_tag);
     add_command(tag, handler);
 }

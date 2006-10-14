@@ -1,9 +1,11 @@
 # -*- makefile -*-
+SUBDIRS = extras
 
 INCLUDES = -I$(top_srcdir)/include 
 
 # libtestcommon temporarily added so we can use register_stage()
 LDBASE = $(top_srcdir)/src
+AM_LDFLAGS = -Wl,-export-dynamic
 
 LDADD = \
 	$(LDBASE)/workload/libworkload.a \
@@ -16,6 +18,7 @@ LDADD = \
 	-lrt \
 	-laio \
 	-lreadline \
+	-lltdl \
 	-lcurses
 
 # define programs here
@@ -24,6 +27,7 @@ bin_PROGRAMS = qpipe
 
 COMMANDS = \
    command/printer.cpp \
+   command/load_handler.cpp \
    command/tpch_handler.cpp
 
 qpipe_SOURCES = \
