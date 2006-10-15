@@ -39,7 +39,7 @@ protected:
     module_t _modules[NUM_MODULES];
     int _cpus_per_module;
 
-    class rr_module_query_state_t : public policy_t::query_state_t {
+    class rr_module_query_state_t : public qpipe::query_state_t {
         
     public:
       
@@ -52,6 +52,31 @@ protected:
             
         virtual ~rr_module_query_state_t() { }
     };
+
+
+    virtual cpu_t assign(packet_t*, query_state_t* qs) {
+
+        // Dynamic cast acts like an assert(), verifying the type.
+        rr_module_query_state_t* qstate = dynamic_cast<rr_module_query_state_t*>(qs);
+        int module_index = qstate->_module_index;
+        module_t* module = &_modules[module_index];
+
+        int next_cpu;
+        critical_section_t cs(module->_module_mutex);
+
+        // RR_MODULE dispatching policy requires that every call to
+        // assign_packet_to_cpu() results in an increment of the
+        // module's next cpu index.
+        next_cpu = module->_next_module_cpu;
+        module->_next_module_cpu = (next_cpu + 1) % _cpus_per_module;
+        
+        cs.exit();
+        
+        return
+            cpu_set_get_cpu( &_cpu_set,
+                             module_index * _cpus_per_module + next_cpu );
+    }
+
 
 public:
     
@@ -104,27 +129,6 @@ public:
         delete qstate;
     }
 
-  
-    virtual void assign_packet_to_cpu(packet_t* packet, query_state_t* qs) {
-
-        // Dynamic cast acts like an assert(), verifying the type.
-        rr_module_query_state_t* qstate = dynamic_cast<rr_module_query_state_t*>(qs);
-        int module_index = qstate->_module_index;
-        module_t* module = &_modules[module_index];
-
-        int next_cpu;
-        critical_section_t cs(module->_module_mutex);
-
-        // RR_MODULE dispatching policy requires that every call to
-        // assign_packet_to_cpu() results in an increment of the
-        // module's next cpu index.
-        next_cpu = module->_next_module_cpu;
-        module->_next_module_cpu = (next_cpu + 1) % _cpus_per_module;
-        
-        cs.exit();
-        
-        packet->_cpu_bind = new policy_cpu_bind(cpu_set_get_cpu( &_cpu_set, module_index * _cpus_per_module + next_cpu ));
-    }
 
 };
 

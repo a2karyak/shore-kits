@@ -254,12 +254,11 @@ void tpch_q4_driver::submit(void* disp) {
                                                 new default_key_extractor_t(),
                                                 new int_key_compare_t());
 
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
-    dp->assign_packet_to_cpu(agg_packet, qs);
-    dp->assign_packet_to_cpu(join_packet, qs);
-    dp->assign_packet_to_cpu(orders_packet, qs);
-    dp->assign_packet_to_cpu(line_item_packet, qs);
-    dp->query_state_destroy(qs);
+    qpipe::query_state_t* qs = dp->query_state_create();
+    agg_packet->assign_query_state(qs);
+    join_packet->assign_query_state(qs);
+    orders_packet->assign_query_state(qs);
+    line_item_packet->assign_query_state(qs);
 
     // Dispatch packet
     guard<tuple_fifo> result = agg_packet->output_buffer();
@@ -272,6 +271,7 @@ void tpch_q4_driver::submit(void* disp) {
               r->ORDER_COUNT);
     }
 
+    dp->query_state_destroy(qs);
 }
 
 EXIT_NAMESPACE(workload);

@@ -7,7 +7,7 @@
 #include "core/tuple.h"
 #include "core/tuple_fifo.h"
 #include "core/functors.h"
-#include "core/cpu_bind.h"
+#include "core/query_state.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -36,6 +36,7 @@ struct query_plan {
 };
 
 
+
 /**
  *  @brief A packet in QPIPE is a unit of work that can be processed
  *  by a stage's worker thread.
@@ -56,6 +57,9 @@ class packet_t
 
 protected:
     query_plan* _plan; 
+
+    // dispatching/CPU binding fields
+    query_state_t* _qstate;
 
     bool _merge_enabled;
 
@@ -84,8 +88,10 @@ public:
     
     c_str _packet_id;
     c_str _packet_type;
-private:    
+
+private:
     guard<tuple_fifo> _output_buffer;
+
 public:
     guard<tuple_filter_t> _output_filter;
 
@@ -102,9 +108,6 @@ public:
 	receive all tuples produced by the stage. Should be
 	initialized to 0. */
     unsigned int _next_tuple_needed;
-
-    cpu_bind* _cpu_bind;
-    
 
 
     /* see packet.cpp for documentation */
@@ -154,6 +157,16 @@ public:
 
     void disable_merging() {
 	_merge_enabled = false;	
+    }
+
+
+    void assign_query_state(query_state_t* qstate) {
+        _qstate = qstate;
+    }
+
+
+    query_state_t* get_query_state() {
+        return _qstate;
     }
 
 };

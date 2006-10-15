@@ -71,9 +71,7 @@ struct q13_count_aggregate_t : public tuple_aggregate_t {
 /**
  * @brief select c_cust_key from customer
  */
-packet_t* customer_scan(Db* tpch_customer,
-                        scheduler::policy_t* dp,
-                        scheduler::policy_t::query_state_t* qs)
+packet_t* customer_scan(Db* tpch_customer, qpipe::query_state_t* qs)
 {
     struct customer_tscan_filter_t : public tuple_filter_t {
         customer_tscan_filter_t() 
@@ -100,7 +98,7 @@ packet_t* customer_scan(Db* tpch_customer,
                                           buffer,
                                           filter,
                                           tpch_customer);
-    dp->assign_packet_to_cpu(packet, qs);
+    packet->assign_query_state(qs);
     return packet;
 }
 
@@ -158,7 +156,7 @@ struct order_tscan_filter_t : public tuple_filter_t {
  *        group by c_custkey
  *        order by c_custkey desc
  */
-packet_t* order_scan(Db* tpch_orders, scheduler::policy_t* dp, scheduler::policy_t::query_state_t* qs) {
+packet_t* order_scan(Db* tpch_orders, qpipe::query_state_t* qs) {
 
     // Orders TSCAN
     tuple_filter_t* filter = new order_tscan_filter_t();
@@ -167,7 +165,7 @@ packet_t* order_scan(Db* tpch_orders, scheduler::policy_t* dp, scheduler::policy
                                                 buffer,
                                                 filter,
                                                 tpch_orders);
-    dp->assign_packet_to_cpu(tscan_packet, qs);
+    tscan_packet->assign_query_state(qs);
 
     // group by
     filter = new trivial_filter_t(sizeof(key_count_tuple_t));
@@ -181,14 +179,14 @@ packet_t* order_scan(Db* tpch_orders, scheduler::policy_t* dp, scheduler::policy
                                                 aggregator,
                                                 new int_desc_key_extractor_t(),
                                                 new int_key_compare_t());
-    dp->assign_packet_to_cpu(pagg_packet, qs);
+    pagg_packet->assign_query_state(qs);
 
     return pagg_packet;
 }
 
 void tpch_q13_driver::submit(void* disp) {
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
+    qpipe::query_state_t* qs = dp->query_state_create();
     
     /*
      * select c_count, count(*) as custdist
@@ -270,8 +268,8 @@ void tpch_q13_driver::submit(void* disp) {
     // join? cust_order_count is already sorted on c_custkey
 
     // get the inputs to the join
-    packet_t* customer_packet = customer_scan(tpch_customer, dp, qs);
-    packet_t* order_packet = order_scan(tpch_orders, dp, qs);
+    packet_t* customer_packet = customer_scan(tpch_customer, qs);
+    packet_t* order_packet = order_scan(tpch_orders, qs);
 
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
     tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
@@ -283,7 +281,7 @@ void tpch_q13_driver::submit(void* disp) {
                                                    order_packet,
                                                    join,
                                                    true);
-    dp->assign_packet_to_cpu(join_packet, qs);
+    join_packet->assign_query_state(qs);
 
 
     // group by c_count
@@ -297,7 +295,7 @@ void tpch_q13_driver::submit(void* disp) {
                                                  new q13_count_aggregate_t(),
                                                  new int_desc_key_extractor_t(),
                                                  new int_key_compare_t());
-    dp->assign_packet_to_cpu(pagg_packet, qs);
+    pagg_packet->assign_query_state(qs);
     
 
     // final sort of results
@@ -311,11 +309,9 @@ void tpch_q13_driver::submit(void* disp) {
                                     new q13_key_compare_t(),
                                     pagg_packet);
 
-    dp->assign_packet_to_cpu(sort_packet, qs);
+    sort_packet->assign_query_state(qs);
 
     // Dispatch packet
-    dp->query_state_destroy(qs);
-    
     dispatcher_t::dispatch_packet(sort_packet);
     guard<tuple_fifo> result = sort_packet->output_buffer();
         
@@ -325,6 +321,9 @@ void tpch_q13_driver::submit(void* disp) {
         TRACE(TRACE_QUERY_RESULTS, "*** Q13 Count: %d. CustDist: %d.  ***\n",
               r->KEY, r->COUNT);
     }
+
+
+    dp->query_state_destroy(qs);
 }
 
 EXIT_NAMESPACE(workload);

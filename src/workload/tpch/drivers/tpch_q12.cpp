@@ -312,15 +312,14 @@ void tpch_q12_driver::submit(void* disp) {
                                        compare);
 
     // go!
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
-    dp->assign_packet_to_cpu(agg_packet, qs);
-    dp->assign_packet_to_cpu(join_packet, qs);
-    dp->assign_packet_to_cpu(order_packet, qs);
-    dp->assign_packet_to_cpu(lineitem_packet, qs);
-    dp->query_state_destroy(qs);
+    qpipe::query_state_t* qs = dp->query_state_create();
+    agg_packet->assign_query_state(qs);
+    join_packet->assign_query_state(qs);
+    order_packet->assign_query_state(qs);
+    lineitem_packet->assign_query_state(qs);
+
     dispatcher_t::dispatch_packet(agg_packet);
 
-        
     tuple_t output;
     TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10s %10s\n",
           "Shipmode", "High_Count", "Low_Count");
@@ -331,7 +330,8 @@ void tpch_q12_driver::submit(void* disp) {
               r->HIGH_LINE_COUNT,
               r->LOW_LINE_COUNT);
     }
-    
+
+    dp->query_state_destroy(qs);
 }
 
 EXIT_NAMESPACE(workload);

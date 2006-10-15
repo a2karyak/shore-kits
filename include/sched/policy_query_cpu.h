@@ -26,7 +26,7 @@ protected:
     int _cpu_num;
  
 
-    class query_cpu_query_state_t : public policy_t::query_state_t {
+    class query_cpu_query_state_t : public qpipe::query_state_t {
 
     public:
 
@@ -40,6 +40,12 @@ protected:
     };
 
   
+    virtual cpu_t assign(packet_t*, query_state_t* qs) {
+        query_cpu_query_state_t* state = dynamic_cast<query_cpu_query_state_t*>(qs);
+        return state->_qcpu;
+    }
+
+
 public:
    
     policy_query_cpu_t()
@@ -81,12 +87,7 @@ public:
         delete qstate;
     }
 
-    
-    virtual void assign_packet_to_cpu(packet_t* packet, query_state_t* qs) {
-        query_cpu_query_state_t* state = dynamic_cast<query_cpu_query_state_t*>(qs);
-        packet->_cpu_bind = new policy_cpu_bind(state->_qcpu);
-    }
-
+   
 };
 
 

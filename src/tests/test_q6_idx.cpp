@@ -127,7 +127,7 @@ struct print_filter_t : tuple_filter_t {
 
 
 
-packet_t* create_q6_idx_packet(const c_str &client_prefix, scheduler::policy_t* dp) {
+packet_t* create_q6_idx_packet(const c_str &client_prefix, qpipe::query_state_t* qs) {
 
     // choose a random year from 1993 to 1997 (inclusive)
     time_t date = datestr_to_timet("1993-01-01");
@@ -189,12 +189,10 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, scheduler::policy_t* 
                                            new default_key_extractor_t(0),
                                            q6_probe_packet);
     
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
-    dp->assign_packet_to_cpu(q6_agg_packet, qs);
-    dp->assign_packet_to_cpu(q6_iscan_packet, qs);
-    dp->assign_packet_to_cpu(q6_sort_packet, qs);
-    dp->assign_packet_to_cpu(q6_probe_packet, qs);
-    dp->query_state_destroy(qs);
+    q6_agg_packet->assign_query_state(qs);
+    q6_iscan_packet->assign_query_state(qs);
+    q6_sort_packet->assign_query_state(qs);
+    q6_probe_packet->assign_query_state(qs);
 
     if(0)
         return q6_iscan_packet;
@@ -239,10 +237,11 @@ int main(int argc, char* argv[]) {
     for(int i=0; i < num_iterations; i++) {
         stopwatch_t timer;
         
-        
-        packet_t* q6_packet = create_q6_idx_packet("Q6", dp);
+        qpipe::query_state_t* qs = dp->query_state_create();
+        packet_t* q6_packet = create_q6_idx_packet("Q6", qs);
 
         tuple_fifo* output_buffer = q6_packet->output_buffer();
+
         dispatcher_t::dispatch_packet(q6_packet);
     
         tuple_t output;
@@ -256,6 +255,7 @@ int main(int argc, char* argv[]) {
         }
         
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
+        dp->query_state_destroy(qs);
     }
     
  

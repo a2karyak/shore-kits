@@ -20,21 +20,38 @@ class policy_rr_cpu_t : public policy_t {
 
 protected:
 
+    class rr_cpu_state_t : public qpipe::query_state_t {
+    public:
+        rr_cpu_state_t() { }
+        virtual ~rr_cpu_state_t() { }
+    };
+
+
     pthread_mutex_t _cpu_next_mutex;
     struct cpu_set_s _cpu_set;
     int _cpu_next;
     int _cpu_num;
  
+    virtual cpu_t assign(packet_t*, query_state_t*) {
+
+        int next_cpu;
+
+        critical_section_t cs(_cpu_next_mutex);
+
+        // RR-CPU dispatching policy requires that every call to
+        // assign_packet_to_cpu() results in an increment of the next cpu
+        // index.
+        next_cpu = _cpu_next;
+        _cpu_next = (_cpu_next + 1) % _cpu_num;
+
+        cs.exit();
+
+        return cpu_set_get_cpu( &_cpu_set, next_cpu );
+    }
+
+
 public:
 
-    class rr_cpu_query_state_t : public policy_t::query_state_t {
-
-    protected:
-        rr_cpu_query_state_t() { }
-        virtual ~rr_cpu_query_state_t() { }
-    };
-
-    
     policy_rr_cpu_t()
         : _cpu_next_mutex(thread_mutex_create())
     {
@@ -51,38 +68,15 @@ public:
 
 
     virtual query_state_t* query_state_create() {
-        // No state to maintain for RR-CPU policy. The value that we
-        // return here should be opaquely passed to our own
-        // assign_packet_to_cpu() method.
-        return NULL;
+        return new rr_cpu_state_t();
     }
 
   
     virtual void query_state_destroy(query_state_t* qs) {
-        // Nothing created... nothing to destroy
-        assert( qs == NULL );
+        rr_cpu_state_t* qstate = dynamic_cast<rr_cpu_state_t*>(qs);
+        delete qstate;
     }
 
-  
-    virtual void assign_packet_to_cpu(packet_t* packet, query_state_t* qs) {
-
-        // error checking
-        assert( qs == NULL );
-
-        int next_cpu;
-
-        critical_section_t cs(_cpu_next_mutex);
-
-        // RR-CPU dispatching policy requires that every call to
-        // assign_packet_to_cpu() results in an increment of the next cpu
-        // index.
-        next_cpu = _cpu_next;
-        _cpu_next = (_cpu_next + 1) % _cpu_num;
-
-        cs.exit();
-
-        packet->_cpu_bind = new policy_cpu_bind(cpu_set_get_cpu( &_cpu_set, next_cpu ));
-    }
 
 };
 

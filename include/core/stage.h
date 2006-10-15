@@ -122,8 +122,10 @@ public:
         // process rebinding instructions here since we have access to
         // the primary packet
         packet_t* packet = _adaptor->get_packet();
-        if(packet->_cpu_bind)
-            packet->_cpu_bind->bind(packet);
+        query_state_t* qstate = packet->get_query_state();
+        if (qstate != NULL) {
+            /* do binding here */
+        }
         
 	process_packet();
     }

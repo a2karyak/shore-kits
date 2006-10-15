@@ -39,14 +39,17 @@ packet_t::packet_t(const c_str    &packet_id,
                    query_plan*     plan,
                    bool            merge_enabled)
     : _plan(plan),
+      
+      /* Allow packets to be created unbound to any query. */
+      _qstate(NULL),
+
       _merge_enabled(merge_enabled),
       _packet_id(packet_id),
       _packet_type(packet_type),
       _output_buffer(output_buffer),
       _output_filter(output_filter),
       _next_tuple_on_merge(stage_container_t::NEXT_TUPLE_UNINITIALIZED),
-      _next_tuple_needed  (stage_container_t::NEXT_TUPLE_INITIAL_VALUE),
-      _cpu_bind(NULL)
+      _next_tuple_needed  (stage_container_t::NEXT_TUPLE_INITIAL_VALUE)
 {
     // error checking
     assert(output_buffer != NULL);

@@ -30,10 +30,9 @@ packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) 
                                            new default_key_extractor_t(0),
                                            q6_tscan_packet);
     
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
-    dp->assign_packet_to_cpu(q6_agg_packet, qs);
-    dp->assign_packet_to_cpu(q6_tscan_packet, qs);
-    dp->query_state_destroy(qs);
+    qpipe::query_state_t* qs = dp->query_state_create();
+    q6_agg_packet->assign_query_state(qs);
+    q6_tscan_packet->assign_query_state(qs);
 
     if(1)
         return q6_agg_packet;

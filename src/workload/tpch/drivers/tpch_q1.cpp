@@ -236,10 +236,9 @@ void tpch_q1_driver::submit(void* disp) {
                                        new q1_key_extract_t(),
                                        new int_key_compare_t());
 
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
-    dp->assign_packet_to_cpu(q1_agg_packet, qs);
-    dp->assign_packet_to_cpu(q1_tscan_packet, qs);
-    dp->query_state_destroy(qs);
+    qpipe::query_state_t* qs = dp->query_state_create();
+    q1_agg_packet->assign_query_state(qs);
+    q1_tscan_packet->assign_query_state(qs);
         
     // Dispatch packet
     dispatcher_t::dispatch_packet(q1_agg_packet);
@@ -256,6 +255,8 @@ void tpch_q1_driver::submit(void* disp) {
               tuple->L_SUM_DISC_PRICE);
     }
 
+
+    dp->query_state_destroy(qs);
 }
 
 EXIT_NAMESPACE(workload);

@@ -16,48 +16,37 @@ ENTER_NAMESPACE(scheduler);
 
 class policy_os_t : public policy_t {
 
-public:
+protected:
 
-    class os_query_state_t : public policy_t::query_state_t {
-
-    protected:
+    class os_query_state_t : public qpipe::query_state_t {
+    public:
         os_query_state_t() { }
         virtual ~os_query_state_t() { }
     };
 
 
-
-    policy_os_t() { }
-
-
-    virtual ~policy_os_t() {}
-
-    
-    virtual query_state_t* query_state_create() {
-        // No state to maintain for OS policy. The value that we
-        // return here should be opaquely passed to our own
-        // assign_packet_to_cpu() method.
+    virtual cpu_t assign(packet_t*, query_state_t*) {
+        // OS dispatching policy requires that worker threads who pick up
+        // packets never use hard affinity to (re-)bind themselves. We
+        // indicate that no rebinding should take place by returning a CPU of NULL.
         return NULL;
     }
 
 
-    virtual void query_state_destroy(query_state_t* qs) {
-        // Nothing created... nothing to destroy
-        assert( qs == NULL );
+public:
+
+    policy_os_t() { }
+    virtual ~policy_os_t() {}
+
+    
+    virtual query_state_t* query_state_create() {
+        return new os_query_state_t();
     }
 
-  
-    virtual void assign_packet_to_cpu(packet_t* packet, query_state_t* qs) {
 
-        // error checking
-        assert( qs == NULL );
-
-        // OS dispatching policy requires that worker threads who pick up
-        // packets never use hard affinity to (re-)bind themselves. We
-        // indicate that no rebinding should take place by setting the
-        // packet CPU to NULL.
-
-        packet->_cpu_bind = NULL;
+    virtual void query_state_destroy(query_state_t* qs) {
+        os_query_state_t* qstate = dynamic_cast<os_query_state_t*>(qs);
+        delete qstate;
     }
 
 };

@@ -400,7 +400,7 @@ struct q16_compare2_t : public key_compare_t {
 void tpch_q16_driver::submit(void* disp) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
+    qpipe::query_state_t* qs = dp->query_state_create();
     
 
     // figure out where the SUPP_KEY lives inside part_supp_tuple_t
@@ -482,18 +482,16 @@ void tpch_q16_driver::submit(void* disp) {
     
 
     // assign packets to cpus...
-    dp->assign_packet_to_cpu(partsupp_scan_packet, qs);
-    dp->assign_packet_to_cpu(supplier_scan_packet, qs);
-    dp->assign_packet_to_cpu(not_in_packet, qs);
-    dp->assign_packet_to_cpu(part_scan_packet, qs);
-    dp->assign_packet_to_cpu(join_packet, qs);
-    dp->assign_packet_to_cpu(pagg_packet, qs);
-    dp->assign_packet_to_cpu(agg_packet, qs);
-    dp->assign_packet_to_cpu(sort_packet, qs);
+    partsupp_scan_packet->assign_query_state(qs);
+    supplier_scan_packet->assign_query_state(qs);
+    not_in_packet->assign_query_state(qs);
+    part_scan_packet->assign_query_state(qs);
+    join_packet->assign_query_state(qs);
+    pagg_packet->assign_query_state(qs);
+    agg_packet->assign_query_state(qs);
+    sort_packet->assign_query_state(qs);
     
     // Dispatch packet
-    dp->query_state_destroy(qs);
-
     dispatcher_t::dispatch_packet(sort_packet);
     guard<tuple_fifo> result = sort_packet->output_buffer();
     
@@ -509,6 +507,8 @@ void tpch_q16_driver::submit(void* disp) {
               r->p_brand, r->p_type, r->p_size, r->p_partkey);
     }
 
+
+    dp->query_state_destroy(qs);
 }
 
 EXIT_NAMESPACE(workload);

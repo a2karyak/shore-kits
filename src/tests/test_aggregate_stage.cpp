@@ -59,16 +59,19 @@ int main(int argc, char* argv[]) {
                                 fc_packet );
 
     // send packet tree
-    scheduler::policy_t::query_state_t* qs = dp->query_state_create();
-    dp->assign_packet_to_cpu(fc_packet, qs);
-    dp->assign_packet_to_cpu(agg_packet, qs);
-    dispatcher_t::dispatch_packet(agg_packet);
-    dp->query_state_destroy(qs);
+    qpipe::query_state_t* qs = dp->query_state_create();
+    fc_packet->assign_query_state(qs);
+    agg_packet->assign_query_state(qs);
 
-    
+
+    dispatcher_t::dispatch_packet(agg_packet);
+
+ 
     tuple_t output;
     while(count_buffer->get_tuple(output))
         TRACE(TRACE_ALWAYS, "Count: %d\n", *(int*)output.data);
+
+    dp->query_state_destroy(qs);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
 
     return 0;
