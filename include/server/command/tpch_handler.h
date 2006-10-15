@@ -35,12 +35,6 @@ class tpch_handler_t : public command_handler_t, public workload::driver_directo
     map<c_str, scheduler::policy_t*> _scheduler_policies;
     
 
-    void add_driver(const char*  tag, driver_t* driver);
-    void add_driver(const c_str &tag, driver_t* driver);
-    
-    void add_scheduler_policy(const char*  tag, scheduler::policy_t* dp);
-    void add_scheduler_policy(const c_str &tag, scheduler::policy_t* dp);
-    
     void print_run_statistics(workload::workload_t::results_t &results);
 
 public:
@@ -51,6 +45,12 @@ public:
 
     virtual ~tpch_handler_t() { }
 
+    void add_scheduler_policy(const char*  tag, scheduler::policy_t* dp);
+    void add_scheduler_policy(const c_str &tag, scheduler::policy_t* dp);
+    
+    void add_driver(const char*  tag, driver_t* driver);
+    void add_driver(const c_str &tag, driver_t* driver);
+    
     driver_t* lookup_driver(const c_str &tag);
 };
 
