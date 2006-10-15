@@ -82,8 +82,10 @@ void interactive_mode(void) {
 
 
 #if USE_READLINE
-    if (save_history)
+    if (save_history) {
+        PRINT("Saving history...\n");
         history_close();
+    }
 #endif
 
 

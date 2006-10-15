@@ -19,11 +19,16 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
+#include <readline/history.h>
 
 
 
 bool ensure_qpipe_directory_exists();
+bool try_history_load();
+bool history_save();
 
 
 
@@ -40,14 +45,21 @@ bool history_open() {
     if (!ensure_qpipe_directory_exists())
         return false;       
 
-    return false;
-}
-
-
-bool history_close() {
+    if (!try_history_load())
+        return false;
+    
     return true;
 }
 
+
+
+bool history_close() {
+    
+    if (!history_save())
+        return false;
+
+    return true;
+}
 
 
 
@@ -73,33 +85,64 @@ bool ensure_qpipe_directory_exists() {
 }
 
 
-#if 0
-/**
- * @brief Check whether the file specified is writeable.
- * @param abs_path The path of the file.
- * 
- * @return 1 If program file is writeable. 0 otherwise.
- */
-static int is_writable_file(char* abs_path)
-{
-    // for simplicity, we will just try and create the file here
 
-  int fd = open(abs_path, O_WRONLY|O_CREAT|O_TRUNC);
-  if ( fd == -1 )
-  {
-    return 0;
-  }
+bool try_history_load() {
 
-  // if we succeed, we will remove the file here as well
-  close(fd);
-  if ( unlink(abs_path) == -1 )
-  {
-    dbprintf("Got error removing file: %s\n", strerror(errno));
-    return 0;
-  }
-  return 1;
+    char* home_directory = getenv("HOME");
+    if (home_directory == NULL) {
+        TRACE(TRACE_ALWAYS,
+              "HOME environment variable not set. Cannot use history.\n");
+        return false;
+    }
+
+    c_str qpipe_history_file("%s/%s/%s",
+                             home_directory,
+                             QPIPE_DIRECTORY_NAME,
+                             QPIPE_HISTORY_FILE);
+
+    int open_ret = open(qpipe_history_file.data(), O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
+    if (open_ret == -1) {
+        TRACE(TRACE_ALWAYS, "Could not open QPIPE history file %s\n",
+              qpipe_history_file.data());
+        return false;
+    }
+    close(open_ret);
+
+    if ( read_history(qpipe_history_file.data()) ) {
+        TRACE(TRACE_ALWAYS, "Could not read QPIPE history file %s\n",
+              qpipe_history_file.data());
+        return false;
+    }
+
+    return true;
 }
-#endif
+
+
+
+bool history_save() {
+
+    char* home_directory = getenv("HOME");
+    if (home_directory == NULL) {
+        TRACE(TRACE_ALWAYS,
+              "HOME environment variable not set. Cannot use history.\n");
+        return false;
+    }
+
+    c_str qpipe_history_file("%s/%s/%s",
+                             home_directory,
+                             QPIPE_DIRECTORY_NAME,
+                             QPIPE_HISTORY_FILE);
+
+    if ( write_history(qpipe_history_file.data()) ) {
+        TRACE(TRACE_ALWAYS, "Could not write QPIPE history file %s\n",
+              qpipe_history_file.data());
+        return false;
+    }
+
+
+    return true;
+}
+
 
 
 #endif

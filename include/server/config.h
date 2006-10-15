@@ -13,7 +13,7 @@
 
 /* Default configuration values */
 #define QPIPE_DIRECTORY_NAME ".qpipe"
-#define QPIPE_HISTORY_FILE QPIPE_DIRECTORY_NAME "/history"
+#define QPIPE_HISTORY_FILE   "history"
 
 #define QPIPE_NETWORK_MODE_DEFAULT_LISTEN_PORT 10000
 
