@@ -41,8 +41,6 @@ void query_main(query_info_t& info, workload::driver_t* driver) {
         stopwatch_t timer;
         driver->submit(info._policy);
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
-
-        //        dbenv->memp_stat_print(0);
     }
 
     db_close();

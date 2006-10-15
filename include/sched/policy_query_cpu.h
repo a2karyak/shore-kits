@@ -30,22 +30,23 @@ protected:
 
     public:
 
+        // Just track the CPU we picked for this query
         cpu_t _qcpu;
 
         query_cpu_query_state_t(cpu_t qcpu)
             : _qcpu(qcpu)
         {
         }
+
         virtual ~query_cpu_query_state_t() { }
+
+        virtual void rebind_self(packet_t*) {
+             /* Rebind calling thread to query's CPU. */
+            cpu_bind_self(_qcpu);
+        }
     };
 
   
-    virtual cpu_t assign(packet_t*, query_state_t* qs) {
-        query_cpu_query_state_t* state = dynamic_cast<query_cpu_query_state_t*>(qs);
-        return state->_qcpu;
-    }
-
-
 public:
    
     policy_query_cpu_t()

@@ -14,9 +14,21 @@ class policy_uniproc_t : public policy_t {
 protected:
 
     class uniproc_query_state_t : public qpipe::query_state_t {
+    private:
+        policy_uniproc_t* _policy;
+        
     public:
-        uniproc_query_state_t() { }
+        uniproc_query_state_t(policy_uniproc_t* policy)
+        : _policy(policy)
+        {
+        }
+
         virtual ~uniproc_query_state_t() { }
+
+        virtual void rebind_self(packet_t* packet) {
+            /* Rebind calling thread to next CPU. */
+            cpu_bind_self( _policy->assign(packet, this) );
+        }
     };        
 
     virtual cpu_t assign(packet_t*, query_state_t*) {
@@ -32,7 +44,7 @@ public:
 
 
     virtual query_state_t* query_state_create() {
-        return new uniproc_query_state_t();
+        return new uniproc_query_state_t(this);
     }
 
 

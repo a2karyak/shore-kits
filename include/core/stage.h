@@ -123,9 +123,9 @@ public:
         // the primary packet
         packet_t* packet = _adaptor->get_packet();
         query_state_t* qstate = packet->get_query_state();
-        if (qstate != NULL) {
-            /* do binding here */
-        }
+        if (qstate != NULL)
+            /* do CPU binding */
+            qstate->rebind_self(packet);
         
 	process_packet();
     }

@@ -495,10 +495,13 @@ void stage_container_t::stage_adaptor_t::run_stage(stage_t* stage) {
     } catch(stop_exception &) {
         // no error
         TRACE(TRACE_DEBUG, "process() ended early\n");
-    } catch(...) {
+    } catch(QPipeException &qe) {
         // error!
-        TRACE(TRACE_DEBUG, "process() encountered an error\n");
+        TRACE(TRACE_ALWAYS, "process() encountered an error: %s\n", qe.what());
         error = true;
+    } catch (...) {
+        TRACE(TRACE_ALWAYS, "Caught unrecognized exception\n");
+        assert(false);
     }
 
     // if we are still accepting packets, stop now

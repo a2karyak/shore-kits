@@ -22,15 +22,11 @@ protected:
     public:
         os_query_state_t() { }
         virtual ~os_query_state_t() { }
+
+        virtual void rebind_self(packet_t*) {
+            // do no rebinding
+        }
     };
-
-
-    virtual cpu_t assign(packet_t*, query_state_t*) {
-        // OS dispatching policy requires that worker threads who pick up
-        // packets never use hard affinity to (re-)bind themselves. We
-        // indicate that no rebinding should take place by returning a CPU of NULL.
-        return NULL;
-    }
 
 
 public:

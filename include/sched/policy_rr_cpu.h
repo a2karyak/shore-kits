@@ -21,9 +21,24 @@ class policy_rr_cpu_t : public policy_t {
 protected:
 
     class rr_cpu_state_t : public qpipe::query_state_t {
+
+    private:
+        policy_rr_cpu_t* _policy;
+
     public:
-        rr_cpu_state_t() { }
+        rr_cpu_state_t(policy_rr_cpu_t* policy)
+        : _policy(policy)
+        {
+        }
+
         virtual ~rr_cpu_state_t() { }
+
+        virtual void rebind_self(packet_t* packet) {
+            /* Rebind calling thread to next CPU. */
+            cpu_t bind_cpu = _policy->assign(packet, this);
+            cpu_bind_self(bind_cpu);
+            TRACE(TRACE_CPU_BINDING, "Binding to CPU %p\n", bind_cpu);
+        }
     };
 
 
@@ -68,7 +83,7 @@ public:
 
 
     virtual query_state_t* query_state_create() {
-        return new rr_cpu_state_t();
+        return new rr_cpu_state_t(this);
     }
 
   

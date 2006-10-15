@@ -8,6 +8,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
+class packet_t;
 struct query_state_t {
 
     /* We expect this class to be subclassed. */
@@ -15,6 +16,15 @@ struct query_state_t {
 protected:
     query_state_t() { }
     virtual ~query_state_t() { }
+    
+public:
+
+    /**
+     * We could create a default implementation that does not
+     * rebinding, but this is safer.
+     */
+    virtual void rebind_self(packet_t*)=0;
+
 };
 
 

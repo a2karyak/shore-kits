@@ -40,17 +40,27 @@ protected:
     int _cpus_per_module;
 
     class rr_module_query_state_t : public qpipe::query_state_t {
+
+    private:
+        
+        policy_rr_module_t* _policy;
         
     public:
       
         int _module_index;
 
-        rr_module_query_state_t(int module_index)
-            : _module_index(module_index)
+        rr_module_query_state_t(policy_rr_module_t* policy, int module_index)
+            : _policy(policy),
+              _module_index(module_index)
         {
         }
             
         virtual ~rr_module_query_state_t() { }
+
+        virtual void rebind_self(packet_t* packet) {
+            /* Rebind calling thread to next CPU. */
+            cpu_bind_self( _policy->assign(packet, this) );
+        }
     };
 
 
@@ -73,8 +83,7 @@ protected:
         cs.exit();
         
         return
-            cpu_set_get_cpu( &_cpu_set,
-                             module_index * _cpus_per_module + next_cpu );
+            cpu_set_get_cpu( &_cpu_set, module_index * _cpus_per_module + next_cpu );
     }
 
 
@@ -119,7 +128,7 @@ public:
         
         cs.exit();
     
-        return new rr_module_query_state_t( next_module );
+        return new rr_module_query_state_t( this, next_module );
     }
 
   
