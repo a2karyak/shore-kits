@@ -11,7 +11,9 @@
 #include "scheduler/os_support.h"
 
 
+
 ENTER_NAMESPACE(scheduler);
+
 
 /* definitions of exported functions */
 
@@ -78,8 +80,11 @@ void cpu_bind_self(cpu_t cpu)
 }
 
 
+
 int  cpu_get_unique_id(cpu_t cpu) {
   return cpu->cpu_unique_id;
 }
+
+
 
 EXIT_NAMESPACE(scheduler);

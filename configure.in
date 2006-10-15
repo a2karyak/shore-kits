@@ -284,8 +284,7 @@ fi
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
     
-AC_PROG_LIBTOOL
-        
+
 # MY_AC_CONFIG_FILES(filename)
 # do AC_CONFIG_FILES(filename, chmod a-w filename)
 define([MY_AC_CONFIG_FILES],
@@ -312,7 +311,6 @@ AC_CONFIG_FILES([ Makefile \
                   src/tests/Makefile \
                   src/tests/common/Makefile \
                   src/server/Makefile \
-                  src/server/extras/Makefile \
                   src/workload/Makefile \
                   src/util/Makefile \
                   src/bdb-ext/Makefile \

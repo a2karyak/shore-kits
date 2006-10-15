@@ -15,6 +15,8 @@
 #include "scheduler/cpu_set_struct.h"
 #include "scheduler/os_support.h"
 
+
+
 ENTER_NAMESPACE(scheduler);
 
 
@@ -35,7 +37,6 @@ static void cpu_set_init_Linux(cpu_set_p cpu_set);
 static void cpu_set_init_Solaris(cpu_set_p cpu_set);
 
 #endif
-
 
 
 
@@ -325,7 +326,10 @@ static void cpu_set_init_Solaris(cpu_set_p cpu_set)
   cpu_set->cpuset_cpus     = cpus;
 }
 
+
 #endif
+
+
 
 EXIT_NAMESPACE(scheduler);
 
