@@ -104,6 +104,8 @@ int main(int argc, char* argv[]) {
 
 
     while (output_buffer->get_tuple(output)) {
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+        int result;
+        memcpy(&result, output.data, sizeof(result));
+        TRACE(TRACE_ALWAYS, "Value: %d\n", result);
     }
 }

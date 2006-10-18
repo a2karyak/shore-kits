@@ -15,7 +15,7 @@ void tpch_m146_driver::submit(void* disp) {
     int rand = this_thread->rand();
     int selection = rand % 3;
 
-    driver_t* driver;
+    driver_t* driver = NULL;
     switch (selection) {
     case 0:
         driver = _directory->lookup_driver(c_str("q1"));

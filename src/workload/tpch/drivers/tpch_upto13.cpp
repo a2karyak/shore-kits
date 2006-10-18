@@ -13,7 +13,7 @@ void tpch_upto13_driver::submit(void* disp) {
     thread_t* this_thread = thread_get_self();
     int selection = this_thread->rand(5);
 
-    driver_t* driver;
+    driver_t* driver = NULL;
     switch (selection) {
     case 0:
         driver = _directory->lookup_driver(c_str("q1"));

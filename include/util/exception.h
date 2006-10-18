@@ -49,9 +49,7 @@ public:
     }
 
 inline c_str errno_to_str(int err=errno) {
-    static const int LEN = 100;
-    char buf[LEN];
-    return strerror_r(err, buf, LEN);
+    return strerror(err);
 }
 
 DEFINE_EXCEPTION(BadAlloc);

@@ -23,10 +23,11 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
     }
 
     virtual bool select(const tuple_t &t) {
-        tpch_supplier_tuple* tuple = (tpch_supplier_tuple*) t.data;
+        tpch_supplier_tuple tuple;
+        memcpy(&tuple, t.data, sizeof(tuple));
         // search for all instances of the first substring. Make sure
         // the second search is *after* the first...
-        char* first = strstr(tuple->S_COMMENT, word1);
+        char* first = strstr(tuple.S_COMMENT, word1);
         if(!first)
             return false;
 
@@ -40,9 +41,9 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
     }
     
     virtual void project(tuple_t &d, const tuple_t &s) {
-        tpch_supplier_tuple* src = (tpch_supplier_tuple*) s.data;
-        int* dest = (int*) d.data;
-        *dest = src->S_SUPPKEY;
+        memcpy(d.data,
+               s.data + offsetof(tpch_supplier_tuple, S_SUPPKEY),
+               sizeof(int));
     }
     virtual supplier_tscan_filter_t* clone() const {
         return new supplier_tscan_filter_t(*this);
@@ -96,33 +97,36 @@ struct part_tscan_filter_t : public tuple_filter_t {
         memcpy(sizes, base_sizes, sizeof(base_sizes));
     }
     virtual bool select(const tuple_t &s) {
-        tpch_part_tuple* part = (tpch_part_tuple*) s.data;
+        tpch_part_tuple part;
+        memcpy(&part, s.data, sizeof(part));
 
         // p_brand <> '[brand]'. 
-        if(!strcmp(part->P_BRAND, brand))
+        if(!strcmp(part.P_BRAND, brand))
             return false;
 
         // p_type not like '[type]%'. Note that we're doing a prefix
         // search here.
-        if(!strncasecmp(part->P_TYPE, type, strlen(type)))
+        if(!strncasecmp(part.P_TYPE, type, strlen(type)))
             return false;
 
         // p_size in (...)
         for(int i=0; i < 8; i++)
-            if(part->P_SIZE == sizes[i])
+            if(part.P_SIZE == sizes[i])
                 return true;
 
         // no size match
         return false;
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        tpch_part_tuple* src = (tpch_part_tuple*) s.data;
-        part_scan_tuple_t* dest = (part_scan_tuple_t*) d.data;
+        tpch_part_tuple src;
+        memcpy(&src, s.data, sizeof(src));
+        part_scan_tuple_t dest;
 
-        dest->p_partkey = src->P_PARTKEY;
-        dest->p_size = src->P_SIZE;
-        memcpy(dest->p_brand, src->P_BRAND, sizeof(src->P_BRAND));
-        memcpy(dest->p_type, src->P_TYPE, sizeof(src->P_TYPE));
+        dest.p_partkey = src.P_PARTKEY;
+        dest.p_size = src.P_SIZE;
+        memcpy(dest.p_brand, src.P_BRAND, sizeof(src.P_BRAND));
+        memcpy(dest.p_type, src.P_TYPE, sizeof(src.P_TYPE));
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
@@ -161,10 +165,12 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        tpch_partsupp_tuple* src = (tpch_partsupp_tuple*) s.data;
-        part_supp_tuple_t* dest = (part_supp_tuple_t*) d.data;
-        dest->PART_KEY = src->PS_PARTKEY;
-        dest->SUPP_KEY = src->PS_SUPPKEY;
+        tpch_partsupp_tuple src;
+        memcpy(&src, s.data, sizeof(src));
+        part_supp_tuple_t dest;
+        dest.PART_KEY = src.PS_PARTKEY;
+        dest.SUPP_KEY = src.PS_SUPPKEY;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual partsupp_tscan_filter_t* clone() const {
         return new partsupp_tscan_filter_t(*this);
@@ -202,8 +208,9 @@ struct partsupp_filter_t : public tuple_filter_t {
     {
     }
     virtual void project(tuple_t &dest, const tuple_t &s) {
-        part_supp_tuple_t* src = (part_supp_tuple_t*) s.data;
-        memcpy(dest.data, &src->PART_KEY, sizeof(int));
+        memcpy(dest.data,
+               s.data + offsetof(part_supp_tuple_t, PART_KEY),
+               sizeof(int));
     }
     virtual partsupp_filter_t* clone() const {
         return new partsupp_filter_t(*this);
@@ -225,13 +232,15 @@ struct q16_join_t : public tuple_join_t {
     }
 
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        part_scan_tuple_t* dest = (part_scan_tuple_t*) d.data;
+        part_scan_tuple_t dest;
         // double cheat -- use p_partkey to store the ps_suppkey, and
         // also project out the real part key instead of using a
         // filter after the fact
-        memcpy(dest, r.data, sizeof(part_scan_tuple_t));
-        part_supp_tuple_t *left = (part_supp_tuple_t*) l.data;
-        dest->p_partkey = left->SUPP_KEY;
+        memcpy(&dest, r.data, sizeof(part_scan_tuple_t));
+        memcpy(&dest.p_partkey,
+               l.data + offsetof(part_supp_tuple_t, SUPP_KEY),
+               sizeof(int));
+        memcpy(d.data, &dest, sizeof(dest));
     }
 
     virtual q16_join_t* clone() const {
@@ -278,9 +287,10 @@ struct q16_extractor1_t : public key_extractor_t {
 #if 1
     virtual int extract_hint(const char* key) {
         return 0;
-        part_scan_tuple_t* pst = (part_scan_tuple_t*) key;
         int result;
-        memcpy(&result, pst->p_brand, sizeof(int));
+        memcpy(&result,
+               key + offsetof(part_scan_tuple_t, p_brand),
+               sizeof(int));
         return result;
     }
 #endif
@@ -321,9 +331,10 @@ struct q16_extractor2_t : public key_extractor_t {
     {
     }
     virtual int extract_hint(const char* key) {
-        part_scan_tuple_t* pst = (part_scan_tuple_t*) (key - key_offset());
         int result;
-        memcpy(&result, pst->p_brand, sizeof(int));
+        memcpy(&result,
+               key -key_offset() + offsetof(part_scan_tuple_t, p_brand),
+               sizeof(int));
         return result;
     }
     virtual q16_extractor2_t* clone() const {
@@ -340,10 +351,16 @@ struct q16_aggregate2_t : public tuple_aggregate_t {
     }
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     virtual void aggregate(char* agg_data, const tuple_t &) {
-        part_scan_tuple_t* agg = (part_scan_tuple_t*) agg_data;
+        int count;
+        memcpy(&count,
+               agg_data + offsetof(part_scan_tuple_t, p_partkey),
+               sizeof(int));
+        count++;
 
         // use the "part key" field to store the count
-        agg->p_partkey++;
+        memcpy(agg_data + offsetof(part_scan_tuple_t, p_partkey),
+               &count,
+               sizeof(int));
     }
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
@@ -362,7 +379,9 @@ struct q16_extractor3_t : public key_extractor_t {
     {
     }
     virtual int extract_hint(const char* key) {
-        return -*(int*)key;
+        int result;
+        memcpy(&result, key, sizeof(result));
+        return -result;
     }
     virtual q16_extractor3_t* clone() const {
         return new q16_extractor3_t(*this);
@@ -501,10 +520,11 @@ void tpch_q16_driver::submit(void* disp) {
     
     tuple_t output;
     while(result->get_tuple(output)) {
-        part_scan_tuple_t* r = (part_scan_tuple_t*) output.data;
+        part_scan_tuple_t r;
+        memcpy(&r, output.data, sizeof(r));
         TRACE(TRACE_ALWAYS,
               "*** Q16 %10s %25s %10d %10d\n",
-              r->p_brand, r->p_type, r->p_size, r->p_partkey);
+              r.p_brand, r.p_type, r.p_size, r.p_partkey);
     }
 
 

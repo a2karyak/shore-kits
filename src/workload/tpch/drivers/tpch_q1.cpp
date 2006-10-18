@@ -79,9 +79,10 @@ public:
 	   L_SHIPDATE <= 1998-12-01 - DELTA DAYS
 	*/
 
-	tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
+	tpch_lineitem_tuple tuple;
+        memcpy(&tuple, input.data, sizeof(tuple));
 
-	if  ( tuple->L_SHIPDATE <= t ) {
+	if  ( tuple.L_SHIPDATE <= t ) {
             //TRACE(TRACE_ALWAYS, "+");
 	    return (true);
 	}
@@ -94,17 +95,17 @@ public:
     /* Projection */
     virtual void project(tuple_t &d, const tuple_t &s) {
 
-        projected_lineitem_tuple *dest;
-        tpch_lineitem_tuple *src;
-        dest = (projected_lineitem_tuple *) d.data;
-        src = (tpch_lineitem_tuple *) s.data;
+        projected_lineitem_tuple dest;
+        tpch_lineitem_tuple src;
+        memcpy(&src, s.data, sizeof(src));
 
-        dest->L_RETURNFLAG = src->L_RETURNFLAG;
-        dest->L_LINESTATUS = src->L_LINESTATUS;
-        dest->L_QUANTITY = src->L_QUANTITY;
-        dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = src->L_DISCOUNT;
-        dest->L_TAX = src->L_TAX;
+        dest.L_RETURNFLAG = src.L_RETURNFLAG;
+        dest.L_LINESTATUS = src.L_LINESTATUS;
+        dest.L_QUANTITY = src.L_QUANTITY;
+        dest.L_EXTENDEDPRICE = src.L_EXTENDEDPRICE;
+        dest.L_DISCOUNT = src.L_DISCOUNT;
+        dest.L_TAX = src.L_TAX;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual q1_tscan_filter_t* clone() const {
         return new q1_tscan_filter_t(*this);
@@ -126,11 +127,11 @@ struct q1_key_extract_t : public key_extractor_t {
     }
     virtual int extract_hint(const char* tuple_data) {
         // store the return flag and line status in the 
-        projected_lineitem_tuple *item;
-        item = (projected_lineitem_tuple *) tuple_data;
+        projected_lineitem_tuple item;
+        memcpy(&item, tuple_data, sizeof(item));
 
-        int result = (item->L_RETURNFLAG << 8)
-            + item->L_LINESTATUS;
+        int result = (item.L_RETURNFLAG << 8)
+            + item.L_LINESTATUS;
 
         return result;
     }
@@ -156,47 +157,48 @@ public:
     virtual key_extractor_t* key_extractor() { return &_extractor; }
 
     virtual void aggregate(char* agg_data, const tuple_t &s) {
-        projected_lineitem_tuple *src;
-        src = (projected_lineitem_tuple *)s.data;
-        aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
+        projected_lineitem_tuple src;
+        memcpy(&src, s.data, sizeof(src));
+        aggregate_tuple tuple;
+        memcpy(&tuple, agg_data, sizeof(tuple));
 
         // cache resused values for convenience
-        double L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        double L_DISCOUNT = src->L_DISCOUNT;
-        double L_QUANTITY = src->L_QUANTITY;
+        double L_EXTENDEDPRICE = src.L_EXTENDEDPRICE;
+        double L_DISCOUNT = src.L_DISCOUNT;
+        double L_QUANTITY = src.L_QUANTITY;
         double L_DISC_PRICE = L_EXTENDEDPRICE * (1 - L_DISCOUNT);
 
         // update count
-        tuple->L_COUNT_ORDER++;
+        tuple.L_COUNT_ORDER++;
         
         // update sums
-        tuple->L_SUM_QTY += L_QUANTITY;
-        tuple->L_SUM_BASE_PRICE += L_EXTENDEDPRICE;
-        tuple->L_SUM_DISC_PRICE += L_DISC_PRICE;
-        tuple->L_SUM_CHARGE += L_DISC_PRICE * (1 + src->L_TAX);
-        tuple->L_AVG_QTY += L_QUANTITY;
-        tuple->L_AVG_PRICE += L_EXTENDEDPRICE;
-        tuple->L_AVG_DISC += L_DISCOUNT;
+        tuple.L_SUM_QTY += L_QUANTITY;
+        tuple.L_SUM_BASE_PRICE += L_EXTENDEDPRICE;
+        tuple.L_SUM_DISC_PRICE += L_DISC_PRICE;
+        tuple.L_SUM_CHARGE += L_DISC_PRICE * (1 + src.L_TAX);
+        tuple.L_AVG_QTY += L_QUANTITY;
+        tuple.L_AVG_PRICE += L_EXTENDEDPRICE;
+        tuple.L_AVG_DISC += L_DISCOUNT;
 
         if(0) {
-	if (((int) tuple->L_COUNT_ORDER) % 100 == 0) {
-	    TRACE(TRACE_DEBUG, "%lf\n", tuple->L_COUNT_ORDER);
+	if (((int) tuple.L_COUNT_ORDER) % 100 == 0) {
+	    TRACE(TRACE_DEBUG, "%lf\n", tuple.L_COUNT_ORDER);
 	    fflush(stdout);
 	}
         }
+        memcpy(agg_data, &tuple, sizeof(tuple));
     }
 
     
     virtual void finish(tuple_t &d, const char* agg_data) {
-            aggregate_tuple *dest;
-            dest = (aggregate_tuple *)d.data;
-            aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
-
-            *dest = *tuple;
+            aggregate_tuple dest;
+            memcpy(&dest, agg_data, sizeof(dest));
+            
             // compute averages
-            dest->L_AVG_QTY /= dest->L_COUNT_ORDER;
-            dest->L_AVG_PRICE /= dest->L_COUNT_ORDER;
-            dest->L_AVG_DISC /= dest->L_COUNT_ORDER;
+            dest.L_AVG_QTY /= dest.L_COUNT_ORDER;
+            dest.L_AVG_PRICE /= dest.L_COUNT_ORDER;
+            dest.L_AVG_DISC /= dest.L_COUNT_ORDER;
+            memcpy(d.data, &dest, sizeof(dest));
     }
 
     virtual q1_count_aggregate_t* clone() const {
@@ -247,12 +249,12 @@ void tpch_q1_driver::submit(void* disp) {
     TRACE(TRACE_QUERY_RESULTS, "*** Q1 ANSWER ...\n");
     TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
     while(agg_output_buffer->get_tuple(output)) {
-        aggregate_tuple *tuple;
-        tuple = (aggregate_tuple *) output.data;
+        aggregate_tuple tuple;
+        memcpy(&tuple, output.data, sizeof(tuple));
         TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",
-              tuple->L_SUM_QTY,
-              tuple->L_SUM_BASE_PRICE,
-              tuple->L_SUM_DISC_PRICE);
+              tuple.L_SUM_QTY,
+              tuple.L_SUM_BASE_PRICE,
+              tuple.L_SUM_DISC_PRICE);
     }
 
 

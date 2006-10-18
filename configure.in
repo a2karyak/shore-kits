@@ -233,7 +233,7 @@ done
 echo $QPIPE_FEATURES
 
 # At least one architecture must be enabled
-if ! (echo $QPIPE_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null); then
+if [ ! (echo $QPIPE_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null) ]; then
     AC_MSG_ERROR([
       At least one of the tpcc, tpch workloads must be enabled.
     ])

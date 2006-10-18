@@ -53,7 +53,9 @@ int main(int argc, char* argv[]) {
   
     tuple_t output;
     while ( int_buffer->get_tuple(output) ) {
-	TRACE(TRACE_ALWAYS, "Read %d\n", *(int*)output.data);
+        int result;
+        memcpy(&result, output.data, sizeof(result));
+	TRACE(TRACE_ALWAYS, "Read %d\n", result);
     }
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     

@@ -15,8 +15,11 @@ int main()
 
   thread_init();
 
-
+#ifdef O_DIRECT
   int fd = open("/tmp/odirect_file.txt", O_CREAT|O_WRONLY|O_DIRECT, S_IRUSR|S_IWUSR);
+#else
+  int fd = open("/tmp/odirect_file.txt", O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
+#endif
   if (fd == -1) {
       TRACE(TRACE_ALWAYS, "open() failed: %s\n",
             strerror(errno));

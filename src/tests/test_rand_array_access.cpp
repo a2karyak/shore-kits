@@ -13,7 +13,7 @@ int access_random_entries(int* array, int size) {
 
     int total = 0;
 
-    int num_tries;
+    int num_tries=0;
     while(total != 1001) { // try to outsmart compiler...
         int index = this_thread->rand() % size;
         total += array[index];

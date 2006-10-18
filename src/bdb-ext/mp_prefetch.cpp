@@ -65,6 +65,9 @@ static const int LOCKED = -1;
 extern "C"
 int disk_cache_invalidate(int fd, size_t page, size_t size) {
     assert(size == PAGE_SIZE);
+    // keep the compiler happy for now...
+    assert(fd > 0);
+    assert(page != 0);
     return 0;
 }
 
@@ -114,7 +117,12 @@ static int indexof_victim(int min_index=0) {
 
 extern "C"
 int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
-        
+
+    if(size != PAGE_SIZE) {
+        printf("Unable to prefetch -- page size mismatch\n");
+        return 1;
+    }
+    
     assert(size == PAGE_SIZE);
     int block = page & -stream_size;
     int block_offset = page - block;
@@ -140,7 +148,7 @@ int disk_cache_read(void* dest, int fd, size_t page, size_t size) {
         // successful prefetch). Either way, initiate a prefetch if we
         // haven't already...
         stream_key prefetch_request(fd, block+stream_size);
-        int victim;
+        int victim = 0;
         int mindex = cache.size()/2;
         bool can_prefetch = check_aio_ready()
             && !exists(prefetch_request)
@@ -276,8 +284,8 @@ int disk_cache_init(size_t size, int streams) {
     // allocate the memory
     buf = (char*) mmap(0, size,
                        PROT_READ|PROT_WRITE,
-                       MAP_PRIVATE|MAP_ANONYMOUS|MAP_POPULATE,
-                       0, 0);
+                       MAP_PRIVATE|MAP_ANON/*|MAP_POPULATE*/,
+                       -1, 0);
     if(buf == MAP_FAILED) {
         perror("init_disk_cache");
         return errno;

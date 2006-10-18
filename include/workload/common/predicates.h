@@ -68,7 +68,7 @@ namespace std {
     {
         bool
         operator()(const double& __x, const double& __y) const
-        { return (int) round(__x*100) == (int) round(__y*100); }
+        { return (int) (__x*100 + .5) == (int) (__y*100 + .5); }
     };
 
     /// One of the @link s20_3_3_comparisons comparison functors@endlink.
@@ -86,7 +86,7 @@ namespace std {
     {
         bool
         operator()(const double& __x, const double& __y) const
-        { return (int) round(__x*100) > (int) round(__y*100); }
+        { return (int) (__x*100 + .5) > (int) (__y*100+.5); }
     };
 
     /// One of the @link s20_3_3_comparisons comparison functors@endlink.
@@ -95,7 +95,7 @@ namespace std {
     {
         bool
         operator()(const double& __x, const double& __y) const
-        { return (int) round(__x*100) < (int) round(__y*100); }
+        { return (int) (__x*100 + .5) < (int)(__y*100+.5); }
     };
 
     /// One of the @link s20_3_3_comparisons comparison functors@endlink.

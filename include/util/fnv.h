@@ -77,7 +77,7 @@
 #define __FNV_H__
 
 #include <cstdlib>
-#include <stdint.h>
+#include <sys/types.h>
 
 /*
  * 32 bit FNV-1 and FNV-1a non-zero initial basis

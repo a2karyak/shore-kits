@@ -31,24 +31,29 @@ public:
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     
     virtual void aggregate(char* agg_data, const tuple_t & src) {
-        agg_t* agg = (agg_t*) agg_data;
-	double * d = (double*) src.data;
+        agg_t agg;
+        double d[2];
+        memcpy(&agg, agg_data, sizeof(agg));
+        memcpy(d, src.data, sizeof(d));
         
 	// update COUNT and SUM
-	agg->count++;
-	agg->sum += d[0] * d[1];
+	agg.count++;
+	agg.sum += d[0] * d[1];
     
-	if(TRACE_AGGREGATE && (agg->count % 10 == 0)) {
-	    TRACE(TRACE_DEBUG, "%d - %lf\n", agg->count, agg->sum);
+	if(TRACE_AGGREGATE && (agg.count % 10 == 0)) {
+	    TRACE(TRACE_DEBUG, "%d - %lf\n", agg.count, agg.sum);
 	    fflush(stdout);
 	}
+        memcpy(agg_data, &agg, sizeof(agg));
     }
 
     virtual void finish(tuple_t &dest, const char* agg_data) {
-        agg_t* agg = (agg_t*) agg_data;
-        double *output = (double*)dest.data;
-        output[0] = agg->sum;
-        output[1] = agg->count;
+        agg_t agg;
+        memcpy(&agg, agg_data, sizeof(agg));
+        double output[2];
+        output[0] = agg.sum;
+        output[1] = agg.count;
+        memcpy(dest.data, output, sizeof(output));
     }
 
     virtual q6_count_aggregate_t* clone() const {

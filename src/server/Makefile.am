@@ -1,11 +1,11 @@
 # -*- makefile -*-
 SUBDIRS = extras
 
-INCLUDES = -I$(top_srcdir)/include 
+INCLUDES = -I$(top_srcdir)/include -I$(HOME)/apps/include
 
 # libtestcommon temporarily added so we can use register_stage()
 LDBASE = $(top_srcdir)/src
-AM_LDFLAGS = -Wl,-export-dynamic
+#AM_LDFLAGS = -Wl,-export-dynamic
 
 LDADD = \
 	$(LDBASE)/workload/libworkload.a \

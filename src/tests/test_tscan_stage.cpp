@@ -46,9 +46,9 @@ int main() {
     dispatcher_t::dispatch_packet(q6_tscan_packet);
     
     tuple_t output;
-    double* d = NULL;
+    double d[2];
     while(!tscan_out_buffer->get_tuple(output)) {
-	d = (double*)output.data;
+	memcpy(&d, output.data, sizeof(d));
 	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n", d[0], d[1]);
     }
 

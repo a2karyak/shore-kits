@@ -142,8 +142,10 @@ int main(int argc, char* argv[]) {
    
     tuple_t output;
     while(output_buffer->get_tuple(output)) {
+        int result;
+        memcpy(&result, output.data, sizeof(result));
         if(do_echo)
-            TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+            TRACE(TRACE_ALWAYS, "Value: %d\n", result);
     }
     TRACE(TRACE_ALWAYS, "No more tuples...\n");
     TRACE(TRACE_ALWAYS, "TEST DONE\n");

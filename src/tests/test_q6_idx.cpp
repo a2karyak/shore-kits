@@ -49,10 +49,12 @@ struct q6_iscan_filter_t : tuple_filter_t {
         _filter.add(p);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        iscan_tuple *dest = (iscan_tuple*) d.data;
-        tpch_lineitem_tuple *src = (tpch_lineitem_tuple*) s.data;
-        dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = src->L_DISCOUNT;
+        iscan_tuple dest;
+        tpch_lineitem_tuple src;
+        memcpy(&src, s.data, sizeof(src));
+        dest.L_EXTENDEDPRICE = src.L_EXTENDEDPRICE;
+        dest.L_DISCOUNT = src.L_DISCOUNT;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
@@ -107,11 +109,7 @@ struct print_filter_t : tuple_filter_t {
 
     // use default project...
     
-    virtual bool select(const tuple_t &t) {
-        if(0) {
-            int* data = (int*)t.data;
-            printf("%d\n", data[0]);
-        }
+    virtual bool select(const tuple_t &) {
         return true;
     }
 
@@ -250,7 +248,8 @@ int main(int argc, char* argv[]) {
         printf("Count: %d\n", count);
         if(0)
         while(output_buffer->get_tuple(output)) {
-            double* r = (double*)output.data;
+            double r[2];
+            memcpy(r, output.data, sizeof(r));
             TRACE(TRACE_ALWAYS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
         }
         

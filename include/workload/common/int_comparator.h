@@ -10,6 +10,7 @@ struct int_key_compare_t : public key_compare_t {
     virtual int operator()(const void*, const void*) {
         // should be unreachable!
         assert(false);
+        return 0;
     }
     virtual key_compare_t* clone() const {
         return new int_key_compare_t(*this);

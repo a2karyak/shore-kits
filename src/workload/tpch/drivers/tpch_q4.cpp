@@ -28,15 +28,17 @@ packet_t* line_item_scan(Db* tpch_lineitem) {
 
         /* Predication */
         virtual bool select(const tuple_t &input) {
-            tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
-            return tuple->L_COMMITDATE < tuple->L_RECEIPTDATE;
+            tpch_lineitem_tuple tuple;
+            memcpy(&tuple, input.data, sizeof(tuple));
+            return tuple.L_COMMITDATE < tuple.L_RECEIPTDATE;
         }
     
         /* Projection */
         virtual void project(tuple_t &dest, const tuple_t &src) {
             /* Should project  L_ORDERKEY */
-            tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
-            memcpy(dest.data, &at->L_ORDERKEY, sizeof(int));
+            memcpy(dest.data,
+                   src.data + offsetof(tpch_lineitem_tuple, L_ORDERKEY),
+                   sizeof(int));
         }
         virtual lineitem_tscan_filter_t* clone() const {
             return new lineitem_tscan_filter_t(*this);
@@ -83,17 +85,20 @@ packet_t* orders_scan(Db* tpch_orders) {
 
         /* Predication */
         virtual bool select(const tuple_t &input) {
-            tpch_orders_tuple *tuple = (tpch_orders_tuple*)input.data;
-            return tuple->O_ORDERDATE >= t1 && tuple->O_ORDERDATE < t2;
+            tpch_orders_tuple tuple;
+            memcpy(&tuple, input.data, sizeof(tuple));
+            return tuple.O_ORDERDATE >= t1 && tuple.O_ORDERDATE < t2;
         }
     
         /* Projection */
         virtual void project(tuple_t &d, const tuple_t &s) {
             /* Should project  O_ORDERKEY and O_ORDERPRIORITY*/
-            tpch_orders_tuple* src = (tpch_orders_tuple*) s.data;
-            order_scan_tuple_t* dest = (order_scan_tuple_t*) d.data;
-            dest->O_ORDERKEY = src->O_ORDERKEY;
-            dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
+            tpch_orders_tuple src;
+            memcpy(&src, s.data, sizeof(src));
+            order_scan_tuple_t dest;
+            dest.O_ORDERKEY = src.O_ORDERKEY;
+            dest.O_ORDERPRIORITY = src.O_ORDERPRIORITY;
+            memcpy(&dest, d.data, sizeof(dest));
         }
         virtual orders_tscan_filter_t* clone() const {
             return new orders_tscan_filter_t(*this);
@@ -154,8 +159,9 @@ struct q4_join_t : public tuple_join_t {
                       const tuple_t &)
     {
         // KLUDGE: this projection should go in a separate filter class
-        order_scan_tuple_t* tuple = (order_scan_tuple_t*) left.data;
-        memcpy(dest.data, &tuple->O_ORDERPRIORITY, sizeof(int));
+        memcpy(dest.data,
+               left.data + offsetof(order_scan_tuple_t, O_ORDERPRIORITY),
+               sizeof(int));
     }
     virtual c_str to_string() const {
         return "join LINEITEM and ORDERS, select O_ORDERPRIORITY";
@@ -177,8 +183,10 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     
     virtual void aggregate(char* agg_data, const tuple_t &) {
-        q4_tuple_t* agg = (q4_tuple_t*) agg_data;
-        agg->ORDER_COUNT++;
+        q4_tuple_t agg;
+        memcpy(&agg, agg_data, sizeof(agg));
+        agg.ORDER_COUNT++;
+        memcpy(agg_data, &agg, sizeof(agg));
     }
 
     virtual void finish(tuple_t &d, const char* agg_data) {
@@ -265,10 +273,11 @@ void tpch_q4_driver::submit(void* disp) {
     dispatcher_t::dispatch_packet(agg_packet);
     tuple_t output;
     while(result->get_tuple(output)) {
-        q4_tuple_t* r = (q4_tuple_t*) output.data;
+        q4_tuple_t r;
+        memcpy(&r, output.data, sizeof(r));
         TRACE(TRACE_QUERY_RESULTS, "*** Q4 Priority: %d. Count: %d.  ***\n",
-              r->O_ORDERPRIORITY,
-              r->ORDER_COUNT);
+              r.O_ORDERPRIORITY,
+              r.ORDER_COUNT);
     }
 
     dp->query_state_destroy(qs);

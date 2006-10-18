@@ -15,43 +15,32 @@ struct c_str::c_str_data {
     char _str[0] __attribute__ ((aligned));
 };
 
-c_str::c_str(const char* str, ...) {
+c_str::c_str(const char* str, ...)
+    : _data(NULL)
+{
 
-    int size = strlen(str) + 1;
-    char format[sizeof(c_str_data) + size];
-
-    // pad with space for the header, but don't copy it in quite yet
-    memset(format, '.', sizeof(c_str_data));
-    // copy over the format string
-    memcpy(&format[sizeof(c_str_data)], str, size);
-
-    // keep the compiler's memory analysis happy (type-punned access!)
-    union {
-        char* str;
-        c_str_data* data;
-    } pun;
-
-
-    // copy the string
-    va_list args;
-    va_start(args, str);
+    for(int i=128; i <= 1024; i *= 2) {
+        va_list args;
+        char tmp[i+1];
+        va_start(args, str);
+        int count = vsnprintf(tmp, i, str, args);
+        va_end(args);
         
-    // format the string
-    if( vasprintf(&pun.str, format, args) < 0)
-        throw EXCEPTION(BadAlloc);
+        if(count > i)
+            continue;
         
-    va_end(args);
-
-    // Copy in initial header value. Let's hope that vasprintf()'s
-    // malloc() call return something 
-    pun.data->_lock = thread_mutex_create();
-    pun.data->_count = 1;
-
-    // done!
-    _data = pun.data;
+        int len = strlen(tmp);
+        _data = (c_str_data*) malloc(sizeof(c_str_data) + len + 1);
+        if(_data == NULL)
+            throw EXCEPTION(BadAlloc);
         
-    if (DEBUG_C_STR)
-        printf("constructed new c_str = %s\n", data());
+        _data->_lock = thread_mutex_create();
+        _data->_count = 1;
+        memcpy(_data->_str, tmp, len+1);
+        return;
+    }
+    // shouldn't get here...
+    throw EXCEPTION(BadAlloc);
 }
 
 const char* c_str::data() const {

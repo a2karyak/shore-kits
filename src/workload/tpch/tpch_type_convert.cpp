@@ -44,8 +44,11 @@ char* timet_to_datestr(time_t time) {
     struct tm tm;
     memset(&tm, 0, sizeof(tm));
     localtime_r(&time, &tm);
-    char* result;
-    asprintf(&result, "%04d-%02d-%02d\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
+    int len = strlen("YYYY-MM-DD\n");
+    char* result = (char*) malloc(len+1);
+    assert(result);
+    assert(snprintf(result, len, "%04d-%02d-%02d\n",
+                    tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday) == len);
     return result;
 }
 

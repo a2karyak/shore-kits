@@ -37,6 +37,7 @@
 /* detected Sun Solaris */
 #include <sys/types.h>
 #include <sys/processor.h>
+#include <sys/procset.h>
 
 #endif
 #endif
@@ -47,7 +48,7 @@
 #error "Unsupported operating system\n"
 #endif
 
-typedef cpu_set_t os_cpu_set_t;
+//typedef cpu_set_t os_cpu_set_t;
 
 
 #endif

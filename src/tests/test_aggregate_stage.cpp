@@ -68,8 +68,11 @@ int main(int argc, char* argv[]) {
 
  
     tuple_t output;
-    while(count_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Count: %d\n", *(int*)output.data);
+    while(count_buffer->get_tuple(output)) {
+        int result;
+        memcpy(&result, output.data, sizeof(result));
+        TRACE(TRACE_ALWAYS, "Count: %d\n", result);
+    }
 
     dp->query_state_destroy(qs);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");

@@ -14,7 +14,7 @@
 #include <cassert>
 #include <functional>
 #include <cstdarg>
-#include <stdint.h>
+
 
 #include "util/c_str.h"
 #include "util/exception.h"

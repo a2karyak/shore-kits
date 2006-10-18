@@ -21,7 +21,10 @@ public:
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     
     virtual void aggregate(char* agg_data, const tuple_t &) {
-        ++*(int*) agg_data;
+        int agg;
+        memcpy(&agg, agg_data, sizeof(agg));
+        ++agg;
+        memcpy(agg_data, &agg, sizeof(agg));
     }
 
     virtual void finish(tuple_t &dest, const char* agg_data) {

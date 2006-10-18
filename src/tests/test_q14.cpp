@@ -57,11 +57,12 @@ struct part_tscan_filter_t : tuple_filter_t {
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        part_scan_tuple* dest = (part_scan_tuple*) d.data;
-        tpch_part_tuple* src = (tpch_part_tuple*) s.data;
-
-        dest->P_PARTKEY = src->P_PARTKEY;
-        memcpy(dest->P_TYPE, src->P_TYPE, sizeof(dest->P_TYPE));
+        memcpy(d.data + offsetof(part_scan_tuple, P_PARTKEY),
+               s.data + offsetof(tpch_part_tuple, P_PARTKEY),
+               sizeof(int));
+        memcpy(d.data + offsetof(part_scan_tuple, P_TYPE),
+               s.data + offsetof(tpch_part_tuple, P_TYPE),
+               sizeof(int));
     }
     virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
@@ -96,12 +97,15 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     }
 
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = (lineitem_scan_tuple*) d.data;
-        tpch_lineitem_tuple *src = (tpch_lineitem_tuple*) s.data;
-
-        dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = src->L_DISCOUNT;
-        dest->L_PARTKEY = src->L_PARTKEY;
+        memcpy(d.data + offsetof(lineitem_scan_tuple, L_EXTENDEDPRICE),
+               s.data + offsetof(tpch_lineitem_tuple, L_EXTENDEDPRICE),
+               SIZEOF(tpch_lineitem_tuple, L_EXTENDEDPRICE));
+        memcpy(d.data + offsetof(lineitem_scan_tuple, L_DISCOUNT),
+               s.data + offsetof(tpch_lineitem_tuple, L_DISCOUNT),
+               SIZEOF(tpch_lineitem_tuple,L_DISCOUNT));
+        memcpy(d.data + offsetof(lineitem_scan_tuple, L_PARTKEY),
+               s.data + offsetof(tpch_lineitem_tuple, L_PARTKEY),
+               SIZEOF(tpch_lineitem_tuple,L_PARTKEY));
     }
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
@@ -136,14 +140,11 @@ struct q14_join : tuple_join_t {
     {
     }
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = (join_tuple*) d.data;
-        part_scan_tuple* left = (part_scan_tuple*) l.data;
-        lineitem_scan_tuple* right = (lineitem_scan_tuple*) r.data;
 
         // cheat and filter out the join key...
-        dest->L_EXTENDEDPRICE = right->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = right->L_DISCOUNT;
-        memcpy(dest->P_TYPE, left->P_TYPE, sizeof(dest->P_TYPE));
+        COPY(d.data, join_tuple, r.data, lineitem_scan_tuple, L_EXTENDEDPRICE);
+        COPY(d.data, join_tuple, r.data, lineitem_scan_tuple, L_DISCOUNT);
+        COPY(d.data, join_tuple, l.data, part_scan_tuple, P_TYPE);
     }
     virtual q14_join* clone() const {
         return new q14_join(*this);
@@ -175,18 +176,23 @@ struct q14_aggregate : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        q14_tuple* agg = (q14_tuple*) agg_data;
-        join_tuple* tuple = (join_tuple*) t.data;
+        q14_tuple agg;
+        memcpy(&agg,  agg_data, sizeof(agg));
+        join_tuple tuple;
+        memcpy(&tuple, t.data, sizeof(tuple));
 
-        double value = tuple->L_EXTENDEDPRICE*(1 - tuple->L_DISCOUNT);
-        agg->TOTAL_SUM += value;
+        double value = tuple.L_EXTENDEDPRICE*(1 - tuple.L_DISCOUNT);
+        agg.TOTAL_SUM += value;
         if(_filter.select(t))
-            agg->PROMO_SUM += value;
+            agg.PROMO_SUM += value;
+        memcpy(agg_data, &agg, sizeof(agg));
     }
     virtual void finish(tuple_t &d, const char* agg_data) {
-        double* dest = (double*) d.data;
-        q14_tuple* agg = (q14_tuple*) agg_data;
-        *dest = 100.*agg->PROMO_SUM/agg->TOTAL_SUM;
+        double dest;
+        q14_tuple agg;
+        memcpy(&agg, agg_data, sizeof(agg));
+        dest = 100.*agg.PROMO_SUM/agg.TOTAL_SUM;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual q14_aggregate* clone() const {
         return new q14_aggregate(*this);
@@ -258,8 +264,9 @@ int main() {
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
-            double* r = (double*) output.data;
-            TRACE(TRACE_ALWAYS, "*** Q14 Promo Revenue: %5.2lf\n", *r);
+            double r;
+            memcpy(&r, output.data, sizeof(r));;
+            TRACE(TRACE_ALWAYS, "*** Q14 Promo Revenue: %5.2lf\n", r);
         }
 
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());

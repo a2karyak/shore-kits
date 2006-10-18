@@ -72,10 +72,12 @@ struct order_tscan_filter_t : tuple_filter_t {
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        order_scan_tuple* dest = (order_scan_tuple*) d.data;
-        tpch_orders_tuple* src = (tpch_orders_tuple*) s.data;
-        dest->O_ORDERKEY = src->O_ORDERKEY;
-        dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
+        order_scan_tuple dest;
+        tpch_orders_tuple src;
+        memcpy(&src, s.data, sizeof(src));
+        dest.O_ORDERKEY = src.O_ORDERKEY;
+        dest.O_ORDERPRIORITY = src.O_ORDERPRIORITY;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual order_tscan_filter_t* clone() const {
         return new order_tscan_filter_t(*this);
@@ -153,10 +155,12 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(p);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = (lineitem_scan_tuple*) d.data;
-        tpch_lineitem_tuple *src = (tpch_lineitem_tuple*) s.data;
-        dest->L_ORDERKEY = src->L_ORDERKEY;
-        dest->L_SHIPMODE = src->L_SHIPMODE;
+        lineitem_scan_tuple dest;
+        tpch_lineitem_tuple src;
+        memcpy(&src, s.data, sizeof(src));
+        dest.L_ORDERKEY = src.L_ORDERKEY;
+        dest.L_SHIPMODE = src.L_SHIPMODE;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
@@ -189,13 +193,16 @@ struct q12_join_t : tuple_join_t {
     {
     }
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = (join_tuple*) d.data;
-        order_scan_tuple* left = (order_scan_tuple*) l.data;
-        lineitem_scan_tuple* right = (lineitem_scan_tuple*) r.data;
+        join_tuple dest;
+        order_scan_tuple left;
+        memcpy(&left, l.data, sizeof(left));
+        lineitem_scan_tuple right;
+        memcpy(&right, r.data, sizeof(right));
         
         // cheat and filter out the join key here
-        dest->L_SHIPMODE = right->L_SHIPMODE;
-        dest->O_ORDERPRIORITY = left->O_ORDERPRIORITY;
+        dest.L_SHIPMODE = right.L_SHIPMODE;
+        dest.O_ORDERPRIORITY = left.O_ORDERPRIORITY;
+        memcpy(d.data, &dest, sizeof(dest));
     }
     virtual q12_join_t* clone() const {
         return new q12_join_t(*this);
@@ -244,12 +251,14 @@ struct q12_aggregate_t : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        q12_tuple* agg = (q12_tuple*) agg_data;
+        q12_tuple agg;
+        memcpy(&agg, agg_data, sizeof(agg));
 
         if(_filter.select(t))
-            agg->HIGH_LINE_COUNT++;
+            agg.HIGH_LINE_COUNT++;
         else
-            agg->LOW_LINE_COUNT++;
+            agg.LOW_LINE_COUNT++;
+        memcpy(agg_data, &agg, sizeof(agg));
     }
     virtual void finish(tuple_t &dest, const char* agg_data) {
         memcpy(dest.data, agg_data, dest.size);
@@ -324,11 +333,12 @@ void tpch_q12_driver::submit(void* disp) {
     TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10s %10s\n",
           "Shipmode", "High_Count", "Low_Count");
     while(result->get_tuple(output)) {
-        q12_tuple* r = (q12_tuple*) output.data;
+        q12_tuple r;
+        memcpy(&r, output.data, sizeof(r));
         TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10d %10d\n",
-              (r->L_SHIPMODE == MAIL) ? "MAIL" : "SHIP",
-              r->HIGH_LINE_COUNT,
-              r->LOW_LINE_COUNT);
+              (r.L_SHIPMODE == MAIL) ? "MAIL" : "SHIP",
+              r.HIGH_LINE_COUNT,
+              r.LOW_LINE_COUNT);
     }
 
     dp->query_state_destroy(qs);

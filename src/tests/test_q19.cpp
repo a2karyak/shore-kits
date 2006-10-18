@@ -82,7 +82,7 @@ struct join_tuple {
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
-    int PARTKEY;
+    int L_PARTKEY;
     int P_SIZE;
     tpch_l_shipmode L_SHIPMODE;
     char P_CONTAINER[STRSIZE(10)];
@@ -135,12 +135,10 @@ struct part_tscan_filter_t : public tuple_filter_t {
         }
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        part_scan_tuple *dest = (part_scan_tuple*) d.data;
-        tpch_part_tuple *src = (tpch_part_tuple*) s.data;
-        dest->P_PARTKEY = src->P_PARTKEY;
-        dest->P_SIZE = src->P_SIZE;
-        memcpy(dest->P_CONTAINER, src->P_CONTAINER, sizeof(src->P_CONTAINER));
-        memcpy(dest->P_BRAND, src->P_BRAND, sizeof(src->P_BRAND));
+        COPY(d.data, part_scan_tuple, s.data, tpch_part_tuple, P_PARTKEY);
+        COPY(d.data, part_scan_tuple, s.data, tpch_part_tuple, P_SIZE);
+        COPY(d.data, part_scan_tuple, s.data, tpch_part_tuple, P_CONTAINER);
+        COPY(d.data, part_scan_tuple, s.data, tpch_part_tuple, P_BRAND);
     }
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
@@ -206,14 +204,12 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(orp);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = (lineitem_scan_tuple*) d.data;
-        tpch_lineitem_tuple *src = (tpch_lineitem_tuple*) s.data;
-        dest->L_QUANTITY = src->L_QUANTITY;
-        dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = src->L_DISCOUNT;
-        dest->L_PARTKEY = src->L_PARTKEY;
-        dest->L_SHIPMODE = src->L_SHIPMODE;
-        memcpy(dest->L_SHIPINSTRUCT, src->L_SHIPINSTRUCT, sizeof(dest->L_SHIPINSTRUCT));
+        COPY(d.data, lineitem_scan_tuple, s.data, tpch_lineitem_tuple, L_QUANTITY);
+        COPY(d.data, lineitem_scan_tuple, s.data, tpch_lineitem_tuple, L_EXTENDEDPRICE);
+        COPY(d.data, lineitem_scan_tuple, s.data, tpch_lineitem_tuple, L_DISCOUNT);
+        COPY(d.data, lineitem_scan_tuple, s.data, tpch_lineitem_tuple, L_PARTKEY);
+        COPY(d.data, lineitem_scan_tuple, s.data, tpch_lineitem_tuple, L_SHIPMODE);
+        COPY(d.data, lineitem_scan_tuple, s.data, tpch_lineitem_tuple, L_SHIPINSTRUCT);
     }
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
@@ -256,19 +252,16 @@ struct q19_join_t : tuple_join_t {
     }
 
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = (join_tuple*) d.data;
-        lineitem_scan_tuple* left = (lineitem_scan_tuple*) l.data;
-        part_scan_tuple* right = (part_scan_tuple*) r.data;
 
-        dest->L_QUANTITY = left->L_QUANTITY;
-        dest->L_EXTENDEDPRICE = left->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = left->L_DISCOUNT;
-        dest->PARTKEY = left->L_PARTKEY;
-        dest->P_SIZE = right->P_SIZE;
-        dest->L_SHIPMODE = left->L_SHIPMODE;
-        memcpy(dest->P_CONTAINER, right->P_CONTAINER, sizeof(right->P_CONTAINER));
-        memcpy(dest->P_BRAND, right->P_BRAND, sizeof(right->P_BRAND));
-        memcpy(dest->L_SHIPINSTRUCT, left->L_SHIPINSTRUCT, sizeof(left->L_SHIPINSTRUCT));
+        COPY(d.data, join_tuple, l.data, lineitem_scan_tuple, L_QUANTITY);
+        COPY(d.data, join_tuple, l.data, lineitem_scan_tuple, L_EXTENDEDPRICE);
+        COPY(d.data, join_tuple, l.data, lineitem_scan_tuple, L_DISCOUNT);
+        COPY(d.data, join_tuple, l.data, lineitem_scan_tuple, L_PARTKEY);
+        COPY(d.data, join_tuple, l.data, lineitem_scan_tuple, L_SHIPMODE);
+        COPY(d.data, join_tuple, l.data, lineitem_scan_tuple, L_SHIPINSTRUCT);
+        COPY(d.data, join_tuple, r.data, part_scan_tuple, P_SIZE);
+        COPY(d.data, join_tuple, r.data, part_scan_tuple, P_CONTAINER);
+        COPY(d.data, join_tuple, r.data, part_scan_tuple, P_BRAND);
     }
 
     virtual q19_join_t* clone() const {
@@ -340,10 +333,8 @@ struct q19_filter_t : tuple_filter_t {
         }
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        q19_tuple *dest = (q19_tuple*) d.data;
-        join_tuple *src = (join_tuple*) s.data;
-        dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = src->L_DISCOUNT;
+        COPY(d.data, q19_tuple, s.data, join_tuple, L_EXTENDEDPRICE);
+        COPY(d.data, q19_tuple, s.data, join_tuple, L_DISCOUNT);
     }
     virtual bool select(const tuple_t &t) {
         return _filter.select(t);
@@ -369,10 +360,13 @@ struct q19_sum_t : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        double* dest = (double*) agg_data;
-        q19_tuple* src = (q19_tuple*) t.data;
+        double dest;
+        memcpy(&dest, agg_data, sizeof(dest));
+        q19_tuple src;
+        memcpy(&src, t.data, sizeof(src));
 
-        *dest += src->L_EXTENDEDPRICE*(1 - src->L_DISCOUNT);
+        dest += src.L_EXTENDEDPRICE*(1 - src.L_DISCOUNT);
+        memcpy(agg_data, &dest, sizeof(dest));
     }
     virtual void finish(tuple_t &dest, const char* agg_data) {
         memcpy(dest.data, agg_data, dest.size);
@@ -445,8 +439,9 @@ int main() {
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
-            double* r = (double*) output.data;
-            TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", *r);
+            double r;
+            memcpy(&r,  output.data, sizeof(r));
+            TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", r);
         }
 
         TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());

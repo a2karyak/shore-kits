@@ -17,5 +17,13 @@
 #include "workload/common/q6_packet.h"
 #include "workload/common/q6_client.h"
 
+// determines the size of a given field in a struct
+#define SIZEOF(s, f) (sizeof(((s*)NULL)->f))
+
+// shortcut to memcpy a same-named field between two structs
+#define COPY(d, dtype, s, stype, f) \
+    memcpy(d + offsetof(dtype, f), \
+           s + offsetof(stype, f), \
+           SIZEOF(stype, f))
 
 #endif

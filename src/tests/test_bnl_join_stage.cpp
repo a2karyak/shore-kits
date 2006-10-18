@@ -100,8 +100,11 @@ int main(int argc, char* argv[]) {
     
     
     tuple_t output;
-    while(join_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+    while(join_buffer->get_tuple(output)) {
+        int result;
+        memcpy(&result, output.data, sizeof(result));
+        TRACE(TRACE_ALWAYS, "Value: %d\n", result);
+    }
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     
     return 0;

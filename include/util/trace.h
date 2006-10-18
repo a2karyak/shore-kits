@@ -10,7 +10,7 @@
 #define _TRACE_H
 
 #include <cstdarg>             /* for varargs */
-#include <stdint.h>            /* for uint32_t */
+#include <sys/types.h>            /* for uint32_t */
 
 
 /* exported constants */
