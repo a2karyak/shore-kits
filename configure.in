@@ -270,6 +270,7 @@ AC_SUBST(BDB_HOME)
 
 #PROFILE_FLAGS="-pg"
 OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+#$OPT_FLAGS="-O3 -fno-inline"
 CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
 	-Wconversion -Wno-system-headers -D_REENTRANT -I$BDB_HOME/include"
 

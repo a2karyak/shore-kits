@@ -5,6 +5,32 @@ ENTER_NAMESPACE(qpipe);
 
 static const int PAGE_SIZE = 4096;
 
+
+
+// use 3/9 for "good" performance
+#define READ_PREFETCH 3
+#define WRITE_PREFETCH 9
+
+inline
+void touch(void const* page) {
+#if 0
+    assert(PAGE_SIZE/CACHE_LINE % 8 == 0);
+    static int const CACHE_LINE = 64/sizeof(long);
+    long volatile *bp = (long*) page;
+    long *be = PAGE_SIZE/sizeof(long) + (long*) page;
+    for(; bp < be; bp+=CACHE_LINE*8) {
+        bp[0*CACHE_LINE];
+        bp[1*CACHE_LINE];
+        bp[2*CACHE_LINE];
+        bp[3*CACHE_LINE];
+        bp[4*CACHE_LINE];
+        bp[5*CACHE_LINE];
+        bp[6*CACHE_LINE];
+        bp[7*CACHE_LINE];
+    } 
+#endif
+}
+
 struct strlt {
     bool operator()(char* const a, char* const b) {
         return strcmp(a, b) < 0;
@@ -14,6 +40,7 @@ struct strlt {
 pthread_mutex_t open_fifo_mutex = thread_mutex_create();
 static int open_fifo_count = 0;
 static stats_list file_stats;
+static size_t total_prefetches = 0;
 
 /*
  * Creates a new (temporary) file in the BDB bufferpool for the FIFO
@@ -39,6 +66,7 @@ void tuple_fifo::destroy() {
     // store the stats for later...
     file_stats.push_back(_pool->get_stats());
     DB_MPOOL_FSTAT &stat = file_stats.back();
+    total_prefetches += _prefetch_count;
 
     // canonicalize the name so we don't have dangling pointers
     stat.file_name = "FIFO";
@@ -54,9 +82,13 @@ stats_list tuple_fifo::get_stats() {
     return file_stats;
 }
 
+size_t tuple_fifo::prefetch_count() {
+    return total_prefetches;
+}
 void tuple_fifo::clear_stats() {
     critical_section_t cs(open_fifo_mutex);
     file_stats.clear();
+    total_prefetches = 0;
 }
 
 /*
@@ -133,9 +165,21 @@ void tuple_fifo::_flush(bool force) {
     // * * * END CRITICAL SECTION * * *
 }
 
+//#define USE_PREFETCH
+
 void tuple_fifo::ensure_write_ready() {
-    if(check_write_ready())
+    if(check_write_ready()) {
+#ifdef USE_PREFETCH
+        // issue a prefetch
+        size_t count = _write_page->end()->data - _write_page->begin()->data;
+        __builtin_prefetch(_prefetch_page->begin()->data + count, 1);
+#endif
+#if WRITE_PREFETCH != 0
+        __builtin_prefetch(_write_page->end()->data + WRITE_PREFETCH*64);
+        _prefetch_count++;
+#endif
         return;
+    }
 
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
@@ -151,8 +195,16 @@ void tuple_fifo::ensure_write_ready() {
     }
     
     // allocate the page (_flush() increments the counter)
+#ifdef USE_PREFETCH
+    do {
+        _write_page = _prefetch_page;
+        _prefetch_page = page::alloc(tuple_size(), this);
+    } while(_write_page == NULL);
+#else
     _write_page = page::alloc(tuple_size(), this);
-
+#endif
+    touch(&_write_page);
+    
     // * * * END CRITICAL SECTION * * *
 }
 
@@ -201,6 +253,10 @@ bool tuple_fifo::_attempt_tuple_read() {
     }
 
     // good to go!
+#if READ_PREFETCH != 0
+    __builtin_prefetch(_read_iterator->data + READ_PREFETCH*64);
+    _prefetch_count++;
+#endif
     _read_armed = true;
     return true;
 }
@@ -239,6 +295,8 @@ bool tuple_fifo::_attempt_page_read(bool block) {
     
     // allocate the page (_purge() increments the counter)
     _read_page = _pin(_read_pnum);
+    touch(&_write_page);
+    
     assert(_read_page);
     _read_iterator = _read_page->begin();
     _read_armed = true;

@@ -16,7 +16,7 @@ using std::list;
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_NONE;
+static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
 
 /* exported datatypes */
 

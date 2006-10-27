@@ -40,11 +40,13 @@ private:
     size_t _capacity;
     size_t _threshold;
     size_t _page_size;
+    size_t _prefetch_count;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
     bool _read_armed;
     guard<page> _write_page;
+    guard<page> _prefetch_page;
 
     // used to communicate between reader and writer
     volatile db_pgno_t _read_pnum;
@@ -99,6 +101,7 @@ public:
     static int open_fifos();
 
     static stats_list get_stats();
+    static size_t prefetch_count();
     
     // closes all memory pool file handles (which are left open to
     // preserve their statistics)
