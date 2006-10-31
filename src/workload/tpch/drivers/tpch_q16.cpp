@@ -60,7 +60,7 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
 packet_t *supplier_scan(Db* tpch_supplier) {
     tuple_filter_t* filter = new supplier_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
-    packet_t* tscan_packet = new tscan_packet_t("Supplier TSCAN",
+    packet_t* tscan_packet = new tscan_packet_t("supplier TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_supplier);
@@ -76,24 +76,45 @@ struct part_scan_tuple_t {
 };
 
 struct part_tscan_filter_t : public tuple_filter_t {
-    char* brand;
-    char* type;
+    char brand[32];
+    char type[32];
     int sizes[8];
 
     part_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_part_tuple))
     {
         // TODO: randomize
+        if(0) {
 #if 1
-        brand = "Brand#45";
-        type = "MEDIUM POLISHED";
-        int base_sizes[] = {49, 14, 23, 45, 19, 3, 36, 9};
+            strcpy(brand, "Brand#45");
+            strcpy(type, "MEDIUM POLISHED");
+            int base_sizes[] = {49, 14, 23, 45, 19, 3, 36, 9};
 #else
-        brand = "Brand#33";
-        type = "LARGE PLATED";
-        int base_sizes[] = {16, 19, 11, 6, 23, 42, 48, 13};
+            strcpy(brand, "Brand#33");
+            strcpy(type, "LARGE PLATED");
+            int base_sizes[] = {16, 19, 11, 6, 23, 42, 48, 13};
 #endif
-        memcpy(sizes, base_sizes, sizeof(base_sizes));
+            memcpy(sizes, base_sizes, sizeof(base_sizes));
+        }
+        else {
+            thread_t* self = thread_get_self();
+            sprintf(brand, "Brand#%1d%1d", self->rand(5) + 1, self->rand(5) + 1);
+            char const* TYPE1[] = {"STANDARD", "SMALL", "MEDIUM", "LARGE", "PROMO", "ECONOMY"};
+            char const* TYPE2[] = {"ANODIZED", "BURNISHED", "PLATED", "POLISHED", "BRUSHED"};
+            sprintf(type, "%s %s", TYPE1[self->rand(6)], TYPE2[self->rand(5)]);
+            for(int i=0; i < 8; i++) {
+                int j = -1;
+                int size;
+                // loop until we get a unique value
+                while(j != i) {
+                    size = self->rand(50) + 1;
+                    for(j=0; j < i && sizes[j] != size; j++);
+                    if(j == i)
+                        break;
+                }
+                sizes[i] = size;
+            }
+        }
     }
     virtual bool select(const tuple_t &s) {
         tpch_part_tuple* part = (tpch_part_tuple*) s.data;
@@ -142,7 +163,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
 packet_t* part_scan(Db* tpch_part) {
     tuple_filter_t* filter = new part_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(part_scan_tuple_t), dbenv);
-    packet_t* tscan_packet = new tscan_packet_t("Part TSCAN",
+    packet_t* tscan_packet = new tscan_packet_t("part TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_part);
@@ -177,7 +198,7 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
 packet_t* partsupp_scan(Db* tpch_partsupp) {
     tuple_filter_t* filter = new partsupp_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(part_supp_tuple_t), dbenv);
-    packet_t* tscan_packet = new tscan_packet_t("Partsupp TSCAN",
+    packet_t* tscan_packet = new tscan_packet_t("partsupp TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_partsupp);

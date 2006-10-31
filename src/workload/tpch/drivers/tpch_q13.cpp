@@ -94,7 +94,7 @@ packet_t* customer_scan(Db* tpch_customer, qpipe::query_state_t* qs)
 
     tuple_filter_t* filter = new customer_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
-    packet_t *packet = new tscan_packet_t("Customer TSCAN",
+    packet_t *packet = new tscan_packet_t("customer TSCAN",
                                           buffer,
                                           filter,
                                           tpch_customer);
@@ -103,15 +103,25 @@ packet_t* customer_scan(Db* tpch_customer, qpipe::query_state_t* qs)
 }
 
 struct order_tscan_filter_t : public tuple_filter_t {
-    char *word1;
-    char *word2;
+    char const* word1;
+    char const* word2;
         
     order_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_orders_tuple))
     {
+        static char const* FIRST[] = {"special", "pending", "unusual", "express"};
+        static char const* SECOND[] = {"packages", "requests", "accounts", "deposits"};
+
         // TODO: random word selection per TPC-H spec
-        word1 = "special";
-        word2 = "requests";
+        if(0) {
+            word1 = "special";
+            word2 = "requests";
+        }
+        else {
+            thread_t* self = thread_get_self();
+            word1 = FIRST[self->rand(4)];
+            word2 = SECOND[self->rand(4)];
+        }
     }
 
     virtual bool select(const tuple_t &input) {
@@ -161,7 +171,7 @@ packet_t* order_scan(Db* tpch_orders, qpipe::query_state_t* qs) {
     // Orders TSCAN
     tuple_filter_t* filter = new order_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
-    packet_t* tscan_packet = new tscan_packet_t("Orders TSCAN",
+    packet_t* tscan_packet = new tscan_packet_t("orders TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_orders);
