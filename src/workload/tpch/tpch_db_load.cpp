@@ -394,6 +394,7 @@ void tpch_load_region_table(Db* db, const char* fname) {
 void tpch_load_supplier_table(Db* db, const char* fname) {
 
     char linebuffer[MAX_LINE_LENGTH];
+    static int count = 0;
 
     printf("Populating SUPPLIER...\n");
     progress_reset();
@@ -428,6 +429,17 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
         Dbt key(&tup.S_SUPPKEY, sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
+
+        if (count++ < 10 && 0) {
+            TRACE(TRACE_ALWAYS, "Inserting supplier tuple (%d|%s|%s|%d|%s|%lf|%s)\n",
+                  tup.S_SUPPKEY,
+                  tup.S_NAME,
+                  tup.S_ADDRESS,
+                  tup.S_NATIONKEY,
+                  tup.S_PHONE,
+                  tup.S_ACCTBAL,
+                  tup.S_COMMENT);
+        }
 
         progress_update();
     }
