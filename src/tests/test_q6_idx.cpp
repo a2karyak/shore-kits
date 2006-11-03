@@ -28,10 +28,11 @@ struct iscan_tuple {
 struct q6_iscan_filter_t : tuple_filter_t {
     and_predicate_t _filter;
     double _discount;
+    double _qty;
 
     q6_iscan_filter_t(double discount, double qty)
         : tuple_filter_t(sizeof(tpch_lineitem_tuple)),
-          _discount(discount)
+          _discount(discount), _qty(qty)
     {
         predicate_t* p;
         size_t offset;
@@ -62,8 +63,9 @@ struct q6_iscan_filter_t : tuple_filter_t {
     }
     virtual c_str to_string() const {
         return c_str("select L_EXTENDEDPRICE, L_DISCOUNT "
-                     "where L_DISCOUNT between %f and %f",
-                     _discount - .01, _discount + .01);
+                     "where L_DISCOUNT between %f and %f"
+                     " and L_QUANTITY < %f",
+                     _discount - .01, _discount + .01, _qty);
     }
 };
 

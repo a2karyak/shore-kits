@@ -39,7 +39,6 @@ void sorted_in_stage_t::process_packet() {
 
     // fire up inputs
     dispatcher_t::dispatch_packet(packet->_left);
-    dispatcher_t::dispatch_packet(packet->_right);
 
     tuple_t left;
     const char* left_key;
@@ -50,8 +49,9 @@ void sorted_in_stage_t::process_packet() {
     int right_hint;
     
     // seed the process with the first left tuple
-    if(left_input->get_tuple(left))
+    if(!left_input->get_tuple(left))
         return;
+    dispatcher_t::dispatch_packet(packet->_right);
     left_key = left_extractor->extract_key(left);
     left_hint = left_extractor->extract_hint(left_key);
 
@@ -72,14 +72,14 @@ void sorted_in_stage_t::process_packet() {
         do {
 
             // advance right side
-            if(right_input->get_tuple(right)) {
+            if(!right_input->get_tuple(right)) {
 
                 // No more right-side tuples! Simply deal with
                 // remaining left-side tuples. If we are computing IN,
                 // we don't output them. If we are computing NOT IN,
                 // we output them all.
                 if(reject_matches) {
-                    while(!left_input->get_tuple(left)) 
+                    while(left_input->get_tuple(left)) 
                         _adaptor->output(left);
                 }
                 
@@ -111,7 +111,7 @@ void sorted_in_stage_t::process_packet() {
             // if we are here, it is because the right side tuple is
             // at least as large as the left side tuple. Advance the
             // left side until it becomes larger than the right side.
-            if(left_input->get_tuple(left))
+            if(!left_input->get_tuple(left))
                 // No more left tuples! See reasoning above to see why
                 // we can stop.
                 return;

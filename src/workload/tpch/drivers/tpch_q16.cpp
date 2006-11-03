@@ -523,7 +523,7 @@ void tpch_q16_driver::submit(void* disp) {
     tuple_t output;
     while(result->get_tuple(output)) {
         part_scan_tuple_t* r = (part_scan_tuple_t*) output.data;
-        TRACE(TRACE_ALWAYS,
+        TRACE(TRACE_QUERY_RESULTS,
               "*** Q16 %10s %25s %10d %10d\n",
               r->p_brand, r->p_type, r->p_size, r->p_partkey);
     }
