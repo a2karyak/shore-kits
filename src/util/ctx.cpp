@@ -28,7 +28,7 @@ typedef __uint64_t Reg;
     SP  --->  +-- Back chain             (SP + 0)
 
     Low Address
-*/
+MaG*/
 struct ppc64_stack_frame {
     Reg back_chain;
     Reg save_cr;
@@ -72,7 +72,7 @@ context_map::iterator ctx_current() {
 
 void ctx_yield(ppc64_stack_frame** cur) {
     ppc64_stack_frame** owner = ctx_current()->second.owner;
-    cxt_swap(cur, *owner);
+    ctx_swap(cur, *owner);
 }
 
 
@@ -129,7 +129,7 @@ ppc64_stack_frame* ctx_create(void* (*func)(void*), void* arg,
 
     // hack! on power5 the "address" of a function is actually a
     // pointer to its address. Dereference to avoid badness...
-    asm("ld %0, 0(%1)" : "=b"(r1->save_lr) : "b"(&ctx_start));
+    r1->save_lr = *(Reg*) &ctx_start;
     
     // register it for later
     ppc64_context &ctx = ctx_live[buffer];
@@ -151,20 +151,16 @@ ppc64_stack_frame* ctxb;
 
 void* a(void*) {
     for(int i=0; i < COUNT; i++) {
-        //        printf("A");
+        //printf("A");
         ctx_swap(&ctxa, ctxb);
-        a_ready = false;
-        b_ready = true;
     }
     ctx_exit(NULL);
 }
 
 void* b(void*) {
     for(int i=0; i < COUNT; i++) {
-        //        printf("B");
+        //printf("B");
         ctx_swap(&ctxb, ctxa);
-        b_ready = false;
-        a_ready = true;
     }
     ctx_exit(NULL);
 }

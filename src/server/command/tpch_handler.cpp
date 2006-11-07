@@ -48,7 +48,8 @@ void tpch_handler_t::init() {
     if ( state == TPCH_HANDLER_UNINITIALIZED ) {
 
         // open DB tables (1.25 GB bpool)
-        db_open(DB_RDONLY|DB_THREAD, 1, 625*1024*1024);
+        db_open(DB_RDONLY|DB_THREAD, 2, 125*1024*1024);
+        //        db_open(DB_RDONLY|DB_THREAD, 1, 625*1024*1024);
 
         // register drivers...
         add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
@@ -217,7 +218,7 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
         free(gsp);
         free(fsp);
 
-        TRACE(TRACE_STATISTICS, "***\tPrefetch count: %u\n", tuple_fifo::prefetch_count());
+        TRACE(TRACE_STATISTICS, "***\tPrefetch count: %lu\n", tuple_fifo::prefetch_count());
     }
     tuple_fifo::clear_stats();
     

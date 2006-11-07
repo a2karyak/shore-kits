@@ -6,8 +6,8 @@
 #include "util/exception.h"
 #include "util/sync.h"
 
-// Ignore the warning: printf("") is valid!
-const c_str c_str::EMPTY_STRING = "";
+// Should be just "", but gcc gives warnings about it
+const c_str c_str::EMPTY_STRING("%s", "");
 
 struct c_str::c_str_data {
     mutable pthread_mutex_t _lock;

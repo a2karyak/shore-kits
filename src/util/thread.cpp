@@ -240,6 +240,19 @@ void thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex)
     THROW_IF(ThreadException, err);
 }
 
+bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
+                           struct timespec &timeout)
+{
+    int err = pthread_cond_timedwait(&cond, &mutex, &timeout);
+    switch(err) {
+    case 0: return true;
+    case ETIMEDOUT: return false;
+    default: THROW_IF(ThreadException, err);
+    }
+    // unreachable
+    assert(false);
+}
+
 
 
 /**

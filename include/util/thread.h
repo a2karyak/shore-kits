@@ -15,6 +15,7 @@
 #include <functional>
 #include <cstdarg>
 #include <stdint.h>
+#include <time.h>
 
 #include "util/c_str.h"
 #include "util/exception.h"
@@ -34,7 +35,8 @@ void thread_cond_destroy(pthread_cond_t &cond);
 void thread_cond_signal(pthread_cond_t &cond);
 void thread_cond_broadcast(pthread_cond_t &cond);
 void thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex);
-
+bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
+                           struct timespec &timeout);
 
 template <class T>
 T* thread_join(pthread_t tid) {
