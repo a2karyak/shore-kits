@@ -219,6 +219,7 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
         free(fsp);
 
         TRACE(TRACE_STATISTICS, "***\tPrefetch count: %lu\n", tuple_fifo::prefetch_count());
+        TRACE(TRACE_STATISTICS, "***\tContext switches: %lu\n", tuple_fifo::context_switches());
     }
     tuple_fifo::clear_stats();
     

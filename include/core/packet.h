@@ -16,7 +16,7 @@ using std::list;
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
+static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_NONE;
 
 /* exported datatypes */
 
@@ -56,7 +56,7 @@ class packet_t
 {
 
 protected:
-    query_plan* _plan; 
+    query_plan* _plan;
 
     // dispatching/CPU binding fields
     query_state_t* _qstate;

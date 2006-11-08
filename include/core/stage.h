@@ -37,7 +37,7 @@ public:
 
     public:
         
-	virtual const c_str &get_container_name()=0;
+	virtual c_str get_container_name()=0;
         virtual packet_t* get_packet()=0;
         virtual void output(page* p)=0;
 	virtual void stop_accepting_packets()=0;	

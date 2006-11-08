@@ -8,8 +8,8 @@ static const int PAGE_SIZE = 4096;
 
 
 // use 3/9 for "good" performance
-#define READ_PREFETCH 3
-#define WRITE_PREFETCH 9
+#define READ_PREFETCH 0
+#define WRITE_PREFETCH 0
 
 inline
 void touch(void const* page) {
@@ -41,6 +41,7 @@ pthread_mutex_t open_fifo_mutex = thread_mutex_create();
 static int open_fifo_count = 0;
 static stats_list file_stats;
 static size_t total_prefetches = 0;
+static size_t total_ctx_switches = 0;
 
 /*
  * Creates a new (temporary) file in the BDB bufferpool for the FIFO
@@ -67,6 +68,7 @@ void tuple_fifo::destroy() {
     file_stats.push_back(_pool->get_stats());
     DB_MPOOL_FSTAT &stat = file_stats.back();
     total_prefetches += _prefetch_count;
+    total_ctx_switches += _context_switches;
 
     // canonicalize the name so we don't have dangling pointers
     stat.file_name = "FIFO";
@@ -85,10 +87,14 @@ stats_list tuple_fifo::get_stats() {
 size_t tuple_fifo::prefetch_count() {
     return total_prefetches;
 }
+size_t tuple_fifo::context_switches() {
+    return total_ctx_switches;
+}
 void tuple_fifo::clear_stats() {
     critical_section_t cs(open_fifo_mutex);
     file_stats.clear();
     total_prefetches = 0;
+    total_ctx_switches = 0;
 }
 
 /*
@@ -181,18 +187,16 @@ void tuple_fifo::ensure_write_ready() {
         return;
     }
 
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_lock);
+    // should happen at most once...
     _termination_check();
-    
-    // Wait for space to open up? Once we've slept because of empty,
-    // space for _threshold pages must be available before we are
-    // willing to try again
-    for(size_t threshold=1; _available_writes() < threshold; threshold = _threshold) {
-        // sleep until something important changes
-        thread_cond_wait(_writer_notify, _lock);
+    while(_available_writes() == 0) {
+        _context_switches++;
+        ctx_swap(&_write_ctx, _read_ctx);
         _termination_check();
     }
+
+    // if still nothing, something went wrong
+    assert(_available_writes() > 0);
     
     // allocate the page (_flush() increments the counter)
 #ifdef USE_PREFETCH
@@ -204,8 +208,6 @@ void tuple_fifo::ensure_write_ready() {
     _write_page = page::alloc(tuple_size(), this);
 #endif
     touch(&_write_page);
-    
-    // * * * END CRITICAL SECTION * * *
 }
 
 /*
@@ -263,36 +265,21 @@ bool tuple_fifo::_attempt_tuple_read() {
 
 // true means a page was read
 bool tuple_fifo::_attempt_page_read(bool block) {
-    
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_lock);
+    // should happen at most once...
     _termination_check();
-
-    
-    // wait for pages to arrive? Once we've slept because of empty,
-    // _threshold pages must be available before we are willing to try
-    // again (unless send_eof() is called)
-    int available_reads = _available_reads();
-    for(int threshold=1; available_reads < threshold; threshold = _threshold) {
-        // eof?
-        if(_done_writing) {
-            if(available_reads == 0)
-                return false;
-            
-            // no point to waiting for more pages...
-            break;
-        }
-        
-        // must block to get a page; allowed to?
-        if(!block)
-            return false;
-        
-        // sleep until something important changes
-        thread_cond_wait(_reader_notify, _lock);
+    while(_available_reads() == 0 && !_done_writing) {
+        _context_switches++;
+        ctx_swap(&_read_ctx, _write_ctx);
         _termination_check();
-        available_reads = _available_reads();
+    }
+
+    // if still nothing, eof
+    if(_available_reads() == 0) {
+        assert(_done_writing);
+        return false;
     }
     
+
     // allocate the page (_purge() increments the counter)
     _read_page = _pin(_read_pnum);
     touch(&_write_page);
@@ -301,7 +288,6 @@ bool tuple_fifo::_attempt_page_read(bool block) {
     _read_iterator = _read_page->begin();
     _read_armed = true;
 
-    // * * * END CRITICAL SECTION * * *
     return true;
 }
  
@@ -316,17 +302,15 @@ bool tuple_fifo::send_eof() {
 
     // make sure the reader wakes up to see the EOF
     _done_writing = true;
-    thread_cond_signal(_reader_notify);
+    //    ctx_exit(NULL);
     
     // * * * END CRITICAL SECTION * * *
     return true;
 }
 
 bool tuple_fifo::terminate() {
-    
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
-
 
     // did the other end beat me to it? Note: if _done_writing is true
     // the reader is responsible for deleting the buffer; either the
@@ -334,13 +318,10 @@ bool tuple_fifo::terminate() {
     // access. False is the right return value for both cases.
     if(_terminated || _done_writing)
         return false;
-    
-    // make sure nobody is sleeping (either the reader or writer could
-    // be calling this)
+
+    // set the flag, then switch over to let the reader clean up.
     _terminated = true;
-    thread_cond_signal(_reader_notify);
-    thread_cond_signal(_writer_notify);
-    
+
     // * * * END CRITICAL SECTION * * *
     return true;
 }

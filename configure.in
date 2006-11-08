@@ -16,6 +16,7 @@ AC_SUBST(NEWLINE)
 AC_PREREQ(2.50)
 AC_PROG_CXX
 AC_PROG_RANLIB
+AM_PROG_AS
 
 AC_MSG_NOTICE(Configuring QPipe)
 
@@ -269,9 +270,9 @@ AC_SUBST(BDB_HOME)
 # basic flags/libs every arch needs
 
 #PROFILE_FLAGS="-pg"
-OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
-#$OPT_FLAGS="-O3 -fno-inline"
-CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
+OPT_FLAGS="-g -O3 -finline-limit=1200 -fomit-frame-pointer"
+#OPT_FLAGS="-O0 -g3 -save-temps"
+CXXFLAGS="$PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
 	-Wconversion -Wno-system-headers -D_REENTRANT -I$BDB_HOME/include"
 
 LDFLAGS="-lnsl -ldl -lm -lpthread"

@@ -28,7 +28,7 @@ public:
     static const unsigned int NEXT_TUPLE_INITIAL_VALUE;
 
 	
-protected:
+public:
 
     class stage_adaptor_t : public stage_t::adaptor_t {
 
@@ -70,7 +70,7 @@ protected:
         }
 
 
-	virtual const c_str &get_container_name() {
+	virtual c_str get_container_name() {
 	    return _container->get_name();
 	}
 

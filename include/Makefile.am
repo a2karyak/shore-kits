@@ -6,10 +6,10 @@ dummy_SOURCES = dummy.cpp
 # This is the real point of the Makefile -- autogenerate package
 # includes and precompile them while we're at it
 BUILT_SOURCES = \
-	util_impl.h util_impl.h.gch \
-	core_impl.h core_impl.h.gch \
-	scheduler_impl.h scheduler_impl.h.gch \
-	stages_impl.h stages_impl.h.gch
+	util_impl.h \
+	core_impl.h \
+	scheduler_impl.h \
+	stages_impl.h 
 
 CLEANFILES = $(BUILT_SOURCES)
 
@@ -19,6 +19,7 @@ CLEANFILES = $(BUILT_SOURCES)
 # automagically based on these.
 UTIL_H = \
 	util/c_str.h \
+	util/ctx.h \
 	util/exception.h \
 	util/fnv.h \
 	util/guard.h \

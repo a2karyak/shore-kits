@@ -111,6 +111,18 @@ packet_list_t* stage_container_t::container_queue_dequeue() {
     return plist;
 }
 
+struct stage_packet {
+    stage_t* stage;
+    stage_container_t::stage_adaptor_t* adaptor;
+};
+
+void* stage_process_packet(stage_packet* arg) {
+    arg->adaptor->run_stage(arg->stage);
+    delete arg->stage;
+    delete arg->adaptor;
+    return NULL;
+}
+
 
 
 /**
@@ -129,84 +141,18 @@ packet_list_t* stage_container_t::container_queue_dequeue() {
  *  @param packet The packet to send to this stage.
  */
 void stage_container_t::enqueue(packet_t* packet) {
+    packet_list_t* packets = new packet_list_t;
+    packets->push_back(packet);
+    stage_adaptor_t* adaptor;
+    adaptor = new stage_adaptor_t(this, packets,
+                                  packets->front()->_output_filter->input_tuple_size());
 
-
-    assert(packet != NULL);
-
-
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_container_lock);
-
-
-    // check for non-mergeable packets
-    if ( !packet->is_merge_enabled() )  {
-	// We are forcing the new packet to not merge with others.
-	container_queue_enqueue_no_merge(packet);
-        if (TRACE_MERGING)
-            TRACE(TRACE_ALWAYS, "%s merging disabled\n",
-                  packet->_packet_id.data());
-	return;
-	// * * * END CRITICAL SECTION * * *
-    }
-
-
-    // try merging with packets in merge_candidates before they
-    // disappear or become non-mergeable
-    list<stage_adaptor_t*>::iterator sit = _container_current_stages.begin();
-    for( ; sit != _container_current_stages.end(); ++sit) {
-	// try to merge with this stage
-	stage_container_t::stage_adaptor_t* ad = *sit;
-	if ( ad->try_merge(packet) ) {
-	    /* packet was merged with this existing stage */
-            if (TRACE_MERGING)
-                TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
-                      packet->_packet_id.data(),
-                      packet->_next_tuple_on_merge);
-	    return;
-	    // * * * END CRITICAL SECTION * * *
-	}
-    }
-
-
-    // If we are here, we could not merge with any of the running
-    // stages. Don't give up. We can still try merging with a packet in
-    // the container_queue.
-    list<packet_list_t*>::iterator cit = _container_queue.begin();
-    for ( ; cit != _container_queue.end(); ++cit) {
-	
-	packet_list_t* cq_plist = *cit;
-	packet_t* cq_packet = cq_plist->front();
-
-
-	// No need to acquire queue_pack's merge mutex. No other
-	// thread can touch it until we release _container_lock.
-    
-	// We need to check queue_pack's mergeability flag since some
-	// packets are non-mergeable from the beginning. Don't need to
-	// grab its merge_mutex because its mergeability status could
-	// not have changed while it was in the queue.
-	if ( cq_packet->is_mergeable(packet) ) {
-	    // add this packet to the list of already merged packets
-	    // in the container queue
-	    cq_plist->push_back(packet);
-            if (TRACE_MERGING)
-                TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
-                      packet->_packet_id.data());
-	    return;
-	    // * * * END CRITICAL SECTION * * *
-	}
-    }
-    
-
-    if (TRACE_MERGING)
-        TRACE(TRACE_ALWAYS, "%s could not be merged\n",
-              packet->_packet_id.data());
-    
-    
-    // No work sharing detected. We can now give up and insert the new
-    // packet into the stage_queue.
-    container_queue_enqueue_no_merge(packet);
-    // * * * END CRITICAL SECTION * * *
+    // rather than enqueueing, we simply set up the context for coroutines
+    stage_packet p = {_stage_maker->create_stage(), adaptor};
+    ctx_handle* ctx = ctx_create((void*(*)(void*))&stage_process_packet,
+                                 new stage_packet(p),
+                                 &packet->output_buffer()->_read_ctx);
+    packet->output_buffer()->_write_ctx = ctx;
 };
 
 

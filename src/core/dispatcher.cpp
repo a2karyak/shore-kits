@@ -72,8 +72,6 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type, stage_con
   static_hash_map_insert( &stage_directory, ptcopy, sc, node );
 }
 
-
-
 /**
  *  @brief THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be
  *  since stages should register themselves in their constructors and

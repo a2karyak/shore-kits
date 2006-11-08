@@ -57,6 +57,7 @@ time_add_day (time_t time, int days)
 {
     struct tm tm;
 
+    memset(&tm, 0, sizeof(struct tm));
 	localtime_r (&time, &tm);
 	tm.tm_mday += days;
 	tm.tm_isdst = -1;

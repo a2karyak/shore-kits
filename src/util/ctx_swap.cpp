@@ -1,5 +1,8 @@
 #include <cassert>
 #include <sys/types.h>
+#include "util/ctx.h"
+#include <cstring>
+
 typedef __uint64_t Reg;
 
 /** http://www.freestandards.org/spec/ELF/ppc64/PPC-elf64abi.html#STACK
@@ -22,7 +25,7 @@ typedef __uint64_t Reg;
 
     Low Address
 */
-struct ppc64_stack_frame {
+struct ctx_handle {
     Reg back_chain;
     Reg save_cr;
     Reg save_lr;
@@ -32,14 +35,28 @@ struct ppc64_stack_frame {
     Reg save_params[];
 } __attribute__((aligned(16)));
 
-register ppc64_stack_frame* r1 asm("r1");
+ctx_handle* ctx_init(void* ctx_stack, void (*start)(void)) {
+    // reserve a stack frame -- it actually gets accessed, though only
+    // the value of save_lr ends up getting used
+    ctx_handle* r1 = -1 + (ctx_handle*) ctx_stack;
+
+    // hack! on power5 the "address" of a function is actually a
+    // pointer to its address. Dereference to avoid badness...
+    memset(r1, 0, sizeof(ctx_handle));
+    r1->save_lr = *(Reg*) start;
+    r1->back_chain = 0;
+    return r1;
+}
+
+// map the stack pointer to a global var
+register ctx_handle* r1 asm("r1");
 
 /* http://www.freestandards.org/spec/ELF/ppc64/PPC-elf64abi.html
  *
  * WARNING!! THIS FILE MUST BE COMPILED W/ OPTIMIZATIONS!!!
  * Otherwise gcc creates a stack frame, which messes everything up.
  */
-void ctx_swap(ppc64_stack_frame** from, ppc64_stack_frame* to) {
+void ctx_swap(ctx_handle** from, ctx_handle* to) {
     //    __builtin_prefetch(-288 + (char*) to);
     // Conveniently, the ppc64 ABI allows you to go 288 bytes past the
     // stack pointer without getting into trouble. This is exactly

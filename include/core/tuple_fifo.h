@@ -6,7 +6,7 @@
 #include <vector>
 
 template<>
-inline void guard<DbMpoolFile>::action(DbMpoolFile* ptr) {
+inline void guard_action<DbMpoolFile>::operator()(DbMpoolFile* ptr) {
     // sync so the darn thing realizes it doesn't have to write out
     // those "dirty" pages
     //    ptr->sync();
@@ -41,6 +41,7 @@ private:
     size_t _threshold;
     size_t _page_size;
     size_t _prefetch_count;
+    size_t _context_switches;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
@@ -60,6 +61,10 @@ private:
     pthread_cond_t _writer_notify;
 
 public:
+    // coroutine vars
+    ctx_handle* _read_ctx;
+    ctx_handle* _write_ctx;
+
 
     /**
      *  @brief Construct a tuple FIFO that holds tuples of the
@@ -83,12 +88,15 @@ public:
                size_t page_size=get_default_page_size())
         : page_pool(page_size), _dbenv(env),
           _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
-          _page_size(page_size), _read_armed(false),
+          _page_size(page_size),
+          _prefetch_count(0), _context_switches(0),
+          _read_armed(false),
           _read_pnum(1), _write_pnum(1),
           _done_writing(false), _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
-          _writer_notify(thread_cond_create())
+          _writer_notify(thread_cond_create()),
+          _read_ctx(NULL), _write_ctx(NULL)
     {
         init();
     }
@@ -102,6 +110,7 @@ public:
 
     static stats_list get_stats();
     static size_t prefetch_count();
+    static size_t context_switches();
     
     // closes all memory pool file handles (which are left open to
     // preserve their statistics)
@@ -340,11 +349,9 @@ EXIT_NAMESPACE(qpipe);
 
 
 template<>
-inline void guard<qpipe::tuple_fifo>::action(qpipe::tuple_fifo* ptr) {
-    if(!ptr->terminate()) {
+inline void guard_action<qpipe::tuple_fifo>::operator()(qpipe::tuple_fifo* ptr) {
+    if(!ptr->terminate())
         delete ptr;
-    }
 }
-
 
 #endif

@@ -9,6 +9,13 @@
 #include "util/trace.h"
 
 
+template<typename T>
+struct guard_action {
+    void operator()(T* ptr) {
+        delete ptr;
+    }
+};
+
 /**
  * @brief A generic RAII guard class.
  *
@@ -25,16 +32,12 @@
  * what "null" and "action" are)
  *
  */
-template <typename T>
+template <typename T, typename A=guard_action<T> >
 class guard {
 private:
     T* _ptr;
 
 private:
-    // Specialize this function as necessary
-    void action(T* ptr) {
-        delete ptr;
-    }
 public:
     
     guard(T* ptr=NULL)
@@ -132,20 +135,20 @@ public:
 private:
     void assign(T* ptr) {
         if(_ptr && _ptr != ptr)
-            action(_ptr);
+            A()(_ptr);
         _ptr = ptr;
     }
     
 };
 
 template<>
-inline void guard<FILE>::action(FILE* ptr) {
+inline void guard_action<FILE>::operator()(FILE* ptr) {
     if(fclose(ptr))
         TRACE(TRACE_ALWAYS, "fclose failed");
 }
 
 template<>
-inline void guard<Dbc>::action(Dbc* ptr) {
+inline void guard_action<Dbc>::operator()(Dbc* ptr) {
     // could throw an exception inside a destructor, but we can live
     // with the abort if it ever happens
     ptr->close();

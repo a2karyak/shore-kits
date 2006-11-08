@@ -19,7 +19,7 @@ ENTER_NAMESPACE(qpipe);
 
 // exported constants
 
-static const int DEFAULT_BUFFER_PAGES = 100;
+static const int DEFAULT_BUFFER_PAGES = 7;
 
 
 
@@ -496,7 +496,7 @@ EXIT_NAMESPACE(qpipe);
  * in any case)
  */
 template <>
-inline void guard<qpipe::page>::action(qpipe::page* ptr) {
+inline void guard_action<qpipe::page>::operator()(qpipe::page* ptr) {
     ptr->free();
 }
 
