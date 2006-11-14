@@ -12,7 +12,7 @@ static const int PAGE_SIZE = 4096;
 #define WRITE_PREFETCH 9
 
 inline
-void touch(void const* page) {
+void touch(void const*) {
 #if 0
     assert(PAGE_SIZE/CACHE_LINE % 8 == 0);
     static int const CACHE_LINE = 64/sizeof(long);
@@ -52,11 +52,6 @@ void tuple_fifo::init() {
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
     cs.exit();
-
-    DbMpoolFile* pool;
-    dbenv()->memp_fcreate(&pool, 0);
-    _pool = pool;
-    _pool->open(NULL, DB_CREATE|DB_DIRECT, 0644, PAGE_SIZE);
 }
 
 void tuple_fifo::destroy() {
@@ -64,12 +59,9 @@ void tuple_fifo::destroy() {
     critical_section_t cs(open_fifo_mutex);
     
     // store the stats for later...
-    file_stats.push_back(_pool->get_stats());
-    DB_MPOOL_FSTAT &stat = file_stats.back();
     total_prefetches += _prefetch_count;
 
     // canonicalize the name so we don't have dangling pointers
-    stat.file_name = "FIFO";
     open_fifo_count--;
 }
 
@@ -91,50 +83,6 @@ void tuple_fifo::clear_stats() {
     total_prefetches = 0;
 }
 
-/*
- * Allocates a new page at the end of the FIFO's file and pins it in
- * the BDB buffer pool
- */
-void* tuple_fifo::alloc() {
-    db_pgno_t pnum;
-    void* page;
-    _pool->get(&pnum, DB_MPOOL_NEW, &page);
-    return page;
-}
-
-/*
- * Discards a page from the buffer pool. It is marked as clean (no
- * write-back needed) and flagged as a good candidate for eviction.
- */
-void tuple_fifo::free(void* p) {
-    _unpin(static_cast<page*>(p), false);
-}
-
-/*
- * Unpins a page from the buffer pool. If marked to keep, it will be
- * flagged as dirty; otherwise it will be effectively deleted by
- * marking it as clean and evictable. If the page was already written
- * to disk it will remain there until the FIFO is destroyed and the
- * file is deleted.
- */
-void tuple_fifo::_unpin(page* p, bool keep) {
-    int flags = keep? DB_MPOOL_DIRTY : DB_MPOOL_TRASH;
-    _pool->put(p, flags);
-}
-
-/*
- * Pins a page in the buffer pool, retrieving it from disk as necessary.
- */
-page* tuple_fifo::_pin(db_pgno_t pnum) {
-    union {
-        void* v;
-        page* p;
-    } pun;
-
-    _pool->get(&pnum, 0, &pun.v);
-    return pun.p;
-}
-
 /**
  * @brief Potentially makes a page write visible to the reader.
  *
@@ -148,15 +96,11 @@ void tuple_fifo::_flush(bool force) {
     if( !(force || _write_page->full()) )
         return;
 
-    // flush!
-    _unpin(_write_page.release(), true);
-
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
     _termination_check();
 
-    // update state 
-    _write_pnum++;
+    _pages.push_back(_write_page.release());
 
     // notify the reader?
     if(_available_reads() >= _threshold)
@@ -195,15 +139,7 @@ void tuple_fifo::ensure_write_ready() {
     }
     
     // allocate the page (_flush() increments the counter)
-#ifdef USE_PREFETCH
-    do {
-        _write_page = _prefetch_page;
-        _prefetch_page = page::alloc(tuple_size(), this);
-    } while(_write_page == NULL);
-#else
-    _write_page = page::alloc(tuple_size(), this);
-#endif
-    touch(&_write_page);
+    _write_page = page::alloc(tuple_size());
     
     // * * * END CRITICAL SECTION * * *
 }
@@ -218,22 +154,7 @@ bool tuple_fifo::_purge(bool stolen) {
     assert(_read_page);
     
     // purge?
-    if( !(stolen || _read_iterator == _read_page->end()) )
-        return false;
-
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_lock);
-    _termination_check();
-
-    // update state 
-    _read_pnum++;
-    
-    // notify the writer?
-    if(_available_writes() >= _threshold)
-        thread_cond_signal(_writer_notify);
-
-    // * * * END CRITICAL SECTION * * *
-    return true;
+    return stolen || _read_iterator == _read_page->end();
 }
 
 bool tuple_fifo::_attempt_tuple_read() {
@@ -247,7 +168,7 @@ bool tuple_fifo::_attempt_tuple_read() {
 
     // Anything left on the page?
     ++_read_iterator;
-    if(_purge(false)) {
+    if(_read_iterator == _read_page->end()) {
         _read_page.done();
         return false;
     }
@@ -293,13 +214,16 @@ bool tuple_fifo::_attempt_page_read(bool block) {
         available_reads = _available_reads();
     }
     
-    // allocate the page (_purge() increments the counter)
-    _read_page = _pin(_read_pnum);
-    touch(&_write_page);
-    
+    // allocate the page
+    _read_page = _pages.front();
+    _pages.pop_front();
     assert(_read_page);
     _read_iterator = _read_page->begin();
     _read_armed = true;
+    
+    // notify the writer?
+    if(_available_writes() >= _threshold)
+        thread_cond_signal(_writer_notify);
 
     // * * * END CRITICAL SECTION * * *
     return true;

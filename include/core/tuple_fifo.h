@@ -4,6 +4,7 @@
 
 #include "core/tuple.h"
 #include <vector>
+#include <list>
 
 template<>
 inline void guard<DbMpoolFile>::action(DbMpoolFile* ptr) {
@@ -20,7 +21,6 @@ DEFINE_EXCEPTION(TerminatedBufferException);
 
 typedef std::vector<DB_MPOOL_FSTAT> stats_list;
 
-
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
  *  safely pass tuples to another. The producer will fill a page of
@@ -30,12 +30,13 @@ typedef std::vector<DB_MPOOL_FSTAT> stats_list;
  *  allocate a new page every time the current page is filled and
  *  handed to the consumer.
  */
-class tuple_fifo : public page_pool {
+class tuple_fifo {
 
 private:
-
-    guard<DbMpoolFile> _pool;
+    typedef std::list<page*> page_list;
+    page_list _pages;
     DbEnv* _dbenv;
+    
     size_t _tuple_size;
     size_t _capacity;
     size_t _threshold;
@@ -49,8 +50,6 @@ private:
     guard<page> _prefetch_page;
 
     // used to communicate between reader and writer
-    volatile db_pgno_t _read_pnum;
-    volatile db_pgno_t _write_pnum;
     volatile bool _done_writing;
     volatile bool _terminated;
 
@@ -76,15 +75,14 @@ public:
      *  @param page_size The size of the pages used in our buffer.
      */
 
-    tuple_fifo(size_t tuple_size,
-               DbEnv* env,
+    tuple_fifo(
+               size_t tuple_size, DbEnv* dbenv,
                size_t capacity=DEFAULT_BUFFER_PAGES,
                size_t threshold=64,
                size_t page_size=get_default_page_size())
-        : page_pool(page_size), _dbenv(env),
-          _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
+        :  _dbenv(dbenv),
+           _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
           _page_size(page_size), _read_armed(false),
-          _read_pnum(1), _write_pnum(1),
           _done_writing(false), _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
@@ -106,15 +104,10 @@ public:
     // closes all memory pool file handles (which are left open to
     // preserve their statistics)
     static void clear_stats();
-    
-    // requird by page_pool
-    virtual void* alloc();
-    virtual void free(void* page);
 
     DbEnv* dbenv() {
         return _dbenv;
     }
-    
     size_t tuple_size() const {
         return _tuple_size;
     }
@@ -206,7 +199,7 @@ public:
 
         // no mixing allowed!
         assert(_read_iterator == _read_page->begin());
-        _purge(true);
+        //        _purge(true);
         _read_armed = false;
         return _read_page.release();
     }
@@ -300,11 +293,11 @@ public:
 
 private:
     size_t _available_writes() {
-        return _capacity - (_write_pnum - _read_pnum);
+        return _capacity - _pages.size();
     }
 
     size_t _available_reads() {
-        return _write_pnum - _read_pnum;
+        return _pages.size();
     }
 
     void _termination_check() {
@@ -323,14 +316,11 @@ private:
     void init();
     void destroy();
 
-    void _unpin(page* p, bool keep);
-
     // attempts to read a tuple from an existing page
     bool _attempt_tuple_read();
     // attempts to read a new page
     bool _attempt_page_read(bool block);
 
-    page* _pin(db_pgno_t pnum);
 };
 
 
