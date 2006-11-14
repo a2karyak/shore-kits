@@ -18,7 +18,7 @@ ENTER_NAMESPACE(workload);
  * @brief select distinct l_orderkey from lineitem where l_commitdate
  * < l_receiptdate
  */
-packet_t* line_item_scan(Db* tpch_lineitem) {
+packet_t* line_item_scan(page_list* tpch_lineitem) {
     struct lineitem_tscan_filter_t : public tuple_filter_t {
         /* Initialize the predicates */
         lineitem_tscan_filter_t()
@@ -65,7 +65,7 @@ struct order_scan_tuple_t {
     int O_ORDERPRIORITY;
 };
 
-packet_t* orders_scan(Db* tpch_orders) {
+packet_t* orders_scan(page_list* tpch_orders) {
     struct orders_tscan_filter_t : public tuple_filter_t {
         time_t t1, t2;
         

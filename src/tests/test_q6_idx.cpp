@@ -179,7 +179,7 @@ packet_t* create_q6_idx_packet(const c_str &client_prefix, qpipe::query_state_t*
     id = c_str("%s_IPROBE_PACKET", client_prefix.data());
     q6_probe_packet = new iprobe_packet_t(id, new tuple_fifo(sizeof(iscan_tuple), dbenv),
                                           new q6_iscan_filter_t(discount, qty),
-                                          q6_sort_packet, tpch_lineitem);
+                                          q6_sort_packet, tpch_lineitem_shipdate_idx);
                                        
     // AGGREGATE
     id = c_str("%s_AGGREGATE_PACKET", client_prefix.data());

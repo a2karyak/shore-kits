@@ -6,7 +6,7 @@
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
 
-#include "util.h"
+#include "core.h"
 
 #include <cstdlib>
 #include <cmath>
@@ -27,427 +27,247 @@ void progress_done();
 /* internal helper functions */
 
 static void store_string(char* dest, char* src);
-static void db_table_load(void (*tbl_loader) (Db*, const char*),
-                          Db* db,
-                          const char* tbl_path, const char* tbl_filename);
 
-
+using namespace qpipe;
 
 /* definitions of exported functions */
 
-void tpch_load_customer_table(Db* db, const char* fname) {
+// dest is guaranteed to be zeroed out and have "enough" alignment for casting purposes
+typedef void (*parse_tuple)(char* dest, char* linebuffer);
 
+void parse_table(char const* fin_name, char const* fout_name, parse_tuple parse, size_t tuple_size) {
     char linebuffer[MAX_LINE_LENGTH];
+    char tuple_data[tuple_size] __attribute__((aligned(16)));
+    tuple_t tuple(tuple_data, tuple_size);
 
-    TRACE(TRACE_DEBUG, "Populating CUSTOMER...\n");
+    TRACE(TRACE_DEBUG, "Populating %s...\n", fout_name);
     progress_reset();
-    tpch_customer_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
+    FILE* fin = fopen(fin_name, "r");
+    if (fin == NULL) {
+        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fin_name);
         throw EXCEPTION(BdbException, "fopen() failed");
     }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.C_CUSTKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.C_NAME, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.C_ADDRESS, tmp);
-        tmp = strtok(NULL, "|");
-        tup.C_NATIONKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.C_PHONE, tmp);
-        tmp = strtok(NULL, "|");
-        tup.C_ACCTBAL = atof(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.C_MKTSEGMENT, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.C_COMMENT, tmp);
-
-        // insert tuple into database
-        Dbt key(&tup.C_CUSTKEY, sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_lineitem_table(Db* db, const char* fname) {
-
-    char linebuffer[MAX_LINE_LENGTH];
-
-    printf("Populating LINEITEM...\n");
-    progress_reset();
-    tpch_lineitem_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
+    FILE* fout = fopen(fout_name, "w");
+    if (fout == NULL) {
+        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fout_name);
         throw EXCEPTION(BdbException, "fopen() failed");
     }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
 
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.L_ORDERKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_PARTKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_SUPPKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_LINENUMBER = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_QUANTITY = atof(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_EXTENDEDPRICE = atof(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_DISCOUNT = atof(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_TAX = atof(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_RETURNFLAG = tmp[0];
-        tmp = strtok(NULL, "|");
-        tup.L_LINESTATUS = tmp[0];
-        tmp = strtok(NULL, "|");
-        tup.L_SHIPDATE = datestr_to_timet(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_COMMITDATE = datestr_to_timet(tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_RECEIPTDATE = datestr_to_timet(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.L_SHIPINSTRUCT, tmp);
-        tmp = strtok(NULL, "|");
-        tup.L_SHIPMODE = modestr_to_shipmode(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.L_COMMENT, tmp);
-
-        // insert tuple into database
-        // key is composed of 2 fields 	L_ORDERKEY, L_LINENUMBER
-        Dbt key(&tup.L_ORDERKEY, 2 * sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_nation_table(Db* db, const char* fname) {
-
-    char linebuffer[MAX_LINE_LENGTH];
- 
-    printf("Populating NATION...\n");
-    progress_reset();
-    tpch_nation_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fopen() failed");
-    }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.N_NATIONKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.N_NAME = nnamestr_to_nname(tmp);
-        tmp = strtok(NULL, "|");
-        tup.N_REGIONKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.N_COMMENT, tmp);
-
-        // insert tuple into database
-        Dbt key(&tup.N_NATIONKEY, sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_orders_table(Db* db, const char* fname) {
-    
-    char linebuffer[MAX_LINE_LENGTH];
-
-    printf("Populating ORDERS...\n");
-    progress_reset();
-    tpch_orders_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fopen() failed");
-    }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.O_ORDERKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.O_CUSTKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.O_ORDERSTATUS = tmp[0];
-        tmp = strtok(NULL, "|");
-        tup.O_TOTALPRICE = atof(tmp);
-        tmp = strtok(NULL, "|");
-        tup.O_ORDERDATE = datestr_to_timet(tmp);
-        tmp = strtok(NULL, "|");
-        tup.O_ORDERPRIORITY = prioritystr_to_orderpriorty(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.O_CLERK, tmp);
-        tmp = strtok(NULL, "|");
-        tup.O_SHIPPRIORITY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.O_COMMENT, tmp);
-
-        // insert tuple into database
-        // key is composed of 2 fields 	O_ORDERKEY and O_CUSTKEY
-        Dbt key(&tup.O_ORDERKEY, 2 * sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_part_table(Db* db, const char* fname) {
-
-    char linebuffer[MAX_LINE_LENGTH];
- 
-    printf("Populating PART...\n");
-    progress_reset();
-    tpch_part_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fopen() failed");
-    }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.P_PARTKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.P_NAME, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.P_MFGR, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.P_BRAND, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.P_TYPE, tmp);
-        tmp = strtok(NULL, "|");
-        tup.P_SIZE = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.P_CONTAINER, tmp);
-        tmp = strtok(NULL, "|");
-        tup.P_RETAILPRICE = atof(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.P_COMMENT, tmp);
-
-        // insert tuple into database
-        Dbt key(&tup.P_PARTKEY, sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_partsupp_table(Db* db, const char* fname) {
-
-    char linebuffer[MAX_LINE_LENGTH];
-
-    printf("Populating PARTSUPP...\n");
-    progress_reset();
-    tpch_partsupp_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fopen() failed");
-    }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.PS_PARTKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.PS_SUPPKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.PS_AVAILQTY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        tup.PS_SUPPLYCOST = atof(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.PS_COMMENT, tmp);
-	
-        // insert tuple into database
-        // key is composed of 2 fields 	PS_PARTKEY and PS_SUPPKEY
-        Dbt key(&tup.PS_PARTKEY, 2 * sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_region_table(Db* db, const char* fname) {
-
-    char linebuffer[MAX_LINE_LENGTH];
-
-    printf("Populating REGION...\n");
-    progress_reset();
-    tpch_region_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fopen() failed");
-    }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.R_REGIONKEY= atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.R_NAME, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.R_COMMENT, tmp);
-
-        // insert tuple into database
-        Dbt key(&tup.R_REGIONKEY, sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        progress_update();
-    }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fclose() failed");
-    }
-    progress_done();
-}
-
-
-
-void tpch_load_supplier_table(Db* db, const char* fname) {
-
-    char linebuffer[MAX_LINE_LENGTH];
-    static int count = 0;
-
-    printf("Populating SUPPLIER...\n");
-    progress_reset();
-    tpch_supplier_tuple tup;
-
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        throw EXCEPTION(BdbException, "fopen() failed");
-    }
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
-        // clear the tuple
-        memset(&tup, 0, sizeof(tup));
-
-        // split line into tab separated parts
-        char* tmp = strtok(linebuffer, "|");
-        tup.S_SUPPKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.S_NAME, tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.S_ADDRESS, tmp);
-        tmp = strtok(NULL, "|");
-        tup.S_NATIONKEY = atoi(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.S_PHONE, tmp);
-        tmp = strtok(NULL, "|");
-        tup.S_ACCTBAL= atof(tmp);
-        tmp = strtok(NULL, "|");
-        store_string(tup.S_COMMENT, tmp);
-
-        // insert tuple into database
-        Dbt key(&tup.S_SUPPKEY, sizeof(int));
-        Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
-
-        if (count++ < 10 && 0) {
-            TRACE(TRACE_ALWAYS, "Inserting supplier tuple (%d|%s|%s|%d|%s|%lf|%s)\n",
-                  tup.S_SUPPKEY,
-                  tup.S_NAME,
-                  tup.S_ADDRESS,
-                  tup.S_NATIONKEY,
-                  tup.S_PHONE,
-                  tup.S_ACCTBAL,
-                  tup.S_COMMENT);
+    page *p = page::alloc(tuple_size);
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fin)) {
+        // flush to file?
+        if(p->full()) {
+            p->fwrite_full_page(fout);
+            p->clear();
         }
-
+        
+        memset(tuple_data, 0, tuple_size);
+        parse(tuple_data, linebuffer);
+        p->append_tuple(tuple);
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
+
+    if(!p->empty())
+        p->fwrite_full_page(fout);
+    p->free();
+    
+    if ( fclose(fout) ) {
+        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fout_name);
         throw EXCEPTION(BdbException, "fclose() failed");
     }
+    if ( fclose(fin) ) {
+        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fin_name);
+        throw EXCEPTION(BdbException, "fclose() failed");
+    }
+    
     progress_done();
+}
+
+void tpch_load_customer_table(char* dest, char* linebuffer) {
+
+    tpch_customer_tuple &tup = *(tpch_customer_tuple*) dest;
+    
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.C_CUSTKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.C_NAME, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.C_ADDRESS, tmp);
+    tmp = strtok(NULL, "|");
+    tup.C_NATIONKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.C_PHONE, tmp);
+    tmp = strtok(NULL, "|");
+    tup.C_ACCTBAL = atof(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.C_MKTSEGMENT, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.C_COMMENT, tmp);
+}
+
+
+
+void tpch_load_lineitem_table(char* dest, char* linebuffer) {
+    tpch_lineitem_tuple &tup = *(tpch_lineitem_tuple*) dest;
+    
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.L_ORDERKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_PARTKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_SUPPKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_LINENUMBER = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_QUANTITY = atof(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_EXTENDEDPRICE = atof(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_DISCOUNT = atof(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_TAX = atof(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_RETURNFLAG = tmp[0];
+    tmp = strtok(NULL, "|");
+    tup.L_LINESTATUS = tmp[0];
+    tmp = strtok(NULL, "|");
+    tup.L_SHIPDATE = datestr_to_timet(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_COMMITDATE = datestr_to_timet(tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_RECEIPTDATE = datestr_to_timet(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.L_SHIPINSTRUCT, tmp);
+    tmp = strtok(NULL, "|");
+    tup.L_SHIPMODE = modestr_to_shipmode(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.L_COMMENT, tmp);
+}
+
+
+
+void tpch_load_nation_table(char* dest, char* linebuffer) {
+    tpch_nation_tuple &tup = *(tpch_nation_tuple*) dest;
+    
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.N_NATIONKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.N_NAME = nnamestr_to_nname(tmp);
+    tmp = strtok(NULL, "|");
+    tup.N_REGIONKEY = atoi(tmp);
+
+    tmp = strtok(NULL, "|");
+    store_string(tup.N_COMMENT, tmp);
+}
+
+
+
+void tpch_load_orders_table(char* dest, char* linebuffer) {
+    tpch_orders_tuple &tup = *(tpch_orders_tuple*) dest;
+    
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.O_ORDERKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.O_CUSTKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.O_ORDERSTATUS = tmp[0];
+    tmp = strtok(NULL, "|");
+    tup.O_TOTALPRICE = atof(tmp);
+    tmp = strtok(NULL, "|");
+    tup.O_ORDERDATE = datestr_to_timet(tmp);
+    tmp = strtok(NULL, "|");
+    tup.O_ORDERPRIORITY = prioritystr_to_orderpriorty(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.O_CLERK, tmp);
+    tmp = strtok(NULL, "|");
+    tup.O_SHIPPRIORITY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.O_COMMENT, tmp);
+}
+
+
+
+void tpch_load_part_table(char* dest, char* linebuffer) {
+    tpch_part_tuple &tup = *(tpch_part_tuple*) dest;
+    
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.P_PARTKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.P_NAME, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.P_MFGR, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.P_BRAND, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.P_TYPE, tmp);
+    tmp = strtok(NULL, "|");
+    tup.P_SIZE = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.P_CONTAINER, tmp);
+    tmp = strtok(NULL, "|");
+    tup.P_RETAILPRICE = atof(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.P_COMMENT, tmp);
+}
+
+
+
+void tpch_load_partsupp_table(char* dest, char* linebuffer) {
+    tpch_partsupp_tuple &tup = *(tpch_partsupp_tuple*) dest;
+
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.PS_PARTKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.PS_SUPPKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.PS_AVAILQTY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    tup.PS_SUPPLYCOST = atof(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.PS_COMMENT, tmp);
+}
+
+
+
+void tpch_load_region_table(char* dest, char* linebuffer) {
+    tpch_region_tuple &tup = *(tpch_region_tuple*) dest;
+
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.R_REGIONKEY= atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.R_NAME, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.R_COMMENT, tmp);
+}
+
+
+
+void tpch_load_supplier_table(char* dest, char* linebuffer) {
+    tpch_supplier_tuple &tup = *(tpch_supplier_tuple*) dest;
+
+    // split line into tab separated parts
+    char* tmp = strtok(linebuffer, "|");
+    tup.S_SUPPKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.S_NAME, tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.S_ADDRESS, tmp);
+    tmp = strtok(NULL, "|");
+    tup.S_NATIONKEY = atoi(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.S_PHONE, tmp);
+    tmp = strtok(NULL, "|");
+    tup.S_ACCTBAL= atof(tmp);
+    tmp = strtok(NULL, "|");
+    store_string(tup.S_COMMENT, tmp);
 }
 
 
@@ -459,17 +279,21 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
  *
  *  @throw BdbException on error.
  */
-void db_load(const char* tbl_path) {
-
+void db_load(const char*) {
+#define PARSE(fin, fout, table) \
+parse_table("tbl/" fin, "database/" fout, &tpch_load_##table##_table, sizeof(tpch_##table##_tuple))
+    
     // load all TPC-H tables from the files generated by dbgen
-    db_table_load(tpch_load_customer_table, tpch_customer, tbl_path, TABLE_CUSTOMER_TBL_FILENAME);
-    db_table_load(tpch_load_lineitem_table, tpch_lineitem, tbl_path, TABLE_LINEITEM_TBL_FILENAME);
-    db_table_load(tpch_load_nation_table,   tpch_nation,   tbl_path, TABLE_NATION_TBL_FILENAME);
-    db_table_load(tpch_load_orders_table,   tpch_orders,   tbl_path, TABLE_ORDERS_TBL_FILENAME);
-    db_table_load(tpch_load_part_table,     tpch_part,     tbl_path, TABLE_PART_TBL_FILENAME);
-    db_table_load(tpch_load_partsupp_table, tpch_partsupp, tbl_path, TABLE_PARTSUPP_TBL_FILENAME);
-    db_table_load(tpch_load_region_table,   tpch_region,   tbl_path, TABLE_REGION_TBL_FILENAME);
-    db_table_load(tpch_load_supplier_table, tpch_supplier, tbl_path, TABLE_SUPPLIER_TBL_FILENAME);
+    /*
+    PARSE(TABLE_CUSTOMER_TBL_FILENAME, TABLE_CUSTOMER_NAME, customer);
+    PARSE(TABLE_LINEITEM_TBL_FILENAME, TABLE_LINEITEM_NAME, lineitem);
+    PARSE(TABLE_NATION_TBL_FILENAME, TABLE_NATION_NAME, nation);
+    PARSE(TABLE_ORDERS_TBL_FILENAME, TABLE_ORDERS_NAME, orders);
+    PARSE(TABLE_PART_TBL_FILENAME, TABLE_PART_NAME, part);
+    PARSE(TABLE_PARTSUPP_TBL_FILENAME, TABLE_PARTSUPP_NAME, partsupp);
+    */
+    PARSE(TABLE_REGION_TBL_FILENAME, TABLE_REGION_NAME, region);
+    PARSE(TABLE_SUPPLIER_TBL_FILENAME, TABLE_SUPPLIER_NAME, supplier);
 }
 
 
@@ -483,17 +307,6 @@ static void store_string(char* dest, char* src) {
 }
 
 
-
-static void db_table_load(void (*tbl_loader) (Db*, const char*),
-                          Db* db,
-                          const char* tbl_path, const char* tbl_filename) {
-    
-    // prepend filename with common path
-    char path[MAX_FILENAME_SIZE];
-    snprintf(path, MAX_FILENAME_SIZE, "%s/%s", tbl_path, tbl_filename);
-    tbl_loader(db, path);
-}
-    
 
 // progress reporting
 

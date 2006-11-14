@@ -5,7 +5,6 @@
 
 
 #include <cassert>
-#include <cstdio>
 
 // for Dbt class
 #include <db_cxx.h>
@@ -264,38 +263,7 @@ private:
      *  @throw FileException if a read error occurs.
      */
     
-    bool fread_full_page(FILE* file) {
-
-        // save page attributes that we'll be overwriting
-	size_t size = page_size();
-
-        // write over this page
-        size_t size_read = ::fread(this, 1, size, file);
-        
-        // We expect to read either a whole page or no data at
-        // all. Anything else is an error.
-        if ( (size_read == 0) && feof(file) )
-            // done with file
-            return false;
-
-        // check sizes match
-        if ( (size != size_read) || (size != page_size()) ) {
-	    // The page we read does not have the same size as the
-	    // page object we overwrote. Luckily, we used the object
-	    // size when reading, so we didn't overflow our internal
-	    // buffer.
-            TRACE(TRACE_ALWAYS,
-                  "Read %zd byte-page with internal page size of %zd bytes into a buffer of %zd bytes. "
-                  "Sizes should all match.\n",
-                  size_read,
-                  page_size(),
-                  size);
-            throw EXCEPTION(FileException, "::fread read wrong size page");
-        }
-
-	return true;
-    }
-
+    bool fread_full_page(FILE* file);
 
     /**
      *  @brief Drain this page to the specified file. If the page is
@@ -307,15 +275,7 @@ private:
      *
      *  @throw FileException if a write error occurs.
      */
-    void fwrite_full_page(FILE *file) {
-        size_t write_count = ::fwrite(this, 1, page_size(), file);
-        if ( write_count != page_size() ) {
-            TRACE(TRACE_ALWAYS, "::fwrite() wrote %zd/%zd page bytes\n",
-                  write_count,
-                  page_size());
-            throw EXCEPTION(FileException, "::fwrite() failed");
-        }
-    }
+    void fwrite_full_page(FILE *file);
     
 
     /**

@@ -68,7 +68,7 @@ struct q13_count_aggregate_t : public tuple_aggregate_t {
 /**
  * @brief select c_cust_key from customer
  */
-packet_t* customer_scan(Db* tpch_customer) {
+packet_t* customer_scan(page_list* tpch_customer) {
     struct customer_tscan_filter_t : public tuple_filter_t {
         customer_tscan_filter_t() 
             : tuple_filter_t(sizeof(tpch_customer_tuple))
@@ -152,7 +152,7 @@ struct order_tscan_filter_t : public tuple_filter_t {
  *        group by c_custkey
  *        order by c_custkey desc
  */
-packet_t* order_scan(Db* tpch_orders) {
+packet_t* order_scan(page_list* tpch_orders) {
 
     // Orders TSCAN
     tuple_filter_t* filter = new order_tscan_filter_t();

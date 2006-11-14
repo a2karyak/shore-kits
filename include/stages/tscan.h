@@ -3,6 +3,7 @@
 #define _TSCAN_H
 
 #include "core.h"
+#include "workload/tpch/tpch_db.h"
 
 
 
@@ -21,7 +22,7 @@ public:
     static const c_str PACKET_TYPE;
 
 
-    Db* _db;
+    page_list* _db;
 
    
     /**
@@ -48,7 +49,7 @@ public:
     tscan_packet_t(const c_str    &packet_id,
 		   tuple_fifo* output_buffer,
 		   tuple_filter_t* output_filter,
-		   Db* db)
+		   page_list* db)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    create_plan(output_filter, db)),
 	  _db(db)
@@ -56,7 +57,7 @@ public:
         assert(db != NULL);
     }
 
-    static query_plan* create_plan(tuple_filter_t* filter, Db* db) {
+    static query_plan* create_plan(tuple_filter_t* filter, page_list* db) {
         c_str action("%s:%p", PACKET_TYPE.data(), db);
         return new query_plan(action, filter->to_string(), NULL, 0);
     }

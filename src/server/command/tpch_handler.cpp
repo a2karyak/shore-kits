@@ -211,8 +211,8 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
             print_file_stats(fifo_stats[i]);
 
         // and the normal files
-        for(int i=0; fsp[i]; i++)
-            print_file_stats(*fsp[i]);
+        //        for(int i=0; fsp[i]; i++)
+        //            print_file_stats(*fsp[i]);
         
         TRACE(TRACE_STATISTICS, "***\t\n");
         free(gsp);
