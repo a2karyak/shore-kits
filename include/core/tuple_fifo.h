@@ -42,12 +42,11 @@ private:
     size_t _threshold;
     size_t _page_size;
     size_t _prefetch_count;
+    size_t _curr_pages;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
-    bool _read_armed;
     guard<page> _write_page;
-    guard<page> _prefetch_page;
 
     // used to communicate between reader and writer
     volatile bool _done_writing;
@@ -80,9 +79,9 @@ public:
                size_t capacity=DEFAULT_BUFFER_PAGES,
                size_t threshold=64,
                size_t page_size=get_default_page_size())
-        :  _dbenv(dbenv),
-           _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
-          _page_size(page_size), _read_armed(false),
+        : _dbenv(dbenv),
+          _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
+          _page_size(page_size), _prefetch_count(0), _curr_pages(0),
           _done_writing(false), _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
@@ -155,7 +154,7 @@ public:
      */
 
     tuple_t allocate() {
-	ensure_write_ready();
+        ensure_write_ready();
         return _write_page->allocate_tuple();
     };
     
@@ -163,9 +162,8 @@ public:
     bool get_tuple(tuple_t &tuple) {
         if(!ensure_read_ready())
             return false;
-
-        tuple = *_read_iterator;
-        _read_armed = false;
+        
+        tuple = *_read_iterator++;
         return true;
     }
 
@@ -193,16 +191,7 @@ public:
      *  terminated the buffer.
      */
 
-    page* get_page() {
-        if(!ensure_read_ready())
-            return NULL;
-
-        // no mixing allowed!
-        assert(_read_iterator == _read_page->begin());
-        //        _purge(true);
-        _read_armed = false;
-        return _read_page.release();
-    }
+    page* get_page();
 
 
     /**
@@ -211,7 +200,11 @@ public:
      * When this function returns at least one tuple may be written
      * without blocking.
      */
-    void ensure_write_ready();
+    void ensure_write_ready() {
+        if(_write_page->full())
+            _flush_write_page(false);
+    }
+        
 
     /**
      * @brief ensures that the FIFO is ready for reading.
@@ -223,32 +216,9 @@ public:
      */
     bool ensure_read_ready() {
         // blocking attempt => only returns false if EOF
-        return _attempt_tuple_read() || _attempt_page_read(true);
+        return (_read_iterator != _read_page->end()) || _get_read_page();
     }
 
-
-    /**
-     * @brief Determines whether the FIFO is ready for writing (non-blocking).
-     */
-    bool check_write_ready() {
-        assert(!_done_writing);
-        _flush(false);
-        return _write_page != NULL;
-    }
-
-    /**
-     * @brief Determines whether the FIFO is ready for reading (non-blocking)
-     *
-     * @return true if there are tuples ready to read, or if EOF
-     */
-    bool check_read_ready() {
-        // can we advance an existing iterator or grab a new page
-        // without blocking?
-        return _attempt_tuple_read() || _attempt_page_read(false) || _done_writing;
-
-        // non-blocking attempt => false could mean either EOF (return
-        // true) or empty (return false)
-    }
     
     /**
      * @brief Closes the buffer immediately (and abnormally).
@@ -277,7 +247,6 @@ public:
     bool send_eof();
     
     
-    
     /**
      *  @brief Check if we have consumed all tuples from this
      *  buffer.
@@ -286,18 +255,17 @@ public:
      *  have read every tuple of every page in this buffer.
      */
     bool eof() {
-        _termination_check();
-        return !_read_page && !_available_reads() && _done_writing;
+        return !ensure_read_ready();
     }
 
 
 private:
     size_t _available_writes() {
-        return _capacity - _pages.size();
+        return _capacity - _available_reads();
     }
 
     size_t _available_reads() {
-        return _pages.size();
+        return _curr_pages;
     }
 
     void _termination_check() {
@@ -306,20 +274,12 @@ private:
     }
 
 
-    /**
-     * @brief flushes the current write page if it is full (or if forced)
-     */
-    void _flush(bool force);
-
-    bool _purge(bool stolen);
-
     void init();
     void destroy();
 
-    // attempts to read a tuple from an existing page
-    bool _attempt_tuple_read();
     // attempts to read a new page
-    bool _attempt_page_read(bool block);
+    bool _get_read_page();
+    void _flush_write_page(bool done_writing);
 
 };
 
