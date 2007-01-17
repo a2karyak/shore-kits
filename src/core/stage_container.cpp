@@ -317,7 +317,7 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
     _next_tuple += p->tuple_count();
     next_tuple = _next_tuple;
     cs.exit();
-
+    prefetch_page(p);
     
     // Any new packets which merge after this point will not 
     // receive this page.

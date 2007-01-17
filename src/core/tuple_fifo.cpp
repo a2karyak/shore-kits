@@ -263,6 +263,11 @@ bool tuple_fifo::_attempt_tuple_read() {
     return true;
 }
 
+static int next_stream_id() {
+    static int i=0;
+    return i++;
+}
+
 // true means a page was read
 bool tuple_fifo::_attempt_page_read(bool block) {
     // should happen at most once...
@@ -282,9 +287,9 @@ bool tuple_fifo::_attempt_page_read(bool block) {
 
     // allocate the page (_purge() increments the counter)
     _read_page = _pin(_read_pnum);
-    touch(&_write_page);
-    
     assert(_read_page);
+    touch(&_read_page);
+    prefetch_page(_read_page);
     _read_iterator = _read_page->begin();
     _read_armed = true;
 

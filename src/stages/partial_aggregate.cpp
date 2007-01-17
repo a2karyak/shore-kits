@@ -56,6 +56,7 @@ void partial_aggregate_stage_t::process_packet() {
     // create a set to hold the sorted run
     tuple_less_t less(agg_key, compare);
     tuple_set_t run(less);
+    input_buffer->ensure_read_ready();
 
     // read in the tuples and aggregate them in the set
     while(!input_buffer->eof()) {
@@ -63,13 +64,17 @@ void partial_aggregate_stage_t::process_packet() {
         _page_count = 0;
         _agg_page = NULL;
         while(_page_count < MAX_RUN_PAGES && !input_buffer->eof()) {
-            guard<page> page = NULL;
-            tuple_t in;
-            while(1) {
-                // out of pages?
-                if(!input_buffer->get_tuple(in))
-                   break;
-
+            guard<page> p = input_buffer->get_page();
+#if 1
+            // read just one tuple
+            tuple_t in = *p->begin();
+#else
+            // read each tuple
+#define in *it
+#endif
+            do {
+                for(page::iterator it=p->begin(); it != p->end(); ++it) {
+                    
                 int hint = tup_key->extract_hint(in);
 
                 // fool the aggregate's key extractor into thinking
@@ -102,7 +107,15 @@ void partial_aggregate_stage_t::process_packet() {
                 // update an existing aggregate tuple (which may have
                 // just barely been inserted)
                 _aggregate->aggregate(candidate->data, in);
+                }
             }
+#if 0
+            // the real thing
+            while((p = input_buffer->get_page()) != NULL);
+#else
+            // fake version that reads the same page over and over...
+            while(guard<page>(input_buffer->get_page()) != NULL);
+#endif
         }
 
         // TODO: handle cases where the run doesn't fit in memory

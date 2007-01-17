@@ -19,7 +19,7 @@ ENTER_NAMESPACE(qpipe);
 
 // exported constants
 
-static const int DEFAULT_BUFFER_PAGES = 7;
+static const int DEFAULT_BUFFER_PAGES = 100;
 
 
 
@@ -403,7 +403,7 @@ private:
         bool operator !=(const iterator &other) const {
             return !(*this == other);
         }
-        tuple_t operator *() {
+        tuple_t &operator *() {
             return _current;
         }
         tuple_t *operator ->() {

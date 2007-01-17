@@ -174,7 +174,7 @@ void tpch_handler_t::handle_command(const char* command) {
 
 
 static void print_file_stats(DB_MPOOL_FSTAT fs) {
-    if(fs.st_cache_miss == 0)
+    if(0 && fs.st_cache_miss == 0)
         return;
     
     int requests = fs.st_cache_hit + fs.st_cache_miss;

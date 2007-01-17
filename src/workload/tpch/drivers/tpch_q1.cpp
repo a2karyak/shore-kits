@@ -50,16 +50,16 @@ private:
 
     /* DELTA random within [60 .. 120] */
     int DELTA;
-
+    bool first;
 public:
 
     /* Initialize the predicates */
     q1_tscan_filter_t() : tuple_filter_t(sizeof(tpch_lineitem_tuple)) {
-
+        first = false;
 	t = datestr_to_timet("1998-12-01");
 
 	/* Calculate random predicates */
-#if 1
+#if 0
         // TPCH spec: "DELTA is randomly selected within [60. 120]"
         thread_t* self = thread_get_self();
         DELTA = 60 + self->rand(61);
@@ -74,7 +74,11 @@ public:
 
     /* Predication */
     virtual bool select(const tuple_t &input) {
-
+        if(0) {
+        bool was_first = first;
+        first = false;
+        return was_first;
+        }
 	/* Predicate:
 	   L_SHIPDATE <= 1998-12-01 - DELTA DAYS
 	*/
@@ -213,6 +217,7 @@ public:
 void tpch_q1_driver::submit(void* disp) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
+    qpipe::query_state_t* qs = dp->query_state_create();
   
     // TSCAN PACKET
     tuple_fifo* tscan_out_buffer =
@@ -223,6 +228,7 @@ void tpch_q1_driver::submit(void* disp) {
                            new q1_tscan_filter_t(),
                            tpch_lineitem);
 
+#if 1
     // AGG PACKET CREATION
     guard<tuple_fifo> agg_output_buffer =
         new tuple_fifo(sizeof(aggregate_tuple), dbenv);
@@ -236,13 +242,17 @@ void tpch_q1_driver::submit(void* disp) {
                                        new q1_key_extract_t(),
                                        new int_key_compare_t());
 
-    qpipe::query_state_t* qs = dp->query_state_create();
-    q1_agg_packet->assign_query_state(qs);
     q1_tscan_packet->assign_query_state(qs);
+    q1_agg_packet->assign_query_state(qs);
         
     // Dispatch packet
     dispatcher_t::dispatch_packet(q1_agg_packet);
-    
+#else
+    // just read from the file scan
+    guard<tuple_fifo> agg_output_buffer = q1_tscan_packet->output_buffer();
+    q1_tscan_packet->assign_query_state(qs);
+    dispatcher_t::dispatch_packet(q1_tscan_packet);
+#endif
     tuple_t output;
     TRACE(TRACE_QUERY_RESULTS, "*** Q1 ANSWER ...\n");
     TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");

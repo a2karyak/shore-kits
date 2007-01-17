@@ -21,6 +21,24 @@ DEFINE_EXCEPTION(TerminatedBufferException);
 typedef std::vector<DB_MPOOL_FSTAT> stats_list;
 
 
+inline
+void prefetch_page(page* p) {
+    if(1) {
+        // see http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.aixassem/doc/alangref/dcbt.htm
+        // mask out the least significant 7 bits (we want all flags zeroed)
+        size_t ea = ((size_t) p) & -32;
+        // want dcbt 0, n, 0b1000
+        asm("dcbt 0, %0, %1" : : "r"(ea), "i" (0x8));
+#define IBM_SHL(val, n) (((size_t) (val)) << (64 - (n)))
+#define IBM_BIT(n) IBM_SHL(1, n)
+        // start fetching now | fetch 128 blocks
+        ea = IBM_BIT(32) | IBM_SHL(128, 47);
+        asm("dcbt 0, %0, %1" : : "r"(ea), "i"(0xa));
+#undef IBM_BIT
+#undef IBM_SHL
+    }
+}
+
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
  *  safely pass tuples to another. The producer will fill a page of
@@ -42,6 +60,7 @@ private:
     size_t _page_size;
     size_t _prefetch_count;
     size_t _context_switches;
+    long _stream_id;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
@@ -90,6 +109,7 @@ public:
           _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
           _page_size(page_size),
           _prefetch_count(0), _context_switches(0),
+          _stream_id(-1),
           _read_armed(false),
           _read_pnum(1), _write_pnum(1),
           _done_writing(false), _terminated(false),

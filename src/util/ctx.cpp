@@ -11,6 +11,7 @@
 
 struct ctx_context {
     ctx_handle* self;
+    size_t stack_id;
     size_t stack_size;
     void* (*func)(void*);
     void* arg;
@@ -64,6 +65,16 @@ void ctx_exit(void* rval) {
     ctx_exit(ctx_current(), rval);
 }
 
+void ctx_sweep() {
+    context_list::iterator it=ctx_zombies.begin();
+    for(; it != ctx_zombies.end(); ++it) {
+        VALGRIND_STACK_DEREGISTER(it->second.stack_id);
+        delete [] (((char*) it->first) - it->second.stack_size);
+    }
+    
+    ctx_zombies.clear();
+}
+
 // dirty hack: this function is only ever "called" by returning from
 // ctx_swap for the first time a context is scheduled. Even though
 // ctx_swap won't explicinly pass the params, it doesn't clobber the
@@ -94,7 +105,11 @@ ctx_handle* ctx_create(void* (*func)(void*), void* arg,
     if(stack_size == 0)
         stack_size = 1*M;
 
+    // clear out the zombie contexts
+    ctx_sweep();
+    
     void* buffer;
+    size_t stack_id;
     if(0) {
         buffer = mmap(0, stack_size, 
                       PROT_READ|PROT_WRITE,
@@ -104,7 +119,7 @@ ctx_handle* ctx_create(void* (*func)(void*), void* arg,
     else {
         char* base = new char[stack_size];
         buffer = base + stack_size;
-        VALGRIND_STACK_REGISTER(base, buffer);
+        stack_id = VALGRIND_STACK_REGISTER(base, buffer);
     }
     // allocation failure?
     if(buffer == (void*)-1)
@@ -113,6 +128,7 @@ ctx_handle* ctx_create(void* (*func)(void*), void* arg,
     // register it for later
     ctx_context &ctx = ctx_live[buffer];
     ctx.stack_size = stack_size;
+    ctx.stack_id = stack_id;
     ctx.func = func;
     ctx.arg = arg;
     ctx.rval = NULL;
