@@ -114,24 +114,38 @@ void tpch_handler_t::handle_command(const char* command) {
     // parse command
     char driver_tag[SERVER_COMMAND_BUFFER_SIZE];
     char scheduler_policy_tag[SERVER_COMMAND_BUFFER_SIZE];
-    if ( sscanf(command, "%*s %s %d %d %d %s",
-                driver_tag,
-                &num_clients,
-                &num_iterations,
-                &think_time,
-                scheduler_policy_tag) < 5 ) {
-        
+    
+
+    // parse driver tag
+    if ( sscanf(command, "%*s %s", driver_tag) < 1 ) {
         char command_tag[SERVER_COMMAND_BUFFER_SIZE];
         int command_found = sscanf(command, "%s", command_tag);
         assert(command_found == 1);
-        PRINT("Usage: %s"
-              " <driver_tag>"
-              " <num_clients>"
-              " <num_iterations>"
-              " <think_time>"
-              " <scheduler_policy_tag>"
-              "\n",
-              command_tag);
+        print_usage(command_tag);
+        return;
+    }
+
+
+    // 'list' tag handled differently from all others...
+    if (!strcmp(driver_tag, "list"))
+    {
+        for (map<c_str, driver_t*>::iterator it = _drivers.begin(); it != _drivers.end(); ++it)
+        {
+            PRINT("%s\n", it->first.data());
+        }
+        return;
+    }
+   
+    
+    if ( sscanf(command, "%*s %*s %d %d %d %s",
+                &num_clients,
+                &num_iterations,
+                &think_time,
+                scheduler_policy_tag) < 4 ) {
+        char command_tag[SERVER_COMMAND_BUFFER_SIZE];
+        int command_found = sscanf(command, "%s", command_tag);
+        assert(command_found == 1);
+        print_usage(command_tag);
         return;
     }
 
@@ -186,7 +200,17 @@ static void print_file_stats(DB_MPOOL_FSTAT fs) {
     TRACE(TRACE_STATISTICS, "***\t\tPage requests: %d\n", requests);
     TRACE(TRACE_STATISTICS, "***\t\tHit rate     : %.1f%%\n", hit_rate);
     TRACE(TRACE_STATISTICS, "***\t\t\n");
- }
+}
+
+
+void tpch_handler_t::print_usage(const char* command_tag)
+{
+    PRINT("Usage: %s"
+          " list | <driver_tag> <num_clients> <num_iterations> <think_time> <scheduler_policy_tag>"
+          "\n",
+          command_tag);
+}
+
 
 void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
 
