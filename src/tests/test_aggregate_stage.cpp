@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     register_stage<aggregate_stage_t>(1);
 
 
-    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int));
 
     struct int_tuple_writer_info_s writer_info(int_buffer, num_tuples);
     func_call_packet_t* fc_packet = 
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
                                &writer_info);
     
     
-    tuple_fifo* count_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* count_buffer = new tuple_fifo(sizeof(int));
 
 
     aggregate_packet_t* agg_packet =
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
  
     tuple_t output;
     while(count_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Count: %d\n", *(int*)output.data);
+        TRACE(TRACE_ALWAYS, "Count: %d\n", *safe_cast<int>(output.data));
 
     dp->query_state_destroy(qs);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");

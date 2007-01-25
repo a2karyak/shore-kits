@@ -78,7 +78,7 @@ struct strlt {
 
 pthread_mutex_t open_fifo_mutex = thread_mutex_create();
 static int open_fifo_count = 0;
-static stats_list file_stats;
+
 static size_t total_prefetches = 0;
 
 /*
@@ -115,17 +115,11 @@ int tuple_fifo::open_fifos() {
     return open_fifo_count;
 }
 
-stats_list tuple_fifo::get_stats() {
-    critical_section_t cs(open_fifo_mutex);
-    return file_stats;
-}
-
 size_t tuple_fifo::prefetch_count() {
     return total_prefetches;
 }
 void tuple_fifo::clear_stats() {
     critical_section_t cs(open_fifo_mutex);
-    file_stats.clear();
     total_prefetches = 0;
 }
 

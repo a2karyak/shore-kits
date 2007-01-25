@@ -33,7 +33,7 @@
 
 #define TRACE_NETWORK            (1 << 10)
 
-#define TRACE_DEBUG              (1 << 31)
+#define TRACE_DEBUG              (1u << 31)
 
 
 

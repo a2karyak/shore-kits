@@ -103,7 +103,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
         it = runs.erase(it);
 	
         fscan_packet_t* p;
-        tuple_fifo* buf = new tuple_fifo(_tuple_size, _dbenv);
+        tuple_fifo* buf = new tuple_fifo(_tuple_size);
 
 
         c_str fscan_packet_id("SORT_FSCAN_PACKET_%d", i);
@@ -121,7 +121,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
 
     // create a merge packet to consume the fscans
     merge_packet_t* mp;
-    tuple_fifo* merge_out = new tuple_fifo(_tuple_size, _dbenv);
+    tuple_fifo* merge_out = new tuple_fifo(_tuple_size);
 
 
     mp = new merge_packet_t("SORT_MERGE_PACKET",
@@ -149,7 +149,7 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
 
     // KLUDGE! the fdump stage will reopen the file
     fclose(create_tmp_file(file_name, "merged-run"));
-    fdump_out = new tuple_fifo(_tuple_size, _dbenv);
+    fdump_out = new tuple_fifo(_tuple_size);
     
     fp = new fdump_packet_t("SORT_FDUMP_PACKET",
                             fdump_out,
@@ -351,7 +351,6 @@ void sort_stage_t::process_packet() {
     _tuple_size = _input_buffer->tuple_size();
     _compare = packet->_compare;
     _extract = packet->_extract;
-    _dbenv = packet->output_buffer()->dbenv();
     _sorting_finished = false;
 
 

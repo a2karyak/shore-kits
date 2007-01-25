@@ -32,7 +32,7 @@ void tpch_m_1_4_6_12_driver::submit(void* disp) {
         break;
 
     default:
-        assert(false);
+	unreachable();
     }
 
     TRACE(TRACE_DEBUG, "selection = %d\n", selection);

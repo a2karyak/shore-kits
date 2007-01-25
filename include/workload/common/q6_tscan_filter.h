@@ -107,7 +107,7 @@ public:
         /* Should project L_EXTENDEDPRICE & L_DISCOUNT */
 
         // Calculate L_EXTENDEDPRICE
-        tpch_lineitem_tuple *at = (tpch_lineitem_tuple*)(src.data);
+        tpch_lineitem_tuple *at = safe_cast<tpch_lineitem_tuple>(src.data);
 
         memcpy(dest.data, &at->L_EXTENDEDPRICE, sizeof(double));
         memcpy(dest.data + sizeof(double), &at->L_DISCOUNT, sizeof(double));

@@ -13,8 +13,6 @@ LDADD = \
 	$(LDBASE)/stages/libstages.a \
 	$(LDBASE)/core/libcore.a \
 	$(LDBASE)/util/libutil.a \
-	$(BDB_HOME)/lib/libdb_cxx.a \
-	$(LDBASE)/bdb-ext/libbdbext.a \
 	-lrt \
 	-laio \
 	-lreadline \

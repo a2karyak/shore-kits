@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     register_stage<func_call_stage_t>(1);
     
 
-    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int));
     func_call_packet_t* fc_packet = 
 	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
                                int_buffer);
 
 
-    tuple_fifo* output_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* output_buffer = new tuple_fifo(sizeof(int));
     tuple_filter_t* output_filter = new trivial_filter_t(int_buffer->tuple_size());
     sort_packet_t* packet = new sort_packet_t("SORT_PACKET_1",
                                               output_buffer,
@@ -104,6 +104,6 @@ int main(int argc, char* argv[]) {
 
 
     while (output_buffer->get_tuple(output)) {
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *safe_cast<int>(output.data));
     }
 }

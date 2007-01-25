@@ -48,8 +48,7 @@ void tpch_handler_t::init() {
     if ( state == TPCH_HANDLER_UNINITIALIZED ) {
 
         // open DB tables (1.25 GB bpool)
-        db_open(DB_RDONLY|DB_THREAD, 2, 125*1024*1024);
-        //        db_open(DB_RDONLY|DB_THREAD, 1, 625*1024*1024);
+        db_open();
 
         // register drivers...
         add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
@@ -187,22 +186,6 @@ void tpch_handler_t::handle_command(const char* command) {
 }
 
 
-static void print_file_stats(DB_MPOOL_FSTAT fs) {
-    if(fs.st_cache_miss == 0)
-        return;
-    
-    int requests = fs.st_cache_hit + fs.st_cache_miss;
-    double hit_rate = 100.*fs.st_cache_hit/requests;
-    TRACE(TRACE_STATISTICS, "***\t ---File: %s\n", fs.file_name);
-    TRACE(TRACE_STATISTICS, "***\t\tPages created: %d\n", fs.st_page_create);
-    TRACE(TRACE_STATISTICS, "***\t\tPages read   : %d\n", fs.st_page_in);
-    TRACE(TRACE_STATISTICS, "***\t\tPages written: %d\n", fs.st_page_out);
-    TRACE(TRACE_STATISTICS, "***\t\tPage requests: %d\n", requests);
-    TRACE(TRACE_STATISTICS, "***\t\tHit rate     : %.1f%%\n", hit_rate);
-    TRACE(TRACE_STATISTICS, "***\t\t\n");
-}
-
-
 void tpch_handler_t::print_usage(const char* command_tag)
 {
     PRINT("Usage: %s"
@@ -214,36 +197,6 @@ void tpch_handler_t::print_usage(const char* command_tag)
 
 void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
 
-    if(1) {
-        DB_MPOOL_STAT *gsp;
-        DB_MPOOL_FSTAT **fsp;
-
-        dbenv->memp_stat(&gsp, &fsp, DB_STAT_CLEAR);
-
-        int requests = gsp->st_cache_hit + gsp->st_cache_miss;
-        double hit_rate = 100.*gsp->st_cache_hit/requests;
-        TRACE(TRACE_STATISTICS, "***\n");
-        TRACE(TRACE_STATISTICS, "*** Memory Pool statistics:\n");
-        TRACE(TRACE_STATISTICS, "***\tCapacity: %d\n", gsp->st_pages);
-        TRACE(TRACE_STATISTICS, "***\tRequests: %d\n", requests);
-        TRACE(TRACE_STATISTICS, "***\tHit rate: %.1f%%\n", hit_rate);
-        TRACE(TRACE_STATISTICS, "***\t\n");
-
-        // grab the temp file stats
-        qpipe::stats_list fifo_stats = tuple_fifo::get_stats();
-        for(size_t i=0; i < fifo_stats.size(); i++)
-            print_file_stats(fifo_stats[i]);
-
-        // and the normal files
-        //        for(int i=0; fsp[i]; i++)
-        //            print_file_stats(*fsp[i]);
-        
-        TRACE(TRACE_STATISTICS, "***\t\n");
-        free(gsp);
-        free(fsp);
-
-        TRACE(TRACE_STATISTICS, "***\tPrefetch count: %lu\n", tuple_fifo::prefetch_count());
-    }
     tuple_fifo::clear_stats();
     
     // print final statistics

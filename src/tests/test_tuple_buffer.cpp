@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    tuple_fifo int_buffer(sizeof(int), dbenv);
+    tuple_fifo int_buffer(sizeof(int));
 
     // can only send EOF once, although we can terminate multiple
     // times

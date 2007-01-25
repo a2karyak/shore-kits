@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include "util.h"
 
 
 
@@ -43,6 +44,7 @@ enum tpch_l_shipmode {
     SHIP,
     END_SHIPMODE
 };
+DEF_POD_SAFE_CAST(tpch_l_shipmode);
 
 enum tpch_o_orderpriority {
     URGENT_1,
@@ -51,6 +53,7 @@ enum tpch_o_orderpriority {
     NOT_SPECIFIED_4,
     LOW_5
 };
+DEF_POD_SAFE_CAST(tpch_o_orderpriority);
 
 enum tpch_n_name{
     ALGERIA,
@@ -79,8 +82,10 @@ enum tpch_n_name{
     UNITED_KINGDOM,
     UNITED_STATES
 };
+DEF_POD_SAFE_CAST(tpch_n_name);
 
 struct tpch_customer_tuple {
+    static int const ALIGN;
     double C_ACCTBAL;
     int C_CUSTKEY;
     int C_NATIONKEY;
@@ -92,6 +97,7 @@ struct tpch_customer_tuple {
 };
 
 struct tpch_lineitem_tuple {
+    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
@@ -111,6 +117,7 @@ struct tpch_lineitem_tuple {
 };
 
 struct tpch_nation_tuple {
+    static int const ALIGN;
     int N_NATIONKEY;
     int N_REGIONKEY;
     tpch_n_name N_NAME;
@@ -118,6 +125,7 @@ struct tpch_nation_tuple {
 };
 
 struct tpch_orders_tuple {
+    static int const ALIGN;
     double O_TOTALPRICE;
     time_t O_ORDERDATE;
     int O_ORDERKEY;
@@ -130,6 +138,7 @@ struct tpch_orders_tuple {
 };
 
 struct tpch_part_tuple {
+    static int const ALIGN;
     double P_RETAILPRICE;
     int P_PARTKEY;
     int P_SIZE;
@@ -142,6 +151,7 @@ struct tpch_part_tuple {
 };
 
 struct tpch_partsupp_tuple {
+    static int const ALIGN;
     double PS_SUPPLYCOST;
     int PS_PARTKEY;
     int PS_SUPPKEY;
@@ -150,12 +160,14 @@ struct tpch_partsupp_tuple {
 };
 
 struct tpch_region_tuple {
+    static int const ALIGN;
     int R_REGIONKEY;
     char R_NAME   [STRSIZE(25)];
     char R_COMMENT[STRSIZE(152)];
 };
 
 struct tpch_supplier_tuple {
+    static int const ALIGN;
     double S_ACCTBAL;
     int S_SUPPKEY;
     int S_NATIONKEY;

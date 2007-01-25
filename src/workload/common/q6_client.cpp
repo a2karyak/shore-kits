@@ -38,7 +38,7 @@ void* q6_client_main(void* arg) {
         }
         if(1)
         while( out->get_tuple(output) ) {
-            double* r = (double*)output.data;
+            double* r = safe_cast<double>(output.data);
             TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
         }
 

@@ -5,9 +5,8 @@
 
 
 #include <cassert>
+#include <new>
 
-// for Dbt class
-#include <db_cxx.h>
 #include "util.h"
 
 
@@ -50,11 +49,6 @@ public:
     tuple_t() {
 	// no data
         init(NULL, 0);
-    }
-
-    // construct a tuple from a BerkeleyDB tuple (a Dbt object)
-    tuple_t(Dbt &data) {
-        init((char *)data.get_data(), data.get_size());
     }
     
     tuple_t(char* d, size_t s) {

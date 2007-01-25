@@ -14,7 +14,7 @@ using namespace qpipe;
 packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) {
 
     // TSCAN
-    tuple_fifo* tscan_output = new tuple_fifo(2*sizeof(double), dbenv);
+    tuple_fifo* tscan_output = new tuple_fifo(2*sizeof(double));
     tscan_packet_t *q6_tscan_packet;
     q6_tscan_packet = new tscan_packet_t("lineitem TSCAN",
                                          tscan_output,
@@ -24,7 +24,7 @@ packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) 
     // AGGREGATE
     aggregate_packet_t* q6_agg_packet;
     q6_agg_packet = new aggregate_packet_t(c_str("%s_AGGREGATE_PACKET", client_prefix.data()),
-                                           new tuple_fifo(2*sizeof(double), dbenv),
+                                           new tuple_fifo(2*sizeof(double)),
                                            new trivial_filter_t(tscan_output->tuple_size()),
                                            new q6_count_aggregate_t(),
                                            new default_key_extractor_t(0),

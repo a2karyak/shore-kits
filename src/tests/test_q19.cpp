@@ -63,13 +63,16 @@ using namespace qpipe;
  */
 
 struct part_scan_tuple {
+    static int const ALIGN;
     int P_PARTKEY;
     int P_SIZE;
     char P_CONTAINER[STRSIZE(10)];
     char P_BRAND[STRSIZE(10)];
 };
+int const part_scan_tuple::ALIGN = sizeof(int);
 
 struct lineitem_scan_tuple {
+    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
@@ -77,8 +80,10 @@ struct lineitem_scan_tuple {
     tpch_l_shipmode L_SHIPMODE;
     char L_SHIPINSTRUCT[STRSIZE(25)];
 };
+int const lineitem_scan_tuple::ALIGN = sizeof(double);
 
 struct join_tuple {
+    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
@@ -89,11 +94,14 @@ struct join_tuple {
     char P_BRAND[STRSIZE(10)];
     char L_SHIPINSTRUCT[STRSIZE(25)];
 };
+int const join_tuple::ALIGN = sizeof(double);
 
 struct q19_tuple {
+    static int const ALIGN;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
 };
+int const q19_tuple::ALIGN = sizeof(double);
 
 /**
  * @brief select p_partkey, p_brand, p_container, p_size from part
@@ -135,8 +143,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
         }
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        part_scan_tuple *dest = (part_scan_tuple*) d.data;
-        tpch_part_tuple *src = (tpch_part_tuple*) s.data;
+        part_scan_tuple *dest = safe_cast<part_scan_tuple>(d.data);
+        tpch_part_tuple *src = safe_cast<tpch_part_tuple>(s.data);
         dest->P_PARTKEY = src->P_PARTKEY;
         dest->P_SIZE = src->P_SIZE;
         memcpy(dest->P_CONTAINER, src->P_CONTAINER, sizeof(src->P_CONTAINER));
@@ -206,8 +214,8 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(orp);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = (lineitem_scan_tuple*) d.data;
-        tpch_lineitem_tuple *src = (tpch_lineitem_tuple*) s.data;
+        lineitem_scan_tuple *dest = safe_cast<lineitem_scan_tuple>(d.data);
+        tpch_lineitem_tuple *src = safe_cast<tpch_lineitem_tuple>(s.data);
         dest->L_QUANTITY = src->L_QUANTITY;
         dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
         dest->L_DISCOUNT = src->L_DISCOUNT;
@@ -256,9 +264,9 @@ struct q19_join_t : tuple_join_t {
     }
 
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = (join_tuple*) d.data;
-        lineitem_scan_tuple* left = (lineitem_scan_tuple*) l.data;
-        part_scan_tuple* right = (part_scan_tuple*) r.data;
+        join_tuple* dest = safe_cast<join_tuple>(d.data);
+        lineitem_scan_tuple* left = safe_cast<lineitem_scan_tuple>(l.data);
+        part_scan_tuple* right = safe_cast<part_scan_tuple>(r.data);
 
         dest->L_QUANTITY = left->L_QUANTITY;
         dest->L_EXTENDEDPRICE = left->L_EXTENDEDPRICE;
@@ -340,8 +348,8 @@ struct q19_filter_t : tuple_filter_t {
         }
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        q19_tuple *dest = (q19_tuple*) d.data;
-        join_tuple *src = (join_tuple*) s.data;
+        q19_tuple *dest = safe_cast<q19_tuple>(d.data);
+        join_tuple *src = safe_cast<join_tuple>(s.data);
         dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
         dest->L_DISCOUNT = src->L_DISCOUNT;
     }
@@ -369,8 +377,8 @@ struct q19_sum_t : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        double* dest = (double*) agg_data;
-        q19_tuple* src = (q19_tuple*) t.data;
+        double* dest = safe_cast<double>(agg_data);
+        q19_tuple* src = safe_cast<q19_tuple>(t.data);
 
         *dest += src->L_EXTENDEDPRICE*(1 - src->L_DISCOUNT);
     }
@@ -403,7 +411,7 @@ int main() {
 
         // lineitem scan
         tuple_filter_t* filter = new lineitem_tscan_filter_t();
-        tuple_fifo* buffer = new tuple_fifo(sizeof(lineitem_scan_tuple), dbenv);
+        tuple_fifo* buffer = new tuple_fifo(sizeof(lineitem_scan_tuple));
         packet_t* lineitem_packet;
         lineitem_packet = new tscan_packet_t("lineitem TSCAN",
                                              buffer,
@@ -412,7 +420,7 @@ int main() {
 
         // part scan
         filter = new part_tscan_filter_t();
-        buffer = new tuple_fifo(sizeof(part_scan_tuple), dbenv);
+        buffer = new tuple_fifo(sizeof(part_scan_tuple));
         packet_t* part_packet;
         part_packet = new tscan_packet_t("part TSCAN",
                                          buffer,
@@ -421,7 +429,7 @@ int main() {
 
         // join
         filter = new q19_filter_t();
-        buffer = new tuple_fifo(sizeof(q19_tuple), dbenv);
+        buffer = new tuple_fifo(sizeof(q19_tuple));
         packet_t* join_packet;
         join_packet = new hash_join_packet_t("lineitem-part HJOIN",
                                              buffer, filter,
@@ -431,7 +439,7 @@ int main() {
 
         // sum
         filter = new trivial_filter_t(sizeof(double));
-        buffer = new tuple_fifo(sizeof(double), dbenv);
+        buffer = new tuple_fifo(sizeof(double));
         key_extractor_t* extractor = new default_key_extractor_t(0, 0);
         packet_t* sum_packet;
         sum_packet = new aggregate_packet_t("final SUM",
@@ -445,7 +453,7 @@ int main() {
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
-            double* r = (double*) output.data;
+            double* r = safe_cast<double>(output.data);
             TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", *r);
         }
 

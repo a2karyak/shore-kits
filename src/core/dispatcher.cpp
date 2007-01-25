@@ -62,11 +62,8 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type, stage_con
   if ( node == NULL )
       throw EXCEPTION(BadAlloc);
 
-  char* ptcopy;
-  if ( asprintf(&ptcopy, packet_type.data()) == -1 ) {
-      free(node);
-      throw EXCEPTION(BadAlloc);
-  }
+  char* ptcopy = new char[strlen(packet_type.data())+1];
+  strcpy(ptcopy, packet_type.data());
   
   // add to hash map
   static_hash_map_insert( &stage_directory, ptcopy, sc, node );

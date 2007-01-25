@@ -44,8 +44,8 @@ char* timet_to_datestr(time_t time) {
     struct tm tm;
     memset(&tm, 0, sizeof(tm));
     localtime_r(&time, &tm);
-    char* result;
-    asprintf(&result, "%04d-%02d-%02d\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
+    char* result = new char[strlen("09/09/2009\n")+1];
+    sprintf(result, "%04d-%02d-%02d\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
     return result;
 }
 

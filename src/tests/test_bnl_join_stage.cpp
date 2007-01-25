@@ -38,7 +38,7 @@ public:
     }
     
     packet_t* reset() {
-        tuple_fifo* right_int_buffer = new tuple_fifo(sizeof(int), dbenv);
+        tuple_fifo* right_int_buffer = new tuple_fifo(sizeof(int));
         struct int_tuple_writer_info_s* info =
             new int_tuple_writer_info_s(right_int_buffer, _num_tuples);
         return
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
 
     tuple_join_t* join = new workload::single_int_join_t();
-    tuple_fifo* left_int_buffer = new tuple_fifo(join->left_tuple_size(), dbenv);
+    tuple_fifo* left_int_buffer = new tuple_fifo(join->left_tuple_size());
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples);
 
     func_call_packet_t* left_packet = 
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
-    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size(), dbenv);
+    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size());
 
     bnl_join_packet_t* join_packet =
         new bnl_join_packet_t( "BNL_JOIN_PACKET_1",
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     
     tuple_t output;
     while(join_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *safe_cast<int>(output.data));
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     
     return 0;

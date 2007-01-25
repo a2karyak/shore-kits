@@ -249,8 +249,8 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
     case ETIMEDOUT: return false;
     default: THROW_IF(ThreadException, err);
     }
-    // unreachable
-    assert(false);
+
+    unreachable();
 }
 
 

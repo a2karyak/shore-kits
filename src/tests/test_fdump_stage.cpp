@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
     
     
     // just need to pass one int at a time to the counter
-    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
-    tuple_fifo* signal_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int));
+    tuple_fifo* signal_buffer = new tuple_fifo(sizeof(int));
 
 
     struct int_tuple_writer_info_s info(int_buffer, num_tuples);

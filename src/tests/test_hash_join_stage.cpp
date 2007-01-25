@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 
 
     tuple_join_t* join = new workload::single_int_join_t();
-    tuple_fifo* left_int_buffer = new tuple_fifo(join->left_tuple_size(), dbenv);
+    tuple_fifo* left_int_buffer = new tuple_fifo(join->left_tuple_size());
     struct int_tuple_writer_info_s left_writer_info(left_int_buffer, num_tuples);
 
     func_call_packet_t* left_packet = 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
-    tuple_fifo* right_int_buffer = new tuple_fifo(join->right_tuple_size(), dbenv);
+    tuple_fifo* right_int_buffer = new tuple_fifo(join->right_tuple_size());
     struct int_tuple_writer_info_s right_writer_info(right_int_buffer, num_tuples);
     func_call_packet_t* right_packet = 
 	new func_call_packet_t("RIGHT_PACKET",
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
                                &right_writer_info);
     
     
-    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size(), dbenv);
+    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size());
 
     
     hash_join_packet_t* join_packet =
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     
     tuple_t output;
     while(join_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *safe_cast<int>(output.data));
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
 
     return 0;

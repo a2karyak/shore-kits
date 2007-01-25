@@ -2,15 +2,13 @@
 #ifndef _TPCH_DB_H
 #define _TPCH_DB_H
 
+#include <inttypes.h>
 #include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_db_load.h"
-#include "workload/tpch/bdb_config.h"
-#include <db_cxx.h>
 
-
-void db_open(u_int32_t flags=DB_RDONLY|DB_THREAD,
-             u_int32_t db_cache_size_gb=BDB_BUFFER_POOL_SIZE_GB,
-             u_int32_t db_cache_size_bytes=BDB_BUFFER_POOL_SIZE_BYTES);
+void db_open(uint32_t flags=0,
+             uint32_t db_cache_size_gb=1,
+             uint32_t db_cache_size_bytes=0);
 void db_close();
 
 

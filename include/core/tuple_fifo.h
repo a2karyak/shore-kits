@@ -6,20 +6,9 @@
 #include <vector>
 #include <list>
 
-template<>
-inline void guard<DbMpoolFile>::action(DbMpoolFile* ptr) {
-    // sync so the darn thing realizes it doesn't have to write out
-    // those "dirty" pages
-    //    ptr->sync();
-    ptr->set_priority(DB_PRIORITY_VERY_LOW);
-    ptr->close(0);
-}
-
 ENTER_NAMESPACE(qpipe);
 
 DEFINE_EXCEPTION(TerminatedBufferException);
-
-typedef std::vector<DB_MPOOL_FSTAT> stats_list;
 
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
@@ -35,7 +24,6 @@ class tuple_fifo {
 private:
     typedef std::list<page*> page_list;
     page_list _pages;
-    DbEnv* _dbenv;
     
     size_t _tuple_size;
     size_t _capacity;
@@ -75,11 +63,11 @@ public:
      */
 
     tuple_fifo(
-               size_t tuple_size, DbEnv* dbenv,
+               size_t tuple_size,
                size_t capacity=DEFAULT_BUFFER_PAGES,
                size_t threshold=64,
                size_t page_size=get_default_page_size())
-        : _dbenv(dbenv),
+        : 
           _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
           _page_size(page_size), _prefetch_count(0), _curr_pages(0),
           _done_writing(false), _terminated(false),
@@ -97,16 +85,12 @@ public:
     // the number of FIFOs currently open
     static int open_fifos();
 
-    static stats_list get_stats();
     static size_t prefetch_count();
     
     // closes all memory pool file handles (which are left open to
     // preserve their statistics)
     static void clear_stats();
 
-    DbEnv* dbenv() {
-        return _dbenv;
-    }
     size_t tuple_size() const {
         return _tuple_size;
     }

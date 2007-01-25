@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     
     
     // just need to pass one int at a time to the counter
-    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int));
     
     // aggregate single count result (single int)
     int_tuple_writer_info_s info(int_buffer, num_tuples, 0);
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
   
     tuple_t output;
     while ( int_buffer->get_tuple(output) ) {
-	TRACE(TRACE_ALWAYS, "Read %d\n", *(int*)output.data);
+	TRACE(TRACE_ALWAYS, "Read %d\n", *safe_cast<int>(output.data));
     }
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     

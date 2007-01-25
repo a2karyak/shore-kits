@@ -23,6 +23,7 @@ public:
 
     virtual query_state_t* query_state_create()=0;
     virtual void query_state_destroy(query_state_t* qstate)=0;
+    virtual ~policy_t() { }
 };
 
 

@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     
     
     // aggregate single count result (single int)
-    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* int_buffer = new tuple_fifo(sizeof(int));
     fscan_packet_t* packet = 
 	new fscan_packet_t("FSCAN_PACKET_1",
                            int_buffer,
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
   
     tuple_t output;
     while ( int_buffer->get_tuple(output) ) {
-	TRACE(TRACE_ALWAYS, "Read %d\n", *(int*)output.data);
+	TRACE(TRACE_ALWAYS, "Read %d\n", *safe_cast<int>(output.data));
     }
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
 

@@ -22,6 +22,8 @@
 
 #include <sched.h>
 
+typedef cpu_set_t os_cpu_set_t;
+
 #endif
 
 
@@ -47,7 +49,6 @@
 #error "Unsupported operating system\n"
 #endif
 
-typedef cpu_set_t os_cpu_set_t;
 
 
 #endif

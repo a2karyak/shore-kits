@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
     merge_packet_t::buffer_list_t input_buffers;
     for(int i=0; i < merge_factor; i++) {
 
-        tuple_fifo *input_buffer = new tuple_fifo(sizeof(int), dbenv);
+        tuple_fifo *input_buffer = new tuple_fifo(sizeof(int));
         input_buffers.push_back(input_buffer);
         merge_info[i].first = input_buffer;
 
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
     
     
     // fire up the merge stage now
-    guard<tuple_fifo> output_buffer = new tuple_fifo(sizeof(int), dbenv);
+    guard<tuple_fifo> output_buffer = new tuple_fifo(sizeof(int));
     merge_packet_t* packet = new merge_packet_t("MERGE_PACKET_1",
                                                 output_buffer,
                                                 new trivial_filter_t(input_buffers[0]->tuple_size()),
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
     tuple_t output;
     while(output_buffer->get_tuple(output)) {
         if(do_echo)
-            TRACE(TRACE_ALWAYS, "Value: %d\n", *(int*)output.data);
+            TRACE(TRACE_ALWAYS, "Value: %d\n", *safe_cast<int>(output.data));
     }
     TRACE(TRACE_ALWAYS, "No more tuples...\n");
     TRACE(TRACE_ALWAYS, "TEST DONE\n");

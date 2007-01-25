@@ -15,19 +15,19 @@ ENTER_NAMESPACE(workload);
 
 // the tuples after tablescan projection
 struct projected_lineitem_tuple {
-    char L_RETURNFLAG;
-    char L_LINESTATUS;
+    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
     double L_TAX;
+    char L_RETURNFLAG;
+    char L_LINESTATUS;
 };
 
 
 // the final aggregated tuples
 struct aggregate_tuple {
-    char L_RETURNFLAG;
-    char L_LINESTATUS;
+    static int const ALIGN;
     double L_SUM_QTY;
     double L_SUM_BASE_PRICE;
     double L_SUM_DISC_PRICE;
@@ -36,9 +36,12 @@ struct aggregate_tuple {
     double L_AVG_PRICE;
     double L_AVG_DISC;
     double L_COUNT_ORDER;
+    char L_RETURNFLAG;
+    char L_LINESTATUS;
 };
 
-
+int const projected_lineitem_tuple::ALIGN = sizeof(double);
+int const aggregate_tuple::ALIGN = sizeof(double);
 
 class q1_tscan_filter_t : public tuple_filter_t {
 
@@ -79,7 +82,7 @@ public:
 	   L_SHIPDATE <= 1998-12-01 - DELTA DAYS
 	*/
 
-	tpch_lineitem_tuple *tuple = (tpch_lineitem_tuple*)input.data;
+	tpch_lineitem_tuple *tuple = safe_cast<tpch_lineitem_tuple>(input.data);
 
 	if  ( tuple->L_SHIPDATE <= t ) {
             //TRACE(TRACE_ALWAYS, "+");
@@ -96,8 +99,8 @@ public:
 
         projected_lineitem_tuple *dest;
         tpch_lineitem_tuple *src;
-        dest = (projected_lineitem_tuple *) d.data;
-        src = (tpch_lineitem_tuple *) s.data;
+        dest = safe_cast<projected_lineitem_tuple>(d.data);
+        src = safe_cast<tpch_lineitem_tuple>(s.data);
 
         dest->L_RETURNFLAG = src->L_RETURNFLAG;
         dest->L_LINESTATUS = src->L_LINESTATUS;
@@ -127,7 +130,7 @@ struct q1_key_extract_t : public key_extractor_t {
     virtual int extract_hint(const char* tuple_data) {
         // store the return flag and line status in the 
         projected_lineitem_tuple *item;
-        item = (projected_lineitem_tuple *) tuple_data;
+        item = safe_cast<projected_lineitem_tuple>(tuple_data);
 
         int result = (item->L_RETURNFLAG << 8)
             + item->L_LINESTATUS;
@@ -157,8 +160,8 @@ public:
 
     virtual void aggregate(char* agg_data, const tuple_t &s) {
         projected_lineitem_tuple *src;
-        src = (projected_lineitem_tuple *)s.data;
-        aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
+        src = safe_cast<projected_lineitem_tuple>(s.data);
+        aggregate_tuple* tuple = safe_cast<aggregate_tuple>(agg_data);
 
         // cache resused values for convenience
         double L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
@@ -189,8 +192,8 @@ public:
     
     virtual void finish(tuple_t &d, const char* agg_data) {
             aggregate_tuple *dest;
-            dest = (aggregate_tuple *)d.data;
-            aggregate_tuple* tuple = (aggregate_tuple*) agg_data;
+            dest = safe_cast<aggregate_tuple>(d.data);
+            aggregate_tuple* tuple = safe_cast<aggregate_tuple>(agg_data);
 
             *dest = *tuple;
             // compute averages
@@ -216,7 +219,7 @@ void tpch_q1_driver::submit(void* disp) {
   
     // TSCAN PACKET
     tuple_fifo* tscan_out_buffer =
-        new tuple_fifo(sizeof(projected_lineitem_tuple), dbenv);
+        new tuple_fifo(sizeof(projected_lineitem_tuple));
     tscan_packet_t* q1_tscan_packet =
         new tscan_packet_t("lineitem TSCAN",
                            tscan_out_buffer,
@@ -225,7 +228,7 @@ void tpch_q1_driver::submit(void* disp) {
 
     // AGG PACKET CREATION
     guard<tuple_fifo> agg_output_buffer =
-        new tuple_fifo(sizeof(aggregate_tuple), dbenv);
+        new tuple_fifo(sizeof(aggregate_tuple));
     packet_t* q1_agg_packet;
     q1_agg_packet = 
         new partial_aggregate_packet_t("Q1_AGG_PACKET",
@@ -248,7 +251,7 @@ void tpch_q1_driver::submit(void* disp) {
     TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
     while(agg_output_buffer->get_tuple(output)) {
         aggregate_tuple *tuple;
-        tuple = (aggregate_tuple *) output.data;
+        tuple = safe_cast<aggregate_tuple>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",
               tuple->L_SUM_QTY,
               tuple->L_SUM_BASE_PRICE,

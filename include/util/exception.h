@@ -5,12 +5,17 @@
 #include <exception>
 #include <cstring>
 #include <cerrno>
+#include <cassert>
+#include <cstdlib>
 
 #include "util/c_str.h"
 
 // optional printf-like message allowed here
 #define EXCEPTION(type,args...) \
    type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(args))
+
+#define THROW(type, args...) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(args))
 
 // tests an error code and throws the specified exception if nonzero
 #define THROW_IF(Exception, err) \
@@ -51,12 +56,19 @@ public:
 inline c_str errno_to_str(int err=errno) {
     static const int LEN = 100;
     char buf[LEN];
-    return strerror_r(err, buf, LEN);
+    strerror_r(err, buf, LEN);
+    return buf;
 }
 
 DEFINE_EXCEPTION(BadAlloc);
 DEFINE_EXCEPTION(OutOfRange);
 DEFINE_EXCEPTION(FileException);
 DEFINE_EXCEPTION(BdbException);
+
+inline void unreachable() __attribute__((noreturn));
+inline void unreachable() {
+    assert(false);
+    exit(-1);
+}
 
 #endif

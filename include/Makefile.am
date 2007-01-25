@@ -59,8 +59,6 @@ STAGES_H = \
         stages/fscan.h \
         stages/func_call.h \
         stages/hash_join.h \
-        stages/iprobe.h \
-        stages/iscan.h \
         stages/merge.h \
         stages/partial_aggregate.h \
         stages/sort.h \

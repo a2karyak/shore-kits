@@ -36,25 +36,6 @@ fi
 # check for egrep
 AC_PROG_EGREP
 
-# default berkeley db
-# $target is typically processor-vendor-os
-case "$target" in
-  # Sparc Solaris
-  *sparc*sun*)
-    BDB_HOME_DEFAULT="/export/home/ipandis/berkeleydb"
-    ;;
-
-  *ppc*)
-    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
-    ;;
-
- *)
-    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
-    ;;
-esac
-
-AC_ARG_VAR(BDB_HOME, Location of Berkeley DB Installation; default is $BDB_HOME_DEFAULT)
-
 # debugging diagnostic; set to 'echo' to debug or 'true' for production
 diagnostic() {
   echo "$@"
@@ -110,33 +91,6 @@ reqgcc_mid=3
 AC_MSG_CHECKING(home directory)
 QPIPE_HOME=`pwd`
 AC_MSG_RESULT($QPIPE_HOME)
-
-
-# get berkeley db location and version (not implem)
-AC_MSG_CHECKING(BerkeleyDB directory)
-if test -z $BDB_HOME; then
-    BDB_HOME=$BDB_HOME_DEFAULT
-fi
-
-if ! test -d $BDB_HOME -a -f $BDB_HOME/include/db.h; then
-    AC_ERROR([
-	    BerkeleyDB at $BDB_HOME not found; 
-	    Please run ./configure BDB_HOME=where berkeleydb is located])
-
-fi
-
-AC_MSG_RESULT($BDB_HOME)
-
-# berkeleydb version
-AC_MSG_CHECKING(BerkeleyDB version)
-
-bdb_ver=`cat $BDB_HOME/include/db.h | grep 'DB_VERSION_STRING' | sed 's/^.*Berkeley DB //'`
-bdb_major=`echo $bdb_ver | sed 's/\..*$//'`
-[bdb_mid=`echo $bdb_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
-[bdb_minor=`echo $bdb_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/:.*$//'`]
-
-BDB_VERSION="$bdb_major.$bdb_mid.$bdb_minor"
-AC_MSG_RESULT($BDB_VERSION)
 
 
 
@@ -264,7 +218,6 @@ AC_SUBST(QPIPE_VERSION_MAJOR)
 AC_SUBST(QPIPE_VERSION_MINOR)
 AC_SUBST(QPIPE_VERSION_REV)
 AC_SUBST(QPIPE_VERSION)
-AC_SUBST(BDB_HOME)
 
 # basic flags/libs every arch needs
 
@@ -272,7 +225,7 @@ AC_SUBST(BDB_HOME)
 OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #$OPT_FLAGS="-O3 -fno-inline"
 CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
-	-Wconversion -Wno-system-headers -D_REENTRANT -I$BDB_HOME/include"
+	-Wconversion -Wno-system-headers -D_REENTRANT"
 
 LDFLAGS="-lnsl -ldl -lm -lpthread"
 
@@ -316,7 +269,6 @@ AC_CONFIG_FILES([ Makefile \
                   src/server/extras/Makefile \
                   src/workload/Makefile \
                   src/util/Makefile \
-                  src/bdb-ext/Makefile \
                   src/core/Makefile \
                   src/scheduler/Makefile \
                   src/stages/Makefile \
@@ -335,8 +287,6 @@ QPipe configuration:
   QPipe home:               QPIPE_HOME           $QPIPE_HOME	
   GCC compiler              GCC_COMPILER         $GCC_COMPILER
   GCC version               GCC_VERSION          $GCC_VERSION
-  BerkeleyDB version:	    BDB_VERSION		 $BDB_VERSION
-  BerkeleyDB home:          BDB_HOME             $BDB_HOME
   Architecture/OS:          ARCHOS               $ARCHOS
   QPipe features            QPIPE_FEATURES       $QPIPE_FEATURES
 EOF

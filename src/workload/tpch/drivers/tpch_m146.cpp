@@ -30,7 +30,7 @@ void tpch_m146_driver::submit(void* disp) {
         break;
 
     default:
-        assert(false);
+        unreachable();
     }
 
     TRACE(TRACE_DEBUG, "rand = %d, selection = %d\n", rand, selection);

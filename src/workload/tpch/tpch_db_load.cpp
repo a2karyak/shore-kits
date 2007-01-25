@@ -1,7 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "workload/tpch/tpch_db_load.h"
-#include "workload/tpch/tpch_compare.h"
 #include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
@@ -86,7 +85,7 @@ void parse_table(char const* fin_name, char const* fout_name, parse_tuple parse,
 
 void tpch_load_customer_table(char* dest, char* linebuffer) {
 
-    tpch_customer_tuple &tup = *(tpch_customer_tuple*) dest;
+    tpch_customer_tuple &tup = *safe_cast<tpch_customer_tuple>(dest);
     
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -110,7 +109,7 @@ void tpch_load_customer_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_lineitem_table(char* dest, char* linebuffer) {
-    tpch_lineitem_tuple &tup = *(tpch_lineitem_tuple*) dest;
+    tpch_lineitem_tuple &tup = *safe_cast<tpch_lineitem_tuple>(dest);
     
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -150,7 +149,7 @@ void tpch_load_lineitem_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_nation_table(char* dest, char* linebuffer) {
-    tpch_nation_tuple &tup = *(tpch_nation_tuple*) dest;
+    tpch_nation_tuple &tup = *safe_cast<tpch_nation_tuple>(dest);
     
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -167,7 +166,7 @@ void tpch_load_nation_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_orders_table(char* dest, char* linebuffer) {
-    tpch_orders_tuple &tup = *(tpch_orders_tuple*) dest;
+    tpch_orders_tuple &tup = *safe_cast<tpch_orders_tuple>(dest);
     
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -193,7 +192,7 @@ void tpch_load_orders_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_part_table(char* dest, char* linebuffer) {
-    tpch_part_tuple &tup = *(tpch_part_tuple*) dest;
+    tpch_part_tuple &tup = *safe_cast<tpch_part_tuple>(dest);
     
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -219,7 +218,7 @@ void tpch_load_part_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_partsupp_table(char* dest, char* linebuffer) {
-    tpch_partsupp_tuple &tup = *(tpch_partsupp_tuple*) dest;
+    tpch_partsupp_tuple &tup = *safe_cast<tpch_partsupp_tuple>(dest);
 
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -237,7 +236,7 @@ void tpch_load_partsupp_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_region_table(char* dest, char* linebuffer) {
-    tpch_region_tuple &tup = *(tpch_region_tuple*) dest;
+    tpch_region_tuple &tup = *safe_cast<tpch_region_tuple>(dest);
 
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");
@@ -251,7 +250,7 @@ void tpch_load_region_table(char* dest, char* linebuffer) {
 
 
 void tpch_load_supplier_table(char* dest, char* linebuffer) {
-    tpch_supplier_tuple &tup = *(tpch_supplier_tuple*) dest;
+    tpch_supplier_tuple &tup = *safe_cast<tpch_supplier_tuple>(dest);
 
     // split line into tab separated parts
     char* tmp = strtok(linebuffer, "|");

@@ -5,7 +5,7 @@
 
 int main() {
   thread_init();
-  db_open(DB_CREATE);
+  db_open();
     
   db_load("tbl");
 

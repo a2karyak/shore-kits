@@ -115,7 +115,6 @@ private:
     key_extractor_t* _extract;
     key_compare_t* _compare;
     size_t              _tuple_size;
-    DbEnv* _dbenv;
     
 
     typedef list<c_str> run_list_t;
@@ -164,7 +163,7 @@ public:
 
     sort_stage_t()
         : _input_buffer(NULL), _extract(NULL), _compare(NULL),
-          _tuple_size(0), _dbenv(NULL), _monitor_thread(0)
+          _tuple_size(0), _monitor_thread(0)
     {
     }
 

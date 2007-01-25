@@ -13,12 +13,12 @@ WL_BASE = \
 WL_COMMON = \
    common/q6_packet.cpp \
    common/q6_client.cpp \
-   common/copy_string.cpp
+   common/q6_aggregate.cpp
 
 WL_TPCH = \
    tpch/tpch_db.cpp \
+   tpch/tpch_struct.cpp \
    tpch/tpch_db_load.cpp \
-   tpch/tpch_compare.cpp \
    tpch/tpch_env.cpp \
    tpch/tpch_type_convert.cpp \
    tpch/drivers/tpch_q1.cpp  \

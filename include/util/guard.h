@@ -5,9 +5,65 @@
 #include <cstdio>
 #include <cassert>
 #include <unistd.h>
-#include "db_cxx.h"
 #include "util/trace.h"
 
+/**
+ * Template function for "safely" casting from char* to more aligned
+ * pointer types. In emacs, use this regexp to replace a cast with the
+ * corresponding safe_cast() call:
+ * - replace: (\(\S-*?\>\)\s-?\*)\s-?\(\<\S-+\>\)
+ * - with: safe_cast<\1>(\2)
+ */
+template<class P, class T>
+T* _safe_cast(P ptr, int size) {
+    union {
+	P p;
+	size_t i;
+	T* t;
+    } u;
+    u.p = ptr;
+
+    // make sure the requested alignment is a power of 2
+    assert((size & -size) == size);
+    
+    // make sure the pointer is properly aligned
+    assert(((size-1) & u.i) == 0);
+    return u.t;
+}
+
+// purposely avoid a catch-all implementation
+template<class T>
+T* safe_cast(char const* ptr);
+template<class T>
+T* safe_cast(void const* ptr);
+
+
+// pick up any struct that has been properly tagged
+template<class T>
+T* safe_cast(char const* ptr) {
+    return _safe_cast<char const*, T>(ptr, T::ALIGN);
+}
+
+template<class T>
+T* safe_cast(void const* ptr) {
+    return _safe_cast<void const*, T>(ptr, T::ALIGN);
+}
+
+// for things like int and double
+#define DEF_POD_SAFE_CAST(type) \
+    template<> \
+    static type* safe_cast(char const* ptr) { \
+        return _safe_cast<char const*, type>(ptr, sizeof(type)); \
+    } \
+    template<> \
+    static type* safe_cast(void const* ptr) { \
+        return _safe_cast<void const*, type>(ptr, sizeof(type)); \
+    }
+
+DEF_POD_SAFE_CAST(unsigned int);
+DEF_POD_SAFE_CAST(long int);
+DEF_POD_SAFE_CAST(int);
+DEF_POD_SAFE_CAST(double);
 
 /**
  * @brief A generic RAII guard class.
@@ -142,13 +198,6 @@ template<>
 inline void guard<FILE>::action(FILE* ptr) {
     if(fclose(ptr))
         TRACE(TRACE_ALWAYS, "fclose failed");
-}
-
-template<>
-inline void guard<Dbc>::action(Dbc* ptr) {
-    // could throw an exception inside a destructor, but we can live
-    // with the abort if it ever happens
-    ptr->close();
 }
 
 
@@ -333,96 +382,5 @@ struct fd_guard_t : guard_base_t<int, fd_guard_t> {
     }
 };
 
-
-/**
- * @brief Support class for cursor_guard_t
- */
-struct cursor_info_t {
-    Db* _db;
-    Dbc* _cursor;
-    cursor_info_t(Db* db, Dbc* cursor)
-        : _db(db), _cursor(cursor)
-    {
-    }
-};
-
-/**
- * @brief Ensures that a BDB cursor gets closed. The Db* is necessary
- * for error reporting
- */
-struct cursor_guard_t : guard_base_t<cursor_info_t, cursor_guard_t> {
-    typedef guard_base_t<cursor_info_t, cursor_guard_t> Base;
-    static cursor_info_t open_cursor(Db* db) {
-        Dbc *dbc;
-        // ignore the error code -- BDB is configured to throw exceptions
-        db->cursor(NULL, &dbc, 0);
-        
-        return cursor_info_t(db, dbc);
-    }
-    cursor_guard_t(Db* db)
-        : Base(open_cursor(db))
-    {
-    }
-    cursor_guard_t(Db* db, Dbc* cursor)
-        : Base(cursor_info_t(db, cursor))
-    {
-    }
-    cursor_guard_t(const cursor_info_t &info) 
-        : Base(info)
-    {
-    }
-    static void guard_action(cursor_info_t &info) {
-        if(info._cursor) {
-            // ignore the error code -- BDB is configured to throw exceptions
-            info._cursor->close();
-        }
-    }
-    static cursor_info_t null_value() {
-        return cursor_info_t(NULL, NULL);
-    }
-    static bool different(const cursor_info_t &a, const cursor_info_t &b) {
-        return a._cursor != b._cursor;
-    }
-    operator Dbc*() const {
-        return Base::get()._cursor;
-    }
-    Dbc &operator *() const {
-        return *Base::get()._cursor;
-    }
-    Dbc* operator ->() const {
-        return Base::get()._cursor;
-    }
-};
-
-struct dbt_guard_t : guard_base_t<Dbt, dbt_guard_t> {
-    typedef guard_base_t<Dbt, dbt_guard_t> Base;
-    
-    // The blob must be aligned for int accesses and a multiple of
-    // 1024 bytes long.
-    dbt_guard_t(size_t len)
-        : Base(Dbt(new int[len/sizeof(int)], len))
-    {
-        _obj.set_flags(DB_DBT_USERMEM);
-        _obj.set_ulen(_obj.get_size());
-    }
-    static void guard_action(const Dbt &dbt) {
-        delete [] (int*) dbt.get_data();
-    }
-    static Dbt null_value() {
-        return Dbt();
-    }
-    static bool different(const Dbt &a, const Dbt &b) {
-        return a.get_data() != b.get_data();
-    }
-    operator Dbt*() const {
-        return &_obj;
-    }
-    Dbt &operator *() const {
-        return _obj;
-    }
-    Dbt* operator ->() const {
-        return &_obj;
-    }
-};
 
 #endif

@@ -31,7 +31,7 @@ void tpch_sim_mix_driver::submit(void* disp) {
         break;
 
     default:
-        assert(false);
+        unreachable();
     }
 
     TRACE(TRACE_DEBUG, "selection = %d\n", selection);

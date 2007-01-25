@@ -8,8 +8,6 @@ libstages_a_SOURCES = \
    fscan.cpp \
    fdump.cpp \
    tscan.cpp \
-   iscan.cpp \
-   iprobe.cpp \
    aggregate.cpp \
    partial_aggregate.cpp \
    sorted_in.cpp \

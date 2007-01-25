@@ -28,14 +28,16 @@ ENTER_NAMESPACE(workload);
  */
 
 struct key_count_tuple_t {
+    static int const ALIGN;
     int KEY;
     int COUNT;
 };
+int const key_count_tuple_t::ALIGN = sizeof(int);
 
 // this comparator sorts its keys in descending order
 struct int_desc_key_extractor_t : public key_extractor_t {
     virtual int extract_hint(const char* tuple_data) {
-        return -*(int*)tuple_data;
+        return -*safe_cast<int>(tuple_data);
     }
     virtual int_desc_key_extractor_t* clone() const {
         return new int_desc_key_extractor_t(*this);
@@ -52,7 +54,7 @@ struct q13_count_aggregate_t : public tuple_aggregate_t {
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     
     virtual void aggregate(char* agg_data, const tuple_t &) {
-        key_count_tuple_t* agg = (key_count_tuple_t*) agg_data;
+        key_count_tuple_t* agg = safe_cast<key_count_tuple_t>(agg_data);
         agg->COUNT++;
     }
 
@@ -80,8 +82,8 @@ packet_t* customer_scan(page_list* tpch_customer, qpipe::query_state_t* qs)
         }
 
         virtual void project(tuple_t &d, const tuple_t &s) {
-            tpch_customer_tuple* src = (tpch_customer_tuple*) s.data;
-            int* dest = (int*) d.data;
+            tpch_customer_tuple* src = safe_cast<tpch_customer_tuple>(s.data);
+            int* dest = safe_cast<int>(d.data);
             *dest = src->C_CUSTKEY;
         }
         virtual customer_tscan_filter_t* clone() const {
@@ -93,7 +95,7 @@ packet_t* customer_scan(page_list* tpch_customer, qpipe::query_state_t* qs)
     };
 
     tuple_filter_t* filter = new customer_tscan_filter_t();
-    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     packet_t *packet = new tscan_packet_t("customer TSCAN",
                                           buffer,
                                           filter,
@@ -125,7 +127,7 @@ struct order_tscan_filter_t : public tuple_filter_t {
     }
 
     virtual bool select(const tuple_t &input) {
-        tpch_orders_tuple* order = (tpch_orders_tuple*) input.data;
+        tpch_orders_tuple* order = safe_cast<tpch_orders_tuple>(input.data);
 
         // search for all instances of the first substring. Make sure
         // the second search is *after* the first...
@@ -144,8 +146,8 @@ struct order_tscan_filter_t : public tuple_filter_t {
     /* Projection */
     virtual void project(tuple_t &d, const tuple_t &s) {
         // project C_CUSTKEY
-        tpch_orders_tuple* src = (tpch_orders_tuple*) s.data;
-        int* dest = (int*) d.data;
+        tpch_orders_tuple* src = safe_cast<tpch_orders_tuple>(s.data);
+        int* dest = safe_cast<int>(d.data);
         *dest = src->O_CUSTKEY;
     }
 
@@ -170,7 +172,7 @@ packet_t* order_scan(page_list* tpch_orders, qpipe::query_state_t* qs) {
 
     // Orders TSCAN
     tuple_filter_t* filter = new order_tscan_filter_t();
-    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     packet_t* tscan_packet = new tscan_packet_t("orders TSCAN",
                                                 buffer,
                                                 filter,
@@ -179,7 +181,7 @@ packet_t* order_scan(page_list* tpch_orders, qpipe::query_state_t* qs) {
 
     // group by
     filter = new trivial_filter_t(sizeof(key_count_tuple_t));
-    buffer = new tuple_fifo(sizeof(key_count_tuple_t), dbenv);
+    buffer = new tuple_fifo(sizeof(key_count_tuple_t));
     tuple_aggregate_t* aggregator = new q13_count_aggregate_t();
     packet_t* pagg_packet;
     pagg_packet= new partial_aggregate_packet_t("Orders Group By",
@@ -207,7 +209,7 @@ void tpch_q13_driver::submit(void* disp) {
     struct q13_join_t : public tuple_join_t {
         struct right_key_extractor_t : public key_extractor_t {
             virtual int extract_hint(const char* tuple_data) {
-                key_count_tuple_t* tuple = (key_count_tuple_t*) tuple_data;
+                key_count_tuple_t* tuple = safe_cast<key_count_tuple_t>(tuple_data);
                 return tuple->KEY;
             }
             virtual right_key_extractor_t* clone() const {
@@ -217,7 +219,7 @@ void tpch_q13_driver::submit(void* disp) {
     
         struct left_key_extractor_t : public key_extractor_t {
             virtual int extract_hint(const char* tuple_data) {
-                return *(int*) tuple_data;
+                return *safe_cast<int>(tuple_data);
             }
             virtual left_key_extractor_t* clone() const {
                 return new left_key_extractor_t(*this);
@@ -236,7 +238,7 @@ void tpch_q13_driver::submit(void* disp) {
                           const tuple_t &right)
         {
             // KLUDGE: this projection should go in a separate filter class
-            key_count_tuple_t* tuple = (key_count_tuple_t*) right.data;
+            key_count_tuple_t* tuple = safe_cast<key_count_tuple_t>(right.data);
             memcpy(dest.data, &tuple->COUNT, sizeof(int));
         }
         virtual void outer_join(tuple_t &dest, const tuple_t &) {
@@ -252,7 +254,7 @@ void tpch_q13_driver::submit(void* disp) {
         q13_key_extract_t() : key_extractor_t(sizeof(key_count_tuple_t)) { }
             
         virtual int extract_hint(const char* tuple_data) {
-            key_count_tuple_t* tuple = (key_count_tuple_t*) tuple_data;
+            key_count_tuple_t* tuple = safe_cast<key_count_tuple_t>(tuple_data);
             // confusing -- custdist is a count of counts... and
             // descending sort
             return -tuple->COUNT;
@@ -265,8 +267,8 @@ void tpch_q13_driver::submit(void* disp) {
         virtual int operator()(const void* key1, const void* key2) {
             // at this point we know the custdist (count) fields are
             // different, so just check the c_count (key) fields
-            key_count_tuple_t* a = (key_count_tuple_t*) key1;
-            key_count_tuple_t* b = (key_count_tuple_t*) key2;
+            key_count_tuple_t* a = safe_cast<key_count_tuple_t>(key1);
+            key_count_tuple_t* b = safe_cast<key_count_tuple_t>(key2);
             return b->KEY - a->KEY;
         }
         virtual q13_key_compare_t* clone() const {
@@ -282,7 +284,7 @@ void tpch_q13_driver::submit(void* disp) {
     packet_t* order_packet = order_scan(tpch_orders, qs);
 
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
-    tuple_fifo* buffer = new tuple_fifo(sizeof(int), dbenv);
+    tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     tuple_join_t* join = new q13_join_t();
     packet_t* join_packet = new hash_join_packet_t("Orders - Customer JOIN",
                                                    buffer,
@@ -296,7 +298,7 @@ void tpch_q13_driver::submit(void* disp) {
 
     // group by c_count
     filter = new trivial_filter_t(sizeof(key_count_tuple_t));
-    buffer = new tuple_fifo(sizeof(key_count_tuple_t), dbenv);
+    buffer = new tuple_fifo(sizeof(key_count_tuple_t));
     packet_t *pagg_packet;
     pagg_packet = new partial_aggregate_packet_t("c_count SORT",
                                                  buffer,
@@ -310,7 +312,7 @@ void tpch_q13_driver::submit(void* disp) {
 
     // final sort of results
     filter = new trivial_filter_t(sizeof(key_count_tuple_t));
-    buffer = new tuple_fifo(sizeof(key_count_tuple_t), dbenv);
+    buffer = new tuple_fifo(sizeof(key_count_tuple_t));
     packet_t *sort_packet;
     sort_packet = new sort_packet_t("custdist, c_count SORT",
                                     buffer,
@@ -327,7 +329,7 @@ void tpch_q13_driver::submit(void* disp) {
         
     tuple_t output;
     while(result->get_tuple(output)) {
-        key_count_tuple_t* r = (key_count_tuple_t*) output.data;
+        key_count_tuple_t* r = safe_cast<key_count_tuple_t>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** Q13 Count: %d. CustDist: %d.  ***\n",
               r->KEY, r->COUNT);
     }

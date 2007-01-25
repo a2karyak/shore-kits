@@ -128,6 +128,5 @@ void sorted_in_stage_t::process_packet() {
         } 
     }
 
-    // unreachable
-    throw EXCEPTION(QPipeException, "Should not be here!\n");
+    unreachable();
 }

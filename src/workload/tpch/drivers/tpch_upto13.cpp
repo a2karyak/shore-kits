@@ -36,7 +36,7 @@ void tpch_upto13_driver::submit(void* disp) {
         
 
     default:
-        assert(false);
+        unreachable();
     }
 
     TRACE(TRACE_DEBUG, "selection = %d\n", selection);
