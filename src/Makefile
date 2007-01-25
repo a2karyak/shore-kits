@@ -27,3 +27,8 @@ tests:
 server:
 	cd ../
 	cd ..; make qpipe
+
+clean:
+	cd ../
+	cd ..; make clean
+

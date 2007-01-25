@@ -3,5 +3,5 @@ util:
 	cd ../..; make lib/libutil.a
 
 clean:
-	cd ../
-	cd ..; make clean
+	cd ../../
+	cd ../..; make clean
