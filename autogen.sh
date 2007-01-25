@@ -1,7 +1,8 @@
 #!/bin/sh
 
 svn log | ./gnuify-changelog.pl > ChangeLog
+libtoolize
 aclocal
-automake
 autoconf
+automake
 ./configure
