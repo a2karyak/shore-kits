@@ -57,6 +57,8 @@ bin_PROGRAMS = \
    grouper \
    test_busy_wait \
    test_busy_wait_all \
+   test_context_set \
+   test_context_makecontext \
    test_context_switching
 
 test_odirect_SOURCES = test_odirect.cpp
@@ -94,4 +96,6 @@ test_mpool_SOURCES = test_mpool.cpp
 grouper_SOURCES = grouper.cpp
 test_busy_wait_SOURCES = test_busy_wait.cpp
 test_busy_wait_all_SOURCES = test_busy_wait_all.cpp
+test_context_set_SOURCES = test_context_set.cpp
+test_context_makecontext_SOURCES = test_context_makecontext.cpp
 test_context_switching_SOURCES = test_context_switching.cpp

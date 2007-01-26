@@ -3,63 +3,38 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <ucontext.h>
 
 #include "util.h"
 #include "tests/common/cpu_bind.h"
 #include "tests/common/busy_wait.h"
 
 
-
-void* thread_main(void* arg) {
-
-    int* cpu_index_addr = (int*)arg;
-    int  cpu_index = *cpu_index_addr;
-
-    bind_to_cpu(cpu_index);
-
-    printf("Bound to cpu %d\n", cpu_index);
-
-    busy_wait();
-    return NULL;
+void start_thread_main(ucontext_t* switch_thread)
+{
+    TRACE(TRACE_ALWAYS, "STARTING start_thread_main\n");
 }
 
 
-
-int main(int argc, char* argv[]) {
-
-
-    // parse command-line args
-    if ( argc < 2 ) {
-        printf("Usage: %s <num seconds>\n", argv[0]);
-        return -1;
-    }
-
-    const char* num_seconds_str = argv[1];
-    int num_seconds = atoi(num_seconds_str);
-    if (num_seconds <= 0) {
-        printf("Invalid number of seconds %s\n", num_seconds_str);
-        return -1;
-    }
-
-    // set wake-up in num_seconds seconds
-    if (alarm(num_seconds) != 0) {
-        printf("alarm() failed\n");
-        return -1;
-    }
+void switch_thread_main(void)
+{
+    TRACE(TRACE_ALWAYS, "STARTING switch_thread_main\n");
+}
 
 
-    // since we have the root thread, we can avoid creating one.
-    int i;
-    for (i = 0; i < (NUMCPUS-1); i++) {
-        pthread_t tid;
-        int ret = pthread_create(&tid, NULL, thread_main, &cpu_indices[i]);
-        assert(!ret);
-    }
+int main(int, char**) {
 
+#if 0
+    ucontext_t start_thread, switch_thread;
+    
+    TRACE(TRACE_ALWAYS, "Going to call getcontext(&start_thread)\n");
+    getcontext(&start_thread);
+    TRACE(TRACE_ALWAYS, "Called getcontext(&start_thread)\n");
 
-    // put the root thread to work as well...
-    thread_main(&cpu_indices[i]);
-
+    getcontext(&switch_thread);
+    makecontext(&switch_thread, switch_thread_main, 0);
+    makecontext(&start_thread, start_thread_main, 1, &switch_thread);
+#endif    
 
     return 0;
 }
