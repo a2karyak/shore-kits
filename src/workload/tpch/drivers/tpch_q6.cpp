@@ -22,7 +22,7 @@ void tpch_q6_driver::submit(void* disp) {
     dispatcher_t::dispatch_packet(q6);
     tuple_t output;
     while( out->get_tuple(output) ) {
-        double* r = safe_cast<double>(output.data);
+        double* r = aligned_cast<double>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
     }
 }

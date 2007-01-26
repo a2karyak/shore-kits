@@ -48,7 +48,7 @@ int main() {
     tuple_t output;
     double* d = NULL;
     while(!tscan_out_buffer->get_tuple(output)) {
-	d = safe_cast<double>(output.data);
+	d = aligned_cast<double>(output.data);
 	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n", d[0], d[1]);
     }
 

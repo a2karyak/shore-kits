@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
     tuple_t output;
     while(output_buffer->get_tuple(output)) {
         if(do_echo)
-            TRACE(TRACE_ALWAYS, "Value: %d\n", *safe_cast<int>(output.data));
+            TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
     }
     TRACE(TRACE_ALWAYS, "No more tuples...\n");
     TRACE(TRACE_ALWAYS, "TEST DONE\n");

@@ -49,7 +49,7 @@ public:
     {
     }
     virtual bool select(const tuple_t &tuple) {
-        V* field = safe_cast<V>(tuple.data + _offset);
+        V* field = aligned_cast<V>(tuple.data + _offset);
         return T<V>()(*field, _value);
     }
     virtual scalar_predicate_t* clone() const {
@@ -239,8 +239,8 @@ public:
     {
     }
     virtual bool select(const tuple_t &tuple) {
-        V* field1 = safe_cast<V>(tuple.data + _offset1);
-        V* field2 = safe_cast<V>(tuple.data + _offset2);
+        V* field1 = aligned_cast<V>(tuple.data + _offset1);
+        V* field2 = aligned_cast<V>(tuple.data + _offset2);
         return T<V>()(*field1, *field2);
     }
     virtual field_predicate_t* clone() const {

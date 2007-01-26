@@ -107,10 +107,10 @@ public:
         /* Should project L_EXTENDEDPRICE & L_DISCOUNT */
 
         // Calculate L_EXTENDEDPRICE
-        tpch_lineitem_tuple *at = safe_cast<tpch_lineitem_tuple>(src.data);
-
-        memcpy(dest.data, &at->L_EXTENDEDPRICE, sizeof(double));
-        memcpy(dest.data + sizeof(double), &at->L_DISCOUNT, sizeof(double));
+        tpch_lineitem_tuple *at = aligned_cast<tpch_lineitem_tuple>(src.data);
+	double *dt = aligned_cast<double>(dest.data);
+	dt[0] = at->L_EXTENDEDPRICE;
+	dt[1] = at->L_DISCOUNT;
     }
 
     virtual q6_tscan_filter_t* clone() const {

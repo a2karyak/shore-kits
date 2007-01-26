@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
  
     tuple_t output;
     while(count_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Count: %d\n", *safe_cast<int>(output.data));
+        TRACE(TRACE_ALWAYS, "Count: %d\n", *aligned_cast<int>(output.data));
 
     dp->query_state_destroy(qs);
     TRACE(TRACE_ALWAYS, "TEST DONE\n");

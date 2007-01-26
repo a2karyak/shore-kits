@@ -15,7 +15,6 @@ using namespace qpipe;
 class q6_count_aggregate_t : public tuple_aggregate_t {
 
     struct agg_t {
-	static int const ALIGN;
         double sum;
         int count;
     };
@@ -32,8 +31,8 @@ public:
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     
     virtual void aggregate(char* agg_data, const tuple_t & src) {
-        agg_t* agg = safe_cast<agg_t>(agg_data);
-	double * d = safe_cast<double>(src.data);
+        agg_t* agg = aligned_cast<agg_t>(agg_data);
+	double * d = aligned_cast<double>(src.data);
         
 	// update COUNT and SUM
 	agg->count++;
@@ -46,8 +45,8 @@ public:
     }
 
     virtual void finish(tuple_t &dest, const char* agg_data) {
-        agg_t* agg = safe_cast<agg_t>(agg_data);
-        double *output = safe_cast<double>(dest.data);
+        agg_t* agg = aligned_cast<agg_t>(agg_data);
+        double *output = aligned_cast<double>(dest.data);
         output[0] = agg->sum;
         output[1] = agg->count;
     }

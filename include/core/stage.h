@@ -96,6 +96,7 @@ public:
 
     stage_t()
 	: _adaptor(NULL)
+	
     {
     }
 

@@ -25,27 +25,21 @@ using namespace qpipe;
  */
 
 struct lineitem_scan_tuple {
-    static int const ALIGN;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
     int L_PARTKEY;
 };
-int const lineitem_scan_tuple::ALIGN = sizeof(double);
 
 struct part_scan_tuple {
-    static int const ALIGN;
     int P_PARTKEY;
     char P_TYPE[STRSIZE(25)];
 };
-int const part_scan_tuple::ALIGN = sizeof(int);
 
 struct join_tuple {
-    static int const ALIGN;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
     char P_TYPE[STRSIZE(25)];
 };
-int const join_tuple::ALIGN = sizeof(double);
 
 struct q14_tuple {
     static int const ALIGN;
@@ -53,7 +47,6 @@ struct q14_tuple {
     double TOTAL_SUM;
     char P_TYPE[STRSIZE(25)];
 };
-int const q14_tuple::ALIGN = sizeof(double);
 
 /**
  * @brief select P_PARTKEY, P_TYPE from PART
@@ -65,8 +58,8 @@ struct part_tscan_filter_t : tuple_filter_t {
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        part_scan_tuple* dest = safe_cast<part_scan_tuple>(d.data);
-        tpch_part_tuple* src = safe_cast<tpch_part_tuple>(s.data);
+        part_scan_tuple* dest = aligned_cast<part_scan_tuple>(d.data);
+        tpch_part_tuple* src = aligned_cast<tpch_part_tuple>(s.data);
 
         dest->P_PARTKEY = src->P_PARTKEY;
         memcpy(dest->P_TYPE, src->P_TYPE, sizeof(dest->P_TYPE));
@@ -104,8 +97,8 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     }
 
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = safe_cast<lineitem_scan_tuple>(d.data);
-        tpch_lineitem_tuple *src = safe_cast<tpch_lineitem_tuple>(s.data);
+        lineitem_scan_tuple *dest = aligned_cast<lineitem_scan_tuple>(d.data);
+        tpch_lineitem_tuple *src = aligned_cast<tpch_lineitem_tuple>(s.data);
 
         dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
         dest->L_DISCOUNT = src->L_DISCOUNT;
@@ -144,9 +137,9 @@ struct q14_join : tuple_join_t {
     {
     }
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = safe_cast<join_tuple>(d.data);
-        part_scan_tuple* left = safe_cast<part_scan_tuple>(l.data);
-        lineitem_scan_tuple* right = safe_cast<lineitem_scan_tuple>(r.data);
+        join_tuple* dest = aligned_cast<join_tuple>(d.data);
+        part_scan_tuple* left = aligned_cast<part_scan_tuple>(l.data);
+        lineitem_scan_tuple* right = aligned_cast<lineitem_scan_tuple>(r.data);
 
         // cheat and filter out the join key...
         dest->L_EXTENDEDPRICE = right->L_EXTENDEDPRICE;
@@ -183,8 +176,8 @@ struct q14_aggregate : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        q14_tuple* agg = safe_cast<q14_tuple>(agg_data);
-        join_tuple* tuple = safe_cast<join_tuple>(t.data);
+        q14_tuple* agg = aligned_cast<q14_tuple>(agg_data);
+        join_tuple* tuple = aligned_cast<join_tuple>(t.data);
 
         double value = tuple->L_EXTENDEDPRICE*(1 - tuple->L_DISCOUNT);
         agg->TOTAL_SUM += value;
@@ -192,8 +185,8 @@ struct q14_aggregate : tuple_aggregate_t {
             agg->PROMO_SUM += value;
     }
     virtual void finish(tuple_t &d, const char* agg_data) {
-        double* dest = safe_cast<double>(d.data);
-        q14_tuple* agg = safe_cast<q14_tuple>(agg_data);
+        double* dest = aligned_cast<double>(d.data);
+        q14_tuple* agg = aligned_cast<q14_tuple>(agg_data);
         *dest = 100.*agg->PROMO_SUM/agg->TOTAL_SUM;
     }
     virtual q14_aggregate* clone() const {
@@ -266,7 +259,7 @@ int main() {
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
-            double* r = safe_cast<double>(output.data);
+            double* r = aligned_cast<double>(output.data);
             TRACE(TRACE_ALWAYS, "*** Q14 Promo Revenue: %5.2lf\n", *r);
         }
 

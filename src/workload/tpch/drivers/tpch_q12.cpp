@@ -43,33 +43,25 @@ ENTER_NAMESPACE(workload);
  */
 
 struct lineitem_scan_tuple {
-    static int const ALIGN;
     int L_ORDERKEY;
     tpch_l_shipmode L_SHIPMODE;
 };
-int const lineitem_scan_tuple::ALIGN = sizeof(int);
 
 struct order_scan_tuple {
-    static int const ALIGN;
     int O_ORDERKEY;
     tpch_o_orderpriority O_ORDERPRIORITY;
 };
-int const order_scan_tuple::ALIGN = sizeof(int);
 
 struct join_tuple {
-    static int const ALIGN;
     tpch_l_shipmode L_SHIPMODE;
     tpch_o_orderpriority O_ORDERPRIORITY;
 };
-int const join_tuple::ALIGN = sizeof(int);
 
 struct q12_tuple {
-    static int const ALIGN;
     tpch_l_shipmode L_SHIPMODE;
     int HIGH_LINE_COUNT;
     int LOW_LINE_COUNT;
 };
-int const q12_tuple::ALIGN = sizeof(int);
 
 /**
  * @brief select O_ORDERKEY, O_ORDERPRIORITY from ORDERS
@@ -80,8 +72,8 @@ struct order_tscan_filter_t : tuple_filter_t {
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        order_scan_tuple* dest = safe_cast<order_scan_tuple>(d.data);
-        tpch_orders_tuple* src = safe_cast<tpch_orders_tuple>(s.data);
+        order_scan_tuple* dest = aligned_cast<order_scan_tuple>(d.data);
+        tpch_orders_tuple* src = aligned_cast<tpch_orders_tuple>(s.data);
         dest->O_ORDERKEY = src->O_ORDERKEY;
         dest->O_ORDERPRIORITY = src->O_ORDERPRIORITY;
     }
@@ -161,8 +153,8 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(p);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = safe_cast<lineitem_scan_tuple>(d.data);
-        tpch_lineitem_tuple *src = safe_cast<tpch_lineitem_tuple>(s.data);
+        lineitem_scan_tuple *dest = aligned_cast<lineitem_scan_tuple>(d.data);
+        tpch_lineitem_tuple *src = aligned_cast<tpch_lineitem_tuple>(s.data);
         dest->L_ORDERKEY = src->L_ORDERKEY;
         dest->L_SHIPMODE = src->L_SHIPMODE;
     }
@@ -197,9 +189,9 @@ struct q12_join_t : tuple_join_t {
     {
     }
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = safe_cast<join_tuple>(d.data);
-        order_scan_tuple* left = safe_cast<order_scan_tuple>(l.data);
-        lineitem_scan_tuple* right = safe_cast<lineitem_scan_tuple>(r.data);
+        join_tuple* dest = aligned_cast<join_tuple>(d.data);
+        order_scan_tuple* left = aligned_cast<order_scan_tuple>(l.data);
+        lineitem_scan_tuple* right = aligned_cast<lineitem_scan_tuple>(r.data);
         
         // cheat and filter out the join key here
         dest->L_SHIPMODE = right->L_SHIPMODE;
@@ -252,7 +244,7 @@ struct q12_aggregate_t : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        q12_tuple* agg = safe_cast<q12_tuple>(agg_data);
+        q12_tuple* agg = aligned_cast<q12_tuple>(agg_data);
 
         if(_filter.select(t))
             agg->HIGH_LINE_COUNT++;
@@ -332,7 +324,7 @@ void tpch_q12_driver::submit(void* disp) {
     TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10s %10s\n",
           "Shipmode", "High_Count", "Low_Count");
     while(result->get_tuple(output)) {
-        q12_tuple* r = safe_cast<q12_tuple>(output.data);
+        q12_tuple* r = aligned_cast<q12_tuple>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10d %10d\n",
               (r->L_SHIPMODE == MAIL) ? "MAIL" : "SHIP",
               r->HIGH_LINE_COUNT,

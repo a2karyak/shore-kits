@@ -42,7 +42,6 @@ int partial_aggregate_stage_t::alloc_agg(hint_tuple_pair_t &agg, const char* key
 }
 
 void partial_aggregate_stage_t::process_packet() {
-
     partial_aggregate_packet_t* packet;
     packet = (partial_aggregate_packet_t*) _adaptor->get_packet();
     tuple_fifo* input_buffer = packet->_input_buffer;

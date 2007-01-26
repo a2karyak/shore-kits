@@ -15,7 +15,6 @@ ENTER_NAMESPACE(workload);
 
 // the tuples after tablescan projection
 struct projected_lineitem_tuple {
-    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
@@ -27,7 +26,6 @@ struct projected_lineitem_tuple {
 
 // the final aggregated tuples
 struct aggregate_tuple {
-    static int const ALIGN;
     double L_SUM_QTY;
     double L_SUM_BASE_PRICE;
     double L_SUM_DISC_PRICE;
@@ -39,9 +37,6 @@ struct aggregate_tuple {
     char L_RETURNFLAG;
     char L_LINESTATUS;
 };
-
-int const projected_lineitem_tuple::ALIGN = sizeof(double);
-int const aggregate_tuple::ALIGN = sizeof(double);
 
 class q1_tscan_filter_t : public tuple_filter_t {
 
@@ -82,7 +77,7 @@ public:
 	   L_SHIPDATE <= 1998-12-01 - DELTA DAYS
 	*/
 
-	tpch_lineitem_tuple *tuple = safe_cast<tpch_lineitem_tuple>(input.data);
+	tpch_lineitem_tuple *tuple = aligned_cast<tpch_lineitem_tuple>(input.data);
 
 	if  ( tuple->L_SHIPDATE <= t ) {
             //TRACE(TRACE_ALWAYS, "+");
@@ -99,8 +94,8 @@ public:
 
         projected_lineitem_tuple *dest;
         tpch_lineitem_tuple *src;
-        dest = safe_cast<projected_lineitem_tuple>(d.data);
-        src = safe_cast<tpch_lineitem_tuple>(s.data);
+        dest = aligned_cast<projected_lineitem_tuple>(d.data);
+        src = aligned_cast<tpch_lineitem_tuple>(s.data);
 
         dest->L_RETURNFLAG = src->L_RETURNFLAG;
         dest->L_LINESTATUS = src->L_LINESTATUS;
@@ -130,7 +125,7 @@ struct q1_key_extract_t : public key_extractor_t {
     virtual int extract_hint(const char* tuple_data) {
         // store the return flag and line status in the 
         projected_lineitem_tuple *item;
-        item = safe_cast<projected_lineitem_tuple>(tuple_data);
+        item = aligned_cast<projected_lineitem_tuple>(tuple_data);
 
         int result = (item->L_RETURNFLAG << 8)
             + item->L_LINESTATUS;
@@ -160,8 +155,8 @@ public:
 
     virtual void aggregate(char* agg_data, const tuple_t &s) {
         projected_lineitem_tuple *src;
-        src = safe_cast<projected_lineitem_tuple>(s.data);
-        aggregate_tuple* tuple = safe_cast<aggregate_tuple>(agg_data);
+        src = aligned_cast<projected_lineitem_tuple>(s.data);
+        aggregate_tuple* tuple = aligned_cast<aggregate_tuple>(agg_data);
 
         // cache resused values for convenience
         double L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
@@ -192,8 +187,8 @@ public:
     
     virtual void finish(tuple_t &d, const char* agg_data) {
             aggregate_tuple *dest;
-            dest = safe_cast<aggregate_tuple>(d.data);
-            aggregate_tuple* tuple = safe_cast<aggregate_tuple>(agg_data);
+            dest = aligned_cast<aggregate_tuple>(d.data);
+            aggregate_tuple* tuple = aligned_cast<aggregate_tuple>(agg_data);
 
             *dest = *tuple;
             // compute averages
@@ -251,7 +246,7 @@ void tpch_q1_driver::submit(void* disp) {
     TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
     while(agg_output_buffer->get_tuple(output)) {
         aggregate_tuple *tuple;
-        tuple = safe_cast<aggregate_tuple>(output.data);
+        tuple = aligned_cast<aggregate_tuple>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",
               tuple->L_SUM_QTY,
               tuple->L_SUM_BASE_PRICE,

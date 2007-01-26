@@ -132,12 +132,10 @@ WL_BASE = \
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
-   $(SW)/common/q6_client.cpp \
-   $(SW)/common/q6_aggregate.cpp
+   $(SW)/common/q6_client.cpp 
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
-   $(SW)/tpch/tpch_struct.cpp \
    $(SW)/tpch/tpch_db_load.cpp \
    $(SW)/tpch/tpch_env.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \

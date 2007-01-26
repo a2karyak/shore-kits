@@ -52,6 +52,7 @@ class partial_aggregate_stage_t : public stage_t {
     size_t _page_count;
     tuple_aggregate_t* _aggregate;
     page* _agg_page;
+    size_t _tuple_align;
 public:
     static const c_str DEFAULT_STAGE_NAME;
     typedef partial_aggregate_packet_t stage_packet_t;

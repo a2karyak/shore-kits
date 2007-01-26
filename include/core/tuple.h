@@ -143,6 +143,7 @@ public:
     }
 };
 
+class tuple_fifo;
 /**
  *  @brief Wapper class for a page header that stores the page's
  *  size. The constructor is private to prevent stray headers from
@@ -154,6 +155,7 @@ class page {
 
     page_pool* _pool;
     size_t _tuple_size;
+    size_t _padded_size;
     size_t _free_count;
     size_t _end_offset;
 public:
@@ -176,6 +178,7 @@ private:
     static page* alloc(size_t tuple_size, page_pool* pool=malloc_page_pool::instance()) {
         return new (pool->alloc()) page(pool, tuple_size);
     }
+    
     void free() {
         // do not call the destructor before releasing the memory
         _pool->free(this);
@@ -280,9 +283,7 @@ private:
      */
 
     char* allocate() {
-
-        if(full())
-            throw EXCEPTION(OutOfRange, "Page full");
+        assert(!full());
         
         char *result = &_data[_end_offset];
         _end_offset += tuple_size();
@@ -400,6 +401,8 @@ private:
           _tuple_size(tuple_size),
           next(NULL)
     {
+	// must be 8-byte aligned!
+	test_alignment(_data, sizeof(double));
         clear();
     }
     

@@ -63,16 +63,13 @@ using namespace qpipe;
  */
 
 struct part_scan_tuple {
-    static int const ALIGN;
     int P_PARTKEY;
     int P_SIZE;
     char P_CONTAINER[STRSIZE(10)];
     char P_BRAND[STRSIZE(10)];
 };
-int const part_scan_tuple::ALIGN = sizeof(int);
 
 struct lineitem_scan_tuple {
-    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
@@ -80,10 +77,8 @@ struct lineitem_scan_tuple {
     tpch_l_shipmode L_SHIPMODE;
     char L_SHIPINSTRUCT[STRSIZE(25)];
 };
-int const lineitem_scan_tuple::ALIGN = sizeof(double);
 
 struct join_tuple {
-    static int const ALIGN;
     double L_QUANTITY;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
@@ -94,14 +89,11 @@ struct join_tuple {
     char P_BRAND[STRSIZE(10)];
     char L_SHIPINSTRUCT[STRSIZE(25)];
 };
-int const join_tuple::ALIGN = sizeof(double);
 
 struct q19_tuple {
-    static int const ALIGN;
     double L_EXTENDEDPRICE;
     double L_DISCOUNT;
 };
-int const q19_tuple::ALIGN = sizeof(double);
 
 /**
  * @brief select p_partkey, p_brand, p_container, p_size from part
@@ -143,8 +135,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
         }
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        part_scan_tuple *dest = safe_cast<part_scan_tuple>(d.data);
-        tpch_part_tuple *src = safe_cast<tpch_part_tuple>(s.data);
+        part_scan_tuple *dest = aligned_cast<part_scan_tuple>(d.data);
+        tpch_part_tuple *src = aligned_cast<tpch_part_tuple>(s.data);
         dest->P_PARTKEY = src->P_PARTKEY;
         dest->P_SIZE = src->P_SIZE;
         memcpy(dest->P_CONTAINER, src->P_CONTAINER, sizeof(src->P_CONTAINER));
@@ -214,8 +206,8 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
         _filter.add(orp);
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        lineitem_scan_tuple *dest = safe_cast<lineitem_scan_tuple>(d.data);
-        tpch_lineitem_tuple *src = safe_cast<tpch_lineitem_tuple>(s.data);
+        lineitem_scan_tuple *dest = aligned_cast<lineitem_scan_tuple>(d.data);
+        tpch_lineitem_tuple *src = aligned_cast<tpch_lineitem_tuple>(s.data);
         dest->L_QUANTITY = src->L_QUANTITY;
         dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
         dest->L_DISCOUNT = src->L_DISCOUNT;
@@ -264,9 +256,9 @@ struct q19_join_t : tuple_join_t {
     }
 
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        join_tuple* dest = safe_cast<join_tuple>(d.data);
-        lineitem_scan_tuple* left = safe_cast<lineitem_scan_tuple>(l.data);
-        part_scan_tuple* right = safe_cast<part_scan_tuple>(r.data);
+        join_tuple* dest = aligned_cast<join_tuple>(d.data);
+        lineitem_scan_tuple* left = aligned_cast<lineitem_scan_tuple>(l.data);
+        part_scan_tuple* right = aligned_cast<part_scan_tuple>(r.data);
 
         dest->L_QUANTITY = left->L_QUANTITY;
         dest->L_EXTENDEDPRICE = left->L_EXTENDEDPRICE;
@@ -348,8 +340,8 @@ struct q19_filter_t : tuple_filter_t {
         }
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        q19_tuple *dest = safe_cast<q19_tuple>(d.data);
-        join_tuple *src = safe_cast<join_tuple>(s.data);
+        q19_tuple *dest = aligned_cast<q19_tuple>(d.data);
+        join_tuple *src = aligned_cast<join_tuple>(s.data);
         dest->L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
         dest->L_DISCOUNT = src->L_DISCOUNT;
     }
@@ -377,8 +369,8 @@ struct q19_sum_t : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        double* dest = safe_cast<double>(agg_data);
-        q19_tuple* src = safe_cast<q19_tuple>(t.data);
+        double* dest = aligned_cast<double>(agg_data);
+        q19_tuple* src = aligned_cast<q19_tuple>(t.data);
 
         *dest += src->L_EXTENDEDPRICE*(1 - src->L_DISCOUNT);
     }
@@ -453,7 +445,7 @@ int main() {
         
         tuple_t output;
         while(!buffer->get_tuple(output)) {
-            double* r = safe_cast<double>(output.data);
+            double* r = aligned_cast<double>(output.data);
             TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", *r);
         }
 

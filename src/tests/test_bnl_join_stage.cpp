@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     
     tuple_t output;
     while(join_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *safe_cast<int>(output.data));
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
     
     return 0;

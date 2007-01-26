@@ -7,63 +7,45 @@
 #include <unistd.h>
 #include "util/trace.h"
 
-/**
- * Template function for "safely" casting from char* to more aligned
- * pointer types. In emacs, use this regexp to replace a cast with the
- * corresponding safe_cast() call:
- * - replace: (\(\S-*?\>\)\s-?\*)\s-?\(\<\S-+\>\)
- * - with: safe_cast<\1>(\2)
- */
-template<class P, class T>
-T* _safe_cast(P ptr, int size) {
+// see http://src.opensolaris.org/source/xref/sfw/usr/src/cmd/gcc/gcc-3.4.3/gcc/testsuite/g++.old-deja/g++.abi/align.C
+// Origin: Alex Samuel <samuel (at) codesourcery.com>
+#define alignmentof(type) (alignment_of<type>())
+template<typename T>
+inline size_t alignment_of() {
+    struct S {
+	char c;
+	T t;
+    };
+    return offsetof(S, t);
+}
+
+inline void test_alignment(void const* ptr, int align) {
     union {
-	P p;
+	void const* p;
 	size_t i;
+    } u;
+    u.p = ptr;
+    
+    // make sure the requested alignment is a power of 2
+    assert((align & -align) == align);
+    
+    // make sure the pointer is properly aligned
+    assert(((align-1) & u.i) == 0);
+}
+
+template<class T>
+inline T* aligned_cast(void const* ptr) {
+    union {
+	void const* p;
 	T* t;
+	size_t i;
     } u;
     u.p = ptr;
 
-    // make sure the requested alignment is a power of 2
-    assert((size & -size) == size);
-    
     // make sure the pointer is properly aligned
-    assert(((size-1) & u.i) == 0);
+    assert(((alignmentof(T)-1) & u.i) == 0);
     return u.t;
 }
-
-// purposely avoid a catch-all implementation
-template<class T>
-T* safe_cast(char const* ptr);
-template<class T>
-T* safe_cast(void const* ptr);
-
-
-// pick up any struct that has been properly tagged
-template<class T>
-T* safe_cast(char const* ptr) {
-    return _safe_cast<char const*, T>(ptr, T::ALIGN);
-}
-
-template<class T>
-T* safe_cast(void const* ptr) {
-    return _safe_cast<void const*, T>(ptr, T::ALIGN);
-}
-
-// for things like int and double
-#define DEF_POD_SAFE_CAST(type) \
-    template<> \
-    static type* safe_cast(char const* ptr) { \
-        return _safe_cast<char const*, type>(ptr, sizeof(type)); \
-    } \
-    template<> \
-    static type* safe_cast(void const* ptr) { \
-        return _safe_cast<void const*, type>(ptr, sizeof(type)); \
-    }
-
-DEF_POD_SAFE_CAST(unsigned int);
-DEF_POD_SAFE_CAST(long int);
-DEF_POD_SAFE_CAST(int);
-DEF_POD_SAFE_CAST(double);
 
 /**
  * @brief A generic RAII guard class.

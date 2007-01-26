@@ -23,7 +23,7 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
     }
 
     virtual bool select(const tuple_t &t) {
-        tpch_supplier_tuple* tuple = safe_cast<tpch_supplier_tuple>(t.data);
+        tpch_supplier_tuple* tuple = aligned_cast<tpch_supplier_tuple>(t.data);
         // search for all instances of the first substring. Make sure
         // the second search is *after* the first...
         char* first = strstr(tuple->S_COMMENT, word1);
@@ -40,8 +40,8 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
     }
     
     virtual void project(tuple_t &d, const tuple_t &s) {
-        tpch_supplier_tuple* src = safe_cast<tpch_supplier_tuple>(s.data);
-        int* dest = safe_cast<int>(d.data);
+        tpch_supplier_tuple* src = aligned_cast<tpch_supplier_tuple>(s.data);
+        int* dest = aligned_cast<int>(d.data);
         *dest = src->S_SUPPKEY;
     }
     virtual supplier_tscan_filter_t* clone() const {
@@ -69,13 +69,11 @@ packet_t *supplier_scan(page_list* tpch_supplier) {
 }
 
 struct part_scan_tuple_t {
-    static int const ALIGN;
     int p_partkey;
     int p_size;
     char p_brand[STRSIZE(10)];
     char p_type[STRSIZE(25)];
 };
-int const part_scan_tuple_t::ALIGN = sizeof(int);
 
 struct part_tscan_filter_t : public tuple_filter_t {
     char brand[32];
@@ -119,7 +117,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
         }
     }
     virtual bool select(const tuple_t &s) {
-        tpch_part_tuple* part = safe_cast<tpch_part_tuple>(s.data);
+        tpch_part_tuple* part = aligned_cast<tpch_part_tuple>(s.data);
 
         // p_brand <> '[brand]'. 
         if(!strcmp(part->P_BRAND, brand))
@@ -139,8 +137,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
         return false;
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        tpch_part_tuple* src = safe_cast<tpch_part_tuple>(s.data);
-        part_scan_tuple_t* dest = safe_cast<part_scan_tuple_t>(d.data);
+        tpch_part_tuple* src = aligned_cast<tpch_part_tuple>(s.data);
+        part_scan_tuple_t* dest = aligned_cast<part_scan_tuple_t>(d.data);
 
         dest->p_partkey = src->P_PARTKEY;
         dest->p_size = src->P_SIZE;
@@ -186,8 +184,8 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
     {
     }
     virtual void project(tuple_t &d, const tuple_t &s) {
-        tpch_partsupp_tuple* src = safe_cast<tpch_partsupp_tuple>(s.data);
-        part_supp_tuple_t* dest = safe_cast<part_supp_tuple_t>(d.data);
+        tpch_partsupp_tuple* src = aligned_cast<tpch_partsupp_tuple>(s.data);
+        part_supp_tuple_t* dest = aligned_cast<part_supp_tuple_t>(d.data);
         dest->PART_KEY = src->PS_PARTKEY;
         dest->SUPP_KEY = src->PS_SUPPKEY;
     }
@@ -227,8 +225,8 @@ struct partsupp_filter_t : public tuple_filter_t {
     {
     }
     virtual void project(tuple_t &dest, const tuple_t &s) {
-        part_supp_tuple_t* src = safe_cast<part_supp_tuple_t>(s.data);
-        memcpy(dest.data, &src->PART_KEY, sizeof(int));
+        part_supp_tuple_t* src = aligned_cast<part_supp_tuple_t>(s.data);
+        *aligned_cast<int>(dest.data) = src->PART_KEY;
     }
     virtual partsupp_filter_t* clone() const {
         return new partsupp_filter_t(*this);
@@ -250,12 +248,12 @@ struct q16_join_t : public tuple_join_t {
     }
 
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
-        part_scan_tuple_t* dest = safe_cast<part_scan_tuple_t>(d.data);
+        part_scan_tuple_t* dest = aligned_cast<part_scan_tuple_t>(d.data);
         // double cheat -- use p_partkey to store the ps_suppkey, and
         // also project out the real part key instead of using a
         // filter after the fact
         memcpy(dest, r.data, sizeof(part_scan_tuple_t));
-        part_supp_tuple_t *left = safe_cast<part_supp_tuple_t>(l.data);
+        part_supp_tuple_t *left = aligned_cast<part_supp_tuple_t>(l.data);
         dest->p_partkey = left->SUPP_KEY;
     }
 
@@ -269,8 +267,8 @@ struct q16_join_t : public tuple_join_t {
 
 struct q16_compare1_t : public key_compare_t {
     virtual int operator()(const void* key1, const void* key2) {
-        part_scan_tuple_t* a = safe_cast<part_scan_tuple_t>(key1);
-        part_scan_tuple_t* b = safe_cast<part_scan_tuple_t>(key2);
+        part_scan_tuple_t* a = aligned_cast<part_scan_tuple_t>(key1);
+        part_scan_tuple_t* b = aligned_cast<part_scan_tuple_t>(key2);
 
         // sort by brand...
         int diff = strcmp(a->p_brand, b->p_brand);
@@ -303,7 +301,7 @@ struct q16_extractor1_t : public key_extractor_t {
 #if 1
     virtual int extract_hint(const char* key) {
         return 0;
-        part_scan_tuple_t* pst = safe_cast<part_scan_tuple_t>(key);
+        part_scan_tuple_t* pst = aligned_cast<part_scan_tuple_t>(key);
         int result;
         memcpy(&result, pst->p_brand, sizeof(int));
         return result;
@@ -346,7 +344,7 @@ struct q16_extractor2_t : public key_extractor_t {
     {
     }
     virtual int extract_hint(const char* key) {
-        part_scan_tuple_t* pst = safe_cast<part_scan_tuple_t>(key - key_offset());
+        part_scan_tuple_t* pst = aligned_cast<part_scan_tuple_t>(key - key_offset());
         int result;
         memcpy(&result, pst->p_brand, sizeof(int));
         return result;
@@ -365,7 +363,7 @@ struct q16_aggregate2_t : public tuple_aggregate_t {
     }
     virtual key_extractor_t* key_extractor() { return &_extractor; }
     virtual void aggregate(char* agg_data, const tuple_t &) {
-        part_scan_tuple_t* agg = safe_cast<part_scan_tuple_t>(agg_data);
+        part_scan_tuple_t* agg = aligned_cast<part_scan_tuple_t>(agg_data);
 
         // use the "part key" field to store the count
         agg->p_partkey++;
@@ -387,7 +385,7 @@ struct q16_extractor3_t : public key_extractor_t {
     {
     }
     virtual int extract_hint(const char* key) {
-        return -*safe_cast<int>(key);
+        return -*aligned_cast<int>(key);
     }
     virtual q16_extractor3_t* clone() const {
         return new q16_extractor3_t(*this);
@@ -396,8 +394,8 @@ struct q16_extractor3_t : public key_extractor_t {
 
 struct q16_compare2_t : public key_compare_t {
     virtual int operator()(const void* key1, const void* key2) {
-        part_scan_tuple_t* a = safe_cast<part_scan_tuple_t>(key1);
-        part_scan_tuple_t* b = safe_cast<part_scan_tuple_t>(key2);
+        part_scan_tuple_t* a = aligned_cast<part_scan_tuple_t>(key1);
+        part_scan_tuple_t* b = aligned_cast<part_scan_tuple_t>(key2);
 
         // sort by suppkey desc ... (hint took care of it)
         
@@ -526,7 +524,7 @@ void tpch_q16_driver::submit(void* disp) {
     
     tuple_t output;
     while(result->get_tuple(output)) {
-        part_scan_tuple_t* r = safe_cast<part_scan_tuple_t>(output.data);
+        part_scan_tuple_t* r = aligned_cast<part_scan_tuple_t>(output.data);
         TRACE(TRACE_QUERY_RESULTS,
               "*** Q16 %10s %25s %10d %10d\n",
               r->p_brand, r->p_type, r->p_size, r->p_partkey);
