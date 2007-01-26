@@ -6,11 +6,13 @@ lib_LIBRARIES = lib/libtest.a lib/libworkload.a lib/libscheduler.a \
 
 LDADD = $(lib_LIBRARIES)
 
+#   tests/send_tuples 
 TESTS = \
    tests/cpu_binding \
    tests/rand_array_access \
    tests/load_db_tables \
    tests/trace \
+   tests/hashtable \
    tests/tuple_buffer \
    tests/tpch_load \
    tests/tpch_struct_sizes \
@@ -186,6 +188,8 @@ tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_load_db_tables_SOURCES = $(ST)/load_db_tables.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
+tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
+tests_send_tuples_SOURCES = $(ST)/test_send_tuples.cpp
 tests_tuple_buffer_SOURCES = $(ST)/test_tuple_buffer.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp

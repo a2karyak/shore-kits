@@ -35,7 +35,9 @@ void tscan_stage_t::process_packet() {
     adaptor_t* adaptor = _adaptor;
     tscan_packet_t* packet = (tscan_packet_t*)adaptor->get_packet();
     page_list* table = packet->_db;
-    for(page_list::iterator it=table->begin(); it != table->end(); ++it)
+    for(page_list::iterator it=table->begin(); it != table->end(); ++it) {
+        TRACE(TRACE_ALWAYS, "Outputting another page %p\n", *it);
         adaptor->output(*it);
+    }
 
 }
