@@ -31,28 +31,27 @@ int main(int argc, char* argv[]) {
         usage(argv[0]);
         
     // parse index
-    char* numtuples_ptr = argv[2];
+    char* numtuples_ptr = argv[1];
     char* numtuples_endptr;
     int numtuples = strtol(numtuples_ptr, &numtuples_endptr, 10);
     if ((numtuples_endptr == numtuples_ptr) || (numtuples < 0)) {
         // invalid number
-        TRACE(TRACE_ALWAYS, "%s must be a non-negative integer\n", numtuples);
+        TRACE(TRACE_ALWAYS, "%s must be a non-negative integer\n", numtuples_ptr);
         usage(argv[0]);
     }
 
 
-    tuple_fifo int_buffer(sizeof(int));
+    tuple_fifo buf(sizeof(int));
 
-
+    
     for (int i = 0; i < numtuples; i++) {
         
-        tuple_t srctup(&i, sizeof(i));
-        tuple_t outtup = int_buffer.allocate();
+        tuple_t srctup((char*)&i, (size_t)sizeof(int));
+        tuple_t outtup = buf.allocate();
         outtup.assign(srctup);
     }
     bool ret = buf.send_eof();
-    TRACE(TRACE_ALWAYS, "i = %d: send_eof() returned %s\n",
-          i,
+    TRACE(TRACE_ALWAYS, "send_eof() returned %s\n",
           ret ? "TRUE" : "FALSE");
 
 
