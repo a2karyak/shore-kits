@@ -27,12 +27,12 @@ void aggregate_stage_t::process_packet() {
 
     // "I" own dest, so allocate space for it on the stack
     size_t dest_size = packet->output_buffer()->tuple_size();
-    char dest_data[dest_size];
+    array_guard_t<char> dest_data = new char[dest_size];
     tuple_t dest(dest_data, dest_size);
 
 
     size_t agg_size = aggregate->tuple_size();
-    char agg_data[agg_size];
+    array_guard_t<char> agg_data = new char[agg_size];
     tuple_t agg(agg_data, agg_size);
     
     size_t key_size = extract->key_size();

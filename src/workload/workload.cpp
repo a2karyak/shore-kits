@@ -28,7 +28,7 @@ bool workload_t::run(results_t &results) {
 
     // create client threads for this workload
     int clients_created = 0;
-    pthread_t client_ids[_num_clients];
+    array_guard_t<pthread_t> client_ids = new pthread_t[_num_clients];
     client_sync_t client_sync;
 
     for (int client_index = 0; client_index < _num_clients; client_index++) {

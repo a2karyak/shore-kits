@@ -23,7 +23,7 @@ int process_next_command_using_fgets(FILE* in_stream, bool print_prompt) {
     char command[SERVER_COMMAND_BUFFER_SIZE];
 
     if (print_prompt)
-        PRINT("%s", QPIPE_PROMPT);
+        TRACE(TRACE_ALWAYS, "%s", QPIPE_PROMPT);
     
     char* fgets_ret = fgets(command, sizeof(command), in_stream);
     if (fgets_ret == NULL)

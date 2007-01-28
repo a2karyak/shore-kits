@@ -1,6 +1,7 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include "util/compat.h"
 #include "util/c_str.h"
 #include "util/exception.h"
 #include "util/fnv.h"

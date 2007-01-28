@@ -95,7 +95,7 @@ void tpch_handler_t::shutdown() {
     if ( state == TPCH_HANDLER_INITIALIZED ) {
         
         // close DB tables
-        PRINT("... closing db\n");
+        TRACE(TRACE_ALWAYS, "... closing db\n");
         db_close();
         state = TPCH_HANDLER_SHUTDOWN;
     }
@@ -130,7 +130,7 @@ void tpch_handler_t::handle_command(const char* command) {
     {
         for (map<c_str, driver_t*>::iterator it = _drivers.begin(); it != _drivers.end(); ++it)
         {
-            PRINT("%s\n", it->first.data());
+            TRACE(TRACE_ALWAYS, "%s\n", it->first.data());
         }
         return;
     }
@@ -161,7 +161,7 @@ void tpch_handler_t::handle_command(const char* command) {
     driver_t* driver = lookup_driver(c_str(driver_tag));
     if ( driver == NULL ) {
         // no such driver registered!
-        PRINT("No driver registered for %s\n", driver_tag);
+        TRACE(TRACE_ALWAYS, "No driver registered for %s\n", driver_tag);
         return;
     }
 
@@ -169,7 +169,7 @@ void tpch_handler_t::handle_command(const char* command) {
     scheduler::policy_t* dp = _scheduler_policies[c_str(scheduler_policy_tag)];
     if ( dp == NULL ) {
         // no such policy registered!
-        PRINT("%s is not a valid dispatcher policy\n", scheduler_policy_tag);
+        TRACE(TRACE_ALWAYS, "%s is not a valid dispatcher policy\n", scheduler_policy_tag);
         return;
     }
     
@@ -188,7 +188,7 @@ void tpch_handler_t::handle_command(const char* command) {
 
 void tpch_handler_t::print_usage(const char* command_tag)
 {
-    PRINT("Usage: %s"
+    TRACE(TRACE_ALWAYS, "Usage: %s"
           " list | <driver_tag> <num_clients> <num_iterations> <think_time> <scheduler_policy_tag>"
           "\n",
           command_tag);

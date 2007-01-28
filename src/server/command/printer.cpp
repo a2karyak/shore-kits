@@ -16,6 +16,6 @@ void printer_t::handle_command(const char* command) {
     TRACE(TRACE_ALWAYS, "num not specified... aborting\n");
   
   for (int i = 0; i < num; i++) {
-    PRINT("%s\n", command);
+    TRACE(TRACE_ALWAYS, "%s\n", command);
   }
 }

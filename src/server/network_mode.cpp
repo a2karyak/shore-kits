@@ -5,6 +5,7 @@
 #include "server/command_set.h"
 #include "util/tcp.h"
 #include "util/trace.h"
+#include "util/compat.h"
 
 #include <cstring>
 #include <errno.h>
@@ -14,6 +15,11 @@
 #include <netdb.h>      /* for clientaddr structure */
 
 
+
+#include <stdio.h>
+#ifndef __GCC
+using namespace std;
+#endif
 
 
 /**

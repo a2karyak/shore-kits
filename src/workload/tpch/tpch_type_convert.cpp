@@ -9,7 +9,7 @@
 
 
 
-int datepart(char* str, const time_t *pt) {
+int datepart(char const* str, const time_t *pt) {
     tm tm_struct;
     tm_struct = *(localtime(pt));
     if(strcmp(str, "yy") == 0) {
@@ -24,7 +24,7 @@ int datepart(char* str, const time_t *pt) {
  *  @brief : Converts a string to corresponding time_t
  */
 
-time_t datestr_to_timet(char* str) {
+time_t datestr_to_timet(char const* str) {
     // str in yyyy-mm-dd format
     tm time_str;
     int count = sscanf(str, "%d-%d-%d", &time_str.tm_year,
@@ -49,7 +49,7 @@ char* timet_to_datestr(time_t time) {
     return result;
 }
 
-tpch_l_shipmode modestr_to_shipmode(char* tmp) {
+tpch_l_shipmode modestr_to_shipmode(char const* tmp) {
     if (!strcmp(tmp, "REG AIR"))
         return REG_AIR;
     else if (!strcmp(tmp, "AIR"))
@@ -67,7 +67,7 @@ tpch_l_shipmode modestr_to_shipmode(char* tmp) {
 }
 
 
-tpch_o_orderpriority prioritystr_to_orderpriorty(char* tmp) {
+tpch_o_orderpriority prioritystr_to_orderpriorty(char const* tmp) {
 
     if (!strcmp(tmp, "1-URGENT"))
         return URGENT_1;
@@ -143,7 +143,7 @@ tpch_n_name nation_ids[] = {
  * nnamestr_to_nname: Returns the nation id based on the nation name (string)
  */
 
-tpch_n_name nnamestr_to_nname(char* tmp) {
+tpch_n_name nnamestr_to_nname(char const* tmp) {
 
     uint i = 0;
     for (i = 0; i < sizeof(nation_names)/sizeof(char*); ++i) {

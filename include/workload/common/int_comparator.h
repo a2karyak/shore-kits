@@ -7,7 +7,7 @@
 using namespace qpipe;
 
 struct int_key_compare_t : public key_compare_t {
-    virtual int operator()(const void*, const void*) {
+    virtual int operator()(const void*, const void*) const {
 	unreachable();
     }
     virtual key_compare_t* clone() const {

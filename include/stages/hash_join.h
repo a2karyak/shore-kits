@@ -12,7 +12,11 @@
 
 #include "core.h"
 
+#ifdef __GCC
 #include <ext/hash_set>
+#else
+#include "util/hashtable.h"
+#endif
 
 
 using namespace qpipe;
@@ -109,7 +113,7 @@ public:
 /*******************
  * hash_join_stage *
  *******************/
-using __gnu_cxx::hashtable;
+//using __gnu_cxx::hashtable;
 using std::string;
 using std::vector;
 
@@ -135,21 +139,21 @@ class hash_join_stage_t : public stage_t {
      * The key equality test simply performs a bytewise comparison of
      * the two keys it is given.
      */
-    typedef hashtable<char *, const char *,
-                      hash_key_t,
-                      extract_key_t<true>,
-                      equal_key_t> tuple_hash_t;
+        typedef hashtable<char *, const char *,
+                          hash_key_t,
+                          extract_key_t<true>,
+                          equal_key_t> tuple_hash_t;
   
     /* Reads tuples from the given source to build an in-memory hash table
      */
-    template<class TupleSource>
-    page* build_hash(tuple_hash_t &probe_table,
-                       TupleSource source);
+        template<class TupleSource>
+        page* build_hash(tuple_hash_t &probe_table,
+                           TupleSource source);
     
-    template <class TupleSource>
-    hash_join_packet_t *probe_matches(tuple_hash_t &probe_table,
-                                      hash_join_packet_t *packet,
-                                      TupleSource source);
+        template <class TupleSource>
+        hash_join_packet_t *probe_matches(tuple_hash_t &probe_table,
+                                          hash_join_packet_t *packet,
+                                          TupleSource source);
 
     struct partition_t {
         page* _page;

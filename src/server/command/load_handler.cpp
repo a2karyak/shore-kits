@@ -21,7 +21,7 @@ void load_handler_t::shutdown() {
 }
 
 void load_handler_t::handle_command(char const* command) {
-    char copy[strlen(command)+1];
+    array_guard_t<char> copy = new char[strlen(command)+1];
     strcpy(copy, command);
 
     char* saved;

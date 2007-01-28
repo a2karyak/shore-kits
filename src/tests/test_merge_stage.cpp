@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    write_info_t merge_info[merge_factor];
+    array_guard_t<write_info_t> merge_info = new write_info_t[merge_factor];
 
 
     

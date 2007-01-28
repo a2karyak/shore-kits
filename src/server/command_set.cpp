@@ -183,7 +183,7 @@ static void dispatch_command(const char* command) {
     command_handler_t* handler = command_mappings[command_tag];
     if ( handler == NULL ) {
         // unregistered command
-        PRINT("Unregistered command %s\n", command_tag);
+        TRACE(TRACE_ALWAYS, "Unregistered command %s\n", command_tag);
         return;
     }
 

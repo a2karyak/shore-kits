@@ -15,6 +15,7 @@ int cpu_indices[NUMCPUS] = { 0, 1, 2, 3 };
 
 
 
+extern "C" void* thread_main(void* arg);
 void* thread_main(void* arg) {
 
     int* cpu_index_addr = (int*)arg;

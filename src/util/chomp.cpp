@@ -3,6 +3,9 @@
 
 #include <cstring>
 
+#ifndef __GCC
+using std::strlen;
+#endif
 
 void chomp_newline(char* str) {
     int len = strlen(str);

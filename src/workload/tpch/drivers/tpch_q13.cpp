@@ -36,7 +36,7 @@ int const key_count_tuple_t::ALIGN = sizeof(int);
 
 // this comparator sorts its keys in descending order
 struct int_desc_key_extractor_t : public key_extractor_t {
-    virtual int extract_hint(const char* tuple_data) {
+    virtual int extract_hint(const char* tuple_data) const {
         return -*aligned_cast<int>(tuple_data);
     }
     virtual int_desc_key_extractor_t* clone() const {
@@ -208,7 +208,7 @@ void tpch_q13_driver::submit(void* disp) {
      */
     struct q13_join_t : public tuple_join_t {
         struct right_key_extractor_t : public key_extractor_t {
-            virtual int extract_hint(const char* tuple_data) {
+            virtual int extract_hint(const char* tuple_data) const {
                 key_count_tuple_t* tuple = aligned_cast<key_count_tuple_t>(tuple_data);
                 return tuple->KEY;
             }
@@ -218,7 +218,7 @@ void tpch_q13_driver::submit(void* disp) {
         };
     
         struct left_key_extractor_t : public key_extractor_t {
-            virtual int extract_hint(const char* tuple_data) {
+            virtual int extract_hint(const char* tuple_data) const {
                 return *aligned_cast<int>(tuple_data);
             }
             virtual left_key_extractor_t* clone() const {
@@ -252,7 +252,7 @@ void tpch_q13_driver::submit(void* disp) {
     struct q13_key_extract_t : public key_extractor_t {
         q13_key_extract_t() : key_extractor_t(sizeof(key_count_tuple_t)) { }
             
-        virtual int extract_hint(const char* tuple_data) {
+        virtual int extract_hint(const char* tuple_data) const {
             key_count_tuple_t* tuple = aligned_cast<key_count_tuple_t>(tuple_data);
             // confusing -- custdist is a count of counts... and
             // descending sort
@@ -263,7 +263,7 @@ void tpch_q13_driver::submit(void* disp) {
         }
     };
     struct q13_key_compare_t : public key_compare_t {
-        virtual int operator()(const void* key1, const void* key2) {
+        virtual int operator()(const void* key1, const void* key2) const {
             // at this point we know the custdist (count) fields are
             // different, so just check the c_count (key) fields
             key_count_tuple_t* a = aligned_cast<key_count_tuple_t>(key1);

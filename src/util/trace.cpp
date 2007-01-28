@@ -22,7 +22,6 @@
 #if 0
 static void trace_force_(const char* filename, int line_num, const char* function_name,
 		  char* format, ...) __attribute__((format(printf, 4, 5)));
-#endif
 
 /**
  *  @def TRACE_FORCE
@@ -39,6 +38,7 @@ static void trace_force_(const char* filename, int line_num, const char* functio
  */
 
 #define TRACE_FORCE(format, rest...) trace_force_(__FILE__, __LINE__, __FUNCTION__, format, ##rest)
+#endif
 
 
 static void trace_print_pthread(FILE* out_stream, pthread_t thread);
@@ -46,7 +46,7 @@ static void trace_print_pthread(FILE* out_stream, pthread_t thread);
 
 static void trace_stream(FILE* out_stream,
 		  const char* filename, int line_num, const char* function_name,
-		  char* format, va_list ap);
+		  char const* format, va_list ap);
 
 
 /**
@@ -84,9 +84,7 @@ static unsigned int trace_current_setting = ~0u;
  *
  *  @param ... Optional arguments referenced by the format string.
  */
-void trace_(unsigned int trace_type,
-	    const char* filename, int line_num, const char* function_name,
-	    char* format, ...)
+void tracer::operator()(unsigned int trace_type, char const* format, ...)
 {
 
     /* Print if any trace_type bits match bits in the current trace
@@ -100,7 +98,7 @@ void trace_(unsigned int trace_type,
     va_start(ap, format);
   
     /* currently, we only support printing to streams */
-    trace_stream(stdout, filename, line_num, function_name, format, ap);
+    trace_stream(stdout, _file, _line, _function, format, ap);
 
     va_end(ap);
     return;
@@ -237,7 +235,7 @@ static pthread_mutex_t stream_mutex = thread_mutex_create();
 
 static void trace_stream(FILE* out_stream,
 		  const char* filename, int line_num, const char* function_name,
-		  char* format, va_list ap)
+		  char const* format, va_list ap)
 {
 
     /* Any message we print should be prefixed by:

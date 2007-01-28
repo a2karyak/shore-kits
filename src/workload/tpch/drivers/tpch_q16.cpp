@@ -12,8 +12,8 @@ using namespace qpipe;
 ENTER_NAMESPACE(workload);
 
 struct supplier_tscan_filter_t : public tuple_filter_t {
-    char *word1;
-    char *word2;
+    char const *word1;
+    char const *word2;
         
     supplier_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_supplier_tuple))
@@ -266,7 +266,7 @@ struct q16_join_t : public tuple_join_t {
 };
 
 struct q16_compare1_t : public key_compare_t {
-    virtual int operator()(const void* key1, const void* key2) {
+    virtual int operator()(const void* key1, const void* key2) const {
         part_scan_tuple_t* a = aligned_cast<part_scan_tuple_t>(key1);
         part_scan_tuple_t* b = aligned_cast<part_scan_tuple_t>(key2);
 
@@ -299,7 +299,7 @@ struct q16_extractor1_t : public key_extractor_t {
     {
     }
 #if 1
-    virtual int extract_hint(const char* key) {
+    virtual int extract_hint(const char* key) const{
         return 0;
         part_scan_tuple_t* pst = aligned_cast<part_scan_tuple_t>(key);
         int result;
@@ -343,7 +343,7 @@ struct q16_extractor2_t : public key_extractor_t {
                           calc_key_offset())
     {
     }
-    virtual int extract_hint(const char* key) {
+    virtual int extract_hint(const char* key) const {
         part_scan_tuple_t* pst = aligned_cast<part_scan_tuple_t>(key - key_offset());
         int result;
         memcpy(&result, pst->p_brand, sizeof(int));
@@ -384,7 +384,7 @@ struct q16_extractor3_t : public key_extractor_t {
         : key_extractor_t(sizeof(part_scan_tuple_t))
     {
     }
-    virtual int extract_hint(const char* key) {
+    virtual int extract_hint(const char* key) const {
         return -*aligned_cast<int>(key);
     }
     virtual q16_extractor3_t* clone() const {
@@ -393,7 +393,7 @@ struct q16_extractor3_t : public key_extractor_t {
 };
 
 struct q16_compare2_t : public key_compare_t {
-    virtual int operator()(const void* key1, const void* key2) {
+    virtual int operator()(const void* key1, const void* key2) const {
         part_scan_tuple_t* a = aligned_cast<part_scan_tuple_t>(key1);
         part_scan_tuple_t* b = aligned_cast<part_scan_tuple_t>(key2);
 

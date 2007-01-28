@@ -65,7 +65,7 @@ void cpu_bind_self(cpu_t cpu)
      current one. */
 
   if ( processor_bind(P_LWPID, P_MYID, cpu->cpu_id, NULL) )
-      throw EXCEPTION(QPipeException,
+      THROW2(QPipeException,
                       "Caught %s while binding processor",
                       errno_to_str().data());
   return;
@@ -73,7 +73,7 @@ void cpu_bind_self(cpu_t cpu)
 #endif
   
 
-  throw EXCEPTION(QPipeException, 
+  THROW1(QPipeException, 
                   "Unsupported operating system\n");
 }
 

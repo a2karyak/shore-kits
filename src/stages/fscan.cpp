@@ -27,7 +27,7 @@ void fscan_stage_t::process_packet() {
     const c_str &filename = packet->_filename;
     guard<FILE> file = fopen(filename.data(), "r");
     if (file == NULL)
-        throw EXCEPTION(FileException,
+        THROW3(FileException,
                         "Caught %s opening '%s'",
                         errno_to_str().data(), filename.data());
 

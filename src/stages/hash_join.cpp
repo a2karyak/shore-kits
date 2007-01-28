@@ -274,7 +274,7 @@ void hash_join_stage_t::process_packet() {
             std::pair<tuple_hash_t::iterator, tuple_hash_t::iterator> range;
             range = table.equal_range(left_key);
 
-            char data[_join->out_tuple_size()];
+            array_guard_t<char> data = new char[_join->out_tuple_size()];
             tuple_t out(data, sizeof(data));
             if(outer_join && range.first == range.second) {
                 _join->outer_join(out, left);

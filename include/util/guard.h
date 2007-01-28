@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <cassert>
+#include <cstddef>
 #include <unistd.h>
 #include "util/trace.h"
 

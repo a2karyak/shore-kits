@@ -29,7 +29,7 @@ void fdump_stage_t::process_packet() {
     // make sure the file gets closed when we're done
     guard<FILE> file = fopen(filename.data(), "w+");
     if (file == NULL)
-        throw EXCEPTION(FileException,
+        THROW3(FileException,
                         "Caught %s opening '%s'",
                         errno_to_str().data(), filename.data());
 

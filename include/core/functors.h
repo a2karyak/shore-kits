@@ -151,7 +151,7 @@ struct key_compare_t {
      * @return negative if a < b, positive if a > b, and zero if a == b
      */
     
-    virtual int operator()(const void* key1, const void* key2)=0;
+    virtual int operator()(const void* key1, const void* key2) const=0;
     virtual key_compare_t* clone() const=0;
 
     virtual ~key_compare_t() { }
@@ -182,7 +182,7 @@ public:
     /**
      * @brief extracts the full key of a tuple. 
      */
-    const char* extract_key(const tuple_t &tuple) {
+    const char* extract_key(const tuple_t &tuple) const {
         return extract_key(tuple.data);
     }
     char* extract_key(tuple_t &tuple) {
@@ -196,7 +196,7 @@ public:
      * The default implementation assumes the key is the first part of
      * the tuple and simply returns its argument.
      */
-    const char* extract_key(const char* tuple_data) {
+    const char* extract_key(const char* tuple_data) const {
         return tuple_data + key_offset();
     }
 
@@ -210,7 +210,7 @@ public:
      * comparisons but equal shortcut keys require a full key compare
      * to resolve the ambiguity.
      */
-    int extract_hint(const tuple_t &tuple) {
+    int extract_hint(const tuple_t &tuple) const {
         return extract_hint(extract_key(tuple));
     }
 
@@ -231,7 +231,7 @@ public:
      */
     
 
-    virtual int extract_hint(const char* key) {
+    virtual int extract_hint(const char* key) const {
         // this guarantees that we're not doing something dangerous
         if(key_size() > sizeof(int))
             return 0;
@@ -266,7 +266,7 @@ struct default_key_extractor_t : public key_extractor_t {
         : key_extractor_t(key_size, key_offset)
     {
     }
-    virtual int extract_hint(const char* key) {
+    virtual int extract_hint(const char* key) const {
         int result = 0;
         memcpy(&result, key, std::min(sizeof(int), key_size()));
         return result;
@@ -292,7 +292,7 @@ struct tuple_comparator_t {
     }
 
 
-    int operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
+    int operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) const {
         int diff = a.hint - b.hint;
         if(_extract->key_size() <= sizeof(int) || diff)
             return diff;
@@ -314,7 +314,7 @@ struct tuple_less_t {
     {
     }
 
-    bool operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) {
+    bool operator()(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b) const {
         return _compare(a, b) < 0;
     }
 };

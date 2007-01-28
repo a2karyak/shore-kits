@@ -48,7 +48,7 @@ bool page::fread_full_page(FILE* file) {
               size_read,
               page_size(),
               size);
-        throw EXCEPTION(FileException, "::fread read wrong size page");
+        THROW1(FileException, "::fread read wrong size page");
     }
 
     return true;
@@ -59,7 +59,7 @@ void page::fwrite_full_page(FILE *file) {
         TRACE(TRACE_ALWAYS, "::fwrite() wrote %zd/%zd page bytes\n",
               write_count,
               page_size());
-        throw EXCEPTION(FileException, "::fwrite() failed");
+        THROW1(FileException, "::fwrite() failed");
     }
 }
    

@@ -40,7 +40,7 @@ void parse_table(char const* fin_name, char const* fout_name,
     char linebuffer[MAX_LINE_LENGTH];
     
     // force 8-byte alignment
-    char tuple_data[tuple_size+7];
+    array_guard_t<char> tuple_data = new char[tuple_size+7];
     union {
 	size_t i;
 	char* p;
@@ -55,12 +55,12 @@ void parse_table(char const* fin_name, char const* fout_name,
     FILE* fin = fopen(fin_name, "r");
     if (fin == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fin_name);
-        throw EXCEPTION(BdbException, "fopen() failed");
+        THROW1(BdbException, "fopen() failed");
     }
     FILE* fout = fopen(fout_name, "w");
     if (fout == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fout_name);
-        throw EXCEPTION(BdbException, "fopen() failed");
+        THROW1(BdbException, "fopen() failed");
     }
 
     page *p = page::alloc(tuple_size);
@@ -83,11 +83,11 @@ void parse_table(char const* fin_name, char const* fout_name,
     
     if ( fclose(fout) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fout_name);
-        throw EXCEPTION(BdbException, "fclose() failed");
+        THROW1(BdbException, "fclose() failed");
     }
     if ( fclose(fin) ) {
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fin_name);
-        throw EXCEPTION(BdbException, "fclose() failed");
+        THROW1(BdbException, "fclose() failed");
     }
     
     progress_done();

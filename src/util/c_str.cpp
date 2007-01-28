@@ -5,6 +5,8 @@
 #include "util/c_str.h"
 #include "util/exception.h"
 #include "util/sync.h"
+#include "util/guard.h"
+#include <stdio.h>
 
 // Ignore the warning: printf("") is valid!
 const c_str c_str::EMPTY_STRING("%s", "");
@@ -12,7 +14,7 @@ const c_str c_str::EMPTY_STRING("%s", "");
 struct c_str::c_str_data {
     mutable pthread_mutex_t _lock;
     mutable unsigned _count;
-    char _str[0] __attribute__ ((aligned));
+    char* _str() { return sizeof(c_str_data) + (char*) this; }
 };
 
 c_str::c_str(const char* str, ...)
@@ -21,7 +23,7 @@ c_str::c_str(const char* str, ...)
 
     for(int i=128; i <= 1024; i *= 2) {
         va_list args;
-        char tmp[i+1];
+        array_guard_t<char> tmp = new char[i+1];
         va_start(args, str);
         int count = vsnprintf(tmp, i, str, args);
         va_end(args);
@@ -30,23 +32,23 @@ c_str::c_str(const char* str, ...)
             continue;
         
         int len = strlen(tmp);
-        _data = (c_str_data*) malloc(sizeof(c_str_data) + len + 1);
+        _data = (c_str_data*) malloc(sizeof(c_str_data) + len);
         if(_data == NULL)
-            throw EXCEPTION(BadAlloc);
+            THROW(BadAlloc);
         
         _data->_lock = thread_mutex_create();
         _data->_count = 1;
-        memcpy(_data->_str, tmp, len+1);
+        memcpy(_data->_str(), tmp, len+1);
         return;
     }
     // shouldn't get here...
-    throw EXCEPTION(BadAlloc);
+    THROW(BadAlloc);
 }
 
 const char* c_str::data() const {
     // Return the actual string... whatever uses this string must
     // copy it since it does not own it.
-    return _data->_str;
+    return _data->_str();
 }
 
 void c_str::assign(const c_str &other) {
@@ -69,7 +71,7 @@ void c_str::release() {
         cs.exit();
             
         if(DEBUG_C_STR)
-            printf("Freeing %s\n", &_data->_str[0]);
+            printf("Freeing %s\n", _data->_str());
         free(_data);
     }
     // * * * END CRITICAL SECTION * * *

@@ -231,6 +231,7 @@ LDFLAGS="-lnsl -ldl -lm -lpthread"
 
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt"
+    CXXFLAGS="-xtarget=ultraT1 -xchip=ultraT1 -features=extensions"
 else
     LDFLAGS="$LDFLAGS -lboost_regex"
 fi

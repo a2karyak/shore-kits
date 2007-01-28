@@ -72,7 +72,7 @@ static void open_db_table(page_list* table, const char* table_name) {
     
     FILE* f = fopen(fname, "r");
     if(f == NULL) 
-        throw EXCEPTION(FileException, "Unable to open %s\n", fname);
+        THROW2(FileException, "Unable to open %s\n", fname);
     
     page* p = page::alloc(1);
     while(p->fread_full_page(f)) {

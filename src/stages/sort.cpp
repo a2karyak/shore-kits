@@ -460,7 +460,7 @@ void sort_stage_t::process_packet() {
     tuple_fifo* merge_output = thread_join<tuple_fifo>(_monitor_thread);
     _monitor_thread = 0;
     if(merge_output == NULL)
-        throw EXCEPTION(QPipeException, "Merge failed. Terminating Sort");
+        THROW1(QPipeException, "Merge failed. Terminating Sort");
     
 
     // transfer the output of the last merge to the stage output

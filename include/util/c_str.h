@@ -9,10 +9,11 @@
 #endif
 #include <cstdio>
 #include <cstring>
+#include "compat.h"
 
 #define DEBUG_C_STR 0
 
-
+using namespace std;
 
 class c_str {
 
@@ -43,7 +44,7 @@ public:
     }
     
     // start counting params at 2 instead of 1 -- non-static member function
-    c_str(const char* str, ...) __attribute__((format(printf, 2, 3)));
+    c_str(const char* str, ...) ATTRIBUTE(format(printf, 2, 3));
     
     operator const char*() const {
         return data();

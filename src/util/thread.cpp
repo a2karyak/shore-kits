@@ -24,7 +24,7 @@ static pthread_key_t THREAD_KEY_SELF;
 
 /* internal helper functions */
 
-static void thread_destroy(void* thread_object);
+extern "C" static void thread_destroy(void* thread_object);
 extern "C" void* start_thread(void *);
 
 

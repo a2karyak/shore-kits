@@ -109,7 +109,7 @@ void partial_aggregate_stage_t::process_packet() {
 
         // write out the result
         size_t out_size = packet->_output_filter->input_tuple_size();
-        char out_data[out_size];
+        array_guard_t<char> out_data = new char[out_size];
         tuple_t out(out_data, out_size);
         for(tuple_set_t::iterator it=run.begin(); it != run.end(); ++it) {
             // convert the aggregate tuple to an output tuple

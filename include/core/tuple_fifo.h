@@ -254,7 +254,7 @@ private:
 
     void _termination_check() {
         if(_terminated)
-            EXCEPTION(TerminatedBufferException, "Buffer closed unexpectedly");
+            THROW1(TerminatedBufferException, "Buffer closed unexpectedly");
     }
 
 

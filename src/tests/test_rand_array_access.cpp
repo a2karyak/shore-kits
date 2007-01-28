@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 
 
     int num_ints = array_bytes / sizeof(int);
-    int array[num_ints];
+    array_guard_t<int> array = new int[num_ints];
     fill_array_with_random_numbers(array, num_ints);
 
     TRACE(TRACE_ALWAYS, "Returned %d\n",

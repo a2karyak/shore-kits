@@ -5,6 +5,6 @@
 
 #include "util.h"
 
-#define PRINT(format, rest...) TRACE(TRACE_ALWAYS, format, ##rest)
+//#define PRINT(format, rest...) TRACE(TRACE_ALWAYS, format, ##rest)
 
 #endif

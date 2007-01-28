@@ -11,6 +11,7 @@
 
 #include <cstdarg>             /* for varargs */
 #include <stdint.h>            /* for uint32_t */
+#include "util/compat.h"
 
 
 /* exported constants */
@@ -39,9 +40,19 @@
 
 /* exported functions */
 
+struct tracer {
+    char const* _file;
+    int _line;
+    char const* _function;
+    tracer(char const* file, int line, char const* function)
+	: _file(file), _line(line), _function(function)
+    {
+    }
+    void operator()(unsigned int type, char const* format, ...) ATTRIBUTE(format(printf, 3, 4));
+};
 void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
-	    char* format, ...) __attribute__((format(printf, 5, 6)));
+	    char const* format, ...) ;
 
 void trace_set(unsigned int trace_type_mask);
 
@@ -71,7 +82,7 @@ void trace_set(unsigned int trace_type_mask);
  *
  * @return void
  */
-#define TRACE(type, format, rest...) trace_(type, __FILE__, __LINE__, __FUNCTION__, format , ##rest)
+#define TRACE tracer(__FILE__, __LINE__, __FUNCTION__)
 
 
 

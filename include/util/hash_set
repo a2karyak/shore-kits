@@ -61,7 +61,7 @@
 #ifndef _HASH_SET
 #define _HASH_SET 1
 
-#include <ext/hashtable.h>
+#include "util/hashtable.h"
 #include <bits/concept_check.h>
 
 namespace __gnu_cxx

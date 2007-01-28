@@ -14,7 +14,6 @@ TESTS = \
    tests/trace \
    tests/hashtable \
    tests/send_tuples \
-   tests/receive_tuples \
    tests/tuple_buffer \
    tests/tpch_load \
    tests/tpch_struct_sizes \
@@ -192,7 +191,6 @@ tests_load_db_tables_SOURCES = $(ST)/load_db_tables.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
 tests_send_tuples_SOURCES = $(ST)/test_send_tuples.cpp
-tests_receive_tuples_SOURCES = $(ST)/test_receive_tuples.cpp
 tests_tuple_buffer_SOURCES = $(ST)/test_tuple_buffer.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
@@ -264,7 +262,12 @@ tests_busy_wait_all_LDADD = $(TEST_LIBS)
 
 SE = $(top_srcdir)/src/server
 
-qpipe_LDFLAGS = -Wl,-export-dynamic
+# FIXME: FRJ: removed because CC doesn't like it. Need to track down
+# its version and select between the two properly.
+#qpipe_LDFLAGS = -Wl,-export-dynamic
+
+# FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
+qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
 	-lltdl \

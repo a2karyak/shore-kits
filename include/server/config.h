@@ -9,7 +9,8 @@
 #define QPIPE_VERSION "v2.0"
 #define QPIPE_PROMPT  "(qpipe) "
 
-#define USE_READLINE 1
+// Until we get CC to recognize our libreadline install...
+#define USE_READLINE 0
 
 /* Default configuration values */
 #define QPIPE_DIRECTORY_NAME ".qpipe"

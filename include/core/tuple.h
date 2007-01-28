@@ -163,8 +163,12 @@ public:
     
 private:
     // jumping-off point for the data on this page
-    char   _data[];
-
+#ifdef __GCC
+    char   _data_array[0];
+    char* _data() { return _data_array; }
+#else
+    char* _data() { return sizeof(page)+(char*)this; }
+#endif
  public:
 
     /**
@@ -243,7 +247,7 @@ private:
      */
 
     tuple_t get_tuple(size_t index) {
-        return tuple_t(&_data[index*tuple_size()], tuple_size());
+        return tuple_t(&_data()[index*tuple_size()], tuple_size());
     }
 
 
@@ -285,7 +289,7 @@ private:
     char* allocate() {
         assert(!full());
         
-        char *result = &_data[_end_offset];
+        char *result = &_data()[_end_offset];
         _end_offset += tuple_size();
         _free_count--;
         return result;
@@ -343,7 +347,7 @@ private:
         {
         }
         iterator(page *page, size_t offset)
-            : _current(page->_data + offset,
+            : _current(page->_data() + offset,
                        page->tuple_size())
         {
         }
@@ -402,7 +406,7 @@ private:
           next(NULL)
     {
 	// must be 8-byte aligned!
-	test_alignment(_data, sizeof(double));
+	test_alignment(_data(), sizeof(double));
         clear();
     }
     

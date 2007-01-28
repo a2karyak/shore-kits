@@ -3,7 +3,7 @@
 #define _HASHTABLE_H
 
 #include <cstdlib>
-
+#include "util/guard.h"
 
 /**
  * @brief A generic RAII guard class.
@@ -21,7 +21,7 @@
  * what "null" and "action" are)
  *
  */
-template <class Data, class ExtractKey, class EqualKey, class HashFcn>
+template <class Data, class Key, class HashFcn, class ExtractKey, class EqualKey>
 class hashtable {
     
 private:
@@ -34,8 +34,8 @@ private:
     /* the table */
     int          _capacity;
     int          _size;
-    Data*        _data;
-    link_t*      _links;
+    array_guard_t<Data>        _data;
+    array_guard_t<link_t>      _links;
     bool*        _exists;
     
     /* key-value functors */
@@ -146,7 +146,7 @@ private:
 public:
     
     
-    hashtable(int capacity, ExtractKey extract, EqualKey equal, HashFcn hash)
+    hashtable(int capacity, HashFcn hash, EqualKey equal, ExtractKey extract)
         : _capacity(capacity)
         , _size(0)
         , _data(new Data[capacity])
@@ -158,30 +158,23 @@ public:
     {
         
         /* create free list */
-        for (int i = 0; i < capacity; i++) {
-            if (i < capacity-1)
-                _links[i].next = i+1;
-            else
-                _links[i].next = 0;
-
-            if (i > 0)
-                _links[i].prev = i-1;
-            else
-                _links[i].prev = capacity-1;
+	_links[0].prev = capacity-1;
+	_links[capacity-1].next = 0;
+        for (int i = 1; i < capacity; i++) {
+	    _links[i-1].next = i;
+	    _links[i].prev = i-1;
         }
         
         _free_head = 0;
 
-        /* TODO check whether this is the correct way to "initialize" the
-           data array */
-        memset(_data, 0, sizeof(_data));
+	// operator new() calls Data() for each element in the data array
     }
 
     
     /**
      * @brief 
      */
-    void insert_no_resize(Data d) {
+    void insert_equal_noresize(Data d) {
         
         /* Check for space. */
         assert(_size < _capacity);
@@ -195,7 +188,7 @@ public:
     /**
      * @brief 
      */
-    bool insert_unique_no_resize(Data d) {
+    bool insert_unique_noresize(Data d) {
         
         size_t hash_code = _hash(_extract(d));
         int hash_pos = (int)(hash_code % (size_t)_capacity);
@@ -220,9 +213,13 @@ public:
         int hash_pos = (int)(hash_code % (size_t)_capacity);
         return bucket_contains(d, hash_pos);
     }
-    
 
-#if 0
+    void clear() {
+	// TODO: I'm not sure why this was being called, but it's not
+	// terribly hard to implement...
+    }
+
+#if 1
     /**
      *  @brief Iterator over the tuples in this page. Each dereference
      *  returns a tuple_t.
@@ -242,53 +239,69 @@ public:
         hashtable* _parent;
         
         /* the data we use for equal_range() */
-        Data       _data;
-        ExtractKey _extract;
-        EqualKey   _equal;
+        Key       _key;
 
         
     public:
 
         iterator(int head_index, hashtable* parent,
-                 Data& data, ExtractKey extract; EqualKey equal)
+                 Key const& key)
             : _head_index(head_index)
             , _curr_index(head_index)
             , _returned_head(false)
             , _num_returned(0)
             , _parent(parent)
-            , _data(data)
-            , _extract(extract)
-            , _equal(equal)
+            , _key(key)
         {
         }
-
+	iterator()
+	    : _curr_index(-1), _parent(NULL)
+	{
+	}
         bool operator ==(const iterator &other) const {
+	    // technically there's more, but this is enough to handle
+	    // its intended use in a for loop.
             return _parent == other._parent
-                && _num_returned == other._num_returned;
+                && _curr_index == other._curr_index;
         }
 
         bool operator !=(const iterator &other) const {
             return !(*this == other);
         }
 
+	Data& operator*() {
+	    return *get();
+	}
         Data* operator ->() {
-
+	    return get();
+	}
+	Data* get() {
             if ((_curr_index == _head_index) && _returned_head)
                 /* back at the beginning! */
                 return NULL;
 
-            return &_parent->_data[curr_index];
+            return &_parent->_data[_curr_index];
         }
 
         iterator &operator ++() {
 
             int curr_index = _curr_index;
             int next_index = _parent->_links[curr_index].next;
-            
-            if ((_curr_index == _head_index) && _returned_head)
+
+	    Data* d = get();
+	    if(!d) {
                 /* no more elements back at the beginning! */
+		_curr_index = -1;
+		_parent = NULL;
                 return *this;
-            
+	    }
+
+	    // if this isn't a match, try again. Naju, an iterative
+	    // version would be way better, but I was less likely to
+	    // mess up this way...
+	    if(!_parent->_equal(_key, _parent->_extract(*d)))
+		return ++*this;
+	    
             _returned_head = true;
             _curr_index = next_index;
             _num_returned++;
@@ -303,10 +316,10 @@ public:
     };
     
             
-    iterator equal_range(Data& d) {
-        size_t hash_code = _hash(_extract(d));
+    std::pair<iterator, iterator> equal_range(Key const & k) {
+        size_t hash_code = _hash(k);
         int hash_pos = (int)(hash_code % (size_t)_capacity);
-        return iterator(hash_pos, this, d);
+        return std::make_pair(iterator(hash_pos, this, k), iterator());
     }
 
 #endif

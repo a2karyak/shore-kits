@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 int qpipe_init(int argc, char* argv[]) {
 
     thread_init();
-    PRINT("QPipe Execution Engine\n");
+    TRACE(TRACE_ALWAYS, "QPipe Execution Engine\n");
     
     register_command_handlers();
     register_stage_containers();
@@ -64,5 +64,5 @@ int qpipe_init(int argc, char* argv[]) {
 
 void qpipe_shutdown() {
     shutdown_command_handlers();
-    PRINT("Thank you for using QPipe\nExiting...\n");
+    TRACE(TRACE_ALWAYS, "Thank you for using QPipe\nExiting...\n");
 }

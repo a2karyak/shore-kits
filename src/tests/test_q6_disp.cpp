@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
    
 
     stopwatch_t timer;
-    pthread_t clients[num_clients];
+    array_guard_t<pthread_t> clients = new pthread_t[num_clients];
     for (int i = 0; i < num_clients; i++) {
 
         // allocate client state

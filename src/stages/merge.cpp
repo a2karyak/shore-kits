@@ -122,7 +122,7 @@ void merge_stage_t::process_packet() {
     
     // allocate an array of buffer heads
     int merge_factor = inputs.size();
-    buffer_head_t head_array[merge_factor];
+    array_guard_t<buffer_head_t> head_array = new buffer_head_t[merge_factor];
     TRACE(TRACE_DEBUG, "Processing %d-way merge\n", merge_factor);
 
                              

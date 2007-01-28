@@ -58,7 +58,7 @@ static int process_next_command_using_readline() {
 
 void interactive_mode(void) {
 
-    PRINT("Interactive mode...\n");
+    TRACE(TRACE_ALWAYS, "Interactive mode...\n");
 
     
 #if USE_READLINE
@@ -83,7 +83,7 @@ void interactive_mode(void) {
 
 #if USE_READLINE
     if (save_history) {
-        PRINT("Saving history...\n");
+        TRACE(TRACE_ALWAYS, "Saving history...\n");
         history_close();
     }
 #endif

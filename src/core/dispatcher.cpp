@@ -53,14 +53,14 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type, stage_con
   // then we need policy/cost model to determine which SORT stage to
   // use when. For now, restrict to one stage per type.
   if ( !static_hash_map_find( &stage_directory, packet_type, NULL, NULL ) )
-      throw EXCEPTION(DispatcherException,
+      THROW2(DispatcherException,
                       "Trying to register duplicate stage for type %s\n",
                       packet_type.data());
 
   // allocate hash node and copy of key string
   static_hash_node_t node = (static_hash_node_t)malloc(sizeof(*node));
   if ( node == NULL )
-      throw EXCEPTION(BadAlloc);
+      THROW(BadAlloc);
 
   char* ptcopy = new char[strlen(packet_type.data())+1];
   strcpy(ptcopy, packet_type.data());
@@ -82,7 +82,7 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
   
   void* sc;
   if ( static_hash_map_find( &stage_directory, packet->_packet_type.data(), &sc, NULL ) )
-      throw EXCEPTION(DispatcherException, 
+      THROW2(DispatcherException, 
                       "Packet type %s unregistered\n",
                       packet->_packet_type.data());
  

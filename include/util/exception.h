@@ -10,17 +10,45 @@
 
 #include "util/c_str.h"
 
-// optional printf-like message allowed here
-#define EXCEPTION(type,args...) \
-   type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(args))
+#if 0
+#define EXCEPTION(type,__VA_ARGS__) \
+   type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(__VA_ARGS__))
 
-#define THROW(type, args...) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(args))
+#define THROW(type, __VA_ARGS__) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(__VA_ARGS__))
 
 // tests an error code and throws the specified exception if nonzero
 #define THROW_IF(Exception, err) \
     do { if(err) throw EXCEPTION(Exception, errno_to_str(err)); } while (0)
 
+#else
+
+#define EXCEPTION(type) \
+   type(__FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define EXCEPTION1(type, arg) \
+   type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg))
+#define EXCEPTION2(type, arg1, arg2) \
+   type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2))
+
+#define THROW(type) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, "")
+#define THROW1(type, arg) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg))
+#define THROW2(type, arg1, arg2) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2))
+// these two only used by cpu_set.cpp
+#define THROW3(type, arg1, arg2, arg3) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3))
+#define THROW4(type, arg1, arg2, arg3, arg4) \
+   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3, arg4))
+
+// tests an error code and throws the specified exception if nonzero
+#define THROW_IF(Exception, err) \
+    do { if(err) THROW1(Exception, errno_to_str(err)); } while (0)
+#endif
+
+
+// optional printf-like message allowed here
 class QPipeException : public std::exception
 {
 
@@ -54,10 +82,7 @@ public:
     }
 
 inline c_str errno_to_str(int err=errno) {
-    static const int LEN = 100;
-    char buf[LEN];
-    strerror_r(err, buf, LEN);
-    return buf;
+    return strerror(err);
 }
 
 DEFINE_EXCEPTION(BadAlloc);
@@ -65,10 +90,14 @@ DEFINE_EXCEPTION(OutOfRange);
 DEFINE_EXCEPTION(FileException);
 DEFINE_EXCEPTION(BdbException);
 
-inline void unreachable() __attribute__((noreturn));
+#ifdef __GCC
+inline void unreachable() ATTRIBUTE(noreturn);
 inline void unreachable() {
     assert(false);
     exit(-1);
 }
+#else
+#define unreachable() throw "Unreachable"
+#endif
 
 #endif

@@ -36,7 +36,7 @@ void bnl_join_stage_t::process_packet() {
 
     // get ready...
     size_t key_size = join->key_size();
-    char output_data[join->out_tuple_size()];
+    array_guard_t<char> output_data = new char[join->out_tuple_size()];
     tuple_t output_tuple(output_data, sizeof(output_data));
     
     

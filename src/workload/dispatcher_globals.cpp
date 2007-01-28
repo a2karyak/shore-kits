@@ -24,7 +24,7 @@ void global_scheduler_policy_set(const char* dpolicy) {
   if ( !strcmp(dpolicy, "RR_MODULE") )
     global_policy = new policy_rr_module_t();
   if ( global_policy == NULL ) 
-      throw EXCEPTION(qpipe::DispatcherException,
+      THROW2(qpipe::DispatcherException,
                       "Unrecognized scheduler policy: %s",
                       dpolicy);
 }

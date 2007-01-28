@@ -122,7 +122,7 @@ struct q1_key_extract_t : public key_extractor_t {
     {
         assert(sizeof(char) == 1);
     }
-    virtual int extract_hint(const char* tuple_data) {
+    virtual int extract_hint(const char* tuple_data) const {
         // store the return flag and line status in the 
         projected_lineitem_tuple *item;
         item = aligned_cast<projected_lineitem_tuple>(tuple_data);

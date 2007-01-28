@@ -77,7 +77,7 @@ void cpu_set_init(cpu_set_p cpu_set)
 #endif
 
 
-  throw EXCEPTION(QPipeException, "Unsupported operating system");
+  THROW1(QPipeException, "Unsupported operating system");
 }
 
 
@@ -95,7 +95,7 @@ int cpu_set_get_num_cpus(cpu_set_p cpu_set)
 {
   /* error checks */
     if ( cpu_set == NULL )
-        throw EXCEPTION(QPipeException, "Called with NULL cpu_set_t");
+        THROW1(QPipeException, "Called with NULL cpu_set_t");
 
     return cpu_set->cpuset_num_cpus;
 }
@@ -119,12 +119,12 @@ cpu_t cpu_set_get_cpu(cpu_set_p cpu_set, int index)
 
   /* error checks */
     if ( cpu_set == NULL )
-        throw EXCEPTION(QPipeException, "Called with NULL cpu_set_t");
+        THROW1(QPipeException, "Called with NULL cpu_set_t");
     
     if ( index < 0 )
-        throw EXCEPTION(OutOfRange, "Called with negative index %d\n", index);
+        THROW2(OutOfRange, "Called with negative index %d\n", index);
     if ( index >= cpu_set->cpuset_num_cpus )
-        throw EXCEPTION(OutOfRange, 
+        THROW3(OutOfRange, 
                         "Called with index %d in a cpu_set_t with %d CPUs\n",
                         index,
                         cpu_set->cpuset_num_cpus);
@@ -284,7 +284,7 @@ static void cpu_set_init_Solaris(cpu_set_p cpu_set)
   cpu_t cpus =
     (cpu_t)malloc( num_cpus * sizeof(struct cpu_s) );
   if ( cpus == NULL )
-      throw EXCEPTION(BadAlloc);
+      THROW(BadAlloc);
       
   for (i = 0; i < num_cpus; i++)
   {
@@ -307,7 +307,7 @@ static void cpu_set_init_Solaris(cpu_set_p cpu_set)
     cpus[num_found].cpu_id = cpu_num;
     if ( processor_info( cpu_num, &cpus[num_found].cpu_proc_info ) ) {
         free(cpus);
-        throw EXCEPTION(ThreadException,
+        THROW4(ThreadException,
                         "processor_info() failed with %s on CPU %d/%d\n",
                         errno_to_str().data(),
                         cpu_num+1,
