@@ -221,6 +221,97 @@ public:
         return bucket_contains(d, hash_pos);
     }
     
+
+#if 0
+    /**
+     *  @brief Iterator over the tuples in this page. Each dereference
+     *  returns a tuple_t.
+     */
+
+    class iterator {
+
+    private:
+        
+        /* iterator position management */
+        int  _head_index;
+        int  _curr_index;
+        bool _returned_head;
+        int  _num_returned;
+
+        /* the enclosing hash table */
+        hashtable* _parent;
+        
+        /* the data we use for equal_range() */
+        Data       _data;
+        ExtractKey _extract;
+        EqualKey   _equal;
+
+        
+    public:
+
+        iterator(int head_index, hashtable* parent,
+                 Data& data, ExtractKey extract; EqualKey equal)
+            : _head_index(head_index)
+            , _curr_index(head_index)
+            , _returned_head(false)
+            , _num_returned(0)
+            , _parent(parent)
+            , _data(data)
+            , _extract(extract)
+            , _equal(equal)
+        {
+        }
+
+        bool operator ==(const iterator &other) const {
+            return _parent == other._parent
+                && _num_returned == other._num_returned;
+        }
+
+        bool operator !=(const iterator &other) const {
+            return !(*this == other);
+        }
+
+        Data* operator ->() {
+
+            if ((_curr_index == _head_index) && _returned_head)
+                /* back at the beginning! */
+                return NULL;
+
+            return &_parent->_data[curr_index];
+        }
+
+        iterator &operator ++() {
+
+            int curr_index = _curr_index;
+            int next_index = _parent->_links[curr_index].next;
+            
+            if ((_curr_index == _head_index) && _returned_head)
+                /* no more elements back at the beginning! */
+                return *this;
+            
+            _returned_head = true;
+            _curr_index = next_index;
+            _num_returned++;
+            return *this;
+        }
+
+        iterator operator ++(int) {
+            iterator old = *this;
+            ++*this;
+            return old;
+        }
+    };
+    
+            
+    iterator equal_range(Data& d) {
+        size_t hash_code = _hash(_extract(d));
+        int hash_pos = (int)(hash_code % (size_t)_capacity);
+        return iterator(hash_pos, this, d);
+    }
+
+#endif
+
+
 };
 
 
