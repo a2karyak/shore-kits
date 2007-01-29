@@ -200,22 +200,22 @@ static void cpu_set_init_Linux(cpu_set_p cpu_set)
   
   /* get current affinity set so we can restore it when we're done */
   if ( sched_getaffinity( 0, sizeof(os_cpu_set_t), &original_affinity_set ) )
-      throw EXCEPTION(ThreadException,
-                      "sched_getaffinity() failed with %s",
-                      errno_to_str().data());
+      throw EXCEPTION2(ThreadException,
+                       "sched_getaffinity() failed with %s",
+                       errno_to_str().data());
 
   /* test restoration */
   if ( sched_setaffinity( 0, sizeof(os_cpu_set_t), &original_affinity_set ) )
-      throw EXCEPTION(ThreadException,
-                      "sched_setaffinity() failed with %s",
-                      errno_to_str().data());
+      throw EXCEPTION2(ThreadException,
+                       "sched_setaffinity() failed with %s",
+                       errno_to_str().data());
 
 
   /* allocate cpus */
   cpu_t cpus = 
     (cpu_t)malloc( num_cpus * sizeof(struct cpu_s) );
   if ( cpus == NULL )
-      throw EXCEPTION(BadAlloc);
+    throw EXCEPTION1(BadAlloc, "cpu array");
 
   for (i = 0; i < num_cpus; i++)
     /* initialize fields */
@@ -247,9 +247,9 @@ static void cpu_set_init_Linux(cpu_set_p cpu_set)
 
   /* restore original affinity set */
   if ( sched_setaffinity( 0, sizeof(os_cpu_set_t), &original_affinity_set ) )
-      throw EXCEPTION(ThreadException,
-                      "sched_setaffinity() failed with %s",
-                      errno_to_str().data());
+      throw EXCEPTION2(ThreadException,
+                       "sched_setaffinity() failed with %s",
+                       errno_to_str().data());
   
   
   /* return parameters */

@@ -40,9 +40,9 @@ void cpu_bind_self(cpu_t cpu)
      THREAD is a processor with its own pid_t. */
   
   if ( sched_setaffinity(0, sizeof(os_cpu_set_t), &cpu->cpu_set) )
-      throw EXCEPTION(QPipeException,
-                      "Caught %s in call to sched_setaffinity()",
-                      errno_to_str().data());
+    throw EXCEPTION2(QPipeException,
+                     "Caught %s in call to sched_setaffinity()",
+                     errno_to_str().data());
 
   return;
 
