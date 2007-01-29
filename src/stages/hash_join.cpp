@@ -19,6 +19,7 @@ const c_str hash_join_packet_t::PACKET_TYPE = "HASH_JOIN";
 const c_str hash_join_stage_t::DEFAULT_STAGE_NAME = "HASH_JOIN";
 
 
+#if 0
 
 struct hash_join_stage_t::hash_key_t {
     size_t _len;
@@ -146,10 +147,12 @@ struct hash_join_stage_t::left_action_t {
     }
 };
 
+#endif
 
 
 void hash_join_stage_t::process_packet() {
 
+#if 0
     hash_join_packet_t* packet = (hash_join_packet_t *)_adaptor->get_packet();
 
     // TODO: release partition resources!
@@ -300,4 +303,6 @@ void hash_join_stage_t::process_packet() {
     }
 
     // TODO: handle the file partitions now...
+#endif
+
 }

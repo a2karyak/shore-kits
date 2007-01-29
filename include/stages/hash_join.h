@@ -118,6 +118,7 @@ using std::string;
 using std::vector;
 
 class hash_join_stage_t : public stage_t {
+
     struct hash_key_t;
     
     template <bool left>
@@ -139,11 +140,13 @@ class hash_join_stage_t : public stage_t {
      * The key equality test simply performs a bytewise comparison of
      * the two keys it is given.
      */
-        typedef hashtable<char *, const char *,
-                          hash_key_t,
-                          extract_key_t<true>,
-                          equal_key_t> tuple_hash_t;
-  
+
+#if 0
+    typedef hashtable<char *, const char *,
+                      hash_key_t,
+                      extract_key_t<true>,
+                      equal_key_t> tuple_hash_t;
+    
     /* Reads tuples from the given source to build an in-memory hash table
      */
         template<class TupleSource>
@@ -174,29 +177,42 @@ class hash_join_stage_t : public stage_t {
     int page_count;
 
     tuple_join_t *_join;
+
+#endif
+
+
 public:
 
-    static const c_str DEFAULT_STAGE_NAME;
     typedef hash_join_packet_t stage_packet_t;
+
+    static const c_str DEFAULT_STAGE_NAME;
+
     virtual void process_packet();
-    
+
     // set up the partitions in memory
     hash_join_stage_t()
-        : partitions(512),
-          page_quota(10000), page_count(0)
+        //    : partitions(512),
+        //page_quota(10000), page_count(0)
     {
     }
 
     ~hash_join_stage_t() {
     }
 
+
+#if 0
+
 private:
+
     void test_overflow(int partition);
 
     struct left_action_t;
     struct right_action_t;
     template<class Action>
     void close_file(partition_list_t::iterator it, Action a);
+
+#endif
+
 };
 
 #endif	// __HASH_JOIN_H

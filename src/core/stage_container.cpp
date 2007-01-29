@@ -384,6 +384,7 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
         packet_t* curr_packet = *it;
         bool terminate_curr_packet = false;
         try {
+            
             // Drain all tuples in output page into the current packet's
             // output buffer.
             page::iterator page_it = p->begin();
@@ -401,18 +402,22 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
                 }
             }
             
+
             // If this packet has run more than once, it may have received
             // all the tuples it needs. Check for this case.
-            if ( next_tuple == curr_packet->_next_tuple_needed )
-                // This packet has received all tuples it needs! Another
+            if ( next_tuple == curr_packet->_next_tuple_needed ) {
+                
+                 // This packet has received all tuples it needs! Another
                 // reason to terminate this packet!
                 terminate_curr_packet = true;
+            }
         
 
         } catch(TerminatedBufferException &e) {
             // The consumer of the current packet's output
             // buffer has terminated the buffer! No need to
             // continue iterating over output page.
+            TRACE(TRACE_ALWAYS, "Caught TerminatedBufferException. Terminating current packet.\n");
             terminate_curr_packet = true;
         }
         

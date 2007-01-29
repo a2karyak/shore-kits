@@ -26,7 +26,7 @@ using std::pair;
  * what "null" and "action" are)
  *
  */
-template <class Data, class Key, class HashFcn, class ExtractKey, class EqualKey, class EqualData>
+template <class Data, class Key, class ExtractKey, class EqualKey, class EqualData, class HashFcn>
 class hashtable {
     
 private:
@@ -38,28 +38,25 @@ private:
     array_guard_t<bool>  _exists;
     
     /* key-value functors */
-    HashFcn    _hash;
-    ExtractKey _extract;
+    ExtractKey _extractkey;
     EqualKey   _equalkey;
     EqualData  _equaldata;
-
-    /* free list */
-    int  _free_head;
+    HashFcn    _hashfcn;
 
 
 public:
     
    
-    hashtable(int capacity, HashFcn hash, ExtractKey extract,
-              EqualKey equalkey, EqualData equaldata)
+    hashtable(int capacity, ExtractKey extractkey,
+              EqualKey equalkey, EqualData equaldata, HashFcn hashfcn)
         : _capacity(capacity)
         , _size(0)
         , _data(new Data[capacity])
         , _exists(new bool[capacity])
-        , _hash(hash)
-        , _extract(extract)
+        , _extractkey(extractkey)
         , _equalkey(equalkey)
         , _equaldata(equaldata)
+        , _hashfcn(hashfcn)
     {
         /* initialize _exists */
         for (int i = 0; i < capacity; i++) {
@@ -75,7 +72,7 @@ public:
         
         /* Check for space. */
         assert(_size < _capacity);
-        size_t hash_code = _hash(_extract(d));
+        size_t hash_code = _hashfcn(_extractkey(d));
         int hash_pos = (int)(hash_code % (size_t)_capacity);
 
         /* Linear probing */
@@ -93,10 +90,12 @@ public:
         /* At this point, we had better have stopped because we found
            an empty slot. We already verified at the start of the
            function that there is space available. */
+        assert(pos != _capacity);
         assert(! _exists[pos] );
 
         _data[pos] = d;
         _exists[pos] = true;
+        _size++;
     }
         
 
@@ -106,7 +105,7 @@ public:
     bool insert_unique_noresize(Data d) {
         
         /* Don't check for free space! */
-        size_t hash_code = _hash(_extract(d));
+        size_t hash_code = _hashfcn(_extractkey(d));
         int hash_pos = (int)(hash_code % (size_t)_capacity);
 
         int pos;
@@ -115,14 +114,14 @@ public:
            the end of the array. */
         for (pos = hash_pos;
              (pos < _capacity)
-                 && !equaldata(_data[pos],d)
+                 && !_equaldata(_data[pos],d)
                  && _exists[pos]; pos++);
         if (pos == _capacity) {
             /* Reached end of table with no slot. */
             /* Loop 2: Continue probing from beginning of array. */
             for (pos = hash_pos;
                  (pos < _capacity)
-                     && !equaldata(_data[pos],d)
+                     && !_equaldata(_data[pos],d)
                      && _exists[pos]; pos++);
         }
 
@@ -132,7 +131,7 @@ public:
            assert() before... */
         assert(pos != _capacity);
         
-        if (equaldata(_data[pos],d))
+        if (_equaldata(_data[pos],d))
             /* Found a copy! Don't insert! */
             return false;
         
@@ -141,6 +140,7 @@ public:
         
         _data[pos] = d;
         _exists[pos] = true;
+        _size++;
         return true;
     }
 
@@ -151,7 +151,7 @@ public:
     bool contains(Data d) {
 
         /* Don't check for free space! */
-        size_t hash_code = _hash(_extract(d));
+        size_t hash_code = _hashfcn(_extractkey(d));
         int hash_pos = (int)(hash_code % (size_t)_capacity);
 
         int pos;
@@ -160,14 +160,14 @@ public:
            the end of the array. */
         for (pos = hash_pos;
              (pos < _capacity)
-                 && !equaldata(_data[pos],d)
+                 && !_equaldata(_data[pos],d)
                  && _exists[pos]; pos++);
         if (pos == _capacity) {
             /* Reached end of table with no slot. */
             /* Loop 2: Continue probing from beginning of array. */
             for (pos = hash_pos;
                  (pos < _capacity)
-                     && !equaldata(_data[pos],d)
+                     && !_equaldata(_data[pos],d)
                      && _exists[pos]; pos++);
         }
 
@@ -176,7 +176,7 @@ public:
             return false;
         }
         
-        if (equaldata(_data[pos],d))
+        if (_equaldata(_data[pos],d))
             /* Found a copy! */
             return true;
         
@@ -193,7 +193,7 @@ public:
         _size = 0;
     }
 
-#if 1
+
     /**
      *  @brief Iterator over the tuples in this page. Each dereference
      *  returns a tuple_t.
@@ -202,41 +202,78 @@ public:
     class iterator {
 
     private:
-        
-        /* iterator position management */
-        int  _head_index;
-        int  _curr_index;
-        bool _returned_head;
-        int  _num_returned;
 
         /* the enclosing hash table */
         hashtable* _parent;
         
         /* the data we use for equal_range() */
-        Key       _key;
+        Key _key;
+
+        /* iterator position management */
+        int  _start_index;
+        int  _curr_index;
+
+        /* For checking whether an iterator is equal to the END
+           iterator. */
+        bool _is_end;
 
         
     public:
 
-        iterator(int head_index, hashtable* parent,
-                 Key const& key)
-            : _head_index(head_index)
-            , _curr_index(head_index)
-            , _returned_head(false)
-            , _num_returned(0)
-            , _parent(parent)
-            , _key(key)
-        {
-        }
 	iterator()
-	    : _curr_index(-1), _parent(NULL)
+	    : _parent(NULL)
+            , _is_end(true)
 	{
 	}
+
+	iterator(hashtable* parent)
+	    : _parent(parent)
+            , _is_end(true)
+	{
+	}
+
+        iterator(hashtable* parent, Key const& key, int start_index)
+            : _parent(parent)
+            , _key(key)
+            , _start_index(start_index)
+            , _curr_index(start_index)
+            , _is_end(false)
+        {
+            /* If there is no data at this location, immediately END. */
+            if (!parent->_exists[start_index]) {
+                _is_end = true;
+                return;
+            }
+            
+            /* If the data here has a key equal to the key we are
+               searching for, stay here. */
+            if (parent->_equalkey(key, parent->_extractkey(parent->_data[start_index])))
+                return;
+            
+            /* Otherwise, use ++ to advance to the first key that does
+               match (or go to END). */
+            ++*this;
+        }
+
         bool operator ==(const iterator &other) const {
-	    // technically there's more, but this is enough to handle
-	    // its intended use in a for loop.
-            return _parent == other._parent
-                && _curr_index == other._curr_index;
+
+            /* Handling the END case is a little tedious. */
+            if (_is_end)
+                return other._is_end;
+            if (other._is_end)
+                return _is_end;
+
+            /* This should only be used on iterators from the same
+               table. */
+            assert(_parent == other._parent);
+
+            /* Iterators should be at the same position, searching for
+               the same key. */
+            return
+                   _start_index == other._start_index
+                && _curr_index  == other._curr_index
+                && _parent->_equalkey(_key, other._key)
+                ;
         }
 
         bool operator !=(const iterator &other) const {
@@ -246,40 +283,55 @@ public:
 	Data& operator*() {
 	    return *get();
 	}
+
         Data* operator ->() {
 	    return get();
 	}
+
 	Data* get() {
-            if ((_curr_index == _head_index) && _returned_head)
-                /* back at the beginning! */
-                return NULL;
+            /* Make sure we did not wrap. */
+            assert(!_is_end);
+          
+            if (1) {
+                TRACE(TRACE_ALWAYS, "Looking at data %s stored at position %d\n",
+                      _parent->_data[_curr_index],
+                      _curr_index);
+            }
 
             return &_parent->_data[_curr_index];
         }
 
         iterator &operator ++() {
 
-            int curr_index = _curr_index;
-            int next_index = _parent->_links[curr_index].next;
+            assert(!_is_end);
 
-	    Data* d = get();
-	    if(!d) {
-                /* no more elements back at the beginning! */
-		_curr_index = -1;
-		_parent = NULL;
-                return *this;
-	    }
+            int curr = _curr_index;
+            while (1) {
+                
+                /* Continue to increment 'curr' (allowing for
+                   wrapping). We can stop if parent's entry at 'curr'
+                   is equal to our key. We enter the END state if the
+                   parent stores nothing at 'curr' or if 'curr' wraps
+                   back to '_start_index'. */
+                curr = (curr+1) % _parent->_capacity;
 
-	    // if this isn't a match, try again. Naju, an iterative
-	    // version would be way better, but I was less likely to
-	    // mess up this way...
-	    if(!_parent->_equal(_key, _parent->_extract(*d)))
-		return ++*this;
-	    
-            _returned_head = true;
-            _curr_index = next_index;
-            _num_returned++;
-            return *this;
+                /* check for end cases */
+                if (!_parent->_exists[curr]) {
+                    _is_end = true;
+                    return *this;
+                }
+                
+                if (curr == _start_index) {
+                    /* wrapped to the beginning of the table */
+                    _is_end = true;
+                    return *this;
+                }
+
+                if (_parent->_equalkey(_key, _parent->_extractkey(_parent->_data[curr]))) {
+                    _curr_index = curr;
+                    return *this;
+                }
+            }
         }
 
         iterator operator ++(int) {
@@ -289,15 +341,12 @@ public:
         }
     };
     
-            
-    std::pair<iterator, iterator> equal_range(Key const & k) {
-        size_t hash_code = _hash(k);
+    
+    std::pair<iterator, iterator> equal_range(Key const& k) {
+        size_t hash_code = _hashfcn(k);
         int hash_pos = (int)(hash_code % (size_t)_capacity);
-        return std::make_pair(iterator(hash_pos, this, k), iterator());
+        return std::make_pair(iterator(this, k, hash_pos), iterator(this));
     }
-
-#endif
-
 
 };
 
