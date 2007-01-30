@@ -174,21 +174,19 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
  * @brief ... from lineitem, orders where L_ORDERKEY = O_ORDERKEY ...
  */
 struct q12_join_t : tuple_join_t {
-    static key_extractor_t* create_left_extractor() {
-        size_t offset = offsetof(order_scan_tuple, O_ORDERKEY);
-        return new int_key_extractor_t(sizeof(int), offset);
-    }
-    static key_extractor_t* create_right_extractor() {
-        size_t offset = offsetof(lineitem_scan_tuple, L_ORDERKEY);
-        return new int_key_extractor_t(sizeof(int), offset);
-    }
+
     q12_join_t()
-        : tuple_join_t(sizeof(order_scan_tuple), create_left_extractor(),
-                       sizeof(lineitem_scan_tuple), create_right_extractor(),
-                       new int_key_compare_t(), sizeof(join_tuple))
+        : tuple_join_t(sizeof(order_scan_tuple),
+                       offsetof(order_scan_tuple, O_ORDERKEY),
+                       sizeof(lineitem_scan_tuple),
+                       offsetof(lineitem_scan_tuple, L_ORDERKEY),
+                       sizeof(int),
+                       sizeof(join_tuple))
     {
     }
+
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
+
         join_tuple* dest = aligned_cast<join_tuple>(d.data);
         order_scan_tuple* left = aligned_cast<order_scan_tuple>(l.data);
         lineitem_scan_tuple* right = aligned_cast<lineitem_scan_tuple>(r.data);
@@ -197,9 +195,11 @@ struct q12_join_t : tuple_join_t {
         dest->L_SHIPMODE = right->L_SHIPMODE;
         dest->O_ORDERPRIORITY = left->O_ORDERPRIORITY;
     }
+
     virtual q12_join_t* clone() const {
         return new q12_join_t(*this);
     }
+
     virtual c_str to_string() const {
         return "join LINEITEM, ORDERS, select L_SHIPMODE, O_ORDERPRIORITY";
     }

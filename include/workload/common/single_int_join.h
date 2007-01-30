@@ -12,10 +12,12 @@ ENTER_NAMESPACE(workload);
 
 
 struct single_int_join_t : public tuple_join_t {
+
     single_int_join_t()
-        : tuple_join_t(sizeof(int), new int_key_extractor_t(),
-                       sizeof(int), new int_key_extractor_t(),
-                       new int_key_compare_t(), sizeof(int))
+        : tuple_join_t(sizeof(int), 0,
+                       sizeof(int), 0,
+                       sizeof(int),
+                       sizeof(int))
     {
     }
 
@@ -23,8 +25,11 @@ struct single_int_join_t : public tuple_join_t {
                       const tuple_t &left,
                       const tuple_t &)
     {
+        /* The two integers are equal. Just copy this value to the
+           output. */
         dest.assign(left);
     }
+
     virtual c_str to_string() const {
         return "single_int_join_t";
     }

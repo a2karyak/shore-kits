@@ -207,32 +207,17 @@ void tpch_q13_driver::submit(void* disp) {
      * order by custdist desc, c_count desc
      */
     struct q13_join_t : public tuple_join_t {
-        struct right_key_extractor_t : public key_extractor_t {
-            virtual int extract_hint(const char* tuple_data) const {
-                key_count_tuple_t* tuple = aligned_cast<key_count_tuple_t>(tuple_data);
-                return tuple->KEY;
-            }
-            virtual right_key_extractor_t* clone() const {
-                return new right_key_extractor_t(*this);
-            }
-        };
-    
-        struct left_key_extractor_t : public key_extractor_t {
-            virtual int extract_hint(const char* tuple_data) const {
-                return *aligned_cast<int>(tuple_data);
-            }
-            virtual left_key_extractor_t* clone() const {
-                return new left_key_extractor_t(*this);
-            }
-        };
-    
-            
+
         q13_join_t()
-            : tuple_join_t(sizeof(int), new left_key_extractor_t(),
-                           sizeof(key_count_tuple_t), new right_key_extractor_t(),
-                           new int_key_compare_t(), sizeof(int))
+            : tuple_join_t(sizeof(int),
+                           0,
+                           sizeof(key_count_tuple_t),
+                           offsetof(key_count_tuple_t, KEY),
+                           sizeof(int),
+                           sizeof(int))
         {
         }
+
         virtual void join(tuple_t &dest,
                           const tuple_t &,
                           const tuple_t &right)
@@ -241,9 +226,11 @@ void tpch_q13_driver::submit(void* disp) {
             key_count_tuple_t* tuple = aligned_cast<key_count_tuple_t>(right.data);
 	    *aligned_cast<int>(dest.data) = tuple->COUNT;
         }
-        virtual void outer_join(tuple_t &dest, const tuple_t &) {
+
+        virtual void left_outer_join(tuple_t &dest, const tuple_t &) {
 	    *aligned_cast<int>(dest.data) = 0;
         }
+
         virtual c_str to_string() const {
             return "CUSTOMER left outer join CUST_ORDER_COUNT, select COUNT";
         }

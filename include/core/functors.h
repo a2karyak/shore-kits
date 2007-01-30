@@ -329,79 +329,74 @@ struct tuple_less_t {
 
 class tuple_join_t {
 
-    size_t _left_tuple_size;
-    guard<key_extractor_t> _left;
-    
-    size_t _right_tuple_size;
-    guard<key_extractor_t> _right;
+    /* The query must specify where to find the keys of the tuples it
+       joins. The keys must be a contiguous region of memory that is
+       at some offset into the tuple. */
+    size_t _lt_tuple_size;
+    size_t _lt_key_offset;
+    size_t _rt_tuple_size;
+    size_t _rt_key_offset;
 
-    guard<key_compare_t> _compare;
-    
+    size_t _key_size;
+
+    /* is this necessary? */
     size_t _out_tuple_size;
 
+    /* No need to pass key and tuple comparators. Two keys are equal
+       if and only if the bytes of their keys are equal (as stated by
+       memcmp()). */
+    
 public:
 
-    size_t left_tuple_size()  { return _left_tuple_size; }
-    size_t right_tuple_size() { return _right_tuple_size; }
-    size_t out_tuple_size()   { return _out_tuple_size; }
-    size_t key_size()         { return _left->key_size(); }
-
-
-    tuple_join_t(size_t           left_tuple_size,
-                 key_extractor_t* left,
-                 size_t           right_tuple_size,
-                 key_extractor_t* right,
-                 key_compare_t*   compare,
-                 size_t           output_tuple_size)
-        : _left_tuple_size(left_tuple_size),
-          _left(left),
-          _right_tuple_size(right_tuple_size),
-          _right(right),
-          _compare(compare),
-          _out_tuple_size(output_tuple_size)
+    size_t left_tuple_size()   { return _lt_tuple_size; }
+    size_t left_key_offset()   { return _lt_key_offset; }
+    size_t right_tuple_size()  { return _rt_tuple_size; }
+    size_t right_key_offset()  { return _rt_key_offset; }
+    size_t key_size()          { return _key_size; }
+    size_t output_tuple_size() { return _out_tuple_size; }
+    
+    tuple_join_t(size_t lt_tuple_size,
+                 size_t lt_key_offset,
+                 size_t rt_tuple_size,
+                 size_t rt_key_offset,
+                 size_t k_size,
+                 size_t out_tuple_size)
+        : _lt_tuple_size(lt_tuple_size)
+        , _lt_key_offset(lt_key_offset)
+        , _rt_tuple_size(rt_tuple_size)
+        , _rt_key_offset(rt_key_offset)
+        , _key_size(k_size)
+        , _out_tuple_size(out_tuple_size)
     {
-        assert(left->key_size() == right->key_size());
     }
 
     tuple_join_t(tuple_join_t const &other)
-        : _left_tuple_size(other._left_tuple_size),
-          _left(other._left->clone()),
-          _right_tuple_size(other._right_tuple_size),
-          _right(other._right->clone()),
-          _compare(other._compare->clone()),
-          _out_tuple_size(other._out_tuple_size)
+        : _lt_tuple_size(other._lt_tuple_size)
+        , _lt_key_offset(other._lt_key_offset)
+        , _rt_tuple_size(other._rt_tuple_size)
+        , _rt_key_offset(other._rt_key_offset)
+        , _key_size(other._key_size)
+        , _out_tuple_size(other._out_tuple_size)
     {
     }
 
-
-    const char* get_left_key(const char* tuple_data) {
-        return _left->extract_key(tuple_data);
+    const char* left_key(const tuple_t& tup) {
+        const char* tup_data = (const char*)tup.data;
+        return &tup_data[left_key_offset()];
     }
 
 
-    const char* get_right_key(const char* tuple_data) {
-        return _right->extract_key(tuple_data);
-    }
-
-
-    const char* get_left_key(const tuple_t &tuple) {
-        return get_left_key(tuple.data);
-    }
-
-
-    const char* get_right_key(const tuple_t &tuple) {
-        return get_right_key(tuple.data);
-    }
-
-
-    int compare(const char* left_key, const char* right_key) {
-        return (*_compare)(left_key, right_key);
+    const char* right_key(const tuple_t& tup) {
+        const char* tup_data = (const char*)tup.data;
+        return &tup_data[right_key_offset()];
     }
 
 
     /**
-     *  @brief Determine whether two tuples pass an internal set of join
-     *  predicates. Should be applied within a join stage.
+     *  @brief Join two tuples that have equal keys. Copy out the
+     *  requested attributes from 'left' and 'right' into
+     *  'dest'. Should be applied within a join stage once we have
+     *  determined that two tuples have matching join attributes.
      *
      *  @param dest If the two tuples pass the specified join
      *  predicates, a composite of the two is assigned here.
@@ -409,22 +404,30 @@ public:
      *  @param A tuple from the outer relation.
      *
      *  @param A tuple from the inner relation.
-     *
-     *  @return True if the specified tuples pass the join
-     *  predicates. False otherwise.
      */
-
     virtual void join(tuple_t &dest,
                       const tuple_t &left,
                       const tuple_t &right)=0;
 
-
     /**
-     * @brief Performs a left outer join (right outer joins are not
-     * directly supported but can be achieved by reversing the meaning
-     * of "left" and "right")
+     *  @brief If we are doing an left outer join, then we need a
+     *  function we can call on a left tuple that does not match
+     *  against any tuples on the right. This function does the
+     *  equivalent of 'join' for left tuples that do not match tuples
+     *  any tuples on the right.
+     *
+     *  @brief We can compute right outer joins by switching the order
+     *  of the input relations to our hash join.
+     *
+     *  @param dest The output.
+     *
+     *  @param left The left tuple that did not hit anything on the
+     *  right. 
      */
-    virtual void outer_join(tuple_t &, const tuple_t &) {
+    virtual void left_outer_join(tuple_t &,
+                                 const tuple_t &) {
+        /* Provide default implementaiton since most tuple_join_t
+           functors will never be used to perform outer joins. */
         assert(false);
     }
 

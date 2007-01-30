@@ -237,21 +237,49 @@ struct partsupp_filter_t : public tuple_filter_t {
 };
 
 struct q16_join_t : public tuple_join_t {
+
+    /* We have part_supp_tuple_t tuples coming from the left and
+       part_scan_tuple_t tuples coming from the right.
+       
+       part_supp:
+       - part_key
+       - supp_key
+       
+       part_scan:
+       - int p_partkey
+       - int p_size
+       - char p_brand[10]
+       - char p_type[25]
+
+       We are joining on part_supp.part_key and part_scan.p_partkey.
+
+       We are projecting out a composite tuple with
+       - part_supp.supp_key
+       - part_scan.p_size
+       - part_scan.p_brand
+       - part_scan.p_type
+
+       We are going to cheat by not defining a struct type for the
+       output tuples. They are so similar to the part_scan tuples that
+       we will just use the same struct for both. Just remember to
+       think of the first field of the output tuple as SUPP_KEY, not
+       p_partkey...
+    */
+
     q16_join_t()
-        : tuple_join_t(sizeof(int),
-                       new int_key_extractor_t(),
+        : tuple_join_t(sizeof(part_supp_tuple_t),
+                       0,
                        sizeof(part_scan_tuple_t),
-                       new int_key_extractor_t(),
-                       new int_key_compare_t(),
+                       0,
+                       sizeof(int),
                        sizeof(part_scan_tuple_t))
     {
     }
 
     virtual void join(tuple_t &d, const tuple_t &l, const tuple_t &r) {
+
         part_scan_tuple_t* dest = aligned_cast<part_scan_tuple_t>(d.data);
-        // double cheat -- use p_partkey to store the ps_suppkey, and
-        // also project out the real part key instead of using a
-        // filter after the fact
+        // use p_partkey to store the ps_suppkey (see discussion above)
         memcpy(dest, r.data, sizeof(part_scan_tuple_t));
         part_supp_tuple_t *left = aligned_cast<part_supp_tuple_t>(l.data);
         dest->p_partkey = left->SUPP_KEY;

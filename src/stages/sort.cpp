@@ -38,12 +38,21 @@ static void flush_page(page* pg, FILE* file);
 
 
 /**
- *  @brief checks for finished merges and moves them to the finished
- *  merge map so their results can be merged in turn.
+ *  @brief At any point in our merge sort, we have a set of "runs"
+ *  (sorted output files) and a set of active merge operations. This
+ *  function checks the set of active merges to see if any of them
+ *  have completed. If so, we promote the resulting sorted file to the
+ *  "run set".
  */
 void sort_stage_t::check_finished_merges() {
 
-    // check for finished merges and 
+    
+    /* The merge operations required to complete the sort form a
+       tree. The lowest level (0) The _merge_map contains one entry
+       per level in the merge tree.  0 being the lowest) to a
+       merge_list_t (a list of merge operations happening at that
+       level). */
+
     merge_map_t::iterator level_it = _merge_map.begin();
     while(level_it != _merge_map.end()) {
         int level = level_it->first;

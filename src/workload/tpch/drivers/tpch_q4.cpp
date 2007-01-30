@@ -121,34 +121,23 @@ packet_t* orders_scan(page_list* tpch_orders) {
     return tscan_packet;
 }
 
+
+
 // left is lineitem, right is orders
 struct q4_join_t : public tuple_join_t {
-    struct left_key_extractor_t : public key_extractor_t {
-        virtual void extract_key(void* key, const void* tuple_data) {
-            order_scan_tuple_t* tuple = aligned_cast<order_scan_tuple_t>(tuple_data);
-            memcpy(key, &tuple->O_ORDERKEY, key_size());
-        }
-        virtual left_key_extractor_t* clone() const {
-            return new left_key_extractor_t(*this);
-        }
-    };
-    
-    struct right_key_extractor_t : public key_extractor_t {
-        virtual void extract_key(void* key, const void* tuple_data) {
-            memcpy(key, tuple_data, key_size());
-        }
-        virtual right_key_extractor_t* clone() const {
-            return new right_key_extractor_t(*this);
-        }
-    };
-    
-    q4_join_t()
-        : tuple_join_t(sizeof(order_scan_tuple_t), new left_key_extractor_t(),
-                       sizeof(int), new right_key_extractor_t(),
-                       new int_key_compare_t(),
+
+
+    q4_join_t ()
+        : tuple_join_t(sizeof(order_scan_tuple_t),
+                       offsetof(order_scan_tuple_t, O_ORDERKEY),
+                       sizeof(int),
+                       0,
+                       sizeof(int),
                        sizeof(int))
     {
     }
+                       
+    
     virtual void join(tuple_t &dest,
                       const tuple_t &left,
                       const tuple_t &)
@@ -157,15 +146,22 @@ struct q4_join_t : public tuple_join_t {
         order_scan_tuple_t* tuple = aligned_cast<order_scan_tuple_t>(left.data);
         *aligned_cast<int>(dest.data) = tuple->O_ORDERPRIORITY;
     }
+
+    virtual q4_join_t* clone() const {
+        return new q4_join_t(*this);
+    }
+
     virtual c_str to_string() const {
         return "join LINEITEM and ORDERS, select O_ORDERPRIORITY";
     }
 };
 
+
 struct q4_tuple_t {
     int O_ORDERPRIORITY;
     int ORDER_COUNT;
 };
+
 
 struct q4_count_aggregate_t : public tuple_aggregate_t {
     default_key_extractor_t _extractor;

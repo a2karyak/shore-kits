@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
                                &right_writer_info);
     
     
-    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size());
+    tuple_fifo* join_buffer = new tuple_fifo(join->output_tuple_size());
 
     
     hash_join_packet_t* join_packet =

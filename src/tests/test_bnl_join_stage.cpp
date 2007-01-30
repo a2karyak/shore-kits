@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
                                shuffled_triangle_int_tuple_writer_fc,
                                &left_writer_info);
     
-    tuple_fifo* join_buffer = new tuple_fifo(join->out_tuple_size());
+    tuple_fifo* join_buffer = new tuple_fifo(join->output_tuple_size());
 
     bnl_join_packet_t* join_packet =
         new bnl_join_packet_t( "BNL_JOIN_PACKET_1",

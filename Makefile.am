@@ -31,7 +31,6 @@ TESTS = \
    tests/q6 \
    tests/q6_disp \
    tests/q13 \
-   tests/q13_pagg \
    tests/q14 \
    tests/q12 \
    tests/q16 \
@@ -147,7 +146,9 @@ WL_TPCH = \
    $(SW)/tpch/drivers/tpch_q6.cpp  \
    $(SW)/tpch/drivers/tpch_q12.cpp \
    $(SW)/tpch/drivers/tpch_q13.cpp \
+   $(SW)/tpch/drivers/tpch_q14.cpp \
    $(SW)/tpch/drivers/tpch_q16.cpp \
+   $(SW)/tpch/drivers/tpch_q19.cpp \
    $(SW)/tpch/drivers/tpch_m_1_4_6_12.cpp \
    $(SW)/tpch/drivers/tpch_upto13.cpp \
    $(SW)/tpch/drivers/tpch_m146.cpp \
@@ -208,7 +209,6 @@ tests_tpch_struct_sizes_SOURCES = $(ST)/tpch_struct_sizes.cpp
 tests_q4_SOURCES = $(ST)/test_q4.cpp
 tests_q6_SOURCES = $(ST)/test_q6.cpp
 tests_q13_SOURCES = $(ST)/test_q13.cpp
-tests_q13_pagg_SOURCES = $(ST)/test_q13_pagg.cpp
 tests_q14_SOURCES = $(ST)/test_q14.cpp
 tests_q12_SOURCES = $(ST)/test_q12.cpp
 tests_q16_SOURCES = $(ST)/test_q16.cpp
@@ -241,7 +241,6 @@ tests_tpch_struct_sizes_LDADD = $(TEST_LIBS)
 tests_q4_LDADD = $(TEST_LIBS)
 tests_q6_LDADD = $(TEST_LIBS)
 tests_q13_LDADD = $(TEST_LIBS)
-tests_q13_pagg_LDADD = $(TEST_LIBS)
 tests_q14_LDADD = $(TEST_LIBS)
 tests_q12_LDADD = $(TEST_LIBS)
 tests_q16_LDADD = $(TEST_LIBS)
