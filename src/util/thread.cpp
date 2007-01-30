@@ -24,7 +24,7 @@ static pthread_key_t THREAD_KEY_SELF;
 
 /* internal helper functions */
 
-extern "C" static void thread_destroy(void* thread_object);
+extern "C" void thread_destroy(void* thread_object);
 extern "C" void* start_thread(void *);
 
 
@@ -281,7 +281,7 @@ void* start_thread(void* thread_object)
 
 
 
-static void thread_destroy(void* thread_object)
+void thread_destroy(void* thread_object)
 {
     thread_t* thread = (thread_t*)thread_object;
     if(thread && thread->delete_me())

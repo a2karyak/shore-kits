@@ -31,6 +31,7 @@ private:
     size_t _page_size;
     size_t _prefetch_count;
     size_t _curr_pages;
+    char* _read_end;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
@@ -200,7 +201,7 @@ public:
      */
     bool ensure_read_ready() {
         // blocking attempt => only returns false if EOF
-        return (_read_iterator != _read_page->end()) || _get_read_page();
+	return (_read_iterator->data != _read_end) || _get_read_page();
     }
 
     
@@ -255,6 +256,12 @@ private:
     void _termination_check() {
         if(_terminated)
             THROW1(TerminatedBufferException, "Buffer closed unexpectedly");
+    }
+
+    void _set_read_page(page* p) {
+	_read_page = p;
+	_read_iterator = _read_page->begin();
+	_read_end = _read_page->end()->data;
     }
 
 

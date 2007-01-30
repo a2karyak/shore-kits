@@ -1,3 +1,4 @@
+/** -*- mode:C++; c-basic-offset:4 -*- */
 #include "core/tuple_fifo.h"
 
 
@@ -88,8 +89,7 @@ static size_t total_prefetches = 0;
  */
 void tuple_fifo::init() {
     // prepare for reading
-    _read_page = SENTINEL_PAGE;
-    _read_iterator = _read_page->begin();
+    _set_read_page(SENTINEL_PAGE);
 
     // prepare for writing
     _write_page = SENTINEL_PAGE;
@@ -132,8 +132,7 @@ page* tuple_fifo::get_page() {
 
     // hand off the page and replace it with the sentinel
     page* result = _read_page.release();
-    _read_page = SENTINEL_PAGE;
-    _read_iterator = _read_page->begin();
+    _set_read_page(SENTINEL_PAGE);
     return result;
 }
 
@@ -201,8 +200,7 @@ bool tuple_fifo::_get_read_page() {
     }
 
     // allocate the page
-    _read_page = _pages.front();
-    _read_iterator = _read_page->begin();
+    _set_read_page(_pages.front());
     _pages.pop_front();
     _curr_pages--;
 

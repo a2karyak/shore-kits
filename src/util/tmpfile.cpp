@@ -25,7 +25,7 @@ FILE *create_tmp_file(c_str &name, const c_str &prefix) {
                         "Caught %s while opening temp file %s",
                         errno_to_str().data(), (char*) name_template);
     
-    TRACE(TRACE_TEMP_FILE, "Created temp file %s\n", name_template);
+    TRACE(TRACE_TEMP_FILE, "Created temp file %s\n", (char*) name_template);
 
 
     // open a stream on the file
