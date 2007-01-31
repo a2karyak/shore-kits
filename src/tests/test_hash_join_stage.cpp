@@ -18,7 +18,6 @@ using namespace qpipe;
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
 
 
     // parse output filename
@@ -33,6 +32,7 @@ int main(int argc, char* argv[]) {
     }
 
 
+    db_open();
     register_stage<func_call_stage_t>(2);
     register_stage<hash_join_stage_t>(1);
 

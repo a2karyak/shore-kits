@@ -379,16 +379,21 @@ public:
         , _out_tuple_size(other._out_tuple_size)
     {
     }
-
-    const char* left_key(const tuple_t& tup) {
-        const char* tup_data = (const char*)tup.data;
+    
+    const char* left_key_bytes(const char* tup_data) {
         return &tup_data[left_key_offset()];
     }
 
+    const char* right_key_bytes(const char* tup_data) {
+        return &tup_data[right_key_offset()];
+    }
+    
+    const char* left_key(const tuple_t& tup) {
+        return left_key_bytes((const char*)tup.data);
+    }
 
     const char* right_key(const tuple_t& tup) {
-        const char* tup_data = (const char*)tup.data;
-        return &tup_data[right_key_offset()];
+        return right_key_bytes((const char*)tup.data);
     }
 
 

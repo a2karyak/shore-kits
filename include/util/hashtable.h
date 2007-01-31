@@ -114,15 +114,15 @@ public:
            the end of the array. */
         for (pos = hash_pos;
              (pos < _capacity)
-                 && !_equaldata(_data[pos],d)
-                 && _exists[pos]; pos++);
+                 && _exists[pos]
+                 && !_equaldata(_data[pos],d); pos++);
         if (pos == _capacity) {
             /* Reached end of table with no slot. */
             /* Loop 2: Continue probing from beginning of array. */
             for (pos = hash_pos;
                  (pos < _capacity)
-                     && !_equaldata(_data[pos],d)
-                     && _exists[pos]; pos++);
+                     && _exists[pos]
+                     && !_equaldata(_data[pos],d); pos++);
         }
 
         /* At this point, we may have reached the end of the array
@@ -131,17 +131,18 @@ public:
            assert() before... */
         assert(pos != _capacity);
         
-        if (_equaldata(_data[pos],d))
-            /* Found a copy! Don't insert! */
-            return false;
+        if (!_exists[pos]) {
+            /* Found an empty slot. Insert here. */
+            _data[pos] = d;
+            _exists[pos] = true;
+            _size++;
+            return true;
+        }
+
         
-        /* If we are here, we have found an empty slot. */
-        assert(! _exists[pos] );
-        
-        _data[pos] = d;
-        _exists[pos] = true;
-        _size++;
-        return true;
+        /* If we are here, we must have found a copy of the data. */
+        assert( _equaldata(_data[pos],d) );
+        return false;
     }
 
 
@@ -160,15 +161,15 @@ public:
            the end of the array. */
         for (pos = hash_pos;
              (pos < _capacity)
-                 && !_equaldata(_data[pos],d)
-                 && _exists[pos]; pos++);
+                 && _exists[pos]
+                 && !_equaldata(_data[pos],d); pos++);
         if (pos == _capacity) {
             /* Reached end of table with no slot. */
             /* Loop 2: Continue probing from beginning of array. */
             for (pos = hash_pos;
                  (pos < _capacity)
-                     && !_equaldata(_data[pos],d)
-                     && _exists[pos]; pos++);
+                     && _exists[pos]
+                     && !_equaldata(_data[pos],d); pos++);
         }
 
         if (pos == _capacity) {
@@ -176,14 +177,14 @@ public:
             return false;
         }
         
-        if (_equaldata(_data[pos],d))
-            /* Found a copy! */
-            return true;
-        
-        /* If we are here, we have found an empty slot. */
-        assert(! _exists[pos] );
-        
-        return false;
+        if (!_exists[pos]) {
+            /* Found an empty slot. Table does not contain data. */
+            return false;
+        }
+
+        /* If we are here, we have found a copy of the data. */        
+        assert(_equaldata(_data[pos],d));
+        return true;
     }
 
 
@@ -292,7 +293,7 @@ public:
             /* Make sure we did not wrap. */
             assert(!_is_end);
           
-            if (1) {
+            if (0) {
                 TRACE(TRACE_ALWAYS, "Looking at data %s stored at position %d\n",
                       _parent->_data[_curr_index],
                       _curr_index);

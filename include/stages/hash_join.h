@@ -11,6 +11,7 @@
 #define __HASH_JOIN_STAGE_H
 
 #include "core.h"
+#include "util/hashtable.h"
 
 #ifdef __GCC
 #include <ext/hash_set>
@@ -20,6 +21,9 @@
 
 
 using namespace qpipe;
+using std::string;
+using std::vector;
+
 
 #define HASH_JOIN_STAGE_NAME  "HASH_JOIN"
 #define HASH_JOIN_PACKET_TYPE "HASH_JOIN"
@@ -29,7 +33,9 @@ using namespace qpipe;
  * hash_join_packet *
  ********************/
 
+
 class hash_join_packet_t : public packet_t {
+
 public:
     static const c_str PACKET_TYPE;
 
@@ -110,76 +116,138 @@ public:
 };
 
 
+
 /*******************
  * hash_join_stage *
  *******************/
-//using __gnu_cxx::hashtable;
-using std::string;
-using std::vector;
 
 class hash_join_stage_t : public stage_t {
 
-    struct hash_key_t;
-    
-    template <bool left>
-    struct extract_key_t;
-    
-    struct equal_key_t;
 
-    /**
-     * Abuse the flexibility of the base STL hashtable implementation
-     * to avoid storing tuple keys.
-     *
-     * The key extractor maintains internal space to hold the
-     * key. When asked to extract a key it returns a pointer to this
-     * initial space after filling it based on the tuple it was
-     * given. Since this may be called more than once per expression
-     * (see the implementation) the extractor actually maintains space
-     * for two keys, alternating which pointer it returns.
-     *
-     * The key equality test simply performs a bytewise comparison of
-     * the two keys it is given.
-     */
+private:
 
-#if 0
-    typedef hashtable<char *, const char *,
-                      hash_key_t,
-                      extract_key_t<true>,
-                      equal_key_t> tuple_hash_t;
+
+    /* datatypes */
+
+    /* Helper classes used by the hashtable data structure. All of
+       these are very short, so give the compiler the option of
+       inlining. */
     
-    /* Reads tuples from the given source to build an in-memory hash table
-     */
-        template<class TupleSource>
-        page* build_hash(tuple_hash_t &probe_table,
-                           TupleSource source);
+    struct extractkey_t {
+        
+        tuple_join_t *_join;
+        bool _right;
+
+        extractkey_t(tuple_join_t *join, bool right)
+            : _join(join)
+            , _right(right)
+        {
+        }
+        
+        const char* const operator()(const char* value) const {
+            return _right ? _join->right_key_bytes(value) : _join->left_key_bytes(value);
+        }
+    };
+
+
+    /* Can be used for both EqualKey and EqualData template
+       parameter. */
+    struct equalbytes_t {
+        
+        size_t _len;
+        equalbytes_t(size_t len)
+            : _len(len)
+        {
+        }
+
+        bool operator()(const char *k1, const char *k2) const {
+            return !memcmp(k1, k2, _len);
+        }
+    };
+
     
-        template <class TupleSource>
-        hash_join_packet_t *probe_matches(tuple_hash_t &probe_table,
-                                          hash_join_packet_t *packet,
-                                          TupleSource source);
+    struct hashfcn_t {
+        
+        size_t _len;
+        hashfcn_t(size_t len)
+            : _len(len)
+        {
+        }
+        
+        size_t operator()(const char *key) const {
+            return fnv_hash(key, _len);
+        }
+    };
+
+
+    typedef hashtable<char *,
+                      const char *,
+                      extractkey_t,
+                      equalbytes_t,
+                      equalbytes_t,
+                      hashfcn_t> tuple_hash_t;
+    
+
+    /* These are our bookkeeping data structures. */
 
     struct partition_t {
+
         page* _page;
         int size;
         FILE *file;
         c_str file_name1;
         c_str file_name2;
+
         partition_t()
             : _page(NULL), size(0), file(NULL)
         {
         }
     };
 
+    
     typedef vector<partition_t> partition_list_t;
-    partition_list_t partitions;
+
+
+    struct left_action_t {
+        void operator ()(partition_list_t::iterator it) {
+            it->file = NULL;
+        }
+    };
+
+
+    struct right_action_t {
+        size_t _left_tuple_size;
+        right_action_t(size_t left_tuple_size)
+            : _left_tuple_size(left_tuple_size)
+        {
+        }
+        void operator()(partition_list_t::iterator it) {
+            // open a new file for the left side partition
+            it->file = create_tmp_file(it->file_name2, "hash-join-left");
+            
+            // resize the page to match left-side tuples
+            it->_page = page::alloc(_left_tuple_size);
+        }
+    };
+    
+    
+    
+    /* fields */
     
     int page_quota;
     int page_count;
-
     tuple_join_t *_join;
+    partition_list_t partitions;
 
-#endif
 
+
+    /* methods */
+    void test_overflow(int partition);
+
+    template<class Action>
+    void close_file(partition_list_t::iterator it, Action a);
+    
+   
 
 public:
 
@@ -187,32 +255,23 @@ public:
 
     static const c_str DEFAULT_STAGE_NAME;
 
-    virtual void process_packet();
 
-    // set up the partitions in memory
+    virtual void process_packet();
+    
+    
+    // Allocate in-memory partitions...
     hash_join_stage_t()
-        //    : partitions(512),
-        //page_quota(10000), page_count(0)
+        : page_quota(10000)
+        , page_count(0)
+        , partitions(512)
     {
     }
 
     ~hash_join_stage_t() {
     }
 
-
-#if 0
-
-private:
-
-    void test_overflow(int partition);
-
-    struct left_action_t;
-    struct right_action_t;
-    template<class Action>
-    void close_file(partition_list_t::iterator it, Action a);
-
-#endif
-
 };
+
+
 
 #endif	// __HASH_JOIN_H

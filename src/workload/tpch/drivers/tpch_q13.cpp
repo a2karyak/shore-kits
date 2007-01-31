@@ -309,6 +309,7 @@ void tpch_q13_driver::submit(void* disp) {
 
     sort_packet->assign_query_state(qs);
 
+
     // Dispatch packet
     dispatcher_t::dispatch_packet(sort_packet);
     guard<tuple_fifo> result = sort_packet->output_buffer();

@@ -63,6 +63,7 @@ void shuffled_triangle_int_tuple_writer_fc(void* arg) {
     
     
     for (unsigned i=0; i < tuples.size(); i++) {
+        TRACE(TRACE_ALWAYS, "Writing %d\n", tuples[i]);
         tuple_t in_tuple((char*)&tuples[i], sizeof(int));
         int_buffer->append(in_tuple);
     }

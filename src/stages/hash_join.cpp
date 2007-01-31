@@ -13,194 +13,99 @@
 #include <algorithm>
 
 
-
 const c_str hash_join_packet_t::PACKET_TYPE = "HASH_JOIN";
 
 const c_str hash_join_stage_t::DEFAULT_STAGE_NAME = "HASH_JOIN";
 
 
-#if 0
-
-struct hash_join_stage_t::hash_key_t {
-    size_t _len;
-    hash_key_t(size_t len)
-        : _len(len)
-    {
-    }
-    size_t operator()(const char *key) const {
-        return fnv_hash(key, _len);
-    }
-};
-
-
-
-template <bool right>
-struct hash_join_stage_t::extract_key_t {
-    tuple_join_t *_join;
-
-    extract_key_t(tuple_join_t *join)
-        : _join(join)
-    {
-    }
-    const char* const operator()(const char * value) const {
-        return right? _join->get_right_key(value) : _join->get_left_key(value);
-    }
-};
-
-
-
-struct hash_join_stage_t::equal_key_t {
-    size_t _len;
-    equal_key_t(size_t len)
-        : _len(len)
-    {
-    }
-    bool operator()(const char *k1, const char *k2) const {
-        return !memcmp(k1, k2, _len);
-    }
-};
-
-
-
-void hash_join_stage_t::test_overflow(int partition) {
-    partition_t &p = partitions[partition];
-
-    // room on the current page?
-    if(p._page && !p._page->full())
-        return ;
-    
-    // check the quota
-    if(page_count == page_quota) {
-        // find the biggest partition
-        int max = -1;
-        for(unsigned i=0; i < partitions.size(); i++) {
-            partition_t &p = partitions[i];
-            if(!p.file && (max < 0 || p.size > partitions[max].size))
-                max = i;
-        }
-
-        // create a file
-        partition_t &p = partitions[max];
-        p.file = create_tmp_file(p.file_name1, "hash-join-right");
-
-        // send the partition to the file
-        guard<page> head;
-        for(head = p._page; head->next; head=head->next) {
-            head->fwrite_full_page(p.file);
-            page_count--;
-        }
-
-        // write the last page, but don't free it
-        head->fwrite_full_page(p.file);
-        head->clear();
-        p._page = head.release();
-    }
-    else {
-        // allocate another page
-        page* pg = page::alloc(_join->right_tuple_size());
-        pg->next = p._page;
-        p._page = pg;
-        page_count++;
-    }
-
-    // done!
-    p.size++;
-}
-
-
-
-template <class Action>
-void hash_join_stage_t::close_file(partition_list_t::iterator it, Action action) {
-    page *p = it->_page;
-
-    // file partition? (make sure the file gets closed)
-    file_guard_t file = it->file;
-    if(!p || p->empty())
-        return;
-    
-    p->fwrite_full_page(file);
-    action(it);
-}
-
-
-
-struct hash_join_stage_t::right_action_t {
-    size_t _left_tuple_size;
-    right_action_t(size_t left_tuple_size)
-        : _left_tuple_size(left_tuple_size)
-    {
-    }
-    void operator()(partition_list_t::iterator it) {
-        // open a new file for the left side partition
-        it->file = create_tmp_file(it->file_name2, "hash-join-left");
-
-        // resize the page to match left-side tuples
-        it->_page = page::alloc(_left_tuple_size);
-    }
-};
-
-
-
-struct hash_join_stage_t::left_action_t {
-    void operator ()(partition_list_t::iterator it) {
-        it->file = NULL;
-    }
-};
-
-#endif
-
 
 void hash_join_stage_t::process_packet() {
 
-#if 0
     hash_join_packet_t* packet = (hash_join_packet_t *)_adaptor->get_packet();
 
-    // TODO: release partition resources!
+    /* TODO: release partition resources! */
     bool outer_join = packet->_outer;
     _join = packet->_join;
     bool distinct = packet->_distinct;
+    
 
-    // anything worth reading?
+    /* TERMINOLOGY: The 'right' relation is the inner relation. The
+       'left' relation is the outer relation. With left-deep query
+       plans, the right relation will be a table scan. */
+
+
+    /* First divide the right relation into partitions. */
     tuple_fifo *right_buffer = packet->_right_buffer;
     dispatcher_t::dispatch_packet(packet->_right);
 
 
-    if(!right_buffer->ensure_read_ready())
-        // No right-side tuples... no join tuples.
+    /* Quick check for no-tuple case. */
+    if(!right_buffer->ensure_read_ready()) {
+        /* No right side tuples! "Normal" (inner) join returns
+           nothing. Outer join returns everything in left relation
+           with appropriate null values. */
+        /* TODO Handle outer join here. */
         return;
+    }
     
     
-    // read in the right relation
-    hash_key_t hash_key(_join->key_size());
-    extract_key_t<true> extract_right_key(_join);
+    hash_join_stage_t::extractkey_t extract_left (_join, false);
+    hash_join_stage_t::extractkey_t extract_right(_join, true);
+    hash_join_stage_t::hashfcn_t    hashfcn(_join->key_size());
+
+    
+    /* Continue with building hash partitions of 'right'
+       relation. Read each tuple and assign it to the appropriate
+       partition. We don't have a "primary" partition and secondary
+       partitions.  If any of our partitions fill up, we flush to
+       disk. */
     tuple_t right;
     while(1) {
 
-        // eof?
+        /* check for EOF */
         if(!right_buffer->get_tuple(right))
             break;
 
-        // use the "lazy mod" approach to reduce the hash range
-        int hash_code = hash_key(extract_right_key(right.data));
-        int partition = hash_code % partitions.size();
-        page* &p = partitions[partition]._page;
+        /* Identify the partition that needs this tuple. */
+        size_t hash_code = hashfcn(extract_right(right.data));
+        int    hash_int  = (int)hash_code;
+        int    partition = hash_int % partitions.size();
 
-        // make sure the page isn't full before writing
+        /* Simple optimization: Flush _before_ inserting into a full
+           page, not after we fill a page. This can avoid one
+           unnecessary flush per partition. */
+        // assert(0);
         test_overflow(partition);
 
-        // write to the page
+        /* If the partition was full, we would have flushed its data
+           and cleared it of tuples. We can now safely append to the
+           page. */
+        page* &p = partitions[partition]._page;
         p->append_tuple(right);
     }
 
-    // create and fill the in-memory hash table
+    /* TODO Flush all partitions to disk and free the partition
+       memory. */
+
+    /* We now have the right relation sitting on disk in partition
+       files. */
+
+    /* Create and fill the in-memory hash table. */
     size_t page_capacity = page::capacity(get_default_page_size(),
                                           _join->right_tuple_size());
-    tuple_hash_t table(page_count*page_capacity,
-                       hash_key,
-                       equal_key_t(_join->key_size()),
-                       extract_right_key);
+
+    extractkey_t right_key_extractor(_join, true);
+    equalbytes_t equal_key (_join->key_size());
+    equalbytes_t equal_rtup(_join->right_tuple_size());
+    hashfcn_t    hasher(_join->key_size());
     
-    // flush any partitions that went to disk
+    tuple_hash_t table(page_count * page_capacity,
+                       right_key_extractor,
+                       equal_key,
+                       equal_rtup,
+                       hasher);
+    
+    /* Flush any partitions that went to disk */
     right_action_t right_action(_join->left_tuple_size());
     for(partition_list_t::iterator it=partitions.begin(); it != partitions.end(); ++it) {
 
@@ -222,7 +127,7 @@ void hash_join_stage_t::process_packet() {
                     if(distinct)
                         table.insert_unique_noresize(it->data);
                     else
-                        table.insert_equal_noresize(it->data);
+                        table.insert_noresize(it->data);
                 }
 
                 p = p->next;
@@ -240,7 +145,7 @@ void hash_join_stage_t::process_packet() {
 
     
     // read in the left relation now
-    extract_key_t<false> extract_left_key(_join);
+    extractkey_t left_key_extractor(_join, false);
     tuple_t left(NULL, _join->left_tuple_size());
     while(1) {
 
@@ -249,8 +154,8 @@ void hash_join_stage_t::process_packet() {
             break;
      
         // which partition?
-        const char* left_key = extract_left_key(left.data);
-        int hash_code = hash_key(left_key);
+        const char* left_key = left_key_extractor(left.data);
+        int hash_code = hasher(left_key);
         int partition = hash_code % partitions.size();
         partition_t &p = partitions[partition];
 
@@ -277,10 +182,10 @@ void hash_join_stage_t::process_packet() {
             std::pair<tuple_hash_t::iterator, tuple_hash_t::iterator> range;
             range = table.equal_range(left_key);
 
-            array_guard_t<char> data = new char[_join->out_tuple_size()];
-            tuple_t out(data, sizeof(data));
+            array_guard_t<char> data = new char[_join->output_tuple_size()];
+            tuple_t out(data, _join->output_tuple_size());
             if(outer_join && range.first == range.second) {
-                _join->outer_join(out, left);
+                _join->left_outer_join(out, left);
                 _adaptor->output(out);
             }
             else {
@@ -303,6 +208,88 @@ void hash_join_stage_t::process_packet() {
     }
 
     // TODO: handle the file partitions now...
-#endif
 
+}
+
+
+
+void hash_join_stage_t::test_overflow(int partition) {
+
+    partition_t &p = partitions[partition];
+
+    /* check for room on the current page */
+    if(p._page && !p._page->full())
+        return ;
+    
+    
+    /* A partition is either a list of in-memory pages strung together
+       or a file on disk with one in-memory page. 'page_count' is the
+       total number of in-memory pages used by all partitions.
+
+       As long as 'page_count' is less than 'page_quota', we grow
+       in-memory partitions by simply tacking other pages onto the end
+       their lists. When 'page_count' reaches 'page_quota', we pick
+       the largest in-memory partition and turn it into a disk
+       partition. */
+    if(page_count == page_quota) {
+        
+        /* We need to flush to disk. We will flush the biggest
+           partition. */
+        
+        /* Find the biggest in-memory partition. */
+        int max = -1;
+        for(unsigned i=0; i < partitions.size(); i++) {
+            partition_t &p = partitions[i];
+            if(!p.file && (max < 0 || p.size > partitions[max].size))
+                max = i;
+        }
+
+        /* Create a file on disk. */
+        partition_t &p = partitions[max];
+        p.file = create_tmp_file(p.file_name1, "hash-join-right");
+
+        /* Send the partition to the file. */
+        guard<page> head;
+        for(head = p._page; head->next; head=head->next) {
+            head->fwrite_full_page(p.file);
+            page_count--;
+        }
+        
+        /* Write the last page, but don't free it. */
+        head->fwrite_full_page(p.file);
+        head->clear();
+        p._page = head.release();
+    }
+    else {
+        
+        /* No need to flush to disk. Simply add a page to the full
+           in-memory partition. */
+        page* pg = page::alloc(_join->right_tuple_size());
+        pg->next = p._page;
+        p._page = pg;
+        page_count++;
+    }
+
+    // done!
+    p.size++;
+}
+
+
+
+template <class Action>
+void hash_join_stage_t::close_file(partition_list_t::iterator it, Action action) {
+
+    /* I think this function is supposed to have no effect if called
+       on an in-memory partition. If it is called on a file partition,
+       it is supposed to flush the partition to disk. */
+    page *p = it->_page;
+    
+    /* File partition? */
+    /* Write remaining tuples to disk and apply 'action' to it. */
+    file_guard_t file = it->file;
+    if(!p || p->empty())
+        return;
+    
+    p->fwrite_full_page(file);
+    action(it);
 }
