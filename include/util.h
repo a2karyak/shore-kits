@@ -3,6 +3,7 @@
 
 #include "util/compat.h"
 #include "util/c_str.h"
+#include "util/decimal.h"
 #include "util/exception.h"
 #include "util/fnv.h"
 #include "util/guard.h"

@@ -34,8 +34,8 @@ int main() {
 
 
     // TSCAN PACKET
-    // the output consists of 2 doubles
-    tuple_fifo* tscan_out_buffer = new tuple_fifo(2*sizeof(double));
+    // the output consists of 2 decimals
+    tuple_fifo* tscan_out_buffer = new tuple_fifo(2*sizeof(decimal));
     tuple_filter_t* tscan_filter = new q6_tscan_filter_t(true);
 
 
@@ -46,10 +46,11 @@ int main() {
     dispatcher_t::dispatch_packet(q6_tscan_packet);
     
     tuple_t output;
-    double* d = NULL;
+    decimal* d = NULL;
     while(!tscan_out_buffer->get_tuple(output)) {
-	d = aligned_cast<double>(output.data);
-	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n", d[0], d[1]);
+	d = aligned_cast<decimal>(output.data);
+	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
+	      (double) d[0], (double) d[1]);
     }
 
 

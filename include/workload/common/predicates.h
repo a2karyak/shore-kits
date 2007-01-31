@@ -57,66 +57,6 @@ public:
     }
 };
 
-/** Override the "normal" double precision to approximate a
- *  fixed-point format with 2 trailing decimals. 
- */
-namespace std {
-
-    /// One of the @link s20_3_3_comparisons comparison functors@endlink.
-    template <>
-    struct equal_to<double> : public binary_function<double, double, bool>
-    {
-        bool
-        operator()(const double& __x, const double& __y) const
-        { return (int) round(__x*100) == (int) round(__y*100); }
-    };
-
-    /// One of the @link s20_3_3_comparisons comparison functors@endlink.
-    template <>
-    struct not_equal_to<double> : public binary_function<double, double, bool>
-    {
-        bool
-        operator()(const double& __x, const double& __y) const
-        { return !equal_to<double>()(__x, __y); }
-    };
-
-    /// One of the @link s20_3_3_comparisons comparison functors@endlink.
-    template <>
-    struct greater<double> : public binary_function<double, double, bool>
-    {
-        bool
-        operator()(const double& __x, const double& __y) const
-        { return (int) round(__x*100) > (int) round(__y*100); }
-    };
-
-    /// One of the @link s20_3_3_comparisons comparison functors@endlink.
-    template <>
-    struct less<double> : public binary_function<double, double, bool>
-    {
-        bool
-        operator()(const double& __x, const double& __y) const
-        { return (int) round(__x*100) < (int) round(__y*100); }
-    };
-
-    /// One of the @link s20_3_3_comparisons comparison functors@endlink.
-    template <>
-    struct greater_equal<double> : public binary_function<double, double, bool>
-    {
-        bool
-        operator()(const double& __x, const double& __y) const
-        { return !less<double>()(__x, __y); }
-    };
-
-    /// One of the @link s20_3_3_comparisons comparison functors@endlink.
-    template <>
-    struct less_equal<double> : public binary_function<double, double, bool>
-    {
-        bool
-        operator()(const double& __x, const double& __y) const
-        { return !greater<double>()(__x, __y); }
-    };
-}
-
 /**
  * @brief string predicate. Given a field type and offset in the
  * tuple, it extracts the field and tests it against the given

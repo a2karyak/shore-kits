@@ -74,18 +74,18 @@ struct part_scan_tuple {
 };
 
 struct lineitem_scan_tuple {
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
+    decimal L_QUANTITY;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
     int L_PARTKEY;
     tpch_l_shipmode L_SHIPMODE;
     char L_SHIPINSTRUCT[STRSIZE(25)];
 };
 
 struct join_tuple {
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
+    decimal L_QUANTITY;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
     int PARTKEY;
     int P_SIZE;
     tpch_l_shipmode L_SHIPMODE;
@@ -95,8 +95,8 @@ struct join_tuple {
 };
 
 struct q19_tuple {
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
 };
 
 /**
@@ -201,9 +201,9 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
             and_predicate_t* andp = new and_predicate_t();
             // l_quantity >= [quantity] and l_quantity <= [quantity]+10
             offset = offsetof(tpch_lineitem_tuple, L_QUANTITY);
-            p = new scalar_predicate_t<double, greater_equal>(quantities[i], offset);
+            p = new scalar_predicate_t<decimal, greater_equal>(quantities[i], offset);
             andp->add(p);
-            p = new scalar_predicate_t<double, less_equal>(quantities[i]+10, offset);
+            p = new scalar_predicate_t<decimal, less_equal>(quantities[i]+10, offset);
             andp->add(p);
             orp->add(andp);
         }
@@ -329,10 +329,10 @@ struct q19_filter_t : tuple_filter_t {
 
             // l_quantity ...
             offset = offsetof(join_tuple, L_QUANTITY);
-            double q = quantities[i];
-            p = new scalar_predicate_t<double, greater_equal>(q, offset);
+            decimal q = quantities[i];
+            p = new scalar_predicate_t<decimal, greater_equal>(q, offset);
             andp->add(p);
-            p = new scalar_predicate_t<double, less_equal>(q + 10, offset);
+            p = new scalar_predicate_t<decimal, less_equal>(q + 10, offset);
             andp->add(p);
 
             _filter.add(andp);
@@ -359,7 +359,7 @@ struct q19_sum_t : tuple_aggregate_t {
     default_key_extractor_t _extractor;
     
     q19_sum_t()
-        : tuple_aggregate_t(sizeof(double)),
+        : tuple_aggregate_t(sizeof(decimal)),
           _extractor(0, 0)
     {
     }
@@ -368,7 +368,7 @@ struct q19_sum_t : tuple_aggregate_t {
         return &_extractor;
     }
     virtual void aggregate(char* agg_data, const tuple_t &t) {
-        double* dest = aligned_cast<double>(agg_data);
+        decimal* dest = aligned_cast<decimal>(agg_data);
         q19_tuple* src = aligned_cast<q19_tuple>(t.data);
 
         *dest += src->L_EXTENDEDPRICE*(1 - src->L_DISCOUNT);
@@ -426,8 +426,8 @@ void tpch_q19_driver::submit(void* disp) {
 
     
     // sum
-    filter = new trivial_filter_t(sizeof(double));
-    buffer = new tuple_fifo(sizeof(double));
+    filter = new trivial_filter_t(sizeof(decimal));
+    buffer = new tuple_fifo(sizeof(decimal));
     key_extractor_t* extractor = new default_key_extractor_t(0, 0);
     packet_t* sum_packet;
     sum_packet = new aggregate_packet_t("final SUM",
@@ -444,8 +444,8 @@ void tpch_q19_driver::submit(void* disp) {
     
     tuple_t output;
     while(result->get_tuple(output)) {
-        double* r = aligned_cast<double>(output.data);
-        TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", *r);
+        decimal* r = aligned_cast<decimal>(output.data);
+        TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", r->to_double());
     }
 
     dp->query_state_destroy(qs);

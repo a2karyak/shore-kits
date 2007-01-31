@@ -36,10 +36,10 @@ private:
     int DATE;
 
     /* DISCOUNT is random [0.02 .. 0.09] */
-    double DISCOUNT;
+    decimal DISCOUNT;
 
     /* QUANTITY is randon [24 .. 25] */
-    double QUANTITY;
+    decimal QUANTITY;
 
 public:
 
@@ -85,13 +85,13 @@ public:
         _filter.add(p);
 
         offset = offsetof(tpch_lineitem_tuple, L_DISCOUNT);
-        p = new scalar_predicate_t<double, greater_equal>(DISCOUNT-.01, offset);
+        p = new scalar_predicate_t<decimal, greater_equal>(DISCOUNT-.01, offset);
         _filter.add(p);
-        p = new scalar_predicate_t<double, less_equal>(DISCOUNT+.01, offset);
+        p = new scalar_predicate_t<decimal, less_equal>(DISCOUNT+.01, offset);
         _filter.add(p);
         
         offset = offsetof(tpch_lineitem_tuple, L_QUANTITY);
-        p = new scalar_predicate_t<double, less>(QUANTITY, offset);
+        p = new scalar_predicate_t<decimal, less>(QUANTITY, offset);
         _filter.add(p);
     }
 
@@ -108,7 +108,7 @@ public:
 
         // Calculate L_EXTENDEDPRICE
         tpch_lineitem_tuple *at = aligned_cast<tpch_lineitem_tuple>(src.data);
-	double *dt = aligned_cast<double>(dest.data);
+	decimal *dt = aligned_cast<decimal>(dest.data);
 	dt[0] = at->L_EXTENDEDPRICE;
 	dt[1] = at->L_DISCOUNT;
     }
@@ -119,7 +119,8 @@ public:
 
     virtual c_str to_string() const {
         char* date = timet_to_datestr(DATE);
-        c_str result("q6_tscan_filter_t(%s, %f, %f)", date, QUANTITY, DISCOUNT);
+        c_str result("q6_tscan_filter_t(%s, %f, %f)",
+		     date, QUANTITY.to_double(), DISCOUNT.to_double());
         free(date);
         return result;
     }

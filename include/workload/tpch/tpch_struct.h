@@ -82,7 +82,7 @@ enum tpch_n_name{
 };
 
 struct tpch_customer_tuple {
-    double C_ACCTBAL;
+    decimal C_ACCTBAL;
     int C_CUSTKEY;
     int C_NATIONKEY;
     char C_NAME      [STRSIZE(25)];
@@ -93,10 +93,10 @@ struct tpch_customer_tuple {
 };
 
 struct tpch_lineitem_tuple {
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
-    double L_TAX;
+    decimal L_QUANTITY;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
+    decimal L_TAX;
     time_t L_SHIPDATE;
     time_t L_COMMITDATE;
     time_t L_RECEIPTDATE;
@@ -119,7 +119,7 @@ struct tpch_nation_tuple {
 };
 
 struct tpch_orders_tuple {
-    double O_TOTALPRICE;
+    decimal O_TOTALPRICE;
     time_t O_ORDERDATE;
     int O_ORDERKEY;
     int O_CUSTKEY;
@@ -131,7 +131,7 @@ struct tpch_orders_tuple {
 };
 
 struct tpch_part_tuple {
-    double P_RETAILPRICE;
+    decimal P_RETAILPRICE;
     int P_PARTKEY;
     int P_SIZE;
     char P_NAME     [STRSIZE(55)];
@@ -143,7 +143,7 @@ struct tpch_part_tuple {
 };
 
 struct tpch_partsupp_tuple {
-    double PS_SUPPLYCOST;
+    decimal PS_SUPPLYCOST;
     int PS_PARTKEY;
     int PS_SUPPKEY;
     int PS_AVAILQTY;
@@ -157,7 +157,7 @@ struct tpch_region_tuple {
 };
 
 struct tpch_supplier_tuple {
-    double S_ACCTBAL;
+    decimal S_ACCTBAL;
     int S_SUPPKEY;
     int S_NATIONKEY;
     char S_NAME   [STRSIZE(25)];

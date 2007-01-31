@@ -38,8 +38,9 @@ void* q6_client_main(void* arg) {
         }
         if(1)
         while( out->get_tuple(output) ) {
-            double* r = aligned_cast<double>(output.data);
-            TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n", (unsigned)r[0], r[1]);
+            decimal* r = aligned_cast<decimal>(output.data);
+            TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n",
+		  r[0].to_int(), r[1].to_double());
         }
 
         /* done with query state */

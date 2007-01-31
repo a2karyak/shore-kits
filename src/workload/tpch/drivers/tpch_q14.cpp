@@ -29,8 +29,8 @@ ENTER_NAMESPACE(workload);
  */
 
 struct lineitem_scan_tuple {
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
     int L_PARTKEY;
 };
 
@@ -40,15 +40,15 @@ struct part_scan_tuple {
 };
 
 struct join_tuple {
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
     char P_TYPE[STRSIZE(25)];
 };
 
 struct q14_tuple {
     static int const ALIGN;
-    double PROMO_SUM;
-    double TOTAL_SUM;
+    decimal PROMO_SUM;
+    decimal TOTAL_SUM;
     char P_TYPE[STRSIZE(25)];
 };
 
@@ -186,13 +186,13 @@ struct q14_aggregate : tuple_aggregate_t {
         q14_tuple* agg = aligned_cast<q14_tuple>(agg_data);
         join_tuple* tuple = aligned_cast<join_tuple>(t.data);
 
-        double value = tuple->L_EXTENDEDPRICE*(1 - tuple->L_DISCOUNT);
+        decimal value = tuple->L_EXTENDEDPRICE*(1 - tuple->L_DISCOUNT);
         agg->TOTAL_SUM += value;
         if(_filter.select(t))
             agg->PROMO_SUM += value;
     }
     virtual void finish(tuple_t &d, const char* agg_data) {
-        double* dest = aligned_cast<double>(d.data);
+        decimal* dest = aligned_cast<decimal>(d.data);
         q14_tuple* agg = aligned_cast<q14_tuple>(agg_data);
         *dest = 100.*agg->PROMO_SUM/agg->TOTAL_SUM;
     }
@@ -244,8 +244,8 @@ void tpch_q14_driver::submit(void* disp) {
     join_packet->assign_query_state(qs);
     
     // aggregation
-    filter = new trivial_filter_t(sizeof(double));
-    buffer = new tuple_fifo(sizeof(double));
+    filter = new trivial_filter_t(sizeof(decimal));
+    buffer = new tuple_fifo(sizeof(decimal));
     key_extractor_t* extractor = new default_key_extractor_t(0, 0);
     tuple_aggregate_t* aggregate = new q14_aggregate();
     packet_t* agg_packet;
@@ -264,8 +264,8 @@ void tpch_q14_driver::submit(void* disp) {
     
     tuple_t output;
     while(result->get_tuple(output)) {
-        double* r = aligned_cast<double>(output.data);
-        TRACE(TRACE_ALWAYS, "*** Q14 Promo Revenue: %5.2lf\n", *r);
+        decimal* r = aligned_cast<decimal>(output.data);
+        TRACE(TRACE_ALWAYS, "*** Q14 Promo Revenue: %5.2lf\n", r->to_double());
     }
     
     dp->query_state_destroy(qs);

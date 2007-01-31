@@ -15,10 +15,10 @@ ENTER_NAMESPACE(workload);
 
 // the tuples after tablescan projection
 struct projected_lineitem_tuple {
-    double L_QUANTITY;
-    double L_EXTENDEDPRICE;
-    double L_DISCOUNT;
-    double L_TAX;
+    decimal L_QUANTITY;
+    decimal L_EXTENDEDPRICE;
+    decimal L_DISCOUNT;
+    decimal L_TAX;
     char L_RETURNFLAG;
     char L_LINESTATUS;
 };
@@ -26,14 +26,14 @@ struct projected_lineitem_tuple {
 
 // the final aggregated tuples
 struct aggregate_tuple {
-    double L_SUM_QTY;
-    double L_SUM_BASE_PRICE;
-    double L_SUM_DISC_PRICE;
-    double L_SUM_CHARGE;
-    double L_AVG_QTY;
-    double L_AVG_PRICE;
-    double L_AVG_DISC;
-    double L_COUNT_ORDER;
+    decimal L_SUM_QTY;
+    decimal L_SUM_BASE_PRICE;
+    decimal L_SUM_DISC_PRICE;
+    decimal L_SUM_CHARGE;
+    decimal L_AVG_QTY;
+    decimal L_AVG_PRICE;
+    decimal L_AVG_DISC;
+    decimal L_COUNT_ORDER;
     char L_RETURNFLAG;
     char L_LINESTATUS;
 };
@@ -159,10 +159,10 @@ public:
         aggregate_tuple* tuple = aligned_cast<aggregate_tuple>(agg_data);
 
         // cache resused values for convenience
-        double L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        double L_DISCOUNT = src->L_DISCOUNT;
-        double L_QUANTITY = src->L_QUANTITY;
-        double L_DISC_PRICE = L_EXTENDEDPRICE * (1 - L_DISCOUNT);
+        decimal L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
+        decimal L_DISCOUNT = src->L_DISCOUNT;
+        decimal L_QUANTITY = src->L_QUANTITY;
+        decimal L_DISC_PRICE = L_EXTENDEDPRICE * (1 - L_DISCOUNT);
 
         // update count
         tuple->L_COUNT_ORDER++;
@@ -177,7 +177,7 @@ public:
         tuple->L_AVG_DISC += L_DISCOUNT;
 
         if(0) {
-	if (((int) tuple->L_COUNT_ORDER) % 100 == 0) {
+	if ((tuple->L_COUNT_ORDER).to_int() % 100 == 0) {
 	    TRACE(TRACE_DEBUG, "%lf\n", tuple->L_COUNT_ORDER);
 	    fflush(stdout);
 	}
