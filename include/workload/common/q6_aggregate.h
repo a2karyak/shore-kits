@@ -39,7 +39,8 @@ public:
 	agg->sum += d[0] * d[1];
     
 	if(TRACE_AGGREGATE && (agg->count % 10 == 0)) {
-	    TRACE(TRACE_DEBUG, "%d - %lf\n", agg->count, agg->sum);
+
+	    TRACE(TRACE_DEBUG, "%d - %lf\n", agg->count, agg->sum.to_double());
 	    fflush(stdout);
 	}
     }

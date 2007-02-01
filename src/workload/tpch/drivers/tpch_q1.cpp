@@ -178,7 +178,7 @@ public:
 
         if(0) {
 	if ((tuple->L_COUNT_ORDER).to_int() % 100 == 0) {
-	    TRACE(TRACE_DEBUG, "%lf\n", tuple->L_COUNT_ORDER);
+	    TRACE(TRACE_DEBUG, "%lf\n", tuple->L_COUNT_ORDER.to_double());
 	    fflush(stdout);
 	}
         }
@@ -248,9 +248,9 @@ void tpch_q1_driver::submit(void* disp) {
         aggregate_tuple *tuple;
         tuple = aligned_cast<aggregate_tuple>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",
-              tuple->L_SUM_QTY,
-              tuple->L_SUM_BASE_PRICE,
-              tuple->L_SUM_DISC_PRICE);
+              tuple->L_SUM_QTY.to_double(),
+              tuple->L_SUM_BASE_PRICE.to_double(),
+              tuple->L_SUM_DISC_PRICE.to_double());
     }
 
 

@@ -61,7 +61,7 @@ public:
         // QUANTITY
         QUANTITY = 24 + .01*self->rand(101);
 
-        TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT, QUANTITY);
+        TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT.to_double(), QUANTITY.to_double());
 
         if(0) {
             // override for validation run
