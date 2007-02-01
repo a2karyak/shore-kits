@@ -50,7 +50,7 @@ int main() {
     while(!tscan_out_buffer->get_tuple(output)) {
 	d = aligned_cast<decimal>(output.data);
 	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
-	      (double) d[0], (double) d[1]);
+	      d[0].to_double(), d[1].to_double());
     }
 
 
