@@ -5,10 +5,10 @@
 
 int main() {
   thread_init();
-  db_open();
+  //  db_open();
     
   db_load("tbl");
 
-  db_close();
+  //  db_close();
   return 0;
 }
