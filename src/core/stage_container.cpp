@@ -377,28 +377,31 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
     // receive this page.
     
 
+    page::iterator pend = p->end();
     bool packets_remaining = false;
     while (it != end) {
 
 
         packet_t* curr_packet = *it;
+	tuple_fifo* output_buffer = curr_packet->output_buffer();
+	tuple_filter_t* output_filter = curr_packet->_output_filter;
         bool terminate_curr_packet = false;
         try {
             
             // Drain all tuples in output page into the current packet's
             // output buffer.
             page::iterator page_it = p->begin();
-            while(page_it != p->end()) {
+            while(page_it != pend) {
 
                 // apply current packet's filter to this tuple
                 tuple_t in_tup = page_it.advance();
-                if(curr_packet->_output_filter->select(in_tup)) {
+                if(output_filter->select(in_tup)) {
 
                     // this tuple selected by filter!
 
                     // allocate space in the output buffer and project into it
-                    tuple_t out_tup = curr_packet->output_buffer()->allocate();
-                    curr_packet->_output_filter->project(out_tup, in_tup);
+                    tuple_t out_tup = output_buffer->allocate();
+                    output_filter->project(out_tup, in_tup);
                 }
             }
             

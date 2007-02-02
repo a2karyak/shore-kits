@@ -314,7 +314,8 @@ public:
                    is equal to our key. We enter the END state if the
                    parent stores nothing at 'curr' or if 'curr' wraps
                    back to '_start_index'. */
-                curr = (curr+1) % _parent->_capacity;
+		if(++curr == _parent->_capacity)
+		    curr = 0;
 
                 /* check for end cases */
                 if (!_parent->_exists[curr]) {

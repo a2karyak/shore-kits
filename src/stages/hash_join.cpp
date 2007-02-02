@@ -147,6 +147,7 @@ void hash_join_stage_t::process_packet() {
     // read in the left relation now
     extractkey_t left_key_extractor(_join, false);
     tuple_t left(NULL, _join->left_tuple_size());
+    array_guard_t<char> data = new char[_join->output_tuple_size()];
     while(1) {
 
         // eof?
@@ -182,7 +183,6 @@ void hash_join_stage_t::process_packet() {
             std::pair<tuple_hash_t::iterator, tuple_hash_t::iterator> range;
             range = table.equal_range(left_key);
 
-            array_guard_t<char> data = new char[_join->output_tuple_size()];
             tuple_t out(data, _join->output_tuple_size());
             if(outer_join && range.first == range.second) {
                 _join->left_outer_join(out, left);
