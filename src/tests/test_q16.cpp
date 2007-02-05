@@ -23,6 +23,8 @@ int main(int argc, char* argv[]) {
 
     workload::tpch_q16_driver driver(c_str("Q16"));
                    
+    trace_set(TRACE_QUERY_RESULTS);
+
     query_main(info, &driver);
     return 0;
 }

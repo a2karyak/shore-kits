@@ -9,7 +9,7 @@
 
 using namespace qpipe;
 
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(q19);
 
 
 /*
@@ -384,6 +384,10 @@ struct q19_sum_t : tuple_aggregate_t {
     }
 };
 
+
+EXIT_NAMESPACE(q19);
+using namespace q19;
+ENTER_NAMESPACE(workload);
 
 void tpch_q19_driver::submit(void* disp) {
 

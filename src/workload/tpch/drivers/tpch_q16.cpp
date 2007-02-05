@@ -9,7 +9,7 @@
 
 using namespace qpipe;
 
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(q16);
 
 struct supplier_tscan_filter_t : public tuple_filter_t {
     char const *word1;
@@ -446,6 +446,9 @@ struct q16_compare2_t : public key_compare_t {
     }
 };
 
+EXIT_NAMESPACE(q16);
+using namespace q16;
+ENTER_NAMESPACE(workload);
 
 
 void tpch_q16_driver::submit(void* disp) {

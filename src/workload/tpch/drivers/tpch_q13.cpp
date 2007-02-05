@@ -9,7 +9,7 @@
 
 using namespace qpipe;
 
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(q13);
 
 /**
  * Original TPC-H Query 13:
@@ -195,6 +195,10 @@ packet_t* order_scan(page_list* tpch_orders, qpipe::query_state_t* qs) {
 
     return pagg_packet;
 }
+
+EXIT_NAMESPACE(q13);
+using namespace q13;
+ENTER_NAMESPACE(workload);
 
 void tpch_q13_driver::submit(void* disp) {
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;

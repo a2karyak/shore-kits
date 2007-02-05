@@ -15,6 +15,8 @@ int main(int argc, char* argv[]) {
     register_stage<aggregate_stage_t>(1);
     workload::tpch_q6_driver driver(c_str("Q6"));
 
+    trace_set(TRACE_QUERY_RESULTS);
+
     query_main(info, &driver);
     return 0;
 }

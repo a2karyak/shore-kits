@@ -10,7 +10,7 @@
 #include "workload/common/int_comparator.h"
 
 
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(q1);
 
 
 // the tuples after tablescan projection
@@ -207,6 +207,9 @@ public:
 };
 
 
+EXIT_NAMESPACE(q1);
+using namespace q1;
+ENTER_NAMESPACE(workload);
 
 void tpch_q1_driver::submit(void* disp) {
 

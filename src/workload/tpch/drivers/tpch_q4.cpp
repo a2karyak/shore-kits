@@ -10,7 +10,7 @@
 #include "workload/common/int_comparator.h"
 
 
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(q4);
 
 
 
@@ -188,6 +188,9 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
     }
 };
 
+EXIT_NAMESPACE(q4);
+using namespace q4;
+ENTER_NAMESPACE(workload);
 
 
 void tpch_q4_driver::submit(void* disp) {
