@@ -11,8 +11,8 @@ int main(int argc, char* argv[]) {
 
     query_info_t info = query_init(argc, argv);
     
-    register_stage<tscan_stage_t>(1);
-    register_stage<aggregate_stage_t>(1);
+    register_stage<tscan_stage_t>(0);
+    register_stage<aggregate_stage_t>(0);
     workload::tpch_q6_driver driver(c_str("Q6"));
 
     trace_set(TRACE_QUERY_RESULTS);

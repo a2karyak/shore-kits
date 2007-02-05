@@ -5,6 +5,7 @@
 #include "core/tuple.h"
 #include <vector>
 #include <list>
+//#include <ucontext.h>
 
 ENTER_NAMESPACE(qpipe);
 
@@ -31,7 +32,7 @@ private:
     size_t _page_size;
     size_t _prefetch_count;
     size_t _curr_pages;
-    char* _read_end;
+    char*  _read_end;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
@@ -47,6 +48,11 @@ private:
     pthread_cond_t _writer_notify;
 
 public:
+
+    // coroutine vars
+    //    ucontext_t* _read_ctx;
+    //    ucontext_t* _write_ctx;
+
 
     /**
      *  @brief Construct a tuple FIFO that holds tuples of the

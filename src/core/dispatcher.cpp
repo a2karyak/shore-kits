@@ -77,9 +77,8 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type, stage_con
  *  their constructors should execute in the context of the root
  *  thread.
  */
-void dispatcher_t::_dispatch_packet(packet_t* packet) {
-
-  
+void dispatcher_t::_dispatch_packet(packet_t* packet)
+{
   void* sc;
   if ( static_hash_map_find( &stage_directory, packet->_packet_type.data(), &sc, NULL ) )
       THROW2(DispatcherException, 
