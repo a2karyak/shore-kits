@@ -15,7 +15,9 @@ TESTS = \
    tests/hashtable \
    tests/send_tuples \
    tests/tuple_buffer \
+   tests/context_set \
    tests/context_makecontext \
+   tests/context_producer_consumer \
    tests/load_db_tables \
    tests/tpch_load \
    tests/tpch_struct_sizes \
@@ -195,7 +197,9 @@ tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
 tests_send_tuples_SOURCES = $(ST)/test_send_tuples.cpp
 tests_tuple_buffer_SOURCES = $(ST)/test_tuple_buffer.cpp
+tests_context_set_SOURCES = = $(ST)/test_context_set.cpp
 tests_context_makecontext_SOURCES = $(ST)/test_context_makecontext.cpp
+tests_context_producer_consumer_SOURCES = $(ST)/test_context_producer_consumer.cpp
 tests_load_db_tables_SOURCES = $(ST)/load_db_tables.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_fdump_stage_SOURCES = $(ST)/test_fdump_stage.cpp
