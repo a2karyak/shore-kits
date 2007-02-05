@@ -16,7 +16,7 @@
 
 
 /* shared data */
-
+int running = 1;
 int buffer[NUM_BUFFER_ENTRIES];
 int buffer_entry_count = 0;
 
@@ -31,7 +31,8 @@ void* producer_main(int arg)
 {
     static int gen = 100;
 
-    while (1) {
+    int i;
+    for (i = 0; i < 5; i++) {
 
         TRACE(TRACE_ALWAYS, "Running producer\n");
 
@@ -50,6 +51,8 @@ void* producer_main(int arg)
         /* Ensure that all buffer items have been consumed */
         assert(buffer_entry_count == 0);
     }
+
+    running = 0;
 
     return NULL;
 }
@@ -80,9 +83,20 @@ int main(int, char**) {
 
     while (1) {
 
+
+        /* Run producer to create more data... */
+        int swapret = swapcontext(&consumer, &producer);
+        assert(swapret != -1);
+        if (!running)
+            break;
+
+
+        /* Run consumer to empty out the buffer. */
         TRACE(TRACE_ALWAYS, "Running consumer\n");
-        
-        /* Empty out the buffer */
+
+        /* Ensure that buffer is full */
+        assert(buffer_entry_count == NUM_BUFFER_ENTRIES);
+
         int i;
         for (i = 0; i < buffer_entry_count; i++) {
             TRACE(TRACE_ALWAYS, "Removed %d from position %d\n",
@@ -91,18 +105,13 @@ int main(int, char**) {
         }
         buffer_entry_count = 0;
 
-        /* Run producer */
-        int swapret = swapcontext(&consumer, &producer);
-        assert(swapret != -1);
 
         /* error checking */
-        /* Ensure that buffer is full */
-        assert(buffer_entry_count == NUM_BUFFER_ENTRIES);
         sleep(1);
     }
 
 
     /* should never reach here */
-    assert(0);
+    TRACE(TRACE_ALWAYS, "Done with program\n");
     return 0;
 }
