@@ -18,6 +18,7 @@
 #include <cstdarg>
 #include <stdint.h>
 #include <time.h>
+#include <ucontext.h>
 
 #include "util/c_str.h"
 #include "util/exception.h"
@@ -71,10 +72,13 @@ private:
 
     c_str        _thread_name;
     unsigned int _rand_seed;
+    
 protected:
     bool _delete_me;
 
 public:
+
+    ucontext_t*  _ucontext;
 
     virtual void* run()=0;
     

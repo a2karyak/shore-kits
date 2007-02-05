@@ -142,83 +142,54 @@ packet_list_t* stage_container_t::container_queue_dequeue() {
  */
 void stage_container_t::enqueue(packet_t* packet) {
 
-
     assert(packet != NULL);
 
+    packet_list_t* packets = new packet_list_t;
+    packets->push_back(packet);
+    stage_adaptor_t* adaptor = 
+        new stage_adaptor_t(this, packets,
+                            packets->front()->_output_filter->input_tuple_size());
 
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_container_lock);
+    /* This is ugly. We are going to create the first context for this
+       kernel thread. By creating it here, we don't have to modify the
+       individual query code.
 
-
-    // check for non-mergeable packets
-    if ( !packet->is_merge_enabled() )  {
-	// We are forcing the new packet to not merge with others.
-	container_queue_enqueue_no_merge(packet);
-        if (TRACE_MERGING)
-            TRACE(TRACE_ALWAYS, "%s merging disabled\n",
-                  packet->_packet_id.data());
-	return;
-	// * * * END CRITICAL SECTION * * *
+       Even though we initialize this context here with getcontext(),
+       we do this only so swapcontext() receives a valid ucontext_t as
+       its 'oucp' argument. As soon as we invoke swapcontext(), this
+       struct will be overwritten. */
+    thread_t* self = thread_get_self();
+    if (self->_ucontext == NULL) {
+        TRACE(TRACE_ALWAYS, "Have not set up a context! Must be a driver thread!\n");
+        ucontext_t* ctx = (ucontext_t*)malloc(sizeof(*ctx));
+        int getctx = getcontext(ctx);
+        assert(getctx == 0);
+        self->_ucontext = ctx;
     }
 
 
-    // try merging with packets in merge_candidates before they
-    // disappear or become non-mergeable
-    list<stage_adaptor_t*>::iterator sit = _container_current_stages.begin();
-    for( ; sit != _container_current_stages.end(); ++sit) {
-	// try to merge with this stage
-	stage_container_t::stage_adaptor_t* ad = *sit;
-	if ( ad->try_merge(packet) ) {
-	    /* packet was merged with this existing stage */
-            if (TRACE_MERGING)
-                TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
-                      packet->_packet_id.data(),
-                      packet->_next_tuple_on_merge);
-	    return;
-	    // * * * END CRITICAL SECTION * * *
-	}
-    }
+    /* Create a context for the consumer. */
+    ucontext_t* producer = (ucontext_t*)malloc(sizeof(*producer));
+    int getctx = getcontext(producer);
+    assert(getctx == 0);
 
-
-    // If we are here, we could not merge with any of the running
-    // stages. Don't give up. We can still try merging with a packet in
-    // the container_queue.
-    list<packet_list_t*>::iterator cit = _container_queue.begin();
-    for ( ; cit != _container_queue.end(); ++cit) {
-	
-	packet_list_t* cq_plist = *cit;
-	packet_t* cq_packet = cq_plist->front();
-
-
-	// No need to acquire queue_pack's merge mutex. No other
-	// thread can touch it until we release _container_lock.
+    long stack_size = SIGSTKSZ;
+    int* stack = (int*)malloc(stack_size);
+    assert(stack != NULL); /* TODO change this to a throw */
+    producer->uc_stack.ss_sp    = stack;
+    producer->uc_stack.ss_flags = 0;
+    producer->uc_stack.ss_size  = stack_size;
+    producer->uc_link           = self->_ucontext;
     
-	// We need to check queue_pack's mergeability flag since some
-	// packets are non-mergeable from the beginning. Don't need to
-	// grab its merge_mutex because its mergeability status could
-	// not have changed while it was in the queue.
-	if ( cq_packet->is_mergeable(packet) ) {
-	    // add this packet to the list of already merged packets
-	    // in the container queue
-	    cq_plist->push_back(packet);
-            if (TRACE_MERGING)
-                TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
-                      packet->_packet_id.data());
-	    return;
-	    // * * * END CRITICAL SECTION * * *
-	}
-    }
-    
-
-    if (TRACE_MERGING)
-        TRACE(TRACE_ALWAYS, "%s could not be merged\n",
-              packet->_packet_id.data());
+    makecontext(producer,
+                (void (*)())stage_container_t::static_run_stage_wrapper,
+                2,
+                _stage_maker->create_stage(), adaptor);
     
     
-    // No work sharing detected. We can now give up and insert the new
-    // packet into the stage_queue.
-    container_queue_enqueue_no_merge(packet);
-    // * * * END CRITICAL SECTION * * *
+    /* set up fifo fields */
+    packet->output_buffer()->_read_ctx  = self->_ucontext;
+    packet->output_buffer()->_write_ctx = producer;
 };
 
 

@@ -40,6 +40,7 @@ extern "C" void* start_thread(void *);
  */
 thread_t::thread_t(const c_str &name)
     : _thread_name(name), _delete_me(true)
+      , _ucontext(NULL)
 {
     // do nothing...
 }
