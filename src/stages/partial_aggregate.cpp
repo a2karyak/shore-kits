@@ -80,7 +80,16 @@ void partial_aggregate_stage_t::process_packet() {
                 size_t offset = agg_key->key_offset();
                 char* key_data = tup_key->extract_key(in);
                 hint_tuple_pair_t key(hint, key_data - offset);
-                
+
+		// Supposedly, insertion with a proper hint is
+		// amortized O(1) time. However, the definition of
+		// "proper" is ambiguous:
+		// - SGI STL reference: insertion point *before* hint
+		// - Solaris STL source: insert point *after* hint
+		// - Dinkum STL reference: insertion point *adjacent* to hint
+		// - GNU STL: no documentation (as usual); adjacent?
+		// - Solaris profiler: same performance as vanilla insert either way
+		
                 // find the lowest aggregate such that candidate >=
                 // key. This is either the aggregate we want or a good
                 // hint for the insertion that otherwise follows
