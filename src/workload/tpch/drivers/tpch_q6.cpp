@@ -23,8 +23,8 @@ void tpch_q6_driver::submit(void* disp) {
     tuple_t output;
     while( out->get_tuple(output) ) {
         decimal* r = aligned_cast<decimal>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "*** Q6 Count: %u. Sum: %lf.  ***\n",
-	      r[0].to_int(), r[1].to_double());
+        TRACE(TRACE_QUERY_RESULTS, "*** Q6 Sum: %f. Count: %u.  ***\n",
+	      r[0].to_double(), r[1].to_int());
     }
 }
 
