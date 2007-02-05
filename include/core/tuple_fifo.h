@@ -50,8 +50,8 @@ private:
 public:
 
     // coroutine vars
-    //    ucontext_t* _read_ctx;
-    //    ucontext_t* _write_ctx;
+    ucontext_t* _read_ctx;
+    ucontext_t* _write_ctx;
 
 
     /**

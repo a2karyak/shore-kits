@@ -28,6 +28,18 @@ const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 struct stop_exception { };
 
 
+
+void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
+                                                  stage_adaptor_t* adaptor)
+{
+    adaptor->run_stage(stage);
+    delete stage;
+    delete adaptor;
+    return NULL;
+}
+
+
+
 // container methods
 
 /**

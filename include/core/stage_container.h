@@ -27,7 +27,6 @@ public:
     static const unsigned int NEXT_TUPLE_UNINITIALIZED;
     static const unsigned int NEXT_TUPLE_INITIAL_VALUE;
 
-	
 protected:
 
     class stage_adaptor_t : public stage_t::adaptor_t {
@@ -105,8 +104,6 @@ protected:
 	bool try_merge(packet_t* packet);
 	void run_stage(stage_t* stage);
 
-    protected:
-
 	void finish_packet(packet_t* packet);
         void cleanup();
         void abort_queries();
@@ -115,7 +112,9 @@ protected:
 
         void output_page(page* p);
     };
-    
+
+
+protected:
     
     // container synch vars
     pthread_mutex_t _container_lock;
@@ -136,6 +135,10 @@ protected:
     
     
 public:
+    
+    /* -ngm- Used for plain operations in the qpipe-plain branch. */
+    static void* static_run_stage_wrapper(stage_t* stage,
+                                          stage_adaptor_t* adaptor);
 
     stage_container_t(const c_str &container_name, stage_factory_t* stage_maker);
     ~stage_container_t();
