@@ -10,11 +10,13 @@ LDADD = $(lib_LIBRARIES)
 TESTS = \
    tests/cpu_binding \
    tests/rand_array_access \
-   tests/load_db_tables \
    tests/trace \
+   tests/bitvector \
    tests/hashtable \
    tests/send_tuples \
    tests/tuple_buffer \
+   tests/context_makecontext \
+   tests/load_db_tables \
    tests/tpch_load \
    tests/tpch_struct_sizes \
    tests/fscan_stage \
@@ -37,11 +39,11 @@ TESTS = \
    tests/q19 \
    tests/q1 \
    tests/q4 \
-   tests/bitvector \
    tests/hash_map \
    tests_grouper \
    tests/busy_wait \
    tests/busy_wait_all
+
 
 bin_PROGRAMS = qpipe $(TESTS)
 
@@ -188,12 +190,13 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
-tests_load_db_tables_SOURCES = $(ST)/load_db_tables.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
+tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
 tests_send_tuples_SOURCES = $(ST)/test_send_tuples.cpp
 tests_tuple_buffer_SOURCES = $(ST)/test_tuple_buffer.cpp
-tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
+tests_context_makecontext_SOURCES = $(ST)/test_context_makecontext.cpp
+tests_load_db_tables_SOURCES = $(ST)/load_db_tables.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_fdump_stage_SOURCES = $(ST)/test_fdump_stage.cpp
 tests_merge_stage_SOURCES = $(ST)/test_merge_stage.cpp
