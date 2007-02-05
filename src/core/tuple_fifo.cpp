@@ -150,7 +150,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     for(size_t threshold=1; _available_writes() < threshold; threshold = _threshold) {
         //        fprintf(stderr, "Fifo %p sleeping on write\n", this);
         // sleep until something important changes
-        thread_cond_wait(_writer_notify, _lock);
+        wait_for_reader();
         _termination_check();
     }
 
@@ -172,9 +172,9 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     // notify the reader?
     if(_available_reads() >= _threshold || done_writing) {
         //        fprintf(stderr, "Fifo %p notifying reader\n", this);
-        thread_cond_signal(_reader_notify);
+        ensure_reader_running();
     }
-
+    
     // * * * END CRITICAL SECTION * * *
 }
 
@@ -190,7 +190,7 @@ bool tuple_fifo::_get_read_page() {
     for(size_t t=1; !_done_writing && _available_reads() < t; t = _threshold) {
         // sleep until something important changes
         //        fprintf(stderr, "Fifo %p sleeping on read\n", this);
-        thread_cond_wait(_reader_notify, _lock);
+        wait_for_writer();
         _termination_check();
     }
 
@@ -207,8 +207,8 @@ bool tuple_fifo::_get_read_page() {
     // notify the writer?
     if(_available_writes() >= _threshold && !_done_writing) {
         //        fprintf(stderr, "Fifo %p notifying writer\n", this);
-        thread_cond_signal(_writer_notify);
-}
+        ensure_writer_running();
+    }
 
     // * * * END CRITICAL SECTION * * *
     return true;

@@ -245,6 +245,7 @@ public:
 
 
 private:
+
     size_t _available_writes() {
         return _capacity - _available_reads();
     }
@@ -264,7 +265,6 @@ private:
 	_read_end = _read_page->end()->data;
     }
 
-
     void init();
     void destroy();
 
@@ -272,6 +272,22 @@ private:
     bool _get_read_page();
     void _flush_write_page(bool done_writing);
 
+    
+    void wait_for_reader() {
+        thread_cond_wait(_writer_notify, _lock);
+    }
+    void ensure_reader_running() {
+        thread_cond_signal(_reader_notify);
+    }
+    
+    void wait_for_writer() {
+        thread_cond_wait(_reader_notify, _lock);
+    }
+
+    void ensure_writer_running() {
+        thread_cond_signal(_writer_notify);
+    }
+    
 };
 
 
