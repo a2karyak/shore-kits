@@ -9,9 +9,9 @@ ENTER_NAMESPACE(qpipe);
  */
 struct sentinel_page_pool : page_pool {
     // ensure enough space for one 1-byte tuple (so the page is empty)
-    char _data[sizeof(page)];
+    char _data[sizeof(qpipe::page)];
     sentinel_page_pool()
-        : page_pool(sizeof(page))
+        : page_pool(sizeof(qpipe::page))
     {
         /* We need a really special page with the following properties:
          * - read sentinel: p->begin() == p->end()
@@ -40,11 +40,8 @@ struct sentinel_page_pool : page_pool {
  * don't care.
  */
 static sentinel_page_pool SENTINEL_POOL;
-static page* SENTINEL_PAGE = page::alloc(1, &SENTINEL_POOL);
-
-
-static const int PAGE_SIZE = 4096;
-
+static qpipe::page* SENTINEL_PAGE = qpipe::page::alloc(1, &SENTINEL_POOL);
+static const int QPIPE_PAGE_SIZE = 4096;
 
 
 // use 3/9 for "good" performance
@@ -54,10 +51,10 @@ static const int PAGE_SIZE = 4096;
 inline
 void touch(void const*) {
 #if 0
-    assert(PAGE_SIZE/CACHE_LINE % 8 == 0);
+    assert(QPIPE_PAGE_SIZE/CACHE_LINE % 8 == 0);
     static int const CACHE_LINE = 64/sizeof(long);
     long volatile *bp = (long*) page;
-    long *be = PAGE_SIZE/sizeof(long) + (long*) page;
+    long *be = QPIPE_PAGE_SIZE/sizeof(long) + (long*) page;
     for(; bp < be; bp+=CACHE_LINE*8) {
         bp[0*CACHE_LINE];
         bp[1*CACHE_LINE];

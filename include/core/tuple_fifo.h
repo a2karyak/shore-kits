@@ -5,6 +5,7 @@
 #include "core/tuple.h"
 #include <vector>
 #include <list>
+#include <ucontext.h>
 
 ENTER_NAMESPACE(qpipe);
 

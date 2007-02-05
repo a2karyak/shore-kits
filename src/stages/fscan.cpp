@@ -32,7 +32,8 @@ void fscan_stage_t::process_packet() {
                         errno_to_str().data(), filename.data());
 
         
-    guard<page> tuple_page = page::alloc(packet->output_buffer()->tuple_size());
+    guard<qpipe::page> tuple_page =
+        qpipe::page::alloc(packet->output_buffer()->tuple_size());
     
 
     // If we have FSCAN working sharing enabled, we could be accepting
@@ -55,7 +56,7 @@ void fscan_stage_t::process_packet() {
 	}
 
 	// output() each tuple in the page
-	page::iterator it = tuple_page->begin();
+        qpipe::page::iterator it = tuple_page->begin();
         while(it != tuple_page->end())
 	    adaptor->output(*it++);
 

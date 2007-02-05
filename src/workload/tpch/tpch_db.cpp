@@ -74,13 +74,13 @@ static void open_db_table(page_list* table, const char* table_name) {
     if(f == NULL) 
         THROW2(FileException, "Unable to open %s\n", fname);
     
-    page* p = page::alloc(1);
+    qpipe::page* p = qpipe::page::alloc(1);
     while(p->fread_full_page(f)) {
         if (0 && !strcmp(table_name, "LINEITEM.cdb")) {
             TRACE(TRACE_ALWAYS, "Loaded %s with another page\n", table_name);
         }
         table->push_back(p);
-        p = page::alloc(1);
+        p = qpipe::page::alloc(1);
     }
     TRACE(TRACE_ALWAYS, "%s loaded with %d pages\n", table_name, table->size());
 

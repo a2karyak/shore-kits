@@ -44,7 +44,7 @@ void bnl_join_stage_t::process_packet() {
         
         
         // get another page of tuples from the outer relation
-        guard<page> outer_tuple_page = left_buffer->get_page();
+        guard<qpipe::page> outer_tuple_page = left_buffer->get_page();
         if ( !outer_tuple_page )
             // done with outer relation... done with join
             return;
@@ -60,7 +60,7 @@ void bnl_join_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            guard<page> inner_tuple_page = right_buffer->get_page();
+            guard<qpipe::page> inner_tuple_page = right_buffer->get_page();
             if ( !inner_tuple_page )
                 // done with inner relation... continue to next page
                 // of outer relation
@@ -69,14 +69,14 @@ void bnl_join_stage_t::process_packet() {
             
             // join each tuple on the outer relation page with each
             // tuple on the inner relation page
-            page::iterator o_it = outer_tuple_page->begin();
+            qpipe::page::iterator o_it = outer_tuple_page->begin();
             while(o_it != outer_tuple_page->end()) {
 
                 tuple_t outer_tuple = o_it.advance();
                 const char* outer_key = join->left_key(outer_tuple);
 
 
-                page::iterator i_it = inner_tuple_page->begin();
+                qpipe::page::iterator i_it = inner_tuple_page->begin();
                 while(i_it != inner_tuple_page->end()) {
 
 

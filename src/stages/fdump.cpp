@@ -40,7 +40,7 @@ void fdump_stage_t::process_packet() {
     // read the file; make sure the buffer pages get deleted
     while (1) {
     
-        guard<page> tuple_page = input_buffer->get_page();
+        guard<qpipe::page> tuple_page = input_buffer->get_page();
         if(tuple_page == NULL) {
             // no more pages
             TRACE(TRACE_DEBUG, "Finished dump to file %s\n", filename.data());

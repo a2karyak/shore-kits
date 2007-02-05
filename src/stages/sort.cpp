@@ -20,7 +20,6 @@ using std::list;
 
 
 
-
 const c_str sort_packet_t::PACKET_TYPE = "SORT";
 
 
@@ -33,7 +32,7 @@ const unsigned int sort_stage_t::PAGES_PER_INITIAL_SORTED_RUN = 8 * 1024;
 
 
 
-static void flush_page(page* pg, FILE* file);
+static void flush_page(qpipe::page* pg, FILE* file);
 
 
 
@@ -371,11 +370,11 @@ void sort_stage_t::process_packet() {
         return;
     
     // create a buffer page for writing to file
-    guard<page> out_page = page::alloc(_tuple_size);
+    guard<qpipe::page> out_page = qpipe::page::alloc(_tuple_size);
     
     // create a key array 
     int capacity =
-        page::capacity(_input_buffer->page_size(), _tuple_size);
+        qpipe::page::capacity(_input_buffer->page_size(), _tuple_size);
     int tuple_count = PAGES_PER_INITIAL_SORTED_RUN * capacity;
     hint_vector_t array;
     array.reserve(tuple_count);
@@ -400,7 +399,7 @@ void sort_stage_t::process_packet() {
         for(unsigned int i=0; i < PAGES_PER_INITIAL_SORTED_RUN; i++) {
 
             // read in a run of pages
-            page* p = _input_buffer->get_page();
+            qpipe::page* p = _input_buffer->get_page();
             if(p == NULL)
                 break;
 
@@ -408,7 +407,7 @@ void sort_stage_t::process_packet() {
             pages.add(p);
 
             // add the tuples in the page into the key array
-            for(page::iterator it=p->begin(); it != p->end(); ++it) {
+            for(qpipe::page::iterator it=p->begin(); it != p->end(); ++it) {
                 int hint = _extract->extract_hint(*it);
                 array.push_back(hint_tuple_pair_t(hint, it->data));
             }
@@ -483,7 +482,7 @@ void sort_stage_t::process_packet() {
 /**
  * @brief flush (page) to (file) and clear it. PANIC on error.
  */
-static void flush_page(page* pg, FILE* file) {
+static void flush_page(qpipe::page* pg, FILE* file) {
     pg->fwrite_full_page(file);
     pg->clear();
 }
