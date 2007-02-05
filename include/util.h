@@ -16,6 +16,7 @@
 #include "util/time.h"
 #include "util/tmpfile.h"
 #include "util/trace.h"
+#include "util/offsetof.h"
 
 
 #endif

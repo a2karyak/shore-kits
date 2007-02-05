@@ -79,7 +79,7 @@ public:
            L_QUANTITY < QUANTITY
         */
 
-        offset = offsetof(tpch_lineitem_tuple,L_SHIPDATE);
+        offset = offsetof(tpch_lineitem_tuple, L_SHIPDATE);
         p = new scalar_predicate_t<time_t, greater_equal>(t1, offset);
         _filter.add(p);
         p = new scalar_predicate_t<time_t, less>(t2, offset);

@@ -12,15 +12,18 @@
  */
 
 
-/* The linker should find a nice home for this */
-unsigned long offsetof_base;
+#define ASSIGN_OFFSET_OF(dest,type,field) { \
+   type t;                                  \
+   size_t field_base  = (size_t)(&t.field); \
+   size_t struct_base = (size_t)(&t);       \
+   dest = field_base - struct_base;         \
+}
 
-#ifdef offsetof
-#undef offsetof
-#endif
 
-#define offsetof(struct_name,field) \
+/*
+  #define offsetof(struct_name,field) { \
   ( ((size_t)&(((struct_name*)(&offsetof_base))->field)) - (size_t)(&offsetof_base) )
+*/
 
 
 #endif
