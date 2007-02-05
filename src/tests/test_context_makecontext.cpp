@@ -36,12 +36,13 @@ int main(int, char**) {
        makecontext(). Since the only other way to create a context is
        by using getcontext(), we have the following choices:
 
-       - Return to the root thread (or at least the kernel thread that
-         was running before we made any context switches).
+       - Return to the root context (the context that was running
+         before we made any context switches). This is the preferred
+         approach.
         
-       - Exit from this thread (I guess with pthread_exit()).
+       - Exit the kernel thread (I guess with pthread_exit()).
 
-       - Exit from the program (with the exit() system call).
+       - Exit the program (with the exit() system call).
     */
     
     int getroot = getcontext(&root);
