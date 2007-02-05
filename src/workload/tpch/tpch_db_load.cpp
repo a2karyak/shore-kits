@@ -63,7 +63,7 @@ void parse_table(char const* fin_name, char const* fout_name,
         THROW1(BdbException, "fopen() failed");
     }
 
-    page *p = page::alloc(tuple_size);
+    qpipe::page *p = qpipe::page::alloc(tuple_size);
     while (fgets(linebuffer, MAX_LINE_LENGTH, fin)) {
         // flush to file?
         if(p->full()) {

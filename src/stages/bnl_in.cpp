@@ -46,7 +46,7 @@ void bnl_in_stage_t::process_packet() {
         
         
         // get another page of tuples from the outer relation
-        guard<page> outer_tuple_page = left_buffer->get_page();
+        guard<qpipe::page> outer_tuple_page = left_buffer->get_page();
         if ( !outer_tuple_page )
             // done with outer relation... done with join
             return;
@@ -68,7 +68,7 @@ void bnl_in_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            guard<page> inner_tuple_page = right_buffer->get_page();
+            guard<qpipe::page> inner_tuple_page = right_buffer->get_page();
             if ( !inner_tuple_page )
                 // done with inner relation... time to output some
                 // tuples from opage
@@ -77,7 +77,7 @@ void bnl_in_stage_t::process_packet() {
             
             // compare each tuple on the outer relation page with each
             // tuple on the inner relation page
-            page::iterator o_it = outer_tuple_page->begin();
+            qpipe::page::iterator o_it = outer_tuple_page->begin();
             for (int o_index = 0; o_it != outer_tuple_page->end(); ++o_index) {
                 
                 
@@ -87,7 +87,7 @@ void bnl_in_stage_t::process_packet() {
                     outer_ktpair(_extract->extract_hint(outer_tuple), outer_tuple.data);
 
                 
-                page::iterator i_it = inner_tuple_page->begin();
+                qpipe::page::iterator i_it = inner_tuple_page->begin();
                 while(i_it != inner_tuple_page->end()) {
 
                     
@@ -111,7 +111,7 @@ void bnl_in_stage_t::process_packet() {
         // now that we've scanned over the inner relation, we have
         // enough information to process the page of outer relation
         // tuples
-        page::iterator o_it = outer_tuple_page->begin();
+        qpipe::page::iterator o_it = outer_tuple_page->begin();
         for (int o_index = 0; o_it != outer_tuple_page->end(); ++o_index) {
             if ( matches[o_index] != output_on_match ) 
                 _adaptor->output(o_it.advance());

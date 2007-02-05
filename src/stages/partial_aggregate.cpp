@@ -23,7 +23,7 @@ int partial_aggregate_stage_t::alloc_agg(hint_tuple_pair_t &agg, const char* key
         if(_page_count >= MAX_RUN_PAGES)
             return 1;
 
-        _agg_page = page::alloc(_aggregate->tuple_size());
+        _agg_page = qpipe::page::alloc(_aggregate->tuple_size());
         _page_list.add(_agg_page);
         _page_count++;
     }
@@ -62,7 +62,7 @@ void partial_aggregate_stage_t::process_packet() {
         _page_count = 0;
         _agg_page = NULL;
         while(_page_count < MAX_RUN_PAGES && !input_buffer->eof()) {
-            guard<page> page = NULL;
+            guard<qpipe::page> page = NULL;
             tuple_t in;
             while(1) {
                 // out of pages?

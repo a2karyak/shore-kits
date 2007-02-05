@@ -20,9 +20,9 @@
 #endif
 
 
-using namespace qpipe;
 using std::string;
 using std::vector;
+using namespace qpipe;
 
 
 #define HASH_JOIN_STAGE_NAME  "HASH_JOIN"
@@ -192,7 +192,7 @@ private:
 
     struct partition_t {
 
-        page* _page;
+        qpipe::page* _page;
         int size;
         FILE *file;
         c_str file_name1;
@@ -226,7 +226,7 @@ private:
             it->file = create_tmp_file(it->file_name2, "hash-join-left");
             
             // resize the page to match left-side tuples
-            it->_page = page::alloc(_left_tuple_size);
+            it->_page = qpipe::page::alloc(_left_tuple_size);
         }
     };
     

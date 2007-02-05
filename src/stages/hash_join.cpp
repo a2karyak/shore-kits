@@ -80,7 +80,7 @@ void hash_join_stage_t::process_packet() {
         /* If the partition was full, we would have flushed its data
            and cleared it of tuples. We can now safely append to the
            page. */
-        page* &p = partitions[partition]._page;
+        qpipe::page* &p = partitions[partition]._page;
         p->append_tuple(right);
     }
 
@@ -91,8 +91,9 @@ void hash_join_stage_t::process_packet() {
        files. */
 
     /* Create and fill the in-memory hash table. */
-    size_t page_capacity = page::capacity(get_default_page_size(),
-                                          _join->right_tuple_size());
+    size_t page_capacity =
+        qpipe::page::capacity(get_default_page_size(),
+                              _join->right_tuple_size());
 
     extractkey_t right_key_extractor(_join, true);
     equalbytes_t equal_key (_join->key_size());
@@ -109,7 +110,7 @@ void hash_join_stage_t::process_packet() {
     right_action_t right_action(_join->left_tuple_size());
     for(partition_list_t::iterator it=partitions.begin(); it != partitions.end(); ++it) {
 
-        page* p = it->_page;
+        qpipe::page* p = it->_page;
         if(p == NULL)
             // empty partition
             continue;
@@ -121,7 +122,7 @@ void hash_join_stage_t::process_packet() {
         // build hash table out of in-memory partition
         else {
             while(p) {
-                for(page::iterator it=p->begin(); it != p->end(); ++it) {
+                for(qpipe::page::iterator it=p->begin(); it != p->end(); ++it) {
                     // Distinguish between DISTINCT join and
                     // non-DISTINCT join, as DB/2 does
                     if(distinct)
@@ -166,7 +167,7 @@ void hash_join_stage_t::process_packet() {
 
         // add to file partition?
         if(p.file) {
-            page* pg = p._page;
+            qpipe::page* pg = p._page;
 
             // flush to disk?
             if(pg->full()) {
@@ -202,7 +203,7 @@ void hash_join_stage_t::process_packet() {
     table.clear();
     for(partition_list_t::iterator it=partitions.begin(); it != partitions.end(); ++it) {
         // delete the page list
-        for(guard<page> pg = it->_page; pg; pg = pg->next);
+        for(guard<qpipe::page> pg = it->_page; pg; pg = pg->next);
         if(it->file) 
             close_file(it, left_action_t());
     }
@@ -249,7 +250,7 @@ void hash_join_stage_t::test_overflow(int partition) {
         p.file = create_tmp_file(p.file_name1, "hash-join-right");
 
         /* Send the partition to the file. */
-        guard<page> head;
+        guard<qpipe::page> head;
         for(head = p._page; head->next; head=head->next) {
             head->fwrite_full_page(p.file);
             page_count--;
@@ -264,7 +265,8 @@ void hash_join_stage_t::test_overflow(int partition) {
         
         /* No need to flush to disk. Simply add a page to the full
            in-memory partition. */
-        page* pg = page::alloc(_join->right_tuple_size());
+        qpipe::page* pg =
+            qpipe::page::alloc(_join->right_tuple_size());
         pg->next = p._page;
         p._page = pg;
         page_count++;
@@ -282,7 +284,7 @@ void hash_join_stage_t::close_file(partition_list_t::iterator it, Action action)
     /* I think this function is supposed to have no effect if called
        on an in-memory partition. If it is called on a file partition,
        it is supposed to flush the partition to disk. */
-    page *p = it->_page;
+    qpipe::page *p = it->_page;
     
     /* File partition? */
     /* Write remaining tuples to disk and apply 'action' to it. */
