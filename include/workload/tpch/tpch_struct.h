@@ -100,11 +100,11 @@ struct tpch_lineitem_tuple {
     time_t L_SHIPDATE;
     time_t L_COMMITDATE;
     time_t L_RECEIPTDATE;
+    tpch_l_shipmode L_SHIPMODE;
     int L_ORDERKEY;
     int L_LINENUMBER;
     int L_PARTKEY;
     int L_SUPPKEY;
-    tpch_l_shipmode L_SHIPMODE;
     char L_RETURNFLAG;
     char L_LINESTATUS;
     char L_SHIPINSTRUCT[STRSIZE(25)];
@@ -112,19 +112,19 @@ struct tpch_lineitem_tuple {
 };
 
 struct tpch_nation_tuple {
+    tpch_n_name N_NAME;
     int N_NATIONKEY;
     int N_REGIONKEY;
-    tpch_n_name N_NAME;
     char N_COMMENT[STRSIZE(152)];
 };
 
 struct tpch_orders_tuple {
     decimal O_TOTALPRICE;
     time_t O_ORDERDATE;
+    tpch_o_orderpriority O_ORDERPRIORITY;
     int O_ORDERKEY;
     int O_CUSTKEY;
     int O_SHIPPRIORITY;
-    tpch_o_orderpriority O_ORDERPRIORITY;
     char O_ORDERSTATUS;
     char O_CLERK  [STRSIZE(15)];
     char O_COMMENT[STRSIZE(79)];
