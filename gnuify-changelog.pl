@@ -10,6 +10,7 @@
 # $ svn log | /path/to/gnuify-changelog.pl > ChangeLog
 
 %hackers = ( "ryan"      => 'Ryan Johnson <ryanjohn@ece.cmu.edu>',
+             "ryanjohn"  => 'Ryan Johnson <ryanjohn@ece.cmu.edu>',
 	     "ipandis"   => 'Ippokratis Pandis <ipandis@cs.cmu.edu>',
 	     "nhardave"  => 'Nikos Hardavellas <nhardave@andrew.cmu.edu>',
 	     "ddash"     => 'Debabrata Dash <ddash@andrew.cmu.edu>',
@@ -35,6 +36,8 @@ while (<>) {
 
     @parts = split (/ /, $_);
 
+
+    # Remove uninitialized string...
     print "$parts[0] $parts[4] $hackers{$parts[2]}\n";
     # read all the blank lines
     $first_line=1;
