@@ -16,7 +16,7 @@
 int g_switched = 0;
 
 
-void* switcher_main(int arg)
+extern "C" void* switcher_main(int arg)
 {
     TRACE(TRACE_ALWAYS, "IN SWITCHER WITH ARG = %d\n", arg);
     return NULL;

@@ -27,7 +27,7 @@ ucontext_t producer, consumer;
 
 
 
-void* producer_main(int arg)
+extern "C" void* producer_main(int arg)
 {
     static int gen = 100;
 

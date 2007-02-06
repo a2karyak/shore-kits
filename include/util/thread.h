@@ -108,7 +108,7 @@ public:
         assert(n > 0);
 
         if ((n & -n) == n)  // i.e., n is a power of 2
-            return (int)((n * (uint64_t)rand()) >> 31);
+            return (int)((n * (uint64_t)rand()) / (RAND_MAX+1));
 
         int bits, val;
         do {
