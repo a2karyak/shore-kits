@@ -27,7 +27,7 @@ char* strerror_copy(int errnum);
 char* errnum_to_string(int errnum)
 {
 
-  char* const_errstr = NULL;
+  char const* const_errstr = NULL;
 
 #define CASE(errnum) { case errnum: const_errstr = #errnum; break; }
  
@@ -72,7 +72,7 @@ char* errnum_to_string(int errnum)
     CASE(EIO);
     CASE(EISCONN);
     CASE(EISDIR);
-    CASE(EISNAM);
+    /*CASE(EISNAM);*/
     /* CASE(EKEYEXPIRED); */
     /* CASE(EKEYREJECTED); */
     /* CASE(EKEYREVOKED); */
@@ -86,8 +86,8 @@ char* errnum_to_string(int errnum)
     CASE(ELIBSCN);
     CASE(ELIBEXEC);
     CASE(ELOOP);
-    CASE(EMEDIUMTYPE);
-    CASE(EMFILE);
+    //    CASE(EMEDIUMTYPE); // not defined
+    CASE(EMFILE); // defined twice (?)
     CASE(EMLINK);
     CASE(EMSGSIZE);
     CASE(EMULTIHOP);
@@ -104,7 +104,7 @@ char* errnum_to_string(int errnum)
     /* CASE(ENOKEY); */
     CASE(ENOLCK);
     CASE(ENOLINK);
-    CASE(ENOMEDIUM);
+    //    CASE(ENOMEDIUM);
     CASE(ENOMEM);
     CASE(ENOMSG);
     CASE(ENONET);
@@ -125,7 +125,7 @@ char* errnum_to_string(int errnum)
     CASE(ENXIO);
     /* CASE(EOPNOTSUPP); */ /* same value as ENOTSUP in Linux */
     CASE(EOVERFLOW);
-    CASE(EPERM);
+    //     CASE(EPERM); // defined twice?
     CASE(EPFNOSUPPORT);
     CASE(EPIPE);
     CASE(EPROTO);
@@ -134,7 +134,7 @@ char* errnum_to_string(int errnum)
     CASE(ERANGE);
     CASE(EREMCHG);
     CASE(EREMOTE);
-    CASE(EREMOTEIO);
+    //    CASE(EREMOTEIO); // not defined
     CASE(ERESTART);
     CASE(EROFS);
     CASE(ESHUTDOWN);
@@ -146,7 +146,7 @@ char* errnum_to_string(int errnum)
     CASE(ETIME);
     CASE(ETIMEDOUT);
     CASE(ETXTBSY);
-    CASE(EUCLEAN);
+    //    CASE(EUCLEAN); // not defined
     CASE(EUNATCH);
     CASE(EUSERS);
     /* CASE(EWOULDBLOCK); */ /* same value as EAGAIN in Linux */
@@ -212,11 +212,8 @@ char* strerror_copy(int errnum)
 #else
 
 
-  size_t size = INITIAL_STRERROR_BUFFER_SIZE;
-  char errstr[size];
-  char* strerror_ret = strerror_r(errnum, errstr, size);
-  assert(strerror_ret = errstr);
-  return alloc_printf(NULL, NULL, "(%s)", errstr);
+  char const* strerror_ret = strerror(errnum);
+  return alloc_printf(NULL, NULL, "(%s)", strerror_ret);
 
 
 #endif

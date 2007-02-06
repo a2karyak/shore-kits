@@ -30,7 +30,7 @@ struct stop_exception { };
 
 
 
-void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
+extern "C" void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
                                                   stage_adaptor_t* adaptor,
                                                   ctx_t* ctx)
 {
