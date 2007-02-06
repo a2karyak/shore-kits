@@ -2,6 +2,7 @@
 
 #include "core/stage_container.h"
 #include "util.h"
+#include "util/ctx.h"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -30,8 +31,12 @@ struct stop_exception { };
 
 
 void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
-                                                  stage_adaptor_t* adaptor)
+                                                  stage_adaptor_t* adaptor,
+                                                  ctx_t* ctx)
 {
+    thread_t* self = thread_get_self();
+    TRACE(TRACE_ALWAYS, "Running with self = %p\n", self);
+    self->_ctx = ctx;
     adaptor->run_stage(stage);
     delete stage;
     delete adaptor;
@@ -159,36 +164,40 @@ void stage_container_t::enqueue(packet_t* packet) {
        its 'oucp' argument. As soon as we invoke swapcontext(), this
        struct will be overwritten. */
     thread_t* self = thread_get_self();
-    if (self->_ucontext == NULL) {
+    if (self->_ctx == NULL) {
+
         TRACE(TRACE_ALWAYS, "Have not set up a context! Must be a driver thread!\n");
-        ucontext_t* ctx = (ucontext_t*)malloc(sizeof(*ctx));
-        int getctx = getcontext(ctx);
-        assert(getctx == 0);
-        self->_ucontext = ctx;
+
+        /* Let's name the context after the thread itself. */
+        c_str  self_name("(DRIVER %s)", self->thread_name().data());
+        ctx_t* ctx = new ctx_t(self_name);
+        self->_ctx = ctx;
     }
 
 
-    /* Create a context for the consumer. */
-    ucontext_t* producer = (ucontext_t*)malloc(sizeof(*producer));
-    int getctx = getcontext(producer);
-    assert(getctx == 0);
+    /* Name the new context using the packet type */
+    c_str  producer_name("(%s)", packet->_packet_type.data());
+    ctx_t* producer = new ctx_t(producer_name);
+    
+#define KB 1024
+#define MB (KB * KB)
 
-    long stack_size = SIGSTKSZ;
+    long stack_size = 4 * MB;
     int* stack = (int*)malloc(stack_size);
     assert(stack != NULL); /* TODO change this to a throw */
-    producer->uc_stack.ss_sp    = stack;
-    producer->uc_stack.ss_flags = 0;
-    producer->uc_stack.ss_size  = stack_size;
-    producer->uc_link           = self->_ucontext;
+    producer->_context.uc_stack.ss_sp    = stack;
+    producer->_context.uc_stack.ss_flags = 0;
+    producer->_context.uc_stack.ss_size  = stack_size;
+    producer->_context.uc_link           = &self->_ctx->_context;
     
-    makecontext(producer,
+    makecontext(&producer->_context,
                 (void (*)())stage_container_t::static_run_stage_wrapper,
-                2,
-                _stage_maker->create_stage(), adaptor);
+                3,
+                _stage_maker->create_stage(), adaptor, producer);
     
     
     /* set up fifo fields */
-    packet->output_buffer()->_read_ctx  = self->_ucontext;
+    packet->output_buffer()->_read_ctx  = self->_ctx;
     packet->output_buffer()->_write_ctx = producer;
 };
 
@@ -441,19 +450,20 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
  *  @param packet The packet to terminate.
  */
 void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
-
     
     // packet output buffer
-    guard<tuple_fifo> output_buffer = packet->release_output_buffer();
-    if ( output_buffer->send_eof() )
-        // Consumer has not already terminated this buffer! It is now
-        // responsible for deleting it.
-        output_buffer.release();
+    tuple_fifo* output_buffer = packet->release_output_buffer();
+    output_buffer->send_eof();
+    /* Should never come back here. What about deleting the packet below? */
+    assert(0);
+
 
     // packet input buffer(s)
     if ( packet != _packet ) {
         // since we are not the primary, can happily destroy packet
         // subtrees
+        TRACE(TRACE_ALWAYS, "Destroying %p\n", packet);
+        while(1);
         delete packet;
     }
 }

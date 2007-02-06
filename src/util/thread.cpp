@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util/thread.h"
+#include "util/errnum_to_string.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,7 +41,7 @@ extern "C" void* start_thread(void *);
  */
 thread_t::thread_t(const c_str &name)
     : _thread_name(name), _delete_me(true)
-      , _ucontext(NULL)
+    , _ctx(NULL)
 {
     // do nothing...
 }
@@ -180,6 +181,11 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
 void thread_mutex_lock(pthread_mutex_t &mutex)
 {
     int err = pthread_mutex_lock(&mutex);
+    if (err) {
+        char* str = errnum_to_string(err);
+        printf("error %s\n", str);
+        free(str);
+    }
     THROW_IF(ThreadException, err);
 }
 
@@ -264,7 +270,7 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
  *
  *  @return The value returned by thread_object->run().
  */
-
+#include "util/trace.h"
 void* start_thread(void* thread_object)
 {
     thread_t* thread = (thread_t*)thread_object;
@@ -275,8 +281,10 @@ void* start_thread(void* thread_object)
     // pieces of thread-specific storage.
     err = pthread_setspecific(THREAD_KEY_SELF, thread);
     THROW_IF(ThreadException, err);
-  
+ 
     thread->reset_rand();
+    TRACE(TRACE_ALWAYS, "Running\n");
+
     return thread->run();
 }
 

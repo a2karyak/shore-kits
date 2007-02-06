@@ -6,6 +6,7 @@
 #include "util.h"
 #include "core/packet.h"
 #include "core/stage.h"
+#include "util/ctx.h"
 
 
 
@@ -138,7 +139,8 @@ public:
     
     /* -ngm- Used for plain operations in the qpipe-plain branch. */
     static void* static_run_stage_wrapper(stage_t* stage,
-                                          stage_adaptor_t* adaptor);
+                                          stage_adaptor_t* adaptor,
+                                          ctx_t* context);
 
     stage_container_t(const c_str &container_name, stage_factory_t* stage_maker);
     ~stage_container_t();

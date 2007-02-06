@@ -70,7 +70,9 @@ lib_libutil_a_SOURCES = \
 	$(SU)/trace.cpp \
 	$(SU)/tcp.cpp \
 	$(SU)/rio.cpp \
-	$(SU)/chomp.cpp
+	$(SU)/chomp.cpp \
+        $(SU)/alloc_printf.cpp \
+        $(SU)/errnum_to_string.cpp
 
 
 ################################################################################

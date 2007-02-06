@@ -3,9 +3,10 @@
 #define __TUPLE_FIFO_H
 
 #include "core/tuple.h"
+#include "util/ctx.h"
 #include <vector>
 #include <list>
-#include <ucontext.h>
+
 
 ENTER_NAMESPACE(qpipe);
 
@@ -23,6 +24,9 @@ DEFINE_EXCEPTION(TerminatedBufferException);
 class tuple_fifo {
 
 private:
+
+    static bool DEBUG_CTX_SWITCH;
+
     typedef std::list<page*> page_list;
     page_list _pages;
     
@@ -50,8 +54,8 @@ private:
 public:
 
     // coroutine vars
-    ucontext_t* _read_ctx;
-    ucontext_t* _write_ctx;
+    ctx_t* _read_ctx;
+    ctx_t* _write_ctx;
 
 
     /**
@@ -86,6 +90,8 @@ public:
     }
 
     ~tuple_fifo() {
+        assert(this != NULL);
+        TRACE(TRACE_ALWAYS, "Fifo %p destructor running\n", this);
         destroy();
     }
 
@@ -278,22 +284,73 @@ private:
     bool _get_read_page();
     void _flush_write_page(bool done_writing);
 
-    
-    void wait_for_reader() {
-        thread_cond_wait(_writer_notify, _lock);
-    }
     void ensure_reader_running() {
-        thread_cond_signal(_reader_notify);
-    }
-    
-    void wait_for_writer() {
-        thread_cond_wait(_reader_notify, _lock);
+        /* not clear whether we need to switch here */
+        /* do nothing */
     }
 
     void ensure_writer_running() {
-        thread_cond_signal(_writer_notify);
+        /* not clear whether we need to switch here */
+        /* do nothing */
     }
-    
+
+
+    void wait_for_reader() {
+
+        pthread_mutex_unlock(&_lock);
+        
+        if (DEBUG_CTX_SWITCH) {
+            TRACE(TRACE_ALWAYS, "Running in context %s\n",
+                  thread_get_self()->_ctx->_context_name.data());
+            TRACE(TRACE_ALWAYS, "FIFO thinks we are going to switch from %s to %s\n",
+                  _write_ctx->_context_name.data(),
+                  _read_ctx->_context_name.data());
+        }
+
+        /* writer waits */
+        assert(thread_get_self()->_ctx == _write_ctx);
+        int swapret = swapcontext(&_write_ctx->_context, &_read_ctx->_context);
+        assert(swapret == 0);
+
+        /* back to the writer! */
+        thread_get_self()->_ctx = _write_ctx;
+
+        if (DEBUG_CTX_SWITCH) {
+            TRACE(TRACE_ALWAYS, "Now running in context %s\n",
+                  thread_get_self()->_ctx->_context_name.data());
+        }
+        
+        pthread_mutex_lock(&_lock);
+    }
+
+
+    void wait_for_writer() {
+
+        pthread_mutex_unlock(&_lock);
+
+        if (DEBUG_CTX_SWITCH) {
+            TRACE(TRACE_ALWAYS, "Running in context %s\n",
+                  thread_get_self()->_ctx->_context_name.data());
+            TRACE(TRACE_ALWAYS, "FIFO thinks we are going to switch from %s to %s\n",
+                  _read_ctx->_context_name.data(),
+                  _write_ctx->_context_name.data());
+        }
+
+        /* reader waits */
+        assert(thread_get_self()->_ctx == _read_ctx);
+        int swapret = swapcontext(&_read_ctx->_context, &_write_ctx->_context);
+        assert(swapret == 0);
+
+        /* back to the reader! */
+        thread_get_self()->_ctx = _read_ctx;
+        if (DEBUG_CTX_SWITCH) {
+            TRACE(TRACE_ALWAYS, "Now running in context %s\n",
+                  thread_get_self()->_ctx->_context_name.data());
+        }
+
+        pthread_mutex_lock(&_lock);
+    }
+  
 };
 
 

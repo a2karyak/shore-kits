@@ -4,6 +4,11 @@
 
 ENTER_NAMESPACE(qpipe);
 
+
+bool tuple_fifo::DEBUG_CTX_SWITCH = false;
+
+
+
 /* The pool that manages the sentinel page. Only one page will ever be
  * "created", and it must not actually go away when freed.
  */
@@ -214,8 +219,26 @@ bool tuple_fifo::_get_read_page() {
 
 bool tuple_fifo::send_eof() {
     try {
+
         // make sure not to drop a partial page
         _flush_write_page(true);
+
+        DEBUG_CTX_SWITCH = true;
+
+        if (DEBUG_CTX_SWITCH) {
+            TRACE(TRACE_ALWAYS, "Running in context %s\n",
+                  thread_get_self()->_ctx->_context_name.data());
+            TRACE(TRACE_ALWAYS, "FIFO thinks we are going to switch from %s to %s\n",
+                  _write_ctx->_context_name.data(),
+                  _read_ctx->_context_name.data());
+        }
+
+        /* writer never returns */
+        assert(thread_get_self()->_ctx == _write_ctx);
+        int swapret = swapcontext(&_write_ctx->_context, &_read_ctx->_context);
+        assert(swapret == 0);
+        assert(0);
+
         return true;
     }
     catch(TerminatedBufferException &e) {

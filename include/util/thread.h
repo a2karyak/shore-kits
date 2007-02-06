@@ -22,6 +22,7 @@
 
 #include "util/c_str.h"
 #include "util/exception.h"
+#include "util/ctx.h"
 
 
 DEFINE_EXCEPTION(ThreadException);
@@ -69,7 +70,7 @@ T* thread_join(pthread_t tid) {
 class thread_t {
 
 private:
-
+    
     c_str        _thread_name;
     unsigned int _rand_seed;
     
@@ -78,7 +79,7 @@ protected:
 
 public:
 
-    ucontext_t*  _ucontext;
+    ctx_t* _ctx;
 
     virtual void* run()=0;
     
