@@ -2,6 +2,7 @@
 #include <cstdio>
 
 #include "core/tuple.h"
+#include <unistd.h>
 
 
 ENTER_NAMESPACE(qpipe);
@@ -9,7 +10,8 @@ ENTER_NAMESPACE(qpipe);
 malloc_page_pool malloc_page_pool::_instance;
 
 
-static size_t default_page_size = 4096;
+static size_t default_page_size = sysconf(_SC_PAGESIZE);
+
 static bool initialized = false;
 
 void set_default_page_size(size_t page_size) {
