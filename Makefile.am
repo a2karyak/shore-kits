@@ -11,6 +11,7 @@ TESTS = \
    tests/cpu_binding \
    tests/rand_array_access \
    tests/trace \
+   tests/constants \
    tests/bitvector \
    tests/hashtable \
    tests/send_tuples \
@@ -193,6 +194,7 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
+tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
 tests_send_tuples_SOURCES = $(ST)/test_send_tuples.cpp
