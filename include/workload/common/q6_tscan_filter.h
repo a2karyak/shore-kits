@@ -63,9 +63,11 @@ public:
 
         TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT.to_double(), QUANTITY.to_double());
 
-        if(0) {
+        if(1) {
             // override for validation run
             DATE = datestr_to_timet("1994-01-01");
+	    t1 = DATE;
+	    t2 = time_add_year(t1, 1);
             QUANTITY = 24;
             DISCOUNT = .06;
         }

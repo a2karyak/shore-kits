@@ -27,14 +27,14 @@ ucontext_t producer, consumer;
 
 
 
-void* producer_main(int arg)
+extern "C" void* producer_main(int arg)
 {
     static int gen = 100;
 
     int i;
     for (i = 0; i < 5; i++) {
 
-        TRACE(TRACE_ALWAYS, "Running producer\n");
+        TRACE(TRACE_ALWAYS, "Running producer with arg = %d\n", arg);
 
         /* Fill the buffer */
         while (buffer_entry_count < NUM_BUFFER_ENTRIES) {

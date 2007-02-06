@@ -93,15 +93,15 @@ void partial_aggregate_stage_t::process_packet() {
                 // find the lowest aggregate such that candidate >=
                 // key. This is either the aggregate we want or a good
                 // hint for the insertion that otherwise follows
-                tuple_set_t::iterator candidate = run.lower_bound(key);
-                if(candidate == run.end() || less(key, *candidate)) {
+                tuple_set_t::iterator candidate = run.find(key);
+                if(candidate == run.end()) {
                     // initialize a blank aggregate tuple
                     hint_tuple_pair_t agg(hint, NULL);
                     if(alloc_agg(agg, key_data))
                         break;
                     
                     // insert the new aggregate tuple
-                    candidate = run.insert(candidate, agg);
+                    candidate = run.insert(agg).first;
                 }
                 else {
                     TRACE(TRACE_DEBUG, "Merging a tuple\n");
