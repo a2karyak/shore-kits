@@ -9,7 +9,8 @@ ENTER_NAMESPACE(qpipe);
 malloc_page_pool malloc_page_pool::_instance;
 
 
-static size_t default_page_size = 4096;
+static size_t default_page_size = 8192;
+
 static bool initialized = false;
 
 void set_default_page_size(size_t page_size) {
