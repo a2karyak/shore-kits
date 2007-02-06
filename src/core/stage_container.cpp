@@ -180,7 +180,7 @@ void stage_container_t::enqueue(packet_t* packet) {
     ctx_t* producer = new ctx_t(producer_name);
     
 #define KB 1024
-#define MB (KB * KB)
+#define MB ((KB) * (KB))
 
     long stack_size = 4 * MB;
     int* stack = (int*)malloc(stack_size);
