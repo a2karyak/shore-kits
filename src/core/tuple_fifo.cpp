@@ -1,5 +1,6 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
 #include "core/tuple_fifo.h"
+#include <sys/mman.h>
 
 
 ENTER_NAMESPACE(qpipe);
@@ -8,6 +9,84 @@ ENTER_NAMESPACE(qpipe);
 bool tuple_fifo::DEBUG_CTX_SWITCH = false;
 
 
+
+#define MMAP_FAILURE ((char*) -1)
+
+static void unmap(char* start, char* end) {
+    // anything to do?
+    if(start == end)
+	return;
+    
+    int result = munmap(start, end - start);
+    if(result != 0)
+	TRACE(TRACE_ALWAYS, "munmap() failed on %p - %p: %s\n",
+	      start, end, errno_to_str(errno).data());
+    else
+	TRACE(TRACE_ALWAYS, "unmapped %p - %p\n", start, end);
+}
+
+void* mmap_page_pool::alloc() {
+    critical_section_t cs(_mutex);
+    if(_available_start == _available_end) {
+	// try to recycle recently freed memory (save a munmap+mmap pair)
+	if(_free_start != _free_end) {
+	    _available_start = _free_start;
+	    _available_end = _free_end;
+	    _free_start = _free_end = NULL;
+	}
+	
+	else {
+	    // allocate in chunks of 1008k, which becomes exactly 1M
+	    // with red zones. Anything smaller gets rounded up
+	    // anyway. See "man mmap" for the gory details.
+	    size_t len = 1008*1024;
+	    _available_start = (char*) mmap(0, len, PROT_READ|PROT_WRITE,
+					    MAP_PRIVATE|MAP_ANON, -1, 0);
+	    if(_available_start == MMAP_FAILURE)
+		THROW2(BadAlloc, "mmap() failed: %s", errno_to_str(errno).data());
+	    _available_end = _available_start + len;
+	    TRACE(TRACE_ALWAYS, "mapped %p - %p\n", _available_start, _available_end);
+	}
+    }
+
+    // pick off the next available page
+    char* next = _available_start;
+    _available_start += page_size();
+    ++_outstanding;
+    return next;
+}
+
+void mmap_page_pool::free(void* ptr) {
+    critical_section_t cs(_mutex);
+
+    // accumulate the largest sequence possible before actually
+    // calling munmap()
+    char* data = (char*) ptr;
+
+    // do we have to start a new sequence?
+    if(_free_end != data) {
+	// was there a previous sequence?
+	if(_free_end != NULL)
+	    unmap(_free_start, _free_end);
+
+	// start a new sequence
+	_free_start = _free_end = data;
+    }
+    
+    // add this page to the current sequence (which may have been length 0)
+    _free_end += page_size();
+
+    // scary, but it works. Just don't touch me again!
+    if(--_outstanding == 0) {
+	cs.exit();
+	delete this;
+    }
+}
+
+mmap_page_pool::~mmap_page_pool() {
+    // remember to let go of any stragglers!
+    unmap(_available_start, _available_end);
+}
 
 /* The pool that manages the sentinel page. Only one page will ever be
  * "created", and it must not actually go away when freed.
@@ -46,7 +125,7 @@ struct sentinel_page_pool : page_pool {
  */
 static sentinel_page_pool SENTINEL_POOL;
 static qpipe::page* SENTINEL_PAGE = qpipe::page::alloc(1, &SENTINEL_POOL);
-static const int QPIPE_PAGE_SIZE = 4096;
+//static const int QPIPE_PAGE_SIZE = 4096;
 
 
 // use 3/9 for "good" performance
@@ -169,7 +248,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         _write_page.done();
     }
     else
-        _write_page = page::alloc(tuple_size());
+        _write_page = page::alloc(tuple_size(), _pool);
 
     // notify the reader?
     if(_available_reads() >= _threshold || done_writing) {
@@ -218,6 +297,7 @@ bool tuple_fifo::_get_read_page() {
 
 
 bool tuple_fifo::send_eof() {
+    _pool->release();
     try {
 
         // make sure not to drop a partial page

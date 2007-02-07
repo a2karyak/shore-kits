@@ -12,6 +12,28 @@ ENTER_NAMESPACE(qpipe);
 
 DEFINE_EXCEPTION(TerminatedBufferException);
 
+struct mmap_page_pool : page_pool {
+    pthread_mutex_t _mutex;
+    char* _available_start;
+    char* _available_end;
+    char* _free_start;
+    char* _free_end;
+    size_t _outstanding;
+
+    mmap_page_pool(size_t page_size=get_default_page_size())
+	: page_pool(page_size), _mutex(thread_mutex_create()),
+	  _available_start(NULL), _available_end(NULL),
+	  _free_start(NULL), _free_end(NULL),
+	  _outstanding(1)
+    {
+    }
+    void release() { _outstanding--; }
+    virtual void* alloc();
+    virtual void free(void* ptr);
+    virtual ~mmap_page_pool();
+};
+
+
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
  *  safely pass tuples to another. The producer will fill a page of
@@ -51,6 +73,9 @@ private:
     pthread_cond_t _reader_notify;
     pthread_cond_t _writer_notify;
 
+    // allocator
+    mmap_page_pool *_pool;
+
 public:
 
     // coroutine vars
@@ -84,7 +109,8 @@ public:
           _done_writing(false), _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
-          _writer_notify(thread_cond_create())
+          _writer_notify(thread_cond_create()),
+	  _pool(new mmap_page_pool(page_size))
     {
         init();
     }
