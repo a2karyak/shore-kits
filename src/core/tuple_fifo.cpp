@@ -163,8 +163,12 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         _done_writing = true;
         _write_page.done();
     }
-    else
+    else if(_free_pages.empty())
         _write_page = page::alloc(tuple_size());
+    else {
+	_write_page = _free_pages.front();
+	_free_pages.pop_front();
+    }
 
     // notify the reader?
     if(_available_reads() >= _threshold || done_writing) {
@@ -180,7 +184,13 @@ bool tuple_fifo::_get_read_page() {
     critical_section_t cs(_lock);
     _termination_check();
 
-
+    // free the page so the writer can use it
+    if(_read_page != SENTINEL_PAGE) {
+	_read_page->clear();
+	_free_pages.push_back(_read_page.release());
+	_set_read_page(SENTINEL_PAGE);
+    }
+    
     // wait for pages to arrive? Once we've slept because of empty,
     // _threshold pages must be available before we are willing to try
     // again (unless send_eof() is called)

@@ -25,6 +25,7 @@ class tuple_fifo {
 private:
     typedef std::list<page*> page_list;
     page_list _pages;
+    page_list _free_pages;
     
     size_t _tuple_size;
     size_t _capacity;
