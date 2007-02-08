@@ -86,6 +86,7 @@ void mmap_page_pool::free(void* ptr) {
 mmap_page_pool::~mmap_page_pool() {
     // remember to let go of any stragglers!
     unmap(_available_start, _available_end);
+    unmap(_free_start, _free_end);
 }
 
 /* The pool that manages the sentinel page. Only one page will ever be
