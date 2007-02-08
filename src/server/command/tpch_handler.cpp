@@ -167,23 +167,35 @@ void tpch_handler_t::handle_command(const char* command) {
 
     // lookup dispatcher policy
     scheduler::policy_t* dp = _scheduler_policies[c_str(scheduler_policy_tag)];
-    if ( dp == NULL ) {
+    if (dp == NULL) {
         // no such policy registered!
         TRACE(TRACE_ALWAYS, "%s is not a valid dispatcher policy\n", scheduler_policy_tag);
         return;
     }
     
 
-    // run new workload...
-    workload_t::results_t results;
+    /* We will construct a workload object to run this experiment. The
+       workload object will create the required worker threads,
+       provide the synchronization required to coordinate their
+       iteration, etc. */
+
+    /* Provide the workload with a name so it has an intelligent way
+       to name its client threads. */
     c_str workload_name("%s + %s", driver_tag, scheduler_policy_tag);
-    workload_t w(workload_name, driver, dp, num_clients, num_iterations, think_time);
+    workload_t w(workload_name, driver, dp, num_clients,
+                 num_iterations, think_time);
+
+    /* The basic interface is the run() method, which takes a
+       statistics object and fills it with the stats collected during
+       the workload execution. */
+    workload_t::results_t results;
     w.run(results);
 
-    
-    // report results...
-    print_run_statistics(results);
+    /* Report results. We'll use the workload name for its
+       description. */
+    print_run_statistics(workload_name, results);
 }
+
 
 
 void tpch_handler_t::print_usage(const char* command_tag)
@@ -195,7 +207,7 @@ void tpch_handler_t::print_usage(const char* command_tag)
 }
 
 
-void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
+void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results_t &results) {
 
     tuple_fifo::clear_stats();
     
@@ -207,6 +219,7 @@ void tpch_handler_t::print_run_statistics(workload_t::results_t &results) {
     float tpmC = (60.0 * queries_completed) / results.total_time;
     
     TRACE(TRACE_STATISTICS, "~~~\n");
+    TRACE(TRACE_STATISTICS, "~~~ Decription        = %s\n", desc.data());
     TRACE(TRACE_STATISTICS, "~~~ Clients           = %d \n", results.num_clients);
     TRACE(TRACE_STATISTICS, "~~~ Iterations        = %d \n", results.num_iterations);
     TRACE(TRACE_STATISTICS, "~~~ Think Time        = %d \n", results.think_time);
