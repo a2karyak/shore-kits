@@ -97,7 +97,16 @@ void tuple_fifo::init() {
     cs.exit();
 }
 
+struct free_page {
+    void operator()(qpipe::page* p) {
+	p->done();
+    }
+}
+
 void tuple_fifo::destroy() {
+    std::for_each(_pages.begin(), _pages.end(), free_page());
+    std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
+	
     // stats
     critical_section_t cs(open_fifo_mutex);
     
