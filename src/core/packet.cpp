@@ -68,8 +68,7 @@ packet_t::packet_t(const c_str    &packet_id,
  */
 
 packet_t::~packet_t(void) {
-    
-    TRACE(TRACE_PACKET_FLOW, "Destroying %s packet with ID %s\n",
+    TRACE(TRACE_ALWAYS, "Destroying %s packet with ID %s\n",
 	  _packet_type.data(),
 	  _packet_id.data());
 }

@@ -78,9 +78,11 @@ private:
 
 public:
 
-    // coroutine vars
-    ctx_t* _read_ctx;
-    ctx_t* _write_ctx;
+    /* Once this FIFO is destroyed, we know that the writer will never
+       run again. The writer will be destroyed when it destroys its
+       output FIFO. */
+    ctx_t*              _read_ctx;
+    guard<worker_ctx_t> _write_ctx;
 
 
     /**

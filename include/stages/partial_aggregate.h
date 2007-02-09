@@ -31,6 +31,7 @@ struct partial_aggregate_packet_t : public packet_t {
     {
     }
 
+
     // TODO: consider the key comparator as well
     static query_plan* create_plan(tuple_filter_t* filter, tuple_aggregate_t* agg,
                                    key_extractor_t* key, query_plan const* child)

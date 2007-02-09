@@ -155,6 +155,7 @@ void stage_container_t::enqueue(packet_t* packet) {
         new stage_adaptor_t(this, packets,
                             packets->front()->_output_filter->input_tuple_size());
 
+
     /* This is ugly. We are going to create the first context for this
        kernel thread. By creating it here, we don't have to modify the
        individual query code.
@@ -172,29 +173,24 @@ void stage_container_t::enqueue(packet_t* packet) {
         c_str  self_name("(DRIVER %s)", self->thread_name().data());
         ctx_t* ctx = new ctx_t(self_name);
         self->_ctx = ctx;
+
+        /* Don't allocate a separate stack for this first context. It
+           will use the context that Pthreads allocated. */
     }
 
 
+    /* At this point, we assume that self->_ctx has been initialized
+       with a valid context. This will become the consumer context on
+       the new FIFO. */
+
     /* Name the new context using the packet type */
     c_str  producer_name("(%s)", packet->_packet_type.data());
-    ctx_t* producer = new ctx_t(producer_name);
-    
-#define KB 1024
-#define MB ((KB) * (KB))
-
-    long stack_size = 4 * MB;
-    int* stack = (int*)malloc(stack_size);
-    assert(stack != NULL); /* TODO change this to a throw */
-    producer->_context.uc_stack.ss_sp    = stack;
-    producer->_context.uc_stack.ss_flags = 0;
-    producer->_context.uc_stack.ss_size  = stack_size;
-    producer->_context.uc_link           = &self->_ctx->_context;
-    
+    worker_ctx_t* producer = new worker_ctx_t(producer_name, &self->_ctx->_context);
     makecontext(&producer->_context,
                 (void (*)())stage_container_t::static_run_stage_wrapper,
                 3,
                 _stage_maker->create_stage(), adaptor, producer);
-    
+
     
     /* set up fifo fields */
     packet->output_buffer()->_read_ctx  = self->_ctx;

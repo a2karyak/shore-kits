@@ -35,6 +35,9 @@ void register_stage(int worker_threads=10) {
     sc = new stage_container_t(name, new stage_factory<Stage>);
     dispatcher_t::register_stage_container(Stage::stage_packet_t::PACKET_TYPE.data(), sc);
 
+    /* This is qpipe-plain. Don't create any worker threads. */
+    worker_threads = 0;
+
     // fire up the worker threads
     for(int i=0; i < worker_threads; i++) {
         thread_t* thread = new stage_thread(c_str("%s_THREAD_%d", name.data(), i), sc);

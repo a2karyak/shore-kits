@@ -7,6 +7,7 @@ ENTER_NAMESPACE(qpipe);
 
 
 bool tuple_fifo::DEBUG_CTX_SWITCH = false;
+#define DEBUG_MMAP false
 
 
 
@@ -22,7 +23,8 @@ static void unmap(char* start, char* end) {
 	TRACE(TRACE_ALWAYS, "munmap() failed on %p - %p: %s\n",
 	      start, end, errno_to_str(errno).data());
     else
-	TRACE(TRACE_ALWAYS, "unmapped %p - %p\n", start, end);
+        if (DEBUG_MMAP)
+            TRACE(TRACE_ALWAYS, "unmapped %p - %p\n", start, end);
 }
 
 void* mmap_page_pool::alloc() {
@@ -45,7 +47,8 @@ void* mmap_page_pool::alloc() {
 	    if(_available_start == MMAP_FAILURE)
 		THROW2(BadAlloc, "mmap() failed: %s", errno_to_str(errno).data());
 	    _available_end = _available_start + len;
-	    TRACE(TRACE_ALWAYS, "mapped %p - %p\n", _available_start, _available_end);
+            if (DEBUG_MMAP)
+                TRACE(TRACE_ALWAYS, "mapped %p - %p\n", _available_start, _available_end);
 	}
     }
 
@@ -304,7 +307,7 @@ bool tuple_fifo::send_eof() {
         // make sure not to drop a partial page
         _flush_write_page(true);
 
-        DEBUG_CTX_SWITCH = true;
+        //        DEBUG_CTX_SWITCH = true;
 
         if (DEBUG_CTX_SWITCH) {
             TRACE(TRACE_ALWAYS, "Running in context %s\n",
