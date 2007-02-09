@@ -6,6 +6,8 @@
 #include "server/config.h"
 #include "workload/tpch/tpch_db.h"
 
+#include "workload/tpch/drivers/merge_test.h"
+
 #include "workload/tpch/drivers/tpch_q1.h"
 #include "workload/tpch/drivers/tpch_q4.h"
 #include "workload/tpch/drivers/tpch_q6.h"
@@ -51,6 +53,7 @@ void tpch_handler_t::init() {
         db_open();
 
         // register drivers...
+        add_driver("merge_test", new merge_test_driver(c_str("MERGE-TEST")));
         add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
         add_driver("q4", new tpch_q4_driver(c_str("TPCH-Q4")));
         add_driver("q6", new tpch_q6_driver(c_str("TPCH-Q6")));

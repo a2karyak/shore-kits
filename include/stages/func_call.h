@@ -65,7 +65,9 @@ public:
                        void* func_arg,
                        void (*destructor) (void*) = NULL,
                        bool _merge=false)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, _merge),
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                   _merge ? create_plan(output_filter, func) : NULL,
+                   _merge),
           _func(func),
           _func_arg(func_arg),
           _destructor(destructor)
@@ -81,11 +83,18 @@ public:
             _destructor(_func_arg);
     }
 
-
-    virtual bool is_compatible(packet_t*) {
-        /* Allow merging (useful for testing packet merging) */
-        return true;
+    static query_plan* create_plan(tuple_filter_t* filter, void (*func) (void*, void*)) {
+        c_str action("%p", func);
+        return new query_plan(action, filter->to_string(), NULL, 0);
     }
+    
+    virtual bool is_compatible(packet_t* other) {
+        // enforce the OSP_SCAN policy (attempt to merge compatible
+        // packets unless OSP_NONE prevents this from being called in
+        // the first place)
+        return packet_t::is_compatible(plan(), other->plan());
+    }
+
 };
 
 

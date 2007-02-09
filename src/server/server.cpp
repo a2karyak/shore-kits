@@ -51,7 +51,7 @@ int qpipe_init(int argc, char* argv[]) {
     register_command_handlers();
     register_stage_containers();
 
-    TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING );
+    TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING);
 
     if ((argc > 1) && (strcmp(argv[1], "-n") == 0)) {
         return RUN_NETWORK_MODE;
