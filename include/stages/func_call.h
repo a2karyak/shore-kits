@@ -63,8 +63,9 @@ public:
                        tuple_filter_t* output_filter,
                        void (*func) (void*),
                        void* func_arg,
-                       void (*destructor) (void*) = NULL)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+                       void (*destructor) (void*) = NULL,
+                       bool _merge=false)
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, _merge),
           _func(func),
           _func_arg(func_arg),
           _destructor(destructor)
@@ -79,7 +80,12 @@ public:
         if ( _destructor != NULL )
             _destructor(_func_arg);
     }
-    
+
+
+    virtual bool is_compatible(packet_t*) {
+        /* Allow merging (useful for testing packet merging) */
+        return true;
+    }
 };
 
 

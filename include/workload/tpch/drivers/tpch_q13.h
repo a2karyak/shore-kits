@@ -7,19 +7,9 @@
 
 ENTER_NAMESPACE(workload);
 
-class tpch_q13_driver : public driver_t {
-
-public:
-
-    tpch_q13_driver(const c_str& description)
-        : driver_t(description)
-    {
-    }
-
-    virtual void submit(void* disp);
-    
-};
+DECLARE_DRIVER(tpch_q13);
 
 EXIT_NAMESPACE(workload);
+
 
 #endif
