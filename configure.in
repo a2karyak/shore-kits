@@ -222,8 +222,8 @@ AC_SUBST(QPIPE_VERSION)
 # basic flags/libs every arch needs
 
 #PROFILE_FLAGS="-pg -O0"
-#OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
-#$OPT_FLAGS="-O3 -fno-inline"
+OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+#OPT_FLAGS="-O3 -fno-inline"
 CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
 	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 
