@@ -23,7 +23,7 @@ public:
     static const c_str PACKET_TYPE;
     
     
-    void (*_func) (void*);
+    void (*_func) (void*, void*);
     
     
     void* _func_arg;
@@ -61,7 +61,7 @@ public:
     func_call_packet_t(const c_str    &packet_id,
                        tuple_fifo* output_buffer,
                        tuple_filter_t* output_filter,
-                       void (*func) (void*),
+                       void (*func) (void*, void*),
                        void* func_arg,
                        void (*destructor) (void*) = NULL,
                        bool _merge=false)

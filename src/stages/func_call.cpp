@@ -19,5 +19,5 @@ const c_str func_call_stage_t::DEFAULT_STAGE_NAME = "FUNC_CALL_STAGE";
 void func_call_stage_t::process_packet() {
     adaptor_t* adaptor = _adaptor;
     func_call_packet_t* packet = (func_call_packet_t*)adaptor->get_packet();
-    packet->_func(packet->_func_arg);
+    packet->_func(adaptor, packet->_func_arg);
 }
