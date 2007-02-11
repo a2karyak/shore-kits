@@ -43,7 +43,7 @@ TESTS = \
    tests/q1 \
    tests/q4 \
    tests/hash_map \
-   tests_grouper \
+   tests/grouper \
    tests/busy_wait \
    tests/busy_wait_all
 
