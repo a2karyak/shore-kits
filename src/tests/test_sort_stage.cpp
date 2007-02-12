@@ -19,9 +19,9 @@ int num_copies;
 
 
 
-void write_ints(void* arg)
+void write_ints(void*, void* tfifo)
 {
-    tuple_fifo* buffer = (tuple_fifo *)arg;
+    tuple_fifo* buffer = (tuple_fifo *)tfifo;
 
     // produce a set of inputs, with duplicated values
     vector<int> inputs;

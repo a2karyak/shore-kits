@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
                                new trivial_filter_t(int_buffer->tuple_size()),
-                               int_tuple_writer_void,
+                               int_tuple_writer_fc,
                                &info);
     
     

@@ -35,7 +35,7 @@ class tpch_handler_t : public command_handler_t, public workload::driver_directo
     map<c_str, scheduler::policy_t*> _scheduler_policies;
     
     void print_usage(const char* command_tag);
-    void print_run_statistics(workload::workload_t::results_t &results);
+    void print_run_statistics(const c_str& desc, workload::workload_t::results_t &results);
 
 public:
 

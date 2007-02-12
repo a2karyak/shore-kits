@@ -53,15 +53,10 @@ public:
         _context.uc_stack.ss_flags = 0;
         _context.uc_stack.ss_size  = stack_size;
         _context.uc_link           = uc_link;
-
-        printf("Created worker_ctx %s\n", _context_name.data());
-        fflush(stdout);
     }
 
 
     ~worker_ctx_t() {
-        printf("Destroying worker_ctx %s\n", _context_name.data());
-        fflush(stdout);
         free(_context.uc_stack.ss_sp);
         _context.uc_stack.ss_sp = NULL;
     }

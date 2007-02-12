@@ -148,6 +148,7 @@ WL_TPCH = \
    $(SW)/tpch/tpch_db_load.cpp \
    $(SW)/tpch/tpch_env.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \
+   $(SW)/tpch/drivers/merge_test.cpp  \
    $(SW)/tpch/drivers/tpch_q1.cpp  \
    $(SW)/tpch/drivers/tpch_q4.cpp  \
    $(SW)/tpch/drivers/tpch_q6.cpp  \

@@ -1,9 +1,11 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
 #include "core/tuple_fifo.h"
 #include <sys/mman.h>
+#include <algorithm>
 
 
 ENTER_NAMESPACE(qpipe);
+
 
 
 bool tuple_fifo::DEBUG_CTX_SWITCH = false;
@@ -91,6 +93,8 @@ mmap_page_pool::~mmap_page_pool() {
     unmap(_available_start, _available_end);
     unmap(_free_start, _free_end);
 }
+
+
 
 /* The pool that manages the sentinel page. Only one page will ever be
  * "created", and it must not actually go away when freed.
@@ -185,7 +189,17 @@ void tuple_fifo::init() {
     cs.exit();
 }
 
+struct free_page {
+    void operator()(qpipe::page* p) {
+	p->free();
+    }
+};
+
 void tuple_fifo::destroy() {
+
+    std::for_each(_pages.begin(), _pages.end(), free_page());
+    std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
+	
     // stats
     critical_section_t cs(open_fifo_mutex);
     
@@ -251,8 +265,12 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         _done_writing = true;
         _write_page.done();
     }
-    else
+    else if(_free_pages.empty())
         _write_page = page::alloc(tuple_size(), _pool);
+    else {
+	_write_page = _free_pages.front();
+	_free_pages.pop_front();
+    }
 
     // notify the reader?
     if(_available_reads() >= _threshold || done_writing) {
@@ -268,7 +286,13 @@ bool tuple_fifo::_get_read_page() {
     critical_section_t cs(_lock);
     _termination_check();
 
-
+    // free the page so the writer can use it
+    if(_read_page != SENTINEL_PAGE) {
+	_read_page->clear();
+	_free_pages.push_back(_read_page.release());
+	_set_read_page(SENTINEL_PAGE);
+    }
+    
     // wait for pages to arrive? Once we've slept because of empty,
     // _threshold pages must be available before we are willing to try
     // again (unless send_eof() is called)

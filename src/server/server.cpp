@@ -52,8 +52,9 @@ int qpipe_init(int argc, char* argv[]) {
     register_stage_containers();
 
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
-              | TRACE_PACKET_FLOW
-              | TRACE_THREAD_LIFE_CYCLE);
+              //| TRACE_PACKET_FLOW
+              //| TRACE_THREAD_LIFE_CYCLE
+              );
     
     if ((argc > 1) && (strcmp(argv[1], "-n") == 0)) {
         return RUN_NETWORK_MODE;

@@ -20,9 +20,9 @@ typedef vector<int> input_list_t;
 typedef pair<tuple_fifo*, input_list_t> write_info_t;
 
 
-void write_tuples(void* arg)
+void write_tuples(void*, void* winfo)
 {
-    write_info_t *info = (write_info_t *)arg;
+    write_info_t *info = (write_info_t *)winfo;
     tuple_fifo* buffer = info->first;
     input_list_t &inputs = info->second;
 
