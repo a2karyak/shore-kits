@@ -222,7 +222,7 @@ void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results
     float tpmC = (60.0 * queries_completed) / results.total_time;
     
     TRACE(TRACE_STATISTICS, "~~~\n");
-    TRACE(TRACE_STATISTICS, "~~~ Decription        = %s\n", desc.data());
+    TRACE(TRACE_STATISTICS, "~~~ Description       = %s\n", desc.data());
     TRACE(TRACE_STATISTICS, "~~~ Clients           = %d \n", results.num_clients);
     TRACE(TRACE_STATISTICS, "~~~ Iterations        = %d \n", results.num_iterations);
     TRACE(TRACE_STATISTICS, "~~~ Think Time        = %d \n", results.think_time);

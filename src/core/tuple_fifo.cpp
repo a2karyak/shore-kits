@@ -10,6 +10,7 @@ ENTER_NAMESPACE(qpipe);
 
 bool tuple_fifo::DEBUG_CTX_SWITCH = false;
 #define DEBUG_MMAP false
+#define USE_MMAP   false /* if false, we use malloc() to allocate pages */
 
 
 
@@ -265,8 +266,12 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         _done_writing = true;
         _write_page.done();
     }
-    else if(_free_pages.empty())
-        _write_page = page::alloc(tuple_size(), _pool);
+    else if(_free_pages.empty()) {
+        if (USE_MMAP)
+            _write_page = page::alloc(tuple_size(), _pool);
+        else
+            _write_page = page::alloc(tuple_size());
+    }
     else {
 	_write_page = _free_pages.front();
 	_free_pages.pop_front();
