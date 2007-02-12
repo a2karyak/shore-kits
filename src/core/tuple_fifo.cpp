@@ -303,25 +303,13 @@ bool tuple_fifo::_get_read_page() {
 bool tuple_fifo::send_eof() {
     _pool->release();
     try {
-
         // make sure not to drop a partial page
         _flush_write_page(true);
 
-        //        DEBUG_CTX_SWITCH = true;
-
-        if (DEBUG_CTX_SWITCH) {
-            TRACE(TRACE_ALWAYS, "Running in context %s\n",
-                  thread_get_self()->_ctx->_context_name.data());
-            TRACE(TRACE_ALWAYS, "FIFO thinks we are going to switch from %s to %s\n",
-                  _write_ctx->_context_name.data(),
-                  _read_ctx->_context_name.data());
-        }
-
-        /* writer never returns */
-        assert(thread_get_self()->_ctx == _write_ctx);
-        int swapret = swapcontext(&_write_ctx->_context, &_read_ctx->_context);
-        assert(swapret == 0);
-        assert(0);
+        /* -ngm- qpipe-plain originally swapped contexts here for the
+            last time, but this means we leak any resources we
+            allocated in this thread. The best thing to do is drop
+            back to the "thread main" function and switch there... */
 
         return true;
     }

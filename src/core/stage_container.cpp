@@ -35,11 +35,22 @@ extern "C" void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
                                                   ctx_t* ctx)
 {
     thread_t* self = thread_get_self();
-    TRACE(TRACE_ALWAYS, "Running with self = %p\n", self);
     self->_ctx = ctx;
+
+    TRACE(TRACE_THREAD_LIFE_CYCLE,
+          "Running context %s with self = %p\n",
+          ctx->_context_name.data(),
+          self);
+
     adaptor->run_stage(stage);
     delete stage;
     delete adaptor;
+
+    TRACE(TRACE_THREAD_LIFE_CYCLE,
+          "Exiting context %s with self = %p\n",
+          ctx->_context_name.data(),
+          self);
+    
     return NULL;
 }
 
@@ -450,18 +461,13 @@ void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
     // packet output buffer
     tuple_fifo* output_buffer = packet->release_output_buffer();
     output_buffer->send_eof();
-    /* Should never come back here. What about deleting the packet below? */
-    assert(0);
 
-
-    // packet input buffer(s)
-    if ( packet != _packet ) {
-        // since we are not the primary, can happily destroy packet
-        // subtrees
-        TRACE(TRACE_ALWAYS, "Destroying %p\n", packet);
-        while(1);
-        delete packet;
-    }
+    /* Staged qpipe deleted 'packet' here, provided it was not equal
+       to the primary packet ( '_packet' ). I guess the correct thing
+       to do here is simply assert that we must be dealing with the
+       primary packet. Work-sharing does not make too much sense in
+       qpipe-plain. */
+    assert( packet == _packet );
 }
 
 
