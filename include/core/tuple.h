@@ -421,6 +421,19 @@ private:
     ~page();
 };
 
+EXIT_NAMESPACE(qpipe);
+/**
+ * Specialize the guard template to release pages back into their pool
+ * instead of calling 'delete' operator (which would fail to compile
+ * in any case)
+ */
+template <>
+inline void guard<qpipe::page>::action(qpipe::page* ptr) {
+    ptr->free();
+}
+ENTER_NAMESPACE(qpipe);
+
+
 /**
  * @brief Stores a list of pages that should all be freed at the same time.
  *
@@ -429,10 +442,10 @@ private:
  * a secondary data structure (eg sorting and hashing)
  */
 class page_trash_stack {
-    guard<page> _head;
+    guard<qpipe::page> _head;
     
 public:
-    void add(page* p) {
+    void add(qpipe::page* p) {
         p->next = _head.release();
         _head = p;
     }
@@ -449,17 +462,6 @@ public:
  *  @brief Represents a page of tuples of the same type.
  */
 EXIT_NAMESPACE(qpipe);
-
-
-/**
- * Specialize the guard template to release pages back into their pool
- * instead of calling 'delete' operator (which would fail to compile
- * in any case)
- */
-template <>
-inline void guard<qpipe::page>::action(qpipe::page* ptr) {
-    ptr->free();
-}
 
 
 #endif
