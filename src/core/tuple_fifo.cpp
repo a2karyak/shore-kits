@@ -146,6 +146,22 @@ page* tuple_fifo::get_page() {
     return result;
 }
 
+inline void tuple_fifo::wait_for_reader() {
+    thread_cond_wait(_writer_notify, _lock);
+    
+}
+inline void tuple_fifo::ensure_reader_running() {
+    thread_cond_signal(_reader_notify);
+}
+    
+inline void tuple_fifo::wait_for_writer() {
+    thread_cond_wait(_reader_notify, _lock);
+}
+
+inline void tuple_fifo::ensure_writer_running() {
+    thread_cond_signal(_writer_notify);
+}
+
 void tuple_fifo::_flush_write_page(bool done_writing) {
     // after the call to send_eof() the write page is NULL
     assert(!_done_writing);
@@ -172,7 +188,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
     if(done_writing) {
-        fprintf(stderr, "Fifo %p sending EOF\n", this);
+	//        fprintf(stderr, "Fifo %p sending EOF\n", this);
         _done_writing = true;
         _write_page.done();
     }

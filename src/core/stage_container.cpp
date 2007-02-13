@@ -50,10 +50,13 @@ void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
  *  this string, so the caller should deallocate it if necessary.
  */
 stage_container_t::stage_container_t(const c_str &container_name,
-				     stage_factory_t* stage_maker)
+				     stage_factory_t* stage_maker, int active_count, int max_count)
     : _container_lock(thread_mutex_create()),
       _container_queue_nonempty(thread_cond_create()),
-      _container_name(container_name), _stage_maker(stage_maker)
+      _container_name(container_name), _stage_maker(stage_maker),
+      _pool(active_count),
+      _max_threads((max_count > active_count)? max_count : std::max(20, active_count * 5)),
+      _curr_threads(0), _next_thread(0)
 {
 }
 
@@ -76,11 +79,37 @@ stage_container_t::~stage_container_t(void) {
 }
 
 
+/**
+ * A wrapper to allow us to run multiple threads off of one stage
+ * container. It might be possible to make stage_container_t inherit
+ * from thread_t and instantiate it directly multiple times, but
+ * thread-local state like the RNG would be too risky to use.
+ */
+struct stage_thread : thread_t {
+    stage_container_t* _sc;
+    stage_thread(const c_str &name, stage_container_t* sc)
+        : thread_t(name), _sc(sc)
+    {
+    }
+    virtual void* run() {
+        _sc->run();
+        return NULL;
+    }
+};
+
+
 
 /**
  *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::container_queue_enqueue_no_merge(packet_list_t* packets) {
+    if(_pool._active == 0 && _curr_threads < _max_threads) {
+	_curr_threads++;
+	c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread++);
+	thread_t* thread = new stage_thread(thread_name, this);
+	thread_create(thread, &_pool);
+    }
+    
     _container_queue.push_back(packets);
     thread_cond_signal(_container_queue_nonempty);
 }

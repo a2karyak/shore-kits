@@ -275,20 +275,12 @@ private:
     void _flush_write_page(bool done_writing);
 
     
-    void wait_for_reader() {
-        thread_cond_wait(_writer_notify, _lock);
-    }
-    void ensure_reader_running() {
-        thread_cond_signal(_reader_notify);
-    }
+    void wait_for_reader();
+    void ensure_reader_running();
     
-    void wait_for_writer() {
-        thread_cond_wait(_reader_notify, _lock);
-    }
+    void wait_for_writer();
 
-    void ensure_writer_running() {
-        thread_cond_signal(_writer_notify);
-    }
+    void ensure_writer_running();
     
 };
 
