@@ -56,6 +56,7 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
       _max_threads((max_count > active_count)? max_count : std::max(20, active_count * 5)),
+      _idle_threads(0),
       _curr_threads(0), _next_thread(0)
 {
 }
@@ -103,7 +104,7 @@ struct stage_thread : thread_t {
  *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::container_queue_enqueue_no_merge(packet_list_t* packets) {
-    if(_pool._active == 0 && _curr_threads < _max_threads) {
+    if(_curr_threads < _max_threads && _idle_threads == 0) {
 	_curr_threads++;
 	c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread++);
 	thread_t* thread = new stage_thread(thread_name, this);
@@ -265,6 +266,7 @@ void stage_container_t::run() {
 	// _container_lock in container_queue_dequeue() if we end up
 	// actually waiting.
 	critical_section_t cs(_container_lock);
+	_idle_threads++;
 	packet_list_t* packets = container_queue_dequeue();
 	
 
@@ -289,6 +291,7 @@ void stage_container_t::run() {
 	// is better to release the container lock and reacquire it
 	// here since stage construction can take a long time.
         _container_current_stages.push_back( &adaptor );
+	_idle_threads--;
 	cs.exit();
 
         

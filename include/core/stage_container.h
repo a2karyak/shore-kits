@@ -70,6 +70,7 @@ private:
     thread_pool _pool;
     int _max_threads; // how many threads can exist in this pool?
     int _curr_threads; // how many threads do exist?
+    int _idle_threads; // how many are waiting for packets?
     int _next_thread; // ascending count for ID purposes
 };
 

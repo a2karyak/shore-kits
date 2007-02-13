@@ -3,7 +3,7 @@
 #include "stages.h"
 #include "workload/common/register_stage.h"
 
-#define MAX_NUM_CLIENTS 8
+#define MAX_NUM_CLIENTS 16
 
 #define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 // Q4 has two scans
 #define MAX_NUM_AGGREGATE_THREADS         MAX_NUM_CLIENTS
