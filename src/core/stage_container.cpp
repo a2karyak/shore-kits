@@ -326,7 +326,6 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
       _stage_adaptor_lock(thread_mutex_create()),
       _container(container),
       _packet_list(packet_list),
-      _merge_count(packet_list.size())
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
       _still_accepting_packets(true),
       _cancelled(false)
@@ -395,7 +394,6 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
-    _merge_count++;
     packet->_next_tuple_on_merge = _next_tuple;
 
     // * * * END CRITICAL SECTION * * *
@@ -482,7 +480,6 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
             // special cases for us.
             finish_packet(curr_packet);
             it = _packet_list->erase(it);
-	    _packet_list
             continue;
         }
  
