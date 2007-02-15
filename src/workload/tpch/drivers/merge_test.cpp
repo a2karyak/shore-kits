@@ -69,8 +69,8 @@ void merge_test_driver::submit(void* disp) {
     
 
     tuple_t output;
-    int*    v;
-    int     old_v;
+    int*    v = NULL;
+    int     old_v = -1;
     bool    first = true;
     
 
