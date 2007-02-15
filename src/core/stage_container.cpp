@@ -55,7 +55,7 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_queue_nonempty(thread_cond_create()),
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
-      _max_threads((max_count > active_count)? max_count : std::max(20, active_count * 5)),
+      _max_threads((max_count > active_count)? max_count : std::max(100, active_count * 5)),
       _idle_threads(0),
       _curr_threads(0), _next_thread(0)
 {
@@ -191,6 +191,9 @@ void stage_container_t::enqueue(packet_t* packet) {
 	// * * * END CRITICAL SECTION * * *
     }
 
+    // only try to merge if we have no idle contexts around. Otherwise it
+    // just serializes us and leaves cores idle
+    if(_curr_threads - _idle_threads > _pool._max_active) {
 
     // try merging with packets in merge_candidates before they
     // disappear or become non-mergeable
@@ -238,7 +241,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 	    // * * * END CRITICAL SECTION * * *
 	}
     }
-    
+    }
 
     if (TRACE_MERGING)
         TRACE(TRACE_ALWAYS, "%s could not be merged\n",
@@ -323,6 +326,7 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
       _stage_adaptor_lock(thread_mutex_create()),
       _container(container),
       _packet_list(packet_list),
+      _merge_count(packet_list.size())
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
       _still_accepting_packets(true),
       _cancelled(false)
@@ -391,6 +395,7 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
+    _merge_count++;
     packet->_next_tuple_on_merge = _next_tuple;
 
     // * * * END CRITICAL SECTION * * *
@@ -477,6 +482,7 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
             // special cases for us.
             finish_packet(curr_packet);
             it = _packet_list->erase(it);
+	    _packet_list
             continue;
         }
  
