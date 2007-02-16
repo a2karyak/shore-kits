@@ -88,6 +88,7 @@ static size_t total_prefetches = 0;
  * when the FIFO is destroyed.
  */
 void tuple_fifo::init() {
+    _reader_tid = pthread_self();
     // prepare for reading
     _set_read_page(SENTINEL_PAGE);
 
@@ -98,6 +99,10 @@ void tuple_fifo::init() {
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
     cs.exit();
+}
+
+void tuple_fifo::writer_init() {
+    _writer_tid = pthread_self();
 }
 
 struct free_page {

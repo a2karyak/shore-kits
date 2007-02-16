@@ -17,6 +17,7 @@ ENTER_NAMESPACE(qpipe);
 #define TRACE_MERGING 0
 #define TRACE_DEQUEUE 0
 
+#define USE_SMART_OSP false
 
 
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
@@ -55,8 +56,8 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_queue_nonempty(thread_cond_create()),
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
-      _max_threads((max_count > active_count)? max_count : std::max(100, active_count * 5)),
-      _idle_threads(0),
+      _max_threads((max_count > active_count)? max_count : std::max(10, active_count * 4)),
+      _idle_threads(0), _reserved_threads(0),
       _curr_threads(0), _next_thread(0)
 {
 }
@@ -104,11 +105,12 @@ struct stage_thread : thread_t {
  *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::container_queue_enqueue_no_merge(packet_list_t* packets) {
-    if(_curr_threads < _max_threads && _idle_threads == 0) {
+    if(_available_threads() > 0 && _idle_threads == 0) {
 	_curr_threads++;
 	c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread++);
 	thread_t* thread = new stage_thread(thread_name, this);
 	thread_create(thread, &_pool);
+	_idle_threads++;
     }
     
     _container_queue.push_back(packets);
@@ -193,7 +195,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 
     // only try to merge if we have no idle contexts around. Otherwise it
     // just serializes us and leaves cores idle
-    if(_curr_threads - _idle_threads > _pool._max_active) {
+    if(!USE_SMART_OSP || _curr_threads - _idle_threads > _pool._max_active) {
 
     // try merging with packets in merge_candidates before they
     // disappear or become non-mergeable
@@ -216,7 +218,7 @@ void stage_container_t::enqueue(packet_t* packet) {
     // If we are here, we could not merge with any of the running
     // stages. Don't give up. We can still try merging with a packet in
     // the container_queue.
-    list<packet_list_t*>::iterator cit = _container_queue.begin();
+    ContainerQueue::iterator cit = _container_queue.begin();
     for ( ; cit != _container_queue.end(); ++cit) {
 	
 	packet_list_t* cq_plist = *cit;
@@ -269,7 +271,6 @@ void stage_container_t::run() {
 	// _container_lock in container_queue_dequeue() if we end up
 	// actually waiting.
 	critical_section_t cs(_container_lock);
-	_idle_threads++;
 	packet_list_t* packets = container_queue_dequeue();
 	
 
@@ -306,6 +307,7 @@ void stage_container_t::run() {
         // remove active stage
 	critical_section_t cs_remove_active_stage(_container_lock);
         _container_current_stages.remove(&adaptor);
+	_idle_threads++;
 	cs_remove_active_stage.exit();
         
         
@@ -347,6 +349,7 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
     for (it = packet_list->begin(); it != packet_list->end(); ++it) {
         packet_t* packet = *it;
         packet->_next_tuple_on_merge = NEXT_TUPLE_INITIAL_VALUE;
+	packet->output_buffer()->writer_init();
     }
 }
 
@@ -395,6 +398,10 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
     packet->_next_tuple_on_merge = _next_tuple;
+
+    // init the writer tid in case this packet is already going. If
+    // not, the proper value will be set by the adaptor's constructor.
+    packet->output_buffer()->writer_init();
 
     // * * * END CRITICAL SECTION * * *
     return true;

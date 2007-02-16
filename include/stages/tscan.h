@@ -63,9 +63,12 @@ public:
     }
     
     virtual bool is_compatible(packet_t* other) {
-        // enforce the OSP_SCAN policy (attempt to merge compatible
+        // enforce the OSP_SCAN and OSP_NO_SCAN policies (attempt to merge compatible
         // packets unless OSP_NONE prevents this from being called in
         // the first place)
+	if(osp_policy == OSP_NO_SCAN)
+	    return false;
+	
         return packet_t::is_compatible(plan(), other->plan());
     }
 };

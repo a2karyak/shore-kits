@@ -48,6 +48,10 @@ private:
     pthread_cond_t _reader_notify;
     pthread_cond_t _writer_notify;
 
+    // debug vars
+    pthread_t _reader_tid;
+    pthread_t _writer_tid;
+    
 public:
 
     /**
@@ -76,7 +80,8 @@ public:
           _done_writing(false), _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
-          _writer_notify(thread_cond_create())
+          _writer_notify(thread_cond_create()),
+	  _reader_tid(0), _writer_tid(0)
     {
         init();
     }
@@ -84,6 +89,8 @@ public:
     ~tuple_fifo() {
         destroy();
     }
+
+    void writer_init();
 
     // the number of FIFOs currently open
     static int open_fifos();

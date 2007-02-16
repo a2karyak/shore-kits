@@ -16,7 +16,7 @@ using std::list;
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
+static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_NO_SCAN;
 
 /* exported datatypes */
 
@@ -81,7 +81,10 @@ protected:
     }
     
     virtual bool is_compatible(packet_t* other) {
-        return (osp_policy != OSP_FULL)? false : is_compatible(plan(), other->plan());
+        if (osp_policy == OSP_NONE || osp_policy == OSP_SCAN)
+	    return false;
+	
+	return is_compatible(plan(), other->plan());
     }
 
 public:
