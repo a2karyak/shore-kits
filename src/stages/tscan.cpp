@@ -34,8 +34,43 @@ void tscan_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
     tscan_packet_t* packet = (tscan_packet_t*)adaptor->get_packet();
-    page_list* table = packet->_db;
-    for(page_list::iterator it=table->begin(); it != table->end(); ++it) {
-        adaptor->output(*it);
+
+    Db*  db = packet->_db;
+    cursor_guard_t cursor(db);
+    
+
+    // BerkeleyDB cannot read into page_t's. Allocate a large blob and
+    // do bulk reading.
+    dbt_guard_t bulk_data(TSCAN_BULK_READ_BUFFER_SIZE);
+    Dbt bulk_key;
+    for (int bulk_read_index = 0; ; bulk_read_index++) {
+
+        // any return code besides DB_NOTFOUND would throw an exception
+        int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
+        if(err) {
+            assert(err = DB_NOTFOUND);
+            return;
+        }
+
+        // iterate over the blob we read and output the individual
+        // tuples
+#if 0
+        Dbt key, data;
+        DbMultipleKeyDataIterator it = bulk_data.get();
+	for (int tuple_index = 0; it.next(key, data); tuple_index++) {
+            tuple_t tup((char*)data.get_data(), (size_t)data.get_size());
+	    adaptor->output(tup);
+        }
+#else
+        Dbt data;
+        DbMultipleDataIterator it = bulk_data.get();
+	for (int tuple_index = 0; it.next(data); tuple_index++) {
+            tuple_t tup((char*)data.get_data(), (size_t)data.get_size());
+	    adaptor->output(tup);
+        }
+#endif
     }
+
+    // control never reaches here
+    assert(false);
 }

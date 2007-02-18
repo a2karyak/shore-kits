@@ -57,7 +57,7 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
  * @brief select s_suppkey from supplier where s_comment like
  * "%Customer%Complaints%"
  */
-packet_t *supplier_scan(page_list* tpch_supplier) {
+packet_t *supplier_scan(Db* tpch_supplier) {
     tuple_filter_t* filter = new supplier_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     packet_t* tscan_packet = new tscan_packet_t("supplier TSCAN",
@@ -160,7 +160,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
  * p_brand <> [brand] and p_type not like '[type]%' and p_size in
  * (...)
  */
-packet_t* part_scan(page_list* tpch_part) {
+packet_t* part_scan(Db* tpch_part) {
     tuple_filter_t* filter = new part_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(part_scan_tuple_t));
     packet_t* tscan_packet = new tscan_packet_t("part TSCAN",
@@ -197,7 +197,7 @@ struct partsupp_tscan_filter_t : public tuple_filter_t {
     }
 };
 
-packet_t* partsupp_scan(page_list* tpch_partsupp) {
+packet_t* partsupp_scan(Db* tpch_partsupp) {
     tuple_filter_t* filter = new partsupp_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(part_supp_tuple_t));
     packet_t* tscan_packet = new tscan_packet_t("partsupp TSCAN",
