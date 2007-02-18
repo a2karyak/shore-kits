@@ -110,6 +110,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/ia64)
 
     ARCHOS=IA64_LINUX
+    CPU_FLAGS="-mtune=itanium2"
     ;;
 
   # linux on power5? (not implem)
@@ -231,8 +232,6 @@ LDFLAGS="-lnsl -ldl -lm -lpthread"
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
     CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0"
-else
-    LDFLAGS="$LDFLAGS -lboost_regex"
 fi
 
 # in IA64 no -Wextra -Wno-invalid-offsetof
@@ -240,7 +239,6 @@ if test "$ARCHOS" = "IA64_LINUX"; then
     CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wfloat-equal \
 	-Wconversion -Wno-system-headers -D_REENTRANT"
 fi
-
 
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
