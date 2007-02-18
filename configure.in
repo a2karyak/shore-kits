@@ -2,7 +2,7 @@ m4_pattern_allow([^AC_PACKAGE])
 
 # configure.in for QPipe         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
-AC_INIT(THIS_IS_QPIPE)
+AC_INIT(THIS_IS_QPIPE,2.0)
 
 # find system type (using this macro means we must include
 # the files install-sh, config.sub, and config.guess (all from
