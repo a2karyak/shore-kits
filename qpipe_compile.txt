@@ -1,0 +1,32 @@
+
+SVN:
+
+-- to checkout
+-- svn co svn+ssh://<afs-enabled-machine>/afs/cs.cmu.edu/project/stageddb/repository/svn/branches/<branch-name>
+
+-- Typical branches: qpipe-lomond, qpipe-tpcc...
+
+
+COMPILE:
+
+-- libtoolize
+-- aclocal
+
+-- ./autogen.sh
+-- autoreconf
+
+# -- ./configure BDB_HOME= <bdb>
+
+-- link /mnt/raid/qpipedata/sf1/database to directory where the qpipe executable is
+
+
+IA64_LINUX specific:
+
+It compiles with g++-4.1.1 
+
+At NEMESIS it resides at /home/ryan/apps/bin
+
+CXX=/home/ryan/apps/bin/g++-4.1.1 configure
+CXX=/home/ryan/apps/bin/g++-4.1.1 make
+
+
