@@ -17,6 +17,6 @@
 #include "util/tmpfile.h"
 #include "util/trace.h"
 #include "util/offsetof.h"
-
+#include "util/fileops.h"
 
 #endif

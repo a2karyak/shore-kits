@@ -71,7 +71,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/trace.cpp \
 	$(SU)/tcp.cpp \
 	$(SU)/rio.cpp \
-	$(SU)/chomp.cpp
+	$(SU)/chomp.cpp \
+        $(SU)/fileops.cpp
 
 
 ################################################################################
