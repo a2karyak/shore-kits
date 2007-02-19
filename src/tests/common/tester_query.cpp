@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common/tpch_query.h"
+#include "tests/common/tester_query.h"
 
 #include "scheduler.h"
 #include "workload/tpch/tpch_db.h"

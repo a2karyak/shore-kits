@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _FSCAN_H
-#define _FSCAN_H
+#ifndef _PAYMENT_BEGIN_H
+#define _PAYMENT_BEGIN_H
 
 #include <cstdio>
 
@@ -108,18 +108,6 @@ public:
         _trx_state = UNDEF;
     }
 
-    
-    /**
-     *  @brief Emptry constructor
-     *  @todo  TO BE REMOVED
-     */
-
-    payment_begin_packet_t()
-    : trx_packet_t("EMPTY_ID", "EMPTY_TYPE", NULL, NULL, create_plan(NULL, 0, 0.0, "EMPTY_DATE"))
-    {
-        _trx_state = UNDEF;
-        TRACE(TRACE_ALWAYS, "Empty payment_begin_packet_t constructor.\nTo be removed.");        
-    }
 
 
     static query_plan* create_plan( tuple_filter_t* filter,

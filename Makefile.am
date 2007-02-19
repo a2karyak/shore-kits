@@ -45,7 +45,9 @@ TESTS = \
    tests/hash_map \
    tests_grouper \
    tests/busy_wait \
-   tests/busy_wait_all
+   tests/busy_wait_all \
+   tests/payment
+
 
 
 bin_PROGRAMS = qpipe $(TESTS)
@@ -186,7 +188,7 @@ lib_libtest_a_CXXFLAGS = $(AM_CXXFLAGS)
 lib_libtest_a_SOURCES = \
    $(STC)/drive_stage.cpp \
    $(STC)/int_tuple_writer.cpp \
-   $(STC)/tpch_query.cpp \
+   $(STC)/tester_query.cpp \
    $(STC)/cpu_bind.cpp \
    $(STC)/busy_wait.cpp
 
@@ -237,6 +239,8 @@ tests_hash_map_SOURCES = $(ST)/test_hash_map.cpp
 tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
+tests_payment_SOURCES = $(ST)/test_payment.cpp
+
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
@@ -269,7 +273,7 @@ tests_hash_map_LDADD = $(TEST_LIBS)
 tests_grouper_LDADD = $(TEST_LIBS)
 tests_busy_wait_LDADD = $(TEST_LIBS)
 tests_busy_wait_all_LDADD = $(TEST_LIBS)
-
+tests_payment_LDADD = $(TEST_LIBS)
 
 ################################################################################
 #

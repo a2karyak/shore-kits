@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TPCH_QUERY_H
-#define _TPCH_QUERY_H
+#ifndef _TESTER_QUERY_H
+#define _TESTER_QUERY_H
 
 #include "scheduler.h"
 #include "workload/driver.h"

@@ -1,7 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+# include "scheduler.h"
 # include "workload/tpcc/drivers/tpcc_payment.h"
-# include "stages/tpcc/payment_begin.h"
+# include "workload/common.h"
 
 
 using namespace qpipe;
@@ -34,7 +35,20 @@ trx_packet_t* tpcc_payment_driver::create_payment_packet(const c_str &client_pre
     payment_begin_packet_t* payment_packet;
 
     TRACE(TRACE_ALWAYS, "SHOULD CALL CORRECT payment_begin_packet_t CONSTRUCTOR!");
-    payment_packet = new payment_begin_packet_t();
+    payment_packet = new payment_begin_packet_t("payment_test",
+						NULL,
+						NULL,
+						1,
+						1,
+						10,
+						2,
+						2,
+						20,
+						1,
+						"EMPTY",
+						5.0,
+						"NEVER");
+					       
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

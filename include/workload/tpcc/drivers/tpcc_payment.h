@@ -4,9 +4,10 @@
 #define __TPCC_PAYMENT_H
 
 # include "stages/tpcc/trx_packet.h"
+# include "stages/tpcc/payment_begin.h"
+
 # include "workload/driver.h"
-# include "core.h"
-# include "scheduler.h"
+# include "workload/driver_directory.h"
 
 using namespace qpipe;
 

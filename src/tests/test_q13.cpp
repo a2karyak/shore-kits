@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "stages.h"
-#include "tests/common/tpch_query.h"
+#include "tests/common/tester_query.h"
 #include "workload/common.h"
 
 #include "workload/tpch/drivers/tpch_q13.h"
