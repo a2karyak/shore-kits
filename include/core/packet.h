@@ -8,6 +8,7 @@
 #include "core/tuple_fifo.h"
 #include "core/functors.h"
 #include "core/query_state.h"
+#include "util/resource_reserver.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -56,12 +57,16 @@ class packet_t
 {
 
 protected:
+
+    /* used for detecting work-sharing opportunities */
     query_plan* _plan; 
 
-    // dispatching/CPU binding fields
+    /* used dispatching/CPU binding */
     query_state_t* _qstate;
 
+    /* used to recover from coming in too late for work sharing */
     bool _merge_enabled;
+
 
     static bool is_compatible(query_plan const* a, query_plan const* b) {
         if(!a || !b || strcmp(a->action, b->action))
@@ -86,6 +91,7 @@ protected:
 	
 	return is_compatible(plan(), other->plan());
     }
+
 
 public:
     
@@ -176,5 +182,6 @@ public:
 
 
 EXIT_NAMESPACE(qpipe);
+
 
 #endif
