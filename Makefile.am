@@ -121,7 +121,9 @@ lib_libstages_a_SOURCES = \
    $(SG)/merge.cpp \
    $(SG)/sort.cpp \
    $(SG)/bnl_join.cpp \
-   $(SG)/bnl_in.cpp
+   $(SG)/bnl_in.cpp \
+   $(SG)/tpcc/trx_packet.cpp \
+   $(SG)/tpcc/payment_begin.cpp
 
 
 ################################################################################
@@ -161,10 +163,16 @@ WL_TPCH = \
    $(SW)/tpch/drivers/tpch_m14612.cpp \
    $(SW)/tpch/drivers/tpch_sim_mix.cpp
 
+WL_TPCC = \
+   $(SW)/tpcc/drivers/tpcc_payment.cpp
+
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
    $(WL_COMMON) \
-   $(WL_TPCH)
+   $(WL_TPCH) \
+   $(WL_TPCC)
+
+
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
 
 ################################################################################

@@ -281,12 +281,6 @@ if test "$ARCHOS" = "SPARC_SUN"; then
     CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0"
 fi
 
-# in IA64 no -Wextra -Wno-invalid-offsetof
-if test "$ARCHOS" = "IA64_LINUX"; then
-    CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wfloat-equal \
-	-Wconversion -Wno-system-headers -D_REENTRANT"
-fi
-
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
     
