@@ -32,7 +32,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     // create environment
     try {
         dbenv = new DbEnv(0);
-        dbenv->set_errpfx("qpipe");
+	//        dbenv->set_errpfx("qpipe");
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", e.what());
