@@ -28,6 +28,7 @@ public:
 
     static const c_str PACKET_TYPE;
 
+    TrxState _trx_state;
 
     /**
      *  @brief PAYMENT transaction inputs:
@@ -103,6 +104,8 @@ public:
     {
         strncpy(_c_last, a_c_last, 16);
         strncpy(_h_date, a_h_date, strlen(a_h_date));
+
+        _trx_state = UNDEF;
     }
 
     
@@ -114,7 +117,7 @@ public:
     payment_begin_packet_t()
     : trx_packet_t("EMPTY_ID", "EMPTY_TYPE", NULL, NULL, create_plan(NULL, 0, 0.0, "EMPTY_DATE"))
     {
-
+        _trx_state = UNDEF;
         TRACE(TRACE_ALWAYS, "Empty payment_begin_packet_t constructor.\nTo be removed.");        
     }
 
@@ -153,9 +156,6 @@ public:
 protected:
 
     virtual void process_packet();
-
-
-    TrxState _trx_state;
 
     static int _trx_counter;
     static pthread_mutex_t _trx_counter_mutex;
