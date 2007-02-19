@@ -48,6 +48,10 @@ case "$target" in
     BDB_HOME_DEFAULT="/usr/software/berkeleydb"
     ;;
 
+  *ia64*)
+    BDB_HOME_DEFAULT="$HOME/work/apps/berkeleydb"
+    ;;
+
  *)
     BDB_HOME_DEFAULT="/usr/software/berkeleydb"
     ;;
@@ -324,5 +328,4 @@ QPipe configuration:
   BerkeleyDB version:       BDB_VERSION          $BDB_VERSION
   BerkeleyDB home:          BDB_HOME             $BDB_HOME
   Architecture/OS:          ARCHOS               $ARCHOS
-  QPipe features            QPIPE_FEATURES       $QPIPE_FEATURES
 EOF
