@@ -82,7 +82,11 @@ struct aggregate_packet_t : public packet_t {
         children[0] = child;
         return new query_plan(action, filter->to_string(), children, 1);
     }
-    
+
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        _input->declare_worker_needs(reserve);
+    }
 };
 
 

@@ -19,7 +19,10 @@ using std::list;
 // change this variable to set the style of sharing we use...
 static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_NO_SCAN;
 
+
+
 /* exported datatypes */
+
 
 class   packet_t;
 typedef list<packet_t*> packet_list_t;
@@ -39,6 +42,19 @@ struct query_plan {
 
 
 /**
+ * @brief Base class for packet chomper (any class that exports a
+ * chomp() method). In the general case, chomp() must be synchronized.
+ */
+class packet_chomper_t
+{
+public:
+    virtual void chomp(packet_t* p)=0;
+    virtual ~packet_chomper_t() { }
+};
+
+
+
+/**
  *  @brief A packet in QPIPE is a unit of work that can be processed
  *  by a stage's worker thread.
  *
@@ -51,8 +67,6 @@ struct query_plan {
  *  queue, it will check the working set to see if the new packet can
  *  be merged with an existing one that is already being processed.
  */
-
-
 class packet_t
 {
 
@@ -133,6 +147,7 @@ public:
     tuple_fifo* release_output_buffer() {
         return _output_buffer.release();
     }
+    
     tuple_fifo* output_buffer() {
         return _output_buffer;
     }
@@ -173,11 +188,11 @@ public:
         _qstate = qstate;
     }
 
-
     query_state_t* get_query_state() {
         return _qstate;
     }
 
+    virtual void declare_worker_needs(resource_reserver_t* reserve)=0;
 };
 
 

@@ -1,5 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "core.h"
 #include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/register_stage.h"
@@ -48,6 +49,7 @@ int main(int argc, char* argv[]) {
                                &info);
     
     
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
   
   

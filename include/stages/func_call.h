@@ -95,6 +95,10 @@ public:
         return packet_t::is_compatible(plan(), other->plan());
     }
 
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many FUNC_CALL workers it needs. */
+    }
 };
 
 

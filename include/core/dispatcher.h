@@ -85,8 +85,8 @@ public:
 };
 
 
-EXIT_NAMESPACE(qpipe);
 
+EXIT_NAMESPACE(qpipe);
 
 
 #endif

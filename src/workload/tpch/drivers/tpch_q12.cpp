@@ -321,6 +321,7 @@ void tpch_q12_driver::submit(void* disp) {
     order_packet->assign_query_state(qs);
     lineitem_packet->assign_query_state(qs);
 
+    reserve_query_workers(agg_packet);
     dispatcher_t::dispatch_packet(agg_packet);
 
     tuple_t output;

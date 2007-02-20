@@ -314,10 +314,12 @@ void tpch_q13_driver::submit(void* disp) {
     sort_packet->assign_query_state(qs);
 
 
-    // Dispatch packet
-    dispatcher_t::dispatch_packet(sort_packet);
+    // dispatch root
     guard<tuple_fifo> result = sort_packet->output_buffer();
-        
+    reserve_query_workers(sort_packet);
+    dispatcher_t::dispatch_packet(sort_packet);
+
+       
     tuple_t output;
     while(result->get_tuple(output)) {
         key_count_tuple_t* r = aligned_cast<key_count_tuple_t>(output.data);

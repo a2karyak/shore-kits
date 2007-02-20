@@ -43,7 +43,13 @@ struct partial_aggregate_packet_t : public packet_t {
         return new query_plan(action, filter->to_string(), children, 1);
     }
     
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        _input->declare_worker_needs(reserve);
+    }
 };
+
+
 
 class partial_aggregate_stage_t : public stage_t {
     typedef std::set<hint_tuple_pair_t, tuple_less_t> tuple_set_t;
@@ -61,5 +67,7 @@ protected:
     virtual void process_packet();
     int alloc_agg(hint_tuple_pair_t &agg, const char* key);
 };
+
+
 
 #endif

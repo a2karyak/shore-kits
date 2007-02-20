@@ -70,6 +70,9 @@ int main(int argc, char* argv[]) {
                                 right_packet,
                                 join
                                 );
+
+
+    reserve_query_workers(join_packet);
     dispatcher_t::dispatch_packet(join_packet);
     
     

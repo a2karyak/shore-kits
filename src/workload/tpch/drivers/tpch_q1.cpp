@@ -241,7 +241,8 @@ void tpch_q1_driver::submit(void* disp) {
     q1_agg_packet->assign_query_state(qs);
     q1_tscan_packet->assign_query_state(qs);
         
-    // Dispatch packet
+    // dispatch root
+    reserve_query_workers(q1_agg_packet);
     dispatcher_t::dispatch_packet(q1_agg_packet);
     
     tuple_t output;

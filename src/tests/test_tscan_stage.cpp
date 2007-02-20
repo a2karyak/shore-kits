@@ -43,6 +43,7 @@ int main() {
         new tscan_packet_t("TSCAN_PACKET_1" , tscan_out_buffer, tscan_filter, tpch_lineitem);
 
     // Dispatch packet
+    reserve_query_workers(q6_tscan_packet);
     dispatcher_t::dispatch_packet(q6_tscan_packet);
     
     tuple_t output;

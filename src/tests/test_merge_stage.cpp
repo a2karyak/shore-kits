@@ -124,6 +124,7 @@ int main(int argc, char* argv[]) {
 
         // Need to dispatch the FUNC_CALL packet ourselves. MERGE
         // assumes that the meta-stage performs this dispatch.
+        reserve_query_workers(fc_packet);
         dispatcher_t::dispatch_packet(fc_packet);
     }
     
@@ -137,6 +138,9 @@ int main(int argc, char* argv[]) {
                                                 input_buffers,
                                                 new int_key_extractor_t(),
                                                 new int_key_compare_t());
+
+
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
     
    

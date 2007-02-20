@@ -38,8 +38,9 @@ void bnl_in_stage_t::process_packet() {
     
     
     // dispatch outer relation so we can stream it
+    TRACE(TRACE_ALWAYS,
+          "Dispatching _left... Is declare_worker_needs() implemented?\n");
     dispatcher_t::dispatch_packet(packet->_left);
-
  
     
     while (1) {
@@ -61,6 +62,8 @@ void bnl_in_stage_t::process_packet() {
         // read the entire inner relation
         packet_t* right_packet = right_source->reset();
         tuple_fifo* right_buffer = right_packet->output_buffer();
+        TRACE(TRACE_ALWAYS,
+              "Dispatching _right_packet... Is declare_worker_needs() implemented?\n");
         dispatcher_t::dispatch_packet(right_packet);
         
 

@@ -35,6 +35,11 @@ struct sorted_in_packet_t : public packet_t {
     {
     }
 
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        _left->declare_worker_needs(reserve);
+        _right->declare_worker_needs(reserve);
+    }
 };
 
 struct sorted_in_stage_t : public stage_t {

@@ -53,7 +53,7 @@ public:
     int count_right;
   
     /**
-     *  @brief sort_packet_t constructor.
+     *  @brief Constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -112,6 +112,12 @@ public:
         children[0] = left->plan();
         children[1] = right->plan();
         return new query_plan(action, filter->to_string(), children, 2);
+    }
+
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        _left->declare_worker_needs(reserve);
+        _right->declare_worker_needs(reserve);
     }
 };
 

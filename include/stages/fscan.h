@@ -65,6 +65,11 @@ public:
         c_str action("%s:%s", PACKET_TYPE.data(), file_name.data());
         return new query_plan(action, filter->to_string(), NULL, 0);
     }
+
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many FSCAN workers it needs. */
+    }
 };
 
 

@@ -77,6 +77,10 @@ struct merge_packet_t : public packet_t {
             delete *it++;
     }
 
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many MERGE workers it needs. */
+    }
 };
 
 
@@ -123,7 +127,7 @@ protected:
 private:
 
     void insert_sorted(buffer_head_t* head);
-    int compare(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b);
+    int  compare(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b);
 };
 
 

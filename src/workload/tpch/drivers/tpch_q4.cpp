@@ -261,7 +261,10 @@ void tpch_q4_driver::submit(void* disp) {
 
     // Dispatch packet
     guard<tuple_fifo> result = agg_packet->output_buffer();
+    reserve_query_workers(agg_packet);
     dispatcher_t::dispatch_packet(agg_packet);
+
+
     tuple_t output;
     while(result->get_tuple(output)) {
         q4_tuple_t* r = aligned_cast<q4_tuple_t>(output.data);

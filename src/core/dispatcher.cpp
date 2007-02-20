@@ -45,10 +45,9 @@ dispatcher_t::~dispatcher_t() {
  *  their constructors should execute in the context of the root
  *  thread.
  */
-void dispatcher_t::_register_stage_container(const c_str &packet_type, stage_container_t* sc)
+void dispatcher_t::_register_stage_container(const c_str &packet_type,
+                                             stage_container_t* sc)
 {
-
-  
   // We eventually want multiple stages willing to perform SORT's. But
   // then we need policy/cost model to determine which SORT stage to
   // use when. For now, restrict to one stage per type.
@@ -79,7 +78,6 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type, stage_con
  */
 void dispatcher_t::_dispatch_packet(packet_t* packet) {
 
-  
   void* sc;
   if ( static_hash_map_find( &stage_directory, packet->_packet_type.data(), &sc, NULL ) )
       THROW2(DispatcherException, 
@@ -112,10 +110,23 @@ int string_comparator(const void* key1, const void* key2) {
   return strcmp(str1, str2);
 }
 
+
+
 size_t packet_type_hash(const void* key) {
   const char* str = (const char*)key;
   return (size_t)RSHash(str, strlen(str));
 }
+
+
+
+void reserve_query_workers(packet_t* root) {
+  
+  TRACE(TRACE_ALWAYS, "hello...\n");
+  
+}
+
+
+
 
 EXIT_NAMESPACE(qpipe);
 

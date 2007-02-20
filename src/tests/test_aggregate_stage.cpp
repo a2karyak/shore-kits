@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
     agg_packet->assign_query_state(qs);
 
 
+    reserve_query_workers(agg_packet);
     dispatcher_t::dispatch_packet(agg_packet);
 
  

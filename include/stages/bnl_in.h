@@ -73,6 +73,10 @@ struct bnl_in_packet_t : public packet_t {
     {
     }
   
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        TRACE(TRACE_ALWAYS, "UNIMPLEMENTED! Why are you not using sorted_in?\n");
+        assert(0);
+    }
 };
 
 

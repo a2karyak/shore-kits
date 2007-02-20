@@ -92,7 +92,16 @@ public:
         return new query_plan(action, filter->to_string(), children, 1);
     }
     
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
 
+        TRACE(TRACE_ALWAYS, "NOT COMPLETE!\n");
+        assert(0);
+
+        /* need to reserve one SORT worker, ... */
+        reserve->declare_resource_need(_packet_type, 1);
+        
+        _input->declare_worker_needs(reserve);
+    }
 };
 
 

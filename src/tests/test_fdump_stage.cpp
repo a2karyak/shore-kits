@@ -53,6 +53,7 @@ int main(int argc, char* argv[]) {
 			   output_filename);
     
     
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
   
   
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
     TRACE(TRACE_ALWAYS, "get_tuple() returned %d\n",
 	  signal_buffer->get_tuple(output) );
     TRACE(TRACE_ALWAYS, "TEST DONE\n");
-    exit(0);
-    
+
+
     return 0;
 }

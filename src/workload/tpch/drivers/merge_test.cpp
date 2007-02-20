@@ -64,7 +64,8 @@ void merge_test_driver::submit(void* disp) {
     sleep(self->rand(20));
     
     
-    // Dispatch packet
+    // dispatch root
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
     
 

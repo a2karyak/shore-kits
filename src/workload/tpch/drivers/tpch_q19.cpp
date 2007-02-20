@@ -442,7 +442,8 @@ void tpch_q19_driver::submit(void* disp) {
     sum_packet->assign_query_state(qs);
 
 
-    // go!
+    // dispatch root
+    reserve_query_workers(sum_packet);
     dispatcher_t::dispatch_packet(sum_packet);
     guard<tuple_fifo> result = sum_packet->output_buffer();
     

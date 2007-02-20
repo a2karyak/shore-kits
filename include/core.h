@@ -9,5 +9,6 @@
 #include "core/stage_container.h"
 #include "core/tuple.h"
 #include "core/tuple_fifo.h"
+#include "core/reserve_query_workers.h"
 
 #endif
