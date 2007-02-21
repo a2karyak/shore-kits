@@ -31,16 +31,15 @@ public:
 protected:
 
     class stage_adaptor_t;
+    typedef list <packet_list_t*> ContainerQueue;
     
     
     // container synch vars
     debug_mutex_t _container_lock;
     pthread_cond_t  _container_queue_nonempty;
-
-
+    
     c_str                   _container_name;
-    typedef list <packet_list_t*> ContainerQueue;
-    ContainerQueue _container_queue;
+    ContainerQueue          _container_queue;
     list <stage_adaptor_t*> _container_current_stages;
 
     stage_factory_t* _stage_maker;
@@ -50,7 +49,8 @@ protected:
     void container_queue_enqueue_no_merge(packet_list_t* packets);
     void container_queue_enqueue_no_merge(packet_t* packet);
     packet_list_t* container_queue_dequeue();
-    
+    void create_worker();
+   
     
 public:
     
@@ -60,28 +60,48 @@ public:
 
     stage_container_t(const c_str &container_name, stage_factory_t* stage_maker,
 		      int active_count, int max_count=-1);
+
     ~stage_container_t();
   
     const c_str &get_name(){ return _container_name; }
 
     void enqueue(packet_t* packet);
 
+    void reserve(int n);
+
     void run();
 
 private:
 
 
+    /* The pool that the worker threads will belong to. Thread pools
+       are used to control the number of threads that the OS needs to
+       schedule. When one thread in the pool waits on a condition
+       variable, it let's another thread through. */
     thread_pool _pool;
-    int _max_threads;      // how many threads can exist in this pool?
-    int _curr_threads;     // how many threads do exist?
-    int _idle_threads;     // how many are waiting for packets?
-    int _reserved_threads; // how many have been claimed?
-    int _next_thread;      // ascending count for ID purposes
 
-    int _available_threads() {
-	int claimed_threads = _curr_threads - _idle_threads + _reserved_threads;
-	return _max_threads - claimed_threads;
-    }
+    /* The maximum number of worker threads this stage should ever
+       have. Note that even though this number is high, _pool
+       guarantees that only a fixed number of them are being scheduled
+       by the OS. */
+    int _max_threads;
+
+    /* Used to generate a container-unique thread ID when we create
+       more threads. */
+    int _next_thread;
+
+    /* Used to track the reservation of worker threads by clients who
+       want to submit queries. A client is responsible for reserving
+       all required workers before submitting the query.
+
+       This pool's capacity should be the number of worker threads
+       that exist for this stage. Every packet list in the container
+       queue must have a worker reserved for it.
+
+       Workers can report themselves as idle or non-idle when they
+       enter and exit process_packet().
+    */
+    struct resource_pool_s _rp;
 };
 
 
@@ -160,7 +180,7 @@ public:
 
     bool try_merge(packet_t* packet);
     void run_stage(stage_t* stage);
-
+    
 protected:
 
     void finish_packet(packet_t* packet);

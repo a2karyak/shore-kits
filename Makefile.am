@@ -72,7 +72,10 @@ lib_libutil_a_SOURCES = \
 	$(SU)/tcp.cpp \
 	$(SU)/rio.cpp \
 	$(SU)/chomp.cpp \
-        $(SU)/fileops.cpp
+        $(SU)/fileops.cpp \
+        $(SU)/static_list_node.cpp \
+        $(SU)/static_list.cpp \
+        $(SU)/resource_pool.cpp
 
 
 ################################################################################
