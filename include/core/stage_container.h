@@ -67,19 +67,24 @@ public:
     void enqueue(packet_t* packet);
 
     void run();
+
 private:
+
+
     thread_pool _pool;
-    int _max_threads; // how many threads can exist in this pool?
-    int _curr_threads; // how many threads do exist?
-    int _idle_threads; // how many are waiting for packets?
+    int _max_threads;      // how many threads can exist in this pool?
+    int _curr_threads;     // how many threads do exist?
+    int _idle_threads;     // how many are waiting for packets?
     int _reserved_threads; // how many have been claimed?
-    int _next_thread; // ascending count for ID purposes
+    int _next_thread;      // ascending count for ID purposes
 
     int _available_threads() {
 	int claimed_threads = _curr_threads - _idle_threads + _reserved_threads;
 	return _max_threads - claimed_threads;
     }
 };
+
+
 
 class stage_container_t::stage_adaptor_t : public stage_t::adaptor_t {
 

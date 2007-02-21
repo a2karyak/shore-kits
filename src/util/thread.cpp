@@ -301,8 +301,6 @@ void* start_thread(void* thread_object)
     if(!pool)
 	pool = &default_thread_pool;
 
-    int err;
-
     // Register local data. Should not fail since we only need two
     // pieces of thread-specific storage.
     THREAD_KEY_SELF = thread;

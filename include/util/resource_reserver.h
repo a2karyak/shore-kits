@@ -20,6 +20,7 @@ class resource_reserver_t
 public:
     virtual void declare_resource_need(const c_str& name, int count)=0;
     virtual void acquire_resources()=0;
+    virtual ~resource_reserver_t() { }
 };
 
 

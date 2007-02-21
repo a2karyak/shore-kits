@@ -57,8 +57,10 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
       _max_threads((max_count > active_count)? max_count : std::max(10, active_count * 4)),
-      _idle_threads(0), _reserved_threads(0),
-      _curr_threads(0), _next_thread(0)
+      _curr_threads(0),
+      _idle_threads(0),
+      _reserved_threads(0),
+      _next_thread(0)
 {
 }
 

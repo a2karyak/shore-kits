@@ -119,12 +119,30 @@ size_t packet_type_hash(const void* key) {
 
 
 
-void reserve_query_workers(packet_t* root) {
-  
-  TRACE(TRACE_ALWAYS, "hello...\n");
-  
-}
+class worker_reserver_t : public resource_reserver_t
+{
+public:
 
+  virtual void declare_resource_need(const c_str& name, int count) {
+    TRACE(TRACE_ALWAYS, "Reserving %d workers of type %s\n",
+          count,
+          name.data());
+  }
+
+  virtual void acquire_resources() {
+    TRACE(TRACE_ALWAYS, "hello...\n");
+  }
+
+};
+
+
+
+void reserve_query_workers(packet_t* root)
+{
+  worker_reserver_t wr ;
+  root->declare_worker_needs(&wr);
+  wr.acquire_resources();
+}
 
 
 
