@@ -69,7 +69,7 @@ public:
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    _merge ? create_plan(output_filter, func) : NULL,
                    _merge,    /* whether to merge */
-                   _unreserve /* whether to unreserve */
+                   _unreserve /* whether to unreserve worker on completion */
                    ),
           _func(func),
           _func_arg(func_arg),

@@ -273,6 +273,7 @@ void stage_container_t::enqueue(packet_t* packet) {
 
 
     assert(packet != NULL);
+    bool unreserve = packet->unreserve_worker_on_completion();
 
 
     /* The caller should have reserved a worker thread before the
@@ -322,7 +323,8 @@ void stage_container_t::enqueue(packet_t* packet) {
                           packet->_next_tuple_on_merge);
 
                 /* unreserve the worker that the client reserved */
-                resource_pool_unreserve(&_rp, 1);
+                if (unreserve)
+                    resource_pool_unreserve(&_rp, 1);
                 
                 return;
                 // * * * END CRITICAL SECTION * * *
@@ -357,7 +359,8 @@ void stage_container_t::enqueue(packet_t* packet) {
 
                 /* packet was merged with an existing packet */
                 /* unreserve the worker that the client reserved */
-                resource_pool_unreserve(&_rp, 1);
+                if (unreserve)
+                    resource_pool_unreserve(&_rp, 1);
                 
                 return;
                 // * * * END CRITICAL SECTION * * *
@@ -808,7 +811,8 @@ void stage_container_t::stage_adaptor_t::cleanup() {
            unreserve ourself from the container. Remember to drop
            non-idle count before this! */
 	resource_pool_notify_idle(&_container->_rp);
-        resource_pool_unreserve(&_container->_rp, 1);
+        if (_packet->unreserve_worker_on_completion())
+            resource_pool_unreserve(&_container->_rp, 1);
     }
     else {
 

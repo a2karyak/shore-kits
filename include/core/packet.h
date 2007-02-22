@@ -197,6 +197,10 @@ public:
         return _qstate;
     }
 
+    bool unreserve_worker_on_completion() {
+        return _unreserve_on_completion;
+    }
+
     virtual void declare_worker_needs(resource_reserver_t* reserve)=0;
 };
 
