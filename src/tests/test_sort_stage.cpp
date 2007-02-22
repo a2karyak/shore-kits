@@ -57,9 +57,9 @@ void write_ints(void*, void* tfifo)
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
-    int THREAD_POOL_SIZE = 20;
+    db_open_guard_t db_open;
 
+    int THREAD_POOL_SIZE = 20;
     bool do_echo = true;
     
 

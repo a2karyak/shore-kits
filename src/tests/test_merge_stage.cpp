@@ -65,8 +65,8 @@ void write_tuples(void*, void* winfo)
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
-
+    db_open_guard_t db_open;
+    
     TRACE(TRACE_ALWAYS,
           "This unit test is currently broken for the following reasons:\n"
           " - it does not acquire and release workers like a meta-stage should"

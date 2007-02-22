@@ -4,13 +4,14 @@
 
 #include "scheduler.h"
 #include "workload/tpch/tpch_db.h"
+#include "workload/common.h"
 
 
 
 query_info_t query_init(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    db_open(); /* destroy this below in query_main */
 
     // parse command line args
     if ( argc < 2 ) {

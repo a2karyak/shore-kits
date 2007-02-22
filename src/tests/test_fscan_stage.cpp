@@ -29,7 +29,7 @@ public:
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    db_open_guard_t db_open;
 
     // parse input filename
     if ( argc < 2 ) {
