@@ -11,6 +11,7 @@
 #include "stages/hash_join.h"
 #include "stages/merge.h"
 #include "stages/partial_aggregate.h"
+#include "stages/hash_aggregate.h"
 #include "stages/sort.h"
 #include "stages/sorted_in.h"
 #include "stages/tscan.h"

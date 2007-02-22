@@ -139,6 +139,7 @@ public:
       ,"HASH_JOIN"
       ,"MERGE"
       ,"PARTIAL_AGGREGATE"
+      ,"HASH_AGGREGATE"
       ,"SORT"
       ,"SORTED_IN"
       ,"TSCAN"

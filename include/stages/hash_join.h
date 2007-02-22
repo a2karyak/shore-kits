@@ -19,7 +19,7 @@
 #include "util/hashtable.h"
 #endif
 
-
+#include <string>
 using namespace qpipe;
 using std::string;
 using std::vector;

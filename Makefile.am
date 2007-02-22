@@ -119,6 +119,7 @@ lib_libstages_a_SOURCES = \
    $(SG)/tscan.cpp \
    $(SG)/aggregate.cpp \
    $(SG)/partial_aggregate.cpp \
+   $(SG)/hash_aggregate.cpp \
    $(SG)/sorted_in.cpp \
    $(SG)/hash_join.cpp \
    $(SG)/func_call.cpp \

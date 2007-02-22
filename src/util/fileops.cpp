@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include "util/trace.h"
+#include "util/guard.h"
 
 
 
@@ -52,7 +53,7 @@ static int _store(char* dst, int dst_size, const char* src);
 /* debugging */
 
 static const int debug_trace_type = TRACE_DEBUG;
-#define DEBUG_TRACE(format, rest...) TRACE(debug_trace_type, format, ##rest)
+#define DEBUG_TRACE(format, arg) TRACE(debug_trace_type, format, arg)
 
 
 
@@ -243,7 +244,7 @@ int fileops_check_file_creatable(const char* path)
       return FILEOPS_ERROR_PATH_TOO_LONG;
     
     /* construct parent directory */
-    char parent_dir[size];
+    array_guard_t<char> parent_dir = new char[size];
     int ret = fileops_parse_parent_directory(parent_dir, size, path);
     assert((ret == 0) || (ret == FILEOPS_ERROR_PATH_TOO_LONG));
     if (ret == FILEOPS_ERROR_PATH_TOO_LONG)
