@@ -421,9 +421,11 @@ void stage_container_t::run() {
 	// Add new stage to the container's list of active stages. It
 	// is better to release the container lock and reacquire it
 	// here since stage construction can take a long time.
-        _container_current_stages.push_back( &adaptor );
-        //TRACE(TRACE_ALWAYS, "Notifying not idle with packet %s\n",
-        //packets->front()->_packet_id.data());
+        _container_current_stages.push_back(&adaptor);
+
+        /* Becomes non-idle. Note that we don't become non-idle in
+           this method. We do it in cleanup() since we must do it
+           before deciding whether to unreserve ourselves. */
         resource_pool_notify_non_idle(&_rp);
 
         // * * * END CRITICAL SECTION * * *
@@ -438,10 +440,8 @@ void stage_container_t::run() {
         // remove active stage
 	critical_section_t cs_remove_active_stage(_container_lock);
         // * * * BEGIN CRITICAL SECTION * * *
-
         _container_current_stages.remove(&adaptor);
-	resource_pool_notify_idle(&_rp);
-
+        /* should have marked ourselves non-idle in cleanup */
         // * * * END CRITICAL SECTION * * *
 	cs_remove_active_stage.exit();
         
@@ -805,7 +805,9 @@ void stage_container_t::stage_adaptor_t::cleanup() {
         critical_section_t cs(_container->_container_lock);
         
         /* We will return and be able to process more packets. We can
-           unreserve ourself from the container. */
+           unreserve ourself from the container. Remember to drop
+           non-idle count before this! */
+	resource_pool_notify_idle(&_container->_rp);
         resource_pool_unreserve(&_container->_rp, 1);
     }
     else {
@@ -814,10 +816,12 @@ void stage_container_t::stage_adaptor_t::cleanup() {
         // container.
         critical_section_t cs(_container->_container_lock);
 
+        /* Drop non-idle count */
+	resource_pool_notify_idle(&_container->_rp);
 	_container->container_queue_enqueue_no_merge(_packet_list);
     }
-    _packet_list = NULL;
 
+    _packet_list = NULL;
     
     // Terminate inputs of primary packet. finish_packet() already
     // took care of its output buffer.
