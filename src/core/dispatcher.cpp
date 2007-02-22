@@ -89,7 +89,28 @@ void dispatcher_t::_reserve_workers(const c_str& type, int n) {
 
 
 
-void dispatcher_t::register_stage_container(const c_str &packet_type, stage_container_t* sc) {
+/**
+ *  @brief Release the specified number of worker threads.
+ *
+ *  THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be since
+ *  stages should register themselves in their constructors and their
+ *  constructors should execute in the context of the root
+ *  thread. Reserving workers does not modify the dispatcher's data
+ *  structures.
+ */
+void dispatcher_t::_unreserve_workers(const c_str& type, int n) {
+  
+  stage_container_t* sc = _scdir[type];
+  if (sc == NULL)
+    THROW2(DispatcherException,
+           "Type %s unregistered\n", type.data());
+  sc->unreserve(n);
+}
+
+
+
+void dispatcher_t::register_stage_container(const c_str &packet_type,
+                                            stage_container_t* sc) {
   instance()->_register_stage_container(packet_type, sc);
 }
 
@@ -101,64 +122,14 @@ void dispatcher_t::dispatch_packet(packet_t* packet) {
 
 
 
-void dispatcher_t::reserve_workers(const c_str& type, int n) {
-  instance()->_reserve_workers(type, n);
+dispatcher_t::worker_reserver_t* dispatcher_t::reserver_acquire() {
+  return new worker_reserver_t(instance());
 }
 
 
 
-class worker_reserver_t : public resource_reserver_t
-{
-
-private:
-
-  map<c_str, int> worker_needs;
-
-  void reserve(const c_str& type) {
-    int n = worker_needs[type];
-    if (n > 0)
-      dispatcher_t::reserve_workers(type, n);
-  }
-
-public:
-
-  virtual void declare_resource_need(const c_str& name, int count) {
-    int curr_needs = worker_needs[name];
-    worker_needs[name] = curr_needs + count;
-  }
-
-  virtual void acquire_resources() {
-    
-    static const char* order[] = {
-      "AGGREGATE"
-      ,"BNL_IN"
-      ,"BNL_JOIN"
-      ,"FDUMP"
-      ,"FSCAN"
-      ,"FUNC_CALL"
-      ,"HASH_JOIN"
-      ,"MERGE"
-      ,"PARTIAL_AGGREGATE"
-      ,"HASH_AGGREGATE"
-      ,"SORT"
-      ,"SORTED_IN"
-      ,"TSCAN"
-    };
-    
-    int num_types = sizeof(order)/sizeof(order[0]);
-    for (int i = 0; i < num_types; i++)
-      reserve(order[i]);
-  }
-
-};
-
-
-
-void reserve_query_workers(packet_t* root)
-{
-  worker_reserver_t wr ;
-  root->declare_worker_needs(&wr);
-  wr.acquire_resources();
+void dispatcher_t::reserver_release(worker_reserver_t* wr) {
+  delete wr;
 }
 
 

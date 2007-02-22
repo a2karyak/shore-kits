@@ -38,10 +38,10 @@ struct sorted_in_packet_t : public packet_t {
     {
     }
 
-    virtual void declare_worker_needs(resource_reserver_t* reserve) {
-        reserve->declare_resource_need(_packet_type, 1);
-        _left->declare_worker_needs(reserve);
-        _right->declare_worker_needs(reserve);
+    virtual void declare_worker_needs(resource_declare_t* declare) {
+        declare->declare(_packet_type, 1);
+        _left->declare_worker_needs(declare);
+        _right->declare_worker_needs(declare);
     }
 };
 

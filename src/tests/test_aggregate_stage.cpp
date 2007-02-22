@@ -6,17 +6,30 @@
 #include "workload/common.h"
 #include "tests/common.h"
 #include "workload/common/register_stage.h"
-
-
+#include "workload/process_query.h"
 
 using namespace qpipe;
+using namespace workload;
 
+
+class test_aggregate_stage_process_tuple_t : public process_tuple_t {
+public:
+
+    virtual void process(const tuple_t& output) {
+        TRACE(TRACE_ALWAYS, "Count: %d\n", *aligned_cast<int>(output.data));
+    }
+
+    virtual void end() {
+        TRACE(TRACE_ALWAYS, "TEST DONE\n");
+    }
+
+};
 
 
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    db_open_guard_t db_open;
     scheduler::policy_t* dp = new scheduler::policy_rr_cpu_t();
 
     // parse output filename
@@ -64,16 +77,10 @@ int main(int argc, char* argv[]) {
     agg_packet->assign_query_state(qs);
 
 
-    reserve_query_workers(agg_packet);
-    dispatcher_t::dispatch_packet(agg_packet);
-
- 
-    tuple_t output;
-    while(count_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Count: %d\n", *aligned_cast<int>(output.data));
+    test_aggregate_stage_process_tuple_t pt;
+    process_query(agg_packet, pt);
 
     dp->query_state_destroy(qs);
-    TRACE(TRACE_ALWAYS, "TEST DONE\n");
 
     return 0;
 }

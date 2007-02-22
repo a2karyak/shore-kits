@@ -6,8 +6,11 @@
 
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
+#include "workload/process_query.h"
+
 
 using namespace qpipe;
+
 
 ENTER_NAMESPACE(q13);
 
@@ -196,9 +199,28 @@ packet_t* order_scan(page_list* tpch_orders, qpipe::query_state_t* qs) {
     return pagg_packet;
 }
 
+
 EXIT_NAMESPACE(q13);
+
+
 using namespace q13;
+
+
 ENTER_NAMESPACE(workload);
+
+
+class tpch_q13_process_tuple_t : public process_tuple_t {
+    
+public:
+     
+    virtual void process(const tuple_t& output) {
+        key_count_tuple_t* r = aligned_cast<key_count_tuple_t>(output.data);
+        TRACE(TRACE_QUERY_RESULTS, "*** Q13 Count: %d. CustDist: %d.  ***\n",
+              r->KEY, r->COUNT);
+    }
+
+};
+
 
 void tpch_q13_driver::submit(void* disp) {
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
@@ -314,21 +336,12 @@ void tpch_q13_driver::submit(void* disp) {
     sort_packet->assign_query_state(qs);
 
 
-    // dispatch root
-    guard<tuple_fifo> result = sort_packet->output_buffer();
-    reserve_query_workers(sort_packet);
-    dispatcher_t::dispatch_packet(sort_packet);
-
-       
-    tuple_t output;
-    while(result->get_tuple(output)) {
-        key_count_tuple_t* r = aligned_cast<key_count_tuple_t>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "*** Q13 Count: %d. CustDist: %d.  ***\n",
-              r->KEY, r->COUNT);
-    }
+    tpch_q13_process_tuple_t pt;
+    process_query(sort_packet, pt);
 
 
     dp->query_state_destroy(qs);
 }
+
 
 EXIT_NAMESPACE(workload);

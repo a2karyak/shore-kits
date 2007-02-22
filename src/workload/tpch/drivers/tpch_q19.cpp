@@ -6,8 +6,11 @@
 
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
+#include "workload/process_query.h"
+
 
 using namespace qpipe;
+
 
 ENTER_NAMESPACE(q19);
 
@@ -386,8 +389,25 @@ struct q19_sum_t : tuple_aggregate_t {
 
 
 EXIT_NAMESPACE(q19);
+
+
 using namespace q19;
+
+
 ENTER_NAMESPACE(workload);
+
+
+class tpch_q19_process_tuple_t : public process_tuple_t {
+    
+public:
+     
+    virtual void process(const tuple_t& output) {
+        decimal* r = aligned_cast<decimal>(output.data);
+        TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", r->to_double());
+    }
+
+};
+
 
 void tpch_q19_driver::submit(void* disp) {
 
@@ -442,16 +462,9 @@ void tpch_q19_driver::submit(void* disp) {
     sum_packet->assign_query_state(qs);
 
 
-    // dispatch root
-    reserve_query_workers(sum_packet);
-    dispatcher_t::dispatch_packet(sum_packet);
-    guard<tuple_fifo> result = sum_packet->output_buffer();
-    
-    tuple_t output;
-    while(result->get_tuple(output)) {
-        decimal* r = aligned_cast<decimal>(output.data);
-        TRACE(TRACE_ALWAYS, "*** Q19 Revenue: %lf\n", r->to_double());
-    }
+    tpch_q19_process_tuple_t pt;
+    process_query(sum_packet, pt);
+
 
     dp->query_state_destroy(qs);
 }

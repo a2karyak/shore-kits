@@ -8,6 +8,7 @@
 #include "workload/tpch/tpch_type_convert.h"
 #include "workload/tpch/tpch_env.h"
 #include "workload/common/int_comparator.h"
+#include "workload/process_query.h"
 
 
 ENTER_NAMESPACE(q4);
@@ -188,9 +189,32 @@ struct q4_count_aggregate_t : public tuple_aggregate_t {
     }
 };
 
+
 EXIT_NAMESPACE(q4);
+
+
 using namespace q4;
+using namespace workload;
+
+
 ENTER_NAMESPACE(workload);
+
+
+using namespace qpipe;
+
+
+class tpch_q4_process_tuple_t : public process_tuple_t {
+    
+public:
+        
+    virtual void process(const tuple_t& output) {
+        q4_tuple_t* r = aligned_cast<q4_tuple_t>(output.data);
+        TRACE(TRACE_QUERY_RESULTS, "*** Q4 Priority: %d. Count: %d.  ***\n",
+              r->O_ORDERPRIORITY,
+              r->ORDER_COUNT);
+    }
+
+};
 
 
 void tpch_q4_driver::submit(void* disp) {
@@ -260,20 +284,11 @@ void tpch_q4_driver::submit(void* disp) {
     line_item_packet->assign_query_state(qs);
 
     // Dispatch packet
-    guard<tuple_fifo> result = agg_packet->output_buffer();
-    reserve_query_workers(agg_packet);
-    dispatcher_t::dispatch_packet(agg_packet);
-
-
-    tuple_t output;
-    while(result->get_tuple(output)) {
-        q4_tuple_t* r = aligned_cast<q4_tuple_t>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "*** Q4 Priority: %d. Count: %d.  ***\n",
-              r->O_ORDERPRIORITY,
-              r->ORDER_COUNT);
-    }
+    tpch_q4_process_tuple_t pt;
+    process_query(agg_packet, pt);
 
     dp->query_state_destroy(qs);
 }
+
 
 EXIT_NAMESPACE(workload);

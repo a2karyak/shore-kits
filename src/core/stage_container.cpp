@@ -255,6 +255,19 @@ void stage_container_t::reserve(int n) {
 
 
 /**
+ *  @brief Unreserve the specified number of workers.
+ *
+ *  @param n The number of workers.
+ *
+ *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
+ */
+void stage_container_t::unreserve(int n) {
+    assert(0);
+}
+
+
+
+/**
  *  @brief Send the specified packet to this container. We will try to
  *  merge the packet into a running stage or into an already enqueued
  *  packet packet list. If we fail, we will wrap the packet in a

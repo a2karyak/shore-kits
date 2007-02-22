@@ -17,7 +17,7 @@
 #include "util/tmpfile.h"
 #include "util/trace.h"
 #include "util/offsetof.h"
-#include "util/resource_reserver.h"
+#include "util/resource_declare.h"
 #include "util/fileops.h"
 #include "util/resource_pool.h"
 #include "util/resource_pool_struct.h"

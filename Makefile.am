@@ -140,7 +140,8 @@ WL_BASE = \
    $(SW)/workload.cpp \
    $(SW)/workload_client.cpp \
    $(SW)/register_stage_containers.cpp \
-   $(SW)/dispatcher_globals.cpp
+   $(SW)/dispatcher_globals.cpp \
+   $(SW)/process_query.cpp
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \

@@ -8,6 +8,7 @@
 #include "workload/tpch/tpch_type_convert.h"
 #include "workload/tpch/tpch_env.h"
 #include "workload/common/int_comparator.h"
+#include "workload/process_query.h"
 
 
 ENTER_NAMESPACE(q1);
@@ -208,8 +209,38 @@ public:
 
 
 EXIT_NAMESPACE(q1);
+
+
 using namespace q1;
+using namespace workload;
+
+
 ENTER_NAMESPACE(workload);
+
+
+using namespace qpipe;
+
+
+class tpch_q1_process_tuple_t : public process_tuple_t {
+    
+public:
+        
+    virtual void begin() {
+        TRACE(TRACE_QUERY_RESULTS, "*** Q1 ANSWER ...\n");
+        TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
+    }
+    
+    virtual void process(const tuple_t& output) {
+        aggregate_tuple *tuple;
+        tuple = aligned_cast<aggregate_tuple>(output.data);
+        TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",
+              tuple->L_SUM_QTY.to_double(),
+              tuple->L_SUM_BASE_PRICE.to_double(),
+              tuple->L_SUM_DISC_PRICE.to_double());
+    }
+
+};
+
 
 void tpch_q1_driver::submit(void* disp) {
 
@@ -241,24 +272,13 @@ void tpch_q1_driver::submit(void* disp) {
     q1_agg_packet->assign_query_state(qs);
     q1_tscan_packet->assign_query_state(qs);
         
-    // dispatch root
-    reserve_query_workers(q1_agg_packet);
-    dispatcher_t::dispatch_packet(q1_agg_packet);
-    
-    tuple_t output;
-    TRACE(TRACE_QUERY_RESULTS, "*** Q1 ANSWER ...\n");
-    TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
-    while(agg_output_buffer->get_tuple(output)) {
-        aggregate_tuple *tuple;
-        tuple = aligned_cast<aggregate_tuple>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "*** %lf\t%lf\t%lf\n",
-              tuple->L_SUM_QTY.to_double(),
-              tuple->L_SUM_BASE_PRICE.to_double(),
-              tuple->L_SUM_DISC_PRICE.to_double());
-    }
+
+    tpch_q1_process_tuple_t pt;
+    process_query(q1_agg_packet, pt);
 
 
     dp->query_state_destroy(qs);
 }
+
 
 EXIT_NAMESPACE(workload);

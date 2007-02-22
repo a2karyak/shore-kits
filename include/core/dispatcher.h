@@ -6,6 +6,7 @@
 #include "core/tuple.h"
 #include "core/packet.h"
 #include "core/stage_container.h"
+#include "util/resource_declare.h"
 #include <map>
 
 using std::map;
@@ -39,12 +40,11 @@ class dispatcher_t {
 
 protected:
 
-    // synch vars
 
     // stage directory
     map<c_str, stage_container_t*> _scdir;
-
    
+ 
     dispatcher_t();
     ~dispatcher_t();
 
@@ -53,10 +53,12 @@ protected:
     void _register_stage_container(const c_str &packet_type, stage_container_t* sc);
     void _dispatch_packet(packet_t* packet);
     void _reserve_workers(const c_str& type, int n);
+    void _unreserve_workers(const c_str& type, int n);
     
-    
+
     static pthread_mutex_t _instance_lock;
     static dispatcher_t*   _instance;
+
 
     static dispatcher_t* instance() {
         
@@ -70,9 +72,16 @@ protected:
         // initialized.
 	return _instance;
     }
-    
+
+
 public:
 
+
+    // exported datatypes
+    class worker_reserver_t;
+    
+
+    // accessors to global instance...
     static void init() {
         _instance = new dispatcher_t();
     }
@@ -86,9 +95,60 @@ public:
     
     static void dispatch_packet(packet_t* packet);
 
-    static void reserve_workers(const c_str& type, int n);
+    static worker_reserver_t* reserver_acquire();
+    static void reserver_release(worker_reserver_t* wr);
 };
 
+
+
+class dispatcher_t::worker_reserver_t : public resource_declare_t
+{
+
+private:
+
+    dispatcher_t*   _dispatcher;
+    map<c_str, int> _worker_needs;
+    
+    void reserve(const c_str& type) {
+        int n = _worker_needs[type];
+        if (n > 0)
+            _dispatcher->_reserve_workers(type, n);
+    }
+    
+public:
+
+    worker_reserver_t (dispatcher_t* dispatcher)
+        : _dispatcher(dispatcher)
+    {
+    }
+    
+    virtual void declare(const c_str& name, int count) {
+        int curr_needs = _worker_needs[name];
+        _worker_needs[name] = curr_needs + count;
+    }
+    
+    void acquire_resources() {
+        
+        static const char* order[] = {
+            "AGGREGATE"
+            ,"BNL_IN"
+            ,"BNL_JOIN"
+            ,"FDUMP"
+            ,"FSCAN"
+            ,"FUNC_CALL"
+            ,"HASH_JOIN"
+            ,"MERGE"
+            ,"PARTIAL_AGGREGATE"
+            ,"SORT"
+            ,"SORTED_IN"
+            ,"TSCAN"
+        };
+        
+        int num_types = sizeof(order)/sizeof(order[0]);
+        for (int i = 0; i < num_types; i++)
+            reserve(order[i]);
+    }
+};
 
 
 EXIT_NAMESPACE(qpipe);

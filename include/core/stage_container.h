@@ -68,7 +68,8 @@ public:
     void enqueue(packet_t* packet);
 
     void reserve(int n);
-
+    void unreserve(int n);
+    
     void run();
 
 private:
