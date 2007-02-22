@@ -2,7 +2,7 @@
 
 #include "util.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/tpch/tpch_tables.h"
+#include "workload/tpch/tpch_filenames.h"
 
 
 
@@ -23,14 +23,14 @@ void db_open(uint32_t, uint32_t db_cache_size_gb, uint32_t db_cache_size_bytes) 
     assert(db_cache_size_gb + db_cache_size_bytes > 0);
     
     // open tables
-    open_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
-    open_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
-    open_db_table(tpch_nation, TABLE_NATION_NAME);
-    open_db_table(tpch_orders, TABLE_ORDERS_NAME);
-    open_db_table(tpch_part, TABLE_PART_NAME);
-    open_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
-    open_db_table(tpch_region, TABLE_REGION_NAME);
-    open_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
+    open_db_table(tpch_customer, CDB_FILENAME_CUSTOMER);
+    open_db_table(tpch_lineitem, CDB_FILENAME_LINEITEM);
+    open_db_table(tpch_nation,   CDB_FILENAME_NATION);
+    open_db_table(tpch_orders,   CDB_FILENAME_ORDERS);
+    open_db_table(tpch_part,     CDB_FILENAME_PART);
+    open_db_table(tpch_partsupp, CDB_FILENAME_PARTSUPP);
+    open_db_table(tpch_region,   CDB_FILENAME_REGION);
+    open_db_table(tpch_supplier, CDB_FILENAME_SUPPLIER);
 
     TRACE(TRACE_ALWAYS, "TPCH database open\n");
 }
@@ -47,14 +47,14 @@ void db_open(uint32_t, uint32_t db_cache_size_gb, uint32_t db_cache_size_bytes) 
 void db_close() {
 
     // close tables
-    close_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
-    close_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
-    close_db_table(tpch_nation, TABLE_NATION_NAME);
-    close_db_table(tpch_orders, TABLE_ORDERS_NAME);
-    close_db_table(tpch_part, TABLE_PART_NAME);
-    close_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
-    close_db_table(tpch_region, TABLE_REGION_NAME);
-    close_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
+    close_db_table(tpch_customer, CDB_FILENAME_CUSTOMER);
+    close_db_table(tpch_lineitem, CDB_FILENAME_LINEITEM);
+    close_db_table(tpch_nation,   CDB_FILENAME_NATION);
+    close_db_table(tpch_orders,   CDB_FILENAME_ORDERS);
+    close_db_table(tpch_part,     CDB_FILENAME_PART);
+    close_db_table(tpch_partsupp, CDB_FILENAME_PARTSUPP);
+    close_db_table(tpch_region,   CDB_FILENAME_REGION);
+    close_db_table(tpch_supplier, CDB_FILENAME_SUPPLIER);
 }
 
 
