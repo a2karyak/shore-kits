@@ -256,7 +256,7 @@ void tpch_q1_driver::submit(void* disp) {
                            tpch_lineitem);
 
     // AGG PACKET CREATION
-    guard<tuple_fifo> agg_output_buffer =
+    tuple_fifo* agg_output_buffer =
         new tuple_fifo(sizeof(aggregate_tuple));
     packet_t* q1_agg_packet;
     q1_agg_packet = 

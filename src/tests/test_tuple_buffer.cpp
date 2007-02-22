@@ -3,8 +3,7 @@
 #include "util.h"
 #include "core.h"
 #include "workload/tpch/tpch_db.h"
-
-#include "tests/common/tester_thread.h"
+#include "tests/common.h"
 
 #include <cstdlib>
 

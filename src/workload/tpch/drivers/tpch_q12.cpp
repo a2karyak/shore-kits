@@ -329,7 +329,7 @@ void tpch_q12_driver::submit(void* disp) {
 
     // partial aggregation
     filter = new trivial_filter_t(sizeof(q12_tuple));
-    guard<tuple_fifo> result = new tuple_fifo(sizeof(q12_tuple));
+    tuple_fifo* result = new tuple_fifo(sizeof(q12_tuple));
     size_t offset = offsetof(join_tuple, L_SHIPMODE);
     key_extractor_t* extractor = new default_key_extractor_t(sizeof(int), offset);
     key_compare_t* compare = new int_key_compare_t();

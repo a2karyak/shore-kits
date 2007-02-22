@@ -3,8 +3,10 @@
 #define __HASH_AGGREGATE_H
 
 #include "core.h"
+#include "util/resource_declare.h"
 
 using namespace qpipe;
+
 
 struct hash_aggregate_packet_t : public packet_t {
     static const c_str PACKET_TYPE;
@@ -43,9 +45,9 @@ struct hash_aggregate_packet_t : public packet_t {
         return new query_plan(action, filter->to_string(), children, 1);
     }
     
-    virtual void declare_worker_needs(resource_reserver_t* reserve) {
-        reserve->declare_resource_need(_packet_type, 1);
-        _input->declare_worker_needs(reserve);
+    virtual void declare_worker_needs(resource_declare_t* declare) {
+        declare->declare(_packet_type, 1);
+        _input->declare_worker_needs(declare);
     }
 };
 
