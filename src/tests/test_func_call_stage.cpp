@@ -1,5 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "core.h"
 #include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/register_stage.h"
@@ -44,10 +45,11 @@ int main(int argc, char* argv[]) {
 	new func_call_packet_t("FUNC_CALL_PACKET_1",
                                int_buffer, 
                                new trivial_filter_t(int_buffer->tuple_size()),
-                               int_tuple_writer_void,
+                               int_tuple_writer_fc,
                                &info);
     
     
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
   
   

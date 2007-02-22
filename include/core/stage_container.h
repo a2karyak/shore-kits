@@ -30,100 +30,16 @@ public:
 	
 protected:
 
-    class stage_adaptor_t : public stage_t::adaptor_t {
-
-    protected:
-        
-        // adaptor synch vars
-	pthread_mutex_t _stage_adaptor_lock;
-
-	stage_container_t* _container;
-
-        packet_t*      _packet;
-        packet_list_t* _packet_list;
-
-	unsigned int _next_tuple;
-        bool _still_accepting_packets;
-
-        // Group many output() tuples into a page before "sending"
-        // entire page to packet list
-        guard<page> out_page;
-	
-	// Checked independently of other variables. Don't need to
-	// protect this with _stage_adaptor_mutex.
-	volatile bool _cancelled;
-
-	
-    public:
-
-        stage_adaptor_t(stage_container_t* container,
-                        packet_list_t* packet_list,
-                        size_t tuple_size);
-        
-
-        ~stage_adaptor_t() {
-            // we should have deleted the primary packet
-            assert( _packet == NULL );
-            // we should have either deleted or handed off ownership
-            // of the packet list
-            assert( _packet_list == NULL );
-        }
-
-
-	virtual const c_str &get_container_name() {
-	    return _container->get_name();
-	}
-
-
-        virtual packet_t* get_packet() {
-            return _packet;
-        }
-
-        
-        /**
-         *  @brief Thin wrapper that just invokes output_page.
-         *  Hopefully, this function will be inline and
-         *  the compiler can optimize across the call to
-         *  output_page, which is not virtual.
-         */
-        virtual void output(page* p) {
-            output_page(p);
-        }
-	
-
-	virtual void stop_accepting_packets() {
-	    critical_section_t cs(_stage_adaptor_lock);
-	    _still_accepting_packets = false;
-	}
-	
-
-        virtual bool check_for_cancellation() {
-            return _cancelled;
-        }
-
-
-	bool try_merge(packet_t* packet);
-	void run_stage(stage_t* stage);
-
-    protected:
-
-	void finish_packet(packet_t* packet);
-        void cleanup();
-        void abort_queries();
-
-    private:
-
-        void output_page(page* p);
-    };
+    class stage_adaptor_t;
+    typedef list <packet_list_t*> ContainerQueue;
     
     
     // container synch vars
-    pthread_mutex_t _container_lock;
+    debug_mutex_t _container_lock;
     pthread_cond_t  _container_queue_nonempty;
-
-
+    
     c_str                   _container_name;
-    list <packet_list_t*>   _container_queue;
+    ContainerQueue          _container_queue;
     list <stage_adaptor_t*> _container_current_stages;
 
     stage_factory_t* _stage_maker;
@@ -133,7 +49,8 @@ protected:
     void container_queue_enqueue_no_merge(packet_list_t* packets);
     void container_queue_enqueue_no_merge(packet_t* packet);
     packet_list_t* container_queue_dequeue();
-    
+    void create_worker();
+   
     
 public:
     
@@ -141,16 +58,139 @@ public:
     static void* static_run_stage_wrapper(stage_t* stage,
                                           stage_adaptor_t* adaptor);
 
-    stage_container_t(const c_str &container_name, stage_factory_t* stage_maker);
+    stage_container_t(const c_str &container_name, stage_factory_t* stage_maker,
+		      int active_count, int max_count=-1);
+
     ~stage_container_t();
   
     const c_str &get_name(){ return _container_name; }
 
     void enqueue(packet_t* packet);
 
+    void reserve(int n);
+
     void run();
+
+private:
+
+
+    /* The pool that the worker threads will belong to. Thread pools
+       are used to control the number of threads that the OS needs to
+       schedule. When one thread in the pool waits on a condition
+       variable, it let's another thread through. */
+    thread_pool _pool;
+
+    /* The maximum number of worker threads this stage should ever
+       have. Note that even though this number is high, _pool
+       guarantees that only a fixed number of them are being scheduled
+       by the OS. */
+    int _max_threads;
+
+    /* Used to generate a container-unique thread ID when we create
+       more threads. */
+    int _next_thread;
+
+    /* Used to track the reservation of worker threads by clients who
+       want to submit queries. A client is responsible for reserving
+       all required workers before submitting the query.
+
+       This pool's capacity should be the number of worker threads
+       that exist for this stage. Every packet list in the container
+       queue must have a worker reserved for it.
+
+       Workers can report themselves as idle or non-idle when they
+       enter and exit process_packet().
+    */
+    struct resource_pool_s _rp;
 };
 
+
+
+class stage_container_t::stage_adaptor_t : public stage_t::adaptor_t {
+
+protected:
+        
+    // adaptor synch vars
+    pthread_mutex_t _stage_adaptor_lock;
+
+    stage_container_t* _container;
+
+    packet_t*      _packet;
+    packet_list_t* _packet_list;
+
+    unsigned int _next_tuple;
+    bool _still_accepting_packets;
+
+    // Group many output() tuples into a page before "sending"
+    // entire page to packet list
+    guard<page> out_page;
+	
+    // Checked independently of other variables. Don't need to
+    // protect this with _stage_adaptor_mutex.
+    volatile bool _cancelled;
+
+	
+public:
+
+    stage_adaptor_t(stage_container_t* container,
+		    packet_list_t* packet_list,
+		    size_t tuple_size);
+        
+
+    ~stage_adaptor_t() {
+	// we should have deleted the primary packet
+	assert( _packet == NULL );
+	// we should have either deleted or handed off ownership
+	// of the packet list
+	assert( _packet_list == NULL );
+    }
+
+
+    virtual const c_str &get_container_name() {
+	return _container->get_name();
+    }
+
+
+    virtual packet_t* get_packet() {
+	return _packet;
+    }
+
+        
+    /**
+     *  @brief Thin wrapper that just invokes output_page.
+     *  Hopefully, this function will be inline and
+     *  the compiler can optimize across the call to
+     *  output_page, which is not virtual.
+     */
+    virtual void output(page* p) {
+	output_page(p);
+    }
+	
+
+    virtual void stop_accepting_packets() {
+	critical_section_t cs(_stage_adaptor_lock);
+	_still_accepting_packets = false;
+    }
+	
+
+    virtual bool check_for_cancellation() {
+	return _cancelled;
+    }
+
+
+    bool try_merge(packet_t* packet);
+    void run_stage(stage_t* stage);
+    
+protected:
+
+    void finish_packet(packet_t* packet);
+    void cleanup();
+    void abort_queries();
+
+private:
+
+    void output_page(page* p);
+};
 
 struct stage_factory_t {
   virtual stage_t* create_stage()=0;

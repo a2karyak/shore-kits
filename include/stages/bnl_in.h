@@ -63,7 +63,10 @@ struct bnl_in_packet_t : public packet_t {
                     key_extractor_t* extract,
                     key_compare_t*  compare,
                     bool            output_on_match)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   true   /* unreserve worker on completion */
+                   ),
           _left(left),
           _left_buffer(left->output_buffer()),
           _right_source(right_source),
@@ -73,6 +76,10 @@ struct bnl_in_packet_t : public packet_t {
     {
     }
   
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        TRACE(TRACE_ALWAYS, "UNIMPLEMENTED! Why are you not using sorted_in?\n");
+        assert(0);
+    }
 };
 
 

@@ -4,7 +4,7 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_tables.h"
 #include "workload/tpch/tpch_compare.h"
-#include "workload/tpch/bdb_config.h"
+#include "workload/bdb_config.h"
 
 
 
@@ -32,7 +32,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     // create environment
     try {
         dbenv = new DbEnv(0);
-	//        dbenv->set_errpfx("qpipe");
+        dbenv->set_errpfx(BDB_ERROR_PREFIX);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", e.what());
@@ -57,12 +57,21 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
   
     // set data directory
     try {
+
+        const char* desc = "BDB_TPCH_DIRECTORY";
+        const char* dir  = BDB_TPCH_DIRECTORY;
+
+        if (fileops_check_directory_accessible(dir))
+            THROW3(BdbException, "%s %s not accessible.\n",
+                   desc,
+                   dir);
+
         // data directory stores table files
-        dbenv->set_data_dir(BDB_DATA_DIRECTORY);
+        dbenv->set_data_dir(BDB_TPCH_DIRECTORY);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException setting data directory to \"%s\". Make sure directory exists\n",
-              BDB_DATA_DIRECTORY);
+              BDB_TPCH_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->set_data_dir() threw DbException");
     }
@@ -70,10 +79,25 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
   
     // set temp directory
     try {
+
+        const char* desc = "BDB_TEMP_DIRECTORY";
+        const char* dir  = BDB_TEMP_DIRECTORY;
+
+        if (fileops_check_directory_accessible(dir))
+            THROW3(BdbException, "%s %s not accessible.\n",
+                   desc,
+                   dir);
+
+        if (fileops_check_file_writeable(dir))
+            THROW3(BdbException, "%s %s not writeable.\n",
+                   desc,
+                   dir);
+
         dbenv->set_tmp_dir(BDB_TEMP_DIRECTORY);
     }
     catch ( DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException setting temp directory to \"%s\". Make sure directory exists\n",
+        TRACE(TRACE_ALWAYS,
+              "Caught DbException setting temp directory to \"%s\". Make sure directory exists\n",
               BDB_TEMP_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->set_tmp_dir() threw DbException");
@@ -82,19 +106,34 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     dbenv->set_msgfile(stderr);
     dbenv->set_errfile(stderr);
     // TODO: DB_NOMMAP?
-    dbenv->set_flags(DB_NOMMAP|DB_DIRECT_DB, true);
+    // dbenv->set_flags(DB_NOMMAP, true);
     dbenv->set_verbose(DB_VERB_REGISTER, true);
     
 
     // open home directory
     try {
+        
+        const char* desc = "BDB_HOME_DIRECTORY";
+        const char* dir  = BDB_HOME_DIRECTORY;
+
+        if (fileops_check_directory_accessible(dir))
+            THROW3(BdbException, "%s %s not accessible.\n",
+                   desc,
+                   dir);
+
+        if (fileops_check_file_writeable(dir))
+            THROW3(BdbException, "%s %s not writeable.\n",
+                   desc,
+                   dir);
+
         // open environment with no transactional support.
         dbenv->open(BDB_HOME_DIRECTORY,
                     DB_CREATE | DB_PRIVATE | DB_THREAD | DB_INIT_CDB | DB_INIT_MPOOL,
                     0);
     }
     catch ( DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException opening home directory \"%s\". Make sure directory exists\n",
+        TRACE(TRACE_ALWAYS,
+              "Caught DbException opening home directory \"%s\". Make sure directory exists\n",
               BDB_HOME_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->open() threw DbException");

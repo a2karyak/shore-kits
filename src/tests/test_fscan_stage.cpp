@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
                            input_filename);
     
     
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
     
   

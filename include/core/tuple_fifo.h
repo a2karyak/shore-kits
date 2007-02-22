@@ -48,6 +48,10 @@ private:
     pthread_cond_t _reader_notify;
     pthread_cond_t _writer_notify;
 
+    // debug vars
+    pthread_t _reader_tid;
+    pthread_t _writer_tid;
+    
 public:
 
     /**
@@ -76,7 +80,8 @@ public:
           _done_writing(false), _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
-          _writer_notify(thread_cond_create())
+          _writer_notify(thread_cond_create()),
+	  _reader_tid(0), _writer_tid(0)
     {
         init();
     }
@@ -84,6 +89,8 @@ public:
     ~tuple_fifo() {
         destroy();
     }
+
+    void writer_init();
 
     // the number of FIFOs currently open
     static int open_fifos();
@@ -275,20 +282,12 @@ private:
     void _flush_write_page(bool done_writing);
 
     
-    void wait_for_reader() {
-        thread_cond_wait(_writer_notify, _lock);
-    }
-    void ensure_reader_running() {
-        thread_cond_signal(_reader_notify);
-    }
+    void wait_for_reader();
+    void ensure_reader_running();
     
-    void wait_for_writer() {
-        thread_cond_wait(_reader_notify, _lock);
-    }
+    void wait_for_writer();
 
-    void ensure_writer_running() {
-        thread_cond_signal(_writer_notify);
-    }
+    void ensure_writer_running();
     
 };
 

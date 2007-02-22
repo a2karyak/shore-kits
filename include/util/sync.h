@@ -7,6 +7,17 @@
 
 // exported functions
 
+struct debug_mutex_t {
+    pthread_mutex_t _lock;
+    pthread_t _last_owner_tid;
+    debug_mutex_t(pthread_mutex_t const &lock)
+	: _lock(lock), _last_owner_tid(0)
+    {
+    }
+    operator pthread_mutex_t&() {
+	return _lock;
+    }
+};
 /**
  *  @brief A critical section manager. Locks and unlocks the specified
  *  mutex upon construction and destruction respectively.
@@ -19,11 +30,23 @@ struct critical_section_t {
     {
         thread_mutex_lock(*_mutex);
     }
+    critical_section_t(debug_mutex_t &mutex)
+        : _mutex(&mutex._lock)
+    {
+        thread_mutex_lock(*_mutex);
+	mutex._last_owner_tid = pthread_self();
+    }
     
     void enter(pthread_mutex_t &mutex) {
         exit();
         _mutex = &mutex;
         thread_mutex_lock(*_mutex);
+    }
+    void enter(debug_mutex_t &mutex) {
+        exit();
+        _mutex = &mutex._lock;
+        thread_mutex_lock(*_mutex);
+	mutex._last_owner_tid = pthread_self();
     }
     void exit() {
         if(_mutex) {

@@ -545,11 +545,12 @@ void tpch_q16_driver::submit(void* disp) {
     agg_packet->assign_query_state(qs);
     sort_packet->assign_query_state(qs);
     
-    // Dispatch packet
+    // dispatch root
+    reserve_query_workers(sort_packet);
     dispatcher_t::dispatch_packet(sort_packet);
     guard<tuple_fifo> result = sort_packet->output_buffer();
     
-    TRACE(TRACE_ALWAYS,
+    TRACE(TRACE_QUERY_RESULTS,
           "*** Q16 %10s %25s %10s %10s\n",
           "Brand", "Type", "Size", "Suppliers");
     

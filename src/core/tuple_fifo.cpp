@@ -1,8 +1,11 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
 #include "core/tuple_fifo.h"
+#include <algorithm>
 
 
 ENTER_NAMESPACE(qpipe);
+
+
 
 /* The pool that manages the sentinel page. Only one page will ever be
  * "created", and it must not actually go away when freed.
@@ -85,6 +88,7 @@ static size_t total_prefetches = 0;
  * when the FIFO is destroyed.
  */
 void tuple_fifo::init() {
+    _reader_tid = pthread_self();
     // prepare for reading
     _set_read_page(SENTINEL_PAGE);
 
@@ -97,7 +101,21 @@ void tuple_fifo::init() {
     cs.exit();
 }
 
+void tuple_fifo::writer_init() {
+    _writer_tid = pthread_self();
+}
+
+struct free_page {
+    void operator()(qpipe::page* p) {
+	p->free();
+    }
+};
+
 void tuple_fifo::destroy() {
+
+    std::for_each(_pages.begin(), _pages.end(), free_page());
+    std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
+	
     // stats
     critical_section_t cs(open_fifo_mutex);
     
@@ -133,6 +151,22 @@ page* tuple_fifo::get_page() {
     return result;
 }
 
+inline void tuple_fifo::wait_for_reader() {
+    thread_cond_wait(_writer_notify, _lock);
+    
+}
+inline void tuple_fifo::ensure_reader_running() {
+    thread_cond_signal(_reader_notify);
+}
+    
+inline void tuple_fifo::wait_for_writer() {
+    thread_cond_wait(_reader_notify, _lock);
+}
+
+inline void tuple_fifo::ensure_writer_running() {
+    thread_cond_signal(_writer_notify);
+}
+
 void tuple_fifo::_flush_write_page(bool done_writing) {
     // after the call to send_eof() the write page is NULL
     assert(!_done_writing);
@@ -159,7 +193,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
     if(done_writing) {
-        fprintf(stderr, "Fifo %p sending EOF\n", this);
+	//        fprintf(stderr, "Fifo %p sending EOF\n", this);
         _done_writing = true;
         _write_page.done();
     }

@@ -6,12 +6,16 @@
 #include "server/config.h"
 #include "workload/tpch/tpch_db.h"
 
+#include "workload/tpch/drivers/merge_test.h"
+
 #include "workload/tpch/drivers/tpch_q1.h"
 #include "workload/tpch/drivers/tpch_q4.h"
 #include "workload/tpch/drivers/tpch_q6.h"
 #include "workload/tpch/drivers/tpch_q12.h"
 #include "workload/tpch/drivers/tpch_q13.h"
+#include "workload/tpch/drivers/tpch_q14.h"
 #include "workload/tpch/drivers/tpch_q16.h"
+#include "workload/tpch/drivers/tpch_q19.h"
 
 #include "workload/tpch/drivers/tpch_m146.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
@@ -51,12 +55,15 @@ void tpch_handler_t::init() {
         db_open();
 
         // register drivers...
+        add_driver("merge_test", new merge_test_driver(c_str("MERGE-TEST")));
         add_driver("q1", new tpch_q1_driver(c_str("TPCH-Q1")));
         add_driver("q4", new tpch_q4_driver(c_str("TPCH-Q4")));
         add_driver("q6", new tpch_q6_driver(c_str("TPCH-Q6")));
         add_driver("q12", new tpch_q12_driver(c_str("TPCH-Q12")));
         add_driver("q13", new tpch_q13_driver(c_str("TPCH-Q13")));
+        add_driver("q14", new tpch_q14_driver(c_str("TPCH-Q14")));
         add_driver("q16", new tpch_q16_driver(c_str("TPCH-Q16")));
+        add_driver("q19", new tpch_q19_driver(c_str("TPCH-Q19")));
 
         // Need to pass a mix driver like m146 a directory... We are
         // the directory since we implement a lookup_driver
@@ -219,7 +226,7 @@ void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results
     float tpmC = (60.0 * queries_completed) / results.total_time;
     
     TRACE(TRACE_STATISTICS, "~~~\n");
-    TRACE(TRACE_STATISTICS, "~~~ Decription        = %s\n", desc.data());
+    TRACE(TRACE_STATISTICS, "~~~ Description       = %s\n", desc.data());
     TRACE(TRACE_STATISTICS, "~~~ Clients           = %d \n", results.num_clients);
     TRACE(TRACE_STATISTICS, "~~~ Iterations        = %d \n", results.num_iterations);
     TRACE(TRACE_STATISTICS, "~~~ Think Time        = %d \n", results.think_time);

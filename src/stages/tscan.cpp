@@ -47,11 +47,9 @@ void tscan_stage_t::process_packet() {
 
         // any return code besides DB_NOTFOUND would throw an exception
         int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
-        if(err) {
-            assert(err = DB_NOTFOUND);
-            return;
-        }
-
+        if(err)
+            THROW2(BdbException, "cursor->get() returned %d\n", err);
+        
         // iterate over the blob we read and output the individual
         // tuples
 #if 0

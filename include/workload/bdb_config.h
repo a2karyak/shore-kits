@@ -9,8 +9,11 @@
 #define BDB_BUFFER_POOL_SIZE_GB 1 /* 1 GB */
 #define BDB_BUFFER_POOL_SIZE_BYTES 600*1024*1024 /* 600MB */
 
+#define BDB_ERROR_PREFIX "BDB_ERROR"
+
 #define BDB_HOME_DIRECTORY  "."
-#define BDB_DATA_DIRECTORY  "database_tpcc"
+#define BDB_TBL_DIRECTORY   "tbl_tpch"
+#define BDB_TPCH_DIRECTORY  "database_bdb_tpch"
 #define BDB_TEMP_DIRECTORY  "temp"
 
 

@@ -10,11 +10,11 @@ using namespace qpipe;
 
 
 
-void int_tuple_writer_void(void* arg) {
+void int_tuple_writer_fc(void*, void* itw_info) {
 
     struct int_tuple_writer_info_s* info =
-        (struct int_tuple_writer_info_s*)arg;
-
+        (struct int_tuple_writer_info_s*)itw_info;
+    
     tuple_fifo* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;
     
@@ -26,13 +26,12 @@ void int_tuple_writer_void(void* arg) {
 
 
 
-void* int_tuple_writer_main(void* arg) {
+void* int_tuple_writer_main(void* itw_info) {
 
-    // let int_tuple_writer_void() do most of the work
-    int_tuple_writer_void(arg);
-
+    int_tuple_writer_fc(NULL, itw_info);
+    
     struct int_tuple_writer_info_s* info =
-        (struct int_tuple_writer_info_s*)arg;
+        (struct int_tuple_writer_info_s*)itw_info;
     info->int_buffer->send_eof();
     
     return NULL;
@@ -40,10 +39,10 @@ void* int_tuple_writer_main(void* arg) {
 
 
 
-void shuffled_triangle_int_tuple_writer_fc(void* arg) {
+void shuffled_triangle_int_tuple_writer_fc(void*, void* itw_info) {
   
     struct int_tuple_writer_info_s* info =
-        (struct int_tuple_writer_info_s*)arg;
+        (struct int_tuple_writer_info_s*)itw_info;
 
     tuple_fifo* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;
@@ -71,11 +70,11 @@ void shuffled_triangle_int_tuple_writer_fc(void* arg) {
 
 
 
-void increasing_int_tuple_writer_fc(void* arg)
+void increasing_int_tuple_writer_fc(void*, void* itw_info)
 {
 
     struct int_tuple_writer_info_s* info =
-        (struct int_tuple_writer_info_s*)arg;
+        (struct int_tuple_writer_info_s*)itw_info;
 
     tuple_fifo* int_buffer = info->int_buffer;
     int num_tuples = info->num_tuples;

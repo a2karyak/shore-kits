@@ -23,7 +23,7 @@ public:
     static const c_str PACKET_TYPE;
     
     
-    void (*_func) (void*);
+    void (*_func) (void*, void*);
     
     
     void* _func_arg;
@@ -61,10 +61,16 @@ public:
     func_call_packet_t(const c_str    &packet_id,
                        tuple_fifo* output_buffer,
                        tuple_filter_t* output_filter,
-                       void (*func) (void*),
+                       void (*func) (void*, void*),
                        void* func_arg,
-                       void (*destructor) (void*) = NULL)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+                       void (*destructor) (void*) = NULL,
+                       bool _merge=false,
+                       bool _unreserve=true)
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                   _merge ? create_plan(output_filter, func) : NULL,
+                   _merge,    /* whether to merge */
+                   _unreserve /* whether to unreserve worker on completion */
+                   ),
           _func(func),
           _func_arg(func_arg),
           _destructor(destructor)
@@ -79,7 +85,23 @@ public:
         if ( _destructor != NULL )
             _destructor(_func_arg);
     }
+
+    static query_plan* create_plan(tuple_filter_t* filter, void (*func) (void*, void*)) {
+        c_str action("%p", func);
+        return new query_plan(action, filter->to_string(), NULL, 0);
+    }
     
+    virtual bool is_compatible(packet_t* other) {
+        // enforce the OSP_SCAN policy (attempt to merge compatible
+        // packets unless OSP_NONE prevents this from being called in
+        // the first place)
+        return packet_t::is_compatible(plan(), other->plan());
+    }
+
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many FUNC_CALL workers it needs. */
+    }
 };
 
 

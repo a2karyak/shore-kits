@@ -43,11 +43,12 @@ int main() {
         new tscan_packet_t("TSCAN_PACKET_1" , tscan_out_buffer, tscan_filter, tpch_lineitem);
 
     // Dispatch packet
+    reserve_query_workers(q6_tscan_packet);
     dispatcher_t::dispatch_packet(q6_tscan_packet);
     
     tuple_t output;
     decimal* d = NULL;
-    while(!tscan_out_buffer->get_tuple(output)) {
+    while(tscan_out_buffer->get_tuple(output)) {
 	d = aligned_cast<decimal>(output.data);
 	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
 	      d[0].to_double(), d[1].to_double());

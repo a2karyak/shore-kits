@@ -6,12 +6,15 @@
 #include "core/tuple.h"
 #include "core/packet.h"
 #include "core/stage_container.h"
+#include <map>
+
+using std::map;
 
 
 ENTER_NAMESPACE(qpipe);
 
-DEFINE_EXCEPTION(DispatcherException);
 
+DEFINE_EXCEPTION(DispatcherException);
 
 
 /* exported constants */
@@ -39,17 +42,17 @@ protected:
     // synch vars
 
     // stage directory
-    struct static_hash_map_s  stage_directory;
-    struct static_hash_node_s stage_directory_buckets[DISPATCHER_NUM_STATIC_HASH_MAP_BUCKETS];
+    map<c_str, stage_container_t*> _scdir;
 
    
     dispatcher_t();
     ~dispatcher_t();
 
-    
+   
     // methods
     void _register_stage_container(const c_str &packet_type, stage_container_t* sc);
     void _dispatch_packet(packet_t* packet);
+    void _reserve_workers(const c_str& type, int n);
     
     
     static pthread_mutex_t _instance_lock;
@@ -82,11 +85,13 @@ public:
     }
     
     static void dispatch_packet(packet_t* packet);
+
+    static void reserve_workers(const c_str& type, int n);
 };
 
 
-EXIT_NAMESPACE(qpipe);
 
+EXIT_NAMESPACE(qpipe);
 
 
 #endif

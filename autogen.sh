@@ -6,5 +6,5 @@ automake -a -f
 libtoolize
 aclocal
 autoconf
-automake
+automake --add-missing
 ./configure

@@ -43,7 +43,7 @@ TESTS = \
    tests/q1 \
    tests/q4 \
    tests/hash_map \
-   tests_grouper \
+   tests/grouper \
    tests/busy_wait \
    tests/busy_wait_all \
    tests/payment
@@ -73,7 +73,11 @@ lib_libutil_a_SOURCES = \
 	$(SU)/trace.cpp \
 	$(SU)/tcp.cpp \
 	$(SU)/rio.cpp \
-	$(SU)/chomp.cpp
+	$(SU)/chomp.cpp \
+        $(SU)/fileops.cpp \
+        $(SU)/static_list_node.cpp \
+        $(SU)/static_list.cpp \
+        $(SU)/resource_pool.cpp
 
 
 ################################################################################
@@ -150,7 +154,11 @@ WL_TPCH = \
    $(SW)/tpch/tpch_db_load.cpp \
    $(SW)/tpch/tpch_env.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \
+<<<<<<< .working
    $(SW)/tpch/tpch_compare.cpp \
+=======
+   $(SW)/tpch/drivers/merge_test.cpp  \
+>>>>>>> .merge-right.r500
    $(SW)/tpch/drivers/tpch_q1.cpp  \
    $(SW)/tpch/drivers/tpch_q4.cpp  \
    $(SW)/tpch/drivers/tpch_q6.cpp  \

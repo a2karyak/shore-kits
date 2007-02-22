@@ -63,7 +63,10 @@ struct aggregate_packet_t : public packet_t {
                        key_extractor_t*   extract,
                        packet_t*          input)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, aggregator, extract, input->plan())),
+                   create_plan(output_filter, aggregator, extract, input->plan()),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
 	  _aggregator(aggregator), _extract(extract),
           _input(input),
           _input_buffer(input->output_buffer())
@@ -82,7 +85,11 @@ struct aggregate_packet_t : public packet_t {
         children[0] = child;
         return new query_plan(action, filter->to_string(), children, 1);
     }
-    
+
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        _input->declare_worker_needs(reserve);
+    }
 };
 
 

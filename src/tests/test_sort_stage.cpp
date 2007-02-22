@@ -19,9 +19,9 @@ int num_copies;
 
 
 
-void write_ints(void* arg)
+void write_ints(void*, void* tfifo)
 {
-    tuple_fifo* buffer = (tuple_fifo *)arg;
+    tuple_fifo* buffer = (tuple_fifo *)tfifo;
 
     // produce a set of inputs, with duplicated values
     vector<int> inputs;
@@ -97,12 +97,13 @@ int main(int argc, char* argv[]) {
                                               new int_key_extractor_t(),
                                               new int_key_compare_t(),
                                               fc_packet);
+    
+    
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
 
     
     tuple_t output;
-
-
     while (output_buffer->get_tuple(output)) {
         TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
     }

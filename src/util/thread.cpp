@@ -16,9 +16,38 @@
 
 
 
-/* internal data structures */
+/* internal datatypes */
 
-static pthread_key_t THREAD_KEY_SELF;
+
+struct thread_args {
+    thread_t* t;
+    thread_pool* p;
+    thread_args(thread_t* thread, thread_pool* pool)
+	: t(thread), p(pool)
+    {
+    }
+};
+
+   
+class root_thread_t : public thread_t {
+
+public:
+    
+    /**
+     *  @brief 
+     */
+    root_thread_t(const c_str &name)
+        : thread_t(name)
+    {
+    }
+
+
+    virtual void* run() {
+        // must be overwridden, but never called for the root thread
+        assert(false);
+        return NULL;
+    }
+};
 
 
 
@@ -26,11 +55,20 @@ static pthread_key_t THREAD_KEY_SELF;
 
 extern "C" void thread_destroy(void* thread_object);
 extern "C" void* start_thread(void *);
+static void setup_thread(thread_args* args);
+
+
+
+/* internal data structures */
+
+static thread_local<thread_t> THREAD_KEY_SELF(&thread_destroy);
+thread_local<thread_pool>     THREAD_POOL;
+// the default thread pool effectively has no limit.
+static thread_pool default_thread_pool(1<<30);
 
 
 
 /* method definitions */
-
 
 /**
  *  @brief thread_t base class constructor. Every subclass constructor
@@ -57,26 +95,6 @@ void thread_t::reset_rand() {
 }
 
 
-class root_thread_t : public thread_t {
-    
-public:
-    
-    /**
-     *  @brief 
-     */
-    root_thread_t(const c_str &name)
-        : thread_t(name)
-    {
-    }
-
-
-    virtual void* run() {
-        // must be overwridden, but never called for the root thread
-        assert(false);
-        return NULL;
-    }
-};
-
 
 
 /**
@@ -87,13 +105,8 @@ public:
 
 void thread_init(void)
 {
-    int err = pthread_key_create( &THREAD_KEY_SELF, thread_destroy );
-    THROW_IF(ThreadException, err);
-    
-    root_thread_t* root_thread = new root_thread_t("root-thread");
-
-    err = pthread_setspecific(THREAD_KEY_SELF, root_thread);
-    THROW_IF(ThreadException, err);
+    thread_args args(new root_thread_t("root-thread"), NULL);
+    setup_thread(&args);
 }
  
 
@@ -103,7 +116,7 @@ thread_t* thread_get_self(void)
     // It would be nice to verify that the name returned is not
     // NULL. However, the name of the root thread can be NULL if we have
     // not yet completely initialized it.
-    return (thread_t*)pthread_getspecific(THREAD_KEY_SELF);
+    return THREAD_KEY_SELF;
 }
 
 
@@ -119,7 +132,7 @@ thread_t* thread_get_self(void)
  *  @return 0 on success. Non-zero on error.
  */
 
-pthread_t thread_create(thread_t* t)
+pthread_t thread_create(thread_t* t, thread_pool* pool)
 {
     int err;
     pthread_t tid;
@@ -133,7 +146,7 @@ pthread_t thread_create(thread_t* t)
     err = pthread_attr_setscope( &pattr, PTHREAD_SCOPE_SYSTEM );
     THROW_IF(ThreadException, err);
   
-    err = pthread_create(&tid, &pattr, start_thread, t);
+    err = pthread_create(&tid, &pattr, start_thread, new thread_args(t, pool));
     THROW_IF(ThreadException, err);
 
     return tid;
@@ -178,7 +191,18 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
 
 void thread_mutex_lock(pthread_mutex_t &mutex)
 {
+    for(int i=0; i < 3; i++) {
+	int err = pthread_mutex_trylock(&mutex);
+	if(!err)
+	    return;
+	if(err != EBUSY)
+	    THROW_IF(ThreadException, err);
+    }
+
+    thread_pool* pool = THREAD_POOL;
+    pool->stop();
     int err = pthread_mutex_lock(&mutex);
+    pool->start();
     THROW_IF(ThreadException, err);
 }
 
@@ -236,14 +260,21 @@ void thread_cond_broadcast(pthread_cond_t &cond)
 
 void thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex)
 {
+    thread_pool* pool = THREAD_POOL;
+    pool->stop();
     int err = pthread_cond_wait(&cond, &mutex);
+    pool->start();
     THROW_IF(ThreadException, err);
 }
 
 bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
                            struct timespec &timeout)
 {
+    thread_pool* pool = THREAD_POOL;
+    pool->stop();
     int err = pthread_cond_timedwait(&cond, &mutex, &timeout);
+    pool->start();
+    
     switch(err) {
     case 0: return true;
     case ETIMEDOUT: return false;
@@ -266,17 +297,17 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 
 void* start_thread(void* thread_object)
 {
-    thread_t* thread = (thread_t*)thread_object;
+    thread_args* args = (thread_args*)thread_object;
+    setup_thread(args);
+    delete args;
+    
+    thread_t* thread  = THREAD_KEY_SELF;
+    thread_pool* pool = THREAD_POOL;
 
-    int err;
-
-    // Register local data. Should not fail since we only need two
-    // pieces of thread-specific storage.
-    err = pthread_setspecific(THREAD_KEY_SELF, thread);
-    THROW_IF(ThreadException, err);
-  
-    thread->reset_rand();
-    return thread->run();
+    pool->start();
+    void* rval = thread->run();
+    pool->stop();
+    return rval;
 }
 
 
@@ -286,4 +317,44 @@ void thread_destroy(void* thread_object)
     thread_t* thread = (thread_t*)thread_object;
     if(thread && thread->delete_me())
         delete thread;
+}
+
+// NOTE: we can't call thread_xxx methods because they call us
+void thread_pool::start() {
+    int err = pthread_mutex_lock(&_lock);
+    THROW_IF(ThreadException, err);
+    while(_active == _max_active) {
+	err = pthread_cond_wait(&_cond, &_lock);
+	THROW_IF(ThreadException, err);
+    }
+    assert(_active < _max_active);
+    _active++;
+    err = pthread_mutex_unlock(&_lock);
+    THROW_IF(ThreadException, err);
+}
+
+void thread_pool::stop() {
+    int err = pthread_mutex_lock(&_lock);
+    THROW_IF(ThreadException, err);
+    _active--;
+    thread_cond_signal(_cond);
+    err = pthread_mutex_unlock(&_lock);
+    THROW_IF(ThreadException, err);
+}
+
+
+
+static void setup_thread(thread_args* args) {
+
+    thread_t* thread  = args->t;
+    thread_pool* pool = args->p;
+
+    if(!pool)
+	pool = &default_thread_pool;
+
+    // Register local data. Should not fail since we only need two
+    // pieces of thread-specific storage.
+    THREAD_KEY_SELF = thread;
+    THREAD_POOL     = pool;
+    thread->reset_rand();
 }

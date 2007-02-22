@@ -28,6 +28,7 @@ void* q6_client_main(void* arg) {
            dispatch. */
         qpipe::query_state_t* qs = q6->get_query_state();
 
+        reserve_query_workers(q6);
         dispatcher_t::dispatch_packet(q6);
 
         tuple_t output;

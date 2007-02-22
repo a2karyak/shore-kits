@@ -71,13 +71,20 @@ public:
 		   tuple_fifo*     input_buffer,
 		   const c_str    &filename,
                    notify_t*       notifier=NULL)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   false  /* keep worker on completion */
+                   ),
 	  _input_buffer(input_buffer),
           _filename(filename),
           _notifier(notifier)
     {
     }
 
+    virtual void declare_worker_needs(resource_reserver_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many FDUMP workers it needs. */
+    }
 };
 
 

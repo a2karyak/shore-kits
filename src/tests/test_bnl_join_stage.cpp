@@ -96,6 +96,9 @@ int main(int argc, char* argv[]) {
                                new write_ints_tuple_source_t(num_tuples),
                                //new tuple_source_once_t(right_packet),
                                join);
+
+
+    reserve_query_workers(join_packet);
     dispatcher_t::dispatch_packet(join_packet);
     
     

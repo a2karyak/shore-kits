@@ -51,7 +51,10 @@ public:
 		   tuple_filter_t* output_filter,
 		   Db* db)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, db)),
+                   create_plan(output_filter, db),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
 	  _db(db)
     {
         assert(db != NULL);
@@ -63,10 +66,18 @@ public:
     }
     
     virtual bool is_compatible(packet_t* other) {
-        // enforce the OSP_SCAN policy (attempt to merge compatible
+        // enforce the OSP_SCAN and OSP_NO_SCAN policies (attempt to merge compatible
         // packets unless OSP_NONE prevents this from being called in
         // the first place)
+	if(osp_policy == OSP_NO_SCAN)
+	    return false;
+	
         return packet_t::is_compatible(plan(), other->plan());
+    }
+
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        /* no inputs */
     }
 };
 

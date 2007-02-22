@@ -5,27 +5,12 @@
 #include "util.h"
 #include "workload/driver.h"
 
+
 ENTER_NAMESPACE(workload);
 
-
 DECLARE_DRIVER(tpch_q1);
-/*
-class tpch_q1_driver : public driver_t {
-
-public:
-
-    tpch_q1_driver(const c_str& description)
-        : driver_t(description)
-    {
-    }
-
-    virtual void submit(void* disp);
-    
-};
-*/
-
-
 
 EXIT_NAMESPACE(workload);
+
 
 #endif

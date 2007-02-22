@@ -20,9 +20,9 @@ typedef vector<int> input_list_t;
 typedef pair<tuple_fifo*, input_list_t> write_info_t;
 
 
-void write_tuples(void* arg)
+void write_tuples(void*, void* winfo)
 {
-    write_info_t *info = (write_info_t *)arg;
+    write_info_t *info = (write_info_t *)winfo;
     tuple_fifo* buffer = info->first;
     input_list_t &inputs = info->second;
 
@@ -124,6 +124,7 @@ int main(int argc, char* argv[]) {
 
         // Need to dispatch the FUNC_CALL packet ourselves. MERGE
         // assumes that the meta-stage performs this dispatch.
+        reserve_query_workers(fc_packet);
         dispatcher_t::dispatch_packet(fc_packet);
     }
     
@@ -137,6 +138,9 @@ int main(int argc, char* argv[]) {
                                                 input_buffers,
                                                 new int_key_extractor_t(),
                                                 new int_key_compare_t());
+
+
+    reserve_query_workers(packet);
     dispatcher_t::dispatch_packet(packet);
     
    

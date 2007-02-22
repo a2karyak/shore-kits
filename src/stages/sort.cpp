@@ -131,7 +131,9 @@ void sort_stage_t::start_merge(int new_level, run_list_t& runs, int merge_factor
     merge_packet_t* mp;
     tuple_fifo* merge_out = new tuple_fifo(_tuple_size);
 
-
+    TRACE(TRACE_ALWAYS,
+          "Argh! Sending merge packet... This means we need to get serial merges working\n");
+    assert(0);
     mp = new merge_packet_t("SORT_MERGE_PACKET",
                             merge_out,
                             new trivial_filter_t(_tuple_size),
