@@ -222,10 +222,10 @@ void tpch_q4_driver::submit(void* disp) {
 
     // First deal with the lineitem half
 
-    packet_t *line_item_packet = line_item_scan(tpch_lineitem);
+    packet_t *line_item_packet = line_item_scan(tpch_tables[TPCH_TABLE_LINEITEM].db);
         
     // Now, the orders half
-    packet_t* orders_packet = orders_scan(tpch_orders);
+    packet_t* orders_packet = orders_scan(tpch_tables[TPCH_TABLE_ORDERS].db);
 
     // join them...
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));

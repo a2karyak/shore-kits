@@ -142,17 +142,15 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
   
 
     // open tables
-    open_db_table(tpch_customer, flags, tpch_customer_bt_compare_fcn, BDB_FILENAME_CUSTOMER);
-    open_db_table(tpch_lineitem, flags, tpch_lineitem_bt_compare_fcn, BDB_FILENAME_LINEITEM);
-    open_db_table(tpch_nation,   flags, tpch_nation_bt_compare_fcn,   BDB_FILENAME_NATION);
-    open_db_table(tpch_orders,   flags, tpch_orders_bt_compare_fcn,   BDB_FILENAME_ORDERS);
-    open_db_table(tpch_part,     flags, tpch_part_bt_compare_fcn,     BDB_FILENAME_PART);
-    open_db_table(tpch_partsupp, flags, tpch_partsupp_bt_compare_fcn, BDB_FILENAME_PARTSUPP);
-    open_db_table(tpch_region,   flags, tpch_region_bt_compare_fcn,   BDB_FILENAME_REGION);
-    open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, BDB_FILENAME_SUPPLIER);
-
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        open_db_table(tpch_tables[i].db,
+                      flags,
+                      tpch_tables[i].bt_compare_fn,
+                      tpch_tables[i].bdb_filename);
+    
     // open indexes
-    open_db_index(tpch_lineitem, tpch_lineitem_shipdate,
+    open_db_index(tpch_tables[TPCH_TABLE_LINEITEM].db,
+                  tpch_lineitem_shipdate,
                   tpch_lineitem_shipdate_idx,
                   flags,
                   tpch_lineitem_shipdate_compare_fcn,
@@ -183,14 +181,8 @@ void db_close() {
     close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
 
     // close tables
-    close_db_table(tpch_customer, BDB_FILENAME_CUSTOMER);
-    close_db_table(tpch_lineitem, BDB_FILENAME_LINEITEM);
-    close_db_table(tpch_nation,   BDB_FILENAME_NATION);
-    close_db_table(tpch_orders,   BDB_FILENAME_ORDERS);
-    close_db_table(tpch_part,     BDB_FILENAME_PART);
-    close_db_table(tpch_partsupp, BDB_FILENAME_PARTSUPP);
-    close_db_table(tpch_region,   BDB_FILENAME_REGION);
-    close_db_table(tpch_supplier, BDB_FILENAME_SUPPLIER);
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        close_db_table(tpch_tables[i].db, tpch_tables[i].bdb_filename);
 
     
     // close environment
@@ -216,16 +208,20 @@ void db_close() {
  */
 static void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp, const char* table_name) {
+    
+    c_str path("%s/%s", BDB_TPCH_DIRECTORY, table_name);
+    
     try {
         table = new Db(dbenv, 0);
         table->set_bt_compare(cmp);
         table->set_pagesize(4096);
-        table->open(NULL, table_name, NULL, DB_BTREE, flags, 0644);
+        table->open(NULL, path.data(), NULL, DB_BTREE, flags, 0644);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS,
-              "Caught DbException opening table \"%s\". Make sure database is set up properly.\n",
-              table_name);
+              "Caught DbException opening table \"%s\". "
+              "Make sure database is set up properly.\n",
+              path.data());
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "table->open() failed");
     }
@@ -242,12 +238,14 @@ static void open_db_table(Db*& table, u_int32_t flags,
  */
 static void close_db_table(Db* &table, const char* table_name) {
 
+    c_str path("%s/%s", BDB_TPCH_DIRECTORY, table_name);
+
     try {
         table->close(0);
     }
     catch ( DbException &e) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing table \"%s\"\n",
-              table_name);
+              path.data());
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "table->close() failed");
     }
@@ -267,23 +265,27 @@ static void open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
                           idx_key_create_func_t key_create,
                           const char* , const char* index_name) {
 
+    c_str path("%s/%s", BDB_TPCH_DIRECTORY, index_name);
+
     try {
         assoc = new Db(dbenv, 0);
         assoc->set_bt_compare(cmp);
         // not necessarily unique...
         assoc->set_flags(DB_DUP);
-        assoc->open(NULL, index_name, NULL, DB_BTREE, DB_THREAD | DB_CREATE, 0644);
+        assoc->open(NULL, path.data(), NULL, DB_BTREE, DB_THREAD | DB_CREATE, 0644);
         table->associate(NULL, assoc, key_create, DB_CREATE);
 
         index = new Db(dbenv, 0);
         index->set_bt_compare(cmp);
         index->set_flags(DB_DUP);
-        index->open(NULL, index_name, NULL, DB_BTREE, DB_THREAD, 0644);
+        index->open(NULL, path.data(), NULL, DB_BTREE, DB_THREAD, 0644);
         
     }
     catch ( DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException opening index \"%s\". Make sure database is set up properly\n",
-              index_name);
+        TRACE(TRACE_ALWAYS,
+              "Caught DbException opening index \"%s\". "
+              "Make sure database is set up properly\n",
+              path.data());
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "index->open() failed");
     }

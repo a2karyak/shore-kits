@@ -270,8 +270,10 @@ void tpch_q13_driver::submit(void* disp) {
     // join? cust_order_count is already sorted on c_custkey
 
     // get the inputs to the join
-    packet_t* customer_packet = customer_scan(tpch_customer, qs);
-    packet_t* order_packet = order_scan(tpch_orders, qs);
+    packet_t* customer_packet =
+        customer_scan(tpch_tables[TPCH_TABLE_CUSTOMER].db, qs);
+    packet_t* order_packet =
+        order_scan(tpch_tables[TPCH_TABLE_ORDERS].db, qs);
 
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
     tuple_fifo* buffer = new tuple_fifo(sizeof(int));

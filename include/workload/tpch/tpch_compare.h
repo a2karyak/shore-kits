@@ -5,15 +5,16 @@
 
 #include <db_cxx.h>
 
-// tables
-int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_orders_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_part_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_partsupp_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_region_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_supplier_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_customer_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
-int tpch_nation_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);
+
+/* BerkelyDB comparators for B-tree table organization */
+int tpch_bt_compare_fn_CUSTOMER(Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_LINEITEM(Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_NATION  (Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_ORDERS  (Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_PART    (Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_PARTSUPP(Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_REGION  (Db*, const Dbt* k1, const Dbt* k2);
+int tpch_bt_compare_fn_SUPPLIER(Db*, const Dbt* k1, const Dbt* k2);
 
 // indexes
 int tpch_lineitem_shipdate_compare_fcn(Db*, const Dbt* k1, const Dbt* k2);

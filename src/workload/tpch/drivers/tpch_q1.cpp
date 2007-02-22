@@ -222,7 +222,7 @@ void tpch_q1_driver::submit(void* disp) {
         new tscan_packet_t("lineitem TSCAN",
                            tscan_out_buffer,
                            new q1_tscan_filter_t(),
-                           tpch_lineitem);
+                           tpch_tables[TPCH_TABLE_LINEITEM].db);
 
     // AGG PACKET CREATION
     guard<tuple_fifo> agg_output_buffer =

@@ -40,7 +40,8 @@ int main() {
 
 
     tscan_packet_t* q6_tscan_packet =
-        new tscan_packet_t("TSCAN_PACKET_1" , tscan_out_buffer, tscan_filter, tpch_lineitem);
+        new tscan_packet_t("TSCAN_PACKET_1" , tscan_out_buffer, tscan_filter,
+                           tpch_tables[TPCH_TABLE_LINEITEM].db);
 
     // Dispatch packet
     reserve_query_workers(q6_tscan_packet);

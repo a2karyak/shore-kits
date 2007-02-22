@@ -4,35 +4,35 @@
 #define _TPCH_FILENAMES_H
 
 
-#define TABLE_CUSTOMER_ID           "TBL_CUST"
+#define TABLE_ID_CUSTOMER           "TBL_CUST"
 #define TBL_FILENAME_CUSTOMER       "customer.tbl"
 #define BDB_FILENAME_CUSTOMER       "CUSTOMER.bdb"
 
-#define TABLE_LINEITEM_ID           "TBL_LITEM"
+#define TABLE_ID_LINEITEM           "TBL_LITEM"
 #define TBL_FILENAME_LINEITEM       "lineitem.tbl"
 #define BDB_FILENAME_LINEITEM       "LINEITEM.bdb"
 
-#define TABLE_NATION_ID             "TBL_NAT"
+#define TABLE_ID_NATION             "TBL_NAT"
 #define TBL_FILENAME_NATION         "nation.tbl"
 #define BDB_FILENAME_NATION         "NATION.bdb"
 
-#define TABLE_ORDERS_ID             "TBL_ORD"
+#define TABLE_ID_ORDERS             "TBL_ORD"
 #define TBL_FILENAME_ORDERS         "orders.tbl"
 #define BDB_FILENAME_ORDERS         "ORDERS.bdb"
 
-#define TABLE_PART_ID               "TBL_PRT"
+#define TABLE_ID_PART               "TBL_PRT"
 #define TBL_FILENAME_PART           "part.tbl"
 #define BDB_FILENAME_PART           "PART.bdb"
 
-#define TABLE_PARTSUPP_ID           "TBL_PRTSUP"
+#define TABLE_ID_PARTSUPP           "TBL_PRTSUP"
 #define TBL_FILENAME_PARTSUPP       "partsupp.tbl"
 #define BDB_FILENAME_PARTSUPP       "PARTSUPP.bdb"
 
-#define TABLE_REGION_ID             "TBL_REG"
+#define TABLE_ID_REGION             "TBL_REG"
 #define TBL_FILENAME_REGION         "region.tbl"
 #define BDB_FILENAME_REGION         "REGION.bdb"
 
-#define TABLE_SUPPLIER_ID           "TBL_SUP"
+#define TABLE_ID_SUPPLIER           "TBL_SUP"
 #define TBL_FILENAME_SUPPLIER       "supplier.tbl"
 #define BDB_FILENAME_SUPPLIER       "SUPPLIER.bdb"
 

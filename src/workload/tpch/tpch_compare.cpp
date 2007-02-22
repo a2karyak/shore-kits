@@ -23,6 +23,7 @@ int tpch_lineitem_shipdate_key_fcn(Db*, const Dbt*, const Dbt* pd, Dbt* sk) {
     sk->set_size(SIZEOF(tpch_lineitem_tuple, L_SHIPDATE));
     return 0;    
 }
+
 int tpch_lineitem_shipdate_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
     // extract the fields and compare
     TYPEOF(tpch_lineitem_tuple, L_SHIPDATE) t1, t2;
@@ -31,7 +32,27 @@ int tpch_lineitem_shipdate_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
     return t1 - t2;
 }
 
-int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+
+
+int tpch_bt_compare_fn_CUSTOMER(Db*, const Dbt* k1, const Dbt* k2) {
+
+    int u1;
+    int u2;
+    memcpy(&u1,((int*)k1->get_data()), sizeof(int));
+    memcpy(&u2,((int*)k2->get_data()), sizeof(int));
+
+    if (u1 < u2)
+        return -1;
+    else if (u1 == u2)
+        return 0;
+    else
+        return 1;
+}
+
+
+
+int tpch_bt_compare_fn_LINEITEM(Db*, const Dbt* k1, const Dbt* k2) {
+    
     struct {
         TYPEOF(tpch_lineitem_tuple, L_ORDERKEY) ok;
         TYPEOF(tpch_lineitem_tuple, L_LINENUMBER) ln;
@@ -49,7 +70,26 @@ int tpch_lineitem_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-int tpch_orders_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+
+int tpch_bt_compare_fn_NATION(Db*, const Dbt* k1, const Dbt* k2) {
+
+    int u1;
+    int u2;
+    memcpy(&u1,((int*)k1->get_data()), sizeof(int));
+    memcpy(&u2,((int*)k2->get_data()), sizeof(int));
+
+    if (u1 < u2)
+        return -1;
+    else if (u1 == u2)
+        return 0;
+    else
+        return 1;
+}
+
+
+
+int tpch_bt_compare_fn_ORDERS(Db*, const Dbt* k1, const Dbt* k2) {
+
     // key has 2 integers
     int u1[2];
     int u2[2];
@@ -65,7 +105,8 @@ int tpch_orders_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-int tpch_part_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+
+int tpch_bt_compare_fn_PART(Db*, const Dbt* k1, const Dbt* k2) {
 
     int u1;
     int u2;
@@ -81,7 +122,9 @@ int tpch_part_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-int tpch_partsupp_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+
+int tpch_bt_compare_fn_PARTSUPP(Db*, const Dbt* k1, const Dbt* k2) {
+
     // key has 2 integers
     int u1[2];
     int u2[2];
@@ -97,7 +140,8 @@ int tpch_partsupp_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-int tpch_region_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+
+int tpch_bt_compare_fn_REGION(Db*, const Dbt* k1, const Dbt* k2) {
 
     int u1;
     int u2;
@@ -113,7 +157,8 @@ int tpch_region_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-int tpch_supplier_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
+
+int tpch_bt_compare_fn_SUPPLIER(Db*, const Dbt* k1, const Dbt* k2) {
 
     int u1;
     int u2;
@@ -129,33 +174,5 @@ int tpch_supplier_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
 }
 
 
-int tpch_customer_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
-
-    int u1;
-    int u2;
-    memcpy(&u1,((int*)k1->get_data()), sizeof(int));
-    memcpy(&u2,((int*)k2->get_data()), sizeof(int));
-
-    if (u1 < u2)
-        return -1;
-    else if (u1 == u2)
-        return 0;
-    else
-        return 1;
-}
 
 
-int tpch_nation_bt_compare_fcn(Db*, const Dbt* k1, const Dbt* k2) {
-
-    int u1;
-    int u2;
-    memcpy(&u1,((int*)k1->get_data()), sizeof(int));
-    memcpy(&u2,((int*)k2->get_data()), sizeof(int));
-
-    if (u1 < u2)
-        return -1;
-    else if (u1 == u2)
-        return 0;
-    else
-        return 1;
-}

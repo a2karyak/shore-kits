@@ -152,6 +152,7 @@ WL_COMMON = \
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
    $(SW)/tpch/tpch_db_load.cpp \
+   $(SW)/tpch/tpch_tbl_parsers.cpp \
    $(SW)/tpch/tpch_env.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \
    $(SW)/tpch/tpch_compare.cpp \
