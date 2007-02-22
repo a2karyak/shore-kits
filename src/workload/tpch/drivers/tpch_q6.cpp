@@ -15,7 +15,9 @@ void tpch_q6_driver::submit(void* disp) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
   
-    packet_t* q6 = create_q6_packet( "Q6_CLIENT_", dp );
+    thread_t* this_thread = thread_get_self();
+    c_str qtag("Q6CL_%s_", this_thread->thread_name().data());
+    packet_t* q6 = create_q6_packet( qtag.data(), dp );
     guard<tuple_fifo> out = q6->output_buffer();
         
     

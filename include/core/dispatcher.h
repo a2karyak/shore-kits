@@ -50,6 +50,7 @@ protected:
     // methods
     void _register_stage_container(const c_str &packet_type, stage_container_t* sc);
     void _dispatch_packet(packet_t* packet);
+    void _reserve_workers(const c_str& type, int n);
     
     
     static pthread_mutex_t _instance_lock;
@@ -82,6 +83,8 @@ public:
     }
     
     static void dispatch_packet(packet_t* packet);
+
+    static void reserve_workers(const c_str& type, int n);
 };
 
 

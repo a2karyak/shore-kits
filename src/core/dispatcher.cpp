@@ -1,9 +1,13 @@
 
 #include "util.h"
 #include "core/dispatcher.h"
+#include "stages.h"
 
 #include <cstdio>
 #include <cstring>
+#include <map>
+
+using std::map;
 
 
 
@@ -90,6 +94,29 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
 
 
 
+/**
+ *  @brief Acquire the required number of worker threads.
+ *
+ *  THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be since
+ *  stages should register themselves in their constructors and their
+ *  constructors should execute in the context of the root
+ *  thread. Reserving workers does not modify the dispatcher's data
+ *  structures.
+ */
+void dispatcher_t::_reserve_workers(const c_str& type, int n) {
+  
+  void* sc;
+  if ( static_hash_map_find( &stage_directory, type.data(), &sc, NULL ) )
+    THROW2(DispatcherException, 
+           "Type %s unregistered\n",
+           type.data());
+  
+  stage_container_t* stage_container = (stage_container_t*)sc;
+  stage_container->reserve(n);
+}
+
+
+
 void dispatcher_t::register_stage_container(const c_str &packet_type, stage_container_t* sc) {
   instance()->_register_stage_container(packet_type, sc);
 }
@@ -98,6 +125,12 @@ void dispatcher_t::register_stage_container(const c_str &packet_type, stage_cont
 
 void dispatcher_t::dispatch_packet(packet_t* packet) {
   instance()->_dispatch_packet(packet);
+}
+
+
+
+void dispatcher_t::reserve_workers(const c_str& type, int n) {
+  instance()->_reserve_workers(type, n);
 }
 
 
@@ -121,16 +154,44 @@ size_t packet_type_hash(const void* key) {
 
 class worker_reserver_t : public resource_reserver_t
 {
+
+private:
+
+  map<c_str, int> worker_needs;
+
+  void reserve(const c_str& type) {
+    int n = worker_needs[type];
+    if (n > 0)
+      dispatcher_t::reserve_workers(type, n);
+  }
+
 public:
 
   virtual void declare_resource_need(const c_str& name, int count) {
-    TRACE(TRACE_ALWAYS, "Reserving %d workers of type %s\n",
-          count,
-          name.data());
+    int curr_needs = worker_needs[name];
+    worker_needs[name] = curr_needs + count;
   }
 
   virtual void acquire_resources() {
-    TRACE(TRACE_ALWAYS, "hello...\n");
+    
+    static const char* order[] = {
+      "AGGREGATE"
+      ,"BNL_IN"
+      ,"BNL_JOIN"
+      ,"FDUMP"
+      ,"FSCAN"
+      ,"FUNC_CALL"
+      ,"HASH_JOIN"
+      ,"MERGE"
+      ,"PARTIAL_AGGREGATE"
+      ,"SORT"
+      ,"SORTED_IN"
+      ,"TSCAN"
+    };
+    
+    int num_types = sizeof(order)/sizeof(order[0]);
+    for (int i = 0; i < num_types; i++)
+      reserve(order[i]);
   }
 
 };

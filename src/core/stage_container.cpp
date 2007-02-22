@@ -162,8 +162,11 @@ void stage_container_t::create_worker() {
     _next_thread++;
     c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread);
     thread_t* thread = new stage_thread(thread_name, this);
+
+    TRACE(TRACE_ALWAYS, "Creating thread %s\n", thread_name.data());
+
     thread_create(thread, &_pool);
-    
+
     // notify resource pool
     resource_pool_notify_capacity_increase(&_rp, 1);
 }
@@ -419,6 +422,8 @@ void stage_container_t::run() {
 	// is better to release the container lock and reacquire it
 	// here since stage construction can take a long time.
         _container_current_stages.push_back( &adaptor );
+        //TRACE(TRACE_ALWAYS, "Notifying not idle with packet %s\n",
+        //packets->front()->_packet_id.data());
         resource_pool_notify_non_idle(&_rp);
 
         // * * * END CRITICAL SECTION * * *

@@ -16,7 +16,7 @@ packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) 
     // TSCAN
     tuple_fifo* tscan_output = new tuple_fifo(sizeof(decimal[2]));
     tscan_packet_t *q6_tscan_packet;
-    q6_tscan_packet = new tscan_packet_t("lineitem TSCAN",
+    q6_tscan_packet = new tscan_packet_t(c_str("%s_TSCAN_PACKET", client_prefix.data()),
                                          tscan_output,
                                          new q6_tscan_filter_t(),
                                          tpch_lineitem);
