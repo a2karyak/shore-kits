@@ -20,20 +20,7 @@ pthread_mutex_t dispatcher_t::_instance_lock = thread_mutex_create();
 
 
 
-/* internal helper functions */
-
-int string_comparator (const void* key1, const void* key2);
-size_t packet_type_hash(const void* key);
-
-
-
-dispatcher_t::dispatcher_t() {
-  static_hash_map_init( &stage_directory,
-			&stage_directory_buckets[0],
-			DISPATCHER_NUM_STATIC_HASH_MAP_BUCKETS,
-			packet_type_hash,
-			string_comparator);
-}
+dispatcher_t::dispatcher_t() { }
 
 
 
@@ -52,24 +39,15 @@ dispatcher_t::~dispatcher_t() {
 void dispatcher_t::_register_stage_container(const c_str &packet_type,
                                              stage_container_t* sc)
 {
-  // We eventually want multiple stages willing to perform SORT's. But
-  // then we need policy/cost model to determine which SORT stage to
-  // use when. For now, restrict to one stage per type.
-  if ( !static_hash_map_find( &stage_directory, packet_type, NULL, NULL ) )
-      THROW2(DispatcherException,
-                      "Trying to register duplicate stage for type %s\n",
-                      packet_type.data());
+  // We may eventually want multiple stages willing to perform
+  // SORT's. But then we need policy/cost model to determine which
+  // SORT stage to use when. For now, restrict to one stage per type.
+  if ( _scdir[packet_type] != NULL )
+    THROW2(DispatcherException,
+           "Trying to register duplicate stage for type %s\n",
+           packet_type.data());
 
-  // allocate hash node and copy of key string
-  static_hash_node_t node = (static_hash_node_t)malloc(sizeof(*node));
-  if ( node == NULL )
-      THROW(BadAlloc);
-
-  char* ptcopy = new char[strlen(packet_type.data())+1];
-  strcpy(ptcopy, packet_type.data());
-  
-  // add to hash map
-  static_hash_map_insert( &stage_directory, ptcopy, sc, node );
+  _scdir[packet_type] = sc;
 }
 
 
@@ -82,14 +60,11 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type,
  */
 void dispatcher_t::_dispatch_packet(packet_t* packet) {
 
-  void* sc;
-  if ( static_hash_map_find( &stage_directory, packet->_packet_type.data(), &sc, NULL ) )
-      THROW2(DispatcherException, 
-                      "Packet type %s unregistered\n",
-                      packet->_packet_type.data());
- 
-  stage_container_t* stage_container = (stage_container_t*)sc;
-  stage_container->enqueue(packet);
+  stage_container_t* sc = _scdir[packet->_packet_type];
+  if (sc == NULL)
+    THROW2(DispatcherException, 
+           "Packet type %s unregistered\n", packet->_packet_type.data());
+  sc->enqueue(packet);
 }
 
 
@@ -105,14 +80,11 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
  */
 void dispatcher_t::_reserve_workers(const c_str& type, int n) {
   
-  void* sc;
-  if ( static_hash_map_find( &stage_directory, type.data(), &sc, NULL ) )
-    THROW2(DispatcherException, 
-           "Type %s unregistered\n",
-           type.data());
-  
-  stage_container_t* stage_container = (stage_container_t*)sc;
-  stage_container->reserve(n);
+  stage_container_t* sc = _scdir[type];
+  if (sc == NULL)
+    THROW2(DispatcherException,
+           "Type %s unregistered\n", type.data());
+  sc->reserve(n);
 }
 
 
@@ -131,23 +103,6 @@ void dispatcher_t::dispatch_packet(packet_t* packet) {
 
 void dispatcher_t::reserve_workers(const c_str& type, int n) {
   instance()->_reserve_workers(type, n);
-}
-
-
-
-/* definitions of internal helper functions */
-
-int string_comparator(const void* key1, const void* key2) {
-  const char* str1 = (const char*)key1;
-  const char* str2 = (const char*)key2;
-  return strcmp(str1, str2);
-}
-
-
-
-size_t packet_type_hash(const void* key) {
-  const char* str = (const char*)key;
-  return (size_t)RSHash(str, strlen(str));
 }
 
 
