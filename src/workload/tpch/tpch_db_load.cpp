@@ -3,8 +3,6 @@
 #include "workload/tpch/tpch_db_load.h"
 #include "workload/tpch/tpch_compare.h"
 #include "workload/tpch/tpch_env.h"
-#include "workload/tpch/tpch_struct.h"
-#include "workload/tpch/tpch_type_convert.h"
 
 #include "util.h"
 
