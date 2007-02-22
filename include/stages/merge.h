@@ -64,7 +64,10 @@ struct merge_packet_t : public packet_t {
                    const buffer_list_t& input_buffers,
                    key_extractor_t* extract,
                    key_compare_t*  compare)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   false  /* keep worker on completion */
+                   ),
           _input_buffers(input_buffers),
           _extract(extract),
           _compare(compare)

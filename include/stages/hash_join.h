@@ -91,7 +91,10 @@ public:
                        bool outer=false,
                        bool distinct=false)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter,
-                   create_plan(output_filter, join, outer, distinct, left, right)),
+                   create_plan(output_filter, join, outer, distinct, left, right),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
           _left(left),
           _right(right),
           _left_buffer(left->output_buffer()),

@@ -63,7 +63,10 @@ struct bnl_in_packet_t : public packet_t {
                     key_extractor_t* extract,
                     key_compare_t*  compare,
                     bool            output_on_match)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   true   /* unreserve worker on completion */
+                   ),
           _left(left),
           _left_buffer(left->output_buffer()),
           _right_source(right_source),

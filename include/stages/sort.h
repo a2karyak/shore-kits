@@ -73,7 +73,10 @@ public:
                   key_compare_t* compare,
                   packet_t*           input)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, extract, input)),
+                   create_plan(output_filter, extract, input),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
           _extract(extract), _compare(compare),
           _input(input),
           _input_buffer(input->output_buffer())

@@ -56,7 +56,10 @@ public:
 		   tuple_filter_t* output_filter,
 		   const c_str    &filename)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, filename)),
+                   create_plan(output_filter, filename),
+                   true,  /* merging allowed */
+                   false  /* keep worker on completion */
+                   ),
           _filename(filename)
     {
     }

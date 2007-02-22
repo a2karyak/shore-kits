@@ -51,7 +51,10 @@ public:
 		   tuple_filter_t* output_filter,
 		   page_list* db)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, db)),
+                   create_plan(output_filter, db),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
 	  _db(db)
     {
         assert(db != NULL);

@@ -63,7 +63,10 @@ struct aggregate_packet_t : public packet_t {
                        key_extractor_t*   extract,
                        packet_t*          input)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, aggregator, extract, input->plan())),
+                   create_plan(output_filter, aggregator, extract, input->plan()),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
 	  _aggregator(aggregator), _extract(extract),
           _input(input),
           _input_buffer(input->output_buffer())

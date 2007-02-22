@@ -25,7 +25,10 @@ struct partial_aggregate_packet_t : public packet_t {
                                key_extractor_t* extractor,
                                key_compare_t* compare)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter,
-                   create_plan(out_filter, aggregate, extractor, input->plan())),
+                   create_plan(out_filter, aggregate, extractor, input->plan()),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
           _input(input), _input_buffer(input->output_buffer()),
           _aggregate(aggregate), _extractor(extractor), _compare(compare)
     {

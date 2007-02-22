@@ -64,10 +64,13 @@ public:
                        void (*func) (void*, void*),
                        void* func_arg,
                        void (*destructor) (void*) = NULL,
-                       bool _merge=false)
+                       bool _merge=false,
+                       bool _unreserve=true)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    _merge ? create_plan(output_filter, func) : NULL,
-                   _merge),
+                   _merge,    /* whether to merge */
+                   _unreserve /* whether to unreserve */
+                   ),
           _func(func),
           _func_arg(func_arg),
           _destructor(destructor)

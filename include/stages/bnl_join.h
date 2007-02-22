@@ -55,7 +55,10 @@ struct bnl_join_packet_t : public packet_t {
                       packet_t* left,
                       tuple_source_t* right_source,
                       tuple_join_t* join)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   true   /* unreserve worker on completion */
+                   ),
           _left(left),
           _left_buffer(left->output_buffer()),
           _right_source(right_source),

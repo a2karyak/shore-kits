@@ -81,6 +81,10 @@ protected:
     /* used to recover from coming in too late for work sharing */
     bool _merge_enabled;
 
+    /* used to keep sub-stages from unreserving workers so long as the
+       meta-stage needs them */
+    bool _unreserve_on_completion;
+
 
     static bool is_compatible(query_plan const* a, query_plan const* b) {
         if(!a || !b || strcmp(a->action, b->action))
@@ -139,7 +143,8 @@ public:
              tuple_fifo*     output_buffer,
              tuple_filter_t* output_filter,
              query_plan*     plan,
-             bool            merge_enabled=true);
+             bool            merge_enabled,
+             bool            unreserve_on_completion);
 
 
     virtual ~packet_t(void);
