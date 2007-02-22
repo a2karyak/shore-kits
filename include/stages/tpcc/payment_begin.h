@@ -92,7 +92,10 @@ public:
                            const double a_h_amount,
                            const char* a_h_date)
 	: trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                       create_plan(output_filter, a_c_id, a_h_amount, a_h_date)),
+                       create_plan(output_filter, a_c_id, a_h_amount, a_h_date),
+                       true, /* merging allowed */
+                       true  /* unreserve worker on completion */
+                       ),
           _home_hw_id(a_home_hw_id),
           _home_d_id(a_home_d_id),
           _v_cust_wh_selection(a_v_cust_wh_selection),
@@ -117,6 +120,12 @@ public:
     {
         c_str action("%s:%d:%f:%d", PACKET_TYPE.data(), a_c_id, a_h_amount, a_h_date);
         return new query_plan(action, filter->to_string(), NULL, 0);
+    }
+
+
+    virtual void declare_worker_needs(resource_reserver_t* reserve) {
+        reserve->declare_resource_need(_packet_type, 1);
+        /* no inputs */
     }
 
 }; // END OF CLASS: payment_begin_packet_t

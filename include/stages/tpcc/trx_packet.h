@@ -27,11 +27,13 @@ protected:
 public:
 
   /* see trx_packet.cpp for documentation */  
-  trx_packet_t(const c_str       &packet_id,
-               const c_str       &packet_type,
-               tuple_fifo*        output_buffer,
-               tuple_filter_t*    output_filter,
-               query_plan*        trx_plan);
+  trx_packet_t(const c_str     &packet_id,
+               const c_str     &packet_type,
+               tuple_fifo*     output_buffer,
+               tuple_filter_t* output_filter,
+               query_plan*     trx_plan,
+               bool _merge,
+               bool _unreserve);
 
   virtual ~trx_packet_t(void);
 
