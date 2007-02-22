@@ -55,6 +55,8 @@ void db_close() {
     close_db_table(tpch_partsupp, CDB_FILENAME_PARTSUPP);
     close_db_table(tpch_region,   CDB_FILENAME_REGION);
     close_db_table(tpch_supplier, CDB_FILENAME_SUPPLIER);
+
+    TRACE(TRACE_ALWAYS, "TPCH database closed\n");
 }
 
 
