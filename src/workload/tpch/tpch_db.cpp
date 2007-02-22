@@ -209,7 +209,7 @@ void db_close() {
 static void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp, const char* table_name) {
     
-    c_str path("%s/%s", BDB_TPCH_DIRECTORY, table_name);
+    c_str path("%s", table_name);
     
     try {
         table = new Db(dbenv, 0);
@@ -265,7 +265,7 @@ static void open_db_index(Db* table, Db*& assoc, Db*& index, u_int32_t,
                           idx_key_create_func_t key_create,
                           const char* , const char* index_name) {
 
-    c_str path("%s/%s", BDB_TPCH_DIRECTORY, index_name);
+    c_str path("%s", index_name);
 
     try {
         assoc = new Db(dbenv, 0);
