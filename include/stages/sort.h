@@ -97,9 +97,6 @@ public:
     
     virtual void declare_worker_needs(resource_reserver_t* reserve) {
 
-        TRACE(TRACE_ALWAYS, "NOT COMPLETE!\n");
-        assert(0);
-
         /* need to reserve one SORT worker, ... */
         reserve->declare_resource_need(_packet_type, 1);
         
