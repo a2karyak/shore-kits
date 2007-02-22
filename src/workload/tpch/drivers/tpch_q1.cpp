@@ -229,7 +229,7 @@ void tpch_q1_driver::submit(void* disp) {
         new tuple_fifo(sizeof(aggregate_tuple));
     packet_t* q1_agg_packet;
     q1_agg_packet = 
-        new hash_aggregate_packet_t("Q1_AGG_PACKET",
+        new partial_aggregate_packet_t("Q1_AGG_PACKET",
                                        agg_output_buffer,
                                        new trivial_filter_t(agg_output_buffer->tuple_size()),
                                        q1_tscan_packet,

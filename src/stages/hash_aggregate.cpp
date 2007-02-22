@@ -4,9 +4,11 @@
 #ifdef __SUNPRO_CC
 #include <hash_set>
 using std::hashtable;
+using std::hash_set;
 #else
 #include <ext/hash_set>
 using __gnu_cxx::hashtable;
+using __gnu_cxx::hash_set;
 #endif
 
 const c_str hash_aggregate_packet_t::PACKET_TYPE = "HASH_AGGREGATE";
@@ -69,7 +71,7 @@ struct hashfcn_t {
     }
 };
 
-typedef std::hash_set<char*, hashfcn_t, equalbytes_t>::allocator_type alloc_t;
+typedef hash_set<char*, hashfcn_t, equalbytes_t>::allocator_type alloc_t;
 typedef hashtable<char *, const char *,
 		  hashfcn_t, extractkey_t,
 		  equalbytes_t, alloc_t> tuple_hash_t;
@@ -107,7 +109,7 @@ void hash_aggregate_stage_t::process_packet() {
     _aggregate = packet->_aggregate;
     key_extractor_t* agg_key = _aggregate->key_extractor();
     key_extractor_t* tup_key = packet->_extractor;
-    key_compare_t* compare = packet->_compare;
+    //    key_compare_t* compare = packet->_compare;
     
     
     // create a set to hold the sorted run
