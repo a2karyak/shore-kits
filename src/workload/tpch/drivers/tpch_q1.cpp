@@ -118,7 +118,7 @@ public:
 // "order by L_RETURNFLAG, L_LINESTATUS"
 struct q1_key_extract_t : public key_extractor_t {
     q1_key_extract_t()
-        : key_extractor_t(sizeof(char)*2, 0)
+        : key_extractor_t(sizeof(char)*2, offsetof(projected_lineitem_tuple, L_RETURNFLAG))
     {
         assert(sizeof(char) == 1);
     }
