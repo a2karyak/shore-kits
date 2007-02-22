@@ -16,8 +16,38 @@
 
 
 
-/* internal data structures */
+/* internal datatypes */
 
+
+struct thread_args {
+    thread_t* t;
+    thread_pool* p;
+    thread_args(thread_t* thread, thread_pool* pool)
+	: t(thread), p(pool)
+    {
+    }
+};
+
+   
+class root_thread_t : public thread_t {
+
+public:
+    
+    /**
+     *  @brief 
+     */
+    root_thread_t(const c_str &name)
+        : thread_t(name)
+    {
+    }
+
+
+    virtual void* run() {
+        // must be overwridden, but never called for the root thread
+        assert(false);
+        return NULL;
+    }
+};
 
 
 
@@ -25,17 +55,20 @@
 
 extern "C" void thread_destroy(void* thread_object);
 extern "C" void* start_thread(void *);
+static void setup_thread(thread_args* args);
+
+
+
+/* internal data structures */
 
 static thread_local<thread_t> THREAD_KEY_SELF(&thread_destroy);
-
-thread_local<thread_pool> THREAD_POOL;
-
+thread_local<thread_pool>     THREAD_POOL;
 // the default thread pool effectively has no limit.
 static thread_pool default_thread_pool(1<<30);
 
 
-/* method definitions */
 
+/* method definitions */
 
 /**
  *  @brief thread_t base class constructor. Every subclass constructor
@@ -62,26 +95,6 @@ void thread_t::reset_rand() {
 }
 
 
-class root_thread_t : public thread_t {
-    
-public:
-    
-    /**
-     *  @brief 
-     */
-    root_thread_t(const c_str &name)
-        : thread_t(name)
-    {
-    }
-
-
-    virtual void* run() {
-        // must be overwridden, but never called for the root thread
-        assert(false);
-        return NULL;
-    }
-};
-
 
 
 /**
@@ -92,8 +105,8 @@ public:
 
 void thread_init(void)
 {
-    root_thread_t* root_thread = new root_thread_t("root-thread");
-    THREAD_KEY_SELF = root_thread;
+    thread_args args(new root_thread_t("root-thread"), NULL);
+    setup_thread(&args);
 }
  
 
@@ -107,15 +120,6 @@ thread_t* thread_get_self(void)
 }
 
 
-
-struct thread_args {
-    thread_t* t;
-    thread_pool* p;
-    thread_args(thread_t* thread, thread_pool* pool)
-	: t(thread), p(pool)
-    {
-    }
-};
 
 /**
  *  @brief Creates a new thread and starts it.
@@ -294,18 +298,11 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 void* start_thread(void* thread_object)
 {
     thread_args* args = (thread_args*)thread_object;
-    thread_t* thread = args->t;
-    thread_pool* pool = args->p;
+    setup_thread(args);
     delete args;
-
-    if(!pool)
-	pool = &default_thread_pool;
-
-    // Register local data. Should not fail since we only need two
-    // pieces of thread-specific storage.
-    THREAD_KEY_SELF = thread;
-    THREAD_POOL = pool;
-    thread->reset_rand();
+    
+    thread_t* thread  = THREAD_KEY_SELF;
+    thread_pool* pool = THREAD_POOL;
 
     pool->start();
     void* rval = thread->run();
@@ -343,4 +340,21 @@ void thread_pool::stop() {
     thread_cond_signal(_cond);
     err = pthread_mutex_unlock(&_lock);
     THROW_IF(ThreadException, err);
+}
+
+
+
+static void setup_thread(thread_args* args) {
+
+    thread_t* thread  = args->t;
+    thread_pool* pool = args->p;
+
+    if(!pool)
+	pool = &default_thread_pool;
+
+    // Register local data. Should not fail since we only need two
+    // pieces of thread-specific storage.
+    THREAD_KEY_SELF = thread;
+    THREAD_POOL     = pool;
+    thread->reset_rand();
 }
