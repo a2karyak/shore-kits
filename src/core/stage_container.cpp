@@ -16,6 +16,7 @@ ENTER_NAMESPACE(qpipe);
 
 #define TRACE_MERGING 0
 #define TRACE_DEQUEUE 0
+#define TRACE_WORKER_CREATE 0
 
 static const bool ALWAYS_TRY_OSP = true;
 
@@ -163,7 +164,8 @@ void stage_container_t::create_worker() {
     c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread);
     thread_t* thread = new stage_thread(thread_name, this);
 
-    TRACE(TRACE_ALWAYS, "Creating thread %s\n", thread_name.data());
+    if (TRACE_WORKER_CREATE)
+        TRACE(TRACE_ALWAYS, "Creating thread %s\n", thread_name.data());
 
     thread_create(thread, &_pool);
 
