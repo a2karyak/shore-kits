@@ -4,6 +4,7 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_filenames.h"
 #include "workload/tpch/tpch_compare.h"
+#include "workload/tpch/tpch_filenames.h"
 #include "workload/bdb_config.h"
 
 
