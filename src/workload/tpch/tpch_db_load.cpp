@@ -27,7 +27,7 @@ void progress_done();
 /* internal helper functions */
 
 static void store_string(char* dest, char* src);
-static void db_table_load(void (*tbl_loader) (Db*, const char*),
+static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
                           const char* tbl_path, const char* tbl_filename);
 
@@ -35,7 +35,7 @@ static void db_table_load(void (*tbl_loader) (Db*, const char*),
 
 /* definitions of exported functions */
 
-void tpch_load_customer_table(Db* db, const char* fname) {
+void tpch_load_customer_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -43,11 +43,6 @@ void tpch_load_customer_table(Db* db, const char* fname) {
     progress_reset();
     tpch_customer_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -77,16 +72,12 @@ void tpch_load_customer_table(Db* db, const char* fname) {
         progress_update();
     }
 
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
     progress_done();
 }
 
 
 
-void tpch_load_lineitem_table(Db* db, const char* fname) {
+void tpch_load_lineitem_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -94,11 +85,6 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
     progress_reset();
     tpch_lineitem_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -145,16 +131,13 @@ void tpch_load_lineitem_table(Db* db, const char* fname) {
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
 
 
-void tpch_load_nation_table(Db* db, const char* fname) {
+void tpch_load_nation_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
  
@@ -162,11 +145,6 @@ void tpch_load_nation_table(Db* db, const char* fname) {
     progress_reset();
     tpch_nation_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -188,16 +166,13 @@ void tpch_load_nation_table(Db* db, const char* fname) {
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
 
 
-void tpch_load_orders_table(Db* db, const char* fname) {
+void tpch_load_orders_table(Db* db, FILE* fd) {
     
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -205,11 +180,6 @@ void tpch_load_orders_table(Db* db, const char* fname) {
     progress_reset();
     tpch_orders_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -242,16 +212,13 @@ void tpch_load_orders_table(Db* db, const char* fname) {
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
 
 
-void tpch_load_part_table(Db* db, const char* fname) {
+void tpch_load_part_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
  
@@ -259,11 +226,6 @@ void tpch_load_part_table(Db* db, const char* fname) {
     progress_reset();
     tpch_part_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -295,16 +257,13 @@ void tpch_load_part_table(Db* db, const char* fname) {
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
 
 
-void tpch_load_partsupp_table(Db* db, const char* fname) {
+void tpch_load_partsupp_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -312,11 +271,6 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
     progress_reset();
     tpch_partsupp_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -341,16 +295,13 @@ void tpch_load_partsupp_table(Db* db, const char* fname) {
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
 
 
-void tpch_load_region_table(Db* db, const char* fname) {
+void tpch_load_region_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -358,11 +309,6 @@ void tpch_load_region_table(Db* db, const char* fname) {
     progress_reset();
     tpch_region_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -382,16 +328,13 @@ void tpch_load_region_table(Db* db, const char* fname) {
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
 
 
-void tpch_load_supplier_table(Db* db, const char* fname) {
+void tpch_load_supplier_table(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
     static int count = 0;
@@ -400,11 +343,6 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
     progress_reset();
     tpch_supplier_tuple tup;
 
-    FILE* fd = fopen(fname, "r");
-    if (fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", fname);
-        THROW1(BdbException, "fopen() failed");
-    }
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
@@ -437,16 +375,13 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
                   tup.S_ADDRESS,
                   tup.S_NATIONKEY,
                   tup.S_PHONE,
-                  tup.S_ACCTBAL,
+                  tup.S_ACCTBAL.to_double(),
                   tup.S_COMMENT);
         }
 
         progress_update();
     }
-    if ( fclose(fd) ) {
-        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", fname);
-        THROW1(BdbException, "fclose() failed");
-    }
+
     progress_done();
 }
 
@@ -462,14 +397,14 @@ void tpch_load_supplier_table(Db* db, const char* fname) {
 void db_load(const char* tbl_path) {
 
     // load all TPC-H tables from the files generated by dbgen
-    db_table_load(tpch_load_customer_table, tpch_customer, tbl_path, TABLE_CUSTOMER_TBL_FILENAME);
-    db_table_load(tpch_load_lineitem_table, tpch_lineitem, tbl_path, TABLE_LINEITEM_TBL_FILENAME);
-    db_table_load(tpch_load_nation_table,   tpch_nation,   tbl_path, TABLE_NATION_TBL_FILENAME);
-    db_table_load(tpch_load_orders_table,   tpch_orders,   tbl_path, TABLE_ORDERS_TBL_FILENAME);
-    db_table_load(tpch_load_part_table,     tpch_part,     tbl_path, TABLE_PART_TBL_FILENAME);
-    db_table_load(tpch_load_partsupp_table, tpch_partsupp, tbl_path, TABLE_PARTSUPP_TBL_FILENAME);
-    db_table_load(tpch_load_region_table,   tpch_region,   tbl_path, TABLE_REGION_TBL_FILENAME);
-    db_table_load(tpch_load_supplier_table, tpch_supplier, tbl_path, TABLE_SUPPLIER_TBL_FILENAME);
+    db_table_load(tpch_load_customer_table, tpch_customer, tbl_path, TBL_FILENAME_CUSTOMER);
+    db_table_load(tpch_load_lineitem_table, tpch_lineitem, tbl_path, TBL_FILENAME_LINEITEM);
+    db_table_load(tpch_load_nation_table,   tpch_nation,   tbl_path, TBL_FILENAME_NATION);
+    db_table_load(tpch_load_orders_table,   tpch_orders,   tbl_path, TBL_FILENAME_ORDERS);
+    db_table_load(tpch_load_part_table,     tpch_part,     tbl_path, TBL_FILENAME_PART);
+    db_table_load(tpch_load_partsupp_table, tpch_partsupp, tbl_path, TBL_FILENAME_PARTSUPP);
+    db_table_load(tpch_load_region_table,   tpch_region,   tbl_path, TBL_FILENAME_REGION);
+    db_table_load(tpch_load_supplier_table, tpch_supplier, tbl_path, TBL_FILENAME_SUPPLIER);
 }
 
 
@@ -484,14 +419,25 @@ static void store_string(char* dest, char* src) {
 
 
 
-static void db_table_load(void (*tbl_loader) (Db*, const char*),
+static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
                           const char* tbl_path, const char* tbl_filename) {
     
     // prepend filename with common path
-    char path[MAX_FILENAME_SIZE];
-    snprintf(path, MAX_FILENAME_SIZE, "%s/%s", tbl_path, tbl_filename);
-    tbl_loader(db, path);
+    c_str path("%s/%s", tbl_path, tbl_filename);
+
+    FILE* fd = fopen(path.data(), "r");
+    if (fd == NULL) {
+        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", path.data());
+        THROW1(BdbException, "fopen() failed");
+    }
+
+    tbl_loader(db, fd);
+
+    if ( fclose(fd) ) {
+        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", path.data());
+        THROW1(BdbException, "fclose() failed");
+    }
 }
     
 

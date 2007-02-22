@@ -6,37 +6,37 @@
 
 // BerekeleyDB table names
 
-#define TABLE_CUSTOMER_NAME         "CUSTOMER.cdb"
 #define TABLE_CUSTOMER_ID           "TBL_CUST"
-#define TABLE_CUSTOMER_TBL_FILENAME "customer.tbl"
+#define TBL_FILENAME_CUSTOMER       "customer.tbl"
+#define BDB_FILENAME_CUSTOMER       "CUSTOMER.bdb"
 
-#define TABLE_LINEITEM_NAME         "LINEITEM.cdb"
 #define TABLE_LINEITEM_ID           "TBL_LITEM"
-#define TABLE_LINEITEM_TBL_FILENAME "lineitem.tbl"
+#define TBL_FILENAME_LINEITEM       "lineitem.tbl"
+#define BDB_FILENAME_LINEITEM       "LINEITEM.bdb"
 
-#define TABLE_NATION_NAME           "NATION.cdb"
 #define TABLE_NATION_ID             "TBL_NAT"
-#define TABLE_NATION_TBL_FILENAME   "nation.tbl"
+#define TBL_FILENAME_NATION         "nation.tbl"
+#define BDB_FILENAME_NATION         "NATION.bdb"
 
-#define TABLE_ORDERS_NAME           "ORDERS.cdb"
 #define TABLE_ORDERS_ID             "TBL_ORD"
-#define TABLE_ORDERS_TBL_FILENAME   "orders.tbl"
+#define TBL_FILENAME_ORDERS         "orders.tbl"
+#define BDB_FILENAME_ORDERS         "ORDERS.bdb"
 
-#define TABLE_PART_NAME             "PART.cdb"
 #define TABLE_PART_ID               "TBL_PRT"
-#define TABLE_PART_TBL_FILENAME     "part.tbl"
+#define TBL_FILENAME_PART           "part.tbl"
+#define BDB_FILENAME_PART           "PART.bdb"
 
-#define TABLE_PARTSUPP_NAME         "PARTSUPP.cdb"
 #define TABLE_PARTSUPP_ID           "TBL_PRTSUP"
-#define TABLE_PARTSUPP_TBL_FILENAME "partsupp.tbl"
+#define TBL_FILENAME_PARTSUPP       "partsupp.tbl"
+#define BDB_FILENAME_PARTSUPP       "PARTSUPP.bdb"
 
-#define TABLE_REGION_NAME           "REGION.cdb"
 #define TABLE_REGION_ID             "TBL_REG"
-#define TABLE_REGION_TBL_FILENAME   "region.tbl"
+#define TBL_FILENAME_REGION         "region.tbl"
+#define BDB_FILENAME_REGION         "REGION.bdb"
 
-#define TABLE_SUPPLIER_NAME         "SUPPLIER.cdb"
 #define TABLE_SUPPLIER_ID           "TBL_SUP"
-#define TABLE_SUPPLIER_TBL_FILENAME "supplier.tbl"
+#define TBL_FILENAME_SUPPLIER       "supplier.tbl"
+#define BDB_FILENAME_SUPPLIER       "SUPPLIER.bdb"
 
 #define INDEX_LINEITEM_SHIPDATE_NAME "LINEITEM.SHIPDATE"
 #define INDEX_LINEITEM_SHIPDATE_ID   "IDX_LI_SD"

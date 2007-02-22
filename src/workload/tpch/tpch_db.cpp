@@ -141,14 +141,14 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
   
 
     // open tables
-    open_db_table(tpch_customer, flags, tpch_customer_bt_compare_fcn, TABLE_CUSTOMER_NAME);
-    open_db_table(tpch_lineitem, flags, tpch_lineitem_bt_compare_fcn, TABLE_LINEITEM_NAME);
-    open_db_table(tpch_nation, flags, tpch_nation_bt_compare_fcn, TABLE_NATION_NAME);
-    open_db_table(tpch_orders, flags, tpch_orders_bt_compare_fcn, TABLE_ORDERS_NAME);
-    open_db_table(tpch_part, flags, tpch_part_bt_compare_fcn, TABLE_PART_NAME);
-    open_db_table(tpch_partsupp, flags, tpch_partsupp_bt_compare_fcn, TABLE_PARTSUPP_NAME);
-    open_db_table(tpch_region, flags, tpch_region_bt_compare_fcn, TABLE_REGION_NAME);
-    open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, TABLE_SUPPLIER_NAME);
+    open_db_table(tpch_customer, flags, tpch_customer_bt_compare_fcn, BDB_FILENAME_CUSTOMER);
+    open_db_table(tpch_lineitem, flags, tpch_lineitem_bt_compare_fcn, BDB_FILENAME_LINEITEM);
+    open_db_table(tpch_nation,   flags, tpch_nation_bt_compare_fcn,   BDB_FILENAME_NATION);
+    open_db_table(tpch_orders,   flags, tpch_orders_bt_compare_fcn,   BDB_FILENAME_ORDERS);
+    open_db_table(tpch_part,     flags, tpch_part_bt_compare_fcn,     BDB_FILENAME_PART);
+    open_db_table(tpch_partsupp, flags, tpch_partsupp_bt_compare_fcn, BDB_FILENAME_PARTSUPP);
+    open_db_table(tpch_region,   flags, tpch_region_bt_compare_fcn,   BDB_FILENAME_REGION);
+    open_db_table(tpch_supplier, flags, tpch_supplier_bt_compare_fcn, BDB_FILENAME_SUPPLIER);
 
     // open indexes
     open_db_index(tpch_lineitem, tpch_lineitem_shipdate,
@@ -182,14 +182,14 @@ void db_close() {
     close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
 
     // close tables
-    close_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
-    close_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
-    close_db_table(tpch_nation, TABLE_NATION_NAME);
-    close_db_table(tpch_orders, TABLE_ORDERS_NAME);
-    close_db_table(tpch_part, TABLE_PART_NAME);
-    close_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
-    close_db_table(tpch_region, TABLE_REGION_NAME);
-    close_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
+    close_db_table(tpch_customer, BDB_FILENAME_CUSTOMER);
+    close_db_table(tpch_lineitem, BDB_FILENAME_LINEITEM);
+    close_db_table(tpch_nation,   BDB_FILENAME_NATION);
+    close_db_table(tpch_orders,   BDB_FILENAME_ORDERS);
+    close_db_table(tpch_part,     BDB_FILENAME_PART);
+    close_db_table(tpch_partsupp, BDB_FILENAME_PARTSUPP);
+    close_db_table(tpch_region,   BDB_FILENAME_REGION);
+    close_db_table(tpch_supplier, BDB_FILENAME_SUPPLIER);
 
     
     // close environment
@@ -222,7 +222,8 @@ static void open_db_table(Db*& table, u_int32_t flags,
         table->open(NULL, table_name, NULL, DB_BTREE, flags, 0644);
     }
     catch ( DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException opening table \"%s\". Make sure database is set up properly.\n",
+        TRACE(TRACE_ALWAYS,
+              "Caught DbException opening table \"%s\". Make sure database is set up properly.\n",
               table_name);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "table->open() failed");
