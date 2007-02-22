@@ -35,7 +35,7 @@ void tscan_stage_t::process_packet() {
     adaptor_t* adaptor = _adaptor;
     tscan_packet_t* packet = (tscan_packet_t*)adaptor->get_packet();
 
-    Db*  db = packet->_db;
+    Db* db = packet->_db;
     cursor_guard_t cursor(db);
     
 
@@ -44,6 +44,8 @@ void tscan_stage_t::process_packet() {
     dbt_guard_t bulk_data(TSCAN_BULK_READ_BUFFER_SIZE);
     Dbt bulk_key;
     for (int bulk_read_index = 0; ; bulk_read_index++) {
+
+        TRACE(TRACE_ALWAYS, "Doing bulk read\n");
 
         // any return code besides DB_NOTFOUND would throw an exception
         int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
