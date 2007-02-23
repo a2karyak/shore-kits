@@ -3,14 +3,14 @@
 #include "stages.h"
 #include "workload/common/register_stage.h"
 
-#define MAX_NUM_CLIENTS 3
+#define MAX_NUM_CLIENTS 16
 
 #define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 // Q4 has two scans
 #define MAX_NUM_AGGREGATE_THREADS         MAX_NUM_CLIENTS
 #define MAX_NUM_PARTIAL_AGGREGATE_THREADS MAX_NUM_CLIENTS
 #define MAX_NUM_HASH_JOIN_THREADS         MAX_NUM_CLIENTS
 #define MAX_NUM_FUNC_CALL_THREADS         MAX_NUM_CLIENTS
-#define MAX_NUM_SORT_THREADS              2
+#define MAX_NUM_SORT_THREADS              MAX_NUM_CLIENTS
 
 
 void register_stage_containers() {
