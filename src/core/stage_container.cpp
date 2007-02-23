@@ -15,7 +15,7 @@
 /* constants */
 
 #define TRACE_MERGING 0
-#define TRACE_DEQUEUE 0
+#define TRACE_DEQUEUE 1
 #define TRACE_WORKER_CREATE 0
 
 
@@ -189,13 +189,7 @@ void stage_container_t::create_worker() {
 void stage_container_t::reserve(int n) {
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
-    TRACE(TRACE_ALWAYS, "%s reserve count was %d\n",
-          _container_name.data(),
-          resource_pool_get_num_reserved(&_rp));
     _reserve(n);
-    TRACE(TRACE_ALWAYS, "%s reserve count now %d\n",
-          _container_name.data(),
-          resource_pool_get_num_reserved(&_rp));
 }
 
 
@@ -288,15 +282,7 @@ void stage_container_t::unreserve(int n) {
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
     
-    TRACE(TRACE_ALWAYS, "%s reserve count was %d\n",
-          _container_name.data(),
-          resource_pool_get_num_reserved(&_rp));
-
     resource_pool_unreserve(&_rp, n);
-
-    TRACE(TRACE_ALWAYS, "%s reserve count now %d\n",
-          _container_name.data(),
-          resource_pool_get_num_reserved(&_rp));
 
     // * * * END CRITICAL SECTION * * *
 }
@@ -882,16 +868,7 @@ void stage_container_t::stage_adaptor_t::cleanup() {
            non-idle count before this! */
 	resource_pool_notify_idle(&_container->_rp);
         if (_packet->unreserve_worker_on_completion()) {
-
-            TRACE(TRACE_ALWAYS, "%s reserve count was %d\n",
-                  _container->_container_name.data(),
-                  resource_pool_get_num_reserved(&_container->_rp));
-            
             resource_pool_unreserve(&_container->_rp, 1);
-
-            TRACE(TRACE_ALWAYS, "%s reserve count now %d\n",
-                  _container->_container_name.data(),
-                  resource_pool_get_num_reserved(&_container->_rp));
         }
     }
     else {

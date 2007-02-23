@@ -24,7 +24,7 @@
 #include <stdlib.h>        /* for NULL */
 #include <assert.h>        /* for assert() */
 #include "util/trace.h"
-
+#include "util/tassert.h"
 
 
 
@@ -90,7 +90,9 @@ void resource_pool_reserve(resource_pool_t rp, int n)
   
   /* Error checking. If 'n' is larger than the pool capacity, we will
      never be able to satisfy the request. */
-  assert(n <= rp->capacity);
+  TASSERT(n <= rp->capacity);
+
+  TRACE(TRACE_ALWAYS, "%reserve count was %d\n", rp->reserved);
 
   /* Checks:
      
@@ -106,6 +108,7 @@ void resource_pool_reserve(resource_pool_t rp, int n)
     
     /* If we are here, we have been granted the resources. The thread
        which gave them to us has already updated the pool's state. */
+    TRACE(TRACE_ALWAYS, "%reserve count now %d\n", rp->reserved);
     return;
   }
 
@@ -113,6 +116,7 @@ void resource_pool_reserve(resource_pool_t rp, int n)
   /* If we are here, we did not wait. We are responsible for updating
      the state of the rpaphore before we exit. */
   rp->reserved += n;
+  TRACE(TRACE_ALWAYS, "%reserve count now %d\n", rp->reserved);
 }
 
 
@@ -131,12 +135,15 @@ void resource_pool_reserve(resource_pool_t rp, int n)
 void resource_pool_unreserve(resource_pool_t rp, int n)
 {
   /* error checking */
-  assert(rp->reserved >= n);
+  TASSERT(rp->reserved >= n);
+
+  TRACE(TRACE_ALWAYS, "reserve count was %d\n", rp->reserved);
 
   /* update the 'reserved' count */
   rp->reserved -= n;
   waiter_wake(rp);
-  return;
+  
+  TRACE(TRACE_ALWAYS, "reserve count now %d\n", rp->reserved);
 }
 
 
@@ -157,9 +164,11 @@ void resource_pool_unreserve(resource_pool_t rp, int n)
  */
 void resource_pool_notify_capacity_increase(resource_pool_t rp, int diff)
 {
-  assert(diff > 0);
+  TASSERT(diff > 0);
+  TRACE(TRACE_ALWAYS, "%reserve count was %d\n", rp->reserved);
   rp->capacity += diff;
   waiter_wake(rp);
+  TRACE(TRACE_ALWAYS, "%reserve count now %d\n", rp->reserved);
 }
 
 
@@ -180,15 +189,17 @@ void resource_pool_notify_capacity_increase(resource_pool_t rp, int diff)
  */
 void resource_pool_notify_idle(resource_pool_t rp)
 {
-  assert(rp->non_idle > 0);
+  TASSERT(rp->non_idle > 0);
   rp->non_idle--;
+  TRACE(TRACE_ALWAYS, "IDLE ... count now %d\n", rp->non_idle);
 }
 
 
 void resource_pool_notify_non_idle(resource_pool_t rp)
 {
-  assert(rp->non_idle < rp->reserved);
+  TASSERT(rp->non_idle < rp->reserved);
   rp->non_idle++;
+  TRACE(TRACE_ALWAYS, "NON_IDLE ... count now %d\n", rp->non_idle);
 }
 
 
@@ -260,7 +271,7 @@ void waiter_wake(resource_pool_t rp)
     void* waiter_node;
     int get_ret =
       static_list_get_head(&rp->waiters, &waiter_node);
-    assert(get_ret == 0);
+    TASSERT(get_ret == 0);
     struct waiter_node_s* wn = (struct waiter_node_s*)waiter_node;
     
     if (num_unreserved < wn->req_reserve_count)
@@ -271,7 +282,7 @@ void waiter_wake(resource_pool_t rp)
     /* Remove thread from queue. Wake it. Update rpaphore count. */
     int remove_ret =
       static_list_remove_head(&rp->waiters, &waiter_node, NULL);
-    assert(remove_ret == 0);
+    TASSERT(remove_ret == 0);
     wn = (struct waiter_node_s*)waiter_node;
  
     rp->reserved += wn->req_reserve_count;
