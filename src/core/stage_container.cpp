@@ -69,10 +69,9 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
       _max_threads((max_count > active_count)? max_count : std::max(10, active_count * 4)),
-      _next_thread(0)
+      _next_thread(0),
+      _rp(&_container_lock._lock, 0, container_name)
 {
-    /* Initially, there are no worker threads in this pool. */
-    resource_pool_init(&_rp, &_container_lock._lock, 0);
 }
 
 
@@ -181,7 +180,7 @@ void stage_container_t::create_worker() {
     thread_create(thread, &_pool);
 
     // notify resource pool
-    resource_pool_notify_capacity_increase(&_rp, 1);
+    _rp.notify_capacity_increase(1);
 }
 
 
@@ -213,13 +212,11 @@ void stage_container_t::_reserve(int n) {
 
     // See if we can satisfy the request with existing, unreserved
     // threads.
-    int curr_capacity =
-        resource_pool_get_num_capacity(&_rp);
-    int curr_reserved =
-        resource_pool_get_num_reserved(&_rp);
+    int curr_capacity = _rp.get_capacity();
+    int curr_reserved = _rp.get_reserved();
     if ((curr_capacity - curr_reserved) >= n) {
         /* we can get the resources we want without waiting! */
-        resource_pool_reserve(&_rp, n);
+        _rp.reserve(n);
         return;
     }
     
@@ -238,7 +235,7 @@ void stage_container_t::_reserve(int n) {
 
 
     // It is now a policy decision whether to wait for existing,
-    // reserved threads to free up (using resource_pool_reserve) or
+    // reserved threads to free up (using resource_pool_t::reserve) or
     // increase the number of existing threads further to avoid
     // blocking).
 
@@ -250,8 +247,7 @@ void stage_container_t::_reserve(int n) {
         int unreserved = curr_capacity - curr_reserved;
         if (unreserved >= n) {
             /* we can get the resources we want without waiting! */
-            resource_pool_reserve(&_rp, n);
-            return;
+            break;
         }
 
         create_worker();
@@ -259,8 +255,8 @@ void stage_container_t::_reserve(int n) {
     }
 
 
-    /* Hit _max_threads... Forced to wait... */
-    resource_pool_reserve(&_rp, n);
+    /* Either we have enough or we have hit _max_threads... */
+    _rp.reserve(n);
     
     
     // * * * END CRITICAL SECTION * * *
@@ -282,8 +278,8 @@ void stage_container_t::unreserve(int n) {
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
     
-    resource_pool_unreserve(&_rp, n);
-
+    _rp.unreserve(n);
+    
     // * * * END CRITICAL SECTION * * *
 }
 
@@ -344,8 +340,7 @@ void stage_container_t::enqueue(packet_t* packet) {
        system resources). We want to share when the number of active
        (non-idle) workers is greater than this amount.
     */
-    if(ALWAYS_TRY_OSP
-       || (resource_pool_get_num_non_idle(&_rp) >= _pool._max_active)) {
+    if(ALWAYS_TRY_OSP || (_rp.get_non_idle() >= _pool._max_active)) {
         
 
 #if TRACE_MERGING
@@ -484,7 +479,7 @@ void stage_container_t::run() {
         /* Becomes non-idle. Note that we don't become non-idle in
            this method. We do it in cleanup() since we must do it
            before deciding whether to unreserve ourselves. */
-        resource_pool_notify_non_idle(&_rp);
+        _rp.notify_non_idle();
 
         // * * * END CRITICAL SECTION * * *
 	cs.exit();
@@ -866,9 +861,9 @@ void stage_container_t::stage_adaptor_t::cleanup() {
         /* We will return and be able to process more packets. We can
            unreserve ourself from the container. Remember to drop
            non-idle count before this! */
-	resource_pool_notify_idle(&_container->_rp);
+	_container->_rp.notify_idle();
         if (_packet->unreserve_worker_on_completion()) {
-            resource_pool_unreserve(&_container->_rp, 1);
+            _container->_rp.unreserve(1);
         }
     }
     else {
@@ -878,7 +873,7 @@ void stage_container_t::stage_adaptor_t::cleanup() {
         critical_section_t cs(_container->_container_lock);
 
         /* Drop non-idle count */
-	resource_pool_notify_idle(&_container->_rp);
+	_container->_rp.notify_idle();
 	_container->container_queue_enqueue_no_merge(_packet_list);
     }
 

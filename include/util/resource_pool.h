@@ -20,33 +20,55 @@
 #ifndef _RESOURCE_POOL_H
 #define _RESOURCE_POOL_H
 
+#include "util/thread.h"
+#include "util/c_str.h"
+#include "util/static_list.h"
+#include "util/static_list_struct.h" /* for static_list_s structure */
+
 
 
 /* exported datatypes */
 
+class resource_pool_t {
 
-/** @typedef resource_pool_t
- *
- *  @brief This is our reader-writer lock datatype. Modules that need
- *  access to the internal representation should include
- *  resource_pool_struct.h.
- */
-typedef struct resource_pool_s* resource_pool_t;
+ private:
 
+  pthread_mutex_t* _mutexp;
 
+  int _capacity;
+  int _reserved;
+  int _non_idle;
+  
+  c_str _name;
 
-/* exported functions */
+  struct static_list_s _waiters;
+  
+ public:
 
-void resource_pool_init(resource_pool_t rp, pthread_mutex_t* mutex, int capacity);
-void resource_pool_destroy(resource_pool_t rp);
-void resource_pool_reserve(resource_pool_t rp, int n);
-void resource_pool_unreserve(resource_pool_t rp, int n);
-void resource_pool_notify_capacity_increase(resource_pool_t rp, int diff);
-void resource_pool_notify_idle(resource_pool_t rp);
-void resource_pool_notify_non_idle(resource_pool_t rp);
-int  resource_pool_get_num_capacity(resource_pool_t rp);
-int  resource_pool_get_num_reserved(resource_pool_t rp);
-int  resource_pool_get_num_non_idle(resource_pool_t rp);
+  resource_pool_t(pthread_mutex_t* mutexp, int capacity, const c_str& name)
+    : _mutexp(mutexp)
+    , _capacity(capacity)
+    , _reserved(0)
+    , _non_idle(0)
+    , _name(name)
+    {
+      static_list_init(&_waiters);
+    }
+
+  void reserve(int n);
+  void unreserve(int n);
+  void notify_capacity_increase(int diff);
+  void notify_idle();
+  void notify_non_idle();
+  int  get_capacity();
+  int  get_reserved();
+  int  get_non_idle();
+
+ private:
+ 
+  void wait_for_turn(int req_reserve_count);
+  void waiter_wake();
+};
 
 
 

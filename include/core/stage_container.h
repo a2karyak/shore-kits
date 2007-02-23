@@ -103,7 +103,7 @@ private:
        Workers can report themselves as idle or non-idle when they
        enter and exit process_packet().
     */
-    struct resource_pool_s _rp;
+    resource_pool_t _rp;
 };
 
 

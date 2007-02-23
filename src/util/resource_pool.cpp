@@ -18,7 +18,6 @@
  */
 #include <pthread.h>              /* need to include this first */
 #include "util/resource_pool.h"   /* for prototypes */
-#include "util/resource_pool_struct.h" /* for resource_pool_s structure definition */
 #include "util/static_list.h"          /* for static_list_t functions */
 
 #include <stdlib.h>        /* for NULL */
@@ -44,32 +43,7 @@ struct waiter_node_s
 
 
 
-/* internal helper functions */
-
-static void wait_for_turn(resource_pool_t rp, int req_reserve_count);
-void waiter_wake(resource_pool_t rp);
-
-
-
-/* definitions of exported functions */
-
-/** 
- *  @brief Semaphore initializer.
- *
- *  @return void
- */
-void resource_pool_init(resource_pool_t rp, pthread_mutex_t* mutexp,
-                        int capacity)
-{
-  /* For some reason, RESOURCE_POOL_STATIC_INITIALIZER does not work. */
-  rp->mutexp = mutexp;
-  rp->capacity = capacity;
-  rp->reserved = 0;
-  rp->non_idle = 0;
-  static_list_init(&rp->waiters);
-}
-
-
+/* method definitions */
 
 /**
  *  @brief Reserve 'n' copies of the resource.
@@ -85,15 +59,19 @@ void resource_pool_init(resource_pool_t rp, pthread_mutex_t* mutexp,
  *
  *  @return void
  */
-void resource_pool_reserve(resource_pool_t rp, int n)
+void resource_pool_t::reserve(int n)
 {
   
   /* Error checking. If 'n' is larger than the pool capacity, we will
      never be able to satisfy the request. */
-  TASSERT(n <= rp->capacity);
-
-  TRACE(TRACE_ALWAYS, "%reserve count was %d\n", rp->reserved);
-
+  TASSERT(n <= _capacity);
+  
+  TRACE(TRACE_ALWAYS, "%s was %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
+  
   /* Checks:
      
      - If there are other threads waiting, add ourselves to the queue
@@ -101,22 +79,32 @@ void resource_pool_reserve(resource_pool_t rp, int n)
 
      - If there are no waiting threads, but the number of unreserved
        threads is too small, add ourselves to the queue of waiters. */
-  int num_unreserved = rp->capacity - rp->reserved;
-  if (!static_list_is_empty(&rp->waiters) || (num_unreserved < n))
-  {
-    wait_for_turn(rp, n);
+  int num_unreserved = _capacity - _reserved;
+  if (!static_list_is_empty(&_waiters) || (num_unreserved < n)) {
+
+    wait_for_turn(n);
     
     /* If we are here, we have been granted the resources. The thread
        which gave them to us has already updated the pool's state. */
-    TRACE(TRACE_ALWAYS, "%reserve count now %d\n", rp->reserved);
+    TRACE(TRACE_ALWAYS, "%s after_woken %d:%d:%d\n",
+          _name.data(),
+          _capacity,
+          _reserved,
+          _non_idle);
+
     return;
   }
 
 
   /* If we are here, we did not wait. We are responsible for updating
      the state of the rpaphore before we exit. */
-  rp->reserved += n;
-  TRACE(TRACE_ALWAYS, "%reserve count now %d\n", rp->reserved);
+  _reserved += n;
+  
+  TRACE(TRACE_ALWAYS, "%s didnt_sleep %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
 }
 
 
@@ -132,18 +120,32 @@ void resource_pool_reserve(resource_pool_t rp, int n)
  *
  *  @return void
  */
-void resource_pool_unreserve(resource_pool_t rp, int n)
+void resource_pool_t::unreserve(int n)
 {
   /* error checking */
-  TASSERT(rp->reserved >= n);
-
-  TRACE(TRACE_ALWAYS, "reserve count was %d\n", rp->reserved);
+  TASSERT(_reserved >= n);
+  TRACE(TRACE_ALWAYS, "%s was %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
 
   /* update the 'reserved' count */
-  rp->reserved -= n;
-  waiter_wake(rp);
+  _reserved -= n;
+
+  TRACE(TRACE_ALWAYS, "%s now %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
+
+  waiter_wake();
   
-  TRACE(TRACE_ALWAYS, "reserve count now %d\n", rp->reserved);
+  TRACE(TRACE_ALWAYS, "%s after_waking %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
 }
 
 
@@ -162,13 +164,23 @@ void resource_pool_unreserve(resource_pool_t rp, int n)
  *
  *  @return void
  */
-void resource_pool_notify_capacity_increase(resource_pool_t rp, int diff)
+void resource_pool_t::notify_capacity_increase(int diff)
 {
   TASSERT(diff > 0);
-  TRACE(TRACE_ALWAYS, "%reserve count was %d\n", rp->reserved);
-  rp->capacity += diff;
-  waiter_wake(rp);
-  TRACE(TRACE_ALWAYS, "%reserve count now %d\n", rp->reserved);
+  TRACE(TRACE_ALWAYS, "%s was %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
+
+  _capacity += diff;
+  waiter_wake();
+
+  TRACE(TRACE_ALWAYS, "%s now %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
 }
 
 
@@ -187,31 +199,39 @@ void resource_pool_notify_capacity_increase(resource_pool_t rp, int diff)
  *
  *  @return void
  */
-void resource_pool_notify_idle(resource_pool_t rp)
+void resource_pool_t::notify_idle()
 {
-  TASSERT(rp->non_idle > 0);
-  rp->non_idle--;
-  TRACE(TRACE_ALWAYS, "IDLE ... count now %d\n", rp->non_idle);
+  TASSERT(_non_idle > 0);
+  _non_idle--;
+  TRACE(TRACE_ALWAYS, "%s IDLE %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
 }
 
 
-void resource_pool_notify_non_idle(resource_pool_t rp)
+void resource_pool_t::notify_non_idle()
 {
-  TASSERT(rp->non_idle < rp->reserved);
-  rp->non_idle++;
-  TRACE(TRACE_ALWAYS, "NON_IDLE ... count now %d\n", rp->non_idle);
+  TASSERT(_non_idle < _reserved);
+  _non_idle++;
+  TRACE(TRACE_ALWAYS, "%s NON_IDLE %d:%d:%d\n",
+        _name.data(),
+        _capacity,
+        _reserved,
+        _non_idle);
 }
 
 
-int resource_pool_get_num_capacity(resource_pool_t rp)
+int resource_pool_t::get_capacity()
 {
-  return rp->capacity;
+  return _capacity;
 }
 
 
-int resource_pool_get_num_reserved(resource_pool_t rp)
+int resource_pool_t::get_reserved()
 {
-  return rp->reserved;
+  return _reserved;
 }
 
 
@@ -220,9 +240,9 @@ int resource_pool_get_num_reserved(resource_pool_t rp)
  * non-idle resources. This method returns the number of idle
  * resources.
  */
-int resource_pool_get_num_non_idle(resource_pool_t rp)
+int resource_pool_t::get_non_idle()
 {
-  return rp->non_idle;
+  return _non_idle;
 }
 
 
@@ -240,15 +260,15 @@ int resource_pool_get_num_non_idle(resource_pool_t rp)
  *
  * @pre Calling thread holds resource pool mutex on entry.
  */
-static void wait_for_turn(resource_pool_t rp, int req_reserve_count)
+void resource_pool_t::wait_for_turn(int req_reserve_count)
 {
  
   struct waiter_node_s node;
   node.req_reserve_count = req_reserve_count;
   pthread_cond_init(&node.request_granted, NULL);
-  static_list_append(&rp->waiters, &node, &node.list_node);
+  static_list_append(&_waiters, &node, &node.list_node);
   
-  pthread_cond_wait(&node.request_granted, rp->mutexp);
+  pthread_cond_wait(&node.request_granted, _mutexp);
   
   /* If we are here, we have been granted access! The state of the
      lock has been updated. We just need to return to the caller. */
@@ -262,15 +282,15 @@ static void wait_for_turn(resource_pool_t rp, int req_reserve_count)
  *
  * @pre Calling thread holds resource pool mutex on entry.
  */
-void waiter_wake(resource_pool_t rp)
+void resource_pool_t::waiter_wake()
 {
-  while ( !static_list_is_empty(&rp->waiters) )
-  {
-    int num_unreserved = rp->capacity - rp->reserved;
-
+  while ( !static_list_is_empty(&_waiters) )
+    {
+    int num_unreserved = _capacity - _reserved;
+    
     void* waiter_node;
     int get_ret =
-      static_list_get_head(&rp->waiters, &waiter_node);
+      static_list_get_head(&_waiters, &waiter_node);
     TASSERT(get_ret == 0);
     struct waiter_node_s* wn = (struct waiter_node_s*)waiter_node;
     
@@ -281,11 +301,11 @@ void waiter_wake(resource_pool_t rp)
     /* Hit another thread that can be allowed to pass. */
     /* Remove thread from queue. Wake it. Update rpaphore count. */
     int remove_ret =
-      static_list_remove_head(&rp->waiters, &waiter_node, NULL);
+      static_list_remove_head(&_waiters, &waiter_node, NULL);
     TASSERT(remove_ret == 0);
     wn = (struct waiter_node_s*)waiter_node;
  
-    rp->reserved += wn->req_reserve_count;
+    _reserved += wn->req_reserve_count;
     pthread_cond_signal(&wn->request_granted);
   }
 }

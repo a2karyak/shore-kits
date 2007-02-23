@@ -188,7 +188,7 @@ void tpch_handler_t::handle_command(const char* command) {
 
     /* Provide the workload with a name so it has an intelligent way
        to name its client threads. */
-    c_str workload_name("%s + %s", driver_tag, scheduler_policy_tag);
+    c_str workload_name("%s+%s", driver_tag, scheduler_policy_tag);
     workload_t w(workload_name, driver, dp, num_clients,
                  num_iterations, think_time);
 

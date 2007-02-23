@@ -124,36 +124,8 @@ public:
         _worker_needs[name] = curr_needs + count;
     }
     
-    void acquire_resources() {
-        
-        static const char* order[] = {
-            "AGGREGATE"
-            ,"BNL_IN"
-            ,"BNL_JOIN"
-            ,"FDUMP"
-            ,"FSCAN"
-            ,"FUNC_CALL"
-            ,"HASH_JOIN"
-            ,"MERGE"
-            ,"PARTIAL_AGGREGATE"
-            ,"HASH_AGGREGATE"
-            ,"SORT"
-            ,"SORTED_IN"
-            ,"TSCAN"
-        };
-        
-        int num_types = sizeof(order)/sizeof(order[0]);
-        for (int i = 0; i < num_types; i++) {
-            const char* type = order[i];
-            int n = _worker_needs[type];
-            if (n > 0)
-                _dispatcher->_reserve_workers(type, n);
-        }
-    }
+    void acquire_resources();
 };
-
-
-
 
 
 
@@ -181,8 +153,10 @@ public:
         map<c_str, int>::iterator it;
         for (it = _worker_needs.begin(); it != _worker_needs.end(); ++it) {
             int n = it->second;
-            if (n > 0)
+            if (n > 0) {
+                TRACE(TRACE_ALWAYS, "Releasing %d %s workers\n", n, it->first.data());
                 _dispatcher->_unreserve_workers(it->first, n);
+            }
         }
     }
 };
