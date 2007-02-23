@@ -14,7 +14,7 @@
 
 /* constants */
 
-#define TRACE_MERGING 0
+#define TRACE_MERGING 1
 #define TRACE_DEQUEUE 1
 #define TRACE_WORKER_CREATE 0
 
@@ -342,12 +342,6 @@ void stage_container_t::enqueue(packet_t* packet) {
     */
     if(ALWAYS_TRY_OSP || (_rp.get_non_idle() >= _pool._max_active)) {
         
-
-#if TRACE_MERGING
-        c_str packet_id = packet->_packet_id;
-        int   next_tuple_on_merge = packet->_next_tuple_on_merge;
-#endif
-
         /* Try merging with packets in merge_candidates before they
            disappear or become non-mergeable. */
         list<stage_adaptor_t*>::iterator sit = _container_current_stages.begin();
@@ -356,25 +350,17 @@ void stage_container_t::enqueue(packet_t* packet) {
             // try to merge with this stage
             stage_container_t::stage_adaptor_t* ad = *sit;
 
-            
-            if ( ad->try_merge(packet) ) {
-
+            stage_container_t::merge_t ret = ad->try_merge(packet);
+            if (ret == stage_container_t::MERGE_SUCCESS_RELEASE_RESOURCES) {
                 // * * * END CRITICAL SECTION * * *
                 cs.exit();
-
-#if TRACE_MERGING
-                /* packet was merged with this existing stage */
-                TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
-                      packet_id.data(),
-                      next_tuple_on_merge);
-#endif
-                
-                /* need to exit critical section before we unreserve */
                 if (unreserve)
                     wr->release_resources();
-                
                 return;
             }
+            if (ret == stage_container_t::MERGE_SUCCESS_HOLD_RESOURCES)
+                // * * * END CRITICAL SECTION * * *
+                return;
         }
 
 
@@ -402,12 +388,6 @@ void stage_container_t::enqueue(packet_t* packet) {
 
                 // * * * END CRITICAL SECTION * * *
                 cs.exit();
-                
-#if TRACE_MERGING
-                /* packet was merged with an existing stage */
-                TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
-                      packet_id.data());
-#endif
                 
                 /* need to exit critical section before we unreserve */
                 if (unreserve)
@@ -526,6 +506,7 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
       _packet_list(packet_list),
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
       _still_accepting_packets(true),
+      _contains_late_merger(false),
       _cancelled(false)
 {
     
@@ -568,16 +549,16 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
  *  MUST NOT BE HOLDING THE _stage_adaptor_lock MUTEX FOR THIS
  *  ADAPTOR.
  */
-bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
- 
+stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
+    
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_stage_adaptor_lock);
 
 
     if ( !_still_accepting_packets ) {
 	// stage not longer in a state where it can accept new packets
-	return false;
-	// * * * END CRITICAL SECTION * * *	
+        return stage_container_t::MERGE_FAILED;
+        // * * * END CRITICAL SECTION * * *	
     }
 
     // The _still_accepting_packets flag cannot change since we are
@@ -590,21 +571,42 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     // comparing it with the stage's primary packet.
     if ( !_packet->is_mergeable(packet) ) {
 	// packet cannot share work with this stage
-	return false;
+	return stage_container_t::MERGE_FAILED;
 	// * * * END CRITICAL SECTION * * *
     }
     
     
+    /* packet was merged with this existing stage */
+    if (TRACE_MERGING)
+        TRACE(TRACE_ALWAYS, "%s merged into %s. next_tuple_on_merge = %d\n",
+              packet->_packet_id.data(),
+              _packet->_packet_id.data(),
+              _packet->_next_tuple_on_merge);
+
+    stage_container_t::merge_t ret;
+
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
     packet->_next_tuple_on_merge = _next_tuple;
-
+    if ((_next_tuple == NEXT_TUPLE_INITIAL_VALUE) || _contains_late_merger)
+        /* Either we will be done when the primary packet finishes or
+           there is already a late merger within the packet chain. In
+           the latter case, the late merger has enough worker threads
+           reserved for both of us. */
+        ret = stage_container_t::MERGE_SUCCESS_RELEASE_RESOURCES;
+    else {
+        /* We are are a late merger (and we are the first late
+           merger). We will be needing our worker threads... */
+        _contains_late_merger = true;
+        ret = stage_container_t::MERGE_SUCCESS_HOLD_RESOURCES;
+    }
+    
     // init the writer tid in case this packet is already going. If
     // not, the proper value will be set by the adaptor's constructor.
     packet->output_buffer()->writer_init();
 
     // * * * END CRITICAL SECTION * * *
-    return true;
+    return ret;
 }
 
 
@@ -851,36 +853,32 @@ void stage_container_t::stage_adaptor_t::cleanup() {
     }
 
 
-    // Re-enqueue incomplete packets if we have them
-    if ( _packet_list->empty() ) {
+    critical_section_t cs(_container->_container_lock);
+    // * * * BEGIN CRITICAL SECTION * * *
 
-	delete _packet_list;
-
-        critical_section_t cs(_container->_container_lock);
-        
-        /* We will return and be able to process more packets. We can
-           unreserve ourself from the container. Remember to drop
-           non-idle count before this! */
-	_container->_rp.notify_idle();
-        if (_packet->unreserve_worker_on_completion()) {
-            _container->_rp.unreserve(1);
-        }
-    }
-    else {
-
-        // Hand off ownership of the packet list back to the
-        // container.
-        critical_section_t cs(_container->_container_lock);
-
-        /* Drop non-idle count */
-	_container->_rp.notify_idle();
-	_container->container_queue_enqueue_no_merge(_packet_list);
-    }
-
-    _packet_list = NULL;
     
-    // Terminate inputs of primary packet. finish_packet() already
-    // took care of its output buffer.
+    /* We will return and be able to process more packets. We can
+       unreserve ourself from the container. Remember to drop
+       non-idle count before this! */
+    _container->_rp.notify_idle();
+    if (_packet->unreserve_worker_on_completion())
+        _container->_rp.unreserve(1);
+
+
+    // Re-enqueue incomplete packets if we have them
+    if ( _packet_list->empty() )
+	delete _packet_list;
+    else
+        _container->container_queue_enqueue_no_merge(_packet_list);
+
+    
+    // * * * END CRITICAL SECTION * * *
+    cs.exit();
+
+    
+    // TODO Terminate inputs of primary packet. finish_packet()
+    // already took care of its output buffer.
+    _packet_list = NULL;
     assert(_packet != NULL);
     delete _packet;
     _packet = NULL;

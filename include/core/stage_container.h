@@ -27,6 +27,11 @@ public:
     static const unsigned int NEXT_TUPLE_UNINITIALIZED;
     static const unsigned int NEXT_TUPLE_INITIAL_VALUE;
 
+    enum merge_t {
+        MERGE_FAILED,
+        MERGE_SUCCESS_HOLD_RESOURCES,
+        MERGE_SUCCESS_RELEASE_RESOURCES
+    };
 	
 protected:
 
@@ -122,6 +127,7 @@ protected:
 
     unsigned int _next_tuple;
     bool _still_accepting_packets;
+    bool _contains_late_merger;
 
     // Group many output() tuples into a page before "sending"
     // entire page to packet list
@@ -180,7 +186,7 @@ public:
     }
 
 
-    bool try_merge(packet_t* packet);
+    stage_container_t::merge_t try_merge(packet_t* packet);
     void run_stage(stage_t* stage);
     
 protected:

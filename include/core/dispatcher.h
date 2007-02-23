@@ -7,6 +7,7 @@
 #include "core/packet.h"
 #include "core/stage_container.h"
 #include "util/resource_declare.h"
+#include "util/resource_releaser.h"
 #include <map>
 
 using std::map;
@@ -129,7 +130,7 @@ public:
 
 
 
-class dispatcher_t::worker_releaser_t : public resource_declare_t
+class dispatcher_t::worker_releaser_t : public resource_declare_t, public resource_releaser_t
 {
 
 private:

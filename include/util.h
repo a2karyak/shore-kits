@@ -18,6 +18,7 @@
 #include "util/trace.h"
 #include "util/offsetof.h"
 #include "util/resource_declare.h"
+#include "util/resource_releaser.h"
 #include "util/fileops.h"
 #include "util/resource_pool.h"
 #include "util/tassert.h"

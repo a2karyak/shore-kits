@@ -54,6 +54,7 @@ void* workload_client_t::run() {
         if (_think_time_sec > 0)
             sleep(_think_time_sec);
         TRACE(TRACE_DEBUG, "Open Fifos: %d\n", tuple_fifo::open_fifos());
+        TRACE(TRACE_ALWAYS, "Done with iteration %d\n", i);
     }    
 
     // record client end time...
