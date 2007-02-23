@@ -134,5 +134,17 @@ void dispatcher_t::reserver_release(worker_reserver_t* wr) {
 
 
 
+dispatcher_t::worker_releaser_t* dispatcher_t::releaser_acquire() {
+  return new worker_releaser_t(instance());
+}
+
+
+
+void dispatcher_t::releaser_release(worker_releaser_t* wr) {
+  delete wr;
+}
+
+
+
 EXIT_NAMESPACE(qpipe);
 

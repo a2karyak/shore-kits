@@ -77,6 +77,11 @@ public:
     {
         // error checking
         assert(func != NULL);
+        if (_merge && !_unreserve) {
+            TRACE(TRACE_ALWAYS,
+                  "WARNING: Won't release worker on completion, but work sharing possible\n"
+                  "         What do you want the container to do when it merges?\n");
+        }
     }
 
     

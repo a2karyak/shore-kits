@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "core/stage_container.h"
+#include "core/dispatcher.h"
 #include "util.h"
 
 #ifndef _GNU_SOURCE
@@ -11,23 +12,34 @@
 #include <cstring>
 
 
-
-ENTER_NAMESPACE(qpipe);
+/* constants */
 
 #define TRACE_MERGING 0
 #define TRACE_DEQUEUE 0
 #define TRACE_WORKER_CREATE 0
 
-static const bool ALWAYS_TRY_OSP = true;
 
+ENTER_NAMESPACE(qpipe);
+
+
+static const bool ALWAYS_TRY_OSP = true;
 
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
+
+
 
 // the "STOP" exception. Simply indicates that the stage should stop
 // (not necessarily an "error"). Thrown by the adaptor's output(),
 // caught by the container.
 struct stop_exception { };
+
+template<>
+inline void
+guard<qpipe::dispatcher_t::worker_releaser_t>::action(qpipe::dispatcher_t::worker_releaser_t* ptr) {
+    TRACE(TRACE_ALWAYS, "Releasing worker_releaser_t\n");
+    qpipe::dispatcher_t::releaser_release(ptr);
+}
 
 
 
@@ -262,7 +274,14 @@ void stage_container_t::reserve(int n) {
  *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::unreserve(int n) {
-    assert(0);
+
+    assert(n > 0);
+
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_container_lock);
+    
+    resource_pool_unreserve(&_rp, n);
+    // * * * END CRITICAL SECTION * * *
 }
 
 
@@ -289,7 +308,9 @@ void stage_container_t::enqueue(packet_t* packet) {
 
     assert(packet != NULL);
     bool unreserve = packet->unreserve_worker_on_completion();
-
+    guard<dispatcher_t::worker_releaser_t> wr = dispatcher_t::releaser_acquire();
+    packet->declare_worker_needs(wr);
+    
 
     /* The caller should have reserved a worker thread before the
        enqueue operation is performed. If we manage to merge, we will
@@ -323,26 +344,38 @@ void stage_container_t::enqueue(packet_t* packet) {
     if(ALWAYS_TRY_OSP
        || (resource_pool_get_num_non_idle(&_rp) >= _pool._max_active)) {
         
-        // try merging with packets in merge_candidates before they
-        // disappear or become non-mergeable
+
+#if TRACE_MERGING
+        c_str packet_id = packet->_packet_id;
+        int   next_tuple_on_merge = packet->_next_tuple_on_merge;
+#endif
+
+        /* Try merging with packets in merge_candidates before they
+           disappear or become non-mergeable. */
         list<stage_adaptor_t*>::iterator sit = _container_current_stages.begin();
         for( ; sit != _container_current_stages.end(); ++sit) {
+
             // try to merge with this stage
             stage_container_t::stage_adaptor_t* ad = *sit;
+
+            
             if ( ad->try_merge(packet) ) {
 
-                /* packet was merged with this existing stage */
-                if (TRACE_MERGING)
-                    TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
-                          packet->_packet_id.data(),
-                          packet->_next_tuple_on_merge);
+                // * * * END CRITICAL SECTION * * *
+                cs.exit();
 
-                /* unreserve the worker that the client reserved */
+#if TRACE_MERGING
+                /* packet was merged with this existing stage */
+                TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
+                      packet_id.data(),
+                      next_tuple_on_merge);
+#endif
+                
+                /* need to exit critical section before we unreserve */
                 if (unreserve)
-                    resource_pool_unreserve(&_rp, 1);
+                    wr->release_resources();
                 
                 return;
-                // * * * END CRITICAL SECTION * * *
             }
         }
 
@@ -368,17 +401,21 @@ void stage_container_t::enqueue(packet_t* packet) {
                 // add this packet to the list of already merged packets
                 // in the container queue
                 cq_plist->push_back(packet);
-                if (TRACE_MERGING)
-                    TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
-                          packet->_packet_id.data());
 
-                /* packet was merged with an existing packet */
-                /* unreserve the worker that the client reserved */
+                // * * * END CRITICAL SECTION * * *
+                cs.exit();
+                
+#if TRACE_MERGING
+                /* packet was merged with an existing stage */
+                TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
+                      packet_id.data());
+#endif
+                
+                /* need to exit critical section before we unreserve */
                 if (unreserve)
-                    resource_pool_unreserve(&_rp, 1);
+                    wr->release_resources();
                 
                 return;
-                // * * * END CRITICAL SECTION * * *
             }
         }
     }

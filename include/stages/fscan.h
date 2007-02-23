@@ -57,7 +57,7 @@ public:
 		   const c_str    &filename)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    create_plan(output_filter, filename),
-                   true,  /* merging allowed */
+                   false, /* merging not allowed */
                    false  /* keep worker on completion */
                    ),
           _filename(filename)

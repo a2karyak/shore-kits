@@ -79,7 +79,8 @@ public:
 
     // exported datatypes
     class worker_reserver_t;
-    
+    class worker_releaser_t;
+
 
     // accessors to global instance...
     static void init() {
@@ -97,6 +98,8 @@ public:
 
     static worker_reserver_t* reserver_acquire();
     static void reserver_release(worker_reserver_t* wr);
+    static worker_releaser_t* releaser_acquire();
+    static void releaser_release(worker_releaser_t* wr);
 };
 
 
@@ -139,6 +142,7 @@ public:
             ,"HASH_JOIN"
             ,"MERGE"
             ,"PARTIAL_AGGREGATE"
+            ,"HASH_AGGREGATE"
             ,"SORT"
             ,"SORTED_IN"
             ,"TSCAN"
@@ -147,6 +151,41 @@ public:
         int num_types = sizeof(order)/sizeof(order[0]);
         for (int i = 0; i < num_types; i++)
             reserve(order[i]);
+    }
+};
+
+
+
+
+
+
+class dispatcher_t::worker_releaser_t : public resource_declare_t
+{
+
+private:
+
+    dispatcher_t*   _dispatcher;
+    map<c_str, int> _worker_needs;
+    
+public:
+
+    worker_releaser_t (dispatcher_t* dispatcher)
+        : _dispatcher(dispatcher)
+    {
+    }
+    
+    virtual void declare(const c_str& name, int count) {
+        int curr_needs = _worker_needs[name];
+        _worker_needs[name] = curr_needs + count;
+    }
+    
+    void release_resources() {
+        map<c_str, int>::iterator it;
+        for (it = _worker_needs.begin(); it != _worker_needs.end(); ++it) {
+            int n = it->second;
+            if (n > 0)
+                _dispatcher->_unreserve_workers(it->first, n);
+        }
     }
 };
 

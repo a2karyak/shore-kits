@@ -93,6 +93,7 @@ void static_list_append(static_list_t list, void* value, static_list_node_t node
 void static_list_remove_node(static_list_t list, static_list_node_t node)
 {
   /* cannot actually detect that node is not in the list */
+  list = list;
   static_list_node_cut(node);  
 }
 

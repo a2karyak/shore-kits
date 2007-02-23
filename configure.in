@@ -222,10 +222,12 @@ AC_SUBST(QPIPE_VERSION)
 # basic flags/libs every arch needs
 
 # PROFILE_FLAGS CAUSES DEADLOCK ON crete.db.cs.cmu.edu
+DEBUG_FLAGS="-O0"
 #PROFILE_FLAGS="-pg -O0"
-OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+#OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
-CXXFLAGS="-g $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS -Wall -Wcast-align -Wextra -Wfloat-equal \
+CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
+        -Wall -Wcast-align -Wextra -Wfloat-equal \
 	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 
 LDFLAGS="-lnsl -ldl -lm -lpthread"
