@@ -27,6 +27,12 @@
 
 
 
+/* internal constants */
+
+#define TRACE_RESOURCE_POOL 0
+
+
+
 /* internal structures */
 
 /**
@@ -66,7 +72,7 @@ void resource_pool_t::reserve(int n)
      never be able to satisfy the request. */
   TASSERT(n <= _capacity);
   
-  TRACE(TRACE_ALWAYS, "%s was %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s was %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -86,7 +92,7 @@ void resource_pool_t::reserve(int n)
     
     /* If we are here, we have been granted the resources. The thread
        which gave them to us has already updated the pool's state. */
-    TRACE(TRACE_ALWAYS, "%s after_woken %d:%d:%d\n",
+    TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s after_woken %d:%d:%d\n",
           _name.data(),
           _capacity,
           _reserved,
@@ -100,7 +106,7 @@ void resource_pool_t::reserve(int n)
      the state of the rpaphore before we exit. */
   _reserved += n;
   
-  TRACE(TRACE_ALWAYS, "%s didnt_sleep %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s didnt_sleep %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -124,7 +130,7 @@ void resource_pool_t::unreserve(int n)
 {
   /* error checking */
   TASSERT(_reserved >= n);
-  TRACE(TRACE_ALWAYS, "%s was %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s was %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -133,7 +139,7 @@ void resource_pool_t::unreserve(int n)
   /* update the 'reserved' count */
   _reserved -= n;
 
-  TRACE(TRACE_ALWAYS, "%s now %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s now %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -141,7 +147,7 @@ void resource_pool_t::unreserve(int n)
 
   waiter_wake();
   
-  TRACE(TRACE_ALWAYS, "%s after_waking %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s after_waking %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -167,7 +173,7 @@ void resource_pool_t::unreserve(int n)
 void resource_pool_t::notify_capacity_increase(int diff)
 {
   TASSERT(diff > 0);
-  TRACE(TRACE_ALWAYS, "%s was %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s was %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -176,7 +182,7 @@ void resource_pool_t::notify_capacity_increase(int diff)
   _capacity += diff;
   waiter_wake();
 
-  TRACE(TRACE_ALWAYS, "%s now %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s now %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -203,7 +209,7 @@ void resource_pool_t::notify_idle()
 {
   TASSERT(_non_idle > 0);
   _non_idle--;
-  TRACE(TRACE_ALWAYS, "%s IDLE %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s IDLE %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,
@@ -215,7 +221,7 @@ void resource_pool_t::notify_non_idle()
 {
   TASSERT(_non_idle < _reserved);
   _non_idle++;
-  TRACE(TRACE_ALWAYS, "%s NON_IDLE %d:%d:%d\n",
+  TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s NON_IDLE %d:%d:%d\n",
         _name.data(),
         _capacity,
         _reserved,

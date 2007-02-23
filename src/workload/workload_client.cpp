@@ -5,10 +5,14 @@
 #include <unistd.h>
 
 
-
 using namespace qpipe;
 
+
 ENTER_NAMESPACE(workload);
+
+
+#define TRACE_ITERATIONS 0
+
 
 workload_client_t::workload_client_t(const c_str      &name,
                                      execution_time_t* etime,
@@ -54,7 +58,8 @@ void* workload_client_t::run() {
         if (_think_time_sec > 0)
             sleep(_think_time_sec);
         TRACE(TRACE_DEBUG, "Open Fifos: %d\n", tuple_fifo::open_fifos());
-        TRACE(TRACE_ALWAYS, "Done with iteration %d\n", i);
+        TRACE(TRACE_ITERATIONS & TRACE_ALWAYS,
+              "Done with iteration %d\n", i);
     }    
 
     // record client end time...

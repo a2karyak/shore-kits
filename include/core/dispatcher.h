@@ -21,6 +21,7 @@ DEFINE_EXCEPTION(DispatcherException);
 
 /* exported constants */
 
+#define TRACE_RESOURCE_RELEASE 0
 static const int DISPATCHER_NUM_STATIC_HASH_MAP_BUCKETS = 64;
 
 
@@ -155,7 +156,8 @@ public:
         for (it = _worker_needs.begin(); it != _worker_needs.end(); ++it) {
             int n = it->second;
             if (n > 0) {
-                TRACE(TRACE_ALWAYS, "Releasing %d %s workers\n", n, it->first.data());
+                TRACE(TRACE_RESOURCE_RELEASE & TRACE_ALWAYS,
+                      "Releasing %d %s workers\n", n, it->first.data());
                 _dispatcher->_unreserve_workers(it->first, n);
             }
         }

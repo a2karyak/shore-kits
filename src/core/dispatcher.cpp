@@ -14,8 +14,10 @@ using std::map;
 ENTER_NAMESPACE(qpipe);
 
 
-dispatcher_t* dispatcher_t::_instance = NULL;
+#define TRACE_ACQUIRE_RESOURCES 0
 
+
+dispatcher_t* dispatcher_t::_instance = NULL;
 pthread_mutex_t dispatcher_t::_instance_lock = thread_mutex_create();
 
 
@@ -80,10 +82,6 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
  */
 void dispatcher_t::_reserve_workers(const c_str& type, int n) {
   
-  if (type == c_str("TSCAN")) {
-    TRACE(TRACE_ALWAYS, "Reserving %d TSCAN\n", n);
-  }
-    
   stage_container_t* sc = _scdir[type];
   if (sc == NULL)
     THROW2(DispatcherException,
@@ -173,7 +171,8 @@ void dispatcher_t::worker_reserver_t::acquire_resources() {
     const c_str* type = order[i];
     int n = _worker_needs[*type];
     if (n > 0) {
-      TRACE(TRACE_ALWAYS, "Reserving %d %s workers\n", n, type->data());
+      if (TRACE_ACQUIRE_RESOURCES)
+        TRACE(TRACE_ALWAYS, "Reserving %d %s workers\n", n, type->data());
       _dispatcher->_reserve_workers(*type, n);
     }
   }
