@@ -271,8 +271,6 @@ bool tuple_fifo::send_eof() {
 
 bool tuple_fifo::terminate() {
     
-    TRACE(TRACE_ALWAYS, "terminate() disabled\n");
-    assert(0);
 
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
