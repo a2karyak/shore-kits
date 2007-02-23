@@ -80,6 +80,10 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
  */
 void dispatcher_t::_reserve_workers(const c_str& type, int n) {
   
+  if (type == c_str("TSCAN")) {
+    TRACE(TRACE_ALWAYS, "Reserving %d TSCAN\n", n);
+  }
+    
   stage_container_t* sc = _scdir[type];
   if (sc == NULL)
     THROW2(DispatcherException,

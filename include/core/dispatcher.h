@@ -112,12 +112,6 @@ private:
     dispatcher_t*   _dispatcher;
     map<c_str, int> _worker_needs;
     
-    void reserve(const c_str& type) {
-        int n = _worker_needs[type];
-        if (n > 0)
-            _dispatcher->_reserve_workers(type, n);
-    }
-    
 public:
 
     worker_reserver_t (dispatcher_t* dispatcher)
@@ -149,8 +143,12 @@ public:
         };
         
         int num_types = sizeof(order)/sizeof(order[0]);
-        for (int i = 0; i < num_types; i++)
-            reserve(order[i]);
+        for (int i = 0; i < num_types; i++) {
+            const char* type = order[i];
+            int n = _worker_needs[type];
+            if (n > 0)
+                _dispatcher->_reserve_workers(type, n);
+        }
     }
 };
 

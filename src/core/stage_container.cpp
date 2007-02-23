@@ -37,7 +37,6 @@ struct stop_exception { };
 template<>
 inline void
 guard<qpipe::dispatcher_t::worker_releaser_t>::action(qpipe::dispatcher_t::worker_releaser_t* ptr) {
-    TRACE(TRACE_ALWAYS, "Releasing worker_releaser_t\n");
     qpipe::dispatcher_t::releaser_release(ptr);
 }
 
@@ -187,21 +186,30 @@ void stage_container_t::create_worker() {
 
 
 
+void stage_container_t::reserve(int n) {
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_container_lock);
+    TRACE(TRACE_ALWAYS, "%s reserve count was %d\n",
+          _container_name.data(),
+          resource_pool_get_num_reserved(&_rp));
+    _reserve(n);
+    TRACE(TRACE_ALWAYS, "%s reserve count now %d\n",
+          _container_name.data(),
+          resource_pool_get_num_reserved(&_rp));
+}
+
+
 /**
  *  @brief Reserve the specified number of workers.
  *
  *  @param n The number of workers.
  *
- *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
+ *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
-void stage_container_t::reserve(int n) {
+void stage_container_t::_reserve(int n) {
     
 
     assert(n > 0);
-
-
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_container_lock);
 
 
     // Make sure we are not asking for something we can't satisfy even
@@ -280,7 +288,16 @@ void stage_container_t::unreserve(int n) {
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
     
+    TRACE(TRACE_ALWAYS, "%s reserve count was %d\n",
+          _container_name.data(),
+          resource_pool_get_num_reserved(&_rp));
+
     resource_pool_unreserve(&_rp, n);
+
+    TRACE(TRACE_ALWAYS, "%s reserve count now %d\n",
+          _container_name.data(),
+          resource_pool_get_num_reserved(&_rp));
+
     // * * * END CRITICAL SECTION * * *
 }
 
@@ -689,7 +706,8 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
             // The consumer of the current packet's output
             // buffer has terminated the buffer! No need to
             // continue iterating over output page.
-            TRACE(TRACE_ALWAYS, "Caught TerminatedBufferException. Terminating current packet.\n");
+            TRACE(TRACE_ALWAYS,
+                  "Caught TerminatedBufferException. Terminating current packet.\n");
             terminate_curr_packet = true;
         }
         
@@ -863,8 +881,18 @@ void stage_container_t::stage_adaptor_t::cleanup() {
            unreserve ourself from the container. Remember to drop
            non-idle count before this! */
 	resource_pool_notify_idle(&_container->_rp);
-        if (_packet->unreserve_worker_on_completion())
+        if (_packet->unreserve_worker_on_completion()) {
+
+            TRACE(TRACE_ALWAYS, "%s reserve count was %d\n",
+                  _container->_container_name.data(),
+                  resource_pool_get_num_reserved(&_container->_rp));
+            
             resource_pool_unreserve(&_container->_rp, 1);
+
+            TRACE(TRACE_ALWAYS, "%s reserve count now %d\n",
+                  _container->_container_name.data(),
+                  resource_pool_get_num_reserved(&_container->_rp));
+        }
     }
     else {
 

@@ -74,6 +74,7 @@ public:
 
 private:
 
+    void _reserve(int n);
 
     /* The pool that the worker threads will belong to. Thread pools
        are used to control the number of threads that the OS needs to
