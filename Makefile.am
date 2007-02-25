@@ -283,7 +283,9 @@ SE = $(top_srcdir)/src/server
 #qpipe_LDFLAGS = -Wl,-export-dynamic
 
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
-qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include
+# FIXME: IP: anothe hack to find <ltdl.h> on ia64. Shouldn't hurt anybody else...
+qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
+
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
 	-lltdl \
