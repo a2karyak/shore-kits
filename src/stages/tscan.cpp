@@ -23,6 +23,27 @@ const c_str tscan_stage_t::DEFAULT_STAGE_NAME = "TSCAN_STAGE";
  */
 const size_t tscan_stage_t::TSCAN_BULK_READ_BUFFER_SIZE=256*KB;
 
+
+
+static c_str bdb_get_error_to_cstr(int errnum) {
+    
+#define CASE(x) case x: return c_str(#x);
+    switch(errnum) {
+        CASE(DB_NOTFOUND);
+        CASE(DB_REP_HANDLE_DEAD);
+        CASE(DB_REP_LOCKOUT);
+        CASE(DB_SECONDARY_BAD);
+        CASE(EINVAL);
+        CASE(DB_BUFFER_SMALL);
+        CASE(DB_LOCK_DEADLOCK);
+        CASE(DB_LOCK_NOTGRANTED);
+    default:
+        return c_str("Unrecognized error %d", errnum);
+    }
+}
+
+
+
 /**
  *  @brief Read the specified table.
  *
@@ -49,28 +70,20 @@ void tscan_stage_t::process_packet() {
 
         // any return code besides DB_NOTFOUND would throw an exception
         int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
-        if(err)
-            THROW2(BdbException, "cursor->get() returned %d\n", err);
-        
+        if(err && (err != DB_NOTFOUND))
+            THROW2(BdbException, "cursor->get() returned %s\n",
+                   bdb_get_error_to_cstr(err).data());
+        if (err == DB_NOTFOUND)
+            return;
+
         // iterate over the blob we read and output the individual
         // tuples
-#if 1
         Dbt key, data;
         DbMultipleKeyDataIterator it = bulk_data.get();
 	for (int tuple_index = 0; it.next(key, data); tuple_index++) {
             tuple_t tup((char*)data.get_data(), (size_t)data.get_size());
 	    adaptor->output(tup);
         }
-#else
-        /* For some reason, this code sets the data size to equal the
-           key size... */
-        Dbt data;
-        DbMultipleDataIterator it = bulk_data.get();
-        for (int tuple_index = 0; it.next(data); tuple_index++) {
-            tuple_t tup((char*)data.get_data(), (size_t)data.get_size());
-            adaptor->output(tup);
-        }
-#endif
     }
 
     // control never reaches here
