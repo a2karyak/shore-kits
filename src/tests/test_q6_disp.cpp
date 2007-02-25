@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     }
 
         
-    db_open();
+    db_open_guard_t db_open;
 
 
     register_stage<tscan_stage_t>(num_clients);
@@ -80,6 +80,5 @@ int main(int argc, char* argv[]) {
 
     
     TRACE(TRACE_ALWAYS, "Query executed in %.3lf s\n", timer.time());
-    db_close();
     return 0;
 }

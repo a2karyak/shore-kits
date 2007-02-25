@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "core/stage_container.h"
+#include "core/dispatcher.h"
 #include "util.h"
 
 #ifndef _GNU_SOURCE
@@ -11,23 +12,33 @@
 #include <cstring>
 
 
+/* constants */
+
+#define TRACE_MERGING TRACE_RESOURCE_RELEASE|0
+#define TRACE_DEQUEUE TRACE_RESOURCE_RELEASE|0
+#define TRACE_WORKER_CREATE 0
+
 
 ENTER_NAMESPACE(qpipe);
 
-#define TRACE_MERGING 0
-#define TRACE_DEQUEUE 0
-#define TRACE_WORKER_CREATE 0
 
 static const bool ALWAYS_TRY_OSP = true;
 
-
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
+
+
 
 // the "STOP" exception. Simply indicates that the stage should stop
 // (not necessarily an "error"). Thrown by the adaptor's output(),
 // caught by the container.
 struct stop_exception { };
+
+template<>
+inline void
+guard<qpipe::dispatcher_t::worker_releaser_t>::action(qpipe::dispatcher_t::worker_releaser_t* ptr) {
+    qpipe::dispatcher_t::releaser_release(ptr);
+}
 
 
 
@@ -58,10 +69,9 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
       _max_threads((max_count > active_count)? max_count : std::max(10, active_count * 4)),
-      _next_thread(0)
+      _next_thread(0),
+      _rp(&_container_lock._lock, 0, container_name)
 {
-    /* Initially, there are no worker threads in this pool. */
-    resource_pool_init(&_rp, &_container_lock._lock, 0);
 }
 
 
@@ -170,9 +180,16 @@ void stage_container_t::create_worker() {
     thread_create(thread, &_pool);
 
     // notify resource pool
-    resource_pool_notify_capacity_increase(&_rp, 1);
+    _rp.notify_capacity_increase(1);
 }
 
+
+
+void stage_container_t::reserve(int n) {
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_container_lock);
+    _reserve(n);
+}
 
 
 /**
@@ -180,16 +197,12 @@ void stage_container_t::create_worker() {
  *
  *  @param n The number of workers.
  *
- *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
+ *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
-void stage_container_t::reserve(int n) {
+void stage_container_t::_reserve(int n) {
     
 
     assert(n > 0);
-
-
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_container_lock);
 
 
     // Make sure we are not asking for something we can't satisfy even
@@ -199,13 +212,11 @@ void stage_container_t::reserve(int n) {
 
     // See if we can satisfy the request with existing, unreserved
     // threads.
-    int curr_capacity =
-        resource_pool_get_num_capacity(&_rp);
-    int curr_reserved =
-        resource_pool_get_num_reserved(&_rp);
+    int curr_capacity = _rp.get_capacity();
+    int curr_reserved = _rp.get_reserved();
     if ((curr_capacity - curr_reserved) >= n) {
         /* we can get the resources we want without waiting! */
-        resource_pool_reserve(&_rp, n);
+        _rp.reserve(n);
         return;
     }
     
@@ -224,7 +235,7 @@ void stage_container_t::reserve(int n) {
 
 
     // It is now a policy decision whether to wait for existing,
-    // reserved threads to free up (using resource_pool_reserve) or
+    // reserved threads to free up (using resource_pool_t::reserve) or
     // increase the number of existing threads further to avoid
     // blocking).
 
@@ -236,8 +247,7 @@ void stage_container_t::reserve(int n) {
         int unreserved = curr_capacity - curr_reserved;
         if (unreserved >= n) {
             /* we can get the resources we want without waiting! */
-            resource_pool_reserve(&_rp, n);
-            return;
+            break;
         }
 
         create_worker();
@@ -245,12 +255,33 @@ void stage_container_t::reserve(int n) {
     }
 
 
-    /* Hit _max_threads... Forced to wait... */
-    resource_pool_reserve(&_rp, n);
+    /* Either we have enough or we have hit _max_threads... */
+    _rp.reserve(n);
     
     
     // * * * END CRITICAL SECTION * * *
 };
+
+
+
+/**
+ *  @brief Unreserve the specified number of workers.
+ *
+ *  @param n The number of workers.
+ *
+ *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
+ */
+void stage_container_t::unreserve(int n) {
+
+    assert(n > 0);
+
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_container_lock);
+    
+    _rp.unreserve(n);
+    
+    // * * * END CRITICAL SECTION * * *
+}
 
 
 
@@ -276,7 +307,9 @@ void stage_container_t::enqueue(packet_t* packet) {
 
     assert(packet != NULL);
     bool unreserve = packet->unreserve_worker_on_completion();
-
+    guard<dispatcher_t::worker_releaser_t> wr = dispatcher_t::releaser_acquire();
+    packet->declare_worker_needs(wr);
+    
 
     /* The caller should have reserved a worker thread before the
        enqueue operation is performed. If we manage to merge, we will
@@ -307,30 +340,27 @@ void stage_container_t::enqueue(packet_t* packet) {
        system resources). We want to share when the number of active
        (non-idle) workers is greater than this amount.
     */
-    if(ALWAYS_TRY_OSP
-       || (resource_pool_get_num_non_idle(&_rp) >= _pool._max_active)) {
+    if(ALWAYS_TRY_OSP || (_rp.get_non_idle() >= _pool._max_active)) {
         
-        // try merging with packets in merge_candidates before they
-        // disappear or become non-mergeable
+        /* Try merging with packets in merge_candidates before they
+           disappear or become non-mergeable. */
         list<stage_adaptor_t*>::iterator sit = _container_current_stages.begin();
         for( ; sit != _container_current_stages.end(); ++sit) {
+
             // try to merge with this stage
             stage_container_t::stage_adaptor_t* ad = *sit;
-            if ( ad->try_merge(packet) ) {
 
-                /* packet was merged with this existing stage */
-                if (TRACE_MERGING)
-                    TRACE(TRACE_ALWAYS, "%s merged into a stage next_tuple_on_merge = %d\n",
-                          packet->_packet_id.data(),
-                          packet->_next_tuple_on_merge);
-
-                /* unreserve the worker that the client reserved */
-                if (unreserve)
-                    resource_pool_unreserve(&_rp, 1);
-                
-                return;
+            stage_container_t::merge_t ret = ad->try_merge(packet);
+            if (ret == stage_container_t::MERGE_SUCCESS_RELEASE_RESOURCES) {
                 // * * * END CRITICAL SECTION * * *
+                cs.exit();
+                if (unreserve)
+                    wr->release_resources();
+                return;
             }
+            if (ret == stage_container_t::MERGE_SUCCESS_HOLD_RESOURCES)
+                // * * * END CRITICAL SECTION * * *
+                return;
         }
 
 
@@ -355,17 +385,15 @@ void stage_container_t::enqueue(packet_t* packet) {
                 // add this packet to the list of already merged packets
                 // in the container queue
                 cq_plist->push_back(packet);
-                if (TRACE_MERGING)
-                    TRACE(TRACE_ALWAYS, "%s merged into existing packet list\n",
-                          packet->_packet_id.data());
 
-                /* packet was merged with an existing packet */
-                /* unreserve the worker that the client reserved */
+                // * * * END CRITICAL SECTION * * *
+                cs.exit();
+                
+                /* need to exit critical section before we unreserve */
                 if (unreserve)
-                    resource_pool_unreserve(&_rp, 1);
+                    wr->release_resources();
                 
                 return;
-                // * * * END CRITICAL SECTION * * *
             }
         }
     }
@@ -431,7 +459,7 @@ void stage_container_t::run() {
         /* Becomes non-idle. Note that we don't become non-idle in
            this method. We do it in cleanup() since we must do it
            before deciding whether to unreserve ourselves. */
-        resource_pool_notify_non_idle(&_rp);
+        _rp.notify_non_idle();
 
         // * * * END CRITICAL SECTION * * *
 	cs.exit();
@@ -478,6 +506,7 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
       _packet_list(packet_list),
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
       _still_accepting_packets(true),
+      _contains_late_merger(false),
       _cancelled(false)
 {
     
@@ -520,16 +549,16 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
  *  MUST NOT BE HOLDING THE _stage_adaptor_lock MUTEX FOR THIS
  *  ADAPTOR.
  */
-bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
- 
+stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
+    
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_stage_adaptor_lock);
 
 
     if ( !_still_accepting_packets ) {
 	// stage not longer in a state where it can accept new packets
-	return false;
-	// * * * END CRITICAL SECTION * * *	
+        return stage_container_t::MERGE_FAILED;
+        // * * * END CRITICAL SECTION * * *	
     }
 
     // The _still_accepting_packets flag cannot change since we are
@@ -542,21 +571,42 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     // comparing it with the stage's primary packet.
     if ( !_packet->is_mergeable(packet) ) {
 	// packet cannot share work with this stage
-	return false;
+	return stage_container_t::MERGE_FAILED;
 	// * * * END CRITICAL SECTION * * *
     }
     
     
+    /* packet was merged with this existing stage */
+    if (TRACE_MERGING)
+        TRACE(TRACE_ALWAYS, "%s merged into %s. next_tuple_on_merge = %d\n",
+              packet->_packet_id.data(),
+              _packet->_packet_id.data(),
+              _packet->_next_tuple_on_merge);
+
+    stage_container_t::merge_t ret;
+
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
     packet->_next_tuple_on_merge = _next_tuple;
-
+    if ((_next_tuple == NEXT_TUPLE_INITIAL_VALUE) || _contains_late_merger)
+        /* Either we will be done when the primary packet finishes or
+           there is already a late merger within the packet chain. In
+           the latter case, the late merger has enough worker threads
+           reserved for both of us. */
+        ret = stage_container_t::MERGE_SUCCESS_RELEASE_RESOURCES;
+    else {
+        /* We are are a late merger (and we are the first late
+           merger). We will be needing our worker threads... */
+        _contains_late_merger = true;
+        ret = stage_container_t::MERGE_SUCCESS_HOLD_RESOURCES;
+    }
+    
     // init the writer tid in case this packet is already going. If
     // not, the proper value will be set by the adaptor's constructor.
     packet->output_buffer()->writer_init();
 
     // * * * END CRITICAL SECTION * * *
-    return true;
+    return ret;
 }
 
 
@@ -639,7 +689,8 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
             // The consumer of the current packet's output
             // buffer has terminated the buffer! No need to
             // continue iterating over output page.
-            TRACE(TRACE_ALWAYS, "Caught TerminatedBufferException. Terminating current packet.\n");
+            TRACE(TRACE_ALWAYS,
+                  "Caught TerminatedBufferException. Terminating current packet.\n");
             terminate_curr_packet = true;
         }
         
@@ -802,35 +853,32 @@ void stage_container_t::stage_adaptor_t::cleanup() {
     }
 
 
-    // Re-enqueue incomplete packets if we have them
-    if ( _packet_list->empty() ) {
+    critical_section_t cs(_container->_container_lock);
+    // * * * BEGIN CRITICAL SECTION * * *
 
-	delete _packet_list;
-
-        critical_section_t cs(_container->_container_lock);
-        
-        /* We will return and be able to process more packets. We can
-           unreserve ourself from the container. Remember to drop
-           non-idle count before this! */
-	resource_pool_notify_idle(&_container->_rp);
-        if (_packet->unreserve_worker_on_completion())
-            resource_pool_unreserve(&_container->_rp, 1);
-    }
-    else {
-
-        // Hand off ownership of the packet list back to the
-        // container.
-        critical_section_t cs(_container->_container_lock);
-
-        /* Drop non-idle count */
-	resource_pool_notify_idle(&_container->_rp);
-	_container->container_queue_enqueue_no_merge(_packet_list);
-    }
-
-    _packet_list = NULL;
     
-    // Terminate inputs of primary packet. finish_packet() already
-    // took care of its output buffer.
+    /* We will return and be able to process more packets. We can
+       unreserve ourself from the container. Remember to drop
+       non-idle count before this! */
+    _container->_rp.notify_idle();
+    if (_packet->unreserve_worker_on_completion())
+        _container->_rp.unreserve(1);
+
+
+    // Re-enqueue incomplete packets if we have them
+    if ( _packet_list->empty() )
+	delete _packet_list;
+    else
+        _container->container_queue_enqueue_no_merge(_packet_list);
+
+    
+    // * * * END CRITICAL SECTION * * *
+    cs.exit();
+
+    
+    // TODO Terminate inputs of primary packet. finish_packet()
+    // already took care of its output buffer.
+    _packet_list = NULL;
     assert(_packet != NULL);
     delete _packet;
     _packet = NULL;

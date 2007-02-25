@@ -34,8 +34,10 @@ trx_packet_t* tpcc_payment_driver::create_payment_packet(const c_str &client_pre
     // BEGIN_PAYMENT
     payment_begin_packet_t* payment_packet;
 
+    c_str packet_name("%s_payment_test", client_prefix.data());
+
     TRACE(TRACE_ALWAYS, "SHOULD CALL CORRECT payment_begin_packet_t CONSTRUCTOR!");
-    payment_packet = new payment_begin_packet_t("payment_test",
+    payment_packet = new payment_begin_packet_t(packet_name,
 						NULL,
 						NULL,
 						1,

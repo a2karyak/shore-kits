@@ -1,7 +1,6 @@
 
 #include "util.h"
 #include "core/dispatcher.h"
-#include "stages.h"
 
 #include <cstdio>
 #include <cstring>
@@ -14,8 +13,10 @@ using std::map;
 ENTER_NAMESPACE(qpipe);
 
 
-dispatcher_t* dispatcher_t::_instance = NULL;
+#define TRACE_ACQUIRE_RESOURCES 0
 
+
+dispatcher_t* dispatcher_t::_instance = NULL;
 pthread_mutex_t dispatcher_t::_instance_lock = thread_mutex_create();
 
 
@@ -89,7 +90,28 @@ void dispatcher_t::_reserve_workers(const c_str& type, int n) {
 
 
 
-void dispatcher_t::register_stage_container(const c_str &packet_type, stage_container_t* sc) {
+/**
+ *  @brief Release the specified number of worker threads.
+ *
+ *  THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be since
+ *  stages should register themselves in their constructors and their
+ *  constructors should execute in the context of the root
+ *  thread. Reserving workers does not modify the dispatcher's data
+ *  structures.
+ */
+void dispatcher_t::_unreserve_workers(const c_str& type, int n) {
+  
+  stage_container_t* sc = _scdir[type];
+  if (sc == NULL)
+    THROW2(DispatcherException,
+           "Type %s unregistered\n", type.data());
+  sc->unreserve(n);
+}
+
+
+
+void dispatcher_t::register_stage_container(const c_str &packet_type,
+                                            stage_container_t* sc) {
   instance()->_register_stage_container(packet_type, sc);
 }
 
@@ -101,63 +123,41 @@ void dispatcher_t::dispatch_packet(packet_t* packet) {
 
 
 
-void dispatcher_t::reserve_workers(const c_str& type, int n) {
-  instance()->_reserve_workers(type, n);
+dispatcher_t::worker_reserver_t* dispatcher_t::reserver_acquire() {
+  return new worker_reserver_t(instance());
 }
 
 
 
-class worker_reserver_t : public resource_reserver_t
-{
+void dispatcher_t::reserver_release(worker_reserver_t* wr) {
+  delete wr;
+}
 
-private:
 
-  map<c_str, int> worker_needs;
 
-  void reserve(const c_str& type) {
-    int n = worker_needs[type];
-    if (n > 0)
-      dispatcher_t::reserve_workers(type, n);
+dispatcher_t::worker_releaser_t* dispatcher_t::releaser_acquire() {
+  return new worker_releaser_t(instance());
+}
+
+
+
+void dispatcher_t::releaser_release(worker_releaser_t* wr) {
+  delete wr;
+}
+
+
+
+void dispatcher_t::worker_reserver_t::acquire_resources() {
+  
+  map<c_str, int>::iterator it;
+  for (it = _worker_needs.begin(); it != _worker_needs.end(); ++it) {
+    int n = it->second;
+    if (n > 0) {
+      if (TRACE_ACQUIRE_RESOURCES)
+        TRACE(TRACE_ALWAYS, "Reserving %d %s workers\n", n, it->first.data());
+      _dispatcher->_reserve_workers(it->first, n);
+    }
   }
-
-public:
-
-  virtual void declare_resource_need(const c_str& name, int count) {
-    int curr_needs = worker_needs[name];
-    worker_needs[name] = curr_needs + count;
-  }
-
-  virtual void acquire_resources() {
-    
-    static const char* order[] = {
-      "AGGREGATE"
-      ,"BNL_IN"
-      ,"BNL_JOIN"
-      ,"FDUMP"
-      ,"FSCAN"
-      ,"FUNC_CALL"
-      ,"HASH_JOIN"
-      ,"MERGE"
-      ,"PARTIAL_AGGREGATE"
-      ,"SORT"
-      ,"SORTED_IN"
-      ,"TSCAN"
-    };
-    
-    int num_types = sizeof(order)/sizeof(order[0]);
-    for (int i = 0; i < num_types; i++)
-      reserve(order[i]);
-  }
-
-};
-
-
-
-void reserve_query_workers(packet_t* root)
-{
-  worker_reserver_t wr ;
-  root->declare_worker_needs(&wr);
-  wr.acquire_resources();
 }
 
 

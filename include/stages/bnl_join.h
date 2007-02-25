@@ -66,7 +66,7 @@ struct bnl_join_packet_t : public packet_t {
     {
     }
     
-    virtual void declare_worker_needs(resource_reserver_t*) {
+    virtual void declare_worker_needs(resource_declare_t*) {
         TRACE(TRACE_ALWAYS, "UNIMPLEMENTED! Why are you not using hash join?\n");
         assert(0);
     }

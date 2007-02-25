@@ -1,8 +1,9 @@
 # -*- makefile -*-
 INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include
 
-lib_LIBRARIES = lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-	lib/libstages.a lib/libcore.a lib/libutil.a
+lib_LIBRARIES = \
+   lib/libtest.a lib/libworkload.a lib/libscheduler.a \
+   lib/libstages.a lib/libcore.a lib/libutil.a
 
 LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a
 
@@ -121,6 +122,7 @@ lib_libstages_a_SOURCES = \
    $(SG)/tscan.cpp \
    $(SG)/aggregate.cpp \
    $(SG)/partial_aggregate.cpp \
+   $(SG)/hash_aggregate.cpp \
    $(SG)/sorted_in.cpp \
    $(SG)/hash_join.cpp \
    $(SG)/func_call.cpp \
@@ -143,7 +145,8 @@ WL_BASE = \
    $(SW)/workload.cpp \
    $(SW)/workload_client.cpp \
    $(SW)/register_stage_containers.cpp \
-   $(SW)/dispatcher_globals.cpp
+   $(SW)/dispatcher_globals.cpp \
+   $(SW)/process_query.cpp
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \

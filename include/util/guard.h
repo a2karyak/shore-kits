@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <db_cxx.h>
 #include "util/trace.h"
+#include "util/exception.h"
 
 // see http://src.opensolaris.org/source/xref/sfw/usr/src/cmd/gcc/gcc-3.4.3/gcc/testsuite/g++.old-deja/g++.abi/align.C
 // Origin: Alex Samuel <samuel (at) codesourcery.com>

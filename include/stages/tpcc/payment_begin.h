@@ -5,9 +5,9 @@
 
 #include <cstdio>
 
-# include "stages/tpcc/trx_packet.h"
-# include "core.h"
-# include "util.h"
+#include "stages/tpcc/trx_packet.h"
+#include "core.h"
+#include "util.h"
 
 
 using namespace qpipe;
@@ -123,8 +123,8 @@ public:
     }
 
 
-    virtual void declare_worker_needs(resource_reserver_t* reserve) {
-        reserve->declare_resource_need(_packet_type, 1);
+    virtual void declare_worker_needs(resource_declare_t* declare) {
+        declare->declare(_packet_type, 1);
         /* no inputs */
     }
 

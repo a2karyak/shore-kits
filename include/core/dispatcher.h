@@ -6,6 +6,8 @@
 #include "core/tuple.h"
 #include "core/packet.h"
 #include "core/stage_container.h"
+#include "util/resource_declare.h"
+#include "util/resource_releaser.h"
 #include <map>
 
 using std::map;
@@ -19,6 +21,7 @@ DEFINE_EXCEPTION(DispatcherException);
 
 /* exported constants */
 
+#define TRACE_RESOURCE_RELEASE 0
 static const int DISPATCHER_NUM_STATIC_HASH_MAP_BUCKETS = 64;
 
 
@@ -39,12 +42,11 @@ class dispatcher_t {
 
 protected:
 
-    // synch vars
 
     // stage directory
     map<c_str, stage_container_t*> _scdir;
-
    
+ 
     dispatcher_t();
     ~dispatcher_t();
 
@@ -53,10 +55,12 @@ protected:
     void _register_stage_container(const c_str &packet_type, stage_container_t* sc);
     void _dispatch_packet(packet_t* packet);
     void _reserve_workers(const c_str& type, int n);
+    void _unreserve_workers(const c_str& type, int n);
     
-    
+
     static pthread_mutex_t _instance_lock;
     static dispatcher_t*   _instance;
+
 
     static dispatcher_t* instance() {
         
@@ -70,9 +74,17 @@ protected:
         // initialized.
 	return _instance;
     }
-    
+
+
 public:
 
+
+    // exported datatypes
+    class worker_reserver_t;
+    class worker_releaser_t;
+
+
+    // accessors to global instance...
     static void init() {
         _instance = new dispatcher_t();
     }
@@ -86,9 +98,71 @@ public:
     
     static void dispatch_packet(packet_t* packet);
 
-    static void reserve_workers(const c_str& type, int n);
+    static worker_reserver_t* reserver_acquire();
+    static void reserver_release(worker_reserver_t* wr);
+    static worker_releaser_t* releaser_acquire();
+    static void releaser_release(worker_releaser_t* wr);
 };
 
+
+
+class dispatcher_t::worker_reserver_t : public resource_declare_t
+{
+
+private:
+
+    dispatcher_t*   _dispatcher;
+    map<c_str, int> _worker_needs;
+    
+public:
+
+    worker_reserver_t (dispatcher_t* dispatcher)
+        : _dispatcher(dispatcher)
+    {
+    }
+    
+    virtual void declare(const c_str& name, int count) {
+        int curr_needs = _worker_needs[name];
+        _worker_needs[name] = curr_needs + count;
+    }
+    
+    void acquire_resources();
+};
+
+
+
+class dispatcher_t::worker_releaser_t : public resource_declare_t, public resource_releaser_t
+{
+
+private:
+
+    dispatcher_t*   _dispatcher;
+    map<c_str, int> _worker_needs;
+    
+public:
+
+    worker_releaser_t (dispatcher_t* dispatcher)
+        : _dispatcher(dispatcher)
+    {
+    }
+    
+    virtual void declare(const c_str& name, int count) {
+        int curr_needs = _worker_needs[name];
+        _worker_needs[name] = curr_needs + count;
+    }
+    
+    void release_resources() {
+        map<c_str, int>::iterator it;
+        for (it = _worker_needs.begin(); it != _worker_needs.end(); ++it) {
+            int n = it->second;
+            if (n > 0) {
+                TRACE(TRACE_RESOURCE_RELEASE & TRACE_ALWAYS,
+                      "Releasing %d %s workers\n", n, it->first.data());
+                _dispatcher->_unreserve_workers(it->first, n);
+            }
+        }
+    }
+};
 
 
 EXIT_NAMESPACE(qpipe);

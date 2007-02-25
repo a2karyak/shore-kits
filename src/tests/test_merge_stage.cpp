@@ -4,6 +4,7 @@
 #include "workload/common/register_stage.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
+#include "workload/process_query.h"
 #include "tests/common.h"
 
 #include <utility>
@@ -11,13 +12,37 @@
 #include <algorithm>
 
 using namespace qpipe;
+using namespace workload;
 using std::vector;
 using std::pair;
 
 
-
 typedef vector<int> input_list_t;
 typedef pair<tuple_fifo*, input_list_t> write_info_t;
+
+
+class test_merge_stage_process_tuple_t : public process_tuple_t {
+private:
+    bool _do_echo;
+
+public:
+
+    test_merge_stage_process_tuple_t(bool do_echo)
+        : _do_echo(do_echo)
+    {
+    }
+
+    virtual void process(const tuple_t& output) {
+        if(_do_echo)
+            TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
+    }
+
+    virtual void end() {
+        TRACE(TRACE_ALWAYS, "No more tuples...\n");
+        TRACE(TRACE_ALWAYS, "TEST DONE\n");
+    }
+
+};
 
 
 void write_tuples(void*, void* winfo)
@@ -40,12 +65,17 @@ void write_tuples(void*, void* winfo)
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
-
+    db_open_guard_t db_open;
+    
+    TRACE(TRACE_ALWAYS,
+          "This unit test is currently broken for the following reasons:\n"
+          " - it does not acquire and release workers like a meta-stage should"
+          " - I have disabled the dispatching of the FUNC_CALL packets that feed the merge\n");
+    assert(0);
+    
     int merge_factor;
     int count;
     bool do_echo = true;
-
 
 
     // parse command line args
@@ -67,15 +97,12 @@ int main(int argc, char* argv[]) {
         do_echo = false;
 
 
-
     // create a FUNC_CALL stage to feed the MERGE stage
     register_stage<func_call_stage_t>(1);
     register_stage<merge_stage_t>(merge_factor);
 
 
-
     array_guard_t<write_info_t> merge_info = new write_info_t[merge_factor];
-
 
     
     // Generate a list of count unique tuples with merge_factor
@@ -86,10 +113,8 @@ int main(int argc, char* argv[]) {
             main_inputs.push_back(i);
     
     
-    
     // shuffle the list and partition it
     std::random_shuffle(main_inputs.begin(), main_inputs.end());
-
     
 
     int i=0;
@@ -102,7 +127,6 @@ int main(int argc, char* argv[]) {
         it += count;
     }
     
-
 
     // send the partitions to merge input generation threads
     merge_packet_t::buffer_list_t input_buffers;
@@ -124,10 +148,12 @@ int main(int argc, char* argv[]) {
 
         // Need to dispatch the FUNC_CALL packet ourselves. MERGE
         // assumes that the meta-stage performs this dispatch.
+        fc_packet = fc_packet;
+#if 0
         reserve_query_workers(fc_packet);
         dispatcher_t::dispatch_packet(fc_packet);
+#endif
     }
-    
     
     
     // fire up the merge stage now
@@ -139,16 +165,8 @@ int main(int argc, char* argv[]) {
                                                 new int_key_extractor_t(),
                                                 new int_key_compare_t());
 
-
-    reserve_query_workers(packet);
-    dispatcher_t::dispatch_packet(packet);
+    test_merge_stage_process_tuple_t pt(do_echo);
+    process_query(packet, pt);
     
-   
-    tuple_t output;
-    while(output_buffer->get_tuple(output)) {
-        if(do_echo)
-            TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
-    }
-    TRACE(TRACE_ALWAYS, "No more tuples...\n");
-    TRACE(TRACE_ALWAYS, "TEST DONE\n");
+    return 0;
 }

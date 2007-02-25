@@ -8,7 +8,7 @@
 #include "core/tuple_fifo.h"
 #include "core/functors.h"
 #include "core/query_state.h"
-#include "util/resource_reserver.h"
+#include "util/resource_declare.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -17,7 +17,7 @@ using std::list;
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_NO_SCAN;
+static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
 
 
 
@@ -200,8 +200,8 @@ public:
     bool unreserve_worker_on_completion() {
         return _unreserve_on_completion;
     }
-
-    virtual void declare_worker_needs(resource_reserver_t* reserve)=0;
+    
+    virtual void declare_worker_needs(resource_declare_t* declare)=0;
 };
 
 

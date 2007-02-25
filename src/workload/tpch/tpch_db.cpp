@@ -195,6 +195,8 @@ void db_close() {
         THROW1(BdbException, "dbenv->close() threw DbException");
     }
 
+
+    TRACE(TRACE_ALWAYS, "TPCH database closed\n");
 }
 
 

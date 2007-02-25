@@ -1,9 +1,10 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
 #include "stages.h"
+#include "tests/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
-#include "tests/common.h"
+#include "workload/process_query.h"
 
 #include <vector>
 #include <algorithm>
@@ -11,8 +12,20 @@
 using std::vector;
 
 using namespace qpipe;
+using namespace workload;
 
 
+class test_hash_join_stage_process_tuple_t : public process_tuple_t {
+public:
+
+    virtual void process(const tuple_t& output) {
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
+    }
+
+    virtual void end() {
+        TRACE(TRACE_ALWAYS, "TEST DONE\n");
+    }    
+};
 
 
 int main(int argc, char* argv[]) {
@@ -32,7 +45,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    db_open();
+    db_open_guard_t db_open;
     register_stage<func_call_stage_t>(2);
     register_stage<hash_join_stage_t>(1);
 
@@ -71,15 +84,8 @@ int main(int argc, char* argv[]) {
                                 join
                                 );
 
-
-    reserve_query_workers(join_packet);
-    dispatcher_t::dispatch_packet(join_packet);
+    test_hash_join_stage_process_tuple_t pt;
+    process_query(join_packet, pt);
     
-    
-    tuple_t output;
-    while(join_buffer->get_tuple(output))
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
-    TRACE(TRACE_ALWAYS, "TEST DONE\n");
-
     return 0;
 }

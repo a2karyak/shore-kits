@@ -27,6 +27,11 @@ public:
     static const unsigned int NEXT_TUPLE_UNINITIALIZED;
     static const unsigned int NEXT_TUPLE_INITIAL_VALUE;
 
+    enum merge_t {
+        MERGE_FAILED,
+        MERGE_SUCCESS_HOLD_RESOURCES,
+        MERGE_SUCCESS_RELEASE_RESOURCES
+    };
 	
 protected:
 
@@ -68,11 +73,13 @@ public:
     void enqueue(packet_t* packet);
 
     void reserve(int n);
-
+    void unreserve(int n);
+    
     void run();
 
 private:
 
+    void _reserve(int n);
 
     /* The pool that the worker threads will belong to. Thread pools
        are used to control the number of threads that the OS needs to
@@ -101,7 +108,7 @@ private:
        Workers can report themselves as idle or non-idle when they
        enter and exit process_packet().
     */
-    struct resource_pool_s _rp;
+    resource_pool_t _rp;
 };
 
 
@@ -120,6 +127,7 @@ protected:
 
     unsigned int _next_tuple;
     bool _still_accepting_packets;
+    bool _contains_late_merger;
 
     // Group many output() tuples into a page before "sending"
     // entire page to packet list
@@ -178,7 +186,7 @@ public:
     }
 
 
-    bool try_merge(packet_t* packet);
+    stage_container_t::merge_t try_merge(packet_t* packet);
     void run_stage(stage_t* stage);
     
 protected:

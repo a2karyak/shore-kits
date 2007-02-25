@@ -271,6 +271,7 @@ bool tuple_fifo::send_eof() {
 
 bool tuple_fifo::terminate() {
     
+
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
 

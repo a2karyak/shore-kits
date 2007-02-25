@@ -57,7 +57,7 @@ public:
 		   const c_str    &filename)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    create_plan(output_filter, filename),
-                   true,  /* merging allowed */
+                   false, /* merging not allowed */
                    false  /* keep worker on completion */
                    ),
           _filename(filename)
@@ -69,7 +69,7 @@ public:
         return new query_plan(action, filter->to_string(), NULL, 0);
     }
 
-    virtual void declare_worker_needs(resource_reserver_t*) {
+    virtual void declare_worker_needs(resource_declare_t*) {
         /* Do nothing. The stage the that creates us is responsible
            for deciding how many FSCAN workers it needs. */
     }

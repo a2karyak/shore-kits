@@ -4,17 +4,41 @@
 #include "workload/tpch/tpch_db.h"
 #include "tests/common.h"
 #include "workload/common/register_stage.h"
-
-
+#include "workload/process_query.h"
 
 using namespace qpipe;
+using namespace workload;
 
+
+class test_fdump_stage_process_tuple_t : public process_tuple_t {
+private:
+    bool _got_tuple;
+
+public:
+
+    test_fdump_stage_process_tuple_t()
+        : _got_tuple(false)
+    {
+    }
+     
+    virtual void process(const tuple_t&) {
+        _got_tuple = true;
+    }
+    
+    virtual void end() {
+        if (_got_tuple)
+            TRACE(TRACE_ALWAYS, "Got a tuple!\n");
+        else
+            TRACE(TRACE_ALWAYS, "Done with no tuples\n");
+        TRACE(TRACE_ALWAYS, "TEST DONE\n");
+    }
+};
 
 
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    db_open_guard_t db_open;
     
     
     // parse output filename
@@ -52,16 +76,8 @@ int main(int argc, char* argv[]) {
 			   int_buffer, 
 			   output_filename);
     
-    
-    reserve_query_workers(packet);
-    dispatcher_t::dispatch_packet(packet);
-  
-  
-    tuple_t output;
-    TRACE(TRACE_ALWAYS, "get_tuple() returned %d\n",
-	  signal_buffer->get_tuple(output) );
-    TRACE(TRACE_ALWAYS, "TEST DONE\n");
-
+    test_fdump_stage_process_tuple_t pt;
+    process_query(packet, pt);
 
     return 0;
 }

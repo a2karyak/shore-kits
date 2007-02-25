@@ -95,12 +95,12 @@ public:
         return new query_plan(action, filter->to_string(), children, 1);
     }
     
-    virtual void declare_worker_needs(resource_reserver_t* reserve) {
-
-        /* need to reserve one SORT worker, ... */
-        reserve->declare_resource_need(_packet_type, 1);
+    virtual void declare_worker_needs(resource_declare_t* declare) {
         
-        _input->declare_worker_needs(reserve);
+        /* need to reserve one SORT worker, ... */
+        declare->declare(_packet_type, 1);
+        
+        _input->declare_worker_needs(declare);
     }
 };
 
