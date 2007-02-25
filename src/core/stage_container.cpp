@@ -34,11 +34,15 @@ const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 // caught by the container.
 struct stop_exception { };
 
+EXIT_NAMESPACE(qpipe);
 template<>
 inline void
-guard<qpipe::dispatcher_t::worker_releaser_t>::action(qpipe::dispatcher_t::worker_releaser_t* ptr) {
+guard<qpipe::dispatcher_t::worker_releaser_t>::
+   action(qpipe::dispatcher_t::worker_releaser_t* ptr) 
+{
     qpipe::dispatcher_t::releaser_release(ptr);
 }
+ENTER_NAMESPACE(qpipe);
 
 
 
