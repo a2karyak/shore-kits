@@ -67,7 +67,12 @@ public:
      */
 
     void assign(const tuple_t &src) {
-        assert(size == src.size);
+        if (size != src.size) {
+            TRACE(TRACE_ALWAYS, "(internal) size = %d (tuple) size = %d\n",
+                  size,
+                  src.size);
+            assert(size == src.size);
+        }
         memcpy(data, src.data, size);
     }
 

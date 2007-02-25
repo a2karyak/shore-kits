@@ -55,6 +55,7 @@ void tpch_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
 
         // insert tuple into database
         Dbt key(&tup.C_CUSTKEY, sizeof(int));
+        TRACE(TRACE_ALWAYS, "Inserting tuple of size %d\n", sizeof(tup));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 

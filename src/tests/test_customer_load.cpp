@@ -23,6 +23,11 @@ using namespace workload;
 
 class test_customer_load_process_tuple_t : public process_tuple_t {
 public:
+    
+    virtual void begin() {
+        TRACE(TRACE_ALWAYS, "sizeof(tpch_customer_tuple) = %d\n",
+              sizeof(tpch_customer_tuple));
+    }
 
     virtual void process(const tuple_t& output) {
 	struct tpch_customer_tuple* t =
@@ -33,10 +38,6 @@ public:
 };
 
 
-/** @fn    : main
- *  @brief : Calls a table scan and outputs a specific projection
- */
-
 int main() {
 
     thread_init();
@@ -44,8 +45,6 @@ int main() {
 
     register_stage<tscan_stage_t>(1);
 
-
-    // TSCAN PACKET
     tuple_fifo* tscan_out_buffer =
         new tuple_fifo(sizeof(struct tpch_customer_tuple));
     tuple_filter_t* tscan_filter =

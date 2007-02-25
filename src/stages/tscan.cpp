@@ -54,7 +54,7 @@ void tscan_stage_t::process_packet() {
         
         // iterate over the blob we read and output the individual
         // tuples
-#if 0
+#if 1
         Dbt key, data;
         DbMultipleKeyDataIterator it = bulk_data.get();
 	for (int tuple_index = 0; it.next(key, data); tuple_index++) {
@@ -62,11 +62,13 @@ void tscan_stage_t::process_packet() {
 	    adaptor->output(tup);
         }
 #else
+        /* For some reason, this code sets the data size to equal the
+           key size... */
         Dbt data;
         DbMultipleDataIterator it = bulk_data.get();
-	for (int tuple_index = 0; it.next(data); tuple_index++) {
+        for (int tuple_index = 0; it.next(data); tuple_index++) {
             tuple_t tup((char*)data.get_data(), (size_t)data.get_size());
-	    adaptor->output(tup);
+            adaptor->output(tup);
         }
 #endif
     }
