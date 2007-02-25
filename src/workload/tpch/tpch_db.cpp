@@ -35,7 +35,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         dbenv = new DbEnv(0);
         dbenv->set_errpfx(BDB_ERROR_PREFIX);
     }
-    catch ( DbException &e) {
+    catch (DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", e.what());
         THROW1(BdbException, "Could not create new DbEnv");
     }
@@ -47,7 +47,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
             THROW1(BdbException, "dbenv->set_cachesize() failed!\n");
         }
     }
-    catch ( DbException &e) {
+    catch (DbException &e) {
         TRACE(TRACE_ALWAYS, "Caught DbException setting buffer pool size to %d GB, %d B: %s\n",
               db_cache_size_gb,
               db_cache_size_bytes,
@@ -59,7 +59,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     // set data directory
     try {
 
-        const char* desc = "BDB_TPCH_DIRECTORY";
+        const char* desc = "BDB_TPCH_DIRECTORY (BDB data)";
         const char* dir  = BDB_TPCH_DIRECTORY;
 
         if (fileops_check_directory_accessible(dir))
@@ -70,8 +70,10 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         // data directory stores table files
         dbenv->set_data_dir(BDB_TPCH_DIRECTORY);
     }
-    catch ( DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException setting data directory to \"%s\". Make sure directory exists\n",
+    catch (DbException &e) {
+        TRACE(TRACE_ALWAYS,
+              "Caught DbException setting data directory to \"%s\"."
+              " Make sure directory exists\n",
               BDB_TPCH_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->set_data_dir() threw DbException");
@@ -81,7 +83,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     // set temp directory
     try {
 
-        const char* desc = "BDB_TEMP_DIRECTORY";
+        const char* desc = "BDB_TEMP_DIRECTORY (BDB temp)";
         const char* dir  = BDB_TEMP_DIRECTORY;
 
         if (fileops_check_directory_accessible(dir))
@@ -98,7 +100,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS,
-              "Caught DbException setting temp directory to \"%s\". Make sure directory exists\n",
+              "Caught DbException setting temp directory to \"%s\"."
+              " Make sure directory exists\n",
               BDB_TEMP_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->set_tmp_dir() threw DbException");
@@ -114,7 +117,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     // open home directory
     try {
         
-        const char* desc = "BDB_HOME_DIRECTORY";
+        const char* desc = "BDB_HOME_DIRECTORY (BDB home)";
         const char* dir  = BDB_HOME_DIRECTORY;
 
         if (fileops_check_directory_accessible(dir))
@@ -134,7 +137,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS,
-              "Caught DbException opening home directory \"%s\". Make sure directory exists\n",
+              "Caught DbException opening home directory \"%s\"."
+              " Make sure directory exists\n",
               BDB_HOME_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->open() threw DbException");

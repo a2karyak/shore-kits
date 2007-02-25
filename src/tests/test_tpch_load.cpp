@@ -21,9 +21,9 @@ int main() {
     /* NGM: Removed DB_TRUNCATE flag since it was causing an exception
        to be thrown in table open. As a temporary fix, we will simply
        delete the old database file before rebuilding. */
-    //    db_open(DB_CREATE|DB_THREAD);
-    //    db_open(DB_CREATE|DB_THREAD); // Huh? Why is this commented out?
+    db_open(DB_CREATE|DB_THREAD); // Huh? Why is this commented out?
     db_load();
     db_close();
+
     return 0;
 }

@@ -26,6 +26,7 @@ TESTS = \
    tests/fscan_stage \
    tests/fdump_stage \
    tests/tscan_stage \
+   tests/customer_load \
    tests/func_call_stage \
    tests/aggregate_stage \
    tests/merge_stage \
@@ -229,6 +230,7 @@ tests_merge_stage_SOURCES = $(ST)/test_merge_stage.cpp
 tests_sort_stage_SOURCES = $(ST)/test_sort_stage.cpp
 tests_fscan_stage_SOURCES = $(ST)/test_fscan_stage.cpp
 tests_tscan_stage_SOURCES = $(ST)/test_tscan_stage.cpp
+tests_customer_load_SOURCES = $(ST)/test_customer_load.cpp
 tests_func_call_stage_SOURCES = $(ST)/test_func_call_stage.cpp
 tests_aggregate_stage_SOURCES = $(ST)/test_aggregate_stage.cpp
 tests_hash_join_stage_SOURCES = $(ST)/test_hash_join_stage.cpp
