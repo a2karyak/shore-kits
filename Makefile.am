@@ -3,8 +3,7 @@ INCLUDES = -I$(top_srcdir)/include
 
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libutil.a \
-   lib/libstages.a lib/libutil.a
+   lib/libstages.a lib/libcore.a lib/libutil.a
 
 LDADD = $(lib_LIBRARIES)
 

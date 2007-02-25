@@ -1,7 +1,6 @@
 
 #include "util.h"
 #include "core/dispatcher.h"
-#include "stages.h"
 
 #include <cstdio>
 #include <cstring>
@@ -150,30 +149,13 @@ void dispatcher_t::releaser_release(worker_releaser_t* wr) {
 
 void dispatcher_t::worker_reserver_t::acquire_resources() {
   
-  static const c_str* order[] = {
-    &aggregate_packet_t::PACKET_TYPE
-    , &bnl_in_packet_t::PACKET_TYPE
-    , &bnl_join_packet_t::PACKET_TYPE
-    , &fdump_packet_t::PACKET_TYPE
-    , &fscan_packet_t::PACKET_TYPE
-    , &func_call_packet_t::PACKET_TYPE
-    , &hash_join_packet_t::PACKET_TYPE
-    , &merge_packet_t::PACKET_TYPE
-    , &partial_aggregate_packet_t::PACKET_TYPE
-    , &hash_aggregate_packet_t::PACKET_TYPE
-    , &sort_packet_t::PACKET_TYPE
-    , &sorted_in_packet_t::PACKET_TYPE
-    , &tscan_packet_t::PACKET_TYPE
-  };
-  
-  int num_types = sizeof(order)/sizeof(order[0]);
-  for (int i = 0; i < num_types; i++) {
-    const c_str* type = order[i];
-    int n = _worker_needs[*type];
+  map<c_str, int>::iterator it;
+  for (it = _worker_needs.begin(); it != _worker_needs.end(); ++it) {
+    int n = it->second;
     if (n > 0) {
       if (TRACE_ACQUIRE_RESOURCES)
-        TRACE(TRACE_ALWAYS, "Reserving %d %s workers\n", n, type->data());
-      _dispatcher->_reserve_workers(*type, n);
+        TRACE(TRACE_ALWAYS, "Reserving %d %s workers\n", n, it->first.data());
+      _dispatcher->_reserve_workers(it->first, n);
     }
   }
 }
