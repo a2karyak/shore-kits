@@ -8,6 +8,7 @@
 #include "server/command/printer.h"
 #include "server/command/tpch_handler.h"
 #include "server/command/load_handler.h"
+#include "server/command/tpcc_handler.h"
 
 #include <map>
 #include <string>
@@ -49,6 +50,7 @@ void register_command_handlers(void) {
     add_command("print", new printer_t());
     add_command("tpch",  new tpch_handler_t());
     add_command("load", new load_handler_t());
+    add_command("tpcc", new tpcc_handler_t());
 }
 
 
@@ -71,6 +73,7 @@ void register_command_handlers(void) {
  *  @return 0 to continue executing if called from interactive
  *  mode. Non-zero it command specified that program should quit.
  */
+
 int process_command(const char* command) {
 
     // check for quit...

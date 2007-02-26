@@ -299,8 +299,9 @@ SE = $(top_srcdir)/src/server
 #qpipe_LDFLAGS = -Wl,-export-dynamic
 
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
-# FIXME: IP: additional to make G++@itaniums find <ltdl.h>. Should't hurt anybody else...
+# FIXME: IP: additional to make gcc @ ia64 find <ltdl.h>. Should't hurt anybody else...
 qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
+
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
 	-lltdl \
@@ -309,7 +310,8 @@ qpipe_LDADD = $(LDADD) \
 COMMANDS = \
    $(SE)/command/printer.cpp \
    $(SE)/command/load_handler.cpp \
-   $(SE)/command/tpch_handler.cpp
+   $(SE)/command/tpch_handler.cpp \
+   $(SE)/command/tpcc_handler.cpp 
 
 qpipe_SOURCES = \
    $(SE)/server.cpp \

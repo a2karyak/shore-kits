@@ -35,8 +35,10 @@ struct partial_aggregate_packet_t : public packet_t {
     }
 
     // TODO: consider the key comparator as well
-    static query_plan* create_plan(tuple_filter_t* filter, tuple_aggregate_t* agg,
-                                   key_extractor_t* key, query_plan const* child)
+    static query_plan* create_plan(tuple_filter_t* filter, 
+				   tuple_aggregate_t* agg,
+                                   key_extractor_t* key, 
+				   query_plan const* child)
     {
         c_str action("%s:%s:%s", PACKET_TYPE.data(),
                      agg->to_string().data(), key->to_string().data());
@@ -45,6 +47,7 @@ struct partial_aggregate_packet_t : public packet_t {
         children[0] = child;
         return new query_plan(action, filter->to_string(), children, 1);
     }
+
     
     virtual void declare_worker_needs(resource_declare_t* declare) {
         declare->declare(_packet_type, 1);

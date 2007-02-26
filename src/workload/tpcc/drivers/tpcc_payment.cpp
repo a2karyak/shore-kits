@@ -14,6 +14,9 @@ ENTER_NAMESPACE(workload);
 void tpcc_payment_driver::submit(void* disp) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
+
+
+    TRACE(TRACE_ALWAYS, "CREATING_PAYMENT_PACKET");
   
     trx_packet_t* payment = create_payment_packet( "PAYMENT_CLIENT_", dp );
     guard<tuple_fifo> out = payment->output_buffer();

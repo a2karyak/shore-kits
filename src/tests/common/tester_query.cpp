@@ -10,7 +10,9 @@
 query_info_t query_init(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    // TODO: ip Uncommented db_open for program to run
+    TRACE(TRACE_ALWAYS, "SHOULD OPEN DB!\n");
+    //    db_open();
 
     // parse command line args
     if ( argc < 2 ) {

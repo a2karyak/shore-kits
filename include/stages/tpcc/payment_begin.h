@@ -113,12 +113,15 @@ public:
 
 
 
+    // FIXME: ip Correct the plan creation
     static query_plan* create_plan( tuple_filter_t* filter,
                                     const int a_c_id,
                                     const double a_h_amount,
                                     const char* a_h_date) 
     {
-        c_str action("%s:%d:%f:%d", PACKET_TYPE.data(), a_c_id, a_h_amount, a_h_date);
+        c_str action("%s:%d:%f:%d", PACKET_TYPE.data(), 
+		     a_c_id, a_h_amount, a_h_date);
+
         return new query_plan(action, filter->to_string(), NULL, 0);
     }
 
@@ -134,29 +137,39 @@ public:
 
 /**
  *  @brief PAYMENT_BEGIN stage. 
- *  Assigns a unique id to the submitted PAYMENT transaction and submits the 
+ *
+ *  1) Assigns a unique id to the submitted PAYMENT transaction and submits the 
  *  appropriate packets to their stages (PAYMENT_CUST, PAYMENT_WH, and 
  *  PAYMENT_DIST).
+ *
+ *  2) Once all packets return: Commits if everyone successful. Rollbacks if any
+ *  probkem.
  */
 
 class payment_begin_stage_t : public stage_t {
+
+protected:
+
+    virtual void process_packet();
+
+    int _trx_counter;
+    pthread_mutex_t _trx_counter_mutex;
     
+
 public:
 
     static const c_str DEFAULT_STAGE_NAME;
     typedef payment_begin_packet_t stage_packet_t;
 
-    payment_begin_stage_t() { }
+    payment_begin_stage_t();
     
-    virtual ~payment_begin_stage_t() { }
-    
-protected:
+    virtual ~payment_begin_stage_t() { 
 
-    virtual void process_packet();
+	TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN destructor");	
+	thread_mutex_destroy( _trx_counter_mutex );
+    }
 
-    static int _trx_counter;
-    static pthread_mutex_t _trx_counter_mutex;
-
+    int get_next_counter();
     
 }; // END OF CLASS: payment_begin_stage_t
 
