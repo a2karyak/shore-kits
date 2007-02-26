@@ -38,8 +38,17 @@ void tpcc_payment_driver::submit(void* disp) {
 				     bp_filter,
 				     dp );
 
+
+    qpipe::query_state_t* qs = dp->query_state_create();
+    bp_packet->assign_query_state(qs);
+    
+
+    //    bp_process_tuple_t pt;
+    //    process_query(q1_agg_packet, pt);
+    
+    // FIXME: this should be to bp_process_tuple_t
     guard<tuple_fifo> out = bp_packet->output_buffer();
-        
+       
     dispatcher_t::dispatch_packet(bp_packet);
 
     tuple_t output;
@@ -52,6 +61,9 @@ void tpcc_payment_driver::submit(void* disp) {
         TRACE(TRACE_QUERY_RESULTS, "*** Count: %d. TRX: %d ***\n",
 	      ++row_counter, tmp);
     }
+
+
+    dp->query_state_destroy(qs);
 }
 
 
