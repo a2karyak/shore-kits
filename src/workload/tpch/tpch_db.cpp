@@ -23,14 +23,8 @@ void db_open(uint32_t, uint32_t db_cache_size_gb, uint32_t db_cache_size_bytes) 
     assert(db_cache_size_gb + db_cache_size_bytes > 0);
     
     // open tables
-    open_db_table(tpch_customer, CDB_FILENAME_CUSTOMER);
-    open_db_table(tpch_lineitem, CDB_FILENAME_LINEITEM);
-    open_db_table(tpch_nation,   CDB_FILENAME_NATION);
-    open_db_table(tpch_orders,   CDB_FILENAME_ORDERS);
-    open_db_table(tpch_part,     CDB_FILENAME_PART);
-    open_db_table(tpch_partsupp, CDB_FILENAME_PARTSUPP);
-    open_db_table(tpch_region,   CDB_FILENAME_REGION);
-    open_db_table(tpch_supplier, CDB_FILENAME_SUPPLIER);
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        open_db_table(tpch_tables[i].db, tpch_tables[i].cdb_filename);
 
     TRACE(TRACE_ALWAYS, "TPCH database open\n");
 }
@@ -47,14 +41,8 @@ void db_open(uint32_t, uint32_t db_cache_size_gb, uint32_t db_cache_size_bytes) 
 void db_close() {
 
     // close tables
-    close_db_table(tpch_customer, CDB_FILENAME_CUSTOMER);
-    close_db_table(tpch_lineitem, CDB_FILENAME_LINEITEM);
-    close_db_table(tpch_nation,   CDB_FILENAME_NATION);
-    close_db_table(tpch_orders,   CDB_FILENAME_ORDERS);
-    close_db_table(tpch_part,     CDB_FILENAME_PART);
-    close_db_table(tpch_partsupp, CDB_FILENAME_PARTSUPP);
-    close_db_table(tpch_region,   CDB_FILENAME_REGION);
-    close_db_table(tpch_supplier, CDB_FILENAME_SUPPLIER);
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        close_db_table(tpch_tables[i].db, tpch_tables[i].cdb_filename);
 
     TRACE(TRACE_ALWAYS, "TPCH database closed\n");
 }

@@ -19,7 +19,7 @@ packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) 
     q6_tscan_packet = new tscan_packet_t("TSCAN",
                                          tscan_output,
                                          new q6_tscan_filter_t(),
-                                         tpch_lineitem);
+                                         tpch_tables[TPCH_TABLE_LINEITEM].db);
     
     // AGGREGATE
     aggregate_packet_t* q6_agg_packet;

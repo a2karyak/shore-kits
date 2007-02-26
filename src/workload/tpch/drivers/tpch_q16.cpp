@@ -495,8 +495,8 @@ void tpch_q16_driver::submit(void* disp) {
     tuple_fifo* buffer = new tuple_fifo(sizeof(part_supp_tuple_t));
 
 
-    packet_t* partsupp_scan_packet = partsupp_scan(tpch_partsupp);
-    packet_t* supplier_scan_packet = supplier_scan(tpch_supplier);
+    packet_t* partsupp_scan_packet = partsupp_scan(tpch_tables[TPCH_TABLE_PARTSUPP].db);
+    packet_t* supplier_scan_packet = supplier_scan(tpch_tables[TPCH_TABLE_SUPPLIER].db);
 
 
     packet_t* not_in_packet = new sorted_in_packet_t("ps_suppkey NOT IN",
@@ -514,7 +514,7 @@ void tpch_q16_driver::submit(void* disp) {
     buffer = new tuple_fifo(sizeof(part_scan_tuple_t));
 
 
-    packet_t* part_scan_packet = part_scan(tpch_part);
+    packet_t* part_scan_packet = part_scan(tpch_tables[TPCH_TABLE_PART].db);
     packet_t* join_packet = new hash_join_packet_t("Part JOIN",
                                                    buffer,
                                                    filter,

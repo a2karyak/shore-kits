@@ -307,14 +307,14 @@ void tpch_q12_driver::submit(void* disp) {
         new tscan_packet_t("lineitem TSCAN",
                            buffer,
                            filter,
-                           tpch_lineitem);
+                           tpch_tables[TPCH_TABLE_LINEITEM].db);
     // order scan
     filter = new order_tscan_filter_t();
     buffer = new tuple_fifo(sizeof(order_scan_tuple));
     packet_t* order_packet =
         new tscan_packet_t("order TSCAN",
                            buffer, filter,
-                           tpch_orders);
+                           tpch_tables[TPCH_TABLE_ORDERS].db);
     
     // join
     filter = new trivial_filter_t(sizeof(join_tuple));

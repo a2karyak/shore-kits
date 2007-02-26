@@ -242,7 +242,7 @@ void tpch_q14_driver::submit(void* disp) {
     lineitem_packet = new tscan_packet_t("lineitem TSCAN",
                                          buffer,
                                          filter,
-                                         tpch_lineitem);
+                                         tpch_tables[TPCH_TABLE_LINEITEM].db);
     lineitem_packet->assign_query_state(qs);
 
     // part scan
@@ -251,7 +251,7 @@ void tpch_q14_driver::submit(void* disp) {
     packet_t* part_packet;
     part_packet = new tscan_packet_t("part TSCAN",
                                      buffer, filter,
-                                     tpch_part);
+                                     tpch_tables[TPCH_TABLE_PART].db);
     part_packet->assign_query_state(qs);
     
     // join
