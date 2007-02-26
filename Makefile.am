@@ -301,7 +301,6 @@ SE = $(top_srcdir)/src/server
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
 # FIXME: IP: additional to make gcc @ ia64 find <ltdl.h>. Should't hurt anybody else...
 qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
-
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
 	-lltdl \

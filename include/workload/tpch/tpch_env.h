@@ -42,6 +42,7 @@ enum tpch_table_list_t {
 };
 
 
+
 /* exported data structures */
 
 /* BerkeleyDB environment */
@@ -57,6 +58,7 @@ extern Db* tpch_lineitem_shipdate_idx;
 
 typedef int (*bt_compare_func_t)(Db*, const Dbt*, const Dbt*);
 typedef int (*idx_key_create_func_t)(Db*, const Dbt*, const Dbt*, Dbt*);
+
 
 
 #endif

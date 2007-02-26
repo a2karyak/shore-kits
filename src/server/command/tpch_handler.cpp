@@ -53,8 +53,7 @@ void tpch_handler_t::init() {
 
         // open DB tables (1.25 GB bpool)
 
-	// FIXME: ip db_open is commented only to test the payment_trx
-        //db_open();
+        db_open();
 
         // register drivers...
         add_driver("merge_test", new merge_test_driver(c_str("MERGE-TEST")));

@@ -8,6 +8,7 @@
 
 /* exported data structures */
 
+
 /* BerkeleyDB environment */
 DbEnv* dbenv = NULL;
 

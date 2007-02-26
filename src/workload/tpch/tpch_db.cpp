@@ -188,7 +188,6 @@ void db_close() {
     // close tables
     for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
         close_db_table(tpch_tables[i].db, tpch_tables[i].bdb_filename);
-
     
     // close environment
     try {    

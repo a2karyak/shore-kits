@@ -13,9 +13,17 @@
 
 
 
+void progress_reset();
+void progress_update();
+void progress_done();
+
+#define MAX_LINE_LENGTH 1024
+#define MAX_FILENAME_SIZE 1024
+
+
+
 /* internal helper functions */
 
-static void store_string(char* dest, char* src);
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
                           const char* tbl_path, const char* tbl_filename);
@@ -43,9 +51,6 @@ void db_load(const char* tbl_path) {
 
 
 /* definitions of internal helper functions */
-
-
-
 
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
