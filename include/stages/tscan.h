@@ -46,6 +46,7 @@ public:
      *  Db*'s can be shared among threads, we will not take ownership
      *  of this object.
      */
+
     tscan_packet_t(const c_str    &packet_id,
 		   tuple_fifo* output_buffer,
 		   tuple_filter_t* output_filter,

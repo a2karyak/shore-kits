@@ -17,7 +17,8 @@ using std::list;
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
+static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} 
+    const osp_policy = OSP_FULL;
 
 
 
@@ -27,13 +28,20 @@ static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_F
 class   packet_t;
 typedef list<packet_t*> packet_list_t;
 
+
+/**
+ *  @brief Structure used for representing the sub-queries
+ *  in order to detect work sharing opportunities.
+ */
+
 struct query_plan {
     c_str action;
     c_str filter;
     query_plan const** child_plans;
     int child_count;
     
-    query_plan(const c_str &a, const c_str &f, query_plan const** children, int count)
+    query_plan(const c_str &a, const c_str &f, query_plan const** children, 
+	       int count)
         : action(a), filter(f), child_plans(children), child_count(count)
     {
     }
@@ -45,6 +53,7 @@ struct query_plan {
  * @brief Base class for packet chomper (any class that exports a
  * chomp() method). In the general case, chomp() must be synchronized.
  */
+
 class packet_chomper_t
 {
 public:

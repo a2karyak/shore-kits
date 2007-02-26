@@ -17,5 +17,7 @@
 #include "stages/tscan.h"
 #include "stages/tuple_source.h"
 
+#include "stages/tpcc/payment_begin.h"
+
 #endif
 

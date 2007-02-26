@@ -3,9 +3,11 @@
 #include "stages.h"
 #include "workload/common/register_stage.h"
 
-#define MAX_NUM_CLIENTS 16
+#define MAX_NUM_CLIENTS  16
+#define MAX_NUM_TRXS     1000
 
-#define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 // Q4 has two scans
+
+#define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 /* Q4 has two scans */
 #define MAX_NUM_AGGREGATE_THREADS         MAX_NUM_CLIENTS
 #define MAX_NUM_PARTIAL_AGGREGATE_THREADS MAX_NUM_CLIENTS
 #define MAX_NUM_HASH_JOIN_THREADS         MAX_NUM_CLIENTS
@@ -27,5 +29,10 @@ void register_stage_containers() {
 
     //    register_stage<merge_stage_t>(MAX_NUM_CLIENTS);
     //    register_stage<fdump_stage_t>(MAX_NUM_CLIENTS);
-    //    register_stage<fscan_stage_t>(MAX_NUM_CLIENTS);
+
+    // added for tpcc workloads
+    register_stage<fscan_stage_t>(MAX_NUM_CLIENTS);
+
+    // FIXME: ip Should be relative with the MAX_NUM_TRXS
+    register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS); 
 }

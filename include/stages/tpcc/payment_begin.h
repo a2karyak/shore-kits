@@ -92,7 +92,7 @@ public:
                            const double a_h_amount,
                            const char* a_h_date)
 	: trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                       create_plan(output_filter, a_c_id, a_h_amount, a_h_date),
+                       create_plan(a_c_id, a_h_amount, a_h_date),
                        true, /* merging allowed */
                        true  /* unreserve worker on completion */
                        ),
@@ -105,7 +105,12 @@ public:
           _c_id(a_c_id),
           _h_amount(a_h_amount)
     {
-        strncpy(_c_last, a_c_last, 16);
+	assert(a_h_date != NULL);
+
+	if (a_c_last != NULL)
+	    strncpy(_c_last, a_c_last, 16);
+	
+	_h_date = new char[strlen(a_h_date) + 1];
         strncpy(_h_date, a_h_date, strlen(a_h_date));
 
         _trx_state = UNDEF;
@@ -114,15 +119,14 @@ public:
 
 
     // FIXME: ip Correct the plan creation
-    static query_plan* create_plan( tuple_filter_t* filter,
-                                    const int a_c_id,
+    static query_plan* create_plan( const int a_c_id,
                                     const double a_h_amount,
                                     const char* a_h_date) 
     {
         c_str action("%s:%d:%f:%d", PACKET_TYPE.data(), 
 		     a_c_id, a_h_amount, a_h_date);
 
-        return new query_plan(action, filter->to_string(), NULL, 0);
+        return new query_plan(action, NULL, NULL, 0);
     }
 
 
@@ -165,7 +169,7 @@ public:
     
     virtual ~payment_begin_stage_t() { 
 
-	TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN destructor");	
+	TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN destructor\n");	
 	thread_mutex_destroy( _trx_counter_mutex );
     }
 

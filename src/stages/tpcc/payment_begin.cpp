@@ -18,7 +18,7 @@ payment_begin_stage_t::payment_begin_stage_t()
     : _trx_counter_mutex(thread_mutex_create())
 {
     
-    TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN constructor");
+    TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN constructor\n");
 
     _trx_counter = 0;    
 }
@@ -43,6 +43,19 @@ void payment_begin_stage_t::process_packet() {
     TRACE(TRACE_ALWAYS, 
 	  "Processing PAYMENT_BEGIN with id: %d. Counter: &d\n", 
 	  my_trx_id, get_next_counter());
+
+
+    // create output tuple
+    // "I" own tup, so allocate space for it in the stack
+    size_t dest_size = packet->output_buffer()->tuple_size();
+    array_guard_t<char> dest_data = new char[dest_size];
+    tuple_t dest(dest_data, dest_size);
+
+    int* dest_tmp;
+    dest_tmp = aligned_cast<int>(dest.data);
+    *dest_tmp = my_trx_id;
+
+    adaptor->output(dest);
 
 } // process_packet
 
