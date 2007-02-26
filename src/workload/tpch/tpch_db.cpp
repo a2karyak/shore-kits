@@ -152,6 +152,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
                       tpch_tables[i].bt_compare_fn,
                       tpch_tables[i].bdb_filename);
     
+
     // open indexes
     open_db_index(tpch_tables[TPCH_TABLE_LINEITEM].db,
                   tpch_lineitem_shipdate,

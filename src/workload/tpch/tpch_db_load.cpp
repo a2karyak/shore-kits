@@ -33,14 +33,11 @@ static void db_table_load(void (*tbl_loader) (Db*, FILE*),
  */
 void db_load(const char* tbl_path) {
 
-    //    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
-    
-    // Let's try just loading customer...
-    int i = TPCH_TABLE_CUSTOMER;
-    db_table_load(tpch_tables[i].parse_tbl,
-                  tpch_tables[i].db,
-                  tbl_path,
-                  tpch_tables[i].tbl_filename);
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        db_table_load(tpch_tables[i].parse_tbl,
+                      tpch_tables[i].db,
+                      tbl_path,
+                      tpch_tables[i].tbl_filename);
 }
 
 

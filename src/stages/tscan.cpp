@@ -66,8 +66,6 @@ void tscan_stage_t::process_packet() {
     Dbt bulk_key;
     for (int bulk_read_index = 0; ; bulk_read_index++) {
 
-        TRACE(TRACE_ALWAYS, "Doing bulk read\n");
-
         // any return code besides DB_NOTFOUND would throw an exception
         int err = cursor->get(&bulk_key, bulk_data, DB_MULTIPLE_KEY | DB_NEXT);
         if(err && (err != DB_NOTFOUND))

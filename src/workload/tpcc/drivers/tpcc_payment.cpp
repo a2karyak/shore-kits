@@ -3,12 +3,43 @@
 # include "scheduler.h"
 # include "workload/tpcc/drivers/tpcc_payment.h"
 # include "workload/common.h"
+#include "workload/process_query.h"
 
 
 using namespace qpipe;
 
 ENTER_NAMESPACE(workload);
 
+
+
+using namespace qpipe;
+
+
+class payment_process_tuple_t : public process_tuple_t {
+
+private:
+
+    int row_counter;
+
+public:
+
+    payment_process_tuple_t()
+        : row_counter(0)
+    {
+    }
+        
+    virtual void begin() {
+        TRACE(TRACE_QUERY_RESULTS, "*** PAYMENT ANSWER ...\n");
+    }
+    
+    virtual void process(const tuple_t& output) {
+	int* tmp;
+	tmp = aligned_cast<int>(output.data);
+        TRACE(TRACE_QUERY_RESULTS, "*** Count: %d. TRX: %d ***\n",
+	      ++row_counter, tmp);
+    }
+
+};
 
 
 void tpcc_payment_driver::submit(void* disp) {
@@ -43,24 +74,8 @@ void tpcc_payment_driver::submit(void* disp) {
     bp_packet->assign_query_state(qs);
     
 
-    //    bp_process_tuple_t pt;
-    //    process_query(q1_agg_packet, pt);
-    
-    // FIXME: this should be to bp_process_tuple_t
-    guard<tuple_fifo> out = bp_packet->output_buffer();
-       
-    dispatcher_t::dispatch_packet(bp_packet);
-
-    tuple_t output;
-    int row_counter = 0;
-
-    while( out->get_tuple(output) ) {
-	int* tmp;
-	tmp = aligned_cast<int>(output.data);
-
-        TRACE(TRACE_QUERY_RESULTS, "*** Count: %d. TRX: %d ***\n",
-	      ++row_counter, tmp);
-    }
+    payment_process_tuple_t pt;
+    process_query(bp_packet, pt);
 
 
     dp->query_state_destroy(qs);
