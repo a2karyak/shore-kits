@@ -64,16 +64,24 @@ public:
                        void (*func) (void*, void*),
                        void* func_arg,
                        void (*destructor) (void*) = NULL,
-                       bool _merge=false)
+                       bool _merge=false,
+                       bool _unreserve=true)
         : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    _merge ? create_plan(output_filter, func) : NULL,
-                   _merge),
+                   _merge,    /* whether to merge */
+                   _unreserve /* whether to unreserve worker on completion */
+                   ),
           _func(func),
           _func_arg(func_arg),
           _destructor(destructor)
     {
         // error checking
         assert(func != NULL);
+        if (_merge && !_unreserve) {
+            TRACE(TRACE_ALWAYS,
+                  "WARNING: Won't release worker on completion, but work sharing possible\n"
+                  "         What do you want the container to do when it merges?\n");
+        }
     }
 
     
@@ -95,6 +103,10 @@ public:
         return packet_t::is_compatible(plan(), other->plan());
     }
 
+    virtual void declare_worker_needs(resource_declare_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many FUNC_CALL workers it needs. */
+    }
 };
 
 

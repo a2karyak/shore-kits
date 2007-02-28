@@ -55,14 +55,21 @@ struct bnl_join_packet_t : public packet_t {
                       packet_t* left,
                       tuple_source_t* right_source,
                       tuple_join_t* join)
-        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+        : packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   true   /* unreserve worker on completion */
+                   ),
           _left(left),
           _left_buffer(left->output_buffer()),
           _right_source(right_source),
           _join(join)
     {
     }
-  
+    
+    virtual void declare_worker_needs(resource_declare_t*) {
+        TRACE(TRACE_ALWAYS, "UNIMPLEMENTED! Why are you not using hash join?\n");
+        assert(0);
+    }
 };
 
 

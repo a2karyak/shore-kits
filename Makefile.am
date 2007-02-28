@@ -1,8 +1,9 @@
 # -*- makefile -*-
 INCLUDES = -I$(top_srcdir)/include
 
-lib_LIBRARIES = lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-	lib/libstages.a lib/libcore.a lib/libutil.a
+lib_LIBRARIES = \
+   lib/libtest.a lib/libworkload.a lib/libscheduler.a \
+   lib/libstages.a lib/libcore.a lib/libutil.a
 
 LDADD = $(lib_LIBRARIES)
 
@@ -71,9 +72,13 @@ lib_libutil_a_SOURCES = \
 	$(SU)/trace.cpp \
 	$(SU)/tcp.cpp \
 	$(SU)/rio.cpp \
-	$(SU)/chomp.cpp \
         $(SU)/alloc_printf.cpp \
         $(SU)/errnum_to_string.cpp
+	$(SU)/chomp.cpp \
+        $(SU)/fileops.cpp \
+        $(SU)/static_list_node.cpp \
+        $(SU)/static_list.cpp \
+        $(SU)/resource_pool.cpp
 
 
 ################################################################################
@@ -117,6 +122,7 @@ lib_libstages_a_SOURCES = \
    $(SG)/tscan.cpp \
    $(SG)/aggregate.cpp \
    $(SG)/partial_aggregate.cpp \
+   $(SG)/hash_aggregate.cpp \
    $(SG)/sorted_in.cpp \
    $(SG)/hash_join.cpp \
    $(SG)/func_call.cpp \
@@ -137,7 +143,8 @@ WL_BASE = \
    $(SW)/workload.cpp \
    $(SW)/workload_client.cpp \
    $(SW)/register_stage_containers.cpp \
-   $(SW)/dispatcher_globals.cpp
+   $(SW)/dispatcher_globals.cpp \
+   $(SW)/process_query.cpp
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
@@ -148,6 +155,7 @@ WL_TPCH = \
    $(SW)/tpch/tpch_db_load.cpp \
    $(SW)/tpch/tpch_env.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \
+   $(SW)/tpch/tpch_tuple_parsers.cpp \
    $(SW)/tpch/drivers/merge_test.cpp  \
    $(SW)/tpch/drivers/tpch_q1.cpp  \
    $(SW)/tpch/drivers/tpch_q4.cpp  \
@@ -278,7 +286,9 @@ SE = $(top_srcdir)/src/server
 #qpipe_LDFLAGS = -Wl,-export-dynamic
 
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
-qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include
+# FIXME: IP: anothe hack to find <ltdl.h> on ia64. Shouldn't hurt anybody else...
+qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
+
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
 	-lltdl \

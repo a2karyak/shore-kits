@@ -56,7 +56,10 @@ public:
 		   tuple_filter_t* output_filter,
 		   const c_str    &filename)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                   create_plan(output_filter, filename)),
+                   create_plan(output_filter, filename),
+                   false, /* merging not allowed */
+                   false  /* keep worker on completion */
+                   ),
           _filename(filename)
     {
     }
@@ -64,6 +67,11 @@ public:
     static query_plan* create_plan(tuple_filter_t* filter, const c_str &file_name) {
         c_str action("%s:%s", PACKET_TYPE.data(), file_name.data());
         return new query_plan(action, filter->to_string(), NULL, 0);
+    }
+
+    virtual void declare_worker_needs(resource_declare_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many FSCAN workers it needs. */
     }
 };
 

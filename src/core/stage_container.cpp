@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "core/stage_container.h"
+#include "core/dispatcher.h"
 #include "util.h"
 #include "util/ctx.h"
 
@@ -12,22 +13,37 @@
 #include <cstring>
 
 
+/* constants */
+
+#define TRACE_MERGING TRACE_RESOURCE_RELEASE|0
+#define TRACE_DEQUEUE TRACE_RESOURCE_RELEASE|0
+#define TRACE_WORKER_CREATE 0
+
 
 ENTER_NAMESPACE(qpipe);
 
-#define TRACE_MERGING 0
-#define TRACE_DEQUEUE 0
 
-
+static const bool ALWAYS_TRY_OSP = true;
 
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
+
+
 
 // the "STOP" exception. Simply indicates that the stage should stop
 // (not necessarily an "error"). Thrown by the adaptor's output(),
 // caught by the container.
 struct stop_exception { };
 
+EXIT_NAMESPACE(qpipe);
+template<>
+inline void
+guard<qpipe::dispatcher_t::worker_releaser_t>::
+   action(qpipe::dispatcher_t::worker_releaser_t* ptr) 
+{
+    qpipe::dispatcher_t::releaser_release(ptr);
+}
+ENTER_NAMESPACE(qpipe);
 
 
 extern "C" void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
@@ -66,10 +82,14 @@ extern "C" void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
  *  this string, so the caller should deallocate it if necessary.
  */
 stage_container_t::stage_container_t(const c_str &container_name,
-				     stage_factory_t* stage_maker)
+				     stage_factory_t* stage_maker, int active_count, int max_count)
     : _container_lock(thread_mutex_create()),
       _container_queue_nonempty(thread_cond_create()),
-      _container_name(container_name), _stage_maker(stage_maker)
+      _container_name(container_name), _stage_maker(stage_maker),
+      _pool(active_count),
+      _max_threads((max_count > active_count)? max_count : std::max(10, active_count * 4)),
+      _next_thread(0),
+      _rp(&_container_lock._lock, 0, container_name)
 {
 }
 
@@ -90,6 +110,26 @@ stage_container_t::~stage_container_t(void) {
     thread_mutex_destroy(_container_lock);
     thread_cond_destroy(_container_queue_nonempty);
 }
+
+
+/**
+ * A wrapper to allow us to run multiple threads off of one stage
+ * container. It might be possible to make stage_container_t inherit
+ * from thread_t and instantiate it directly multiple times, but
+ * thread-local state like the RNG would be too risky to use.
+ */
+struct stage_thread : thread_t {
+    stage_container_t* _sc;
+    stage_thread(const c_str &name, stage_container_t* sc)
+        : thread_t(name), _sc(sc)
+    {
+        
+    }
+    virtual void* run() {
+        _sc->run();
+        return NULL;
+    }
+};
 
 
 
@@ -123,7 +163,7 @@ void stage_container_t::container_queue_enqueue_no_merge(packet_t* packet) {
  *  container queue. If no packets are available, wait for one to
  *  appear.
  *
- *  THE CALLER MUST BE HOLDING THE stage_lock MUTEX.
+ *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
 packet_list_t* stage_container_t::container_queue_dequeue() {
 
@@ -142,6 +182,129 @@ packet_list_t* stage_container_t::container_queue_dequeue() {
 
 
 /**
+ *  @brief Create another worker thread.
+ *
+ *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
+ */
+void stage_container_t::create_worker() {
+    
+    // create another worker thread
+    _next_thread++;
+    c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread);
+    thread_t* thread = new stage_thread(thread_name, this);
+
+    if (TRACE_WORKER_CREATE)
+        TRACE(TRACE_ALWAYS, "Creating thread %s\n", thread_name.data());
+
+    thread_create(thread, &_pool);
+
+    // notify resource pool
+    _rp.notify_capacity_increase(1);
+}
+
+
+
+void stage_container_t::reserve(int n) {
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_container_lock);
+    _reserve(n);
+}
+
+
+/**
+ *  @brief Reserve the specified number of workers.
+ *
+ *  @param n The number of workers.
+ *
+ *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
+ */
+void stage_container_t::_reserve(int n) {
+    
+
+    assert(n > 0);
+
+
+    // Make sure we are not asking for something we can't satisfy even
+    // with the maximum number of threads.
+    assert(n <= _max_threads);
+
+
+    // See if we can satisfy the request with existing, unreserved
+    // threads.
+    int curr_capacity = _rp.get_capacity();
+    int curr_reserved = _rp.get_reserved();
+    if ((curr_capacity - curr_reserved) >= n) {
+        /* we can get the resources we want without waiting! */
+        _rp.reserve(n);
+        return;
+    }
+    
+    
+    // We need to bump up the number of existing threads (monitored by
+    // the capacity of our resource pool) to at least n to avoid
+    // deadlock.
+    while (curr_capacity < n) {
+        create_worker();
+        curr_capacity++;
+    }
+    
+
+    // At this point, we can reserve n safely without risking
+    // deadlock.
+
+
+    // It is now a policy decision whether to wait for existing,
+    // reserved threads to free up (using resource_pool_t::reserve) or
+    // increase the number of existing threads further to avoid
+    // blocking).
+
+
+    // Eager approach... create as many threads as we can before
+    // blocking...
+    while (curr_capacity < _max_threads) {
+        
+        int unreserved = curr_capacity - curr_reserved;
+        if (unreserved >= n) {
+            /* we can get the resources we want without waiting! */
+            break;
+        }
+
+        create_worker();
+        curr_capacity++;
+    }
+
+
+    /* Either we have enough or we have hit _max_threads... */
+    _rp.reserve(n);
+    
+    
+    // * * * END CRITICAL SECTION * * *
+};
+
+
+
+/**
+ *  @brief Unreserve the specified number of workers.
+ *
+ *  @param n The number of workers.
+ *
+ *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
+ */
+void stage_container_t::unreserve(int n) {
+
+    assert(n > 0);
+
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_container_lock);
+    
+    _rp.unreserve(n);
+    
+    // * * * END CRITICAL SECTION * * *
+}
+
+
+
+/**
  *  @brief Send the specified packet to this container. We will try to
  *  merge the packet into a running stage or into an already enqueued
  *  packet packet list. If we fail, we will wrap the packet in a
@@ -155,10 +318,16 @@ packet_list_t* stage_container_t::container_queue_dequeue() {
  *  queue.
  *
  *  @param packet The packet to send to this stage.
+ *
+ *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::enqueue(packet_t* packet) {
 
     assert(packet != NULL);
+    bool unreserve = packet->unreserve_worker_on_completion();
+    guard<dispatcher_t::worker_releaser_t> wr = dispatcher_t::releaser_acquire();
+    packet->declare_worker_needs(wr);
+    
 
     packet_list_t* packets = new packet_list_t;
     packets->push_back(packet);
@@ -189,7 +358,6 @@ void stage_container_t::enqueue(packet_t* packet) {
            will use the context that Pthreads allocated. */
     }
 
-
     /* At this point, we assume that self->_ctx has been initialized
        with a valid context. This will become the consumer context on
        the new FIFO. */
@@ -202,7 +370,6 @@ void stage_container_t::enqueue(packet_t* packet) {
                 3,
                 _stage_maker->create_stage(), adaptor, producer);
 
-    
     /* set up fifo fields */
     packet->output_buffer()->_read_ctx  = self->_ctx;
     packet->output_buffer()->_write_ctx = producer;
@@ -213,6 +380,8 @@ void stage_container_t::enqueue(packet_t* packet) {
 /**
  *  @brief Worker threads for this stage should invoke this
  *  function. It will return when the stage shuts down.
+ *
+ *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::run() {
 
@@ -222,9 +391,11 @@ void stage_container_t::run() {
 	// Wait for a packet to become available. We release the
 	// _container_lock in container_queue_dequeue() if we end up
 	// actually waiting.
+
 	critical_section_t cs(_container_lock);
+        // * * * BEGIN CRITICAL SECTION * * *
+
 	packet_list_t* packets = container_queue_dequeue();
-	
 
 	// error checking
 	assert( packets != NULL );
@@ -240,13 +411,23 @@ void stage_container_t::run() {
         // can construct the adaptor before the dequeue and invoke
         // some init() function to initialize the adaptor with the
         // packet list.
-	stage_adaptor_t adaptor(this, packets, packets->front()->_output_filter->input_tuple_size());
+	stage_adaptor_t
+            adaptor(this,
+                    packets,
+                    packets->front()->_output_filter->input_tuple_size());
 
         
 	// Add new stage to the container's list of active stages. It
 	// is better to release the container lock and reacquire it
 	// here since stage construction can take a long time.
-        _container_current_stages.push_back( &adaptor );
+        _container_current_stages.push_back(&adaptor);
+
+        /* Becomes non-idle. Note that we don't become non-idle in
+           this method. We do it in cleanup() since we must do it
+           before deciding whether to unreserve ourselves. */
+        _rp.notify_non_idle();
+
+        // * * * END CRITICAL SECTION * * *
 	cs.exit();
 
         
@@ -257,7 +438,10 @@ void stage_container_t::run() {
 	
         // remove active stage
 	critical_section_t cs_remove_active_stage(_container_lock);
+        // * * * BEGIN CRITICAL SECTION * * *
         _container_current_stages.remove(&adaptor);
+        /* should have marked ourselves non-idle in cleanup */
+        // * * * END CRITICAL SECTION * * *
 	cs_remove_active_stage.exit();
         
         
@@ -271,6 +455,14 @@ void stage_container_t::run() {
 // stage adaptor methods
 
 
+/**
+ * @brief Stage adaptor constructor.
+ *
+ *  THE CALLER DOES NOT NEED TO BE HOLDING THE _container_lock
+ *  MUTEX. Holding the lock creates a longer critical section, but
+ *  increases the chances of seeing sharing since a packet list is
+ *  either in the container queue or in an current stage.
+ */
 stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container,
                                                     packet_list_t* packet_list,
                                                     size_t tuple_size)
@@ -280,6 +472,7 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
       _packet_list(packet_list),
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
       _still_accepting_packets(true),
+      _contains_late_merger(false),
       _cancelled(false)
 {
     
@@ -299,6 +492,7 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
     for (it = packet_list->begin(); it != packet_list->end(); ++it) {
         packet_t* packet = *it;
         packet->_next_tuple_on_merge = NEXT_TUPLE_INITIAL_VALUE;
+	packet->output_buffer()->writer_init();
     }
 }
 
@@ -316,17 +510,21 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
  *  @param packet The packet to try and merge.
  *
  *  @return true if the merge was successful. false otherwise.
+ *
+ *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX. THE CALLER
+ *  MUST NOT BE HOLDING THE _stage_adaptor_lock MUTEX FOR THIS
+ *  ADAPTOR.
  */
-bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
- 
+stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
+    
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_stage_adaptor_lock);
 
 
     if ( !_still_accepting_packets ) {
 	// stage not longer in a state where it can accept new packets
-	return false;
-	// * * * END CRITICAL SECTION * * *	
+        return stage_container_t::MERGE_FAILED;
+        // * * * END CRITICAL SECTION * * *	
     }
 
     // The _still_accepting_packets flag cannot change since we are
@@ -339,17 +537,42 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
     // comparing it with the stage's primary packet.
     if ( !_packet->is_mergeable(packet) ) {
 	// packet cannot share work with this stage
-	return false;
+	return stage_container_t::MERGE_FAILED;
 	// * * * END CRITICAL SECTION * * *
     }
     
     
+    /* packet was merged with this existing stage */
+    if (TRACE_MERGING)
+        TRACE(TRACE_ALWAYS, "%s merged into %s. next_tuple_on_merge = %d\n",
+              packet->_packet_id.data(),
+              _packet->_packet_id.data(),
+              _packet->_next_tuple_on_merge);
+
+    stage_container_t::merge_t ret;
+
     // If we are here, we detected work sharing!
     _packet_list->push_front(packet);
     packet->_next_tuple_on_merge = _next_tuple;
+    if ((_next_tuple == NEXT_TUPLE_INITIAL_VALUE) || _contains_late_merger)
+        /* Either we will be done when the primary packet finishes or
+           there is already a late merger within the packet chain. In
+           the latter case, the late merger has enough worker threads
+           reserved for both of us. */
+        ret = stage_container_t::MERGE_SUCCESS_RELEASE_RESOURCES;
+    else {
+        /* We are are a late merger (and we are the first late
+           merger). We will be needing our worker threads... */
+        _contains_late_merger = true;
+        ret = stage_container_t::MERGE_SUCCESS_HOLD_RESOURCES;
+    }
+    
+    // init the writer tid in case this packet is already going. If
+    // not, the proper value will be set by the adaptor's constructor.
+    packet->output_buffer()->writer_init();
 
     // * * * END CRITICAL SECTION * * *
-    return true;
+    return ret;
 }
 
 
@@ -357,18 +580,31 @@ bool stage_container_t::stage_adaptor_t::try_merge(packet_t* packet) {
 /**
  *  @brief Outputs a page of tuples to this stage's packet set. The
  *  caller retains ownership of the page.
+ *
+ *  THE CALLER SHOULD NOT BE HOLDING THE _container_lock
+ *  MUTEX. Holding it should not cause deadlock but it is unnecessary
+ *  to hold it. THE CALLER MUST NOT BE HOLDING THE _stage_adaptor_lock
+ *  MUTEX FOR THIS ADAPTOR.
+ *
+ *  COMPLICATED SYNCHRONIZATION ALERT: We will release
+ *  stage_adaptor_lock here after recording the head and tail of the
+ *  list. We do this with the assumption that the only operations done
+ *  to this list by other threads are prepend (push_front)
+ *  operations. These should not interfere with us.
  */
 void stage_container_t::stage_adaptor_t::output_page(page* p) {
 
     packet_list_t::iterator it, end;
     unsigned int next_tuple;
     
-    
+
     critical_section_t cs(_stage_adaptor_lock);
+    // * * * BEGIN CRITICAL SECTION * * *
     it  = _packet_list->begin();
     end = _packet_list->end();
     _next_tuple += p->tuple_count();
     next_tuple = _next_tuple;
+    // * * * END CRITICAL SECTION * * *
     cs.exit();
 
     
@@ -419,7 +655,8 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
             // The consumer of the current packet's output
             // buffer has terminated the buffer! No need to
             // continue iterating over output page.
-            TRACE(TRACE_ALWAYS, "Caught TerminatedBufferException. Terminating current packet.\n");
+            TRACE(TRACE_ALWAYS,
+                  "Caught TerminatedBufferException. Terminating current packet.\n");
             terminate_curr_packet = true;
         }
         
@@ -455,9 +692,11 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
  *  it.
  *
  *  @param packet The packet to terminate.
+ *
+ *  THE CALLER DON'T NEED TO BE HOLDING EITHER THE _container_lock
+ *  MUTEX OR THE _stage_adaptor_lock MUTEX.
  */
 void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
-    
     // packet output buffer
     tuple_fifo* output_buffer = packet->release_output_buffer();
     output_buffer->send_eof();
@@ -481,6 +720,10 @@ void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
  *  returns.
  *
  *  @param stage The stage providing us with a process().
+ *
+ *  THE CALLER DOES NOT NEED TO BE HOLDING THE _container_lock
+ *  MUTEX. THE CALLER MUST NOT BE HOLDING THE _stage_adaptor_lock
+ *  MUTEX.
  */
 void stage_container_t::stage_adaptor_t::run_stage(stage_t* stage) {
 
@@ -529,6 +772,16 @@ void stage_container_t::stage_adaptor_t::run_stage(stage_t* stage) {
  *  re-enqueue it.
  *
  *  Invoke terminate_inputs() on the primary packet and delete it.
+ *
+ *  THE CALLER DOES NOT NEED TO BE HOLDING THE _container_lock MUTEX
+ *  OR THE _stage_adaptor_lock MUTEX.
+ *
+ *  COMPLICATED SYNCHRONIZATION ALERT: We will walk through the packet
+ *  list without holding the _stage_adaptor_lock. We do this with the
+ *  assumption that our caller has invoked
+ *  stop_acceping_packets(). Since this disables any further merging
+ *  into this stage, we can assume that no one else is touching our
+ *  packet list.
  */
 void stage_container_t::stage_adaptor_t::cleanup() {
 
@@ -562,20 +815,32 @@ void stage_container_t::stage_adaptor_t::cleanup() {
     }
 
 
-    // Re-enqueue incomplete packets if we have them
-    if ( _packet_list->empty() ) {
-	delete _packet_list;
-    }
-    else {
-        // Hand off ownership of the packet list back to the
-        // container.
-	_container->container_queue_enqueue_no_merge(_packet_list);
-    }
-    _packet_list = NULL;
+    critical_section_t cs(_container->_container_lock);
+    // * * * BEGIN CRITICAL SECTION * * *
 
     
-    // Terminate inputs of primary packet. finish_packet() already
-    // took care of its output buffer.
+    /* We will return and be able to process more packets. We can
+       unreserve ourself from the container. Remember to drop
+       non-idle count before this! */
+    _container->_rp.notify_idle();
+    if (_packet->unreserve_worker_on_completion())
+        _container->_rp.unreserve(1);
+
+
+    // Re-enqueue incomplete packets if we have them
+    if ( _packet_list->empty() )
+	delete _packet_list;
+    else
+        _container->container_queue_enqueue_no_merge(_packet_list);
+
+    
+    // * * * END CRITICAL SECTION * * *
+    cs.exit();
+
+    
+    // TODO Terminate inputs of primary packet. finish_packet()
+    // already took care of its output buffer.
+    _packet_list = NULL;
     assert(_packet != NULL);
     delete _packet;
     _packet = NULL;
@@ -592,18 +857,26 @@ void stage_container_t::stage_adaptor_t::cleanup() {
  *
  *  Invoke terminate() on the primary packet's output buffer, invoke
  *  terminate_inputs() to terminate its input buffers, and delete it.
+ *
+ *  THE CALLER DOES NOT NEED TO BE HOLDING THE _container_lock MUTEX
+ *  OR THE _stage_adaptor_lock MUTEX.
+ *
+ *  COMPLICATED SYNCHRONIZATION ALERT: We will walk through the packet
+ *  list without holding the _stage_adaptor_lock. We do this with the
+ *  assumption that our caller has invoked
+ *  stop_acceping_packets(). Since this disables any further merging
+ *  into this stage, we can assume that no one else is touching our
+ *  packet list.
  */
 void stage_container_t::stage_adaptor_t::abort_queries() {
+
     TRACE(TRACE_ALWAYS, "Aborting query: %s", _packet->_packet_id.data());
 
     // handle non-primary packets in packet list
     packet_list_t::iterator it;
     for (it = _packet_list->begin(); it != _packet_list->end(); ++it) {
         
-
 	packet_t* curr_packet = *it;
-
-
         if ( curr_packet != _packet ) {
             // packet is non-primary
             delete curr_packet;

@@ -3,8 +3,7 @@
 #include "util.h"
 #include "core.h"
 #include "workload/tpch/tpch_db.h"
-
-#include "tests/common/tester_thread.h"
+#include "tests/common.h"
 
 #include <cstdlib>
 
@@ -43,7 +42,7 @@ void do_send_eof(tuple_fifo &buf, int i) {
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
+    db_open_guard_t db_open;
 
 
     // command-line args

@@ -3,10 +3,14 @@
 #include "scheduler.h"
 
 #include "workload/tpch/drivers/merge_test.h"
+#include "workload/process_query.h"
 
+using namespace qpipe;
+using namespace workload;
 
 
 ENTER_NAMESPACE(merge_test);
+
 
 void sleep_interval() {
     sleep(1);
@@ -37,47 +41,31 @@ EXIT_NAMESPACE(merge_test);
 
 using namespace merge_test;
 
+
 ENTER_NAMESPACE(workload);
 
 
-void merge_test_driver::submit(void* disp) {
 
-    scheduler::policy_t* dp = (scheduler::policy_t*)disp;
+class merge_test_process_tuple_t : public process_tuple_t {
 
-    // FUNC_CALL PACKET with merging allowed
-    tuple_fifo* out_buffer = new tuple_fifo(sizeof(int));
-    func_call_packet_t* packet =
-        new func_call_packet_t("FUNC_CALL_PACKET",
-                               out_buffer,
-                               new trivial_filter_t(out_buffer->tuple_size()),
-                               merge_test_fc,
-                               NULL,
-                               NULL,
-                               true);
-
-    qpipe::query_state_t* qs = dp->query_state_create();
-    packet->assign_query_state(qs);
-        
-
-    /* sleep before dispatch so we get merged in later */
-    thread_t* self = thread_get_self();
-    sleep(self->rand(20));
-    
-    
-    // Dispatch packet
-    dispatcher_t::dispatch_packet(packet);
-    
-
-    tuple_t output;
+private:
     int*    v;
     int     old_v;
-    bool    first = true;
-    
+    bool    first;
 
-    /* Only print boundary values (first, end, and rollover from late
-       merging). */
-    TRACE(TRACE_ALWAYS, "*** ANSWER ...\n");
-    while(out_buffer->get_tuple(output)) {
+public:
+    merge_test_process_tuple_t()
+        : v(NULL)
+        , old_v(-1)
+        , first(true)
+    {
+    }
+        
+    virtual void begin() {
+        TRACE(TRACE_ALWAYS, "*** ANSWER ...\n");
+    }
+    
+    virtual void process(const tuple_t& output) {
 
         if (!first)
             old_v = *v;
@@ -94,7 +82,40 @@ void merge_test_driver::submit(void* disp) {
         first = false;
     }
 
-    TRACE(TRACE_ALWAYS, "*** END old_v: %d, v: %d\n", old_v, *v);
+    virtual void end() {
+        TRACE(TRACE_ALWAYS, "*** END old_v: %d, v: %d\n", old_v, *v);
+    }
+};
+
+
+
+void merge_test_driver::submit(void* disp) {
+
+    scheduler::policy_t* dp = (scheduler::policy_t*)disp;
+
+    // FUNC_CALL PACKET with merging allowed
+    tuple_fifo* fifo = new tuple_fifo(sizeof(int));
+    func_call_packet_t* packet =
+        new func_call_packet_t("FUNC_CALL_PACKET",
+                               fifo,
+                               new trivial_filter_t(fifo->tuple_size()),
+                               merge_test_fc,
+                               NULL,
+                               NULL,
+                               true);
+
+    qpipe::query_state_t* qs = dp->query_state_create();
+    packet->assign_query_state(qs);
+        
+
+    /* sleep before dispatch so we get merged in later */
+    thread_t* self = thread_get_self();
+    sleep(self->rand(20));
+    
+
+    merge_test_process_tuple_t pt;
+    process_query(packet, pt);
+
 
     dp->query_state_destroy(qs);
 }

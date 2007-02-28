@@ -1,14 +1,28 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "core.h"
 #include "stages.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/register_stage.h"
+#include "workload/process_query.h"
 #include "tests/common.h"
 
-
-
 using namespace qpipe;
+using namespace workload;
 
+
+class test_func_call_stage_process_tuple_t : public process_tuple_t {
+public:
+
+    virtual void process(const tuple_t& output) {
+	TRACE(TRACE_ALWAYS, "Read %d\n", *aligned_cast<int>(output.data));
+    }
+
+    virtual void end() {
+        TRACE(TRACE_ALWAYS, "TEST DONE\n");
+    }
+
+};
 
 
 int main(int argc, char* argv[]) {
@@ -47,16 +61,8 @@ int main(int argc, char* argv[]) {
                                int_tuple_writer_fc,
                                &info);
     
-    
-    dispatcher_t::dispatch_packet(packet);
-  
-  
-    tuple_t output;
-    while ( int_buffer->get_tuple(output) ) {
-	TRACE(TRACE_ALWAYS, "Read %d\n", *aligned_cast<int>(output.data));
-    }
-    TRACE(TRACE_ALWAYS, "TEST DONE\n");
-    
+    test_func_call_stage_process_tuple_t pt;
+    process_query(packet, pt);
     
     return 0;
 }

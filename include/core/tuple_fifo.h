@@ -124,6 +124,8 @@ public:
         destroy();
     }
 
+    void writer_init();
+
     // the number of FIFOs currently open
     static int open_fifos();
 
@@ -322,7 +324,6 @@ private:
         /* not clear whether we need to switch here */
         /* do nothing */
     }
-
 
     void wait_for_reader() {
 

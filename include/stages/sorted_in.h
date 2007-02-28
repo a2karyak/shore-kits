@@ -25,7 +25,10 @@ struct sorted_in_packet_t : public packet_t {
                        key_extractor_t* left_extractor,
                        key_extractor_t* right_extractor,
                        key_compare_t* compare, bool reject_matches)
-        : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter, NULL, false),
+        : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter, NULL,
+                   false, /* merging not allowed */
+                   true   /* unreserve worker on completion */
+                   ),
           _left(left), _right(right),
           _left_input(left->output_buffer()),
           _right_input(right->output_buffer()),
@@ -35,6 +38,11 @@ struct sorted_in_packet_t : public packet_t {
     {
     }
 
+    virtual void declare_worker_needs(resource_declare_t* declare) {
+        declare->declare(_packet_type, 1);
+        _left->declare_worker_needs(declare);
+        _right->declare_worker_needs(declare);
+    }
 };
 
 struct sorted_in_stage_t : public stage_t {

@@ -2,7 +2,7 @@ m4_pattern_allow([^AC_PACKAGE])
 
 # configure.in for QPipe         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
-AC_INIT(THIS_IS_QPIPE)
+AC_INIT(THIS_IS_QPIPE,2.0)
 
 # find system type (using this macro means we must include
 # the files install-sh, config.sub, and config.guess (all from
@@ -110,7 +110,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/ia64)
 
     ARCHOS=IA64_LINUX
-    CPU_FLAGS="-mtune-arch=itanium"
+    CPU_FLAGS="-mtune=itanium2"
     ;;
 
   # linux on power5? (not implem)
@@ -221,20 +221,20 @@ AC_SUBST(QPIPE_VERSION)
 
 # basic flags/libs every arch needs
 
+#DEBUG_FLAGS="-O0"
 #PROFILE_FLAGS="-pg -O0"
-OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+#OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_FLAGS="-O3 -fno-inline"
+#OPT_DEBUG_FLAGS="-O3 -fno-inline"
 CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
--Wall -Wcast-align -Wextra -Wfloat-equal \
--Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
+        -Wall -Wcast-align -Wextra -Wfloat-equal \
+	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 
 LDFLAGS="-lnsl -ldl -lm -lpthread"
 
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
-    CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0"
-else
-    LDFLAGS="$LDFLAGS -lboost_regex"
+    CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0 -mt -lpthread -library=stlport4"
 fi
 
 AC_SUBST(CXXFLAGS)

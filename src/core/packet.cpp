@@ -3,7 +3,7 @@
 #include "core/packet.h"
 #include "core/stage_container.h"
 #include "util.h"
-
+#include "util/thread.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -37,14 +37,16 @@ packet_t::packet_t(const c_str    &packet_id,
 		   tuple_fifo*     output_buffer,
 		   tuple_filter_t* output_filter,
                    query_plan*     plan,
-                   bool            merge_enabled)
+                   bool            merge_enabled,
+                   bool            unreserve_on_completion)
     : _plan(plan),
       
       /* Allow packets to be created unbound to any query. */
       _qstate(NULL),
 
       _merge_enabled(merge_enabled),
-      _packet_id(packet_id),
+      _unreserve_on_completion(unreserve_on_completion),
+      _packet_id("%s_%s", thread_get_self()->thread_name().data(), packet_id.data()),
       _packet_type(packet_type),
       _output_buffer(output_buffer),
       _output_filter(output_filter),

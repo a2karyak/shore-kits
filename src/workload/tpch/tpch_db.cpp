@@ -2,7 +2,7 @@
 
 #include "util.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/tpch/tpch_tables.h"
+#include "workload/tpch/tpch_filenames.h"
 
 
 
@@ -23,14 +23,8 @@ void db_open(uint32_t, uint32_t db_cache_size_gb, uint32_t db_cache_size_bytes) 
     assert(db_cache_size_gb + db_cache_size_bytes > 0);
     
     // open tables
-    open_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
-    open_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
-    open_db_table(tpch_nation, TABLE_NATION_NAME);
-    open_db_table(tpch_orders, TABLE_ORDERS_NAME);
-    open_db_table(tpch_part, TABLE_PART_NAME);
-    open_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
-    open_db_table(tpch_region, TABLE_REGION_NAME);
-    open_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        open_db_table(tpch_tables[i].db, tpch_tables[i].cdb_filename);
 
     TRACE(TRACE_ALWAYS, "TPCH database open\n");
 }
@@ -47,14 +41,10 @@ void db_open(uint32_t, uint32_t db_cache_size_gb, uint32_t db_cache_size_bytes) 
 void db_close() {
 
     // close tables
-    close_db_table(tpch_customer, TABLE_CUSTOMER_NAME);
-    close_db_table(tpch_lineitem, TABLE_LINEITEM_NAME);
-    close_db_table(tpch_nation, TABLE_NATION_NAME);
-    close_db_table(tpch_orders, TABLE_ORDERS_NAME);
-    close_db_table(tpch_part, TABLE_PART_NAME);
-    close_db_table(tpch_partsupp, TABLE_PARTSUPP_NAME);
-    close_db_table(tpch_region, TABLE_REGION_NAME);
-    close_db_table(tpch_supplier, TABLE_SUPPLIER_NAME);
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        close_db_table(tpch_tables[i].db, tpch_tables[i].cdb_filename);
+
+    TRACE(TRACE_ALWAYS, "TPCH database closed\n");
 }
 
 

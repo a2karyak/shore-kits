@@ -37,6 +37,8 @@ void hash_join_stage_t::process_packet() {
     /* First divide the right relation into partitions. */
     tuple_fifo *right_buffer = packet->_right_buffer;
     dispatcher_t::dispatch_packet(packet->_right);
+    tuple_fifo *left_buffer = packet->_left_buffer;
+    dispatcher_t::dispatch_packet(packet->_left);
 
 
     /* Quick check for no-tuple case. */
@@ -138,8 +140,6 @@ void hash_join_stage_t::process_packet() {
 
 
     // start building left side hash partitions
-    tuple_fifo *left_buffer = packet->_left_buffer;
-    dispatcher_t::dispatch_packet(packet->_left);
     if(!left_buffer->ensure_read_ready())
         // No left-side tuples... no join tuples.
         return;

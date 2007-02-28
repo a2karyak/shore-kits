@@ -174,14 +174,70 @@ thread_t* member_func_thread(Class *instance,
                                                     thread_name);
 }
 
+struct thread_pool {
+    pthread_mutex_t _lock;
+    pthread_cond_t _cond;
+    int _max_active;		// how many can be active at a time?
+    int _active;		// how many are actually active?
+    thread_pool(int max_active)
+	: _lock(thread_mutex_create()),
+	  _cond(thread_cond_create()),
+	  _max_active(max_active), _active(0)
+    {
+    }
+
+    void start();
+    void stop();
+};
+
 
 
 // exported functions
 
 void      thread_init(void);
 thread_t* thread_get_self(void);
-pthread_t thread_create(thread_t* t);
+pthread_t thread_create(thread_t* t, thread_pool* p=NULL);
 
+template<typename T>
+struct thread_local {
+    pthread_key_t _key;
+    
+    // NOTE:: the template is here because there because I am not
+    // aware of a way to pass 'extern "C" function pointers to a C++
+    // class member function. Fortunately the compiler can still
+    // instantiate a template taking 'extern "C"' stuff... However,
+    // this makes a default constructor argument of NULL ambiguous, so
+    // we have to have two constructors instead. Yuck.
+    template<class Destructor>
+    thread_local(Destructor d) {
+	pthread_key_create(&_key, d);
+    }
+    thread_local() {
+	pthread_key_create(&_key, NULL);
+    }
+    ~thread_local() {
+	pthread_key_delete(_key);
+    }
+
+    T* get() {
+	return reinterpret_cast<T*>(pthread_getspecific(_key));
+    }
+    void set(T* val) {
+	int result = pthread_setspecific(_key, val);
+	THROW_IF(ThreadException, result);
+    }
+    
+
+    thread_local &operator=(T* val) {
+	set(val);
+	return *this;
+    }
+    operator T*() {
+	return get();
+    }
+};
+
+extern thread_local<thread_pool> THREAD_POOL;
 
 
 #endif  /* __THREAD_H */

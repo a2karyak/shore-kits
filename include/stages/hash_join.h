@@ -19,7 +19,7 @@
 #include "util/hashtable.h"
 #endif
 
-
+#include <string>
 using std::string;
 using std::vector;
 using namespace qpipe;
@@ -53,7 +53,7 @@ public:
     int count_right;
   
     /**
-     *  @brief sort_packet_t constructor.
+     *  @brief Constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -91,7 +91,10 @@ public:
                        bool outer=false,
                        bool distinct=false)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, output_filter,
-                   create_plan(output_filter, join, outer, distinct, left, right)),
+                   create_plan(output_filter, join, outer, distinct, left, right),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
           _left(left),
           _right(right),
           _left_buffer(left->output_buffer()),
@@ -112,6 +115,12 @@ public:
         children[0] = left->plan();
         children[1] = right->plan();
         return new query_plan(action, filter->to_string(), children, 2);
+    }
+
+    virtual void declare_worker_needs(resource_declare_t* declare) {
+        declare->declare(_packet_type, 1);
+        _left->declare_worker_needs(declare);
+        _right->declare_worker_needs(declare);
     }
 };
 

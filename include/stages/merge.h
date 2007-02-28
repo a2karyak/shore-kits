@@ -64,7 +64,10 @@ struct merge_packet_t : public packet_t {
                    const buffer_list_t& input_buffers,
                    key_extractor_t* extract,
                    key_compare_t*  compare)
-	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL, false),
+	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter, NULL,
+                   false, /* merging not allowed */
+                   false  /* keep worker on completion */
+                   ),
           _input_buffers(input_buffers),
           _extract(extract),
           _compare(compare)
@@ -77,6 +80,10 @@ struct merge_packet_t : public packet_t {
             delete *it++;
     }
 
+    virtual void declare_worker_needs(resource_declare_t*) {
+        /* Do nothing. The stage the that creates us is responsible
+           for deciding how many MERGE workers it needs. */
+    }
 };
 
 
@@ -123,7 +130,7 @@ protected:
 private:
 
     void insert_sorted(buffer_head_t* head);
-    int compare(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b);
+    int  compare(const hint_tuple_pair_t &a, const hint_tuple_pair_t &b);
 };
 
 

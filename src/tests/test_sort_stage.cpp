@@ -6,17 +6,26 @@
 #include "tests/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/register_stage.h"
+#include "workload/process_query.h"
 #include <vector>
 #include <algorithm>
 
 using std::vector;
-
 using namespace qpipe;
+using namespace workload;
+
+
+class test_sort_stage_process_tuple_t : public process_tuple_t {
+public:
+
+    virtual void process(const tuple_t& output) {
+        TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
+    }
+};
 
 
 int num_values;
 int num_copies;
-
 
 
 void write_ints(void*, void* tfifo)
@@ -48,9 +57,9 @@ void write_ints(void*, void* tfifo)
 int main(int argc, char* argv[]) {
 
     thread_init();
-    db_open();
-    int THREAD_POOL_SIZE = 20;
+    db_open_guard_t db_open;
 
+    int THREAD_POOL_SIZE = 20;
     bool do_echo = true;
     
 
@@ -97,13 +106,8 @@ int main(int argc, char* argv[]) {
                                               new int_key_extractor_t(),
                                               new int_key_compare_t(),
                                               fc_packet);
-    dispatcher_t::dispatch_packet(packet);
+    test_sort_stage_process_tuple_t pt;
+    process_query(packet, pt);
 
-    
-    tuple_t output;
-
-
-    while (output_buffer->get_tuple(output)) {
-        TRACE(TRACE_ALWAYS, "Value: %d\n", *aligned_cast<int>(output.data));
-    }
+    return 0;
 }

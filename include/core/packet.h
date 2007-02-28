@@ -8,6 +8,7 @@
 #include "core/tuple_fifo.h"
 #include "core/functors.h"
 #include "core/query_state.h"
+#include "util/resource_declare.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -16,9 +17,12 @@ using std::list;
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
+static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
+
+
 
 /* exported datatypes */
+
 
 class   packet_t;
 typedef list<packet_t*> packet_list_t;
@@ -38,6 +42,19 @@ struct query_plan {
 
 
 /**
+ * @brief Base class for packet chomper (any class that exports a
+ * chomp() method). In the general case, chomp() must be synchronized.
+ */
+class packet_chomper_t
+{
+public:
+    virtual void chomp(packet_t* p)=0;
+    virtual ~packet_chomper_t() { }
+};
+
+
+
+/**
  *  @brief A packet in QPIPE is a unit of work that can be processed
  *  by a stage's worker thread.
  *
@@ -50,18 +67,24 @@ struct query_plan {
  *  queue, it will check the working set to see if the new packet can
  *  be merged with an existing one that is already being processed.
  */
-
-
 class packet_t
 {
 
 protected:
+
+    /* used for detecting work-sharing opportunities */
     query_plan* _plan; 
 
-    // dispatching/CPU binding fields
+    /* used dispatching/CPU binding */
     query_state_t* _qstate;
 
+    /* used to recover from coming in too late for work sharing */
     bool _merge_enabled;
+
+    /* used to keep sub-stages from unreserving workers so long as the
+       meta-stage needs them */
+    bool _unreserve_on_completion;
+
 
     static bool is_compatible(query_plan const* a, query_plan const* b) {
         if(!a || !b || strcmp(a->action, b->action))
@@ -81,8 +104,12 @@ protected:
     }
     
     virtual bool is_compatible(packet_t* other) {
-        return (osp_policy != OSP_FULL)? false : is_compatible(plan(), other->plan());
+        if (osp_policy == OSP_NONE || osp_policy == OSP_SCAN)
+	    return false;
+	
+	return is_compatible(plan(), other->plan());
     }
+
 
 public:
     
@@ -116,7 +143,8 @@ public:
              tuple_fifo*     output_buffer,
              tuple_filter_t* output_filter,
              query_plan*     plan,
-             bool            merge_enabled=true);
+             bool            merge_enabled,
+             bool            unreserve_on_completion);
 
 
     virtual ~packet_t(void);
@@ -124,6 +152,7 @@ public:
     tuple_fifo* release_output_buffer() {
         return _output_buffer.release();
     }
+    
     tuple_fifo* output_buffer() {
         return _output_buffer;
     }
@@ -164,14 +193,19 @@ public:
         _qstate = qstate;
     }
 
-
     query_state_t* get_query_state() {
         return _qstate;
     }
 
+    bool unreserve_worker_on_completion() {
+        return _unreserve_on_completion;
+    }
+    
+    virtual void declare_worker_needs(resource_declare_t* declare)=0;
 };
 
 
 EXIT_NAMESPACE(qpipe);
+
 
 #endif

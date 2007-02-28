@@ -25,7 +25,10 @@ struct partial_aggregate_packet_t : public packet_t {
                                key_extractor_t* extractor,
                                key_compare_t* compare)
         : packet_t(packet_id, PACKET_TYPE, out_buffer, out_filter,
-                   create_plan(out_filter, aggregate, extractor, input->plan())),
+                   create_plan(out_filter, aggregate, extractor, input->plan()),
+                   true, /* merging allowed */
+                   true  /* unreserve worker on completion */
+                   ),
           _input(input), _input_buffer(input->output_buffer()),
           _aggregate(aggregate), _extractor(extractor), _compare(compare)
     {
@@ -44,7 +47,13 @@ struct partial_aggregate_packet_t : public packet_t {
         return new query_plan(action, filter->to_string(), children, 1);
     }
     
+    virtual void declare_worker_needs(resource_declare_t* declare) {
+        declare->declare(_packet_type, 1);
+        _input->declare_worker_needs(declare);
+    }
 };
+
+
 
 class partial_aggregate_stage_t : public stage_t {
     typedef std::set<hint_tuple_pair_t, tuple_less_t> tuple_set_t;
@@ -62,5 +71,7 @@ protected:
     virtual void process_packet();
     int alloc_agg(hint_tuple_pair_t &agg, const char* key);
 };
+
+
 
 #endif

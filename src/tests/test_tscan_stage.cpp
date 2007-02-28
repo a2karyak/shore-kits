@@ -14,11 +14,22 @@
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/register_stage.h"
-
+#include "workload/process_query.h"
 
 using namespace qpipe;
+using namespace workload;
 
 
+class test_tscan_stage_process_tuple_t : public process_tuple_t {
+public:
+
+    virtual void process(const tuple_t& output) {
+	decimal* d = aligned_cast<decimal>(output.data);
+	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
+	      d[0].to_double(), d[1].to_double());
+    }
+    
+};
 
 
 /** @fn    : main
@@ -28,7 +39,7 @@ using namespace qpipe;
 int main() {
 
     thread_init();
-    db_open();
+    db_open_guard_t db_open;
 
     register_stage<tscan_stage_t>(1);
 
@@ -40,20 +51,13 @@ int main() {
 
 
     tscan_packet_t* q6_tscan_packet =
-        new tscan_packet_t("TSCAN_PACKET_1" , tscan_out_buffer, tscan_filter, tpch_lineitem);
+        new tscan_packet_t("TSCAN_PACKET_1",
+                           tscan_out_buffer,
+                           tscan_filter,
+                           tpch_tables[TPCH_TABLE_LINEITEM].db);
 
-    // Dispatch packet
-    dispatcher_t::dispatch_packet(q6_tscan_packet);
-    
-    tuple_t output;
-    decimal* d = NULL;
-    while(!tscan_out_buffer->get_tuple(output)) {
-	d = aligned_cast<decimal>(output.data);
-	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
-	      d[0].to_double(), d[1].to_double());
-    }
+    test_tscan_stage_process_tuple_t pt;
+    process_query(q6_tscan_packet, pt);
 
-
-    db_close();
     return 0;
 }

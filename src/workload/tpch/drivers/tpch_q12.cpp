@@ -6,8 +6,11 @@
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/predicates.h"
+#include "workload/process_query.h"
+
 
 using namespace qpipe;
+
 
 ENTER_NAMESPACE(q12);
 
@@ -262,11 +265,36 @@ struct q12_aggregate_t : tuple_aggregate_t {
     }
 };
 
+
 EXIT_NAMESPACE(q12);
+
+
 using namespace q12;
+
+
 ENTER_NAMESPACE(workload);
 
     
+class tpch_q12_process_tuple_t : public process_tuple_t {
+    
+public:
+     
+    virtual void begin() {
+        TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10s %10s\n",
+              "Shipmode", "High_Count", "Low_Count");
+    }
+    
+    virtual void process(const tuple_t& output) {
+        q12_tuple* r = aligned_cast<q12_tuple>(output.data);
+        TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10d %10d\n",
+              (r->L_SHIPMODE == MAIL) ? "MAIL" : "SHIP",
+              r->HIGH_LINE_COUNT,
+              r->LOW_LINE_COUNT);
+    }
+
+};
+
+
 void tpch_q12_driver::submit(void* disp) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*) disp;
@@ -279,14 +307,14 @@ void tpch_q12_driver::submit(void* disp) {
         new tscan_packet_t("lineitem TSCAN",
                            buffer,
                            filter,
-                           tpch_lineitem);
+                           tpch_tables[TPCH_TABLE_LINEITEM].db);
     // order scan
     filter = new order_tscan_filter_t();
     buffer = new tuple_fifo(sizeof(order_scan_tuple));
     packet_t* order_packet =
         new tscan_packet_t("order TSCAN",
                            buffer, filter,
-                           tpch_orders);
+                           tpch_tables[TPCH_TABLE_ORDERS].db);
     
     // join
     filter = new trivial_filter_t(sizeof(join_tuple));
@@ -301,7 +329,7 @@ void tpch_q12_driver::submit(void* disp) {
 
     // partial aggregation
     filter = new trivial_filter_t(sizeof(q12_tuple));
-    guard<tuple_fifo> result = new tuple_fifo(sizeof(q12_tuple));
+    tuple_fifo* result = new tuple_fifo(sizeof(q12_tuple));
     size_t offset = offsetof(join_tuple, L_SHIPMODE);
     key_extractor_t* extractor = new default_key_extractor_t(sizeof(int), offset);
     key_compare_t* compare = new int_key_compare_t();
@@ -321,20 +349,11 @@ void tpch_q12_driver::submit(void* disp) {
     order_packet->assign_query_state(qs);
     lineitem_packet->assign_query_state(qs);
 
-    dispatcher_t::dispatch_packet(agg_packet);
-
-    tuple_t output;
-    TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10s %10s\n",
-          "Shipmode", "High_Count", "Low_Count");
-    while(result->get_tuple(output)) {
-        q12_tuple* r = aligned_cast<q12_tuple>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "*** Q12 %10s %10d %10d\n",
-              (r->L_SHIPMODE == MAIL) ? "MAIL" : "SHIP",
-              r->HIGH_LINE_COUNT,
-              r->LOW_LINE_COUNT);
-    }
+    tpch_q12_process_tuple_t pt;
+    process_query(agg_packet, pt);
 
     dp->query_state_destroy(qs);
 }
+
 
 EXIT_NAMESPACE(workload);

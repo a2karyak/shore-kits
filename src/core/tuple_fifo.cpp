@@ -178,6 +178,7 @@ static size_t total_prefetches = 0;
  * when the FIFO is destroyed.
  */
 void tuple_fifo::init() {
+    _reader_tid = pthread_self();
     // prepare for reading
     _set_read_page(SENTINEL_PAGE);
 
@@ -188,6 +189,10 @@ void tuple_fifo::init() {
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
     cs.exit();
+}
+
+void tuple_fifo::writer_init() {
+    _writer_tid = pthread_self();
 }
 
 struct free_page {
@@ -262,7 +267,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
     if(done_writing) {
-        fprintf(stderr, "Fifo %p sending EOF\n", this);
+	//        fprintf(stderr, "Fifo %p sending EOF\n", this);
         _done_writing = true;
         _write_page.done();
     }
@@ -351,6 +356,7 @@ bool tuple_fifo::send_eof() {
 
 bool tuple_fifo::terminate() {
     
+
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
 

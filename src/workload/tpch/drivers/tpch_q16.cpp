@@ -6,10 +6,14 @@
 
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
+#include "workload/process_query.h"
+
 
 using namespace qpipe;
 
+
 ENTER_NAMESPACE(q16);
+
 
 struct supplier_tscan_filter_t : public tuple_filter_t {
     char const *word1;
@@ -446,9 +450,34 @@ struct q16_compare2_t : public key_compare_t {
     }
 };
 
+
 EXIT_NAMESPACE(q16);
+
+
 using namespace q16;
+
+
 ENTER_NAMESPACE(workload);
+
+
+class tpch_q16_process_tuple_t : public process_tuple_t {
+    
+public:
+     
+    virtual void begin() {
+        TRACE(TRACE_QUERY_RESULTS,
+              "*** Q16 %10s %25s %10s %10s\n",
+              "Brand", "Type", "Size", "Suppliers");
+    }
+    
+    virtual void process(const tuple_t& output) {
+        part_scan_tuple_t* r = aligned_cast<part_scan_tuple_t>(output.data);
+        TRACE(TRACE_QUERY_RESULTS,
+              "*** Q16 %10s %25s %10d %10d\n",
+              r->p_brand, r->p_type, r->p_size, r->p_partkey);
+    }
+
+};
 
 
 void tpch_q16_driver::submit(void* disp) {
@@ -466,8 +495,8 @@ void tpch_q16_driver::submit(void* disp) {
     tuple_fifo* buffer = new tuple_fifo(sizeof(part_supp_tuple_t));
 
 
-    packet_t* partsupp_scan_packet = partsupp_scan(tpch_partsupp);
-    packet_t* supplier_scan_packet = supplier_scan(tpch_supplier);
+    packet_t* partsupp_scan_packet = partsupp_scan(tpch_tables[TPCH_TABLE_PARTSUPP].db);
+    packet_t* supplier_scan_packet = supplier_scan(tpch_tables[TPCH_TABLE_SUPPLIER].db);
 
 
     packet_t* not_in_packet = new sorted_in_packet_t("ps_suppkey NOT IN",
@@ -485,7 +514,7 @@ void tpch_q16_driver::submit(void* disp) {
     buffer = new tuple_fifo(sizeof(part_scan_tuple_t));
 
 
-    packet_t* part_scan_packet = part_scan(tpch_part);
+    packet_t* part_scan_packet = part_scan(tpch_tables[TPCH_TABLE_PART].db);
     packet_t* join_packet = new hash_join_packet_t("Part JOIN",
                                                    buffer,
                                                    filter,
@@ -544,25 +573,14 @@ void tpch_q16_driver::submit(void* disp) {
     pagg_packet->assign_query_state(qs);
     agg_packet->assign_query_state(qs);
     sort_packet->assign_query_state(qs);
+
     
-    // Dispatch packet
-    dispatcher_t::dispatch_packet(sort_packet);
-    guard<tuple_fifo> result = sort_packet->output_buffer();
-    
-    TRACE(TRACE_ALWAYS,
-          "*** Q16 %10s %25s %10s %10s\n",
-          "Brand", "Type", "Size", "Suppliers");
-    
-    tuple_t output;
-    while(result->get_tuple(output)) {
-        part_scan_tuple_t* r = aligned_cast<part_scan_tuple_t>(output.data);
-        TRACE(TRACE_QUERY_RESULTS,
-              "*** Q16 %10s %25s %10d %10d\n",
-              r->p_brand, r->p_type, r->p_size, r->p_partkey);
-    }
+    tpch_q16_process_tuple_t pt;
+    process_query(sort_packet, pt);
 
 
     dp->query_state_destroy(qs);
 }
+
 
 EXIT_NAMESPACE(workload);
