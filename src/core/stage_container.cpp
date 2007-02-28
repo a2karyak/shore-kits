@@ -29,13 +29,15 @@ const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 
 
-
 // the "STOP" exception. Simply indicates that the stage should stop
 // (not necessarily an "error"). Thrown by the adaptor's output(),
 // caught by the container.
 struct stop_exception { };
 
+
 EXIT_NAMESPACE(qpipe);
+
+
 template<>
 inline void
 guard<qpipe::dispatcher_t::worker_releaser_t>::
@@ -43,12 +45,14 @@ guard<qpipe::dispatcher_t::worker_releaser_t>::
 {
     qpipe::dispatcher_t::releaser_release(ptr);
 }
+
+
 ENTER_NAMESPACE(qpipe);
 
 
 extern "C" void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
-                                                  stage_adaptor_t* adaptor,
-                                                  ctx_t* ctx)
+                                                             stage_adaptor_t* adaptor,
+                                                             ctx_t* ctx)
 {
     thread_t* self = thread_get_self();
     self->_ctx = ctx;
@@ -324,11 +328,6 @@ void stage_container_t::unreserve(int n) {
 void stage_container_t::enqueue(packet_t* packet) {
 
     assert(packet != NULL);
-    bool unreserve = packet->unreserve_worker_on_completion();
-    guard<dispatcher_t::worker_releaser_t> wr = dispatcher_t::releaser_acquire();
-    packet->declare_worker_needs(wr);
-    
-
     packet_list_t* packets = new packet_list_t;
     packets->push_back(packet);
     stage_adaptor_t* adaptor = 

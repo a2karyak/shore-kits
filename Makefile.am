@@ -73,7 +73,7 @@ lib_libutil_a_SOURCES = \
 	$(SU)/tcp.cpp \
 	$(SU)/rio.cpp \
         $(SU)/alloc_printf.cpp \
-        $(SU)/errnum_to_string.cpp
+        $(SU)/errnum_to_string.cpp \
 	$(SU)/chomp.cpp \
         $(SU)/fileops.cpp \
         $(SU)/static_list_node.cpp \

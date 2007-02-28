@@ -62,7 +62,8 @@ public:
     
     /* -ngm- Used for plain operations in the qpipe-plain branch. */
     static void* static_run_stage_wrapper(stage_t* stage,
-                                          stage_adaptor_t* adaptor);
+                                          stage_adaptor_t* adaptor,
+                                          ctx_t* context);
 
     stage_container_t(const c_str &container_name, stage_factory_t* stage_maker,
 		      int active_count, int max_count=-1);
@@ -165,9 +166,6 @@ public:
     }
 
     
-    void output_page(page* p);
-
-
 protected:
     
     // container synch vars
@@ -198,15 +196,12 @@ protected:
 
 
     stage_container_t::merge_t try_merge(packet_t* packet);
-    void run_stage(stage_t* stage);
-    
+   
    
 public:
     
-    /* -ngm- Used for plain operations in the qpipe-plain branch. */
-    static void* static_run_stage_wrapper(stage_t* stage,
-                                          stage_adaptor_t* adaptor,
-                                          ctx_t* context);
+    void run_stage(stage_t* stage);
+
 
 protected:
 
