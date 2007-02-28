@@ -59,8 +59,18 @@ extern "C" void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
 
     TRACE(TRACE_THREAD_LIFE_CYCLE,
           "Running context %s with self = %p\n",
-          ctx->_context_name.data(),
-          self);
+          ctx->_context_name.data(), self);
+
+    /* Do the things worker threads do before invoking run_stage(). */
+
+    /* Do not notify that we are non idle... we have not reserved
+       worker threads... */
+#if 0
+    stage_container_t* container = adaptor->get_container();
+    critical_section_t cs(container->_container_lock);
+    container->_rp.notify_non_idle();
+    cs.exit();
+#endif
 
     adaptor->run_stage(stage);
     delete stage;
@@ -818,12 +828,16 @@ void stage_container_t::stage_adaptor_t::cleanup() {
     // * * * BEGIN CRITICAL SECTION * * *
 
     
+    /* Do not release worker threads... we have not reserved
+       them... */
+#if 0
     /* We will return and be able to process more packets. We can
        unreserve ourself from the container. Remember to drop
        non-idle count before this! */
     _container->_rp.notify_idle();
     if (_packet->unreserve_worker_on_completion())
         _container->_rp.unreserve(1);
+#endif
 
 
     // Re-enqueue incomplete packets if we have them

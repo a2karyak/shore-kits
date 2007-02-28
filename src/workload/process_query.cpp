@@ -14,12 +14,16 @@ ENTER_NAMESPACE(workload);
 void process_query(packet_t* root, process_tuple_t& pt)
 {
     guard<tuple_fifo> out = root->output_buffer();
-    
-    dispatcher_t::worker_reserver_t* wr = dispatcher_t::reserver_acquire();
 
+
+    /* Plain system... do not reserve worker threads! */
+#if 0
+    dispatcher_t::worker_reserver_t* wr = dispatcher_t::reserver_acquire();
     /* reserve worker threads and dispatch... */
     root->declare_worker_needs(wr);
     wr->acquire_resources();
+#endif
+
     dispatcher_t::dispatch_packet(root);
     
     /* process query results */
@@ -29,7 +33,9 @@ void process_query(packet_t* root, process_tuple_t& pt)
         pt.process(output);
     pt.end();
 
+#if 0
     dispatcher_t::reserver_release(wr);
+#endif
 }
 
 

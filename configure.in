@@ -223,7 +223,7 @@ AC_SUBST(QPIPE_VERSION)
 
 #DEBUG_FLAGS="-O0"
 #PROFILE_FLAGS="-pg -O0"
-#OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_FLAGS="-O3 -fno-inline"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
 CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \

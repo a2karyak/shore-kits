@@ -156,8 +156,13 @@ public:
     }
 
 
+    stage_container_t* get_container() {
+        return _container;
+    }
+        
+
     virtual const c_str &get_container_name() {
-	return _container->get_name();
+ 	return _container->get_name();
     }
 
 
