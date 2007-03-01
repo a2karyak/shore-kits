@@ -34,8 +34,10 @@ void* thread_main(void* arg)
 
     struct itimerval it_real_start, it_real_end;
     struct itimerval it_virt_start, it_virt_end;
+    struct itimerval it_prof_start, it_prof_end;
     itimer_set_big(&it_real_start); 
     itimer_set_big(&it_virt_start); 
+    itimer_set_big(&it_prof_start); 
 
 
     /* set up this thread's timers */
@@ -44,6 +46,10 @@ void* thread_main(void* arg)
         return NULL;
     }
     if (setitimer(ITIMER_VIRTUAL, &it_virt_start, NULL)) {
+        TRACE(TRACE_ALWAYS, "setitimer() failed\n");
+        return NULL;
+    }
+    if (setitimer(ITIMER_PROF, &it_prof_start, NULL)) {
         TRACE(TRACE_ALWAYS, "setitimer() failed\n");
         return NULL;
     }
@@ -56,8 +62,11 @@ void* thread_main(void* arg)
         TRACE(TRACE_ALWAYS, "getitimer() failed\n");
         return NULL;
     }
-    
     if (getitimer(ITIMER_VIRTUAL, &it_virt_end)) {
+        TRACE(TRACE_ALWAYS, "getitimer() failed\n");
+        return NULL;
+    }
+    if (getitimer(ITIMER_PROF, &it_prof_end)) {
         TRACE(TRACE_ALWAYS, "getitimer() failed\n");
         return NULL;
     }
@@ -76,7 +85,13 @@ void* thread_main(void* arg)
     printf("%s Virtual timer end:   %s\n",
            info->name.data(),
            itimer_to_cstr(&it_virt_end).data());
-
+    printf("%s Profile timer start: %s\n",
+           info->name.data(),
+           itimer_to_cstr(&it_prof_start).data());
+    printf("%s Profile timer end:   %s\n",
+           info->name.data(),
+           itimer_to_cstr(&it_prof_end).data());
+    
     return NULL;
 }
 
