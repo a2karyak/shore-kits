@@ -13,6 +13,7 @@ TESTS = \
    tests/rand_array_access \
    tests/trace \
    tests/itimer_keypress \
+   tests/itimer_threads \
    tests/constants \
    tests/bitvector \
    tests/hashtable \
@@ -206,6 +207,7 @@ tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
 tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
+tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
 tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
