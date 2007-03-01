@@ -9,7 +9,10 @@
 
 ENTER_NAMESPACE(qpipe);
 
+
 DEFINE_EXCEPTION(TerminatedBufferException);
+
+
 
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
@@ -103,16 +106,13 @@ public:
         destroy();
     }
 
-    void writer_init();
 
-    // the number of FIFOs currently open
+    /* Global tuple_fifo statistics */
     static int open_fifos();
-
     static size_t prefetch_count();
-    
-    // closes all memory pool file handles (which are left open to
-    // preserve their statistics)
     static void clear_stats();
+
+
 
     size_t tuple_size() const {
         return _tuple_size;
@@ -124,12 +124,15 @@ public:
     }
 
 
+    void writer_init();
+
+
     /**
-     *  @brief This function can only be called by the
-     *  producer. Insert a tuple into this buffer. If the buffer is
-     *  full (if it already has allocated the maximum number of
-     *  pages), wait for the consumer to read. If the current page is
-     *  filled and the buffer is not full, allocate a new page.
+     *  @brief Only the producer may call this method. Insert a tuple
+     *  into this buffer. If the buffer is full (if it already has
+     *  allocated the maximum number of pages), wait for the consumer
+     *  to read. If the current page is filled and the buffer is not
+     *  full, allocate a new page.
      *
      *  @param tuple The tuple to insert. On successful insert, the
      *  data that this tuple points to will be copied into this page.
@@ -147,11 +150,10 @@ public:
     
     
     /**
-     *  @brief This function can only be called by the
-     *  producer. Allocate space for a new tuple in this buffer and
-     *  set 'tuple' to point to it. The tuple size stored in the
-     *  buffer must match the size of 'tuple'. This function blocks if
-     *  the buffer is full.
+     *  @brief Only the producer may call this method. Allocate space
+     *  for a new tuple in this buffer and set the returned tuple to
+     *  point to it. The caller may then assign to this tuple to
+     *  assign to the buffer.
      *
      *  If this function returns success, the caller may invoke
      *  tuple.assign() to copy data into the allocated space. This
@@ -169,17 +171,17 @@ public:
     bool get_tuple(tuple_t &tuple) {
         if(!ensure_read_ready())
             return false;
-        
+       
         tuple = *_read_iterator++;
         return true;
     }
 
 
     /**
-     *  @brief This function can only be called by the
-     *  consumer. Retrieve a page of tuples from the buffer in one
-     *  operation. The buffer gives up ownership of the page and will
-     *  not access (or free) it afterward.
+     *  @brief Only the consumer may call this method. Retrieve a page
+     *  of tuples from the buffer in one operation. The buffer gives
+     *  up ownership of the page and will not access (or free) it
+     *  afterward.
      *
      *  WARNING: Do not mix calls to get_page() and get_tuple() unless
      *  the caller if prepared to deal with duplicate tuples. In other
@@ -207,6 +209,7 @@ public:
      * When this function returns at least one tuple may be written
      * without blocking.
      */
+
     void ensure_write_ready() {
         if(_write_page->full())
             _flush_write_page(false);
@@ -221,6 +224,7 @@ public:
      *
      * @return false if EOF
      */
+
     bool ensure_read_ready() {
         // blocking attempt => only returns false if EOF
 	return (_read_iterator->data != _read_end) || _get_read_page();
@@ -239,6 +243,7 @@ public:
      * was already terminated or at EOF.
      * 
      */
+
     bool terminate();
 
 
@@ -251,6 +256,7 @@ public:
      * access the FIFO again if send_eof() returns true.
      *
      */
+
     bool send_eof();
     
     
@@ -261,6 +267,7 @@ public:
      *  @return Returns true only if the producer has sent EOF and we
      *  have read every tuple of every page in this buffer.
      */
+
     bool eof() {
         return !ensure_read_ready();
     }
@@ -293,13 +300,11 @@ private:
     // attempts to read a new page
     bool _get_read_page();
     void _flush_write_page(bool done_writing);
-
     
     void wait_for_reader();
     void ensure_reader_running();
     
     void wait_for_writer();
-
     void ensure_writer_running();
     
 };

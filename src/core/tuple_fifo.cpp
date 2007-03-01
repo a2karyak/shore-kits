@@ -7,80 +7,95 @@ ENTER_NAMESPACE(qpipe);
 
 
 
-/* The pool that manages the sentinel page. Only one page will ever be
- * "created", and it must not actually go away when freed.
+/* Prefetch constants */
+
+/* use 3/9 for "good" performance */
+#define READ_PREFETCH  3
+#define WRITE_PREFETCH 9
+
+
+
+/* Global tuple_fifo statistics */
+
+
+/* statistics data structures */
+
+pthread_mutex_t open_fifo_mutex = thread_mutex_create();
+static int open_fifo_count = 0;
+static size_t total_prefetches = 0;
+
+
+/* statistics methods */
+
+/**
+ * @brief Return the number of currently open tuple_fifos. Not
+ * synchronized.
+ */
+int tuple_fifo::open_fifos() {
+    return open_fifo_count;
+}
+
+
+/**
+ * @brief Return the number of prefetches done so far. Not
+ * synchronized.
+ */
+size_t tuple_fifo::prefetch_count() {
+    return total_prefetches;
+}
+
+
+/**
+ * @brief Reset global statistics to initial values. This method _is_
+ * synchronized.
+ */
+void tuple_fifo::clear_stats() {
+    critical_section_t cs(open_fifo_mutex);
+    total_prefetches = 0;
+}
+
+
+
+/* Sentinal page pool. */
+
+/**
+ * @brief Every page within a tuple_fifo needs to be part of a
+ * page_pool that manages its deletion. The sentinal_page_pool
+ * allocates a single global "sentinal page" that is never freed. This
+ * page is inserted into every tuple_fifo to reduce the number of
+ * corner cases it needs to deal with.
+ *
+ * The sentinal page does not go away when it is "freed".
  */
 struct sentinel_page_pool : page_pool {
-    // ensure enough space for one 1-byte tuple (so the page is empty)
+    
+    /* We will use this single buffer for our global page instance */
     char _data[sizeof(qpipe::page)];
+
     sentinel_page_pool()
         : page_pool(sizeof(qpipe::page))
     {
-        /* We need a really special page with the following properties:
-         * - read sentinel: p->begin() == p->end()
-         * - write sentinel: p->full()
-         * - flush sentinel: p->empty()
-         */
-        //        page* p = page::alloc(1, this);
-        //        assert(p->begin() == p->end() && p->full() && p->empty());
     }
+
     virtual void* alloc() {
         return _data;
     }
+
     virtual void free(void*) {
-        // do nothing.
+        /* do nothing */
     }
 };
 
-/* A sentinel page used to avoid corner cases in page reads. It is used
- * - Before the first call to advance_reader()
- * - After any call to read_page()
- * - During initialization of the write page
- *
- * A tuple size of 1 is almost certainly illegal for any FIFO
- * instance, but since it is always an error for the user to call
- * read() or read_page() without first calling advance_reader(), we
- * don't care.
- */
+
+/* sentinal page data structures */
+
 static sentinel_page_pool SENTINEL_POOL;
 static qpipe::page* SENTINEL_PAGE = qpipe::page::alloc(1, &SENTINEL_POOL);
 static const int QPIPE_PAGE_SIZE = 4096;
 
 
-// use 3/9 for "good" performance
-#define READ_PREFETCH 3
-#define WRITE_PREFETCH 9
 
-inline
-void touch(void const*) {
-#if 0
-    assert(QPIPE_PAGE_SIZE/CACHE_LINE % 8 == 0);
-    static int const CACHE_LINE = 64/sizeof(long);
-    long volatile *bp = (long*) page;
-    long *be = QPIPE_PAGE_SIZE/sizeof(long) + (long*) page;
-    for(; bp < be; bp+=CACHE_LINE*8) {
-        bp[0*CACHE_LINE];
-        bp[1*CACHE_LINE];
-        bp[2*CACHE_LINE];
-        bp[3*CACHE_LINE];
-        bp[4*CACHE_LINE];
-        bp[5*CACHE_LINE];
-        bp[6*CACHE_LINE];
-        bp[7*CACHE_LINE];
-    } 
-#endif
-}
-
-struct strlt {
-    bool operator()(char* const a, char* const b) {
-        return strcmp(a, b) < 0;
-    }
-};
-
-pthread_mutex_t open_fifo_mutex = thread_mutex_create();
-static int open_fifo_count = 0;
-
-static size_t total_prefetches = 0;
+/* definitions of exported methods */
 
 /*
  * Creates a new (temporary) file in the BDB bufferpool for the FIFO
@@ -88,6 +103,7 @@ static size_t total_prefetches = 0;
  * when the FIFO is destroyed.
  */
 void tuple_fifo::init() {
+
     _reader_tid = pthread_self();
     // prepare for reading
     _set_read_page(SENTINEL_PAGE);
@@ -101,44 +117,54 @@ void tuple_fifo::init() {
     cs.exit();
 }
 
+
+
+/**
+ * @brief Should be invoked by the writer before writing tuples.
+ */
 void tuple_fifo::writer_init() {
+    /* set up the _writer_tid field to make debugging easier */
     _writer_tid = pthread_self();
 }
 
+
+
+/**
+ * @brief Function object. Wrapper around p->free() that can be passed
+ * to std::for_each.
+ */
 struct free_page {
     void operator()(qpipe::page* p) {
 	p->free();
     }
 };
 
+
+
+/**
+ * @brief Deallocate the pags in this tuple_fifo and add our local
+ * statistics to global ones.
+ */
 void tuple_fifo::destroy() {
 
     std::for_each(_pages.begin(), _pages.end(), free_page());
     std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
 	
-    // stats
+    /* update stats */
     critical_section_t cs(open_fifo_mutex);
-    
-    // store the stats for later...
     total_prefetches += _prefetch_count;
-
-    // canonicalize the name so we don't have dangling pointers
     open_fifo_count--;
 }
 
-int tuple_fifo::open_fifos() {
-    return open_fifo_count;
-}
 
-size_t tuple_fifo::prefetch_count() {
-    return total_prefetches;
-}
-void tuple_fifo::clear_stats() {
-    critical_section_t cs(open_fifo_mutex);
-    total_prefetches = 0;
-}
 
+/**
+ * @brief Get a page from the tuple_fifo.
+ *
+ * @return NULL if the tuple_fifo has been closed. A page otherwise.
+ */
 page* tuple_fifo::get_page() {
+
     if(!ensure_read_ready())
         return NULL;
 
@@ -151,14 +177,77 @@ page* tuple_fifo::get_page() {
     return result;
 }
 
+
+
+/**
+ * @brief Only the producer may call this method. Notify the
+ * tuple_fifo that the caller will be inserting no more data.
+ *
+ * @return True if we successfully send and EOF. False if the fifo has
+ * been terminated.
+ */
+bool tuple_fifo::send_eof() {
+    try {
+        // make sure not to drop a partial page
+        _flush_write_page(true);
+        return true;
+    }
+    catch(TerminatedBufferException &e) {
+        // oops! reader terminated first
+        return false;
+    }
+}
+
+
+
+/**
+ * @brief Both producer and consumer may call this method. This method
+ * is used to notify the "other side" that we are terminating
+ * abnormally. The other side should receive a
+ * TerminatedBufferException on the next tuple_fifo operation.
+ *
+ * The side which terminates last is responsible for deleting the
+ * tuple_fifo.
+ *
+ * @return True if we successfully terminate. False if the other side
+ * has already terminated.
+ */
+bool tuple_fifo::terminate() {
+    
+    // * * * BEGIN CRITICAL SECTION * * *
+    critical_section_t cs(_lock);
+
+
+    // did the other end beat me to it? Note: if _done_writing is true
+    // the reader is responsible for deleting the buffer; either the
+    // the reader doesn't know yet or the writer is making an illegal
+    // access. False is the right return value for both cases.
+    if(_terminated || _done_writing)
+        return false;
+    
+    // make sure nobody is sleeping (either the reader or writer could
+    // be calling this)
+    _terminated = true;
+    thread_cond_signal(_reader_notify);
+    thread_cond_signal(_writer_notify);
+    
+    // * * * END CRITICAL SECTION * * *
+    return true;
+}
+
+
+
+/* definitions of helper methods */
+
+
 inline void tuple_fifo::wait_for_reader() {
     thread_cond_wait(_writer_notify, _lock);
-    
 }
+
 inline void tuple_fifo::ensure_reader_running() {
     thread_cond_signal(_reader_notify);
 }
-    
+
 inline void tuple_fifo::wait_for_writer() {
     thread_cond_wait(_reader_notify, _lock);
 }
@@ -167,7 +256,15 @@ inline void tuple_fifo::ensure_writer_running() {
     thread_cond_signal(_writer_notify);
 }
 
+
+
+/**
+ * @brief Get a page from the tuple_fifo.
+ *
+ * @return NULL if the tuple_fifo has been closed. A page otherwise.
+ */
 void tuple_fifo::_flush_write_page(bool done_writing) {
+
     // after the call to send_eof() the write page is NULL
     assert(!_done_writing);
 
@@ -213,7 +310,10 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     // * * * END CRITICAL SECTION * * *
 }
 
+
+
 bool tuple_fifo::_get_read_page() {
+
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
     _termination_check();
@@ -256,41 +356,5 @@ bool tuple_fifo::_get_read_page() {
 }
 
 
-bool tuple_fifo::send_eof() {
-    try {
-        // make sure not to drop a partial page
-        _flush_write_page(true);
-        return true;
-    }
-    catch(TerminatedBufferException &e) {
-        // oops! reader terminated first
-        return false;
-    }
-}
 
-
-bool tuple_fifo::terminate() {
-    
-
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_lock);
-
-
-    // did the other end beat me to it? Note: if _done_writing is true
-    // the reader is responsible for deleting the buffer; either the
-    // the reader doesn't know yet or the writer is making an illegal
-    // access. False is the right return value for both cases.
-    if(_terminated || _done_writing)
-        return false;
-    
-    // make sure nobody is sleeping (either the reader or writer could
-    // be calling this)
-    _terminated = true;
-    thread_cond_signal(_reader_notify);
-    thread_cond_signal(_writer_notify);
-    
-    // * * * END CRITICAL SECTION * * *
-    return true;
-}
- 
 EXIT_NAMESPACE(qpipe);
