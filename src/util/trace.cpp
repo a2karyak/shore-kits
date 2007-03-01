@@ -117,8 +117,19 @@ void trace_set(unsigned int trace_type_mask) {
     /* avoid unnecessary synchronization here */
     /* should really only be called once at the beginning of the
        program */
-    trace_current_setting = trace_type_mask;        
+    trace_current_setting = trace_type_mask;
 }
+
+
+
+/**
+ *  @brief Get the set of trace types that are currently enabled.
+ */
+unsigned int trace_get() {
+    return trace_current_setting;
+}
+
+
 
 /* internal constants */
 

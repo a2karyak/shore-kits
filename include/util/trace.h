@@ -50,11 +50,12 @@ struct tracer {
     }
     void operator()(unsigned int type, char const* format, ...) ATTRIBUTE(format(printf, 3, 4));
 };
+
 void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
 	    char const* format, ...) ;
-
 void trace_set(unsigned int trace_type_mask);
+unsigned int trace_get();
 
 
 
@@ -97,6 +98,20 @@ void trace_set(unsigned int trace_type_mask);
  * @return void
  */
 #define TRACE_SET(types) trace_set(types)
+
+
+
+/**
+ *  @def TRACE_GET
+ *
+ * @brief Macro wrapper for trace_get()
+ * 
+ * @param types Passed through as trace_type_mask parameter of
+ * trace_get().
+ *
+ * @return void
+ */
+#define TRACE_GET(types) trace_get(types)
 
 
 

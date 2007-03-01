@@ -33,7 +33,11 @@ private:
     size_t _page_size;
     size_t _prefetch_count;
     size_t _curr_pages;
-    char* _read_end;
+    size_t _num_inserted;
+    size_t _num_removed;
+    size_t _num_waits_on_insert;
+    size_t _num_waits_on_remove;
+    char*  _read_end;
 
     guard<page> _read_page;
     page::iterator _read_iterator;
@@ -69,19 +73,28 @@ public:
      *  @param page_size The size of the pages used in our buffer.
      */
 
-    tuple_fifo(
-               size_t tuple_size,
+    tuple_fifo(size_t tuple_size,
                size_t capacity=DEFAULT_BUFFER_PAGES,
                size_t threshold=64,
                size_t page_size=get_default_page_size())
         : 
-          _tuple_size(tuple_size), _capacity(capacity), _threshold(threshold),
-          _page_size(page_size), _prefetch_count(0), _curr_pages(0),
-          _done_writing(false), _terminated(false),
+          _tuple_size(tuple_size),
+          _capacity(capacity),
+          _threshold(threshold),
+          _page_size(page_size),
+          _prefetch_count(0),
+          _curr_pages(0),
+          _num_inserted(0),
+          _num_removed(0),
+          _num_waits_on_insert(0),
+          _num_waits_on_remove(0),
+          _done_writing(false),
+          _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
-	  _reader_tid(0), _writer_tid(0)
+	  _reader_tid(0),
+          _writer_tid(0)
     {
         init();
     }
