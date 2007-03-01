@@ -12,6 +12,7 @@ TESTS = \
    tests/cpu_binding \
    tests/rand_array_access \
    tests/trace \
+   tests/itimer_keypress \
    tests/constants \
    tests/bitvector \
    tests/hashtable \
@@ -76,7 +77,8 @@ lib_libutil_a_SOURCES = \
         $(SU)/fileops.cpp \
         $(SU)/static_list_node.cpp \
         $(SU)/static_list.cpp \
-        $(SU)/resource_pool.cpp
+        $(SU)/resource_pool.cpp \
+        $(SU)/itimer.cpp
 
 
 ################################################################################
@@ -203,6 +205,7 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
+tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
 tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
