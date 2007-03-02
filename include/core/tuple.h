@@ -26,6 +26,7 @@ extern void set_default_page_size(size_t page_size);
 extern size_t get_default_page_size();
 
 
+
 /**
  *  @brief QPIPE tuple. An initialized tuple stores a char* into some
  *  tuple_page_t as well as the size of the data.
@@ -87,7 +88,10 @@ private:
     }
 };
 
+
+
 class page_pool {
+
     size_t _page_size;
     
 public:
@@ -115,10 +119,14 @@ public:
     virtual ~page_pool() { }
 };
 
+
+
 /**
- * @brief A page pool implementation backed by the freestore (ie heap).
+ * @brief A page pool implementation backed by the freestore (i.e.
+ * heap).
  */
 struct malloc_page_pool : page_pool {
+
 private:
     static malloc_page_pool _instance;
     
@@ -143,7 +151,12 @@ public:
     }
 };
 
+
+
 class tuple_fifo;
+
+
+
 /**
  *  @brief Wapper class for a page header that stores the page's
  *  size. The constructor is private to prevent stray headers from
@@ -184,7 +197,7 @@ private:
     }
     
     void free() {
-        // do not call the destructor before releasing the memory
+        /* Do not call the destructor before releasing the memory. */
         _pool->free(this);
     }
     
@@ -331,6 +344,7 @@ private:
         allocate_tuple().assign(tuple);
     }
     
+
     /**
      *  @brief Iterator over the tuples in this page. Each dereference
      *  returns a tuple_t.
@@ -397,9 +411,7 @@ private:
     }
     
     
-
 private:
-    // leave initialization to the allocator
     page(page_pool* pool, size_t tuple_size)
         : _pool(pool),
           _tuple_size(tuple_size),
@@ -421,7 +433,12 @@ private:
     ~page();
 };
 
+
+
 EXIT_NAMESPACE(qpipe);
+
+
+
 /**
  * Specialize the guard template to release pages back into their pool
  * instead of calling 'delete' operator (which would fail to compile
@@ -431,6 +448,9 @@ template <>
 inline void guard<qpipe::page>::action(qpipe::page* ptr) {
     ptr->free();
 }
+
+
+
 ENTER_NAMESPACE(qpipe);
 
 
@@ -442,6 +462,7 @@ ENTER_NAMESPACE(qpipe);
  * a secondary data structure (eg sorting and hashing)
  */
 class page_trash_stack {
+
     guard<qpipe::page> _head;
     
 public:
@@ -458,10 +479,10 @@ public:
     }
 };
 
-/**
- *  @brief Represents a page of tuples of the same type.
- */
+
+
 EXIT_NAMESPACE(qpipe);
+
 
 
 #endif

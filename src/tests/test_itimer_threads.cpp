@@ -1,14 +1,23 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/**
+ * @brief Unit test to see if individual threads get their own itimer
+ * structures. It appears that they don't the thread that invokes
+ * setitimer() last ends up setting the timer of the other threads as
+ * well.
+ */
+
 #include "util.h"
 #include <sys/time.h>
 
 
 typedef void (*wait_t) (void);
+typedef void (*itimer_set_t) (struct itimerval*);
 typedef struct
 {
     wait_t wait_func;
-    c_str  name;
+    itimer_set_t itimer_set;
+    c_str name;
 } thread_info_t;
 
 
@@ -35,9 +44,9 @@ void* thread_main(void* arg)
     struct itimerval it_real_start, it_real_end;
     struct itimerval it_virt_start, it_virt_end;
     struct itimerval it_prof_start, it_prof_end;
-    itimer_set_big(&it_real_start); 
-    itimer_set_big(&it_virt_start); 
-    itimer_set_big(&it_prof_start); 
+    info->itimer_set(&it_real_start); 
+    info->itimer_set(&it_virt_start); 
+    info->itimer_set(&it_prof_start); 
 
 
     /* set up this thread's timers */
@@ -97,6 +106,8 @@ void* thread_main(void* arg)
 
 
 void wait_cond(void) {
+    /* This is ugly... the helper threads releases the mutex even
+       though it did not lock it! */
     /* wait for signal from root thread */
     pthread_cond_wait(&cond, &mutex);
     pthread_mutex_unlock(&mutex);
@@ -123,8 +134,12 @@ int main(int, char**)
   thread_init();
 
 
-  thread_info_t root_info = { wait_keypress, c_str("root") };
-  thread_info_t helper_info = { wait_cond, c_str("helper") };
+  thread_info_t root_info   = { wait_keypress,
+                                itimer_set_max,
+                                c_str("root") };
+  thread_info_t helper_info = { wait_cond,
+                                itimer_set_big,
+                                c_str("helper") };
   
 
   pthread_mutex_lock(&mutex);
