@@ -15,6 +15,7 @@ TESTS = \
    tests/itimer_keypress \
    tests/itimer_threads \
    tests/thread_cputime \
+   tests/max_timers \
    tests/constants \
    tests/bitvector \
    tests/hashtable \
@@ -210,6 +211,7 @@ tests_trace_SOURCES = $(ST)/test_trace.cpp
 tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
 tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
 tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
+tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
 tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
@@ -248,6 +250,7 @@ tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
+tests_max_timers_LDADD = lib/libutil.a -lrt
 tests_load_db_tables_LDADD = $(TEST_LIBS)
 tests_trace_LDADD = $(TEST_LIBS)
 tests_tuple_buffer_LDADD = $(TEST_LIBS)
