@@ -111,7 +111,7 @@ public:
     static int open_fifos();
     static size_t prefetch_count();
     static void clear_stats();
-
+    static void trace_stats();
 
 
     size_t tuple_size() const {
@@ -145,6 +145,7 @@ public:
 
     void append(const tuple_t &tuple) {
         ensure_write_ready();
+        _num_inserted++;
         _write_page->append_tuple(tuple);
     }
     
@@ -164,6 +165,7 @@ public:
 
     tuple_t allocate() {
         ensure_write_ready();
+        _num_inserted++;
         return _write_page->allocate_tuple();
     };
     
@@ -173,6 +175,7 @@ public:
             return false;
        
         tuple = *_read_iterator++;
+        _num_removed++;
         return true;
     }
 

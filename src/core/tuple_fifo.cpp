@@ -1,5 +1,6 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
 #include "core/tuple_fifo.h"
+#include "util/trace.h"
 #include <algorithm>
 
 
@@ -15,14 +16,20 @@ ENTER_NAMESPACE(qpipe);
 
 
 
+/* debugging */
+static int TRACE_MASK_BLOCKING = TRACE_COMPONENT_MASK_NONE;
+
+
+
 /* Global tuple_fifo statistics */
 
-
 /* statistics data structures */
-
-pthread_mutex_t open_fifo_mutex = thread_mutex_create();
+static pthread_mutex_t open_fifo_mutex = thread_mutex_create();
 static int open_fifo_count = 0;
+static int total_fifos_existed = 0;
+static int total_fifos_experienced_blocking = 0;
 static size_t total_prefetches = 0;
+
 
 
 /* statistics methods */
@@ -36,6 +43,7 @@ int tuple_fifo::open_fifos() {
 }
 
 
+
 /**
  * @brief Return the number of prefetches done so far. Not
  * synchronized.
@@ -45,6 +53,7 @@ size_t tuple_fifo::prefetch_count() {
 }
 
 
+
 /**
  * @brief Reset global statistics to initial values. This method _is_
  * synchronized.
@@ -52,6 +61,16 @@ size_t tuple_fifo::prefetch_count() {
 void tuple_fifo::clear_stats() {
     critical_section_t cs(open_fifo_mutex);
     total_prefetches = 0;
+}
+
+
+
+/**
+ * @brief Dump stats using TRACE.
+ */
+void tuple_fifo::trace_stats() {
+    TRACE(TRACE_ALWAYS, "Fraction of tuple_fifos that experiened blocked = %lf\n",
+          (double)total_fifos_experienced_blocking/total_fifos_existed);
 }
 
 
@@ -114,6 +133,7 @@ void tuple_fifo::init() {
     // stats
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
+    total_fifos_existed++;
     cs.exit();
 }
 
@@ -154,6 +174,16 @@ void tuple_fifo::destroy() {
     critical_section_t cs(open_fifo_mutex);
     total_prefetches += _prefetch_count;
     open_fifo_count--;
+    if ((_num_waits_on_insert > 0) || (_num_waits_on_remove > 0))
+        total_fifos_experienced_blocking++;
+
+
+    TRACE(TRACE_MASK_BLOCKING & TRACE_ALWAYS,
+          "Blocked on insert %.2f\n",
+          (double)_num_waits_on_insert/_num_inserted);
+    TRACE(TRACE_MASK_BLOCKING & TRACE_ALWAYS,
+          "Blocked on remove %.2f\n",
+          (double)_num_waits_on_remove/_num_removed);
 }
 
 
@@ -174,6 +204,9 @@ page* tuple_fifo::get_page() {
     // hand off the page and replace it with the sentinel
     page* result = _read_page.release();
     _set_read_page(SENTINEL_PAGE);
+
+    // return page
+    _num_removed += result->tuple_count();
     return result;
 }
 
@@ -241,6 +274,7 @@ bool tuple_fifo::terminate() {
 
 
 inline void tuple_fifo::wait_for_reader() {
+    _num_waits_on_insert++;
     thread_cond_wait(_writer_notify, _lock);
 }
 
@@ -249,6 +283,7 @@ inline void tuple_fifo::ensure_reader_running() {
 }
 
 inline void tuple_fifo::wait_for_writer() {
+    _num_waits_on_remove++;
     thread_cond_wait(_reader_notify, _lock);
 }
 

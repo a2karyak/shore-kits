@@ -201,6 +201,7 @@ void tpch_handler_t::handle_command(const char* command) {
     /* Report results. We'll use the workload name for its
        description. */
     print_run_statistics(workload_name, results);
+    tuple_fifo::trace_stats();
 }
 
 
