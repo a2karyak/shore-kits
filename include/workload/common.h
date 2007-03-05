@@ -16,7 +16,6 @@
 #include "workload/common/process_query.h"
 
 #include "workload/common/q6_packet.h"
-#include "workload/common/q6_client.h"
 
 
 #endif

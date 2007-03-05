@@ -150,7 +150,6 @@ WL_BASE = \
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
-   $(SW)/common/q6_client.cpp \
    $(SW)/common/process_query.cpp
 
 WL_TPCH = \
@@ -193,7 +192,9 @@ lib_libtest_a_SOURCES = \
    $(STC)/int_tuple_writer.cpp \
    $(STC)/tpch_query.cpp \
    $(STC)/cpu_bind.cpp \
-   $(STC)/busy_wait.cpp
+   $(STC)/busy_wait.cpp \
+   $(STC)/q6_client.cpp
+
 
 ################################################################################
 #

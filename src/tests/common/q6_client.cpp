@@ -1,6 +1,6 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "workload/common/q6_client.h"
+#include "tests/common/q6_client.h"
 
 #include "stages.h"
 #include "workload/common/q6_packet.h"
