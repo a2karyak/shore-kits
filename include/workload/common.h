@@ -15,8 +15,6 @@
 #include "workload/common/process_tuple.h"
 #include "workload/common/process_query.h"
 
-#include "workload/common/q6_tscan_filter.h"
-#include "workload/common/q6_aggregate.h"
 #include "workload/common/q6_packet.h"
 #include "workload/common/q6_client.h"
 
