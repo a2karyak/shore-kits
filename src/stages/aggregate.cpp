@@ -58,6 +58,7 @@ void aggregate_stage_t::process_packet() {
 
             if(!first) {
                 aggregate->finish(dest, agg.data);
+                TRACE(TRACE_ALWAYS, "key_size = %d\n", key_size);
                 adaptor->output(dest);
             }
  

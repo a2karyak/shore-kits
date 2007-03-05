@@ -15,7 +15,28 @@ ENTER_NAMESPACE(q6pf);
 
 class q6pf_aggregate_t : public tuple_aggregate_t {
 
-    default_key_extractor_t _extractor;
+public:
+
+    class q6pf_key_extractor_t : public key_extractor_t {
+    public:
+        q6pf_key_extractor_t()
+            : key_extractor_t(0, 0)
+        {
+        }
+
+        virtual int extract_hint(const char*) const {
+            /* should never be called! */
+            assert(0);
+        }
+
+        virtual key_extractor_t* clone() const {
+            return new q6pf_key_extractor_t(*this);
+        }
+    };
+    
+private:
+
+    q6pf_key_extractor_t    _extractor;
     q6_tscan_filter_t       _tscan_filter;
     q6_count_aggregate_t    _count_aggregate;
 
@@ -23,7 +44,7 @@ public:
 
     q6pf_aggregate_t()
         : tuple_aggregate_t(sizeof(q6_agg_t)),
-          _extractor(0, 0),
+          _extractor(),
           _tscan_filter(),
           _count_aggregate()
     {
@@ -78,7 +99,7 @@ void tpch_q6pf_driver::submit(void* disp) {
     struct cdb_table_s* tpch_lineitem = &tpch_tables[TPCH_TABLE_LINEITEM];
     tuple_fifo* tscan_output = new tuple_fifo(tpch_lineitem->tuple_size);
     tscan_packet_t *q6_tscan_packet =
-        new tscan_packet_t("TSCAN",
+        new tscan_packet_t("Q6PF_TSCAN_PACKET",
                            tscan_output,
                            new trivial_filter_t(tscan_output->tuple_size()),
                            tpch_lineitem->db);
@@ -90,8 +111,7 @@ void tpch_q6pf_driver::submit(void* disp) {
                                agg_output,
                                new trivial_filter_t(agg_output->tuple_size()),
                                new q6pf_aggregate_t(),
-                               new default_key_extractor_t
-                               (sizeof(int), offsetof(tpch_lineitem_tuple, L_EXTENDEDPRICE)),
+                               new q6pf_aggregate_t::q6pf_key_extractor_t(),
                                q6_tscan_packet);
     
     qpipe::query_state_t* qs = dp->query_state_create();
