@@ -42,19 +42,6 @@ struct query_plan {
 
 
 /**
- * @brief Base class for packet chomper (any class that exports a
- * chomp() method). In the general case, chomp() must be synchronized.
- */
-class packet_chomper_t
-{
-public:
-    virtual void chomp(packet_t* p)=0;
-    virtual ~packet_chomper_t() { }
-};
-
-
-
-/**
  *  @brief A packet in QPIPE is a unit of work that can be processed
  *  by a stage's worker thread.
  *
