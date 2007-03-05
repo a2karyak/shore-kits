@@ -53,12 +53,14 @@ void aggregate_stage_t::process_packet() {
         const char* key = extract->extract_key(src);
 
         // break group?
-        if(first || (key_size && memcmp(last_key, key, key_size))) {
+        if(first || /* allow init() call if first tuple */
+           (key_size && memcmp(last_key, key, key_size))) {
+
             if(!first) {
-                TRACE(TRACE_ALWAYS, "Detected group break at iteration %d\n", i);
                 aggregate->finish(dest, agg.data);
                 adaptor->output(dest);
             }
+ 
             aggregate->init(agg.data);
             memcpy(last_key, key, key_size);
             first = false;
