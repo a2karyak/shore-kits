@@ -171,7 +171,9 @@ WL_TPCH = \
    $(SW)/tpch/drivers/tpch_upto13.cpp \
    $(SW)/tpch/drivers/tpch_m146.cpp \
    $(SW)/tpch/drivers/tpch_m14612.cpp \
-   $(SW)/tpch/drivers/tpch_sim_mix.cpp
+   $(SW)/tpch/drivers/tpch_sim_mix.cpp \
+   $(SW)/tpch/drivers/tpch_q6pf.cpp
+
 
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \

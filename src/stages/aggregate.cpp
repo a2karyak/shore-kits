@@ -38,6 +38,7 @@ void aggregate_stage_t::process_packet() {
     size_t key_size = extract->key_size();
     char* last_key = aggregate->key_extractor()->extract_key(agg_data);
 
+    int i = 0;
     bool first = true;
     while (1) {
 
@@ -54,6 +55,7 @@ void aggregate_stage_t::process_packet() {
         // break group?
         if(first || (key_size && memcmp(last_key, key, key_size))) {
             if(!first) {
+                TRACE(TRACE_ALWAYS, "Detected group break at iteration %d\n", i);
                 aggregate->finish(dest, agg.data);
                 adaptor->output(dest);
             }
@@ -63,6 +65,7 @@ void aggregate_stage_t::process_packet() {
         }
         
         aggregate->aggregate(agg.data, src);
+        i++;
     }
 
     // output the last group, if any

@@ -16,6 +16,7 @@
 #include "workload/tpch/drivers/tpch_q14.h"
 #include "workload/tpch/drivers/tpch_q16.h"
 #include "workload/tpch/drivers/tpch_q19.h"
+#include "workload/tpch/drivers/tpch_q6pf.h"
 
 #include "workload/tpch/drivers/tpch_m146.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
@@ -64,15 +65,16 @@ void tpch_handler_t::init() {
         add_driver("q14", new tpch_q14_driver(c_str("TPCH-Q14")));
         add_driver("q16", new tpch_q16_driver(c_str("TPCH-Q16")));
         add_driver("q19", new tpch_q19_driver(c_str("TPCH-Q19")));
+        add_driver("q6pf", new tpch_q6pf_driver(c_str("TPCH-Q6PF")));
 
         // Need to pass a mix driver like m146 a directory... We are
         // the directory since we implement a lookup_driver
         // method. TODO change this so we pass down one of our data
         // fields.
-        add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-146"), this));
+        add_driver("m146", new tpch_m146_driver(c_str("TPCH-MIX-1,4,6"), this));
         add_driver("m_1_4_6_12", new tpch_m_1_4_6_12_driver(c_str("TPCH-MIX 1,4,6,12"), this));
         add_driver("upto13", new tpch_upto13_driver(c_str("TPCH-MIX 1,4,6,12,13"), this));
-        add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-14612"), this));
+        add_driver("m14612", new tpch_m14612_driver(c_str("TPCH-MIX-1,4,6,12"), this));
         add_driver("sim_mix", new tpch_sim_mix_driver(c_str("TPCH-SIM-MIX"), this));
         
 
