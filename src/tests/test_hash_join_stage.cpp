@@ -4,7 +4,6 @@
 #include "tests/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
-#include "workload/process_query.h"
 
 #include <vector>
 #include <algorithm>

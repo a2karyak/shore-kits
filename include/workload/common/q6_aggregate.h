@@ -14,13 +14,14 @@ using namespace qpipe;
 
 class q6_count_aggregate_t : public tuple_aggregate_t {
 
+    default_key_extractor_t _extractor;
+
+public:
+
     struct agg_t {
         decimal sum;
         int count;
     };
-
-    default_key_extractor_t _extractor;
-public:
 
     q6_count_aggregate_t()
         : tuple_aggregate_t(sizeof(agg_t)),
@@ -38,18 +39,15 @@ public:
 	agg->count++;
 	agg->sum += d[0] * d[1];
     
-	if(TRACE_AGGREGATE && (agg->count % 10 == 0)) {
-
-	    TRACE(TRACE_DEBUG, "%d - %lf\n", agg->count, agg->sum.to_double());
-	    fflush(stdout);
-	}
+	if(TRACE_AGGREGATE && (agg->count % 10 == 0))
+	    TRACE(TRACE_ALWAYS, "%d - %lf\n", agg->count, agg->sum.to_double());
     }
 
     virtual void finish(tuple_t &dest, const char* agg_data) {
         agg_t* agg = aligned_cast<agg_t>(agg_data);
-        decimal *output = aligned_cast<decimal>(dest.data);
-        output[0] = agg->sum;
-        output[1] = agg->count;
+        agg_t* output = aligned_cast<agg_t>(dest.data);
+        output->count = agg->count;
+        output->sum   = agg->sum;
     }
 
     virtual q6_count_aggregate_t* clone() const {

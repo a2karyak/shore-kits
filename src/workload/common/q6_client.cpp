@@ -6,22 +6,11 @@
 #include "workload/common/q6_packet.h"
 #include "workload/common/q6_aggregate.h"
 #include "workload/common/q6_tscan_filter.h"
+#include "workload/common/process_query.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/process_query.h"
 
 using namespace qpipe;
 using namespace workload;
-
-
-class q6_process_tuple_t : public process_tuple_t {
-public:
-    virtual void process(const tuple_t& output) {
-        decimal* r = aligned_cast<decimal>(output.data);
-        TRACE(TRACE_QUERY_RESULTS,
-              "*** Q6 Count: %u. Sum: %lf.  ***\n",
-              r[0].to_int(), r[1].to_double());
-    }
-};
 
 
 void* q6_client_main(void* arg) {

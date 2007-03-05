@@ -3,8 +3,7 @@
 #include "core.h"
 #include "stages.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/common/register_stage.h"
-#include "workload/process_query.h"
+#include "workload/common.h"
 #include "tests/common.h"
 
 using namespace qpipe;
