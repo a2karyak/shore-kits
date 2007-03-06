@@ -15,6 +15,8 @@
 #include "stages/sort.h"
 #include "stages/sorted_in.h"
 #include "stages/tscan.h"
+#include "stages/echo.h"
+#include "stages/sieve.h"
 #include "stages/tuple_source.h"
 
 #endif

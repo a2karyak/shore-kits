@@ -547,14 +547,15 @@ public:
     /**
      *  @brief Return true if an output tuple is produced.
      */
-    virtual bool pass(tuple_t& out_tuple, const tuple_t &in_tuple)=0;
+    virtual bool pass(tuple_t& dest, const tuple_t &src)=0;
     
 
     /**
      *  @brief Return true of an output tuple is produced.
      */
-    virtual bool flush(tuple_t& out_tuple)=0;
-    
+    virtual bool flush(tuple_t&) {
+        return false;
+    }
 
     virtual tuple_sieve_t* clone() const=0;
     

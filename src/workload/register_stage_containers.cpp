@@ -24,6 +24,8 @@ void register_stage_containers() {
     register_stage<sort_stage_t>(MAX_NUM_SORT_THREADS);
 
     register_stage<sorted_in_stage_t>(MAX_NUM_CLIENTS);
+    register_stage<echo_stage_t>(MAX_NUM_CLIENTS);
+    register_stage<sieve_stage_t>(MAX_NUM_CLIENTS);
 
     //    register_stage<merge_stage_t>(MAX_NUM_CLIENTS);
     //    register_stage<fdump_stage_t>(MAX_NUM_CLIENTS);
