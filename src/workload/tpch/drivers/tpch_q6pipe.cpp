@@ -13,83 +13,6 @@
 ENTER_NAMESPACE(q6pipe);
 
 
-class q6pipe_aggregate_t : public tuple_aggregate_t {
-
-public:
-
-    class q6pf_key_extractor_t : public key_extractor_t {
-    public:
-        q6pf_key_extractor_t()
-            : key_extractor_t(0, 0)
-        {
-        }
-
-        virtual int extract_hint(const char*) const {
-            /* should never be called! */
-            assert(0);
-        }
-
-        virtual key_extractor_t* clone() const {
-            return new q6pf_key_extractor_t(*this);
-        }
-    };
-    
-private:
-
-    q6pf_key_extractor_t    _extractor;
-    q6_tscan_filter_t       _tscan_filter;
-    q6_count_aggregate_t    _count_aggregate;
-
-public:
-
-    q6pipe_aggregate_t()
-        : tuple_aggregate_t(sizeof(q6_agg_t)),
-          _extractor(),
-          _tscan_filter(),
-          _count_aggregate()
-    {
-    }
-
-    virtual key_extractor_t* key_extractor() { return &_extractor; }
-    
-    virtual void aggregate(char* agg_data, const tuple_t& src) {
-     
-        /* Go through the motions if and only if the TSCAN would have
-           selected this tuple. */
-        if (_tscan_filter.select(src)) {
-            decimal d[2];
-            tuple_t temp((char*)&d, sizeof(d));
-            _tscan_filter.project(temp, src);
-            _count_aggregate.aggregate(agg_data, temp);
-        }
-    }
-    
-    virtual void finish(tuple_t &dest, const char* agg_data) {
-        _count_aggregate.finish(dest, agg_data);
-    }
-
-    virtual q6pipe_aggregate_t* clone() const {
-        return new q6pipe_aggregate_t(*this);
-    }
-
-    virtual c_str to_string() const {
-        return "q6pipe_aggregate_t";
-    }
-};
-
-
-EXIT_NAMESPACE(q6pipe);
-
-
-using namespace q6pipe;
-using namespace workload;
-
-
-ENTER_NAMESPACE(workload);
-
-
-using namespace qpipe;
-
 
 class q6pipe_sieve_t : public tuple_sieve_t {
 
@@ -176,6 +99,16 @@ public:
     }
 };
 
+
+
+EXIT_NAMESPACE(q6pipe);
+
+
+using namespace q6pipe;
+using namespace qpipe;
+
+
+ENTER_NAMESPACE(workload);
 
 
 void tpch_q6pipe_driver::submit(void* disp) {
