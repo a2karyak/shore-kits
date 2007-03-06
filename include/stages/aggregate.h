@@ -4,10 +4,7 @@
 #define __AGGREGATE_H
 
 #include <cstdio>
-
 #include "core.h"
-
-
 
 using namespace qpipe;
 

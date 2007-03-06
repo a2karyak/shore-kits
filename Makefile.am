@@ -133,7 +133,8 @@ lib_libstages_a_SOURCES = \
    $(SG)/sort.cpp \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
-   $(SG)/echo.cpp
+   $(SG)/echo.cpp \
+   $(SG)/sieve.cpp
 
 
 ################################################################################
