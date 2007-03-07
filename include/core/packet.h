@@ -10,14 +10,17 @@
 #include "core/query_state.h"
 #include "util/resource_declare.h"
 
-
-ENTER_NAMESPACE(qpipe);
-
 using std::list;
 
 
+ENTER_NAMESPACE(qpipe);
+
+
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_SCAN, OSP_NO_SCAN, OSP_FULL} const osp_policy = OSP_FULL;
+static enum {OSP_NONE, OSP_FULL} const osp_global_policy = OSP_FULL;
+
+/* reroute to dispatcher */
+bool is_osp_enabled_for_type(const c_str& packet_type);
 
 
 
@@ -90,11 +93,18 @@ protected:
         return true;
     }
     
-    virtual bool is_compatible(packet_t* other) {
-        if (osp_policy == OSP_NONE || osp_policy == OSP_SCAN)
+    bool is_compatible(packet_t* other) {
+
+        if (osp_global_policy == OSP_NONE)
 	    return false;
-	
-	return is_compatible(plan(), other->plan());
+
+        /* Check packet type with dispatcher. Either of our types
+           should be ok since we will only merge if types are
+           identical. */
+        if (!is_osp_enabled_for_type(_packet_type))
+            return false;
+        
+        return is_compatible(plan(), other->plan());
     }
 
 
@@ -152,7 +162,17 @@ public:
      */  
     
     bool is_merge_enabled() {
-	return (osp_policy == OSP_NONE)? false : _merge_enabled;
+
+        if (osp_global_policy == OSP_NONE)
+            return false;
+        
+        /* Check packet type with dispatcher. Either of our types
+           should be ok since we will only merge if types are
+           identical. */
+        if (!is_osp_enabled_for_type(_packet_type))
+            return false;
+        
+        return _merge_enabled;
     }
 
     query_plan const* plan() const {

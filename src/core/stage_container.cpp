@@ -22,8 +22,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
-static const bool ALWAYS_TRY_OSP = true;
-
+static const bool ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE = true;
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 
@@ -344,7 +343,8 @@ void stage_container_t::enqueue(packet_t* packet) {
        system resources). We want to share when the number of active
        (non-idle) workers is greater than this amount.
     */
-    if(ALWAYS_TRY_OSP || (_rp.get_non_idle() >= _pool._max_active)) {
+    if(ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE
+       || (_rp.get_non_idle() >= _pool._max_active)) {
         
         /* Try merging with packets in merge_candidates before they
            disappear or become non-mergeable. */

@@ -65,16 +65,6 @@ public:
         return new query_plan(action, filter->to_string(), NULL, 0);
     }
     
-    virtual bool is_compatible(packet_t* other) {
-        // enforce the OSP_SCAN and OSP_NO_SCAN policies (attempt to merge compatible
-        // packets unless OSP_NONE prevents this from being called in
-        // the first place)
-	if(osp_policy == OSP_NO_SCAN)
-	    return false;
-	
-        return packet_t::is_compatible(plan(), other->plan());
-    }
-
     virtual void declare_worker_needs(resource_declare_t* declare) {
         declare->declare(_packet_type, 1);
         /* no inputs */
