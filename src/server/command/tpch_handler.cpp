@@ -18,6 +18,7 @@
 #include "workload/tpch/drivers/tpch_q19.h"
 #include "workload/tpch/drivers/tpch_q6pf.h"
 #include "workload/tpch/drivers/tpch_q6pipe.h"
+#include "workload/tpch/drivers/tpch_q1pipe.h"
 
 #include "workload/tpch/drivers/tpch_m146.h"
 #include "workload/tpch/drivers/tpch_m_1_4_6_12.h"
@@ -68,6 +69,7 @@ void tpch_handler_t::init() {
         add_driver("q19", new tpch_q19_driver(c_str("TPCH-Q19")));
         add_driver("q6pf", new tpch_q6pf_driver(c_str("TPCH-Q6PF")));
         add_driver("q6pipe", new tpch_q6pipe_driver(c_str("TPCH-Q6PIPE")));
+        add_driver("q1pipe", new tpch_q6pipe_driver(c_str("TPCH-Q1PIPE")));
 
         // Need to pass a mix driver like m146 a directory... We are
         // the directory since we implement a lookup_driver
