@@ -14,6 +14,9 @@ ENTER_NAMESPACE(q6pipe);
 
 
 
+/**
+ * @brief This sieve receives a decimal[2] and output a decimal.
+ */
 class q6pipe_sieve_t : public tuple_sieve_t {
 
 public:
