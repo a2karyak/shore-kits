@@ -55,6 +55,7 @@ public:
         virtual int extract_hint(const char*) const {
             /* should never be called! */
             assert(0);
+            return 0;
         }
 
         virtual key_extractor_t* clone() const {
