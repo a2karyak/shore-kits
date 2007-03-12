@@ -7,6 +7,9 @@ lib_LIBRARIES = \
 
 LDADD = $(lib_LIBRARIES)
 
+#\
+   tests/max_timers \
+   tests/thread_cputime
 
 TESTS = \
    tests/cpu_binding \
@@ -14,8 +17,6 @@ TESTS = \
    tests/trace \
    tests/itimer_keypress \
    tests/itimer_threads \
-   tests/thread_cputime \
-   tests/max_timers \
    tests/constants \
    tests/bitvector \
    tests/hashtable \
