@@ -38,12 +38,12 @@ void payment_begin_stage_t::process_packet() {
     payment_begin_packet_t* packet = 
 	(payment_begin_packet_t*)adaptor->get_packet();
 
-    const int my_trx_id = packet->trx_id();
+    const int my_trx_id = get_next_counter();
+    packet->set_trx_id(my_trx_id);
 
     TRACE(TRACE_ALWAYS, 
-	  "Processing PAYMENT_BEGIN with id: %d. Counter: &d\n", 
-	  my_trx_id, get_next_counter());
-
+	  "Processing PAYMENT_BEGIN with id: %d. Counter: %d\n", 
+	  packet->trx_id(), my_trx_id);
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
@@ -53,6 +53,7 @@ void payment_begin_stage_t::process_packet() {
 
     int* dest_tmp;
     dest_tmp = aligned_cast<int>(dest.data);
+
     *dest_tmp = my_trx_id;
 
     adaptor->output(dest);

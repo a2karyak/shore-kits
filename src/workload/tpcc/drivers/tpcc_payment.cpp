@@ -36,7 +36,7 @@ public:
 	int* tmp;
 	tmp = aligned_cast<int>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** Count: %d. TRX: %d ***\n",
-	      ++row_counter, tmp);
+	      ++row_counter, *tmp);
     }
 
 };

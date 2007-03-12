@@ -41,7 +41,7 @@ public:
   /**
    *  @brief Returns true if compared trx_packet_t has the same _trx_id
    */
-
+    
   static bool is_same_trx(trx_packet_t const* a_trx, trx_packet_t const* b_trx) {
 
     if ( !a_trx || !b_trx || a_trx->_trx_id != b_trx->_trx_id)
@@ -57,7 +57,7 @@ public:
 
   void set_trx_id(int a_trx_id) {
 
-    assert (a_trx_id == NO_VALID_TRX_ID);
+    assert (a_trx_id > NO_VALID_TRX_ID);
 
     _trx_id = a_trx_id;
   }
