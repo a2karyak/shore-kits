@@ -102,6 +102,7 @@ sub run_plotter_on_inputs {
     print PLOTTER "\n set autoscale";
     print PLOTTER "\n set xtic auto";
     print PLOTTER "\n set ytic auto";
+    print PLOTTER "\n set logscale xy 2";
     print PLOTTER "\n set title \"$desc\"";
     print PLOTTER "\n set xlabel \"clients\"";
     print PLOTTER "\n set ylabel \"throughput (queries/min)\"";
