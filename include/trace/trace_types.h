@@ -29,6 +29,8 @@
 #define TRACE_QUERY_RESULTS        (1 << 8)
 #define TRACE_STATISTICS           (1 << 9)
 #define TRACE_NETWORK              (1 << 10)
+#define TRACE_RESPONSE_TIME        (1 << 11)
+#define TRACE_WORK_SHARING         (1 << 12)
 #define TRACE_DEBUG                (1 << 31)
 
 

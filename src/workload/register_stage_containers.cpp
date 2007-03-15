@@ -20,6 +20,7 @@ void register_stage_containers() {
     register_stage<partial_aggregate_stage_t>(MAX_NUM_CLIENTS);
     register_stage<hash_aggregate_stage_t>(MAX_NUM_CLIENTS);
     register_stage<hash_join_stage_t>(MAX_NUM_CLIENTS);
+    register_stage<pipe_hash_join_stage_t>(MAX_NUM_CLIENTS);
     register_stage<func_call_stage_t>(MAX_NUM_FUNC_CALL_THREADS);
     register_stage<sort_stage_t>(MAX_NUM_SORT_THREADS);
 

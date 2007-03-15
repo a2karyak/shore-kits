@@ -284,6 +284,27 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
     unreachable();
 }
 
+bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
+                           int timeout_ms)
+{
+    if(timeout_ms > 0) {
+    struct timespec timeout;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    if(timeout_ms > 1000) {
+	timeout.tv_sec = timeout_ms / 1000;
+	timeout.tv_nsec = (timeout_ms - timeout.tv_sec*1000)*1000;
+    }
+    else {
+	timeout.tv_sec = 0;
+	timeout.tv_nsec = timeout_ms*1000;
+    }
+    
+    return thread_cond_wait(cond, mutex, timeout);
+    }
+    thread_cond_wait(cond, mutex);
+    return true;
+}
 
 
 /**

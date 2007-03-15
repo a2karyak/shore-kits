@@ -464,16 +464,19 @@ ENTER_NAMESPACE(qpipe);
 class page_trash_stack {
 
     guard<qpipe::page> _head;
-    
+    int _size;
 public:
     void add(qpipe::page* p) {
         p->next = _head.release();
         _head = p;
+	++_size;
     }
     void clear() {
         // use the page guard free the pages one by one
         for( ; _head; _head = _head->next);
+	_size = 0;
     }
+    int size() { return _size; }
     ~page_trash_stack() {
         clear();
     }

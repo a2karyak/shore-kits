@@ -201,9 +201,8 @@ void tuple_fifo::destroy() {
  *
  * @return NULL if the tuple_fifo has been closed. A page otherwise.
  */
-page* tuple_fifo::get_page() {
-
-    if(!ensure_read_ready())
+page* tuple_fifo::get_page(int timeout) {
+    if(!ensure_read_ready(timeout))
         return NULL;
 
     // no partial pages allowed!
@@ -290,9 +289,9 @@ inline void tuple_fifo::ensure_reader_running() {
     thread_cond_signal(_reader_notify);
 }
 
-inline void tuple_fifo::wait_for_writer() {
+inline bool tuple_fifo::wait_for_writer(int timeout) {
     _num_waits_on_remove++;
-    thread_cond_wait(_reader_notify, _lock);
+    return thread_cond_wait(_reader_notify, _lock, timeout);
 }
 
 inline void tuple_fifo::ensure_writer_running() {
@@ -353,9 +352,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     // * * * END CRITICAL SECTION * * *
 }
 
-
-
-bool tuple_fifo::_get_read_page() {
+int tuple_fifo::_get_read_page(int timeout) {
 
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
@@ -371,16 +368,24 @@ bool tuple_fifo::_get_read_page() {
     // wait for pages to arrive? Once we've slept because of empty,
     // _threshold pages must be available before we are willing to try
     // again (unless send_eof() is called)
+    if(timeout >= 0) {
     for(size_t t=1; !_done_writing && _available_reads() < t; t = _threshold) {
         // sleep until something important changes
         //        fprintf(stderr, "Fifo %p sleeping on read\n", this);
-        wait_for_writer();
+        if(!wait_for_writer(timeout))
+	    break;
+	
         _termination_check();
     }
-
+    }
     if(_available_reads() == 0) {
-        assert(_done_writing);
-        return false;
+	if(_done_writing)
+	    return -1;
+	if(timeout != 0)
+	    return 0;
+
+	// one of the previous is required to be true!
+	unreachable();
     }
 
     // allocate the page
@@ -395,7 +400,7 @@ bool tuple_fifo::_get_read_page() {
     }
 
     // * * * END CRITICAL SECTION * * *
-    return true;
+    return 1;
 }
 
 

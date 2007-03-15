@@ -88,7 +88,7 @@ unsigned int trace_get();
  *
  * @return void
  */
-#define TRACE_GET(types) trace_get(types)
+#define TRACE_GET() trace_get()
 
 
 

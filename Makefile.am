@@ -132,6 +132,7 @@ lib_libstages_a_SOURCES = \
    $(SG)/hash_aggregate.cpp \
    $(SG)/sorted_in.cpp \
    $(SG)/hash_join.cpp \
+   $(SG)/pipe_hash_join.cpp \
    $(SG)/func_call.cpp \
    $(SG)/merge.cpp \
    $(SG)/sort.cpp \

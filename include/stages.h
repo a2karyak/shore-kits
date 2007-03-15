@@ -9,6 +9,7 @@
 #include "stages/fscan.h"
 #include "stages/func_call.h"
 #include "stages/hash_join.h"
+#include "stages/pipe_hash_join.h"
 #include "stages/merge.h"
 #include "stages/partial_aggregate.h"
 #include "stages/hash_aggregate.h"

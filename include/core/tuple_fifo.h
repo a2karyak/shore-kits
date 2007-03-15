@@ -210,7 +210,7 @@ public:
      *  terminated the buffer.
      */
 
-    page* get_page();
+    page* get_page(int timeout=0);
 
 
     /**
@@ -230,14 +230,20 @@ public:
      * @brief ensures that the FIFO is ready for reading.
      *
      * The call will block until a tuple becomes available for
-     * reading, or EOF is encountered
+     * reading, or EOF is encountered.
      *
-     * @return false if EOF
+     * @return false if EOF or timeout expired
      */
-
-    bool ensure_read_ready() {
+    bool ensure_read_ready(int timeout=0) {
         // blocking attempt => only returns false if EOF
-	return (_read_iterator->data != _read_end) || _get_read_page();
+	return (_read_iterator->data != _read_end) || _get_read_page(timeout) == 1;
+    }
+
+    // non-blocking. Return 1 if ready, 0 if not ready, -1 if EOF
+    int check_read_ready() {
+	if(_read_iterator->data != _read_end)
+	    return 1;
+	return _get_read_page(-1);
     }
 
     
@@ -279,7 +285,7 @@ public:
      */
 
     bool eof() {
-        return !ensure_read_ready();
+        return check_read_ready() < 0;
     }
 
 
@@ -308,13 +314,13 @@ private:
     void destroy();
 
     // attempts to read a new page
-    bool _get_read_page();
+    int _get_read_page(int timeout);
     void _flush_write_page(bool done_writing);
     
     void wait_for_reader();
     void ensure_reader_running();
     
-    void wait_for_writer();
+    bool wait_for_writer(int timeout);
     void ensure_writer_running();
     
 };
