@@ -98,7 +98,9 @@ lib_libcore_a_SOURCES = \
 	$(SC)/packet.cpp \
 	$(SC)/stage_container.cpp \
 	$(SC)/tuple.cpp \
-	$(SC)/tuple_fifo.cpp
+	$(SC)/tuple_fifo.cpp \
+	$(SC)/tuple_fifo_directory.cpp
+
 
 
 

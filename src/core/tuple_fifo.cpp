@@ -1,6 +1,7 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "core/tuple_fifo.h"
+#include "core/tuple_fifo_directory.h"
 #include "util/trace.h"
 #include "util/acounter.h"
 #include <algorithm>
@@ -126,14 +127,18 @@ static const int QPIPE_PAGE_SIZE = 4096;
  */
 void tuple_fifo::init() {
 
+    /* Check on the tuple_fifo directory. */
+    tuple_fifo_directory_t::open_once();
+
     _reader_tid = pthread_self();
-    // prepare for reading
+
+    /* Prepare for reading. */
     _set_read_page(SENTINEL_PAGE);
 
-    // prepare for writing
+    /* Prepare for writing. */
     _write_page = SENTINEL_PAGE;
     
-    // stats
+    /* Update statistics. */
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
     total_fifos_existed++;
