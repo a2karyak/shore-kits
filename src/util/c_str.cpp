@@ -1,4 +1,4 @@
-// -*- mode:c++; c-basic-offset:4 -*-
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include <stdarg.h>
 
@@ -8,8 +8,12 @@
 #include "util/guard.h"
 #include <stdio.h>
 
+
+
 // Ignore the warning: printf("") is valid!
 const c_str c_str::EMPTY_STRING("%s", "");
+
+
 
 struct c_str::c_str_data {
     mutable pthread_mutex_t _lock;
@@ -17,22 +21,25 @@ struct c_str::c_str_data {
     char* _str() { return sizeof(c_str_data) + (char*) this; }
 };
 
+
+
 c_str::c_str(const char* str, ...)
     : _data(NULL)
 {
 
     for(int i=128; i <= 1024; i *= 2) {
+
         va_list args;
         array_guard_t<char> tmp = new char[i+1];
         va_start(args, str);
         int count = vsnprintf(tmp, i, str, args);
         va_end(args);
         
-        if(count > i)
+        if((count < 0) /* glibc 2.0 */ || (count > i) /* glibc 2.1 */)
             continue;
         
         int len = strlen(tmp);
-        _data = (c_str_data*) malloc(sizeof(c_str_data) + len);
+        _data = (c_str_data*) malloc(sizeof(c_str_data) + len + 1);
         if(_data == NULL)
             THROW(BadAlloc);
         
@@ -41,15 +48,20 @@ c_str::c_str(const char* str, ...)
         memcpy(_data->_str(), tmp, len+1);
         return;
     }
+
     // shouldn't get here...
     THROW(BadAlloc);
 }
+
+
 
 const char* c_str::data() const {
     // Return the actual string... whatever uses this string must
     // copy it since it does not own it.
     return _data->_str();
 }
+
+
 
 void c_str::assign(const c_str &other) {
 
@@ -61,6 +73,8 @@ void c_str::assign(const c_str &other) {
     _data->_count++;
     // * * * END CRITICAL SECTION * * *
 }
+
+
 
 void c_str::release() {
     // * * * BEGIN CRITICAL SECTION * * *
@@ -75,6 +89,4 @@ void c_str::release() {
         free(_data);
     }
     // * * * END CRITICAL SECTION * * *
-}    
-    
-    
+}

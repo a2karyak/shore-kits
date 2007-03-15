@@ -15,6 +15,8 @@
 
 using namespace std;
 
+
+
 class c_str {
 
     struct c_str_data;
@@ -35,7 +37,9 @@ class c_str {
     void assign(const c_str &other);    
 
 public:
+
     static const c_str EMPTY_STRING;
+
 
     c_str (const c_str &other=EMPTY_STRING) {
         if (DEBUG_C_STR)
@@ -43,12 +47,15 @@ public:
         assign(other);
     }
     
+
     // start counting params at 2 instead of 1 -- non-static member function
     c_str(const char* str, ...) ATTRIBUTE(format(printf, 2, 3));
     
+
     operator const char*() const {
         return data();
     }
+
 
     const char* data() const;
     
