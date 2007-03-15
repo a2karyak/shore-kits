@@ -5,6 +5,10 @@
 #include "util/fileops.h"
 #include "core/tuple_fifo_directory.h"
 
+#include <sys/types.h>
+#include <dirent.h>
+#include <unistd.h>
+
 
 
 ENTER_NAMESPACE(qpipe);
@@ -37,13 +41,15 @@ void tuple_fifo_directory_t::open_once() {
     const c_str& path = dir_path();
     if (fileops_check_file_directory(path.data()))
         THROW2(TupleFifoDirectoryException,
-               "Tuple fifo directory %s does not exist\n",
+               "Tuple fifo directory %s does not exist",
                path.data());
-
+    
     if (fileops_check_directory_accessible(path.data()))
         THROW2(TupleFifoDirectoryException,
-               "Tuple fifo directory %s not writeable\n",
+               "Tuple fifo directory %s not writeable",
                path.data());
+
+    clean_dir();
 
     _dir_state = TUPLE_FIFO_DIRECTORY_OPEN;
 }
@@ -57,6 +63,53 @@ void tuple_fifo_directory_t::close() {
         return;
 
     _dir_state = TUPLE_FIFO_DIRECTORY_CLOSED;
+}
+
+
+
+c_str tuple_fifo_directory_t::generate_filename(int id) {
+    return c_str("tuple_fifo_%d", id);
+}
+
+
+
+bool tuple_fifo_directory_t::filename_filter(const char* path) {
+    int id;
+    return sscanf(path, "tuple_fifo_%d", &id) == 1;
+}
+
+
+
+void tuple_fifo_directory_t::clean_dir() {
+
+    DIR* dir = opendir(dir_path().data());
+    if (dir == NULL)
+        THROW2(TupleFifoDirectoryException,
+               "opendir(%s) failed", dir_path().data());
+
+    while (1) {
+
+        struct dirent* dinfo = readdir(dir);
+        if (dinfo == NULL)
+            /* done reading */
+            break;
+ 
+        const char* filename = dinfo->d_name;
+        if (!filename_filter(filename))
+            /* not a tuple_fifo file */
+            continue;
+
+        /* If we are here, we have found a tuple_fifo file. Delete
+           it. */
+        c_str filepath("%s/%s", dir_path().data(), filename);
+        if (unlink(filepath.data()))
+            THROW2(TupleFifoDirectoryException,
+                   "unlink(%s) failed", filepath.data());
+    }
+
+    if (closedir(dir))
+        THROW2(TupleFifoDirectoryException,
+               "closedir(%s) failed", dir_path().data());
 }
 
 

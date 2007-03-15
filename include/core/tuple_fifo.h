@@ -333,4 +333,5 @@ inline void guard<qpipe::tuple_fifo>::action(qpipe::tuple_fifo* ptr) {
 }
 
 
+
 #endif

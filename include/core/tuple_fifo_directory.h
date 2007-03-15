@@ -30,9 +30,14 @@ private:
 public:
 
     static const c_str& dir_path();
-    static const c_str& generate_filename(int id);
     static void open_once();
     static void close();
+    static c_str generate_filename(int id);
+    
+private:
+
+    static bool filename_filter(const char* path);
+    static void clean_dir();
 
 };
 
