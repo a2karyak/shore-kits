@@ -62,6 +62,8 @@ void tuple_fifo_directory_t::close() {
     if (_dir_state != TUPLE_FIFO_DIRECTORY_OPEN)
         return;
 
+    clean_dir();
+
     _dir_state = TUPLE_FIFO_DIRECTORY_CLOSED;
 }
 
@@ -105,6 +107,10 @@ void tuple_fifo_directory_t::clean_dir() {
         if (unlink(filepath.data()))
             THROW2(TupleFifoDirectoryException,
                    "unlink(%s) failed", filepath.data());
+
+        /* debugging */
+        TRACE(TRACE_ALWAYS, "Deleting old tuple_fifo file %s\n",
+              filepath.data());
     }
 
     if (closedir(dir))
