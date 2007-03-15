@@ -13,6 +13,8 @@ ENTER_NAMESPACE(qpipe);
 DEFINE_EXCEPTION(TerminatedBufferException);
 
 
+int tuple_fifo_generate_id();
+
 
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
@@ -26,7 +28,9 @@ DEFINE_EXCEPTION(TerminatedBufferException);
 class tuple_fifo {
 
 private:
+
     typedef std::list<page*> page_list;
+
     page_list _pages;
     page_list _free_pages;
     
@@ -59,6 +63,8 @@ private:
     pthread_t _reader_tid;
     pthread_t _writer_tid;
     
+    int _fifo_id;
+
 public:
 
     /**
@@ -97,7 +103,8 @@ public:
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
 	  _reader_tid(0),
-          _writer_tid(0)
+          _writer_tid(0),
+          _fifo_id(tuple_fifo_generate_id())
     {
         init();
     }

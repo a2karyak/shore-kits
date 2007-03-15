@@ -1,7 +1,10 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
+
 #include "core/tuple_fifo.h"
 #include "util/trace.h"
+#include "util/acounter.h"
 #include <algorithm>
+
 
 
 ENTER_NAMESPACE(qpipe);
@@ -388,6 +391,13 @@ bool tuple_fifo::_get_read_page() {
 
     // * * * END CRITICAL SECTION * * *
     return true;
+}
+
+
+
+int tuple_fifo_generate_id() {
+    static acounter_t next_fifo_id;
+    return next_fifo_id.fetch_and_inc();
 }
 
 
