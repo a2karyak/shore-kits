@@ -4,13 +4,19 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_filenames.h"
 
+using namespace qpipe;
 
 
+
+/* helper functions */
 
 static void open_db_table(page_list* table, const char* table_name);
 static void close_db_table(page_list* table, const char* table_name);
 
-using namespace qpipe;
+
+
+/* definitions of exported functions */
+
 /**
  *  @brief Open TPC-H tables.
  *
@@ -94,4 +100,3 @@ static void close_db_table(page_list* table, const char*) {
         (*it)->free();
     table->clear();
 }
-
