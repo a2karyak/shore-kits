@@ -11,10 +11,13 @@
 using namespace qpipe;
 
 
+
 ENTER_NAMESPACE(q16);
 
 
+
 struct supplier_tscan_filter_t : public tuple_filter_t {
+
     char const *word1;
     char const *word2;
         
@@ -47,29 +50,34 @@ struct supplier_tscan_filter_t : public tuple_filter_t {
         int* dest = aligned_cast<int>(d.data);
         *dest = src->S_SUPPKEY;
     }
+
     virtual supplier_tscan_filter_t* clone() const {
         return new supplier_tscan_filter_t(*this);
     }
+
     virtual c_str to_string() const {
         return c_str("select S_SUPPKEY where S_COMMENT like %%%s%%%s%%",
                      word1, word2);
     }
 };
 
+
+
 /**
  * @brief select s_suppkey from supplier where s_comment like
  * "%Customer%Complaints%"
  */
-packet_t *supplier_scan(page_list* tpch_supplier) {
+packet_t* supplier_scan(page_list* tpch_supplier) {
     tuple_filter_t* filter = new supplier_tscan_filter_t();
     tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     packet_t* tscan_packet = new tscan_packet_t("supplier TSCAN",
                                                 buffer,
                                                 filter,
                                                 tpch_supplier);
-
     return tscan_packet;
 }
+
+
 
 struct part_scan_tuple_t {
     int p_partkey;
@@ -77,6 +85,8 @@ struct part_scan_tuple_t {
     char p_brand[STRSIZE(10)];
     char p_type[STRSIZE(25)];
 };
+
+
 
 struct part_tscan_filter_t : public tuple_filter_t {
     char brand[32];
@@ -119,6 +129,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
             }
         }
     }
+
+
     virtual bool select(const tuple_t &s) {
         tpch_part_tuple* part = aligned_cast<tpch_part_tuple>(s.data);
 
@@ -139,6 +151,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
         // no size match
         return false;
     }
+
+
     virtual void project(tuple_t &d, const tuple_t &s) {
         tpch_part_tuple* src = aligned_cast<tpch_part_tuple>(s.data);
         part_scan_tuple_t* dest = aligned_cast<part_scan_tuple_t>(d.data);
@@ -148,15 +162,21 @@ struct part_tscan_filter_t : public tuple_filter_t {
         memcpy(dest->p_brand, src->P_BRAND, sizeof(src->P_BRAND));
         memcpy(dest->p_type, src->P_TYPE, sizeof(src->P_TYPE));
     }
+
+
     virtual part_tscan_filter_t* clone() const {
         return new part_tscan_filter_t(*this);
     }
+
+
     virtual c_str to_string() const {
         return c_str("select P_PARTKEY, P_SIZE, P_BRAND, P_TYPE "
                      "where P_BRAND <> %s and P_TYPE not like %s%%",
                      brand, type);
     }
 };
+
+
 
 /**
  * @brief select p_brand, p_type, p_size, p_partkey from part where
@@ -174,31 +194,44 @@ packet_t* part_scan(page_list* tpch_part) {
     return tscan_packet;
 }
 
+
+
 struct part_supp_tuple_t {
     static int const ALIGN;
     int PART_KEY;
     int SUPP_KEY;
 };
+
+
+
 int const part_supp_tuple_t::ALIGN = sizeof(int);
 
+
+
 struct partsupp_tscan_filter_t : public tuple_filter_t {
+
     partsupp_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_partsupp_tuple))
     {
     }
+
     virtual void project(tuple_t &d, const tuple_t &s) {
         tpch_partsupp_tuple* src = aligned_cast<tpch_partsupp_tuple>(s.data);
         part_supp_tuple_t* dest = aligned_cast<part_supp_tuple_t>(d.data);
         dest->PART_KEY = src->PS_PARTKEY;
         dest->SUPP_KEY = src->PS_SUPPKEY;
     }
+
     virtual partsupp_tscan_filter_t* clone() const {
         return new partsupp_tscan_filter_t(*this);
     }
+
     virtual c_str to_string() const {
         return "select PS_PARTKEY, PS_SUPPKEY";
     }
 };
+
+
 
 packet_t* partsupp_scan(page_list* tpch_partsupp) {
     tuple_filter_t* filter = new partsupp_tscan_filter_t();
@@ -218,26 +251,33 @@ packet_t* partsupp_scan(page_list* tpch_partsupp) {
                                               new int_key_extractor_t(sizeof(int), offset),
                                               new int_key_compare_t(),
                                               tscan_packet);
-                                              
     return sort_packet;
 }
 
+
+
 struct partsupp_filter_t : public tuple_filter_t {
+
     partsupp_filter_t()
         : tuple_filter_t(sizeof(part_supp_tuple_t))
     {
     }
+
     virtual void project(tuple_t &dest, const tuple_t &s) {
         part_supp_tuple_t* src = aligned_cast<part_supp_tuple_t>(s.data);
         *aligned_cast<int>(dest.data) = src->PART_KEY;
     }
+
     virtual partsupp_filter_t* clone() const {
         return new partsupp_filter_t(*this);
     }
+
     virtual c_str to_string() const {
         return "select PART_KEY";
     }
 };
+
+
 
 struct q16_join_t : public tuple_join_t {
 
@@ -296,7 +336,10 @@ struct q16_join_t : public tuple_join_t {
     }
 };
 
+
+
 struct q16_compare1_t : public key_compare_t {
+
     virtual int operator()(const void* key1, const void* key2) const {
         part_scan_tuple_t* a = aligned_cast<part_scan_tuple_t>(key1);
         part_scan_tuple_t* b = aligned_cast<part_scan_tuple_t>(key2);
@@ -319,16 +362,21 @@ struct q16_compare1_t : public key_compare_t {
 
         return 0;
     }
+
     virtual q16_compare1_t* clone() const {
         return new q16_compare1_t(*this);
     }
 };
 
+
+
 struct q16_extractor1_t : public key_extractor_t {
+
     q16_extractor1_t()
         : key_extractor_t(sizeof(part_scan_tuple_t))
     {
     }
+
 #if 1
     virtual int extract_hint(const char* key) const{
         return 0;
@@ -338,48 +386,64 @@ struct q16_extractor1_t : public key_extractor_t {
         return result;
     }
 #endif
+
     virtual q16_extractor1_t* clone() const {
         return new q16_extractor1_t(*this);
     }
 };
 
+
+
 struct q16_aggregate1_t : public tuple_aggregate_t {
+
     q16_extractor1_t _extractor;
+
     q16_aggregate1_t()
         : tuple_aggregate_t(sizeof(part_scan_tuple_t))
     {
     }
+
     virtual key_extractor_t* key_extractor() { return &_extractor; }
+
     virtual void aggregate(char*, const tuple_t &) {
         // do nothing -- no data fields
     }
+
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
     }
+
     virtual q16_aggregate1_t* clone() const {
         return new q16_aggregate1_t(*this);
     }
+
     virtual c_str to_string() const {
         return "q16_aggregate1_t";
     }
 };
 
+
+
 struct q16_extractor2_t : public key_extractor_t {
+
     static size_t calc_key_offset() {
         part_scan_tuple_t* pst = NULL;
         return (size_t) &pst->p_size;
     }
+
     q16_extractor2_t()
         : key_extractor_t(sizeof(part_scan_tuple_t) - calc_key_offset(),
                           calc_key_offset())
     {
     }
+
     virtual int extract_hint(const char* key) const {
         part_scan_tuple_t* pst = aligned_cast<part_scan_tuple_t>(key - key_offset());
         int result;
         memcpy(&result, pst->p_brand, sizeof(int));
         return result;
     }
+
     virtual q16_extractor2_t* clone() const {
         return new q16_extractor2_t(*this);
     }
@@ -387,44 +451,60 @@ struct q16_extractor2_t : public key_extractor_t {
 
 
 struct q16_aggregate2_t : public tuple_aggregate_t {
+
     q16_extractor2_t _extractor;
+
     q16_aggregate2_t()
         : tuple_aggregate_t(sizeof(part_scan_tuple_t))
     {
     }
+
     virtual key_extractor_t* key_extractor() { return &_extractor; }
+
     virtual void aggregate(char* agg_data, const tuple_t &) {
         part_scan_tuple_t* agg = aligned_cast<part_scan_tuple_t>(agg_data);
 
         // use the "part key" field to store the count
         agg->p_partkey++;
     }
+
     virtual void finish(tuple_t &d, const char* agg_data) {
         memcpy(d.data, agg_data, tuple_size());
     }
+
     virtual q16_aggregate2_t* clone() const {
         return new q16_aggregate2_t(*this);
     }
+
     virtual c_str to_string() const {
         return "q16_aggregate2_t";
     }
 };
 
+
+
 struct q16_extractor3_t : public key_extractor_t {
+
     q16_extractor3_t()
         : key_extractor_t(sizeof(part_scan_tuple_t))
     {
     }
+
     virtual int extract_hint(const char* key) const {
         return -*aligned_cast<int>(key);
     }
+
     virtual q16_extractor3_t* clone() const {
         return new q16_extractor3_t(*this);
     }
 };
 
+
+
 struct q16_compare2_t : public key_compare_t {
+
     virtual int operator()(const void* key1, const void* key2) const {
+
         part_scan_tuple_t* a = aligned_cast<part_scan_tuple_t>(key1);
         part_scan_tuple_t* b = aligned_cast<part_scan_tuple_t>(key2);
 
@@ -444,10 +524,12 @@ struct q16_compare2_t : public key_compare_t {
 
         return 0;
     }
+
     virtual q16_compare2_t* clone() const {
         return new q16_compare2_t(*this);
     }
 };
+
 
 
 EXIT_NAMESPACE(q16);
@@ -457,6 +539,7 @@ using namespace q16;
 
 
 ENTER_NAMESPACE(workload);
+
 
 
 class tpch_q16_process_tuple_t : public process_tuple_t {
@@ -477,6 +560,7 @@ public:
     }
 
 };
+
 
 
 void tpch_q16_driver::submit(void* disp) {

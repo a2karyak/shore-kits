@@ -73,7 +73,7 @@ void tuple_fifo::clear_stats() {
  * @brief Dump stats using TRACE.
  */
 void tuple_fifo::trace_stats() {
-    TRACE(TRACE_ALWAYS, "Fraction of tuple_fifos that experiened blocked = %lf\n",
+    TRACE(TRACE_ALWAYS, "Fraction of tuple_fifos that experienced blocking = %lf\n",
           (double)total_fifos_experienced_blocking/total_fifos_existed);
 }
 
