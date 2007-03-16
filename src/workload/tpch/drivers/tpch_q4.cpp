@@ -254,7 +254,7 @@ void tpch_q4_driver::submit(void* disp) {
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
     buffer = new tuple_fifo(sizeof(int));
     tuple_join_t* join = new q4_join_t();
-    packet_t* join_packet = new pipe_hash_join_packet_t("Orders - Lineitem JOIN",
+    packet_t* join_packet = new hash_join_packet_t("Orders - Lineitem JOIN",
                                                    buffer,
                                                    filter,
                                                    orders_packet,
