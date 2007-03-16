@@ -29,7 +29,7 @@ const c_str pipe_hash_join_packet_t::PACKET_TYPE = "PIPE_HASH_JOIN";
 const c_str pipe_hash_join_stage_t::DEFAULT_STAGE_NAME = "PIPE_HASH_JOIN";
 
 
-
+namespace {
 /* Helper classes used by the hashtable data structure. All of
    these are very short, so give the compiler the option of
    inlining. */
@@ -76,7 +76,7 @@ struct hashfcn_t {
 	return fnv_hash(key, _len);
     }
 };
-
+}
 typedef hash_set<char*, hashfcn_t, equalbytes_t>::allocator_type alloc_t;
 typedef hashtable<char *, const char *,
 		  hashfcn_t, extractkey_t,
@@ -143,7 +143,7 @@ void pipe_hash_join_stage_t::process_packet() {
 	    tuple_t left = it.advance();
 	    left_hash.insert_equal(left.data);
 	    hit probe = right_hash.find(left_ke(left.data));
-	    while(probe != right_hash.end()) {
+	    for(; probe != right_hash.end(); ++probe) {
 		right.data = *probe;
 		_join->join(out, left, right);
 		_adaptor->output(out);
@@ -166,7 +166,7 @@ void pipe_hash_join_stage_t::process_packet() {
 	    tuple_t right = it.advance();
 	    right_hash.insert_equal(right.data);
 	    hit probe = left_hash.find(right_ke(right.data));
-	    while(probe != left_hash.end()) {
+	    for(; probe != left_hash.end(); ++probe) {
 		left.data = *probe;
 		_join->join(out, left, right);
 		_adaptor->output(out);

@@ -466,6 +466,10 @@ class page_trash_stack {
     guard<qpipe::page> _head;
     int _size;
 public:
+    page_trash_stack()
+	: _size(0)
+    {
+    }
     void add(qpipe::page* p) {
         p->next = _head.release();
         _head = p;

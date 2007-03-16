@@ -57,7 +57,7 @@ public:
 
         virtual int extract_hint(const char*) const {
             /* should never be called! */
-            assert(0);
+            unreachable();
             return 0;
         }
 
