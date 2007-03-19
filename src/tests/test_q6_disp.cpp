@@ -24,7 +24,7 @@ using namespace qpipe;
  */
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     TRACE_SET(TRACE_ALWAYS);
 
 

@@ -37,7 +37,7 @@ public:
 
 int main() {
 
-    thread_init();
+    util_init();
     db_open_guard_t db_open;
 
     register_stage<tscan_stage_t>(1);

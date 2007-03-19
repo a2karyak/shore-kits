@@ -55,7 +55,7 @@ int busy_delay_init(void)
   if (num < 0)
     return -1;
 
-  TRACE(TRACE_ALWAYS, "Computed %d iterations per ms\n", num);
+  TRACE(0&TRACE_ALWAYS, "Computed %d iterations per ms\n", num);
   NUM_ITERATIONS_PER_MS = num;
   return 0;
 }
@@ -148,7 +148,7 @@ static int compute_iterations_per_ms(int min_pow, int num_pow)
       if (t == _NAN)
       {
         /* error checking */
-        TRACE(TRACE_DEBUG, "compute_time_ms(%d) return NAN\n", num_iter);
+        TRACE(0&TRACE_DEBUG, "compute_time_ms(%d) return NAN\n", num_iter);
         return -1;
       }
 
@@ -156,7 +156,7 @@ static int compute_iterations_per_ms(int min_pow, int num_pow)
     }
 
     double tavg = sum / NUM_RUNS_PER_ITERATION_COUNT;
-    TRACE(TRACE_DEBUG,
+    TRACE(0&TRACE_DEBUG,
           "Computed time of %lf for %d iterations\n",
           tavg,
           num_iter);

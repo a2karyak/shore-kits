@@ -27,7 +27,7 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     db_open_guard_t db_open;
 
     // parse input filename

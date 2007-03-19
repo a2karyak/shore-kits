@@ -24,7 +24,7 @@ void usage(const char* program_name) {
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
 
     // command-line args
     if ( argc < 2 )

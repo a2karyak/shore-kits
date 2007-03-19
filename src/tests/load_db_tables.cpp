@@ -4,7 +4,7 @@
 #include "workload/tpch/tpch_db.h"
 
 int main() {
-  thread_init();
+  util_init();
   //  db_open();
     
   db_load("tbl");

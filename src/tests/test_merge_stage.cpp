@@ -62,7 +62,7 @@ void write_tuples(void*, void* winfo)
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     db_open_guard_t db_open;
     
     TRACE(TRACE_ALWAYS,

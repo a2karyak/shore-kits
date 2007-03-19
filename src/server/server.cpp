@@ -45,9 +45,9 @@ int main(int argc, char* argv[]) {
 
 int qpipe_init(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     TRACE(TRACE_ALWAYS, "QPipe Execution Engine\n");
-    
+
     register_command_handlers();
     register_stage_containers();
 

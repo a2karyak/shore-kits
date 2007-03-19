@@ -5,9 +5,9 @@
 
 int main(int, char**)
 {
-  thread_init();
+    util_init();
 
-  TRACE(TRACE_ALWAYS, "SIGSTKSZ = %d\n", SIGSTKSZ);
+    TRACE(TRACE_ALWAYS, "SIGSTKSZ = %d\n", SIGSTKSZ);
 
-  return 0;
+    return 0;
 }

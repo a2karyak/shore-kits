@@ -87,82 +87,82 @@ public:
 
 int main(int, char**)
 {
-  thread_init();
+    util_init();
 
-  TRACE(TRACE_ALWAYS, "hello world from %s\n", thread_get_self()->thread_name().data());
+    TRACE(TRACE_ALWAYS, "hello world from %s\n", thread_get_self()->thread_name().data());
  
-  EqualInt       equalint;
-  EqualIntString equalintstring;
-  ExtractInt     extractint;
-  HashInt        hashint;
+    EqualInt       equalint;
+    EqualIntString equalintstring;
+    ExtractInt     extractint;
+    HashInt        hashint;
 
   
-  /* REMOVE CC Compiler warnings */
-  equalint = equalint;
-  equalintstring = equalintstring;
-  extractint = extractint;
-  hashint = hashint;
+    /* REMOVE CC Compiler warnings */
+    equalint = equalint;
+    equalintstring = equalintstring;
+    extractint = extractint;
+    hashint = hashint;
 
 
-  TRACE(TRACE_ALWAYS, "(5, 4) = %s\n", equalint(5, 4) ? "TRUE" : "FALSE");
-  TRACE(TRACE_ALWAYS, "(5, 5) = %s\n", equalint(5, 5) ? "TRUE" : "FALSE");
+    TRACE(TRACE_ALWAYS, "(5, 4) = %s\n", equalint(5, 4) ? "TRUE" : "FALSE");
+    TRACE(TRACE_ALWAYS, "(5, 5) = %s\n", equalint(5, 5) ? "TRUE" : "FALSE");
 
   
-  hashtable <const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>
-      ht(40, extractint, equalint, equalintstring, hashint);
+    hashtable <const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>
+        ht(40, extractint, equalint, equalintstring, hashint);
   
 
-  /* Insert three copies of the numbers 0..9 */
-  for (int t = 0; t < 3; t++) {
-      for (int i = 0; i < 10; i++) {
-          ht.insert_noresize(int_strings[i]);
-      }
-  }
+    /* Insert three copies of the numbers 0..9 */
+    for (int t = 0; t < 3; t++) {
+        for (int i = 0; i < 10; i++) {
+            ht.insert_noresize(int_strings[i]);
+        }
+    }
 
-  /* Check contains() against 0..19. Half should exist. */
-  for (int i = 0; i < 20; i++) {
-      TRACE(TRACE_ALWAYS, "ht.contains(%d) = %s\n",
-            i,
-            ht.contains(int_strings[i]) ? "TRUE" : "FALSE");
-  }
+    /* Check contains() against 0..19. Half should exist. */
+    for (int i = 0; i < 20; i++) {
+        TRACE(TRACE_ALWAYS, "ht.contains(%d) = %s\n",
+              i,
+              ht.contains(int_strings[i]) ? "TRUE" : "FALSE");
+    }
   
-  /* Check insert_unique_noresize() on 0..19. The numbers 10..19
-     should be inserted successfully. */
-  for (int i = 0; i < 20; i++) {
-      TRACE(TRACE_ALWAYS, "ht.insert_unique_noresize(%d) = %s\n",
-            i,
-            ht.insert_unique_noresize(int_strings[i]) ? "TRUE" : "FALSE");
-  }
+    /* Check insert_unique_noresize() on 0..19. The numbers 10..19
+       should be inserted successfully. */
+    for (int i = 0; i < 20; i++) {
+        TRACE(TRACE_ALWAYS, "ht.insert_unique_noresize(%d) = %s\n",
+              i,
+              ht.insert_unique_noresize(int_strings[i]) ? "TRUE" : "FALSE");
+    }
 
-  /* Check equal_range() on 0..30. The numbers in 0..9 should have
-     three entries each. The numbers in 10..19 should have one entry
-     each. The numbers in 20..29 should have no entries. */
-  for (int i = 0; i < 30; i++) {
+    /* Check equal_range() on 0..30. The numbers in 0..9 should have
+       three entries each. The numbers in 10..19 should have one entry
+       each. The numbers in 20..29 should have no entries. */
+    for (int i = 0; i < 30; i++) {
 
-      std::pair
-          <hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator,
-           hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator>
-          itpair = ht.equal_range(extractint(int_strings[i]));
+        std::pair
+            <hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator,
+            hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator>
+            itpair = ht.equal_range(extractint(int_strings[i]));
 
-      hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator
-          one = itpair.first;
-      hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator
-          end = itpair.second;
+        hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator
+            one = itpair.first;
+        hashtable<const char*, int, ExtractInt, EqualInt, EqualIntString, HashInt>::iterator
+            end = itpair.second;
       
-      if (one == end) {
-          TRACE(TRACE_ALWAYS, "No data for i = %d\n", i);
-      }
-      for ( ; one != end; ++one) {
-          const char* v = *one;
-          TRACE(TRACE_ALWAYS, "Got value %s for i = %d\n",
-                v,
-                i);
-      }
-  }
+        if (one == end) {
+            TRACE(TRACE_ALWAYS, "No data for i = %d\n", i);
+        }
+        for ( ; one != end; ++one) {
+            const char* v = *one;
+            TRACE(TRACE_ALWAYS, "Got value %s for i = %d\n",
+                  v,
+                  i);
+        }
+    }
 
 
-  TRACE(TRACE_ALWAYS, "This should lead to an abort...\n");
-  ht.insert_noresize(int_strings[1]);
+    TRACE(TRACE_ALWAYS, "This should lead to an abort...\n");
+    ht.insert_noresize(int_strings[1]);
   
-  return 0;
+    return 0;
 }

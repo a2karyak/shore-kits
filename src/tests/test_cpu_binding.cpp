@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
 
     // parse index of CPU to bind to
     if ( argc < 2 ) {

@@ -26,7 +26,7 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     
 
     int num_tuples = -1;

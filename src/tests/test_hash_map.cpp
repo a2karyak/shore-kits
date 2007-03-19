@@ -10,26 +10,26 @@ using std::string;
 
 int main(int, char**)
 {
-  thread_init();
+    util_init();
 
-  const char* key = "hello";
+    const char* key = "hello";
 
 
-  std::map<string, int> s_string;
-  s_string[key] = 5;
+    std::map<string, int> s_string;
+    s_string[key] = 5;
   
-  TRACE(TRACE_ALWAYS, "s_string[\"%s\"] maps to %d\n",
-        key,
-        s_string[key]);
+    TRACE(TRACE_ALWAYS, "s_string[\"%s\"] maps to %d\n",
+          key,
+          s_string[key]);
   
 
-  std::map<c_str, int> s_cstr;
-  s_cstr[c_str(key)] = 5;
+    std::map<c_str, int> s_cstr;
+    s_cstr[c_str(key)] = 5;
 
-  s_cstr.find(key);
-  TRACE(TRACE_ALWAYS, "s_cstr[\"%s\"]   maps to %d\n",
-        key,
-        s_cstr[c_str(key)]);
+    s_cstr.find(key);
+    TRACE(TRACE_ALWAYS, "s_cstr[\"%s\"]   maps to %d\n",
+          key,
+          s_cstr[c_str(key)]);
   
-  return 0;
+    return 0;
 }

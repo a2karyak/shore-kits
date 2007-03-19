@@ -164,7 +164,7 @@ void wait_keypress(void) {
 
 int main(int, char**)
 {
-  thread_init();
+    util_init();
 
 
   thread_info_t root_info   = { wait_keypress,
