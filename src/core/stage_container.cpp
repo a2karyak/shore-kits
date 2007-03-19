@@ -581,12 +581,6 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
     
     
     /* packet was merged with this existing stage */
-    if (TRACE_MERGING)
-        TRACE(TRACE_ALWAYS, "%s merged into %s. next_tuple_on_merge = %d\n",
-              packet->_packet_id.data(),
-              _packet->_packet_id.data(),
-              _packet->_next_tuple_on_merge);
-
     stage_container_t::merge_t ret;
 
     // If we are here, we detected work sharing!
@@ -610,6 +604,14 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
     packet->output_buffer()->writer_init();
 
     // * * * END CRITICAL SECTION * * *
+    cs.exit();
+    
+    TRACE(TRACE_WORK_SHARING, "%s merged into %s. next_tuple_on_merge = %d\n",
+	  packet->_packet_id.data(),
+	  packet->_packet_id.data(),
+	  packet->_next_tuple_on_merge);
+
+    
     return ret;
 }
 

@@ -23,5 +23,6 @@
 #include "util/resource_pool.h"
 #include "util/tassert.h"
 #include "util/itimer.h"
+#include "util/acounter.h"
 
 #endif

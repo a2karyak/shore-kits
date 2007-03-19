@@ -259,9 +259,7 @@ void tpch_q4_driver::submit(void* disp) {
                                                    filter,
                                                    orders_packet,
                                                    line_item_packet,
-                                                   join,
-                                                   false,
-                                                   true);
+                                                   join);
 
     // sort/aggregate in one step
     filter = new trivial_filter_t(sizeof(q4_tuple_t));

@@ -13,6 +13,8 @@ ENTER_NAMESPACE(qpipe);
 DEFINE_EXCEPTION(TerminatedBufferException);
 
 
+int tuple_fifo_generate_id();
+
 
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
@@ -26,7 +28,9 @@ DEFINE_EXCEPTION(TerminatedBufferException);
 class tuple_fifo {
 
 private:
+
     typedef std::list<page*> page_list;
+
     page_list _pages;
     page_list _free_pages;
     
@@ -59,6 +63,8 @@ private:
     pthread_t _reader_tid;
     pthread_t _writer_tid;
     
+    int _fifo_id;
+
 public:
 
     /**
@@ -97,7 +103,8 @@ public:
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
 	  _reader_tid(0),
-          _writer_tid(0)
+          _writer_tid(0),
+          _fifo_id(tuple_fifo_generate_id())
     {
         init();
     }
@@ -203,7 +210,7 @@ public:
      *  terminated the buffer.
      */
 
-    page* get_page();
+    page* get_page(int timeout=0);
 
 
     /**
@@ -223,14 +230,20 @@ public:
      * @brief ensures that the FIFO is ready for reading.
      *
      * The call will block until a tuple becomes available for
-     * reading, or EOF is encountered
+     * reading, or EOF is encountered.
      *
-     * @return false if EOF
+     * @return false if EOF or timeout expired
      */
-
-    bool ensure_read_ready() {
+    bool ensure_read_ready(int timeout=0) {
         // blocking attempt => only returns false if EOF
-	return (_read_iterator->data != _read_end) || _get_read_page();
+	return (_read_iterator->data != _read_end) || _get_read_page(timeout) == 1;
+    }
+
+    // non-blocking. Return 1 if ready, 0 if not ready, -1 if EOF
+    int check_read_ready() {
+	if(_read_iterator->data != _read_end)
+	    return 1;
+	return _get_read_page(-1);
     }
 
     
@@ -272,7 +285,7 @@ public:
      */
 
     bool eof() {
-        return !ensure_read_ready();
+        return check_read_ready() < 0;
     }
 
 
@@ -301,13 +314,13 @@ private:
     void destroy();
 
     // attempts to read a new page
-    bool _get_read_page();
+    int _get_read_page(int timeout);
     void _flush_write_page(bool done_writing);
     
     void wait_for_reader();
     void ensure_reader_running();
     
-    void wait_for_writer();
+    bool wait_for_writer(int timeout);
     void ensure_writer_running();
     
 };
@@ -324,6 +337,7 @@ inline void guard<qpipe::tuple_fifo>::action(qpipe::tuple_fifo* ptr) {
         delete ptr;
     }
 }
+
 
 
 #endif

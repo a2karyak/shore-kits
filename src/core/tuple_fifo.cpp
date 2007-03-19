@@ -1,7 +1,11 @@
 /** -*- mode:C++; c-basic-offset:4 -*- */
+
 #include "core/tuple_fifo.h"
+#include "core/tuple_fifo_directory.h"
 #include "util/trace.h"
+#include "util/acounter.h"
 #include <algorithm>
+
 
 
 ENTER_NAMESPACE(qpipe);
@@ -69,7 +73,7 @@ void tuple_fifo::clear_stats() {
  * @brief Dump stats using TRACE.
  */
 void tuple_fifo::trace_stats() {
-    TRACE(TRACE_ALWAYS, "Fraction of tuple_fifos that experiened blocked = %lf\n",
+    TRACE(TRACE_ALWAYS, "Fraction of tuple_fifos that experienced blocking = %lf\n",
           (double)total_fifos_experienced_blocking/total_fifos_existed);
 }
 
@@ -123,14 +127,18 @@ static const int QPIPE_PAGE_SIZE = 4096;
  */
 void tuple_fifo::init() {
 
+    /* Check on the tuple_fifo directory. */
+    tuple_fifo_directory_t::open_once();
+
     _reader_tid = pthread_self();
-    // prepare for reading
+
+    /* Prepare for reading. */
     _set_read_page(SENTINEL_PAGE);
 
-    // prepare for writing
+    /* Prepare for writing. */
     _write_page = SENTINEL_PAGE;
     
-    // stats
+    /* Update statistics. */
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
     total_fifos_existed++;
@@ -193,9 +201,8 @@ void tuple_fifo::destroy() {
  *
  * @return NULL if the tuple_fifo has been closed. A page otherwise.
  */
-page* tuple_fifo::get_page() {
-
-    if(!ensure_read_ready())
+page* tuple_fifo::get_page(int timeout) {
+    if(!ensure_read_ready(timeout))
         return NULL;
 
     // no partial pages allowed!
@@ -282,9 +289,9 @@ inline void tuple_fifo::ensure_reader_running() {
     thread_cond_signal(_reader_notify);
 }
 
-inline void tuple_fifo::wait_for_writer() {
+inline bool tuple_fifo::wait_for_writer(int timeout) {
     _num_waits_on_remove++;
-    thread_cond_wait(_reader_notify, _lock);
+    return thread_cond_wait(_reader_notify, _lock, timeout);
 }
 
 inline void tuple_fifo::ensure_writer_running() {
@@ -345,9 +352,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     // * * * END CRITICAL SECTION * * *
 }
 
-
-
-bool tuple_fifo::_get_read_page() {
+int tuple_fifo::_get_read_page(int timeout) {
 
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
@@ -363,16 +368,24 @@ bool tuple_fifo::_get_read_page() {
     // wait for pages to arrive? Once we've slept because of empty,
     // _threshold pages must be available before we are willing to try
     // again (unless send_eof() is called)
+    if(timeout >= 0) {
     for(size_t t=1; !_done_writing && _available_reads() < t; t = _threshold) {
         // sleep until something important changes
         //        fprintf(stderr, "Fifo %p sleeping on read\n", this);
-        wait_for_writer();
+        if(!wait_for_writer(timeout))
+	    break;
+	
         _termination_check();
     }
-
+    }
     if(_available_reads() == 0) {
-        assert(_done_writing);
-        return false;
+	if(_done_writing)
+	    return -1;
+	if(timeout != 0)
+	    return 0;
+
+	// one of the previous is required to be true!
+	unreachable();
     }
 
     // allocate the page
@@ -387,7 +400,14 @@ bool tuple_fifo::_get_read_page() {
     }
 
     // * * * END CRITICAL SECTION * * *
-    return true;
+    return 1;
+}
+
+
+
+int tuple_fifo_generate_id() {
+    static acounter_t next_fifo_id;
+    return next_fifo_id.fetch_and_inc();
 }
 
 

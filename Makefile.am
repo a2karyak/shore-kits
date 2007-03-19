@@ -51,7 +51,8 @@ TESTS = \
    tests/hash_map \
    tests/grouper \
    tests/busy_wait \
-   tests/busy_wait_all
+   tests/busy_wait_all \
+   tests/acounter
 
 
 bin_PROGRAMS = qpipe $(TESTS)
@@ -97,7 +98,9 @@ lib_libcore_a_SOURCES = \
 	$(SC)/packet.cpp \
 	$(SC)/stage_container.cpp \
 	$(SC)/tuple.cpp \
-	$(SC)/tuple_fifo.cpp
+	$(SC)/tuple_fifo.cpp \
+	$(SC)/tuple_fifo_directory.cpp
+
 
 
 
@@ -129,6 +132,7 @@ lib_libstages_a_SOURCES = \
    $(SG)/hash_aggregate.cpp \
    $(SG)/sorted_in.cpp \
    $(SG)/hash_join.cpp \
+   $(SG)/pipe_hash_join.cpp \
    $(SG)/func_call.cpp \
    $(SG)/merge.cpp \
    $(SG)/sort.cpp \
@@ -254,6 +258,7 @@ tests_hash_map_SOURCES = $(ST)/test_hash_map.cpp
 tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
+tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)

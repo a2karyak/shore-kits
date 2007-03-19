@@ -38,6 +38,8 @@ public:
     virtual ~driver_t() { }
 
     virtual void submit(void* arg)=0;
+
+    c_str description() { return _description; }
 };
 
 
