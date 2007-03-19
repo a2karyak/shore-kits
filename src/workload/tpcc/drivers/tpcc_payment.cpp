@@ -3,7 +3,7 @@
 # include "scheduler.h"
 # include "workload/tpcc/drivers/tpcc_payment.h"
 # include "workload/common.h"
-#include "workload/process_query.h"
+# include "workload/process_query.h"
 
 
 using namespace qpipe;
@@ -39,7 +39,7 @@ public:
 	      ++row_counter, *tmp);
     }
 
-};
+}; // END OF: payment_process_tuple_t
 
 
 void tpcc_payment_driver::submit(void* disp) {
@@ -97,6 +97,9 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
     TRACE(TRACE_ALWAYS, 
 	  "HARD-CODED payment_begin_packet_t\n");
 
+    char* param_last = "EMPTY";
+    char* param_date = "NEVER";
+
     payment_packet = new payment_begin_packet_t(packet_name,
 						bp_output_buffer,
 						bp_output_filter,
@@ -107,9 +110,9 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
 						2,
 						20,
 						1,
-						"EMPTY",
+						param_last,
 						5.0,
-						"NEVER");
+						param_date);
 					       
     
     qpipe::query_state_t* qs = dp->query_state_create();

@@ -42,21 +42,21 @@ void payment_begin_stage_t::process_packet() {
     packet->set_trx_id(my_trx_id);
 
     TRACE(TRACE_ALWAYS, 
-	  "Processing PAYMENT_BEGIN with id: %d. Counter: %d\n", 
-	  packet->trx_id(), my_trx_id);
+	  "Processing PAYMENT_BEGIN with id: %d\n", 
+	  packet->trx_id());
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
-    size_t dest_size = packet->output_buffer()->tuple_size();
-    array_guard_t<char> dest_data = new char[dest_size];
-    tuple_t dest(dest_data, dest_size);
+     size_t dest_size = packet->output_buffer()->tuple_size();
+     array_guard_t<char> dest_data = new char[dest_size];
+     tuple_t dest(dest_data, dest_size);
 
-    int* dest_tmp;
-    dest_tmp = aligned_cast<int>(dest.data);
+     int* dest_tmp;
+     dest_tmp = aligned_cast<int>(dest.data);
 
-    *dest_tmp = my_trx_id;
+     *dest_tmp = my_trx_id;
 
-    adaptor->output(dest);
+     adaptor->output(dest);
 
 } // process_packet
 

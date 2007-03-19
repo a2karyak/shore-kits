@@ -107,8 +107,12 @@ public:
     {
 	assert(a_h_date != NULL);
 
-	if (a_c_last != NULL)
-	    strncpy(_c_last, a_c_last, 16);
+	if (a_c_last != NULL) {	    
+	    int len = strlen(a_c_last)> 14 ? 14 : strlen(a_c_last);
+	    strncpy(_c_last, a_c_last, len );
+	    _c_last[len+1] = '\0';
+	}
+	    
 	
 	_h_date = new char[strlen(a_h_date) + 1];
         strncpy(_h_date, a_h_date, strlen(a_h_date));
@@ -122,8 +126,8 @@ public:
 	
 	TRACE(TRACE_ALWAYS, "payment_packet_t destructor\n");
 
-	if (_h_date)
-	    delete (_h_date);
+ 	if (_h_date)
+ 	    delete (_h_date);
     }
 
 
