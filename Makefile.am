@@ -157,7 +157,8 @@ WL_BASE = \
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
-   $(SW)/common/process_query.cpp
+   $(SW)/common/process_query.cpp \
+   $(SW)/common/randgen.cpp
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \

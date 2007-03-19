@@ -6,7 +6,6 @@
 
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/common.h"
 
 using namespace qpipe;
 
@@ -168,6 +167,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
                 int j = -1;
                 int size=0;
                 // loop until we get a unique value
+                TRACE(TRACE_ALWAYS, "Entering for i = %d\n", i);
                 while(j != i) {
 
                     // My original code
@@ -180,6 +180,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
                     if(j == i)
                         break;
                 }
+                TRACE(TRACE_ALWAYS, "Exit for i = %d\n", i);
                 sizes[i] = size;
             }
         }
