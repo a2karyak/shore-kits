@@ -68,6 +68,7 @@ tests: $(TESTS)
 SU=$(top_srcdir)/src/util
 lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS)
 lib_libutil_a_SOURCES = \
+	$(SU)/util_init.cpp \
 	$(SU)/c_str.cpp \
 	$(SU)/fnv.cpp \
 	$(SU)/hash_functions.cpp \
