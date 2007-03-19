@@ -83,7 +83,9 @@ lib_libutil_a_SOURCES = \
         $(SU)/static_list_node.cpp \
         $(SU)/static_list.cpp \
         $(SU)/resource_pool.cpp \
-        $(SU)/itimer.cpp
+        $(SU)/itimer.cpp \
+        $(SU)/busy_delay.cpp
+
 
 
 ################################################################################
