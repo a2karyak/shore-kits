@@ -114,7 +114,6 @@ struct sentinel_page_pool : page_pool {
 
 static sentinel_page_pool SENTINEL_POOL;
 static qpipe::page* SENTINEL_PAGE = qpipe::page::alloc(1, &SENTINEL_POOL);
-static const int QPIPE_PAGE_SIZE = 4096;
 
 
 
