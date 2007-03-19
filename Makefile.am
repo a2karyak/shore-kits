@@ -38,6 +38,7 @@ TESTS = \
    tests/hash_join_stage \
    tests/bnl_join_stage \
    tests/bnl_in_stage \
+   tests/delay_writer_stage \
    tests/q4 \
    tests/q6 \
    tests/q6_disp \
@@ -262,6 +263,7 @@ tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
+tests_delay_writer_stage_SOURCES = $(ST)/test_delay_writer_stage.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)

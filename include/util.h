@@ -25,5 +25,6 @@
 #include "util/tassert.h"
 #include "util/itimer.h"
 #include "util/acounter.h"
+#include "util/busy_delay.h"
 
 #endif

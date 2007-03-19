@@ -5,7 +5,6 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
-#include "workload/common.h"
 
 using namespace qpipe;
 using namespace workload;
