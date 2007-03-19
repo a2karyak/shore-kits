@@ -2,6 +2,7 @@
 
 #include "tests/common/tpch_query.h"
 
+#include "core/tuple_fifo_directory.h"
 #include "scheduler.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
@@ -11,6 +12,7 @@
 query_info_t query_init(int argc, char* argv[]) {
 
     thread_init();
+    tuple_fifo_directory_t::open_once();
     db_open(); /* destroy this below in query_main */
 
     // parse command line args

@@ -126,9 +126,6 @@ static qpipe::page* SENTINEL_PAGE = qpipe::page::alloc(1, &SENTINEL_POOL);
  */
 void tuple_fifo::init() {
 
-    /* Check on the tuple_fifo directory. */
-    tuple_fifo_directory_t::open_once();
-
     _reader_tid = pthread_self();
 
     /* Prepare for reading. */
