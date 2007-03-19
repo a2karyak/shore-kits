@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util/trace.h"
+#include "util/thread.h"
 #include "util/util_init.h"
 #include "util/busy_delay.h"
 
