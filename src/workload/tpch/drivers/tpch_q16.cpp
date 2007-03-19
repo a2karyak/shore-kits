@@ -12,6 +12,41 @@ using namespace qpipe;
 
 
 
+/**
+   select
+        p_brand,
+        p_type,
+        p_size,
+        count(distinct ps_suppkey) as supplier_cnt
+   from
+        partsupp,
+        part
+   where
+        p_partkey = ps_partkey
+        and p_brand <> ':1'
+        and p_type not like ':2%'
+        and p_size in (:3, :4, :5, :6, :7, :8, :9, :10)
+        and ps_suppkey not in (
+                select
+                        s_suppkey
+                from
+                        supplier
+                where
+                        s_comment like '%Customer%Complaints%'
+        )
+   group by
+        p_brand,
+        p_type,
+        p_size
+   order by
+        supplier_cnt desc,
+        p_brand,
+        p_type,
+        p_size;
+ */
+
+
+
 ENTER_NAMESPACE(q16);
 
 
@@ -111,16 +146,36 @@ struct part_tscan_filter_t : public tuple_filter_t {
         }
         else {
             thread_t* self = thread_get_self();
-            sprintf(brand, "Brand#%1d%1d", self->rand(5) + 1, self->rand(5) + 1);
+
+            // My original code
+            // sprintf(brand, "Brand#%1d%1d", self->rand(5) + 1, self->rand(5) + 1);
+            // Nikos
+            // //sprintf(brand, "Brand#%1d%1d", self->rand(5) + 1, self->rand(5) + 1);
+            //sprintf(brand, "Brand#%1d%1d", 5 + 1, 5 + 1);
+            sprintf(brand, "Brand#%1d%1d", 4 + 1, 4 + 1);
+
             char const* TYPE1[] = {"STANDARD", "SMALL", "MEDIUM", "LARGE", "PROMO", "ECONOMY"};
             char const* TYPE2[] = {"ANODIZED", "BURNISHED", "PLATED", "POLISHED", "BRUSHED"};
-            sprintf(type, "%s %s", TYPE1[self->rand(6)], TYPE2[self->rand(5)]);
+            
+            // My original code
+            // sprintf(type, "%s %s", TYPE1[self->rand(6)], TYPE2[self->rand(5)]);
+            // Nikos
+            // //sprintf(type, "%s %s", TYPE1[self->rand(6)], TYPE2[self->rand(5)]);
+            //sprintf(type, "%s %s", TYPE1[6], TYPE2[5]);
+            sprintf(type, "%s %s", TYPE1[5], TYPE2[4]);
+
             for(int i=0; i < 8; i++) {
                 int j = -1;
                 int size=0;
                 // loop until we get a unique value
                 while(j != i) {
-                    size = self->rand(50) + 1;
+
+                    // My original code
+                    // size = self->rand(50) + 1;
+                    // Nikos
+                    // size = self->rand(50) + 1;
+                    // size = 50 + 1;
+                    size = 49 + 1;
                     for(j=0; j < i && sizes[j] != size; j++);
                     if(j == i)
                         break;
