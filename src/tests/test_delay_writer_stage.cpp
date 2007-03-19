@@ -10,6 +10,7 @@ public:
 
     virtual void process(const tuple_t& output) {
 	int* d = aligned_cast<int>(output.data);
+        d = d;
 	TRACE(TRACE_ALWAYS, "Read another int\n");
     }
     
@@ -27,7 +28,7 @@ int main() {
     // DELAY WRITER PACKET
     // the output consists of a single int
     tuple_fifo* out_buffer = new tuple_fifo(sizeof(int));
-    tuple_filter_t* filter = new trivial_filter_t(true);
+    tuple_filter_t* filter = new trivial_filter_t(out_buffer->tuple_size());
     
 
     delay_writer_packet_t* delay_writer_packet =
