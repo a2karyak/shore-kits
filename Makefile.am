@@ -143,7 +143,8 @@ lib_libstages_a_SOURCES = \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
    $(SG)/echo.cpp \
-   $(SG)/sieve.cpp
+   $(SG)/sieve.cpp \
+   $(SG)/delay_writer.cpp
 
 
 ################################################################################
