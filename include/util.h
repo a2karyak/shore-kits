@@ -24,5 +24,6 @@
 #include "util/tassert.h"
 #include "util/itimer.h"
 #include "util/acounter.h"
+#include "util/randgen.h"
 
 #endif

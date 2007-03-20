@@ -3,9 +3,12 @@
 #ifndef __RANDGEN_H
 #define __RANDGEN_H
 
-#include "util.h" /* for ENTER_NAMESPACE/EXIT_NAMESPACE */
-
-ENTER_NAMESPACE(workload);
+#ifdef __GCC
+#include <cstdlib>
+#else
+#include <stdlib.h> /* On Sun's CC <stdlib.h> defines rand_r,
+                       <cstdlib> doesn't */
+#endif
 
 
 class randgen_t {
@@ -53,9 +56,6 @@ public:
     }
     
 };
-
-
-EXIT_NAMESPACE(workload);
 
 
 #endif
