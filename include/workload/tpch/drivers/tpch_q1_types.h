@@ -51,19 +51,21 @@ public:
     /* Initialize the predicates */
     q1_tscan_filter_t() : tuple_filter_t(sizeof(tpch_lineitem_tuple)) {
 
+        /* select random number generator */
+        static int _function_local_seed;
+        randgen_t  randgen(&_function_local_seed);
+        randgen_t* randgenp;
+        if (always_use_deterministic_predicates())
+            randgenp = &randgen;
+        else {
+            thread_t* self = thread_get_self();
+            randgenp = self->randgen();
+        }
+
+        /* predicates */
 	t = datestr_to_timet("1998-12-01");
-
-	/* Calculate random predicates */
-#if 1
-        // TPCH spec: "DELTA is randomly selected within [60. 120]"
-        thread_t* self = thread_get_self();
-        DELTA = 60 + self->rand(61);
-#else
-        DELTA = 90;
-#endif
-
-	// Predicate: 1998-12-01 - DELTA days
-	t = time_add_day(t, -DELTA);
+        DELTA = 60 + randgenp->rand(61);
+	t = time_add_day(t, -DELTA); // 1998-12-01 - DELTA days
     }
 
 

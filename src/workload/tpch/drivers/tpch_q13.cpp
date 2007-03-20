@@ -112,19 +112,24 @@ struct order_tscan_filter_t : public tuple_filter_t {
     order_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_orders_tuple))
     {
-        static char const* FIRST[] = {"special", "pending", "unusual", "express"};
-        static char const* SECOND[] = {"packages", "requests", "accounts", "deposits"};
-
-        // TODO: random word selection per TPC-H spec
-        if(0) {
-            word1 = "special";
-            word2 = "requests";
-        }
+        /* select random number generator */
+        static int _function_local_seed;
+        randgen_t  randgen(&_function_local_seed);
+        randgen_t* randgenp;
+        if (always_use_deterministic_predicates())
+            randgenp = &randgen;
         else {
             thread_t* self = thread_get_self();
-            word1 = FIRST[self->rand(4)];
-            word2 = SECOND[self->rand(4)];
+            randgenp = self->randgen();
         }
+
+        /* select word1 and word2 */
+        static char const* FIRST[] = {"special", "pending", "unusual", "express"};
+        static char const* SECOND[] = {"packages", "requests", "accounts", "deposits"};
+        int num_first_entries  = sizeof(FIRST)/sizeof(FIRST[0]);
+        int num_second_entries = sizeof(SECOND)/sizeof(SECOND[0]);
+        word1 = FIRST [randgenp->rand(num_first_entries)];
+        word2 = SECOND[randgenp->rand(num_second_entries)];
     }
 
     virtual bool select(const tuple_t &input) {

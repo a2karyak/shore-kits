@@ -49,7 +49,7 @@ private:
     /* DISCOUNT is random [0.02 .. 0.09] */
     decimal DISCOUNT;
 
-    /* QUANTITY is randon [24 .. 25] */
+    /* QUANTITY is random [24 .. 25] */
     decimal QUANTITY;
 
 public:
@@ -59,29 +59,31 @@ public:
         : tuple_filter_t(sizeof(tpch_lineitem_tuple)),
           _echo(echo)
     {
-        thread_t* self = thread_get_self();
+        /* select random number generator */
+        static int _function_local_seed;
+        randgen_t  randgen(&_function_local_seed);
+        randgen_t* randgenp;
+        if (always_use_deterministic_predicates())
+            randgenp = &randgen;
+        else {
+            thread_t* self = thread_get_self();
+            randgenp = self->randgen();
+        }
 
-        // DATE
+        
+        /* predicates */
         t1 = datestr_to_timet("1993-01-01");
-        t1 = time_add_year(t1, self->rand(5));
+        t1 = time_add_year(t1, randgenp->rand(5));
         t2 = time_add_year(t1, 1);
 
-        // DISCOUNT
-        DISCOUNT = .02 + self->rand(8)*.01;
+        DISCOUNT = .02 + .01 * randgenp->rand(8);   // random [0.02 .. 0.09]
+        QUANTITY =  24 + .01 * randgenp->rand(101); // random [24 .. 25]
 
-        // QUANTITY
-        QUANTITY = 24 + .01*self->rand(101);
+        TRACE(TRACE_DEBUG,
+              "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n",
+              DISCOUNT.to_double(),
+              QUANTITY.to_double());
 
-        TRACE(TRACE_DEBUG, "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n", DISCOUNT.to_double(), QUANTITY.to_double());
-
-        if(0) {
-            // override for validation run
-            DATE = datestr_to_timet("1994-01-01");
-	    t1 = DATE;
-	    t2 = time_add_year(t1, 1);
-            QUANTITY = 24;
-            DISCOUNT = .06;
-        }
         size_t offset;
         predicate_t* p;
 

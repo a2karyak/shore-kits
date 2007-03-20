@@ -101,19 +101,29 @@ struct lineitem_tscan_filter_t : tuple_filter_t {
     lineitem_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_lineitem_tuple))
     {
+        /* select random number generator */
+        static int _function_local_seed;
+        randgen_t  randgen(&_function_local_seed);
+        randgen_t* randgenp;
+        if (always_use_deterministic_predicates())
+            randgenp = &randgen;
+        else {
+            thread_t* self = thread_get_self();
+            randgenp = self->randgen();
+        }
+
         size_t offset;
         predicate_t* p;
 
         // where L_SHIPMODE in ('MAIL', 'SHIP') ...
-        thread_t* self = thread_get_self();
         // pick a random ship mode
-        mode1 = self->rand(END_SHIPMODE);
+        mode1 = randgenp->rand(END_SHIPMODE);
         // and another that must be different -- add a random number
         // that is neither 0 or END_SHIPMODE and take the modulus.
-        mode2 = (mode1 + self->rand(END_SHIPMODE-1) + 1) % END_SHIPMODE;
+        mode2 = (mode1 + randgenp->rand(END_SHIPMODE-1) + 1) % END_SHIPMODE;
 
         // 5 possible years to choose from
-        year = self->rand(5);
+        year = randgenp->rand(5);
 
         if(0) {
             // validation run
