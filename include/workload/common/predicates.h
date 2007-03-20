@@ -2,6 +2,8 @@
 #ifndef __PREDICATES_H
 #define __PREDICATES_H
 
+#include "util.h"
+#include "core/tuple.h"
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -16,7 +18,7 @@ using std::less_equal;
 using std::greater_equal;
 using std::equal_to;
 using std::not_equal_to;
-
+using namespace qpipe;
 
 
 ENTER_NAMESPACE(workload);
@@ -275,6 +277,10 @@ public:
 
 typedef compound_predicate_t<false> and_predicate_t;
 typedef compound_predicate_t<true> or_predicate_t;
+
+
+
+bool always_use_deterministic_predicates(void);
 
 
 

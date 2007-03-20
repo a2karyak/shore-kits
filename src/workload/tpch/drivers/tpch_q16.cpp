@@ -130,9 +130,9 @@ struct part_tscan_filter_t : public tuple_filter_t {
     part_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_part_tuple))
     {
-
-        static int function_local_seed;
-        randgen_t  randgen(&function_local_seed);
+        
+        static int _function_local_seed;
+        randgen_t  randgen(&_function_local_seed);
         randgen_t* randgenp = &randgen;
 
 
