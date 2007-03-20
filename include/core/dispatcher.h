@@ -45,17 +45,20 @@ protected:
 
     // stage directory
     map<c_str, stage_container_t*> _scdir;
-   
+    map<c_str, bool> _ospdir;
+    
  
     dispatcher_t();
     ~dispatcher_t();
 
    
     // methods
-    void _register_stage_container(const c_str &packet_type, stage_container_t* sc);
+    void _register_stage_container(const c_str& packet_type,
+                                   stage_container_t* sc, bool osp);
     void _dispatch_packet(packet_t* packet);
     void _reserve_workers(const c_str& type, int n);
     void _unreserve_workers(const c_str& type, int n);
+    bool _is_osp_enabled_for_type(const c_str& packet_type);
     
 
     static pthread_mutex_t _instance_lock;
@@ -89,15 +92,28 @@ public:
         _instance = new dispatcher_t();
     }
 
-    static void register_stage_container(const c_str &packet_type, stage_container_t* sc);
-    
+
+    static void register_stage_container(const c_str &packet_type,
+                                         stage_container_t* sc, bool osp_enabled) {
+        instance()->_register_stage_container(packet_type, sc, osp_enabled);
+    }
+    static bool is_osp_enabled_for_type(const c_str &packet_type) {
+        return instance()->_is_osp_enabled_for_type(packet_type);
+    }
+
+       
+
+    /* packet dispatching */
     template<template<class> class Guard>
     static void dispatch_packet(Guard<packet_t> &packet) {
         dispatch_packet(packet.release());
     }
-    
-    static void dispatch_packet(packet_t* packet);
+    static void dispatch_packet(packet_t* packet) {
+        instance()->_dispatch_packet(packet);
+    }
 
+
+    /* worker thread methods */
     static worker_reserver_t* reserver_acquire();
     static void reserver_release(worker_reserver_t* wr);
     static worker_releaser_t* releaser_acquire();

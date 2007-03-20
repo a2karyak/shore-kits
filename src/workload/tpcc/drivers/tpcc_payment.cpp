@@ -3,7 +3,7 @@
 # include "scheduler.h"
 # include "workload/tpcc/drivers/tpcc_payment.h"
 # include "workload/common.h"
-# include "workload/process_query.h"
+
 
 
 using namespace qpipe;

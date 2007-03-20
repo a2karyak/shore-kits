@@ -1,10 +1,8 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
 #include "stages.h"
-#include "workload/common/register_stage.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
-#include "workload/process_query.h"
 #include "tests/common.h"
 
 #include <utility>

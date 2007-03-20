@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h> /* Added this on enceladus. Maybe will not work on lomond. */
 #include <fcntl.h>
 
 #ifndef _GNU_SOURCE
@@ -85,16 +86,17 @@ thread_t::thread_t(const c_str &name)
 
 void thread_t::reset_rand() {
 
+    /* generate new seed */
+    unsigned int new_seed;
     int fd = open("/dev/urandom", O_RDONLY);
     assert(fd != -1);
-    
-    int read_size = read(fd, &_rand_seed, sizeof(int));
-    assert(read_size == sizeof(int));
-
+    int read_size = read(fd, &new_seed, sizeof(new_seed));
+    assert(read_size == sizeof(new_seed));
     close(fd);
+
+    /* reset _randgen using new seed */
+    _randgen.reset(new_seed);
 }
-
-
 
 
 /**
@@ -284,6 +286,27 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
     unreachable();
 }
 
+bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
+                           int timeout_ms)
+{
+    if(timeout_ms > 0) {
+    struct timespec timeout;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    if(timeout_ms > 1000) {
+	timeout.tv_sec = timeout_ms / 1000;
+	timeout.tv_nsec = (timeout_ms - timeout.tv_sec*1000)*1000;
+    }
+    else {
+	timeout.tv_sec = 0;
+	timeout.tv_nsec = timeout_ms*1000;
+    }
+    
+    return thread_cond_wait(cond, mutex, timeout);
+    }
+    thread_cond_wait(cond, mutex);
+    return true;
+}
 
 
 /**

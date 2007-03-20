@@ -7,6 +7,9 @@
 #include "workload/tpch/tpch_filenames.h"
 #include "workload/bdb_config.h"
 
+#include "workload/common.h"
+
+using namespace qpipe;
 
 
 
@@ -19,6 +22,8 @@ static void open_db_index(Db* table, Db* &assoc, Db*& index, u_int32_t flags,
                           const char* assoc_name, const char* index_name);
 static void close_db_table(Db*& table, const char* table_name);
 
+
+/* definitions of exported functions */
 
 
 /**
@@ -212,6 +217,7 @@ void db_close() {
  *
  *  @throw BdbException on error.
  */
+
 static void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp, const char* table_name) {
     
@@ -256,7 +262,6 @@ static void close_db_table(Db* &table, const char* table_name) {
         THROW1(BdbException, "table->close() failed");
     }
 }
-
 
 
 /**

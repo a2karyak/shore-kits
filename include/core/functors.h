@@ -519,7 +519,55 @@ public:
 
 
 
+/**
+ * @brief Used by the sieve stage. Do not confuse a tuple_sieve_t with
+ * a tuple_filter_t. At the time of this writing, we apply a
+ * tuple_filter_t (select and project) at every stage's output to
+ * reduce the size of the data we pass up the plan. tuple_sieve_t only
+ * execute at sieve nodes within that plan, nodes that exist only to
+ * provide further pipelined parallelism.
+ */
+class tuple_sieve_t {
+    
+    size_t _tuple_size;
+
+public:
+    tuple_sieve_t(size_t tuple_size)
+        : _tuple_size(tuple_size)
+    {
+    }
+
+    /**
+     * @brief Size of output tuple.
+     */
+     
+    size_t tuple_size() { return _tuple_size; }
+    
+    
+    /**
+     *  @brief Return true if an output tuple is produced.
+     */
+    virtual bool pass(tuple_t& dest, const tuple_t &src)=0;
+    
+
+    /**
+     *  @brief Return true of an output tuple is produced.
+     */
+    virtual bool flush(tuple_t&) {
+        return false;
+    }
+
+    virtual tuple_sieve_t* clone() const=0;
+    
+    virtual c_str to_string() const=0;
+  
+    virtual ~tuple_sieve_t() { }
+};
+
+
+
 EXIT_NAMESPACE(qpipe);
+
 
 
 #endif	// __FUNCTORS_H

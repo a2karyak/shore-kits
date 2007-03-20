@@ -2,6 +2,8 @@
 #ifndef __PREDICATES_H
 #define __PREDICATES_H
 
+#include "util.h"
+#include "core/tuple.h"
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -16,11 +18,16 @@ using std::less_equal;
 using std::greater_equal;
 using std::equal_to;
 using std::not_equal_to;
+using namespace qpipe;
+
+
+ENTER_NAMESPACE(workload);
+
+
 
 /**
- * @brief Composable predicate base class
+ * @brief Composable predicate base class.
  */
-
 struct predicate_t {
     virtual bool select(const tuple_t &tuple)=0;
 
@@ -166,8 +173,12 @@ public:
     }
 };
 
+
+
 typedef like_predicate<false> like_predicate_t;
 typedef like_predicate<true> not_like_predicate_t;
+
+
 
 template <typename V, template<class> class T=equal_to>
 class field_predicate_t : public predicate_t {
@@ -190,7 +201,6 @@ public:
 
 
 
-
 /**
  * @brief Conjunctive predicate. Selects a tuple only if all of its
  * internal predicates pass.
@@ -199,6 +209,7 @@ template<bool DISJUNCTION>
 class compound_predicate_t : public predicate_t {
 public:
     typedef std::vector<predicate_t*> predicate_list_t;
+
 private:
     predicate_list_t _list;
     
@@ -230,6 +241,7 @@ private:
         // clone the predicates in the list
         std::transform(_list.begin(), _list.end(), _list.begin(), clone_t());
     }
+
 public:
     void add(predicate_t* p) {
         _list.push_back(p);
@@ -261,7 +273,19 @@ public:
     }
 };
 
+
+
 typedef compound_predicate_t<false> and_predicate_t;
 typedef compound_predicate_t<true> or_predicate_t;
+
+
+
+bool always_use_deterministic_predicates(void);
+
+
+
+EXIT_NAMESPACE(workload);
+
+
 
 #endif

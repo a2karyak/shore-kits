@@ -6,8 +6,6 @@
 
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/process_query.h"
-
 
 using namespace qpipe;
 

@@ -7,11 +7,16 @@ lib_LIBRARIES = \
 
 LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a
 
+#\
+   tests/max_timers \
+   tests/thread_cputime
 
 TESTS = \
    tests/cpu_binding \
    tests/rand_array_access \
    tests/trace \
+   tests/itimer_keypress \
+   tests/itimer_threads \
    tests/constants \
    tests/bitvector \
    tests/hashtable \
@@ -48,7 +53,8 @@ TESTS = \
    tests/grouper \
    tests/busy_wait \
    tests/busy_wait_all \
-   tests/payment
+   tests/payment \
+   tests/acounter
 
 
 
@@ -79,7 +85,8 @@ lib_libutil_a_SOURCES = \
         $(SU)/fileops.cpp \
         $(SU)/static_list_node.cpp \
         $(SU)/static_list.cpp \
-        $(SU)/resource_pool.cpp
+        $(SU)/resource_pool.cpp \
+        $(SU)/itimer.cpp
 
 
 ################################################################################
@@ -94,7 +101,9 @@ lib_libcore_a_SOURCES = \
 	$(SC)/packet.cpp \
 	$(SC)/stage_container.cpp \
 	$(SC)/tuple.cpp \
-	$(SC)/tuple_fifo.cpp
+	$(SC)/tuple_fifo.cpp \
+	$(SC)/tuple_fifo_directory.cpp
+
 
 
 
@@ -126,13 +135,16 @@ lib_libstages_a_SOURCES = \
    $(SG)/hash_aggregate.cpp \
    $(SG)/sorted_in.cpp \
    $(SG)/hash_join.cpp \
+   $(SG)/pipe_hash_join.cpp \
    $(SG)/func_call.cpp \
    $(SG)/merge.cpp \
    $(SG)/sort.cpp \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
    $(SG)/tpcc/trx_packet.cpp \
-   $(SG)/tpcc/payment_begin.cpp
+   $(SG)/tpcc/payment_begin.cpp \
+   $(SG)/echo.cpp \
+   $(SG)/sieve.cpp
 
 
 ################################################################################
@@ -146,12 +158,12 @@ WL_BASE = \
    $(SW)/workload.cpp \
    $(SW)/workload_client.cpp \
    $(SW)/register_stage_containers.cpp \
-   $(SW)/dispatcher_globals.cpp \
-   $(SW)/process_query.cpp
+   $(SW)/dispatcher_globals.cpp
 
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
-   $(SW)/common/q6_client.cpp 
+   $(SW)/common/process_query.cpp \
+   $(SW)/common/predicates.cpp
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
@@ -175,8 +187,11 @@ WL_TPCH = \
    $(SW)/tpch/drivers/tpch_m14612.cpp \
    $(SW)/tpch/drivers/tpch_sim_mix.cpp
 
+
+
 WL_TPCC = \
    $(SW)/tpcc/drivers/tpcc_payment.cpp
+
 
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
@@ -200,7 +215,9 @@ lib_libtest_a_SOURCES = \
    $(STC)/int_tuple_writer.cpp \
    $(STC)/tester_query.cpp \
    $(STC)/cpu_bind.cpp \
-   $(STC)/busy_wait.cpp
+   $(STC)/busy_wait.cpp \
+   $(STC)/q6_client.cpp
+
 
 ################################################################################
 #
@@ -215,6 +232,10 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
+tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
+tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
+tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
+tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
 tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
@@ -251,10 +272,13 @@ tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_payment_SOURCES = $(ST)/test_payment.cpp
+tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
+tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
+tests_max_timers_LDADD = lib/libutil.a -lrt
 tests_load_db_tables_LDADD = $(TEST_LIBS)
 tests_trace_LDADD = $(TEST_LIBS)
 tests_tuple_buffer_LDADD = $(TEST_LIBS)
@@ -310,7 +334,9 @@ COMMANDS = \
    $(SE)/command/printer.cpp \
    $(SE)/command/load_handler.cpp \
    $(SE)/command/tpch_handler.cpp \
-   $(SE)/command/tpcc_handler.cpp 
+   $(SE)/command/tpcc_handler.cpp \
+   $(SE)/command/tracer.cpp
+
 
 qpipe_SOURCES = \
    $(SE)/server.cpp \

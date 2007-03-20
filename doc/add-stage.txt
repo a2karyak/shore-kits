@@ -1,0 +1,10 @@
+
+Create a .h in include/stages and a .cpp in include/stages with the
+packet and stage type definitions.
+
+Update include/stages.h to include the .h file you just created.
+
+Update Makefile.am to include the stage's cpp file in libstages.
+
+Update workload/register_stage_containers.cpp to register a new
+container for this stage type.

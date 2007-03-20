@@ -22,8 +22,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
-static const bool ALWAYS_TRY_OSP = true;
-
+static const bool ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE = true;
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 
@@ -344,7 +343,8 @@ void stage_container_t::enqueue(packet_t* packet) {
        system resources). We want to share when the number of active
        (non-idle) workers is greater than this amount.
     */
-    if(ALWAYS_TRY_OSP || (_rp.get_non_idle() >= _pool._max_active)) {
+    if(ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE
+       || (_rp.get_non_idle() >= _pool._max_active)) {
         
         /* Try merging with packets in merge_candidates before they
            disappear or become non-mergeable. */
@@ -581,12 +581,6 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
     
     
     /* packet was merged with this existing stage */
-    if (TRACE_MERGING)
-        TRACE(TRACE_ALWAYS, "%s merged into %s. next_tuple_on_merge = %d\n",
-              packet->_packet_id.data(),
-              _packet->_packet_id.data(),
-              _packet->_next_tuple_on_merge);
-
     stage_container_t::merge_t ret;
 
     // If we are here, we detected work sharing!
@@ -610,6 +604,14 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
     packet->output_buffer()->writer_init();
 
     // * * * END CRITICAL SECTION * * *
+    cs.exit();
+    
+    TRACE(TRACE_WORK_SHARING, "%s merged into %s. next_tuple_on_merge = %d\n",
+	  packet->_packet_id.data(),
+	  packet->_packet_id.data(),
+	  packet->_next_tuple_on_merge);
+
+    
     return ret;
 }
 

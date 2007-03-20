@@ -9,6 +9,8 @@
 #include "server/command/tpch_handler.h"
 #include "server/command/load_handler.h"
 #include "server/command/tpcc_handler.h"
+#include "server/command/tracer.h"
+
 
 #include <map>
 #include <string>
@@ -51,6 +53,7 @@ void register_command_handlers(void) {
     add_command("tpch",  new tpch_handler_t());
     add_command("load", new load_handler_t());
     add_command("tpcc", new tpcc_handler_t());
+    add_command("tracer", new tracer_t());
 }
 
 

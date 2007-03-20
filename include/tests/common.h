@@ -8,6 +8,7 @@
 #include "tests/common/tester_thread.h"
 #include "tests/common/int_tuple_writer.h"
 #include "tests/common/db_open_guard.h"
+#include "tests/common/q6_client.h"
 
 
 #endif

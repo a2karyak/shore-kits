@@ -15,7 +15,7 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/common/register_stage.h"
-#include "workload/process_query.h"
+
 
 using namespace qpipe;
 using namespace workload;

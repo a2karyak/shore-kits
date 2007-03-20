@@ -2,7 +2,7 @@
 
 #include "core/tuple_fifo.h"
 #include "core/dispatcher.h"
-#include "workload/process_query.h"
+#include "workload/common/process_query.h"
 #include "util.h"
 
 using namespace qpipe;

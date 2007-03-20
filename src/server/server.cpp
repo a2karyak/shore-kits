@@ -1,6 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util.h"
+#include "core/tuple_fifo_directory.h"
 #include "server/print.h"
 #include "server/interactive_mode.h"
 #include "server/network_mode.h"
@@ -46,13 +47,14 @@ int main(int argc, char* argv[]) {
 int qpipe_init(int argc, char* argv[]) {
 
     thread_init();
+    qpipe::tuple_fifo_directory_t::open_once();
     TRACE(TRACE_ALWAYS, "QPipe Execution Engine\n");
     
     register_command_handlers();
     register_stage_containers();
 
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
-              | TRACE_QUERY_RESULTS
+              //| TRACE_QUERY_RESULTS
               //| TRACE_PACKET_FLOW
               );
 

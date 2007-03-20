@@ -12,30 +12,7 @@
 #include <cstdarg>             /* for varargs */
 #include <stdint.h>            /* for uint32_t */
 #include "util/compat.h"
-
-
-/* exported constants */
-
-#define TRACE_ALWAYS             (1 << 0)
-
-#define TRACE_TUPLE_FLOW         (1 << 1)
-#define TRACE_PACKET_FLOW        (1 << 2)
-
-#define TRACE_SYNC_COND          (1 << 3)
-#define TRACE_SYNC_LOCK          (1 << 4)
-
-#define TRACE_THREAD_LIFE_CYCLE  (1 << 5)
-
-#define TRACE_TEMP_FILE          (1 << 6)
-#define TRACE_CPU_BINDING        (1 << 7)
-#define TRACE_QUERY_RESULTS      (1 << 8)
-
-#define TRACE_STATISTICS         (1 << 9)
-
-#define TRACE_NETWORK            (1 << 10)
-
-#define TRACE_DEBUG              (1u << 31)
-
+#include "trace/trace_types.h"
 
 
 /* exported functions */
@@ -50,11 +27,12 @@ struct tracer {
     }
     void operator()(unsigned int type, char const* format, ...) ATTRIBUTE(format(printf, 3, 4));
 };
+
 void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
 	    char const* format, ...) ;
-
 void trace_set(unsigned int trace_type_mask);
+unsigned int trace_get();
 
 
 
@@ -97,6 +75,20 @@ void trace_set(unsigned int trace_type_mask);
  * @return void
  */
 #define TRACE_SET(types) trace_set(types)
+
+
+
+/**
+ *  @def TRACE_GET
+ *
+ * @brief Macro wrapper for trace_get()
+ * 
+ * @param types Passed through as trace_type_mask parameter of
+ * trace_get().
+ *
+ * @return void
+ */
+#define TRACE_GET() trace_get()
 
 
 

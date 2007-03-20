@@ -29,9 +29,12 @@ public:
     double time() {
         return time_us()*1e-6;
     }
-    void reset() {
+    long long clock_us() {
         gettimeofday(&tv, NULL);
-        mark = tv.tv_usec + tv.tv_sec*1000000ll;
+        return tv.tv_usec + tv.tv_sec*1000000ll;
+    }
+    void reset() {
+	mark = clock_us();
     }
 };
 

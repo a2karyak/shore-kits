@@ -53,8 +53,13 @@ void* workload_client_t::run() {
     // record client start time...
     _etime->start();
 
+    stopwatch_t qtime;
     for (int i = 0; i < _num_iterations; i++) {
+	TRACE(TRACE_RESPONSE_TIME, "Query '%s' started at %lld\n",
+	      _driver->description().data(), qtime.clock_us());
         _driver->submit(_driver_arg);
+	TRACE(TRACE_RESPONSE_TIME, "Query '%s' finished at %lld\n",
+	      _driver->description().data(), qtime.clock_us());
         if (_think_time_sec > 0)
             sleep(_think_time_sec);
         TRACE(TRACE_DEBUG, "Open Fifos: %d\n", tuple_fifo::open_fifos());

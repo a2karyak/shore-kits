@@ -3,7 +3,7 @@
 #include "scheduler.h"
 
 #include "workload/tpch/drivers/merge_test.h"
-#include "workload/process_query.h"
+#include "workload/common.h"
 
 using namespace qpipe;
 using namespace workload;

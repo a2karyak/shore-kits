@@ -96,6 +96,14 @@ int main(int, char**)
   ExtractInt     extractint;
   HashInt        hashint;
 
+  
+  /* REMOVE CC Compiler warnings */
+  equalint = equalint;
+  equalintstring = equalintstring;
+  extractint = extractint;
+  hashint = hashint;
+
+
   TRACE(TRACE_ALWAYS, "(5, 4) = %s\n", equalint(5, 4) ? "TRUE" : "FALSE");
   TRACE(TRACE_ALWAYS, "(5, 5) = %s\n", equalint(5, 5) ? "TRUE" : "FALSE");
 

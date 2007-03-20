@@ -96,13 +96,6 @@ public:
         return new query_plan(action, filter->to_string(), NULL, 0);
     }
     
-    virtual bool is_compatible(packet_t* other) {
-        // enforce the OSP_SCAN policy (attempt to merge compatible
-        // packets unless OSP_NONE prevents this from being called in
-        // the first place)
-        return packet_t::is_compatible(plan(), other->plan());
-    }
-
     virtual void declare_worker_needs(resource_declare_t*) {
         /* Do nothing. The stage the that creates us is responsible
            for deciding how many FUNC_CALL workers it needs. */

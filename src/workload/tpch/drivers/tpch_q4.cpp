@@ -7,8 +7,7 @@
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
 #include "workload/tpch/tpch_env.h"
-#include "workload/common/int_comparator.h"
-#include "workload/process_query.h"
+#include "workload/common.h"
 
 
 ENTER_NAMESPACE(q4);
@@ -260,9 +259,7 @@ void tpch_q4_driver::submit(void* disp) {
                                                    filter,
                                                    orders_packet,
                                                    line_item_packet,
-                                                   join,
-                                                   false,
-                                                   true);
+                                                   join);
 
     // sort/aggregate in one step
     filter = new trivial_filter_t(sizeof(q4_tuple_t));

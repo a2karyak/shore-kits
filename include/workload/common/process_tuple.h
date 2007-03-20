@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PROCESS_QUERY_H
-#define _PROCESS_QUERY_H
+#ifndef _PROCESS_TUPLE_H
+#define _PROCESS_TUPLE_H
 
 #include "core/tuple.h"
 #include "core/packet.h"
@@ -21,9 +21,6 @@ public:
     virtual void end() { }
     virtual ~process_tuple_t() { }
 };
-
-
-void process_query(packet_t* root, process_tuple_t& pt);
 
 
 EXIT_NAMESPACE(workload);

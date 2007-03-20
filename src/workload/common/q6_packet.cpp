@@ -3,9 +3,9 @@
 #include "workload/common/q6_packet.h"
 
 #include "stages.h"
-#include "workload/common/q6_aggregate.h"
-#include "workload/common/q6_tscan_filter.h"
+#include "core.h"
 #include "workload/tpch/tpch_db.h"
+#include <cmath>
 
 
 using namespace qpipe;
@@ -24,7 +24,7 @@ packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) 
     // AGGREGATE
     aggregate_packet_t* q6_agg_packet;
     q6_agg_packet = new aggregate_packet_t(c_str("%s_AGGREGATE_PACKET", client_prefix.data()),
-                                           new tuple_fifo(sizeof(decimal[2])),
+                                           new tuple_fifo(sizeof(q6_agg_t)),
                                            new trivial_filter_t(tscan_output->tuple_size()),
                                            new q6_count_aggregate_t(),
                                            new default_key_extractor_t(0),

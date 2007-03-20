@@ -38,7 +38,8 @@ dispatcher_t::~dispatcher_t() {
  *  thread.
  */
 void dispatcher_t::_register_stage_container(const c_str &packet_type,
-                                             stage_container_t* sc)
+                                             stage_container_t* sc,
+                                             bool osp_enabled)
 {
   // We may eventually want multiple stages willing to perform
   // SORT's. But then we need policy/cost model to determine which
@@ -49,15 +50,14 @@ void dispatcher_t::_register_stage_container(const c_str &packet_type,
            packet_type.data());
 
   _scdir[packet_type] = sc;
+  _ospdir[packet_type] = osp_enabled;
 }
 
 
 
 /**
- *  @brief THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be
- *  since stages should register themselves in their constructors and
- *  their constructors should execute in the context of the root
- *  thread.
+ *  @brief THIS FUNCTION IS NOT THREAD-SAFE IF MAP LOOKUP IS NOT
+ *  THREAD SAFE.
  */
 void dispatcher_t::_dispatch_packet(packet_t* packet) {
 
@@ -71,13 +71,26 @@ void dispatcher_t::_dispatch_packet(packet_t* packet) {
 
 
 /**
+ *  @brief THIS FUNCTION IS NOT THREAD-SAFE IF MAP LOOKUP IS NOT
+ *  THREAD SAFE.
+ */
+bool dispatcher_t::_is_osp_enabled_for_type(const c_str& type) {
+  
+  /* make sure type is registered */
+  stage_container_t* sc = _scdir[type];
+  if (sc == NULL)
+    THROW2(DispatcherException, 
+           "Packet type %s unregistered\n", type.data());
+  
+  return _ospdir[type];
+}
+
+
+
+/**
  *  @brief Acquire the required number of worker threads.
  *
- *  THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be since
- *  stages should register themselves in their constructors and their
- *  constructors should execute in the context of the root
- *  thread. Reserving workers does not modify the dispatcher's data
- *  structures.
+ *  THIS FUNCTION IS NOT THREAD-SAFE IF MAP LOOKUP IS NOT THREAD SAFE.
  */
 void dispatcher_t::_reserve_workers(const c_str& type, int n) {
   
@@ -93,11 +106,7 @@ void dispatcher_t::_reserve_workers(const c_str& type, int n) {
 /**
  *  @brief Release the specified number of worker threads.
  *
- *  THIS FUNCTION IS NOT THREAD-SAFE. It should not have to be since
- *  stages should register themselves in their constructors and their
- *  constructors should execute in the context of the root
- *  thread. Reserving workers does not modify the dispatcher's data
- *  structures.
+ *  THIS FUNCTION IS NOT THREAD-SAFE IF MAP LOOKUP IS NOT THREAD SAFE.
  */
 void dispatcher_t::_unreserve_workers(const c_str& type, int n) {
   
@@ -106,19 +115,6 @@ void dispatcher_t::_unreserve_workers(const c_str& type, int n) {
     THROW2(DispatcherException,
            "Type %s unregistered\n", type.data());
   sc->unreserve(n);
-}
-
-
-
-void dispatcher_t::register_stage_container(const c_str &packet_type,
-                                            stage_container_t* sc) {
-  instance()->_register_stage_container(packet_type, sc);
-}
-
-
-
-void dispatcher_t::dispatch_packet(packet_t* packet) {
-  instance()->_dispatch_packet(packet);
 }
 
 
@@ -162,5 +158,11 @@ void dispatcher_t::worker_reserver_t::acquire_resources() {
 
 
 
-EXIT_NAMESPACE(qpipe);
+/* wrapper which we can use inside packet.h */
+bool is_osp_enabled_for_type(const c_str& packet_type) {
+  return dispatcher_t::is_osp_enabled_for_type(packet_type);
+}
 
+
+
+EXIT_NAMESPACE(qpipe);
