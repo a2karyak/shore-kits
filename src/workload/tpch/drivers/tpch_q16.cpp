@@ -130,60 +130,60 @@ struct part_tscan_filter_t : public tuple_filter_t {
     part_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_part_tuple))
     {
-        // TODO: randomize
-        if(0) {
-#if 1
-            strcpy(brand, "Brand#45");
-            strcpy(type, "MEDIUM POLISHED");
-            int base_sizes[] = {49, 14, 23, 45, 19, 3, 36, 9};
-#else
-            strcpy(brand, "Brand#33");
-            strcpy(type, "LARGE PLATED");
-            int base_sizes[] = {16, 19, 11, 6, 23, 42, 48, 13};
-#endif
-            memcpy(sizes, base_sizes, sizeof(base_sizes));
-        }
-        else {
-            thread_t* self = thread_get_self();
 
-            // My original code
-            // sprintf(brand, "Brand#%1d%1d", self->rand(5) + 1, self->rand(5) + 1);
-            // Nikos
-            // //sprintf(brand, "Brand#%1d%1d", self->rand(5) + 1, self->rand(5) + 1);
-            //sprintf(brand, "Brand#%1d%1d", 5 + 1, 5 + 1);
-            sprintf(brand, "Brand#%1d%1d", 4 + 1, 4 + 1);
+        static int function_local_seed;
+        randgen_t  randgen(&function_local_seed);
+        randgen_t* randgenp = &randgen;
 
-            char const* TYPE1[] = {"STANDARD", "SMALL", "MEDIUM", "LARGE", "PROMO", "ECONOMY"};
-            char const* TYPE2[] = {"ANODIZED", "BURNISHED", "PLATED", "POLISHED", "BRUSHED"};
+
+        /* BRAND = Brand#MN where M and N are two single character
+           strings representing two numbers randomly and independently
+           selected within [1 .. 5]; */
+        sprintf(brand, "Brand#%1d%1d", randgenp->rand(5) + 1, randgenp->rand(5) + 1);
             
-            // My original code
-            // sprintf(type, "%s %s", TYPE1[self->rand(6)], TYPE2[self->rand(5)]);
-            // Nikos
-            // //sprintf(type, "%s %s", TYPE1[self->rand(6)], TYPE2[self->rand(5)]);
-            //sprintf(type, "%s %s", TYPE1[6], TYPE2[5]);
-            sprintf(type, "%s %s", TYPE1[5], TYPE2[4]);
 
-            for(int i=0; i < 8; i++) {
-                int j = -1;
-                int size=0;
-                // loop until we get a unique value
-                TRACE(TRACE_ALWAYS, "Entering for i = %d\n", i);
-                while(j != i) {
+        /* TYPE is made of the first 2 syllables of a string randomly
+           selected within the list of 3-syllable strings defined for
+           Types in Clause 4.2.2.13; */
+        char const* TYPE1[] = {"STANDARD", "SMALL", "MEDIUM", "LARGE", "PROMO", "ECONOMY"};
+        char const* TYPE2[] = {"ANODIZED", "BURNISHED", "PLATED", "POLISHED", "BRUSHED"};
+        int num_type1_entries = sizeof(TYPE1)/sizeof(TYPE1[0]);
+        int num_type2_entries = sizeof(TYPE2)/sizeof(TYPE2[0]);
+        sprintf(type, "%s %s",
+                TYPE1[randgenp->rand(num_type1_entries)],
+                TYPE2[randgenp->rand(num_type2_entries)]);
+        
 
-                    // My original code
-                    // size = self->rand(50) + 1;
-                    // Nikos
-                    // size = self->rand(50) + 1;
-                    // size = 50 + 1;
-                    size = 49 + 1;
-                    for(j=0; j < i && sizes[j] != size; j++);
-                    if(j == i)
+        /* SIZE1 is randomly selected as a set of eight different
+           values within [1 .. 50]; */
+        int num_entries = sizeof(sizes)/sizeof(sizes[0]);
+        for(int i = 0; i < num_entries; i++) {
+            
+            /* Generate a unique value for sizes[i]. */
+            /* TODO Do this in a deterministic amount of time. */
+            int trial_value;
+            while (1) {
+
+                /* generate trial value in [1,50] */
+                trial_value = randgenp->rand(50) + 1;
+
+                /* search for duplicate within sizes[0..i-1] */
+                bool found_duplicate = false;
+                for (int j = 0; j < i; j++)
+                    if (sizes[j] == trial_value) {
+                        found_duplicate = true;
                         break;
-                }
-                TRACE(TRACE_ALWAYS, "Exit for i = %d\n", i);
-                sizes[i] = size;
-            }
-        }
+                    }
+                
+                if (!found_duplicate)
+                    /* Success! Generated none-duplicate value! */
+                    break;
+
+            } /* endof while(1) */
+            
+            TRACE(0&TRACE_ALWAYS, "%d for i = %d\n", trial_value, i);
+            sizes[i] = trial_value;
+        } /* endof for (int i = 0...) */
     }
 
 

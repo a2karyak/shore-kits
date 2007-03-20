@@ -85,13 +85,10 @@ thread_t::thread_t(const c_str &name)
 
 
 void thread_t::reset_rand() {
-
     int fd = open("/dev/urandom", O_RDONLY);
     assert(fd != -1);
-    
     int read_size = read(fd, &_rand_seed, sizeof(int));
     assert(read_size == sizeof(int));
-
     close(fd);
 }
 
