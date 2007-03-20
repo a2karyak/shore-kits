@@ -29,13 +29,10 @@ public:
     }
 
     randgen_t(void* addr) {
-#ifdef __LP64__
 	UNUSED(addr);
 	reset(0);
-#else
         assert(sizeof(void*) >= sizeof(unsigned int));
-        reset((unsigned int)addr);
-#endif
+        reset((unsigned int)(unsigned long)addr);
     }
 
     void reset(unsigned int seed) {
