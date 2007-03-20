@@ -73,11 +73,23 @@ packet_t* orders_scan(page_list* tpch_orders) {
         orders_tscan_filter_t()
             : tuple_filter_t(sizeof(tpch_orders_tuple))
         {
+
+            /* select random number generator */
+            static int _function_local_seed;
+            randgen_t  randgen(&_function_local_seed);
+            randgen_t* randgenp;
+            if (always_use_deterministic_predicates())
+                randgenp = &randgen;
+            else {
+                thread_t* self = thread_get_self();
+                randgenp = self->randgen();
+            }
+            
             // TPCH Spec: "DATE is the first day of a randomly
             // selected month between the first month of 1993 and the
             // 10th month of 1997."
             t1 = datestr_to_timet("1993-01-01");
-            t1 = time_add_month(t1, thread_get_self()->rand(59));
+            t1 = time_add_month(t1, randgenp->rand(59));
             t2 = time_add_month(t1, 3);
         }
 
