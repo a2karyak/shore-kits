@@ -17,13 +17,17 @@ class randgen_t {
     
 public:
 
+    randgen_t() {
+        reset(0);
+    }
+    
+    randgen_t(unsigned int seed) {
+        reset(seed);
+    }
+
     randgen_t(void* addr) {
         assert(sizeof(void*) >= sizeof(unsigned int));
         reset((unsigned int)addr);
-    }
-
-    randgen_t(unsigned int seed) {
-        reset(seed);
     }
 
     void reset(unsigned int seed) {

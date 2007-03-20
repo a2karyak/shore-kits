@@ -21,6 +21,7 @@
 
 #include "util/c_str.h"
 #include "util/exception.h"
+#include "util/randgen.h"
 
 
 DEFINE_EXCEPTION(ThreadException);
@@ -72,7 +73,7 @@ class thread_t {
 private:
 
     c_str        _thread_name;
-    unsigned int _rand_seed;
+    randgen_t    _randgen;
 protected:
     bool _delete_me;
 
@@ -94,11 +95,20 @@ public:
 
 
     /**
+     *  @brief Returns pointer to thread_t's randgen_t object.
+     */
+    randgen_t* randgen() {
+        return &_randgen;
+    }
+
+
+    /**
      *  @brief Returns a pseudo-random integer between 0 and RAND_MAX.
      */
     int rand() {
-        return rand_r(&_rand_seed);
+        return _randgen.rand();
     }
+
 
     /**
      * Returns a pseudorandom, uniformly distributed int value between
@@ -107,18 +117,7 @@ public:
      * Source http://java.sun.com/j2se/1.5.0/docs/api/java/util/Random.html#nextInt(int)
      */
     int rand(int n) {
-        assert(n > 0);
-
-        if ((n & -n) == n)  // i.e., n is a power of 2
-            return (int)((n * (uint64_t)rand()) / (RAND_MAX+1));
-
-        int bits, val;
-        do {
-            bits = rand();
-            val = bits % n;
-        } while(bits - val + (n-1) < 0);
-        
-        return val;
+        return _randgen.rand(n);
     }
 
     virtual ~thread_t() { }

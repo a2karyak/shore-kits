@@ -85,14 +85,18 @@ thread_t::thread_t(const c_str &name)
 
 
 void thread_t::reset_rand() {
+
+    /* generate new seed */
+    unsigned int new_seed;
     int fd = open("/dev/urandom", O_RDONLY);
     assert(fd != -1);
-    int read_size = read(fd, &_rand_seed, sizeof(int));
-    assert(read_size == sizeof(int));
+    int read_size = read(fd, &new_seed, sizeof(new_seed));
+    assert(read_size == sizeof(new_seed));
     close(fd);
+
+    /* reset _randgen using new seed */
+    _randgen.reset(new_seed);
 }
-
-
 
 
 /**
