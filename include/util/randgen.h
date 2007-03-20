@@ -10,10 +10,13 @@
                        <cstdlib> doesn't */
 #endif
 
+#define UNUSED(x) { x = x; }
+
 
 class randgen_t {
 
     unsigned int _seed;
+
     
 public:
 
@@ -26,8 +29,13 @@ public:
     }
 
     randgen_t(void* addr) {
+#ifdef __LP64__
+	UNUSED(addr);
+	reset(0);
+#else
         assert(sizeof(void*) >= sizeof(unsigned int));
         reset((unsigned int)addr);
+#endif
     }
 
     void reset(unsigned int seed) {
