@@ -130,10 +130,17 @@ struct part_tscan_filter_t : public tuple_filter_t {
     part_tscan_filter_t()
         : tuple_filter_t(sizeof(tpch_part_tuple))
     {
-        
+
+        /* select random number generator */
         static int _function_local_seed;
         randgen_t  randgen(&_function_local_seed);
-        randgen_t* randgenp = &randgen;
+        randgen_t* randgenp;
+        if (always_use_deterministic_predicates())
+            randgenp = &randgen;
+        else {
+            thread_t* self = thread_get_self();
+            randgenp = self->randgen();
+        }
 
 
         /* BRAND = Brand#MN where M and N are two single character
