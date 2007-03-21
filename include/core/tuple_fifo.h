@@ -31,40 +31,46 @@ private:
 
     typedef std::list<page*> page_list;
 
+    /* ID */
+    int _fifo_id;
+
+    /* page list management */
     page_list _pages;
     page_list _free_pages;
-    
-    size_t _tuple_size;
+    size_t _curr_pages;
     size_t _capacity;
     size_t _threshold;
+
+    /* useful fields to store */
+    size_t _tuple_size;
     size_t _page_size;
+
+    /* stats (don't affect correctness) */
     size_t _prefetch_count;
-    size_t _curr_pages;
     size_t _num_inserted;
     size_t _num_removed;
     size_t _num_waits_on_insert;
     size_t _num_waits_on_remove;
-    char*  _read_end;
 
+    /* read and write page management */
+    char*  _read_end;
     guard<page> _read_page;
     page::iterator _read_iterator;
     guard<page> _write_page;
 
-    // used to communicate between reader and writer
+    /* detect DONE and TERMINATED states */
     volatile bool _done_writing;
     volatile bool _terminated;
 
-    // synch vars
+    /* synch vars */
     pthread_mutex_t _lock;
     pthread_cond_t _reader_notify;
     pthread_cond_t _writer_notify;
 
-    // debug vars
+    /* debug vars */
     pthread_t _reader_tid;
     pthread_t _writer_tid;
     
-    int _fifo_id;
-
 public:
 
     /**
@@ -86,13 +92,13 @@ public:
                size_t capacity=DEFAULT_BUFFER_PAGES,
                size_t threshold=64,
                size_t page_size=get_default_page_size())
-        : 
-          _tuple_size(tuple_size),
+        : _fifo_id(tuple_fifo_generate_id()),
+          _curr_pages(0),
           _capacity(capacity),
           _threshold(threshold),
+          _tuple_size(tuple_size),
           _page_size(page_size),
           _prefetch_count(0),
-          _curr_pages(0),
           _num_inserted(0),
           _num_removed(0),
           _num_waits_on_insert(0),
@@ -103,8 +109,7 @@ public:
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
 	  _reader_tid(0),
-          _writer_tid(0),
-          _fifo_id(tuple_fifo_generate_id())
+          _writer_tid(0)
     {
         init();
     }
