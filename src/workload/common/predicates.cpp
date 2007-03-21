@@ -22,7 +22,7 @@ predicate_randgen_t predicate_randgen_t::acquire(const char* caller_tag) {
         return predicate_randgen_t(caller_tag);
     else
         /* non-deterministic */
-        return predicate_randgen_t();
+        return predicate_randgen_t(thread_get_self()->randgen());
 }
 
 

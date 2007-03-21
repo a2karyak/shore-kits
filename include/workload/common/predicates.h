@@ -288,16 +288,26 @@ typedef compound_predicate_t<true> or_predicate_t;
 class predicate_randgen_t {
 
     enum {
+        INVALID,
         USE_THREAD_LOCAL,
         USE_CALLER
     } _type;
     randgen_t  _caller_randgen;
     randgen_t* _thread_local_randgen;
-    
+
+
+    /* Needed to construct empty object. */
     predicate_randgen_t ()
+        : _type(INVALID),
+          _caller_randgen(),
+          _thread_local_randgen(NULL)
+    {
+    }
+    
+    predicate_randgen_t (randgen_t* randgen)
         : _type(USE_THREAD_LOCAL),
           _caller_randgen(),
-          _thread_local_randgen(thread_get_self()->randgen())
+          _thread_local_randgen(randgen)
     {
     }
     
