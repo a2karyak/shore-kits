@@ -3,6 +3,8 @@
 #ifndef __RANDGEN_H
 #define __RANDGEN_H
 
+#include <cassert>
+#include <stdint.h>
 #ifdef __GCC
 #include <cstdlib>
 #else
@@ -15,7 +17,7 @@ class randgen_t {
 
     unsigned int _seed;
 
-    
+
 public:
 
     randgen_t() {

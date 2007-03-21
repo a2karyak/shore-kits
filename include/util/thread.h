@@ -7,11 +7,7 @@
 // pthread.h should always be the first include!
 #include <pthread.h>
 #include <cstdio>
-#ifdef __GCC
 #include <cstdlib>
-#else
-#include <stdlib.h> // on Sun's CC <stdlib.h> defines rand_r, <cstdlib> doesn't
-#endif
 #include <cerrno>
 #include <cassert>
 #include <functional>
@@ -26,10 +22,6 @@
 
 DEFINE_EXCEPTION(ThreadException);
 
-
-#ifndef __GCC
-//using std::rand_r;
-#endif
 
 pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr=NULL);
 void thread_mutex_lock(pthread_mutex_t &mutex);
