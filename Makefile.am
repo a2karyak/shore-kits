@@ -321,7 +321,8 @@ COMMANDS = \
    $(SE)/command/printer.cpp \
    $(SE)/command/load_handler.cpp \
    $(SE)/command/tpch_handler.cpp \
-   $(SE)/command/tracer.cpp
+   $(SE)/command/tracer.cpp \
+   $(SE)/command/sharing.cpp
 
 qpipe_SOURCES = \
    $(SE)/server.cpp \

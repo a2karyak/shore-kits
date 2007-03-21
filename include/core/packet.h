@@ -17,7 +17,7 @@ ENTER_NAMESPACE(qpipe);
 
 
 // change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_FULL} const osp_global_policy = OSP_FULL;
+static enum {OSP_NONE, OSP_FULL} osp_global_policy = OSP_FULL;
 
 /* reroute to dispatcher */
 bool is_osp_enabled_for_type(const c_str& packet_type);
