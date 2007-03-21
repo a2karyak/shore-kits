@@ -52,7 +52,9 @@ TESTS = \
    tests/grouper \
    tests/busy_wait \
    tests/busy_wait_all \
-   tests/acounter
+   tests/acounter \
+   tests/randgen_shuffle
+
 
 
 bin_PROGRAMS = qpipe $(TESTS)
@@ -261,6 +263,7 @@ tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
+tests_randgen_shuffle_SOURCES = $(ST)/test_randgen_shuffle.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
