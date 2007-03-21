@@ -138,6 +138,9 @@ void tuple_fifo::init() {
     /* Prepare for writing. */
     _write_page = SENTINEL_PAGE;
     
+    /* update state */
+    _state.transition(tuple_fifo_state_t::IN_MEMORY);
+
     /* Update statistics. */
     critical_section_t cs(open_fifo_mutex);
     open_fifo_count++;
@@ -262,12 +265,12 @@ bool tuple_fifo::terminate() {
     // the reader is responsible for deleting the buffer; either the
     // the reader doesn't know yet or the writer is making an illegal
     // access. False is the right return value for both cases.
-    if(_terminated || _done_writing)
+    if(is_terminated() || is_done_writing())
         return false;
     
     // make sure nobody is sleeping (either the reader or writer could
     // be calling this)
-    _terminated = true;
+    _state.transition(tuple_fifo_state_t::TERMINATED);
     thread_cond_signal(_reader_notify);
     thread_cond_signal(_writer_notify);
     
@@ -308,8 +311,8 @@ inline void tuple_fifo::ensure_writer_running() {
 void tuple_fifo::_flush_write_page(bool done_writing) {
 
     // after the call to send_eof() the write page is NULL
-    assert(!_done_writing);
-
+    assert(!is_done_writing());
+    
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
     _termination_check();
@@ -318,7 +321,6 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     // space for _threshold pages must be available before we are
     // willing to try again
     for(size_t threshold=1; _available_writes() < threshold; threshold = _threshold) {
-        //        fprintf(stderr, "Fifo %p sleeping on write\n", this);
         // sleep until something important changes
         wait_for_reader();
         _termination_check();
@@ -332,8 +334,13 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
     if(done_writing) {
-	//        fprintf(stderr, "Fifo %p sending EOF\n", this);
-        _done_writing = true;
+        switch (_state.current()) {
+        case tuple_fifo_state_t::IN_MEMORY:
+            _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
+            break;
+        default:
+            assert(0);
+        }
         _write_page.done();
     }
     else if(_free_pages.empty())
@@ -344,13 +351,13 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
     // notify the reader?
-    if(_available_reads() >= _threshold || done_writing) {
-        //        fprintf(stderr, "Fifo %p notifying reader\n", this);
+    if(_available_reads() >= _threshold || is_done_writing())
         ensure_reader_running();
-    }
     
     // * * * END CRITICAL SECTION * * *
 }
+
+
 
 int tuple_fifo::_get_read_page(int timeout) {
 
@@ -369,17 +376,15 @@ int tuple_fifo::_get_read_page(int timeout) {
     // _threshold pages must be available before we are willing to try
     // again (unless send_eof() is called)
     if(timeout >= 0) {
-    for(size_t t=1; !_done_writing && _available_reads() < t; t = _threshold) {
-        // sleep until something important changes
-        //        fprintf(stderr, "Fifo %p sleeping on read\n", this);
-        if(!wait_for_writer(timeout))
-	    break;
-	
-        _termination_check();
-    }
+        for(size_t t=1; !is_done_writing() && _available_reads() < t; t = _threshold) {
+            // sleep until something important changes
+            if(!wait_for_writer(timeout))
+                break;
+            _termination_check();
+        }
     }
     if(_available_reads() == 0) {
-	if(_done_writing)
+	if(is_done_writing())
 	    return -1;
 	if(timeout != 0)
 	    return 0;
@@ -394,10 +399,8 @@ int tuple_fifo::_get_read_page(int timeout) {
     _curr_pages--;
 
     // notify the writer?
-    if(_available_writes() >= _threshold && !_done_writing) {
-        //        fprintf(stderr, "Fifo %p notifying writer\n", this);
+    if(_available_writes() >= _threshold && !is_done_writing())
         ensure_writer_running();
-    }
 
     // * * * END CRITICAL SECTION * * *
     return 1;
@@ -408,6 +411,36 @@ int tuple_fifo::_get_read_page(int timeout) {
 int tuple_fifo_generate_id() {
     static acounter_t next_fifo_id;
     return next_fifo_id.fetch_and_inc();
+}
+
+
+
+void tuple_fifo::tuple_fifo_state_t::transition(const _tuple_fifo_state_t next) {
+    if (_transition_ok(next))
+        _value = next;
+    else {
+        TRACE(TRACE_ALWAYS, "Invalid transition from %s to %s\n",
+              to_string().data(),
+              state_to_string(next).data());
+        assert(0);
+    }
+}
+
+
+
+bool tuple_fifo::tuple_fifo_state_t::_transition_ok(const _tuple_fifo_state_t next) {
+    switch(_value) {
+    case INVALID:
+        /* Only allowed transition should be to IN_MEMORY since we are
+           only INVALID in the constructor until we invoke init(). */
+        return next == IN_MEMORY;
+    case IN_MEMORY:
+        return
+            (next == IN_MEMORY_DONE_WRITING)
+            || (next == TERMINATED);
+    default:
+        return false;
+    }
 }
 
 

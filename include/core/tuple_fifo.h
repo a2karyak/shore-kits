@@ -29,10 +29,63 @@ class tuple_fifo {
 
 private:
 
+    /* internal datatypes */
+
     typedef std::list<page*> page_list;
+
+    class tuple_fifo_state_t {
+    public:
+        enum _tuple_fifo_state_t {
+            INVALID = 0,
+            IN_MEMORY,
+            IN_MEMORY_DONE_WRITING,
+            TERMINATED
+        };
+        
+    private:
+        volatile _tuple_fifo_state_t _value;
+
+    public:
+
+        tuple_fifo_state_t ()
+            : _value(INVALID)
+        {
+        }
+
+        static c_str state_to_string(const _tuple_fifo_state_t value) {
+            switch(value) {
+#define TF_STATE(x) case x: return #x;
+                TF_STATE(INVALID);
+                TF_STATE(IN_MEMORY);
+                TF_STATE(IN_MEMORY_DONE_WRITING);
+                TF_STATE(TERMINATED);
+            default:
+                assert(0);
+            }
+        }
+        
+        c_str to_string() {
+            return state_to_string(current());
+        }
+
+        _tuple_fifo_state_t current() {
+            return _value;
+        }
+        
+        void transition(const _tuple_fifo_state_t next);
+
+private:
+
+        bool _transition_ok(const _tuple_fifo_state_t next);
+    };
+
+
 
     /* ID */
     int _fifo_id;
+
+    /* state */
+    tuple_fifo_state_t _state;
 
     /* page list management */
     page_list _pages;
@@ -57,10 +110,6 @@ private:
     guard<page> _read_page;
     page::iterator _read_iterator;
     guard<page> _write_page;
-
-    /* detect DONE and TERMINATED states */
-    volatile bool _done_writing;
-    volatile bool _terminated;
 
     /* synch vars */
     pthread_mutex_t _lock;
@@ -103,8 +152,6 @@ public:
           _num_removed(0),
           _num_waits_on_insert(0),
           _num_waits_on_remove(0),
-          _done_writing(false),
-          _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
@@ -305,7 +352,7 @@ private:
     }
 
     void _termination_check() {
-        if(_terminated)
+        if(is_terminated())
             THROW1(TerminatedBufferException, "Buffer closed unexpectedly");
     }
 
@@ -321,7 +368,15 @@ private:
     // attempts to read a new page
     int _get_read_page(int timeout);
     void _flush_write_page(bool done_writing);
+
     
+    bool is_terminated() {
+        return _state.current() == tuple_fifo_state_t::TERMINATED;
+    }
+    bool is_done_writing() {
+        return _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING;
+    }
+
     void wait_for_reader();
     void ensure_reader_running();
     
