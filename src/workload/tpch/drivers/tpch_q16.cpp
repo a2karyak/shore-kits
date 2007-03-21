@@ -132,21 +132,13 @@ struct part_tscan_filter_t : public tuple_filter_t {
     {
 
         /* select random number generator */
-        static int _function_local_seed;
-        randgen_t  randgen(&_function_local_seed);
-        randgen_t* randgenp;
-        if (always_use_deterministic_predicates())
-            randgenp = &randgen;
-        else {
-            thread_t* self = thread_get_self();
-            randgenp = self->randgen();
-        }
+        ACQUIRE_PREDICATE_RANDGEN(randgen);
 
 
         /* BRAND = Brand#MN where M and N are two single character
            strings representing two numbers randomly and independently
            selected within [1 .. 5]; */
-        sprintf(brand, "Brand#%1d%1d", randgenp->rand(5) + 1, randgenp->rand(5) + 1);
+        sprintf(brand, "Brand#%1d%1d", randgen.rand(5) + 1, randgen.rand(5) + 1);
             
 
         /* TYPE is made of the first 2 syllables of a string randomly
@@ -157,8 +149,8 @@ struct part_tscan_filter_t : public tuple_filter_t {
         int num_type1_entries = sizeof(TYPE1)/sizeof(TYPE1[0]);
         int num_type2_entries = sizeof(TYPE2)/sizeof(TYPE2[0]);
         sprintf(type, "%s %s",
-                TYPE1[randgenp->rand(num_type1_entries)],
-                TYPE2[randgenp->rand(num_type2_entries)]);
+                TYPE1[randgen.rand(num_type1_entries)],
+                TYPE2[randgen.rand(num_type2_entries)]);
         
 
         /* SIZE1 is randomly selected as a set of eight different
@@ -172,7 +164,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
             while (1) {
 
                 /* generate trial value in [1,50] */
-                trial_value = randgenp->rand(50) + 1;
+                trial_value = randgen.rand(50) + 1;
 
                 /* search for duplicate within sizes[0..i-1] */
                 bool found_duplicate = false;

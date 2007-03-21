@@ -10,10 +10,19 @@ ENTER_NAMESPACE(workload);
 
 
 
-static bool _audp = true;
+static bool use_deterministic_predicates(void) {
+    return true;
+}
 
-bool always_use_deterministic_predicates(void) {
-    return _audp;
+
+
+predicate_randgen_t predicate_randgen_t::acquire(const char* caller_tag) {
+    if (use_deterministic_predicates())
+        /* deterministic */
+        return predicate_randgen_t(caller_tag);
+    else
+        /* non-deterministic */
+        return predicate_randgen_t();
 }
 
 

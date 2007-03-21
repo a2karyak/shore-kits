@@ -60,24 +60,16 @@ public:
           _echo(echo)
     {
         /* select random number generator */
-        static int _function_local_seed;
-        randgen_t  randgen(&_function_local_seed);
-        randgen_t* randgenp;
-        if (always_use_deterministic_predicates())
-            randgenp = &randgen;
-        else {
-            thread_t* self = thread_get_self();
-            randgenp = self->randgen();
-        }
+        ACQUIRE_PREDICATE_RANDGEN(randgen);
 
-        
+
         /* predicates */
         t1 = datestr_to_timet("1993-01-01");
-        t1 = time_add_year(t1, randgenp->rand(5));
+        t1 = time_add_year(t1, randgen.rand(5));
         t2 = time_add_year(t1, 1);
 
-        DISCOUNT = .02 + .01 * randgenp->rand(8);   // random [0.02 .. 0.09]
-        QUANTITY =  24 + .01 * randgenp->rand(101); // random [24 .. 25]
+        DISCOUNT = .02 + .01 * randgen.rand(8);   // random [0.02 .. 0.09]
+        QUANTITY =  24 + .01 * randgen.rand(101); // random [24 .. 25]
 
         TRACE(TRACE_DEBUG,
               "Q6 - DISCOUNT = %.2f. QUANTITY = %.2f\n",

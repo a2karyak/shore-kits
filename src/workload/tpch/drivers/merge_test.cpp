@@ -94,16 +94,9 @@ void merge_test_driver::submit(void* disp) {
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 
     /* select random number generator */
-    static int _function_local_seed;
-    randgen_t  randgen(&_function_local_seed);
-    randgen_t* randgenp;
-    if (always_use_deterministic_predicates())
-        randgenp = &randgen;
-    else {
-        thread_t* self = thread_get_self();
-        randgenp = self->randgen();
-    }
-    
+    ACQUIRE_PREDICATE_RANDGEN(randgen);
+
+
     // FUNC_CALL PACKET with merging allowed
     tuple_fifo* fifo = new tuple_fifo(sizeof(int));
     func_call_packet_t* packet =
@@ -120,9 +113,9 @@ void merge_test_driver::submit(void* disp) {
         
 
     /* sleep before dispatch so we get merged in later */
-    sleep(randgenp->rand(20));
+    sleep(randgen.rand(20));
     
-
+    
     merge_test_process_tuple_t pt;
     process_query(packet, pt);
 

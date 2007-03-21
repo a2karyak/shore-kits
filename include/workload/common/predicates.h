@@ -280,7 +280,72 @@ typedef compound_predicate_t<true> or_predicate_t;
 
 
 
-bool always_use_deterministic_predicates(void);
+/**
+ * @brief Use a special wrapper class around randgen_t when we
+ * generate predicates so we can control whether predicates are
+ * generated at random or deterministically.
+ */
+class predicate_randgen_t {
+
+    enum {
+        USE_THREAD_LOCAL,
+        USE_CALLER
+    } _type;
+    randgen_t  _caller_randgen;
+    randgen_t* _thread_local_randgen;
+    
+    predicate_randgen_t ()
+        : _type(USE_THREAD_LOCAL),
+          _caller_randgen(),
+          _thread_local_randgen(thread_get_self()->randgen())
+    {
+    }
+    
+    predicate_randgen_t (const char* caller_tag)
+        : _type(USE_CALLER),
+          _caller_randgen(RSHash(caller_tag, strlen(caller_tag))),
+          _thread_local_randgen(NULL)
+    {
+    }
+        
+public:
+
+    int rand() {
+        switch (_type) {
+        case USE_THREAD_LOCAL:
+            assert(_thread_local_randgen != NULL);
+            return _thread_local_randgen->rand();
+        case USE_CALLER:
+            return _caller_randgen.rand();
+        default:
+            assert(0);
+        }
+    }
+
+    int rand(int n) {
+        switch (_type) {
+        case USE_THREAD_LOCAL:
+            assert(_thread_local_randgen != NULL);
+            return _thread_local_randgen->rand(n);
+        case USE_CALLER:
+            return _caller_randgen.rand(n);
+        default:
+            assert(0);
+        }
+    }
+
+    static predicate_randgen_t acquire(const char* caller_tag);
+};
+
+
+
+/**
+ * @brief How to generate caller_tag? We probably want to use
+ * __FUNCTION__, but just in case, wrap the caller_tag selection in a
+ * macro...
+ */
+#define ACQUIRE_PREDICATE_RANDGEN(lval) \
+   predicate_randgen_t lval=predicate_randgen_t::acquire(__FUNCTION__)
 
 
 

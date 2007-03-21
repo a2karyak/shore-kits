@@ -113,23 +113,15 @@ struct order_tscan_filter_t : public tuple_filter_t {
         : tuple_filter_t(sizeof(tpch_orders_tuple))
     {
         /* select random number generator */
-        static int _function_local_seed;
-        randgen_t  randgen(&_function_local_seed);
-        randgen_t* randgenp;
-        if (always_use_deterministic_predicates())
-            randgenp = &randgen;
-        else {
-            thread_t* self = thread_get_self();
-            randgenp = self->randgen();
-        }
+        ACQUIRE_PREDICATE_RANDGEN(randgen);
 
         /* select word1 and word2 */
         static char const* FIRST[] = {"special", "pending", "unusual", "express"};
         static char const* SECOND[] = {"packages", "requests", "accounts", "deposits"};
         int num_first_entries  = sizeof(FIRST)/sizeof(FIRST[0]);
         int num_second_entries = sizeof(SECOND)/sizeof(SECOND[0]);
-        word1 = FIRST [randgenp->rand(num_first_entries)];
-        word2 = SECOND[randgenp->rand(num_second_entries)];
+        word1 = FIRST [randgen.rand(num_first_entries)];
+        word2 = SECOND[randgen.rand(num_second_entries)];
     }
 
     virtual bool select(const tuple_t &input) {

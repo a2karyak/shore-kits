@@ -10,8 +10,6 @@
                        <cstdlib> doesn't */
 #endif
 
-#define UNUSED(x) { x = x; }
-
 
 class randgen_t {
 
@@ -29,8 +27,6 @@ public:
     }
 
     randgen_t(void* addr) {
-	UNUSED(addr);
-	reset(0);
         assert(sizeof(void*) >= sizeof(unsigned int));
         reset((unsigned int)(unsigned long)addr);
     }
