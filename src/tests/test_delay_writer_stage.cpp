@@ -6,12 +6,24 @@
 
 
 class test_delay_writer_stage_process_tuple_t : public process_tuple_t {
+
+    stopwatch_t _sw;
+
 public:
 
-    virtual void process(const tuple_t& output) {
-	int* d = aligned_cast<int>(output.data);
-        d = d;
-	TRACE(TRACE_ALWAYS, "Read another int\n");
+    test_delay_writer_stage_process_tuple_t()
+        : _sw()
+    {
+    }
+    
+    virtual void begin() {
+        _sw.reset();
+    }
+
+    virtual void process(const tuple_t& /*output*/) {
+	//int* d = aligned_cast<int>(output.data);
+	TRACE(TRACE_ALWAYS, "Delay was %lf\n", _sw.time());
+        _sw.reset();
     }
     
 };
@@ -35,8 +47,8 @@ int main() {
         new delay_writer_packet_t("DELAY_WRITER_PACKET",
                                   out_buffer,
                                   filter,
-                                  1000,
-                                  10);
+                                  10000,
+                                  1000);
 
 
     test_delay_writer_stage_process_tuple_t pt;

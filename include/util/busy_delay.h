@@ -14,7 +14,8 @@
 /* exported functions */
 
 int  busy_delay_init(void);
-void busy_delay(int num_ms);
+void busy_delay_ms(int ms);
+void busy_delay_us(int us);
 
 
 #endif

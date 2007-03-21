@@ -60,19 +60,39 @@ int busy_delay_init(void)
   return 0;
 }
 
+
 /**
  *  @brief Delay for the specified number of milliseconds.
  */
-void busy_delay(int num_ms)
+void busy_delay_ms(int ms)
 {
   /* error checking */
   assert(NUM_ITERATIONS_PER_MS > 0);
 
   int m;
-  for (m = 0; m < num_ms; m++)
+  for (m = 0; m < ms; m++)
   {
     int i;
     for (i = 0; i < NUM_ITERATIONS_PER_MS; i++)
+      iteration();
+  }
+}
+
+
+/**
+ *  @brief Delay for the specified number of microseconds.
+ */
+void busy_delay_us(int us)
+{
+  /* error checking */
+  assert(NUM_ITERATIONS_PER_MS > 0);
+
+  int num_iterations_per_us = NUM_ITERATIONS_PER_MS / 1000;
+  int m;
+  for (m = 0; m < us; m++)
+  {
+    int i;
+    for (i = 0; i < num_iterations_per_us; i++)
       iteration();
   }
 }
@@ -145,9 +165,9 @@ static int compute_iterations_per_ms(int min_pow, int num_pow)
     {
       /* compute time to run 'num_iter' iterations */
       double t = compute_time_ms(num_iter);
-      if (t == _NAN)
+      if (isnan(t))
       {
-        /* error checking */
+        /* error checking ... check for _NAN */
         TRACE(0&TRACE_DEBUG, "compute_time_ms(%d) return NAN\n", num_iter);
         return -1;
       }

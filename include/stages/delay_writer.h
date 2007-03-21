@@ -22,7 +22,7 @@ public:
 
 
     const size_t _output_tuple_size;
-    const int _delay_ms;
+    const int _delay_us;
     const int _num_tuples;
 
    
@@ -32,7 +32,7 @@ public:
     delay_writer_packet_t(const c_str&    packet_id,
                           tuple_fifo*     output_buffer,
                           tuple_filter_t* output_filter,
-                          int             delay_ms,
+                          int             delay_us,
                           int             num_tuples)
 	: packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                    NULL,
@@ -40,7 +40,7 @@ public:
                    true   /* unreserve worker on completion */
                    ),
 	  _output_tuple_size(output_buffer->tuple_size()),
-          _delay_ms(delay_ms),
+          _delay_us(delay_us),
           _num_tuples(num_tuples)
     {
     }

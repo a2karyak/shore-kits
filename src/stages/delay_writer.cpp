@@ -29,10 +29,10 @@ void delay_writer_stage_t::process_packet() {
     tuple_t tuple(tuple_data, tuple_size);
     
 
-    int delay_ms = packet->_delay_ms;
+    int delay_us = packet->_delay_us;
     int num_tuples = packet->_num_tuples;
     for (int i = 0; i < num_tuples; i++) {
-        busy_delay(delay_ms);
+        busy_delay_us(delay_us);
         adaptor->output(tuple);
     }
 }
