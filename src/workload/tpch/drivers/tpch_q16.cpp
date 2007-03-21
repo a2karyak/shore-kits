@@ -156,15 +156,7 @@ struct part_tscan_filter_t : public tuple_filter_t {
         /* SIZE1 is randomly selected as a set of eight different
            values within [1 .. 50]; */
         int num_entries = sizeof(sizes)/sizeof(sizes[0]);
-        int range_min = 1;
-        int range_max = 50;
-        int range_size = range_max - range_min + 1;
-        int range[range_size];
-        for (int i = 0; i < range_size; i++)
-            range[i] = i + range_min;
-        randgen_util_t::shuffle(range, range_size, randgen.randgen());
-        for(int i = 0; i < num_entries; i++)
-            sizes[i] = range[i];
+        randgen_util_t::random_in_range(sizes, num_entries, 1, 50, randgen.randgen());
     }
 
 
