@@ -9,6 +9,7 @@
 #include <functional>
 #include <string>
 #include <cmath>
+#include <cassert>
 
 using std::vector;
 using std::string;
@@ -320,28 +321,24 @@ class predicate_randgen_t {
         
 public:
 
-    int rand() {
+    randgen_t* randgen() {
         switch (_type) {
         case USE_THREAD_LOCAL:
             assert(_thread_local_randgen != NULL);
-            return _thread_local_randgen->rand();
+            return _thread_local_randgen;
         case USE_CALLER:
-            return _caller_randgen.rand();
+            return &_caller_randgen;
         default:
             assert(0);
         }
     }
 
+    int rand() {
+        return randgen()->rand();
+    }
+
     int rand(int n) {
-        switch (_type) {
-        case USE_THREAD_LOCAL:
-            assert(_thread_local_randgen != NULL);
-            return _thread_local_randgen->rand(n);
-        case USE_CALLER:
-            return _caller_randgen.rand(n);
-        default:
-            assert(0);
-        }
+        return randgen()->rand(n);
     }
 
     static predicate_randgen_t acquire(const char* caller_tag);

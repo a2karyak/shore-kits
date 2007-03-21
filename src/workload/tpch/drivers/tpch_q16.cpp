@@ -156,33 +156,15 @@ struct part_tscan_filter_t : public tuple_filter_t {
         /* SIZE1 is randomly selected as a set of eight different
            values within [1 .. 50]; */
         int num_entries = sizeof(sizes)/sizeof(sizes[0]);
-        for(int i = 0; i < num_entries; i++) {
-            
-            /* Generate a unique value for sizes[i]. */
-            /* TODO Do this in a deterministic amount of time. */
-            int trial_value;
-            while (1) {
-
-                /* generate trial value in [1,50] */
-                trial_value = randgen.rand(50) + 1;
-
-                /* search for duplicate within sizes[0..i-1] */
-                bool found_duplicate = false;
-                for (int j = 0; j < i; j++)
-                    if (sizes[j] == trial_value) {
-                        found_duplicate = true;
-                        break;
-                    }
-                
-                if (!found_duplicate)
-                    /* Success! Generated none-duplicate value! */
-                    break;
-
-            } /* endof while(1) */
-            
-            TRACE(0&TRACE_ALWAYS, "%d for i = %d\n", trial_value, i);
-            sizes[i] = trial_value;
-        } /* endof for (int i = 0...) */
+        int range_min = 1;
+        int range_max = 50;
+        int range_size = range_max - range_min + 1;
+        int range[range_size];
+        for (int i = 0; i < range_size; i++)
+            range[i] = i + range_min;
+        randgen_util_t::shuffle(range, range_size, randgen.randgen());
+        for(int i = 0; i < num_entries; i++)
+            sizes[i] = range[i];
     }
 
 

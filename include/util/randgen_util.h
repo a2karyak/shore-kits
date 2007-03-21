@@ -11,7 +11,7 @@ class randgen_util_t {
 public:
 
     template <class T>
-    static void randgen_shuffle(T* vals, int n, randgen_t* randgenp) {
+    static void shuffle(T* vals, int n, randgen_t* randgenp) {
 
         assert(n > 0);
         for (int i = 0; i < n-1; i++) {
@@ -26,7 +26,7 @@ public:
             vals[swap_index] = temp;
         }
     }
-    
+
 };
     
 
