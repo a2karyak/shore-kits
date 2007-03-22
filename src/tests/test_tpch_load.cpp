@@ -16,7 +16,7 @@
 
 int main() {
 
-    thread_init();
+    util_init();
     
     /* NGM: Removed DB_TRUNCATE flag since it was causing an exception
        to be thrown in table open. As a temporary fix, we will simply

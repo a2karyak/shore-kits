@@ -29,42 +29,95 @@ class tuple_fifo {
 
 private:
 
+    /* internal datatypes */
+
     typedef std::list<page*> page_list;
 
+    class tuple_fifo_state_t {
+    public:
+        enum _tuple_fifo_state_t {
+            INVALID = 0,
+            IN_MEMORY,
+            IN_MEMORY_DONE_WRITING,
+            TERMINATED
+        };
+        
+    private:
+        volatile _tuple_fifo_state_t _value;
+
+    public:
+
+        tuple_fifo_state_t ()
+            : _value(INVALID)
+        {
+        }
+
+        static c_str state_to_string(const _tuple_fifo_state_t value) {
+            switch(value) {
+#define TF_STATE(x) case x: return #x;
+                TF_STATE(INVALID);
+                TF_STATE(IN_MEMORY);
+                TF_STATE(IN_MEMORY_DONE_WRITING);
+                TF_STATE(TERMINATED);
+            default:
+                assert(0);
+            }
+        }
+        
+        c_str to_string() {
+            return state_to_string(current());
+        }
+
+        _tuple_fifo_state_t current() {
+            return _value;
+        }
+        
+        void transition(const _tuple_fifo_state_t next);
+
+private:
+
+        bool _transition_ok(const _tuple_fifo_state_t next);
+    };
+
+
+    /* ID */
+    int _fifo_id;
+
+    /* state */
+    tuple_fifo_state_t _state;
+
+    /* page list management */
     page_list _pages;
     page_list _free_pages;
-    
-    size_t _tuple_size;
+    size_t _curr_pages;
     size_t _capacity;
     size_t _threshold;
+
+    /* useful fields to store */
+    size_t _tuple_size;
     size_t _page_size;
-    size_t _prefetch_count;
-    size_t _curr_pages;
+
+    /* stats (don't affect correctness) */
     size_t _num_inserted;
     size_t _num_removed;
     size_t _num_waits_on_insert;
     size_t _num_waits_on_remove;
-    char*  _read_end;
 
+    /* read and write page management */
+    char*  _read_end;
     guard<page> _read_page;
     page::iterator _read_iterator;
     guard<page> _write_page;
 
-    // used to communicate between reader and writer
-    volatile bool _done_writing;
-    volatile bool _terminated;
-
-    // synch vars
+    /* synch vars */
     pthread_mutex_t _lock;
     pthread_cond_t _reader_notify;
     pthread_cond_t _writer_notify;
 
-    // debug vars
+    /* debug vars */
     pthread_t _reader_tid;
     pthread_t _writer_tid;
     
-    int _fifo_id;
-
 public:
 
     /**
@@ -74,37 +127,37 @@ public:
      *  @param tuple_size The size of the tuples stored in this
      *  tuple_fifo.
      *
-     *  @param num_pages We would like to allocate a new page whenever
+     *  @param capacity We would like to allocate a new page whenever
      *  we fill up the current page. If the buffer currently contains
      *  this many pages, our insert operations will block rather than
      *  allocate new pages.
      *
+     *  @param threshold If the writer sees a full tuple_fifo, it
+     *  waits until this many free pages appear before writing
+     *  more. If a reader sees this many, it wait until this many full
+     *  pages appear or until the writer finishes writing.
+     *
      *  @param page_size The size of the pages used in our buffer.
      */
-
     tuple_fifo(size_t tuple_size,
                size_t capacity=DEFAULT_BUFFER_PAGES,
                size_t threshold=64,
                size_t page_size=get_default_page_size())
-        : 
-          _tuple_size(tuple_size),
+        : _fifo_id(tuple_fifo_generate_id()),
+          _curr_pages(0),
           _capacity(capacity),
           _threshold(threshold),
+          _tuple_size(tuple_size),
           _page_size(page_size),
-          _prefetch_count(0),
-          _curr_pages(0),
           _num_inserted(0),
           _num_removed(0),
           _num_waits_on_insert(0),
           _num_waits_on_remove(0),
-          _done_writing(false),
-          _terminated(false),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
 	  _reader_tid(0),
-          _writer_tid(0),
-          _fifo_id(tuple_fifo_generate_id())
+          _writer_tid(0)
     {
         init();
     }
@@ -115,8 +168,7 @@ public:
 
 
     /* Global tuple_fifo statistics */
-    static int open_fifos();
-    static size_t prefetch_count();
+    static int  open_fifos();
     static void clear_stats();
     static void trace_stats();
 
@@ -144,12 +196,9 @@ public:
      *  @param tuple The tuple to insert. On successful insert, the
      *  data that this tuple points to will be copied into this page.
      *
-     *  @return true on successful insert. false if the buffer was
-     *  terminated by the consumer.
-     *
-     *  @throw Can throw exceptions on error.
+     *  @throw Can throw TerminatedBufferException if the reader has
+     *  terminated the buffer.
      */
-
     void append(const tuple_t &tuple) {
         ensure_write_ready();
         _num_inserted++;
@@ -163,13 +212,15 @@ public:
      *  point to it. The caller may then assign to this tuple to
      *  assign to the buffer.
      *
-     *  If this function returns success, the caller may invoke
+     *  When this function returns, the caller may invoke
      *  tuple.assign() to copy data into the allocated space. This
      *  should be done before the next put_tuple() or alloc_tuple()
      *  operation to prevent uninitialized data from being fed to the
      *  consumer of this buffer.
+     *
+     *  @throw Can throw TerminatedBufferException if the consumer has
+     *  terminated the buffer.
      */
-
     tuple_t allocate() {
         ensure_write_ready();
         _num_inserted++;
@@ -177,6 +228,15 @@ public:
     };
     
 
+    /**
+     *  @brief Only the consumer may call this method. If the buffer
+     *  contains more tuples, set 'tuple' to be the next tuple in the
+     *  buffer and return true. If the buffer has been closed and is
+     *  empty, return false.
+     *
+     *  @throw Can throw TerminatedBufferException if the producer has
+     *  terminated the buffer.
+     */
     bool get_tuple(tuple_t &tuple) {
         if(!ensure_read_ready())
             return false;
@@ -187,39 +247,15 @@ public:
     }
 
 
-    /**
-     *  @brief Only the consumer may call this method. Retrieve a page
-     *  of tuples from the buffer in one operation. The buffer gives
-     *  up ownership of the page and will not access (or free) it
-     *  afterward.
-     *
-     *  WARNING: Do not mix calls to get_page() and get_tuple() unless
-     *  the caller if prepared to deal with duplicate tuples. In other
-     *  words, the caller must be willing to process some unknown
-     *  number of tuples twice.
-     *
-     *  @param pagep If a page is retrieved, it is assigned to this
-     *  tuple_page_t pointer. If the caller is mixing calls to
-     *  get_page() and get_tuple(), some of the tuples on the returned
-     *  page may have been returned by previous calls to get_tuple()).
-     *
-     *  @return NULL if the buffer is empty and the producer has
-     *  invoked send_eof() on the buffer.
-     *
-     *  @throw BufferTerminatedException if the producer has
-     *  terminated the buffer.
-     */
-
-    page* get_page(int timeout=0);
+    page* get_page(int timeout_ms=0);
 
 
     /**
-     * @brief ensures that the FIFO is ready for writing.
+     * @brief Ensures that the FIFO is ready for writing.
      *
      * When this function returns at least one tuple may be written
      * without blocking.
      */
-
     void ensure_write_ready() {
         if(_write_page->full())
             _flush_write_page(false);
@@ -227,17 +263,19 @@ public:
         
 
     /**
-     * @brief ensures that the FIFO is ready for reading.
+     * @brief Ensures that the FIFO is ready for reading.
      *
      * The call will block until a tuple becomes available for
      * reading, or EOF is encountered.
      *
      * @return false if EOF or timeout expired
      */
-    bool ensure_read_ready(int timeout=0) {
+    bool ensure_read_ready(int timeout_ms=0) {
         // blocking attempt => only returns false if EOF
-	return (_read_iterator->data != _read_end) || _get_read_page(timeout) == 1;
+	return (_read_iterator->data != _read_end)
+            || (_get_read_page(timeout_ms) == 1);
     }
+
 
     // non-blocking. Return 1 if ready, 0 if not ready, -1 if EOF
     int check_read_ready() {
@@ -247,32 +285,9 @@ public:
     }
 
     
-    /**
-     * @brief Closes the buffer immediately (and abnormally).
-     *
-     * If successful, the other end will be notified through an
-     * exception at some point in the future and will be responsible
-     * for deleting the FIFO. The caller must not access the FIFO
-     * again if terminate() returns true.
-     *
-     * @return true if termination succeeded. false means the buffer
-     * was already terminated or at EOF.
-     * 
-     */
-
     bool terminate();
 
-
-    /**
-     * @brief Signals the reader that the writer has finished
-     * producing tuples.
-     *
-     * The FIFO will close normally once the last tuple has been read;
-     * the reader is responsible for deleting it. The writer must not
-     * access the FIFO again if send_eof() returns true.
-     *
-     */
-
+    
     bool send_eof();
     
     
@@ -283,7 +298,6 @@ public:
      *  @return Returns true only if the producer has sent EOF and we
      *  have read every tuple of every page in this buffer.
      */
-
     bool eof() {
         return check_read_ready() < 0;
     }
@@ -300,7 +314,7 @@ private:
     }
 
     void _termination_check() {
-        if(_terminated)
+        if(is_terminated())
             THROW1(TerminatedBufferException, "Buffer closed unexpectedly");
     }
 
@@ -313,10 +327,18 @@ private:
     void init();
     void destroy();
 
-    // attempts to read a new page
-    int _get_read_page(int timeout);
+    /* These methods control access and waiting. */
+    int  _get_read_page(int timeout);
     void _flush_write_page(bool done_writing);
-    
+
+
+    bool is_terminated() {
+        return _state.current() == tuple_fifo_state_t::TERMINATED;
+    }
+    bool is_done_writing() {
+        return _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING;
+    }
+
     void wait_for_reader();
     void ensure_reader_running();
     

@@ -18,6 +18,7 @@
 #include "stages/tscan.h"
 #include "stages/echo.h"
 #include "stages/sieve.h"
+#include "stages/delay_writer.h"
 #include "stages/tuple_source.h"
 
 #endif

@@ -11,16 +11,17 @@
 
 query_info_t query_init(int argc, char* argv[]) {
 
-    thread_init();
-    tuple_fifo_directory_t::open_once();
-    db_open(); /* destroy this below in query_main */
+    util_init();
 
-    // parse command line args
+    /* check command line arguments */
     if ( argc < 2 ) {
 	TRACE(TRACE_ALWAYS, "Usage: %s <num iterations>\n", argv[0]);
 	exit(-1);
     }
 
+    db_open(); /* destroy this below in query_main */
+
+    /* parse command line arguments */
     int num_iterations = atoi(argv[1]);
     if ( num_iterations == 0 ) {
 	TRACE(TRACE_ALWAYS, "Invalid iterations per client %s\n", argv[1]);

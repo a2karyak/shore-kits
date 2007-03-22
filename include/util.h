@@ -1,6 +1,7 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include "util/util_init.h"
 #include "util/compat.h"
 #include "util/c_str.h"
 #include "util/decimal.h"
@@ -24,6 +25,7 @@
 #include "util/tassert.h"
 #include "util/itimer.h"
 #include "util/acounter.h"
+#include "util/busy_delay.h"
 #include "util/randgen.h"
 #include "util/randgen_util.h"
 

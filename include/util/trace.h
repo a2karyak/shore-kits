@@ -30,7 +30,7 @@ struct tracer {
 
 void trace_(unsigned int trace_type,
 	    const char* filename, int line_num, const char* function_name,
-	    char const* format, ...) ;
+	    char const* format, ...);
 void trace_set(unsigned int trace_type_mask);
 unsigned int trace_get();
 

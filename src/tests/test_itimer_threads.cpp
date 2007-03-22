@@ -131,33 +131,33 @@ void wait_keypress(void) {
 
 int main(int, char**)
 {
-  thread_init();
+    util_init();
 
 
-  thread_info_t root_info   = { wait_keypress,
-                                itimer_set_max,
-                                c_str("root") };
-  thread_info_t helper_info = { wait_cond,
-                                itimer_set_big,
-                                c_str("helper") };
+    thread_info_t root_info   = { wait_keypress,
+                                  itimer_set_max,
+                                  c_str("root") };
+    thread_info_t helper_info = { wait_cond,
+                                  itimer_set_big,
+                                  c_str("helper") };
   
 
-  pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&mutex);
 
 
-  pthread_t helper;
-  if (pthread_create(&helper, NULL, thread_main, &helper_info)) {
-      TRACE(TRACE_ALWAYS, "pthread_create failed\n");
-      return -1;
-  }
+    pthread_t helper;
+    if (pthread_create(&helper, NULL, thread_main, &helper_info)) {
+        TRACE(TRACE_ALWAYS, "pthread_create failed\n");
+        return -1;
+    }
   
   
-  thread_main(&root_info);
-  
-
-  pthread_join(helper, NULL);
-  TRACE(TRACE_ALWAYS, "Joined with helper!\n");
+    thread_main(&root_info);
   
 
-  return 0;
+    pthread_join(helper, NULL);
+    TRACE(TRACE_ALWAYS, "Joined with helper!\n");
+  
+
+    return 0;
 }

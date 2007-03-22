@@ -5,7 +5,6 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
 #include "tests/common.h"
-#include "workload/common.h"
 
 using namespace qpipe;
 using namespace workload;
@@ -27,7 +26,7 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     db_open_guard_t db_open;
     scheduler::policy_t* dp = new scheduler::policy_rr_cpu_t();
 

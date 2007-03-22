@@ -38,6 +38,7 @@ TESTS = \
    tests/hash_join_stage \
    tests/bnl_join_stage \
    tests/bnl_in_stage \
+   tests/delay_writer_stage \
    tests/q4 \
    tests/q6 \
    tests/q6_disp \
@@ -70,6 +71,7 @@ tests: $(TESTS)
 SU=$(top_srcdir)/src/util
 lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS)
 lib_libutil_a_SOURCES = \
+	$(SU)/util_init.cpp \
 	$(SU)/c_str.cpp \
 	$(SU)/fnv.cpp \
 	$(SU)/hash_functions.cpp \
@@ -86,7 +88,9 @@ lib_libutil_a_SOURCES = \
         $(SU)/static_list.cpp \
         $(SU)/resource_pool.cpp \
         $(SU)/itimer.cpp \
+        $(SU)/busy_delay.cpp \
         $(SU)/randgen_util.cpp
+
 
 
 ################################################################################
@@ -142,7 +146,8 @@ lib_libstages_a_SOURCES = \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
    $(SG)/echo.cpp \
-   $(SG)/sieve.cpp
+   $(SG)/sieve.cpp \
+   $(SG)/delay_writer.cpp
 
 
 ################################################################################
@@ -263,6 +268,7 @@ tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
+tests_delay_writer_stage_SOURCES = $(ST)/test_delay_writer_stage.cpp
 tests_randgen_shuffle_SOURCES = $(ST)/test_randgen_shuffle.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)

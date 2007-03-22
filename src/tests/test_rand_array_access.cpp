@@ -41,7 +41,7 @@ void fill_array_with_random_numbers(int* array, int size) {
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
 
     // bind to CPU 0
     bind_to_cpu(0);

@@ -41,7 +41,7 @@ void do_send_eof(tuple_fifo &buf, int i) {
 
 int main(int argc, char* argv[]) {
 
-    thread_init();
+    util_init();
     db_open_guard_t db_open;
 
 

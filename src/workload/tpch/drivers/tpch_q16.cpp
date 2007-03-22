@@ -43,9 +43,6 @@ using namespace qpipe;
         p_type,
         p_size;
  */
-
-
-
 ENTER_NAMESPACE(q16);
 
 
