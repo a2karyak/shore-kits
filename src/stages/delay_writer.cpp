@@ -24,7 +24,7 @@ void delay_writer_stage_t::process_packet() {
     
     /* create blank tuple */
     size_t tuple_size = packet->_output_tuple_size;
-    char   tuple_data[tuple_size];
+    array_guard_t<char> tuple_data = new char[tuple_size];
     memset(tuple_data, 0, sizeof(tuple_data));
     tuple_t tuple(tuple_data, tuple_size);
     

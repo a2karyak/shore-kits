@@ -8,6 +8,14 @@
  */
 #include "util/busy_delay.h" /* for prototypes */
 #include <cstdlib>      /* for NULL, malloc, free */
+
+#ifdef __GCC
+#include <cstring>
+#else
+#include <string.h> /* On Sun's CC <string.h> defines memset,
+                       <cstring> doesn't */
+#endif
+
 #include <cstring>      /* for memset */
 #include <math.h>       /* for log */
 #include <cassert>      /* for assert */
@@ -46,7 +54,7 @@ int busy_delay_init(void)
   assert(NUM_ITERATIONS_PER_MS == -1);
 
   /* initialize other constants */
-  _NAN = log(-1);
+  _NAN = log((double)-1);
 
   /* calibrate */
   int min_pow = 10;
