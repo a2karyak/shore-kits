@@ -207,7 +207,6 @@ void tpch_handler_t::handle_command(const char* command) {
     /* Report results. We'll use the workload name for its
        description. */
     print_run_statistics(workload_name, results);
-    tuple_fifo::trace_stats();
 }
 
 
@@ -223,8 +222,7 @@ void tpch_handler_t::print_usage(const char* command_tag)
 
 void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results_t &results) {
 
-    tuple_fifo::clear_stats();
-    
+
     // print final statistics
     int queries_completed =
         results.num_clients * results.num_iterations;
@@ -242,6 +240,8 @@ void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results
     TRACE(TRACE_STATISTICS, "~~~ Throughput        = %.2f queries/min\n", tpmC);
     TRACE(TRACE_STATISTICS, "~~~\n");
 
+    tuple_fifo::trace_stats();
+    tuple_fifo::clear_stats();
 }
 
 

@@ -99,7 +99,6 @@ private:
     size_t _page_size;
 
     /* stats (don't affect correctness) */
-    size_t _prefetch_count;
     size_t _num_inserted;
     size_t _num_removed;
     size_t _num_waits_on_insert;
@@ -151,7 +150,6 @@ public:
           _threshold(threshold),
           _tuple_size(tuple_size),
           _page_size(page_size),
-          _prefetch_count(0),
           _num_inserted(0),
           _num_removed(0),
           _num_waits_on_insert(0),
@@ -171,8 +169,7 @@ public:
 
 
     /* Global tuple_fifo statistics */
-    static int open_fifos();
-    static size_t prefetch_count();
+    static int  open_fifos();
     static void clear_stats();
     static void trace_stats();
 

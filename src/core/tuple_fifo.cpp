@@ -12,16 +12,8 @@ ENTER_NAMESPACE(qpipe);
 
 
 
-/* Prefetch constants */
-
-/* use 3/9 for "good" performance */
-#define READ_PREFETCH  3
-#define WRITE_PREFETCH 9
-
-
-
 /* debugging */
-static int TRACE_MASK_BLOCKING = TRACE_COMPONENT_MASK_NONE;
+static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static const bool FLUSH_TO_DISK_ON_FULL = false;
 
 
@@ -29,11 +21,12 @@ static const bool FLUSH_TO_DISK_ON_FULL = false;
 /* Global tuple_fifo statistics */
 
 /* statistics data structures */
-static pthread_mutex_t open_fifo_mutex = thread_mutex_create();
+static pthread_mutex_t tuple_fifo_stats_mutex = thread_mutex_create();
 static int open_fifo_count = 0;
-static int total_fifos_existed = 0;
-static int total_fifos_experienced_blocking = 0;
-static size_t total_prefetches = 0;
+static int total_fifos_created = 0;
+static int total_fifos_experienced_read_wait = 0;
+static int total_fifos_experienced_write_wait = 0;
+static int total_fifos_experienced_wait = 0;
 
 
 
@@ -50,22 +43,15 @@ int tuple_fifo::open_fifos() {
 
 
 /**
- * @brief Return the number of prefetches done so far. Not
- * synchronized.
- */
-size_t tuple_fifo::prefetch_count() {
-    return total_prefetches;
-}
-
-
-
-/**
  * @brief Reset global statistics to initial values. This method _is_
  * synchronized.
  */
 void tuple_fifo::clear_stats() {
-    critical_section_t cs(open_fifo_mutex);
-    total_prefetches = 0;
+    critical_section_t cs(tuple_fifo_stats_mutex);
+    open_fifo_count = 0;
+    total_fifos_created = 0;
+    total_fifos_experienced_read_wait = 0;
+    total_fifos_experienced_write_wait = 0;
 }
 
 
@@ -74,8 +60,19 @@ void tuple_fifo::clear_stats() {
  * @brief Dump stats using TRACE.
  */
 void tuple_fifo::trace_stats() {
-    TRACE(TRACE_ALWAYS, "Fraction of tuple_fifos that experienced blocking = %lf\n",
-          (double)total_fifos_experienced_blocking/total_fifos_existed);
+    
+    TRACE(TRACE_ALWAYS,
+          "--- Since the last clear_stats\n");
+    TRACE(TRACE_ALWAYS,
+          "%d tuple_fifos created\n", total_fifos_created);
+    TRACE(TRACE_ALWAYS,
+          "%d currently open\n", open_fifo_count);
+    TRACE(TRACE_ALWAYS,
+          "%lf experienced read waits\n",
+          (double)total_fifos_experienced_read_wait/total_fifos_created);
+    TRACE(TRACE_ALWAYS,
+          "%lf experienced write waits\n",
+          (double)total_fifos_experienced_write_wait/total_fifos_created);
 }
 
 
@@ -144,9 +141,9 @@ void tuple_fifo::init() {
     _state.transition(tuple_fifo_state_t::IN_MEMORY);
 
     /* Update statistics. */
-    critical_section_t cs(open_fifo_mutex);
+    critical_section_t cs(tuple_fifo_stats_mutex);
     open_fifo_count++;
-    total_fifos_existed++;
+    total_fifos_created++;
     cs.exit();
 }
 
@@ -184,17 +181,21 @@ void tuple_fifo::destroy() {
     std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
 	
     /* update stats */
-    critical_section_t cs(open_fifo_mutex);
-    total_prefetches += _prefetch_count;
+    critical_section_t cs(tuple_fifo_stats_mutex);
     open_fifo_count--;
-    if ((_num_waits_on_insert > 0) || (_num_waits_on_remove > 0))
-        total_fifos_experienced_blocking++;
+    bool write_wait = _num_waits_on_insert > 0;
+    bool read_wait  = _num_waits_on_remove > 0;
+    if (read_wait)
+        total_fifos_experienced_read_wait++;
+    if (write_wait)
+        total_fifos_experienced_write_wait++;
+    if (read_wait || write_wait)
+        total_fifos_experienced_wait++;
 
-
-    TRACE(TRACE_MASK_BLOCKING & TRACE_ALWAYS,
+    TRACE(TRACE_MASK_WAITS & TRACE_ALWAYS,
           "Blocked on insert %.2f\n",
           (double)_num_waits_on_insert/_num_inserted);
-    TRACE(TRACE_MASK_BLOCKING & TRACE_ALWAYS,
+    TRACE(TRACE_MASK_WAITS & TRACE_ALWAYS,
           "Blocked on remove %.2f\n",
           (double)_num_waits_on_remove/_num_removed);
 }
@@ -362,7 +363,6 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         if(!_write_page->empty()) {
             _pages.push_back(_write_page.release());
             _curr_pages++;
-            _prefetch_count++;
         }
         
 
