@@ -22,6 +22,7 @@ ENTER_NAMESPACE(qpipe);
 
 /* debugging */
 static int TRACE_MASK_BLOCKING = TRACE_COMPONENT_MASK_NONE;
+static const bool FLUSH_TO_DISK_ON_FULL = false;
 
 
 
@@ -108,6 +109,7 @@ struct sentinel_page_pool : page_pool {
         /* do nothing */
     }
 };
+
 
 
 /* sentinal page data structures */
@@ -337,44 +339,65 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     critical_section_t cs(_lock);
     _termination_check();
 
-    // Wait for space to open up? Once we've slept because of empty,
-    // space for _threshold pages must be available before we are
-    // willing to try again
-    for(size_t threshold=1; _available_writes() < threshold; threshold = _threshold) {
-        // sleep until something important changes
-        wait_for_reader();
-        _termination_check();
-    }
+    if (FLUSH_TO_DISK_ON_FULL) {
 
-    // allocate the page
-    if(!_write_page->empty()) {
-        _pages.push_back(_write_page.release());
-        _curr_pages++;
-        _prefetch_count++;
-    }
 
-    if(done_writing) {
-        switch (_state.current()) {
-        case tuple_fifo_state_t::IN_MEMORY:
-            _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
-            break;
-        default:
-            assert(0);
-        }
-        _write_page.done();
+
     }
-    else if(_free_pages.empty())
-        _write_page = page::alloc(tuple_size());
     else {
-	_write_page = _free_pages.front();
-	_free_pages.pop_front();
-    }
+        
+        /* tuple_fifo stays in memory */
+        /* If the buffer is currently full, we must wait for space to
+           open up. Once we start waiting we continue waiting until
+           space for '_threshold' pages is available. */
+        for(size_t threshold=1;
+            _available_writes() < threshold; threshold = _threshold) {
+            /* wait until something important changes */
+            wait_for_reader();
+            _termination_check();
+        }
 
-    // notify the reader?
-    if(_available_reads() >= _threshold || is_done_writing())
-        ensure_reader_running();
-    
-    // * * * END CRITICAL SECTION * * *
+
+        /* save _write_page if it is not empty */
+        if(!_write_page->empty()) {
+            _pages.push_back(_write_page.release());
+            _curr_pages++;
+            _prefetch_count++;
+        }
+        
+
+        /* allocate a new _write_page if necessary */
+        if (!done_writing && !_free_pages.empty()) {
+            /* allocate from free list */
+            _write_page = _free_pages.front();
+            _free_pages.pop_front();
+        }
+        if(!done_writing && _free_pages.empty())
+            /* allocate using page::alloc */
+            _write_page = page::alloc(tuple_size());
+
+        
+        /* If allocation is not necessary (because we are done
+           writing), just do state transition. */
+        if(done_writing) {
+            switch (_state.current()) {
+            case tuple_fifo_state_t::IN_MEMORY:
+                _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
+                break;
+            default:
+                assert(0);
+            }
+            _write_page.done();
+        }
+
+
+        /* wake the reader if necessary */
+        if(_available_reads() >= _threshold || is_done_writing())
+            ensure_reader_running();
+        
+        // * * * END CRITICAL SECTION * * *
+
+    } /* endof else statement */
 }
 
 
