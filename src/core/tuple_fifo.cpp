@@ -200,9 +200,24 @@ void tuple_fifo::destroy() {
 
 
 /**
- * @brief Get a page from the tuple_fifo.
+ *  @brief Only the consumer may call this method. Retrieve a page
+ *  of tuples from the buffer in one operation. The buffer gives
+ *  up ownership of the page and will not access (or free) it
+ *  afterward.
  *
- * @return NULL if the tuple_fifo has been closed. A page otherwise.
+ *  WARNING: Do not mix calls to get_page() and get_tuple() on the
+ *  same tuple_fifo... unless the caller if prepared to deal with
+ *  duplicate tuples. In other words, the caller must be willing
+ *  to process some unknown number of tuples twice.
+ *
+ *  @param timeout The maximum number of milli-seconds to wait for
+ *  a tuple.
+ *
+ *  @return NULL if the buffer is empty and the producer has
+ *  invoked send_eof() on the buffer.
+ *
+ *  @throw BufferTerminatedException if the producer has
+ *  terminated the buffer.
  */
 page* tuple_fifo::get_page(int timeout) {
     if(!ensure_read_ready(timeout))
@@ -224,7 +239,10 @@ page* tuple_fifo::get_page(int timeout) {
 
 /**
  * @brief Only the producer may call this method. Notify the
- * tuple_fifo that the caller will be inserting no more data.
+ * tuple_fifo that the caller will be inserting no more data.  The
+ * FIFO will close normally once the last tuple has been read; the
+ * reader is responsible for deleting it. The writer must not access
+ * the FIFO again if send_eof() returns true.
  *
  * @return True if we successfully send and EOF. False if the fifo has
  * been terminated.
@@ -249,8 +267,10 @@ bool tuple_fifo::send_eof() {
  * abnormally. The other side should receive a
  * TerminatedBufferException on the next tuple_fifo operation.
  *
- * The side which terminates last is responsible for deleting the
- * tuple_fifo.
+ * If successful, the other end will be notified through an
+ * exception at some point in the future and will be responsible
+ * for deleting the FIFO. The caller must not access the FIFO
+ * again if terminate() returns true.
  *
  * @return True if we successfully terminate. False if the other side
  * has already terminated.
