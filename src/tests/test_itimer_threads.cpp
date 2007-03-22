@@ -35,7 +35,7 @@ void itimer_set_big(struct itimerval* itimer)
 }
 
 
-void* thread_main(void* arg)
+extern "C" void* thread_main(void* arg)
 {
 
     thread_info_t* info = (thread_info_t*)arg;

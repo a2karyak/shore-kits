@@ -7,7 +7,8 @@
  *
  *  @bug None known.
  */
-#include "util/randgen_util.h"   /* for prototypes */
+#include "util/randgen_util.h" /* for prototypes */
+#include "util/guard.h"        /* for array_guard_t */ 
 #include <cassert>
 
 
@@ -26,7 +27,15 @@ void randgen_util_t::random_in_range(int* results, int num_results,
   int range_size = max_inclusive - min_inclusive + 1;
   assert(range_size >= num_results);
 
-  int range[range_size];
+
+#if _GCC
+  int _range[range_size];
+#else
+  array_guard_t<int> _range = new int[range_size];
+#endif
+  int* range = _range;
+
+
   for (int i = 0; i < range_size; i++)
     range[i] = i + min_inclusive;
 

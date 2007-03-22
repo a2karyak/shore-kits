@@ -11,7 +11,16 @@ int main(int, char**)
 
   TRACE(TRACE_ALWAYS, "Method 1:\n");
   int n = 20;
-  int A[n];
+
+
+#if _GCC
+  int _A[n];
+#else
+  array_guard_t<int> _A = new int[n];
+#endif
+  int* A = _A;
+
+
   for (int i = 0; i < n; i++)
       A[i] = i;
   randgen_t randgen = *thread_get_self()->randgen();

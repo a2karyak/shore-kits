@@ -2,7 +2,12 @@
 #ifndef _GUARD_H
 #define _GUARD_H
 
+#if _GCC
 #include <cstdio>
+#else
+#include <stdio.h>
+#endif
+
 #include <cassert>
 #include <cstddef>
 #include <unistd.h>
