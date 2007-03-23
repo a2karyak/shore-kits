@@ -160,7 +160,7 @@ public:
           _memory_capacity(capacity),
           _threshold(threshold),
           _next_page(0),
-          _file_head_page(-1),
+          _file_head_page(0),
           _tuple_size(tuple_size),
           _page_size(page_size),
           _num_inserted(0),

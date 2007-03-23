@@ -427,7 +427,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
         
         /* update _file_head_page */
-        assert(_file_head_page == -1);
+        assert(_file_head_page == 0);
         _file_head_page = _next_page;
 
         _state.transition(tuple_fifo_state_t::ON_DISK);
@@ -450,20 +450,22 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
     } /* endof case: IN_MEMORY */
         
-    case ON_DISK: {
+    case tuple_fifo_state_t::ON_DISK: {
 
         if (fseek(_page_file, 0, SEEK_END))
             THROW1(FileException, "fseek to EOF");
-        _write_page.fwrite_full_page(_page_file);
+        _write_page->fwrite_full_page(_page_file);
         _pages_in_fifo++;
 
         if (done_writing) {
             _state.transition(tuple_fifo_state_t::ON_DISK_DONE_WRITING);
             _write_page.done();
         }
-        else
+        else {
             /* simply reuse write page */
-            _write_page.clear();
+            _write_page->clear();
+            /* reuse 'p' for _write_page */
+        }
         
         /* wake the reader if necessary */
         if(_available_fifo_reads() >= _threshold || is_done_writing())
@@ -503,19 +505,27 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
 
 
     /* Free the page so the writer can use it. */
-    if(_read_page != SENTINEL_PAGE) {
-	_read_page->clear();
-	_free_pages.push_back(_read_page.release());
-	_set_read_page(SENTINEL_PAGE);
+    if (_read_page != SENTINEL_PAGE) {
+        if(is_in_memory()) {
+            /* We are still maintaining an in-memory page list from which
+               we are pulling pages. We release them to _free_pages as we
+               are done with them. */
+            _read_page->clear();
+            _free_pages.push_back(_read_page.release());
+            _set_read_page(SENTINEL_PAGE);
+        }
+        else
+            /* We are reusing the same read page. */
+            _read_page->clear();
     }
-    
-    
+
+
     /* If 'wait_on_empty' and the buffer is currently empty, we must
        wait for space to open up. Once we start waiting we continue
        waiting until either space for '_threshold' pages is available
        OR the writer has invoked send_eof() or terminate(). */
     for(size_t t=1;
-        (timeout_ms >= 0) && !is_done_writing() && _available_in_memory_reads() < t;
+        (timeout_ms >= 0) && !is_done_writing() && (_available_fifo_reads() < t);
         t = _threshold) {
         /* We are to either wait for a page or wait for timeout_ms. */
         if(!wait_for_writer(timeout_ms))
@@ -523,25 +533,55 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
             break;
         _termination_check();
     }
-    
+
+
     if(_available_in_memory_reads() == 0) {
         if(is_done_writing())
+            /* notify caller that the tuple_fifo is closed */
 	    return -1;
 	if(timeout_ms != 0)
+            /* notify caller that we timed out */
 	    return 0;
 	unreachable();
     }
 
-    /* Pull the page. */
-    _set_read_page(_pages.front());
-    _pages.pop_front();
-    _pages_in_memory--;
+
+    switch(_state.current()) {
+    case tuple_fifo_state_t::IN_MEMORY:
+    case tuple_fifo_state_t::IN_MEMORY_DONE_WRITING: {
+        /* pull the page from page_list */
+        _set_read_page(_pages.front());
+        _pages.pop_front();
+        _pages_in_memory--;
+        break;
+    }
+    case tuple_fifo_state_t::ON_DISK:
+    case tuple_fifo_state_t::ON_DISK_DONE_WRITING: {
+        
+        /* release _read_page so we can invoke methods */
+
+        /* pull page from disk file */
+        unsigned long seek_pos = _next_page * get_default_page_size();
+        if (fseek(_page_file, seek_pos, SEEK_SET))
+            THROW2(FileException, "fseek to %lu", seek_pos);
+        _read_page->fread_full_page(_page_file);
+    }
+
+    default:
+        unreachable();
+    } /* endof switch statement */
+
+    
     _pages_in_fifo--;
     _next_page++;
     
+    
     /* wake the writer if necessary */
-    if(_available_in_memory_writes() >= _threshold && !is_done_writing())
+    if(!FLUSH_TO_DISK_ON_FULL
+       && (_available_in_memory_writes() >= _threshold)
+       && !is_done_writing())
         ensure_writer_running();
+
 
     // * * * END CRITICAL SECTION * * *
     return 1;
