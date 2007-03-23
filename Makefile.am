@@ -52,7 +52,9 @@ TESTS = \
    tests/itimer_keypress \
    tests/itimer_threads \
    tests/thread_cputime_timer \
-   tests/max_timers
+   tests/max_timers \
+   tests/thread_cputime_clock
+
 
 
 
@@ -269,11 +271,13 @@ tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
 tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
 tests_thread_cputime_timer_SOURCES = $(ST)/test_thread_cputime_timer.cpp
 tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
+tests_thread_cputime_clock_SOURCES = $(ST)/test_thread_cputime_clock.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 tests_thread_cputime_timer_LDADD = $(TEST_LIBS) -lrt
 tests_max_timers_LDADD = lib/libutil.a -lrt
+tests_thread_cputime_clock_LDADD = $(TEST_LIBS) -lrt
 tests_load_db_tables_LDADD = $(TEST_LIBS)
 tests_trace_LDADD = $(TEST_LIBS)
 tests_tuple_buffer_LDADD = $(TEST_LIBS)

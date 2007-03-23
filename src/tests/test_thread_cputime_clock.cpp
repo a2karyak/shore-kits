@@ -45,30 +45,41 @@ void itimer_set_big(struct itimerval* itimer)
 }
 
 
+void timespec_diff(const struct timespec* a,
+                   const struct timespec* b,
+                   struct timespec* result)
+{
+#define TIMESPEC_NANOSECOND_PER_SEC 1000000000
+
+    /* verify that 'a' is larger */
+    assert((a->tv_sec > b->tv_sec) ||
+           ((a->tv_sec == b->tv_sec) && (a->tv_nsec > b->tv_nsec)));
+
+    /* compute difference */
+    long nsec_diff = a->tv_nsec - b->tv_nsec;
+    if (nsec_diff >= 0) {
+        /* no need to borrow */
+        result->tv_sec  = a->tv_sec - b->tv_sec;
+        result->tv_nsec = nsec_diff;
+    }
+    else {
+        /* need to borrow from sec */
+        result->tv_sec  = a->tv_sec - b->tv_sec - 1;
+        result->tv_nsec = nsec_diff + TIMESPEC_NANOSECOND_PER_SEC;
+    }
+}
+
+
+
 void* thread_main(void* arg)
 {
 
     thread_info_t* info = (thread_info_t*)arg;
 
     
-    /* create timer */
-    timer_t timerid;
-    if (timer_create(CLOCK_THREAD_CPUTIME_ID, NULL, &timerid)) {
-        TRACE(TRACE_ALWAYS, "timer_create() failed: %s\n",
-              strerror(errno));
-        abort();
-    }
-    TRACE(TRACE_ALWAYS, "Created a timer with id %d\n", timerid);
-
-
 #if 0
 
     /* On Linux, we have... */
-
-    struct itimerspec {
-        struct timespec it_interval;    /* timer period */
-        struct timespec it_value;       /* timer expiration */
-    };
 
     struct timespec {
         time_t  tv_sec;         /* seconds */
@@ -77,47 +88,49 @@ void* thread_main(void* arg)
 
 #endif
     
-    struct itimerspec interval;
-    memset(&interval, 0, sizeof(struct itimerspec));
-    interval.it_value.tv_sec  = 1 << 30;
-    interval.it_value.tv_nsec = 0;
-    if (timer_settime(timerid, 0, &interval, NULL)) {
-        TRACE(TRACE_ALWAYS, "timer_settime() failed\n");
+    struct timespec start;
+    memset(&start, 0, sizeof(struct timespec));
+    start.tv_sec  = 1 << 30;
+    start.tv_nsec = 0;
+    if (clock_settime(CLOCK_THREAD_CPUTIME_ID, &start)) {
+        TRACE(TRACE_ALWAYS, "clock_settime() failed: %s\n",
+              strerror(errno));
         abort();
     }
+    
 
-
-    printf("%s Set timer %d to %ld, %ld\n",
+    printf("%s timer set to %lu, %lu\n",
            info->name.data(),
-           timerid,
-           interval.it_value.tv_sec,
-           interval.it_value.tv_nsec);
+           (unsigned long)start.tv_sec,
+           (unsigned long)start.tv_nsec);
 
-
+    
     info->wait_func();
 
 
-    struct itimerspec elapsed;
-    memset(&elapsed, 0, sizeof(struct itimerspec));
-    if (timer_gettime(timerid, &elapsed)) {
-        TRACE(TRACE_ALWAYS, "timer_gettime() failed\n");
+    struct timespec end;
+    memset(&end, 0, sizeof(struct timespec));
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end)) {
+        TRACE(TRACE_ALWAYS, "clock_gettime() failed: %s\n",
+              strerror(errno));
         abort();
     }
 
 
-    printf("%s it_value of %d is %ld, %ld\n",
+    printf("%s timer value is %lu, %lu\n",
            info->name.data(),
-           timerid,
-           elapsed.it_value.tv_sec,
-           elapsed.it_value.tv_nsec);
-
-    printf("%s it_interval of %d is %ld, %ld\n",
-           info->name.data(),
-           timerid,
-           elapsed.it_interval.tv_sec,
-           elapsed.it_interval.tv_nsec);
-
+           (unsigned long)end.tv_sec,
+           (unsigned long)end.tv_nsec);
     
+    
+    struct timespec result;
+    timespec_diff(&end, &start, &result);
+    printf("%s timer difference is %lu, %lu\n",
+           info->name.data(),
+           (unsigned long)result.tv_sec,
+           (unsigned long)result.tv_nsec);
+
+
     return NULL;
 }
 
@@ -156,7 +169,7 @@ void wait_keypress(void) {
 
     /* wait for keypress */
     printf("Press a key when ready...\n");
-    getc(stdin);
+    getchar();
 
     /* signal helper thread */
     signaled = 1; /* if helper using wait_busy */
