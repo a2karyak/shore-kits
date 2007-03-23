@@ -317,7 +317,6 @@ public:
 
 private:
 
-   
     size_t _available_in_memory_writes() {
         assert(is_in_memory());
         return _memory_capacity - _available_in_memory_reads();

@@ -104,7 +104,6 @@ void thread_t::reset_rand() {
  *
  *  @return void
  */
-
 void thread_init(void)
 {
     thread_args args(new root_thread_t("root-thread"), NULL);
@@ -133,7 +132,6 @@ thread_t* thread_get_self(void)
  *
  *  @return 0 on success. Non-zero on error.
  */
-
 pthread_t thread_create(thread_t* t, thread_pool* pool)
 {
     int err;
@@ -269,8 +267,13 @@ void thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex)
     THROW_IF(ThreadException, err);
 }
 
+
+
+/**
+ * @return True if signaled and false if timed out.
+ */
 bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
-                           struct timespec &timeout)
+                      struct timespec &timeout)
 {
     thread_pool* pool = THREAD_POOL;
     pool->stop();
@@ -286,27 +289,34 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
     unreachable();
 }
 
+
+
+/**
+ * @return True if signaled and false if timed out.
+ */
 bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
-                           int timeout_ms)
+                      int timeout_ms)
 {
     if(timeout_ms > 0) {
-    struct timespec timeout;
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    if(timeout_ms > 1000) {
-	timeout.tv_sec = timeout_ms / 1000;
-	timeout.tv_nsec = (timeout_ms - timeout.tv_sec*1000)*1000;
-    }
-    else {
-	timeout.tv_sec = 0;
-	timeout.tv_nsec = timeout_ms*1000;
+        struct timespec timeout;
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        if(timeout_ms > 1000) {
+            timeout.tv_sec = timeout_ms / 1000;
+            timeout.tv_nsec = (timeout_ms - timeout.tv_sec*1000)*1000;
+        }
+        else {
+            timeout.tv_sec = 0;
+            timeout.tv_nsec = timeout_ms*1000;
+        }
+        
+        return thread_cond_wait(cond, mutex, timeout);
     }
     
-    return thread_cond_wait(cond, mutex, timeout);
-    }
     thread_cond_wait(cond, mutex);
     return true;
 }
+
 
 
 /**
@@ -317,7 +327,6 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
  *
  *  @return The value returned by thread_object->run().
  */
-
 void* start_thread(void* thread_object)
 {
     thread_args* args = (thread_args*)thread_object;
@@ -342,6 +351,8 @@ void thread_destroy(void* thread_object)
         delete thread;
 }
 
+
+
 // NOTE: we can't call thread_xxx methods because they call us
 void thread_pool::start() {
     int err = pthread_mutex_lock(&_lock);
@@ -355,6 +366,8 @@ void thread_pool::start() {
     err = pthread_mutex_unlock(&_lock);
     THROW_IF(ThreadException, err);
 }
+
+
 
 void thread_pool::stop() {
     int err = pthread_mutex_lock(&_lock);

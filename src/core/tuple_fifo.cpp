@@ -357,7 +357,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
 
 
-        /* save _write_page if it is not empty */
+        /* Save _write_page if it is not empty. */
         if(!_write_page->empty()) {
             _pages.push_back(_write_page.release());
             _pages_in_memory++;
@@ -365,20 +365,11 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
         
 
-        /* allocate a new _write_page if necessary */
-        if (!done_writing && !_free_pages.empty()) {
-            /* allocate from free list */
-            _write_page = _free_pages.front();
-            _free_pages.pop_front();
-        }
-        if(!done_writing && _free_pages.empty())
-            /* allocate using page::alloc */
-            _write_page = page::alloc(tuple_size());
-
-        
-        /* If allocation is not necessary (because we are done
-           writing), just do state transition. */
+        /* Allocate a new _write_page if necessary. */
         if(done_writing) {
+            /* Allocation of a new _write_page is not necessary
+               (because we are done writing). Just do state
+               transition. */
             switch (_state.current()) {
             case tuple_fifo_state_t::IN_MEMORY:
                 _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
@@ -388,6 +379,17 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             }
             _write_page.done();
         }
+        else {
+            /* Allocate a new _write_page. */
+            if (_free_pages.empty())
+                /* Allocate using page::alloc. */
+                _write_page = page::alloc(tuple_size());
+            else {
+                /* Allocate from free list. */
+                _write_page = _free_pages.front();
+                _free_pages.pop_front();
+            }
+        }
 
 
         /* wake the reader if necessary */
@@ -395,54 +397,68 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             ensure_reader_running();
         
         // * * * END CRITICAL SECTION * * *
-
+        
     } /* endof else statement */
 }
 
 
 
-int tuple_fifo::_get_read_page(int timeout) {
+/**
+ * @brief Use a timeout_ms value of 0 to wait until a page appears or
+ * the tuple_fifo is closed (normal behavior). Use a negative
+ * timeout_ms value to avoid waiting. If the tuple_fifo contains no
+ * pages, we return immediately with a value of 0. Use a positive
+ * timeout_ms value to wait for a max length of time.
+ *
+ * @return 1 if we got a page. -1 if the tuple_fifo has been
+ * closed. If 'timeout_ms' is negative and this method returns 0, it
+ * means the tuple_fifo is empty. If the timeout_ms value is positive
+ * and we return 0, it means we timed out.
+ */
+int tuple_fifo::_get_read_page(int timeout_ms) {
 
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
     _termination_check();
 
-    // free the page so the writer can use it
+
+    /* Free the page so the writer can use it. */
     if(_read_page != SENTINEL_PAGE) {
 	_read_page->clear();
 	_free_pages.push_back(_read_page.release());
 	_set_read_page(SENTINEL_PAGE);
     }
     
-    // wait for pages to arrive? Once we've slept because of empty,
-    // _threshold pages must be available before we are willing to try
-    // again (unless send_eof() is called)
-    if(timeout >= 0) {
-        for(size_t t=1; !is_done_writing() && _available_reads() < t; t = _threshold) {
-            // sleep until something important changes
-            if(!wait_for_writer(timeout))
-                break;
-            _termination_check();
-        }
+    
+    /* If 'wait_on_empty' and the buffer is currently empty, we must
+       wait for space to open up. Once we start waiting we continue
+       waiting until either space for '_threshold' pages is available
+       OR the writer has invoked send_eof() or terminate(). */
+    for(size_t t=1;
+        (timeout_ms >= 0) && !is_done_writing() && _available_reads() < t;
+        t = _threshold) {
+        /* We are to either wait for a page or wait for timeout_ms. */
+        if(!wait_for_writer(timeout_ms))
+            /* Timed out! */
+            break;
+        _termination_check();
     }
-
+    
     if(_available_reads() == 0) {
 	if(is_done_writing())
 	    return -1;
-	if(timeout != 0)
+	if(timeout_ms != 0)
 	    return 0;
-
-	// one of the previous is required to be true!
 	unreachable();
     }
 
-    // allocate the page
+    /* Pull the page. */
     _set_read_page(_pages.front());
     _pages.pop_front();
     _pages_in_memory--;
     _pages_in_fifo--;
     
-    // notify the writer?
+    /* wake the writer if necessary */
     if(_available_in_memory_writes() >= _threshold && !is_done_writing())
         ensure_writer_running();
 
