@@ -9,6 +9,7 @@
  * This does not seem to work on enceladus, although I remember it
  * working on crete.
  */
+#define __USE_XOPEN2K
 #include "util.h"
 #include <time.h>
 #include <sys/time.h>
@@ -52,8 +53,10 @@ void timespec_diff(const struct timespec* a,
 #define TIMESPEC_NANOSECOND_PER_SEC 1000000000
 
     /* verify that 'a' is larger */
-    assert((a->tv_sec > b->tv_sec) ||
-           ((a->tv_sec == b->tv_sec) && (a->tv_nsec > b->tv_nsec)));
+    //assert((a->tv_sec > b->tv_sec) ||
+    //((a->tv_sec == b->tv_sec) && (a->tv_nsec > b->tv_nsec)));
+
+        
 
     /* compute difference */
     long nsec_diff = a->tv_nsec - b->tv_nsec;
@@ -88,12 +91,25 @@ void* thread_main(void* arg)
 
 #endif
     
+    clockid_t clockid;
+    
+    //clockid = CLOCK_THREAD_CPUTIME_ID;
+    if (pthread_getcpuclockid(pthread_self(), &clockid)) {
+        fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
+              strerror(errno));
+        abort();
+    }
+    fprintf(stderr, "Got clockid_t %d for %s\n",
+          (int)clockid,
+          info->name.data());
+    
+
     struct timespec start;
     memset(&start, 0, sizeof(struct timespec));
     start.tv_sec  = 1 << 30;
     start.tv_nsec = 0;
-    if (clock_settime(CLOCK_THREAD_CPUTIME_ID, &start)) {
-        TRACE(TRACE_ALWAYS, "clock_settime() failed: %s\n",
+    if (clock_settime(clockid, &start)) {
+        fprintf(stderr, "clock_settime() failed: %s\n",
               strerror(errno));
         abort();
     }
@@ -110,8 +126,8 @@ void* thread_main(void* arg)
 
     struct timespec end;
     memset(&end, 0, sizeof(struct timespec));
-    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end)) {
-        TRACE(TRACE_ALWAYS, "clock_gettime() failed: %s\n",
+    if (clock_gettime(clockid, &end)) {
+        fprintf(stderr, "clock_gettime() failed: %s\n",
               strerror(errno));
         abort();
     }
@@ -152,7 +168,7 @@ void wait_busy(void) {
     sleep_time.tv_sec = 0;
     sleep_time.tv_nsec = 10000;
     while(!signaled) {
-        //TRACE(TRACE_ALWAYS, "signaled = 0\n");
+        //fprintf(stderr, "signaled = 0\n");
         int x;
         for (x = 10000000; x--; ) {
             x = x+1;
@@ -175,13 +191,22 @@ void wait_keypress(void) {
     signaled = 1; /* if helper using wait_busy */
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&mutex);
-    TRACE(TRACE_ALWAYS, "signaled = %d\n", signaled);
+    fprintf(stderr, "signaled = %d\n", signaled);
 }
 
 
 int main(int, char**)
 {
     util_init();
+
+
+    clockid_t clockid;
+    if (pthread_getcpuclockid(pthread_self(), &clockid)) {
+        fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
+              strerror(errno));
+        abort();
+    }
+    fprintf(stderr, "Got clockid_t %d\n", (int)clockid);
 
 
     thread_info_t root_info   = { wait_keypress,
@@ -197,7 +222,7 @@ int main(int, char**)
 
     pthread_t helper;
     if (pthread_create(&helper, NULL, thread_main, &helper_info)) {
-        TRACE(TRACE_ALWAYS, "pthread_create failed\n");
+        fprintf(stderr, "pthread_create failed\n");
         return -1;
     }
   
@@ -206,7 +231,7 @@ int main(int, char**)
   
 
     pthread_join(helper, NULL);
-    TRACE(TRACE_ALWAYS, "Joined with helper!\n");
+    fprintf(stderr, "Joined with helper!\n");
   
 
     return 0;
