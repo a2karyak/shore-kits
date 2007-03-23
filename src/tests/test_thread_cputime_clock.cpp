@@ -11,6 +11,7 @@
  */
 #define __USE_XOPEN2K
 #include "util.h"
+#include "scheduler/os_support.h"
 #include <time.h>
 #include <sys/time.h>
 
@@ -96,13 +97,15 @@ void* thread_main(void* arg)
     if (1)
         clockid = CLOCK_THREAD_CPUTIME_ID;
     else {
-        /*
+#ifdef FOUND_LINUX
         if (pthread_getcpuclockid(pthread_self(), &clockid)) {
             fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
                     strerror(errno));
             abort();
         }
-        */
+#else
+        assert(0);
+#endif
     }
     fprintf(stderr, "Got clockid_t %d for %s\n",
           (int)clockid,
