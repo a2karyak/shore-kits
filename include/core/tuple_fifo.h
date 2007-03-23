@@ -3,6 +3,7 @@
 #define __TUPLE_FIFO_H
 
 #include "core/tuple.h"
+#include <cstdio>
 #include <vector>
 #include <list>
 #include <ucontext.h>
@@ -93,6 +94,11 @@ private:
     size_t _capacity;
     size_t _threshold;
 
+    /* page file management */
+    FILE*  _page_file;
+    size_t _page_file_head_page;
+    size_t _page_file_next_page;
+    
     /* useful fields to store */
     size_t _tuple_size;
     size_t _page_size;
