@@ -338,67 +338,71 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     critical_section_t cs(_lock);
     _termination_check();
 
-    if (FLUSH_TO_DISK_ON_FULL) {
+    switch(_state.current()) {
+    case tuple_fifo_state_t::IN_MEMORY:
 
+        /* Let's write down all the cases and worry about condensing
+           them later. */
+        if (!FLUSH_TO_DISK_ON_FULL) {
 
-
-    }
-    else {
-        
-        /* tuple_fifo stays in memory */
-        /* If the buffer is currently full, we must wait for space to
-           open up. Once we start waiting we continue waiting until
-           space for '_threshold' pages is available. */
-        for(size_t threshold=1;
-            _available_in_memory_writes() < threshold; threshold = _threshold) {
-            /* wait until something important changes */
-            wait_for_reader();
-            _termination_check();
-        }
-
-
-        /* Save _write_page if it is not empty. */
-        if(!_write_page->empty()) {
-            _pages.push_back(_write_page.release());
-            _pages_in_memory++;
-            _pages_in_fifo++;
-        }
-        
-
-        /* Allocate a new _write_page if necessary. */
-        if(done_writing) {
-            /* Allocation of a new _write_page is not necessary
-               (because we are done writing). Just do state
-               transition. */
-            switch (_state.current()) {
-            case tuple_fifo_state_t::IN_MEMORY:
-                _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
-                break;
-            default:
-                assert(0);
+            /* tuple_fifo stays in memory */
+            /* If the buffer is currently full, we must wait for space to
+               open up. Once we start waiting we continue waiting until
+               space for '_threshold' pages is available. */
+            for(size_t threshold=1;
+                _available_in_memory_writes() < threshold; threshold = _threshold) {
+                /* wait until something important changes */
+                wait_for_reader();
+                _termination_check();
             }
-            _write_page.done();
-        }
-        else {
-            /* Allocate a new _write_page. */
-            if (_free_pages.empty())
-                /* Allocate using page::alloc. */
-                _write_page = page::alloc(tuple_size());
+            
+            /* Save _write_page if it is not empty. */
+            if(!_write_page->empty()) {
+                _pages.push_back(_write_page.release());
+                _pages_in_memory++;
+                _pages_in_fifo++;
+            }
+            
+            /* Allocate a new _write_page if necessary. */
+            if(done_writing) {
+                /* Allocation of a new _write_page is not necessary
+                   (because we are done writing). Just do state
+                   transition. */
+                switch (_state.current()) {
+                case tuple_fifo_state_t::IN_MEMORY:
+                    _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
+                    break;
+                default:
+                    assert(0);
+                }
+                _write_page.done();
+            }
             else {
-                /* Allocate from free list. */
-                _write_page = _free_pages.front();
-                _free_pages.pop_front();
+                /* Allocate a new _write_page. */
+                if (_free_pages.empty())
+                    /* Allocate using page::alloc. */
+                    _write_page = page::alloc(tuple_size());
+                else {
+                    /* Allocate from free list. */
+                    _write_page = _free_pages.front();
+                    _free_pages.pop_front();
+                }
             }
+                    
+            /* wake the reader if necessary */
+            if(_available_in_memory_reads() >= _threshold || is_done_writing())
+                ensure_reader_running();
+            
+            return;
         }
-
-
-        /* wake the reader if necessary */
-        if(_available_in_memory_reads() >= _threshold || is_done_writing())
-            ensure_reader_running();
         
+        
+    default:
+        unreachable();
+
         // * * * END CRITICAL SECTION * * *
-        
-    } /* endof else statement */
+            
+    } /* endof switch statement */
 }
 
 
