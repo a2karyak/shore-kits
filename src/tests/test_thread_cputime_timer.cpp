@@ -16,7 +16,7 @@
 
 
 #ifndef _POSIX_THREAD_CPUTIME
-#error No per-thread timers!
+#warning No per-thread timers!
 #endif
 
 

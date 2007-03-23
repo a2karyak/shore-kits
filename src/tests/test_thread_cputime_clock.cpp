@@ -17,7 +17,7 @@
 
 
 #ifndef _POSIX_THREAD_CPUTIME
-#error No per-thread timers!
+#warning No per-thread timers!
 #endif
 
 
@@ -93,11 +93,16 @@ void* thread_main(void* arg)
     
     clockid_t clockid;
     
-    //clockid = CLOCK_THREAD_CPUTIME_ID;
-    if (pthread_getcpuclockid(pthread_self(), &clockid)) {
-        fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
-              strerror(errno));
-        abort();
+    if (1)
+        clockid = CLOCK_THREAD_CPUTIME_ID;
+    else {
+        /*
+        if (pthread_getcpuclockid(pthread_self(), &clockid)) {
+            fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
+                    strerror(errno));
+            abort();
+        }
+        */
     }
     fprintf(stderr, "Got clockid_t %d for %s\n",
           (int)clockid,
@@ -200,6 +205,7 @@ int main(int, char**)
     util_init();
 
 
+#if 0
     clockid_t clockid;
     if (pthread_getcpuclockid(pthread_self(), &clockid)) {
         fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
@@ -207,6 +213,7 @@ int main(int, char**)
         abort();
     }
     fprintf(stderr, "Got clockid_t %d\n", (int)clockid);
+#endif
 
 
     thread_info_t root_info   = { wait_keypress,
