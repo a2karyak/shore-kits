@@ -415,11 +415,21 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         for (page_list::iterator it = _pages.begin(); it != _pages.end(); ) {
             qpipe::page* p = *it;
             p->fwrite_full_page(_page_file);
+
+            /* Technically, we should be freeing all but one of these
+               pages. The unfreed page will be used as the new
+               _write_page. */
+            p->clear();
             _free_pages.push_back(p);
+
             it = _pages.erase(it);
             _pages_in_memory--;
         }
         
+        /* update _file_head_page */
+        assert(_file_head_page == -1);
+        _file_head_page = _next_page;
+
         _state.transition(tuple_fifo_state_t::ON_DISK);
         if (done_writing) {
             /* transition again! */
@@ -440,6 +450,28 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
     } /* endof case: IN_MEMORY */
         
+    case ON_DISK: {
+
+        if (fseek(_page_file, 0, SEEK_END))
+            THROW1(FileException, "fseek to EOF");
+        _write_page.fwrite_full_page(_page_file);
+        _pages_in_fifo++;
+
+        if (done_writing) {
+            _state.transition(tuple_fifo_state_t::ON_DISK_DONE_WRITING);
+            _write_page.done();
+        }
+        else
+            /* simply reuse write page */
+            _write_page.clear();
+        
+        /* wake the reader if necessary */
+        if(_available_fifo_reads() >= _threshold || is_done_writing())
+            ensure_reader_running();
+
+        break;
+    }
+
     default:
         unreachable();
 
@@ -493,7 +525,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     }
     
     if(_available_in_memory_reads() == 0) {
-	if(is_done_writing())
+        if(is_done_writing())
 	    return -1;
 	if(timeout_ms != 0)
 	    return 0;
@@ -505,6 +537,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     _pages.pop_front();
     _pages_in_memory--;
     _pages_in_fifo--;
+    _next_page++;
     
     /* wake the writer if necessary */
     if(_available_in_memory_writes() >= _threshold && !is_done_writing())

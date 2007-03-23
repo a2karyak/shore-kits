@@ -101,8 +101,8 @@ private:
 
     /* page file management */
     FILE*  _page_file;
-    size_t _page_file_head_page;
-    size_t _page_file_next_page;
+    size_t _next_page;
+    size_t _file_head_page;
     
     /* useful fields to store */
     size_t _tuple_size;
@@ -159,6 +159,8 @@ public:
           _pages_in_memory(0),
           _memory_capacity(capacity),
           _threshold(threshold),
+          _next_page(0),
+          _file_head_page(-1),
           _tuple_size(tuple_size),
           _page_size(page_size),
           _num_inserted(0),
