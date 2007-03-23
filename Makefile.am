@@ -7,16 +7,10 @@ lib_LIBRARIES = \
 
 LDADD = $(lib_LIBRARIES)
 
-#\
-   tests/max_timers \
-   tests/thread_cputime
-
 TESTS = \
    tests/cpu_binding \
    tests/rand_array_access \
    tests/trace \
-   tests/itimer_keypress \
-   tests/itimer_threads \
    tests/constants \
    tests/bitvector \
    tests/hashtable \
@@ -54,7 +48,12 @@ TESTS = \
    tests/busy_wait \
    tests/busy_wait_all \
    tests/acounter \
-   tests/randgen_shuffle
+   tests/randgen_shuffle \
+   tests/itimer_keypress \
+   tests/itimer_threads \
+   tests/thread_cputime \
+   tests/max_timers
+
 
 
 
@@ -229,10 +228,6 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
-tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
-tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
-tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
-tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
 tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
@@ -270,6 +265,10 @@ tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 tests_delay_writer_stage_SOURCES = $(ST)/test_delay_writer_stage.cpp
 tests_randgen_shuffle_SOURCES = $(ST)/test_randgen_shuffle.cpp
+tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
+tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
+tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
+tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)

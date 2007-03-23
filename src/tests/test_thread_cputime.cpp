@@ -5,6 +5,9 @@
  * CLOCK_THREAD_CPUTIME_ID clockid_t. Basically, we have a busy wait
  * thread and a thread that sleeps. We see that both threads get back
  * different values from timer_gettime().
+ *
+ * This does not seem to work on enceladus, although I remember it
+ * working on crete.
  */
 #include "util.h"
 #include <time.h>
@@ -13,7 +16,7 @@
 
 
 #ifndef _POSIX_THREAD_CPUTIME
-//#warning No per-thread timers!
+#error No per-thread timers!
 #endif
 
 
@@ -51,7 +54,8 @@ void* thread_main(void* arg)
     /* create timer */
     timer_t timerid;
     if (timer_create(CLOCK_THREAD_CPUTIME_ID, NULL, &timerid)) {
-        TRACE(TRACE_ALWAYS, "timer_create() failed\n");
+        TRACE(TRACE_ALWAYS, "timer_create() failed: %s\n",
+              strerror(errno));
         abort();
     }
     TRACE(TRACE_ALWAYS, "Created a timer with id %d\n", timerid);
@@ -167,30 +171,30 @@ int main(int, char**)
     util_init();
 
 
-  thread_info_t root_info   = { wait_keypress,
-                                itimer_set_max,
-                                c_str("root") };
-  thread_info_t helper_info = { wait_busy,
-                                itimer_set_big,
-                                c_str("helper") };
+    thread_info_t root_info   = { wait_keypress,
+                                  itimer_set_max,
+                                  c_str("root") };
+    thread_info_t helper_info = { wait_busy,
+                                  itimer_set_big,
+                                  c_str("helper") };
   
 
-  pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&mutex);
 
 
-  pthread_t helper;
-  if (pthread_create(&helper, NULL, thread_main, &helper_info)) {
-      TRACE(TRACE_ALWAYS, "pthread_create failed\n");
-      return -1;
-  }
+    pthread_t helper;
+    if (pthread_create(&helper, NULL, thread_main, &helper_info)) {
+        TRACE(TRACE_ALWAYS, "pthread_create failed\n");
+        return -1;
+    }
   
   
-  thread_main(&root_info);
-  
-
-  pthread_join(helper, NULL);
-  TRACE(TRACE_ALWAYS, "Joined with helper!\n");
+    thread_main(&root_info);
   
 
-  return 0;
+    pthread_join(helper, NULL);
+    TRACE(TRACE_ALWAYS, "Joined with helper!\n");
+  
+
+    return 0;
 }
