@@ -69,8 +69,8 @@ void tuple_fifo_directory_t::close() {
 
 
 
-c_str tuple_fifo_directory_t::generate_filename(int id) {
-    return c_str("tuple_fifo_%d", id);
+c_str tuple_fifo_directory_t::generate_pathname(int id) {
+    return c_str("%s/tuple_fifo_%d", dir_path().data(), id);
 }
 
 

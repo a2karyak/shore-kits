@@ -350,7 +350,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
            open up. Once we start waiting we continue waiting until
            space for '_threshold' pages is available. */
         for(size_t threshold=1;
-            _available_writes() < threshold; threshold = _threshold) {
+            _available_in_memory_writes() < threshold; threshold = _threshold) {
             /* wait until something important changes */
             wait_for_reader();
             _termination_check();
@@ -360,7 +360,8 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         /* save _write_page if it is not empty */
         if(!_write_page->empty()) {
             _pages.push_back(_write_page.release());
-            _curr_pages++;
+            _pages_in_memory++;
+            _pages_in_fifo++;
         }
         
 
@@ -390,7 +391,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
         /* wake the reader if necessary */
-        if(_available_reads() >= _threshold || is_done_writing())
+        if(_available_in_memory_reads() >= _threshold || is_done_writing())
             ensure_reader_running();
         
         // * * * END CRITICAL SECTION * * *
@@ -438,10 +439,11 @@ int tuple_fifo::_get_read_page(int timeout) {
     // allocate the page
     _set_read_page(_pages.front());
     _pages.pop_front();
-    _curr_pages--;
-
+    _pages_in_memory--;
+    _pages_in_fifo--;
+    
     // notify the writer?
-    if(_available_writes() >= _threshold && !is_done_writing())
+    if(_available_in_memory_writes() >= _threshold && !is_done_writing())
         ensure_writer_running();
 
     // * * * END CRITICAL SECTION * * *

@@ -40,6 +40,8 @@ private:
             INVALID = 0,
             IN_MEMORY,
             IN_MEMORY_DONE_WRITING,
+            ON_DISK,
+            ON_DISK_DONE_WRITING,
             TERMINATED
         };
         
@@ -59,6 +61,8 @@ private:
                 TF_STATE(INVALID);
                 TF_STATE(IN_MEMORY);
                 TF_STATE(IN_MEMORY_DONE_WRITING);
+                TF_STATE(ON_DISK);
+                TF_STATE(ON_DISK_DONE_WRITING);
                 TF_STATE(TERMINATED);
             default:
                 assert(0);
@@ -90,8 +94,9 @@ private:
     /* page list management */
     page_list _pages;
     page_list _free_pages;
-    size_t _curr_pages;
-    size_t _capacity;
+    size_t _pages_in_fifo; /* number of entries in _pages */
+    size_t _pages_in_memory;
+    size_t _memory_capacity;
     size_t _threshold;
 
     /* page file management */
@@ -150,8 +155,9 @@ public:
                size_t threshold=64,
                size_t page_size=get_default_page_size())
         : _fifo_id(tuple_fifo_generate_id()),
-          _curr_pages(0),
-          _capacity(capacity),
+          _pages_in_fifo(0),
+          _pages_in_memory(0),
+          _memory_capacity(capacity),
           _threshold(threshold),
           _tuple_size(tuple_size),
           _page_size(page_size),
@@ -311,12 +317,19 @@ public:
 
 private:
 
-    size_t _available_writes() {
-        return _capacity - _available_reads();
+   
+    size_t _available_in_memory_writes() {
+        assert(is_in_memory());
+        return _memory_capacity - _available_in_memory_reads();
+    }
+
+    size_t _available_in_memory_reads() {
+        assert(is_in_memory());
+        return _pages_in_memory;
     }
 
     size_t _available_reads() {
-        return _curr_pages;
+        return _pages_in_fifo;
     }
 
     void _termination_check() {
@@ -338,12 +351,22 @@ private:
     void _flush_write_page(bool done_writing);
 
 
+    bool is_in_memory() {
+        return
+            _state.current() == tuple_fifo_state_t::IN_MEMORY ||
+            _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING;
+    }
+
+    bool is_done_writing() {
+        return
+            _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING ||
+            _state.current() == tuple_fifo_state_t::ON_DISK_DONE_WRITING;
+    }
+    
     bool is_terminated() {
         return _state.current() == tuple_fifo_state_t::TERMINATED;
     }
-    bool is_done_writing() {
-        return _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING;
-    }
+
 
     void wait_for_reader();
     void ensure_reader_running();
