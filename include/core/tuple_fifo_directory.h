@@ -32,7 +32,7 @@ public:
     static const c_str& dir_path();
     static void open_once();
     static void close();
-    static c_str generate_pathname(int id);
+    static c_str generate_filepath(int id);
     
 private:
 

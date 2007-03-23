@@ -327,7 +327,7 @@ private:
         return _pages_in_memory;
     }
 
-    size_t _available_reads() {
+    size_t _available_fifo_reads() {
         return _pages_in_fifo;
     }
 
