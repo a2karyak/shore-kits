@@ -30,6 +30,7 @@ bool page::fread_full_page(FILE* file) {
 
     // save page attributes that we'll be overwriting
     size_t size = page_size();
+    TRACE(0&TRACE_ALWAYS, "Computed page size as %d\n", (int)size);
     page_pool* pool = _pool;
 
     // write over this page

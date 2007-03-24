@@ -14,7 +14,8 @@ ENTER_NAMESPACE(qpipe);
 
 /* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
-static const bool FLUSH_TO_DISK_ON_FULL = false;
+static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
+static const bool FLUSH_TO_DISK_ON_FULL = true;
 
 
 
@@ -359,7 +360,10 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
 
 
-        /* Check whether we can proceed without flushing to disk. */
+        /* At this point, we don't have to wait for space anymore. If
+           we still don't have enough space, it must be because we are
+           using a disk flush policy. Check whether we can proceed
+           without flushing to disk. */
         if (_available_in_memory_writes() >= 1) {
 
             /* Save _write_page if it is not empty. */
@@ -397,7 +401,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
 
 
-        /* If we are here, we need to flush to disk! */
+        /* If we are here, we need to flush to disk. */
         /* Create on disk file. */
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
         _page_file = fopen(filepath.data(), "w+");
@@ -426,6 +430,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             _free_pages.push_back(p);
 
             it = _pages.erase(it);
+            assert(_pages_in_memory > 0);
             _pages_in_memory--;
         }
         fflush(_page_file);
@@ -442,6 +447,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
         else {
             /* allocate from free list */
+            assert(!_free_pages.empty());
             _write_page = _free_pages.front();
             _free_pages.pop_front();
         }
@@ -560,28 +566,62 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     case tuple_fifo_state_t::IN_MEMORY:
     case tuple_fifo_state_t::IN_MEMORY_DONE_WRITING: {
         /* pull the page from page_list */
+        assert(!_pages.empty());
         _set_read_page(_pages.front());
         _pages.pop_front();
+        assert(_pages_in_memory > 0);
         _pages_in_memory--;
         break;
     }
     case tuple_fifo_state_t::ON_DISK:
     case tuple_fifo_state_t::ON_DISK_DONE_WRITING: {
+
+        /* pull temporary page from free list */
+        if (_read_page == SENTINEL_PAGE) {
+            assert(!_free_pages.empty());
+            _set_read_page(_free_pages.front());
+            _free_pages.pop_front();
+            /* From this point onward, we are on disk, so we should
+               not be releasing this page... */
+        }
         
         /* release _read_page so we can invoke methods */
+        size_t page_size = _read_page->page_size();
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "page_size = %d\n", (int)page_size);
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "malloc_page_pool page_size = %d\n",
+              (int)malloc_page_pool::instance()->page_size());
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "SENTINEL_POOL page_size = %d\n",
+              (int)SENTINEL_POOL.page_size());
 
         /* pull page from disk file */
-        TRACE(TRACE_ALWAYS, "_next_page = %d\n", (int)_next_page);
-        TRACE(TRACE_ALWAYS, "_file_head_page = %d\n", (int)_file_head_page);
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "_next_page = %d\n", (int)_next_page);
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "_file_head_page = %d\n", (int)_file_head_page);
         unsigned long seek_pos =
             (_next_page - _file_head_page) * get_default_page_size();
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "fseek to %lu\n", seek_pos);
         int fseek_ret = fseek(_page_file, seek_pos, SEEK_SET);
         assert(!fseek_ret);
         if (fseek_ret)
             THROW2(FileException, "fseek to %lu", seek_pos);
-        _read_page->fread_full_page(_page_file);
-        TRACE(TRACE_ALWAYS, "Wrote page with %d byte tuples. Read %d byte tuples\n",
-              (int)_tuple_size,
+        int fread_ret = _read_page->fread_full_page(_page_file);
+        assert(fread_ret);
+
+        if (TRACE_ALWAYS&TRACE_MASK_DISK) {
+            for (size_t i = 0; i < page_size; i++) {
+                page* pg = _read_page.release();
+                unsigned char* pg_bytes = (unsigned char*)pg;
+                printf("%02x", pg_bytes[i]);
+                if (i % 2 == 0)
+                    printf("\t");
+                if (i % 16 == 0)
+                    printf("\n");
+                _set_read_page(pg);
+            }
+        }
+
+        _set_read_page(_read_page.release());
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "Read %d %d byte tuples\n",
+              (int)_read_page->tuple_count(),
               (int)_read_page->tuple_size());
         break;
     }
@@ -591,6 +631,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     } /* endof switch statement */
 
     
+    assert(_pages_in_fifo > 0);
     _pages_in_fifo--;
     _next_page++;
     

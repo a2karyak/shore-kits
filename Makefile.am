@@ -52,7 +52,8 @@ TESTS = \
    tests/acounter \
    tests/randgen_shuffle \
    tests/fwrite_page \
-   tests/fread_page
+   tests/fread_page \
+   tests/freadwrite_page
 
 
 
@@ -268,6 +269,7 @@ tests_delay_writer_stage_SOURCES = $(ST)/test_delay_writer_stage.cpp
 tests_randgen_shuffle_SOURCES = $(ST)/test_randgen_shuffle.cpp
 tests_fwrite_page_SOURCES = $(ST)/test_fwrite_page.cpp
 tests_fread_page_SOURCES = $(ST)/test_fread_page.cpp
+tests_freadwrite_page_SOURCES = $(ST)/test_freadwrite_page.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
