@@ -52,14 +52,12 @@ int main(int argc, char* argv[]) {
     }
     int_buffer.send_eof();
     TRACE(TRACE_ALWAYS, "Added %d tuples into the tuple_fifo\n", num_tuples);
-    for (int i = 0; i < num_tuples; i++) {
-        tuple_t tuple;
-        while (int_buffer.get_tuple(tuple)) {
-            int* tuple_int = aligned_cast<int>(tuple.data);
-            TRACE(TRACE_ALWAYS, "Read %d\n", *tuple_int);
-        }
+    tuple_t tuple;
+    while (int_buffer.get_tuple(tuple)) {
+        int* tuple_int = aligned_cast<int>(tuple.data);
+        TRACE(TRACE_ALWAYS, "Read %d\n", *tuple_int);
     }
-    
-    
+
+
     return 0;
 }

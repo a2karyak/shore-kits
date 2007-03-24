@@ -15,7 +15,7 @@ ENTER_NAMESPACE(qpipe);
 /* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
-static const bool FLUSH_TO_DISK_ON_FULL = true;
+static const bool FLUSH_TO_DISK_ON_FULL = false;
 
 
 
@@ -208,12 +208,10 @@ void tuple_fifo::destroy() {
  *  afterward.
  *
  *  WARNING: Do not mix calls to get_page() and get_tuple() on the
- *  same tuple_fifo... unless the caller if prepared to deal with
- *  duplicate tuples. In other words, the caller must be willing
- *  to process some unknown number of tuples twice.
+ *  same tuple_fifo.
  *
- *  @param timeout The maximum number of milli-seconds to wait for
- *  a tuple.
+ *  @param timeout The maximum number of milliseconds to wait for a
+ *  tuple.
  *
  *  @return NULL if the buffer is empty and the producer has
  *  invoked send_eof() on the buffer.
@@ -222,7 +220,8 @@ void tuple_fifo::destroy() {
  *  terminated the buffer.
  */
 page* tuple_fifo::get_page(int timeout) {
-    if(!ensure_read_ready(timeout))
+    
+    if (!ensure_read_ready(timeout))
         return NULL;
 
     // no partial pages allowed!
@@ -304,7 +303,6 @@ bool tuple_fifo::terminate() {
 
 /* definitions of helper methods */
 
-
 inline void tuple_fifo::wait_for_reader() {
     _num_waits_on_insert++;
     thread_cond_wait(_writer_notify, _lock);
@@ -365,8 +363,9 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
            using a disk flush policy. Check whether we can proceed
            without flushing to disk. */
         if (_available_in_memory_writes() >= 1) {
-
-            /* Save _write_page if it is not empty. */
+            
+            /* Add _write_page to other tuple_fifo pages unless
+               empty. */
             if(!_write_page->empty()) {
                 _pages.push_back(_write_page.release());
                 _pages_in_memory++;
@@ -381,18 +380,9 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
                 _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
                 _write_page.done();
             }
-            else {
-                /* Allocate a new _write_page. */
-                if (_free_pages.empty())
-                    /* Allocate using page::alloc. */
-                    _write_page = page::alloc(tuple_size());
-                else {
-                    /* Allocate from free list. */
-                    _write_page = _free_pages.front();
-                    _free_pages.pop_front();
-                }
-            }
-                    
+            else
+                _write_page = _alloc_page();
+            
             /* wake the reader if necessary */
             if(_available_in_memory_reads() >= _threshold || is_done_writing())
                 ensure_reader_running();
@@ -423,13 +413,11 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             qpipe::page* p = *it;
             p->fwrite_full_page(_page_file);
 
-            /* Technically, we should be freeing all but one of these
-               pages. The unfreed page will be used as the new
-               _write_page. */
+            /* done with page */
             p->clear();
             _free_pages.push_back(p);
-
             it = _pages.erase(it);
+
             assert(_pages_in_memory > 0);
             _pages_in_memory--;
         }
@@ -448,8 +436,20 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         else {
             /* allocate from free list */
             assert(!_free_pages.empty());
-            _write_page = _free_pages.front();
-            _free_pages.pop_front();
+            _write_page = _alloc_page();
+
+            /* TODO It's clear whether we want to replace the
+               SENTINAL_PAGE here. On the one hand, if we can replace
+               it, we can free the rest of the pages in the free
+               list. On the other, we still need to check for the
+               SENTINAL_PAGE in _get_read_page since pages may be
+               removed using get_page (instead of tuples removed with
+               get_tuple). */
+            if (_read_page == SENTINEL_PAGE) {
+                _set_read_page(_alloc_page());
+                /* After this point, we should not release either of
+                   these pages. */
+            }
         }
 
         /* wake the reader if necessary */
@@ -477,7 +477,6 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         else {
             /* simply reuse write page */
             _write_page->clear();
-            /* reuse 'p' for _write_page */
         }
         
         /* wake the reader if necessary */
@@ -518,18 +517,13 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
 
 
     /* Free the page so the writer can use it. */
-    if (_read_page != SENTINEL_PAGE) {
-        if(is_in_memory()) {
-            /* We are still maintaining an in-memory page list from which
-               we are pulling pages. We release them to _free_pages as we
-               are done with them. */
-            _read_page->clear();
-            _free_pages.push_back(_read_page.release());
-            _set_read_page(SENTINEL_PAGE);
-        }
-        else
-            /* We are reusing the same read page. */
-            _read_page->clear();
+    if (is_in_memory() && (_read_page != SENTINEL_PAGE)) {
+        /* We are still maintaining an in-memory page list from which
+           we are pulling pages. We release them to _free_pages as we
+           are done with them. */
+        _read_page->clear();
+        _free_pages.push_back(_read_page.release());
+        _set_read_page(SENTINEL_PAGE);
     }
 
 
@@ -548,13 +542,17 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     }
 
 
+    TRACE(TRACE_ALWAYS&TRACE_MASK_DISK,
+          "available reads = %d\n", (int)_available_fifo_reads());
     if(_available_fifo_reads() == 0) {
         /* If we are here, we exited the loop above because one of the
            other conditions failed. We either noticed that the
            tuple_fifo has been closed or we've timed out. */
-        if(is_done_writing())
+        if(is_done_writing()) {
             /* notify caller that the tuple_fifo is closed */
+            TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "Returning -1\n");
 	    return -1;
+        }
 	if(timeout_ms != 0)
             /* notify caller that we timed out */
 	    return 0;
@@ -576,24 +574,28 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     case tuple_fifo_state_t::ON_DISK:
     case tuple_fifo_state_t::ON_DISK_DONE_WRITING: {
 
-        /* pull temporary page from free list */
-        if (_read_page == SENTINEL_PAGE) {
-            assert(!_free_pages.empty());
-            _set_read_page(_free_pages.front());
-            _free_pages.pop_front();
-            /* From this point onward, we are on disk, so we should
-               not be releasing this page... */
+        /* We are on disk. We should not be releasing _read_page after
+           iterating over its entries. However, we still need to be
+           prepared against code which extracts pages from the
+           tuple_fifo using get_page(). get_page() sets _read_page to
+           the SENTINEL_PAGE. */
+        if (_read_page == SENTINEL_PAGE)
+            _set_read_page(_alloc_page());
+        else {
+            /* We are reusing the same read page... do a reset */
+            _read_page->clear();
+            _set_read_page(_read_page.release());
         }
-        
-        /* release _read_page so we can invoke methods */
-        size_t page_size = _read_page->page_size();
-        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "page_size = %d\n", (int)page_size);
-        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "malloc_page_pool page_size = %d\n",
-              (int)malloc_page_pool::instance()->page_size());
-        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "SENTINEL_POOL page_size = %d\n",
-              (int)SENTINEL_POOL.page_size());
 
-        /* pull page from disk file */
+
+        /* Make sure that at this point, we are not dealing with the
+           SENTINAL_PAGE. */
+        assert(_read_page != SENTINEL_PAGE);
+        assert(_read_page->page_size() == malloc_page_pool::instance()->page_size());
+
+
+        /* read page from disk file */
+        _read_page->clear();
         TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "_next_page = %d\n", (int)_next_page);
         TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "_file_head_page = %d\n", (int)_file_head_page);
         unsigned long seek_pos =
@@ -605,22 +607,24 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
             THROW2(FileException, "fseek to %lu", seek_pos);
         int fread_ret = _read_page->fread_full_page(_page_file);
         assert(fread_ret);
+        _set_read_page(_read_page.release());
 
+
+        size_t page_size = _read_page->page_size();
         if (TRACE_ALWAYS&TRACE_MASK_DISK) {
+            page* pg = _read_page.release();
+            unsigned char* pg_bytes = (unsigned char*)pg;
             for (size_t i = 0; i < page_size; i++) {
-                page* pg = _read_page.release();
-                unsigned char* pg_bytes = (unsigned char*)pg;
                 printf("%02x", pg_bytes[i]);
                 if (i % 2 == 0)
                     printf("\t");
                 if (i % 16 == 0)
                     printf("\n");
-                _set_read_page(pg);
-            }
+            } 
+            _set_read_page(pg);
         }
-
-        _set_read_page(_read_page.release());
-        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "Read %d %d byte tuples\n",
+        
+        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "Read %d %d-byte tuples\n",
               (int)_read_page->tuple_count(),
               (int)_read_page->tuple_size());
         break;

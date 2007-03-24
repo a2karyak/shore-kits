@@ -252,9 +252,8 @@ public:
      *  terminated the buffer.
      */
     bool get_tuple(tuple_t &tuple) {
-        if(!ensure_read_ready())
+        if (!ensure_read_ready())
             return false;
-       
         tuple = *_read_iterator++;
         _num_removed++;
         return true;
@@ -286,7 +285,7 @@ public:
      */
     bool ensure_read_ready(int timeout_ms=0) {
         // blocking attempt => only returns false if EOF
-	return (_read_iterator->data != _read_end)
+        return (_read_iterator->data != _read_end)
             || (_get_read_page(timeout_ms) == 1);
     }
 
@@ -342,6 +341,19 @@ private:
 	_read_page = p;
 	_read_iterator = _read_page->begin();
 	_read_end = _read_page->end()->data;
+    }
+
+    page* _alloc_page() {
+        /* Allocate a new _write_page. */
+        if (_free_pages.empty())
+            /* Allocate using page::alloc. */
+            return page::alloc(tuple_size());
+
+        /* Allocate from free list. */
+        page* p = _free_pages.front();
+        _free_pages.pop_front();
+        p->clear();
+        return p;
     }
 
     void init();
