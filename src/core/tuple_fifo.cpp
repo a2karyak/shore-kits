@@ -401,9 +401,12 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         /* Create on disk file. */
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
         _page_file = fopen(filepath.data(), "w+");
+        assert(_page_file != NULL);
         if (_page_file == NULL)
             THROW2(FileException,
                    "fopen(%s) failed", filepath.data());
+        TRACE(TRACE_ALWAYS, "Created tuple_fifo file %s\n",
+              filepath.data());
         
         /* Append this page to _pages and flush the entire
            page_list to disk. */
@@ -452,7 +455,9 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         
     case tuple_fifo_state_t::ON_DISK: {
 
-        if (fseek(_page_file, 0, SEEK_END))
+        int fseek_ret = fseek(_page_file, 0, SEEK_END);
+        assert(!fseek_ret);
+        if (fseek_ret)
             THROW1(FileException, "fseek to EOF");
         _write_page->fwrite_full_page(_page_file);
         _pages_in_fifo++;
@@ -535,7 +540,10 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     }
 
 
-    if(_available_in_memory_reads() == 0) {
+    if(_available_fifo_reads() == 0) {
+        /* If we are here, we exited the loop above because one of the
+           other conditions failed. We either noticed that the
+           tuple_fifo has been closed or we've timed out. */
         if(is_done_writing())
             /* notify caller that the tuple_fifo is closed */
 	    return -1;
@@ -561,10 +569,17 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
         /* release _read_page so we can invoke methods */
 
         /* pull page from disk file */
-        unsigned long seek_pos = _next_page * get_default_page_size();
-        if (fseek(_page_file, seek_pos, SEEK_SET))
+        unsigned long seek_pos =
+            (_next_page - _file_head_page) * get_default_page_size();
+        int fseek_ret = fseek(_page_file, seek_pos, SEEK_SET);
+        assert(!fseek_ret);
+        if (fseek_ret)
             THROW2(FileException, "fseek to %lu", seek_pos);
         _read_page->fread_full_page(_page_file);
+        TRACE(TRACE_ALWAYS, "Wrote page with %d byte tuples. Read %d byte tuples\n",
+              (int)_tuple_size,
+              (int)_read_page->tuple_size());
+        break;
     }
 
     default:

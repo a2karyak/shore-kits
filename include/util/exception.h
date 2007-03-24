@@ -10,12 +10,17 @@
 
 #include "util/c_str.h"
 
+
+
+/**
+ * @brief Using VA_ARGS...
+ */
 #if 0
 #define EXCEPTION(type,__VA_ARGS__) \
    type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(__VA_ARGS__))
 
 #define THROW(type, __VA_ARGS__) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(__VA_ARGS__))
+      throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(__VA_ARGS__)
 
 // tests an error code and throws the specified exception if nonzero
 #define THROW_IF(Exception, err) \
@@ -23,6 +28,11 @@
 
 #else
 
+
+
+/**
+ * @brief Without VA_ARGS
+ */
 #define EXCEPTION(type) \
    type(__FILE__, __LINE__, __PRETTY_FUNCTION__)
 #define EXCEPTION1(type, arg) \
@@ -30,22 +40,48 @@
 #define EXCEPTION2(type, arg1, arg2) \
    type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2))
 
+
 #define THROW(type) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, "")
+   do { \
+     assert(false); \
+     throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, ""); \
+   } while (false)
 #define THROW1(type, arg) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg))
+   do { \
+     assert(false); \
+     throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg)); \
+   } while (false)
+
 #define THROW2(type, arg1, arg2) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2))
+   do { \
+     assert(false); \
+     throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2)); \
+   } while (false)
+
 // these two only used by cpu_set.cpp
 #define THROW3(type, arg1, arg2, arg3) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3))
+   do { \
+     assert(false); \
+     throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3)); \
+   } while (false)
+
 #define THROW4(type, arg1, arg2, arg3, arg4) \
-   throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3, arg4))
+   do { \
+     assert(false); \
+     throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3, arg4)); \
+   } while (false)
 
 // tests an error code and throws the specified exception if nonzero
 #define THROW_IF(Exception, err) \
-    do { if(err) THROW1(Exception, errno_to_str(err)); } while (0)
+   do { \
+     assert(!err); \
+     if(err) { \
+        THROW1(Exception, errno_to_str(err)); \
+     } \
+   } while (false)
+
 #endif
+
 
 
 // optional printf-like message allowed here
@@ -85,6 +121,7 @@ inline c_str errno_to_str(int err=errno) {
     return strerror(err);
 }
 
+DEFINE_EXCEPTION(Unreachable);
 DEFINE_EXCEPTION(BadAlloc);
 DEFINE_EXCEPTION(OutOfRange);
 DEFINE_EXCEPTION(FileException);
@@ -97,7 +134,7 @@ inline void unreachable() {
     exit(-1);
 }
 #else
-#define unreachable() throw "Unreachable"
+#define unreachable() THROW(Unreachable)
 #endif
 
 #endif

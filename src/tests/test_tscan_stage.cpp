@@ -24,7 +24,7 @@ public:
 
     virtual void process(const tuple_t& output) {
 	decimal* d = aligned_cast<decimal>(output.data);
-	TRACE(TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
+	TRACE(0&TRACE_ALWAYS, "Read ID: EXT=%lf - DISC=%lf\n",
 	      d[0].to_double(), d[1].to_double());
     }
     
