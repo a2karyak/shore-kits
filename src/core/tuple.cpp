@@ -6,7 +6,10 @@
 
 ENTER_NAMESPACE(qpipe);
 
+
+
 malloc_page_pool malloc_page_pool::_instance;
+
 
 
 static size_t default_page_size = 8192;
@@ -20,6 +23,8 @@ void set_default_page_size(size_t page_size) {
 }
 
 size_t get_default_page_size() { return default_page_size; }
+
+
 
 bool page::fread_full_page(FILE* file) {
 
@@ -54,6 +59,9 @@ bool page::fread_full_page(FILE* file) {
 
     return true;
 }
+
+
+
 void page::fwrite_full_page(FILE *file) {
     size_t write_count = ::fwrite(this, 1, page_size(), file);
     if ( write_count != page_size() ) {
@@ -63,5 +71,7 @@ void page::fwrite_full_page(FILE *file) {
         THROW1(FileException, "::fwrite() failed");
     }
 }
-   
+
+
+
 EXIT_NAMESPACE(qpipe);

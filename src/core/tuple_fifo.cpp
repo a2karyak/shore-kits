@@ -428,6 +428,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             it = _pages.erase(it);
             _pages_in_memory--;
         }
+        fflush(_page_file);
         
         /* update _file_head_page */
         assert(_file_head_page == 0);
@@ -460,6 +461,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         if (fseek_ret)
             THROW1(FileException, "fseek to EOF");
         _write_page->fwrite_full_page(_page_file);
+        fflush(_page_file);
         _pages_in_fifo++;
 
         if (done_writing) {
@@ -569,6 +571,8 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
         /* release _read_page so we can invoke methods */
 
         /* pull page from disk file */
+        TRACE(TRACE_ALWAYS, "_next_page = %d\n", (int)_next_page);
+        TRACE(TRACE_ALWAYS, "_file_head_page = %d\n", (int)_file_head_page);
         unsigned long seek_pos =
             (_next_page - _file_head_page) * get_default_page_size();
         int fseek_ret = fseek(_page_file, seek_pos, SEEK_SET);

@@ -209,13 +209,13 @@ private:
         return _tuple_size;
     }
 
+
     /**
      *  @brief Returns the total number of tuples that fit into this
      *  page.
      *
      *  @return See description.
      */
-
     size_t capacity() const {
         return capacity(page_size(), tuple_size());
     }
@@ -223,6 +223,7 @@ private:
     size_t tuple_count() const {
         return _end_offset/tuple_size();
     }
+
 
     /**
      *  @brief Empty this page of its tuples.
@@ -237,7 +238,6 @@ private:
      *  @brief Returns true if and only if this page currently
      *  contains zero tuples.
      */
-
     bool empty() const {
         return _end_offset == 0;
     }
@@ -247,7 +247,6 @@ private:
      *  @brief Returns true if and only if this page currently
      *  contains the maximum number of tuples it can fit.
      */
-
     bool full() const {
         return _free_count == 0;
     }
@@ -258,7 +257,6 @@ private:
      *
      *  @param index The tuple index. Tuples are zero-indexed.
      */
-
     tuple_t get_tuple(size_t index) {
         return tuple_t(&_data()[index*tuple_size()], tuple_size());
     }
@@ -276,8 +274,8 @@ private:
      *
      *  @throw FileException if a read error occurs.
      */
-    
     bool fread_full_page(FILE* file);
+
 
     /**
      *  @brief Drain this page to the specified file. If the page is
@@ -298,10 +296,8 @@ private:
      *  @return NULL if the page is full. Otherwise, the address of
      *  the newly allocated tuple.
      */
-
     char* allocate() {
         assert(!full());
-        
         char *result = &_data()[_end_offset];
         _end_offset += tuple_size();
         _free_count--;
@@ -320,7 +316,6 @@ private:
      *  @return true on successful allocate. false on failure (if the
      *  page is full).
      */
-
     tuple_t allocate_tuple() {
         return tuple_t(allocate(), tuple_size());
     }
@@ -338,7 +333,6 @@ private:
      *  @return true on successful allocate and copy. False if the
      *  page is full.
      */
-
     void append_tuple(const tuple_t &tuple) {
         // use tuple::assign() instead of a naked memcpy()
         allocate_tuple().assign(tuple);
@@ -349,39 +343,45 @@ private:
      *  @brief Iterator over the tuples in this page. Each dereference
      *  returns a tuple_t.
      */
-
     class iterator {
 
     private:
         tuple_t _current;
         
     public:
+
         iterator()
             : _current(NULL, 0)
         {
         }
-        iterator(page *page, size_t offset)
+
+        iterator(page* page, size_t offset)
             : _current(page->_data() + offset,
                        page->tuple_size())
         {
         }
-        iterator(size_t size, char *data)
+
+        iterator(size_t size, char* data)
             : _current(data, size)
         {
         }
 
-        bool operator ==(const iterator &other) const {
+        bool operator ==(const iterator& other) const {
             return _current.data == other._current.data;
         }
-        bool operator !=(const iterator &other) const {
+
+        bool operator !=(const iterator& other) const {
             return !(*this == other);
         }
+
         tuple_t operator *() {
             return _current;
         }
+
         tuple_t *operator ->() {
             return &_current;
         }
+
         /**
          * @brief Returns the current value and advances the iterator
          * in a single operation
@@ -391,10 +391,12 @@ private:
             ++*this;
             return result;
         }
+
         iterator &operator ++() {
             _current.data += _current.size;
             return *this;
         }
+
         iterator operator ++(int) {
             iterator old = *this;
             ++*this;
@@ -426,7 +428,8 @@ private:
     // Prevent attempts to copy pages. Allowing shallow copies would be
     // dangerous; deep copies are expensive and not necessary so far.
     page(const page &other);
-    page &operator =(const page &other);
+
+    page &operator =(const page &other);    
 
     // Prevent the user from stack allocating pages or calling delete
     // on page pointers. Use page::alloc() and page::free() instead
