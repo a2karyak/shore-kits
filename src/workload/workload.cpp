@@ -27,25 +27,26 @@ bool workload_t::run(results_t &results) {
 
 
     // create client threads for this workload
-    int clients_created = 0;
-    array_guard_t<pthread_t> client_ids = new pthread_t[_num_clients];
+    array_guard_t<pthread_t>
+        client_ids = new pthread_t[_num_clients];
+
     client_sync_t client_sync;
-
-    for (int client_index = 0; client_index < _num_clients; client_index++) {
-
+    int clients_created = 0;
+    for (int i = 0; i < _num_clients; i++) {
+        
         // create another workload client
         try {
-            // create new client thread
-            c_str client_name("%s.%d", _name.data(), client_index);
-            workload_client_t* client =
+            /* create another workload client thread */
+            c_str client_name("%s.%d", _name.data(), i);
+            workload_client_t* client_struct =
                 new workload_client_t(client_name,
-                                      &results.client_times[client_index],
+                                      &results.client_times[i],
                                       _driver,
                                       _driver_arg,
                                       &client_sync,
                                       _num_iterations,
                                       _think_time);
-            client_ids[client_index] = thread_create(client);
+            client_ids[i] = thread_create(client_struct);
         }
         catch (QPipeException &e) {
 
@@ -73,7 +74,7 @@ bool workload_t::run(results_t &results) {
     // run workload and wait for clients to finish
     client_sync.signal_continue();
     wait_for_clients(client_ids, clients_created);
-
+    
     
     // record finish time
     results.total_time = timer.time();
@@ -99,15 +100,16 @@ bool workload_t::run(results_t &results) {
  *  @param num_thread_ids The number of valiid thread IDs in the
  *  thread_ids array.
  */
-void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
-
-    // wait for client threads to receive error message
-    for (int i = 0; i < num_thread_ids; i++) {
-        // join should not really fail unless we are doing
-        // something seriously wrong...
-        int join_ret = pthread_join(thread_ids[i], NULL);
+void workload_t::wait_for_clients(pthread_t* client_ids, int n) {
+    /* wait for client threads to receive error message */
+    for (int i = 0; i < n; i++) {
+        /* pthread_join should not really fail unless we are doing
+           something seriously wrong... */
+        int join_ret = pthread_join(client_ids[i], NULL);
         assert(join_ret == 0);
     }
 }
+
+
 
 EXIT_NAMESPACE(workload);
