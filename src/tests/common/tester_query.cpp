@@ -45,5 +45,6 @@ void query_main(query_info_t& info, workload::driver_t* driver) {
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 
-    db_close();
+    // FIXME: (ip) First we should create the correct database
+    //    db_close();
 }

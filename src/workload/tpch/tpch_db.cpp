@@ -33,7 +33,13 @@ static void close_db_table(Db*& table, const char* table_name);
  *
  *  @throw BdbException on error.
  */
-void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_size_bytes) {
+void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
+             u_int32_t db_cache_size_bytes) 
+{
+
+    TRACE(TRACE_ALWAYS,
+          "DB_OPEN called\n");
+
 
     // create environment
     try {
@@ -41,7 +47,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         dbenv->set_errpfx(BDB_ERROR_PREFIX);
     }
     catch (DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", e.what());
+        TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", 
+              e.what());
         THROW1(BdbException, "Could not create new DbEnv");
     }
   
@@ -53,7 +60,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, u_int32_t db_cache_siz
         }
     }
     catch (DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException setting buffer pool size to %d GB, %d B: %s\n",
+        TRACE(TRACE_ALWAYS, 
+              "Caught DbException setting buffer pool size to %d GB, %d B: %s\n",
               db_cache_size_gb,
               db_cache_size_bytes,
               e.what());

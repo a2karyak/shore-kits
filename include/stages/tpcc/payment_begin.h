@@ -17,7 +17,8 @@ using namespace qpipe;
  *  @brief Possible states of a transaction
  */
 
-enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, COMMITTED, ROLLBACKED };
+enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
+		COMMITTED, ROLLBACKED };
 
 
 /* exported datatypes */
@@ -139,7 +140,7 @@ public:
         c_str action("%s:%d:%f:%d", PACKET_TYPE.data(), 
 		     a_c_id, a_h_amount, a_h_date);
 
-        return new query_plan(action, NULL, NULL, 0);
+        return new query_plan(action, "none", NULL, 0);
     }
 
 
