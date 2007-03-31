@@ -28,5 +28,7 @@
 #include "util/busy_delay.h"
 #include "util/randgen.h"
 #include "util/randgen_util.h"
+#include "util/rio.h"
+#include "util/alignedops.h"
 
 #endif
