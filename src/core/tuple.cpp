@@ -32,7 +32,7 @@ bool page::read_full_page(int fd) {
     /* create an aligned array of bytes we can read into */
     void* aligned_base;
     guard<char> ptr =
-        (char*)aligned_alloc(this, page_size(), 512, &aligned_base);
+        (char*)aligned_alloc(page_size(), 512, &aligned_base);
     assert(ptr != NULL);
 
 
@@ -82,7 +82,7 @@ void page::write_full_page(int fd) {
     /* create an aligned copy of ourselves */
     void* aligned_base;
     guard<char> ptr =
-        (char*)aligned_alloc(this, page_size(), 512, &aligned_base);
+        (char*)aligned_alloc(page_size(), 512, &aligned_base);
     assert(ptr != NULL);
     memcpy(aligned_base, this, page_size());
 

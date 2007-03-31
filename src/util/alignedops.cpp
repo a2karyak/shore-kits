@@ -28,15 +28,14 @@ static const int debug_trace_type = TRACE_DEBUG;
  *
  *  @return NULL on error.
  */
-void* aligned_alloc(void*  buf,
-                    size_t buf_size, size_t align_size,
+void* aligned_alloc(size_t min_buf_size, size_t align_size,
                     void** aligned_base) {
     
-    assert(buf_size > 0);
+    assert(min_buf_size > 0);
     assert(align_size > 0);
 
     /* allocate space */
-    size_t alloc_size = buf_size + align_size - 1;
+    size_t alloc_size = min_buf_size + align_size - 1;
     guard<char> big_buf = new char[alloc_size];
     if (big_buf == NULL)
         return NULL;

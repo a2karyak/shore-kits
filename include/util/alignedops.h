@@ -16,8 +16,7 @@
 
 /* exported functions */
 
-void* aligned_alloc(void*  buf,
-                    size_t buf_size, size_t align_size,
+void* aligned_alloc(size_t min_buf_size, size_t align_size,
                     void** aligned_base);
 
 #endif
