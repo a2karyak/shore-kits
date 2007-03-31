@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cassert>
 #include <cstdlib>
+#include <cstdio>
 
 #include "util/c_str.h"
 
@@ -48,12 +49,16 @@
    } while (false)
 #define THROW1(type, arg) \
    do { \
+     fprintf(stderr, arg); \
+     fflush(stderr); \
      assert(false); \
      throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg)); \
    } while (false)
 
 #define THROW2(type, arg1, arg2) \
    do { \
+     fprintf(stderr, arg1, arg2); \
+     fflush(stderr); \
      assert(false); \
      throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2)); \
    } while (false)
@@ -61,12 +66,16 @@
 // these two only used by cpu_set.cpp
 #define THROW3(type, arg1, arg2, arg3) \
    do { \
+     fprintf(stderr, arg1, arg2, arg3); \
+     fflush(stderr); \
      assert(false); \
      throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3)); \
    } while (false)
 
 #define THROW4(type, arg1, arg2, arg3, arg4) \
    do { \
+     fprintf(stderr, arg1, arg2, arg3, arg4); \
+     fflush(stderr); \
      assert(false); \
      throw type(__FILE__, __LINE__, __PRETTY_FUNCTION__, c_str(arg1, arg2, arg3, arg4)); \
    } while (false)

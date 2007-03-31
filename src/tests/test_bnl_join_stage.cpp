@@ -42,23 +42,29 @@ class write_ints_tuple_source_t : public tuple_source_t {
 
 private:
 
-    int _num_tuples;
+    int    _num_tuples;
+    size_t _tuple_size;
 
 public:
 
     write_ints_tuple_source_t(int num_tuples)
-        : _num_tuples(num_tuples)
+        : _num_tuples(num_tuples),
+          _tuple_size(sizeof(int))
     {
     }
     
-    packet_t* reset() {
-        tuple_fifo* right_int_buffer = new tuple_fifo(sizeof(int));
+    virtual size_t tuple_size() {
+        return _tuple_size;
+    }
+
+    virtual packet_t* reset() {
+        tuple_fifo* right_int_buffer = new tuple_fifo(_tuple_size);
         struct int_tuple_writer_info_s* info =
             new int_tuple_writer_info_s(right_int_buffer, _num_tuples);
         return
             new func_call_packet_t("RIGHT_PACKET",
                                    right_int_buffer,
-                                   new trivial_filter_t(sizeof(int)),
+                                   new trivial_filter_t(_tuple_size),
                                    shuffled_triangle_int_tuple_writer_fc,
                                    info,
                                    destroy_writer_info);

@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
                              output_buffer,
                              new trivial_filter_t(sizeof(int)),
                              left_packet,
-                             new workload::tuple_source_once_t(right_packet),
+                             new workload::tuple_source_once_t(right_packet, sizeof(int)),
                              new int_key_extractor_t(),
                              new int_key_compare_t(),
                              false );

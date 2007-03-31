@@ -3,6 +3,7 @@
 #define _TUPLE_SOURCE_H
 
 #include "core.h"
+#include <cstdlib>
 
 
 using namespace qpipe;
@@ -18,6 +19,8 @@ public:
      *  as a tuple_source_t.
      */
     virtual packet_t* reset()=0;
+
+    virtual size_t tuple_size()=0;
 
     virtual ~tuple_source_t() { }
 };
