@@ -10,6 +10,8 @@
  * working on crete.
  */
 #include "util.h"
+#include "scheduler/os_support.h"
+#include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -52,8 +54,16 @@ void* thread_main(void* arg)
 
     
     /* create timer */
+    clockid_t clockid;
+#ifdef FOUND_LINUX
+        if (pthread_getcpuclockid(pthread_self(), &clockid)) {
+            fprintf(stderr, "pthread_getcpuclockid() failed: %s\n",
+                    strerror(errno));
+            abort();
+        }
+#endif
     timer_t timerid;
-    if (timer_create(CLOCK_THREAD_CPUTIME_ID, NULL, &timerid)) {
+    if (timer_create(clockid, NULL, &timerid)) {
         TRACE(TRACE_ALWAYS, "timer_create() failed: %s\n",
               strerror(errno));
         abort();
