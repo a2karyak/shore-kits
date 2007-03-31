@@ -100,7 +100,7 @@ private:
     size_t _threshold;
 
     /* page file management */
-    FILE*  _page_file;
+    int    _page_file;
     size_t _next_page;
     size_t _file_head_page;
     
@@ -159,6 +159,7 @@ public:
           _pages_in_memory(0),
           _memory_capacity(capacity),
           _threshold(threshold),
+          _page_file(-1),
           _next_page(0),
           _file_head_page(0),
           _tuple_size(tuple_size),

@@ -6,6 +6,11 @@
 #include "util/acounter.h"
 #include <algorithm>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 
 ENTER_NAMESPACE(qpipe);
@@ -15,7 +20,15 @@ ENTER_NAMESPACE(qpipe);
 /* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
-static const bool FLUSH_TO_DISK_ON_FULL = false;
+static const bool FLUSH_TO_DISK_ON_FULL = true;
+static const bool USE_DIRECT_IO = true;
+
+/**
+ * @brief Whether we should invoke fsync after we write pages to
+ * disk. Note that this is totally un-necessary if we are using DIRECT
+ * I/O. The sync should already be done.
+ */
+static const bool SYNC_AFTER_WRITES = (!USE_DIRECT_IO) && false;
 
 
 
@@ -179,6 +192,14 @@ void tuple_fifo::destroy() {
     std::for_each(_pages.begin(), _pages.end(), free_page());
     std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
 	
+    if (_page_file != -1) {
+        close(_page_file);
+        c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
+        if (unlink(filepath.data()))
+            THROW2(TupleFifoDirectoryException,
+                   "unlink(%s) failed", filepath.data());
+    }
+
     /* update stats */
     critical_section_t cs(tuple_fifo_stats_mutex);
     open_fifo_count--;
@@ -396,9 +417,10 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         /* If we are here, we need to flush to disk. */
         /* Create on disk file. */
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
-        _page_file = fopen(filepath.data(), "w+");
-        assert(_page_file != NULL);
-        if (_page_file == NULL)
+        int flags = O_CREAT|O_TRUNC|O_RDWR;
+        if (USE_DIRECT_IO) flags |= O_DIRECT;
+        _page_file = open(filepath.data(), flags, S_IRUSR|S_IWUSR);
+        if (_page_file == -1)
             THROW2(FileException,
                    "fopen(%s) failed", filepath.data());
         TRACE(TRACE_ALWAYS, "Created tuple_fifo file %s\n",
@@ -413,7 +435,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
         for (page_list::iterator it = _pages.begin(); it != _pages.end(); ) {
             qpipe::page* p = *it;
-            p->fwrite_full_page(_page_file);
+            p->write_full_page(_page_file);
 
             /* done with page */
             p->clear();
@@ -423,7 +445,11 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             assert(_pages_in_memory > 0);
             _pages_in_memory--;
         }
-        fflush(_page_file);
+
+        if (SYNC_AFTER_WRITES) {
+            int fsync_ret = fsync(_page_file);
+            assert(fsync_ret == 0);
+        }
         
         /* update _file_head_page */
         assert(_file_head_page == 0);
@@ -463,13 +489,18 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     } /* endof case: IN_MEMORY */
         
     case tuple_fifo_state_t::ON_DISK: {
+        
+        int seek_ret = lseek(_page_file, 0, SEEK_END);
+        assert(seek_ret != (off_t)-1);
+        if (seek_ret == (off_t)-1)
+            THROW1(FileException, "seek to END-OF-FILE");
+        
+        _write_page->write_full_page(_page_file);
+        if (SYNC_AFTER_WRITES) {
+            int fsync_ret = fsync(_page_file);
+            assert(fsync_ret == 0);
+        }
 
-        int fseek_ret = fseek(_page_file, 0, SEEK_END);
-        assert(!fseek_ret);
-        if (fseek_ret)
-            THROW1(FileException, "fseek to EOF");
-        _write_page->fwrite_full_page(_page_file);
-        fflush(_page_file);
         _pages_in_fifo++;
 
         if (done_writing) {
@@ -603,11 +634,13 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
         unsigned long seek_pos =
             (_next_page - _file_head_page) * get_default_page_size();
         TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "fseek to %lu\n", seek_pos);
-        int fseek_ret = fseek(_page_file, seek_pos, SEEK_SET);
-        assert(!fseek_ret);
-        if (fseek_ret)
-            THROW2(FileException, "fseek to %lu", seek_pos);
-        int fread_ret = _read_page->fread_full_page(_page_file);
+
+        int seek_ret = lseek(_page_file, seek_pos, SEEK_SET);
+        assert(seek_ret != (off_t)-1);
+        if (seek_ret == (off_t)-1)
+            THROW2(FileException, "seek to %lu", (unsigned long)seek_pos);
+
+        int fread_ret = _read_page->read_full_page(_page_file);
         assert(fread_ret);
         _set_read_page(_read_page.release());
 
