@@ -423,8 +423,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         if (_page_file == -1)
             THROW2(FileException,
                    "fopen(%s) failed", filepath.data());
-        TRACE(TRACE_ALWAYS, "Created tuple_fifo file %s\n",
-              filepath.data());
+        TRACE(TRACE_TUPLE_FIFO_FILE, "Created tuple_fifo file %s\n", filepath.data());
         
         /* Append this page to _pages and flush the entire
            page_list to disk. */
