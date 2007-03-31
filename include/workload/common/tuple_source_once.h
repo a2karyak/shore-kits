@@ -7,7 +7,10 @@
 
 using namespace qpipe;
 
+
+
 ENTER_NAMESPACE(workload);
+
 
 
 /**
@@ -16,27 +19,38 @@ ENTER_NAMESPACE(workload);
  */
 class tuple_source_once_t : public tuple_source_t {
   
- private:
+private:
 
-  packet_t* _packet;
+    packet_t* _packet;
+    size_t    _tuple_size;
+    
 
- public:
+public:
   
-  tuple_source_once_t(packet_t* packet)
-    : _packet(packet)
+    tuple_source_once_t(packet_t* packet, size_t tuple_size)
+        : _packet(packet),
+          _tuple_size(tuple_size)
     {
-      assert( packet != NULL );
+        assert( packet != NULL );
     }
-  
-  virtual packet_t* reset() {
-    assert ( _packet != NULL );
-    packet_t* packet = _packet;
-    _packet = NULL;
-    return packet;
-  }
+
+    virtual size_t tuple_size() {
+        return _tuple_size;
+    }
+
+    virtual packet_t* reset() {
+        assert ( _packet != NULL );
+        packet_t* packet = _packet;
+        _packet = NULL;
+        return packet;
+    }
 
 };
 
+
+
 EXIT_NAMESPACE(workload);
+
+
 
 #endif

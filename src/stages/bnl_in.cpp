@@ -43,12 +43,14 @@ void bnl_in_stage_t::process_packet() {
     dispatcher_t::dispatch_packet(packet->_left);
  
     
+    guard<qpipe::page> outer_tuple_page = page::alloc(left_buffer->tuple_size());
+    guard<qpipe::page> inner_tuple_page = page::alloc(right_source->tuple_size());
+    
     while (1) {
         
         
         // get another page of tuples from the outer relation
-        guard<qpipe::page> outer_tuple_page = left_buffer->get_page();
-        if ( !outer_tuple_page )
+        if (!left_buffer->copy_page(outer_tuple_page))
             // done with outer relation... done with join
             return;
     
@@ -71,8 +73,7 @@ void bnl_in_stage_t::process_packet() {
             
             
             // get another page of tuples from the inner relation
-            guard<qpipe::page> inner_tuple_page = right_buffer->get_page();
-            if ( !inner_tuple_page )
+            if (!right_buffer->copy_page(inner_tuple_page))
                 // done with inner relation... time to output some
                 // tuples from opage
                 break;

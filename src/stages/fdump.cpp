@@ -37,17 +37,15 @@ void fdump_stage_t::process_packet() {
     tuple_fifo* input_buffer = packet->_input_buffer;
     
     
-    // read the file; make sure the buffer pages get deleted
+    guard<qpipe::page> next_page = page::alloc(input_buffer->tuple_size());
     while (1) {
     
-        guard<qpipe::page> tuple_page = input_buffer->get_page();
-        if(tuple_page == NULL) {
-            // no more pages
+        if (!input_buffer->copy_page(next_page)) {
             TRACE(TRACE_DEBUG, "Finished dump to file %s\n", filename.data());
-            return;
+            break;
         }
+
         TRACE(TRACE_ALWAYS, "Wrote page\n");
-        
-        tuple_page->fwrite_full_page(file);
+        next_page->fwrite_full_page(file);
     }
 }

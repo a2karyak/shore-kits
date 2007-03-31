@@ -23,10 +23,10 @@ void echo_stage_t::process_packet() {
     dispatcher_t::dispatch_packet(packet->_input);
 
     
+    guard<qpipe::page> next_page = page::alloc(input_buffer->tuple_size());
     while (1) {
-        guard<qpipe::page> p = input_buffer->get_page();
-        if (p == NULL)
+        if (!input_buffer->copy_page(next_page))
             break;
-        adaptor->output(p);
+        adaptor->output(next_page);
     }
 }

@@ -203,37 +203,39 @@ void tuple_fifo::destroy() {
 
 /**
  *  @brief Only the consumer may call this method. Retrieve a page
- *  of tuples from the buffer in one operation. The buffer gives
- *  up ownership of the page and will not access (or free) it
- *  afterward.
+ *  of tuples from the buffer in one operation.
  *
- *  WARNING: Do not mix calls to get_page() and get_tuple() on the
+ *  WARNING: Do not mix calls to copy_page() and get_tuple() on the
  *  same tuple_fifo.
  *
  *  @param timeout The maximum number of milliseconds to wait for a
  *  tuple.
  *
- *  @return NULL if the buffer is empty and the producer has
- *  invoked send_eof() on the buffer.
- *
  *  @throw BufferTerminatedException if the producer has
  *  terminated the buffer.
  */
-page* tuple_fifo::get_page(int timeout) {
+bool tuple_fifo::copy_page(page* dst, int timeout_ms) {
     
-    if (!ensure_read_ready(timeout))
-        return NULL;
+    if (!ensure_read_ready(timeout_ms))
+        /* how to check for timeout? */
+        return false;
 
-    // no partial pages allowed!
+    /* no partial pages allowed! */
     assert(_read_iterator == _read_page->begin());
 
-    // hand off the page and replace it with the sentinel
-    page* result = _read_page.release();
-    _set_read_page(SENTINEL_PAGE);
+    /* copy over tuples */
+    dst->clear();
+    size_t capacity = dst->capacity();
+    for(size_t i = 0; i < capacity; i++) {
+        tuple_t tuple;
+        if (!get_tuple(tuple))
+            break;
+        dst->append_tuple(tuple);
+    }
 
-    // return page
-    _num_removed += result->tuple_count();
-    return result;
+    /* return page */
+    _num_removed += dst->tuple_count();
+    return true;
 }
 
 
@@ -312,9 +314,9 @@ inline void tuple_fifo::ensure_reader_running() {
     thread_cond_signal(_reader_notify);
 }
 
-inline bool tuple_fifo::wait_for_writer(int timeout) {
+inline bool tuple_fifo::wait_for_writer(int timeout_ms) {
     _num_waits_on_remove++;
-    return thread_cond_wait(_reader_notify, _lock, timeout);
+    return thread_cond_wait(_reader_notify, _lock, timeout_ms);
 }
 
 inline void tuple_fifo::ensure_writer_running() {

@@ -260,7 +260,7 @@ public:
     }
 
 
-    page* get_page(int timeout_ms=0);
+    bool copy_page(page* dst, int timeout_ms=0);
 
 
     /**
