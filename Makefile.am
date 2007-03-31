@@ -53,7 +53,8 @@ TESTS = \
    tests/randgen_shuffle \
    tests/fwrite_page \
    tests/fread_page \
-   tests/freadwrite_page
+   tests/freadwrite_page \
+   tests/freadwrite_direct
 
 
 
@@ -88,7 +89,8 @@ lib_libutil_a_SOURCES = \
         $(SU)/resource_pool.cpp \
         $(SU)/itimer.cpp \
         $(SU)/busy_delay.cpp \
-        $(SU)/randgen_util.cpp
+        $(SU)/randgen_util.cpp \
+        $(SU)/alignedops.cpp
 
 
 
@@ -270,6 +272,7 @@ tests_randgen_shuffle_SOURCES = $(ST)/test_randgen_shuffle.cpp
 tests_fwrite_page_SOURCES = $(ST)/test_fwrite_page.cpp
 tests_fread_page_SOURCES = $(ST)/test_fread_page.cpp
 tests_freadwrite_page_SOURCES = $(ST)/test_freadwrite_page.cpp
+tests_freadwrite_direct_SOURCES = $(ST)/test_freadwrite_direct.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)

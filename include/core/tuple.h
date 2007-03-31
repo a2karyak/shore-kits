@@ -274,6 +274,34 @@ private:
      *
      *  @throw FileException if a read error occurs.
      */
+    bool read_full_page(int fd);
+
+
+    /**
+     *  @brief Drain this page to the specified file. If the page is
+     *  not full, we drain padding so a full page is written.
+     *
+     *  @param file The file to write to.
+     *
+     *  @return void
+     *
+     *  @throw FileException if a write error occurs.
+     */
+    void write_full_page(int fd);
+    
+
+    /**
+     *  @brief Fill this page with tuples read from the specified
+     *  file. If this page already contains tuples, we will overwrite
+     *  them.
+     *
+     *  @param file The file to read from.
+     *
+     *  @return true if a page was successfully read. false if there
+     *  thare no more pages to read in the file.
+     *
+     *  @throw FileException if a read error occurs.
+     */
     bool fread_full_page(FILE* file);
 
 
