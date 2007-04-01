@@ -2,23 +2,27 @@
 
 #include "util/thread.h"
 
+#include <cstdio>
+#include <cstring>
+
+#include <cassert>
+#include <stdint.h>
+#ifdef __GCC
+#include <cstdlib>
+#else
+#include <stdlib.h> /* On Sun's CC <stdlib.h> defines rand_r,
+                       <cstdlib> doesn't */
+#endif
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h> /* Added this on enceladus. Maybe will not work on lomond. */
 #include <fcntl.h>
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include <cstdio>
-#include <cstring>
-#include <unistd.h>
-
 
 
 /* internal datatypes */
-
 
 struct thread_args {
     thread_t* t;
