@@ -496,7 +496,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
         /* Let the reader know where to get pages */
-        TRACE(TRACE_ALWAYS, "FIFO %d: Wrote pages %zd-%zd to disk\n",
+        TRACE(TRACE_TUPLE_FIFO_FILE, "FIFO %d: Wrote pages %zd-%zd to disk\n",
               _fifo_id,
               _list_head_page_index,
               _list_tail_page_index);
@@ -581,7 +581,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
 
-    TRACE(TRACE_ALWAYS, "FIFO %d: Wrote pages %zd-%zd to disk\n",
+    TRACE(TRACE_TUPLE_FIFO_FILE, "FIFO %d: Wrote pages %zd-%zd to disk\n",
           _fifo_id,
           _list_head_page_index,
           _list_tail_page_index);
