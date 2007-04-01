@@ -4,6 +4,7 @@
 #include "core/tuple_fifo_directory.h"
 #include "util/trace.h"
 #include "util/acounter.h"
+#include "scheduler/os_support.h"
 #include <algorithm>
 
 #include <unistd.h>
@@ -21,7 +22,7 @@ ENTER_NAMESPACE(qpipe);
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
 static const bool FLUSH_TO_DISK_ON_FULL = true;
-static const bool USE_DIRECT_IO = true;
+static const bool USE_DIRECT_IO = false;
 
 /**
  * @brief Whether we should invoke fsync after we write pages to
@@ -470,12 +471,39 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         /* If we are here, we need to flush to disk. */
         /* Create on disk file. */
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
+
+
+#ifdef FOUND_LINUX
+
         int flags = O_CREAT|O_TRUNC|O_RDWR;
         if (USE_DIRECT_IO) flags |= O_DIRECT;
         _page_file = open(filepath.data(), flags, S_IRUSR|S_IWUSR);
         if (_page_file == -1)
-            THROW2(FileException,
-                   "fopen(%s) failed", filepath.data());
+            THROW2(FileException, "open(%s) failed", filepath.data());
+        
+#endif
+
+
+#ifdef FOUND_SOLARIS
+
+        int flags = O_CREAT|O_TRUNC|O_RDWR;
+        _page_file = open(filepath.data(), flags, S_IRUSR|S_IWUSR);
+        if (_page_file == -1)
+            THROW2(FileException, "open(%s) failed", filepath.data());
+        if (USE_DIRECT_IO) {
+            int directio_ret = directio(_page_file, DIRECTIO_ON);
+            if (directio_ret != 0) {
+                TRACE(TRACE_ALWAYS,
+                      "directio(%d, DIRECTIO_ON) failed: %s\n",
+                      _page_file,
+                      strerror(errno));
+                assert(false);
+            }
+        }
+
+#endif
+
+        
         TRACE(TRACE_TUPLE_FIFO_FILE, "Created tuple_fifo file %s\n", filepath.data());
 
 
