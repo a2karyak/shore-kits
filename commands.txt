@@ -1,0 +1,7 @@
+
+tpch q16 1 10 0 OS
+tpch q16 2 10 0 OS
+tpch q16 4 10 0 OS
+tpch q16 6 10 0 OS
+tpch q16 8 10 0 OS
+tpch q16 10 10 0 OS
