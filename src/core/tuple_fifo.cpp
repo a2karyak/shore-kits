@@ -18,11 +18,11 @@ ENTER_NAMESPACE(qpipe);
 
 
 
-/* debugging... */
+/* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
 static const bool FLUSH_TO_DISK_ON_FULL = true;
-static const bool USE_DIRECT_IO = false;
+static const bool USE_DIRECT_IO = true;
 
 /**
  * @brief Whether we should invoke fsync after we write pages to
@@ -658,7 +658,9 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     if(_free_read_page) {
         if (_read_page != SENTINEL_PAGE)
             _read_page->clear();
-        _read_page->free();
+        /* No need to explicitly free _read_page here. The _read_page
+           guard will free it when we assign a new value to it. In
+           fact, freeing it here is a double-free error. */
     }
     else {
         assert(_read_page != SENTINEL_PAGE);
