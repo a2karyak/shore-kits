@@ -94,9 +94,10 @@ private:
     /* page list management */
     page_list _pages;
     page_list _free_pages;
-    size_t _pages_in_fifo; /* number of entries in _pages */
+    size_t _page_count;
     size_t _pages_in_memory;
     size_t _memory_capacity;
+    size_t _available_reads;
     size_t _threshold;
 
     /* page file management */
@@ -155,9 +156,10 @@ public:
                size_t threshold=64,
                size_t page_size=get_default_page_size())
         : _fifo_id(tuple_fifo_generate_id()),
-          _pages_in_fifo(0),
+          _page_count(0),
           _pages_in_memory(0),
           _memory_capacity(capacity),
+          _available_reads(0),
           _threshold(threshold),
           _page_file(-1),
           _next_page(0),
@@ -319,18 +321,16 @@ public:
 
 private:
 
-    size_t _available_in_memory_writes() {
-        assert(is_in_memory());
-        return _memory_capacity - _available_in_memory_reads();
+    size_t _available_memory_writes() {
+        return _memory_capacity - _pages_in_memory;
     }
 
-    size_t _available_in_memory_reads() {
-        assert(is_in_memory());
-        return _pages_in_memory;
+    size_t _pages_in_fifo() {
+        return _page_count;
     }
 
     size_t _available_fifo_reads() {
-        return _pages_in_fifo;
+        return _available_reads;
     }
 
     void _termination_check() {
