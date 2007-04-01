@@ -102,8 +102,13 @@ private:
 
     /* page file management */
     int    _page_file;
-    size_t _next_page;
-    size_t _file_head_page;
+    bool   _free_read_page;
+    ssize_t _next_write_page_index;
+    ssize_t _next_read_page_index;
+    ssize_t _list_head_page_index;
+    ssize_t _list_tail_page_index;
+    ssize_t _file_head_page_index;
+    ssize_t _file_tail_page_index;
     
     /* useful fields to store */
     size_t _tuple_size;
@@ -162,8 +167,13 @@ public:
           _available_reads(0),
           _threshold(threshold),
           _page_file(-1),
-          _next_page(0),
-          _file_head_page(0),
+          _free_read_page(true),
+          _next_write_page_index(0), /* ID of current write page */
+          _next_read_page_index (0), /* ID of next page to be read */
+          _list_head_page_index(-1),
+          _list_tail_page_index(-1),
+          _file_head_page_index(-1),
+          _file_tail_page_index(-1),
           _tuple_size(tuple_size),
           _page_size(page_size),
           _num_inserted(0),
