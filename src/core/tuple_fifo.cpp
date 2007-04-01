@@ -496,20 +496,26 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
         /* Let the reader know where to get pages */
+        assert(_file_head_page_index == -1);
+        assert(_file_tail_page_index == -1);
         _file_head_page_index = _list_head_page_index;
         _file_tail_page_index = _list_tail_page_index;
         _list_head_page_index = -1;
         _list_tail_page_index = -1;
 
+
         _state.transition(tuple_fifo_state_t::ON_DISK);
+
         
         /* allocate from free list */
         assert(!_free_pages.empty());
         _write_page = _alloc_page();
 
+
         /* wake the reader if necessary */
         if(_available_fifo_reads() >= _threshold)
             ensure_reader_running();
+
 
         return;
     }
@@ -665,6 +671,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
         /* Pull the next page from '_pages' list. */
         _set_read_page(_pages.front());
         _pages.pop_front();
+        _free_read_page = false;
 
         _pages_in_memory--;
         _page_count--;

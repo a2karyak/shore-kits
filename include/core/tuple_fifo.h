@@ -349,6 +349,7 @@ private:
     }
 
     void _set_read_page(page* p) {
+        //TRACE(TRACE_ALWAYS, "Setting read page to %p\n", p);
 	_read_page = p;
 	_read_iterator = _read_page->begin();
 	_read_end = _read_page->end()->data;

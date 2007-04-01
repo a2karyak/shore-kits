@@ -129,25 +129,42 @@ struct malloc_page_pool : page_pool {
 
 private:
     static malloc_page_pool _instance;
+
+    pthread_mutex_t _mutex;
+    size_t _alloc_count;
+    size_t  _free_count;
     
 public:
+
     static malloc_page_pool *instance() {
         return &_instance;
     }
         
     malloc_page_pool(size_t page_size = get_default_page_size())
-        : page_pool(page_size)
+        : page_pool(page_size),
+          _mutex(thread_mutex_create()),
+          _alloc_count(0),
+          _free_count (0)
     {
     }
+
     virtual void* alloc() {
-        void* ptr = malloc(page_size());
+        void* ptr = ::malloc(page_size());
         if(!ptr)
             throw std::bad_alloc();
+        
+        critical_section_t cs(_mutex);
+        _alloc_count++;
 
         return ptr;
     }
+
     virtual void free(void* ptr) {
+
         ::free(ptr);
+
+        critical_section_t cs(_mutex);
+        _free_count++;
     }
 };
 
