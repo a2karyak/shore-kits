@@ -20,7 +20,7 @@ ENTER_NAMESPACE(qpipe);
 /* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
-static const bool FLUSH_TO_DISK_ON_FULL = false;
+static const bool FLUSH_TO_DISK_ON_FULL = true;
 static const bool USE_DIRECT_IO = true;
 
 /**
@@ -496,6 +496,10 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
         /* Let the reader know where to get pages */
+        TRACE(TRACE_ALWAYS, "FIFO %d: Wrote pages %zd-%zd to disk\n",
+              _fifo_id,
+              _list_head_page_index,
+              _list_tail_page_index);
         assert(_file_head_page_index == -1);
         assert(_file_tail_page_index == -1);
         _file_head_page_index = _list_head_page_index;
@@ -521,7 +525,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
         
 
-    /* Already on disk... */
+    /* !FLUSH_TO_DISK_ON_FILL and !is_in_memory() */
     if (done_writing) {
         /* No need to flush to disk since we are done. */
         /* Allocation of a new _write_page is not necessary
@@ -544,11 +548,23 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
     /* Flush to disk */
-    int seek_ret = lseek(_page_file, 0, SEEK_END);
-    assert(seek_ret != (off_t)-1);
-    if (seek_ret == (off_t)-1)
-        THROW1(FileException, "seek to END-OF-FILE");
+    bool overwrite =
+        (_next_read_page_index >= _list_head_page_index) &&
+        (_next_read_page_index <= _list_tail_page_index);
 
+    if (overwrite) {
+        int seek_ret = lseek(_page_file, 0, SEEK_SET);
+        assert(seek_ret != (off_t)-1);
+        if (seek_ret == (off_t)-1)
+            THROW1(FileException, "seek to END-OF-FILE");
+    }
+    else {
+        /* append */
+        int seek_ret = lseek(_page_file, 0, SEEK_END);
+        assert(seek_ret != (off_t)-1);
+        if (seek_ret == (off_t)-1)
+            THROW1(FileException, "seek to END-OF-FILE");
+    }
 
     for (page_list::iterator it = _pages.begin(); it != _pages.end(); ) {
         qpipe::page* p = *it;
@@ -565,6 +581,12 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
 
+    TRACE(TRACE_ALWAYS, "FIFO %d: Wrote pages %zd-%zd to disk\n",
+          _fifo_id,
+          _list_head_page_index,
+          _list_tail_page_index);
+    if (overwrite)
+        _file_head_page_index = _list_head_page_index;
     _file_tail_page_index = _list_tail_page_index;
     _list_head_page_index = -1;
     _list_tail_page_index = -1;
