@@ -9,18 +9,18 @@ const c_str payment_begin_packet_t::PACKET_TYPE = "PAYMENT_BEGIN";
 const c_str payment_begin_stage_t::DEFAULT_STAGE_NAME = "PAYMENT_BEGIN_STAGE";
 
 
+int payment_begin_stage_t::_trx_counter = 0;
+pthread_mutex_t payment_begin_stage_t::_trx_counter_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
 
 /**
  *  @brief Constructor: Initializes the counter
  */
 
-payment_begin_stage_t::payment_begin_stage_t()
-    : _trx_counter_mutex(thread_mutex_create())
-{
+payment_begin_stage_t::payment_begin_stage_t() {
     
     TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN constructor\n");
-
-    _trx_counter = 0;    
 }
 
 /**
@@ -38,7 +38,8 @@ void payment_begin_stage_t::process_packet() {
     payment_begin_packet_t* packet = 
 	(payment_begin_packet_t*)adaptor->get_packet();
 
-    const int my_trx_id = get_next_counter();
+    int my_trx_id;
+    my_trx_id = get_next_counter();
     packet->set_trx_id(my_trx_id);
 
     TRACE(TRACE_ALWAYS, 
@@ -70,6 +71,8 @@ int payment_begin_stage_t::get_next_counter() {
     critical_section_t cs( _trx_counter_mutex );
 
     int tmp_counter = ++_trx_counter;
+
+    TRACE( TRACE_ALWAYS, "counter: %d\n", _trx_counter);
 
     cs.exit(); 
 

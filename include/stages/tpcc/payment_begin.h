@@ -125,8 +125,6 @@ public:
     // Destructor
     ~payment_begin_packet_t() {
 	
-	TRACE(TRACE_ALWAYS, "payment_packet_t destructor\n");
-
  	if (_h_date)
  	    delete (_h_date);
     }
@@ -170,8 +168,8 @@ protected:
 
     virtual void process_packet();
 
-    int _trx_counter;
-    pthread_mutex_t _trx_counter_mutex;
+    static int _trx_counter;
+    static pthread_mutex_t _trx_counter_mutex;
     
 
 public:
