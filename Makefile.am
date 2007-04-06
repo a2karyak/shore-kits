@@ -190,7 +190,9 @@ WL_TPCH = \
 
 
 WL_TPCC = \
+   $(SW)/tpcc/drivers/common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp
+
 
 
 lib_libworkload_a_SOURCES = \

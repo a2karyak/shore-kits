@@ -1,18 +1,21 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpcc_payment.cpp
+ *
+ *  @brief Implements client that submits PAYMENT transaction according to the TPCC
+ *  specification.
+ */
+
 # include "scheduler.h"
 # include "workload/tpcc/drivers/tpcc_payment.h"
 # include "workload/common.h"
 
-
+# include "workload/tpcc/drivers/common.h"
 
 using namespace qpipe;
 
 ENTER_NAMESPACE(workload);
 
-
-
-using namespace qpipe;
 
 
 class payment_process_tuple_t : public process_tuple_t {
@@ -47,18 +50,15 @@ void tpcc_payment_driver::submit(void* disp) {
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 
 
-    TRACE(TRACE_ALWAYS, "CREATING_BEGIN_PAYMENT_PACKET\n");
-
-
     // payment_begin_packet output
-    // FIXME: ip I don't know if we need output buffers for the PAYMENT_BEGIN
-    //           but the code asserts if output_buffer == NULL
+    // FIXME: (ip) I don't know if we need output buffers for the PAYMENT_BEGIN
+    //             but the code asserts if output_buffer == NULL
     tuple_fifo* bp_buffer = new tuple_fifo(sizeof(int));
 
 
     // payment_begin_packet filter
-    // FIXME: ip I also don't believe that we need filters for the PAYMENT
-    //           but the code asserts if output_filter == NULL
+    // FIXME: (ip) I also don't believe that we need filters for the PAYMENT
+    //             but the code asserts if output_filter == NULL
     tuple_filter_t* bp_filter = new trivial_filter_t(sizeof(int));
     
 
@@ -95,7 +95,20 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
 
 
     TRACE(TRACE_ALWAYS, 
-	  "HARD-CODED payment_begin_packet_t\n");
+	  "!! HARD-CODED payment_begin_packet_t\n");
+
+    TRACE(TRACE_ALWAYS, "URand(0, 100) = %d\tURand(100, 1000) = %d\n", 
+          URand(0, 100), URand(100, 1000));
+
+    TRACE(TRACE_ALWAYS, "NURand(255, 0, 999) = %d\tNURand(1023, 1, 3000) = %d\n", 
+          NURand(255, 0, 999), NURand(1023, 1, 3000));
+
+    TRACE(TRACE_ALWAYS, "URand(0, 100) = %d\tURand(100, 1000) = %d\n", 
+          URand(0, 100), URand(100, 1000));
+
+    TRACE(TRACE_ALWAYS, "NURand(255, 0, 999) = %d\tNURand(1023, 1, 3000) = %d\n", 
+          NURand(255, 0, 999), NURand(1023, 1, 3000));
+
 
     char* param_last = "EMPTY";
     char* param_date = "NEVER";

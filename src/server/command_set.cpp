@@ -50,7 +50,7 @@ void register_command_handlers(void) {
     // specified command tag.
 
     add_command("print", new printer_t());
-    add_command("tpch",  new tpch_handler_t());
+    //    add_command("tpch",  new tpch_handler_t());
     add_command("load", new load_handler_t());
     add_command("tpcc", new tpcc_handler_t());
     add_command("tracer", new tracer_t());
