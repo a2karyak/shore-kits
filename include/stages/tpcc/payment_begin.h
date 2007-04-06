@@ -46,7 +46,7 @@ public:
      *  10) H_DATE char* : the payment time
      */
 
-    int _home_hw_id;
+    int _home_wh_id;
     int _home_d_id;
     int _v_cust_wh_selection;
     int _remote_wh_id;
@@ -82,7 +82,7 @@ public:
     payment_begin_packet_t(const c_str    &packet_id,
                            tuple_fifo*     output_buffer,
                            tuple_filter_t* output_filter,
-                           const int a_home_hw_id,   
+                           const int a_home_wh_id,   
                            const int a_home_d_id,
                            const int a_v_cust_wh_selection,
                            const int a_remote_wh_id,
@@ -97,7 +97,7 @@ public:
                        true, /* merging allowed */
                        true  /* unreserve worker on completion */
                        ),
-          _home_hw_id(a_home_hw_id),
+          _home_wh_id(a_home_wh_id),
           _home_d_id(a_home_d_id),
           _v_cust_wh_selection(a_v_cust_wh_selection),
           _remote_wh_id(a_remote_wh_id),
@@ -109,14 +109,13 @@ public:
 	assert(a_h_date != NULL);
 
 	if (a_c_last != NULL) {	    
-	    int len = strlen(a_c_last)> 14 ? 14 : strlen(a_c_last);
-	    strncpy(_c_last, a_c_last, len );
-	    _c_last[len+1] = '\0';
+	    strncpy(_c_last, a_c_last, 15);
+	    _c_last[16] = '\0';
 	}
 	    
-	
 	_h_date = new char[strlen(a_h_date) + 1];
         strncpy(_h_date, a_h_date, strlen(a_h_date));
+        _h_date[strlen(a_h_date)] = '\0';
 
         _trx_state = UNDEF;
     }
@@ -130,7 +129,22 @@ public:
     }
 
 
-    // FIXME: ip Correct the plan creation
+    void describe_trx() {
+
+        TRACE( TRACE_ALWAYS, \
+               "PAYMENT:\nWH_ID=%d\t\tD_ID=%d\n" \
+               "SEL_WH=%d\tSEL_IDENT=%d\n" \
+               "REM_WH_ID=%d\tREM_D_ID=%d\n" \
+               "C_ID=%d\tC_LAST=%s\n" \
+               "H_AMOUNT=%.2f\tH_DATE=%s\n", \
+               _home_wh_id, _home_d_id, 
+               _v_cust_wh_selection, _v_cust_ident_selection,
+               _remote_wh_id, _remote_d_id,
+               _c_id, _c_last,
+               _h_amount, _h_date);
+    }
+
+    // FIXME: (ip) Correct the plan creation
     static query_plan* create_plan( const int a_c_id,
                                     const double a_h_amount,
                                     const char* a_h_date) 

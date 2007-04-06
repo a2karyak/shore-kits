@@ -28,6 +28,8 @@ int URand(int low, int high);
 
 int NURand(int A, int low, int high);
 
+char* generate_cust_last(int select);
+
 EXIT_NAMESPACE(workload);
 
 #endif // _TPCC_COMMON_H

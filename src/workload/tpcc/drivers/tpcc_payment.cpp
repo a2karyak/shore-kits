@@ -7,15 +7,21 @@
  */
 
 # include "scheduler.h"
-# include "workload/tpcc/drivers/tpcc_payment.h"
+# include "util.h"
+
 # include "workload/common.h"
 
 # include "workload/tpcc/drivers/common.h"
+# include "workload/tpcc/drivers/tpcc_payment.h"
+
 
 using namespace qpipe;
 
 ENTER_NAMESPACE(workload);
 
+
+/** FIXME: (ip) SF constant */
+const int SF = 10;
 
 
 class payment_process_tuple_t : public process_tuple_t {
@@ -67,7 +73,8 @@ void tpcc_payment_driver::submit(void* disp) {
 	create_begin_payment_packet( "PAYMENT_CLIENT_", 
 				     bp_buffer, 
 				     bp_filter,
-				     dp );
+				     dp,
+                                     SF);
 
 
     qpipe::query_state_t* qs = dp->query_state_create();
@@ -82,54 +89,64 @@ void tpcc_payment_driver::submit(void* disp) {
 }
 
 
+/** @func create_begin_payment_packet
+ *
+ *  @brief Creates a new PAYMENT request, given the scaling factor (sf) of the database
+ */
+
 payment_begin_packet_t* 
 tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix, 
 						 tuple_fifo* bp_output_buffer,
 						 tuple_filter_t* bp_output_filter,
-						 scheduler::policy_t* dp) 
+						 scheduler::policy_t* dp,
+                                                 int sf) 
 {
     // BEGIN_PAYMENT
     payment_begin_packet_t* payment_packet;
 
+    assert(sf > 0);
+
+    // produce PAYMENT params according to tpcc spec v.5.4
+    int p_home_wh_id = URand(1, sf);
+    int p_home_d_id = URand(1, 10);
+    int select_wh = URand(1, 100); // 85 - 15
+    int p_rem_wh_id = URand(1, sf);
+    int p_rem_d_id = URand(1, 10);
+    int select_ident = URand(1, 100); // 60 - 40
+    int p_c_id = NURand(1023, 1, 3000);
+    char* p_c_last = generate_cust_last(NURand(255, 0, 999));
+    long p_amount = (long)URand(100, 500000)/(long)100.00;
+
+    char* p_date = "NEVER";
+    
     c_str packet_name("%s_payment_test", client_prefix.data());
 
 
     TRACE(TRACE_ALWAYS, 
 	  "!! HARD-CODED payment_begin_packet_t\n");
 
-    TRACE(TRACE_ALWAYS, "URand(0, 100) = %d\tURand(100, 1000) = %d\n", 
-          URand(0, 100), URand(100, 1000));
-
-    TRACE(TRACE_ALWAYS, "NURand(255, 0, 999) = %d\tNURand(1023, 1, 3000) = %d\n", 
-          NURand(255, 0, 999), NURand(1023, 1, 3000));
-
-    TRACE(TRACE_ALWAYS, "URand(0, 100) = %d\tURand(100, 1000) = %d\n", 
-          URand(0, 100), URand(100, 1000));
-
-    TRACE(TRACE_ALWAYS, "NURand(255, 0, 999) = %d\tNURand(1023, 1, 3000) = %d\n", 
-          NURand(255, 0, 999), NURand(1023, 1, 3000));
 
 
-    char* param_last = "EMPTY";
-    char* param_date = "NEVER";
 
     payment_packet = new payment_begin_packet_t(packet_name,
 						bp_output_buffer,
 						bp_output_filter,
-						1,
-						1,
-						10,
-						2,
-						2,
-						20,
-						1,
-						param_last,
-						5.0,
-						param_date);
+						p_home_wh_id,
+						p_home_d_id,
+						select_wh,
+						p_rem_wh_id,
+						p_rem_d_id,
+						select_ident,
+						p_c_id,
+						p_c_last,
+						p_amount,
+						p_date);
 					       
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);
+
+    payment_packet->describe_trx();
 
     return (payment_packet);
 }
