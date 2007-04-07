@@ -8,6 +8,12 @@
 
 ENTER_NAMESPACE(qpipe);
 
+// change this variable to set the style of sharing we use...
+
+osp_policy_t osp_global_policy = OSP_FULL;
+
+
+
 /**
  *  @brief packet_t constructor.
  *

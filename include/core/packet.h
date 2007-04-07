@@ -16,8 +16,8 @@ using std::list;
 ENTER_NAMESPACE(qpipe);
 
 
-// change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_FULL} osp_global_policy = OSP_FULL;
+typedef enum {OSP_NONE, OSP_FULL}  osp_policy_t;
+extern osp_policy_t osp_global_policy;
 
 /* reroute to dispatcher */
 bool is_osp_enabled_for_type(const c_str& packet_type);
