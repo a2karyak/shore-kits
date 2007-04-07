@@ -16,8 +16,10 @@
 # - stop profiling
 # - writes the command and its throughput to a file
 
+DIR=.
 function errcho()
 {
+    echo "$@" >> $DIR/script.out
     echo "$@" >&2
 }
 
@@ -28,7 +30,7 @@ function find_pid()
     # only allow exact matches at end of line
     PID=$(ps -u$USER | grep " $1$")
     RESULT=$?
-    errcho "PID search returned $PID with code $RESULT"
+#    errcho "PID search returned $PID with code $RESULT"
     if [ $RESULT -ne 0 ]; then
 	errcho "Unable to find a running instance of $1"
 	exit 1
@@ -48,10 +50,11 @@ sleep 1
 if [ $# -ne 3 ]; then
     cat >&2 <<EOF
 Usage:
-\$ collect-stats.sh <query-name> <cores> <output-dir> | ./qpipe > qpipe.out
+\$ collect-stats.sh <query> <cores> <dest-dir> < qpipe.in | ./qpipe > qpipe.out
 
-This script *must* be piped to the input of qpipe to control it
-qpipe *must* write its output to 'qpipe.out' for this script to read
+This script *must* be piped to the input of qpipe to control it.
+The script saves all input and output streams as log files in the dest-dir.
+qpipe *must* write its output to 'qpipe.out' for this script to read.
 EOF
     find_pid qpipe
     errcho "Killing qpipe ($PID)"
@@ -64,50 +67,123 @@ N=$2
 DIR=$3
 
 #globals
-MLIST="1 2 3 4 6 8 10 12 16 20 24 28 32 36 40"
-REPEAT=10
+MLIST="1 2 4 7 11 16 22 29 37 45" 
+REPEAT=3
 
 # overrides for testing
-MLIST="1 2 3"
-REPEAT=2
+#MLIST="1 2 3"
+#REPEAT=2
+
+mkdir -p $DIR
+# serialize this run
+SERFILE=$DIR/serial.txt
+if [ ! -e $SERFILE ]; then
+    echo 0 > $SERFILE
+fi
+
+read SERIAL < $SERFILE
+((SERIAL++))
+echo $SERIAL > $SERFILE
+SERIAL=$(printf "ser%04d" $SERIAL)
+
+# create a serialized dir to store output, then soft-link it for ease of use
+SUBDIR=$(printf "%s-n%02d" $QUERY $N)
+SERDIR=$SUBDIR-$SERIAL
+(
+    mkdir -p $DIR
+    cd $DIR
+    mkdir $SERDIR
+    rm -f $SUBDIR
+    ln -s $SERDIR $SUBDIR
+)
+DIR=$DIR/$SUBDIR
+SERDIR=$DIR/$SERDIR
 
 find_pid qpipe
 QPIPE_PID=$PID
 errcho "Found qpipe with PID $QPIPE_PID"
+
+FAIL_PSRSET=no
+if [ "$N" -lt 32 ]; then
+    errcho "Giving the user a chance to bind qpipe to a processor set of size $N..."
+    sleep 10
+    errcho "... checking processor set"
+    PSRSET=$(/usr/sbin/psrset -q $QPIPE_PID)
+    if [ -n "$PSRSET" ]; then
+	errcho "qpipe is not bound to a processor set and N=$N"
+	FAIL_PSRSET=yes
+    else
+	PSRSET_SIZE=$(/usr/sbin/psrset -i $PSRSET | wc -w)
+	# The output of psrset is "user processor set N: ..."
+	((PSRSET_SIZE -= 4))
+	if [ "$PSRSET_SIZE" -ne "$N" ]; then
+	    errcho "qpipe bound to a processor set of size $PSRSET_SIZE when N=$N"
+	    FAIL_PSRSET=yes
+	fi
+    fi
+else
+    # make usre there are no processor sets defined
+    if [ ! -n "$(/usr/sbin/psrset)" ]; then
+	errcho "processor sets exist when N=32"
+	FAIL_PSRSET=yes
+    fi
+fi
+
+if [ "$FAIL_PSRSET" == "yes" ]; then
+    errcho "killing qpipe"
+    kill $QPIPE_PID
+    exit 1
+fi
+
 errcho "Making $REPEAT runs for m = {$MLIST}" 
 
+# make a backup of the qpipe executable so we can repeat the experiment
+cp qpipe $SERDIR
 
-# Create dbx commands
+function echodbx()
+{
+    echo echo "$@"
+    echo "$@"
+}
+
+# Create controlled dbx session
 (
-    echo attach $QPIPE_PID
-#    echo set -o '$sigblock'
-    echo print '"cont"'
-    echo cont
-    echo print '"debugger back"'
-    #echo collector store directory $DIR
+    echodbx date
+    echodbx attach $QPIPE_PID
+    echodbx cont
+    echodbx collector store directory $PWD/$DIR
+    
+    # unshared execution    
     for m in $MLIST; do
-#	echo collector store group $QUERY-n$N-m$m.erg
+	echodbx collector store group $(printf "m%02d-noWS.erg" $m)
 	for((i=0; i < REPEAT; i++)); do   
-#	    echo collector store experiment $QUERY-n$N-m$m-$i.er
-#	    echo collector enable
-	    echo print '"cont"'
-	    echo cont
-	    echo print '"debugger back"'
-#	    echo collector disable
+	    echodbx collector enable
+	    echodbx cont
+	    echodbx collector disable
 	done
     done
-    echo "exit"
-) > dbx.in
 
-# Start dbx
-(dbx 2>&1 < dbx.in) > dbx.out &
+    # shared execution
+    for m in $MLIST; do
+	echodbx collector store group $(printf "m%02d-WS.erg" $m)
+	for((i=0; i < REPEAT; i++)); do   
+	    echodbx collector enable
+	    echodbx cont
+	    echodbx collector disable
+	done
+    done
+    echodbx exit
+) > $DIR/dbx.in
+
+(dbx < $DIR/dbx.in 2>&1) > $DIR/dbx.out &
 
 
 # find dbx  ($! points to the subshell running it)
 find_pid dbx
 DBX_PID=$PID
 errcho "Started dbx with PID $DBX_PID"
-    
+
+WAIT_STRING="Interactive"
 function wait_for_qpipe()
 {
     errcho "Waiting for qpipe prompt to return"
@@ -115,13 +191,12 @@ function wait_for_qpipe()
     while read line; do 
 	# make sure we are ready
 	errcho "$line"
-	if echo $line | grep "Throughput" || echo $line | grep "Interactive"; then
-	    THROUGHPUT=$(echo $line | grep "Throughput")
-	    # make dbx run the next set of commands
-#	    sleep 1
-#	    kill -INT $DBX_PID
+#	errcho $(echo $line | grep "$WAIT_STRING")
+	if echo $line | grep "$WAIT_STRING"; then
+	    WAIT_STRING="Throughput"
+	    THROUGHPUT=$line
+	    # break into dbx so it runs the next set of commands
 	    kill -INT $QPIPE_PID
-#	    sleep 1
 	    return 0
 	fi
     done
@@ -135,23 +210,46 @@ function wait_for_qpipe()
 # wait for the first qpipe prompt to appear
 wait_for_qpipe
 
-rm -f $DIR/throughputs.dat
+
+function echoqpipe()
+{
+    errcho "$@"
+    echo "$@" >> $DIR/qpipe.in
+    echo "$@"
+}
 
 # for each number of sharers
+
+# unshared execution
+OUTFILE=$DIR/throughput-noWS.dat
+echoqpipe sharing global_disable
 for m in $MLIST; do
     # repeat 10 times for consistency
     for((i=0; i < REPEAT; i++)); do
 	# send the next command to qpipe
-	echo "tpch $QUERY $m 1 0 OS"
+	echoqpipe "tpch $QUERY $m 1 0 OS"
 	wait_for_qpipe
-	echo $QUERY-n$N-m$m-$i $(echo $THROUGHPUT | awk '{print $6}') >> $DIR/throughputs.dat
+	echo m$m-$i $(echo $THROUGHPUT | awk '{print $6}') >> $OUTFILE
     done
 done
 
-# by exiting we cause qpipe to quit
-# The last time dbx got an INT it was out of commands and exited
+# shared execution
+OUTFILE=$DIR/throughput-WS.dat
+echoqpipe sharing global_enable
+echoqpipe tracer enable TRACE_WORK_SHARING
+for m in $MLIST; do
+    # repeat 10 times for consistency
+    for((i=0; i < REPEAT; i++)); do
+	# send the next command to qpipe
+	echoqpipe "tpch $QUERY $m 1 0 OS"
+	wait_for_qpipe
+	echo m$m-$i $(echo $THROUGHPUT | awk '{print $6}') >> $OUTFILE
+    done
+done
+
+# The last time dbx got an INT it should have run its exit command
 errcho "Experiments complete. Exiting..."
-echo "quit"
+echoqpipe "quit"
 
 # pick up the rest of qpipe's output so we don't get a broken pipe
-while read line; do echo $line; done
+while read line; do errcho $line; done
