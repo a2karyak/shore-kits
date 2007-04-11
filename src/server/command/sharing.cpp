@@ -71,28 +71,24 @@ void sharing_t::handle_command(const char* command)
 
 void sharing_t::global_enable()
 {
-    qpipe::osp_global_policy = qpipe::OSP_FULL;
+    qpipe::packet_t::global_osp_set(true);
 }
 
 
 
 void sharing_t::global_disable()
 {
-    qpipe::osp_global_policy = qpipe::OSP_NONE;
+    qpipe::packet_t::global_osp_set(false);
 }
 
 
 
 c_str sharing_t::global_sharing_policy()
 {
-    switch(qpipe::osp_global_policy) {
-    case qpipe::OSP_NONE:
-        return c_str("OSP_NONE");
-    case qpipe::OSP_FULL:
+    if (qpipe::packet_t::global_osp_is_enabled())
         return c_str("OSP_FULL");
-    default:
-        return c_str("Unrecognized type!");
-    }
+    else
+        return c_str("OSP_NONE");
 }
 
 

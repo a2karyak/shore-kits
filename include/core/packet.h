@@ -16,16 +16,13 @@ using std::list;
 ENTER_NAMESPACE(qpipe);
 
 
-// change this variable to set the style of sharing we use...
-static enum {OSP_NONE, OSP_FULL} osp_global_policy = OSP_FULL;
 
-/* reroute to dispatcher */
+/* Per-packet OSP: Reroute to dispatcher */
 bool is_osp_enabled_for_type(const c_str& packet_type);
 
 
 
 /* exported datatypes */
-
 
 class   packet_t;
 typedef list<packet_t*> packet_list_t;
@@ -59,6 +56,23 @@ struct query_plan {
  */
 class packet_t
 {
+    /* Global OSP policy */
+private:
+    typedef enum {OSP_NONE, OSP_FULL} global_osp_policy_t;
+    static global_osp_policy_t global_osp_policy;
+
+public:
+
+    static bool global_osp_is_enabled() {
+        assert((global_osp_policy == OSP_NONE) ||
+               (global_osp_policy == OSP_FULL));
+        return global_osp_policy == OSP_FULL;
+    }
+
+    static void global_osp_set(bool enable) {
+        global_osp_policy = enable ? OSP_FULL : OSP_NONE;
+    }
+
 
 protected:
 
@@ -95,7 +109,9 @@ protected:
     
     bool is_compatible(packet_t* other) {
 
-        if (osp_global_policy == OSP_NONE)
+        /* If we have disabled OSP (work sharing) system-wide, we
+           don't permit merging. */
+        if (!global_osp_is_enabled())
 	    return false;
 
         /* Check packet type with dispatcher. Either of our types
@@ -163,8 +179,10 @@ public:
     
     bool is_merge_enabled() {
 
-        if (osp_global_policy == OSP_NONE)
-            return false;
+        /* If we have disabled OSP (work sharing) system-wide, we
+           don't permit merging. */
+        if (!global_osp_is_enabled())
+	    return false;
         
         /* Check packet type with dispatcher. Either of our types
            should be ok since we will only merge if types are
