@@ -2,9 +2,6 @@
 
 /* hash_join_stage.h */
 /* Declaration of the hash_join_stage hash_join_packet classes */
-/* History: 
-   3/3/2006: Removed the static hash_join_cnt variable of the hash_join_packet_t class, instead it  uses the singleton stage_packet_counter class.
-*/
 
 
 #ifndef __HASH_JOIN_STAGE_H

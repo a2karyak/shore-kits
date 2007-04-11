@@ -39,8 +39,57 @@ void payment_finalize_stage_t::process_packet() {
 
     packet->describe_trx();
 
+    /* First dispatch all the payment packets */
+    dispatcher_t::dispatch_packet(packet->_upd_wh);
+    dispatcher_t::dispatch_packet(packet->_upd_distr);
+    dispatcher_t::dispatch_packet(packet->_upd_cust);
+    dispatcher_t::dispatch_packet(packet->_ins_hist);
 
-    TRACE( TRACE_ALWAYS, "!! FINALIZING TRX=%d !!\n", packet->trx_id());
+    /* Variables used to determine the transaction status.
+       All stages return a single integer indicating success/failure */
+    int trx_status = 0;
+    tuple_t trx_result;
+
+    /* Get the results of each sub-transaction */
+    trx_status = packet->_upd_wh_buffer->get_tuple(trx_result);
+    
+    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+        // should abort
+        packet->set_trx_state(POISSONED);
+        packet->rollback();
+    }
+
+    trx_status = packet->_upd_distr_buffer->get_tuple(trx_result);
+    
+    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+        // should abort
+        packet->set_trx_state(POISSONED);
+        packet->rollback();
+    }
+
+    trx_status = packet->_upd_cust_buffer->get_tuple(trx_result);
+    
+    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+        // should abort
+        packet->set_trx_state(POISSONED);
+        packet->rollback();
+    }
+
+    trx_status = packet->_ins_hist_buffer->get_tuple(trx_result);
+    
+    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+        // should abort
+        packet->set_trx_state(POISSONED);
+        packet->rollback();
+    }
+
+
+    // if reached this point should commit
+    packet->commit();
+    packet->set_trx_state(COMMITTED);
+
+
 
 } // process_packet
+
 

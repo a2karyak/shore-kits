@@ -1,7 +1,9 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #ifndef _STAGES_H
 #define _STAGES_H
 
+// basic stages
 #include "stages/aggregate.h"
 #include "stages/bnl_in.h"
 #include "stages/bnl_join.h"
@@ -20,12 +22,15 @@
 #include "stages/sieve.h"
 #include "stages/tuple_source.h"
 
-#include "stages/tpcc/payment_begin.h"
-#include "stages/tpcc/payment_upd_wh.h"
-#include "stages/tpcc/payment_upd_distr.h"
-#include "stages/tpcc/payment_upd_cust.h"
-#include "stages/tpcc/payment_ins_hist.h"
-#include "stages/tpcc/payment_finalize.h"
+// transactional stages
+#include "stages/tpcc/payment.h"
+//#include "stages/tpcc/payment_upd_wh.h"
+//#include "stages/tpcc/payment_upd_distr.h"
+//#include "stages/tpcc/payment_upd_cust.h"
+//#include "stages/tpcc/payment_ins_hist.h"
+//#include "stages/tpcc/payment_finalize.h"
+//#include "stages/tpcc/payment_begin.h"
+
 
 
 #endif

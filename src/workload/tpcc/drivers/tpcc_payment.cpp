@@ -44,8 +44,9 @@ public:
     virtual void process(const tuple_t& output) {
 	int* tmp;
 	tmp = aligned_cast<int>(output.data);
+
         TRACE(TRACE_QUERY_RESULTS, "*** Count: %d. TRX: %d ***\n",
-	      ++row_counter, *tmp);
+       	      ++row_counter, *tmp);
     }
 
 }; // END OF: payment_process_tuple_t
@@ -91,7 +92,8 @@ void tpcc_payment_driver::submit(void* disp) {
 
 /** @func create_begin_payment_packet
  *
- *  @brief Creates a new PAYMENT request, given the scaling factor (sf) of the database
+ *  @brief Creates a new PAYMENT request, given the scaling factor (sf) 
+ *  of the database
  */
 
 payment_begin_packet_t* 

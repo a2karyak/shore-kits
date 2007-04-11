@@ -5,9 +5,15 @@
 
 #include <cstdio>
 
-#include "stages/tpcc/trx_packet.h"
 #include "core.h"
 #include "util.h"
+#include "scheduler.h"
+
+#include "stages/tpcc/trx_packet.h"
+#include "stages/tpcc/payment_upd_wh.h"
+#include "stages/tpcc/payment_upd_distr.h"
+#include "stages/tpcc/payment_upd_cust.h"
+#include "stages/tpcc/payment_ins_hist.h"
 
 
 using namespace qpipe;
@@ -21,6 +27,18 @@ class payment_finalize_packet_t : public trx_packet_t {
 public:
 
     static const c_str PACKET_TYPE;
+
+    /* The input packets */
+    guard<trx_packet_t> _upd_wh;
+    guard<trx_packet_t> _upd_distr;
+    guard<trx_packet_t> _upd_cust;
+    guard<trx_packet_t> _ins_hist;
+
+    /* The input buffers */
+    guard<tuple_fifo> _upd_wh_buffer;
+    guard<tuple_fifo> _upd_distr_buffer;
+    guard<tuple_fifo> _upd_cust_buffer;
+    guard<tuple_fifo> _ins_hist_buffer;
 
 
     /**
@@ -41,18 +59,32 @@ public:
      *  will be deleted in the packet destructor.
      *
      *  @param trx_id The transaction id
+     *
+     *  @param The four packets that make the payment transaction
      */
 
     payment_finalize_packet_t(const c_str    &packet_id,
                               tuple_fifo*     output_buffer,
                               tuple_filter_t* output_filter,
-                              const int a_trx_id)
+                              const int a_trx_id,
+                              payment_upd_wh_packet_t* upd_wh,
+                              payment_upd_distr_packet_t* upd_distr,
+                              payment_upd_cust_packet_t* upd_cust,
+                              payment_ins_hist_packet_t* ins_hist)
 	: trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                        create_plan(a_trx_id),
                        true, /* merging allowed */
                        true,  /* unreserve worker on completion */
                        a_trx_id
-                       )
+                       ),
+        _upd_wh(upd_wh),
+        _upd_distr(upd_distr),
+        _upd_cust(upd_cust),
+        _ins_hist(ins_hist),
+        _upd_wh_buffer(upd_wh->output_buffer()),
+        _upd_distr_buffer(upd_distr->output_buffer()),
+        _upd_cust_buffer(upd_cust->output_buffer()),
+        _ins_hist_buffer(ins_hist->output_buffer())
     {
     }
 
@@ -81,6 +113,26 @@ public:
         declare->declare(_packet_type, 1);
         /* no inputs */
     }
+
+
+    /** @brief Calls all the payment_* packets of this transaction to rollback */
+    
+    void rollback() {
+        _upd_wh->rollback();
+        _upd_distr->rollback();
+        _upd_cust->rollback();
+        _ins_hist->rollback();
+    }
+
+    /** @brief Calls all the payment_* packets of this transaction to commit */
+
+    void commit() {
+        _upd_wh->commit();
+        _upd_distr->commit();
+        _upd_cust->commit();
+        _ins_hist->commit();
+    }
+        
 
 }; // END OF CLASS: payment_finalize_packet_t
 

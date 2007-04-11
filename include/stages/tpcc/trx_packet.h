@@ -83,6 +83,26 @@ public:
         _trx_id = a_trx_id;
     }
 
+    TrxState trx_state() {
+        return (_trx_state);
+    }
+    
+    void set_trx_state(TrxState a_trx_state) {
+        
+        assert (a_trx_state > UNDEF);
+        
+        _trx_state = a_trx_state;
+    }
+
+
+    virtual void rollback() {
+        TRACE( TRACE_ALWAYS, "TRX - %d SHOULD ROLLBACK!\n", _trx_id);
+    }
+
+    virtual void commit() {
+        TRACE( TRACE_ALWAYS, "TRX - %d SHOULD COMMIT!\n", _trx_id);
+    }
+
 
 }; // END OF CLASS: trx_packet
 

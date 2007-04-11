@@ -64,5 +64,11 @@ void register_stage_containers() {
 
     // FIXME: (ip) Should be relative with the MAX_NUM_TRXS
     register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS); 
+    register_stage<payment_upd_wh_stage_t>(MAX_NUM_CLIENTS); 
+    register_stage<payment_upd_distr_stage_t>(MAX_NUM_CLIENTS); 
+    register_stage<payment_upd_cust_stage_t>(MAX_NUM_CLIENTS); 
+    register_stage<payment_ins_hist_stage_t>(MAX_NUM_CLIENTS); 
+    register_stage<payment_finalize_stage_t>(MAX_NUM_CLIENTS); 
+
 #endif
 }

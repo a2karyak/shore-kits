@@ -5,15 +5,23 @@
 
 #include <cstdio>
 
-#include "stages/tpcc/trx_packet.h"
 #include "core.h"
 #include "util.h"
+#include "scheduler.h"
 
+#include "stages/tpcc/trx_packet.h"
+//#include "stages/tpcc/payment.h"
+#include "stages/tpcc/payment_upd_wh.h"
+#include "stages/tpcc/payment_upd_distr.h"
+#include "stages/tpcc/payment_upd_cust.h"
+#include "stages/tpcc/payment_ins_hist.h"
+#include "stages/tpcc/payment_finalize.h"
 
 using namespace qpipe;
 
 
 /* exported datatypes */
+
 
 class payment_begin_packet_t : public trx_packet_t {
   
@@ -191,7 +199,65 @@ public:
         //	thread_mutex_destroy( _trx_counter_mutex );
     }
 
+    /** @brief Returns the next trx_id */
     int get_next_counter();
+
+    /** @brief Retuns a payment_upd_wh_packet_t */
+    payment_upd_wh_packet_t* create_payment_upd_wh_packet(const c_str& client_prefix,
+                                                          tuple_fifo* uwh_buffer,
+                                                          tuple_filter_t* uwh_filter,
+                                                          scheduler::policy_t* dp,
+                                                          int a_trx_id,
+                                                          int a_wh_id,
+                                                          double a_amount);
+
+    /** @brief Returns a payment_upd_distr_packet_t */
+    payment_upd_distr_packet_t* create_payment_upd_distr_packet(const c_str& client_prefix,
+                                                                tuple_fifo* ud_buffer,
+                                                                tuple_filter_t* ud_filter,
+                                                                scheduler::policy_t* dp,
+                                                                int a_trx_id,
+                                                                int a_wh_id,
+                                                                int a_distr_id,
+                                                                double a_amount);
+    
+
+    /** @brief Returns a payment_upd_cust_packet_t */
+    payment_upd_cust_packet_t* create_payment_upd_cust_packet(const c_str& client_prefix,
+                                                              tuple_fifo* uc_buffer,
+                                                              tuple_filter_t* uc_filter,
+                                                              scheduler::policy_t* dp,
+                                                              int a_trx_id,
+                                                              int a_wh_id,
+                                                              int a_distr_id,
+                                                              int a_cust_id,
+                                                              char* a_cust_last,
+                                                              double a_amount);
+    
+    /** @brief Returns a payment_ins_hist_packet_t */
+    payment_ins_hist_packet_t* create_payment_ins_hist_packet(const c_str& client_prefix,
+                                                              tuple_fifo* ih_buffer,
+                                                              tuple_filter_t* ih_filter,
+                                                              scheduler::policy_t* dp,
+                                                              int a_trx_id,
+                                                              int a_wh_id,
+                                                              int a_distr_id,
+                                                              int a_cust_id,
+                                                              int a_cust_wh_id,
+                                                              int a_cust_distr_id);
+    
+    /** @brief Returns a payment_finalize_packet_t */
+    payment_finalize_packet_t* create_payment_finalize_packet(const c_str& client_prefix,
+                                                              tuple_fifo* fin_buffer,
+                                                              tuple_filter_t* fin_filter,
+                                                              scheduler::policy_t* dp,
+                                                              int a_trx_id,
+                                                              payment_upd_wh_packet_t* upd_wh,
+                                                              payment_upd_distr_packet_t* upd_distr,
+                                                              payment_upd_cust_packet_t* upd_cust,
+                                                              payment_ins_hist_packet_t* ins_hist);
+
+    
     
 }; // END OF CLASS: payment_begin_stage_t
 
