@@ -17,7 +17,8 @@ ENTER_NAMESPACE(qpipe);
 
 // exported constants
 
-static const int DEFAULT_BUFFER_PAGES = 100;
+// static const int DEFAULT_BUFFER_PAGES = 100; // DSS-style workload
+static const int DEFAULT_BUFFER_PAGES = 1; // OLTP-style workload
 
 
 

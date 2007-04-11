@@ -21,6 +21,12 @@
 #include "stages/tuple_source.h"
 
 #include "stages/tpcc/payment_begin.h"
+#include "stages/tpcc/payment_upd_wh.h"
+#include "stages/tpcc/payment_upd_distr.h"
+#include "stages/tpcc/payment_upd_cust.h"
+#include "stages/tpcc/payment_ins_hist.h"
+#include "stages/tpcc/payment_finalize.h"
+
 
 #endif
 

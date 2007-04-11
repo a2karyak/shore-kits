@@ -46,6 +46,10 @@ void payment_begin_stage_t::process_packet() {
 	  "Processing PAYMENT_BEGIN with id: %d\n", 
 	  packet->trx_id());
 
+    packet->describe_trx();
+
+    /** FIXME: (ip) Below is a test */
+
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
      size_t dest_size = packet->output_buffer()->tuple_size();

@@ -200,8 +200,7 @@ void tpcc_handler_t::print_run_statistics(const c_str& desc,
     tuple_fifo::clear_stats();
     
     // print final statistics
-    int trx_completed =
-        results.num_clients * results.num_iterations;
+    int trx_completed = results.num_clients * results.num_iterations;
     
     // queries per hour
     float tpmC = (60.0 * trx_completed) / results.total_time;

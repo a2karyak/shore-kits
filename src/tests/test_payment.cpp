@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 
     query_info_t info = query_init(argc, argv);
     
-    register_stage<payment_begin_stage_t>(1);
+    register_stage<payment_begin_stage_t>(10);
 
     workload::tpcc_payment_driver driver(c_str("PAYMENT"));
 

@@ -117,14 +117,10 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
     char* p_c_last = generate_cust_last(NURand(255, 0, 999));
     long p_amount = (long)URand(100, 500000)/(long)100.00;
 
+    // FIXME: (ip) Correct p_date value
     char* p_date = "NEVER";
     
     c_str packet_name("%s_payment_test", client_prefix.data());
-
-
-    TRACE(TRACE_ALWAYS, 
-	  "!! HARD-CODED payment_begin_packet_t\n");
-
 
 
 
@@ -145,8 +141,6 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);
-
-    payment_packet->describe_trx();
 
     return (payment_packet);
 }

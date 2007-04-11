@@ -1,4 +1,5 @@
 // -*- mode:c++; c-basic-offset:4 -*-
+
 #ifndef __PREDICATES_H
 #define __PREDICATES_H
 
@@ -28,6 +29,7 @@ ENTER_NAMESPACE(workload);
 /**
  * @brief Composable predicate base class.
  */
+
 struct predicate_t {
     virtual bool select(const tuple_t &tuple)=0;
 
@@ -64,6 +66,7 @@ public:
     }
 };
 
+
 /**
  * @brief string predicate. Given a field type and offset in the
  * tuple, it extracts the field and tests it against the given
@@ -94,6 +97,7 @@ public:
 /**
  * @brief string predicate that performs 'like' comparisons.
  */
+
 template <bool INVERTED=false>
 class like_predicate : public predicate_t {
     size_t _offset;
@@ -127,6 +131,7 @@ class like_predicate : public predicate_t {
         if((beg + 1) != value.size())
             _eol = value.substr(beg, value.size());
     }
+
 public:
     like_predicate(const string &value, size_t offset)
         : _offset(offset)
@@ -205,6 +210,7 @@ public:
  * @brief Conjunctive predicate. Selects a tuple only if all of its
  * internal predicates pass.
  */
+
 template<bool DISJUNCTION>
 class compound_predicate_t : public predicate_t {
 public:

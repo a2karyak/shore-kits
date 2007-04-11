@@ -13,14 +13,6 @@
 using namespace qpipe;
 
 
-/**
- *  @brief Possible states of a transaction
- */
-
-enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
-		COMMITTED, ROLLBACKED };
-
-
 /* exported datatypes */
 
 class payment_begin_packet_t : public trx_packet_t {
@@ -29,7 +21,6 @@ public:
 
     static const c_str PACKET_TYPE;
 
-    TrxState _trx_state;
 
     /**
      *  @brief PAYMENT transaction inputs:
@@ -131,12 +122,14 @@ public:
 
     void describe_trx() {
 
-        TRACE( TRACE_ALWAYS, \
-               "PAYMENT:\nWH_ID=%d\t\tD_ID=%d\n" \
+        TRACE( TRACE_ALWAYS,
+               "\nPAYMENT - TRX=%d\n" \
+               "WH_ID=%d\t\tD_ID=%d\n" \
                "SEL_WH=%d\tSEL_IDENT=%d\n" \
                "REM_WH_ID=%d\tREM_D_ID=%d\n" \
                "C_ID=%d\tC_LAST=%s\n" \
                "H_AMOUNT=%.2f\tH_DATE=%s\n", \
+               _trx_id,
                _home_wh_id, _home_d_id, 
                _v_cust_wh_selection, _v_cust_ident_selection,
                _remote_wh_id, _remote_d_id,
@@ -168,12 +161,11 @@ public:
 /**
  *  @brief PAYMENT_BEGIN stage. 
  *
- *  1) Assigns a unique id to the submitted PAYMENT transaction and submits the 
- *  appropriate packets to their stages (PAYMENT_CUST, PAYMENT_WH, and 
- *  PAYMENT_DIST).
+ *  1) Assigns a unique id to the submitted PAYMENT transaction
  *
- *  2) Once all packets return: Commits if everyone successful. Rollbacks if any
- *  probkem.
+ *  2) Submits the appropriate packets to their stages (PAYMENT_UPD_CUST, 
+ *  PAYMENT_UPD_WH, PAYMENT_UPD_DISTR and PAYMENT_INS_HIST) and a transaction
+ *  finalization packet (PAYMENT_FINALIZE)
  */
 
 class payment_begin_stage_t : public stage_t {
@@ -196,7 +188,7 @@ public:
     virtual ~payment_begin_stage_t() { 
 
 	TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN destructor\n");	
-	thread_mutex_destroy( _trx_counter_mutex );
+        //	thread_mutex_destroy( _trx_counter_mutex );
     }
 
     int get_next_counter();

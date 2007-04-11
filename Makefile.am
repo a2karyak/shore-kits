@@ -143,6 +143,11 @@ lib_libstages_a_SOURCES = \
    $(SG)/bnl_in.cpp \
    $(SG)/tpcc/trx_packet.cpp \
    $(SG)/tpcc/payment_begin.cpp \
+   $(SG)/tpcc/payment_upd_wh.cpp \
+   $(SG)/tpcc/payment_upd_distr.cpp \
+   $(SG)/tpcc/payment_upd_cust.cpp \
+   $(SG)/tpcc/payment_ins_hist.cpp \
+   $(SG)/tpcc/payment_finalize.cpp \
    $(SG)/echo.cpp \
    $(SG)/sieve.cpp
 
