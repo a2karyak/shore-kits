@@ -359,6 +359,9 @@ void stage_container_t::enqueue(packet_t* packet) {
                 // * * * END CRITICAL SECTION * * *
                 cs.exit();
                 if (unreserve)
+                    /* Still need to do this check since worker may
+                       have been reserved by a meta-stage which does
+                       not want us to free it. */
                     wr->release_resources();
                 return;
             }

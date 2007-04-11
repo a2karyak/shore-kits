@@ -42,6 +42,7 @@ static int total_fifos_created = 0;
 static int total_fifos_experienced_read_wait = 0;
 static int total_fifos_experienced_write_wait = 0;
 static int total_fifos_experienced_wait = 0;
+static int total_fifos_stayed_in_memory = 0;
 
 
 
@@ -87,6 +88,9 @@ void tuple_fifo::trace_stats() {
     TRACE(TRACE_ALWAYS,
           "%lf experienced write waits\n",
           (double)total_fifos_experienced_write_wait/total_fifos_created);
+    TRACE(TRACE_ALWAYS,
+          "%lf stayed in memory\n",
+          (double)total_fifos_stayed_in_memory/total_fifos_created);
 }
 
 
@@ -192,7 +196,8 @@ void tuple_fifo::destroy() {
 
     std::for_each(_pages.begin(), _pages.end(), free_page());
     std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
-	
+
+
     if (_page_file != -1) {
         close(_page_file);
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
@@ -200,6 +205,7 @@ void tuple_fifo::destroy() {
             THROW2(TupleFifoDirectoryException,
                    "unlink(%s) failed", filepath.data());
     }
+
 
     /* update stats */
     critical_section_t cs(tuple_fifo_stats_mutex);
@@ -212,6 +218,10 @@ void tuple_fifo::destroy() {
         total_fifos_experienced_write_wait++;
     if (read_wait || write_wait)
         total_fifos_experienced_wait++;
+    if (is_in_memory())
+        total_fifos_stayed_in_memory++;
+    cs.exit();
+
 
     TRACE(TRACE_MASK_WAITS & TRACE_ALWAYS,
           "Blocked on insert %.2f\n",
