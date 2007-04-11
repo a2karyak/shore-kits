@@ -21,7 +21,7 @@ ENTER_NAMESPACE(qpipe);
 /* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
-static const bool FLUSH_TO_DISK_ON_FULL = false;
+static const bool FLUSH_TO_DISK_ON_FULL = true;
 static const bool USE_DIRECT_IO = false;
 
 /**
@@ -39,6 +39,7 @@ static const bool SYNC_AFTER_WRITES = (!USE_DIRECT_IO) && false;
 static pthread_mutex_t tuple_fifo_stats_mutex = thread_mutex_create();
 static int open_fifo_count = 0;
 static int total_fifos_created = 0;
+static int total_fifos_destroyed = 0;
 static int total_fifos_experienced_read_wait = 0;
 static int total_fifos_experienced_write_wait = 0;
 static int total_fifos_experienced_wait = 0;
@@ -66,8 +67,11 @@ void tuple_fifo::clear_stats() {
     critical_section_t cs(tuple_fifo_stats_mutex);
     open_fifo_count = 0;
     total_fifos_created = 0;
+    total_fifos_destroyed = 0;
     total_fifos_experienced_read_wait = 0;
     total_fifos_experienced_write_wait = 0;
+    total_fifos_experienced_wait = 0;
+    total_fifos_stayed_in_memory = 0;
 }
 
 
@@ -81,13 +85,20 @@ void tuple_fifo::trace_stats() {
     TRACE(TRACE_ALWAYS,
           "%d tuple_fifos created\n", total_fifos_created);
     TRACE(TRACE_ALWAYS,
+          "%d tuple_fifos destroyed\n", total_fifos_destroyed);
+    TRACE(TRACE_ALWAYS,
           "%d currently open\n", open_fifo_count);
+    TRACE(TRACE_ALWAYS,
+          "%d tuple_fifos stayed in memory\n", total_fifos_stayed_in_memory);
     TRACE(TRACE_ALWAYS,
           "%lf experienced read waits\n",
           (double)total_fifos_experienced_read_wait/total_fifos_created);
     TRACE(TRACE_ALWAYS,
           "%lf experienced write waits\n",
           (double)total_fifos_experienced_write_wait/total_fifos_created);
+    TRACE(TRACE_ALWAYS,
+          "%lf experienced waits (read or write)\n",
+          (double)total_fifos_experienced_wait/total_fifos_created);
     TRACE(TRACE_ALWAYS,
           "%lf stayed in memory\n",
           (double)total_fifos_stayed_in_memory/total_fifos_created);
@@ -210,6 +221,7 @@ void tuple_fifo::destroy() {
     /* update stats */
     critical_section_t cs(tuple_fifo_stats_mutex);
     open_fifo_count--;
+    total_fifos_destroyed++;
     bool write_wait = _num_waits_on_insert > 0;
     bool read_wait  = _num_waits_on_remove > 0;
     if (read_wait)
