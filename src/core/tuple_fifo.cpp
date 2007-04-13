@@ -50,6 +50,8 @@ static struct {
     int total_fifos_stayed_in_memory;
     int total_fifos_terminated_in_memory;
     int total_fifos_terminated_on_disk;
+    int total_fifos_shared;
+
 } _tuple_fifo_stats;
 
 
@@ -96,6 +98,9 @@ void tuple_fifo::trace_stats() {
           _tuple_fifo_stats.total_fifos_terminated_in_memory);
     TRACE(TRACE_ALWAYS, "%d tuple_fifos terminated while on disk\n",
           _tuple_fifo_stats.total_fifos_terminated_on_disk);
+
+    TRACE(TRACE_ALWAYS, "%d tuple_fifos shared\n",
+          _tuple_fifo_stats.total_fifos_shared);
 }
 
 
@@ -236,6 +241,8 @@ void tuple_fifo::destroy() {
             _tuple_fifo_stats.total_fifos_terminated_in_memory++;
         else
             _tuple_fifo_stats.total_fifos_terminated_on_disk++;
+    if (is_shared())
+        _tuple_fifo_stats.total_fifos_shared++;
     cs.exit();
 
 
