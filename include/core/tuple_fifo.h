@@ -336,17 +336,8 @@ public:
      * packets. The caller must not be holding the _lock mutex when
      * invoking this method.
      */
-    void set_shared() {
-        critical_section_t cs(_lock);
+    void set_shared();
 
-        _is_shared = true;
-
-        /* The writer may be waiting for the tuple_fifo to drain. Now
-           that the tuple_fifo is being shared, the writer may be
-           forced to flush pages to disk to avoid deadlock. */
-        ensure_writer_running();
-    }
-  
 
 private:
 

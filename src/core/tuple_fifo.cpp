@@ -347,21 +347,42 @@ bool tuple_fifo::terminate() {
 
 
 
+void tuple_fifo::set_shared() {
+
+    critical_section_t cs(_lock);
+    
+    _is_shared = true;
+    
+    /* The writer may be waiting for the tuple_fifo to drain. Now
+       that the tuple_fifo is being shared, the writer may be
+       forced to flush pages to disk to avoid deadlock. */
+    ensure_writer_running();
+}
+
+
+
 /* definitions of helper methods */
+
 
 inline void tuple_fifo::wait_for_reader() {
     _num_waits_on_insert++;
     thread_cond_wait(_writer_notify, _lock);
 }
 
+
+
 inline void tuple_fifo::ensure_reader_running() {
     thread_cond_signal(_reader_notify);
 }
+
+
 
 inline bool tuple_fifo::wait_for_writer(int timeout_ms) {
     _num_waits_on_remove++;
     return thread_cond_wait(_reader_notify, _lock, timeout_ms);
 }
+
+
 
 inline void tuple_fifo::ensure_writer_running() {
     thread_cond_signal(_writer_notify);
