@@ -64,13 +64,13 @@ void config_command_t::handle_command(const char* command)
     }
 
 
-    if (!strcmp(tag, "known")) {
+    if (!strcmp(tag, "list")) {
         print_known_vars();
         return;
     }
 
 
-    if (!strcmp(tag, "list")) {
+    if (!strcmp(tag, "enabled")) {
         print_enabled_vars();
         return;
     }
@@ -163,5 +163,5 @@ void config_command_t::print_enabled_vars() {
 
 
 void config_command_t::print_usage(const char* command_tag) {
-    TRACE(TRACE_ALWAYS, "%s known|list|enable <type>|disable <type>\n", command_tag);
+    TRACE(TRACE_ALWAYS, "%s list|enabled|enable <type>|disable <type>\n", command_tag);
 }

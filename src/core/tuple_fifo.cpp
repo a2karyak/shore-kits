@@ -507,10 +507,9 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             _termination_check();
         }
         if (waited)
-            assert(_available_memory_writes() >= _threshold);
-
+            assert(is_shared() || (_available_memory_writes() >= _threshold));
     }
-        
+    
 
     /* Add _write_page to other tuple_fifo pages unless empty. */
     if(!_write_page->empty()) {
