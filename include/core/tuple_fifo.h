@@ -19,6 +19,7 @@ int tuple_fifo_generate_id();
 
 extern bool FLUSH_TO_DISK_ON_FULL;
 extern bool USE_DIRECT_IO;
+extern bool WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN;
 
 
 

@@ -9,9 +9,11 @@ using namespace qpipe;
 ENTER_NAMESPACE(workload);
 
 
+bool USE_DETERMINISTIC_PREDICATES = true;
+
 
 static bool use_deterministic_predicates(void) {
-    return true;
+    return USE_DETERMINISTIC_PREDICATES;
 }
 
 

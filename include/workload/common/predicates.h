@@ -26,6 +26,10 @@ ENTER_NAMESPACE(workload);
 
 
 
+extern bool USE_DETERMINISTIC_PREDICATES;
+
+
+
 /**
  * @brief Composable predicate base class.
  */

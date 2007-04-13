@@ -23,6 +23,7 @@ static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
 bool FLUSH_TO_DISK_ON_FULL = false;
 bool USE_DIRECT_IO = false;
+bool WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN = true;
 
 
 
@@ -481,27 +482,35 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
     }
 
 
-    /* FLUSH_TO_DISK_ON_FULL */
-    /* Quick optimization: If the tuple_fifo is not part of a sequence
-       of merged packets, we can avoid disk I/O by simply waiting. We
-       do not risk deadlock because we are not part of a work sharing
-       cycle. */
-    /* If the buffer is currently full and not shared, we can wait for
-       space to open up. Once we start waiting, we continue waiting
-       until either the buffer becomes shared or space for
-       '_threshold' pages becomes available. */
-    bool waited = false;
-    for(size_t threshold=1;
-        !is_shared() && (_available_memory_writes() < threshold);
-        threshold = _threshold) {
-        /* wait until something important changes */
-        waited = true;
-        wait_for_reader();
-        _termination_check();
-    }
-    if (waited)
-        assert(_available_memory_writes() >= _threshold);
+    /* FLUSH_TO_DISK_ON_FULL is true */
 
+
+    if (WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN) {
+
+        /* Quick optimization: If the tuple_fifo is not part of a sequence
+           of merged packets, we can avoid disk I/O by simply waiting. We
+           do not risk deadlock because we are not part of a work sharing
+           cycle. */
+        
+        /* If the buffer is currently full and not shared, we can wait for
+           space to open up. Once we start waiting, we continue waiting
+           until either the buffer becomes shared or space for
+           '_threshold' pages becomes available. */
+
+        bool waited = false;
+        for(size_t threshold=1;
+            !is_shared() && (_available_memory_writes() < threshold);
+            threshold = _threshold) {
+            /* wait until something important changes */
+            waited = true;
+            wait_for_reader();
+            _termination_check();
+        }
+        if (waited)
+            assert(_available_memory_writes() >= _threshold);
+
+    }
+        
 
     /* Add _write_page to other tuple_fifo pages unless empty. */
     if(!_write_page->empty()) {

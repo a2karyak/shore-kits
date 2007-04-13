@@ -7,6 +7,7 @@
 #include "server/config.h"
 
 #include "core/tuple_fifo.h"
+#include "workload/common/predicates.h"
 
 #include <cstring>
 #include <cstdio>
@@ -14,6 +15,9 @@
 
 using qpipe::FLUSH_TO_DISK_ON_FULL;
 using qpipe::USE_DIRECT_IO;
+using qpipe::WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN;
+using workload::USE_DETERMINISTIC_PREDICATES;
+
 
 static bool sample_var = false;
 
@@ -29,7 +33,8 @@ void config_command_t::init()
     ADD_VAR(sample_var);
     ADD_VAR(FLUSH_TO_DISK_ON_FULL);
     ADD_VAR(USE_DIRECT_IO);
-
+    ADD_VAR(WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN);
+    ADD_VAR(USE_DETERMINISTIC_PREDICATES);
 };
 
 
