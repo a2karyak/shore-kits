@@ -201,6 +201,7 @@ void tpch_handler_t::handle_command(const char* command) {
     /* The basic interface is the run() method, which takes a
        statistics object and fills it with the stats collected during
        the workload execution. */
+    tuple_fifo::clear_stats();
     workload_t::results_t results;
     w.run(results);
 
@@ -222,7 +223,6 @@ void tpch_handler_t::print_usage(const char* command_tag)
 
 void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results_t &results) {
 
-
     // print final statistics
     int queries_completed =
         results.num_clients * results.num_iterations;
@@ -241,7 +241,6 @@ void tpch_handler_t::print_run_statistics(const c_str& desc, workload_t::results
     TRACE(TRACE_STATISTICS, "~~~\n");
 
     tuple_fifo::trace_stats();
-    tuple_fifo::clear_stats();
 }
 
 

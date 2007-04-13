@@ -80,7 +80,6 @@ bool workload_t::run(results_t &results) {
     results.total_time = timer.time();
 
 
-    TRACE(TRACE_ALWAYS, "Open Fifo count: %d\n", qpipe::tuple_fifo::open_fifos());
     return true;
 }
 
