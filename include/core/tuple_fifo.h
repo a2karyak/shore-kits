@@ -45,9 +45,10 @@ private:
             INVALID = 0,
             IN_MEMORY,
             IN_MEMORY_DONE_WRITING,
+            IN_MEMORY_TERMINATED,
             ON_DISK,
             ON_DISK_DONE_WRITING,
-            TERMINATED
+            ON_DISK_TERMINATED
         };
         
     private:
@@ -66,9 +67,10 @@ private:
                 TF_STATE(INVALID);
                 TF_STATE(IN_MEMORY);
                 TF_STATE(IN_MEMORY_DONE_WRITING);
+                TF_STATE(IN_MEMORY_TERMINATED);
                 TF_STATE(ON_DISK);
                 TF_STATE(ON_DISK_DONE_WRITING);
-                TF_STATE(TERMINATED);
+                TF_STATE(ON_DISK_TERMINATED);
             default:
                 assert(0);
             }
@@ -402,7 +404,8 @@ private:
     bool is_in_memory() {
         return
             _state.current() == tuple_fifo_state_t::IN_MEMORY ||
-            _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING;
+            _state.current() == tuple_fifo_state_t::IN_MEMORY_DONE_WRITING ||
+            _state.current() == tuple_fifo_state_t::IN_MEMORY_TERMINATED;
     }
 
     bool is_done_writing() {
@@ -412,7 +415,8 @@ private:
     }
     
     bool is_terminated() {
-        return _state.current() == tuple_fifo_state_t::TERMINATED;
+        return _state.current() == tuple_fifo_state_t::IN_MEMORY_TERMINATED
+            || _state.current() == tuple_fifo_state_t::ON_DISK_TERMINATED;
     }
 
 

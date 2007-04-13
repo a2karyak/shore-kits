@@ -124,6 +124,8 @@ protected:
 
     packet_t*      _packet;
     packet_list_t* _packet_list;
+    bool           _sharing;
+    bool           _completed_primary;
 
     unsigned int _next_tuple;
     bool _still_accepting_packets;

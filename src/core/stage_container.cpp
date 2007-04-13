@@ -390,17 +390,6 @@ void stage_container_t::enqueue(packet_t* packet) {
             // not have changed while it was in the queue.
             if ( cq_packet->is_mergeable(packet) ) {
 
-#if 0
-                /* We need to mark all tuple_fifos in the chain as shared so the
-                   writer can flush tuple_fifos to disk. */
-                packet_list_t::iterator it;
-                for (it = cq_plist->begin(); it != cq_plist->end(); ++it) {
-                    packet_t* curr_packet = *it;
-                    curr_packet->output_buffer()->set_shared();
-                }
-                packet->output_buffer()->set_shared();
-#endif
-                
                 /* Append 'packet' to the list of already merged
                    packets in the container queue. */
                 cq_plist->push_back(packet);
@@ -524,6 +513,8 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
       _stage_adaptor_lock(thread_mutex_create()),
       _container(container),
       _packet_list(packet_list),
+      _sharing(false),
+      _completed_primary(false),
       _next_tuple(NEXT_TUPLE_INITIAL_VALUE),
       _still_accepting_packets(true),
       _contains_late_merger(false),
@@ -532,12 +523,28 @@ stage_container_t::stage_adaptor_t::stage_adaptor_t(stage_container_t* container
     
     assert( !packet_list->empty() );
     
-    packet_list_t::iterator it;
-    
+ 
+    /* If we are sharing, we need to mark all tuple_fifos in the chain
+       as shared so the writer can flush tuple_fifos to disk. Note
+       that we can test for sharing by checking whether 'packet_list'
+       is a singleton. If the list contains one element, we are not
+       sharing. */
+    if ( ++(packet_list->begin()) != packet_list->end() ) {
+        /* List contains more than one packet... we are sharing. */
+        packet_list_t::iterator it;
+        for (it = packet_list->begin(); it != packet_list->end(); ++it) {
+            packet_t* curr_packet = *it;
+            curr_packet->output_buffer()->set_shared();
+        }
+        _sharing = true;
+    }
+
+
     // We only need one packet to provide us with inputs. We
     // will make the first packet in the list a "primary"
     // packet. We can destroy the packet subtrees in the other
     // packets in the list since they will NEVER be used.
+    packet_list_t::iterator it;
     it = packet_list->begin();
     _packet = *it;
 
@@ -600,17 +607,13 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
     stage_container_t::merge_t ret;
 
     /* If we are here, we detected work sharing! */
-
-#if 0
     /* We need to mark all tuple_fifos in the chain as shared so the
        writer can flush tuple_fifos to disk. */
-    packet_list_t::iterator it;
-    for (it = _packet_list->begin(); it != _packet_list->end(); ++it) {
-        packet_t* curr_packet = *it;
-        curr_packet->output_buffer()->set_shared();
-    }
     packet->output_buffer()->set_shared();
-#endif
+    if (!_sharing && !_completed_primary) {
+        _packet->output_buffer()->set_shared();
+        _sharing = true;
+    }
 
     /* Prepend 'packet' to the list. */
     _packet_list->push_front(packet);
@@ -764,8 +767,8 @@ void stage_container_t::stage_adaptor_t::output_page(page* p) {
  *
  *  @param packet The packet to terminate.
  *
- *  THE CALLER DON'T NEED TO BE HOLDING EITHER THE _container_lock
- *  MUTEX OR THE _stage_adaptor_lock MUTEX.
+ *  THE CALLER SHOULD NOT BE HOLDING EITHER THE _container_lock MUTEX
+ *  OR THE _stage_adaptor_lock MUTEX.
  */
 void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
 
@@ -782,6 +785,10 @@ void stage_container_t::stage_adaptor_t::finish_packet(packet_t* packet) {
         // subtrees
         delete packet;
     }
+
+    critical_section_t cs(_stage_adaptor_lock);
+    if ( packet == _packet )
+        _completed_primary = true;
 }
 
 

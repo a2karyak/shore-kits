@@ -138,8 +138,8 @@ void config_command_t::print_known_vars() {
 
     map<c_str, bool*>::iterator it;
     for (it = _known_config_vars.begin(); it != _known_config_vars.end(); ++it) {
-        TRACE(TRACE_ALWAYS,
-              "Registered trace type %s\n", it->first.data());
+        bool* var = it->second;
+        TRACE(TRACE_ALWAYS, "%s: %s\n", it->first.data(), *var ? "ENABLED" : "DISABLED");
     }
 }
 
@@ -151,7 +151,7 @@ void config_command_t::print_enabled_vars() {
     for (it = _known_config_vars.begin(); it != _known_config_vars.end(); ++it) {
         bool* var = it->second;
         if ( *var )
-            TRACE(TRACE_ALWAYS, "Enabled type %s\n", it->first.data());
+            TRACE(TRACE_ALWAYS, "%s: ENABLED\n", it->first.data());
     }
 }
 

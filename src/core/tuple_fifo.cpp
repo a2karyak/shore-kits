@@ -207,6 +207,11 @@ struct free_page {
  */
 void tuple_fifo::destroy() {
 
+
+    if (!FLUSH_TO_DISK_ON_FULL)
+        assert(is_in_memory());
+    
+
     std::for_each(_pages.begin(), _pages.end(), free_page());
     std::for_each(_free_pages.begin(), _free_pages.end(), free_page());
 
@@ -339,7 +344,12 @@ bool tuple_fifo::terminate() {
     
     // make sure nobody is sleeping (either the reader or writer could
     // be calling this)
-    _state.transition(tuple_fifo_state_t::TERMINATED);
+    
+    if (is_in_memory())
+        _state.transition(tuple_fifo_state_t::IN_MEMORY_TERMINATED);
+    else
+        _state.transition(tuple_fifo_state_t::ON_DISK_TERMINATED);
+    
     thread_cond_signal(_reader_notify);
     thread_cond_signal(_writer_notify);
     
@@ -468,6 +478,8 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
     /* FLUSH_TO_DISK_ON_FULL */
+
+#if 0
     /* Quick optimization: If the tuple_fifo is not part of a sequence
        of merged packets, we can avoid disk I/O by simply waiting. We
        do not risk deadlock because we are not part of a work sharing
@@ -483,6 +495,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         wait_for_reader();
         _termination_check();
     }
+#endif
 
 
     /* Add _write_page to other tuple_fifo pages unless empty. */
@@ -889,11 +902,11 @@ bool tuple_fifo::tuple_fifo_state_t::_transition_ok(const _tuple_fifo_state_t ne
         return
             (next == IN_MEMORY_DONE_WRITING)
             || (next == ON_DISK)
-            || (next == TERMINATED);
+            || (next == IN_MEMORY_TERMINATED);
     case ON_DISK:
         return
             (next == ON_DISK_DONE_WRITING)
-            || (next == TERMINATED);
+            || (next == ON_DISK_TERMINATED);
     default:
         return false;
     }
