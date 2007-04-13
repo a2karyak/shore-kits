@@ -389,9 +389,20 @@ void stage_container_t::enqueue(packet_t* packet) {
             // grab its merge_mutex because its mergeability status could
             // not have changed while it was in the queue.
             if ( cq_packet->is_mergeable(packet) ) {
-                // add this packet to the list of already merged packets
-                // in the container queue
+
+                /* We need to mark all tuple_fifos in the chain as shared so the
+                   writer can flush tuple_fifos to disk. */
+                packet_list_t::iterator it;
+                for (it = cq_plist->begin(); it != cq_plist->end(); ++it) {
+                    packet_t* curr_packet = *it;
+                    curr_packet->output_buffer()->set_shared();
+                }
+                packet->output_buffer()->set_shared();
+    
+                /* Append 'packet' to the list of already merged
+                   packets in the container queue. */
                 cq_plist->push_back(packet);
+
 
                 // * * * END CRITICAL SECTION * * *
                 cs.exit();
@@ -576,18 +587,31 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
     // Mergeability is an equality relation. We can check whether
     // packet is similar to the packets in this stage by simply
     // comparing it with the stage's primary packet.
-    if ( !_packet->is_mergeable(packet) ) {
+    if (!_packet->is_mergeable(packet)) {
 	// packet cannot share work with this stage
 	return stage_container_t::MERGE_FAILED;
 	// * * * END CRITICAL SECTION * * *
     }
     
     
-    /* packet was merged with this existing stage */
+    /* packet may merged with this existing stage */
     stage_container_t::merge_t ret;
 
-    // If we are here, we detected work sharing!
+    /* If we are here, we detected work sharing! */
+
+    /* We need to mark all tuple_fifos in the chain as shared so the
+       writer can flush tuple_fifos to disk. */
+    packet_list_t::iterator it;
+    for (it = _packet_list->begin(); it != _packet_list->end(); ++it) {
+        packet_t* curr_packet = *it;
+        curr_packet->output_buffer()->set_shared();
+    }
+    packet->output_buffer()->set_shared();
+    
+    /* Prepend 'packet' to the list. */
     _packet_list->push_front(packet);
+
+    /* Record the progress of this stage when we merged. */
     packet->_next_tuple_on_merge = _next_tuple;
     if ((_next_tuple == NEXT_TUPLE_INITIAL_VALUE) || _contains_late_merger)
         /* Either we will be done when the primary packet finishes or
