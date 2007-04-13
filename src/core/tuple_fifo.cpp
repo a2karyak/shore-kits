@@ -490,13 +490,17 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
        space to open up. Once we start waiting, we continue waiting
        until either the buffer becomes shared or space for
        '_threshold' pages becomes available. */
+    bool waited = false;
     for(size_t threshold=1;
         !is_shared() && (_available_memory_writes() < threshold);
         threshold = _threshold) {
         /* wait until something important changes */
+        waited = true;
         wait_for_reader();
         _termination_check();
     }
+    if (waited)
+        assert(_available_memory_writes() >= _threshold);
 
 
     /* Add _write_page to other tuple_fifo pages unless empty. */
@@ -534,7 +538,11 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
         
 
-        if (_available_memory_writes() >= 1) {
+        /* Note that we have added another page to _pages, decreasing
+           the number of available write by 1. We need to flush to
+           disk if this causes the number of available reads to drop
+           below 0. */
+        if (_available_memory_writes() >= 0) {
             /* No need to flush to disk since we are staying in memory. */
             _write_page = _alloc_page();
             if(_available_fifo_reads() >= _threshold)
@@ -543,8 +551,9 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
     
         
-        /* Need to flush to disk... */
-        /* If we are here, we need to flush to disk. */
+        /* If we are here, we have -1 available memory writes
+           remaining. We need to flush to disk. */
+        assert(_available_memory_writes() == -1);
         /* Create on disk file. */
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
 

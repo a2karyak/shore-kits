@@ -104,8 +104,8 @@ private:
     page_list _free_pages;
     size_t _page_count;
     size_t _pages_in_memory;
-    size_t _memory_capacity;
     size_t _available_reads;
+    size_t _memory_capacity;
     size_t _threshold;
 
     /* page file management */
@@ -172,8 +172,8 @@ public:
           _is_shared(false),
           _page_count(0),
           _pages_in_memory(0),
-          _memory_capacity(capacity),
           _available_reads(0),
+          _memory_capacity(capacity),
           _threshold(threshold),
           _page_file(-1),
           _free_read_page(true),
