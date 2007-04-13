@@ -4,6 +4,7 @@
 #include "server/command_set.h"
 #include "server/print.h"
 #include "server/config.h"
+#include "server/config_display.h"
 #include "server/command/command_handler.h"
 #include "server/command/printer.h"
 #include "server/command/tpch_handler.h"
@@ -23,6 +24,7 @@ using std::string;
 /* internal data structures */
 
 static map<c_str, command_handler_t*> command_mappings;
+static config_display_t* _server_config_display = NULL;
 
 
 
@@ -37,6 +39,12 @@ static void dispatch_command(const char* command);
 /* definitions of exported functions */
 
 
+config_display_t* server_get_config_display() {
+    assert(_server_config_display != NULL);
+    return _server_config_display;
+}
+
+
 /**
  *  @brief Register a set of command tag-command handler mappings. All
  *  command handlers should be registered here, in this function.
@@ -49,12 +57,16 @@ void register_command_handlers(void) {
     // method) and insert the handler into the command set using the
     // specified command tag.
 
+    config_command_t* config = new config_command_t();
+    assert(_server_config_display == NULL);
+    _server_config_display = config;
+
     add_command("print", new printer_t());
     add_command("tpch",  new tpch_handler_t());
     add_command("load", new load_handler_t());
     add_command("tracer", new tracer_t());
     add_command("sharing", new sharing_t());
-    add_command("config", new config_command_t());
+    add_command("config", config);
 }
 
 
@@ -88,7 +100,7 @@ int process_command(const char* command) {
     if ( strcasecmp(command, "shutdown") == 0 )
         // quit command!
         return PROCESS_NEXT_SHUTDOWN;
-           
+    
     dispatch_command(command);
     return PROCESS_NEXT_CONTINUE;
 }

@@ -4,6 +4,7 @@
 #include "server/command/tpch_handler.h"
 #include "server/print.h"
 #include "server/config.h"
+#include "server/config_display.h"
 #include "workload/tpch/tpch_db.h"
 
 #include "workload/tpch/drivers/merge_test.h"
@@ -198,10 +199,17 @@ void tpch_handler_t::handle_command(const char* command) {
     workload_t w(workload_name, driver, dp, num_clients,
                  num_iterations, think_time);
 
-    /* The basic interface is the run() method, which takes a
-       statistics object and fills it with the stats collected during
-       the workload execution. */
+    /* Clear statistics from previous run. */
     tuple_fifo::clear_stats();
+
+    /* Display global configuration so we know what we were
+       running. */
+    server_get_config_display()->display_config();
+
+    /* The workload object's run() method takes a statistics object
+       and fills it with the stats collected during the workload
+       execution. Note that these are independent of the tuple_fifo
+       stats we cleared earlier. */
     workload_t::results_t results;
     w.run(results);
 

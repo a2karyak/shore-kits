@@ -5,12 +5,13 @@
 
 #include <map>
 #include "server/command/command_handler.h"
+#include "server/config_display.h"
 #include "util.h"
 
 using std::map;
 
 
-class config_command_t : public command_handler_t {
+class config_command_t : public command_handler_t, public config_display_t {
 
     map<c_str, bool*> _known_config_vars;
     
@@ -18,6 +19,11 @@ public:
 
     virtual void init();
     virtual void handle_command(const char* command);
+
+    virtual void display_config() {
+        print_known_vars();
+    }
+
     virtual ~config_command_t() { }
 
 private:
