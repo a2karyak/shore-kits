@@ -90,6 +90,7 @@ private:
 
     /* state */
     tuple_fifo_state_t _state;
+    volatile bool _is_shared;
 
     /* page list management */
     page_list _pages;
@@ -161,6 +162,7 @@ public:
                size_t threshold=64,
                size_t page_size=get_default_page_size())
         : _fifo_id(tuple_fifo_generate_id()),
+          _is_shared(false),
           _page_count(0),
           _pages_in_memory(0),
           _memory_capacity(capacity),
@@ -329,7 +331,32 @@ public:
     }
 
 
+    /**
+     * @brief Should only be invoked by code responsible for merging
+     * packets. The caller must not be holding the _lock mutex when
+     * invoking this method.
+     */
+    void set_shared() {
+        critical_section_t cs(_lock);
+
+        _is_shared = true;
+
+        /* The writer may be waiting for the tuple_fifo to drain. Now
+           that the tuple_fifo is being shared, the writer may be
+           forced to flush pages to disk to avoid deadlock. */
+        ensure_writer_running();
+    }
+  
+
 private:
+
+    /**
+     * @brief Should only be caller by the writer. The caller must be
+     * holding the _lock mutex when invoking this method.
+     */
+    bool is_shared() {
+        return _is_shared;
+    }
 
     size_t _available_memory_writes() {
         return _memory_capacity - _pages_in_memory;
