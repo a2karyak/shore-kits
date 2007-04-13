@@ -390,6 +390,7 @@ void stage_container_t::enqueue(packet_t* packet) {
             // not have changed while it was in the queue.
             if ( cq_packet->is_mergeable(packet) ) {
 
+#if 0
                 /* We need to mark all tuple_fifos in the chain as shared so the
                    writer can flush tuple_fifos to disk. */
                 packet_list_t::iterator it;
@@ -398,7 +399,8 @@ void stage_container_t::enqueue(packet_t* packet) {
                     curr_packet->output_buffer()->set_shared();
                 }
                 packet->output_buffer()->set_shared();
-    
+#endif
+                
                 /* Append 'packet' to the list of already merged
                    packets in the container queue. */
                 cq_plist->push_back(packet);
@@ -599,6 +601,7 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
 
     /* If we are here, we detected work sharing! */
 
+#if 0
     /* We need to mark all tuple_fifos in the chain as shared so the
        writer can flush tuple_fifos to disk. */
     packet_list_t::iterator it;
@@ -607,7 +610,8 @@ stage_container_t::merge_t stage_container_t::stage_adaptor_t::try_merge(packet_
         curr_packet->output_buffer()->set_shared();
     }
     packet->output_buffer()->set_shared();
-    
+#endif
+
     /* Prepend 'packet' to the list. */
     _packet_list->push_front(packet);
 

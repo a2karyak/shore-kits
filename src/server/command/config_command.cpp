@@ -6,10 +6,14 @@
 #include "server/print.h"
 #include "server/config.h"
 
+#include "core/tuple_fifo.h"
+
 #include <cstring>
 #include <cstdio>
 
 
+using qpipe::FLUSH_TO_DISK_ON_FULL;
+using qpipe::USE_DIRECT_IO;
 
 static bool sample_var = false;
 
@@ -23,6 +27,8 @@ void config_command_t::init()
 #define ADD_VAR(x) _known_config_vars[c_str("%s", #x)] = &x;
     
     ADD_VAR(sample_var);
+    ADD_VAR(FLUSH_TO_DISK_ON_FULL);
+    ADD_VAR(USE_DIRECT_IO);
 
 };
 

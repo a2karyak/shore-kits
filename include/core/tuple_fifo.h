@@ -17,6 +17,11 @@ DEFINE_EXCEPTION(TerminatedBufferException);
 int tuple_fifo_generate_id();
 
 
+extern bool FLUSH_TO_DISK_ON_FULL;
+extern bool USE_DIRECT_IO;
+
+
+
 /**
  *  @brief Thread-safe tuple buffer. This class allows one thread to
  *  safely pass tuples to another. The producer will fill a page of
