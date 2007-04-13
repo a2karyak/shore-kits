@@ -10,6 +10,7 @@
 #include "server/command/load_handler.h"
 #include "server/command/tracer.h"
 #include "server/command/sharing.h"
+#include "server/command/config_command.h"
 
 #include <map>
 #include <string>
@@ -53,6 +54,7 @@ void register_command_handlers(void) {
     add_command("load", new load_handler_t());
     add_command("tracer", new tracer_t());
     add_command("sharing", new sharing_t());
+    add_command("config", new config_command_t());
 }
 
 

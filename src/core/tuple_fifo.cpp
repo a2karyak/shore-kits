@@ -21,7 +21,7 @@ ENTER_NAMESPACE(qpipe);
 /* debugging */
 static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
-static const bool FLUSH_TO_DISK_ON_FULL = true;
+static const bool FLUSH_TO_DISK_ON_FULL = false;
 static const bool USE_DIRECT_IO = false;
 
 /**
