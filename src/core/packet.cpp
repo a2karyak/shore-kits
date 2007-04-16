@@ -10,7 +10,7 @@ ENTER_NAMESPACE(qpipe);
 
 
 
-packet_t::global_osp_policy_t packet_t::global_osp_policy = packet_t::OSP_FULL;
+bool global_osp_enabled = true;
 
 
 

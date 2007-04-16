@@ -7,6 +7,7 @@
 #include "server/config.h"
 
 #include "core/tuple_fifo.h"
+#include "core/packet.h"
 #include "workload/common/predicates.h"
 
 #include <cstring>
@@ -17,7 +18,8 @@ using qpipe::FLUSH_TO_DISK_ON_FULL;
 using qpipe::USE_DIRECT_IO;
 using qpipe::WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN;
 using workload::USE_DETERMINISTIC_PREDICATES;
-
+using qpipe::packet_t;
+using qpipe::global_osp_enabled;
 
 static bool sample_var = false;
 
@@ -35,6 +37,8 @@ void config_command_t::init()
     ADD_VAR(USE_DIRECT_IO);
     ADD_VAR(WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN);
     ADD_VAR(USE_DETERMINISTIC_PREDICATES);
+
+    _known_config_vars[c_str("GLOBAL_OSP")] = &global_osp_enabled;
 };
 
 

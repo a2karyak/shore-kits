@@ -17,6 +17,10 @@ ENTER_NAMESPACE(qpipe);
 
 
 
+extern bool global_osp_enabled;
+
+
+
 /* Per-packet OSP: Reroute to dispatcher */
 bool is_osp_enabled_for_type(const c_str& packet_type);
 
@@ -57,20 +61,16 @@ struct query_plan {
 class packet_t
 {
     /* Global OSP policy */
-private:
-    typedef enum {OSP_NONE, OSP_FULL} global_osp_policy_t;
-    static global_osp_policy_t global_osp_policy;
-
 public:
 
+    /* Convenience wrappers for global_osp_enabled. The only code that
+       bypasses these wrappers is the 'config' command handler. */
     static bool global_osp_is_enabled() {
-        assert((global_osp_policy == OSP_NONE) ||
-               (global_osp_policy == OSP_FULL));
-        return global_osp_policy == OSP_FULL;
+        return global_osp_enabled;
     }
 
     static void global_osp_set(bool enable) {
-        global_osp_policy = enable ? OSP_FULL : OSP_NONE;
+        global_osp_enabled = enable;
     }
 
 
