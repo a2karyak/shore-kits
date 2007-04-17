@@ -163,7 +163,8 @@ void tuple_fifo::init() {
     _set_read_page(SENTINEL_PAGE);
 
     /* Prepare for writing. */
-    _write_page = SENTINEL_PAGE;
+    /* TODO ... original code was _write_page = SENTINEL_PAGE; */
+    _write_page = _alloc_page();
     
     /* update state */
     _state.transition(tuple_fifo_state_t::IN_MEMORY);
@@ -416,7 +417,10 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
     /* After the call to send_eof() the write page is NULL. */
     assert(!is_done_writing());
-    
+    if (_write_page->empty())
+        assert(done_writing);
+
+
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_lock);
     _termination_check();
@@ -442,24 +446,25 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
 
 
-        /* Add _write_page to other tuple_fifo pages unless
-           empty. */
+        /* Add _write_page to page list unless empty. If _write_page
+           is empty, 'done_writing' should be true and we will free
+           the page when we call _write_page.done() below. */
         if(!_write_page->empty()) {
-
+            
+            /* We can safely add to the page list since we have
+               verified that _available_memory_writes() > 0. */
             _pages.push_back(_write_page.release());
-
-            if (_pages.size() == 1)
-                /* added new list head page */
-                _list_head_page_index = _next_write_page_index;
-            _list_tail_page_index = _next_write_page_index;
-            _next_write_page_index++;
-
             _pages_in_memory++;
-            _page_count++;
-            _available_reads++;
+            _available_fifo_reads++;
+
+            if (_pages_in_memory == 1)
+                /* added new list head page */
+                _list_head_page_index = _write_page_index;
+            _list_tail_page_index = _write_page_index;
+            _write_page_index++;
         }
 
-
+        
         /* Allocate a new _write_page if necessary. */
         if(done_writing) {
             /* Allocation of a new _write_page is not necessary
@@ -467,15 +472,17 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
                transition. */
             _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
             _write_page.done();
+            _write_page_index = -1;
         }
-        else
+        else {
             /* If is safe to allocate another page. We have made
                sure that there are available writes. */
             _write_page = _alloc_page();
+        }
         
 
         /* wake the reader if necessary */
-        if((_available_fifo_reads() >= _threshold) || is_done_writing())
+        if((_available_reads() >= _threshold) || is_done_writing())
             ensure_reader_running();
         
         return;
@@ -508,66 +515,72 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         }
         if (waited)
             assert(is_shared() || (_available_memory_writes() >= _threshold));
+        assert(is_shared() || (_available_memory_writes() >= 1));
     }
     
 
-    /* Add _write_page to other tuple_fifo pages unless empty. */
-    if(!_write_page->empty()) {
-
-        _pages.push_back(_write_page.release());
-
-        if (_pages.size() == 1)
-            /* added new list head page */
-            _list_head_page_index = _next_write_page_index;
-        _list_tail_page_index = _next_write_page_index;
-        _next_write_page_index++;
-
-        _pages_in_memory++;
-        _page_count++;
-        _available_reads++;
-    }
-
-
     /* Check for cases in which we don't need to flush to disk. */
-    if(is_in_memory()) {
+    if (_available_memory_writes() >= 1) {
+        
+        /* Add _write_page to page list unless empty. If _write_page
+           is empty, 'done_writing' should be true and we will free
+           the page when we call _write_page.done() below. */
+        if(!_write_page->empty()) {
 
-        assert(_state.current() == tuple_fifo_state_t::IN_MEMORY);
+            /* We can safely add to the page list since we have
+               verified that _available_memory_writes() > 0. */
+            _pages.push_back(_write_page.release());
+            _pages_in_memory++;
+            _available_fifo_reads++;
+            
+            if (_pages_in_memory == 1)
+                /* added new list head page */
+                _list_head_page_index = _write_page_index;
+            _list_tail_page_index = _write_page_index;
+            _write_page_index++;
+        }
 
         
-        if (done_writing) {
-            /* No need to flush to disk since we are done. */
+        /* Allocate a new _write_page if necessary. */
+        if(done_writing) {
             /* Allocation of a new _write_page is not necessary
                (because we are done writing). Just do state
                transition. */
-            _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
+            if (is_in_memory())
+                _state.transition(tuple_fifo_state_t::IN_MEMORY_DONE_WRITING);
+            else
+                _state.transition(tuple_fifo_state_t::ON_DISK_DONE_WRITING);
             _write_page.done();
-            ensure_reader_running();
-            return;
+            _write_page_index = -1;
         }
-        
-
-        /* Note that we have added another page to _pages, decreasing
-           the number of available write by 1. We need to flush to
-           disk if this causes the number of available reads to drop
-           below 0. */
-        if (_available_memory_writes() >= 0) {
-            /* No need to flush to disk since we are staying in memory. */
+        else {
+            /* If is safe to allocate another page. We have made
+               sure that there are available writes. */
             _write_page = _alloc_page();
-            if(_available_fifo_reads() >= _threshold)
-                ensure_reader_running();
-            return;
         }
-    
+
+
+        /* wake the reader if necessary */
+        if((_available_reads() >= _threshold) || is_done_writing())
+            ensure_reader_running();
+
         
-        /* If we are here, we have -1 available memory writes
-           remaining. We need to flush to disk. */
-        assert(_available_memory_writes() == -1);
+        return;
+    }
+
+
+
+    /* If we are here, we have no available memory writes
+       remaining. We need to flush to disk. */
+    if (is_in_memory()) {
+
+
         /* Create on disk file. */
         c_str filepath = tuple_fifo_directory_t::generate_filepath(_fifo_id);
 
 
 #ifdef FOUND_LINUX
-
+        
         int flags = O_CREAT|O_TRUNC|O_RDWR;
         if (USE_DIRECT_IO) flags |= O_DIRECT;
         _page_file = open(filepath.data(), flags, S_IRUSR|S_IWUSR);
@@ -578,7 +591,7 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
 
 
 #ifdef FOUND_SOLARIS
-
+        
         int flags = O_CREAT|O_TRUNC|O_RDWR;
         _page_file = open(filepath.data(), flags, S_IRUSR|S_IWUSR);
         if (_page_file == -1)
@@ -600,8 +613,8 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         
         TRACE(TRACE_TUPLE_FIFO_FILE, "Created tuple_fifo file %s\n", filepath.data());
 
-
-        /* Write pages to disk. */
+        
+        /* Write list pages to disk. */
         for (page_list::iterator it = _pages.begin(); it != _pages.end(); ) {
             qpipe::page* p = *it;
             p->write_full_page(_page_file);
@@ -611,65 +624,70 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             assert(_pages_in_memory > 0);
             _pages_in_memory--;
         }
+
+
+        /* If the _write_page is not empty, write it to disk as
+           well. If _write_page is empty, 'done_writing' should be
+           true and we will free the page when we call
+           _write_page.done() below. */
+        size_t last_page_written = _list_tail_page_index;
+        if(!_write_page->empty()) {
+            _write_page->write_full_page(_page_file);
+            _write_page->clear();
+            last_page_written = _write_page_index;
+            _write_page_index++;
+        }
         if (SYNC_AFTER_WRITES) {
             int fsync_ret = fsync(_page_file);
             assert(fsync_ret == 0);
         }
 
 
+        /* Debugging... */
+        TRACE(TRACE_TUPLE_FIFO_FILE,
+              "FIFO %d: Wrote pages %zd-%zd to disk\n", _fifo_id,
+              _list_head_page_index, last_page_written);
+
+
         /* Let the reader know where to get pages */
-        TRACE(TRACE_TUPLE_FIFO_FILE, "FIFO %d: Wrote pages %zd-%zd to disk\n",
-              _fifo_id,
-              _list_head_page_index,
-              _list_tail_page_index);
+        /* Since we were in memory, the file have been empty. We need
+           to initialize the file index values to the proper page
+           indices and update the list index values to indicate an
+           empty list. */
         assert(_file_head_page_index == -1);
         assert(_file_tail_page_index == -1);
         _file_head_page_index = _list_head_page_index;
-        _file_tail_page_index = _list_tail_page_index;
+        _file_tail_page_index = last_page_written;
         _list_head_page_index = -1;
         _list_tail_page_index = -1;
-
-
         _state.transition(tuple_fifo_state_t::ON_DISK);
 
-        
-        /* allocate from free list */
-        assert(!_free_pages.empty());
-        _write_page = _alloc_page();
+       
+        if (done_writing) {
+            _state.transition(tuple_fifo_state_t::ON_DISK_DONE_WRITING);
+            _write_page.done();
+            _write_page_index = -1;
+        }
 
 
         /* wake the reader if necessary */
-        if(_available_fifo_reads() >= _threshold)
+        if((_available_reads() >= _threshold) || is_done_writing())
             ensure_reader_running();
-
 
         return;
     }
         
 
-    /* !FLUSH_TO_DISK_ON_FILL and !is_in_memory() */
-    if (done_writing) {
-        /* No need to flush to disk since we are done. */
-        /* Allocation of a new _write_page is not necessary
-           (because we are done writing). Just do state
-           transition. */
-        _state.transition(tuple_fifo_state_t::ON_DISK_DONE_WRITING);
-        _write_page.done();
-        ensure_reader_running();
-        return;
-    }
-    
-    
-    if (_available_memory_writes() >= 1) {
-        /* Don't flush till we have more pages. */
-        _write_page = _alloc_page();
-        if(_available_fifo_reads() >= _threshold)
-            ensure_reader_running();
-        return;
-    }
+
+    /* If we are here, we have no available memory writes
+       remaining. We need to flush to disk. The disk file already
+       exists. */
 
 
     /* Flush to disk */
+    /* If the reader needs to pull the next page from the list, the
+       reader has finished draining the disk file. We can overwrite
+       the disk file from the beginning. */
     bool overwrite =
         (_next_read_page_index >= _list_head_page_index) &&
         (_next_read_page_index <= _list_tail_page_index);
@@ -688,6 +706,8 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
             THROW1(FileException, "seek to END-OF-FILE");
     }
 
+
+    /* Write list pages to disk. */
     for (page_list::iterator it = _pages.begin(); it != _pages.end(); ) {
         qpipe::page* p = *it;
         p->write_full_page(_page_file);
@@ -697,33 +717,51 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         assert(_pages_in_memory > 0);
         _pages_in_memory--;
     }
+    
+
+    /* If the _write_page is not empty, write it to disk as well. If
+       _write_page is empty, 'done_writing' should be true and we will
+       free the page when we call _write_page.done() below. */
+    size_t last_page_written = _list_tail_page_index;
+    if(!_write_page->empty()) {
+        _write_page->write_full_page(_page_file);
+        _write_page->clear();
+        last_page_written = _write_page_index;
+        _write_page_index++;
+    }
     if (SYNC_AFTER_WRITES) {
         int fsync_ret = fsync(_page_file);
         assert(fsync_ret == 0);
     }
-
-
-    TRACE(TRACE_TUPLE_FIFO_FILE, "FIFO %d: Wrote pages %zd-%zd to disk\n",
+    
+    
+    /* Debugging... */
+    TRACE(TRACE_TUPLE_FIFO_FILE,
+          "FIFO %d: Wrote pages %zd-%zd to disk\n",
           _fifo_id,
           _list_head_page_index,
-          _list_tail_page_index);
+          last_page_written);
+    
+    
+    /* Let the reader know where to get pages */
     if (overwrite)
         _file_head_page_index = _list_head_page_index;
-    _file_tail_page_index = _list_tail_page_index;
+    _file_tail_page_index = last_page_written;
     _list_head_page_index = -1;
     _list_tail_page_index = -1;
     
 
-    /* simply reuse write page */
-    assert(!_free_pages.empty());
-    _write_page = _alloc_page();
-
-
+    if (done_writing) {
+        _state.transition(tuple_fifo_state_t::ON_DISK_DONE_WRITING);
+        _write_page.done();
+        _write_page_index = -1;
+    }
+    
     /* wake the reader if necessary */
-    if(_available_fifo_reads() >= _threshold)
+    if((_available_reads() >= _threshold) || is_done_writing())
         ensure_reader_running();
     
-   
+    return;
     // * * * END CRITICAL SECTION * * *
 }
 
@@ -748,20 +786,24 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     _termination_check();
     
 
-    /* Free the page so the writer can use it. */
-    if(_free_read_page) {
-        if (_read_page != SENTINEL_PAGE)
-            _read_page->clear();
-        /* No need to explicitly free _read_page here. The _read_page
-           guard will free it when we assign a new value to it. In
-           fact, freeing it here is a double-free error. */
-    }
-    else {
+    /* Determine whether the current _read_page should be freed or
+       added to the free list. We want to free pages which we
+       temporarily allocated as buffers to read pages off disk. */
+    if (_add_read_page_to_free_list) {
+
         assert(_read_page != SENTINEL_PAGE);
+
+        /* Release the page from the guard so it does not get
+           freed. */
         _free_pages.push_back(_read_page.release());
+
+        _set_read_page(SENTINEL_PAGE);
+        _read_page_index = -1;
+
+        /* SENTINAL_PAGE should never be added to the free list. */
+        _add_read_page_to_free_list = false;
     }
-    _set_read_page(SENTINEL_PAGE);
-    _free_read_page = true;
+
 
 
     /* If there are no pages available, wait until either
@@ -771,7 +813,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
         for(size_t t=1;
                    !timed_out
                 && !is_done_writing()
-                && (_available_fifo_reads() < t);
+                && (_available_reads() < t);
             t = _threshold) {
             
             if(!wait_for_writer(timeout_ms)) /* check for timeout */
@@ -782,18 +824,19 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     }
 
 
-    /* special cases: non-blocking, done writing, and timeout */
-    if(_available_fifo_reads() == 0) {
+
+    /* Special Cases: non-blocking, done writing, and timeout */
+    if(_available_reads() == 0) {
         assert(is_done_writing() || (timeout_ms < 0) || timed_out);
         if(is_done_writing())
             return -1;
         if (timeout_ms < 0)
-            /* Non-blocking check. Notify that tuple_fifo is
-               empty. */
+            /* Non-blocking check. Notify that tuple_fifo is empty. */
             return 0;
         /* timed out! */
         return 0;
     }
+
 
 
     /* If we are here, we have pages to read! */
@@ -804,24 +847,25 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     bool page_on_disk =
         (_next_read_page_index >= _file_head_page_index) &&
         (_next_read_page_index <= _file_tail_page_index);
-   
-
     assert(page_in_list || page_on_disk);
+
 
 
     if (page_in_list) {
 
-        assert(_read_page == SENTINEL_PAGE);
+        /* page in list */
+        /* Make sure list not empty. */
         assert(!_pages.empty());
+        assert(_list_head_page_index != -1);
+        assert(_list_tail_page_index != -1);
 
         /* Pull the next page from '_pages' list. */
         _set_read_page(_pages.front());
         _pages.pop_front();
-        _free_read_page = false;
-
+        _add_read_page_to_free_list = true;
+        
         _pages_in_memory--;
-        _page_count--;
-        _available_reads--;
+        _available_fifo_reads--;
         _list_head_page_index++;
 
         if (_pages.empty()) {
@@ -829,6 +873,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
             _list_tail_page_index = -1;
         }
 
+        _read_page_index = _next_read_page_index;
         _next_read_page_index++;
 
         /* Notify the writer if case he is waiting to time-out. */
@@ -841,12 +886,28 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
     else {
 
         /* page on disk */
-        assert(_read_page == SENTINEL_PAGE);
+        /* Make sure file not empty. */
+        assert(_file_head_page_index != -1);
+        assert(_file_tail_page_index != -1);
+
         
-        bool alloc_using_malloc = _free_pages.empty();
-        _read_page = _alloc_page();
-        _free_read_page = alloc_using_malloc;
-        
+        if (_read_page == SENTINEL_PAGE) {
+
+            /* Allocate a buffer page to read into. Let's try and pull
+               this from the _free_pages list. If possible. Pull the
+               next page from '_pages' list. */
+
+            bool allocated_using_malloc = _free_pages.empty();
+            _read_page = _alloc_page();
+            _add_read_page_to_free_list = !allocated_using_malloc;
+        }
+        else {
+            
+            /* Otherwise, we have already allocated a page using
+               malloc. Just reuse it. */
+            _read_page->clear();
+        }
+
 
         off_t file_page = (_next_read_page_index - _file_head_page_index);
         off_t seek_pos  = file_page * get_default_page_size();
@@ -858,18 +919,21 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
 
         int fread_ret = _read_page->read_full_page(_page_file);
         assert(fread_ret);
+        /* Update iterator... */
         _set_read_page(_read_page.release());
 
 
-        _page_count--;
-        _available_reads--;
+        _available_fifo_reads--;
+        _read_page_index = _next_read_page_index;
         _next_read_page_index++;
         
+        
+        if (0) {
 
-        size_t page_size = _read_page->page_size();
-        if (TRACE_ALWAYS&TRACE_MASK_DISK) {
+            size_t page_size = _read_page->page_size();
             page* pg = _read_page.release();
             unsigned char* pg_bytes = (unsigned char*)pg;
+
             for (size_t i = 0; i < page_size; i++) {
                 printf("%02x", pg_bytes[i]);
                 if (i % 2 == 0)
@@ -877,14 +941,18 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
                 if (i % 16 == 0)
                     printf("\n");
             } 
+
             _set_read_page(pg);
+
+            TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "Read %d %d-byte tuples\n",
+                  (int)_read_page->tuple_count(),
+                  (int)_read_page->tuple_size());
         }
 
         
-        TRACE(TRACE_ALWAYS&TRACE_MASK_DISK, "Read %d %d-byte tuples\n",
-              (int)_read_page->tuple_count(),
-              (int)_read_page->tuple_size());
-
+        TRACE(TRACE_TUPLE_FIFO_FILE,
+              "FIFO %d: Read page %zd from disk\n",
+              _read_page_index);
         return 1;
     }
 }

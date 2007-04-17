@@ -103,16 +103,16 @@ private:
     /* page list management */
     page_list _pages;
     page_list _free_pages;
-    size_t _page_count;
     size_t _pages_in_memory;
-    size_t _available_reads;
+    size_t _available_fifo_reads;
     size_t _memory_capacity;
     size_t _threshold;
 
     /* page file management */
-    int    _page_file;
-    bool   _free_read_page;
-    ssize_t _next_write_page_index;
+    int     _page_file;
+    bool    _add_read_page_to_free_list;
+    ssize_t _write_page_index;
+    ssize_t _read_page_index;
     ssize_t _next_read_page_index;
     ssize_t _list_head_page_index;
     ssize_t _list_tail_page_index;
@@ -171,19 +171,33 @@ public:
                size_t page_size=get_default_page_size())
         : _fifo_id(tuple_fifo_generate_id()),
           _is_shared(false),
-          _page_count(0),
           _pages_in_memory(0),
-          _available_reads(0),
+          _available_fifo_reads(0),
           _memory_capacity(capacity),
           _threshold(threshold),
           _page_file(-1),
-          _free_read_page(true),
-          _next_write_page_index(0), /* ID of current write page */
-          _next_read_page_index (0), /* ID of next page to be read */
-          _list_head_page_index(-1),
-          _list_tail_page_index(-1),
-          _file_head_page_index(-1),
-          _file_tail_page_index(-1),
+
+          /* We initialize the _read_page to the SENTINAL_PAGE. This
+             should not be added to the free list. */
+          _add_read_page_to_free_list(false),
+          
+          /* ID of write page. We will allocate a page in init(). */
+          _write_page_index(0),
+          
+          /* ID of read page. We will set this to  -1 whenever the read
+             page is the SENTINAL_PAGE. */
+          _read_page_index(-1),
+          
+          /* ID of the next page the reader will read. This should
+             increase monotonically as the reader consumes more
+             pages. */
+          _next_read_page_index(0),
+
+          _list_head_page_index(-1), /* list empty */
+          _list_tail_page_index(-1), /* list empty */
+          _file_head_page_index(-1), /* no file on disk */
+          _file_tail_page_index(-1), /* no file on disk */
+
           _tuple_size(tuple_size),
           _page_size(page_size),
           _num_inserted(0),
@@ -361,12 +375,8 @@ private:
         return _memory_capacity - _pages_in_memory;
     }
 
-    size_t _pages_in_fifo() {
-        return _page_count;
-    }
-
-    size_t _available_fifo_reads() {
-        return _available_reads;
+    size_t _available_reads() {
+        return _available_fifo_reads;
     }
 
     void _termination_check() {
