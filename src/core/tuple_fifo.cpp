@@ -23,7 +23,7 @@ static int TRACE_MASK_WAITS = TRACE_COMPONENT_MASK_NONE;
 static int TRACE_MASK_DISK  = TRACE_COMPONENT_MASK_NONE;
 bool FLUSH_TO_DISK_ON_FULL = true;
 bool USE_DIRECT_IO = false;
-bool WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN = false;
+bool WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN = true;
 
 
 
@@ -597,7 +597,6 @@ void tuple_fifo::_flush_write_page(bool done_writing) {
         if (_page_file == -1)
             THROW2(FileException, "open(%s) failed", filepath.data());
         if (USE_DIRECT_IO) {
-            TRACE(TRACE_ALWAYS, "Using DIO\n");
             int directio_ret = directio(_page_file, DIRECTIO_ON);
             if (directio_ret != 0) {
                 TRACE(TRACE_ALWAYS,
@@ -952,6 +951,7 @@ int tuple_fifo::_get_read_page(int timeout_ms) {
         
         TRACE(TRACE_TUPLE_FIFO_FILE,
               "FIFO %d: Read page %zd from disk\n",
+              _fifo_id,
               _read_page_index);
         return 1;
     }

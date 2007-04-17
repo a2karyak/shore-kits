@@ -4,10 +4,13 @@ use strict;
 
 my @workloads = ('./sim_mix_commands.txt', './q16_commands.txt');
 
-my $OUTPUT_DIR = "./output/lomond_04.15.2007";
+my $OUTPUT_DIR = "./output/lomond_04.17.2007";
 my $program = './qpipe';
 #my $program = "/export/home/ngm/.user_env/bin/monitor_echo";
 $| = 1;
+
+my $DRIVER_COMMAND_FILE = "driver_commands.txt";
+
 
 my @COMMON_CONFIG_VARIABLES = (
     'GLOBAL_OSP',
@@ -16,7 +19,7 @@ my @COMMON_CONFIG_VARIABLES = (
 
 my @FLUSH_CONFIG_VARIABLES =  (
     'WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN',
-    'USE_DIRECT_IO'
+    USE_DIRECT_IO
     );
 
 
@@ -29,9 +32,9 @@ my @command_list = ();
 foreach my $w (@workloads) {
 
 
-
     # Phase 1: Do not push anything to disk
-    if (0) {
+    if (1) {
+
         my $common_size  = 1 + $#COMMON_CONFIG_VARIABLES;
         my $common_limit = 2 ** $common_size;
         foreach my $common_config ( 0 .. ($common_limit-1) ) {
@@ -63,10 +66,14 @@ foreach my $w (@workloads) {
             close(WORKLOAD_COMMANDS);
 
             # now we have constructed @commands
-            open(PROGRAM, " | $program | tee $path_ext");
+            open(COMMANDS, ">$DRIVER_COMMAND_FILE");
             foreach my $command (@commands) {
-                print PROGRAM "$command \n";
+                print COMMANDS "$command \n";
             }
+            close(COMMANDS);
+            
+            system("$program < $DRIVER_COMMAND_FILE | tee $path_ext") == 0
+                || die "Failed to run with $path_ext";
         }
 
     } # endof Phase 1
@@ -108,11 +115,14 @@ foreach my $w (@workloads) {
             close(WORKLOAD_COMMANDS);
 
             # now we have constructed @commands
-            open(PROGRAM, " | $program | tee $path_ext");
-            print PROGRAM "config enable FLUSH_TO_DISK_ON_FULL\n";
+            open(COMMANDS, ">$DRIVER_COMMAND_FILE");
             foreach my $command (@commands) {
-                print PROGRAM "$command \n";
+                print COMMANDS "$command \n";
             }
+            close(COMMANDS);
+
+            system("$program < $DRIVER_COMMAND_FILE | tee $path_ext") == 0
+                || die "Failed to run with $path_ext";
         }
 
     } # endof Phase 2
