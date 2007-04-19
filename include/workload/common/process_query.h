@@ -11,6 +11,9 @@ using namespace qpipe;
 ENTER_NAMESPACE(workload);
 
 
+extern bool RESERVE_WORKERS_BEFORE_DISPATCH;
+
+
 void process_query(packet_t* root, process_tuple_t& pt);
 
 
