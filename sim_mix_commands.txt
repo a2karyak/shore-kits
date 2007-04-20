@@ -1,0 +1,10 @@
+
+tpch sim_mix 1 10 0 OS
+tpch sim_mix 2 10 0 OS
+tpch sim_mix 4 10 0 OS
+tpch sim_mix 8 10 0 OS
+tpch sim_mix 16 10 0 OS
+tpch sim_mix 32 10 0 OS
+tpch sim_mix 64 10 0 OS
+
+quit

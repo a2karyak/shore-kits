@@ -4,7 +4,7 @@ use strict;
 
 my @workloads = ('./sim_mix_commands.txt', './q16_commands.txt');
 
-my $OUTPUT_DIR = "./output/lomond_04.17.2007";
+my $OUTPUT_DIR = "./output";
 my $program = './qpipe';
 #my $program = "/export/home/ngm/.user_env/bin/monitor_echo";
 $| = 1;
@@ -26,7 +26,9 @@ my @FLUSH_CONFIG_VARIABLES =  (
 die "$program not an executable program" if (! -x "$program" );
 
 
-my @command_list = ();
+foreach my $w (@workloads) {
+    die "$w not readable file" if ( ! -r $w );
+}
 
 
 foreach my $w (@workloads) {
@@ -41,6 +43,7 @@ foreach my $w (@workloads) {
             
             my $path_ext = $OUTPUT_DIR."/"."${w}_FLUSH_OFF";
             my @commands = ();
+            push(@commands, "config disable FLUSH_TO_DISK_ON_FULL");
 
             # go through bits
             foreach my $bit_index (0 .. ($common_size-1)) {
@@ -90,6 +93,7 @@ foreach my $w (@workloads) {
             
             my $path_ext = $OUTPUT_DIR."/"."${w}_FLUSH_ON";
             my @commands = ();
+            push(@commands, "config enable FLUSH_TO_DISK_ON_FULL");
 
             # go through bits
             foreach my $bit_index (0 .. ($all_size-1)) {

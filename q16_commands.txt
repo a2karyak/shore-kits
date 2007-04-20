@@ -1,0 +1,10 @@
+
+tpch q16 1 10 0 OS
+tpch q16 2 10 0 OS
+tpch q16 4 10 0 OS
+tpch q16 8 10 0 OS
+tpch q16 16 10 0 OS
+tpch q16 32 10 0 OS
+tpch q16 64 10 0 OS
+
+quit
