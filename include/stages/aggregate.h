@@ -41,10 +41,6 @@ struct aggregate_packet_t : public packet_t {
      *  tuple sent to output_buffer. The packet OWNS this filter. It
      *  will be deleted in the packet destructor.
      *
-     *  @param output_filter The filter that will be applied to any
-     *  tuple sent to output_buffer. The packet OWNS this filter. It
-     *  will be deleted in the packet destructor.
-     *
      *  @param aggregator The aggregator we will be using for this
      *  packet. The packet OWNS this aggregator. It will be deleted in
      *  the packet destructor.

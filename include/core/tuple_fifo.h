@@ -9,7 +9,6 @@
 
 ENTER_NAMESPACE(qpipe);
 
-
 DEFINE_EXCEPTION(TerminatedBufferException);
 
 
@@ -84,7 +83,7 @@ public:
 
     tuple_fifo(size_t tuple_size,
                size_t capacity=DEFAULT_BUFFER_PAGES,
-               size_t threshold=64,
+               size_t threshold=DEFAULT_THRESHOLD_SIZE,
                size_t page_size=get_default_page_size())
         : 
           _tuple_size(tuple_size),

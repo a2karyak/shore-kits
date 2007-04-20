@@ -17,8 +17,25 @@ ENTER_NAMESPACE(qpipe);
 
 // exported constants
 
-// static const int DEFAULT_BUFFER_PAGES = 100; // DSS-style workload
-static const int DEFAULT_BUFFER_PAGES = 1; // OLTP-style workload
+
+
+/**
+ *  @brief For oltp-stype workloads, default number of buffer pages and 
+ *  threshold size does not need to be greater than 1
+ */
+
+static const int DEFAULT_BUFFER_PAGES = 1;
+static const int  DEFAULT_THRESHOLD_SIZE = 1; 
+
+// @FIXME: (ip) Choose OLTP or DSS workload specific parameters
+
+/**
+ *  @brief For dss-stype workloads,  default number of buffer pages and 
+ *  threshold size can have larger values
+ */
+
+// static const int DEFAULT_BUFFER_PAGES = 100;
+//static const int  DEFAULT_THRESHOLD_SIZE = 64; 
 
 
 

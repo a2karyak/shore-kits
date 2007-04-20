@@ -39,11 +39,13 @@ void payment_finalize_stage_t::process_packet() {
 
     packet->describe_trx();
 
+
     /* First dispatch all the payment packets */
     dispatcher_t::dispatch_packet(packet->_upd_wh);
     dispatcher_t::dispatch_packet(packet->_upd_distr);
     dispatcher_t::dispatch_packet(packet->_upd_cust);
     dispatcher_t::dispatch_packet(packet->_ins_hist);
+
 
     /* Variables used to determine the transaction status.
        All stages return a single integer indicating success/failure */

@@ -24,34 +24,6 @@ ENTER_NAMESPACE(workload);
 const int SF = 10;
 
 
-class payment_process_tuple_t : public process_tuple_t {
-
-private:
-
-    int row_counter;
-
-public:
-
-    payment_process_tuple_t()
-        : row_counter(0)
-    {
-    }
-        
-    virtual void begin() {
-        TRACE(TRACE_QUERY_RESULTS, "*** PAYMENT ANSWER ...\n");
-    }
-    
-    virtual void process(const tuple_t& output) {
-	int* tmp;
-	tmp = aligned_cast<int>(output.data);
-
-        TRACE(TRACE_QUERY_RESULTS, "*** Count: %d. TRX: %d ***\n",
-       	      ++row_counter, *tmp);
-    }
-
-}; // END OF: payment_process_tuple_t
-
-
 void tpcc_payment_driver::submit(void* disp) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
@@ -60,7 +32,7 @@ void tpcc_payment_driver::submit(void* disp) {
     // payment_begin_packet output
     // FIXME: (ip) I don't know if we need output buffers for the PAYMENT_BEGIN
     //             but the code asserts if output_buffer == NULL
-    tuple_fifo* bp_buffer = new tuple_fifo(sizeof(int));
+    tuple_fifo* bp_buffer = new tuple_fifo(sizeof(trx_result_tuple));
 
 
     // payment_begin_packet filter
@@ -82,8 +54,8 @@ void tpcc_payment_driver::submit(void* disp) {
     bp_packet->assign_query_state(qs);
     
 
-    payment_process_tuple_t pt;
-    process_query(bp_packet, pt);
+    trx_result_process_tuple_t trx_rt(bp_packet);
+    process_query(bp_packet, trx_rt);
 
 
     dp->query_state_destroy(qs);

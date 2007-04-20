@@ -100,7 +100,7 @@ void payment_begin_stage_t::process_packet() {
                                       buffer,
                                       filter,
                                       dp,
-                                      packet->trx_id(),
+                                      packet->get_trx_id(),
                                       packet->_home_wh_id,
                                       packet->_h_amount);
     
@@ -114,7 +114,7 @@ void payment_begin_stage_t::process_packet() {
                                          buffer,
                                          filter,
                                          dp,
-                                         packet->trx_id(),
+                                         packet->get_trx_id(),
                                          packet->_home_wh_id,
                                          packet->_home_d_id,
                                          packet->_h_amount);
@@ -129,7 +129,7 @@ void payment_begin_stage_t::process_packet() {
                                         buffer,
                                         filter,
                                         dp,
-                                        packet->trx_id(),
+                                        packet->get_trx_id(),
                                         packet->_home_wh_id,
                                         packet->_home_d_id,
                                         packet->_c_id,
@@ -148,7 +148,7 @@ void payment_begin_stage_t::process_packet() {
                                         buffer,
                                         filter,
                                         dp,
-                                        packet->trx_id(),
+                                        packet->get_trx_id(),
                                         packet->_home_wh_id,
                                         packet->_home_d_id,
                                         packet->_c_id,
@@ -164,7 +164,7 @@ void payment_begin_stage_t::process_packet() {
                                         buffer,
                                         filter,
                                         dp,
-                                        packet->trx_id(),
+                                        packet->get_trx_id(),
                                         upd_wh_packet,
                                         upd_distr_packet,
                                         upd_cust_packet,
@@ -177,6 +177,17 @@ void payment_begin_stage_t::process_packet() {
     upd_distr_packet->assign_query_state(qs);
     upd_cust_packet->assign_query_state(qs);
     ins_hist_packet->assign_query_state(qs);
+
+
+    // start processing packets
+    trx_result_process_tuple_t rpt(finalize_packet);
+    process_query(finalize_packet, rpt);
+
+    TRACE( TRACE_ALWAYS, "SHOULD NOTIFY CLIENT\n");
+
+    dp->query_state_destroy(qs);
+
+    TRACE( TRACE_ALWAYS, "DONE\n" );
 
 
     /** FIXME: (ip) Below is a test */

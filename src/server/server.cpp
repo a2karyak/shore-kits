@@ -53,9 +53,10 @@ int qpipe_init(int argc, char* argv[]) {
     register_command_handlers();
     register_stage_containers();
 
+    // FIXME: (ip) Traces everything
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
-              //| TRACE_QUERY_RESULTS
-              //| TRACE_PACKET_FLOW
+              //              | TRACE_QUERY_RESULTS
+              //              | TRACE_PACKET_FLOW
               );
 
     if ((argc > 1) && (strcmp(argv[1], "-n") == 0)) {

@@ -6,6 +6,9 @@
 #include <cstdio>
 
 #include "core.h"
+#include "workload/common/process_tuple.h"
+
+using namespace workload;
 
 
 ENTER_NAMESPACE(qpipe);
@@ -20,6 +23,8 @@ ENTER_NAMESPACE(qpipe);
 
 enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
 		COMMITTED, ROLLBACKED };
+
+
 
 
 /**
@@ -72,7 +77,7 @@ public:
     }
 
 
-    int trx_id() {
+    int get_trx_id() {
         return (_trx_id);
     }
     
@@ -104,7 +109,69 @@ public:
     }
 
 
-}; // END OF CLASS: trx_packet
+}; /* trx_packet */
+
+
+/**
+ *  @brief Structure used to represent the result of a transaction
+ */
+
+struct trx_result_tuple {
+
+    TrxState R_STATE;
+    int R_ID;
+
+}; /* trx_result_tuple */
+
+
+
+/**
+ *  @brief Definition of a transaction result tuple
+ */
+
+class trx_result_process_tuple_t : public process_tuple_t {
+
+private:
+    trx_packet_t* _packet;
+
+public:
+
+    trx_result_process_tuple_t(trx_packet_t* a_trx_packet) 
+        : process_tuple_t() 
+    {
+        assert(a_trx_packet != NULL);
+        _packet = a_trx_packet;
+    }
+
+    virtual void begin() {
+        TRACE( TRACE_ALWAYS, "*** TRX ***\n");
+    }
+
+
+    void set_trx_packet(trx_packet_t* a_trx_packet) {
+        _packet = a_trx_packet;
+    }
+
+
+    virtual void process(const tuple_t& output) {
+
+        assert (_packet != NULL);
+
+        trx_result_tuple* r = aligned_cast<trx_result_tuple>(output.data);
+        TRACE( TRACE_ALWAYS, "*** TRX=%d\tRESULT=%d\n",
+               r->R_ID,
+               r->R_STATE);
+
+        assert (_packet->get_trx_id() == r->R_ID);
+
+        _packet->set_trx_state(r->R_STATE);
+    }
+
+
+    virtual ~trx_result_process_tuple_t() { }
+
+
+}; /* trx_result_process_tuple_t */
 
 
 EXIT_NAMESPACE(qpipe);

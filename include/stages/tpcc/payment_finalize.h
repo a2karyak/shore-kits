@@ -86,6 +86,17 @@ public:
         _upd_cust_buffer(upd_cust->output_buffer()),
         _ins_hist_buffer(ins_hist->output_buffer())
     {
+        /* asserts on uninitiliazed input packets */
+        assert(_upd_wh != NULL);
+        assert(_upd_distr != NULL);
+        assert(_upd_cust != NULL);
+        assert(_ins_hist != NULL);       
+
+        /* asserts on NULL input buffers */
+        assert(_upd_wh_buffer != NULL);
+        assert(_upd_distr_buffer != NULL);
+        assert(_upd_cust_buffer != NULL);
+        assert(_ins_hist_buffer != NULL);       
     }
 
     
@@ -110,8 +121,14 @@ public:
 
 
     virtual void declare_worker_needs(resource_declare_t* declare) {
+        /* declare own needs */
         declare->declare(_packet_type, 1);
-        /* no inputs */
+        
+        /* declares inputs */
+        _upd_wh->declare_worker_needs(declare);
+        _upd_distr->declare_worker_needs(declare);
+        _upd_cust->declare_worker_needs(declare);
+        _ins_hist->declare_worker_needs(declare);
     }
 
 
