@@ -12,10 +12,6 @@ ENTER_NAMESPACE(workload);
 
 
 
-bool RESERVE_WORKERS_BEFORE_DISPATCH = true;
-
-
-
 void process_query(packet_t* root, process_tuple_t& pt)
 {
     guard<tuple_fifo> out = root->output_buffer();
