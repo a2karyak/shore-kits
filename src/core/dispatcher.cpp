@@ -165,4 +165,19 @@ bool is_osp_enabled_for_type(const c_str& packet_type) {
 
 
 
+
+void dispatcher_t::print_pool_capacities() {
+  
+  dispatcher_t* d = instance();
+  map<c_str, stage_container_t*>::iterator it;
+  TRACE(TRACE_ALWAYS, "Thread pools (pool : num threads)\n");
+  for (it = d->_scdir.begin(); it != d->_scdir.end(); ++it) {
+    TRACE(TRACE_ALWAYS, "%s: %d\n",
+          it->first.data(),
+          it->second->get_pool_capacity());
+  }
+}
+
+
+
 EXIT_NAMESPACE(qpipe);

@@ -4,7 +4,7 @@ use strict;
 
 my @workloads = ('./sim_mix_commands.txt', './q16_commands.txt');
 
-my $OUTPUT_DIR = "./output/lomond_04.21.2007";
+my $OUTPUT_DIR = "./output/lomond_04.21.2007c";
 my $program = './qpipe';
 #my $program = "/export/home/ngm/.user_env/bin/monitor_echo";
 $| = 1;
@@ -32,7 +32,7 @@ foreach my $w (@workloads) {
 
 
     # Phase 1: Do not push anything to disk
-    if (0) {
+    if (1) {
 
         my $common_size  = 1 + $#COMMON_CONFIG_VARIABLES;
         my $common_limit = 2 ** $common_size;
@@ -82,7 +82,7 @@ foreach my $w (@workloads) {
 
 
     # Phase 2: Enable disk flushing
-    if (1) {
+    if (0) {
         
         my @all_config = (@COMMON_CONFIG_VARIABLES, @RESERVE_CONFIG_VARIABLES);
         my $all_size = 1 + $#all_config;

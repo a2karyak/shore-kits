@@ -82,6 +82,8 @@ public:
     
     void run();
 
+    int get_pool_capacity();
+
 private:
 
     void _reserve(int n);

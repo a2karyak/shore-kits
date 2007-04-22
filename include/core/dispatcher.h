@@ -118,6 +118,9 @@ public:
     static void reserver_release(worker_reserver_t* wr);
     static worker_releaser_t* releaser_acquire();
     static void releaser_release(worker_releaser_t* wr);
+
+    
+    static void print_pool_capacities();
 };
 
 

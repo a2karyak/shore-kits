@@ -23,7 +23,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
-bool RESERVE_WORKERS_BEFORE_DISPATCH = false;
+bool RESERVE_WORKERS_BEFORE_DISPATCH = true;
 static const bool ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE = true;
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
@@ -533,6 +533,20 @@ void stage_container_t::run() {
         
 	// TODO: check for container shutdown
     }
+}
+
+
+
+/**
+ *  @brief Get number of worker thread in this stage container.
+ *
+ *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
+ */
+int stage_container_t::get_pool_capacity() {
+    critical_section_t cs(_container_lock);
+    // * * * BEGIN CRITICAL SECTION * * *
+    return _rp.get_capacity();
+    // * * * END CRITICAL SECTION * * *
 }
 
 
