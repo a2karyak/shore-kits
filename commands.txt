@@ -1,4 +1,6 @@
 
+config disable WAIT_FOR_UNSHARED_TUPLE_FIFOS_TO_DRAIN
+
 tpch sim_mix 1 10 0 OS
 tpch sim_mix 2 10 0 OS
 tpch sim_mix 4 10 0 OS
@@ -20,5 +22,3 @@ tpch q16 64 10 0 OS
 quit
 
 tpch q16 128 10 0 OS
-
-
