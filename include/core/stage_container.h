@@ -13,11 +13,12 @@ using std::list;
 
 
 
+ENTER_NAMESPACE(qpipe);
+
+
+
 extern bool RESERVE_WORKERS_BEFORE_DISPATCH;
 
-
-
-ENTER_NAMESPACE(qpipe);
 
 
 /* exported datatypes */
