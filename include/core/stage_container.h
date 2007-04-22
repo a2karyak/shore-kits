@@ -13,6 +13,10 @@ using std::list;
 
 
 
+extern bool RESERVE_WORKERS_BEFORE_DISPATCH;
+
+
+
 ENTER_NAMESPACE(qpipe);
 
 

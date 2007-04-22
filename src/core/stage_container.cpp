@@ -19,13 +19,14 @@
 #define TRACE_WORKER_CREATE 0
 
 
+
 ENTER_NAMESPACE(qpipe);
 
 
+bool RESERVE_WORKERS_BEFORE_DISPATCH = true;
 static const bool ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE = true;
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
-
 
 
 // the "STOP" exception. Simply indicates that the stage should stop
@@ -33,7 +34,11 @@ const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 // caught by the container.
 struct stop_exception { };
 
+
 EXIT_NAMESPACE(qpipe);
+
+
+
 template<>
 inline void
 guard<qpipe::dispatcher_t::worker_releaser_t>::
@@ -41,6 +46,9 @@ guard<qpipe::dispatcher_t::worker_releaser_t>::
 {
     qpipe::dispatcher_t::releaser_release(ptr);
 }
+
+
+
 ENTER_NAMESPACE(qpipe);
 
 
