@@ -23,7 +23,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
-bool RESERVE_WORKERS_BEFORE_DISPATCH = true;
+bool RESERVE_WORKERS_BEFORE_DISPATCH = false;
 static const bool ALWAYS_TRY_OSP_INSTEAD_OF_WORKER_CREATE = true;
 const unsigned int stage_container_t::NEXT_TUPLE_UNINITIALIZED = 0;
 const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
@@ -83,6 +83,14 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _next_thread(0),
       _rp(&_container_lock._lock, 0, container_name)
 {
+    if (!RESERVE_WORKERS_BEFORE_DISPATCH) {
+        /* The _reserve() method below creates threads as they are
+           needed. If we are not reserving threads, we should probably
+           just create the limit from the beginning. Note that this
+           hack does not prevent deadlock! */
+        for (int i = 0; i < _max_threads; i++)
+            create_worker();
+    }
 }
 
 
@@ -197,10 +205,16 @@ void stage_container_t::create_worker() {
 
 
 void stage_container_t::reserve(int n) {
+
+    /* This method should not be called unless we are reserving worker
+       threads. */
+    assert(RESERVE_WORKERS_BEFORE_DISPATCH);
+
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
     _reserve(n);
 }
+
 
 
 /**
@@ -214,6 +228,9 @@ void stage_container_t::_reserve(int n) {
     
 
     assert(n > 0);
+    /* This method should not be called unless we are reserving worker
+       threads. */
+    assert(RESERVE_WORKERS_BEFORE_DISPATCH);
 
 
     // Make sure we are not asking for something we can't satisfy even
@@ -285,6 +302,9 @@ void stage_container_t::_reserve(int n) {
 void stage_container_t::unreserve(int n) {
 
     assert(n > 0);
+    /* This method should not be called unless we are reserving worker
+       threads. */
+    assert(RESERVE_WORKERS_BEFORE_DISPATCH);
 
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
@@ -317,10 +337,21 @@ void stage_container_t::enqueue(packet_t* packet) {
 
 
     assert(packet != NULL);
-    bool unreserve = packet->unreserve_worker_on_completion();
-    guard<dispatcher_t::worker_releaser_t> wr = dispatcher_t::releaser_acquire();
-    packet->declare_worker_needs(wr);
-    
+    bool unreserve = false;
+    guard<dispatcher_t::worker_releaser_t> wr;
+
+
+    if (RESERVE_WORKERS_BEFORE_DISPATCH) {
+        /* If we are reserving worker threads, we should have done so
+           already. We need code here to unreserve workers immediately
+           if we no longer need them (i.e. if we detected work
+           sharing). */
+        unreserve = packet->unreserve_worker_on_completion();
+        wr = dispatcher_t::releaser_acquire();
+        /* Count resources to release if we share. */
+        packet->declare_worker_needs(wr);
+    }
+
 
     /* The caller should have reserved a worker thread before the
        enqueue operation is performed. If we manage to merge, we will
@@ -366,7 +397,7 @@ void stage_container_t::enqueue(packet_t* packet) {
             if (ret == stage_container_t::MERGE_SUCCESS_RELEASE_RESOURCES) {
                 // * * * END CRITICAL SECTION * * *
                 cs.exit();
-                if (unreserve)
+                if (RESERVE_WORKERS_BEFORE_DISPATCH && unreserve)
                     /* Still need to do this check since worker may
                        have been reserved by a meta-stage which does
                        not want us to free it. */
@@ -407,7 +438,7 @@ void stage_container_t::enqueue(packet_t* packet) {
                 cs.exit();
                 
                 /* need to exit critical section before we unreserve */
-                if (unreserve)
+                if (RESERVE_WORKERS_BEFORE_DISPATCH && unreserve)
                     wr->release_resources();
                 
                 return;
@@ -415,10 +446,11 @@ void stage_container_t::enqueue(packet_t* packet) {
         }
     }
 
+
     if (TRACE_MERGING)
         TRACE(TRACE_ALWAYS, "%s could not be merged\n",
               packet->_packet_id.data());
-    
+
     
     // No work sharing detected. We can now give up and insert the new
     // packet into the stage_queue.
@@ -473,15 +505,18 @@ void stage_container_t::run() {
 	// here since stage construction can take a long time.
         _container_current_stages.push_back(&adaptor);
 
+
         /* Becomes non-idle. Note that we don't become non-idle in
            this method. We do it in cleanup() since we must do it
            before deciding whether to unreserve ourselves. */
-        _rp.notify_non_idle();
+        if (RESERVE_WORKERS_BEFORE_DISPATCH)
+            _rp.notify_non_idle();
+
 
         // * * * END CRITICAL SECTION * * *
 	cs.exit();
 
-        
+
         // create stage
         guard<stage_t> stage = _stage_maker->create_stage();
         adaptor.run_stage(stage);
@@ -908,13 +943,23 @@ void stage_container_t::stage_adaptor_t::cleanup() {
     critical_section_t cs(_container->_container_lock);
     // * * * BEGIN CRITICAL SECTION * * *
 
-    
-    /* We will return and be able to process more packets. We can
-       unreserve ourself from the container. Remember to drop
-       non-idle count before this! */
-    _container->_rp.notify_idle();
-    if (_packet->unreserve_worker_on_completion())
-        _container->_rp.unreserve(1);
+
+    if (RESERVE_WORKERS_BEFORE_DISPATCH) {
+
+        /* Remember to drop non-idle count! */
+        _container->_rp.notify_idle();
+
+        /* This worker thread may return from this function and
+           process more packets. */
+        /* This worker may unreserve itself from the container, even
+           if there are unfinished packets in its chain which need to
+           be re-enqueued. If there are such late mergers, the
+           try_merge() call which merged at least one of them returned
+           with MERGE_SUCCESS_HOLD_RESOURCES. This means that a set of
+           workers for this subtree has remained reserved. */
+        if (_packet->unreserve_worker_on_completion())
+            _container->_rp.unreserve(1);
+    }
 
 
     // Re-enqueue incomplete packets if we have them
