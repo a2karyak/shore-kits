@@ -3,10 +3,11 @@
 use strict;
 
 my @workloads = ('./sim_mix_commands.txt', './q16_commands.txt');
+my $qpipe = "./qpipe";
+my $qpipe_noreserve = "./qpipe_noreserve";
+
 
 my $OUTPUT_DIR = "./output/lomond_04.21.2007c";
-my $program = './qpipe';
-#my $program = "/export/home/ngm/.user_env/bin/monitor_echo";
 $| = 1;
 
 my $DRIVER_COMMAND_FILE = "driver_commands.txt";
@@ -41,7 +42,6 @@ foreach my $w (@workloads) {
             my $path_ext = $OUTPUT_DIR."/"."${w}_FLUSH_OFF_RESERVE_ON";
             my @commands = ();
             push(@commands, "config disable FLUSH_TO_DISK_ON_FULL");
-            push(@commands, "config enable  RESERVE_WORKERS_BEFORE_DISPATCH");
 
             # go through bits
             foreach my $bit_index (0 .. ($common_size-1)) {
@@ -73,7 +73,7 @@ foreach my $w (@workloads) {
             }
             close(COMMANDS);
             
-            system("$program < $DRIVER_COMMAND_FILE | tee $path_ext") == 0
+            system("$qpipe < $DRIVER_COMMAND_FILE | tee $path_ext") == 0
                 || die "Failed to run with $path_ext";
         }
 
@@ -125,7 +125,7 @@ foreach my $w (@workloads) {
             }
             close(COMMANDS);
 
-            system("$program < $DRIVER_COMMAND_FILE | tee $path_ext") == 0
+            system("$qpipe_noreserve < $DRIVER_COMMAND_FILE | tee $path_ext") == 0
                 || die "Failed to run with $path_ext";
         }
 

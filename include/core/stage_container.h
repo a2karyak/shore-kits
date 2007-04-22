@@ -17,6 +17,10 @@ ENTER_NAMESPACE(qpipe);
 
 
 
+/**
+ * @brief We cannot toggle this value between runs and expect it to
+ * "do the right thing". The system maintains its pools across runs.
+ */
 extern bool RESERVE_WORKERS_BEFORE_DISPATCH;
 
 
