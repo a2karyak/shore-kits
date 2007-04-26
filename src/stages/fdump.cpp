@@ -37,7 +37,8 @@ void fdump_stage_t::process_packet() {
     tuple_fifo* input_buffer = packet->_input_buffer;
     
     
-    guard<qpipe::page> next_page = page::alloc(input_buffer->tuple_size());
+    guard<qpipe::page> next_page =
+        qpipe::page::alloc(input_buffer->tuple_size());
     while (1) {
     
         if (!input_buffer->copy_page(next_page)) {

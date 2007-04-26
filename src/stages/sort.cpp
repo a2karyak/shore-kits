@@ -401,7 +401,7 @@ void sort_stage_t::process_packet() {
         for(unsigned int i=0; i < PAGES_PER_INITIAL_SORTED_RUN; i++) {
 
             // read in a run of pages
-            qpipe::page* p = page::alloc(_input_buffer->tuple_size());
+            qpipe::page* p = qpipe::page::alloc(_input_buffer->tuple_size());
             if (!_input_buffer->copy_page(p)) {
                 p->free();
                 break;

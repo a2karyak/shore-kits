@@ -134,7 +134,7 @@ void pipe_hash_join_stage_t::process_packet() {
  do_left:
     if(left_ready == 1) {
 	// process a left page
-        qpipe::page* p = page::alloc(left_buffer->tuple_size());
+        qpipe::page* p = qpipe::page::alloc(left_buffer->tuple_size());
 	left_buffer->copy_page(p);
 	left_pages.add(p);
 	pit it = p->begin();
@@ -158,7 +158,7 @@ void pipe_hash_join_stage_t::process_packet() {
  do_right:
     if(right_ready == 1) {
 	// process a right page
-        qpipe::page* p = page::alloc(right_buffer->tuple_size());
+        qpipe::page* p = qpipe::page::alloc(right_buffer->tuple_size());
         right_buffer->copy_page(p);
 	right_pages.add(p);
 	pit it = p->begin();

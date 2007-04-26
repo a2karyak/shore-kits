@@ -43,8 +43,8 @@ void bnl_in_stage_t::process_packet() {
     dispatcher_t::dispatch_packet(packet->_left);
  
     
-    guard<qpipe::page> outer_tuple_page = page::alloc(left_buffer->tuple_size());
-    guard<qpipe::page> inner_tuple_page = page::alloc(right_source->tuple_size());
+    guard<qpipe::page> outer_tuple_page = qpipe::page::alloc(left_buffer->tuple_size());
+    guard<qpipe::page> inner_tuple_page = qpipe::page::alloc(right_source->tuple_size());
     
     while (1) {
         

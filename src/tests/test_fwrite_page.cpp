@@ -16,7 +16,7 @@ int main(int, char**) {
     util_init();
 
     // parse index
-    guard<page> p = page::alloc(sizeof(int));
+    guard<qpipe::page> p = qpipe::page::alloc(sizeof(int));
     for (int i = 0; ; i++) {
         tuple_t tuple((char*)&i, sizeof(i));
         p->append_tuple(tuple);
