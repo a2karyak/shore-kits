@@ -52,6 +52,9 @@ static struct {
     int total_fifos_terminated_in_memory;
     int total_fifos_terminated_on_disk;
     int total_fifos_shared;
+    
+    int total_pages_written_to_disk;
+    int total_pages_read_from_disk;
 
 } _tuple_fifo_stats;
 
@@ -102,6 +105,11 @@ void tuple_fifo::trace_stats() {
 
     TRACE(TRACE_ALWAYS, "%d tuple_fifos shared\n",
           _tuple_fifo_stats.total_fifos_shared);
+
+    TRACE(TRACE_ALWAYS, "%d pages written to disk\n",
+          _tuple_fifo_stats.total_pages_written_to_disk);
+    TRACE(TRACE_ALWAYS, "%d pages read from disk\n",
+          _tuple_fifo_stats.total_pages_read_from_disk);
 }
 
 
@@ -245,6 +253,10 @@ void tuple_fifo::destroy() {
             _tuple_fifo_stats.total_fifos_terminated_on_disk++;
     if (is_shared())
         _tuple_fifo_stats.total_fifos_shared++;
+
+    _tuple_fifo_stats.total_pages_written_to_disk += _num_pages_written_to_disk;
+    _tuple_fifo_stats.total_pages_read_from_disk  += _num_pages_read_from_disk;
+    
     cs.exit();
 
 

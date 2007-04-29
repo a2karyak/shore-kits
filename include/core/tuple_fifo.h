@@ -128,6 +128,8 @@ private:
     size_t _num_removed;
     size_t _num_waits_on_insert;
     size_t _num_waits_on_remove;
+    size_t _num_pages_written_to_disk;
+    size_t _num_pages_read_from_disk;
 
     /* read and write page management */
     char*  _read_end;
@@ -204,6 +206,8 @@ public:
           _num_removed(0),
           _num_waits_on_insert(0),
           _num_waits_on_remove(0),
+          _num_pages_written_to_disk(0),
+          _num_pages_read_from_disk(0),
           _lock(thread_mutex_create()),
           _reader_notify(thread_cond_create()),
           _writer_notify(thread_cond_create()),
