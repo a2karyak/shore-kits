@@ -42,5 +42,19 @@ trx_packet_t::~trx_packet_t(void) {
 }
 
 
+/**
+ *  @brief trx_result_tuple initializer 
+ */
+
+void trx_result_tuple::reset(TrxState aTrxState, int anID) {
+
+    // check for validity of inputs
+    assert ((aTrxState >= UNDEF) && (aTrxState <= ROLLBACKED));
+    assert (anID >= NO_VALID_TRX_ID);
+
+    R_STATE = aTrxState;
+    R_ID = anID;
+}
+
 
 EXIT_NAMESPACE(qpipe);

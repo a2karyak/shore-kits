@@ -113,14 +113,34 @@ public:
 
 
 /**
- *  @brief Structure used to represent the result of a transaction
+ *  @brief Class used to represent the result of a transaction
  */
 
-struct trx_result_tuple {
+class trx_result_tuple {
 
+private:
     TrxState R_STATE;
     int R_ID;
 
+public:
+
+    // construction - destruction
+
+    trx_result_tuple() { reset(UNDEF, -1); }
+
+    trx_result_tuple(TrxState aTrxState, int anID) { reset(aTrxState, anID); }
+
+    ~trx_result_tuple() { }
+
+    // access methods
+
+    int get_id() { return (R_ID); }
+
+    TrxState get_state() { return (R_STATE); }
+
+    void reset(TrxState aTrxState, int anID);
+    
+    
 }; /* trx_result_tuple */
 
 
@@ -159,12 +179,12 @@ public:
 
         trx_result_tuple* r = aligned_cast<trx_result_tuple>(output.data);
         TRACE( TRACE_ALWAYS, "*** TRX=%d\tRESULT=%d\n",
-               r->R_ID,
-               r->R_STATE);
+               r->get_id(),
+               r->get_state());
 
-        assert (_packet->get_trx_id() == r->R_ID);
+        assert (_packet->get_trx_id() == r->get_id());
 
-        _packet->set_trx_state(r->R_STATE);
+        _packet->set_trx_state(r->get_state());
     }
 
 

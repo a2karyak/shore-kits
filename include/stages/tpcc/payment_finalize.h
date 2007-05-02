@@ -135,19 +135,29 @@ public:
     /** @brief Calls all the payment_* packets of this transaction to rollback */
     
     void rollback() {
-        _upd_wh->rollback();
-        _upd_distr->rollback();
-        _upd_cust->rollback();
-        _ins_hist->rollback();
+        
+        TRACE( TRACE_ALWAYS, "~~~ Should Rollback TRX=%d ~~~\n", _trx_id);
+
+        /*
+          _upd_wh->rollback();
+          _upd_distr->rollback();
+          _upd_cust->rollback();
+          _ins_hist->rollback();
+        */
     }
 
     /** @brief Calls all the payment_* packets of this transaction to commit */
 
     void commit() {
-        _upd_wh->commit();
-        _upd_distr->commit();
-        _upd_cust->commit();
-        _ins_hist->commit();
+
+        TRACE( TRACE_ALWAYS, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
+
+        /*
+          _upd_wh->commit();
+          _upd_distr->commit();
+          _upd_cust->commit();
+          _ins_hist->commit();
+        */
     }
         
 

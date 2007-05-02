@@ -195,13 +195,24 @@ void payment_begin_stage_t::process_packet() {
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
      size_t dest_size = packet->output_buffer()->tuple_size();
+
+     TRACE( TRACE_ALWAYS, "size: %d\n", dest_size);
+
      array_guard_t<char> dest_data = new char[dest_size];
      tuple_t dest(dest_data, dest_size);
 
-     int* dest_tmp;
-     dest_tmp = aligned_cast<int>(dest.data);
+     /**
+      *  trx_result_tuple structure
+      *  TrxState R_STATE
+      *  int R_ID
+      */
 
-     *dest_tmp = my_trx_id;
+     trx_result_tuple tmpRTuple(COMMITTED, my_trx_id);
+
+     trx_result_tuple* dest_result_tuple;
+     dest_result_tuple = aligned_cast<trx_result_tuple>(dest.data);
+
+     *dest_result_tuple = tmpRTuple;
 
      adaptor->output(dest);
 
