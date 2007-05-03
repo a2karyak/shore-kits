@@ -90,8 +90,6 @@ void payment_finalize_stage_t::process_packet() {
     packet->commit();
     packet->set_trx_state(COMMITTED);
 
-
-
 } // process_packet
 
 

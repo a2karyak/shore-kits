@@ -24,7 +24,7 @@ ENTER_NAMESPACE(qpipe);
 enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
 		COMMITTED, ROLLBACKED };
 
-
+c_str translate_state(TrxState aState);
 
 
 /**
@@ -138,6 +138,8 @@ public:
 
     TrxState get_state() { return (R_STATE); }
 
+    c_str say_state() { return (translate_state(R_STATE)); }
+
     void reset(TrxState aTrxState, int anID);
     
     
@@ -178,9 +180,9 @@ public:
         assert (_packet != NULL);
 
         trx_result_tuple* r = aligned_cast<trx_result_tuple>(output.data);
-        TRACE( TRACE_ALWAYS, "*** TRX=%d\tRESULT=%d\n",
+        TRACE( TRACE_ALWAYS, "*** TRX=%d\tRESULT=%s\n",
                r->get_id(),
-               r->get_state());
+               r->say_state().data());
 
         assert (_packet->get_trx_id() == r->get_id());
 

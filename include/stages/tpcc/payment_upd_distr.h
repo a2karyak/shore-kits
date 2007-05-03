@@ -82,7 +82,7 @@ public:
     void describe_trx() {
 
         TRACE( TRACE_ALWAYS,
-               "\nUPD_WH - TRX_ID=%d\n" \
+               "\nUPD_DISTR - TRX_ID=%d\n" \
                "WH_ID=%d\t\tDISTRICT=%d\tAMOYNT=%.2f\n", 
                _trx_id, 
                _wh_id, _distr_id, _amount);

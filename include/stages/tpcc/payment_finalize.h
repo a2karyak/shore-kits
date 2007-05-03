@@ -28,13 +28,31 @@ public:
 
     static const c_str PACKET_TYPE;
 
-    /* The input packets */
+
+    /*
+    // Removed the guards
+
+    // The input packets
+    payment_upd_wh_packet_t _upd_wh;
+    payment_upd_distr_packet_t _upd_distr;
+    payment_upd_cust_packet_t _upd_cust;
+    payment_ins_hist_packet_t _ins_hist;
+
+    // The input buffers
+    tuple_fifo _upd_wh_buffer;
+    tuple_fifo _upd_distr_buffer;
+    tuple_fifo _upd_cust_buffer;
+    tuple_fifo _ins_hist_buffer;
+    */
+
+
+    // The input packets
     guard<trx_packet_t> _upd_wh;
     guard<trx_packet_t> _upd_distr;
     guard<trx_packet_t> _upd_cust;
     guard<trx_packet_t> _ins_hist;
 
-    /* The input buffers */
+    // The input buffers
     guard<tuple_fifo> _upd_wh_buffer;
     guard<tuple_fifo> _upd_distr_buffer;
     guard<tuple_fifo> _upd_cust_buffer;
@@ -67,10 +85,10 @@ public:
                               tuple_fifo*     output_buffer,
                               tuple_filter_t* output_filter,
                               const int a_trx_id,
-                              payment_upd_wh_packet_t* upd_wh,
-                              payment_upd_distr_packet_t* upd_distr,
-                              payment_upd_cust_packet_t* upd_cust,
-                              payment_ins_hist_packet_t* ins_hist)
+                              trx_packet_t* upd_wh,
+                              trx_packet_t* upd_distr,
+                              trx_packet_t* upd_cust,
+                              trx_packet_t* ins_hist)
 	: trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                        create_plan(a_trx_id),
                        true, /* merging allowed */
@@ -128,32 +146,18 @@ public:
     }
 
 
-    /** @brief Calls all the payment_* packets of this transaction to rollback */
+    /** @brief Calls for this transaction to rollback */
     
     void rollback() {
         
         TRACE( TRACE_ALWAYS, "~~~ Should Rollback TRX=%d ~~~\n", _trx_id);
-
-        /*
-          _upd_wh->rollback();
-          _upd_distr->rollback();
-          _upd_cust->rollback();
-          _ins_hist->rollback();
-        */
     }
 
-    /** @brief Calls all the payment_* packets of this transaction to commit */
+    /** @brief Calls for this transaction to commit */
 
     void commit() {
 
         TRACE( TRACE_ALWAYS, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
-
-        /*
-          _upd_wh->commit();
-          _upd_distr->commit();
-          _upd_cust->commit();
-          _ins_hist->commit();
-        */
     }
         
 

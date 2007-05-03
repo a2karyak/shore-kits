@@ -64,7 +64,9 @@ public:
     {
     }
 
-    static query_plan* create_plan(tuple_filter_t* filter, const c_str &file_name) {
+    static query_plan* create_plan(tuple_filter_t* filter, 
+                                   const c_str &file_name) 
+    {
         c_str action("%s:%s", PACKET_TYPE.data(), file_name.data());
         return new query_plan(action, filter->to_string(), NULL, 0);
     }

@@ -44,7 +44,7 @@ void tpcc_payment_driver::submit(void* disp) {
     
 
     // payment_begin_packet
-    payment_begin_packet_t* bp_packet = 
+    trx_packet_t* bp_packet = 
 	create_begin_payment_packet( "PAYMENT_CLIENT_", 
 				     bp_buffer, 
 				     bp_filter,
@@ -70,7 +70,7 @@ void tpcc_payment_driver::submit(void* disp) {
  *  of the database
  */
 
-payment_begin_packet_t* 
+trx_packet_t* 
 tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix, 
 						 tuple_fifo* bp_output_buffer,
 						 tuple_filter_t* bp_output_filter,
@@ -78,7 +78,7 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
                                                  int sf) 
 {
     // BEGIN_PAYMENT
-    payment_begin_packet_t* payment_packet;
+    trx_packet_t* payment_packet;
 
     assert(sf > 0);
 
