@@ -88,12 +88,7 @@ public:
       {
       }
 
-    
-    
-    // Destructor
-    ~payment_ins_hist_packet_t() { }
-    
-
+        
     void describe_trx() {
 
         TRACE( TRACE_ALWAYS,

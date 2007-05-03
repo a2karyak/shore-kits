@@ -78,11 +78,6 @@ public:
       {
       }
 
-    
-    
-    // Destructor
-    ~payment_upd_distr_packet_t() { }
-
 
     void describe_trx() {
 

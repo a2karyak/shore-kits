@@ -34,13 +34,13 @@ void tpcc_payment_driver::submit(void* disp) {
     //             but the code asserts if output_buffer == NULL
     tuple_fifo* bp_buffer = new tuple_fifo(sizeof(trx_result_tuple));
 
-    TRACE (TRACE_ALWAYS, "bp buffer size = %d\n", sizeof(trx_result_tuple));
-
-
     // payment_begin_packet filter
     // FIXME: (ip) I also don't believe that we need filters for the PAYMENT
     //             but the code asserts if output_filter == NULL
-    tuple_filter_t* bp_filter = new trivial_filter_t(sizeof(int));
+
+    // (ip) size of output_filter and output_buffer should be the same!
+    tuple_filter_t* bp_filter = 
+        new trivial_filter_t(sizeof(trx_result_tuple));
     
 
     // payment_begin_packet

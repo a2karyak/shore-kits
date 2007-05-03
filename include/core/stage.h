@@ -72,6 +72,7 @@ public:
         virtual ~adaptor_t() { }
         
     protected:
+
         /**
          * @brief outputs the last partial page, if any. The adaptor's
          * implementation should call this function after normal

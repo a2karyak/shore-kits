@@ -443,6 +443,8 @@ private:
 	// must be 8-byte aligned!
 	test_alignment(_data(), sizeof(double));
         clear();
+
+        //        TRACE( TRACE_ALWAYS, "~~~ tuple_size= %d\n", tuple_size);
     }
     
 

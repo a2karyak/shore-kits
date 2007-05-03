@@ -91,11 +91,6 @@ public:
         }
       }
 
-    
-    
-    // Destructor
-    ~payment_upd_cust_packet_t() { }
-
 
     void describe_trx() {
 

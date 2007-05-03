@@ -87,8 +87,8 @@ void payment_begin_stage_t::process_packet() {
     TRACE( TRACE_ALWAYS, "By default the policy is OS\n");
     scheduler::policy_t* dp = new scheduler::policy_os_t();
 
-    /** @note The outoput buffers of all the non-finalize stages, which is
-     *  the input to the finalize stage are simple integers 
+    /** @note The output buffers of all the non-finalize stages, which is
+     *  the input to the finalize stage, are simple integers 
      */
 
     // 2a. PAYMENT_UPD_WH
@@ -183,38 +183,28 @@ void payment_begin_stage_t::process_packet() {
     trx_result_process_tuple_t rpt(finalize_packet);
     process_query(finalize_packet, rpt);
 
-    TRACE( TRACE_ALWAYS, "SHOULD NOTIFY CLIENT\n");
-
     dp->query_state_destroy(qs);
-
-    TRACE( TRACE_ALWAYS, "DONE\n" );
-
-
-    /** FIXME: (ip) Below is a test */
+    
+    TRACE( TRACE_ALWAYS, "DONE. NOTIFYING CLIENT\n" );
+    
+    // writing output 
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
-     size_t dest_size = packet->output_buffer()->tuple_size();
-
-     TRACE( TRACE_ALWAYS, "size: %d\n", dest_size);
-
-     array_guard_t<char> dest_data = new char[dest_size];
-     tuple_t dest(dest_data, dest_size);
-
-     /**
-      *  trx_result_tuple structure
-      *  TrxState R_STATE
-      *  int R_ID
-      */
-
-     trx_result_tuple tmpRTuple(COMMITTED, my_trx_id);
-
-     trx_result_tuple* dest_result_tuple;
-     dest_result_tuple = aligned_cast<trx_result_tuple>(dest.data);
-
-     *dest_result_tuple = tmpRTuple;
-
-     adaptor->output(dest);
+    size_t dest_size = packet->output_buffer()->tuple_size();
+    
+    array_guard_t<char> dest_data = new char[dest_size];
+    tuple_t dest(dest_data, dest_size);
+    
+    
+    trx_result_tuple aTrxResultTuple(COMMITTED, my_trx_id);
+    
+    trx_result_tuple* dest_result_tuple;
+    dest_result_tuple = aligned_cast<trx_result_tuple>(dest.data);
+    
+    *dest_result_tuple = aTrxResultTuple;
+    
+    adaptor->output(dest);
 
 } // process_packet
 

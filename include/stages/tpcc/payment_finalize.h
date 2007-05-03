@@ -99,10 +99,6 @@ public:
         assert(_ins_hist_buffer != NULL);       
     }
 
-    
-    // Destructor
-    ~payment_finalize_packet_t() { }
-
 
     void describe_trx() {
 

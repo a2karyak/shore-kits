@@ -119,14 +119,6 @@ public:
         _trx_state = UNDEF;
     }
 
-    
-    // Destructor
-    ~payment_begin_packet_t() {
-	
- 	if (_h_date)
- 	    delete (_h_date);
-    }
-
 
     void describe_trx() {
 
