@@ -196,6 +196,7 @@ void payment_begin_stage_t::process_packet() {
     
     adaptor->output(dest);
 
+
 } // process_packet
 
 

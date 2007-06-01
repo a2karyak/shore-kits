@@ -73,9 +73,19 @@ private:
 
 private:
     // Specialize this function as necessary
+
     void action(T* ptr) {
         delete ptr;
     }
+
+    
+    /* possible change 
+    void action(T* ptr) {
+       if (ptr != NULL)
+          delete ptr;
+    }
+    */
+
 public:
     
     guard(T* ptr=NULL)

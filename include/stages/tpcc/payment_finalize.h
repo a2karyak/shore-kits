@@ -29,23 +29,22 @@ public:
     static const c_str PACKET_TYPE;
 
 
-    /*
     // Removed the guards
 
     // The input packets
-    payment_upd_wh_packet_t _upd_wh;
-    payment_upd_distr_packet_t _upd_distr;
-    payment_upd_cust_packet_t _upd_cust;
-    payment_ins_hist_packet_t _ins_hist;
+    payment_upd_wh_packet_t* _upd_wh;
+    payment_upd_distr_packet_t* _upd_distr;
+    payment_upd_cust_packet_t* _upd_cust;
+    payment_ins_hist_packet_t* _ins_hist;
 
     // The input buffers
-    tuple_fifo _upd_wh_buffer;
-    tuple_fifo _upd_distr_buffer;
-    tuple_fifo _upd_cust_buffer;
-    tuple_fifo _ins_hist_buffer;
-    */
+    tuple_fifo* _upd_wh_buffer;
+    tuple_fifo* _upd_distr_buffer;
+    tuple_fifo* _upd_cust_buffer;
+    tuple_fifo* _ins_hist_buffer;
+    
 
-
+    /*
     // The input packets
     guard<trx_packet_t> _upd_wh;
     guard<trx_packet_t> _upd_distr;
@@ -57,7 +56,7 @@ public:
     guard<tuple_fifo> _upd_distr_buffer;
     guard<tuple_fifo> _upd_cust_buffer;
     guard<tuple_fifo> _ins_hist_buffer;
-
+    */
 
     /**
      *  @brief payment_finalize_packet_t constructor.
@@ -95,14 +94,14 @@ public:
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-        _upd_wh(upd_wh),
-        _upd_distr(upd_distr),
-        _upd_cust(upd_cust),
-        _ins_hist(ins_hist),
-        _upd_wh_buffer(upd_wh->output_buffer()),
-        _upd_distr_buffer(upd_distr->output_buffer()),
-        _upd_cust_buffer(upd_cust->output_buffer()),
-        _ins_hist_buffer(ins_hist->output_buffer())
+          _upd_wh((payment_upd_wh_packet_t*)upd_wh),
+          _upd_distr((payment_upd_distr_packet_t*)upd_distr),
+          _upd_cust((payment_upd_cust_packet_t*)upd_cust),
+          _ins_hist((payment_ins_hist_packet_t*)ins_hist),
+          _upd_wh_buffer(upd_wh->output_buffer()),
+          _upd_distr_buffer(upd_distr->output_buffer()),
+          _upd_cust_buffer(upd_cust->output_buffer()),
+          _ins_hist_buffer(ins_hist->output_buffer())
     {
         /* asserts on uninitiliazed input packets */
         assert(_upd_wh != NULL);
@@ -135,14 +134,15 @@ public:
 
 
     virtual void declare_worker_needs(resource_declare_t* declare) {
-        /* declare own needs */
-        declare->declare(_packet_type, 1);
         
         /* declares inputs */
         _upd_wh->declare_worker_needs(declare);
         _upd_distr->declare_worker_needs(declare);
         _upd_cust->declare_worker_needs(declare);
         _ins_hist->declare_worker_needs(declare);
+
+        /* declare own needs */
+        declare->declare(_packet_type, 1);
     }
 
 
@@ -159,7 +159,6 @@ public:
 
         TRACE( TRACE_ALWAYS, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
     }
-        
 
 }; // END OF CLASS: payment_finalize_packet_t
 
