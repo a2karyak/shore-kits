@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file rio.cpp
  *
@@ -10,6 +11,7 @@
  *
  *  @bug None known.
  */
+
 #include "util/rio.h"  /* for prototypes */
 
 

@@ -4,6 +4,8 @@
  *
  *  @brief Implements client that submits PAYMENT transaction according to the TPCC
  *  specification.
+ *
+ *  @author Ippokratis Pandis (ipandis)
  */
 
 # include "scheduler.h"

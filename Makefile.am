@@ -3,7 +3,8 @@ INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include
 
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libutil.a
+   lib/libstages.a lib/libcore.a lib/libutil.a \
+   lib/libdbgen.a
 
 LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a
 
@@ -57,10 +58,15 @@ TESTS = \
    tests/acounter
 
 
+DBGEN = \
+   dbgen_tpcc
 
-bin_PROGRAMS = qpipe $(TESTS)
+
+bin_PROGRAMS = qpipe $(TESTS) $(DBGEN)
 
 tests: $(TESTS)
+
+dbgen: $(DBGEN)
 
 ################################################################################
 #
@@ -193,11 +199,9 @@ WL_TPCH = \
    $(SW)/tpch/drivers/tpch_sim_mix.cpp
 
 
-
 WL_TPCC = \
    $(SW)/tpcc/drivers/common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp
-
 
 
 lib_libworkload_a_SOURCES = \
@@ -208,6 +212,29 @@ lib_libworkload_a_SOURCES = \
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
+
+
+
+################################################################################
+#
+# src/workload/ (dbgen)
+#
+################################################################################
+
+SDBGEN=$(top_srcdir)/src/workload
+
+WL_TPCC_DBGEN = \
+   $(SDBGEN)/tpcc/dbgen/gendata.cpp \
+   $(SDBGEN)/tpcc/dbgen/tpcc_misc.cpp \
+   $(SDBGEN)/tpcc/dbgen/tpcc_rnd.cpp
+
+lib_libdbgen_a_SOURCES = \
+   $(WL_TPCC_DBGEN)
+
+lib_libdbgen_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
+
+dbgen_tpcc_SOURCES = $(SDBGEN)/tpcc/dbgen/gendata.cpp
+dbgen_tpcc_LDADD = lib/libdbgen.a $(LDADD)
 
 ################################################################################
 #
@@ -241,8 +268,8 @@ tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
 tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
 tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
-tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
-tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
+#tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
+#tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
 tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
@@ -284,8 +311,8 @@ tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
-tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
-tests_max_timers_LDADD = lib/libutil.a -lrt
+#tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
+#tests_max_timers_LDADD = lib/libutil.a -lrt
 tests_load_db_tables_LDADD = $(TEST_LIBS)
 tests_trace_LDADD = $(TEST_LIBS)
 tests_tuple_buffer_LDADD = $(TEST_LIBS)

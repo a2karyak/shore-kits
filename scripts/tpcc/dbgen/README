@@ -1,4 +1,0 @@
-./tbl_loader.pl Configuration:
-Options: WH_COUNT = 1
-Options: SEP      = |
-Options: OUT_DIR  = .
