@@ -8,6 +8,7 @@
 #include "workload/common.h"
 
 using namespace q1;
+using namespace tpch;
 using namespace workload;
 
 

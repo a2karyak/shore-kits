@@ -6,7 +6,7 @@
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common/predicates.h"
-
+#include "workload/tpch/tpch_env.h"
 
 using namespace qpipe;
 
@@ -269,6 +269,8 @@ EXIT_NAMESPACE(q12);
 
 
 using namespace q12;
+using namespace tpch;
+using namespace workload;
 
 
 ENTER_NAMESPACE(workload);

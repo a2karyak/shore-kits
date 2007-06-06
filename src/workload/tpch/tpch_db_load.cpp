@@ -1,35 +1,34 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "workload/tpch/tpch_db_load.h"
-#include "workload/tpch/tpch_compare.h"
-
-#include "workload/common/bdb_env.h"
-#include "workload/tpch/tpch_env.h"
-
-#include "util.h"
-
 #include <cstdlib>
 #include <cmath>
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "util.h"
 
+#include "workload/common/bdb_env.h"
+#include "workload/tpch/tpch_env.h"
+#include "workload/tpch/tpch_compare.h"
+#include "workload/tpch/tpch_db_load.h"
 
-void progress_reset();
-void progress_update();
-void progress_done();
+using namespace workload;
+using namespace tpch;
+
 
 #define MAX_LINE_LENGTH 1024
 #define MAX_FILENAME_SIZE 1024
 
 
-
-/* internal helper functions */
+// Forward declaration of internal helper functions
+void progress_reset();
+void progress_update();
+void progress_done();
 
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
-                          const char* tbl_path, const char* tbl_filename);
-
+                          const char* tbl_path, 
+                          const char* tbl_filename);
 
 
 /* definitions of exported functions */

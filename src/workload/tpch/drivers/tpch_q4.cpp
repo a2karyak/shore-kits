@@ -193,6 +193,7 @@ EXIT_NAMESPACE(q4);
 
 
 using namespace q4;
+using namespace tpch;
 using namespace workload;
 
 

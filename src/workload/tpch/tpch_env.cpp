@@ -1,12 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_filenames.h"
+#include "workload/tpch/tpch_tbl_parsers.h"
 #include "workload/tpch/tpch_compare.h"
 
-#include "workload/common/bdb_env.h"
+using namespace tpch;
 
 
 /* BerkeleyDB indexes */
+
 Db* tpch_lineitem_shipdate = NULL;
 Db* tpch_lineitem_shipdate_idx = NULL;
 

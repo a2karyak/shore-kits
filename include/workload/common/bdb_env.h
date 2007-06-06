@@ -17,15 +17,14 @@ ENTER_NAMESPACE(workload);
 typedef int (*bt_compare_fn_t) (Db*, const Dbt*, const Dbt*);
 typedef void (*parse_tbl_t) (Db*, FILE*);
 
+
 typedef int (*bt_compare_func_t)(Db*, const Dbt*, const Dbt*);
 typedef int (*idx_key_create_func_t)(Db*, const Dbt*, 
                                      const Dbt*, Dbt*);
 
 
-
 // bdb_table_s: Class the represents a table/file
-class bdb_table_s {
-public:
+struct bdb_table_s {
     const char* tbl_filename;
     const char* bdb_filename;
     const char* table_id;

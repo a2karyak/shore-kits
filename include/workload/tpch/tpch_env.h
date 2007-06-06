@@ -8,9 +8,9 @@
 #include "util/namespace.h"
 #include "workload/common/bdb_env.h"
 
+using namespace workload;
 
 ENTER_NAMESPACE(tpch);
-
 
 /* exported constants */
 

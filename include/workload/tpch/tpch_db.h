@@ -1,10 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TPCH_DB_H
-#define _TPCH_DB_H
+#ifndef __TPCH_DB_H
+#define __TPCH_DB_H
 
 #include <inttypes.h>
-
 
 ENTER_NAMESPACE(tpch);
 
