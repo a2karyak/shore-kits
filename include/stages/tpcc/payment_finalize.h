@@ -181,7 +181,6 @@ public:
 
     static const c_str DEFAULT_STAGE_NAME;
     typedef payment_finalize_packet_t stage_packet_t;
-
     payment_finalize_stage_t();
     
     virtual ~payment_finalize_stage_t() { 

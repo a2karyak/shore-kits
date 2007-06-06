@@ -7,13 +7,9 @@
 #
 # REQUIREMENTS:  ---
 #
-#         BUGS:  Please report bugs to naju AT cmu DOT edu
-#
-#        NOTES:  See README.
-#
-#       AUTHOR:  Naju Mancheril, Debabrata Dash
-#      COMPANY:  
-#      VERSION:  2.0
+#       AUTHOR:  Naju Mancheril, Debabrata Dash, Ippokratis Pandis
+#      COMPANY:  Carnegie Mellon University 
+#      VERSION:  2.1
 #      CREATED:  11/07/2006 12:10:32 PM EDT
 #     REVISION:  $Id$
 #===============================================================================

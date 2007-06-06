@@ -2,9 +2,9 @@
 
 #===============================================================================
 #
-#         FILE:  dbgen
+#         FILE:  tbl_loader.pl
 #
-#        USAGE:  ./dbgen  [OPTIONS]
+#        USAGE:  ./tbl_loader.pl  [OPTIONS]
 #
 #  DESCRIPTION:  TPC-C data generator.
 #
@@ -19,26 +19,23 @@
 #
 # REQUIREMENTS:  DBGEN_UTIL.pm
 #
-#         BUGS:  None known. Please report bugs to naju AT cmu DOT edu
-#
-#        NOTES:  See README.
-#
-#       AUTHOR:  Naju Mancheril, Debabrata Dash
-#      COMPANY:  
-#      VERSION:  2.0
+#       AUTHOR:  Naju Mancheril, Debabrata Dash, Ippokratis Pandis
+#      COMPANY:  Carnegie Mellon University
+#      VERSION:  2.1
 #      CREATED:  11/07/2006 12:10:32 PM EDT
 #     REVISION:  $Id$
 #===============================================================================
 
 use strict;
 use Getopt::Std;
+#use DateTime::Event::Random;
 use POSIX;
-
-use lib "..";
-use DB_CONFIG;
 
 use lib ".";
 use DBGEN_UTIL;
+
+use lib "../";
+use DB_CONFIG;
 
 
 
@@ -61,14 +58,40 @@ my $CUSTOMER_TABLE_POPULATED_TIME;
 
 
 
-# Parse command-line options
+
+# Print something and output it also to the README file
+sub print_readme_and_echo {
+    my $output = shift;
+    print README $output;
+    print $output;
+}
+
+
+# fn: Print usage and exit
+sub print_usage_exit {
+
+    print "USAGE:    $0 -w WH_COUNT -s SEP -d OUT_DIR\n";
+    print "OPTIONS:  -w WH_COUNT - Specify the number of warehouses (TPC-C scale factor)\n";
+    print "          -s SEP      - Specify the separator to use when printing data\n";
+    print "          -d OUT_DIR  - Specify the output directory\n";
+
+    exit();
+}
+
+
+
+# fn: Parse command-line options
 my %options;
-getopts("w:s:d:", \%options);
+getopts("chw:s:d:", \%options);
+
+
+# checks if user asked for help
+print_usage_exit() if $options{h};
+
+# uses rest options
 $warehouse_count     = $options{w} ? $options{w} : $DB_CONFIG::DEFAULT_NUM_WAREHOUSES;
 $attribute_separator = $options{s} ? $options{s} : $DB_CONFIG::DEFAULT_ATTRIBUTE_SEPARATOR;
 $output_dir          = $options{d} ? $options{d} : $DB_CONFIG::DEFAULT_OUTPUT_DIRECTORY;
-
-
 
 
 open(README,           ">".DBGEN_UTIL::generate_output_file_path($output_dir, "README"));
@@ -83,9 +106,34 @@ open(ORDER_LINE_TABLE, ">".DBGEN_UTIL::generate_table_file_path($output_dir, "or
 open(NEW_ORDER_TABLE,  ">".DBGEN_UTIL::generate_table_file_path($output_dir, "new_order"));
 
 
+# fn: Print configuration
+sub print_config {
+    print_readme_and_echo "$0 Configuration:\n";
+    print_readme_and_echo "Options: WH_COUNT = $warehouse_count\n";
+    print_readme_and_echo "Options: SEP      = $attribute_separator\n";
+    print_readme_and_echo "Options: OUT_DIR  = $output_dir\n";
+}
 
+# fn: Print configuration and exit
+sub print_config_exit {
+    print_config();
+    exit();
+}
+
+
+# Check user option to print config and exit 
+print_config_exit() if $options{c};
+
+# Print current configuration
+print_config();
+ 
+print "\nGenerating dbgen_constants...\n";
 generate_dbgen_constants();
+
+print "\nGenerating item_data...\n";
 generate_item_data();
+
+print "\nGenerating warehouse_data...\n";
 generate_warehouse_data();
 
 
@@ -100,18 +148,6 @@ close(STOCK_TABLE);
 close(WAREHOUSE_TABLE);
 close(ITEM_TABLE);
 close(README);
-
-
-
-
-
-
-sub print_readme_and_echo {
-    my $output = shift;
-    print README $output;
-    print $output;
-}
-
 
 
 
@@ -152,6 +188,8 @@ sub generate_item_data {
 
     foreach ( 1 .. $NUM_UNIQUE_ITEMS )
     {
+        print "i";
+
         my $i_id    = $_;
         my $i_im_id = DBGEN_UTIL::generate_random_integer_within(1, 10000);
         my $i_name  = DBGEN_UTIL::generate_astring(14, 24);
@@ -208,6 +246,8 @@ sub generate_warehouse_data {
 
 
     foreach (1 .. $warehouse_count) {
+
+        print "w";
         
         my $w_id = $_;
         my $w_name     = DBGEN_UTIL::generate_astring(6, 10);
