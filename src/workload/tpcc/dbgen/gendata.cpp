@@ -16,6 +16,8 @@
 #include <time.h> 
 #include <ctype.h>
 
+#include "util.h"
+
 #include "workload/tpcc/dbgen/platform_io.h"
 #include "workload/tpcc/dbgen/platform_sem.h"
 #include "workload/tpcc/dbgen/tpcc_rnd.h" 
@@ -81,6 +83,9 @@ char *outname2 = NULL;
 int main (int argc, char *argv[]) {
    int option = -1;
    char *delim = NULL;            
+
+
+   TRACE( TRACE_ALWAYS, "*** Should make it multi-threaded!\n");
 
 
    // Compute Warehouse Ranges                                      
@@ -320,7 +325,7 @@ void print_tpcc_dbgen_usage( void ) {
     fprintf(stderr, "    STOCK - 6\n");
     fprintf(stderr, "    CUSTOMER - 7\n");
     fprintf(stderr, "    HISTORY - 8\n");
-    fprintf(stderr, "    ORDERS + ORDERLIE - 9\n");
+    fprintf(stderr, "    ORDERS + ORDERLINE - 9\n");
     fprintf(stderr, "    NEW_ORDER - 11\n");
     fprintf(stderr, "    \n");
     
