@@ -1,14 +1,15 @@
-// -*- mode:C++; c-basic-offset:4 -*-
-
-#include "util.h"
-#include "tests/common.h"
-#include "workload/tpch/tpch_db.h"
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include <unistd.h>
 #include <sys/time.h>
 #include <cmath>
 
+#include "util.h"
+#include "tests/common.h"
+#include "workload/tpch/tpch_db.h"
+#include "workload/tpch/tpch_db_load.h"
 
+using namespace tpch;
 
 /**
  *  @brief : Calls a table scan and outputs a specific projection

@@ -12,12 +12,10 @@
 #include "util.h"
 #include "workload/common/bdb_env.h"
 
-using namespace workload;
-
 /* exported data structures */
 
-
 /* BerkeleyDB environment */
-DbEnv* dbenv = NULL;
+DbEnv* workload::dbenv = NULL;
+
 
 

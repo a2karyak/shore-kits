@@ -4,6 +4,9 @@
 #include "workload/tpch/tpch_struct.h"
 #include <cstdlib>
 
+
+ENTER_NAMESPACE(tpch);
+
 // 'typeof' is a gnu extension
 #define TYPEOF(TYPE, MEMBER) typeof(((TYPE *)0)->MEMBER)
 
@@ -173,6 +176,6 @@ int tpch_bt_compare_fn_SUPPLIER(Db*, const Dbt* k1, const Dbt* k2) {
         return 1;
 }
 
-
+EXIT_NAMESPACE(tpch);
 
 

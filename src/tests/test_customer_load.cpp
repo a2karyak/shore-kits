@@ -15,10 +15,11 @@
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/common/register_stage.h"
-
+#include "workload/tpch/tpch_env.h"
 
 using namespace qpipe;
 using namespace workload;
+using namespace tpch;
 
 
 class test_customer_load_process_tuple_t : public process_tuple_t {

@@ -10,8 +10,8 @@ using namespace tpch;
 
 /* BerkeleyDB indexes */
 
-Db* tpch_lineitem_shipdate = NULL;
-Db* tpch_lineitem_shipdate_idx = NULL;
+Db* tpch::tpch_lineitem_shipdate = NULL;
+Db* tpch::tpch_lineitem_shipdate_idx = NULL;
 
 
 /* exported data structures */
@@ -23,7 +23,7 @@ Db* tpch_lineitem_shipdate_idx = NULL;
                       tpch_bt_compare_fn_##name, \
                       tpch_parse_tbl_##name }
 
-bdb_table_s tpch_tables[_TPCH_TABLE_COUNT_] = {
+bdb_table_s tpch::tpch_tables[_TPCH_TABLE_COUNT_] = {
     TABLE(CUSTOMER),
     TABLE(LINEITEM),
     TABLE(NATION),

@@ -6,6 +6,7 @@
 #include "util/trace.h"
 
 
+ENTER_NAMESPACE(tpch);
 
 /* internal constants */
 
@@ -405,3 +406,6 @@ static void store_string(char* dest, char* src) {
     strncpy(dest, src, len);
     dest[len] = '\0';
 }
+
+
+EXIT_NAMESPACE(tpch);

@@ -14,9 +14,11 @@
 #include "workload/common.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/common.h"
+#include "workload/tpch/tpch_env.h"
 
 using namespace qpipe;
 using namespace workload;
+using namespace tpch;
 
 
 class test_tscan_stage_process_tuple_t : public process_tuple_t {
