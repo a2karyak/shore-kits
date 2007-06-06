@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _COMMON_BDB_ENV_H
-#define _COMMON_BDB_ENV_H
+#ifndef __BDB_ENV_H
+#define __BDB_ENV_H
 
 #include <inttypes.h>
 
@@ -21,6 +21,20 @@ typedef int (*bt_compare_func_t)(Db*, const Dbt*, const Dbt*);
 typedef int (*idx_key_create_func_t)(Db*, const Dbt*, 
                                      const Dbt*, Dbt*);
 
+
+
+// bdb_table_s: Class the represents a table/file
+class bdb_table_s {
+public:
+    const char* tbl_filename;
+    const char* bdb_filename;
+    const char* table_id;
+
+    Db* db;
+
+    bt_compare_fn_t bt_compare_fn;
+    parse_tbl_t     parse_tbl;
+};
 
 
 /* BerkeleyDB environment */

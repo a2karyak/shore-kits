@@ -4,8 +4,7 @@
 #define _TPCH_DB_H
 
 #include <inttypes.h>
-#include "workload/tpch/tpch_env.h"
-#include "workload/tpch/tpch_db_load.h"
+
 
 ENTER_NAMESPACE(tpch);
 

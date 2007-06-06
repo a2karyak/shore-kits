@@ -1,6 +1,7 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _BDB_CONFIG_H
-#define _BDB_CONFIG_H
+#ifndef __BDB_CONFIG_H
+#define __BDB_CONFIG_H
 
 
 

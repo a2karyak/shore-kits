@@ -1,19 +1,22 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util.h"
+
 #include "workload/tpch/tpch_db.h"
+#include "workload/tpch/tpch_env.h"
+
 #include "workload/tpch/tpch_filenames.h"
 #include "workload/tpch/tpch_compare.h"
-#include "workload/tpch/tpch_filenames.h"
+
+#include "workload/common.h"
+
 
 #include "workload/common/bdb_env.h"
 #include "workload/bdb_config.h"
 
-#include "workload/common.h"
-
 using namespace qpipe;
 using namespace workload;
-
+using namespace tpch;
 
 /* definitions of exported functions */
 

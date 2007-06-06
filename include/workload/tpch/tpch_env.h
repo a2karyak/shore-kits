@@ -1,24 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TPCH_ENV_H
-#define _TPCH_ENV_H
+#ifndef __TPCH_ENV_H
+#define __TPCH_ENV_H
 
 #include <cstdio>
 
+#include "util/namespace.h"
 #include "workload/common/bdb_env.h"
 
-// bdb_table_s: Class the represents a table/file
-class bdb_table_s {
-public:
-    const char* tbl_filename;
-    const char* bdb_filename;
-    const char* table_id;
 
-    Db* db;
-
-    bt_compare_fn_t bt_compare_fn;
-    parse_tbl_t     parse_tbl;
-};
+ENTER_NAMESPACE(tpch);
 
 
 /* exported constants */
@@ -35,12 +26,14 @@ enum tpch_table_list_t {
     _TPCH_TABLE_COUNT_  = 8
 };
 
+/* pointers to tpch_tables */
 extern bdb_table_s tpch_tables[_TPCH_TABLE_COUNT_];
 
 /* BerkeleyDB indexes */
 extern Db* tpch_lineitem_shipdate;
 extern Db* tpch_lineitem_shipdate_idx;
 
+EXIT_NAMESPACE(tpch);
 
 
 #endif

@@ -7,8 +7,8 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __TPCCMISC_H
-#define __TPCCMISC_H
+#ifndef __TPCC_MISC_H
+#define __TPCC_MISC_H
 
 extern double current_time_ms(void);
 extern double current_time(void);

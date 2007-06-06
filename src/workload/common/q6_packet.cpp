@@ -11,6 +11,7 @@
 
 
 using namespace qpipe;
+using namespace tpch;
 
 
 packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) {
