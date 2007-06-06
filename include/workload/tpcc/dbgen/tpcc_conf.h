@@ -20,8 +20,8 @@
  *        of the CUSTOMERS_PER_DISTRICT.
  */
 
-#define WAREHOUSES                              10
-//#define WAREHOUSES                              100
+//#define WAREHOUSES                              10
+#define WAREHOUSES                              100
 #define DISTRICTS_PER_WAREHOUSE                 10
 #define CUSTOMERS_PER_DISTRICT                  3000
 #define ITEMS                                   100000

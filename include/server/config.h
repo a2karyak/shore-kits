@@ -1,12 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _CONFIG_H
-#define _CONFIG_H
+#ifndef _SERVER_CONFIG_H
+#define _SERVER_CONFIG_H
 
 #define SERVER_COMMAND_BUFFER_SIZE 1024
 
 /* Configurable values */
-#define QPIPE_VERSION "v2.0"
+#define QPIPE_VERSION "v2.1"
 #define QPIPE_PROMPT  "(qpipe) "
 
 // Until we get CC to recognize our libreadline install...

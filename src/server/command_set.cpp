@@ -11,6 +11,7 @@
 #include "server/command/tpcc_handler.h"
 #include "server/command/tracer.h"
 
+#include "workload/register_stage_containers.h"
 
 #include <map>
 #include <string>
@@ -41,19 +42,31 @@ static void dispatch_command(const char* command);
  *  @brief Register a set of command tag-command handler mappings. All
  *  command handlers should be registered here, in this function.
  *
+ *  @param int - select between query and transaction processing environment
+ *
  *  @return void
  */
-void register_command_handlers(void) {
+void register_command_handlers( const int environment ) {
 
     // Initialize the specified handler (by invoking the init()
     // method) and insert the handler into the command set using the
     // specified command tag.
 
+    // Utilities
     add_command("print", new printer_t());
-    //    add_command("tpch",  new tpch_handler_t());
-    add_command("load", new load_handler_t());
-    add_command("tpcc", new tpcc_handler_t());
     add_command("tracer", new tracer_t());
+
+    // Data Loads
+    add_command("load", new load_handler_t());
+
+    if (environment == QUERY_ENV) {
+        // Query Processing
+        add_command("tpch",  new tpch_handler_t());
+    }
+    else {
+        // Trx Processing
+        add_command("tpcc", new tpcc_handler_t());
+    }
 }
 
 
