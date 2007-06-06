@@ -314,6 +314,14 @@ void print_tpcc_dbgen_usage( void ) {
     fprintf(stderr, "    -f1/-p1 specifies the destination for the orders table\n");
     fprintf(stderr, "    -f2/-p2 specifies the destination for the orderline table\n");
     fprintf(stderr, "    \n");
+    fprintf(stderr, "    WAREHOUSE - 3\n");
+    fprintf(stderr, "    DISTRICT - 4\n");
+    fprintf(stderr, "    ITEM - 5\n");
+    fprintf(stderr, "    STOCK - 6\n");
+    fprintf(stderr, "    CUSTOMER - 7\n");
+    fprintf(stderr, "    HISTORY - 8\n");
+    fprintf(stderr, "    ORDERS + ORDERLIE - 9\n");
+    fprintf(stderr, "    NEW_ORDER - 11\n");
     fprintf(stderr, "    \n");
     
 }
