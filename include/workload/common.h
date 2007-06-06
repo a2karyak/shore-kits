@@ -3,7 +3,6 @@
 #ifndef _WORKLOAD_COMMON_H
 #define _WORKLOAD_COMMON_H
 
-
 #include "workload/common/tuple_source_once.h"
 #include "workload/common/count_aggregate.h"
 #include "workload/common/register_stage.h"

@@ -1,21 +1,17 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_filenames.h"
 #include "workload/tpch/tpch_compare.h"
-#include "workload/tpch/tpch_tbl_parsers.h"
 
+#include "workload/common/bdb_env.h"
 
-/* exported data structures */
-
-
-/* BerkeleyDB environment */
-DbEnv* dbenv = NULL;
 
 /* BerkeleyDB indexes */
 Db* tpch_lineitem_shipdate = NULL;
 Db* tpch_lineitem_shipdate_idx = NULL;
 
+
+/* exported data structures */
 
 #define TABLE(name) { TBL_FILENAME_##name, \
                       BDB_FILENAME_##name, \

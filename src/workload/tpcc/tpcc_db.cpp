@@ -1,36 +1,35 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "util.h"
-#include "workload/tpch/tpch_db.h"
-#include "workload/tpch/tpch_filenames.h"
-#include "workload/tpch/tpch_compare.h"
-#include "workload/tpch/tpch_filenames.h"
+/** @file tpcc_db.cpp
+ *
+ *  @brief Creates and configures the transaction processing database
+ *  uses the BerkeleyDB as the underlying storage manager.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
 
-#include "workload/common/bdb_env.h"
-#include "workload/bdb_config.h"
+#include "util.h"
+#include "workload/tpch/tpcc_db.h"
+#include "workload/tpch/tpcc_filenames.h"
+#include "workload/c
 
 #include "workload/common.h"
 
 using namespace qpipe;
 using namespace workload;
 
-
-/* definitions of exported functions */
-
-
 /**
- *  @brief Open TPC-H tables.
+ *  @brief Open TPC-C tables.
  *
  *  @return void
  *
  *  @throw BdbException on error.
  */
-void tpch::db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
+void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
                    u_int32_t db_cache_size_bytes) 
 {
-
     TRACE(TRACE_ALWAYS,
-          "TPC-H DB_OPEN called\n");
+          "TPC-C DB_OPEN called\n");
 
 
     // create environment
@@ -64,8 +63,8 @@ void tpch::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
     // set data directory
     try {
 
-        const char* desc = "BDB_TPCH_DIRECTORY (BDB data)";
-        const char* dir  = BDB_TPCH_DIRECTORY;
+        const char* desc = "BDB_TPCC_DIRECTORY (BDB data)";
+        const char* dir  = BDB_TPCC_DIRECTORY;
 
         if (fileops_check_directory_accessible(dir))
             THROW3(BdbException, "%s %s not accessible.\n",
@@ -73,13 +72,13 @@ void tpch::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
                    dir);
 
         // data directory stores table files
-        dbenv->set_data_dir(BDB_TPCH_DIRECTORY);
+        dbenv->set_data_dir(BDB_TPCC_DIRECTORY);
     }
     catch (DbException &e) {
         TRACE(TRACE_ALWAYS,
               "Caught DbException setting data directory to \"%s\"."
               " Make sure directory exists\n",
-              BDB_TPCH_DIRECTORY);
+              BDB_TPCC_DIRECTORY);
         TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
         THROW1(BdbException, "dbenv->set_data_dir() threw DbException");
     }
@@ -149,42 +148,48 @@ void tpch::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         THROW1(BdbException, "dbenv->open() threw DbException");
     }
   
+    TRACE( TRACE_ALWAYS, "Shoud Correct This!!\n");
 
+    /*
     // open tables
-    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
         open_db_table(tpch_tables[i].db,
-                                flags,
-                                tpch_tables[i].bt_compare_fn,
-                                tpch_tables[i].bdb_filename);
+                      flags,
+                      tpch_tables[i].bt_compare_fn,
+                      tpch_tables[i].bdb_filename);
     
 
     // open indexes
     open_db_index(tpch_tables[TPCH_TABLE_LINEITEM].db,
-                            tpch_lineitem_shipdate,
-                            tpch_lineitem_shipdate_idx,
-                            flags,
-                            tpch_lineitem_shipdate_compare_fcn,
-                            tpch_lineitem_shipdate_key_fcn,
-                            INDEX_LINEITEM_SHIPDATE_NAME,
-                            INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
-    
+                  tpch_lineitem_shipdate,
+                  tpch_lineitem_shipdate_idx,
+                  flags,
+                  tpch_lineitem_shipdate_compare_fcn,
+                  tpch_lineitem_shipdate_key_fcn,
+                  INDEX_LINEITEM_SHIPDATE_NAME,
+                  INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
+    */                  
+
     TRACE(TRACE_ALWAYS, "BerkeleyDB buffer pool set to %d GB, %d B\n",
           db_cache_size_gb,
           db_cache_size_bytes);
-    TRACE(TRACE_ALWAYS, "TPC-H database open\n");
+    TRACE(TRACE_ALWAYS, "TPC-C database open\n");
 }
 
 
 
 /**
- *  @brief Close TPC-H tables.
+ *  @brief Close TPC-C tables.
  *
  *  @return void
  *
  *  @throw BdbException on error.
  */
-void tpch::db_close() {
+void tpcc::db_close() {
 
+    TRACE( TRACE_ALWAYS, "Shoud Correct This!!\n");
+
+    /*
     // close indexes
     close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
     close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
@@ -192,7 +197,9 @@ void tpch::db_close() {
     // close tables
     for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
         close_db_table(tpch_tables[i].db, tpch_tables[i].bdb_filename);
-    
+    */
+        
+
     // close environment
     try {    
  	dbenv->close(0);
@@ -203,6 +210,5 @@ void tpch::db_close() {
         THROW1(BdbException, "dbenv->close() threw DbException");
     }
 
-
-    TRACE(TRACE_ALWAYS, "TPC-H database closed\n");
+    TRACE(TRACE_ALWAYS, "TPC-C database closed\n");
 }

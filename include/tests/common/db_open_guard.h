@@ -5,6 +5,7 @@
 
 #include "workload/tpch/tpch_db.h"
 
+using namespace tpch;
 
 struct db_open_guard_t {
 

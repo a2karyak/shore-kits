@@ -1,4 +1,5 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __TPCH_Q12_H
 #define __TPCH_Q12_H
 

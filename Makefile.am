@@ -174,7 +174,8 @@ WL_BASE = \
 WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
    $(SW)/common/process_query.cpp \
-   $(SW)/common/predicates.cpp
+   $(SW)/common/predicates.cpp \
+   $(SW)/common/bdb_env.cpp
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
@@ -200,6 +201,7 @@ WL_TPCH = \
 
 
 WL_TPCC = \
+   $(SW)/tpcc/tpcc_db.cpp \
    $(SW)/tpcc/drivers/common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp
 

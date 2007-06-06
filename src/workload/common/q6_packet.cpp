@@ -2,10 +2,12 @@
 
 #include "workload/common/q6_packet.h"
 
+#include <cmath>
+
 #include "stages.h"
 #include "core.h"
-#include "workload/tpch/tpch_db.h"
-#include <cmath>
+#include "workload/common/bdb_env.h"
+#include "workload/tpch/tpch_env.h"
 
 
 using namespace qpipe;

@@ -11,10 +11,17 @@
 
 #define BDB_ERROR_PREFIX "BDB_ERROR"
 
+// General
 #define BDB_HOME_DIRECTORY  "."
-#define BDB_TBL_DIRECTORY   "tbl_tpch"
-#define BDB_TPCH_DIRECTORY  "database_bdb_tpch"
 #define BDB_TEMP_DIRECTORY  "temp"
+
+// TPCH
+#define BDB_TPCH_TBL_DIRECTORY   "tbl_tpch"
+#define BDB_TPCH_DIRECTORY  "database_bdb_tpch"
+
+// TPCC
+#define BDB_TPCC_TBL_DIRECTORY   "tbl_tpcc"
+#define BDB_TPCC_DIRECTORY  "database_bdb_tpcc"
 
 
 

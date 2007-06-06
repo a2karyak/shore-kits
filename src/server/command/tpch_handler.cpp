@@ -29,6 +29,7 @@
 #include "scheduler.h"
 
 
+using namespace tpch;
 using namespace workload;
 using qpipe::tuple_fifo;
 

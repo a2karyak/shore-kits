@@ -2,6 +2,8 @@
 
 #include "workload/tpch/tpch_db_load.h"
 #include "workload/tpch/tpch_compare.h"
+
+#include "workload/common/bdb_env.h"
 #include "workload/tpch/tpch_env.h"
 
 #include "util.h"
@@ -39,7 +41,7 @@ static void db_table_load(void (*tbl_loader) (Db*, FILE*),
  *
  *  @throw BdbException on error.
  */
-void db_load(const char* tbl_path) {
+void tpch::db_load(const char* tbl_path) {
 
     for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
         db_table_load(tpch_tables[i].parse_tbl,
@@ -53,8 +55,8 @@ void db_load(const char* tbl_path) {
 /* definitions of internal helper functions */
 
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
-                          Db* db,
-                          const char* tbl_path, const char* tbl_filename) {
+                                Db* db,
+                                const char* tbl_path, const char* tbl_filename) {
     
     // prepend filename with common path
     c_str path("%s/%s", tbl_path, tbl_filename);

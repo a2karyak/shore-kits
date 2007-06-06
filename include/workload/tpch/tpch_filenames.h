@@ -3,6 +3,9 @@
 #ifndef _TPCH_FILENAMES_H
 #define _TPCH_FILENAMES_H
 
+#include "util/namespace.h"
+
+ENTER_NAMESPACE(tpch);
 
 #define TABLE_ID_CUSTOMER           "TBL_CUST"
 #define TBL_FILENAME_CUSTOMER       "customer.tbl"
@@ -40,5 +43,6 @@
 #define INDEX_LINEITEM_SHIPDATE_ID   "IDX_LI_SD"
 #define INDEX_LINEITEM_SHIPDATE_FILENAME "lineitem-shipdate.tbl"
 
+EXIT_NAMESPACE(tpch);
 
 #endif

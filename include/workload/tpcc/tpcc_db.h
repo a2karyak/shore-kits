@@ -1,13 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TPCH_DB_H
-#define _TPCH_DB_H
+#ifndef _TPCC_DB_H
+#define _TPCC_DB_H
 
 #include <inttypes.h>
-#include "workload/tpch/tpch_env.h"
-#include "workload/tpch/tpch_db_load.h"
 
-ENTER_NAMESPACE(tpch);
+//#include "workload/tpch/tpch_env.h"
+//#include "workload/tpch/tpch_db_load.h"
+
+ENTER_NAMESPACE(tpcc);
 
 void db_open(uint32_t flags=0,
              uint32_t db_cache_size_gb=1,
@@ -15,6 +16,6 @@ void db_open(uint32_t flags=0,
 
 void db_close();
 
-EXIT_NAMESPACE(tpch);
+EXIT_NAMESPACE(tpcc);
 
 #endif
