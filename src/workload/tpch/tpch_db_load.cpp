@@ -54,9 +54,10 @@ void tpch::db_load(const char* tbl_path) {
 /* definitions of internal helper functions */
 
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
-                                Db* db,
-                                const char* tbl_path, const char* tbl_filename) {
-    
+                          Db* db,
+                          const char* tbl_path, 
+                          const char* tbl_filename) 
+{    
     // prepend filename with common path
     c_str path("%s/%s", tbl_path, tbl_filename);
 

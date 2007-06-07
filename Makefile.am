@@ -55,11 +55,13 @@ TESTS = \
    tests/busy_wait \
    tests/busy_wait_all \
    tests/payment \
-   tests/acounter
-
+   tests/acounter \
+   test/load_tpcc_tables
 
 DBGEN = \
    dbgen_tpcc
+
+
 
 
 bin_PROGRAMS = qpipe $(TESTS) $(DBGEN)
@@ -236,7 +238,9 @@ lib_libdbgen_a_SOURCES = \
 lib_libdbgen_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
 
 dbgen_tpcc_SOURCES = $(SDBGEN)/tpcc/dbgen/gendata.cpp
+
 dbgen_tpcc_LDADD = lib/libdbgen.a $(LDADD)
+
 
 ################################################################################
 #
@@ -309,6 +313,7 @@ tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_payment_SOURCES = $(ST)/test_payment.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
+tests_load_tpcc_tables_SOURCES = $(ST)/load_tpcc_tables.cpp
 
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
@@ -345,6 +350,8 @@ tests_grouper_LDADD = $(TEST_LIBS)
 tests_busy_wait_LDADD = $(TEST_LIBS)
 tests_busy_wait_all_LDADD = $(TEST_LIBS)
 tests_payment_LDADD = $(TEST_LIBS)
+tests_load_db_tables_LDADD = $(TEST_LIBS)
+
 
 ################################################################################
 #

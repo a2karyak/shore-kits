@@ -74,7 +74,7 @@ int qpipe_init(int argc, char* argv[]) {
     register_command_handlers(environment);
     register_stage_containers(environment);
 
-    // FIXME: (ip) Traces everything
+
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
               //              | TRACE_QUERY_RESULTS
               //              | TRACE_PACKET_FLOW
