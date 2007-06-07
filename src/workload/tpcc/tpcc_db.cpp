@@ -16,7 +16,6 @@
 #include "workload/tpcc/tpcc_db.h"
 #include "workload/tpcc/tpcc_filenames.h"
 
-
 #include "workload/common.h"
 
 using namespace qpipe;

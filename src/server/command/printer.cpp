@@ -10,12 +10,14 @@
 
 
 void printer_t::handle_command(const char* command) {
+
+    int num;
+    if ( sscanf(command, "%*s %d", &num) < 1 ) {
+        TRACE(TRACE_ALWAYS, "num not specified... aborting\n");
+        return;
+    }
     
-  int num;
-  if ( sscanf(command, "%*s %d", &num) < 1 )
-    TRACE(TRACE_ALWAYS, "num not specified... aborting\n");
-  
-  for (int i = 0; i < num; i++) {
-    TRACE(TRACE_ALWAYS, "%s\n", command);
-  }
+    for (int i = 0; i < num; i++) {
+        TRACE(TRACE_ALWAYS, "%s\n", command);
+    }
 }

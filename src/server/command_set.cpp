@@ -32,7 +32,7 @@ static map<c_str, command_handler_t*> command_mappings;
 static void add_command(const c_str &command_tag, command_handler_t* handler);
 void add_command(const char*  command_tag, command_handler_t* handler);
 static void dispatch_command(const char* command);
-
+bool check_quit(const char* command);
 
 
 /* definitions of exported functions */
@@ -93,7 +93,7 @@ void register_command_handlers( const int environment ) {
 int process_command(const char* command) {
 
     // check for quit...
-    if ( strcasecmp(command, "quit") == 0 )
+    if ( check_quit(command) )
         // quit command!
         return PROCESS_NEXT_QUIT;
 
@@ -210,3 +210,29 @@ static void dispatch_command(const char* command) {
     // same handler for multiple commands
     handler->handle_command(command);
 }
+
+
+
+/** @fn check_quit
+ *
+ *  @brief Check if user asked the system to quit. Now, it accepts not
+ *  only the "quit" command, but also other variations, such asL
+ *  "q", "quit;", "exit", "exit;" 
+ *
+ *  @param command The command tag to register the handler for.
+ *
+ *  @return true if command is to quit.
+ */
+bool check_quit(const char* command) {
+
+    if (( strcasecmp(command, "quit") == 0 ) ||
+        ( strcasecmp(command, "q") == 0 ) ||
+        ( strcasecmp(command, "quit;") == 0 ) ||
+        ( strcasecmp(command, "exit") == 0 ) ||
+        ( strcasecmp(command, "exit;") == 0 ) )
+        // quit command!
+        return (true);
+
+    return (false);
+}
+
