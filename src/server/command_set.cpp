@@ -226,8 +226,9 @@ static void dispatch_command(const char* command) {
 bool check_quit(const char* command) {
 
     if (( strcasecmp(command, "quit") == 0 ) ||
-        ( strcasecmp(command, "q") == 0 ) ||
         ( strcasecmp(command, "quit;") == 0 ) ||
+        ( strcasecmp(command, "q") == 0 ) ||
+        ( strcasecmp(command, "q;") == 0 ) ||
         ( strcasecmp(command, "exit") == 0 ) ||
         ( strcasecmp(command, "exit;") == 0 ) )
         // quit command!
