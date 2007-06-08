@@ -1,6 +1,5 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-
 /**
  *
  *  @brief Exports structures that we store/load from BerkeleyDB.
@@ -15,7 +14,7 @@
 #ifndef TPCH_STRUCT_H
 #define TPCH_STRUCT_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <sys/time.h>
 #include "util.h"

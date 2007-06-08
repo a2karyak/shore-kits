@@ -1,8 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file load_db_tables.cpp
+/** @file load_tpcc_tables.cpp
  *
- *  @brief Test loading TPC-H tables
+ *  @brief Test loading TPC-C tables
+ *
+ *  @author Ippokratis Pandis (ipandis)
  */
 
 #include <unistd.h>
@@ -25,8 +27,9 @@ int main() {
        delete the old database file before rebuilding. */
 
     db_open(DB_CREATE|DB_THREAD); 
-    db_tpch_load("tpch_tbl");
+    db_tpcc_load("tpcc_tbl");
     db_close();
 
     return 0;
 }
+

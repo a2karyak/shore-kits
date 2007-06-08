@@ -1,8 +1,9 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 #ifndef _TASSERT_H
 #define _TASSERT_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "util/trace.h"
 
 

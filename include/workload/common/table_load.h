@@ -2,7 +2,7 @@
 
 /** @file table_load.h
  *
- *  @brief Interface for the database loads functions
+ *  @brief Interface for the database load functions
  *
  *  @author Ippokratis Pandis (ipandis)
  */

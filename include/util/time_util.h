@@ -1,3 +1,5 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 /* Miscellaneous time-related utilities
  *
  * Copyright (C) 1998 The Free Software Foundation
@@ -13,9 +15,9 @@
 
 #include <time.h>
 
-#include <string.h>
+#include <cstring>
 #include <ctype.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 
 

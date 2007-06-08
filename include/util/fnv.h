@@ -1,3 +1,5 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 /*
  * fnv - Fowler/Noll/Vo- hash code
  *
@@ -76,7 +78,7 @@
 #if !defined(__FNV_H__)
 #define __FNV_H__
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <stdint.h>
 #include <cstddef>
 

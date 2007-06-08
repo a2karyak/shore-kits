@@ -2,13 +2,14 @@
 
 #include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_filenames.h"
-#include "workload/tpch/tpch_tbl_parsers.h"
 #include "workload/tpch/tpch_compare.h"
+#include "workload/tpch/tpch_tbl_parsers.h"
+
 
 using namespace tpch;
 
 
-/* BerkeleyDB indexes */
+// BDB indexes
 
 Db* tpch::tpch_lineitem_shipdate = NULL;
 Db* tpch::tpch_lineitem_shipdate_idx = NULL;

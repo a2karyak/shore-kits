@@ -26,8 +26,6 @@ TESTS = \
    tests/context_set \
    tests/context_makecontext \
    tests/context_producer_consumer \
-   tests/load_db_tables \
-   tests/tpch_load \
    tests/tpch_struct_sizes \
    tests/fscan_stage \
    tests/fdump_stage \
@@ -56,7 +54,9 @@ TESTS = \
    tests/busy_wait_all \
    tests/payment \
    tests/acounter \
-   test/load_tpcc_tables
+   tests/tpch_load \
+   tests/tpcc_load
+
 
 DBGEN = \
    dbgen_tpcc
@@ -177,15 +177,15 @@ WL_COMMON = \
    $(SW)/common/q6_packet.cpp \
    $(SW)/common/process_query.cpp \
    $(SW)/common/predicates.cpp \
+   $(SW)/common/table_load.cpp \
    $(SW)/common/bdb_env.cpp
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
-   $(SW)/tpch/tpch_db_load.cpp \
-   $(SW)/tpch/tpch_tbl_parsers.cpp \
    $(SW)/tpch/tpch_env.cpp \
-   $(SW)/tpch/tpch_type_convert.cpp \
+   $(SW)/tpch/tpch_tbl_parsers.cpp \
    $(SW)/tpch/tpch_compare.cpp \
+   $(SW)/tpch/tpch_type_convert.cpp \
    $(SW)/tpch/drivers/merge_test.cpp  \
    $(SW)/tpch/drivers/tpch_q1.cpp  \
    $(SW)/tpch/drivers/tpch_q4.cpp  \
@@ -204,6 +204,9 @@ WL_TPCH = \
 
 WL_TPCC = \
    $(SW)/tpcc/tpcc_db.cpp \
+   $(SW)/tpcc/tpcc_env.cpp \
+   $(SW)/tpcc/tpcc_tbl_parsers.cpp \
+   $(SW)/tpcc/tpcc_compare.cpp \
    $(SW)/tpcc/drivers/common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp
 
@@ -284,8 +287,7 @@ tests_tuple_buffer_SOURCES = $(ST)/test_tuple_buffer.cpp
 tests_context_set_SOURCES = = $(ST)/test_context_set.cpp
 tests_context_makecontext_SOURCES = $(ST)/test_context_makecontext.cpp
 tests_context_producer_consumer_SOURCES = $(ST)/test_context_producer_consumer.cpp
-tests_load_db_tables_SOURCES = $(ST)/load_db_tables.cpp
-tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
+
 tests_fdump_stage_SOURCES = $(ST)/test_fdump_stage.cpp
 tests_merge_stage_SOURCES = $(ST)/test_merge_stage.cpp
 tests_sort_stage_SOURCES = $(ST)/test_sort_stage.cpp
@@ -313,18 +315,16 @@ tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_payment_SOURCES = $(ST)/test_payment.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
-tests_load_tpcc_tables_SOURCES = $(ST)/load_tpcc_tables.cpp
-
+tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
+tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 #tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
 #tests_max_timers_LDADD = lib/libutil.a -lrt
-tests_load_db_tables_LDADD = $(TEST_LIBS)
 tests_trace_LDADD = $(TEST_LIBS)
 tests_tuple_buffer_LDADD = $(TEST_LIBS)
 tests_bitvector_LDADD = $(TEST_LIBS)
-tests_tpch_load_LDADD = $(TEST_LIBS)
 tests_fdump_stage_LDADD = $(TEST_LIBS)
 tests_merge_stage_LDADD = $(TEST_LIBS)
 tests_sort_stage_LDADD = $(TEST_LIBS)
@@ -350,7 +350,8 @@ tests_grouper_LDADD = $(TEST_LIBS)
 tests_busy_wait_LDADD = $(TEST_LIBS)
 tests_busy_wait_all_LDADD = $(TEST_LIBS)
 tests_payment_LDADD = $(TEST_LIBS)
-tests_load_db_tables_LDADD = $(TEST_LIBS)
+tests_tpch_load_LDADD = $(TEST_LIBS)
+tests_tpcc_load_LDADD = $(TEST_LIBS)
 
 
 ################################################################################

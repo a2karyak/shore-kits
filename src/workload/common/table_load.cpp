@@ -1,5 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file table_load.cpp
+ *
+ *  @brief Calls the database load functions
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #include <cstdlib>
 #include <cmath>
 #include <sys/types.h>
@@ -16,9 +23,13 @@
 
 
 // TPC-C related
+#include "workload/tpcc/tpcc_env.h"
+#include "workload/tpcc/tpcc_compare.h"
 
 
 using namespace workload;
+using namespace tpch;
+using namespace tpcc;
 
 
 #define MAX_LINE_LENGTH 1024
@@ -38,14 +49,16 @@ static void db_table_load(void (*tbl_loader) (Db*, FILE*),
 
 /* definitions of exported functions */
 
-/**
+
+/** @fn db_tpch_load
+ *
  *  @brief Load TPC-H tables.
  *
  *  @return void
  *
  *  @throw BdbException on error.
  */
-void tpch::db_load(const char* tbl_path) {
+void workload::db_tpch_load(const char* tbl_path) {
 
     for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
         db_table_load(tpch_tables[i].parse_tbl,
@@ -53,6 +66,25 @@ void tpch::db_load(const char* tbl_path) {
                       tbl_path,
                       tpch_tables[i].tbl_filename);
 }
+
+
+/** @fn db_tpcc_load
+ *
+ *  @brief Load TPC-C tables.
+ *
+ *  @return void
+ *
+ *  @throw BdbException on error.
+ */
+void workload::db_tpcc_load(const char* tbl_path) {
+
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
+        db_table_load(tpcc_tables[i].parse_tbl,
+                      tpcc_tables[i].db,
+                      tbl_path,
+                      tpcc_tables[i].tbl_filename);
+}
+
 
 
 
