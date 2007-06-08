@@ -10,13 +10,13 @@
 
 #include "util.h"
 
+#include "workload/common.h"
 #include "workload/common/bdb_env.h"
-#include "workload/bdb_config.h"
+#include "workload/common/bdb_config.h"
 
 #include "workload/tpcc/tpcc_db.h"
 #include "workload/tpcc/tpcc_filenames.h"
 
-#include "workload/common.h"
 
 using namespace qpipe;
 using namespace workload;

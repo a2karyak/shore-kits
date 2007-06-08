@@ -11,7 +11,7 @@
 #define __TABLE_DB_LOAD_H
 
 #include "util/namespace.h"
-#include "workload/bdb_config.h"
+#include "workload/common/bdb_config.h"
 
 ENTER_NAMESPACE(workload);
 

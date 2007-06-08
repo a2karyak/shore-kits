@@ -3,7 +3,7 @@
 #include "util.h"
 
 #include "workload/common/bdb_env.h"
-#include "workload/bdb_config.h"
+#include "workload/common/bdb_config.h"
 
 #include "workload/common.h"
 

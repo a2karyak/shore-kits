@@ -8,7 +8,7 @@
 #include <db_cxx.h>
 
 #include "util.h"
-#include "workload/bdb_config.h"
+#include "workload/common/bdb_config.h"
 
 ENTER_NAMESPACE(workload);
 
