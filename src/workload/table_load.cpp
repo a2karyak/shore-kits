@@ -8,12 +8,17 @@
 #include "util.h"
 
 #include "workload/common/bdb_env.h"
+#include "workload/common/table_load.h"
+
+// TPC-H related
 #include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_compare.h"
-#include "workload/tpch/tpch_db_load.h"
+
+
+// TPC-C related
+
 
 using namespace workload;
-using namespace tpch;
 
 
 #define MAX_LINE_LENGTH 1024

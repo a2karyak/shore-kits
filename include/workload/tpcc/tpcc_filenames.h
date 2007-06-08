@@ -1,5 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpcc_filenames.h
+ *
+ *  @brief Definition of TPC-C related filenames
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #ifndef _TPCC_FILENAMES_H
 #define _TPCC_FILENAMES_H
 
