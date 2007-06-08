@@ -151,7 +151,7 @@ void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         THROW1(BdbException, "dbenv->open() threw DbException");
     }
   
-    TRACE( TRACE_ALWAYS, "Shoud Correct This!!\n");
+    TRACE( TRACE_ALWAYS, "Should Correct This!!\n");
 
     /*
     // open tables
@@ -190,7 +190,7 @@ void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
  */
 void tpcc::db_close() {
 
-    TRACE( TRACE_ALWAYS, "Shoud Correct This!!\n");
+    TRACE( TRACE_ALWAYS, "Should Correct This!!\n");
 
     /*
     // close indexes

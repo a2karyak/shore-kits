@@ -14,7 +14,8 @@
 
 using namespace qpipe;
 using namespace workload;
-using namespace tpch;
+
+ENTER_NAMESPACE(tpch);
 
 /* definitions of exported functions */
 
@@ -26,8 +27,8 @@ using namespace tpch;
  *
  *  @throw BdbException on error.
  */
-void tpch::db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
-                   u_int32_t db_cache_size_bytes) 
+void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
+             u_int32_t db_cache_size_bytes) 
 {
 
     TRACE(TRACE_ALWAYS,
@@ -184,7 +185,7 @@ void tpch::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
  *
  *  @throw BdbException on error.
  */
-void tpch::db_close() {
+void db_close() {
 
     // close indexes
     close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
@@ -207,3 +208,6 @@ void tpch::db_close() {
 
     TRACE(TRACE_ALWAYS, "TPC-H database closed\n");
 }
+
+
+EXIT_NAMESPACE(tpch);

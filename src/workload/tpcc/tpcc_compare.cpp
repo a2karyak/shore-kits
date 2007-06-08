@@ -1,25 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#include "workload/common/bdb_env.h"
 #include "workload/tpch/tpch_compare.h"
 #include "workload/tpch/tpch_struct.h"
 #include <cstdlib>
 
 
 ENTER_NAMESPACE(tpch);
-
-// 'typeof' is a gnu extension
-#define TYPEOF(TYPE, MEMBER) typeof(((TYPE *)0)->MEMBER)
-
-
-#define SIZEOF(TYPE, MEMBER) sizeof(((TYPE *)0)->MEMBER)
-
-// 'offsetof' is found in <stddef.h>
-#define FIELD(SRC, TYPE, MEMBER) (((char*) (SRC)) + offsetof(TYPE, MEMBER))
-
-#define GET_FIELD(DEST, SRC, TYPE, MEMBER) \
-    memcpy(DEST, \
-           FIELD(SRC, TYPE, MEMBER), \
-           SIZEOF(TYPE, MEMBER))
 
 int tpch_lineitem_shipdate_key_fcn(Db*, const Dbt*, const Dbt* pd, Dbt* sk) {
     sk->set_data(FIELD(pd->get_data(), tpch_lineitem_tuple, L_SHIPDATE));

@@ -2,7 +2,7 @@
 
 /** @file tpcc_env.c
  *
- *  @brief Useful data structures for the TPC-C database
+ *  @brief Declaration of the TPC-C database tables and indexes
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -32,9 +32,9 @@ Db* tpch::tpch_lineitem_shipdate_idx = NULL;
                       TABLE_ID_##name,     \
                       NULL, \
                       tpcc_bt_compare_fn_##name, \
-                      tpch_parse_tbl_##name }
+                      tpcc_parse_tbl_##name }
 
-bdb_table_s tpcc::tpch_tables[_TPCH_TABLE_COUNT_] = {
+bdb_table_s tpcc::tpcc_tables[_TPCC_TABLE_COUNT_] = {
     TABLE(CUSTOMER),
     TABLE(DISTRICT),
     TABLE(HISTORY),

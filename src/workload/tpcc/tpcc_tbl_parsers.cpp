@@ -1,16 +1,22 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "workload/tpch/tpch_tbl_parsers.h"
-#include "workload/tpch/tpch_struct.h"
-#include "workload/tpch/tpch_type_convert.h"
+/** @file tpcc_tbl_parsers.cpp
+ *
+ *  @brief Implementation of the TPC-C table parsing functions
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #include "util/trace.h"
 
+#include "workload/common/bdb_env.h"
+#include "workload/tpcc/tpcc_tbl_parsers.h"
+#include "workload/tpcc/tpcc_struct.h"
+//#include "workload/tpcc/tpcc_type_convert.h"
 
-ENTER_NAMESPACE(tpch);
+using namespace workload;
 
-/* internal constants */
-
-#define MAX_LINE_LENGTH 1024
+ENTER_NAMESPACE(tpcc);
 
 
 
@@ -27,13 +33,13 @@ static void store_string(char* dest, char* src);
 
 void tpch_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
   
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
 
     TRACE(TRACE_DEBUG, "Populating CUSTOMER...\n");
     progress_reset();
     tpch_customer_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
         // split line into tab separated parts
@@ -69,13 +75,13 @@ void tpch_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_LINEITEM(Db* db, FILE* fd) {
   
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
 
     printf("Populating LINEITEM...\n");
     progress_reset();
     tpch_lineitem_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
@@ -129,13 +135,13 @@ void tpch_parse_tbl_LINEITEM(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_NATION(Db* db, FILE* fd) {
   
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
  
     printf("Populating NATION...\n");
     progress_reset();
     tpch_nation_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
@@ -164,13 +170,13 @@ void tpch_parse_tbl_NATION(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_ORDERS(Db* db, FILE* fd) {
     
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
 
     printf("Populating ORDERS...\n");
     progress_reset();
     tpch_orders_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
@@ -210,13 +216,13 @@ void tpch_parse_tbl_ORDERS(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_PART(Db* db, FILE* fd) {
 
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
  
     printf("Populating PART...\n");
     progress_reset();
     tpch_part_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
@@ -255,13 +261,13 @@ void tpch_parse_tbl_PART(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_PARTSUPP(Db* db, FILE* fd) {
     
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
 
     printf("Populating PARTSUPP...\n");
     progress_reset();
     tpch_partsupp_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
@@ -293,13 +299,13 @@ void tpch_parse_tbl_PARTSUPP(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_REGION(Db* db, FILE* fd) {
 
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
 
     printf("Populating REGION...\n");
     progress_reset();
     tpch_region_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
@@ -326,14 +332,14 @@ void tpch_parse_tbl_REGION(Db* db, FILE* fd) {
 
 void tpch_parse_tbl_SUPPLIER(Db* db, FILE* fd) {
 
-    char linebuffer[MAX_LINE_LENGTH];
+    char linebuffer[LOAD_MAX_LINE_LENGTH];
     static int count = 0;
 
     printf("Populating SUPPLIER...\n");
     progress_reset();
     tpch_supplier_tuple tup;
 
-    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+    while (fgets(linebuffer, LOAD_MAX_LINE_LENGTH, fd)) {
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
 
