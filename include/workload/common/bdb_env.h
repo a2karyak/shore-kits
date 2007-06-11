@@ -72,11 +72,11 @@ extern DbEnv* dbenv;
 
 /* exported functions */
 
-static void open_db_table(Db*& table, u_int32_t flags,
+extern void open_db_table(Db*& table, u_int32_t flags,
                           bt_compare_func_t cmp,
                           const char* table_name);
 
-static void open_db_index(Db* table, Db* &assoc, 
+extern void open_db_index(Db* table, Db* &assoc, 
                           Db*& index, 
                           u_int32_t,
                           bt_compare_func_t cmp,
@@ -84,7 +84,7 @@ static void open_db_index(Db* table, Db* &assoc,
                           const char*, 
                           const char* index_name);
 
-static void close_db_table(Db* &table, 
+extern void close_db_table(Db* &table, 
                            const char* table_name);
 
 

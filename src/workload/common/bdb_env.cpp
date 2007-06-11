@@ -21,6 +21,7 @@ DbEnv* dbenv = NULL;
 
 /* exported functions */
 
+
 /**
  *  @brief Open the specified table.
  *
@@ -28,9 +29,10 @@ DbEnv* dbenv = NULL;
  *
  *  @throw BdbException on error.
  */
+
 void open_db_table(Db*& table, u_int32_t flags,
-                          bt_compare_func_t cmp,
-                          const char* table_name) 
+                   bt_compare_func_t cmp,
+                   const char* table_name) 
 {
     c_str path("%s", table_name);
     
@@ -55,6 +57,8 @@ void open_db_table(Db*& table, u_int32_t flags,
     }
 }
 
+
+
 /**
  *  @brief Open the specified table index.
  *
@@ -63,13 +67,13 @@ void open_db_table(Db*& table, u_int32_t flags,
  *  @throw BdbException on error.
  */
 
-static void open_db_index(Db* table, Db* &assoc, 
-                          Db*& index, 
-                          u_int32_t,
-                          bt_compare_func_t cmp,
-                          idx_key_create_func_t key_create,
-                          const char*, 
-                          const char* index_name) 
+void open_db_index(Db* table, Db* &assoc, 
+                   Db*& index, 
+                   u_int32_t,
+                   bt_compare_func_t cmp,
+                   idx_key_create_func_t key_create,
+                   const char*, 
+                   const char* index_name) 
 {
     c_str path("%s", index_name);
     
@@ -116,9 +120,10 @@ static void open_db_index(Db* table, Db* &assoc,
  *
  *  @throw BdbException on error.
  */
-static void close_db_table(Db* &table, 
-                           const char* table_name) {
 
+void close_db_table(Db* &table, 
+                    const char* table_name) {
+    
     c_str path("%s/%s", BDB_TPCH_DIRECTORY, table_name);
 
     try {

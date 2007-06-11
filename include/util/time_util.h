@@ -1,17 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/* Miscellaneous time-related utilities
- *
- * Copyright (C) 1998 The Free Software Foundation
- * Copyright (C) 2000 Ximian, Inc.
- *
- * Authors: Federico Mena <federico@ximian.com>
- *          Miguel de Icaza <miguel@ximian.com>
- *          Damon Chaplin <damon@ximian.com>
+/** @file time_util.h
+ * 
+ *  @brief Miscellaneous time-related utilities
+ * 
+ *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef TIME_UTIL_H
-#define TIME_UTIL_H
+#ifndef __TIME_UTIL_H
+#define __TIME_UTIL_H
 
 #include <time.h>
 
@@ -20,12 +17,19 @@
 #include <cstdlib>
 
 
+/** time conversion functions */
 
-/**************************************************************************
- * time_t manipulation functions.
+int datepart(char const* str, const time_t *pt);
+time_t datestr_to_timet(char const* str);
+char* timet_to_datestr(time_t time);
+
+
+
+/** time_t manipulation functions
  *
- * NOTE: these use the Unix timezone functions like mktime() and localtime()
- **************************************************************************/
+ *  @note These function use the Unix timezone functions
+ *        like mktime() and localtime()
+ */
 
 /* Add or subtract a number of days, weeks or months. */
 time_t	time_add_day		(time_t time, int days);

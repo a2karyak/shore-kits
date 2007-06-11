@@ -1,5 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpch_filenames.h
+ *
+ *  @brief Definition of TPC-H related filenames
+ */
+
 #ifndef _TPCH_FILENAMES_H
 #define _TPCH_FILENAMES_H
 

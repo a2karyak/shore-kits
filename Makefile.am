@@ -84,7 +84,7 @@ lib_libutil_a_SOURCES = \
 	$(SU)/hash_functions.cpp \
 	$(SU)/static_hash_map.cpp \
 	$(SU)/thread.cpp \
-	$(SU)/time.cpp \
+	$(SU)/time_util.cpp \
 	$(SU)/tmpfile.cpp \
 	$(SU)/trace.cpp \
 	$(SU)/tcp.cpp \

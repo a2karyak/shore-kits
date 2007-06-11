@@ -1,13 +1,16 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _DATASTR_TO_TIMET_H
-#define _DATASTR_TO_TIMET_H
+/** @file tpch_type_convert.h
+ *
+ *  @brief Definition of TPC-H type conversion functions
+ */
+
+
+#ifndef __TPCH_TYPE_CONVERT_H
+#define __TPCH_TYPE_CONVERT_H
 
 #include "workload/tpch/tpch_struct.h"
-#include <sys/time.h>
 
-int datepart(char const* str, const time_t *pt);
-time_t datestr_to_timet(char const* str);
-char* timet_to_datestr(time_t time);
 tpch_l_shipmode modestr_to_shipmode(char const* tmp);
 tpch_o_orderpriority prioritystr_to_orderpriorty(char const* tmp);
 tpch_n_name nnamestr_to_nname(char const* tmp);

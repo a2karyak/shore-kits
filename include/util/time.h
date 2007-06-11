@@ -1,11 +1,10 @@
-/* Miscellaneous time-related utilities
- *
- * Copyright (C) 1998 The Free Software Foundation
- * Copyright (C) 2000 Ximian, Inc.
- *
- * Authors: Federico Mena <federico@ximian.com>
- *          Miguel de Icaza <miguel@ximian.com>
- *          Damon Chaplin <damon@ximian.com>
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file time_util.h
+ * 
+ *  @brief Miscellaneous time-related utilities
+ * 
+ *  @author Ippokratis Pandis (ipandis)
  */
 
 #ifndef TIME_UTIL_H
