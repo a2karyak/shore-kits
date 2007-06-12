@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/**
+/** @file tpch_struct.h
  *
  *  @brief Exports structures that we store/load from BerkeleyDB.
  *
@@ -11,14 +11,17 @@
  *  most 79 characters. We add an extra character for NUL-termination
  *  so we can use libc string functions on the loaded data.
  */
-#ifndef TPCH_STRUCT_H
-#define TPCH_STRUCT_H
+
+#ifndef __TPCH_STRUCT_H
+#define __TPCH_STRUCT_H
 
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/time.h>
 #include "util.h"
 
+
+ENTER_NAMESPACE(tpch);
 
 
 /* use this for allocation of NUL-terminated strings */
@@ -166,4 +169,8 @@ struct tpch_supplier_tuple {
 };
 
 
-#endif	// TPCH_STRUCT_H
+EXIT_NAMESPACE(workload);
+
+
+#endif
+

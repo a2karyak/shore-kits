@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file tpcc_compare.cpp
+/** @file tpcc_compare.h
  *
  *  @brief Interface for the TPC-C B-trees comparators
  *
@@ -17,7 +17,7 @@
 
 ENTER_NAMESPACE(tpcc);
 
-// BerkeleyDB comparators for B-tree table organization
+// BerkeleyDB comparators for B-tree TPC-C table organization
 
 int tpcc_bt_compare_fn_CUSTOMER(Db* idx, 
                                 const Dbt* k1, const Dbt* k2);

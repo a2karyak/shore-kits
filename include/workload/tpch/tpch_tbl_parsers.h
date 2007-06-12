@@ -1,5 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpch_tbl_parsers.h
+ *
+ *  @brief Declaration of the TPC-H table parsing functions
+ */
+
 #ifndef __TPCH_TBL_PARSERS_H
 #define __TPCH_TBL_PARSERS_H
 

@@ -8,8 +8,9 @@
  *
  *  @bug See itimer.c.
  */
-#ifndef _ITIMER_H
-#define _ITIMER_H
+
+#ifndef __ITIMER_H
+#define __ITIMER_H
 
 #include "util/c_str.h"
 #include <sys/time.h>

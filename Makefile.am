@@ -94,7 +94,9 @@ lib_libutil_a_SOURCES = \
         $(SU)/static_list_node.cpp \
         $(SU)/static_list.cpp \
         $(SU)/resource_pool.cpp \
-        $(SU)/itimer.cpp
+        $(SU)/itimer.cpp \
+        $(SU)/progress.cpp
+
 
 
 ################################################################################
@@ -174,7 +176,6 @@ WL_BASE = \
    $(SW)/dispatcher_globals.cpp
 
 WL_COMMON = \
-   $(SW)/common/q6_packet.cpp \
    $(SW)/common/process_query.cpp \
    $(SW)/common/predicates.cpp \
    $(SW)/common/table_load.cpp \
@@ -187,6 +188,7 @@ WL_TPCH = \
    $(SW)/tpch/tpch_compare.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \
    $(SW)/tpch/drivers/merge_test.cpp  \
+   $(SW)/tpch/q6_packet.cpp \
    $(SW)/tpch/drivers/tpch_q1.cpp  \
    $(SW)/tpch/drivers/tpch_q4.cpp  \
    $(SW)/tpch/drivers/tpch_q6.cpp  \
@@ -367,7 +369,7 @@ SE = $(top_srcdir)/src/server
 #qpipe_LDFLAGS = -Wl,-export-dynamic
 
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
-# FIXME: IP: additional to make gcc @ ia64 find <ltdl.h>. Should't hurt anybody else...
+# FIXME: IP: addition to make gcc @ ia64 find <ltdl.h>. Should't hurt anybody else...
 qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
 qpipe_LDADD = $(LDADD) \
 	-lreadline \

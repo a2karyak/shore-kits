@@ -11,9 +11,15 @@
 
 #include "workload/tpch/tpch_struct.h"
 
+ENTER_NAMESPACE(tpch);
+
+
 tpch_l_shipmode modestr_to_shipmode(char const* tmp);
 tpch_o_orderpriority prioritystr_to_orderpriorty(char const* tmp);
 tpch_n_name nnamestr_to_nname(char const* tmp);
+
+
+EXIT_NAMESPACE(tpch);
 
 #endif
 

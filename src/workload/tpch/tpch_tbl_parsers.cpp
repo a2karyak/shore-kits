@@ -1,9 +1,17 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpch_tbl_parsers.cpp
+ *
+ *  @brief Implementation of the TPC-H table parsing functions
+ */
+
 #include "workload/tpch/tpch_tbl_parsers.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
+
 #include "util/trace.h"
+#include "util/time_util.h"
+#include "util/progress.h"
 
 
 ENTER_NAMESPACE(tpch);
@@ -12,15 +20,7 @@ ENTER_NAMESPACE(tpch);
 
 #define MAX_LINE_LENGTH 1024
 
-
-
-/* helper functions */
-
-static void progress_reset();
-static void progress_update();
-static void progress_done();
-static void store_string(char* dest, char* src);
-
+static unsigned long progress = 0;
 
 
 /* definitions of exported functions */
@@ -30,7 +30,7 @@ void tpch_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
 
     TRACE(TRACE_DEBUG, "Populating CUSTOMER...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_customer_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -59,7 +59,7 @@ void tpch_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -72,7 +72,7 @@ void tpch_parse_tbl_LINEITEM(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating LINEITEM...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_lineitem_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -119,7 +119,7 @@ void tpch_parse_tbl_LINEITEM(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -132,7 +132,7 @@ void tpch_parse_tbl_NATION(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
  
     printf("Populating NATION...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_nation_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -154,7 +154,7 @@ void tpch_parse_tbl_NATION(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -167,7 +167,7 @@ void tpch_parse_tbl_ORDERS(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating ORDERS...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_orders_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -200,7 +200,7 @@ void tpch_parse_tbl_ORDERS(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -213,7 +213,7 @@ void tpch_parse_tbl_PART(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
  
     printf("Populating PART...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_part_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -245,7 +245,7 @@ void tpch_parse_tbl_PART(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -258,7 +258,7 @@ void tpch_parse_tbl_PARTSUPP(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating PARTSUPP...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_partsupp_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -283,7 +283,7 @@ void tpch_parse_tbl_PARTSUPP(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -296,7 +296,7 @@ void tpch_parse_tbl_REGION(Db* db, FILE* fd) {
     char linebuffer[MAX_LINE_LENGTH];
 
     printf("Populating REGION...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_region_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -316,7 +316,7 @@ void tpch_parse_tbl_REGION(Db* db, FILE* fd) {
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
@@ -330,7 +330,7 @@ void tpch_parse_tbl_SUPPLIER(Db* db, FILE* fd) {
     static int count = 0;
 
     printf("Populating SUPPLIER...\n");
-    progress_reset();
+    progress_reset(&progress);
     tpch_supplier_tuple tup;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
@@ -369,42 +369,10 @@ void tpch_parse_tbl_SUPPLIER(Db* db, FILE* fd) {
                   tup.S_COMMENT);
         }
 
-        progress_update();
+        progress_update(&progress);
     }
 
     progress_done();
-}
-
-
-
-/* definitions of helper functions */
-
-
-#define PROGRESS_INTERVAL 100000
-
-static unsigned long progress = 0;
-
-static void progress_reset() {
-    progress = 0;
-}
-
-static void progress_update() {
-    if ( (progress++ % PROGRESS_INTERVAL) == 0 ) {
-        printf(".");
-        fflush(stdout);
-        progress = 1; // prevent overflow
-    }
-}
-
-static void progress_done() {
-    printf("done\n");
-    fflush(stdout);
-}
-
-static void store_string(char* dest, char* src) {
-    int len = strlen(src);
-    strncpy(dest, src, len);
-    dest[len] = '\0';
 }
 
 

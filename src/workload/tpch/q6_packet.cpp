@@ -1,17 +1,25 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#include "workload/common/q6_packet.h"
+/** @file q6_packet.cpp
+ * 
+ *  @brief Implementation of the TPC-H Q6 packet function
+ */
 
 #include <cmath>
 
 #include "stages.h"
 #include "core.h"
 #include "workload/common/bdb_env.h"
+
+#include "workload/tpch/q6_packet.h"
 #include "workload/tpch/tpch_env.h"
 
 
 using namespace qpipe;
-using namespace tpch;
+using namespace workload;
+
+
+ENTER_NAMESPACE(tpch);
 
 
 packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) {
@@ -42,3 +50,7 @@ packet_t* create_q6_packet(const c_str &client_prefix, scheduler::policy_t* dp) 
     else
         return q6_tscan_packet;
 }
+
+
+EXIT_NAMESPACE(tpch);
+

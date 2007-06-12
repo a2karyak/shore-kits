@@ -13,7 +13,7 @@
 #include "util/stopwatch.h"
 #include "util/sync.h"
 #include "util/thread.h"
-#include "util/time.h"
+#include "util/time_util.h"
 #include "util/tmpfile.h"
 #include "util/trace.h"
 #include "util/offsetof.h"

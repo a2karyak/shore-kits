@@ -3,9 +3,12 @@
 #include "tests/common/q6_client.h"
 
 #include "stages.h"
-#include "workload/common/q6_packet.h"
+
 #include "workload/common/process_query.h"
+
 #include "workload/tpch/tpch_db.h"
+#include "workload/tpch/q6_packet.h"
+
 
 using namespace qpipe;
 using namespace workload;

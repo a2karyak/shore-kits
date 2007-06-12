@@ -12,6 +12,7 @@
 
 #include <time.h>
 
+#include <cstdio>
 #include <cstring>
 #include <ctype.h>
 #include <cstdlib>
@@ -31,16 +32,16 @@ char* timet_to_datestr(time_t time);
  *        like mktime() and localtime()
  */
 
-/* Add or subtract a number of days, weeks or months. */
-time_t	time_add_day		(time_t time, int days);
-time_t	time_add_week		(time_t time, int weeks);
-time_t  time_add_month          (time_t time, int months);
-time_t  time_add_year           (time_t time, int years);
+/* Add or subtract a number of days, weeks or months */
+time_t time_add_day(time_t time, int days);
+time_t time_add_week(time_t time, int weeks);
+time_t time_add_month(time_t time, int months);
+time_t time_add_year(time_t time, int years);
 
-/* Returns the beginning or end of the day. */
-time_t	time_day_begin		(time_t t);
-time_t	time_day_end		(time_t t);
+/* Return the beginning or end of the day */
+time_t time_day_begin(time_t t);
+time_t time_day_end(time_t t);
 
 
 
-#endif // TIME_UTIL_H
+#endif

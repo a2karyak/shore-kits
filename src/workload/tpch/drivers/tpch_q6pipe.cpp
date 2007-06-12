@@ -2,12 +2,14 @@
 #include "stages.h"
 #include "scheduler.h"
 
+#include "workload/common.h"
+
 #include "workload/tpch/drivers/tpch_q6pipe.h"
-#include "workload/common/q6_packet.h"
+#include "workload/tpch/q6_packet.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
 #include "workload/tpch/tpch_env.h"
-#include "workload/common.h"
+
 
 
 ENTER_NAMESPACE(q6pipe);
