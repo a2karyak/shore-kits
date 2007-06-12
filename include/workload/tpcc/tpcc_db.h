@@ -16,6 +16,8 @@ void db_open(uint32_t flags=0,
 
 void db_close();
 
+void db_read();
+
 EXIT_NAMESPACE(tpcc);
 
 #endif

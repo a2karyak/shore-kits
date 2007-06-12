@@ -85,6 +85,7 @@ extern void open_db_index(Db* table, Db* &assoc,
                           const char* index_name);
 
 extern void close_db_table(Db* &table, 
+                           const char* dir_name,
                            const char* table_name);
 
 

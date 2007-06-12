@@ -55,7 +55,9 @@ TESTS = \
    tests/payment \
    tests/acounter \
    tests/tpch_load \
-   tests/tpcc_load
+   tests/tpcc_load \
+   tests/tpcc_load_confirm 
+
 
 
 DBGEN = \
@@ -317,8 +319,9 @@ tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_payment_SOURCES = $(ST)/test_payment.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
-tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
+tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
+tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
@@ -354,6 +357,7 @@ tests_busy_wait_all_LDADD = $(TEST_LIBS)
 tests_payment_LDADD = $(TEST_LIBS)
 tests_tpch_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_LDADD = $(TEST_LIBS)
+tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
 
 
 ################################################################################

@@ -188,12 +188,19 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
 void db_close() {
 
     // close indexes
-    close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
-    close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
+    close_db_table(tpch_lineitem_shipdate_idx, 
+                   BDB_TPCH_DIRECTORY,
+                   INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
+
+    close_db_table(tpch_lineitem_shipdate, 
+                   BDB_TPCH_DIRECTORY,
+                   INDEX_LINEITEM_SHIPDATE_NAME);
 
     // close tables
     for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
-        close_db_table(tpch_tables[i].db, tpch_tables[i].bdb_filename);
+        close_db_table(tpch_tables[i].db, 
+                       BDB_TPCH_DIRECTORY,
+                       tpch_tables[i].bdb_filename);
     
     // close environment
     try {    

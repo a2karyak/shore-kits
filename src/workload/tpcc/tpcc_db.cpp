@@ -14,6 +14,7 @@
 #include "workload/common/bdb_env.h"
 #include "workload/common/bdb_config.h"
 
+#include "workload/tpcc/tpcc_env.h"
 #include "workload/tpcc/tpcc_db.h"
 #include "workload/tpcc/tpcc_filenames.h"
 
@@ -21,15 +22,22 @@
 using namespace qpipe;
 using namespace workload;
 
-/**
- *  @brief Open TPC-C tables.
+
+ENTER_NAMESPACE(tpcc);
+
+
+/** @fn db_open
+ *
+ *  @brief Open TPC-C tables. Initializes a transactional 
+ *  subsystem.
  *
  *  @return void
  *
  *  @throw BdbException on error.
  */
-void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
-                   u_int32_t db_cache_size_bytes) 
+
+void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
+             u_int32_t db_cache_size_bytes) 
 {
     TRACE(TRACE_ALWAYS,
           "TPC-C DB_OPEN called\n");
@@ -121,9 +129,9 @@ void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
     dbenv->set_verbose(DB_VERB_REGISTER, true);
     
 
-    // open home directory
-    try {
-        
+    // Open TPC-C Database Environment
+
+    try {        
         const char* desc = "BDB_HOME_DIRECTORY (BDB home)";
         const char* dir  = BDB_HOME_DIRECTORY;
 
@@ -137,9 +145,22 @@ void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
                    desc,
                    dir);
 
+
+        // initialize the transactional subsystem
+        u_int32_t env_flags = 
+            DB_CREATE     | // If the environment does not exist, create it
+            DB_PRIVATE    | // The env will be accessed by a single process
+            DB_INIT_LOCK  | // Initialize locking
+            DB_INIT_LOG   | // Initialize logging
+            DB_INIT_MPOOL | // Initialize the cache
+            DB_THREAD     | // Free-thread the env handle
+            DB_INIT_TXN;    // Initialize transactions  
+
+
+
         // open environment with no transactional support.
         dbenv->open(BDB_HOME_DIRECTORY,
-                    DB_CREATE | DB_PRIVATE | DB_THREAD | DB_INIT_CDB | DB_INIT_MPOOL,
+                    env_flags,
                     0);
     }
     catch ( DbException &e) {
@@ -153,15 +174,16 @@ void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
   
     TRACE( TRACE_ALWAYS, "Should Correct This!!\n");
 
-    /*
+    
     // open tables
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
-        open_db_table(tpch_tables[i].db,
+        open_db_table(tpcc_tables[i].db,
                       flags,
-                      tpch_tables[i].bt_compare_fn,
-                      tpch_tables[i].bdb_filename);
+                      tpcc_tables[i].bt_compare_fn,
+                      tpcc_tables[i].bdb_filename);
     
 
+    /*
     // open indexes
     open_db_index(tpch_tables[TPCH_TABLE_LINEITEM].db,
                   tpch_lineitem_shipdate,
@@ -176,32 +198,39 @@ void tpcc::db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
     TRACE(TRACE_ALWAYS, "BerkeleyDB buffer pool set to %d GB, %d B\n",
           db_cache_size_gb,
           db_cache_size_bytes);
+
     TRACE(TRACE_ALWAYS, "TPC-C database open\n");
 }
 
 
 
-/**
+
+/** @fn db_close
  *  @brief Close TPC-C tables.
  *
  *  @return void
  *
  *  @throw BdbException on error.
  */
-void tpcc::db_close() {
+
+void db_close() {
 
     TRACE( TRACE_ALWAYS, "Should Correct This!!\n");
+
+
+    // close tables
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
+        close_db_table(tpcc_tables[i].db, 
+                       BDB_TPCC_DIRECTORY,
+                       tpcc_tables[i].bdb_filename);
+        
 
     /*
     // close indexes
     close_db_table(tpch_lineitem_shipdate_idx, INDEX_LINEITEM_SHIPDATE_NAME "_IDX");
     close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
-
-    // close tables
-    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
-        close_db_table(tpch_tables[i].db, tpch_tables[i].bdb_filename);
     */
-        
+
 
     // close environment
     try {    
@@ -215,3 +244,28 @@ void tpcc::db_close() {
 
     TRACE(TRACE_ALWAYS, "TPC-C database closed\n");
 }
+
+
+
+/** @fn db_read
+ *  @brief Reads the TPC-C tables. For test purposes
+ *
+ *  @throw BdbException on error.
+ */
+
+void db_read() {
+
+    TRACE( TRACE_ALWAYS, "For Debug!!\n");
+
+
+    // close tables
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++) {
+
+        TRACE( TRACE_ALWAYS, "To be done!\n");
+    }   
+
+    TRACE(TRACE_ALWAYS, "TPC-C database read\n");
+}
+
+
+EXIT_NAMESPACE(tpcc);

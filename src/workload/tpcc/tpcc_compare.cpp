@@ -21,9 +21,36 @@ ENTER_NAMESPACE(tpcc);
 
 // BerkeleyDB comparators for B-tree TPC-C table organization
 
+
+// CUSTOMER key is composed of 3 fields: C_C_ID, C_D_ID, C_W_ID
 int tpcc_bt_compare_fn_CUSTOMER(Db* idx, 
-                                const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
+                                const Dbt* k1, 
+                                const Dbt* k2)
+{ 
+    struct {
+        TYPEOF(tpcc_customer_tuple, C_C_ID) c_c_id;
+        TYPEOF(tpcc_customer_tuple, C_D_ID) c_d_id;
+        TYPEOF(tpcc_customer_tuple, C_W_ID) c_w_id;
+    } key1, key2;
+
+    memcpy(&key1, k1->get_data(), sizeof(key1));
+    memcpy(&key2, k2->get_data(), sizeof(key2));
+
+
+    TYPEOF(tpcc_customer_tuple, C_C_ID) c_diff = key1.c_c_id - key2.c_c_id;
+    if(c_diff != 0)
+        return c_diff;
+
+
+    TYPEOF(tpcc_customer_tuple, C_D_ID) d_diff = key1.c_d_id - key2.c_d_id;
+    if(d_diff != 0)
+        return d_diff;
+
+
+    TYPEOF(tpcc_customer_tuple, C_W_ID) w_diff = key1.c_w_id - key2.c_w_id;
+    return w_diff;
+}
+
 
 
 int tpcc_bt_compare_fn_DISTRICT(Db* idx, 

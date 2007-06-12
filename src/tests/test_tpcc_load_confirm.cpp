@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file test_tpcc_load.cpp
+/** @file test_tpcc_load_confirm.cpp
  *
- *  @brief Test loading TPC-C tables
+ *  @brief Confirm loading TPC-C tables
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -15,6 +15,8 @@
 #include "tests/common.h"
 
 #include "workload/tpcc/tpcc_db.h"
+#include "workload/tpcc/tpcc_struct.h"
+
 #include "workload/common/table_load.h"
 
 
@@ -30,8 +32,8 @@ int main() {
        to be thrown in table open. As a temporary fix, we will simply
        delete the old database file before rebuilding. */
 
-    tpcc::db_open(DB_CREATE|DB_THREAD); 
-    db_tpcc_load("tpcc_sf");
+    tpcc::db_open(DB_JOINENV|DB_THREAD); 
+    tpcc::db_read();
     tpcc::db_close();
 
     return 0;

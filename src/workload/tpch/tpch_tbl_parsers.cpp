@@ -18,8 +18,6 @@ ENTER_NAMESPACE(tpch);
 
 /* internal constants */
 
-#define MAX_LINE_LENGTH 1024
-
 static unsigned long progress = 0;
 
 

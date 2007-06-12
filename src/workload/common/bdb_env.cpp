@@ -113,18 +113,17 @@ void open_db_index(Db* table, Db* &assoc,
 
 
 
-/**
+/** @fn close_db_table
  *  @brief Close the specified table.
- *
- *  @return void
  *
  *  @throw BdbException on error.
  */
 
 void close_db_table(Db* &table, 
-                    const char* table_name) {
-    
-    c_str path("%s/%s", BDB_TPCH_DIRECTORY, table_name);
+                    const char* dir_name,
+                    const char* table_name) 
+{    
+    c_str path("%s/%s", dir_name, table_name);
 
     try {
         table->close(0);

@@ -14,6 +14,9 @@
 #define PROGRESS_INTERVAL 100000
 
 
+#define MAX_LINE_LENGTH 1024
+
+
 /** exported helper functions */
 
 void progress_reset(unsigned long* indicator);
