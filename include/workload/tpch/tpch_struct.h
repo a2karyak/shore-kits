@@ -21,7 +21,7 @@
 #include "util.h"
 
 
-ENTER_NAMESPACE(tpch);
+//ENTER_NAMESPACE(tpch);
 
 
 /* use this for allocation of NUL-terminated strings */
@@ -55,7 +55,7 @@ enum tpch_o_orderpriority {
     LOW_5
 };
 
-enum tpch_n_name{
+enum tpch_n_name {
     ALGERIA,
     ARGENTINA,
     BRAZIL,
@@ -169,7 +169,7 @@ struct tpch_supplier_tuple {
 };
 
 
-EXIT_NAMESPACE(workload);
+//EXIT_NAMESPACE(workload);
 
 
 #endif
