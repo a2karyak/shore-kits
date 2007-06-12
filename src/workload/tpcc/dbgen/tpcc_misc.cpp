@@ -2,7 +2,7 @@
 
 /** @file tpccmisc.cpp
  *
- *  @brief Misc routine
+ *  @brief Misc routines for the TPC-C data table generation
  *
  *  @author Ippokratis Pandis (ipandis)
  */

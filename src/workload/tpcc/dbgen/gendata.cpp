@@ -7,9 +7,10 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
+
 #include <stdlib.h>
-#include <stdio.h>                                                
-#include <string.h>                                               
+#include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -18,42 +19,13 @@
 
 #include "util.h"
 
+#include "workload/tpcc/dbgen/gendata.h"    
 #include "workload/tpcc/dbgen/platform_io.h"
 #include "workload/tpcc/dbgen/platform_sem.h"
 #include "workload/tpcc/dbgen/tpcc_rnd.h" 
 #include "workload/tpcc/dbgen/tpcc_misc.h"
 #include "workload/tpcc/dbgen/tpcc_conf.h"    
 #include "workload/tpcc/dbgen/tpcc_datastr.h"    
-
-// Int64
-typedef int Int64;
-
-
-// PROTOTYPES
-int gen_dist_tbl( void );                                      
-int gen_cust_tbl( void );
-int gen_hist_tbl( void );
-int gen_nu_ord_tbl( void );
-int gen_ordr_tbl( void );
-int gen_item_tbl( void );
-int gen_stock_tbl( void );
-int gen_ware_tbl( void );                                      
-
-// method declaration
-void print_tpcc_dbgen_usage(void);
-
-// format of the various tables
-char fmtWare[]    = "%d|%s|%s|%s|%s|%s|%s|%f|%f|\n";            
-char fmtDist[]    = "%d|%d|%s|%s|%s|%s|%s|%s|%f|%f|%d\n";       
-char fmtItem[]    = "%d|%d|%s|%d|%s\n";
-char fmtStock[]   = "%d|%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|\n";
-
-char fmtCust[]    = "%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%lld|%s|%f|%f|%d|%f|%f|%d|%s|%s\n";
-char fmtHist[]    = "%d|%d|%d|%d|%d|%lld|%d|%s\n";               
-char fmtOrdr[]    = "%d|%d|%d|%d|%lld|%d|%d|%d|\n";              
-char fmtOLine[]   = "%d|%d|%d|%d|%d|%d|%lld|%d|%d|%s\n";        
-
-char fmtNewOrd[]  = "%d|%d|%d\n";                               
 
 // global variabkes
 int i, j;
@@ -684,23 +656,22 @@ int gen_cust_tbl( void ) {
    char cust_data1[251];
    char cust_data2[251];
    double cust_discount;
-   double luck_of_the_draw;
    Int64 currtmstmp;
 
    int numBytes;
    ioHandle hnd;    
    char Buffer[1024];
 
-   timestamp1 = current_time();                                   
+   timestamp1 = current_time();
 
+   rc = GenericOpen(&hnd, outtype1, outname1);
 
-   rc = GenericOpen(&hnd, outtype1, outname1);                    
    if (rc != 0) { 
        return (report_gen_fail("CUSTOMER", 0));
    }
 
-   strcpy(cust_middle, "OE");                                     
-   currtmstmp = time(NULL);                                       
+   strcpy(cust_middle, "OE");
+   currtmstmp = time(NULL);
 
    // ---------------------------------------------------------------
    // Defect 264315:  Change CUSTOMER index order

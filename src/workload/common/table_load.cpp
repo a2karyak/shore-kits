@@ -17,6 +17,7 @@
 #include "workload/common/bdb_env.h"
 #include "workload/common/table_load.h"
 
+
 // TPC-H related
 #include "workload/tpch/tpch_env.h"
 #include "workload/tpch/tpch_compare.h"
@@ -35,11 +36,6 @@ using namespace tpcc;
 #define MAX_LINE_LENGTH 1024
 #define MAX_FILENAME_SIZE 1024
 
-
-// Forward declaration of internal helper functions
-void progress_reset();
-void progress_update();
-void progress_done();
 
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
