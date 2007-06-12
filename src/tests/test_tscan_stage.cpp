@@ -3,22 +3,21 @@
 /** @file    : test_tscan_stage.cpp
  *  @brief   : Unittest for the tscan stage
  *  @author  : Ippokratis Pandis
- *  @version : 0.1
- *  @history :
- 8/6/2006 : Updated to work with the new class definitions
- 25/5/2006: Initial version
-*/ 
+ */ 
 
 #include "stages.h"
 #include "tests/common.h"
 #include "workload/common.h"
+
+#include "workload/tpch/q6_packet.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/common.h"
 #include "workload/tpch/tpch_env.h"
 
-using namespace qpipe;
-using namespace workload;
+
 using namespace tpch;
+using namespace workload;
+using namespace qpipe;
+
 
 
 class test_tscan_stage_process_tuple_t : public process_tuple_t {

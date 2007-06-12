@@ -15,6 +15,10 @@ using namespace qpipe;
 using namespace scheduler;
 using namespace workload;
 
+
+ENTER_NAMESPACE(tpch);
+
+
 #define TRACE_Q6_AGGREGATE 0
 
 
@@ -199,5 +203,8 @@ public:
 
 packet_t* create_q6_packet(const c_str &client_prefix, policy_t* dp);
 
+
+
+EXIT_NAMESPACE(tpch);
 
 #endif

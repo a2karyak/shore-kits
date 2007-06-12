@@ -9,10 +9,11 @@
 
 #include <cstdlib>
 
-#include "workload/common/bdb_env.h"
 #include "workload/tpcc/tpcc_compare.h"
 #include "workload/tpcc/tpcc_struct.h"
+#include "workload/common/bdb_env.h"
 
+using namespace workload;
 
 
 ENTER_NAMESPACE(tpcc);
@@ -22,44 +23,40 @@ ENTER_NAMESPACE(tpcc);
 
 int tpcc_bt_compare_fn_CUSTOMER(Db* idx, 
                                 const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 
 int tpcc_bt_compare_fn_DISTRICT(Db* idx, 
                                 const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_HISTORY(Db* idx, 
                                const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_ITEM(Db* idx, 
                             const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_NEW_ORDER(Db* idx, 
                                  const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_ORDER(Db* idx, 
                                 const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_ORDERLINE(Db* idx, 
                                  const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_STOCK(Db* idx, 
                              const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
-
-int tpcc_bt_compare_fn_STOCK(Db* idx, 
-                             const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 int tpcc_bt_compare_fn_WAREHOUSE(Db* idx, 
                                  const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+ { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
 
 
 /*
@@ -87,5 +84,4 @@ int tpch_bt_compare_fn_SUPPLIER(Db*, const Dbt* k1, const Dbt* k2) {
 */
 
 EXIT_NAMESPACE(tpcc);
-
 

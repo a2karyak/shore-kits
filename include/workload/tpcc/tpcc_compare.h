@@ -43,9 +43,6 @@ int tpcc_bt_compare_fn_ORDERLINE(Db* idx,
 int tpcc_bt_compare_fn_STOCK(Db* idx, 
                              const Dbt* k1, const Dbt* k2);
 
-int tpcc_bt_compare_fn_STOCK(Db* idx, 
-                             const Dbt* k1, const Dbt* k2);
-
 int tpcc_bt_compare_fn_WAREHOUSE(Db* idx, 
                                  const Dbt* k1, const Dbt* k2);
 

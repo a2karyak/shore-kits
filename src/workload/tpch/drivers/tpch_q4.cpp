@@ -10,6 +10,8 @@
 #include "workload/common.h"
 
 
+using namespace tpch;
+
 ENTER_NAMESPACE(q4);
 
 

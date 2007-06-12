@@ -1,13 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "workload/tpch/drivers/tpch_q6.h"
+#include "workload/tpch/q6_packet.h"
 
 #include "workload/common.h"
 #include "core.h"
 
 
 using namespace qpipe;
-
+using namespace workload;
+using namespace tpch;
 
 ENTER_NAMESPACE(workload);
 
@@ -26,3 +28,4 @@ void tpch_q6_driver::submit(void* disp) {
 
 
 EXIT_NAMESPACE(workload);
+

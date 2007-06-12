@@ -14,6 +14,8 @@
 #include <cstdio>
 
 
+ENTER_NAMESPACE(tpch);
+
 
 /** TPC-H type conversions */
 
@@ -122,3 +124,7 @@ tpch_n_name nnamestr_to_nname(char const* tmp) {
     // should not reach this line
     return UNITED_STATES;
 }
+
+
+EXIT_NAMESPACE(tpch);
+

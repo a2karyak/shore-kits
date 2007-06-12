@@ -7,6 +7,9 @@
 #include "workload/tpch/tpch_type_convert.h"
 
 
+using namespace tpch;
+
+
 ENTER_NAMESPACE(q1);
 
 

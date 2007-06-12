@@ -1,7 +1,7 @@
 /* -*- mode:c++; c-basic-offset:4 -*- */
 
-#ifndef _WORKLOAD_CLIENT_H
-#define _WORKLOAD_CLIENT_H
+#ifndef __WORKLOAD_CLIENT_H
+#define __WORKLOAD_CLIENT_H
 
 #include "workload/driver.h"
 #include "workload/client_sync.h"
@@ -53,4 +53,4 @@ public:
 EXIT_NAMESPACE(workload);
 
 
-#endif	// __WL_CLIENT_H
+#endif

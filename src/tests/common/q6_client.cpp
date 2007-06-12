@@ -12,7 +12,7 @@
 
 using namespace qpipe;
 using namespace workload;
-
+using namespace tpch;
 
 void* q6_client_main(void* arg) {
     

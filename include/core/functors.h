@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _FUNCTORS_H
-#define _FUNCTORS_H
+#ifndef __FUNCTORS_H
+#define __FUNCTORS_H
 
 #include "core/tuple.h"
 #include <algorithm>

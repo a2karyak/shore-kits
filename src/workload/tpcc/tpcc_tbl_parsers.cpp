@@ -7,16 +7,19 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "util/trace.h"
+/*
 #include "util/time_util.h"
 #include "util/progress.h"
 
 #include "workload/common/bdb_env.h"
-#include "workload/tpcc/tpcc_tbl_parsers.h"
 #include "workload/tpcc/tpcc_struct.h"
 //#include "workload/tpcc/tpcc_type_convert.h"
+*/
 
-using namespace workload;
+#include "util/trace.h"
+
+#include "workload/tpcc/tpcc_tbl_parsers.h"
+
 
 ENTER_NAMESPACE(tpcc);
 
@@ -43,5 +46,5 @@ void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing N
 void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
 
 
-
 EXIT_NAMESPACE(tpcc);
+

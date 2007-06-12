@@ -59,4 +59,7 @@ struct tpch_customer_tuple {
 };
 */
 
+
+EXIT_NAMESPACE(tpcc);
+
 #endif

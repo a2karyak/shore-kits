@@ -4,9 +4,11 @@
 #include "scheduler.h"
 #include "workload/tpch/drivers/tpch_q19.h"
 
-#include "workload/common.h"
+#include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_env.h"
+
+#include "workload/common.h"
 
 using namespace tpch;
 using namespace qpipe;

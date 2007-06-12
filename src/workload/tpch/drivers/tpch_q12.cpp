@@ -1,14 +1,20 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "stages.h"
+
 #include "workload/tpch/drivers/tpch_q12.h"
 
-#include "workload/common.h"
+#include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_db.h"
-#include "workload/common/predicates.h"
 #include "workload/tpch/tpch_env.h"
 
+#include "workload/common.h"
+
+
+using namespace tpch;
+using namespace workload;
 using namespace qpipe;
+
 
 
 ENTER_NAMESPACE(q12);
