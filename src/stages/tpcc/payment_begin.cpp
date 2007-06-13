@@ -1,7 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file payment_begin.cpp
+ *
+ *  @brief Implementation of the tpc-c payment_begin stage
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
 
-//# include "stages/tpcc/payment.h"
 # include "stages/tpcc/payment_begin.h"
 # include "workload/common.h"
 

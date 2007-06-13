@@ -3,16 +3,23 @@
 #include "tests/common/tester_query.h"
 
 #include "scheduler.h"
+
 #include "workload/tpch/tpch_db.h"
+#include "workload/tpcc/tpcc_db.h"
 
 
-
-query_info_t query_init(int argc, char* argv[]) {
+query_info_t query_init(int argc, char* argv[], int env) {
 
     thread_init();
+    
+    // open database
+    if (env == QUERY_ENV) {
+        tpch::db_open();
+    }
+    else {
+        tpcc::db_open();
+    }
 
-    TRACE(TRACE_ALWAYS, "SHOULD OPEN DB!\n");
-    tpch::db_open();
 
     // parse command line args
     if ( argc < 2 ) {
@@ -35,7 +42,7 @@ query_info_t query_init(int argc, char* argv[]) {
 
 
 
-void query_main(query_info_t& info, workload::driver_t* driver) {
+void query_main(query_info_t& info, workload::driver_t* driver, int env) {
 
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS);
 
@@ -45,5 +52,11 @@ void query_main(query_info_t& info, workload::driver_t* driver) {
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 
-    tpch::db_close();
+    // close database
+    if (env == QUERY_ENV) {
+        tpch::db_close();
+    }
+    else {
+        tpcc::db_close();
+    }
 }

@@ -1,7 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PAYMENT_BEGIN_H
-#define _PAYMENT_BEGIN_H
+/** @file payment_begin.h
+ *
+ *  @brief Interface for the tpc-c payment_begin stage
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
+#ifndef __TPCC_PAYMENT_BEGIN_H
+#define __TPCC_PAYMENT_BEGIN_H
 
 #include <cstdio>
 
@@ -10,7 +17,7 @@
 #include "scheduler.h"
 
 #include "stages/tpcc/trx_packet.h"
-//#include "stages/tpcc/payment.h"
+
 #include "stages/tpcc/payment_upd_wh.h"
 #include "stages/tpcc/payment_upd_distr.h"
 #include "stages/tpcc/payment_upd_cust.h"
@@ -154,7 +161,7 @@ public:
         /* no inputs */
     }
 
-}; // END OF CLASS: payment_begin_packet_t
+}; // EOF payment_begin_packet_t
 
 
 
@@ -185,10 +192,8 @@ public:
 
     payment_begin_stage_t();
  
-    virtual ~payment_begin_stage_t() { 
-
+    ~payment_begin_stage_t() { 
 	TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN destructor\n");	
-        //	thread_mutex_destroy( _trx_counter_mutex );
     }
 
     /** @brief Returns the next trx_id */
@@ -259,7 +264,7 @@ public:
     
     
     
-}; // END OF CLASS: payment_begin_stage_t
+}; // EOF payment_begin_stage_t
 
 
 

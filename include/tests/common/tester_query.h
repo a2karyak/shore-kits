@@ -4,7 +4,9 @@
 #define _TESTER_QUERY_H
 
 #include "scheduler.h"
+
 #include "workload/driver.h"
+#include "workload/register_stage_containers.h"
 
 
 struct query_info_t {
@@ -13,9 +15,10 @@ struct query_info_t {
 };
 
 
-query_info_t query_init(int argc, char* argv[]);
+query_info_t query_init(int argc, char* argv[], int env = QUERY_ENV);
 
-void query_main(query_info_t& info, workload::driver_t* driver);
+
+void query_main(query_info_t& info, workload::driver_t* driver, int env = QUERY_ENV);
 
 
 

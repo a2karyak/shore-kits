@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef __TPCC_PAYMENT_H
-#define __TPCC_PAYMENT_H
+#ifndef __TPCC_PAYMENT_DRIVER_H
+#define __TPCC_PAYMENT_DRIVER_H
 
 # include "stages/tpcc/trx_packet.h"
 # include "stages/tpcc/payment_begin.h"

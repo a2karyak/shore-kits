@@ -154,6 +154,7 @@ lib_libstages_a_SOURCES = \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
    $(SG)/tpcc/trx_packet.cpp \
+   $(SG)/tpcc/payment_baseline.cpp \
    $(SG)/tpcc/payment_begin.cpp \
    $(SG)/tpcc/payment_upd_wh.cpp \
    $(SG)/tpcc/payment_upd_distr.cpp \

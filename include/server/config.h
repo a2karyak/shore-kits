@@ -12,7 +12,7 @@
 // Until we get CC to recognize our libreadline install...
 #define USE_READLINE 1
 
-/* Default configuration values */
+// Default configuration values
 #define QPIPE_DIRECTORY_NAME ".qpipe"
 #define QPIPE_HISTORY_FILE   "history"
 

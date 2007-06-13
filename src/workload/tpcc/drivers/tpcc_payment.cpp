@@ -66,7 +66,7 @@ void tpcc_payment_driver::submit(void* disp) {
 }
 
 
-/** @func create_begin_payment_packet
+/** @fn create_begin_payment_packet
  *
  *  @brief Creates a new PAYMENT request, given the scaling factor (sf) 
  *  of the database
