@@ -18,6 +18,13 @@ ENTER_NAMESPACE(workload);
 void db_tpch_load(const char* tbl_path=BDB_TPCH_TBL_DIRECTORY);
 void db_tpcc_load(const char* tbl_path=BDB_TPCC_TBL_DIRECTORY);
 
+
+/** for verification purposes */
+void db_tpch_read();
+void db_tpcc_read();
+
+
+
 EXIT_NAMESPACE(workload);
 
 #endif

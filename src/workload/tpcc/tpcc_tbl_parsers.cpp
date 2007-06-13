@@ -36,7 +36,7 @@ static unsigned long progress = 0;
 
 void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd) { 
 
-    TRACE( TRACE_ALWAYS, "Shoud be multi-threaded!"); 
+    TRACE( TRACE_ALWAYS, "Should be multi-threaded!"); 
   
     char linebuffer[MAX_LINE_LENGTH];
 

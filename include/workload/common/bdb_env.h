@@ -45,6 +45,7 @@ ENTER_NAMESPACE(workload);
 
 typedef int (*bt_compare_fn_t) (Db*, const Dbt*, const Dbt*);
 typedef void (*parse_tbl_t) (Db*, FILE*);
+typedef void (*read_tbl_t) (Db*);
 
 
 typedef int (*bt_compare_func_t)(Db*, const Dbt*, const Dbt*);
@@ -62,7 +63,9 @@ struct bdb_table_s {
 
     bt_compare_fn_t bt_compare_fn;
     parse_tbl_t     parse_tbl;
+    read_tbl_t      read_tbl;
 };
+
 
 
 /* BerkeleyDB environment */
@@ -87,6 +90,7 @@ extern void open_db_index(Db* table, Db* &assoc,
 extern void close_db_table(Db* &table, 
                            const char* dir_name,
                            const char* table_name);
+
 
 
 

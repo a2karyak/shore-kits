@@ -137,6 +137,8 @@ void close_db_table(Db* &table,
 }
 
 
+
+
 EXIT_NAMESPACE(workload);
 
 

@@ -11,6 +11,7 @@
 #include "workload/tpcc/tpcc_filenames.h"
 #include "workload/tpcc/tpcc_compare.h"
 #include "workload/tpcc/tpcc_tbl_parsers.h"
+#include "workload/tpcc/tpcc_tbl_readers.h"
 
 
 using namespace tpcc;
@@ -32,7 +33,8 @@ Db* tpch::tpch_lineitem_shipdate_idx = NULL;
                       TABLE_ID_##name,     \
                       NULL, \
                       tpcc_bt_compare_fn_##name, \
-                      tpcc_parse_tbl_##name }
+                      tpcc_parse_tbl_##name, \
+                      tpcc_read_tbl_##name }
 
 bdb_table_s tpcc::tpcc_tables[_TPCC_TABLE_COUNT_] = {
     TABLE(CUSTOMER),

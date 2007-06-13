@@ -10,9 +10,9 @@
 query_info_t query_init(int argc, char* argv[]) {
 
     thread_init();
-    // TODO: ip Uncommented db_open for program to run
+
     TRACE(TRACE_ALWAYS, "SHOULD OPEN DB!\n");
-    //    db_open();
+    tpch::db_open();
 
     // parse command line args
     if ( argc < 2 ) {
@@ -45,6 +45,5 @@ void query_main(query_info_t& info, workload::driver_t* driver) {
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 
-    // FIXME: (ip) First we should create the correct database
-    //    db_close();
+    tpch::db_close();
 }

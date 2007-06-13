@@ -18,6 +18,8 @@
 
 void register_stage_containers(int enviroment) {
 
+
+
     if (enviroment == QUERY_ENV) {
         register_stage<tscan_stage_t>(MAX_NUM_TSCAN_THREADS, false);
         register_stage<aggregate_stage_t>(MAX_NUM_AGGREGATE_THREADS, false);

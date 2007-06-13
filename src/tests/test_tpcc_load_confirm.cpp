@@ -12,12 +12,12 @@
 #include <cmath>
 
 #include "util.h"
-#include "tests/common.h"
+
+#include "workload/common.h"
+#include "workload/common/table_load.h"
 
 #include "workload/tpcc/tpcc_db.h"
-#include "workload/tpcc/tpcc_struct.h"
 
-#include "workload/common/table_load.h"
 
 
 using namespace workload;
@@ -28,12 +28,12 @@ int main() {
 
     thread_init();
     
-    /* NGM: Removed DB_TRUNCATE flag since it was causing an exception
-       to be thrown in table open. As a temporary fix, we will simply
-       delete the old database file before rebuilding. */
+    // line up the stages...
+    register_stage<tscan_stage_t>();
 
+    // open db
     tpcc::db_open(DB_JOINENV|DB_THREAD); 
-    tpcc::db_read();
+    db_tpcc_read();
     tpcc::db_close();
 
     return 0;

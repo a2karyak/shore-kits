@@ -4,6 +4,7 @@
 #include "workload/tpch/tpch_filenames.h"
 #include "workload/tpch/tpch_compare.h"
 #include "workload/tpch/tpch_tbl_parsers.h"
+#include "workload/tpch/tpch_tbl_readers.h"
 
 
 using namespace tpch;
@@ -22,7 +23,8 @@ Db* tpch::tpch_lineitem_shipdate_idx = NULL;
                       TABLE_ID_##name,     \
                       NULL, \
                       tpch_bt_compare_fn_##name, \
-                      tpch_parse_tbl_##name }
+                      tpch_parse_tbl_##name, \
+                      tpch_read_tbl_##name }
 
 bdb_table_s tpch::tpch_tables[_TPCH_TABLE_COUNT_] = {
     TABLE(CUSTOMER),

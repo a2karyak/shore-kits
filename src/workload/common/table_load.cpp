@@ -37,13 +37,22 @@ using namespace tpcc;
 #define MAX_FILENAME_SIZE 1024
 
 
+
+/** Declaration of internal helper functions */
+
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
                           const char* tbl_path, 
                           const char* tbl_filename);
 
 
-/* definitions of exported functions */
+static void db_table_read(void (*tbl_reader) (Db*),
+                          Db* db);
+
+
+
+
+/** Definitions of exported functions */
 
 
 /** @fn db_tpch_load
@@ -83,8 +92,50 @@ void workload::db_tpcc_load(const char* tbl_path) {
 
 
 
+/** @fn db_tpch_read
+ *
+ *  @brief Read TPC-H tables, for verification.
+ *
+ *  @return void
+ *
+ *  @throw BdbException on error.
+ */
+void workload::db_tpch_read() {
+
+    for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
+        db_table_read(tpch_tables[i].read_tbl,
+                      tpch_tables[i].db);
+}
+
+
+
+/** @fn db_tpcc_read
+ *
+ *  @brief Read TPC-C tables, for verification.
+ *
+ *  @return void
+ *
+ *  @throw BdbException on error.
+ */
+void workload::db_tpcc_read() {
+
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
+        db_table_read(tpcc_tables[i].read_tbl,
+                      tpcc_tables[i].db);
+}
+
+
 
 /* definitions of internal helper functions */
+
+
+
+/** @fn db_table_load
+ *  @brief Static function. Opens the requested file, and if succeeds, it calls the 
+ *  tbl_loader function, for the specific file and the database table handle.
+ *
+ *  @throw BdbException
+ */
 
 static void db_table_load(void (*tbl_loader) (Db*, FILE*),
                           Db* db,
@@ -106,4 +157,19 @@ static void db_table_load(void (*tbl_loader) (Db*, FILE*),
         TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", path.data());
         THROW1(BdbException, "fclose() failed");
     }
+}
+
+
+
+/** @fn db_table_read
+ *  @brief Static function. It calls the tbl_reader function, for the specific
+ *   database table handle.
+ *
+ *  @throw BdbException
+ */
+
+static void db_table_read(void (*tbl_reader) (Db*),
+                          Db* db)
+{    
+    tbl_reader(db);
 }

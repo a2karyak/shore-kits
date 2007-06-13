@@ -187,6 +187,7 @@ WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
    $(SW)/tpch/tpch_env.cpp \
    $(SW)/tpch/tpch_tbl_parsers.cpp \
+   $(SW)/tpch/tpch_tbl_readers.cpp \
    $(SW)/tpch/tpch_compare.cpp \
    $(SW)/tpch/tpch_type_convert.cpp \
    $(SW)/tpch/drivers/merge_test.cpp  \
@@ -210,6 +211,7 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_db.cpp \
    $(SW)/tpcc/tpcc_env.cpp \
    $(SW)/tpcc/tpcc_tbl_parsers.cpp \
+   $(SW)/tpcc/tpcc_tbl_readers.cpp \
    $(SW)/tpcc/tpcc_compare.cpp \
    $(SW)/tpcc/drivers/common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp

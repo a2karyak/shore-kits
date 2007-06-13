@@ -19,11 +19,13 @@
 #include "workload/tpcc/tpcc_filenames.h"
 
 
+
 using namespace qpipe;
 using namespace workload;
 
 
 ENTER_NAMESPACE(tpcc);
+
 
 
 /** @fn db_open
@@ -172,8 +174,6 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         THROW1(BdbException, "dbenv->open() threw DbException");
     }
   
-    TRACE( TRACE_ALWAYS, "Should Correct This!!\n");
-
     
     // open tables
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
@@ -266,6 +266,9 @@ void db_read() {
 
     TRACE(TRACE_ALWAYS, "TPC-C database read\n");
 }
+
+
+
 
 
 EXIT_NAMESPACE(tpcc);
