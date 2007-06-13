@@ -34,7 +34,7 @@ static unsigned long progress = 0;
 /* definitions of exported functions */
 
 
-void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd) { 
+void tpcc_parse_tbl_CUSTOMER(Db* db, FILE* fd) { 
   
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -106,7 +106,7 @@ void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd) {
 
 
 
-void tpcc_parse_tbl_DISTRICT  (Db* db, FILE* fd) { 
+void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -157,7 +157,7 @@ void tpcc_parse_tbl_DISTRICT  (Db* db, FILE* fd) {
 
 
 
-void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd) { 
+void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -199,7 +199,7 @@ void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd) {
 }
 
 
-void tpcc_parse_tbl_ITEM      (Db* db, FILE* fd) { 
+void tpcc_parse_tbl_ITEM(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -237,11 +237,11 @@ void tpcc_parse_tbl_ITEM      (Db* db, FILE* fd) {
 }
 
 
-void tpcc_parse_tbl_NEW_ORDER (Db* db, FILE* fd) { 
+void tpcc_parse_tbl_NEW_ORDER(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
 
-    TRACE(TRACE_DEBUG, "Populating TPC-C ITEM...\n");
+    TRACE(TRACE_DEBUG, "Populating TPC-C NEW_ORDER...\n");
     progress_reset(&progress);
     tpcc_new_order_tuple tup;
 
@@ -257,7 +257,6 @@ void tpcc_parse_tbl_NEW_ORDER (Db* db, FILE* fd) {
         tup.NO_W_ID = atoi(tmp);
 
 
-
         // insert tuple into database
         // NEW_ORDER key composed (NO_O_ID, NO_D_ID, NO_W_ID)
         Dbt key(&tup.NO_O_ID, 3 * sizeof(int));
@@ -271,13 +270,208 @@ void tpcc_parse_tbl_NEW_ORDER (Db* db, FILE* fd) {
 }
 
 
-void tpcc_parse_tbl_ORDER     (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
 
-void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
 
-void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+    char linebuffer[MAX_LINE_LENGTH];
 
-void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+    TRACE(TRACE_DEBUG, "Populating TPC-C ORDER...\n");
+    progress_reset(&progress);
+    tpcc_order_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.O_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_C_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_D_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_ENTRY_D = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_CARRIER_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_OL_CNT = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.O_ALL_LOCAL = atoi(tmp);
+
+
+
+        // insert tuple into database
+        // NEW_ORDER key composed (O_ID, O_C_ID, O_D_ID, O_W_ID)
+        Dbt key(&tup.O_ID, 4 * sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
+
+
+
+void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) { 
+
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C ORDERLINE...\n");
+    progress_reset(&progress);
+    tpcc_orderline_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.OL_O_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_D_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_NUMBER = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_I_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_SUPPLY_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_DELIVERY_D = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_QUANTITY = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.OL_AMOYNT = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.OL_DIST_INFO,tmp);
+
+
+
+        // insert tuple into database
+        // ORDERLINE key composed (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER)
+        Dbt key(&tup.OL_O_ID, 4 * sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
+
+
+
+void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) { 
+
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C STOCK...\n");
+    progress_reset(&progress);
+    tpcc_stock_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.S_I_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.S_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.S_REMOTE_CNT = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.S_QUANTITY = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.S_ORDER_CNT = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.S_YTD = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_01,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_02,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_03,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_04,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_05,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_06,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_07,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_08,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_09,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DIST_10,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.S_DATA,tmp);
+
+
+
+        // insert tuple into database
+        // STOCK key composed (S_I_ID, S_W_ID)
+        Dbt key(&tup.S_I_ID, 2 * sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
+
+
+
+void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
+
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C WAREHOUSE...\n");
+    progress_reset(&progress);
+    tpcc_warehouse_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.W_NAME,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.W_STREET_1,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.W_STREET_2,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.W_CITY,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.W_STATE,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.W_ZIP,tmp);
+        tmp = strtok(NULL, "|");
+        tup.W_TAX = atof(tmp);
+        tmp = strtok(NULL, "|");
+        tup.W_YTD = atof(tmp);
+
+
+
+        // insert tuple into database
+        // WAREHOUSE key composed (W_ID)
+        Dbt key(&tup.W_ID, sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
 
 
 EXIT_NAMESPACE(tpcc);

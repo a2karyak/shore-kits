@@ -105,48 +105,65 @@ struct tpcc_new_order_tuple {
 
 
 struct tpcc_order_tuple {
-
-   int ware_num = 0 ;    
-   int dist_num = 0 ;    
-   int cust_num = 0 ;    
-   int ord_num = 0 ;     
-   int ordr_carrier_id;
-   int ordr_ol_cnt;
-   int oline_ol_num;
-   int oline_item_num;
-
-   int oline_amount;
-   char oline_dist_info[25];
-   Int64 nulltmstmp = 0;
-   Int64 currtmstmp;    
-   int ware_num = 0 ;    
-   int dist_num = 0 ;    
-   int cust_num = 0 ;    
-   int ord_num = 0 ;     
-   int ordr_carrier_id;
-   int ordr_ol_cnt;
-   int oline_ol_num;
-   int oline_item_num;
-
-   int oline_amount;
-   char oline_dist_info[25];
-   Int64 nulltmstmp = 0;
-   Int64 currtmstmp;    
+    int O_ID;
+    int O_C_ID;
+    int O_D_ID;
+    int O_W_ID;
+    int O_ENTRY_D;
+    int O_CARRIER_ID;
+    int O_OL_CNT;
+    int O_ALL_LOCAL;
 };
 
 
-/*
-enum tpch_l_shipmode {
-    REG_AIR,
-    AIR,
-    RAIL,
-    TRUCK,
-    MAIL,
-    FOB,
-    SHIP,
-    END_SHIPMODE
+struct tpcc_orderline_tuple {
+    int OL_O_ID;
+    int OL_D_ID;
+    int OL_W_ID;
+    int OL_NUMBER;
+    int OL_I_ID;
+    int OL_SUPPLY_W_ID;
+    int OL_DELIVERY_D;
+    int OL_QUANTITY;
+    int OL_AMOYNT;
+    char OL_DIST_INFO [STRSIZE(25)];
 };
-*/
+
+
+
+struct tpcc_stock_tuple {
+    int S_I_ID;
+    int S_W_ID;
+    int S_REMOTE_CNT;
+    int S_QUANTITY;
+    int S_ORDER_CNT;
+    int S_YTD;
+    char S_DIST_01 [STRSIZE(24)];
+    char S_DIST_02 [STRSIZE(24)];
+    char S_DIST_03 [STRSIZE(24)];
+    char S_DIST_04 [STRSIZE(24)];
+    char S_DIST_05 [STRSIZE(24)];
+    char S_DIST_06 [STRSIZE(24)];
+    char S_DIST_07 [STRSIZE(24)];
+    char S_DIST_08 [STRSIZE(24)];
+    char S_DIST_09 [STRSIZE(24)];
+    char S_DIST_10 [STRSIZE(24)];
+    char S_DATA    [STRSIZE(50)];
+};
+
+
+
+struct tpcc_warehouse_tuple {
+    int W_ID;
+    char W_NAME     [STRSIZE(20)];
+    char W_STREET_1 [STRSIZE(20)];
+    char W_STREET_2 [STRSIZE(20)];
+    char W_CITY     [STRSIZE(20)];
+    char W_STATE    [STRSIZE(2)];
+    char W_ZIP      [STRSIZE(9)];
+    decimal W_TAX;
+    decimal W_YTD;
+};
 
 
 EXIT_NAMESPACE(tpcc);

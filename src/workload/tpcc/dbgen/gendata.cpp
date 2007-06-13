@@ -30,24 +30,24 @@
 // global variabkes
 int i, j;
 double timestamp1, timestamp2, elapse;
-int rc, rc1, rc2;                                               
+int rc, rc1, rc2;
 
-int using_range = 0;                                            
+int using_range = 0;
 int using_npipe = 0;
-int using_rct = 0;                                              
-int quiet_mode = 0;                                             
+int using_rct = 0;
+int quiet_mode = 0;
 
 // warehouse ranges
-int ware_start=-1, ware_end=-1;                            
+int ware_start=-1, ware_end=-1;
 int maxLocalWarehouse=-1;
 
-void InitFormatStrings(char delim);                             
-void ScalingReport(void);                                       
+void InitFormatStrings(char delim);
+void ScalingReport(void);
 
-int outtype1 = 0;                                               
-int outtype2 = 0;                                               
-char *outname1 = NULL;                                         
-char *outname2 = NULL;                                         
+int outtype1 = 0;
+int outtype2 = 0; 
+char *outname1 = NULL;
+char *outname2 = NULL;
 
 
 
@@ -972,101 +972,102 @@ int gen_ordr_tbl( void ) {
    // CLUSTERRATIO 100% after loading.
    // ---------------------------------------------------------------
 
-   for (ware_num = ware_start; ware_num <= ware_end; ware_num++)
-   {
-      if (!quiet_mode) {                                        
-         fprintf(stdout, "ORDERS & ORDER_LINE for Warehouse #%d\n", ware_num); //@d273338mte
-         fflush(stdout);                                        
-      }                                                         
-      for (dist_num = 1; dist_num <= DISTRICTS_PER_WAREHOUSE; dist_num++)
-      {
-          if (!quiet_mode) {                                    
-             fprintf(stdout, "District #%d\t", dist_num);       
-             fflush(stdout);                                    
-          }                                                     
-
-          seed_1_3000();
-          
-          for (ord_num = 1; ord_num <= CUSTOMERS_PER_DISTRICT; ord_num++)
-          {
-            if (ord_num < 2101)
-               ordr_carrier_id = rand_integer( 1, 10 ) ;
-            else
-               ordr_carrier_id = 0;
-
-            cust_num = random_1_3000();                         
-            ordr_ol_cnt = rand_integer(MIN_OL_PER_ORDER,MAX_OL_PER_ORDER);
-
-            numBytes = sprintf(Buffer, fmtOrdr,                 
-                               ord_num,
-                               cust_num,
-                               dist_num,
-                               ware_num,
-                               currtmstmp,
-                               ordr_carrier_id,
-                               ordr_ol_cnt,
-                               1);
-
-            rc1 = GenericWrite(&hnd1, Buffer, numBytes);         
-            if (rc1 != 0) { 
-                return (report_gen_fail("ORDERS", ord_num));
-            }
-
-            for ( oline_ol_num = 1; 
-                  oline_ol_num <= ordr_ol_cnt; oline_ol_num++ )
-            {
-               oline_item_num = rand_integer(1, ITEMS) ;
-               create_random_a_string( oline_dist_info, 24, 24) ;
-               oline_amount = rand_integer(001, 999999);
-
-               if (ord_num < 2101)
+   for (ware_num = ware_start; ware_num <= ware_end; ware_num++)       
+       {
+           if (!quiet_mode) {                                        
+               fprintf(stdout, "ORDERS & ORDER_LINE for Warehouse #%d\n", 
+                       ware_num); 
+               fflush(stdout);                                        
+           }                                                         
+           for (dist_num = 1; dist_num <= DISTRICTS_PER_WAREHOUSE; dist_num++)
                {
-                  oline_amount = 0;
-                  numBytes = sprintf(Buffer, fmtOLine,
-                                     ord_num,
-                                     dist_num,
-                                     ware_num,
-                                     oline_ol_num,
-                                     oline_item_num,
-                                     ware_num,
-                                     currtmstmp,
-                                     5,
-                                     oline_amount,
-                                     oline_dist_info);
-               } else {
-                  numBytes = sprintf(Buffer, fmtOLine,           
-                                     ord_num,
-                                     dist_num,
-                                     ware_num,
-                                     oline_ol_num,
-                                     oline_item_num,
-                                     ware_num,
-                                     nulltmstmp,                  
-                                     5,
-                                     oline_amount,
-                                     oline_dist_info);
-               } /* if (ord_num < 2101) */
+                   if (!quiet_mode) {                                    
+                       fprintf(stdout, "District #%d\t", dist_num);       
+                       fflush(stdout);                                    
+                   }                                                     
+                   
+                   seed_1_3000();
+                   
+                   for (ord_num = 1; ord_num <= CUSTOMERS_PER_DISTRICT; ord_num++)
+                       {
+                           if (ord_num < 2101)
+                               ordr_carrier_id = rand_integer( 1, 10 ) ;
+                           else
+                               ordr_carrier_id = 0;
+                           
+                           cust_num = random_1_3000();                         
+                           ordr_ol_cnt = rand_integer(MIN_OL_PER_ORDER,MAX_OL_PER_ORDER);
+                           
+                           numBytes = sprintf(Buffer, fmtOrdr,                 
+                                              ord_num,
+                                              cust_num,
+                                              dist_num,
+                                              ware_num,
+                                              currtmstmp,
+                                              ordr_carrier_id,
+                                              ordr_ol_cnt,
+                                              1);
+                           
+                           rc1 = GenericWrite(&hnd1, Buffer, numBytes);         
+                           if (rc1 != 0) { 
+                               return (report_gen_fail("ORDERS", ord_num));
+                           }
+                           
+                           for ( oline_ol_num = 1; 
+                                 oline_ol_num <= ordr_ol_cnt; oline_ol_num++ )
+                               {
+                                   oline_item_num = rand_integer(1, ITEMS) ;
+                                   create_random_a_string( oline_dist_info, 24, 24) ;
+                                   oline_amount = rand_integer(001, 999999);
+                                   
+                                   if (ord_num < 2101)
+                                       {
+                                           oline_amount = 0;
+                                           numBytes = sprintf(Buffer, fmtOLine,
+                                                              ord_num,
+                                                              dist_num,
+                                                              ware_num,
+                                                              oline_ol_num,
+                                                              oline_item_num,
+                                                              ware_num,
+                                                              currtmstmp,
+                                                              5,
+                                                              oline_amount,
+                                                              oline_dist_info);
+                                       } else {
+                                           numBytes = sprintf(Buffer, fmtOLine,           
+                                                              ord_num,
+                                                              dist_num,
+                                                              ware_num,
+                                                              oline_ol_num,
+                                                              oline_item_num,
+                                                              ware_num,
+                                                              nulltmstmp,                  
+                                                              5,
+                                                              oline_amount,
+                                                              oline_dist_info);
+                                       } /* if (ord_num < 2101) */
+                                   
+                                   rc2 = GenericWrite(&hnd2, Buffer, numBytes);      
+                                   if (rc2 != 0) { 
+                                       return (report_gen_fail("ORDER_LINE", oline_item_num));
+                                   }
 
-               rc2 = GenericWrite(&hnd2, Buffer, numBytes);      
-               if (rc2 != 0) { 
-                   return (report_gen_fail("ORDER_LINE", oline_item_num));
-               }
-
-            } 
-         } 
-      } 
-   } 
-
+                               } 
+                       } 
+               } 
+       } 
+   
    rc1 = GenericClose(&hnd2);
    rc2 = GenericClose(&hnd1);
 
 
    if ((rc1 == 0) && (rc2 == 0)) {  
-     return (report_gen_success("ORDER && ORDER_LINE"));
+       return (report_gen_success("ORDER && ORDER_LINE"));
    } else {
-     return (report_gen_fail("ORDER OR ORDER_LINE",0));
+       return (report_gen_fail("ORDER OR ORDER_LINE",0));
    }
-
+   
 }
 
 
