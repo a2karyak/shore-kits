@@ -303,7 +303,7 @@ void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
 
 
         // insert tuple into database
-        // NEW_ORDER key composed (O_ID, O_C_ID, O_D_ID, O_W_ID)
+        // ORDER key composed (O_ID, O_C_ID, O_D_ID, O_W_ID)
         Dbt key(&tup.O_ID, 4 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);

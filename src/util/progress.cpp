@@ -46,7 +46,7 @@ void progress_update(unsigned long* indicator) {
 
 void progress_done(unsigned long* indicator) {
     
-    printf("\nDone : %f rows written\n", indicator);
+    printf("\nDone : %f rows written\n", *indicator);
     fflush(stdout);
 }
 

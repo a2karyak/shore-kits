@@ -9,9 +9,12 @@
 
 #include <cstdlib>
 
+#include "workload/common/bdb_env.h"
+#include "workload/common/table_compare.h"
+
 #include "workload/tpcc/tpcc_compare.h"
 #include "workload/tpcc/tpcc_struct.h"
-#include "workload/common/bdb_env.h"
+
 
 using namespace workload;
 
@@ -22,93 +25,96 @@ ENTER_NAMESPACE(tpcc);
 // BerkeleyDB comparators for B-tree TPC-C table organization
 
 
-// CUSTOMER key is composed of 3 fields: C_C_ID, C_D_ID, C_W_ID
-int tpcc_bt_compare_fn_CUSTOMER(Db* idx, 
+// CUSTOMER key is composed of 3 (int) fields: C_C_ID, C_D_ID, C_W_ID
+int tpcc_bt_compare_fn_CUSTOMER(Db*, 
                                 const Dbt* k1, 
                                 const Dbt* k2)
 { 
-    struct {
-        TYPEOF(tpcc_customer_tuple, C_C_ID) c_c_id;
-        TYPEOF(tpcc_customer_tuple, C_D_ID) c_d_id;
-        TYPEOF(tpcc_customer_tuple, C_W_ID) c_w_id;
-    } key1, key2;
+    return (bt_compare_fn_3_int(k1, k2));
+}
+
+// DISTRICT key is composed of 2 (int) fields: D_ID, D_W_ID
+int tpcc_bt_compare_fn_DISTRICT(Db*, 
+                                const Dbt* k1, 
+                                const Dbt* k2)
+{ 
+    return (bt_compare_fn_3_int(k1, k2));
+}
+
+
+// HISTORY does not have a key, use the whole tuple
+int tpcc_bt_compare_fn_HISTORY(Db*, 
+                               const Dbt* k1, 
+                               const Dbt* k2)
+{ 
+    return (0);
+    /*
+    tpcc_history_tuple key1, key2;
 
     memcpy(&key1, k1->get_data(), sizeof(key1));
     memcpy(&key2, k2->get_data(), sizeof(key2));
 
 
-    TYPEOF(tpcc_customer_tuple, C_C_ID) c_diff = key1.c_c_id - key2.c_c_id;
-    if(c_diff != 0)
-        return c_diff;
-
-
-    TYPEOF(tpcc_customer_tuple, C_D_ID) d_diff = key1.c_d_id - key2.c_d_id;
-    if(d_diff != 0)
-        return d_diff;
-
-
-    TYPEOF(tpcc_customer_tuple, C_W_ID) w_diff = key1.c_w_id - key2.c_w_id;
-    return w_diff;
+    tpcc_history_tuple o_diff = key1 - key2;
+    return o_diff;
+    */
 }
 
 
-
-int tpcc_bt_compare_fn_DISTRICT(Db* idx, 
-                                const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_HISTORY(Db* idx, 
-                               const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_ITEM(Db* idx, 
-                            const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_NEW_ORDER(Db* idx, 
-                                 const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_ORDER(Db* idx, 
-                                const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_ORDERLINE(Db* idx, 
-                                 const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_STOCK(Db* idx, 
-                             const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-int tpcc_bt_compare_fn_WAREHOUSE(Db* idx, 
-                                 const Dbt* k1, const Dbt* k2)
- { TRACE( TRACE_ALWAYS, "Doing Nothing!"); return (-1); }
-
-
-/*
-int tpch_lineitem_shipdate_key_fcn(Db*, const Dbt*, const Dbt* pd, Dbt* sk) {
-    sk->set_data(FIELD(pd->get_data(), tpch_lineitem_tuple, L_SHIPDATE));
-    sk->set_size(SIZEOF(tpch_lineitem_tuple, L_SHIPDATE));
-    return 0;    
+// ITEM key is composed of 1 (int) field: I_ID
+int tpcc_bt_compare_fn_ITEM(Db*, 
+                            const Dbt* k1, 
+                            const Dbt* k2)
+{ 
+    return (bt_compare_fn_1_int(k1, k2));
 }
 
-int tpch_bt_compare_fn_SUPPLIER(Db*, const Dbt* k1, const Dbt* k2) {
 
-    int u1;
-    int u2;
-    memcpy(&u1,((int*)k1->get_data()), sizeof(int));
-    memcpy(&u2,((int*)k2->get_data()), sizeof(int));
-
-    if (u1 < u2)
-        return -1;
-    else if (u1 == u2)
-        return 0;
-    else
-        return 1;
+// NEW_ORDER key is composed of 3 (int) fields: NO_O_ID, NO_D_ID, NO_W_ID
+int tpcc_bt_compare_fn_NEW_ORDER(Db*, 
+                                 const Dbt* k1, 
+                                 const Dbt* k2)
+{ 
+    return (bt_compare_fn_3_int(k1, k2));
 }
 
-*/
+
+// ORDER key is composed of 4 (int) fields: O_ID, O_C_ID, O_D_ID, O_W_ID
+int tpcc_bt_compare_fn_ORDER(Db*, 
+                             const Dbt* k1, 
+                             const Dbt* k2)
+{ 
+    return (bt_compare_fn_4_int(k1, k2));
+}
+
+
+// ORDERLINE key is composed of 4 (int) fields: OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
+int tpcc_bt_compare_fn_ORDERLINE(Db*, 
+                                 const Dbt* k1,
+                                 const Dbt* k2)
+{ 
+    return (bt_compare_fn_4_int(k1, k2));
+}
+
+
+// STOCK key is composed of 2 (int) fields: S_I_ID, S_W_ID
+int tpcc_bt_compare_fn_STOCK(Db*, 
+                             const Dbt* k1,
+                             const Dbt* k2)
+{ 
+    return (bt_compare_fn_2_int(k1, k2));
+}
+
+
+// WAREHOUSE key is composed of 1 (int) field: W_ID
+int tpcc_bt_compare_fn_WAREHOUSE(Db*, 
+                                 const Dbt* k1, 
+                                 const Dbt* k2)
+{ 
+    return (bt_compare_fn_1_int(k1, k2));
+}
+
+
 
 EXIT_NAMESPACE(tpcc);
 

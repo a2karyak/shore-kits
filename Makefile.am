@@ -181,6 +181,7 @@ WL_COMMON = \
    $(SW)/common/process_query.cpp \
    $(SW)/common/predicates.cpp \
    $(SW)/common/table_load.cpp \
+   $(SW)/common/table_compare.cpp \
    $(SW)/common/bdb_env.cpp
 
 WL_TPCH = \
