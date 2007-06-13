@@ -20,7 +20,7 @@
  */
 
 void progress_reset(unsigned long* indicator) {
-  *indicator = 0;
+    *indicator = 0;
 }
 
 
@@ -31,11 +31,11 @@ void progress_reset(unsigned long* indicator) {
 
 void progress_update(unsigned long* indicator) {
   
-  if ( (*indicator++ % PROGRESS_INTERVAL) == 0 ) {
-    printf(".");
-    fflush(stdout);
-    *indicator = 1; // prevent overflow
-  }
+    if ( (*indicator++ % PROGRESS_INTERVAL) == 0 ) {
+        printf(".");
+        fflush(stdout);
+        *indicator = 1; // prevent overflow
+    }
 }
 
 
@@ -44,9 +44,10 @@ void progress_update(unsigned long* indicator) {
  *  @brief Outputs a done message
  */
 
-void progress_done() {
-  printf("done\n");
-  fflush(stdout);
+void progress_done(unsigned long* indicator) {
+    
+    printf("\nDone : %f rows written\n", indicator);
+    fflush(stdout);
 }
 
 
@@ -56,8 +57,8 @@ void progress_done() {
  */
 
 void store_string(char* dest, char* src) {
-  int len = strlen(src);
-  strncpy(dest, src, len);
-  dest[len] = '\0';
+    int len = strlen(src);
+    strncpy(dest, src, len);
+    dest[len] = '\0';
 }
 

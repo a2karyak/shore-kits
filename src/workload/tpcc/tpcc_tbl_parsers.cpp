@@ -101,13 +101,60 @@ void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done(&progress);
 }
 
 
 
 void tpcc_parse_tbl_DISTRICT  (Db* db, FILE* fd) { 
-    TRACE( TRACE_ALWAYS, "Doing Nothing!"); }  
+
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C DISTRICT...\n");
+    progress_reset(&progress);
+    tpcc_district_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.D_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.D_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.D_NAME,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.D_STREET_1,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.D_STREET_2,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.D_CITY,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.D_STATE,tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.D_ZIP,tmp);
+        tmp = strtok(NULL, "|");
+        tup.D_TAX = atof(tmp);
+        tmp = strtok(NULL, "|");
+        tup.D_YTD = atof(tmp);
+        tmp = strtok(NULL, "|");
+        tup.D_NEXT_O_ID = atoi(tmp);
+
+
+
+        // insert tuple into database
+        // DISTRICT key composed (D_ID, D_W_ID)
+        Dbt key(&tup.D_ID, 2 * sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
+
 
 
 void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd) { 
@@ -142,19 +189,87 @@ void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd) {
         // insert tuple into database
         // HISTORY does not have a key, use the whole tuple
         Dbt key(&tup, sizeof(tpcc_history_tuple));
-        Dbt data(&tup, sizeof(tpcc_history_tuple));
+        Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done(&progress);
 }
 
 
-void tpcc_parse_tbl_ITEM      (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+void tpcc_parse_tbl_ITEM      (Db* db, FILE* fd) { 
 
-void tpcc_parse_tbl_NEW_ORDER (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C ITEM...\n");
+    progress_reset(&progress);
+    tpcc_item_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.I_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.I_IM_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.I_NAME,tmp);
+        tmp = strtok(NULL, "|");
+        tup.I_PRICE = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.I_DATA,tmp);
+
+
+
+        // insert tuple into database
+        // ITEM key composed (I_ID)
+        Dbt key(&tup.I_ID, sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
+
+
+void tpcc_parse_tbl_NEW_ORDER (Db* db, FILE* fd) { 
+
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C ITEM...\n");
+    progress_reset(&progress);
+    tpcc_new_order_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.NO_O_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.NO_D_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.NO_W_ID = atoi(tmp);
+
+
+
+        // insert tuple into database
+        // NEW_ORDER key composed (NO_O_ID, NO_D_ID, NO_W_ID)
+        Dbt key(&tup.NO_O_ID, 3 * sizeof(int));
+        Dbt data(&tup, sizeof(tup));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done(&progress);
+}
+
 
 void tpcc_parse_tbl_ORDER     (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
 

@@ -337,20 +337,20 @@ int report_gen_fail( char* tName, int iter ) {
 
 
 
-// fn: Generate ITEM table                                                  
+// fn: Generate ITEM table
 int gen_item_tbl( void ) {
 
-   int item_num = 0;                                    
+   int item_num = 0;
    int item_im_id;
    char item_name[25];
    int item_price;
    char item_data[51];
 
-   int numBytes;                                              
-   ioHandle hnd;                                                  
+   int numBytes;
+   ioHandle hnd;
    char Buffer[1024];
 
-   timestamp1 = current_time();                                   
+   timestamp1 = current_time();
 
    rc = GenericOpen(&hnd, outtype1, outname1);
 
@@ -373,26 +373,26 @@ int gen_item_tbl( void ) {
       /* create ORIGINAL field */
       create_a_string_with_original( item_data, 26, 50, 10) ;     
 
-      numBytes = sprintf(Buffer, fmtItem,                         
+      numBytes = sprintf(Buffer, fmtItem,
                          item_num,
                          item_im_id,
                          item_name,
                          item_price,
                          item_data);
 
-      rc = GenericWrite(&hnd, Buffer, numBytes);                  
+      rc = GenericWrite(&hnd, Buffer, numBytes);
 
       if (rc != 0) {
         return (report_gen_fail("ITEM", item_num));
       }
    }
 
-   rc = GenericClose(&hnd);                                       
+   rc = GenericClose(&hnd);
 
-   if (rc == 0) {                                               
-     return (report_gen_success("ITEM"));
+   if (rc == 0) {  
+       return (report_gen_success("ITEM"));
    } else {
-     return (report_gen_fail("ITEM",0));
+       return (report_gen_fail("ITEM",0));
    }
 }
 

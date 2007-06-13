@@ -31,16 +31,14 @@ int gen_ware_tbl( void );
 void print_tpcc_dbgen_usage(void);
 
 // format of the various tables
-char fmtWare[]    = "%d|%s|%s|%s|%s|%s|%s|%f|%f|\n";            
-char fmtDist[]    = "%d|%d|%s|%s|%s|%s|%s|%s|%f|%f|%d\n";       
+char fmtWare[]    = "%d|%s|%s|%s|%s|%s|%s|%f|%f|\n";
+char fmtDist[]    = "%d|%d|%s|%s|%s|%s|%s|%s|%f|%f|%d\n";
 char fmtItem[]    = "%d|%d|%s|%d|%s\n";
 char fmtStock[]   = "%d|%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|\n";
-
 char fmtCust[]    = "%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%lld|%s|%f|%f|%d|%f|%f|%d|%s|%s\n";
 char fmtHist[]    = "%d|%d|%d|%d|%d|%lld|%d|%s\n";
 char fmtOrdr[]    = "%d|%d|%d|%d|%lld|%d|%d|%d|\n";
-char fmtOLine[]   = "%d|%d|%d|%d|%d|%d|%lld|%d|%d|%s\n";        
-
+char fmtOLine[]   = "%d|%d|%d|%d|%d|%d|%lld|%d|%d|%s\n";     
 char fmtNewOrd[]  = "%d|%d|%d\n";                               
 
 

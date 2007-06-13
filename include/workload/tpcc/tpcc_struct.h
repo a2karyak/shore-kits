@@ -59,16 +59,17 @@ struct tpcc_customer_tuple {
 
 
 struct tpcc_district_tuple {
-   int ware_num;   
-   int dist_num;   
-   char dist_name[11];
-   char dist_street_1[21];
-   char dist_street_2[21];
-   char dist_city[21];
-   char dist_state[3];
-   char dist_zip[10];
-   double dist_tax;
-   int  next_o_id;
+    int D_ID;
+    int D_W_ID;
+    char D_NAME     [STRSIZE(10)];
+    char D_STREET_1 [STRSIZE(20)];
+    char D_STREET_2 [STRSIZE(20)];
+    char D_CITY     [STRSIZE(20)];
+    char D_STATE    [STRSIZE(2)];
+    char D_ZIP      [STRSIZE(10)];
+    decimal D_TAX;
+    decimal D_YTD;
+    int D_NEXT_O_ID;
 };
 
 
@@ -86,6 +87,52 @@ struct tpcc_history_tuple {
 
 
 
+struct tpcc_item_tuple {
+    int I_ID;
+    int I_IM_ID;
+    char I_NAME [STRSIZE(24)];
+    int I_PRICE;
+    char I_DATA [STRSIZE(50)];
+};
+
+
+
+struct tpcc_new_order_tuple {
+    int NO_O_ID;
+    int NO_D_ID;
+    int NO_W_ID;
+};
+
+
+struct tpcc_order_tuple {
+
+   int ware_num = 0 ;    
+   int dist_num = 0 ;    
+   int cust_num = 0 ;    
+   int ord_num = 0 ;     
+   int ordr_carrier_id;
+   int ordr_ol_cnt;
+   int oline_ol_num;
+   int oline_item_num;
+
+   int oline_amount;
+   char oline_dist_info[25];
+   Int64 nulltmstmp = 0;
+   Int64 currtmstmp;    
+   int ware_num = 0 ;    
+   int dist_num = 0 ;    
+   int cust_num = 0 ;    
+   int ord_num = 0 ;     
+   int ordr_carrier_id;
+   int ordr_ol_cnt;
+   int oline_ol_num;
+   int oline_item_num;
+
+   int oline_amount;
+   char oline_dist_info[25];
+   Int64 nulltmstmp = 0;
+   Int64 currtmstmp;    
+};
 
 
 /*

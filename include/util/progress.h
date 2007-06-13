@@ -21,7 +21,7 @@
 
 void progress_reset(unsigned long* indicator);
 void progress_update(unsigned long* indicator);
-void progress_done();
+void progress_done(unsigned long* indicator);
 
 
 /* @note This is not a progress helper function but it is used by
