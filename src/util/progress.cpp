@@ -44,9 +44,9 @@ void progress_update(unsigned long* indicator) {
  *  @brief Outputs a done message
  */
 
-void progress_done(unsigned long* indicator) {
+void progress_done() {
     
-    printf("\nDone : %f rows written\n", *indicator);
+    printf("\nDone\n");
     fflush(stdout);
 }
 

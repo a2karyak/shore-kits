@@ -101,7 +101,7 @@ void tpcc_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -152,7 +152,7 @@ void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -195,7 +195,7 @@ void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -233,7 +233,7 @@ void tpcc_parse_tbl_ITEM(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -266,7 +266,7 @@ void tpcc_parse_tbl_NEW_ORDER(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -311,7 +311,7 @@ void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -360,7 +360,7 @@ void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -423,7 +423,7 @@ void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 
@@ -470,7 +470,7 @@ void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done(&progress);
+    progress_done();
 }
 
 

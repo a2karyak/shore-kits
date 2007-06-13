@@ -54,6 +54,10 @@ int bt_compare_fn_4_int(const Dbt* k1,
                         const Dbt* k2);
 
 
+int bt_compare_fn_6_int(const Dbt* k1, 
+                        const Dbt* k2);
+
+
 EXIT_NAMESPACE(workload);
 
 
