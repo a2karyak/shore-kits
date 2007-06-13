@@ -35,8 +35,6 @@ static unsigned long progress = 0;
 
 
 void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd) { 
-
-    TRACE( TRACE_ALWAYS, "Should be multi-threaded!"); 
   
     char linebuffer[MAX_LINE_LENGTH];
 
@@ -108,9 +106,51 @@ void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd) {
 
 
 
-void tpcc_parse_tbl_DISTRICT  (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+void tpcc_parse_tbl_DISTRICT  (Db* db, FILE* fd) { 
+    TRACE( TRACE_ALWAYS, "Doing Nothing!"); }  
 
-void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
+
+void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd) { 
+
+    char linebuffer[MAX_LINE_LENGTH];
+
+    TRACE(TRACE_DEBUG, "Populating TPC-C HISTORY...\n");
+    progress_reset(&progress);
+    tpcc_history_tuple tup;
+
+    while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+        // clear the tuple
+        memset(&tup, 0, sizeof(tup));
+        // split line into tab separated parts
+        char* tmp = strtok(linebuffer, "|");
+        tup.H_C_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.H_C_D_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.H_C_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.H_D_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.H_W_ID = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.H_DATE = atoi(tmp);
+        tmp = strtok(NULL, "|");
+        tup.H_AMOYNT = atof(tmp);
+        tmp = strtok(NULL, "|");
+        store_string(tup.H_DATA,tmp);
+
+        // insert tuple into database
+        // HISTORY does not have a key, use the whole tuple
+        Dbt key(&tup, sizeof(tpcc_history_tuple));
+        Dbt data(&tup, sizeof(tpcc_history_tuple));
+        db->put(NULL, &key, &data, 0);
+
+        progress_update(&progress);
+    }
+
+    progress_done();
+}
+
 
 void tpcc_parse_tbl_ITEM      (Db* db, FILE* fd) { TRACE( TRACE_ALWAYS, "Doing Nothing!"); }
 

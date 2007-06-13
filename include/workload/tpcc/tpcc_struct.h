@@ -58,6 +58,35 @@ struct tpcc_customer_tuple {
 
 
 
+struct tpcc_district_tuple {
+   int ware_num;   
+   int dist_num;   
+   char dist_name[11];
+   char dist_street_1[21];
+   char dist_street_2[21];
+   char dist_city[21];
+   char dist_state[3];
+   char dist_zip[10];
+   double dist_tax;
+   int  next_o_id;
+};
+
+
+
+struct tpcc_history_tuple {
+    int H_C_ID;
+    int H_C_D_ID;
+    int H_C_W_ID;
+    int H_D_ID;
+    int H_W_ID;
+    int H_DATE;
+    decimal H_AMOYNT;
+    char H_DATA [STRSIZE(25)];
+};
+
+
+
+
 
 /*
 enum tpch_l_shipmode {
