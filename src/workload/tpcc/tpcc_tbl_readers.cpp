@@ -47,11 +47,13 @@ public:
 
     //    if ( (row_cnt++ % interval) == 0) {
       TRACE(TRACE_ALWAYS, 
-            "*** CUSTOMER: %d %d %d %s\n",
+            "*** CUSTOMER: %d %d %d %s %s\n",
             c->C_C_ID,
             c->C_D_ID,
             c->C_W_ID,
-            c->C_LAST);
+            c->C_LAST,
+            c->C_FIRST);
+      
       //    }
   }
 
@@ -71,14 +73,16 @@ void tpcc_read_tbl_CUSTOMER  (Db* db) {
     scheduler::policy_t* dp = new scheduler::policy_os_t();
     qpipe::query_state_t* qs = dp->query_state_create();
     
-    
+
+    TRACE( TRACE_ALWAYS, "%d\n", sizeof(tpcc_customer_tuple));
+
     // CUSTOMER scan
     tuple_filter_t* filter = new trivial_filter_t(sizeof(tpcc_customer_tuple));
-    tuple_fifo* buffer = new tuple_fifo(sizeof(tpcc_customer_tuple));
+    tuple_fifo* output = new tuple_fifo(sizeof(tpcc_customer_tuple));
     packet_t* tscan_customer_packet;
 
-    tscan_customer_packet = new tscan_packet_t("tpcc customer TSCAN",
-                                               buffer,
+    tscan_customer_packet = new tscan_packet_t("TPCC-CUSTOMER-TSCAN",
+                                               output,
                                                filter,
                                                tpcc_tables[TPCC_TABLE_CUSTOMER].db);
     tscan_customer_packet->assign_query_state(qs);
