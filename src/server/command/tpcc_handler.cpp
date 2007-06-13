@@ -5,16 +5,14 @@
 #include "server/print.h"
 #include "server/config.h"
 
-// FIXME: ip uncomment this
-//#include "workload/tpch/tpch_db.h"
+#include "workload/tpcc/tpcc_db.h"
 
-//#include "workload/tpch/drivers/merge_test.h"
-
+// tpcc drivers header files
 #include "workload/tpcc/drivers/tpcc_payment.h"
 
 #include "scheduler.h"
 
-
+using namespace tpcc;
 using namespace workload;
 using qpipe::tuple_fifo;
 
@@ -41,10 +39,8 @@ void tpcc_handler_t::init() {
 
     if ( state == TPCC_HANDLER_UNINITIALIZED ) {
 
-        // open DB tables (1.25 GB bpool)
-
-	// FIXME: ip db_open is commented only to test the payment_trx
-        //db_open();
+        // open DB tables (1.25 GB bpool)       
+        db_open();
 
         // register drivers...
         add_driver("payment", new tpcc_payment_driver(c_str("PAYMENT")));
@@ -76,9 +72,8 @@ void tpcc_handler_t::shutdown() {
         
         // close DB tables
         TRACE(TRACE_ALWAYS, "... closing db\n");
+	db_close();
 
-	// FIXME: ip uncomment it
-	//        db_close();
         state = TPCC_HANDLER_SHUTDOWN;
     }
 }

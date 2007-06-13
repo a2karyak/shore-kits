@@ -13,28 +13,84 @@
 //#include "workload/tpcc/tpcc_type_convert.h"
 */
 
+
+#include "stages.h"
+#include "scheduler.h"
+
 #include "util/trace.h"
 
+#include "workload/tpcc/tpcc_env.h"
 #include "workload/tpcc/tpcc_tbl_readers.h"
 #include "workload/tpcc/tpcc_struct.h"
+#include "workload/tpcc/tpcc_filenames.h"
+
+#include "workload/common.h"
 
 
 ENTER_NAMESPACE(tpcc);
 
 
-/* definitions of exported functions */
 
+/** Definitions of internal helper class and functions */
+
+static const int interval = 1000;
+static int row_cnt = 0;
+
+
+class tpcc_customer_process_tuple_t : public process_tuple_t {
+
+public:
+  
+  virtual void process(const tuple_t& output) {
+
+    tpcc_customer_tuple* c = aligned_cast<tpcc_customer_tuple>(output.data);
+
+    //    if ( (row_cnt++ % interval) == 0) {
+      TRACE(TRACE_ALWAYS, 
+            "*** CUSTOMER: %d %d %d %s\n",
+            c->C_C_ID,
+            c->C_D_ID,
+            c->C_W_ID,
+            c->C_LAST);
+      //    }
+  }
+
+};
+
+
+
+/** Definitions of exported functions */
+
+
+/** tpc-c CUSTOMER table scan */
 
 void tpcc_read_tbl_CUSTOMER  (Db* db) {
 
-    TRACE( TRACE_ALWAYS, "Should be multi-threaded!"); 
-
     TRACE(TRACE_DEBUG, "Reading TPC-C CUSTOMER...\n");
 
-    tpcc_customer_tuple tup;
+    scheduler::policy_t* dp = new scheduler::policy_os_t();
+    qpipe::query_state_t* qs = dp->query_state_create();
+    
+    
+    // CUSTOMER scan
+    tuple_filter_t* filter = new trivial_filter_t(sizeof(tpcc_customer_tuple));
+    tuple_fifo* buffer = new tuple_fifo(sizeof(tpcc_customer_tuple));
+    packet_t* tscan_customer_packet;
+
+    tscan_customer_packet = new tscan_packet_t("tpcc customer TSCAN",
+                                               buffer,
+                                               filter,
+                                               tpcc_tables[TPCC_TABLE_CUSTOMER].db);
+    tscan_customer_packet->assign_query_state(qs);
 
 
-}
+    tpcc_customer_process_tuple_t pt;
+    process_query(tscan_customer_packet, pt);
+
+    
+    dp->query_state_destroy(qs);
+};
+
 
 
 void tpcc_read_tbl_DISTRICT  (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
@@ -54,8 +110,6 @@ void tpcc_read_tbl_ORDERLINE (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented ye
 void tpcc_read_tbl_STOCK     (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
 void tpcc_read_tbl_WAREHOUSE (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-
-
 
 
 

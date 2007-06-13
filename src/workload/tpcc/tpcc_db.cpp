@@ -215,9 +215,6 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
 
 void db_close() {
 
-    TRACE( TRACE_ALWAYS, "Should Correct This!!\n");
-
-
     // close tables
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
         close_db_table(tpcc_tables[i].db, 

@@ -56,7 +56,6 @@ void tpch_handler_t::init() {
     if ( state == TPCH_HANDLER_UNINITIALIZED ) {
 
         // open DB tables (1.25 GB bpool)
-
         db_open();
 
         // register drivers...

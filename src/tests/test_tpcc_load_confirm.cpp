@@ -28,12 +28,16 @@ int main() {
 
     thread_init();
     
-    // line up the stages...
+    // register the TSCAN stage used by the tbl_readers
     register_stage<tscan_stage_t>();
 
     // open db
     tpcc::db_open(DB_JOINENV|DB_THREAD); 
+
+    // do the reading / table scanning
     db_tpcc_read();
+
+    // close db
     tpcc::db_close();
 
     return 0;

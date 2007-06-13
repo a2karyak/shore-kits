@@ -16,6 +16,7 @@
 int  qpipe_init(int argc, char* argv[]);
 void qpipe_shutdown(void);
 
+int processing_env = QUERY_ENV;
 
 
 /* internal constants */
@@ -58,21 +59,22 @@ int qpipe_init(int argc, char* argv[]) {
     thread_init();
     qpipe::tuple_fifo_directory_t::open_once();
 
-    // Parse TPC-H / TPC-C environment
+
     int environment = QUERY_ENV;
 
+    // Parse TPC-H / TPC-C environment
     if ((argc > 1) && (strcmp(argv[1], "-trx") == 0)) {
         TRACE( TRACE_ALWAYS,
                "StagedTRX: Transaction Processing Engine\n");
-        environment = TRX_ENV;
+        processing_env = TRX_ENV;
     } 
     else {
         TRACE( TRACE_ALWAYS, 
-               "Cordoba Query Execution Engine\n");
+               "Cordoba: Query Execution Engine\n");
     }
     
-    register_command_handlers(environment);
-    register_stage_containers(environment);
+    register_command_handlers(processing_env);
+    register_stage_containers(processing_env);
 
 
     TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
@@ -91,5 +93,11 @@ int qpipe_init(int argc, char* argv[]) {
 
 void qpipe_shutdown() {
     shutdown_command_handlers();
-    TRACE(TRACE_ALWAYS, "Thank you for using QPipe\nExiting...\n");
+    
+    if (processing_env == QUERY_ENV) {
+        TRACE(TRACE_ALWAYS, "Thank you for using Cordoba\nExiting...\n");
+    }
+    else {
+        TRACE(TRACE_ALWAYS, "Thank you for using StagedTRX\nExiting...\n");
+    }
 }
