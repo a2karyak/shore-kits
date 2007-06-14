@@ -54,10 +54,10 @@ foreach (@TPCC_TABLE_ID) {
 
     my $table = $_;
 
-    my $command = "$TPCC_TABLE_CMD -t $table -r 1 $wh_count -f $TPCC_TABLE_DIRECTORY/$table.dat";
+    my $command = "$TPCC_TABLE_CMD -t $table -r 1 $wh_count -f $table_directory/$table.dat";
 
     if ($table == 9) {
-        $command = "$TPCC_TABLE_CMD -t $table -r 1 $wh_count -f1 $TPCC_TABLE_DIRECTORY/9.dat -f2 $TPCC_TABLE_DIRECTORY/10.dat";
+        $command = "$TPCC_TABLE_CMD -t $table -r 1 $wh_count -f1 $table_directory/9.dat -f2 $table_directory/10.dat";
     }
 
     print $command;
@@ -66,15 +66,15 @@ foreach (@TPCC_TABLE_ID) {
     system($command) == 0
         or die "system() failed to run ($command)";
 
-    print "$TPCC_TABLE_DIRECTORY/$table.dat created\n";
-    $ls_cmd = "ls -la $TPCC_TABLE_DIRECTORY/$table.dat";
+    print "$table_directory/$table.dat created\n";
+    $ls_cmd = "ls -la $table_directory/$table.dat";
 
 #   Execute ls command without caring about result
     system($ls_cmd);
 
 }
 
-$ls_cmd = "ls -la $TPCC_TABLE_DIRECTORY";
+$ls_cmd = "ls -la $table_directory";
 system($ls_cmd);
 
 
