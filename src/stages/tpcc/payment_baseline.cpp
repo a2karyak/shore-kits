@@ -12,6 +12,8 @@
 # include "workload/common.h"
 
 
+const c_str payment_baseline_packet_t::PACKET_TYPE = "PAYMENT_BASELINE";
+
 const c_str payment_baseline_stage_t::DEFAULT_STAGE_NAME = "PAYMENT_BASELINE_STAGE";
 
 
