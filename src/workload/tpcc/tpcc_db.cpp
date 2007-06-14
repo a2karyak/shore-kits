@@ -124,8 +124,11 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         THROW1(BdbException, "dbenv->set_tmp_dir() threw DbException");
     }
 
+
+    // Redirect msg output
     dbenv->set_msgfile(stderr);
     dbenv->set_errfile(stderr);
+
     // TODO: DB_NOMMAP?
     // dbenv->set_flags(DB_NOMMAP, true);
     dbenv->set_verbose(DB_VERB_REGISTER, true);
@@ -147,6 +150,14 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
                    desc,
                    dir);
 
+	// Use the default deadlock detection scheme:
+	dbenv->set_lk_detect(DB_LOCK_DEFAULT);
+
+	// Set a large number of locks so we don't run out (ENOMEM
+	// will result if we do run out):
+	dbenv->set_lk_max_locks(BDB_MAX_LOCKS);
+	dbenv->set_lk_max_objects(BDB_MAX_OBJECTS);
+
 
         // initialize the transactional subsystem
         u_int32_t env_flags = 
@@ -158,6 +169,9 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
             DB_THREAD     | // Free-thread the env handle
             DB_INIT_TXN;    // Initialize transactions  
 
+        /** @note Other possible flags
+            DB_RECOVER    | // Run normal recovery before opening for normal use
+        */
 
 
         // open environment with no transactional support.
