@@ -1,5 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpcc_handler.cpp
+ *
+ *  @brief Implementation of handler of tpc-c related commands
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #include "core.h"
 #include "server/command/tpcc_handler.h"
 #include "server/print.h"
@@ -9,6 +16,8 @@
 
 // tpcc drivers header files
 #include "workload/tpcc/drivers/tpcc_payment.h"
+#include "workload/tpcc/drivers/tpcc_payment_baseline.h"
+
 
 #include "scheduler.h"
 
@@ -43,7 +52,8 @@ void tpcc_handler_t::init() {
         db_open();
 
         // register drivers...
-        add_driver("payment", new tpcc_payment_driver(c_str("PAYMENT")));
+        add_driver("payment",          new tpcc_payment_driver(c_str("PAYMENT")));
+        add_driver("payment_baseline", new tpcc_payment_baseline_driver(c_str("PAYMENT_BASELINE")));
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());

@@ -36,13 +36,16 @@ void register_stage_containers(int enviroment) {
     }
     else {        
         // FIXME: (ip) Should be relative with the MAX_NUM_TRXS
-        // trx staged do not share
+
+        /** @note trx staged do not share */
         register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_wh_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_distr_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_cust_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_ins_hist_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_finalize_stage_t>(MAX_NUM_CLIENTS, false); 
+
+        register_stage<payment_baseline_stage_t>(MAX_NUM_CLIENTS, false); 
     }
 }
 

@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _COMMAND_SET_H
-#define _COMMAND_SET_H
+#ifndef __COMMAND_SET_H
+#define __COMMAND_SET_H
 
 void register_command_handlers(const int environment);
 

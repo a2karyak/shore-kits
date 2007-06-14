@@ -1,7 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TPCC_HANDLER_H
-#define _TPCC_HANDLER_H
+/** @file tpcc_handler.h
+ *
+ *  @brief Declaration of handler of tpc-c related commands
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
+#ifndef __TPCC_HANDLER_H
+#define __TPCC_HANDLER_H
+
 
 #include "core.h"
 #include "scheduler.h"
@@ -11,6 +19,7 @@
 #include "server/command/command_handler.h"
 
 #include <map>
+
 
 using std::map;
 using workload::driver_t;
