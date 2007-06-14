@@ -153,10 +153,17 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
 	// Use the default deadlock detection scheme:
 	dbenv->set_lk_detect(DB_LOCK_DEFAULT);
 
-	// Set a large number of locks so we don't run out (ENOMEM
-	// will result if we do run out):
+	// Set a large number of locks so we don't run out 
+        // (ENOMEM will result if we do run out):
 	dbenv->set_lk_max_locks(BDB_MAX_LOCKS);
 	dbenv->set_lk_max_objects(BDB_MAX_OBJECTS);
+
+        // Set the maximum number of simultaneous transactions
+        dbenv->set_tx_max(BDB_MAX_TRX);
+
+        // Set the transaction timeout value, 0 means no timeout
+        // dbenv->set_timeout(BDB_TRX_TIMEOUT, DB_SET_TXN_TIMEOUT);
+
 
 
         // initialize the transactional subsystem

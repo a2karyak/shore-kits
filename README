@@ -1,4 +1,17 @@
 
+REQUIRED directories:
+
+- database_bdb_tpcc : Contains the database tables for the TPC-C DB.
+- database_bdb_tpch : Contains the database tables for the TPC-H DB.
+
+- tbl_tpcc : Contains the tables for the TPC-C DB.
+- tbl_tpch : Contains the tables for the TPC-H DB.
+
+- tpcc_sf : Contains the load files for the TPC-C DB.
+- tpch_sf : Contains the load files for the TPC-H DB.
+
+
+
 
 QPIPE QUERIES:
 

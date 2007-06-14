@@ -31,6 +31,12 @@ ENTER_NAMESPACE(tpcc);
 /* exported structures */
 
 
+// FIXME (ip): We may need to add some padding to pretend row-level locking
+//             BDB does page-level locking. 
+//             The hot structures, such as WAREHOUSE and DISTRICT are the
+//             candidates for padding.
+
+
 struct tpcc_customer_tuple {
     int C_C_ID;
     int C_D_ID;
@@ -57,6 +63,7 @@ struct tpcc_customer_tuple {
 };
 
 
+// FIXME (ip): We may need padding to the DISTRICT
 
 struct tpcc_district_tuple {
     int D_ID;
@@ -152,6 +159,7 @@ struct tpcc_stock_tuple {
 };
 
 
+// FIXME (ip): We may need padding to the WAREHOUSE
 
 struct tpcc_warehouse_tuple {
     int W_ID;
