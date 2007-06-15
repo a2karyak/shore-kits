@@ -152,8 +152,12 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
                    desc,
                    dir);
 
-	// Use the default deadlock detection scheme:
-	dbenv->set_lk_detect(DB_LOCK_DEFAULT);
+	/** @note Use the default deadlock detection scheme. 
+         *  Indicate that the transaction with the fewest number
+         *  of write locks will receive the deadlock notification
+         *  in the event of a deadlock.
+         */
+	dbenv->set_lk_detect(DB_LOCK_MINWRITE);
 
 	// Set a large number of lockers, locks and loced objects
         // so we don't run out (ENOMEM will result if we do run out)
@@ -167,7 +171,25 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         // Set the transaction timeout value, 0 means no timeout
         // dbenv->set_timeout(BDB_TRX_TIMEOUT, DB_SET_TXN_TIMEOUT);
 
+        
+        /** FIXME (ip): We may want to turn off logging. By doing so we are
+         *  giving up the transactional durability guarantee, in case of 
+         *  application or hardware crashes. On the other hand, I/O is 
+         *  reduced and the throughput is possible to increase. Once a 
+         *  transaction commits the log is flushed to disk, but it is not
+         *  backed by a file.
+         *
+         *  @note To indicate that logging is to be performed only in memory
+         *  DB_LOG_INMEMORY flag should be set to the environment before that
+         *  is opened.
+         *
+         *  @note Also the size of the log memory buffer should be set. The
+         *  default value is 1 MB
+         */
+        //dbenv->set_flags(DB_LOG_INMEMORY, 1);
+        //dbenv->set_lg_bsize(5 * 1024 * 1024); /* Set memory log = 5 MBs */
 
+        
 
         // initialize the transactional subsystem
         u_int32_t env_flags = 
@@ -177,6 +199,7 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
             DB_INIT_LOG   | // Initialize logging
             DB_INIT_MPOOL | // Initialize the cache
             DB_THREAD     | // Free-thread the env handle
+            DB_RECOVER    | // Run normal recovery at db environment startup
             DB_INIT_TXN;    // Initialize transactions  
 
         /** @note Other possible flags
@@ -252,6 +275,8 @@ void db_close() {
     close_db_table(tpch_lineitem_shipdate, INDEX_LINEITEM_SHIPDATE_NAME);
     */
 
+    // run a checkpoint before closing
+    db_checkpoint();
 
     // close environment
     try {    
@@ -264,6 +289,31 @@ void db_close() {
     }
 
     TRACE(TRACE_ALWAYS, "TPC-C database closed\n");
+}
+
+
+
+/** @fn db_checkpoint
+ *  @brief Performs a database checkpoint.
+ *
+ *  @return void
+ *
+ *  @throw BdbException on error.
+ */
+
+void db_checkpoint() {
+
+    // Perform a checkpoint
+    try {    
+ 	dbenv->txn_checkpoint(0, 0, 0);
+    }
+    catch ( DbException &e) {
+	TRACE(TRACE_ALWAYS, "Caught DbException checkpointing environment\n");
+        TRACE(TRACE_ALWAYS, "DbException: %s\n", e.what());
+        THROW1(BdbException, "dbenv->checkpoint() threw DbException");
+    }
+
+    TRACE(TRACE_ALWAYS, "TPC-C database checkpointed\n");
 }
 
 

@@ -21,7 +21,7 @@ DbStageTxn::DbStageTxn() {
 
 
 
-DbStageTxn::~DbStageTxn() {
+inline DbStageTxn::~DbStageTxn() {
 
   // Destroy the mutex
   pthread_mutex_destroy(&dbtxn_mutex);
@@ -33,7 +33,7 @@ DbStageTxn::~DbStageTxn() {
  *  @brief Get the corresponding lock
  */
 
-void DbStageTxn::acquire_txn() {
+inline void DbStageTxn::acquire_txn() {
 
   pthread_mutex_lock(&dbtxn_mutex);
 }

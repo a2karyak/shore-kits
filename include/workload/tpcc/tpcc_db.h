@@ -53,12 +53,21 @@ ENTER_NAMESPACE(tpcc);
  *  SERIALIZABLE (level 3). Other possible values are:
  *  READ UNCOMMITTED (level 1) - Allows reads of dirtied (uncommitted) data.
  *  READ COMMITTED (level 2)   - Releases read locks before trx ends.
+ *  as well as 
+ *  SNAPSHOT ISOLATION - Which is a form a multiversion concurrency control.
  *
  *  @note In order to enable READ UNCOMMITTED isolation we must pass this
  *  parameter in the dbopen function.
  */
 #define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE
 //#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_READ_UNCOMMITTED
+
+/** @note Define the env flags.
+ *
+ *  @note In order to enable SNAPSHOT ISOLATION the environment should be 
+ *  opened with multiversion support.
+ */
+//#define BDB_TPCC_ENV_OPEN_FLAGS DB_MULTIVERSION
 
 
 /** Exported functions */
@@ -69,7 +78,11 @@ void db_open(uint32_t flags,
 
 void db_close();
 
-void db_read();
+void db_checkpoint();
+
+void db_read(); /* for debugging purposes */
+
+
 
 EXIT_NAMESPACE(tpcc);
 
