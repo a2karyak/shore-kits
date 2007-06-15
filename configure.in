@@ -164,7 +164,7 @@ case "$target" in
     CPU_FLAGS="-mtune=itanium2"
     ;;
 
-  # linux on power5? (not implem)
+  # linux on power5
   *ppc*linux*)
     AC_MSG_RESULT(configuring for linux/power5)
 
@@ -173,7 +173,7 @@ case "$target" in
     ;;
 
 
-  # linux on power5? (not implem)
+  # linux on power5-ppc64
   *powerpc64*linux*)
     AC_MSG_RESULT(configuring for linux/powerpc64)
 
@@ -186,6 +186,13 @@ case "$target" in
     AC_MSG_RESULT(configuring for sparc/sun)
     
     ARCHOS=SPARC_SUN
+    ;;
+
+  # x86 Cygwin
+  *686*cygwin*)
+    AC_MSG_RESULT(configuring for i686/cygwin)
+    
+    ARCHOS=x86_LINUX
     ;;
 
  *)
