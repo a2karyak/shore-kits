@@ -2,8 +2,10 @@
 
 /** @file tpcc_db.cpp
  *
- *  @brief Creates and configures the transaction processing database
- *  uses the BerkeleyDB as the underlying storage manager.
+ *  @brief Creates and configures the transaction processing database.
+ *  The current implementation uses BerkeleyDB as the underlying 
+ *  storage manager, which is also responsible for the locking, logging,
+ *  and transaction operations.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -153,8 +155,9 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
 	// Use the default deadlock detection scheme:
 	dbenv->set_lk_detect(DB_LOCK_DEFAULT);
 
-	// Set a large number of locks so we don't run out 
-        // (ENOMEM will result if we do run out):
+	// Set a large number of lockers, locks and loced objects
+        // so we don't run out (ENOMEM will result if we do run out)
+	dbenv->set_lk_max_lockers(BDB_MAX_LOCKERS);
 	dbenv->set_lk_max_locks(BDB_MAX_LOCKS);
 	dbenv->set_lk_max_objects(BDB_MAX_OBJECTS);
 

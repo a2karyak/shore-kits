@@ -184,7 +184,8 @@ WL_COMMON = \
    $(SW)/common/predicates.cpp \
    $(SW)/common/table_load.cpp \
    $(SW)/common/table_compare.cpp \
-   $(SW)/common/bdb_env.cpp
+   $(SW)/common/bdb_env.cpp \
+   $(SW)/common/bdb_txn.cpp
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \

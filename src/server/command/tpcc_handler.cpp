@@ -49,7 +49,7 @@ void tpcc_handler_t::init() {
     if ( state == TPCC_HANDLER_UNINITIALIZED ) {
 
         // open DB tables (1.25 GB bpool)       
-        db_open();
+        db_open(BDB_TPCC_DB_OPEN_FLAGS);
 
         // register drivers...
         add_driver("payment",          new tpcc_payment_driver(c_str("PAYMENT")));
