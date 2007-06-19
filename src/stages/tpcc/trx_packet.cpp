@@ -1,11 +1,21 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file trx_packet.cpp
+ *
+ *  @brief A trx_packet is a normal packet with a transaction id, status identifier,
+ *  and a corresponding db-specific (currently BerkeleyDB) transaction handle.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+ 
 #include "stages/tpcc/trx_packet.h"
 
 
 
 ENTER_NAMESPACE(qpipe);
 
+
+/** Helper functions */
 
 /**
  *  @brief Displays in a friendly way a TrxState
@@ -37,6 +47,9 @@ c_str translate_state(TrxState aState) {
     return ("Known");
 }
 
+
+////////////////////////
+// class trx_packet_t //
 
 /**
  *  @brief trx_packet_t constructor
@@ -77,7 +90,11 @@ trx_packet_t::~trx_packet_t(void) {
 }
 
 
-/**
+
+////////////////////////////
+// class trx_result_tuple //
+
+/** @fn reset
  *  @brief trx_result_tuple initializer 
  */
 
@@ -90,6 +107,25 @@ void trx_result_tuple::reset(TrxState aTrxState, int anID) {
     R_STATE = aTrxState;
     R_ID = anID;
 }
+
+
+/** @fn copy constructor */
+trx_result_tuple::trx_result_tuple(const trx_result_tuple& t) {
+
+    R_STATE = t.R_STATE;
+    R_ID = t.R_ID;
+}
+    
+    
+/** @fn copy assingment */
+trx_result_tuple& trx_result_tuple::operator=(const trx_result_tuple& t) {
+
+    R_STATE = t.R_STATE;
+    R_ID = t.R_ID;
+    
+    return (*this);
+}
+
 
 
 EXIT_NAMESPACE(qpipe);

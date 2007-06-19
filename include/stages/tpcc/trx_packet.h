@@ -1,14 +1,24 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file trx_packet.h
+ *
+ *  @brief A trx_packet is a normal packet with a transaction id, status identifier,
+ *  and a corresponding db-specific (currently BerkeleyDB) transaction handle.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
+
 #ifndef __TRX_PACKET_H
 #define __TRX_PACKET_H
 
 #include <cstdio>
+#include <db_cxx.h>
 
 #include "core.h"
 #include "workload/common/process_tuple.h"
 
-using namespace workload;
+// using namespace workload;
 
 
 ENTER_NAMESPACE(qpipe);
@@ -45,6 +55,11 @@ protected:
 
 public:
 
+
+    /** @brief The corresponding transaction handle of this packet */
+    DbTxn* _trx_txn = NULL;
+
+
     /* see trx_packet.cpp for documentation */  
 
     trx_packet_t(const c_str     &packet_id,
@@ -58,11 +73,58 @@ public:
 
     virtual ~trx_packet_t(void);
 
+    /** Member access functions */
+
+    inline int get_trx_id() {
+        return (_trx_id);
+    }
+    
+    inline void set_trx_id(int a_trx_id) {
+        
+        assert (a_trx_id > NO_VALID_TRX_ID);
+        
+        _trx_id = a_trx_id;
+    }
+
+    inline TrxState trx_state() {
+        return (_trx_state);
+    }
+    
+    inline void set_trx_state(TrxState a_trx_state) {
+        
+        assert (a_trx_state > UNDEF);
+        
+        _trx_state = a_trx_state;
+    }
+
+    inline DbTxn* get_trx_txn() {
+        return (_trx_txn);
+    }
+    
+    
+    inline void set_trx_txn(DbTxn* a_trx_txn) {        
+        _trx_txn = a_trx_txn;
+    }
+
+
+    /** Exported Functions */
+    
+
+    virtual void rollback() {
+        TRACE( TRACE_ALWAYS, "TRX - %d SHOULD ROLLBACK!\n", _trx_id);
+    }
+
+    virtual void commit() {
+        TRACE( TRACE_ALWAYS, "TRX - %d SHOULD COMMIT!\n", _trx_id);
+    }
+
+
+    /** Helper Functions */
 
     /** @brief Describes the requested transaction */
 
     virtual void describe_trx() {
-        TRACE(TRACE_ALWAYS, "A TRX request\n");
+        TRACE(TRACE_ALWAYS, "A TRX request with id=%d\n", _trx_id);
     }
 
 
@@ -75,56 +137,31 @@ public:
         
         return (true);
     }
-
-
-    int get_trx_id() {
-        return (_trx_id);
-    }
     
-    void set_trx_id(int a_trx_id) {
-        
-        assert (a_trx_id > NO_VALID_TRX_ID);
-        
-        _trx_id = a_trx_id;
-    }
-
-    TrxState trx_state() {
-        return (_trx_state);
-    }
-    
-    void set_trx_state(TrxState a_trx_state) {
-        
-        assert (a_trx_state > UNDEF);
-        
-        _trx_state = a_trx_state;
-    }
-
-
-    virtual void rollback() {
-        TRACE( TRACE_ALWAYS, "TRX - %d SHOULD ROLLBACK!\n", _trx_id);
-    }
-
-    virtual void commit() {
-        TRACE( TRACE_ALWAYS, "TRX - %d SHOULD COMMIT!\n", _trx_id);
-    }
-
-
 }; /* trx_packet */
 
 
-/**
+
+/** @class trx_result_tuple
  *  @brief Class used to represent the result of a transaction
  */
 
 class trx_result_tuple {
 
 private:
+
+    /** Member variables */
+
     TrxState R_STATE;
     int R_ID;
 
+    /** Private access methods */
+
+    inline void set_id(int anID) { R_ID = anID; }
+
 public:
 
-    // construction - destruction
+    /** construction - destruction */
 
     trx_result_tuple() { reset(UNDEF, -1); }
 
@@ -132,18 +169,28 @@ public:
 
     ~trx_result_tuple() { }
 
-    // access methods
+    trx_result_tuple(const trx_result_tuple& t); // copy constructor
+    
+    trx_result_tuple& operator=(const trx_result_tuple& t); // copy assingment
 
-    int get_id() { return (R_ID); }
 
-    TrxState get_state() { return (R_STATE); }
+    /** Access methods */
 
-    c_str say_state() { return (translate_state(R_STATE)); }
+    inline int get_id() { return (R_ID); }
 
-    void reset(TrxState aTrxState, int anID);
+    inline void set_state(TrxState aState) { 
+       assert ((aState >= UNDEF) && (aState <= ROLLBACKED));
+       R_STATE = aState;
+    }
+    
+    inline TrxState get_state() { return (R_STATE); }
+
+    inline c_str say_state() { return (translate_state(R_STATE)); }
+
+    inline void reset(TrxState aTrxState, int anID);
     
     
-}; /* trx_result_tuple */
+}; // EOF: trx_result_tuple
 
 
 

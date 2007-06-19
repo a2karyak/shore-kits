@@ -37,6 +37,8 @@ ENTER_NAMESPACE(tpcc);
 //             candidates for padding.
 
 
+// CUSTOMER
+
 struct tpcc_customer_tuple {
     int C_C_ID;
     int C_D_ID;
@@ -63,6 +65,15 @@ struct tpcc_customer_tuple {
 };
 
 
+struct tpcc_customer_tuple_key {
+    int C_C_ID;
+    int C_D_ID;
+    int C_W_ID;
+};
+
+
+// DISTRICT
+
 // FIXME (ip): We may need padding to the DISTRICT
 
 struct tpcc_district_tuple {
@@ -80,6 +91,14 @@ struct tpcc_district_tuple {
 };
 
 
+struct tpcc_district_tuple_key {
+    int D_ID;
+    int D_W_ID;
+};
+
+
+
+// HISTORY
 
 struct tpcc_history_tuple {
     int H_C_ID;
@@ -93,6 +112,7 @@ struct tpcc_history_tuple {
 };
 
 
+// ITEM
 
 struct tpcc_item_tuple {
     int I_ID;
@@ -104,12 +124,22 @@ struct tpcc_item_tuple {
 
 
 
+struct tpcc_item_tuple_key {
+    int I_ID;
+};
+
+
+
+// NEW_ORDER
+
 struct tpcc_new_order_tuple {
     int NO_O_ID;
     int NO_D_ID;
     int NO_W_ID;
 };
 
+
+// ORDER
 
 struct tpcc_order_tuple {
     int O_ID;
@@ -122,6 +152,17 @@ struct tpcc_order_tuple {
     int O_ALL_LOCAL;
 };
 
+
+struct tpcc_order_tuple_key {
+    int O_ID;
+    int O_C_ID;
+    int O_D_ID;
+    int O_W_ID;
+};
+
+
+
+// ORDERLINE
 
 struct tpcc_orderline_tuple {
     int OL_O_ID;
@@ -137,6 +178,15 @@ struct tpcc_orderline_tuple {
 };
 
 
+struct tpcc_orderline_tuple_key {
+    int OL_O_ID;
+    int OL_D_ID;
+    int OL_W_ID;
+    int OL_NUMBER;
+};
+
+
+// STOCK
 
 struct tpcc_stock_tuple {
     int S_I_ID;
@@ -159,6 +209,14 @@ struct tpcc_stock_tuple {
 };
 
 
+struct tpcc_stock_tuple_key {
+    int S_I_ID;
+    int S_W_ID;
+};
+
+
+// WAREHOUSE
+
 // FIXME (ip): We may need padding to the WAREHOUSE
 
 struct tpcc_warehouse_tuple {
@@ -173,6 +231,10 @@ struct tpcc_warehouse_tuple {
     decimal W_YTD;
 };
 
+
+struct tpcc_warehouse_tuple_key {
+    int W_ID;
+};
 
 EXIT_NAMESPACE(tpcc);
 

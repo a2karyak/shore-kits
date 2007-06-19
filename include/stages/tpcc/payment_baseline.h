@@ -23,6 +23,8 @@
 
 #include "stages/tpcc/trx_packet.h"
 
+#include "workload/tpcc/tpcc_struct.h"
+
 
 using namespace qpipe;
 
@@ -130,6 +132,7 @@ public:
         _trx_state = UNDEF;
       }
 
+    /** Helper Functions */
 
     void describe_trx() {
 
@@ -192,6 +195,18 @@ public:
     ~payment_baseline_stage_t() { 
 	TRACE(TRACE_ALWAYS, "PAYMENT_BASELINE destructor\n");	
     }        
+
+
+private:    
+
+    trx_result_tuple executePaymentBaseline(payment_baseline_packet_t* p);
+    
+    int updateCustomerByLast(int wh_id, int d_id, char* c_last);
+    
+    int updateCustomerByID(int wh_id, int d_id, int c_id);
+    
+    int updateCustomerData(tpcc_customer_tuple* a_customer);
+                           
     
 }; // EOF: payment_baseline_stage_t
 
