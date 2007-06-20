@@ -60,6 +60,9 @@ protected:
     void _unreserve_workers(const c_str& type, int n);
     bool _is_osp_enabled_for_type(const c_str& packet_type);
     
+    // Used for the VLDB07 shared/unshared execution predictive model.
+    void _set_osp_for_type(const c_str& packet_type, bool osp_switch);
+
 
     static pthread_mutex_t _instance_lock;
     static dispatcher_t*   _instance;
@@ -112,6 +115,10 @@ public:
         instance()->_dispatch_packet(packet);
     }
 
+    // Used for the VLDB07 shared/unshared execution predictive model.
+    static void set_osp_for_type(const c_str& packet_type, bool osp_switch) {
+        return instance()->_set_osp_for_type(packet_type, osp_switch);
+    }
 
     /* worker thread methods */
     static worker_reserver_t* reserver_acquire();

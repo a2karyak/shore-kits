@@ -22,6 +22,8 @@ extern osp_policy_t osp_global_policy;
 /* reroute to dispatcher */
 bool is_osp_enabled_for_type(const c_str& packet_type);
 
+// Used for the VLDB07 shared/unshared execution predictive model.
+void set_osp_for_type(const c_str& packet_type, bool osp_switch);
 
 
 /* exported datatypes */

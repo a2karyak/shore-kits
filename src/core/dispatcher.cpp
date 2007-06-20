@@ -163,6 +163,14 @@ bool is_osp_enabled_for_type(const c_str& packet_type) {
   return dispatcher_t::is_osp_enabled_for_type(packet_type);
 }
 
+// Set osp at run time on a per-packet-type basis.
+// Used for the VLDB07 shared/unshared execution predictive model.
+void dispatcher_t::_set_osp_for_type(const c_str& packet_type, bool osp_switch) {
+      _ospdir[packet_type] = osp_switch;
+}
+void set_osp_for_type(const c_str& packet_type, bool osp_switch) {
+      dispatcher_t::set_osp_for_type(packet_type, osp_switch);
+}
 
 
 EXIT_NAMESPACE(qpipe);

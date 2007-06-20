@@ -9,6 +9,9 @@
 #include "workload/tpch/tpch_env.h"
 #include "workload/common.h"
 
+#include "vldb07_model/model.h"
+
+using namespace VLDB07Model;
 
 ENTER_NAMESPACE(q4);
 
@@ -283,6 +286,21 @@ void tpch_q4_driver::submit(void* disp) {
     join_packet->assign_query_state(qs);
     orders_packet->assign_query_state(qs);
     line_item_packet->assign_query_state(qs);
+
+    // VLDB07 share/unshared execution predictive model.
+    if (VLDB07_model_t::is_model_enabled()) {
+        bool osp_switch = VLDB07_model_t::is_shared_faster_join(   VLDB07_model_t::get_M()      // m
+                                                                 , 5.25    // ps1
+                                                                 , 1.17    // ps2
+                                                                 , 15.981  // w
+                                                                 , 0.09    // s
+                                                                 , 0.24    // pa
+                                                                 , 177     // k
+                                                                 , 0.4     // fs
+                                                                 , 0.85    // fa
+                                                               );
+        qpipe::set_osp_for_type(c_str("HASH_JOIN"), osp_switch);
+    }
 
     // Dispatch packet
     tpch_q4_process_tuple_t pt;

@@ -28,9 +28,12 @@
 
 #include "scheduler.h"
 
+#include "vldb07_model/model.h"
+
 
 using namespace workload;
 using qpipe::tuple_fifo;
+using namespace VLDB07Model;
 
 pthread_mutex_t tpch_handler_t::state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -161,6 +164,10 @@ void tpch_handler_t::handle_command(const char* command) {
         return;
     }
 
+    // used for the VLDB07 shared/unshared execution predictive model.
+    if (VLDB07_model_t::is_model_enabled()) {
+        VLDB07_model_t::set_M(num_clients);
+    }
 
     // debugging
     TRACE(TRACE_ALWAYS, "num_clients = %d, num_iterations = %d, think_time = %d, scheduler_policy = %s\n",
@@ -277,4 +284,3 @@ void tpch_handler_t::add_scheduler_policy(const c_str &tag, scheduler::policy_t*
 driver_t* tpch_handler_t::lookup_driver(const c_str &tag) {
     return _drivers[tag];
 }
-

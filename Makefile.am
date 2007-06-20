@@ -3,7 +3,7 @@ INCLUDES = -I$(top_srcdir)/include
 
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libutil.a
+   lib/libstages.a lib/libcore.a lib/libutil.a lib/libvldb07_model.a
 
 LDADD = $(lib_LIBRARIES)
 
@@ -109,6 +109,17 @@ lib_libcore_a_SOURCES = \
 	$(SC)/tuple_fifo.cpp \
 	$(SC)/tuple_fifo_directory.cpp
 
+
+
+################################################################################
+#
+# src/vldb07_model/
+#
+################################################################################
+
+SV=$(top_srcdir)/src/vldb07_model
+lib_libvldb07_model_a_SOURCES = \
+	$(SV)/model.cpp
 
 
 

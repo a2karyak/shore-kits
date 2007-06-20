@@ -21,6 +21,11 @@ private:
     void global_enable();
     void global_disable();
     c_str global_sharing_policy();
+
+    void global_vldb07_model_enable();
+    void global_vldb07_model_disable();
+    c_str global_vldb07_model_policy();
+
     void print_usage(const char* command_tag);
 };
 
