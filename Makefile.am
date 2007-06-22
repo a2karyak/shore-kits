@@ -139,7 +139,7 @@ lib_libscheduler_a_SOURCES = \
 ################################################################################
 
 SG=$(top_srcdir)/src/stages
-lib_libstages_a_SOURCES = \
+SG_MAIN = \
    $(SG)/fscan.cpp \
    $(SG)/fdump.cpp \
    $(SG)/tscan.cpp \
@@ -154,6 +154,10 @@ lib_libstages_a_SOURCES = \
    $(SG)/sort.cpp \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
+   $(SG)/echo.cpp \
+   $(SG)/sieve.cpp \
+
+SG_TRX = \
    $(SG)/tpcc/trx_packet.cpp \
    $(SG)/tpcc/payment_baseline.cpp \
    $(SG)/tpcc/payment_begin.cpp \
@@ -161,9 +165,17 @@ lib_libstages_a_SOURCES = \
    $(SG)/tpcc/payment_upd_distr.cpp \
    $(SG)/tpcc/payment_upd_cust.cpp \
    $(SG)/tpcc/payment_ins_hist.cpp \
-   $(SG)/tpcc/payment_finalize.cpp \
-   $(SG)/echo.cpp \
-   $(SG)/sieve.cpp
+   $(SG)/tpcc/payment_finalize.cpp
+
+SG_COMMON = \
+   $(SG)/common/process_query.cpp \
+   $(SG)/common/predicates.cpp 
+
+lib_libstages_a_SOURCES = \
+   $(SG_MAIN) \
+   $(SG_TRX) \
+   $(SG_COMMON)
+
 
 
 ################################################################################
@@ -180,8 +192,6 @@ WL_BASE = \
    $(SW)/dispatcher_globals.cpp
 
 WL_COMMON = \
-   $(SW)/common/process_query.cpp \
-   $(SW)/common/predicates.cpp \
    $(SW)/common/table_load.cpp \
    $(SW)/common/table_compare.cpp \
    $(SW)/common/bdb_env.cpp \

@@ -19,10 +19,10 @@ using std::less_equal;
 using std::greater_equal;
 using std::equal_to;
 using std::not_equal_to;
-using namespace qpipe;
 
 
-ENTER_NAMESPACE(workload);
+
+ENTER_NAMESPACE(qpipe);
 
 
 
@@ -290,7 +290,7 @@ bool always_use_deterministic_predicates(void);
 
 
 
-EXIT_NAMESPACE(workload);
+EXIT_NAMESPACE(qpipe);
 
 
 

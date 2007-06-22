@@ -1,12 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "workload/common/predicates.h"
-
-using namespace qpipe;
+#include "stages/common/predicates.h"
 
 
-
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(qpipe);
 
 
 
@@ -18,4 +15,4 @@ bool always_use_deterministic_predicates(void) {
 
 
 
-EXIT_NAMESPACE(workload);
+EXIT_NAMESPACE(qpipe);

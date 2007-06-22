@@ -2,13 +2,11 @@
 
 #include "core/tuple_fifo.h"
 #include "core/dispatcher.h"
-#include "workload/common/process_query.h"
+#include "stages/common/process_query.h"
 #include "util.h"
 
-using namespace qpipe;
 
-
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(qpipe);
 
 
 void process_query(packet_t* root, process_tuple_t& pt)
@@ -33,4 +31,4 @@ void process_query(packet_t* root, process_tuple_t& pt)
 }
 
 
-EXIT_NAMESPACE(workload);
+EXIT_NAMESPACE(qpipe);

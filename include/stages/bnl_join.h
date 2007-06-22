@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _BNL_JOIN_H
-#define _BNL_JOIN_H
+#ifndef __BNL_JOIN_H
+#define __BNL_JOIN_H
 
 #include <cstdio>
 #include <string>

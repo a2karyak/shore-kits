@@ -1,15 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PROCESS_TUPLE_H
-#define _PROCESS_TUPLE_H
+#ifndef __PROCESS_TUPLE_H
+#define __PROCESS_TUPLE_H
 
 #include "core/tuple.h"
 #include "core/packet.h"
 
-using namespace qpipe;
 
-
-ENTER_NAMESPACE(workload);
+ENTER_NAMESPACE(qpipe);
 
 
 /* exported datatypes */
@@ -23,7 +21,7 @@ public:
 };
 
 
-EXIT_NAMESPACE(workload);
+EXIT_NAMESPACE(qpipe);
 
 
 #endif
