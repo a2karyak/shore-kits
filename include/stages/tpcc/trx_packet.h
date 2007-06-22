@@ -15,8 +15,9 @@
 #include <cstdio>
 #include <db_cxx.h>
 
-#include "core.h"
 #include "workload/common/process_tuple.h"
+#include "core.h"
+
 
 // using namespace workload;
 
@@ -57,7 +58,7 @@ public:
 
 
     /** @brief The corresponding transaction handle of this packet */
-    DbTxn* _trx_txn = NULL;
+    DbTxn* _trx_txn;
 
 
     /* see trx_packet.cpp for documentation */  
