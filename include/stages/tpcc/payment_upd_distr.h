@@ -1,13 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PAYMENT_UPD_DISTR_H
-#define _PAYMENT_UPD_DISTR_H
+#ifndef __TPCC_PAYMENT_UPD_DISTR_H
+#define __TPCC_PAYMENT_UPD_DISTR_H
 
 #include <cstdio>
 
-#include "stages/tpcc/trx_packet.h"
 #include "core.h"
 #include "util.h"
+
+#include "stages/tpcc/common/trx_packet.h"
 
 
 using namespace qpipe;

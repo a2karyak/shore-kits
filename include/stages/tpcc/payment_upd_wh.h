@@ -5,10 +5,10 @@
 
 #include <cstdio>
 
-#include "stages/tpcc/trx_packet.h"
 #include "core.h"
 #include "util.h"
 
+#include "stages/tpcc/common/trx_packet.h"
 
 using namespace qpipe;
 

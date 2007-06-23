@@ -12,7 +12,7 @@
 #define __TPCC_PAYMENT_BASELINE_DRIVER_H
 
 
-# include "stages/tpcc/trx_packet.h"
+# include "stages/tpcc/common/trx_packet.h"
 # include "stages/tpcc/payment_baseline.h"
 
 # include "workload/driver.h"

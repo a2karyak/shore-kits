@@ -8,7 +8,7 @@
  *  @author Ippokratis Pandis (ipandis)
  */
  
-#include "stages/tpcc/trx_packet.h"
+#include "stages/tpcc/common/trx_packet.h"
 
 
 

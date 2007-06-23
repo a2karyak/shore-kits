@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PAYMENT_FINALIZE_H
-#define _PAYMENT_FINALIZE_H
+#ifndef __TPCC_PAYMENT_FINALIZE_H
+#define __TPCC_PAYMENT_FINALIZE_H
 
 #include <cstdio>
 
@@ -9,7 +9,8 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/trx_packet.h"
+#include "stages/tpcc/common/trx_packet.h"
+
 #include "stages/tpcc/payment_upd_wh.h"
 #include "stages/tpcc/payment_upd_distr.h"
 #include "stages/tpcc/payment_upd_cust.h"

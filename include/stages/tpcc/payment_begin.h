@@ -16,7 +16,7 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/trx_packet.h"
+#include "stages/tpcc/common/trx_packet.h"
 
 #include "stages/tpcc/payment_upd_wh.h"
 #include "stages/tpcc/payment_upd_distr.h"

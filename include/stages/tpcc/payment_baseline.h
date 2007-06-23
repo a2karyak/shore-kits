@@ -17,6 +17,7 @@
 
 #include <cstdio>
 
+
 #include "core.h"
 #include "util.h"
 #include "scheduler.h"
@@ -27,6 +28,7 @@
 
 
 using namespace qpipe;
+using namespace tpcc;
 
 
 /* exported datatypes */
