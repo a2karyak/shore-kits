@@ -19,12 +19,14 @@
 
 #include "util/trace.h"
 
-#include "workload/tpcc/tpcc_env.h"
-#include "workload/tpcc/tpcc_tbl_readers.h"
-#include "workload/tpcc/tpcc_struct.h"
-#include "workload/tpcc/tpcc_filenames.h"
+#include "stages/tpcc/common/tpcc_struct.h"
 
 #include "workload/common.h"
+
+#include "workload/tpcc/tpcc_env.h"
+#include "workload/tpcc/tpcc_tbl_readers.h"
+#include "workload/tpcc/tpcc_filenames.h"
+
 
 
 ENTER_NAMESPACE(tpcc);
@@ -97,23 +99,23 @@ void tpcc_read_tbl_CUSTOMER  (Db* db) {
 
 
 
-void tpcc_read_tbl_DISTRICT  (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_DISTRICT  (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
 
-void tpcc_read_tbl_HISTORY   (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_HISTORY   (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
-void tpcc_read_tbl_ITEM      (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); } 
+void tpcc_read_tbl_ITEM      (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); } 
 
 
-void tpcc_read_tbl_NEW_ORDER (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_NEW_ORDER (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
-void tpcc_read_tbl_ORDER     (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_ORDER     (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
-void tpcc_read_tbl_ORDERLINE (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_ORDERLINE (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
-void tpcc_read_tbl_STOCK     (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_STOCK     (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
-void tpcc_read_tbl_WAREHOUSE (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpcc_read_tbl_WAREHOUSE (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
 
 

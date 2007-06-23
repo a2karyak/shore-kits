@@ -139,15 +139,15 @@ public:
         return (true);
     }
     
-}; /* trx_packet */
+}; // EOF trx_packet
 
 
 
-/** @class trx_result_tuple
+/** @class trx_result_tuple_t
  *  @brief Class used to represent the result of a transaction
  */
 
-class trx_result_tuple {
+class trx_result_tuple_t {
 
 private:
 
@@ -164,15 +164,15 @@ public:
 
     /** construction - destruction */
 
-    trx_result_tuple() { reset(UNDEF, -1); }
+    trx_result_tuple_t() { reset(UNDEF, -1); }
 
-    trx_result_tuple(TrxState aTrxState, int anID) { reset(aTrxState, anID); }
+    trx_result_tuple_t(TrxState aTrxState, int anID) { reset(aTrxState, anID); }
 
-    ~trx_result_tuple() { }
+    ~trx_result_tuple_t() { }
 
-    trx_result_tuple(const trx_result_tuple& t); // copy constructor
+    trx_result_tuple_t(const trx_result_tuple_t& t); // copy constructor
     
-    trx_result_tuple& operator=(const trx_result_tuple& t); // copy assingment
+    trx_result_tuple_t& operator=(const trx_result_tuple_t& t); // copy assingment
 
 
     /** Access methods */
@@ -188,10 +188,17 @@ public:
 
     inline c_str say_state() { return (translate_state(R_STATE)); }
 
-    inline void reset(TrxState aTrxState, int anID);
-    
-    
-}; // EOF: trx_result_tuple
+    inline void reset(TrxState aTrxState, int anID) {
+
+        // check for validity of inputs
+        assert ((aTrxState >= UNDEF) && (aTrxState <= ROLLBACKED));
+        assert (anID >= NO_VALID_TRX_ID);
+
+        R_STATE = aTrxState;
+        R_ID = anID;
+    }
+        
+}; // EOF: trx_result_tuple_t
 
 
 
@@ -218,7 +225,7 @@ public:
     }
 
 
-    void set_trx_packet(trx_packet_t* a_trx_packet) {
+    inline void set_trx_packet(trx_packet_t* a_trx_packet) {
         _packet = a_trx_packet;
     }
 
@@ -227,7 +234,7 @@ public:
 
         assert (_packet != NULL);
 
-        trx_result_tuple* r = aligned_cast<trx_result_tuple>(output.data);
+        trx_result_tuple_t* r = aligned_cast<trx_result_tuple_t>(output.data);
         TRACE( TRACE_ALWAYS, "*** TRX=%d\tRESULT=%s\n",
                r->get_id(),
                r->say_state().data());
@@ -241,7 +248,7 @@ public:
     virtual ~trx_result_process_tuple_t() { }
 
 
-}; /* trx_result_process_tuple_t */
+}; // EOF trx_result_process_tuple_t
 
 
 EXIT_NAMESPACE(qpipe);

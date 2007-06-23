@@ -13,7 +13,7 @@
 #include "workload/common/table_compare.h"
 
 #include "workload/tpcc/tpcc_compare.h"
-#include "workload/tpcc/tpcc_struct.h"
+//#include "workload/tpcc/tpcc_struct.h"
 
 
 using namespace workload;

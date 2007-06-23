@@ -92,25 +92,11 @@ trx_packet_t::~trx_packet_t(void) {
 
 
 ////////////////////////////
-// class trx_result_tuple //
-
-/** @fn reset
- *  @brief trx_result_tuple initializer 
- */
-
-void trx_result_tuple::reset(TrxState aTrxState, int anID) {
-
-    // check for validity of inputs
-    assert ((aTrxState >= UNDEF) && (aTrxState <= ROLLBACKED));
-    assert (anID >= NO_VALID_TRX_ID);
-
-    R_STATE = aTrxState;
-    R_ID = anID;
-}
+// class trx_result_tuple_t //
 
 
 /** @fn copy constructor */
-trx_result_tuple::trx_result_tuple(const trx_result_tuple& t) {
+trx_result_tuple_t::trx_result_tuple_t(const trx_result_tuple_t& t) {
 
     R_STATE = t.R_STATE;
     R_ID = t.R_ID;
@@ -118,7 +104,7 @@ trx_result_tuple::trx_result_tuple(const trx_result_tuple& t) {
     
     
 /** @fn copy assingment */
-trx_result_tuple& trx_result_tuple::operator=(const trx_result_tuple& t) {
+trx_result_tuple_t& trx_result_tuple_t::operator=(const trx_result_tuple_t& t) {
 
     R_STATE = t.R_STATE;
     R_ID = t.R_ID;

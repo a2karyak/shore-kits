@@ -8,8 +8,9 @@
  */
 
 
-# include "stages/tpcc/payment_baseline.h"
-# include "workload/common.h"
+#include "stages/tpcc/payment_baseline.h"
+
+#include "workload/tpcc/tpcc_env.h"
 
 
 const c_str payment_baseline_packet_t::PACKET_TYPE = "PAYMENT_BASELINE";
@@ -45,7 +46,7 @@ void payment_baseline_stage_t::process_packet() {
     // Prints out the packet info
     packet->describe_trx();
     
-    trx_result_tuple aTrxResultTuple = executePaymentBaseline(&packet);
+    trx_result_tuple_t aTrxResultTuple = executePaymentBaseline(packet);
     
     TRACE( TRACE_ALWAYS, "DONE. NOTIFYING CLIENT\n" );
     
@@ -58,8 +59,8 @@ void payment_baseline_stage_t::process_packet() {
     array_guard_t<char> dest_data = new char[dest_size];
     tuple_t dest(dest_data, dest_size);
     
-    trx_result_tuple* dest_result_tuple;
-    dest_result_tuple = aligned_cast<trx_result_tuple>(dest.data);
+    trx_result_tuple_t* dest_result_tuple;
+    dest_result_tuple = aligned_cast<trx_result_tuple_t>(dest.data);
     
     *dest_result_tuple = aTrxResultTuple;
     
@@ -74,13 +75,13 @@ void payment_baseline_stage_t::process_packet() {
  *
  *  @brief Executes the PAYMENT transactions. Wrapper function.
  *  
- *  @return A trx_result_tuple with the status of the transaction.
+ *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
-trx_result_tuple payment_baseline_stage_t::executePaymentBaseline(payment_baseline_packet_t* p) {
+trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_baseline_packet_t* p) {
 
     // initialize the result structure
-    trx_result_tuple aTrxResultTuple(UNDEF, p->get_trx_id());
+    trx_result_tuple_t aTrxResultTuple(UNDEF, p->get_trx_id());
     
     try {
         
@@ -98,30 +99,35 @@ trx_result_tuple payment_baseline_stage_t::executePaymentBaseline(payment_baseli
         *  W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE and W_ZIP are retrieved.
         *  W_YTD is increased by H_AMOYNT.
         */
-       TRACE( TRACE_ALWAYS, "Step 2: Retrieving and Updating the row in the WAREHOUSE table \
-        with matching W_ID\=%d\n", p->_home_wh_id );
+       TRACE( TRACE_ALWAYS, 
+              "Step 2: Updating the row in the WAREHOUSE table with matching W_ID=%d\n", 
+              p->_home_wh_id );
 
        // WAREHOUSE key: W_ID 
-       Dbt key_wh(p->_home_wh_id, sizeof(int));
+       Dbt key_wh((void*)p->_home_wh_id, sizeof(int));
        
        Dbt data_wh;
        data_wh.set_flags(DB_DBT_MALLOC);
 
-       dbenv->get(p->_trx_txn, &key_wh, &data_wh, DB_RMW);
+       tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(p->_trx_txn, &key_wh, &data_wh, DB_RMW);       
+       //       dbenv->get(p->_trx_txn, &key_wh, &data_wh, DB_RMW);
        tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
 
        assert(warehouse); // make sure that we got a warehouse
        
        warehouse->W_YTD += p->_h_amount;
-       dbenv->put(p->_trx_txn, &key_wh, &data_wh, 0);       
+       tpcc_tables[TPCC_TABLE_WAREHOUSE].db->put(p->_trx_txn, &key_wh, &data_wh, 0);       
 
 
        /** Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
         *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
         *  D_YTD is increased by H_AMOYNT.
         */
-       TRACE( TRACE_ALWAYS, "Step 3: Retrieving and Updating the row in the DISTRICT table \
-        with matching D_W_ID=%d and D_ID=%d\n", p->_home_d_id, p->_home_wh_id);
+       TRACE( TRACE_ALWAYS, 
+              "Step 3: Updating the row in the DISTRICT table with matching \
+               D_W_ID=%d and D_ID=%d\n", 
+              p->_home_d_id, 
+              p->_home_wh_id);
 
        // DISTRICT key: D_ID, D_W_ID 
        tpcc_district_tuple_key dk = { p->_home_d_id, p->_home_wh_id };
@@ -129,13 +135,13 @@ trx_result_tuple payment_baseline_stage_t::executePaymentBaseline(payment_baseli
        Dbt data_d;
        data_d.set_flags(DB_DBT_MALLOC);
 
-       dbenv->get(p->_trx_txn, &key_d, &data_d, DB_RMW);
+       tpcc_tables[TPCC_TABLE_DISTRICT].db->get(p->_trx_txn, &key_d, &data_d, DB_RMW);
        tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
 
        assert(district); // make sure that we got a district
        
        district->D_YTD += p->_h_amount;
-       dbenv->put(p->_trx_txn, &key_d, &data_d, 0);       
+       tpcc_tables[TPCC_TABLE_DISTRICT].db->put(p->_trx_txn, &key_d, &data_d, 0);       
 
 
 

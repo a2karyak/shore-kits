@@ -201,7 +201,7 @@ public:
 
 private:    
 
-    trx_result_tuple executePaymentBaseline(payment_baseline_packet_t* p);
+    trx_result_tuple_t executePaymentBaseline(payment_baseline_packet_t* p);
     
     int updateCustomerByLast(int wh_id, int d_id, char* c_last);
     

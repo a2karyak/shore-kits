@@ -16,8 +16,10 @@
 #include "util/time_util.h"
 #include "util/progress.h"
 
+#include "stages/tpcc/common/tpcc_struct.h"
+
 #include "workload/tpcc/tpcc_tbl_parsers.h"
-#include "workload/tpcc/tpcc_struct.h"
+
 
 
 ENTER_NAMESPACE(tpcc);
@@ -94,7 +96,7 @@ void tpcc_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
 
         // insert tuple into database
         // CUSTOMER key is composed of 3 fields: C_C_ID, C_D_ID, C_W_ID
-        Dbt key(&tup.C_C_ID, 3 * sizeof(int));
+        Dbt key((void*)&tup.C_C_ID, 3 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -145,7 +147,7 @@ void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) {
 
         // insert tuple into database
         // DISTRICT key composed (D_ID, D_W_ID)
-        Dbt key(&tup.D_ID, 2 * sizeof(int));
+        Dbt key((void*)&tup.D_ID, 2 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -188,7 +190,7 @@ void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) {
 
         // insert tuple into database
         // HISTORY does not have a key, use the whole tuple
-        Dbt key(&tup, sizeof(tpcc_history_tuple));
+        Dbt key((void*)&tup, sizeof(tpcc_history_tuple));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -226,7 +228,7 @@ void tpcc_parse_tbl_ITEM(Db* db, FILE* fd) {
 
         // insert tuple into database
         // ITEM key composed (I_ID)
-        Dbt key(&tup.I_ID, sizeof(int));
+        Dbt key((void*)&tup.I_ID, sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -259,7 +261,7 @@ void tpcc_parse_tbl_NEW_ORDER(Db* db, FILE* fd) {
 
         // insert tuple into database
         // NEW_ORDER key composed (NO_O_ID, NO_D_ID, NO_W_ID)
-        Dbt key(&tup.NO_O_ID, 3 * sizeof(int));
+        Dbt key((void*)&tup.NO_O_ID, 3 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -304,7 +306,7 @@ void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
 
         // insert tuple into database
         // ORDER key composed (O_ID, O_C_ID, O_D_ID, O_W_ID)
-        Dbt key(&tup.O_ID, 4 * sizeof(int));
+        Dbt key((void*)&tup.O_ID, 4 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -353,7 +355,7 @@ void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) {
 
         // insert tuple into database
         // ORDERLINE key composed (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER)
-        Dbt key(&tup.OL_O_ID, 4 * sizeof(int));
+        Dbt key((void*)&tup.OL_O_ID, 4 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -416,7 +418,7 @@ void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) {
 
         // insert tuple into database
         // STOCK key composed (S_I_ID, S_W_ID)
-        Dbt key(&tup.S_I_ID, 2 * sizeof(int));
+        Dbt key((void*)&tup.S_I_ID, 2 * sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
@@ -463,7 +465,7 @@ void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
 
         // insert tuple into database
         // WAREHOUSE key composed (W_ID)
-        Dbt key(&tup.W_ID, sizeof(int));
+        Dbt key((void*)&tup.W_ID, sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 

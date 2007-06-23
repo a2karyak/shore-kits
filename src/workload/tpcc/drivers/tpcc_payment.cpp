@@ -34,7 +34,7 @@ void tpcc_payment_driver::submit(void* disp) {
     // payment_begin_packet output
     // FIXME: (ip) I don't know if we need output buffers for the PAYMENT_BEGIN
     //             but the code asserts if output_buffer == NULL
-    tuple_fifo* bp_buffer = new tuple_fifo(sizeof(trx_result_tuple));
+    tuple_fifo* bp_buffer = new tuple_fifo(sizeof(trx_result_tuple_t));
 
     // payment_begin_packet filter
     // FIXME: (ip) I also don't believe that we need filters for the PAYMENT
@@ -42,7 +42,7 @@ void tpcc_payment_driver::submit(void* disp) {
 
     // (ip) size of output_filter and output_buffer should be the same!
     tuple_filter_t* bp_filter = 
-        new trivial_filter_t(sizeof(trx_result_tuple));
+        new trivial_filter_t(sizeof(trx_result_tuple_t));
     
 
     // payment_begin_packet

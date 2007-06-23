@@ -5,6 +5,11 @@
  *  @brief Implementation of the TPC-H table parsing functions
  */
 
+
+// FIXME (ip): The keys should be (void*) for safer retrieval
+// Like:  Dbt key((void*)&tup.C_ID, sizeof(out))
+
+
 #include "workload/tpch/tpch_tbl_parsers.h"
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"

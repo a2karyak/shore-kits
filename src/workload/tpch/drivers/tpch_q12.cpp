@@ -1,14 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "stages.h"
+#include "scheduler.h"
+
+#include "workload/common.h"
 
 #include "workload/tpch/drivers/tpch_q12.h"
 
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/tpch_env.h"
-
-#include "workload/common.h"
 
 
 using namespace tpch;

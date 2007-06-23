@@ -34,7 +34,7 @@ public:
     }
 
     virtual void process(const tuple_t& output) {
-        trx_result_tuple* r = aligned_cast<trx_result_tuple>(output.data);
+        trx_result_tuple_t* r = aligned_cast<trx_result_tuple_t>(output.data);
         TRACE(TRACE_ALWAYS, "*** PAYMENT_BEGIN TRX=%d RESULT=%s\n",
               r->get_id(),
               (r->get_state() == COMMITTED) ? "OK" : "ABORT");
@@ -192,10 +192,10 @@ void payment_begin_stage_t::process_packet() {
     tuple_t dest(dest_data, dest_size);
     
     
-    trx_result_tuple aTrxResultTuple(COMMITTED, my_trx_id);
+    trx_result_tuple_t aTrxResultTuple(COMMITTED, my_trx_id);
     
-    trx_result_tuple* dest_result_tuple;
-    dest_result_tuple = aligned_cast<trx_result_tuple>(dest.data);
+    trx_result_tuple_t* dest_result_tuple;
+    dest_result_tuple = aligned_cast<trx_result_tuple_t>(dest.data);
     
     *dest_result_tuple = aTrxResultTuple;
     

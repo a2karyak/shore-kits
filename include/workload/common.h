@@ -14,6 +14,6 @@
 // predicates to stages/common/, I added the following inclusion.
 // Should be removed 
 #include "stages/common.h"
-
+//#include "stages/tpcc/common/tpcc_struct.h"
 
 #endif
