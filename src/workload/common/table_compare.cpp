@@ -82,7 +82,7 @@ int bt_compare_fn_1_int(const Dbt* k1,
     int u1 = *(int*)k1->get_data();
     int u2 = *(int*)k2->get_data();
 
-    printf ("k1=%d\tk2=%d\n", u1, u2);
+    //    printf ("k1=%d\tk2=%d\n", u1, u2);
 
     if (u1 < u2)
         return -1;
@@ -102,7 +102,7 @@ int bt_compare_fn_1_int(const Dbt* k1,
 int bt_compare_fn_2_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-    printf ("k1=%d\tk2=%d\n", *(int*)k1->get_data(), *(int*)k2->get_data());
+    //    printf ("k1=%d\tk2=%d\n", *(int*)k1->get_data(), *(int*)k2->get_data());
 
     // key has 2 integers
     s_two_ints u1;
