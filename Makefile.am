@@ -157,8 +157,11 @@ SG_MAIN = \
    $(SG)/echo.cpp \
    $(SG)/sieve.cpp
 
+SG_COMMON = \
+   $(SG)/common/process_query.cpp \
+   $(SG)/common/predicates.cpp 
+
 SG_TRX = \
-   $(SG)/tpcc/trx_packet.cpp \
    $(SG)/tpcc/payment_baseline.cpp \
    $(SG)/tpcc/payment_begin.cpp \
    $(SG)/tpcc/payment_upd_wh.cpp \
@@ -167,14 +170,14 @@ SG_TRX = \
    $(SG)/tpcc/payment_ins_hist.cpp \
    $(SG)/tpcc/payment_finalize.cpp
 
-SG_COMMON = \
-   $(SG)/common/process_query.cpp \
-   $(SG)/common/predicates.cpp 
+SG_TRX_COMMON = \
+   $(SG)/tpcc/common/trx_packet.cpp 
 
 lib_libstages_a_SOURCES = \
    $(SG_MAIN) \
+   $(SG_COMMON) \
    $(SG_TRX) \
-   $(SG_COMMON)
+   $(SG_TRX_COMMON)
 
 
 
