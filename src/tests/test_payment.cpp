@@ -1,11 +1,18 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/payment_begin.h"
+/** @file test_tpcc_load.cpp
+ *
+ *  @brief Test running TPC-C PAYMENT_STAGED transaction. We need to register
+ *  all the trxstages.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
 
-# include "tests/common/tester_query.h"
+#include "tests/common/tester_query.h"
 
-# include "workload/common.h"
-# include "workload/tpcc/drivers/tpcc_payment.h"
+#include "workload/register_stage_containers.h"
+#include "workload/tpcc/drivers/tpcc_payment.h"
+
 
 using namespace qpipe;
 
@@ -14,7 +21,8 @@ int main(int argc, char* argv[]) {
 
     query_info_t info = query_init(argc, argv, TRX_ENV);
     
-    register_stage<payment_begin_stage_t>(10);
+    register_stage_containers(TRX_ENV);
+
 
     workload::tpcc_payment_driver driver(c_str("PAYMENT"));
 

@@ -22,10 +22,15 @@ ENTER_NAMESPACE(workload);
 int bt_compare_fn_1_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-    int u1;
-    int u2;
+    int u1[1];
+    int u2[1];
+    memcpy(u1, k1->get_data(), sizeof(int));
+    memcpy(u2, k2->get_data(), sizeof(int));
+
+    /*
     memcpy(&u1,((int*)k1->get_data()), sizeof(int));
     memcpy(&u2,((int*)k2->get_data()), sizeof(int));
+    */
 
     if (u1 < u2)
         return -1;

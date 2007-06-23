@@ -1,7 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file test_tpcc_load.cpp
+ *
+ *  @brief Test running TPC-C PAYMENT_BASELINE transaction. We need to register
+ *  only one stage - payment_baseline_stage_t
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #include "stages/tpcc/payment_baseline.h"
-//# include "stages/tpcc/payment_begin.h"
 
 #include "tests/common/tester_query.h"
 
