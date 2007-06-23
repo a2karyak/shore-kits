@@ -465,7 +465,7 @@ void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
 
         // insert tuple into database
         // WAREHOUSE key composed (W_ID)
-        Dbt key((void*)&tup.W_ID, sizeof(int));
+        Dbt key(&tup.W_ID, sizeof(int));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 

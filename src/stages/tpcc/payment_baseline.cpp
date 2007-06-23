@@ -71,7 +71,6 @@ void payment_baseline_stage_t::process_packet() {
 } // process_packet
 
 
-
 /** @fn executePayment
  *
  *  @brief Executes the PAYMENT transactions. Wrapper function.
@@ -105,20 +104,25 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
               p->_home_wh_id );
 
        // WAREHOUSE key: W_ID 
-       Dbt key_wh((void*)p->_home_wh_id, sizeof(int));
+       Dbt key_wh(&p->_home_wh_id, sizeof(int));
        
        Dbt data_wh;
        data_wh.set_flags(DB_DBT_MALLOC);
 
-       tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(p->_trx_txn, &key_wh, &data_wh, DB_RMW);       
-       //       dbenv->get(p->_trx_txn, &key_wh, &data_wh, DB_RMW);
-       tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
+       if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(p->_trx_txn, &key_wh, &data_wh, DB_RMW) == 
+           DB_NOTFOUND) 
+           {
+               THROW2(BdbException, 
+                      "warehouse with id=%d not found in the database\n", 
+                      p->_home_wh_id);
+           }
 
-       assert(warehouse); // make sure that we got a warehouse
+       tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
+       
+       assert(warehouse != NULL); // make sure that we got a warehouse
        
        warehouse->W_YTD += p->_h_amount;
        tpcc_tables[TPCC_TABLE_WAREHOUSE].db->put(p->_trx_txn, &key_wh, &data_wh, 0);       
-
 
        /** Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
         *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
@@ -192,23 +196,22 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
        p->_trx_txn->commit(0);
 
     }
-	catch(DbException err) {
-	    dbenv->err(err.get_errno(), "%d: Caught exception\n");
-	    TRACE( TRACE_ALWAYS, "DbException - Aborting PAYMENT trx...\n");
+    catch(DbException err) {
+        dbenv->err(err.get_errno(), "%d: Caught exception\n");
+        TRACE( TRACE_ALWAYS, "DbException - Aborting PAYMENT trx...\n");
+        
+        p->_trx_txn->abort();
 	    
-	    p->_trx_txn->abort();
-	    
-	    aTrxResultTuple.set_state(ROLLBACKED);
-	    return (aTrxResultTuple);
-	    
-	    // FIXME (ip): We may want to have retries
-	    //if (++failed_tries > MAX_TRIES) {
-	    //   packet->_trx_txn->abort();
-	    //   TRACE( TRACE_ALWAYS, "MAX_FAILS - Aborting...\n");
-	    
-	}
-
-	return (aTrxResultTuple);
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
+        
+        // FIXME (ip): We may want to have retries
+        //if (++failed_tries > MAX_TRIES) {
+        //   packet->_trx_txn->abort();
+        //   TRACE( TRACE_ALWAYS, "MAX_FAILS - Aborting...\n");        
+    }
+    
+    return (aTrxResultTuple);
 
 } // EOF: executePayment
 

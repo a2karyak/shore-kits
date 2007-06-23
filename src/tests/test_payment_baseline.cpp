@@ -19,7 +19,7 @@
 using namespace qpipe;
 
 // sets certain range in the queried warehouses
-const int WH = 4; 
+const int WH = 1; 
 
 int main(int argc, char* argv[]) {
 

@@ -14,15 +14,6 @@ using namespace tpch;
 query_info_t query_init(int argc, char* argv[], int env) {
 
     thread_init();
-    
-    // open database
-    if (env == QUERY_ENV) {
-        tpch::db_open();
-    }
-    else {
-        tpcc::db_open(BDB_TPCC_DB_OPEN_FLAGS);
-    }
-
 
     // parse command line args
     if ( argc < 2 ) {
@@ -35,6 +26,17 @@ query_info_t query_init(int argc, char* argv[], int env) {
 	TRACE(TRACE_ALWAYS, "Invalid iterations per client %s\n", argv[1]);
 	exit(-1);
     }
+
+    
+    // open database
+    if (env == QUERY_ENV) {
+        tpch::db_open();
+    }
+    else {
+        tpcc::db_open(BDB_TPCC_DB_OPEN_FLAGS);
+    }
+
+
 
     query_info_t info;
     info.num_iterations = num_iterations;

@@ -48,6 +48,8 @@ void open_db_table(Db*& table, u_int32_t flags,
                     DB_BTREE, 
                     flags, 
                     0644);
+
+        TRACE(TRACE_DEBUG, "Table: %s opened...\n", table_name);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS,
@@ -129,6 +131,7 @@ void close_db_table(Db* &table,
 
     try {
         table->close(0);
+        TRACE(TRACE_DEBUG, "Table: %s closed...\n", table_name);
     }
     catch ( DbException &e) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing table \"%s\"\n",

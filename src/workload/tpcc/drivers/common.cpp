@@ -50,7 +50,7 @@ int URand(int low, int high) {
   randgen_t* randgenp = self->randgen();
   int d = high - low + 1;
 
-  if ((d & -d) == d) {
+  if (((d & -d) == d) && (high > 1)) {
       // we avoid to pass a power of 2 to rand()
       return( low + ((randgenp->rand(high - low + 2) + randgenp->rand(high - low))/2) );
   }
