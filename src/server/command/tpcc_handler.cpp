@@ -95,7 +95,7 @@ void tpcc_handler_t::handle_command(const char* command) {
     int num_clients;
     int num_iterations;
     int think_time;
-    
+
 
     // parse command
     char driver_tag[SERVER_COMMAND_BUFFER_SIZE];

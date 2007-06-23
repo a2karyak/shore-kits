@@ -22,10 +22,6 @@ using namespace qpipe;
 ENTER_NAMESPACE(workload);
 
 
-/** FIXME: (ip) SF constant */
-const int SF = 10;
-
-
 void tpcc_payment_baseline_driver::submit(void* disp) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
@@ -51,7 +47,7 @@ void tpcc_payment_baseline_driver::submit(void* disp) {
                                         bp_buffer, 
                                         bp_filter,
                                         dp,
-                                        SF);
+                                        whRange);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
@@ -113,7 +109,7 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                    p_c_last,
                                                    p_amount,
                                                    p_date);
-					       
+
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

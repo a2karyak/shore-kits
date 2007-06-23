@@ -279,7 +279,7 @@ AC_SUBST(QPIPE_VERSION)
 
 # basic flags/libs every arch needs
 
-# PROFILE_FLAGS CAUSES DEADLOCK ON crete.db.cs.cmu.edu
+# *** PROFILE_FLAGS CAUSES DEADLOCK ON crete.db.cs.cmu.edu ***
 DEBUG_FLAGS="-O0"
 #PROFILE_FLAGS="-pg -O0"
 #OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"

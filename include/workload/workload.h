@@ -1,7 +1,7 @@
 /* -*- mode:c++; c-basic-offset:4 -*- */
 
-#ifndef _WORKLOAD_H
-#define _WORKLOAD_H
+#ifndef __WORKLOAD_H
+#define __WORKLOAD_H
 
 #include "util.h"
 #include "workload/measurements.h"
@@ -21,6 +21,7 @@ ENTER_NAMESPACE(workload);
  *  encapsulate (1) creating these client threads and (2) waiting for
  *  all of them to finish executing.
  */
+
 class workload_t {
 
 private:
@@ -35,7 +36,6 @@ private:
     int _num_clients;
     int _num_iterations;
     int _think_time;
-
 
     void wait_for_clients(pthread_t* thread_ids, int num_thread_ids);
 
@@ -73,6 +73,9 @@ public:
 
     // run a workload and wait for it to finish executing
     bool run(results_t &results);
+
+    // describe workload properties
+    void describe();
 };
 
 EXIT_NAMESPACE(workload);

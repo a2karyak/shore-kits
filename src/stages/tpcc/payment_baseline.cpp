@@ -45,9 +45,10 @@ void payment_baseline_stage_t::process_packet() {
 
     // Prints out the packet info
     packet->describe_trx();
-    
+
     trx_result_tuple_t aTrxResultTuple = executePaymentBaseline(packet);
     
+
     TRACE( TRACE_ALWAYS, "DONE. NOTIFYING CLIENT\n" );
     
     // writing output 

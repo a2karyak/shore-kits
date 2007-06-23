@@ -28,22 +28,31 @@ int processing_env = QUERY_ENV;
 
 int main(int argc, char* argv[]) {
 
-    // qpipe_init() panics on error
-    int mode = qpipe_init(argc, argv);
+    try {
 
-    switch (mode) {
-    case RUN_INTERACTIVE_MODE:
-        interactive_mode();
-        break;
-    case RUN_NETWORK_MODE:
-        network_mode(QPIPE_NETWORK_MODE_DEFAULT_LISTEN_PORT);
-        break;
-    case RUN_BATCH_MODE:
-        TRACE( TRACE_ALWAYS, "Batch mode unimplemented\n");
-        break;
-    default:
-        interactive_mode();
-        break;
+        // qpipe_init() panics on error
+        int mode = qpipe_init(argc, argv);
+
+        switch (mode) {
+        case RUN_INTERACTIVE_MODE:
+            interactive_mode();
+            break;
+        case RUN_NETWORK_MODE:
+            network_mode(QPIPE_NETWORK_MODE_DEFAULT_LISTEN_PORT);
+            break;
+        case RUN_BATCH_MODE:
+            TRACE( TRACE_ALWAYS, "Batch mode unimplemented\n");
+            break;
+        default:
+            interactive_mode();
+            break;
+        }
+    }
+    catch (...) {
+        // catches any arbitrary exception raised
+        TRACE( TRACE_ALWAYS, "Exception reached main()\tExiting...");
+        qpipe_shutdown();
+        return (-1);
     }
          
 

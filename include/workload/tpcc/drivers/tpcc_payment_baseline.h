@@ -26,14 +26,26 @@ ENTER_NAMESPACE(workload);
 
 class tpcc_payment_baseline_driver : public driver_t {
 
+private:
+    // whRange governs the range of warehouses queried by the client
+    // the default value is 10
+    int whRange;
+
 public:
 
-    tpcc_payment_baseline_driver(const c_str& description)
+    tpcc_payment_baseline_driver(const c_str& description, const int aRange = 10)
       : driver_t(description)
       {
+          assert (aRange > 0);
+          whRange = aRange;
       }
 
     virtual void submit(void* disp);
+
+    inline void setRange(const int aRange) {
+        assert (aRange > 0);
+        whRange = aRange;
+    }
 
     trx_packet_t* create_payment_baseline_packet(const c_str& client_prefix,
                                                  tuple_fifo* bp_buffer,

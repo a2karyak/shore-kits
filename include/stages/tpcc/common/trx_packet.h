@@ -166,7 +166,8 @@ public:
 
     trx_result_tuple_t() { reset(UNDEF, -1); }
 
-    trx_result_tuple_t(TrxState aTrxState, int anID) { reset(aTrxState, anID); }
+    trx_result_tuple_t(TrxState aTrxState, int anID) { reset(aTrxState, anID); 
+    }
 
     ~trx_result_tuple_t() { }
 

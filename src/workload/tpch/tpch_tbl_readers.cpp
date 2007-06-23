@@ -25,14 +25,14 @@ ENTER_NAMESPACE(tpch);
 /* definitions of exported functions */
 
 
-void tpch_read_tbl_CUSTOMER (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_LINEITEM (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_NATION   (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_ORDERS   (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_PART     (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_PARTSUPP (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_REGION   (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
-void tpch_read_tbl_SUPPLIER (Db* db) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_CUSTOMER (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_LINEITEM (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_NATION   (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_ORDERS   (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_PART     (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_PARTSUPP (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_REGION   (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
+void tpch_read_tbl_SUPPLIER (Db* ) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
 
 

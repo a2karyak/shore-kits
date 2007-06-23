@@ -49,6 +49,11 @@ int URand(int low, int high) {
   thread_t* self = thread_get_self();
   randgen_t* randgenp = self->randgen();
 
+  if ((high % 2) == 0) {
+      int ret = (randgenp->rand(high - low + 2) + randgenp->rand(high - low))/2;
+      return (low + ret);
+  }
+
   return (low + randgenp->rand(high - low + 1));
 }
 
