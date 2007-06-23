@@ -138,8 +138,8 @@ public:
 
     void describe_trx() {
 
-        //        printf(
-        TRACE( TRACE_ALWAYS,
+        printf(
+        //        TRACE( TRACE_ALWAYS,
              "\nPAYMENT - TRX=%d\n" \
              "WH_ID=%d\t\tD_ID=%d\n" \
              "SEL_WH=%d\tSEL_IDENT=%d\n" \

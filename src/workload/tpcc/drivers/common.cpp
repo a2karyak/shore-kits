@@ -48,13 +48,14 @@ int URand(int low, int high) {
 
   thread_t* self = thread_get_self();
   randgen_t* randgenp = self->randgen();
+  int d = high - low + 1;
 
-  if ((high % 2) == 0) {
-      int ret = (randgenp->rand(high - low + 2) + randgenp->rand(high - low))/2;
-      return (low + ret);
+  if ((d & -d) == d) {
+      // we avoid to pass a power of 2 to rand()
+      return( low + ((randgenp->rand(high - low + 2) + randgenp->rand(high - low))/2) );
   }
 
-  return (low + randgenp->rand(high - low + 1));
+  return (low + randgenp->rand(d));
 }
 
 

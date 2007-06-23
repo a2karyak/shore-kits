@@ -110,6 +110,7 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                    p_amount,
                                                    p_date);
 
+    payment_packet->describe_trx();
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

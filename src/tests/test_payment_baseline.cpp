@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 
     return (-1);
     /////
-    EOF URand() testing 
+    //    EOF URand() testing 
     */
 
     query_main(info, &driver, TRX_ENV);
