@@ -21,9 +21,9 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/trx_packet.h"
+#include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/common/tpcc_struct.h"
 
-#include "workload/tpcc/tpcc_struct.h"
 
 
 using namespace qpipe;

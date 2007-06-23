@@ -4,14 +4,14 @@
 
 #include "stages.h"
 
-#include "workload/common/process_query.h"
+#include "stages/common/process_query.h"
 
 #include "workload/tpch/tpch_db.h"
 #include "workload/tpch/q6_packet.h"
 
 
 using namespace qpipe;
-using namespace workload;
+//using namespace workload;
 using namespace tpch;
 
 void* q6_client_main(void* arg) {

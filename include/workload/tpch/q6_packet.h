@@ -1,19 +1,21 @@
 // -*- mode:C++; c-basic-offset:4 -*-
 
-#ifndef _Q6_PACKET_H
-#define _Q6_PACKET_H
+#ifndef __Q6_PACKET_H
+#define __Q6_PACKET_H
 
 
 #include "core.h"
 #include "scheduler.h"
+
+#include "stages/common/process_tuple.h"
+#include "stages/common/predicates.h"
+
 #include "workload/tpch/tpch_struct.h"
 #include "workload/tpch/tpch_type_convert.h"
-#include "workload/common/process_tuple.h"
-#include "workload/common/predicates.h"
 
 using namespace qpipe;
 using namespace scheduler;
-using namespace workload;
+//using namespace workload;
 
 
 ENTER_NAMESPACE(tpch);

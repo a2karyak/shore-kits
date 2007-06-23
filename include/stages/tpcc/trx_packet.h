@@ -15,9 +15,9 @@
 #include <cstdio>
 #include <db_cxx.h>
 
-#include "workload/common/process_tuple.h"
 #include "core.h"
 
+#include "stages/common/process_tuple.h"
 
 // using namespace workload;
 

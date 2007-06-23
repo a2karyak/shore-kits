@@ -155,7 +155,7 @@ SG_MAIN = \
    $(SG)/bnl_join.cpp \
    $(SG)/bnl_in.cpp \
    $(SG)/echo.cpp \
-   $(SG)/sieve.cpp \
+   $(SG)/sieve.cpp
 
 SG_TRX = \
    $(SG)/tpcc/trx_packet.cpp \

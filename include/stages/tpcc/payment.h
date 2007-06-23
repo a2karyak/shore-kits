@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PAYMENT_H
-#define _PAYMENT_H
+#ifndef __TPCC_PAYMENT_H
+#define __TPCC_PAYMENT_H
 
 // STAGED PAYMENT
 #include "stages/tpcc/payment_upd_wh.h"

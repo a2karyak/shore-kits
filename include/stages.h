@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _STAGES_H
-#define _STAGES_H
+#ifndef __STAGES_H
+#define __STAGES_H
 
 // basic stages
 #include "stages/aggregate.h"
@@ -21,11 +21,6 @@
 #include "stages/echo.h"
 #include "stages/sieve.h"
 #include "stages/tuple_source.h"
-
-// transactional stages
-#include "stages/tpcc/payment.h"
-
-
 
 #endif
 

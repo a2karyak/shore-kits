@@ -10,4 +10,10 @@
 #include "workload/common/int_comparator.h"
 #include "workload/common/single_int_join.h"
 
+// FIXME (ip) To reduce the need for code-changes, after moving process_* and
+// predicates to stages/common/, I added the following inclusion.
+// Should be removed 
+#include "stages/common.h"
+
+
 #endif

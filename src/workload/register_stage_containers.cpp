@@ -1,6 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "stages.h"
+#include "trxstages.h"
+
 #include "workload/common/register_stage.h"
 #include "workload/register_stage_containers.h"
 
