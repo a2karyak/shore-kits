@@ -198,9 +198,10 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
             DB_INIT_LOCK  | // Initialize locking
             DB_INIT_LOG   | // Initialize logging
             DB_INIT_MPOOL | // Initialize the cache
+            DB_INIT_TXN   | // Initialize transactions  
             DB_THREAD     | // Free-thread the env handle
-            DB_RECOVER    | // Run normal recovery at db environment startup
-            DB_INIT_TXN;    // Initialize transactions  
+            DB_RECOVER;     // Run normal recovery at db environment startup
+
 
         /** @note Other possible flags
             DB_RECOVER    | // Run normal recovery before opening for normal use

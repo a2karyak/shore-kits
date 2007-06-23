@@ -37,6 +37,8 @@ void open_db_table(Db*& table, u_int32_t flags,
     c_str path("%s", table_name);
     
     try {
+        assert (dbenv != NULL); /* for transaction-support dbenv should not be NULL */
+
         table = new Db(dbenv, 0);
         table->set_bt_compare(cmp);
         table->set_pagesize(4096);

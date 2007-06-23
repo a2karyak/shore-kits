@@ -58,8 +58,12 @@ ENTER_NAMESPACE(tpcc);
  *
  *  @note In order to enable READ UNCOMMITTED isolation we must pass this
  *  parameter in the dbopen function.
+ *
+ *  @note In order to open a table with transactional support the environmental
+ *  handle should be passed, and the database must open within a transaction.
+ *  For this reason DB_AUTO_COMMIT is used in the database open command.
  */
-#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE
+#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_AUTO_COMMIT
 //#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_READ_UNCOMMITTED
 
 /** @note Define the env flags.
