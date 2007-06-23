@@ -129,18 +129,36 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
         *  D_YTD is increased by H_AMOYNT.
         */
        TRACE( TRACE_ALWAYS, 
-              "Step 3: Updating the row in the DISTRICT table with matching \
-               D_W_ID=%d and D_ID=%d\n", 
+              "Step 3: Updating the row in the DISTRICT table with matching " \
+              "D_ID=%d and D_W_ID=%d\n", 
               p->_home_d_id, 
               p->_home_wh_id);
 
        // DISTRICT key: D_ID, D_W_ID 
-       tpcc_district_tuple_key dk = { p->_home_d_id, p->_home_wh_id };
-       Dbt key_d(&dk, 2 * sizeof(int));
+       tpcc_district_tuple_key dk;
+       dk.D_ID = p->_home_d_id;
+       dk.D_W_ID = p->_home_wh_id;
+       Dbt key_d(&dk, sizeof(dk));
+
+       /*
+       memcpy(&dk.D_ID, &p->_home_d_id, sizeof(int));
+       memcpy(&dk.D_W_ID, &p->_home_wh_id, sizeof(int));
+       Dbt key_d(&dk.D_ID, 2 * sizeof(int));
+       */
+
+
        Dbt data_d;
        data_d.set_flags(DB_DBT_MALLOC);
 
-       tpcc_tables[TPCC_TABLE_DISTRICT].db->get(p->_trx_txn, &key_d, &data_d, DB_RMW);
+       if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(p->_trx_txn, &key_d, &data_d, DB_RMW) ==
+           DB_NOTFOUND)
+           {
+               THROW3(BdbException, 
+                      "district with id=(%d,%d) not found in the database\n", 
+                      dk.D_ID,
+                      dk.D_W_ID);
+           }
+
        tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
 
        assert(district); // make sure that we got a district

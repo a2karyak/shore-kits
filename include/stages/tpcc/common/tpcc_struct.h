@@ -28,6 +28,10 @@ ENTER_NAMESPACE(tpcc);
 #define STRSIZE(x)(x+1)
 
 
+/** @note comment this to remove padding */
+#define PADDING_ENABLE
+
+
 /* exported structures */
 
 
@@ -88,6 +92,10 @@ struct tpcc_district_tuple {
     decimal D_TAX;
     decimal D_YTD;
     int D_NEXT_O_ID;
+
+#ifdef PADDING_ENABLE
+    char D_PADDING  [STRSIZE(3000)];
+#endif
 };
 
 
@@ -229,6 +237,10 @@ struct tpcc_warehouse_tuple {
     char W_ZIP      [STRSIZE(9)];
     decimal W_TAX;
     decimal W_YTD;
+
+#ifdef PADDING_ENABLE
+    char W_PADDING  [STRSIZE(3000)];
+#endif
 };
 
 

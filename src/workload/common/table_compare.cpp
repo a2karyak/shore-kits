@@ -16,6 +16,8 @@ ENTER_NAMESPACE(workload);
 
 /** Helper functions */
 
+
+
 // FIXME (ip) Taken by Colohan
 
 // On the SGI we get hosed by unaligned data structures.  If we use
@@ -40,6 +42,34 @@ static inline void unaligned_memcpy(void *a,
 
 /** Exported functions */
 
+struct s_two_ints {
+    int s1;
+    int s2;
+};
+
+struct s_three_ints {
+    int s1;
+    int s2;
+    int s3;
+};
+
+struct s_four_ints {
+    int s1;
+    int s2;
+    int s3;
+    int s4;
+};
+
+struct s_six_ints {
+    int s1;
+    int s2;
+    int s3;
+    int s4;
+    int s5;
+    int s6;
+};
+    
+
 
 /** @bt_compare_fn_1_int
  *
@@ -53,11 +83,6 @@ int bt_compare_fn_1_int(const Dbt* k1,
     int u2 = *(int*)k2->get_data();
 
     printf ("k1=%d\tk2=%d\n", u1, u2);
-
-    /*
-    memcpy(&u1,((int*)k1->get_data()), sizeof(int));
-    memcpy(&u2,((int*)k2->get_data()), sizeof(int));
-    */
 
     if (u1 < u2)
         return -1;
@@ -77,15 +102,17 @@ int bt_compare_fn_1_int(const Dbt* k1,
 int bt_compare_fn_2_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-    // key has 2 integers
-    int u1[2];
-    int u2[2];
-    memcpy(u1, k1->get_data(), 2 * sizeof(int));
-    memcpy(u2, k2->get_data(), 2 * sizeof(int));
+    printf ("k1=%d\tk2=%d\n", *(int*)k1->get_data(), *(int*)k2->get_data());
 
-    if ((u1[0] < u2[0]) || ((u1[0] == u2[0]) && (u1[1] < u2[1])))
+    // key has 2 integers
+    s_two_ints u1;
+    s_two_ints u2;
+    memcpy(&u1, k1->get_data(), sizeof(u1));
+    memcpy(&u2, k2->get_data(), sizeof(u2));
+
+    if ((u1.s1 < u2.s1) || ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)))
         return -1;
-    else if ((u1[0] == u2[0]) && (u1[1] == u2[1]))
+    else if ((u1.s1 == u2.s1) && (u1.s2 == u2.s2))
         return 0;
     else
         return 1;
@@ -103,16 +130,16 @@ int bt_compare_fn_3_int(const Dbt* k1,
                         const Dbt* k2)
 {
   // key has 3 integers
-  int u1[3];
-  int u2[3];
-  memcpy(u1, k1->get_data(), 3 * sizeof(int));
-  memcpy(u2, k2->get_data(), 3 * sizeof(int));
+  s_three_ints u1;
+  s_three_ints u2;
+  memcpy(&u1, k1->get_data(), sizeof(u1));
+  memcpy(&u2, k2->get_data(), sizeof(u2));
   
-  if ((u1[0] < u2[0]) || 
-      ((u1[0] == u2[0]) && (u1[1] < u2[1])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] < u2[2])))
+  if ((u1.s1 < u2.s1) || 
+      ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 < u2.s3)))
     return -1;
-  else if ((u1[0] == u2[0]) && (u1[1] == u2[1]) &&  (u1[2] == u2[2]) )
+  else if ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) &&  (u1.s3 == u2.s3) )
     return 0;
   else
     return 1;
@@ -129,20 +156,20 @@ int bt_compare_fn_4_int(const Dbt* k1,
                         const Dbt* k2)
 {
   // key has 4 integers
-  int u1[4];
-  int u2[4];
-  memcpy(u1, k1->get_data(), 4 * sizeof(int));
-  memcpy(u2, k2->get_data(), 4 * sizeof(int));
+  s_four_ints u1;
+  s_four_ints u2;
+  memcpy(&u1, k1->get_data(), sizeof(s_four_ints));
+  memcpy(&u2, k2->get_data(), sizeof(s_four_ints));
   
-  if ((u1[0] < u2[0]) || 
-      ((u1[0] == u2[0]) && (u1[1] < u2[1])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] < u2[2])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] == u2[2]) && (u1[3] < u2[3])))
+  if ((u1.s1 < u2.s1) || 
+      ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 < u2.s3)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 == u2.s3) && (u1.s4 < u2.s4)))
     return -1;
-  else if ((u1[0] == u2[0]) && 
-           (u1[1] == u2[1]) &&  
-           (u1[2] == u2[2]) &&  
-           (u1[3] == u2[3]))
+  else if ((u1.s1 == u2.s1) && 
+           (u1.s2 == u2.s2) &&  
+           (u1.s3 == u2.s3) &&  
+           (u1.s4 == u2.s4))
     return 0;
   else
     return 1;
@@ -159,27 +186,27 @@ int bt_compare_fn_6_int(const Dbt* k1,
                         const Dbt* k2)
 {
   // key has 6 integers
-  int u1[6];
-  int u2[6];
-  memcpy(u1, k1->get_data(), 6 * sizeof(int));
-  memcpy(u2, k2->get_data(), 6 * sizeof(int));
+  s_six_ints u1;
+  s_six_ints u2;
+  memcpy(&u1, k1->get_data(), sizeof(s_six_ints));
+  memcpy(&u2, k2->get_data(), sizeof(s_six_ints));
   
-  if ((u1[0] < u2[0]) || 
-      ((u1[0] == u2[0]) && (u1[1] < u2[1])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] < u2[2])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && 
-       (u1[2] == u2[2]) && (u1[3] < u2[3])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && 
-       (u1[2] == u2[2]) && (u1[3] == u2[3]) && (u1[4] < u2[4])) ||
-      ((u1[0] == u2[0]) && (u1[1] == u2[1]) && (u1[2] == u2[2]) && 
-       (u1[3] == u2[3]) && (u1[4] == u2[4]) && (u1[5] < u2[5])))
+  if ((u1.s1 < u2.s1) || 
+      ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 < u2.s3)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && 
+       (u1.s3 == u2.s3) && (u1.s4 < u2.s4)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && 
+       (u1.s3 == u2.s3) && (u1.s4 == u2.s4) && (u1.s5 < u2.s5)) ||
+      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 == u2.s3) && 
+       (u1.s4 == u2.s4) && (u1.s5 == u2.s5) && (u1.s6 < u2.s6)))
     return -1;
-  else if ((u1[0] == u2[0]) && 
-           (u1[1] == u2[1]) &&  
-           (u1[2] == u2[2]) &&  
-           (u1[3] == u2[3]) &&  
-           (u1[4] == u2[4]) &&  
-           (u1[5] == u2[5]))
+  else if ((u1.s1 == u2.s1) && 
+           (u1.s2 == u2.s2) &&  
+           (u1.s3 == u2.s3) &&  
+           (u1.s4 == u2.s4) &&  
+           (u1.s5 == u2.s5) &&  
+           (u1.s6 == u2.s6))
     return 0;
   else
     return 1;

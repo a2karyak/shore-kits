@@ -19,12 +19,12 @@ class tpcc_payment_driver : public driver_t {
 
 private:
     // whRange governs the range of warehouses queried by the client
-    // the default value is 10
+    // the default value is RANGE (see trx_packet.h)
     int whRange;
 
 public:
 
-    tpcc_payment_driver(const c_str& description, const int aRange = 10)
+    tpcc_payment_driver(const c_str& description, const int aRange = RANGE)
         : driver_t(description)
     {
           assert (aRange > 0);

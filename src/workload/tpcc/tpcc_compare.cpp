@@ -41,7 +41,7 @@ int tpcc_bt_compare_fn_DISTRICT(Db*,
                                 const Dbt* k1, 
                                 const Dbt* k2)
 { 
-    return (bt_compare_fn_3_int(k1, k2));
+    return (bt_compare_fn_2_int(k1, k2));
 }
 
 

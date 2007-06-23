@@ -26,6 +26,7 @@ ENTER_NAMESPACE(qpipe);
 
 
 # define NO_VALID_TRX_ID -1
+# define RANGE 1
 
 
 /**
