@@ -7,7 +7,6 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-
 #include "stages/tpcc/payment_baseline.h"
 
 #include "workload/tpcc/tpcc_env.h"
@@ -170,7 +169,9 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
 
        /** Step 4: Retrieve and Update CUSTOMER */
 
-       if (p->_v_cust_ident_selection < 40) {
+       // FIXME (ip) : It always chooses the customer by id. It should be 40.
+       if (p->_v_cust_ident_selection < 0) {
+           //       if (p->_v_cust_ident_selection < 40) {
            /** Step 4b: Retrieve CUSTOMER based on C_LAST */
            TRACE( TRACE_ALWAYS, "Step 4b: Retrieving and Updating the row in the CUSTOMER table \
                   with matching C_W_ID=%d and C_D_ID=%d and C_LAST=%s\n",
@@ -178,10 +179,15 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
                   p->_home_d_id, 
                   p->_c_last);
         
-           if (updateCustomerByLast(p->_home_d_id, p->_home_d_id, p->_c_last)) {
-                   // Failed
+           if (updateCustomerByLast(p->_trx_txn, 
+                                    p->_home_d_id, 
+                                    p->_home_d_id, 
+                                    p->_c_last, 
+                                    p->_h_amount)) {
+               // Failed
                 
-                   /** FIXME (ip): Should Abort/Rollback */       
+               /** FIXME (ip): Should Abort/Rollback */       
+               assert (1==0);
            }
        }
        else {
@@ -192,10 +198,15 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
                   p->_home_d_id, 
                   p->_c_id);
         
-           if (updateCustomerByID(p->_home_d_id, p->_home_d_id, p->_c_id)) {
-                   // Failed
+           if (updateCustomerByID(p->_trx_txn, 
+                                  p->_home_d_id, 
+                                  p->_home_d_id, 
+                                  p->_c_id, 
+                                  p->_h_amount)) {
+               // Failed
                  
-                   /** FIXME (ip): Should Abort/Rollback */       
+               /** FIXME (ip): Should Abort/Rollback */       
+               assert (1==0);
            }
        }
     
@@ -250,22 +261,61 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
  *  @return 0 on success, non-zero on failure
  */
     
-int payment_baseline_stage_t::updateCustomerByID(int wh_id, int d_id, int c_id) {
+int payment_baseline_stage_t::updateCustomerByID(DbTxn* a_txn, 
+                                                 int wh_id, 
+                                                 int d_id, 
+                                                 int c_id, 
+                                                 decimal h_amount) 
+{
+    assert (a_txn); // abort if no valid transaction handle
 
-    int iResult = 0;
-
-    tpcc_customer_tuple a_customer;
+    tpcc_customer_tuple_key ck;
+    ck.C_C_ID = c_id;
+    ck.C_D_ID = d_id;
+    ck.C_W_ID = wh_id;
+    Dbt key_c(&ck, sizeof(ck));
+        
+    Dbt data_c;
+    data_c.set_flags(DB_DBT_MALLOC);
     
-    TRACE( TRACE_ALWAYS, "*** TO BE DONE! Updating Customer using C_ID\n");
-
-    /** Retrieving CUSTOMER row using C_ID */
+    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(a_txn, &key_c, &data_c, DB_RMW) ==
+        DB_NOTFOUND)
+        {
+            THROW4(BdbException, 
+                   "customer with id=(%d,%d,%d) not found in the database\n", 
+                   ck.C_C_ID,
+                   ck.C_D_ID,
+                   ck.C_W_ID);
+        }
     
-    if (strncmp(a_customer.C_CREDIT, "BC", 2) == 0) {
-        return (updateCustomerData(&a_customer));
+    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)data_c.get_data();
+    
+    assert(customer); // make sure that we got a customer
+    
+    if (customer->C_BALANCE < h_amount) {
+        TRACE( TRACE_ALWAYS, 
+               "balance (%.2f) < (%.2f) h_amount. Aborting trx...\n",
+               customer->C_BALANCE,
+               h_amount);
+        return (1);
+    }
+
+    // updating customer data
+    customer->C_BALANCE -= h_amount;
+    customer->C_YTD_PAYMENT += h_amount;
+    customer->C_PAYMENT_CNT++;
+    
+    
+    if (strncmp(customer->C_CREDIT, "BC", 2) == 0) {
+        return (updateCustomerData(a_txn, &key_c, &data_c));
     }
     
-    return (iResult);
+    tpcc_tables[TPCC_TABLE_DISTRICT].db->put(a_txn, &key_c, &data_c, 0);
+
+    return (0);
 }
+
+
 
 
 /** @fn updateCustomerByLast
@@ -285,7 +335,16 @@ int payment_baseline_stage_t::updateCustomerByID(int wh_id, int d_id, int c_id) 
  *  @return 0 on success, non-zero on failure
  */
     
-int payment_baseline_stage_t::updateCustomerByLast(int wh_id, int d_id, char* c_last) {
+int payment_baseline_stage_t::updateCustomerByLast(DbTxn* a_txn, 
+                                                   int wh_id, 
+                                                   int d_id, 
+                                                   char* c_last,
+                                                   decimal h_amount) 
+{
+    // FIXME (ip) Not implemented yet
+    assert( 1 == 0);
+
+    assert(a_txn); // abort if no valid transaction handle 
 
     int iResult = 0;
 
@@ -296,7 +355,7 @@ int payment_baseline_stage_t::updateCustomerByLast(int wh_id, int d_id, char* c_
     /** Retrieving CUSTOMER rows using C_LAST (and a cursor) */
     
     if (strncmp(a_customer.C_CREDIT, "BC", 2) == 0) {
-        return (updateCustomerData(&a_customer));
+        return (updateCustomerData(a_txn, NULL, NULL));
     }
     
     return (iResult);
@@ -315,20 +374,25 @@ int payment_baseline_stage_t::updateCustomerByLast(int wh_id, int d_id, char* c_
  *  @return 0 on success, non-zero on failure
  */
     
-int payment_baseline_stage_t::updateCustomerData(tpcc_customer_tuple* a_customer) {
+int payment_baseline_stage_t::updateCustomerData(DbTxn* a_txn,
+                                                 Dbt* a_cust_key,
+                                                 Dbt* a_cust_data) 
+{
+    assert( a_txn ); // make sure correct parameters
+    assert( a_cust_key );
+    assert( a_cust_data );
+    
+    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)a_cust_data->get_data();
 
-    int iResult = 0;
-
-    assert((strncmp(a_customer->C_CREDIT, "BC", 2) == 0) &&
-            a_customer->C_DATA_1 &&
-            a_customer->C_DATA_2);
+    assert((strncmp(customer->C_CREDIT, "BC", 2) == 0) &&
+            customer->C_DATA_1 &&
+            customer->C_DATA_2);
 
 
     TRACE( TRACE_ALWAYS, "*** TO BE DONE! Updating Customer Data\n");
-
+    assert ( 1 == 0); // FIXME (ip) : Remove
     
-    
-    return (iResult);
+    return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(a_txn, a_cust_key, a_cust_data, 0));
 }
 
 

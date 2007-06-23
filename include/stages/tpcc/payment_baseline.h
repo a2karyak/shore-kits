@@ -138,8 +138,8 @@ public:
 
     void describe_trx() {
 
-        printf(
-        //        TRACE( TRACE_ALWAYS,
+        //        printf(
+        TRACE( TRACE_ALWAYS,
              "\nPAYMENT - TRX=%d\n" \
              "WH_ID=%d\t\tD_ID=%d\n" \
              "SEL_WH=%d\tSEL_IDENT=%d\n" \
@@ -204,11 +204,13 @@ private:
 
     trx_result_tuple_t executePaymentBaseline(payment_baseline_packet_t* p);
     
-    int updateCustomerByLast(int wh_id, int d_id, char* c_last);
+    int updateCustomerByLast(DbTxn* a_txn, int wh_id, int d_id, char* c_last, decimal h_amount);
     
-    int updateCustomerByID(int wh_id, int d_id, int c_id);
+    int updateCustomerByID(DbTxn* a_txn, int wh_id, int d_id, int c_id, decimal h_amount);
     
-    int updateCustomerData(tpcc_customer_tuple* a_customer);
+    int updateCustomerData(DbTxn* a_txn, 
+                           Dbt* a_cust_key, 
+                           Dbt* a_cust_data);
                            
     
 }; // EOF: payment_baseline_stage_t
