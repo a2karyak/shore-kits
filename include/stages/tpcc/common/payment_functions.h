@@ -87,7 +87,7 @@ inline void describe(payment_input_t pin, int id) {
            "SEL_WH=%d\tSEL_IDENT=%d\n" \
            "REM_WH_ID=%d\tREM_D_ID=%d\n" \
            "C_ID=%d\tC_LAST=%s\n" \
-           "H_AMOUNT=%.2f\tH_DATE=%s\n", \
+           "H_AMOUNT=%.2f\tH_DATE=%d\n", \
            id,
            pin._home_wh_id, 
            pin._home_d_id, 

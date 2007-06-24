@@ -103,9 +103,21 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_inpu
        TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
        dbenv->txn_begin(NULL, &txn, 0);
 
-       updateWarehouse(pin, txn);
+       if (updateWarehouse(pin, txn)) {
+           
+           // Failed. Throw exception
+           THROW1( BdbException, 
+                   "WAREHOUSE update failed...\n");
+       }
 
-       updateDistrict(pin, txn);
+
+       if (updateDistrict(pin, txn)) {
+           
+           // Failed. Throw exception
+           THROW1( BdbException, 
+                   "DISTRICT update failed...\n");
+       }
+
 
        if (updateCustomer(pin, txn)) {           
            // Failed. Throw exception
@@ -113,7 +125,14 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_inpu
                    "CUSTOMER update failed...\n");
        }
 
-       insertHistory(pin, txn);
+       if (insertHistory(pin, txn)) {
+
+           // Failed. Throw exception
+           THROW1( BdbException, 
+                   "HISTORY instertion failed...\n");
+       }
+
+
     
        /** Step 6: The database transaction is committed */
        TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
@@ -132,6 +151,14 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_inpu
         //if (++failed_tries > MAX_TRIES) {
         //   packet->_trx_txn->abort();
         //   TRACE( TRACE_ALWAYS, "MAX_FAILS - Aborting...\n");        
+    }
+    catch(...) {
+        TRACE( TRACE_ALWAYS, "Unknown Exception - Aborting PAYMENT trx...\n");
+        
+        txn->abort();
+	    
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
     }
 
     // if reached this point transaction succeeded

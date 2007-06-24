@@ -35,8 +35,6 @@ ENTER_NAMESPACE(tpcc_payment);
 
 int insertHistory(payment_input_t* pin, DbTxn* txn) {
 
-    assert ( 1 == 0 ); // FIXME not implemented yet
-
     /////////////////////////////
     ///// START INS_HISTORY /////
     
@@ -63,12 +61,7 @@ int insertHistory(payment_input_t* pin, DbTxn* txn) {
     Dbt key_h(&ht, sizeof(ht));
     Dbt data_h(&ht, sizeof(ht));
     
-    if (tpcc_tables[TPCC_TABLE_HISTORY].db->put(txn, &key_h, &data_h, 0)) {
-
-        // Failed. Throw exception
-        THROW1( BdbException, 
-                "HISTORY instertion failed...\n");
-    }
+    return (tpcc_tables[TPCC_TABLE_HISTORY].db->put(txn, &key_h, &data_h, 0));
 
     ///// EOF INS_HISTORY /////
     ///////////////////////////
@@ -221,7 +214,7 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn) {
     
     tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
     
-    assert(warehouse != NULL); // make sure that we got a warehouse
+    assert(warehouse); // make sure that we got a warehouse
     
     warehouse->W_YTD += pin->_h_amount;
     
@@ -368,13 +361,50 @@ int updateCustomerByLast(DbTxn* txn,
     
 void updateCustomerData(tpcc_customer_tuple* a_customer) 
 {
-    // FIXME (ip) Not implemented yet
-    assert ( 1 == 0); 
-
     assert( a_customer ); // make sure correct parameters
     assert( strncmp(a_customer->C_CREDIT, "BC", 2) == 0 );
 
     TRACE( TRACE_ALWAYS, "*** TO BE DONE! Updating Customer Data\n");
+
+    // FIXME (ip) Modification instead of writing D_ID, W_ID, and H_AMOYNT
+    // we write again C_D_ID, C_W_ID, and C_BALANCE
+
+    char tmp [STRSIZE(500)];
+
+    // writes new info
+    snprintf(&tmp[0], 80, "%d:%d:%d:%d:%d:%.2f|",
+             a_customer->C_C_ID,
+             a_customer->C_D_ID,
+             a_customer->C_W_ID,
+             a_customer->C_D_ID,
+             a_customer->C_W_ID,
+             a_customer->C_BALANCE.to_double());
+
+
+    // copies first half of old data, which is stored 
+    // on the first member variable
+    strncpy(&tmp[80], a_customer->C_DATA_1, 250);
+
+    // copies part of the second half of old data, which
+    // is stored on the second member variable
+    strncpy(&tmp[330], a_customer->C_DATA_2, 170);
+
+    TRACE( TRACE_RECORD_FLOW,
+           "Before\n1:%s\n2:%s\n",
+           a_customer->C_DATA_1,
+           a_customer->C_DATA_2);
+
+    // copy back to the structure
+    strncpy(a_customer->C_DATA_1, tmp, 250);
+    a_customer->C_DATA_1[250] = '\0';
+    strncpy(a_customer->C_DATA_2, &tmp[250], 250);
+    a_customer->C_DATA_2[250] = '\0';
+
+
+    TRACE( TRACE_RECORD_FLOW,
+           "After\n1:%s\n2:%s\n",
+           a_customer->C_DATA_1,
+           a_customer->C_DATA_2);
 }
 
 
