@@ -98,7 +98,8 @@ lib_libutil_a_SOURCES = \
         $(SU)/static_list.cpp \
         $(SU)/resource_pool.cpp \
         $(SU)/itimer.cpp \
-        $(SU)/progress.cpp
+        $(SU)/progress.cpp \
+        $(SU)/store_string.cpp
 
 
 
@@ -171,7 +172,9 @@ SG_TRX = \
    $(SG)/tpcc/payment_finalize.cpp
 
 SG_TRX_COMMON = \
-   $(SG)/tpcc/common/trx_packet.cpp 
+   $(SG)/tpcc/common/trx_packet.cpp \
+   $(SG)/tpcc/common/payment_functions.cpp
+
 
 lib_libstages_a_SOURCES = \
    $(SG_MAIN) \

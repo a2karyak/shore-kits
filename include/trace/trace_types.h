@@ -30,8 +30,9 @@
 #define TRACE_NETWORK              (1 << 10)
 #define TRACE_RESPONSE_TIME        (1 << 11)
 #define TRACE_WORK_SHARING         (1 << 12)
-#define TRACE_KEY_COMP             (1 << 13)
-#define TRACE_RECORD_FLOW          (1 << 14)
+#define TRACE_TRX_FLOW             (1 << 13)
+#define TRACE_KEY_COMP             (1 << 14)
+#define TRACE_RECORD_FLOW          (1 << 15)
 #define TRACE_DEBUG                (1 << 31)
 
 

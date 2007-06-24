@@ -24,12 +24,5 @@ void progress_update(unsigned long* indicator);
 void progress_done();
 
 
-/* @note This is not a progress helper function but it is used by
- *       both the tbl_parsers.
- */
-
-void store_string(char* dest, char* src);
-
-
 #endif
 

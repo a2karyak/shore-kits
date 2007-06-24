@@ -84,7 +84,7 @@ int bt_compare_fn_1_int(const Dbt* k1,
     int u2 = *(int*)k2->get_data();
 
     TRACE ( TRACE_KEY_COMP, 
-            "k1=(%d)\tk2=(%d)\n", 
+            "\nk1=(%d)\tk2=(%d)\n", 
             u1, u2);
 
     if (u1 < u2)

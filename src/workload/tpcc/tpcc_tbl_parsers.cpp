@@ -10,6 +10,7 @@
 #include "util/trace.h"
 #include "util/time_util.h"
 #include "util/progress.h"
+#include "util/store_string.h"
 
 #include "stages/tpcc/common/tpcc_struct.h"
 
@@ -202,7 +203,7 @@ void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) {
 
         // insert tuple into database
         // HISTORY does not have a key, use the whole tuple
-        Dbt key(&tup, sizeof(tpcc_history_tuple));
+        Dbt key(&tup, sizeof(tup));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 

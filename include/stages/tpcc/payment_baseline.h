@@ -17,18 +17,19 @@
 
 #include <cstdio>
 
-
 #include "core.h"
 #include "util.h"
 #include "scheduler.h"
 
 #include "stages/tpcc/common/trx_packet.h"
 #include "stages/tpcc/common/tpcc_struct.h"
-
+#include "stages/tpcc/common/payment_functions.h"
 
 
 using namespace qpipe;
 using namespace tpcc;
+using namespace tpcc_payment;
+
 
 
 /* exported datatypes */
@@ -44,33 +45,8 @@ public:
 
     static const c_str PACKET_TYPE;
 
-
-    /**
-     *  @brief PAYMENT transaction inputs:
-     *  
-     *  1) HOME_WH_ID int [1 .. SF] : home warehouse id
-     *  2) HOME_D_ID int [1 .. 10]  : home district id
-     *  3) V_CUST_WH_SELECTION int [1 .. 100] : customer warehouse selection ( 85% - 15%)
-     *  4) REMOTE_WH_ID int [1 .. SF] : remote warehouse id (optional)
-     *  5) REMOTE_D_ID int [1 .. 10] : remote district id (optional)
-     *  6) V_CUST_IDENT_SELECTION int [1 .. 100] : customer identification selection ( 60% - 40%)
-     *  7) C_ID int : customer id (C_ID = NURand(1023, 1, 3000) (optional)
-     *  8) C_LAST char* : customer lastname (using NURand(255, 0, 999) (optional)
-     *  9) H_AMOUNT long [1.00 .. 5,000.00] : the payment amount
-     *  10) H_DATE char* : the payment time
-     */
-
-    int _home_wh_id;
-    int _home_d_id;
-    int _v_cust_wh_selection;
-    int _remote_wh_id;
-    int _remote_d_id;
-    int _v_cust_ident_selection;
-    int _c_id;
-    char _c_last[16];
-    double _h_amount;
-    char* _h_date;
-
+    // structure that contains all the required inputs
+    payment_input_t _p_in;
 
 
     /**
@@ -110,49 +86,31 @@ public:
                      create_plan(a_c_id, a_h_amount, a_h_date),
                      true, /* merging allowed */
                      true  /* unreserve worker on completion */
-                     ),
-      _home_wh_id(a_home_wh_id),
-      _home_d_id(a_home_d_id),
-      _v_cust_wh_selection(a_v_cust_wh_selection),
-      _remote_wh_id(a_remote_wh_id),
-      _remote_d_id(a_remote_d_id),
-      _v_cust_ident_selection(a_v_cust_ident_selection),
-      _c_id(a_c_id),
-      _h_amount(a_h_amount)
-      {
-	assert(a_h_date != NULL);
+                     )
+    {
+        _p_in._home_wh_id = a_home_wh_id;
+        _p_in._home_d_id = a_home_d_id;
+        _p_in._v_cust_wh_selection = a_v_cust_wh_selection;
+        _p_in._remote_wh_id = a_remote_wh_id;
+        _p_in._remote_d_id = a_remote_d_id;
+        _p_in._v_cust_ident_selection = a_v_cust_ident_selection;
+        _p_in._c_id = a_c_id;
+        _p_in._h_amount = a_h_amount;
+	
+        assert(a_h_date != NULL);
         
 	if (a_c_last != NULL) {	    
-	    strncpy(_c_last, a_c_last, 15);
-	    _c_last[16] = '\0';
+	    strncpy(_p_in._c_last, a_c_last, 15);
+	    _p_in._c_last[16] = '\0';
 	}
         
-	_h_date = new char[strlen(a_h_date) + 1];
-        strncpy(_h_date, a_h_date, strlen(a_h_date));
-        _h_date[strlen(a_h_date)] = '\0';
+	_p_in._h_date = new char[strlen(a_h_date) + 1];
+        strncpy(_p_in._h_date, a_h_date, strlen(a_h_date));
+        _p_in._h_date[strlen(a_h_date)] = '\0';
 
         _trx_state = UNDEF;
       }
 
-    /** Helper Functions */
-
-    void describe_trx() {
-
-        //        printf(
-        TRACE( TRACE_ALWAYS,
-             "\nPAYMENT - TRX=%d\n" \
-             "WH_ID=%d\t\tD_ID=%d\n" \
-             "SEL_WH=%d\tSEL_IDENT=%d\n" \
-             "REM_WH_ID=%d\tREM_D_ID=%d\n" \
-             "C_ID=%d\tC_LAST=%s\n" \
-             "H_AMOUNT=%.2f\tH_DATE=%s\n", \
-             _trx_id,
-             _home_wh_id, _home_d_id, 
-             _v_cust_wh_selection, _v_cust_ident_selection,
-             _remote_wh_id, _remote_d_id,
-             _c_id, _c_last,
-             _h_amount, _h_date);
-    }
     
     // FIXME: (ip) Correct the plan creation
     static query_plan* create_plan( const int a_c_id,
@@ -170,6 +128,15 @@ public:
       declare->declare(_packet_type, 1);
       /* no inputs */
     }
+
+
+    /** Helper Functions */
+
+    void describe_trx() {
+        
+        describe(_p_in, _trx_id);
+    }
+
 
 }; // EOF payment_baseline_packet_t
 
@@ -202,14 +169,7 @@ public:
 
 private:    
 
-    trx_result_tuple_t executePaymentBaseline(payment_baseline_packet_t* p);
-    
-    int updateCustomerByLast(DbTxn* a_txn, int wh_id, int d_id, char* c_last, decimal h_amount);
-    
-    int updateCustomerByID(DbTxn* a_txn, int wh_id, int d_id, int c_id, decimal h_amount);
-    
-    void updateCustomerData(tpcc_customer_tuple* a_customer);
-                           
+    trx_result_tuple_t executePaymentBaseline(payment_baseline_packet_t* p);                           
     
 }; // EOF: payment_baseline_stage_t
 
