@@ -1,15 +1,49 @@
+QPipe & StageTRX Readme
+-----------------------
+
 
 REQUIRED directories:
+
+The system checks for the existence of the following directories. 
 
 - database_bdb_tpcc : Contains the database tables for the TPC-C DB.
 - database_bdb_tpch : Contains the database tables for the TPC-H DB.
 
-- tbl_tpcc : Contains the tables for the TPC-C DB.
-- tbl_tpch : Contains the tables for the TPC-H DB.
+- tbl_tpcc : Contains the load tables for the TPC-C DB.
+- tbl_tpch : Contains the load tables for the TPC-H DB.
 
-- tpcc_sf : Contains the load files for the TPC-C DB.
-- tpch_sf : Contains the load files for the TPC-H DB.
 
+----------
+
+
+RUNNING STRAGETRX:
+
+1) Create flat load TPC-C files and rename them
+
+#> dbgen-generate-files.pl (-h for help)
+e.g. dbgen-generate-files.pl -w 1 -d tbl_tpcc
+This will create flat files for 1WH in directory tbl_tpcc.
+
+#> cd tbl_tpcc
+#> <base_dir>/scripts/tpcc/dbgen/rename_files.sh
+This will rename the flat files to loader-friendly names.
+
+
+2) Load TPC-C database
+
+#> ./tests/tpcc_load
+
+
+3) Run transactions
+
+#> ./qipetrx (alias for ./qpipe -trx)
+Start the stagetrx environment.
+(qpipe) tpcc list
+(qpipe) tpcc payment_baseline 1 1 0 OS
+...
+
+
+----------
 
 
 
@@ -40,6 +74,8 @@ _stage_next_tuple counter into the adaptor since we must increment it
 whenever we invoke output().
 
 
+----------
+
 
 PACKET TERMINATION
 
@@ -60,6 +96,10 @@ PACKET TERMINATION
     need a way to ABORT the entire query. This can be done by
     terminating the current stage, and sending a message directly to
     the client to close its input buffer.
+
+
+
+----------
 
 
 
@@ -87,6 +127,9 @@ that a shutdown is in progress, and exit.
 stage. The stage destructor deletes every packet in its stage
 queue. We know that no one else can touch this queue since all workers
 have exited.
+
+
+----------
 
 
 
@@ -129,6 +172,7 @@ PACKET PROCESSING
       should be deleted.
 
 
+----------
 
 
 include/
