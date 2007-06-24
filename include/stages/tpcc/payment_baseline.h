@@ -22,22 +22,15 @@
 #include "scheduler.h"
 
 #include "stages/tpcc/common/trx_packet.h"
-#include "stages/tpcc/common/tpcc_struct.h"
 #include "stages/tpcc/common/payment_functions.h"
 
 
 using namespace qpipe;
-using namespace tpcc;
 using namespace tpcc_payment;
 
 
 
 /* exported datatypes */
-
-/** @note The payment_begin_packet is adequate. Since Baseline and Staged
- *  implementation of the transaction have essentially the same interface.
- *  It is a copy-paste of the payment_begin_packet_t
- */
 
 class payment_baseline_packet_t : public trx_packet_t {
 
@@ -45,7 +38,7 @@ public:
 
     static const c_str PACKET_TYPE;
 
-    // structure that contains all the required inputs
+    // structure that contains the required input
     payment_input_t _p_in;
 
 

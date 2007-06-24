@@ -30,12 +30,12 @@ class payment_begin_process_tuple_t : public process_tuple_t {
 public:
 
     virtual void begin() {
-        TRACE( TRACE_ALWAYS, "*** PAYMENT_BEGIN RESULTS\n" );
+        TRACE( TRACE_DEBUG, "*** PAYMENT_BEGIN RESULTS\n" );
     }
 
     virtual void process(const tuple_t& output) {
         trx_result_tuple_t* r = aligned_cast<trx_result_tuple_t>(output.data);
-        TRACE(TRACE_ALWAYS, "*** PAYMENT_BEGIN TRX=%d RESULT=%s\n",
+        TRACE(TRACE_QUERY_RESULTS, "*** PAYMENT_BEGIN TRX=%d RESULT=%s\n",
               r->get_id(),
               (r->get_state() == COMMITTED) ? "OK" : "ABORT");
         
@@ -49,8 +49,9 @@ public:
 
 payment_begin_stage_t::payment_begin_stage_t() {
     
-    TRACE(TRACE_ALWAYS, "PAYMENT_BEGIN constructor\n");
+    TRACE(TRACE_DEBUG, "PAYMENT_BEGIN constructor\n");
 }
+
 
 /**
  *  @brief Initialize transaction specified by payment_begin_packet_t p.
@@ -96,8 +97,8 @@ void payment_begin_stage_t::process_packet() {
                                       filter,
                                       dp,
                                       packet->get_trx_id(),
-                                      packet->_home_wh_id,
-                                      packet->_h_amount);
+                                      packet->_p_in._home_wh_id,
+                                      packet->_p_in._h_amount);
     
 
     // 2b. PAYMENT_UPD_DISTR
@@ -110,9 +111,9 @@ void payment_begin_stage_t::process_packet() {
                                          filter,
                                          dp,
                                          packet->get_trx_id(),
-                                         packet->_home_wh_id,
-                                         packet->_home_d_id,
-                                         packet->_h_amount);
+                                         packet->_p_in._home_wh_id,
+                                         packet->_p_in._home_d_id,
+                                         packet->_p_in._h_amount);
 
 
     // 2c. PAYMENT_UPD_CUST
@@ -125,11 +126,11 @@ void payment_begin_stage_t::process_packet() {
                                         filter,
                                         dp,
                                         packet->get_trx_id(),
-                                        packet->_home_wh_id,
-                                        packet->_home_d_id,
-                                        packet->_c_id,
-                                        packet->_c_last,
-                                        packet->_h_amount);
+                                        packet->_p_in._home_wh_id,
+                                        packet->_p_in._home_d_id,
+                                        packet->_p_in._c_id,
+                                        packet->_p_in._c_last,
+                                        packet->_p_in._h_amount);
 
 
     // 2d. PAYMENT_INS_HIST
@@ -144,11 +145,11 @@ void payment_begin_stage_t::process_packet() {
                                         filter,
                                         dp,
                                         packet->get_trx_id(),
-                                        packet->_home_wh_id,
-                                        packet->_home_d_id,
-                                        packet->_c_id,
-                                        packet->_home_wh_id,
-                                        packet->_home_d_id);
+                                        packet->_p_in._home_wh_id,
+                                        packet->_p_in._home_d_id,
+                                        packet->_p_in._c_id,
+                                        packet->_p_in._home_wh_id,
+                                        packet->_p_in._home_d_id);
     
     // 2e. PAYMENT_FINALIZE
     buffer = new tuple_fifo(sizeof(int));
@@ -205,9 +206,11 @@ void payment_begin_stage_t::process_packet() {
 } // process_packet
 
 
+
 /** PAYMENT_* packet creation functions */
 
-/**
+
+/** @fn get_next_counter
  *  @brief Using the mutex, increases the internal counter by 1 and returns it.
  */
 
@@ -226,7 +229,7 @@ int payment_begin_stage_t::get_next_counter() {
 
 
 
-/** @func  create_payment_upd_wh_packet_t
+/** @fn  create_payment_upd_wh_packet_t
  *  @brief Retuns a payment_upd_wh_packet_t 
  */
 
@@ -256,7 +259,7 @@ payment_begin_stage_t::create_payment_upd_wh_packet(const c_str& client_prefix,
 }
 
 
-/** @func  create_payment_upd_distr_packet_t
+/** @fn  create_payment_upd_distr_packet_t
  *  @brief Returns a payment_upd_distr_packet_t 
  */
  
@@ -289,7 +292,7 @@ payment_begin_stage_t::create_payment_upd_distr_packet(const c_str& client_prefi
 
 
 
-/** @func  create_payment_upd_cust_packet_t
+/** @fn  create_payment_upd_cust_packet_t
  *  @brief Returns a payment_upd_cust_packet_t 
  */
  
@@ -325,7 +328,7 @@ payment_begin_stage_t::create_payment_upd_cust_packet(const c_str& client_prefix
 }
 
 
-/** @func  create_payment_ins_hist_packet_t
+/** @fn  create_payment_ins_hist_packet_t
  *  @brief Returns a payment_ins_hist_packet_t
  */
 
@@ -361,7 +364,7 @@ payment_begin_stage_t::create_payment_ins_hist_packet(const c_str& client_prefix
 }
 
 
-/** @func  create_payment_finalize_packet_t
+/** @fn  create_payment_finalize_packet_t
  *  @brief Returns a payment_finalize_packet_t
  */
 
