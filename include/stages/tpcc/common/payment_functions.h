@@ -61,8 +61,16 @@ struct payment_input_t {
 
 /** Exported functions */
 
-trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn, const int id);
-    
+trx_result_tuple_t executePaymentBaseline(payment_input_t* pin, DbTxn* txn, const int id);
+
+int insertHistory(payment_input_t* pin, DbTxn* txn);
+
+int updateDistrict(payment_input_t* pin, DbTxn* txn);
+
+int updateWarehouse(payment_input_t* pin, DbTxn* txn);
+
+int updateCustomer(payment_input_t* pin, DbTxn* txn);    
+
 int updateCustomerByLast(DbTxn* txn, int wh_id, int d_id, char* c_last, decimal h_amount);
 
 int updateCustomerByID(DbTxn* txn, int wh_id, int d_id, int c_id, decimal h_amount);

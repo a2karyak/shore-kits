@@ -20,14 +20,14 @@ using namespace qpipe;
 ENTER_NAMESPACE(tpcc_payment);
 
 
-/** @fn executePayment
+/** @fn executePaymentBaseline
  *
- *  @brief Executes the PAYMENT transactions. Wrapper function.
+ *  @brief Executes the PAYMENT transaction serially. Wrapper function.
  *  
  *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
-trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn, const int id) {
+trx_result_tuple_t executePaymentBaseline(payment_input_t* pin, DbTxn* txn, const int id) {
 
     // initialize the result structure
     trx_result_tuple_t aTrxResultTuple(UNDEF, id);
@@ -38,194 +38,21 @@ trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn, const int id
     
        /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
 
-
-       ///////////////////////////////
-       ///// START UPD_WAREHOUSE /////
     
        /** Step 1: The database transaction is started */
        TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
-
        dbenv->txn_begin(NULL, &txn, 0);
-    
-    
-       /** Step 2: Retrieve the row in the WAREHOUSE table with matching W_ID.
-        *  W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE and W_ZIP are retrieved.
-        *  W_YTD is increased by H_AMOYNT.
-        */
-       TRACE( TRACE_TRX_FLOW, 
-              "Step 2: Updating the row in the WAREHOUSE table with matching W_ID=%d\n", 
-              pin->_home_wh_id );
 
-       // WAREHOUSE key: W_ID 
-       Dbt key_wh(&pin->_home_wh_id, sizeof(int));
-       
-       Dbt data_wh;
-       data_wh.set_flags(DB_DBT_MALLOC);
+       updateWarehouse(pin, txn);
 
-       if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &data_wh, DB_RMW) == 
-           DB_NOTFOUND) 
-           {
-               THROW2(BdbException, 
-                      "warehouse with id=%d not found in the database\n", 
-                      pin->_home_wh_id);
-           }
+       updateDistrict(pin, txn);
 
-       tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
-       
-       assert(warehouse != NULL); // make sure that we got a warehouse
-       
-       warehouse->W_YTD += pin->_h_amount;
-       tpcc_tables[TPCC_TABLE_WAREHOUSE].db->put(txn, &key_wh, &data_wh, 0);       
+       updateCustomer(pin, txn);
 
-
-       ///// EOF UPD_WAREHOUSE //////
-       //////////////////////////////
-
-
-
-       //////////////////////////////
-       ///// START UPD_DISTRICT /////
-
-
-       /** Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
-        *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
-        *  D_YTD is increased by H_AMOYNT.
-        */
-       TRACE( TRACE_TRX_FLOW, 
-              "Step 3: Updating the row in the DISTRICT table with matching " \
-              "D_ID=%d and D_W_ID=%d\n", 
-              pin->_home_d_id, 
-              pin->_home_wh_id);
-
-       // DISTRICT key: D_ID, D_W_ID 
-       tpcc_district_tuple_key dk;
-       dk.D_ID = pin->_home_d_id;
-       dk.D_W_ID = pin->_home_wh_id;
-       Dbt key_d(&dk, sizeof(dk));
-
-       Dbt data_d;
-       data_d.set_flags(DB_DBT_MALLOC);
-
-       if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &data_d, DB_RMW) ==
-           DB_NOTFOUND)
-           {
-               THROW3(BdbException, 
-                      "district with id=(%d,%d) not found in the database\n", 
-                      dk.D_ID,
-                      dk.D_W_ID);
-           }
-
-       tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
-
-       assert(district); // make sure that we got a district
-       
-       district->D_YTD += pin->_h_amount;
-       tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &data_d, 0);       
-
-
-       ///// EOF UPD_DISTRICT /////
-       ////////////////////////////
-
-
-
-       //////////////////////////////
-       ///// START UPD_CUSTOMER /////
-
-
-       /** Step 4: Retrieve and Update CUSTOMER */
-
-       // FIXME (ip) : It always chooses the customer by id. It should be 40.
-       if (pin->_v_cust_ident_selection < 0) {
-           //       if (pin->_v_cust_ident_selection < 40) {
-
-           /** Step 4b: Retrieve CUSTOMER based on C_LAST */
-           TRACE( TRACE_TRX_FLOW, 
-                  "Step 4b: Retrieving and Updating the row in the CUSTOMER table \
-                  with matching C_W_ID=%d and C_D_ID=%d and C_LAST=%s\n",
-                  pin->_home_wh_id,
-                  pin->_home_d_id, 
-                  pin->_c_last);
-        
-           if (updateCustomerByLast(txn, 
-                                    pin->_home_wh_id, 
-                                    pin->_home_d_id, 
-                                    pin->_c_last, 
-                                    pin->_h_amount)) 
-               {
-                   // Failed. Throw exception
-                   THROW1( BdbException,
-                           "CUSTOMER updateByLast failed...\n");
-               }
-       }
-       else {
-           /** Step 4a: Retrieve CUSTOMER based on C_ID */
-           TRACE( TRACE_TRX_FLOW, 
-                  "Step 4a: Retrieving and Updating the row in the CUSTOMER table \
-                  with matching C_W_ID=%d and C_D_ID=%d and C_ID=%d\n",
-                  pin->_home_wh_id,
-                  pin->_home_d_id, 
-                  pin->_c_id);
-        
-           if (updateCustomerByID(txn, 
-                                  pin->_home_wh_id, 
-                                  pin->_home_d_id, 
-                                  pin->_c_id, 
-                                  pin->_h_amount)) 
-               {
-                   // Failed. Throw exception
-                   THROW1( BdbException,
-                           "CUSTOMER updateByID failed...\n");
-               }
-       }
-
-
-       ///// EOF UPD_CUSTOMER /////
-       ////////////////////////////
-
-
-       
-       /////////////////////////////
-       ///// START INS_HISTORY /////
-   
-    
-       /** Step 5: Insert a new HISTORY row. A new row is inserted into the HISTORY
-        *  table with H_C_ID = C_ID, H_C_D_ID = C_D_ID, H_C_W_ID = C_W_ID, H_D_ID = D_ID,
-        *  H_W_ID = W_ID and H_DATA = concatenating W_NAME and D_NAME separated by
-        *  4 spaces.
-        */
-       TRACE( TRACE_TRX_FLOW, "Step 5: Inserting a new row in HISTORY table\n");
-
-       // HISTORY does not have key
-       tpcc_history_tuple ht;
-       ht.H_C_ID = pin->_c_id;
-       ht.H_C_D_ID = pin->_home_d_id;
-       ht.H_C_W_ID = pin->_home_wh_id;
-       ht.H_D_ID = pin->_home_d_id;
-       ht.H_W_ID = pin->_home_wh_id;       
-       //       ht.H_DATe = ;
-       ht.H_AMOYNT = pin->_h_amount;
-       //       DATA
-        
-       
-
-       // prepare to insert
-       Dbt key_h(&ht, sizeof(ht));
-       Dbt data_h(&ht, sizeof(ht));
-
-       if (tpcc_tables[TPCC_TABLE_HISTORY].db->put(txn, &key_h, &data_h, 0))
-           {
-               // Failed. Throw exception
-               THROW1( BdbException, 
-                       "HISTORY instertion failed...\n");
-           }
-
-       ///// EOF INS_HISTORY /////
-       ///////////////////////////
-
+       insertHistory(pin, txn);
     
        /** Step 6: The database transaction is committed */
        TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
-
        txn->commit(0);
     }
     catch(DbException err) {
@@ -248,6 +75,221 @@ trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn, const int id
     return (aTrxResultTuple);
 
 } // EOF: executePayment
+
+
+
+/** @fn insertHistory
+ *  
+ *  @brief Step 5: Insert a new HISTORY row. A new row is inserted into the HISTORY
+ *  table with H_C_ID = C_ID, H_C_D_ID = C_D_ID, H_C_W_ID = C_W_ID, H_D_ID = D_ID,
+ *  H_W_ID = W_ID and H_DATA = concatenating W_NAME and D_NAME separated by
+ *  4 spaces.
+ *
+ *  @brief Selects which updateCustomerX() function to call
+ *
+ *  @return 0 on success, non-zero on failure
+ */
+
+int insertHistory(payment_input_t* pin, DbTxn* txn) {
+
+    assert ( 1 == 0 ); // FIXME not implemented yet
+
+    /////////////////////////////
+    ///// START INS_HISTORY /////
+    
+    TRACE( TRACE_TRX_FLOW, "Step 5: Inserting a new row in HISTORY table\n");
+    
+    // HISTORY does not have key
+    tpcc_history_tuple ht;
+    ht.H_C_ID = pin->_c_id;
+    ht.H_C_D_ID = pin->_home_d_id;
+    ht.H_C_W_ID = pin->_home_wh_id;
+    ht.H_D_ID = pin->_home_d_id;
+    ht.H_W_ID = pin->_home_wh_id;       
+    //       ht.H_DATe = ;
+    ht.H_AMOYNT = pin->_h_amount;
+    //       DATA
+
+
+    // prepare to insert
+    Dbt key_h(&ht, sizeof(ht));
+    Dbt data_h(&ht, sizeof(ht));
+    
+    if (tpcc_tables[TPCC_TABLE_HISTORY].db->put(txn, &key_h, &data_h, 0)) {
+
+        // Failed. Throw exception
+        THROW1( BdbException, 
+                "HISTORY instertion failed...\n");
+    }
+
+    ///// EOF INS_HISTORY /////
+    ///////////////////////////
+}
+
+
+
+
+/** @fn updateCustomer
+ *  
+ *  @brief Selects which updateCustomerX() function to call
+ *
+ *  @return 0 on success, non-zero on failure
+ */
+
+int updateCustomer(payment_input_t* pin, DbTxn* txn) {
+
+    //////////////////////////////
+    ///// START UPD_CUSTOMER /////
+
+    // FIXME (ip) : It always chooses the customer by id. It should be 40.
+    if (pin->_v_cust_ident_selection < 0) {
+        //       if (pin->_v_cust_ident_selection < 40) {
+        
+        /** Step 4b: Retrieve CUSTOMER based on C_LAST */
+        TRACE( TRACE_TRX_FLOW, 
+               "Step 4b: Retrieving and Updating the row in the CUSTOMER table " \
+               "with matching C_W_ID=%d and C_D_ID=%d and C_LAST=%s\n",
+               pin->_home_wh_id,
+               pin->_home_d_id, 
+               pin->_c_last);
+        
+        if (updateCustomerByLast(txn, 
+                                 pin->_home_wh_id, 
+                                 pin->_home_d_id, 
+                                 pin->_c_last, 
+                                 pin->_h_amount)) 
+            {
+                // Failed. Throw exception
+                THROW1( BdbException,
+                        "CUSTOMER updateByLast failed...\n");
+                return (1);
+            }
+    }
+    else {
+        /** Step 4a: Retrieve CUSTOMER based on C_ID */
+        TRACE( TRACE_TRX_FLOW, 
+               "Step 4a: Retrieving and Updating the row in the CUSTOMER table " \
+               "with matching C_W_ID=%d and C_D_ID=%d and C_ID=%d\n",
+               pin->_home_wh_id,
+               pin->_home_d_id, 
+               pin->_c_id);
+        
+        if (updateCustomerByID(txn, 
+                               pin->_home_wh_id, 
+                               pin->_home_d_id, 
+                               pin->_c_id, 
+                               pin->_h_amount)) 
+            {
+                // Failed. Throw exception
+                THROW1( BdbException,
+                        "CUSTOMER updateByID failed...\n");
+                return (1);
+            }
+    }
+    
+    ///// EOF UPD_CUSTOMER /////
+    ////////////////////////////
+}
+
+
+/** @fn updateWarehouse
+ *  
+ *  @brief Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
+ *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
+ *  D_YTD is increased by H_AMOYNT.
+ *
+ *  @return 0 on success, non-zero on failure
+ */
+
+int updateDistrict(payment_input_t* pin, DbTxn* txn) {
+
+    //////////////////////////////
+    ///// START UPD_DISTRICT /////
+    
+    TRACE( TRACE_TRX_FLOW, 
+           "Step 3: Updating the row in the DISTRICT table with matching " \
+           "D_ID=%d and D_W_ID=%d\n", 
+           pin->_home_d_id, 
+           pin->_home_wh_id);
+    
+    // DISTRICT key: D_ID, D_W_ID 
+    tpcc_district_tuple_key dk;
+    dk.D_ID = pin->_home_d_id;
+    dk.D_W_ID = pin->_home_wh_id;
+    Dbt key_d(&dk, sizeof(dk));
+    
+    Dbt data_d;
+    data_d.set_flags(DB_DBT_MALLOC);
+       
+    if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &data_d, DB_RMW) ==
+        DB_NOTFOUND)
+        {
+            THROW3(BdbException, 
+                   "district with id=(%d,%d) not found in the database\n", 
+                   dk.D_ID,
+                   dk.D_W_ID);
+
+            return (1);
+        }
+    
+    tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
+    
+    assert(district); // make sure that we got a district
+    
+    district->D_YTD += pin->_h_amount;
+
+    return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &data_d, 0));
+    
+    ///// EOF UPD_DISTRICT /////
+    ////////////////////////////
+}
+
+
+
+/** @fn updateWarehouse
+ *
+ *  @brief Step 2: Retrieve the row in the WAREHOUSE table with matching W_ID.
+ *  W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE and W_ZIP are retrieved.
+ *  W_YTD is increased by H_AMOYNT.
+ *  
+ *  @return 0 on success, non-zero on failure
+ */
+
+int updateWarehouse(payment_input_t* pin, DbTxn* txn) {
+
+    ///////////////////////////////
+    ///// START UPD_WAREHOUSE /////    
+        
+    TRACE( TRACE_TRX_FLOW, 
+           "Step 2: Updating the row in the WAREHOUSE table with matching W_ID=%d\n", 
+           pin->_home_wh_id );
+    
+    // WAREHOUSE key: W_ID 
+    Dbt key_wh(&pin->_home_wh_id, sizeof(int));
+    
+    Dbt data_wh;
+    data_wh.set_flags(DB_DBT_MALLOC);
+    
+    if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &data_wh, DB_RMW) == 
+        DB_NOTFOUND) 
+        {
+            THROW2(BdbException, 
+                   "warehouse with id=%d not found in the database\n", 
+                   pin->_home_wh_id);
+            return (1);
+        }
+    
+    tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
+    
+    assert(warehouse != NULL); // make sure that we got a warehouse
+    
+    warehouse->W_YTD += pin->_h_amount;
+    
+    return (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->put(txn, &key_wh, &data_wh, 0));
+
+    ///// EOF UPD_WAREHOUSE //////
+    //////////////////////////////
+}
 
 
 
