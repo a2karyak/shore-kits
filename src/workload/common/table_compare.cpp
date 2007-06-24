@@ -17,7 +17,7 @@ ENTER_NAMESPACE(workload);
 /** Helper functions */
 
 
-
+/*
 // FIXME (ip) Taken by Colohan
 
 // On the SGI we get hosed by unaligned data structures.  If we use
@@ -38,6 +38,7 @@ static inline void unaligned_memcpy(void *a,
         bb++;
     }
 }
+*/
 
 
 /** Exported functions */
@@ -102,13 +103,13 @@ int bt_compare_fn_1_int(const Dbt* k1,
 int bt_compare_fn_2_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-    //    printf ("k1=%d\tk2=%d\n", *(int*)k1->get_data(), *(int*)k2->get_data());
-
     // key has 2 integers
     s_two_ints u1;
     s_two_ints u2;
     memcpy(&u1, k1->get_data(), sizeof(u1));
     memcpy(&u2, k2->get_data(), sizeof(u2));
+
+    //    printf ("k1=(%d,%d)\tk2=(%d,%d)\n", u1.s1, u1.s2, u2.s1, u2.s2);
 
     if ((u1.s1 < u2.s1) || ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)))
         return -1;
@@ -126,16 +127,18 @@ int bt_compare_fn_2_int(const Dbt* k1,
  *  @brief Comparator when the key consists of the first 3 int fields
  */
 
+
 int bt_compare_fn_3_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-    //    printf ("k1=%d\tk2=%d\n", *(int*)k1->get_data(), *(int*)k2->get_data());
-
     // key has 3 integers
     s_three_ints u1;
     s_three_ints u2;
+
     memcpy(&u1, k1->get_data(), sizeof(u1));
     memcpy(&u2, k2->get_data(), sizeof(u2));
+
+    printf ("k1=(%d,%d,%d)\tk2=(%d,%d,%d)\n", u1.s1, u1.s2, u1.s3, u2.s1, u2.s2, u2.s3);
     
     if ((u1.s1 < u2.s1) || 
         ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||

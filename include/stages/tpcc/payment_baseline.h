@@ -208,9 +208,7 @@ private:
     
     int updateCustomerByID(DbTxn* a_txn, int wh_id, int d_id, int c_id, decimal h_amount);
     
-    int updateCustomerData(DbTxn* a_txn, 
-                           Dbt* a_cust_key, 
-                           Dbt* a_cust_data);
+    void updateCustomerData(tpcc_customer_tuple* a_customer);
                            
     
 }; // EOF: payment_baseline_stage_t

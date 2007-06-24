@@ -7,11 +7,6 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-/*
-#include "workload/common/bdb_env.h"
-//#include "workload/tpcc/tpcc_type_convert.h"
-*/
-
 #include "util/trace.h"
 #include "util/time_util.h"
 #include "util/progress.h"

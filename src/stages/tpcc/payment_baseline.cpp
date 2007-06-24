@@ -199,7 +199,7 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
                   p->_c_id);
         
            if (updateCustomerByID(p->_trx_txn, 
-                                  p->_home_d_id, 
+                                  p->_home_wh_id, 
                                   p->_home_d_id, 
                                   p->_c_id, 
                                   p->_h_amount)) {
@@ -281,11 +281,14 @@ int payment_baseline_stage_t::updateCustomerByID(DbTxn* a_txn,
     if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(a_txn, &key_c, &data_c, DB_RMW) ==
         DB_NOTFOUND)
         {
-            THROW4(BdbException, 
+            TRACE( TRACE_ALWAYS,
                    "customer with id=(%d,%d,%d) not found in the database\n", 
                    ck.C_C_ID,
                    ck.C_D_ID,
                    ck.C_W_ID);
+            
+            THROW1( BdbException,
+                    "Customer not found\n");
         }
     
     tpcc_customer_tuple* customer = (tpcc_customer_tuple*)data_c.get_data();
@@ -294,9 +297,9 @@ int payment_baseline_stage_t::updateCustomerByID(DbTxn* a_txn,
     
     if (customer->C_BALANCE < h_amount) {
         TRACE( TRACE_ALWAYS, 
-               "balance (%.2f) < (%.2f) h_amount. Aborting trx...\n",
+               "balance (%f) < (%f) h_amount. Aborting trx...\n",
                customer->C_BALANCE,
-               h_amount);
+               h_amount.to_double());
         return (1);
     }
 
@@ -307,12 +310,10 @@ int payment_baseline_stage_t::updateCustomerByID(DbTxn* a_txn,
     
     
     if (strncmp(customer->C_CREDIT, "BC", 2) == 0) {
-        return (updateCustomerData(a_txn, &key_c, &data_c));
+        updateCustomerData(customer);
     }
     
-    tpcc_tables[TPCC_TABLE_DISTRICT].db->put(a_txn, &key_c, &data_c, 0);
-
-    return (0);
+    return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(a_txn, &key_c, &data_c, 0));
 }
 
 
@@ -341,9 +342,6 @@ int payment_baseline_stage_t::updateCustomerByLast(DbTxn* a_txn,
                                                    char* c_last,
                                                    decimal h_amount) 
 {
-    // FIXME (ip) Not implemented yet
-    assert( 1 == 0);
-
     assert(a_txn); // abort if no valid transaction handle 
 
     int iResult = 0;
@@ -355,9 +353,13 @@ int payment_baseline_stage_t::updateCustomerByLast(DbTxn* a_txn,
     /** Retrieving CUSTOMER rows using C_LAST (and a cursor) */
     
     if (strncmp(a_customer.C_CREDIT, "BC", 2) == 0) {
-        return (updateCustomerData(a_txn, NULL, NULL));
+        updateCustomerData(&a_customer);
     }
-    
+
+    // FIXME (ip) Not implemented yet
+    assert( 1 == 0);
+ 
+   
     return (iResult);
 }
     
@@ -370,29 +372,19 @@ int payment_baseline_stage_t::updateCustomerByLast(DbTxn* a_txn,
  *  by an equal number of bytes and by discarding the bytes that are shifted out of
  *  the right side of the C_DATA field. The content of the C_DATA field never exceeds
  *  500 characters. The selected customer is updated with the new C_DATA field.
- *  
- *  @return 0 on success, non-zero on failure
  */
     
-int payment_baseline_stage_t::updateCustomerData(DbTxn* a_txn,
-                                                 Dbt* a_cust_key,
-                                                 Dbt* a_cust_data) 
+void payment_baseline_stage_t::updateCustomerData(tpcc_customer_tuple* a_customer) 
 {
-    assert( a_txn ); // make sure correct parameters
-    assert( a_cust_key );
-    assert( a_cust_data );
-    
-    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)a_cust_data->get_data();
+    assert( a_customer ); // make sure correct parameters
 
-    assert((strncmp(customer->C_CREDIT, "BC", 2) == 0) &&
-            customer->C_DATA_1 &&
-            customer->C_DATA_2);
+    assert((strncmp(a_customer->C_CREDIT, "BC", 2) == 0) &&
+           a_customer->C_DATA_1 &&
+           a_customer->C_DATA_2);
 
 
     TRACE( TRACE_ALWAYS, "*** TO BE DONE! Updating Customer Data\n");
     assert ( 1 == 0); // FIXME (ip) : Remove
-    
-    return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(a_txn, a_cust_key, a_cust_data, 0));
 }
 
 
