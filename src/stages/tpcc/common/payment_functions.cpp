@@ -370,7 +370,7 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
     char tmp [STRSIZE(500)];
 
     // writes new info
-    snprintf(&tmp[0], 80, "%d:%d:%d:%d:%d:%.2f|",
+    sprintf(&tmp[0], "%d:%d:%d:%d:%d:%.2f|",
              a_customer->C_C_ID,
              a_customer->C_D_ID,
              a_customer->C_W_ID,

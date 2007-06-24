@@ -42,10 +42,15 @@ payment_input_t create_payment_input(int sf) {
     pin._remote_d_id = URand(1, 10);
     pin._v_cust_ident_selection = URand(1, 100); // 60 - 40
     pin._c_id = NURand(1023, 1, 3000);
-    store_string(pin._c_last,  
-                 generate_cust_last(NURand(255, 0, 999)));
+
+    char * tCustLast = generate_cust_last(NURand(255, 0, 999));
+    store_string(pin._c_last,  tCustLast);
+                 
     pin._h_amount = (long)URand(100, 500000)/(long)100.00;
     pin._h_date = time(NULL);
+
+    if (tCustLast)
+        delete (tCustLast);
 
     return (pin);
 }

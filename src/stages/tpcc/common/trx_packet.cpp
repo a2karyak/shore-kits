@@ -15,38 +15,6 @@
 ENTER_NAMESPACE(qpipe);
 
 
-/** Helper functions */
-
-/**
- *  @brief Displays in a friendly way a TrxState
- */
-
-c_str translate_state(TrxState aState) {
-
-    switch (aState) {
-    case UNDEF:
-        return ("Undef");
-        break;
-    case UNSUBMITTED:
-        return ("Unsubmitted");
-        break;
-    case SUBMITTED:
-        return ("Submitted");
-        break;
-    case POISSONED:
-        return ("Poissoned");
-        break;
-    case COMMITTED:
-        return ("Commited");
-        break;
-    case ROLLBACKED:
-        return ("Rollbacked");
-        break;
-    }
-
-    return ("Known");
-}
-
 
 ////////////////////////
 // class trx_packet_t //

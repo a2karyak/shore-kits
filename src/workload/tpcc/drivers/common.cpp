@@ -117,17 +117,15 @@ char* generate_cust_last(int select) {
 
   /** FIXME: (ip) C_LAST is char[16] */
 
-  char* s_cust_last = new char[strlen(CUST_LAST[i1]) +
-                               strlen(CUST_LAST[i2]) +
-                               strlen(CUST_LAST[i3]) + 1];
-  
+  int iLen = strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]);
 
-  sprintf(s_cust_last, "%s%s%s\0", 
+  char* s_cust_last = new char[iLen + 1];
+  
+  snprintf(s_cust_last, iLen, "%s%s%s", 
           CUST_LAST[i1],
           CUST_LAST[i2],
           CUST_LAST[i3]);
-
-  //TRACE(TRACE_ALWAYS, "SEL: [%d]\tC_LAST: [%s]\n", select, s_cust_last);
+  s_cust_last[iLen] = '\0';
   
   return (s_cust_last);
 }

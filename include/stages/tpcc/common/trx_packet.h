@@ -36,8 +36,23 @@ ENTER_NAMESPACE(qpipe);
 enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
 		COMMITTED, ROLLBACKED };
 
-c_str translate_state(TrxState aState);
+static char* sTrxStates[6] = { "Undef", "Unsubmitted", "Submitted",
+                               "Poissoned", "Committed", "Rollbacked" };
 
+
+/** Helper functions */
+
+/** @fn translate_state
+ *  @brief Displays in a friendly way a TrxState
+ */
+
+inline char* translate_state(TrxState aState) {
+    assert ((aState >= 0) && (aState < 6));
+    return (sTrxStates[aState]);
+}
+
+
+/** Exported classes and data structures */
 
 /**
  *  @brief Definition of the transactional packets: A transactional packet has 
@@ -82,9 +97,8 @@ public:
     }
     
     inline void set_trx_id(int a_trx_id) {
-        
-        assert (a_trx_id > NO_VALID_TRX_ID);
-        
+        // Cannot set a NO_VALID trx id
+        assert (a_trx_id > NO_VALID_TRX_ID);        
         _trx_id = a_trx_id;
     }
 
@@ -93,9 +107,8 @@ public:
     }
     
     inline void set_trx_state(TrxState a_trx_state) {
-        
-        assert (a_trx_state > UNDEF);
-        
+        // Cannot set a UNDEF state
+        assert (a_trx_state > UNDEF);        
         _trx_state = a_trx_state;
     }
 
@@ -188,7 +201,7 @@ public:
     
     inline TrxState get_state() { return (R_STATE); }
 
-    inline c_str say_state() { return (translate_state(R_STATE)); }
+    inline char* say_state() { return (translate_state(R_STATE)); }
 
     inline void reset(TrxState aTrxState, int anID) {
 
@@ -234,16 +247,14 @@ public:
 
     virtual void process(const tuple_t& output) {
 
-        assert (_packet != NULL);
+        assert (_packet);
 
         trx_result_tuple_t* r = aligned_cast<trx_result_tuple_t>(output.data);
-        TRACE( TRACE_ALWAYS, "*** TRX=%d\tRESULT=%s\n",
-               r->get_id(),
-               r->say_state().data());
-
+        TRACE( TRACE_QUERY_RESULTS, "*** TRX=%d\tRESULT=%s\n",
+               r->get_id(),r->say_state());
 
         // FIXME (ip) Is this assertion correct?
-        //        assert (_packet->get_trx_id() == r->get_id());
+        assert (_packet->get_trx_id() == r->get_id());
 
         _packet->set_trx_state(r->get_state());
     }
