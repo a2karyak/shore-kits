@@ -241,7 +241,9 @@ public:
                r->get_id(),
                r->say_state().data());
 
-        assert (_packet->get_trx_id() == r->get_id());
+
+        // FIXME (ip) Is this assertion correct?
+        //        assert (_packet->get_trx_id() == r->get_id());
 
         _packet->set_trx_state(r->get_state());
     }

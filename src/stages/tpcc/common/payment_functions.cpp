@@ -364,8 +364,6 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
     assert( a_customer ); // make sure correct parameters
     assert( strncmp(a_customer->C_CREDIT, "BC", 2) == 0 );
 
-    TRACE( TRACE_ALWAYS, "*** TO BE DONE! Updating Customer Data\n");
-
     // FIXME (ip) Modification instead of writing D_ID, W_ID, and H_AMOYNT
     // we write again C_D_ID, C_W_ID, and C_BALANCE
 
@@ -380,14 +378,15 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
              a_customer->C_W_ID,
              a_customer->C_BALANCE.to_double());
 
+    int i = strlen(tmp);
 
     // copies first half of old data, which is stored 
     // on the first member variable
-    strncpy(&tmp[80], a_customer->C_DATA_1, 250);
+    strncpy(&tmp[i], a_customer->C_DATA_1, 250);
 
     // copies part of the second half of old data, which
     // is stored on the second member variable
-    strncpy(&tmp[330], a_customer->C_DATA_2, 170);
+    strncpy(&tmp[i+250], a_customer->C_DATA_2, 250-i);
 
     TRACE( TRACE_RECORD_FLOW,
            "Before\n1:%s\n2:%s\n",
