@@ -13,9 +13,14 @@
 
 
 #include <db_cxx.h>
-#include "stages/tpcc/common/tpcc_struct.h"
 
+#include "stages/tpcc/common/tpcc_struct.h"
+#include "stages/tpcc/common/trx_packet.h"
+
+
+using namespace qpipe;
 using namespace tpcc;
+
 
 
 ENTER_NAMESPACE(tpcc_payment);
@@ -55,10 +60,12 @@ struct payment_input_t {
 
 
 /** Exported functions */
-    
-int updateCustomerByLast(DbTxn* a_txn, int wh_id, int d_id, char* c_last, decimal h_amount);
 
-int updateCustomerByID(DbTxn* a_txn, int wh_id, int d_id, int c_id, decimal h_amount);
+trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn, const int id);
+    
+int updateCustomerByLast(DbTxn* txn, int wh_id, int d_id, char* c_last, decimal h_amount);
+
+int updateCustomerByID(DbTxn* txn, int wh_id, int d_id, int c_id, decimal h_amount);
 
 void updateCustomerData(tpcc_customer_tuple* a_customer);
 

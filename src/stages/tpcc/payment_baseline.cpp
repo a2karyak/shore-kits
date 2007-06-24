@@ -12,6 +12,7 @@
 
 #include "workload/tpcc/tpcc_env.h"
 
+using namespace qpipe;
 using namespace tpcc_payment;
 
 
@@ -48,8 +49,9 @@ void payment_baseline_stage_t::process_packet() {
     // Prints out the packet info
     packet->describe_trx();
 
-    trx_result_tuple_t aTrxResultTuple = executePaymentBaseline(packet->_p_in, 
-                                                                packet->_trx_txn);
+    trx_result_tuple_t aTrxResultTuple = executePayment(&packet->_p_in, 
+                                                        packet->_trx_txn,
+                                                        packet->get_trx_id());
     
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );

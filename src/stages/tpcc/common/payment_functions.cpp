@@ -9,7 +9,12 @@
  */
 
 #include "stages/tpcc/common/payment_functions.h"
+
+#include "stages/tpcc/common/trx_packet.h"
+
 #include "workload/tpcc/tpcc_env.h"
+
+using namespace qpipe;
 
 
 ENTER_NAMESPACE(tpcc_payment);
@@ -22,10 +27,10 @@ ENTER_NAMESPACE(tpcc_payment);
  *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
-trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn) {
+trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn, const int id) {
 
     // initialize the result structure
-    trx_result_tuple_t aTrxResultTuple(UNDEF, p->get_trx_id());
+    trx_result_tuple_t aTrxResultTuple(UNDEF, id);
     
     try {
         
@@ -261,13 +266,13 @@ trx_result_tuple_t executePayment(payment_input_t* pin, DbTxn* txn) {
  *  @return 0 on success, non-zero on failure
  */
     
-int updateCustomerByID(DbTxn* a_txn, 
+int updateCustomerByID(DbTxn* txn, 
                        int wh_id, 
                        int d_id, 
                        int c_id, 
                        decimal h_amount) 
 {
-    assert (a_txn); // abort if no valid transaction handle
+    assert (txn); // abort if no valid transaction handle
 
     tpcc_customer_tuple_key ck;
     ck.C_C_ID = c_id;
@@ -278,7 +283,7 @@ int updateCustomerByID(DbTxn* a_txn,
     Dbt data_c;
     data_c.set_flags(DB_DBT_MALLOC);
     
-    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(a_txn, &key_c, &data_c, DB_RMW) ==
+    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(txn, &key_c, &data_c, DB_RMW) ==
         DB_NOTFOUND)
         {
             THROW4( BdbException,
@@ -319,7 +324,7 @@ int updateCustomerByID(DbTxn* a_txn,
         updateCustomerData(customer);
     }
     
-    return (tpcc_tables[TPCC_TABLE_CUSTOMER].db->put(a_txn, &key_c, &data_c, 0));
+    return (tpcc_tables[TPCC_TABLE_CUSTOMER].db->put(txn, &key_c, &data_c, 0));
 }
 
 
@@ -342,7 +347,7 @@ int updateCustomerByID(DbTxn* a_txn,
  *  @return 0 on success, non-zero on failure
  */
     
-int updateCustomerByLast(DbTxn* a_txn, 
+int updateCustomerByLast(DbTxn* txn, 
                          int wh_id, 
                          int d_id, 
                          char* c_last,
@@ -351,7 +356,7 @@ int updateCustomerByLast(DbTxn* a_txn,
     // FIXME (ip) Not implemented yet
     assert( 1 == 0);
 
-    assert(a_txn); // abort if no valid transaction handle 
+    assert(txn); // abort if no valid transaction handle 
 
     int iResult = 0;
 

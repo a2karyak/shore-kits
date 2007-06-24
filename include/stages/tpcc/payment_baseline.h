@@ -163,13 +163,9 @@ public:
     payment_baseline_stage_t();
  
     ~payment_baseline_stage_t() { 
-	TRACE(TRACE_ALWAYS, "PAYMENT_BASELINE destructor\n");	
+	TRACE(TRACE_DEBUG, "PAYMENT_BASELINE destructor\n");	
     }        
 
-
-private:    
-
-    trx_result_tuple_t executePaymentBaseline(payment_baseline_packet_t* p);                           
     
 }; // EOF: payment_baseline_stage_t
 
