@@ -1,5 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file tpcc_payment.cpp
+ *
+ *  @brief Declaration of the client that submits PAYMENT transactions 
+ *  according to the TPC-C specification.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #ifndef __TPCC_PAYMENT_DRIVER_H
 #define __TPCC_PAYMENT_DRIVER_H
 

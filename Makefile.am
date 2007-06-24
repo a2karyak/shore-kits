@@ -234,6 +234,7 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_tbl_readers.cpp \
    $(SW)/tpcc/tpcc_compare.cpp \
    $(SW)/tpcc/drivers/common.cpp \
+   $(SW)/tpcc/drivers/tpcc_payment_common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp \
    $(SW)/tpcc/drivers/tpcc_payment_baseline.cpp
 

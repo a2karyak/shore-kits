@@ -1,7 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PAYMENT_INS_HIST_H
-#define _PAYMENT_INS_HIST_H
+/** @file payment_ins_hist.h
+ *
+ *  @brief Interface for the payment_insert_history stage,
+ *  part of the payment_staged transaction.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
+#ifndef __TPCC_PAYMENT_INS_HIST_H
+#define __TPCC_PAYMENT_INS_HIST_H
 
 #include <cstdio>
 

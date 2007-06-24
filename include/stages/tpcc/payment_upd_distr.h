@@ -1,5 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file payment_upd_distr.h
+ *
+ *  @brief Interface for the payment_update_district stage,
+ *  part of the payment_staged transaction.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
 #ifndef __TPCC_PAYMENT_UPD_DISTR_H
 #define __TPCC_PAYMENT_UPD_DISTR_H
 
@@ -9,7 +17,6 @@
 #include "util.h"
 
 #include "stages/tpcc/common/trx_packet.h"
-
 
 using namespace qpipe;
 

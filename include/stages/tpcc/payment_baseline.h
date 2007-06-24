@@ -74,7 +74,7 @@ public:
                               const int a_c_id,
                               const char a_c_last[16],
                               const double a_h_amount,
-                              const char* a_h_date)
+                              const int a_h_date)
       : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                      create_plan(a_c_id, a_h_amount, a_h_date),
                      true, /* merging allowed */
@@ -89,29 +89,26 @@ public:
         _p_in._v_cust_ident_selection = a_v_cust_ident_selection;
         _p_in._c_id = a_c_id;
         _p_in._h_amount = a_h_amount;
-	
-        assert(a_h_date != NULL);
+
+        assert (a_c_last);
         
-	if (a_c_last != NULL) {	    
-	    strncpy(_p_in._c_last, a_c_last, 15);
-	    _p_in._c_last[16] = '\0';
-	}
-        
-	_p_in._h_date = new char[strlen(a_h_date) + 1];
-        strncpy(_p_in._h_date, a_h_date, strlen(a_h_date));
-        _p_in._h_date[strlen(a_h_date)] = '\0';
+        strncpy(_p_in._c_last, a_c_last, 14);
+        _p_in._c_last[15] = '\0';
 
         _trx_state = UNDEF;
-      }
+    }
 
     
     // FIXME: (ip) Correct the plan creation
     static query_plan* create_plan( const int a_c_id,
                                     const double a_h_amount,
-                                    const char* a_h_date) 
+                                    const int a_h_date) 
       {
-        c_str action("%s:%d:%f:%d", PACKET_TYPE.data(), 
-		     a_c_id, a_h_amount, a_h_date);
+        c_str action("%s:%d:%f:%d", 
+                     PACKET_TYPE.data(), 
+		     a_c_id, 
+                     a_h_amount, 
+                     a_h_date);
         
         return new query_plan(action, "none", NULL, 0);
       }
@@ -159,6 +156,12 @@ public:
 	TRACE(TRACE_DEBUG, "PAYMENT_BASELINE destructor\n");	
     }        
 
+private:
+
+    trx_result_tuple_t executePaymentBaseline(payment_input_t* pin, 
+                                              DbTxn* txn, 
+                                              const int id);
+    
     
 }; // EOF: payment_baseline_stage_t
 

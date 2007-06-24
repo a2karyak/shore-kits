@@ -54,14 +54,12 @@ struct payment_input_t {
     int _c_id;
     char _c_last[16];
     double _h_amount;
-    char* _h_date;
+    int _h_date;
 
 }; // EOF payment_input_t
 
 
 /** Exported functions */
-
-trx_result_tuple_t executePaymentBaseline(payment_input_t* pin, DbTxn* txn, const int id);
 
 int insertHistory(payment_input_t* pin, DbTxn* txn);
 

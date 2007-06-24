@@ -25,5 +25,6 @@
 #include "util/itimer.h"
 #include "util/acounter.h"
 #include "util/randgen.h"
+#include "util/store_string.h"
 
 #endif

@@ -8,16 +8,17 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-# include "scheduler.h"
-# include "util.h"
+#include "scheduler.h"
+#include "util.h"
 
-# include "workload/common.h"
+#include "workload/common.h"
 
-# include "workload/tpcc/drivers/common.h"
-# include "workload/tpcc/drivers/tpcc_payment.h"
-
+#include "workload/tpcc/drivers/tpcc_payment.h"
+#include "workload/tpcc/drivers/tpcc_payment_common.h"
 
 using namespace qpipe;
+using namespace tpcc;
+
 
 ENTER_NAMESPACE(workload);
 
@@ -74,43 +75,28 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
 						 scheduler::policy_t* dp,
                                                  int sf) 
 {
-    // BEGIN_PAYMENT
-    trx_packet_t* payment_packet;
-
     assert(sf > 0);
 
-    // produce PAYMENT params according to tpcc spec v.5.4
-    int p_home_wh_id = URand(1, sf);
-    int p_home_d_id = URand(1, 10);
-    int select_wh = URand(1, 100); // 85 - 15
-    int p_rem_wh_id = URand(1, sf);
-    int p_rem_d_id = URand(1, 10);
-    int select_ident = URand(1, 100); // 60 - 40
-    int p_c_id = NURand(1023, 1, 3000);
-    char* p_c_last = generate_cust_last(NURand(255, 0, 999));
-    long p_amount = (long)URand(100, 500000)/(long)100.00;
+    trx_packet_t* payment_packet;
 
-    // FIXME: (ip) Correct p_date value
-    char* p_date = "NEVER";
+    tpcc_payment::payment_input_t pin = create_payment_input(sf);
     
     c_str packet_name("%s_payment_test", client_prefix.data());
 
 
-
     payment_packet = new payment_begin_packet_t(packet_name,
-						bp_output_buffer,
-						bp_output_filter,
-						p_home_wh_id,
-						p_home_d_id,
-						select_wh,
-						p_rem_wh_id,
-						p_rem_d_id,
-						select_ident,
-						p_c_id,
-						p_c_last,
-						p_amount,
-						p_date);
-					       
+                                                bp_output_buffer,
+                                                bp_output_filter,
+                                                pin._home_wh_id,
+                                                pin._home_d_id,
+                                                pin._v_cust_wh_selection,
+                                                pin._remote_wh_id,
+                                                pin._remote_d_id,
+                                                pin._v_cust_ident_selection,
+                                                pin._c_id,
+                                                pin._c_last,
+                                                pin._h_amount,
+                                                pin._h_date);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

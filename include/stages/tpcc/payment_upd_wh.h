@@ -1,7 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _PAYMENT_UPD_WH_H
-#define _PAYMENT_UPD_WH_H
+/** @file payment_upd_wh.h
+ *
+ *  @brief Interface for the payment_update_warehouse stage,
+ *  part of the payment_staged transaction.
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
+#ifndef __TPCC_PAYMENT_UPD_WH_H
+#define __TPCC_PAYMENT_UPD_WH_H
 
 #include <cstdio>
 

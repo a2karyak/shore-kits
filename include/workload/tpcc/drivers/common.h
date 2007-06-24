@@ -6,12 +6,13 @@
  *  @version Based on TPC-C Standard Specification Revision 5.4 (Apr 2005)
  */
 
-#ifndef _TPCC_COMMON_H
-#define _TPCC_COMMON_H
+#ifndef __TPCC_COMMON_H
+#define __TPCC_COMMON_H
 
 #include "util.h"
 
-ENTER_NAMESPACE(workload);
+
+ENTER_NAMESPACE(tpcc);
 
 /** Terminology
  *  
@@ -30,7 +31,7 @@ int NURand(int A, int low, int high);
 
 char* generate_cust_last(int select);
 
-EXIT_NAMESPACE(workload);
+EXIT_NAMESPACE(tpcc);
 
-#endif // _TPCC_COMMON_H
+#endif
 

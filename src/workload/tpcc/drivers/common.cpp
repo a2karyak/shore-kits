@@ -8,7 +8,8 @@
 
 #include "workload/tpcc/drivers/common.h"
 
-ENTER_NAMESPACE(workload);
+
+ENTER_NAMESPACE(tpcc);
 
 
 /** Terminology
@@ -132,4 +133,4 @@ char* generate_cust_last(int select) {
 }
 
 
-EXIT_NAMESPACE(workload);
+EXIT_NAMESPACE(tpcc);

@@ -78,6 +78,68 @@ void payment_baseline_stage_t::process_packet() {
 
 
 
+/** @fn executePaymentBaseline
+ *
+ *  @brief Executes the PAYMENT transaction serially. Wrapper function.
+ *  
+ *  @return A trx_result_tuple_t with the status of the transaction.
+ */
+    
+trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_input_t* pin, 
+                                                                    DbTxn* txn, 
+                                                                    const int id) 
+{
+    // initialize the result structure
+    trx_result_tuple_t aTrxResultTuple(UNDEF, id);
+    
+    try {
+        
+       TRACE( TRACE_TRX_FLOW, "*** EXECUTING TRX CONVENTIONALLY ***\n");
+    
+       /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
+
+    
+       /** Step 1: The database transaction is started */
+       TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
+       dbenv->txn_begin(NULL, &txn, 0);
+
+       updateWarehouse(pin, txn);
+
+       updateDistrict(pin, txn);
+
+       if (updateCustomer(pin, txn)) {           
+           // Failed. Throw exception
+           THROW1( BdbException,
+                   "CUSTOMER update failed...\n");
+       }
+
+       insertHistory(pin, txn);
+    
+       /** Step 6: The database transaction is committed */
+       TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
+       txn->commit(0);
+    }
+    catch(DbException err) {
+        dbenv->err(err.get_errno(), "%d: Caught exception\n");
+        TRACE( TRACE_ALWAYS, "DbException - Aborting PAYMENT trx...\n");
+        
+        txn->abort();
+	    
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
+        
+        // FIXME (ip): We may want to have retries
+        //if (++failed_tries > MAX_TRIES) {
+        //   packet->_trx_txn->abort();
+        //   TRACE( TRACE_ALWAYS, "MAX_FAILS - Aborting...\n");        
+    }
+
+    // if reached this point transaction succeeded
+    aTrxResultTuple.set_state(COMMITTED);
+    return (aTrxResultTuple);
+
+} // EOF: executePaymentBaseline
+
 
 
     
