@@ -1,12 +1,20 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TESTER_QUERY_H
-#define _TESTER_QUERY_H
+#ifndef __TESTER_QUERY_H
+#define __TESTER_QUERY_H
 
 #include "scheduler.h"
 
 #include "workload/driver.h"
 #include "workload/register_stage_containers.h"
+
+
+// tracing the key comparison in tpcc
+#define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS | TRACE_KEY_COMP | TRACE_RECORD_FLOW)
+//#define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS | TRACE_RECORD_FLOW)
+
+// default tracing flags
+//#define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS)
 
 
 struct query_info_t {

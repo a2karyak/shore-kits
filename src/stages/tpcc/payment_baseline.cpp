@@ -223,7 +223,6 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_base
        TRACE( TRACE_ALWAYS, "Step 6: The database transaction is committed\n" );
 
        p->_trx_txn->commit(0);
-
     }
     catch(DbException err) {
         dbenv->err(err.get_errno(), "%d: Caught exception\n");
@@ -281,32 +280,38 @@ int payment_baseline_stage_t::updateCustomerByID(DbTxn* a_txn,
     if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(a_txn, &key_c, &data_c, DB_RMW) ==
         DB_NOTFOUND)
         {
-            TRACE( TRACE_ALWAYS,
-                   "customer with id=(%d,%d,%d) not found in the database\n", 
+            THROW4( BdbException,
+                   "Customer with id=(%d,%d,%d) not found in the database\n", 
                    ck.C_C_ID,
                    ck.C_D_ID,
                    ck.C_W_ID);
-            
-            THROW1( BdbException,
-                    "Customer not found\n");
         }
     
     tpcc_customer_tuple* customer = (tpcc_customer_tuple*)data_c.get_data();
     
     assert(customer); // make sure that we got a customer
-    
-    if (customer->C_BALANCE < h_amount) {
-        TRACE( TRACE_ALWAYS, 
-               "balance (%f) < (%f) h_amount. Aborting trx...\n",
-               customer->C_BALANCE,
-               h_amount.to_double());
-        return (1);
-    }
+
+    TRACE( TRACE_RECORD_FLOW, 
+           "\nBal: (%.2f) Payment: (%.2f) Cnt: (%d) Cred: (%s) Amount: (%.2f)\n",
+           customer->C_BALANCE.to_double(),
+           customer->C_YTD_PAYMENT.to_double(),
+           customer->C_PAYMENT_CNT,
+           customer->C_CREDIT,
+           h_amount.to_double());
+
 
     // updating customer data
     customer->C_BALANCE -= h_amount;
     customer->C_YTD_PAYMENT += h_amount;
     customer->C_PAYMENT_CNT++;
+
+    TRACE( TRACE_RECORD_FLOW, 
+           "\nBal: (%.2f) Payment: (%.2f) Cnt: (%d) Cred: (%s) Amount: (%.2f)\n",
+           customer->C_BALANCE.to_double(),
+           customer->C_YTD_PAYMENT.to_double(),
+           customer->C_PAYMENT_CNT,
+           customer->C_CREDIT,
+           h_amount.to_double());
     
     
     if (strncmp(customer->C_CREDIT, "BC", 2) == 0) {

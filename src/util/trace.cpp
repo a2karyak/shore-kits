@@ -2,17 +2,16 @@
 
 /** @file trace.cpp
  *
- *  @brief Tracing module. To add a new tracing type, please create a
+ *  @brief Tracing module. To add a new tracing type, create a
  *  constant for the type in trace_types.h. Then register it in the
  *  switch() statement below. You may also want to add a macro for
  *  that tracing type in trace.h.
  *
  *  @author Naju Mancheril (ngm)
- *
- *  @bug None known.
  */
 #include "util/trace.h"              /* for prototypes */
 #include "util/sync.h"
+
 #include <cstdio>               /* for stdout, stderr */
 #include <cstring>              /* for strlen() */
 

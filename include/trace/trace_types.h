@@ -5,11 +5,10 @@
  *  @brief Lists all TRACE types. Each of these should be a bit
  *  specified in a bit vector. We current support up to 32 tracing
  *  types.
- *
- *  @bug None known.
  */
-#ifndef _TRACE_TYPES_H
-#define _TRACE_TYPES_H
+
+#ifndef __TRACE_TYPES_H
+#define __TRACE_TYPES_H
 
 
 
@@ -31,6 +30,8 @@
 #define TRACE_NETWORK              (1 << 10)
 #define TRACE_RESPONSE_TIME        (1 << 11)
 #define TRACE_WORK_SHARING         (1 << 12)
+#define TRACE_KEY_COMP             (1 << 13)
+#define TRACE_RECORD_FLOW          (1 << 14)
 #define TRACE_DEBUG                (1 << 31)
 
 

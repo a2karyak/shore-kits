@@ -4,10 +4,11 @@
  *
  *  @brief Tracing module.
  *
- *  @bug See trace.cpp.
+ *  @note See trace.cpp.
  */
-#ifndef _TRACE_H
-#define _TRACE_H
+
+#ifndef __TRACE_H
+#define __TRACE_H
 
 #include <cstdarg>             /* for varargs */
 #include <stdint.h>            /* for uint32_t */

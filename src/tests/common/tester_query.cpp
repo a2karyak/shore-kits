@@ -49,7 +49,7 @@ query_info_t query_init(int argc, char* argv[], int env) {
 
 void query_main(query_info_t& info, workload::driver_t* driver, int env) {
 
-    TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS);
+    TRACE_SET(TESTER_TRACE_MASK);
 
     for(int i=0; i < info.num_iterations; i++) {
         stopwatch_t timer;

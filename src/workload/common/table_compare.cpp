@@ -83,7 +83,9 @@ int bt_compare_fn_1_int(const Dbt* k1,
     int u1 = *(int*)k1->get_data();
     int u2 = *(int*)k2->get_data();
 
-    //   printf ("k1=%d\tk2=%d\n", u1, u2);
+    TRACE ( TRACE_KEY_COMP, 
+            "k1=(%d)\tk2=(%d)\n", 
+            u1, u2);
 
     if (u1 < u2)
         return -1;
@@ -109,7 +111,10 @@ int bt_compare_fn_2_int(const Dbt* k1,
     memcpy(&u1, k1->get_data(), sizeof(u1));
     memcpy(&u2, k2->get_data(), sizeof(u2));
 
-    //    printf ("k1=(%d,%d)\tk2=(%d,%d)\n", u1.s1, u1.s2, u2.s1, u2.s2);
+    TRACE ( TRACE_KEY_COMP, 
+            "\nk1=(%d,%d)\tk2=(%d,%d)\n", 
+            u1.s1, u1.s2, 
+            u2.s1, u2.s2);
 
     if ((u1.s1 < u2.s1) || ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)))
         return -1;
@@ -138,7 +143,10 @@ int bt_compare_fn_3_int(const Dbt* k1,
     memcpy(&u1, k1->get_data(), sizeof(u1));
     memcpy(&u2, k2->get_data(), sizeof(u2));
 
-    printf ("k1=(%d,%d,%d)\tk2=(%d,%d,%d)\n", u1.s1, u1.s2, u1.s3, u2.s1, u2.s2, u2.s3);
+    TRACE ( TRACE_KEY_COMP, 
+            "\nk1=(%d,%d,%d)\tk2=(%d,%d,%d)\n", 
+            u1.s1, u1.s2, u1.s3, 
+            u2.s1, u2.s2, u2.s3);
     
     if ((u1.s1 < u2.s1) || 
         ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||
@@ -160,24 +168,31 @@ int bt_compare_fn_3_int(const Dbt* k1,
 int bt_compare_fn_4_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-  // key has 4 integers
-  s_four_ints u1;
-  s_four_ints u2;
-  memcpy(&u1, k1->get_data(), sizeof(s_four_ints));
-  memcpy(&u2, k2->get_data(), sizeof(s_four_ints));
+    // key has 4 integers
+    s_four_ints u1;
+    s_four_ints u2;
+    memcpy(&u1, k1->get_data(), sizeof(s_four_ints));
+    memcpy(&u2, k2->get_data(), sizeof(s_four_ints));
+
+
+    TRACE ( TRACE_KEY_COMP, 
+            "\nk1=(%d,%d,%d,%d)\tk2=(%d,%d,%d,%d)\n", 
+            u1.s1, u1.s2, u1.s3, u1.s4,
+            u2.s1, u2.s2, u2.s3, u1.s4);
+    
   
-  if ((u1.s1 < u2.s1) || 
-      ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||
-      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 < u2.s3)) ||
-      ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 == u2.s3) && (u1.s4 < u2.s4)))
-    return -1;
-  else if ((u1.s1 == u2.s1) && 
-           (u1.s2 == u2.s2) &&  
-           (u1.s3 == u2.s3) &&  
-           (u1.s4 == u2.s4))
-    return 0;
-  else
-    return 1;
+    if ((u1.s1 < u2.s1) || 
+        ((u1.s1 == u2.s1) && (u1.s2 < u2.s2)) ||
+        ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 < u2.s3)) ||
+        ((u1.s1 == u2.s1) && (u1.s2 == u2.s2) && (u1.s3 == u2.s3) && (u1.s4 < u2.s4)))
+        return -1;
+    else if ((u1.s1 == u2.s1) && 
+             (u1.s2 == u2.s2) &&  
+             (u1.s3 == u2.s3) &&  
+             (u1.s4 == u2.s4))
+        return 0;
+    else
+        return 1;
 }
 
 
