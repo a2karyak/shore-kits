@@ -207,8 +207,11 @@ void tpcc_handler_t::print_run_statistics(const c_str& desc,
     // print final statistics
     int trx_completed = results.num_clients * results.num_iterations;
     
-    // queries per hour
-    float tpmC = (60.0 * trx_completed) / results.total_time;
+    // queries per sec
+    float tpsC =  trx_completed / results.total_time;
+
+    // queries per min
+    //float tpmC =  (60 * trx_completed) / results.total_time;
     
     TRACE(TRACE_STATISTICS, "~~~\n");
     TRACE(TRACE_STATISTICS, "~~~ Description       = %s\n", desc.data());
@@ -217,7 +220,8 @@ void tpcc_handler_t::print_run_statistics(const c_str& desc,
     TRACE(TRACE_STATISTICS, "~~~ Think Time        = %d \n", results.think_time);
     TRACE(TRACE_STATISTICS, "~~~ Duration          = %.2f \n", results.total_time);
     TRACE(TRACE_STATISTICS, "~~~\n");
-    TRACE(TRACE_STATISTICS, "~~~ Throughput        = %.2f trx/min\n", tpmC);
+    TRACE(TRACE_STATISTICS, "~~~ Throughput        = %.2f trx/sec\n", tpsC);
+    //    TRACE(TRACE_STATISTICS, "~~~ Throughput        = %.2f trx/min\n", tpsC);
     TRACE(TRACE_STATISTICS, "~~~\n");
 }
 

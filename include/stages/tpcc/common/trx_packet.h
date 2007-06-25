@@ -24,7 +24,9 @@ ENTER_NAMESPACE(qpipe);
 
 
 # define NO_VALID_TRX_ID -1
-# define RANGE 1
+
+// Sets the range of warehouses queried
+# define RANGE           2
 
 
 /**
