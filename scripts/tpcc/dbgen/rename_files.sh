@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# @file rename_files.sh
+# 
+# @brief The stagedtrx loaded (<base_dir>/tests/tpcc_load) needs the flat data
+# files with specific filenames. This script simply renames the files generated
+# by the dbgen-generate-files.pl tool accordingly.
+#
+# @author Ippokratis Pandis (ipandis) 
+
 mv 3.dat WAREHOUSE.dat
 mv 4.dat DISTRICT.dat
 mv 5.dat ITEM.dat

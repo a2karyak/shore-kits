@@ -181,13 +181,21 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
          *
          *  @note To indicate that logging is to be performed only in memory
          *  DB_LOG_INMEMORY flag should be set to the environment before that
-         *  is opened.
+         *  is opened. 
          *
-         *  @note Also the size of the log memory buffer should be set. The
-         *  default value is 1 MB
+         *  @note Additionally, in this case the system should not run normal
+         *  recovery when the environment is opened.
          */
-        //dbenv->set_flags(DB_LOG_INMEMORY, 1);
-        //dbenv->set_lg_bsize(5 * 1024 * 1024); /* Set memory log = 5 MBs */
+
+        dbenv->set_flags(DB_LOG_INMEMORY, 1);
+
+
+        /** @note In using in-memory logging  the size of the log memory buffer 
+         *  should be large enough to hold all logging information likely to be
+         *  created for our longest running transaction. The default value is 1 MB.
+         */
+        
+        dbenv->set_lg_bsize(10 * 1024 * 1024); /* Set memory log = 10 MBs */
 
         
 
@@ -199,14 +207,12 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
             DB_INIT_LOG   | // Initialize logging
             DB_INIT_MPOOL | // Initialize the cache
             DB_INIT_TXN   | // Initialize transactions  
-            DB_THREAD     | // Free-thread the env handle
-            DB_RECOVER;     // Run normal recovery at db environment startup
+            DB_THREAD;      // Free-thread the env handle
 
 
         /** @note Other possible flags
-            DB_RECOVER    | // Run normal recovery before opening for normal use
-        */
-
+         *  DB_RECOVER    | // Run normal recovery before opening for normal use
+         */
 
         // open environment with no transactional support.
         dbenv->open(BDB_HOME_DIRECTORY,
@@ -277,7 +283,8 @@ void db_close() {
     */
 
     // run a checkpoint before closing
-    db_checkpoint();
+    // FIXME (ip) Do we need this?
+    //    db_checkpoint();
 
     // close environment
     try {    

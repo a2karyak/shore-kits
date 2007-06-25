@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     }
     catch (...) {
         // catches any arbitrary exception raised
-        TRACE( TRACE_ALWAYS, "Exception reached main()\tExiting...");
+        TRACE( TRACE_ALWAYS, "Exception reached main()\tExiting...\n");
         qpipe_shutdown();
         return (-1);
     }
@@ -74,21 +74,22 @@ int qpipe_init(int argc, char* argv[]) {
     // Parse TPC-H / TPC-C environment
     if ((argc > 1) && (strcmp(argv[1], "-trx") == 0)) {
         TRACE( TRACE_ALWAYS,
-               "StagedTRX: Transaction Processing Engine\n");
+               "StagedTRX - Transaction Processing Engine\n");
         processing_env = TRX_ENV;
     } 
     else {
         TRACE( TRACE_ALWAYS, 
-               "Cordoba: Query Execution Engine\n");
+               "Cordoba - Query Execution Engine\n");
     }
     
     register_command_handlers(processing_env);
     register_stage_containers(processing_env);
 
 
-    TRACE_SET(TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
+    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
               //              | TRACE_QUERY_RESULTS
               //              | TRACE_PACKET_FLOW
+              //              | TRACE_TRX_FLOW
               );
 
     if ((argc > 1) && (strcmp(argv[1], "-n") == 0)) {

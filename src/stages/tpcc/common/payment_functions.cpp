@@ -389,7 +389,7 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
     strncpy(&tmp[i+250], a_customer->C_DATA_2, 250-i);
 
     TRACE( TRACE_RECORD_FLOW,
-           "Before\n1:%s\n2:%s\n",
+           "Before\DATA1 - %s\nDATA2 - %s\n",
            a_customer->C_DATA_1,
            a_customer->C_DATA_2);
 
@@ -401,7 +401,7 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
 
 
     TRACE( TRACE_RECORD_FLOW,
-           "After\n1:%s\n2:%s\n",
+           "After\nDATA1 - %s\nDATA2 - %s\n",
            a_customer->C_DATA_1,
            a_customer->C_DATA_2);
 }

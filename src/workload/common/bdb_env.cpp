@@ -49,7 +49,7 @@ void open_db_table(Db*& table, u_int32_t flags,
                     flags, 
                     0644);
 
-        TRACE(TRACE_DEBUG, "Table: %s opened...\n", table_name);
+        TRACE(TRACE_DEBUG, "Table (%s) opened...\n", table_name);
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS,

@@ -43,6 +43,29 @@ Start the stagetrx environment.
 ...
 
 
+
+----------
+
+
+
+CLEARING DATABASE LSNs:
+
+When moving databases or changing the logging mechanism we need to reset
+the LSNs of the database files. Otherwise, DbExceptions will raise. 
+This can be by three ways. 
+
+(a) From the application, calling the DB_ENV->lsn_reset() method.
+(b) By the dba, using the -r option to the db_load utility.
+(c) By the dba, by dumping and reloading the database (db_dump and db_load).
+
+There is a script that resets the LSNs of all the table of the TPC-C database 
+automatically:
+
+#> cd database_bdb_tpcc/
+#> <base_dir>/scripts/tpcc/reset_db_lsns.sh
+
+
+
 ----------
 
 

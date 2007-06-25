@@ -63,14 +63,17 @@ ENTER_NAMESPACE(tpcc);
  *  handle should be passed, and the database must open within a transaction.
  *  For this reason DB_AUTO_COMMIT is used in the database open command.
  */
+
 #define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_AUTO_COMMIT
 //#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_READ_UNCOMMITTED
+
 
 /** @note Define the env flags.
  *
  *  @note In order to enable SNAPSHOT ISOLATION the environment should be 
  *  opened with multiversion support.
  */
+
 //#define BDB_TPCC_ENV_OPEN_FLAGS DB_MULTIVERSION
 
 

@@ -80,7 +80,6 @@ void updateCustomerData(tpcc_customer_tuple* a_customer);
 
 inline void describe(payment_input_t pin, int id) {
 
-    //        printf(
     TRACE( TRACE_TRX_FLOW,
            "\nPAYMENT - TRX=%d\n" \
            "WH_ID=%d\t\tD_ID=%d\n" \
