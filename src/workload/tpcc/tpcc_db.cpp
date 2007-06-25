@@ -29,6 +29,12 @@ using namespace workload;
 ENTER_NAMESPACE(tpcc);
 
 
+/** Forward declaration of helper functions */
+
+int open_env_in_memory_logging();
+int open_env_regular_logging();
+
+
 
 /** @fn db_open
  *
@@ -40,7 +46,9 @@ ENTER_NAMESPACE(tpcc);
  *  @throw BdbException on error.
  */
 
-void db_open(u_int32_t flags, u_int32_t db_cache_size_gb, 
+void db_open(int in_memory,
+             u_int32_t flags, 
+             u_int32_t db_cache_size_gb, 
              u_int32_t db_cache_size_bytes) 
 {
     TRACE(TRACE_ALWAYS,
@@ -53,7 +61,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         dbenv->set_errpfx(BDB_ERROR_PREFIX);
     }
     catch (DbException &e) {
-        TRACE(TRACE_ALWAYS, "Caught DbException creating new DbEnv object: %s\n", 
+        TRACE(TRACE_ALWAYS, 
+              "Caught DbException creating new DbEnv object: %s\n", 
               e.what());
         THROW1(BdbException, "Could not create new DbEnv");
     }
@@ -137,7 +146,6 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
     
 
     // Open TPC-C Database Environment
-
     try {        
         const char* desc = "BDB_HOME_DIRECTORY (BDB home)";
         const char* dir  = BDB_HOME_DIRECTORY;
@@ -171,53 +179,18 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
         // Set the transaction timeout value, 0 means no timeout
         // dbenv->set_timeout(BDB_TRX_TIMEOUT, DB_SET_TXN_TIMEOUT);
 
-        
-        /** FIXME (ip): We may want to turn off logging. By doing so we are
-         *  giving up the transactional durability guarantee, in case of 
-         *  application or hardware crashes. On the other hand, I/O is 
-         *  reduced and the throughput is possible to increase. Once a 
-         *  transaction commits the log is flushed to disk, but it is not
-         *  backed by a file.
-         *
-         *  @note To indicate that logging is to be performed only in memory
-         *  DB_LOG_INMEMORY flag should be set to the environment before that
-         *  is opened. 
-         *
-         *  @note Additionally, in this case the system should not run normal
-         *  recovery when the environment is opened.
-         */
-
-        dbenv->set_flags(DB_LOG_INMEMORY, 1);
-
-
-        /** @note In using in-memory logging  the size of the log memory buffer 
-         *  should be large enough to hold all logging information likely to be
-         *  created for our longest running transaction. The default value is 1 MB.
-         */
-        
-        dbenv->set_lg_bsize(10 * 1024 * 1024); /* Set memory log = 10 MBs */
-
-        
-
-        // initialize the transactional subsystem
-        u_int32_t env_flags = 
-            DB_CREATE     | // If the environment does not exist, create it
-            DB_PRIVATE    | // The env will be accessed by a single process
-            DB_INIT_LOCK  | // Initialize locking
-            DB_INIT_LOG   | // Initialize logging
-            DB_INIT_MPOOL | // Initialize the cache
-            DB_INIT_TXN   | // Initialize transactions  
-            DB_THREAD;      // Free-thread the env handle
-
-
-        /** @note Other possible flags
-         *  DB_RECOVER    | // Run normal recovery before opening for normal use
-         */
-
-        // open environment with no transactional support.
-        dbenv->open(BDB_HOME_DIRECTORY,
-                    env_flags,
-                    0);
+        if (in_memory) {
+            // open env with in memory logging
+            if (open_env_in_memory_logging()) {
+                THROW1( BdbException, "dbenv failed to open...\n");
+            }
+        }
+        else {
+            // open env with regural logging
+            if (open_env_regular_logging()) {
+                THROW1( BdbException, "dbenv failed to open...\n");
+            }                
+        }
     }
     catch ( DbException &e) {
         TRACE(TRACE_ALWAYS,
@@ -269,6 +242,8 @@ void db_open(u_int32_t flags, u_int32_t db_cache_size_gb,
 
 void db_close() {
 
+    TRACE( TRACE_ALWAYS, "Closing TPC-C database...\n" );
+
     // close tables
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
         close_db_table(tpcc_tables[i].db, 
@@ -284,7 +259,7 @@ void db_close() {
 
     // run a checkpoint before closing
     // FIXME (ip) Do we need this?
-    //    db_checkpoint();
+    db_checkpoint();
 
     // close environment
     try {    
@@ -344,6 +319,88 @@ void db_read() {
     }   
 
     TRACE(TRACE_ALWAYS, "TPC-C database read\n");
+}
+
+
+/** Helper functions */
+
+
+
+/** @fn open_env_in_memory_logging
+ *
+ *  @brief Opens environment with in-memory logging configured.
+ *
+ *  @note Transactional durability is not assured with this method.
+ *  BE CAREFUL!
+ */
+
+int open_env_in_memory_logging() {
+
+        
+    /** We may want to turn off logging. By doing so we are
+     *  giving up the transactional durability guarantee, in case of 
+     *  application or hardware crashes. On the other hand, I/O is 
+     *  reduced and the throughput is possible to increase. Once a 
+     *  transaction commits the log is flushed to disk, but it is not
+     *  backed by a file.
+     *
+     *  @note To indicate that logging is to be performed only in memory
+     *  DB_LOG_INMEMORY flag should be set to the environment before that
+     *  is opened. 
+     *
+     *  @note Additionally, in this case the system should not run normal
+     *  recovery when the environment is opened.
+     */
+    
+    dbenv->set_flags(DB_LOG_INMEMORY, 1);
+        
+    
+    /** @note In using in-memory logging  the size of the log memory buffer 
+     *  should be large enough to hold all logging information likely to be
+     *  created for our longest running transaction. The default value is 1 MB.
+     */
+    
+    dbenv->set_lg_bsize(10 * 1024 * 1024); /* Set memory log = 10 MBs */
+
+        
+    
+    // initialize the transactional subsystem
+    u_int32_t env_flags = 
+        DB_CREATE     | // If the environment does not exist, create it
+        DB_PRIVATE    | // The env will be accessed by a single process
+        DB_INIT_LOCK  | // Initialize locking
+        DB_INIT_LOG   | // Initialize logging
+        DB_INIT_MPOOL | // Initialize the cache
+        DB_INIT_TXN   | // Initialize transactions  
+        DB_THREAD;      // Free-thread the env handle
+        
+    return (dbenv->open(BDB_HOME_DIRECTORY, env_flags, 0));
+}
+
+
+
+/** @fn open_env_regular_logging
+ *
+ *  @brief Opens environment with regural logging configured.
+ *
+ *  @note Transactional durability is not assured with this method.
+ *  BE CAREFUL!
+ */
+
+int open_env_regular_logging() {
+    
+    // initialize the transactional subsystem
+    u_int32_t env_flags = 
+        DB_CREATE     | // If the environment does not exist, create it
+        DB_PRIVATE    | // The env will be accessed by a single process
+        DB_INIT_LOCK  | // Initialize locking
+        DB_INIT_LOG   | // Initialize logging
+        DB_INIT_MPOOL | // Initialize the cache
+        DB_INIT_TXN   | // Initialize transactions  
+        DB_RECOVER    | // Run normal recovery before opening for normal use
+        DB_THREAD;      // Free-thread the env handle
+        
+    return ( dbenv->open(BDB_HOME_DIRECTORY, env_flags,0));
 }
 
 

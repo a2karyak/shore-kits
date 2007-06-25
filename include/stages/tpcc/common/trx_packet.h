@@ -19,8 +19,6 @@
 
 #include "stages/common/process_tuple.h"
 
-// using namespace workload;
-
 
 ENTER_NAMESPACE(qpipe);
 
@@ -236,7 +234,7 @@ public:
     }
 
     virtual void begin() {
-        TRACE( TRACE_ALWAYS, "*** TRX ***\n");
+        TRACE( TRACE_QUERY_RESULTS, "*** TRX ***\n");
     }
 
 

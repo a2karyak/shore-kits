@@ -56,16 +56,26 @@ void* workload_client_t::run() {
 
     stopwatch_t qtime;
     for (int i = 0; i < _num_iterations; i++) {
+
+        TRACE( TRACE_ALWAYS,
+              "Iteration %d\n", i);        
+
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' started at %lld\n",
 	      _driver->description().data(), qtime.clock_us());
+
         _driver->submit(_driver_arg);
+
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' finished at %lld\n",
 	      _driver->description().data(), qtime.clock_us());
+
         if (_think_time_sec > 0)
             sleep(_think_time_sec);
+
         TRACE(TRACE_DEBUG, "Open Fifos: %d\n", tuple_fifo::open_fifos());
-        TRACE(TRACE_ITERATIONS & TRACE_ALWAYS,
-              "Done with iteration %d\n", i);
+
+        TRACE( TRACE_DEBUG,
+              "Done with Iteration %d\n", i);        
+
     }    
 
     // record client end time...

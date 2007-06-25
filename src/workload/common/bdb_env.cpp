@@ -132,6 +132,11 @@ void close_db_table(Db* &table,
     try {
         table->close(0);
         TRACE(TRACE_DEBUG, "Table: %s closed...\n", table_name);
+
+        /** @note Once we close the database successfully we also reset
+         *  the corresponding LSN number
+         */
+        dbenv->lsn_reset(path, 0);
     }
     catch ( DbException &e) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing table \"%s\"\n",

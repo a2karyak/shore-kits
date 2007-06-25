@@ -24,13 +24,15 @@ using namespace tpcc;
 
 int main() {
 
+    TRACE_SET( LOAD_TRACE_MASK );
+
     thread_init();
     
     /* NGM: Removed DB_TRUNCATE flag since it was causing an exception
        to be thrown in table open. As a temporary fix, we will simply
        delete the old database file before rebuilding. */
 
-    tpcc::db_open(DB_CREATE|DB_THREAD); 
+    tpcc::db_open(BDB_REGULAR_LOGGING, DB_CREATE|DB_THREAD); 
     db_tpcc_load("tpcc_sf");
     tpcc::db_close();
 

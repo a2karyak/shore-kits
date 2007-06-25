@@ -33,7 +33,7 @@ query_info_t query_init(int argc, char* argv[], int env) {
         tpch::db_open();
     }
     else {
-        tpcc::db_open(BDB_TPCC_DB_OPEN_FLAGS);
+        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
     }
 
 

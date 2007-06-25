@@ -15,37 +15,17 @@
 
 #include <inttypes.h>
 
-
-//#include "workload/tpch/tpch_env.h"
-//#include "workload/tpch/tpch_db_load.h"
+#include "workload/common/bdb_config.h"
 
 ENTER_NAMESPACE(tpcc);
 
 
 /** Transaction processing engine parameters */
 
-/** @note Define the maximum number of lockers, locks and locked objects. 
- *  BDB's default value is 1000 for each of them. This value low and may 
- *  result to ENOMEM errors at run-time, especially when the number of 
- *  clients is high.
- */
-#define BDB_MAX_LOCKERS 40000
-#define BDB_MAX_LOCKS   40000
-#define BDB_MAX_OBJECTS 40000
 
-
-/** @note Define the maximum number of possible in-flight
- *  transactions. BDB's default value is 10.
- */
-#define BDB_MAX_TRX     100
-
-
-/** @note Define the timeout value for the transactions.
- *  BDB's default value is 0, which means that there is 
- *  no timeout.
- */
-#define BDB_SEC         1000000
-#define BDB_TRX_TIMEOUT 0 * BDB_SEC
+/** @note Define tpcc data directories */
+#define BDB_TPCC_TBL_DIRECTORY   "tbl_tpcc"
+#define BDB_TPCC_DIRECTORY       "database_bdb_tpcc"
 
 
 /** @note Define the dbopen flags. This flag defines, among others,
@@ -68,6 +48,15 @@ ENTER_NAMESPACE(tpcc);
 //#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_READ_UNCOMMITTED
 
 
+/** @note Define the logging method
+ *  There are two types of logging, regural on disk logging and in-memory logging.
+ *  The latter is dangerous since there is are no transaction durability guarantees.
+ */
+
+#define BDB_TPCC_LOGGING_METHOD BDB_IN_MEMORY_LOGGING
+
+
+
 /** @note Define the env flags.
  *
  *  @note In order to enable SNAPSHOT ISOLATION the environment should be 
@@ -79,7 +68,8 @@ ENTER_NAMESPACE(tpcc);
 
 /** Exported functions */
 
-void db_open(uint32_t flags,
+void db_open(int in_memory,
+             uint32_t flags,
              uint32_t db_cache_size_gb=1,
              uint32_t db_cache_size_bytes=0);
 

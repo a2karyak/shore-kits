@@ -24,9 +24,9 @@ int main() {
        to be thrown in table open. As a temporary fix, we will simply
        delete the old database file before rebuilding. */
 
-    db_open(DB_CREATE|DB_THREAD); 
+    tpch::db_open(DB_CREATE|DB_THREAD); 
     db_tpch_load("tpch_tbl");
-    db_close();
+    tpch::db_close();
 
     return 0;
 }

@@ -32,7 +32,7 @@ int main() {
     register_stage<tscan_stage_t>();
 
     // open db
-    tpcc::db_open(DB_JOINENV|DB_THREAD); 
+    tpcc::db_open(BDB_TPCC_LOGGING_METHOD, DB_JOINENV|DB_THREAD); 
 
     // do the reading / table scanning
     db_tpcc_read();
