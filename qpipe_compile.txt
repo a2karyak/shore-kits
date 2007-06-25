@@ -30,3 +30,9 @@ CXX=/home/ryan/apps/bin/g++-4.1.1 configure
 CXX=/home/ryan/apps/bin/g++-4.1.1 make
 
 
+
+SUN_SPARC specific:
+
+gcc/g++ hasn't been reliable in Niagara.
+
+CXX=CC ./autogen
