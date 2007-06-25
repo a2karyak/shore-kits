@@ -10,7 +10,6 @@
 #include "workload/register_stage_containers.h"
 
 
-
 /* internal helper functions */
 
 int  qpipe_init(int argc, char* argv[]);

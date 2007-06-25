@@ -336,6 +336,11 @@ void db_read() {
 
 int open_env_in_memory_logging() {
 
+    TRACE( TRACE_ALWAYS, 
+           "Opening Transactional Database with In-memory logging\n" \
+           "**** Dangerous if system crashes ****\n");
+           
+
         
     /** We may want to turn off logging. By doing so we are
      *  giving up the transactional durability guarantee, in case of 
@@ -388,6 +393,10 @@ int open_env_in_memory_logging() {
  */
 
 int open_env_regular_logging() {
+
+    TRACE( TRACE_ALWAYS, 
+           "Opening Transactional Database with Regular (on-disk) logging\n");
+
     
     // initialize the transactional subsystem
     u_int32_t env_flags = 

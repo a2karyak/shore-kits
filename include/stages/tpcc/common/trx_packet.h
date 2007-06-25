@@ -229,7 +229,7 @@ public:
     trx_result_process_tuple_t(trx_packet_t* a_trx_packet) 
         : process_tuple_t() 
     {
-        assert(a_trx_packet != NULL);
+        assert(a_trx_packet);
         _packet = a_trx_packet;
     }
 
@@ -238,9 +238,9 @@ public:
     }
 
 
-    inline void set_trx_packet(trx_packet_t* a_trx_packet) {
-        _packet = a_trx_packet;
-    }
+    //    inline void set_trx_packet(trx_packet_t* a_trx_packet) {
+    //        _packet = a_trx_packet;
+    //    }
 
 
     virtual void process(const tuple_t& output) {
@@ -252,7 +252,7 @@ public:
                r->get_id(),r->say_state());
 
         // FIXME (ip) Is this assertion correct?
-        assert (_packet->get_trx_id() == r->get_id());
+        //        assert (_packet->get_trx_id() == r->get_id());
 
         _packet->set_trx_state(r->get_state());
     }

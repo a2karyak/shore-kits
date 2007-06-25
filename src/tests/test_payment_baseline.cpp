@@ -31,23 +31,6 @@ int main(int argc, char* argv[]) {
 
     trace_set(TRACE_QUERY_RESULTS);
 
-    //////
-    /* testing the URand()
-    scheduler::policy_t* dp = new scheduler::policy_os_t();
-    for (int i=0; i<100; i++) {
-        
-        driver.create_payment_baseline_packet("kati", 
-                                              new tuple_fifo(1), 
-                                              new trivial_filter_t(1),
-                                              dp,
-                                              WH);
-    }
-
-    return (-1);
-    /////
-    //    EOF URand() testing 
-    */
-
     query_main(info, &driver, TRX_ENV);
     return 0;
 }
