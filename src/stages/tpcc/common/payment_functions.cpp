@@ -20,6 +20,14 @@ using namespace qpipe;
 ENTER_NAMESPACE(tpcc_payment);
 
 
+/** Forward declaration of helper functions */
+
+void updateCustomerData(tpcc_customer_tuple* a_customer);
+
+
+/** Exported Functions */
+
+
 
 /** @fn insertHistory
  *  
@@ -33,7 +41,7 @@ ENTER_NAMESPACE(tpcc_payment);
  *  @return 0 on success, non-zero on failure
  */
 
-int insertHistory(payment_input_t* pin, DbTxn* txn) {
+int insertHistory(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) {
 
     /////////////////////////////
     ///// START INS_HISTORY /////
@@ -80,7 +88,6 @@ int insertHistory(payment_input_t* pin, DbTxn* txn) {
 
 
 
-
 /** @fn updateCustomer
  *  
  *  @brief Selects which updateCustomerX() function to call
@@ -88,7 +95,7 @@ int insertHistory(payment_input_t* pin, DbTxn* txn) {
  *  @return 0 on success, non-zero on failure
  */
 
-int updateCustomer(payment_input_t* pin, DbTxn* txn) {
+int updateCustomer(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) {
 
     //////////////////////////////
     ///// START UPD_CUSTOMER /////
@@ -109,7 +116,8 @@ int updateCustomer(payment_input_t* pin, DbTxn* txn) {
                                      pin->_home_wh_id, 
                                      pin->_home_d_id, 
                                      pin->_c_last, 
-                                     pin->_h_amount));
+                                     pin->_h_amount,
+                                     a_p_dbts));
     }
     else {
         /** Step 4a: Retrieve CUSTOMER based on C_ID */
@@ -124,7 +132,8 @@ int updateCustomer(payment_input_t* pin, DbTxn* txn) {
                                    pin->_home_wh_id, 
                                    pin->_home_d_id, 
                                    pin->_c_id, 
-                                   pin->_h_amount));
+                                   pin->_h_amount,
+                                   a_p_dbts));
     }
 
     // It should never reach this point, return error
@@ -145,7 +154,7 @@ int updateCustomer(payment_input_t* pin, DbTxn* txn) {
  *  @return 0 on success, non-zero on failure
  */
 
-int updateDistrict(payment_input_t* pin, DbTxn* txn) {
+int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) {
 
     //////////////////////////////
     ///// START UPD_DISTRICT /////
@@ -199,7 +208,7 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn) {
  *  @return 0 on success, non-zero on failure
  */
 
-int updateWarehouse(payment_input_t* pin, DbTxn* txn) {
+int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) {
 
     ///////////////////////////////
     ///// START UPD_WAREHOUSE /////    
@@ -258,7 +267,8 @@ int updateCustomerByID(DbTxn* txn,
                        int wh_id, 
                        int d_id, 
                        int c_id, 
-                       decimal h_amount) 
+                       decimal h_amount,
+                       s_payment_dbt_t* a_p_dbts) 
 {
     assert (txn); // abort if no valid transaction handle
 
@@ -339,10 +349,10 @@ int updateCustomerByLast(DbTxn* txn,
                          int wh_id, 
                          int d_id, 
                          char* c_last,
-                         decimal h_amount) 
+                         decimal h_amount,
+                         s_payment_dbt_t* a_p_dbts) 
 {
-    // FIXME (ip) Not implemented yet
-    assert( 1 == 0);
+    assert(1==0); // FIXME (ip) Not implemented yet
 
     assert(txn); // abort if no valid transaction handle 
 

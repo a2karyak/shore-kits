@@ -14,13 +14,34 @@
 #include "workload/common.h"
 
 #include "workload/tpcc/drivers/tpcc_payment.h"
-#include "workload/tpcc/drivers/tpcc_payment_common.h"
+
 
 using namespace qpipe;
 using namespace tpcc;
 
 
 ENTER_NAMESPACE(workload);
+
+
+
+void tpcc_payment_driver::allocate_dbts() {
+
+    TRACE( TRACE_TRX_FLOW, "Allocating Dbts...\n");
+
+    allocate_payment_dbts(&_dbts);
+    _allocated = 1;
+}
+
+
+
+void tpcc_payment_driver::deallocate_dbts() {
+
+    TRACE( TRACE_TRX_FLOW, "Deallocating Dbts...\n");
+
+    deallocate_payment_dbts(&_dbts);
+    _allocated = 0;
+}
+
 
 void tpcc_payment_driver::submit(void* disp) {
  
@@ -47,7 +68,7 @@ void tpcc_payment_driver::submit(void* disp) {
 				     bp_buffer, 
 				     bp_filter,
 				     dp,
-                                     whRange);
+                                     _whRange);
 
 
     qpipe::query_state_t* qs = dp->query_state_create();

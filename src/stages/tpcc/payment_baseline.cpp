@@ -51,7 +51,8 @@ void payment_baseline_stage_t::process_packet() {
 
     trx_result_tuple_t aTrxResultTuple = executePaymentBaseline(&packet->_p_in, 
                                                                 packet->_trx_txn,
-                                                                packet->get_trx_id());
+                                                                packet->get_trx_id(),
+                                                                packet->_p_dbts);
     
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
@@ -87,7 +88,8 @@ void payment_baseline_stage_t::process_packet() {
     
 trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_input_t* pin, 
                                                                     DbTxn* txn, 
-                                                                    const int id) 
+                                                                    const int id,
+                                                                    s_payment_dbt_t* a_p_dbts) 
 {
     // initialize the result structure
     trx_result_tuple_t aTrxResultTuple(UNDEF, id);
@@ -103,7 +105,7 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_inpu
        TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
        dbenv->txn_begin(NULL, &txn, 0);
 
-       if (updateWarehouse(pin, txn)) {
+       if (updateWarehouse(pin, txn, a_p_dbts)) {
            
            // Failed. Throw exception
            THROW1( BdbException, 
@@ -111,7 +113,7 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_inpu
        }
 
 
-       if (updateDistrict(pin, txn)) {
+       if (updateDistrict(pin, txn, a_p_dbts)) {
            
            // Failed. Throw exception
            THROW1( BdbException, 
@@ -119,13 +121,13 @@ trx_result_tuple_t payment_baseline_stage_t::executePaymentBaseline(payment_inpu
        }
 
 
-       if (updateCustomer(pin, txn)) {           
+       if (updateCustomer(pin, txn, a_p_dbts)) {           
            // Failed. Throw exception
            THROW1( BdbException,
                    "CUSTOMER update failed...\n");
        }
 
-       if (insertHistory(pin, txn)) {
+       if (insertHistory(pin, txn, a_p_dbts)) {
 
            // Failed. Throw exception
            THROW1( BdbException, 

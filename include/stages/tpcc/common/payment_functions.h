@@ -59,21 +59,50 @@ struct payment_input_t {
 }; // EOF payment_input_t
 
 
+
+/** @brief The purpose of this structure is to allocate only once per driver 
+ *  the needed space for the data to be retrieved or used as keys. Otherwise
+ *  for each iteration, BDB will allocate (using malloc()) new space.
+ */
+
+struct s_payment_dbt_t {
+
+    // UPD_WAREHOUSE
+    Dbt* whData;
+    //Dbt* whKey;
+    
+
+    // UPD_DISTRICT
+    Dbt* distData;
+    //    Dbt* distKey;
+
+    // UPD_CUSTOMER
+    Dbt* custData;
+    //Dbt* custKey;
+
+    // INS_HISTORY
+    // FIXME (ip) ?
+
+}; // EOF s_payment_dbt_t
+
+
+
 /** Exported functions */
 
-int insertHistory(payment_input_t* pin, DbTxn* txn);
+int insertHistory(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts);
 
-int updateDistrict(payment_input_t* pin, DbTxn* txn);
+int updateCustomer(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts);
 
-int updateWarehouse(payment_input_t* pin, DbTxn* txn);
+int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts);
 
-int updateCustomer(payment_input_t* pin, DbTxn* txn);    
+int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts);
 
-int updateCustomerByLast(DbTxn* txn, int wh_id, int d_id, char* c_last, decimal h_amount);
 
-int updateCustomerByID(DbTxn* txn, int wh_id, int d_id, int c_id, decimal h_amount);
+int updateCustomerByID(DbTxn* txn, int wh_id, int d_id, int c_id,
+                       decimal h_amount, s_payment_dbt_t* a_p_dbts);
 
-void updateCustomerData(tpcc_customer_tuple* a_customer);
+int updateCustomerByLast(DbTxn* txn, int wh_id, int d_id, char* c_last, 
+                         decimal h_amount, s_payment_dbt_t* a_p_dbts);
 
 
 /** Helper Functions */

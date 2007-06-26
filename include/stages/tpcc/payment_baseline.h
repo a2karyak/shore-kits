@@ -41,6 +41,9 @@ public:
     // structure that contains the required input
     payment_input_t _p_in;
 
+    // pointer to placeholders for the Dbts
+    s_payment_dbt_t* _p_dbts;
+
 
     /**
      *  @brief payment_baseline_packet_t constructor.
@@ -74,13 +77,20 @@ public:
                               const int a_c_id,
                               const char a_c_last[16],
                               const double a_h_amount,
-                              const int a_h_date)
+                              const int a_h_date,
+                              s_payment_dbt_t* a_p_dbts)
       : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                      create_plan(a_c_id, a_h_amount, a_h_date),
                      true, /* merging allowed */
                      true  /* unreserve worker on completion */
                      )
     {
+        // take pointer to allocated Dbts
+        assert (a_p_dbts);
+        _p_dbts = a_p_dbts;
+            
+
+        // copy input
         _p_in._home_wh_id = a_home_wh_id;
         _p_in._home_d_id = a_home_d_id;
         _p_in._v_cust_wh_selection = a_v_cust_wh_selection;
@@ -161,7 +171,8 @@ private:
 
     trx_result_tuple_t executePaymentBaseline(payment_input_t* pin, 
                                               DbTxn* txn, 
-                                              const int id);
+                                              const int id, 
+                                              s_payment_dbt_t* a_p_dbts);
     
     
 }; // EOF: payment_baseline_stage_t

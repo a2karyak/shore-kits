@@ -70,4 +70,45 @@ payment_input_t create_payment_input(int sf) {
 }
 
 
+/** @fn allocate_payment_dbts
+ *
+ *  @brief Allocates the required dbts for the PAYMENT_* transactions
+ */
+
+void allocate_payment_dbts(s_payment_dbt_t* p_dbts) {
+
+    /** @note The caller (tpcc_payment_*_driver) is the owner of
+     *  those dbts
+     */
+    tpcc_warehouse_tuple wh;
+    p_dbts->whData = new Dbt(&wh, sizeof(wh));
+
+    tpcc_district_tuple d;
+    p_dbts->distData = new Dbt(&d, sizeof(d));
+
+    tpcc_customer_tuple c;
+    p_dbts->custData = new Dbt(&c, sizeof(c));
+}
+
+
+/** @fn deallocate_payment_dbts
+ *
+ *  @brief Deallocates the required dbts for the PAYMENT_* transactions
+ */
+
+void deallocate_payment_dbts(s_payment_dbt_t* p_dbts) {
+
+    assert (p_dbts);
+
+    if (p_dbts->whData)
+        delete (p_dbts->whData);
+
+    if (p_dbts->distData)
+        delete (p_dbts->distData);
+    
+    if (p_dbts->custData)
+        delete (p_dbts->custData);
+}
+
+
 EXIT_NAMESPACE(tpcc);

@@ -14,13 +14,31 @@
 #include "workload/common.h"
 
 #include "workload/tpcc/drivers/tpcc_payment_baseline.h"
-#include "workload/tpcc/drivers/tpcc_payment_common.h"
+
 
 using namespace qpipe;
 using namespace tpcc;
 
 
 ENTER_NAMESPACE(workload);
+
+
+void tpcc_payment_baseline_driver::allocate_dbts() {
+
+    TRACE( TRACE_TRX_FLOW, "Allocating Dbts...\n");
+
+    allocate_payment_dbts(&_dbts);
+    _allocated = 1;
+}
+
+
+void tpcc_payment_baseline_driver::deallocate_dbts() {
+
+    TRACE( TRACE_TRX_FLOW, "Dellocating Dbts...\n");
+
+    deallocate_payment_dbts(&_dbts);
+    _allocated = 0;
+}
 
 
 void tpcc_payment_baseline_driver::submit(void* disp) {
@@ -48,7 +66,7 @@ void tpcc_payment_baseline_driver::submit(void* disp) {
                                         bp_buffer, 
                                         bp_filter,
                                         dp,
-                                        whRange);
+                                        _whRange);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
@@ -75,7 +93,8 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                              scheduler::policy_t* dp,
                                                              int sf) 
 {
-    assert(sf > 0);
+    assert(sf>0);
+    assert(_allocated);
 
     trx_packet_t* payment_packet;
 
@@ -95,7 +114,8 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                    pin._c_id,
                                                    pin._c_last,
                                                    pin._h_amount,
-                                                   pin._h_date);
+                                                   pin._h_date,
+                                                   &_dbts);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

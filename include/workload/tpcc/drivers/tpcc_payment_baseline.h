@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file tpcc_payment_baseline.cpp
+/** @file tpcc_payment_baseline.h
  *
  *  @brief Declaration of the driver that submits PAYMENT_BASELINE transaction requests,
  *  according to the TPCC specification.
@@ -12,40 +12,44 @@
 #define __TPCC_PAYMENT_BASELINE_DRIVER_H
 
 
-# include "stages/tpcc/common/trx_packet.h"
-# include "stages/tpcc/payment_baseline.h"
+#include "workload/tpcc/drivers/trx_driver.h"
+#include "workload/tpcc/drivers/tpcc_payment_common.h"
+#include "stages/tpcc/payment_baseline.h"
 
-# include "workload/driver.h"
-# include "workload/driver_directory.h"
 
 using namespace qpipe;
+using namespace tpcc;
 
 
 ENTER_NAMESPACE(workload);
 
 
-class tpcc_payment_baseline_driver : public driver_t {
+class tpcc_payment_baseline_driver : public trx_driver_t {
 
-private:
-    // whRange governs the range of warehouses queried by the client
-    // the default value is RANGE
-    int whRange;
+protected:
+
+    // Structure for allocating only once all the Dbts
+    s_payment_dbt_t _dbts;
+
+    virtual void allocate_dbts();
+    virtual void deallocate_dbts();
 
 public:
 
     tpcc_payment_baseline_driver(const c_str& description, const int aRange = RANGE)
-      : driver_t(description)
-      {
-          assert (aRange > 0);
-          whRange = aRange;
-      }
-
-    virtual void submit(void* disp);
-
-    inline void setRange(const int aRange) {
+        : trx_driver_t(description)
+    {
         assert (aRange > 0);
-        whRange = aRange;
+        _whRange = aRange;
+        
+        allocate_dbts();
     }
+
+    ~tpcc_payment_baseline_driver() { 
+        deallocate_dbts();
+    }
+    
+    virtual void submit(void* disp);
 
     trx_packet_t* create_payment_baseline_packet(const c_str& client_prefix,
                                                  tuple_fifo* bp_buffer,
@@ -53,6 +57,7 @@ public:
                                                  scheduler::policy_t* dp,
                                                  int sf);
 };
+
 
 EXIT_NAMESPACE(workload);
 
