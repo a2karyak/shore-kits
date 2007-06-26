@@ -8,7 +8,7 @@
 
 #define MAX_NUM_TRXS     1000
 //#define MAX_NUM_CLIENTS 16
-#define MAX_NUM_CLIENTS 128
+#define MAX_NUM_CLIENTS 256
 #define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 // Q4, Q16 have two scans
 #define MAX_NUM_AGGREGATE_THREADS         MAX_NUM_CLIENTS
 #define MAX_NUM_PARTIAL_AGGREGATE_THREADS MAX_NUM_CLIENTS * 2 // Q1 uses two partial aggregates
@@ -38,15 +38,16 @@ void register_stage_containers(int enviroment) {
     }
     else {        
         // FIXME: (ip) Should be relative with the MAX_NUM_TRXS
-
+       
         /** @note trx staged do not share */
+        /*
         register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_wh_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_distr_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_cust_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_ins_hist_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_finalize_stage_t>(MAX_NUM_CLIENTS, false); 
-
+        */
         register_stage<payment_baseline_stage_t>(MAX_NUM_CLIENTS, false); 
     }
 }

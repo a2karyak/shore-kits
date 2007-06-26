@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstring>
 
+
 /* definitions of exported helper functions */
 
 
@@ -44,21 +45,9 @@ void progress_update(unsigned long* indicator) {
  *  @brief Outputs a done message
  */
 
-void progress_done() {
+void progress_done(const char* tablename) {
     
-    printf("\nDone\n");
+    printf("\nDone loading (%s)...\n", tablename);
     fflush(stdout);
-}
-
-
-
-/** @fn store_string
- *  @brief copies a string to another
- */
-
-void store_string(char* dest, char* src) {
-    int len = strlen(src);
-    strncpy(dest, src, len);
-    dest[len] = '\0';
 }
 

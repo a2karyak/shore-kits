@@ -4,7 +4,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h> /* Added this on enceladus. Maybe will not work on lomond. */
+#include <sys/time.h> /* Added this for Enceladus. Maybe will not work on lomond. */
 #include <fcntl.h>
 
 #ifndef _GNU_SOURCE

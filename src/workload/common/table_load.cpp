@@ -16,7 +16,7 @@
 
 #include "workload/common/bdb_env.h"
 #include "workload/common/table_load.h"
-
+#include "workload/workload.h"
 
 // TPC-H related
 #include "workload/tpch/tpch_env.h"
@@ -48,6 +48,12 @@ static void db_table_load(void (*tbl_loader) (Db*, FILE*),
 
 static void db_table_read(void (*tbl_reader) (Db*),
                           Db* db);
+
+void db_table_load_mt(pthread_t* loader_ids,
+                      tbl_loader a_loader,
+                      Db* db,
+                      const char* tbl_path, 
+                      const char* tbl_filename);
 
 
 
@@ -172,4 +178,86 @@ static void db_table_read(void (*tbl_reader) (Db*),
                           Db* db)
 {    
     tbl_reader(db);
+}
+
+
+
+/** Experiment */
+
+
+/** @fn db_tpcc_load_mt
+ *
+ *  @brief Load TPC-C tables.
+ *
+ *  @return void
+ *
+ *  @throw BdbException on error.
+ */
+void workload::db_tpcc_load_mt(const char* tbl_path) {
+
+    int _TPCC_TABLE_COUNT_ = 1; // FIXME (ip) for debugging..
+
+    array_guard_t<pthread_t> loader_ids = new pthread_t[_TPCC_TABLE_COUNT_];
+
+    try {
+
+        for (int i = 0; i < _TPCC_TABLE_COUNT_; i++) {
+        
+            db_table_load_mt(loader_ids,
+                             tpcc_tables[i].parse_tbl,
+                             tpcc_tables[i].db,
+                             tbl_path,
+                             tpcc_tables[i].tbl_filename);
+        }
+    }
+    catch (QPipeException &e) {
+        
+        TRACE ( TRACE_ALWAYS, "Exception thrown in multithreaded table loading...\n");
+        workload_t::wait_for_clients(loader_ids, _TPCC_TABLE_COUNT_);
+        throw e;
+    }
+
+    TRACE( TRACE_DEBUG, "Waiting for clients...\n");
+    workload_t::wait_for_clients(loader_ids, _TPCC_TABLE_COUNT_);
+}
+
+
+/** @fn db_table_load_mt
+ *  @brief Opens the requested file, and if succeeds, it creates a
+ *  loader_thread_t that calls the tbl_loader function, for
+ *   the specific file and the database table handle.
+ *
+ *  @throw BdbException
+ */
+
+void db_table_load_mt(pthread_t* loader_id,
+                      tbl_loader a_loader,
+                      Db* db,
+                      const char* tbl_path, 
+                      const char* tbl_filename) 
+{    
+    assert(1==0); // FIXME (ip) Not tested yet
+
+    // prepend filename with common path
+    c_str path("%s/%s", tbl_path, tbl_filename);
+    c_str thr_name("loader_%s", tbl_filename);
+
+    FILE* fd = fopen(path.data(), "r");
+    if (fd == NULL) {
+        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", path.data());
+        THROW1(BdbException, "fopen() failed");
+    }
+
+    loader_thread_t* loader_thread = new loader_thread_t(thr_name, 
+                                                         a_loader, 
+                                                         db, 
+                                                         fd);
+
+    *loader_id = thread_create(loader_thread);
+
+
+    if ( fclose(fd) ) {
+        TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", path.data());
+        THROW1(BdbException, "fclose() failed");
+    }
 }

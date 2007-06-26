@@ -80,6 +80,8 @@ void updateCustomerData(tpcc_customer_tuple* a_customer);
 
 inline void describe(payment_input_t pin, int id) {
 
+#ifndef USE_SAME_INPUT
+
     TRACE( TRACE_TRX_FLOW,
            "\nPAYMENT - TRX=%d\n" \
            "WH_ID=%d\t\tD_ID=%d\n" \
@@ -98,6 +100,26 @@ inline void describe(payment_input_t pin, int id) {
            pin._c_last,
            pin._h_amount, 
            pin._h_date);
+
+#else
+    // If using the standard input, _c_last is NULL
+    TRACE( TRACE_TRX_FLOW,
+           "\nPAYMENT - TRX=%d\n" \
+           "WH_ID=%d\t\tD_ID=%d\n" \
+           "SEL_WH=%d\tSEL_IDENT=%d\n" \
+           "REM_WH_ID=%d\tREM_D_ID=%d\n" \
+           "C_ID=%d\tH_AMOUNT=%.2f\tH_DATE=%d\n", \
+           id,
+           pin._home_wh_id, 
+           pin._home_d_id, 
+           pin._v_cust_wh_selection, 
+           pin._v_cust_ident_selection,
+           pin._remote_wh_id, 
+           pin._remote_d_id,
+           pin._c_id, 
+           pin._h_amount, 
+           pin._h_date);
+#endif
 }
 
 

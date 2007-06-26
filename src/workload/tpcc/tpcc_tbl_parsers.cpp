@@ -24,17 +24,10 @@ ENTER_NAMESPACE(tpcc);
 /* definitions of exported functions */
 
 
-/* internal constants */
-
-static unsigned long progress = 0;
-
-
-/* definitions of exported functions */
-
-
 void tpcc_parse_tbl_CUSTOMER(Db* db, FILE* fd) { 
   
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C CUSTOMER...\n");
     progress_reset(&progress);
@@ -109,7 +102,7 @@ void tpcc_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("CUSTOMER");
 }
 
 
@@ -117,6 +110,7 @@ void tpcc_parse_tbl_CUSTOMER(Db* db, FILE* fd) {
 void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C DISTRICT...\n");
     progress_reset(&progress);
@@ -167,7 +161,7 @@ void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("tpcc_table");
 }
 
 
@@ -175,14 +169,20 @@ void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) {
 void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C HISTORY...\n");
     progress_reset(&progress);
+
     tpcc_history_tuple tup;
+    tpcc_history_tuple_key hk;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
+        memset(&hk, 0, sizeof(hk));
+
         // split line into tab separated parts
         char* tmp = strtok(linebuffer, "|");
         tup.H_C_ID = atoi(tmp);
@@ -201,30 +201,45 @@ void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) {
         tmp = strtok(NULL, "|");
         store_string(tup.H_DATA,tmp);
 
+        // construct key
+        // HISTORY does not have a key, use the first 6 integers
+        // as the key
+        hk.H_C_ID = tup.H_C_ID;
+        hk.H_C_D_ID = tup.H_C_D_ID;
+        hk.H_C_W_ID = tup.H_C_W_ID;
+        hk.H_D_ID = tup.H_D_ID;
+        hk.H_W_ID = tup.H_W_ID;
+        hk.H_DATE = tup.H_DATE;
+
         // insert tuple into database
-        // HISTORY does not have a key, use the whole tuple
-        Dbt key(&tup, sizeof(tup));
+        Dbt key(&hk, sizeof(hk));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("HISTORY");
 }
 
 
 void tpcc_parse_tbl_ITEM(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C ITEM...\n");
     progress_reset(&progress);
+
     tpcc_item_tuple tup;
+    tpcc_item_tuple_key ik;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
+        memset(&ik, 0, sizeof(ik));
+
         // split line into tab separated parts
         char* tmp = strtok(linebuffer, "|");
         tup.I_ID = atoi(tmp);
@@ -237,24 +252,26 @@ void tpcc_parse_tbl_ITEM(Db* db, FILE* fd) {
         tmp = strtok(NULL, "|");
         store_string(tup.I_DATA,tmp);
 
-
+        // construct key
+        // ITEM key composed (I_ID)
+        ik.I_ID = tup.I_ID;
 
         // insert tuple into database
-        // ITEM key composed (I_ID)
-        Dbt key(&tup.I_ID, sizeof(int));
+        Dbt key(&ik, sizeof(ik));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("ITEM");
 }
 
 
 void tpcc_parse_tbl_NEW_ORDER(Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C NEW_ORDER...\n");
     progress_reset(&progress);
@@ -281,7 +298,7 @@ void tpcc_parse_tbl_NEW_ORDER(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("NEW_ORDER");
 }
 
 
@@ -289,6 +306,7 @@ void tpcc_parse_tbl_NEW_ORDER(Db* db, FILE* fd) {
 void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C ORDER...\n");
     progress_reset(&progress);
@@ -336,7 +354,7 @@ void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("ORDER");
 }
 
 
@@ -344,6 +362,7 @@ void tpcc_parse_tbl_ORDER(Db* db, FILE* fd) {
 void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C ORDERLINE...\n");
     progress_reset(&progress);
@@ -396,7 +415,7 @@ void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("tpcc_table");
 }
 
 
@@ -404,6 +423,7 @@ void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) {
 void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) { 
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C STOCK...\n");
     progress_reset(&progress);
@@ -467,7 +487,7 @@ void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) {
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("tpcc_table");
 }
 
 
@@ -475,14 +495,20 @@ void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd) {
 void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
 
     char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
 
     TRACE(TRACE_DEBUG, "Populating TPC-C WAREHOUSE...\n");
     progress_reset(&progress);
+
     tpcc_warehouse_tuple tup;
+    tpcc_warehouse_tuple_key wk;
 
     while (fgets(linebuffer, MAX_LINE_LENGTH, fd)) {
+
         // clear the tuple
         memset(&tup, 0, sizeof(tup));
+        memset(&wk, 0, sizeof(wk));
+
         // split line into tab separated parts
         char* tmp = strtok(linebuffer, "|");
         tup.W_ID = atoi(tmp);
@@ -503,18 +529,19 @@ void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
         tmp = strtok(NULL, "|");
         tup.W_YTD = atof(tmp);
 
-
+        // construct key
+        // WAREHOUSE key composed (W_ID)
+        wk.W_ID = tup.W_ID;
 
         // insert tuple into database
-        // WAREHOUSE key composed (W_ID)
-        Dbt key(&tup.W_ID, sizeof(int));
+        Dbt key(&wk, sizeof(wk));
         Dbt data(&tup, sizeof(tup));
         db->put(NULL, &key, &data, 0);
 
         progress_update(&progress);
     }
 
-    progress_done();
+    progress_done("tpcc_table");
 }
 
 

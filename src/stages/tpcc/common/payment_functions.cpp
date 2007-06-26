@@ -40,7 +40,7 @@ int insertHistory(payment_input_t* pin, DbTxn* txn) {
     
     TRACE( TRACE_TRX_FLOW, "Step 5: Inserting a new row in HISTORY table\n");
     
-    // HISTORY does not have key
+    // Preparing HISTORY tuple
     tpcc_history_tuple ht;
     ht.H_C_ID = pin->_c_id;
     ht.H_C_D_ID = pin->_home_d_id;
@@ -48,7 +48,7 @@ int insertHistory(payment_input_t* pin, DbTxn* txn) {
     ht.H_D_ID = pin->_home_d_id;
     ht.H_W_ID = pin->_home_wh_id;       
     ht.H_DATE = pin->_h_date;
-    ht.H_AMOYNT = pin->_h_amount;
+    ht.H_AMOYNT = pin->_h_amount;    
     
     // FIXME (ip) Modification of the specification. Instead of concatenating
     // W_NAME and D_NAME we do that with W_ID and D_ID
@@ -57,8 +57,19 @@ int insertHistory(payment_input_t* pin, DbTxn* txn) {
              pin->_home_d_id);
     ht.H_DATA[25] = '\0';
 
+
+    // HISTORY has a key comprised by the first 6 integers
+    tpcc_history_tuple_key hk;
+    hk.H_C_ID = pin->_c_id;
+    hk.H_C_D_ID = pin->_home_d_id;
+    hk.H_C_W_ID = pin->_home_wh_id;
+    hk.H_D_ID = pin->_home_d_id;
+    hk.H_W_ID = pin->_home_wh_id;       
+    hk.H_DATE = pin->_h_date;
+
+
     // prepare to insert
-    Dbt key_h(&ht, sizeof(ht));
+    Dbt key_h(&hk, sizeof(hk));
     Dbt data_h(&ht, sizeof(ht));
     
     return (tpcc_tables[TPCC_TABLE_HISTORY].db->put(txn, &key_h, &data_h, 0));
@@ -125,7 +136,7 @@ int updateCustomer(payment_input_t* pin, DbTxn* txn) {
 
 
 
-/** @fn updateWarehouse
+/** @fn updateDistrict
  *  
  *  @brief Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
  *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
@@ -198,7 +209,9 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn) {
            pin->_home_wh_id );
     
     // WAREHOUSE key: W_ID 
-    Dbt key_wh(&pin->_home_wh_id, sizeof(int));
+    tpcc_warehouse_tuple_key wk;
+    wk.W_ID = pin->_home_wh_id;
+    Dbt key_wh(&wk, sizeof(wk));
     
     Dbt data_wh;
     data_wh.set_flags(DB_DBT_MALLOC);
@@ -208,7 +221,7 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn) {
         {
             THROW2(BdbException, 
                    "warehouse with id=%d not found in the database\n", 
-                   pin->_home_wh_id);
+                   wk.W_ID);
             return (1);
         }
     

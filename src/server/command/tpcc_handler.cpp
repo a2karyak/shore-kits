@@ -186,7 +186,15 @@ void tpcc_handler_t::handle_command(const char* command) {
     /* Report results. We'll use the workload name for its
        description. */
     print_run_statistics(workload_name, results);
+
+    //    if (BDB_TPCC_LOGGING_METHOD == BDB_IN_MEMORY_LOGGING) {
+        /* At the end of each StageTRX command we do a checkpoint if we use
+         * in memory logging
+         */    
+    //        db_checkpoint();
+    //    }
 }
+
 
 
 

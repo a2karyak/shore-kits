@@ -94,7 +94,7 @@ struct tpcc_district_tuple {
     int D_NEXT_O_ID;
 
 #ifdef PADDING_ENABLE
-    char D_PADDING  [STRSIZE(3000)];
+    char D_PADDING  [STRSIZE(3500)];
 #endif
 };
 
@@ -117,6 +117,17 @@ struct tpcc_history_tuple {
     int H_DATE;
     decimal H_AMOYNT;
     char H_DATA [STRSIZE(25)];
+};
+
+
+
+struct tpcc_history_tuple_key {
+    int H_C_ID;
+    int H_C_D_ID;
+    int H_C_W_ID;
+    int H_D_ID;
+    int H_W_ID;
+    int H_DATE;
 };
 
 
@@ -239,7 +250,7 @@ struct tpcc_warehouse_tuple {
     decimal W_YTD;
 
 #ifdef PADDING_ENABLE
-    char W_PADDING  [STRSIZE(3000)];
+    char W_PADDING  [STRSIZE(3500)];
 #endif
 };
 

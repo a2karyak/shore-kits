@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file test_tpcc_load.cpp
+/** @file test_tpcc_load_mt.cpp
  *
- *  @brief Test loading TPC-C tables
+ *  @brief Test loading TPC-C tables. Testing multi-threaded version
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -25,7 +25,7 @@ using namespace tpcc;
 
 int main() {
 
-    TRACE_SET( LOAD_TRACE_MASK );
+    TRACE_SET( LOAD_TRACE_MASK | TRACE_DEBUG );
 
     thread_init();
 
@@ -37,7 +37,7 @@ int main() {
 
     _etime.start();
     tpcc::db_open(BDB_REGULAR_LOGGING, DB_CREATE|DB_THREAD); 
-    db_tpcc_load("tpcc_sf");
+    db_tpcc_load_mt("tpcc_sf");
     tpcc::db_close();
     _etime.stop();
 

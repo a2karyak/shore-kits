@@ -14,10 +14,11 @@
 
 ENTER_NAMESPACE(tpcc);
 
+
 /** Terminology
  *  
- *  [x .. y]:        Represents a closed range of values starting with x and ending 
- *                   with y
+ *  [x .. y]:        Represents a closed range of values starting with x 
+ *                   and ending with y
  *  NURand(A, x, y): Non-uniform distributed value between x and y
  *  URand(x, y):     Uniformly distributed value between x and y
  */                  

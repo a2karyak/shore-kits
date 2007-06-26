@@ -37,9 +37,12 @@ private:
     int _num_iterations;
     int _think_time;
 
-    void wait_for_clients(pthread_t* thread_ids, int num_thread_ids);
-
 public:
+
+
+    static void wait_for_clients(pthread_t* thread_ids, 
+                                 int num_thread_ids);
+
 
     struct results_t {
 

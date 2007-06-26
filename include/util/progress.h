@@ -13,7 +13,6 @@
 
 #define PROGRESS_INTERVAL 100000
 
-
 #define MAX_LINE_LENGTH 1024
 
 
@@ -21,8 +20,7 @@
 
 void progress_reset(unsigned long* indicator);
 void progress_update(unsigned long* indicator);
-void progress_done();
-
+void progress_done(const char* tablename);
 
 #endif
 

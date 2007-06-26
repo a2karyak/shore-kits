@@ -90,10 +90,11 @@ public:
         _p_in._h_amount = a_h_amount;
         _p_in._h_date = a_h_date;
 
-        assert (a_c_last);
-        
-        strncpy(_p_in._c_last, a_c_last, 14);
-        _p_in._c_last[15] = '\0';
+        if (a_c_last) {
+      
+            strncpy(_p_in._c_last, a_c_last, 14);
+            _p_in._c_last[15] = '\0';
+        }
 
         _trx_state = UNDEF;
     }

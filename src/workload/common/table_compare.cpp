@@ -17,31 +17,11 @@ ENTER_NAMESPACE(workload);
 /** Helper functions */
 
 
-/*
-// FIXME (ip) Taken by Colohan
-
-// On the SGI we get hosed by unaligned data structures.  If we use
-// memcpy() then the compiler replaces our memcpy() call with an
-// optimized version which is also intolerant of unaligned data
-// structures.  So we just implement our own (inefficient) version
-// here which hopefully the compiler is not stupid enough to optimize
-// away.
-static inline void unaligned_memcpy(void *a,
-                                    const void *b,
-                                    int sz)
-{
-    char *aa = (char *)a;
-    const char *bb = (const char *)b;
-    while(sz--) {
-        *aa = *bb;
-        aa++;
-        bb++;
-    }
-}
-*/
-
-
 /** Exported functions */
+
+struct s_one_int {
+    int s1;
+};
 
 struct s_two_ints {
     int s1;
@@ -80,16 +60,19 @@ struct s_six_ints {
 int bt_compare_fn_1_int(const Dbt* k1, 
                         const Dbt* k2)
 {
-    int u1 = *(int*)k1->get_data();
-    int u2 = *(int*)k2->get_data();
+    // key has 1 integer
+    s_one_int u1;
+    s_one_int u2;
+    memcpy(&u1, k1->get_data(), sizeof(u1));
+    memcpy(&u2, k2->get_data(), sizeof(u2));
 
     TRACE ( TRACE_KEY_COMP, 
             "\nk1=(%d)\tk2=(%d)\n", 
-            u1, u2);
+            u1.s1, u2.s1);
 
-    if (u1 < u2)
+    if (u1.s1 < u2.s1)
         return -1;
-    else if (u1 == u2)
+    else if (u1.s1 == u2.s1)
         return 0;
     else
         return 1;

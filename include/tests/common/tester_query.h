@@ -19,7 +19,7 @@
 //#define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS)
 
 // tracing flags for the db loads
-#define LOAD_TRACE_MASK (TRACE_ALWAYS )
+#define LOAD_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS )
 
 
 struct query_info_t {

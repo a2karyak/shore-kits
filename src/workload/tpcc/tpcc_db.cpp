@@ -248,7 +248,8 @@ void db_close() {
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
         close_db_table(tpcc_tables[i].db, 
                        BDB_TPCC_DIRECTORY,
-                       tpcc_tables[i].bdb_filename);
+                       tpcc_tables[i].bdb_filename, 
+                       1);
         
 
     /*
@@ -258,7 +259,6 @@ void db_close() {
     */
 
     // run a checkpoint before closing
-    // FIXME (ip) Do we need this?
     db_checkpoint();
 
     // close environment
@@ -397,6 +397,7 @@ int open_env_regular_logging() {
     TRACE( TRACE_ALWAYS, 
            "Opening Transactional Database with Regular (on-disk) logging\n");
 
+    // The default log file is 1MB
     
     // initialize the transactional subsystem
     u_int32_t env_flags = 

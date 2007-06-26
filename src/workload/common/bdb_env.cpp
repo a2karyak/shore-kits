@@ -125,18 +125,23 @@ void open_db_index(Db* table, Db* &assoc,
 
 void close_db_table(Db* &table, 
                     const char* dir_name,
-                    const char* table_name) 
+                    const char* table_name,
+                    const int is_trx)
 {    
     c_str path("%s/%s", dir_name, table_name);
 
     try {
         table->close(0);
-        TRACE(TRACE_DEBUG, "Table: %s closed...\n", table_name);
+        TRACE(TRACE_DEBUG, "Table (%s) closed...\n", table_name);
 
-        /** @note Once we close the database successfully we also reset
-         *  the corresponding LSN number
-         */
-        dbenv->lsn_reset(path, 0);
+        if (is_trx) {
+
+            /** @note Once we close the database table successfully and we
+             *  have applied transactions (it is a trx table) we also reset
+             *  the corresponding LSN number
+             */
+            dbenv->lsn_reset(path, 0);
+        }
     }
     catch ( DbException &e) {
 	TRACE(TRACE_ALWAYS, "Caught DbException closing table \"%s\"\n",

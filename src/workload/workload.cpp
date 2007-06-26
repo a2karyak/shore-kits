@@ -98,8 +98,9 @@ bool workload_t::run(results_t &results) {
  *  @param num_thread_ids The number of valiid thread IDs in the
  *  thread_ids array.
  */
-void workload_t::wait_for_clients(pthread_t* thread_ids, int num_thread_ids) {
-
+void workload_t::wait_for_clients(pthread_t* thread_ids, 
+                                  int num_thread_ids) 
+{
     // wait for client threads to receive error message
     for (int i = 0; i < num_thread_ids; i++) {
         // join should not really fail unless we are doing
