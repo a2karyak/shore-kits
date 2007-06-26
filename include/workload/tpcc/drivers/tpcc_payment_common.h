@@ -31,6 +31,7 @@ void allocate_payment_dbts(s_payment_dbt_t* p_dbts);
 
 void deallocate_payment_dbts(s_payment_dbt_t* p_dbts);
 
+void reset_payment_dbts(s_payment_dbt_t* p_dbts);
 
 EXIT_NAMESPACE(tpcc);
 

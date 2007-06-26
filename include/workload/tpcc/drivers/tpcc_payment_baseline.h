@@ -33,6 +33,7 @@ protected:
 
     virtual void allocate_dbts();
     virtual void deallocate_dbts();
+    virtual void reset_dbts();
 
 public:
 

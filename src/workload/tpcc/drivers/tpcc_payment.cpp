@@ -43,6 +43,16 @@ void tpcc_payment_driver::deallocate_dbts() {
 }
 
 
+
+void tpcc_payment_driver::reset_dbts() {
+
+    TRACE( TRACE_TRX_FLOW, "Resetting Dbts...\n");
+
+    reset_payment_dbts(&_dbts);
+}
+
+
+
 void tpcc_payment_driver::submit(void* disp) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;

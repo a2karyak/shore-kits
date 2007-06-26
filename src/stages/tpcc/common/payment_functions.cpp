@@ -171,11 +171,19 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
     dk.D_W_ID = pin->_home_wh_id;
     Dbt key_d(&dk, sizeof(dk));
     
-    Dbt data_d;
-    data_d.set_flags(DB_DBT_MALLOC);
-       
-    if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &data_d, DB_RMW) ==
+    ///// (ip)
+    //    Dbt data_d;
+    //    data_d.set_flags(DB_DBT_MALLOC);
+
+    //    TRACE( TRACE_ALWAYS, "Original  Size = %d\n", data_d.get_size());
+    //    TRACE( TRACE_ALWAYS, "Candidate Size = %d\n", a_p_dbts->distData->get_size());
+    ///// (ip)
+
+    
+    if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &a_p_dbts->distData, DB_RMW) ==
         DB_NOTFOUND)
+        //    if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &data_d, DB_RMW) == 
+        //        DB_NOTFOUND)
         {
             THROW3(BdbException, 
                    "district with id=(%d,%d) not found in the database\n", 
@@ -185,13 +193,16 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
             return (1);
         }
     
-    tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
+    
+    //tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
+    tpcc_district_tuple* district = (tpcc_district_tuple*)a_p_dbts->distData.get_data();
     
     assert(district); // make sure that we got a district
     
     district->D_YTD += pin->_h_amount;
 
-    return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &data_d, 0));
+    //return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &data_d, 0));
+    return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &a_p_dbts->distData, 0));
     
     ///// EOF UPD_DISTRICT /////
     ////////////////////////////
@@ -222,10 +233,11 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts)
     wk.W_ID = pin->_home_wh_id;
     Dbt key_wh(&wk, sizeof(wk));
     
-    Dbt data_wh;
-    data_wh.set_flags(DB_DBT_MALLOC);
+    //    Dbt data_wh;
+    //    data_wh.set_flags(DB_DBT_MALLOC);
     
-    if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &data_wh, DB_RMW) == 
+    //    if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &data_wh, DB_RMW) == 
+    if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &a_p_dbts->whData, DB_RMW) == 
         DB_NOTFOUND) 
         {
             THROW2(BdbException, 
@@ -234,13 +246,14 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts)
             return (1);
         }
     
-    tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
+    //tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
+    tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)a_p_dbts->whData.get_data();
     
     assert(warehouse); // make sure that we got a warehouse
     
     warehouse->W_YTD += pin->_h_amount;
     
-    return (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->put(txn, &key_wh, &data_wh, 0));
+    return (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->put(txn, &key_wh, &a_p_dbts->whData, 0));
 
     ///// EOF UPD_WAREHOUSE //////
     //////////////////////////////
@@ -278,10 +291,11 @@ int updateCustomerByID(DbTxn* txn,
     ck.C_W_ID = wh_id;
     Dbt key_c(&ck, sizeof(ck));
         
-    Dbt data_c;
-    data_c.set_flags(DB_DBT_MALLOC);
+    //    Dbt data_c;
+    //data_c.set_flags(DB_DBT_MALLOC);
     
-    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(txn, &key_c, &data_c, DB_RMW) ==
+    //    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(txn, &key_c, &data_c, DB_RMW) ==
+    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(txn, &key_c, &a_p_dbts->custData, DB_RMW) ==
         DB_NOTFOUND)
         {
             THROW4( BdbException,
@@ -291,7 +305,8 @@ int updateCustomerByID(DbTxn* txn,
                    ck.C_W_ID);
         }
     
-    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)data_c.get_data();
+    //    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)data_c.get_data();
+    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)a_p_dbts->custData.get_data();
     
     assert(customer); // make sure that we got a customer
 
@@ -322,7 +337,7 @@ int updateCustomerByID(DbTxn* txn,
         updateCustomerData(customer);
     }
     
-    return (tpcc_tables[TPCC_TABLE_CUSTOMER].db->put(txn, &key_c, &data_c, 0));
+    return (tpcc_tables[TPCC_TABLE_CUSTOMER].db->put(txn, &key_c, &a_p_dbts->custData, 0));
 }
 
 
@@ -361,6 +376,7 @@ int updateCustomerByLast(DbTxn* txn,
     tpcc_customer_tuple a_customer;
     
     TRACE( TRACE_ALWAYS, "*** TO BE DONE! Updating Customer using C_LAST\n");
+
     
     /** Retrieving CUSTOMER rows using C_LAST (and a cursor) */
     

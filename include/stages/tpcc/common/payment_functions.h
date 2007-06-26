@@ -68,17 +68,17 @@ struct payment_input_t {
 struct s_payment_dbt_t {
 
     // UPD_WAREHOUSE
-    Dbt* whData;
-    //Dbt* whKey;
+    Dbt whData;
+    //Dbt whKey;
     
 
     // UPD_DISTRICT
-    Dbt* distData;
-    //    Dbt* distKey;
+    Dbt distData;
+    //Dbt distKey;
 
     // UPD_CUSTOMER
-    Dbt* custData;
-    //Dbt* custKey;
+    Dbt custData;
+    //Dbt custKey;
 
     // INS_HISTORY
     // FIXME (ip) ?
