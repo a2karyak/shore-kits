@@ -24,13 +24,20 @@ IA64_LINUX specific:
 
 It compiles with g++-4.1.1 
 
+---
+IA64:
+
 At NEMESIS it resides at /home/ryan/apps/bin
 
 CXX=/home/ryan/apps/bin/g++-4.1.1 configure
 CXX=/home/ryan/apps/bin/g++-4.1.1 make
 
+To run we need to put /usr/local/lib to the LD_LIBRARY_PATH
+for example:
+#> LD_LIBRARY_PATH=/usr/local/lib ./qpipe
 
 
+---
 SUN_SPARC specific:
 
 gcc/g++ hasn't been reliable in Niagara.
