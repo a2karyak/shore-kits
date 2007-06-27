@@ -29,7 +29,7 @@ ENTER_NAMESPACE(tpcc);
 
 
 /** @note comment this to remove padding */
-#define PADDING_ENABLE
+//#define PADDING_ENABLE
 
 
 /* exported structures */

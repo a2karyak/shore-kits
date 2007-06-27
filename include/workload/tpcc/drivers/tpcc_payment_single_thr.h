@@ -63,6 +63,8 @@ public:
 
       assert(_allocated);
 
+      printf(" = %d running =\n", _id);
+
       for (int i=0; i < _iterations; i++) {
 
           executePayment();

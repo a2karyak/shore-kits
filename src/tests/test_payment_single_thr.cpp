@@ -50,11 +50,11 @@ int main(int argc, char* argv[]) {
         for(int idx=0; idx < info.num_clients; idx++) {
   
             // create a new kernel schedulable thread
-            err = pthread_attr_init( &pattr );
-            THROW_IF(ThreadException, err);
+            //            err = pthread_attr_init( &pattr );
+            //            THROW_IF(ThreadException, err);
             
-            err = pthread_attr_setscope( &pattr, PTHREAD_SCOPE_SYSTEM );
-            THROW_IF(ThreadException, err);
+            //            err = pthread_attr_setscope( &pattr, PTHREAD_SCOPE_SYSTEM );
+            //            THROW_IF(ThreadException, err);
   
     
             tpcc_payment_single_thr_driver* client = 
