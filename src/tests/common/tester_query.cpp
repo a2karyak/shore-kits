@@ -116,6 +116,7 @@ query_info_t query_single_thr_init(int argc, char* argv[], int env) {
     query_info_t info;
     info.num_iterations = num_iterations;
     info._policy = new scheduler::policy_os_t();
+    info.num_clients = num_clients;
 
     return info;
 }

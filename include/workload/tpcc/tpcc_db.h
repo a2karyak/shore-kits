@@ -22,6 +22,11 @@ ENTER_NAMESPACE(tpcc);
 
 /** Transaction processing engine parameters */
 
+/** @note Define BDB_ONLY_TPCC_PAYMENT to open/close only the
+ *  tables involved in the tpcc payment transaction 
+ */
+#define BDB_ONLY_TPCC_PAYMENT
+
 
 /** @note Define tpcc data directories */
 #define BDB_TPCC_TBL_DIRECTORY   "tbl_tpcc"

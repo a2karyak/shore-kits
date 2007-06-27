@@ -25,6 +25,8 @@ ENTER_NAMESPACE(workload);
 
 void tpcc_payment_single_thr_driver::allocate_dbts() {
 
+    assert (!_allocated);
+
     TRACE( TRACE_TRX_FLOW, "Allocating Dbts...\n");
 
     allocate_payment_dbts(&_dbts);
@@ -33,6 +35,8 @@ void tpcc_payment_single_thr_driver::allocate_dbts() {
 
 
 void tpcc_payment_single_thr_driver::deallocate_dbts() {
+
+    assert (_allocated);
 
     TRACE( TRACE_TRX_FLOW, "Dellocating Dbts...\n");
 

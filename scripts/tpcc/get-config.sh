@@ -30,6 +30,11 @@ echo " "
 # Checks if we are using random of fixed parameters
 echo "Checking parameter configuration"
 echo " "
-greps USE_SAME include | grep define
+greps USE_SAME include/ | grep define | grep -v "\~"
 echo " "
 
+# Checks which tables are opened
+echo "Checking which TPC-C tables are open"
+echo " "
+greps BDB_ONLY include/ | grep -v "\~\|note"
+echo " "

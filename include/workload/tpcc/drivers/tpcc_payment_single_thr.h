@@ -24,6 +24,7 @@ ENTER_NAMESPACE(workload);
 
 
 class tpcc_payment_single_thr_driver : public thread_t {
+//class tpcc_payment_single_thr_driver {
 
 protected:
 
@@ -36,26 +37,43 @@ protected:
 
     int _allocated;
     int _id;
+    int _iterations;
 
 public:
 
-    tpcc_payment_single_thr_driver(const c_str& description, const int id)
-      : thread_t(description), _id(id)
+    tpcc_payment_single_thr_driver(const c_str& description, 
+                                   const int id,
+                                   const int iter)
+      //      : thread_t(description), _allocated(0), _id(id), _iterations(iter)
+        : thread_t(description), _allocated(0), _id(id), _iterations(iter)
       {
-        allocate_dbts();
+        printf( " + %d constructing\n", _id);
+        //        TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
       }
 
 
-    ~tpcc_payment_single_thr_driver() {
+    virtual ~tpcc_payment_single_thr_driver() { }
+
+
+    virtual void* run() {        
+
+      assert(!_allocated);
+
+      allocate_dbts();
+
+      assert(_allocated);
+
+      for (int i=0; i < _iterations; i++) {
+
+        //executePayment();
+        printf(" = %d running (%d) =\n", _id, i);
+        //TRACE( TRACE_ALWAYS, " - %d running(%d) -\n", _id, i);
+      }
+
       deallocate_dbts();
-    }
-
-    virtual void* run() {
-      //return (executePayment());
-
-      TRACE( TRACE_ALWAYS, " - running() -\n");
       return (NULL);
     }
+
 
     void* executePayment();
 };

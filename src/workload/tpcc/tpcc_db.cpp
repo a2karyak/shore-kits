@@ -201,14 +201,37 @@ void db_open(int in_memory,
         THROW1(BdbException, "dbenv->open() threw DbException");
     }
   
+
+#ifdef BDB_ONLY_TPCC_PAYMENT
     
     // open tables
+    TRACE( TRACE_ALWAYS, "*** Opening only the PAYMENT tables ***\n");
+        
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++) {
+
+        switch (i) {
+        case (TPCC_TABLE_CUSTOMER):
+        case (TPCC_TABLE_DISTRICT):
+        case (TPCC_TABLE_HISTORY):
+        case (TPCC_TABLE_WAREHOUSE):
+            open_db_table(tpcc_tables[i].db,
+                          flags,
+                          tpcc_tables[i].bt_compare_fn,
+                          tpcc_tables[i].bdb_filename);
+            break;
+        default:
+            break;
+        }
+    }
+
+#else
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
         open_db_table(tpcc_tables[i].db,
                       flags,
                       tpcc_tables[i].bt_compare_fn,
                       tpcc_tables[i].bdb_filename);
     
+#endif    
 
     /*
     // open indexes
@@ -244,13 +267,34 @@ void db_close() {
 
     TRACE( TRACE_ALWAYS, "Closing TPC-C database...\n" );
 
+#ifdef BDB_ONLY_TPCC_PAYMENT
+
+    // close
+    TRACE( TRACE_ALWAYS, "*** Closing only the PAYMENT tables ***\n");        
+    for (int i = 0; i < _TPCC_TABLE_COUNT_; i++) {
+        switch (i) {
+        case (TPCC_TABLE_CUSTOMER):
+        case (TPCC_TABLE_DISTRICT):
+        case (TPCC_TABLE_HISTORY):
+        case (TPCC_TABLE_WAREHOUSE):
+            close_db_table(tpcc_tables[i].db, 
+                           BDB_TPCC_DIRECTORY,
+                           tpcc_tables[i].bdb_filename, 
+                           1);
+            break;
+        default:
+            break;
+        }
+    }
+
+#else
     // close tables
     for (int i = 0; i < _TPCC_TABLE_COUNT_; i++)
         close_db_table(tpcc_tables[i].db, 
                        BDB_TPCC_DIRECTORY,
                        tpcc_tables[i].bdb_filename, 
                        1);
-        
+#endif
 
     /*
     // close indexes
