@@ -25,7 +25,7 @@ ENTER_NAMESPACE(tpcc);
 /** @note Define BDB_ONLY_TPCC_PAYMENT to open/close only the
  *  tables involved in the tpcc payment transaction 
  */
-#define BDB_ONLY_TPCC_PAYMENT
+//#define BDB_ONLY_TPCC_PAYMENT
 
 
 /** @note Define tpcc data directories */
@@ -49,6 +49,7 @@ ENTER_NAMESPACE(tpcc);
  *  For this reason DB_AUTO_COMMIT is used in the database open command.
  */
 
+//#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE 
 #define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_AUTO_COMMIT
 //#define BDB_TPCC_DB_OPEN_FLAGS DB_CREATE | DB_READ_UNCOMMITTED
 

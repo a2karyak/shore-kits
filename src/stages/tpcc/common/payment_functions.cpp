@@ -168,6 +168,7 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
     tpcc_district_tuple_key dk;
     dk.D_ID = pin->_home_d_id;
     dk.D_W_ID = pin->_home_wh_id;
+    dk.D_PADDING_KEY = 0;
     Dbt key_d(&dk, sizeof(dk));
 
     
@@ -218,6 +219,7 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts)
     // WAREHOUSE key: W_ID 
     tpcc_warehouse_tuple_key wk;
     wk.W_ID = pin->_home_wh_id;
+    wk.W_PADDING_KEY = 0;
     Dbt key_wh(&wk, sizeof(wk));
     
     if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &a_p_dbts->whData, DB_RMW) == 

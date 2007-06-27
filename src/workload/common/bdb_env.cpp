@@ -41,7 +41,16 @@ void open_db_table(Db*& table, u_int32_t flags,
 
         table = new Db(dbenv, 0);
         table->set_bt_compare(cmp);
-        table->set_pagesize(4096);
+        table->set_pagesize(BDB_PAGESIZE);
+
+        /* Opens the table with support for duplicated records.
+        int ret = table->set_flags(DB_DUPSORT);
+        if (ret != 0) {
+            table->err(ret, "Attempt to set DUPSORT flag failed.");
+            TRACE (TRACE_ALWAYS, "Attempt to set DUPSORT flag failed");
+        }
+        */
+
         table->open(NULL, 
                     path.data(), 
                     NULL, 
@@ -85,7 +94,7 @@ void open_db_index(Db* table, Db* &assoc,
         assoc = new Db(dbenv, 0);
         assoc->set_bt_compare(cmp);
         // not necessarily unique...
-        assoc->set_flags(DB_DUP);
+        //        assoc->set_flags(DB_DUP);
         assoc->open(NULL, 
                     path.data(), 
                     NULL, 

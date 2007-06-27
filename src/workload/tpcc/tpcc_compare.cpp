@@ -41,7 +41,11 @@ int tpcc_bt_compare_fn_DISTRICT(Db*,
                                 const Dbt* k1, 
                                 const Dbt* k2)
 { 
-    return (bt_compare_fn_2_int(k1, k2));
+    // in order to support the padding column
+    return (bt_compare_fn_3_int(k1, k2));
+
+    // FIXME (ip)
+    //return (bt_compare_fn_2_int(k1, k2));
 }
 
 
@@ -112,7 +116,12 @@ int tpcc_bt_compare_fn_WAREHOUSE(Db*,
                                  const Dbt* k1, 
                                  const Dbt* k2)
 { 
-    return (bt_compare_fn_1_int(k1, k2));
+    // In order to support one additional record
+    // for padding purposes
+    return (bt_compare_fn_2_int(k1, k2));
+
+    // FIXME (ip)
+    //return (bt_compare_fn_1_int(k1, k2));
 }
 
 

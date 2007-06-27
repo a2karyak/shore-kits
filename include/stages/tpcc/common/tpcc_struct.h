@@ -78,8 +78,6 @@ struct tpcc_customer_tuple_key {
 
 // DISTRICT
 
-// FIXME (ip): We may need padding to the DISTRICT
-
 struct tpcc_district_tuple {
     int D_ID;
     int D_W_ID;
@@ -102,6 +100,9 @@ struct tpcc_district_tuple {
 struct tpcc_district_tuple_key {
     int D_ID;
     int D_W_ID;
+
+    // padding
+    int D_PADDING_KEY;
 };
 
 
@@ -257,6 +258,9 @@ struct tpcc_warehouse_tuple {
 
 struct tpcc_warehouse_tuple_key {
     int W_ID;
+
+    // for padding purposes
+    int W_PADDING_KEY;
 };
 
 EXIT_NAMESPACE(tpcc);

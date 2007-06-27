@@ -17,6 +17,8 @@
 #include "workload/tpcc/tpcc_tbl_parsers.h"
 
 
+#define SECOND_PADDING
+#define DUPLICATES_PADDING 1000
 
 ENTER_NAMESPACE(tpcc);
 
@@ -156,12 +158,24 @@ void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) {
         // insert tuple into database
         Dbt key(&tk, sizeof(tk));
         Dbt data(&tup, sizeof(tup));
+
+#ifdef SECOND_PADDING
+        // pad by adding multiple same records 
+        tk.D_PADDING_KEY = 0;
+        for (int i = 0; i < DUPLICATES_PADDING; i++) {
+            if (db->put(NULL, &key, &data, 0) == 0) {
+                printf("+");
+                tk.D_PADDING_KEY += 1;
+            }
+        }
+#else
         db->put(NULL, &key, &data, 0);
+#endif
 
         progress_update(&progress);
     }
 
-    progress_done("tpcc_table");
+    progress_done("DISTRICT");
 }
 
 
@@ -536,8 +550,20 @@ void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
         // insert tuple into database
         Dbt key(&wk, sizeof(wk));
         Dbt data(&tup, sizeof(tup));
-        db->put(NULL, &key, &data, 0);
 
+#ifdef SECOND_PADDING
+        // FIXME (ip) Make sure padding works
+        // for padding we use an additional column
+        wk.W_PADDING_KEY = 0;
+        for (int i = 0; i < DUPLICATES_PADDING; i++) {
+            if (db->put(NULL, &key, &data, 0) == 0) {
+                printf("+");
+                wk.W_PADDING_KEY += 1;
+            }
+        }
+#else
+        db->put(NULL, &key, &data, 0);
+#endif 
         progress_update(&progress);
     }
 
