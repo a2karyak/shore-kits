@@ -81,6 +81,7 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <cstddef>
+#include <string>
 
 /*
  * 32 bit FNV-1 and FNV-1a non-zero initial basis

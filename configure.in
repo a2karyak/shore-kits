@@ -41,7 +41,7 @@ AC_PROG_EGREP
 case "$target" in
   # Sparc Solaris
   *sparc*sun*)
-    BDB_HOME_DEFAULT="/export/home/ipandis/berkeleydb"
+    BDB_HOME_DEFAULT="/export/home/ipandis/apps/berkeleydb"
     ;;
 
   *ppc*)
