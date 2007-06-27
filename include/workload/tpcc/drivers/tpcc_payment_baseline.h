@@ -24,6 +24,12 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
+// FIXME *******************************************
+// FIXME (ip) The drivers should not save any state
+// FIXME (ip) s_payment_dbt_t should be removed
+// FIXME ******************************************
+
+
 class tpcc_payment_baseline_driver : public trx_driver_t {
 
 protected:

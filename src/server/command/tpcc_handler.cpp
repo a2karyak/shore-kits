@@ -17,6 +17,7 @@
 // tpcc drivers header files
 #include "workload/tpcc/drivers/tpcc_payment.h"
 #include "workload/tpcc/drivers/tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/tpcc_payment_nos.h"
 
 
 #include "scheduler.h"
@@ -54,6 +55,7 @@ void tpcc_handler_t::init() {
         // register drivers...
         add_driver("payment",          new tpcc_payment_driver(c_str("PAYMENT")));
         add_driver("payment_baseline", new tpcc_payment_baseline_driver(c_str("PAYMENT_BASELINE")));
+        add_driver("payment_nos",      new tpcc_payment_nos_driver(c_str("PAYMENT_NOS")));
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());

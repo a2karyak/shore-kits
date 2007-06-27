@@ -47,8 +47,8 @@ public:
       //      : thread_t(description), _allocated(0), _id(id), _iterations(iter)
         : thread_t(description), _allocated(0), _id(id), _iterations(iter)
       {
-        printf( " + %d constructing\n", _id);
-        //        TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
+          //        printf( " + %d constructing\n", _id);
+          //        TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
       }
 
 
