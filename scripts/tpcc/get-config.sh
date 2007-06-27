@@ -26,3 +26,10 @@ echo "Getting DB_SIZE"
 echo " "
 ls -la database_bdb_tpcc
 echo " "
+
+# Checks if we are using random of fixed parameters
+echo "Checking parameter configuration"
+echo " "
+greps USE_SAME include | grep define
+echo " "
+

@@ -59,27 +59,4 @@ trx_packet_t::~trx_packet_t(void) {
 
 
 
-////////////////////////////
-// class trx_result_tuple_t //
-
-
-/** @fn copy constructor */
-trx_result_tuple_t::trx_result_tuple_t(const trx_result_tuple_t& t) {
-
-    R_STATE = t.R_STATE;
-    R_ID = t.R_ID;
-}
-    
-    
-/** @fn copy assingment */
-trx_result_tuple_t& trx_result_tuple_t::operator=(const trx_result_tuple_t& t) {
-
-    R_STATE = t.R_STATE;
-    R_ID = t.R_ID;
-    
-    return (*this);
-}
-
-
-
 EXIT_NAMESPACE(qpipe);

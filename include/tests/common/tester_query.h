@@ -9,29 +9,40 @@
 #include "workload/register_stage_containers.h"
 
 
-// tracing flags for the tests
+/** Tracing flags for the tests */
 
 // tracing the key comparison in tpcc
 //#define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS | TRACE_KEY_COMP | TRACE_RECORD_FLOW | TRACE_TRX_FLOW )
 #define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS | TRACE_RECORD_FLOW | TRACE_TRX_FLOW )
 
 // default tracing flags
-//#define TESTER_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS)
+#define DEFAULT_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS | TRACE_QUERY_RESULTS)
 
 // tracing flags for the db loads
 #define LOAD_TRACE_MASK (TRACE_ALWAYS | TRACE_STATISTICS )
 
 
+/** Exported data structures */
+
+
 struct query_info_t {
     int num_iterations;
     scheduler::policy_t* _policy;
+    int num_clients;
 };
 
 
+/** Exported functions */
+
+// Staged execution
 query_info_t query_init(int argc, char* argv[], int env = QUERY_ENV);
-
-
 void query_main(query_info_t& info, workload::driver_t* driver, int env = QUERY_ENV);
+
+// Conventional (single-thread per request) execution
+query_info_t query_single_thr_init(int argc, char* argv[], int env);
+
+
+
 
 
 

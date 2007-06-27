@@ -17,7 +17,6 @@
 #include "stages/tpcc/common/tpcc_struct.h"
 #include "stages/tpcc/common/trx_packet.h"
 
-
 using namespace qpipe;
 using namespace tpcc;
 
@@ -103,6 +102,13 @@ int updateCustomerByID(DbTxn* txn, int wh_id, int d_id, int c_id,
 
 int updateCustomerByLast(DbTxn* txn, int wh_id, int d_id, char* c_last, 
                          decimal h_amount, s_payment_dbt_t* a_p_dbts);
+
+
+// implementation of the single-threaded version of the payment
+trx_result_tuple_t executePaymentBaseline(payment_input_t* pin,
+                                          const int id,
+                                          DbTxn* txn,
+                                          s_payment_dbt_t* a_dbts);
 
 
 /** Helper Functions */

@@ -29,7 +29,6 @@ using namespace qpipe;
 using namespace tpcc_payment;
 
 
-
 /* exported datatypes */
 
 class payment_baseline_packet_t : public trx_packet_t {
@@ -166,14 +165,6 @@ public:
     ~payment_baseline_stage_t() { 
 	TRACE(TRACE_DEBUG, "PAYMENT_BASELINE destructor\n");	
     }        
-
-private:
-
-    trx_result_tuple_t executePaymentBaseline(payment_input_t* pin, 
-                                              DbTxn* txn, 
-                                              const int id, 
-                                              s_payment_dbt_t* a_p_dbts);
-    
     
 }; // EOF: payment_baseline_stage_t
 

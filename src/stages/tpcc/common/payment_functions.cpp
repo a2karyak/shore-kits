@@ -9,10 +9,9 @@
  */
 
 #include "stages/tpcc/common/payment_functions.h"
-
 #include "stages/tpcc/common/trx_packet.h"
-
 #include "workload/tpcc/tpcc_env.h"
+
 
 using namespace qpipe;
 
@@ -170,20 +169,10 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
     dk.D_ID = pin->_home_d_id;
     dk.D_W_ID = pin->_home_wh_id;
     Dbt key_d(&dk, sizeof(dk));
-    
-    ///// (ip)
-    //    Dbt data_d;
-    //    data_d.set_flags(DB_DBT_MALLOC);
-
-    //    TRACE( TRACE_ALWAYS, "Original  Size = %d\n", data_d.get_size());
-    //    TRACE( TRACE_ALWAYS, "Candidate Size = %d\n", a_p_dbts->distData->get_size());
-    ///// (ip)
 
     
     if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &a_p_dbts->distData, DB_RMW) ==
         DB_NOTFOUND)
-        //    if (tpcc_tables[TPCC_TABLE_DISTRICT].db->get(txn, &key_d, &data_d, DB_RMW) == 
-        //        DB_NOTFOUND)
         {
             THROW3(BdbException, 
                    "district with id=(%d,%d) not found in the database\n", 
@@ -194,14 +183,12 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
         }
     
     
-    //tpcc_district_tuple* district = (tpcc_district_tuple*)data_d.get_data();
     tpcc_district_tuple* district = (tpcc_district_tuple*)a_p_dbts->distData.get_data();
     
     assert(district); // make sure that we got a district
     
     district->D_YTD += pin->_h_amount;
 
-    //return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &data_d, 0));
     return (tpcc_tables[TPCC_TABLE_DISTRICT].db->put(txn, &key_d, &a_p_dbts->distData, 0));
     
     ///// EOF UPD_DISTRICT /////
@@ -233,10 +220,6 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts)
     wk.W_ID = pin->_home_wh_id;
     Dbt key_wh(&wk, sizeof(wk));
     
-    //    Dbt data_wh;
-    //    data_wh.set_flags(DB_DBT_MALLOC);
-    
-    //    if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &data_wh, DB_RMW) == 
     if (tpcc_tables[TPCC_TABLE_WAREHOUSE].db->get(txn, &key_wh, &a_p_dbts->whData, DB_RMW) == 
         DB_NOTFOUND) 
         {
@@ -246,7 +229,6 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts)
             return (1);
         }
     
-    //tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)data_wh.get_data();
     tpcc_warehouse_tuple* warehouse = (tpcc_warehouse_tuple*)a_p_dbts->whData.get_data();
     
     assert(warehouse); // make sure that we got a warehouse
@@ -290,11 +272,7 @@ int updateCustomerByID(DbTxn* txn,
     ck.C_D_ID = d_id;
     ck.C_W_ID = wh_id;
     Dbt key_c(&ck, sizeof(ck));
-        
-    //    Dbt data_c;
-    //data_c.set_flags(DB_DBT_MALLOC);
     
-    //    if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(txn, &key_c, &data_c, DB_RMW) ==
     if (tpcc_tables[TPCC_TABLE_CUSTOMER].db->get(txn, &key_c, &a_p_dbts->custData, DB_RMW) ==
         DB_NOTFOUND)
         {
@@ -305,7 +283,6 @@ int updateCustomerByID(DbTxn* txn,
                    ck.C_W_ID);
         }
     
-    //    tpcc_customer_tuple* customer = (tpcc_customer_tuple*)data_c.get_data();
     tpcc_customer_tuple* customer = (tpcc_customer_tuple*)a_p_dbts->custData.get_data();
     
     assert(customer); // make sure that we got a customer
@@ -444,6 +421,99 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
            a_customer->C_DATA_1,
            a_customer->C_DATA_2);
 }
+
+
+
+/** @fn executePaymentBaseline
+ *
+ *  @brief Executes the PAYMENT transaction serially. Wrapper function.
+ *  
+ *  @return A trx_result_tuple_t with the status of the transaction.
+ */
+    
+trx_result_tuple_t executePaymentBaseline(payment_input_t* pin,
+                                          const int id,
+                                          DbTxn* txn,
+                                          s_payment_dbt_t* a_dbts)
+{        
+    // initialize the result structure
+    trx_result_tuple_t aTrxResultTuple(UNDEF, id);
+    
+    try {
+        
+       TRACE( TRACE_TRX_FLOW, "*** EXECUTING TRX CONVENTIONALLY ***\n");
+    
+       /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
+
+    
+       /** Step 1: The database transaction is started */
+       TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
+       dbenv->txn_begin(NULL, &txn, 0);
+
+       if (updateWarehouse(pin, txn, a_dbts)) {
+           
+           // Failed. Throw exception
+           THROW1( BdbException, 
+                   "WAREHOUSE update failed...\n");
+       }
+
+
+       if (updateDistrict(pin, txn, a_dbts)) {
+           
+           // Failed. Throw exception
+           THROW1( BdbException, 
+                   "DISTRICT update failed...\n");
+       }
+
+
+       if (updateCustomer(pin, txn, a_dbts)) {           
+           // Failed. Throw exception
+           THROW1( BdbException,
+                   "CUSTOMER update failed...\n");
+       }
+
+       if (insertHistory(pin, txn, a_dbts)) {
+
+           // Failed. Throw exception
+           THROW1( BdbException, 
+                   "HISTORY instertion failed...\n");
+       }
+
+
+    
+       /** Step 6: The database transaction is committed */
+       TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
+       txn->commit(0);
+    }
+    catch(DbException err) {
+        dbenv->err(err.get_errno(), "%d: Caught exception\n");
+        TRACE( TRACE_ALWAYS, "DbException - Aborting PAYMENT trx...\n");
+        
+        txn->abort();
+	    
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
+        
+        // FIXME (ip): We may want to have retries
+        //if (++failed_tries > MAX_TRIES) {
+        //   txn->abort();
+        //   TRACE( TRACE_ALWAYS, "MAX_FAILS - Aborting...\n");        
+    }
+    catch(...) {
+        TRACE( TRACE_ALWAYS, "Unknown Exception - Aborting PAYMENT trx...\n");
+        
+        txn->abort();
+	    
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
+    }
+
+    // if reached this point transaction succeeded
+    aTrxResultTuple.set_state(COMMITTED);
+    return (aTrxResultTuple);
+
+} // EOF: executePaymentBaseline
+
 
 
 

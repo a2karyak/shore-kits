@@ -26,11 +26,11 @@ ENTER_NAMESPACE(qpipe);
 # define NO_VALID_TRX_ID -1
 
 // Sets the range of warehouses queried
-# define RANGE           1
+# define RANGE           4
 
 
 /** Use this definition to produce the same packet over and over */
-#define USE_SAME_INPUT 
+//#define USE_SAME_INPUT 
 
 
 /**
@@ -189,9 +189,24 @@ public:
 
     ~trx_result_tuple_t() { }
 
-    trx_result_tuple_t(const trx_result_tuple_t& t); // copy constructor
+    /** @fn copy constructor */
+    trx_result_tuple_t(const trx_result_tuple_t& t) {
+
+        R_STATE = t.R_STATE;
+        R_ID = t.R_ID;
+    }
     
-    trx_result_tuple_t& operator=(const trx_result_tuple_t& t); // copy assingment
+    
+
+
+    /** @fn copy assingment */
+    trx_result_tuple_t& operator=(const trx_result_tuple_t& t) {
+        
+        R_STATE = t.R_STATE;
+        R_ID = t.R_ID;
+        
+        return (*this);
+    }
 
 
     /** Access methods */

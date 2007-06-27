@@ -129,7 +129,7 @@ thread_t* thread_get_self(void)
  *  @param thread A pointer to a pthread_t that will store the ID of
  *  the newly created thread.
  *
- *  @param t - A thead that contains the function to run.
+ *  @param t - A thread that contains the function to run.
  *
  *  @return 0 on success. Non-zero on error.
  */

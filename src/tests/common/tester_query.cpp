@@ -11,6 +11,12 @@
 using namespace tpcc;
 using namespace tpch;
 
+
+
+////////////////////////////
+///// Staged execution /////
+
+
 query_info_t query_init(int argc, char* argv[], int env) {
 
     thread_init();
@@ -22,7 +28,7 @@ query_info_t query_init(int argc, char* argv[], int env) {
     }
 
     int num_iterations = atoi(argv[1]);
-    if ( num_iterations == 0 ) {
+    if ( num_iterations <= 0 ) {
 	TRACE(TRACE_ALWAYS, "Invalid iterations per client %s\n", argv[1]);
 	exit(-1);
     }
@@ -65,3 +71,52 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
         tpcc::db_close();
     }
 }
+
+
+
+
+//////////////////////////////////////////////////////////////
+///// Conventional (single-thread per request) execution /////
+
+
+
+query_info_t query_single_thr_init(int argc, char* argv[], int env) {
+
+    thread_init();
+
+    // parse command line args
+    if ( argc < 3 ) {
+	TRACE(TRACE_ALWAYS, "Usage: %s <num clients> <num iterations>\n", argv[0]);
+	exit(-1);
+    }
+
+    int num_clients = atoi(argv[1]);
+    if ( num_clients <= 0 ) {
+	TRACE(TRACE_ALWAYS, "Invalid number of clients = %s\n", argv[1]);
+	exit(-1);
+    }
+
+    int num_iterations = atoi(argv[2]);
+    if ( num_iterations <= 0 ) {
+	TRACE(TRACE_ALWAYS, "Invalid iterations per client = %s\n", argv[2]);
+	exit(-1);
+    }
+
+    
+    // open database
+    if (env == QUERY_ENV) {
+        tpch::db_open();
+    }
+    else {
+        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
+    }
+
+
+
+    query_info_t info;
+    info.num_iterations = num_iterations;
+    info._policy = new scheduler::policy_os_t();
+
+    return info;
+}
+
