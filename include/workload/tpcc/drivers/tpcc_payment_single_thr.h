@@ -65,9 +65,9 @@ public:
 
       for (int i=0; i < _iterations; i++) {
 
-        //executePayment();
-        printf(" = %d running (%d) =\n", _id, i);
-        //TRACE( TRACE_ALWAYS, " - %d running(%d) -\n", _id, i);
+          executePayment();
+          //        printf(" = %d running (%d) =\n", _id, i);
+          //        TRACE( TRACE_ALWAYS, " - %d running(%d) -\n", _id, i);
       }
 
       deallocate_dbts();
