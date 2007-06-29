@@ -12,7 +12,8 @@
 #define __TPCC_PAYMENT_NOS_DRIVER_H
 
 
-#include "workload/tpcc/drivers/trx_driver.h"
+#include "workload/driver.h"
+
 #include "workload/tpcc/drivers/tpcc_payment_common.h"
 #include "workload/tpcc/drivers/tpcc_payment_nos.h"
 
@@ -24,33 +25,30 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
-class tpcc_payment_nos_driver : public trx_driver_t {
+//----------------------------------------------------------------------------
+// @class tpcc_payment_nos_driver 
+//
+// @brief This is the driver that creates and fires a fixed for now number of
+// tpcc_payment_single_thr threds.
+// 
+// @note The workload_client will report incorrect statistics for this driver.
+//
+// @todo Enable the user from the command line to determine the number of
+// threads and iterations.
+//
 
-protected:
-
-    // Structure for allocating only once all the Dbts
-    s_payment_dbt_t _dbts;
-
-    virtual void allocate_dbts() { }
-    virtual void deallocate_dbts() { }
-    virtual void reset_dbts() { }
+class tpcc_payment_nos_driver : public driver_t {
 
 public:
 
-    tpcc_payment_nos_driver(const c_str& description, const int aRange = RANGE)
-        : trx_driver_t(description)
-    {
-        assert (aRange > 0);
-        _whRange = aRange;
-        
-        allocate_dbts();
+    tpcc_payment_nos_driver(const c_str& description)
+        : driver_t(description) 
+    {  
     }
 
-    ~tpcc_payment_nos_driver() { 
-        deallocate_dbts();
-    }
+    ~tpcc_payment_nos_driver() { }
     
-    virtual void submit(void* disp);
+    virtual void submit(void* disp, memObject_t* mem);
 };
 
 

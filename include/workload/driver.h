@@ -1,9 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _DRIVER_H
-#define _DRIVER_H
+#ifndef __DRIVER_H
+#define __DRIVER_H
 
+#include "memory/mem_obj.h"
 #include "util.h"
+
+
+using namespace qpipe;
 
 
 ENTER_NAMESPACE(workload);
@@ -37,9 +41,17 @@ public:
 
     virtual ~driver_t() { }
 
-    virtual void submit(void* arg)=0;
+    virtual void submit(void* arg, memObject_t* mem)=0;
 
     c_str description() { return _description; }
+
+    virtual void f_allocate(memObject_t* m_obj) { 
+        m_obj->allocate();
+    };
+
+    virtual void f_deallocate(memObject_t* m_obj) {
+        m_obj->deallocate();
+    }
 };
 
 
@@ -54,7 +66,7 @@ public:
      { \
      } \
    \
-     virtual void submit(void* arg); \
+     virtual void submit(void* arg, memObject_t* mem); \
    \
   };
 

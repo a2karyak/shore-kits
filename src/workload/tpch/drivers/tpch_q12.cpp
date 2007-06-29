@@ -303,7 +303,7 @@ public:
 };
 
 
-void tpch_q12_driver::submit(void* disp) {
+void tpch_q12_driver::submit(void* disp, memObject_t*) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*) disp;
   

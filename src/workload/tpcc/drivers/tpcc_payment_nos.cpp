@@ -30,7 +30,11 @@ void* start_client( void* ptr);
 #define NOS_CLIENTS      8
 #define NOS_ITERATIONS 200
 
-void tpcc_payment_nos_driver::submit(void* disp) {
+void tpcc_payment_nos_driver::submit(void* disp, memObject_t*) {
+
+    /** @note This driver does need to allocate any memory, since it creates a
+     *  number of independent threads that do their own memory management
+     */
 
     query_info_t info;
     info.num_clients    = NOS_CLIENTS;

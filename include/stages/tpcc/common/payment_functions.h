@@ -14,6 +14,7 @@
 
 #include <db_cxx.h>
 
+#include "memory/mem_obj.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 #include "stages/tpcc/common/trx_packet.h"
 
@@ -64,8 +65,12 @@ struct payment_input_t {
  *  for each iteration, BDB will allocate (using malloc()) new space.
  */
 
-struct s_payment_dbt_t {
+class s_payment_dbt_t : public memObject_t {
 
+public: 
+
+    /** Member variables */
+    
     // UPD_WAREHOUSE
     Dbt whData;
     //Dbt whKey;
@@ -81,6 +86,26 @@ struct s_payment_dbt_t {
 
     // INS_HISTORY
     // FIXME (ip) ?
+
+
+    /** Construction */
+
+    inline s_payment_dbt_t () { };
+
+    virtual ~s_payment_dbt_t() {
+
+        if (_allocated)
+            deallocate();
+    };
+
+
+    /** Memory management functions */
+
+    virtual void allocate();
+    
+    virtual void deallocate();
+
+    virtual void reset();
 
 }; // EOF s_payment_dbt_t
 

@@ -89,7 +89,7 @@ public:
 
 
 
-void merge_test_driver::submit(void* disp) {
+void merge_test_driver::submit(void* disp, memObject_t*) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 

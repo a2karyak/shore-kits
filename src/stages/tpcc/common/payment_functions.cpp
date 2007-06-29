@@ -518,6 +518,79 @@ trx_result_tuple_t executePaymentBaseline(payment_input_t* pin,
 
 
 
+//----------------------------------------
+// @class s_payment_dbt_t
+//
+// @brief Dbts for the payment transaction
+//
+
+
+/** @fn allocate_payment_dbts
+ *
+ *  @brief Allocates the required dbts for the PAYMENT_* transactions
+ *  and sets their flag as memory allocated by user.
+ */
+
+void s_payment_dbt_t::allocate() {
+
+    /** @note The caller (tpcc_payment_*_driver) is the owner of
+     *  those dbts
+     */
+
+    memset(&whData, 0, sizeof(Dbt));
+    whData.set_data(malloc(sizeof(tpcc_warehouse_tuple)));
+    whData.set_ulen(sizeof(tpcc_warehouse_tuple));
+    whData.set_flags(DB_DBT_USERMEM);
+
+
+    memset(&distData, 0, sizeof(Dbt));
+    distData.set_data(malloc(sizeof(tpcc_district_tuple)));
+    distData.set_ulen(sizeof(tpcc_district_tuple));
+    distData.set_flags(DB_DBT_USERMEM);
+
+
+    memset(&custData, 0, sizeof(Dbt));
+    custData.set_data(malloc(sizeof(tpcc_customer_tuple)));
+    custData.set_ulen(sizeof(tpcc_customer_tuple));
+    custData.set_flags(DB_DBT_USERMEM);
+
+    _allocated = 1;
+}
+
+
+/** @fn deallocate_payment_dbts
+ *
+ *  @brief Deallocates the required dbts for the PAYMENT_* transactions
+ */
+
+void s_payment_dbt_t::deallocate() {
+
+    if (whData.get_data())
+        delete ((tpcc_warehouse_tuple*)whData.get_data());
+
+    if (distData.get_data())
+        delete ((tpcc_district_tuple*)distData.get_data());
+    
+    if (custData.get_data())
+        delete ((tpcc_customer_tuple*)custData.get_data());
+
+    _allocated = 0;
+}
+
+
+
+/** @fn reset_payment_dbts
+ *
+ *  @brief Resets the required dbts for the PAYMENT_* transactions
+ */
+
+void s_payment_dbt_t::reset() {
+
+    TRACE( TRACE_DEBUG, "resetting...\n");
+    // FIXME (ip) Do we really need to do anything here?
+}
+
+
 
 EXIT_NAMESPACE(tpcc);
 

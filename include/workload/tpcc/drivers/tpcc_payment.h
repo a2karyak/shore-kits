@@ -12,7 +12,8 @@
 #define __TPCC_PAYMENT_DRIVER_H
 
 
-#include "workload/tpcc/drivers/trx_driver.h"
+#include "workload/driver.h"
+
 #include "workload/tpcc/drivers/tpcc_payment_common.h"
 #include "stages/tpcc/payment_begin.h"
 
@@ -24,33 +25,18 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
-class tpcc_payment_driver : public trx_driver_t {
-
-protected:
-
-    // Structure for allocating only once all the Dbts
-    s_payment_dbt_t _dbts;
-
-    virtual void allocate_dbts();
-    virtual void deallocate_dbts();
-    virtual void reset_dbts();
+class tpcc_payment_driver : public driver_t {
 
 public:
 
-    tpcc_payment_driver(const c_str& description, const int aRange = RANGE)
-        : trx_driver_t(description)
+    tpcc_payment_driver(const c_str& description)
+        : driver_t(description)
     {
-          assert (aRange > 0);
-          _whRange = aRange;
-
-          allocate_dbts();
     }
 
-    ~tpcc_payment_driver() { 
-        deallocate_dbts();
-    }
+    ~tpcc_payment_driver() { }
 
-    virtual void submit(void* disp);
+    virtual void submit(void* disp, memObject_t* mem);
 
     trx_packet_t* create_begin_payment_packet(const c_str& client_prefix,
                                               tuple_fifo* bp_buffer,

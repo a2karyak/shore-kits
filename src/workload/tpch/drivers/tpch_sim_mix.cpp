@@ -8,7 +8,7 @@
 ENTER_NAMESPACE(workload);
 
 
-void tpch_sim_mix_driver::submit(void* disp) {
+void tpch_sim_mix_driver::submit(void* disp, memObject_t* mem) {
  
     thread_t* this_thread = thread_get_self();
     int selection = this_thread->rand(4);
@@ -35,7 +35,7 @@ void tpch_sim_mix_driver::submit(void* disp) {
     }
 
     TRACE(TRACE_DEBUG, "selection = %d\n", selection);
-    driver->submit(disp);
+    driver->submit(disp, mem);
 }
 
 EXIT_NAMESPACE(workload);

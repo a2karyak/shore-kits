@@ -1,4 +1,5 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __TPCH_SIM_MIX_H
 #define __TPCH_SIM_MIX_H
 
@@ -23,8 +24,7 @@ public:
     {
     }
     
-    virtual void submit(void* disp);
-    
+    virtual void submit(void* disp, memObject_t* mem);    
 };
 
 EXIT_NAMESPACE(workload);

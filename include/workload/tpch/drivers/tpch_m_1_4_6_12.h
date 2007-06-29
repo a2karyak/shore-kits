@@ -23,7 +23,7 @@ public:
     {
     }
     
-    virtual void submit(void* disp);
+    virtual void submit(void* disp, memObject_t* mem=NULL);
     
 };
 

@@ -23,37 +23,6 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
-void tpcc_payment_single_thr_driver::allocate_dbts() {
-
-    assert (!_allocated);
-
-    TRACE( TRACE_TRX_FLOW, "Allocating Dbts...\n");
-
-    allocate_payment_dbts(&_dbts);
-    _allocated = 1;
-}
-
-
-void tpcc_payment_single_thr_driver::deallocate_dbts() {
-
-    assert (_allocated);
-
-    TRACE( TRACE_TRX_FLOW, "Dellocating Dbts...\n");
-
-    deallocate_payment_dbts(&_dbts);
-    _allocated = 0;
-}
-
-
-void tpcc_payment_single_thr_driver::reset_dbts() {
-
-    TRACE( TRACE_TRX_FLOW, "Resetting Dbts...\n");
-
-    reset_payment_dbts(&_dbts);
-}
-
-
-
 /** @fn executePayment
  *
  *  @brief Execute a Payment transaction
@@ -61,7 +30,7 @@ void tpcc_payment_single_thr_driver::reset_dbts() {
 
 void* tpcc_payment_single_thr_driver::executePayment() {
 
-    assert(_allocated);
+    assert(_dbts.is_allocated());
 
     tpcc_payment::payment_input_t pin = create_payment_input(RANGE);
     DbTxn* txn = NULL;

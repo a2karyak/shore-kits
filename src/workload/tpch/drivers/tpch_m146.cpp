@@ -8,7 +8,7 @@ ENTER_NAMESPACE(workload);
 
 
 
-void tpch_m146_driver::submit(void* disp) {
+void tpch_m146_driver::submit(void* disp, memObject_t* mem) {
  
     // randomly select one of the drivers 1, 4, or 6...
     thread_t* this_thread = thread_get_self();
@@ -34,7 +34,7 @@ void tpch_m146_driver::submit(void* disp) {
     }
 
     TRACE(TRACE_DEBUG, "rand = %d, selection = %d\n", rand, selection);
-    driver->submit(disp);
+    driver->submit(disp, mem);
 }
 
 EXIT_NAMESPACE(workload);

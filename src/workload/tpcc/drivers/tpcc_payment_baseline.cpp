@@ -10,49 +10,23 @@
 
 #include "scheduler.h"
 #include "util.h"
-
 #include "workload/common.h"
-
 #include "workload/tpcc/drivers/tpcc_payment_baseline.h"
 
 
 using namespace qpipe;
 using namespace tpcc;
+using namespace tpcc_payment;
 
 
 ENTER_NAMESPACE(workload);
 
 
-void tpcc_payment_baseline_driver::allocate_dbts() {
 
-    TRACE( TRACE_TRX_FLOW, "Allocating Dbts...\n");
-
-    allocate_payment_dbts(&_dbts);
-    _allocated = 1;
-}
-
-
-void tpcc_payment_baseline_driver::deallocate_dbts() {
-
-    TRACE( TRACE_TRX_FLOW, "Dellocating Dbts...\n");
-
-    deallocate_payment_dbts(&_dbts);
-    _allocated = 0;
-}
-
-
-void tpcc_payment_baseline_driver::reset_dbts() {
-
-    TRACE( TRACE_TRX_FLOW, "Resetting Dbts...\n");
-
-    reset_payment_dbts(&_dbts);
-}
-
-
-void tpcc_payment_baseline_driver::submit(void* disp) {
+void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
-
+    s_payment_dbt_t* p_dbts = (s_payment_dbt_t*)mem;
 
     // payment_begin_packet output
     // FIXME: (ip) I don't know if we need output buffers for the PAYMENT_BEGIN
@@ -74,7 +48,8 @@ void tpcc_payment_baseline_driver::submit(void* disp) {
                                         bp_buffer, 
                                         bp_filter,
                                         dp,
-                                        _whRange);
+                                        p_dbts,
+                                        RANGE);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
@@ -99,10 +74,10 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                              tuple_fifo* bp_output_buffer,
                                                              tuple_filter_t* bp_output_filter,
                                                              scheduler::policy_t* dp,
+                                                             s_payment_dbt_t* p_dbts,
                                                              int sf) 
 {
     assert(sf>0);
-    assert(_allocated);
 
     trx_packet_t* payment_packet;
 
@@ -123,7 +98,7 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                    pin._c_last,
                                                    pin._h_amount,
                                                    pin._h_date,
-                                                   &_dbts);
+                                                   p_dbts);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

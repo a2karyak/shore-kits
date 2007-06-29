@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _TUPLE_H
-#define _TUPLE_H
+#ifndef __TUPLE_H
+#define __TUPLE_H
 
 
 #include <cassert>
@@ -19,7 +19,7 @@ ENTER_NAMESPACE(qpipe);
 
 
 
-/**
+/** FIXME (ip)
  *  @brief For oltp-stype workloads, default number of buffer pages and 
  *  threshold size does not need to be greater than 1
  */
@@ -181,7 +181,7 @@ class tuple_fifo;
 
 
 /**
- *  @brief Wapper class for a page header that stores the page's
+ *  @brief Wrapper class for a page header that stores the page's
  *  size. The constructor is private to prevent stray headers from
  *  being created in the code. We instead export a static alloc()
  *  function that allocates a new page and places a header at the

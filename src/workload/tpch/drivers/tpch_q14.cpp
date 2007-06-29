@@ -232,7 +232,7 @@ public:
 };
 
 
-void tpch_q14_driver::submit(void* disp) {
+void tpch_q14_driver::submit(void* disp, memObject_t*) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
     qpipe::query_state_t* qs = dp->query_state_create();

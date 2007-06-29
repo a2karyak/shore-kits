@@ -45,6 +45,7 @@ bool workload_t::run(results_t &results) {
                                       &client_sync,
                                       _num_iterations,
                                       _think_time);
+
             client_ids[client_index] = thread_create(client);
         }
         catch (QPipeException &e) {

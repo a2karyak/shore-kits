@@ -1,11 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __TUPLE_FIFO_H
 #define __TUPLE_FIFO_H
 
 #include "core/tuple.h"
 #include <vector>
 #include <list>
-#include <ucontext.h>
+//#include <ucontext.h>
 
 ENTER_NAMESPACE(qpipe);
 

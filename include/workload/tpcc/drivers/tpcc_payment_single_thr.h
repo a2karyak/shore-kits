@@ -23,19 +23,22 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
+//------------------------------------------------------------------------
+// @class tpcc_payment_single_thr_driver
+//
+// @brief This is an object that executes the payment_baseline transaction
+// in a single threaded fashion.
+//
+// @note This is not a driver, that is why it can have own state
+//
+
 class tpcc_payment_single_thr_driver : public thread_t {
-//class tpcc_payment_single_thr_driver {
 
 protected:
 
     // Structure for allocating only once all the Dbts
     s_payment_dbt_t _dbts;
 
-    virtual void allocate_dbts();
-    virtual void deallocate_dbts();
-    virtual void reset_dbts();
-
-    int _allocated;
     int _id;
     int _iterations;
 
@@ -44,10 +47,8 @@ public:
     tpcc_payment_single_thr_driver(const c_str& description, 
                                    const int id,
                                    const int iter)
-      //      : thread_t(description), _allocated(0), _id(id), _iterations(iter)
-        : thread_t(description), _allocated(0), _id(id), _iterations(iter)
+        : thread_t(description), _id(id), _iterations(iter)
       {
-          //        printf( " + %d constructing\n", _id);
           //        TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
       }
 
@@ -57,23 +58,22 @@ public:
 
     virtual void* run() {        
 
-      assert(!_allocated);
+        assert(!_dbts.is_allocated());
 
-      allocate_dbts();
+        _dbts.allocate();
+      
+        assert(_dbts.is_allocated());
 
-      assert(_allocated);
-
-      printf(" = %d running =\n", _id);
-
-      for (int i=0; i < _iterations; i++) {
-
-          executePayment();
-          //        printf(" = %d running (%d) =\n", _id, i);
-          //        TRACE( TRACE_ALWAYS, " - %d running(%d) -\n", _id, i);
-      }
-
-      deallocate_dbts();
-      return (NULL);
+        printf(" = %d running =\n", _id);
+        
+        for (int i=0; i < _iterations; i++) {
+          
+            executePayment();
+            //        TRACE( TRACE_ALWAYS, " - %d running(%d) -\n", _id, i);
+        }
+        
+        _dbts.deallocate();
+        return (NULL);
     }
 
 

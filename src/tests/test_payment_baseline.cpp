@@ -18,16 +18,13 @@
 
 using namespace qpipe;
 
-// sets certain range in the queried warehouses
-const int WH = 1; 
-
 int main(int argc, char* argv[]) {
 
     query_info_t info = query_init(argc, argv, TRX_ENV);
     
     register_stage<payment_baseline_stage_t>(10);
 
-    workload::tpcc_payment_baseline_driver driver(c_str("PAYMENT_BASELINE"), WH);
+    workload::tpcc_payment_baseline_driver driver(c_str("PAYMENT_BASELINE"));
 
     trace_set(TRACE_QUERY_RESULTS);
 

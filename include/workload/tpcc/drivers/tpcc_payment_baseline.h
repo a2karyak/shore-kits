@@ -12,56 +12,39 @@
 #define __TPCC_PAYMENT_BASELINE_DRIVER_H
 
 
-#include "workload/tpcc/drivers/trx_driver.h"
+#include "workload/driver.h"
 #include "workload/tpcc/drivers/tpcc_payment_common.h"
+#include "stages/tpcc/common/payment_functions.h"
 #include "stages/tpcc/payment_baseline.h"
 
 
 using namespace qpipe;
 using namespace tpcc;
+using namespace tpcc_payment;
 
 
 ENTER_NAMESPACE(workload);
 
 
-// FIXME *******************************************
-// FIXME (ip) The drivers should not save any state
-// FIXME (ip) s_payment_dbt_t should be removed
-// FIXME ******************************************
-
-
-class tpcc_payment_baseline_driver : public trx_driver_t {
-
-protected:
-
-    // Structure for allocating only once all the Dbts
-    s_payment_dbt_t _dbts;
-
-    virtual void allocate_dbts();
-    virtual void deallocate_dbts();
-    virtual void reset_dbts();
+class tpcc_payment_baseline_driver : public driver_t {
 
 public:
 
-    tpcc_payment_baseline_driver(const c_str& description, const int aRange = RANGE)
-        : trx_driver_t(description)
+    tpcc_payment_baseline_driver(const c_str& description)
+        : driver_t(description)
     {
-        assert (aRange > 0);
-        _whRange = aRange;
-        
-        allocate_dbts();
     }
 
     ~tpcc_payment_baseline_driver() { 
-        deallocate_dbts();
     }
     
-    virtual void submit(void* disp);
+    virtual void submit(void* disp, memObject_t* mem);
 
     trx_packet_t* create_payment_baseline_packet(const c_str& client_prefix,
                                                  tuple_fifo* bp_buffer,
                                                  tuple_filter_t* bp_filter,
                                                  scheduler::policy_t* dp,
+                                                 s_payment_dbt_t* p_dbts,
                                                  int sf);
 };
 

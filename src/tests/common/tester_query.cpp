@@ -59,7 +59,7 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
 
     for(int i=0; i < info.num_iterations; i++) {
         stopwatch_t timer;
-        driver->submit(info._policy);
+        driver->submit(info._policy, NULL);
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 

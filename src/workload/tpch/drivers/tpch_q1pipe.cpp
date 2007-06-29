@@ -172,7 +172,7 @@ using namespace qpipe;
 ENTER_NAMESPACE(workload);
 
 
-void tpch_q1pipe_driver::submit(void* disp) {
+void tpch_q1pipe_driver::submit(void* disp, memObject_t*) {
 
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
   
