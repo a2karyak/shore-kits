@@ -85,7 +85,6 @@ public:
                      )
     {
         // take pointer to allocated Dbts
-        assert (a_p_dbts);
         _p_dbts = a_p_dbts;
             
 

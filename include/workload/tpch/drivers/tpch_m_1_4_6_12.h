@@ -1,4 +1,5 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __TPCH_M_1_4_6_12_H
 #define __TPCH_M_1_4_6_12_H
 
@@ -23,7 +24,7 @@ public:
     {
     }
     
-    virtual void submit(void* disp, memObject_t* mem=NULL);
+    virtual void submit(void* disp, memObject_t* mem);
     
 };
 

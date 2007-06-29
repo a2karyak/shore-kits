@@ -57,9 +57,11 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
 
     TRACE_SET(TESTER_TRACE_MASK);
 
+    memObject_t mem;
+
     for(int i=0; i < info.num_iterations; i++) {
         stopwatch_t timer;
-        driver->submit(info._policy, NULL);
+        driver->submit(info._policy, &mem);
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 

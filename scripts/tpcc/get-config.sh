@@ -7,6 +7,9 @@
 # @author Ippokratis Pandis (ipandis)
 
 # Gets the RANGE of the warehouses queried
+
+
+# Getting RANGE used from TPC-C clients
 echo "Getting RANGE"
 echo " "
 greps RANGE include/ | grep define | grep -v "\~"
@@ -37,4 +40,11 @@ echo " "
 echo "Checking which TPC-C tables are open"
 echo " "
 greps BDB_ONLY include/ | grep -v "\~\|note"
+echo " "
+
+
+# Gets pagesize
+echo "Checking used pagesize"
+echo " "
+greps PAGESIZE include/
 echo " "

@@ -26,7 +26,7 @@
 
 /** @note Define the page size of the database tables */
 #define QUERY_ENV_PAGESIZE 4096
-#define TRX_ENV_PAGESIZE    512
+#define TRX_ENV_PAGESIZE   4096
 #define BDB_PAGESIZE       TRX_ENV_PAGESIZE
 
 /** @note Define the maximum number of lockers, locks and locked objects. 
