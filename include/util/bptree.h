@@ -23,7 +23,7 @@
 #include <boost/pool/object_pool.hpp>
 
 // DEBUG
-//#include <iostream>
+#include <iostream>
 //using std::cout;
 //using std::endl;
 
@@ -77,26 +77,27 @@ public:
         if ( depth == 0 ) {
             // The root is a leaf node
             DEBUG_ASSERT( *reinterpret_cast<NodeType*>(root) == NODE_LEAF );
-            was_split= leaf_insert(reinterpret_cast<LeafNode*>(root), 
-                                   key, value, &result);
+            was_split = leaf_insert(reinterpret_cast<LeafNode*>(root), 
+                                    key, value, &result);
         } 
         else {
             // The root is an inner node
             DEBUG_ASSERT( *reinterpret_cast<NodeType*>(root) == NODE_INNER );
-            was_split= inner_insert(reinterpret_cast<InnerNode*>(root), 
-                                    depth, key, value, &result);
+            was_split = inner_insert(reinterpret_cast<InnerNode*>(root), 
+                                     depth, key, value, &result);
         }
         
         if ( was_split ) {
             // The old root was splitted in two parts.
             // We have to create a new root pointing to them
+            
             depth++;
-            root= new_inner_node();
-            InnerNode* rootProxy= reinterpret_cast<InnerNode*>(root);
-            rootProxy->num_keys= 1;
-            rootProxy->keys[0]= result.key;
-            rootProxy->children[0]= result.left;
-            rootProxy->children[1]= result.right;
+            root = new_inner_node();
+            InnerNode* rootProxy = reinterpret_cast<InnerNode*>(root);
+            rootProxy->num_keys = 1;
+            rootProxy->keys[0] = result.key;
+            rootProxy->children[0] = result.left;
+            rootProxy->children[1] = result.right;
         }
     }
     
@@ -146,6 +147,23 @@ public:
     {
         return sizeof(LeafNode);
     }        
+
+
+    // Overrides operator<< (for ostreams)
+    template <typename AKEY, typename AVALUE, 
+              unsigned AINODE_ENTRIES, unsigned ALEAF_ENTRIES,
+              unsigned AINODE_PADDING, unsigned ALEAF_PADDING,
+              unsigned ANODE_ALIGNMENT>
+    friend std::ostream& operator<<(std::ostream& out, 
+                                    BPlusTree<AKEY, AVALUE, AINODE_ENTRIES, ALEAF_ENTRIES,
+                                    AINODE_PADDING, ALEAF_PADDING, ANODE_ALIGNMENT>& bpt)
+    {
+        out << "bpt: " << sizeof(bpt) 
+            << " IN_SZ= " << bpt.sizeof_inner_node()
+            << " LE_SZ= " << bpt.sizeof_leaf_node() << "\n";
+        
+        return (out);
+    }
 
 
 private:
