@@ -36,7 +36,7 @@ int main() {
        delete the old database file before rebuilding. */
 
     _etime.start();
-    tpcc::db_open(BDB_REGULAR_LOGGING, DB_CREATE | DB_THREAD); 
+    tpcc::db_open(BDB_REGULAR_LOGGING, BDB_TPCC_DB_OPEN_FLAGS); 
     db_tpcc_load("tpcc_sf");
     tpcc::db_close();
     _etime.stop();

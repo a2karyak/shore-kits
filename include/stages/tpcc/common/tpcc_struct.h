@@ -29,6 +29,10 @@ ENTER_NAMESPACE(tpcc);
 
 
 /** @note comment this to remove padding */
+/** @note This padding does not work because BDB transfers the entire row,
+ *  thus, too many data are being transfered and the throughput is dominated
+ *  by this time.
+ */
 //#define PADDING_ENABLE
 
 

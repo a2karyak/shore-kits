@@ -59,8 +59,8 @@ TESTS = \
    tests/tpch_load \
    tests/tpcc_load \
    tests/tpcc_load_mt \
-   tests/tpcc_load_confirm 
-
+   tests/tpcc_load_confirm \
+   tests/bptree
 
 
 DBGEN = \
@@ -102,6 +102,7 @@ lib_libutil_a_SOURCES = \
         $(SU)/itimer.cpp \
         $(SU)/progress.cpp \
         $(SU)/store_string.cpp
+
 
 
 
@@ -353,6 +354,7 @@ tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
+tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
@@ -392,6 +394,7 @@ tests_tpch_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_mt_LDADD = $(TEST_LIBS)
 tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
+tests_bptree_LDADD = $(TEST_LIBS)
 
 
 ################################################################################

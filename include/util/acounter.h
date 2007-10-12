@@ -9,8 +9,8 @@
  *
  *  @bug None known.
  */
-#ifndef _ACOUNTER_H
-#define _ACOUNTER_H
+#ifndef __ACOUNTER_H
+#define __ACOUNTER_H
 
 #include "util/thread.h"
 #include "util/sync.h"
