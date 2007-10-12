@@ -245,7 +245,7 @@ done
 echo $QPIPE_FEATURES
 
 # At least one architecture must be enabled
-if ! (echo $QPIPE_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null); then
+if ! echo $QPIPE_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null; then
     AC_MSG_ERROR([
       At least one of the tpcc, tpch workloads must be enabled.
     ])
@@ -292,7 +292,7 @@ LDFLAGS="-lnsl -ldl -lm -lpthread"
 
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
-    CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0 -mt -lpthread -library=stlport4"
+    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions -xs -g -xinstrument=datarace -mt -lpthread -library=stlport4 -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DDEBUG -DW_DEBUG -UNDEBUG -DW_LARGEFILE -DLARGEFILE_AWARE -D_FILE_OFFSET_BITS=64"
 fi
 
 AC_SUBST(CXXFLAGS)

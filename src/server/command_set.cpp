@@ -14,7 +14,15 @@
 #include "workload/register_stage_containers.h"
 
 #include <map>
-#include <string>
+
+
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
+#include <cstdio>
+#include <cstring>
+#endif
 
 using std::map;
 using std::string;

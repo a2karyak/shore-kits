@@ -99,6 +99,7 @@ void* start_client( void* ptr) {
     tpcc_payment_single_thr_driver* a_client = (tpcc_payment_single_thr_driver*)ptr;
     a_client->run();
     pthread_exit(0);
+    return NULL;
 }
 
 

@@ -26,7 +26,7 @@ void updateCustomerData(tpcc_customer_tuple* a_customer);
 
 /** Exported Functions */
 
-
+#if 0
 
 /** @fn insertHistory
  *  
@@ -55,7 +55,7 @@ int insertHistory(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) {
     ht.H_D_ID = pin->_home_d_id;
     ht.H_W_ID = pin->_home_wh_id;       
     ht.H_DATE = pin->_h_date;
-    ht.H_AMOYNT = pin->_h_amount;    
+    ht.H_AMOUNT = pin->_h_amount;    
     
     // FIXME (ip) Modification of the specification. Instead of concatenating
     // W_NAME and D_NAME we do that with W_ID and D_ID
@@ -516,7 +516,7 @@ trx_result_tuple_t executePaymentBaseline(payment_input_t* pin,
 
 } // EOF: executePaymentBaseline
 
-
+#endif
 
 //----------------------------------------
 // @class s_payment_dbt_t

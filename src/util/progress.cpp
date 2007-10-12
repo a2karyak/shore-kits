@@ -9,9 +9,13 @@
 
 #include "util/progress.h"
 
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
 #include <cstdio>
 #include <cstring>
-
+#endif
 
 /* definitions of exported helper functions */
 
@@ -32,10 +36,10 @@ void progress_reset(unsigned long* indicator) {
 
 void progress_update(unsigned long* indicator) {
   
-    if ( (*indicator++ % PROGRESS_INTERVAL) == 0 ) {
+    if ( (++*indicator % PROGRESS_INTERVAL) == 0 ) {
         printf(".");
         fflush(stdout);
-        *indicator = 1; // prevent overflow
+        *indicator = 0; // prevent overflow
     }
 }
 

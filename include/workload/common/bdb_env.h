@@ -18,12 +18,21 @@
 #include "util.h"
 #include "workload/common/bdb_config.h"
 
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
+#include <cstdio>
+#include <cstring>
+#endif
+
+
 ENTER_NAMESPACE(workload);
 
 /* definition of macros */
 
-// 'typeof' is a gnu extension
-#define TYPEOF(TYPE, MEMBER) typeof(((TYPE *)0)->MEMBER)
+// 'typeof' is a gnu extension supported by Sun CC v12
+#define TYPEOF(TYPE, MEMBER) __typeof__(((TYPE *)0)->MEMBER)
 
 
 #define SIZEOF(TYPE, MEMBER) sizeof(((TYPE *)0)->MEMBER)

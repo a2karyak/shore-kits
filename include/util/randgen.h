@@ -34,7 +34,7 @@ public:
 	reset(0);
 #else
         assert(sizeof(void*) >= sizeof(unsigned int));
-        reset((unsigned int)addr);
+        reset((unsigned int) (long) addr);
 #endif
     }
 

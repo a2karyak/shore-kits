@@ -38,7 +38,7 @@ ENTER_NAMESPACE(tpcc);
 static const int interval = 1000;
 static int row_cnt = 0;
 
-
+#if 0
 class tpcc_customer_process_tuple_t : public process_tuple_t {
 
 public:
@@ -98,7 +98,7 @@ void tpcc_read_tbl_CUSTOMER  (Db* db) {
 };
 
 
-
+#endif
 void tpcc_read_tbl_DISTRICT  (Db*) { TRACE( TRACE_ALWAYS, "Not Implemented yet!\n"); }
 
 

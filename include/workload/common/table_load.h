@@ -11,12 +11,12 @@
 #define __TABLE_DB_LOAD_H
 
 #include "util/namespace.h"
-#include "workload/common/bdb_config.h"
+//#include "workload/common/bdb_config.h"
 
-#include "workload/tpch/tpch_db.h"
+//#include "workload/tpch/tpch_db.h"
 #include "workload/tpcc/tpcc_db.h"
 
-using namespace tpch;
+//using namespace tpch;
 using namespace tpcc;
 
 
@@ -26,12 +26,12 @@ typedef void (*tbl_loader) (Db*, FILE*);
 
 
 // database load wrappers
-void db_tpch_load(const char* tbl_path=BDB_TPCH_TBL_DIRECTORY);
+//void db_tpch_load(const char* tbl_path=BDB_TPCH_TBL_DIRECTORY);
 void db_tpcc_load(const char* tbl_path=BDB_TPCC_TBL_DIRECTORY);
 
 
 /** for verification purposes */
-void db_tpch_read();
+//void db_tpch_read();
 void db_tpcc_read();
 
 
@@ -39,6 +39,7 @@ void db_tpcc_read();
 
 void db_tpcc_load_mt(const char* tbl_path=BDB_TPCC_TBL_DIRECTORY);
 
+#if 0
 class loader_thread_t : public thread_t {
 
 private:
@@ -85,7 +86,7 @@ public:
 
 
 /** EOF experimental multi-threaded loading */
-
+#endif
 
 EXIT_NAMESPACE(workload);
 

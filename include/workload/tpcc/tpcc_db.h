@@ -15,7 +15,7 @@
 
 #include <inttypes.h>
 
-#include "workload/common/bdb_config.h"
+//#include "workload/common/bdb_config.h"
 
 ENTER_NAMESPACE(tpcc);
 

@@ -320,7 +320,7 @@ int report_gen_success( char* tName ) {
 
 
 // fn: Return failed table creation
-int report_gen_fail( char* tName, int iter ) {
+int report_gen_fail( char const* tName, int iter ) {
 
      timestamp2 = current_time();
      elapse = timestamp2 - timestamp1;

@@ -15,7 +15,7 @@
 #include "tests/common.h"
 #include "workload/measurements.h" /* for execution_time_t */
 
-#include "workload/tpcc/tpcc_db.h"
+//#include "workload/tpcc/tpcc_db.h"
 #include "workload/common/table_load.h"
 
 

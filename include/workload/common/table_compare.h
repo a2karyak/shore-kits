@@ -19,20 +19,6 @@ ENTER_NAMESPACE(workload);
 
 /** Helper macros */
 
-// 'typeof' is a gnu extension
-#define TYPEOF(TYPE, MEMBER) typeof(((TYPE *)0)->MEMBER)
-
-
-#define SIZEOF(TYPE, MEMBER) sizeof(((TYPE *)0)->MEMBER)
-
-// 'offsetof' is found in <stddef.h>
-#define FIELD(SRC, TYPE, MEMBER) (((char*) (SRC)) + offsetof(TYPE, MEMBER))
-
-#define GET_FIELD(DEST, SRC, TYPE, MEMBER) \
-    memcpy(DEST, \
-           FIELD(SRC, TYPE, MEMBER), \
-           SIZEOF(TYPE, MEMBER))
-
 
 
 /** Exported functions */

@@ -2,6 +2,15 @@
 #include "server/command/load_handler.h"
 #include "server/command/tpch_handler.h"
 
+
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
+#include <cstdio>
+#include <cstring>
+#endif
+
 using namespace workload;
 
 typedef scheduler::policy_t* (*policy_factory)();

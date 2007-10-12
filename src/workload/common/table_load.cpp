@@ -69,6 +69,7 @@ void db_table_load_mt(pthread_t* loader_ids,
  *
  *  @throw BdbException on error.
  */
+#if 0
 void workload::db_tpch_load(const char* tbl_path) {
 
     for (int i = 0; i < _TPCH_TABLE_COUNT_; i++)
@@ -77,7 +78,7 @@ void workload::db_tpch_load(const char* tbl_path) {
                       tbl_path,
                       tpch_tables[i].tbl_filename);
 }
-
+#endif
 
 /** @fn db_tpcc_load
  *
@@ -97,7 +98,7 @@ void workload::db_tpcc_load(const char* tbl_path) {
 }
 
 
-
+#if 0
 /** @fn db_tpch_read
  *
  *  @brief Read TPC-H tables, for verification.
@@ -112,7 +113,7 @@ void workload::db_tpch_read() {
         db_table_read(tpch_tables[i].read_tbl,
                       tpch_tables[i].db);
 }
-
+#endif
 
 
 /** @fn db_tpcc_read
@@ -221,7 +222,7 @@ void workload::db_tpcc_load_mt(const char* tbl_path) {
     workload_t::wait_for_clients(loader_ids, _TPCC_TABLE_COUNT_);
 }
 
-
+#if 0
 /** @fn db_table_load_mt
  *  @brief Opens the requested file, and if succeeds, it creates a
  *  loader_thread_t that calls the tbl_loader function, for
@@ -261,3 +262,4 @@ void db_table_load_mt(pthread_t* loader_id,
         THROW1(BdbException, "fclose() failed");
     }
 }
+#endif

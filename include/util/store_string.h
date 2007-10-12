@@ -13,6 +13,14 @@
 
 /** exported helper functions */
 
+#ifdef __SUNPRO_CC
+#include <string.h>
+#else
+#include <cstring>
+#endif
+
+#define FILL_STRING(dest, src) strncpy(dest, src, sizeof(dest))
+
 void store_string(char* dest, char* src);
 
 

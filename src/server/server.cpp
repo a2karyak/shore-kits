@@ -39,9 +39,10 @@ int main(int argc, char* argv[]) {
         case RUN_NETWORK_MODE:
             network_mode(QPIPE_NETWORK_MODE_DEFAULT_LISTEN_PORT);
             break;
-        case RUN_BATCH_MODE:
+        case RUN_BATCH_MODE: {
             TRACE( TRACE_ALWAYS, "Batch mode unimplemented\n");
             break;
+	}
         default:
             interactive_mode();
             break;
