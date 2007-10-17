@@ -24,23 +24,8 @@
 #include <boost/static_assert.hpp>
 #include <boost/pool/object_pool.hpp>
 
-// for critical_section_t
 #include "util/sync.h"
-
-// DEBUG
-#include <iostream>
-//using std::cout;
-//using std::endl;
-
-#ifdef DEBUG_ASSERT
-#    warning "DEBUG_ASSERT overloaded"
-#else
-#    ifdef DEBUG
-#        define DEBUG_ASSERT(expr) assert(expr)
-#    else
-#        define DEBUG_ASSERT(expr)
-#    endif
-#endif
+#include "util/trace.h"
 
 template <typename KEY, typename VALUE, 
           unsigned INODE_ENTRIES, unsigned LEAF_ENTRIES,
@@ -55,23 +40,28 @@ public:
     
     // Leaf nodes must be able to hold at least one element
     BOOST_STATIC_ASSERT(LEAF_ENTRIES>0);
-    
-    // Builds a new empty tree.
+
+
+    /** @fn:   Constructor
+     *  @desc: Builds a new empty tree.
+     */
+
     BPlusTree()
         : depth(0)
     {
-        // DEBUG
-        // cout << "sizeof(LeafNode)==" << sizeof(LeafNode) << endl;
-        // cout << "sizeof(InnerNode)==" << sizeof(InnerNode) << endl;
-
         // Initialization of mutexes
         pthread_mutex_init(&innerPool_mutex, NULL);
         pthread_mutex_init(&leafPool_mutex, NULL);
-        pthread_rwlock_init(&depth_rwlock, NULL);
+        pthread_mutex_init(&depth_mutex, NULL);
 
         // Initialization of the root, should be done after mutex init
         root = new_leaf_node();
     }
+
+
+    /** @fn:   Destructor 
+     *  @desc: Destroys the tree.
+     */
 
     ~BPlusTree() 
     {
@@ -81,49 +71,77 @@ public:
         // Destroes the mutexes
         pthread_mutex_destroy(&innerPool_mutex);
         pthread_mutex_destroy(&leafPool_mutex);
-        pthread_rwlock_destroy(&depth_rwlock);
+        pthread_mutex_destroy(&depth_mutex);
     }
-    
-    // Inserts a pair (key, value). If there is a previous pair with
-    // the same key, the old value is overwritten with the new one.
+
+
+    /** @fn:   insert
+     *  @desc: Inserts a pair (key, value). If there is a previous pair 
+     *  with the same key, the old value is overwritten with the new 
+     *  one (updated). The root is locked at any case and it will be
+     *  released later on the drill down
+     */
+
     void insert(KEY key, VALUE value) 
     {
         InsertionResult result;
-        bool was_split;
+        bool was_split = false;
+        InnerNode* rootProxy = NULL;
+        LeafNode* rootLeafProxy = NULL;
+        register unsigned oldDepth = depth;
 
-        pthread_rwlock_rdlock(&depth_rwlock);        
-        if ( depth == 0 ) {
-            // The root is a leaf node
-            DEBUG_ASSERT( *reinterpret_cast<NodeType*>(root) == NODE_LEAF );
-            was_split = leaf_insert(reinterpret_cast<LeafNode*>(root), 
-                                    key, value, &result);
+        if ( oldDepth == 0 ) {
+            // The root is a leaf node 
+            rootLeafProxy = reinterpret_cast<LeafNode*>(root);
+
+            TRACE( TRACE_DEBUG, "root leaf write-lock (%x)\n", rootLeafProxy);
+            pthread_rwlock_wrlock(&(rootLeafProxy->leaf_rwlock));
+
+            was_split = leaf_insert(rootLeafProxy, NULL, key, value, &result);
         } 
         else {
             // The root is an inner node
-            DEBUG_ASSERT( *reinterpret_cast<NodeType*>(root) == NODE_INNER );
-            was_split = inner_insert(reinterpret_cast<InnerNode*>(root), 
+            rootProxy = reinterpret_cast<InnerNode*>(root);
+
+            TRACE( TRACE_DEBUG, "root inner write-lock (%x)\n", rootProxy);
+            pthread_rwlock_wrlock(&(rootProxy->in_rwlock));
+
+            was_split = inner_insert(rootProxy, NULL,
                                      depth, key, value, &result);
         }
-        pthread_rwlock_unlock(&depth_rwlock);        
 
         if (was_split) {
             // The old root was splitted in two parts.
             // We have to create a new root pointing to them
-            pthread_rwlock_wrlock(&depth_rwlock);
-            depth++;
-            cout << "Depth = " << depth << "\n";
+            // Once we are done we should unlock the old root.
+            pthread_mutex_lock(&depth_mutex);
 
             // Create the new root node
-            root = new_inner_node();
-            InnerNode* rootProxy = reinterpret_cast<InnerNode*>(root);
-            rootProxy->num_keys = 1;
-            rootProxy->keys[0] = result.key;
-            rootProxy->children[0] = result.left;
-            rootProxy->children[1] = result.right;
+            root = new_inner_node(true);
+            InnerNode* newRootProxy = reinterpret_cast<InnerNode*>(root);
+            newRootProxy->num_keys = 1;
+            newRootProxy->keys[0] = result.key;
+            newRootProxy->children[0] = result.left;
+            newRootProxy->children[1] = result.right;
 
-            // The new root InnerNode was created and returned locked
-            // it should be released now
-            pthread_rwlock_unlock(&depth_rwlock);
+            TRACE( TRACE_DEBUG, "new root unlock (%x)\n", newRootProxy);
+            pthread_rwlock_unlock(&(newRootProxy->in_rwlock));
+            
+            if (oldDepth == 0) {
+                // the splitted root was a leaf
+                TRACE( TRACE_DEBUG, "root leaf unlock (%x)\n", rootLeafProxy);
+                pthread_rwlock_unlock(&(rootLeafProxy->leaf_rwlock));
+            }
+            else {
+                // the splitted root was a inner node
+                TRACE( TRACE_DEBUG, "root inner unlock (%x)\n", rootProxy);
+                pthread_rwlock_unlock(&(rootProxy->in_rwlock));
+            }
+
+            depth++;
+            TRACE( TRACE_ALWAYS, "Depth = %d\n", depth);
+
+            pthread_mutex_unlock(&depth_mutex);
         }
     }
     
@@ -135,7 +153,8 @@ public:
     {
         InnerNode* inner;
         register void* node = root;
-        register unsigned d = depth;
+        unsigned initDepth = depth;
+        register unsigned d = initDepth;
         register unsigned index;
     
         // Drills down the InnerNodes
@@ -145,22 +164,35 @@ public:
             inner = reinterpret_cast<InnerNode*>(node);
 
             // Read locks the node
+            TRACE( TRACE_DEBUG, "inner read (%x)\n", node);
             pthread_rwlock_rdlock(&(inner->in_rwlock));
 
-            DEBUG_ASSERT( inner->type == NODE_INNER );
             index = inner_position_for(key, inner->keys, inner->num_keys);
             node = inner->children[index];
 
             // Unlocks the node
+            TRACE( TRACE_DEBUG, "inner unlock (%x)\n", node);
             pthread_rwlock_unlock(&(inner->in_rwlock));
         }
+       
+        if (initDepth != depth) {
+            // The initial depth value has changed will going down the tree
+            // It should restart the search
+            TRACE( TRACE_ALWAYS, "Depth mismatch. Old (%d) Current (%d)\n", 
+                   initDepth, depth);
+            return (find(key, value));
+        }
+
         
         // Reached the correct leaf node
         assert(node);
-        LeafNode* leaf= reinterpret_cast<LeafNode*>(node);
-        DEBUG_ASSERT( leaf->type == NODE_LEAF );
 
+        // Searches within the leaf node
+        LeafNode* leaf= reinterpret_cast<LeafNode*>(node);
+
+        TRACE( TRACE_DEBUG, "leaf read (%x)\n", node);
         pthread_rwlock_rdlock(&(leaf->leaf_rwlock));
+
         index= leaf_position_for(key, leaf->keys, leaf->num_keys);
         
         if ( leaf->keys[index] == key ) {
@@ -168,12 +200,17 @@ public:
             if ( value != 0 ) {
                 *value= leaf->values[index];
             }
+
+            TRACE( TRACE_DEBUG, "leaf unlock (%x)\n", node);
             pthread_rwlock_unlock(&(leaf->leaf_rwlock));
+
             return true;
         } 
         else {
             // No entry with that key found, returns false
+            TRACE( TRACE_DEBUG, "leaf unlock (%x)\n", node);
             pthread_rwlock_unlock(&(leaf->leaf_rwlock));
+
             return false;
         }
     }
@@ -216,19 +253,11 @@ private:
     
     // Leaf nodes store pairs of keys and values.
     struct LeafNode {
-#ifdef DEBUG
-        // Debug mode constructor
-        LeafNode() : type(NODE_LEAF), num_keys(0) {
-            // rwlock initialization
-            pthread_rwlock_init(&leaf_rwlock, NULL);
-        }
-        const NodeType type;
-#else
         LeafNode() : num_keys(0) { 
             // rwlock initialization
             pthread_rwlock_init(&leaf_rwlock, NULL);
         }
-#endif
+
         // Destructor
         ~LeafNode() {
             // destroy the rwlock
@@ -244,25 +273,18 @@ private:
         unsigned char _pad[LEAF_PADDING];
     };
 
+
     /** @struct: Innernode
      *  @desc:   A structure for the internal nodes of the BPTree
      */
 
     struct InnerNode {
-#ifdef DEBUG
-        // Debug mode constructor
-        InnerNode() : type(NODE_INNER), num_keys(0) {
-            // rwlock initialization
-            pthread_rwlock_init(&in_rwlock, NULL);
-        }
-        const NodeType type;
-#else
         // Constructor
         InnerNode() : num_keys(0) {
             // rwlock initialization
             pthread_rwlock_init(&in_rwlock, NULL);
         }
-#endif
+
         // Destructor
         ~InnerNode() {
             // destroy the rwlock
@@ -290,8 +312,7 @@ private:
                 result= 0;
             }
             
-            // Alternative: result= std::malloc(bytes);
-            return reinterpret_cast<char*>(result);
+            return (reinterpret_cast<char*>(result));
         }
 
         static void free(char* const block) { 
@@ -318,18 +339,16 @@ private:
         // release leafPool lock
         pthread_mutex_unlock(&leafPool_mutex);
 
-        //cout << "New LeafNode at " << result << endl;
+        TRACE( TRACE_DEBUG, "New LeafNode at %x\n", result);
         return result;
     }
     
     // Frees a leaf node previously allocated with new_leaf_node()
     void delete_leaf_node(LeafNode* node) {
-        DEBUG_ASSERT( node->type == NODE_LEAF );
 
         assert (0); // (ip): Not implemented yet!
 
         //cout << "Deleting LeafNode at " << node << endl;
-        // Alternatively: delete node;
         leafPool.destroy(node);
     }
 
@@ -340,30 +359,34 @@ private:
      *  @note: Uses the innerNodePool for this. Made thread_safe.
      */
 
-    InnerNode* new_inner_node() {
+    InnerNode* new_inner_node(bool bLocked = false) 
+    {
         InnerNode* result;
 
         // regulate the access to the innerPool
         pthread_mutex_lock(&innerPool_mutex);
 
-        // Alternatively: result= new InnerNode();
         result = innerPool.construct();
+
+        if (bLocked) {
+            TRACE( TRACE_DEBUG, "new inner write-lock (%x)\n", result);
+            pthread_rwlock_wrlock(&(result->in_rwlock));
+        }
+            
 
         // release innerPool lock
         pthread_mutex_unlock(&innerPool_mutex);
 
-        //cout << "New InnerNode at " << result << endl;
+        TRACE( TRACE_DEBUG, "New InnerNode at %x\n", result);
         return result;
     }
 
     // Frees an inner node previously allocated with new_inner_node()
     void delete_inner_node(InnerNode* node) {
-        DEBUG_ASSERT( node->type == NODE_INNER );
 
         assert (0); // (ip): Not implemented yet!
 
         //cout << "Deleting InnerNode at " << node << endl;
-        // Alternatively: delete node;
         innerPool.destroy(node);
     }
 
@@ -434,30 +457,41 @@ private:
 
     /** fn:   leaf_insert 
      *  desc: Inserts an entry to a leaf node. If there not enough room
-     *  it causes a leaf node split. The thread that inserts something an
+     *  it causes a leaf node split. The thread that inserts an
      *  entry to a leaf node acquires a lock for the whole node.
+     *  If no split is to be done the lock to the parent node is released.
      */
 
-    bool leaf_insert(LeafNode* node, KEY& key,
-                     VALUE& value, InsertionResult* result) 
+    bool leaf_insert(LeafNode* node, InnerNode* parentNode,
+                     KEY& key, VALUE& value, 
+                     InsertionResult* result) 
     {
         assert(node);
 
-        // Write-Locks the leaf node before insert
-        pthread_rwlock_wrlock(&(node->leaf_rwlock));
+        // Write-Locks the leaf node before insert, unless there is no
+        // parentNode. If there is no parentNode it means that the 
+        // current node is a leaf/root node and it is already locked
+        // so there is no need for additional locking
 
-        DEBUG_ASSERT(node->type == NODE_LEAF);
+        if (parentNode) {
+            TRACE( TRACE_DEBUG, "leaf write (%x)\n", node);
+            pthread_rwlock_wrlock(&(node->leaf_rwlock));
+        }
+
         assert(node->num_keys <= LEAF_ENTRIES);
         bool was_split= false;
         
         // Simple linear search
         unsigned i = leaf_position_for(key, node->keys, node->num_keys);
 
+        // Check if Leaf node is full
         if ( node->num_keys == LEAF_ENTRIES ) {
             // The node was full. We must split it
             unsigned treshold = (LEAF_ENTRIES+1)/2;
+
+            // Create a new sibling node and transfers theshold entries
             LeafNode* new_sibling = new_leaf_node();
-            new_sibling->num_keys = node->num_keys -treshold;
+            new_sibling->num_keys = node->num_keys - treshold;
         
             for(unsigned j=0; j < new_sibling->num_keys; ++j) {
                 new_sibling->keys[j]   = node->keys[treshold+j];
@@ -466,7 +500,7 @@ private:
             
             node->num_keys= treshold;
         
-            if ( i < treshold ) {
+            if (i<treshold) {
                 // Inserted element goes to left sibling
                 leaf_insert_nonfull(node, key, value, i);
             } 
@@ -476,17 +510,24 @@ private:
             }
             
             // Notify the parent about the split
-            was_split= true;
-            result->key= new_sibling->keys[0];
-            result->left= node;
-            result->right= new_sibling;
+            was_split = true;
+            result->key = new_sibling->keys[0];
+            result->left = node;
+            result->right = new_sibling;
         } 
-        else {
+        else {            
+            if (parentNode) {
+                TRACE( TRACE_DEBUG, "releasing dad (%x)\n", parentNode); 
+                TRACE( TRACE_DEBUG, "unlock (%x)\n", parentNode);
+                pthread_rwlock_unlock(&(parentNode->in_rwlock));
+            }
+                
             // The node was not full
             leaf_insert_nonfull(node, key, value, i);
         }
 
         // Insertion completed, unlocks the node
+        TRACE( TRACE_DEBUG, "leaf unlock (%x)\n", node);
         pthread_rwlock_unlock(&(node->leaf_rwlock));
         
         return was_split;        
@@ -502,10 +543,9 @@ private:
     void leaf_insert_nonfull(LeafNode* node, KEY& key, 
                              VALUE& value, unsigned index)
     {
-        DEBUG_ASSERT( node->type == NODE_LEAF );
-        assert( node->num_keys < LEAF_ENTRIES );
-        assert( index <= LEAF_ENTRIES );
-        assert( index <= node->num_keys );
+        assert(node->num_keys<LEAF_ENTRIES);
+        assert(index<=LEAF_ENTRIES);
+        assert(index<=node->num_keys);
         
         if ( (index < LEAF_ENTRIES) && (node->keys[index] == key) ) {
             // We are inserting a duplicate value.
@@ -535,22 +575,23 @@ private:
      *  it causes an inner node split. 
      */
 
-    bool inner_insert(InnerNode* node, unsigned depth, 
+    bool inner_insert(InnerNode* node, InnerNode* parentNode, unsigned depth, 
                       KEY& key, VALUE& value, 
                       InsertionResult* result)
     {
         assert(node);
 
         // Locks the node before insert
+        TRACE( TRACE_DEBUG, "inner writelock (%x)\n", node);        
         pthread_rwlock_wrlock(&(node->in_rwlock));
 
-        DEBUG_ASSERT( node->type == NODE_INNER );
-        assert( depth != 0 );
+        // Since we are inserting to an inner node the depth > 0
+        assert(depth>0);
         
         // Early split if node is full.
         // This is not the canonical algorithm for B+ trees,
         // but it is simpler and does not break the definition.
-        bool was_split= false;
+        bool was_split = false;
         
         if ( node->num_keys == INODE_ENTRIES ) {
             // Split
@@ -583,11 +624,17 @@ private:
             }
         } 
         else {
-            // No split
+            // No split, can release parent
+            if (parentNode) {
+                TRACE( TRACE_DEBUG, "inner unlock (%x)\n", parentNode);
+                pthread_rwlock_unlock(&(parentNode->in_rwlock));
+            }
+
             inner_insert_nonfull(node, depth, key, value);
         }
 
         // Insertion completed, unlocks the node
+        TRACE( TRACE_DEBUG, "inner unlock (%x)\n", node);
         pthread_rwlock_unlock(&(node->in_rwlock));
 
         return was_split;
@@ -598,40 +645,44 @@ private:
     void inner_insert_nonfull(InnerNode* node, unsigned depth, 
                               KEY& key, VALUE& value)
     {
-        DEBUG_ASSERT( node->type == NODE_INNER );
-        assert( node->num_keys < INODE_ENTRIES );
-        assert( depth != 0 );
+        assert(node->num_keys<INODE_ENTRIES);
+        assert(depth!=0);
         
         // Simple linear search
-        unsigned index= inner_position_for(key, 
-                                           node->keys,
-                                           node->num_keys);
+        unsigned index = inner_position_for(key, node->keys, node->num_keys);
         InsertionResult result;
         bool was_split;
         
         if ( depth-1 == 0 ) {
-            // The children are leaf nodes
-            for (unsigned kk=0; kk < node->num_keys+1; ++kk) {
-                DEBUG_ASSERT( *reinterpret_cast<NodeType*>
-                              (node->children[kk]) == NODE_LEAF );
-            }
+            // The children are leaf nodes, lock the leaf child 
+            // and insert entry
+            LeafNode* leafChild = reinterpret_cast<LeafNode*>
+                (node->children[index]);
+
+            TRACE( TRACE_DEBUG, "leaf write (%x)\n", leafChild);
+            pthread_rwlock_wrlock(&(leafChild->leaf_rwlock));
             
-            was_split= leaf_insert(reinterpret_cast<LeafNode*>
-                                   (node->children[index]), 
-                                   key, value, &result);
+            was_split = leaf_insert( leafChild, node,
+                                     key, value, &result);
         } 
         else {
-            // The children are inner nodes
-            for (unsigned kk=0; kk < node->num_keys+1; ++kk) {
-                DEBUG_ASSERT( *reinterpret_cast<NodeType*>
-                              (node->children[kk]) == NODE_INNER );
-            }
+            // The children are inner nodes, lock the inner child
+            // and insert entry
+            InnerNode* innerChild = reinterpret_cast<InnerNode*>
+                (node->children[index]);
             
-            InnerNode* child = reinterpret_cast<InnerNode*>(node->children[index]);
-            was_split= inner_insert(child, depth-1, key, value, &result);
+            TRACE( TRACE_DEBUG, "inner write (%x)\n", innerChild);
+            pthread_rwlock_wrlock(&(innerChild->in_rwlock));
+
+            was_split = inner_insert(innerChild, node, depth-1, 
+                                     key, value, &result);
         }
         
-        if ( was_split ) {
+        if (was_split) {
+            // There was a split to the child node.
+            // The node is still locked. It should be updated and
+            // then released.
+
             if ( index == node->num_keys ) {
                 // Insertion at the rightmost key
                 node->keys[index]= result.key;
@@ -641,7 +692,8 @@ private:
             } 
             else {
                 // Insertion not at the rightmost key
-                node->children[node->num_keys+1] = node->children[node->num_keys];
+                node->children[node->num_keys+1] = 
+                    node->children[node->num_keys];
                 
                 for (unsigned i=node->num_keys; i!=index; --i) {
                     node->children[i] = node->children[i-1];
@@ -653,7 +705,12 @@ private:
                 node->keys[index] = result.key;
                 node->num_keys++;
             }
-        } // else the current node is not affected
+
+            TRACE( TRACE_DEBUG, "inner unlock (%x)\n", node);
+            pthread_rwlock_unlock(&(node->in_rwlock));
+        } 
+        // else the current node is not affected 
+        // and its lock is already released
     }
 
     typedef AlignedMemoryAllocator<NODE_ALIGNMENT> AlignedAllocator;
@@ -667,7 +724,7 @@ private:
     boost::object_pool<LeafNode, AlignedAllocator>  leafPool;
     
     // Depth of the tree. A tree of depth 0 only has a leaf node.
-    pthread_rwlock_t depth_rwlock;
+    pthread_mutex_t depth_mutex;
     unsigned depth;
 
     // Pointer to the root node. It may be a leaf or an inner node, but

@@ -8,6 +8,7 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
+#include "util.h"
 #include "util/bptree.h"
 
 // For random number generator (rng)
@@ -24,7 +25,11 @@ using std::endl;
 
 // How many keys to produce
 //const int MAX_KEYS = 10000;
-const int MAX_KEYS = 100000;
+const int MAX_KEYS = 30;
+
+// How many threads will be created
+const int NUM_THREADS = 1;
+pthread_t tid[NUM_THREADS]; // Array of thread IDs
 
 // Tree constants
 const unsigned cTwoLines = 128;
@@ -35,11 +40,6 @@ const unsigned cArch = 64;
 const unsigned cINodePad = cTwoLines - 16 * cINodeEntries - 8;
 const unsigned cLeafPad = cTwoLines - 8 * cLeafEntries - 8;
 
-
-// How many threads will be created
-const int NUM_THREADS = 2;
-pthread_t tid[NUM_THREADS]; // Array of thread IDs
-
 // The B+ tree
 BPlusTree<int, int, cINodeEntries, cLeafEntries, cINodePad, cLeafPad, cArch> aTree;
 
@@ -49,7 +49,9 @@ void checkValues(int numOfThreads);
 
 int main(void)
 {
-    std::cout << "Hello world!\n"; 
+    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
+
+    thread_init();
 
     time_t tstart = time(NULL);
     
@@ -94,15 +96,28 @@ void* loadValues(void* parm)
 
     cout << "Thread with ID = " << tid << " starts\n";
 
-    boost::rand48 rng(boost::int32_t(2137));
+    boost::rand48 rng(boost::int32_t(2137 + tid));
 
     // Load MAX_KEYS keys
     int avalue = 0;
     for (int i=MAX_KEYS*tid; i<MAX_KEYS*(tid+1); i++) {
         avalue = rng();
-        aTree.insert(i, avalue);
 
-        o << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
+        // Modification, flips a coin and with probability 0.2 
+        // instead of insert makes a probe (find)
+
+        /*
+        if ( (avalue % 10) < 3 ) {
+            if (aTree.find(i, &avalue))
+                o << "F (" << i << ") V = " << avalue << "\n";
+        }
+        else {
+        */
+            cout << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
+            //o << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
+            aTree.insert(i, avalue);
+
+            //}
     }
 
     //    cout << o.str();
