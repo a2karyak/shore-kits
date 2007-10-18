@@ -95,7 +95,7 @@ int main(void)
 void* loadValues(void* parm)
 {
     //    int tid = static_cast<int>(parm);
-    int tid = (int)parm;
+    int tid = (int)((long)parm);
 
     std::string strout;
     std::ostringstream o;
