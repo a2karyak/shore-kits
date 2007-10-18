@@ -7,16 +7,20 @@
 #include "util/trace.h"
 #include "util/compat.h"
 
+#ifdef __SUNPRO_CC
+#include <string.h>
+#else
 #include <cstring>
+#endif
+
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>  /* for socket */
 #include <sys/socket.h>
 #include <netdb.h>      /* for clientaddr structure */
 
-
-
 #include <stdio.h>
+
 #ifndef __GCC
 using namespace std;
 #endif

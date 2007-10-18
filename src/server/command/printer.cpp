@@ -4,9 +4,15 @@
 #include "util.h"
 #include "server/command/printer.h"
 #include "server/print.h"
+
+
+#ifdef __SUNPRO_CC
+#include <string.h>
+#include <stdio.h>
+#else
 #include <cstring>
 #include <cstdio>
-
+#endif
 
 
 void printer_t::handle_command(const char* command) {

@@ -7,14 +7,20 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
 #include <cstdio>
 #include <cstring>
+#endif
+
 #include "compat.h"
 
 #define DEBUG_C_STR 0
 
 using namespace std;
-
 
 
 class c_str {

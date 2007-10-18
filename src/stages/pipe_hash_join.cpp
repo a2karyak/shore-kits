@@ -1,22 +1,20 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/* hash_join_stage.cpp */
-/* Implementation of the HASH_JOIN operator */
-/* History: 
-   3/6/2006: Uses the outtup variable of the output_tup_t, instead of the data.
-*/
-
+/** @file: pipe_hash_join.cpp
+ *  @desc: Implementation of the HASH_JOIN operator
+ */
 
 #include "stages/pipe_hash_join.h"
 
-#include <cstring>
 #include <algorithm>
 
 #ifdef __SUNPRO_CC
+#include <string.h>
 #include <hash_set>
 using std::hashtable;
 using std::hash_set;
 #else
+#include <cstring>
 #include <ext/hash_set>
 using __gnu_cxx::hashtable;
 using __gnu_cxx::hash_set;

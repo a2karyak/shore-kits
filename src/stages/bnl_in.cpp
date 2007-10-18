@@ -2,19 +2,21 @@
 
 #include "stages/bnl_in.h"
 
+
+#ifdef __SUNPRO_CC
+#include <string.h>
+#else
 #include <cstring>
+#endif
+
 #include <bitset>
 
 using std::bitset;
 
 
-
 const c_str bnl_in_packet_t::PACKET_TYPE = "BNL_IN";
 
-
-
 const c_str bnl_in_stage_t::DEFAULT_STAGE_NAME = "BNL_IN_STAGE";
-
 
 
 /**

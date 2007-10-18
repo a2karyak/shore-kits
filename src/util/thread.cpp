@@ -4,15 +4,23 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h> /* Added this for Enceladus. Maybe will not work on lomond. */
+#include <sys/time.h> /* Added this for Enceladus. Maybe not work on lomond. */
 #include <fcntl.h>
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
+
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
 #include <cstdio>
 #include <cstring>
+#endif
+
+
 #include <unistd.h>
 
 

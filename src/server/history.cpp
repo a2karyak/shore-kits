@@ -13,9 +13,16 @@
 */
 #if USE_READLINE
 
+
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#else
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#endif
 
 #include <sys/stat.h>
 #include <sys/types.h>

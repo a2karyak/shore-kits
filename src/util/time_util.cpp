@@ -9,9 +9,12 @@
 
 #include "util/time_util.h"
 
-
 #include <cassert>
 
+#ifdef __SUNPRO_CC
+#include <strings.h>
+#include <stdio.h>
+#endif 
 
 
 /** time conversion functions */

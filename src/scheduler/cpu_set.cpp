@@ -1,14 +1,23 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file cpu_set.cpp
  *
  *  @brief Implements cpu_set_t functions.
- *
- *  @bug None known.
  */
+
+
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#else
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 #include <cerrno>
+#endif
+
+
+#include <unistd.h>
 
 #include "util.h"
 #include "scheduler/cpu_set.h"

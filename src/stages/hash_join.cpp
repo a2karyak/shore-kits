@@ -1,22 +1,27 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/* hash_join_stage.cpp */
-/* Implementation of the HASH_JOIN operator */
-/* History: 
-   3/6/2006: Uses the outtup variable of the output_tup_t, instead of the data.
-*/
-
+/** @file: hash_join_stage.cpp
+ *
+ *  @desc: Implementation of the HASH_JOIN operator
+ *  @history: 
+ *  3/6/2006: Uses the outtup variable of the output_tup_t, instead of the data
+ */
 
 #include "stages/hash_join.h"
 
+
+#ifdef __SUNPRO_CC
+#include <string.h>
+#else
 #include <cstring>
+#endif
+
 #include <algorithm>
 
 
 const c_str hash_join_packet_t::PACKET_TYPE = "HASH_JOIN";
 
 const c_str hash_join_stage_t::DEFAULT_STAGE_NAME = "HASH_JOIN";
-
 
 
 void hash_join_stage_t::process_packet() {

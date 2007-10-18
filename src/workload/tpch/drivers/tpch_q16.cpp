@@ -10,6 +10,10 @@
 
 #include "workload/common.h"
 
+#ifdef __SUNPRO_CC
+#include <strings.h>
+#endif 
+
 using namespace tpch;
 using namespace qpipe;
 

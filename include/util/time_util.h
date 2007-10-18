@@ -12,10 +12,17 @@
 
 #include <time.h>
 
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#else
 #include <cstdio>
 #include <cstring>
-#include <ctype.h>
 #include <cstdlib>
+#endif
+
+#include <ctype.h>
 
 
 /** time conversion functions */

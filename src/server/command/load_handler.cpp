@@ -1,6 +1,18 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file load_handler.cpp
+ *
+ *  @author Naju Mancheril (ngm)
+ */
+
 #include <ltdl.h>
 #include "server/command/load_handler.h"
 #include "server/command/tpch_handler.h"
+
+
+#ifdef __SUNPRO_CC
+#include <string.h>
+#endif
 
 using namespace workload;
 

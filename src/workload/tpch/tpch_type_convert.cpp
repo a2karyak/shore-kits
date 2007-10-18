@@ -8,10 +8,18 @@
 
 #include "workload/tpch/tpch_type_convert.h"
 
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <stdio.h>
+#else
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
 #include <cstdio>
+#endif
+
 
 
 ENTER_NAMESPACE(tpch);

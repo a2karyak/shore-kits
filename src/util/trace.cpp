@@ -13,9 +13,14 @@
 #include "util/trace.h"              /* for prototypes */
 #include "util/sync.h"
 
-#include <cstdio>               /* for stdout, stderr */
-#include <cstring>              /* for strlen() */
 
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
+#include <cstdio>
+#include <cstring>
+#endif
 
 
 /* internal data structures */

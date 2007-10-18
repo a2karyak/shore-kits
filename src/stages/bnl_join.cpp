@@ -2,13 +2,15 @@
 
 #include "stages/bnl_join.h"
 
-#include <cstring>
 
+#ifdef __SUNPRO_CC
+#include <string.h>
+#else
+#include <cstring>
+#endif
 
 
 const c_str bnl_join_packet_t::PACKET_TYPE = "BNL_JOIN";
-
-
 
 const c_str bnl_join_stage_t::DEFAULT_STAGE_NAME = "BNL_JOIN_STAGE";
 

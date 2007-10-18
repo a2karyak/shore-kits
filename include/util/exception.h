@@ -1,12 +1,28 @@
-// -*- mode:C++; c-basic-offset:4 -*-
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file exception.h
+ * 
+ *  @brief Miscellaneous exception-related helper functions
+ * 
+ *  @author Naju Mancheril (ngm)
+ */
+
 #ifndef __EXCEPTION_H
 #define __EXCEPTION_H
 
-#include <exception>
+#ifdef __SUNPRO_CC
+#include <string.h>
+#include <errno.h>
+#include <assert.h>
+#include <stdlib.h>
+#else
 #include <cstring>
 #include <cerrno>
 #include <cassert>
 #include <cstdlib>
+#endif
+
+#include <exception>
 
 #include "util/c_str.h"
 

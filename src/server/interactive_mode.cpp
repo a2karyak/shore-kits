@@ -6,10 +6,16 @@
 #include "server/history.h"
 #include "server/process_next_command_using_fgets.h"
 
+
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#else
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-
+#endif
 
 
 #if USE_READLINE

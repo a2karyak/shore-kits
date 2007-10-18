@@ -1,7 +1,21 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file chomp.cpp
+ *
+ *  @brief Implementation of the chomp helper function
+ *
+ *  @author Naju Mancheril (ngm)
+ */
 
 #include "util/chomp.h"
 
+
+#ifdef __SUNPRO_CC
+#include <string.h>
+#else
 #include <cstring>
+#endif
+
 
 #ifndef __GCC
 using std::strlen;

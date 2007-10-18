@@ -9,14 +9,19 @@
  *  @brief Exports trace_force() function. trace_force() should only
  *  be invoked by code within the tracing module. All code outside the
  *  trace module should invoke TRACE().
- *
- *  @bug None known.
  */
+
 #include "trace/trace_force.h" /* for prototypes */
 
+#ifdef __SUNPRO_CC
+#include <stdarg.h>  
+#include <stdio.h>   
+#include <string.h>
+#else
 #include <cstdarg>      /* for va_list */
 #include <cstdio>       /* for stdout, stderr */
 #include <cstring>      /* for strlen() */
+#endif
 
 
 

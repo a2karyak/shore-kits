@@ -8,8 +8,14 @@
 #define _GNU_SOURCE
 #endif
 
+
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#include <string.h>
+#else
 #include <cstdio>
 #include <cstring>
+#endif
 
 
 /* constants */

@@ -1,12 +1,18 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#else
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <climits>
+#endif
 
 #include "util.h"
-
 
 
 #define BUFFER_SIZE 1024
