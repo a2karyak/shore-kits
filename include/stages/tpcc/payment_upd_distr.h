@@ -124,7 +124,7 @@ public:
  *
  *  The row in the DISTRICT table with matching D_W_ID and D_ID is selected.
  *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE, and D_ZIP are retrieved,
- *  and D_YTD, the district's year-to-date balance, is increased by H_AMOYNT
+ *  and D_YTD, the district's year-to-date balance, is increased by H_AMOUNT
  */
 
 class payment_upd_distr_stage_t : public stage_t {

@@ -292,7 +292,7 @@ LDFLAGS="-lnsl -ldl -lm -lpthread"
 
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
-    CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0 -mt -lpthread -library=stlport4"
+    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions -xO5 -xs -g0 -mt -lpthread -library=stlport4"
 fi
 
 AC_SUBST(CXXFLAGS)

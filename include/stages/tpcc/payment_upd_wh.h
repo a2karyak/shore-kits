@@ -118,7 +118,7 @@ public:
  *
  *  The row in the WAREHOUSE table with matching WH_ID is selected. 
  *  W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE and W_ZIP are retrieved,
- *  and W_YTD, the warehouse's year-to-date balance, is increased by H_AMOYNT.
+ *  and W_YTD, the warehouse's year-to-date balance, is increased by H_AMOUNT.
  */
 
 class payment_upd_wh_stage_t : public stage_t {

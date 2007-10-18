@@ -32,7 +32,7 @@ void progress_reset(unsigned long* indicator) {
 
 void progress_update(unsigned long* indicator) {
   
-    if ( (*indicator++ % PROGRESS_INTERVAL) == 0 ) {
+    if ( (++*indicator % PROGRESS_INTERVAL) == 0 ) {
         printf(".");
         fflush(stdout);
         *indicator = 1; // prevent overflow

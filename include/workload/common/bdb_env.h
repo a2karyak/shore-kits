@@ -23,7 +23,7 @@ ENTER_NAMESPACE(workload);
 /* definition of macros */
 
 // 'typeof' is a gnu extension
-#define TYPEOF(TYPE, MEMBER) typeof(((TYPE *)0)->MEMBER)
+#define TYPEOF(TYPE, MEMBER) __typeof__(((TYPE *)0)->MEMBER)
 
 
 #define SIZEOF(TYPE, MEMBER) sizeof(((TYPE *)0)->MEMBER)

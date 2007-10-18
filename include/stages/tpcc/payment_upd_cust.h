@@ -133,7 +133,7 @@ public:
  *  The row in the CUSTOMER table with matching C_W_ID, C_D_ID and C_ID is selected.
  *  C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP,
  *  C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, and C_BALANCE are retrieved.
- *  C_BALANCE is decreased by H_AMOYNT. C_YTD_PAYMENT is increased by H_AMOYNT.
+ *  C_BALANCE is decreased by H_AMOUNT. C_YTD_PAYMENT is increased by H_AMOUNT.
  *  C_PAYMENT_CNT is incremented by 1.
  * 
  *  Case 2: The customer is selected based on customer last name.
@@ -142,8 +142,8 @@ public:
  *  C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP,
  *  C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, and C_BALANCE are retrieved
  *  from the row at position (n/2 rounded up the next integer) in the sorted set of
- *  selected rows from the CUSTOMER table. C_BALANCE is decreased by H_AMOYNT. 
- *  C_YTD_PAYMENT is increased by H_AMOYNT. C_PAYMENT_CNT is incremented by 1.
+ *  selected rows from the CUSTOMER table. C_BALANCE is decreased by H_AMOUNT. 
+ *  C_YTD_PAYMENT is increased by H_AMOUNT. C_PAYMENT_CNT is incremented by 1.
  */
 
 class payment_upd_cust_stage_t : public stage_t {

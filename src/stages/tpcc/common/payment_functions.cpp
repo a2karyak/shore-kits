@@ -55,7 +55,7 @@ int insertHistory(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) {
     ht.H_D_ID = pin->_home_d_id;
     ht.H_W_ID = pin->_home_wh_id;       
     ht.H_DATE = pin->_h_date;
-    ht.H_AMOYNT = pin->_h_amount;    
+    ht.H_AMOUNT = pin->_h_amount;    
     
     // FIXME (ip) Modification of the specification. Instead of concatenating
     // W_NAME and D_NAME we do that with W_ID and D_ID
@@ -148,7 +148,7 @@ int updateCustomer(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
  *  
  *  @brief Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
  *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
- *  D_YTD is increased by H_AMOYNT.
+ *  D_YTD is increased by H_AMOUNT.
  *
  *  @return 0 on success, non-zero on failure
  */
@@ -202,7 +202,7 @@ int updateDistrict(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts) 
  *
  *  @brief Step 2: Retrieve the row in the WAREHOUSE table with matching W_ID.
  *  W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE and W_ZIP are retrieved.
- *  W_YTD is increased by H_AMOYNT.
+ *  W_YTD is increased by H_AMOUNT.
  *  
  *  @return 0 on success, non-zero on failure
  */
@@ -252,8 +252,8 @@ int updateWarehouse(payment_input_t* pin, DbTxn* txn, s_payment_dbt_t* a_p_dbts)
  *  is selected. C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE,
  *  C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_DATA_1,
  *  and C_DATA_2 are retrieved.
- *  C_BALANCE is decreased by H_AMOYNT. 
- *  C_YTD_PAYMENT is increased by H_AMOYNT. 
+ *  C_BALANCE is decreased by H_AMOUNT. 
+ *  C_YTD_PAYMENT is increased by H_AMOUNT. 
  *  C_PAYMENT_CNT is increased by 1.
  *  updateCustomerData is called.
  *  
@@ -331,8 +331,8 @@ int updateCustomerByID(DbTxn* txn,
  *  C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_DATA_1,
  *  and C_DATA_2 are retrieved from the row at position (n/2 rounded up to the next
  *  integer) in the sorted set of selected rows.
- *  C_BALANCE is decreased by H_AMOYNT. 
- *  C_YTD_PAYMENT is increased by H_AMOYNT. 
+ *  C_BALANCE is decreased by H_AMOUNT. 
+ *  C_YTD_PAYMENT is increased by H_AMOUNT. 
  *  C_PAYMENT_CNT is increased by 1.
  *  updateCustomerData is called.
  *  
@@ -370,7 +370,7 @@ int updateCustomerByLast(DbTxn* txn,
 /** @fn updateCustomerData
  *
  *  @brief If the value of C_CREDIT is equal to "BC", then the following history
- *  information: C_ID, C_D_ID, C_W_ID, D_ID, W_ID, and H_AMOYNT, are inserted at
+ *  information: C_ID, C_D_ID, C_W_ID, D_ID, W_ID, and H_AMOUNT, are inserted at
  *  the left of C_DATA field by shifting the existing content of C_DATA to the right
  *  by an equal number of bytes and by discarding the bytes that are shifted out of
  *  the right side of the C_DATA field. The content of the C_DATA field never exceeds
@@ -382,7 +382,7 @@ void updateCustomerData(tpcc_customer_tuple* a_customer)
     assert( a_customer ); // make sure correct parameters
     assert( strncmp(a_customer->C_CREDIT, "BC", 2) == 0 );
 
-    // FIXME (ip) Modification instead of writing D_ID, W_ID, and H_AMOYNT
+    // FIXME (ip) Modification instead of writing D_ID, W_ID, and H_AMOUNT
     // we write again C_D_ID, C_W_ID, and C_BALANCE
 
     char tmp [STRSIZE(500)];

@@ -28,13 +28,17 @@ using std::endl;
 const int MAX_KEYS = 30;
 
 // How many threads will be created
-const int NUM_THREADS = 1;
+//const int NUM_THREADS = 1;
+const int NUM_THREADS = 2;
+//const int NUM_THREADS = 20;
 pthread_t tid[NUM_THREADS]; // Array of thread IDs
 
 // Tree constants
 const unsigned cTwoLines = 128;
-const unsigned cINodeEntries = 7;
-const unsigned cLeafEntries = 14;
+const unsigned cINodeEntries = 4;
+const unsigned cLeafEntries = 5;
+//const unsigned cINodeEntries = 7;
+//const unsigned cLeafEntries = 14;
 const unsigned cArch = 64;
 
 const unsigned cINodePad = cTwoLines - 16 * cINodeEntries - 8;
@@ -80,6 +84,8 @@ int main(void)
     cout << "Loading lasted: " << (tstop - tstart) << " secs. " 
          << tstop << " " <<  tstart << "\n";
 
+    // Print final tree data
+    aTree.print();
     //    checkValues(NUM_THREADS);
 
     return (0);

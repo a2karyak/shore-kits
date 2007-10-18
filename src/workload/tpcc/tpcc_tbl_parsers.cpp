@@ -5,6 +5,10 @@
  *  @brief Implementation of the TPC-C table parsing functions
  *
  *  @author Ippokratis Pandis (ipandis)
+ *
+ *  @history:
+ *  10/17/2007: Changed the calls to strtok() to the corresponding thread-safe
+ *              version (strtok())
  */
 
 #include "util/trace.h"
@@ -211,7 +215,7 @@ void tpcc_parse_tbl_HISTORY(Db* db, FILE* fd) {
         tmp = strtok(NULL, "|");
         tup.H_DATE = atoi(tmp);
         tmp = strtok(NULL, "|");
-        tup.H_AMOYNT = atof(tmp);
+        tup.H_AMOUNT = atof(tmp);
         tmp = strtok(NULL, "|");
         store_string(tup.H_DATA,tmp);
 

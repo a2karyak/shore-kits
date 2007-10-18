@@ -120,7 +120,7 @@ struct tpcc_history_tuple {
     int H_D_ID;
     int H_W_ID;
     int H_DATE;
-    decimal H_AMOYNT;
+    decimal H_AMOUNT;
     char H_DATA [STRSIZE(25)];
 };
 
