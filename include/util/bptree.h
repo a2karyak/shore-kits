@@ -15,12 +15,15 @@
 #define __BPLUSTREE_H
 
 // This is required for glibc to define std::posix_memalign
-#if !defined (_XOPEN_SOURCE) || (_XOPEN_SOURCE < 600)
 #define _XOPEN_SOURCE 600
-#endif
-#include <stdlib.h>
 
-#include <assert.h>
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#else
+#include <cstdlib>
+#endif
+
+// Boost includes
 #include <boost/static_assert.hpp>
 #include <boost/pool/object_pool.hpp>
 
@@ -442,10 +445,17 @@ private:
         
         static char* malloc(const size_type bytes) {
             void* result;
-            if( posix_memalign(&result, ALIGNMENT, bytes) != 0 ) {
-                result= 0;
+
+#ifdef __SUNPRO_CC
+            // (ip) Using memalign() instead of posix_memalign()
+            if ((result = memalign(ALIGNMENT, bytes)) == NULL) {
+                result = 0;
             }
-            
+#else
+            if (posix_memalign(&result, ALIGNMENT, bytes) != 0) {
+                result = 0;
+            }
+#endif            
             return (reinterpret_cast<char*>(result));
         }
 

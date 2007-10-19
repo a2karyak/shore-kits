@@ -42,21 +42,26 @@ case "$target" in
   # Sparc Solaris
   *sparc*sun*)
     BDB_HOME_DEFAULT="/export/home/ipandis/apps/berkeleydb"
+    BOOST_HOME_DEFAULT="/export/home/ipandis/apps/boost"
     ;;
 
   *ppc*)
     BDB_HOME_DEFAULT="/usr/software/berkeleydb"
+    BOOST_HOME_DEFAULT="/usr/software/boost"
     ;;
 
   *ia64*)
     BDB_HOME_DEFAULT="$HOME/work/apps/berkeleydb"
+    BOOST_HOME_DEFAULT="$HOME/work/apps/boost"
     ;;
 
  *)
     BDB_HOME_DEFAULT="/usr/software/berkeleydb"
+    BOOST_HOME_DEFAULT="/usr/software/boost"
     ;;
 esac
 
+AC_ARG_VAR(BOOST_HOME, Location of Boost Installation; default is $BOOST_HOME_DEFAULT)
 
 AC_ARG_VAR(BDB_HOME, Location of Berkeley DB Installation; default is $BDB_HOME_DEFAULT)
 
@@ -116,6 +121,15 @@ reqgcc_mid=3
 AC_MSG_CHECKING(home directory)
 QPIPE_HOME=`pwd`
 AC_MSG_RESULT($QPIPE_HOME)
+
+
+# get boost location
+AC_MSG_CHECKING(Boost directory)
+if test -z $BOOST_HOME; then
+    BOOST_HOME=$BOOST_HOME_DEFAULT
+fi
+
+AC_MSG_RESULT($BOOST_HOME)
 
 
 # get berkeley db location and version (not implem)
@@ -337,5 +351,6 @@ QPipe configuration:
   GCC version               GCC_VERSION          $GCC_VERSION
   BerkeleyDB version:       BDB_VERSION          $BDB_VERSION
   BerkeleyDB home:          BDB_HOME             $BDB_HOME
+  Boost home:               BOOST_HOME           $BOOST_HOME
   Architecture/OS:          ARCHOS               $ARCHOS
 EOF

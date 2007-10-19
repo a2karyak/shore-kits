@@ -1,5 +1,5 @@
 # -*- makefile -*-
-INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include
+INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include -I$(BOOST_HOME)
 
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \

@@ -14,10 +14,17 @@
 // For random number generator (rng)
 #include <boost/random.hpp>
 
+#ifdef __SUNPRO_CC
+#include <time.h>
+#include <iostream.h>
+#include <string.h>
+#else
 #include <ctime>
 #include <iostream>
-#include <sstream>
 #include <string>
+#endif
+
+#include <sstream>
 
 using std::cout;
 using std::endl;

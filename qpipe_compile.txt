@@ -43,3 +43,8 @@ SUN_SPARC specific:
 gcc/g++ hasn't been reliable in Niagara.
 
 CXX=CC ./autogen
+
+---
+LOMOND specific:
+
+CC=~ryanjohn/apps/opt/SUNWspro/bin/cc CXX=~ryanjohn/apps/opt/SUNWspro/bin/CC ./configure
