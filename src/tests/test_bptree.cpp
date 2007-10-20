@@ -60,9 +60,10 @@ void checkValues(int numOfThreads);
 
 int main(void)
 {
-    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
-
     thread_init();
+
+    trace_set(TRACE_ALWAYS);
+    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
 
     time_t tstart = time(NULL);
     
@@ -72,7 +73,7 @@ int main(void)
     assert (cINodePad > 0);
     assert (cLeafPad > 0);
 
-    cout << aTree;
+    //cout << aTree;
 
     int i = 0;
 
@@ -88,11 +89,11 @@ int main(void)
 
     time_t tstop = time(NULL);
 
-    cout << "Loading lasted: " << (tstop - tstart) << " secs. " 
-         << tstop << " " <<  tstart << "\n";
+    TRACE( TRACE_DEBUG, "Loading lasted: %d secs. Start at %d\n", (tstop - tstart), tstart); 
 
     // Print final tree data
     aTree.print();
+
     //    checkValues(NUM_THREADS);
 
     return (0);
@@ -101,13 +102,10 @@ int main(void)
 
 void* loadValues(void* parm)
 {
-    //    int tid = static_cast<int>(parm);
     int tid = (int)((long)parm);
 
-    std::string strout;
-    std::ostringstream o;
-
-    cout << "Thread with ID = " << tid << " starts\n";
+    //cout << "Thread with ID = " << tid << " starts\n";
+    TRACE( TRACE_DEBUG, "Thread with ID = %d starts\n", tid);
 
     boost::rand48 rng(boost::int32_t(2137 + tid));
 
@@ -122,21 +120,24 @@ void* loadValues(void* parm)
         /*
         if ( (avalue % 10) < 3 ) {
             if (aTree.find(i, &avalue))
-                o << "F (" << i << ") V = " << avalue << "\n";
+                //o << "F (" << i << ") V = " << avalue << "\n";
+                TRACE( TRACE_DEBUG, "READ (%d): %d %d", tid, i, value;
         }
         else {
-        */
-            cout << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
-            //o << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
+            TRACE ( TRACE_DEBUG,  "(%d) %d %d", tid, i, avalue;
+            //cout << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
+
             aTree.insert(i, avalue);
+        }
+        */
 
-            //}
+        TRACE ( TRACE_DEBUG,  "(%d) %d %d\n", tid, i, avalue);
+        aTree.insert(i, avalue);
     }
-
-    //    cout << o.str();
     
     return (NULL);
 }
+
 
 void checkValues(int numOfThreads)
 {    
@@ -144,6 +145,6 @@ void checkValues(int numOfThreads)
     int anotherValue = 0;
     for (int i = 0; i < numOfThreads * MAX_KEYS; i++) {
         if (aTree.find(i, &anotherValue))
-            cout << "Found (" << i << ") V = " << anotherValue << "\n";
+            TRACE( TRACE_DEBUG, "Found (%i) = %d\n", i, anotherValue);
     }
 }
