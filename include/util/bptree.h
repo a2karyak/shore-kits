@@ -132,6 +132,7 @@ public:
     }
 
 
+
     /** @fn:   Destructor 
      *  @desc: Destroys the tree.
      */
@@ -146,6 +147,7 @@ public:
         pthread_mutex_destroy(&_leafPool_mutex);
         pthread_rwlock_destroy(&_root_rwlock);
     }
+
 
 
     /** @fn:   insert
@@ -208,81 +210,102 @@ public:
             print();
         }
     }
+
     
 
-    // Looks for the given key. If it is not found, it returns false,
-    // if it is found, it returns true and copies the associated value
-    // unless the pointer is null.
-    bool find(const KEY& key, VALUE* value = 0) const 
+    /** @fn:   find
+     *  @desc: Looks for the given key. If it is not found, it returns false,
+     *  if it is found, it returns true and copies the associated value
+     *  unless the pointer is null.
+     */
+
+    bool find(const KEY& key, VALUE* value = 0)  
     {
-        InnerNode* inner;
-        register void* node = _root;
-        uint initDepth = _depth;
-        register uint d = initDepth;
-        register uint index;
+        // Before doing anything grabs the root mutex for reading
+        // Once the root lock is acquired the root pointer and depth
+        // are reliable value.
+        // The root lock will be released as soon we acquire the read
+        // lock for any child node
+        pthread_rwlock_rdlock(&_root_rwlock);
+        TRACE( TRACE_DEBUG, "root read-lock\n");
 
-
-        TRACE( TRACE_DEBUG, " find() should be done thread safe!!    ****\n ");
-        TRACE( TRACE_DEBUG, " find() should read-lock the root mutex ****\n ");
-
-        // Unlocks the root mutex
-        //            TRACE( TRACE_DEBUG, "root mutex unlock\n");
-        //            pthread_mutex_unlock(&_root_mutex);
-       
+        void* aNode = _root; 
+        InnerNode* inner = NULL;
+        InnerNode* parentInner = NULL;
+        uint d = _depth;
+        uint index = 0;
 
         // Drills down the InnerNodes
         while ( d-- > 0 ) {
-            assert(node);
+            assert(aNode);
             
-            inner = reinterpret_cast<InnerNode*>(node);
+            inner = reinterpret_cast<InnerNode*>(aNode);
 
             // Read locks the node
             pthread_rwlock_rdlock(&(inner->in_rwlock));
-            TRACE( TRACE_DEBUG, "inner read (%p)\n", node);
+            TRACE( TRACE_DEBUG, "inner read (%p)\n", aNode);
 
+            // Now that it locked the child it should unlock the parent
+            if (parentInner) {
+                TRACE( TRACE_DEBUG, "inner unlock (%p)\n", parentInner);
+                pthread_rwlock_unlock(&(parentInner->in_rwlock));
+            }
+            else {
+                // If no parent it means that we are at the root inner node
+                // Since we acquired the read lock to that node we can 
+                // release the root lock
+                TRACE( TRACE_DEBUG, "root unlock\n");
+                pthread_rwlock_unlock(&_root_rwlock);
+            }
+
+            // Find the correct child node and save pointer to the current node 
+            // in order to release it in the next iteration
             index = inner_position_for(key, inner->keys, inner->num_keys);
-            node = inner->children[index];
-
-            // Unlocks the node
-            TRACE( TRACE_DEBUG, "inner unlock (%p)\n", node);
-            pthread_rwlock_unlock(&(inner->in_rwlock));
+            aNode = inner->children[index];
+            parentInner = inner;
         }
-       
-        if (initDepth != _depth) {
-            // The initial depth value has changed will going down the tree
-            // It should restart the search
-            TRACE( TRACE_DEBUG, "Depth mismatch. Old (%d) Current (%d)\n", 
-                   initDepth, _depth);
-            return (find(key, value));
-        }
-
         
         // Reached the correct leaf node
-        assert(node);
+        assert(aNode);
 
         // Searches within the leaf node
-        LeafNode* leaf= reinterpret_cast<LeafNode*>(node);
+        LeafNode* leaf = reinterpret_cast<LeafNode*>(aNode);
 
         // Read lock the leaf node
         pthread_rwlock_rdlock(&(leaf->leaf_rwlock));
-        TRACE( TRACE_DEBUG, "leaf read (%p)\n", node);
+        TRACE( TRACE_DEBUG, "leaf read (%p)\n", aNode);
 
-        index= leaf_position_for(key, leaf->keys, leaf->num_keys);
+        // Now that it locked the leaf it should unlock the parent inner node
+        if (parentInner) {
+            TRACE( TRACE_DEBUG, "inner unlock (%p)\n", parentInner);
+            pthread_rwlock_unlock(&(parentInner->in_rwlock));
+        }
+        else {
+            // If no parent it means that we are at the root inner node
+            // Since we acquired the read lock to that node we can 
+            // release the root lock
+            TRACE( TRACE_DEBUG, "root unlock\n");
+            pthread_rwlock_unlock(&_root_rwlock);
+        }
+
+        // Look for the position of the queried entry in the Leaf
+        index = leaf_position_for(key, leaf->keys, leaf->num_keys);
         
+        // Checks if valid key found and unlocks leaf
         if ( leaf->keys[index] == key ) {
             // Entry found, copies the value and returns true
             if ( value != 0 ) {
-                *value= leaf->values[index];
+                *value = leaf->values[index];
             }
 
-            TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", node);
+            TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", leaf);
             pthread_rwlock_unlock(&(leaf->leaf_rwlock));
 
             return true;
         } 
         else {
             // No entry with that key found, returns false
-            TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", node);
+            TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", leaf);
             pthread_rwlock_unlock(&(leaf->leaf_rwlock));
 
             return false;

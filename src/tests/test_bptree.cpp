@@ -32,8 +32,8 @@ using std::endl;
 
 
 // How many keys to produce
-const int MAX_KEYS = 10000;
-//const int MAX_KEYS = 300;
+//const int MAX_KEYS = 10000;
+const int MAX_KEYS = 300;
 //const int MAX_KEYS = 30;
 
 // How many threads will be created
@@ -57,9 +57,9 @@ const unsigned cLeafPad = cTwoLines - 8 * cLeafEntries - 8;
 // The B+ tree
 BPlusTree<int, int, cINodeEntries, cLeafEntries, cINodePad, cLeafPad, cArch> aTree;
 
+
 // Function declaration
-void* loadValues(void* parm);
-void checkValues(int numOfThreads);
+void checkValues();
 
 
 class bptree_loader_t : public thread_t 
@@ -79,23 +79,21 @@ private:
             avalue = rng();
 
             // Modification, flips a coin and with probability 0.2 
-            // instead of insert makes a probe (find)
+            // instead of insert makes a probe
 
-            /*
-              if ( (avalue % 10) < 3 ) {
-              if (aTree.find(i, &avalue))
-              //o << "F (" << i << ") V = " << avalue << "\n";
-              TRACE( TRACE_DEBUG, "READ (%d): %d %d", tid, i, value;
-              }
-              else {
-              TRACE ( TRACE_DEBUG,  "(%d) %d %d", tid, i, avalue;
-              //cout << "(" <<  tid <<  ") " << i << " " << avalue << "\n";              
-              aTree.insert(i, avalue);
-              }
-            */
-
-            TRACE ( TRACE_DEBUG,  "INSERT K=(%d) V=(%d)\n", i, avalue);
-            aTree.insert(i, avalue);
+            if ( (avalue % 10) < 3 ) {
+                TRACE ( TRACE_DEBUG,  "FIND K=(%d)\n", i - MAX_KEYS);
+                if (aTree.find(i - MAX_KEYS, &avalue)) {
+                    TRACE( TRACE_DEBUG, "Found (%d) = %d\n", i - MAX_KEYS, avalue);
+                }
+                else {
+                    TRACE( TRACE_DEBUG, "Not Found (%d)\n", i - MAX_KEYS);
+                }
+            }
+            else {
+                TRACE ( TRACE_DEBUG,  "INSERT K=(%d) V=(%d)\n", i, avalue);
+                aTree.insert(i, avalue);
+            }
         }
     }    
     
@@ -125,8 +123,8 @@ int main(void)
 {
     thread_init();
 
-    //    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
-    TRACE_SET( TRACE_ALWAYS );
+    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
+    //TRACE_SET( TRACE_ALWAYS );
     
     BOOST_STATIC_ASSERT(cTwoLines - 16 * cINodeEntries - 8);
     BOOST_STATIC_ASSERT(cTwoLines - 16 * cLeafEntries - 8);    
@@ -168,24 +166,36 @@ int main(void)
 
     time_t tstop = time(NULL);
 
-    TRACE( TRACE_ALWAYS, "Loading lasted: %d secs. Start at %d\n", 
-           (tstop - tstart), tstart); 
+    TRACE( TRACE_ALWAYS, "*******************************\n");
+    TRACE( TRACE_ALWAYS, "Loading finished\n");
+    TRACE( TRACE_ALWAYS, "Keys     = %d\n", MAX_KEYS * NUM_THREADS);
+    TRACE( TRACE_ALWAYS, "Duration = %d secs\n", tstop - tstart); 
+    TRACE( TRACE_ALWAYS, "Rate     = %.2f keys/sec\n", 
+           (double)(MAX_KEYS * NUM_THREADS)/(double)(tstop - tstart));
+    TRACE( TRACE_ALWAYS, "*******************************\n");
 
     // Print final tree data
-    aTree.print();
+    //    aTree.print();
+
+    // Call the tree.find() function
+    //checkValues();
 
     return (0);
 }
  
 
-/*
-void checkValues(int numOfThreads)
+
+void checkValues()
 {    
-    // Retrieve those MAX_KEYS keys
+    // Retrieve the loaded keys
     int anotherValue = 0;
-    for (int i = 0; i < numOfThreads * MAX_KEYS; i++) {
-        if (aTree.find(i, &anotherValue))
-            TRACE( TRACE_DEBUG, "Found (%i) = %d\n", i, anotherValue);
+    for (int i = 0; i < NUM_THREADS * MAX_KEYS; i++) {
+        if (aTree.find(i, &anotherValue)) {
+            TRACE( TRACE_DEBUG, "Found (%d) = %d\n", i, anotherValue);
+        }
+        else {
+            TRACE( TRACE_DEBUG, "Not Found (%d)\n", i);
+        }
     }
 }
-*/
+
