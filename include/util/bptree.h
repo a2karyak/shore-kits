@@ -129,9 +129,6 @@ public:
 
         // Initialization of the root, should be done after mutex init
         _root = new_leaf_node();
-
-        // Prints the whole tree
-        print();
     }
 
 
@@ -254,7 +251,7 @@ public:
         if (initDepth != _depth) {
             // The initial depth value has changed will going down the tree
             // It should restart the search
-            TRACE( TRACE_ALWAYS, "Depth mismatch. Old (%d) Current (%d)\n", 
+            TRACE( TRACE_DEBUG, "Depth mismatch. Old (%d) Current (%d)\n", 
                    initDepth, _depth);
             return (find(key, value));
         }

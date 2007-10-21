@@ -32,13 +32,14 @@ using std::endl;
 
 
 // How many keys to produce
-//const int MAX_KEYS = 10000;
-const int MAX_KEYS = 30;
+const int MAX_KEYS = 10000;
+//const int MAX_KEYS = 300;
+//const int MAX_KEYS = 30;
 
 // How many threads will be created
 //const int NUM_THREADS = 1;
-const int NUM_THREADS = 2;
-//const int NUM_THREADS = 20;
+//const int NUM_THREADS = 2;
+const int NUM_THREADS = 20;
 
 
 
@@ -124,7 +125,8 @@ int main(void)
 {
     thread_init();
 
-    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
+    //    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
+    TRACE_SET( TRACE_ALWAYS );
     
     BOOST_STATIC_ASSERT(cTwoLines - 16 * cINodeEntries - 8);
     BOOST_STATIC_ASSERT(cTwoLines - 16 * cLeafEntries - 8);    
@@ -144,7 +146,7 @@ int main(void)
         for (i=0; i<NUM_THREADS; i++) {
 
             // Give thread a name
-            c_str thr_name("BP%d", i+1);
+            c_str thr_name("BPL-%d", i+1);
 
             // Create thread context
             bptree_loader_t* bploader = new bptree_loader_t(thr_name, i);
@@ -166,7 +168,7 @@ int main(void)
 
     time_t tstop = time(NULL);
 
-    TRACE( TRACE_DEBUG, "Loading lasted: %d secs. Start at %d\n", 
+    TRACE( TRACE_ALWAYS, "Loading lasted: %d secs. Start at %d\n", 
            (tstop - tstart), tstart); 
 
     // Print final tree data
