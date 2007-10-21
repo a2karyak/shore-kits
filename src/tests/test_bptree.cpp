@@ -10,6 +10,7 @@
 
 #include "util.h"
 #include "util/bptree.h"
+#include "workload/workload.h"
 
 // For random number generator (rng)
 #include <boost/random.hpp>
@@ -38,7 +39,8 @@ const int MAX_KEYS = 30;
 //const int NUM_THREADS = 1;
 const int NUM_THREADS = 2;
 //const int NUM_THREADS = 20;
-pthread_t tid[NUM_THREADS]; // Array of thread IDs
+
+
 
 // Tree constants
 const unsigned cTwoLines = 128;
@@ -58,14 +60,71 @@ BPlusTree<int, int, cINodeEntries, cLeafEntries, cINodePad, cLeafPad, cArch> aTr
 void* loadValues(void* parm);
 void checkValues(int numOfThreads);
 
+
+class bptree_loader_t : public thread_t 
+{
+private:
+
+    int _tid;
+
+    void loadValues() {
+
+        boost::rand48 rng(_tid);
+
+        // Load MAX_KEYS keys
+        int avalue = 0;
+
+        for (int i = MAX_KEYS* _tid; i<MAX_KEYS*(_tid+1); i++) {
+            avalue = rng();
+
+            // Modification, flips a coin and with probability 0.2 
+            // instead of insert makes a probe (find)
+
+            /*
+              if ( (avalue % 10) < 3 ) {
+              if (aTree.find(i, &avalue))
+              //o << "F (" << i << ") V = " << avalue << "\n";
+              TRACE( TRACE_DEBUG, "READ (%d): %d %d", tid, i, value;
+              }
+              else {
+              TRACE ( TRACE_DEBUG,  "(%d) %d %d", tid, i, avalue;
+              //cout << "(" <<  tid <<  ") " << i << " " << avalue << "\n";              
+              aTree.insert(i, avalue);
+              }
+            */
+
+            TRACE ( TRACE_DEBUG,  "INSERT K=(%d) V=(%d)\n", i, avalue);
+            aTree.insert(i, avalue);
+        }
+    }    
+    
+public:
+
+    bptree_loader_t(const c_str& name, const int id)
+        : thread_t(name),
+          _tid(id)
+    {
+        TRACE( TRACE_DEBUG,
+               "B+ tree loader with id (%d) constructed...\n",
+               _tid);
+    }
+
+    virtual ~bptree_loader_t() { }
+
+    virtual void* run() {
+
+        loadValues();
+        return (NULL);
+    }
+
+}; // EOF: bptree_loader_t
+
+
 int main(void)
 {
     thread_init();
 
-    trace_set(TRACE_ALWAYS);
     TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
-
-    time_t tstart = time(NULL);
     
     BOOST_STATIC_ASSERT(cTwoLines - 16 * cINodeEntries - 8);
     BOOST_STATIC_ASSERT(cTwoLines - 16 * cLeafEntries - 8);    
@@ -73,72 +132,51 @@ int main(void)
     assert (cINodePad > 0);
     assert (cLeafPad > 0);
 
-    //cout << aTree;
+    array_guard_t<pthread_t> bpt_loader_ids = new pthread_t[NUM_THREADS];
+
+    time_t tstart = time(NULL);
 
     int i = 0;
 
-    // Create loader threads
-    for (i=0; i<NUM_THREADS; i++) {
-        pthread_create(&tid[i], NULL, loadValues, reinterpret_cast<void*>(i));
+    try {
+
+        // Create loader threads
+        for (i=0; i<NUM_THREADS; i++) {
+
+            // Give thread a name
+            c_str thr_name("BP%d", i+1);
+
+            // Create thread context
+            bptree_loader_t* bploader = new bptree_loader_t(thr_name, i);
+
+            // Create and start running thread
+            bpt_loader_ids[i] = thread_create(bploader);
+                
+            //pthread_create(&tid[i], NULL, loadValues, reinterpret_cast<void*>(i));
+        }
+
+    }
+    catch (QPipeException &e) {
+
+        TRACE( TRACE_ALWAYS, "Exception thrown in MT B+ tree loading....\n");
+        throw e;
     }
 
-    // Wait for all the threads to finish
-    for (i=0; i<NUM_THREADS; i++) {
-        pthread_join(tid[i], NULL);
-    }
+    workload::workload_t::wait_for_clients(bpt_loader_ids, NUM_THREADS);
 
     time_t tstop = time(NULL);
 
-    TRACE( TRACE_DEBUG, "Loading lasted: %d secs. Start at %d\n", (tstop - tstart), tstart); 
+    TRACE( TRACE_DEBUG, "Loading lasted: %d secs. Start at %d\n", 
+           (tstop - tstart), tstart); 
 
     // Print final tree data
     aTree.print();
-
-    //    checkValues(NUM_THREADS);
 
     return (0);
 }
  
 
-void* loadValues(void* parm)
-{
-    int tid = (int)((long)parm);
-
-    //cout << "Thread with ID = " << tid << " starts\n";
-    TRACE( TRACE_DEBUG, "Thread with ID = %d starts\n", tid);
-
-    boost::rand48 rng(boost::int32_t(2137 + tid));
-
-    // Load MAX_KEYS keys
-    int avalue = 0;
-    for (int i=MAX_KEYS*tid; i<MAX_KEYS*(tid+1); i++) {
-        avalue = rng();
-
-        // Modification, flips a coin and with probability 0.2 
-        // instead of insert makes a probe (find)
-
-        /*
-        if ( (avalue % 10) < 3 ) {
-            if (aTree.find(i, &avalue))
-                //o << "F (" << i << ") V = " << avalue << "\n";
-                TRACE( TRACE_DEBUG, "READ (%d): %d %d", tid, i, value;
-        }
-        else {
-            TRACE ( TRACE_DEBUG,  "(%d) %d %d", tid, i, avalue;
-            //cout << "(" <<  tid <<  ") " << i << " " << avalue << "\n";
-
-            aTree.insert(i, avalue);
-        }
-        */
-
-        TRACE ( TRACE_DEBUG,  "(%d) %d %d\n", tid, i, avalue);
-        aTree.insert(i, avalue);
-    }
-    
-    return (NULL);
-}
-
-
+/*
 void checkValues(int numOfThreads)
 {    
     // Retrieve those MAX_KEYS keys
@@ -148,3 +186,4 @@ void checkValues(int numOfThreads)
             TRACE( TRACE_DEBUG, "Found (%i) = %d\n", i, anotherValue);
     }
 }
+*/

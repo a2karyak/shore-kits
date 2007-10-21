@@ -71,9 +71,9 @@ T* thread_join(pthread_t tid) {
 class thread_t {
 
 private:
-
     c_str        _thread_name;
     randgen_t    _randgen;
+
 protected:
     bool _delete_me;
 
