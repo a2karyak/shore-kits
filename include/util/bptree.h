@@ -388,10 +388,15 @@ public:
         out << "Data types sizes\n";
         out << "uint             = " << sizeof(uint) << "\n";
         out << "pthread_rwlock_t = " << sizeof(pthread_rwlock_t) << "\n";
-        out << "KEY              = " << sizeof(AKEY) << "\n";
-        out << "VALUE            = " << sizeof(AVALUE) << "\n";
         out << "void*            = " << sizeof(void*) << "\n";
         out << "uchar            = " << sizeof(unsigned char) << "\n";
+        out << "pthread_mutex_t  = " << sizeof(pthread_mutex_t) << "\n";
+
+        out << "InnerPool        = " << sizeof(bpt._innerPool) << "\n";
+        out << "LeafPool         = " << sizeof(bpt._leafPool) << "\n";
+
+        out << "KEY              = " << sizeof(AKEY) << "\n";
+        out << "VALUE            = " << sizeof(AVALUE) << "\n";
 
 
         // Tree description
