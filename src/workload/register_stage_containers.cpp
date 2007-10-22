@@ -1,12 +1,24 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file register_stage_containers.h
+ *
+ *  @brief Registration of the stages on the system, given the environment
+ *
+ *  @history
+ *  10/21/07: Adding options for InMemory and SHORE transactional environments
+ */
+
 #include "stages.h"
 #include "trxstages.h"
 
 #include "workload/common/register_stage.h"
 #include "workload/register_stage_containers.h"
 
-#define MAX_NUM_TRXS     1000
+// OLTP-related constants
+#define MAX_NUM_TRXS     64
+
+
+// DSS-related constants
 //#define MAX_NUM_CLIENTS 16
 #define MAX_NUM_CLIENTS 256
 #define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 // Q4, Q16 have two scans
@@ -18,11 +30,34 @@
 #define MAX_NUM_SORTED_IN_STAGE_THREADS   MAX_NUM_CLIENTS
 
 
-void register_stage_containers(int enviroment) {
+void register_stage_containers(int environment) {
 
+    switch ( environment ) {
 
+        /** OLTP stages registration */
+        /** @note trx stages do not share */
+    case TRX_BDB_ENV:
+        /*
+        register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<payment_upd_wh_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<payment_upd_distr_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<payment_upd_cust_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<payment_ins_hist_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<payment_finalize_stage_t>(MAX_NUM_CLIENTS, false); 
+        */
 
-    if (enviroment == QUERY_ENV) {
+        register_stage<payment_baseline_stage_t>(MAX_NUM_TRXS, false);      
+        break;
+
+    case TRX_SHORE_ENV:
+    case TRX_MEM_ENV:
+        assert (1==0); // (ip) Not implemented yet       
+        break;
+
+        /** DSS stages registration */
+    case QUERY_ENV:
+    default:
+
         register_stage<tscan_stage_t>(MAX_NUM_TSCAN_THREADS, false);
         register_stage<aggregate_stage_t>(MAX_NUM_AGGREGATE_THREADS, false);
         register_stage<partial_aggregate_stage_t>(MAX_NUM_PARTIAL_AGGREGATE_THREADS, false);
@@ -35,20 +70,7 @@ void register_stage_containers(int enviroment) {
         register_stage<sorted_in_stage_t>(MAX_NUM_SORTED_IN_STAGE_THREADS, false);
         register_stage<echo_stage_t>(MAX_NUM_CLIENTS, false);
         register_stage<sieve_stage_t>(MAX_NUM_CLIENTS, false);
-    }
-    else {        
-        // FIXME: (ip) Should be relative with the MAX_NUM_TRXS
-       
-        /** @note trx staged do not share */
-        /*
-        register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
-        register_stage<payment_upd_wh_stage_t>(MAX_NUM_CLIENTS, false); 
-        register_stage<payment_upd_distr_stage_t>(MAX_NUM_CLIENTS, false); 
-        register_stage<payment_upd_cust_stage_t>(MAX_NUM_CLIENTS, false); 
-        register_stage<payment_ins_hist_stage_t>(MAX_NUM_CLIENTS, false); 
-        register_stage<payment_finalize_stage_t>(MAX_NUM_CLIENTS, false); 
-        */
-        register_stage<payment_baseline_stage_t>(MAX_NUM_CLIENTS, false); 
+        break;
     }
 }
 

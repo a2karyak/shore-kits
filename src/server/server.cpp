@@ -67,18 +67,44 @@ int qpipe_init(int argc, char* argv[]) {
     thread_init();
     qpipe::tuple_fifo_directory_t::open_once();
 
+    // The default environment is the DSS
+    int processing_env = QUERY_ENV;
 
-    int environment = QUERY_ENV;
 
-    // Parse TPC-H / TPC-C environment
-    if ((argc > 1) && (strcmp(argv[1], "-trx") == 0)) {
-        TRACE( TRACE_ALWAYS,
-               "StagedTRX - Transaction Processing Engine\n");
-        processing_env = TRX_ENV;
+    // Parse user selection for the environment
+    if (argc > 1) {
+        
+        if ((strcmp(argv[1], "-bdb-trx") == 0)) {
+            // BDB underneath
+            TRACE( TRACE_ALWAYS,
+                   "BDB-StagedTRX\n");
+            TRACE( TRACE_ALWAYS,
+                   "Transaction Processing Engine with BerkeleyDB storage manager\n");
+            processing_env = TRX_BDB_ENV;
+        }
+        else if ((strcmp(argv[1], "-shore-trx") == 0)) {
+            // SHORE underneath
+            TRACE( TRACE_ALWAYS,
+                   "SHORE-StagedTRX\n");
+            TRACE( TRACE_ALWAYS,
+                   "Transaction Processing Engine with SHORE storage manager\n");
+            processing_env = TRX_SHORE_ENV;
+        }
+        else if ((strcmp(argv[1], "-mem-trx") == 0)) {
+            // In main memory
+            TRACE( TRACE_ALWAYS,
+                   "InMemory-StagedTRX\n");
+            TRACE( TRACE_ALWAYS,
+                   "Main Memory Transaction Processing Engine\n");
+            processing_env = TRX_MEM_ENV;
+        }
     } 
-    else {
+
+    if (processing_env == QUERY_ENV) {
         TRACE( TRACE_ALWAYS, 
-               "Cordoba - Query Execution Engine\n");
+               "Cordoba\n");
+        TRACE( TRACE_ALWAYS,
+               "Query Execution Engine\n");
     }
     
     register_command_handlers(processing_env);
@@ -101,12 +127,6 @@ int qpipe_init(int argc, char* argv[]) {
 
 
 void qpipe_shutdown() {
-    shutdown_command_handlers();
-    
-    if (processing_env == QUERY_ENV) {
-        TRACE(TRACE_ALWAYS, "Thank you for using Cordoba\nExiting...\n");
-    }
-    else {
-        TRACE(TRACE_ALWAYS, "Thank you for using StagedTRX\nExiting...\n");
-    }
+    shutdown_command_handlers();    
+    TRACE(TRACE_ALWAYS, "Staged Database System exiting...\n");
 }

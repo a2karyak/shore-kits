@@ -384,9 +384,25 @@ public:
                                     BPlusTree<AKEY, AVALUE, AINODE_ENTRIES, ALEAF_ENTRIES,
                                     AINODE_PADDING, ALEAF_PADDING, ANODE_ALIGNMENT>& bpt)
     {
+        // Data types sizes
+        out << "Data types sizes\n";
+        out << "uint             = " << sizeof(uint) << "\n";
+        out << "pthread_rwlock_t = " << sizeof(pthread_rwlock_t) << "\n";
+        out << "KEY              = " << sizeof(AKEY) << "\n";
+        out << "VALUE            = " << sizeof(AVALUE) << "\n";
+        out << "void*            = " << sizeof(void*) << "\n";
+        out << "uchar            = " << sizeof(unsigned char) << "\n";
+
+
+        // Tree description
         out << "bpt: " << sizeof(bpt) 
-            << " IN_SZ= " << bpt.sizeof_inner_node()
-            << " LE_SZ= " << bpt.sizeof_leaf_node() << "\n";
+            << "\nINNER: ENTRIES = " << AINODE_ENTRIES
+            << "\tPAD = " << AINODE_PADDING
+            << "\tSZ = " << bpt.sizeof_inner_node() 
+            << "\nLEAF : ENTRIES = " << ALEAF_ENTRIES
+            << "\tPAD = " << ALEAF_PADDING           
+            << "\tSZ = " << bpt.sizeof_leaf_node()  
+            << "\n";
         
         return (out);
     }

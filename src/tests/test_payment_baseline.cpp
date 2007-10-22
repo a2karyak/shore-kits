@@ -1,9 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file test_tpcc_load.cpp
+/** @file test_payment_baseline.cpp
  *
- *  @brief Test running TPC-C PAYMENT_BASELINE transaction. We need to register
- *  only one stage - payment_baseline_stage_t
+ *  @brief Test running TPC-C PAYMENT_BASELINE transaction with BDB underneath. 
+ *  We need to register only one stage - payment_baseline_stage_t
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -20,14 +20,14 @@ using namespace qpipe;
 
 int main(int argc, char* argv[]) {
 
-    query_info_t info = query_init(argc, argv, TRX_ENV);
+    query_info_t info = query_init(argc, argv, TRX_BDB_ENV);
     
     register_stage<payment_baseline_stage_t>(10);
 
-    workload::tpcc_payment_baseline_driver driver(c_str("PAYMENT_BASELINE"));
+    workload::tpcc_payment_baseline_driver driver(c_str("BDB-PAY-BASELINE"));
 
     trace_set(TRACE_QUERY_RESULTS);
 
-    query_main(info, &driver, TRX_ENV);
+    query_main(info, &driver, TRX_BDB_ENV);
     return 0;
 }

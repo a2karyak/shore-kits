@@ -22,7 +22,6 @@ using namespace workload;
 using namespace tpcc;
 
 
-void wait_for_clients(pthread_t* thread_ids, int num_thread_ids);
 void* start_client( void* ptr);
 
 
@@ -70,16 +69,15 @@ void tpcc_payment_nos_driver::submit(void* disp, memObject_t*) {
     }
     catch (QPipeException &e) {
         
-        wait_for_clients(client_ids, info.num_clients);
+        workload::workload_t::wait_for_clients(client_ids, info.num_clients);
 
         throw e;
     }    
 
-    wait_for_clients(client_ids, info.num_clients);
+    workload::workload_t::wait_for_clients(client_ids, info.num_clients);
 
     double etime = timer.time();
 
-    //    TRACE(TRACE_STATISTICS, "Workload executed in\t (%.3lf) s\n", etime);
     TRACE(TRACE_STATISTICS, "\nThroughput \t(%.3lf) trx/sec\n", 
           (double)(info.num_clients * info.num_iterations)/etime);
 
@@ -94,14 +92,3 @@ void* start_client( void* ptr) {
     return (NULL);
 }
 
-
-void wait_for_clients(pthread_t* thread_ids, int num_thread_ids)  {
-
-    // wait for client threads to receive error message
-    for (int i = 0; i < num_thread_ids; i++) {
-        // join should not really fail unless we are doing
-        // something seriously wrong...
-        int join_ret = pthread_join(thread_ids[i], NULL);
-        assert(join_ret == 0);
-    }
-}

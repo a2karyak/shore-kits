@@ -25,41 +25,43 @@
 #include <string>
 #endif
 
-#include <sstream>
-
-using std::cout;
-using std::endl;
-
-
 // How many keys to produce
-//const int MAX_KEYS = 10000;
-const int MAX_KEYS = 300;
-//const int MAX_KEYS = 30;
+const int MAX_KEYS = 100000;
 
 // How many threads will be created
-//const int NUM_THREADS = 1;
-//const int NUM_THREADS = 2;
 const int NUM_THREADS = 20;
 
-
-
 // Tree constants
-const unsigned cTwoLines = 128;
-const unsigned cINodeEntries = 4;
-const unsigned cLeafEntries = 5;
-//const unsigned cINodeEntries = 7;
-//const unsigned cLeafEntries = 14;
+
+// Config-1: 128B NODE SIZE - 4 NODEENTRIES - 5 LEAFENTRIES
+//const unsigned cNodeSize = 128;
+//const unsigned cLeafSize = 128;
+//const unsigned cINodeEntries = 4;
+//const unsigned cLeafEntries = 5;
+
+// Config-2: 1KB NODE SIZE - 62 NODEENTRIES - 124 LEAFENTRIES
+const unsigned cNodeSize = 1024;
+const unsigned cLeafSize = 1024;
+const unsigned cINodeEntries = 124;
+const unsigned cLeafEntries = 62;
+
+// Config-3: 4KB NODE SIZE -255 NODEENTRIES - 510 LEAFENTRIES
+//const unsigned cNodeSize = 4096;
+//const unsigned cLeafSize = 4096;
+//const unsigned cINodeEntries = 510;
+//const unsigned cLeafEntries = 255;
+
 const unsigned cArch = 64;
 
-const unsigned cINodePad = cTwoLines - 16 * cINodeEntries - 8;
-const unsigned cLeafPad = cTwoLines - 8 * cLeafEntries - 8;
+const unsigned cINodePad = cNodeSize - (8*cINodeEntries) - 8;
+const unsigned cLeafPad = cLeafSize - (16*cLeafEntries) - 8;
 
 // The B+ tree
 BPlusTree<int, int, cINodeEntries, cLeafEntries, cINodePad, cLeafPad, cArch> aTree;
 
 
 // Function declaration
-void checkValues();
+void checkValues(int threads, int keys);
 
 
 class bptree_loader_t : public thread_t 
@@ -67,6 +69,7 @@ class bptree_loader_t : public thread_t
 private:
 
     int _tid;
+    int _max_keys;
 
     void loadValues() {
 
@@ -75,19 +78,19 @@ private:
         // Load MAX_KEYS keys
         int avalue = 0;
 
-        for (int i = MAX_KEYS* _tid; i<MAX_KEYS*(_tid+1); i++) {
+        for (int i = (_max_keys* _tid); i<(_max_keys*(_tid+1)); i++) {
             avalue = rng();
 
-            // Modification, flips a coin and with probability 0.2 
+            // Flips a coin and with probability 0.2 
             // instead of insert makes a probe
 
             if ( (avalue % 10) < 3 ) {
-                TRACE ( TRACE_DEBUG,  "FIND K=(%d)\n", i - MAX_KEYS);
+                TRACE ( TRACE_DEBUG,  "FIND K=(%d)\n", i - _max_keys);
                 if (aTree.find(i - MAX_KEYS, &avalue)) {
-                    TRACE( TRACE_DEBUG, "Found (%d) = %d\n", i - MAX_KEYS, avalue);
+                    TRACE( TRACE_DEBUG, "Found (%d) = %d\n", i - _max_keys, avalue);
                 }
                 else {
-                    TRACE( TRACE_DEBUG, "Not Found (%d)\n", i - MAX_KEYS);
+                    TRACE( TRACE_DEBUG, "Not Found (%d)\n", i - _max_keys);
                 }
             }
             else {
@@ -99,13 +102,21 @@ private:
     
 public:
 
-    bptree_loader_t(const c_str& name, const int id)
+    bptree_loader_t(const c_str& name, const int id, const int keys)
         : thread_t(name),
           _tid(id)
     {
+
+        if (keys > 0) {
+            _max_keys = keys;
+        }
+        else {
+            _max_keys = MAX_KEYS;
+        }
+
         TRACE( TRACE_DEBUG,
-               "B+ tree loader with id (%d) constructed...\n",
-               _tid);
+               "B+ tree loader with id (%d) will load (%d) keys...\n",
+               _tid, _max_keys);
     }
 
     virtual ~bptree_loader_t() { }
@@ -119,40 +130,62 @@ public:
 }; // EOF: bptree_loader_t
 
 
-int main(void)
+int main(int argc, char* argv[]) 
 {
+    int numOfKeys = MAX_KEYS;
+    int numOfThreads = NUM_THREADS;
+
+    std::cout << aTree << "\n";
+
+    // Parse user input
+    if (argc > 2) {
+        numOfKeys = atoi(argv[2]);
+    }
+
+    if (argc > 1) {
+        numOfThreads = atoi(argv[1]);
+    }
+   
     thread_init();
 
-    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
-    //TRACE_SET( TRACE_ALWAYS );
-    
-    BOOST_STATIC_ASSERT(cTwoLines - 16 * cINodeEntries - 8);
-    BOOST_STATIC_ASSERT(cTwoLines - 16 * cLeafEntries - 8);    
+    //    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
+    TRACE_SET( TRACE_ALWAYS );
 
-    assert (cINodePad > 0);
-    assert (cLeafPad > 0);
+    TRACE ( TRACE_ALWAYS, "%s <threads> <keys>\n", argv[0]);
 
-    array_guard_t<pthread_t> bpt_loader_ids = new pthread_t[NUM_THREADS];
+    // Validate tree parameters
+    BOOST_STATIC_ASSERT((cNodeSize - 8 * cINodeEntries - 8) > 0);
+    BOOST_STATIC_ASSERT((cLeafSize - 16 * cLeafEntries - 8) > 0);
 
+    assert(cINodePad < cNodeSize);
+    assert(cLeafPad < cLeafSize);
+    assert(cINodePad > 0);
+    assert(cLeafPad > 0);
+
+    // Validate user input
+    assert (numOfThreads > 0);
+    assert (numOfKeys > 0);
+
+    TRACE( TRACE_ALWAYS, "Threads = (%d). Keys = (%d)\n", numOfThreads, numOfKeys);
+
+    array_guard_t<pthread_t> bpt_loader_ids = new pthread_t[numOfThreads];
+
+    // Start measuring experiment duration
     time_t tstart = time(NULL);
-
-    int i = 0;
 
     try {
 
         // Create loader threads
-        for (i=0; i<NUM_THREADS; i++) {
+        for (int i=0; i<numOfThreads; i++) {
 
             // Give thread a name
             c_str thr_name("BPL-%d", i+1);
 
             // Create thread context
-            bptree_loader_t* bploader = new bptree_loader_t(thr_name, i);
+            bptree_loader_t* bploader = new bptree_loader_t(thr_name, i, numOfKeys);
 
             // Create and start running thread
             bpt_loader_ids[i] = thread_create(bploader);
-                
-            //pthread_create(&tid[i], NULL, loadValues, reinterpret_cast<void*>(i));
         }
 
     }
@@ -162,16 +195,18 @@ int main(void)
         throw e;
     }
 
-    workload::workload_t::wait_for_clients(bpt_loader_ids, NUM_THREADS);
+    workload::workload_t::wait_for_clients(bpt_loader_ids, numOfThreads);
 
     time_t tstop = time(NULL);
 
     TRACE( TRACE_ALWAYS, "*******************************\n");
     TRACE( TRACE_ALWAYS, "Loading finished\n");
-    TRACE( TRACE_ALWAYS, "Keys     = %d\n", MAX_KEYS * NUM_THREADS);
-    TRACE( TRACE_ALWAYS, "Duration = %d secs\n", tstop - tstart); 
-    TRACE( TRACE_ALWAYS, "Rate     = %.2f keys/sec\n", 
-           (double)(MAX_KEYS * NUM_THREADS)/(double)(tstop - tstart));
+    TRACE( TRACE_ALWAYS, "Threads       = %d\n", numOfThreads);
+    TRACE( TRACE_ALWAYS, "KeysPerThread = %d\n", numOfKeys);
+    TRACE( TRACE_ALWAYS, "Total Keys    = %d\n", (numOfThreads * numOfKeys));
+    TRACE( TRACE_ALWAYS, "Duration      = %d secs\n", tstop - tstart); 
+    TRACE( TRACE_ALWAYS, "Rate          = %.2f keys/sec\n", 
+           (double)(numOfThreads * numOfKeys)/(double)(tstop - tstart));
     TRACE( TRACE_ALWAYS, "*******************************\n");
 
     // Print final tree data
@@ -185,11 +220,11 @@ int main(void)
  
 
 
-void checkValues()
+void checkValues(int threads, int keys)
 {    
     // Retrieve the loaded keys
     int anotherValue = 0;
-    for (int i = 0; i < NUM_THREADS * MAX_KEYS; i++) {
+    for (int i = 0; i < (threads*keys); i++) {
         if (aTree.find(i, &anotherValue)) {
             TRACE( TRACE_DEBUG, "Found (%d) = %d\n", i, anotherValue);
         }
