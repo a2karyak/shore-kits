@@ -33,28 +33,64 @@ const int NUM_THREADS = 20;
 
 // Tree constants
 
+#ifdef __SUNPRO_CC
+// (ip) In Lomond the sizes are different need configuration!
+//
+
 // Config-1: 128B NODE SIZE - 4 NODEENTRIES - 5 LEAFENTRIES
 //const unsigned cNodeSize = 128;
 //const unsigned cLeafSize = 128;
 //const unsigned cINodeEntries = 4;
 //const unsigned cLeafEntries = 5;
+//const unsigned cINodePad = 4;
+//const unsigned cLeafPad = 4;
 
-// Config-2: 1KB NODE SIZE - 62 NODEENTRIES - 124 LEAFENTRIES
+// Config-2: 1KB NODE SIZE - 79 NODEENTRIES - 120 LEAFENTRIES
 const unsigned cNodeSize = 1024;
 const unsigned cLeafSize = 1024;
-const unsigned cINodeEntries = 124;
-const unsigned cLeafEntries = 62;
+const unsigned cINodeEntries = 79;
+const unsigned cLeafEntries = 120;
+const unsigned cINodePad = 4;
+const unsigned cLeafPad = 4;
 
 // Config-3: 4KB NODE SIZE -255 NODEENTRIES - 510 LEAFENTRIES
 //const unsigned cNodeSize = 4096;
 //const unsigned cLeafSize = 4096;
 //const unsigned cINodeEntries = 510;
 //const unsigned cLeafEntries = 255;
+//const unsigned cINodePad = 4;
+//const unsigned cLeafPad = 4;
+
+#else
+
+// Config-1: 128B NODE SIZE - 4 NODEENTRIES - 5 LEAFENTRIES
+//const unsigned cNodeSize = 128;
+//const unsigned cLeafSize = 128;
+//const unsigned cINodeEntries = 4;
+//const unsigned cLeafEntries = 5;
+//const unsigned cINodePad = 4;
+//const unsigned cLeafPad = 4;
+
+// Config-2: 1KB NODE SIZE - 79 NODEENTRIES - 120 LEAFENTRIES
+const unsigned cNodeSize = 1024;
+const unsigned cLeafSize = 1024;
+const unsigned cINodeEntries = 79;
+const unsigned cLeafEntries = 120;
+const unsigned cINodePad = 4;
+const unsigned cLeafPad = 4;
+
+// Config-3: 4KB NODE SIZE -255 NODEENTRIES - 510 LEAFENTRIES
+//const unsigned cNodeSize = 4096;
+//const unsigned cLeafSize = 4096;
+//const unsigned cINodeEntries = 510;
+//const unsigned cLeafEntries = 255;
+//const unsigned cINodePad = 4;
+//const unsigned cLeafPad = 4;
+
+#endif
+
 
 const unsigned cArch = 64;
-
-const unsigned cINodePad = cNodeSize - (8*cINodeEntries) - 8;
-const unsigned cLeafPad = cLeafSize - (16*cLeafEntries) - 8;
 
 // The B+ tree
 BPlusTree<int, int, cINodeEntries, cLeafEntries, cINodePad, cLeafPad, cArch> aTree;
