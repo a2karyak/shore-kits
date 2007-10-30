@@ -2,8 +2,8 @@
 
 /** @file tpcc_payment.cpp
  *
- *  @brief Implements client that submits PAYMENT transaction according to the TPCC
- *  specification.
+ *  @brief Implements client that submits BDB-PAYMENT transactions according to
+ *   the TPC-C specification.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -84,7 +84,7 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
 
     trx_packet_t* payment_packet;
 
-    tpcc_payment::payment_input_t pin = create_payment_input(sf);
+    tpcc::payment_input_t pin = create_payment_input(sf);
     
     c_str packet_name("%s_payment_test", client_prefix.data());
 

@@ -2,8 +2,7 @@
 
 /** @file tpcc_payment_common.cpp
  *
- *  @brief Implements common functionality for the clients that submit 
- *  PAYMENT_BASELINE or PAYMENT_STAGED transactions
+ *  @brief Implements function that creates a PAYMENT input
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -12,10 +11,6 @@
 
 # include "workload/tpcc/drivers/common.h"
 # include "workload/tpcc/drivers/tpcc_payment_common.h"
-
-
-using namespace qpipe;
-using namespace tpcc_payment;
 
 
 ENTER_NAMESPACE(tpcc);

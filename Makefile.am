@@ -178,12 +178,17 @@ SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
    $(SG)/tpcc/common/payment_functions.cpp
 
+SG_INMEM_TRX = \
+   $(SG)/tpcc/inmem/inmem_payment_functions.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_baseline.cpp
+
 
 lib_libstages_a_SOURCES = \
    $(SG_MAIN) \
    $(SG_COMMON) \
    $(SG_TRX) \
-   $(SG_TRX_COMMON)
+   $(SG_TRX_COMMON) \
+   $(SG_INMEM_TRX)
 
 
 
@@ -244,11 +249,17 @@ WL_TPCC = \
    $(SW)/tpcc/drivers/tpcc_payment_single_thr.cpp
 
 
+WL_INMEM_TPCC = \
+   $(SW)/tpcc/inmem_tpcc_env.cpp \
+   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp
+
+
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
    $(WL_COMMON) \
    $(WL_TPCH) \
-   $(WL_TPCC)
+   $(WL_TPCC) \
+   $(WL_INMEM_TPCC)
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload

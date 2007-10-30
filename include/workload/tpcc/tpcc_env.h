@@ -2,7 +2,7 @@
 
 /** @file tpcc_env.h
  *
- *  @brief Definitions useful for the TPC-C database
+ *  @brief Declaration of BDB tables related with the TPC-C database
  *
  *  @author Ippokratis Pandis (ipandis)
  */

@@ -32,7 +32,7 @@
 
 void register_stage_containers(int environment) {
 
-    switch ( environment ) {
+    switch (environment) {
 
         /** OLTP stages registration */
         /** @note trx stages do not share */
@@ -50,6 +50,9 @@ void register_stage_containers(int environment) {
         break;
 
     case TRX_SHORE_ENV:
+        assert (1==0); // (ip) Not implemented yet       
+        break;
+
     case TRX_MEM_ENV:
         assert (1==0); // (ip) Not implemented yet       
         break;

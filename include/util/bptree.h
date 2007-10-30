@@ -375,6 +375,7 @@ public:
     }
 
 
+    /*
     // Overrides operator<< (for ostreams)
     template <typename AKEY, typename AVALUE, 
               uint AINODE_ENTRIES, uint ALEAF_ENTRIES,
@@ -411,6 +412,7 @@ public:
         
         return (out);
     }
+    */
 
     ////////////////////////////////////////////////////////////////
 

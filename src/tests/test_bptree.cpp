@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
     int numOfKeys = MAX_KEYS;
     int numOfThreads = NUM_THREADS;
 
-    std::cout << aTree << "\n";
+    //    std::cout << aTree << "\n";
 
     // Parse user input
     if (argc > 2) {

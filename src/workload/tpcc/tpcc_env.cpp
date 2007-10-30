@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file tpcc_env.c
+/** @file tpcc_env.cpp
  *
  *  @brief Declaration of the TPC-C database tables and indexes
  *

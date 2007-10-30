@@ -11,13 +11,13 @@
 #ifndef __TPCC_PAYMENT_SINGLE_THR_DRIVER_H
 #define __TPCC_PAYMENT_SINGLE_THR_DRIVER_H
 
-
-#include "workload/tpcc/drivers/tpcc_payment_common.h"
 #include "stages/tpcc/common/payment_functions.h"
+#include "workload/tpcc/drivers/tpcc_payment_common.h"
 
 
 using namespace qpipe;
 using namespace tpcc;
+using namespace tpcc_payment;
 
 
 ENTER_NAMESPACE(workload);

@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file tpcc_payment_baseline.cpp
+/** @file inmem_tpcc_payment_baseline.cpp
  *
- *  @brief Implements client that submits PAYMENT_BASELINE transaction requests,
+ *  @brief Implements client that submits INMEM_PAYMENT_BASELINE transaction requests,
  *  according to the TPCC specification.
  *
  *  @author Ippokratis Pandis (ipandis)
@@ -11,7 +11,7 @@
 #include "scheduler.h"
 #include "util.h"
 #include "workload/common.h"
-#include "workload/tpcc/drivers/tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.h"
 
 
 using namespace qpipe;
@@ -23,10 +23,9 @@ ENTER_NAMESPACE(workload);
 
 
 
-void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
+void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
-    s_payment_dbt_t* p_dbts = (s_payment_dbt_t*)mem;
 
     // payment_begin_packet output
     // FIXME: (ip) I don't know if we need output buffers for the PAYMENT_BEGIN
@@ -44,12 +43,11 @@ void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
 
     // payment_baseline_packet
     trx_packet_t* bp_packet = 
-	create_payment_baseline_packet( "PAYMENT_BASELINE_CLIENT_", 
-                                        bp_buffer, 
-                                        bp_filter,
-                                        dp,
-                                        p_dbts,
-                                        RANGE);
+	create_inmem_payment_baseline_packet( "INMEM_PAYMENT_BASELINE_CLIENT_", 
+                                              bp_buffer, 
+                                              bp_filter,
+                                              dp,
+                                              RANGE);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
@@ -63,19 +61,19 @@ void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
 }
 
 
-/** @fn create_payment_baseline_packet
+/** @fn create_inmem_payment_baseline_packet
  *
- *  @brief Creates a new PAYMENT_BASELINE request, given the scaling factor (sf) 
+ *  @brief Creates a new INMEM_PAYMENT_BASELINE request, given the scaling factor (sf) 
  *  of the database
  */
 
 trx_packet_t* 
-tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client_prefix, 
-                                                             tuple_fifo* bp_output_buffer,
-                                                             tuple_filter_t* bp_output_filter,
-                                                             scheduler::policy_t* dp,
-                                                             s_payment_dbt_t* p_dbts,
-                                                             int sf) 
+inmem_tpcc_payment_baseline_driver::
+create_inmem_payment_baseline_packet(const c_str &client_prefix, 
+                                     tuple_fifo* bp_output_buffer,
+                                     tuple_filter_t* bp_output_filter,
+                                     scheduler::policy_t* dp,
+                                     int sf) 
 {
     assert(sf>0);
 
@@ -85,11 +83,10 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
     
     c_str packet_name("%s_payment_test", client_prefix.data());
 
-    payment_packet = new payment_baseline_packet_t(packet_name,
-                                                   bp_output_buffer,
-                                                   bp_output_filter,
-                                                   pin,
-                                                   p_dbts);
+    payment_packet = new inmem_payment_baseline_packet_t(packet_name,
+                                                         bp_output_buffer,
+                                                         bp_output_filter,
+                                                         pin);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

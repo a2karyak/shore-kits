@@ -21,7 +21,7 @@
 #include "workload/tpcc/tpcc_tbl_parsers.h"
 
 
-#define SECOND_PADDING
+//#define SECOND_PADDING
 #define DUPLICATES_PADDING 40
 
 ENTER_NAMESPACE(tpcc);

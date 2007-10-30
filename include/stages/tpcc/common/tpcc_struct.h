@@ -2,13 +2,14 @@
 
 /** @file tpcc_struct.h
  *
- *  @brief Exports structures that we store/load from BerkeleyDB
- *         for the TPC-C database
+ *  @brief Exports structures that we store/load for the TPC-C database
+ *
+ *  @note Used for BDB/SHORE/INMEMORY implementations
  *
  *  @author Ippokratis Pandis (ipandis)
  *
- *  Comment field:
- *
+ *  @history:
+ *  10/29/07: The BPTree implementation need implementation of the ==,< operators
  */
 
 #ifndef __TPCC_STRUCT_H
@@ -23,7 +24,7 @@
 ENTER_NAMESPACE(tpcc);
 
 
-/* use this for allocation of NUL-terminated strings */
+/* use this for allocation of NULL-terminated strings */
 
 #define STRSIZE(x)(x+1)
 
@@ -77,7 +78,47 @@ struct tpcc_customer_tuple_key {
     int C_C_ID;
     int C_D_ID;
     int C_W_ID;
+
+    bool operator==(const tpcc_customer_tuple_key& rhs) const {
+        return ((C_C_ID == rhs.C_C_ID) && 
+                (C_D_ID == rhs.C_D_ID) &&
+                (C_W_ID == rhs.C_W_ID));
+    }
+    
+    bool operator<(const tpcc_customer_tuple_key& rhs) const {
+        if ((C_C_ID < rhs.C_C_ID) ||
+            ((C_C_ID == rhs.C_C_ID) && (C_D_ID < rhs.C_D_ID)) ||
+            ((C_C_ID == rhs.C_C_ID) && (C_D_ID == rhs.C_D_ID) && (C_W_ID < rhs.C_W_ID)))
+            return (true);
+        else
+            return (false);
+    }
+
 };
+
+
+struct tpcc_customer_tuple_body {
+    char C_FIRST    [STRSIZE(16)];
+    char C_MIDDLE   [STRSIZE(2)];
+    char C_LAST     [STRSIZE(16)];
+    char C_STREET_1 [STRSIZE(20)];
+    char C_STREET_2 [STRSIZE(20)];
+    char C_CITY     [STRSIZE(20)];
+    char C_STATE    [STRSIZE(2)];
+    char C_ZIP      [STRSIZE(9)];
+    char C_PHONE    [STRSIZE(16)];
+    int C_SINCE;
+    char C_CREDIT   [STRSIZE(2)];
+    decimal C_CREDIT_LIM;
+    decimal C_DISCOUNT;
+    decimal C_BALANCE;
+    decimal C_YTD_PAYMENT;
+    decimal C_LAST_PAYMENT;
+    int C_PAYMENT_CNT;
+    char C_DATA_1   [STRSIZE(250)];
+    char C_DATA_2   [STRSIZE(250)];    
+};
+
 
 
 // DISTRICT
@@ -106,7 +147,7 @@ struct tpcc_district_tuple_key {
     int D_W_ID;
 
     // padding
-    int D_PADDING_KEY;
+    //    int D_PADDING_KEY;
 };
 
 
@@ -133,6 +174,41 @@ struct tpcc_history_tuple_key {
     int H_D_ID;
     int H_W_ID;
     int H_DATE;
+
+    bool operator==(const tpcc_history_tuple_key& rhs) const {
+        return ((H_C_ID == rhs.H_C_ID) && 
+                (H_C_D_ID == rhs.H_C_D_ID) && 
+                (H_C_W_ID == rhs.H_C_W_ID) && 
+                (H_D_ID == rhs.H_D_ID) && 
+                (H_W_ID == rhs.H_W_ID) && 
+                (H_DATE == rhs.H_DATE));
+    }
+    
+    bool operator<(const tpcc_history_tuple_key& rhs) const {
+        if ((H_C_ID < rhs.H_C_ID) ||
+            ((H_C_ID == rhs.H_C_ID) && (H_C_D_ID < rhs.H_C_D_ID)) ||
+            ((H_C_ID == rhs.H_C_ID) && (H_C_D_ID == rhs.H_C_D_ID) && 
+             (H_C_W_ID < rhs.H_C_W_ID)) ||
+            ((H_C_ID == rhs.H_C_ID) && (H_C_D_ID == rhs.H_C_D_ID) && 
+             (H_C_W_ID == rhs.H_C_W_ID) && (H_D_ID < rhs.H_D_ID)) ||
+            ((H_C_ID == rhs.H_C_ID) && (H_C_D_ID == rhs.H_C_D_ID) && 
+             (H_C_W_ID == rhs.H_C_W_ID) && (H_D_ID == rhs.H_D_ID) &&
+             (H_W_ID < rhs.H_W_ID)) ||
+            ((H_C_ID == rhs.H_C_ID) && (H_C_D_ID == rhs.H_C_D_ID) && 
+             (H_C_W_ID == rhs.H_C_W_ID) && (H_D_ID == rhs.H_D_ID) &&
+             (H_W_ID == rhs.H_W_ID) && (H_DATE == rhs.H_DATE))
+            )
+            return (true);
+        else
+            return (false);
+    }
+        
+};
+
+
+struct tpcc_history_tuple_body {
+    decimal H_AMOUNT;
+    char H_DATA [STRSIZE(25)];
 };
 
 
@@ -264,7 +340,7 @@ struct tpcc_warehouse_tuple_key {
     int W_ID;
 
     // for padding purposes
-    int W_PADDING_KEY;
+    //    int W_PADDING_KEY;
 };
 
 EXIT_NAMESPACE(tpcc);
