@@ -7,8 +7,6 @@
  *  @author Ippokratis Pandis (ipandis)
  *
  *  @history:
- *  10/17/2007: Changed the calls to strtok() to the corresponding thread-safe
- *              version (strtok())
  */
 
 #include "util/trace.h"

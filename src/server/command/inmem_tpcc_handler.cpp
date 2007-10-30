@@ -1,23 +1,23 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file tpcc_handler.cpp
+/** @file inmem_tpcc_handler.cpp
  *
- *  @brief Implementation of handler of BDB-TPC-C related commands
+ *  @brief Implementation of handler of InMem-TPC-C related commands
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
 #include "core.h"
-#include "server/command/tpcc_handler.h"
+#include "server/command/inmem_tpcc_handler.h"
 #include "server/print.h"
 #include "server/config.h"
 
-#include "workload/tpcc/tpcc_db.h"
+#include "workload/tpcc/inmem_tpcc_env.h"
+//#include "workload/tpcc/tpcc_db.h"
 
-// tpcc drivers header files
-#include "workload/tpcc/drivers/tpcc_payment.h"
-#include "workload/tpcc/drivers/tpcc_payment_baseline.h"
-#include "workload/tpcc/drivers/tpcc_payment_nos.h"
+
+// InMem-TPCC drivers header files
+#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.h"
 
 
 #include "scheduler.h"
@@ -26,39 +26,41 @@ using namespace tpcc;
 using namespace workload;
 using qpipe::tuple_fifo;
 
-pthread_mutex_t tpcc_handler_t::state_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t inmem_tpcc_handler_t::state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-tpcc_handler_t::state_t tpcc_handler_t::state = TPCC_HANDLER_UNINITIALIZED;
+inmem_tpcc_handler_t::state_t inmem_tpcc_handler_t::state = INMEM_TPCC_HANDLER_UNINITIALIZED;
 
-tpcc_handler_t *tpcc_handler = NULL;
+inmem_tpcc_handler_t* inmem_tpcc_handler = NULL;
+
+
 
 /** @fn init
  *
- *  @brief Initialize TPC-C handler. 
+ *  @brief Initialize INMEM-TPC-C handler. 
 
  *  @note We must invoke db_open() to initialize our global table 
  *  environment. We must ensure that this happens exactly once, 
- *  despite the fact that we may register the same tpcc_handler_t 
- *  instance, or multiple tpcc_handler_t instances for different 
+ *  despite the fact that we may register the same inmem_tpcc_handler_t 
+ *  instance, or multiple inmem_tpcc_handler_t instances for different 
  *  command tags.
  */
 
-void tpcc_handler_t::init() {
+void inmem_tpcc_handler_t::init() {
 
     // use a global thread-safe state machine to ensure that db_open()
     // is called exactly once
 
     critical_section_t cs(state_mutex);
 
-    if ( state == TPCC_HANDLER_UNINITIALIZED ) {
+    if ( state == INMEM_TPCC_HANDLER_UNINITIALIZED ) {
 
-        // open DB tables (1.25 GB bpool)       
-        db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
+        // Create the InMemory environment instance
+        // @note The first invocation make the system to load the data
+        inmem_env = new InMemTPCCEnv();
 
         // register drivers...
-        add_driver("payment",          new tpcc_payment_driver(c_str("PAYMENT")));
-        add_driver("payment_baseline", new tpcc_payment_baseline_driver(c_str("PAYMENT_BASELINE")));
-        add_driver("payment_nos",      new tpcc_payment_nos_driver(c_str("PAYMENT_NOS")));
+        add_driver("inmem_payment_baseline", 
+                   new inmem_tpcc_payment_baseline_driver(c_str("INMEM_PAYMENT_BASELINE")));
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());
@@ -66,36 +68,39 @@ void tpcc_handler_t::init() {
         add_scheduler_policy("RR_MODULE", new scheduler::policy_rr_module_t());
         add_scheduler_policy("QUERY_CPU", new scheduler::policy_query_cpu_t());
 
-        tpcc_handler = this;
-        state = TPCC_HANDLER_INITIALIZED;
-    }
-
-
-    
+        inmem_tpcc_handler = this;
+        state = INMEM_TPCC_HANDLER_INITIALIZED;
+    }    
 }
 
 
+/** @fn shutdown
+ *
+ *  @brief Do the appropriate shutdown
+ */
 
-void tpcc_handler_t::shutdown() {
+void inmem_tpcc_handler_t::shutdown() {
 
     // use a global thread-safe state machine to ensure that
     // db_close() is called exactly once
 
     critical_section_t cs(state_mutex);
 
-    if ( state == TPCC_HANDLER_INITIALIZED ) {
+    if ( state == INMEM_TPCC_HANDLER_INITIALIZED ) {
         
-        // close DB tables
+        // close in-memory environment
         TRACE(TRACE_ALWAYS, "... closing db\n");
-	db_close();
 
-        state = TPCC_HANDLER_SHUTDOWN;
+        if (inmem_env)
+            delete inmem_env;
+
+        state = INMEM_TPCC_HANDLER_SHUTDOWN;
     }
 }
 
 
 
-void tpcc_handler_t::handle_command(const char* command) {
+void inmem_tpcc_handler_t::handle_command(const char* command) {
 
     int num_clients;
     int num_iterations;
@@ -191,19 +196,12 @@ void tpcc_handler_t::handle_command(const char* command) {
     /* Report results. We'll use the workload name for its
        description. */
     print_run_statistics(workload_name, results);
-
-    //    if (BDB_TPCC_LOGGING_METHOD == BDB_IN_MEMORY_LOGGING) {
-        /* At the end of each StageTRX command we do a checkpoint if we use
-         * in memory logging
-         */    
-    //        db_checkpoint();
-    //    }
 }
 
 
 
 
-void tpcc_handler_t::print_usage(const char* command_tag)
+void inmem_tpcc_handler_t::print_usage(const char* command_tag)
 {
     TRACE(TRACE_ALWAYS, "Usage: %s"
           " list | <driver_tag> <num_clients> <num_iterations> <think_time> <scheduler_policy_tag>"
@@ -212,7 +210,7 @@ void tpcc_handler_t::print_usage(const char* command_tag)
 }
 
 
-void tpcc_handler_t::print_run_statistics(const c_str& desc, 
+void inmem_tpcc_handler_t::print_run_statistics(const c_str& desc, 
 					  workload_t::results_t &results) 
 {
     tuple_fifo::clear_stats();
@@ -240,14 +238,14 @@ void tpcc_handler_t::print_run_statistics(const c_str& desc,
 
 
 
-void tpcc_handler_t::add_driver(const char* tag, driver_t* driver) {
+void inmem_tpcc_handler_t::add_driver(const char* tag, driver_t* driver) {
 
     add_driver(c_str(tag), driver);
 }
 
 
 
-void tpcc_handler_t::add_driver(const c_str &tag, driver_t* driver) {
+void inmem_tpcc_handler_t::add_driver(const c_str &tag, driver_t* driver) {
 
     // make sure no mapping currently exists
     assert( _drivers.find(tag) == _drivers.end() );
@@ -256,7 +254,7 @@ void tpcc_handler_t::add_driver(const c_str &tag, driver_t* driver) {
 
 
 
-void tpcc_handler_t::add_scheduler_policy(const char* tag, 
+void inmem_tpcc_handler_t::add_scheduler_policy(const char* tag, 
 					  scheduler::policy_t* dp) 
 {
     add_scheduler_policy(c_str(tag), dp);
@@ -264,7 +262,7 @@ void tpcc_handler_t::add_scheduler_policy(const char* tag,
 
 
 
-void tpcc_handler_t::add_scheduler_policy(const c_str &tag, 
+void inmem_tpcc_handler_t::add_scheduler_policy(const c_str &tag, 
 					  scheduler::policy_t* dp) 
 {
     // make sure no mapping currently exists
@@ -274,7 +272,7 @@ void tpcc_handler_t::add_scheduler_policy(const c_str &tag,
 
 
 
-driver_t* tpcc_handler_t::lookup_driver(const c_str &tag) {
+driver_t* inmem_tpcc_handler_t::lookup_driver(const c_str &tag) {
     return _drivers[tag];
 }
 

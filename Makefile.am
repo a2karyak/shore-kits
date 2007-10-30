@@ -433,6 +433,8 @@ COMMANDS = \
    $(SE)/command/load_handler.cpp \
    $(SE)/command/tpch_handler.cpp \
    $(SE)/command/tpcc_handler.cpp \
+   $(SE)/command/inmem_tpcc_handler.cpp \
+   $(SE)/command/shore_tpcc_handler.cpp \
    $(SE)/command/tracer.cpp
 
 

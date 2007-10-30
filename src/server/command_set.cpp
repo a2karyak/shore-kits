@@ -1,15 +1,27 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
+/** @file command_set.cpp
+ *
+ *  @brief Registers the appropriate set of commands
+ */
+
 #include "util.h"
 #include "server/command_set.h"
 #include "server/print.h"
 #include "server/config.h"
 #include "server/command/command_handler.h"
+
+// General purpose command handlers
 #include "server/command/printer.h"
+#include "server/command/tracer.h"
+
+// Special purpose command handlers
 #include "server/command/tpch_handler.h"
 #include "server/command/load_handler.h"
 #include "server/command/tpcc_handler.h"
-#include "server/command/tracer.h"
+#include "server/command/inmem_tpcc_handler.h"
+#include "server/command/shore_tpcc_handler.h"
+
 
 #include "workload/register_stage_containers.h"
 
@@ -45,20 +57,23 @@ bool check_quit(const char* command);
 /* definitions of exported functions */
 
 
-/**
+/** @fn register_command_handlers
+ * 
  *  @brief Register a set of command tag-command handler mappings. All
  *  command handlers should be registered here, in this function.
  *
- *  @param int - select between query and transaction processing environment
+ *  @param int - select between query and transaction processing environments
  *
  *  @return void
  */
+
 void register_command_handlers( const int environment ) {
 
     // Initialize the specified handler (by invoking the init()
     // method) and insert the handler into the command set using the
     // specified command tag.
 
+    // General Purpose command handlers
     // Utilities
     add_command("print", new printer_t());
     add_command("tracer", new tracer_t());
@@ -66,13 +81,32 @@ void register_command_handlers( const int environment ) {
     // Data Loads
     add_command("load", new load_handler_t());
 
-    if (environment == QUERY_ENV) {
-        // Query Processing
+
+    // Special Purpose command handlers
+
+    switch (environment) {
+
+        /** OLTP commands */
+
+    case TRX_BDB_ENV:
+        add_command("bdbtpcc", new tpcc_handler_t());
+        break;
+
+    case TRX_SHORE_ENV:
+        add_command("shoretpcc", new shore_tpcc_handler_t());
+        break;
+
+    case TRX_MEM_ENV:
+        add_command("inmemtpcc", new inmem_tpcc_handler_t());
+        break;
+
+
+        /** DSS commands */
+
+    case QUERY_ENV:
+    default:
         add_command("tpch",  new tpch_handler_t());
-    }
-    else {
-        // Trx Processing
-        add_command("tpcc", new tpcc_handler_t());
+        break;
     }
 }
 

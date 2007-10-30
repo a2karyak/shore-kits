@@ -2,7 +2,7 @@
 
 /** @file inmem_tpcc_env.h
  *
- *  @brief Definitions useful for the TPC-C database
+ *  @brief Definition of the InMemory TPC-C environment
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -10,6 +10,7 @@
 #ifndef __INMEM_TPCC_ENV_H
 #define __INMEM_TPCC_ENV_H
 
+#include "util/guard.h"
 #include "util/namespace.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 
@@ -22,6 +23,8 @@
 ENTER_NAMESPACE(tpcc);
 
 /* constants */
+
+#define INMEM_TPCC_DATA_DIR "tpcc_sf"
 
 #define SCALING_FACTOR 1
 #define WAREHOUSE_FANOUT 1
@@ -40,24 +43,62 @@ ENTER_NAMESPACE(tpcc);
 #define cArch 64
 
 
-/* pointers to B+ tree and Arrays */
+////////////////////////////////////////////////////////////////////////
 
-/* Arrays: WAREHOUSE, DISTRICT */
+/** @class InMemTPCCEnv
+ *  
+ *  @brief Class that contains the various data structures used in the
+ *  In-Memory TPC-C environment.
+ */
 
-extern lathedArray<tpcc_warehouse_tuple, SCALING_FACTOR, WAREHOUSE_FANOUT> im_warehouses;
+class InMemTPCCEnv 
+{
+private:    
 
-extern lathedArray<tpcc_district_tuple, SCALING_FACTOR, DISTRICT_FANOUT> im_districts;
+
+    /** Private functions */
+
+    int loaddata(c_str loadDir);
+
+
+public:
+
+    /** Member variables */
+
+    /* Arrays: WAREHOUSE, DISTRICT */
+
+    lathedArray<tpcc_warehouse_tuple, 
+                SCALING_FACTOR, 
+                WAREHOUSE_FANOUT> im_warehouses;
+
+    lathedArray<tpcc_district_tuple, 
+                SCALING_FACTOR, 
+                DISTRICT_FANOUT> im_districts;
+
+    /* BPTrees: CUSTOMER, HISTORY */
+
+    BPlusTree<tpcc_customer_tuple_key, tpcc_customer_tuple_body,
+              cCustNodeEntries, cCustLeafEntries,
+              cCustNodePad, cCustLeafPad, cArch> im_customers;
+
+    BPlusTree<tpcc_history_tuple_key, tpcc_history_tuple_body,
+              cHistNodeEntries, cHistLeafEntries,
+              cHistNodePad, cHistLeafPad, cArch> im_histories;
 
 
 
-/* BPTrees: CUSTOMER, HISTORY */
-extern BPlusTree<tpcc_customer_tuple_key, tpcc_customer_tuple_body,
-                 cCustNodeEntries, cCustLeafEntries,
-                 cCustNodePad, cCustLeafPad, cArch> im_customers;
+    /** Construction  */
 
-extern BPlusTree<tpcc_history_tuple_key, tpcc_history_tuple_body,
-                 cHistNodeEntries, cHistLeafEntries,
-                 cHistNodePad, cHistLeafPad, cArch> im_histories;
+    InMemTPCCEnv() {
+        // Loads the data from the INMEM_TPCC_DATA_DIR folder
+        loaddata(c_str(INMEM_TPCC_DATA_DIR));
+    }
+
+
+    ~InMemTPCCEnv() { }
+
+
+}; // EOF InMemTPCCEnv
 
 
 EXIT_NAMESPACE(tpcc);

@@ -447,13 +447,16 @@ private:
 
         // Prints out the Keys of the InnerNode
         for (i=0; i<iNodeKeys; i++) {
-            TRACE( TRACE_DEBUG, "PL=(%d) K=(%d)\n", i, aInnerNode->keys[i]);
+            /*
+            TRACE( TRACE_DEBUG, "PL=(%d) K=(%d)\n", i, 
+                   aInnerNode->keys[i]);
+            */
         }            
 
         // Calls the print function for the children        
         if (localDepth == 0) {
             // The children are leaf nodes
-            for (i=0; i<iNodeKeys+1; i++) {
+            for (i=0; i<iNodeKeys+1; i++) {                
                 printLeaf(reinterpret_cast<LeafNode*>(aInnerNode->children[i]), 
                           localDepth);
             }
@@ -495,8 +498,11 @@ private:
 
         // Prints out the Entries of the LeafNode
         for (i=0; i<iLeafEntries; i++) {
-            TRACE( TRACE_DEBUG, "PL=(%d) K=(%d) V=(%d)\n", 
-                   i, aLeafNode->keys[i],  aLeafNode->values[i]);
+            /*
+            TRACE( TRACE_DEBUG, "PL=(%d) K=(%d) V=(%d)\n", i,
+            aLeafNode->keys[i], 
+            aLeafNode->values[i]);
+            */
         }            
 
         // Reading completed, unlocks the node
@@ -800,9 +806,11 @@ private:
             node->num_keys++;
         }
 
+        /*
         // print debug info
         TRACE( TRACE_DEBUG, "\nEntry: K=(%d) V=(%d). At Leaf=(%p) IDX=(%d) #KEYS=(%d)\n",
-               key, value, node, index, node->num_keys);
+        key,value, node, index, node->num_keys);
+        */
 
         // Insertion completed, unlocks the node
         TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", node);

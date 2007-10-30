@@ -592,5 +592,5 @@ void s_payment_dbt_t::reset() {
 
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(tpcc_payment);
 

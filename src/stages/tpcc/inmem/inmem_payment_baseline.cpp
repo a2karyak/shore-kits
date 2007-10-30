@@ -10,7 +10,7 @@
 #include "stages/tpcc/inmem/inmem_payment_baseline.h"
 #include "stages/tpcc/common/payment_functions.h"
 
-#include "workload/tpcc/tpcc_env.h"
+#include "workload/tpcc/inmem_tpcc_env.h"
 
 using namespace qpipe;
 using namespace tpcc_payment;
@@ -50,8 +50,10 @@ void inmem_payment_baseline_stage_t::process_packet() {
     // Prints out the packet info
     packet->describe_trx();
 
-    trx_result_tuple_t aTrxResultTuple = executeInMemPaymentBaseline(&packet->_p_in,
-                                                                     packet->get_trx_id());
+    trx_result_tuple_t aTrxResultTuple = 
+        executeInMemPaymentBaseline(&packet->_p_in,
+                                    packet->get_trx_id(),
+                                    inmem_env);
     
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );

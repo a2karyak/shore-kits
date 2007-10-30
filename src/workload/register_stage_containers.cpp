@@ -36,6 +36,7 @@ void register_stage_containers(int environment) {
 
         /** OLTP stages registration */
         /** @note trx stages do not share */
+
     case TRX_BDB_ENV:
         /*
         register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
@@ -54,7 +55,7 @@ void register_stage_containers(int environment) {
         break;
 
     case TRX_MEM_ENV:
-        assert (1==0); // (ip) Not implemented yet       
+        register_stage<inmem_payment_baseline_stage_t>(MAX_NUM_TRXS, false);
         break;
 
         /** DSS stages registration */

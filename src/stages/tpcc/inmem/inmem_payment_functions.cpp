@@ -10,13 +10,18 @@
 
 #include "util/exception.h"
 #include "stages/tpcc/inmem/inmem_payment_functions.h"
-#include "workload/tpcc/inmem_tpcc_env.h"
 
 
 using namespace qpipe;
+using namespace tpcc;
 
 
 ENTER_NAMESPACE(tpcc_payment);
+
+
+/** Exported variable */
+
+InMemTPCCEnv* inmem_env = NULL;
 
 
 /** Forward declaration of helper functions */
@@ -41,10 +46,13 @@ void updateInMemCustomerData(tpcc_customer_tuple_key ck,
  *  @return 0 on success, non-zero on failure
  */
 
-int insertInMemHistory(payment_input_t* pin) {
-
+int insertInMemHistory(payment_input_t* pin, 
+                       InMemTPCCEnv* env) 
+{
     /////////////////////////////
     ///// START INS_HISTORY /////
+
+    assert (env); // ensure that we have a valid environment
     
     TRACE( TRACE_TRX_FLOW, "Step 5: Inserting a new row in HISTORY table\n");
     
@@ -70,7 +78,7 @@ int insertInMemHistory(payment_input_t* pin) {
     hk.H_DATE = pin->_h_date;
 
     // Assume that insertion always succeeds
-    im_histories.insert(hk, htb);
+    env->im_histories.insert(hk, htb);
     
     return (0);
 
@@ -87,10 +95,13 @@ int insertInMemHistory(payment_input_t* pin) {
  *  @return 0 on success, non-zero on failure
  */
 
-int updateInMemCustomer(payment_input_t* pin) {
-
+int updateInMemCustomer(payment_input_t* pin,
+                        InMemTPCCEnv* env) 
+{
     //////////////////////////////
     ///// START UPD_CUSTOMER /////
+
+    assert (env); // ensure that we have a valid environment
 
     // FIXME (ip) : It always chooses the customer by id. It should be 40.
     if (pin->_v_cust_ident_selection < 0) {
@@ -99,7 +110,7 @@ int updateInMemCustomer(payment_input_t* pin) {
         /** Step 4b: Retrieve CUSTOMER based on C_LAST */
         TRACE( TRACE_TRX_FLOW, 
                "Step 4b: Retrieving and Updating the row in the CUSTOMER table " \
-               "with matching C_W_ID=%d and C_D_ID=%d and C_LAST=%s\n",
+               "with matching C_W_ID=(%d) and C_D_ID=(%d) and C_LAST=(%s)\n",
                pin->_home_wh_id,
                pin->_home_d_id, 
                pin->_c_last);
@@ -107,13 +118,14 @@ int updateInMemCustomer(payment_input_t* pin) {
         return (updateInMemCustomerByLast(pin->_home_wh_id, 
                                           pin->_home_d_id, 
                                           pin->_c_last, 
-                                          pin->_h_amount));
+                                          pin->_h_amount,
+                                          env));
     }
     else {
         /** Step 4a: Retrieve CUSTOMER based on C_ID */
         TRACE( TRACE_TRX_FLOW, 
                "Step 4a: Retrieving and Updating the row in the CUSTOMER table " \
-               "with matching C_W_ID=%d and C_D_ID=%d and C_ID=%d\n",
+               "with matching C_W_ID=(%d) and C_D_ID=(%d) and C_ID=(%d)\n",
                pin->_home_wh_id,
                pin->_home_d_id, 
                pin->_c_id);
@@ -121,91 +133,14 @@ int updateInMemCustomer(payment_input_t* pin) {
         return (updateInMemCustomerByID(pin->_home_wh_id, 
                                         pin->_home_d_id, 
                                         pin->_c_id, 
-                                        pin->_h_amount));
+                                        pin->_h_amount,
+                                        env));
     }
 
     // It should never reach this point, return error
     return (1);
     
     ///// EOF UPD_CUSTOMER /////
-    ////////////////////////////
-}
-
-
-
-/** @fn updateInMemDistrict
- *  
- *  @brief Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
- *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
- *  D_YTD is increased by H_AMOUNT.
- *
- *
- *  @note For the in-memory version the Districts are stored in an array. We access the
- *  
- *  
- *  @return 0 on success, non-zero on failure
- */
-
-int updateInMemDistrict(payment_input_t* pin) {
-
-    //////////////////////////////
-    ///// START UPD_DISTRICT /////
-    
-    TRACE( TRACE_TRX_FLOW, 
-           "Step 3: Updating the row in the DISTRICT table with matching " \
-           "D_ID=%d and D_W_ID=%d\n", 
-           pin->_home_d_id, 
-           pin->_home_wh_id);
-    
-    // DISTRICT key: D_ID, D_W_ID 
-    tpcc_district_tuple_key dk;
-    dk.D_ID = pin->_home_d_id;
-    dk.D_W_ID = pin->_home_wh_id;
-
-    // Calculate index in array
-    int idx = (dk.D_W_ID * 10) + dk.D_ID;
-    tpcc_district_tuple* district = NULL;
-
-    // Get the entry
-    if ((district = im_districts.write(idx)) == NULL) {
-        // No entry returned
-        THROW2(TrxException, "Called Districts.write(%d)\n", idx);
-        return (1);
-    }
-    else if ( (district->D_ID != dk.D_ID) || (district->D_W_ID != dk.D_W_ID) ) {
-        // Entry returned but keys do not match
-        // Should abort, but also unlock that entry
-        THROW3(TrxException, 
-               "District with id=(%d,%d) not found in the database\n", 
-               dk.D_ID,
-               dk.D_W_ID);    
-        
-        if (im_districts.release(idx)) {
-            // Error while trying to release entry
-            THROW2(TrxException, "Called Districts.release(%d)\n", idx);
-        }
-        return (1);
-    }
-
-    // If we reached this point we have the valid entry.
-    // We can update and release lock
-    
-    assert(district); // make sure that we got a district
-
-    // Update district
-    district->D_YTD += pin->_h_amount;
-
-    // Release district
-    if (im_districts.release(idx)) {
-        // Error while trying to release entry
-        THROW2(TrxException, "Called Districts.release(%d)\n", idx);
-        return (1);
-    }    
-
-    // Assume always success if this point is reached
-    return (0);
-    
-    ///// EOF UPD_DISTRICT /////
     ////////////////////////////
 }
 
@@ -220,10 +155,13 @@ int updateInMemDistrict(payment_input_t* pin) {
  *  @return 0 on success, non-zero on failure
  */
 
-int updateInMemWarehouse(payment_input_t* pin) {
-
+int updateInMemWarehouse(payment_input_t* pin, int* idx,
+                        InMemTPCCEnv* env) 
+{
     ///////////////////////////////
     ///// START UPD_WAREHOUSE /////    
+
+    assert (env); // ensure that we have a valid environment
         
     TRACE( TRACE_TRX_FLOW, 
            "Step 2: Updating the row in the WAREHOUSE table with matching W_ID=%d\n", 
@@ -233,26 +171,32 @@ int updateInMemWarehouse(payment_input_t* pin) {
     //tpcc_warehouse_tuple_key wk;
 
     // Calculate index in array
-    int idx = pin->_home_wh_id;
+    *idx = pin->_home_wh_id;
     tpcc_warehouse_tuple* warehouse = NULL;
 
     // Get the entry
-    if ((warehouse = im_warehouses.write(idx)) == NULL) {
+    if ((warehouse = env->im_warehouses.write(*idx)) == NULL) {
         // No entry returned
-        THROW2(TrxException, "Called Warehouses.write(%d)\n", idx);
+        *idx = -1;
+        THROW2(TrxException, "Called Warehouses.write(%d)\n", *idx);
         return (1);
     }
     else if (warehouse->W_ID != pin->_home_wh_id) {
         // Entry returned but keys do not match
         // Should abort, but also unlock that entry
+        
+        if (env->im_warehouses.release(*idx)) {
+            // Error while trying to release entry
+            *idx = -1;
+            THROW2(TrxException, "Called Warehouses.release(%d)\n", 
+                   pin->_home_wh_id);
+        }
+
+        *idx = -1;
         THROW2(TrxException, 
                "Warehouse with id=(%d) not found in the database\n", 
-               idx);    
-        
-        if (im_warehouses.release(idx)) {
-            // Error while trying to release entry
-            THROW2(TrxException, "Called Warehouses.release(%d)\n", idx);
-        }
+               pin->_home_wh_id);    
+
         return (1);
     }
 
@@ -264,19 +208,100 @@ int updateInMemWarehouse(payment_input_t* pin) {
     // Update warehouse
     warehouse->W_YTD += pin->_h_amount;
 
-    // Release district
-    if (im_warehouses.release(idx)) {
-        // Error while trying to release entry
-        THROW2(TrxException, "Called Warehouses.release(%d)\n", idx);
-        return (1);
-    }    
-
     // Assume always success if this point is reached
     return (0);
 
     ///// EOF UPD_WAREHOUSE //////
     //////////////////////////////
 }
+
+
+
+
+/** @fn updateInMemDistrict
+ *  
+ *  @brief Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
+ *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE and D_ZIP are retrieved.
+ *  D_YTD is increased by H_AMOUNT.
+ *
+ *  @note For the in-memory version the Districts are stored in an array. 
+ *  We access the array through the latchedArray interface which returns
+ *  the entries locked. On sucess the idx of the updated entry is propagated
+ *  to the caller function. Otherwise, it tries to unlock here.
+ *  
+ *  @return 0 on success, non-zero on failure
+ */
+
+int updateInMemDistrict(payment_input_t* pin, int* idx,
+                        InMemTPCCEnv* env) 
+{
+    //////////////////////////////
+    ///// START UPD_DISTRICT /////
+
+    assert (env); // ensure that we have a valid environment
+    
+    TRACE( TRACE_TRX_FLOW, 
+           "Step 3: Updating the row in the DISTRICT table with matching " \
+           "D_ID=%d and D_W_ID=%d\n", 
+           pin->_home_d_id, 
+           pin->_home_wh_id);
+    
+    // DISTRICT key: D_ID, D_W_ID 
+    tpcc_district_tuple_key dk;
+    dk.D_ID = pin->_home_d_id;
+    dk.D_W_ID = pin->_home_wh_id;
+    tpcc_district_tuple* district;
+
+    // Calculate index in array
+    *idx = (dk.D_W_ID * 10) + dk.D_ID;
+
+    // Get the entry
+    if ((district = env->im_districts.write(*idx)) == NULL) {
+        // No entry returned
+        *idx = -1;
+        THROW3(TrxException, "Called Districts.write(%d,%d)\n",
+               dk.D_ID,
+               dk.D_W_ID);
+        return (1);
+    }
+    else if ( (district->D_ID != dk.D_ID) || 
+              (district->D_W_ID != dk.D_W_ID) ) 
+        {
+            // Entry returned but keys do not match
+            // Should abort, but also unlock that entry
+            if (env->im_districts.release(*idx)) {
+                // Error while trying to release entry
+                *idx = -1;
+                THROW3(TrxException, "Called Districts.release(%d,%d)\n",
+                       dk.D_ID,
+                       dk.D_W_ID);
+            }
+
+            *idx = -1;
+            THROW3(TrxException, 
+                   "District with id=(%d,%d) not found in the database\n", 
+                   dk.D_ID,
+                   dk.D_W_ID);    
+
+            return (1);
+        }
+
+    // If we reached this point we have the valid entry.
+    // We can update it. The lock will be released inside the
+    // caller (executeInMemPaymentX()) function
+    
+    assert(district); // make sure that we got a district
+
+    // Update district
+    district->D_YTD += pin->_h_amount;
+
+    // Assume always success if this point is reached
+    return (0);
+    
+    ///// EOF UPD_DISTRICT /////
+    ////////////////////////////
+}
+
 
 
 
@@ -298,8 +323,11 @@ int updateInMemWarehouse(payment_input_t* pin) {
 int updateCustomerByID(int wh_id, 
                        int d_id, 
                        int c_id, 
-                       decimal h_amount)
+                       decimal h_amount,
+                       InMemTPCCEnv* env)
 {
+    assert (env); // ensure that we have a valid environment
+
     tpcc_customer_tuple_key ck;
     ck.C_C_ID = c_id;
     ck.C_D_ID = d_id;
@@ -307,7 +335,7 @@ int updateCustomerByID(int wh_id,
 
     tpcc_customer_tuple_body pcb;
 
-    if (im_customers.find(ck, &pcb) == false) {
+    if (env->im_customers.find(ck, &pcb) == false) {
         THROW4( BdbException,
                 "Customer with id=(%d,%d,%d) not found in the database\n", 
                 ck.C_C_ID,
@@ -347,7 +375,7 @@ int updateCustomerByID(int wh_id,
     // Update the Customer
     // @note In the BPTree implementation in order to update simply insert
     // with the same key
-    im_customers.insert(ck, pcb);
+    env->im_customers.insert(ck, pcb);
 
     // Assume success if this point is reached
     return (0);
@@ -372,12 +400,15 @@ int updateCustomerByID(int wh_id,
  *  
  *  @return 0 on success, non-zero on failure
  */
-    
+
 int updateInMemCustomerByLast(int wh_id, 
                               int d_id, 
                               char* c_last,
-                              decimal h_amount)
+                              decimal h_amount,
+                              InMemTPCCEnv* env)
 {
+    assert (env); // ensure that we have a valid environment
+
     assert(1==0); // FIXME (ip) Not implemented yet
 
     int iResult = 0;
@@ -462,73 +493,143 @@ void updateInMemCustomerData(tpcc_customer_tuple_key ck,
  *
  *  @brief Executes the INMEM_PAYMENT transaction serially. Wrapper function.
  *  
+ *  @note The latches on the Warehouse and District entries are released here
+ *
  *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
 trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
-                                               const int id)
+                                               const int id, 
+                                               InMemTPCCEnv* env)
 {        
+    assert (env); // ensure that we have a valid environment
+
     // initialize the result structure
     trx_result_tuple_t aTrxResultTuple(UNDEF, id);
+
+    int myDistrictIdx = -1;
+    int myWarehouseIdx = -1;
     
     try {
         
-       TRACE( TRACE_TRX_FLOW, "*** EXECUTING INMEM-TRX CONVENTIONALLY ***\n");
+        TRACE( TRACE_TRX_FLOW, "*** EXECUTING INMEM-TRX CONVENTIONALLY ***\n");
     
-       /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
+        /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
+    
+
+        /** Step 1: The database transaction is started */
+        TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
+
+        if (updateInMemWarehouse(pin, &myWarehouseIdx, env)) {
+            
+            // Failed. Throw exception
+            THROW1( TrxException, 
+                    "WAREHOUSE update failed...\n");
+        }
+
+
+        if (updateInMemDistrict(pin, &myDistrictIdx, env)) {
+            
+            // Failed. Throw exception
+            THROW1( TrxException, 
+                    "DISTRICT update failed...\n");
+        }
+
+
+        if (updateInMemCustomer(pin, env)) {
+            // Failed. Throw exception
+            THROW1( TrxException,
+                    "CUSTOMER update failed...\n");
+        }
+
+        if (insertInMemHistory(pin, env)) {
+
+            // Failed. Throw exception
+            THROW1( TrxException, 
+                    "HISTORY instertion failed...\n");
+        }
 
     
-       /** Step 1: The database transaction is started */
-       TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
+        /** Step 6: The database transaction is committed */
+        TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
 
-       if (updateInMemWarehouse(pin)) {
-           
-           // Failed. Throw exception
-           THROW1( TrxException, 
-                   "WAREHOUSE update failed...\n");
-       }
+        // Releases the locks in the Warehouse and the District
+        // In reverse order. That is, it first releases the District
+        // and then the Warehouse.
 
-
-       if (updateInMemDistrict(pin)) {
-           
-           // Failed. Throw exception
-           THROW1( TrxException, 
-                   "DISTRICT update failed...\n");
-       }
+        // Release district
+        if (env->im_districts.release(myDistrictIdx)) {
+            // Error while trying to release entry
+            THROW2(TrxException, "Called Districts.release(%d)\n", 
+                   myDistrictIdx);
+        }    
 
 
-       if (updateInMemCustomer(pin)) {
-           // Failed. Throw exception
-           THROW1( TrxException,
-                   "CUSTOMER update failed...\n");
-       }
+        // Release warehouse
+        if (env->im_warehouses.release(myWarehouseIdx)) {
+            // Error while trying to release entry
+            THROW2(TrxException, "Called Warehouses.release(%d)\n", 
+                   myWarehouseIdx);
+        }    
 
-       if (insertInMemHistory(pin)) {
+    }        
+    catch(TrxException e) {
+        TRACE( TRACE_ALWAYS, "TrxException Exception - Aborting PAYMENT trx...\n");
 
-           // Failed. Throw exception
-           THROW1( TrxException, 
-                   "HISTORY instertion failed...\n");
-       }
+        // Release district
+        if (myDistrictIdx >= 0) {
+            if (env->im_districts.release(myDistrictIdx)) {
+                // Error while trying to release entry
+                THROW2(TrxException, "Called Districts.release(%d)\n", 
+                       myDistrictIdx);
+            }
+        }    
 
-    
-       /** Step 6: The database transaction is committed */
-       TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
-    }
-    catch(DbException err) {
 
-        TRACE( TRACE_ALWAYS, "DbException - Aborting PAYMENT trx...\n");	    
+        // Release warehouse
+        if  (myWarehouseIdx >= 0) {
+            if (env->im_warehouses.release(myWarehouseIdx)) {
+                // Error while trying to release entry
+                THROW2(TrxException, "Called Warehouses.release(%d)\n", 
+                       myWarehouseIdx);
+            }    
+        }
+        
+
         aTrxResultTuple.set_state(ROLLBACKED);
         return (aTrxResultTuple);
+    }
+    catch(...) {
+        TRACE( TRACE_ALWAYS, "Unknown Exception - Aborting PAYMENT trx...\n");
+
+
+        // Release district
+        if (myDistrictIdx >= 0) {
+            if (env->im_districts.release(myDistrictIdx)) {
+                // Error while trying to release entry
+                THROW2(TrxException, "Called Districts.release(%d)\n", 
+                       myDistrictIdx);
+            }
+        }    
+
+
+        // Release warehouse
+        if  (myWarehouseIdx >= 0) {
+            if (env->im_warehouses.release(myWarehouseIdx)) {
+                // Error while trying to release entry
+                THROW2(TrxException, "Called Warehouses.release(%d)\n", 
+                       myWarehouseIdx);
+            }    
+        }
         
+
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
+
         // FIXME (ip): We may want to have retries
         //if (++failed_tries > MAX_TRIES) {
         //   txn->abort();
         //   TRACE( TRACE_ALWAYS, "MAX_FAILS - Aborting...\n");        
-    }
-    catch(...) {
-        TRACE( TRACE_ALWAYS, "Unknown Exception - Aborting PAYMENT trx...\n");
-        aTrxResultTuple.set_state(ROLLBACKED);
-        return (aTrxResultTuple);
     }
 
     // if reached this point transaction succeeded
@@ -539,5 +640,5 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
 
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(tpcc_payment);
 

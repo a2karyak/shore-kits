@@ -23,7 +23,7 @@ ENTER_NAMESPACE(workload);
 
 
 
-void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
+void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 

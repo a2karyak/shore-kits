@@ -2,7 +2,7 @@
 
 /** @file inmem_tpcc_env.cpp
  *
- *  @brief Declaration of the InMemory TPC-C database data structures
+ *  @brief Declaration of the InMemory TPC-C environment
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -11,24 +11,14 @@
 
 using namespace tpcc;
 
-/* exported data structures */
+/** Exported functions */
 
+int InMemTPCCEnv::loaddata(c_str loadDir) {
 
-/** Arrays: WAREHOUSE, DISTRICT */
+    TRACE( TRACE_DEBUG, "Getting data from (%s)\n", loadDir.data());
 
+    assert (1==0); // (ip) Not implemented yet!!!
 
-lathedArray<tpcc_warehouse_tuple, SCALING_FACTOR, WAREHOUSE_FANOUT> im_warehouses;
-
-lathedArray<tpcc_district_tuple, SCALING_FACTOR, DISTRICT_FANOUT> im_districts;
-
-
-/** BPTrees: CUSTOMER, HISTORY */
-
-BPlusTree<tpcc_customer_tuple_key, tpcc_customer_tuple_body,
-          cCustNodeEntries, cCustLeafEntries,
-          cCustNodePad, cCustLeafPad, cArch> im_customers;
-
-BPlusTree<tpcc_history_tuple_key, tpcc_history_tuple_body,
-          cHistNodeEntries, cHistLeafEntries,
-          cHistNodePad, cHistLeafPad, cArch> im_histories;
+    return (0);
+}
 
