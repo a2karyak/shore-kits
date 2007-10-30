@@ -8,7 +8,7 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "util/exception.h"
+
 #include "stages/tpcc/inmem/inmem_payment_functions.h"
 
 
@@ -320,11 +320,12 @@ int updateInMemDistrict(payment_input_t* pin, int* idx,
  *  @return 0 on success, non-zero on failure
  */
     
-int updateCustomerByID(int wh_id, 
-                       int d_id, 
-                       int c_id, 
-                       decimal h_amount,
-                       InMemTPCCEnv* env)
+
+int updateInMemCustomerByID(int wh_id, 
+			    int d_id, 
+			    int c_id, 
+                            decimal h_amount, 
+			    InMemTPCCEnv* env)
 {
     assert (env); // ensure that we have a valid environment
 
@@ -384,7 +385,7 @@ int updateCustomerByID(int wh_id,
 
 
 
-/** @fn updateCustomerByLast
+/** @fn updateInMemCustomerByLast
  *
  *  @brief Step 4, Case 2: The customer is selected based on customer last name.
  *  That is, all rows in the CUSTOMER table with matching C_W_ID, C_D_ID and C_LAST
@@ -429,7 +430,7 @@ int updateInMemCustomerByLast(int wh_id,
 }
     
     
-/** @fn updateCustomerData
+/** @fn updateInMemCustomerData
  *
  *  @brief If the value of C_CREDIT is equal to "BC", then the following history
  *  information: C_ID, C_D_ID, C_W_ID, D_ID, W_ID, and H_AMOUNT, are inserted at
@@ -489,7 +490,7 @@ void updateInMemCustomerData(tpcc_customer_tuple_key ck,
 
 
 
-/** @fn executePaymentBaseline
+/** @fn executeInMemPaymentBaseline
  *
  *  @brief Executes the INMEM_PAYMENT transaction serially. Wrapper function.
  *  

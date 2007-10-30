@@ -42,10 +42,13 @@ int updateInMemWarehouse(payment_input_t* pin, int* idx,
                          InMemTPCCEnv* env);
 
 int updateInMemCustomerByID(int wh_id, int d_id, int c_id, 
-                            decimal h_amount, InMemTPCCEnv* env);
+                            decimal h_amount, 
+			    InMemTPCCEnv* env);
 
-int updateInMemCustomerByLast(int wh_id, int d_id, char* c_last,
-                              decimal h_amount, InMemTPCCEnv* env);
+int updateInMemCustomerByLast(int wh_id, int d_id, 
+			      char* c_last,
+                              decimal h_amount, 
+			      InMemTPCCEnv* env);
 
 
 // implementation of the single-threaded version of the inmemory payment
