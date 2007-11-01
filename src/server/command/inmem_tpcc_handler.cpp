@@ -110,7 +110,7 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
     // parse command
     char driver_tag[SERVER_COMMAND_BUFFER_SIZE];
     char scheduler_policy_tag[SERVER_COMMAND_BUFFER_SIZE];
-    
+
 
     // parse driver tag
     if ( sscanf(command, "%*s %s", driver_tag) < 1 ) {
@@ -118,6 +118,13 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
         int command_found = sscanf(command, "%s", command_tag);
         assert(command_found == 1);
         print_usage(command_tag);
+        return;
+    }
+
+    
+    // 'dump' tag handled differently. It dumps  in memory data
+    if (!strcmp(driver_tag, "dump")) {
+        inmem_env->dump();
         return;
     }
 
@@ -133,8 +140,8 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
 
         return;
     }
-   
-    
+
+    // scans run options
     if ( sscanf(command, "%*s %*s %d %d %d %s",
                 &num_clients,
                 &num_iterations,

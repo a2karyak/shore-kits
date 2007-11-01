@@ -133,6 +133,22 @@ public:
       return (1);
     }
 
+
+    /** @fn dump
+     *
+     *  @brief Dumps the contents of the array
+     *
+     *  @note Very inefficient, should used only for debugging
+     */
+
+    void dump() {
+        for (int idx=0; idx<SF*FANOUT; idx++) {
+            pthread_rwlock_wrlock(&_array_rwlock[idx]);
+            TRACE( TRACE_DEBUG, "%d %s\n", idx, _array[idx].tuple_to_str().data());
+            pthread_rwlock_unlock(&_array_rwlock[idx]);        
+        }
+    }
+
 }; // EOF latchedArray
 
 

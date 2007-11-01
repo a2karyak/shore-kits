@@ -171,7 +171,7 @@ int updateInMemWarehouse(payment_input_t* pin, int* idx,
     //tpcc_warehouse_tuple_key wk;
 
     // Calculate index in array
-    *idx = pin->_home_wh_id;
+    *idx = (pin->_home_wh_id - 1);
     tpcc_warehouse_tuple* warehouse = NULL;
 
     // Get the entry
@@ -252,8 +252,8 @@ int updateInMemDistrict(payment_input_t* pin, int* idx,
     dk.D_W_ID = pin->_home_wh_id;
     tpcc_district_tuple* district;
 
-    // Calculate index in array
-    *idx = (dk.D_W_ID * 10) + dk.D_ID;
+    // Calculate index in the array
+    *idx = ((dk.D_W_ID - 1) * 10) + (dk.D_ID - 1);
 
     // Get the entry
     if ((district = env->im_districts.write(*idx)) == NULL) {

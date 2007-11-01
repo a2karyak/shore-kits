@@ -35,10 +35,14 @@ ENTER_NAMESPACE(tpcc);
 
 DECLARE_TPCC_PARSER(ITEM, tpcc_item_tuple_key, tpcc_item_tuple, "i4", true);
 DECLARE_TPCC_PARSER(NEW_ORDER, tpcc_new_order_tuple, int, "i4i4i4", false);
-DECLARE_TPCC_PARSER(HISTORY, tpcc_history_tuple_key, tpcc_history_tuple, "i4i4i4i4i4i4", true);
 DECLARE_TPCC_PARSER(ORDER, tpcc_order_tuple_key, tpcc_order_tuple, "i4i4i4i4", true);
 DECLARE_TPCC_PARSER(DISTRICT, tpcc_district_tuple_key, tpcc_district_tuple, "i4i4", true);
 DECLARE_TPCC_PARSER(WAREHOUSE, tpcc_warehouse_tuple_key, tpcc_warehouse_tuple, "i4", true);
+
+//DECLARE_TPCC_PARSER(HISTORY, tpcc_history_tuple_key, tpcc_history_tuple, "i4i4i4i4i4i4", true);
+DECLARE_TPCC_PARSER(HISTORY, tpcc_history_tuple_key, tpcc_history_tuple_body, "i4i4i4i4i4i4", true);
+
+DECLARE_TPCC_PARSER(CUSTOMER, tpcc_customer_tuple_key, tpcc_customer_tuple_body, "i4i4i4", true);
 
 #undef DECLARE_TPCC_PARSER
 

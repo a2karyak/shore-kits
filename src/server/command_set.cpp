@@ -89,15 +89,15 @@ void register_command_handlers( const int environment ) {
         /** OLTP commands */
 
     case TRX_BDB_ENV:
-        add_command("bdbtpcc", new tpcc_handler_t());
+        add_command("bdb", new tpcc_handler_t());
         break;
 
     case TRX_SHORE_ENV:
-        add_command("shoretpcc", new shore_tpcc_handler_t());
+        add_command("shore", new shore_tpcc_handler_t());
         break;
 
     case TRX_MEM_ENV:
-        add_command("inmemtpcc", new inmem_tpcc_handler_t());
+        add_command("inmem", new inmem_tpcc_handler_t());
         break;
 
 

@@ -109,12 +109,18 @@ public:
     /** Construction  */
 
     InMemTPCCEnv() {
+
+        im_customers.set_name(c_str("customer"));
+        im_histories.set_name(c_str("history"));
+
         // Loads the data from the INMEM_TPCC_DATA_DIR folder
         loaddata(c_str(INMEM_TPCC_DATA_DIR));
     }
 
 
     ~InMemTPCCEnv() { }
+
+    void dump();
 
 
 }; // EOF InMemTPCCEnv

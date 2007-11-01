@@ -677,8 +677,10 @@ DEFINE_TPCC_PARSER(DISTRICT) {
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
     record.first.D_ID = atoi(tmp);
+    record.second.D_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.D_W_ID = atoi(tmp);
+    record.second.D_W_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     FILL_STRING(record.second.D_NAME,tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -701,6 +703,7 @@ DEFINE_TPCC_PARSER(DISTRICT) {
     return record;
 }
 
+
 DEFINE_TPCC_PARSER(WAREHOUSE) {
     
     // split line into tab separated parts
@@ -708,6 +711,7 @@ DEFINE_TPCC_PARSER(WAREHOUSE) {
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
     record.first.W_ID = atoi(tmp);
+    record.second.W_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     FILL_STRING(record.second.W_NAME,tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -727,6 +731,61 @@ DEFINE_TPCC_PARSER(WAREHOUSE) {
 
     return record;
 }
+
+
+DEFINE_TPCC_PARSER(CUSTOMER) {
+    
+    // split line into tab separated parts
+    record_t record;
+    char* lasts;
+    char* tmp = strtok_r(linebuffer, "|", &lasts);
+    record.first.C_C_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.C_D_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.C_W_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_FIRST,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_MIDDLE,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_LAST,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_STREET_1,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_STREET_2,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_CITY,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_STATE,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_ZIP,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_PHONE,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_SINCE = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_CREDIT,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_CREDIT_LIM = atof(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_DISCOUNT = atof(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_BALANCE = atof(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_YTD_PAYMENT = atof(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_LAST_PAYMENT = atof(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.C_PAYMENT_CNT = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_DATA_1,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.C_DATA_2,tmp);
+
+    return record;
+}
+
 
 
 // EOF PER-TABLE ROW PARSERS

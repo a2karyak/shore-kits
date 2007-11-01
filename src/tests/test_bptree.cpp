@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
    
     thread_init();
 
-    //    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG );
+    //    TRACE_SET( TRACE_ALWAYS | TRACE_DEBUG | TRACE_LOCK_ACTION );
     TRACE_SET( TRACE_ALWAYS );
 
     TRACE ( TRACE_ALWAYS, "%s <threads> <keys>\n", argv[0]);

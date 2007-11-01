@@ -16,36 +16,44 @@
 ENTER_NAMESPACE(tpcc);
 
 
-/////////////////////////////////////////////////////
-// Class inmem_loader_impl
+///////////////////////////////////////////////////////////
+// @class Abstract data_loader_t
+//
+// @brief Wrapper class that get a row parser and a
+// filename. It opens the file and for each row it parses
+// it calls the insert function
+//
+// @note The insert function is pure virtual. 
 
 
-template <class InMemDS, class RowParser>
-class inmem_loader_impl : public thread_t
+template <class RowParser>
+class data_loader_t : public thread_t
 {
 private:
     c_str _fname; // file name    
-    InMemDS* _ds; // data structure
 
     typedef typename RowParser::record_t record_t;
 
 public:
-    inmem_loader_impl(c_str aloadername, c_str afname, InMemDS* ads) : 
+    data_loader_t(c_str aloadername, c_str afname) : 
         thread_t(aloadername),
-        _fname(afname),_ds(ads) 
+        _fname(afname) 
     {
     }
 
-    virtual ~inmem_loader_impl() { }
+    virtual ~data_loader_t() { }
 
     virtual void* run();
 
-}; // EOF inmem_loader_impl
+    virtual int insert(int idx, record_t aRecord)=0; 
+
+}; // EOF data_loader_t
 
 
-template <class InMemDS, class RowParser>
-void* inmem_loader_impl<InMemDS, RowParser>::run() {
+template <class RowParser>
+void* data_loader_t<RowParser>::run() {
 
+    TRACE( TRACE_DEBUG, "Loading (%s)\n", _fname.data());
 
     FILE* fd = fopen(_fname.data(), "r");
 
@@ -66,7 +74,7 @@ void* inmem_loader_impl<InMemDS, RowParser>::run() {
     for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
         record = parser.parse_row(linebuffer);
 
-        _ds->insert(i, record.second);
+        insert(i, record);
         progress_update(&progress);
     }
     
@@ -80,6 +88,73 @@ void* inmem_loader_impl<InMemDS, RowParser>::run() {
 
     return (NULL);
 }
+
+
+///////////////////////////////////////////////////////////
+// @class inmem_array_loader_impl
+//
+// @brief Loader for InMemory Arrays
+
+template <class InMemDS, class RowParser>
+class inmem_array_loader_impl : public data_loader_t<RowParser>
+{
+private:
+    InMemDS* _ds; // data structure
+
+    typedef typename RowParser::record_t record_t;
+
+public:
+
+    inmem_array_loader_impl(c_str aloadername, c_str afname, InMemDS* ads) :
+        data_loader_t<RowParser>(aloadername, afname),
+        _ds(ads)
+    {
+    }
+
+    ~inmem_array_loader_impl() { }
+
+    int insert(int idx, record_t aRecord) {
+        _ds->insert(idx, aRecord.second);
+        TRACE( TRACE_DEBUG, "%d\n", idx);
+        return (0);
+    }
+
+}; // EOF inmem_array_loader_impl
+
+
+
+
+///////////////////////////////////////////////////////////
+// @class inmem_bptree_loader_impl
+//
+// @brief Loader for InMemory BPTrees
+
+template <class InMemDS, class RowParser>
+class inmem_bptree_loader_impl : public data_loader_t<RowParser>
+{
+    InMemDS* _ds; // data structure
+
+    typedef typename RowParser::record_t record_t;
+
+public:
+
+    inmem_bptree_loader_impl(c_str aloadername, c_str afname, InMemDS* ads) :
+        data_loader_t<RowParser>(aloadername, afname),
+        _ds(ads)
+    {
+    }
+
+    ~inmem_bptree_loader_impl() { }
+
+    int insert(int idx, record_t aRecord) {
+        _ds->insert(aRecord.first, aRecord.second);
+        if ((idx % 1000) == 0)
+            TRACE( TRACE_DEBUG, "%d\n", idx);
+        return (0);
+    }
+
+}; // EOF inmem_bptree_loader_impl
+
 
 
 EXIT_NAMESPACE(tpcc);
