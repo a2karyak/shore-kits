@@ -35,7 +35,17 @@ int InMemTPCCEnv::loaddata(c_str loadDir) {
                                        c_str("%s/warehouse.tbl", loadDir.data()),
                                        &im_warehouses);
         
-        inmem_loader_ids[WAREHOUSE] = thread_create(wh_loader_thread);
+        //        inmem_loader_ids[WAREHOUSE] = thread_create(wh_loader_thread);
+        wh_loader_thread->run();
+
+        // DISTRICT
+        typedef inmem_loader_impl<district_array_t, parse_tpcc_DISTRICT> district_inmem_loader;
+
+        guard<district_inmem_loader> distr_loader_thread = 
+            new district_inmem_loader(c_str("DISTR-LOADER"),
+                                      c_str("%s/distr.tbl", loadDir.data()),
+                                      &im_districts);
+
 
         // (ip) Fire up the rest 
 
@@ -46,7 +56,7 @@ int InMemTPCCEnv::loaddata(c_str loadDir) {
         throw e;
     }
                                                                     
-    workload_t::wait_for_clients(inmem_loader_ids, INMEM_PAYMENT_TABLES);
+    //    workload_t::wait_for_clients(inmem_loader_ids, INMEM_PAYMENT_TABLES);
 
     time_t tstop = time(NULL);
 

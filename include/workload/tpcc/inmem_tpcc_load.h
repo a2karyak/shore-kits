@@ -34,12 +34,11 @@ public:
         thread_t(aloadername),
         _fname(afname),_ds(ads) 
     {
-        TRACE( TRACE_DEBUG, "New (%s) (%s) (%p)\n", aloadername, _fname, _ds);
     }
 
     virtual ~inmem_loader_impl() { }
 
-    void* run();
+    virtual void* run();
 
 }; // EOF inmem_loader_impl
 
@@ -48,14 +47,11 @@ template <class InMemDS, class RowParser>
 void* inmem_loader_impl<InMemDS, RowParser>::run() {
 
 
-    TRACE( TRACE_DEBUG, " HALLO \n ");
-
     FILE* fd = fopen(_fname.data(), "r");
 
-    if (fd == NULL) {
-
-        //        THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
-        printf("fopen() failed on (%s)\n", _fname.data());
+    if (fd == NULL) {        
+        THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
+        //printf("fopen() failed on (%s)\n", _fname.data());
 
         return (NULL);
     }
@@ -76,9 +72,8 @@ void* inmem_loader_impl<InMemDS, RowParser>::run() {
     
 
     if ( fclose(fd) ) {
-
-        printf("fclose() failed on (%s)\n", _fname.data());
-        //THROW2( TrxException, "fclose() failed on (%s)\n", _fname.data());
+        //printf("fclose() failed on (%s)\n", _fname.data());
+        THROW2( TrxException, "fclose() failed on (%s)\n", _fname.data());
 
         return (NULL);
     }    
