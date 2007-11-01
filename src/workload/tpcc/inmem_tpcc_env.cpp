@@ -32,7 +32,7 @@ int InMemTPCCEnv::loaddata(c_str loadDir) {
 
         guard<warehouse_inmem_loader> wh_loader_thread = 
             new warehouse_inmem_loader(c_str("WH-LOADER"),
-                                       c_str("%s/warehouse.tbl", loadDir.data()),
+                                       c_str("%s/%s", loadDir.data(), INMEM_TPCC_DATA_WAREHOUSE),
                                        &im_warehouses);
         
         //        inmem_loader_ids[WAREHOUSE] = thread_create(wh_loader_thread);
@@ -43,16 +43,18 @@ int InMemTPCCEnv::loaddata(c_str loadDir) {
 
         guard<district_inmem_loader> distr_loader_thread = 
             new district_inmem_loader(c_str("DISTR-LOADER"),
-                                      c_str("%s/distr.tbl", loadDir.data()),
+                                      c_str("%s/%s", loadDir.data(), INMEM_TPCC_DATA_DISTRICT),
                                       &im_districts);
 
+        //        inmem_loader_ids[DISTRICT] = thread_create(distr_loader_thread);
+        distr_loader_thread->run();
 
-        // (ip) Fire up the rest 
 
+        // (ip) Tree loaders 
     }
     catch (TrxException& e) {
 
-        TRACE( TRACE_ALWAYS, "Exception thrown in InMem Loading...\n");
+        TRACE( TRACE_ALWAYS, "Exception thrown in InMem Loading...\n%s", e.what());
         throw e;
     }
                                                                     

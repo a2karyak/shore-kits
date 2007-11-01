@@ -24,7 +24,22 @@ ENTER_NAMESPACE(tpcc);
 
 /* constants */
 
+// (ip) In Lomond the data files and directory have different name
+// just a quick hack to run it in both
+#ifdef __SUNPRO_CC
+#define INMEM_TPCC_DATA_DIR "tbl_tpcc"
+#define INMEM_TPCC_DATA_WAREHOUSE "warehouse.dat"
+#define INMEM_TPCC_DATA_DISTRICT "district.dat"
+#define INMEM_TPCC_DATA_CUSTOMER "customer.dat"
+#define INMEM_TPCC_DATA_HISTORY "history.dat"
+#else
 #define INMEM_TPCC_DATA_DIR "tpcc_sf"
+#define INMEM_TPCC_DATA_WAREHOUSE "WAREHOUSE.dat"
+#define INMEM_TPCC_DATA_DISTRICT "DISTRICT.dat"
+#define INMEM_TPCC_DATA_CUSTOMER "CUSTOMER.dat"
+#define INMEM_TPCC_DATA_HISTORY "HISTORY.dat"
+#endif
+
 
 #define SCALING_FACTOR 1
 #define WAREHOUSE_FANOUT 1
