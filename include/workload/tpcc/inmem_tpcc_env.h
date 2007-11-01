@@ -55,6 +55,11 @@ class InMemTPCCEnv
 {
 private:    
 
+    static const int WAREHOUSE = 0;
+    static const int DISTRICT = 1;
+    static const int CUSTOMER = 2;
+    static const int HISTORY = 3;
+    static const int INMEM_PAYMENT_TABLES = 4;
 
     /** Private functions */
 
@@ -67,23 +72,22 @@ public:
 
     /* Arrays: WAREHOUSE, DISTRICT */
 
-    lathedArray<tpcc_warehouse_tuple, 
-                SCALING_FACTOR, 
-                WAREHOUSE_FANOUT> im_warehouses;
+    typedef latchedArray<tpcc_warehouse_tuple, SCALING_FACTOR, WAREHOUSE_FANOUT> warehouse_array_t;
+    warehouse_array_t im_warehouses;
 
-    lathedArray<tpcc_district_tuple, 
-                SCALING_FACTOR, 
-                DISTRICT_FANOUT> im_districts;
+    typedef latchedArray<tpcc_district_tuple, SCALING_FACTOR, DISTRICT_FANOUT> district_array_t;
+    district_array_t im_districts;
 
     /* BPTrees: CUSTOMER, HISTORY */
+    typedef BPlusTree<tpcc_customer_tuple_key, tpcc_customer_tuple_body,
+                      cCustNodeEntries, cCustLeafEntries,
+                      cCustNodePad, cCustLeafPad, cArch> customer_tree_t;
+    customer_tree_t im_customers;
 
-    BPlusTree<tpcc_customer_tuple_key, tpcc_customer_tuple_body,
-              cCustNodeEntries, cCustLeafEntries,
-              cCustNodePad, cCustLeafPad, cArch> im_customers;
-
-    BPlusTree<tpcc_history_tuple_key, tpcc_history_tuple_body,
-              cHistNodeEntries, cHistLeafEntries,
-              cHistNodePad, cHistLeafPad, cArch> im_histories;
+    typedef BPlusTree<tpcc_history_tuple_key, tpcc_history_tuple_body,
+                      cHistNodeEntries, cHistLeafEntries,
+                      cHistNodePad, cHistLeafPad, cArch> history_tree_t;
+    history_tree_t im_histories;
 
 
 

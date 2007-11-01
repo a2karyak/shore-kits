@@ -32,7 +32,7 @@
  */
 
 template <typename TUPLE_TYPE, int SF, int FANOUT>
-class lathedArray
+class latchedArray
 {
 private:
 
@@ -43,7 +43,7 @@ private:
 public:
 
     // Constructor
-    lathedArray() {
+    latchedArray() {
         // initializes the locks
         for (int i=0; i<SF*FANOUT; i++) {
             pthread_rwlock_init(&_array_rwlock[i], NULL);
@@ -51,7 +51,7 @@ public:
     }
 
     // Destructor
-    virtual ~lathedArray() {
+    virtual ~latchedArray() {
         // destroys the locks
         for (int i=0; i<SF*FANOUT; i++) {
             pthread_rwlock_destroy(&_array_rwlock[i]);
@@ -133,7 +133,7 @@ public:
       return (1);
     }
 
-}; // EOF lathedArray
+}; // EOF latchedArray
 
 
 #endif 
