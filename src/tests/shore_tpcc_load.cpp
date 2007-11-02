@@ -75,6 +75,7 @@ void parser_impl<Parser>::run() {
     // blow away the previous file, if any
     file_info_t info;
     unsigned size = sizeof(info);
+    vec_t table_info(&info, size);
     bool found;
     W_COERCE(_ssm->begin_xct());
     W_COERCE(ss_m::vol_root_index(_lvid, root_iid));
@@ -82,7 +83,7 @@ void parser_impl<Parser>::run() {
     if(found) {
 	cout << "Removing previous instance of " << parser.table_name() << endl;
 	W_COERCE(ss_m::destroy_file(_lvid, info._table_id));
-	W_COERCE(ss_m::destroy_assoc(_lvid, root_iid, table_name, vec_t(&info, sizeof(info))));
+	W_COERCE(ss_m::destroy_assoc(_lvid, root_iid, table_name, table_info));
     }
     
     W_COERCE(_ssm->commit_xct());
@@ -93,7 +94,7 @@ void parser_impl<Parser>::run() {
 	 << "'' with " << (ksize+bsize) << " bytes per record" << endl;
     W_COERCE(_ssm->create_file(_lvid, info._table_id, smlevel_3::t_regular));
     W_COERCE(ss_m::vol_root_index(_lvid, root_iid));
-    W_COERCE(ss_m::create_assoc(_lvid, root_iid, table_name, vec_t(&info, sizeof(info))));
+    W_COERCE(ss_m::create_assoc(_lvid, root_iid, table_name, table_info));
     
     // insert records one by one...
     record_t record;
@@ -229,17 +230,17 @@ void smthread_user_t::run() {
 
 #if 0 // serial
     W_COERCE(order_thread->fork());
-    W_IGNORE(order_thread->wait());
+    W_IGNORE(order_thread->join());
     W_COERCE(district_thread->fork());
-    W_IGNORE(district_thread->wait());
+    W_IGNORE(district_thread->join());
     W_COERCE(warehouse_thread->fork());
-    W_IGNORE(warehouse_thread->wait());
+    W_IGNORE(warehouse_thread->join());
     W_COERCE(history_thread->fork());
-    W_IGNORE(history_thread->wait());
+    W_IGNORE(history_thread->join());
     W_COERCE(new_order_thread->fork());
-    W_IGNORE(new_order_thread->wait());
+    W_IGNORE(new_order_thread->join());
     W_COERCE(item_thread->fork());
-    W_IGNORE(item_thread->wait());
+    W_IGNORE(item_thread->join());
 #else
     W_COERCE(warehouse_thread->fork());
     W_COERCE(district_thread->fork());
@@ -248,12 +249,12 @@ void smthread_user_t::run() {
     W_COERCE(new_order_thread->fork());
     W_COERCE(item_thread->fork());
     
-    W_IGNORE(order_thread->wait());
-    W_IGNORE(district_thread->wait());
-    W_IGNORE(warehouse_thread->wait());
-    W_IGNORE(history_thread->wait());
-    W_IGNORE(new_order_thread->wait());
-    W_IGNORE(item_thread->wait());
+    W_IGNORE(order_thread->join());
+    W_IGNORE(district_thread->join());
+    W_IGNORE(warehouse_thread->join());
+    W_IGNORE(history_thread->join());
+    W_IGNORE(new_order_thread->join());
+    W_IGNORE(item_thread->join());
 #endif
 
     // done!
@@ -270,7 +271,7 @@ int main(int argc, char* argv[]) {
 	cerr << "error forking main thread: " << e <<endl;
 	return 1;
     }
-    e = smtu->wait();
+    e = smtu->join();
     if(e) {
 	cerr << "error joining main thread: " << e <<endl;
 	return 1;

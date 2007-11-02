@@ -357,7 +357,8 @@ tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 
-tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(HOME)/projects/shore-lomond-temp/installed/include
+SHORE=$(HOME)/projects/shore-lomond-temp/src
+tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 #tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
@@ -395,7 +396,7 @@ tests_payment_single_thr_LDADD = $(TEST_LIBS)
 tests_tpch_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_mt_LDADD = $(TEST_LIBS)
-tests_tpcc_load_shore_LDADD = $(TEST_LIBS) -L$(HOME)/projects/shore-lomond-temp/installed/lib -lsm -lsthread -lfc -lcommon 
+tests_tpcc_load_shore_LDADD = $(TEST_LIBS)  -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon 
 tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
 
 
