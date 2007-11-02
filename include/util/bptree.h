@@ -203,7 +203,7 @@ public:
 
             // The tree just got one level taller
             _depth++;
-            TRACE( TRACE_ALWAYS, "(%s) Depth = %d ***\n", _name, _depth);
+            TRACE( TRACE_ALWAYS, "(%s) Depth = %d ***\n", _name.data(), _depth);
 
             // Unlocks the root lock
             // TRACE( TRACE_DEBUG, "root unlock\n");
