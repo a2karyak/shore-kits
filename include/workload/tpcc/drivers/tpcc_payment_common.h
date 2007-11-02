@@ -20,7 +20,7 @@ ENTER_NAMESPACE(tpcc);
 
 /** Exported functionality */
 
-payment_input_t create_payment_input(int sf = TPCC_SCALING_FACTOR);
+payment_input_t create_payment_input(int sf = QUERIED_TPCC_SCALING_FACTOR);
 
 EXIT_NAMESPACE(tpcc);
 

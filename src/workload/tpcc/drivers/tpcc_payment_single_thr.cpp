@@ -32,7 +32,7 @@ void* tpcc_payment_single_thr_driver::executePayment() {
 
     assert(_dbts.is_allocated());
 
-    tpcc::payment_input_t pin = create_payment_input(TPCC_SCALING_FACTOR);
+    tpcc::payment_input_t pin = create_payment_input(QUERIED_TPCC_SCALING_FACTOR);
     DbTxn* txn = NULL;
 
     trx_result_tuple_t aTrxResultTuple = executePaymentBaseline(&pin,

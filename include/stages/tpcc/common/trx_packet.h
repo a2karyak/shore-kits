@@ -26,9 +26,6 @@ ENTER_NAMESPACE(qpipe);
 # define NO_VALID_TRX_ID -1
 
 
-/** Use this definition to produce the same packet over and over */
-//#define USE_SAME_INPUT 
-
 
 /**
  *  @brief Possible states of a transaction

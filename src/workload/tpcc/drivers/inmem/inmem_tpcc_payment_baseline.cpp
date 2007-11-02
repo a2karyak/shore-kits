@@ -47,7 +47,7 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
                                               bp_buffer, 
                                               bp_filter,
                                               dp,
-                                              TPCC_SCALING_FACTOR);
+                                              QUERIED_TPCC_SCALING_FACTOR);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);

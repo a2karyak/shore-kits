@@ -33,8 +33,10 @@
 void register_stage_containers(int environment) {
 
     if (environment != QUERY_ENV) {
-        TRACE( TRACE_ALWAYS, "Registering TRX environment with SF=(%d)\n",
-               TPCC_SCALING_FACTOR);        
+        TRACE( TRACE_ALWAYS, "*****************" \
+               "Registering TRX environment\n" \
+               "SCALING FACTOR \t\t= (%d)\nQUERIED WAREHOUSES \t= (%d)\n",
+               TPCC_SCALING_FACTOR, QUERIED_TPCC_SCALING_FACTOR);
     }
     
     switch (environment) {

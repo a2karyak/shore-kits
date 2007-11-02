@@ -26,5 +26,10 @@
 //# define QUERIED_TPCC_SCALING_FACTOR             100
 
 
+/** Use this definition to produce the same packet over and over */
+//#define USE_SAME_INPUT 
+
+
+
 #endif
 

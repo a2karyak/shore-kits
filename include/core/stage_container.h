@@ -7,10 +7,6 @@
 #include "core/packet.h"
 #include "core/stage.h"
 
-#ifdef __SUNPRO_CC
-#include <pthread_alloc>
-#endif
-
 using std::list;
 
 
@@ -39,13 +35,7 @@ protected:
 
     class stage_adaptor_t;
 
-
-#ifdef __SUNPRO_CC
-    // (ip) Using pthread_allocator
-    typedef list <packet_list_t*, std::pthread_allocator<packet_list_t*> > ContainerQueue;
-#else
     typedef list <packet_list_t*> ContainerQueue;
-#endif
     
     
     // container synch vars
@@ -55,11 +45,7 @@ protected:
     c_str                   _container_name;
     ContainerQueue          _container_queue;
 
-#ifdef __SUNPRO_CC
-    list <stage_adaptor_t*, std::pthread_allocator<stage_adaptor_t*> _container_current_stages;
-#else
     list <stage_adaptor_t*> _container_current_stages;
-#endif
 
     stage_factory_t* _stage_maker;
 

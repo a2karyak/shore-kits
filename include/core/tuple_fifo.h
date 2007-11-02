@@ -7,10 +7,6 @@
 #include <vector>
 #include <list>
 
-#ifdef __SUNPRO_CC
-#include <pthread_alloc>
-#endif
-
 //#include <ucontext.h>
 
 ENTER_NAMESPACE(qpipe);
@@ -34,13 +30,7 @@ class tuple_fifo {
 
 private:
 
-#ifdef __SUNPRO_CC
-    // (ip) Using pthread_allocator instead of the STL one
-    typedef std::list<page*, std::pthread_allocator<page*> > page_list;
-#else
     typedef std::list<page*> page_list;
-#endif
-
 
     page_list _pages;
     page_list _free_pages;
