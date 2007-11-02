@@ -25,9 +25,6 @@ ENTER_NAMESPACE(qpipe);
 
 # define NO_VALID_TRX_ID -1
 
-// Sets the range of warehouses queried
-# define RANGE           1
-
 
 /** Use this definition to produce the same packet over and over */
 //#define USE_SAME_INPUT 

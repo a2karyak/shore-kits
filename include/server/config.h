@@ -7,7 +7,7 @@
 
 /* Configurable values */
 #define QPIPE_VERSION "v2.1"
-#define QPIPE_PROMPT  "(qpipe) "
+#define QPIPE_PROMPT  "(sparta) "
 
 // Until we get CC to recognize our libreadline install...
 #define USE_READLINE 1

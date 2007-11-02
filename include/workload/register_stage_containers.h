@@ -6,8 +6,8 @@
  *  on the system, given the environment
  */
 
-#ifndef _REGISTER_STAGE_CONTAINERS_H
-#define _REGISTER_STAGE_CONTAINERS_H
+#ifndef __REGISTER_STAGE_CONTAINERS_H
+#define __REGISTER_STAGE_CONTAINERS_H
 
 // Engine environment
 

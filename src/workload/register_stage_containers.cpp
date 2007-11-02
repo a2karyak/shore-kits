@@ -32,12 +32,18 @@
 
 void register_stage_containers(int environment) {
 
+    if (environment != QUERY_ENV) {
+        TRACE( TRACE_ALWAYS, "Registering TRX environment with SF=(%d)\n",
+               TPCC_SCALING_FACTOR);        
+    }
+    
     switch (environment) {
 
         /** OLTP stages registration */
         /** @note trx stages do not share */
 
     case TRX_BDB_ENV:
+
         /*
         register_stage<payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_upd_wh_stage_t>(MAX_NUM_CLIENTS, false); 
@@ -51,10 +57,12 @@ void register_stage_containers(int environment) {
         break;
 
     case TRX_SHORE_ENV:
+
         assert (1==0); // (ip) Not implemented yet       
         break;
 
     case TRX_MEM_ENV:
+
         register_stage<inmem_payment_baseline_stage_t>(MAX_NUM_TRXS, false);
         break;
 

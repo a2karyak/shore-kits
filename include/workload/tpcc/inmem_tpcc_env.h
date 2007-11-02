@@ -12,6 +12,8 @@
 
 #include "util/guard.h"
 #include "util/namespace.h"
+
+#include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 
 // For the in-memory data structures
@@ -26,22 +28,13 @@ ENTER_NAMESPACE(tpcc);
 
 // (ip) In Lomond the data files and directory have different name
 // just a quick hack to run it in both
-#ifdef __SUNPRO_CC
-#define INMEM_TPCC_DATA_DIR "tbl_tpcc"
-#define INMEM_TPCC_DATA_WAREHOUSE "warehouse.dat"
-#define INMEM_TPCC_DATA_DISTRICT "district.dat"
-#define INMEM_TPCC_DATA_CUSTOMER "customer.dat"
-#define INMEM_TPCC_DATA_HISTORY "history.dat"
-#else
 #define INMEM_TPCC_DATA_DIR "tpcc_sf"
 #define INMEM_TPCC_DATA_WAREHOUSE "WAREHOUSE.dat"
 #define INMEM_TPCC_DATA_DISTRICT "DISTRICT.dat"
 #define INMEM_TPCC_DATA_CUSTOMER "CUSTOMER.dat"
 #define INMEM_TPCC_DATA_HISTORY "HISTORY.dat"
-#endif
 
 
-#define SCALING_FACTOR 1
 #define WAREHOUSE_FANOUT 1
 #define DISTRICT_FANOUT 10
 
@@ -87,10 +80,10 @@ public:
 
     /* Arrays: WAREHOUSE, DISTRICT */
 
-    typedef latchedArray<tpcc_warehouse_tuple, SCALING_FACTOR, WAREHOUSE_FANOUT> warehouse_array_t;
+    typedef latchedArray<tpcc_warehouse_tuple, TPCC_SCALING_FACTOR, WAREHOUSE_FANOUT> warehouse_array_t;
     warehouse_array_t im_warehouses;
 
-    typedef latchedArray<tpcc_district_tuple, SCALING_FACTOR, DISTRICT_FANOUT> district_array_t;
+    typedef latchedArray<tpcc_district_tuple, TPCC_SCALING_FACTOR, DISTRICT_FANOUT> district_array_t;
     district_array_t im_districts;
 
     /* BPTrees: CUSTOMER, HISTORY */
