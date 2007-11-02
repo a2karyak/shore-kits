@@ -10,6 +10,10 @@
 #include "core/query_state.h"
 #include "util/resource_declare.h"
 
+#ifdef __SUNPRO_CC
+#include <pthread_alloc>
+#endif
+
 using std::list;
 
 
@@ -28,8 +32,12 @@ bool is_osp_enabled_for_type(const c_str& packet_type);
 
 
 class   packet_t;
-typedef list<packet_t*> packet_list_t;
 
+#ifdef __SUNPRO_CC
+typedef list<packet_t*, std::pthread_allocator<packet_t*> > packet_list_t;
+#else
+typedef list<packet_t*> packet_list_t;
+#endif
 
 /**
  *  @brief Structure used for representing the sub-queries

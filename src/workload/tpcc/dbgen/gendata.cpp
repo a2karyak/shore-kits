@@ -1080,15 +1080,15 @@ void InitFormatStrings(char delim) {
   if (delim == '|') return;
 
   // Replace Delimiters
-  while (p = strchr(fmtWare,'|'))   { *p = delim; }
-  while (p = strchr(fmtDist,'|'))   { *p = delim; }
-  while (p = strchr(fmtItem,'|'))   { *p = delim; }
-  while (p = strchr(fmtStock,'|'))  { *p = delim; }
-  while (p = strchr(fmtCust,'|'))   { *p = delim; }
-  while (p = strchr(fmtHist,'|'))   { *p = delim; }
-  while (p = strchr(fmtOrdr,'|'))   { *p = delim; }
-  while (p = strchr(fmtOLine,'|'))  { *p = delim; }
-  while (p = strchr(fmtNewOrd,'|')) { *p = delim; }
+  while ((p = strchr(fmtWare,'|')))   { *p = delim; }
+  while ((p = strchr(fmtDist,'|')))   { *p = delim; }
+  while ((p = strchr(fmtItem,'|')))   { *p = delim; }
+  while ((p = strchr(fmtStock,'|')))  { *p = delim; }
+  while ((p = strchr(fmtCust,'|')))   { *p = delim; }
+  while ((p = strchr(fmtHist,'|')))   { *p = delim; }
+  while ((p = strchr(fmtOrdr,'|')))   { *p = delim; }
+  while ((p = strchr(fmtOLine,'|')))  { *p = delim; }
+  while ((p = strchr(fmtNewOrd,'|'))) { *p = delim; }
 }                                  
 
 
