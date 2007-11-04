@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef __TPCC_PAYMENT_FINALIZE_H
-#define __TPCC_PAYMENT_FINALIZE_H
+#ifndef __BDB_TPCC_PAYMENT_FINALIZE_H
+#define __BDB_TPCC_PAYMENT_FINALIZE_H
 
 #include <cstdio>
 
@@ -9,7 +9,7 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/common/bdb_trx_packet.h"
 
 #include "stages/tpcc/payment_upd_wh.h"
 #include "stages/tpcc/payment_upd_distr.h"
@@ -23,7 +23,7 @@ using namespace qpipe;
 
 /* exported datatypes */
 
-class payment_finalize_packet_t : public trx_packet_t {
+class payment_finalize_packet_t : public bdb_trx_packet_t {
   
 public:
 
@@ -44,20 +44,6 @@ public:
     tuple_fifo* _upd_cust_buffer;
     tuple_fifo* _ins_hist_buffer;
     
-
-    /*
-    // The input packets
-    guard<trx_packet_t> _upd_wh;
-    guard<trx_packet_t> _upd_distr;
-    guard<trx_packet_t> _upd_cust;
-    guard<trx_packet_t> _ins_hist;
-
-    // The input buffers
-    guard<tuple_fifo> _upd_wh_buffer;
-    guard<tuple_fifo> _upd_distr_buffer;
-    guard<tuple_fifo> _upd_cust_buffer;
-    guard<tuple_fifo> _ins_hist_buffer;
-    */
 
     /**
      *  @brief payment_finalize_packet_t constructor.
@@ -85,16 +71,16 @@ public:
                               tuple_fifo*     output_buffer,
                               tuple_filter_t* output_filter,
                               const int a_trx_id,
-                              trx_packet_t* upd_wh,
-                              trx_packet_t* upd_distr,
-                              trx_packet_t* upd_cust,
-                              trx_packet_t* ins_hist)
-	: trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                       create_plan(a_trx_id),
-                       true, /* merging allowed */
-                       true,  /* unreserve worker on completion */
-                       a_trx_id
-                       ),
+                              bdb_trx_packet_t* upd_wh,
+                              bdb_trx_packet_t* upd_distr,
+                              bdb_trx_packet_t* upd_cust,
+                              bdb_trx_packet_t* ins_hist)
+	: bdb_trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                           create_plan(a_trx_id),
+                           true, /* merging allowed */
+                           true,  /* unreserve worker on completion */
+                           a_trx_id
+                           ),
           _upd_wh((payment_upd_wh_packet_t*)upd_wh),
           _upd_distr((payment_upd_distr_packet_t*)upd_distr),
           _upd_cust((payment_upd_cust_packet_t*)upd_cust),

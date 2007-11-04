@@ -56,7 +56,7 @@ payment_input_t create_payment_input(int sf) {
     pin._remote_d_id =  1;
     pin._v_cust_ident_selection = 50;
     pin._c_id =  1500;        
-    //    pin._c_last = NULL;
+    pin._c_last = NULL;
     pin._h_amount = 1000.00;
     pin._h_date = time(NULL);
 #endif        

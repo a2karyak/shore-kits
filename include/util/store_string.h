@@ -24,4 +24,7 @@
 void store_string(char* dest, char* src);
 
 
+void store_string(char* dest, const char* src);
+
+
 #endif

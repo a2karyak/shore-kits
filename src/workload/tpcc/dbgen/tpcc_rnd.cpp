@@ -81,10 +81,10 @@ int random_1_3000( void ) {
 
 // fn: initialize_random
 void initialize_random(void) {
-  int t = current_time();                                     
+    int t = (int)current_time();                                     
 
-  srand(t);                                                   
-  srandom(t);                                                 
+    srand(t);                                                   
+    srandom(t);                                                 
 }
 
 

@@ -13,10 +13,8 @@
 #define __TRX_PACKET_H
 
 #include <cstdio>
-#include <db_cxx.h>
 
 #include "core.h"
-
 #include "stages/common/process_tuple.h"
 
 
@@ -71,10 +69,6 @@ protected:
 public:
 
 
-    /** @brief The corresponding transaction handle of this packet */
-    DbTxn* _trx_txn;
-
-
     /* see trx_packet.cpp for documentation */  
 
     trx_packet_t(const c_str     &packet_id,
@@ -108,15 +102,6 @@ public:
         // Cannot set a UNDEF state
         assert (a_trx_state > UNDEF);        
         _trx_state = a_trx_state;
-    }
-
-    inline DbTxn* get_trx_txn() {
-        return (_trx_txn);
-    }
-    
-    
-    inline void set_trx_txn(DbTxn* a_trx_txn) {        
-        _trx_txn = a_trx_txn;
     }
 
 
@@ -159,8 +144,8 @@ public:
  *  @brief Class used to represent the result of a transaction
  */
 
-class trx_result_tuple_t {
-
+class trx_result_tuple_t 
+{
 private:
 
     /** Member variables */
@@ -234,8 +219,8 @@ public:
  *  @brief Definition of a transaction result tuple
  */
 
-class trx_result_process_tuple_t : public process_tuple_t {
-
+class trx_result_process_tuple_t : public process_tuple_t 
+{
 private:
     trx_packet_t* _packet;
 

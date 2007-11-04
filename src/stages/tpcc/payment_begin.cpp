@@ -91,7 +91,7 @@ void payment_begin_stage_t::process_packet() {
     tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
 
-    trx_packet_t* upd_wh_packet = 
+    bdb_trx_packet_t* upd_wh_packet = 
         create_payment_upd_wh_packet( packet->_packet_id,
                                       buffer,
                                       filter,
@@ -105,7 +105,7 @@ void payment_begin_stage_t::process_packet() {
     buffer = new tuple_fifo(sizeof(int));
     filter = new trivial_filter_t(sizeof(int));
 
-    trx_packet_t* upd_distr_packet = 
+    bdb_trx_packet_t* upd_distr_packet = 
         create_payment_upd_distr_packet( packet->_packet_id,
                                          buffer,
                                          filter,
@@ -120,7 +120,7 @@ void payment_begin_stage_t::process_packet() {
     buffer = new tuple_fifo(sizeof(int));
     filter = new trivial_filter_t(sizeof(int));
 
-    trx_packet_t* upd_cust_packet = 
+    bdb_trx_packet_t* upd_cust_packet = 
         create_payment_upd_cust_packet( packet->_packet_id,
                                         buffer,
                                         filter,
@@ -139,7 +139,7 @@ void payment_begin_stage_t::process_packet() {
     buffer = new tuple_fifo(sizeof(int));
     filter = new trivial_filter_t(sizeof(int));
 
-    trx_packet_t* ins_hist_packet = 
+    bdb_trx_packet_t* ins_hist_packet = 
         create_payment_ins_hist_packet( packet->_packet_id,
                                         buffer,
                                         filter,
@@ -155,7 +155,7 @@ void payment_begin_stage_t::process_packet() {
     buffer = new tuple_fifo(sizeof(int));
     filter = new trivial_filter_t(sizeof(int));
 
-    trx_packet_t* finalize_packet = 
+    bdb_trx_packet_t* finalize_packet = 
         create_payment_finalize_packet( packet->_packet_id,
                                         buffer,
                                         filter,
@@ -233,7 +233,7 @@ int payment_begin_stage_t::get_next_counter() {
  *  @brief Retuns a payment_upd_wh_packet_t 
  */
 
-trx_packet_t* 
+bdb_trx_packet_t* 
 payment_begin_stage_t::create_payment_upd_wh_packet(const c_str& client_prefix,
                                                     tuple_fifo* uwh_buffer,
                                                     tuple_filter_t* uwh_filter,
@@ -263,7 +263,7 @@ payment_begin_stage_t::create_payment_upd_wh_packet(const c_str& client_prefix,
  *  @brief Returns a payment_upd_distr_packet_t 
  */
  
-trx_packet_t* 
+bdb_trx_packet_t* 
 payment_begin_stage_t::create_payment_upd_distr_packet(const c_str& client_prefix,
                                                        tuple_fifo* ud_buffer,
                                                        tuple_filter_t* ud_filter,
@@ -296,7 +296,7 @@ payment_begin_stage_t::create_payment_upd_distr_packet(const c_str& client_prefi
  *  @brief Returns a payment_upd_cust_packet_t 
  */
  
-trx_packet_t* 
+bdb_trx_packet_t* 
 payment_begin_stage_t::create_payment_upd_cust_packet(const c_str& client_prefix,
                                                       tuple_fifo* uc_buffer,
                                                       tuple_filter_t* uc_filter,
@@ -332,7 +332,7 @@ payment_begin_stage_t::create_payment_upd_cust_packet(const c_str& client_prefix
  *  @brief Returns a payment_ins_hist_packet_t
  */
 
-trx_packet_t* 
+bdb_trx_packet_t* 
 payment_begin_stage_t::create_payment_ins_hist_packet(const c_str& client_prefix,
                                                       tuple_fifo* ih_buffer,
                                                       tuple_filter_t* ih_filter,
@@ -368,16 +368,16 @@ payment_begin_stage_t::create_payment_ins_hist_packet(const c_str& client_prefix
  *  @brief Returns a payment_finalize_packet_t
  */
 
-trx_packet_t* 
+bdb_trx_packet_t* 
 payment_begin_stage_t::create_payment_finalize_packet(const c_str& client_prefix,
                                                       tuple_fifo* fin_buffer,
                                                       tuple_filter_t* fin_filter,
                                                       scheduler::policy_t* dp,
                                                       int a_trx_id,
-                                                      trx_packet_t* upd_wh,
-                                                      trx_packet_t* upd_distr,
-                                                      trx_packet_t* upd_cust,
-                                                      trx_packet_t* ins_hist)
+                                                      bdb_trx_packet_t* upd_wh,
+                                                      bdb_trx_packet_t* upd_distr,
+                                                      bdb_trx_packet_t* upd_cust,
+                                                      bdb_trx_packet_t* ins_hist)
 {
     c_str packet_name("%s_payment_finalize", client_prefix.data());
 

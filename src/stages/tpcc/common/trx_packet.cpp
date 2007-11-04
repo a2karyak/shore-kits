@@ -35,10 +35,9 @@ trx_packet_t::trx_packet_t(const c_str       &packet_id,
                output_filter, trx_plan,
                _merge,    /* whether to merge */
                _unreserve /* whether to unreserve worker on completion */
-               )
-{
-    _trx_id = trx_id;
-    
+               ),
+      _trx_id(trx_id)
+{    
     TRACE(TRACE_PACKET_FLOW, "Created %s TRX packet with ID %s\n",
           _packet_type.data(),
           _packet_id.data());

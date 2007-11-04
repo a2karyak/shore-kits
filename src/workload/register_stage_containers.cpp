@@ -8,11 +8,13 @@
  *  10/21/07: Adding options for InMemory and SHORE transactional environments
  */
 
+#include "workload/register_stage_containers.h"
+
 #include "stages.h"
 #include "trxstages.h"
 
 #include "workload/common/register_stage.h"
-#include "workload/register_stage_containers.h"
+
 
 // OLTP-related constants
 #define MAX_NUM_TRXS     64
@@ -32,10 +34,12 @@
 
 void register_stage_containers(int environment) {
 
+
     if (environment != QUERY_ENV) {
-        TRACE( TRACE_ALWAYS, "*****************" \
+        TRACE( TRACE_ALWAYS, "\n*****************\n" \
                "Registering TRX environment\n" \
-               "SCALING FACTOR \t\t= (%d)\nQUERIED WAREHOUSES \t= (%d)\n",
+               "SCALING FACTOR \t\t= (%d)\nQUERIED WAREHOUSES \t= (%d)\n" \
+               "*****************\n",
                TPCC_SCALING_FACTOR, QUERIED_TPCC_SCALING_FACTOR);
     }
     

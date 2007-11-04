@@ -8,15 +8,15 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __TPCC_PAYMENT_UPD_DISTR_H
-#define __TPCC_PAYMENT_UPD_DISTR_H
+#ifndef __BDB_TPCC_PAYMENT_UPD_DISTR_H
+#define __BDB_TPCC_PAYMENT_UPD_DISTR_H
 
 #include <cstdio>
 
 #include "core.h"
 #include "util.h"
 
-#include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/common/bdb_trx_packet.h"
 
 using namespace qpipe;
 
@@ -24,7 +24,7 @@ using namespace qpipe;
 
 /* exported datatypes */
 
-class payment_upd_distr_packet_t : public trx_packet_t {
+class payment_upd_distr_packet_t : public bdb_trx_packet_t {
   
 public:
 
@@ -74,17 +74,17 @@ public:
                                const int a_wh_id,   
                                const int a_distr_id,
                                const double a_amount)
-      : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                     create_plan(a_trx_id, a_wh_id, a_distr_id, a_amount),
-                     false, /* merging not allowed */
-                     true,  /* unreserve worker on completion */
-                     a_trx_id
-                     ),
-      _wh_id(a_wh_id),
-      _distr_id(a_distr_id),
-      _amount(a_amount)
-      {
-      }
+        : bdb_trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                           create_plan(a_trx_id, a_wh_id, a_distr_id, a_amount),
+                           false, /* merging not allowed */
+                           true,  /* unreserve worker on completion */
+                           a_trx_id
+                           ),
+          _wh_id(a_wh_id),
+          _distr_id(a_distr_id),
+          _amount(a_amount)
+    {
+    }
 
 
     void describe_trx() {

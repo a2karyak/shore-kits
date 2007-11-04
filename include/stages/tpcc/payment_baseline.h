@@ -11,8 +11,8 @@
  */
 
 
-#ifndef __TPCC_PAYMENT_BASELINE_H
-#define __TPCC_PAYMENT_BASELINE_H
+#ifndef __BDB_TPCC_PAYMENT_BASELINE_H
+#define __BDB_TPCC_PAYMENT_BASELINE_H
 
 
 #include <cstdio>
@@ -21,7 +21,7 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/common/bdb_trx_packet.h"
 #include "stages/tpcc/common/payment_functions.h"
 
 
@@ -31,7 +31,7 @@ using namespace tpcc_payment;
 
 /* exported datatypes */
 
-class payment_baseline_packet_t : public trx_packet_t {
+class payment_baseline_packet_t : public bdb_trx_packet_t {
 
 public:
 
@@ -69,11 +69,11 @@ public:
                               tuple_filter_t* output_filter,
                               const payment_input_t a_p_input,
                               s_payment_dbt_t* a_p_dbts)
-      : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                     create_plan(a_p_input._c_id, a_p_input._h_amount, a_p_input._h_date),
-                     true, /* merging allowed */
-                     true  /* unreserve worker on completion */
-                     )
+      : bdb_trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                         create_plan(a_p_input._c_id, a_p_input._h_amount, a_p_input._h_date),
+                         true, /* merging allowed */
+                         true  /* unreserve worker on completion */
+                         )
     {
         // take pointer to allocated Dbts
         _p_dbts = a_p_dbts;

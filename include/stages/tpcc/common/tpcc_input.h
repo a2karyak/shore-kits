@@ -64,9 +64,7 @@ public:
         _h_amount = rhs._h_amount;
 
         if (rhs._c_last) {
-        
-            strncpy(_c_last, _c_last, 15);
-            _c_last[15] = '\0';
+            store_string(_c_last, rhs._c_last);
         }        
 
         return (*this);
@@ -80,46 +78,46 @@ public:
 
 inline void describe(payment_input_t pin, int id) {
 
-#ifndef USE_SAME_INPUT
+    if (pin._c_last) {
 
-    TRACE( TRACE_TRX_FLOW,
-           "\nPAYMENT - TRX=%d\n" \
-           "WH_ID=%d\t\tD_ID=%d\n" \
-           "SEL_WH=%d\tSEL_IDENT=%d\n" \
-           "REM_WH_ID=%d\tREM_D_ID=%d\n" \
-           "C_ID=%d\tC_LAST=%s\n" \
-           "H_AMOUNT=%.2f\tH_DATE=%d\n", \
-           id,
-           pin._home_wh_id, 
-           pin._home_d_id, 
-           pin._v_cust_wh_selection, 
-           pin._v_cust_ident_selection,
-           pin._remote_wh_id, 
-           pin._remote_d_id,
-           pin._c_id, 
-           pin._c_last,
-           pin._h_amount, 
-           pin._h_date);
+        TRACE( TRACE_TRX_FLOW,
+               "\nPAYMENT - TRX=%d\n" \
+               "WH_ID=%d\t\tD_ID=%d\n" \
+               "SEL_WH=%d\tSEL_IDENT=%d\n" \
+               "REM_WH_ID=%d\tREM_D_ID=%d\n" \
+               "C_ID=%d\tC_LAST=%s\n" \
+               "H_AMOUNT=%.2f\tH_DATE=%d\n", \
+               id,
+               pin._home_wh_id, 
+               pin._home_d_id, 
+               pin._v_cust_wh_selection, 
+               pin._v_cust_ident_selection,
+               pin._remote_wh_id, 
+               pin._remote_d_id,
+               pin._c_id, 
+               pin._c_last,
+               pin._h_amount, 
+               pin._h_date);
+    }
+    else {
 
-#else
-    // If using the standard input, _c_last is NULL
-    TRACE( TRACE_TRX_FLOW,
-           "\nPAYMENT - TRX=%d\n" \
-           "WH_ID=%d\t\tD_ID=%d\n" \
-           "SEL_WH=%d\tSEL_IDENT=%d\n" \
-           "REM_WH_ID=%d\tREM_D_ID=%d\n" \
-           "C_ID=%d\tH_AMOUNT=%.2f\tH_DATE=%d\n", \
-           id,
-           pin._home_wh_id, 
-           pin._home_d_id, 
-           pin._v_cust_wh_selection, 
-           pin._v_cust_ident_selection,
-           pin._remote_wh_id, 
-           pin._remote_d_id,
-           pin._c_id, 
-           pin._h_amount, 
-           pin._h_date);
-#endif
+        // If using the standard input, _c_last is NULL
+        TRACE( TRACE_TRX_FLOW,
+               "\nPAYMENT - TRX=%d\n" \
+               "WH_ID=%d\t\tD_ID=%d\n" \
+               "SEL_WH=%d\tSEL_IDENT=%d\n" \
+               "REM_WH_ID=%d\tREM_D_ID=%d\n" \
+               "C_ID=%d\tH_AMOUNT=%.2f\tH_DATE=%d\n", \
+               id,
+               pin._home_wh_id, 
+               pin._home_d_id, 
+               pin._v_cust_wh_selection, 
+               pin._v_cust_ident_selection,
+               pin._remote_wh_id, 
+               pin._remote_d_id,
+               pin._c_id, 
+               pin._h_amount, 
+               pin._h_date);
 }
 
 EXIT_NAMESPACE(tpcc);

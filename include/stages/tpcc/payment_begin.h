@@ -7,8 +7,8 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __TPCC_PAYMENT_BEGIN_H
-#define __TPCC_PAYMENT_BEGIN_H
+#ifndef __BDB_TPCC_PAYMENT_BEGIN_H
+#define __BDB_TPCC_PAYMENT_BEGIN_H
 
 #include <cstdio>
 
@@ -16,7 +16,7 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/common/bdb_trx_packet.h"
 #include "stages/tpcc/common/payment_functions.h"
 
 #include "stages/tpcc/payment_upd_wh.h"
@@ -31,7 +31,7 @@ using namespace tpcc_payment;
 /* exported datatypes */
 
 
-class payment_begin_packet_t : public trx_packet_t {
+class payment_begin_packet_t : public bdb_trx_packet_t {
   
 public:
 
@@ -74,11 +74,11 @@ public:
                            const char a_c_last[16],
                            const double a_h_amount,
                            const int a_h_date)
-      : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                     create_plan(a_c_id, a_h_amount, a_h_date),
-                     true, /* merging allowed */
-                     true  /* unreserve worker on completion */
-                     )
+        : bdb_trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
+                           create_plan(a_c_id, a_h_amount, a_h_date),
+                           true, /* merging allowed */
+                           true  /* unreserve worker on completion */
+                           )
     {
         _p_in._home_wh_id = a_home_wh_id;
         _p_in._home_d_id = a_home_d_id;
@@ -91,9 +91,7 @@ public:
         _p_in._h_date = a_h_date;
 
         if (a_c_last) {
-      
-            strncpy(_p_in._c_last, a_c_last, 14);
-            _p_in._c_last[15] = '\0';
+            store_string(_p_in._c_last, a_c_last);
         }
 
         _trx_state = UNDEF;
@@ -166,7 +164,7 @@ public:
     int get_next_counter();
 
     /** @brief Retuns a payment_upd_wh_packet_t */
-    trx_packet_t* 
+    bdb_trx_packet_t* 
     create_payment_upd_wh_packet(const c_str& client_prefix,
                                  tuple_fifo* uwh_buffer,
                                  tuple_filter_t* uwh_filter,
@@ -177,7 +175,7 @@ public:
 
 
     /** @brief Returns a payment_upd_distr_packet_t */
-    trx_packet_t* 
+    bdb_trx_packet_t* 
     create_payment_upd_distr_packet(const c_str& client_prefix,
                                     tuple_fifo* ud_buffer,
                                     tuple_filter_t* ud_filter,
@@ -189,7 +187,7 @@ public:
     
 
     /** @brief Returns a payment_upd_cust_packet_t */
-    trx_packet_t* 
+    bdb_trx_packet_t* 
     create_payment_upd_cust_packet(const c_str& client_prefix,
                                    tuple_fifo* uc_buffer,
                                    tuple_filter_t* uc_filter,
@@ -203,7 +201,7 @@ public:
     
 
     /** @brief Returns a payment_ins_hist_packet_t */
-    trx_packet_t* 
+    bdb_trx_packet_t* 
     create_payment_ins_hist_packet(const c_str& client_prefix,
                                    tuple_fifo* ih_buffer,
                                    tuple_filter_t* ih_filter,
@@ -217,16 +215,16 @@ public:
     
 
     /** @brief Returns a payment_finalize_packet_t */
-    trx_packet_t* 
+    bdb_trx_packet_t* 
     create_payment_finalize_packet(const c_str& client_prefix,
                                    tuple_fifo* fin_buffer,
                                    tuple_filter_t* fin_filter,
                                    scheduler::policy_t* dp,
                                    int a_trx_id,
-                                   trx_packet_t* upd_wh,
-                                   trx_packet_t* upd_distr,
-                                   trx_packet_t* upd_cust,
-                                   trx_packet_t* ins_hist);
+                                   bdb_trx_packet_t* upd_wh,
+                                   bdb_trx_packet_t* upd_distr,
+                                   bdb_trx_packet_t* upd_cust,
+                                   bdb_trx_packet_t* ins_hist);
     
     
     

@@ -43,7 +43,7 @@ void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
     
 
     // payment_baseline_packet
-    trx_packet_t* bp_packet = 
+    bdb_trx_packet_t* bp_packet = 
 	create_payment_baseline_packet( "PAYMENT_BASELINE_CLIENT_", 
                                         bp_buffer, 
                                         bp_filter,
@@ -69,7 +69,7 @@ void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
  *  of the database
  */
 
-trx_packet_t* 
+bdb_trx_packet_t* 
 tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client_prefix, 
                                                              tuple_fifo* bp_output_buffer,
                                                              tuple_filter_t* bp_output_filter,
@@ -79,17 +79,17 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
 {
     assert(sf>0);
 
-    trx_packet_t* payment_packet;
+
 
     tpcc::payment_input_t pin = create_payment_input(sf);
     
     c_str packet_name("%s_payment_test", client_prefix.data());
 
-    payment_packet = new payment_baseline_packet_t(packet_name,
-                                                   bp_output_buffer,
-                                                   bp_output_filter,
-                                                   pin,
-                                                   p_dbts);
+    bdb_trx_packet_t* payment_packet = new payment_baseline_packet_t(packet_name,
+                                                                     bp_output_buffer,
+                                                                     bp_output_filter,
+                                                                     pin,
+                                                                     p_dbts);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     payment_packet->assign_query_state(qs);

@@ -575,7 +575,10 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
 
     }        
     catch(TrxException e) {
-        TRACE( TRACE_ALWAYS, "TrxException Exception - Aborting PAYMENT trx...\n");
+        TRACE( TRACE_ALWAYS, 
+               "********************************\n" \
+               "TrxException Exception - Aborting PAYMENT trx...\n" \
+               "Reason: (%s)\n", e.what());
 
         // Release district
         if (myDistrictIdx >= 0) {
@@ -601,7 +604,9 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
         return (aTrxResultTuple);
     }
     catch(...) {
-        TRACE( TRACE_ALWAYS, "Unknown Exception - Aborting PAYMENT trx...\n");
+        TRACE( TRACE_ALWAYS, 
+               "********************************\n" \
+               "Unknown Exception - Aborting PAYMENT trx...\n");
 
 
         // Release district

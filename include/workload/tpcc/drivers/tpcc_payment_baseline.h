@@ -8,8 +8,8 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __TPCC_PAYMENT_BASELINE_DRIVER_H
-#define __TPCC_PAYMENT_BASELINE_DRIVER_H
+#ifndef __BDB_TPCC_PAYMENT_BASELINE_DRIVER_H
+#define __BDB_TPCC_PAYMENT_BASELINE_DRIVER_H
 
 
 #include "workload/driver.h"
@@ -40,12 +40,12 @@ public:
     
     virtual void submit(void* disp, memObject_t* mem);
 
-    trx_packet_t* create_payment_baseline_packet(const c_str& client_prefix,
-                                                 tuple_fifo* bp_buffer,
-                                                 tuple_filter_t* bp_filter,
-                                                 scheduler::policy_t* dp,
-                                                 s_payment_dbt_t* p_dbts,
-                                                 int sf);
+    bdb_trx_packet_t* create_payment_baseline_packet(const c_str& client_prefix,
+                                                     tuple_fifo* bp_buffer,
+                                                     tuple_filter_t* bp_filter,
+                                                     scheduler::policy_t* dp,
+                                                     s_payment_dbt_t* p_dbts,
+                                                     int sf);
 };
 
 
