@@ -39,9 +39,9 @@ ENTER_NAMESPACE(tpcc);
 #define WAREHOUSE_FANOUT 1
 #define DISTRICT_FANOUT 10
 
-#define cCustNodeEntries 40
+#define cCustNodeEntries 20
 #define cCustNodePad 4
-#define cCustLeafEntries 80
+#define cCustLeafEntries 40
 #define cCustLeafPad 4
 
 #define cHistNodeEntries 50
