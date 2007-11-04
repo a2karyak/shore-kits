@@ -20,6 +20,8 @@
 #include "util/trace.h"
 
 
+
+
 ////////////////////////////////////////////////////////////////////////////
 
 /** @class latchedArray
@@ -73,6 +75,8 @@ public:
         return (&_array[idx]);
       }
 
+      TRACE( TRACE_TRX_FLOW, "Out-of-bounds access attempt idx = (%d)\n", idx);
+
       // out-of-bounds
       return (NULL);
     }
@@ -91,6 +95,8 @@ public:
         return (&_array[idx]);
       }
 
+      TRACE( TRACE_TRX_FLOW, "Out-of-bounds access attempt idx = (%d)\n", idx);
+
       // out-of-bounds
       return (NULL);
     }
@@ -108,6 +114,8 @@ public:
         pthread_rwlock_unlock(&_array_rwlock[idx]);
         return (0);
       }
+
+      TRACE( TRACE_TRX_FLOW, "Out-of-bounds access attempt idx = (%d)\n", idx);
 
       // out-of-bounds
       return (1);
@@ -128,6 +136,8 @@ public:
         pthread_rwlock_unlock(&_array_rwlock[idx]);        
         return (0);
       }
+
+      TRACE( TRACE_TRX_FLOW, "Out-of-bounds access attempt idx = (%d)\n", idx);
 
       // out-of-bounds
       return (1);

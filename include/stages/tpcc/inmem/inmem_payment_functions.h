@@ -52,7 +52,7 @@ int updateInMemCustomerByLast(int wh_id, int d_id,
 
 
 // implementation of the single-threaded version of the inmemory payment
-trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
+trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t pin,
                                                const int id,
                                                InMemTPCCEnv* env);
 

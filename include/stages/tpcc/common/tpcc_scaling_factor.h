@@ -12,8 +12,8 @@
 // Sets the scaling factor of the TPC-C database
 // @note Some data structures base their size on this value
 
-# define TPCC_SCALING_FACTOR             1
-//# define TPCC_SCALING_FACTOR             10
+//# define TPCC_SCALING_FACTOR             1
+# define TPCC_SCALING_FACTOR             10
 //# define TPCC_SCALING_FACTOR             100
 
 
@@ -21,8 +21,8 @@
 // @note The tpcc_drivers create their requests bases on this value
 
 
-# define QUERIED_TPCC_SCALING_FACTOR             1
-//# define QUERIED_TPCC_SCALING_FACTOR             10
+//# define QUERIED_TPCC_SCALING_FACTOR             1
+# define QUERIED_TPCC_SCALING_FACTOR             10
 //# define QUERIED_TPCC_SCALING_FACTOR             100
 
 

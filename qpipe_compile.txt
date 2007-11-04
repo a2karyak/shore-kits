@@ -48,3 +48,7 @@ CXX=CC ./autogen
 LOMOND specific:
 
 CC=~ryanjohn/apps/opt/SUNWspro/bin/cc CXX=~ryanjohn/apps/opt/SUNWspro/bin/CC ./configure
+
+or 
+
+CC=~/ryanbin/cc CXX=~/ryanbin/CC ./configure

@@ -22,6 +22,7 @@
 #include <boost/array.hpp>
 
 
+
 ENTER_NAMESPACE(tpcc);
 
 /* constants */
@@ -38,9 +39,9 @@ ENTER_NAMESPACE(tpcc);
 #define WAREHOUSE_FANOUT 1
 #define DISTRICT_FANOUT 10
 
-#define cCustNodeEntries 10
+#define cCustNodeEntries 40
 #define cCustNodePad 4
-#define cCustLeafEntries 20
+#define cCustLeafEntries 80
 #define cCustLeafPad 4
 
 #define cHistNodeEntries 50

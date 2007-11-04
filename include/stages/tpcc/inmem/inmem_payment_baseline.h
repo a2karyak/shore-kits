@@ -103,7 +103,7 @@ public:
 
     void describe_trx() {
         
-        describe(_p_in, _trx_id);
+        _p_in.describe(_trx_id);
     }
 
 }; // EOF payment_baseline_packet_t

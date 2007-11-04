@@ -48,9 +48,6 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
                                               bp_filter,
                                               dp,
                                               QUERIED_TPCC_SCALING_FACTOR);
-
-    // Prints out the packet info
-    bp_packet->describe_trx();
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);

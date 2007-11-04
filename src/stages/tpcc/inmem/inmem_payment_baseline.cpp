@@ -51,7 +51,7 @@ void inmem_payment_baseline_stage_t::process_packet() {
     packet->describe_trx();
 
     trx_result_tuple_t aTrxResultTuple = 
-        executeInMemPaymentBaseline(&packet->_p_in,
+        executeInMemPaymentBaseline(packet->_p_in,
                                     packet->get_trx_id(),
                                     inmem_env);
     

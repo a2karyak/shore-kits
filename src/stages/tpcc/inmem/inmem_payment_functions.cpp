@@ -177,8 +177,8 @@ int updateInMemWarehouse(payment_input_t* pin, int* idx,
     // Get the entry
     if ((warehouse = env->im_warehouses.write(*idx)) == NULL) {
         // No entry returned
-        *idx = -1;
         THROW2(TrxException, "Called Warehouses.write(%d)\n", *idx);
+        *idx = -1;
         return (1);
     }
     else if (warehouse->W_ID != pin->_home_wh_id) {
@@ -499,7 +499,7 @@ void updateInMemCustomerData(tpcc_customer_tuple_key ck,
  *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
-trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
+trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t pin,
                                                const int id, 
                                                InMemTPCCEnv* env)
 {        
@@ -518,10 +518,12 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
         /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
     
 
+        pin.describe(id);
+
         /** Step 1: The database transaction is started */
         TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
 
-        if (updateInMemWarehouse(pin, &myWarehouseIdx, env)) {
+        if (updateInMemWarehouse(&pin, &myWarehouseIdx, env)) {
             
             // Failed. Throw exception
             THROW1( TrxException, 
@@ -529,7 +531,7 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
         }
 
 
-        if (updateInMemDistrict(pin, &myDistrictIdx, env)) {
+        if (updateInMemDistrict(&pin, &myDistrictIdx, env)) {
             
             // Failed. Throw exception
             THROW1( TrxException, 
@@ -537,13 +539,13 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t* pin,
         }
 
 
-        if (updateInMemCustomer(pin, env)) {
+        if (updateInMemCustomer(&pin, env)) {
             // Failed. Throw exception
             THROW1( TrxException,
                     "CUSTOMER update failed...\n");
         }
 
-        if (insertInMemHistory(pin, env)) {
+        if (insertInMemHistory(&pin, env)) {
 
             // Failed. Throw exception
             THROW1( TrxException, 
