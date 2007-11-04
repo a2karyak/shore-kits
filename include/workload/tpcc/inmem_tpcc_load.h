@@ -109,9 +109,12 @@ public:
         data_loader_t<RowParser>(aloadername, afname),
         _ds(ads)
     {
+        TRACE( TRACE_DEBUG, "Array Loader constructor\n");
     }
 
-    ~inmem_array_loader_impl() { }
+    virtual ~inmem_array_loader_impl() {
+        TRACE( TRACE_DEBUG, "Array Loader destructor\n");
+    }
 
     int insert(int idx, record_t aRecord) {
         _ds->insert(idx, aRecord.second);
@@ -142,9 +145,12 @@ public:
         data_loader_t<RowParser>(aloadername, afname),
         _ds(ads)
     {
+        TRACE( TRACE_DEBUG, "BPTree Loader constructor\n");
     }
 
-    ~inmem_bptree_loader_impl() { }
+    virtual ~inmem_bptree_loader_impl() {
+        TRACE( TRACE_DEBUG, "BPTree Loader destructor\n");
+    }
 
     int insert(int idx, record_t aRecord) {
         _ds->insert(aRecord.first, aRecord.second);

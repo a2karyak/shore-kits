@@ -67,6 +67,7 @@ private:
     static const int DISTRICT = 1;
     static const int CUSTOMER = 2;
     static const int HISTORY = 3;
+
     static const int INMEM_PAYMENT_TABLES = 4;
 
     /** Private functions */
