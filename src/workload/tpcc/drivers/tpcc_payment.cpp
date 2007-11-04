@@ -52,7 +52,7 @@ void tpcc_payment_driver::submit(void* disp, memObject_t* mem) {
 				     bp_buffer, 
 				     bp_filter,
 				     dp,
-                                     QUERIED_TPCC_SCALING_FACTOR);
+                                     selectedQueriedSF);
 
 
     qpipe::query_state_t* qs = dp->query_state_create();

@@ -165,7 +165,14 @@ SG_COMMON = \
    $(SG)/common/process_query.cpp \
    $(SG)/common/predicates.cpp 
 
-SG_TRX = \
+
+SG_TRX_COMMON = \
+   $(SG)/tpcc/common/trx_packet.cpp \
+   $(SG)/tpcc/common/tpcc_scaling_factor.cpp
+
+
+SG_BDB_TRX = \
+   $(SG)/tpcc/common/payment_functions.cpp \
    $(SG)/tpcc/payment_baseline.cpp \
    $(SG)/tpcc/payment_begin.cpp \
    $(SG)/tpcc/payment_upd_wh.cpp \
@@ -174,9 +181,6 @@ SG_TRX = \
    $(SG)/tpcc/payment_ins_hist.cpp \
    $(SG)/tpcc/payment_finalize.cpp
 
-SG_TRX_COMMON = \
-   $(SG)/tpcc/common/trx_packet.cpp \
-   $(SG)/tpcc/common/payment_functions.cpp
 
 SG_INMEM_TRX = \
    $(SG)/tpcc/inmem/inmem_payment_functions.cpp \
@@ -186,8 +190,8 @@ SG_INMEM_TRX = \
 lib_libstages_a_SOURCES = \
    $(SG_MAIN) \
    $(SG_COMMON) \
-   $(SG_TRX) \
    $(SG_TRX_COMMON) \
+   $(SG_BDB_TRX) \
    $(SG_INMEM_TRX)
 
 

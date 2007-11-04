@@ -17,7 +17,7 @@
 
 
 // OLTP-related constants
-#define MAX_NUM_TRXS     64
+#define MAX_NUM_TRXS     256
 
 
 // DSS-related constants
@@ -32,15 +32,17 @@
 #define MAX_NUM_SORTED_IN_STAGE_THREADS   MAX_NUM_CLIENTS
 
 
+
 void register_stage_containers(int environment) {
 
 
     if (environment != QUERY_ENV) {
+        selectedQueriedSF = QUERIED_TPCC_SCALING_FACTOR;
         TRACE( TRACE_ALWAYS, "\n*****************\n" \
                "Registering TRX environment\n" \
                "SCALING FACTOR \t\t= (%d)\nQUERIED WAREHOUSES \t= (%d)\n" \
                "*****************\n",
-               TPCC_SCALING_FACTOR, QUERIED_TPCC_SCALING_FACTOR);
+               TPCC_SCALING_FACTOR, selectedQueriedSF);
     }
     
     switch (environment) {
@@ -58,6 +60,7 @@ void register_stage_containers(int environment) {
         register_stage<payment_ins_hist_stage_t>(MAX_NUM_CLIENTS, false); 
         register_stage<payment_finalize_stage_t>(MAX_NUM_CLIENTS, false); 
         */
+
 
         register_stage<payment_baseline_stage_t>(MAX_NUM_TRXS, false);      
         break;

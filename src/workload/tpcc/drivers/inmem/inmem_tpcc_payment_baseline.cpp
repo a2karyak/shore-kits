@@ -22,7 +22,6 @@ using namespace tpcc_payment;
 ENTER_NAMESPACE(workload);
 
 
-
 void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
@@ -47,12 +46,11 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
                                               bp_buffer, 
                                               bp_filter,
                                               dp,
-                                              QUERIED_TPCC_SCALING_FACTOR);
+                                              selectedQueriedSF);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
-    
-    
+        
     trx_result_process_tuple_t trx_rt(bp_packet);
     process_query(bp_packet, trx_rt);
 

@@ -22,13 +22,15 @@
 
 
 //# define QUERIED_TPCC_SCALING_FACTOR             1
-# define QUERIED_TPCC_SCALING_FACTOR             10
+# define QUERIED_TPCC_SCALING_FACTOR             8
+//# define QUERIED_TPCC_SCALING_FACTOR             10
 //# define QUERIED_TPCC_SCALING_FACTOR             100
 
 
 /** Use this definition to produce the same packet over and over */
 //#define USE_SAME_INPUT 
 
+extern int selectedQueriedSF;
 
 
 #endif

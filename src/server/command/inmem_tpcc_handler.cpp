@@ -12,9 +12,9 @@
 #include "server/print.h"
 #include "server/config.h"
 
+// InMem-TPCC data-structures
+#include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "workload/tpcc/inmem_tpcc_env.h"
-//#include "workload/tpcc/tpcc_db.h"
-
 
 // InMem-TPCC drivers header files
 #include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.h"
@@ -128,6 +128,15 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
         return;
     }
 
+    // 'wh' tag sets the number of queried warehouses
+    if (!strcmp(driver_tag, "wh")) {
+        int queried_warehouses = 0;
+        sscanf(command, "%*s %*s %d",
+               &queried_warehouses);
+        TRACE( TRACE_ALWAYS, "Queried WHs = (%d)\n", queried_warehouses);
+        selectedQueriedSF = queried_warehouses;
+        return;
+    }
 
     // 'list' tag handled differently from all others...
     if (!strcmp(driver_tag, "list"))
