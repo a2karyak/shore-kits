@@ -118,6 +118,7 @@ inline void describe(payment_input_t pin, int id) {
                pin._c_id, 
                pin._h_amount, 
                pin._h_date);
+    }
 }
 
 EXIT_NAMESPACE(tpcc);
