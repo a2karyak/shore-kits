@@ -47,7 +47,7 @@ payment_input_t create_payment_input(int sf) {
     pin._h_date = time(NULL);
         
     if (tCustLast)
-        delete (tCustLast);        
+        delete [] (tCustLast);        
 #else
     pin._home_wh_id = 1;
     pin._home_d_id =  1;

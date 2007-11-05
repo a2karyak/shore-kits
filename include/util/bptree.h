@@ -296,7 +296,7 @@ public:
         index = leaf_position_for(key, leaf->keys, leaf->num_keys);
         
         // Checks if valid key found and unlocks leaf
-        if ( leaf->keys[index] == key ) {
+        if ( index < leaf->num_keys && leaf->keys[index] == key ) {
             // Entry found, copies the value and returns true
             if ( value != 0 ) {
                 *value = leaf->values[index];
@@ -820,9 +820,8 @@ private:
         assert(node->num_keys<LEAF_ENTRIES);
         assert(index<=node->num_keys);
         
-        if ( (index < LEAF_ENTRIES) && 
-             (node->keys[index] == key) && 
-             (node->num_keys > 0)) {
+        if ( (index < node->num_keys) && 
+             (node->keys[index] == key)) {
             // We are inserting a duplicate value.
             // Simply overwrite (update) the old one
             node->values[index] = value;
