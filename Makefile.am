@@ -55,6 +55,7 @@ TESTS = \
    tests/payment \
    tests/payment_baseline \
    tests/payment_single_thr \
+   tests/inmem_payment_single_thr \
    tests/acounter \
    tests/tpch_load \
    tests/tpcc_load \
@@ -255,7 +256,8 @@ WL_TPCC = \
 
 WL_INMEM_TPCC = \
    $(SW)/tpcc/inmem_tpcc_env.cpp \
-   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp
+   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp \
+   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.cpp
 
 
 lib_libworkload_a_SOURCES = \
@@ -364,6 +366,7 @@ tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
 tests_payment_SOURCES = $(ST)/test_payment.cpp
 tests_payment_baseline_SOURCES = $(ST)/test_payment_baseline.cpp
 tests_payment_single_thr_SOURCES = $(ST)/test_payment_single_thr.cpp
+tests_inmem_payment_single_thr_SOURCES = $(ST)/test_inmem_payment_single_thr.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
@@ -405,6 +408,7 @@ tests_busy_wait_all_LDADD = $(TEST_LIBS)
 tests_payment_LDADD = $(TEST_LIBS)
 tests_payment_baseline_LDADD = $(TEST_LIBS)
 tests_payment_single_thr_LDADD = $(TEST_LIBS)
+tests_inmem_payment_single_thr_LDADD = $(TEST_LIBS)
 tests_tpch_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_mt_LDADD = $(TEST_LIBS)

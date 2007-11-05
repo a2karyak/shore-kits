@@ -29,6 +29,7 @@ struct query_info_t {
     int num_iterations;
     scheduler::policy_t* _policy;
     int num_clients;
+    int scaling_factor;
 };
 
 

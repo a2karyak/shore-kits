@@ -35,13 +35,19 @@ query_info_t query_init(int argc, char* argv[], int env) {
 
     
     // open database
-    if (env == QUERY_ENV) {
-        tpch::db_open();
-    }
-    else {
-        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
-    }
+    switch (env) {
 
+    case (QUERY_ENV): 
+        tpch::db_open(); 
+        break;
+
+    case (TRX_MEM_ENV):
+        break;
+
+    default:
+        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
+        break;
+    }
 
 
     query_info_t info;
@@ -65,15 +71,23 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 
-    // close database
-    if (env == QUERY_ENV) {
-        tpch::db_close();
-    }
-    else {
-        tpcc::db_close();
-    }
-}
 
+    // open database
+    switch (env) {
+
+    case (QUERY_ENV): 
+        tpch::db_close(); 
+        break;
+
+    case (TRX_MEM_ENV):
+        break;
+
+    default:
+        tpcc::db_close();
+        break;
+    }
+
+}
 
 
 
@@ -87,8 +101,8 @@ query_info_t query_single_thr_init(int argc, char* argv[], int env) {
     thread_init();
 
     // parse command line args
-    if ( argc < 3 ) {
-	TRACE(TRACE_ALWAYS, "Usage: %s <num clients> <num iterations>\n", argv[0]);
+    if ( argc < 4 ) {
+	TRACE(TRACE_ALWAYS, "Usage: %s <num clients> <num iterations> <scaling factor>\n", argv[0]);
 	exit(-1);
     }
 
@@ -104,21 +118,35 @@ query_info_t query_single_thr_init(int argc, char* argv[], int env) {
 	exit(-1);
     }
 
-    
-    // open database
-    if (env == QUERY_ENV) {
-        tpch::db_open();
-    }
-    else {
-        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
+    int num_sf = atoi(argv[3]);
+    if ( num_sf <= 0 ) {
+	TRACE(TRACE_ALWAYS, "Invalid scaling factor = %s\n", argv[3]);
+	exit(-1);
     }
 
+
+    
+    // open database
+    switch (env) {
+
+    case (QUERY_ENV): 
+        tpch::db_open(); 
+        break;
+
+    case (TRX_MEM_ENV):
+        break;
+
+    default:
+        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
+        break;
+    }
 
 
     query_info_t info;
     info.num_iterations = num_iterations;
     info._policy = new scheduler::policy_os_t();
     info.num_clients = num_clients;
+    info.scaling_factor = num_sf;
 
     return info;
 }

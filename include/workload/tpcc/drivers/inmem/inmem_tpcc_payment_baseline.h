@@ -2,8 +2,8 @@
 
 /** @file inmem_tpcc_payment_baseline.h
  *
- *  @brief Declaration of the driver that submits INMEM_PAYMENT_BASELINE transaction requests,
- *  according to the TPCC specification.
+ *  @brief Declaration of the driver that submits INMEM_PAYMENT_BASELINE 
+ *  transaction requests, according to the TPCC specification.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
