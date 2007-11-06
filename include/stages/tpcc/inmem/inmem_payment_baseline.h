@@ -66,7 +66,7 @@ public:
                                     const payment_input_t a_p_input)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                        create_plan(a_p_input._c_id, a_p_input._h_amount, a_p_input._h_date),
-                       true, /* merging allowed */
+                       false, /* merging allowed */
                        true  /* unreserve worker on completion */
                        )
     {

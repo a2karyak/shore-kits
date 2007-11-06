@@ -36,14 +36,26 @@ protected:
     class stage_adaptor_t;
 
     typedef list <packet_list_t*> ContainerQueue;
-    
+
+    // used by the distributed stage queue
+    struct DistributedQueueSlice {
+	pthread_mutex_t _lock;
+	pthread_cond_t _cond;
+	ContainerQueue _queue;
+	DistributedQueueSlice() : _lock(thread_mutex_create()), _cond(thread_cond_create()) { }
+    private:
+	// no-nos
+	void operator=(DistributedQueueSlice const&);
+	DistributedQueueSlice(DistributedQueueSlice const&);
+    };
+    vector<DistributedQueueSlice*> _queue_slices;
     
     // container synch vars
     debug_mutex_t _container_lock;
     pthread_cond_t  _container_queue_nonempty;
     
     c_str                   _container_name;
-    ContainerQueue          _container_queue;
+    //    ContainerQueue          _container_queue;
 
     list <stage_adaptor_t*> _container_current_stages;
 
@@ -53,7 +65,7 @@ protected:
     // container queue manipulation
     void container_queue_enqueue_no_merge(packet_list_t* packets);
     void container_queue_enqueue_no_merge(packet_t* packet);
-    packet_list_t* container_queue_dequeue();
+    packet_list_t* container_queue_dequeue(int which);
     void create_worker();
    
     
@@ -75,7 +87,7 @@ public:
     void reserve(int n);
     void unreserve(int n);
     
-    void run();
+    void run(int id);
 
 private:
 
@@ -119,6 +131,7 @@ protected:
         
     // adaptor synch vars
     pthread_mutex_t _stage_adaptor_lock;
+
 
     stage_container_t* _container;
 

@@ -81,6 +81,7 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _next_thread(0),
       _rp(&_container_lock._lock, 0, container_name)
 {
+    _queue_slices.reserve(_max_threads);
 }
 
 
@@ -99,6 +100,8 @@ stage_container_t::~stage_container_t(void) {
     // destroy synch vars    
     thread_mutex_destroy(_container_lock);
     thread_cond_destroy(_container_queue_nonempty);
+    for(int i=0; i < _next_thread; i++)
+	delete _queue_slices[i];
 }
 
 
@@ -110,13 +113,14 @@ stage_container_t::~stage_container_t(void) {
  */
 struct stage_thread : thread_t {
     stage_container_t* _sc;
-    stage_thread(const c_str &name, stage_container_t* sc)
-        : thread_t(name), _sc(sc)
+    int _which;
+    stage_thread(const c_str &name, stage_container_t* sc, int which)
+        : thread_t(name), _sc(sc), _which(which)
     {
         
     }
     virtual void* run() {
-        _sc->run();
+        _sc->run(_which);
         return NULL;
     }
 };
@@ -124,11 +128,22 @@ struct stage_thread : thread_t {
 
 
 /**
- *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::container_queue_enqueue_no_merge(packet_list_t* packets) {
-    _container_queue.push_back(packets);
-    thread_cond_signal(_container_queue_nonempty);
+    /* NOTE: _rp.get_capacity() could potentially change, but it's not
+       worth grabbing a lock -- it increases monotonically, so the
+       worst that happens is that newly added threads might get
+       ignored for a short while.
+
+       Also, we don't need to lock the _queue_slices because a call to
+       reserve() in our constructor means no resizes during the
+       life of the program; the vector is effectively read-only.
+     */
+    int which = thread_get_self()->rand(_next_thread);
+    DistributedQueueSlice* slice = _queue_slices[which];
+    critical_section_t cs(slice->_lock);
+    slice->_queue.push_back(packets);
+    thread_cond_signal(slice->_cond);
 }
 
 
@@ -138,7 +153,6 @@ void stage_container_t::container_queue_enqueue_no_merge(packet_list_t* packets)
  *  element in the _container_queue and signal a waiting worker
  *  thread.
  *
- *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
 void stage_container_t::container_queue_enqueue_no_merge(packet_t* packet) {
     packet_list_t* packets = new packet_list_t();
@@ -153,18 +167,19 @@ void stage_container_t::container_queue_enqueue_no_merge(packet_t* packet) {
  *  container queue. If no packets are available, wait for one to
  *  appear.
  *
- *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
  */
-packet_list_t* stage_container_t::container_queue_dequeue() {
+packet_list_t* stage_container_t::container_queue_dequeue(int which) {
 
+    DistributedQueueSlice* slice = _queue_slices[which];
+    critical_section_t cs(slice->_lock);
+    
     // wait for a packet to appear
-    while ( _container_queue.empty() ) {
-	thread_cond_wait( _container_queue_nonempty, _container_lock );
-    }
+    while(slice->_queue.empty())
+	thread_cond_wait(slice->_cond, slice->_lock);
 
     // remove available packet
-    packet_list_t* plist = _container_queue.front();
-    _container_queue.pop_front();
+    packet_list_t* plist = slice->_queue.front();
+    slice->_queue.pop_front();
   
     return plist;
 }
@@ -179,13 +194,16 @@ packet_list_t* stage_container_t::container_queue_dequeue() {
 void stage_container_t::create_worker() {
     
     // create another worker thread
-    _next_thread++;
     c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread);
-    thread_t* thread = new stage_thread(thread_name, this);
+    thread_t* thread = new stage_thread(thread_name, this, _next_thread);
 
     if (TRACE_WORKER_CREATE)
         TRACE(TRACE_ALWAYS, "Creating thread %s\n", thread_name.data());
 
+    // must update _queue_slices *before* updating _next_thread or spawning the thread
+    DistributedQueueSlice* slice = new DistributedQueueSlice;
+    _queue_slices.push_back(slice);
+    _next_thread++;
     thread_create(thread, &_pool);
 
     // notify resource pool
@@ -325,10 +343,6 @@ void stage_container_t::enqueue(packet_t* packet) {
        unreserve that worker. */
 
 
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_container_lock);
-
-
     // check for non-mergeable packets
     if (!packet->is_merge_enabled())  {
 	// We are forcing the new packet to not merge with others.
@@ -337,10 +351,15 @@ void stage_container_t::enqueue(packet_t* packet) {
             TRACE(TRACE_ALWAYS, "%s merging disabled\n",
                   packet->_packet_id.data());
 	return;
-	// * * * END CRITICAL SECTION * * *
     }
 
-
+    /** UNIMPLEMENTED: Distributing the queues makes work sharing a
+	bit harder... we need to implement and maintain a parallel
+	hash table, with per-bucket locks, that maps potential sharing matches to the
+	appropriate queue
+     */
+    assert(false);
+#if 0
     /* UTILIZATION AWARE WORK SHARING:
 
        We want to avoid work sharing when there are idle system
@@ -417,6 +436,7 @@ void stage_container_t::enqueue(packet_t* packet) {
     // packet into the stage_queue.
     container_queue_enqueue_no_merge(packet);
     // * * * END CRITICAL SECTION * * *
+#endif // UNIMPLEMENTED
 };
 
 
@@ -427,7 +447,7 @@ void stage_container_t::enqueue(packet_t* packet) {
  *
  *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
  */
-void stage_container_t::run() {
+void stage_container_t::run(int id) {
 
     while (1) {
 	
@@ -436,10 +456,7 @@ void stage_container_t::run() {
 	// _container_lock in container_queue_dequeue() if we end up
 	// actually waiting.
 
-	critical_section_t cs(_container_lock);
-        // * * * BEGIN CRITICAL SECTION * * *
-
-	packet_list_t* packets = container_queue_dequeue();
+	packet_list_t* packets = container_queue_dequeue(id);
 
 	// error checking
 	assert( packets != NULL );
@@ -460,7 +477,11 @@ void stage_container_t::run() {
                     packets,
                     packets->front()->_output_filter->input_tuple_size());
 
-        
+
+        // * * * BEGIN CRITICAL SECTION * * *
+	{
+	critical_section_t cs(_container_lock);
+
 	// Add new stage to the container's list of active stages. It
 	// is better to release the container lock and reacquire it
 	// here since stage construction can take a long time.
@@ -470,9 +491,8 @@ void stage_container_t::run() {
            this method. We do it in cleanup() since we must do it
            before deciding whether to unreserve ourselves. */
         _rp.notify_non_idle();
-
+	}
         // * * * END CRITICAL SECTION * * *
-	cs.exit();
 
         
         // create stage
@@ -481,13 +501,13 @@ void stage_container_t::run() {
 
 	
         // remove active stage
+	{
 	critical_section_t cs_remove_active_stage(_container_lock);
         // * * * BEGIN CRITICAL SECTION * * *
         _container_current_stages.remove(&adaptor);
         /* should have marked ourselves non-idle in cleanup */
         // * * * END CRITICAL SECTION * * *
-	cs_remove_active_stage.exit();
-        
+        }
         
 	// TODO: check for container shutdown
     }

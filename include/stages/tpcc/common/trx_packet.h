@@ -254,7 +254,7 @@ public:
         // FIXME (ip) Is this assertion correct?
         //        assert (_packet->get_trx_id() == r->get_id());
 
-        _packet->set_trx_state(r->get_state());
+	//        _packet->set_trx_state(r->get_state());
     }
 
 

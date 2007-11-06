@@ -15,7 +15,7 @@ using namespace qpipe;
 void* drive_stage(void* arg)
 {
     stage_container_t* sc = (stage_container_t*)arg;
-    sc->run();
+    sc->run(0);
 
     return NULL;
 }
