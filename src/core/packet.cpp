@@ -4,10 +4,38 @@
 #include "core/stage_container.h"
 #include "util.h"
 #include "util/thread.h"
-
+#include "util/pool_alloc.h"
+#include "util/exception.h"
 
 ENTER_NAMESPACE(qpipe);
 
+static pool_alloc packet_alloc;
+
+void* packet_t::operator new(size_t size) {
+    void* ptr = packet_alloc.alloc(size);
+    if(!ptr)
+	THROW(BadAlloc);
+    return ptr;
+}
+
+void packet_t::operator delete(void* ptr) {
+    packet_alloc.free(ptr);
+}
+    
+// This is a horrible hack, but we don't have a functors.cpp to put it in
+static pool_alloc filter_alloc;
+
+void* tuple_filter_t::operator new(size_t size) {
+    void* ptr = filter_alloc.alloc(size);
+    if(!ptr)
+	THROW(BadAlloc);
+    return ptr;
+}
+
+void tuple_filter_t::operator delete(void* ptr) {
+    filter_alloc.free(ptr);
+}
+    
 /**
  *  @brief packet_t constructor.
  *

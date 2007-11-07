@@ -102,6 +102,7 @@ lib_libutil_a_SOURCES = \
         $(SU)/resource_pool.cpp \
         $(SU)/itimer.cpp \
         $(SU)/progress.cpp \
+	$(SU)/pool_alloc.cpp \
         $(SU)/store_string.cpp
 
 

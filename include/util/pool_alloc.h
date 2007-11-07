@@ -3,14 +3,14 @@
 #ifndef __POOL_ALLOC_H
 #define __POOL_ALLOC_H
 
+#include <pthread.h>
+#include <cassert>
+
 struct in_progress_block;
 
 struct alloc_pthread_specific {
     pthread_key_t _ptkey;
-    alloc_pthread_specific() {
-	int error = pthread_key_create(&_ptkey, NULL);
-	assert(!error);
-    }
+    alloc_pthread_specific();
     operator in_progress_block*() {
 	return (in_progress_block*) pthread_getspecific(_ptkey);
     }
@@ -20,20 +20,11 @@ struct alloc_pthread_specific {
     }
 };
 
-/* A memory pool allocator. It can handle any size, though small data structures are best.
-  
- */
 class pool_alloc {
     alloc_pthread_specific _in_progress;
 public:
     void* alloc(int size);
     void free(void* ptr);
-};
-
-/* this version assumes it always allocates the same size (and asserts
-   otherwise). This is much more efficient, but also more limited.
- */
-class pool_alloc_fixed {
 };
 
 #endif

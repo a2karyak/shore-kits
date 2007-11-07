@@ -28,6 +28,8 @@ private:
     
 public:
 
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
 
     size_t input_tuple_size() { return _tuple_size; }
 

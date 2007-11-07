@@ -8,15 +8,22 @@
 #include "util/guard.h"
 #include <stdio.h>
 
+#ifdef __SUNPRO_CC
+#include <atomic.h>
+#endif
 
+#include "util/pool_alloc.h"
 
 // Ignore the warning: printf("") is valid!
 const c_str c_str::EMPTY_STRING("%s", "");
 
-
+static pool_alloc c_str_alloc;
 
 struct c_str::c_str_data {
+#ifndef __SUNPRO_CC
+    // Sun provides atomic_add primitives we can use instead of locks
     mutable pthread_mutex_t _lock;
+#endif
     mutable unsigned _count;
     char* _str() { return sizeof(c_str_data) + (char*) this; }
 };
@@ -27,30 +34,27 @@ c_str::c_str(const char* str, ...)
     : _data(NULL)
 {
 
-    for(int i=128; i <= 1024; i *= 2) {
+    static int const i = 1024;
+    char tmp[i];
+	
+    va_list args;
+    va_start(args, str);
+    int count = vsnprintf(tmp, i, str, args);
+    va_end(args);
+        
+    if((count < 0) /* glibc 2.0 */ || (count >= i) /* glibc 2.1 */)
+	THROW(BadAlloc); // oops!
 
-        va_list args;
-        array_guard_t<char> tmp = new char[i+1];
-        va_start(args, str);
-        int count = vsnprintf(tmp, i, str, args);
-        va_end(args);
-        
-        if((count < 0) /* glibc 2.0 */ || (count > i) /* glibc 2.1 */)
-            continue;
-        
-        int len = strlen(tmp);
-        _data = (c_str_data*) malloc(sizeof(c_str_data) + len + 1);
-        if(_data == NULL)
-            THROW(BadAlloc);
-        
-        _data->_lock = thread_mutex_create();
-        _data->_count = 1;
-        memcpy(_data->_str(), tmp, len+1);
-        return;
-    }
+    
+    _data = (c_str_data*) c_str_alloc.alloc(sizeof(c_str_data) + count + 1);
+    if(_data == NULL)
+	THROW(BadAlloc);
 
-    // shouldn't get here...
-    THROW(BadAlloc);
+#ifndef __SUNPRO_CC
+    _data->_lock = thread_mutex_create();
+#endif
+    _data->_count = 1;
+    memcpy(_data->_str(), tmp, count+1);
 }
 
 
@@ -65,28 +69,39 @@ const char* c_str::data() const {
 
 void c_str::assign(const c_str &other) {
 
-    // other._data won't disappear (see above)
+    // other._data won't disappear because it can't be destroyed before we return.
     _data = other._data;
 
+#ifdef __SUNPRO_CC
+    atomic_add_32(&_data->_count, 1);
+#else
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_data->_lock);
     _data->_count++;
     // * * * END CRITICAL SECTION * * *
+#endif
 }
 
 
 
 void c_str::release() {
+    int count;
+#ifdef __SUNPRO_CC
+    count = atomic_add_32_nv(&_data->_count, -1);
+#else
     // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_data->_lock);
-    if(--_data->_count == 0) {
+    {
+	critical_section_t cs(_data->_lock);
+	count = --_data->_count;
+    }
+    // * * * END CRITICAL SECTION * * *
+#endif
+    if(count == 0) {
         // we were the last reference, so nobody else could
         // possibly modify the data struct any more
-        cs.exit();
             
         if(DEBUG_C_STR)
             printf("Freeing %s\n", _data->_str());
-        free(_data);
+        c_str_alloc.free(_data);
     }
-    // * * * END CRITICAL SECTION * * *
 }

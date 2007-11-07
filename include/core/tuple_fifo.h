@@ -113,6 +113,9 @@ public:
     ~tuple_fifo() {
         destroy();
     }
+    
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
 
 
     /* Global tuple_fifo statistics */

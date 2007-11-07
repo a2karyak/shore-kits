@@ -150,6 +150,8 @@ public:
              bool            merge_enabled,
              bool            unreserve_on_completion);
 
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
 
     virtual ~packet_t(void);
 

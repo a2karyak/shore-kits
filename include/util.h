@@ -26,6 +26,7 @@
 #include "util/acounter.h"
 #include "util/randgen.h"
 #include "util/store_string.h"
+#include "util/pool_alloc.h"
 //#include "util/bptree.h"
 
 #endif
