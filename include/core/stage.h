@@ -103,7 +103,9 @@ public:
 
     virtual ~stage_t() { }
     
-
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
+    
     void init(adaptor_t* adaptor) {
 	_adaptor = adaptor;
     }    

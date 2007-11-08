@@ -14,10 +14,25 @@
 
 #include "util/pool_alloc.h"
 
+/**
+   HACK: This is "Part B" of the "Swatchz Counter." Allocate a
+   pool_alloc on the heap and assign it to the variable. Because the
+   pointer defaults to a compile time constant (NULL), my changes are
+   in no danger of getting clobbered when this file's static
+   initializers run. For the same reason, swatchz_count will already
+   be initialized to 0 before I get here.
+ */
+static pool_alloc* c_str_alloc = NULL;
+static swatchz_count = 0;
+initialize_allocator::initialize_allocator() {
+    if(!swatchz_count++)
+	c_str_alloc = new pool_alloc("c_str");
+}
+
+
+
 // Ignore the warning: printf("") is valid!
 const c_str c_str::EMPTY_STRING("%s", "");
-
-static pool_alloc c_str_alloc;
 
 struct c_str::c_str_data {
 #ifndef __SUNPRO_CC
@@ -45,8 +60,8 @@ c_str::c_str(const char* str, ...)
     if((count < 0) /* glibc 2.0 */ || (count >= i) /* glibc 2.1 */)
 	THROW(BadAlloc); // oops!
 
-    
-    _data = (c_str_data*) c_str_alloc.alloc(sizeof(c_str_data) + count + 1);
+    _data = (c_str_data*) c_str_alloc->alloc(sizeof(c_str_data) + count + 1);
+
     if(_data == NULL)
 	THROW(BadAlloc);
 
@@ -102,6 +117,6 @@ void c_str::release() {
             
         if(DEBUG_C_STR)
             printf("Freeing %s\n", _data->_str());
-        c_str_alloc.free(_data);
+        c_str_alloc->free(_data);
     }
 }

@@ -19,6 +19,9 @@ protected:
     
 public:
 
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
+    
     /**
      * We could create a default implementation that does not
      * rebinding, but this is safer.

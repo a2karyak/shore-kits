@@ -174,6 +174,29 @@ public:
     }
 };
 
+struct fast_page_pool : page_pool {
+private:
+    static fast_page_pool _instance;
+    pool_alloc _alloc;
+public:
+    static fast_page_pool* instance() {
+	return &_instance;
+    }
+    fast_page_pool(size_t page_size = get_default_page_size())
+	: page_pool(page_size), _alloc("page")
+    {
+    }
+    virtual void* alloc() {
+	void* ptr = _alloc.alloc(page_size());
+        if(!ptr)
+            throw std::bad_alloc();
+
+        return ptr;
+    }
+    virtual void free(void* ptr) {
+	_alloc.free(ptr);
+    }
+};
 
 
 class tuple_fifo;
@@ -215,7 +238,7 @@ private:
         return (page_size - sizeof(page))/tuple_size;
     }
     
-    static page* alloc(size_t tuple_size, page_pool* pool=malloc_page_pool::instance()) {
+    static page* alloc(size_t tuple_size, page_pool* pool=fast_page_pool::instance()) {
         return new (pool->alloc()) page(pool, tuple_size);
     }
     

@@ -35,7 +35,7 @@ static int total_fifos_experienced_blocking = 0;
 static size_t total_prefetches = 0;
 
 
-static pool_alloc fifo_alloc;
+static pool_alloc fifo_alloc("fifo");
 
 void* tuple_fifo::operator new(size_t size) {
     void* ptr = fifo_alloc.alloc(size);

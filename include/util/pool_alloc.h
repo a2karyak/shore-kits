@@ -22,7 +22,9 @@ struct alloc_pthread_specific {
 
 class pool_alloc {
     alloc_pthread_specific _in_progress;
+    char const* _name;
 public:
+    pool_alloc(char const* name="<nameless>") : _name(name) { }
     void* alloc(int size);
     void free(void* ptr);
 };

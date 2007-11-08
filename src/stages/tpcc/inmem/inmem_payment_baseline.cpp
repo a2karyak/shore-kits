@@ -30,6 +30,14 @@ inmem_payment_baseline_stage_t::inmem_payment_baseline_stage_t() {
     TRACE(TRACE_DEBUG, "INMEM_PAYMENT_BASELINE constructor\n");
 }
 
+static pool_alloc array_alloc("payment");
+
+struct alloc_guard {
+    char* _ptr;
+    alloc_guard(int size) : _ptr((char*) array_alloc.alloc(size)) { }
+    ~alloc_guard() { array_alloc.free(_ptr); }
+    operator char*() { return _ptr; }
+};
 
 /**
  *  @brief Execute TPC-C Payment transaction is a conventional way 
@@ -64,7 +72,7 @@ void inmem_payment_baseline_stage_t::process_packet() {
     // "I" own tup, so allocate space for it in the stack
     size_t dest_size = packet->output_buffer()->tuple_size();
     
-    array_guard_t<char> dest_data = new char[dest_size];
+    alloc_guard dest_data = dest_size;
     tuple_t dest(dest_data, dest_size);
     
     trx_result_tuple_t* dest_result_tuple;

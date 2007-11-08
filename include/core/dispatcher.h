@@ -136,6 +136,9 @@ public:
         : _dispatcher(dispatcher)
     {
     }
+
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
     
     virtual void declare(const c_str& name, int count) {
         int curr_needs = _worker_needs[name];
@@ -162,6 +165,9 @@ public:
     {
     }
     
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
+
     virtual void declare(const c_str& name, int count) {
         int curr_needs = _worker_needs[name];
         _worker_needs[name] = curr_needs + count;

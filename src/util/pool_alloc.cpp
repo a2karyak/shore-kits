@@ -7,8 +7,10 @@
 
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
+#include <stdio.h>
 #else
 #include <cstdlib>
+#include <cstdio>
 #endif
 #include <new>
 
@@ -55,14 +57,31 @@ namespace {
     
     struct block {
 	bitmap _bitmap; // 1 bits mark in-use slots
+#ifdef TRACE_LEAKS
+	char const* _name;
+#endif
 	char _data[0]; // place-holder
 	
 	// Whoever creates me owns all the data, and can dole it out as they choose
-	block()
+	block(char const* name)
 	    : _bitmap(~0ull)
 	{
+#ifdef TRACE_LEAKS
+	    _name = name;
+#endif
 	}
 	header* get_header(int index);
+	bitmap update_map(bitmap _range) {
+	    bitmap result;
+#ifdef __SUNPRO_CC
+	    result = atomic_and_64_nv(&_block->_bitmap, _range);
+#else
+#warning "Free is not thread-safe on this architecture"
+	    result = _block->_bitmap & _range;
+	    _block->_bitmap = result;
+#endif
+	    return result;
+	}
     };
 
     struct header {
@@ -73,32 +92,33 @@ namespace {
     };
 }
 
-struct in_progress_block {	
+struct in_progress_block {
+    char const* _name;
     block* _block;
     bitmap _next_unit; // a single bit that marches right to left; 0 indicates the block is full
     int _delta; // how much do I increment the offset for each allocation from the current block?
     int _offset; // current block offset in bytes
     int _new_delta; // how much should I have been incrementing? (the max of all requested sizes)
-    in_progress_block(int delta)
-	: _block(NULL), _next_unit(0), _delta(delta), _offset(0), _new_delta(delta)
+    in_progress_block(char const* name, int delta)
+	: _name(name), _block(NULL), _next_unit(0), _delta(delta), _offset(0), _new_delta(delta)
     {
     }
     void new_block() {
 	// if we saw something bigger than we planned on last time around, update the delta.
-#ifdef DEBUG_ALLOC
-	fprintf(stderr, "Allocating a new block with %d-byte units\n", _new_delta);
-#endif
 	_next_unit = 1;
 	_delta = _new_delta;
 	int bytes = sizeof(block) + BLOCK_UNITS*_delta;
 	void* data = ::malloc(bytes);
-	_block = new(data) block;
+	_block = new(data) block(_name);
 	_offset = 0;
+#ifdef TRACE_LEAKS
+	fprintf(stderr, "%s block 1 %p+%d\n", _name, _block, BLOCK_UNITS*_delta);
+#endif
     }
     
     header* allocate(int size);
     void grab_unit(bitmap &range, int &size);
-    header* init_header(int offset, bitmap range);
+    header* init_header(int offset, bitmap range);    
 };
 
 
@@ -111,35 +131,27 @@ namespace {
 
 	// special case: oversized block (single object) allocated with malloc() 
 	if(!_range) {
-#ifdef DEBUG_ALLOC
-	    fprintf(stderr, "Freeing oversized block %p\n", _block);
+#ifdef TRACE_LEAKS
+	    fprintf(stderr, "%s unit -1 %p %016llx (oversized)\n", _block->_name, _block, _range);
 #endif
 	    ::free(_block);
 	    return;
 	}
 
 	// normal case: regular block (multiple objects) allocated with operator new()
-	bitmap result;
-#ifdef __SUNPRO_CC
-	result = atomic_and_64_nv(&_block->_bitmap, _range);
-#else
-	//#error Sorry, only sparc supported so far
-	result = _block->_bitmap & _range;
-	_block->_bitmap = result;
+#ifdef TRACE_LEAKS
+	fprintf(stderr, "%s unit -1 %p %016llx\n", _block->_name, _block, _range);
 #endif
 
-#ifdef DEBUG_ALLOC
-	fprintf(stderr, "Freeing allocation %p from block %p. Range: 0x%016llx, new block map: 0x%016llx\n",
-		this, _block, _range, _block->_bitmap);
-#endif
 	// if everybody has turned in their bits, we will never be touched again
-	if(!result) {
-#ifdef DEBUG_ALLOC
-	    fprintf(stderr, "Freeing block %p\n", _block);
+	if(!update_map(_range)) {
+#ifdef TRACE_LEAKS
+	    fprintf(stderr, "%s block -1 %p\n", _block->_name, _block);
 #endif
 	    ::free(_block);
 	}
     }
+    
     
 }
 
@@ -168,17 +180,10 @@ header* in_progress_block::allocate(int size) {
 
     // save the old offset for use by the header
     int offset = _offset;
-    
-#ifdef DEBUG_ALLOC
-    int bytes = 0;
-#endif
-    
+
     // fast track version for well-behaved sizes
     if(size <= _delta) {
 	grab_unit(range, size);
-#ifdef DEBUG_ALLOC
-	    bytes += _delta;
-#endif
     }
     
     // slow track version handles odd sizes
@@ -188,16 +193,9 @@ header* in_progress_block::allocate(int size) {
 	
 	while(_next_unit != 0 && size > 0) {
 	    grab_unit(range, size);
-#ifdef DEBUG_ALLOC
-	    bytes += _delta;
-#endif
 	}
 	// out of space?
 	if(size > 0) {
-#ifdef DEBUG_ALLOC
-	    fprintf(stderr, "Block %p can't fit %d bytes. Freeing leftovers (range %016llx)\n",
-		    _block, size, range);
-#endif
 	    //  "Free" the rest of the block so it doesn't leak, and move on.
 	    init_header(offset, range)->release();
 	    return NULL;
@@ -207,39 +205,26 @@ header* in_progress_block::allocate(int size) {
 
     // fill out the header and return it
     header* h = init_header(offset, range);
-#ifdef DEBUG_ALLOC
-    fprintf(stderr, "Allocated %d bytes from block %p, starting at %p with range %016llx\n",
-	    bytes, _block, h, h->_range);
-#endif
     return h;
 }
 
 void* pool_alloc::alloc(int size) {
     // factor in the header and align it to the nearest 8 bytes
     size = (size + sizeof(header) + 7) & -8;
-    in_progress_block* b = _in_progress;
+    in_progress_block* ipb = _in_progress;
 
     // first time?
-    if(!b) {
-#ifdef DEBUG_ALLOC
-	fprintf(stderr, "Creating new pre-thread allocator state\n");
-#endif
-	b = _in_progress = new in_progress_block(size);
+    if(!ipb) {
+	ipb = _in_progress = new in_progress_block(_name, size);
     }
 
     // does the current block have space?
-    header* h = b->allocate(size);
+    header* h = ipb->allocate(size);
     if(h) {
-#ifdef DEBUG_ALLOC
-	fprintf(stderr, "Allocated %p from block %p with range %016llx\n", h, h->_block, h->_range);
-#endif
     }
     
     // too big? 
     else /*if(size > BLOCK_UNITS/2*b->_delta) */{
-#ifdef DEBUG_ALLOC
-	fprintf(stderr, "Oversized allocation detected. Reverting to malloc\n");
-#endif
 	/* We can't just use regular malloc because the
 	   deallocator would die. Instead, fake it out:
 
@@ -250,10 +235,14 @@ void* pool_alloc::alloc(int size) {
 	void* data = ::malloc(sizeof(block) + sizeof(header) + size);
 	if(!data)
 	    return NULL;
-	block* b = new(data) block;
+	block* b = new(data) block(_name);
 	h = b->get_header(0);
 	h->_block = b;
 	h->_range = 0; // this marks us as a special block
+#ifdef TRACE_LEAKS
+	fprintf(stderr, "%s block 1 %p+%d (oversized)\n", _name, b, BLOCK_UNITS*ipb->_delta);
+#endif
+	
     }
 #if 0
     // time for the next block
@@ -261,13 +250,16 @@ void* pool_alloc::alloc(int size) {
 	// unreachable?
 	assert(false);
 	// better work this time!
-	b->new_block();
-	h = b->allocate(size);
+	ipb->new_block();
+	h = ipb->allocate(size);
 	assert(h);
 #ifdef DEBUG_ALLOC
 	fprintf(stderr, "Allocated %p from new block %p with range %016llx\n", h, h->_block, h->_range);
 #endif
     }
+#endif
+#ifdef TRACE_LEAKS
+	fprintf(stderr, "%s unit 1 %p %016llx\n", _name, h->_block, h->_range);
 #endif
     return h->_data;
 }
@@ -290,13 +282,16 @@ extern "C" {
     static void destruct_in_progress(void* arg) {
 	in_progress_block* b = (in_progress_block*) arg;
 	if(b && b->_block && b->_next_unit) {
-	    // force an overflow so we don't leak the rest of the block
+	    /* force an overflow so we don't leak the rest of the
+	       block (guaranteed to fail because there is always at
+	       least one unit already allocated in the block)
+	     */
 	    b->allocate(BLOCK_UNITS*b->_delta);
 	}
 	    
     }
 }
-alloc_palloc_pthread_specific::alloc_pthread_specific() {
+alloc_pthread_specific::alloc_pthread_specific() {
     int error = pthread_key_create(&_ptkey, &destruct_in_progress);
     assert(!error);
 }

@@ -22,6 +22,26 @@
 
 using namespace std;
 
+/**
+   HACK: This is "Part A" of a "Swatchz Counter." It's job is to make
+   sure the compiler initializes c_str's internal allocator before
+   trying to initialize any statically allocated c_str objects.
+
+   Because we must include the header to use c_str, we guarantee that
+   our little abomination will initialize before any static c_str that
+   might occur in the .cpp file. The linker will then pick some random
+   .o file to initialize first, and the corresponding version of
+   swatchz will initialize the allocator. Later .o files will see a
+   non-zero counter and return immediately.
+
+   We don't have to make this thing thread safe because all static
+   initialization occurs before main(), so we're guaranteed
+   single-threaded.
+ */
+struct initialize_allocator {
+    initialize_allocator();
+};
+static initialize_allocator swatchz;
 
 class c_str {
 
