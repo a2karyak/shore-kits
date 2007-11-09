@@ -52,12 +52,10 @@ void tpcc_payment_baseline_driver::submit(void* disp, memObject_t* mem) {
                                         selectedQueriedSF);
     
     qpipe::query_state_t* qs = dp->query_state_create();
-    bp_packet->assign_query_state(qs);
-    
+    bp_packet->assign_query_state(qs);    
     
     trx_result_process_tuple_t trx_rt(bp_packet);
     process_query(bp_packet, trx_rt);
-
 
     dp->query_state_destroy(qs);
 }
@@ -79,8 +77,6 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
 {
     assert(sf>0);
 
-
-
     tpcc::payment_input_t pin = create_payment_input(sf);
     
     c_str packet_name("%s_payment_test", client_prefix.data());
@@ -90,9 +86,6 @@ tpcc_payment_baseline_driver::create_payment_baseline_packet(const c_str &client
                                                                      bp_output_filter,
                                                                      pin,
                                                                      p_dbts);
-    
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_packet->assign_query_state(qs);
 
     return (payment_packet);
 }

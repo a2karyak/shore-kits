@@ -252,9 +252,6 @@ payment_begin_stage_t::create_payment_upd_wh_packet(const c_str& client_prefix,
                                     a_wh_id,
                                     a_amount);
 
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_upd_wh_packet->assign_query_state(qs);
-
     return (payment_upd_wh_packet);
 }
 
@@ -283,9 +280,6 @@ payment_begin_stage_t::create_payment_upd_distr_packet(const c_str& client_prefi
                                        a_wh_id,
                                        a_distr_id,
                                        a_amount);
-
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_upd_distr_packet->assign_query_state(qs);
     
     return (payment_upd_distr_packet);
 }
@@ -320,9 +314,6 @@ payment_begin_stage_t::create_payment_upd_cust_packet(const c_str& client_prefix
                                       a_cust_id,
                                       a_cust_last,
                                       a_amount);
-
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_upd_cust_packet->assign_query_state(qs);
     
     return (payment_upd_cust_packet);
 }
@@ -356,10 +347,7 @@ payment_begin_stage_t::create_payment_ins_hist_packet(const c_str& client_prefix
                                       a_cust_id,
                                       a_cust_wh_id,
                                       a_cust_distr_id);
-    
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_ins_hist_packet->assign_query_state(qs);
-    
+        
     return (payment_ins_hist_packet);
 }
 
@@ -390,9 +378,6 @@ payment_begin_stage_t::create_payment_finalize_packet(const c_str& client_prefix
                                       upd_distr,
                                       upd_cust,
                                       ins_hist);
-
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_finalize_packet->assign_query_state(qs);
     
     return (payment_finalize_packet);
 }

@@ -186,7 +186,13 @@ SG_BDB_TRX = \
 
 SG_INMEM_TRX = \
    $(SG)/tpcc/inmem/inmem_payment_functions.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_baseline.cpp
+   $(SG)/tpcc/inmem/inmem_payment_baseline.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_begin.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_upd_wh.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_upd_distr.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_upd_cust.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_ins_hist.cpp \
+   $(SG)/tpcc/inmem/inmem_payment_finalize.cpp
 
 
 lib_libstages_a_SOURCES = \
@@ -258,6 +264,7 @@ WL_TPCC = \
 WL_INMEM_TPCC = \
    $(SW)/tpcc/inmem_tpcc_env.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp \
+   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_staged.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.cpp
 
 

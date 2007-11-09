@@ -34,7 +34,7 @@ public:
     {
     }
 
-    ~tpcc_payment_driver() { }
+    virtual ~tpcc_payment_driver() { }
 
     virtual void submit(void* disp, memObject_t* mem);
 

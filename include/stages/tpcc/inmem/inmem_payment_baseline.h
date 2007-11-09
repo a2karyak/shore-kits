@@ -77,6 +77,9 @@ public:
         _trx_state = UNDEF;
     }
 
+
+    virtual ~inmem_payment_baseline_packet_t() { }
+
     
     // FIXME: (ip) Correct the plan creation
     static query_plan* create_plan( const int a_c_id,

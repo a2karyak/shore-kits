@@ -2,8 +2,8 @@
 
 /** @file inmem_tpcc_payment_baseline.cpp
  *
- *  @brief Implements client that submits INMEM_PAYMENT_BASELINE transaction requests,
- *  according to the TPCC specification.
+ *  @brief Implements client that submits INMEM_PAYMENT_SATGED 
+ *  transaction requests, according to the TPCC specification.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -11,7 +11,7 @@
 #include "scheduler.h"
 #include "util.h"
 #include "workload/common.h"
-#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_staged.h"
 
 
 using namespace qpipe;
@@ -22,7 +22,7 @@ using namespace tpcc_payment;
 ENTER_NAMESPACE(workload);
 
 
-void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
+void inmem_tpcc_payment_staged_driver::submit(void* disp, memObject_t*) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 
@@ -40,13 +40,13 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
         new trivial_filter_t(sizeof(trx_result_tuple_t));
     
 
-    // payment_baseline_packet
+    // payment_staged_packet
     trx_packet_t* bp_packet = 
-	create_inmem_payment_baseline_packet( "INMEM_PAYMENT_BASELINE_CLIENT_", 
-                                              bp_buffer, 
-                                              bp_filter,
-                                              dp,
-                                              selectedQueriedSF);
+	create_inmem_payment_staged_packet( "INMEM_PAYMENT_STAGED_CLIENT_", 
+                                            bp_buffer, 
+                                            bp_filter,
+                                            dp,
+                                            selectedQueriedSF);
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
@@ -58,32 +58,31 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
 }
 
 
-/** @fn create_inmem_payment_baseline_packet
+/** @fn create_inmem_payment_staged_packet
  *
- *  @brief Creates a new INMEM_PAYMENT_BASELINE request, given the scaling factor (sf) 
+ *  @brief Creates a new INMEM_PAYMENT_STAGED request, given the scaling factor (sf) 
  *  of the database
  */
 
 trx_packet_t* 
-inmem_tpcc_payment_baseline_driver::
-create_inmem_payment_baseline_packet(const c_str &client_prefix, 
-                                     tuple_fifo* bp_output_buffer,
-                                     tuple_filter_t* bp_output_filter,
-                                     scheduler::policy_t* dp,
-                                     int sf) 
+inmem_tpcc_payment_staged_driver::
+create_inmem_payment_staged_packet(const c_str &client_prefix, 
+                                   tuple_fifo* bp_output_buffer,
+                                   tuple_filter_t* bp_output_filter,
+                                   scheduler::policy_t* dp,
+                                   int sf) 
 {
     assert(sf>0);
-
-    trx_packet_t* payment_packet;
 
     tpcc::payment_input_t pin = create_payment_input(sf);
     
     c_str packet_name("%s_payment_test", client_prefix.data());
 
-    payment_packet = new inmem_payment_baseline_packet_t(packet_name,
-                                                         bp_output_buffer,
-                                                         bp_output_filter,
-                                                         pin);
+    trx_packet_t* payment_packet = 
+        new inmem_payment_begin_packet_t(packet_name,
+                                         bp_output_buffer,
+                                         bp_output_filter,
+                                         pin);
     
     return (payment_packet);
 }

@@ -23,7 +23,6 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
-
 void tpcc_payment_driver::submit(void* disp, memObject_t* mem) {
 
     // FIXME (ip) Should use the mem object.
@@ -86,7 +85,6 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
     
     c_str packet_name("%s_payment_test", client_prefix.data());
 
-
     bdb_trx_packet_t* payment_packet 
         = new payment_begin_packet_t(packet_name,
                                      bp_output_buffer,
@@ -101,9 +99,6 @@ tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix,
                                      pin._c_last,
                                      pin._h_amount,
                                      pin._h_date);
-    
-    qpipe::query_state_t* qs = dp->query_state_create();
-    payment_packet->assign_query_state(qs);
 
     return (payment_packet);
 }

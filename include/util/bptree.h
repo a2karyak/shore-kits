@@ -9,6 +9,8 @@
  *  @author: Ippokratis Pandis (ipandis)
  *
  *  @history
+ *  11/9/07:  Option to lock all nodes as it goes down the tree and returns 
+ *            pointers to the locks in a vector 
  *  10/20/07: Adding a root rwlock
  *  10/17/07: Implementing a "crabbing" locking schema
  *  10/16/07: Adding Reader-Writer Locks to the nodes and shared variables
