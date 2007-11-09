@@ -9,46 +9,14 @@
 
 ENTER_NAMESPACE(qpipe);
 
-static pool_alloc packet_alloc("packet");
-
-void* packet_t::operator new(size_t size) {
-    void* ptr = packet_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void packet_t::operator delete(void* ptr) {
-    packet_alloc.free(ptr);
-}
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(packet_t, packet);
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(query_plan, plan);
     
 // This is a horrible hack, but we don't have a functors.cpp to put it in
-static pool_alloc filter_alloc("filter");
-
-void* tuple_filter_t::operator new(size_t size) {
-    void* ptr = filter_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void tuple_filter_t::operator delete(void* ptr) {
-    filter_alloc.free(ptr);
-}
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(tuple_filter_t, filter);
     
 // Ditto for query_state.cpp
-static pool_alloc state_alloc("state");
-
-void* query_state_t::operator new(size_t size) {
-    void* ptr = state_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void query_state_t::operator delete(void* ptr) {
-    state_alloc.free(ptr);
-}
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(query_state_t, state);
     
 /**
  *  @brief packet_t constructor.
@@ -115,6 +83,11 @@ packet_t::~packet_t(void) {
     TRACE(TRACE_PACKET_FLOW, "Destroying %s packet with ID %s\n",
 	  _packet_type.data(),
 	  _packet_id.data());
+    /* Delete the plan. We know nobody needs it any more because my
+       parent had to already have been scheduled (and made its work
+       sharing comparison) before me.
+    */
+    delete _plan; 
 }
 
 

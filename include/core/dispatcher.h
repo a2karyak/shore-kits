@@ -137,8 +137,7 @@ public:
     {
     }
 
-    void* operator new(size_t size);
-    void operator delete(void* ptr);
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
     
     virtual void declare(const c_str& name, int count) {
         int curr_needs = _worker_needs[name];
@@ -165,8 +164,8 @@ public:
     {
     }
     
-    void* operator new(size_t size);
-    void operator delete(void* ptr);
+
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
 
     virtual void declare(const c_str& name, int count) {
         int curr_needs = _worker_needs[name];

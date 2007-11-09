@@ -14,6 +14,33 @@
 
 #include "util/pool_alloc.h"
 
+#undef TRACK_LEAKS
+
+#ifdef TRACK_LEAKS
+#include <map>
+#include <set>
+#include <vector>
+typedef std::vector<void*> address_list;
+typedef std::map<c_str::c_str_data*, address_list> owner_map;
+static pthread_mutex_t owner_mutex = PTHREAD_MUTEX_INITIALIZER;
+static owner_map* owners;
+
+/*
+  This declaration is actually inlined asm, not a function. To use it, (on sparc)
+  create a file with a .il extension containing the following:
+
+.inline get_caller,0
+	mov %i7, %o0
+.end
+
+  Manually add that file onto the end of whatever command 'make' uses
+  to compile this file, rebuild libutil.ca, and relink qpipe. If you
+  get errors about discarded symbols, compile c_str.cpp without debug
+  info (sorry, I don't know what the real problem is).
+ */
+extern "C" void* get_caller();
+#endif
+
 /**
    HACK: This is "Part B" of the "Swatchz Counter." Allocate a
    pool_alloc on the heap and assign it to the variable. Because the
@@ -25,8 +52,12 @@
 static pool_alloc* c_str_alloc = NULL;
 static int swatchz_count = 0;
 initialize_allocator::initialize_allocator() {
-    if(!swatchz_count++)
+    if(!swatchz_count++) {
 	c_str_alloc = new pool_alloc("c_str");
+#ifdef TRACK_LEAKS
+	owners = new owner_map;
+#endif
+    }
 }
 
 
@@ -44,6 +75,25 @@ struct c_str::c_str_data {
 };
 
 
+#ifdef TRACK_LEAKS
+void print_live_strings() {
+    owner_map::iterator it = owners->begin();
+    std::set<void*> uniques;
+    for(; it != owners->end(); ++it) {
+	address_list::iterator it2 = it->second.begin();
+	printf("\"%s\"", it->first->_str());
+	uniques.clear();
+	for(; it2 != it->second.end(); ++it2) {
+	    if(uniques.find(*it2) != uniques.end())
+		continue;
+	    printf(" @0x%p", *it2);
+	    uniques.insert(*it2);
+	}
+	printf("\n");
+    }
+	
+}
+#endif
 
 c_str::c_str(const char* str, ...)
     : _data(NULL)
@@ -62,14 +112,18 @@ c_str::c_str(const char* str, ...)
 
     _data = (c_str_data*) c_str_alloc->alloc(sizeof(c_str_data) + count + 1);
 
-    if(_data == NULL)
-	THROW(BadAlloc);
-
 #ifndef __SUNPRO_CC
     _data->_lock = thread_mutex_create();
 #endif
     _data->_count = 1;
     memcpy(_data->_str(), tmp, count+1);
+    
+#if defined(TRACK_LEAKS) && defined(__SUNPRO_CC)
+    pthread_mutex_lock(&owner_mutex);
+    (*owners)[_data].push_back(get_caller());
+    pthread_mutex_unlock(&owner_mutex);
+#endif
+    
 }
 
 
@@ -84,11 +138,19 @@ const char* c_str::data() const {
 
 void c_str::assign(const c_str &other) {
 
+#if defined(TRACK_LEAKS) && defined(__SUNPRO_CC)
+    pthread_mutex_lock(&owner_mutex);
+    (*owners)[other._data].push_back(get_caller());
+    pthread_mutex_unlock(&owner_mutex);
+#endif
+    
     // other._data won't disappear because it can't be destroyed before we return.
     _data = other._data;
 
 #ifdef __SUNPRO_CC
+    membar_enter();
     atomic_add_32(&_data->_count, 1);
+    membar_exit();
 #else
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_data->_lock);
@@ -99,10 +161,12 @@ void c_str::assign(const c_str &other) {
 
 
 
-void c_str::release() {
+void c_str::release() {    
     int count;
 #ifdef __SUNPRO_CC
+    membar_enter();
     count = atomic_add_32_nv(&_data->_count, -1);
+    membar_exit();
 #else
     // * * * BEGIN CRITICAL SECTION * * *
     {
@@ -117,6 +181,12 @@ void c_str::release() {
             
         if(DEBUG_C_STR)
             printf("Freeing %s\n", _data->_str());
+	
+#ifdef TRACK_LEAKS
+	pthread_mutex_lock(&owner_mutex);
+	owners->erase(_data);
+	pthread_mutex_unlock(&owner_mutex);
+#endif
         c_str_alloc->free(_data);
     }
 }

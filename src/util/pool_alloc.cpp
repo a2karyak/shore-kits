@@ -19,6 +19,10 @@
 using namespace std;
 #endif
 
+
+#undef TRACE_LEAKS
+#undef TRACK_BLOCKS
+
 // always shift left, 0 indicates full block
 typedef unsigned long bitmap;
 
@@ -52,9 +56,36 @@ typedef unsigned long bitmap;
 // 
 static int const BLOCK_UNITS = 64; // one for each bit in a 'bitmap'
 
+#ifdef TRACK_BLOCKS
+#include <set>
+#include <utility>
+namespace {class block; }
+static pthread_mutex_t block_mutex = PTHREAD_MUTEX_INITIALIZER;
+struct block_entry {
+    char const* _name;
+    pthread_t _tid;
+    block* _block;
+    block_entry(char const* name, pthread_t tid, block* b) : _name(name), _tid(tid), _block(b) { }
+    bool operator<(block_entry const &other) const {
+	if(_name < other._name)
+	    return true;
+	if(_name > other._name)
+	    return false;
+	if(_tid < other._tid)
+	    return true;
+	if(_tid > other._tid)
+	    return false;
+	return _block < other._block;
+    }
+};
+typedef std::set<block_entry> block_set;
+static block_set* live_blocks;
+#endif
+
 namespace {
     class header;
-    
+
+    // WARNING: sizeof(block) must be a multiple of 8 bytes
     struct block {
 	bitmap _bitmap; // 1 bits mark in-use slots
 #ifdef TRACE_LEAKS
@@ -70,20 +101,11 @@ namespace {
 	    _name = name;
 #endif
 	}
-	header* get_header(int index);
-	bitmap update_map(bitmap _range) {
-	    bitmap result;
-#ifdef __SUNPRO_CC
-	    result = atomic_and_64_nv(&_block->_bitmap, _range);
-#else
-#warning "Free is not thread-safe on this architecture"
-	    result = _block->_bitmap & _range;
-	    _block->_bitmap = result;
-#endif
-	    return result;
-	}
+	header* get_header(int index, bitmap range);
+	void cut_loose();
     };
 
+    // WARNING: sizeof(header) must be a multiple of 8 bytes
     struct header {
 	bitmap _range; // 0 bits mark me
 	block* _block;
@@ -92,62 +114,85 @@ namespace {
     };
 }
 
+#ifdef TRACK_BLOCKS
+void print_live_blocks() {
+    // not locked because we only use it from the debugger anyway
+    block_set::iterator it = live_blocks->begin();
+    for(; it != live_blocks->end(); ++it) {
+	printf("%8s (%3d): @%16p ", it->_name, it->_tid, it->_block);
+	bitmap units = it->_block->_bitmap;
+	for(int i=0; i < BLOCK_UNITS; i++) {
+	    putchar('0' + (units&0x1));
+	    units >>= 1;
+	}
+	putchar('\n');
+    }
+}
+#endif
 struct in_progress_block {
     char const* _name;
     block* _block;
     bitmap _next_unit; // a single bit that marches right to left; 0 indicates the block is full
     int _delta; // how much do I increment the offset for each allocation from the current block?
     int _offset; // current block offset in bytes
-    int _new_delta; // how much should I have been incrementing? (the max of all requested sizes)
+    int _alloc_count;
+    int _huge_count;
+    int _alloc_sizes[BLOCK_UNITS];
+    int _huge_sizes[BLOCK_UNITS];
     in_progress_block(char const* name, int delta)
-	: _name(name), _block(NULL), _next_unit(0), _delta(delta), _offset(0), _new_delta(delta)
+	: _name(name), _block(NULL), _next_unit(0), _delta(delta), _offset(0),
+	  _alloc_count(0), _huge_count(0)
     {
     }
-    void new_block() {
-	// if we saw something bigger than we planned on last time around, update the delta.
-	_next_unit = 1;
-	_delta = _new_delta;
-	int bytes = sizeof(block) + BLOCK_UNITS*_delta;
-	void* data = ::malloc(bytes);
-	_block = new(data) block(_name);
-	_offset = 0;
-#ifdef TRACE_LEAKS
-	fprintf(stderr, "%s block 1 %p+%d\n", _name, _block, BLOCK_UNITS*_delta);
-#endif
-    }
-    
+    ~in_progress_block() { discard_block(); }
+    void new_block();
     header* allocate(int size);
-    void grab_unit(bitmap &range, int &size);
-    header* init_header(int offset, bitmap range);    
+    header* allocate_normal(int size);
+    header* allocate_huge(int size);
+    void discard_block();
 };
 
 
 namespace {
-    header* block::get_header(int offset) {
-	return (header*) &_data[offset];
+    header* block::get_header(int offset, bitmap range) {
+	header* h = (header*) &_data[offset];
+	h->_block = this;
+	h->_range = range;
+	return h;
     }
-    
+
     void header::release() {
 
-	// special case: oversized block (single object) allocated with malloc() 
-	if(!_range) {
-#ifdef TRACE_LEAKS
-	    fprintf(stderr, "%s unit -1 %p %016llx (oversized)\n", _block->_name, _block, _range);
-#endif
-	    ::free(_block);
-	    return;
-	}
-
-	// normal case: regular block (multiple objects) allocated with operator new()
 #ifdef TRACE_LEAKS
 	fprintf(stderr, "%s unit -1 %p %016llx\n", _block->_name, _block, _range);
 #endif
 
-	// if everybody has turned in their bits, we will never be touched again
-	if(!update_map(_range)) {
-#ifdef TRACE_LEAKS
-	    fprintf(stderr, "%s block -1 %p\n", _block->_name, _block);
+	bitmap result;
+	bitmap clear_range = ~_range;
+#ifdef __SUNPRO_CC
+	membar_enter();
+	result = atomic_and_64_nv(&_block->_bitmap, clear_range);
+	membar_exit();
+#else
+#warning "pool_alloc::free is not thread-safe on this architecture"
+	result = _block->_bitmap & clear_range;
+	_block->_bitmap = result;
 #endif
+	
+	// have all the units come back?
+	if(!result) {
+#ifdef TRACE_LEAKS
+	    if(!clear_range)
+		fprintf(stderr, "%s block -1 %p %016llx (oversized)\n", _block->_name, _block, _range);
+	    else
+		fprintf(stderr, "%s block -1 %p\n", _block->_name, _block);
+#endif
+#ifdef TRACK_BLOCKS
+	    pthread_mutex_lock(&block_mutex);
+	    live_blocks->erase(block_entry(_block->_name, pthread_self(), _block));
+	    pthread_mutex_unlock(&block_mutex);
+#endif
+	    // note: this frees the memory 'this' occupies
 	    ::free(_block);
 	}
     }
@@ -155,117 +200,180 @@ namespace {
     
 }
 
-header* in_progress_block::init_header(int offset, bitmap range) {
-    header* h = _block->get_header(offset);
-    h->_range = ~range;
-    h->_block = _block;
-    return h;
-}
+static int const ADJUST_GOAL = 5; // 1/x
+static int const K_MAX = (BLOCK_UNITS+ADJUST_GOAL-1)/ADJUST_GOAL;
 
-void in_progress_block::grab_unit(bitmap &range, int &size) {
-    range |= _next_unit;
-    _next_unit <<= 1;
-    size -= _delta;
-    _offset += _delta;
-}
-header* in_progress_block::allocate(int size) {
-    bitmap range = 0;
-    if(_next_unit == 0) {
-	new_block();
-	if(!_block) {
-	    _next_unit = 0;
-	    return NULL;
-	}
-    }
+static int kth_biggest(int* array, int array_size) {
+    int top_k[K_MAX];
+    int k = (array_size+ADJUST_GOAL-1)/ADJUST_GOAL;
+    int last=0; // last entry of the top-k list
+    top_k[0] = array[0];
+    for(int i=1; i < array_size; i++) {
+	int size = array[i];
 
-    // save the old offset for use by the header
-    int offset = _offset;
-
-    // fast track version for well-behaved sizes
-    if(size <= _delta) {
-	grab_unit(range, size);
-    }
-    
-    // slow track version handles odd sizes
-    else {
-	if(_new_delta < size)
-	    _new_delta = size;
+	// find the insertion point
+	int index=0;
+	while(index <= last && size < top_k[index]) ++index;
+	if(index == k)
+	    continue; // too small...
 	
-	while(_next_unit != 0 && size > 0) {
-	    grab_unit(range, size);
-	}
-	// out of space?
-	if(size > 0) {
-	    //  "Free" the rest of the block so it doesn't leak, and move on.
-	    init_header(offset, range)->release();
-	    return NULL;
-	}
-
+	// bump everything else over to make room...
+	for(int j=k; --j > index; )
+	    top_k[j] = top_k[j-1];
+	
+	// ...and insert
+	top_k[index] = size;
+	if(index > last)
+	    last = index;
     }
 
-    // fill out the header and return it
-    header* h = init_header(offset, range);
+    return top_k[last];
+}
+
+void in_progress_block::discard_block() {
+    // allocate whatever is left of this block and throw it away
+    if(_next_unit) {
+	_block->get_header(_offset, ~(_next_unit-1))->release();
+	_next_unit = 0;
+    }
+}
+    
+void in_progress_block::new_block() {
+    // adjust the unit size? We want no more than 1/x requests to allocate 2+ units
+    
+
+    _huge_count = 0;
+    _alloc_count = 0;
+    _next_unit = 1;
+    int bytes = sizeof(block) + BLOCK_UNITS*_delta;
+    void* data = ::malloc(bytes);
+    if(!data)
+	throw std::bad_alloc();
+    
+    _block = new(data) block(_name);
+    _offset = 0;
+#ifdef TRACK_BLOCKS
+    pthread_mutex_lock(&block_mutex);
+    live_blocks->insert(block_entry(_name, pthread_self(), _block));
+    pthread_mutex_unlock(&block_mutex);
+#endif
+}
+
+header* in_progress_block::allocate_huge(int size) {
+    _huge_sizes[_huge_count++] = size;
+    // enough "huge" requests to destroy our ADJUST_GOAL?
+    if(_huge_count > K_MAX) {
+	discard_block();
+	_delta = kth_biggest(_huge_sizes, _huge_count);
+	return allocate_normal(size);
+    }
+
+    /* Create a block that's just the size we want, and allocate
+       the whole thing to this request. 
+    */
+    void* data = ::malloc(sizeof(block) + size);
+    if(!data)
+	throw std::bad_alloc();
+	
+    block* b = new(data) block(_name);
+#ifdef TRACK_BLOCKS
+    pthread_mutex_lock(&block_mutex);
+    live_blocks->insert(block_entry(_name, pthread_self(), b));
+    pthread_mutex_unlock(&block_mutex);
+#endif
+#ifdef TRACE_LEAKS
+    fprintf(stderr, "%s block 1 %p+%d (oversized)\n", _name, b, size);
+#endif
+    return b->get_header(0, ~0ull);
+}
+
+header* in_progress_block::allocate_normal(int size) {
+
+    // is the previous block full?
+    if(_next_unit == 0) {
+	if(_alloc_count)
+	    _delta = kth_biggest(_alloc_sizes, _alloc_count);
+	new_block();
+#ifdef TRACE_LEAKS
+	fprintf(stderr, "%s block 1 %p+%d\n", _name, _block, _delta);
+#endif
+    }
+
+    // update stats
+    _alloc_sizes[_alloc_count++] = size;
+    
+    // initialize a header 
+    header* h = _block->get_header(_offset, 0);
+    
+    // carve out the units this request needs
+    int remaining = size;
+    do {
+	h->_range |= _next_unit;
+	_next_unit <<= 1;
+	remaining -= _delta;
+	_offset += _delta;
+    } while(remaining > 0 && _next_unit);
+
+    // out of space?
+    if(remaining > 0) {
+	//  free this undersized allocation and try again with a new block
+	h->release();
+	return allocate_normal(size);
+    }
+
+    // success!
     return h;
+}
+
+header* in_progress_block::allocate(int size) {
+    // how many units is "huge" ?
+    static int const HUGE_THRESHOLD = BLOCK_UNITS/8;
+
+    // huge?
+    return (size > HUGE_THRESHOLD*_delta)? allocate_huge(size) : allocate_normal(size);
 }
 
 void* pool_alloc::alloc(int size) {
-    // factor in the header and align it to the nearest 8 bytes
+    // factor in the header size and round up to the next 8 byte boundary
     size = (size + sizeof(header) + 7) & -8;
-    in_progress_block* ipb = _in_progress;
 
     // first time?
+    in_progress_block* ipb = _in_progress;
     if(!ipb) {
+#ifdef TRACK_BLOCKS
+	if(!live_blocks)
+	    live_blocks = new block_set;
+#endif
 	ipb = _in_progress = new in_progress_block(_name, size);
     }
 
-    // does the current block have space?
     header* h = ipb->allocate(size);
-    if(h) {
-    }
-    
-    // too big? 
-    else /*if(size > BLOCK_UNITS/2*b->_delta) */{
-	/* We can't just use regular malloc because the
-	   deallocator would die. Instead, fake it out:
-
-	   1. Allocate a "block" that has enough extra space to fit the request
-	   2. Set up a fake in_progress_block to allocate from
-	   3. Set the "size" to the whole block
-	*/
-	void* data = ::malloc(sizeof(block) + sizeof(header) + size);
-	if(!data)
-	    return NULL;
-	block* b = new(data) block(_name);
-	h = b->get_header(0);
-	h->_block = b;
-	h->_range = 0; // this marks us as a special block
 #ifdef TRACE_LEAKS
-	fprintf(stderr, "%s block 1 %p+%d (oversized)\n", _name, b, BLOCK_UNITS*ipb->_delta);
-#endif
-	
-    }
-#if 0
-    // time for the next block
-    else {
-	// unreachable?
-	assert(false);
-	// better work this time!
-	ipb->new_block();
-	h = ipb->allocate(size);
-	assert(h);
-#ifdef DEBUG_ALLOC
-	fprintf(stderr, "Allocated %p from new block %p with range %016llx\n", h, h->_block, h->_range);
-#endif
-    }
-#endif
-#ifdef TRACE_LEAKS
-	fprintf(stderr, "%s unit 1 %p %016llx\n", _name, h->_block, h->_range);
+    fprintf(stderr, "%s unit 1 %p %016llx\n", _name, h->_block, h->_range);
 #endif
     return h->_data;
 }
 
 void pool_alloc::free(void* ptr) {
-    // we have to back up to retrieve the header info (watch out for aliasing)
+    /* C++ "strict aliasing" rules allow the compiler to assume that
+       void* and header* never point to the same memory.  If
+       optimizations actually take advantage of this, simple casts
+       would break.
+
+       NOTE 1: char* automatically aliases everything, but I'm not sure
+       if that's enough to make void* -> char* -> header* safe.
+
+       NOTE 2: in practice I've only seen strict aliasing cause
+       problems if (a) the memory is actually *accessed* through
+       pointers of different types and (b) those pointers both reside
+       in the same function after inlining has taken place. But, just
+       to be safe...
+
+       Unions are gcc's official way of telling the compiler that two
+       incompatible pointers do, in fact, overlap. I suspect it will
+       work for CC as well, since a union is rather explicit about
+       two things being in the same place.
+     */
     union {
 	void* vptr;
 	char* cptr;
@@ -273,6 +381,7 @@ void pool_alloc::free(void* ptr) {
     union {
 	char* cptr;
 	header* hptr;
+	// ptr actually points to header::_data, so back up a bit..
     } u2 = {u1.cptr - sizeof(header)};
 
     u2.hptr->release();
@@ -281,14 +390,7 @@ void pool_alloc::free(void* ptr) {
 extern "C" {
     static void destruct_in_progress(void* arg) {
 	in_progress_block* b = (in_progress_block*) arg;
-	if(b && b->_block && b->_next_unit) {
-	    /* force an overflow so we don't leak the rest of the
-	       block (guaranteed to fail because there is always at
-	       least one unit already allocated in the block)
-	     */
-	    b->allocate(BLOCK_UNITS*b->_delta);
-	}
-	    
+	delete b;
     }
 }
 alloc_pthread_specific::alloc_pthread_specific() {
@@ -299,7 +401,7 @@ alloc_pthread_specific::alloc_pthread_specific() {
 #if 0
 #include <vector>
 #include <algorithm>
-#include "stopwatch.H"
+#include "util/stopwatch.h"
 
 struct malloc_alloc {
     void* alloc(int size) { return ::malloc(size); }
@@ -320,7 +422,7 @@ void test1() {
 	std::random_shuffle(pointers.begin(), pointers.end());
     }
     double shuffle_time = timer.time_ms();
-    for(int j=0; j < 1000;  j++) {
+    for(int j=0; j < 1;  j++) {
 	pointers.clear();
 	for(int i=0; i < 1000; i++)
 	    pointers.push_back(pa.alloc(10));

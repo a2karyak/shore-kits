@@ -34,18 +34,7 @@ const unsigned int stage_container_t::NEXT_TUPLE_INITIAL_VALUE = 1;
 
 
 // This is a horrible hack, but we don't have a functors.cpp to put it in
-static pool_alloc stage_alloc("stage");
-
-void* stage_t::operator new(size_t size) {
-    void* ptr = stage_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void stage_t::operator delete(void* ptr) {
-    stage_alloc.free(ptr);
-}
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(stage_t, stage);
 
 // the "STOP" exception. Simply indicates that the stage should stop
 // (not necessarily an "error"). Thrown by the adaptor's output(),

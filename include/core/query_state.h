@@ -19,8 +19,7 @@ protected:
     
 public:
 
-    void* operator new(size_t size);
-    void operator delete(void* ptr);
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
     
     /**
      * We could create a default implementation that does not

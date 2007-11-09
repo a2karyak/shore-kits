@@ -28,8 +28,7 @@ private:
     
 public:
 
-    void* operator new(size_t size);
-    void operator delete(void* ptr);
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
 
     size_t input_tuple_size() { return _tuple_size; }
 

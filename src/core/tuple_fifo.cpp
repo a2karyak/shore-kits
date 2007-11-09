@@ -35,18 +35,7 @@ static int total_fifos_experienced_blocking = 0;
 static size_t total_prefetches = 0;
 
 
-static pool_alloc fifo_alloc("fifo");
-
-void* tuple_fifo::operator new(size_t size) {
-    void* ptr = fifo_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void tuple_fifo::operator delete(void* ptr) {
-    fifo_alloc.free(ptr);
-}
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(tuple_fifo, fifo);
     
 
 

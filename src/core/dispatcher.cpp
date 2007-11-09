@@ -26,31 +26,8 @@ dispatcher_t* dispatcher_t::_instance = NULL;
 pthread_mutex_t dispatcher_t::_instance_lock = thread_mutex_create();
 
 
-static pool_alloc reserver_alloc("reserve");
-static pool_alloc releaser_alloc("release");
-
-void* dispatcher_t::worker_reserver_t::operator new(size_t size) {
-    void* ptr = reserver_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void dispatcher_t::worker_reserver_t::operator delete(void* ptr) {
-    reserver_alloc.free(ptr);
-}
-    
-void* dispatcher_t::worker_releaser_t::operator new(size_t size) {
-    void* ptr = releaser_alloc.alloc(size);
-    if(!ptr)
-	THROW(BadAlloc);
-    return ptr;
-}
-
-void dispatcher_t::worker_releaser_t::operator delete(void* ptr) {
-    releaser_alloc.free(ptr);
-}
-    
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(dispatcher_t::worker_reserver_t, reserve);
+DEFINE_POOL_ALLOC_NEW_AND_DELETE(dispatcher_t::worker_releaser_t, release);    
 
 
 dispatcher_t::dispatcher_t() { }

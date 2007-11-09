@@ -103,8 +103,8 @@ public:
 
     virtual ~stage_t() { }
     
-    void* operator new(size_t size);
-    void operator delete(void* ptr);
+
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
     
     void init(adaptor_t* adaptor) {
 	_adaptor = adaptor;

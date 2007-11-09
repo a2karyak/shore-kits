@@ -187,11 +187,7 @@ public:
     {
     }
     virtual void* alloc() {
-	void* ptr = _alloc.alloc(page_size());
-        if(!ptr)
-            throw std::bad_alloc();
-
-        return ptr;
+	return _alloc.alloc(page_size());
     }
     virtual void free(void* ptr) {
 	_alloc.free(ptr);

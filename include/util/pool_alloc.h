@@ -29,4 +29,17 @@ public:
     void free(void* ptr);
 };
 
+#define DECLARE_POOL_ALLOC_NEW_AND_DELETE() \
+    void* operator new(size_t size); \
+    void operator delete(void* ptr)
+
+#define DEFINE_POOL_ALLOC_NEW_AND_DELETE(class, name) \
+static pool_alloc name##_alloc(#name); \
+void* class::operator new(size_t size) { \
+    return name##_alloc.alloc(size); \
+} \
+void class::operator delete(void* ptr) { \
+    name##_alloc.free(ptr); \
+}
+    
 #endif

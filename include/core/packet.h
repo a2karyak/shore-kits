@@ -47,6 +47,8 @@ struct query_plan {
         : action(a), filter(f), child_plans(children), child_count(count)
     {
     }
+    void* operator new(size_t size);
+    void operator delete(void* ptr);
 };
 
 
@@ -150,8 +152,7 @@ public:
              bool            merge_enabled,
              bool            unreserve_on_completion);
 
-    void* operator new(size_t size);
-    void operator delete(void* ptr);
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
 
     virtual ~packet_t(void);
 
