@@ -23,6 +23,56 @@ ENTER_NAMESPACE(workload);
 
 
 //------------------------------------------------------------------------
+// @class inmem_tpcc_payment_single_thr_helper
+//
+// @brief This is the helper thread that executes the inmem_payment_baseline 
+// transaction 
+//
+// @note This is not a driver, that is why it can have own state
+//
+
+class inmem_tpcc_payment_single_thr_helper : public thread_t {
+
+protected:
+
+    payment_input_t _pin;
+    int _id;
+    InMemTPCCEnv* _env;
+
+public:
+
+    inmem_tpcc_payment_single_thr_helper(const c_str& description, 
+                                         payment_input_t a_pin,
+                                         const int a_id,
+                                         InMemTPCCEnv* env)
+        : thread_t(description), _pin(a_pin), _id(a_id), _env(env)
+    {
+        //TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
+    }
+
+
+    virtual ~inmem_tpcc_payment_single_thr_helper() { }
+
+
+    virtual void* run() {        
+
+        assert (_env);
+        assert (_id>=0);
+
+        trx_result_tuple_t aTrxResultTuple = executeInMemPaymentBaseline(_pin,
+                                                                         _id, 
+                                                                         _env);
+
+        TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
+        
+        return (NULL);
+    }
+
+}; // EOF inmem_tpcc_payment_single_thr_helper
+
+
+
+//------------------------------------------------------------------------
 // @class inmem_tpcc_payment_single_thr_driver
 //
 // @brief This is an object that executes the inmem_payment_baseline 
@@ -69,7 +119,7 @@ public:
 
     void* executeInMemPayment(InMemTPCCEnv* env, int sf);
 
-};
+}; // EOF inmem_tpcc_payment_single_thr_driver
 
 
 EXIT_NAMESPACE(workload);

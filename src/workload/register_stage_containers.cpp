@@ -17,7 +17,7 @@
 
 
 // OLTP-related constants
-#define MAX_NUM_TRXS     256
+#define MAX_NUM_TRXS     32
 
 
 // DSS-related constants
