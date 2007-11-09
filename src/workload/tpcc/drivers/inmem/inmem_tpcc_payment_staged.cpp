@@ -45,7 +45,6 @@ void inmem_tpcc_payment_staged_driver::submit(void* disp, memObject_t*) {
 	create_inmem_payment_staged_packet( "INMEM_PAYMENT_STAGED_CLIENT_", 
                                             bp_buffer, 
                                             bp_filter,
-                                            dp,
                                             selectedQueriedSF);
     
     qpipe::query_state_t* qs = dp->query_state_create();
@@ -69,7 +68,6 @@ inmem_tpcc_payment_staged_driver::
 create_inmem_payment_staged_packet(const c_str &client_prefix, 
                                    tuple_fifo* bp_output_buffer,
                                    tuple_filter_t* bp_output_filter,
-                                   scheduler::policy_t* dp,
                                    int sf) 
 {
     assert(sf>0);

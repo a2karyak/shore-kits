@@ -50,7 +50,6 @@ void tpcc_payment_driver::submit(void* disp, memObject_t* mem) {
 	create_begin_payment_packet( "PAYMENT_CLIENT_", 
 				     bp_buffer, 
 				     bp_filter,
-				     dp,
                                      selectedQueriedSF);
 
 
@@ -76,7 +75,6 @@ bdb_trx_packet_t*
 tpcc_payment_driver::create_begin_payment_packet(const c_str &client_prefix, 
 						 tuple_fifo* bp_output_buffer,
 						 tuple_filter_t* bp_output_filter,
-						 scheduler::policy_t* dp,
                                                  int sf) 
 {
     assert(sf > 0);

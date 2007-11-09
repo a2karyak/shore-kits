@@ -115,9 +115,9 @@ char* generate_cust_last(int select) {
   i2 = ((select % 100) - i3) / 10;
   i1 = (select - (select % 100)) / 100;
 
-  /** FIXME: (ip) C_LAST is char[16] */
-
   int iLen = strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]);
+
+  assert (iLen < 17);   // C_LAST is char[16]
 
   char* s_cust_last = new char[iLen + 1];
   

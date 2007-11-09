@@ -42,7 +42,6 @@ public:
     trx_packet_t* create_inmem_payment_baseline_packet(const c_str& client_prefix,
                                                        tuple_fifo* bp_buffer,
                                                        tuple_filter_t* bp_filter,
-                                                       scheduler::policy_t* dp,
                                                        int sf);
 };
 

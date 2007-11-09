@@ -253,12 +253,17 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_tbl_parsers.cpp \
    $(SW)/tpcc/tpcc_tbl_readers.cpp \
    $(SW)/tpcc/tpcc_compare.cpp \
-   $(SW)/tpcc/drivers/common.cpp \
+   $(SW)/tpcc/drivers/common.cpp
+
+WL_TPCC_PAYMENT = \
    $(SW)/tpcc/drivers/tpcc_payment_common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment.cpp \
    $(SW)/tpcc/drivers/tpcc_payment_baseline.cpp \
    $(SW)/tpcc/drivers/tpcc_payment_nos.cpp \
    $(SW)/tpcc/drivers/tpcc_payment_single_thr.cpp
+
+WL_TPCC_NEW_ORDER = \
+   $(SW)/tpcc/drivers/tpcc_new_order_common.cpp
 
 
 WL_INMEM_TPCC = \
@@ -273,6 +278,8 @@ lib_libworkload_a_SOURCES = \
    $(WL_COMMON) \
    $(WL_TPCH) \
    $(WL_TPCC) \
+   $(WL_TPCC_PAYMENT) \
+   $(WL_TPCC_NEW_ORDER) \
    $(WL_INMEM_TPCC)
 
 
