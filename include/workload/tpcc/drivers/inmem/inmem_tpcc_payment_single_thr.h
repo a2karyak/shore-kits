@@ -49,7 +49,7 @@ public:
                                          InMemTPCCEnv* env)
         : thread_t(description), _id(id), _iterations(iter), _sf(sf), _env(env)
     {
-        TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
+        //TRACE( TRACE_ALWAYS, " + %d constructing\n", _id);
     }
 
 

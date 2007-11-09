@@ -31,6 +31,9 @@ int do_iteration(int argc, char* argv[]);
 
 int main(int argc, char* argv[]) {
 
+    // Input validation. If incorrect input, aborts.
+    query_info_t info = query_single_thr_init(argc, argv, TRX_MEM_ENV);
+
 
     //    TRACE_SET ( DEFAULT_TRACE_MASK | TRACE_DEBUG | TRACE_TRX_FLOW );
     TRACE_SET ( DEFAULT_TRACE_MASK );

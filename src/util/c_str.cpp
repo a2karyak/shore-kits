@@ -23,7 +23,7 @@
    be initialized to 0 before I get here.
  */
 static pool_alloc* c_str_alloc = NULL;
-static swatchz_count = 0;
+static int swatchz_count = 0;
 initialize_allocator::initialize_allocator() {
     if(!swatchz_count++)
 	c_str_alloc = new pool_alloc("c_str");
