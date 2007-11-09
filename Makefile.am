@@ -13,6 +13,7 @@ LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a
    tests/thread_cputime
 
 TESTS = \
+   tests/alloc \
    tests/cpu_binding \
    tests/rand_array_access \
    tests/trace \
@@ -337,6 +338,7 @@ ST = $(top_srcdir)/src/tests
 
 TEST_LIBS = lib/libtest.a $(LDADD)
 
+tests_alloc_SOURCES = $(ST)/test_alloc.cpp
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
 tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp

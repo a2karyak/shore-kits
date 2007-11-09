@@ -14,6 +14,13 @@
 
 #include "util/pool_alloc.h"
 
+// We only have atomic ops on some arch...
+#ifdef __SUNPRO_CC
+#undef USE_ATOMIC_OPS
+#else
+// Unsupported arch must use locks
+#undef USE_ATOMIC_OPS
+#endif
 #undef TRACK_LEAKS
 
 #ifdef TRACK_LEAKS
@@ -24,6 +31,8 @@ typedef std::vector<void*> address_list;
 typedef std::map<c_str::c_str_data*, address_list> owner_map;
 static pthread_mutex_t owner_mutex = PTHREAD_MUTEX_INITIALIZER;
 static owner_map* owners;
+
+#ifdef __SUNPRO_CC
 
 /*
   This declaration is actually inlined asm, not a function. To use it, (on sparc)
@@ -39,6 +48,10 @@ static owner_map* owners;
   info (sorry, I don't know what the real problem is).
  */
 extern "C" void* get_caller();
+#else
+// sorry, out of luck on the caller
+void* get_caller() { return NULL; }
+#endif
 #endif
 
 /**
@@ -66,8 +79,8 @@ initialize_allocator::initialize_allocator() {
 const c_str c_str::EMPTY_STRING("%s", "");
 
 struct c_str::c_str_data {
-#ifndef __SUNPRO_CC
-    // Sun provides atomic_add primitives we can use instead of locks
+#ifndef USE_ATOMIC_OPS
+    // Use atomic primitives instead of locks
     mutable pthread_mutex_t _lock;
 #endif
     mutable unsigned _count;
@@ -112,13 +125,13 @@ c_str::c_str(const char* str, ...)
 
     _data = (c_str_data*) c_str_alloc->alloc(sizeof(c_str_data) + count + 1);
 
-#ifndef __SUNPRO_CC
+#ifndef USE_ATOMIC_OPS
     _data->_lock = thread_mutex_create();
 #endif
     _data->_count = 1;
     memcpy(_data->_str(), tmp, count+1);
     
-#if defined(TRACK_LEAKS) && defined(__SUNPRO_CC)
+#if defined(TRACK_LEAKS)
     pthread_mutex_lock(&owner_mutex);
     (*owners)[_data].push_back(get_caller());
     pthread_mutex_unlock(&owner_mutex);
@@ -138,7 +151,7 @@ const char* c_str::data() const {
 
 void c_str::assign(const c_str &other) {
 
-#if defined(TRACK_LEAKS) && defined(__SUNPRO_CC)
+#if defined(TRACK_LEAKS)
     pthread_mutex_lock(&owner_mutex);
     (*owners)[other._data].push_back(get_caller());
     pthread_mutex_unlock(&owner_mutex);
@@ -147,10 +160,14 @@ void c_str::assign(const c_str &other) {
     // other._data won't disappear because it can't be destroyed before we return.
     _data = other._data;
 
+#ifdef USE_ATOMIC_OPS
 #ifdef __SUNPRO_CC
     membar_enter();
     atomic_add_32(&_data->_count, 1);
     membar_exit();
+#else
+#error "Sorry, you're stuck with locks on this architecture"
+#endif
 #else
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_data->_lock);
@@ -163,10 +180,14 @@ void c_str::assign(const c_str &other) {
 
 void c_str::release() {    
     int count;
+#ifdef USE_ATOMIC_OPS
 #ifdef __SUNPRO_CC
     membar_enter();
     count = atomic_add_32_nv(&_data->_count, -1);
     membar_exit();
+#else
+#error "Sorry, you're stuck with locks on this architecture"
+#endif    
 #else
     // * * * BEGIN CRITICAL SECTION * * *
     {

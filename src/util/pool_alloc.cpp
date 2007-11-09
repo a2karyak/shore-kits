@@ -1,5 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 #include "util/pool_alloc.h"
+#include "util/sync.h"
 
 #ifdef __SUNPRO_CC
 #include <atomic.h>
@@ -19,9 +20,20 @@
 using namespace std;
 #endif
 
+// We only have atomic ops on some arch...
+#ifdef __SUNPRO_CC
+#define USE_ATOMIC_OPS
+#else
+// Unsupported arch must use locks
+#undef USE_ATOMIC_OPS
+#endif
+#undef TRACK_LEAKS
+
 
 #undef TRACE_LEAKS
 #undef TRACK_BLOCKS
+
+
 
 // always shift left, 0 indicates full block
 typedef unsigned long bitmap;
@@ -57,15 +69,19 @@ typedef unsigned long bitmap;
 static int const BLOCK_UNITS = 64; // one for each bit in a 'bitmap'
 
 #ifdef TRACK_BLOCKS
-#include <set>
+#include <map>
+#include <vector>
 #include <utility>
-namespace {class block; }
+#include <algorithm>
+namespace {struct block; }
 static pthread_mutex_t block_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct block_entry {
+    block* _block;
     char const* _name;
     pthread_t _tid;
-    block* _block;
-    block_entry(char const* name, pthread_t tid, block* b) : _name(name), _tid(tid), _block(b) { }
+    int _delta;
+    block_entry(block* b, char const* name, pthread_t tid, int delta)
+	: _block(b), _name(name), _tid(tid), _delta(delta) { }
     bool operator<(block_entry const &other) const {
 	if(_name < other._name)
 	    return true;
@@ -78,8 +94,13 @@ struct block_entry {
 	return _block < other._block;
     }
 };
-typedef std::set<block_entry> block_set;
-static block_set* live_blocks;
+typedef std::map<block*, int> block_map; // block, delta
+typedef std::pair<block_map, pthread_mutex_t> block_map_sync;
+typedef std::pair<char const*, pthread_t> thread_alloc_key;
+typedef std::pair<block_map_sync*, bool> thread_alloc_value; // map, thread live?
+typedef std::map<thread_alloc_key, thread_alloc_value> thread_maps;
+typedef std::vector<block_entry> block_list;
+static thread_maps* live_blocks;
 #endif
 
 namespace {
@@ -87,9 +108,15 @@ namespace {
 
     // WARNING: sizeof(block) must be a multiple of 8 bytes
     struct block {
+#ifndef USE_ATOMIC_OPS
+	pthread_mutex_t _lock;
+#endif
 	bitmap _bitmap; // 1 bits mark in-use slots
-#ifdef TRACE_LEAKS
-	char const* _name;
+#if defined(TRACE_LEAKS)
+	const char* _name;
+#endif
+#if defined(TRACK_BLOCKS)
+	block_map_sync* _live_blocks;
 #endif
 	char _data[0]; // place-holder
 	
@@ -97,6 +124,9 @@ namespace {
 	block(char const* name)
 	    : _bitmap(~0ull)
 	{
+#ifndef USE_ATOMIC_OPS
+	    _lock = thread_mutex_create();
+#endif
 #ifdef TRACE_LEAKS
 	    _name = name;
 #endif
@@ -117,15 +147,38 @@ namespace {
 #ifdef TRACK_BLOCKS
 void print_live_blocks() {
     // not locked because we only use it from the debugger anyway
-    block_set::iterator it = live_blocks->begin();
-    for(; it != live_blocks->end(); ++it) {
-	printf("%8s (%3d): @%16p ", it->_name, it->_tid, it->_block);
+    block_list blist;
+
+    // (thread_alloc_key, thread_alloc_value) pairs
+    thread_maps::iterator map = live_blocks->begin();
+    while(map != live_blocks->end()) {
+	thread_alloc_key const &key = map->first;
+	thread_alloc_value &value = map->second;
+	block_map* bmap = &value.first->first;
+
+	// (block*, delta) pairs
+	block_map::iterator it = bmap->begin();
+	for( ; it != bmap->end(); ++it) 
+	    blist.push_back(block_entry(it->first, key.first, key.second, it->second));
+	
+	// is the thread dead and all blocks deallocated?
+	if(!value.second && bmap->empty()) 
+	    live_blocks->erase(map++);
+	else
+	    ++map;
+    }
+
+    std::sort(blist.begin(), blist.end());
+    block_list::iterator it=blist.begin();
+    printf("Allocator  (tid): " "address           " " unit bitmap\n");
+    for(; it != blist.end(); ++it) {
+	printf("%10s (%3d): 0x%016p %4d ", it->_name, it->_tid, it->_block, it->_delta);
 	bitmap units = it->_block->_bitmap;
 	for(int i=0; i < BLOCK_UNITS; i++) {
 	    putchar('0' + (units&0x1));
 	    units >>= 1;
 	}
-	putchar('\n');
+	putchar('\n');    
     }
 }
 #endif
@@ -139,12 +192,29 @@ struct in_progress_block {
     int _huge_count;
     int _alloc_sizes[BLOCK_UNITS];
     int _huge_sizes[BLOCK_UNITS];
+#ifdef TRACK_BLOCKS
+    block_map_sync* _live_blocks;
+#endif
     in_progress_block(char const* name, int delta)
 	: _name(name), _block(NULL), _next_unit(0), _delta(delta), _offset(0),
 	  _alloc_count(0), _huge_count(0)
     {
+#ifdef TRACK_BLOCKS
+	// register our private block map
+	_live_blocks = new block_map_sync;
+	_live_blocks->second = thread_mutex_create();
+	critical_section_t cs(block_mutex);
+	(*live_blocks)[std::make_pair(_name, pthread_self())] = std::make_pair(_live_blocks, true);
+#endif
     }
-    ~in_progress_block() { discard_block(); }
+    ~in_progress_block() {
+	discard_block();
+#ifdef TRACK_BLOCKS
+	// mark the block as dead
+	critical_section_t cs(block_mutex);
+	(*live_blocks)[std::make_pair(_name, pthread_self())].second = false;
+#endif
+    }
     void new_block();
     header* allocate(int size);
     header* allocate_normal(int size);
@@ -169,14 +239,20 @@ namespace {
 
 	bitmap result;
 	bitmap clear_range = ~_range;
+#ifdef USE_ATOMIC_OPS
 #ifdef __SUNPRO_CC
 	membar_enter();
 	result = atomic_and_64_nv(&_block->_bitmap, clear_range);
 	membar_exit();
 #else
-#warning "pool_alloc::free is not thread-safe on this architecture"
-	result = _block->_bitmap & clear_range;
-	_block->_bitmap = result;
+#error "Sorry, atomic ops not supported on this architecture"
+#endif
+#else
+	{
+	    critical_section_t cs(_block->_lock);
+	    result = _block->_bitmap & clear_range;
+	    _block->_bitmap = result;
+	}
 #endif
 	
 	// have all the units come back?
@@ -188,11 +264,12 @@ namespace {
 		fprintf(stderr, "%s block -1 %p\n", _block->_name, _block);
 #endif
 #ifdef TRACK_BLOCKS
-	    pthread_mutex_lock(&block_mutex);
-	    live_blocks->erase(block_entry(_block->_name, pthread_self(), _block));
-	    pthread_mutex_unlock(&block_mutex);
+	    {
+		critical_section_t cs(_block->_live_blocks->second);
+		_block->_live_blocks->first.erase(_block);
+	    }
 #endif
-	    // note: this frees the memory 'this' occupies
+	    // note: frees the memory 'this' occupies
 	    ::free(_block);
 	}
     }
@@ -253,9 +330,11 @@ void in_progress_block::new_block() {
     _block = new(data) block(_name);
     _offset = 0;
 #ifdef TRACK_BLOCKS
-    pthread_mutex_lock(&block_mutex);
-    live_blocks->insert(block_entry(_name, pthread_self(), _block));
-    pthread_mutex_unlock(&block_mutex);
+    {
+	_block->_live_blocks = _live_blocks;
+	critical_section_t cs(_live_blocks->second);
+	_live_blocks->first[_block] = _delta;
+    }
 #endif
 }
 
@@ -277,9 +356,11 @@ header* in_progress_block::allocate_huge(int size) {
 	
     block* b = new(data) block(_name);
 #ifdef TRACK_BLOCKS
-    pthread_mutex_lock(&block_mutex);
-    live_blocks->insert(block_entry(_name, pthread_self(), b));
-    pthread_mutex_unlock(&block_mutex);
+    {
+	b->_live_blocks = _live_blocks;
+	critical_section_t cs(_live_blocks->second);
+	_live_blocks->first[b] = size;
+    }
 #endif
 #ifdef TRACE_LEAKS
     fprintf(stderr, "%s block 1 %p+%d (oversized)\n", _name, b, size);
@@ -342,7 +423,7 @@ void* pool_alloc::alloc(int size) {
     if(!ipb) {
 #ifdef TRACK_BLOCKS
 	if(!live_blocks)
-	    live_blocks = new block_set;
+	    live_blocks = new thread_maps;
 #endif
 	ipb = _in_progress = new in_progress_block(_name, size);
     }
@@ -397,47 +478,3 @@ alloc_pthread_specific::alloc_pthread_specific() {
     int error = pthread_key_create(&_ptkey, &destruct_in_progress);
     assert(!error);
 }
-
-#if 0
-#include <vector>
-#include <algorithm>
-#include "util/stopwatch.h"
-
-struct malloc_alloc {
-    void* alloc(int size) { return ::malloc(size); }
-    void free(void* ptr) { ::free(ptr); }
-};
-
-malloc_alloc ma;
-pool_alloc pa;
-
-// just try to allocate and free a bunch in a row...
-void test1() {
-    std::vector<void*> pointers;
-
-    // find out how much the shuffles cost
-    pointers.resize(1000);
-    stopwatch_t timer;
-    for(int i=0; i < 1000; i++) {
-	std::random_shuffle(pointers.begin(), pointers.end());
-    }
-    double shuffle_time = timer.time_ms();
-    for(int j=0; j < 1;  j++) {
-	pointers.clear();
-	for(int i=0; i < 1000; i++)
-	    pointers.push_back(pa.alloc(10));
-
-	std::random_shuffle(pointers.begin(), pointers.end());
-	for(unsigned i=0; i < pointers.size(); i++)
-	    pa.free(pointers[i]);
-    }
-    double t = timer.time_ms();
-    fprintf(stderr, "Cycled 10 bytes 1M times in %.3f ms (%.3f w/o shuffle)\n", t, t-shuffle_time);
-}
-
-int main() {
-    test1();
-
-    return 0;
-}
-#endif
