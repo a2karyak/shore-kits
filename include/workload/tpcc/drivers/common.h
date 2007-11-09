@@ -30,7 +30,7 @@ int URand(int low, int high);
 
 int NURand(int A, int low, int high);
 
-char* generate_cust_last(int select);
+int generate_cust_last(int select, char* dest);
 
 EXIT_NAMESPACE(tpcc);
 

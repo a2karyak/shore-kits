@@ -23,7 +23,7 @@ using namespace tpcc_payment;
 
 
 // (ip) To be removed in order to test the additional helper thread
-#define NO_HELPER_THREAD
+//#define NO_HELPER_THREAD
 
 
 /** @fn executeInMemPayment

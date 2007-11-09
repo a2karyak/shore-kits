@@ -43,11 +43,13 @@ protected:
 	pthread_cond_t _cond;
 	ContainerQueue _queue;
 	DistributedQueueSlice() : _lock(thread_mutex_create()), _cond(thread_cond_create()) { }
+
     private:
 	// no-nos
 	void operator=(DistributedQueueSlice const&);
 	DistributedQueueSlice(DistributedQueueSlice const&);
     };
+
     vector<DistributedQueueSlice*> _queue_slices;
     
     // container synch vars

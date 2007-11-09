@@ -99,15 +99,18 @@ int NURand(int A, int low, int high) {
  *  For example, 
  *  The number: 371 generates the name: PRICALLYOUGHT
  *  The number: 40 generates the name: BARPRESBAR
+ *
+ *  @return The length of the created string. 0 on errors.
  */
 
 char* CUST_LAST[10] = { "BAR", "OUGHT", "ABLE", "PRI", "PRES", "ESE",
                         "ANTI", "CALLY", "ATION", "EING" };
 
 
-char* generate_cust_last(int select) {
+int generate_cust_last(int select, char* dest) {
   
-  assert((select >= 0) && (select < 1000));
+  assert ((select >= 0) && (select < 1000));
+  assert (dest);
 
   int i1, i2, i3;
 
@@ -118,16 +121,14 @@ char* generate_cust_last(int select) {
   int iLen = strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]);
 
   assert (iLen < 17);   // C_LAST is char[16]
-
-  char* s_cust_last = new char[iLen + 1];
   
-  snprintf(s_cust_last, iLen, "%s%s%s", 
+  snprintf(dest, iLen, "%s%s%s", 
           CUST_LAST[i1],
           CUST_LAST[i2],
           CUST_LAST[i3]);
-  s_cust_last[iLen] = '\0';
+  dest[iLen] = '\0';
   
-  return (s_cust_last);
+  return (iLen);
 }
 
 

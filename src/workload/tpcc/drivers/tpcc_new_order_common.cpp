@@ -43,9 +43,6 @@ new_order_input_t create_new_order_input(int sf) {
     pin._v_cust_ident_selection = URand(1, 100); // 60 - 40
     pin._c_id = NURand(1023, 1, 3000);
     
-    // Calls the function that returns the correct cust_last
-    store_string(pin._c_last,  generate_cust_last(NURand(255, 0, 999)));
-    
     pin._h_amount = (long)URand(100, 500000)/(long)100.00;
     pin._h_date = time(NULL);
 
