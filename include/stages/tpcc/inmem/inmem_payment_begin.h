@@ -133,7 +133,7 @@ protected:
 public:
 
     static const c_str DEFAULT_STAGE_NAME;
-    typedef inmem_payment_begin_stage_t stage_packet_t;
+    typedef inmem_payment_begin_packet_t stage_packet_t;
 
     inmem_payment_begin_stage_t();
  

@@ -19,7 +19,7 @@
 // InMem-TPCC drivers header files
 #include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.h"
 //#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.h"
-
+#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_staged.h"
 
 #include "scheduler.h"
 
@@ -62,6 +62,9 @@ void inmem_tpcc_handler_t::init() {
         // register drivers...
         add_driver("inmem_payment_baseline", 
                    new inmem_tpcc_payment_baseline_driver(c_str("INMEM_PAYMENT_BASELINE")));
+
+        add_driver("inmem_payment_staged", 
+                   new inmem_tpcc_payment_staged_driver(c_str("INMEM_PAYMENT_STAGED")));
 
 
         // register dispatcher policies...

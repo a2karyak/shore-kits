@@ -8,8 +8,8 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __BDB_TPCC_PAYMENT_UPD_WH_H
-#define __BDB_TPCC_PAYMENT_UPD_WH_H
+#ifndef __INMEM_TPCC_PAYMENT_UPD_WH_H
+#define __INMEM_TPCC_PAYMENT_UPD_WH_H
 
 #include <cstdio>
 
@@ -86,7 +86,7 @@ public:
 
     void describe_trx() {
 
-        TRACE( TRACE_ALWAYS,
+        TRACE( TRACE_DEBUG,
                "\nUPD_WH - TRX_ID=%d\n" \
                "WH_ID=%d\t\tAMOYNT=%.2f\n", 
                _trx_id, 

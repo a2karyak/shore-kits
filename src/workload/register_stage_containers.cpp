@@ -72,7 +72,18 @@ void register_stage_containers(int environment) {
 
     case TRX_MEM_ENV:
 
+        // Baseline Payment
         register_stage<inmem_payment_baseline_stage_t>(MAX_NUM_TRXS, false);
+
+        // Staged Payment
+        register_stage<inmem_payment_begin_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<inmem_payment_upd_wh_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<inmem_payment_upd_distr_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<inmem_payment_upd_cust_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<inmem_payment_ins_hist_stage_t>(MAX_NUM_CLIENTS, false); 
+        register_stage<inmem_payment_finalize_stage_t>(MAX_NUM_CLIENTS, false); 
+
+
         break;
 
         /** DSS stages registration */
