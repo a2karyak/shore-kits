@@ -13,8 +13,12 @@
 #define __ACOUNTER_H
 
 #include "util/thread.h"
-#include "util/sync.h"
 
+#ifdef __SUNPRO_CC
+#include <atomic.h>
+#else
+#include "util/sync.h"
+#endif
 
 
 /* exported datatypes */
@@ -23,24 +27,35 @@ class acounter_t {
 
  private:
 
+    uint _value;
     pthread_mutex_t _mutex;
-    int _value;
   
  public:
 
     acounter_t(int value=0)
-        : _mutex(thread_mutex_create()),
-          _value(value)
+        : _value(value)
+#ifndef __SUNPRO_CC
+        ,_mutex(thread_mutex_create())
+#endif
     {
     }
 
     ~acounter_t() {
+#ifndef __SUNPRO_CC
         thread_mutex_destroy(_mutex);
+#endif
     }
 
-    int fetch_and_inc() {
+    uint fetch_and_inc() {
+#ifndef __SUNPRO_CC
         critical_section_t cs(_mutex);
-        return _value++;
+        _value++;
+#else
+        atomic_inc_uint(&_value);
+#endif
+
+
+        return (_value);
     }
         
 };
