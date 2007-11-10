@@ -42,7 +42,8 @@ using std::string;
 
 /* internal data structures */
 
-static map<c_str, command_handler_t*> command_mappings;
+typedef map<c_str, command_handler_t*> command_map;
+static command_map command_mappings;
 
 
 
@@ -53,6 +54,12 @@ void add_command(const char*  command_tag, command_handler_t* handler);
 static void dispatch_command(const char* command);
 bool check_quit(const char* command);
 
+class help_command_handler : public command_handler_t {
+    virtual void handle_command(char const* command) {
+	for(command_map::iterator it=command_mappings.begin(); it != command_mappings.end(); ++it)
+	    printf("%s\n", it->first.data());
+    }
+};
 
 /* definitions of exported functions */
 
@@ -75,6 +82,7 @@ void register_command_handlers( const int environment ) {
 
     // General Purpose command handlers
     // Utilities
+    add_command("help", new help_command_handler());
     add_command("print", new printer_t());
     add_command("tracer", new tracer_t());
 
