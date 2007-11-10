@@ -65,7 +65,7 @@ public:
 
     /** Exported Functions */
 
-    c_str get_name() const { return _name; }
+    c_str get_name() { return _name; }
     void set_name(c_str name) { _name = name; }
     /** @fn read
      *
@@ -168,7 +168,7 @@ public:
 	for(int i=0; i < SF*FANOUT; i++) {
 	    int count = fwrite(read(i), sizeof(TUPLE_TYPE), 1, fout);
 	    release(i);
-	    if(count != sizeof(TUPLE_TYPE))
+	    if(count != 1)
 		THROW_IF(FileException, errno);
 	}
     }
@@ -176,7 +176,7 @@ public:
 	for(int i=0; i < SF*FANOUT; i++) {
 	    int count = fread(write(i), sizeof(TUPLE_TYPE), 1, fin);
 	    release(i);
-	    if(count != sizeof(TUPLE_TYPE))
+	    if(count != 1)
 		THROW_IF(FileException, errno);
 	}
     }

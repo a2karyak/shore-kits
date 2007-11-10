@@ -458,7 +458,7 @@ private:
 	template<class T>
 	Writer &operator<<(T const &value) {
 	    int count = fwrite((void*) &value, sizeof(T), 1, _fout);
-	    if(count != sizeof(value))
+	    if(count != 1)
 		throw errno;
 	    return *this;
 	}
@@ -471,7 +471,7 @@ private:
 	template<class T>
 	Reader &operator>>(T const &value) {
 	    int count = fread((void*) &value, sizeof(T), 1, _fin);
-	    if(count != sizeof(value))
+	    if(count != 1)
 		throw errno;
 	    return *this;
 	}

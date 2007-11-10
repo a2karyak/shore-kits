@@ -83,7 +83,7 @@ struct c_str::c_str_data {
     // Use atomic primitives instead of locks
     mutable pthread_mutex_t _lock;
 #endif
-    mutable unsigned _count;
+    mutable unsigned long _count;
     char _data[0];
     char* _str() { return _data; }
 };
@@ -115,14 +115,24 @@ c_str::c_str(const char* str, ...)
 
     static int const i = 1024;
     char tmp[i];
-	
-    va_list args;
-    va_start(args, str);
-    int count = vsnprintf(tmp, i, str, args);
-    va_end(args);
+    char const* src;
+    int count;
+
+    // do we really have to do the va_args thing?
+    if(strchr(str, '%')) {
+	src = tmp;
+	va_list args;
+	va_start(args, str);
+	count = vsnprintf(tmp, i, str, args);
+	va_end(args);
         
-    if((count < 0) /* glibc 2.0 */ || (count >= i) /* glibc 2.1 */)
-	THROW(BadAlloc); // oops!
+	if((count < 0) /* glibc 2.0 */ || (count >= i) /* glibc 2.1 */)
+	    THROW(BadAlloc); // oops!
+    }
+    else {
+	src = str;
+	count = strlen(str);
+    }
 
     _data = (c_str_data*) c_str_alloc->alloc(sizeof(c_str_data) + count + 1);
 
@@ -130,7 +140,7 @@ c_str::c_str(const char* str, ...)
     _data->_lock = thread_mutex_create();
 #endif
     _data->_count = 1;
-    memcpy(_data->_str(), tmp, count+1);
+    memcpy(_data->_str(), src, count+1);
     
 #if defined(TRACK_LEAKS)
     pthread_mutex_lock(&owner_mutex);
@@ -164,7 +174,7 @@ void c_str::assign(const c_str &other) {
 #ifdef USE_ATOMIC_OPS
 #ifdef __SUNPRO_CC
     membar_enter();
-    atomic_add_32(&_data->_count, 1);
+    atomic_add_64(&_data->_count, 1);
     membar_exit();
 #else
 #error "Sorry, you're stuck with locks on this architecture"
@@ -184,7 +194,7 @@ void c_str::release() {
 #ifdef USE_ATOMIC_OPS
 #ifdef __SUNPRO_CC
     membar_enter();
-    count = atomic_add_32_nv(&_data->_count, -1);
+    count = atomic_add_64_nv(&_data->_count, -1);
     membar_exit();
 #else
 #error "Sorry, you're stuck with locks on this architecture"

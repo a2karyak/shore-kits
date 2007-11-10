@@ -96,7 +96,7 @@ class save_table : public thread_t {
     c_str _fname;
 public:
     save_table(Table &table, c_str fname)
-	: thread_t(c_str("%s_save_thread", _table.get_name().data())),
+	: thread_t(c_str("%s_save_thread", table.get_name().data())),
 	  _table(table), _fname(fname)
     {
     }
@@ -127,7 +127,7 @@ class restore_table : public thread_t {
     c_str _fname;
 public:
     restore_table(Table &table, c_str fname)
-	: thread_t(c_str("%s_restore_thread", _table.get_name().data())),
+	: thread_t(c_str("%s_restore_thread", table.get_name().data())),
 	  _table(table), _fname(fname)
     {
     }

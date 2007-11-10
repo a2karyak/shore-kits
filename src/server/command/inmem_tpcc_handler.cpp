@@ -134,13 +134,6 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
 	return;
     }
 	    
-    if( !strcmp(driver_tag, "save")) {
-	char dirname[1024];
-	c_str dir = (sscanf(command, "%*s %*s %s", &dirname) < 1)? INMEM_TPCC_SAVE_DIR : dirname;    
-	inmem_env->savedata(dir);
-	return;
-    }
-	    
     if( !strcmp(driver_tag, "restore")) {
 	char dirname[1024];
 	c_str dir = (sscanf(command, "%*s %*s %s", &dirname) < 1)? INMEM_TPCC_SAVE_DIR : dirname;    
@@ -148,6 +141,13 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
 	return;
     }
 
+    if( !strcmp(driver_tag, "save")) {
+	char dirname[1024];
+	c_str dir = (sscanf(command, "%*s %*s %s", &dirname) < 1)? INMEM_TPCC_SAVE_DIR : dirname;    
+	inmem_env->savedata(dir);
+	return;
+    }
+	    
     if(!inmem_env->is_initialized()) {
 	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' or 'restore' to load one\n");
 	return;

@@ -117,8 +117,8 @@ public:
 	_initialized = false;
         im_customers.set_name(c_str("customer"));
         im_histories.set_name(c_str("history"));
-	im_warehouses.set_name("warehouse");
-	im_districts.set_name("district");
+	im_warehouses.set_name(c_str("warehouse"));
+	im_districts.set_name(c_str("district"));
 
     }
 

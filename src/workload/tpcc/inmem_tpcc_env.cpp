@@ -38,7 +38,7 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
     typedef save_table<warehouse_array_t> warehouse_inmem_saver;
 
     warehouse_inmem_saver* wh_saver_thread = 
-        new warehouse_inmem_saver(im_warehouses, c_str("%s%s", saveDir.data(), INMEM_TPCC_SAVE_WAREHOUSE));
+        new warehouse_inmem_saver(im_warehouses, c_str("%s/%s", saveDir.data(), INMEM_TPCC_SAVE_WAREHOUSE));
 
 
 
@@ -49,7 +49,7 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
     typedef save_table<district_array_t> district_inmem_saver;
 
     district_inmem_saver* distr_saver_thread = 
-        new district_inmem_saver(im_districts, c_str("%s%s", saveDir.data(), INMEM_TPCC_SAVE_DISTRICT));
+        new district_inmem_saver(im_districts, c_str("%s/%s", saveDir.data(), INMEM_TPCC_SAVE_DISTRICT));
 
 
 
@@ -60,7 +60,7 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
     typedef save_table<customer_tree_t> customer_inmem_saver;
 
     customer_inmem_saver* customer_saver_thread = 
-        new customer_inmem_saver(im_customers, c_str("%s%s", saveDir.data(), INMEM_TPCC_SAVE_CUSTOMER));
+        new customer_inmem_saver(im_customers, c_str("%s/%s", saveDir.data(), INMEM_TPCC_SAVE_CUSTOMER));
 
 
 
@@ -71,14 +71,16 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
     typedef save_table<history_tree_t> history_inmem_saver;
 
     history_inmem_saver* history_saver_thread = 
-        new history_inmem_saver(im_histories, c_str("%s%s", saveDir.data(), INMEM_TPCC_SAVE_HISTORY));
+        new history_inmem_saver(im_histories, c_str("%s/%s", saveDir.data(), INMEM_TPCC_SAVE_HISTORY));
 
 
     // Start measuring loading time
     time_t tstart = time(NULL);
 
 
+#ifdef PARALLEL
     try {
+	
 
         /////////////////////////
         // START WAREHOUSE SAVER
@@ -109,7 +111,6 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
         ////////////////////////
 
         inmem_save_ids[HISTORY] = thread_create(history_saver_thread);
-
     }
     catch (TrxException& e) {
 
@@ -118,6 +119,12 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
     }
                                                                     
     workload_t::wait_for_clients(inmem_save_ids, INMEM_PAYMENT_TABLES);
+#else
+    wh_saver_thread->run();
+    distr_saver_thread->run();
+    customer_saver_thread->run();
+    history_saver_thread->run();
+#endif
 
     time_t tstop = time(NULL);
 
@@ -145,7 +152,7 @@ int InMemTPCCEnv::restoredata(c_str restoreDir) {
     typedef restore_table<warehouse_array_t> warehouse_inmem_restorer;
 
     warehouse_inmem_restorer* wh_restorer_thread = 
-        new warehouse_inmem_restorer(im_warehouses, c_str("%s%s", restoreDir.data(), INMEM_TPCC_SAVE_WAREHOUSE));
+        new warehouse_inmem_restorer(im_warehouses, c_str("%s/%s", restoreDir.data(), INMEM_TPCC_SAVE_WAREHOUSE));
 
 
 
@@ -156,7 +163,7 @@ int InMemTPCCEnv::restoredata(c_str restoreDir) {
     typedef restore_table<district_array_t> district_inmem_restorer;
 
     district_inmem_restorer* distr_restorer_thread = 
-        new district_inmem_restorer(im_districts, c_str("%s%s", restoreDir.data(), INMEM_TPCC_SAVE_DISTRICT));
+        new district_inmem_restorer(im_districts, c_str("%s/%s", restoreDir.data(), INMEM_TPCC_SAVE_DISTRICT));
 
 
 
@@ -167,7 +174,7 @@ int InMemTPCCEnv::restoredata(c_str restoreDir) {
     typedef restore_table<customer_tree_t> customer_inmem_restorer;
 
     customer_inmem_restorer* customer_restorer_thread = 
-        new customer_inmem_restorer(im_customers, c_str("%s%s", restoreDir.data(), INMEM_TPCC_SAVE_CUSTOMER));
+        new customer_inmem_restorer(im_customers, c_str("%s/%s", restoreDir.data(), INMEM_TPCC_SAVE_CUSTOMER));
 
 
 
@@ -178,7 +185,7 @@ int InMemTPCCEnv::restoredata(c_str restoreDir) {
     typedef restore_table<history_tree_t> history_inmem_restorer;
 
     history_inmem_restorer* history_restorer_thread = 
-        new history_inmem_restorer(im_histories, c_str("%s%s", restoreDir.data(), INMEM_TPCC_SAVE_HISTORY));
+        new history_inmem_restorer(im_histories, c_str("%s/%s", restoreDir.data(), INMEM_TPCC_SAVE_HISTORY));
 
 
     // Start measuring loading time
