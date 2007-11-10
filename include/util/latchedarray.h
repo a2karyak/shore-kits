@@ -41,11 +41,14 @@ private:
     boost::array<TUPLE_TYPE, SF * FANOUT> _array;
 
     pthread_rwlock_t _array_rwlock[SF * FANOUT];
+    c_str _name;
 
 public:
 
     // Constructor
-    latchedArray() {
+    latchedArray(c_str name="<nameless>")
+	: _name(name)
+    {
         // initializes the locks
         for (int i=0; i<SF*FANOUT; i++) {
             pthread_rwlock_init(&_array_rwlock[i], NULL);
@@ -62,6 +65,8 @@ public:
 
     /** Exported Functions */
 
+    c_str get_name() const { return _name; }
+    void set_name(c_str name) { _name = name; }
     /** @fn read
      *
      *  @brief Returns the requested entry locked for read
@@ -159,6 +164,22 @@ public:
         }
     }
 
+    void save(FILE* fout) {
+	for(int i=0; i < SF*FANOUT; i++) {
+	    int count = fwrite(read(i), sizeof(TUPLE_TYPE), 1, fout);
+	    release(i);
+	    if(count != sizeof(TUPLE_TYPE))
+		THROW_IF(FileException, errno);
+	}
+    }
+    void restore(FILE* fin) {
+	for(int i=0; i < SF*FANOUT; i++) {
+	    int count = fread(write(i), sizeof(TUPLE_TYPE), 1, fin);
+	    release(i);
+	    if(count != sizeof(TUPLE_TYPE))
+		THROW_IF(FileException, errno);
+	}
+    }
 }; // EOF latchedArray
 
 

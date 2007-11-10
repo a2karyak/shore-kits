@@ -406,7 +406,7 @@ public:
      *  @brief: Sets the name of the Tree
      */ 
 
-    const void get_name() { return(_name); }
+    c_str const get_name() { return(_name); }
 
 
 
@@ -450,9 +450,102 @@ public:
     */
 
     ////////////////////////////////////////////////////////////////
+private:
+    struct Writer {
+	FILE* _fout;
+	Writer(FILE* fout) : _fout(fout) { }
+
+	template<class T>
+	Writer &operator<<(T const &value) {
+	    int count = fwrite((void*) &value, sizeof(T), 1, _fout);
+	    if(count != sizeof(value))
+		throw errno;
+	    return *this;
+	}
+    };
+
+    struct Reader {
+	FILE* _fin;
+	Reader(FILE* fin) : _fin(fin) { }
+
+	template<class T>
+	Reader &operator>>(T const &value) {
+	    int count = fread((void*) &value, sizeof(T), 1, _fin);
+	    if(count != sizeof(value))
+		throw errno;
+	    return *this;
+	}
+    };
+
+public:
+    // dumps the tree's contents to file.
+    // caller should catch(int err) in case anything goes wrong
+    void save(FILE* fout) {
+	// dump tree info
+	Writer out = fout;
+	out << _depth;
+	dump_node(out, _root, _depth);
+    }
+
+    // loads a btree from file.
+    // caller should catch(int err) in case anything goes wrong
+    void restore(FILE* fin) {
+	Reader in = fin;
+
+	// first, we need to clear out the current tree
+	delete_node(_root, _depth);
+
+	// now load
+	in >> _depth;
+	
+	load_node(in, _root, _depth);
+    }
 
 
 private:
+
+    void delete_node(void* node, int localDepth) {
+	if(localDepth) {
+	    InnerNode* inner = reinterpret_cast<InnerNode*>(node);
+	    for(int i=0; i <= inner->num_keys; i++)
+		delete_node(inner->children[i], localDepth-1);
+	    _innerPool.destroy(inner);
+	}
+	else {
+	    LeafNode* leaf = reinterpret_cast<LeafNode*>(node);
+	    _leafPool.destroy(leaf);
+	}
+    }
+    void load_node(Reader in, void* &node, int localDepth) {
+	if(localDepth) {
+	    InnerNode* inner = _innerPool.construct();
+	    in >> inner->num_keys >> inner->keys;
+
+	    for(int i=0; i <= inner->num_keys; i++) 
+		load_node(in, inner->children[i], localDepth-1);
+	    node = inner;
+	}
+	else {
+	    LeafNode* leaf = _leafPool.construct();
+	    in >> leaf->num_keys >> leaf->keys >> leaf->values;
+	    node = leaf;
+	}
+    }
+    
+    void dump_node(Writer out, void* node, int localDepth) {
+	if(localDepth) {
+	    InnerNode* inner = reinterpret_cast<InnerNode*>(node);
+	    out << inner->num_keys << inner->keys;
+	
+	    for(int i=0; i <= inner->num_keys; i++)
+		dump_node(out, inner->children[i], localDepth-1);
+	}
+	else {
+	    LeafNode* leaf = reinterpret_cast<LeafNode*>(node);
+	    out << leaf->num_keys << leaf->keys << leaf->values;
+	}
+    }
+
 
 
     ////////////////////////////////////////////////////////////////
@@ -1016,7 +1109,6 @@ private:
         // by its child in the body of the leaf_insert() or inner_insert() 
         // functions
     }
-
 
 
     ////////////////////////////////////////////////////////////////

@@ -35,6 +35,13 @@ ENTER_NAMESPACE(tpcc);
 #define INMEM_TPCC_DATA_CUSTOMER "CUSTOMER.dat"
 #define INMEM_TPCC_DATA_HISTORY "HISTORY.dat"
 
+// these are saved-out btree/array state and should load *way* faster
+#define INMEM_TPCC_SAVE_DIR INMEM_TPCC_DATA_DIR
+#define INMEM_TPCC_SAVE_WAREHOUSE "WAREHOUSE.save"
+#define INMEM_TPCC_SAVE_DISTRICT "DISTRICT.save"
+#define INMEM_TPCC_SAVE_CUSTOMER "CUSTOMER.save"
+#define INMEM_TPCC_SAVE_HISTORY "HISTORY.save"
+
 
 #define WAREHOUSE_FANOUT 1
 #define DISTRICT_FANOUT 10
@@ -70,13 +77,16 @@ private:
     static const int HISTORY = 3;
 
     static const int INMEM_PAYMENT_TABLES = 4;
-
-    /** Private functions */
-
-    int loaddata(c_str loadDir);
-
+    
+    /** Private variables */
+    bool _initialized;
 
 public:
+    
+    int loaddata(c_str loadDir);
+    int savedata(c_str saveDir);
+    int restoredata(c_str restoreDir);
+
 
     /** Member variables */
 
@@ -104,17 +114,18 @@ public:
     /** Construction  */
 
     InMemTPCCEnv() {
-
+	_initialized = false;
         im_customers.set_name(c_str("customer"));
         im_histories.set_name(c_str("history"));
+	im_warehouses.set_name("warehouse");
+	im_districts.set_name("district");
 
-        // Loads the data from the INMEM_TPCC_DATA_DIR folder
-        loaddata(c_str(INMEM_TPCC_DATA_DIR));
     }
 
 
     ~InMemTPCCEnv() { }
 
+    bool is_initialized() const { return _initialized; }
     void dump();
 
 

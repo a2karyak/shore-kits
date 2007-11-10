@@ -90,6 +90,68 @@ void* data_loader_t<RowParser>::run() {
 }
 
 
+template<class Table>
+class save_table : public thread_t {
+    Table &_table;
+    c_str _fname;
+public:
+    save_table(Table &table, c_str fname)
+	: thread_t(c_str("%s_save_thread", _table.get_name().data())),
+	  _table(table), _fname(fname)
+    {
+    }
+    virtual void* run() {
+	TRACE( TRACE_DEBUG, "Saving %s table to (%s)\n", _table.get_name().data(), _fname.data());
+
+	guard<FILE> fd = fopen(_fname.data(), "w");
+
+	if (fd == NULL) {        
+	    THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
+	    //printf("fopen() failed on (%s)\n", _fname.data());
+	}
+
+	try {
+	    _table.save(fd);
+	}
+	catch(int error) {
+	    THROW_IF(FileException, error);
+	}
+	
+	return NULL;
+    }
+};
+
+template<class Table>
+class restore_table : public thread_t {
+    Table &_table;
+    c_str _fname;
+public:
+    restore_table(Table &table, c_str fname)
+	: thread_t(c_str("%s_restore_thread", _table.get_name().data())),
+	  _table(table), _fname(fname)
+    {
+    }
+    virtual void* run() {
+	TRACE( TRACE_DEBUG, "Restoring table %s from  (%s)\n", _table.get_name().data(), _fname.data());
+
+	guard<FILE> fd = fopen(_fname.data(), "r");
+
+	if (fd == NULL) {        
+	    THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
+	    //printf("fopen() failed on (%s)\n", _fname.data());
+	}
+
+	try {
+	    _table.restore(fd);
+	}
+	catch(int error) {
+	    THROW_IF(FileException, error);
+	}
+	
+	return NULL;
+    }
+};
+
 ///////////////////////////////////////////////////////////
 // @class inmem_array_loader_impl
 //
