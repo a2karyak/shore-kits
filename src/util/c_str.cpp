@@ -84,7 +84,8 @@ struct c_str::c_str_data {
     mutable pthread_mutex_t _lock;
 #endif
     mutable unsigned _count;
-    char* _str() { return sizeof(c_str_data) + (char*) this; }
+    char _data[0];
+    char* _str() { return _data; }
 };
 
 
