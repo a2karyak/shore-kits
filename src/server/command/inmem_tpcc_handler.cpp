@@ -141,6 +141,11 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
 	return;
     }
 
+    if(!inmem_env->is_initialized()) {
+	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' or 'restore' to load one\n");
+	return;
+    }
+    
     if( !strcmp(driver_tag, "save")) {
 	char dirname[1024];
 	c_str dir = (sscanf(command, "%*s %*s %s", &dirname) < 1)? INMEM_TPCC_SAVE_DIR : dirname;    
@@ -148,11 +153,6 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
 	return;
     }
 	    
-    if(!inmem_env->is_initialized()) {
-	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' or 'restore' to load one\n");
-	return;
-    }
-    
     // 'dump' tag handled differently. It dumps  in memory data
     if (!strcmp(driver_tag, "dump")) {
         inmem_env->dump();
