@@ -4,6 +4,9 @@
 # include "util.h"
 
 
+using namespace tpcc_payment;
+
+
 const c_str inmem_payment_upd_wh_packet_t::PACKET_TYPE = "INMEM_PAYMENT_UPD_WH";
 
 const c_str inmem_payment_upd_wh_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_UPD_WH_STAGE";
@@ -39,6 +42,8 @@ void inmem_payment_upd_wh_stage_t::process_packet() {
 
 
     TRACE( TRACE_ALWAYS, "!! UPDATING WAREHOUSE !!\n");
+
+    staged_updateInMemWarehouse(&packet->_pin, inmem_env);
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack

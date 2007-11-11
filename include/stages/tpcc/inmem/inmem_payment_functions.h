@@ -57,6 +57,16 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t pin,
                                                InMemTPCCEnv* env);
 
 
+
+/// STAGED Functions 
+
+int staged_updateInMemWarehouse(payment_input_t* pin, InMemTPCCEnv* env);
+int staged_updateInMemDistrict(payment_input_t* pin, InMemTPCCEnv* env);
+int staged_updateInMemCustomer(payment_input_t* pin, InMemTPCCEnv* env);
+int staged_insertInMemHistory(payment_input_t* pin, InMemTPCCEnv* env);
+
+
+
 /** Exported variable */
 
 extern InMemTPCCEnv* inmem_env;

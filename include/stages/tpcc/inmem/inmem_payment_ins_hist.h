@@ -17,6 +17,8 @@
 #include "util.h"
 
 #include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/inmem/inmem_payment_functions.h"
+
 
 using namespace qpipe;
 
@@ -39,12 +41,7 @@ public:
      *  5) H_AMOUNT long: payment amount
      */
 
-    int _wh_id;
-    int _distr_id;
-    int _cust_id;
-    int _cust_wh_id;
-    int _cust_distr_id;
-
+    payment_input_t _pin;
 
 
     /**
@@ -75,23 +72,15 @@ public:
                                     tuple_fifo*     output_buffer,
                                     tuple_filter_t* output_filter,
                                     const int a_trx_id,
-                                    const int a_wh_id,   
-                                    const int a_distr_id,
-                                    const int a_cust_id,
-                                    const int a_cust_wh_id,
-                                    const int a_cust_distr_id)
+                                    const payment_input_t* p_pin)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                       create_plan(a_trx_id, a_wh_id, a_distr_id, 
-                                   a_cust_id, a_cust_wh_id, a_cust_distr_id),
+                       create_plan(a_trx_id, p_pin->_home_wh_id, p_pin->_home_d_id, 
+                                   p_pin->_c_id, p_pin->_home_wh_id, p_pin->_home_d_id),
                        false, /* merging not allowed */
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-          _wh_id(a_wh_id),
-          _distr_id(a_distr_id),
-          _cust_id(a_cust_id),
-          _cust_wh_id(a_cust_wh_id),
-          _cust_distr_id(a_cust_distr_id)
+          _pin(*p_pin)
     {
     }
 
@@ -104,7 +93,8 @@ public:
                "\nINS_HIST - TRX_ID=%d\n" \
                "WH_ID=%d\tD_ID=%d\tC_ID=%d\tC_WH_ID=%d\tC_D_ID=%d\n",
                _trx_id, 
-               _wh_id, _distr_id, _cust_id, _cust_wh_id , _cust_distr_id);
+               _pin._home_wh_id, _pin._home_d_id, _pin._c_id, 
+               _pin._home_wh_id , _pin._home_d_id);
     }
 
     

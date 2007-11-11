@@ -217,7 +217,6 @@ int updateInMemWarehouse(payment_input_t* pin, int* idx,
 
 
 
-
 /** @fn updateInMemDistrict
  *  
  *  @brief Step 3: Retrieve the row in the DISTRICT table with matching D_W_ID and D_ID.
@@ -645,6 +644,40 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t pin,
     return (aTrxResultTuple);
 
 } // EOF: executePaymentBaseline
+
+
+
+////////////////////////////////////////////////////////////
+// STAGED Functions
+////////////////////////////////////////////////////////////
+
+
+int staged_updateInMemWarehouse(payment_input_t* pin, InMemTPCCEnv* env) {
+
+    assert (1==0); // (ip) Not implemented yet
+    return (0);
+}
+
+
+int staged_updateInMemDistrict(payment_input_t* pin, InMemTPCCEnv* env) {
+
+    assert (1==0); // (ip) Not implemented yet
+    return (0);
+}
+
+int staged_updateInMemCustomer(payment_input_t* pin, InMemTPCCEnv* env) {
+
+    assert (1==0); // (ip) Not implemented yet
+    return (0);
+}
+
+int staged_insertInMemHistory(payment_input_t* pin, InMemTPCCEnv* env) {
+
+    assert (1==0); // (ip) Not implemented yet
+    return (0);
+}
+
+
 
 
 

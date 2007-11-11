@@ -17,6 +17,7 @@
 #include "util.h"
 
 #include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/inmem/inmem_payment_functions.h"
 
 using namespace qpipe;
 
@@ -39,12 +40,7 @@ public:
      *  5) H_AMOUNT long: payment amount
      */
 
-    int _wh_id;
-    int _distr_id;
-    int _cust_id;
-    char* _cust_last;
-    double _amount;
-
+    payment_input_t _pin;
 
 
     /**
@@ -75,27 +71,16 @@ public:
                                     tuple_fifo*     output_buffer,
                                     tuple_filter_t* output_filter,
                                     const int a_trx_id,
-                                    const int a_wh_id,   
-                                    const int a_distr_id,
-                                    const int a_cust_id,
-                                    const char* a_cust_last,
-                                    const double a_amount)
+                                    const payment_input_t* p_pin)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                       create_plan(a_trx_id, a_wh_id, a_distr_id, a_cust_id, a_amount),
+                       create_plan(a_trx_id, p_pin->_home_wh_id, p_pin->_home_d_id, 
+                                   p_pin->_c_id, p_pin->_h_amount),
                        false, /* merging not allowed */
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-          _wh_id(a_wh_id),
-          _distr_id(a_distr_id),
-          _cust_id(a_cust_id),
-          _amount(a_amount)
+          _pin(*p_pin)
     {
-        if (a_cust_last != NULL) {
-            _cust_last = new char[strlen(a_cust_last) + 1];
-            strncpy(_cust_last, a_cust_last, strlen(a_cust_last));
-            _cust_last[strlen(a_cust_last)] = '\0';
-        }
     }
 
 
@@ -108,7 +93,8 @@ public:
                "\nWH_ID=%d\t\tDISTRICT=%d\tAMOYNT=%.2f\n" \
                "CUST_ID=%d\tCUST_LAST=%s\n",
                _trx_id, 
-               _wh_id, _cust_id, _amount, _cust_id, _cust_last);
+               _pin._home_wh_id, _pin._home_d_id, _pin._h_amount, 
+               _pin._c_id, _pin._c_last);
     }
 
     

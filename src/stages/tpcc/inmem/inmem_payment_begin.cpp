@@ -95,8 +95,7 @@ void inmem_payment_begin_stage_t::process_packet() {
                                             buffer,
                                             filter,
                                             packet->get_trx_id(),
-                                            packet->_p_in._home_wh_id,
-                                            packet->_p_in._h_amount);
+                                            &packet->_p_in);
     
 
     // 2b. INMEM_PAYMENT_UPD_DISTR
@@ -108,9 +107,7 @@ void inmem_payment_begin_stage_t::process_packet() {
                                                buffer,
                                                filter,
                                                packet->get_trx_id(),
-                                               packet->_p_in._home_wh_id,
-                                               packet->_p_in._home_d_id,
-                                               packet->_p_in._h_amount);
+                                               &packet->_p_in);
     
 
     // 2c. INMEM_PAYMENT_UPD_CUST
@@ -122,11 +119,7 @@ void inmem_payment_begin_stage_t::process_packet() {
                                               buffer,
                                               filter,
                                               packet->get_trx_id(),
-                                              packet->_p_in._home_wh_id,
-                                              packet->_p_in._home_d_id,
-                                              packet->_p_in._c_id,
-                                              packet->_p_in._c_last,
-                                              packet->_p_in._h_amount);
+                                              &packet->_p_in);
 
 
     // 2d. INMEM_PAYMENT_INS_HIST
@@ -140,11 +133,7 @@ void inmem_payment_begin_stage_t::process_packet() {
                                               buffer,
                                               filter,
                                               packet->get_trx_id(),
-                                              packet->_p_in._home_wh_id,
-                                              packet->_p_in._home_d_id,
-                                              packet->_p_in._c_id,
-                                              packet->_p_in._home_wh_id,
-                                              packet->_p_in._home_d_id);
+                                              &packet->_p_in);
     
     // 2e. INMEM_PAYMENT_FINALIZE
     buffer = new tuple_fifo(sizeof(int));
@@ -232,8 +221,7 @@ inmem_payment_begin_stage_t::create_inmem_payment_upd_wh_packet(const c_str& cli
                                                                 tuple_fifo* uwh_buffer,
                                                                 tuple_filter_t* uwh_filter,
                                                                 int a_trx_id,
-                                                                int a_wh_id,
-                                                                double a_amount) 
+                                                                payment_input_t* p_pin)
 {
     c_str packet_name("%s_inmem_payment_upd_wh", client_prefix.data());
 
@@ -242,8 +230,7 @@ inmem_payment_begin_stage_t::create_inmem_payment_upd_wh_packet(const c_str& cli
                                           uwh_buffer,
                                           uwh_filter,
                                           a_trx_id,
-                                          a_wh_id,
-                                          a_amount);
+                                          p_pin);
 
     return (inmem_payment_upd_wh_packet);
 }
@@ -258,20 +245,16 @@ inmem_payment_begin_stage_t::create_inmem_payment_upd_distr_packet(const c_str& 
                                                                    tuple_fifo* ud_buffer,
                                                                    tuple_filter_t* ud_filter,
                                                                    int a_trx_id,
-                                                                   int a_wh_id,
-                                                                   int a_distr_id,
-                                                                   double a_amount)
+                                                                   payment_input_t* p_pin)
 {
     c_str packet_name("%s_inmem_payment_upd_distr", client_prefix.data());
 
     inmem_payment_upd_distr_packet_t* inmem_payment_upd_distr_packet =
         new inmem_payment_upd_distr_packet_t(packet_name,
-                                       ud_buffer,
-                                       ud_filter,
-                                       a_trx_id,
-                                       a_wh_id,
-                                       a_distr_id,
-                                       a_amount);
+                                             ud_buffer,
+                                             ud_filter,
+                                             a_trx_id,
+                                             p_pin);
     
     return (inmem_payment_upd_distr_packet);
 }
@@ -287,24 +270,16 @@ inmem_payment_begin_stage_t::create_inmem_payment_upd_cust_packet(const c_str& c
                                                                   tuple_fifo* uc_buffer,
                                                                   tuple_filter_t* uc_filter,
                                                                   int a_trx_id,
-                                                                  int a_wh_id,
-                                                                  int a_distr_id,
-                                                                  int a_cust_id,
-                                                                  char* a_cust_last,
-                                                                  double a_amount)
+                                                                  payment_input_t* p_pin)
 {
     c_str packet_name("%s_inmem_payment_upd_cust", client_prefix.data());
 
     inmem_payment_upd_cust_packet_t* inmem_payment_upd_cust_packet =
         new inmem_payment_upd_cust_packet_t(packet_name,
-                                      uc_buffer,
-                                      uc_filter,
-                                      a_trx_id,
-                                      a_wh_id,
-                                      a_distr_id,
-                                      a_cust_id,
-                                      a_cust_last,
-                                      a_amount);
+                                            uc_buffer,
+                                            uc_filter,
+                                            a_trx_id,
+                                            p_pin);
     
     return (inmem_payment_upd_cust_packet);
 }
@@ -319,25 +294,17 @@ inmem_payment_begin_stage_t::create_inmem_payment_ins_hist_packet(const c_str& c
                                                                   tuple_fifo* ih_buffer,
                                                                   tuple_filter_t* ih_filter,
                                                                   int a_trx_id,
-                                                                  int a_wh_id,
-                                                                  int a_distr_id,
-                                                                  int a_cust_id,
-                                                                  int a_cust_wh_id,
-                                                                  int a_cust_distr_id)
+                                                                  payment_input_t* p_pin)
 {
     c_str packet_name("%s_inmem_payment_ins_hist", client_prefix.data());
     
     inmem_payment_ins_hist_packet_t* inmem_payment_ins_hist_packet =
         new inmem_payment_ins_hist_packet_t(packet_name,
-                                      ih_buffer,
-                                      ih_filter,
-                                      a_trx_id,
-                                      a_wh_id,
-                                      a_distr_id,
-                                      a_cust_id,
-                                      a_cust_wh_id,
-                                      a_cust_distr_id);
-    
+                                            ih_buffer,
+                                            ih_filter,
+                                            a_trx_id,
+                                            p_pin);
+
     return (inmem_payment_ins_hist_packet);
 }
 

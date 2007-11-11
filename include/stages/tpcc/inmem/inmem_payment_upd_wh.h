@@ -17,6 +17,7 @@
 #include "util.h"
 
 #include "stages/tpcc/common/trx_packet.h"
+#include "stages/tpcc/inmem/inmem_payment_functions.h"
 
 using namespace qpipe;
 
@@ -35,10 +36,8 @@ public:
      *  1) WH_ID int: warehouse id
      *  2) H_AMOUNT long: payment amount
      */
-
-    int _wh_id;
-    double _amount;
-
+    
+    payment_input_t _pin;
 
 
     /**
@@ -67,16 +66,14 @@ public:
                                   tuple_fifo*     output_buffer,
                                   tuple_filter_t* output_filter,
                                   const int a_trx_id,
-                                  const int a_wh_id,   
-                                  const double a_amount)
+                                  const payment_input_t* p_pin)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
-                       create_plan(a_trx_id, a_wh_id, a_amount),
+                       create_plan(a_trx_id, p_pin->_home_wh_id, p_pin->_h_amount),
                        false, /* merging not allowed */
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-          _wh_id(a_wh_id),
-          _amount(a_amount)
+          _pin(*p_pin)
     {
     }
     
@@ -90,7 +87,7 @@ public:
                "\nUPD_WH - TRX_ID=%d\n" \
                "WH_ID=%d\t\tAMOYNT=%.2f\n", 
                _trx_id, 
-               _wh_id, _amount);
+               _pin._home_wh_id, _pin._h_amount);
     }
 
     

@@ -68,12 +68,9 @@ public:
                        create_plan(a_p_input._c_id, a_p_input._h_amount, a_p_input._h_date),
                        false, /* merging allowed */
                        true  /* unreserve worker on completion */
-                       )
+                       ),
+          _p_in(a_p_input) /* copy input */          
     {
-        // Copy input
-        _p_in = a_p_input;
-
-        // Set transaction state
         _trx_state = UNDEF;
     }
 

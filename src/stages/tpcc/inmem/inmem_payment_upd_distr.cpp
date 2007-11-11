@@ -4,6 +4,9 @@
 # include "util.h"
 
 
+using namespace tpcc_payment;
+
+
 const c_str inmem_payment_upd_distr_packet_t::PACKET_TYPE = "INMEM_PAYMENT_UPD_DISTR";
 
 const c_str inmem_payment_upd_distr_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_UPD_DISTR_STAGE";
@@ -39,6 +42,10 @@ void inmem_payment_upd_distr_stage_t::process_packet() {
 
 
     TRACE( TRACE_ALWAYS, "!! UPDATING DISTRICT !!\n");
+
+
+    staged_updateInMemDistrict(&packet->_pin, inmem_env);
+
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack

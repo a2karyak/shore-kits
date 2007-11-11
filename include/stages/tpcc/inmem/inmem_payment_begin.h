@@ -69,12 +69,9 @@ public:
                        create_plan(a_p_input._c_id, a_p_input._h_amount, a_p_input._h_date),
                        false, /* merging disallowed */
                        true  /* unreserve worker on completion */
-                       )
+                       ),
+          _p_in(a_p_input)
     {
-        // Copy input
-        _p_in = a_p_input;
-
-        // Set transaction state
         _trx_state = UNDEF;
     }
 
@@ -150,8 +147,7 @@ public:
                                        tuple_fifo* uwh_buffer,
                                        tuple_filter_t* uwh_filter,
                                        int a_trx_id,
-                                       int a_wh_id,
-                                       double a_amount);
+                                       payment_input_t* p_pin);
     
 
     /** @brief Returns a inmem_payment_upd_distr_packet_t */
@@ -160,9 +156,7 @@ public:
                                           tuple_fifo* ud_buffer,
                                           tuple_filter_t* ud_filter,
                                           int a_trx_id,
-                                          int a_wh_id,
-                                          int a_distr_id,
-                                          double a_amount);
+                                          payment_input_t* p_pin);
     
 
     /** @brief Returns a inmem_payment_upd_cust_packet_t */
@@ -171,11 +165,7 @@ public:
                                          tuple_fifo* uc_buffer,
                                          tuple_filter_t* uc_filter,
                                          int a_trx_id,
-                                         int a_wh_id,
-                                         int a_distr_id,
-                                         int a_cust_id,
-                                         char* a_cust_last,
-                                         double a_amount);
+                                         payment_input_t* p_pin);
     
 
     /** @brief Returns an inmem_payment_ins_hist_packet_t */
@@ -184,11 +174,7 @@ public:
                                          tuple_fifo* ih_buffer,
                                          tuple_filter_t* ih_filter,
                                          int a_trx_id,
-                                         int a_wh_id,
-                                         int a_distr_id,
-                                         int a_cust_id,
-                                         int a_cust_wh_id,
-                                         int a_cust_distr_id);
+                                         payment_input_t* p_pin);
     
 
     /** @brief Returns an inmem_payment_finalize_packet_t */
