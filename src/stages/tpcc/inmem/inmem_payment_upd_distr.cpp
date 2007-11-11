@@ -38,11 +38,7 @@ void inmem_payment_upd_distr_stage_t::process_packet() {
     inmem_payment_upd_distr_packet_t* packet = 
 	(inmem_payment_upd_distr_packet_t*)adaptor->get_packet();
 
-    packet->describe_trx();
-
-
-    TRACE( TRACE_ALWAYS, "!! UPDATING DISTRICT !!\n");
-
+    //    packet->describe_trx();
 
     staged_updateInMemDistrict(&packet->_pin, inmem_env);
 

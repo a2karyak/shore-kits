@@ -38,10 +38,7 @@ void inmem_payment_upd_wh_stage_t::process_packet() {
     inmem_payment_upd_wh_packet_t* packet = 
 	(inmem_payment_upd_wh_packet_t*)adaptor->get_packet();
 
-    packet->describe_trx();
-
-
-    TRACE( TRACE_ALWAYS, "!! UPDATING WAREHOUSE !!\n");
+    //    packet->describe_trx();
 
     staged_updateInMemWarehouse(&packet->_pin, inmem_env);
 

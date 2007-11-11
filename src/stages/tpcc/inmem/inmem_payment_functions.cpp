@@ -652,29 +652,123 @@ trx_result_tuple_t executeInMemPaymentBaseline(payment_input_t pin,
 ////////////////////////////////////////////////////////////
 
 
+
+/** @fn staged_updateInMemWarehouse
+ *
+ *  @brief Updates the InMem Warehouse without locking. In a Staged TP no
+ *  locking in the Array is required. 
+ * 
+ *  @return 0 on success, non-zero otherwise
+ */
+
 int staged_updateInMemWarehouse(payment_input_t* pin, InMemTPCCEnv* env) {
 
-    assert (1==0); // (ip) Not implemented yet
+    ///////////////////////////////////////
+    ///// START STAGED_UPD_WAREHOUSE /////    
+
+    assert (env); // ensure that we have a valid environment
+        
+    TRACE( TRACE_TRX_FLOW, 
+           "Step 2: Updating the row in the WAREHOUSE table with matching W_ID=%d\n", 
+           pin->_home_wh_id );
+
+    // Calculate index in array
+    int idx = (pin->_home_wh_id - 1);
+    tpcc_warehouse_tuple* warehouse = NULL;
+
+    // Get the entry
+    if ((warehouse = env->im_warehouses.read_nl(idx)) == NULL) {
+        // No entry returned
+        THROW2(TrxException, "Called Warehouses.read_nl(%d)\n", idx);
+        return (1);
+    }
+
+    // If we reached this point we have the valid entry.
+    // We simply update
+    assert(warehouse); // make sure that we got a warehouse
+    
+    // Update warehouse
+    warehouse->W_YTD += pin->_h_amount;    
+
+    // Assume always success if this point is reached
     return (0);
+
+    ///// EOF STAGED_UPD_WAREHOUSE //////
+    /////////////////////////////////////
 }
 
 
+
+/** @fn staged_updateInMemDistrict
+ *
+ *  @brief Updates the InMem District without locking. In a Staged TP no
+ *  locking in the Array is required. 
+ * 
+ *  @return 0 on success, non-zero otherwise
+ */
+
 int staged_updateInMemDistrict(payment_input_t* pin, InMemTPCCEnv* env) {
 
-    assert (1==0); // (ip) Not implemented yet
+    //////////////////////////////
+    ///// START UPD_DISTRICT /////
+
+    assert (env); // ensure that we have a valid environment
+    
+    TRACE( TRACE_TRX_FLOW, 
+           "Step 3: Updating the row in the DISTRICT table with matching " \
+           "D_ID=%d and D_W_ID=%d\n", 
+           pin->_home_d_id, 
+           pin->_home_wh_id);
+
+    // DISTRICT key: D_ID, D_W_ID 
+    tpcc_district_tuple_key dk;
+    dk.D_ID = pin->_home_d_id;
+    dk.D_W_ID = pin->_home_wh_id;
+
+    tpcc_district_tuple* district;
+
+    // Calculate index in the array
+    int idx = ((dk.D_W_ID - 1) * 10) + (dk.D_ID - 1);
+
+    // Get the entry
+    if ((district = env->im_districts.read_nl(idx)) == NULL) {
+        // No entry returned
+        THROW3(TrxException, "Called Districts.write(%d,%d)\n",
+               dk.D_ID,
+               dk.D_W_ID);
+        return (1);
+    }
+
+    // If we reached this point we have the valid entry.
+    // We can update it    
+    assert(district); // make sure that we got a district
+
+    // Update district
+    district->D_YTD += pin->_h_amount;
+
+    // Assume always success if this point is reached
     return (0);
+    
+    ///// EOF UPD_DISTRICT /////
+    ////////////////////////////
 }
 
 int staged_updateInMemCustomer(payment_input_t* pin, InMemTPCCEnv* env) {
 
-    assert (1==0); // (ip) Not implemented yet
-    return (0);
+    return (updateInMemCustomer(pin,env));
 }
 
-int staged_insertInMemHistory(payment_input_t* pin, InMemTPCCEnv* env) {
 
-    assert (1==0); // (ip) Not implemented yet
-    return (0);
+/** @fn staged_insertInMemHistory
+ *
+ *  @brief Inserts into InMem History.
+ *
+ *  @return 0 on success, non-zero otherwise
+ */
+
+int staged_insertInMemHistory(payment_input_t* pin, InMemTPCCEnv* env) {
+    
+    return (insertInMemHistory(pin,env));
 }
 
 

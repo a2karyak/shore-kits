@@ -3,6 +3,8 @@
 # include "stages/tpcc/inmem/inmem_payment_ins_hist.h"
 # include "util.h"
 
+using namespace tpcc_payment;
+
 
 const c_str inmem_payment_ins_hist_packet_t::PACKET_TYPE = "INMEM_PAYMENT_INS_HIST";
 
@@ -35,10 +37,17 @@ void inmem_payment_ins_hist_stage_t::process_packet() {
     inmem_payment_ins_hist_packet_t* packet = 
 	(inmem_payment_ins_hist_packet_t*)adaptor->get_packet();
 
-    packet->describe_trx();
+    //    packet->describe_trx();
 
+    if (staged_insertInMemHistory(&packet->_pin,inmem_env)) {
+        TRACE( TRACE_TRX_FLOW, 
+               "Error in History Insertion.\n");
+        
+        assert (1==0); // Not implemented yet
+    }
+    
+    
 
-    TRACE( TRACE_ALWAYS, "!! INSERTING HISTORY !!\n");
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack

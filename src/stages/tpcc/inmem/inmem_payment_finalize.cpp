@@ -49,37 +49,42 @@ void inmem_payment_finalize_stage_t::process_packet() {
     /* Variables used to determine the transaction status.
        All stages return a single integer indicating success/failure */
     int trx_status = 0;
+    int* trx_data;
     tuple_t trx_result;
 
     /* Get the results of each sub-transaction */
-    trx_status = packet->_upd_wh_buffer->get_tuple(trx_result);
+    trx_status = packet->_upd_wh_buffer->get_tuple(trx_result);    
     
-    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+    if (!trx_status && !(trx_data = aligned_cast<int>(trx_result.data))) {
         // should abort
+        //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
         packet->set_trx_state(POISSONED);
         packet->rollback();
     }
 
     trx_status = packet->_upd_distr_buffer->get_tuple(trx_result);
     
-    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+    if (!trx_status && !(trx_data = aligned_cast<int>(trx_result.data))) {
         // should abort
+        //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
         packet->set_trx_state(POISSONED);
         packet->rollback();
     }
 
     trx_status = packet->_upd_cust_buffer->get_tuple(trx_result);
     
-    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+    if (!trx_status && !(trx_data = aligned_cast<int>(trx_result.data))) {
         // should abort
+        //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
         packet->set_trx_state(POISSONED);
         packet->rollback();
     }
 
     trx_status = packet->_ins_hist_buffer->get_tuple(trx_result);
     
-    if (!trx_status && !(aligned_cast<int>(trx_result.data))) {
+    if (!trx_status && !(trx_data = aligned_cast<int>(trx_result.data))) {
         // should abort
+        //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
         packet->set_trx_state(POISSONED);
         packet->rollback();
     }

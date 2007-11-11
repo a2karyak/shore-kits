@@ -4,6 +4,9 @@
 # include "util.h"
 
 
+using namespace tpcc_payment;
+
+
 const c_str inmem_payment_upd_cust_packet_t::PACKET_TYPE = "INMEM_PAYMENT_UPD_CUST";
 
 const c_str inmem_payment_upd_cust_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_UPD_CUST_STAGE";
@@ -35,10 +38,16 @@ void inmem_payment_upd_cust_stage_t::process_packet() {
     inmem_payment_upd_cust_packet_t* packet = 
 	(inmem_payment_upd_cust_packet_t*)adaptor->get_packet();
 
-    packet->describe_trx();
+    //    packet->describe_trx();
+
+    if (staged_updateInMemCustomer(&packet->_pin, inmem_env)) {
+        TRACE( TRACE_TRX_FLOW, 
+               "Error in Customer Update.\n");
+        
+        assert (1==0); // Not implemented yet
+    }
 
 
-    TRACE( TRACE_ALWAYS, "!! UPDATING CUSTOMER !!\n");
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack

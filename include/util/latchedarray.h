@@ -67,6 +67,7 @@ public:
 
     c_str get_name() { return _name; }
     void set_name(c_str name) { _name = name; }
+
     /** @fn read
      *
      *  @brief Returns the requested entry locked for read
@@ -147,6 +148,51 @@ public:
       // out-of-bounds
       return (1);
     }
+
+
+
+    /** @fn read_nl
+     *
+     *  @brief Reads the requested entry without locking
+     *
+     *  @return A pointer to the  entry of the array, NULL on error
+     */
+
+    TUPLE_TYPE* read_nl(int idx) {
+      if ( (idx >= 0) && (idx < SF*FANOUT) ) {
+        return (&_array[idx]);
+      }
+
+      TRACE( TRACE_TRX_FLOW, "Out-of-bounds access attempt idx = (%d)\n", idx);
+
+      // out-of-bounds
+      return (NULL);
+    }
+
+
+    /** @fn insert_nl
+     *
+     *  @brief  Inserts a new entry in the specified place of the array
+     *  without locking
+     *
+     *  @note Should be very careful when doing such an operation
+     *
+     *  @return 0 on success, non-zero otherwise
+     */
+
+    int insert_nl(int idx, const TUPLE_TYPE anEntry) {
+      if ( (idx >= 0) && (idx < SF*FANOUT) ) {
+        _array[idx] = anEntry;
+        return (0);
+      }
+
+      TRACE( TRACE_TRX_FLOW, "Out-of-bounds access attempt idx = (%d)\n", idx);
+
+      // out-of-bounds
+      return (1);
+    }   
+
+
 
 
     /** @fn dump

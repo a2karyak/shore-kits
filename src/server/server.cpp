@@ -115,8 +115,8 @@ int qpipe_init(int argc, char* argv[]) {
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
-               | TRACE_TRX_FLOW
-               | TRACE_DEBUG
+               //               | TRACE_TRX_FLOW
+               //               | TRACE_DEBUG
               );
 
     if ((argc > 1) && (strcmp(argv[1], "-n") == 0)) {
