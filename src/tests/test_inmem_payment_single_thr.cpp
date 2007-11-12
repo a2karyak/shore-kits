@@ -41,11 +41,19 @@ int main(int argc, char* argv[]) {
 
     // Create the InMem Environment
     inmem_env = new InMemTPCCEnv();
+    
+    // Restores tpcc data
+    //inmem_env->loaddata(INMEM_TPCC_DATA_DIR);
+    inmem_env->restoredata(INMEM_TPCC_SAVE_DIR);
+        
 
     for (int i=0; i<ITERATIONS; i++) {
 
         do_iteration(argc, argv);
     }
+
+    delete info._policy;
+    delete inmem_env;
 
     return (0);
 }

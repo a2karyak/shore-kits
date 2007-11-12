@@ -115,7 +115,7 @@ void thread_t::reset_rand() {
 
 void thread_init(void)
 {
-    thread_args args(new root_thread_t("root-thread"), NULL);
+    thread_args args(new root_thread_t(c_str("root-thread")), NULL);
     setup_thread(&args);
 }
  

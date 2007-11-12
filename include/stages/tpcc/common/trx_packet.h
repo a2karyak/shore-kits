@@ -21,7 +21,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
-# define NO_VALID_TRX_ID -1
+#define NO_VALID_TRX_ID -1
 
 
 
@@ -163,7 +163,8 @@ public:
 
     trx_result_tuple_t() { reset(UNDEF, -1); }
 
-    trx_result_tuple_t(TrxState aTrxState, int anID) { reset(aTrxState, anID); 
+    trx_result_tuple_t(TrxState aTrxState, int anID) { 
+        reset(aTrxState, anID); 
     }
 
     ~trx_result_tuple_t() { }
@@ -187,6 +188,13 @@ public:
         return (*this);
     }
 
+    
+    /** @fn equality operator */
+    friend bool operator==(const trx_result_tuple_t& t, 
+                           const trx_result_tuple_t& s) 
+    {       
+        return ((t.R_STATE == s.R_STATE) && (t.R_ID == s.R_ID));
+    }
 
     /** Access methods */
 
