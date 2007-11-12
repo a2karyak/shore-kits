@@ -145,7 +145,7 @@ public:
     
     void rollback() {
         
-        TRACE( TRACE_ALWAYS, "~~~ Should Rollback TRX=%d ~~~\n", _trx_id);
+        TRACE( TRACE_TRX_FLOW, "~~~ Should Rollback TRX=%d ~~~\n", _trx_id);
     }
 
 
@@ -153,7 +153,7 @@ public:
 
     void commit() {
 
-        TRACE( TRACE_ALWAYS, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
+        TRACE( TRACE_TRX_FLOW, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
     }
 
 }; // END OF CLASS: inmem_payment_finalize_packet_t

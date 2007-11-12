@@ -19,7 +19,7 @@ const c_str inmem_payment_upd_wh_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_UP
 
 inmem_payment_upd_wh_stage_t::inmem_payment_upd_wh_stage_t() {
     
-    TRACE(TRACE_ALWAYS, "INMEM_PAYMENT_UPD_WH constructor\n");
+    TRACE(TRACE_DEBUG, "INMEM_PAYMENT_UPD_WH constructor\n");
 }
 
 
@@ -44,16 +44,16 @@ void inmem_payment_upd_wh_stage_t::process_packet() {
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
-    //     size_t dest_size = packet->output_buffer()->tuple_size();
-    //     array_guard_t<char> dest_data = new char[dest_size];
-    //     tuple_t dest(dest_data, dest_size);
+    //    size_t dest_size = packet->output_buffer()->tuple_size();
+    //    char* dest_data = new char[dest_size];
+    //    tuple_t* dest = new tuple_t(dest_data, dest_size);
 
-    //     int* dest_tmp;
-    //     dest_tmp = aligned_cast<int>(dest.data);
+    //    int* dest_tmp;
+    //    dest_tmp = aligned_cast<int>(dest.data);
 
-    //     *dest_tmp = my_trx_id;
+    //    *dest_tmp = my_trx_id;
 
-    //     adaptor->output(dest);
+    //    adaptor->output(dest);
      
 } // process_packet
 

@@ -18,7 +18,7 @@ const c_str inmem_payment_ins_hist_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_
 
 inmem_payment_ins_hist_stage_t::inmem_payment_ins_hist_stage_t() {
     
-    TRACE(TRACE_ALWAYS, "INMEM_PAYMENT_INS_HIST constructor\n");
+    TRACE(TRACE_TRX_FLOW, "INMEM_PAYMENT_INS_HIST constructor\n");
 }
 
 

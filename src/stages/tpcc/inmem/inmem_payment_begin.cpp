@@ -48,7 +48,7 @@ public:
  */
 
 inmem_payment_begin_stage_t::inmem_payment_begin_stage_t() {    
-    TRACE(TRACE_DEBUG, "INMEM_PAYMENT_BEGIN constructor\n");
+    //    TRACE(TRACE_DEBUG, "INMEM_PAYMENT_BEGIN constructor\n");
 }
 
 
@@ -79,7 +79,6 @@ void inmem_payment_begin_stage_t::process_packet() {
     
     /** FIXME: (ip) Scheduler policy?
      *  by default is set to OS  */
-    TRACE( TRACE_DEBUG, "By default the policy is OS\n");
     scheduler::policy_t* dp = new scheduler::policy_os_t();
 
     /** @note The output buffers of all the non-finalize stages, which is
@@ -164,7 +163,7 @@ void inmem_payment_begin_stage_t::process_packet() {
 
     dp->query_state_destroy(qs);
     
-    TRACE( TRACE_ALWAYS, "DONE. NOTIFYING CLIENT\n" );
+    //    TRACE( TRACE_ALWAYS, "DONE. NOTIFYING CLIENT\n" );
     
     // writing output 
 
