@@ -42,8 +42,14 @@ protected:
 	pthread_mutex_t _lock;
 	pthread_cond_t _cond;
 	ContainerQueue _queue;
-	DistributedQueueSlice() : _lock(thread_mutex_create()), _cond(thread_cond_create()) { }
-
+	int _dequeue_op_count;
+	int _dequeue_wait_count;
+	DistributedQueueSlice()
+	    : _lock(thread_mutex_create()), _cond(thread_cond_create()),
+	      _dequeue_op_count(0), _dequeue_wait_count(0)
+	{
+	}
+	
     private:
 	// no-nos
 	void operator=(DistributedQueueSlice const&);

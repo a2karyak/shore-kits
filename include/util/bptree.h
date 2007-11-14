@@ -478,6 +478,10 @@ private:
     };
 
 public:
+    size_t size_bytes() const {
+	return size_bytes_node(_root, _depth);
+	
+    }
     // dumps the tree's contents to file.
     // caller should catch(int err) in case anything goes wrong
     void save(FILE* fout) {
@@ -504,6 +508,19 @@ public:
 
 private:
 
+    size_t size_bytes_node(void* node, int localDepth) const {
+	if(localDepth) {
+	    size_t bytes = sizeof(InnerNode);
+	    InnerNode const* inner = reinterpret_cast<InnerNode const*>(node);
+	    for(int i=0; i <= inner->num_keys; i++)
+		bytes += size_bytes_node(inner->children[i], localDepth-1);
+	    return bytes;
+	}
+	else {
+	    return sizeof(LeafNode);
+	}
+    }
+    
     void delete_node(void* node, int localDepth) {
 	if(localDepth) {
 	    InnerNode* inner = reinterpret_cast<InnerNode*>(node);

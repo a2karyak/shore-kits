@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 
+#undef DISABLE_THREAD_POOL
 
 /* internal datatypes */
 
@@ -184,6 +185,7 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
         THROW_IF(ThreadException, err);
 
         ptr_mutex_attr = &mutex_attr;
+	ptr_mutex_attr = attr;
     }
     else
     {
@@ -352,6 +354,7 @@ void thread_destroy(void* thread_object)
 
 // NOTE: we can't call thread_xxx methods because they call us
 void thread_pool::start() {
+#ifndef DISABLE_THREAD_POOL
     int err = pthread_mutex_lock(&_lock);
     THROW_IF(ThreadException, err);
     while(_active == _max_active) {
@@ -362,15 +365,18 @@ void thread_pool::start() {
     _active++;
     err = pthread_mutex_unlock(&_lock);
     THROW_IF(ThreadException, err);
+#endif
 }
 
 void thread_pool::stop() {
+#ifndef DISABLE_THREAD_POOL
     int err = pthread_mutex_lock(&_lock);
     THROW_IF(ThreadException, err);
     _active--;
     thread_cond_signal(_cond);
     err = pthread_mutex_unlock(&_lock);
     THROW_IF(ThreadException, err);
+#endif
 }
 
 

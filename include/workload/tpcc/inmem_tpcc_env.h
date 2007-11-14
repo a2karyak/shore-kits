@@ -126,6 +126,7 @@ public:
     ~InMemTPCCEnv() { }
 
     bool is_initialized() const { return _initialized; }
+    int datasize() const;
     void dump();
 
 

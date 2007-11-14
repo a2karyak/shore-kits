@@ -18,6 +18,11 @@ using namespace tpcc;
 
 /** Exported functions */
 
+int InMemTPCCEnv::datasize() const {
+    size_t bytes = sizeof(im_warehouses) + sizeof(im_districts);
+    bytes += im_customers.size_bytes() + im_histories.size_bytes();
+    return bytes >>= 20; // inMB
+}
 
 /** @fn savedata
  *

@@ -13,7 +13,7 @@
 // @note Some data structures base their size on this value
 
 //# define TPCC_SCALING_FACTOR             1
-# define TPCC_SCALING_FACTOR             10
+ #define TPCC_SCALING_FACTOR             10
 //# define TPCC_SCALING_FACTOR             100
 
 

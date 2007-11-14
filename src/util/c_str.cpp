@@ -16,7 +16,7 @@
 
 // We only have atomic ops on some arch...
 #ifdef __SUNPRO_CC
-#undef USE_ATOMIC_OPS
+#define USE_ATOMIC_OPS
 #else
 // Unsupported arch must use locks
 #undef USE_ATOMIC_OPS

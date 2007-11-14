@@ -145,6 +145,11 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
 	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' or 'restore' to load one\n");
 	return;
     }
+
+    if( !strcmp(driver_tag, "du")) {
+	TRACE(TRACE_ALWAYS, "Database currently occupies %d MB\n", inmem_env->datasize());
+	return;
+    }
     
     if( !strcmp(driver_tag, "save")) {
 	char dirname[1024];

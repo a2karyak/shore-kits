@@ -3,6 +3,7 @@
 #include "core/stage_container.h"
 #include "core/dispatcher.h"
 #include "util.h"
+#include <sched.h>
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -79,7 +80,7 @@ stage_container_t::stage_container_t(const c_str &container_name,
       _container_queue_nonempty(thread_cond_create()),
       _container_name(container_name), _stage_maker(stage_maker),
       _pool(active_count),
-      _max_threads((max_count > active_count)? max_count : std::max(10, active_count * 4)),
+      _max_threads((max_count > active_count)? max_count : active_count),
       _next_thread(0),
       _rp(&_container_lock._lock, 0, container_name)
 {
@@ -174,11 +175,24 @@ packet_list_t* stage_container_t::container_queue_dequeue(int which) {
 
     DistributedQueueSlice* slice = _queue_slices[which];
     critical_section_t cs(slice->_lock);
-    
+
+    slice->_dequeue_op_count++;
+    if(slice->_queue.empty()) {
+	slice->_dequeue_wait_count++;
+	pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+	// sleep for 1 ms
+	thread_cond_wait(cond, slice->_lock, 1);
+    }
+
     // wait for a packet to appear
     while(slice->_queue.empty())
 	thread_cond_wait(slice->_cond, slice->_lock);
 
+    if(slice->_dequeue_op_count == 10000) {
+	printf("Slice %d encountered %d%% waits\n", which, 100*slice->_dequeue_wait_count/slice->_dequeue_op_count);
+	slice->_dequeue_op_count = slice->_dequeue_wait_count = 0;
+    }
+    
     // remove available packet
     packet_list_t* plist = slice->_queue.front();
     slice->_queue.pop_front();
@@ -451,6 +465,16 @@ void stage_container_t::enqueue(packet_t* packet) {
  */
 void stage_container_t::run(int id) {
 
+    // lower my priority a bit so the clients run first
+    {
+	pthread_t tid = pthread_self();
+	struct sched_param param;
+	int policy;
+	pthread_getschedparam(tid, &policy, &param);
+	param.sched_priority = sched_get_priority_max(policy);
+	pthread_setschedparam(tid, policy, &param);
+    }
+    
     while (1) {
 	
 
