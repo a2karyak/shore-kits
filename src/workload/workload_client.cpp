@@ -70,12 +70,12 @@ void* workload_client_t::run() {
               "Iteration %d\n", i);        
 
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' started at %lld\n",
-	      _driver->description().data(), qtime.clock_us());
+	      _driver->description().data(), qtime.time_us());
 
         _driver->submit(_driver_arg, &_mem);
 
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' finished at %lld\n",
-	      _driver->description().data(), qtime.clock_us());
+	      _driver->description().data(), qtime.time_us());
 
         if (_think_time_sec > 0)
             sleep(_think_time_sec);
