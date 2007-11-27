@@ -37,7 +37,7 @@ TESTS = \
    tests/merge_stage \
    tests/sort_stage \
    tests/hash_join_stage \
-   tests/bnl_join_stage \
+   tests/bnl_join_stageHE \
    tests/bnl_in_stage \
    tests/q4 \
    tests/q6 \
@@ -62,6 +62,8 @@ TESTS = \
    tests/tpcc_load \
    tests/tpcc_load_mt \
    tests/tpcc_load_confirm \
+   tests/clh_lock \
+   tests/clh_rwlock \
    tests/bptree
 
 
@@ -84,7 +86,7 @@ dbgen: $(DBGEN)
 ################################################################################
 
 SU=$(top_srcdir)/src/util
-lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS)
+lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
 lib_libutil_a_SOURCES = \
 	$(SU)/c_str.cpp \
 	$(SU)/fnv.cpp \
@@ -104,6 +106,9 @@ lib_libutil_a_SOURCES = \
         $(SU)/itimer.cpp \
         $(SU)/progress.cpp \
 	$(SU)/pool_alloc.cpp \
+	$(SU)/clh_lock.cpp \
+	$(SU)/clh_rwlock.cpp \
+	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp
 
 
@@ -364,7 +369,6 @@ tests_customer_load_SOURCES = $(ST)/test_customer_load.cpp
 tests_func_call_stage_SOURCES = $(ST)/test_func_call_stage.cpp
 tests_aggregate_stage_SOURCES = $(ST)/test_aggregate_stage.cpp
 tests_hash_join_stage_SOURCES = $(ST)/test_hash_join_stage.cpp
-tests_bnl_join_stage_SOURCES = $(ST)/test_bnl_join_stage.cpp
 tests_bnl_in_stage_SOURCES = $(ST)/test_bnl_in_stage.cpp
 tests_tpch_struct_sizes_SOURCES = $(ST)/tpch_struct_sizes.cpp
 tests_q4_SOURCES = $(ST)/test_q4.cpp
@@ -390,6 +394,9 @@ tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 tests_bptree_SOURCES = $(ST)/test_bptree.cpp
+tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
+tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
+
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
@@ -406,7 +413,6 @@ tests_tscan_stage_LDADD = $(TEST_LIBS)
 tests_func_call_stage_LDADD = $(TEST_LIBS)
 tests_aggregate_stage_LDADD = $(TEST_LIBS)
 tests_hash_join_stage_LDADD = $(TEST_LIBS)
-tests_bnl_join_stage_LDADD = $(TEST_LIBS)
 tests_bnl_in_stage_LDADD = $(TEST_LIBS)
 tests_tpch_struct_sizes_LDADD = $(TEST_LIBS)
 tests_q4_LDADD = $(TEST_LIBS)
@@ -431,6 +437,8 @@ tests_tpcc_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_mt_LDADD = $(TEST_LIBS)
 tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
 tests_bptree_LDADD = $(TEST_LIBS)
+tests_clh_lock_LDADD = $(TEST_LIBS)
+tests_clh_rwlock_LDADD = $(TEST_LIBS)
 
 
 ################################################################################
