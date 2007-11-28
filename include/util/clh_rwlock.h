@@ -115,7 +115,7 @@ private:
 	explicit lnode(qnode_ptr ptr) : _ptr(ptr) { }
 	explicit lnode(dnode* node);
 	lnode(live_handle h) : _ptr(h._ptr) { }
-	qnode_ptr volatile operator->() volatile { return _ptr; }
+	qnode_ptr operator->() { return _ptr; }
 	bool valid() volatile { return _ptr != NULL; }
 	operator live_handle() volatile { live_handle h = {_ptr}; return h; }
 	bool operator==(lnode volatile const &other) volatile const { return _ptr == other._ptr; }
@@ -143,7 +143,7 @@ private:
 	operator dead_handle() { dead_handle h = {_ptr}; return h; }
     
 	lnode writer();
-	pre_baton_pair join_queue(lnode volatile &queue, bool atomic=true);
+	pre_baton_pair join_queue(lnode &queue, bool atomic=true);
     };
     
     struct post_baton_pair {
@@ -164,8 +164,8 @@ private:
 private:
     static Manager* &manager();
     
-    lnode volatile _queue;
-    lnode volatile _shunt_queue;
+    lnode _queue;
+    lnode _shunt_queue;
     
     post_baton_pair wait_for_baton(dnode seed, bool check_for_writer=true);
 };
