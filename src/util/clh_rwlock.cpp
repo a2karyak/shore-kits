@@ -13,6 +13,19 @@
 #include <cassert>
 #endif
 
+/* I've hand-coded "plain C" versions of the three lock
+   functions. They typically reduce instruction counts by 50% or more,
+   but the overall performance of my ubench didn't change. In
+   addition, the stripped-down versions have not been tested as
+   carefully, though I know of no bugs. Finally, they assume
+   sparc/solaris (though this should be easy to fix).
+
+   So, for now, we leave them out, but they're there in case they
+   become useful (or if somebody wants to see what's going on without
+   parsing a bunch of C++ *stuff*
+ */
+#undef FAST_VERSION
+
 #ifdef TRACE_MODE
 #ifndef SERIAL_MODE
 #define SERIAL_MODE
@@ -137,13 +150,13 @@ void clh_rwlock::lnode::pass_baton(long read_count, clh_rwlock::lnode writer=clh
     _ptr->_read_count = read_count;
 }
 
+static long const WAITING = -1;
 
 inline
-clh_rwlock::pre_baton_pair clh_rwlock::dnode::join_queue(clh_rwlock::lnode volatile &queue, bool atomic) {
-    static long const WAITING = -1;
+clh_rwlock::pre_baton_pair clh_rwlock::dnode::join_queue(clh_rwlock::lnode &queue, bool atomic) {
 
     lnode pred;
-    *_ptr = qnode(); // clear out everything!
+    _ptr->_writer=NULL; // clear out everything!
 #ifdef DEBUG_MODE
     pthread_t tid = pthread_self();    
     _ptr->_tid = pthread_self();
@@ -308,6 +321,7 @@ clh_rwlock::post_baton_pair clh_rwlock::wait_for_baton(clh_rwlock::dnode seed, b
     return main_result;
 }
 
+#ifndef FAST_VERSION
 clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed) {
 #ifdef SERIAL_MODE
     critical_section cs(serialize);
@@ -349,7 +363,78 @@ clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed)
     membar_enter();
     return me;
 }
+#else
+clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed) {
+    qnode_ptr me = _seed._ptr;
+    
+    // join_queue
+    me->_writer = NULL;
+    membar_producer();
+    me->_read_count = WAITING;
+    union { lnode *_l; uint64_t* _i; } q={&_queue};
+    qnode_ptr pred = (qnode_ptr) atomic_swap_64(q._i, (uint64_t) me);    
+    lnode(pred).spin();
+    membar_consumer();
 
+    // wait_for_baton
+    qnode_ptr writer;
+    while((writer=pred->_writer)) {
+	// join the shunt queue
+	long read_count = pred->_read_count;
+	qnode_ptr me_wait = pred;
+	me_wait->_writer = NULL;
+	me_wait->_read_count = WAITING;
+	pred = ((live_handle)_shunt_queue)._ptr;
+	_shunt_queue = lnode(me_wait);
+	
+	if(pred->_read_count == 0) {
+	    // ENDS
+	    // pass_baton to writer (me_wait becomes next _shunt_queue)
+	    writer->_writer = NULL;
+	    membar_producer();
+	    writer->_read_count = 0;
+	}
+	else {
+	    // SHUNT
+	    // pass_baton to successor
+	    me->_writer = writer;
+	    membar_producer();
+	    me->_read_count = read_count;
+	    me = me_wait;
+	}
+
+	lnode(pred).spin();
+	membar_consumer();
+    }
+
+    // now the actual write stuff
+    long read_count = pred->_read_count;
+    if(read_count) {
+	qnode_ptr me_wait = pred;
+	me_wait->_writer = NULL;
+	me_wait->_read_count = WAITING;
+	pred = ((live_handle)_shunt_queue)._ptr;
+	_shunt_queue = lnode(me_wait);
+
+	// start shunt notice 
+	me->_writer = pred;
+	membar_producer();
+	me->_read_count = read_count;
+
+	// and wait for the baton to come back
+	me = me_wait;
+	lnode(pred).spin();
+    }
+
+    // act like a normal CLH lock, with _writer == the node to recycle
+    me->_writer = pred;
+    membar_enter();
+    live_handle h = {me};
+    return h;
+}
+#endif
+
+#ifndef FAST_VERSION
 clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) {
 #ifdef SERIAL_MODE
     critical_section cs(serialize);
@@ -378,7 +463,65 @@ clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) 
     membar_enter();
     return me;
 }
+#else
+clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) {
+    qnode_ptr me = _seed._ptr;
+    assert(me);
 
+    // join_queue
+    me->_writer = NULL;
+    membar_producer();
+    me->_read_count = WAITING;
+    union { lnode *_l; uint64_t* _i; } q={&_queue};
+    qnode_ptr pred = (qnode_ptr) atomic_swap_64(q._i, (uint64_t) me);    
+    lnode(pred).spin();
+    membar_consumer();
+
+    // wait_for_baton
+    qnode_ptr writer;
+    while((writer=pred->_writer)) {
+	// join the shunt queue
+	long read_count = pred->_read_count;
+	qnode_ptr me_wait = pred;
+	me_wait->_writer = NULL;
+	me_wait->_read_count = WAITING;
+	pred = ((live_handle)_shunt_queue)._ptr;
+	_shunt_queue = lnode(me_wait);
+	
+	if(pred->_read_count == 0) {
+	    // ENDS
+	    // pass_baton to writer (me_wait becomes next _shunt_queue)
+	    writer->_writer = NULL;
+	    membar_producer();
+	    writer->_read_count = 0;
+	}
+	else {
+	    // SHUNT
+	    // pass_baton to successor
+	    me->_writer = writer;
+	    membar_producer();
+	    me->_read_count = read_count;
+	    me = me_wait;
+	}
+
+	lnode(pred).spin();
+	membar_consumer();
+    }
+
+    // now the actual read stuff
+    me->_writer = NULL;
+    membar_producer();
+    me->_read_count = pred->_read_count+1;
+    
+    pred->_read_count = 1;
+    pred->_writer = NULL;
+    membar_enter();
+    live_handle h = {pred};
+    return h;
+}
+#endif
+
+#ifndef FAST_VERSION
 clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
 #ifdef SERIAL_MODE
     critical_section cs(serialize);
@@ -461,3 +604,56 @@ clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
     assert(((dead_handle)result)._ptr);
     return result;
 }
+#else
+clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
+    membar_exit();
+    qnode_ptr me = _me._ptr;
+    qnode_ptr pred;
+    switch(me->_read_count) {
+    case WAITING:
+	// writer
+	pred = me->_writer; // stored here earlier...
+	me->_writer = NULL;
+	membar_producer();
+	me->_read_count = 0;
+	break;
+    case 1: {
+	// reader
+	// wait for baton (no shunts)
+	me->_writer = NULL;
+	membar_producer();
+	me->_read_count = WAITING;
+	union { lnode *_l; uint64_t* _i; } q={&_queue}, s={&_shunt_queue};
+	uint64_t mi = (uint64_t) me;
+	pred = (qnode_ptr) atomic_swap_64(q._i, mi);    
+	lnode(pred).spin();
+	membar_consumer();
+
+	// last reader and nobody behind me (yet)?
+	long new_read_count = pred->_read_count-1;
+	qnode_ptr writer = pred->_writer;
+	if(writer && new_read_count == 0 && mi == atomic_cas_64(q._i, mi, *s._i)) {
+	    // SPLICE
+	    *s._i = mi;
+	    writer->_writer = NULL;
+	    membar_producer();
+	    writer->_read_count = 0;
+	}
+	else {
+	    // forward shunt notice
+	    me->_writer = writer;
+	    membar_producer();
+	    me->_read_count = new_read_count;
+	}
+    }
+	break;
+    default:
+	// eek!
+	assert(me->_read_count == WAITING || me->_read_count == 1);
+    }
+
+    // done!
+    dead_handle h = {pred};
+    return h;
+}
+#endif
