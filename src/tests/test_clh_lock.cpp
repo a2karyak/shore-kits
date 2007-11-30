@@ -5,7 +5,7 @@
 #include "util/stopwatch.h"
 #include <stdio.h>
 
-static int const THREADS = 32;
+static int const THREADS = 8;
 static long const COUNT = 1l << 20;
 
 long local_count;
@@ -25,6 +25,13 @@ extern "C" void* run(void* arg) {
      }
 	
 clh_lock global_lock;
+pthread_mutex_t global_plock = PTHREAD_MUTEX_INITIALIZER;
+void test_shared_pthreads() {
+    for(long i=0; i < local_count; i++) {
+	pthread_mutex_lock(&global_plock);
+	pthread_mutex_unlock(&global_plock);
+    }
+}
 void test_shared_auto() {
     for(long i=0; i < local_count; i++) {
 	global_lock.acquire();
@@ -54,7 +61,7 @@ int main() {
     for(int k=1; k <= THREADS; k++) {
 	local_count = COUNT/k;
 	for(long i=0; i < k; i++)
-	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_manual);
+	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_pthreads);
 	union {
 	    void* vptr;
 	    double d;
