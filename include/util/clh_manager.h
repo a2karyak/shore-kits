@@ -42,11 +42,9 @@ struct clh_manager {
 	LiveHandle h = it->second;
 	*it = _live_handles.back(); // fill the hole with the last entry 
 	_live_handles.resize(_live_handles.size()-1);
-	assert(h._ptr);
 	return h;	    
     }
     void free(DeadHandle h) {
-      assert(h._ptr);
 	_dead_handles.push_back(h);
     }
     DeadHandle alloc() {
@@ -55,7 +53,6 @@ struct clh_manager {
 
 	DeadHandle h = _dead_handles.back();
 	_dead_handles.pop_back();
-	assert(h._ptr);
 	return h;
     }
     

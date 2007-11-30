@@ -2,7 +2,12 @@
 #ifndef __CLHLOCK_H
 #define __CLHLOCK_H
 
-#include <pthread.h>
+#include "util/clh_manager.h"
+
+#if defined(__SUNPRO_CC)
+#include <atomic.h>
+#endif
+
 
 /** A CLH queing spinlock. Contention is limited to a single SWAP,
     after which each thread spins on its own memory location.
@@ -17,36 +22,75 @@ class clh_lock {
 
     struct qnode;
     typedef qnode volatile* qnode_ptr;
-    typedef qnode_ptr volatile queue;
     // A queue entry for a thread to spin on
     struct qnode {
-	queue _pred;
-	pthread_t _tid;
+	qnode_ptr _pred;
 	bool volatile _waiting;
-	qnode() : _pred(NULL), _tid(0), _waiting(false) { }
+	qnode() : _pred(NULL), _waiting(false) { }
     };
   
-    // accesses the current thread's qnode
-    static qnode_ptr &me();
+    // 
     static void spin(qnode_ptr pred); // in clh_profile.cpp
+    
 private:
-    queue _tail;
+    qnode_ptr volatile _tail;
 
 public:
-    /** IMPORTANT: each thread needs its own heap-allocated qnode, and
-	thread-local storage can't use operator new(). So, any thread
-	that might use a clh_lock during its lifetime MUST call
-	thread_init() to avoid seg faulting and thread_destroy() to
-	avoid leaking memory. 
-     */
-    static void thread_init() { me() = new qnode; }
-    static void thread_destroy() { delete me(); }
+    
+    // clh_manager uses these
+    typedef qnode_ptr live_handle;
+    typedef qnode_ptr dead_handle;
+    static dead_handle create_handle() { return new qnode; }
+    static void destroy_handle(dead_handle h) { delete h; }
+
+    // node manager
+    typedef clh_manager<clh_lock> Manager;
+    static __thread Manager* _manager; // accesses my thread-local clh_manager
+    static void thread_init_manager() { _manager = new Manager; }
+    static void thread_destroy_manager() { delete _manager; }
     
     // the lock starts out free
-    clh_lock() : _tail(new qnode) { }
-    ~clh_lock() { delete _tail; }
+    clh_lock() : _tail(create_handle()) { }
+    ~clh_lock() { destroy_handle(_tail); }
 
-    void acquire();
-    void release();
+    live_handle acquire(dead_handle i) {
+	i->_waiting = true;
+    
+#if defined(__SUNPRO_CC)
+	membar_producer(); // make sure _waiting sticks
+	qnode_ptr pred = (qnode_ptr) atomic_swap_ptr(&_tail, (void*) i);
+#else
+	// this forms an "acquire" barrier
+	qnode_ptr pred = __sync_lock_test_and_set(&_tail, i);
+#endif
+
+	// now spin
+	spin(i->_pred = pred);
+#ifdef __SUNPRO_CC
+	//    membar_enter(); // no later load/store can move in front of this
+#endif
+	return i;
+    }
+    dead_handle release(live_handle i) {
+	qnode_ptr pred = i->_pred;
+
+#if defined(__SUNPRO_CC)
+	membar_exit();
+	i->_waiting = false;
+#else
+	// see notes in acquire()
+	__sync_lock_release(&i->_waiting);
+#endif
+	return pred;
+    }
+    void acquire() {
+	Manager* m = _manager;
+	m->put_me(this, acquire(m->alloc()));
+    }
+    void release() {
+	Manager* m = _manager;
+	m->free(release(m->get_me(this)));
+    }
+    
 };
 #endif

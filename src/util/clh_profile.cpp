@@ -16,6 +16,8 @@ void clh_lock::spin(clh_lock::qnode_ptr pred) {
     while(pred->_waiting);
 }
 
+//#define TRACE_MODE
+
 #ifdef TRACE_MODE
 #ifndef SERIAL_MODE
 #define SERIAL_MODE
@@ -23,9 +25,28 @@ void clh_lock::spin(clh_lock::qnode_ptr pred) {
 #endif
 
 #ifdef SERIAL_MODE
+extern pthread_mutex_t serialize;
+
 #ifndef DEBUG_MODE
 #define DEBUG_MODE
 #endif
+#endif
+
+#ifdef DEBUG_MODE
+#include <stdio.h>
+extern char const* get_indent(pthread_t=pthread_self());
+extern size_t get_id(clh_rwlock::qnode_ptr);
+// WARNING: this is *not* the canonical qnode and may get out of sync
+struct clh_rwlock::qnode {
+    long volatile _read_count;
+    qnode_ptr volatile _writer;
+    qnode_ptr volatile _pred;
+    pthread_t _tid;
+    qnode() : _read_count(0), _writer(NULL)
+	    , _pred(NULL), _tid(0)
+    {
+    }
+};
 #endif
 
 /*
@@ -62,6 +83,19 @@ void clh_rwlock::release() {
     m->free(release(m->get_me(this)));
 }
 
+#if 0
+void clh_lock::acquire() {
+    Manager* m = manager();
+    m->put_me(this, acquire(m->alloc()));
+}
+
+void clh_lock::release() {
+    Manager* m = manager();
+    m->free(release(m->get_me(this)));
+}
+#endif
+
+__thread clh_lock::Manager* clh_lock::_manager = NULL;
 
 clh_rwlock::dnode clh_rwlock::lnode::spin() {
 #ifdef TRACE_MODE
