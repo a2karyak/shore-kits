@@ -36,6 +36,24 @@
 
 typedef unsigned int uint;
 
+#undef BPTREE_USE_MUTEX
+
+#ifdef BPTREE_USE_MUTEX
+typedef pthread_mutex_t Lock;
+#define INIT(lock) pthread_mutex_init(&lock, NULL)
+#define DESTROY(lock) pthread_mutex_destroy(&lock)
+#define ACQUIRE_READ(lock) pthread_mutex_lock(&lock)
+#define ACQUIRE_WRITE(lock) pthread_mutex_lock(&lock)
+#define RELEASE(lock) pthread_mutex_unlock(&lock)
+#else
+typedef  pthread_rwlock_t Lock;
+#define INIT(lock) pthread_rwlock_init(&lock, NULL)
+#define DESTROY(lock) pthread_rwlock_destroy(&lock)
+#define ACQUIRE_READ(lock) pthread_rwlock_rdlock(&lock)
+#define ACQUIRE_WRITE(lock) pthread_rwlock_wrlock(&lock)
+#define RELEASE(lock) pthread_rwlock_unlock(&lock)
+#endif
+
 template <typename KEY, typename VALUE, 
           uint INODE_ENTRIES, uint LEAF_ENTRIES,
           uint INODE_PADDING = 0, uint LEAF_PADDING = 0,
@@ -57,17 +75,17 @@ private:
     struct LeafNode {
         LeafNode() : num_keys(0) { 
             // rwlock initialization
-            pthread_rwlock_init(&leaf_rwlock, NULL);
+            INIT(leaf_rwlock);
         }
 
         // Destructor
         ~LeafNode() {
             // destroy the rwlock
-            pthread_rwlock_destroy(&leaf_rwlock);
+	    DESTROY(leaf_rwlock);
         }
 
         // Reader-Writer Lock
-        pthread_rwlock_t leaf_rwlock;
+        Lock             leaf_rwlock;
 
         uint             num_keys;
         KEY              keys[LEAF_ENTRIES];
@@ -84,17 +102,17 @@ private:
         // Constructor
         InnerNode() : num_keys(0) {
             // rwlock initialization
-            pthread_rwlock_init(&in_rwlock, NULL);
+            INIT(in_rwlock);
         }
         
         // Destructor
         ~InnerNode() {
             // destroy the rwlock
-            pthread_rwlock_destroy(&in_rwlock);
+            DESTROY(in_rwlock);
         }
 
         // Reader-Writer Lock
-        pthread_rwlock_t in_rwlock;
+        Lock             in_rwlock;
 
         uint             num_keys;
         KEY              keys[INODE_ENTRIES];
@@ -131,7 +149,7 @@ public:
         // Initialization of mutexes
         pthread_mutex_init(&_innerPool_mutex, NULL);
         pthread_mutex_init(&_leafPool_mutex, NULL);
-        pthread_rwlock_init(&_root_rwlock, NULL);
+        INIT(_root_rwlock);
 
         // Initialization of the root, should be done after mutex init
         _root = new_leaf_node();
@@ -151,7 +169,7 @@ public:
         // Destroes the mutexes
         pthread_mutex_destroy(&_innerPool_mutex);
         pthread_mutex_destroy(&_leafPool_mutex);
-        pthread_rwlock_destroy(&_root_rwlock);
+        DESTROY(_root_rwlock);
     }
 
 
@@ -173,7 +191,7 @@ public:
         // Before doing anything grabs the root mutex for writing
         // If no-split will happen the lock will be released by the 
         // consequent leaf_insert() or inner_insert() functions
-        pthread_rwlock_wrlock(&_root_rwlock);
+        ACQUIRE_WRITE(_root_rwlock);
         // TRACE( TRACE_DEBUG, "root write-lock\n");
 
         if ( _depth == 0 ) {
@@ -209,7 +227,7 @@ public:
 
             // Unlocks the root lock
             // TRACE( TRACE_DEBUG, "root unlock\n");
-            pthread_rwlock_unlock(&_root_rwlock);
+            RELEASE(_root_rwlock);
 
 
             // Prints the whole tree for debug
@@ -232,7 +250,7 @@ public:
         // are reliable value.
         // The root lock will be released as soon we acquire the read
         // lock for any child node
-        pthread_rwlock_rdlock(&_root_rwlock);
+        ACQUIRE_READ(_root_rwlock);
         // TRACE( TRACE_DEBUG, "root read-lock\n");
 
         void* aNode = _root; 
@@ -248,20 +266,20 @@ public:
             inner = reinterpret_cast<InnerNode*>(aNode);
 
             // Read locks the node
-            pthread_rwlock_rdlock(&(inner->in_rwlock));
+            ACQUIRE_READ(inner->in_rwlock);
             // TRACE( TRACE_DEBUG, "inner read (%p)\n", aNode);
 
             // Now that it locked the child it should unlock the parent
             if (parentInner) {
                 // TRACE( TRACE_DEBUG, "inner unlock (%p)\n", parentInner);
-                pthread_rwlock_unlock(&(parentInner->in_rwlock));
+                RELEASE(parentInner->in_rwlock);
             }
             else {
                 // If no parent it means that we are at the root inner node
                 // Since we acquired the read lock to that node we can 
                 // release the root lock
                 // TRACE( TRACE_DEBUG, "root unlock\n");
-                pthread_rwlock_unlock(&_root_rwlock);
+                RELEASE(_root_rwlock);
             }
 
             // Find the correct child node and save pointer to the current node 
@@ -278,20 +296,20 @@ public:
         LeafNode* leaf = reinterpret_cast<LeafNode*>(aNode);
 
         // Read lock the leaf node
-        pthread_rwlock_rdlock(&(leaf->leaf_rwlock));
+        ACQUIRE_READ(leaf->leaf_rwlock);
         // TRACE( TRACE_DEBUG, "leaf read (%p)\n", aNode);
 
         // Now that it locked the leaf it should unlock the parent inner node
         if (parentInner) {
             // TRACE( TRACE_DEBUG, "inner unlock (%p)\n", parentInner);
-            pthread_rwlock_unlock(&(parentInner->in_rwlock));
+            RELEASE(parentInner->in_rwlock);
         }
         else {
             // If no parent it means that we are at the root inner node
             // Since we acquired the read lock to that node we can 
             // release the root lock
             // TRACE( TRACE_DEBUG, "root unlock\n");
-            pthread_rwlock_unlock(&_root_rwlock);
+            RELEASE(_root_rwlock);
         }
 
         // Look for the position of the queried entry in the Leaf
@@ -305,14 +323,14 @@ public:
             }
 
             // TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", leaf);
-            pthread_rwlock_unlock(&(leaf->leaf_rwlock));
+            RELEASE((leaf->leaf_rwlock));
 
             return true;
         } 
         else {
             // No entry with that key found, returns false
             // TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", leaf);
-            pthread_rwlock_unlock(&(leaf->leaf_rwlock));
+            RELEASE((leaf->leaf_rwlock));
 
             return false;
         }
@@ -364,7 +382,7 @@ public:
         int entryCounter = 0;
 
         // Locks the root       
-        pthread_rwlock_rdlock(&_root_rwlock);
+        ACQUIRE_READ(_root_rwlock);
         // TRACE( TRACE_DEBUG, "root read\n");
 
         if (_depth == 0) {
@@ -380,7 +398,7 @@ public:
         // TRACE( TRACE_DEBUG, "root unlock\n");
         TRACE( TRACE_ALWAYS, "Tree: (%s). Levels: (%d). Entries: (%d)\n",
                _name.data(), _depth, entryCounter);
-        pthread_rwlock_unlock(&_root_rwlock);
+        RELEASE(_root_rwlock);
 
 
     }
@@ -579,7 +597,7 @@ private:
         assert (aInnerNode);
 
         // Read-locks the node
-        pthread_rwlock_rdlock(&(aInnerNode->in_rwlock));
+        ACQUIRE_READ((aInnerNode->in_rwlock));
         // TRACE( TRACE_DEBUG, "inner read (%p)\n", aInnerNode);
 
         uint iNodeKeys = aInnerNode->num_keys;
@@ -618,7 +636,7 @@ private:
 
         // Traversing completed, unlocks the node
         // TRACE( TRACE_DEBUG, "inner read unlock (%p)\n", aInnerNode);
-        pthread_rwlock_unlock(&(aInnerNode->in_rwlock));
+        RELEASE((aInnerNode->in_rwlock));
     }
 
 
@@ -631,7 +649,7 @@ private:
         assert (aLeafNode);
 
         // Read-locks the node
-        pthread_rwlock_rdlock(&(aLeafNode->leaf_rwlock));
+        ACQUIRE_READ((aLeafNode->leaf_rwlock));
         // TRACE( TRACE_DEBUG, "leaf read (%p)\n", aLeafNode);
 
         uint iLeafEntries = aLeafNode->num_keys;
@@ -656,7 +674,7 @@ private:
 
         // Reading completed, unlocks the node
         // TRACE( TRACE_DEBUG, "leaf read unlock (%p)\n", aLeafNode);
-        pthread_rwlock_unlock(&(aLeafNode->leaf_rwlock));
+        RELEASE((aLeafNode->leaf_rwlock));
     }
 
 
@@ -842,7 +860,7 @@ private:
 
         // Write-Locks the leaf node before insertion
         // The lock will be released inside the leaf_insert_nonfull()
-        pthread_rwlock_wrlock(&(node->leaf_rwlock));
+        ACQUIRE_WRITE((node->leaf_rwlock));
         // TRACE( TRACE_DEBUG, "leaf write (%p)\n", node);
 
         assert(node->num_keys <= LEAF_ENTRIES);
@@ -880,11 +898,11 @@ private:
                 // The new_sibling will be unlocked inside the leaf_insert_nonfull()
                 // We also unlock the old Leaf node.
 
-                pthread_rwlock_wrlock(&(new_sibling->leaf_rwlock));
+                ACQUIRE_WRITE((new_sibling->leaf_rwlock));
                 // TRACE( TRACE_DEBUG, "leaf write (%p)\n", new_sibling);
 
                 // TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", node);
-                pthread_rwlock_unlock(&(node->leaf_rwlock));
+                RELEASE((node->leaf_rwlock));
 
                 leaf_insert_nonfull(new_sibling, key, value, i-treshold);
             }
@@ -902,13 +920,13 @@ private:
                 // Normal Leaf with a parent InnerNode.
                 // The lock to the InnerNode can be released.
                 // TRACE( TRACE_DEBUG, "inner unlock (%p)\n", parentNode);
-                pthread_rwlock_unlock(&(parentNode->in_rwlock));
+                RELEASE((parentNode->in_rwlock));
             }
             else {
                 // The current Leaf is the root. 
                 // Since it will not change we can release the root lock
                 // TRACE( TRACE_DEBUG, "root unlock\n");
-                pthread_rwlock_unlock(&_root_rwlock);
+                RELEASE(_root_rwlock);
             }
 
             leaf_insert_nonfull(node, key, value, i);
@@ -962,7 +980,7 @@ private:
 
         // Insertion completed, unlocks the node
         // TRACE( TRACE_DEBUG, "leaf unlock (%p)\n", node);
-        pthread_rwlock_unlock(&(node->leaf_rwlock));
+        RELEASE((node->leaf_rwlock));
     }
 
 
@@ -980,7 +998,7 @@ private:
         assert(node);
 
         // Write-Locks the inner node before insert
-        pthread_rwlock_wrlock(&(node->in_rwlock));
+        ACQUIRE_WRITE((node->in_rwlock));
         // TRACE( TRACE_DEBUG, "inner write (%p)\n", node);
         
         // Since we are inserting to an inner node the localDepth > 0
@@ -1027,11 +1045,11 @@ private:
                 // in order to treal all the inner nodes the same.
                 // The old node will not be modified anymore, so we can release it
 
-                pthread_rwlock_wrlock(&(new_sibling->in_rwlock));
+                ACQUIRE_WRITE((new_sibling->in_rwlock));
                 // TRACE( TRACE_DEBUG, "inner write (%p)\n", new_sibling);
 
                 // TRACE( TRACE_DEBUG, "inner unlock (%p)\n", node);
-                pthread_rwlock_unlock(&(node->in_rwlock));                
+                RELEASE((node->in_rwlock));                
                 
                 inner_insert_nonfull(new_sibling, localDepth, key, value);
             }
@@ -1042,13 +1060,13 @@ private:
             if (parentNode) {
                 // Normal InnerNode with a parent InnerNode
                 // TRACE( TRACE_DEBUG, "inner unlock (%p)\n", parentNode);
-                pthread_rwlock_unlock(&(parentNode->in_rwlock));
+                RELEASE((parentNode->in_rwlock));
             }
             else {
                 // The current InnerNode is the root.
                 // Since it will not change we can release the root lock.
                 // TRACE( TRACE_DEBUG, "root unlock\n");
-                pthread_rwlock_unlock(&_root_rwlock);
+                RELEASE(_root_rwlock);
             }                
 
             inner_insert_nonfull(node, localDepth, key, value);
@@ -1119,7 +1137,7 @@ private:
 
             // The insertion completed and the lock is released
             // TRACE( TRACE_DEBUG, "inner unlock (%p)\n", node);
-            pthread_rwlock_unlock(&(node->in_rwlock));
+            RELEASE((node->in_rwlock));
         } 
 
         // @note: If there was not a split the node has already been released
@@ -1148,7 +1166,7 @@ private:
 
     // Pointer to the root node. It may be a leaf or an inner node, but
     // it is never null
-    pthread_rwlock_t _root_rwlock;
+    Lock              _root_rwlock;
     void*            _root;
 
 
