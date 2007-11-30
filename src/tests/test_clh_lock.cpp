@@ -26,6 +26,19 @@ extern "C" void* run(void* arg) {
 	
 clh_lock global_lock;
 pthread_mutex_t global_plock = PTHREAD_MUTEX_INITIALIZER;
+pthread_rwlock_t global_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+void test_shared_rlock() {
+    for(long i=0; i < local_count; i++) {
+	pthread_rwlock_rdlock(&global_rwlock);
+	pthread_rwlock_unlock(&global_rwlock);
+    }
+}
+void test_shared_wlock() {
+    for(long i=0; i < local_count; i++) {
+	pthread_rwlock_wrlock(&global_rwlock);
+	pthread_rwlock_unlock(&global_rwlock);
+    }
+}
 void test_shared_pthreads() {
     for(long i=0; i < local_count; i++) {
 	pthread_mutex_lock(&global_plock);
@@ -61,7 +74,7 @@ int main() {
     for(int k=1; k <= THREADS; k++) {
 	local_count = COUNT/k;
 	for(long i=0; i < k; i++)
-	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_pthreads);
+	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_wlock);
 	union {
 	    void* vptr;
 	    double d;
