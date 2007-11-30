@@ -38,7 +38,11 @@ struct fast_rwlock {
 	while(pred->_waiting) {
 	    //	    assert((now=timer.now()) < start + 10000);
 	}
+#ifdef __SUNPRO_CC
 	membar_consumer();
+#else
+	__sync_synchronize();
+#endif
     }
     void spin_state(long mask, long expected) {
 	stopwatch_t timer;
@@ -47,6 +51,11 @@ struct fast_rwlock {
 	while((_state & mask) != expected) {
 	    //=	    assert((now=timer.now()) < start + 10000);
 	}
+#ifdef __SUNPRO_CC
+	membar_enter(); // this is the last thing my caller does...
+#else
+	__sync_synchronize();
+#endif
     }
     qnode_ptr acquire_write(qnode_ptr me) {
 	assert(_state < 0x10000);
@@ -54,18 +63,29 @@ struct fast_rwlock {
     
 	// first, try to CAS directly
 	for(int i=0; i < WRITE_CAS_ATTEMPTS; i++) {
-	    if(atomic_cas_64(&_state, 0, ONE_WRITER) == 0) {
+#ifdef __SUNPRO_CC
+	    if(atomic_cas_64(&_state, 0, ONE_WRITER) == 0) { 
+#else
+	    if(__sync_bool_compare_and_swap(&_state, 0, ONE_WRITER)) {
+#endif
 	assert(_state < 0x10000);
 		me->_pred = NULL; // indicates the CAS succeeded
+#ifdef __SUNPRO_CC
 		membar_enter();
+#endif
 		return me;
 	    }
 	}
     
 	// enqueue
 	me->_waiting = true;
+#ifdef __SUNPRO_CC
 	membar_producer(); // finish updates to i *before* it hits the queue
 	qnode_ptr pred = (qnode_ptr) atomic_swap_ptr(&_tail, (void*) me);
+#else
+	__sync_synchronize();
+	qnode_ptr pred = __sync_lock_test_and_set(&_tail, me);
+#endif
     
 	// wait our turn
 	spin_queue(me->_pred = pred);
@@ -77,23 +97,30 @@ struct fast_rwlock {
 	   will be in the queue behind me, and haven't staked their claims
 	   yet.
 	*/
+#ifdef __SUNPRO_CC
 	atomic_add_64(&_state, ONE_WRITER);
+#else
+	__sync_fetch_and_add(&_state, ONE_WRITER);
+#endif
 	assert(_state < 0x10000);
 
 	// now spin until we have the lock
 	spin_state(-1, ONE_WRITER);
 
 	// no need to pass the baton to our successor quite yet...
-	membar_enter();
 	return me;
     }
   
     qnode_ptr release_write(qnode_ptr me) {
 	assert(_state < 0x10000);
 	qnode_ptr pred = me->_pred;
-    
+
+#ifdef __SUNPRO_CC
 	membar_exit();
-	long new_state = atomic_add_64_nv(&_state, -ONE_WRITER);
+	atomic_add_64(&_state, -ONE_WRITER);
+#else
+	__sync_fetch_and_add(&_state, -ONE_WRITER);
+#endif
 	assert(_state < 0x10000);
 	if(pred) {
 	    /* we are in the queue - pass the baton to our successor
@@ -115,29 +142,43 @@ struct fast_rwlock {
 	for(int i=0; i < READ_CAS_ATTEMPTS; i++) {
 	    // fail immediately if there's a writer
 	    long old_state = _state & READ_MASK;
+#ifdef __SUNPRO_CC
 	    if(atomic_cas_64(&_state, old_state, old_state+ONE_READER) == old_state) {
-	assert(_state < 0x10000);
+#else
+	    if(__sync_bool_compare_and_swap(&_state, old_state, old_state+ONE_READER)) {
+#endif
+		assert(_state < 0x10000);
 		me->_pred = NULL; // indicates the CAS succeeded
+#ifdef __SUNPRO_CC
 		membar_enter();
+#endif
 		return me;
 	    }
 	}
     
 	// enqueue
 	me->_waiting = true;
+#ifdef __SUNPRO_CC
 	membar_producer(); // finish updates to i *before* it hits the queue
 	qnode_ptr pred = (qnode_ptr) atomic_swap_ptr(&_tail, (void*) me);
+#else
+	__sync_synchronize();
+	qnode_ptr pred = __sync_lock_test_and_set(&_tail, me);
+#endif
     
 	// wait our turn
 	spin_queue(me->_pred = pred);
     
-	// stake our claim 
+	// stake our claim
+#ifdef __SUNPRO_CC
 	atomic_add_64(&_state, ONE_READER);
+#else
+	__sync_fetch_and_add(&_state, ONE_READER);
+#endif
 	assert(_state < 0x10000);
 
 	// now spin until we have the lock
 	spin_state(WRITE_MASK, 0);
-	membar_enter();
 
 	// pass the baton to our successor
 	me->_waiting = false;
@@ -148,15 +189,20 @@ struct fast_rwlock {
     qnode_ptr release_read(qnode_ptr me) {
 	assert(_state < 0x10000);
 	// we already passed the baton
+#ifdef __SUNPRO_CC
 	membar_exit();
 	atomic_add_64(&_state, -ONE_READER);
+#else
+	__sync_fetch_and_add(&_state, -ONE_READER);
+#endif
 	assert(_state < 0x10000);
 	return me;
     }
 };
 
-static int const THREADS = 32;
-static long const COUNT = 1l << 20;
+static int const THREADS = 8;
+
+static long const COUNT = 1l << 22;
 
 long local_count;
 extern "C" void* run(void* arg) {
@@ -189,7 +235,7 @@ void ncs(long delay_ns=DELAY_NS) {
     long delay_us = (delay_ns + 999)/1000;
     stopwatch_t timer;
     long start = timer.now();
-    while(timer.now() < start+DELAY_US);
+    while(timer.now() < start+delay_us);
 #endif
 }
 void cs(long lines=LINES_TOUCHED) {
@@ -321,7 +367,7 @@ int main() {
     pthread_t tids[THREADS];
 
     // ====================================================================== 
-    CHOOSE_TEST(test_fast_rwlock);
+    CHOOSE_TEST(test_fast_wlock);
     // ======================================================================
     for(int j=0; j < 3; j++) {
 	printf("Per-thread cost for 1..%d threads using %s (in usec)\n", THREADS, test_name);
