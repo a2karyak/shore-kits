@@ -69,10 +69,9 @@ void test_shared_auto() {
     }
 }
 void test_shared_manual() {
-    clh_lock::Manager m;
+    clh_lock::dead_handle h = clh_lock::create_handle();
     for(long i=0; i < local_count; i++) {
-	m.put_me(&global_lock, global_lock.acquire(m.alloc()));
-	m.free(global_lock.release(m.get_me(&global_lock)));
+	h = global_lock.release(global_lock.acquire(h));
     }
 }
 
@@ -92,7 +91,7 @@ int main() {
     for(int k=1; k <= THREADS; k++) {
 	local_count = COUNT/k;
 	for(long i=0; i < k; i++)
-	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_manual);
+	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_wlock);
 	union {
 	    void* vptr;
 	    double d;
