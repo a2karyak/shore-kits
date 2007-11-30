@@ -4,13 +4,16 @@
 #include <pthread.h>
 #include "util/stopwatch.h"
 #include <stdio.h>
+#include "util/clh_rwlock.h"
 
-static int const THREADS = 8;
+static int const THREADS = 32;
 static long const COUNT = 1l << 20;
 
 long local_count;
 extern "C" void* run(void* arg) {
     clh_lock::thread_init_manager();
+    clh_rwlock::thread_init_manager();
+    
     
     stopwatch_t timer;
     ((void (*)()) arg)();
@@ -21,22 +24,36 @@ extern "C" void* run(void* arg) {
     } u = {timer.time()};
 
      clh_lock::thread_destroy_manager();
+     clh_rwlock::thread_destroy_manager();
      return u.vptr;
      }
 	
 clh_lock global_lock;
 pthread_mutex_t global_plock = PTHREAD_MUTEX_INITIALIZER;
 pthread_rwlock_t global_rwlock = PTHREAD_RWLOCK_INITIALIZER;
-void test_shared_rlock() {
+void test_shared_prlock() {
     for(long i=0; i < local_count; i++) {
 	pthread_rwlock_rdlock(&global_rwlock);
 	pthread_rwlock_unlock(&global_rwlock);
     }
 }
-void test_shared_wlock() {
+void test_shared_pwlock() {
     for(long i=0; i < local_count; i++) {
 	pthread_rwlock_wrlock(&global_rwlock);
 	pthread_rwlock_unlock(&global_rwlock);
+    }
+}
+clh_rwlock global_clh_rwlock;
+void test_shared_rlock() {
+    for(long i=0; i < local_count; i++) {
+	global_clh_rwlock.acquire_read();
+	global_clh_rwlock.release();
+    }
+}
+void test_shared_wlock() {
+    for(long i=0; i < local_count; i++) {
+	global_clh_rwlock.acquire_write();
+	global_clh_rwlock.release();
     }
 }
 void test_shared_pthreads() {
@@ -52,9 +69,10 @@ void test_shared_auto() {
     }
 }
 void test_shared_manual() {
-    clh_lock::dead_handle h = clh_lock::create_handle();
+    clh_lock::Manager m;
     for(long i=0; i < local_count; i++) {
-	h = global_lock.release(global_lock.acquire(h));
+	m.put_me(&global_lock, global_lock.acquire(m.alloc()));
+	m.free(global_lock.release(m.get_me(&global_lock)));
     }
 }
 
@@ -74,7 +92,7 @@ int main() {
     for(int k=1; k <= THREADS; k++) {
 	local_count = COUNT/k;
 	for(long i=0; i < k; i++)
-	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_wlock);
+	    pthread_create(&tids[i], NULL, &run, (void*) &test_shared_manual);
 	union {
 	    void* vptr;
 	    double d;
