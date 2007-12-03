@@ -16,7 +16,7 @@
 
 
 static int const THREADS=32;
-static long const COUNT = 1l << 20;
+static long const COUNT = 1l << 24;
 static long local_count; // how many times to loop?
 static long local_wmask; // how often to write?
 
@@ -67,13 +67,13 @@ extern "C" void* test_shared_rwlock(void* arg) {
 int main() {
     pthread_t tids[THREADS];
 
-    for(int wmask=0; wmask < (1 << 10); wmask=(wmask+1)*2-1) {
+    for(int wmask=1; wmask < (1 << 10); wmask=(wmask+1)*2-1) {
 	printf("Starting round %d...\n", wmask);
 #ifdef DEBUG_MODE
 	history.clear();
 #endif
 	local_wmask = wmask;
-	for(int k=1; k <= THREADS; k*=2) {
+	for(int k=THREADS; k <= THREADS; k*=2) {
 	    local_count = COUNT/THREADS;
 	    for(long i=0; i < k; i++)
 		pthread_create(&tids[i], NULL, &test_shared_rwlock, (void*) i);
@@ -86,7 +86,7 @@ int main() {
 		pthread_join(tids[i], &u.vptr);
 		total += u.d;
 	    }
-	    printf("%d %.3lf us\n", k, 1e6*total/local_count/k);
+	    printf("%d %.3lf us\n", k, 1e6*total/COUNT/k);
 	}
     }
     return 0;
