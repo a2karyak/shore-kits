@@ -8,7 +8,7 @@
 #include "util/clh_rwlock.h"
 
 // FIXME: support gcc!
-#ifdef __SUNPRO_CC
+#ifdef __sparcv9
 #include <atomic.h>
 #endif
 
@@ -114,14 +114,16 @@ clh_rwlock::dnode clh_rwlock::lnode::spin() {
 	}
 #endif
     }
+#ifdef __sparcv9
     membar_consumer();
+#else
+    __sync_synchronize();
+#endif
 #ifdef TRACE_MODE
     // by passing the baton, we remove ourselves from the queue
     fprintf(stderr, "%s! (%ld) %d ! \n", get_indent(), get_id(_ptr), _ptr->_tid);
 //    fprintf(stderr, "(%ld):\t\t\t\t\t !  -> t@%d\n", get_id(_ptr), pthread_self());
     _ptr->_pred = NULL;
 #endif
-    // FIXME: add support for GCC
-    membar_enter();
     return kill();
 }

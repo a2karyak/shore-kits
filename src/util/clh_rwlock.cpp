@@ -145,8 +145,11 @@ void clh_rwlock::lnode::pass_baton(long read_count, clh_rwlock::lnode writer=clh
 //    fprintf(stderr, "(%ld):\tt@%d ->  ?\n", get_id(_ptr), pthread_self());
 #endif
     _ptr->_writer = writer._ptr;
-    // FIXME: add support for GCC
+#ifdef __sparcv9
     membar_exit();
+#else
+    __sync_synchronize();
+#endif
     _ptr->_read_count = read_count;
 }
 
@@ -174,10 +177,11 @@ clh_rwlock::pre_baton_pair clh_rwlock::dnode::join_queue(clh_rwlock::lnode &queu
     _ptr->_read_count = WAITING;
     lnode me(_ptr);
 
-    // FIXME: gcc support
-    membar_exit();
     if(atomic) {
-	pred = atomic::swap(queue, me);
+#ifdef __sparcv9
+	membar_exit();
+#endif
+	pred = atomic_swap(&queue, me);
     }
     else {
 	pred = queue;
@@ -360,7 +364,9 @@ clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed)
     me->_writer = ((dead_handle) pred)._ptr;
     assert(me->_writer);
     // me->_read_count is no-touchie! we have real successors
+#ifdef __sparcv9
     membar_enter();
+#endif
     return me;
 }
 #else
@@ -374,7 +380,6 @@ clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed)
     union { lnode *_l; uint64_t* _i; } q={&_queue};
     qnode_ptr pred = (qnode_ptr) atomic_swap_64(q._i, (uint64_t) me);    
     lnode(pred).spin();
-    membar_consumer();
 
     // wait_for_baton
     qnode_ptr writer;
@@ -391,20 +396,27 @@ clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed)
 	    // ENDS
 	    // pass_baton to writer (me_wait becomes next _shunt_queue)
 	    writer->_writer = NULL;
+#ifdef __sparcv9
 	    membar_producer();
+#else
+	    __sync_synchronize();
+#endif
 	    writer->_read_count = 0;
 	}
 	else {
 	    // SHUNT
 	    // pass_baton to successor
 	    me->_writer = writer;
+#ifdef __sparcv9
 	    membar_producer();
+#else
+	    __sync_synchronize();
+#endif
 	    me->_read_count = read_count;
 	    me = me_wait;
 	}
 
 	lnode(pred).spin();
-	membar_consumer();
     }
 
     // now the actual write stuff
@@ -418,7 +430,11 @@ clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed)
 
 	// start shunt notice 
 	me->_writer = pred;
+#ifdef __sparcv9
 	membar_producer();
+#else
+	__sync_synchronize();
+#endif
 	me->_read_count = read_count;
 
 	// and wait for the baton to come back
@@ -428,7 +444,9 @@ clh_rwlock::live_handle clh_rwlock::acquire_write(clh_rwlock::dead_handle _seed)
 
     // act like a normal CLH lock, with _writer == the node to recycle
     me->_writer = pred;
+#ifdef __sparcv9
     membar_enter();
+#endif
     live_handle h = {me};
     return h;
 }
@@ -460,7 +478,9 @@ clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) 
     lnode me(&result._pred);
     me->_read_count = 1;
     me->_writer = NULL;
+#ifdef __sparcv9
     membar_enter();
+#endif
     return me;
 }
 #else
@@ -470,12 +490,16 @@ clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) 
 
     // join_queue
     me->_writer = NULL;
+#ifdef __sparcv9
     membar_producer();
+#else
+    __sync_synchronize();
+#endif
+    
     me->_read_count = WAITING;
     union { lnode *_l; uint64_t* _i; } q={&_queue};
     qnode_ptr pred = (qnode_ptr) atomic_swap_64(q._i, (uint64_t) me);    
     lnode(pred).spin();
-    membar_consumer();
 
     // wait_for_baton
     qnode_ptr writer;
@@ -492,14 +516,22 @@ clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) 
 	    // ENDS
 	    // pass_baton to writer (me_wait becomes next _shunt_queue)
 	    writer->_writer = NULL;
+#ifdef __sparcv9
 	    membar_producer();
+#else
+	    __sync_synchronize();
+#endif
 	    writer->_read_count = 0;
 	}
 	else {
 	    // SHUNT
 	    // pass_baton to successor
 	    me->_writer = writer;
+#ifdef __sparcv9
 	    membar_producer();
+#else
+	    __sync_synchronize();
+#endif
 	    me->_read_count = read_count;
 	    me = me_wait;
 	}
@@ -510,12 +542,18 @@ clh_rwlock::live_handle clh_rwlock::acquire_read(clh_rwlock::dead_handle _seed) 
 
     // now the actual read stuff
     me->_writer = NULL;
+#ifdef __sparcv9
     membar_producer();
+#else
+    __sync_synchronize();
+#endif
     me->_read_count = pred->_read_count+1;
     
     pred->_read_count = 1;
     pred->_writer = NULL;
+#ifdef __sparcv9
     membar_enter();
+#endif
     live_handle h = {pred};
     return h;
 }
@@ -529,10 +567,13 @@ clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
 #ifdef TRACE_MODE
     fprintf(stderr, "%s     -    \n", get_indent());
 #endif
+#ifdef __sparcv9
     membar_exit();
+#else
+    __sync_synchronize();
+#endif
     lnode me = _me;
     long my_count = me->_read_count;
-    qnode_ptr my_writer = me->_writer;
     dnode result;
     if(me.is_waiting()) {
 	history_push(FREE);
@@ -577,7 +618,7 @@ clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
 	//	printf("Should fail!\n");
 	}
 #endif
-	if(writer.valid() && new_read_count == 0 && atomic::cas(_queue, main_result._me, _shunt_queue) == main_result._me) {
+	if(writer.valid() && new_read_count == 0 && atomic_cas(&_queue, main_result._me, _shunt_queue) == main_result._me) {
 	    history_push(SPLICE);
 	    _shunt_queue = main_result._me; // becomes the seed for the next shunt queue
 #ifdef DEBUG_MODE
@@ -606,7 +647,9 @@ clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
 }
 #else
 clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
+#ifdef __sparcv9
     membar_exit();
+#endif
     qnode_ptr me = _me._ptr;
     qnode_ptr pred;
     switch(me->_read_count) {
@@ -614,20 +657,27 @@ clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
 	// writer
 	pred = me->_writer; // stored here earlier...
 	me->_writer = NULL;
+#ifdef __sparcv9
 	membar_producer();
+#else
+	__sync_synchronize();
+#endif
 	me->_read_count = 0;
 	break;
     case 1: {
 	// reader
 	// wait for baton (no shunts)
 	me->_writer = NULL;
+#ifdef __sparcv9
 	membar_producer();
+#else
+	__sync_synchronize();
+#endif
 	me->_read_count = WAITING;
 	union { lnode *_l; uint64_t* _i; } q={&_queue}, s={&_shunt_queue};
 	uint64_t mi = (uint64_t) me;
 	pred = (qnode_ptr) atomic_swap_64(q._i, mi);    
 	lnode(pred).spin();
-	membar_consumer();
 
 	// last reader and nobody behind me (yet)?
 	long new_read_count = pred->_read_count-1;
@@ -636,13 +686,21 @@ clh_rwlock::dead_handle clh_rwlock::release(clh_rwlock::live_handle _me) {
 	    // SPLICE
 	    *s._i = mi;
 	    writer->_writer = NULL;
+#ifdef __sparcv9
 	    membar_producer();
+#else
+	    __sync_synchronize();
+#endif
 	    writer->_read_count = 0;
 	}
 	else {
 	    // forward shunt notice
 	    me->_writer = writer;
+#ifdef __sparcv9
 	    membar_producer();
+#else
+	    __sync_synchronize();
+#endif
 	    me->_read_count = new_read_count;
 	}
     }

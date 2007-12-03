@@ -192,7 +192,7 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/powerpc64)
 
     ARCHOS=PPC64_LINUX
-    CPU_FLAGS="-mcpu=powerpc64"
+    CPU_FLAGS="-m64"
     ;;
     
   # Sparc Solaris
