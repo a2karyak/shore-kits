@@ -97,7 +97,8 @@ struct mcs_rwlock {
     struct qnode {
 	qnode_ptr _prev;
 	qnode_ptr _next;
-	enum {READER, WRITER, ACTIVE_READER} _state;
+	enum State {READER, WRITER, ACTIVE_READER};
+	State _state;
 	unsigned int _waiting;
 	unsigned int _locked;
 	qnode() : _prev(NULL), _next(NULL), _waiting(true), _locked(false) { }
@@ -126,7 +127,7 @@ struct mcs_rwlock {
     qnode_ptr join_queue(qnode_ptr me) {
 #ifdef __SUNPRO_CC
 	membar_producer();
-	qnode_ptr pred = (qnode_ptr) atomic_swap_ptr(&_tail, (void*) me);
+	qnode_ptr pred = atomic_swap(&_tail, me);
 #else
 	__sync_synchronize();
 	qnode_ptr pred = __sync_lock_test_and_set(&_tail, me);
@@ -137,7 +138,7 @@ struct mcs_rwlock {
 	qnode_ptr next;
 #ifdef __SUNPRO_CC
 	membar_exit();
-	if(!(next=me->_next) && me == (qnode_ptr) atomic_cas_ptr(&_tail, (void*) me, (void*) new_value))
+	if(!(next=me->_next) && me == atomic_cas(&_tail, me, new_value))
 	    return NULL;
 #else
 	if(!(next=me->_next) && __sync_bool_compare_and_swap(&_tail, me, new_value))
@@ -184,20 +185,39 @@ struct mcs_rwlock {
 	qnode_ptr pred = join_queue(me);
 	if(pred) {
 	    me->_prev = pred;
-	    pred->_next = me;
-	    if(pred->_state != qnode::ACTIVE_READER) while(me->_waiting);
-#ifdef __SUNPRO_CC
-	    membar_consumer();
+	    qnode::State pred_state = pred->_state;
+#ifdef __sparcv9
+		membar_consumer();
 #else
-	    __sync_synchronize();
+		__sync_synchronize();
 #endif
+	    pred->_next = me;
+	    if(pred_state != qnode::ACTIVE_READER) {
+		while(me->_waiting);
+#ifdef __sparcv9
+		membar_consumer();
+#else
+		__sync_synchronize();
+#endif
+	    }
 	}
-	if(me->_next && me->_state == qnode::READER)
+	if(me->_next && me->_next->_state == qnode::READER) 
 	    me->_next->_waiting = false;
+	
 	me->_state = qnode::ACTIVE_READER;
+#ifdef __sparcv9
+	membar_enter();
+#else
+	__sync_synchronize();
+#endif
     }
 
     void release_read(qnode_ptr me) {
+#ifdef __sparcv9
+	membar_exit();
+#else
+	__sync_synchronize();
+#endif
 	qnode_ptr pred = me->_prev;
 
 	// try to lock down my predecessor
@@ -225,7 +245,12 @@ struct mcs_rwlock {
 	    // make my successor the head of the queue
 	    qnode_ptr next = try_fast_leave_queue(me);
 	    if(next) {
+#ifdef __sparcv9
+		membar_producer();
 		next->_waiting = false;
+#else
+		__sync_lock_release(&next->_waiting);
+#endif
 		next->_prev = NULL; // unlink myself
 	    }
 	}
@@ -282,7 +307,7 @@ struct fast_rwlock {
     }
     qnode_ptr acquire_write(qnode_ptr me) {
 	//assert(_state < 0x10000);
-	static int const WRITE_CAS_ATTEMPTS = 1;
+	static int const WRITE_CAS_ATTEMPTS = 3;
     
 	// first, try to CAS directly
 	for(int i=0; i < WRITE_CAS_ATTEMPTS; i++) {
@@ -459,8 +484,8 @@ extern "C" void* run(void* arg) {
      return u.vptr;
 }
 
-static long const DELAY_NS = 1000; // 1usec
-static int const LINES_TOUCHED = 2;
+static long const DELAY_NS = 0; // 1usec
+static int const LINES_TOUCHED = 0;
 void ncs(long delay_ns=DELAY_NS) {
     // spin for 1 usec
 #ifdef __SUNPRO_CC
@@ -548,7 +573,7 @@ TEST_RWLOCK(pthread, sizeof(int),
 	    pthread_rwlock_rdlock(&global_rwlock), pthread_rwlock_wrlock(&global_rwlock),
 	    pthread_rwlock_unlock(&global_rwlock), pthread_rwlock_unlock(&global_rwlock));
 #endif
-#if 1
+#if 0
 clh_rwlock global_clh_rwlock;
 TEST_RWLOCK(clh_manual, clh_rwlock::dead_handle h = clh_rwlock::create_handle(),
 	    clh_rwlock::live_handle l = global_clh_rwlock.acquire_read(h),
@@ -564,7 +589,7 @@ TEST_RWLOCK(fast_manual, fast_rwlock::qnode_ptr me = new fast_rwlock::qnode,
 	    me = global_fast_rwlock.acquire_read(me), me = global_fast_rwlock.acquire_write(me),
 	    me = global_fast_rwlock.release_read(me), me = global_fast_rwlock.release_write(me));
 #endif
-#if 0 // broken on ppc64
+#if 0
 mcs_rwlock global_mcs_rwlock;
 TEST_RWLOCK(mcs, mcs_rwlock::qnode me,
 	    global_mcs_rwlock.acquire_read(&me), global_mcs_rwlock.acquire_write(&me),
