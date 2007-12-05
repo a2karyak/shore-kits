@@ -17,50 +17,76 @@ template<class LockType>
 struct clh_manager {
     typedef typename LockType::live_handle LiveHandle;
     typedef typename LockType::dead_handle DeadHandle;
-    typedef std::pair<LockType*, LiveHandle> live_handle;
-    typedef std::vector<live_handle> lh_list;
-    lh_list _live_handles;
-    std::vector<DeadHandle> _dead_handles;
-    
-    struct match_lock {
-	LockType* _lock;
-	match_lock(LockType* l) : _lock(l) { }
-	bool operator()(live_handle const &h) { return h.first == _lock; }
+    union handle {
+	LiveHandle _lh;
+	DeadHandle _dh;
     };
+    enum { MAX_HANDLES=4 }; // really 2-3 should be enough!
+    handle _handles[MAX_HANDLES];
+    LockType const* _locks[MAX_HANDLES];
+    
 
+    // a known bad lock pointer that marks available (dead) lock handles
+    static LockType const* dead_lock() { return (LockType const*) 0x1; }
+    
+    clh_manager() {
+	for(int i=0; i < MAX_HANDLES; i++) {
+	    _handles[i]._dh = LockType::create_handle();
+	    _locks[i] = dead_lock();
+	}
+    };
+    ~clh_manager() {
+	// we better not be holding any locks!
+	for(int i=0; i < MAX_HANDLES; i++) {
+	    assert(_locks[i] == dead_lock());
+	    LockType::destroy_handle(_handles[i]._dh);
+	}
+    }
+
+    inline
+    int find(LockType const* lock) {
+	for(int i=0; i < MAX_HANDLES; i++)
+	    if(_locks[i] == lock)
+		return i;
+	//	assert(i < MAX_HANDLES);
+    }
     // associates a live handle with a lock
-    void put_me(LockType* lock, LiveHandle h) {
-	_live_handles.push_back(live_handle(lock, h));
+    #if 0
+    inline
+    void put_me(LockType const* lock, LiveHandle h) {	
+	int i = find(NULL);
+	_locks[i] = lock;
+	_handles[i]._lh = h;
     }
     
     // finds the live handle for this lock and clears its association
-    LiveHandle get_me(LockType* lock) {
-	typedef typename lh_list::iterator iterator;
-	
-	iterator it = std::find_if(_live_handles.begin(), _live_handles.end(), match_lock(lock));
-	assert(it != _live_handles.end());
-	LiveHandle h = it->second;
-	*it = _live_handles.back(); // fill the hole with the last entry 
-	_live_handles.resize(_live_handles.size()-1);
-	return h;	    
-    }
-    void free(DeadHandle h) {
-	_dead_handles.push_back(h);
-    }
-    DeadHandle alloc() {
-	if(_dead_handles.empty())
-	    return LockType::create_handle();
-
-	DeadHandle h = _dead_handles.back();
-	_dead_handles.pop_back();
+    inline
+    LiveHandle get_me(LockType const* lock) {
+	int i = find(lock);
+	LiveHandle h = _handles[i]._lh;
+	_locks[i] = NULL; // free the slot
 	return h;
     }
-    
-    ~clh_manager() {
-	// we better not be holding any locks!
-	assert(_live_handles.empty());
-	std::for_each(_dead_handles.begin(), _dead_handles.end(), LockType::destroy_handle);
+    inline
+    void free(DeadHandle h) {
+	int i = find(NULL);
+	_locks[i] = dead_lock();
+	_handles[i]._dh = h;
     }
+    inline
+    DeadHandle alloc() {
+	int i = find(dead_lock());
+	_locks[i] = NULL;
+	return _handles[i]._dh;
+    }
+    #else
+    // cheat!
+    void put_me(LockType const* lock, LiveHandle h) { _handles[0]._lh = h; }
+    LiveHandle get_me(LockType const* lock) { return _handles[0]._lh; }
+    void free(DeadHandle h) { _handles[0]._dh = h; }
+    DeadHandle alloc() { return _handles[0]._dh; }
+    #endif
+    
 };
 
 

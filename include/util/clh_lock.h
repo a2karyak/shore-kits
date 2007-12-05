@@ -83,13 +83,17 @@ public:
 #endif
 	return pred;
     }
-    void acquire() {
-	Manager* m = _manager;
+    inline void acquire(Manager *m) {
 	m->put_me(this, acquire(m->alloc()));
     }
-    void release() {
-	Manager* m = _manager;
+    inline void release(Manager *m) {
 	m->free(release(m->get_me(this)));
+    }
+    inline void acquire() {
+	acquire(_manager);
+    }
+    inline void release() {
+	release(_manager);
     }
     
 };
