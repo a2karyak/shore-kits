@@ -541,35 +541,32 @@ extern "C" void* run(void* arg) {
      return u.vptr;
 }
 
-static long const DELAY_NS = 0; // 1usec
-static int const LINES_TOUCHED = 0;
-void ncs(long delay_ns=DELAY_NS) {
-    if(delay_ns <= 0)
-	return;
-    
-    // spin for 1 usec
-#ifdef __SUNPRO_CC
-    hrtime_t start = gethrtime();
-    while(gethrtime() < start + delay_ns);
-#else
-    // round up to the neares us
-    long delay_us = (delay_ns + 999)/1000;
-    stopwatch_t timer;
-    long start = timer.now();
-    while(timer.now() < start+delay_us);
-#endif
-}
-void cs(long lines=LINES_TOUCHED) {
-    if(lines <= 0)
-	return;
-    // assume  cache lines no larger than 128-byte
-    static int const MAX_LINES = 100;
-    static int const LINE_SIZE = 64;
-    static int volatile data[MAX_LINES*LINE_SIZE/sizeof(int)];
+static long const NCS_LINES = 10; // 1usec
+static int const CS_LINES = 0;
+struct cache_line {
+    int data;
+    int filler[64/sizeof(int)-1]; // 64-byte lines
+};
+void ncs(long lines = NCS_LINES) {
 
+    static int const MAX_LINES = 128;
+    static __thread cache_line volatile local_data[MAX_LINES];
+
+    // simulate an expensive data operation
+    volatile long sum = 0;
     for(int i=0; i < lines; i++)
-	data[i*LINE_SIZE];
-    
+	sum += local_data[i].data;
+}
+void cs(long lines=CS_LINES) {
+
+    static int const MAX_LINES = 128;
+    static cache_line volatile shared_data[MAX_LINES];
+
+    // simulate an expensive read (safe for R-locks)
+    volatile long sum = 0;
+    for(int i=0; i < lines; i++) {
+	sum += shared_data[i].data;
+    }
 }
 
 typedef std::pair<char const*, void (*)()> tfunction;
@@ -647,14 +644,14 @@ mcs_lock global_mcs_lock;
 TEST_LOCK(pthread, sizeof(int), pthread_mutex_lock(&global_plock), pthread_mutex_unlock(&global_plock));
 #endif
 
-#if 0
+#if 1
 TEST_LOCK(clh_manual, clh_lock::dead_handle h = clh_lock::create_handle(),
 	  clh_lock::live_handle lh = global_lock.acquire(h), h = global_lock.release(lh));
 //TEST_LOCK(clh_semiauto, clh_lock::Manager *m = clh_lock::_manager, global_lock.acquire(m), global_lock.release(m));
 TEST_LOCK(clh_auto, sizeof(int), global_lock.acquire(), global_lock.release());
 #endif
 
-#if 0
+#if 1
 TEST_LOCK(mcs, mcs_lock::qnode me, global_mcs_lock.acquire(me), global_mcs_lock.release(me));
 #endif  
 

@@ -45,13 +45,13 @@ struct clh_manager {
 
     inline
     int find(LockType const* lock) {
-	for(int i=0; i < MAX_HANDLES; i++)
-	    if(_locks[i] == lock)
-		return i;
+	int i=0;
+	while( i < MAX_HANDLES && _locks[i] != lock) i++;
 	//	assert(i < MAX_HANDLES);
+	return i;
     }
     // associates a live handle with a lock
-    #if 0
+    #if 1
     inline
     void put_me(LockType const* lock, LiveHandle h) {	
 	int i = find(NULL);
