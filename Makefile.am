@@ -37,7 +37,6 @@ TESTS = \
    tests/merge_stage \
    tests/sort_stage \
    tests/hash_join_stage \
-   tests/bnl_join_stageHE \
    tests/bnl_in_stage \
    tests/q4 \
    tests/q6 \
@@ -459,7 +458,7 @@ qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/liblt
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
 	-lltdl \
-	-lcurses
+	-lncurses
 
 COMMANDS = \
    $(SE)/command/printer.cpp \
