@@ -329,142 +329,110 @@ struct fast_rwlock {
 
 
     qnode_ptr volatile _tail;
-    struct rw_halves {
-	uint32_t _writers;
-	uint32_t _readers;
-	bool operator ==(rw_halves &other) const {
-	    return _writers == other._writers && _readers == other._readers;
-	}
-    };
-    union {
-	uint64_t volatile _state;
-	rw_halves volatile _state_halves;
-    };
+    uint64_t volatile _state;
 
     fast_rwlock() : _tail(new qnode), _state(0) { }
     ~fast_rwlock() { delete _tail; }
 
     void spin_queue(qnode_ptr pred) {
+	stopwatch_t timer;
+	long start = timer.now();
+	long now;
 	while(pred->_waiting) {
-	    //	    assert((now=timer.now()) < start + 10000);
+	    //      assert((now=timer.now()) < start + 10000);
 	}
-#ifdef __sparcv9
+	#ifdef __SUNPRO_CC
 	membar_consumer();
-#else
+	#else
 	__sync_synchronize();
-#endif
+	#endif
     }
     void spin_state(long mask, long expected) {
 	stopwatch_t timer;
 	long start = timer.now();
 	long now;
 	while((_state & mask) != expected) {
-	    //=	    assert((now=timer.now()) < start + 10000);
+	    //=     assert((now=timer.now()) < start + 10000);
 	}
-#ifdef __sparcv9
+	#ifdef __SUNPRO_CC
 	membar_enter(); // this is the last thing my caller does...
-#else
+	#else
 	__sync_synchronize();
-#endif
+	#endif
     }
     qnode_ptr acquire_write(qnode_ptr me) {
 	//assert(_state < 0x10000);
 	static int const WRITE_CAS_ATTEMPTS = 3;
 
-	/* Writer protocol:
-	   1. increment the writer bit by 2 (tells reader we're not at queue head)
-	   2. If already >0, or if CAS fails from contention, join the queue
-	   3. thread owns lock when it reaches head of queue and all readers have left
-	   4. decrement writer bit to release
-	   5. notify successor if in queue
-	 */
 	// first, try to CAS directly
-	bool have_ticket = false;
-	uint32_t old_writer = _state_halves._writers;
 	for(int i=0; i < WRITE_CAS_ATTEMPTS; i++) {
-	    uint32_t cur_writer;
-	    if(_state > 0) {
-		if((cur_writer=atomic_cas(&_state_halves._writers, old_writer, old_writer+2)) == old_writer) {
-		    have_ticket = true;
-		    break; // join the queue
-		}
+	    if(
+	       #ifdef __SUNPRO_CC
+	       _state == 0 && atomic_cas_64(&_state, 0, ONE_WRITER) == 0
+	       #else
+	       __sync_bool_compare_and_swap(&_state, 0, ONE_WRITER)
+	       #endif
+	       ) {
+		//assert(_state < 0x10000);
+		me->_pred = NULL; // indicates the CAS succeeded
+		#ifdef __SUNPRO_CC
+		membar_enter();
+		#endif
+		return me;
 	    }
-	    else {
-		rw_halves old_state = _state_halves;
-		rw_halves new_state = old_state;
-		new_state._writers++;
-		if((new_state=atomic_cas(&_state_halves, old_state, new_state)) == old_state) {
-		
-		    // I have the write lock... once all readers leave
-		    while(_state_halves._readers > 0);
-		    
-		    me->_pred = NULL; // CAS succeeded - no queuing for me
-#ifdef __sparcv9
-		    membar_enter();
-#else
-		    __sync_synchronize();
-#endif
-		    return me;
-		}
-	    }
-	    old_writer = cur_writer;
 	}
-    
+
 	// enqueue
 	me->_waiting = true;
-#ifdef __sparcv9
+	#ifdef __SUNPRO_CC
 	membar_producer(); // finish updates to i *before* it hits the queue
-	qnode_ptr pred = atomic_swap(&_tail, me);
-#else
+	qnode_ptr pred = (qnode_ptr) atomic_swap_ptr(&_tail, (void*) me);
+	#else
 	__sync_synchronize();
 	qnode_ptr pred = __sync_lock_test_and_set(&_tail, me);
-#endif
-    
+	#endif
+
 	// wait our turn
 	spin_queue(me->_pred = pred);
-    
-	/* forcibly stake our claim. We waited our turn, so we don't
-	   have to be nice any more. If we already added ourselves to
-	   the write count, decrement by one to give up our ticket and
-	   claim the head position in one operation.
-	*/
-#ifdef __sparcv9
-	atomic_add_32(&_state_halves._writers, have_ticket? -1 : 1);
-#else
-	__sync_fetch_and_add(&_state_halves._writers, have_ticket? -1 : 1);
-#endif
 
-	/* now spin until we have the lock. We're at the head of the
-	   queue, so we can ignore the _writers field from now on
-	 */
-	while(_state_halves._readers > 0);
-#ifdef __sparcv9
-	membar_enter();
-#else
-	__sync_synchronize();
-#endif
-	
+	/* stake our claim so readers stop grabbing the lock. At most
+	   one other writer might be ahead of us at this point -- the
+	   one whose CAS succeeded between my last reader calling
+	   release() and me finishing this atomic add. All other
+	   potential writers will be in the queue behind me, and
+	   haven't staked their claims yet.
+	*/
+	#ifdef __SUNPRO_CC
+	atomic_add_64(&_state, ONE_WRITER);
+	#else
+	__sync_fetch_and_add(&_state, ONE_WRITER);
+	#endif
+	//assert(_state < 0x10000);
+
+	// now spin until we have the lock
+	spin_state(-1, ONE_WRITER);
+
 	// no need to pass the baton to our successor quite yet...
 	return me;
     }
-  
+
     qnode_ptr release_write(qnode_ptr me) {
 	//assert(_state < 0x10000);
 	qnode_ptr pred = me->_pred;
 
-#ifdef __SUNPRO_CC
+	#ifdef __SUNPRO_CC
 	membar_exit();
-	atomic_dec_32(&_state_halves._writers);
-#else
-	__sync_fetch_and_add(&_state_halves._writers, -1);
-#endif
+	atomic_add_64(&_state, -ONE_WRITER);
+	#else
+	__sync_fetch_and_add(&_state, -ONE_WRITER);
+	#endif
 	//assert(_state < 0x10000);
 	if(pred) {
 	    /* we are in the queue - pass the baton to our successor
 	       (they may very well block if there's another writer
 	       around, but we have to wake them up any way or risk
 	       deadlock.
-	     */
+	    */
 	    me->_waiting = false;
 	    me = pred;
 	}
@@ -474,58 +442,51 @@ struct fast_rwlock {
     qnode_ptr acquire_read(qnode_ptr me) {
 	//assert(_state < 0x10000);
 	static int const READ_CAS_ATTEMPTS = 3;
-    
+
 	// first, try to CAS directly
-	rw_halves old_halves = _state_halves;
 	for(int i=0; i < READ_CAS_ATTEMPTS; i++) {
 	    // fail immediately if there's a writer
-	    rw_halves new_halves = old_halves;
-	    new_halves._readers++;
-	    if(new_halves._writers == 0 && 
-#ifdef __sparcv9
-	       (new_halves=atomic_cas(&_state_halves, old_halves, new_halves)) == old_halves
-#else
-	       (new_halves=__sync_val_compare_and_swap(&_state_halves, old_halves, new_halves)) == old_halves
-#endif
+	    long old_state = _state & READ_MASK;
+	    if(
+	       #ifdef __SUNPRO_CC
+	       _state == old_state &&  atomic_cas_64(&_state, old_state, old_state+ONE_READER) == old_state
+	       #else
+	       __sync_bool_compare_and_swap(&_state, old_state, old_state+ONE_READER)
+	       #endif
 	       ) {
 		//assert(_state < 0x10000);
 		me->_pred = NULL; // indicates the CAS succeeded
-#ifdef __sparcv9
+		#ifdef __SUNPRO_CC
 		membar_enter();
-#endif
+		#endif
 		return me;
 	    }
-	    old_halves = new_halves;
 	}
-    
+
 	// enqueue
 	me->_waiting = true;
-#ifdef __sparcv9
+	#ifdef __SUNPRO_CC
 	membar_producer(); // finish updates to i *before* it hits the queue
-	qnode_ptr pred = atomic_swap(&_tail, me);
-#else
+	qnode_ptr pred = (qnode_ptr) atomic_swap_ptr(&_tail, (void*) me);
+	#else
 	__sync_synchronize();
 	qnode_ptr pred = __sync_lock_test_and_set(&_tail, me);
-#endif
-    
+	#endif
+
 	// wait our turn
 	spin_queue(me->_pred = pred);
 
-	// wait for the current writer (if any) to leave
-	while(_state_halves._writers & 1);
-#ifdef __sparcv9
-	membar_enter();
-#else
-	__sync_synchronize();
-#endif
-	
 	// stake our claim
-#ifdef __sparcv9
-	atomic_inc_32(&_state_halves._readers);
-#else
-	__sync_fetch_and_add(&_state, 1);
-#endif
-	
+	#ifdef __SUNPRO_CC
+	atomic_add_64(&_state, ONE_READER);
+	#else
+	__sync_fetch_and_add(&_state, ONE_READER);
+	#endif
+	//assert(_state < 0x10000);
+
+	// now spin until we have the lock
+	spin_state(WRITE_MASK, 0);
+
 	// pass the baton to our successor
 	me->_waiting = false;
 	pred->_pred = pred; // anything but NULL
@@ -535,19 +496,21 @@ struct fast_rwlock {
     qnode_ptr release_read(qnode_ptr me) {
 	//assert(_state < 0x10000);
 	// we already passed the baton
-#ifdef __sparcv9
+	#ifdef __SUNPRO_CC
 	membar_exit();
-	atomic_dec_32(&_state_halves._readers);
-#else
-	__sync_fetch_and_add(&_state_halves._readers, -1);
-#endif
+	atomic_add_64(&_state, -ONE_READER);
+	#else
+	__sync_fetch_and_add(&_state, -ONE_READER);
+	#endif
 	//assert(_state < 0x10000);
 	return me;
     }
 };
 
-static int const THREADS = 32;
-static long const COUNT = 1l << 16;
+
+
+static int const THREADS = 8;
+static long const COUNT = 1l << 20;
 
 #include <unistd.h>
 volatile bool ready;
@@ -680,18 +643,18 @@ pthread_mutex_t global_plock = PTHREAD_MUTEX_INITIALIZER;
 pthread_rwlock_t global_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 mcs_lock global_mcs_lock;
 
-#if 0
+#if 1
 TEST_LOCK(pthread, sizeof(int), pthread_mutex_lock(&global_plock), pthread_mutex_unlock(&global_plock));
 #endif
 
-#if 1
+#if 0
 TEST_LOCK(clh_manual, clh_lock::dead_handle h = clh_lock::create_handle(),
 	  clh_lock::live_handle lh = global_lock.acquire(h), h = global_lock.release(lh));
-TEST_LOCK(clh_semiauto, clh_lock::Manager *m = clh_lock::_manager, global_lock.acquire(m), global_lock.release(m));
+//TEST_LOCK(clh_semiauto, clh_lock::Manager *m = clh_lock::_manager, global_lock.acquire(m), global_lock.release(m));
 TEST_LOCK(clh_auto, sizeof(int), global_lock.acquire(), global_lock.release());
 #endif
 
-#if 1
+#if 0
 TEST_LOCK(mcs, mcs_lock::qnode me, global_mcs_lock.acquire(me), global_mcs_lock.release(me));
 #endif  
 
