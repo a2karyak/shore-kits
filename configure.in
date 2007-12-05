@@ -302,12 +302,19 @@ CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
         -Wall -Wcast-align -Wextra -Wfloat-equal \
 	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 
-LDFLAGS="-lnsl -ldl -lm -lpthread"
+LDFLAGS="-lnsl -ldl -lm -lpthread "
 
 if test "$ARCHOS" = "SPARC_SUN"; then
-    LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
+    LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9 -lcurses"
     CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 #    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xs -g -xinstrument=datarace -mt -lpthread -library=stlport4"
+fi
+
+# Adding curses lib
+if test "$ARCHOS" = "SPARC_SUN"; then
+   LDFLAGS="$LDFLAGS -lcurses"
+else
+   LDFLAGS="$LDFLAGS -lncurses"
 fi
 
 AC_SUBST(CXXFLAGS)

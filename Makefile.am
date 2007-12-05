@@ -457,8 +457,7 @@ SE = $(top_srcdir)/src/server
 qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
 qpipe_LDADD = $(LDADD) \
 	-lreadline \
-	-lltdl \
-	-lncurses
+	-lltdl
 
 COMMANDS = \
    $(SE)/command/printer.cpp \
