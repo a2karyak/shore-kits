@@ -509,7 +509,7 @@ struct fast_rwlock {
 
 
 
-static int const THREADS = 8;
+static int const THREADS = 32;
 static long const COUNT = 1l << 20;
 
 #include <unistd.h>
@@ -541,8 +541,8 @@ extern "C" void* run(void* arg) {
      return u.vptr;
 }
 
-static long const NCS_LINES = 10; // 1usec
-static int const CS_LINES = 0;
+static long const NCS_LINES = 0; // 1usec
+static int const CS_LINES = 10;
 struct cache_line {
     int data;
     int filler[64/sizeof(int)-1]; // 64-byte lines

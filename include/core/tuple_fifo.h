@@ -114,7 +114,7 @@ public:
         destroy();
     }
     
-    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE(tuple_fifo);
 
     /* Global tuple_fifo statistics */
     static int open_fifos();

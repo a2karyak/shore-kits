@@ -18,12 +18,12 @@ struct malloc_alloc {
 };
 
 malloc_alloc ma;
-pool_alloc pa;
+pool_alloc pa("test");
 
 // just try to allocate and free a bunch in a row...
 void test1() {
     std::vector<void*> pointers;
-    static int const ITERATIONS = 1;
+    static int const ITERATIONS = 1000;
 
     // find out how much the shuffles cost
     pointers.resize(1000);

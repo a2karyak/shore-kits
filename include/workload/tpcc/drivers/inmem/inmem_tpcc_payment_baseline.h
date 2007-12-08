@@ -39,8 +39,7 @@ public:
     
     virtual void submit(void* disp, memObject_t* mem);
 
-    trx_packet_t* create_inmem_payment_baseline_packet(const c_str& client_prefix,
-                                                       tuple_fifo* bp_buffer,
+    trx_packet_t* create_inmem_payment_baseline_packet(tuple_fifo* bp_buffer,
                                                        tuple_filter_t* bp_filter,
                                                        int sf);
 };

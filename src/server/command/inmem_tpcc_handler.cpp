@@ -60,10 +60,10 @@ void inmem_tpcc_handler_t::init() {
         inmem_env = new InMemTPCCEnv();
 
         // register drivers...
-        add_driver("inmem_payment_baseline", 
+        add_driver("payment_baseline", 
                    new inmem_tpcc_payment_baseline_driver(c_str("INMEM_PAYMENT_BASELINE")));
 
-        add_driver("inmem_payment_staged", 
+        add_driver("payment_staged", 
                    new inmem_tpcc_payment_staged_driver(c_str("INMEM_PAYMENT_STAGED")));
 
 

@@ -19,7 +19,7 @@ protected:
     
 public:
 
-    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE(query_state_t);
     
     /**
      * We could create a default implementation that does not

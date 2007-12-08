@@ -49,14 +49,14 @@ inmem_tpcc_payment_single_thr_driver::singleThrPaymentHelper(payment_input_t pin
     // Runs the TRX in a HELPER thread
     array_guard_t<pthread_t> helper_id = new pthread_t[1];
     inmem_tpcc_payment_single_thr_helper* helper;
-
+    static c_str name = "INMEM-PAY-SINGLE-HELPER";
     // Creates a new thread (helper) which executes the transaction
     // We do this trick in order to be fair with the staged version and not execute
     // the whole transaction in the context of the client
     try {
 
         helper =
-            new inmem_tpcc_payment_single_thr_helper(c_str("INMEM-PAY-SINGLE-HELPER"),
+            new inmem_tpcc_payment_single_thr_helper(name,
                                                      pin,
                                                      _id,
                                                      _env);

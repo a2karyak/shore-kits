@@ -1,7 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util/thread.h"
-
+#include "util/clh_lock.h"
+#include "util/clh_rwlock.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h> /* Added this for Enceladus. Maybe not work on lomond. */
@@ -71,8 +72,8 @@ static void setup_thread(thread_args* args);
 
 /* internal data structures */
 
-static thread_local<thread_t> THREAD_KEY_SELF(&thread_destroy);
-thread_local<thread_pool>     THREAD_POOL;
+static __thread thread_t* THREAD_KEY_SELF;
+__thread thread_pool* THREAD_POOL;
 // the default thread pool effectively has no limit.
 static thread_pool default_thread_pool(1<<30);
 
@@ -172,9 +173,9 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
     const pthread_mutexattr_t* ptr_mutex_attr;
     int err;
 
-  
     if (attr == NULL)
     {
+#if 0
         err = pthread_mutexattr_init(&mutex_attr);
         THROW_IF(ThreadException, err);
 
@@ -185,7 +186,9 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
         THROW_IF(ThreadException, err);
 
         ptr_mutex_attr = &mutex_attr;
+#else
 	ptr_mutex_attr = attr;
+#endif
     }
     else
     {
@@ -330,6 +333,9 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 
 void* start_thread(void* thread_object)
 {
+    clh_lock::thread_init_manager();
+    clh_rwlock::thread_init_manager();
+    
     thread_args* args = (thread_args*)thread_object;
     setup_thread(args);
     delete args;
@@ -340,17 +346,16 @@ void* start_thread(void* thread_object)
     pool->start();
     void* rval = thread->run();
     pool->stop();
+    
+    clh_lock::thread_destroy_manager();
+    clh_rwlock::thread_destroy_manager();
+    
+    if(thread->delete_me())
+	delete thread;
     return rval;
 }
 
 
-
-void thread_destroy(void* thread_object)
-{
-    thread_t* thread = (thread_t*)thread_object;
-    if(thread && thread->delete_me())
-        delete thread;
-}
 
 // NOTE: we can't call thread_xxx methods because they call us
 void thread_pool::start() {

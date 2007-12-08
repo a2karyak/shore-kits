@@ -28,7 +28,7 @@ private:
     
 public:
 
-    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE(tuple_filter_t);
 
     size_t input_tuple_size() { return _tuple_size; }
 

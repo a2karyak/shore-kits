@@ -146,10 +146,11 @@ public:
                                          InMemTPCCEnv* env)
         : thread_t(description), _id(id), _iterations(iter), _sf(sf), _env(env)
     {
+	static c_str name = "INMEM-PAY-SINGLE-POOL";
 #ifdef WITH_POOLED_THREAD
         sem_init(&_sem, 0, 0);
         sem_init(&_poolsem, 0, 0);
-        _helper = new inmem_tpcc_payment_single_thr_helper(c_str("INMEM-PAY-SINGLE-POOL"),
+        _helper = new inmem_tpcc_payment_single_thr_helper(name,
                                                            create_payment_input(_sf),
                                                            _id,
                                                            &_sem,

@@ -174,24 +174,25 @@ public:
     }
 };
 
+class page;
 struct fast_page_pool : page_pool {
 private:
     static fast_page_pool _instance;
-    pool_alloc _alloc;
 public:
     static fast_page_pool* instance() {
 	return &_instance;
     }
     fast_page_pool(size_t page_size = get_default_page_size())
-	: page_pool(page_size), _alloc("page")
+	: page_pool(page_size)
     {
     }
     virtual void* alloc() {
-	return _alloc.alloc(page_size());
+	return pool()->alloc(page_size());
     }
     virtual void free(void* ptr) {
-	_alloc.free(ptr);
+	pool()->free(ptr);
     }
+    DECLARE_POOL_ALLOC_POOL(page);
 };
 
 

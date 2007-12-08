@@ -47,6 +47,7 @@ void tpcc_payment_nos_driver::submit(void* disp, memObject_t*) {
     int err;
     pthread_attr_t pattr;
 
+    static c_str name = "PAYMENT_SINGLE_THR";
 
     try {
         for(int idx=0; idx < info.num_clients; idx++) {
@@ -60,7 +61,7 @@ void tpcc_payment_nos_driver::submit(void* disp, memObject_t*) {
   
     
             tpcc_payment_single_thr_driver* client = 
-                new tpcc_payment_single_thr_driver(c_str("PAYMENT_SINGLE_THR"), 
+                new tpcc_payment_single_thr_driver(name,
                                                    idx,
                                                    info.num_iterations);
   

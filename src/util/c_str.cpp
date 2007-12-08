@@ -8,19 +8,12 @@
 #include "util/guard.h"
 #include <stdio.h>
 
-#ifdef __SUNPRO_CC
+#ifdef __sparcv9
 #include <atomic.h>
 #endif
 
 #include "util/pool_alloc.h"
 
-// We only have atomic ops on some arch...
-#ifdef __SUNPRO_CC
-#define USE_ATOMIC_OPS
-#else
-// Unsupported arch must use locks
-#undef USE_ATOMIC_OPS
-#endif
 #undef TRACK_LEAKS
 
 #ifdef TRACK_LEAKS
@@ -56,17 +49,15 @@ void* get_caller() { return NULL; }
 
 /**
    HACK: This is "Part B" of the "Swatchz Counter." Allocate a
-   pool_alloc on the heap and assign it to the variable. Because the
+   owner_map on the heap and assign it to the variable. Because the
    pointer defaults to a compile time constant (NULL), my changes are
    in no danger of getting clobbered when this file's static
    initializers run. For the same reason, swatchz_count will already
    be initialized to 0 before I get here.
  */
-static pool_alloc* c_str_alloc = NULL;
 static int swatchz_count = 0;
 initialize_allocator::initialize_allocator() {
     if(!swatchz_count++) {
-	c_str_alloc = new pool_alloc("c_str");
 #ifdef TRACK_LEAKS
 	owners = new owner_map;
 #endif
@@ -79,13 +70,10 @@ initialize_allocator::initialize_allocator() {
 const c_str c_str::EMPTY_STRING("%s", "");
 
 struct c_str::c_str_data {
-#ifndef USE_ATOMIC_OPS
-    // Use atomic primitives instead of locks
-    mutable pthread_mutex_t _lock;
-#endif
     mutable unsigned long _count;
     char _data[0];
     char* _str() { return _data; }
+    DECLARE_POOL_ALLOC_POOL(c_str_data);
 };
 
 
@@ -134,11 +122,8 @@ c_str::c_str(const char* str, ...)
 	count = strlen(str);
     }
 
-    _data = (c_str_data*) c_str_alloc->alloc(sizeof(c_str_data) + count + 1);
+    _data = (c_str_data*) c_str_data::pool()->alloc(sizeof(c_str_data) + count + 1);
 
-#ifndef USE_ATOMIC_OPS
-    _data->_lock = thread_mutex_create();
-#endif
     _data->_count = 1;
     memcpy(_data->_str(), src, count+1);
     
@@ -171,19 +156,12 @@ void c_str::assign(const c_str &other) {
     // other._data won't disappear because it can't be destroyed before we return.
     _data = other._data;
 
-#ifdef USE_ATOMIC_OPS
-#ifdef __SUNPRO_CC
+#ifdef __sparcv9
     membar_enter();
-    atomic_add_64(&_data->_count, 1);
+    atomic_inc_64(&_data->_count);
     membar_exit();
 #else
-#error "Sorry, you're stuck with locks on this architecture"
-#endif
-#else
-    // * * * BEGIN CRITICAL SECTION * * *
-    critical_section_t cs(_data->_lock);
-    _data->_count++;
-    // * * * END CRITICAL SECTION * * *
+    __sync_fetch_and_add(&_data->_count, 1);
 #endif
 }
 
@@ -191,22 +169,13 @@ void c_str::assign(const c_str &other) {
 
 void c_str::release() {    
     int count;
-#ifdef USE_ATOMIC_OPS
-#ifdef __SUNPRO_CC
-    membar_enter();
-    count = atomic_add_64_nv(&_data->_count, -1);
-    membar_exit();
+#ifdef __sparcv9
+    membar_producer();
+    count = atomic_dec_64_nv(&_data->_count);
+    membar_consumer();
 #else
-#error "Sorry, you're stuck with locks on this architecture"
+    count = __sync_add_and_fetch(&_data->_count, -1);
 #endif    
-#else
-    // * * * BEGIN CRITICAL SECTION * * *
-    {
-	critical_section_t cs(_data->_lock);
-	count = --_data->_count;
-    }
-    // * * * END CRITICAL SECTION * * *
-#endif
     if(count == 0) {
         // we were the last reference, so nobody else could
         // possibly modify the data struct any more
@@ -219,6 +188,6 @@ void c_str::release() {
 	owners->erase(_data);
 	pthread_mutex_unlock(&owner_mutex);
 #endif
-        c_str_alloc->free(_data);
+	c_str_data::pool()->free(_data);
     }
 }

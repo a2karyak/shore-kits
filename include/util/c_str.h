@@ -41,7 +41,7 @@ using namespace std;
 struct initialize_allocator {
     initialize_allocator();
 };
-static initialize_allocator swatchz;
+static initialize_allocator c_str_swatchz;
 
 class c_str {
 

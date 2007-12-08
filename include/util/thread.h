@@ -194,6 +194,7 @@ void      thread_init(void);
 thread_t* thread_get_self(void);
 pthread_t thread_create(thread_t* t, thread_pool* p=NULL);
 
+#if 0 // superceded by thread_local.h
 template<typename T>
 struct thread_local {
     pthread_key_t _key;
@@ -232,8 +233,8 @@ struct thread_local {
 	return get();
     }
 };
-
-extern thread_local<thread_pool> THREAD_POOL;
+#endif
+extern __thread thread_pool* THREAD_POOL;
 
 
 #endif  /* __THREAD_H */

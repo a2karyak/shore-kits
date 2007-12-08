@@ -33,18 +33,40 @@
 
 #include "util/sync.h"
 #include "util/trace.h"
+#include "util/clh_rwlock.h"
+#include "util/clh_lock.h"
+
 
 typedef unsigned int uint;
 
-#undef BPTREE_USE_MUTEX
+#define BPTREE_USE_MUTEX
+#undef BPTREE_USE_CLH_RWLOCK
+#undef BPTREE_USE_CLH_LOCK
 
-#ifdef BPTREE_USE_MUTEX
+#if defined(BPTREE_USE_MUTEX)
 typedef pthread_mutex_t Lock;
 #define INIT(lock) pthread_mutex_init(&lock, NULL)
 #define DESTROY(lock) pthread_mutex_destroy(&lock)
 #define ACQUIRE_READ(lock) pthread_mutex_lock(&lock)
 #define ACQUIRE_WRITE(lock) pthread_mutex_lock(&lock)
 #define RELEASE(lock) pthread_mutex_unlock(&lock)
+
+#elif defined(BPTREE_USE_CLH_RWLOCK)
+typedef clh_rwlock Lock;
+#define INIT(lock) 
+#define DESTROY(lock) 
+#define ACQUIRE_READ(lock) lock.acquire_read()
+#define ACQUIRE_WRITE(lock) lock.acquire_write()
+#define RELEASE(lock) lock.release()
+
+#elif defined(BPTREE_USE_CLH_LOCK)
+typedef clh_lock Lock;
+#define INIT(lock)
+#define DESTROY(lock)
+#define ACQUIRE_READ(lock) lock.acquire()
+#define ACQUIRE_WRITE(lock) lock.acquire()
+#define RELEASE(lock) lock.release()
+
 #else
 typedef  pthread_rwlock_t Lock;
 #define INIT(lock) pthread_rwlock_init(&lock, NULL)
@@ -91,6 +113,7 @@ private:
         KEY              keys[LEAF_ENTRIES];
         VALUE            values[LEAF_ENTRIES];
         unsigned char    _pad[LEAF_PADDING];
+	DECLARE_POOL_ALLOC_NEW_AND_DELETE(LeafNode);
     };
 
 
@@ -118,6 +141,7 @@ private:
         KEY              keys[INODE_ENTRIES];
         void*            children[INODE_ENTRIES+1];
         unsigned char    _pad[INODE_PADDING];
+	DECLARE_POOL_ALLOC_NEW_AND_DELETE(InnerNode);
     };
 
 
@@ -147,8 +171,6 @@ public:
         : _name(aTreeName), _depth(0)
     {
         // Initialization of mutexes
-        pthread_mutex_init(&_innerPool_mutex, NULL);
-        pthread_mutex_init(&_leafPool_mutex, NULL);
         INIT(_root_rwlock);
 
         // Initialization of the root, should be done after mutex init
@@ -167,8 +189,6 @@ public:
         // when innerPool and leafPool are destroyed.
 
         // Destroes the mutexes
-        pthread_mutex_destroy(&_innerPool_mutex);
-        pthread_mutex_destroy(&_leafPool_mutex);
         DESTROY(_root_rwlock);
     }
 
@@ -544,16 +564,16 @@ private:
 	    InnerNode* inner = reinterpret_cast<InnerNode*>(node);
 	    for(int i=0; i <= inner->num_keys; i++)
 		delete_node(inner->children[i], localDepth-1);
-	    _innerPool.destroy(inner);
+	    delete_inner_node(inner);
 	}
 	else {
 	    LeafNode* leaf = reinterpret_cast<LeafNode*>(node);
-	    _leafPool.destroy(leaf);
+	    delete_leaf_node(leaf);
 	}
     }
     void load_node(Reader in, void* &node, int localDepth) {
 	if(localDepth) {
-	    InnerNode* inner = _innerPool.construct();
+	    InnerNode* inner = new_inner_node();
 	    in >> inner->num_keys >> inner->keys;
 
 	    for(int i=0; i <= inner->num_keys; i++) 
@@ -561,7 +581,7 @@ private:
 	    node = inner;
 	}
 	else {
-	    LeafNode* leaf = _leafPool.construct();
+	    LeafNode* leaf = new_leaf_node();
 	    in >> leaf->num_keys >> leaf->keys >> leaf->values;
 	    node = leaf;
 	}
@@ -717,29 +737,12 @@ private:
      */
 
     LeafNode* new_leaf_node() {
-        LeafNode* result;
-
-        // regulate the access to the leafPool
-        pthread_mutex_lock(&_leafPool_mutex);
-
-        //result= new LeafNode();
-        result = _leafPool.construct();
-
-        // TRACE( TRACE_DEBUG, "New LeafNode at (%p)\n", result);
-
-        // release leafPool lock
-        pthread_mutex_unlock(&_leafPool_mutex);
-
-        return result;
+	return new LeafNode;
     }
     
     // Frees a leaf node previously allocated with new_leaf_node()
     void delete_leaf_node(LeafNode* node) {
-
-        assert (0); // (ip): Not implemented yet!
-
-        //cout << "Deleting LeafNode at " << node << endl;
-        _leafPool.destroy(node);
+	delete node;
     }
 
 
@@ -751,27 +754,12 @@ private:
 
     InnerNode* new_inner_node() 
     {
-        InnerNode* result;
-
-        // regulate the access to the innerPool
-        pthread_mutex_lock(&_innerPool_mutex);
-
-        result = _innerPool.construct();
-
-        // TRACE( TRACE_DEBUG, "New InnerNode at (%p)\n", result);
-            
-        // release innerPool lock
-        pthread_mutex_unlock(&_innerPool_mutex);
-        return result;
+	return new InnerNode;
     }
 
     // Frees an inner node previously allocated with new_inner_node()
     void delete_inner_node(InnerNode* node) {
-
-        assert (0); // (ip): Not implemented yet!
-
-        //cout << "Deleting InnerNode at " << node << endl;
-        _innerPool.destroy(node);
+	delete node;
     }
 
 
@@ -1153,13 +1141,6 @@ private:
 
     typedef AlignedMemoryAllocator<NODE_ALIGNMENT> AlignedAllocator;
     
-    // Node memory allocators. IMPORTANT @NOTE: they must be declared
-    // before the root to make sure that they are properly initialised
-    // before being used to allocate any node
-    pthread_mutex_t _innerPool_mutex;
-    boost::object_pool<InnerNode, AlignedAllocator> _innerPool;
-    pthread_mutex_t _leafPool_mutex;
-    boost::object_pool<LeafNode, AlignedAllocator>  _leafPool;
     
     // Depth of the tree. A tree of depth 0 only has a leaf node.
     uint _depth;

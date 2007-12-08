@@ -34,8 +34,6 @@ static int total_fifos_existed = 0;
 static int total_fifos_experienced_blocking = 0;
 static size_t total_prefetches = 0;
 
-
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(tuple_fifo, fifo);
     
 
 

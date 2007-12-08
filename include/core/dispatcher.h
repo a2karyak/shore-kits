@@ -137,7 +137,7 @@ public:
     {
     }
 
-    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE(worker_reserver_t);
     
     virtual void declare(const c_str& name, int count) {
         int curr_needs = _worker_needs[name];
@@ -165,7 +165,7 @@ public:
     }
     
 
-    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE(worker_releaser_t);
 
     virtual void declare(const c_str& name, int count) {
         int curr_needs = _worker_needs[name];

@@ -26,9 +26,6 @@ dispatcher_t* dispatcher_t::_instance = NULL;
 pthread_mutex_t dispatcher_t::_instance_lock = thread_mutex_create();
 
 
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(dispatcher_t::worker_reserver_t, reserve);
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(dispatcher_t::worker_releaser_t, release);    
-
 
 dispatcher_t::dispatcher_t() { }
 

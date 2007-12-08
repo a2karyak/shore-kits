@@ -30,13 +30,12 @@ inmem_payment_baseline_stage_t::inmem_payment_baseline_stage_t() {
     TRACE(TRACE_DEBUG, "INMEM_PAYMENT_BASELINE constructor\n");
 }
 
-static pool_alloc array_alloc("payment");
-
 struct alloc_guard {
     char* _ptr;
-    alloc_guard(int size) : _ptr((char*) array_alloc.alloc(size)) { }
-    ~alloc_guard() { array_alloc.free(_ptr); }
+    alloc_guard(int size) : _ptr((char*) pool()->alloc(size)) { }
+    ~alloc_guard() { pool()->free(_ptr); }
     operator char*() { return _ptr; }
+    DECLARE_POOL_ALLOC_POOL(alloc_guard);
 };
 
 /**

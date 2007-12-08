@@ -14,19 +14,13 @@
 #include <cstdio>
 #endif
 #include <new>
+#include <vector>
 
 #ifdef DEBUG_ALLOC
 #include <cstdio>
 using namespace std;
 #endif
 
-// We only have atomic ops on some arch...
-#ifdef __SUNPRO_CC
-#define USE_ATOMIC_OPS
-#else
-// Unsupported arch must use locks
-#undef USE_ATOMIC_OPS
-#endif
 #undef TRACK_LEAKS
 
 
@@ -34,6 +28,50 @@ using namespace std;
 #undef TRACK_BLOCKS
 
 
+namespace {
+    /* This mess here makes the pointer associated with a
+       pthread_key_t act like a normal pointer (except expensive).
+     */
+    typedef std::vector<pool_alloc*> pool_list;
+
+    extern "C" void delete_pool_list(void* arg) {
+	pool_list* pl = (pool_list*) arg;
+	if(!pl)
+	    return;
+	for(int i=0; i < pl->size(); i++)
+	    delete pl->at(i);
+
+	delete pl;
+    }
+    
+    struct {
+	pthread_key_t ptkey;
+	void init() {
+	    // WARNING: not thread safe! (must call it during static initialization)
+	    static bool initialized = false;
+	    if(initialized)
+		return;
+	    
+	    int err = pthread_key_create(&ptkey, delete_pool_list);
+	    assert(!err);
+	    initialized = true;
+	}
+	operator pool_list*() { return get(); }
+	pool_list* operator->() { return get(); }
+	pool_list* get() {
+	    pool_list* ptr = (pool_list*) pthread_getspecific(ptkey);
+	    if(!ptr)
+		pthread_setspecific(ptkey, ptr = new pool_list);
+	    
+	    return ptr;
+	}
+    } thread_local_pools;
+}
+
+// the rest of the swatchz counter
+static_initialize_pool_alloc::static_initialize_pool_alloc() {
+    thread_local_pools.init();
+}
 
 // always shift left, 0 indicates full block
 typedef unsigned long bitmap;
@@ -66,21 +104,19 @@ typedef unsigned long bitmap;
    
  */
 // 
-static int const BLOCK_UNITS = 64; // one for each bit in a 'bitmap'
-
 #ifdef TRACK_BLOCKS
 #include <map>
 #include <vector>
 #include <utility>
 #include <algorithm>
-namespace {struct block; }
+
 static pthread_mutex_t block_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct block_entry {
-    block* _block;
+    pool_alloc::block* _block;
     char const* _name;
     pthread_t _tid;
     int _delta;
-    block_entry(block* b, char const* name, pthread_t tid, int delta)
+    block_entry(pool_alloc::block* b, char const* name, pthread_t tid, int delta)
 	: _block(b), _name(name), _tid(tid), _delta(delta) { }
     bool operator<(block_entry const &other) const {
 	if(_name < other._name)
@@ -94,60 +130,17 @@ struct block_entry {
 	return _block < other._block;
     }
 };
-typedef std::map<block*, int> block_map; // block, delta
+typedef std::map<pool_alloc::block*, int> block_map; // block, delta
 typedef std::pair<block_map, pthread_mutex_t> block_map_sync;
 typedef std::pair<char const*, pthread_t> thread_alloc_key;
 typedef std::pair<block_map_sync*, bool> thread_alloc_value; // map, thread live?
 typedef std::map<thread_alloc_key, thread_alloc_value> thread_maps;
 typedef std::vector<block_entry> block_list;
 static thread_maps* live_blocks;
-#endif
 
-namespace {
-    class header;
-
-    // WARNING: sizeof(block) must be a multiple of 8 bytes
-    struct block {
-#ifndef USE_ATOMIC_OPS
-	pthread_mutex_t _lock;
-#endif
-	bitmap _bitmap; // 1 bits mark in-use slots
-#if defined(TRACE_LEAKS)
-	const char* _name;
-#endif
-#if defined(TRACK_BLOCKS)
-	block_map_sync* _live_blocks;
-#endif
-	char _data[0]; // place-holder
-	
-	// Whoever creates me owns all the data, and can dole it out as they choose
-	block(char const* name)
-	    : _bitmap(~0ull)
-	{
-#ifndef USE_ATOMIC_OPS
-	    _lock = thread_mutex_create();
-#endif
-#ifdef TRACE_LEAKS
-	    _name = name;
-#endif
-	}
-	header* get_header(int index, bitmap range);
-	void cut_loose();
-    };
-
-    // WARNING: sizeof(header) must be a multiple of 8 bytes
-    struct header {
-	bitmap _range; // 0 bits mark me
-	block* _block;
-	char _data[0]; // place-holder for the actual data
-	void release();
-    };
-}
-
-#ifdef TRACK_BLOCKS
 void print_live_blocks() {
-    // not locked because we only use it from the debugger anyway
-    block_list blist;
+    // not locked because we should only use it from the debugger anyway
+    pool_alloc::block_list blist;
 
     // (thread_alloc_key, thread_alloc_value) pairs
     thread_maps::iterator map = live_blocks->begin();
@@ -174,111 +167,94 @@ void print_live_blocks() {
     for(; it != blist.end(); ++it) {
 	printf("%10s (%3d): 0x%016p %4d ", it->_name, it->_tid, it->_block, it->_delta);
 	bitmap units = it->_block->_bitmap;
-	for(int i=0; i < BLOCK_UNITS; i++) {
+	for(int i=0; i < pool_alloc::BLOCK_UNITS; i++) {
 	    putchar('0' + (units&0x1));
 	    units >>= 1;
 	}
 	putchar('\n');    
     }
 }
-#endif
-struct in_progress_block {
-    char const* _name;
-    block* _block;
-    bitmap _next_unit; // a single bit that marches right to left; 0 indicates the block is full
-    int _delta; // how much do I increment the offset for each allocation from the current block?
-    int _offset; // current block offset in bytes
-    int _alloc_count;
-    int _huge_count;
-    int _alloc_sizes[BLOCK_UNITS];
-    int _huge_sizes[BLOCK_UNITS];
-#ifdef TRACK_BLOCKS
-    block_map_sync* _live_blocks;
-#endif
-    in_progress_block(char const* name, int delta)
-	: _name(name), _block(NULL), _next_unit(0), _delta(delta), _offset(0),
-	  _alloc_count(0), _huge_count(0)
-    {
-#ifdef TRACK_BLOCKS
-	// register our private block map
-	_live_blocks = new block_map_sync;
-	_live_blocks->second = thread_mutex_create();
-	critical_section_t cs(block_mutex);
-	(*live_blocks)[std::make_pair(_name, pthread_self())] = std::make_pair(_live_blocks, true);
-#endif
-    }
-    ~in_progress_block() {
-	discard_block();
-#ifdef TRACK_BLOCKS
-	// mark the block as dead
-	critical_section_t cs(block_mutex);
-	(*live_blocks)[std::make_pair(_name, pthread_self())].second = false;
-#endif
-    }
-    void new_block();
-    header* allocate(int size);
-    header* allocate_normal(int size);
-    header* allocate_huge(int size);
-    void discard_block();
-};
-
-
-namespace {
-    header* block::get_header(int offset, bitmap range) {
-	header* h = (header*) &_data[offset];
-	h->_block = this;
-	h->_range = range;
-	return h;
-    }
-
-    void header::release() {
-
-#ifdef TRACE_LEAKS
-	fprintf(stderr, "%s unit -1 %p %016llx\n", _block->_name, _block, _range);
-#endif
-
-	bitmap result;
-	bitmap clear_range = ~_range;
-#ifdef USE_ATOMIC_OPS
-#ifdef __SUNPRO_CC
-	membar_enter();
-	result = atomic_and_64_nv(&_block->_bitmap, clear_range);
-	membar_exit();
 #else
-#error "Sorry, atomic ops not supported on this architecture"
+void print_live_blocks() {
+    printf("Sorry, block tracking is not enabled. Recompile with -DTRACK_BLOCKS and try again)\n");
+}
 #endif
-#else
-	{
-	    critical_section_t cs(_block->_lock);
-	    result = _block->_bitmap & clear_range;
-	    _block->_bitmap = result;
-	}
-#endif
-	
-	// have all the units come back?
-	if(!result) {
-#ifdef TRACE_LEAKS
-	    if(!clear_range)
-		fprintf(stderr, "%s block -1 %p %016llx (oversized)\n", _block->_name, _block, _range);
-	    else
-		fprintf(stderr, "%s block -1 %p\n", _block->_name, _block);
-#endif
+
+pool_alloc::pool_alloc(char const* name, long delta)
+    : _name(name), _block(NULL), _next_unit(0), _delta(delta), _offset(0),
+      _alloc_count(0), _huge_count(0)
+{
+    //    printf("t@%d initializing a pool_alloc<%s>\n ", pthread_self(), name);
+    memset(_alloc_sizes, 0, sizeof(_alloc_sizes));
+    memset(_huge_sizes, 0, sizeof(_huge_sizes));
 #ifdef TRACK_BLOCKS
-	    {
-		critical_section_t cs(_block->_live_blocks->second);
-		_block->_live_blocks->first.erase(_block);
-	    }
+    // register our private block map
+    _live_blocks = new block_map_sync;
+    _live_blocks->second = thread_mutex_create();
+    critical_section_t cs(block_mutex);
+    (*live_blocks)[std::make_pair(_name, pthread_self())] = std::make_pair(_live_blocks, true);
 #endif
-	    // note: frees the memory 'this' occupies
-	    ::free(_block);
-	}
-    }
-    
-    
+
+    // add myself to the pool list
+    thread_local_pools->push_back(this);
 }
 
+pool_alloc::~pool_alloc() {
+    //    printf("t@%d destroying a pool_alloc<%s>\n", pthread_self(), _name);
+    discard_block();
+#ifdef TRACK_BLOCKS
+    // mark the block as dead
+    critical_section_t cs(block_mutex);
+    (*live_blocks)[std::make_pair(_name, pthread_self())].second = false;
+#endif
+}
+
+
+pool_alloc::header* pool_alloc::block::get_header(int offset, pool_alloc::bitmap range) {
+    header* h = (header*) &_data[offset];
+    h->_block = this;
+    h->_range = range;
+    return h;
+}
+
+void pool_alloc::header::release() {
+
+#ifdef TRACE_LEAKS
+    fprintf(stderr, "%s unit -1 %p %016llx\n", _block->_name, _block, _range);
+#endif
+
+    bitmap result;
+    bitmap clear_range = ~_range;
+#ifdef __sparcv9
+    membar_enter();
+    result = atomic_and_64_nv(&_block->_bitmap, clear_range);
+    membar_exit();
+#else
+    result = __sync_and_and_fetch(&_block->_bitmap, clear_range);
+#endif
+	
+    // have all the units come back?
+    if(!result) {
+#ifdef TRACE_LEAKS
+	if(!clear_range)
+	    fprintf(stderr, "%s block -1 %p %016llx (oversized)\n", _block->_name, _block, _range);
+	else
+	    fprintf(stderr, "%s block -1 %p\n", _block->_name, _block);
+#endif
+#ifdef TRACK_BLOCKS
+	{
+	    critical_section_t cs(_block->_live_blocks->second);
+	    _block->_live_blocks->first.erase(_block);
+	}
+#endif
+	// note: frees the memory 'this' occupies
+	::free(_block);
+    }
+}
+    
+
 static int const ADJUST_GOAL = 5; // 1/x
-static int const K_MAX = (BLOCK_UNITS+ADJUST_GOAL-1)/ADJUST_GOAL;
+static int const K_MAX = (pool_alloc::BLOCK_UNITS+ADJUST_GOAL-1)/ADJUST_GOAL;
 
 static int kth_biggest(int* array, int array_size) {
     int top_k[K_MAX];
@@ -307,7 +283,7 @@ static int kth_biggest(int* array, int array_size) {
     return top_k[last];
 }
 
-void in_progress_block::discard_block() {
+void pool_alloc::discard_block() {
     // allocate whatever is left of this block and throw it away
     if(_next_unit) {
 	_block->get_header(_offset, ~(_next_unit-1))->release();
@@ -315,7 +291,7 @@ void in_progress_block::discard_block() {
     }
 }
     
-void in_progress_block::new_block() {
+void pool_alloc::new_block() {
     // adjust the unit size? We want no more than 1/x requests to allocate 2+ units
     
 
@@ -338,7 +314,7 @@ void in_progress_block::new_block() {
 #endif
 }
 
-header* in_progress_block::allocate_huge(int size) {
+pool_alloc::header* pool_alloc::allocate_huge(int size) {
     _huge_sizes[_huge_count++] = size;
     // enough "huge" requests to destroy our ADJUST_GOAL?
     if(_huge_count > K_MAX) {
@@ -368,7 +344,7 @@ header* in_progress_block::allocate_huge(int size) {
     return b->get_header(0, ~0ull);
 }
 
-header* in_progress_block::allocate_normal(int size) {
+pool_alloc::header* pool_alloc::allocate_normal(int size) {
 
     // is the previous block full?
     if(_next_unit == 0) {
@@ -406,7 +382,7 @@ header* in_progress_block::allocate_normal(int size) {
     return h;
 }
 
-header* in_progress_block::allocate(int size) {
+pool_alloc::header* pool_alloc::allocate(int size) {
     // how many units is "huge" ?
     static int const HUGE_THRESHOLD = BLOCK_UNITS/8;
 
@@ -414,21 +390,16 @@ header* in_progress_block::allocate(int size) {
     return (size > HUGE_THRESHOLD*_delta)? allocate_huge(size) : allocate_normal(size);
 }
 
+#undef USE_MALLOC
+
 void* pool_alloc::alloc(int size) {
+#ifdef USE_MALLOC
+    return ::malloc(size);
+#endif
     // factor in the header size and round up to the next 8 byte boundary
     size = (size + sizeof(header) + 7) & -8;
-
-    // first time?
-    in_progress_block* ipb = _in_progress;
-    if(!ipb) {
-#ifdef TRACK_BLOCKS
-	if(!live_blocks)
-	    live_blocks = new thread_maps;
-#endif
-	ipb = _in_progress = new in_progress_block(_name, size);
-    }
-
-    header* h = ipb->allocate(size);
+    
+    header* h = allocate(size);
 #ifdef TRACE_LEAKS
     fprintf(stderr, "%s unit 1 %p %016llx\n", _name, h->_block, h->_range);
 #endif
@@ -436,6 +407,11 @@ void* pool_alloc::alloc(int size) {
 }
 
 void pool_alloc::free(void* ptr) {
+#ifdef USE_MALLOC
+    ::free(ptr);
+    return;
+#endif
+
     /* C++ "strict aliasing" rules allow the compiler to assume that
        void* and header* never point to the same memory.  If
        optimizations actually take advantage of this, simple casts
@@ -458,23 +434,10 @@ void pool_alloc::free(void* ptr) {
     union {
 	void* vptr;
 	char* cptr;
-    } u1 = {ptr};
-    union {
-	char* cptr;
 	header* hptr;
-	// ptr actually points to header::_data, so back up a bit..
-    } u2 = {u1.cptr - sizeof(header)};
-
-    u2.hptr->release();
-}
-
-extern "C" {
-    static void destruct_in_progress(void* arg) {
-	in_progress_block* b = (in_progress_block*) arg;
-	delete b;
-    }
-}
-alloc_pthread_specific::alloc_pthread_specific() {
-    int error = pthread_key_create(&_ptkey, &destruct_in_progress);
-    assert(!error);
+    } u = {ptr};
+    
+    // ptr actually points to header::_data, so back up a bit before calling release()
+    u.cptr -= sizeof(header);
+    u.hptr->release();
 }

@@ -42,8 +42,7 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
 
     // payment_baseline_packet
     trx_packet_t* bp_packet = 
-	create_inmem_payment_baseline_packet( "INMEM_PAYMENT_BASELINE_CLIENT_", 
-                                              bp_buffer, 
+	create_inmem_payment_baseline_packet( bp_buffer, 
                                               bp_filter,
                                               selectedQueriedSF);
     
@@ -65,8 +64,7 @@ void inmem_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
 
 trx_packet_t* 
 inmem_tpcc_payment_baseline_driver::
-create_inmem_payment_baseline_packet(const c_str &client_prefix, 
-                                     tuple_fifo* bp_output_buffer,
+create_inmem_payment_baseline_packet(tuple_fifo* bp_output_buffer,
                                      tuple_filter_t* bp_output_filter,
                                      int sf) 
 {
@@ -76,7 +74,7 @@ create_inmem_payment_baseline_packet(const c_str &client_prefix,
 
     tpcc::payment_input_t pin = create_payment_input(sf);
     
-    c_str packet_name("%s_payment_test", client_prefix.data());
+    static c_str packet_name = "INMEM_PAYMENT_BASELINE_CLIENT_payment_test";
 
     payment_packet = new inmem_payment_baseline_packet_t(packet_name,
                                                          bp_output_buffer,

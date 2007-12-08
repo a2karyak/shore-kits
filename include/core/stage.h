@@ -104,7 +104,7 @@ public:
     virtual ~stage_t() { }
     
 
-    DECLARE_POOL_ALLOC_NEW_AND_DELETE();
+    DECLARE_POOL_ALLOC_NEW_AND_DELETE(stage_t);
     
     void init(adaptor_t* adaptor) {
 	_adaptor = adaptor;

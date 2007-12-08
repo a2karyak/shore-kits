@@ -9,15 +9,6 @@
 
 ENTER_NAMESPACE(qpipe);
 
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(packet_t, packet);
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(query_plan, plan);
-    
-// This is a horrible hack, but we don't have a functors.cpp to put it in
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(tuple_filter_t, filter);
-    
-// Ditto for query_state.cpp
-DEFINE_POOL_ALLOC_NEW_AND_DELETE(query_state_t, state);
-    
 /**
  *  @brief packet_t constructor.
  *
