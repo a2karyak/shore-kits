@@ -18,7 +18,36 @@
 
 #include "util/sync.h"
 #include "util/trace.h"
+#include "util/clh_lock.h"
 
+
+//#define LARRAY_USE_MUTEX
+#define LARRAY_USE_CLH_LOCK
+
+#if defined(LARRAY_USE_MUTEX)
+typedef pthread_mutex_t LArrayLock;
+#define INIT(lock) pthread_mutex_init(&lock, NULL)
+#define DESTROY(lock) pthread_mutex_destroy(&lock)
+#define ACQUIRE_READ(lock) pthread_mutex_lock(&lock)
+#define ACQUIRE_WRITE(lock) pthread_mutex_lock(&lock)
+#define RELEASE(lock) pthread_mutex_unlock(&lock)
+
+#elif defined(LARRAY_USE_CLH_LOCK)
+typedef clh_lock LArrayLock;
+#define INIT(lock)
+#define DESTROY(lock)
+#define ACQUIRE_READ(lock) lock.acquire()
+#define ACQUIRE_WRITE(lock) lock.acquire()
+#define RELEASE(lock) lock.release()
+
+#else
+typedef  pthread_rwlock_t LArrayLock;
+#define INIT(lock) pthread_rwlock_init(&lock, NULL)
+#define DESTROY(lock) pthread_rwlock_destroy(&lock)
+#define ACQUIRE_READ(lock) pthread_rwlock_rdlock(&lock)
+#define ACQUIRE_WRITE(lock) pthread_rwlock_wrlock(&lock)
+#define RELEASE(lock) pthread_rwlock_unlock(&lock)
+#endif
 
 
 
@@ -40,7 +69,7 @@ private:
 
     boost::array<TUPLE_TYPE, SF * FANOUT> _array;
 
-    pthread_rwlock_t _array_rwlock[SF * FANOUT];
+    LArrayLock _array_rwlock[SF * FANOUT];
     c_str _name;
 
 public:
@@ -51,7 +80,7 @@ public:
     {
         // initializes the locks
         for (int i=0; i<SF*FANOUT; i++) {
-            pthread_rwlock_init(&_array_rwlock[i], NULL);
+            INIT(_array_rwlock[i]);
         }
     }
 
@@ -59,7 +88,7 @@ public:
     virtual ~latchedArray() {
         // destroys the locks
         for (int i=0; i<SF*FANOUT; i++) {
-            pthread_rwlock_destroy(&_array_rwlock[i]);
+            DESTROY(_array_rwlock[i]);
         }
     }        
 
@@ -77,7 +106,7 @@ public:
 
     TUPLE_TYPE* read(int idx) {
       if ( (idx >= 0) && (idx < SF*FANOUT) ) {
-        pthread_rwlock_rdlock(&_array_rwlock[idx]);
+	  ACQUIRE_READ(_array_rwlock[idx]);
         return (&_array[idx]);
       }
 
@@ -97,7 +126,7 @@ public:
 
     TUPLE_TYPE* write(int idx) {
       if ( (idx >= 0) && (idx < SF*FANOUT) ) {
-        pthread_rwlock_wrlock(&_array_rwlock[idx]);
+	  ACQUIRE_WRITE(_array_rwlock[idx]);
         return (&_array[idx]);
       }
 
@@ -117,7 +146,7 @@ public:
 
     int release(int idx) {
       if ( (idx >= 0) && (idx < SF*FANOUT) ) {
-        pthread_rwlock_unlock(&_array_rwlock[idx]);
+	  RELEASE(_array_rwlock[idx]);
         return (0);
       }
 
@@ -137,9 +166,9 @@ public:
 
     int insert(int idx, const TUPLE_TYPE anEntry) {
       if ( (idx >= 0) && (idx < SF*FANOUT) ) {
-        pthread_rwlock_wrlock(&_array_rwlock[idx]);
+	  ACQUIRE_WRITE(_array_rwlock[idx]);
         _array[idx] = anEntry;
-        pthread_rwlock_unlock(&_array_rwlock[idx]);        
+        RELEASE(_array_rwlock[idx]);        
         return (0);
       }
 
@@ -204,9 +233,9 @@ public:
 
     void dump() {
         for (int idx=0; idx<SF*FANOUT; idx++) {
-            pthread_rwlock_wrlock(&_array_rwlock[idx]);
+	    ACQUIRE_READ(_array_rwlock[idx]);
             TRACE( TRACE_DEBUG, "%d %s\n", idx, _array[idx].tuple_to_str().data());
-            pthread_rwlock_unlock(&_array_rwlock[idx]);        
+            RELEASE(_array_rwlock[idx]);        
         }
     }
 
@@ -228,5 +257,10 @@ public:
     }
 }; // EOF latchedArray
 
+#undef INIT
+#undef DESTROY
+#undef ACQUIRE_READ
+#undef ACQUIRE_WRITE
+#undef RELEASE
 
 #endif 

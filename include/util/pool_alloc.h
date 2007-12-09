@@ -4,6 +4,7 @@
 #define __POOL_ALLOC_H
 
 #include <cassert>
+#include <cstdlib>
 #include "util/thread_local.h"
 
 class pool_alloc {

@@ -42,17 +42,38 @@ typedef unsigned int uint;
 #define BPTREE_USE_MUTEX
 #undef BPTREE_USE_CLH_RWLOCK
 #undef BPTREE_USE_CLH_LOCK
+#undef BPTREE_USE_TAS
 
 #if defined(BPTREE_USE_MUTEX)
-typedef pthread_mutex_t Lock;
+typedef pthread_mutex_t BPTreeLock;
 #define INIT(lock) pthread_mutex_init(&lock, NULL)
 #define DESTROY(lock) pthread_mutex_destroy(&lock)
 #define ACQUIRE_READ(lock) pthread_mutex_lock(&lock)
 #define ACQUIRE_WRITE(lock) pthread_mutex_lock(&lock)
 #define RELEASE(lock) pthread_mutex_unlock(&lock)
 
+#elif defined(BPTREE_USE_TAS)
+struct tas_lock {
+    unsigned int volatile _taken;
+    tas_lock() : _taken(false) { }
+    void acquire() {
+	while(_taken || atomic_cas_32(&_taken, false, true));
+	membar_enter();
+    }
+    void release() {
+	membar_exit();
+	_taken = false;
+    }
+};
+typedef tas_lock BPTreeLock;
+#define INIT(lock)
+#define DESTROY(lock)
+#define ACQUIRE_READ(lock) lock.acquire()
+#define ACQUIRE_WRITE(lock) lock.acquire()
+#define RELEASE(lock) lock.release()
+
 #elif defined(BPTREE_USE_CLH_RWLOCK)
-typedef clh_rwlock Lock;
+typedef clh_rwlock BPTreeLock;
 #define INIT(lock) 
 #define DESTROY(lock) 
 #define ACQUIRE_READ(lock) lock.acquire_read()
@@ -60,7 +81,7 @@ typedef clh_rwlock Lock;
 #define RELEASE(lock) lock.release()
 
 #elif defined(BPTREE_USE_CLH_LOCK)
-typedef clh_lock Lock;
+typedef clh_lock BPTreeLock;
 #define INIT(lock)
 #define DESTROY(lock)
 #define ACQUIRE_READ(lock) lock.acquire()
@@ -68,7 +89,7 @@ typedef clh_lock Lock;
 #define RELEASE(lock) lock.release()
 
 #else
-typedef  pthread_rwlock_t Lock;
+typedef  pthread_rwlock_t BPTreeLock;
 #define INIT(lock) pthread_rwlock_init(&lock, NULL)
 #define DESTROY(lock) pthread_rwlock_destroy(&lock)
 #define ACQUIRE_READ(lock) pthread_rwlock_rdlock(&lock)
@@ -107,7 +128,7 @@ private:
         }
 
         // Reader-Writer Lock
-        Lock             leaf_rwlock;
+        BPTreeLock             leaf_rwlock;
 
         uint             num_keys;
         KEY              keys[LEAF_ENTRIES];
@@ -135,7 +156,7 @@ private:
         }
 
         // Reader-Writer Lock
-        Lock             in_rwlock;
+        BPTreeLock             in_rwlock;
 
         uint             num_keys;
         KEY              keys[INODE_ENTRIES];
@@ -1147,7 +1168,7 @@ private:
 
     // Pointer to the root node. It may be a leaf or an inner node, but
     // it is never null
-    Lock              _root_rwlock;
+    BPTreeLock              _root_rwlock;
     void*            _root;
 
 
