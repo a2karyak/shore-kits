@@ -291,8 +291,10 @@ CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
 LDFLAGS="-lnsl -ldl -lm -lpthread"
 
 if test "$ARCHOS" = "SPARC_SUN"; then
+   NDEBUG_FLAGS="-DNDEBUG -UW_DEBUG -UDEBUG -xO4 -g0"
+   DEBUG_FLAGS="-DDEBUG -DW_DEBUG -UNDEBUG  -g -xs -xinstrument=datarace"
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
-    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions -xs -xinstrument=datarace -g -mt -lpthread -library=stlport4 -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DDEBUG -DW_DEBUG -UNDEBUG -DW_LARGEFILE -DLARGEFILE_AWARE -D_FILE_OFFSET_BITS=64 -DARCH_LP64 -DNO_FASTNEW"
+    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions $NDEBUG_FLAGS -mt -lpthread -library=stlport4 -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DW_LARGEFILE -DLARGEFILE_AWARE -D_FILE_OFFSET_BITS=64 -DARCH_LP64 -DNO_FASTNEW"
 fi
 
 AC_SUBST(CXXFLAGS)

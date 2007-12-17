@@ -52,7 +52,60 @@ struct parser_impl : public parse_thread {
     void run();
 };
 
+/* Runs a transaction, checking for deadlock and retrying
+   automatically as need be. 'Transaction' must be a type whose
+   function call operator takes no arguments and returns w_rc_t.
+ */
+template<class Transaction>
+w_rc_t run_xct(ss_m* ssm, Transaction &t) {
+    w_rc_t e;
+    do {
+	e = ssm->begin_xct();
+	if(e)
+	    break;
+	e = t(ssm);
+	if(e)
+	    e = ssm->abort_xct();
+	else
+	    e = ssm->commit_xct();
+    } while(e && e.err_num() == smlevel_0::eDEADLOCK);
+    return e;
+}
+pthread_mutex_t vol_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+template<class Parser>
+struct create_volume_xct {
+    lvid_t &_lvid;
+    Parser &_parser;
+    file_info_t &_info;
+    size_t _bytes;
+    create_volume_xct(lvid_t &lvid, Parser &parser, file_info_t &info, size_t bytes)
+	: _lvid(lvid), _parser(parser), _info(info), _bytes(bytes)
+    {
+    }
+    w_rc_t operator()(ss_m* ssm) {
+	CRITICAL_SECTION(cs, vol_mutex);
+	serial_t root_iid;
+	vec_t table_name(_parser.table_name(), strlen(_parser.table_name()));
+	unsigned size = sizeof(_info);
+	vec_t table_info(&_info, size);
+	bool found;
+	W_DO(ss_m::vol_root_index(_lvid, root_iid));
+	W_DO(ss_m::find_assoc(_lvid, root_iid, table_name, &_info, size, found));
+	if(found) {
+	    cout << "Removing previous instance of " << _parser.table_name() << endl;
+	    W_DO(ss_m::destroy_file(_lvid, _info._table_id));
+	    W_DO(ss_m::destroy_assoc(_lvid, root_iid, table_name, table_info));
+	}
+	// create the file and register it with the root index
+	cout << "Creating table ``" << _parser.table_name()
+	     << "'' with " << _bytes << " bytes per record" << endl;
+	W_DO(ssm->create_file(_lvid, _info._table_id, smlevel_3::t_regular));
+	W_DO(ss_m::vol_root_index(_lvid, root_iid));
+	W_DO(ss_m::create_assoc(_lvid, root_iid, table_name, table_info));
+	return RCOK;
+    }
+};
 
 template <class Parser>
 void parser_impl<Parser>::run() {
@@ -63,38 +116,20 @@ void parser_impl<Parser>::run() {
 	return;
     }
 
-    serial_t root_iid;
     unsigned long progress = 0;
     char linebuffer[MAX_LINE_LENGTH];
     Parser parser;
     typedef typename Parser::record_t record_t;
     static size_t const ksize = sizeof(record_t::first_type);
     static size_t const bsize = parser.has_body()? sizeof(record_t::second_type) : 0;
-    vec_t table_name(parser.table_name(), strlen(parser.table_name()));
 
     // blow away the previous file, if any
     file_info_t info;
-    unsigned size = sizeof(info);
-    vec_t table_info(&info, size);
-    bool found;
+    create_volume_xct<Parser> cvxct(_lvid, parser, info, ksize+bsize);
+    W_COERCE(run_xct(_ssm, cvxct));
+
+	     
     W_COERCE(_ssm->begin_xct());
-    W_COERCE(ss_m::vol_root_index(_lvid, root_iid));
-    W_COERCE(ss_m::find_assoc(_lvid, root_iid, table_name, &info, size, found));
-    if(found) {
-	cout << "Removing previous instance of " << parser.table_name() << endl;
-	W_COERCE(ss_m::destroy_file(_lvid, info._table_id));
-	W_COERCE(ss_m::destroy_assoc(_lvid, root_iid, table_name, table_info));
-    }
-    
-    W_COERCE(_ssm->commit_xct());
-    
-    W_COERCE(_ssm->begin_xct());
-    // create the file and register it with the root index
-    cout << "Creating table ``" << parser.table_name()
-	 << "'' with " << (ksize+bsize) << " bytes per record" << endl;
-    W_COERCE(_ssm->create_file(_lvid, info._table_id, smlevel_3::t_regular));
-    W_COERCE(ss_m::vol_root_index(_lvid, root_iid));
-    W_COERCE(ss_m::create_assoc(_lvid, root_iid, table_name, table_info));
     
     // insert records one by one...
     record_t record;
@@ -248,13 +283,13 @@ void smthread_user_t::run() {
     W_COERCE(history_thread->fork());
     W_COERCE(new_order_thread->fork());
     W_COERCE(item_thread->fork());
-    
+
     W_IGNORE(order_thread->join());
     W_IGNORE(district_thread->join());
     W_IGNORE(warehouse_thread->join());
     W_IGNORE(history_thread->join());
     W_IGNORE(new_order_thread->join());
-    W_IGNORE(item_thread->join());
+   W_IGNORE(item_thread->join());
 #endif
 
     // done!
