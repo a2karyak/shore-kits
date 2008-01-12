@@ -27,20 +27,22 @@ public:
 #define MAX_FNAME_LEN = 31;
 struct file_info_t {
     std::pair<int,int> _record_size;
-    serial_t 	_table_id;
-    serial_t 	_first_rid;
+    stid_t 	_table_id;
+    rid_t 	_first_rid;
 };
 
 struct parse_thread : public smthread_t {
     c_str _fname; // file name
     ss_m* _ssm; // database handle
-    lvid_t _lvid;
+    vid_t _vid;
     file_info_t _info;
+    sm_stats_info_t _stats;
     
 public:
-    parse_thread(c_str fname, ss_m* ssm, lvid_t lvid)
-	: _fname(fname), _ssm(ssm), _lvid(lvid)
+    parse_thread(c_str fname, ss_m* ssm, vid_t vid)
+	: _fname(fname), _ssm(ssm), _vid(vid)
     {
+	memset(&_stats, 0, sizeof(_stats));
     }
     virtual void run()=0;
     ~parse_thread() {}
@@ -48,8 +50,18 @@ public:
 
 template <class Parser>
 struct parser_impl : public parse_thread {
-    parser_impl(c_str fname, ss_m* ssm, lvid_t lvid) : parse_thread(fname, ssm, lvid) { }
+    parser_impl(c_str fname, ss_m* ssm, vid_t vid)
+	: parse_thread(fname, ssm, vid)
+    {
+    }
     void run();
+};
+
+struct test_parser : public parser_impl<parse_tpcc_ORDER> {
+    test_parser(int tid, ss_m* ssm, vid_t vid)
+	: parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
+    {
+    }
 };
 
 /* Runs a transaction, checking for deadlock and retrying
@@ -75,34 +87,34 @@ pthread_mutex_t vol_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 template<class Parser>
 struct create_volume_xct {
-    lvid_t &_lvid;
-    Parser &_parser;
+    vid_t &_vid;
+    char const* _table_name;
     file_info_t &_info;
     size_t _bytes;
-    create_volume_xct(lvid_t &lvid, Parser &parser, file_info_t &info, size_t bytes)
-	: _lvid(lvid), _parser(parser), _info(info), _bytes(bytes)
+    create_volume_xct(vid_t &vid, char const* tname, file_info_t &info, size_t bytes)
+	: _vid(vid), _table_name(tname), _info(info), _bytes(bytes)
     {
     }
     w_rc_t operator()(ss_m* ssm) {
 	CRITICAL_SECTION(cs, vol_mutex);
-	serial_t root_iid;
-	vec_t table_name(_parser.table_name(), strlen(_parser.table_name()));
+	stid_t root_iid;
+	vec_t table_name(_table_name, strlen(_table_name));
 	unsigned size = sizeof(_info);
 	vec_t table_info(&_info, size);
 	bool found;
-	W_DO(ss_m::vol_root_index(_lvid, root_iid));
-	W_DO(ss_m::find_assoc(_lvid, root_iid, table_name, &_info, size, found));
+	W_DO(ss_m::vol_root_index(_vid, root_iid));
+	W_DO(ss_m::find_assoc(root_iid, table_name, &_info, size, found));
 	if(found) {
-	    cout << "Removing previous instance of " << _parser.table_name() << endl;
-	    W_DO(ss_m::destroy_file(_lvid, _info._table_id));
-	    W_DO(ss_m::destroy_assoc(_lvid, root_iid, table_name, table_info));
+	    cout << "Removing previous instance of " << _table_name << endl;
+	    W_DO(ss_m::destroy_file(_info._table_id));
+	    W_DO(ss_m::destroy_assoc(root_iid, table_name, table_info));
 	}
 	// create the file and register it with the root index
-	cout << "Creating table ``" << _parser.table_name()
+	cout << "Creating table ``" << _table_name
 	     << "'' with " << _bytes << " bytes per record" << endl;
-	W_DO(ssm->create_file(_lvid, _info._table_id, smlevel_3::t_regular));
-	W_DO(ss_m::vol_root_index(_lvid, root_iid));
-	W_DO(ss_m::create_assoc(_lvid, root_iid, table_name, table_info));
+	W_DO(ssm->create_file(_vid, _info._table_id, smlevel_3::t_regular));
+	W_DO(ss_m::vol_root_index(_vid, root_iid));
+	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
 	return RCOK;
     }
 };
@@ -125,41 +137,47 @@ void parser_impl<Parser>::run() {
 
     // blow away the previous file, if any
     file_info_t info;
-    create_volume_xct<Parser> cvxct(_lvid, parser, info, ksize+bsize);
+    create_volume_xct<Parser> cvxct(_vid, _fname.data(), info, ksize+bsize);
     W_COERCE(run_xct(_ssm, cvxct));
-
-	     
+     
+    sm_stats_info_t stats;
+    memset(&stats, 0, sizeof(stats));
+    sm_stats_info_t* dummy; // needed to keep xct commit from deleting our stats...
+    
     W_COERCE(_ssm->begin_xct());
     
     // insert records one by one...
     record_t record;
     vec_t head(&record.first, ksize);
     vec_t body(&record.second, bsize);
-    serial_t rid;
+    rid_t rid;
     bool first = true;
-    for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
+    static int const INTERVAL = 100000;
+    int mark = INTERVAL;
+    int i;
+    
+    for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
 	record = parser.parse_row(linebuffer);
-	W_COERCE(_ssm->create_rec(_lvid, info._table_id, head, bsize, body, rid));
+	W_COERCE(_ssm->create_rec(info._table_id, head, bsize, body, rid));
 	if(first)
 	    info._first_rid = rid;
 	
 	first = false;
 	progress_update(&progress);
-	if(i >= 1000) {
-	    W_COERCE(_ssm->commit_xct());
+	if(i >= mark) {
+	    W_COERCE(_ssm->commit_xct(dummy));
 	    W_COERCE(_ssm->begin_xct());
-	    i=0;
+	    mark += INTERVAL;
 	}
 	    
     }
     
     // done!
-    W_COERCE(_ssm->commit_xct());
-    
+    W_COERCE(_ssm->commit_xct(dummy));
     info._record_size = std::make_pair(ksize, bsize);
     progress_done(parser.table_name());
     _info = info;
-    cout << "Successfully loaded " << progress << " records" << endl;
+    cout << "Successfully loaded " << i << " records" << endl;
     if ( fclose(fd) ) {
 	TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", _fname.data());
 	// TOOD: return an error code or something
@@ -188,13 +206,15 @@ void smthread_user_t::run() {
     static char const* opts[] = {
 	"fake-command-line",
 	"-sm_bufpoolsize", "102400", // in kB
+	//	"-sm_logging", "no", // temporary
 	"-sm_logdir", "log",
 	"-sm_logsize", "102400", // in kB
+	"-sm_logbufsize", "10240", // in kB
 	"-sm_diskrw", "/export/home/ryanjohn/projects/shore-lomond/installed/bin/diskrw",
 	"-sm_errlog", "info", // one of {none emerg fatal alert internal error warning info debug}
     };
     w_ostrstream err;
-    int opts_count = 11; // clobbered by the parser
+    int opts_count = sizeof(opts)/sizeof(char const*); // clobbered by the parser
     w_rc_t rc = options.parse_command_line(opts, opts_count, 2, &err);
     err << ends;
     if(rc) {
@@ -235,13 +255,13 @@ void smthread_user_t::run() {
     devid_t devid;
     W_COERCE(ssm->mount_dev(device, vol_cnt, devid));
     
-    lvid_t lvid;
+    lvid_t lvid; // this is a "crutch for those... using the physical ID... interface"
+    vid_t vid(1);
     if(clobber) {
 	// create volume (only one per device supported, so this is kind of silly)
 	// see http://www.cs.wisc.edu/shore/1.0/man/volume.ssm.html
 	W_COERCE(ssm->generate_new_lvid(lvid));
-	W_COERCE(ssm->create_vol(device, lvid, quota));
-	W_COERCE(ssm->add_logical_id_index(lvid, 0, 0));
+	W_COERCE(ssm->create_vol(device, lvid, quota, false, vid));
     }
     else {
 	lvid_t* lvid_list;
@@ -255,13 +275,31 @@ void smthread_user_t::run() {
 	delete [] lvid_list;
     }
 
+#if 1
+    static int const THREADS = 8;
+    guard<parse_thread> threads[THREADS];
+    for(int i=0; i < THREADS; i++)
+	threads[i] = new test_parser(i, ssm.get(), vid);
+    for(int i=0; i < THREADS; i++)
+	threads[i]->fork();
+
+    sm_stats_info_t stats;
+    memset(&stats, 0, sizeof(stats));
+    for(int i=0; i < THREADS; i++) {
+	threads[i]->join();
+	//stats += threads[i]->_stats;
+    }
+    ss_m::gather_stats(stats, false);
+    //    cout << stats << endl;
+	
+#else
     //create and spawn threads...
-    guard<parse_thread> item_thread = new parser_impl<parse_tpcc_ITEM>("tbl_tpcc/item.dat", ssm.get(), lvid);
-    guard<parse_thread> new_order_thread = new parser_impl<parse_tpcc_NEW_ORDER>("tbl_tpcc/new_order.dat", ssm.get(), lvid);
-    guard<parse_thread> history_thread = new parser_impl<parse_tpcc_HISTORY>("tbl_tpcc/history.dat", ssm.get(), lvid);
-    guard<parse_thread> district_thread = new parser_impl<parse_tpcc_DISTRICT>("tbl_tpcc/district.dat", ssm.get(), lvid);
-    guard<parse_thread> order_thread = new parser_impl<parse_tpcc_ORDER>("tbl_tpcc/order.dat", ssm.get(), lvid);
-    guard<parse_thread> warehouse_thread = new parser_impl<parse_tpcc_WAREHOUSE>("tbl_tpcc/warehouse.dat", ssm.get(), lvid);
+    guard<parse_thread> item_thread = new parser_impl<parse_tpcc_ITEM>("tbl_tpcc/item.dat", ssm.get(), vid);
+    guard<parse_thread> new_order_thread = new parser_impl<parse_tpcc_NEW_ORDER>("tbl_tpcc/new_order.dat", ssm.get(), vid);
+    guard<parse_thread> history_thread = new parser_impl<parse_tpcc_HISTORY>("tbl_tpcc/history.dat", ssm.get(), vid);
+    guard<parse_thread> district_thread = new parser_impl<parse_tpcc_DISTRICT>("tbl_tpcc/district.dat", ssm.get(), vid);
+    guard<parse_thread> order_thread = new parser_impl<parse_tpcc_ORDER>("tbl_tpcc/order.dat", ssm.get(), vid);
+    guard<parse_thread> warehouse_thread = new parser_impl<parse_tpcc_WAREHOUSE>("tbl_tpcc/warehouse.dat", ssm.get(), vid);
 
 #if 0 // serial
     W_COERCE(order_thread->fork());
@@ -291,6 +329,8 @@ void smthread_user_t::run() {
     W_IGNORE(new_order_thread->join());
    W_IGNORE(item_thread->join());
 #endif
+#endif
+   
 
     // done!
     cout << "Shutting down Shore..." << endl;
