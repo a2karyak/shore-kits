@@ -11,7 +11,7 @@
 #include "scheduler.h"
 #include "util.h"
 #include "workload/common.h"
-#include "workload/tpcc/drivers/tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment_baseline.h"
 
 
 using namespace qpipe;

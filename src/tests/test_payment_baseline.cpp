@@ -8,12 +8,12 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "stages/tpcc/payment_baseline.h"
+#include "stages/tpcc/bdb/payment_baseline.h"
 
 #include "tests/common/tester_query.h"
 
 #include "workload/common.h"
-#include "workload/tpcc/drivers/tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment_baseline.h"
 
 
 using namespace qpipe;

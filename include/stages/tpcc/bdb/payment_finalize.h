@@ -11,10 +11,10 @@
 
 #include "stages/tpcc/common/bdb_trx_packet.h"
 
-#include "stages/tpcc/payment_upd_wh.h"
-#include "stages/tpcc/payment_upd_distr.h"
-#include "stages/tpcc/payment_upd_cust.h"
-#include "stages/tpcc/payment_ins_hist.h"
+#include "stages/tpcc/bdb/payment_upd_wh.h"
+#include "stages/tpcc/bdb/payment_upd_distr.h"
+#include "stages/tpcc/bdb/payment_upd_cust.h"
+#include "stages/tpcc/bdb/payment_ins_hist.h"
 
 
 using namespace qpipe;

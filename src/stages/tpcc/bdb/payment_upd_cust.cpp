@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/payment_upd_cust.h"
+# include "stages/tpcc/bdb/payment_upd_cust.h"
 # include "util.h"
 
 

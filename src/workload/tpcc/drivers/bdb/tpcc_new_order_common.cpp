@@ -8,9 +8,8 @@
  */
 
 # include "util.h"
-
 # include "workload/tpcc/drivers/common.h"
-# include "workload/tpcc/drivers/tpcc_new_order_common.h"
+# include "workload/tpcc/drivers/bdb/tpcc_new_order_common.h"
 
 
 ENTER_NAMESPACE(tpcc);

@@ -1,9 +1,17 @@
 // -*- mode:c++; c-basic-offset:4 -*-
+
+/** @file  atomic_ops.h 
+ *
+ *  @brief Provides typesafe atomic operations in a compiler- and machine-agnostic way
+ */
+
+// TODO: atomic xchg might be useful on x86(_64) arches
+
+
 #ifndef __ATOMIC_OPS_H
 #define __ATOMIC_OPS_H
 
-/* Provides typesafe atomic operations in a compiler- and machine-agnostic way */
-// TODO: atomic xchg might be useful on x86(_64) arches
+
 #if defined(__sparcv9)
 #include <atomic.h>
 #else
@@ -115,5 +123,6 @@ struct atomic_swap_helper<T, sizeof(uint64_t)> {
 template<class T>
 T atomic_swap(T volatile* target, T new_value) {
     return atomic_swap_helper<T>()(target, new_value);
-}
+};
+
 #endif

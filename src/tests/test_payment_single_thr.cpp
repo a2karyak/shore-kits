@@ -9,7 +9,7 @@
  */
 
 #include "workload/workload.h"
-#include "workload/tpcc/drivers/tpcc_payment_single_thr.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment_single_thr.h"
 
 #include "tests/common/tester_query.h"
 

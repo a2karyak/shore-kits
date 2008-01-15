@@ -8,16 +8,16 @@
  */
 
 #include "core.h"
-#include "server/command/tpcc_handler.h"
+#include "server/command/bdb_tpcc_handler.h"
 #include "server/print.h"
 #include "server/config.h"
 
 #include "workload/tpcc/tpcc_db.h"
 
 // tpcc drivers header files
-#include "workload/tpcc/drivers/tpcc_payment.h"
-#include "workload/tpcc/drivers/tpcc_payment_baseline.h"
-#include "workload/tpcc/drivers/tpcc_payment_nos.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment_nos.h"
 
 
 #include "scheduler.h"

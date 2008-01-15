@@ -60,6 +60,7 @@ TESTS = \
    tests/tpch_load \
    tests/tpcc_load \
    tests/tpcc_load_mt \
+   tests/tpcc_load_shore \
    tests/tpcc_load_confirm \
    tests/clh_lock \
    tests/clh_rwlock \
@@ -175,18 +176,17 @@ SG_COMMON = \
 
 SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
-   $(SG)/tpcc/common/tpcc_scaling_factor.cpp
-
+   $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
+   $(SG)/tpcc/common/payment_functions.cpp
 
 SG_BDB_TRX = \
-   $(SG)/tpcc/common/payment_functions.cpp \
-   $(SG)/tpcc/payment_baseline.cpp \
-   $(SG)/tpcc/payment_begin.cpp \
-   $(SG)/tpcc/payment_upd_wh.cpp \
-   $(SG)/tpcc/payment_upd_distr.cpp \
-   $(SG)/tpcc/payment_upd_cust.cpp \
-   $(SG)/tpcc/payment_ins_hist.cpp \
-   $(SG)/tpcc/payment_finalize.cpp
+   $(SG)/tpcc/bdb/payment_baseline.cpp \
+   $(SG)/tpcc/bdb/payment_begin.cpp \
+   $(SG)/tpcc/bdb/payment_upd_wh.cpp \
+   $(SG)/tpcc/bdb/payment_upd_distr.cpp \
+   $(SG)/tpcc/bdb/payment_upd_cust.cpp \
+   $(SG)/tpcc/bdb/payment_ins_hist.cpp \
+   $(SG)/tpcc/bdb/payment_finalize.cpp
 
 
 SG_INMEM_TRX = \
@@ -199,13 +199,18 @@ SG_INMEM_TRX = \
    $(SG)/tpcc/inmem/inmem_payment_ins_hist.cpp \
    $(SG)/tpcc/inmem/inmem_payment_finalize.cpp
 
+SG_SHORE_TRX = \
+   $(SG)/tpcc/shore/shore_payment_functions.cpp \
+   $(SG)/tpcc/shore/shore_payment_baseline.cpp
+
 
 lib_libstages_a_SOURCES = \
    $(SG_MAIN) \
    $(SG_COMMON) \
    $(SG_TRX_COMMON) \
    $(SG_BDB_TRX) \
-   $(SG_INMEM_TRX)
+   $(SG_INMEM_TRX) \
+   $(SG_SHORE_TRX)
 
 
 
@@ -258,24 +263,27 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_tbl_parsers.cpp \
    $(SW)/tpcc/tpcc_tbl_readers.cpp \
    $(SW)/tpcc/tpcc_compare.cpp \
-   $(SW)/tpcc/drivers/common.cpp
+   $(SW)/tpcc/drivers/common.cpp \
+   $(SW)/tpcc/drivers/tpcc_payment_common.cpp
 
-WL_TPCC_PAYMENT = \
-   $(SW)/tpcc/drivers/tpcc_payment_common.cpp \
-   $(SW)/tpcc/drivers/tpcc_payment.cpp \
-   $(SW)/tpcc/drivers/tpcc_payment_baseline.cpp \
-   $(SW)/tpcc/drivers/tpcc_payment_nos.cpp \
-   $(SW)/tpcc/drivers/tpcc_payment_single_thr.cpp
+WL_BDB_TPCC_PAYMENT = \
+   $(SW)/tpcc/drivers/bdb/tpcc_payment.cpp \
+   $(SW)/tpcc/drivers/bdb/tpcc_payment_baseline.cpp \
+   $(SW)/tpcc/drivers/bdb/tpcc_payment_nos.cpp \
+   $(SW)/tpcc/drivers/bdb/tpcc_payment_single_thr.cpp
 
-WL_TPCC_NEW_ORDER = \
-   $(SW)/tpcc/drivers/tpcc_new_order_common.cpp
+WL_BDB_TPCC_NEW_ORDER = \
+   $(SW)/tpcc/drivers/bdb/tpcc_new_order_common.cpp
 
-
-WL_INMEM_TPCC = \
+WL_INMEM_TPCC_PAYMENT = \
    $(SW)/tpcc/inmem_tpcc_env.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_staged.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.cpp
+
+WL_SHORE_TPCC_PAYMENT = \
+   $(SW)/tpcc/shore_tpcc_env.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp
 
 
 lib_libworkload_a_SOURCES = \
@@ -283,9 +291,10 @@ lib_libworkload_a_SOURCES = \
    $(WL_COMMON) \
    $(WL_TPCH) \
    $(WL_TPCC) \
-   $(WL_TPCC_PAYMENT) \
-   $(WL_TPCC_NEW_ORDER) \
-   $(WL_INMEM_TPCC)
+   $(WL_BDB_TPCC_PAYMENT) \
+   $(WL_BDB_TPCC_NEW_ORDER) \
+   $(WL_INMEM_TPCC_PAYMENT) \
+   $(WL_SHORE_TPCC_PAYMENT)
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
@@ -391,12 +400,15 @@ tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
+tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
 tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
 
 
+SHORE=$(HOME)/DEV/shore-lomond/src
+tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 #tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt

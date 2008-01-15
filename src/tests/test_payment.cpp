@@ -11,7 +11,7 @@
 #include "tests/common/tester_query.h"
 
 #include "workload/register_stage_containers.h"
-#include "workload/tpcc/drivers/tpcc_payment.h"
+#include "workload/tpcc/drivers/bdb/tpcc_payment.h"
 
 
 using namespace qpipe;

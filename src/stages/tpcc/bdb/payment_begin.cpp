@@ -7,7 +7,7 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-# include "stages/tpcc/payment_begin.h"
+# include "stages/tpcc/bdb/payment_begin.h"
 # include "workload/common.h"
 
 

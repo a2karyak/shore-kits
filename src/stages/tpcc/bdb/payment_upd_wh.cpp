@@ -1,44 +1,44 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/payment_ins_hist.h"
+# include "stages/tpcc/bdb/payment_upd_wh.h"
 # include "util.h"
 
 
-const c_str payment_ins_hist_packet_t::PACKET_TYPE = "PAYMENT_INS_HIST";
+const c_str payment_upd_wh_packet_t::PACKET_TYPE = "PAYMENT_UPD_WH";
 
-const c_str payment_ins_hist_stage_t::DEFAULT_STAGE_NAME = "PAYMENT_INS_HIST_STAGE";
+const c_str payment_upd_wh_stage_t::DEFAULT_STAGE_NAME = "PAYMENT_UPD_WH_STAGE";
 
 
 
 /**
- *  @brief payment_ins_hist constructor
+ *  @brief payment_upd_wh constructor
  */
 
-payment_ins_hist_stage_t::payment_ins_hist_stage_t() {
+payment_upd_wh_stage_t::payment_upd_wh_stage_t() {
     
-    TRACE(TRACE_ALWAYS, "PAYMENT_INS_HIST constructor\n");
+    TRACE(TRACE_ALWAYS, "PAYMENT_UPD_WH constructor\n");
 }
 
 
 /**
- *  @brief Insert a row at the history table according to $2.5.2.2
+ *  @brief Update warehouse table according to $2.5.2.2
  *
  *  @return void
  *
  *  @throw May throw exceptions on error.
  */
 
-void payment_ins_hist_stage_t::process_packet() {
+void payment_upd_wh_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
 
-    payment_ins_hist_packet_t* packet = 
-	(payment_ins_hist_packet_t*)adaptor->get_packet();
+    payment_upd_wh_packet_t* packet = 
+	(payment_upd_wh_packet_t*)adaptor->get_packet();
 
     packet->describe_trx();
 
 
-    TRACE( TRACE_ALWAYS, "!! INSERTING HISTORY !!\n");
+    TRACE( TRACE_ALWAYS, "!! UPDATING WAREHOUSE !!\n");
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack

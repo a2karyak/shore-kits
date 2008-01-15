@@ -1,44 +1,44 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/payment_upd_wh.h"
+# include "stages/tpcc/bdb/payment_upd_distr.h"
 # include "util.h"
 
 
-const c_str payment_upd_wh_packet_t::PACKET_TYPE = "PAYMENT_UPD_WH";
+const c_str payment_upd_distr_packet_t::PACKET_TYPE = "PAYMENT_UPD_DISTR";
 
-const c_str payment_upd_wh_stage_t::DEFAULT_STAGE_NAME = "PAYMENT_UPD_WH_STAGE";
+const c_str payment_upd_distr_stage_t::DEFAULT_STAGE_NAME = "PAYMENT_UPD_DISTR_STAGE";
 
 
 
 /**
- *  @brief payment_upd_wh constructor
+ *  @brief payment_upd_distr constructor
  */
 
-payment_upd_wh_stage_t::payment_upd_wh_stage_t() {
+payment_upd_distr_stage_t::payment_upd_distr_stage_t() {
     
-    TRACE(TRACE_ALWAYS, "PAYMENT_UPD_WH constructor\n");
+    TRACE(TRACE_ALWAYS, "PAYMENT_UPD_DISTR constructor\n");
 }
 
 
 /**
- *  @brief Update warehouse table according to $2.5.2.2
+ *  @brief Update district table according to $2.5.2.2
  *
  *  @return void
  *
  *  @throw May throw exceptions on error.
  */
 
-void payment_upd_wh_stage_t::process_packet() {
+void payment_upd_distr_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
 
-    payment_upd_wh_packet_t* packet = 
-	(payment_upd_wh_packet_t*)adaptor->get_packet();
+    payment_upd_distr_packet_t* packet = 
+	(payment_upd_distr_packet_t*)adaptor->get_packet();
 
     packet->describe_trx();
 
 
-    TRACE( TRACE_ALWAYS, "!! UPDATING WAREHOUSE !!\n");
+    TRACE( TRACE_ALWAYS, "!! UPDATING DISTRICT !!\n");
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack

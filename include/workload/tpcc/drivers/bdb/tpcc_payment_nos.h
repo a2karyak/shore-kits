@@ -15,7 +15,6 @@
 #include "workload/driver.h"
 
 #include "workload/tpcc/drivers/tpcc_payment_common.h"
-#include "workload/tpcc/drivers/tpcc_payment_nos.h"
 
 
 using namespace qpipe;
