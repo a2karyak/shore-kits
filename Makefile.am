@@ -60,12 +60,12 @@ TESTS = \
    tests/tpch_load \
    tests/tpcc_load \
    tests/tpcc_load_mt \
-   tests/tpcc_load_shore \
    tests/tpcc_load_confirm \
    tests/clh_lock \
    tests/clh_rwlock \
    tests/bptree
 
+#   tests/tpcc_load_shore
 
 DBGEN = \
    dbgen_tpcc
@@ -400,15 +400,15 @@ tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
-tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
+#tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
 tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
 
 
-SHORE=$(HOME)/DEV/shore-lomond/src
-tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config
+#SHORE=$(HOME)/DEV/shore-lomond/src
+#tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 #tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
@@ -475,7 +475,7 @@ COMMANDS = \
    $(SE)/command/printer.cpp \
    $(SE)/command/load_handler.cpp \
    $(SE)/command/tpch_handler.cpp \
-   $(SE)/command/tpcc_handler.cpp \
+   $(SE)/command/bdb_tpcc_handler.cpp \
    $(SE)/command/inmem_tpcc_handler.cpp \
    $(SE)/command/shore_tpcc_handler.cpp \
    $(SE)/command/tracer.cpp

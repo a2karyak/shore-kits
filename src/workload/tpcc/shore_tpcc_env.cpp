@@ -39,26 +39,6 @@ int ShoreTPCCEnv::savedata(c_str saveDir) {
     return (0);
 }
 
-/** @fn restoredata
- *
- *  @brief Loads the TPC-C data from a specified location
- */
-
-int ShoreTPCCEnv::restoredata(c_str restoreDir) {
-
-    TRACE( TRACE_DEBUG, "Saving data to (%s)\n", restoreDir.data());
-
-    // Start measuring loading time
-    time_t tstart = time(NULL);
-
-
-    time_t tstop = time(NULL);
-
-    TRACE( TRACE_ALWAYS, "Restore finished in (%d) secs\n", tstop - tstart);
-    _initialized = true;
-    return (0);
-}
-
 
 /** @fn loaddata
  *

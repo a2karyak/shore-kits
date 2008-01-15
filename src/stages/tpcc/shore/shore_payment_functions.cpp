@@ -21,7 +21,7 @@ ENTER_NAMESPACE(tpcc_payment);
 
 /** Exported variable */
 
-ShoreTPCCEnv* inmem_env = NULL;
+ShoreTPCCEnv* shore_env = NULL;
 
 
 /** Forward declaration of helper functions */
@@ -177,6 +177,7 @@ int updateShoreWarehouse(payment_input_t* pin, int* idx,
 
     assert (false); // (ip) TODO
 
+
     /*
     // Get the entry
     if ((warehouse = env->im_warehouses.write(*idx)) == NULL) {
@@ -254,7 +255,7 @@ int updateShoreDistrict(payment_input_t* pin, int* idx,
     tpcc_district_tuple_key dk;
     dk.D_ID = pin->_home_d_id;
     dk.D_W_ID = pin->_home_wh_id;
-    tpcc_district_tuple* district;
+    tpcc_district_tuple* district = NULL;
 
     // Calculate index in the array
     *idx = ((dk.D_W_ID - 1) * 10) + (dk.D_ID - 1);
@@ -503,7 +504,7 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
 
 /** @fn executeShorePaymentBaseline
  *
- *  @brief Executes the INMEM_PAYMENT transaction serially. Wrapper function.
+ *  @brief Executes the SHORE_PAYMENT transaction serially. Wrapper function.
  *  
  *  @note The latches on the Warehouse and District entries are released here
  *
@@ -524,7 +525,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
     
     try {
         
-        TRACE( TRACE_TRX_FLOW, "*** EXECUTING INMEM-TRX CONVENTIONALLY ***\n");
+        TRACE( TRACE_TRX_FLOW, "*** EXECUTING SHORE-TRX CONVENTIONALLY ***\n");
     
         /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
     
@@ -756,7 +757,7 @@ int staged_updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env) {
     dk.D_ID = pin->_home_d_id;
     dk.D_W_ID = pin->_home_wh_id;
 
-    tpcc_district_tuple* district;
+    tpcc_district_tuple* district = NULL;
 
     // Calculate index in the array
     int idx = ((dk.D_W_ID - 1) * 10) + (dk.D_ID - 1);

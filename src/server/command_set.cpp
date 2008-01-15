@@ -18,7 +18,7 @@
 // Special purpose command handlers
 #include "server/command/tpch_handler.h"
 #include "server/command/load_handler.h"
-#include "server/command/tpcc_handler.h"
+#include "server/command/bdb_tpcc_handler.h"
 #include "server/command/inmem_tpcc_handler.h"
 #include "server/command/shore_tpcc_handler.h"
 

@@ -51,7 +51,7 @@ int updateShoreCustomerByLast(int wh_id, int d_id,
 			      ShoreTPCCEnv* env);
 
 
-// implementation of the single-threaded version of the inmemory payment
+// implementation of the single-threaded version of the Shore payment
 trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
                                                const int id,
                                                ShoreTPCCEnv* env);

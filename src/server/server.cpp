@@ -61,7 +61,6 @@ int main(int argc, char* argv[]) {
 }
 
 
-
 int qpipe_init(int argc, char* argv[]) {
 
     thread_init();
@@ -122,13 +121,14 @@ int qpipe_init(int argc, char* argv[]) {
     if ((argc > 1) && (strcmp(argv[1], "-n") == 0)) {
         return RUN_NETWORK_MODE;
     }    
-    
+
     return RUN_INTERACTIVE_MODE;
 }
 
 
 
 void qpipe_shutdown() {
+
     shutdown_command_handlers();    
     TRACE(TRACE_ALWAYS, "Staged Database System exiting...\n");
 }
