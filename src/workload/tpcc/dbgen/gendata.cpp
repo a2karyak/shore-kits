@@ -304,14 +304,14 @@ void print_tpcc_dbgen_usage( void ) {
 }
 
 // fn: Return successfuk table creation
-int report_gen_success( char* tName ) {
+int report_gen_success( const c_str sName ) {
 
      timestamp2 = current_time();
      elapse = timestamp2 - timestamp1;
      
      fprintf(stdout,
              "\n%s table generated in %8.2f seconds.\n\n",
-             tName,
+             sName.data(),
              elapse); 
      fflush(stdout);                                            
 
@@ -320,14 +320,14 @@ int report_gen_success( char* tName ) {
 
 
 // fn: Return failed table creation
-int report_gen_fail( char const* tName, int iter ) {
+int report_gen_fail( const c_str sName, int iter ) {
 
      timestamp2 = current_time();
      elapse = timestamp2 - timestamp1;
      
      fprintf(stdout,
              "\n%s table FAILED at (I %d) after %8.2f seconds.\n\n",
-             tName,
+             sName.data(),
              iter,
              elapse); 
      fflush(stdout);                                            
@@ -355,7 +355,7 @@ int gen_item_tbl( void ) {
    rc = GenericOpen(&hnd, outtype1, outname1);
 
    if (rc != 0) {
-     return (report_gen_fail("ITEM", 0));
+       return (report_gen_fail(c_str("ITEM"), 0));
    }
 
 
@@ -383,16 +383,16 @@ int gen_item_tbl( void ) {
       rc = GenericWrite(&hnd, Buffer, numBytes);
 
       if (rc != 0) {
-        return (report_gen_fail("ITEM", item_num));
+          return (report_gen_fail(c_str("ITEM"), item_num));
       }
    }
 
    rc = GenericClose(&hnd);
 
    if (rc == 0) {  
-       return (report_gen_success("ITEM"));
+       return (report_gen_success(c_str("ITEM")));
    } else {
-       return (report_gen_fail("ITEM",0));
+       return (report_gen_fail(c_str("ITEM"),0));
    }
 }
 
@@ -426,7 +426,7 @@ int gen_stock_tbl( void ) {
 
    rc = GenericOpen(&hnd, outtype1, outname1);             
    if (rc != 0) { 
-     report_gen_fail("STOCK", 0);
+       report_gen_fail(c_str("STOCK"), 0);
    }                       
 
 
@@ -484,7 +484,7 @@ int gen_stock_tbl( void ) {
          rc = GenericWrite(&hnd, Buffer, numBytes);              
          
          if (rc != 0) {
-             return (report_gen_fail("STOCK", ware_num));
+             return (report_gen_fail(c_str("STOCK"), ware_num));
          }
       }
    } 
@@ -492,9 +492,9 @@ int gen_stock_tbl( void ) {
    rc = GenericClose(&hnd);
 
    if (rc == 0) {                                               
-     return (report_gen_success("STOCK"));
+       return (report_gen_success(c_str("STOCK")));
    } else {
-     return (report_gen_fail("STOCK",0));
+       return (report_gen_fail(c_str("STOCK"),0));
    }
 }
 
@@ -518,7 +518,7 @@ int gen_ware_tbl( void ) {
 
    rc = GenericOpen(&hnd, outtype1, outname1);
    if (rc != 0) {
-       return (report_gen_fail("WAREHOUSE", 0));
+       return (report_gen_fail(c_str("WAREHOUSE"), 0));
    }           
 
    for (ware_num = ware_start; ware_num <= ware_end; ware_num++)
@@ -551,16 +551,16 @@ int gen_ware_tbl( void ) {
 
       rc = GenericWrite(&hnd, Buffer, numBytes); 
       if (rc != 0) { 
-          return (report_gen_fail("WAREHOUSE", 0));
+          return (report_gen_fail(c_str("WAREHOUSE"), 0));
       }                           
    }
 
    rc = GenericClose(&hnd);
 
    if (rc == 0) {                                               
-     return (report_gen_success("WAREHOUSE"));
+       return (report_gen_success(c_str("WAREHOUSE")));
    } else {
-     return (report_gen_fail("WAREHOUSE",0));
+       return (report_gen_fail(c_str("WAREHOUSE"),0));
    }
 }
 
@@ -587,7 +587,7 @@ int gen_dist_tbl( void ) {
 
    rc = GenericOpen(&hnd, outtype1, outname1);                    
    if (rc != 0) { 
-       return (report_gen_fail("DISTRICT", 0));
+       return (report_gen_fail(c_str("DISTRICT"), 0));
    }
 
    for (ware_num = ware_start; ware_num <= ware_end; ware_num++)  
@@ -622,7 +622,7 @@ int gen_dist_tbl( void ) {
 
          rc = GenericWrite(&hnd, Buffer, numBytes);
          if (rc != 0) { 
-             return (report_gen_fail("DISTRICT", dist_num));
+             return (report_gen_fail(c_str("DISTRICT"), dist_num));
          }
 
       } 
@@ -631,9 +631,9 @@ int gen_dist_tbl( void ) {
    rc = GenericClose(&hnd);
 
    if (rc == 0) {                                               
-     return (report_gen_success("DISTRICT"));
+       return (report_gen_success(c_str("DISTRICT")));
    } else {
-     return (report_gen_fail("DISTRICT",0));
+       return (report_gen_fail(c_str("DISTRICT"),0));
    }
 }
 
@@ -667,7 +667,7 @@ int gen_cust_tbl( void ) {
    rc = GenericOpen(&hnd, outtype1, outname1);
 
    if (rc != 0) { 
-       return (report_gen_fail("CUSTOMER", 0));
+       return (report_gen_fail(c_str("CUSTOMER"), 0));
    }
 
    strcpy(cust_middle, "OE");
@@ -757,7 +757,7 @@ int gen_cust_tbl( void ) {
 
             rc = GenericWrite(&hnd, Buffer, numBytes);
             if (rc != 0) { 
-                return (report_gen_fail("CUSTOMER", cust_num));
+                return (report_gen_fail(c_str("CUSTOMER"), cust_num));
             }
 
          } 
@@ -767,9 +767,9 @@ int gen_cust_tbl( void ) {
    rc = GenericClose(&hnd);
 
    if (rc == 0) {                                               
-     return (report_gen_success("CUSTOMER"));
+       return (report_gen_success(c_str("CUSTOMER")));
    } else {
-     return (report_gen_fail("CUSTOMER",0));
+       return (report_gen_fail(c_str("CUSTOMER"),0));
    }
 }
 
@@ -790,7 +790,7 @@ int gen_hist_tbl( void ) {
 
    rc = GenericOpen(&hnd, outtype1, outname1);                   
    if (rc != 0) { 
-       return (report_gen_fail("HISTORY", 0));
+       return (report_gen_fail(c_str("HISTORY"), 0));
    }
 
    currtmstmp = time(NULL);                                     
@@ -821,7 +821,7 @@ int gen_hist_tbl( void ) {
 
             rc = GenericWrite(&hnd, Buffer, numBytes);
             if (rc != 0) { 
-                return (report_gen_fail("HISTORY", cust_num));
+                return (report_gen_fail(c_str("HISTORY"), cust_num));
             }
 
          } 
@@ -831,9 +831,9 @@ int gen_hist_tbl( void ) {
    rc = GenericClose(&hnd);
 
    if (rc == 0) {                                               
-     return (report_gen_success("HISTORY"));
+       return (report_gen_success(c_str("HISTORY")));
    } else {
-     return (report_gen_fail("HISTORY",0));
+       return (report_gen_fail(c_str("HISTORY"),0));
    }
 }
 
@@ -871,7 +871,7 @@ int gen_nu_ord_tbl( void ) {
 
    rc = GenericOpen(&hnd, outtype1, outname1);                   
    if (rc != 0) { 
-       return (report_gen_fail("NEW_ORDER", 0));
+       return (report_gen_fail(c_str("NEW_ORDER"), 0));
    }
 
    /* We generate in O/W/D order for non-RCT tables.  With the
@@ -905,7 +905,7 @@ int gen_nu_ord_tbl( void ) {
 
             rc = GenericWrite(&hnd, Buffer, numBytes);            
             if (rc != 0) { 
-                return (report_gen_fail("NEW_ORDER", dist_num));
+                return (report_gen_fail(c_str("NEW_ORDER"), dist_num));
             }
 
          } 
@@ -915,9 +915,9 @@ int gen_nu_ord_tbl( void ) {
    rc = GenericClose(&hnd);
 
    if (rc == 0) {                                               
-     return (report_gen_success("NEW_ORDER"));
+       return (report_gen_success(c_str("NEW_ORDER")));
    } else {
-     return (report_gen_fail("NEW_ORDER",0));
+       return (report_gen_fail(c_str("NEW_ORDER"),0));
    }
 }
 
@@ -948,12 +948,12 @@ int gen_ordr_tbl( void ) {
 
    rc1 = GenericOpen(&hnd1, outtype1, outname1);                 
    if (rc1 != 0) { 
-       return (report_gen_fail("ORDER", 0));
+       return (report_gen_fail(c_str("ORDER"), 0));
    }
 
    rc2 = GenericOpen(&hnd2, outtype2, outname2);                 
    if (rc2 != 0) { 
-       return (report_gen_fail("ORDER_LINE", 0));
+       return (report_gen_fail(c_str("ORDER_LINE"), 0));
    }
 
    currtmstmp = time(NULL);                                      
@@ -1010,7 +1010,7 @@ int gen_ordr_tbl( void ) {
                            
                            rc1 = GenericWrite(&hnd1, Buffer, numBytes);         
                            if (rc1 != 0) { 
-                               return (report_gen_fail("ORDERS", ord_num));
+                               return (report_gen_fail(c_str("ORDERS"), ord_num));
                            }
                            
                            for ( oline_ol_num = 1; 
@@ -1050,7 +1050,7 @@ int gen_ordr_tbl( void ) {
                                    
                                    rc2 = GenericWrite(&hnd2, Buffer, numBytes);      
                                    if (rc2 != 0) { 
-                                       return (report_gen_fail("ORDER_LINE", oline_item_num));
+                                       return (report_gen_fail(c_str("ORDER_LINE"), oline_item_num));
                                    }
 
                                } 
@@ -1063,9 +1063,9 @@ int gen_ordr_tbl( void ) {
 
 
    if ((rc1 == 0) && (rc2 == 0)) {  
-       return (report_gen_success("ORDER && ORDER_LINE"));
+       return (report_gen_success(c_str("ORDER && ORDER_LINE")));
    } else {
-       return (report_gen_fail("ORDER OR ORDER_LINE",0));
+       return (report_gen_fail(c_str("ORDER OR ORDER_LINE"),0));
    }
    
 }

@@ -14,7 +14,7 @@
 
 #include "workload/driver.h"
 #include "workload/tpcc/drivers/tpcc_payment_common.h"
-#include "stages/tpcc/common/payment_functions.h"
+#include "stages/tpcc/bdb/payment_functions.h"
 #include "stages/tpcc/bdb/payment_baseline.h"
 
 

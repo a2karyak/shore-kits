@@ -8,7 +8,7 @@
 #include "core.h"
 #include "util.h"
 
-#include "stages/tpcc/common/bdb_trx_packet.h"
+#include "stages/tpcc/bdb/bdb_trx_packet.h"
 
 using namespace qpipe;
 

@@ -18,28 +18,6 @@ using namespace tpcc;
 
 /** Exported functions */
 
-/** @fn savedata
- *
- *  @brief Loads the TPC-C data from a specified location
- */
-
-int ShoreTPCCEnv::savedata(c_str saveDir) {
-
-    TRACE( TRACE_DEBUG, "Saving data to (%s)\n", saveDir.data());
-
-
-    // Start measuring loading time
-    time_t tstart = time(NULL);
-
-
-    time_t tstop = time(NULL);
-
-    TRACE( TRACE_ALWAYS, "Save finished in (%d) secs\n", tstop - tstart);
-
-    return (0);
-}
-
-
 /** @fn loaddata
  *
  *  @brief Loads the TPC-C data from a specified location
@@ -52,6 +30,7 @@ int ShoreTPCCEnv::loaddata(c_str loadDir) {
     // Start measuring loading time
     time_t tstart = time(NULL);
 
+    assert (false); // TO DO
 
     time_t tstop = time(NULL);
 
@@ -70,6 +49,8 @@ int ShoreTPCCEnv::loaddata(c_str loadDir) {
 void ShoreTPCCEnv::dump() {
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
     TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
+
+    assert (false); // TO DO
 
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
 }

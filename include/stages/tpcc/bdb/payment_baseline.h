@@ -21,8 +21,8 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/common/bdb_trx_packet.h"
-#include "stages/tpcc/common/payment_functions.h"
+#include "stages/tpcc/bdb/bdb_trx_packet.h"
+#include "stages/tpcc/bdb/payment_functions.h"
 
 
 using namespace qpipe;

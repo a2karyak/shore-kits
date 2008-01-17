@@ -161,19 +161,7 @@ void tpcc_parse_tbl_DISTRICT(Db* db, FILE* fd) {
         // insert tuple into database
         Dbt key(&tk, sizeof(tk));
         Dbt data(&tup, sizeof(tup));
-
-#ifdef SECOND_PADDING
-        // pad by adding multiple same records 
-        tk.D_PADDING_KEY = 0;
-        for (int i = 0; i < DUPLICATES_PADDING; i++) {
-            if (db->put(NULL, &key, &data, 0) == 0) {
-                printf("+");
-                tk.D_PADDING_KEY += 1;
-            }
-        }
-#else
         db->put(NULL, &key, &data, 0);
-#endif
 
         progress_update(&progress);
     }
@@ -413,7 +401,7 @@ void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd) {
         tmp = strtok(NULL, "|");
         tup.OL_QUANTITY = atoi(tmp);
         tmp = strtok(NULL, "|");
-        tup.OL_AMOYNT = atoi(tmp);
+        tup.OL_AMOUNT = atoi(tmp);
         tmp = strtok(NULL, "|");
         store_string(tup.OL_DIST_INFO,tmp);
 
@@ -554,20 +542,8 @@ void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd) {
         // insert tuple into database
         Dbt key(&wk, sizeof(wk));
         Dbt data(&tup, sizeof(tup));
-
-#ifdef SECOND_PADDING
-        // FIXME (ip) Make sure padding works
-        // for padding we use an additional column
-        wk.W_PADDING_KEY = 0;
-        for (int i = 0; i < DUPLICATES_PADDING; i++) {
-            if (db->put(NULL, &key, &data, 0) == 0) {
-                printf("+");
-                wk.W_PADDING_KEY += 1;
-            }
-        }
-#else
         db->put(NULL, &key, &data, 0);
-#endif 
+
         progress_update(&progress);
     }
 
@@ -595,6 +571,10 @@ DEFINE_TPCC_PARSER(ITEM) {
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
     record.first.I_ID = atoi(tmp);
+    record.second.I_ID = record.first.I_ID;
+
+    // end of key
+
     tmp = strtok_r(NULL, "|", &lasts);
     record.second.I_IM_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -606,6 +586,7 @@ DEFINE_TPCC_PARSER(ITEM) {
     
     return record;
 }
+
 
 DEFINE_TPCC_PARSER(NEW_ORDER) {
     // split line into tab separated parts
@@ -620,6 +601,7 @@ DEFINE_TPCC_PARSER(NEW_ORDER) {
     
     return record;
 }
+
 
 DEFINE_TPCC_PARSER(HISTORY) {
     // split line into tab separated parts
@@ -637,6 +619,9 @@ DEFINE_TPCC_PARSER(HISTORY) {
     record.first.H_W_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.H_DATE = atoi(tmp);
+
+    // end of key
+
     tmp = strtok_r(NULL, "|", &lasts);
     record.second.H_AMOUNT = atof(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -644,6 +629,7 @@ DEFINE_TPCC_PARSER(HISTORY) {
 
     return record;
 }
+
 
 DEFINE_TPCC_PARSER(ORDER) {
     
@@ -658,6 +644,9 @@ DEFINE_TPCC_PARSER(ORDER) {
     record.first.O_D_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.O_W_ID = atoi(tmp);
+
+    // end of key
+
     tmp = strtok_r(NULL, "|", &lasts);
     record.second.O_ENTRY_D = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -670,6 +659,94 @@ DEFINE_TPCC_PARSER(ORDER) {
     return record;
 }
 
+
+DEFINE_TPCC_PARSER(ORDERLINE) {
+
+    assert(false); // TODO
+    
+    // split line into tab separated parts
+    record_t record;
+    char* lasts;
+    char* tmp = strtok_r(linebuffer, "|", &lasts);
+
+
+    record.first.OL_O_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.OL_D_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.OL_W_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.OL_NUMBER = atoi(tmp);
+
+    // end of key
+
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.OL_I_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.OL_SUPPLY_W_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.OL_DELIVERY_D = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.OL_QUANTITY = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.OL_AMOUNT = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.OL_DIST_INFO,tmp);
+
+    return record;
+}
+
+
+DEFINE_TPCC_PARSER(STOCK) {
+    
+    // split line into tab separated parts
+    record_t record;
+    char* lasts;
+    char* tmp = strtok_r(linebuffer, "|", &lasts);
+    record.first.S_I_ID = atoi(tmp);
+    record.second.S_I_ID = record.first.S_I_ID;
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.S_W_ID = atoi(tmp);
+    record.second.S_W_ID = record.first.S_W_ID;
+
+    // end of key
+
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.S_REMOTE_CNT = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.S_QUANTITY = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.S_ORDER_CNT = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.S_YTD = atoi(tmp);
+
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_01,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_02,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_03,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_04,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_05,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_06,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_07,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_08,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_09,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DIST_10,tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    FILL_STRING(record.second.S_DATA,tmp);
+
+    return record;
+}
+
+
 DEFINE_TPCC_PARSER(DISTRICT) {
     
     // split line into tab separated parts
@@ -681,6 +758,9 @@ DEFINE_TPCC_PARSER(DISTRICT) {
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.D_W_ID = atoi(tmp);
     record.second.D_W_ID = atoi(tmp);
+
+    // end of key
+
     tmp = strtok_r(NULL, "|", &lasts);
     FILL_STRING(record.second.D_NAME,tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -712,6 +792,9 @@ DEFINE_TPCC_PARSER(WAREHOUSE) {
     char* tmp = strtok_r(linebuffer, "|", &lasts);
     record.first.W_ID = atoi(tmp);
     record.second.W_ID = atoi(tmp);
+
+    // end of key
+
     tmp = strtok_r(NULL, "|", &lasts);
     FILL_STRING(record.second.W_NAME,tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -744,6 +827,9 @@ DEFINE_TPCC_PARSER(CUSTOMER) {
     record.first.C_D_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.C_W_ID = atoi(tmp);
+
+    // end of key
+
     tmp = strtok_r(NULL, "|", &lasts);
     FILL_STRING(record.second.C_FIRST,tmp);
     tmp = strtok_r(NULL, "|", &lasts);

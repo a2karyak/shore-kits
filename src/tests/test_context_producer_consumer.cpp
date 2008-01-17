@@ -27,14 +27,15 @@ ucontext_t producer, consumer;
 
 
 
-extern "C" void* producer_main(int arg)
+extern "C" void producer_main()
 {
     static int gen = 100;
 
     int i;
     for (i = 0; i < 5; i++) {
 
-        TRACE(TRACE_ALWAYS, "Running producer with arg = %d\n", arg);
+        TRACE(TRACE_ALWAYS, "Running producer\n");
+        //TRACE(TRACE_ALWAYS, "Running producer with arg = %d\n", arg);
 
         /* Fill the buffer */
         while (buffer_entry_count < NUM_BUFFER_ENTRIES) {
@@ -54,7 +55,7 @@ extern "C" void* producer_main(int arg)
 
     running = 0;
 
-    return NULL;
+    //return NULL;
 }
 
 
@@ -79,7 +80,7 @@ int main(int, char**) {
     producer.uc_stack.ss_size  = stack_size;
     producer.uc_link = &consumer;
 
-    makecontext(&producer, (void (*)())producer_main, 1, 1021);
+    makecontext(&producer, producer_main, 1, 1021);
 
     while (1) {
 

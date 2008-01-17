@@ -16,10 +16,12 @@
 int g_switched = 0;
 
 
-extern "C" void* switcher_main(int arg)
+//extern "C" void* switcher_main(int arg)
+extern "C" void switcher_main()
 {
-    TRACE(TRACE_ALWAYS, "IN SWITCHER WITH ARG = %d\n", arg);
-    return NULL;
+    TRACE(TRACE_ALWAYS, "IN SWITCHER\n");
+    //    TRACE(TRACE_ALWAYS, "IN SWITCHER WITH ARG = %d\n", arg);
+    //    return NULL;
 }
 
 
@@ -67,7 +69,7 @@ int main(int, char**) {
         switcher.uc_stack.ss_size  = stack_size;
         switcher.uc_link = &root;
 
-        makecontext(&switcher, (void (*)())switcher_main, 1, 1021);
+        makecontext(&switcher, switcher_main, 1, 1021);
 
         /* the switcher context should now be ready... */
         /* Let's try running it with setcontext() */

@@ -7,10 +7,9 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "stages/tpcc/bdb/payment_baseline.h"
-#include "stages/tpcc/common/payment_functions.h"
-
 #include "workload/tpcc/tpcc_env.h"
+#include "stages/tpcc/bdb/payment_baseline.h"
+
 
 using namespace qpipe;
 using namespace tpcc_payment;
@@ -54,7 +53,6 @@ void payment_baseline_stage_t::process_packet() {
                                                                 packet->_trx_txn,
                                                                 packet->_p_dbts);
     
-
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
     
     // writing output 

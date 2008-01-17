@@ -54,7 +54,11 @@ public:
 
     // Construction/Destructions
     payment_input_t() { };
-    virtual ~payment_input_t() { };
+
+    ~payment_input_t() { 
+        // if (_c_last) delete (_c_last);
+    };
+
 
     // Assignment operator
     payment_input_t& operator= (const payment_input_t& rhs) {
@@ -166,7 +170,7 @@ public:
         assert ( 1 == 0 ); // (ip) Not implemented yet
     };
     
-    virtual ~new_order_input_t() { };
+    ~new_order_input_t() { };
 
     // Assignment operator
     new_order_input_t& operator= (const new_order_input_t& rhs) {

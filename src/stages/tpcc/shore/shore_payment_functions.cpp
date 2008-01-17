@@ -47,7 +47,7 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
  */
 
 int insertShoreHistory(payment_input_t* pin, 
-                       ShoreTPCCEnv* env) 
+                       ss_m* pssm, ShoreTPCCEnv* env)
 {
     /////////////////////////////
     ///// START INS_HISTORY /////
@@ -97,7 +97,7 @@ int insertShoreHistory(payment_input_t* pin,
  */
 
 int updateShoreCustomer(payment_input_t* pin,
-                        ShoreTPCCEnv* env) 
+                        ss_m* pssm, ShoreTPCCEnv* env)
 {
     //////////////////////////////
     ///// START UPD_CUSTOMER /////
@@ -120,6 +120,7 @@ int updateShoreCustomer(payment_input_t* pin,
                                           pin->_home_d_id, 
                                           pin->_c_last, 
                                           pin->_h_amount,
+                                          pssm,
                                           env));
     }
     else {
@@ -135,6 +136,7 @@ int updateShoreCustomer(payment_input_t* pin,
                                         pin->_home_d_id, 
                                         pin->_c_id, 
                                         pin->_h_amount,
+                                        pssm,
                                         env));
     }
 
@@ -156,8 +158,8 @@ int updateShoreCustomer(payment_input_t* pin,
  *  @return 0 on success, non-zero on failure
  */
 
-int updateShoreWarehouse(payment_input_t* pin, int* idx,
-                        ShoreTPCCEnv* env) 
+int updateShoreWarehouse(payment_input_t* pin,
+                         ss_m* pssm, ShoreTPCCEnv* env)
 {
     ///////////////////////////////
     ///// START UPD_WAREHOUSE /////    
@@ -172,7 +174,7 @@ int updateShoreWarehouse(payment_input_t* pin, int* idx,
     //tpcc_warehouse_tuple_key wk;
 
     // Calculate index in array
-    *idx = (pin->_home_wh_id - 1);
+    //*idx = (pin->_home_wh_id - 1);
     tpcc_warehouse_tuple* warehouse = NULL;
 
     assert (false); // (ip) TODO
@@ -238,7 +240,7 @@ int updateShoreWarehouse(payment_input_t* pin, int* idx,
  */
 
 int updateShoreDistrict(payment_input_t* pin, int* idx,
-                        ShoreTPCCEnv* env) 
+                        ss_m* pssm, ShoreTPCCEnv* env)
 {
     //////////////////////////////
     ///// START UPD_DISTRICT /////
@@ -312,7 +314,6 @@ int updateShoreDistrict(payment_input_t* pin, int* idx,
 
 
 
-
 /** @fn updateShoreCustomerByID
  *
  *  @brief Step 4, Case 1: The customer is selected based on customer number.
@@ -326,15 +327,16 @@ int updateShoreDistrict(payment_input_t* pin, int* idx,
  *  updateCustomerData is called.
  *  
  *  @return 0 on success, non-zero on failure
- */
-    
+ */    
 
 int updateShoreCustomerByID(int wh_id, 
 			    int d_id, 
 			    int c_id, 
                             decimal h_amount, 
-			    ShoreTPCCEnv* env)
+                            ss_m* pssm, ShoreTPCCEnv* env)
 {
+    assert (false);
+
     assert (env); // ensure that we have a valid environment
 
     tpcc_customer_tuple_key ck;
@@ -418,8 +420,10 @@ int updateShoreCustomerByLast(int wh_id,
                               int d_id, 
                               char* c_last,
                               decimal h_amount,
-                              ShoreTPCCEnv* env)
+                              ss_m* pssm, ShoreTPCCEnv* env)
 {
+    assert (false);
+
     assert (env); // ensure that we have a valid environment
 
     assert(1==0); // FIXME (ip) Not implemented yet
@@ -455,6 +459,8 @@ int updateShoreCustomerByLast(int wh_id,
 void updateShoreCustomerData(tpcc_customer_tuple_key ck, 
                              tpcc_customer_tuple_body* a_cb) 
 {
+    assert (false);
+
     assert( a_cb );
     assert( strncmp(a_cb->C_CREDIT, "BC", 2) == 0 );
 
@@ -506,67 +512,74 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
  *
  *  @brief Executes the SHORE_PAYMENT transaction serially. Wrapper function.
  *  
- *  @note The latches on the Warehouse and District entries are released here
- *
  *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
 trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
                                                const int id, 
-                                               ShoreTPCCEnv* env)
+                                               ss_m* pssm, ShoreTPCCEnv* env)
 {        
+
+    assert (false); // TODO 
+
     assert (env); // ensure that we have a valid environment
+
+    assert (pssm != NULL); // should have a valid db handle
 
     // initialize the result structure
     trx_result_tuple_t aTrxResultTuple(UNDEF, id);
 
-    int myDistrictIdx = -1;
-    int myWarehouseIdx = -1;
-    
     try {
+
+        assert (false); // TO DO
+
+        
         
         TRACE( TRACE_TRX_FLOW, "*** EXECUTING SHORE-TRX CONVENTIONALLY ***\n");
     
-        /** @note PAYMENT TRX According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 */
-    
+        /** @note PAYMENT TRX 
+         *  According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 
+         */    
 
         pin.describe(id);
 
         /** Step 1: The database transaction is started */
         TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
 
-        if (updateShoreWarehouse(&pin, &myWarehouseIdx, env)) {
+        if (updateShoreWarehouse(&pin, pssm, env)) {
             
             // Failed. Throw exception
-            THROW1( TrxException, 
-                    "WAREHOUSE update failed...\n");
+            TRACE( TRACE_ALWAYS, 
+                   "WAREHOUSE update failed...\nAborting\n");
+                        
         }
 
 
-        if (updateShoreDistrict(&pin, &myDistrictIdx, env)) {
+        if (updateShoreDistrict(&pin, pssm, env)) {
             
             // Failed. Throw exception
             THROW1( TrxException, 
-                    "DISTRICT update failed...\n");
+                    "DISTRICT update failed...\nAborting\n");
         }
 
 
-        if (updateShoreCustomer(&pin, env)) {
+        if (updateShoreCustomer(&pin, pssm, env)) {
+
             // Failed. Throw exception
             THROW1( TrxException,
-                    "CUSTOMER update failed...\n");
+                    "CUSTOMER update failed...\nAborting\n");
         }
 
-        if (insertShoreHistory(&pin, env)) {
+        if (insertShoreHistory(&pin, pssm, env)) {
 
             // Failed. Throw exception
             THROW1( TrxException, 
-                    "HISTORY instertion failed...\n");
+                    "HISTORY instertion failed...\nAborting\n");
         }
 
     
         /** Step 6: The database transaction is committed */
-        TRACE( TRACE_TRX_FLOW, "Step 6: The database transaction is committed\n" );
+        TRACE( TRACE_TRX_FLOW, "Step 6: The transaction is committed\n" );
 
         // Releases the locks in the Warehouse and the District
         // In reverse order. That is, it first releases the District
@@ -592,71 +605,10 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
         */   
 
     }        
-    catch(TrxException e) {
-        TRACE( TRACE_ALWAYS, 
-               "********************************\n" \
-               "TrxException Exception - Aborting PAYMENT trx...\n" \
-               "Reason: (%s)\n", e.what());
-
-        // Release district
-        if (myDistrictIdx >= 0) {
-            assert (false); // (ip) TODO
-            /*
-            if (env->im_districts.release(myDistrictIdx)) {
-                // Error while trying to release entry
-                THROW2(TrxException, "Called Districts.release(%d)\n", 
-                       myDistrictIdx);
-            }
-            */
-        }    
-
-
-        // Release warehouse
-        if  (myWarehouseIdx >= 0) {
-            assert (false); // (ip) TODO
-            /*
-            if (env->im_warehouses.release(myWarehouseIdx)) {
-                // Error while trying to release entry
-                THROW2(TrxException, "Called Warehouses.release(%d)\n", 
-                       myWarehouseIdx);
-            } 
-            */   
-        }
-        
-
-        aTrxResultTuple.set_state(ROLLBACKED);
-        return (aTrxResultTuple);
-    }
     catch(...) {
         TRACE( TRACE_ALWAYS, 
                "********************************\n" \
                "Unknown Exception - Aborting PAYMENT trx...\n");
-
-
-        // Release district
-        if (myDistrictIdx >= 0) {
-            assert (false); // (ip) TODO
-            /*
-            if (env->im_districts.release(myDistrictIdx)) {
-                // Error while trying to release entry
-                THROW2(TrxException, "Called Districts.release(%d)\n", 
-                       myDistrictIdx);
-            }
-            */
-        }    
-
-
-        // Release warehouse
-        if  (myWarehouseIdx >= 0) {
-            assert (false); // (ip) TODO
-            /*
-            if (env->im_warehouses.release(myWarehouseIdx)) {
-                // Error while trying to release entry
-                THROW2(TrxException, "Called Warehouses.release(%d)\n", 
-                       myWarehouseIdx);
-            } 
-            */
-        }
         
 
         aTrxResultTuple.set_state(ROLLBACKED);
@@ -788,9 +740,12 @@ int staged_updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env) {
     ////////////////////////////
 }
 
-int staged_updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env) {
 
-    return (updateShoreCustomer(pin,env));
+int staged_updateShoreCustomer(payment_input_t* pin, 
+                               ss_m* pssm, ShoreTPCCEnv* env) 
+{
+
+    return (updateShoreCustomer(pin, pssm, env));
 }
 
 
@@ -801,9 +756,11 @@ int staged_updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env) {
  *  @return 0 on success, non-zero otherwise
  */
 
-int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env) {
+int staged_insertShoreHistory(payment_input_t* pin, 
+                              ss_m* pssm, ShoreTPCCEnv* env) 
+{
     
-    return (insertShoreHistory(pin,env));
+    return (insertShoreHistory(pin, pssm, env));
 }
 
 

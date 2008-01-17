@@ -8,10 +8,10 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "stages/tpcc/common/payment_functions.h"
+
 #include "stages/tpcc/common/trx_packet.h"
 #include "workload/tpcc/tpcc_env.h"
-
+#include "stages/tpcc/bdb/payment_functions.h"
 
 using namespace qpipe;
 

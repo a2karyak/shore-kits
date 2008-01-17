@@ -30,26 +30,23 @@ ENTER_NAMESPACE(tpcc_payment);
 /** Exported functions */
 
 int insertShoreHistory(payment_input_t* pin, 
-                       ShoreTPCCEnv* env);
+                       ss_m* pssm, ShoreTPCCEnv* env);
 
 int updateShoreCustomer(payment_input_t* pin, 
-                        ShoreTPCCEnv* env);
+                        ss_m* pssm, ShoreTPCCEnv* env);
 
-int updateShoreDistrict(payment_input_t* pin, int* idx, 
-                        ShoreTPCCEnv* env);
+int updateShoreDistrict(payment_input_t* pin, 
+                        ss_m* pssm, ShoreTPCCEnv* env);
 
-int updateShoreWarehouse(payment_input_t* pin, int* idx, 
-                         ShoreTPCCEnv* env);
+int updateShoreWarehouse(payment_input_t* pin,
+                         ss_m* pssm, ShoreTPCCEnv* env);
 
-int updateShoreCustomerByID(int wh_id, int d_id, int c_id, 
-                            decimal h_amount, 
-			    ShoreTPCCEnv* env);
+int updateShoreCustomerByID(int wh_id, int d_id, int c_id, decimal h_amount,
+                            ss_m* pssm, ShoreTPCCEnv* env);
 
 int updateShoreCustomerByLast(int wh_id, int d_id, 
-			      char* c_last,
-                              decimal h_amount, 
-			      ShoreTPCCEnv* env);
-
+			      char* c_last, decimal h_amount,
+                              ss_m* pssm, ShoreTPCCEnv* env);
 
 // implementation of the single-threaded version of the Shore payment
 trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,

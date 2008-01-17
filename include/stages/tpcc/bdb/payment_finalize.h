@@ -9,7 +9,7 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/common/bdb_trx_packet.h"
+#include "stages/tpcc/bdb/bdb_trx_packet.h"
 
 #include "stages/tpcc/bdb/payment_upd_wh.h"
 #include "stages/tpcc/bdb/payment_upd_distr.h"

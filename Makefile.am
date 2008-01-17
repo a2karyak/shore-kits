@@ -1,12 +1,25 @@
 # -*- makefile -*-
-INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include -I$(BOOST_HOME)
 
+
+# Shore related 
+SHORE = $(HOME)/DEV/shore-lomond/src
+SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW   -DW_LARGEFILE
+SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS)
+SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon
+
+
+# GLOBAL includes
+INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include -I$(BOOST_HOME) $(SHORE_INCLUDES)
+
+# List of libraries
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
    lib/libstages.a lib/libcore.a lib/libutil.a \
    lib/libdbgen.a
 
-LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a
+# GLOBAL ld
+LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a $(SHORE_LDADD)
+
 
 #\
    tests/max_timers \
@@ -63,9 +76,8 @@ TESTS = \
    tests/tpcc_load_confirm \
    tests/clh_lock \
    tests/clh_rwlock \
-   tests/bptree
-
-#   tests/tpcc_load_shore
+   tests/bptree \
+   tests/tpcc_load_shore
 
 DBGEN = \
    dbgen_tpcc
@@ -176,10 +188,11 @@ SG_COMMON = \
 
 SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
-   $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
-   $(SG)/tpcc/common/payment_functions.cpp
+   $(SG)/tpcc/common/tpcc_scaling_factor.cpp
+
 
 SG_BDB_TRX = \
+   $(SG)/tpcc/bdb/payment_functions.cpp \
    $(SG)/tpcc/bdb/payment_baseline.cpp \
    $(SG)/tpcc/bdb/payment_begin.cpp \
    $(SG)/tpcc/bdb/payment_upd_wh.cpp \
@@ -203,6 +216,8 @@ SG_SHORE_TRX = \
    $(SG)/tpcc/shore/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp
 
+
+lib_libstages_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
 lib_libstages_a_SOURCES = \
    $(SG_MAIN) \
@@ -297,7 +312,7 @@ lib_libworkload_a_SOURCES = \
    $(WL_SHORE_TPCC_PAYMENT)
 
 
-lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
+lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
 
 
@@ -331,7 +346,9 @@ dbgen_tpcc_LDADD = lib/libdbgen.a $(LDADD)
 ################################################################################
 
 STC = $(top_srcdir)/src/tests/common
+
 lib_libtest_a_CXXFLAGS = $(AM_CXXFLAGS)
+
 lib_libtest_a_SOURCES = \
    $(STC)/drive_stage.cpp \
    $(STC)/int_tuple_writer.cpp \
@@ -400,15 +417,17 @@ tests_acounter_SOURCES = $(ST)/test_acounter.cpp
 tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
-#tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
+tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
 tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
 
 
-#SHORE=$(HOME)/DEV/shore-lomond/src
-#tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config
+# exec files that need Shore
+tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS)
+tests_tpcc_load_shore_LDADD = $(TEST_LDADD) $(SHORE_LDADD)
+
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 #tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt

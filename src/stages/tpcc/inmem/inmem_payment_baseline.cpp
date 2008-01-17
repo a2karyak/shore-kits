@@ -8,8 +8,6 @@
  */
 
 #include "stages/tpcc/inmem/inmem_payment_baseline.h"
-#include "stages/tpcc/common/payment_functions.h"
-
 #include "workload/tpcc/inmem_tpcc_env.h"
 
 using namespace qpipe;

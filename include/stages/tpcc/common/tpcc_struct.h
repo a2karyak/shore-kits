@@ -34,16 +34,9 @@ ENTER_NAMESPACE(tpcc);
  *  thus, too many data are being transfered and the throughput is dominated
  *  by this time.
  */
-//#define PADDING_ENABLE
 
 
 /* exported structures */
-
-
-// FIXME (ip): We may need to add some padding to pretend row-level locking
-//             BDB does page-level locking. 
-//             The hot structures, such as WAREHOUSE and DISTRICT are the
-//             candidates for padding.
 
 
 // CUSTOMER
@@ -102,7 +95,6 @@ struct tpcc_customer_tuple_key {
         else
             return (false);
     }
-
 };
 
 
@@ -127,7 +119,6 @@ struct tpcc_customer_tuple_body {
     char C_DATA_1   [STRSIZE(250)];
     char C_DATA_2   [STRSIZE(250)];    
 };
-
 
 
 // DISTRICT
@@ -163,9 +154,6 @@ struct tpcc_district_tuple {
 struct tpcc_district_tuple_key {
     int D_ID;
     int D_W_ID;
-
-    // padding
-    //    int D_PADDING_KEY;
 };
 
 
@@ -226,8 +214,7 @@ struct tpcc_history_tuple_key {
             return (true);
         else
             return (false);
-    }
-        
+    }        
 };
 
 
@@ -257,7 +244,7 @@ struct tpcc_item_tuple_key {
 
 // NEW_ORDER
 
-struct tpcc_new_order_tuple {
+struct tpcc_new_order_tuple { // The whole record is the key
     int NO_O_ID;
     int NO_D_ID;
     int NO_W_ID;
@@ -286,6 +273,15 @@ struct tpcc_order_tuple_key {
 };
 
 
+struct tpcc_order_tuple_body {
+    int O_ENTRY_D;
+    int O_CARRIER_ID;
+    int O_OL_CNT;
+    int O_ALL_LOCAL;
+};
+
+
+
 
 // ORDERLINE
 
@@ -298,7 +294,7 @@ struct tpcc_orderline_tuple {
     int OL_SUPPLY_W_ID;
     int OL_DELIVERY_D;
     int OL_QUANTITY;
-    int OL_AMOYNT;
+    int OL_AMOUNT;
     char OL_DIST_INFO [STRSIZE(25)];
 };
 
@@ -309,6 +305,17 @@ struct tpcc_orderline_tuple_key {
     int OL_W_ID;
     int OL_NUMBER;
 };
+
+
+struct tpcc_orderline_tuple_body {
+    int OL_I_ID;
+    int OL_SUPPLY_W_ID;
+    int OL_DELIVERY_D;
+    int OL_QUANTITY;
+    int OL_AMOUNT;
+    char OL_DIST_INFO [STRSIZE(25)];
+};
+
 
 
 // STOCK
@@ -369,9 +376,6 @@ struct tpcc_warehouse_tuple {
 
 struct tpcc_warehouse_tuple_key {
     int W_ID;
-
-    // for padding purposes
-    //    int W_PADDING_KEY;
 };
 
 EXIT_NAMESPACE(tpcc);
