@@ -2,7 +2,7 @@
 
 
 # Shore related 
-SHORE = $(HOME)/DEV/shore-lomond/src
+SHORE = $(SHORE_HOME)/src
 SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW   -DW_LARGEFILE
 SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS)
 SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon
@@ -425,8 +425,8 @@ tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
 
 
 # exec files that need Shore
-tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS)
-tests_tpcc_load_shore_LDADD = $(TEST_LDADD) $(SHORE_LDADD)
+tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_tpcc_load_shore_LDADD = $(TEST_LIBS)
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)

@@ -1,8 +1,8 @@
 m4_pattern_allow([^AC_PACKAGE])
 
-# configure.in for QPipe         -*- sh -*-
+# configure.in for Cordoba         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
-AC_INIT(THIS_IS_QPIPE,2.0)
+AC_INIT(THIS_IS_CORDOBA,2.0)
 
 # find system type (using this macro means we must include
 # the files install-sh, config.sub, and config.guess (all from
@@ -10,20 +10,20 @@ AC_INIT(THIS_IS_QPIPE,2.0)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
 
-AC_SUBST(QPIPE_FEATURES_DEFINES) 
+AC_SUBST(CORDOBA_FEATURES_DEFINES) 
 AC_SUBST(NEWLINE)
 
 AC_PREREQ(2.50)
 AC_PROG_CXX
 AC_PROG_RANLIB
 
-AC_MSG_NOTICE(Configuring QPipe)
+AC_MSG_NOTICE(Configuring Cordoba)
 
 # Set here the version numbers
-QPIPE_VERSION_MAJOR=1
-QPIPE_VERSION_MINOR=0
-QPIPE_VERSION_REV=0
-QPIPE_VERSION=$QPIPE_VERSION_MAJOR.$QPIPE_VERSION_MINOR.$QPIPE_VERSION_REV
+CORDOBA_VERSION_MAJOR="stagetrx"
+CORDOBA_VERSION_MINOR=1
+CORDOBA_VERSION_REV=0
+CORDOBA_VERSION=$CORDOBA_VERSION_MAJOR.$CORDOBA_VERSION_MINOR.$CORDOBA_VERSION_REV
 
 # make sure I haven't forgotten to run autoconf
 if test configure -ot configure.in; then
@@ -35,35 +35,6 @@ fi
 
 # check for egrep
 AC_PROG_EGREP
-
-# default berkeley db
-# $target is typically processor-vendor-os
-case "$target" in
-  # Sparc Solaris
-  *sparc*sun*)
-    BDB_HOME_DEFAULT="/export/home/ipandis/apps/berkeleydb"
-    BOOST_HOME_DEFAULT="/export/home/ipandis/apps/boost"
-    ;;
-
-  *ppc*)
-    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
-    BOOST_HOME_DEFAULT="/usr/software/boost"
-    ;;
-
-  *ia64*)
-    BDB_HOME_DEFAULT="$HOME/work/apps/berkeleydb"
-    BOOST_HOME_DEFAULT="$HOME/work/apps/boost"
-    ;;
-
- *)
-    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
-    BOOST_HOME_DEFAULT="/usr/software/boost"
-    ;;
-esac
-
-AC_ARG_VAR(BOOST_HOME, Location of Boost Installation; default is $BOOST_HOME_DEFAULT)
-
-AC_ARG_VAR(BDB_HOME, Location of Berkeley DB Installation; default is $BDB_HOME_DEFAULT)
 
 
 # debugging diagnostic; set to 'echo' to debug or 'true' for production
@@ -82,54 +53,154 @@ binaryExists() {
   fi
 }
 
-# gcc
-if binaryExists g++33; then
-GCC_COMPILER=g++
+
+# ---------- Compiler Checking ----------
+CORDOBA_CC=`echo $CC |  sed 's/.*\///'`
+AC_MSG_CHECKING(CC)
+AC_MSG_RESULT($CORDOBA_CC)
+
+CORDOBA_CXX=`echo $CXX |  sed 's/.*\///'`
+AC_MSG_CHECKING(CXX)
+AC_MSG_RESULT($CORDOBA_CXX)
+
+CORDOBA_CXX_VERSION="0.0"
+
+
+if test "$CORDOBA_CC" = "cc"; then
+   # ------ (SUN) C/C++ compiler ------
+   echo "using CC"
+
+   # cc version
+   #AC_MSG_CHECKING(compiler version)
+   #cc_ver=`$CXX -V | grep 'C++' | sed 's/^.*C++ //'`
+   #cc_major=`echo $gcc_ver | sed 's/\..*$//'`
+   #[cc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
+   #CORDOBA_CXX_VERSION="$cc_major.$cc_mid"
+   #AC_MSG_RESULT($CORDOBA_CXX_VERSION)
+
+   # *** Checking the compiler version (cc>=5.9)
+   reqcc_major=5
+   reqcc_mid=8
+   #if test $cc_major -lt $reqcc_major -o $cc_mid -le $reqcc_mid; then
+      #AC_MSG_WARN([CC Compiler $CORDOBA_CC version $CORDOBA_CXX_VERSION is currently not supported by Cordoba])
+      #AC_MSG_WARN([Compiled successfully with cc Compiler $reqcc_major.$reqcc_mid or higher])
+   #fi   
+
 else
-    if binaryExists g++; then
-	GCC_COMPILER=g++
-    else
-	AC_MSG_ERROR([
-	 No suitable compiler found. 
-	 Please make sure gcc is in your path.
-	])
-    fi
-fi
-AC_MSG_RESULT(found compiler $GCC_COMPILER)
+   # ------ GNU C/C++ compiler ------
+   echo "using GCC"
 
-# gcc version
-AC_MSG_CHECKING($GCC_COMPILER compiler version)
+   # gcc
+   if binaryExists g++33; then
+      GCC_COMPILER=g++
+   else
+      if binaryExists g++; then
+         GCC_COMPILER=g++
+      else
+         AC_MSG_ERROR([
+            No suitable compiler found. 
+	    Please make sure gcc is in your path.
+         ])
+      fi
+   fi
 
-gcc_ver=`$GCC_COMPILER --version | grep 'g++' | sed 's/^.*(GCC) //'`
-gcc_major=`echo $gcc_ver | sed 's/\..*$//'`
-[gcc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
-[gcc_minor=`echo $gcc_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/ .*$//'`]
+   # gcc version
+   AC_MSG_CHECKING(compiler version)
 
-GCC_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
-AC_MSG_RESULT($GCC_VERSION)
+   gcc_ver=`$GCC_COMPILER --version | grep 'g++' | sed 's/^.*(GCC) //'`
+   gcc_major=`echo $gcc_ver | sed 's/\..*$//'`
+   [gcc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
+   [gcc_minor=`echo $gcc_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/ .*$//'`]
 
-reqgcc_major=3
-reqgcc_mid=3
-#if test $gcc_major -ge $reqgcc_major -a $gcc_mid -gt $reqgcc_mid; then
-#    AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $GCC_VERSION is currently not supported by QPipe])
-#fi
+   CORDOBA_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
+   AC_MSG_RESULT($CORDOBA_CXX_VERSION)
+
+   # *** Checking the compiler version (g++>=4)
+   reqgcc_major=4
+   reqgcc_mid=0
+   if test $gcc_major -lt $reqgcc_major -o $gcc_mid -lt $reqgcc_mid; then
+      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $CORDOBA_CXX_VERSION is currently not supported by Cordoba])
+      AC_MSG_WARN([Compiled successfully with GCC Compiler $reqgcc_major.$reqgcc_mid or higher])
+   fi   
+fi 
+# ---------- End of Compiler Checking ----------
+
+
+
+# ----------- cordoba required libraries -------------
+# $target is typically processor-vendor-os
+case "$target" in
+  # Sparc Solaris
+  *sparc*sun*)
+    BDB_HOME_DEFAULT="$HOME/apps/berkeleydb"
+    BOOST_HOME_DEFAULT="$HOME/apps/boost"
+    SHORE_HOME_DEFAULT="$HOME/apps/shore"
+    ;;
+
+  *ppc*)
+    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
+    BOOST_HOME_DEFAULT="/usr/software/boost"
+    SHORE_HOME_DEFAULT="/usr/software/shore"
+    ;;
+
+  *ia64*)
+    BDB_HOME_DEFAULT="$HOME/work/apps/berkeleydb"
+    BOOST_HOME_DEFAULT="$HOME/work/apps/boost"
+    SHORE_HOME_DEFAULT="$HOME/work/apps/shore"
+    ;;
+
+ *)
+    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
+    BOOST_HOME_DEFAULT="/usr/software/boost"
+    SHORE_HOME_DEFAULT="/usr/software/shore"
+    ;;
+esac
+
+# getting user parameters
+AC_ARG_VAR(BOOST_HOME, Location of Boost Installation; default is $BOOST_HOME_DEFAULT)
+AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
+AC_ARG_VAR(BDB_HOME, Location of Berkeley DB Installation; default is $BDB_HOME_DEFAULT)
 
 
 # this specifies the root of the source tree; it's just the
 # directory where ./configure runs, except on cygwin, which
 # overrides this below
-AC_MSG_CHECKING(home directory)
-QPIPE_HOME=`pwd`
-AC_MSG_RESULT($QPIPE_HOME)
+AC_MSG_CHECKING(Home directory)
+CORDOBA_HOME=`pwd`
+AC_MSG_RESULT($CORDOBA_HOME)
 
 
-# get boost location
+# BOOST
 AC_MSG_CHECKING(Boost directory)
+# if not a specific parameter try the default one
 if test -z $BOOST_HOME; then
     BOOST_HOME=$BOOST_HOME_DEFAULT
 fi
 
+# check if valid boost dir
+if ! test -d $BOOST_HOME -a -f $BOOST_HOME/boost/array.hpp; then
+    AC_ERROR([
+            Not valid boost directory at $BOOST_HOME;
+            Please run ./configure BOOST_HOME=where boost is located])
+fi
+
 AC_MSG_RESULT($BOOST_HOME)
+
+
+# SHORE
+AC_MSG_CHECKING(Shore directory)
+if test -z $SHORE_HOME; then
+    SHORE_HOME=$SHORE_HOME_DEFAULT
+fi
+
+# check if valid shore dir
+if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
+    AC_ERROR([
+            Not valid Shore directory at $SHORE_HOME;
+            Please run ./configure SHORE_HOME=where shore is located])
+fi
+
+AC_MSG_RESULT($SHORE_HOME)
 
 
 # get berkeley db location and version (not implem)
@@ -142,7 +213,6 @@ if ! test -d $BDB_HOME -a -f $BDB_HOME/include/db.h; then
     AC_ERROR([
             BerkeleyDB at $BDB_HOME not found;
             Please run ./configure BDB_HOME=where berkeleydb is located])
-
 fi
 
 AC_MSG_RESULT($BDB_HOME)
@@ -228,55 +298,63 @@ fi
 NEWLINE="\\
 "
 
+# CORDOBA FEATURES
 # Give a list of features with the defaults
-features="tpcc=yes tpch=yes"                    # workloads
-features="$features tpccgen=yes tpchgen=yes"    # workload generators
-features="$features socket=yes"
 
+# *** old qpipe features
+#features="tpcc=yes tpch=yes"                    # workloads
+#features="$features tpccgen=yes tpchgen=yes"    # workload generators
+#features="$features socket=yes"
 
-QPIPE_FEATURES=""
-QPIPE_NOFEATURES=""
+# cordoba features
+features="bdb=yes"              # configure for BerkeleyDB
+features="$features inmem=yes"  # configure for in-memory
+features="$features shore=yes"  # configure for shore 
 
+CORDOBA_FEATURES=""
+CORDOBA_NOFEATURES=""
 
+# iterate over all features
 for f_val in $features
 do
    f=`echo $f_val | sed -e s%=.*$%%`
-   AC_MSG_CHECKING(whether to use QPipe feature $f)
-   # default value from "features"                                                                                              
+   AC_MSG_CHECKING(whether to use Cordoba feature $f)
+   # default value from "features"
    defval=`echo $f_val | sed -e s%^.*=%%`
-   # current value                                                                                                              
+   # current value
    getcurval="echo \${with_$f:=$defval}"
    curval=`eval $getcurval`
    AC_MSG_RESULT($curval)
    if test $curval = yes ;then
-      QPIPE_FEATURES="$QPIPE_FEATURES $f"
+      CORDOBA_FEATURES="$CORDOBA_FEATURES $f"
    else
-      QPIPE_NOFEATURES="$QPIPE_NOFEATURES $f"
+      CORDOBA_NOFEATURES="$CORDOBA_NOFEATURES $f"
    fi
 done
 
 
-echo $QPIPE_FEATURES
+echo $CORDOBA_FEATURES
 
+# *** no longer needed
 # At least one architecture must be enabled
-if ! (echo $QPIPE_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null); then
-    AC_MSG_ERROR([
-      At least one of the tpcc, tpch workloads must be enabled.
-    ])
-fi
+#if ! (echo $CORDOBA_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null); then
+#    AC_MSG_ERROR([
+#      At least one of the tpcc, tpch workloads must be enabled.
+#    ])
+#fi
 
 
-## Now produce the QPIPE_FEATURES_DEFINES
-QPIPE_FEATURES_DEFINES=""
+## Now produce the CORDOBA_FEATURES_DEFINES
+CORDOBA_FEATURES_DEFINES=""
 # Convert to upper  case
 [ac_toupper="'[a-z]' '[A-Z]'"]
-for f in `echo $QPIPE_FEATURES | tr $ac_toupper`
+for f in `echo $CORDOBA_FEATURES | tr $ac_toupper`
 do
-   QPIPE_FEATURES_DEFINES="${QPIPE_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
+   CORDOBA_FEATURES_DEFINES="${CORDOBA_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
 done
-for f in `echo $QPIPE_NOFEATURES | tr $ac_toupper`
+for f in `echo $CORDOBA_NOFEATURES | tr $ac_toupper`
 do
-   QPIPE_FEATURES_DEFINES="${QPIPE_FEATURES_DEFINES}@NEWLINE@export USE_$f="
+   CORDOBA_FEATURES_DEFINES="${CORDOBA_FEATURES_DEFINES}@NEWLINE@export USE_$f="
 done
 
 
@@ -285,11 +363,11 @@ done
 # write @ARCHOS@ somewhere in a written file to get it substituted
 AC_SUBST(ARCHOS)
 AC_SUBST(GCC_COMPILER)
-AC_SUBST(QPIPE_HOME)
-AC_SUBST(QPIPE_VERSION_MAJOR)
-AC_SUBST(QPIPE_VERSION_MINOR)
-AC_SUBST(QPIPE_VERSION_REV)
-AC_SUBST(QPIPE_VERSION)
+AC_SUBST(CORDOBA_HOME)
+AC_SUBST(CORDOBA_VERSION_MAJOR)
+AC_SUBST(CORDOBA_VERSION_MINOR)
+AC_SUBST(CORDOBA_VERSION_REV)
+AC_SUBST(CORDOBA_VERSION)
 
 # basic flags/libs every arch needs
 
@@ -352,13 +430,16 @@ AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
 # show the user what the variables have been set to
 cat <<EOF
 
-QPipe configuration:
-  QPipe version:            QPIPE_VERSION        $QPIPE_VERSION
-  QPipe home:               QPIPE_HOME           $QPIPE_HOME	
-  GCC compiler              GCC_COMPILER         $GCC_COMPILER
-  GCC version               GCC_VERSION          $GCC_VERSION
-  BerkeleyDB version:       BDB_VERSION          $BDB_VERSION
+Cordoba configuration:
+  Cordoba version:          CORDOBA_VERSION      $CORDOBA_VERSION
+  Cordoba home:             CORDOBA_HOME         $CORDOBA_HOME	
+  Cordoba features:         CORDOBA_FEATURES    $CORDOBA_FEATURES
+  CC Compiler:              CC                   $CC    
+  CXX Compiler:             CXX                  $CXX
+  CC version                CXX_VERSION          $CORDOBA_CXX_VERSION
   BerkeleyDB home:          BDB_HOME             $BDB_HOME
+  BerkeleyDB version:       BDB_VERSION          $BDB_VERSION
   Boost home:               BOOST_HOME           $BOOST_HOME
+  Shore home:               SHORE_HOME           $SHORE_HOME
   Architecture/OS:          ARCHOS               $ARCHOS
 EOF
