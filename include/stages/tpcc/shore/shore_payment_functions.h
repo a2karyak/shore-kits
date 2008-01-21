@@ -17,6 +17,7 @@
 #include "stages/tpcc/common/tpcc_input.h"
 
 #include "workload/tpcc/shore_tpcc_env.h"
+#include "stages/tpcc/shore/shore_tools.h"
 
 
 using namespace qpipe;

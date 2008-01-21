@@ -10,7 +10,7 @@
 #include "workload/tpcc/tpcc_env.h"
 #include "workload/tpcc/tpcc_filenames.h"
 #include "workload/tpcc/tpcc_compare.h"
-#include "workload/tpcc/tpcc_tbl_parsers.h"
+#include "workload/tpcc/bdb_tbl_parsers.h"
 #include "workload/tpcc/tpcc_tbl_readers.h"
 
 
