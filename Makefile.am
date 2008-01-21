@@ -213,6 +213,7 @@ SG_INMEM_TRX = \
    $(SG)/tpcc/inmem/inmem_payment_finalize.cpp
 
 SG_SHORE_TRX = \
+   $(SG)/tpcc/shore/shore_tools.cpp \
    $(SG)/tpcc/shore/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp
 
@@ -244,9 +245,7 @@ WL_BASE = \
 
 WL_COMMON = \
    $(SW)/common/table_load.cpp \
-   $(SW)/common/table_compare.cpp \
-   $(SW)/common/bdb_env.cpp \
-   $(SW)/common/bdb_txn.cpp
+   $(SW)/common/table_compare.cpp
 
 WL_TPCH = \
    $(SW)/tpch/tpch_db.cpp \
@@ -271,7 +270,6 @@ WL_TPCH = \
    $(SW)/tpch/drivers/tpch_m14612.cpp \
    $(SW)/tpch/drivers/tpch_sim_mix.cpp
 
-
 WL_TPCC = \
    $(SW)/tpcc/tpcc_db.cpp \
    $(SW)/tpcc/tpcc_env.cpp \
@@ -280,6 +278,11 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_compare.cpp \
    $(SW)/tpcc/drivers/common.cpp \
    $(SW)/tpcc/drivers/tpcc_payment_common.cpp
+
+WL_BDB_COMMON = \
+   $(SW)/common/bdb_env.cpp \
+   $(SW)/common/bdb_txn.cpp \
+   $(SW)/tpcc/bdb_tbl_parsers.cpp
 
 WL_BDB_TPCC_PAYMENT = \
    $(SW)/tpcc/drivers/bdb/tpcc_payment.cpp \
@@ -296,9 +299,11 @@ WL_INMEM_TPCC_PAYMENT = \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_staged.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.cpp
 
-WL_SHORE_TPCC_PAYMENT = \
+WL_SHORE_COMMON = \
    $(SW)/tpcc/shore_tpcc_env.cpp \
-   $(SW)/tpcc/shore_tpcc_load.cpp \
+   $(SW)/tpcc/shore_tpcc_load.cpp
+
+WL_SHORE_TPCC_PAYMENT = \
    $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp
 
 
@@ -307,9 +312,11 @@ lib_libworkload_a_SOURCES = \
    $(WL_COMMON) \
    $(WL_TPCH) \
    $(WL_TPCC) \
+   $(WL_BDB_COMMON) \
    $(WL_BDB_TPCC_PAYMENT) \
    $(WL_BDB_TPCC_NEW_ORDER) \
    $(WL_INMEM_TPCC_PAYMENT) \
+   $(WL_SHORE_COMMON) \
    $(WL_SHORE_TPCC_PAYMENT)
 
 

@@ -19,10 +19,6 @@ using namespace tpcc;
 ENTER_NAMESPACE(tpcc_payment);
 
 
-/** Exported variable */
-
-ShoreTPCCEnv* shore_env = NULL;
-
 
 /** Forward declaration of helper functions */
 

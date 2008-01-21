@@ -19,25 +19,23 @@
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 
-//#include "stages/tpcc/common/tpcc_struct.h"
-
-
 
 ENTER_NAMESPACE(tpcc);
 
 /* constants */
 
-#define SHORE_TPCC_DATA_DIR "tpcc_sf"
-#define SHORE_TPCC_DATA_WAREHOUSE "WAREHOUSE.dat"
-#define SHORE_TPCC_DATA_DISTRICT  "DISTRICT.dat"
-#define SHORE_TPCC_DATA_CUSTOMER  "CUSTOMER.dat"
-#define SHORE_TPCC_DATA_HISTORY   "HISTORY.dat"
+#define SHORE_TPCC_DATA_DIR        "tpcc_sf"
 
-#define SHORE_TPCC_DATA_ITEM      "ITEM.dat"
-#define SHORE_TPCC_DATA_NE_ORDER  "NEW_ORDER.dat"
-#define SHORE_TPCC_DATA_ORDER     "ORDER.dat"
-#define SHORE_TPCC_DATA_ORDERLINE "ORDERLINE.dat"
-#define SHORE_TPCC_DATA_STOCK     "STOCK.dat"
+#define SHORE_TPCC_DATA_WAREHOUSE  "WAREHOUSE.dat"
+#define SHORE_TPCC_DATA_DISTRICT   "DISTRICT.dat"
+#define SHORE_TPCC_DATA_CUSTOMER   "CUSTOMER.dat"
+#define SHORE_TPCC_DATA_HISTORY    "HISTORY.dat"
+
+#define SHORE_TPCC_DATA_ITEM       "ITEM.dat"
+#define SHORE_TPCC_DATA_NEW_ORDER  "NEW_ORDER.dat"
+#define SHORE_TPCC_DATA_ORDER      "ORDER.dat"
+#define SHORE_TPCC_DATA_ORDERLINE  "ORDERLINE.dat"
+#define SHORE_TPCC_DATA_STOCK      "STOCK.dat"
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -50,31 +48,30 @@ ENTER_NAMESPACE(tpcc);
 
 class ShoreTPCCEnv 
 {
-private:    
-
+public:
+    /** Constants */
     static const int WAREHOUSE = 0;
     static const int DISTRICT = 1;
     static const int CUSTOMER = 2;
     static const int HISTORY = 3;
 
+    // TODO: (ip) ADD ALL TABLES!!
+
     static const int SHORE_PAYMENT_TABLES = 4;
 
-
-    
+private:       
     /** Private variables */
-    bool _initialized;
-
-    ss_m* _ssm; /// database handle
+    bool _initialized; 
+    ss_m* _ssm;                 // database handle
+    pthread_mutex_t _vol_mutex; // volume mutex
     
-
 public:
-    
-    int loaddata(c_str loadDir);
-
     /** Construction  */
-
-    ShoreTPCCEnv() {
+    ShoreTPCCEnv() {        
 	_initialized = false;
+        pthread_mutex_init(&_vol_mutex, NULL);
+
+        // TODO Should open the database
 
         /*
         im_customers.set_name(c_str("customer"));
@@ -84,12 +81,17 @@ public:
         */
     }
 
+    ~ShoreTPCCEnv() { 
+        pthread_mutex_destroy(&_vol_mutex);
+    }
 
-    ~ShoreTPCCEnv() { }
+    /** Methods */    
+    inline ss_m* get_db_handle() { return(_ssm); }
+    inline pthread_mutex_t* get_vol_mutex() { return(&_vol_mutex); }
 
+    int loaddata(c_str loadDir);
     bool is_initialized() const { return _initialized; }
     void dump();
-
 
 }; // EOF ShoreTPCCEnv
 

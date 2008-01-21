@@ -64,11 +64,6 @@ int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env);
 
 
 
-/** Exported variable */
-
-extern ShoreTPCCEnv* shore_env;
-
-
 
 EXIT_NAMESPACE(tpcc_payment);
 

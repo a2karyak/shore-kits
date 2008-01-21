@@ -11,32 +11,42 @@
 #define __SHORE_TPCC_LOAD_H
 
 
-#include "workload/tpcc/tpcc_loader.h"
-#include "sm_vas.h"
+#include "workload/loader.h"
+#include "workload/tpcc/tpcc_tbl_parsers.h"
+#include "stages/tpcc/shore/shore_tools.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 #include <utility>
+
+
+using namespace qpipe;
 
 
 ENTER_NAMESPACE(tpcc);
 
 
 ///////////////////////////////////////////////////////////
-// @class smthread_user_t
+// @class sl_thread_t
 //
-// @brief An smthread base class for all sm-related work
+// @brief An smthread base class for all sm loading related work
 
-class smthread_user_t : public smthread_t {
-    int	argc;
-    char	**argv;
+class sl_thread_t : public smthread_t {
+    int	 argc;
+    char **argv;
+
 public:
     int	retval;
     
-    smthread_user_t(int ac, char **av) 
-	: smthread_t(t_regular, "smthread_user_t"),
+    sl_thread_t(int ac, char **av) 
+	: smthread_t(t_regular, "sl_thread_t"),
 	  argc(ac), argv(av), retval(0)
     {
     }
 
+    // thread entrance
     void run();
+    
+    // helper methods
+    void usage(option_group_t& options);
 };
 
 
@@ -80,6 +90,120 @@ public:
 
 }; // EOF: shore_parse_thread
 
+
+
+///////////////////////////////////////////////////////////
+// @struct shore_parser_impl
+//
+// @brief Implementation of a shore parser thread
+
+template <class Parser>
+struct shore_parser_impl : public shore_parse_thread {
+    shore_parser_impl(c_str fname, ss_m* ssm, vid_t vid)
+	: shore_parse_thread(fname, ssm, vid)
+    {
+    }
+    void run();
+
+}; // EOF: shore_parse_thread
+
+
+template <class Parser>
+void shore_parser_impl<Parser>::run() {
+    FILE* fd = fopen(_fname.data(), "r");
+    if(fd == NULL) {
+        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", _fname.data());
+	// TOOD: return an error code or something
+	return;
+    }
+
+    unsigned long progress = 0;
+    char linebuffer[MAX_LINE_LENGTH];
+    Parser parser;
+    typedef typename Parser::record_t record_t;
+    static size_t const ksize = sizeof(record_t::first_type);
+    static size_t const bsize = parser.has_body()? sizeof(record_t::second_type) : 0;
+
+    // blow away the previous file, if any
+    file_info_t info;
+    create_volume_xct<Parser> cvxct(_vid, _fname.data(), info, ksize+bsize);
+    W_COERCE(run_xct(_ssm, cvxct));
+     
+    sm_stats_info_t stats;
+    memset(&stats, 0, sizeof(stats));
+    sm_stats_info_t* dummy; // needed to keep xct commit from deleting our stats...
+    
+    W_COERCE(_ssm->begin_xct());
+    
+    // insert records one by one...
+    record_t record;
+    vec_t head(&record.first, ksize);
+    vec_t body(&record.second, bsize);
+    rid_t rid;
+    bool first = true;
+    static int const INTERVAL = 100000;
+    int mark = INTERVAL;
+    int i;
+    
+    for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
+	record = parser.parse_row(linebuffer);
+	W_COERCE(_ssm->create_rec(info._table_id, head, bsize, body, rid));
+
+	if(first)
+	    info._first_rid = rid;
+	
+	first = false;
+	progress_update(&progress);
+	if(i >= mark) {
+	    W_COERCE(_ssm->commit_xct(dummy));
+	    W_COERCE(_ssm->begin_xct());
+	    mark += INTERVAL;
+	}
+	    
+    }
+    
+    // done!
+    W_COERCE(_ssm->commit_xct(dummy));
+    info._record_size = std::make_pair(ksize, bsize);
+    progress_done(parser.table_name());
+    _info = info;
+    cout << "Successfully loaded " << i << " records" << endl;
+    if ( fclose(fd) ) {
+	TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", _fname.data());
+	// TOOD: return an error code or something
+	return;
+    }
+}
+
+
+//// Defines all Shore parsers
+
+#define DEFINE_SHORE_TPCC_PARSER_IMPL(tname) \
+    struct shore_parser_impl_##tname : public shore_parser_impl<parse_tpcc_##tname> { \
+        shore_parser_impl_##tname(int tid, ss_m* ssm, vid_t vid) \
+        : shore_parser_impl(c_str("%s/%s", SHORE_TPCC_DATA_DIR, SHORE_TPCC_DATA_##tname), ssm, vid) {}}
+
+DEFINE_SHORE_TPCC_PARSER_IMPL(WAREHOUSE);
+DEFINE_SHORE_TPCC_PARSER_IMPL(DISTRICT);
+DEFINE_SHORE_TPCC_PARSER_IMPL(CUSTOMER);
+DEFINE_SHORE_TPCC_PARSER_IMPL(HISTORY);
+DEFINE_SHORE_TPCC_PARSER_IMPL(ITEM);
+DEFINE_SHORE_TPCC_PARSER_IMPL(NEW_ORDER);
+DEFINE_SHORE_TPCC_PARSER_IMPL(ORDER);
+DEFINE_SHORE_TPCC_PARSER_IMPL(ORDERLINE);
+DEFINE_SHORE_TPCC_PARSER_IMPL(STOCK);       
+
+#undef DEFINE_SHORE_TPCC_PARSER_IMPL
+
+/*
+struct test_parser : public shore_parser_impl<parse_tpcc_ORDER> {
+    test_parser(int tid, ss_m* ssm, vid_t vid)
+	: shore_parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
+    {
+    }
+
+}; // EOF: test_parser
+*/
 
 
 EXIT_NAMESPACE(tpcc);

@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file tpcc_loader.h
+/** @file loader.h
  *
- *  @brief Generic TPC-C loaders
+ *  @brief Generic table loader
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __TPCC_DATA_LOADER_H
-#define __TPCC_DATA_LOADER_H
+#ifndef __TABLE_LOADER_H
+#define __TABLE_LOADER_H
 
 
 #include "util/c_str.h"
@@ -18,7 +18,7 @@
 
 
 
-ENTER_NAMESPACE(tpcc);
+ENTER_NAMESPACE(qpipe);
 
 
 ///////////////////////////////////////////////////////////
@@ -178,6 +178,6 @@ public:
 
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(qpipe);
 
 #endif

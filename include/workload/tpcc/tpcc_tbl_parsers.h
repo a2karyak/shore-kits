@@ -10,7 +10,6 @@
 #ifndef __TPCC_TBL_PARSERS_H
 #define __TPCC_TBL_PARSERS_H
 
-#include <db_cxx.h>
 #include <cstdio>
 
 #include "util/namespace.h"
@@ -53,27 +52,6 @@ DECLARE_TPCC_PARSER(ORDER, tpcc_order_tuple_key, tpcc_order_tuple_body, "i4i4i4i
 DECLARE_TPCC_PARSER(CUSTOMER, tpcc_customer_tuple_key, tpcc_customer_tuple_body, "i4i4i4", true);
 
 #undef DECLARE_TPCC_PARSER
-
-
-
-//////////////////////////////////////////////////////
-// BDB TABLE LOADING
-//
-// (ip) To be replaced with the per-table row parsers
-
-void tpcc_parse_tbl_CUSTOMER  (Db* db, FILE* fd);
-void tpcc_parse_tbl_DISTRICT  (Db* db, FILE* fd);
-void tpcc_parse_tbl_HISTORY   (Db* db, FILE* fd);
-void tpcc_parse_tbl_ITEM      (Db* db, FILE* fd);
-void tpcc_parse_tbl_NEW_ORDER (Db* db, FILE* fd);
-void tpcc_parse_tbl_ORDER     (Db* db, FILE* fd);
-void tpcc_parse_tbl_ORDERLINE (Db* db, FILE* fd);
-void tpcc_parse_tbl_STOCK     (Db* db, FILE* fd);
-void tpcc_parse_tbl_WAREHOUSE (Db* db, FILE* fd);
-
-
-// EOF BDB TABLE LOADING
-//////////////////////////////////////////////////////
 
 
 EXIT_NAMESPACE(tpcc);
