@@ -298,6 +298,7 @@ WL_INMEM_TPCC_PAYMENT = \
 
 WL_SHORE_TPCC_PAYMENT = \
    $(SW)/tpcc/shore_tpcc_env.cpp \
+   $(SW)/tpcc/shore_tpcc_load.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp
 
 

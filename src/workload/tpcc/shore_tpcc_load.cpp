@@ -1,83 +1,37 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file shore_tpcc_load.h
+ *
+ *  @brief Definition of the Shore TPC-C loaders
+ *
+ *  @author Ippokratis Pandis (ipandis)
+ */
+
+/** Compiler options: */
 // CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
 #include "workload/tpcc/shore_tpcc_load.h"
 
 using namespace tpcc;
 
+
+///////////////////////////////////////////////////////////
+// @struct shore_parser_impl
+//
+// @brief Implementation of a shore parser thread
+
 template <class Parser>
-struct parser_impl : public shore_parse_thread {
-    parser_impl(c_str fname, ss_m* ssm, vid_t vid)
+struct shore_parser_impl : public shore_parse_thread {
+    shore_parser_impl(c_str fname, ss_m* ssm, vid_t vid)
 	: shore_parse_thread(fname, ssm, vid)
     {
     }
     void run();
 };
 
-struct test_parser : public parser_impl<parse_tpcc_ORDER> {
-    test_parser(int tid, ss_m* ssm, vid_t vid)
-	: parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
-    {
-    }
-};
-
-/* Runs a transaction, checking for deadlock and retrying
-   automatically as need be. 'Transaction' must be a type whose
-   function call operator takes no arguments and returns w_rc_t.
- */
-template<class Transaction>
-w_rc_t run_xct(ss_m* ssm, Transaction &t) {
-    w_rc_t e;
-    do {
-	e = ssm->begin_xct();
-	if(e)
-	    break;
-	e = t(ssm);
-	if(e)
-	    e = ssm->abort_xct();
-	else
-	    e = ssm->commit_xct();
-    } while(e && e.err_num() == smlevel_0::eDEADLOCK);
-    return e;
-}
-pthread_mutex_t vol_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-template<class Parser>
-struct create_volume_xct {
-    vid_t &_vid;
-    char const* _table_name;
-    file_info_t &_info;
-    size_t _bytes;
-    create_volume_xct(vid_t &vid, char const* tname, file_info_t &info, size_t bytes)
-	: _vid(vid), _table_name(tname), _info(info), _bytes(bytes)
-    {
-    }
-    w_rc_t operator()(ss_m* ssm) {
-	CRITICAL_SECTION(cs, vol_mutex);
-	stid_t root_iid;
-	vec_t table_name(_table_name, strlen(_table_name));
-	unsigned size = sizeof(_info);
-	vec_t table_info(&_info, size);
-	bool found;
-	W_DO(ss_m::vol_root_index(_vid, root_iid));
-	W_DO(ss_m::find_assoc(root_iid, table_name, &_info, size, found));
-	if(found) {
-	    cout << "Removing previous instance of " << _table_name << endl;
-	    W_DO(ss_m::destroy_file(_info._table_id));
-	    W_DO(ss_m::destroy_assoc(root_iid, table_name, table_info));
-	}
-	// create the file and register it with the root index
-	cout << "Creating table ``" << _table_name
-	     << "'' with " << _bytes << " bytes per record" << endl;
-	W_DO(ssm->create_file(_vid, _info._table_id, smlevel_3::t_regular));
-	W_DO(ss_m::vol_root_index(_vid, root_iid));
-	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
-	return RCOK;
-    }
-};
 
 template <class Parser>
-void parser_impl<Parser>::run() {
+void shore_parser_impl<Parser>::run() {
     FILE* fd = fopen(_fname.data(), "r");
     if(fd == NULL) {
         TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", _fname.data());
@@ -140,8 +94,76 @@ void parser_impl<Parser>::run() {
 	// TOOD: return an error code or something
 	return;
     }
-
 }
+
+
+
+// Test of a shore_parser_impl
+
+struct shore_test_parser : public shore_parser_impl<parse_tpcc_ORDER> 
+{
+    shore_test_parser(int tid, ss_m* ssm, vid_t vid)
+	: shore_parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
+    {
+    }
+};
+
+
+/* Runs a transaction, checking for deadlock and retrying
+   automatically as need be. 'Transaction' must be a type whose
+   function call operator takes no arguments and returns w_rc_t.
+ */
+
+template<class Transaction>
+w_rc_t run_xct(ss_m* ssm, Transaction &t) {
+    w_rc_t e;
+    do {
+	e = ssm->begin_xct();
+	if(e)
+	    break;
+	e = t(ssm);
+	if(e)
+	    e = ssm->abort_xct();
+	else
+	    e = ssm->commit_xct();
+    } while(e && e.err_num() == smlevel_0::eDEADLOCK);
+    return e;
+}
+pthread_mutex_t vol_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+template<class Parser>
+struct create_volume_xct {
+    vid_t &_vid;
+    char const* _table_name;
+    file_info_t &_info;
+    size_t _bytes;
+    create_volume_xct(vid_t &vid, char const* tname, file_info_t &info, size_t bytes)
+	: _vid(vid), _table_name(tname), _info(info), _bytes(bytes)
+    {
+    }
+    w_rc_t operator()(ss_m* ssm) {
+	CRITICAL_SECTION(cs, vol_mutex);
+	stid_t root_iid;
+	vec_t table_name(_table_name, strlen(_table_name));
+	unsigned size = sizeof(_info);
+	vec_t table_info(&_info, size);
+	bool found;
+	W_DO(ss_m::vol_root_index(_vid, root_iid));
+	W_DO(ss_m::find_assoc(root_iid, table_name, &_info, size, found));
+	if(found) {
+	    cout << "Removing previous instance of " << _table_name << endl;
+	    W_DO(ss_m::destroy_file(_info._table_id));
+	    W_DO(ss_m::destroy_assoc(root_iid, table_name, table_info));
+	}
+	// create the file and register it with the root index
+	cout << "Creating table ``" << _table_name
+	     << "'' with " << _bytes << " bytes per record" << endl;
+	W_DO(ssm->create_file(_vid, _info._table_id, smlevel_3::t_regular));
+	W_DO(ss_m::vol_root_index(_vid, root_iid));
+	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
+	return RCOK;
+    }
+};
 
 
 void
@@ -170,10 +192,12 @@ void smthread_user_t::run() {
 	"-sm_diskrw", "/export/home/ryanjohn/projects/shore-lomond/installed/bin/diskrw",
 	"-sm_errlog", "info", // one of {none emerg fatal alert internal error warning info debug}
     };
+
     w_ostrstream err;
     int opts_count = sizeof(opts)/sizeof(char const*); // clobbered by the parser
     w_rc_t rc = options.parse_command_line(opts, opts_count, 2, &err);
     err << ends;
+
     if(rc) {
 	cerr << "Error configuring Shore: " << endl;
 	cerr << "\t" << w_error_t::error_string(rc.err_num()) << endl;
@@ -236,7 +260,7 @@ void smthread_user_t::run() {
     static int const THREADS = 8;
     guard<shore_parse_thread> threads[THREADS];
     for(int i=0; i < THREADS; i++)
-	threads[i] = new test_parser(i, ssm.get(), vid);
+	threads[i] = new shore_test_parser(i, ssm.get(), vid);
     for(int i=0; i < THREADS; i++)
 	threads[i]->fork();
 
