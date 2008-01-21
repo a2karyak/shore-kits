@@ -66,7 +66,7 @@ struct create_volume_xct {
 
     create_volume_xct(vid_t &vid, char const* tname, 
                       file_info_t &info, size_t bytes,
-                      pthread_mutex_t* vol_mutex = shore_env->get_vol_mutex()
+                      pthread_mutex_t* vol_mutex
                       )
 	: _vid(vid), _table_name(tname), _info(info), 
           _bytes(bytes), _vol_mutex(vol_mutex)
@@ -77,7 +77,7 @@ struct create_volume_xct {
 
         assert (_vol_mutex != NULL);
 
-	CRITICAL_SECTION(cs, _vol_mutex);
+	CRITICAL_SECTION(cs, *_vol_mutex);
 
 	stid_t root_iid;
 	vec_t table_name(_table_name, strlen(_table_name));

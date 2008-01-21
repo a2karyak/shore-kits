@@ -84,6 +84,7 @@ void sl_thread_t::run()
     bool clobber = true;
     char const* device = "tbl_tpcc/shore";
     int quota = 100*1024; // 100 MB
+
     if(clobber) {
 	cout << "Formatting a new device ``" << device
 	     << "'' with a " << quota << "kB quota" << endl;
@@ -91,6 +92,7 @@ void sl_thread_t::run()
 	// create and mount device
 	// http://www.cs.wisc.edu/shore/1.0/man/device.ssm.html
 	W_COERCE(ssm->format_dev(device, quota, true));
+        cout << "Formatting completed..." << endl;
     }
 
     // mount it...
@@ -118,18 +120,31 @@ void sl_thread_t::run()
 	delete [] lvid_list;
     }
 
-    static int const THREADS = ShoreTPCCEnv::SHORE_PAYMENT_TABLES;
+    static int const THREADS = 1;// ShoreTPCCEnv::SHORE_PAYMENT_TABLES;
     guard<shore_parse_thread> threads[THREADS];
 
     // initialize all table loaders
-    threads[ShoreTPCCEnv::WAREHOUSE] = new shore_parser_impl_WAREHOUSE(ShoreTPCCEnv::WAREHOUSE, ssm.get(), vid);
-    threads[ShoreTPCCEnv::DISTRICT] = new shore_parser_impl_DISTRICT(ShoreTPCCEnv::DISTRICT, ssm.get(), vid);
-    threads[ShoreTPCCEnv::CUSTOMER] = new shore_parser_impl_CUSTOMER(ShoreTPCCEnv::CUSTOMER, ssm.get(), vid);
-    threads[ShoreTPCCEnv::HISTORY] = new shore_parser_impl_HISTORY(ShoreTPCCEnv::HISTORY, ssm.get(), vid);
+    threads[ShoreTPCCEnv::WAREHOUSE] = 
+        new shore_parser_impl_WAREHOUSE(ShoreTPCCEnv::WAREHOUSE, 
+                                        ssm.get(), vid, _env);
+    /*
+    threads[ShoreTPCCEnv::DISTRICT] = 
+        new shore_parser_impl_DISTRICT(ShoreTPCCEnv::DISTRICT, 
+                                       ssm.get(), vid, _env);
+    threads[ShoreTPCCEnv::CUSTOMER] = 
+        new shore_parser_impl_CUSTOMER(ShoreTPCCEnv::CUSTOMER, 
+                                       ssm.get(), vid, _env);
+
+    threads[ShoreTPCCEnv::HISTORY] = 
+        new shore_parser_impl_HISTORY(ShoreTPCCEnv::HISTORY, 
+                                      ssm.get(), vid, _env);
+    */
 
     // start each table loader
-    for(int i=0; i < THREADS; i++)
+    for(int i=0; i < THREADS; i++) {
+        cout << "Starting loader..." << endl;
 	threads[i]->fork();
+    }
 
     sm_stats_info_t stats;
     memset(&stats, 0, sizeof(stats));

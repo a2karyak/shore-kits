@@ -25,7 +25,7 @@ using namespace tpcc;
 
 int ShoreTPCCEnv::loaddata(c_str loadDir) {
 
-    TRACE( TRACE_DEBUG, "Getting data from (%s)\n", loadDir.data());
+    //    TRACE( TRACE_DEBUG, "Getting data from (%s)\n", loadDir.data());
 
     // Start measuring loading time
     time_t tstart = time(NULL);
@@ -34,7 +34,8 @@ int ShoreTPCCEnv::loaddata(c_str loadDir) {
 
     time_t tstop = time(NULL);
 
-    TRACE( TRACE_ALWAYS, "Loading finished in (%d) secs\n", tstop - tstart);
+    //    TRACE( TRACE_ALWAYS, "Loading finished in (%d) secs\n", tstop - tstart);
+    cout << "Loading finished in " << (tstop - tstart) << " secs." << endl;
     _initialized = true;
     return (0);
 }
@@ -47,10 +48,14 @@ int ShoreTPCCEnv::loaddata(c_str loadDir) {
  */
 
 void ShoreTPCCEnv::dump() {
-    TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
-    TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
+
 
     assert (false); // TO DO
+
+    assert (false); // TO DO: Remove TRACE
+
+    TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
+    TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
 
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
 }
