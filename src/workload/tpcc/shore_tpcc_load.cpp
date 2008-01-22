@@ -24,7 +24,7 @@ using namespace tpcc;
 
 void sl_thread_t::run() 
 {
-    if (!shore_env->is_initialized()) {
+    if (!_env->is_initialized()) {
         if (_env->init()) {
             // Couldn't initialize the Shore environment
             // cannot proceed
@@ -33,25 +33,26 @@ void sl_thread_t::run()
     }
 
 
-    static int const THREADS = 1;// ShoreTPCCEnv::SHORE_PAYMENT_TABLES;
+    static int const THREADS = ShoreTPCCEnv::SHORE_PAYMENT_TABLES;
     guard<shore_parse_thread> threads[THREADS];
 
     // initialize all table loaders
     threads[ShoreTPCCEnv::WAREHOUSE] = 
-        new shore_parser_impl_WAREHOUSE(ShoreTPCCEnv::WAREHOUSE, _env);
+        new shore_parser_impl_WAREHOUSE(ShoreTPCCEnv::WAREHOUSE, 
+                                        _env);    
 
-    /*
     threads[ShoreTPCCEnv::DISTRICT] = 
         new shore_parser_impl_DISTRICT(ShoreTPCCEnv::DISTRICT, 
-                                       ssm.get(), vid, _env);
+                                       _env);
+
     threads[ShoreTPCCEnv::CUSTOMER] = 
         new shore_parser_impl_CUSTOMER(ShoreTPCCEnv::CUSTOMER, 
-                                       ssm.get(), vid, _env);
+                                       _env);
 
     threads[ShoreTPCCEnv::HISTORY] = 
         new shore_parser_impl_HISTORY(ShoreTPCCEnv::HISTORY, 
-                                      ssm.get(), vid, _env);
-    */
+                                      _env);
+
 
     // start each table loader
     for(int i=0; i < THREADS; i++) {

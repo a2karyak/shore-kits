@@ -29,6 +29,8 @@ using std::map;
 
 /* constants */
 
+#define SHORE_DEFAULT_CONF_FILE    "shore.conf"
+
 #define SHORE_TPCC_DATA_DIR        "tpcc_sf"
 
 #define SHORE_TPCC_DATA_WAREHOUSE  "WAREHOUSE.dat"
@@ -131,7 +133,9 @@ private:
 public:
 
     /** Construction  */
-    ShoreTPCCEnv() {        
+    ShoreTPCCEnv(string confname) :
+        _cname(confname)
+    {
         pthread_mutex_init(&_env_mutex, NULL);
         pthread_mutex_init(&_vol_mutex, NULL);
 

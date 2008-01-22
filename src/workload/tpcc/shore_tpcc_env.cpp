@@ -268,7 +268,7 @@ void ShoreTPCCEnv::readconfig(string conf_file)
 
     // Parse SM parameters
     for (int i = 0; i < _NUM_DEF_SM_OPTIONS; i++) {
-        cout << _DEF_SM_OPTIONS[0] << " " << _DEF_SM_OPTIONS[1] << " " << _DEF_SM_OPTIONS[2] << endl;
+        cout << _DEF_SM_OPTIONS[i][0] << " " << _DEF_SM_OPTIONS[i][1] << " " << _DEF_SM_OPTIONS[i][2] << endl;
         shoreConfig.readInto(tmp, _DEF_SM_OPTIONS[i][1], _DEF_SM_OPTIONS[i][2]);
         cout << tmp << endl;
         _sm_opts[_DEF_SM_OPTIONS[i][1]] = tmp;

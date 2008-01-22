@@ -11,7 +11,7 @@ using namespace tpcc;
 int main(int argc, char* argv[]) {
 
     // Instanciate the Shore Environment
-    shore_env = new ShoreTPCCEnv();
+    shore_env = new ShoreTPCCEnv("shore.conf");
     
     sl_thread_t* smtu = new sl_thread_t(shore_env);
     if (!smtu)
