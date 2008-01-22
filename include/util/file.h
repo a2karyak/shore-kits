@@ -1,0 +1,76 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file file.h
+ *
+ *  @brief RAII class for C file system calls
+ *
+ *  @recourse http://en.wikipedia.org/wiki/Resource_Acquisition_Is_Initialization
+ */
+
+#ifndef __RAII_FILE_H
+#define __RAII_FILE_H
+
+
+#include <cstdlib> 
+//#include <cstdio>
+#include <iostream>
+#include <stdexcept>
+#include <sys/types.h>
+
+
+class file {
+private:
+    std::FILE* _file_handle ;
+ 
+    // copy and assignment not implemented; prevent their use by
+    // declaring them private.
+    file( const file & ) ;
+    file & operator=( const file & ) ;
+
+public:
+    file( const char* filename, const char* mode = "r+" ) : 
+        _file_handle(std::fopen(filename, mode)) 
+    {
+        if( !_file_handle )
+            throw std::runtime_error("file open failure") ;
+    }
+
+    ~file() {
+        if( std::fclose(_file_handle) != 0 ) {
+          // TODO: deal with filesystem errors, fclose() may fail when flushing latest changes
+        }
+    }
+ 
+    void write(const char* str) {
+      if( std::fputs(str, _file_handle) == EOF )
+        throw std::runtime_error("file write failure") ;
+    } 
+
+    char* read(char* dest, size_t length) {
+      return (std::fgets(dest, length, _file_handle));
+      // TODO: deal with filesystem errors, fclose() may fail when flushing latest changes
+    }
+
+    void flush() {
+        std::cout << "flushing" << std::endl;
+        std::fflush(_file_handle);
+    }
+          
+}; // EOF: file
+
+ 
+/* // This RAII class can then be used as follows: */
+ 
+/* void example_usage() { */
+/*    // open file (acquire resource) */
+/*     file logfile("logfile.txt") ; */
+ 
+/*     logfile.write("hello logfile!") ; */
+ 
+/*     // continue using logfile ...    */
+/*     // throw exceptions or return without worrying about closing the log; */
+/*     // it is closed automatically when logfile goes out of scope. */
+/* } */
+
+
+#endif

@@ -77,7 +77,11 @@ TESTS = \
    tests/clh_lock \
    tests/clh_rwlock \
    tests/bptree \
-   tests/tpcc_load_shore
+   tests/tpcc_load_shore \
+   tests/old_shore_load \
+   tests/raii_file \
+   tests/config_file_example
+
 
 DBGEN = \
    dbgen_tpcc
@@ -121,7 +125,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_lock.cpp \
 	$(SU)/clh_rwlock.cpp \
 	$(SU)/clh_profile.cpp \
-        $(SU)/store_string.cpp
+        $(SU)/store_string.cpp \
+	$(SU)/conf_file.cpp
 
 
 
@@ -426,15 +431,20 @@ tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
+tests_old_shore_load_SOURCES = $(ST)/old_shore_load.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
 tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
+tests_raii_file_SOURCES = $(ST)/test_file.cpp
+tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 
 
 # exec files that need Shore
 tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_load_shore_LDADD = $(TEST_LIBS)
+tests_old_shore_load_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_old_shore_load_LDADD = $(TEST_LIBS)
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
@@ -477,6 +487,8 @@ tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
 tests_bptree_LDADD = $(TEST_LIBS)
 tests_clh_lock_LDADD = $(TEST_LIBS)
 tests_clh_rwlock_LDADD = $(TEST_LIBS)
+tests_raii_file_LDADD = $(TEST_LIBS)
+tests_config_file_example_LDADD = $(TEST_LIBS)
 
 
 ################################################################################

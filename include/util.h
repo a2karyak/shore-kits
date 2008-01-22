@@ -28,5 +28,7 @@
 #include "util/store_string.h"
 #include "util/pool_alloc.h"
 //#include "util/bptree.h"
+#include "util/file.h"
+#include "util/conf_file.h"
 
 #endif

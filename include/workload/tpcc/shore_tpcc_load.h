@@ -31,22 +31,24 @@ ENTER_NAMESPACE(tpcc);
 
 class sl_thread_t : public smthread_t {
 private:
-    ShoreTPCCEnv* _env;
+    ShoreTPCCEnv* _env;    
 
 public:
+
     int	retval;
     
     sl_thread_t(ShoreTPCCEnv* env) 
-	: smthread_t(t_regular, "sl_thread_t"),
-          retval(0)
+	: smthread_t(t_regular, "sl_thread_t"), _env(env), retval(0)
     {
+    }
+
+    ~sl_thread_t() { 
+        if (_env && _env->is_initialized())
+            _env->close();
     }
 
     // thread entrance
     void run();
-    
-    // helper methods
-    void usage(option_group_t& options);
 };
 
 
@@ -58,8 +60,8 @@ public:
 #define MAX_FNAME_LEN = 31;
 struct file_info_t {
     std::pair<int,int> _record_size;
-    stid_t 	_table_id;
-    rid_t 	_first_rid;
+    stid_t 	       _table_id;
+    rid_t 	       _first_rid;
 };
 
 
@@ -70,26 +72,23 @@ struct file_info_t {
 //
 // @note run() function is pure virtual
 
-struct shore_parse_thread : public smthread_t {
-    c_str _fname; // file name
-    ss_m* _ssm; // database handle
-    vid_t _vid;
+class shore_parse_thread : public smthread_t {
+protected:
     file_info_t _info;
+    c_str _load_fname;
     sm_stats_info_t _stats;
     ShoreTPCCEnv* _env;
     
 public:
 
-    shore_parse_thread(c_str fname, ss_m* ssm, vid_t vid, ShoreTPCCEnv* env)
-	: _fname(fname), _ssm(ssm), _vid(vid), _env(env)
+    shore_parse_thread(c_str fname, ShoreTPCCEnv* env)
+	: _load_fname(fname), _env(env)
     {
 	memset(&_stats, 0, sizeof(_stats));
     }
 
+    virtual ~shore_parse_thread() {}
     virtual void run()=0;
-    ~shore_parse_thread() {}
-
-    inline ShoreTPCCEnv* getEnv() { return (_env); }
 
 }; // EOF: shore_parse_thread
 
@@ -102,10 +101,11 @@ public:
 
 template <class Parser>
 struct shore_parser_impl : public shore_parse_thread {
-    shore_parser_impl(c_str fname, ss_m* ssm, vid_t vid, ShoreTPCCEnv* env)
-	: shore_parse_thread(fname, ssm, vid, env)
+    shore_parser_impl(c_str fname, ShoreTPCCEnv* env)
+	: shore_parse_thread(fname, env)
     {
     }
+
     void run();
 
 }; // EOF: shore_parse_thread
@@ -114,10 +114,10 @@ struct shore_parser_impl : public shore_parse_thread {
 template <class Parser>
 void shore_parser_impl<Parser>::run() {
 
-    FILE* fd = fopen(_fname.data(), "r");
+    FILE* fd = fopen(_load_fname.data(), "r");
     if(fd == NULL) {
-        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", _fname.data());
-	// TOOD: return an error code or something
+        TRACE(TRACE_ALWAYS, "fopen() failed on %s\n", _load_fname.data());
+	// TODO: return an error code or something
 	return;
     }
 
@@ -126,19 +126,19 @@ void shore_parser_impl<Parser>::run() {
     Parser parser;
     typedef typename Parser::record_t record_t;
     static size_t const ksize = sizeof(record_t::first_type);
-    static size_t const bsize = parser.has_body()? sizeof(record_t::second_type) : 0;
+    static size_t const bsize = parser.has_body() ? sizeof(record_t::second_type) : 0;
 
     // blow away the previous file, if any
-    file_info_t info;
-    create_volume_xct<Parser> cvxct(_vid, _fname.data(), info, ksize+bsize, 
-                                    getEnv()->get_vol_mutex());
-    W_COERCE(run_xct(_ssm, cvxct));
+    create_volume_xct<Parser> cvxct(_load_fname.data(), _info, 
+                                    ksize+bsize, _env);
+    W_COERCE(run_xct(_env->get_db_hd(), cvxct));
      
     sm_stats_info_t stats;
     memset(&stats, 0, sizeof(stats));
     sm_stats_info_t* dummy; // needed to keep xct commit from deleting our stats...
     
-    W_COERCE(_ssm->begin_xct());
+    // Start inserting records
+    W_COERCE(_env->get_db_hd()->begin_xct());
     
     // insert records one by one...
     record_t record;
@@ -152,30 +152,32 @@ void shore_parser_impl<Parser>::run() {
     
     for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
 	record = parser.parse_row(linebuffer);
-	W_COERCE(_ssm->create_rec(info._table_id, head, bsize, body, rid));
+	W_COERCE(_env->get_db_hd()->create_rec(_info._table_id, head, bsize, body, rid));
 
-	if(first)
-	    info._first_rid = rid;
-	
-	first = false;
+        // Remember the first row inserted
+	if(first) {
+	    _info._first_rid = rid;	
+            first = false;
+        }
+
 	progress_update(&progress);
 	if(i >= mark) {
-	    W_COERCE(_ssm->commit_xct(dummy));
-	    W_COERCE(_ssm->begin_xct());
+            // commit every INTERVAL records
+	    W_COERCE(_env->get_db_hd()->commit_xct(dummy));
+	    W_COERCE(_env->get_db_hd()->begin_xct());
 	    mark += INTERVAL;
-	}
-	    
+	}	    
     }
     
     // done!
-    W_COERCE(_ssm->commit_xct(dummy));
-    info._record_size = std::make_pair(ksize, bsize);
+    W_COERCE(_env->get_db_hd()->commit_xct(dummy));
+    _info._record_size = std::make_pair(ksize, bsize);
     progress_done(parser.table_name());
-    _info = info;
+
     cout << "Successfully loaded " << i << " records" << endl;
     if ( fclose(fd) ) {
-	TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", _fname.data());
-	// TOOD: return an error code or something
+	TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", _load_fname.data());
+	// TODO return an error code or something
 	return;
     }
 }
@@ -185,8 +187,8 @@ void shore_parser_impl<Parser>::run() {
 
 #define DEFINE_SHORE_TPCC_PARSER_IMPL(tname) \
     struct shore_parser_impl_##tname : public shore_parser_impl<parse_tpcc_##tname> { \
-            shore_parser_impl_##tname(int tid, ss_m* ssm, vid_t vid, ShoreTPCCEnv* env) \
-            : shore_parser_impl(c_str("%s/%s", SHORE_TPCC_DATA_DIR, SHORE_TPCC_DATA_##tname), ssm, vid, env) {}}
+            shore_parser_impl_##tname(int tid, ShoreTPCCEnv* env) \
+            : shore_parser_impl(c_str("%s/%s", SHORE_TPCC_DATA_DIR, SHORE_TPCC_DATA_##tname), env) {}}
 
 DEFINE_SHORE_TPCC_PARSER_IMPL(WAREHOUSE);
 DEFINE_SHORE_TPCC_PARSER_IMPL(DISTRICT);

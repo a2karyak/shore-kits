@@ -11,11 +11,8 @@ using namespace tpcc;
 int main(int argc, char* argv[]) {
 
     // Instanciate the Shore Environment
-    cout << "Initializing ShoreEnv..." << endl;
     shore_env = new ShoreTPCCEnv();
-    thread_init();
     
-
     sl_thread_t* smtu = new sl_thread_t(shore_env);
     if (!smtu)
 	W_FATAL(fcOUTOFMEMORY);
@@ -35,6 +32,6 @@ int main(int argc, char* argv[]) {
     int	rv = smtu->retval;
     delete smtu;
 
-    cout << "Closing..." << endl;
-    return rv;
+    TRACE( TRACE_ALWAYS, "Closing...\n");
+    return (rv);
 }

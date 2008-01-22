@@ -56,28 +56,26 @@ w_rc_t run_xct(ss_m* ssm, Transaction &t) {
  */
 
 template<class Parser>
-struct create_volume_xct {
+struct create_volume_xct 
+{
+    //    vid_t &_vid;
+    //    pthread_mutex_t* _vol_mutex;
+    ShoreTPCCEnv* _penv;
 
-    vid_t &_vid;
     char const* _table_name;
     file_info_t &_info;
     size_t _bytes;
-    pthread_mutex_t* _vol_mutex;
 
-    create_volume_xct(vid_t &vid, char const* tname, 
-                      file_info_t &info, size_t bytes,
-                      pthread_mutex_t* vol_mutex
+    create_volume_xct(char const* tname, file_info_t &info, 
+                      size_t bytes, ShoreTPCCEnv* env
                       )
-	: _vid(vid), _table_name(tname), _info(info), 
-          _bytes(bytes), _vol_mutex(vol_mutex)
+	: _table_name(tname), _info(info), _bytes(bytes), _penv(env)
     {
     }
 
     w_rc_t operator()(ss_m* ssm) {
 
-        assert (_vol_mutex != NULL);
-
-	CRITICAL_SECTION(cs, *_vol_mutex);
+	CRITICAL_SECTION(cs, *(_penv->get_vol_mutex()));
 
 	stid_t root_iid;
 	vec_t table_name(_table_name, strlen(_table_name));
@@ -85,7 +83,7 @@ struct create_volume_xct {
 	vec_t table_info(&_info, size);
 	bool found;
 
-	W_DO(ss_m::vol_root_index(_vid, root_iid));
+	W_DO(ss_m::vol_root_index(*(_penv->get_db_vid()), root_iid));
 	W_DO(ss_m::find_assoc(root_iid, table_name, &_info, size, found));
 
 	if(found) {
@@ -97,8 +95,8 @@ struct create_volume_xct {
 	// create the file and register it with the root index
 	cout << "Creating table ``" << _table_name
 	     << "'' with " << _bytes << " bytes per record" << endl;
-	W_DO(ssm->create_file(_vid, _info._table_id, smlevel_3::t_regular));
-	W_DO(ss_m::vol_root_index(_vid, root_iid));
+	W_DO(ssm->create_file(*(_penv->get_db_vid()), _info._table_id, smlevel_3::t_regular));
+	W_DO(ss_m::vol_root_index(*(_penv->get_db_vid()), root_iid));
 	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
 	return RCOK;
     }
