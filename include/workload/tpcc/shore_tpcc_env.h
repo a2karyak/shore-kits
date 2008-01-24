@@ -11,14 +11,9 @@
 #define __SHORE_TPCC_ENV_H
 
 #include "sm_vas.h"
-
-#include "util/guard.h"
-#include "util/c_str.h"
-#include "util/namespace.h"
-
+#include "util.h"
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_struct.h"
-
 #include <map>
 
 
@@ -26,6 +21,9 @@ ENTER_NAMESPACE(tpcc);
 
 using std::map;
 
+
+
+////////////////////////////////////////////////////////////////////////
 
 /* constants */
 
@@ -43,7 +41,6 @@ using std::map;
 #define SHORE_TPCC_DATA_ORDER      "ORDER.dat"
 #define SHORE_TPCC_DATA_ORDERLINE  "ORDERLINE.dat"
 #define SHORE_TPCC_DATA_STOCK      "STOCK.dat"
-
 
 static const string _DEF_SM_OPTIONS[][3] = {
     { "-sm_bufpoolsize", "bufpoolsize", "102400" },
@@ -65,17 +62,6 @@ static const string _DEF_DEV_OPTIONS[][2] = {
 
 static const int _NUM_DEF_DEV_OPTIONS = 3;
 
-static char const* storage_manager_opts[] = {
-    "fake-command-line",
-    "-sm_bufpoolsize", "102400", // in kB
-    //	"-sm_logging", "no", // temporary
-    "-sm_logdir", "log",
-    "-sm_logsize", "102400", // in kB
-    "-sm_logbufsize", "10240", // in kB
-    "-sm_diskrw", "/export/home/ipandis/DEV/shore-lomond/installed/bin/diskrw",
-    "-sm_errlog", "info", // one of {none emerg fatal alert internal error warning info debug}
-};
-
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -95,14 +81,22 @@ public:
     static const int CUSTOMER = 2;
     static const int HISTORY = 3;
 
-    // TODO: (ip) ADD ALL TABLES!!
+    static const int ITEM = 4;
+    static const int NEW_ORDER = 5;
+    static const int ORDER = 6;
+    static const int ORDERLINE = 7;
+    static const int STOCK = 8;
 
     static const int SHORE_PAYMENT_TABLES = 4;
+    static const int SHORE_TPCC_TABLES = 9;
 
 private:       
     /** Private variables */
     bool _initialized; 
-    pthread_mutex_t _env_mutex;
+    pthread_mutex_t _init_mutex;
+
+    bool _loaded;
+    pthread_mutex_t _load_mutex;
 
     ss_m* _pssm;                  // database handle
     pthread_mutex_t _vol_mutex;   // volume mutex
@@ -114,6 +108,7 @@ private:
 
     option_group_t* _popts;       // config options
     string _cname;                // config filename
+
     map<string,string> _sm_opts;  // map of options for the sm
     map<string,string> _dev_opts; // map of options for the device
         
@@ -134,30 +129,41 @@ public:
 
     /** Construction  */
     ShoreTPCCEnv(string confname) :
-        _cname(confname)
+        _cname(confname), _init_mutex(thread_mutex_create()),
+        _vol_mutex(thread_mutex_create()), _load_mutex(thread_mutex_create()),
+        _initialized(false), _loaded(false)                   
     {
-        pthread_mutex_init(&_env_mutex, NULL);
-        pthread_mutex_init(&_vol_mutex, NULL);
-
-	_initialized = false;
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
     }
 
     ~ShoreTPCCEnv() {         
+        pthread_mutex_destroy(&_init_mutex);
         pthread_mutex_destroy(&_vol_mutex);
-        pthread_mutex_destroy(&_env_mutex);
+        pthread_mutex_destroy(&_load_mutex);
+
+        if (_popts)
+            delete (_popts);
+
+        if (_pvid)
+            delete (_pvid);
     }
 
     /** Public methods */    
     int init();
     int close();
-    int loaddata(c_str loadDir);  
+    int loaddata();  
 
     inline ss_m* get_db_hd() { return(_pssm); }
     inline vid_t* get_db_vid() { return(_pvid); }
     inline pthread_mutex_t* get_vol_mutex() { return(&_vol_mutex); }
-    inline bool is_initialized() const { return _initialized; }
+    inline pthread_mutex_t* get_load_mutex() { return(&_load_mutex); }
+    inline bool is_loaded_no_cs() { return (_loaded); }
+    inline void set_loaded_no_cs(bool b) { _loaded = b; } 
+
+    // TODO (should guard those with a mutex?)
+    inline bool is_initialized() { return (_initialized); }
+    inline bool is_loaded() { return (_loaded); }
 
 }; // EOF ShoreTPCCEnv
 

@@ -7,17 +7,22 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "core.h"
+
 #include "server/command/shore_tpcc_handler.h"
-#include "server/print.h"
-#include "server/config.h"
 
-//#include "workload/tpcc/tpcc_db.h"
+// Shore-TPCC data-structures
+#include "stages/tpcc/common/tpcc_scaling_factor.h"
+#include "workload/tpcc/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_load.h"
+#include "stages/tpcc/shore/shore_tools.h"
 
 
-#include "scheduler.h"
+// Shore-TPCC drivers header files
+#include "workload/tpcc/drivers/shore/shore_tpcc_payment_baseline.h"
+//#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_staged.h"
 
-//using namespace tpcc;
+
+using namespace tpcc;
 using namespace workload;
 using qpipe::tuple_fifo;
 
@@ -31,8 +36,8 @@ shore_tpcc_handler_t *shore_tpcc_handler = NULL;
 /** @fn init
  *
  *  @brief Initialize SHORE-TPC-C handler. 
-
- *  @note We must invoke db_open() to initialize our global table 
+ *
+ *  @note We must create an instance of the shore_env initialize our global table 
  *  environment. We must ensure that this happens exactly once, 
  *  despite the fact that we may register the same shore_tpcc_handler_t 
  *  instance, or multiple shore_tpcc_handler_t instances for different 
@@ -48,11 +53,14 @@ void shore_tpcc_handler_t::init() {
 
     if ( state == SHORE_TPCC_HANDLER_UNINITIALIZED ) {
 
-        assert ( 1 == 0); // (ip) Should do the In-memory Loading!!!
+        // Create the Shore environment instance
+        // @note Once the user decide to load the data the system 
+        // will configure and start
+        shore_env = new ShoreTPCCEnv(SHORE_DEFAULT_CONF_FILE);
 
         // register drivers...
-        //        add_driver("shore_payment_baseline", 
-        //new shore_tpcc_payment_baseline_driver(c_str("SHORE_PAYMENT_BASELINE")));
+        add_driver("shore_payment_baseline", 
+                   new shore_tpcc_payment_baseline_driver(c_str("SHORE_PAYMENT_BASELINE")));
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());
@@ -73,18 +81,19 @@ void shore_tpcc_handler_t::init() {
 
 void shore_tpcc_handler_t::shutdown() {
 
+    assert(shore_env);
+
     // use a global thread-safe state machine to ensure that
-    // db_close() is called exactly once
+    // the db close function is called exactly once
 
     critical_section_t cs(state_mutex);
 
     if ( state == SHORE_TPCC_HANDLER_INITIALIZED ) {
         
-        // close DB tables
+        // close Storage manager
         TRACE(TRACE_ALWAYS, "... closing db\n");
-
-        assert (1 == 0); // (ip) Should do correct shutdown!!!
-        //	db_close();
+        closing_smthread_t* closer = new closing_smthread_t(shore_env);
+        run_smthread(closer, c_str("closer"));
 
         state = SHORE_TPCC_HANDLER_SHUTDOWN;
     }
@@ -93,6 +102,8 @@ void shore_tpcc_handler_t::shutdown() {
 
 
 void shore_tpcc_handler_t::handle_command(const char* command) {
+
+    assert(shore_env);
 
     int num_clients;
     int num_iterations;
@@ -114,6 +125,18 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     }
 
 
+    // 'wh' tag sets the number of queried warehouses
+    if (!strcmp(driver_tag, "wh")) {
+        int queried_warehouses = 0;
+        sscanf(command, "%*s %*s %d", &queried_warehouses);
+        if (queried_warehouses>0) {
+            TRACE( TRACE_ALWAYS, "Queried WHs = (%d)\n", queried_warehouses);
+            selectedQueriedSF = queried_warehouses;
+        }
+        return;
+    }
+
+
     // 'list' tag handled differently from all others...
     if (!strcmp(driver_tag, "list"))
     {
@@ -125,7 +148,23 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
 
         return;
     }
-   
+
+
+    // Load data
+    if( !strcmp(driver_tag, "load")) {
+        // Load data to the Shore Database
+        cout << "Loading..." << endl;
+        loading_smthread_t* loader = new loading_smthread_t(shore_env);
+        run_smthread(loader, c_str("loader"));
+        return;
+    }
+
+    // Continue only if data loaded
+    if(!shore_env->is_loaded()) {
+	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'load' to load one\n");
+	return;
+    }
+
     
     if ( sscanf(command, "%*s %*s %d %d %d %s",
                 &num_clients,

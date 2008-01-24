@@ -18,7 +18,6 @@
 
 // InMem-TPCC drivers header files
 #include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.h"
-//#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.h"
 #include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_staged.h"
 
 #include "scheduler.h"
@@ -38,7 +37,7 @@ inmem_tpcc_handler_t* inmem_tpcc_handler = NULL;
 /** @fn init
  *
  *  @brief Initialize INMEM-TPC-C handler. 
-
+ *
  *  @note We must invoke db_open() to initialize our global table 
  *  environment. We must ensure that this happens exactly once, 
  *  despite the fact that we may register the same inmem_tpcc_handler_t 
@@ -167,10 +166,11 @@ void inmem_tpcc_handler_t::handle_command(const char* command) {
     // 'wh' tag sets the number of queried warehouses
     if (!strcmp(driver_tag, "wh")) {
         int queried_warehouses = 0;
-        sscanf(command, "%*s %*s %d",
-               &queried_warehouses);
-        TRACE( TRACE_ALWAYS, "Queried WHs = (%d)\n", queried_warehouses);
-        selectedQueriedSF = queried_warehouses;
+        sscanf(command, "%*s %*s %d", &queried_warehouses);
+        if (queried_warehouses>0) {
+            TRACE( TRACE_ALWAYS, "Queried WHs = (%d)\n", queried_warehouses);
+            selectedQueriedSF = queried_warehouses;
+        }
         return;
     }
 

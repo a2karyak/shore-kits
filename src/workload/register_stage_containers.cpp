@@ -67,7 +67,8 @@ void register_stage_containers(int environment) {
 
     case TRX_SHORE_ENV:
 
-        assert (1==0); // (ip) Not implemented yet       
+        // Baseline Payment
+        register_stage<shore_payment_baseline_stage_t>(MAX_NUM_TRXS, false);
         break;
 
     case TRX_MEM_ENV:

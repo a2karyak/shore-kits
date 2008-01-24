@@ -34,10 +34,9 @@ ENTER_NAMESPACE(tpcc);
 DEFINE_TPCC_PARSER(ITEM) {
     // clear the tuple
     record_t record;
-
-    // split line into tab separated parts
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
+
     record.first.I_ID = atoi(tmp);
     record.second.I_ID = record.first.I_ID;
 
@@ -61,11 +60,14 @@ DEFINE_TPCC_PARSER(NEW_ORDER) {
     record_t record;
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
+
     record.first.NO_O_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.NO_D_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.NO_W_ID = atoi(tmp);
+
+    // the whole record is the key
     
     return record;
 }
@@ -76,6 +78,7 @@ DEFINE_TPCC_PARSER(HISTORY) {
     record_t record;
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
+
     record.first.H_C_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.H_C_D_ID = atoi(tmp);
@@ -99,12 +102,12 @@ DEFINE_TPCC_PARSER(HISTORY) {
 }
 
 
-DEFINE_TPCC_PARSER(ORDER) {
-    
+DEFINE_TPCC_PARSER(ORDER) {    
     // split line into tab separated parts
     record_t record;
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
+
     record.first.O_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     record.first.O_C_ID = atoi(tmp);
@@ -128,15 +131,11 @@ DEFINE_TPCC_PARSER(ORDER) {
 }
 
 
-DEFINE_TPCC_PARSER(ORDERLINE) {
-
-    assert(false); // TODO
-    
+DEFINE_TPCC_PARSER(ORDERLINE) {    
     // split line into tab separated parts
     record_t record;
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
-
 
     record.first.OL_O_ID = atoi(tmp);
     tmp = strtok_r(NULL, "|", &lasts);
@@ -165,12 +164,12 @@ DEFINE_TPCC_PARSER(ORDERLINE) {
 }
 
 
-DEFINE_TPCC_PARSER(STOCK) {
-    
+DEFINE_TPCC_PARSER(STOCK) {    
     // split line into tab separated parts
     record_t record;
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
+
     record.first.S_I_ID = atoi(tmp);
     record.second.S_I_ID = record.first.S_I_ID;
     tmp = strtok_r(NULL, "|", &lasts);
@@ -258,6 +257,7 @@ DEFINE_TPCC_PARSER(WAREHOUSE) {
     record_t record;
     char* lasts;
     char* tmp = strtok_r(linebuffer, "|", &lasts);
+
     record.first.W_ID = atoi(tmp);
     record.second.W_ID = atoi(tmp);
 

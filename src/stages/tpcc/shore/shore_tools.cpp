@@ -13,6 +13,8 @@
 
 ENTER_NAMESPACE(tpcc);
 
+/** Exported variable */
+
 ShoreTPCCEnv* shore_env;
 
 EXIT_NAMESPACE(tpcc);

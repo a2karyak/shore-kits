@@ -18,9 +18,48 @@
 ENTER_NAMESPACE(tpcc);
 
 
-/** Exported variable */
+
+/******** Exported variables ********/
 
 extern ShoreTPCCEnv* shore_env;
+
+
+
+
+/******** Exported functions ********/
+
+
+/** @fn run_smthread
+ *
+ *  @brief Creates an smthread inherited class and runs it
+ *
+ *  @returns non-zero on error
+ */
+
+template<class SMThreadChild>
+int run_smthread(SMThreadChild* t, c_str tname)
+{
+    if (!t)
+	W_FATAL(fcOUTOFMEMORY);
+
+    w_rc_t e = t->fork();
+    if(e) {
+	cerr << "error forking " << tname.data() << " thread... " << endl;
+	return (1);
+    }
+
+    e = t->join();
+    if(e) {
+	cerr << "error joining " << tname.data() << " thread... " << endl;
+	return (2);
+    }
+
+    int	rv = t->retval;
+    delete (t);
+
+    // if we reached this point everything went ok
+    return (rv);
+}
 
 
 /** @fn run_xct

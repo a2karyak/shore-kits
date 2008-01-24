@@ -3,6 +3,7 @@
 
 #include "tests/common.h"
 #include "stages/tpcc/shore/shore_tools.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
 
 using namespace tpcc;
@@ -13,25 +14,15 @@ int main(int argc, char* argv[]) {
     // Instanciate the Shore Environment
     shore_env = new ShoreTPCCEnv("shore.conf");
     
-    sl_thread_t* smtu = new sl_thread_t(shore_env);
-    if (!smtu)
-	W_FATAL(fcOUTOFMEMORY);
+    // Load data to the Shore Database
+    TRACE( TRACE_ALWAYS, "Loading... ");
+    loading_smthread_t* loader = new loading_smthread_t(shore_env);
+    run_smthread(loader, c_str("loader"));
 
-    w_rc_t e = smtu->fork();
-    if(e) {
-	cerr << "error forking main thread: " << e <<endl;
-	return 1;
-    }
+    // Load data to the Shore Database
+    TRACE( TRACE_ALWAYS, "Closing... ");
+    closing_smthread_t* closer = new closing_smthread_t(shore_env);
+    run_smthread(closer, c_str("closer"));
 
-    e = smtu->join();
-    if(e) {
-	cerr << "error joining main thread: " << e <<endl;
-	return 1;
-    }
-
-    int	rv = smtu->retval;
-    delete smtu;
-
-    TRACE( TRACE_ALWAYS, "Closing...\n");
-    return (rv);
+    return (0);
 }

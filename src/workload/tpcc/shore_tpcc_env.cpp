@@ -7,7 +7,7 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-
+#include "util/store_string.h"
 #include "workload/workload.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 
@@ -16,7 +16,19 @@ using namespace workload;
 using namespace tpcc;
 
 
+
+/** Exported variables */
+
+ShoreTPCCEnv* shore_env;
+
+
 /** Exported functions */
+
+
+/********
+ ******** Caution: The functions below should be invoked inside
+ ********          the context of a smthread
+ ********/
 
 
 /** @fn     init
@@ -29,7 +41,7 @@ using namespace tpcc;
 
 int ShoreTPCCEnv::init() 
 {
-    CRITICAL_SECTION(cs,_env_mutex);
+    CRITICAL_SECTION(cs,_init_mutex);
     if (_initialized) {
         TRACE( TRACE_ALWAYS, "Already initialized\n");
         return (1);
@@ -37,7 +49,7 @@ int ShoreTPCCEnv::init()
 
     // Read configuration options
     readconfig(_cname);
-    printconfig();
+    //    printconfig();
     
     // Start the storage manager
     if (configure_sm()) {
@@ -65,7 +77,7 @@ int ShoreTPCCEnv::init()
 
 int ShoreTPCCEnv::close() 
 {
-    CRITICAL_SECTION(cs,_env_mutex);
+    CRITICAL_SECTION(cs, _init_mutex);
     if (!_initialized) {
         cerr << "Environment not initialized..." << endl;
         return (1);
@@ -78,28 +90,6 @@ int ShoreTPCCEnv::close()
     return (0);
 }
 
-
-/** @fn loaddata
- *
- *  @brief Loads the TPC-C data from a specified location
- */
-
-int ShoreTPCCEnv::loaddata(c_str loadDir) 
-{
-    //    TRACE( TRACE_DEBUG, "Getting data from (%s)\n", loadDir.data());
-
-    // Start measuring loading time
-    time_t tstart = time(NULL);
-
-    assert (false); // TO DO
-
-    time_t tstop = time(NULL);
-
-    //    TRACE( TRACE_ALWAYS, "Loading finished in (%d) secs\n", tstop - tstart);
-    cout << "Loading finished in " << (tstop - tstart) << " secs." << endl;
-    _initialized = true;
-    return (0);
-}
 
 
 
@@ -126,7 +116,7 @@ int ShoreTPCCEnv::close_sm()
      *  http://www.cs.wisc.edu/shore/1.0/ssmapi/node3.html
      *  destroying the ss_m instance causes the SSM to shutdown
      */
-    delete _pssm;
+    delete (_pssm);
 
     // If we reached this point the sm is closed
     return (0);
@@ -162,10 +152,23 @@ int ShoreTPCCEnv::configure_sm()
     // have the SSM add its options to the group
     W_COERCE(ss_m::setup_options(_popts));
 
+    int szOpt = _sm_opts.size();
+    assert (szOpt > 1);
+    const char* myOpts[(2*_NUM_DEF_SM_OPTIONS) + 1];
+    int i=0;
+    // iterate over all options
+    myOpts[i++] = (char*)"fake";
+    for (map<string,string>::iterator sm_iter = _sm_opts.begin();
+         sm_iter != _sm_opts.end(); sm_iter++)
+        {            
+            myOpts[i++] = sm_iter->first.c_str();
+            myOpts[i++] = sm_iter->second.c_str();
+        }
+
     w_ostrstream err;
-    int opts_count = sizeof(storage_manager_opts)/sizeof(char const*);
-    w_rc_t rc = _popts->parse_command_line(storage_manager_opts, 
-                                           opts_count, 2, &err);
+    int numOpts = (2*szOpt)+1;
+    w_rc_t rc = _popts->parse_command_line(myOpts, numOpts, 2, &err);
+
     err << ends;
 
     // configure
@@ -206,10 +209,13 @@ int ShoreTPCCEnv::start_sm()
 
     // format and mount the database...
 
-    // TODO: make these command-line options!
-    bool clobber = true;
-    char const* device = "tbl_tpcc/shore";
-    int quota = 100*1024; // 100 MB
+    // Get the configuration from the config file
+    char const* device =  _dev_opts[_DEF_DEV_OPTIONS[0][0]].c_str();
+    int quota = atoi(_dev_opts[_DEF_DEV_OPTIONS[1][0]].c_str());
+    bool clobber = atoi(_dev_opts[_DEF_DEV_OPTIONS[2][0]].c_str());
+
+    assert(strlen(device)>0);
+    assert(quota>0);
 
     if(clobber) {
 	cout << "Formatting a new device ``" << device
@@ -268,18 +274,20 @@ void ShoreTPCCEnv::readconfig(string conf_file)
 
     // Parse SM parameters
     for (int i = 0; i < _NUM_DEF_SM_OPTIONS; i++) {
-        cout << _DEF_SM_OPTIONS[i][0] << " " << _DEF_SM_OPTIONS[i][1] << " " << _DEF_SM_OPTIONS[i][2] << endl;
         shoreConfig.readInto(tmp, _DEF_SM_OPTIONS[i][1], _DEF_SM_OPTIONS[i][2]);
-        cout << tmp << endl;
-        _sm_opts[_DEF_SM_OPTIONS[i][1]] = tmp;
+        _sm_opts[_DEF_SM_OPTIONS[i][0]] = tmp;
+
+        //        cout << _DEF_SM_OPTIONS[i][0] << " " << _DEF_SM_OPTIONS[i][1] << " " << _DEF_SM_OPTIONS[i][2];
+        //        cout << ": (" << tmp << ")" << endl;
     }    
 
     // Parse DEVICE parameters
     for (int i = 0; i < _NUM_DEF_DEV_OPTIONS; i++) {
-        cout << _DEF_DEV_OPTIONS[i][0] << " " << _DEF_DEV_OPTIONS[i][1] << endl;
         shoreConfig.readInto(tmp, _DEF_DEV_OPTIONS[i][0], _DEF_DEV_OPTIONS[i][1]);
-        cout << tmp << endl;
-        _sm_opts[_DEF_DEV_OPTIONS[i][0]] = tmp;
+        _dev_opts[_DEF_DEV_OPTIONS[i][0]] = tmp;
+
+        //        cout << _DEF_DEV_OPTIONS[i][0] << " " << _DEF_DEV_OPTIONS[i][1];
+        //        cout << ": (" << tmp << ")" << endl;
     }
 }
 
@@ -291,19 +299,18 @@ void ShoreTPCCEnv::readconfig(string conf_file)
 
 void ShoreTPCCEnv::printconfig() {
     cout << "Printing configuration " << endl;
-    map<string,string>::iterator iter;
     
     // Print storage manager options
+    map<string,string>::iterator sm_iter;
     cout << "** SM options" << endl;
-    for ( iter = _sm_opts.begin(); iter != _sm_opts.end(); iter++)
-            cout << "option: " << iter->first << " \tvalue: " << iter->second << endl;
+    for ( sm_iter = _sm_opts.begin(); sm_iter != _sm_opts.end(); sm_iter++)
+        cout << sm_iter->first << " \t| " << sm_iter->second << endl;
 
     // Print device options
+    map<string,string>::iterator dev_iter;
     cout << "** Device options" << endl;
-    for ( iter = _dev_opts.begin(); iter != _dev_opts.end(); iter++)
-            cout << "option: " << iter->first << " \tvalue: " << iter->second << endl;    
-
-    cout << "End of configuration" <endl;
+    for ( dev_iter = _dev_opts.begin(); dev_iter != _dev_opts.end(); dev_iter++)
+        cout << dev_iter->first << " \t| " << dev_iter->second << endl;    
 }
 
 

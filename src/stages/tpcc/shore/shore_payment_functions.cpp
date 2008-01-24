@@ -42,8 +42,7 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
  *  @return 0 on success, non-zero on failure
  */
 
-int insertShoreHistory(payment_input_t* pin, 
-                       ss_m* pssm, ShoreTPCCEnv* env)
+int insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env)
 {
     /////////////////////////////
     ///// START INS_HISTORY /////
@@ -92,8 +91,7 @@ int insertShoreHistory(payment_input_t* pin,
  *  @return 0 on success, non-zero on failure
  */
 
-int updateShoreCustomer(payment_input_t* pin,
-                        ss_m* pssm, ShoreTPCCEnv* env)
+int updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env)
 {
     //////////////////////////////
     ///// START UPD_CUSTOMER /////
@@ -116,7 +114,6 @@ int updateShoreCustomer(payment_input_t* pin,
                                           pin->_home_d_id, 
                                           pin->_c_last, 
                                           pin->_h_amount,
-                                          pssm,
                                           env));
     }
     else {
@@ -132,7 +129,6 @@ int updateShoreCustomer(payment_input_t* pin,
                                         pin->_home_d_id, 
                                         pin->_c_id, 
                                         pin->_h_amount,
-                                        pssm,
                                         env));
     }
 
@@ -154,8 +150,7 @@ int updateShoreCustomer(payment_input_t* pin,
  *  @return 0 on success, non-zero on failure
  */
 
-int updateShoreWarehouse(payment_input_t* pin,
-                         ss_m* pssm, ShoreTPCCEnv* env)
+int updateShoreWarehouse(payment_input_t* pin, ShoreTPCCEnv* env)
 {
     ///////////////////////////////
     ///// START UPD_WAREHOUSE /////    
@@ -235,8 +230,7 @@ int updateShoreWarehouse(payment_input_t* pin,
  *  @return 0 on success, non-zero on failure
  */
 
-int updateShoreDistrict(payment_input_t* pin, int* idx,
-                        ss_m* pssm, ShoreTPCCEnv* env)
+int updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env)
 {
     //////////////////////////////
     ///// START UPD_DISTRICT /////
@@ -256,7 +250,7 @@ int updateShoreDistrict(payment_input_t* pin, int* idx,
     tpcc_district_tuple* district = NULL;
 
     // Calculate index in the array
-    *idx = ((dk.D_W_ID - 1) * 10) + (dk.D_ID - 1);
+    //*idx = ((dk.D_W_ID - 1) * 10) + (dk.D_ID - 1);
 
     // Get the entry
     assert (false); // (ip) TODO
@@ -325,11 +319,9 @@ int updateShoreDistrict(payment_input_t* pin, int* idx,
  *  @return 0 on success, non-zero on failure
  */    
 
-int updateShoreCustomerByID(int wh_id, 
-			    int d_id, 
-			    int c_id, 
-                            decimal h_amount, 
-                            ss_m* pssm, ShoreTPCCEnv* env)
+int updateShoreCustomerByID(int wh_id, int d_id, 
+			    int c_id, decimal h_amount, 
+                            ShoreTPCCEnv* env)
 {
     assert (false);
 
@@ -412,11 +404,9 @@ int updateShoreCustomerByID(int wh_id,
  *  @return 0 on success, non-zero on failure
  */
 
-int updateShoreCustomerByLast(int wh_id, 
-                              int d_id, 
-                              char* c_last,
-                              decimal h_amount,
-                              ss_m* pssm, ShoreTPCCEnv* env)
+int updateShoreCustomerByLast(int wh_id, int d_id, 
+                              char* c_last, decimal h_amount,
+                              ShoreTPCCEnv* env)
 {
     assert (false);
 
@@ -511,16 +501,10 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
  *  @return A trx_result_tuple_t with the status of the transaction.
  */
     
-trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
-                                               const int id, 
-                                               ss_m* pssm, ShoreTPCCEnv* env)
+trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin, const int id, 
+                                               ShoreTPCCEnv* env)
 {        
-
-    assert (false); // TODO 
-
     assert (env); // ensure that we have a valid environment
-
-    assert (pssm != NULL); // should have a valid db handle
 
     // initialize the result structure
     trx_result_tuple_t aTrxResultTuple(UNDEF, id);
@@ -542,7 +526,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
         /** Step 1: The database transaction is started */
         TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
 
-        if (updateShoreWarehouse(&pin, pssm, env)) {
+        if (updateShoreWarehouse(&pin, env)) {
             
             // Failed. Throw exception
             TRACE( TRACE_ALWAYS, 
@@ -551,7 +535,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
         }
 
 
-        if (updateShoreDistrict(&pin, pssm, env)) {
+        if (updateShoreDistrict(&pin, env)) {
             
             // Failed. Throw exception
             THROW1( TrxException, 
@@ -559,14 +543,14 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
         }
 
 
-        if (updateShoreCustomer(&pin, pssm, env)) {
+        if (updateShoreCustomer(&pin, env)) {
 
             // Failed. Throw exception
             THROW1( TrxException,
                     "CUSTOMER update failed...\nAborting\n");
         }
 
-        if (insertShoreHistory(&pin, pssm, env)) {
+        if (insertShoreHistory(&pin, env)) {
 
             // Failed. Throw exception
             THROW1( TrxException, 
@@ -737,11 +721,10 @@ int staged_updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env) {
 }
 
 
-int staged_updateShoreCustomer(payment_input_t* pin, 
-                               ss_m* pssm, ShoreTPCCEnv* env) 
+int staged_updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env) 
 {
-
-    return (updateShoreCustomer(pin, pssm, env));
+    assert (false); // TODO
+    return (updateShoreCustomer(pin, env));
 }
 
 
@@ -752,14 +735,11 @@ int staged_updateShoreCustomer(payment_input_t* pin,
  *  @return 0 on success, non-zero otherwise
  */
 
-int staged_insertShoreHistory(payment_input_t* pin, 
-                              ss_m* pssm, ShoreTPCCEnv* env) 
+int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env) 
 {
-    
-    return (insertShoreHistory(pin, pssm, env));
+    assert (false); // TODO
+    return (insertShoreHistory(pin, env));
 }
-
-
 
 
 

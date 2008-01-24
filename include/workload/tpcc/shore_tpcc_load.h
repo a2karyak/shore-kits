@@ -25,31 +25,61 @@ ENTER_NAMESPACE(tpcc);
 
 
 ///////////////////////////////////////////////////////////
-// @class sl_thread_t
+// @class loading_smthread_t
 //
-// @brief An smthread base class for all sm loading related work
+// @brief An smthread-based class for all sm loading related work
 
-class sl_thread_t : public smthread_t {
+class loading_smthread_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
 
 public:
-
     int	retval;
     
-    sl_thread_t(ShoreTPCCEnv* env) 
-	: smthread_t(t_regular, "sl_thread_t"), _env(env), retval(0)
+    loading_smthread_t(ShoreTPCCEnv* env) 
+	: smthread_t(t_regular, "loading_smthread_t"), 
+          _env(env), retval(0)
     {
     }
 
-    ~sl_thread_t() { 
-        if (_env && _env->is_initialized())
-            _env->close();
+    ~loading_smthread_t() { 
     }
 
     // thread entrance
     void run();
-};
+
+    // methods
+    int loaddata();
+
+}; // EOF: loading_smthread_t
+
+
+
+///////////////////////////////////////////////////////////
+// @class closing_smthread_t
+//
+// @brief An smthread-based class for closing the Shore environment
+
+class closing_smthread_t : public smthread_t {
+private:
+    ShoreTPCCEnv* _env;    
+
+public:
+    int	retval;
+    
+    closing_smthread_t(ShoreTPCCEnv* env) 
+	: smthread_t(t_regular, "closing_smthread_t"), 
+          _env(env), retval(0)
+    {
+    }
+
+    ~closing_smthread_t() { 
+    }
+
+    // thread entrance
+    void run();
+
+}; // EOF: closing_smthread_t
 
 
 ///////////////////////////////////////////////////////////
@@ -201,16 +231,6 @@ DEFINE_SHORE_TPCC_PARSER_IMPL(ORDERLINE);
 DEFINE_SHORE_TPCC_PARSER_IMPL(STOCK);       
 
 #undef DEFINE_SHORE_TPCC_PARSER_IMPL
-
-/*
-struct test_parser : public shore_parser_impl<parse_tpcc_ORDER> {
-    test_parser(int tid, ss_m* ssm, vid_t vid)
-	: shore_parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
-    {
-    }
-
-}; // EOF: test_parser
-*/
 
 
 EXIT_NAMESPACE(tpcc);
