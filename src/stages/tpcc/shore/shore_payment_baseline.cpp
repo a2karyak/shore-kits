@@ -55,10 +55,10 @@ void shore_payment_baseline_stage_t::process_packet() {
     // Prints out the packet info
     packet->describe_trx();
 
-    trx_result_tuple_t aTrxResultTuple = 
-        executeShorePaymentBaseline(packet->_p_in,
-                                    packet->get_trx_id(),
-                                    shore_env);
+    trx_result_tuple_t* ptrt = 
+        sm_exec_payment_baseline(&packet->_p_in,
+                                 packet->get_trx_id(),
+                                 shore_env);
     
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
@@ -75,10 +75,9 @@ void shore_payment_baseline_stage_t::process_packet() {
     trx_result_tuple_t* dest_result_tuple;
     dest_result_tuple = aligned_cast<trx_result_tuple_t>(dest.data);
     
-    *dest_result_tuple = aTrxResultTuple;
+    *dest_result_tuple = *ptrt;
     
     adaptor->output(dest);
-
 
 } // process_packet
 

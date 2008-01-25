@@ -29,16 +29,17 @@ ENTER_NAMESPACE(tpcc_payment);
 
 /** Exported functions */
 
-trx_result_tuple_t sm_exec_payment_baseline(payment_input_t pin, 
-                                            const int id, 
-                                            ShoreTPCCEnv* env);
+
+typedef trx_smthread_t<payment_input_t> payment_thr_t;
+
+trx_result_tuple_t* sm_exec_payment_baseline(payment_input_t* ppin, 
+                                             const int id, 
+                                             ShoreTPCCEnv* env);
 
 
-trx_result_tuple_t sm_exec_payment_staged(payment_input_t pin, 
-                                          const int id, 
-                                          ShoreTPCCEnv* env);
-
-
+trx_result_tuple_t* sm_exec_payment_staged(payment_input_t* ppin, 
+                                           const int id, 
+                                           ShoreTPCCEnv* env);
 
 
 

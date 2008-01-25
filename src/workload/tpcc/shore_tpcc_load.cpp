@@ -30,13 +30,13 @@ void loading_smthread_t::run()
             // Couldn't initialize the Shore environment
             // cannot proceed
             cout << "Couldn't initialize Shore " << endl;
-            retval = 1;
+            _rv = 1;
             return;
         }
     }
 
     // load data
-    retval = loaddata();
+    _rv = loaddata();
 }
 
 

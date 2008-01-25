@@ -29,36 +29,90 @@ extern ShoreTPCCEnv* shore_env;
 /******** Exported functions ********/
 
 
-/** @fn run_smthread
+
+/** @fn trx_smthread_t
  *
- *  @brief Creates an smthread inherited class and runs it
- *
- *  @returns non-zero on error
+ *  @brief An smthread-based class for running trxs
  */
 
-template<class SMThreadChild>
-int run_smthread(SMThreadChild* t, c_str tname)
+template<class InputClass>
+class trx_smthread_t : public smthread_t {
+private:
+    typedef trx_result_tuple_t (*trxfn)(InputClass*, const int, ShoreTPCCEnv*);
+
+private:
+    trxfn _fn;           // pointer to trx function 
+    InputClass* _input;
+    ShoreTPCCEnv* _env;
+    int _id;
+    c_str _tname;
+
+public:
+    trx_result_tuple_t _rv;
+
+    trx_smthread_t(trxfn fn, InputClass* fninput, ShoreTPCCEnv* env, 
+                   const int id, c_str tname)
+	: smthread_t(t_regular, tname.data()), _fn(fn), _input(fninput),
+          _env(env), _id(id), _tname(tname), _rv(trx_result_tuple_t(UNDEF, id))
+    {
+    }
+    
+    ~trx_smthread_t() { }
+
+    // thread entrance
+    void trx_smthread_t::run()
+    {
+        // trx executing function, as well as, environment and input
+        // should not be NULL
+        assert (_fn!=NULL);
+        assert (_input!=NULL);
+        assert (_env!=NULL);
+        _rv = (*_fn)(_input, _id, _env);
+    }
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     *  @note The return type of retval() can be anything
+     */
+    inline trx_result_tuple_t retval() { return (_rv); }
+    inline c_str tname() { return (_tname); }
+
+}; // EOF: trx_smthread_t
+
+
+
+/** @fn run_smthread
+ *
+ *  @brief Creates an smthread inherited class and runs it. The
+ *  second argument is the return of the run() function of the thread
+ *  it is allocated in here. It is responsibility of the caller to
+ *  deallocate.
+ *
+ *  @returns non-zero on error on failed thread operation
+ */
+
+template<class SMThread, class SMTReturn>
+int run_smthread(SMThread* t, SMTReturn* r)
 {
     if (!t)
 	W_FATAL(fcOUTOFMEMORY);
 
     w_rc_t e = t->fork();
     if(e) {
-	cerr << "error forking " << tname.data() << " thread... " << endl;
+	cerr << "Error forking " << t->tname().data() << " thread... " << endl;
 	return (1);
     }
 
     e = t->join();
     if(e) {
-	cerr << "error joining " << tname.data() << " thread... " << endl;
+	cerr << "Error joining " << t->tname().data() << " thread... " << endl;
 	return (2);
     }
 
-    int	rv = t->retval;
-    delete (t);
+    r = new SMTReturn(t->retval());
 
     // if we reached this point everything went ok
-    return (rv);
+    return (0);
 }
 
 

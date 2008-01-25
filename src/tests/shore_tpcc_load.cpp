@@ -15,14 +15,22 @@ int main(int argc, char* argv[]) {
     shore_env = new ShoreTPCCEnv("shore.conf");
     
     // Load data to the Shore Database
+    int* r = NULL;
     TRACE( TRACE_ALWAYS, "Loading... ");
-    loading_smthread_t* loader = new loading_smthread_t(shore_env);
-    run_smthread(loader, c_str("loader"));
+    loading_smthread_t* loader = new loading_smthread_t(shore_env, c_str("loader"));
+    run_smthread<loading_smthread_t,int>(loader, r);
+//     if (*r) {
+//         cerr << "Error in loading... " << endl;
+//         cerr << "Exiting... " << endl;
+//         return (1);
+//     }
+    delete (loader);
 
     // Load data to the Shore Database
     TRACE( TRACE_ALWAYS, "Closing... ");
-    closing_smthread_t* closer = new closing_smthread_t(shore_env);
-    run_smthread(closer, c_str("closer"));
+    closing_smthread_t* closer = new closing_smthread_t(shore_env, c_str("closer"));
+    run_smthread<closing_smthread_t,int>(closer, r);
+    delete (closer);
 
     return (0);
 }

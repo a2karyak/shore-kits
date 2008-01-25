@@ -92,9 +92,14 @@ void shore_tpcc_handler_t::shutdown() {
         
         // close Storage manager
         TRACE(TRACE_ALWAYS, "... closing db\n");
-        closing_smthread_t* closer = new closing_smthread_t(shore_env);
-        run_smthread(closer, c_str("closer"));
-        delete closer;
+        closing_smthread_t* closer = new closing_smthread_t(shore_env, c_str("closer"));
+        int* r=NULL;
+        run_smthread(closer, r);
+//         if (*r)
+//             cerr << "Error in closing..." << endl;
+//         delete (r);
+        delete (closer);
+        
         state = SHORE_TPCC_HANDLER_SHUTDOWN;
     }
 }
@@ -153,9 +158,13 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     if( !strcmp(driver_tag, "parse")) {
         // Load data to the Shore Database
         cout << "Loading..." << endl;
-        loading_smthread_t* loader = new loading_smthread_t(shore_env);
-        run_smthread(loader, c_str("loader"));
-        delete loader;
+        int* r=NULL;
+        loading_smthread_t* loader = new loading_smthread_t(shore_env, c_str("loader"));
+        run_smthread(loader, r);
+//         if (*r) 
+//             cerr << "Error in loading... " << endl;
+//         delete (r);
+        delete (loader);
         return;
     }
 

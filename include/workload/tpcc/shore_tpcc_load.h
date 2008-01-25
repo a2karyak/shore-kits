@@ -32,24 +32,30 @@ ENTER_NAMESPACE(tpcc);
 class loading_smthread_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
+    c_str _lname;
 
 public:
-    int	retval;
+    int	_rv;
     
-    loading_smthread_t(ShoreTPCCEnv* env) 
-	: smthread_t(t_regular, "loading_smthread_t"), 
-          _env(env), retval(0)
+    loading_smthread_t(ShoreTPCCEnv* env, c_str lname) 
+	: smthread_t(t_regular), 
+          _env(env), _lname(lname), _rv(0)
     {
     }
 
-    ~loading_smthread_t() { 
-    }
+    ~loading_smthread_t() { }
 
     // thread entrance
     void run();
 
     // methods
     int loaddata();
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     */
+    inline int retval() { return (_rv); }
+    inline c_str tname() { return (_lname); }
 
 }; // EOF: loading_smthread_t
 
@@ -63,21 +69,27 @@ public:
 class closing_smthread_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
+    c_str _tname;
 
 public:
-    int	retval;
+    int	_rv;
     
-    closing_smthread_t(ShoreTPCCEnv* env) 
-	: smthread_t(t_regular, "closing_smthread_t"), 
-          _env(env), retval(0)
+    closing_smthread_t(ShoreTPCCEnv* env, c_str cname) 
+	: smthread_t(t_regular), 
+          _env(env), _tname(cname),_rv(0)
     {
     }
 
-    ~closing_smthread_t() { 
-    }
+    ~closing_smthread_t() { }
 
     // thread entrance
     void run();
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     */
+    inline int retval() { return (_rv); }
+    inline c_str tname() { return (_tname); }
 
 }; // EOF: closing_smthread_t
 
