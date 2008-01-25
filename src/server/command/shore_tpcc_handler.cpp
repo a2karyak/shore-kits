@@ -94,7 +94,7 @@ void shore_tpcc_handler_t::shutdown() {
         TRACE(TRACE_ALWAYS, "... closing db\n");
         closing_smthread_t* closer = new closing_smthread_t(shore_env);
         run_smthread(closer, c_str("closer"));
-
+        delete closer;
         state = SHORE_TPCC_HANDLER_SHUTDOWN;
     }
 }
@@ -124,7 +124,6 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         return;
     }
 
-
     // 'wh' tag sets the number of queried warehouses
     if (!strcmp(driver_tag, "wh")) {
         int queried_warehouses = 0;
@@ -151,17 +150,18 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
 
 
     // Load data
-    if( !strcmp(driver_tag, "load")) {
+    if( !strcmp(driver_tag, "parse")) {
         // Load data to the Shore Database
         cout << "Loading..." << endl;
         loading_smthread_t* loader = new loading_smthread_t(shore_env);
         run_smthread(loader, c_str("loader"));
+        delete loader;
         return;
     }
 
     // Continue only if data loaded
     if(!shore_env->is_loaded()) {
-	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'load' to load one\n");
+	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' to load one\n");
 	return;
     }
 

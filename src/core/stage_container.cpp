@@ -116,9 +116,9 @@ struct stage_thread : thread_t {
     int _which;
     stage_thread(const c_str &name, stage_container_t* sc, int which)
         : thread_t(name), _sc(sc), _which(which)
-    {
-        
+    {        
     }
+
     virtual void* run() {
         _sc->run(_which);
         return NULL;

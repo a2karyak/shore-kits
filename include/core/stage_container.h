@@ -19,9 +19,7 @@ ENTER_NAMESPACE(qpipe);
 struct stage_factory_t;
 
 class stage_container_t {
-
-public:
-   
+public:   
     static const unsigned int NEXT_TUPLE_UNINITIALIZED;
     static const unsigned int NEXT_TUPLE_INITIAL_VALUE;
 
@@ -32,9 +30,7 @@ public:
     };
 	
 protected:
-
     class stage_adaptor_t;
-
     typedef list <packet_list_t*> ContainerQueue;
 
     // used by the distributed stage queue
@@ -69,16 +65,13 @@ protected:
 
     stage_factory_t* _stage_maker;
 
-
     // container queue manipulation
     void container_queue_enqueue_no_merge(packet_list_t* packets);
     void container_queue_enqueue_no_merge(packet_t* packet);
     packet_list_t* container_queue_dequeue(int which);
-    void create_worker();
-   
+    void create_worker();   
     
-public:
-    
+public:    
     /* -ngm- Used for plain operations in the qpipe-plain branch. */
     static void* static_run_stage_wrapper(stage_t* stage,
                                           stage_adaptor_t* adaptor);

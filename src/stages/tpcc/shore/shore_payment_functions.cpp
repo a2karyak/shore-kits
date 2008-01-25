@@ -22,11 +22,74 @@ ENTER_NAMESPACE(tpcc_payment);
 
 /** Forward declaration of helper functions */
 
+
+// implementation of the single-threaded version of the Shore payment
+trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
+                                               const int id,
+                                               ShoreTPCCEnv* env);
+
+// implementation of the staged version of the Shore payment
+trx_result_tuple_t executeShorePaymentStaged(payment_input_t pin,
+                                             const int id,
+                                             ShoreTPCCEnv* env);
+
+
+/// Regular functions
+
+int insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env);
+int updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env);
+int updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env);
+int updateShoreWarehouse(payment_input_t* pin, ShoreTPCCEnv* env);
+int updateShoreCustomerByID(int wh_id, int d_id, int c_id, 
+                            decimal h_amount, ShoreTPCCEnv* env);
+int updateShoreCustomerByLast(int wh_id, int d_id, char* c_last, 
+                              decimal h_amount, ShoreTPCCEnv* env);
+
+/// STAGED functions 
+
+int staged_updateShoreWarehouse(payment_input_t* pin, ShoreTPCCEnv* env);
+int staged_updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env);
+int staged_updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env);
+int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env);
+
+/// Helper functions
+
 void updateShoreCustomerData(tpcc_customer_tuple_key ck, 
                              tpcc_customer_tuple_body* a_cb);
 
 
 /** Exported Functions */
+
+
+
+/** @fn sm_exec_payment_baseline
+ *  
+ *  @brief Wrapper that creates an smthread first and executes the baseline payment
+ */
+
+trx_result_tuple_t sm_exec_payment_baseline(payment_input_t pin, const int id, 
+                                            ShoreTPCCEnv* env)
+{
+    assert (false);
+    return (executeShorePaymentBaseline(pin,id,env));
+}
+
+
+/** @fn sm_exec_payment_staged
+ *  
+ *  @brief Wrapper that creates an smthread first and executes the staged payment
+ */
+
+trx_result_tuple_t sm_exec_payment_staged(payment_input_t pin, const int id, 
+                                          ShoreTPCCEnv* env)
+{
+    assert (false);
+    return (executeShorePaymentStaged(pin,id,env));
+}
+
+
+
+/** Private Functions */
 
 
 
@@ -493,7 +556,6 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
 }
 
 
-
 /** @fn executeShorePaymentBaseline
  *
  *  @brief Executes the SHORE_PAYMENT transaction serially. Wrapper function.
@@ -509,12 +571,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin, const int id
     // initialize the result structure
     trx_result_tuple_t aTrxResultTuple(UNDEF, id);
 
-    try {
-
-        assert (false); // TO DO
-
-        
-        
+    try {                
         TRACE( TRACE_TRX_FLOW, "*** EXECUTING SHORE-TRX CONVENTIONALLY ***\n");
     
         /** @note PAYMENT TRX 
@@ -522,6 +579,9 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin, const int id
          */    
 
         pin.describe(id);
+
+        /** Starts the trx */
+
 
         /** Step 1: The database transaction is started */
         TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
@@ -531,7 +591,6 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin, const int id
             // Failed. Throw exception
             TRACE( TRACE_ALWAYS, 
                    "WAREHOUSE update failed...\nAborting\n");
-                        
         }
 
 
@@ -740,6 +799,51 @@ int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env)
     assert (false); // TODO
     return (insertShoreHistory(pin, env));
 }
+
+
+
+/** @fn executeShorePaymentStaged
+ *
+ *  @brief Executes the SHORE_PAYMENT transaction in a Staged manner/
+ *  
+ *  @return A trx_result_tuple_t with the status of the transaction.
+ */
+    
+trx_result_tuple_t executeShorePaymentStaged(payment_input_t pin, const int id,
+                                             ShoreTPCCEnv* env)
+{        
+    assert (env); // ensure that we have a valid environment
+
+    // initialize the result structure
+    trx_result_tuple_t aTrxResultTuple(UNDEF, id);
+
+    try {                
+        TRACE( TRACE_TRX_FLOW, "*** EXECUTING SHORE-TRX STAGED ***\n");
+    
+        /** @note PAYMENT TRX 
+         *  According to TPC-C benchmark, Revision 5.8.0 pp. 32-35 
+         */    
+
+        pin.describe(id);
+
+        /** Starts the trx */
+        assert (false); // TODO
+    }        
+    catch(...) {
+        TRACE( TRACE_ALWAYS, 
+               "********************************\n" \
+               "Unknown Exception - Aborting PAYMENT trx...\n");
+        
+
+        aTrxResultTuple.set_state(ROLLBACKED);
+        return (aTrxResultTuple);
+    }
+
+    // if reached this point transaction succeeded
+    aTrxResultTuple.set_state(COMMITTED);
+    return (aTrxResultTuple);
+
+} // EOF: executePaymentBaseline
 
 
 

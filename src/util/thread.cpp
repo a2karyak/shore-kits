@@ -150,7 +150,6 @@ pthread_t thread_create(thread_t* t, thread_pool* pool)
     pthread_t tid;
     pthread_attr_t pattr;
 
-  
     // create a new kernel schedulable thread
     err = pthread_attr_init( &pattr );
     THROW_IF(ThreadException, err);
@@ -168,7 +167,6 @@ pthread_t thread_create(thread_t* t, thread_pool* pool)
 
 pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
 {
-
     pthread_mutexattr_t        mutex_attr;
     const pthread_mutexattr_t* ptr_mutex_attr;
     int err;
@@ -190,11 +188,9 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
 	ptr_mutex_attr = attr;
 #endif
     }
-    else
-    {
+    else {
         ptr_mutex_attr = attr;
     }
-
 
     pthread_mutex_t mutex;
     err = pthread_mutex_init(&mutex, ptr_mutex_attr);

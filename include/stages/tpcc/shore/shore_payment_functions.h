@@ -24,39 +24,20 @@ using namespace qpipe;
 using namespace tpcc;
 
 
-
 ENTER_NAMESPACE(tpcc_payment);
 
 
 /** Exported functions */
 
-int insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env);
-
-int updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env);
-
-int updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env);
-
-int updateShoreWarehouse(payment_input_t* pin, ShoreTPCCEnv* env);
-
-int updateShoreCustomerByID(int wh_id, int d_id, int c_id, decimal h_amount,
-                            ShoreTPCCEnv* env);
-
-int updateShoreCustomerByLast(int wh_id, int d_id, char* c_last, decimal h_amount,
-                              ShoreTPCCEnv* env);
-
-// implementation of the single-threaded version of the Shore payment
-trx_result_tuple_t executeShorePaymentBaseline(payment_input_t pin,
-                                               const int id,
-                                               ShoreTPCCEnv* env);
+trx_result_tuple_t sm_exec_payment_baseline(payment_input_t pin, 
+                                            const int id, 
+                                            ShoreTPCCEnv* env);
 
 
+trx_result_tuple_t sm_exec_payment_staged(payment_input_t pin, 
+                                          const int id, 
+                                          ShoreTPCCEnv* env);
 
-/// STAGED Functions 
-
-int staged_updateShoreWarehouse(payment_input_t* pin, ShoreTPCCEnv* env);
-int staged_updateShoreDistrict(payment_input_t* pin, ShoreTPCCEnv* env);
-int staged_updateShoreCustomer(payment_input_t* pin, ShoreTPCCEnv* env);
-int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env);
 
 
 
