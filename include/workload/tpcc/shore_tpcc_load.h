@@ -13,23 +13,39 @@
 
 #include "workload/loader.h"
 #include "workload/tpcc/tpcc_tbl_parsers.h"
+#include "stages/tpcc/shore/shore_file_desc.h"
 #include "stages/tpcc/shore/shore_tools.h"
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 #include <utility>
 
 
 using namespace qpipe;
+using namespace shore;
 
 
 ENTER_NAMESPACE(tpcc);
 
 
+
 ///////////////////////////////////////////////////////////
-// @class loading_smthread_t
+// @struct file_info_t
+//
+// @brief Structure that represents a table
+
+// #define MAX_FNAME_LEN = 31;
+// struct file_info_t {
+//     std::pair<int,int> _record_size;
+//     stid_t 	       _table_id;
+//     rid_t 	       _first_rid;
+// };
+
+
+///////////////////////////////////////////////////////////
+// @class loading_smt_t
 //
 // @brief An smthread-based class for all sm loading related work
 
-class loading_smthread_t : public smthread_t {
+class loading_smt_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
     c_str _lname;
@@ -37,13 +53,13 @@ private:
 public:
     int	_rv;
     
-    loading_smthread_t(ShoreTPCCEnv* env, c_str lname) 
+    loading_smt_t(ShoreTPCCEnv* env, c_str lname) 
 	: smthread_t(t_regular), 
           _env(env), _lname(lname), _rv(0)
     {
     }
 
-    ~loading_smthread_t() { }
+    ~loading_smt_t() { }
 
     // thread entrance
     void run();
@@ -57,16 +73,16 @@ public:
     inline int retval() { return (_rv); }
     inline c_str tname() { return (_lname); }
 
-}; // EOF: loading_smthread_t
+}; // EOF: loading_smt_t
 
 
 
 ///////////////////////////////////////////////////////////
-// @class closing_smthread_t
+// @class closing_smt_t
 //
 // @brief An smthread-based class for closing the Shore environment
 
-class closing_smthread_t : public smthread_t {
+class closing_smt_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
     c_str _tname;
@@ -74,13 +90,13 @@ private:
 public:
     int	_rv;
     
-    closing_smthread_t(ShoreTPCCEnv* env, c_str cname) 
+    closing_smt_t(ShoreTPCCEnv* env, c_str cname) 
 	: smthread_t(t_regular), 
           _env(env), _tname(cname),_rv(0)
     {
     }
 
-    ~closing_smthread_t() { }
+    ~closing_smt_t() { }
 
     // thread entrance
     void run();
@@ -91,20 +107,42 @@ public:
     inline int retval() { return (_rv); }
     inline c_str tname() { return (_tname); }
 
-}; // EOF: closing_smthread_t
+}; // EOF: closing_smt_t
+
 
 
 ///////////////////////////////////////////////////////////
-// @struct file_info_t
+// @class du_smthread_t
 //
-// @brief Structure that represents a table
+// @brief An smthread-based class for all querying stats of the sm
 
-#define MAX_FNAME_LEN = 31;
-struct file_info_t {
-    std::pair<int,int> _record_size;
-    stid_t 	       _table_id;
-    rid_t 	       _first_rid;
-};
+class du_smt_t : public smthread_t {
+private:
+    ShoreTPCCEnv* _env;    
+    c_str _dname;
+
+public:
+    int	_rv;
+    
+    du_smt_t(ShoreTPCCEnv* env, c_str dname) 
+	: smthread_t(t_regular), 
+          _env(env), _dname(dname), _rv(0)
+    {
+    }
+
+    ~du_smt_t() { }
+
+    // thread entrance
+    void run();
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     */
+    inline int retval() { return (_rv); }
+    inline c_str tname() { return (_dname); }
+
+}; // EOF: du_smt_t
+
 
 
 ///////////////////////////////////////////////////////////
@@ -173,14 +211,14 @@ void shore_parser_impl<Parser>::run() {
     // blow away the previous file, if any
     create_volume_xct<Parser> cvxct(_load_fname.data(), _info, 
                                     ksize+bsize, _env);
-    W_COERCE(run_xct(_env->get_db_hd(), cvxct));
+    W_COERCE(run_xct(_env->db(), cvxct));
      
     sm_stats_info_t stats;
     memset(&stats, 0, sizeof(stats));
     sm_stats_info_t* dummy; // needed to keep xct commit from deleting our stats...
     
     // Start inserting records
-    W_COERCE(_env->get_db_hd()->begin_xct());
+    W_COERCE(_env->db()->begin_xct());
     
     // insert records one by one...
     record_t record;
@@ -194,7 +232,7 @@ void shore_parser_impl<Parser>::run() {
     
     for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
 	record = parser.parse_row(linebuffer);
-	W_COERCE(_env->get_db_hd()->create_rec(_info._table_id, head, bsize, body, rid));
+	W_COERCE(_env->db()->create_rec(_info._table_id, head, bsize, body, rid));
 
         // Remember the first row inserted
 	if(first) {
@@ -205,14 +243,14 @@ void shore_parser_impl<Parser>::run() {
 	progress_update(&progress);
 	if(i >= mark) {
             // commit every INTERVAL records
-	    W_COERCE(_env->get_db_hd()->commit_xct(dummy));
-	    W_COERCE(_env->get_db_hd()->begin_xct());
+	    W_COERCE(_env->db()->commit_xct(dummy));
+	    W_COERCE(_env->db()->begin_xct());
 	    mark += INTERVAL;
 	}	    
     }
     
     // done!
-    W_COERCE(_env->get_db_hd()->commit_xct(dummy));
+    W_COERCE(_env->db()->commit_xct(dummy));
     _info._record_size = std::make_pair(ksize, bsize);
     progress_done(parser.table_name());
 

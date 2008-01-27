@@ -3,7 +3,7 @@
 
 #include "tests/common.h"
 #include "stages/tpcc/shore/shore_tools.h"
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
 
 using namespace tpcc;
@@ -17,8 +17,8 @@ int main(int argc, char* argv[]) {
     // Load data to the Shore Database
     int* r = NULL;
     TRACE( TRACE_ALWAYS, "Loading... ");
-    loading_smthread_t* loader = new loading_smthread_t(shore_env, c_str("loader"));
-    run_smthread<loading_smthread_t,int>(loader, r);
+    loading_smt_t* loader = new loading_smt_t(shore_env, c_str("loader"));
+    run_smthread<loading_smt_t,int>(loader, r);
 //     if (*r) {
 //         cerr << "Error in loading... " << endl;
 //         cerr << "Exiting... " << endl;
@@ -28,8 +28,8 @@ int main(int argc, char* argv[]) {
 
     // Load data to the Shore Database
     TRACE( TRACE_ALWAYS, "Closing... ");
-    closing_smthread_t* closer = new closing_smthread_t(shore_env, c_str("closer"));
-    run_smthread<closing_smthread_t,int>(closer, r);
+    closing_smt_t* closer = new closing_smt_t(shore_env, c_str("closer"));
+    run_smthread<closing_smt_t,int>(closer, r);
     delete (closer);
 
     return (0);

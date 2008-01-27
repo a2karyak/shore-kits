@@ -23,6 +23,13 @@ using std::map;
 
 
 
+/******** Exported variables ********/
+
+class ShoreTPCCEnv;
+extern ShoreTPCCEnv* shore_env;
+
+
+
 ////////////////////////////////////////////////////////////////////////
 
 /* constants */
@@ -91,24 +98,27 @@ public:
     static const int SHORE_TPCC_TABLES = 9;
 
 private:       
-    /** Private variables */
+
+    ss_m* _pssm;                  // database handle
+
+    // Status variables
     bool _initialized; 
     pthread_mutex_t _init_mutex;
-
     bool _loaded;
     pthread_mutex_t _load_mutex;
 
-    ss_m* _pssm;                  // database handle
+    // Device and volume. There is a single volume per device. 
+    // The whole environment resides in a single volume.
+    devid_t _devid;               // device id
+    vid_t* _pvid;                 // volume id
+    stid_t _root_iid;             // root id of the volume
     pthread_mutex_t _vol_mutex;   // volume mutex
+    lvid_t _lvid;                 // logical volume id (unnecessary, using physical ids)
+    unsigned _vol_cnt;            // volume count (unnecessary, always 1)
 
-    unsigned _vol_cnt;
-    devid_t _devid;
-    lvid_t _lvid;
-    vid_t* _pvid;
-
+    // Configuration variables
     option_group_t* _popts;       // config options
     string _cname;                // config filename
-
     map<string,string> _sm_opts;  // map of options for the sm
     map<string,string> _dev_opts; // map of options for the device
         
@@ -142,20 +152,32 @@ public:
         pthread_mutex_destroy(&_vol_mutex);
         pthread_mutex_destroy(&_load_mutex);
 
-        if (_popts)
+        if (_popts) {
             delete (_popts);
+            _popts = NULL;
+        }
 
-        if (_pvid)
+        if (_pvid) {
             delete (_pvid);
+            _pvid = NULL;
+        }
+        
+        if (_pssm) {
+            delete (_pssm);
+            _pssm = NULL;
+        }
     }
 
     /** Public methods */    
     int init();
     int close();
     int loaddata();  
+    int statistics();
 
-    inline ss_m* get_db_hd() { return(_pssm); }
-    inline vid_t* get_db_vid() { return(_pvid); }
+
+    // inline access methods
+    inline ss_m* db() { return(_pssm); }
+    inline vid_t* vid() { return(_pvid); }
     inline pthread_mutex_t* get_vol_mutex() { return(&_vol_mutex); }
     inline pthread_mutex_t* get_load_mutex() { return(&_load_mutex); }
     inline bool is_loaded_no_cs() { return (_loaded); }

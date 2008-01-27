@@ -78,6 +78,7 @@ TESTS = \
    tests/clh_rwlock \
    tests/bptree \
    tests/tpcc_load_shore \
+   tests/tpcc_kit \
    tests/old_shore_load \
    tests/raii_file \
    tests/config_file_example
@@ -219,6 +220,12 @@ SG_INMEM_TRX = \
 
 SG_SHORE_TRX = \
    $(SG)/tpcc/shore/shore_tools.cpp \
+   $(SG)/tpcc/shore/shore_file_desc.cpp \
+   $(SG)/tpcc/shore/shore_field.cpp \
+   $(SG)/tpcc/shore/shore_table.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_random.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_env.cpp \
    $(SG)/tpcc/shore/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp
 
@@ -305,7 +312,6 @@ WL_INMEM_TPCC_PAYMENT = \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.cpp
 
 WL_SHORE_COMMON = \
-   $(SW)/tpcc/shore_tpcc_env.cpp \
    $(SW)/tpcc/shore_tpcc_load.cpp
 
 WL_SHORE_TPCC_PAYMENT = \
@@ -431,6 +437,7 @@ tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
+tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
 tests_old_shore_load_SOURCES = $(ST)/old_shore_load.cpp
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 tests_bptree_SOURCES = $(ST)/test_bptree.cpp
@@ -443,6 +450,8 @@ tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 # exec files that need Shore
 tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_load_shore_LDADD = $(TEST_LIBS)
+tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_tpcc_kit_LDADD = $(TEST_LIBS)
 tests_old_shore_load_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_old_shore_load_LDADD = $(TEST_LIBS)
 

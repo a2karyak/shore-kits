@@ -7,7 +7,7 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
 
 
@@ -23,7 +23,7 @@ using namespace tpcc;
  *  not initiliazed, it also initializes it.
  */
 
-void loading_smthread_t::run() 
+void loading_smt_t::run() 
 {
     if (!_env->is_initialized()) {
         if (_env->init()) {
@@ -48,7 +48,7 @@ void loading_smthread_t::run()
  *  @return 0 on sucess, non-zero otherwise
  */
 
-int loading_smthread_t::loaddata() 
+int loading_smt_t::loaddata() 
 {
     CRITICAL_SECTION(cs, *_env->get_load_mutex());
 
@@ -119,7 +119,7 @@ int loading_smthread_t::loaddata()
 
 
 
-/******************** closing_smthread_t methods ******************/
+/******************** closing_smt_t methods ******************/
 
 
 /** @fn run
@@ -127,9 +127,24 @@ int loading_smthread_t::loaddata()
  *  @brief Closes the Shore database
  */
 
-void closing_smthread_t::run() {
+void closing_smt_t::run() {
     assert(_env);
     cout << "Shutting down Shore..." << endl;
     if (_env && _env->is_initialized())            
         _env->close();
+}
+
+
+
+/******************** du_smt_t methods ******************/
+
+
+/** @fn run
+ * 
+ *  @brief Prints sm volume statistics
+ */
+
+void du_smt_t::run() {
+    assert(_env);
+    _env->statistics();
 }

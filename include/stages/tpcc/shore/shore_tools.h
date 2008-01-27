@@ -13,22 +13,16 @@
 
 #include "sm_vas.h"
 #include "util/namespace.h"
-#include "workload/tpcc/shore_tpcc_env.h"
-
-ENTER_NAMESPACE(tpcc);
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
+ENTER_NAMESPACE(shore);
 
-/******** Exported variables ********/
-
-extern ShoreTPCCEnv* shore_env;
 
 
 
 
 /******** Exported functions ********/
-
-
 
 /** @fn trx_smthread_t
  *
@@ -92,7 +86,7 @@ public:
  */
 
 template<class SMThread, class SMTReturn>
-int run_smthread(SMThread* t, SMTReturn* r)
+int run_smthread(SMThread* t, SMTReturn* &r)
 {
     if (!t)
 	W_FATAL(fcOUTOFMEMORY);
@@ -110,6 +104,7 @@ int run_smthread(SMThread* t, SMTReturn* r)
     }
 
     r = new SMTReturn(t->retval());
+    assert (r);
 
     // if we reached this point everything went ok
     return (0);
@@ -119,10 +114,11 @@ int run_smthread(SMThread* t, SMTReturn* r)
 /** @fn run_xct
  *  
  *  @brief  Runs a transaction, checking for deadlock and retrying
- *  automatically as need be. 
+ *  automatically as need be. It essentially wraps the operator() of the
+ *  Transaction class with a begin_xct(), abort_xct() and commit_xct() calls.
  *
- *  @note Transaction must be a type whose function call operator takes 
- *  no arguments and returns w_rc_t.
+ *  @note Transaction's operator() should take as argument the db handle and 
+ *  return a w_rc_t.
  */
 
 template<class Transaction>
@@ -176,7 +172,7 @@ struct create_volume_xct
 	vec_t table_info(&_info, size);
 	bool found;
 
-	W_DO(ss_m::vol_root_index(*(_penv->get_db_vid()), root_iid));
+	W_DO(ss_m::vol_root_index(*(_penv->vid()), root_iid));
 	W_DO(ss_m::find_assoc(root_iid, table_name, &_info, size, found));
 
 	if(found) {
@@ -188,8 +184,8 @@ struct create_volume_xct
 	// create the file and register it with the root index
 	cout << "Creating table ``" << _table_name
 	     << "'' with " << _bytes << " bytes per record" << endl;
-	W_DO(ssm->create_file(*(_penv->get_db_vid()), _info._table_id, smlevel_3::t_regular));
-	W_DO(ss_m::vol_root_index(*(_penv->get_db_vid()), root_iid));
+	W_DO(ssm->create_file(*(_penv->vid()), _info._table_id, smlevel_3::t_regular));
+	W_DO(ss_m::vol_root_index(*(_penv->vid()), root_iid));
 	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
 	return RCOK;
     }
@@ -198,6 +194,7 @@ struct create_volume_xct
 
 
 
-EXIT_NAMESPACE(tpcc);
+
+EXIT_NAMESPACE(shore);
 
 #endif

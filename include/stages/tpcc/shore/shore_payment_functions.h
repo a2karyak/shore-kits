@@ -16,19 +16,19 @@
 #include "stages/tpcc/common/trx_packet.h"
 #include "stages/tpcc/common/tpcc_input.h"
 
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "stages/tpcc/shore/shore_tools.h"
 
 
 using namespace qpipe;
 using namespace tpcc;
+using namespace shore;
 
 
 ENTER_NAMESPACE(tpcc_payment);
 
 
 /** Exported functions */
-
 
 typedef trx_smthread_t<payment_input_t> payment_thr_t;
 

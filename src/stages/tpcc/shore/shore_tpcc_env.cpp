@@ -7,14 +7,10 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "util/store_string.h"
-#include "workload/workload.h"
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
-using namespace workload;
 using namespace tpcc;
-
 
 
 /** Exported variables */
@@ -92,6 +88,27 @@ int ShoreTPCCEnv::close()
 
 
 
+/** @fn    statistics
+ *
+ *  @brief Prints "du"-like statistics for the SM
+ */
+
+int ShoreTPCCEnv::statistics() 
+{
+    CRITICAL_SECTION(cs, _init_mutex);
+    if (!_initialized) {
+        cerr << "Environment not initialized..." << endl;
+        return (1);
+    }
+
+    gatherstats_sm();
+
+    // If reached this point the Shore environment is closed
+    return (0);
+}
+
+
+
 
 /** Storage manager functions */
 
@@ -105,12 +122,25 @@ int ShoreTPCCEnv::close()
 
 int ShoreTPCCEnv::close_sm() 
 {
-    cout << "Closing Shore storage manager...\n";
+    cout << "Closing Shore storage manager... " << endl;
 
     if (!_pssm) {
         cerr << "sm already closed..." << endl;
         return (1);
     }
+
+//     /** Begin trx **/ 
+//     W_COERCE(_pssm->begin_xct());
+//     cout << "Destroying volume..." << endl;
+//     W_COERCE(_pssm->destroy_vol(_lvid));
+    
+//     cout << "Dismounting all devices... " << endl;
+//     W_COERCE(_pssm->dismount_all());
+
+//     cout << "Committing... " << endl ;
+//     W_COERCE(_pssm->commit_xct());
+//     /** Commit trx **/    
+
     
     /** @note According to 
      *  http://www.cs.wisc.edu/shore/1.0/ssmapi/node3.html
@@ -130,9 +160,10 @@ int ShoreTPCCEnv::close_sm()
 
 void ShoreTPCCEnv::gatherstats_sm()
 {
-    sm_stats_info_t stats;
+    sm_du_stats_t stats;
     memset(&stats, 0, sizeof(stats));
-    ss_m::gather_stats(stats, false);
+    
+    //    ss_m::gather_stats(stats, false);
     cout << stats << endl;
 }
 
@@ -197,7 +228,10 @@ int ShoreTPCCEnv::configure_sm()
 
 /** @fn     start_sm
  *
- *  @brief  Start Shore storage manager and Format & Mount the databae
+ *  @brief  Start Shore storage manager. 
+ *  - Formats and mounts the device
+ *  - Creates the volume in the device 
+ *  (Shore limitation: only 1 volume per device)
  *
  *  @return 0 on success, non-zero otherwise
  */ 
@@ -205,6 +239,11 @@ int ShoreTPCCEnv::configure_sm()
 int ShoreTPCCEnv::start_sm()
 {
     cout << "Starting Shore..." << endl;
+    if (_pssm) {
+        cerr << "Shore already started...\n";
+        return (1);
+    }
+
     _pssm = new ss_m();
 
     // format and mount the database...

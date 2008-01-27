@@ -12,9 +12,10 @@
 
 // Shore-TPCC data-structures
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
-#include "workload/tpcc/shore_tpcc_env.h"
-#include "workload/tpcc/shore_tpcc_load.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "stages/tpcc/shore/shore_tools.h"
+#include "workload/tpcc/shore_tpcc_load.h"
+
 
 
 // Shore-TPCC drivers header files
@@ -92,13 +93,14 @@ void shore_tpcc_handler_t::shutdown() {
         
         // close Storage manager
         TRACE(TRACE_ALWAYS, "... closing db\n");
-        closing_smthread_t* closer = new closing_smthread_t(shore_env, c_str("closer"));
+        closing_smt_t* closer = new closing_smt_t(shore_env, c_str("closer"));
         int* r=NULL;
         run_smthread(closer, r);
 //         if (*r)
 //             cerr << "Error in closing..." << endl;
 //         delete (r);
         delete (closer);
+        closer = NULL;
         
         state = SHORE_TPCC_HANDLER_SHUTDOWN;
     }
@@ -159,14 +161,29 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         // Load data to the Shore Database
         cout << "Loading..." << endl;
         int* r=NULL;
-        loading_smthread_t* loader = new loading_smthread_t(shore_env, c_str("loader"));
+        loading_smt_t* loader = new loading_smt_t(shore_env, c_str("loader"));
         run_smthread(loader, r);
 //         if (*r) 
 //             cerr << "Error in loading... " << endl;
 //         delete (r);
         delete (loader);
+        loader = NULL;
         return;
     }
+
+
+    // 'du' tag handled differently from all others...
+    if (!strcmp(driver_tag, "du"))
+    {
+        cout << "Getting stats..." << endl;
+        int* r=NULL;
+        du_smt_t* duer = new du_smt_t(shore_env, c_str("duer"));
+        run_smthread<du_smt_t,int>(duer,r);
+        delete (duer);
+        duer = NULL;
+        return;
+    }
+
 
     // Continue only if data loaded
     if(!shore_env->is_loaded()) {
@@ -174,7 +191,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
 	return;
     }
 
-    
+    // Parses new run data
     if ( sscanf(command, "%*s %*s %d %d %d %s",
                 &num_clients,
                 &num_iterations,

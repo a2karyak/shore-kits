@@ -186,7 +186,7 @@ public:
 //
 // @note Part of the NEW_ORDER transaction
 
-class orderline_input_t :trx_input_t {
+class orderline_input_t : trx_input_t {
 public:
     // Construction/Destructions
     orderline_input_t() { 

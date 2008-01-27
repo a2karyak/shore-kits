@@ -603,7 +603,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin,
         TRACE( TRACE_TRX_FLOW, "Step 1: The database transaction is started\n" );
 
         /** Starts the trx */
-        W_COERCE(env->get_db_hd()->begin_xct());
+        W_COERCE(env->db()->begin_xct());
 
         if (updateShoreWarehouse(ppin, env)) {
             
@@ -639,7 +639,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin,
         TRACE( TRACE_TRX_FLOW, "Step 6: The transaction is committed\n" );
 
         // If we reached this point we should commit
-        W_COERCE(env->get_db_hd()->commit_xct(dummy));
+        W_COERCE(env->db()->commit_xct(dummy));
     }        
     catch(...) {
         TRACE( TRACE_ALWAYS, 
@@ -647,7 +647,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin,
                "Unknown Exception - Aborting PAYMENT trx...\n");        
         
         prt->set_state(ROLLBACKED);
-        W_COERCE(env->get_db_hd()->abort_xct());
+        W_COERCE(env->db()->abort_xct());
         return (*prt);
 
         // FIXME (ip): We may want to have retries
