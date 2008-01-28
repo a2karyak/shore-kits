@@ -23,6 +23,7 @@ private:
     ShoreTPCCEnv* _env;    
     c_str _tname;
 
+    tpcc_random_gen_t _tpccrnd; 
 
     /* all the tables */
     warehouse_t   _warehouse;
@@ -44,6 +45,7 @@ public:
           _env(env), _tname(tname), _rv(0)
     {
         cout << "Hello... " << endl;
+        _tpccrnd = tpcc_random_gen_t(NULL);
     }
 
 
@@ -68,8 +70,8 @@ public:
         _rv = test();
     }
 
-
-    w_rc_t tpcc_run_one_xct(int xct_type = 0);
+    w_rc_t tpcc_run_xct(int num_xct = 100, int xct_type = 0);
+    w_rc_t tpcc_run_one_xct(int xct_type = 0);    
 
     w_rc_t xct_new_order(ss_m* shore, istream& is = cin);
     w_rc_t xct_payment(ss_m* shore, istream& is = cin);
@@ -77,10 +79,13 @@ public:
     w_rc_t xct_delivery(ss_m* shore, istream& is = cin);
     w_rc_t xct_stock_level(ss_m* shore, istream& is = cin);
 
+    void print_tables();
+
 
     // methods
     int test() {
-        tpcc_run_one_xct();
+        tpcc_run_xct();
+        print_tables();
         return (0);
     }
 
@@ -94,11 +99,37 @@ public:
 
 
 
-w_rc_t test_smt_t::xct_new_order(ss_m * shore, istream & is) { return (RCOK); }
-w_rc_t test_smt_t::xct_payment(ss_m * shore, istream & is) { return (RCOK); }
-w_rc_t test_smt_t::xct_order_status(ss_m * shore, istream & is) { return (RCOK); }
-w_rc_t test_smt_t::xct_delivery(ss_m * shore, istream & is) { return (RCOK); }
-w_rc_t test_smt_t::xct_stock_level(ss_m * shore, istream & is) { return (RCOK); }
+w_rc_t test_smt_t::xct_new_order(ss_m * shore, istream & is) { cout << "NEW_ORDER... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_payment(ss_m * shore, istream & is) { cout << "PAYMENT... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_order_status(ss_m * shore, istream & is) { cout << "ORDER_STATUS... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_delivery(ss_m * shore, istream & is) { cout << "DELIVERY... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_stock_level(ss_m * shore, istream & is) { cout << "STOCK_LEVEL... " << endl; return (RCOK); }
+
+
+void test_smt_t::print_tables() {
+
+    /* describes all the tables */
+    _warehouse.print_table(_env->db());
+    _district.print_table(_env->db());
+    _customer.print_table(_env->db());
+    _history.print_table(_env->db());
+    _new_order.print_table(_env->db());
+    _order.print_table(_env->db());
+    _order_line.print_table(_env->db());
+    _item.print_table(_env->db());
+    _stock.print_table(_env->db());
+}
+
+
+w_rc_t test_smt_t::tpcc_run_xct(int num_xct, int xct_type)
+{
+    for (int i=0; i<num_xct; i++) {
+        cout << i << ". ";
+        tpcc_run_one_xct(xct_type);
+    }
+    return (RCOK);
+}
+
 
 
 w_rc_t test_smt_t::tpcc_run_one_xct(int xct_type) 
@@ -106,8 +137,8 @@ w_rc_t test_smt_t::tpcc_run_one_xct(int xct_type)
     int  this_type = xct_type;
 
     if (this_type == 0) {
-        tpcc_random_gen_t tpccrnd; 
-        this_type = tpccrnd.random_xct_type();
+
+        this_type = _tpccrnd.random_xct_type();
     }
     
     switch (this_type) {

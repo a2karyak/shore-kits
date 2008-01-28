@@ -58,7 +58,7 @@ public:
         if (x)
             _seed = x;
         else 
-            _seed = getpid() * time(NULL);
+            _seed = (getpid() + time(NULL)) * time(NULL);
         
         for (int i=0;i<3000;i++)
             _tbl_3000[i] = 0;

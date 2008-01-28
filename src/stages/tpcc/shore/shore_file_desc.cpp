@@ -62,7 +62,7 @@ w_rc_t file_desc_t::find_root_iid(ss_m* db)
  *  @brief: Sets the file fid given the file name.
  */
 
-inline w_rc_t file_desc_t::find_fid(ss_m* db)
+w_rc_t file_desc_t::find_fid(ss_m* db)
 {
     // if valid fid don't bother to lookup
     if (is_fid_valid())
@@ -72,7 +72,7 @@ inline w_rc_t file_desc_t::find_fid(ss_m* db)
     bool          found = false;
     smsize_t      infosize = sizeof(file_info_t);
 
-    if (!is_root_valid())  W_DO(find_root_iid(db));
+    if (!is_root_valid()) W_DO(find_root_iid(db));
     
     W_DO(ss_m::find_assoc(root_iid(),
 			  vec_t(_name, strlen(_name)),

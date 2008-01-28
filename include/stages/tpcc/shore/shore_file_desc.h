@@ -78,13 +78,17 @@ enum file_type_t {
 
 class file_desc_t {
 protected:
+    pthread_mutex_t _fschema_mutex;       // file schema mutex
     char           _name[MAX_FNAME_LEN];  // file name
     stid_t         _fid;                  // physical id of the file
     int            _field_count;          // # of fields
 
-    static vid_t   _vid;                  // volume id
-    static stid_t  _root_iid;             // root id
 
+    vid_t           _vid;                 // volume id
+    stid_t          _root_iid;            // root id
+
+    // (ip) We need to add optimistic concurrencny for _vid and _root_iid
+    //    pthread_mutex_t _vol_mutex;           // mutex for the vid and root_iid
 
 public:
 
@@ -93,16 +97,22 @@ public:
     /* -------------------- */
 
     file_desc_t(const char* name, int fcnt)
-        : _field_count(fcnt), _fid(stid_t::null)
+        : _field_count(fcnt), _fid(stid_t::null),
+          _vid(vid_t::null), _root_iid(stid_t::null)
     {
         assert (fcnt>0);
+
+        pthread_mutex_init(&_fschema_mutex, NULL);
 
         // Copy name
  	memset(_name, 0, MAX_FNAME_LEN);
 	memcpy(_name, name, strlen(name));
     }
 
-    virtual ~file_desc_t() { }
+    virtual ~file_desc_t() 
+    { 
+        pthread_mutex_destroy(&_fschema_mutex);
+    }
 
 
     /* ---------------------- */
@@ -112,16 +122,16 @@ public:
     const char*   name() const { return _name; }
     stid_t        fid() const { return _fid; }
     void          set_fid(stid_t fid) { _fid = fid; }
-    static vid_t  vid() { return _vid; }   
-    static stid_t root_iid() { return _root_iid; }
+    vid_t         vid() { return _vid; }   
+    stid_t        root_iid() { return _root_iid; }
     int           field_count() const { return _field_count; } 
 
     bool          is_fid_valid() const { return (_fid != stid_t::null); }
-    static bool   is_vid_valid() { return (_vid != vid_t::null); }
-    static bool   is_root_valid() { return (_root_iid != stid_t::null); }
+    bool          is_vid_valid() { return (_vid != vid_t::null); }
+    bool          is_root_valid() { return (_root_iid != stid_t::null); }
 
     w_rc_t        find_fid(ss_m* db);
-    static w_rc_t find_root_iid(ss_m* db);
+    w_rc_t        find_root_iid(ss_m* db);
 
     inline w_rc_t check_fid(ss_m* db) {
         if (!is_fid_valid()) {
