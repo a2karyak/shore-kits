@@ -15,7 +15,7 @@ INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include -I$(BOOST_HOME) $(SHORE
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
    lib/libstages.a lib/libcore.a lib/libutil.a \
-   lib/libdbgen.a
+   lib/libdbgen.a lib/libsm.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a $(SHORE_LDADD)
@@ -96,6 +96,7 @@ tests: $(TESTS)
 
 dbgen: $(DBGEN)
 
+
 ################################################################################
 #
 # src/util/
@@ -162,6 +163,28 @@ lib_libscheduler_a_SOURCES = \
 	$(SS)/cpu_set.cpp
 
 
+
+################################################################################
+#
+# src/sm/
+#
+################################################################################
+
+SM=$(top_srcdir)/src/sm
+SM_SHORE = \
+   $(SM)/shore/shore_tools.cpp \
+   $(SM)/shore/shore_file_desc.cpp \
+   $(SM)/shore/shore_field.cpp \
+   $(SM)/shore/shore_table.cpp \
+   $(SM)/shore/shore_env.cpp
+
+lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+
+lib_libsm_a_SOURCES = \
+	$(SM_SHOME)
+
+
+
 ################################################################################
 #
 # src/stages/
@@ -191,11 +214,9 @@ SG_COMMON = \
    $(SG)/common/process_query.cpp \
    $(SG)/common/predicates.cpp 
 
-
 SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp
-
 
 SG_BDB_TRX = \
    $(SG)/tpcc/bdb/payment_functions.cpp \
@@ -206,7 +227,6 @@ SG_BDB_TRX = \
    $(SG)/tpcc/bdb/payment_upd_cust.cpp \
    $(SG)/tpcc/bdb/payment_ins_hist.cpp \
    $(SG)/tpcc/bdb/payment_finalize.cpp
-
 
 SG_INMEM_TRX = \
    $(SG)/tpcc/inmem/inmem_payment_functions.cpp \
@@ -219,10 +239,6 @@ SG_INMEM_TRX = \
    $(SG)/tpcc/inmem/inmem_payment_finalize.cpp
 
 SG_SHORE_TRX = \
-   $(SG)/tpcc/shore/shore_tools.cpp \
-   $(SG)/tpcc/shore/shore_file_desc.cpp \
-   $(SG)/tpcc/shore/shore_field.cpp \
-   $(SG)/tpcc/shore/shore_table.cpp \
    $(SG)/tpcc/shore/shore_tpcc_random.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
    $(SG)/tpcc/shore/shore_tpcc_env.cpp \
@@ -238,6 +254,7 @@ lib_libstages_a_SOURCES = \
    $(SG_TRX_COMMON) \
    $(SG_BDB_TRX) \
    $(SG_INMEM_TRX) \
+   $(SG_SHORE) \
    $(SG_SHORE_TRX)
 
 

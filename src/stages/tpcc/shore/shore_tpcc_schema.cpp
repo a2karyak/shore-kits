@@ -17,7 +17,7 @@
 
 
 using namespace shore;
-
+using namespace tpcc;
 
 #define  MAX_SHORT_LEN     60
 #define  MAX_LONG_LEN     550

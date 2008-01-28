@@ -3,6 +3,7 @@
 
 #include "tests/common.h"
 
+#include "stages/tpcc/shore/shore_env.h"
 #include "stages/tpcc/shore/shore_tpcc_random.h"
 #include "stages/tpcc/shore/shore_tpcc_schema.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
@@ -22,19 +23,7 @@ class test_smt_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
     c_str _tname;
-
     tpcc_random_gen_t _tpccrnd; 
-
-    /* all the tables */
-    warehouse_t   _warehouse;
-    district_t    _district;
-    customer_t    _customer;
-    history_t     _history;
-    new_order_t   _new_order;
-    order_t       _order;
-    order_line_t  _order_line;
-    item_t        _item;
-    stock_t       _stock;
         
 
 public:
@@ -158,8 +147,8 @@ w_rc_t test_smt_t::tpcc_run_one_xct(int xct_type)
 
 
 
-int main(int argc, char* argv[]) {
-
+int main(int argc, char* argv[]) 
+{
     // Instanciate the Shore Environment
     shore_env = new ShoreTPCCEnv("shore.conf");
     

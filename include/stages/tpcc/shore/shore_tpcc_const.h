@@ -16,31 +16,21 @@
 #include "util/namespace.h"
 
 
-ENTER_NAMESPACE(shore);
+ENTER_NAMESPACE(tpcc);
 
 
-/*
- * indices created on the tables are:
- *
- * 1. unique index on order_line(ol_w_id,ol_d_id,ol_o_id,ol_number)
- * 2. unique index on stock(s_w_id,s_i_id)
- * 3. unique index on customer(c_w_id,c_d_id,c_id)
- * 4. index on customer(c_w_id,c_d_id,c_last,c_first,c_id)
- * 5. unique index on order(o_w_id,o_d_id,o_id)
- * 6. unique index on order(o_w_id,o_d_id,o_c_id,o_id) desc
- * 7. unique index on item(i_id)
- * 8. unique index on new_order(no_w_id,no_d_id,no_o_id)
- * 9. unique index on district(d_id,d_w_id)
- * 10. unique index on warehouse(w_id)
- */
+/* ----------------------------- */
+/* --- TPC-C SCALING FACTORS --- */
+/* ----------------------------- */
+
 
 
 /* parameters used to estimate the required storage
  * set it to 4 or 5 for extremely small databases and 2 for
  * databases with standard scales. */
-#define STORAGE_FACTOR     2
- 
-/* scale factor for tpcc benchmark */
+
+const int   STORAGE_FACTOR           = 2;
+
 
 /* Scale-down version 
 #define DISTRICTS_PER_WAREHOUSE                 4
@@ -64,55 +54,93 @@ ENTER_NAMESPACE(shore);
 #define NU_ORDERS_PER_DISTRICT                  90
 */
 
-/*  standard scale 
-*/
-#define DISTRICTS_PER_WAREHOUSE                 10
-#define CUSTOMERS_PER_DISTRICT                  3000
-#define ITEMS                                   100000
-#define STOCK_PER_WAREHOUSE                     ITEMS
-#define MIN_OL_PER_ORDER                        5
-#define MAX_OL_PER_ORDER                        15
-#define NU_ORDERS_PER_DISTRICT                  900
 
-#define MAX_TABLENAM_LENGTH       20
-#define MAX_RECORD_LENGTH        512
+/* --- standard scale -- */
 
-/* number of fields for tables */
-#define TPCC_WAREHOUSE_FCOUNT   9
-#define TPCC_DISTRICT_FCOUNT   11
-#define TPCC_CUSTOMER_FCOUNT   21
-#define TPCC_HISTORY_FCOUNT     8
-#define TPCC_NEW_ORDER_FCOUNT   3
-#define TPCC_ORDER_FCOUNT       8
-#define TPCC_ORDER_LINE_FCOUNT 10
-#define TPCC_ITEM_FCOUNT        5
-#define TPCC_STOCK_FCOUNT      17
+const int DISTRICTS_PER_WAREHOUSE = 10;
+const int CUSTOMERS_PER_DISTRICT  = 3000;
+const int ITEMS                   = 100000;
+const int STOCK_PER_WAREHOUSE     = ITEMS;
+const int MIN_OL_PER_ORDER        = 5;
+const int MAX_OL_PER_ORDER        = 15;
+const int NU_ORDERS_PER_DISTRICT  = 900;
+
+const int MAX_TABLENAM_LENGTH     = 20;
+const int MAX_RECORD_LENGTH       = 512;
 
 
+/* --- number of fields per table --- */
 
-/* ----------------- */
-/* --- TPC-C MIX --- */
-/* ----------------- */
+const int TPCC_WAREHOUSE_FCOUNT  = 9;
+const int TPCC_DISTRICT_FCOUNT   = 11;
+const int TPCC_CUSTOMER_FCOUNT   = 21;
+const int TPCC_HISTORY_FCOUNT    = 8;
+const int TPCC_NEW_ORDER_FCOUNT  = 3;
+const int TPCC_ORDER_FCOUNT      = 8;
+const int TPCC_ORDER_LINE_FCOUNT = 10;
+const int TPCC_ITEM_FCOUNT       = 5;
+const int TPCC_STOCK_FCOUNT      = 17;
 
-#define   XCT_NEW_ORDER    1
-#define   XCT_PAYMENT      2
-#define   XCT_ORDER_STATUS 3
-#define   XCT_DELIVERY     4
-#define   XCT_STOCK_LEVEL  5
+
+
+/* ------------------------ */
+/* --- TPC-C DATA FILES --- */
+/* ------------------------ */
+
+/* --- table ids --- */
+
+const int TBL_ID_WAREHOUSE     = 0;
+const int TBL_ID_DISTRICT      = 1;
+const int TBL_ID_CUSTOMER      = 2;
+const int TBL_ID_HISTORY       = 3;
+const int TBL_ID_ITEM          = 4;
+const int TBL_ID_NEW_ORDER     = 5;
+const int TBL_ID_ORDER         = 6;
+const int TBL_ID_ORDERLINE     = 7;
+const int TBL_ID_STOCK         = 8;
+
+const int SHORE_PAYMENT_TABLES = 4;
+const int SHORE_TPCC_TABLES    = 9;
+
+
+/* --- location of tables --- */
+
+#define SHORE_TPCC_DATA_DIR        "tpcc_sf"
+
+#define SHORE_TPCC_DATA_WAREHOUSE  "WAREHOUSE.dat"
+#define SHORE_TPCC_DATA_DISTRICT   "DISTRICT.dat"
+#define SHORE_TPCC_DATA_CUSTOMER   "CUSTOMER.dat"
+#define SHORE_TPCC_DATA_HISTORY    "HISTORY.dat"
+#define SHORE_TPCC_DATA_ITEM       "ITEM.dat"
+#define SHORE_TPCC_DATA_NEW_ORDER  "NEW_ORDER.dat"
+#define SHORE_TPCC_DATA_ORDER      "ORDER.dat"
+#define SHORE_TPCC_DATA_ORDERLINE  "ORDERLINE.dat"
+#define SHORE_TPCC_DATA_STOCK      "STOCK.dat"
+
+
+
+/* ----------------------------- */
+/* --- TPC-C TRANSACTION MIX --- */
+/* ----------------------------- */
+
+const int XCT_NEW_ORDER     = 1;
+const int XCT_PAYMENT       = 2;
+const int XCT_ORDER_STATUS  = 3;
+const int XCT_DELIVERY      = 4;
+const int XCT_STOCK_LEVEL   = 5;
 
 
 /* --- probabilities for the TPC-C MIX --- */
 
-const int prob_neworder = 45;
-const int prob_payment = 43;
-const int prob_order_status = 4;
-const int prob_delivery = 4;
-const int prob_stock_level = 4;
+const int PROB_NEWORDER     = 45;
+const int PROB_PAYMENT      = 43;
+const int PROB_ORDER_STATUS = 4;
+const int PROB_DELIVERY     = 4;
+const int PROB_STOCK_LEVEL  = 4;
 
 
 
 
-
-EXIT_NAMESPACE(shore);
+EXIT_NAMESPACE(tpcc);
 
 #endif /* __SHORE_TPCC_CONST_H */

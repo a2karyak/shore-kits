@@ -109,39 +109,26 @@ int tpcc_random_gen_t::random_n_string(char* out_buffer,
 int tpcc_random_gen_t::random_xct_type()
 {
     int random_type = random_integer(0, 99);
-
-#if 0
-    if (random_type < 45)
-	return XCT_NEW_ORDER;
-    else if (random_type < 88)
-	return XCT_PAYMENT;
-    else if (random_type < 92)
-	return XCT_ORDER_STATUS;
-    else if (random_type < 96) { 
-	return XCT_DELIVERY;
-    } else {
-	// return XCT_STOCK_LEVEL;
-        return XCT_DELIVERY;
-    }
-#else
     int sum = 0;
-    sum+=prob_neworder;
+    sum+=PROB_NEWORDER;
     if (random_type < sum)
 	return XCT_NEW_ORDER;
-    sum+=prob_payment;
+
+    sum+=PROB_PAYMENT;
     if (random_type < sum)
 	return XCT_PAYMENT;
-    sum+=prob_order_status;
+
+    sum+=PROB_ORDER_STATUS;
     if (random_type < sum)
 	return XCT_ORDER_STATUS;
-    sum+=prob_delivery;
+
+    sum+=PROB_DELIVERY;
     if (random_type < sum)
 	return XCT_DELIVERY;
-    sum+=prob_stock_level;
+
+    sum+=PROB_STOCK_LEVEL;
     if (random_type < sum)
 	return XCT_STOCK_LEVEL;
-#endif
-
 }
 
 

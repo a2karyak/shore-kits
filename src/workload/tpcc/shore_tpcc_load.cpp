@@ -62,38 +62,38 @@ int loading_smt_t::loaddata()
     // Start measuring loading time
     time_t tstart = time(NULL);
 
-    static int const THREADS = ShoreTPCCEnv::SHORE_PAYMENT_TABLES;
+    static int const THREADS = SHORE_PAYMENT_TABLES;
     //static int const THREADS = ShoreTPCCEnv::SHORE_TPCC_TABLES;
     guard<shore_parse_thread> threads[THREADS];
 
     // initialize all table loaders
-    threads[ShoreTPCCEnv::WAREHOUSE] = 
-        new shore_parser_impl_WAREHOUSE(ShoreTPCCEnv::WAREHOUSE, _env);
+    threads[TBL_ID_WAREHOUSE] = 
+        new shore_parser_impl_WAREHOUSE(TBL_ID_WAREHOUSE, _env);
 
-    threads[ShoreTPCCEnv::DISTRICT] = 
-        new shore_parser_impl_DISTRICT(ShoreTPCCEnv::DISTRICT, _env);
+    threads[TBL_ID_DISTRICT] = 
+        new shore_parser_impl_DISTRICT(TBL_ID_DISTRICT, _env);
 
-    threads[ShoreTPCCEnv::CUSTOMER] = 
-        new shore_parser_impl_CUSTOMER(ShoreTPCCEnv::CUSTOMER, _env);
+    threads[TBL_ID_CUSTOMER] = 
+        new shore_parser_impl_CUSTOMER(TBL_ID_CUSTOMER, _env);
 
-    threads[ShoreTPCCEnv::HISTORY] = 
-        new shore_parser_impl_HISTORY(ShoreTPCCEnv::HISTORY, _env);
+    threads[TBL_ID_HISTORY] = 
+        new shore_parser_impl_HISTORY(TBL_ID_HISTORY, _env);
 
     /**
-    threads[ShoreTPCCEnv::ITEM] = 
-        new shore_parser_impl_ITEM(ShoreTPCCEnv::ITEM, _env);
+    threads[TBL_ID_ITEM] = 
+        new shore_parser_impl_ITEM(TBL_ID_ITEM, _env);
 
-    threads[ShoreTPCCEnv::NEW_ORDER] = 
-        new shore_parser_impl_NEW_ORDER(ShoreTPCCEnv::NEW_ORDER, _env);
+    threads[TBL_ID_NEW_ORDER] = 
+        new shore_parser_impl_NEW_ORDER(TBL_ID_NEW_ORDER, _env);
 
-    threads[ShoreTPCCEnv::ORDER] = 
-        new shore_parser_impl_ORDER(ShoreTPCCEnv::ORDER, _env);
+    threads[TBL_ID_ORDER] = 
+        new shore_parser_impl_ORDER(TBL_ID_ORDER, _env);
 
-    threads[ShoreTPCCEnv::ORDERLINE] = 
-        new shore_parser_impl_ORDERLINE(ShoreTPCCEnv::ORDERLINE, _env);
+    threads[TBL_ID_ORDERLINE] = 
+        new shore_parser_impl_ORDERLINE(TBL_ID_ORDERLINE, _env);
 
-    threads[ShoreTPCCEnv::STOCK] = 
-        new shore_parser_impl_STOCK(ShoreTPCCEnv::STOCK, _env);
+    threads[TBL_ID_STOCK] = 
+        new shore_parser_impl_STOCK(TBL_ID_STOCK, _env);
     */
 
 

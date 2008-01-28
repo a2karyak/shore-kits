@@ -102,6 +102,7 @@
 #include "shore_iter.h"
 #include "shore_index.h"
 
+
 ENTER_NAMESPACE(shore);
 
 

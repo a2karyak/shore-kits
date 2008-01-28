@@ -14,19 +14,44 @@
 
 #include "sm_vas.h"
 #include "util.h"
+#include "stages/tpcc/shore/shore_table.h"
 #include "stages/tpcc/shore/shore_tpcc_const.h"
 #include "stages/tpcc/shore/shore_tpcc_random.h"
-#include "stages/tpcc/shore/shore_table.h"
 
 
-ENTER_NAMESPACE(shore);
+using namespace shore;
 
 
-/*
+ENTER_NAMESPACE(tpcc);
+
+
+
+/*********************************************************************
+ *
+ * TPC-C SCHEMA
+ * 
  * This file contains the classes for tables in tpcc benchmark.
  * A class derived from tpcc_table_t (which inherits from table_desc_t) 
  * is created for each table in the databases.
+ *
+ *********************************************************************/
+
+
+/*
+ * indices created on the tables are:
+ *
+ * 1. unique index on order_line(ol_w_id,ol_d_id,ol_o_id,ol_number)
+ * 2. unique index on stock(s_w_id,s_i_id)
+ * 3. unique index on customer(c_w_id,c_d_id,c_id)
+ * 4. index on customer(c_w_id,c_d_id,c_last,c_first,c_id)
+ * 5. unique index on order(o_w_id,o_d_id,o_id)
+ * 6. unique index on order(o_w_id,o_d_id,o_c_id,o_id) desc
+ * 7. unique index on item(i_id)
+ * 8. unique index on new_order(no_w_id,no_d_id,no_o_id)
+ * 9. unique index on district(d_id,d_w_id)
+ * 10. unique index on warehouse(w_id)
  */
+
 
 
 /*  --------------------------------------------------------------
@@ -411,6 +436,6 @@ public:
 };
 
 
-EXIT_NAMESPACE(shore);
+EXIT_NAMESPACE(tpcc);
 
 #endif /* __SHORE_TPCC_SCHEMA_H */
