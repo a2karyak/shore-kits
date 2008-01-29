@@ -10,7 +10,7 @@
  *
  */
 
-#include "stages/tpcc/shore/shore_file_desc.h"
+#include "sm/shore/shore_file_desc.h"
 
 using namespace shore;
 

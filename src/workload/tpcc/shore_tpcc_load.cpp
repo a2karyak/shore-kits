@@ -11,6 +11,7 @@
 #include "workload/tpcc/shore_tpcc_load.h"
 
 
+using namespace shore;
 using namespace tpcc;
 
 

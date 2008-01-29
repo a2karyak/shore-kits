@@ -44,8 +44,10 @@
  *  @note   See file tests/config_file_example.cpp for more examples.
  */
 
-#ifndef __CONFIGFILE_H
-#define __CONFIGFILE_H
+#ifndef __SHORE_CONFIGFILE_H
+#define __SHORE_CONFIGFILE_H
+
+#include "util/namespace.h"
 
 #ifdef __SUNPRO_CC
 #include <string.h>
@@ -57,6 +59,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+
+ENTER_NAMESPACE(shore);
+
 
 using std::string;
 
@@ -268,4 +274,7 @@ void ConfigFile::add( string key, const T& value )
     return;
 }
 
-#endif  // __CONFIGFILE_H
+
+EXIT_NAMESPACE(shore);
+
+#endif  /* __SHORE_CONFIGFILE_H */

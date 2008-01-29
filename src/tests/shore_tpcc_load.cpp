@@ -2,10 +2,14 @@
 // CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
 #include "tests/common.h"
-#include "stages/tpcc/shore/shore_tools.h"
+
+#include "sm/shore/shore_tools.h"
+
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
 
+
+using namespace shore;
 using namespace tpcc;
 
 

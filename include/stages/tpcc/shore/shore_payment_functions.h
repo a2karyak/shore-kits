@@ -16,13 +16,16 @@
 #include "stages/tpcc/common/trx_packet.h"
 #include "stages/tpcc/common/tpcc_input.h"
 
+#include "sm/shore/shore_tools.h"
+
 #include "stages/tpcc/shore/shore_tpcc_env.h"
-#include "stages/tpcc/shore/shore_tools.h"
+
 
 
 using namespace qpipe;
-using namespace tpcc;
 using namespace shore;
+using namespace tpcc;
+
 
 
 ENTER_NAMESPACE(tpcc_payment);

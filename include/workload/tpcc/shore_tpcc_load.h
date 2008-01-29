@@ -13,8 +13,10 @@
 
 #include "workload/loader.h"
 #include "workload/tpcc/tpcc_tbl_parsers.h"
-#include "stages/tpcc/shore/shore_file_desc.h"
-#include "stages/tpcc/shore/shore_tools.h"
+
+#include "sm/shore/shore_file_desc.h"
+#include "sm/shore/shore_tools.h"
+
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include <utility>
 

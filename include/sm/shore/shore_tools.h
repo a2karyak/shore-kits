@@ -13,7 +13,8 @@
 
 #include "sm_vas.h"
 #include "util/namespace.h"
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+
+#include "sm/shore/shore_env.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -32,19 +33,19 @@ ENTER_NAMESPACE(shore);
 template<class InputClass>
 class trx_smthread_t : public smthread_t {
 private:
-    typedef trx_result_tuple_t (*trxfn)(InputClass*, const int, ShoreTPCCEnv*);
+    typedef trx_result_tuple_t (*trxfn)(InputClass*, const int, ShoreEnv*);
 
 private:
     trxfn _fn;           // pointer to trx function 
     InputClass* _input;
-    ShoreTPCCEnv* _env;
+    ShoreEnv* _env;
     int _id;
     c_str _tname;
 
 public:
     trx_result_tuple_t _rv;
 
-    trx_smthread_t(trxfn fn, InputClass* fninput, ShoreTPCCEnv* env, 
+    trx_smthread_t(trxfn fn, InputClass* fninput, ShoreEnv* env, 
                    const int id, c_str tname)
 	: smthread_t(t_regular, tname.data()), _fn(fn), _input(fninput),
           _env(env), _id(id), _tname(tname), _rv(trx_result_tuple_t(UNDEF, id))
@@ -149,14 +150,14 @@ struct create_volume_xct
 {
     //    vid_t &_vid;
     //    pthread_mutex_t* _vol_mutex;
-    ShoreTPCCEnv* _penv;
+    ShoreEnv* _penv;
 
     char const* _table_name;
     file_info_t &_info;
     size_t _bytes;
 
     create_volume_xct(char const* tname, file_info_t &info, 
-                      size_t bytes, ShoreTPCCEnv* env
+                      size_t bytes, ShoreEnv* env
                       )
 	: _table_name(tname), _info(info), _bytes(bytes), _penv(env)
     {

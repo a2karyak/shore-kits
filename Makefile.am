@@ -127,8 +127,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_lock.cpp \
 	$(SU)/clh_rwlock.cpp \
 	$(SU)/clh_profile.cpp \
-        $(SU)/store_string.cpp \
-	$(SU)/conf_file.cpp
+        $(SU)/store_string.cpp
+
 
 
 
@@ -172,7 +172,7 @@ lib_libscheduler_a_SOURCES = \
 
 SM=$(top_srcdir)/src/sm
 SM_SHORE = \
-   $(SM)/shore/shore_tools.cpp \
+   $(SM)/shore/shore_conf.cpp \
    $(SM)/shore/shore_file_desc.cpp \
    $(SM)/shore/shore_field.cpp \
    $(SM)/shore/shore_table.cpp \
@@ -181,7 +181,7 @@ SM_SHORE = \
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
 lib_libsm_a_SOURCES = \
-	$(SM_SHOME)
+	$(SM_SHORE)
 
 
 

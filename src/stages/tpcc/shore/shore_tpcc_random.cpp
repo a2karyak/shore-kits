@@ -11,7 +11,8 @@
 
 #include "stages/tpcc/shore/shore_tpcc_random.h"
 
-using namespace shore; 
+
+using namespace tpcc;
 
 
 /* ----------------- */
@@ -50,7 +51,7 @@ static char *last_name_parts[] =
 
 /** --- helper random functions --- */
 
-inline int tpcc_random_gen_t::random_integer(int val_lo, int val_hi)
+int tpcc_random_gen_t::random_integer(int val_lo, int val_hi)
 {
     return((rand_r(&_seed)%(val_hi-val_lo+1))+val_lo);
 }
@@ -62,7 +63,7 @@ int tpcc_random_gen_t::NUrand_val(int A, int x, int y, int C)
 }
 
 
-inline void tpcc_random_gen_t::init_random(int x)
+void tpcc_random_gen_t::init_random(int x)
 {
     srand(x);
 }
@@ -162,14 +163,14 @@ int tpcc_random_gen_t::random_last_name(char *out_buffer,
 }
 
 
-inline char* tpcc_random_gen_t::random_last_name(const int end)
+char* tpcc_random_gen_t::random_last_name(const int end)
 {
     return last_name_parts[NUrand_val(A_C_LAST, 0, end, C_C_LAST)];
 }
 
 
-inline float tpcc_random_gen_t::random_float_val_return(float min, 
-                                                        float max)
+float tpcc_random_gen_t::random_float_val_return(float min, 
+                                                 float max)
 {
     return (((float)rand_r(&_seed))/(((float)32767)*(max-min)+min));
 }

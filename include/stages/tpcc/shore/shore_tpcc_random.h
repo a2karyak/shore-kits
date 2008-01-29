@@ -13,11 +13,11 @@
 #define __SHORE_TPCC_RANDOM_H
 
 #include "util.h"
+
 #include "stages/tpcc/shore/shore_tpcc_const.h"
 
 
-
-ENTER_NAMESPACE(shore);
+ENTER_NAMESPACE(tpcc);
 
 
 /****************************************************************** 
@@ -110,6 +110,8 @@ public:
 }; // EOF: tpcc_random_gen_t
 
 
-EXIT_NAMESPACE(shore);
+
+EXIT_NAMESPACE(tpcc);
+
 
 #endif /* __SHORE_TPCC_RANDOM_H */

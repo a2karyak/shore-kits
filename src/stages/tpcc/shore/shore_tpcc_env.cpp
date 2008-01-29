@@ -12,7 +12,8 @@
 
 
 using namespace shore;
-using namespace tpcc;
+
+ENTER_NAMESPACE(tpcc);
 
 
 /** Exported variables */
@@ -31,6 +32,9 @@ ShoreTPCCEnv* shore_env;
 
 int ShoreTPCCEnv::loaddata() 
 {
-
+    assert (false); // (ip) TODO
     return (0);
 }
+
+
+EXIT_NAMESPACE(tpcc);

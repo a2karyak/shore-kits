@@ -14,7 +14,8 @@
 
 #include "sm_vas.h"
 #include "util.h"
-#include "stages/tpcc/shore/shore_error.h"
+
+#include "sm/shore/shore_error.h"
 
 
 ENTER_NAMESPACE(shore);

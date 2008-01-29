@@ -8,7 +8,8 @@
  */
 
 
-#include "stages/tpcc/shore/shore_env.h"
+#include "sm/shore/shore_conf.h"
+#include "sm/shore/shore_env.h"
 
 
 using namespace shore;
@@ -303,19 +304,18 @@ void ShoreEnv::readconfig(string conf_file)
 {
     cout << "Reading configuration file " << conf_file << endl;
     
-    ConfigFile shoreConfig(conf_file);
-
+    ConfigFile  sh_config(conf_file);   // config file reader
     string tmp;
 
     // Parse SM parameters
     for (int i = 0; i < SHORE_NUM_DEF_SM_OPTIONS; i++) {
-        shoreConfig.readInto(tmp, SHORE_DEF_SM_OPTIONS[i][1], SHORE_DEF_SM_OPTIONS[i][2]);
+        sh_config.readInto(tmp, SHORE_DEF_SM_OPTIONS[i][1], SHORE_DEF_SM_OPTIONS[i][2]);
         _sm_opts[SHORE_DEF_SM_OPTIONS[i][0]] = tmp;
     }    
 
     // Parse DEVICE parameters
     for (int i = 0; i < SHORE_NUM_DEF_DEV_OPTIONS; i++) {
-        shoreConfig.readInto(tmp, SHORE_DEF_DEV_OPTIONS[i][0], SHORE_DEF_DEV_OPTIONS[i][1]);
+        sh_config.readInto(tmp, SHORE_DEF_DEV_OPTIONS[i][0], SHORE_DEF_DEV_OPTIONS[i][1]);
         _dev_opts[SHORE_DEF_DEV_OPTIONS[i][0]] = tmp;
     }
 }

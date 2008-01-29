@@ -12,6 +12,7 @@
 #ifndef __SHORE_ERROR_H
 #define __SHORE_ERROR_H
 
+
 ENTER_NAMESPACE(shore);
 
 /* error codes returned from shore toolkit */

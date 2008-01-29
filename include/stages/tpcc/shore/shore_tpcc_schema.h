@@ -14,7 +14,9 @@
 
 #include "sm_vas.h"
 #include "util.h"
-#include "stages/tpcc/shore/shore_table.h"
+
+#include "sm/shore/shore_table.h"
+
 #include "stages/tpcc/shore/shore_tpcc_const.h"
 #include "stages/tpcc/shore/shore_tpcc_random.h"
 

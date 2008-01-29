@@ -3,15 +3,11 @@
 
 #include "tests/common.h"
 
-#include "stages/tpcc/shore/shore_env.h"
-#include "stages/tpcc/shore/shore_tpcc_random.h"
-#include "stages/tpcc/shore/shore_tpcc_schema.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
-using namespace tpcc;
 using namespace shore;
-
+using namespace tpcc;
 
 
 ///////////////////////////////////////////////////////////
@@ -73,6 +69,7 @@ public:
 
     // methods
     int test() {
+        _env->loaddata();
         tpcc_run_xct();
         print_tables();
         return (0);
@@ -98,15 +95,15 @@ w_rc_t test_smt_t::xct_stock_level(ss_m * shore, istream & is) { cout << "STOCK_
 void test_smt_t::print_tables() {
 
     /* describes all the tables */
-    _warehouse.print_table(_env->db());
-    _district.print_table(_env->db());
-    _customer.print_table(_env->db());
-    _history.print_table(_env->db());
-    _new_order.print_table(_env->db());
-    _order.print_table(_env->db());
-    _order_line.print_table(_env->db());
-    _item.print_table(_env->db());
-    _stock.print_table(_env->db());
+    _env->warehouse()->print_table(_env->db());
+    _env->district()->print_table(_env->db());
+    _env->customer()->print_table(_env->db());
+    _env->history()->print_table(_env->db());
+    _env->new_order()->print_table(_env->db());
+    _env->order()->print_table(_env->db());
+    _env->orderline()->print_table(_env->db());
+    _env->item()->print_table(_env->db());
+    _env->stock()->print_table(_env->db());
 }
 
 

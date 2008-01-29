@@ -20,8 +20,10 @@
 #ifndef __SHORE_FIELD_H
 #define __SHORE_FIELD_H
 
-#include "stages/tpcc/shore/shore_file_desc.h"
 #include "util.h"
+
+#include "sm/shore/shore_file_desc.h"
+
 
 
 
@@ -36,6 +38,7 @@ ENTER_NAMESPACE(shore);
 class timestamp_t {
 private:
     time_t   _time;
+
 public:
     timestamp_t() { _time = time(NULL); }
 

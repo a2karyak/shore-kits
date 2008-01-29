@@ -9,7 +9,7 @@
  *
  */
 
-#include "stages/tpcc/shore/shore_field.h"
+#include "sm/shore/shore_field.h"
 
 using namespace shore;
 

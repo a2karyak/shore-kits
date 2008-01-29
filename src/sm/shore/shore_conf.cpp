@@ -7,9 +7,11 @@
  *  @note   See file tests/config_file_example.cpp for more examples.
  */
 
-#include "util/conf_file.h"
+#include "sm/shore/shore_conf.h"
 
-using std::string;
+
+ENTER_NAMESPACE(shore);
+
 
 ConfigFile::ConfigFile( string filename, string delimiter,
                         string comment, string sentry )
@@ -32,7 +34,8 @@ ConfigFile::ConfigFile()
 
 
 // Write current configuration to the initial file
-void ConfigFile::saveCurrentConfig() {
+void ConfigFile::saveCurrentConfig()
+{
     std::ofstream of(_fname.c_str());
     if (!of) throw file_not_found(_fname);
     of << (*this);
@@ -91,66 +94,66 @@ std::istream& operator>>( std::istream& is, ConfigFile& cf )
 	
     string nextline = "";  // might need to read ahead to see where value ends
 	
-    while( is || nextline.length() > 0 )
-        {
-            // Read an entire line at a time
-            string line;
-            if( nextline.length() > 0 )
-                {
-                    line = nextline;  // we read ahead; use it now
-                    nextline = "";
-                }
-            else
-                {
-                    std::getline( is, line );
-                }
+    while( is || nextline.length() > 0 ) {
+        // Read an entire line at a time
+        string line;
+        if( nextline.length() > 0 )
+            {
+                line = nextline;  // we read ahead; use it now
+                nextline = "";
+            }
+        else
+            {
+                std::getline( is, line );
+            }
 		
-            // Ignore comments
-            line = line.substr( 0, line.find(comm) );
+        // Ignore comments
+        line = line.substr( 0, line.find(comm) );
 		
-            // Check for end of file sentry
-            if( sentry != "" && line.find(sentry) != string::npos ) return is;
+        // Check for end of file sentry
+        if( sentry != "" && line.find(sentry) != string::npos ) return is;
 		
-            // Parse the line if it contains a delimiter
-            pos delimPos = line.find( delim );
-            if( delimPos < string::npos )
-                {
-                    // Extract the key
-                    string key = line.substr( 0, delimPos );
-                    line.replace( 0, delimPos+skip, "" );
+        // Parse the line if it contains a delimiter
+        pos delimPos = line.find( delim );
+        if( delimPos < string::npos ) {
+            // Extract the key
+            string key = line.substr( 0, delimPos );
+            line.replace( 0, delimPos+skip, "" );
 			
-                    // See if value continues on the next line
-                    // Stop at blank line, next line with a key, end of stream,
-                    // or end of file sentry
-                    bool terminate = false;
-                    while( !terminate && is )
-                        {
-                            std::getline( is, nextline );
-                            terminate = true;
+            // See if value continues on the next line
+            // Stop at blank line, next line with a key, end of stream,
+            // or end of file sentry
+            bool terminate = false;
+            while( !terminate && is ) {
+                std::getline( is, nextline );
+                terminate = true;
 				
-                            string nlcopy = nextline;
-                            ConfigFile::trim(nlcopy);
-                            if( nlcopy == "" ) continue;
+                string nlcopy = nextline;
+                ConfigFile::trim(nlcopy);
+                if( nlcopy == "" ) continue;
 				
-                            nextline = nextline.substr( 0, nextline.find(comm) );
-                            if( nextline.find(delim) != string::npos )
-                                continue;
-                            if( sentry != "" && nextline.find(sentry) != string::npos )
-                                continue;
+                nextline = nextline.substr( 0, nextline.find(comm) );
+                if( nextline.find(delim) != string::npos )
+                    continue;
+                if( sentry != "" && nextline.find(sentry) != string::npos )
+                    continue;
 				
-                            nlcopy = nextline;
-                            ConfigFile::trim(nlcopy);
-                            if( nlcopy != "" ) line += "\n";
-                            line += nextline;
-                            terminate = false;
-                        }
+                nlcopy = nextline;
+                ConfigFile::trim(nlcopy);
+                if( nlcopy != "" ) line += "\n";
+                line += nextline;
+                terminate = false;
+            }
 			
-                    // Store key and value
-                    ConfigFile::trim(key);
-                    ConfigFile::trim(line);
-                    cf.myContents[key] = line;  // overwrites if key is repeated
-                }
+            // Store key and value
+            ConfigFile::trim(key);
+            ConfigFile::trim(line);
+            cf.myContents[key] = line;  // overwrites if key is repeated
         }
+    }
 	
     return is;
 }
+
+
+EXIT_NAMESPACE(shore);

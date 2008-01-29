@@ -24,6 +24,14 @@
 //#define LARRAY_USE_MUTEX
 #define LARRAY_USE_CLH_LOCK
 
+// undef macros
+#undef INIT
+#undef DESTROY
+#undef ACQUIRE_READ
+#undef ACQUIRE_WRITE
+#undef RELEASE
+
+
 #if defined(LARRAY_USE_MUTEX)
 typedef pthread_mutex_t LArrayLock;
 #define INIT(lock) pthread_mutex_init(&lock, NULL)

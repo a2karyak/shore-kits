@@ -13,6 +13,7 @@
 
 
 using namespace qpipe;
+using namespace shore;
 using namespace tpcc;
 
 
@@ -26,12 +27,12 @@ ENTER_NAMESPACE(tpcc_payment);
 // implementation of the single-threaded version of the Shore payment
 trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin,
                                                const int id,
-                                               ShoreTPCCEnv* env);
+                                               ShoreEnv* env);
 
 // implementation of the staged version of the Shore payment
 trx_result_tuple_t executeShorePaymentStaged(payment_input_t* ppin,
                                              const int id,
-                                             ShoreTPCCEnv* env);
+                                             ShoreEnv* env);
 
 
 /// Regular functions
@@ -581,7 +582,7 @@ void updateShoreCustomerData(tpcc_customer_tuple_key ck,
     
 trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin, 
                                                const int id, 
-                                               ShoreTPCCEnv* env)
+                                               ShoreEnv* env)
 {        
     assert (env); // ensure that we have a valid environment
 
@@ -605,7 +606,7 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin,
         /** Starts the trx */
         W_COERCE(env->db()->begin_xct());
 
-        if (updateShoreWarehouse(ppin, env)) {
+        if (updateShoreWarehouse(ppin, (ShoreTPCCEnv*)env)) {
             
             // Failed. Throw exception
             TRACE( TRACE_ALWAYS, 
@@ -613,21 +614,21 @@ trx_result_tuple_t executeShorePaymentBaseline(payment_input_t* ppin,
         }
 
 
-        if (updateShoreDistrict(ppin, env)) {
+        if (updateShoreDistrict(ppin, (ShoreTPCCEnv*)env)) {
             
             // Failed. Throw exception
             THROW1( TrxException, 
                     "DISTRICT update failed...\nAborting\n");
         }
 
-        if (updateShoreCustomer(ppin, env)) {
+        if (updateShoreCustomer(ppin, (ShoreTPCCEnv*)env)) {
 
             // Failed. Throw exception
             THROW1( TrxException,
                     "CUSTOMER update failed...\nAborting\n");
         }
 
-        if (insertShoreHistory(ppin, env)) {
+        if (insertShoreHistory(ppin, (ShoreTPCCEnv*)env)) {
 
             // Failed. Throw exception
             THROW1( TrxException, 
@@ -812,7 +813,7 @@ int staged_insertShoreHistory(payment_input_t* pin, ShoreTPCCEnv* env)
     
 trx_result_tuple_t executeShorePaymentStaged(payment_input_t* ppin, 
                                              const int id,
-                                             ShoreTPCCEnv* env)
+                                             ShoreEnv* env)
 {        
     assert (env); // ensure that we have a valid environment
 

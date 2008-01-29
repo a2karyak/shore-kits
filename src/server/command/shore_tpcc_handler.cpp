@@ -11,16 +11,16 @@
 #include "server/command/shore_tpcc_handler.h"
 
 // Shore-TPCC data-structures
+#include "sm/shore/shore_tools.h"
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
-#include "stages/tpcc/shore/shore_tools.h"
 #include "workload/tpcc/shore_tpcc_load.h"
 
 
 
 // Shore-TPCC drivers header files
 #include "workload/tpcc/drivers/shore/shore_tpcc_payment_baseline.h"
-//#include "workload/tpcc/drivers/inmem/inmem_tpcc_payment_staged.h"
+//#include "workload/tpcc/drivers/shore/shore_tpcc_payment_staged.h"
 
 
 using namespace tpcc;

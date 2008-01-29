@@ -16,12 +16,15 @@
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 
-#include "stages/tpcc/shore/shore_env.h"
+#include "sm/shore/shore_env.h"
+
 #include "stages/tpcc/shore/shore_tpcc_const.h"
 #include "stages/tpcc/shore/shore_tpcc_schema.h"
 
 #include <map>
 
+
+using namespace shore;
 
 
 ENTER_NAMESPACE(tpcc);
@@ -45,7 +48,7 @@ extern ShoreTPCCEnv* shore_env;
  *
  ********************************************************************/
 
-class ShoreTPCCEnv : public shore::ShoreEnv
+class ShoreTPCCEnv : public ShoreEnv
 {
 private:       
     // TPC-C tables
@@ -75,6 +78,18 @@ public:
 
     /** Public methods */    
     int loaddata();  
+
+    // Access to the tables
+    warehouse_t*  warehouse() { return (&_warehouse); }
+    district_t*   district()  { return (&_district); }
+    customer_t*   customer()  { return (&_customer); }
+    history_t*    history()   { return (&_history); }
+    new_order_t*  new_order() { return (&_new_order); }
+    order_t*      order()     { return (&_order); }
+    order_line_t* orderline() { return (&_order_line); }
+    item_t*       item()      { return (&_item); }
+    stock_t*      stock()     { return (&_stock); }
+    
 
 }; // EOF ShoreTPCCEnv
 
