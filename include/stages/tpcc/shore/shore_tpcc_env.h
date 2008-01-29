@@ -14,11 +14,12 @@
 #include "util.h"
 
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
+#include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_struct.h"
+#include "stages/tpcc/common/tpcc_input.h"
 
 #include "sm/shore/shore_env.h"
 
-#include "stages/tpcc/shore/shore_tpcc_const.h"
 #include "stages/tpcc/shore/shore_tpcc_schema.h"
 
 #include <map>
@@ -53,7 +54,7 @@ class ShoreTPCCEnv : public ShoreEnv
 private:       
     // TPC-C tables
 
-    /* all the tables */
+    /** all the tables */
     warehouse_t   _warehouse;
     district_t    _district;
     customer_t    _customer;
@@ -64,6 +65,8 @@ private:
     item_t        _item;
     stock_t       _stock;
 
+    /** some stats */
+    long _no_cnt;        // new order count
     
 public:
 
@@ -79,7 +82,7 @@ public:
     /** Public methods */    
     int loaddata();  
 
-    // Access to the tables
+    /* --- access to the tables --- */
     warehouse_t*  warehouse() { return (&_warehouse); }
     district_t*   district()  { return (&_district); }
     customer_t*   customer()  { return (&_customer); }
@@ -89,7 +92,19 @@ public:
     order_line_t* orderline() { return (&_order_line); }
     item_t*       item()      { return (&_item); }
     stock_t*      stock()     { return (&_stock); }
-    
+
+    /* --- kit baseline trxs --- */
+    w_rc_t xct_new_order(new_order_input_t* no_input, const int xct_id);
+    w_rc_t xct_payment(payment_input_t * pay_input, const int xct_id);
+    w_rc_t xct_order_status(order_status_input_t* status_input, const int xct_id);
+    w_rc_t xct_delivery(delivery_input_t* deliv_input, const int xct_id);
+    w_rc_t xct_stock_level(stock_level_input_t* level_input, const int xct_id);
+
+    /* --- various helper and stats --- */
+    inline long no_cnt() const { return (_no_cnt); }
+    inline long inc_no_cnt() { return (++_no_cnt); }
+
+
 
 }; // EOF ShoreTPCCEnv
 

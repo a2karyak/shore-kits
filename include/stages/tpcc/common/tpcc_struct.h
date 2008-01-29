@@ -29,12 +29,6 @@ ENTER_NAMESPACE(tpcc);
 #define STRSIZE(x)(x+1)
 
 
-/** @note comment this to remove padding */
-/** @note This padding does not work because BDB transfers the entire row,
- *  thus, too many data are being transfered and the throughput is dominated
- *  by this time.
- */
-
 
 /* exported structures */
 
@@ -135,10 +129,6 @@ struct tpcc_district_tuple {
     decimal D_TAX;
     decimal D_YTD;
     int D_NEXT_O_ID;
-
-#ifdef PADDING_ENABLE
-    char D_PADDING  [STRSIZE(3500)];
-#endif
 
 
     c_str tuple_to_str() {
@@ -361,10 +351,6 @@ struct tpcc_warehouse_tuple {
     char W_ZIP      [STRSIZE(9)];
     decimal W_TAX;
     decimal W_YTD;
-
-#ifdef PADDING_ENABLE
-    char W_PADDING  [STRSIZE(3500)];
-#endif
 
     c_str tuple_to_str() {
         return(c_str("WH= %d|%s|%s|%s|%s|%s|%s|%.2f|%.2f",

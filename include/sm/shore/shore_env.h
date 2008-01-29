@@ -85,11 +85,17 @@ private:
     map<string,string>  _sm_opts;     // map of options for the sm
     map<string,string>  _dev_opts;    // map of options for the device    
 
+    // Stats
+    long _aborted_cnt;   // aborted trxs
+    long _committed_cnt; // committed trxs
+
+
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
     void printconfig();
     void dump();
+    void print_trx_stats();
 
     // Storage manager access functions
     int configure_sm();
@@ -103,13 +109,15 @@ public:
     ShoreEnv(string confname) :
         _cname(confname), _init_mutex(thread_mutex_create()),
         _vol_mutex(thread_mutex_create()), _load_mutex(thread_mutex_create()),
-        _initialized(false), _loaded(false)                   
+        _initialized(false), _loaded(false), _aborted_cnt(0), _committed_cnt(0)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
     }
 
     virtual ~ShoreEnv() {         
+        print_trx_stats();
+
         pthread_mutex_destroy(&_init_mutex);
         pthread_mutex_destroy(&_vol_mutex);
         pthread_mutex_destroy(&_load_mutex);
@@ -148,6 +156,13 @@ public:
 
     inline bool is_initialized() { return (_initialized); }
     inline bool is_loaded() { return (_loaded); }
+
+    // stats
+    inline long aborted_cnt() { return (_aborted_cnt); }
+    inline long inc_aborted_cnt() { return (++_aborted_cnt); }
+    inline long committed_cnt() { return (_committed_cnt); }
+    inline long inc_committed_cnt() { return (++_committed_cnt); }
+
 
 }; // EOF ShoreEnv
 

@@ -2,13 +2,16 @@
 
 /** @file tpcc_input.h
  *
- *  @brief Declaration for the (common) inputs for the TPC-C transactions
+ *  @brief Declaration of the (common) inputs for the TPC-C trxs
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
 #ifndef __TPCC_INPUT_H
 #define __TPCC_INPUT_H
+
+#include "util.h"
+#include "stages/tpcc/common/tpcc_const.h"
 
 
 ENTER_NAMESPACE(tpcc);
@@ -18,27 +21,33 @@ ENTER_NAMESPACE(tpcc);
 
 
 
-////////////////////////////////////////////
-// Abstract Class trx_input_t
-//
-// @brief Base class for the Input of any transaction
+/*********************************************************************
+ * 
+ * Abstract trx_input_t
+ *
+ * Base class for the Input of any transaction
+ *
+ *********************************************************************/
 
 class trx_input_t {
 public:
     trx_input_t() { }
     virtual ~trx_input_t() { }
     virtual void describe(int id)=0;
-
+    virtual void gen_input() { } // (ip) TODO make it pure virtual
 }; // EOF: trx_input_t
 
 
 
-////////////////////////////////////////////
-// Class payment_input_t
-//
-// @brief Input for any PAYMENT transaction
+/*********************************************************************
+ * 
+ * payment_input_t
+ *
+ * Input for any PAYMENT transaction
+ *
+ *********************************************************************/
 
-class payment_input_t : trx_input_t {
+class payment_input_t : public trx_input_t {
 public:
 
     /**
@@ -70,88 +79,39 @@ public:
     // Construction/Destructions
     payment_input_t() { };
 
-    ~payment_input_t() { 
-        // if (_c_last) delete (_c_last);
-    };
+    ~payment_input_t() {};
 
-
-    // Assignment operator
-    payment_input_t& operator= (const payment_input_t& rhs) 
-    {
-        // copy input
-        _home_wh_id = rhs._home_wh_id;
-        _home_d_id = rhs._home_d_id;
-        _v_cust_wh_selection = rhs._v_cust_wh_selection;
-        _remote_wh_id = rhs._remote_wh_id;
-        _remote_d_id = rhs._remote_d_id;
-        _v_cust_ident_selection = rhs._v_cust_ident_selection;
-        _c_id = rhs._c_id;
-        _h_amount = rhs._h_amount;
-
-        if (rhs._c_last) {
-            store_string(_c_last, rhs._c_last);
-        }        
-
-        return (*this);
-    }
-
-
-    /** Helper Function */
-
-    void describe( int id = 0 ) {
-
-        if (_c_last) {
-
-            TRACE( TRACE_TRX_FLOW,
-                   "\nPAYMENT: ID=%d\nWH_ID=%d\t\tD_ID=%d\n"  \
-                   "SEL_WH=%d\tSEL_IDENT=%d\n"  \
-                   "REM_WH_ID=%d\tREM_D_ID=%d\n"        \
-                   "C_ID=%d\tC_LAST=%s\n"               \
-                   "H_AMOUNT=%.2f\tH_DATE=%d\n",        \
-                   id,
-                   _home_wh_id, 
-                   _home_d_id, 
-                   _v_cust_wh_selection, 
-                   _v_cust_ident_selection,
-                   _remote_wh_id, 
-                   _remote_d_id,
-                   _c_id, 
-                   _c_last,
-                   _h_amount, 
-                   _h_date);
-        }
-        else {
-            
-            // If using the standard input, _c_last is NULL
-            TRACE( TRACE_TRX_FLOW,                   
-                   "\nPAYMENT: ID=%d\nWH_ID=%d\t\tD_ID=%d\n"      \
-                   "SEL_WH=%d\tSEL_IDENT=%d\n"  \
-                   "REM_WH_ID=%d\tREM_D_ID=%d\n"      \
-                   "C_ID=%d\tH_AMOUNT=%.2f\tH_DATE=%d\n",       \
-                   id,
-                   _home_wh_id, 
-                   _home_d_id, 
-                   _v_cust_wh_selection, 
-                   _v_cust_ident_selection,
-                   _remote_wh_id, 
-                   _remote_d_id,
-                   _c_id, 
-                   _h_amount, 
-                   _h_date);
-        }
-    }
+    payment_input_t& operator= (const payment_input_t& rhs);
+    void describe(int id=0);
 
 }; // EOF payment_input_t
 
 
 
-//////////////////////////////////////////////
-// Class new_order_input_t
-//
-// @brief Input for any NEW_ORDER transaction
 
-class new_order_input_t : trx_input_t {
+/*********************************************************************
+ * 
+ * new_order_input_t
+ *
+ * Input for any NEW_ORDER transaction
+ *
+ *********************************************************************/
+
+class new_order_input_t : public trx_input_t {
 public:
+
+    short   _c_id;          /* input */
+    short   _w_id;          /* input */
+    short   _d_id;          /* input */
+    short   _ol_cnt;        /* input: number of items */
+
+    struct  _ol_item_info {
+        short  _w_id;         /* input */
+        int    _i_id;         /* input */
+        double _balance;      /* input */
+        short  _quantity;     /* input */
+    }  items[MAX_OL_PER_ORDER];
+
 
     // Construction/Destructions
     new_order_input_t() { 
@@ -160,33 +120,28 @@ public:
     
     ~new_order_input_t() { };
 
-
     // Assignment operator
     new_order_input_t& operator= (const new_order_input_t& rhs) {
         assert (false); // (ip) Not implemented yet
         return (*this);
     }
 
-
-    /** Helper Function */
-
-    void describe( int id = 0 ) {
-        assert (false); // (ip) Not implemented yet
-    }
+    void describe(int id=0);
 
 }; // EOF new_order_input_t
 
 
 
 
-//////////////////////////////////////////////
-// Class orderline_input_t
-//
-// @brief Input for any OLDERLINE request
-//
-// @note Part of the NEW_ORDER transaction
+/*********************************************************************
+ * 
+ * orderline_input_t
+ *
+ * Input for any ORDERLINE transaction
+ *
+ *********************************************************************/
 
-class orderline_input_t : trx_input_t {
+class orderline_input_t : public trx_input_t {
 public:
     // Construction/Destructions
     orderline_input_t() { 
@@ -202,14 +157,120 @@ public:
         return (*this);
     }
 
-
-    /** Helper Function */
-
-    void describe( int id = 0 ) {
-        assert (false); // (ip) Not implemented yet
-    }
+    void describe(int id=0);
 
 }; // EOF orderline_input_t
+
+
+
+
+/*********************************************************************
+ * 
+ * order_status_input_t
+ *
+ * Input for any ORDER_STATUS transaction
+ *
+ *********************************************************************/
+
+class order_status_input_t : public trx_input_t {
+public:
+
+    short    _w_id;                  /* input */
+    short    _d_id;                  /* input */
+    int      _c_id;                  /* input */
+    char     _c_last[17];            /* input */
+
+
+    // Construction/Destructions
+    order_status_input_t() { 
+        assert (false); // (ip) Not implemented yet
+    };
+    
+    ~order_status_input_t() { };
+
+
+    // Assignment operator
+    order_status_input_t& operator= (const order_status_input_t& rhs) {
+        assert (false); // (ip) Not implemented yet
+        return (*this);
+    }
+
+    void describe(int id=0);
+
+}; // EOF order_status_input_t
+
+
+
+
+/*********************************************************************
+ * 
+ * delivery_input_t
+ *
+ * Input for any DELIVERY transaction
+ *
+ *********************************************************************/
+
+class delivery_input_t : public trx_input_t {
+public:
+
+    short    _w_id;          /* input */
+    short    _carrier_id;    /* input */
+
+
+    // Construction/Destructions
+    delivery_input_t() { 
+        assert (false); // (ip) Not implemented yet
+    };
+    
+    ~delivery_input_t() { };
+
+
+    // Assignment operator
+    delivery_input_t& operator= (const delivery_input_t& rhs) {
+        assert (false); // (ip) Not implemented yet
+        return (*this);
+    }
+
+    void describe(int id=0);
+
+}; // EOF delivery_input_t
+
+
+
+
+/*********************************************************************
+ * 
+ * stock_level_input_t
+ *
+ * Input for any STOCK_LEVEL transaction
+ *
+ *********************************************************************/
+
+class stock_level_input_t : public trx_input_t {
+public:
+
+    short    _d_id;          /* input */
+    short    _w_id;          /* input */
+    short    _threshold;     /* input */
+
+
+    // Construction/Destructions
+    stock_level_input_t() { 
+        assert (false); // (ip) Not implemented yet
+    };
+    
+    ~stock_level_input_t() { };
+
+
+    // Assignment operator
+    stock_level_input_t& operator= (const stock_level_input_t& rhs) {
+        assert (false); // (ip) Not implemented yet
+        return (*this);
+    }
+
+    void describe(int id=0);
+
+}; // EOF stock_level_input_t
 
 
 
@@ -217,3 +278,4 @@ EXIT_NAMESPACE(tpcc);
 
 
 #endif
+

@@ -106,6 +106,22 @@ int ShoreEnv::statistics()
 
 
 
+/** @fn    print_trx_stats
+ *
+ *  @brief Prints trx statistics
+ */
+
+void ShoreEnv::print_trx_stats() 
+{
+    cout << "====================" << endl;
+    cout << "Database transaction statistics" << endl;
+    cout << "Committed: " << _committed_cnt << endl;
+    cout << "Aborted  : " << _aborted_cnt << endl;
+    cout << "====================" << endl;
+}
+
+
+
 
 /** Storage manager functions */
 

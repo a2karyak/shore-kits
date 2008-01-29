@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   shore_tpcc_const.h
+/** @file:   tpcc_const.h
  *
  *  @brief:  Constants needed by the TPC-C kit
  *
@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef __SHORE_TPCC_CONST_H
-#define __SHORE_TPCC_CONST_H
+#ifndef __TPCC_CONST_H
+#define __TPCC_CONST_H
 
 
 #include "util/namespace.h"
@@ -143,4 +143,4 @@ const int PROB_STOCK_LEVEL  = 4;
 
 EXIT_NAMESPACE(tpcc);
 
-#endif /* __SHORE_TPCC_CONST_H */
+#endif /* __TPCC_CONST_H */

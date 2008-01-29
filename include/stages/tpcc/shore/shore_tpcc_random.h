@@ -14,7 +14,7 @@
 
 #include "util.h"
 
-#include "stages/tpcc/shore/shore_tpcc_const.h"
+#include "stages/tpcc/common/tpcc_const.h"
 
 
 ENTER_NAMESPACE(tpcc);
