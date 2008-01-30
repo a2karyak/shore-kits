@@ -41,7 +41,7 @@ ENTER_NAMESPACE(shore);
 
 #define  DELIM_CHAR            '|'
 
-#define  COMMIT_ACTION_COUNT   100
+#define  COMMIT_ACTION_COUNT  1000
 
 #define  MIN_SMALLINT     0
 #define  MAX_SMALLINT     1<<15
@@ -78,14 +78,13 @@ enum file_type_t {
 
 class file_desc_t {
 protected:
-    pthread_mutex_t _fschema_mutex;       // file schema mutex
-    char           _name[MAX_FNAME_LEN];  // file name
-    stid_t         _fid;                  // physical id of the file
-    int            _field_count;          // # of fields
+    pthread_mutex_t _fschema_mutex;        // file schema mutex
+    char            _name[MAX_FNAME_LEN];  // file name
+    stid_t          _fid;                  // physical id of the file
+    int             _field_count;          // # of fields
 
-
-    vid_t           _vid;                 // volume id
-    stid_t          _root_iid;            // root id
+    vid_t           _vid;                  // volume id
+    stid_t          _root_iid;             // root id
 
     // (ip) We need to add optimistic concurrencny for _vid and _root_iid
     //    pthread_mutex_t _vol_mutex;           // mutex for the vid and root_iid
@@ -93,7 +92,7 @@ protected:
 public:
 
     /* -------------------- */
-    /* --- constructors --- */
+    /* --- construction --- */
     /* -------------------- */
 
     file_desc_t(const char* name, int fcnt)

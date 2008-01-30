@@ -29,177 +29,31 @@ using namespace shore;
 
 
 
-/*==================== Formating ====================*/
+
+/* -------------------------- */
+/* --- bulkload utilities --- */
+/* -------------------------- */
 
 
-/** @fn    format
+
+/********************************************************************* 
  *
- *  @brief For a given tuple in memory (data in _value array), we
- *         format the tuple in disk format so that we can push it 
- *         down to data pages in Shore.
+ *  @fn:    load_table_from_file
+ *  
+ *  @brief: Loads a table from a datafile which has name. "tablename".tbl
  *
- *  @note  convert: memory -> disk format
- */
-
-const char* table_desc_t::format()
-{
-    int i;
-    int var_count = 0;
-    int fixed_size = 0;
-    int null_count = 0;
-
-    /* 1. calculate the total space occupied by the fixed
-     * length fields and null flags.
-     */
-    for (i=0; i<_field_count; i++) {
-	if (_desc[i].is_variable_length()) {
-	    var_count++;
-	}
-	else fixed_size += _desc[i].maxsize();
-	if (_desc[i].allow_null())  null_count++;
-    }
-
-    /* 2. allocate space for formatted data */
-    if (!_formatted_data) {
-	_formatted_data = new char[maxsize()+var_count*sizeof(offset_t)+null_count];
-    }
-
-    /* 3. format the data */
-
-    // current offset for fixed length field values
-    offset_t    fixed_offset = 0;
-    if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
-    // current offset for variable length field slots
-    offset_t    var_slot_offset = fixed_offset + fixed_size; 
-    // current offset for variable length field values
-    offset_t    var_offset = var_slot_offset + sizeof(offset_t)*var_count;
-
-    int    null_index = -1;
-    for (i=0; i<_field_count; i++) {
-	if (_desc[i].allow_null()) {
-	    null_index++;
-	    if (_desc[i].is_null()) {
-		SET_NULL_FLAG(_formatted_data, null_index);
-	    }
-	}
-
-	if (_desc[i].is_variable_length()) {
-	    _desc[i].copy_value(_formatted_data + var_offset);
-	    var_offset += _desc[i].realsize();
-
-	    // set the offset
-	    offset_t   len = _desc[i].realsize();
-	    memcpy(VAR_SLOT(_formatted_data, var_slot_offset), &len, sizeof(offset_t));
-	    var_slot_offset += sizeof(offset_t);
-	}
-	else {
-	    _desc[i].copy_value(_formatted_data + fixed_offset);
-	    fixed_offset += _desc[i].maxsize();
-	}
-    }
-
-    return _formatted_data;
-}
-
-
-/** @fn    load
+ *  @note:  The index file should already been created by create_index()  
  *
- *  @brief Given a tuple in disk format, we read it back into memory
- *         (_value array).
- *
- *  @note  convert: disk -> memory format
- */
-
-bool table_desc_t::load(const char* data)
-{
-    int i;
-    int var_count = 0;
-    int fixed_size = 0;
-    int null_count = 0;
-
-    /* 1. calculate the total space occupied by the fixed
-     * length fields.
-     */
-    for (i=0; i<_field_count; i++) {
-	if (_desc[i].is_variable_length()) {
-	    var_count++;
-	}
-	else fixed_size += _desc[i].maxsize();
-	if (_desc[i].allow_null())  null_count++;
-    }
-
-
-    /* 2. read the data field by field */
-
-    // current offset for fixed length field values
-    offset_t    fixed_offset = 0;
-    if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
-    // current offset for variable length field slots
-    offset_t    var_slot_offset = fixed_offset + fixed_size; 
-    // current offset for variable length field values
-    offset_t    var_offset = var_slot_offset + sizeof(offset_t)*var_count;
-
-    int null_index = -1;
-    for (i=0; i<_field_count; i++) {
-	if (_desc[i].allow_null()) {
-	    null_index++;
-	    if (IS_NULL_FLAG(data, null_index)) {
-		_desc[i].set_null();
-		continue;
-	    }
-	}
-
-	if (_desc[i].is_variable_length()) {
-	    offset_t var_len;
-	    memcpy(&var_len,  VAR_SLOT(data, var_slot_offset), sizeof(offset_t));
-	    _desc[i].set_value(data+var_offset,
-			       var_len);
-	    var_offset += var_len;
-	    var_slot_offset += sizeof(offset_t);
-	}
-	else {
-	    _desc[i].set_value(data+fixed_offset,
-			       _desc[i].maxsize());
-	    fixed_offset += _desc[i].maxsize();
-	}
-    }
-    return true;
-}
-
-
-bool   table_desc_t::load_keyvalue(const unsigned char* string,
-                                   index_desc_t* index)
-{
-    int offset = 0;
-    for (int i=0; i<index->field_count(); i++) {
-	int field_index = index->key_index(i);
-	if (_desc[field_index].is_variable_length()) {
-	    _desc[field_index].set_value(string + offset,
-					 _desc[field_index].realsize());
-	    offset += _desc[field_index].maxsize();
-	}
-	else {
-	    int size = _desc[field_index].maxsize();
-	    _desc[field_index].set_value(string + offset,
-					 size);
-	    offset += size;
-	}
-    }
-    return true;
-}
-
-
-
-/*==================== bulkload utilities ====================*/
+ *********************************************************************/
 
 w_rc_t    table_desc_t::load_table_from_file(ss_m* db)
 {
     cout << "Loading " << _name << " table ..." << endl;
 
-    char   filename[MAX_FILENAME_LEN];
+    char filename[MAX_FILENAME_LEN];
     strcpy(filename, name());
     strcat(filename, ".tbl");
-    ifstream   fin(filename);
+    ifstream fin(filename);
     
     W_DO(db->begin_xct());
 
@@ -208,47 +62,43 @@ w_rc_t    table_desc_t::load_table_from_file(ss_m* db)
     
     if (result == RC(se_TABLE_NOT_FOUND)) {
 	/* create a new file if it does not exist */
-	W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
+	W_DO(db->create_file(vid(), fid(), smlevel_3::t_regular));
 
 	file_info_t info;
-	info.set_fid(_fid);
 	info.set_ftype(FT_REGULAR);
-	smsize_t  infosize = sizeof(info);
+	info.set_fid(fid());
+	smsize_t    infosize = sizeof(info);
 
-
-        /** (ip) Trying to remove warning of inaccessible copy constructor */
-        /**      Converting the first pointer to (const void*) */
-        /**      vec_t((const void*, size_t)) */
-
-        const vec_t a = vec_t(_name, strlen(_name));
-        vec_t c = vec_t(_name, strlen(_name));
-        const vec_t b = vec_t(&info, infosize);
-
+        /* add table info to the root (metadata) tree */
 	W_DO(ss_m::create_assoc(root_iid(),
 				vec_t(_name, strlen(_name)),
-				vec_t(&info, infosize)));               
-// 				vec_t(_name, strlen(_name)),
-// 				vec_t(&info, infosize)));
+				vec_t(&info, infosize)));
     }
     else if (result != RCOK) return result;
 
     /* 2. append the tuples */
-    append_file_i  file_append(fid());
-    
-    int tuple_count = 0;
+    append_file_i file_append(fid());
+
+    //@@@@@@@@@@@@@@
+    // (ip) The parser can be used here
+    //@@@@@@@@@@@@@@
+
+    /* while not at the end of file, read entries and insert them table */
+    int         tuple_count = 0;
+    table_row_t tuple(this);
     while (!fin.eof()) {
 	for (int i=0; i<_field_count; i++) {
 	    char delim = DELIM_CHAR;
 	    if (i == _field_count-1) delim = '\n';
-	    if (!_desc[i].load_value_from_file(fin, delim))
-		goto end_of_input_file;
+	    if (!tuple._pvalues[i].load_value_from_file(fin, delim))
+		break;
 	    fin.get(delim);
 	}
 
 	tuple_count++;
 	W_DO(file_append.create_rec(vec_t(), 0,
-				    vec_t(format(), size()),
-				    _rid));
+				    vec_t(tuple.format(), tuple.size()),
+				    tuple._rid));
 
 	if ((tuple_count % COMMIT_ACTION_COUNT) == 0) {
 	    W_DO(db->commit_xct());
@@ -258,54 +108,68 @@ w_rc_t    table_desc_t::load_table_from_file(ss_m* db)
 	}
     }
 
- end_of_input_file:
-
+    /* 3. commit and print statistics
     W_DO(db->commit_xct());
-
     cout << "# of records inserted: " << tuple_count << endl;
     cout << "Building indices ... " << endl;
 
-    /* 3. update the index structures */
-    return bulkload_index(db);
+    /* 4. update the index structures */
+    return (bulkload_all_indexes(db));
 }
 
 
+/********************************************************************* 
+ *
+ *  @fn:    bulkload_index
+ *  
+ *  @brief: Iterates a file and inserts (one by one) the corresponding 
+ *          entries to the specified index. 
+ *
+ *  @note:  The index file should already been created by create_index()  
+ *
+ *********************************************************************/
+
 w_rc_t table_desc_t::bulkload_index(ss_m* db,
-                                    index_desc_t * index)
+                                    index_desc_t* index)
 {
+    assert (index);
+
     cout << "Starting to build index: " << index->name() << endl;
     
     W_DO(db->begin_xct());
-
-    /* 0. the index file should already been created by create_table() */
     
-    /* 1. insert the indices for all tuples in the table */
+    /* 1. open a (table) scan iterator over the table */
     table_scan_iter_impl* iter;
     W_DO(get_iter_for_file_scan(db, iter));
 
-    int   tuple_count = 0;
-    bool  eof;
-    W_DO(iter->next(db, eof));
+    bool        eof;
+    int         tuple_count = 0;
+    table_row_t row(this);
 
+    /* 2. iterate over the whole table and insert the corresponding index entries */    
+    W_DO(iter->next(db, eof, row));
     while (!eof) {
 	W_DO(db->create_assoc(index->fid(),
-                              vec_t(format_key(index), key_size(index)),
-                              vec_t(&_rid, sizeof(rid_t))));
-	W_DO(iter->next(db, eof));
+                              vec_t(format_key(index, &row), key_size(index, &row)),
+                              vec_t(&(row._rid), sizeof(rid_t))));
+	W_DO(iter->next(db, eof, row));
 	tuple_count++;
 
-	if ( tuple_count % 1000 == 0 ) { 
+        // every 1000 inserts commit and print something
+	if ( tuple_count % COMMIT_ACTION_COUNT == 0 ) { 
+            W_DO(db->commit_xct());
             cerr << "bulkload_index(" << index->name() << "): " << tuple_count << endl;
+            W_DO(db->begin_xct());
 	}
     }
-
-    delete iter;
     W_DO(db->commit_xct());
+    delete iter;
 
-    return RCOK;
+    return (RCOK);
 }
 
 
+/* bulkload an index - find index by name */
 w_rc_t table_desc_t::bulkload_index(ss_m* db,
                                     const char* name)
 {
@@ -317,7 +181,8 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 }
 
 
-w_rc_t table_desc_t::bulkload_index(ss_m* db)
+/* bulkloads all indexes */
+w_rc_t table_desc_t::bulkload_all_indexes(ss_m* db)
 {
     cout << "Start building indices for: " << _name << endl;
   
@@ -334,30 +199,48 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db)
 }
 
 
-/*=========================== access methods =========================*/
+/* --------------------------------- */
+/* --- access data through index --- */
+/* --------------------------------- */
+
+
+/********************************************************************* 
+ *
+ *  @fn:    index_probe
+ *  
+ *  @brief: Finds the rid of the specified key using a certain index
+ *
+ *  @note:  The key is parsed from the tuple that it is passed as parameter
+ *
+ *********************************************************************/
 
 w_rc_t  table_desc_t::index_probe(ss_m* db,
                                   index_desc_t* index,
+                                  table_row_t* ptuple,
                                   lock_mode_t lmode)
 {
-    bool     found;
+    assert (index);
+    assert (ptuple); 
+
+    bool     found = false;
     smsize_t len = sizeof(rid_t);
 
-    /* 1. find the index structure */
+    /* 1. ensure valid index */
     W_DO(index->check_fid(db));
 
     /* 2. find the tuple in the B+tree */
     W_DO(ss_m::find_assoc(index->fid(),
-			  vec_t(format_key(index), key_size(index)),
-			  &_rid,
+			  vec_t(format_key(index, ptuple), key_size(index, ptuple)),
+			  &(ptuple->_rid),
 			  len,
 			  found));
+
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
     /* 3. read the tuple */
-    pin_i   pin;
-    W_DO(pin.pin(rid(), 0, lmode));
-    if (!load(pin.body())) return RC(se_WRONG_DISK_DATA);
+    pin_i pin;
+    W_DO(pin.pin(ptuple->rid(), 0, lmode));
+    if (!ptuple->load(pin.body())) return RC(se_WRONG_DISK_DATA);
     pin.unpin();
   
     return RCOK;
@@ -365,8 +248,18 @@ w_rc_t  table_desc_t::index_probe(ss_m* db,
 
 
 
-/*=================== create physical table =========================*/
+/* ----------------------------------------- */
+/* --- create physical table and indexes --- */
+/* ----------------------------------------- */
 
+
+/********************************************************************* 
+ *
+ *  @fn:    create_table
+ *
+ *  @brief: Creates the physical table and all the corresponding indexes
+ *
+ *********************************************************************/
 
 w_rc_t table_desc_t::create_table(ss_m* db)
 {
@@ -374,10 +267,10 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 	W_DO(find_root_iid(db));
 
     /* create the table */
-    file_info_t   file;
     W_DO(db->create_file(_vid, _fid, smlevel_3::t_regular));
 
     /* add table entry to the metadata tree */
+    file_info_t file;
     file.set_ftype(FT_REGULAR);
     file.set_fid(_fid);
     W_DO(ss_m::create_assoc(root_iid(),
@@ -385,10 +278,12 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 			    vec_t(&file, sizeof(file_info_t))));
     
 
-    /* create the indexes */
+    /* create all the indexes of the table */
     index_desc_t* index = _indexes;
     while (index) {
-	stid_t  iid;
+	stid_t iid;
+
+        /* create index */
 	W_DO(db->create_index(_vid,
                               (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
                               ss_m::t_regular,
@@ -402,6 +297,7 @@ w_rc_t table_desc_t::create_table(ss_m* db)
             file.set_ftype(FT_PRIMARY_IDX);
         else
             file.set_ftype(FT_IDX);
+
 	file.set_fid(iid);
 	W_DO(db->create_assoc(root_iid(),
                               vec_t(index->name(), strlen(index->name())),
@@ -411,90 +307,212 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 	index = index->next();
     }
     
-    return RCOK;
+    return (RCOK);
 }
 
 
-//=================== tuple manipulation =========================
+/****************************************************************** 
+ *  
+ *  @fn:    create_index
+ *
+ *  @brief: Create a regular or primary index on the table
+ *
+ *  @note:  This only creates the index decription for the index in memory. 
+ *          Call bulkload_index to create and populate the index on disks.
+ *
+ ******************************************************************/
 
-
-w_rc_t table_desc_t::add_tuple(ss_m* db)
+bool table_desc_t::create_index(const char* name,
+                                const int* fields,
+                                const int num,
+                                const bool unique,
+                                const bool primary)
 {
+    index_desc_t* p_index = new index_desc_t(name, num, fields, unique);
+
+    /* check the validity of the index */
+    for (int i=0; i<num; i++)  {
+        assert(fields[i] >= 0 && fields[i] < _field_count);
+
+        /* only the last field in the index can be variable lengthed */
+        if (_desc[fields[i]].is_variable_length() && i != num-1) {
+            assert(false);
+        }
+    }
+
+    /* link it to the list */
+    if (_indexes == NULL) _indexes = p_index;
+    else _indexes->insert(p_index);
+
+    /* add as primary */
+    if (p_index->is_unique() && p_index->is_primary())
+        _primary_idx = p_index;
+
+    return true;
+}
+
+
+bool  table_desc_t::create_primary_idx(const char* name,
+                                       const int* fields,
+                                       const int num)
+{
+    index_desc_t* p_index = new index_desc_t(name, num, fields, true, true);
+
+    /* check the validity of the index */
+    for (int i=0; i<num; i++) {
+        assert(fields[i] >= 0 && fields[i] < _field_count);
+
+        /* only the last field in the index can be variable lengthed */
+        if (_desc[fields[i]].is_variable_length() && i != num-1) {
+            assert(false);
+        }
+    }
+
+    /* link it to the list of indexes */
+    if (_indexes == NULL) _indexes = p_index;
+    else _indexes->insert(p_index);
+
+    /* make it the primary index */
+    _primary_idx = p_index;
+
+    return (true);
+}
+
+
+
+/* -------------------------- */
+/* --- tuple manipulation --- */
+/* -------------------------- */
+
+
+/********************************************************************* 
+ *
+ *  @fn:    add_tuple
+ *
+ *  @brief: Inserts a tuple to a table and all the indexes of the table
+ *
+ *  @note:  This function should be called in the context of a trx.
+ *          The passed tuple should be formed. If everything goes as
+ *          expected the _rid of the tuple will be set. 
+ *
+ *********************************************************************/
+
+w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
+{
+    assert (tuple);
+
     /* 1. find the file */
     W_DO(check_fid(db));
 
     /* 2. append the tuple */
-    W_DO(db->create_rec(fid(), vec_t(), size(),
-                        vec_t(format(), size()),
-                        _rid));
+    W_DO(db->create_rec(fid(), vec_t(), tuple->size(),
+                        vec_t(tuple->format(), tuple->size()),
+                        tuple->_rid));
 
     /* 3. update the indexes */
     index_desc_t* index = _indexes;
     while (index) {
-	W_DO(index->find_fid(db));
 	W_DO(db->create_assoc(index->fid(),
-                              vec_t(format_key(index), key_size(index)),
-                              vec_t(&_rid, sizeof(rid_t))));
+                              vec_t(format_key(index, tuple), key_size(index, tuple)),
+                              vec_t(&(tuple->_rid), sizeof(rid_t))));
 
         /* move to next index */
 	index = index->next();
     }
 
-    return RCOK;
+    return (RCOK);
 }
 
 
-w_rc_t table_desc_t::update_tuple(ss_m * db)
+
+/********************************************************************* 
+ *
+ *  @fn:    update_tuple
+ *
+ *  @brief: Upldates a tuple from a table
+ *
+ *  @note:  This function should be called in the context of a trx.
+ *          The passed tuple should be valid.
+ *          There is no need of updating the indexes.
+ *
+ *********************************************************************/
+
+w_rc_t table_desc_t::update_tuple(ss_m* db, table_row_t* tuple)
 {
-    if (!is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+    assert (tuple);
+
+    if (!tuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
     /* 1. pin record */
-    pin_i   pin;
-    W_DO(pin.pin(rid(), 0, EX));
+    pin_i pin;
+    W_DO(pin.pin(tuple->rid(), 0, EX));
 
     int current_size = pin.body_size();
 
     /* 2. update record */
-    if (current_size < size()) {
-        w_rc_t rc = db->append_rec(rid(),
-                                   zvec_t(size()-current_size),
+    if (current_size < tuple->size()) {
+        w_rc_t rc = db->append_rec(tuple->rid(),
+                                   zvec_t(tuple->size() - current_size),
                                    true);
-        if (rc!=RCOK) pin.unpin();
+        // on error unpin 
+        if (rc!=(RCOK)) pin.unpin();
         W_DO(rc);
     }
-    w_rc_t rc = db->update_rec(rid(), 0, vec_t(format(), size()));
+    w_rc_t rc = db->update_rec(tuple->rid(), 
+                               0, 
+                               vec_t(tuple->format(), tuple->size()));
 
     /* 3. unpin */
     pin.unpin();
-    return rc;
+    return (rc);
 }
 
 
-w_rc_t  table_desc_t::delete_tuple(ss_m* db)
+
+/********************************************************************* 
+ *
+ *  @fn:    delete_tuple
+ *
+ *  @brief: Deletes a tuple from a table and the corresponding entries
+ *          on all the indexes of the table
+ *
+ *  @note:  This function should be called in the context of a trx
+ *          The passed tuple should be valid.
+ *
+ *********************************************************************/
+
+w_rc_t  table_desc_t::delete_tuple(ss_m* db, table_row_t* ptuple)
 {
-    if (!is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+    assert (ptuple);
+
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
     /* 1. delete the tuple */
-    W_DO(db->destroy_rec(rid()));
-    _rid = rid_t::null;
+    W_DO(db->destroy_rec(ptuple->rid()));
 
-    /* 2. delete the index entries */
+    /* 2. delete all the corresponding index entries */
     index_desc_t* index = _indexes;
     while (index) {
 	W_DO(index->find_fid(db));
 	W_DO(db->destroy_assoc(index->fid(),
-                               vec_t(format_key(index), key_size(index)),
-                               vec_t(&_rid, sizeof(rid_t))));
+                               vec_t(format_key(index, ptuple), key_size(index,ptuple)),
+                               vec_t(&(ptuple->_rid), sizeof(rid_t))));
 
         /* move to next index */
 	index = index->next();
     }
 
+    /* invalidate tuple */
+    ptuple->set_rid(rid_t::null);
+
     return RCOK;
 }
 
 
-/*======================== tuple iterator ===========================*/
+
+/* ---------------------- */
+/* --- tuple iterator --- */
+/* ---------------------- */
 
 
 w_rc_t  table_desc_t::get_iter_for_file_scan(ss_m* db,
@@ -525,14 +543,21 @@ w_rc_t table_desc_t::get_iter_for_index_scan(ss_m* db,
 
 
 
-/*======================== check index ===========================*/
+/* ------------------- */
+/* --- check index --- */
+/* ------------------- */
 
 
-bool table_desc_t::check_index(ss_m* db)
+/** @fn:    check_all_indexes
+ *
+ *  @brief: Check all indexes
+ */
+
+bool table_desc_t::check_all_indexes(ss_m* db)
 {
     index_desc_t* index = _indexes;
 
-    cout << "Checking consistency of the indices on table " << _name << endl;
+    cout << "Checking consistency of the indexes on table " << _name << endl;
 
     while (index) {
 	w_rc_t rc = check_index(db, index);
@@ -547,6 +572,16 @@ bool table_desc_t::check_index(ss_m* db)
 }
 
 
+/********************************************************************* 
+ *
+ *  @fn:    check_index
+ *
+ *  @brief: Checks all the values on an index. It first gets the rid from
+ *          the table (by scanning) and then probes the index for the same
+ *          tuple. It reports error if the two rids do not match.
+ *
+ *********************************************************************/
+
 w_rc_t table_desc_t::check_index(ss_m* db,
                                  index_desc_t* pindex)
 {
@@ -558,79 +593,98 @@ w_rc_t table_desc_t::check_index(ss_m* db,
     table_scan_iter_impl* iter;
     W_DO(get_iter_for_file_scan(db, iter));
 
-    bool  eof = false;
-    W_DO(iter->next(db, eof));
+    bool        eof = false;
+    table_row_t tablerow(this);
+    W_DO(iter->next(db, eof, tablerow));
     while (!eof) {
-	rid_t tuple_rid = rid();
-	W_DO(index_probe(db, pindex));
-	if (tuple_rid != rid()) {
+        // remember the rid just scanned
+        rid_t tablerid = tablerow.rid();
+	W_DO(index_probe(db, pindex, &tablerow));
+	if (tablerid != tablerow.rid()) {
             cerr << " Inconsistent index... " << endl;
             return RC(se_INCONSISTENT_INDEX);
 	}
-
-	W_DO(iter->next(db, eof));
+	W_DO(iter->next(db, eof, tablerow));
     }
 
     W_DO(db->commit_xct());
     // XCT_COMMIT
 
     delete iter;
-    return RCOK;
+    return (RCOK);
 }
 
 
 
-/*======================== scan index ===========================*/
+/* ------------------ */
+/* --- scan index --- */
+/* ------------------ */
 
-/** scans all indexes */
-w_rc_t table_desc_t::scan_index(ss_m* db)
+
+/** @fn:    scan_all_indexes
+ *
+ *  @brief: Scan all indexes
+ */
+
+w_rc_t table_desc_t::scan_all_indexes(ss_m* db)
 {
     index_desc_t* index = _indexes;
     while (index) {
 	W_DO(scan_index(db, index));
 	index = index->next();
     }
-    return RCOK;
+    return (RCOK);
 }
 
 
-/** @fn    scan_index
+/********************************************************************* 
  *
- *  @brief Iterates over all the values on an index
- */
+ *  @fn:    scan_index
+ *
+ *  @brief: Iterates over all the values on an index
+ *
+ *********************************************************************/
 
 w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
 {
+    assert (index);
+
     cout << "Scanning index " << index->name() << " for table " << name() << endl;
 
     /* 1. open a index scanner */
     index_scan_iter_impl* iter;
     char* high_key = new char [maxkeysize(index)];
     char* low_key = new char [maxkeysize(index)];
-    memcpy(high_key, max_key(index), key_size(index));
-    memcpy(low_key, min_key(index), key_size(index));
+
+    table_row_t lowtuple(this);
+    table_row_t hightuple(this);
+
+    memcpy(low_key, min_key(index, &lowtuple), key_size(index, &lowtuple));
+    memcpy(high_key, max_key(index, &hightuple), key_size(index, &hightuple));
+
     W_DO(get_iter_for_index_scan(db, index, iter,
 				 scan_index_i::ge,
-				 vec_t(low_key, key_size(index)),
+				 vec_t(low_key, key_size(index, &lowtuple)),
 				 scan_index_i::le,
-				 vec_t(high_key, key_size(index)),
+				 vec_t(high_key, key_size(index, &hightuple)),
 				 false));
     delete high_key;
     delete low_key;
 
     /* 2. iterate over all index records */
-    bool  eof;
-    int   count = 0;
-    W_DO(iter->next(db, eof));
-
-    while (!eof) {
-	print_value();
+    bool        eof;
+    int         count = 0;
+    rid_t       rid;
+    table_row_t row(this);
+    W_DO(iter->next(db, eof, rid));
+    while (!eof) {	
 	pin_i  pin;
-	W_DO(pin.pin(rid(), 0));
-	if (!load(pin.body())) return RC(se_WRONG_DISK_DATA);
+	W_DO(pin.pin(rid, 0));
+	if (!row.load(pin.body())) return RC(se_WRONG_DISK_DATA);
 	pin.unpin();
+        row.print_value();
 
-	W_DO(iter->next(db, eof));
+	W_DO(iter->next(db, eof, rid));
 	count++;
     }
     delete iter;
@@ -639,13 +693,13 @@ w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
     cout << count << " tuples found!" << endl;
     cout << "Scan finished!" << endl;
 
-    return RCOK;
+    return (RCOK);
 }
 
 
-
-/*======================== debugging functions ===========================*/
-
+/* ----------------- */
+/* --- debugging --- */
+/* ----------------- */
 
 w_rc_t table_desc_t::print_table(ss_m* db)
 {
@@ -659,11 +713,12 @@ w_rc_t table_desc_t::print_table(ss_m* db)
     table_scan_iter_impl* iter;
     W_DO(get_iter_for_file_scan(db, iter));
 
-    bool  eof;
-    W_DO(iter->next(db, eof));
+    bool        eof = false;
+    table_row_t row(this);
+    W_DO(iter->next(db, eof, row));
     while (!eof) {
-	print_value(fout);
-	W_DO(iter->next(db, eof));
+	row.print_value(fout);
+	W_DO(iter->next(db, eof, row));
     }
 
     W_DO(db->commit_xct());
@@ -684,13 +739,196 @@ void table_desc_t::print_desc(ostream& os)
 }
 
 
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////
+// 
+// class table_desc_t methods 
+//
+//////////////////////////////////////////////////////////////////////
+
+
+/* ----------------- */
+/* --- formating --- */
+/* ----------------- */
+
+
+/********************************************************************* 
+ *
+ *  @fn:    format
+ *
+ *  @brief: For a given tuple in memory (data in _value array), we
+ *          format the tuple in disk format so that we can push it 
+ *          down to data pages in Shore.
+ *
+ *  @note:  convert: memory -> disk format
+ *
+ *********************************************************************/
+
+const char* table_row_t::format()
+{
+    int i;
+    int var_count = 0;
+    int fixed_size = 0;
+    int null_count = 0;
+
+    /* 1. calculate the total space occupied by the fixed
+     * length fields and null flags.
+     */
+    for (i=0; i<_field_cnt; i++) {
+	if (_pvalues[i].is_variable_length()) {
+	    var_count++;
+	}
+	else fixed_size += _ptable->maxsize();
+	if (_pvalues[i].field_desc()->allow_null())  null_count++;
+    }
+
+    /* 2. allocate space for formatted data */
+    if (!_formatted_data) {
+	_formatted_data = new char[_ptable->maxsize()+var_count*sizeof(offset_t)+null_count];
+    }
+
+    /* 3. format the data */
+
+    // current offset for fixed length field values
+    offset_t    fixed_offset = 0;
+    if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
+    // current offset for variable length field slots
+    offset_t    var_slot_offset = fixed_offset + fixed_size; 
+    // current offset for variable length field values
+    offset_t    var_offset = var_slot_offset + sizeof(offset_t)*var_count;
+
+    int    null_index = -1;
+    for (i=0; i<_field_cnt; i++) {
+	if (_pvalues[i].field_desc()->allow_null()) {
+	    null_index++;
+	    if (_pvalues[i].is_null()) {
+		SET_NULL_FLAG(_formatted_data, null_index);
+	    }
+	}
+
+	if (_pvalues[i].is_variable_length()) {
+	    _pvalues[i].copy_value(_formatted_data + var_offset);
+	    var_offset += _pvalues[i].realsize();
+
+	    // set the offset
+	    offset_t   len = _pvalues[i].realsize();
+	    memcpy(VAR_SLOT(_formatted_data, var_slot_offset), &len, sizeof(offset_t));
+	    var_slot_offset += sizeof(offset_t);
+	}
+	else {
+	    _pvalues[i].copy_value(_formatted_data + fixed_offset);
+	    fixed_offset += _pvalues[i].field_desc()->maxsize();
+	}
+    }
+
+    return _formatted_data;
+}
+
+
+/** @fn    load
+ *
+ *  @brief Given a tuple in disk format, we read it back into memory
+ *         (_value array).
+ *
+ *  @note  convert: disk -> memory format
+ */
+
+bool table_row_t::load(const char* data)
+{
+    int i;
+    int var_count = 0;
+    int fixed_size = 0;
+    int null_count = 0;
+
+    /* 1. calculate the total space occupied by the fixed
+     * length fields.
+     */
+    for (i=0; i<_field_cnt; i++) {
+	if (_pvalues[i].is_variable_length())
+	    var_count++;
+	else 
+            fixed_size += _pvalues[i].field_desc()->maxsize();
+
+	if (_pvalues[i].field_desc()->allow_null())  
+            null_count++;
+    }
+
+
+    /* 2. read the data field by field */
+
+    // current offset for fixed length field values
+    offset_t    fixed_offset = 0;
+    if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
+    // current offset for variable length field slots
+    offset_t    var_slot_offset = fixed_offset + fixed_size; 
+    // current offset for variable length field values
+    offset_t    var_offset = var_slot_offset + sizeof(offset_t)*var_count;
+
+    int null_index = -1;
+    for (i=0; i<_field_cnt; i++) {
+	if (_pvalues[i].field_desc()->allow_null()) {
+	    null_index++;
+	    if (IS_NULL_FLAG(data, null_index)) {
+		_pvalues[i].set_null();
+		continue;
+	    }
+	}
+
+	if (_pvalues[i].is_variable_length()) {
+	    offset_t var_len;
+	    memcpy(&var_len,  VAR_SLOT(data, var_slot_offset), sizeof(offset_t));
+	    _pvalues[i].set_value(data+var_offset,
+                                  var_len);
+	    var_offset += var_len;
+	    var_slot_offset += sizeof(offset_t);
+	}
+	else {
+	    _pvalues[i].set_value(data+fixed_offset,
+                                  _pvalues[i].field_desc()->maxsize());
+	    fixed_offset += _pvalues[i].field_desc()->maxsize();
+	}
+    }
+    return true;
+}
+
+
+bool   table_row_t::load_keyvalue(const char* string,
+                                  index_desc_t* index)
+{
+    int offset = 0;
+    for (int i=0; i<index->field_count(); i++) {
+	int field_index = index->key_index(i);
+	if (_pvalues[field_index].is_variable_length()) {
+	    _pvalues[field_index].set_value(string + offset,
+                                            _pvalues[field_index].realsize());
+	    offset += _pvalues[field_index].field_desc()->maxsize();
+	}
+	else {
+	    int size = _pvalues[field_index].field_desc()->maxsize();
+	    _pvalues[field_index].set_value(string + offset,
+                                            size);
+	    offset += size;
+	}
+    }
+    return true;
+}
+
+
+/* ----------------- */
+/* --- debugging --- */
+/* ----------------- */
+
 /* For debug use only: print the value for all the fields. */
-void table_desc_t::print_value(ostream& os)
+void table_row_t::print_value(ostream& os)
 {
     //  cout << "Numer of fields: " << _field_count << endl;
-    for (int i=0; i<_field_count; i++) {
-	_desc[i].print_value(os);
-	if (i != _field_count) os << DELIM_CHAR;
+    for (int i=0; i<_field_cnt; i++) {
+	_pvalues[i].print_value(os);
+	if (i != _field_cnt) os << DELIM_CHAR;
     }
     os << endl;
 }

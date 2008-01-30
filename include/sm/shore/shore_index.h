@@ -71,14 +71,12 @@ public:
     }
 
 
-
     /* ---------------------- */
     /* --- access methods --- */
     /* ---------------------- */
 
     bool        is_unique() const { return _unique; }
     bool        is_primary() const { return _primary; }
-
 
 
     /* ---------------------------- */
@@ -123,9 +121,13 @@ public:
  * @brief: Declaration of a index scan iterator
  * --------------------------------------------------------------------- */
 
-typedef tuple_iter_t<index_desc_t, scan_index_i> index_scan_iter_t;
 
-class index_scan_iter_impl : public index_scan_iter_t /* index_scan_iter_t<index_desc_t> */
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// (ip) should remove the bool!
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+typedef tuple_iter_t<index_desc_t, scan_index_i, rid_t> index_scan_iter_t;
+
+class index_scan_iter_impl : public index_scan_iter_t
 {
 private:
     bool _need_tuple;
@@ -144,16 +146,15 @@ public:
         /** @note We need to know the bounds of the iscan before
          *        opening the iterator. That's why we cannot open
          *        the iterator upon construction.
-         *        Needs explicit call to open_sca(...)
+         *        Needs explicit call to open_scan(...)
          */            
     }
 
-    
     /*
     index_scan_iter_impl(ss_m* db,
-                         index_desc_t* index,
-                         scan_index_i::cmp_t c1, const cvec_t& bound1,
-                         scan_index_i::cmp_t c2, const cvec_t& bound2,
+                         index_desc_t* pindex,
+                         scan_index_i::cmp_t cmp1, const cvec_t& pbound1,
+                         scan_index_i::cmp_t cmp2, const cvec_t& pbound2,
                          const int maxkeysize
                          bool need_tuple = false)
         : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
@@ -182,7 +183,7 @@ public:
         return RCOK;
     }
 
-    w_rc_t next(ss_m* db, bool& eof) 
+    w_rc_t next(ss_m* db, bool& eof, rid_t&) 
     {
         assert(_opened);
 

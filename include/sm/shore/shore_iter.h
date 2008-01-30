@@ -29,7 +29,7 @@ ENTER_NAMESPACE(shore);
  *
  ******************************************************************/
 
-template <class file_desc, class file_scanner>
+template <class file_desc, class file_scanner, class pointer>
 class tuple_iter_t {
 protected:
     ss_m*         _db;
@@ -57,7 +57,7 @@ public:
 
     // virtual w_rc_t open_scan()=0; 
 
-    virtual w_rc_t next(ss_m* db, bool& eof)=0;
+    virtual w_rc_t next(ss_m* db, bool& eof, pointer& tuple)=0;
 
     w_rc_t close_scan() {
         if (_opened) delete _scan;

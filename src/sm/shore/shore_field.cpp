@@ -2,7 +2,7 @@
 
 /** @file:   shore_field.cpp
  *
- *  @brief:  Implementation of the table field description
+ *  @brief:  Implementation of the table field description and value
  *
  *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
@@ -74,13 +74,22 @@ void  field_desc_t::print_desc(ostream & os)
     }
 } 
 
-void  field_desc_t::print_value(ostream & os)
+
+
+/* ------------------------------------ */
+/* --- @class field_value_t methods --- */
+/* -------------------------------------*/
+
+void  field_value_t::print_value(ostream & os)
 {
+    assert (_pfield_desc);
+
     if (_null_flag) {
 	os << "(null)";
 	return;
     }
-    switch (_type) {
+
+    switch (_pfield_desc->type()) {
     case SQL_SMALLINT:
 	os <<_value._smallint;
 	break;
