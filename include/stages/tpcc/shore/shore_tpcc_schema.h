@@ -16,9 +16,7 @@
 #include "util.h"
 
 #include "stages/tpcc/common/tpcc_const.h"
-
 #include "sm/shore/shore_table.h"
-
 #include "stages/tpcc/shore/shore_tpcc_random.h"
 
 
@@ -112,17 +110,25 @@ public:
 	create_index("W_INDEX", keys, 1);
     }
 
-    void   random(short w_id);
+    void   random(table_row_t* ptuple, short w_id);
 
-    w_rc_t  bulkload(ss_m * shore, int w_num);
+    w_rc_t bulkload(ss_m* db, int w_num);
     
-    w_rc_t  index_probe(ss_m * shore, const short  w_id);
-    w_rc_t  index_probe_forupdate(ss_m * shore, const short  w_id);
+    w_rc_t index_probe(ss_m* db, 
+                       table_row_t* ptuple, 
+                       const short w_id);
+
+    w_rc_t index_probe_forupdate(ss_m* db, 
+                                 table_row_t* ptuple, 
+                                 const short w_id);
     
-    w_rc_t   update_ytd(ss_m * shore,
-			const short w_id,
-			const double h_amount);
-};
+    w_rc_t update_ytd(ss_m* db,
+                      table_row_t* ptuple,
+                      const short w_id,
+                      const double h_amount);
+
+}; // EOF: warehouse_t
+
 
 
 class district_t : public tpcc_table_t {
@@ -147,26 +153,32 @@ public:
     }
     
     /* random tuple generator */
-    void        random(short id, short w_id, int next_o_id);
+    void   random(table_row_t* ptuple, short id, short w_id, int next_o_id);
 
-    w_rc_t   bulkload(ss_m * shore, int w_num);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
     /* --- access the table --- */
-    w_rc_t   index_probe(ss_m * shore,
-			 const short d_id,
-			 const short w_id);
-    w_rc_t   index_probe_forupdate(ss_m * shore,
-			 const short d_id,
-			 const short w_id);
+    w_rc_t index_probe(ss_m* db,
+                       table_row_t* ptuple,
+                       const short d_id,
+                       const short w_id);
 
-    w_rc_t   update_ytd(ss_m * shore,
-			const short d_id,
-			const short w_id,
-			const double h_amount);
+    w_rc_t index_probe_forupdate(ss_m* db,
+                                 table_row_t* ptuple,
+                                 const short d_id,
+                                 const short w_id);
 
-    w_rc_t   update_next_o_id(ss_m * shore,
-			      const int  next_o_id);
-};
+    w_rc_t update_ytd(ss_m* db,
+                      table_row_t* ptuple,
+                      const short d_id,
+                      const short w_id,
+                      const double h_amount);
+
+    w_rc_t update_next_o_id(ss_m* db,
+                            table_row_t* ptuple,
+                            const int  next_o_id);
+}; // EOF: district_t
+
 
 
 class customer_t : public tpcc_table_t {
@@ -205,32 +217,39 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int id, short d_id, short w_id);
+    void   random(table_row_t* ptuple, int id, short d_id, short w_id);
 
-    w_rc_t   bulkload(ss_m * shore, int w_num);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
     /* index only access */
-    w_rc_t   get_iter_by_index(ss_m * shore,
-			       index_scan_iter_impl* & iter,
-			       const short w_id,
-			       const short d_id,
-			       const char * c_last);
+    w_rc_t get_iter_by_index(ss_m* db,
+                             index_scan_iter_impl* & iter,
+                             table_row_t* ptuple,
+                             const short w_id,
+                             const short d_id,
+                             const char * c_last);
 
-    w_rc_t   index_probe(ss_m * shore,
-			 const int   c_id,
-			 const short w_id,
-			 const short d_id);
-    w_rc_t   index_probe_forupdate(ss_m * shore,
-			 const int   c_id,
-			 const short w_id,
-			 const short d_id);
+    w_rc_t index_probe(ss_m* db,
+                       table_row_t* ptuple,
+                       const int   c_id,
+                       const short w_id,
+                       const short d_id);
+    
+    w_rc_t index_probe_forupdate(ss_m* db,
+                                 table_row_t* ptuple,
+                                 const int   c_id,
+                                 const short w_id,
+                                 const short d_id);
 
-    w_rc_t   update_tuple(ss_m * shore,
-			  const double balance,
-			  const double ytd_payment,
-			  const short  payment_cnt,
-			  const char * data = NULL);
-};
+    w_rc_t update_tuple(ss_m* db,
+                        table_row_t* ptuple,
+                        const double balance,
+                        const double ytd_payment,
+                        const short  payment_cnt,
+                        const char * data = NULL);
+
+}; // EOF: customer_t
+
 
 
 class history_t : public tpcc_table_t {
@@ -248,10 +267,11 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int c_id, short c_d_id, short c_w_id);
+    void   random(table_row_t* ptuple, int c_id, short c_d_id, short c_w_id);
     
-    w_rc_t  bulkload(ss_m * shore, int w_num);
-};
+    w_rc_t bulkload(ss_m* db, int w_num);
+
+}; // EOF: history_t
 
 
 class  new_order_t : public tpcc_table_t {
@@ -268,20 +288,23 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int id, short d_id, short w_id);
+    void   random(table_row_t* ptuple, int id, short d_id, short w_id);
 
-    w_rc_t  bulkload(ss_m * shore, int w_num);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
-    w_rc_t  get_iter_by_index(ss_m * shore,
-			      index_scan_iter_impl* &iter,
-			      const short w_id,
-			      const short d_id);
+    w_rc_t get_iter_by_index(ss_m* db,
+                             index_scan_iter_impl* &iter,
+                             table_row_t* ptuple,
+                             const short w_id,
+                             const short d_id);
 
-    w_rc_t  delete_by_index(ss_m * shore,
-			    const short  w_id,
-			    const short  d_id,
-			    const int    o_id);
-};
+    w_rc_t delete_by_index(ss_m* db,
+                           table_row_t* ptuple,
+                           const short  w_id,
+                           const short  d_id,
+                           const int    o_id);
+
+}; // EOF: new_order_t
 
 
 class order_t : public tpcc_table_t {
@@ -307,22 +330,26 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int id, int c_id, short d_id, short w_id, short ol_cnt);
+    void   random(table_row_t* ptuple, int id, int c_id, short d_id, short w_id, short ol_cnt);
 
-    w_rc_t  bulkload(ss_m * shore, int w_num, short *);
+    w_rc_t bulkload(ss_m* db, int w_num, short *);
 
-    w_rc_t  update_carrier_by_index(ss_m * shore,
-				    const short w_id,
-				    const short d_id,
-				    const int   o_id,
-				    const short carrier_id);
+    w_rc_t update_carrier_by_index(ss_m* db,
+                                   table_row_t* ptuple,
+                                   const short w_id,
+                                   const short d_id,
+                                   const int   o_id,
+                                   const short carrier_id);
+    
+    w_rc_t get_iter_by_index(ss_m * shore,
+                             index_scan_iter_impl* & iter,
+                             table_row_t* ptuple,
+                             const short w_id,
+                             const short d_id,
+                             const int   c_id);
 
-    w_rc_t  get_iter_by_index(ss_m * shore,
-			      index_scan_iter_impl* & iter,
-			      const short w_id,
-			      const short d_id,
-			      const int   c_id);
-};
+}; // EOF: order_t
+
 
 
 class order_line_t : public tpcc_table_t {
@@ -346,25 +373,28 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int id, short d_id, short w_id,
-		       short ol_index, bool delivery=true);
+    void   random(table_row_t* ptuple, int id, short d_id, short w_id,
+                  short ol_index, bool delivery=true);
 
-    w_rc_t  bulkload(ss_m * shore, int w_num, short *);
+    w_rc_t bulkload(ss_m* db, int w_num, short *);
 
     /* --- access methods --- */
-    w_rc_t  get_iter_by_index(ss_m * shore,
-			      index_scan_iter_impl* & it,
-			      const short w_id,
-			      const short d_id,
-			      const int   low_o_id,
-			      const int   high_o_id);
+    w_rc_t get_iter_by_index(ss_m * db,
+                             index_scan_iter_impl* &it,
+                             table_row_t* ptuple,
+                             const short w_id,
+                             const short d_id,
+                             const int   low_o_id,
+                             const int   high_o_id);
 
-    w_rc_t  get_iter_by_index(ss_m * shore,
-			      index_scan_iter_impl* & iter,
-			      const short w_id,
-			      const short d_id,
-			      const int   o_id);
-};
+    w_rc_t get_iter_by_index(ss_m * db,
+                             index_scan_iter_impl* &iter,
+                             table_row_t* ptuple,
+                             const short w_id,
+                             const short d_id,
+                             const int   o_id);
+
+}; // EOF: order_line_t
 
 
 class item_t : public tpcc_table_t {
@@ -383,13 +413,19 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int id);
+    void   random(table_row_t* ptuple, int id);
 
-    w_rc_t  bulkload(ss_m * shore);
+    w_rc_t bulkload(ss_m* shore);
 
-    w_rc_t  index_probe(ss_m * shore, const int i_id);
-    w_rc_t  index_probe_forupdate(ss_m * shore, const int i_id);
-};
+    w_rc_t index_probe(ss_m* ddb, 
+                       table_row_t* ptuple,
+                       const int i_id);
+
+    w_rc_t index_probe_forupdate(ss_m* db, 
+                                 table_row_t* ptuple,
+                                 const int i_id);
+
+}; // EOF: item_t
 
 
 class stock_t : public tpcc_table_t {
@@ -420,23 +456,28 @@ public:
     }
 
     /* random tuple generator */
-    void        random(int id, short w_id);
+    void   random(table_row_t* ptuple, int id, short w_id);
 
-    w_rc_t  bulkload(ss_m * shore, int w_num);
+    w_rc_t bulkload(ss_m * shore, int w_num);
 
-    w_rc_t  index_probe(ss_m * shore,
-			const int   i_id,
-			const short w_id);
-    w_rc_t  index_probe_forupdate(ss_m * shore,
-			const int   i_id,
-			const short w_id);
+    w_rc_t index_probe(ss_m* db,
+                       table_row_t* ptuple,
+                       const int   i_id,
+                       const short w_id);
 
-    w_rc_t  update_tuple(ss_m * shore,
-			 const short  quantity,
-			 const short  order_cnt,
-			 const double ytd,
-			 const short  remote_cnt);
-};
+    w_rc_t index_probe_forupdate(ss_m* db,
+                                 table_row_t* ptuple,
+                                 const int   i_id,
+                                 const short w_id);
+
+    w_rc_t update_tuple(ss_m* db,
+                        table_row_t* ptuple,
+                        const short  quantity,
+                        const short  order_cnt,
+                        const double ytd,
+                        const short  remote_cnt);
+
+}; // EOF: stock_t
 
 
 EXIT_NAMESPACE(tpcc);

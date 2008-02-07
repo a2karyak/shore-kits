@@ -234,11 +234,11 @@ void shore_parser_impl<Parser>::run() {
     
     for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
 	record = parser.parse_row(linebuffer);
-	W_COERCE(_env->db()->create_rec(_info._table_id, head, bsize, body, rid));
+	W_COERCE(_env->db()->create_rec(_info.fid(), head, bsize, body, rid));
 
         // Remember the first row inserted
 	if(first) {
-	    _info._first_rid = rid;	
+	    _info.set_first_rid(rid);
             first = false;
         }
 
@@ -253,7 +253,7 @@ void shore_parser_impl<Parser>::run() {
     
     // done!
     W_COERCE(_env->db()->commit_xct(dummy));
-    _info._record_size = std::make_pair(ksize, bsize);
+    _info.set_record_size(std::make_pair(ksize, bsize));
     progress_done(parser.table_name());
 
     cout << "Successfully loaded " << i << " records" << endl;

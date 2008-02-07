@@ -21,8 +21,6 @@ ENTER_NAMESPACE(shore);
 
 
 
-
-
 /******** Exported functions ********/
 
 /** @fn trx_smthread_t
@@ -178,14 +176,14 @@ struct create_volume_xct
 
 	if(found) {
 	    cout << "Removing previous instance of " << _table_name << endl;
-	    W_DO(ss_m::destroy_file(_info._table_id));
+	    W_DO(ss_m::destroy_file(_info.fid()));
 	    W_DO(ss_m::destroy_assoc(root_iid, table_name, table_info));
 	}
 
 	// create the file and register it with the root index
 	cout << "Creating table ``" << _table_name
 	     << "'' with " << _bytes << " bytes per record" << endl;
-	W_DO(ssm->create_file(*(_penv->vid()), _info._table_id, smlevel_3::t_regular));
+	W_DO(ssm->create_file(*(_penv->vid()), _info._fid, smlevel_3::t_regular));
 	W_DO(ss_m::vol_root_index(*(_penv->vid()), root_iid));
 	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
 	return RCOK;

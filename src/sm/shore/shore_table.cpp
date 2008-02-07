@@ -46,7 +46,7 @@ using namespace shore;
  *
  *********************************************************************/
 
-w_rc_t    table_desc_t::load_table_from_file(ss_m* db)
+w_rc_t table_desc_t::load_table_from_file(ss_m* db)
 {
     cout << "Loading " << _name << " table ..." << endl;
 
@@ -62,7 +62,7 @@ w_rc_t    table_desc_t::load_table_from_file(ss_m* db)
     
     if (result == RC(se_TABLE_NOT_FOUND)) {
 	/* create a new file if it does not exist */
-	W_DO(db->create_file(vid(), fid(), smlevel_3::t_regular));
+	W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
 
 	file_info_t info;
 	info.set_ftype(FT_REGULAR);
@@ -77,11 +77,13 @@ w_rc_t    table_desc_t::load_table_from_file(ss_m* db)
     else if (result != RCOK) return result;
 
     /* 2. append the tuples */
-    append_file_i file_append(fid());
+    append_file_i file_append(_fid);
 
     //@@@@@@@@@@@@@@
     // (ip) The parser can be used here
     //@@@@@@@@@@@@@@
+    assert (false); 
+    
 
     /* while not at the end of file, read entries and insert them table */
     int         tuple_count = 0;
@@ -267,7 +269,7 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 	W_DO(find_root_iid(db));
 
     /* create the table */
-    W_DO(db->create_file(_vid, _fid, smlevel_3::t_regular));
+    W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
 
     /* add table entry to the metadata tree */
     file_info_t file;
@@ -673,18 +675,17 @@ w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
 
     /* 2. iterate over all index records */
     bool        eof;
-    int         count = 0;
-    rid_t       rid;
+    int         count = 0;    
     table_row_t row(this);
-    W_DO(iter->next(db, eof, rid));
+    W_DO(iter->next(db, eof, row));
     while (!eof) {	
 	pin_i  pin;
-	W_DO(pin.pin(rid, 0));
+	W_DO(pin.pin(row.rid(), 0));
 	if (!row.load(pin.body())) return RC(se_WRONG_DISK_DATA);
 	pin.unpin();
         row.print_value();
 
-	W_DO(iter->next(db, eof, rid));
+	W_DO(iter->next(db, eof, row));
 	count++;
     }
     delete iter;
@@ -896,7 +897,7 @@ bool table_row_t::load(const char* data)
 }
 
 
-bool   table_row_t::load_keyvalue(const char* string,
+bool   table_row_t::load_keyvalue(const unsigned char* string,
                                   index_desc_t* index)
 {
     int offset = 0;

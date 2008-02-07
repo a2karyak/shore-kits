@@ -26,8 +26,6 @@
 ENTER_NAMESPACE(shore);
 
 
-class index_scan_iter_impl;
-
 
 /* ---------------------------------------------------------------
  * @class: index_desc_t
@@ -35,9 +33,8 @@ class index_scan_iter_impl;
  * @brief: Description of a Shore index.
  *---------------------------------------------------------------- */
 
-class index_desc_t : public file_desc_t {
-    friend class index_scan_iter_impl;
-
+class index_desc_t : public file_desc_t 
+{
 private:
     int*          _key;               /* index of fields in the index */
     bool          _unique;            /* whether allow duplicates or not */
@@ -105,6 +102,7 @@ public:
     }
 
 
+
     /* --- index manipulation --- */
 
     int key_index(int index) const {
@@ -113,113 +111,6 @@ public:
     }
 
 }; // EOF: index_desc_t
-
-
-
-/* ---------------------------------------------------------------------
- * @class: index_scan_iter_impl
- * @brief: Declaration of a index scan iterator
- * --------------------------------------------------------------------- */
-
-
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// (ip) should remove the bool!
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-typedef tuple_iter_t<index_desc_t, scan_index_i, rid_t> index_scan_iter_t;
-
-class index_scan_iter_impl : public index_scan_iter_t
-{
-private:
-    bool _need_tuple;
-
-public:
-
-    /* -------------------- */
-    /* --- construction --- */
-    /* -------------------- */
-        
-    index_scan_iter_impl(ss_m* db,
-                         index_desc_t* index,
-                         bool need_tuple = false)
-        : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
-    { 
-        /** @note We need to know the bounds of the iscan before
-         *        opening the iterator. That's why we cannot open
-         *        the iterator upon construction.
-         *        Needs explicit call to open_scan(...)
-         */            
-    }
-
-    /*
-    index_scan_iter_impl(ss_m* db,
-                         index_desc_t* pindex,
-                         scan_index_i::cmp_t cmp1, const cvec_t& pbound1,
-                         scan_index_i::cmp_t cmp2, const cvec_t& pbound2,
-                         const int maxkeysize
-                         bool need_tuple = false)
-        : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
-    { W_COERCE(open_scan(db, c1, bound1, c2, bound2, maxkeysize)); }
-    */
-        
-    ~index_scan_iter_impl() { 
-        close_scan();             
-    }
-
-
-    /* ------------------------ */        
-    /* --- iscan operations --- */
-    /* ------------------------ */
-
-    w_rc_t open_scan(ss_m* db,
-                     scan_index_i::cmp_t c1, const cvec_t& bound1,
-                     scan_index_i::cmp_t c2, const cvec_t& bound2,
-                     const int maxkeysize)
-    {
-        if (!_opened) {
-            W_DO(_file->check_fid(db));
-            _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2);
-            _opened = true;
-        }
-        return RCOK;
-    }
-
-    w_rc_t next(ss_m* db, bool& eof, rid_t&) 
-    {
-        assert(_opened);
-
-        W_DO(_scan->next(eof));
-
-        if (!eof) {
-
-            // @@@@@@@@@@@@@@@@
-            // should fix the code below it does not make sense
-            // to use the table...
-            // @@@@@@@@@@@@@@@@
-
-            assert (false); 
-
-//             rid_t   rid;
-//             vec_t   key(_tuple->format_key(_file), _tuple->key_size(_index));
-//             vec_t   record(&rid, sizeof(rid_t));
-//             smsize_t klen = 0;
-//             smsize_t elen = sizeof(rid_t);
-//             W_DO(_scan->curr(&key, klen, &record, elen));
-//             _tuple->set_rid(rid);
-//             _tuple->load_keyvalue(key.ptr(0), _index);	
-//             if (_need_tuple) {
-//                 pin_i  pin;
-//                 W_DO(pin.pin(rid, 0));
-//                 if (!_tuple->load(pin.body()))
-//                     return RC(se_WRONG_DISK_DATA);
-//                 pin.unpin();
-//             }
-
-        }
-    
-        return RCOK;
-    }
-
-}; // EOF: index_scan_iter_impl
 
 
 

@@ -80,7 +80,6 @@ class file_desc_t {
 protected:
     pthread_mutex_t _fschema_mutex;        // file schema mutex
     char            _name[MAX_FNAME_LEN];  // file name
-    stid_t          _fid;                  // physical id of the file
     int             _field_count;          // # of fields
 
     vid_t           _vid;                  // volume id
@@ -90,6 +89,9 @@ protected:
     //    pthread_mutex_t _vol_mutex;           // mutex for the vid and root_iid
 
 public:
+
+    stid_t          _fid;                  // physical id of the file
+
 
     /* -------------------- */
     /* --- construction --- */
@@ -119,7 +121,7 @@ public:
     /* ---------------------- */
 
     const char*   name() const { return _name; }
-    stid_t        fid() const { return _fid; }
+    stid_t&       fid() { return (_fid); }
     void          set_fid(stid_t fid) { _fid = fid; }
     vid_t         vid() { return _vid; }   
     stid_t        root_iid() { return _root_iid; }
@@ -156,23 +158,16 @@ public:
 
 class file_info_t {
 private:
-    stid_t       _fid;       // using physical interface
-    c_str        _fname;     // file name
-    file_type_t  _ftype;     // {regular,primary idx, idx, ...}
+    c_str              _fname;        // file name
+    file_type_t        _ftype;        // {regular,primary idx, idx, ...}
+    std::pair<int,int> _record_size;  // size of each column of the file record
+
+    rid_t        _first_rid;   // first record
+    rid_t        _cur_rid;     // current tuple id 
 
 public:
 
-    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    // (ip) The following two member
-    // TODO REMOVE THEM!!
-    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
-
-    std::pair<int,int> _record_size;
-    stid_t _table_id;
-
-
-    rid_t        _first_rid; // first record
-    rid_t        _cur_rid;     // current tuple id
+    stid_t             _fid;          // using physical interface
 
     // Constructor
     file_info_t(const stid_t& fid,
@@ -190,9 +185,15 @@ public:
 
     // Access methods
     void set_fid(const stid_t& fid) { _fid = fid; }
-    const stid_t& fid() { return (_fid); }
+    stid_t& fid() { return (_fid); }
     void set_ftype(const file_type_t& ftype) { _ftype = ftype; }
-    const file_type_t& ftype() { return (_ftype); }
+    file_type_t& ftype() { return (_ftype); }
+    void set_first_rid(const rid_t arid) { _first_rid = arid; }
+    rid_t& first_rid() { return (_first_rid); }
+    void set_curr_rid(const rid_t arid) { _cur_rid = arid; }
+    rid_t& curr_rid() { return (_cur_rid); }
+    void set_record_size(const std::pair<int,int> apair) { _record_size = apair; }
+    std::pair<int,int> record_size() { return (_record_size); }
 
 }; // EOF: file_info_t
 

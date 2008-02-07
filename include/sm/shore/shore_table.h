@@ -111,6 +111,7 @@ ENTER_NAMESPACE(shore);
 
 struct table_row_t;
 class table_scan_iter_impl;
+class index_scan_iter_impl;
 
 
 /* ---------------------------------------------------------------
@@ -140,18 +141,6 @@ protected:
     index_desc_t*  find_index(const char* name) { 
         return (_indexes ? _indexes->find_by_name(name) : NULL); 
     }
-
-
-    /* ------------------------------------------------ */
-    /* --- helper functions for bulkloading indices --- */
-    /* ------------------------------------------------ */
-
-    char* index_keydesc(index_desc_t* index);                        /* index key description */
-    char* format_key(index_desc_t* index, table_row_t* prow);        /* format the key value */
-    char* min_key(index_desc_t* index, table_row_t* prow);           /* set indexed fields of the row to minimum */
-    char* max_key(index_desc_t* index, table_row_t* prow);           /* set indexed fields of the row to maximum */
-    int   key_size(index_desc_t* index, table_row_t* prow) const;    /* length of the formatted key */
-    int   maxkeysize(index_desc_t* index) const;                     /* max key size */
 
 public:
 
@@ -237,6 +226,18 @@ public:
     w_rc_t scan_index(ss_m* db, index_desc_t* idx);
 
 
+    /* ------------------------------------------------ */
+    /* --- helper functions for bulkloading indices --- */
+    /* ------------------------------------------------ */
+
+    char* index_keydesc(index_desc_t* index);                            /* index key description */
+    char* format_key(index_desc_t* index, table_row_t* prow);            /* format the key value */
+    char* min_key(index_desc_t* index, table_row_t* prow);               /* set indexed fields of the row to minimum */
+    char* max_key(index_desc_t* index, table_row_t* prow);               /* set indexed fields of the row to maximum */
+    int   key_size(index_desc_t* index, const table_row_t* prow) const;  /* length of the formatted key */
+    int   maxkeysize(index_desc_t* index) const;                         /* max key size */
+
+
     /* ---------------------- */
     /* --- access methods --- */
     /* ---------------------- */
@@ -276,9 +277,9 @@ public:
                                    const char* idx_name,
                                    table_row_t* row) 
     { 
-	index_desc_t * index = find_index(idx_name);
-	assert(index);
-	return index_probe_forupdate(db, index, row);
+	index_desc_t* pindex = find_index(idx_name);
+	assert(pindex);
+	return index_probe_forupdate(db, pindex, row);
     }
 
 
@@ -433,8 +434,11 @@ struct table_row_t {
     int    size() const;             /* disk space needed for tuple */
     bool   load(const char* string); /* load tuple from disk format */ 
 
-    bool   load_keyvalue(const char* string,
+    bool   load_keyvalue(const unsigned char* string,
 			 index_desc_t* index); /* load key fields */
+
+    char* format_key(index_desc_t* index); 
+    int   key_size(index_desc_t* index) const;
 
 
     /* ---------------------- */
@@ -573,8 +577,111 @@ public:
         return (RCOK);
     }
 
-}; // EOF: tuple_iter_t<table_desc_t>
+}; // EOF: table_scan_iter_impl
 
+
+
+/* ---------------------------------------------------------------------
+ * @class: index_scan_iter_impl
+ * @brief: Declaration of a index scan iterator
+ * --------------------------------------------------------------------- */
+
+
+typedef tuple_iter_t<index_desc_t, scan_index_i, table_row_t> index_scan_iter_t;
+
+class index_scan_iter_impl : public index_scan_iter_t
+{
+private:
+    bool _need_tuple;
+
+public:
+
+    /* -------------------- */
+    /* --- construction --- */
+    /* -------------------- */
+        
+    index_scan_iter_impl(ss_m* db,
+                         index_desc_t* index,
+                         bool need_tuple = false)
+        : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
+    { 
+        /** @note We need to know the bounds of the iscan before
+         *        opening the iterator. That's why we cannot open
+         *        the iterator upon construction.
+         *        Needs explicit call to open_scan(...)
+         */            
+    }
+
+    /*
+    index_scan_iter_impl(ss_m* db,
+                         index_desc_t* pindex,
+                         scan_index_i::cmp_t cmp1, const cvec_t& pbound1,
+                         scan_index_i::cmp_t cmp2, const cvec_t& pbound2,
+                         const int maxkeysize
+                         bool need_tuple = false)
+        : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
+    { W_COERCE(open_scan(db, c1, bound1, c2, bound2, maxkeysize)); }
+    */
+        
+    ~index_scan_iter_impl() { 
+        close_scan();             
+    }
+
+
+    /* ------------------------ */        
+    /* --- iscan operations --- */
+    /* ------------------------ */
+
+    w_rc_t open_scan(ss_m* db,
+                     scan_index_i::cmp_t c1, const cvec_t& bound1,
+                     scan_index_i::cmp_t c2, const cvec_t& bound2,
+                     const int maxkeysize)
+    {
+        if (!_opened) {
+            W_DO(_file->check_fid(db));
+            _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2);
+            _opened = true;
+        }
+        return RCOK;
+    }
+
+    w_rc_t next(ss_m* db, bool& eof, table_row_t& tuple) 
+    {
+        assert(_opened);
+
+        W_DO(_scan->next(eof));
+
+        if (!eof) {
+
+            // @@@@@@@@@@@@@@@@
+            // should fix the code below it does not make sense
+            // to use the table...
+            // @@@@@@@@@@@@@@@@
+
+            assert (false);
+
+            rid_t   rid;
+            vec_t   key(tuple.format_key(_file), tuple.key_size(_file));
+            vec_t   record(&rid, sizeof(rid_t));
+            smsize_t klen = 0;
+            smsize_t elen = sizeof(rid_t);
+            W_DO(_scan->curr(&key, klen, &record, elen));
+            tuple.set_rid(rid);
+            tuple.load_keyvalue(key.ptr(0), _file);
+            if (_need_tuple) {
+                pin_i  pin;
+                W_DO(pin.pin(rid, 0));
+                if (!tuple.load(pin.body()))
+                    return RC(se_WRONG_DISK_DATA);
+                pin.unpin();
+            }
+
+        }
+    
+        return RCOK;
+    }
+
+}; // EOF: index_scan_iter_impl
 
 
 
@@ -690,7 +797,8 @@ inline char* table_desc_t::max_key(index_desc_t* index, table_row_t* prow)
  *
  ******************************************************************/
 
-inline int table_desc_t::key_size(index_desc_t* index, table_row_t* prow) const
+inline int table_desc_t::key_size(index_desc_t* index, 
+                                  const table_row_t* prow) const
 {
     int size = 0;
     for (int i=0; i<index->field_count(); i++) {
@@ -774,6 +882,20 @@ inline int table_row_t::size() const
     }
     if (null_count) size += (null_count >> 3) + 1;
     return size;
+}
+
+
+inline char* table_row_t::format_key(index_desc_t* index)
+{
+    assert (_ptable);
+    return (_ptable->format_key(index, this));
+}
+
+
+inline int table_row_t::key_size(index_desc_t* index) const
+{
+    assert (_ptable);
+    return (_ptable->key_size(index, this));
 }
 
 
