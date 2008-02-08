@@ -155,7 +155,8 @@ public:
 	_desc = new field_desc_t[fieldcnt];
     }
     
-    ~table_desc_t() {
+    virtual ~table_desc_t() 
+    {
         if (_desc)
             delete [] _desc;
 
@@ -169,7 +170,7 @@ public:
     /* --- create physical table and index --- */
     /* --------------------------------------- */
 
-    w_rc_t    create_table(ss_m* db);
+    w_rc_t  create_table(ss_m* db);
 
 
     /* create an index on the table (this only creates the index
@@ -208,9 +209,9 @@ public:
     }
 
 
-
-
-    /* bulk-building the specified index on disks */
+    /* -------------------------------------------------- */
+    /* --- bulk-building the specified index on disks --- */
+    /* -------------------------------------------------- */
 
     w_rc_t  bulkload_all_indexes(ss_m* db);
     w_rc_t  bulkload_index(ss_m* db, const char* name);
@@ -316,7 +317,7 @@ public:
     /* --- populate the table with data from files --- */
     /* ----------------------------------------------- */
 
-    w_rc_t   load_table_from_file(ss_m* db);
+    w_rc_t load_table_from_file(ss_m* db);
 
 
 
@@ -342,6 +343,9 @@ public:
 
 
 }; // EOF: table_desc_t
+
+
+typedef std::list<table_desc_t*> table_list_t;
 
 
 
@@ -601,31 +605,33 @@ public:
     /* -------------------- */
         
     index_scan_iter_impl(ss_m* db,
-                         index_desc_t* index,
+                         index_desc_t* pindex,
                          bool need_tuple = false)
-        : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
+        : index_scan_iter_t(db, pindex), _need_tuple(need_tuple) 
     { 
         /** @note We need to know the bounds of the iscan before
          *        opening the iterator. That's why we cannot open
          *        the iterator upon construction.
          *        Needs explicit call to open_scan(...)
-         */            
-    }
+         */        
+    };
 
-    /*
     index_scan_iter_impl(ss_m* db,
                          index_desc_t* pindex,
-                         scan_index_i::cmp_t cmp1, const cvec_t& pbound1,
-                         scan_index_i::cmp_t cmp2, const cvec_t& pbound2,
-                         const int maxkeysize
-                         bool need_tuple = false)
-        : index_scan_iter_t(db, index), _need_tuple(need_tuple) 
-    { W_COERCE(open_scan(db, c1, bound1, c2, bound2, maxkeysize)); }
-    */
+                         scan_index_i::cmp_t cmp1, const cvec_t& bound1,
+                         scan_index_i::cmp_t cmp2, const cvec_t& bound2,
+                         const int maxkeysize,
+                         bool need_tuple) 
+        : index_scan_iter_t(db, pindex), _need_tuple(need_tuple)
+    { 
+        /** @note In case we know the bounds of the iscan a priory */
+        W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2, maxkeysize));
+    };
+
         
     ~index_scan_iter_impl() { 
         close_scan();             
-    }
+    };
 
 
     /* ------------------------ */        
@@ -652,22 +658,16 @@ public:
         W_DO(_scan->next(eof));
 
         if (!eof) {
-
-            // @@@@@@@@@@@@@@@@
-            // should fix the code below it does not make sense
-            // to use the table...
-            // @@@@@@@@@@@@@@@@
-
-            assert (false);
-
-            rid_t   rid;
-            vec_t   key(tuple.format_key(_file), tuple.key_size(_file));
-            vec_t   record(&rid, sizeof(rid_t));
+            rid_t    rid;
+            vec_t    key(tuple.format_key(_file), tuple.key_size(_file));
+            vec_t    record(&rid, sizeof(rid_t));
             smsize_t klen = 0;
             smsize_t elen = sizeof(rid_t);
+
             W_DO(_scan->curr(&key, klen, &record, elen));
             tuple.set_rid(rid);
             tuple.load_keyvalue(key.ptr(0), _file);
+
             if (_need_tuple) {
                 pin_i  pin;
                 W_DO(pin.pin(rid, 0));
@@ -676,9 +676,8 @@ public:
                 pin.unpin();
             }
 
-        }
-    
-        return RCOK;
+        }    
+        return (RCOK);
     }
 
 }; // EOF: index_scan_iter_impl

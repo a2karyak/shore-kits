@@ -60,7 +60,7 @@ static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 3;
 
 class ShoreEnv 
 {
-private:       
+protected:       
 
     ss_m* _pssm;                    // database handle
 
@@ -141,8 +141,10 @@ public:
     /** Public methods */    
     virtual int init();
     virtual int close();
-    virtual int loaddata()=0;
     virtual int statistics();
+
+    virtual w_rc_t loaddata()=0;
+    virtual w_rc_t check_consistency()=0;
 
 
     // inline access methods

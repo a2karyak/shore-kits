@@ -178,9 +178,9 @@ float tpcc_random_gen_t::random_float_val_return(float min,
 
 void tpcc_random_gen_t::seed_1_3000()
 {
-    //@@@@@@@@@@@@@@@@@@@@@@@@
-    // (ip) NOT THREAD SAFE!!!
-    //@@@@@@@@@@@@@@@@@@@@@@@@
+    //*** critical section ***
+    critical_section_t cs(_tbl_mutex);
+    //    CRITICAL_SECTION(_tbl_mutex);
 
     for (int i = 0; i < CUSTOMERS_PER_DISTRICT; i++)
         _tbl_3000[i] = 0;
@@ -189,10 +189,9 @@ void tpcc_random_gen_t::seed_1_3000()
 
 int tpcc_random_gen_t::random_1_3000()
 {
-    //@@@@@@@@@@@@@@@@@@@@@@@@
-    // (ip) NOT THREAD SAFE!!!
-    //@@@@@@@@@@@@@@@@@@@@@@@@
-    assert (false);
+    //*** critical section ***
+    critical_section_t cs(_tbl_mutex);
+    //CRITICAL_SECTION(_tbl_mutex);
  
     int x = random_integer(0, CUSTOMERS_PER_DISTRICT - 1);
 

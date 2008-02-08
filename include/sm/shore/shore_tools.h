@@ -186,7 +186,8 @@ struct create_volume_xct
 	W_DO(ssm->create_file(*(_penv->vid()), _info._fid, smlevel_3::t_regular));
 	W_DO(ss_m::vol_root_index(*(_penv->vid()), root_iid));
 	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
-	return RCOK;
+
+	return (RCOK);
     }
 
 }; // EOF: create_volume_xct 

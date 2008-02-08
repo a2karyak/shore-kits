@@ -61,7 +61,8 @@ ENTER_NAMESPACE(tpcc);
  *  @brief Base class for all the TPC-C tables.
  *
  *  @note  It simply extends the table_desc_t class with a 
- *         tpcc_random_gen_t member variable 
+ *         tpcc_random_gen_t member variable and a pure virtual
+ *         bulkloading function.
  *
  *  --------------------------------------------------------------- */
 
@@ -78,10 +79,15 @@ public:
 
     virtual ~tpcc_table_t() { }
 
-    
+    virtual w_rc_t bulkload(ss_m* db, int w_num)=0;
 
 
 }; // EOF: tpcc_table_t
+
+
+typedef std::list<tpcc_table_t*> tpcc_table_list_t;
+typedef std::list<tpcc_table_t*>::iterator tpcc_table_list_iter;
+
 
 
 
@@ -308,6 +314,10 @@ public:
 
 
 class order_t : public tpcc_table_t {
+private:
+    short* _pcnt_array;
+    w_rc_t bulkload(ss_m* db, int w_num, short* apcnt_array);
+
 public:
     order_t() : tpcc_table_t("ORDERS", TPCC_ORDER_FCOUNT) {
 	/* table schema */
@@ -329,11 +339,25 @@ public:
 	create_index("O_CUST_INDEX", keys2, 4);
     }
 
+    /* cnt_array */
+    void produce_cnt_array(int w_num);
+    inline void free_cnt_array() {
+        if (_pcnt_array)
+            free(_pcnt_array);
+        _pcnt_array = NULL;
+    }
+    inline void set_cnt_array(short* apcnt_array) { 
+        _pcnt_array = apcnt_array; assert(_pcnt_array); 
+    }
+    inline short* get_cnt_array() { return (_pcnt_array); }
+
+
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, int c_id, short d_id, short w_id, short ol_cnt);
 
-    w_rc_t bulkload(ss_m* db, int w_num, short *);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
+    /* table operations */
     w_rc_t update_carrier_by_index(ss_m* db,
                                    table_row_t* ptuple,
                                    const short w_id,
@@ -353,6 +377,10 @@ public:
 
 
 class order_line_t : public tpcc_table_t {
+private:
+    short* _pcnt_array;
+    w_rc_t bulkload(ss_m* db, int w_num, short* apcnt_array);
+
 public:
     order_line_t() : tpcc_table_t("ORDER_LINE", TPCC_ORDER_LINE_FCOUNT) {
 	/* table schema */
@@ -372,11 +400,19 @@ public:
 	create_index("OL_INDEX", keys, 4, false);
     }
 
+    /* cnt_array */
+
+    /** @note: the cnt_array should be created by order_t */
+    inline void set_cnt_array(short* apcnt_array) { 
+        _pcnt_array = apcnt_array; assert(_pcnt_array); 
+    }
+    inline short* get_cnt_array() { return (_pcnt_array); }
+
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, short d_id, short w_id,
                   short ol_index, bool delivery=true);
 
-    w_rc_t bulkload(ss_m* db, int w_num, short *);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
     /* --- access methods --- */
     w_rc_t get_iter_by_index(ss_m * db,
@@ -415,7 +451,7 @@ public:
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id);
 
-    w_rc_t bulkload(ss_m* shore);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
     w_rc_t index_probe(ss_m* ddb, 
                        table_row_t* ptuple,
@@ -458,7 +494,7 @@ public:
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, short w_id);
 
-    w_rc_t bulkload(ss_m * shore, int w_num);
+    w_rc_t bulkload(ss_m* db, int w_num);
 
     w_rc_t index_probe(ss_m* db,
                        table_row_t* ptuple,

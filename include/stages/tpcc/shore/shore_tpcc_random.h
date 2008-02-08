@@ -35,6 +35,7 @@ class tpcc_random_gen_t {
 private:
     uint _seed;
     char _tbl_3000[3000];
+    pthread_mutex_t _tbl_mutex;
 
 public:
 
@@ -44,10 +45,14 @@ public:
 
     tpcc_random_gen_t(uint x = NULL) 
     { 
+        pthread_mutex_init(&_tbl_mutex, NULL);
         reset();
     }
     
-    ~tpcc_random_gen_t() { }
+    ~tpcc_random_gen_t() 
+    { 
+        pthread_mutex_destroy(&_tbl_mutex);
+    }
 
 
     /* ------------------------------- */

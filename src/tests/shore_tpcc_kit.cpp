@@ -2,7 +2,6 @@
 // CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
 #include "tests/common.h"
-
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
@@ -19,8 +18,7 @@ class test_smt_t : public smthread_t {
 private:
     ShoreTPCCEnv* _env;    
     c_str _tname;
-    tpcc_random_gen_t _tpccrnd; 
-        
+    tpcc_random_gen_t _tpccrnd;         
 
 public:
     int	_rv;
@@ -58,11 +56,11 @@ public:
     w_rc_t tpcc_run_xct(int num_xct = 100, int xct_type = 0);
     w_rc_t tpcc_run_one_xct(int xct_type = 0);    
 
-    w_rc_t xct_new_order(ss_m* shore, istream& is = cin);
-    w_rc_t xct_payment(ss_m* shore, istream& is = cin);
-    w_rc_t xct_order_status(ss_m* shore, istream& is = cin);
-    w_rc_t xct_delivery(ss_m* shore, istream& is = cin);
-    w_rc_t xct_stock_level(ss_m* shore, istream& is = cin);
+    w_rc_t xct_new_order(ss_m* db);
+    w_rc_t xct_payment(ss_m* db);
+    w_rc_t xct_order_status(ss_m* db);
+    w_rc_t xct_delivery(ss_m* db);
+    w_rc_t xct_stock_level(ss_m* db);
 
     void print_tables();
 
@@ -70,6 +68,7 @@ public:
     // methods
     int test() {
         _env->loaddata();
+        _env->check_consistency();
         tpcc_run_xct();
         print_tables();
         return (0);
@@ -85,11 +84,11 @@ public:
 
 
 
-w_rc_t test_smt_t::xct_new_order(ss_m * shore, istream & is) { cout << "NEW_ORDER... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_payment(ss_m * shore, istream & is) { cout << "PAYMENT... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_order_status(ss_m * shore, istream & is) { cout << "ORDER_STATUS... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_delivery(ss_m * shore, istream & is) { cout << "DELIVERY... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_stock_level(ss_m * shore, istream & is) { cout << "STOCK_LEVEL... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_new_order(ss_m* db) { cout << "NEW_ORDER... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_payment(ss_m* db) { cout << "PAYMENT... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_order_status(ss_m* db) { cout << "ORDER_STATUS... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_delivery(ss_m* db) { cout << "DELIVERY... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_stock_level(ss_m* db) { cout << "STOCK_LEVEL... " << endl; return (RCOK); }
 
 
 void test_smt_t::print_tables() {
@@ -147,18 +146,24 @@ w_rc_t test_smt_t::tpcc_run_one_xct(int xct_type)
 int main(int argc, char* argv[]) 
 {
     // Instanciate the Shore Environment
-    shore_env = new ShoreTPCCEnv("shore.conf");
+    shore_env = new ShoreTPCCEnv("shore.conf", 1, 1);
     
     // Load data to the Shore Database
     int* r = NULL;
     TRACE( TRACE_ALWAYS, "Starting... ");
     test_smt_t* tt = new test_smt_t(shore_env, c_str("tt"));
     run_smthread<test_smt_t,int>(tt, r);
-    //     if (*r) {
-    //         cerr << "Error in loading... " << endl;
-    //         cerr << "Exiting... " << endl;
-    //         return (1);
-    //     }
-    delete (tt);
+    if (*r) {
+        cerr << "Error in loading... " << endl;
+        cerr << "Exiting... " << endl;
+        return (1);
+    }
+
+    if (tt)
+        delete (tt);
+
+    if (r)
+        delete (r);
+
     return (0);
 }

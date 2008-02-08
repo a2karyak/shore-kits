@@ -609,6 +609,7 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
     
     // add tuples to table and index
     int count = 0;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t awh_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -616,13 +617,15 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
 	W_DO(file_append.create_rec(vec_t(), (smsize_t)0,
 				    vec_t(awh_tuple.format(), awh_tuple.size()),
 				    awh_tuple._rid));
-	count++;
-	if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+	if ((count >= mark) == 0) {
 	    W_DO(db->commit_xct());
 // 	    if (ss_m::num_active_xcts() != 0)
 // 		return RC(se_LOAD_NOT_EXCLUSIVE);
 	    W_DO(db->begin_xct());
+            mark += COMMIT_ACTION_COUNT;
 	}
+	count++;
     }
     W_DO(db->commit_xct());
 
@@ -704,6 +707,7 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
     
     // add tuples to table and index
     int count = 0;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t ad_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -713,11 +717,12 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
 					vec_t(ad_tuple.format(), ad_tuple.size()),
 					ad_tuple._rid));
 	    count++;
-	    if ((count % COMMIT_ACTION_COUNT) == 0) {
+	    if ((count >= mark) == 0) {
 		W_DO(db->commit_xct());
 // 		if (ss_m::num_active_xcts() != 0)
 // 		    return RC(se_LOAD_NOT_EXCLUSIVE);
 		W_DO(db->begin_xct());
+                mark += COMMIT_ACTION_COUNT;
 	    }
 	}
     }
@@ -838,6 +843,7 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
 
     // add tuples to the table 
     int count = 0;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t ac_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -847,13 +853,15 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(ac_tuple.format(), ac_tuple.size()),
 					    ac_tuple._rid));
-		count++;
-		if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+		if ((count >= mark) == 0) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
 		    W_DO(db->begin_xct());
+                    mark += COMMIT_ACTION_COUNT;
 		}
+		count++;
 	    }
 	}
     }
@@ -921,6 +929,7 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
 
     // add tuples to the table 
     int count = 1;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t ah_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -930,13 +939,15 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(ah_tuple.format(), ah_tuple.size()),
 					    ah_tuple._rid));
-		count++;
-		if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+		if ((count >= mark) == 0) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
 		    W_DO(db->begin_xct());
+                    mark += COMMIT_ACTION_COUNT;
 		}
+		count++;
 	    }
 	}
     }
@@ -991,6 +1002,7 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
     append_file_i  file_append(_fid);
     // add tuples to the table 
     int count = 1;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t anu_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1000,13 +1012,15 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(anu_tuple.format(), anu_tuple.size()),
 					    anu_tuple._rid));
-		count++;
-		if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+		if ((count >= mark) == 0) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
 		    W_DO(db->begin_xct());
+                    mark += COMMIT_ACTION_COUNT;
 		}
+		count++;
 	    }
 	}
     }
@@ -1058,6 +1072,24 @@ void order_t::random(table_row_t* ptuple, int id, int c_id, short d_id, short w_
     ptuple->set_value(7, 1);
 }
 
+
+void order_t::produce_cnt_array(int w_num)
+{
+    cerr << "building cnt_array... " << endl;
+    _pcnt_array = (short*)malloc(sizeof(short)*w_num*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
+    assert(_pcnt_array);
+    for (int i=0; i<w_num; i++)
+	_tpccrnd.random_ol_cnt(_pcnt_array+i*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
+    
+}
+
+w_rc_t order_t::bulkload(ss_m* db, int w_num)
+{
+    assert (_pcnt_array);
+    return (bulkload(db, w_num, _pcnt_array));
+}
+
+
 w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 {
 #ifdef   DEBUG
@@ -1078,6 +1110,7 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 
     // add tuples to the table 
     int count = 1;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t ao_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1090,13 +1123,15 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(ao_tuple.format(), ao_tuple.size()),
 					    ao_tuple._rid));
-		count++;
-		if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+		if ((count >= mark) == 0) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
 		    W_DO(db->begin_xct());
+                    mark += COMMIT_ACTION_COUNT;
 		}
+		count++;                
 	    }
 	}
     }
@@ -1160,6 +1195,14 @@ void order_line_t::random(table_row_t* ptuple, int id,
     ptuple->set_value(9, string);
 }
 
+
+w_rc_t order_line_t::bulkload(ss_m* db, int w_num)
+{
+    assert (_pcnt_array);
+    return (bulkload(db, w_num, _pcnt_array));
+}
+
+
 w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 {
 #ifdef   DEBUG
@@ -1181,6 +1224,7 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 
     // add tuples to the table 
     int count = 1;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t aol_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1201,13 +1245,15 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 		    W_DO(file_append.create_rec(vec_t(), 0,
 						vec_t(aol_tuple.format(), aol_tuple.size()),
 						aol_tuple._rid));
-		    count++;
-		    if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+		    if ((count >= mark) == 0) {
 			W_DO(db->commit_xct());
 // 			if (ss_m::num_active_xcts() != 0)
 // 			    return RC(se_LOAD_NOT_EXCLUSIVE);
 			W_DO(db->begin_xct());
+                        mark += COMMIT_ACTION_COUNT;
 		    }
+		    count++;
 		}
 	    }
 	}
@@ -1250,7 +1296,7 @@ void item_t::random(table_row_t* ptuple, int id)
     ptuple->set_value(4, string);
 }
 
-w_rc_t item_t::bulkload(ss_m* db)
+w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
 {
 #ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
@@ -1268,6 +1314,7 @@ w_rc_t item_t::bulkload(ss_m* db)
 
     // add tuples to the table 
     int count = 0;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t ai_tuple(this);
 
     for (int i_id = 1; i_id <= ITEMS; i_id++) {
@@ -1275,13 +1322,15 @@ w_rc_t item_t::bulkload(ss_m* db)
 	W_DO(file_append.create_rec(vec_t(), 0,
 				    vec_t(ai_tuple.format(), ai_tuple.size()),
 				    ai_tuple._rid));
-	count++;
-	if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+	if ((count >= mark) == 0) {
 	    W_DO(db->commit_xct());
 // 	    if (ss_m::num_active_xcts() != 0)
 // 		return RC(se_LOAD_NOT_EXCLUSIVE);
 	    W_DO(db->begin_xct());
+            mark += COMMIT_ACTION_COUNT;
 	}
+	count++;
     }
     W_DO(db->commit_xct());
 
@@ -1384,6 +1433,7 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
 
     // add tuples to the table 
     int count = 0;
+    int mark = COMMIT_ACTION_COUNT;
     table_row_t as_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1392,13 +1442,15 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
 	    W_DO(file_append.create_rec(vec_t(), 0,
 					vec_t(as_tuple.format(), as_tuple.size()),
 					as_tuple._rid));
-	    count++;
-	    if ((count % COMMIT_ACTION_COUNT) == 0) {
+
+	    if ((count >= mark) == 0) {
 		W_DO(db->commit_xct());
 // 		if (ss_m::num_active_xcts() != 0)
 // 		    return RC(se_LOAD_NOT_EXCLUSIVE);
 		W_DO(db->begin_xct());
+                mark += COMMIT_ACTION_COUNT;
 	    }
+	    count++;
 	}
     }
     W_DO(db->commit_xct());
