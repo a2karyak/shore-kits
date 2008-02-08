@@ -23,7 +23,7 @@ ENTER_NAMESPACE(shore);
 
 /******** Exported functions ********/
 
-/** @fn trx_smthread_t
+/** @class trx_smthread_t
  *
  *  @brief An smthread-based class for running trxs
  */
@@ -74,15 +74,18 @@ public:
 
 
 
-/** @fn run_smthread
+/****************************************************************** 
  *
- *  @brief Creates an smthread inherited class and runs it. The
- *  second argument is the return of the run() function of the thread
- *  it is allocated in here. It is responsibility of the caller to
- *  deallocate.
+ *  @fn     run_smthread
  *
- *  @returns non-zero on error on failed thread operation
- */
+ *  @brief  Creates an smthread inherited class and runs it. The
+ *          second argument is the return of the run() function of the 
+ *          thread it is allocated in here. It is responsibility of 
+ *          the caller to deallocate.
+ *
+ *  @return non-zero on error or failed thread operation
+ *
+ ******************************************************************/
 
 template<class SMThread, class SMTReturn>
 int run_smthread(SMThread* t, SMTReturn* &r)

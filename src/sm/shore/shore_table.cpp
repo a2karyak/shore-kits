@@ -15,7 +15,6 @@ using namespace shore;
 
 
 
-
 /* ----------------------------------- */
 /* --- @class table_desc_t methods --- */
 /* ----------------------------------- */
@@ -706,7 +705,7 @@ w_rc_t table_desc_t::print_table(ss_m* db)
 {
     char   filename[MAX_FILENAME_LEN];
     strcpy(filename, name());
-    strcat(filename, ".tbl");
+    strcat(filename, ".tbl.tmp");
     ofstream fout(filename);
 
     W_DO(db->begin_xct());

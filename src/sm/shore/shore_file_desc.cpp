@@ -80,6 +80,10 @@ w_rc_t file_desc_t::find_fid(ss_m* db)
 			  found));
     _fid = info.fid();
     
-    if (!found) return RC(se_TABLE_NOT_FOUND);
+    if (!found) {
+        cerr << "Problem finding table " << _name << endl;
+        return RC(se_TABLE_NOT_FOUND);
+    }
+
     return RCOK;
 }

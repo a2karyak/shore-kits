@@ -69,7 +69,7 @@ public:
     int test() {
         _env->loaddata();
         _env->check_consistency();
-        tpcc_run_xct();
+        //tpcc_run_xct();
         print_tables();
         return (0);
     }

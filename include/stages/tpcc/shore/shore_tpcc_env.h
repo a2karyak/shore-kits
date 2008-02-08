@@ -151,6 +151,81 @@ public:
 }; // EOF ShoreTPCCEnv
 
 
+
+/****************************************************************** 
+ *
+ *  @class tpcc_loading_smt_t
+ *
+ *  @brief An smthread inherited class that it is used for spawning
+ *         multiple tpcc loading threads. 
+ *
+ ******************************************************************/
+
+class tpcc_loading_smt_t : public smthread_t 
+{
+private:
+    ss_m*         _pssm;
+    tpcc_table_t* _ptable;
+    const int     _sf;
+    const int     _cnt;
+    int           _rv;
+
+public:
+    
+    tpcc_loading_smt_t(ss_m* assm, tpcc_table_t* atable, 
+                       const int asf, const int aid) 
+	: smthread_t(t_regular), _pssm(assm), _ptable(atable), 
+          _sf(asf), _cnt(aid)
+    {
+        assert (_pssm);
+        assert (_ptable);
+        assert (_sf);
+    }
+
+    ~tpcc_loading_smt_t() { }
+
+    // thread entrance
+    void run();
+
+    inline rv() { return (_rv); }
+
+}; // EOF: tpcc_loading_smt_t
+
+
+
+/****************************************************************** 
+ *
+ *  @class tpcc_checking_smt_t
+ *
+ *  @brief An smthread inherited class that it is used for spawning
+ *         multiple tpcc checking consistency threads. 
+ *
+ ******************************************************************/
+
+class tpcc_checking_smt_t : public smthread_t 
+{
+private:
+    ss_m*         _pssm;
+    tpcc_table_t* _ptable;
+    const int     _cnt;
+
+public:
+    
+    tpcc_checking_smt_t(ss_m* assm, tpcc_table_t* atable, const int aid) 
+	: smthread_t(t_regular), _pssm(assm), _ptable(atable), _cnt(aid)
+    {
+        assert (_pssm);
+        assert (_ptable);
+    }
+
+    ~tpcc_checking_smt_t() { }
+
+    // thread entrance
+    void run();
+
+}; // EOF: tpcc_checking_smt_t
+
+
 EXIT_NAMESPACE(tpcc);
 
 

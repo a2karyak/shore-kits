@@ -338,7 +338,7 @@ public:
     /* --- debugging tools --- */
     /* ----------------------- */
 
-    w_rc_t print_table(ss_m* );                 /* print the table on screen */
+    w_rc_t print_table(ss_m* db);                 /* print the table on screen */
     void   print_desc(ostream & os = cout);     /* print the schema */
 
 
