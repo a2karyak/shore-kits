@@ -67,10 +67,10 @@ public:
 
     // methods
     int test() {
-        _env->loaddata();
-        _env->check_consistency();
-        //tpcc_run_xct();
-        print_tables();
+        //        _env->loaddata();
+        //        _env->check_consistency();
+        tpcc_run_xct();
+        //        print_tables();
         return (0);
     }
 
@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
     
     // Load data to the Shore Database
     int* r = NULL;
-    TRACE( TRACE_ALWAYS, "Starting... ");
+    TRACE( TRACE_ALWAYS, "Starting...\n");
     test_smt_t* tt = new test_smt_t(shore_env, c_str("tt"));
     run_smthread<test_smt_t,int>(tt, r);
     if (*r) {
@@ -159,11 +159,20 @@ int main(int argc, char* argv[])
         return (1);
     }
 
-    if (tt)
-        delete (tt);
-
-    if (r)
+    if (r) {
         delete (r);
+        r = NULL;
+    }
+
+    if (tt) {
+        delete (tt);
+        tt = NULL;
+    }
+
+    if (shore_env) {
+        delete (shore_env);
+        shore_env = NULL;
+    }
 
     return (0);
 }

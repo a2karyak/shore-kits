@@ -388,8 +388,8 @@ if test "$ARCHOS" = "SPARC_SUN"; then
 # optimize *a lot* flags
 #    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 
-# debuggin flags
-    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xs -g -xinstrument=datarace -mt -lpthread -library=stlport4"
+# debugging flags
+    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
 fi
 
 # Adding curses lib

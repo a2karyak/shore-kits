@@ -54,7 +54,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
     int num_tbl = _table_list.size();
     int cnt = 0;
     guard<tpcc_loading_smt_t> loaders[SHORE_TPCC_TABLES];
-    int ACTUAL_TBLS = 1;
+    int ACTUAL_TBLS = 0;
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
         table_iter != _table_list.end(); table_iter++)
@@ -103,7 +103,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
         if (loaders[i]->rv()) {
             cerr << "~~~~ Error at loader " << i << endl;
             assert (false);
-        }
+        }        
         if (++cnt > ACTUAL_TBLS)
             break;
     }
@@ -138,7 +138,7 @@ w_rc_t ShoreTPCCEnv::check_consistency()
     tpcc_table_t* ptable = NULL;
     int num_tbl = _table_list.size();
     int cnt = 0;
-    int ACTUAL_TBLS = 1;
+    int ACTUAL_TBLS = 0;
     guard<tpcc_checking_smt_t> checkers[SHORE_TPCC_TABLES];
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
