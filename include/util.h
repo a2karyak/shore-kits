@@ -29,6 +29,6 @@
 #include "util/pool_alloc.h"
 #include "util/bptree.h"
 #include "util/file.h"
-
+#include "util/progress.h"
 
 #endif

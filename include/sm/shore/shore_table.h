@@ -64,7 +64,7 @@
  *
  * The mapping between SQL types and C types are defined in
  * field_desc_t.  Modify the class to support more SQL types or
- * change the mapping.  The NUMERIC type is current stored as string;
+ * change the mapping.  The NUMERIC type is currently stored as string;
  * no further understanding is provided yet.  */
 
 /* The disk format of the record looks like this:
@@ -317,8 +317,8 @@ public:
     /* --- populate the table with data from files --- */
     /* ----------------------------------------------- */
 
-    w_rc_t load_table_from_file(ss_m* db);
-
+    w_rc_t       load_from_file(ss_m* db, const char* fname = NULL);
+    virtual bool read_tuple_from_line(table_row_t& tuple, char* string)=0;
 
 
     /* -------------------------------------------------------- */

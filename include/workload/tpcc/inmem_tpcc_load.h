@@ -11,7 +11,7 @@
 #define __INMEM_TPCC_LOAD_H
 
 #include "util/progress.h"
-#include "workload/tpcc/tpcc_tbl_parsers.h"
+#include "stages/tpcc/common/tpcc_tbl_parsers.h"
 
 ENTER_NAMESPACE(tpcc);
 

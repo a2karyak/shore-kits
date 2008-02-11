@@ -217,6 +217,7 @@ SG_COMMON = \
 SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
    $(SG)/tpcc/common/tpcc_input.cpp \
+   $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp
 
 SG_BDB_TRX = \
@@ -303,7 +304,6 @@ WL_TPCH = \
 WL_TPCC = \
    $(SW)/tpcc/tpcc_db.cpp \
    $(SW)/tpcc/tpcc_env.cpp \
-   $(SW)/tpcc/tpcc_tbl_parsers.cpp \
    $(SW)/tpcc/tpcc_tbl_readers.cpp \
    $(SW)/tpcc/tpcc_compare.cpp \
    $(SW)/tpcc/drivers/common.cpp \

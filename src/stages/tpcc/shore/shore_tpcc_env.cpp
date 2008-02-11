@@ -44,41 +44,45 @@ w_rc_t ShoreTPCCEnv::loaddata()
     /* 0. lock the scaling factor */
     critical_section_t cs(_scaling_mutex);
 
-    /* 1. initially produce the cnt_array for order_t and order_line_t */
-    _order.produce_cnt_array(_scaling_factor);
-    _order_line.set_cnt_array(_order.get_cnt_array());
-    assert(_order.get_cnt_array() == _order_line.get_cnt_array());
-
-    /* 2. create the loader threads */
+    /* 1. create the loader threads */
     tpcc_table_t* ptable = NULL;
     int num_tbl = _table_list.size();
     int cnt = 0;
     guard<tpcc_loading_smt_t> loaders[SHORE_TPCC_TABLES];
-    int ACTUAL_TBLS = 0;
+    time_t tstart = time(NULL);
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
         table_iter != _table_list.end(); table_iter++)
         {
             ptable = *table_iter;
-            loaders[cnt] = new tpcc_loading_smt_t(_pssm, ptable, 
-                                                  _scaling_factor, cnt++);
 
-//@@@@@@@@@@@@@@@@@@@@@@@@
-// remove the cnt>1 condition
-//@@@@@@@@@@@@@@@@@@@@@@@@
+            char fname[MAX_FILENAME_LEN];
+            strcpy(fname, SHORE_TPCC_DATA_DIR);
+            strcat(fname, "/");
+            strcat(fname, ptable->name());
+            strcat(fname, ".dat");
+            cout << ++cnt << ". Loading " << ptable->name() << endl;
+            time_t ttablestart = time(NULL);
+            w_rc_t e = ptable->load_from_file(_pssm, fname);
+            time_t ttablestop = time(NULL);
+            if (e != RCOK)
+                cerr << cnt << ". Error while loading " << ptable->name() << " *****" << endl;            
+            else
+                cout << cnt << ". Done loading " << ptable->name() << endl;
 
-            if (cnt > ACTUAL_TBLS)
-                break;
+           cout << "Table " << ptable->name() << " loaded in " << (ttablestop - ttablestart) << " secs..." << endl;
+
+//            loaders[cnt] = new tpcc_loading_smt_t(_pssm, ptable, 
+//                                                  _scaling_factor, cnt++);
+
         }
 
+#if 0
 #if 1
     /* 3. fork the loading threads */
     cnt = 0;
-    time_t tstart = time(NULL);
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
-        if (++cnt > ACTUAL_TBLS)
-            break;
     }
 
     /* 4. join the loading threads */
@@ -89,14 +93,10 @@ w_rc_t ShoreTPCCEnv::loaddata()
             cerr << "~~~~ Error at loader " << i << endl;
             assert (false);
         }
-        if (++cnt > ACTUAL_TBLS)
-            break;
     }    
-    time_t tstop = time(NULL);
 #else
     /* 3. fork & join the loading threads SERIALLY */
     cnt = 0;
-    time_t tstart = time(NULL);
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
 	loaders[i]->join();        
@@ -104,18 +104,14 @@ w_rc_t ShoreTPCCEnv::loaddata()
             cerr << "~~~~ Error at loader " << i << endl;
             assert (false);
         }        
-        if (++cnt > ACTUAL_TBLS)
-            break;
     }
-    time_t tstop = time(NULL);
 #endif
+#endif
+    time_t tstop = time(NULL);
 
     /* 5. print stats */
     cout << "Loading finished in " << (tstop - tstart) << " secs..." << endl;
     cout << num_tbl << " tables loaded..." << endl;        
-
-    /* 6. free the common cnt_array */
-    _order.free_cnt_array();
 
     return (RCOK);
 }
@@ -138,7 +134,6 @@ w_rc_t ShoreTPCCEnv::check_consistency()
     tpcc_table_t* ptable = NULL;
     int num_tbl = _table_list.size();
     int cnt = 0;
-    int ACTUAL_TBLS = 0;
     guard<tpcc_checking_smt_t> checkers[SHORE_TPCC_TABLES];
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
@@ -146,14 +141,6 @@ w_rc_t ShoreTPCCEnv::check_consistency()
         {
             ptable = *table_iter;
             checkers[cnt] = new tpcc_checking_smt_t(_pssm, ptable, cnt++);
-
-
-//@@@@@@@@@@@@@@@@@@@@@@@@
-// remove the cnt>1 condition
-//@@@@@@@@@@@@@@@@@@@@@@@@
-
-            if (++cnt > ACTUAL_TBLS)
-                break;
         }
 
 #if 0
@@ -162,16 +149,12 @@ w_rc_t ShoreTPCCEnv::check_consistency()
     time_t tstart = time(NULL);
     for(int i=0; i<num_tbl; i++) {
 	checkers[i]->fork();
-        if (++cnt > ACTUAL_TBLS)
-            break;
     }
 
     /* 3. join the threads */
     cnt = 0;
     for(int i=0; i < num_tbl; i++) {
 	checkers[i]->join();
-        if (++cnt > ACTUAL_TBLS)
-            break;
     }    
     time_t tstop = time(NULL);
 #else
@@ -181,8 +164,6 @@ w_rc_t ShoreTPCCEnv::check_consistency()
     for(int i=0; i<num_tbl; i++) {
 	checkers[i]->fork();
 	checkers[i]->join();
-        if (++cnt > ACTUAL_TBLS)
-            break;
     }
     time_t tstop = time(NULL);
 #endif
@@ -223,14 +204,23 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* level_input, const int
 
 void tpcc_loading_smt_t::run()
 {
+    char fname[MAX_FILENAME_LEN];
+    strcpy(fname, SHORE_TPCC_DATA_DIR);
+    strcat(fname, "/");
+    strcat(fname, _ptable->name());
+    strcat(fname, ".dat");
     cout << _cnt << ". Loading " << _ptable->name() << endl;
-    w_rc_t e = _ptable->bulkload(_pssm, _sf);
+    time_t ttablestart = time(NULL);
+    w_rc_t e = _ptable->load_from_file(_pssm, fname);
+    time_t ttablestop = time(NULL);
     if (e != RCOK) {
-        cerr << _cnt << " error while loading " << _ptable->name();
+        cerr << _cnt << ". Error while loading " << _ptable->name() << " *****" << endl;
         _rv = 1;
     }
+    else
+        cout << _cnt << ". Done loading " << _ptable->name() << endl;
 
-    cout << _cnt << ". Done loading " << _ptable->name() << endl;
+    cout << "Table " << _ptable->name() << " loaded in " << (ttablestop - ttablestart) << " secs..." << endl;
     _rv = 0;
 }
 

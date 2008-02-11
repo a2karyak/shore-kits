@@ -36,7 +36,7 @@ int ShoreEnv::init()
 {
     CRITICAL_SECTION(cs,_init_mutex);
     if (_initialized) {
-        TRACE( TRACE_ALWAYS, "Already initialized\n");
+        cerr << "Already initialized\n";
         return (1);
     }
 
@@ -57,7 +57,7 @@ int ShoreEnv::init()
 
     // if we reached this point the environment is properly initialized
     _initialized = true;
-    TRACE( TRACE_ALWAYS, "ShoreEnv initialized\n");
+    cout << "ShoreEnv initialized\n";
 
     return (0);
 }
@@ -239,15 +239,19 @@ int ShoreEnv::configure_sm()
 }
 
 
-/** @fn     start_sm
+
+/****************************************************************** 
  *
- *  @brief  Start Shore storage manager. 
- *  - Formats and mounts the device
- *  - Creates the volume in the device 
- *  (Shore limitation: only 1 volume per device)
+ * @fn     start_sm()
  *
- *  @return 0 on success, non-zero otherwise
- */ 
+ * @brief  Start Shore storage manager. 
+ *         - Format and mount the device
+ *         - Create the volume in the device 
+ *         (Shore limitation: only 1 volume per device)
+ *
+ * @return 0 on success, non-zero otherwise
+ *
+ ******************************************************************/
 
 int ShoreEnv::start_sm()
 {

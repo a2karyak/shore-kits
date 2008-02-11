@@ -53,7 +53,7 @@ public:
         _rv = test();
     }
 
-    w_rc_t tpcc_run_xct(int num_xct = 100, int xct_type = 0);
+    w_rc_t tpcc_run_xct(int num_xct = 10, int xct_type = 0);
     w_rc_t tpcc_run_one_xct(int xct_type = 0);    
 
     w_rc_t xct_new_order(ss_m* db);
@@ -67,10 +67,10 @@ public:
 
     // methods
     int test() {
-        //        _env->loaddata();
-        //        _env->check_consistency();
+        _env->loaddata();
+        //_env->check_consistency();
         tpcc_run_xct();
-        //        print_tables();
+        //print_tables();
         return (0);
     }
 
@@ -143,6 +143,49 @@ w_rc_t test_smt_t::tpcc_run_one_xct(int xct_type)
 
 
 
+///////////////////////////////////////////////////////////
+// @class close_smt_t
+//
+// @brief An smthread-based class for tests
+
+class close_smt_t : public smthread_t {
+private:
+    ShoreTPCCEnv* _env;    
+    c_str _tname;
+
+public:
+    int	_rv;
+    
+    close_smt_t(ShoreTPCCEnv* env, c_str tname) 
+	: smthread_t(t_regular), 
+          _env(env), _tname(tname), _rv(0)
+    {
+    }
+
+    ~close_smt_t() {
+    }
+
+
+    // thread entrance
+    void run() {
+        assert (_env);
+        if (_env) {
+            delete (_env);
+            _env = NULL;
+        }        
+    }
+
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     */
+    inline int retval() { return (_rv); }
+    inline c_str tname() { return (_tname); }
+
+}; // EOF: close_smt_t
+
+
+
 int main(int argc, char* argv[]) 
 {
     // Instanciate the Shore Environment
@@ -153,6 +196,7 @@ int main(int argc, char* argv[])
     TRACE( TRACE_ALWAYS, "Starting...\n");
     test_smt_t* tt = new test_smt_t(shore_env, c_str("tt"));
     run_smthread<test_smt_t,int>(tt, r);
+
     if (*r) {
         cerr << "Error in loading... " << endl;
         cerr << "Exiting... " << endl;
@@ -169,10 +213,27 @@ int main(int argc, char* argv[])
         tt = NULL;
     }
 
-    if (shore_env) {
-        delete (shore_env);
-        shore_env = NULL;
+    // close Shore env
+    close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
+    run_smthread<close_smt_t,int>(clt, r);
+
+    if (*r) {
+        cerr << "Error in loading... " << endl;
+        cerr << "Exiting... " << endl;
+        return (1);
     }
+
+    if (r) {
+        delete (r);
+        r = NULL;
+    }
+
+    if (clt) {
+        delete (clt);
+        clt = NULL;
+    }
+
+
 
     return (0);
 }

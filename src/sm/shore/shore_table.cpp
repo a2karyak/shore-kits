@@ -37,7 +37,7 @@ using namespace shore;
 
 /********************************************************************* 
  *
- *  @fn:    load_table_from_file
+ *  @fn:    load_from_file
  *  
  *  @brief: Loads a table from a datafile which has name. "tablename".tbl
  *
@@ -45,71 +45,62 @@ using namespace shore;
  *
  *********************************************************************/
 
-w_rc_t table_desc_t::load_table_from_file(ss_m* db)
+w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 {
-    cout << "Loading " << _name << " table ..." << endl;
-
+    /* 0. get filename */
     char filename[MAX_FILENAME_LEN];
-    strcpy(filename, name());
-    strcat(filename, ".tbl");
-    ifstream fin(filename);
+
+    if (fname == NULL) {
+        // if null use "name().tbl" file
+        strcpy(filename, name());
+        strcat(filename, ".tbl");
+    }
+    else {
+        int sz = (strlen(fname)>MAX_FILENAME_LEN ? strlen(fname) : MAX_FILENAME_LEN);
+        strncpy(filename, fname, sz);
+    }
+
+    FILE* fd = fopen(filename, "r");
+    if(fd == NULL) {
+        cerr << "fopen() failed on " << filename << endl;
+	return RC(se_NOT_FOUND);
+    }    
+
+    cout << "Loading " << _name << " table from (" << filename << ") file..." << endl;
     
     W_DO(db->begin_xct());
-
-    /* 1. check if the file already exists */
-    w_rc_t  result = find_fid(db);
     
-    if (result == RC(se_TABLE_NOT_FOUND)) {
-	/* create a new file if it does not exist */
-	W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
-
-	file_info_t info;
-	info.set_ftype(FT_REGULAR);
-	info.set_fid(fid());
-	smsize_t    infosize = sizeof(info);
-
-        /* add table info to the root (metadata) tree */
-	W_DO(ss_m::create_assoc(root_iid(),
-				vec_t(_name, strlen(_name)),
-				vec_t(&info, infosize)));
-    }
-    else if (result != RCOK) return result;
-
+    /* 1. create the warehouse table */
+    W_DO(create_table(db));
+         
     /* 2. append the tuples */
-    append_file_i file_append(_fid);
+    append_file_i file_append(_fid);    
 
-    //@@@@@@@@@@@@@@
-    // (ip) The parser can be used here
-    //@@@@@@@@@@@@@@
-    assert (false); 
-    
+    /* 3a. read the file line-by-line */
+    /* 3b. convert each line to a tuple for this table */
+    /* 3c. insert tuple to table */
+    register int tuple_count = 0;
+    register int mark = COMMIT_ACTION_COUNT;
+    table_row_t  tuple(this);
+    bool btread = false;
+    char linebuffer[MAX_LINE_LENGTH];
 
-    /* while not at the end of file, read entries and insert them table */
-    int         tuple_count = 0;
-    table_row_t tuple(this);
-    while (!fin.eof()) {
-	for (int i=0; i<_field_count; i++) {
-	    char delim = DELIM_CHAR;
-	    if (i == _field_count-1) delim = '\n';
-	    if (!tuple._pvalues[i].load_value_from_file(fin, delim))
-		break;
-	    fin.get(delim);
-	}
-
-	tuple_count++;
+    for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
+        btread = read_tuple_from_line(tuple, linebuffer);
 	W_DO(file_append.create_rec(vec_t(), 0,
 				    vec_t(tuple.format(), tuple.size()),
 				    tuple._rid));
 
-	if ((tuple_count % COMMIT_ACTION_COUNT) == 0) {
-	    W_DO(db->commit_xct());
-	    if (ss_m::num_active_xcts() != 0)
-		return RC(se_LOAD_NOT_EXCLUSIVE);
-	    W_DO(db->begin_xct());
-	}
+	if(i >= mark) {
+	    W_COERCE(db->commit_xct());
+            cerr << "load(" << name() << "): " << tuple_count << endl;
+	    W_COERCE(db->begin_xct());
+	    mark += COMMIT_ACTION_COUNT;
+	}	    
+        tuple_count++;
     }
-
-    /* 3. commit and print statistics
+    
+    /* 3. commit and print statistics */
     W_DO(db->commit_xct());
     cout << "# of records inserted: " << tuple_count << endl;
     cout << "Building indices ... " << endl;
@@ -144,8 +135,10 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     W_DO(get_iter_for_file_scan(db, iter));
 
     bool        eof;
-    int         tuple_count = 0;
+    register int tuple_count = 0;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t row(this);
+    time_t tstart = time(NULL);
 
     /* 2. iterate over the whole table and insert the corresponding index entries */    
     W_DO(iter->next(db, eof, row));
@@ -156,15 +149,20 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 	W_DO(iter->next(db, eof, row));
 	tuple_count++;
 
-        // every 1000 inserts commit and print something
-	if ( tuple_count % COMMIT_ACTION_COUNT == 0 ) { 
+	if (tuple_count >= mark) { 
             W_DO(db->commit_xct());
-            cerr << "bulkload_index(" << index->name() << "): " << tuple_count << endl;
+            cerr << "index(" << index->name() << "): " << tuple_count << endl;
             W_DO(db->begin_xct());
+            mark += COMMIT_ACTION_COUNT;
 	}
     }
     W_DO(db->commit_xct());
     delete iter;
+
+
+    /* 5. print stats */
+    time_t tstop = time(NULL);
+    cout << "Index " << index->name() << " loaded in " << (tstop - tstart) << " secs..." << endl;
 
     return (RCOK);
 }

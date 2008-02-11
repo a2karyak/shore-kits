@@ -550,10 +550,44 @@ w_rc_t  stock_t::update_tuple(ss_m* db,
  *==========================================================
  */
 
+bool warehouse_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_WAREHOUSE parser;
+    parse_tpcc_WAREHOUSE::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* id */
+    tuple.set_value(0, record.second.W_ID);
+    /* name */
+    tuple.set_value(1, record.second.W_NAME);
+    /* street1 */
+    tuple.set_value(2, record.second.W_STREET_1);
+    /* street2 */
+    tuple.set_value(3, record.second.W_STREET_2);
+    /* city */
+    tuple.set_value(4, record.second.W_CITY);
+    /* state */
+    tuple.set_value(5, record.second.W_STATE);
+    /* zip */
+    tuple.set_value(6, record.second.W_ZIP);
+    /* tax */
+    tuple.set_value(7, record.second.W_TAX.to_double());
+    /* ytd */
+    tuple.set_value(8, record.second.W_YTD.to_double());
+
+    return (true);
+}
+
 void  warehouse_t::random(table_row_t* ptuple, short w_id)
 {
     char    short_string[MAX_SHORT_LEN];
     double  double_number;
+
+    assert (false); // (ip) deprecated
 
     /* id */
     ptuple->set_value(0, w_id);
@@ -593,9 +627,7 @@ void  warehouse_t::random(table_row_t* ptuple, short w_id)
 
 w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(23);
 
@@ -608,8 +640,8 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
     append_file_i  file_append(_fid);
     
     // add tuples to table and index
-    int count = 0;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 0;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t awh_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -618,10 +650,11 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
 				    vec_t(awh_tuple.format(), awh_tuple.size()),
 				    awh_tuple._rid));
 
-	if ((count >= mark) == 0) {
+	if (count >= mark) {
 	    W_DO(db->commit_xct());
 // 	    if (ss_m::num_active_xcts() != 0)
 // 		return RC(se_LOAD_NOT_EXCLUSIVE);
+            cerr << "table(" << _name << "): " << count << endl;
 	    W_DO(db->begin_xct());
             mark += COMMIT_ACTION_COUNT;
 	}
@@ -629,10 +662,8 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return (bulkload_all_indexes(db));
 }
@@ -642,10 +673,49 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
  *==========================================================
  */
 
+
+bool district_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_DISTRICT parser;
+    parse_tpcc_DISTRICT::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* id */
+    tuple.set_value(0, record.second.D_ID);
+    /* w_id */
+    tuple.set_value(1, record.second.D_W_ID);
+    /* name */
+    tuple.set_value(2, record.second.D_NAME);
+    /* street1 */
+    tuple.set_value(3, record.second.D_STREET_1);
+    /* street2 */
+    tuple.set_value(4, record.second.D_STREET_2);
+    /* city */
+    tuple.set_value(5, record.second.D_CITY);
+    /* state */
+    tuple.set_value(6, record.second.D_STATE);
+    /* zip */
+    tuple.set_value(7, record.second.D_ZIP);
+    /* tax */
+    tuple.set_value(8, record.second.D_TAX.to_double());
+    /* ytd */
+    tuple.set_value(9, record.second.D_YTD.to_double());
+    /* next_o_id */
+    tuple.set_value(10, record.second.D_NEXT_O_ID);
+
+    return (true);
+}
+
 void district_t::random(table_row_t* ptuple, short id, short w_id, int next_o_id)
 {
     char   short_string[MAX_SHORT_LEN] = "test";
     double double_number;
+
+    assert (false); // (ip) deprecated
 
     /* id */
     ptuple->set_value(0, id);
@@ -691,9 +761,7 @@ void district_t::random(table_row_t* ptuple, short id, short w_id, int next_o_id
 
 w_rc_t district_t::bulkload(ss_m* db, int w_num)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(44);
 
@@ -706,8 +774,8 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
     append_file_i  file_append(_fid);
     
     // add tuples to table and index
-    int count = 0;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 0;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t ad_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -717,10 +785,11 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
 					vec_t(ad_tuple.format(), ad_tuple.size()),
 					ad_tuple._rid));
 	    count++;
-	    if ((count >= mark) == 0) {
+	    if (count >= mark) {
 		W_DO(db->commit_xct());
 // 		if (ss_m::num_active_xcts() != 0)
 // 		    return RC(se_LOAD_NOT_EXCLUSIVE);
+                cerr << "table(" << _name << "): " << count << endl;
 		W_DO(db->begin_xct());
                 mark += COMMIT_ACTION_COUNT;
 	    }
@@ -728,10 +797,8 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -741,8 +808,70 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
  *==========================================================
  */
 
+bool customer_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_CUSTOMER parser;
+    parse_tpcc_CUSTOMER::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* id */
+    tuple.set_value(0, record.first.C_C_ID);
+    /* d_id */
+    tuple.set_value(1, record.first.C_D_ID);
+    /* w_id */
+    tuple.set_value(2, record.first.C_W_ID);
+    /* first */
+    tuple.set_value(3, record.second.C_FIRST);
+    /* middle */
+    tuple.set_value(4, record.second.C_MIDDLE);
+    /* last */
+    tuple.set_value(5, record.second.C_LAST);
+    /* street1 */
+    tuple.set_value(6, record.second.C_STREET_1);
+    /* street2 */
+    tuple.set_value(7, record.second.C_STREET_2);
+    /* city */
+    tuple.set_value(8, record.second.C_CITY);
+    /* state */
+    tuple.set_value(9, record.second.C_STATE);
+    /* zip */
+    tuple.set_value(10, record.second.C_ZIP);
+    /* phone */
+    tuple.set_value(11, record.second.C_PHONE);
+    /* since */
+    tuple.set_value(12, record.second.C_SINCE);
+    /* credit */
+    tuple.set_value(13, record.second.C_CREDIT);
+    /* credit_limit */
+    tuple.set_value(14, record.second.C_CREDIT_LIM.to_double());
+    /* discount */
+    tuple.set_value(15, record.second.C_DISCOUNT.to_double());
+    /* balance */
+    tuple.set_value(16, record.second.C_BALANCE.to_double());
+    /* ytd_payment */
+    tuple.set_value(17, record.second.C_YTD_PAYMENT.to_double());
+    /* payment_cnt */
+    tuple.set_value(18, record.second.C_LAST_PAYMENT.to_double());
+    /* delivery_cnt */
+    tuple.set_value(19, record.second.C_PAYMENT_CNT);
+    /* data_1 */
+    tuple.set_value(20, record.second.C_DATA_1);
+    /* data_2 */
+    tuple.set_value(21, record.second.C_DATA_2);
+
+    return (true);
+}
+
 void  customer_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
 {
+
+    assert (false); // (ip) modified the schema
+
+
     double  double_number;
     char    string[MAX_LONG_LEN];
     timestamp_t  time;
@@ -827,9 +956,7 @@ void  customer_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
 
 w_rc_t customer_t::bulkload(ss_m* db, int w_num)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(10);
 
@@ -854,10 +981,11 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
 					    vec_t(ac_tuple.format(), ac_tuple.size()),
 					    ac_tuple._rid));
 
-		if ((count >= mark) == 0) {
+		if (count >= mark) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
+                    cerr << "table(" << _name << "): " << count << endl;
 		    W_DO(db->begin_xct());
                     mark += COMMIT_ACTION_COUNT;
 		}
@@ -867,10 +995,8 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -880,10 +1006,42 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
  *==========================================================
  */
 
+bool history_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_HISTORY parser;
+    parse_tpcc_HISTORY::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* c_id */
+    tuple.set_value(0, record.first.H_C_ID);
+    /* c_d_id */
+    tuple.set_value(1, record.first.H_C_D_ID);
+    /* c_w_id */
+    tuple.set_value(2, record.first.H_C_W_ID);
+    /* d_id */
+    tuple.set_value(3, record.first.H_D_ID);
+    /* w_id */
+    tuple.set_value(4, record.first.H_W_ID);
+    /* date */
+    tuple.set_value(5, record.first.H_DATE);
+    /* amount */
+    tuple.set_value(6, record.second.H_AMOUNT.to_double());
+    /* data */
+    tuple.set_value(7, record.second.H_DATA);
+
+    return (true);
+}
+
 void  history_t::random(table_row_t* ptuple, int c_id, short c_d_id, short c_w_id)
 {
     char  string[MAX_SHORT_LEN];
     timestamp_t  time;
+
+    assert (false); // (ip) Modified schema
 
     /* c_id */
     ptuple->set_value(0, c_id);
@@ -913,9 +1071,7 @@ void  history_t::random(table_row_t* ptuple, int c_id, short c_d_id, short c_w_i
 
 w_rc_t  history_t::bulkload(ss_m* db, int w_num)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(15);
 
@@ -928,8 +1084,8 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
     append_file_i  file_append(_fid);
 
     // add tuples to the table 
-    int count = 1;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 1;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t ah_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -940,10 +1096,11 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
 					    vec_t(ah_tuple.format(), ah_tuple.size()),
 					    ah_tuple._rid));
 
-		if ((count >= mark) == 0) {
+		if (count >= mark) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
+                    cerr << "table(" << _name << "): " << count << endl;
 		    W_DO(db->begin_xct());
                     mark += COMMIT_ACTION_COUNT;
 		}
@@ -953,10 +1110,8 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -966,8 +1121,31 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
  *==========================================================
  */
 
+bool new_order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_NEW_ORDER parser;
+    parse_tpcc_NEW_ORDER::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* o_id */
+    tuple.set_value(0, record.first.NO_O_ID);
+    /* d_id */
+    tuple.set_value(1, record.first.NO_D_ID);
+    /* w_id */
+    tuple.set_value(2, record.first.NO_W_ID);
+
+    return (true);
+}
+
 void new_order_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
 {
+
+    assert (false); // (ip) deprecated
+
     /* o_id */
     ptuple->set_value(0, id);
 
@@ -987,9 +1165,7 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
 	cerr << "                  Loading New-Order with 1/3 of CUSTOMERS_PER_DISTRICT" << endl;
     }
 
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(99);
 
@@ -1001,8 +1177,8 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
     /* 2. append tuples */
     append_file_i  file_append(_fid);
     // add tuples to the table 
-    int count = 1;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 1;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t anu_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1013,10 +1189,11 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
 					    vec_t(anu_tuple.format(), anu_tuple.size()),
 					    anu_tuple._rid));
 
-		if ((count >= mark) == 0) {
+		if (count >= mark) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
+                    cerr << "table(" << _name << "): " << count << endl;
 		    W_DO(db->begin_xct());
                     mark += COMMIT_ACTION_COUNT;
 		}
@@ -1026,10 +1203,8 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -1039,11 +1214,44 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
  *==========================================================
  */
 
+bool order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_ORDER parser;
+    parse_tpcc_ORDER::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* id */
+    tuple.set_value(0, record.first.O_ID);
+    /* d_id */
+    tuple.set_value(1, record.first.O_C_ID);
+    /* w_id */
+    tuple.set_value(2, record.first.O_D_ID);
+    /* c_id */
+    tuple.set_value(3, record.first.O_W_ID);
+    /* entry_d */
+    tuple.set_value(4, record.second.O_ENTRY_D);
+    /* carrier_id */
+    tuple.set_value(5, record.second.O_CARRIER_ID);
+    /* ol_cnt */
+    tuple.set_value(6, record.second.O_OL_CNT);
+    /* all_local */
+    tuple.set_value(7, record.second.O_ALL_LOCAL);
+
+    return (true);
+}
+
 void order_t::random(table_row_t* ptuple, int id, int c_id, short d_id, short w_id, short ol_cnt)
 {
     short short_num;
     timestamp_t  time;
     char   string[MAX_SHORT_LEN];
+
+    assert (false); // (ip) modified schema
+
 
     /* id */
     ptuple->set_value(0, id);
@@ -1073,9 +1281,15 @@ void order_t::random(table_row_t* ptuple, int id, int c_id, short d_id, short w_
 }
 
 
-void order_t::produce_cnt_array(int w_num)
+void order_t::produce_cnt_array(int w_num, pthread_mutex_t* parray_mutex)
 {
     cerr << "building cnt_array... " << endl;
+    // first init and lock the mutex
+    assert (parray_mutex);
+    _pcnt_array_mutex = parray_mutex;
+    pthread_mutex_lock(_pcnt_array_mutex);
+    
+    // then create the cnt_array
     _pcnt_array = (short*)malloc(sizeof(short)*w_num*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
     assert(_pcnt_array);
     for (int i=0; i<w_num; i++)
@@ -1092,9 +1306,7 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num)
 
 w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     int index = 0;
 
@@ -1109,8 +1321,8 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
     append_file_i  file_append(_fid);
 
     // add tuples to the table 
-    int count = 1;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 1;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t ao_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1124,10 +1336,11 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 					    vec_t(ao_tuple.format(), ao_tuple.size()),
 					    ao_tuple._rid));
 
-		if ((count >= mark) == 0) {
+		if (count >= mark) {
 		    W_DO(db->commit_xct());
 // 		    if (ss_m::num_active_xcts() != 0)
 // 			return RC(se_LOAD_NOT_EXCLUSIVE);
+                    cerr << "table(" << _name << "): " << count << endl;
 		    W_DO(db->begin_xct());
                     mark += COMMIT_ACTION_COUNT;
 		}
@@ -1137,10 +1350,11 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    // release cnt_array mutex
+    pthread_mutex_unlock(_pcnt_array_mutex);
+    
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -1150,6 +1364,40 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
  *==========================================================
  */
 
+bool order_line_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_ORDERLINE parser;
+    parse_tpcc_ORDERLINE::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* o_id */
+    tuple.set_value(0, record.first.OL_O_ID);
+    /* d_id */
+    tuple.set_value(1, record.first.OL_D_ID);
+    /* w_id */
+    tuple.set_value(2, record.first.OL_W_ID);
+    /* number */
+    tuple.set_value(3, record.first.OL_NUMBER);
+    /* i_id */
+    tuple.set_value(4, record.second.OL_I_ID);
+    /* supply_w_id */
+    tuple.set_value(5, record.second.OL_SUPPLY_W_ID);
+    /* delivery */
+    tuple.set_value(6, record.second.OL_DELIVERY_D);
+    /* quantity */
+    tuple.set_value(7, record.second.OL_QUANTITY);
+    /* amount */
+    tuple.set_value(8, record.second.OL_AMOUNT);
+    /* dist_info */
+    tuple.set_value(9, record.second.OL_DIST_INFO);
+
+    return (true);
+}
+
 void order_line_t::random(table_row_t* ptuple, int id,
 			  short d_id,
 			  short w_id,
@@ -1158,6 +1406,8 @@ void order_line_t::random(table_row_t* ptuple, int id,
 {
     char   string[MAX_SHORT_LEN];
     timestamp_t  time;
+
+    assert (false); // (ip) deprecated
 
     /* o_id */
     ptuple->set_value(0, id);
@@ -1198,16 +1448,19 @@ void order_line_t::random(table_row_t* ptuple, int id,
 
 w_rc_t order_line_t::bulkload(ss_m* db, int w_num)
 {
+    // get cnt_array mutex 
+    assert (_pcnt_array_mutex);
+    critical_section_t cs(*_pcnt_array_mutex);
     assert (_pcnt_array);
+
+    // do the loading
     return (bulkload(db, w_num, _pcnt_array));
 }
 
 
 w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     int index = 0;
 
@@ -1225,7 +1478,6 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
     // add tuples to the table 
     int count = 1;
     int mark = COMMIT_ACTION_COUNT;
-    table_row_t aol_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
@@ -1235,6 +1487,7 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 		int ol_cnt = cnt_array[index++];
 	  
 		for (short ol_id = 1; ol_id <= ol_cnt; ol_id++) {
+                    table_row_t aol_tuple(this);
 		    if (o_id < 2101) {
 			random(&aol_tuple, o_id, d_id, w_id, ol_id);
 		    }
@@ -1246,10 +1499,11 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 						vec_t(aol_tuple.format(), aol_tuple.size()),
 						aol_tuple._rid));
 
-		    if ((count >= mark) == 0) {
+		    if (count >= mark) {
 			W_DO(db->commit_xct());
 // 			if (ss_m::num_active_xcts() != 0)
 // 			    return RC(se_LOAD_NOT_EXCLUSIVE);
+                        cerr << "table(" << _name << "): " << count << endl;
 			W_DO(db->begin_xct());
                         mark += COMMIT_ACTION_COUNT;
 		    }
@@ -1260,10 +1514,8 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -1273,10 +1525,36 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
  *==========================================================
  */
 
+bool item_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_ITEM parser;
+    parse_tpcc_ITEM::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+    /* id */
+    tuple.set_value(0, record.second.I_ID);
+    /* im_id */
+    tuple.set_value(1, record.second.I_IM_ID);
+    /* name */
+    tuple.set_value(2, record.second.I_NAME);
+    /* price */
+    tuple.set_value(3, record.second.I_PRICE);
+    /* data */
+    tuple.set_value(4, record.second.I_DATA);
+
+    return (true);
+}
+
 void item_t::random(table_row_t* ptuple, int id)
 {
     char   string[MAX_SHORT_LEN];
     int    hit;
+
+    assert (false); // (ip) deprecated
 
     /* id */
     ptuple->set_value(0, id);
@@ -1298,9 +1576,7 @@ void item_t::random(table_row_t* ptuple, int id)
 
 w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(13);
 
@@ -1313,8 +1589,8 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
     append_file_i  file_append(_fid);
 
     // add tuples to the table 
-    int count = 0;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 0;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t ai_tuple(this);
 
     for (int i_id = 1; i_id <= ITEMS; i_id++) {
@@ -1323,10 +1599,11 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
 				    vec_t(ai_tuple.format(), ai_tuple.size()),
 				    ai_tuple._rid));
 
-	if ((count >= mark) == 0) {
+	if (count >= mark) {
 	    W_DO(db->commit_xct());
 // 	    if (ss_m::num_active_xcts() != 0)
 // 		return RC(se_LOAD_NOT_EXCLUSIVE);
+            cerr << "table(" << _name << "): " << count << endl;
 	    W_DO(db->begin_xct());
             mark += COMMIT_ACTION_COUNT;
 	}
@@ -1334,10 +1611,8 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }
@@ -1347,10 +1622,61 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
  *==========================================================
  */
 
+bool stock_t::read_tuple_from_line(table_row_t& tuple, char* buf)
+{
+    static parse_tpcc_STOCK parser;
+    parse_tpcc_STOCK::record_t record;
+
+    /* 1. parse row to a record_t object */
+    record = parser.parse_row(buf);
+
+    /* 2. convert the object to a table_row_t */
+
+
+    /* i_id */
+    tuple.set_value(0, record.second.S_I_ID);
+    /* w_id */
+    tuple.set_value(1, record.second.S_W_ID);
+    /* quantity */
+    tuple.set_value(2, record.second.S_REMOTE_CNT);
+    /* dist0 */
+    tuple.set_value(3, record.second.S_QUANTITY);
+    /* dist1 */
+    tuple.set_value(4, record.second.S_ORDER_CNT);
+    /* dist2 */
+    tuple.set_value(5, record.second.S_YTD);
+    /* dist3 */
+    tuple.set_value(6, record.second.S_DIST_01);
+    /* dist4 */
+    tuple.set_value(7, record.second.S_DIST_02);
+    /* dist5 */
+    tuple.set_value(8, record.second.S_DIST_03);
+    /* dist6 */
+    tuple.set_value(9, record.second.S_DIST_04);
+    /* dist7 */
+    tuple.set_value(10, record.second.S_DIST_05);
+    /* dist8 */
+    tuple.set_value(11, record.second.S_DIST_06);
+    /* dist9 */ 
+    tuple.set_value(12, record.second.S_DIST_07);
+    /* ytd */
+    tuple.set_value(13, record.second.S_DIST_08);
+    /* order_cnt */
+    tuple.set_value(14, record.second.S_DIST_09);
+    /* remote_cnt */
+    tuple.set_value(15, record.second.S_DIST_10);
+    /* data */
+    tuple.set_value(16, record.second.S_DATA);
+
+    return (true);
+}
+
 void stock_t::random(table_row_t* ptuple, int id, short w_id)
 {
     char   string[MAX_SHORT_LEN];
     int    hit;
+
+    assert (false); // (ip) Modified schema
 
     /* i_id */
     ptuple->set_value(0, id);
@@ -1417,9 +1743,7 @@ void stock_t::random(table_row_t* ptuple, int id, short w_id)
 
 w_rc_t stock_t::bulkload(ss_m* db, int w_num)
 {
-#ifdef   DEBUG
     cout << "Loading " << _name << " table ..." << endl;
-#endif
 
     _tpccrnd.init_random(7);
 
@@ -1432,8 +1756,8 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
     append_file_i  file_append(_fid);
 
     // add tuples to the table 
-    int count = 0;
-    int mark = COMMIT_ACTION_COUNT;
+    register int count = 0;
+    register int mark = COMMIT_ACTION_COUNT;
     table_row_t as_tuple(this);
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1443,10 +1767,9 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
 					vec_t(as_tuple.format(), as_tuple.size()),
 					as_tuple._rid));
 
-	    if ((count >= mark) == 0) {
+	    if (count >= mark) {
 		W_DO(db->commit_xct());
-// 		if (ss_m::num_active_xcts() != 0)
-// 		    return RC(se_LOAD_NOT_EXCLUSIVE);
+                cerr << "table(" << _name << "): " << count << endl;
 		W_DO(db->begin_xct());
                 mark += COMMIT_ACTION_COUNT;
 	    }
@@ -1455,10 +1778,8 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
     }
     W_DO(db->commit_xct());
 
-#ifdef DEBUG
-    cout << "# of records inserted: " << count << endl;
+    cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
-#endif
 
     return bulkload_all_indexes(db);
 }

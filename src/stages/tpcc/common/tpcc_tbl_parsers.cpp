@@ -12,11 +12,7 @@
 #include "util/progress.h"
 #include "util/store_string.h"
 
-#include "workload/tpcc/tpcc_tbl_parsers.h"
-
-
-//#define SECOND_PADDING
-#define DUPLICATES_PADDING 1000
+#include "stages/tpcc/common/tpcc_tbl_parsers.h"
 
 ENTER_NAMESPACE(tpcc);
 

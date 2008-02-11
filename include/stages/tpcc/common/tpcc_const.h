@@ -73,7 +73,7 @@ const int MAX_RECORD_LENGTH       = 512;
 
 const int TPCC_WAREHOUSE_FCOUNT  = 9;
 const int TPCC_DISTRICT_FCOUNT   = 11;
-const int TPCC_CUSTOMER_FCOUNT   = 21;
+const int TPCC_CUSTOMER_FCOUNT   = 22;
 const int TPCC_HISTORY_FCOUNT    = 8;
 const int TPCC_NEW_ORDER_FCOUNT  = 3;
 const int TPCC_ORDER_FCOUNT      = 8;

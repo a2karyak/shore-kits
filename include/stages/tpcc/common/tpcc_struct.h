@@ -125,7 +125,7 @@ struct tpcc_district_tuple {
     char D_STREET_2 [STRSIZE(20)];
     char D_CITY     [STRSIZE(20)];
     char D_STATE    [STRSIZE(2)];
-    char D_ZIP      [STRSIZE(10)];
+    char D_ZIP      [STRSIZE(9)];
     decimal D_TAX;
     decimal D_YTD;
     int D_NEXT_O_ID;
@@ -343,7 +343,7 @@ struct tpcc_stock_tuple_key {
 
 struct tpcc_warehouse_tuple {
     int W_ID;
-    char W_NAME     [STRSIZE(20)];
+    char W_NAME     [STRSIZE(10)];
     char W_STREET_1 [STRSIZE(20)];
     char W_STREET_2 [STRSIZE(20)];
     char W_CITY     [STRSIZE(20)];

@@ -109,6 +109,8 @@ public:
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
+        
+        _table_list.clear();
     }
 
     /** Public methods */    
