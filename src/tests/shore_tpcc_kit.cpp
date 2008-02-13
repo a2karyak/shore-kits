@@ -15,41 +15,39 @@ using namespace tpcc;
 //
 // @brief An smthread-based class for tests
 
-class test_smt_t : public smthread_t {
+class test_smt_t : public thread_t {
 private:
     ShoreTPCCEnv* _env;    
-    c_str _tname;
     tpcc_random_gen_t _tpccrnd;         
 
 public:
     int	_rv;
     
     test_smt_t(ShoreTPCCEnv* env, c_str tname) 
-	: smthread_t(t_regular), 
-          _env(env), _tname(tname), _rv(0)
+	: thread_t(tname), 
+          _env(env), _rv(0)
     {
-        cout << "Hello... " << endl;
+        TRACE( TRACE_ALWAYS, "Hello...\n");
         _tpccrnd = tpcc_random_gen_t(NULL);
     }
 
 
     ~test_smt_t() {
-        cout << "Bye... " << endl;
+        TRACE( TRACE_ALWAYS, "Bye...\n");
     }
 
 
     // thread entrance
-    void run() {
+    void work() {
         if (!_env->is_initialized()) {
             if (_env->init()) {
                 // Couldn't initialize the Shore environment
                 // cannot proceed
-                cout << "Couldn't initialize Shore " << endl;
+                TRACE( TRACE_ALWAYS, "Couldn't initialize Shore...\n");
                 _rv = 1;
                 return;
             }
         }
-
         // run test
         _rv = test();
     }
@@ -68,9 +66,9 @@ public:
 
     // methods
     int test() {
-        _env->loaddata();
+        //        _env->loaddata();
         //_env->check_consistency();
-        tpcc_run_xct(_env);
+        tpcc_run_xct(_env, 40);
         //print_tables();
         return (0);
     }
@@ -79,32 +77,46 @@ public:
      *        smthread-inherited class that runs using run_smthread()
      */
     inline int retval() { return (_rv); }
-    inline c_str tname() { return (_tname); }
 
 }; // EOF: test_smt_t
 
 
 
 w_rc_t test_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid) 
-{ cout << "NEW_ORDER... " << endl; return (RCOK); }
+{ 
+    TRACE(TRACE_DEBUG, "%d. NEW_ORDER...\n", xctid); 
+    return (RCOK); 
+}
 
 w_rc_t test_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid) 
-{ cout << "ORDER_STATUS... " << endl; return (RCOK); }
+{ 
+    TRACE(TRACE_DEBUG, "%d. ORDER_STATUS...\n", xctid); 
+    return (RCOK); 
+}
+
 
 w_rc_t test_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid) 
-{ cout << "DELIVERY... " << endl; return (RCOK); }
+{ 
+    TRACE(TRACE_DEBUG, "%d. DELIVERY...\n", xctid); 
+    return (RCOK); 
+}
+
 
 w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid) 
-{ cout << "STOCK_LEVEL... " << endl; return (RCOK); }
+{ 
+    TRACE(TRACE_DEBUG, "%d. STOCK...\n", xctid); 
+    return (RCOK); 
+}
 
 
 w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
-    cout << "PAYMENT... " << endl;    
+    TRACE(TRACE_DEBUG, "%d. PAYMENT...\n", xctid);     
 
     payment_input_t pin = create_payment_input();
     trx_result_tuple_t trt;
+    return (RCOK);
     
     w_rc_t e = _env->xct_payment(&pin, xctid, trt);
 
@@ -130,8 +142,9 @@ void test_smt_t::print_tables() {
 w_rc_t test_smt_t::tpcc_run_xct(ShoreTPCCEnv* env, int num_xct, int xct_type)
 {
     for (int i=0; i<num_xct; i++) {
-        cout << i << ". ";
+        //        TRACE( TRACE_DEBUG, "%d . ", i);
         tpcc_run_one_xct(env, xct_type, i);
+        sleep(10);
     }
     return (RCOK);
 }
@@ -142,7 +155,7 @@ w_rc_t test_smt_t::tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
 {
     int  this_type = xct_type;
     if (this_type == 0) {        
-        this_type = _tpccrnd.random_xct_type();
+        this_type = _tpccrnd.random_xct_type(rand()%100);
     }
     
     switch (this_type) {
@@ -168,17 +181,16 @@ w_rc_t test_smt_t::tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
 //
 // @brief An smthread-based class for tests
 
-class close_smt_t : public smthread_t {
+class close_smt_t : public thread_t {
 private:
     ShoreTPCCEnv* _env;    
-    c_str _tname;
 
 public:
     int	_rv;
     
     close_smt_t(ShoreTPCCEnv* env, c_str tname) 
-	: smthread_t(t_regular), 
-          _env(env), _tname(tname), _rv(0)
+	: thread_t(tname), 
+          _env(env), _rv(0)
     {
     }
 
@@ -187,8 +199,9 @@ public:
 
 
     // thread entrance
-    void run() {
+    void work() {
         assert (_env);
+        TRACE( TRACE_ALWAYS, "Closing env...\n");
         if (_env) {
             delete (_env);
             _env = NULL;
@@ -200,60 +213,76 @@ public:
      *        smthread-inherited class that runs using run_smthread()
      */
     inline int retval() { return (_rv); }
-    inline c_str tname() { return (_tname); }
-
+    
 }; // EOF: close_smt_t
 
 
 
 int main(int argc, char* argv[]) 
 {
+    // initialize cordoba threads
+    thread_init();
+
     // Instanciate the Shore Environment
     shore_env = new ShoreTPCCEnv("shore.conf", 1, 1);
     
     // Load data to the Shore Database
-    int* r = NULL;
     TRACE( TRACE_ALWAYS, "Starting...\n");
-    test_smt_t* tt = new test_smt_t(shore_env, c_str("tt"));
-    run_smthread<test_smt_t,int>(tt, r);
+    guard<test_smt_t> tt1 = new test_smt_t(shore_env, c_str("tt1"));
+    guard<test_smt_t> tt2 = new test_smt_t(shore_env, c_str("tt2"));
+    guard<test_smt_t> tt3 = new test_smt_t(shore_env, c_str("tt3"));
+    guard<test_smt_t> tt4 = new test_smt_t(shore_env, c_str("tt4"));
+    //    run_smthread<test_smt_t,int>(tt, r);
 
-    if (*r) {
-        cerr << "Error in loading... " << endl;
-        cerr << "Exiting... " << endl;
-        return (1);
-    }
 
-    if (r) {
-        delete (r);
-        r = NULL;
-    }
+    /* 1. fork the loading threads */
+    tt1->fork();
+    tt2->fork();
+    tt3->fork();
+    tt4->fork();
+    
+    /* 2. join the loading threads */
+    tt1->join();        
+    if (tt1->_rv) {
+        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Exiting...\n");
+        assert (false);
+    }    
 
-    if (tt) {
-        delete (tt);
-        tt = NULL;
-    }
+    tt2->join();        
+    if (tt2->_rv) {
+        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Exiting...\n");
+        assert (false);
+    }    
+
+    tt3->join();        
+    if (tt3->_rv) {
+        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Exiting...\n");
+        assert (false);
+    }    
+
+    tt4->join();        
+    if (tt4->_rv) {
+        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Exiting...\n");
+        assert (false);
+    }    
 
     // close Shore env
-    close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
-    run_smthread<close_smt_t,int>(clt, r);
-
-    if (*r) {
-        cerr << "Error in loading... " << endl;
-        cerr << "Exiting... " << endl;
+    close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));    
+    clt->fork();
+    clt->join();
+    if (clt->_rv) {
+        TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
         return (1);
-    }
-
-    if (r) {
-        delete (r);
-        r = NULL;
     }
 
     if (clt) {
         delete (clt);
         clt = NULL;
     }
-
-
 
     return (0);
 }

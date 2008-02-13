@@ -16,7 +16,7 @@ private:
 
 public:
 
-    void run() {
+    void work() {
         start(start_arg);        
     }
 

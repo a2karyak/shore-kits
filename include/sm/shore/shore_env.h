@@ -118,10 +118,6 @@ public:
     virtual ~ShoreEnv() {         
         print_trx_stats();
 
-        pthread_mutex_destroy(&_init_mutex);
-        pthread_mutex_destroy(&_vol_mutex);
-        pthread_mutex_destroy(&_load_mutex);
-
         if (_popts) {
             delete (_popts);
             _popts = NULL;
@@ -132,10 +128,14 @@ public:
             _pvid = NULL;
         }
         
-        if (_pssm) {
-            delete (_pssm);
-            _pssm = NULL;
-        }
+//         if (_pssm) {
+//             delete (_pssm);
+//             _pssm = NULL;
+//         }
+
+        pthread_mutex_destroy(&_init_mutex);
+        pthread_mutex_destroy(&_vol_mutex);
+        pthread_mutex_destroy(&_load_mutex);
     }
 
     /** Public methods */    
@@ -156,8 +156,14 @@ public:
     inline bool is_loaded_no_cs() { return (_loaded); }
     inline void set_loaded_no_cs(bool b) { _loaded = b; } 
 
-    inline bool is_initialized() { return (_initialized); }
-    inline bool is_loaded() { return (_loaded); }
+    inline bool is_initialized() { 
+        CRITICAL_SECTION(cs, _init_mutex); 
+        return (_initialized); 
+    }
+    inline bool is_loaded() { 
+        CRITICAL_SECTION(cs, _load_mutex);
+        return (_loaded); 
+    }
 
     // stats
     inline long aborted_cnt() { return (_aborted_cnt); }

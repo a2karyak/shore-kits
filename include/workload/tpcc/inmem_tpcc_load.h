@@ -43,7 +43,7 @@ public:
 
     virtual ~data_loader_t() { }
 
-    virtual void run();
+    virtual void work();
 
     virtual int insert(int idx, record_t aRecord)=0; 
 
@@ -51,7 +51,7 @@ public:
 
 
 template <class RowParser>
-void data_loader_t<RowParser>::run() {
+void data_loader_t<RowParser>::work() {
 
     TRACE( TRACE_DEBUG, "Loading (%s)\n", _fname.data());
 
@@ -96,7 +96,7 @@ public:
     {
     }
     
-    virtual void run() {
+    virtual void work() {
 	TRACE( TRACE_DEBUG, "Saving %s table to (%s)\n", _table.get_name().data(), _fname.data());
 
 	guard<FILE> fd = fopen(_fname.data(), "w");
@@ -126,7 +126,7 @@ public:
     {
     }
     
-    virtual void run() {
+    virtual void work() {
 	TRACE( TRACE_DEBUG, "Restoring table %s from  (%s)\n", _table.get_name().data(), _fname.data());
 
 	guard<FILE> fd = fopen(_fname.data(), "r");

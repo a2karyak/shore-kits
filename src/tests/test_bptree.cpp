@@ -157,7 +157,7 @@ public:
 
     virtual ~bptree_loader_t() { }
 
-    virtual void run() {
+    virtual void work() {
         loadValues();
     }
 

@@ -106,8 +106,8 @@ int do_iteration(int argc, char* argv[]) {
 
 
 void* start_client( void* ptr) {
-    inmem_tpcc_payment_single_thr_driver* a_client = (inmem_tpcc_payment_single_thr_driver*)ptr;
-    a_client->run();
+    inmem_tpcc_payment_single_thr_driver* aclient = (inmem_tpcc_payment_single_thr_driver*)ptr;
+    aclient->work();
     pthread_exit(0);
 
     return (NULL);

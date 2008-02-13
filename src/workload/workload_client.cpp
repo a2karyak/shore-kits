@@ -52,7 +52,7 @@ inline workload_client_t::~workload_client_t() {
 
 
 
-void workload_client_t::run() {
+void workload_client_t::work() {
 
     // wait for it...
     if ( !_wait->wait_for_runner() ) {
@@ -65,8 +65,7 @@ void workload_client_t::run() {
     stopwatch_t qtime;
     for (int i = 0; i < _num_iterations; i++) {
 
-        TRACE( TRACE_QUERY_RESULTS,
-              "Iteration %d\n", i);        
+        TRACE( TRACE_QUERY_RESULTS, "Iteration %d\n", i); 
 
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' started at %lld\n",
 	      _driver->description().data(), qtime.now());

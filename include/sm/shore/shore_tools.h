@@ -95,13 +95,15 @@ int run_smthread(SMThread* t, SMTReturn* &r)
 
     w_rc_t e = t->fork();
     if(e) {
-	cerr << "Error forking " << t->tname().data() << " thread... " << endl;
+        TRACE( TRACE_ALWAYS, "Error forking thread (%s)...\n", 
+               t->name());
 	return (1);
     }
 
     e = t->join();
     if(e) {
-	cerr << "Error joining " << t->tname().data() << " thread... " << endl;
+        TRACE( TRACE_ALWAYS, "Error joining thread (%s)...\n", 
+               t->name());
 	return (2);
     }
 

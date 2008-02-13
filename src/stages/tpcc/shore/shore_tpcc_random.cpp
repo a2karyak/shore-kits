@@ -107,9 +107,13 @@ int tpcc_random_gen_t::random_n_string(char* out_buffer,
 
 /* --- peacks a random xct type given the benchmark specification --- */
 
-int tpcc_random_gen_t::random_xct_type()
+int tpcc_random_gen_t::random_xct_type(int selected)
 {
-    int random_type = random_integer(0, 99);
+    int random_type = selected;
+    if (random_type < 0)
+        random_type = random_integer(0, 99);
+    assert (random_type >= 0);
+
     int sum = 0;
     sum+=PROB_NEWORDER;
     if (random_type < sum)

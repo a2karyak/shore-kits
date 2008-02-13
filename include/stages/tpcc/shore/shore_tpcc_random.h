@@ -83,7 +83,7 @@ public:
     /* ----------------------------- */
 
 
-    int  random_xct_type();
+    int  random_xct_type(int selected = -1);
 
 
     int  random_a_string(char * string,

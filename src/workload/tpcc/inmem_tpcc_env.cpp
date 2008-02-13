@@ -125,10 +125,10 @@ int InMemTPCCEnv::savedata(c_str saveDir) {
                                                                     
     workload_t::wait_for_clients(inmem_save_ids, INMEM_PAYMENT_TABLES);
 #else
-    wh_saver_thread->run();
-    distr_saver_thread->run();
-    customer_saver_thread->run();
-    history_saver_thread->run();
+    wh_saver_thread->work();
+    distr_saver_thread->work();
+    customer_saver_thread->work();
+    history_saver_thread->work();
 #endif
 
     time_t tstop = time(NULL);

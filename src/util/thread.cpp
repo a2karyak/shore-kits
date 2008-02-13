@@ -40,8 +40,8 @@ struct thread_args {
 };
 
    
-class root_thread_t : public thread_t {
-
+class root_thread_t : public thread_t 
+{
 public:
     
     /**
@@ -52,8 +52,7 @@ public:
     {
     }
 
-
-    virtual void run() {
+    virtual void work() {
         // must be overwridden, but never called for the root thread
         assert(false);
     }
@@ -95,7 +94,7 @@ thread_t::thread_t(const c_str &name)
 #ifndef USE_SMTHREAD_AS_BASE
     : _thread_name(name), _delete_me(true)
 #else
-      : smthread_t(t_regular), _thread_name(name), _delete_me(true)
+      : smthread_t(t_regular), _thread_name(name), _delete_me(true), _ppool(NULL)
 #endif
 {
     // do nothing...
@@ -115,6 +114,60 @@ void thread_t::reset_rand() {
     /* reset _randgen using new seed */
     _randgen.reset(new_seed);
 }
+
+
+#ifdef USE_SMTHREAD_AS_BASE
+
+/*********************************************************************
+ *
+ * @fn    run
+ *  
+ * @brief Setups the context of a cordoba (smthread_t derived) thread_t
+ *
+ * @note  This function is wrapped with the initialization and destroy
+ *        of a sthread. 
+ *
+ *********************************************************************/
+
+inline void thread_t::run()
+{ 
+    clh_lock::thread_init_manager();
+    clh_rwlock::thread_init_manager();
+
+    setupthr();
+    
+    thread_t* thread  = THREAD_KEY_SELF;
+    thread_pool* pool = THREAD_POOL;
+    assert (pool);
+    pool->start();
+    thread->work();    
+    pool->stop();
+    
+    clh_lock::thread_destroy_manager();
+    clh_rwlock::thread_destroy_manager();
+    
+//     if(thread->delete_me())
+// 	delete thread;
+ }
+
+
+inline void thread_t::setupthr()
+{
+    cout << "(ip) +" << endl;
+
+    if(!_ppool)
+	_ppool = &default_thread_pool;
+
+    // past this point the thread should belong to a pool
+    assert (_ppool);
+
+    // Register local data. Should not fail since we only need two
+    // pieces of thread-specific storage.
+    THREAD_KEY_SELF = this;
+    THREAD_POOL     = _ppool;
+    reset_rand();    
+}
+#endif
 
 
 /**
@@ -219,6 +272,7 @@ void thread_mutex_lock(pthread_mutex_t &mutex)
     }
 
     thread_pool* pool = THREAD_POOL;
+    assert (pool);
     pool->stop();
     int err = pthread_mutex_lock(&mutex);
     pool->start();
@@ -280,6 +334,7 @@ void thread_cond_broadcast(pthread_cond_t &cond)
 void thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex)
 {
     thread_pool* pool = THREAD_POOL;
+    assert (pool);
     pool->stop();
     int err = pthread_cond_wait(&cond, &mutex);
     pool->start();
@@ -290,6 +345,7 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
                            struct timespec &timeout)
 {
     thread_pool* pool = THREAD_POOL;
+    assert (pool);
     pool->stop();
     int err = pthread_cond_timedwait(&cond, &mutex, &timeout);
     pool->start();
@@ -326,14 +382,16 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 }
 
 
-/**
+/*********************************************************************
+ *
  *  @brief thread_main function for newly created threads. Receives a
  *  thread_t object as its argument and it calls its run() function.
  *
  *  @param thread_object A thread_t*.
  *
  *  @return The value returned by thread_object->run().
- */
+ *
+ *********************************************************************/
 
 void* start_thread(void* thread_object)
 {
@@ -346,9 +404,10 @@ void* start_thread(void* thread_object)
     
     thread_t* thread  = THREAD_KEY_SELF;
     thread_pool* pool = THREAD_POOL;
+    assert (pool);
 
     pool->start();
-    thread->run();
+    thread->work();    
     pool->stop();
     
     clh_lock::thread_destroy_manager();
@@ -358,6 +417,7 @@ void* start_thread(void* thread_object)
 	delete thread;
     return (NULL);
 }
+
 
 
 
@@ -390,7 +450,9 @@ void thread_pool::stop() {
 
 
 
-static void setup_thread(thread_args* args) {
+static void setup_thread(thread_args* args) 
+{
+    cout << "(ip) +" << endl;
 
     thread_t* thread  = args->t;
     thread_pool* pool = args->p;
@@ -398,9 +460,13 @@ static void setup_thread(thread_args* args) {
     if(!pool)
 	pool = &default_thread_pool;
 
+    // past this point the thread should belong to a pool
+    assert (pool);
+
     // Register local data. Should not fail since we only need two
     // pieces of thread-specific storage.
     THREAD_KEY_SELF = thread;
     THREAD_POOL     = pool;
     thread->reset_rand();
 }
+

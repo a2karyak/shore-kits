@@ -46,7 +46,7 @@ public:
     }
 
     virtual ~data_loader_t() { }
-    virtual void* run();
+    virtual void work();
     virtual int insert(int idx, record_t aRecord)=0; 
 
 }; // EOF data_loader_t
@@ -55,7 +55,7 @@ public:
 /** data_loader_t methods */
 
 template <class RowParser, class ThreadImpl>
-void* data_loader_t<RowParser, ThreadImpl>::run() {
+void data_loader_t<RowParser, ThreadImpl>::work() {
 
     TRACE( TRACE_DEBUG, "Loading (%s)\n", _fname.data());
 
@@ -63,9 +63,7 @@ void* data_loader_t<RowParser, ThreadImpl>::run() {
 
     if (fd == NULL) {        
         THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
-        //printf("fopen() failed on (%s)\n", _fname.data());
-
-        return (NULL);
+        return;
     }
 
     // Insert rows one by one
@@ -86,11 +84,9 @@ void* data_loader_t<RowParser, ThreadImpl>::run() {
     if ( fclose(fd) ) {
         //printf("fclose() failed on (%s)\n", _fname.data());
         THROW2( TrxException, "fclose() failed on (%s)\n", _fname.data());
-
-        return (NULL);
+        return;
     }    
-
-    return (NULL);
+    return;
 }
 
 
@@ -111,14 +107,13 @@ public:
     {
     }
 
-    virtual void* run() {
+    virtual void work() {
 	TRACE( TRACE_DEBUG, "Saving %s table to (%s)\n", _table.get_name().data(), _fname.data());
 
 	guard<FILE> fd = fopen(_fname.data(), "w");
 
 	if (fd == NULL) {        
 	    THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
-	    //printf("fopen() failed on (%s)\n", _fname.data());
 	}
 
 	try {
@@ -126,9 +121,7 @@ public:
 	}
 	catch(int error) {
 	    THROW_IF(FileException, error);
-	}
-	
-	return NULL;
+	}       
     }
 
 }; // EOF: save_table
@@ -153,14 +146,13 @@ public:
     {
     }
 
-    virtual void* run() {
+    virtual void work() {
 	TRACE( TRACE_DEBUG, "Restoring table %s from  (%s)\n", _table.get_name().data(), _fname.data());
 
 	guard<FILE> fd = fopen(_fname.data(), "r");
 
 	if (fd == NULL) {        
 	    THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
-	    //printf("fopen() failed on (%s)\n", _fname.data());
 	}
 
 	try {
@@ -169,8 +161,6 @@ public:
 	catch(int error) {
 	    THROW_IF(FileException, error);
 	}
-	
-	return NULL;
     }
 
 }; // EOF: restore_table

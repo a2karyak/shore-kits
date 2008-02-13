@@ -36,8 +36,8 @@ int ShoreEnv::init()
 {
     CRITICAL_SECTION(cs,_init_mutex);
     if (_initialized) {
-        cerr << "Already initialized\n";
-        return (1);
+        TRACE( TRACE_ALWAYS, "Already initialized\n");
+        return (0);
     }
 
     // Read configuration options
@@ -46,18 +46,18 @@ int ShoreEnv::init()
     
     // Start the storage manager
     if (configure_sm()) {
-        cerr << "Error configuring Shore\n";
+        TRACE( TRACE_ALWAYS, "Error configuring Shore\n");
         return (1);
     }
 
     if (start_sm()) {
-        cerr << "Error starting Shore\n";
+        TRACE( TRACE_ALWAYS, "Error starting Shore\n");
         return (2);
     }
 
     // if we reached this point the environment is properly initialized
     _initialized = true;
-    cout << "ShoreEnv initialized\n";
+    TRACE( TRACE_DEBUG, "ShoreEnv initialized\n");
 
     return (0);
 }
@@ -113,11 +113,11 @@ int ShoreEnv::statistics()
 
 void ShoreEnv::print_trx_stats() 
 {
-    cout << "====================" << endl;
-    cout << "Database transaction statistics" << endl;
-    cout << "Committed: " << _committed_cnt << endl;
-    cout << "Aborted  : " << _aborted_cnt << endl;
-    cout << "====================" << endl;
+    TRACE( TRACE_STATISTICS, "===============================\n");
+    TRACE( TRACE_STATISTICS, "Database transaction statistics\n");
+    TRACE( TRACE_STATISTICS, "Committed: %d\n", _committed_cnt);
+    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", _aborted_cnt);
+    TRACE( TRACE_STATISTICS, "===============================\n");
 }
 
 
@@ -135,10 +135,10 @@ void ShoreEnv::print_trx_stats()
 
 int ShoreEnv::close_sm() 
 {
-    cout << "Closing Shore storage manager... " << endl;
-
+    TRACE( TRACE_ALWAYS, "Closing Shore storage manager...\n");
+    
     if (!_pssm) {
-        cerr << "sm already closed..." << endl;
+        TRACE( TRACE_ALWAYS, "sm already closed...\n");
         return (1);
     }
 
@@ -191,7 +191,7 @@ void ShoreEnv::gatherstats_sm()
 
 int ShoreEnv::configure_sm()
 {
-    cout << "Configuring Shore..." << endl;
+    TRACE( TRACE_DEBUG, "Configuring Shore...\n");
     
     // have the SSM add its options to the group
     W_COERCE(ss_m::setup_options(_popts));
@@ -255,10 +255,10 @@ int ShoreEnv::configure_sm()
 
 int ShoreEnv::start_sm()
 {
-    cout << "Starting Shore..." << endl;
+    TRACE( TRACE_DEBUG, "Starting Shore...\n");
     if (_pssm) {
-        cerr << "Shore already started...\n";
-        return (1);
+        TRACE( TRACE_DEBUG, "Shore already started...\n");
+        return (0);
     }
 
     _pssm = new ss_m();
@@ -274,13 +274,13 @@ int ShoreEnv::start_sm()
     assert(quota>0);
 
     if(clobber) {
-	cout << "Formatting a new device ``" << device
-	     << "'' with a " << quota << "kB quota" << endl;
+        TRACE( TRACE_DEBUG, "Formatting a new device (%s) with a (%d)kB quota\n",
+               device, quota);
 
 	// create and mount device
 	// http://www.cs.wisc.edu/shore/1.0/man/device.ssm.html
 	W_COERCE(_pssm->format_dev(device, quota, true));
-        cout << "Formatting completed..." << endl;
+        TRACE( TRACE_DEBUG, "Formatting completed...\n");
     }
 
     // mount it...
@@ -322,7 +322,7 @@ void ShoreEnv::usage(option_group_t& options)
 
 void ShoreEnv::readconfig(string conf_file)
 {
-    cout << "Reading configuration file " << conf_file << endl;
+    TRACE( TRACE_DEBUG, "Reading configuration file (%s)\n", conf_file);
     
     ConfigFile  sh_config(conf_file);   // config file reader
     string tmp;
@@ -347,17 +347,17 @@ void ShoreEnv::readconfig(string conf_file)
  */ 
 
 void ShoreEnv::printconfig() {
-    cout << "Printing configuration " << endl;
+    TRACE( TRACE_DEBUG, "Printing configuration\n");
     
     // Print storage manager options
     map<string,string>::iterator sm_iter;
-    cout << "** SM options" << endl;
+    TRACE( TRACE_DEBUG, "** SM options\n");
     for ( sm_iter = _sm_opts.begin(); sm_iter != _sm_opts.end(); sm_iter++)
         cout << sm_iter->first << " \t| " << sm_iter->second << endl;
 
     // Print device options
     map<string,string>::iterator dev_iter;
-    cout << "** Device options" << endl;
+    TRACE( TRACE_DEBUG, "** Device options\n");
     for ( dev_iter = _dev_opts.begin(); dev_iter != _dev_opts.end(); dev_iter++)
         cout << dev_iter->first << " \t| " << dev_iter->second << endl;    
 }

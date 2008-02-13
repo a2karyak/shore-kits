@@ -119,7 +119,7 @@ struct stage_thread : thread_t {
     {        
     }
 
-    virtual void run() {
+    virtual void work() {
         _sc->run(_which);
     }
 };

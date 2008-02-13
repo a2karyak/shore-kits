@@ -77,7 +77,7 @@ public:
     virtual ~inmem_tpcc_payment_single_thr_helper() { }
 
 
-    virtual void run() {
+    virtual void work() {
         assert (_env);
         assert (_id>=0);
 #ifdef WITH_POOLED_THREAD
@@ -177,7 +177,7 @@ public:
 
 
     // Thread-entry function
-    virtual void run() {        
+    virtual void work() {        
 
 #ifdef WITH_HELPER_THREAD
 #ifdef WITH_POOLED_THREAD

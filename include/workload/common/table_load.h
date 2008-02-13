@@ -71,7 +71,7 @@ public:
             delete (_name);
     }
 
-    virtual void run() {
+    virtual void work() {
         assert (_name);
         assert (_loader);
         TRACE( TRACE_DEBUG, 

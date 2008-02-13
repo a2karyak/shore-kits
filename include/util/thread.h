@@ -62,6 +62,39 @@ T* thread_join(pthread_t tid) {
 }
 
 
+/***********************************************************************
+ *
+ *  @struct thread_pool
+ * 
+ *  @brief  Structure that represents a pool of (worker) threads
+ *
+ *  @note   A request of a new thread is either granted immediately or 
+ *          the requestor has to block until notified (by the conditional
+ *          variable).
+ *
+ ***********************************************************************/
+
+
+struct thread_pool 
+{
+    pthread_mutex_t _lock;
+    pthread_cond_t _cond;
+    int _max_active;		// how many can be active at a time?
+    int _active;		// how many are actually active?
+
+    thread_pool(int max_active)
+	: _lock(thread_mutex_create()),
+	  _cond(thread_cond_create()),
+	  _max_active(max_active), _active(0)
+    {
+    }
+
+    void start();
+    void stop();
+
+}; // EOF: thread_pool
+
+
 /** define USE_SMTHRAD_AS_BASE if there is need the base thread class 
  *  to derive from the smthread_t class (Shore threads)
  */
@@ -72,10 +105,18 @@ T* thread_join(pthread_t tid) {
 #endif
 
 
-/**
+/***********************************************************************
+ *
+ *  @class thread_t
+ * 
  *  @brief QPIPE thread base class. Basically a thin wrapper around an
- *  internal method and a thread name.
- */
+ *         internal method and a thread name.
+ *
+ *  @note  if USE_SMTHREAD_AS_BASE is defined it uses the smthread_t class
+ *         as base class (for Shore code execution) 
+ *
+ ***********************************************************************/
+
 #ifndef USE_SMTHREAD_AS_BASE
 class thread_t 
 #else
@@ -86,12 +127,26 @@ private:
     c_str        _thread_name;
     randgen_t    _randgen;
 
+#ifdef USE_SMTHREAD_AS_BASE
+    void run(); /** smthread_t::fork() is going to call run() */
+    thread_pool* _ppool;
+    void setuppool(thread_pool* apool) { _ppool = apool; }
+    void setupthr();
+#endif    
+
 protected:
     bool _delete_me;
 
 public:
 
-    virtual void run()=0;
+    //    virtual void run()=0;
+
+    /** (ip) The previously used run() is already used by smthread core.
+     *       Thus, run() now does the cordoba::thread_t specific setup and
+     *       calls work(). That is, work() is the new entry function for
+     *       thread_t instead of run().
+     */
+    virtual void work()=0; 
     
     bool delete_me() { return _delete_me; }
     
@@ -134,11 +189,11 @@ public:
 
     virtual ~thread_t() { }
     
-protected:
-    
+
+protected:    
     thread_t(const c_str &name);
        
-};
+}; // EOF: thread_t
 
 
 
@@ -159,7 +214,7 @@ public:
     {
     }
     
-    virtual void run() {
+    virtual void work() {
         _func(_instance);
     }
 };
@@ -182,22 +237,6 @@ thread_t* member_func_thread(Class* instance,
                                                     Functor(mem_func),
                                                     thread_name);
 }
-
-struct thread_pool {
-    pthread_mutex_t _lock;
-    pthread_cond_t _cond;
-    int _max_active;		// how many can be active at a time?
-    int _active;		// how many are actually active?
-    thread_pool(int max_active)
-	: _lock(thread_mutex_create()),
-	  _cond(thread_cond_create()),
-	  _max_active(max_active), _active(0)
-    {
-    }
-
-    void start();
-    void stop();
-};
 
 
 

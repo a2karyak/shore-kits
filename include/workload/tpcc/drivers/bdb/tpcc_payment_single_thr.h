@@ -56,13 +56,12 @@ public:
     virtual ~tpcc_payment_single_thr_driver() { }
 
 
-    virtual void run() {        
-
+    virtual void work() {        
         assert(!_dbts.is_allocated());
         _dbts.allocate();      
         assert(_dbts.is_allocated());
 
-        printf(" = %d running =\n", _id);
+        TRACE( TRACE_DEBUG, " = %d running =\n", _id);
         
         for (int i=0; i < _iterations; i++) {         
             executePayment();
