@@ -23,9 +23,10 @@ ENTER_NAMESPACE(workload);
 /* definition of macros */
 
 // 'typeof' is a gnu extension
+#undef TYPEOF
 #define TYPEOF(TYPE, MEMBER) __typeof__(((TYPE *)0)->MEMBER)
 
-
+#undef SIZEOF
 #define SIZEOF(TYPE, MEMBER) sizeof(((TYPE *)0)->MEMBER)
 
 // 'offsetof' is found in <stddef.h>

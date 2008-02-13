@@ -23,7 +23,7 @@ struct q6_client_info_s {
 };
 
 
-void* q6_client_main(void* arg);
+void q6_client_main(void* arg);
 
 
 #endif

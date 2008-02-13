@@ -53,10 +53,9 @@ public:
     }
 
 
-    virtual void* run() {
+    virtual void run() {
         // must be overwridden, but never called for the root thread
         assert(false);
-        return NULL;
     }
 };
 
@@ -81,14 +80,23 @@ static thread_pool default_thread_pool(1<<30);
 
 /* method definitions */
 
-/**
+/***********************************************************************
+ *
+ *  @class thread_t constructor
+ * 
  *  @brief thread_t base class constructor. Every subclass constructor
  *  goes through this. Subclass should invoke the thread_t static
  *  initialization functions (init_thread_name() or
  *  init_thread_name_v()) to set up a new thread object's name.
- */
+ *
+ ***********************************************************************/
+
 thread_t::thread_t(const c_str &name)
+#ifndef USE_SMTHREAD_AS_BASE
     : _thread_name(name), _delete_me(true)
+#else
+      : smthread_t(t_regular), _thread_name(name), _delete_me(true)
+#endif
 {
     // do nothing...
 }
@@ -98,9 +106,9 @@ void thread_t::reset_rand() {
 
     /* generate new seed */
     unsigned int new_seed;
-    int fd = open("/dev/urandom", O_RDONLY);
+    int fd = ::open("/dev/urandom", O_RDONLY);
     assert(fd != -1);
-    int read_size = read(fd, &new_seed, sizeof(new_seed));
+    int read_size = ::read(fd, &new_seed, sizeof(new_seed));
     assert(read_size == sizeof(new_seed));
     close(fd);
 
@@ -340,7 +348,7 @@ void* start_thread(void* thread_object)
     thread_pool* pool = THREAD_POOL;
 
     pool->start();
-    void* rval = thread->run();
+    thread->run();
     pool->stop();
     
     clh_lock::thread_destroy_manager();
@@ -348,7 +356,7 @@ void* start_thread(void* thread_object)
     
     if(thread->delete_me())
 	delete thread;
-    return rval;
+    return (NULL);
 }
 
 

@@ -52,14 +52,13 @@ inline workload_client_t::~workload_client_t() {
 
 
 
-void* workload_client_t::run() {
+void workload_client_t::run() {
 
     // wait for it...
     if ( !_wait->wait_for_runner() ) {
         // error! return immediately...
-        return NULL;
+        return;
     }
-
     // record client start time...
     _etime->start();
 
@@ -87,7 +86,6 @@ void* workload_client_t::run() {
 
     // record client end time...
     _etime->stop();
-    return NULL;
 }
 
 

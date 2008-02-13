@@ -50,7 +50,7 @@ public:
                       
     virtual ~workload_client_t();
 
-    virtual void* run();
+    virtual void run();
 
     virtual void allocate_resources() {
         assert(_driver);

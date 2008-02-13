@@ -11,17 +11,17 @@ class tester_thread_t : public thread_t {
 
 private:
 
-    void* (*start) (void*);
+    void (*start) (void*);
     void* start_arg;
 
 public:
 
-    void* run() {
-        return start(start_arg);
+    void run() {
+        start(start_arg);        
     }
 
 
-    tester_thread_t(void* (*start_routine)(void *), void* arg, const c_str &name)
+    tester_thread_t(void (*start_routine)(void *), void* arg, const c_str &name)
         : thread_t(name),
           start(start_routine), start_arg(arg)
     {

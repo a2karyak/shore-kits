@@ -14,7 +14,7 @@ using namespace qpipe;
 //using namespace workload;
 using namespace tpch;
 
-void* q6_client_main(void* arg) {
+void q6_client_main(void* arg) {
     
     
     struct q6_client_info_s* info = (struct q6_client_info_s*)arg;
@@ -36,9 +36,6 @@ void* q6_client_main(void* arg) {
         info->_policy->query_state_destroy(qs);
         
     } // endof i-loop
-
-    
-    return NULL;
 }
 
 

@@ -50,7 +50,10 @@ int random(int low, int high, randgen_t* rp) {
 int URand(int low, int high) {
 
   thread_t* self = thread_get_self();
+  assert (self);
   randgen_t* randgenp = self->randgen();
+  assert (randgenp);
+
   int d = high - low + 1;
 
   if (((d & -d) == d) && (high > 1)) {

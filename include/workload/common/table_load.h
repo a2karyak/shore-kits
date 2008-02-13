@@ -71,14 +71,13 @@ public:
             delete (_name);
     }
 
-    virtual void* run() {
+    virtual void run() {
         assert (_name);
         assert (_loader);
         TRACE( TRACE_DEBUG, 
                "Starting loading (%s)...\n", 
                _name.data());
         _loader(_db, _file);
-        return (NULL);
     }    
 
 }; // EOF loader_thread_t

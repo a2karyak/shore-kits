@@ -157,10 +157,8 @@ public:
 
     virtual ~bptree_loader_t() { }
 
-    virtual void* run() {
-
+    virtual void run() {
         loadValues();
-        return (NULL);
     }
 
 }; // EOF: bptree_loader_t

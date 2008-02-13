@@ -402,7 +402,7 @@ void sort_stage_t::process_packet() {
 
             // read in a run of pages
             qpipe::page* p = _input_buffer->get_page();
-            if(p == NULL)
+            if (p == NULL)
                 break;
 
             // add new page to the list

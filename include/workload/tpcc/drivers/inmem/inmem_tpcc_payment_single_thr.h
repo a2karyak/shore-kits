@@ -77,10 +77,9 @@ public:
     virtual ~inmem_tpcc_payment_single_thr_helper() { }
 
 
-    virtual void* run() {        
+    virtual void run() {
         assert (_env);
         assert (_id>=0);
-
 #ifdef WITH_POOLED_THREAD
         do {
             sem_wait(_psem);
@@ -92,8 +91,6 @@ public:
         } while (!_done);
         _result = executeInMemPaymentBaseline(_pin, _id, _env);
 #endif
-
-        return (NULL);
     }
 
 
@@ -180,24 +177,22 @@ public:
 
 
     // Thread-entry function
-    virtual void* run() {        
+    virtual void run() {        
 
 #ifdef WITH_HELPER_THREAD
 #ifdef WITH_POOLED_THREAD
 #warning "Both WITH_HELPER_THREAD and WITH_POOLED_THREAD defined..."
 #warning "It will abort at run-time..."
-        assert (1==0); // Both cannot be defined.
+        assert (false); // Both cannot be defined.
 #endif
 #endif
 
         trx_result_tuple_t* aTrxResult;
 
-
 #ifdef WITH_POOLED_THREAD
         aTrxResult = singleThrPaymentPool();
 #else
         for (int i=0; i < _iterations; i++) {            
-
 #ifdef WITH_HELPER_THREAD          
             aTrxResult = singleThrPaymentHelper(create_payment_input(_sf));
 #else
@@ -211,9 +206,7 @@ public:
 #endif // WITH_POOLED_THREAD
 
         delete aTrxResult;        
-        return (NULL);
     }
-
 
 }; // EOF inmem_tpcc_payment_single_thr_driver
 

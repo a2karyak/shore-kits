@@ -43,7 +43,7 @@ public:
 
     virtual ~data_loader_t() { }
 
-    virtual void* run();
+    virtual void run();
 
     virtual int insert(int idx, record_t aRecord)=0; 
 
@@ -51,7 +51,7 @@ public:
 
 
 template <class RowParser>
-void* data_loader_t<RowParser>::run() {
+void data_loader_t<RowParser>::run() {
 
     TRACE( TRACE_DEBUG, "Loading (%s)\n", _fname.data());
 
@@ -60,8 +60,7 @@ void* data_loader_t<RowParser>::run() {
     if (fd == NULL) {        
         THROW2( TrxException, "fopen() failed on (%s)\n", _fname.data());
         //printf("fopen() failed on (%s)\n", _fname.data());
-
-        return (NULL);
+        return;
     }
 
     // Insert rows one by one
@@ -82,11 +81,7 @@ void* data_loader_t<RowParser>::run() {
     if ( fclose(fd) ) {
         //printf("fclose() failed on (%s)\n", _fname.data());
         THROW2( TrxException, "fclose() failed on (%s)\n", _fname.data());
-
-        return (NULL);
     }    
-
-    return (NULL);
 }
 
 
@@ -100,7 +95,8 @@ public:
 	  _table(table), _fname(fname)
     {
     }
-    virtual void* run() {
+    
+    virtual void run() {
 	TRACE( TRACE_DEBUG, "Saving %s table to (%s)\n", _table.get_name().data(), _fname.data());
 
 	guard<FILE> fd = fopen(_fname.data(), "w");
@@ -116,8 +112,6 @@ public:
 	catch(int error) {
 	    THROW_IF(FileException, error);
 	}
-	
-	return NULL;
     }
 };
 
@@ -131,7 +125,8 @@ public:
 	  _table(table), _fname(fname)
     {
     }
-    virtual void* run() {
+    
+    virtual void run() {
 	TRACE( TRACE_DEBUG, "Restoring table %s from  (%s)\n", _table.get_name().data(), _fname.data());
 
 	guard<FILE> fd = fopen(_fname.data(), "r");
@@ -146,9 +141,7 @@ public:
 	}
 	catch(int error) {
 	    THROW_IF(FileException, error);
-	}
-	
-	return NULL;
+	}	
     }
 };
 

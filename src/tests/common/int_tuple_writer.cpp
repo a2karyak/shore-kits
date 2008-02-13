@@ -26,15 +26,13 @@ void int_tuple_writer_fc(void*, void* itw_info) {
 
 
 
-void* int_tuple_writer_main(void* itw_info) {
+void int_tuple_writer_main(void* itw_info) {
 
     int_tuple_writer_fc(NULL, itw_info);
     
     struct int_tuple_writer_info_s* info =
         (struct int_tuple_writer_info_s*)itw_info;
     info->int_buffer->send_eof();
-    
-    return NULL;
 }
 
 

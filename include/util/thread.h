@@ -62,14 +62,26 @@ T* thread_join(pthread_t tid) {
 }
 
 
+/** define USE_SMTHRAD_AS_BASE if there is need the base thread class 
+ *  to derive from the smthread_t class (Shore threads)
+ */
+#define USE_SMTHREAD_AS_BASE
+
+#ifdef USE_SMTHREAD_AS_BASE
+#include "sm_vas.h"
+#endif
 
 
 /**
  *  @brief QPIPE thread base class. Basically a thin wrapper around an
  *  internal method and a thread name.
  */
-class thread_t {
-
+#ifndef USE_SMTHREAD_AS_BASE
+class thread_t 
+#else
+class thread_t : public smthread_t
+#endif
+{
 private:
     c_str        _thread_name;
     randgen_t    _randgen;
@@ -79,7 +91,7 @@ protected:
 
 public:
 
-    virtual void* run()=0;
+    virtual void run()=0;
     
     bool delete_me() { return _delete_me; }
     
@@ -147,8 +159,8 @@ public:
     {
     }
     
-    virtual void* run() {
-        return _func(_instance);
+    virtual void run() {
+        _func(_instance);
     }
 };
 
@@ -157,10 +169,11 @@ public:
 /**
  *  @brief Helper function for running class member functions in a
  *  pthread. The function must take no arguments and return a type
- *  compatible with (void*).
+ *  compatible with (void). // (ip) used to be (void*)
  */
+
 template <class Return, class Class>
-thread_t* member_func_thread(Class *instance,
+thread_t* member_func_thread(Class* instance,
                              Return (Class::*mem_func)(),
                              const c_str& thread_name)
 {

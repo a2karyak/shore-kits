@@ -119,9 +119,8 @@ struct stage_thread : thread_t {
     {        
     }
 
-    virtual void* run() {
+    virtual void run() {
         _sc->run(_which);
-        return NULL;
     }
 };
 
