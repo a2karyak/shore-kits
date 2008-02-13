@@ -2,7 +2,7 @@
 
 /** @file tpcc_payment_common.h
  *
- *  @brief Declaration of function that creates a PAYMENT input
+ *  @brief Declaration of function that generates a PAYMENT input
  *
  *  @author Ippokratis Pandis (ipandis)
  */

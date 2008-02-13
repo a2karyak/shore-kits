@@ -12,7 +12,7 @@
 #define __BDB_TPCC_PAYMENT_SINGLE_THR_DRIVER_H
 
 #include "stages/tpcc/bdb/payment_functions.h"
-#include "workload/tpcc/drivers/tpcc_payment_common.h"
+#include "stages/tpcc/common/tpcc_payment_common.h"
 
 
 using namespace qpipe;

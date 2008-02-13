@@ -2,6 +2,7 @@
 // CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
 #include "tests/common.h"
+#include "stages/tpcc/common/tpcc_payment_common.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
@@ -53,14 +54,14 @@ public:
         _rv = test();
     }
 
-    w_rc_t tpcc_run_xct(int num_xct = 10, int xct_type = 0);
-    w_rc_t tpcc_run_one_xct(int xct_type = 0);    
+    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int num_xct = 10, int xct_type = 0);
+    w_rc_t tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type = 0, int xctid = 0);    
 
-    w_rc_t xct_new_order(ss_m* db);
-    w_rc_t xct_payment(ss_m* db);
-    w_rc_t xct_order_status(ss_m* db);
-    w_rc_t xct_delivery(ss_m* db);
-    w_rc_t xct_stock_level(ss_m* db);
+    w_rc_t xct_new_order(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_payment(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_order_status(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_delivery(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_stock_level(ShoreTPCCEnv* env, int xctid);
 
     void print_tables();
 
@@ -69,7 +70,7 @@ public:
     int test() {
         _env->loaddata();
         //_env->check_consistency();
-        tpcc_run_xct();
+        tpcc_run_xct(_env);
         //print_tables();
         return (0);
     }
@@ -84,11 +85,31 @@ public:
 
 
 
-w_rc_t test_smt_t::xct_new_order(ss_m* db) { cout << "NEW_ORDER... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_payment(ss_m* db) { cout << "PAYMENT... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_order_status(ss_m* db) { cout << "ORDER_STATUS... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_delivery(ss_m* db) { cout << "DELIVERY... " << endl; return (RCOK); }
-w_rc_t test_smt_t::xct_stock_level(ss_m* db) { cout << "STOCK_LEVEL... " << endl; return (RCOK); }
+w_rc_t test_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid) 
+{ cout << "NEW_ORDER... " << endl; return (RCOK); }
+
+w_rc_t test_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid) 
+{ cout << "ORDER_STATUS... " << endl; return (RCOK); }
+
+w_rc_t test_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid) 
+{ cout << "DELIVERY... " << endl; return (RCOK); }
+
+w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid) 
+{ cout << "STOCK_LEVEL... " << endl; return (RCOK); }
+
+
+w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    cout << "PAYMENT... " << endl;    
+
+    payment_input_t pin = create_payment_input();
+    trx_result_tuple_t trt;
+    
+    w_rc_t e = _env->xct_payment(&pin, xctid, trt);
+
+    return (RCOK); 
+}
 
 
 void test_smt_t::print_tables() {
@@ -106,38 +127,37 @@ void test_smt_t::print_tables() {
 }
 
 
-w_rc_t test_smt_t::tpcc_run_xct(int num_xct, int xct_type)
+w_rc_t test_smt_t::tpcc_run_xct(ShoreTPCCEnv* env, int num_xct, int xct_type)
 {
     for (int i=0; i<num_xct; i++) {
         cout << i << ". ";
-        tpcc_run_one_xct(xct_type);
+        tpcc_run_one_xct(env, xct_type, i);
     }
     return (RCOK);
 }
 
 
-
-w_rc_t test_smt_t::tpcc_run_one_xct(int xct_type) 
+ 
+w_rc_t test_smt_t::tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
 {
     int  this_type = xct_type;
-
-    if (this_type == 0) {
-
+    if (this_type == 0) {        
         this_type = _tpccrnd.random_xct_type();
     }
     
     switch (this_type) {
     case XCT_NEW_ORDER:
-        W_DO(xct_new_order(_env->db()));  break;
+        W_DO(xct_new_order(env, xctid));  break;
     case XCT_PAYMENT:
-        W_DO(xct_payment(_env->db())); break;
+        W_DO(xct_payment(env, xctid)); break;
     case XCT_ORDER_STATUS:
-        W_DO(xct_order_status(_env->db())); break;
+        W_DO(xct_order_status(env, xctid)); break;
     case XCT_DELIVERY:
-        W_DO(xct_delivery(_env->db())); break;
+        W_DO(xct_delivery(env, xctid)); break;
     case XCT_STOCK_LEVEL:
-        W_DO(xct_stock_level(_env->db())); break;
+        W_DO(xct_stock_level(env, xctid)); break;
     }
+
     return RCOK;
 }
 

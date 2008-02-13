@@ -1,8 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file workload/tpcc/drivers/common.h
+/** @file stages/tpcc/common/tpcc_random.h
  *  
- *  @brief Functions used for the generation of all the tpcc transaction.
+ *  @brief Functions used for the generation of the inputs for
+ *         all the TPC-C transactions
+ *
  *  @version Based on TPC-C Standard Specification Revision 5.4 (Apr 2005)
  */
 

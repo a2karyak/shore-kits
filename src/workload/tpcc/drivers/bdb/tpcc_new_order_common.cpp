@@ -8,7 +8,7 @@
  */
 
 # include "util.h"
-# include "workload/tpcc/drivers/common.h"
+# include "stages/tpcc/common/tpcc_random.h"
 # include "workload/tpcc/drivers/bdb/tpcc_new_order_common.h"
 
 

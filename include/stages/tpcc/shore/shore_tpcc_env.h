@@ -17,6 +17,7 @@
 #include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 #include "stages/tpcc/common/tpcc_input.h"
+#include "stages/tpcc/common/trx_packet.h"
 
 #include "sm/shore/shore_env.h"
 
@@ -25,7 +26,9 @@
 #include <map>
 
 
+using namespace qpipe;
 using namespace shore;
+
 
 
 ENTER_NAMESPACE(tpcc);
@@ -133,11 +136,21 @@ public:
 
 
     /* --- kit baseline trxs --- */
-    w_rc_t xct_new_order(new_order_input_t* no_input, const int xct_id);
-    w_rc_t xct_payment(payment_input_t * pay_input, const int xct_id);
-    w_rc_t xct_order_status(order_status_input_t* status_input, const int xct_id);
-    w_rc_t xct_delivery(delivery_input_t* deliv_input, const int xct_id);
-    w_rc_t xct_stock_level(stock_level_input_t* level_input, const int xct_id);
+    w_rc_t xct_new_order(new_order_input_t* no_input, 
+                         const int xct_id, 
+                         trx_result_tuple_t& trt);
+    w_rc_t xct_payment(payment_input_t * pay_input, 
+                       const int xct_id, 
+                       trx_result_tuple_t& trt);
+    w_rc_t xct_order_status(order_status_input_t* status_input, 
+                            const int xct_id, 
+                            trx_result_tuple_t& trt);
+    w_rc_t xct_delivery(delivery_input_t* deliv_input, 
+                        const int xct_id, 
+                        trx_result_tuple_t& trt);
+    w_rc_t xct_stock_level(stock_level_input_t* level_input, 
+                           const int xct_id, 
+                           trx_result_tuple_t& trt);
 
 
     /* --- various helper and stats --- */

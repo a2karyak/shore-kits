@@ -218,7 +218,9 @@ SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
    $(SG)/tpcc/common/tpcc_input.cpp \
    $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
-   $(SG)/tpcc/common/tpcc_scaling_factor.cpp
+   $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
+   $(SG)/tpcc/common/tpcc_payment_common.cpp \
+   $(SG)/tpcc/common/tpcc_random.cpp
 
 SG_BDB_TRX = \
    $(SG)/tpcc/bdb/payment_functions.cpp \
@@ -305,9 +307,9 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_db.cpp \
    $(SW)/tpcc/tpcc_env.cpp \
    $(SW)/tpcc/tpcc_tbl_readers.cpp \
-   $(SW)/tpcc/tpcc_compare.cpp \
-   $(SW)/tpcc/drivers/common.cpp \
-   $(SW)/tpcc/drivers/tpcc_payment_common.cpp
+   $(SW)/tpcc/tpcc_compare.cpp
+
+
 
 WL_BDB_COMMON = \
    $(SW)/common/bdb_env.cpp \

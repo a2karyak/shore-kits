@@ -25,9 +25,13 @@ ENTER_NAMESPACE(qpipe);
 
 
 
-/**
- *  @brief Possible states of a transaction
- */
+/******************************************************************** 
+ *
+ * @enum  TrxState
+ *
+ * @brief Possible states of a transaction
+ *
+ ********************************************************************/
 
 enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
 		COMMITTED, ROLLBACKED };
@@ -50,10 +54,16 @@ inline char* translate_state(TrxState aState) {
 
 /** Exported classes and data structures */
 
-/**
- *  @brief Definition of the transactional packets: A transactional packet has 
- *  a unique identifier for the TRX it belongs to.
- */
+
+/******************************************************************** 
+ *
+ * @class trx_result_tuple_t
+ *
+ * @brief Definition of the transactional packets.
+ *        A transactional packet has a unique identifier for the 
+ *        TRX it belongs to.
+ *
+ ********************************************************************/
 
 class trx_packet_t : public packet_t 
 {
@@ -140,9 +150,13 @@ public:
 
 
 
-/** @class trx_result_tuple_t
- *  @brief Class used to represent the result of a transaction
- */
+/******************************************************************** 
+ *
+ * @class trx_result_tuple_t
+ *
+ * @brief Class used to represent the result of a transaction
+ *
+ ********************************************************************/
 
 class trx_result_tuple_t 
 {

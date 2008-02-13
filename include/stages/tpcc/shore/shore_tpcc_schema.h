@@ -127,19 +127,17 @@ public:
                                  table_row_t* ptuple, 
                                  const short w_id);
 
+    
+    w_rc_t update_ytd(ss_m* db,
+                      table_row_t* ptuple,
+                      const short w_id,
+                      const double h_amount);
 
     /** deprecated */
     
     void   random(table_row_t* ptuple, short w_id);
     
     w_rc_t bulkload(ss_m* db, int w_num);
-
-private:
-    
-    w_rc_t update_ytd(ss_m* db,
-                      table_row_t* ptuple,
-                      const short w_id,
-                      const double h_amount);
     
 }; // EOF: warehouse_t
 
@@ -182,15 +180,6 @@ public:
                                  const short w_id);
 
 
-    /** deprecated */
-
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, short id, short w_id, int next_o_id);
-
-    w_rc_t bulkload(ss_m* db, int w_num);
-
-private:
     w_rc_t update_ytd(ss_m* db,
                       table_row_t* ptuple,
                       const short d_id,
@@ -200,6 +189,15 @@ private:
     w_rc_t update_next_o_id(ss_m* db,
                             table_row_t* ptuple,
                             const int  next_o_id);
+
+    /** deprecated */
+
+
+    /* random tuple generator */
+    void   random(table_row_t* ptuple, short id, short w_id, int next_o_id);
+
+    w_rc_t bulkload(ss_m* db, int w_num);
+
 }; // EOF: district_t
 
 
@@ -275,10 +273,9 @@ public:
 
     w_rc_t update_tuple(ss_m* db,
                         table_row_t* ptuple,
-                        const double balance,
-                        const double ytd_payment,
-                        const short  payment_cnt,
-                        const char * data = NULL);
+                        const tpcc_customer_tuple acustomer,
+                        const char* adata1 = NULL,
+                        const char* adata2 = NULL);
 
 }; // EOF: customer_t
 

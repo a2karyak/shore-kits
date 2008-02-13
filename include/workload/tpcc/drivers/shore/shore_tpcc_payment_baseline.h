@@ -13,7 +13,7 @@
 
 
 #include "workload/driver.h"
-#include "workload/tpcc/drivers/tpcc_payment_common.h"
+#include "stages/tpcc/common/tpcc_payment_common.h"
 #include "stages/tpcc/shore/shore_payment_baseline.h"
 
 

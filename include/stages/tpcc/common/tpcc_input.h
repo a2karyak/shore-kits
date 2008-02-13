@@ -23,9 +23,9 @@ ENTER_NAMESPACE(tpcc);
 
 /*********************************************************************
  * 
- * Abstract trx_input_t
+ * @class bstract trx_input_t
  *
- * Base class for the Input of any transaction
+ * @brief Base class for the Input of any transaction
  *
  *********************************************************************/
 
@@ -35,6 +35,7 @@ public:
     virtual ~trx_input_t() { }
     virtual void describe(int id)=0;
     virtual void gen_input() { } // (ip) TODO make it pure virtual
+
 }; // EOF: trx_input_t
 
 

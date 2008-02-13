@@ -2,11 +2,13 @@
 
 /** @file workload/tpcc/drivers/common.cpp
  *  
- *  @brief Functions used for the generation of all the tpcc transaction.
+ *  @brief Functions used for the generation of the inputs for 
+ *         all the tpcc transaction.
+ *
  *  @version Based on TPC-C Standard Specification Revision 5.4 (Apr 2005)
  */
 
-#include "workload/tpcc/drivers/common.h"
+#include "stages/tpcc//common/tpcc_random.h"
 
 
 ENTER_NAMESPACE(tpcc);

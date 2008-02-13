@@ -2,15 +2,14 @@
 
 /** @file tpcc_payment_common.cpp
  *
- *  @brief Implements function that creates a PAYMENT input
+ *  @brief Generates a PAYMENT input
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-# include "util.h"
-
-# include "workload/tpcc/drivers/common.h"
-# include "workload/tpcc/drivers/tpcc_payment_common.h"
+#include "util.h"
+#include "stages/tpcc/common/tpcc_random.h" 
+#include "stages/tpcc/common/tpcc_payment_common.h"
 
 
 ENTER_NAMESPACE(tpcc);

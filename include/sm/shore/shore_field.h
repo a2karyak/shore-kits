@@ -70,6 +70,7 @@ enum  sqltype_t {
     SQL_SMALLINT,   /* SMALLINT */
     SQL_INT,        /* INTEGER */
     SQL_FLOAT,      /* FLOAT */
+    //    SQL_DECIMAL,    /* DECIMAL - DOUBLE/FLOAT */
     SQL_VARCHAR,    /* VARCHAR */
     SQL_CHAR,       /* CHAR */
     SQL_TIME,       /* TIMESTAMP */
@@ -251,6 +252,7 @@ struct field_value_t {
     void   set_int_value(const int data);
     void   set_smallint_value(const short data);
     void   set_float_value(const double data);
+    void   set_decimal_value(const decimal data);
     void   set_time_value(const timestamp_t& data);
     void   set_string_value(const char* string, const int len);
     void   set_var_string_value(const char* string, const int len);
@@ -261,6 +263,7 @@ struct field_value_t {
     short        get_smallint_value() const;
     void         get_string_value(char* string, const int bufsize) const;
     double       get_float_value() const;
+    decimal      get_decimal_value() const;
     timestamp_t& get_time_value() const;
 
     bool    load_value_from_file(ifstream & is, const char delim);
@@ -271,7 +274,6 @@ struct field_value_t {
 
     /* debugging */
     void    print_value(ostream & os = cout);
-
 
 }; // EOF: field_value_t
 
@@ -313,6 +315,10 @@ inline void field_desc_t::setup(sqltype_t type,
     case SQL_FLOAT:
         _size = sizeof(double);
         break;
+
+//     case SQL_DECIMAL:
+//         _size = sizeof(decimal);
+//         break;
     
     case SQL_TIME:
         _size = sizeof(timestamp_t);
@@ -343,6 +349,7 @@ inline const char* field_desc_t::keydesc()
     case SQL_SMALLINT:  sprintf(_keydesc, "i%d", _size); break;
     case SQL_INT:       sprintf(_keydesc, "i%d", _size); break;
     case SQL_FLOAT:     sprintf(_keydesc, "f%d", _size); break;
+        //    case SQL_DECIMAL:   sprintf(_keydesc, "f%d", _size); break;
     case SQL_TIME:      sprintf(_keydesc, "b%d", _size); break;
     case SQL_VARCHAR:   sprintf(_keydesc, "b*%d", _size); break;
     case SQL_CHAR:
@@ -390,6 +397,10 @@ inline void field_value_t::setup(field_desc_t* pfd)
     case SQL_FLOAT:
         _real_size = sizeof(double);
         break;
+
+//     case SQL_DECIMAL:
+//         _real_size = sizeof(decimal);
+//         break;
     
     case SQL_TIME:
         _real_size = _data_size = sizeof(timestamp_t);
@@ -413,7 +424,6 @@ inline void field_value_t::setup(field_desc_t* pfd)
 
     _is_setup = true;
 }
-
 
 
 
@@ -459,6 +469,9 @@ inline void field_value_t::set_value(const void* data,
     case SQL_FLOAT:
 	memcpy(&_value, data, _pfield_desc->maxsize()); 
         break;
+//     case SQL_DECIMAL:
+// 	memcpy(&_value, data, _pfield_desc->maxsize()); 
+//         break;
     case SQL_TIME:
 	memcpy(_value._time, data, _pfield_desc->maxsize()); 
         break;
@@ -499,6 +512,9 @@ inline void field_value_t::set_min_value()
     case SQL_FLOAT:
 	_value._float = MIN_FLOAT;
 	break;
+//     case SQL_DECIMAL:
+// 	_value._decimal = MIN_FLOAT;
+// 	break;
     case SQL_VARCHAR:
     case SQL_CHAR:
     case SQL_NUMERIC:
@@ -528,6 +544,9 @@ inline void field_value_t::set_max_value()
     case SQL_FLOAT:
 	_value._float = MAX_FLOAT;
 	break;
+//     case SQL_DECIMAL:
+// 	_value._decimal = MAX_FLOAT;
+// 	break;
     case SQL_VARCHAR:
     case SQL_CHAR:
 	memset(_data, 'z', _data_size);
@@ -557,6 +576,9 @@ inline bool field_value_t::copy_value(void* data) const
     case SQL_FLOAT:
         memcpy(data, &_value, _real_size);
         break;
+//     case SQL_DECIMAL:
+//         memcpy(data, &_value, _real_size);
+//         break;
     case SQL_TIME:
         memcpy(data, _value._time, _real_size);
         break;
@@ -601,6 +623,7 @@ inline bool field_value_t::load_value_from_file(ifstream & is,
     case SQL_SMALLINT:  _value._smallint = atoi(string); break;
     case SQL_INT:       _value._int = atoi(string); break;
     case SQL_FLOAT:     _value._float = atof(string); break;
+        //    case SQL_DECIMAL:   _value._decimal = decimal(atof(string)); break;
     case SQL_TIME:      break;
     case SQL_VARCHAR:   {
         if (string[0] == '\"') string[strlen(string)-1] = '\0';
@@ -654,6 +677,22 @@ inline void field_value_t::set_float_value(const double data)
     _null_flag = false;
     _value._float = data;
 }
+
+inline void field_value_t::set_decimal_value(const decimal data)
+{ 
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_FLOAT);
+    _null_flag = false;
+    _value._float = data.to_double();
+}
+
+// inline void field_value_t::set_decimal_value(const decimal data)
+// { 
+//     assert (_pfield_desc);
+//     assert (_pfield_desc->type() == SQL_DECIMAL);
+//     _null_flag = false;
+//     _value._decimal = data;
+// }
 
 inline void field_value_t::set_time_value(const timestamp_t& data)
 {
@@ -733,6 +772,21 @@ inline double field_value_t::get_float_value() const
     assert (_pfield_desc->type() == SQL_FLOAT);
     return (_value._float);
 }
+
+
+inline decimal field_value_t::get_decimal_value() const
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_FLOAT);
+    return (decimal(_value._float));
+}
+
+// inline double field_value_t::get_decimal_value() const
+// {
+//     assert (_pfield_desc);
+//     assert (_pfield_desc->type() == SQL_DECIMAL);
+//     return (_value._decimal);
+// }
 
 inline timestamp_t& field_value_t::get_time_value() const
 {

@@ -486,6 +486,13 @@ struct table_row_t {
 	_pvalues[idx].set_value(&v, 0);
     }
 
+    inline void set_value(int idx, const decimal v) 
+    {
+	assert (idx >= 0 && idx < _field_cnt);
+        assert (_is_setup && _pvalues[idx].is_setup());
+	_pvalues[idx].set_decimal_value(v);
+    }
+
     inline void set_value(int idx, const char* string) 
     {
 	assert (idx >= 0 && idx < _field_cnt);
@@ -520,7 +527,9 @@ struct table_row_t {
     bool get_value(const int idx, short& value) const;
     bool get_value(const int idx, char* buffer, const int bufsize) const;
     bool get_value(const int idx, double& value) const;
+    bool get_value(const int idx, decimal& value) const;
     bool get_value(const int idx, timestamp_t& value) const;
+
 
 
     /* --- debugging --- */
@@ -928,7 +937,7 @@ inline bool table_row_t::get_value(const int index,
 }
 
 inline bool table_row_t::get_value(const int index,
-                                    char * buffer,
+                                    char* buffer,
                                     const int bufsize) const
 {
     assert(index >= 0 && index < _field_cnt);
@@ -943,7 +952,7 @@ inline bool table_row_t::get_value(const int index,
 }
 
 inline bool table_row_t::get_value(const int index,
-                                   double & value) const
+                                   double& value) const
 {
     assert(index >= 0 && index < _field_cnt);
     if (!_pvalues[index].is_null()) {
@@ -953,8 +962,20 @@ inline bool table_row_t::get_value(const int index,
     return false;
 }
 
+
+inline bool table_row_t::get_value(const int index,
+                                   decimal& value) const
+{
+    assert(index >= 0 && index < _field_cnt);
+    if (!_pvalues[index].is_null()) {
+        value = _pvalues[index].get_decimal_value();
+        return true;
+    }
+    return false;
+}
+
 inline  bool table_row_t::get_value(const int index,
-                                    timestamp_t & value) const
+                                    timestamp_t& value) const
 {
     assert(index >= 0 && index < _field_cnt);
     if (!_pvalues[index].is_null()) {

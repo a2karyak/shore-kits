@@ -188,11 +188,13 @@ w_rc_t customer_t::index_probe(ss_m* db,
 }
 
 w_rc_t customer_t::index_probe_forupdate(ss_m * db,
-                                         table_row_t* ptuple,
+                                         table_row_t* ptuple,                                         
                                          const int   c_id,
                                          const short w_id,
                                          const short d_id)
 {
+    assert (false); // (ip) 
+
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
@@ -201,24 +203,26 @@ w_rc_t customer_t::index_probe_forupdate(ss_m * db,
 
 w_rc_t customer_t::update_tuple(ss_m* db,
                                 table_row_t* ptuple,
-                                const double balance,
-                                const double ytd_payment,
-                                const short  payment_cnt,
-                                const char * data)
+                                const tpcc_customer_tuple acustomer,
+                                const char* adata1,
+                                const char* adata2)
 {
-    ptuple->set_value(16, balance);
-    ptuple->set_value(17, ytd_payment);
-    ptuple->set_value(18, payment_cnt);
+    ptuple->set_value(16, acustomer.C_BALANCE);
+    ptuple->set_value(17, acustomer.C_YTD_PAYMENT);
+    ptuple->set_value(19, acustomer.C_PAYMENT_CNT);
 
-    if (data)
-	ptuple->set_value(20, data);
+    if (adata1)
+	ptuple->set_value(20, adata1);
 
-    int c_id;
-    short w_id;
-    short d_id;
-    ptuple->get_value(0,c_id);
-    ptuple->get_value(1,d_id);
-    ptuple->get_value(2,w_id);
+    if (adata2)
+	ptuple->set_value(21, adata2);
+
+//     int c_id;
+//     short w_id;
+//     short d_id;
+//     ptuple->get_value(0, c_id);
+//     ptuple->get_value(1, d_id);
+//     ptuple->get_value(2, w_id);
 
     // cout << "APP: " << xct()->tid() << " Update customer-tuple " << w_id << " " << d_id << " " << c_id << endl;
     W_DO(table_desc_t::update_tuple(db, ptuple));
