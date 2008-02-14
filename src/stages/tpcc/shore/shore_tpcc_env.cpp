@@ -41,8 +41,15 @@ ShoreTPCCEnv* shore_env;
 
 w_rc_t ShoreTPCCEnv::loaddata() 
 {
-    /* 0. lock the scaling factor */
-    critical_section_t cs(_scaling_mutex);
+    /* 0. lock the loading status and the scaling factor */
+    critical_section_t load_cs(_load_mutex);
+    if (_loaded) {
+        TRACE( TRACE_ALWAYS, 
+               "Env already loaded. Doing nothing...\n");
+        return (RCOK);
+    }        
+    critical_section_t scale_cs(_scaling_mutex);
+
 
     /* 1. create the loader threads */
     tpcc_table_t* ptable = NULL;
@@ -61,52 +68,49 @@ w_rc_t ShoreTPCCEnv::loaddata()
             strcat(fname, "/");
             strcat(fname, ptable->name());
             strcat(fname, ".dat");
-            cout << ++cnt << ". Loading " << ptable->name() << endl;
+            TRACE( TRACE_DEBUG, "%d. Loading (%s) from (%s)\n", 
+                   ++cnt, ptable->name(), fname);
             time_t ttablestart = time(NULL);
             w_rc_t e = ptable->load_from_file(_pssm, fname);
             time_t ttablestop = time(NULL);
             if (e != RCOK) {
-                cerr << cnt << ". Error while loading " 
-                     << ptable->name() << " *****" << endl; 
-            }
-            else {
-                cout << cnt << ". Done loading " << ptable->name() << endl;
+                TRACE( TRACE_ALWAYS, "%d. Error while loading (%s) *****\n",
+                       cnt, ptable->name());
+                return RC(se_ERROR_IN_LOAD);
             }
 
-           cout << "Table " << ptable->name() << " loaded in " 
-                << (ttablestop - ttablestart) << " secs..." << endl;
+            TRACE( TRACE_DEBUG, "Table (%s) loaded in (%d) secs...\n",
+                   ptable->name(), (ttablestop - ttablestart));
 
-//            loaders[cnt] = new tpcc_loading_smt_t(_pssm, ptable, 
-//                                                  _scaling_factor, cnt++);
-
+            //            loaders[cnt] = new tpcc_loading_smt_t(_pssm, ptable, 
+            //                                                  _scaling_factor, cnt++);
         }
 
 #if 0
 #if 1
     /* 3. fork the loading threads */
-    cnt = 0;
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
     }
 
     /* 4. join the loading threads */
-    cnt = 0;
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->join();        
         if (loaders[i]->rv()) {
             cerr << "~~~~ Error at loader " << i << endl;
             assert (false);
+            return RC(se_ERROR_IN_LOAD);
         }
     }    
 #else
     /* 3. fork & join the loading threads SERIALLY */
-    cnt = 0;
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
 	loaders[i]->join();        
         if (loaders[i]->rv()) {
             cerr << "~~~~ Error at loader " << i << endl;
             assert (false);
+            return RC(se_ERROR_IN_LOAD);
         }        
     }
 #endif
@@ -114,8 +118,12 @@ w_rc_t ShoreTPCCEnv::loaddata()
     time_t tstop = time(NULL);
 
     /* 5. print stats */
-    cout << "Loading finished in " << (tstop - tstart) << " secs..." << endl;
-    cout << num_tbl << " tables loaded..." << endl;        
+    TRACE( TRACE_STATISTICS, "Loading finished in (%d) secs...\n",
+           (tstop - tstart));
+    TRACE( TRACE_STATISTICS, "%d tables loaded...\n", num_tbl);
+
+    /* 6. notify that the env is loaded */
+    _loaded = true;
 
     return (RCOK);
 }
@@ -171,10 +179,10 @@ w_rc_t ShoreTPCCEnv::check_consistency()
     }
     time_t tstop = time(NULL);
 #endif
-
     /* 4. print stats */
-    cout << "Checking finished in " << (tstop - tstart) << " secs..." << endl;
-    cout << num_tbl << " tables checked..." << endl; 
+    TRACE( TRACE_DEBUG, "Checking finished in (%d) secs...\n",
+           (tstop - tstart));
+    TRACE( TRACE_DEBUG, "%d tables checked...\n", num_tbl);
     return (RCOK);
 }
 
@@ -184,11 +192,11 @@ void ShoreTPCCEnv::set_qf(const int aQF)
 {
     if ((aQF >= 0) && (aQF <= _scaling_factor)) {
         critical_section_t cs(_queried_mutex);
-        cout << "New Queried factor: " << aQF << endl;
+        TRACE( TRACE_ALWAYS, "New Queried factor: %d\n", aQF);
         _queried_factor = aQF;
     }
     else {
-        cerr << "Invalid queried factor input: " << aQF << endl;
+        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
     }
 }
 

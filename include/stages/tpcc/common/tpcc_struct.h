@@ -339,8 +339,6 @@ struct tpcc_stock_tuple_key {
 
 // WAREHOUSE
 
-// FIXME (ip): We may need padding to the WAREHOUSE
-
 struct tpcc_warehouse_tuple {
     int W_ID;
     char W_NAME     [STRSIZE(10)];

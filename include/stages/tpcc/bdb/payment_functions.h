@@ -51,7 +51,7 @@ public:
     //Dbt custKey;
 
     // INS_HISTORY
-    // FIXME (ip) ?
+    // (ip) ?
 
 
     /** Construction */

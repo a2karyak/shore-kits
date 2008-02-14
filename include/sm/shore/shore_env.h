@@ -151,11 +151,6 @@ public:
     inline ss_m* db() { return(_pssm); }
     inline vid_t* vid() { return(_pvid); }
 
-    inline pthread_mutex_t* get_vol_mutex() { return(&_vol_mutex); }
-    inline pthread_mutex_t* get_load_mutex() { return(&_load_mutex); }
-    inline bool is_loaded_no_cs() { return (_loaded); }
-    inline void set_loaded_no_cs(bool b) { _loaded = b; } 
-
     inline bool is_initialized() { 
         CRITICAL_SECTION(cs, _init_mutex); 
         return (_initialized); 

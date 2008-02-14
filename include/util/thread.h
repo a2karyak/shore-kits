@@ -141,10 +141,10 @@ public:
 
     //    virtual void run()=0;
 
-    /** (ip) The previously used run() is already used by smthread core.
-     *       Thus, run() now does the cordoba::thread_t specific setup and
-     *       calls work(). That is, work() is the new entry function for
-     *       thread_t instead of run().
+    /** The previously used run() is already used by smthread core.
+     *  Thus, run() now does the cordoba::thread_t specific setup and
+     *  calls work(). That is, work() is the new entry function for
+     *  thread_t instead of run().
      */
     virtual void work()=0; 
     
@@ -224,7 +224,7 @@ public:
 /**
  *  @brief Helper function for running class member functions in a
  *  pthread. The function must take no arguments and return a type
- *  compatible with (void). // (ip) used to be (void*)
+ *  compatible with (void).
  */
 
 template <class Return, class Class>

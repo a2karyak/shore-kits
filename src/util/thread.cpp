@@ -153,7 +153,7 @@ inline void thread_t::run()
 
 inline void thread_t::setupthr()
 {
-    cout << "(ip) +" << endl;
+    cout << "(_)" << endl;
 
     if(!_ppool)
 	_ppool = &default_thread_pool;
@@ -452,7 +452,7 @@ void thread_pool::stop() {
 
 static void setup_thread(thread_args* args) 
 {
-    cout << "(ip) +" << endl;
+    cout << "(+)" << endl;
 
     thread_t* thread  = args->t;
     thread_pool* pool = args->p;

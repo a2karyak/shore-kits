@@ -24,13 +24,16 @@ using namespace shore;
  ********/
 
 
-/** @fn     init
+/*********************************************************************
  *
- *  @brief  Initializes the shore environment. Reads configuration
- *  opens database and device.
+ *  @fn     init
+ *
+ *  @brief  Initialize the shore environment. Reads configuration
+ *          opens database and device.
  *
  *  @return 0 on success, non-zero otherwise
- */
+ *
+ *********************************************************************/
 
 int ShoreEnv::init() 
 {

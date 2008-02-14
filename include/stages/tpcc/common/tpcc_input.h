@@ -34,7 +34,7 @@ public:
     trx_input_t() { }
     virtual ~trx_input_t() { }
     virtual void describe(int id)=0;
-    virtual void gen_input() { } // (ip) TODO make it pure virtual
+    virtual void gen_input()=0;
 
 }; // EOF: trx_input_t
 

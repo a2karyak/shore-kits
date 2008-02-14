@@ -30,6 +30,7 @@ enum {
   se_OPEN_SCAN_ERROR          = 0x810020,
   
   se_LOAD_NOT_EXCLUSIVE       = 0x810040,
+  se_ERROR_IN_LOAD            = 0x810041,
 
   se_WRONG_DISK_DATA          = 0x810050
 };

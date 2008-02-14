@@ -66,9 +66,9 @@ public:
 
     // methods
     int test() {
-        //        _env->loaddata();
+        W_DO(_env->loaddata());
         //_env->check_consistency();
-        tpcc_run_xct(_env, 40);
+        W_DO(tpcc_run_xct(_env, 40));
         //print_tables();
         return (0);
     }
