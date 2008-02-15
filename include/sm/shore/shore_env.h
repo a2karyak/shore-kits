@@ -98,9 +98,9 @@ protected:
     void print_trx_stats();
 
     // Storage manager access functions
-    int configure_sm();
-    int start_sm();
-    int close_sm();
+    int  configure_sm();
+    int  start_sm();
+    int  close_sm();
     void gatherstats_sm();
     
 public:
@@ -159,6 +159,15 @@ public:
         CRITICAL_SECTION(cs, _load_mutex);
         return (_loaded); 
     }
+
+    inline pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }
+    inline pthread_mutex_t* get_vol_mutex() { return (&_vol_mutex); }
+    inline pthread_mutex_t* get_load_mutex() { return (&_load_mutex); }
+    inline bool get_init_no_cs() { return (_initialized); }
+    inline bool get_loaded_no_cs() { return (_loaded); }
+    inline void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
+    inline void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
+
 
     // stats
     inline long aborted_cnt() { return (_aborted_cnt); }

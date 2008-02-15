@@ -34,7 +34,7 @@ public:
     trx_input_t() { }
     virtual ~trx_input_t() { }
     virtual void describe(int id)=0;
-    virtual void gen_input()=0;
+    virtual void gen_input(int sf)=0;
 
 }; // EOF: trx_input_t
 
@@ -80,10 +80,11 @@ public:
     // Construction/Destructions
     payment_input_t() { };
 
-    ~payment_input_t() {};
+    ~payment_input_t() { };
 
     payment_input_t& operator= (const payment_input_t& rhs);
     void describe(int id=0);
+    void gen_input(int sf);
 
 }; // EOF payment_input_t
 
@@ -101,33 +102,33 @@ public:
 class new_order_input_t : public trx_input_t {
 public:
 
-    short   _c_id;          /* input */
-    short   _w_id;          /* input */
-    short   _d_id;          /* input */
-    short   _ol_cnt;        /* input: number of items */
+    short   _wh_id;         /* input */
+    short   _d_id;          /* input: URand(1,10) */
+    short   _c_id;          /* input: NURand(1023, 1, 3000) */
+    short   _ol_cnt;        /* input: number of items URand(5,15) */
+    short   _rbk;           /* input: rollback URand(1,100) */
 
     struct  _ol_item_info {
-        short  _w_id;         /* input */
-        int    _i_id;         /* input */
-        double _balance;      /* input */
-        short  _quantity;     /* input */
+        int     _ol_i_id;             /* input: NURand(8191, 1, 100000) */
+        short   _ol_supply_wh_select; /* input: URand(1, 100) */
+        short   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
+        short   _ol_quantity;         /* input: URand(1, 10) */        
     }  items[MAX_OL_PER_ORDER];
 
+    /** If _supply_wh_id = _wh_id for each item 
+     *  then trx called home, else remote 
+     */    
 
     // Construction/Destructions
-    new_order_input_t() { 
-        assert (false); // (ip) Not implemented yet
-    };
-    
+    new_order_input_t() { };    
     ~new_order_input_t() { };
 
     // Assignment operator
-    new_order_input_t& operator= (const new_order_input_t& rhs) {
-        assert (false); // (ip) Not implemented yet
-        return (*this);
-    }
+    new_order_input_t& operator= (const new_order_input_t& rhs);
 
-    void describe(int id=0);
+    // Methods
+    void describe(int id);
+    void gen_input(int id);
 
 }; // EOF new_order_input_t
 
@@ -153,12 +154,11 @@ public:
 
 
     // Assignment operator
-    orderline_input_t& operator= (const orderline_input_t& rhs) {
-        assert (false); // (ip) Not implemented yet
-        return (*this);
-    }
+    orderline_input_t& operator= (const orderline_input_t& rhs);
 
+    // Methods
     void describe(int id=0);
+    void gen_input(int id);
 
 }; // EOF orderline_input_t
 
@@ -191,12 +191,11 @@ public:
 
 
     // Assignment operator
-    order_status_input_t& operator= (const order_status_input_t& rhs) {
-        assert (false); // (ip) Not implemented yet
-        return (*this);
-    }
+    order_status_input_t& operator= (const order_status_input_t& rhs);
 
+    // Methods
     void describe(int id=0);
+    void gen_input(int id);
 
 }; // EOF order_status_input_t
 
@@ -233,6 +232,7 @@ public:
     }
 
     void describe(int id=0);
+    void gen_input(int id);
 
 }; // EOF delivery_input_t
 
@@ -270,6 +270,7 @@ public:
     }
 
     void describe(int id=0);
+    void gen_input(int id);
 
 }; // EOF stock_level_input_t
 

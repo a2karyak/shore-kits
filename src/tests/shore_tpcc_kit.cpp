@@ -2,7 +2,7 @@
 // CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
 #include "tests/common.h"
-#include "stages/tpcc/common/tpcc_payment_common.h"
+#include "stages/tpcc/common/tpcc_trx_input.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 
 

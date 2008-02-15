@@ -217,9 +217,9 @@ SG_COMMON = \
 SG_TRX_COMMON = \
    $(SG)/tpcc/common/trx_packet.cpp \
    $(SG)/tpcc/common/tpcc_input.cpp \
+   $(SG)/tpcc/common/tpcc_trx_input.cpp \
    $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
-   $(SG)/tpcc/common/tpcc_payment_common.cpp \
    $(SG)/tpcc/common/tpcc_random.cpp
 
 SG_BDB_TRX = \

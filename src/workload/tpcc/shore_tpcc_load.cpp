@@ -53,7 +53,7 @@ int loading_smt_t::loaddata()
 {
     CRITICAL_SECTION(cs, *_env->get_load_mutex());
 
-    if (_env->is_loaded_no_cs()) {
+    if (_env->get_loaded_no_cs()) {
         cerr << "Shore data already loaded... " << endl;
         return (1);
     }

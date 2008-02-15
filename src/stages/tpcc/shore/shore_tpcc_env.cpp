@@ -208,11 +208,6 @@ void ShoreTPCCEnv::set_qf(const int aQF)
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin, 
-                                   const int xct_id, 
-                                   trx_result_tuple_t& trt)
-{ return (RCOK); }
-
 w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin, 
                                       const int xct_id, 
                                       trx_result_tuple_t& trt)
@@ -241,11 +236,15 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
                                  const int xct_id, 
                                  trx_result_tuple_t& trt)
 {
-    // ensure a valid environment
+    // ensure a valid environment    
     assert (ppin);
     assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
-    // payment trx touches 4 tables: warehouse, district, customer, and history
+
+    // payment trx touches 4 tables: 
+    // warehouse, district, customer, and history
     table_row_t rwh;
     table_row_t rdist;
     table_row_t rcust;
@@ -256,11 +255,14 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     W_DO(_pssm->begin_xct());
 
     /* 1. retrieve warehouse for update */
-    W_DO(_warehouse.index_probe_forupdate(_pssm, 
-                                          &rwh, 
-                                          ppin->_home_wh_id));   
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d PAY:warehouse-index-probe\n", xct_id, ppin->_home_wh_id);
+    W_DO(_warehouse.index_probe_forupdate(_pssm, &rwh, ppin->_home_wh_id));   
 
     /* 2. retrieve district for update */
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d PAY:warehouse-index-probe\n", 
+           xct_id, ppin->_home_wh_id);
     W_DO(_district.index_probe_forupdate(_pssm, 
                                          &rdist,
                                          ppin->_home_d_id, 
@@ -284,7 +286,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	 */
 
         index_scan_iter_impl* c_iter;
-        cout << "App: " << xct_id << " PAY:get-iter-by-index" << endl;
+        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:get-iter-by-index\n", xct_id);
 	W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
                                          c_w, c_d, ppin->_c_last));
 
@@ -292,11 +294,11 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	int   count = 0;
 	bool  eof;
 
-        cout << "App: " << xct_id << " PAY:iter-next" << endl;
+        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:iter-next\n", xct_id);
 	W_DO(c_iter->next(_pssm, eof, rcust));
 	while (!eof) {
 	    rcust.get_value(0, c_id_list[count++]);            
-            cout << "App: " << xct_id << " PAY:iter-next" << endl;
+            TRACE( TRACE_TRX_FLOW, "App: %d, PAY:iter-next\n", xct_id);
 	    W_DO(c_iter->next(_pssm, eof, rcust));
 	}
 	delete c_iter;
@@ -315,8 +317,9 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "C_INDEX"
      */
 
-    cout << "App: " << xct_id << " PAY:index-probe-forupdate " 
-         << ppin->_c_id << " " << c_w << " " << c_d << endl;
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d, PAY:index-probe-forupdate (%d) (%d) (%d)\n", 
+           xct_id, ppin->_c_id, c_w, c_d);
     W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, 
                                          c_w, c_d));
 
@@ -340,8 +343,10 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rcust.get_value(15, acust.C_DISCOUNT);
     rcust.get_value(16, acust.C_BALANCE);
     rcust.get_value(17, acust.C_YTD_PAYMENT);
+    rcust.get_value(18, acust.C_LAST_PAYMENT);
     rcust.get_value(19, acust.C_PAYMENT_CNT);
     rcust.get_value(20, acust.C_DATA_1, 251);
+    rcust.get_value(21, acust.C_DATA_2, 251);
 
     // update customer fields
     acust.C_BALANCE -= ppin->_h_amount;
@@ -360,15 +365,14 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	 * plan: index probe on "C_INDEX"
 	 */
 
-        cout << "App: " << xct_id << " PAY:index-probe-forupdate " << ppin->_c_id 
-             << " " << c_w << " " << c_d << endl;
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d, PAY:index-probe-forupdate (%d) (%d) (%d)\n", 
+               xct_id, ppin->_c_id, c_w, c_d);        
 	W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, c_w, c_d));
 
         // update the data
 	char c_new_data_1[251];
         char c_new_data_2[251];
-        rcust.get_value(21, acust.C_DATA_2, 251);
-
 	sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
 		ppin->_c_id, c_d, c_w, ppin->_home_d_id, 
                 ppin->_home_wh_id, ppin->_h_amount);
@@ -378,12 +382,11 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-        cout << "App: " << xct_id << " PAY:update-tuple" << endl;
+        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:update-tuple\n", xct_id);
 	W_DO(_customer.update_tuple(_pssm, &rcust, acust, c_new_data_1, c_new_data_2));
     }
     else { /* good customer */
-
-        cout << "App: " << xct_id << " PAY:update-tuple" << endl;
+        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:update-tuple\n", xct_id);
 	W_DO(_customer.update_tuple(_pssm, &rcust, acust, NULL, NULL));
     }
 
@@ -393,7 +396,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "D_INDEX"
      */
 
-    cout << "App: " << xct_id << " PAY:update-ytd1 " << ppin->_home_wh_id <<  endl;
+    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:update-ytd1 (%d)\n", xct_id, ppin->_home_wh_id);
     W_DO(_district.update_ytd(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id, ppin->_h_amount));
 
     /* SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
@@ -403,8 +406,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "D_INDEX"
      */
 
-    cout << "App: " << xct_id << " PAY:index-probe " << ppin->_home_d_id 
-         << " " << ppin->_home_wh_id << endl;
+    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:index-probe (%d) (%d)\n", 
+           xct_id, ppin->_home_d_id, ppin->_home_wh_id);
     W_DO(_district.index_probe(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id));
 
     tpcc_district_tuple adistr;
@@ -421,7 +424,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "W_INDEX"
      */
 
-    cout << "App: " << xct_id << " PAY:update-ytd2 " << ppin->_home_wh_id <<  endl;
+    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:update-ytd2 (%d)\n", xct_id, ppin->_home_wh_id);
     W_DO(_warehouse.update_ytd(_pssm, &rwh, ppin->_home_wh_id, ppin->_h_amount));
 
     tpcc_warehouse_tuple awh;
@@ -449,7 +452,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rhist.set_value(6, ppin->_h_amount * 100.0);
     rhist.set_value(7, ahist.H_DATA);
 
-    cout << "App: " << xct_id << " PAY:add-tuple " << endl;
+    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:add-tuple\n", xct_id);
     W_DO(_history.add_tuple(_pssm, &rhist));
 
     /* 4. commit */
@@ -464,6 +467,246 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
 
 
+
+/******************************************************************** 
+ *
+ * TPC-C NEW_ORDER
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin, 
+                                   const int xct_id, 
+                                   trx_result_tuple_t& trt)
+{
+    // ensure a valid environment
+    assert (pnoin);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // get a timestamp
+    time_t tstamp = time(NULL);
+
+    // new_order trx touches 8 tables:
+    // warehouse, district, customer, neworder, order, item, stock, orderline
+    table_row_t rwh;
+    table_row_t rdist;
+    table_row_t rcust;
+    table_row_t rno;
+    table_row_t rord;
+    table_row_t ritem;
+    table_row_t rst;
+    table_row_t rol;
+    trt.reset(UNSUBMITTED, xct_id);
+
+    /* 0. initiate transaction */
+    W_DO(_pssm->begin_xct());
+
+
+    /* SELECT c_discount, c_last, c_credit, w_tax
+     * FROM customer, warehouse
+     * WHERE w_id = :w_id AND c_w_id = w_id AND c_d_id = :d_id AND c_id = :c_id
+     *
+     * plan: index probe on "W_INDEX", index probe on "C_INDEX"
+     */
+
+    /* 1. retrieve warehouse for update */
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d NO:warehouse-index-probe (%d)\n", 
+           xct_id, pnoin->_wh_id);
+    W_DO(_warehouse.index_probe(_pssm, &rwh, pnoin->_wh_id));
+
+    /* 2. retrieve district for update */
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d NO:district-index-probe (%d) (%d)\n", 
+           xct_id, pnoin->_wh_id, pnoin->_d_id);
+    W_DO(_district.index_probe_forupdate(_pssm, &rdist, 
+                                         pnoin->_wh_id, pnoin->_d_id));
+
+    /* 3. retrieve customer */
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d NO:customer-index-probe (%d) (%d) (%d)\n", 
+           xct_id, pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id);
+    W_DO(_customer.index_probe(_pssm, &rcust, pnoin->_c_id, 
+                               pnoin->_wh_id, pnoin->_d_id));
+
+    tpcc_warehouse_tuple awh;
+    tpcc_customer_tuple  acust;
+
+    rwh.get_value(7, awh.W_TAX);
+    rcust.get_value(15, acust.C_DISCOUNT);
+    rcust.get_value(13, acust.C_CREDIT, 3);
+    rcust.get_value(5, acust.C_LAST, 17);
+
+
+    /* SELECT d_tax, d_next_o_id
+     * FROM district
+     * WHERE d_id = :d_id AND d_w_id = :w_id
+     *
+     * plan: index probe on "D_INDEX"
+     */
+
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:district-index-probe (%d) (%d)\n",
+           xct_id, pnoin->_wh_id, pnoin->_d_id);
+
+    tpcc_district_tuple adist;
+    rdist.get_value(8, adist.D_TAX);
+    rdist.get_value(10, adist.D_NEXT_O_ID);
+    adist.D_NEXT_O_ID++;
+
+
+    /* UPDATE district
+     * SET d_next_o_id = :next_o_id+1
+     * WHERE CURRENT OF dist_cur
+     */
+
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:district-update-next-o-id\n", xct_id);
+    W_DO(_district.update_next_o_id(_pssm, &rdist, adist.D_NEXT_O_ID));
+    double total_amount = 0;
+    int all_local = 0;
+
+    for (int item_cnt = 0; item_cnt < pnoin->_ol_cnt; item_cnt++) {
+
+        /* 4. for all items update item, stock, and order line */
+	register int  ol_i_id = pnoin->items[item_cnt]._ol_i_id;
+	register short ol_supply_w_id = pnoin->items[item_cnt]._ol_supply_wh_id;
+
+
+	/* SELECT i_price, i_name, i_data
+	 * FROM item
+	 * WHERE i_id = :ol_i_id
+	 *
+	 * plan: index probe on "I_INDEX"
+	 */
+
+        tpcc_item_tuple aitem;
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:item-index-probe (%d)\n", 
+               xct_id, ol_i_id);
+	W_DO(_item.index_probe(_pssm, &ritem, ol_i_id));
+
+        ritem.get_value(4, aitem.I_DATA, 51);
+	ritem.get_value(3, aitem.I_PRICE);
+	ritem.get_value(2, aitem.I_NAME, 25);
+
+        double damount = aitem.I_PRICE * pnoin->items[item_cnt]._ol_quantity; 
+        total_amount += damount;
+        //	info->items[item_cnt].ol_amount = amount;
+
+
+	/* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
+	 * FROM stock
+	 * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
+	 *
+	 * plan: index probe on "S_INDEX"
+	 */
+
+        tpcc_stock_tuple astock;
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-index-probe (%d) (%d)\n", 
+               xct_id, ol_i_id, ol_supply_w_id);
+	W_DO(_stock.index_probe_forupdate(_pssm, &rst, ol_i_id, ol_supply_w_id));       
+
+        rst.get_value(0, astock.S_I_ID);
+        rst.get_value(1, astock.S_W_ID);
+        rst.get_value(5, astock.S_YTD);
+        astock.S_YTD += pnoin->items[item_cnt]._ol_quantity;
+	rst.get_value(2, astock.S_REMOTE_CNT);        
+        rst.get_value(3, astock.S_QUANTITY);
+        astock.S_QUANTITY -= pnoin->items[item_cnt]._ol_quantity;
+        if (astock.S_QUANTITY < 10) astock.S_QUANTITY += 91;
+        rst.get_value(6+pnoin->_d_id, astock.S_DIST[6+pnoin->_d_id], 25);
+	rst.get_value(16, astock.S_DATA, 51);
+
+        char c_s_brand_generic;
+	if (strstr(aitem.I_DATA, "ORIGINAL") != NULL && 
+            strstr(astock.S_DATA, "ORIGINAL") != NULL)
+	    c_s_brand_generic = 'B';
+	else c_s_brand_generic = 'G';
+
+	rst.get_value(4, astock.S_ORDER_CNT);
+        astock.S_ORDER_CNT++;
+
+	if (pnoin->_wh_id != ol_supply_w_id) {
+            astock.S_REMOTE_CNT++;
+	    all_local = 1;
+	}
+
+
+	/* UPDATE stock
+	 * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
+	 * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
+	 */
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-update-tuple (%d) (%d) (%d)\n", 
+               xct_id, astock.S_ORDER_CNT, astock.S_YTD, astock.S_REMOTE_CNT);
+	W_DO(_stock.update_tuple(_pssm, &rst, &astock));
+
+
+	/* INSERT INTO order_line
+	 * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
+	 *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
+	 */
+
+	rol.set_value(0, adist.D_NEXT_O_ID);
+	rol.set_value(1, pnoin->_d_id);
+	rol.set_value(2, pnoin->_wh_id);
+	rol.set_value(3, item_cnt+1);
+	rol.set_value(4, ol_i_id);
+	rol.set_value(5, ol_supply_w_id);
+	rol.set_value(6, tstamp);
+	rol.set_value(7, pnoin->items[item_cnt]._ol_quantity);
+	rol.set_value(8, damount);
+	rol.set_value(9, astock.S_DIST[6+pnoin->_d_id]);
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:add-tuple (%d)\n", 
+               xct_id, adist.D_NEXT_O_ID);
+	W_DO(_order_line.add_tuple(_pssm, &rol));
+
+    } /* end for loop */
+
+
+    /* 5. insert row to orders and new_order */
+
+    /* INSERT INTO orders
+     * VALUES (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
+     */
+   
+    rord.set_value(0, adist.D_NEXT_O_ID);
+    rord.set_value(1, pnoin->_c_id);
+    rord.set_value(2, pnoin->_d_id);
+    rord.set_value(3, pnoin->_wh_id);
+    rord.set_value(4, tstamp);
+    rord.set_value(5, 0);
+    rord.set_value(6, pnoin->_ol_cnt);
+    rord.set_value(7, all_local);
+
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:add-tuple (%d)\n", 
+           xct_id, adist.D_NEXT_O_ID);
+    W_DO(_order.add_tuple(_pssm, &rord));
+
+
+    /* INSERT INTO new_order VALUES (o_id, d_id, w_id)
+     */
+
+    rno.set_value(0, adist.D_NEXT_O_ID);
+    rno.set_value(1, pnoin->_d_id);
+    rno.set_value(2, pnoin->_wh_id);
+
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:add-tuple (%d) (%d) (%d)\n", 
+           xct_id, adist.D_NEXT_O_ID, pnoin->_d_id, pnoin->_wh_id);
+    W_DO(_new_order.add_tuple(_pssm, &rno));
+
+    /* 6. finalize trx */
+    W_DO(_pssm->commit_xct());
+
+    // if we reached this point everything went ok
+    trt.set_state(COMMITTED);
+
+    /* 7. increase statistics */
+    inc_no_cnt();
+
+    return (RCOK);
+
+} // EOF: NEW_ORDER
 
 
 

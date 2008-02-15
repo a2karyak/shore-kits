@@ -6,6 +6,7 @@
  */
 
 #include "stages/tpcc/common/tpcc_input.h"
+#include "stages/tpcc/common/tpcc_trx_input.h"
 
 using namespace tpcc;
 
@@ -38,47 +39,28 @@ payment_input_t& payment_input_t::operator= (const payment_input_t& rhs)
 
 void payment_input_t::describe(int id)
 {
-    if (_c_last) {
-
-        TRACE( TRACE_TRX_FLOW,
-               "\nPAYMENT: ID=%d\nWH_ID=%d\t\tD_ID=%d\n"  \
-               "SEL_WH=%d\tSEL_IDENT=%d\n"  \
-               "REM_WH_ID=%d\tREM_D_ID=%d\n"        \
-               "C_ID=%d\tC_LAST=%s\n"               \
-               "H_AMOUNT=%.2f\tH_DATE=%d\n",        \
-               id,
-               _home_wh_id, 
-               _home_d_id, 
-               _v_cust_wh_selection, 
-               _v_cust_ident_selection,
-               _remote_wh_id, 
-               _remote_d_id,
-               _c_id, 
-               _c_last,
-               _h_amount, 
-               _h_date);
-    }
-    else {
-            
-        // If using the standard input, _c_last is NULL
-        TRACE( TRACE_TRX_FLOW,                   
-               "\nPAYMENT: ID=%d\nWH_ID=%d\t\tD_ID=%d\n"      \
-               "SEL_WH=%d\tSEL_IDENT=%d\n"  \
-               "REM_WH_ID=%d\tREM_D_ID=%d\n"      \
-               "C_ID=%d\tH_AMOUNT=%.2f\tH_DATE=%d\n",       \
-               id,
-               _home_wh_id, 
-               _home_d_id, 
-               _v_cust_wh_selection, 
-               _v_cust_ident_selection,
-               _remote_wh_id, 
-               _remote_d_id,
-               _c_id, 
-               _h_amount, 
-               _h_date);
-    }
+    TRACE( TRACE_TRX_FLOW,
+           "\nPAYMENT: ID=%d\nWH_ID=%d\t\tD_ID=%d\n"  \
+           "SEL_WH=%d\tSEL_IDENT=%d\n"  \
+           "REM_WH_ID=%d\tREM_D_ID=%d\n"        \
+           "C_ID=%d\tH_AMOUNT=%.2f\tH_DATE=%d\n",     \
+           id,
+           _home_wh_id, 
+           _home_d_id, 
+           _v_cust_wh_selection, 
+           _v_cust_ident_selection,
+           _remote_wh_id, 
+           _remote_d_id,
+           _c_id, 
+           _h_amount, 
+           _h_date);
 }
 
+
+void payment_input_t::gen_input(int sf)
+{
+    *this = create_payment_input(sf);
+}
 
 
 
@@ -86,10 +68,31 @@ void payment_input_t::describe(int id)
 /* --- NEW_ORDER_INPUT --- */
 /* ----------------------- */
 
-
-void new_order_input_t::describe(int id) 
+new_order_input_t& new_order_input_t::operator= (const new_order_input_t& rhs) 
 {
     assert (false); // (ip) Not implemented yet
+    return (*this);
+}
+
+
+void new_order_input_t::describe(int id)
+{
+    TRACE( TRACE_TRX_FLOW,
+           "\nNEW_ORDER: ID=%d\nWH_ID=%d\t\tD_ID=%d\nC_ID=%d\t\tOL_CNT=%d\n",
+           id, _wh_id, _d_id, _c_id, _ol_cnt);
+
+    for (int i=0; i < _ol_cnt; i++) {
+    
+        TRACE( TRACE_TRX_FLOW,
+               "\nITEM_INFO: ID=%d\nWH_ID=%d\t\tQUANT=%d",
+               id, items[i]._ol_supply_wh_id, items[i]._ol_quantity);
+    }
+}
+
+
+void new_order_input_t::gen_input(int sf)
+{
+    *this = create_no_input(sf);
 }
 
 
@@ -99,8 +102,46 @@ void new_order_input_t::describe(int id)
 /* ----------------------- */
 
 
-void orderline_input_t::describe(int id) 
+orderline_input_t& orderline_input_t::operator= (const orderline_input_t& rhs) 
 {
     assert (false); // (ip) Not implemented yet
+    return (*this);
+}
+
+
+void orderline_input_t::describe(int id)
+{
+    assert (false); // not implemented
+}
+
+
+void orderline_input_t::gen_input(int sf)
+{
+    assert (false); // not implemented
+}
+
+
+
+/* -------------------------- */
+/* --- ORDER_STATUS_INPUT --- */
+/* -------------------------- */
+
+
+order_status_input_t& order_status_input_t::operator= (const order_status_input_t& rhs) 
+{
+    assert (false); // (ip) Not implemented yet
+    return (*this);
+}
+
+
+void order_status_input_t::describe(int id)
+{
+    assert (false); // not implemented
+}
+
+
+void order_status_input_t::gen_input(int sf)
+{
+    assert (false); // not implemented
 }
 

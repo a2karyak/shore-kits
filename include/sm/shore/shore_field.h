@@ -253,7 +253,8 @@ struct field_value_t {
     void   set_smallint_value(const short data);
     void   set_float_value(const double data);
     void   set_decimal_value(const decimal data);
-    void   set_time_value(const timestamp_t& data);
+    void   set_time_value(const time_t data);    
+    void   set_tstamp_value(const timestamp_t& data);
     void   set_string_value(const char* string, const int len);
     void   set_var_string_value(const char* string, const int len);
 
@@ -264,7 +265,8 @@ struct field_value_t {
     void         get_string_value(char* string, const int bufsize) const;
     double       get_float_value() const;
     decimal      get_decimal_value() const;
-    timestamp_t& get_time_value() const;
+    time_t       get_time_value() const;
+    timestamp_t& get_tstamp_value() const;
 
     bool    load_value_from_file(ifstream & is, const char delim);
 
@@ -686,6 +688,14 @@ inline void field_value_t::set_decimal_value(const decimal data)
     _value._float = data.to_double();
 }
 
+inline void field_value_t::set_time_value(const time_t data)
+{ 
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_FLOAT);
+    _null_flag = false;
+    _value._float = data;
+}
+
 // inline void field_value_t::set_decimal_value(const decimal data)
 // { 
 //     assert (_pfield_desc);
@@ -694,7 +704,7 @@ inline void field_value_t::set_decimal_value(const decimal data)
 //     _value._decimal = data;
 // }
 
-inline void field_value_t::set_time_value(const timestamp_t& data)
+inline void field_value_t::set_tstamp_value(const timestamp_t& data)
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_TIME);
@@ -781,6 +791,13 @@ inline decimal field_value_t::get_decimal_value() const
     return (decimal(_value._float));
 }
 
+inline time_t field_value_t::get_time_value() const
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_FLOAT);
+    return (_value._float);
+}
+
 // inline double field_value_t::get_decimal_value() const
 // {
 //     assert (_pfield_desc);
@@ -788,7 +805,7 @@ inline decimal field_value_t::get_decimal_value() const
 //     return (_value._decimal);
 // }
 
-inline timestamp_t& field_value_t::get_time_value() const
+inline timestamp_t& field_value_t::get_tstamp_value() const
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_TIME);

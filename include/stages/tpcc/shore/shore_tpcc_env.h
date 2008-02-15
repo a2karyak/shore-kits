@@ -78,6 +78,7 @@ private:
 
     /** some stats */
     long _no_cnt;        // new order count
+    pthread_mutex_t _no_cnt_mutex; 
     
 public:
 
@@ -93,6 +94,7 @@ public:
 
         pthread_mutex_init(&_scaling_mutex, NULL);
         pthread_mutex_init(&_queried_mutex, NULL);
+        pthread_mutex_init(&_no_cnt_mutex,  NULL);
 
         /* add the tables to the list */
         _table_list.push_back(&_warehouse);
@@ -112,6 +114,7 @@ public:
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
+        pthread_mutex_destroy(&_no_cnt_mutex);
         
         _table_list.clear();
     }
@@ -139,7 +142,7 @@ public:
     w_rc_t xct_new_order(new_order_input_t* no_input, 
                          const int xct_id, 
                          trx_result_tuple_t& trt);
-    w_rc_t xct_payment(payment_input_t * pay_input, 
+    w_rc_t xct_payment(payment_input_t* pay_input, 
                        const int xct_id, 
                        trx_result_tuple_t& trt);
     w_rc_t xct_order_status(order_status_input_t* status_input, 
@@ -154,8 +157,14 @@ public:
 
 
     /* --- various helper and stats --- */
-    inline long no_cnt() const { return (_no_cnt); }
-    inline long inc_no_cnt() { return (++_no_cnt); }
+    inline long no_cnt() const { 
+        //CRITICAL_SECTION(ncs, _no_cnt_mutex);
+        return (_no_cnt); 
+    }
+    inline long inc_no_cnt() { 
+        //CRITICAL_SECTION(ncs, _no_cnt_mutex);
+        return (++_no_cnt);
+    }
 
     /* --- access methods --- */
     void set_qf(const int aQF);

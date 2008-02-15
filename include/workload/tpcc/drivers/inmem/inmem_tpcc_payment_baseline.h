@@ -13,7 +13,7 @@
 
 
 #include "workload/driver.h"
-#include "stages/tpcc/common/tpcc_payment_common.h"
+#include "stages/tpcc/common/tpcc_trx_input.h"
 #include "stages/tpcc/inmem/inmem_payment_baseline.h"
 
 

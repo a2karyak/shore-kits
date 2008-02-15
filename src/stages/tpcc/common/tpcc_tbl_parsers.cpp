@@ -184,25 +184,25 @@ DEFINE_TPCC_PARSER(STOCK) {
     record.second.S_YTD = atoi(tmp);
 
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_01,tmp);
+    FILL_STRING(record.second.S_DIST[0],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_02,tmp);
+    FILL_STRING(record.second.S_DIST[1],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_03,tmp);
+    FILL_STRING(record.second.S_DIST[2],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_04,tmp);
+    FILL_STRING(record.second.S_DIST[3],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_05,tmp);
+    FILL_STRING(record.second.S_DIST[4],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_06,tmp);
+    FILL_STRING(record.second.S_DIST[5],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_07,tmp);
+    FILL_STRING(record.second.S_DIST[6],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_08,tmp);
+    FILL_STRING(record.second.S_DIST[7],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_09,tmp);
+    FILL_STRING(record.second.S_DIST[8],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
-    FILL_STRING(record.second.S_DIST_10,tmp);
+    FILL_STRING(record.second.S_DIST[9],tmp);
     tmp = strtok_r(NULL, "|", &lasts);
     FILL_STRING(record.second.S_DATA,tmp);
 

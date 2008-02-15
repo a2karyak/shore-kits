@@ -493,6 +493,13 @@ struct table_row_t {
 	_pvalues[idx].set_decimal_value(v);
     }
 
+    inline void set_value(int idx, const time_t v) 
+    {
+	assert (idx >= 0 && idx < _field_cnt);
+        assert (_is_setup && _pvalues[idx].is_setup());
+	_pvalues[idx].set_time_value(v);
+    }
+
     inline void set_value(int idx, const char* string) 
     {
 	assert (idx >= 0 && idx < _field_cnt);
@@ -528,6 +535,7 @@ struct table_row_t {
     bool get_value(const int idx, char* buffer, const int bufsize) const;
     bool get_value(const int idx, double& value) const;
     bool get_value(const int idx, decimal& value) const;
+    bool get_value(const int idx, time_t& value) const;
     bool get_value(const int idx, timestamp_t& value) const;
 
 
@@ -974,12 +982,23 @@ inline bool table_row_t::get_value(const int index,
     return false;
 }
 
+inline bool table_row_t::get_value(const int index,
+                                   time_t& value) const
+{
+    assert(index >= 0 && index < _field_cnt);
+    if (!_pvalues[index].is_null()) {
+        value = _pvalues[index].get_time_value();
+        return true;
+    }
+    return false;
+}
+
 inline  bool table_row_t::get_value(const int index,
                                     timestamp_t& value) const
 {
     assert(index >= 0 && index < _field_cnt);
     if (!_pvalues[index].is_null()) {
-        value = _pvalues[index].get_time_value();
+        value = _pvalues[index].get_tstamp_value();
         return true;
     }
     return false;

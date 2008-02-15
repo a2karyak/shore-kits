@@ -494,23 +494,14 @@ w_rc_t stock_t::index_probe_forupdate(ss_m* db,
 
 w_rc_t  stock_t::update_tuple(ss_m* db,
                               table_row_t* ptuple,
-			      const short  quantity,
-			      const short  order_cnt,
-			      const double ytd,
-			      const short  remote_cnt)
+                              const tpcc_stock_tuple* pstock)
 {
-    ptuple->set_value(2, quantity);
-    ptuple->set_value(14, order_cnt);
-    ptuple->set_value(13, ytd);
-    ptuple->set_value(15, remote_cnt);
-    int i_id;
-    short w_id;
-    ptuple->get_value(0,i_id);
-    ptuple->get_value(1,w_id);
+    ptuple->set_value(3, pstock->S_QUANTITY);
+    ptuple->set_value(4, pstock->S_ORDER_CNT);
+    ptuple->set_value(5, pstock->S_YTD);
+    ptuple->set_value(2, pstock->S_REMOTE_CNT);
 
-    // cout << "APP: " << xct()->tid() << " Update stock-tuple " << w_id << " " << i_id << endl;
     W_DO(table_desc_t::update_tuple(db, ptuple));
-
     return (RCOK);
 }
 
@@ -1650,25 +1641,25 @@ bool stock_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     /* dist2 */
     tuple.set_value(5, record.second.S_YTD);
     /* dist3 */
-    tuple.set_value(6, record.second.S_DIST_01);
+    tuple.set_value(6, record.second.S_DIST[0]);
     /* dist4 */
-    tuple.set_value(7, record.second.S_DIST_02);
+    tuple.set_value(7, record.second.S_DIST[1]);
     /* dist5 */
-    tuple.set_value(8, record.second.S_DIST_03);
+    tuple.set_value(8, record.second.S_DIST[2]);
     /* dist6 */
-    tuple.set_value(9, record.second.S_DIST_04);
+    tuple.set_value(9, record.second.S_DIST[3]);
     /* dist7 */
-    tuple.set_value(10, record.second.S_DIST_05);
+    tuple.set_value(10, record.second.S_DIST[4]);
     /* dist8 */
-    tuple.set_value(11, record.second.S_DIST_06);
+    tuple.set_value(11, record.second.S_DIST[5]);
     /* dist9 */ 
-    tuple.set_value(12, record.second.S_DIST_07);
+    tuple.set_value(12, record.second.S_DIST[6]);
     /* ytd */
-    tuple.set_value(13, record.second.S_DIST_08);
+    tuple.set_value(13, record.second.S_DIST[7]);
     /* order_cnt */
-    tuple.set_value(14, record.second.S_DIST_09);
+    tuple.set_value(14, record.second.S_DIST[8]);
     /* remote_cnt */
-    tuple.set_value(15, record.second.S_DIST_10);
+    tuple.set_value(15, record.second.S_DIST[9]);
     /* data */
     tuple.set_value(16, record.second.S_DATA);
 
