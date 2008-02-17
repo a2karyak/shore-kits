@@ -2,7 +2,6 @@
 // CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
 #include "tests/common.h"
-#include "stages/tpcc/common/tpcc_trx_input.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
@@ -35,6 +34,7 @@ public:
     ~test_smt_t() {
         TRACE( TRACE_ALWAYS, "Bye...\n");
     }
+
 
 
     // thread entrance
@@ -84,42 +84,43 @@ public:
 
 w_rc_t test_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid) 
 { 
-    TRACE(TRACE_DEBUG, "%d. NEW_ORDER...\n", xctid); 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_new_order(xctid, atrt);    
+    return (RCOK); 
+}
+
+w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_payment(xctid, atrt);    
     return (RCOK); 
 }
 
 w_rc_t test_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid) 
 { 
-    TRACE(TRACE_DEBUG, "%d. ORDER_STATUS...\n", xctid); 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_order_status(xctid, atrt);    
     return (RCOK); 
 }
 
 
 w_rc_t test_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid) 
 { 
-    TRACE(TRACE_DEBUG, "%d. DELIVERY...\n", xctid); 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_delivery(xctid, atrt);    
     return (RCOK); 
 }
 
 
 w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid) 
 { 
-    TRACE(TRACE_DEBUG, "%d. STOCK...\n", xctid); 
-    return (RCOK); 
-}
-
-
-w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
-{ 
     assert (env);
-    TRACE(TRACE_DEBUG, "%d. PAYMENT...\n", xctid);     
-
-    payment_input_t pin = create_payment_input();
-    trx_result_tuple_t trt;
-    return (RCOK);
-    
-    w_rc_t e = _env->xct_payment(&pin, xctid, trt);
-
+    trx_result_tuple_t atrt;
+    env->run_stock_level(xctid, atrt);    
     return (RCOK); 
 }
 

@@ -312,17 +312,8 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
 
 w_rc_t order_t::update_carrier_by_index(ss_m* db,
                                         table_row_t* ptuple,
-                                        const short w_id,
-                                        const short d_id,
-                                        const int   o_id,
                                         const short carrier_id)
 {
-    ptuple->set_value(0, o_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-
-    // W_DO(index_probe(shore, "O_INDEX"));
-    // cout << "APP: " << xct()->tid() << " Update order " << w_id << " " << d_id << " " << o_id << endl;
     W_DO(index_probe_forupdate(db, "O_INDEX", ptuple));
 
     ptuple->set_value(5, carrier_id);

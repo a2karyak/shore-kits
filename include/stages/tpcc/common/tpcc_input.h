@@ -40,6 +40,55 @@ public:
 
 
 
+
+/*********************************************************************
+ * 
+ * new_order_input_t
+ *
+ * Input for any NEW_ORDER transaction
+ *
+ *********************************************************************/
+
+class new_order_input_t : public trx_input_t {
+public:
+
+    short   _wh_id;         /* input: URand(1,SF) */
+    short   _d_id;          /* input: URand(1,10) */
+    short   _c_id;          /* input: NURand(1023,1,3000) */
+    short   _ol_cnt;        /* input: number of items URand(5,15) */
+    short   _rbk;           /* input: rollback URand(1,100) */
+
+    struct  _ol_item_info {
+        int     _ol_i_id;             /* input: NURand(8191,1,100000) */
+        short   _ol_supply_wh_select; /* input: URand(1,100) */
+        short   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
+        short   _ol_quantity;         /* input: URand(1,10) */        
+    }  items[MAX_OL_PER_ORDER];
+
+    /** If _supply_wh_id = _wh_id for each item 
+     *  then trx called home, else remote 
+     */    
+
+    // Construction/Destructions
+    new_order_input_t() 
+        : _wh_id(0), _d_id(0), _c_id(0), _ol_cnt(0), _rbk(0)
+    { 
+    };    
+
+    ~new_order_input_t() { };
+
+    // Assignment operator
+    new_order_input_t& operator= (const new_order_input_t& rhs);
+
+    // Methods
+    void describe(int id);
+    void gen_input(int id);
+
+}; // EOF new_order_input_t
+
+
+
+
 /*********************************************************************
  * 
  * payment_input_t
@@ -66,19 +115,24 @@ public:
      *  10) H_DATE char* : the payment time
      */
 
-    int _home_wh_id;
-    int _home_d_id;
-    int _v_cust_wh_selection;
-    int _remote_wh_id;
-    int _remote_d_id;
-    int _v_cust_ident_selection;
-    int _c_id;
-    char _c_last[16];
-    double _h_amount;
+    int _home_wh_id;             /* input: URand(1,SF) */
+    int _home_d_id;              /* input: URand(1,10) */
+    int _v_cust_wh_selection;    /* input: URand(1,100) - 85%-15% */
+    int _remote_wh_id;           /* input: URand(1,SF) */
+    int _remote_d_id;            /* input: URand(1,10) */
+    int _v_cust_ident_selection; /* input: URand(1,100) - 60%-40% */
+    int _c_id;                   /* input: NURand(1023,1,3000) */
+    char _c_last[16];            /* input: NURand(255,0,999) */
+    double _h_amount;            /* input: URand(1.00,5.000) */
     int _h_date;
 
     // Construction/Destructions
-    payment_input_t() { };
+    payment_input_t() 
+        : _home_wh_id(0), _home_d_id(0), _v_cust_wh_selection(0),
+          _remote_wh_id(0), _remote_d_id(0), _v_cust_ident_selection(0),
+          _c_id(0), _h_amount(0), _h_date(0)
+    { 
+    };
 
     ~payment_input_t() { };
 
@@ -87,81 +141,6 @@ public:
     void gen_input(int sf);
 
 }; // EOF payment_input_t
-
-
-
-
-/*********************************************************************
- * 
- * new_order_input_t
- *
- * Input for any NEW_ORDER transaction
- *
- *********************************************************************/
-
-class new_order_input_t : public trx_input_t {
-public:
-
-    short   _wh_id;         /* input */
-    short   _d_id;          /* input: URand(1,10) */
-    short   _c_id;          /* input: NURand(1023, 1, 3000) */
-    short   _ol_cnt;        /* input: number of items URand(5,15) */
-    short   _rbk;           /* input: rollback URand(1,100) */
-
-    struct  _ol_item_info {
-        int     _ol_i_id;             /* input: NURand(8191, 1, 100000) */
-        short   _ol_supply_wh_select; /* input: URand(1, 100) */
-        short   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
-        short   _ol_quantity;         /* input: URand(1, 10) */        
-    }  items[MAX_OL_PER_ORDER];
-
-    /** If _supply_wh_id = _wh_id for each item 
-     *  then trx called home, else remote 
-     */    
-
-    // Construction/Destructions
-    new_order_input_t() { };    
-    ~new_order_input_t() { };
-
-    // Assignment operator
-    new_order_input_t& operator= (const new_order_input_t& rhs);
-
-    // Methods
-    void describe(int id);
-    void gen_input(int id);
-
-}; // EOF new_order_input_t
-
-
-
-
-/*********************************************************************
- * 
- * orderline_input_t
- *
- * Input for any ORDERLINE transaction
- *
- *********************************************************************/
-
-class orderline_input_t : public trx_input_t {
-public:
-    // Construction/Destructions
-    orderline_input_t() { 
-        assert (false); // (ip) Not implemented yet
-    };
-    
-    ~orderline_input_t() { };
-
-
-    // Assignment operator
-    orderline_input_t& operator= (const orderline_input_t& rhs);
-
-    // Methods
-    void describe(int id=0);
-    void gen_input(int id);
-
-}; // EOF orderline_input_t
-
 
 
 
@@ -176,19 +155,20 @@ public:
 class order_status_input_t : public trx_input_t {
 public:
 
-    short    _w_id;                  /* input */
-    short    _d_id;                  /* input */
-    int      _c_id;                  /* input */
-    char     _c_last[17];            /* input */
+    int   _wh_id;       /* input: URand(1,SF) */
+    int   _d_id;        /* input: URand(1,10) */
+    short _c_select;    /* input: URand(1,100) - 60%-40% */
+    int   _c_id;        /* input: NURand(1023,1,3000) */
+    char  _c_last[16];  /* input: NURand(255,0,999) */
 
 
     // Construction/Destructions
-    order_status_input_t() { 
-        assert (false); // (ip) Not implemented yet
-    };
-    
-    ~order_status_input_t() { };
+    order_status_input_t() 
+        : _wh_id(0), _d_id(0), _c_select(0), _c_id(0)
+    { 
+    };    
 
+    ~order_status_input_t() { };
 
     // Assignment operator
     order_status_input_t& operator= (const order_status_input_t& rhs);
@@ -213,24 +193,22 @@ public:
 class delivery_input_t : public trx_input_t {
 public:
 
-    short    _w_id;          /* input */
-    short    _carrier_id;    /* input */
+    short    _wh_id;         /* input: URand(1,SF) */
+    short    _carrier_id;    /* input: URand(1,10) */
 
 
     // Construction/Destructions
-    delivery_input_t() { 
-        assert (false); // (ip) Not implemented yet
-    };
+    delivery_input_t() 
+        : _wh_id(0),_carrier_id(0)
+    { };
     
     ~delivery_input_t() { };
 
 
     // Assignment operator
-    delivery_input_t& operator= (const delivery_input_t& rhs) {
-        assert (false); // (ip) Not implemented yet
-        return (*this);
-    }
+    delivery_input_t& operator= (const delivery_input_t& rhs);
 
+    // Methods
     void describe(int id=0);
     void gen_input(int id);
 
@@ -250,25 +228,23 @@ public:
 class stock_level_input_t : public trx_input_t {
 public:
 
+    short    _wh_id;         /* input */
     short    _d_id;          /* input */
-    short    _w_id;          /* input */
     short    _threshold;     /* input */
 
-
     // Construction/Destructions
-    stock_level_input_t() { 
-        assert (false); // (ip) Not implemented yet
+    stock_level_input_t() 
+        : _wh_id(0), _d_id(0), _threshold(0)
+    { 
     };
     
     ~stock_level_input_t() { };
 
 
     // Assignment operator
-    stock_level_input_t& operator= (const stock_level_input_t& rhs) {
-        assert (false); // (ip) Not implemented yet
-        return (*this);
-    }
+    stock_level_input_t& operator= (const stock_level_input_t& rhs);
 
+    // Methods
     void describe(int id=0);
     void gen_input(int id);
 

@@ -53,10 +53,6 @@ public:
 };
 
 
-int  compare_smallint(const void * d1, const void * d2);
-int  compare_int(const void * d1, const void * d2);
-
-
 
 /*---------------------------------------------------------------------
  * 

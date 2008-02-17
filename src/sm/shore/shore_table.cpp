@@ -827,13 +827,16 @@ const char* table_row_t::format()
 }
 
 
-/** @fn    load
+/*********************************************************************
  *
- *  @brief Given a tuple in disk format, we read it back into memory
- *         (_value array).
+ *  @fn:    load
  *
- *  @note  convert: disk -> memory format
- */
+ *  @brief: Given a tuple in disk format, we read it back into memory
+ *          (_value array).
+ *
+ *  @note:  convert: disk -> memory format
+ *
+ *********************************************************************/
 
 bool table_row_t::load(const char* data)
 {
@@ -842,9 +845,7 @@ bool table_row_t::load(const char* data)
     int fixed_size = 0;
     int null_count = 0;
 
-    /* 1. calculate the total space occupied by the fixed
-     * length fields.
-     */
+    /* 1. calculate the total space occupied by the fixed length fields */
     for (i=0; i<_field_cnt; i++) {
 	if (_pvalues[i].is_variable_length())
 	    var_count++;

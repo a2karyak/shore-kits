@@ -36,31 +36,31 @@ ENTER_NAMESPACE(tpcc);
 // CUSTOMER
 
 struct tpcc_customer_tuple {
-    int C_C_ID;
-    int C_D_ID;
-    int C_W_ID;
-    char C_FIRST    [STRSIZE(16)];
-    char C_MIDDLE   [STRSIZE(2)];
-    char C_LAST     [STRSIZE(16)];
-    char C_STREET_1 [STRSIZE(20)];
-    char C_STREET_2 [STRSIZE(20)];
-    char C_CITY     [STRSIZE(20)];
-    char C_STATE    [STRSIZE(2)];
-    char C_ZIP      [STRSIZE(9)];
-    char C_PHONE    [STRSIZE(16)];
-    int C_SINCE;
-    char C_CREDIT   [STRSIZE(2)];
+    int     C_C_ID;
+    int     C_D_ID;
+    int     C_W_ID;
+    char    C_FIRST    [STRSIZE(16)];
+    char    C_MIDDLE   [STRSIZE(2)];
+    char    C_LAST     [STRSIZE(16)];
+    char    C_STREET_1 [STRSIZE(20)];
+    char    C_STREET_2 [STRSIZE(20)];
+    char    C_CITY     [STRSIZE(20)];
+    char    C_STATE    [STRSIZE(2)];
+    char    C_ZIP      [STRSIZE(9)];
+    char    C_PHONE    [STRSIZE(16)];
+    time_t  C_SINCE;
+    char    C_CREDIT   [STRSIZE(2)];
     decimal C_CREDIT_LIM;
     decimal C_DISCOUNT;
     decimal C_BALANCE;
     decimal C_YTD_PAYMENT;
     decimal C_LAST_PAYMENT;
-    int C_PAYMENT_CNT;
-    char C_DATA_1   [STRSIZE(250)];
-    char C_DATA_2   [STRSIZE(250)];    
+    int     C_PAYMENT_CNT;
+    char    C_DATA_1   [STRSIZE(250)];
+    char    C_DATA_2   [STRSIZE(250)];    
 
     c_str tuple_to_str() {
-        return(c_str("CUST = %d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%s -",
+        return(c_str("CUST = %d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%.2f|%s -",
                      C_C_ID, C_D_ID, C_W_ID, C_FIRST, C_MIDDLE, C_LAST,
                      C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP,
                      C_PHONE, C_SINCE, C_CREDIT));
@@ -93,25 +93,25 @@ struct tpcc_customer_tuple_key {
 
 
 struct tpcc_customer_tuple_body {
-    char C_FIRST    [STRSIZE(16)];
-    char C_MIDDLE   [STRSIZE(2)];
-    char C_LAST     [STRSIZE(16)];
-    char C_STREET_1 [STRSIZE(20)];
-    char C_STREET_2 [STRSIZE(20)];
-    char C_CITY     [STRSIZE(20)];
-    char C_STATE    [STRSIZE(2)];
-    char C_ZIP      [STRSIZE(9)];
-    char C_PHONE    [STRSIZE(16)];
-    int C_SINCE;
-    char C_CREDIT   [STRSIZE(2)];
+    char    C_FIRST    [STRSIZE(16)];
+    char    C_MIDDLE   [STRSIZE(2)];
+    char    C_LAST     [STRSIZE(16)];
+    char    C_STREET_1 [STRSIZE(20)];
+    char    C_STREET_2 [STRSIZE(20)];
+    char    C_CITY     [STRSIZE(20)];
+    char    C_STATE    [STRSIZE(2)];
+    char    C_ZIP      [STRSIZE(9)];
+    char    C_PHONE    [STRSIZE(16)];
+    time_t  C_SINCE;
+    char    C_CREDIT   [STRSIZE(2)];
     decimal C_CREDIT_LIM;
     decimal C_DISCOUNT;
     decimal C_BALANCE;
     decimal C_YTD_PAYMENT;
     decimal C_LAST_PAYMENT;
-    int C_PAYMENT_CNT;
-    char C_DATA_1   [STRSIZE(250)];
-    char C_DATA_2   [STRSIZE(250)];    
+    int     C_PAYMENT_CNT;
+    char    C_DATA_1   [STRSIZE(250)];
+    char    C_DATA_2   [STRSIZE(250)];    
 };
 
 
@@ -151,17 +151,17 @@ struct tpcc_district_tuple_key {
 // HISTORY
 
 struct tpcc_history_tuple {
-    int H_C_ID;
-    int H_C_D_ID;
-    int H_C_W_ID;
-    int H_D_ID;
-    int H_W_ID;
-    int H_DATE;
+    int     H_C_ID;
+    int     H_C_D_ID;
+    int     H_C_W_ID;
+    int     H_D_ID;
+    int     H_W_ID;
+    time_t  H_DATE;
     decimal H_AMOUNT;
-    char H_DATA [STRSIZE(25)];
+    char    H_DATA [STRSIZE(25)];
 
     c_str tuple_to_str() {
-        return(c_str("HIST = %d|%d|%d|%d|%d|%d|%.2f|%s",
+        return(c_str("HIST = %d|%d|%d|%d|%d|%.2f|%.2f|%s",
                      H_C_ID, H_C_D_ID, H_C_W_ID, H_D_ID,
                      H_W_ID, H_DATE, H_AMOUNT.to_double(), 
                      H_DATA));
@@ -171,12 +171,12 @@ struct tpcc_history_tuple {
 
 
 struct tpcc_history_tuple_key {
-    int H_C_ID;
-    int H_C_D_ID;
-    int H_C_W_ID;
-    int H_D_ID;
-    int H_W_ID;
-    int H_DATE;
+    int    H_C_ID;
+    int    H_C_D_ID;
+    int    H_C_W_ID;
+    int    H_D_ID;
+    int    H_W_ID;
+    time_t H_DATE;
 
     bool operator==(const tpcc_history_tuple_key& rhs) const {
         return ((H_C_ID == rhs.H_C_ID) && 
@@ -244,14 +244,14 @@ struct tpcc_new_order_tuple { // The whole record is the key
 // ORDER
 
 struct tpcc_order_tuple {
-    int O_ID;
-    int O_C_ID;
-    int O_D_ID;
-    int O_W_ID;
-    int O_ENTRY_D;
-    int O_CARRIER_ID;
-    int O_OL_CNT;
-    int O_ALL_LOCAL;
+    int    O_ID;
+    int    O_C_ID;
+    int    O_D_ID;
+    int    O_W_ID;
+    time_t O_ENTRY_D;
+    int    O_CARRIER_ID;
+    int    O_OL_CNT;
+    int    O_ALL_LOCAL;
 };
 
 
@@ -264,10 +264,10 @@ struct tpcc_order_tuple_key {
 
 
 struct tpcc_order_tuple_body {
-    int O_ENTRY_D;
-    int O_CARRIER_ID;
-    int O_OL_CNT;
-    int O_ALL_LOCAL;
+    time_t O_ENTRY_D;
+    int    O_CARRIER_ID;
+    int    O_OL_CNT;
+    int    O_ALL_LOCAL;
 };
 
 
@@ -276,16 +276,16 @@ struct tpcc_order_tuple_body {
 // ORDERLINE
 
 struct tpcc_orderline_tuple {
-    int OL_O_ID;
-    int OL_D_ID;
-    int OL_W_ID;
-    int OL_NUMBER;
-    int OL_I_ID;
-    int OL_SUPPLY_W_ID;
-    int OL_DELIVERY_D;
-    int OL_QUANTITY;
-    int OL_AMOUNT;
-    char OL_DIST_INFO [STRSIZE(25)];
+    int    OL_O_ID;
+    int    OL_D_ID;
+    int    OL_W_ID;
+    int    OL_NUMBER;
+    int    OL_I_ID;
+    int    OL_SUPPLY_W_ID;
+    time_t OL_DELIVERY_D;
+    int    OL_QUANTITY;
+    int    OL_AMOUNT;
+    char   OL_DIST_INFO [STRSIZE(25)];
 };
 
 
@@ -298,12 +298,12 @@ struct tpcc_orderline_tuple_key {
 
 
 struct tpcc_orderline_tuple_body {
-    int OL_I_ID;
-    int OL_SUPPLY_W_ID;
-    int OL_DELIVERY_D;
-    int OL_QUANTITY;
-    int OL_AMOUNT;
-    char OL_DIST_INFO [STRSIZE(25)];
+    int    OL_I_ID;
+    int    OL_SUPPLY_W_ID;
+    time_t OL_DELIVERY_D;
+    int    OL_QUANTITY;
+    int    OL_AMOUNT;
+    char   OL_DIST_INFO [STRSIZE(25)];
 };
 
 

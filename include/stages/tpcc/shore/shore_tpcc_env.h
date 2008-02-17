@@ -44,6 +44,106 @@ extern ShoreTPCCEnv* shore_env;
 
 
 
+/****************************************************************** 
+ *
+ *  @struct: tpcc_stats_t
+ *
+ *  @brief:  TPCC Environment statistics
+ *
+ ******************************************************************/
+
+struct tpcc_stats_t 
+{
+    int        _no_att;
+    int        _no_com;
+    tatas_lock _no_lock;
+    int        _pay_att;
+    int        _pay_com;
+    tatas_lock _pay_lock;
+    int        _ord_att;
+    int        _ord_com;
+    tatas_lock _ord_lock;
+    int        _del_att;
+    int        _del_com;
+    tatas_lock _del_lock;
+    int        _sto_att;
+    int        _sto_com;
+    tatas_lock _sto_lock;
+
+    tpcc_stats_t() 
+        : _no_att(0), _no_com(0), _pay_att(0), _pay_com(0), _ord_att(0),
+          _ord_com(0), _del_att(0), _del_com(0), _sto_att(0), _sto_com(0)
+    {
+    }
+
+    ~tpcc_stats_t()
+    {
+        print_trx_stats();
+    }
+
+
+    // Prints stats
+    void print_trx_stats();
+
+    // Access methods
+    int inc_no_att() { 
+        CRITICAL_SECTION(att_no_cs, _no_lock);
+        return (++_no_att); 
+    }
+
+    int inc_no_com() { 
+        CRITICAL_SECTION(com_no_cs, _no_lock);
+        ++_no_att;
+        return (++_no_com); 
+    }
+
+    int inc_pay_att() { 
+        CRITICAL_SECTION(att_pay_cs, _pay_lock);
+        return (++_pay_att); 
+    }
+
+    int inc_pay_com() { 
+        CRITICAL_SECTION(com_pay_cs, _pay_lock);
+        ++_pay_att;
+        return (++_pay_com); 
+    }
+
+    int inc_ord_att() { 
+        CRITICAL_SECTION(att_ord_cs, _ord_lock);
+        return (++_ord_att); 
+    }
+
+    int inc_ord_com() { 
+        CRITICAL_SECTION(com_ord_cs, _ord_lock);
+        ++_ord_att;
+        return (++_ord_com); 
+    }
+
+    int inc_del_att() { 
+        CRITICAL_SECTION(att_del_cs, _del_lock);
+        return (++_del_att); 
+    }
+
+    int inc_del_com() { 
+        CRITICAL_SECTION(com_del_cs, _del_lock);
+        ++_del_att;
+        return (++_del_com); 
+    }
+
+    int inc_sto_att() { 
+        CRITICAL_SECTION(att_sto_cs, _sto_lock);
+        return (++_sto_att); 
+    }
+
+    int inc_sto_com() { 
+        CRITICAL_SECTION(com_sto_cs, _sto_lock);
+        ++_sto_att;
+        return (++_sto_com); 
+    }
+
+}; // EOF tpcc_stats_t
+
+
 /******************************************************************** 
  * 
  *  ShoreTPCCEnv
@@ -77,8 +177,25 @@ private:
     pthread_mutex_t _queried_mutex;
 
     /** some stats */
-    long _no_cnt;        // new order count
-    pthread_mutex_t _no_cnt_mutex; 
+    tpcc_stats_t _tpcc_stats; 
+
+
+    /* --- kit baseline trxs --- */
+    w_rc_t xct_new_order(new_order_input_t* no_input, 
+                         const int xct_id, 
+                         trx_result_tuple_t& trt);
+    w_rc_t xct_payment(payment_input_t* pay_input, 
+                       const int xct_id, 
+                       trx_result_tuple_t& trt);
+    w_rc_t xct_order_status(order_status_input_t* status_input, 
+                            const int xct_id, 
+                            trx_result_tuple_t& trt);
+    w_rc_t xct_delivery(delivery_input_t* deliv_input, 
+                        const int xct_id, 
+                        trx_result_tuple_t& trt);
+    w_rc_t xct_stock_level(stock_level_input_t* level_input, 
+                           const int xct_id, 
+                           trx_result_tuple_t& trt);
     
 public:
 
@@ -94,8 +211,7 @@ public:
 
         pthread_mutex_init(&_scaling_mutex, NULL);
         pthread_mutex_init(&_queried_mutex, NULL);
-        pthread_mutex_init(&_no_cnt_mutex,  NULL);
-
+        
         /* add the tables to the list */
         _table_list.push_back(&_warehouse);
         _table_list.push_back(&_district);
@@ -114,8 +230,7 @@ public:
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
-        pthread_mutex_destroy(&_no_cnt_mutex);
-        
+                
         _table_list.clear();
     }
 
@@ -139,32 +254,11 @@ public:
 
 
     /* --- kit baseline trxs --- */
-    w_rc_t xct_new_order(new_order_input_t* no_input, 
-                         const int xct_id, 
-                         trx_result_tuple_t& trt);
-    w_rc_t xct_payment(payment_input_t* pay_input, 
-                       const int xct_id, 
-                       trx_result_tuple_t& trt);
-    w_rc_t xct_order_status(order_status_input_t* status_input, 
-                            const int xct_id, 
-                            trx_result_tuple_t& trt);
-    w_rc_t xct_delivery(delivery_input_t* deliv_input, 
-                        const int xct_id, 
-                        trx_result_tuple_t& trt);
-    w_rc_t xct_stock_level(stock_level_input_t* level_input, 
-                           const int xct_id, 
-                           trx_result_tuple_t& trt);
-
-
-    /* --- various helper and stats --- */
-    inline long no_cnt() const { 
-        //CRITICAL_SECTION(ncs, _no_cnt_mutex);
-        return (_no_cnt); 
-    }
-    inline long inc_no_cnt() { 
-        //CRITICAL_SECTION(ncs, _no_cnt_mutex);
-        return (++_no_cnt);
-    }
+    w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt);
+    w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt);
+    w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt);
+    w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt);
+    w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt);
 
     /* --- access methods --- */
     void set_qf(const int aQF);
@@ -173,7 +267,8 @@ public:
     inline tpcc_table_list_t* table_list() { return (&_table_list); }
 
 }; // EOF ShoreTPCCEnv
-
+    
+    
 
 
 /****************************************************************** 

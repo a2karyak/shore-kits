@@ -322,9 +322,6 @@ WL_BDB_TPCC_PAYMENT = \
    $(SW)/tpcc/drivers/bdb/tpcc_payment_nos.cpp \
    $(SW)/tpcc/drivers/bdb/tpcc_payment_single_thr.cpp
 
-WL_BDB_TPCC_NEW_ORDER = \
-   $(SW)/tpcc/drivers/bdb/tpcc_new_order_common.cpp
-
 WL_INMEM_TPCC_PAYMENT = \
    $(SW)/tpcc/inmem_tpcc_env.cpp \
    $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp \
@@ -345,7 +342,6 @@ lib_libworkload_a_SOURCES = \
    $(WL_TPCC) \
    $(WL_BDB_COMMON) \
    $(WL_BDB_TPCC_PAYMENT) \
-   $(WL_BDB_TPCC_NEW_ORDER) \
    $(WL_INMEM_TPCC_PAYMENT) \
    $(WL_SHORE_COMMON) \
    $(WL_SHORE_TPCC_PAYMENT)

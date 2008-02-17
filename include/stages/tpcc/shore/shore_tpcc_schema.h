@@ -396,9 +396,6 @@ public:
     /* table operations */
     w_rc_t update_carrier_by_index(ss_m* db,
                                    table_row_t* ptuple,
-                                   const short w_id,
-                                   const short d_id,
-                                   const int   o_id,
                                    const short carrier_id);
     
     w_rc_t get_iter_by_index(ss_m * shore,

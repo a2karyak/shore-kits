@@ -14,29 +14,6 @@
 using namespace shore;
 
 
-/* ------------------------------- */
-/* --- helper global functions --- */
-/* ------------------------------- */
-
-int  compare_smallint(const void * d1, const void * d2)
-{
-    short data1 = *((short*)d1);
-    short data2 = *((short*)d2);
-    if (data1 > data2) return 1;
-    if (data1 == data2) return 0;
-    return -1;
-}
-
-int  compare_int(const void * d1, const void * d2)
-{
-    int data1 = *((int*)d1);
-    int data2 = *((int*)d2);
-    if (data1 > data2) return 1;
-    if (data1 == data2) return 0;
-    return -1;
-}
-
-
 
 /* ----------------------------------- */
 /* --- @class field_desc_t methods --- */

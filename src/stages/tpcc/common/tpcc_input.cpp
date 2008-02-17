@@ -97,31 +97,6 @@ void new_order_input_t::gen_input(int sf)
 
 
 
-/* ----------------------- */
-/* --- ORDERLINE_INPUT --- */
-/* ----------------------- */
-
-
-orderline_input_t& orderline_input_t::operator= (const orderline_input_t& rhs) 
-{
-    assert (false); // (ip) Not implemented yet
-    return (*this);
-}
-
-
-void orderline_input_t::describe(int id)
-{
-    assert (false); // not implemented
-}
-
-
-void orderline_input_t::gen_input(int sf)
-{
-    assert (false); // not implemented
-}
-
-
-
 /* -------------------------- */
 /* --- ORDER_STATUS_INPUT --- */
 /* -------------------------- */
@@ -129,19 +104,99 @@ void orderline_input_t::gen_input(int sf)
 
 order_status_input_t& order_status_input_t::operator= (const order_status_input_t& rhs) 
 {
-    assert (false); // (ip) Not implemented yet
+    _wh_id    = rhs._wh_id;
+    _d_id     = rhs._d_id;
+    _c_select = rhs._c_select;
+    _c_id     = rhs._c_id;
+    
+    if (rhs._c_last) {
+        store_string(_c_last, rhs._c_last);
+    }
+
     return (*this);
 }
 
 
 void order_status_input_t::describe(int id)
 {
-    assert (false); // not implemented
+    if (_c_select < 60) {
+        // using C_LAST
+        TRACE( TRACE_TRX_FLOW,
+               "\nORDER_STATUS: ID=%d\n" \
+               "WH=%d\t\tD=%d\tC_SEL=%d\tC_LAST=%s\n",
+               id, _wh_id, _d_id, _c_select, _c_last);
+    }
+    else {
+        // using C_ID
+        TRACE( TRACE_TRX_FLOW,
+               "\nORDER_STATUS: ID=%d\n" \
+               "WH=%d\t\tD=%d\tC_SEL=%d\tC_ID=%d\n",
+               id, _wh_id, _d_id, _c_select, _c_id);
+    }
 }
 
 
 void order_status_input_t::gen_input(int sf)
 {
-    assert (false); // not implemented
+    *this = create_order_status_input(sf);
+}
+
+
+
+/* ---------------------- */
+/* --- DELIVERY_INPUT --- */
+/* ---------------------- */
+
+
+delivery_input_t& delivery_input_t::operator= (const delivery_input_t& rhs) 
+{
+    _wh_id      = rhs._wh_id;
+    _carrier_id = rhs._carrier_id;
+
+    return (*this);
+}
+
+
+void delivery_input_t::describe(int id)
+{
+    TRACE( TRACE_TRX_FLOW,
+           "\nDELIVERY: ID=%d\nWH=%d\t\tCARRIER=%d\n",
+           id, _wh_id, _carrier_id);
+}
+
+
+void delivery_input_t::gen_input(int sf)
+{
+    *this = create_delivery_input(sf);
+}
+
+
+
+/* ------------------------- */
+/* --- STOCK_LEVEL_INPUT --- */
+/* ------------------------- */
+
+
+stock_level_input_t& stock_level_input_t::operator= (const stock_level_input_t& rhs) 
+{
+    _wh_id     = rhs._wh_id;
+    _d_id      = rhs._d_id;
+    _threshold = rhs._threshold;
+
+    return (*this);
+}
+
+
+void stock_level_input_t::describe(int id)
+{
+    TRACE( TRACE_TRX_FLOW,
+           "\nSTOCK_LEVEL: ID=%d\nWH=%d\t\tD=%d\tTHRESHOLD=%d\n",
+           id, _wh_id, _d_id, _threshold);
+}
+
+
+void stock_level_input_t::gen_input(int sf)
+{
+    *this = create_stock_level_input(sf);
 }
 

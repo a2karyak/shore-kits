@@ -15,56 +15,6 @@
 ENTER_NAMESPACE(tpcc);
 
 
-/********************************************************************* 
- *
- *  @fn:    create_payment_input
- *
- *  @brief: Creates the input for a new PAYMENT request, 
- *          given the scaling factor (sf) of the database
- *
- *********************************************************************/ 
-
-payment_input_t create_payment_input(int sf) 
-{
-    // check scaling factor
-    assert(sf > 0);
-
-    // produce PAYMENT params according to tpcc spec v.5.4
-    payment_input_t pin;
-
-#ifndef USE_SAME_INPUT
-
-    pin._home_wh_id = URand(1, sf);
-    pin._home_d_id = URand(1, 10);
-    pin._v_cust_wh_selection = URand(1, 100); // 85 - 15
-    pin._remote_wh_id = URand(1, sf);
-    pin._remote_d_id = URand(1, 10);
-    pin._v_cust_ident_selection = URand(1, 100); // 60 - 40
-    pin._c_id = NURand(1023, 1, 3000);
-    
-    // Calls the function that returns the correct cust_last
-    generate_cust_last(NURand(255, 0, 999),pin._c_last);
-    
-    pin._h_amount = (long)URand(100, 500000)/(long)100.00;
-    pin._h_date = time(NULL);
-
-#else
-    // Same input
-    pin._home_wh_id = 1;
-    pin._home_d_id =  1;
-    pin._v_cust_wh_selection = 50;
-    pin._remote_wh_id = 1;
-    pin._remote_d_id =  1;
-    pin._v_cust_ident_selection = 50;
-    pin._c_id =  1500;        
-    pin._c_last = NULL;
-    pin._h_amount = 1000.00;
-    pin._h_date = time(NULL);
-#endif        
-
-    return (pin);
-}
-
 
 /********************************************************************* 
  *
@@ -80,7 +30,7 @@ new_order_input_t create_no_input(int sf)
     // check scaling factor
     assert(sf > 0);
 
-    // produce PAYMENT params according to tpcc spec v.5.4
+    // produce NEW_ORDER params according to tpcc spec v.5.9
     new_order_input_t noin;
 
 #ifndef USE_SAME_INPUT    
@@ -125,7 +75,192 @@ new_order_input_t create_no_input(int sf)
 #endif        
 
     return (noin);
-}
+
+}; // EOF: create_new_order
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    create_payment_input
+ *
+ *  @brief: Creates the input for a new PAYMENT request, 
+ *          given the scaling factor (sf) of the database
+ *
+ *********************************************************************/ 
+
+payment_input_t create_payment_input(int sf) 
+{
+    // check scaling factor
+    assert(sf > 0);
+
+    // produce PAYMENT params according to tpcc spec v.5.9
+    payment_input_t pin;
+
+#ifndef USE_SAME_INPUT
+
+    pin._home_wh_id = URand(1, sf);
+    pin._home_d_id = URand(1, 10);    
+    pin._h_amount = (long)URand(100, 500000)/(long)100.00;
+    pin._h_date = time(NULL);
+
+    pin._v_cust_wh_selection = URand(1, 100); // 85 - 15        
+    if (pin._v_cust_wh_selection <= 85) {
+        // all local payment
+        pin._remote_wh_id = pin._home_wh_id;
+        pin._remote_d_id = pin._home_d_id;
+    }
+    else {
+        // remote warehouse
+        do {
+            pin._remote_wh_id = URand(1, sf);
+        } while (pin._home_wh_id != pin._remote_wh_id);
+        pin._remote_d_id = URand(1, 10);
+    }
+    
+    pin._v_cust_ident_selection = URand(1, 100); // 60 - 40
+    if (pin._v_cust_ident_selection <= 60) {
+        // Calls the function that returns the correct cust_last
+        generate_cust_last(NURand(255,0,999), pin._c_last);    
+    }
+    else {
+        pin._c_id = NURand(1023, 1, 3000);
+    }
+
+#else
+    // Same input
+    pin._home_wh_id = 1;
+    pin._home_d_id =  1;
+    pin._v_cust_wh_selection = 50;
+    pin._remote_wh_id = 1;
+    pin._remote_d_id =  1;
+    pin._v_cust_ident_selection = 50;
+    pin._c_id =  1500;        
+    pin._c_last = NULL;
+    pin._h_amount = 1000.00;
+    pin._h_date = time(NULL);
+#endif        
+
+    return (pin);
+
+}; // EOF: create_payment
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    create_order_status_input
+ *
+ *  @brief: Creates the input for a new ORDER_STATUS request, 
+ *          given the scaling factor (sf) of the database
+ *
+ *********************************************************************/ 
+
+order_status_input_t create_order_status_input(int sf)
+{
+    // check scaling factor
+    assert(sf > 0);
+
+    // produce PAYMENT params according to tpcc spec v.5.4
+    order_status_input_t osin;
+
+#ifndef USE_SAME_INPUT    
+
+    osin._wh_id    = URand(1, sf);
+    osin._d_id     = URand(1, 10);
+    osin._c_select = URand(1, 100); /* 60% - 40% */
+
+    if (osin._c_select <= 60) {
+        // Calls the function that returns the correct cust_last
+        generate_cust_last(NURand(255,0,999), osin._c_last);    
+    }
+    else {
+        osin._c_id = NURand(1023, 1, 3000);
+    }
+
+#else
+    // same input
+    osin._wh_id    = 1;
+    osin._d_id     = 1;
+    osin._c_select = 50;
+    osin._c_id     = 1;
+    osin._c_last   = NULL;
+#endif
+
+    return (osin);
+
+}; // EOF: create_order_status
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    create_delivery_input
+ *
+ *  @brief: Creates the input for a new DELIVERY request, 
+ *          given the scaling factor (sf) of the database
+ *
+ *********************************************************************/ 
+
+delivery_input_t create_delivery_input(int sf)
+{
+    // check scaling factor
+    assert(sf > 0);
+
+    // produce PAYMENT params according to tpcc spec v.5.9
+    delivery_input_t din;
+
+#ifndef USE_SAME_INPUT    
+
+    din._wh_id      = URand(1, sf);
+    din._carrier_id = URand(1, 10);
+
+#else
+    // same input
+    din._wh_id      = 1;
+    din._carrier_id = 1;
+#endif        
+
+    return (din);
+
+}; // EOF: create_delivery
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    create_stock_level_input
+ *
+ *  @brief: Creates the input for a new STOCK_LEVEL request, 
+ *          given the scaling factor (sf) of the database
+ *
+ *********************************************************************/ 
+
+stock_level_input_t create_stock_level_input(int sf)
+{
+    // check scaling factor
+    assert(sf > 0);
+
+    // produce PAYMENT params according to tpcc spec v.5.4
+    stock_level_input_t slin;
+
+#ifndef USE_SAME_INPUT    
+
+    slin._wh_id     = URand(1, sf);
+    slin._d_id      = URand(1, 10);
+    slin._threshold = URand(10, 20);
+
+#else
+    // same input
+    slin._wh_id     = 1;
+    slin._d_id      = 1;
+    slin._threshold = 15;
+#endif        
+
+    return (slin);
+
+}; // EOF: create_stock_level
+
 
 
 

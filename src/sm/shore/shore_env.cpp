@@ -18,6 +18,28 @@ using namespace shore;
 /** Exported functions */
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    print_env_stats
+ *
+ *  @brief: Prints trx statistics
+ *
+ ********************************************************************/
+
+void env_stats_t::print_env_stats() 
+{
+    CRITICAL_SECTION(ntrx_cs, _ntrx_lock);
+    TRACE( TRACE_STATISTICS, "===============================\n");
+    TRACE( TRACE_STATISTICS, "Database transaction statistics\n");
+    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _ntrx_att);
+    TRACE( TRACE_STATISTICS, "Committed: %d\n", _ntrx_com);
+    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_ntrx_att-_ntrx_com));
+    TRACE( TRACE_STATISTICS, "===============================\n");
+}
+
+
+
 /********
  ******** Caution: The functions below should be invoked inside
  ********          the context of a smthread
@@ -87,11 +109,13 @@ int ShoreEnv::close()
 }
 
 
-
-/** @fn    statistics
+/******************************************************************** 
  *
- *  @brief Prints "du"-like statistics for the SM
- */
+ *  @fn:    statistics
+ *
+ *  @brief: Prints "du"-like statistics for the SM
+ *
+ ********************************************************************/
 
 int ShoreEnv::statistics() 
 {
@@ -107,21 +131,6 @@ int ShoreEnv::statistics()
     return (0);
 }
 
-
-
-/** @fn    print_trx_stats
- *
- *  @brief Prints trx statistics
- */
-
-void ShoreEnv::print_trx_stats() 
-{
-    TRACE( TRACE_STATISTICS, "===============================\n");
-    TRACE( TRACE_STATISTICS, "Database transaction statistics\n");
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _committed_cnt);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", _aborted_cnt);
-    TRACE( TRACE_STATISTICS, "===============================\n");
-}
 
 
 

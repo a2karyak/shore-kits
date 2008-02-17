@@ -433,7 +433,7 @@ struct table_row_t {
 	return (_formatted_data);
     }
 
-    const char* format();       /* disk format of tuple */
+    const char* format();            /* disk format of tuple */
 
     int    size() const;             /* disk space needed for tuple */
     bool   load(const char* string); /* load tuple from disk format */ 
@@ -568,7 +568,9 @@ public:
     table_scan_iter_impl(ss_m* db, 
                          table_desc_t* table) 
         : table_scan_iter_t(db, table)
-    { W_COERCE(open_scan(db)); }
+    { 
+        W_COERCE(open_scan(_db)); 
+    }
         
     ~table_scan_iter_impl() { close_scan(); }
 

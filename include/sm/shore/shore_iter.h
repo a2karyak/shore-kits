@@ -29,7 +29,7 @@ ENTER_NAMESPACE(shore);
  *
  ******************************************************************/
 
-template <class file_desc, class file_scanner, class pointer>
+template <class file_desc, class file_scanner, class rowpointer>
 class tuple_iter_t {
 protected:
     ss_m*         _db;
@@ -42,13 +42,16 @@ public:
     tuple_iter_t(ss_m* db, file_desc* file)
         : _db(db), _scan(NULL), _file(file), _opened(false) 
     { 
-        assert (db);
+        assert (_db);
     }
 
-    virtual ~tuple_iter_t() { }
+    virtual ~tuple_iter_t() 
+    { 
+        close_scan();
+    }
 
     // Access methods
-    bool opened() const { return _opened; }
+    bool opened() const { return (_opened); }
 
 
     /* ------------------------- */
@@ -57,12 +60,12 @@ public:
 
     // virtual w_rc_t open_scan()=0; 
 
-    virtual w_rc_t next(ss_m* db, bool& eof, pointer& tuple)=0;
+    virtual w_rc_t next(ss_m* db, bool& eof, rowpointer& tuple)=0;
 
     w_rc_t close_scan() {
-        if (_opened) delete _scan;
+        if (_opened) delete (_scan);
         _opened = false;
-        return RCOK;
+        return (RCOK);
     }    
 
 }; // EOF: tuple_iter_t

@@ -49,6 +49,35 @@ static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 3;
 
 
 
+/****************************************************************** 
+ *
+ *  @struct: tpcc_stats_t
+ *
+ *  @brief:  TPCC Environment statistics
+ *
+ ******************************************************************/
+
+struct env_stats_t 
+{
+    int        _ntrx_att;
+    int        _ntrx_com;
+    tatas_lock _ntrx_lock;
+
+    env_stats_t() 
+        : _ntrx_att(0), _ntrx_com(0)
+    {
+    }
+
+    ~env_stats_t()
+    {
+        print_env_stats();
+    }
+
+    void print_env_stats();
+
+}; // EOF env_stats_t
+
+
 /******************************************************************** 
  * 
  *  ShoreEnv
@@ -86,16 +115,13 @@ protected:
     map<string,string>  _dev_opts;    // map of options for the device    
 
     // Stats
-    long _aborted_cnt;   // aborted trxs
-    long _committed_cnt; // committed trxs
-
+    env_stats_t         _env_stats; 
 
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
     void printconfig();
     void dump();
-    void print_trx_stats();
 
     // Storage manager access functions
     int  configure_sm();
@@ -109,15 +135,13 @@ public:
     ShoreEnv(string confname) :
         _cname(confname), _init_mutex(thread_mutex_create()),
         _vol_mutex(thread_mutex_create()), _load_mutex(thread_mutex_create()),
-        _initialized(false), _loaded(false), _aborted_cnt(0), _committed_cnt(0)
+        _initialized(false), _loaded(false)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
     }
 
     virtual ~ShoreEnv() {         
-        print_trx_stats();
-
         if (_popts) {
             delete (_popts);
             _popts = NULL;
@@ -167,14 +191,6 @@ public:
     inline bool get_loaded_no_cs() { return (_loaded); }
     inline void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
     inline void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
-
-
-    // stats
-    inline long aborted_cnt() { return (_aborted_cnt); }
-    inline long inc_aborted_cnt() { return (++_aborted_cnt); }
-    inline long committed_cnt() { return (_committed_cnt); }
-    inline long inc_committed_cnt() { return (++_committed_cnt); }
-
 
 }; // EOF ShoreEnv
 
