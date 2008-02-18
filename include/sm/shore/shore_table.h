@@ -435,11 +435,11 @@ struct table_row_t {
 
     const char* format();            /* disk format of tuple */
 
-    int    size() const;             /* disk space needed for tuple */
-    bool   load(const char* string); /* load tuple from disk format */ 
+    int   size() const;             /* disk space needed for tuple */
+    bool  load(const char* string); /* load tuple from disk format */ 
 
-    bool   load_keyvalue(const unsigned char* string,
-			 index_desc_t* index); /* load key fields */
+    bool  load_keyvalue(const unsigned char* string,
+                        index_desc_t* index); /* load key fields */
 
     char* format_key(index_desc_t* index); 
     int   key_size(index_desc_t* index) const;
@@ -541,8 +541,8 @@ struct table_row_t {
 
 
     /* --- debugging --- */
-    void   print_value(ostream & os = cout);    /* print the tuple value */
-
+    void print_value(ostream& os = cout); /* print the tuple values */
+    void print_tuple();                   /* print the whole tuple */
 }; // EOF: table_row_t
 
 

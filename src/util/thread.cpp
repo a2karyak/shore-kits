@@ -153,7 +153,7 @@ inline void thread_t::run()
 
 inline void thread_t::setupthr()
 {
-    cout << "(_)" << endl;
+    cout << "+" << endl;
 
     if(!_ppool)
 	_ppool = &default_thread_pool;

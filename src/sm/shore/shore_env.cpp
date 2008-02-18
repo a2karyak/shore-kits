@@ -88,10 +88,15 @@ int ShoreEnv::init()
 }
 
 
-/** @fn    close
+/*********************************************************************
  *
- *  @brief Closes the Shore environment
- */
+ *  @fn:     close
+ *
+ *  @brief:  Closes the Shore environment
+ *
+ *  @return: 0 on success, non-zero otherwise
+ *
+ *********************************************************************/
 
 int ShoreEnv::close() 
 {
@@ -138,12 +143,15 @@ int ShoreEnv::statistics()
 /** Storage manager functions */
 
 
-/** @fn     close_sm
+/******************************************************************** 
  *
- *  @brief  Closes the storage manager
+ *  @fn:     close_sm
  *
- *  @return 0 on sucess, non-zero otherwise
- */
+ *  @brief:  Closes the storage manager
+ *
+ *  @return: 0 on sucess, non-zero otherwise
+ *
+ ********************************************************************/
 
 int ShoreEnv::close_sm() 
 {
@@ -194,12 +202,15 @@ void ShoreEnv::gatherstats_sm()
 
 
 
-/** @fn     configure_sm
+/******************************************************************** 
+ *
+ * @fn     configure_sm
  *
  *  @brief  Configure Shore environment
  *
- *  @return 0 on success, non-zero otherwise
- */ 
+ *  @return: 0 on sucess, non-zero otherwise
+ *
+ ********************************************************************/
 
 int ShoreEnv::configure_sm()
 {
@@ -268,24 +279,27 @@ int ShoreEnv::configure_sm()
 int ShoreEnv::start_sm()
 {
     TRACE( TRACE_DEBUG, "Starting Shore...\n");
-    if (_pssm) {
-        TRACE( TRACE_DEBUG, "Shore already started...\n");
-        return (0);
-    }
 
-    _pssm = new ss_m();
+    if (_initialized == false) {
+        _pssm = new ss_m();
+    }
+    else {
+        TRACE( TRACE_DEBUG, "Shore already started...\n");
+        return (1);        
+    }
 
     // format and mount the database...
 
     // Get the configuration from the config file
     char const* device =  _dev_opts[SHORE_DEF_DEV_OPTIONS[0][0]].c_str();
     int quota = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[1][0]].c_str());
-    bool clobber = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[2][0]].c_str());
+    int clobber = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[2][0]].c_str());
 
-    assert(strlen(device)>0);
-    assert(quota>0);
+    assert (_pssm);
+    assert (strlen(device)>0);
+    assert (quota>0);
 
-    if(clobber) {
+    if (clobber) {
         TRACE( TRACE_DEBUG, "Formatting a new device (%s) with a (%d)kB quota\n",
                device, quota);
 

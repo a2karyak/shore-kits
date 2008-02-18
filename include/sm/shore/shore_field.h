@@ -271,10 +271,10 @@ struct field_value_t {
     inline void set_field_desc(field_desc_t* fd) { assert (fd); _pfield_desc = fd; }
 
     /* debugging */
-    void    print_value(ostream & os = cout);
+    void        print_value(ostream & os = cout);
+    void        get_debug_str(char* &buf);
 
 }; // EOF: field_value_t
-
 
 
 
@@ -285,10 +285,13 @@ struct field_value_t {
  *********************************************************************/
 
 
-/** @fn setup
+/*********************************************************************
  *
- *  @brief Sqltype specific setup
- */
+ *  @fn:    setup
+ *
+ *  @brief: Sqltype specific setup
+ *
+ *********************************************************************/
 
 inline void field_desc_t::setup(sqltype_t type,
                                 const char* name,
@@ -339,6 +342,14 @@ inline void field_desc_t::setup(sqltype_t type,
 
 
 
+/*********************************************************************
+ *
+ *  @fn:    keydesc
+ *
+ *  @brief: Returns a string with the key description
+ *
+ *********************************************************************/
+
 inline const char* field_desc_t::keydesc()
 {
     if (!_keydesc) _keydesc = (char*)malloc( MAX_KEYDESC_LEN );
@@ -360,7 +371,6 @@ inline const char* field_desc_t::keydesc()
 
 
 
-
 /*********************************************************************
  *
  *  class field_value_t functions
@@ -368,10 +378,13 @@ inline const char* field_desc_t::keydesc()
  *********************************************************************/
 
 
-/** @fn setup
+/*********************************************************************
  *
- *  @brief Field specific setup for the value
- */
+ *  @fn:    setup
+ *
+ *  @brief: Field specific setup for the value
+ *
+ *********************************************************************/
 
 inline void field_value_t::setup(field_desc_t* pfd)
 {
@@ -425,11 +438,15 @@ inline void field_value_t::setup(field_desc_t* pfd)
 
 
 
-/** @fn: alloc_space
+
+/*********************************************************************
+ *
+ *  @fn:    alloc_space
  * 
  *  @brief: Allocates the requested space (param len). If it has already
  *          allocated enough returns immediately.
- */
+ *
+ *********************************************************************/
 
 inline void field_value_t::alloc_space(const int len)
 {
@@ -454,11 +471,19 @@ inline void field_value_t::alloc_space(const int len)
 }
 
 
+
+/*********************************************************************
+ *
+ *  @fn:    setup
+ *
+ *  @brief: Field specific setup for the value
+ *
+ *********************************************************************/
+
 inline void field_value_t::set_value(const void* data,
                                      const int length)
 {
     assert (_pfield_desc);
-
     _null_flag = false;
 
     switch (_pfield_desc->type()) {
@@ -489,9 +514,9 @@ inline void field_value_t::set_value(const void* data,
 
 
 
-/* --------------------------------- */
-/* ---- Setting value functions ---- */
-/* --------------------------------- */
+/* ----------------------------------------- */
+/* ---- Setting min/max value functions ---- */
+/* ----------------------------------------- */
 
 
 inline void field_value_t::set_min_value()

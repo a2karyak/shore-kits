@@ -233,8 +233,6 @@ int main(int argc, char* argv[])
     guard<test_smt_t> tt2 = new test_smt_t(shore_env, c_str("tt2"));
     guard<test_smt_t> tt3 = new test_smt_t(shore_env, c_str("tt3"));
     guard<test_smt_t> tt4 = new test_smt_t(shore_env, c_str("tt4"));
-    //    run_smthread<test_smt_t,int>(tt, r);
-
 
     /* 1. fork the loading threads */
     tt1->fork();

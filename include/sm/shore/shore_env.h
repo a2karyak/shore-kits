@@ -133,9 +133,9 @@ public:
 
     /** Construction  */
     ShoreEnv(string confname) :
-        _cname(confname), _init_mutex(thread_mutex_create()),
-        _vol_mutex(thread_mutex_create()), _load_mutex(thread_mutex_create()),
-        _initialized(false), _loaded(false)
+        _pssm(NULL), _initialized(false), _init_mutex(thread_mutex_create()),
+        _loaded(false), _load_mutex(thread_mutex_create()),
+        _vol_mutex(thread_mutex_create()), _cname(confname)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);

@@ -65,8 +65,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
         cerr << "fopen() failed on " << filename << endl;
 	return RC(se_NOT_FOUND);
     }    
-
-    cout << "Loading " << _name << " table from (" << filename << ") file..." << endl;
+    TRACE( TRACE_DEBUG, "Loading  (%s) table from (%s) file...\n", _name, filename);
     
     W_DO(db->begin_xct());
     
@@ -86,7 +85,15 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
     char linebuffer[MAX_LINE_LENGTH];
 
     for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
+
+        // (ip) for debugging
+        //        TRACE( TRACE_DEBUG, "BUF: %s\n", linebuffer);
+
         btread = read_tuple_from_line(tuple, linebuffer);
+
+        // (ip) for debugging
+        //        tuple.print_tuple();
+
 	W_DO(file_append.create_rec(vec_t(), 0,
 				    vec_t(tuple.format(), tuple.size()),
 				    tuple._rid));
@@ -823,7 +830,7 @@ const char* table_row_t::format()
 	}
     }
 
-    return _formatted_data;
+    return (_formatted_data);
 }
 
 
@@ -921,13 +928,28 @@ bool   table_row_t::load_keyvalue(const unsigned char* string,
 /* --- debugging --- */
 /* ----------------- */
 
-/* For debug use only: print the value for all the fields. */
+/* For debug use only: print the value of all the fields of the tuple */
 void table_row_t::print_value(ostream& os)
 {
-    //  cout << "Numer of fields: " << _field_count << endl;
+    //  cout << "Number of fields: " << _field_count << endl;
     for (int i=0; i<_field_cnt; i++) {
 	_pvalues[i].print_value(os);
 	if (i != _field_cnt) os << DELIM_CHAR;
     }
     os << endl;
+}
+
+
+/* For debug use only: print the tuple */
+void table_row_t::print_tuple()
+{
+    char* sbuf = NULL;
+    for (int i=0; i<_field_cnt; i++) {
+        _pvalues[i].get_debug_str(sbuf);
+        if (sbuf) {
+            TRACE( TRACE_DEBUG, "%d. %s\n", i, sbuf);
+            delete [] sbuf;
+            sbuf = NULL;
+        }
+    }
 }
