@@ -106,32 +106,15 @@ w_rc_t ShoreTPCCEnv::loaddata()
         table_iter != _table_list.end(); table_iter++)
         {
             ptable = *table_iter;
-
-//             char fname[MAX_FILENAME_LEN];
-//             strcpy(fname, SHORE_TPCC_DATA_DIR);
-//             strcat(fname, "/");
-//             strcat(fname, ptable->name());
-//             strcat(fname, ".dat");
-//             TRACE( TRACE_DEBUG, "%d. Loading (%s) from (%s)\n", 
-//                    ++cnt, ptable->name(), fname);
-//             time_t ttablestart = time(NULL);
-//             w_rc_t e = ptable->load_from_file(_pssm, fname);
-//             time_t ttablestop = time(NULL);
-//             if (e != RCOK) {
-//                 TRACE( TRACE_ALWAYS, "%d. Error while loading (%s) *****\n",
-//                        cnt, ptable->name());
-//                 return RC(se_ERROR_IN_LOAD);
-//             }
-//             TRACE( TRACE_DEBUG, "Table (%s) loaded in (%d) secs...\n",
-//                    ptable->name(), (ttablestop - ttablestart));
-
-            loaders[cnt] = new tpcc_loading_smt_t(c_str("ld"), _pssm, ptable, 
-                                                  _scaling_factor, cnt++);
+            loaders[cnt] = new tpcc_loading_smt_t(c_str("ld%d", cnt), 
+                                                  _pssm, ptable, 
+                                                  _scaling_factor, cnt);
+            cnt++;
         }
 
-#if 1
-#if 0
-    /* 3. fork the loading threads */
+
+#if 1 
+    /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
     }
@@ -147,7 +130,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
         }
         delete loaders[i];
     }    
-#else
+#else 
     /* 3. fork & join the loading threads SERIALLY */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -160,7 +143,6 @@ w_rc_t ShoreTPCCEnv::loaddata()
         }        
         delete loaders[i];
     }
-#endif
 #endif
     time_t tstop = time(NULL);
 
@@ -283,7 +265,7 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
     
     w_rc_t e = xct_new_order(&anoin, xct_id, atrt);
     if (e) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]", 
+        TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_no_att();
         W_DO(_pssm->abort_xct());
@@ -292,7 +274,7 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
         return (e);
     }
 
-    TRACE( TRACE_DEBUG, "Xct (%d) NewOrder completed", xct_id);
+    TRACE( TRACE_DEBUG, "Xct (%d) NewOrder completed\n", xct_id);
     _tpcc_stats.inc_no_com();
     return (RCOK); 
 
@@ -306,7 +288,7 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
     
     w_rc_t e = xct_payment(&apin, xct_id, atrt);
     if (e) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]", 
+        TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_pay_att();
         W_DO(_pssm->abort_xct());
@@ -315,7 +297,7 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
         return (e);
     }
 
-    TRACE( TRACE_DEBUG, "Xct (%d) Payment completed", xct_id);
+    TRACE( TRACE_DEBUG, "Xct (%d) Payment completed\n", xct_id);
     _tpcc_stats.inc_pay_com();
     return (RCOK); 
 }
@@ -328,7 +310,7 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
     
     w_rc_t e = xct_order_status(&aordstin, xct_id, atrt);
     if (e) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]", 
+        TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_ord_att();
         W_DO(_pssm->abort_xct());
@@ -337,7 +319,7 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
         return (e);
     }
 
-    TRACE( TRACE_DEBUG, "Xct (%d) OrderStatus completed", xct_id);
+    TRACE( TRACE_DEBUG, "Xct (%d) OrderStatus completed\n", xct_id);
     _tpcc_stats.inc_ord_com();
     return (RCOK); 
 }
@@ -350,7 +332,7 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
     
     w_rc_t e = xct_delivery(&adelin, xct_id, atrt);
     if (e) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]", 
+        TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_del_att();
         W_DO(_pssm->abort_xct());
@@ -359,7 +341,7 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
         return (e);
     }
 
-    TRACE( TRACE_DEBUG, "Xct (%d) Delivery completed", xct_id);
+    TRACE( TRACE_DEBUG, "Xct (%d) Delivery completed\n", xct_id);
     _tpcc_stats.inc_del_com();
     return (RCOK); 
 }
@@ -372,7 +354,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
     
     w_rc_t e = xct_stock_level(&astoin, xct_id, atrt);
     if (e) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]", 
+        TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_sto_att();
         W_DO(_pssm->abort_xct());
@@ -381,7 +363,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
         return (e);
     }
 
-    TRACE( TRACE_DEBUG, "Xct (%d) StockLevel completed", xct_id);
+    TRACE( TRACE_DEBUG, "Xct (%d) StockLevel completed\n", xct_id);
     _tpcc_stats.inc_sto_com();
     return (RCOK); 
 }
