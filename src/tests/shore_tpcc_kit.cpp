@@ -52,7 +52,7 @@ public:
         _rv = test();
     }
 
-    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int num_xct = 10, int xct_type = 0);
+    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int num_xct = 5, int xct_type = 0);
     w_rc_t tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type = 0, int xctid = 0);    
 
     w_rc_t xct_new_order(ShoreTPCCEnv* env, int xctid);

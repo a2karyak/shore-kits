@@ -67,8 +67,12 @@ void register_stage_containers(int environment) {
 
     case TRX_SHORE_ENV:
 
-        // Baseline Payment
+        // Baseline transactions
+        register_stage<shore_new_order_baseline_stage_t>(MAX_NUM_TRXS, false);
         register_stage<shore_payment_baseline_stage_t>(MAX_NUM_TRXS, false);
+        register_stage<shore_order_status_baseline_stage_t>(MAX_NUM_TRXS, false);
+        register_stage<shore_delivery_baseline_stage_t>(MAX_NUM_TRXS, false);
+        register_stage<shore_stock_level_baseline_stage_t>(MAX_NUM_TRXS, false);
         break;
 
     case TRX_MEM_ENV:

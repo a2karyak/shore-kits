@@ -19,7 +19,6 @@
 
 using namespace qpipe;
 using namespace tpcc;
-using namespace tpcc_payment;
 
 
 ENTER_NAMESPACE(workload);

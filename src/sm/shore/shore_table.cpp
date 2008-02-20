@@ -100,7 +100,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 
 	if(i >= mark) {
 	    W_COERCE(db->commit_xct());
-            cerr << "load(" << name() << "): " << tuple_count << endl;
+            TRACE( TRACE_DEBUG, "load(%s): %d\n", name(), tuple_count);
 	    W_COERCE(db->begin_xct());
 	    mark += COMMIT_ACTION_COUNT;
 	}	    
@@ -158,7 +158,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 
 	if (tuple_count >= mark) { 
             W_DO(db->commit_xct());
-            cerr << "index(" << index->name() << "): " << tuple_count << endl;
+            TRACE( TRACE_DEBUG, "index(%s): %d\n", index->name(), tuple_count);
             W_DO(db->begin_xct());
             mark += COMMIT_ACTION_COUNT;
 	}

@@ -197,7 +197,7 @@ private:
                            const int xct_id, 
                            trx_result_tuple_t& trt);
     
-public:
+public:    
 
     /** Construction  */
     ShoreTPCCEnv(string confname, 
@@ -234,6 +234,14 @@ public:
         _table_list.clear();
     }
 
+
+    /* --- access methods --- */
+    void set_qf(const int aQF);
+    inline int get_qf() { return (_queried_factor); }
+    inline int get_sf() { return (_scaling_factor); }
+    inline tpcc_table_list_t* table_list() { return (&_table_list); }
+
+
     /** Public methods */    
 
     /* --- operations over tables --- */
@@ -254,17 +262,27 @@ public:
 
 
     /* --- kit baseline trxs --- */
+
+    /* --- without input specified --- */
     w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt);
     w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt);
     w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt);
     w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt);
     w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt);
 
-    /* --- access methods --- */
-    void set_qf(const int aQF);
-    inline int get_qf() { return (_queried_factor); }
-    inline int get_sf() { return (_scaling_factor); }
-    inline tpcc_table_list_t* table_list() { return (&_table_list); }
+    /* --- with input specified --- */
+    w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin,
+                         trx_result_tuple_t& atrt);
+    w_rc_t run_payment(const int xct_id, payment_input_t& apin,
+                       trx_result_tuple_t& atrt);
+    w_rc_t run_order_status(const int xct_id, order_status_input_t& aordstin,
+                            trx_result_tuple_t& atrt);
+    w_rc_t run_delivery(const int xct_id, delivery_input_t& adelin,
+                        trx_result_tuple_t& atrt);
+    w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin,
+                           trx_result_tuple_t& atrt);
+
+    static tpcc_random_gen_t _atpccrndgen;
 
 }; // EOF ShoreTPCCEnv
     
@@ -280,7 +298,7 @@ public:
  *
  ******************************************************************/
 
-class tpcc_loading_smt_t : public smthread_t 
+class tpcc_loading_smt_t : public thread_t 
 {
 private:
     ss_m*         _pssm;
@@ -291,10 +309,9 @@ private:
 
 public:
     
-    tpcc_loading_smt_t(ss_m* assm, tpcc_table_t* atable, 
+    tpcc_loading_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable, 
                        const int asf, const int aid) 
-	: smthread_t(t_regular), _pssm(assm), _ptable(atable), 
-          _sf(asf), _cnt(aid)
+	: thread_t(tname), _pssm(assm), _ptable(atable), _sf(asf), _cnt(aid)
     {
         assert (_pssm);
         assert (_ptable);
@@ -304,9 +321,10 @@ public:
     ~tpcc_loading_smt_t() { }
 
     // thread entrance
-    void run();
+    void work();
 
-    inline rv() { return (_rv); }
+    inline int rv() { return (_rv); }
+    inline tpcc_table_t* table() { return (_ptable); }
 
 }; // EOF: tpcc_loading_smt_t
 
@@ -321,7 +339,7 @@ public:
  *
  ******************************************************************/
 
-class tpcc_checking_smt_t : public smthread_t 
+class tpcc_checking_smt_t : public thread_t 
 {
 private:
     ss_m*         _pssm;
@@ -330,8 +348,8 @@ private:
 
 public:
     
-    tpcc_checking_smt_t(ss_m* assm, tpcc_table_t* atable, const int aid) 
-	: smthread_t(t_regular), _pssm(assm), _ptable(atable), _cnt(aid)
+    tpcc_checking_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable, const int aid) 
+	: thread_t(tname), _pssm(assm), _ptable(atable), _cnt(aid)
     {
         assert (_pssm);
         assert (_ptable);
@@ -340,7 +358,7 @@ public:
     ~tpcc_checking_smt_t() { }
 
     // thread entrance
-    void run();
+    void work();
 
 }; // EOF: tpcc_checking_smt_t
 

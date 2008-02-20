@@ -1,31 +1,31 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file shore_payment_baseline.h
+/** @file shore_stock_level_baseline.h
  *
- *  @brief Implementation for the Shore Baseline TPC-C Payment transaction
+ *  @brief Implementation for the Shore Baseline TPC-C Stock_Level transaction
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#include "stages/tpcc/shore/shore_payment_baseline.h"
+#include "stages/tpcc/shore/shore_stock_level_baseline.h"
 
 
 using namespace qpipe;
 using namespace shore;
 
 
-const c_str shore_payment_baseline_packet_t::PACKET_TYPE = "SHORE_PAYMENT_BASELINE";
+const c_str shore_stock_level_baseline_packet_t::PACKET_TYPE = "SHORE_STOCK_LEVEL_BASELINE";
 
-const c_str shore_payment_baseline_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_BASELINE_STAGE";
+const c_str shore_stock_level_baseline_stage_t::DEFAULT_STAGE_NAME = "SHORE_STOCK_LEVEL_BASELINE_STAGE";
 
 
 /**
- *  @brief shore_payment_baseline_stage_t constructor
+ *  @brief shore_stock_level_baseline_stage_t constructor
  */
 
-shore_payment_baseline_stage_t::shore_payment_baseline_stage_t() 
+shore_stock_level_baseline_stage_t::shore_stock_level_baseline_stage_t() 
 {    
-    TRACE(TRACE_DEBUG, "SHORE_PAYMENT_BASELINE constructor\n");
+    TRACE(TRACE_DEBUG, "SHORE_STOCK_LEVEL_BASELINE constructor\n");
 }
 
 struct alloc_guard {
@@ -37,7 +37,7 @@ struct alloc_guard {
 };
 
 /**
- *  @brief Execute TPC-C Payment transaction is a conventional way 
+ *  @brief Execute TPC-C Stock_Level transaction is a conventional way 
  *  using Shore underneath
  *
  *  @return void
@@ -45,18 +45,18 @@ struct alloc_guard {
  *  @throw May throw exceptions on error.
  */
 
-void shore_payment_baseline_stage_t::process_packet() {
+void shore_stock_level_baseline_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
 
-    shore_payment_baseline_packet_t* packet = 
-	(shore_payment_baseline_packet_t*)adaptor->get_packet();
+    shore_stock_level_baseline_packet_t* packet = 
+	(shore_stock_level_baseline_packet_t*)adaptor->get_packet();
 
     // Prints out the packet info
     packet->describe_trx();
 
     trx_result_tuple_t atrt;
-    shore_env->run_payment(packet->get_trx_id(), packet->_p_in, atrt);
+    shore_env->run_stock_level(packet->get_trx_id(), packet->_sl_in, atrt);
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
     

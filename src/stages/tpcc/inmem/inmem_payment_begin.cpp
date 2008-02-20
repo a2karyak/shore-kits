@@ -198,13 +198,9 @@ int inmem_payment_begin_stage_t::get_next_counter() {
 
     critical_section_t cs( _trx_counter_mutex );
 
-    int tmp_counter = ++_trx_counter;
-
     //    TRACE( TRACE_ALWAYS, "counter: %d\n", _trx_counter);
 
-    cs.exit(); 
-
-    return (tmp_counter);
+    return (++_trx_counter);
 }
 
 

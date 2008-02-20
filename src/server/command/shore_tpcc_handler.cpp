@@ -19,7 +19,15 @@
 
 
 // Shore-TPCC drivers header files
+// baseline
+#include "workload/tpcc/drivers/shore/shore_tpcc_new_order_baseline.h"
 #include "workload/tpcc/drivers/shore/shore_tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_order_status_baseline.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_delivery_baseline.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_stock_level_baseline.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_mix_baseline.h"
+
+// staged
 //#include "workload/tpcc/drivers/shore/shore_tpcc_payment_staged.h"
 
 
@@ -60,8 +68,18 @@ void shore_tpcc_handler_t::init() {
         shore_env = new ShoreTPCCEnv(SHORE_DEFAULT_CONF_FILE);
 
         // register drivers...
+        add_driver("shore_new_order_baseline", 
+                   new shore_tpcc_new_order_baseline_driver(c_str("SHORE_NEW_ORDER_BASELINE")));
         add_driver("shore_payment_baseline", 
                    new shore_tpcc_payment_baseline_driver(c_str("SHORE_PAYMENT_BASELINE")));
+        add_driver("shore_order_status_baseline", 
+                   new shore_tpcc_order_status_baseline_driver(c_str("SHORE_ORDER_STATUS_BASELINE")));
+        add_driver("shore_delivery_baseline", 
+                   new shore_tpcc_delivery_baseline_driver(c_str("SHORE_DELIVERY_BASELINE")));
+        add_driver("shore_stock_level_baseline", 
+                   new shore_tpcc_stock_level_baseline_driver(c_str("SHORE_STOCK_LEVEL_BASELINE")));
+        add_driver("shore_mix_baseline", 
+                   new shore_tpcc_mix_baseline_driver(c_str("SHORE_MIX_BASELINE")));
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());

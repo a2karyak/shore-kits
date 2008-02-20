@@ -16,7 +16,6 @@
 
 using namespace qpipe;
 using namespace tpcc;
-using namespace tpcc_payment;
 
 
 ENTER_NAMESPACE(workload);
@@ -74,7 +73,7 @@ create_shore_payment_baseline_packet(tuple_fifo* bp_output_buffer,
 
     tpcc::payment_input_t pin = create_payment_input(sf);
     
-    static c_str packet_name = "SHORE_PAYMENT_BASELINE_CLIENT_payment_test";
+    static c_str packet_name = "SHORE_PAYMENT_BASELINE_CLIENT";
 
     payment_packet = new shore_payment_baseline_packet_t(packet_name,
                                                          bp_output_buffer,

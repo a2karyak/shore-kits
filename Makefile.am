@@ -247,7 +247,12 @@ SG_SHORE_TRX = \
    $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
    $(SG)/tpcc/shore/shore_tpcc_env.cpp \
    $(SG)/tpcc/shore/shore_payment_functions.cpp \
-   $(SG)/tpcc/shore/shore_payment_baseline.cpp
+   $(SG)/tpcc/shore/shore_payment_baseline.cpp \
+   $(SG)/tpcc/shore/shore_new_order_baseline.cpp \
+   $(SG)/tpcc/shore/shore_order_status_baseline.cpp \
+   $(SG)/tpcc/shore/shore_delivery_baseline.cpp \
+   $(SG)/tpcc/shore/shore_stock_level_baseline.cpp
+
 
 
 lib_libstages_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
@@ -332,7 +337,12 @@ WL_SHORE_COMMON = \
    $(SW)/tpcc/shore_tpcc_load.cpp
 
 WL_SHORE_TPCC_PAYMENT = \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp
+   $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_order_status_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_delivery_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_stock_level_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_mix_baseline.cpp
 
 
 lib_libworkload_a_SOURCES = \
