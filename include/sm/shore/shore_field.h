@@ -299,7 +299,7 @@ inline void field_desc_t::setup(sqltype_t type,
                                 bool allow_null)
 {
     // name of field
-    memset(_name, 0, MAX_FIELDNAME_LEN);
+    memset(_name, '\0', MAX_FIELDNAME_LEN);
     strncpy(_name, name, MAX_FIELDNAME_LEN);
     _type = type;
 
@@ -464,7 +464,7 @@ inline void field_value_t::alloc_space(const int len)
     _data_size = len;
 
     // clear the contents of the allocated buffer
-    memset(_data, ' ', _data_size);
+    memset(_data, '\0', _data_size);
 
     // the string value points to the allocated buffer
     _value._string = _data;
@@ -506,7 +506,7 @@ inline void field_value_t::set_value(const void* data,
     case SQL_SNUMERIC:
 	_real_size = length;
 	assert(_real_size <= _pfield_desc->maxsize());
-	memset(_data, ' ', _data_size);
+	memset(_data, '\0', _data_size);
 	memcpy(_value._string, data, length); break;
     }
 }
@@ -587,17 +587,29 @@ inline void field_value_t::set_max_value()
 
 
 
+/*********************************************************************
+ *
+ *  @fn:    copy_value
+ *
+ *  @brief: Copies the 'current' value of of the field to an address
+ *
+ *********************************************************************/
+
 inline bool field_value_t::copy_value(void* data) const
 {
     assert (_pfield_desc);
     assert (!_null_flag);
-    assert (_real_size);
+    assert (_real_size>=0);
 
     switch (_pfield_desc->type()) {
     case SQL_SMALLINT:
+        memcpy(data, &_value._smallint, _real_size);
+        break;
     case SQL_INT:
+        memcpy(data, &_value._int, _real_size);
+        break;
     case SQL_FLOAT:
-        memcpy(data, &_value, _real_size);
+        memcpy(data, &_value._float, _real_size);
         break;
 //     case SQL_DECIMAL:
 //         memcpy(data, &_value, _real_size);
@@ -611,7 +623,7 @@ inline bool field_value_t::copy_value(void* data) const
     case SQL_CHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
-        memset(data, ' ', _real_size);
+        memset(data, '\0', _real_size);
         memcpy(data, _value._string, _real_size);
         break;
     }
@@ -620,6 +632,7 @@ inline bool field_value_t::copy_value(void* data) const
 }
 
 
+/** DEPRECATED: slow */
 inline bool field_value_t::load_value_from_file(ifstream & is,
                                                 const char delim)
 {
@@ -668,6 +681,14 @@ inline bool field_value_t::load_value_from_file(ifstream & is,
 }
 
 
+
+/*********************************************************************
+ *
+ *  @fn:    set_XXX_value
+ *
+ *  @brief: Type-specific set of value 
+ *
+ *********************************************************************/
 
 inline void field_value_t::set_int_value(const int data)
 {
@@ -740,20 +761,22 @@ inline void field_value_t::set_string_value(const char* string,
     assert (_pfield_desc->type() == SQL_CHAR || _pfield_desc->type() == SQL_NUMERIC ||
             _pfield_desc->type() == SQL_SNUMERIC);
     _null_flag = false;
-    memset(_value._string, ' ', _data_size);
+    memset(_value._string, '\0', _data_size);
     _real_size = MIN(len, _data_size);
     memcpy(_value._string, string, _real_size);
 }
 
 
-
-/** @fn: set_var_string_value
+/*********************************************************************
+ *
+ *  @fn: set_var_string_value
  *
  *  @brief: Copies the string to the data buffer and sets real_size
  *
  *  @note: Only len chars are copied. If len > field->maxsize() then only
  *         maxsize() chars are copied.
- */
+ *
+ *********************************************************************/
 
 inline void field_value_t::set_var_string_value(const char* string,
                                                 const int len)
@@ -768,9 +791,13 @@ inline void field_value_t::set_var_string_value(const char* string,
 
 
 
-/* --------------------------------- */
-/* ---- Getting value functions ---- */
-/* --------------------------------- */
+/*********************************************************************
+ *
+ *  @fn:    get_XXX_value
+ *
+ *  @brief: Type-specific return of value 
+ *
+ *********************************************************************/
 
 
 inline int field_value_t::get_int_value() const
@@ -793,7 +820,7 @@ inline void field_value_t::get_string_value(char* buffer,
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_CHAR || _pfield_desc->type() == SQL_VARCHAR ||
             _pfield_desc->type() == SQL_NUMERIC || _pfield_desc->type() == SQL_SNUMERIC);
-    memset(buffer, 0, bufsize);
+    memset(buffer, '\0', bufsize);
     memcpy(buffer, _value._string, MIN(bufsize, _real_size));
 }
 

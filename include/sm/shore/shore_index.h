@@ -72,8 +72,8 @@ public:
     /* --- access methods --- */
     /* ---------------------- */
 
-    bool        is_unique() const { return _unique; }
-    bool        is_primary() const { return _primary; }
+    bool is_unique() const { return _unique; }
+    bool is_primary() const { return _primary; }
 
 
     /* ---------------------------- */

@@ -132,6 +132,7 @@ public:
           _remote_wh_id(0), _remote_d_id(0), _v_cust_ident_selection(0),
           _c_id(0), _h_amount(0), _h_date(0)
     { 
+        memset(_c_last, '\0', 16);
     };
 
     ~payment_input_t() { };
@@ -166,6 +167,7 @@ public:
     order_status_input_t() 
         : _wh_id(0), _d_id(0), _c_select(0), _c_id(0)
     { 
+        memset(_c_last, '\0', 16);
     };    
 
     ~order_status_input_t() { };

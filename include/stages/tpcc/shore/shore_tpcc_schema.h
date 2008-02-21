@@ -188,7 +188,7 @@ public:
 
     w_rc_t update_next_o_id(ss_m* db,
                             table_row_t* ptuple,
-                            const int  next_o_id);
+                            const short  next_o_id);
 
     /** deprecated */
 
@@ -261,13 +261,13 @@ public:
 
     w_rc_t index_probe(ss_m* db,
                        table_row_t* ptuple,
-                       const int   c_id,
+                       const short c_id,
                        const short w_id,
                        const short d_id);
 
     w_rc_t index_probe_forupdate(ss_m* db,
                                  table_row_t* ptuple,
-                                 const int   c_id,
+                                 const short c_id,
                                  const short w_id,
                                  const short d_id);
 
@@ -341,7 +341,7 @@ public:
                            table_row_t* ptuple,
                            const short  w_id,
                            const short  d_id,
-                           const int    o_id);
+                           const short  o_id);
      
 }; // EOF: new_order_t
 
@@ -403,7 +403,7 @@ public:
                              table_row_t* ptuple,
                              const short w_id,
                              const short d_id,
-                             const int   c_id);
+                             const short c_id);
 
 }; // EOF: order_t
 
@@ -456,20 +456,20 @@ public:
     w_rc_t bulkload(ss_m* db, int w_num);
 
     /* --- access methods --- */
-    w_rc_t get_iter_by_index(ss_m * db,
+    w_rc_t get_iter_by_index(ss_m* db,
                              index_scan_iter_impl* &it,
                              table_row_t* ptuple,
                              const short w_id,
                              const short d_id,
-                             const int   low_o_id,
-                             const int   high_o_id);
+                             const short low_o_id,
+                             const short high_o_id);
 
-    w_rc_t get_iter_by_index(ss_m * db,
+    w_rc_t get_iter_by_index(ss_m* db,
                              index_scan_iter_impl* &iter,
                              table_row_t* ptuple,
                              const short w_id,
                              const short d_id,
-                             const int   o_id);
+                             const short o_id);
 
 }; // EOF: order_line_t
 
@@ -501,11 +501,11 @@ public:
 
     w_rc_t index_probe(ss_m* ddb, 
                        table_row_t* ptuple,
-                       const int i_id);
+                       const short i_id);
 
     w_rc_t index_probe_forupdate(ss_m* db, 
                                  table_row_t* ptuple,
-                                 const int i_id);
+                                 const short i_id);
 
 }; // EOF: item_t
 
@@ -552,12 +552,12 @@ public:
 
     w_rc_t index_probe(ss_m* db,
                        table_row_t* ptuple,
-                       const int   i_id,
+                       const short i_id,
                        const short w_id);
 
     w_rc_t index_probe_forupdate(ss_m* db,
                                  table_row_t* ptuple,
-                                 const int   i_id,
+                                 const short i_id,
                                  const short w_id);
 
     w_rc_t update_tuple(ss_m* db,

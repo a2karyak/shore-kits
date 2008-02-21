@@ -30,23 +30,21 @@
  * 3. Secondary indices on the table.  All the secondary indices created
  * on the table are stored as a linked list.
  *
- * 4. Physical id of the current tuple.  (Record id type: rid_t,
- * defined in Shore.)
- *
- * There are methods in tuple_desc for creation, loading of the table
- * and indexes.  Operation on a single tuple, including adding,
- * updating, and index probe is provided as well.
+ * There are methods in (table_desc_t) for creating, and loading the table
+ * and indexes.  Operations on single tuples, including adding,
+ * updating, and index probe is provided as well, as part of either the
+ * (table_desc_t) or (tuple_row_t) classes.
  *
  * The file scan and index scan on the table are implemented through
- * two subclasses, tuple_iter_file_scan and tuple_iter_index_scan,
- * which are inherited from tuple_iter.
+ * two subclasses, (table_scan_iter_impl) and (index_scan_iter_impl),
+ * which are inherited from (tuple_iter_t).
  *
  * USAGE:
  *
  * To create a new table, create a class for the table by inheriting
- * publicly from class tuple_desc to take advantage of all the
+ * publicly from class tuple_desc_t to take advantage of all the
  * built-in tools. The schema of the table should be set at the
- * constructor of the table.  (See tpcc_table.h for examples.)
+ * constructor of the table.  (See shore_tpcc_schema.h for examples.)
  *
  * NOTE:
  *
@@ -63,9 +61,11 @@
  * EXTENSIONS:
  *
  * The mapping between SQL types and C types are defined in
- * field_desc_t.  Modify the class to support more SQL types or
+ * (field_desc_t).  Modify the class to support more SQL types or
  * change the mapping.  The NUMERIC type is currently stored as string;
- * no further understanding is provided yet.  */
+ * no further understanding is provided yet.  
+ *
+ */
 
 /* The disk format of the record looks like this:
  *
@@ -88,7 +88,9 @@
  * to tell the length of the actual values.  So here comes the two
  * additional slots in the middle (between d and b).  In our
  * implementation, we store the offset of the end of b relative to the
- * beginning of the tuple (address of a).  */
+ * beginning of the tuple (address of a).  
+ *
+ */
 
 #ifndef __SHORE_TABLE_H
 #define __SHORE_TABLE_H
@@ -121,8 +123,9 @@ class index_scan_iter_impl;
  *
  * --------------------------------------------------------------- */
 
-class table_desc_t : public file_desc_t {
-    friend class table_scan_iter_impl;
+class table_desc_t : public file_desc_t 
+{
+    //    friend class table_scan_iter_impl;
    
 protected:
 
@@ -137,6 +140,9 @@ protected:
     index_desc_t*  _indexes;                  /* indices on the table */
 
 
+    int            _maxsize;                  /* max tuple size for this table, shortcut */
+    tatas_lock     _maxsize_lock;
+
     int            find_field(const char* field_name) const;
     index_desc_t*  find_index(const char* name) { 
         return (_indexes ? _indexes->find_by_name(name) : NULL); 
@@ -149,7 +155,8 @@ public:
     /* ------------------- */
 
     table_desc_t(const char* name, int fieldcnt)
-        : file_desc_t(name, fieldcnt), _primary_idx(NULL), _indexes(NULL) 
+        : file_desc_t(name, fieldcnt), _primary_idx(NULL), _indexes(NULL),
+          _maxsize(0)
     {
         // Create placeholders for the field descriptors
 	_desc = new field_desc_t[fieldcnt];
@@ -231,12 +238,12 @@ public:
     /* --- helper functions for bulkloading indices --- */
     /* ------------------------------------------------ */
 
-    char* index_keydesc(index_desc_t* index);                            /* index key description */
-    char* format_key(index_desc_t* index, table_row_t* prow);            /* format the key value */
-    char* min_key(index_desc_t* index, table_row_t* prow);               /* set indexed fields of the row to minimum */
-    char* max_key(index_desc_t* index, table_row_t* prow);               /* set indexed fields of the row to maximum */
-    int   key_size(index_desc_t* index, const table_row_t* prow) const;  /* length of the formatted key */
-    int   maxkeysize(index_desc_t* index) const;                         /* max key size */
+    char* index_keydesc(index_desc_t* index);                               /* index key description */
+    int   format_key(index_desc_t* index, table_row_t* prow, char* &dest);  /* format the key value */
+    int   min_key(index_desc_t* index, table_row_t* prow, char* &dest);     /* set indexed fields of the row to minimum */
+    int   max_key(index_desc_t* index, table_row_t* prow, char* &dest);     /* set indexed fields of the row to maximum */
+    int   key_size(index_desc_t* index, const table_row_t* prow) const;     /* length of the formatted key */
+    int   maxkeysize(index_desc_t* index) const;                            /* max key size */
 
 
     /* ---------------------- */
@@ -325,7 +332,7 @@ public:
     /* --- conversion between disk format and memory format --- */
     /* -------------------------------------------------------- */
 
-    int maxsize() const;                 /* maximum requirement for disk format */
+    const int maxsize();                 /* maximum requirement for disk format */
 
     inline field_desc_t* desc(int descidx) {
         assert (descidx >= 0 && descidx < _field_count);
@@ -338,7 +345,7 @@ public:
     /* --- debugging tools --- */
     /* ----------------------- */
 
-    w_rc_t print_table(ss_m* db);                 /* print the table on screen */
+    w_rc_t print_table(ss_m* db);               /* print the table on screen */
     void   print_desc(ostream & os = cout);     /* print the schema */
 
 
@@ -358,16 +365,14 @@ typedef std::list<table_desc_t*> table_list_t;
  *
  * --------------------------------------------------------------- */
 
-struct table_row_t {
-    
+struct table_row_t 
+{    
     table_desc_t*  _ptable;           /* pointer back to the table */
     int            _field_cnt;        /* number of fields */
     bool           _is_setup;         /* flag if already setup */
     
     rid_t          _rid;              /* record id */    
     field_value_t* _pvalues;          /* set of values */
-
-    char*          _formatted_data;   /* buffer for tuple in disk format */
 
 
     /* -------------------- */
@@ -376,14 +381,14 @@ struct table_row_t {
 
     table_row_t()
         : _ptable(NULL), _field_cnt(0), _is_setup(false), 
-          _rid(rid_t::null), _pvalues(NULL), _formatted_data(NULL)
+          _rid(rid_t::null), _pvalues(NULL)
     {
     }
         
 
     table_row_t(table_desc_t* ptd)
         : _ptable(NULL), _field_cnt(0), _is_setup(false), 
-          _rid(rid_t::null), _pvalues(NULL), _formatted_data(NULL)
+          _rid(rid_t::null), _pvalues(NULL)
     {
         setup(ptd);
     }
@@ -393,9 +398,6 @@ struct table_row_t {
     {
         if (_pvalues)
             delete [] _pvalues;
-
-        if (_formatted_data)
-            delete [] _formatted_data;
     }
 
 
@@ -425,15 +427,7 @@ struct table_row_t {
     /* --- conversion between disk format and memory format --- */
     /* -------------------------------------------------------- */
 
-    char* buffer() {
-        assert (_ptable);
-
-	if (!_formatted_data) 
-            _formatted_data = new char[_ptable->maxsize()];
-	return (_formatted_data);
-    }
-
-    const char* format();            /* disk format of tuple */
+    const int format(char* &dest);  /* disk format of tuple */
 
     int   size() const;             /* disk space needed for tuple */
     bool  load(const char* string); /* load tuple from disk format */ 
@@ -441,7 +435,7 @@ struct table_row_t {
     bool  load_keyvalue(const unsigned char* string,
                         index_desc_t* index); /* load key fields */
 
-    char* format_key(index_desc_t* index); 
+    int   format_key(index_desc_t* index, char* &dest); 
     int   key_size(index_desc_t* index) const;
 
 
@@ -667,7 +661,7 @@ public:
             _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2);
             _opened = true;
         }
-        return RCOK;
+        return (RCOK);
     }
 
     w_rc_t next(ss_m* db, bool& eof, table_row_t& tuple) 
@@ -677,8 +671,13 @@ public:
         W_DO(_scan->next(eof));
 
         if (!eof) {
+            char* pdest  = NULL;
+            int   key_sz = tuple.format_key(_file, pdest);
+            assert (pdest); // (ip) if dest == NULL there is invalid key
+
+            vec_t    key(pdest, key_sz);
+
             rid_t    rid;
-            vec_t    key(tuple.format_key(_file), tuple.key_size(_file));
             vec_t    record(&rid, sizeof(rid_t));
             smsize_t klen = 0;
             smsize_t elen = sizeof(rid_t);
@@ -695,6 +694,7 @@ public:
                 pin.unpin();
             }
 
+            delete [] pdest;
         }    
         return (RCOK);
     }
@@ -736,21 +736,35 @@ inline char* table_desc_t::index_keydesc(index_desc_t* idx)
  *
  * @fn:    format_key
  *
- * @brief: Gets an index and for a selected row it copies only the 
- *         fields that are contained in the index and returns the
- *         corresponding char buffer. 
+ * @brief: Gets an index and for a selected row it copies to the
+ *         passed buffer only the fields that are contained in the index 
+ *         and returns the size of the newly allocated buffer, which
+ *         is the key_size for the index.
  *
  ******************************************************************/
 
-inline char* table_desc_t::format_key(index_desc_t* index,
-                                      table_row_t* prow)
+inline int table_desc_t::format_key(index_desc_t* index,
+                                    table_row_t* prow,
+                                    char* &dest)
 {
     assert (index);
     assert (prow);
 
-    if (!prow->_formatted_data) 
-        prow->_formatted_data = new char [maxsize()];
-    
+    int isz = key_size(index, prow);
+    assert (isz);
+
+    if ((!dest) || (sizeof(dest) != isz)) {
+        // new buffer needs to be allocated
+        char* tmp = dest;
+        dest = new char[isz];
+        if (tmp)
+            delete [] tmp;
+    }
+    else {
+        // clean up the buffer
+        memset (dest, 0, isz);
+    }
+
     offset_t offset = 0;
     for (int i=0; i<index->field_count(); i++) {
         int ix = index->key_index(i);
@@ -758,7 +772,7 @@ inline char* table_desc_t::format_key(index_desc_t* index,
         register field_value_t* pfv = &prow->_pvalues[ix];
         register field_desc_t* pfd = pfv->_pfield_desc;
         // copy value
-        if (!pfv->copy_value(prow->_formatted_data+offset))
+        if (!pfv->copy_value(dest+offset))
             return NULL;
 
         // move offset
@@ -770,7 +784,7 @@ inline char* table_desc_t::format_key(index_desc_t* index,
         }
     }
 
-    return (prow->_formatted_data);
+    return (isz);
 }
 
 
@@ -785,23 +799,27 @@ inline char* table_desc_t::format_key(index_desc_t* index,
  *
  ******************************************************************/
 
-inline char* table_desc_t::min_key(index_desc_t* index, table_row_t* prow)
+inline int table_desc_t::min_key(index_desc_t* index, 
+                                 table_row_t* prow,
+                                 char* &dest)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
 	prow->_pvalues[field_index].set_min_value();
     }
-    return format_key(index, prow);
+    return (format_key(index, prow, dest));
 }
 
 
-inline char* table_desc_t::max_key(index_desc_t* index, table_row_t* prow)
+inline int table_desc_t::max_key(index_desc_t* index, 
+                                 table_row_t* prow,
+                                 char* &dest)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
 	prow->_pvalues[field_index].set_max_value();
     }
-    return format_key(index,prow);
+    return (format_key(index, prow, dest));
 }
 
 
@@ -810,8 +828,8 @@ inline char* table_desc_t::max_key(index_desc_t* index, table_row_t* prow)
  *
  * @fn:    key_size
  *
- * @brief: Gets an index and for a selected row it returns the 
- *         real or maximum size of the index key for that row
+ * @brief: For an index and a selected row it returns the 
+ *         real or maximum size of the index key
  *
  ******************************************************************/
 
@@ -819,12 +837,13 @@ inline int table_desc_t::key_size(index_desc_t* index,
                                   const table_row_t* prow) const
 {
     int size = 0;
+    register int ix = 0;
     for (int i=0; i<index->field_count(); i++) {
-        int field_index = index->key_index(i);
-        if (prow->_pvalues[field_index].is_variable_length()) 
-            size += prow->_pvalues[field_index].realsize();
+        ix = index->key_index(i);
+        if (prow->_pvalues[ix].is_variable_length()) 
+            size += prow->_pvalues[ix].realsize();
         else 
-            size += prow->_pvalues[field_index]._pfield_desc->maxsize();
+            size += prow->_pvalues[ix]._pfield_desc->maxsize();
     }
     return (size);
 }
@@ -845,24 +864,31 @@ inline int table_desc_t::maxkeysize(index_desc_t* idx) const
  *
  *  @fn:    maxsize()
  *
- *  @brief: Return the maximum requirement for a tuple in disk format.
+ *  @brief: Return the maximum size requirement for a tuple in disk format.
  *          Only used in allocating _formatted_data.  Should be called
  *          only once for each table.
  *
  ******************************************************************/
 
-inline int  table_desc_t::maxsize() const
+inline const int table_desc_t::maxsize()
 {
+    // shortcut not to re-compute maxsize
+    if (_maxsize)
+        return (_maxsize);
+
+    // calculate maximum size required   
     int size = 0;
     int var_count = 0;
     int null_count = 0;
+    CRITICAL_SECTION(tb_maxsz_cs, _maxsize_lock);
     for (int i=0; i<_field_count; i++) {
         size += _desc[i].maxsize();
         if (_desc[i].allow_null()) null_count++;
         if (_desc[i].is_variable_length()) var_count++;
     }
 
-    return (size + (var_count*sizeof(offset_t)) + (null_count/8) + 1);
+    _maxsize = size + (var_count*sizeof(offset_t)) + (null_count>>3) + 1;
+    return (_maxsize);
 }
 
 
@@ -875,7 +901,14 @@ inline int  table_desc_t::maxsize() const
 
 
 
-/* return the actual size of the tuple in disk format */
+/****************************************************************** 
+ *
+ *  @fn:    size()
+ *
+ *  @brief: Return the actual size of the tuple in disk format
+ *
+ ******************************************************************/
+
 inline int table_row_t::size() const
 {
     int size = 0;
@@ -887,6 +920,7 @@ inline int table_row_t::size() const
      * and the offset to tell the length of the data.
      * Of course, there is a bit for each nullable field.
      */
+
     for (int i=0; i<_field_cnt; i++) {
 	if (_pvalues[i]._pfield_desc->allow_null()) {
 	    null_count++;
@@ -899,14 +933,14 @@ inline int table_row_t::size() const
 	else size += _pvalues[i].realsize();
     }
     if (null_count) size += (null_count >> 3) + 1;
-    return size;
+    return (size);
 }
 
 
-inline char* table_row_t::format_key(index_desc_t* index)
+inline int table_row_t::format_key(index_desc_t* index, char* &dest)
 {
     assert (_ptable);
-    return (_ptable->format_key(index, this));
+    return (_ptable->format_key(index, this, dest));
 }
 
 

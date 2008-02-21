@@ -15,6 +15,9 @@
 ENTER_NAMESPACE(tpcc);
 
 
+// uncomment line below to use produce the same input
+#define USE_SAME_INPUT
+
 
 /********************************************************************* 
  *
@@ -60,8 +63,8 @@ new_order_input_t create_no_input(int sf)
 #else
     // same input
     noin._wh_id  = 1;
-    noin._d_id   = 1;
-    noin._c_id   = 1;
+    noin._d_id   = 2;
+    noin._c_id   = 3;
     noin._ol_cnt = 10;
     noin._rbk    = 50;
 
@@ -130,13 +133,13 @@ payment_input_t create_payment_input(int sf)
 #else
     // Same input
     pin._home_wh_id = 1;
-    pin._home_d_id =  1;
-    pin._v_cust_wh_selection = 50;
+    pin._home_d_id =  2;
+    pin._v_cust_wh_selection = 80;
     pin._remote_wh_id = 1;
-    pin._remote_d_id =  1;
+    pin._remote_d_id =  3;
     pin._v_cust_ident_selection = 50;
     pin._c_id =  1500;        
-    pin._c_last = NULL;
+    //pin._c_last = NULL;
     pin._h_amount = 1000.00;
     pin._h_date = time(NULL);
 #endif        
@@ -181,10 +184,10 @@ order_status_input_t create_order_status_input(int sf)
 #else
     // same input
     osin._wh_id    = 1;
-    osin._d_id     = 1;
-    osin._c_select = 50;
-    osin._c_id     = 1;
-    osin._c_last   = NULL;
+    osin._d_id     = 2;
+    osin._c_select = 80;
+    osin._c_id     = 3;
+    //osin._c_last   = NULL;
 #endif
 
     return (osin);
@@ -253,7 +256,7 @@ stock_level_input_t create_stock_level_input(int sf)
 #else
     // same input
     slin._wh_id     = 1;
-    slin._d_id      = 1;
+    slin._d_id      = 2;
     slin._threshold = 15;
 #endif        
 

@@ -112,9 +112,9 @@ char* CUST_LAST[10] = { "BAR", "OUGHT", "ABLE", "PRI", "PRES", "ESE",
                         "ANTI", "CALLY", "ATION", "EING" };
 
 
-int generate_cust_last(int select, char* dest) {
-  
-  assert ((select >= 0) && (select < 1000));
+int generate_cust_last(int select, char* dest) 
+{  
+  assert ((select>=0) && (select<1000));
   assert (dest);
 
   int i1, i2, i3;
@@ -123,7 +123,7 @@ int generate_cust_last(int select, char* dest) {
   i2 = ((select % 100) - i3) / 10;
   i1 = (select - (select % 100)) / 100;
 
-  int iLen = strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]);
+  int iLen = strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]) + 1;
 
   assert (iLen < 17);   // C_LAST is char[16]
   

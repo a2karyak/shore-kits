@@ -9,6 +9,10 @@ using namespace shore;
 using namespace tpcc;
 
 
+// default value for transaction executed per thread
+#define DF_TRX_PER_THR 5
+
+
 ///////////////////////////////////////////////////////////
 // @class test_smt_t
 //
@@ -52,7 +56,7 @@ public:
         _rv = test();
     }
 
-    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int num_xct = 5, int xct_type = 0);
+    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int num_xct = DF_TRX_PER_THR, int xct_type = 0);
     w_rc_t tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type = 0, int xctid = 0);    
 
     w_rc_t xct_new_order(ShoreTPCCEnv* env, int xctid);
@@ -68,7 +72,7 @@ public:
     int test() {
         W_DO(_env->loaddata());
         //_env->check_consistency();
-        W_DO(tpcc_run_xct(_env, 40));
+        W_DO(tpcc_run_xct(_env));
         //print_tables();
         return (0);
     }
@@ -218,6 +222,9 @@ public:
 }; // EOF: close_smt_t
 
 
+// uncomment below to run 4 threads concurrently
+//#define USE_MT_TPCC_THREADS
+
 
 int main(int argc, char* argv[]) 
 {
@@ -230,16 +237,22 @@ int main(int argc, char* argv[])
     // Load data to the Shore Database
     TRACE( TRACE_ALWAYS, "Starting...\n");
     guard<test_smt_t> tt1 = new test_smt_t(shore_env, c_str("tt1"));
+
+#ifdef USE_MT_TPCC_THREADS 
     guard<test_smt_t> tt2 = new test_smt_t(shore_env, c_str("tt2"));
     guard<test_smt_t> tt3 = new test_smt_t(shore_env, c_str("tt3"));
     guard<test_smt_t> tt4 = new test_smt_t(shore_env, c_str("tt4"));
+#endif
 
     /* 1. fork the loading threads */
     tt1->fork();
+
+#ifdef USE_MT_TPCC_THREADS
     tt2->fork();
     tt3->fork();
     tt4->fork();
-    
+#endif    
+
     /* 2. join the loading threads */
     tt1->join();        
     if (tt1->_rv) {
@@ -248,6 +261,7 @@ int main(int argc, char* argv[])
         assert (false);
     }    
 
+#ifdef USE_MT_TPCC_THREADS
     tt2->join();        
     if (tt2->_rv) {
         TRACE( TRACE_ALWAYS, "Error in loading...\n");
@@ -268,6 +282,8 @@ int main(int argc, char* argv[])
         TRACE( TRACE_ALWAYS, "Exiting...\n");
         assert (false);
     }    
+#endif
+
 
     // close Shore env
     close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));    

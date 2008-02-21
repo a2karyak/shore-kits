@@ -125,7 +125,7 @@ w_rc_t district_t::update_ytd(ss_m* db,
 
 w_rc_t district_t::update_next_o_id(ss_m* db,
                                     table_row_t* ptuple,
-                                    const int next_o_id)
+                                    const short next_o_id)
 {
     ptuple->set_value(10, next_o_id);
     // cout << "APP: " << xct()->tid() << " Update district.next-o-id " << next_o_id << endl;
@@ -149,35 +149,42 @@ w_rc_t customer_t::get_iter_by_index(ss_m* db,
     index_desc_t* index = find_index("C_NAME_INDEX");
     assert (index);
 
+    // prepare the key to be probed
     ptuple->set_value(2, w_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(5, c_last);
     ptuple->set_value(3, "");
     ptuple->set_value(0, 0);
-    int   lowsize = key_size(index, ptuple);
-    char* lowkey  = new char [lowsize];
-    memcpy(lowkey, format_key(index, ptuple), lowsize);
+
+    char* lowkey = NULL;
+    int   lowsz  = format_key(index, ptuple, lowkey);
+    assert (lowkey);
 
     char   temp[2];
     temp[0] = MAX('z', 'Z')+1;
     temp[1] = '\0';
     ptuple->set_value(3, temp);
-    int   highsize = key_size(index, ptuple);
-    char* highkey  = new char[highsize];
-    memcpy(highkey, format_key(index, ptuple), highsize);
+
+    char* highkey = NULL;
+    int   highsz  = format_key(index, ptuple, highkey);
+    assert (highkey);
+    
 
     /* index only access */
     W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(lowkey, lowsize),
-				 scan_index_i::lt, vec_t(highkey, highsize),
+				 scan_index_i::ge, vec_t(lowkey, lowsz),
+				 scan_index_i::lt, vec_t(highkey, highsz),
 				 false));
+
+    delete [] lowkey;
+    delete [] highkey;
 
     return (RCOK);
 }
 
 w_rc_t customer_t::index_probe(ss_m* db,
                                table_row_t* ptuple,
-                               const int   c_id,
+                               const short c_id,
                                const short w_id,
                                const short d_id)
 {
@@ -189,12 +196,10 @@ w_rc_t customer_t::index_probe(ss_m* db,
 
 w_rc_t customer_t::index_probe_forupdate(ss_m * db,
                                          table_row_t* ptuple,                                         
-                                         const int   c_id,
+                                         const short c_id,
                                          const short w_id,
                                          const short d_id)
 {
-    assert (false); // (ip) 
-
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
@@ -245,8 +250,8 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
                                        table_row_t* ptuple,
                                        const short w_id,
                                        const short d_id,
-                                       const int   low_o_id,
-                                       const int   high_o_id)
+                                       const short low_o_id,
+                                       const short high_o_id)
 {
     /* pointer to the index */
     index_desc_t * index = find_index("OL_INDEX");
@@ -257,23 +262,27 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
     ptuple->set_value(3, (short)0);  /* assuming that ol_number starts from 1 */
-    int   lowsize = key_size(index, ptuple);
-    char* lowkey  = new char [lowsize];
-    memcpy(lowkey, format_key(index, ptuple), lowsize);
+
+    char* lowkey = NULL;
+    int   lowsz  = format_key(index, ptuple, lowkey);
+    assert (lowkey);
 
     /* get the highest key value */
     ptuple->set_value(0, high_o_id+1);
-    int   highsize = key_size(index, ptuple);
-    char* highkey = new char [highsize];
-    memcpy(highkey, format_key(index, ptuple), highsize);
+
+    char* highkey = NULL;
+    int   highsz  = format_key(index, ptuple, highkey);
+    assert (highkey);
     
     /* get the tuple iterator (not index only scan) */
     W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(lowkey, lowsize),
-				 scan_index_i::lt, vec_t(highkey, highsize),
+				 scan_index_i::ge, vec_t(lowkey, lowsz),
+				 scan_index_i::lt, vec_t(highkey, highsz),
 				 true));
-    delete (lowkey);
-    delete (highkey);
+
+    delete [] lowkey;
+    delete [] highkey;
+
     return (RCOK);
 }
 
@@ -283,7 +292,7 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
                                        table_row_t* ptuple,
                                        const short w_id,
                                        const short d_id,
-                                       const int   o_id)
+                                       const short o_id)
 {
     index_desc_t  * index = find_index("OL_INDEX");
     assert (index);
@@ -292,21 +301,28 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
     ptuple->set_value(3, 0);
-    int   lowsize = key_size(index, ptuple);
-    char* lowkey = new char [lowsize];
-    memcpy(lowkey, format_key(index, ptuple), lowsize);
-    
+
+    char* lowkey = NULL;
+    int   lowsz  = format_key(index, ptuple, lowkey);
+    assert (lowkey);
+
+    /* get the highest key value */
     ptuple->set_value(0, o_id+1);
-    int   highsize = key_size(index, ptuple);
-    char* highkey = new char [highsize];
-    memcpy(highkey, format_key(index, ptuple), highsize);
+
+    char* highkey = NULL;
+    int   highsz  = format_key(index, ptuple, highkey);
+    assert (highkey);
 
     W_DO(get_iter_for_index_scan(db, index, iter,
 				 scan_index_i::ge,
-				 vec_t(lowkey, lowsize),
+				 vec_t(lowkey, lowsz),
 				 scan_index_i::lt,
-				 vec_t(highkey, highsize),
+				 vec_t(highkey, highsz),
 				 true));
+
+    delete [] lowkey;
+    delete [] highkey;
+
     return (RCOK);
 }
 
@@ -327,7 +343,7 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
                                   table_row_t* ptuple,
                                   const short w_id,
                                   const short d_id,
-                                  const int   c_id)
+                                  const short c_id)
 {
     index_desc_t * index = find_index("O_CUST_INDEX");
     assert (index);
@@ -336,22 +352,26 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
     ptuple->set_value(3, c_id);
-    int   lowsize = key_size(index, ptuple);
-    char* lowkey  = new char [lowsize];
-    memcpy(lowkey, format_key(index, ptuple), lowsize);
-    
+
+    char* lowkey = NULL;
+    int   lowsz  = format_key(index, ptuple, lowkey);
+    assert (lowkey);
+
+    /* get the highest key value */
     ptuple->set_value(3, c_id+1);
-    int   highsize = key_size(index, ptuple);
-    char* highkey = new char [highsize];
-    memcpy(highkey, format_key(index, ptuple), highsize);
+
+    char* highkey = NULL;
+    int   highsz  = format_key(index, ptuple, highkey);
+    assert (highkey);
 
     W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(lowkey, lowsize),
-				 scan_index_i::lt, vec_t(highkey, highsize),
+				 scan_index_i::ge, vec_t(lowkey, lowsz),
+				 scan_index_i::lt, vec_t(highkey, highsz),
 				 true));
 
-    delete (lowkey);
-    delete (highkey);
+    delete [] lowkey;
+    delete [] highkey;
+
     return (RCOK);
 }
 
@@ -377,23 +397,26 @@ w_rc_t   new_order_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
     ptuple->set_value(0, 0);
-    int   lowsize = key_size(index, ptuple);
-    char* lowkey = new char [lowsize];
-    memcpy(lowkey, format_key(index, ptuple), lowsize);
+
+    char* lowkey = NULL;
+    int   lowsz  = format_key(index, ptuple, lowkey);
+    assert (lowkey);
 
     /* get the highest key value */
     ptuple->set_value(1, d_id+1);
-    int   highsize = key_size(index, ptuple);
-    char* highkey = new char [highsize];
-    memcpy(highkey, format_key(index, ptuple), highsize);
-    
+
+    char* highkey = NULL;
+    int   highsz  = format_key(index, ptuple, highkey);
+    assert (highkey);
+
     /* get the tuple iterator (index only scan) */
     W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(lowkey, lowsize),
-				 scan_index_i::lt, vec_t(highkey, highsize)));
+				 scan_index_i::ge, vec_t(lowkey, lowsz),
+				 scan_index_i::lt, vec_t(highkey, highsz)));
 
-    delete (lowkey);
-    delete (highkey);
+    delete [] lowkey;
+    delete [] highkey;
+
     return (RCOK);
 }
 
@@ -401,7 +424,7 @@ w_rc_t new_order_t::delete_by_index(ss_m* db,
                                     table_row_t* ptuple,
 				    const short w_id,
 				    const short d_id,
-				    const int   o_id)
+				    const short o_id)
 {
     ptuple->set_value(0, o_id);
     ptuple->set_value(1, d_id);
@@ -421,7 +444,7 @@ w_rc_t new_order_t::delete_by_index(ss_m* db,
 
 w_rc_t item_t::index_probe(ss_m* db, 
                            table_row_t* ptuple,
-                           const int i_id)
+                           const short i_id)
 {
     index_desc_t* index = find_index("I_INDEX");
     assert (index);
@@ -434,7 +457,7 @@ w_rc_t item_t::index_probe(ss_m* db,
 
 w_rc_t  item_t::index_probe_forupdate(ss_m* db, 
                                       table_row_t* ptuple,
-                                      const int i_id)
+                                      const short i_id)
 {
     index_desc_t * index = find_index("I_INDEX");
     assert (index);
@@ -455,7 +478,7 @@ w_rc_t  item_t::index_probe_forupdate(ss_m* db,
 
 w_rc_t stock_t::index_probe(ss_m* db,
                             table_row_t* ptuple,
-                            const int    i_id,
+                            const short  i_id,
                             const short  w_id)
 {
     index_desc_t * index = find_index("S_INDEX");
@@ -470,7 +493,7 @@ w_rc_t stock_t::index_probe(ss_m* db,
 
 w_rc_t stock_t::index_probe_forupdate(ss_m* db,
                                       table_row_t* ptuple,
-                                      const int    i_id,
+                                      const short  i_id,
                                       const short  w_id)
 {
     index_desc_t * index = find_index("S_INDEX");
@@ -630,10 +653,18 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t awh_tuple(this);
 
+    char* pdest = NULL;
+    int   tsz   = 0; 
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
+        // generate a random tuple
 	random(&awh_tuple, w_id);
+
+        // append it to the table
+        tsz = awh_tuple.format(pdest);
+        assert (pdest);
 	W_DO(file_append.create_rec(vec_t(), (smsize_t)0,
-				    vec_t(awh_tuple.format(), awh_tuple.size()),
+				    vec_t(pdest, tsz),
 				    awh_tuple._rid));
 
 	if (count >= mark) {
@@ -647,6 +678,9 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
 	count++;
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -764,11 +798,19 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t ad_tuple(this);
 
+    char* pdest = NULL;
+    int   tsz   = 0; 
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
+            // generate a random district tuple
 	    random(&ad_tuple, d_id, w_id, CUSTOMERS_PER_DISTRICT+1);
+
+            // append it to the table
+            tsz = ad_tuple.format(pdest);
+            assert (pdest);
 	    W_DO(file_append.create_rec(vec_t(), 0,
-					vec_t(ad_tuple.format(), ad_tuple.size()),
+					vec_t(pdest, tsz),
 					ad_tuple._rid));
 	    count++;
 	    if (count >= mark) {
@@ -782,6 +824,9 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
 	}
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -856,6 +901,7 @@ void  customer_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
 {
 
     assert (false); // (ip) modified the schema
+    assert (false); // (ip) deprecated
 
 
     double  double_number;
@@ -959,12 +1005,20 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
     int mark = COMMIT_ACTION_COUNT;
     table_row_t ac_tuple(this);
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    for (int c_id = 1; c_id <= CUSTOMERS_PER_DISTRICT; c_id++) {
+                // generate a random customer tuple
 		random(&ac_tuple, c_id, d_id, w_id);
+
+                // append it to the table
+                tsz = ac_tuple.format(pdest);
+                assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(ac_tuple.format(), ac_tuple.size()),
+					    vec_t(pdest, tsz),
 					    ac_tuple._rid));
 
 		if (count >= mark) {
@@ -980,6 +1034,9 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
 	}
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -1028,6 +1085,7 @@ void  history_t::random(table_row_t* ptuple, int c_id, short c_d_id, short c_w_i
     timestamp_t  time;
 
     assert (false); // (ip) Modified schema
+    assert (false); // (ip) deprecated
 
     /* c_id */
     ptuple->set_value(0, c_id);
@@ -1074,12 +1132,19 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t ah_tuple(this);
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    for (int c_id = 1; c_id <= CUSTOMERS_PER_DISTRICT; c_id++) {
 		random(&ah_tuple, c_id, d_id, w_id);
+
+                // append it to the table
+                tsz = ah_tuple.format(pdest);
+                assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(ah_tuple.format(), ah_tuple.size()),
+					    vec_t(pdest, tsz),
 					    ah_tuple._rid));
 
 		if (count >= mark) {
@@ -1095,6 +1160,9 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
 	}
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -1167,12 +1235,19 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t anu_tuple(this);
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    for (int o_id = o_id_lo ; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
 		random(&anu_tuple, o_id, d_id, w_id);
+
+                // append it to the table
+                tsz = anu_tuple.format(pdest);
+                assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(anu_tuple.format(), anu_tuple.size()),
+					    vec_t(pdest, tsz),
 					    anu_tuple._rid));
 
 		if (count >= mark) {
@@ -1188,6 +1263,9 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
 	}
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -1237,6 +1315,7 @@ void order_t::random(table_row_t* ptuple, int id, int c_id, short d_id, short w_
     char   string[MAX_SHORT_LEN];
 
     assert (false); // (ip) modified schema
+    assert (false); // (ip) deprecated
 
 
     /* id */
@@ -1311,6 +1390,9 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t ao_tuple(this);
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    _tpccrnd.seed_1_3000();
@@ -1318,8 +1400,12 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 	    for (int o_id = 1; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
 		int ol_cnt = cnt_array[index++];
 		random(&ao_tuple, o_id, _tpccrnd.random_1_3000(), d_id, w_id, ol_cnt);
+
+                // append it to the table
+                tsz = ao_tuple.format(pdest);
+                assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(ao_tuple.format(), ao_tuple.size()),
+					    vec_t(pdest, tsz),
 					    ao_tuple._rid));
 
 		if (count >= mark) {
@@ -1338,6 +1424,9 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 
     // release cnt_array mutex
     pthread_mutex_unlock(_pcnt_array_mutex);
+
+    if (pdest)
+        delete [] pdest;
     
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -1465,6 +1554,9 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
     int count = 1;
     int mark = COMMIT_ACTION_COUNT;
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    _tpccrnd.seed_1_3000();
@@ -1481,8 +1573,11 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 			random(&aol_tuple, o_id, d_id, w_id, ol_id, false);
 		    }
 
+                    // append it to the table
+                    tsz = aol_tuple.format(pdest);
+                    assert (pdest);                    
 		    W_DO(file_append.create_rec(vec_t(), 0,
-						vec_t(aol_tuple.format(), aol_tuple.size()),
+						vec_t(pdest, tsz),
 						aol_tuple._rid));
 
 		    if (count >= mark) {
@@ -1499,6 +1594,9 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 	}
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -1579,10 +1677,17 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t ai_tuple(this);
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int i_id = 1; i_id <= ITEMS; i_id++) {
 	random(&ai_tuple, i_id);
+
+        // append it to the table
+        tsz = ai_tuple.format(pdest);
+        assert (pdest);
 	W_DO(file_append.create_rec(vec_t(), 0,
-				    vec_t(ai_tuple.format(), ai_tuple.size()),
+				    vec_t(pdest, tsz),
 				    ai_tuple._rid));
 
 	if (count >= mark) {
@@ -1596,6 +1701,9 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
 	count++;
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
@@ -1663,6 +1771,7 @@ void stock_t::random(table_row_t* ptuple, int id, short w_id)
     int    hit;
 
     assert (false); // (ip) Modified schema
+    assert (false); // (ip) deprecated
 
     /* i_id */
     ptuple->set_value(0, id);
@@ -1746,11 +1855,18 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t as_tuple(this);
 
+    char* pdest = NULL;
+    int tsz = 0;
+
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int s_id = 1; s_id <= STOCK_PER_WAREHOUSE; s_id++) {
 	    random(&as_tuple, s_id, w_id);
+
+            // append it to the table
+            tsz = as_tuple.format(pdest);
+            assert (pdest);
 	    W_DO(file_append.create_rec(vec_t(), 0,
-					vec_t(as_tuple.format(), as_tuple.size()),
+					vec_t(pdest, tsz),
 					as_tuple._rid));
 
 	    if (count >= mark) {
@@ -1763,6 +1879,9 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
 	}
     }
     W_DO(db->commit_xct());
+
+    if (pdest)
+        delete [] pdest;
 
     cout << _name << " # of records inserted: " << count << endl;
     cout << "Building indices ... " << endl;
