@@ -191,6 +191,10 @@ w_rc_t customer_t::index_probe(ss_m* db,
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
+    
+    // (ip) for debugging
+    ptuple->print_tuple();
+
     return (table_desc_t::index_probe(db, "C_INDEX", ptuple));
 }
 
@@ -222,14 +226,6 @@ w_rc_t customer_t::update_tuple(ss_m* db,
     if (adata2)
 	ptuple->set_value(21, adata2);
 
-//     int c_id;
-//     int w_id;
-//     int d_id;
-//     ptuple->get_value(0, c_id);
-//     ptuple->get_value(1, d_id);
-//     ptuple->get_value(2, w_id);
-
-    // cout << "APP: " << xct()->tid() << " Update customer-tuple " << w_id << " " << d_id << " " << c_id << endl;
     W_DO(table_desc_t::update_tuple(db, ptuple));
 
     return (RCOK);
@@ -682,8 +678,8 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return (bulkload_all_indexes(db));
 }
@@ -828,8 +824,8 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1038,8 +1034,8 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1164,8 +1160,8 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1267,8 +1263,8 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1428,8 +1424,8 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, int* cnt_array)
     if (pdest)
         delete [] pdest;
     
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1598,8 +1594,8 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, int* cnt_array)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1705,8 +1701,8 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }
@@ -1883,8 +1879,8 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
     if (pdest)
         delete [] pdest;
 
-    cout << _name << " # of records inserted: " << count << endl;
-    cout << "Building indices ... " << endl;
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, count);
 
     return bulkload_all_indexes(db);
 }

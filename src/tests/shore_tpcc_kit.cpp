@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
     /* 2. join the loading threads */
     tt1->join();        
     if (tt1->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Error in testing...\n");
         TRACE( TRACE_ALWAYS, "Exiting...\n");
         assert (false);
     }    
@@ -264,21 +264,21 @@ int main(int argc, char* argv[])
 #ifdef USE_MT_TPCC_THREADS
     tt2->join();        
     if (tt2->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Error in testing...\n");
         TRACE( TRACE_ALWAYS, "Exiting...\n");
         assert (false);
     }    
 
     tt3->join();        
     if (tt3->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Error in testing...\n");
         TRACE( TRACE_ALWAYS, "Exiting...\n");
         assert (false);
     }    
 
     tt4->join();        
     if (tt4->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in loading...\n");
+        TRACE( TRACE_ALWAYS, "Error in testing...\n");
         TRACE( TRACE_ALWAYS, "Exiting...\n");
         assert (false);
     }    

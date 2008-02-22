@@ -75,6 +75,18 @@ struct env_stats_t
 
     void print_env_stats();
 
+    int inc_trx_att() {
+        CRITICAL_SECTION(g_att_cs, _ntrx_lock);
+        return (++_ntrx_att);
+    }
+
+    int inc_trx_com() {
+        CRITICAL_SECTION(g_com_cs, _ntrx_lock);
+        ++_ntrx_att;
+        return (++_ntrx_com);
+    }
+
+
 }; // EOF env_stats_t
 
 

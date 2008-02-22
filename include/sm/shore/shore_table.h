@@ -704,17 +704,16 @@ inline const int table_desc_t::format_key(index_desc_t* index,
     int isz = key_size(index, prow);
     assert (isz);
 
-    if ((!dest) || (strlen(dest) != isz)) {
-        // new buffer needs to be allocated
+    if ((!dest) /* || (strlen(dest) < isz) */ ) {
+        // new larger buffer needs to be allocated
         char* tmp = dest;
         dest = new char[isz];
         if (tmp)
             delete [] tmp;
     }
-    else {
-        // clean up the buffer
-        memset (dest, 0, isz);
-    }
+    // in any case, clean up the buffer
+    memset (dest, 0, isz);
+
 
     register offset_t offset = 0;
     for (int i=0; i<index->field_count(); i++) {

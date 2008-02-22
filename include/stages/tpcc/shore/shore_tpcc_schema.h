@@ -157,7 +157,7 @@ public:
         _desc[7].setup(SQL_CHAR,  "D_ZIP", 9);   
         _desc[8].setup(SQL_FLOAT, "D_TAX");    
         _desc[9].setup(SQL_FLOAT, "D_YTD");         /* DECIMAL(12,2) */
-        _desc[10].setup(SQL_INT,  "D_NEXT_O_ID");   /* old: INT */
+        _desc[10].setup(SQL_INT,  "D_NEXT_O_ID");
 
         /* create unique index d_index on (d_id, w_id) */
         int keys[2] = { 0, 1 };
@@ -206,7 +206,7 @@ class customer_t : public tpcc_table_t {
 public:
     customer_t() : tpcc_table_t("CUSTOMER", TPCC_CUSTOMER_FCOUNT) {
         /* table schema */
-        _desc[0].setup(SQL_INT,    "C_ID");             /* old: INT */
+        _desc[0].setup(SQL_INT,    "C_ID");
         _desc[1].setup(SQL_INT,    "C_D_ID");       
         _desc[2].setup(SQL_INT,    "C_W_ID");       
         _desc[3].setup(SQL_CHAR,   "C_FIRST", 16);  
@@ -218,7 +218,7 @@ public:
         _desc[9].setup(SQL_CHAR,   "C_STATE", 2);   
         _desc[10].setup(SQL_CHAR,  "C_ZIP", 9);     
         _desc[11].setup(SQL_CHAR,  "C_PHONE", 16);  
-        _desc[12].setup(SQL_INT,   "C_SINCE");           /* old: TIME */
+        _desc[12].setup(SQL_FLOAT, "C_SINCE");           /* old: TIME */
         _desc[13].setup(SQL_CHAR,  "C_CREDIT", 2);  
         _desc[14].setup(SQL_FLOAT, "C_CREDIT_LIM");      /* DECIMAL(12,2) */
         _desc[15].setup(SQL_FLOAT, "C_DISCOUNT");
@@ -285,14 +285,14 @@ class history_t : public tpcc_table_t {
 public:
     history_t() : tpcc_table_t("HISTORY", TPCC_HISTORY_FCOUNT) {
         /* table schema */
-        _desc[0].setup(SQL_INT,  "H_C_ID");     /* old: INT */
-        _desc[1].setup(SQL_INT,  "H_C_D_ID");  
-        _desc[2].setup(SQL_INT,  "H_C_W_ID"); 
-        _desc[3].setup(SQL_INT,  "H_D_ID");   
-        _desc[4].setup(SQL_INT,  "H_W_ID");    
-        _desc[5].setup(SQL_INT,  "H_DATE");     /* old: TIME */
-        _desc[6].setup(SQL_INT,  "H_AMOUNT");   /* old: INT */
-        _desc[7].setup(SQL_CHAR, "H_DATA", 25); 
+        _desc[0].setup(SQL_INT,   "H_C_ID");
+        _desc[1].setup(SQL_INT,   "H_C_D_ID");  
+        _desc[2].setup(SQL_INT,   "H_C_W_ID"); 
+        _desc[3].setup(SQL_INT,   "H_D_ID");   
+        _desc[4].setup(SQL_INT,   "H_W_ID");    
+        _desc[5].setup(SQL_FLOAT, "H_DATE");     /* old: TIME */
+        _desc[6].setup(SQL_FLOAT, "H_AMOUNT");   /* old: INT */
+        _desc[7].setup(SQL_CHAR,  "H_DATA", 25); 
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -312,7 +312,7 @@ class new_order_t : public tpcc_table_t {
 public:
     new_order_t() : tpcc_table_t("NEW_ORDER", TPCC_NEW_ORDER_FCOUNT) {
         /* table schema */
-        _desc[0].setup(SQL_INT, "NO_O_ID"); /* old: INT */
+        _desc[0].setup(SQL_INT, "NO_O_ID");
         _desc[1].setup(SQL_INT, "NO_D_ID");
         _desc[2].setup(SQL_INT, "NO_W_ID");
 
@@ -355,14 +355,14 @@ private:
 public:
     order_t() : tpcc_table_t("ORDER", TPCC_ORDER_FCOUNT) {
         /* table schema */
-        _desc[0].setup(SQL_INT, "O_ID");          /* old: INT */
-        _desc[1].setup(SQL_INT, "O_C_ID");        /* prev [3] */
-        _desc[2].setup(SQL_INT, "O_D_ID");        /* prev [1] */
-        _desc[3].setup(SQL_INT, "O_W_ID");        /* prev [2] old: INT */
-        _desc[4].setup(SQL_INT, "O_ENTRY_D");     /* old: TIME */
-        _desc[5].setup(SQL_INT, "O_CARRIER_ID"); 
-        _desc[6].setup(SQL_INT, "O_OL_CNT");   
-        _desc[7].setup(SQL_INT, "O_ALL_LOCAL");
+        _desc[0].setup(SQL_INT,   "O_ID");
+        _desc[1].setup(SQL_INT,   "O_C_ID");        /* prev [3] */
+        _desc[2].setup(SQL_INT,   "O_D_ID");        /* prev [1] */
+        _desc[3].setup(SQL_INT,   "O_W_ID");        /* prev [2] */
+        _desc[4].setup(SQL_FLOAT, "O_ENTRY_D");     /* old: TIME */
+        _desc[5].setup(SQL_INT,   "O_CARRIER_ID"); 
+        _desc[6].setup(SQL_INT,   "O_OL_CNT");   
+        _desc[7].setup(SQL_INT,   "O_ALL_LOCAL");
 
         /* create unique index o_index on (w_id, d_id, o_id) */
         int keys1[3] = {3, 2, 0};
@@ -418,16 +418,16 @@ private:
 public:
     order_line_t() : tpcc_table_t("ORDERLINE", TPCC_ORDER_LINE_FCOUNT) {
 	/* table schema */
-	_desc[0].setup(SQL_INT,  "OL_O_ID");          /* old: INT */
-	_desc[1].setup(SQL_INT,  "OL_D_ID");      
-	_desc[2].setup(SQL_INT,  "OL_W_ID");   
-	_desc[3].setup(SQL_INT,  "OL_NUMBER"); 
-	_desc[4].setup(SQL_INT,  "0L_I_ID");          /* old: INT */
-	_desc[5].setup(SQL_INT,  "OL_SUPPLY_W_ID");  
-	_desc[6].setup(SQL_INT,  "OL_DELIVERY_D");    /* old: TIME */
-	_desc[7].setup(SQL_INT,  "OL_QUANTITY");   
-	_desc[8].setup(SQL_INT,  "OL_AMOUNT");        /* old: INT */
-	_desc[9].setup(SQL_CHAR, "OL_DIST_INFO", 25); /* old: CHAR */  
+	_desc[0].setup(SQL_INT,    "OL_O_ID");
+	_desc[1].setup(SQL_INT,    "OL_D_ID");      
+	_desc[2].setup(SQL_INT,    "OL_W_ID");   
+	_desc[3].setup(SQL_INT,    "OL_NUMBER"); 
+	_desc[4].setup(SQL_INT,    "OL_I_ID");
+	_desc[5].setup(SQL_INT,    "OL_SUPPLY_W_ID");  
+	_desc[6].setup(SQL_FLOAT,  "OL_DELIVERY_D");    /* old: TIME */
+	_desc[7].setup(SQL_INT,    "OL_QUANTITY");   
+	_desc[8].setup(SQL_INT,    "OL_AMOUNT");
+	_desc[9].setup(SQL_CHAR,   "OL_DIST_INFO", 25); /* old: CHAR */  
 
 	/* create unique index ol_index on (w_id, d_id, o_id, ol_number) */
 	int keys[4] = {2, 1, 0, 3};
@@ -478,10 +478,10 @@ class item_t : public tpcc_table_t {
 public:
     item_t() : tpcc_table_t("ITEM", TPCC_ITEM_FCOUNT) {
 	/* table schema */
-	_desc[0].setup(SQL_INT,  "I_ID");        /* old: INT */ 
-	_desc[1].setup(SQL_INT,  "I_IM_ID");     /* old: INT */
+	_desc[0].setup(SQL_INT,  "I_ID");
+	_desc[1].setup(SQL_INT,  "I_IM_ID");
 	_desc[2].setup(SQL_CHAR, "I_NAME", 24);   
-	_desc[3].setup(SQL_INT,  "I_PRICE");     /* old: INT */
+	_desc[3].setup(SQL_INT,  "I_PRICE");
 	_desc[4].setup(SQL_CHAR, "I_DATA", 50);
 	
 	/* create unique index on i_index on (i_id) */
@@ -514,13 +514,13 @@ class stock_t : public tpcc_table_t {
 public:
     stock_t() : tpcc_table_t("STOCK", TPCC_STOCK_FCOUNT) {
 	/* table schema */
-	_desc[0].setup(SQL_INT,    "S_I_ID");       /* old: INT */
+	_desc[0].setup(SQL_INT,    "S_I_ID");
 	_desc[1].setup(SQL_INT,    "S_W_ID");       
 	_desc[2].setup(SQL_INT,    "S_REMOTE_CNT"); /* prev [15] */
 	_desc[3].setup(SQL_INT,    "S_QUANTITY");   /* prev [2] */
 	_desc[4].setup(SQL_INT,    "S_ORDER_CNT");  /* prev [14] */
-	_desc[5].setup(SQL_INT,    "S_YTD");        /* prev [13] */ /* old: INT */
-	_desc[6].setup(SQL_CHAR,   "S_DIST0", 24);     /* prev [4] */
+	_desc[5].setup(SQL_INT,    "S_YTD");        /* prev [13] */
+	_desc[6].setup(SQL_CHAR,   "S_DIST0", 24);  /* prev [4] */
 	_desc[7].setup(SQL_CHAR,   "S_DIST1", 24);  
 	_desc[8].setup(SQL_CHAR,   "S_DIST2", 24);  
 	_desc[9].setup(SQL_CHAR,   "S_DIST3", 24);  

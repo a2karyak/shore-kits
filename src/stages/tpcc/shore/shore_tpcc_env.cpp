@@ -99,7 +99,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
     tpcc_table_t* ptable = NULL;
 
     // (ip) for debug loading only the first 2 tables (WH, DISTR)
-    int num_tbl = 2;
+    int num_tbl = 4; // if 4 == PAYMENT TABLES
     //int num_tbl = _table_list.size();
 
     int cnt = 0;
@@ -252,6 +252,7 @@ void ShoreTPCCEnv::set_qf(const int aQF)
  *
  * @brief: They are wrappers to the functions that execute the transaction
  *         body. Their responsibility is to:
+ *
  *         1. Prepare the corresponding input
  *         2. Check the return of the trx function and abort the trx,
  *            if something went wrong
@@ -273,6 +274,7 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
         TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_no_att();
+        _env_stats.inc_trx_att();
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -281,8 +283,8 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
 
     TRACE( TRACE_DEBUG, "Xct (%d) NewOrder completed\n", xct_id);
     _tpcc_stats.inc_no_com();
+    _env_stats.inc_trx_com();
     return (RCOK); 
-
 }
 
 w_rc_t ShoreTPCCEnv::run_payment(const int xct_id, 
@@ -296,6 +298,7 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
         TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_pay_att();
+        _env_stats.inc_trx_att();
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -304,6 +307,7 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
 
     TRACE( TRACE_DEBUG, "Xct (%d) Payment completed\n", xct_id);
     _tpcc_stats.inc_pay_com();
+    _env_stats.inc_trx_com();
     return (RCOK); 
 }
 
@@ -318,6 +322,7 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
         TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_ord_att();
+        _env_stats.inc_trx_att();
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -326,6 +331,7 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
 
     TRACE( TRACE_DEBUG, "Xct (%d) OrderStatus completed\n", xct_id);
     _tpcc_stats.inc_ord_com();
+    _env_stats.inc_trx_com();
     return (RCOK); 
 }
 
@@ -340,6 +346,7 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
         TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_del_att();
+        _env_stats.inc_trx_att();
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -348,6 +355,7 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
 
     TRACE( TRACE_DEBUG, "Xct (%d) Delivery completed\n", xct_id);
     _tpcc_stats.inc_del_com();
+    _env_stats.inc_trx_com();
     return (RCOK); 
 }
 
@@ -362,6 +370,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
         TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
         _tpcc_stats.inc_sto_att();
+        _env_stats.inc_trx_att();
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -370,6 +379,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
 
     TRACE( TRACE_DEBUG, "Xct (%d) StockLevel completed\n", xct_id);
     _tpcc_stats.inc_sto_com();
+    _env_stats.inc_trx_com();
     return (RCOK); 
 }
 
@@ -712,27 +722,29 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
 
+
     /* 1. retrieve warehouse for update */
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d PAY:warehouse-index-probe (%d)\n", xct_id, ppin->_home_wh_id);
+           "App: %d PAY:warehouse-index-probe (%d)\n", 
+           xct_id, ppin->_home_wh_id);
+
     W_DO(_warehouse.index_probe_forupdate(_pssm, &rwh, ppin->_home_wh_id));   
+
 
     /* 2. retrieve district for update */
     TRACE( TRACE_TRX_FLOW, 
            "App: %d PAY:district-index-probe (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
 
-
-    W_DO(_district.index_probe_forupdate(_pssm, 
-                                         &rdist,
+    W_DO(_district.index_probe_forupdate(_pssm, &rdist,
                                          ppin->_home_d_id, 
                                          ppin->_home_wh_id));
 
     // find the customer wh and d
-    int c_w = ( ppin->_v_cust_ident_selection > 85 ? ppin->_home_wh_id : ppin->_remote_wh_id);
-    int c_d = ( ppin->_v_cust_ident_selection > 85 ? ppin->_home_d_id : ppin->_remote_d_id);
+    int c_w = ( ppin->_v_cust_wh_selection > 85 ? ppin->_home_wh_id : ppin->_remote_wh_id);
+    int c_d = ( ppin->_v_cust_wh_selection > 85 ? ppin->_home_d_id : ppin->_remote_d_id);
 
-#if 0
+
     /* 3. retrieve customer for update */
     if (ppin->_c_id == 0) {
 
@@ -749,7 +761,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         assert (ppin->_v_cust_ident_selection <= 60);
 
         index_scan_iter_impl* c_iter;
-        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:cust-get-iter-by-name-index (%s)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
                xct_id, ppin->_c_last);
 	W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
                                          c_w, c_d, ppin->_c_last));
@@ -761,7 +773,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	W_DO(c_iter->next(_pssm, eof, rcust));
 	while (!eof) {
 	    rcust.get_value(0, c_id_list[count++]);            
-            TRACE( TRACE_TRX_FLOW, "App: %d, PAY:cust-iter-next\n", xct_id);
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next\n", xct_id);
 	    W_DO(c_iter->next(_pssm, eof, rcust));
 	}
 	delete c_iter;
@@ -784,10 +796,10 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      */
 
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d, PAY:cust-index-probe-forupdate (%d) (%d) (%d)\n", 
-           xct_id, ppin->_c_id, c_w, c_d);
-    W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, 
-                                         c_w, c_d));
+           "App: %d PAY:cust-index-probe-forupdate (%d) (%d) (%d)\n", 
+           xct_id, c_w, c_d, ppin->_c_id);
+
+    W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, c_w, c_d));
 
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;
@@ -832,7 +844,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	 */
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d, PAY:cust-index-probe-forupdate (%d) (%d) (%d)\n", 
+               "App: %d PAY:cust-index-probe-forupdate (%d) (%d) (%d)\n", 
                xct_id, ppin->_c_id, c_w, c_d);        
 	W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, c_w, c_d));
 
@@ -848,14 +860,13 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:cust-update-tuple\n", xct_id);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
 	W_DO(_customer.update_tuple(_pssm, &rcust, acust, c_new_data_1, c_new_data_2));
     }
     else { /* good customer */
-        TRACE( TRACE_TRX_FLOW, "App: %d, PAY:cust-update-tuple\n", xct_id);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
 	W_DO(_customer.update_tuple(_pssm, &rcust, acust, NULL, NULL));
     }
-#endif
 
     /* UPDATE district SET d_ytd = d_ytd + :h_amount
      * WHERE d_id = :d_id AND d_w_id = :w_id
@@ -863,7 +874,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "D_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:distr-update-ytd1 (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-update-ytd1 (%d)\n", 
            xct_id, ppin->_home_wh_id);
     W_DO(_district.update_ytd(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id, ppin->_h_amount));
 
@@ -874,7 +885,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "D_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:distr-index-probe (%d) (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-index-probe (%d) (%d)\n", 
            xct_id, ppin->_home_d_id, ppin->_home_wh_id);
     W_DO(_district.index_probe(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id));
 
@@ -893,7 +904,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "W_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:wh-update-ytd2 (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd2 (%d)\n", 
            xct_id, ppin->_home_wh_id);
     W_DO(_warehouse.update_ytd(_pssm, &rwh, ppin->_home_wh_id, ppin->_h_amount));
 
@@ -906,7 +917,6 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rwh.get_value(6, awh.W_ZIP, 10);
     
 
-#if 0
     /* INSERT INTO history
      * VALUES (:c_id, :c_d_id, :c_w_id, :d_id, :w_id, :curr_tmstmp, :ih_amount, :h_data)
      */
@@ -923,9 +933,9 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rhist.set_value(6, ppin->_h_amount * 100.0);
     rhist.set_value(7, ahist.H_DATA);
 
-    TRACE( TRACE_TRX_FLOW, "App: %d, PAY:hist-add-tuple\n", xct_id);
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", xct_id);
     W_DO(_history.add_tuple(_pssm, &rhist));
-#endif 
+
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -999,7 +1009,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
         assert (pstin->_c_last);
 
         index_scan_iter_impl* c_iter;
-        TRACE( TRACE_TRX_FLOW, "App: %d, ORDST:get-iter-by-index\n", xct_id);
+        TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
 	W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
                                          w_id, d_id, pstin->_c_last));
 
@@ -1010,7 +1020,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 	W_DO(c_iter->next(_pssm, eof, rcust));
 	while (!eof) {
 	    rcust.get_value(0, c_id_list[count++]);            
-            TRACE( TRACE_TRX_FLOW, "App: %d, ORDST:iter-next\n", xct_id);
+            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:iter-next\n", xct_id);
 	    W_DO(c_iter->next(_pssm, eof, rcust));
 	}
 	delete c_iter;
@@ -1031,7 +1041,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
      */
 
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d, ORDST:index-probe-forupdate (%d) (%d) (%d)\n", 
+           "App: %d ORDST:index-probe-forupdate (%d) (%d) (%d)\n", 
            xct_id, pstin->_c_id, w_id, d_id);
     W_DO(_customer.index_probe(_pssm, &rcust, pstin->_c_id, w_id, d_id));
 
@@ -1053,7 +1063,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
      */
 
     index_scan_iter_impl* o_iter;
-    TRACE( TRACE_TRX_FLOW, "App: %d, ORDST:get-iter-by-index\n", xct_id);
+    TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
     W_DO(_order.get_iter_by_index(_pssm, o_iter, &rord,
 				  w_id, d_id, pstin->_c_id));
 
@@ -1081,7 +1091,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
      */
 
     index_scan_iter_impl* ol_iter;
-    TRACE( TRACE_TRX_FLOW, "App: %d, ORDST:get-iter-by-index\n", xct_id);
+    TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
     W_DO(_order_line.get_iter_by_index(_pssm, ol_iter, &rordline,
 				       w_id, d_id, aorder.O_ID));
 
@@ -1180,7 +1190,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
         table_row_t rsb(&o_id_list);
 
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, DEL:get-iter-by-index (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-iter-by-index (%d) (%d)\n", 
                xct_id, w_id, d_id);
 
         index_scan_iter_impl* no_iter;
@@ -1220,7 +1230,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 * plan: index scan on "NO_INDEX"
 	 */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, DEL:delete-by-index (%d) (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:delete-by-index (%d) (%d) (%d)\n", 
                xct_id, w_id, d_id, no_o_id);
 
 	W_DO(_new_order.delete_by_index(_pssm, &rno, w_id, d_id, no_o_id));
@@ -1236,7 +1246,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 * plan: index probe on "O_INDEX"
 	 */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, DEL:index-probe (%d) (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:index-probe (%d) (%d) (%d)\n", 
                xct_id, no_o_id, d_id, w_id);
 
 	rord.set_value(0, no_o_id);
@@ -1259,7 +1269,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 */
 
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, DEL:get-iter-by-index (%d) (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-iter-by-index (%d) (%d) (%d)\n", 
                xct_id, no_o_id, d_id, w_id);
 
 	int total_amount = 0;
@@ -1289,7 +1299,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 * plan: index probe on "C_INDEX"
 	 */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, DEL:index-probe (%d) (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:index-probe (%d) (%d) (%d)\n", 
                xct_id, c_id, d_id, w_id);
 
 	W_DO(_customer.index_probe(_pssm, &rcust, c_id, d_id, w_id));
@@ -1349,11 +1359,10 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     table_row_t rstock(&_stock);
     trt.reset(UNSUBMITTED, xct_id);
 
-    return (RCOK); // (ip) To remove
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
-
+    
     /* 1. get next_o_id from the district */
 
     /* SELECT d_next_o_id INTO :o_id
@@ -1363,7 +1372,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
      * (index scan on D_INDEX)
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d, STO:index-probe (%d) (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d STO:index-probe (%d) (%d)\n", 
            xct_id, pslin->_d_id, pslin->_wh_id);
 
     W_DO(_district.index_probe(_pssm, &rdist, pslin->_d_id, pslin->_wh_id));
@@ -1391,14 +1400,15 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
     /* 2a. Index scan on order_line table. */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d, STO:get-iter-by-index (%d) (%d) (%d) (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d STO:get-iter-by-index (%d) (%d) (%d) (%d)\n", 
            xct_id, pslin->_wh_id, pslin->_d_id, next_o_id-20, next_o_id);
 
     index_scan_iter_impl* ol_iter;
     W_DO(_order_line.get_iter_by_index(_pssm, ol_iter, &rordline,
 				       pslin->_wh_id, pslin->_d_id,
 				       next_o_id-20, next_o_id));
-    
+
+
     sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_SMALLINT);  /* OL_I_ID */
     ol_list.setup(1, SQL_SMALLINT);  /* OL_W_ID */
@@ -1435,6 +1445,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     int last_i_id = -1;
     int count = 0;
 
+#if 0    
     /* 2c. Nested loop join order_line with stock */
     W_DO(ol_list_sort_iter.next(_pssm, eof, rsb));
     while (!eof) {
@@ -1446,7 +1457,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 	rsb.get_value(0, i_id);
 	rsb.get_value(1, w_id);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d, STO:index-probe (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d STO:index-probe (%d) (%d)\n", 
                xct_id, i_id, w_id);
 
 	W_DO(_stock.index_probe(_pssm, &rstock, i_id, w_id));
@@ -1471,7 +1482,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
 	W_DO(ol_list_sort_iter.next(_pssm, eof, rsb));
     }
-
+#endif
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 

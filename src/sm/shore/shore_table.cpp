@@ -94,7 +94,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
         btread = read_tuple_from_line(tuple, linebuffer);
 
         // (ip) for debugging
-        //tuple.print_tuple();
+        //if (!strcmp(name(), "CUSTOMER")) tuple.print_tuple();
 
         // append it to the table
         tsz = tuple.format(pdest);
@@ -118,8 +118,9 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
     if (pdest)
         delete [] pdest;
 
-    cout << "# of records inserted: " << tuple_count << endl;
-    cout << "Building indices ... " << endl;
+
+    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+           _name, tuple_count);
 
     /* 4. update the index structures */
     return (bulkload_all_indexes(db));
@@ -142,7 +143,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 {
     assert (index);
 
-    cout << "Starting to build index: " << index->name() << endl;
+    TRACE( TRACE_DEBUG, "Building index: %s\n", index->name());
     
     W_DO(db->begin_xct());
     
@@ -158,9 +159,13 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     char* pdest = NULL;
     int key_sz = 0;
 
-    /* 2. iterate over the whole table and insert the corresponding index entries */    
+    /* 2. iterate over the whole table and 
+     *    insert the corresponding index entries */
     W_DO(iter->next(db, eof, row));
     while (!eof) {
+
+        //        row.print_tuple();
+        
         key_sz = format_key(index, &row, pdest);
         assert (pdest); // (ip) if NULL invalid key
         
@@ -185,7 +190,8 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 
     /* 5. print stats */
     time_t tstop = time(NULL);
-    cout << "Index " << index->name() << " loaded in " << (tstop - tstart) << " secs..." << endl;
+    TRACE( TRACE_DEBUG, "Index (%s) loaded (%d) entries in (%d) secs...\n",
+           index->name(), tuple_count, (tstop - tstart));
 
     return (RCOK);
 }
@@ -206,17 +212,22 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 /* bulkloads all indexes */
 w_rc_t table_desc_t::bulkload_all_indexes(ss_m* db)
 {
-    cout << "Start building indices for: " << _name << endl;
+    TRACE( TRACE_DEBUG, "Start building indices for (%s)\n", _name);
   
     index_desc_t* index = _indexes;
 
     while (index) {
 	// build one index at each iteration.
-	W_DO(bulkload_index(db, index));
+        w_rc_t e = bulkload_index(db, index);
+        if (e) {
+            TRACE( TRACE_ALWAYS, "Index (%s) loading aborted [0x%x]\n",
+                   index->name(), e.err_num());
+            assert (false); // (ip) should never happen
+        }
 	index = index->next();
     }
 
-    cout << "End building indices" << endl;
+    TRACE( TRACE_DEBUG, "End building indices for (%s)\n", _name);
     return RCOK;
 }
 
@@ -884,17 +895,15 @@ const int table_row_t::format(char* &dest)
     /* 2. allocate space for formatted data */
 
     assert (tupsize);
-    if ((!dest) || (sizeof(dest) != tupsize)) {
-        // new buffer needs to be allocated
+    if ((!dest) /* (strlen(dest) < tupsize) */ ) {
+        // new larger buffer needs to be allocated
         char* tmp = dest;
 	dest = new char[tupsize];
         if (tmp)
             delete [] tmp;
     }
-    else {
-        // clean up the buffer
-        memset (dest, 0, tupsize);
-    } 
+    // in any case, clean up the buffer
+    memset (dest, 0, tupsize);
 
 
     /* 3. format the data */
