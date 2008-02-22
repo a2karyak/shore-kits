@@ -111,7 +111,7 @@ void  field_value_t::print_value(ostream & os)
 const int field_value_t::get_debug_str(char* &buf)
 {
     assert (_pfield_desc);
-    int sz = _real_size;
+    int sz = _max_size;
     buf = new char[MAX_LINE_LENGTH];
     memset(buf, '\0', MAX_LINE_LENGTH);
 

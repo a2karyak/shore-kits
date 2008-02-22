@@ -27,21 +27,26 @@ ENTER_NAMESPACE(shore);
 
 
 
-/* ---------------------------------------------------------------
- * @class: index_desc_t
+/******************************************************************
  *
- * @brief: Description of a Shore index.
- *---------------------------------------------------------------- */
+ *  @class: index_desc_t
+ *
+ *  @brief: Description of a Shore index.
+ *
+ *  @note:  Even the variable length fields are treated as fixed 
+ *          length, with their maximum possible size.
+ *
+ ******************************************************************/
 
 class index_desc_t : public file_desc_t 
 {
 private:
-    int*          _key;               /* index of fields in the index */
-    bool          _unique;            /* whether allow duplicates or not */
-    bool          _primary;           /* it is primary or not */
+    int*          _key;          /* index of fields in the index */
+    bool          _unique;       /* whether allow duplicates or not */
+    bool          _primary;      /* it is primary or not */
+    int           _maxkeysize;   /* maximum key size */
 
-    index_desc_t* _next;              /* linked list of all indices */
-    //    table_desc_t* _table;             /* pointer to the base table */
+    index_desc_t* _next;         /* linked list of all indices */
 
 public:
 
@@ -52,7 +57,7 @@ public:
     index_desc_t(const char* name, int fieldcnt, const int* fields,
                  bool unique = true, bool primary = false)
         : file_desc_t(name, fieldcnt),
-          _unique(unique), _primary(primary), _next(NULL) 
+          _unique(unique), _primary(primary), _maxkeysize(0), _next(NULL) 
     {
         // Copy the indexes of keys
         _key = new int[_field_count];
@@ -72,13 +77,19 @@ public:
     /* --- access methods --- */
     /* ---------------------- */
 
-    bool is_unique() const { return _unique; }
-    bool is_primary() const { return _primary; }
+    inline bool is_unique() const { return (_unique); }
+    inline bool is_primary() const { return (_primary); }
 
+    tatas_lock  _maxkey_lock;  /* lock for the maximum key size */
+    inline int  get_keysize() { return (_maxkeysize); }
+    inline void set_keysize(const int sz) {
+        assert (sz>0);
+        _maxkeysize = sz;
+    }
 
-    /* ---------------------------- */
-    /* --- link list operations --- */
-    /* ---------------------------- */
+    /* ---------------------------------- */
+    /* --- index link list operations --- */
+    /* ---------------------------------- */
 
 
     index_desc_t* next() const { return _next; }
@@ -98,7 +109,7 @@ public:
     index_desc_t* find_by_name(const char* name) {
 	if (strcmp(name, _name) == 0) return (this);
 	if (_next) return _next->find_by_name(name);
-	return NULL;
+	return (NULL);
     }
 
 
@@ -107,7 +118,7 @@ public:
 
     int key_index(int index) const {
 	assert (index >=0 && index < _field_count);
-	return _key[index];
+	return (_key[index]);
     }
 
 }; // EOF: index_desc_t

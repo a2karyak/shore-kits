@@ -206,7 +206,7 @@ inline void sort_buffer_t::init()
     /* calculate tuple size */
     _tuple_size = 0;
     for (int i=0; i<_field_count; i++)
-        _tuple_size += _desc[i].maxsize();
+        _tuple_size += _desc[i].fieldmaxsize();
 
     /* allocate size for MIN_TUPLES_FOR_SORT tuples */
     _sort_buf = new char[MIN_TUPLES_FOR_SORT*_tuple_size]; 

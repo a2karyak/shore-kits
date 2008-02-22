@@ -125,7 +125,7 @@ public:
         return is_variable_length(_type); 
     }
 
-    inline int       maxsize() const { return _size; }
+    inline int       fieldmaxsize() const { return _size; }
     inline sqltype_t type() const { return _type; }
     inline bool      allow_null() const { return _allow_null; }
 
@@ -416,7 +416,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
         _value._time = (timestamp_t*)_data;
         break;    
     case SQL_VARCHAR:
-        _max_size  = _pfield_desc->maxsize();
+        _max_size  = _pfield_desc->fieldmaxsize();
         /* real_size is re-set at runtime, at the set_value() function */       
         _real_size = 0;
         /* we don't know how much space is already allocated for data
@@ -426,7 +426,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
     case SQL_CHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
-        sz = _pfield_desc->maxsize(); 
+        sz = _pfield_desc->fieldmaxsize(); 
         _real_size = sz;
         _max_size = sz;
 
@@ -621,13 +621,11 @@ inline bool field_value_t::copy_value(void* data) const
         memcpy(data, _value._time, _real_size);
         break;
     case SQL_VARCHAR:
-        memset(data, '\0', _real_size);
         memcpy(data, _value._string, _real_size);
         break;
     case SQL_CHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
-        memset(data, '\0', _real_size);
         memcpy(data, _value._string, _real_size);
         break;
     }
@@ -643,8 +641,8 @@ inline bool field_value_t::load_value_from_file(ifstream & is,
     assert (_pfield_desc);
 
     char* string;
-    string = new char [10 * _pfield_desc->maxsize()];
-    is.get(string, 10*_pfield_desc->maxsize(), delim);
+    string = new char [10*_pfield_desc->fieldmaxsize()];
+    is.get(string, 10*_pfield_desc->fieldmaxsize(), delim);
     if (strlen(string) == 0) {
         delete [] string;
         return false;
@@ -774,8 +772,8 @@ inline void field_value_t::set_fixed_string_value(const char* string,
  *
  *  @brief: Copies the string to the data buffer and sets real_size
  *
- *  @note:  Only len chars are copied. If len > field->maxsize() then only
- *          maxsize() chars are copied.
+ *  @note:  Only len chars are copied. If len > field->fieldsize() then only
+ *          fieldsize() chars are copied.
  *
  *********************************************************************/
 

@@ -589,8 +589,8 @@ w_rc_t table_desc_t::get_iter_for_index_scan(ss_m* db,
                                              bool need_tuple)
 {
     iter = new index_scan_iter_impl(db, index, need_tuple );
-    W_DO( iter->open_scan(db, c1, bound1, c2, bound2, 
-                          maxkeysize(index)));
+    W_DO(iter->open_scan(db, c1, bound1, c2, bound2, 
+                         maxkeysize(index)));
 
     if (iter->opened())  return RCOK;
     return RC(se_OPEN_SCAN_ERROR);
@@ -814,13 +814,17 @@ void table_desc_t::print_desc(ostream& os)
 
 /********************************************************************* 
  *
- *  @fn:    format
+ *  @fn:      format
  *
- *  @brief: For a given tuple in memory (data in _value array), we
- *          format the tuple in disk format so that we can push it 
- *          down to data pages in Shore.
+ *  @brief:   Return a string of the tuple (array of pvalues[]) formatted 
+ *            to the appropriate disk format so it can be pushed down to 
+ *            data pages in Shore.
  *
- *  @note:  convert: memory -> disk format
+ *  @warning: This function should be the inverse of the load() 
+ *            function changes to one of the two functions should be
+ *            mirrored to the other.
+ *
+ *  @note:    convert: memory -> disk format
  *
  *********************************************************************/
 
@@ -831,6 +835,7 @@ const int table_row_t::format(char* &dest)
     int null_count = 0;
     int tupsize    = 0;
 
+
     /* 1. calculate sizes related to the tuple, 
      * - (tupsize)    : total space of the tuple 
      * - (fixed_size) : the space occupied by the fixed length fields 
@@ -840,25 +845,37 @@ const int table_row_t::format(char* &dest)
      */
 
     for (int i=0; i<_field_cnt; i++) {
+
 	if (_pvalues[i].is_variable_length()) {
+            // If it is of VARIABLE length, then if the value is null
+            // do nothing, else add to the total tuple length the (real)
+            // size of the value plus the size of an offset.
+
 	    var_count++;
             if (_pvalues[i].is_null()) continue;
             tupsize += _pvalues[i].realsize();
             tupsize += sizeof(offset_t);
-
 	}
-	else {
-            fixed_size += _pvalues[i].realsize();
-            tupsize += _pvalues[i].realsize();
+	else {            
+            // If it is of FIXED length, then increase the total tuple
+            // length, as well as, the size of the fixed length part of
+            // to tuple by the fixed size of this type of field.
+
+            fixed_size += _pvalues[i].maxsize();
+            tupsize += _pvalues[i].maxsize();
         }
 
 	if (_pvalues[i].field_desc()->allow_null())  
             null_count++;
     }
+
+    // In the total tuple length add the size of the bitmap that
+    // shows which fields can be NULL 
     if (null_count) tupsize += (null_count >> 3) + 1;
 
 
     /* 2. allocate space for formatted data */
+
     assert (tupsize);
     if ((!dest) || (sizeof(dest) != tupsize)) {
         // new buffer needs to be allocated
@@ -884,7 +901,12 @@ const int table_row_t::format(char* &dest)
     offset_t var_offset = var_slot_offset + sizeof(offset_t)*var_count;
 
     int null_index = -1;
+    // iterate over all fields
     for (int i=0; i<_field_cnt; i++) {
+
+        // Check if the field can be NULL. 
+        // If it can be NULL, increase the null_index, and 
+        // if it is indeed NULL set the corresponding bit
 	if (_pvalues[i].field_desc()->allow_null()) {
 	    null_index++;
 	    if (_pvalues[i].is_null()) {
@@ -892,18 +914,27 @@ const int table_row_t::format(char* &dest)
 	    }
 	}
 
+        // Check if the field is of VARIABLE length. 
+        // If it is, copy the field value to the variable length part of the
+        // buffer, to position  (buffer + var_offset)
+        // and increase the var_offset.
 	if (_pvalues[i].is_variable_length()) {
 	    _pvalues[i].copy_value(dest + var_offset);
-	    var_offset += _pvalues[i].realsize();
+            register int offset = _pvalues[i].realsize(); 
+	    var_offset += offset;
 
-	    // set the offset
-	    offset_t len = _pvalues[i].realsize();
+	    // set the offset 
+            offset_t len = offset;
 	    memcpy(VAR_SLOT(dest, var_slot_offset), &len, sizeof(offset_t));
 	    var_slot_offset += sizeof(offset_t);
 	}
 	else {
+            // If it is of FIXED length, then copy the field value to the
+            // fixed length part of the buffer, to position 
+            // (buffer + fixed_offset)
+            // and increase the fixed_offset
 	    _pvalues[i].copy_value(dest + fixed_offset);
-	    fixed_offset += _pvalues[i].field_desc()->maxsize();
+	    fixed_offset += _pvalues[i].maxsize();
 	}
     }
 
@@ -913,28 +944,37 @@ const int table_row_t::format(char* &dest)
 
 /*********************************************************************
  *
- *  @fn:    load
+ *  @fn:      load
  *
- *  @brief: Given a tuple in disk format, we read it back into memory
- *          (_value array).
+ *  @brief:   Given a tuple in disk format, read it back into memory
+ *            (_pvalues[] array).
  *
- *  @note:  convert: disk -> memory format
+ *  @warning: This function should be the inverse of the format() function
+ *            changes to one of the two functions should be mirrored to
+ *            the other.
+ *
+ *  @note:    convert: disk -> memory format
  *
  *********************************************************************/
 
 bool table_row_t::load(const char* data)
 {
-    int i;
-    int var_count = 0;
+    int var_count  = 0;
     int fixed_size = 0;
     int null_count = 0;
 
-    /* 1. calculate the total space occupied by the fixed length fields */
-    for (i=0; i<_field_cnt; i++) {
+    /* 1. calculate sizes related to the tuple, 
+     * - (fixed_size) : the space occupied by the fixed length fields 
+     * - (null_count) : the number of null flags 
+     * - (var_count)  : the number of variable length fields 
+     *
+     */
+
+    for (int i=0; i<_field_cnt; i++) {
 	if (_pvalues[i].is_variable_length())
 	    var_count++;
 	else 
-            fixed_size += _pvalues[i].field_desc()->maxsize();
+            fixed_size += _pvalues[i].maxsize();
 
 	if (_pvalues[i].field_desc()->allow_null())  
             null_count++;
@@ -944,15 +984,21 @@ bool table_row_t::load(const char* data)
     /* 2. read the data field by field */
 
     // current offset for fixed length field values
-    offset_t    fixed_offset = 0;
+    offset_t fixed_offset = 0;
     if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
     // current offset for variable length field slots
-    offset_t    var_slot_offset = fixed_offset + fixed_size; 
+    offset_t var_slot_offset = fixed_offset + fixed_size; 
     // current offset for variable length field values
-    offset_t    var_offset = var_slot_offset + sizeof(offset_t)*var_count;
+    offset_t var_offset = var_slot_offset + sizeof(offset_t)*var_count;
 
     int null_index = -1;
-    for (i=0; i<_field_cnt; i++) {
+    for (int i=0; i<_field_cnt; i++) {
+
+        // Check if the field can be NULL.
+        // If it can be NULL, increase the null_index,
+        // and check if the bit in the null_flags bitmap is set.
+        // If it is set, set the corresponding value in the tuple 
+        // as null, and go to the next field, ignoring the rest
 	if (_pvalues[i].field_desc()->allow_null()) {
 	    null_index++;
 	    if (IS_NULL_FLAG(data, null_index)) {
@@ -961,43 +1007,64 @@ bool table_row_t::load(const char* data)
 	    }
 	}
 
+        // Check if the field is of VARIABLE length.
+        // If it is, copy the offset of the value from the offset part of the
+        // buffer (pointed by var_slot_offset). Then, copy that many chars from
+        // the variable length part of the buffer (pointed by var_offset). 
+        // Then increase by one offset index, and offset of the pointer of the 
+        // next variable value
 	if (_pvalues[i].is_variable_length()) {
 	    offset_t var_len;
 	    memcpy(&var_len,  VAR_SLOT(data, var_slot_offset), sizeof(offset_t));
-	    _pvalues[i].set_value(data+var_offset,
-                                  var_len);
+	    _pvalues[i].set_value(data+var_offset, var_len);
 	    var_offset += var_len;
 	    var_slot_offset += sizeof(offset_t);
 	}
 	else {
-	    _pvalues[i].set_value(data+fixed_offset,
-                                  _pvalues[i].field_desc()->maxsize());
-	    fixed_offset += _pvalues[i].field_desc()->maxsize();
+            // If it is of FIXED length, copy the data from the fixed length
+            // part of the buffer (pointed by fixed_offset), and the increase
+            // the fixed offset by the (fixed) size of the field
+	    _pvalues[i].set_value(data+fixed_offset, _pvalues[i].maxsize());
+	    fixed_offset += _pvalues[i].maxsize();
 	}
     }
     return true;
 }
 
 
-bool   table_row_t::load_keyvalue(const unsigned char* string,
-                                  index_desc_t* index)
+
+/*********************************************************************
+ *
+ *  @fn:      load_keyvalue
+ *
+ *  @brief:   Given a buffer with the representation of the tuple in 
+ *            disk format, read back into memory (to _pvalues[] array),
+ *            but it reads only the fields that are contained to the
+ *            specified index.
+ *
+ *  @warning: This function should be the inverse of the format_key() 
+ *            function changes to one of the two functions should be
+ *            mirrored to the other.
+ *
+ *  @note:    convert: disk -> memory format (for the key)
+ *
+ *********************************************************************/
+
+const bool table_row_t::load_key(const char* string,
+                                 index_desc_t* index)
 {
-    int offset = 0;
+    assert (index);
+    assert (string);
+
+    register int offset = 0;
     for (int i=0; i<index->field_count(); i++) {
-	int field_index = index->key_index(i);
-	if (_pvalues[field_index].is_variable_length()) {
-	    _pvalues[field_index].set_value(string + offset,
-                                            _pvalues[field_index].realsize());
-	    offset += _pvalues[field_index].field_desc()->maxsize();
-	}
-	else {
-	    int size = _pvalues[field_index].field_desc()->maxsize();
-	    _pvalues[field_index].set_value(string + offset,
-                                            size);
-	    offset += size;
-	}
+	register int field_index = index->key_index(i);
+        register int size = _pvalues[field_index].maxsize();
+        _pvalues[field_index].set_value(string + offset, size);
+        offset += size;
     }
-    return true;
+
+    return (true);
 }
 
 

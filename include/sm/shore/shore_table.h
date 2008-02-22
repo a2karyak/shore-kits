@@ -238,12 +238,12 @@ public:
     /* --- helper functions for bulkloading indices --- */
     /* ------------------------------------------------ */
 
-    char* index_keydesc(index_desc_t* index);                               /* index key description */
-    int   format_key(index_desc_t* index, table_row_t* prow, char* &dest);  /* format the key value */
-    int   min_key(index_desc_t* index, table_row_t* prow, char* &dest);     /* set indexed fields of the row to minimum */
-    int   max_key(index_desc_t* index, table_row_t* prow, char* &dest);     /* set indexed fields of the row to maximum */
-    int   key_size(index_desc_t* index, const table_row_t* prow) const;     /* length of the formatted key */
-    int   maxkeysize(index_desc_t* index) const;                            /* max key size */
+    char*     index_keydesc(index_desc_t* index);                              /* index key description */
+    const int format_key(index_desc_t* index, table_row_t* prow, char* &dest); /* format the key value */
+    const int min_key(index_desc_t* index, table_row_t* prow, char* &dest);    /* set indexed fields of the row to minimum */
+    const int max_key(index_desc_t* index, table_row_t* prow, char* &dest);    /* set indexed fields of the row to maximum */
+    const int key_size(index_desc_t* index, const table_row_t* prow) const;    /* length of the formatted key */
+    const int maxkeysize(index_desc_t* index) const;                           /* max key size */
 
 
     /* ---------------------- */
@@ -432,11 +432,9 @@ struct table_row_t
     int   size() const;             /* disk space needed for tuple */
     bool  load(const char* string); /* load tuple from disk format */ 
 
-    bool  load_keyvalue(const unsigned char* string,
-                        index_desc_t* index); /* load key fields */
-
-    int   format_key(index_desc_t* index, char* &dest); 
-    int   key_size(index_desc_t* index) const;
+    const bool load_key(const char* string, index_desc_t* index); /* load key fields */
+    const int  format_key(index_desc_t* index, char* &dest);      /* put the index key to the buffer */
+    const int  key_size(index_desc_t* index) const;               /* return index key size */
 
 
     /* ---------------------- */
@@ -627,7 +625,9 @@ public:
 
             W_DO(_scan->curr(&key, klen, &record, elen));
             tuple.set_rid(rid);
-            tuple.load_keyvalue(key.ptr(0), _file);
+            
+            tuple.load_key((const char*)key.ptr(0), _file);
+            //tuple.load_key(key.ptr(0), _file);
 
             if (_need_tuple) {
                 pin_i  pin;
@@ -677,26 +677,34 @@ inline char* table_desc_t::index_keydesc(index_desc_t* idx)
 
 /****************************************************************** 
  *
- * @fn:    format_key
+ * @fn:       format_key
  *
- * @brief: Gets an index and for a selected row it copies to the
- *         passed buffer only the fields that are contained in the index 
- *         and returns the size of the newly allocated buffer, which
- *         is the key_size for the index.
+ * @brief:    Gets an index and for a selected row it copies to the
+ *            passed buffer only the fields that are contained in the 
+ *            index and returns the size of the newly allocated buffer, 
+ *            which is the key_size for the index.
+ *
+ *  @warning: This function should be the inverse of the load_key() 
+ *            function changes to one of the two functions should be
+ *            mirrored to the other.
+ *
+ *  @note:    !!! Uses the maxsize() of each field, so even the
+ *            variable legnth fields will be treated as of fixed size
  *
  ******************************************************************/
 
-inline int table_desc_t::format_key(index_desc_t* index,
-                                    table_row_t* prow,
-                                    char* &dest)
+inline const int table_desc_t::format_key(index_desc_t* index,
+                                          table_row_t* prow,
+                                          char* &dest)
 {
     assert (index);
     assert (prow);
 
+    //    int isz = key_size(index, prow);
     int isz = key_size(index, prow);
     assert (isz);
 
-    if ((!dest) || (sizeof(dest) != isz)) {
+    if ((!dest) || (strlen(dest) != isz)) {
         // new buffer needs to be allocated
         char* tmp = dest;
         dest = new char[isz];
@@ -708,23 +716,20 @@ inline int table_desc_t::format_key(index_desc_t* index,
         memset (dest, 0, isz);
     }
 
-    offset_t offset = 0;
+    register offset_t offset = 0;
     for (int i=0; i<index->field_count(); i++) {
-        int ix = index->key_index(i);
-
+        register int ix = index->key_index(i);
         register field_value_t* pfv = &prow->_pvalues[ix];
-        register field_desc_t* pfd = pfv->_pfield_desc;
-        // copy value
-        if (!pfv->copy_value(dest+offset))
-            return NULL;
 
-        // move offset
-        if (pfd->is_variable_length()) {
-            offset += pfv->realsize();
+        // copy value
+        if (!pfv->copy_value(dest+offset)) {
+            assert (false); // (ip) problem in copying value
+            return (0);
         }
-        else {
-            offset += pfd->maxsize();
-        }
+        
+        // (ip) previously it was making distinction whether
+        //      the field was of fixed or variable length
+        offset += pfv->maxsize();
     }
 
     return (isz);
@@ -742,9 +747,9 @@ inline int table_desc_t::format_key(index_desc_t* index,
  *
  ******************************************************************/
 
-inline int table_desc_t::min_key(index_desc_t* index, 
-                                 table_row_t* prow,
-                                 char* &dest)
+inline const int table_desc_t::min_key(index_desc_t* index, 
+                                       table_row_t* prow,
+                                       char* &dest)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
@@ -754,9 +759,9 @@ inline int table_desc_t::min_key(index_desc_t* index,
 }
 
 
-inline int table_desc_t::max_key(index_desc_t* index, 
-                                 table_row_t* prow,
-                                 char* &dest)
+inline const int table_desc_t::max_key(index_desc_t* index, 
+                                       table_row_t* prow,
+                                       char* &dest)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
@@ -774,31 +779,72 @@ inline int table_desc_t::max_key(index_desc_t* index,
  * @brief: For an index and a selected row it returns the 
  *         real or maximum size of the index key
  *
+ *  @note: !!! Uses the maxsize() of each field, so even the
+ *         variable legnth fields will be treated as of fixed size
+ *
+ *  @note: Since all fields of an index are of fixed length
+ *         key_size() == maxkeysize()
+ *
  ******************************************************************/
 
-inline int table_desc_t::key_size(index_desc_t* index, 
-                                  const table_row_t* prow) const
+inline const int table_desc_t::key_size(index_desc_t* index, 
+                                        const table_row_t*) const
 {
+    return (maxkeysize(index));
+
+#if 0
+    // !! Old implementation
     int size = 0;
     register int ix = 0;
     for (int i=0; i<index->field_count(); i++) {
         ix = index->key_index(i);
-        if (prow->_pvalues[ix].is_variable_length()) 
-            size += prow->_pvalues[ix].realsize();
-        else 
-            size += prow->_pvalues[ix]._pfield_desc->maxsize();
+        size += prow->_pvalues[ix].maxsize();
     }
     return (size);
+#endif
 }
 
 
-inline int table_desc_t::maxkeysize(index_desc_t* idx) const
+
+/******************************************************************
+ *
+ *  @fn:    maxkeysize
+ *
+ *  @brief: For an index it returns the maximum size of the index key
+ *
+ *  @note:  !!! Now that key_size() Uses the maxsize() of each field, 
+ *              key_size() == maxkeysize()
+ *
+ ******************************************************************/
+
+inline const int table_desc_t::maxkeysize(index_desc_t* idx) const
 {
     int size = 0;
+    if ((size = idx->get_keysize()) > 0) {
+        // keysize has already been calculated
+        // just return that value
+        return (size);
+    }
+    
+    // needs to calculate the (max)key for that index
+    CRITICAL_SECTION(idx_keysz_cs, idx->_maxkey_lock);
+    register int ix = 0;
     for (int i=0; i<idx->field_count(); i++) {
-        size += _desc[idx->key_index(i)].maxsize();
+        ix = idx->key_index(i);
+        size += _desc[ix].fieldmaxsize();
+    }    
+    // set it for the index, for future invokations
+    idx->set_keysize(size);
+    return(size);
+
+#if 0
+    // !! Old implementation
+    int size = 0;
+    for (int i=0; i<idx->field_count(); i++) {
+        size += _desc[idx->key_index(i)].fieldmaxsize();
     }
     return size;
+#endif
 }
 
 
@@ -808,8 +854,7 @@ inline int table_desc_t::maxkeysize(index_desc_t* idx) const
  *  @fn:    maxsize()
  *
  *  @brief: Return the maximum size requirement for a tuple in disk format.
- *          Only used in allocating _formatted_data.  Should be called
- *          only once for each table.
+ *          Normally, it will be calculated only once.
  *
  ******************************************************************/
 
@@ -825,7 +870,7 @@ inline const int table_desc_t::maxsize()
     int null_count = 0;
     CRITICAL_SECTION(tb_maxsz_cs, _maxsize_lock);
     for (int i=0; i<_field_count; i++) {
-        size += _desc[i].maxsize();
+        size += _desc[i].fieldmaxsize();
         if (_desc[i].allow_null()) null_count++;
         if (_desc[i].is_variable_length()) var_count++;
     }
@@ -880,14 +925,14 @@ inline int table_row_t::size() const
 }
 
 
-inline int table_row_t::format_key(index_desc_t* index, char* &dest)
+inline const int table_row_t::format_key(index_desc_t* index, char* &dest)
 {
     assert (_ptable);
     return (_ptable->format_key(index, this, dest));
 }
 
 
-inline int table_row_t::key_size(index_desc_t* index) const
+inline const int table_row_t::key_size(index_desc_t* index) const
 {
     assert (_ptable);
     return (_ptable->key_size(index, this));
