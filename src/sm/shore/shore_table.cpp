@@ -94,7 +94,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
         btread = read_tuple_from_line(tuple, linebuffer);
 
         // (ip) for debugging
-        tuple.print_tuple();
+        //tuple.print_tuple();
 
         // append it to the table
         tsz = tuple.format(pdest);
@@ -102,10 +102,6 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 	W_DO(file_append.create_rec(vec_t(), 0,
 				    vec_t(pdest, tsz),
 				    tuple._rid));
-
-        // (ip) for debugging
-        TRACE( TRACE_DEBUG, "SZ=%d\n%s\n", tsz, pdest);
-
 
 	if(i >= mark) {
 	    W_COERCE(db->commit_xct());
@@ -275,7 +271,7 @@ w_rc_t  table_desc_t::index_probe(ss_m* db,
     if (!ptuple->load(pin.body())) return RC(se_WRONG_DISK_DATA);
     pin.unpin();
 
-    ptuple->print_tuple();
+    //    ptuple->print_tuple();
   
     return RCOK;
 }
@@ -603,27 +599,34 @@ w_rc_t table_desc_t::get_iter_for_index_scan(ss_m* db,
 /* ------------------- */
 
 
-/** @fn:    check_all_indexes
+
+/******************************************************************** 
+ *
+ *  @fn:    check_all_indexes
  *
  *  @brief: Check all indexes
- */
+ *
+ ********************************************************************/
 
 bool table_desc_t::check_all_indexes(ss_m* db)
 {
     index_desc_t* index = _indexes;
 
-    cout << "Checking consistency of the indexes on table " << _name << endl;
+    TRACE( TRACE_DEBUG, "Checking consistency of the indexes on table (%s)\n",
+           _name);
 
     while (index) {
 	w_rc_t rc = check_index(db, index);
 	if (rc) {
-	    cout << "Index checking error in " << name() << " " << index->name() << endl;
-	    cout << "Due to " << rc << endl;
-	    return false;
+            TRACE( TRACE_ALWAYS, "Index checking error in (%s) (%s)\n", 
+                   name(), index->name());
+	    cerr << "Due to " << rc << endl;
+	    return (false);
 	}
 	index = index->next();
     }
-    return true;
+
+    return (true);
 }
 
 
@@ -640,9 +643,8 @@ bool table_desc_t::check_all_indexes(ss_m* db)
 w_rc_t table_desc_t::check_index(ss_m* db,
                                  index_desc_t* pindex)
 {
-    cout << "Start to check index " << pindex->name() << endl;
+    TRACE( TRACE_DEBUG, "Start to check index (%s)\n", pindex->name());
 
-    // XCT_BEGIN
     W_DO(db->begin_xct());
 
     table_scan_iter_impl* iter;
@@ -656,16 +658,16 @@ w_rc_t table_desc_t::check_index(ss_m* db,
         rid_t tablerid = tablerow.rid();
 	W_DO(index_probe(db, pindex, &tablerow));
 	if (tablerid != tablerow.rid()) {
-            cerr << " Inconsistent index... " << endl;
+            TRACE( TRACE_ALWAYS, "Inconsistent index... (%d)-(%d)",
+                   tablerid, tablerow.rid());
             return RC(se_INCONSISTENT_INDEX);
 	}
 	W_DO(iter->next(db, eof, tablerow));
     }
 
     W_DO(db->commit_xct());
-    // XCT_COMMIT
 
-    delete iter;
+    delete (iter);
     return (RCOK);
 }
 
@@ -676,10 +678,14 @@ w_rc_t table_desc_t::check_index(ss_m* db,
 /* ------------------ */
 
 
-/** @fn:    scan_all_indexes
+
+/********************************************************************* 
+ *
+ *  @fn:    scan_all_indexes
  *
  *  @brief: Scan all indexes
- */
+ *
+ *********************************************************************/
 
 w_rc_t table_desc_t::scan_all_indexes(ss_m* db)
 {
@@ -704,7 +710,8 @@ w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
 {
     assert (index);
 
-    cout << "Scanning index " << index->name() << " for table " << name() << endl;
+    TRACE( TRACE_DEBUG, "Scanning index (%s) for table (%s)\n", 
+           index->name(), name());
 
     /* 1. open a index scanner */
     index_scan_iter_impl* iter;
@@ -746,8 +753,8 @@ w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
     delete iter;
 
     /* 3. print out some statistics */
-    cout << count << " tuples found!" << endl;
-    cout << "Scan finished!" << endl;
+    TRACE( TRACE_DEBUG, "%d tuples found!\n", count);
+    TRACE( TRACE_DEBUG, "Scan finished!\n");
 
     return (RCOK);
 }
@@ -1087,6 +1094,9 @@ void table_row_t::print_value(ostream& os)
 /* For debug use only: print the tuple */
 void table_row_t::print_tuple()
 {
+    assert (_ptable);
+    TRACE( TRACE_DEBUG, "Tuple (%s)\n", _ptable->name());
+    
     char* sbuf = NULL;
     int sz = 0;
     for (int i=0; i<_field_cnt; i++) {

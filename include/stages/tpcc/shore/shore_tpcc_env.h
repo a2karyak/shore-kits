@@ -304,14 +304,13 @@ private:
     ss_m*         _pssm;
     tpcc_table_t* _ptable;
     const int     _sf;
-    const int     _cnt;
     int           _rv;
 
 public:
     
     tpcc_loading_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable, 
-                       const int asf, const int aid) 
-	: thread_t(tname), _pssm(assm), _ptable(atable), _sf(asf), _cnt(aid)
+                       const int asf) 
+	: thread_t(tname), _pssm(assm), _ptable(atable), _sf(asf)
     {
         assert (_pssm);
         assert (_ptable);
@@ -343,13 +342,12 @@ class tpcc_checking_smt_t : public thread_t
 {
 private:
     ss_m*         _pssm;
-    tpcc_table_t* _ptable;
-    const int     _cnt;
+    tpcc_table_t* _ptable;   
 
 public:
     
-    tpcc_checking_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable, const int aid) 
-	: thread_t(tname), _pssm(assm), _ptable(atable), _cnt(aid)
+    tpcc_checking_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable) 
+	: thread_t(tname), _pssm(assm), _ptable(atable)
     {
         assert (_pssm);
         assert (_ptable);

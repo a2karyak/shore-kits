@@ -99,9 +99,8 @@ w_rc_t ShoreTPCCEnv::loaddata()
     tpcc_table_t* ptable = NULL;
 
     // (ip) for debug loading only the first 2 tables (WH, DISTR)
-    int num_tbl = 1;
+    int num_tbl = 2;
     //int num_tbl = _table_list.size();
-
 
     int cnt = 0;
     tpcc_loading_smt_t* loaders[SHORE_TPCC_TABLES];
@@ -113,7 +112,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
             ptable = *table_iter;
             loaders[cnt] = new tpcc_loading_smt_t(c_str("ld%d", cnt), 
                                                   _pssm, ptable, 
-                                                  _scaling_factor, cnt);
+                                                  _scaling_factor);
             cnt++;
         }
 
@@ -185,11 +184,12 @@ w_rc_t ShoreTPCCEnv::check_consistency()
         table_iter != _table_list.end(); table_iter++)
         {
             ptable = *table_iter;
-            checkers[cnt] = new tpcc_checking_smt_t(c_str("chk"), _pssm, 
-                                                    ptable, cnt++);
+            checkers[cnt] = new tpcc_checking_smt_t(c_str("chk%d", cnt), _pssm, 
+                                                    ptable);
+            cnt++;
         }
 
-#if 0
+#if 1
     /* 2. fork the threads */
     cnt = 0;
     time_t tstart = time(NULL);
@@ -423,6 +423,10 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id, trx_result_tuple_t& atrt)
  ********************************************************************/
 
 
+// uncomment the line below if want to dump (part of) the trx results
+#define PRINT_TRX_RESULTS
+
+
 /******************************************************************** 
  *
  * TPC-C NEW_ORDER
@@ -652,6 +656,21 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
            xct_id, adist.D_NEXT_O_ID, pnoin->_d_id, pnoin->_wh_id);
     W_DO(_new_order.add_tuple(_pssm, &rno));
 
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    rwh.print_tuple();
+    rdist.print_tuple();
+    rcust.print_tuple();
+    rno.print_tuple();
+    rord.print_tuple();
+    ritem.print_tuple();
+    rst.print_tuple();
+    rol.print_tuple();
+#endif
+
+
     /* 6. finalize trx */
     W_DO(_pssm->commit_xct());
 
@@ -670,7 +689,6 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
  * TPC-C PAYMENT
  *
  ********************************************************************/
-
 
 w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin, 
                                  const int xct_id, 
@@ -704,7 +722,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
            "App: %d PAY:district-index-probe (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
 
-#if 0
+
     W_DO(_district.index_probe_forupdate(_pssm, 
                                          &rdist,
                                          ppin->_home_d_id, 
@@ -714,6 +732,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     int c_w = ( ppin->_v_cust_ident_selection > 85 ? ppin->_home_wh_id : ppin->_remote_wh_id);
     int c_d = ( ppin->_v_cust_ident_selection > 85 ? ppin->_home_d_id : ppin->_remote_d_id);
 
+#if 0
     /* 3. retrieve customer for update */
     if (ppin->_c_id == 0) {
 
@@ -836,6 +855,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         TRACE( TRACE_TRX_FLOW, "App: %d, PAY:cust-update-tuple\n", xct_id);
 	W_DO(_customer.update_tuple(_pssm, &rcust, acust, NULL, NULL));
     }
+#endif
 
     /* UPDATE district SET d_ytd = d_ytd + :h_amount
      * WHERE d_id = :d_id AND d_w_id = :w_id
@@ -865,7 +885,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rdist.get_value(5, adistr.D_CITY, 21);
     rdist.get_value(6, adistr.D_STATE, 3);
     rdist.get_value(7, adistr.D_ZIP, 10);
-#endif
+
 
     /* UPDATE warehouse SET w_ytd = wytd + :h_amount
      * WHERE w_id = :w_id
@@ -885,8 +905,6 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rwh.get_value(5, awh.W_STATE, 3);
     rwh.get_value(6, awh.W_ZIP, 10);
     
-    TRACE( TRACE_DEBUG, "Updated-Warehouse:\n%s\n", awh.tuple_to_str().data());
-    rwh.print_tuple();
 
 #if 0
     /* INSERT INTO history
@@ -908,6 +926,16 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     TRACE( TRACE_TRX_FLOW, "App: %d, PAY:hist-add-tuple\n", xct_id);
     W_DO(_history.add_tuple(_pssm, &rhist));
 #endif 
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    rwh.print_tuple();
+    rdist.print_tuple();
+    rcust.print_tuple();
+    rhist.print_tuple();
+#endif
+
 
     /* 4. commit */
     W_DO(_pssm->commit_xct());
@@ -1074,6 +1102,16 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     delete ol_iter;
     delete [] porderlines;
 
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    rcust.print_tuple();
+    rord.print_tuple();
+    rordline.print_tuple();
+#endif
+
+
     /* 4. commit */
     W_DO(_pssm->commit_xct());
 
@@ -1081,7 +1119,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     trt.set_state(COMMITTED);
 
     return (RCOK);
-}
+
+}; // EOF: ORDER-STATUS
 
 
 
@@ -1260,6 +1299,17 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	rcust.set_value(16, balance+total_amount);
     }
 
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    rno.print_tuple();
+    rord.print_tuple();
+    rordline.print_tuple();
+    rcust.print_tuple();
+#endif
+
+
     /* 4. commit */
     W_DO(_pssm->commit_xct());
 
@@ -1421,6 +1471,16 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
 	W_DO(ol_list_sort_iter.next(_pssm, eof, rsb));
     }
+
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    rdist.print_tuple();
+    rordline.print_tuple();
+    rstock.print_tuple();
+#endif
+
   
     /* 3. commit */
     W_DO(_pssm->commit_xct());
@@ -1453,14 +1513,14 @@ void tpcc_loading_smt_t::work()
     strcat(fname, "/");
     strcat(fname, _ptable->name());
     strcat(fname, ".dat");
-    TRACE( TRACE_DEBUG, "%d. Loading (%s) from (%s)\n", 
-           _cnt, _ptable->name(), fname);
+    TRACE( TRACE_DEBUG, "Loading (%s) from (%s)\n", 
+           _ptable->name(), fname);
     time_t ttablestart = time(NULL);
     w_rc_t e = _ptable->load_from_file(_pssm, fname);
     time_t ttablestop = time(NULL);
     if (e != RCOK) {
-        TRACE( TRACE_ALWAYS, "%d. Error while loading (%s) *****\n",
-               _cnt, _ptable->name());
+        TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
+               _ptable->name());
         _rv = 1;
         return;
     }
@@ -1480,11 +1540,13 @@ void tpcc_loading_smt_t::work()
 
 void tpcc_checking_smt_t::work()
 {
-    TRACE( TRACE_DEBUG, "%d. Checking (%s)\n", _cnt, _ptable->name());
-    if (!_ptable->check_all_indexes(_pssm))
-        TRACE( TRACE_DEBUG, "%d. Inconsistency in (%s)\n", _cnt, _ptable->name());
-    else
-        TRACE( TRACE_DEBUG, "%d. (%s) OK...\n", _cnt, _ptable->name());
+    TRACE( TRACE_DEBUG, "Checking (%s)\n", _ptable->name());
+    if (!_ptable->check_all_indexes(_pssm)) {
+        TRACE( TRACE_DEBUG, "Inconsistency in (%s)\n", _ptable->name());
+    }
+    else {
+        TRACE( TRACE_DEBUG, "(%s) OK...\n", _ptable->name());
+    }
 }
 
 

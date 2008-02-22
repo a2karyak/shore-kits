@@ -117,6 +117,7 @@ const int field_value_t::get_debug_str(char* &buf)
 
     if (_null_flag) {
 	sprintf(buf, "(null)");
+        return (0);
     }
 
     switch (_pfield_desc->type()) {
