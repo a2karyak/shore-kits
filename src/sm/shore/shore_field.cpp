@@ -33,9 +33,6 @@ void  field_desc_t::print_desc(ostream & os)
     case SQL_FLOAT:
 	os << "Type: FLOAT \t size: " << sizeof(double) << endl;
 	break;
-//     case SQL_DECIMAL:
-// 	os << "Type: DECIMAL \t size: " << sizeof(decimal) << endl;
-// 	break;
     case SQL_TIME:
 	os << "Type: TIMESTAMP \t size: " << timestamp_t::size() << endl;
 	break;
@@ -79,9 +76,6 @@ void  field_value_t::print_value(ostream & os)
     case SQL_FLOAT:
 	os << _value._float;
 	break;
-//     case SQL_DECIMAL:
-// 	os << _value._decimal;
-// 	break;
     case SQL_TIME:
 	os << _value._time->string();
 	break;
@@ -114,9 +108,10 @@ void  field_value_t::print_value(ostream & os)
  *
  *********************************************************************/
 
-void field_value_t::get_debug_str(char* &buf)
+const int field_value_t::get_debug_str(char* &buf)
 {
     assert (_pfield_desc);
+    int sz = _real_size;
     buf = new char[MAX_LINE_LENGTH];
     memset(buf, '\0', MAX_LINE_LENGTH);
 
@@ -155,4 +150,6 @@ void field_value_t::get_debug_str(char* &buf)
 	break;
     }
     }
+
+    return (sz);
 }

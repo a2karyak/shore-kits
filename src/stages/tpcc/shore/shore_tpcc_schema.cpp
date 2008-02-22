@@ -19,8 +19,8 @@
 using namespace shore;
 using namespace tpcc;
 
-#define  MAX_SHORT_LEN     60
-#define  MAX_LONG_LEN     550
+#define  MAX_INT_LEN     60
+#define  MAX_LONG_LEN    550
 
 
 
@@ -36,7 +36,7 @@ using namespace tpcc;
 
 w_rc_t warehouse_t::index_probe(ss_m* db,
                                 table_row_t* ptuple,
-                                const short w_id)
+                                const int w_id)
 {
     ptuple->set_value(0, w_id);
     W_DO(table_desc_t::index_probe(db, "W_INDEX", ptuple));
@@ -45,7 +45,7 @@ w_rc_t warehouse_t::index_probe(ss_m* db,
 
 w_rc_t warehouse_t::index_probe_forupdate(ss_m* db,
                                           table_row_t* ptuple,
-                                          const short w_id)
+                                          const int w_id)
 {
     ptuple->set_value(0, w_id);
     W_DO(table_desc_t::index_probe_forupdate(db, "W_INDEX", ptuple));
@@ -54,7 +54,7 @@ w_rc_t warehouse_t::index_probe_forupdate(ss_m* db,
 
 w_rc_t warehouse_t::update_ytd(ss_m* db,
                                table_row_t* ptuple,
-                               const short w_id,
+                               const int w_id,
                                const double amount)
 {
     ptuple->set_value(0, w_id);
@@ -81,8 +81,8 @@ w_rc_t warehouse_t::update_ytd(ss_m* db,
 /* get the district tuple by following the index on (d_id, w_id) */
 w_rc_t district_t::index_probe(ss_m* db,
                                table_row_t* ptuple,
-                               const short d_id,
-                               const short w_id)
+                               const int d_id,
+                               const int w_id)
 {
     /* probing to get the tuple */
     ptuple->set_value(0, d_id);
@@ -92,8 +92,8 @@ w_rc_t district_t::index_probe(ss_m* db,
 
 w_rc_t district_t::index_probe_forupdate(ss_m* db,
                                          table_row_t* ptuple,
-                                         const short d_id,
-                                         const short w_id)
+                                         const int d_id,
+                                         const int w_id)
 {
     /* probing to get the tuple */
     ptuple->set_value(0, d_id);
@@ -103,8 +103,8 @@ w_rc_t district_t::index_probe_forupdate(ss_m* db,
 
 w_rc_t district_t::update_ytd(ss_m* db,
                               table_row_t* ptuple,
-                              const short d_id,
-                              const short w_id,
+                              const int d_id,
+                              const int w_id,
                               const double amount)
 {
     ptuple->set_value(0, d_id);
@@ -125,7 +125,7 @@ w_rc_t district_t::update_ytd(ss_m* db,
 
 w_rc_t district_t::update_next_o_id(ss_m* db,
                                     table_row_t* ptuple,
-                                    const short next_o_id)
+                                    const int next_o_id)
 {
     ptuple->set_value(10, next_o_id);
     // cout << "APP: " << xct()->tid() << " Update district.next-o-id " << next_o_id << endl;
@@ -142,8 +142,8 @@ w_rc_t district_t::update_next_o_id(ss_m* db,
 w_rc_t customer_t::get_iter_by_index(ss_m* db,
                                      index_scan_iter_impl* &iter,
                                      table_row_t* ptuple,
-                                     const short w_id,
-                                     const short d_id,
+                                     const int w_id,
+                                     const int d_id,
                                      const char* c_last)
 {
     index_desc_t* index = find_index("C_NAME_INDEX");
@@ -184,9 +184,9 @@ w_rc_t customer_t::get_iter_by_index(ss_m* db,
 
 w_rc_t customer_t::index_probe(ss_m* db,
                                table_row_t* ptuple,
-                               const short c_id,
-                               const short w_id,
-                               const short d_id)
+                               const int c_id,
+                               const int w_id,
+                               const int d_id)
 {
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
@@ -196,9 +196,9 @@ w_rc_t customer_t::index_probe(ss_m* db,
 
 w_rc_t customer_t::index_probe_forupdate(ss_m * db,
                                          table_row_t* ptuple,                                         
-                                         const short c_id,
-                                         const short w_id,
-                                         const short d_id)
+                                         const int c_id,
+                                         const int w_id,
+                                         const int d_id)
 {
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
@@ -223,8 +223,8 @@ w_rc_t customer_t::update_tuple(ss_m* db,
 	ptuple->set_value(21, adata2);
 
 //     int c_id;
-//     short w_id;
-//     short d_id;
+//     int w_id;
+//     int d_id;
 //     ptuple->get_value(0, c_id);
 //     ptuple->get_value(1, d_id);
 //     ptuple->get_value(2, w_id);
@@ -248,10 +248,10 @@ w_rc_t customer_t::update_tuple(ss_m* db,
 w_rc_t order_line_t::get_iter_by_index(ss_m* db,
                                        index_scan_iter_impl* & iter,
                                        table_row_t* ptuple,
-                                       const short w_id,
-                                       const short d_id,
-                                       const short low_o_id,
-                                       const short high_o_id)
+                                       const int w_id,
+                                       const int d_id,
+                                       const int low_o_id,
+                                       const int high_o_id)
 {
     /* pointer to the index */
     index_desc_t * index = find_index("OL_INDEX");
@@ -261,7 +261,7 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(0, low_o_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    ptuple->set_value(3, (short)0);  /* assuming that ol_number starts from 1 */
+    ptuple->set_value(3, (int)0);  /* assuming that ol_number starts from 1 */
 
     char* lowkey = NULL;
     int   lowsz  = format_key(index, ptuple, lowkey);
@@ -290,9 +290,9 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
 w_rc_t order_line_t::get_iter_by_index(ss_m* db,
                                        index_scan_iter_impl* & iter,
                                        table_row_t* ptuple,
-                                       const short w_id,
-                                       const short d_id,
-                                       const short o_id)
+                                       const int w_id,
+                                       const int d_id,
+                                       const int o_id)
 {
     index_desc_t  * index = find_index("OL_INDEX");
     assert (index);
@@ -328,7 +328,7 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
 
 w_rc_t order_t::update_carrier_by_index(ss_m* db,
                                         table_row_t* ptuple,
-                                        const short carrier_id)
+                                        const int carrier_id)
 {
     W_DO(index_probe_forupdate(db, "O_INDEX", ptuple));
 
@@ -341,9 +341,9 @@ w_rc_t order_t::update_carrier_by_index(ss_m* db,
 w_rc_t order_t::get_iter_by_index(ss_m* db,
                                   index_scan_iter_impl* & iter,
                                   table_row_t* ptuple,
-                                  const short w_id,
-                                  const short d_id,
-                                  const short c_id)
+                                  const int w_id,
+                                  const int d_id,
+                                  const int c_id)
 {
     index_desc_t * index = find_index("O_CUST_INDEX");
     assert (index);
@@ -386,8 +386,8 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
 w_rc_t   new_order_t::get_iter_by_index(ss_m* db,
 					index_scan_iter_impl * & iter,
                                         table_row_t* ptuple,
-					const short w_id,
-					const short d_id)
+					const int w_id,
+					const int d_id)
 {
     /* find the index structure */
     index_desc_t * index = find_index("NO_INDEX");
@@ -422,9 +422,9 @@ w_rc_t   new_order_t::get_iter_by_index(ss_m* db,
 
 w_rc_t new_order_t::delete_by_index(ss_m* db,
                                     table_row_t* ptuple,
-				    const short w_id,
-				    const short d_id,
-				    const short o_id)
+				    const int w_id,
+				    const int d_id,
+				    const int o_id)
 {
     ptuple->set_value(0, o_id);
     ptuple->set_value(1, d_id);
@@ -444,7 +444,7 @@ w_rc_t new_order_t::delete_by_index(ss_m* db,
 
 w_rc_t item_t::index_probe(ss_m* db, 
                            table_row_t* ptuple,
-                           const short i_id)
+                           const int i_id)
 {
     index_desc_t* index = find_index("I_INDEX");
     assert (index);
@@ -457,7 +457,7 @@ w_rc_t item_t::index_probe(ss_m* db,
 
 w_rc_t  item_t::index_probe_forupdate(ss_m* db, 
                                       table_row_t* ptuple,
-                                      const short i_id)
+                                      const int i_id)
 {
     index_desc_t * index = find_index("I_INDEX");
     assert (index);
@@ -478,8 +478,8 @@ w_rc_t  item_t::index_probe_forupdate(ss_m* db,
 
 w_rc_t stock_t::index_probe(ss_m* db,
                             table_row_t* ptuple,
-                            const short  i_id,
-                            const short  w_id)
+                            const int  i_id,
+                            const int  w_id)
 {
     index_desc_t * index = find_index("S_INDEX");
     assert (index);
@@ -493,8 +493,8 @@ w_rc_t stock_t::index_probe(ss_m* db,
 
 w_rc_t stock_t::index_probe_forupdate(ss_m* db,
                                       table_row_t* ptuple,
-                                      const short  i_id,
-                                      const short  w_id)
+                                      const int  i_id,
+                                      const int  w_id)
 {
     index_desc_t * index = find_index("S_INDEX");
     assert (index);
@@ -591,9 +591,9 @@ bool warehouse_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void  warehouse_t::random(table_row_t* ptuple, short w_id)
+void  warehouse_t::random(table_row_t* ptuple, int w_id)
 {
-    char    short_string[MAX_SHORT_LEN];
+    char    int_string[MAX_INT_LEN];
     double  double_number;
 
     assert (false); // (ip) deprecated
@@ -602,29 +602,29 @@ void  warehouse_t::random(table_row_t* ptuple, short w_id)
     ptuple->set_value(0, w_id);
 
     /* name */
-    _tpccrnd.random_a_string(short_string, 6, 10);
-    ptuple->set_value(1, short_string);
+    _tpccrnd.random_a_string(int_string, 6, 10);
+    ptuple->set_value(1, int_string);
 
     /* street1 */
-    _tpccrnd.random_a_string(short_string, 10, 20);
-    ptuple->set_value(2, short_string);
+    _tpccrnd.random_a_string(int_string, 10, 20);
+    ptuple->set_value(2, int_string);
 
     /* street2 */
-    _tpccrnd.random_a_string(short_string, 10, 20);
-    ptuple->set_value(3, short_string);
+    _tpccrnd.random_a_string(int_string, 10, 20);
+    ptuple->set_value(3, int_string);
 
     /* city */
-    _tpccrnd.random_a_string(short_string, 10, 20);
-    ptuple->set_value(4, short_string);
+    _tpccrnd.random_a_string(int_string, 10, 20);
+    ptuple->set_value(4, int_string);
 
     /* state */
-    _tpccrnd.random_a_string(short_string, 2, 2);
-    ptuple->set_value(5, short_string);
+    _tpccrnd.random_a_string(int_string, 2, 2);
+    ptuple->set_value(5, int_string);
 
     /* zip */
-    _tpccrnd.random_n_string(short_string, 4, 4);
-    strcat(short_string, "11111");
-    ptuple->set_value(6, short_string);
+    _tpccrnd.random_n_string(int_string, 4, 4);
+    strcat(int_string, "11111");
+    ptuple->set_value(6, int_string);
 
     /* tax */
     double_number = ((double) _tpccrnd.random_integer(0,2000))/(double)10000.0;
@@ -730,9 +730,9 @@ bool district_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void district_t::random(table_row_t* ptuple, short id, short w_id, int next_o_id)
+void district_t::random(table_row_t* ptuple, int id, int w_id, int next_o_id)
 {
-    char   short_string[MAX_SHORT_LEN] = "test";
+    char   int_string[MAX_INT_LEN] = "test";
     double double_number;
 
     assert (false); // (ip) deprecated
@@ -744,29 +744,29 @@ void district_t::random(table_row_t* ptuple, short id, short w_id, int next_o_id
     ptuple->set_value(1, w_id);
 
     /* name */
-    _tpccrnd.random_a_string(short_string, 6, 10);
-    ptuple->set_value(2, short_string);
+    _tpccrnd.random_a_string(int_string, 6, 10);
+    ptuple->set_value(2, int_string);
 
     /* street1 */
-    _tpccrnd.random_a_string(short_string, 10, 20);
-    ptuple->set_value(3, short_string);
+    _tpccrnd.random_a_string(int_string, 10, 20);
+    ptuple->set_value(3, int_string);
 
     /* street2 */
-    _tpccrnd.random_a_string(short_string, 10, 20);
-    ptuple->set_value(4, short_string);
+    _tpccrnd.random_a_string(int_string, 10, 20);
+    ptuple->set_value(4, int_string);
 
     /* city */
-    _tpccrnd.random_a_string(short_string, 10, 20);
-    ptuple->set_value(5, short_string);
+    _tpccrnd.random_a_string(int_string, 10, 20);
+    ptuple->set_value(5, int_string);
 
     /* state */
-    _tpccrnd.random_a_string(short_string, 2, 2);
-    ptuple->set_value(6, short_string);
+    _tpccrnd.random_a_string(int_string, 2, 2);
+    ptuple->set_value(6, int_string);
 
     /* zip */
-    _tpccrnd.random_n_string(short_string, 4, 4);
-    strcat(short_string, "11111");
-    ptuple->set_value(7, short_string);
+    _tpccrnd.random_n_string(int_string, 4, 4);
+    strcat(int_string, "11111");
+    ptuple->set_value(7, int_string);
 
     /* tax */
     double_number = ((double)_tpccrnd.random_integer(0, 2000))/(double)10000.0;
@@ -897,7 +897,7 @@ bool customer_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void  customer_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
+void  customer_t::random(table_row_t* ptuple, int id, int d_id, int w_id)
 {
 
     assert (false); // (ip) modified the schema
@@ -976,10 +976,10 @@ void  customer_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
     ptuple->set_value(17, (double)-10);
 
     /* payment_cnt */
-    ptuple->set_value(18, (short)10);
+    ptuple->set_value(18, (int)10);
 
     /* delivery_cnt */
-    ptuple->set_value(19, (short)1);
+    ptuple->set_value(19, (int)1);
 
     /* data */
     _tpccrnd.random_a_string(string, 300, 500);
@@ -1079,9 +1079,9 @@ bool history_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void  history_t::random(table_row_t* ptuple, int c_id, short c_d_id, short c_w_id)
+void  history_t::random(table_row_t* ptuple, int c_id, int c_d_id, int c_w_id)
 {
-    char  string[MAX_SHORT_LEN];
+    char  string[MAX_INT_LEN];
     timestamp_t  time;
 
     assert (false); // (ip) Modified schema
@@ -1195,7 +1195,7 @@ bool new_order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void new_order_t::random(table_row_t* ptuple, int id, short d_id, short w_id)
+void new_order_t::random(table_row_t* ptuple, int id, int d_id, int w_id)
 {
 
     assert (false); // (ip) deprecated
@@ -1308,11 +1308,11 @@ bool order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void order_t::random(table_row_t* ptuple, int id, int c_id, short d_id, short w_id, short ol_cnt)
+void order_t::random(table_row_t* ptuple, int id, int c_id, int d_id, int w_id, int ol_cnt)
 {
-    short short_num;
+    int int_num;
     timestamp_t  time;
-    char   string[MAX_SHORT_LEN];
+    char   string[MAX_INT_LEN];
 
     assert (false); // (ip) modified schema
     assert (false); // (ip) deprecated
@@ -1334,9 +1334,9 @@ void order_t::random(table_row_t* ptuple, int id, int c_id, short d_id, short w_
     ptuple->set_value(4, time);
 
     /* carrier_id */
-    if (id < 2101) short_num = _tpccrnd.random_integer(1,10);
-    else short_num = 0;
-    ptuple->set_value(5, short_num);
+    if (id < 2101) int_num = _tpccrnd.random_integer(1,10);
+    else int_num = 0;
+    ptuple->set_value(5, int_num);
 
     /* ol_cnt */
     ptuple->set_value(6, ol_cnt);
@@ -1355,10 +1355,10 @@ void order_t::produce_cnt_array(int w_num, pthread_mutex_t* parray_mutex)
     pthread_mutex_lock(_pcnt_array_mutex);
     
     // then create the cnt_array
-    _pcnt_array = (short*)malloc(sizeof(short)*w_num*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
+    _pcnt_array = (int*)malloc(sizeof(int)*w_num*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
     assert(_pcnt_array);
     for (int i=0; i<w_num; i++)
-	_tpccrnd.random_ol_cnt(_pcnt_array+i*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
+	_tpccrnd.random_ol_cnt((short*)_pcnt_array+i*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
     
 }
 
@@ -1369,7 +1369,7 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num)
 }
 
 
-w_rc_t order_t::bulkload(ss_m* db, int w_num, short* cnt_array)
+w_rc_t order_t::bulkload(ss_m* db, int w_num, int* cnt_array)
 {
     cout << "Loading " << _name << " table ..." << endl;
 
@@ -1474,12 +1474,12 @@ bool order_line_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 }
 
 void order_line_t::random(table_row_t* ptuple, int id,
-			  short d_id,
-			  short w_id,
-			  short ol_index,
+			  int d_id,
+			  int w_id,
+			  int ol_index,
 			  bool delivery)
 {
-    char   string[MAX_SHORT_LEN];
+    char   string[MAX_INT_LEN];
     timestamp_t  time;
 
     assert (false); // (ip) deprecated
@@ -1510,7 +1510,7 @@ void order_line_t::random(table_row_t* ptuple, int id,
         ptuple->set_null(6);
 
     /* quantity */
-    ptuple->set_value(7, (short)5);
+    ptuple->set_value(7, (int)5);
 
     /* amount */
     ptuple->set_value(8, _tpccrnd.random_integer(1, 999999));
@@ -1533,7 +1533,7 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num)
 }
 
 
-w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
+w_rc_t order_line_t::bulkload(ss_m* db, int w_num, int* cnt_array)
 {
     cout << "Loading " << _name << " table ..." << endl;
 
@@ -1564,7 +1564,7 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, short* cnt_array)
 	    for (int o_id = 1; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
 		int ol_cnt = cnt_array[index++];
 	  
-		for (short ol_id = 1; ol_id <= ol_cnt; ol_id++) {
+		for (int ol_id = 1; ol_id <= ol_cnt; ol_id++) {
                     table_row_t aol_tuple(this);
 		    if (o_id < 2101) {
 			random(&aol_tuple, o_id, d_id, w_id, ol_id);
@@ -1635,7 +1635,7 @@ bool item_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 
 void item_t::random(table_row_t* ptuple, int id)
 {
-    char   string[MAX_SHORT_LEN];
+    char   string[MAX_INT_LEN];
     int    hit;
 
     assert (false); // (ip) deprecated
@@ -1765,9 +1765,9 @@ bool stock_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void stock_t::random(table_row_t* ptuple, int id, short w_id)
+void stock_t::random(table_row_t* ptuple, int id, int w_id)
 {
-    char   string[MAX_SHORT_LEN];
+    char   string[MAX_INT_LEN];
     int    hit;
 
     assert (false); // (ip) Modified schema
@@ -1780,7 +1780,7 @@ void stock_t::random(table_row_t* ptuple, int id, short w_id)
     ptuple->set_value(1, w_id);
 
     /* quantity */
-    ptuple->set_value(2, (short)_tpccrnd.random_integer(10, 100));
+    ptuple->set_value(2, (int)_tpccrnd.random_integer(10, 100));
 
     /* dist0 */
     _tpccrnd.random_a_string(string, 24, 24);
@@ -1826,10 +1826,10 @@ void stock_t::random(table_row_t* ptuple, int id, short w_id)
     ptuple->set_value(13, (int)0);
 
     /* order_cnt */
-    ptuple->set_value(14, (short)0);
+    ptuple->set_value(14, (int)0);
 
     /* remote_cnt */
-    ptuple->set_value(15, (short)0);
+    ptuple->set_value(15, (int)0);
 
     /* data */
     _tpccrnd.string_with_original(string, 26, 50, 10.5, &hit);

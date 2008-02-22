@@ -210,17 +210,17 @@ struct tpcc_history_tuple_key {
 
 struct tpcc_history_tuple_body {
     decimal H_AMOUNT;
-    char H_DATA [STRSIZE(25)];
+    char    H_DATA [STRSIZE(25)];
 };
 
 
 // ITEM
 
 struct tpcc_item_tuple {
-    int I_ID;
-    int I_IM_ID;
+    int  I_ID;
+    int  I_IM_ID;
     char I_NAME [STRSIZE(24)];
-    int I_PRICE;
+    int  I_PRICE;
     char I_DATA [STRSIZE(50)];
 };
 

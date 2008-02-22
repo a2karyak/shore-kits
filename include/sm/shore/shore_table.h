@@ -452,72 +452,14 @@ struct table_row_t
     /* --- set field values --- */
     /* ------------------------ */
     
-    inline void set_null(int idx) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_null();
-    }
-
-    inline void set_value(int idx, const int v) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_int_value(v);
-    }
-
-    inline void set_value(int idx, const short v) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_smallint_value(v);
-    }
-
-    inline void set_value(int idx, const double v) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_value(&v, 0);
-    }
-
-    inline void set_value(int idx, const decimal v) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_decimal_value(v);
-    }
-
-    inline void set_value(int idx, const time_t v) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_time_value(v);
-    }
-
-    inline void set_value(int idx, const char* string) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-        register field_desc_t* pdv = _pvalues[idx].field_desc();
-
-	assert (pdv->type() == SQL_VARCHAR || 
-                pdv->type() == SQL_CHAR );
-
-	int len = strlen(string);
-	if ( pdv->type() == SQL_CHAR ) { 
-            if (len > pdv->maxsize()) {
-                len = pdv->maxsize();
-            }
-	}
-	_pvalues[idx].set_value(string, len);
-    }
-
-    inline void set_value(int idx, const timestamp_t& time) 
-    {
-	assert (idx >= 0 && idx < _field_cnt);
-        assert (_is_setup && _pvalues[idx].is_setup());
-	_pvalues[idx].set_value(&time, 0);
-    }
+    void set_null(int idx);
+    void set_value(int idx, const int v);
+    void set_value(int idx, const short v);
+    void set_value(int idx, const double v);
+    void set_value(int idx, const decimal v);
+    void set_value(int idx, const time_t v);
+    void set_value(int idx, const char* string);
+    void set_value(int idx, const timestamp_t& time);
 
 
     /* ------------------------- */
@@ -537,6 +479,7 @@ struct table_row_t
     /* --- debugging --- */
     void print_value(ostream& os = cout); /* print the tuple values */
     void print_tuple();                   /* print the whole tuple */
+
 }; // EOF: table_row_t
 
 
@@ -952,10 +895,87 @@ inline int table_row_t::key_size(index_desc_t* index) const
 
 
 
-/* ------------------------- */
-/* --- find field values --- */
-/* ------------------------- */
+/******************************************************************
+ * 
+ * table_row_t set value functions
+ *
+ ******************************************************************/
+    
+inline void table_row_t::set_null(int idx) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_null();
+}
 
+inline void table_row_t::set_value(int idx, const int v) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_int_value(v);
+}
+
+inline void table_row_t::set_value(int idx, const short v) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_smallint_value(v);
+}
+
+inline void table_row_t::set_value(int idx, const double v) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_float_value(v);
+}
+
+inline void table_row_t::set_value(int idx, const decimal v) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_decimal_value(v);
+}
+
+inline void table_row_t::set_value(int idx, const time_t v) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_time_value(v);
+}
+
+inline void table_row_t::set_value(int idx, const char* string) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    register sqltype_t sqlt = _pvalues[idx].field_desc()->type();
+
+    assert (sqlt == SQL_VARCHAR || sqlt == SQL_CHAR );
+
+    int len = strlen(string);
+    if ( sqlt == SQL_VARCHAR ) { 
+        // if variable length
+        _pvalues[idx].set_var_string_value(string, len);
+    }
+    else {
+        // if fixed length
+        _pvalues[idx].set_fixed_string_value(string, len);
+    }
+}
+
+inline void table_row_t::set_value(int idx, const timestamp_t& time) 
+{
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
+    _pvalues[idx].set_value(&time, 0);
+}
+
+
+
+/******************************************************************
+ * 
+ * table_row_t get value functions
+ *
+ ******************************************************************/
 
 inline bool table_row_t::get_value(const int index,
                                    int& value) const
@@ -973,11 +993,12 @@ inline bool table_row_t::get_value(const int index,
                                    short& value) const
 {
     assert(index >= 0 && index < _field_cnt);
-    if (!_pvalues[index].is_null()) {
-        value = _pvalues[index].get_smallint_value();
-        return true;
+    if (_pvalues[index].is_null()) {
+        value = 0;
+        return false;
     }
-    return false;
+    value = _pvalues[index].get_smallint_value();
+    return true;
 }
 
 inline bool table_row_t::get_value(const int index,
@@ -985,59 +1006,61 @@ inline bool table_row_t::get_value(const int index,
                                     const int bufsize) const
 {
     assert(index >= 0 && index < _field_cnt);
-    if (!_pvalues[index].is_null()) {
-        int size = MIN(bufsize-1, _pvalues[index]._pfield_desc->maxsize());
-        _pvalues[index].get_string_value(buffer, size);
-        buffer[size] ='\0';
-        return true;
+    if (_pvalues[index].is_null()) {
+        buffer[0] = '\0';
+        return (false);
     }
-    buffer[0] = '\0';
-    return false;
+    // if variable length
+    int sz = MIN(bufsize-1, _pvalues[index]._max_size);
+    _pvalues[index].get_string_value(buffer, sz);
+    buffer[sz] ='\0';
+    return (true);
 }
 
 inline bool table_row_t::get_value(const int index,
                                    double& value) const
 {
     assert(index >= 0 && index < _field_cnt);
-    if (!_pvalues[index].is_null()) {
-        value = _pvalues[index].get_float_value();
-        return true;
+    if (_pvalues[index].is_null()) {
+        value = 0;
+        return false;
     }
-    return false;
+    value = _pvalues[index].get_float_value();
+    return true;
 }
-
 
 inline bool table_row_t::get_value(const int index,
                                    decimal& value) const
 {
     assert(index >= 0 && index < _field_cnt);
-    if (!_pvalues[index].is_null()) {
-        value = _pvalues[index].get_decimal_value();
-        return true;
+    if (_pvalues[index].is_null()) {
+        value = decimal(0);
+        return false;        
     }
-    return false;
+    value = _pvalues[index].get_decimal_value();
+    return true;
 }
 
 inline bool table_row_t::get_value(const int index,
                                    time_t& value) const
 {
     assert(index >= 0 && index < _field_cnt);
-    if (!_pvalues[index].is_null()) {
-        value = _pvalues[index].get_time_value();
-        return true;
+    if (_pvalues[index].is_null()) {
+        return false;
     }
-    return false;
+    value = _pvalues[index].get_time_value();
+    return true;
 }
 
 inline  bool table_row_t::get_value(const int index,
                                     timestamp_t& value) const
 {
     assert(index >= 0 && index < _field_cnt);
-    if (!_pvalues[index].is_null()) {
-        value = _pvalues[index].get_tstamp_value();
-        return true;
+    if (_pvalues[index].is_null()) {
+        return false;
     }
-    return false;
+    value = _pvalues[index].get_tstamp_value();
+    return true;
 }
 
 

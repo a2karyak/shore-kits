@@ -10,7 +10,7 @@ using namespace tpcc;
 
 
 // default value for transaction executed per thread
-#define DF_TRX_PER_THR 5
+#define DF_TRX_PER_THR 10
 
 
 ///////////////////////////////////////////////////////////

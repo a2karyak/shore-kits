@@ -703,6 +703,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d PAY:district-index-probe (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
+
+#if 0
     W_DO(_district.index_probe_forupdate(_pssm, 
                                          &rdist,
                                          ppin->_home_d_id, 
@@ -863,6 +865,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rdist.get_value(5, adistr.D_CITY, 21);
     rdist.get_value(6, adistr.D_STATE, 3);
     rdist.get_value(7, adistr.D_ZIP, 10);
+#endif
 
     /* UPDATE warehouse SET w_ytd = wytd + :h_amount
      * WHERE w_id = :w_id
@@ -881,8 +884,11 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rwh.get_value(4, awh.W_CITY, 21);
     rwh.get_value(5, awh.W_STATE, 3);
     rwh.get_value(6, awh.W_ZIP, 10);
+    
+    TRACE( TRACE_DEBUG, "Updated-Warehouse:\n%s\n", awh.tuple_to_str().data());
+    rwh.print_tuple();
 
-
+#if 0
     /* INSERT INTO history
      * VALUES (:c_id, :c_d_id, :c_w_id, :d_id, :w_id, :curr_tmstmp, :ih_amount, :h_data)
      */
@@ -901,6 +907,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
     TRACE( TRACE_TRX_FLOW, "App: %d, PAY:hist-add-tuple\n", xct_id);
     W_DO(_history.add_tuple(_pssm, &rhist));
+#endif 
 
     /* 4. commit */
     W_DO(_pssm->commit_xct());

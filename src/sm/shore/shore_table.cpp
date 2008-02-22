@@ -61,11 +61,12 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
     }
 
     FILE* fd = fopen(filename, "r");
-    if(fd == NULL) {
-        cerr << "fopen() failed on " << filename << endl;
+    if (fd == NULL) {
+        TRACE( TRACE_ALWAYS, "fopen() failed on (%s)\n", filename);
 	return RC(se_NOT_FOUND);
     }    
-    TRACE( TRACE_DEBUG, "Loading  (%s) table from (%s) file...\n", _name, filename);
+    TRACE( TRACE_DEBUG, "Loading (%s) table from (%s) file...\n", 
+           _name, filename);
     
     W_DO(db->begin_xct());
     
@@ -1020,10 +1021,11 @@ void table_row_t::print_value(ostream& os)
 void table_row_t::print_tuple()
 {
     char* sbuf = NULL;
+    int sz = 0;
     for (int i=0; i<_field_cnt; i++) {
-        _pvalues[i].get_debug_str(sbuf);
+        sz = _pvalues[i].get_debug_str(sbuf);
         if (sbuf) {
-            TRACE( TRACE_DEBUG, "%d. %s\n", i, sbuf);
+            TRACE( TRACE_DEBUG, "%d. %s (%d)\n", i, sbuf, sz);
             delete [] sbuf;
             sbuf = NULL;
         }
