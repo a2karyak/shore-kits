@@ -10,6 +10,7 @@
  */
 
 #include "sm/shore/shore_table.h"
+#include "sm/shore/shore_helper_loader.h"
 
 using namespace shore;
 
@@ -86,6 +87,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
     bool btread = false;
     char linebuffer[MAX_LINE_LENGTH];
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
@@ -97,7 +99,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
         //if (!strcmp(name(), "CUSTOMER")) tuple.print_tuple();
 
         // append it to the table
-        tsz = tuple.format(pdest);
+        tsz = tuple.format(pdest, bufsz);
         assert (pdest); // (ip) if NULL invalid
 	W_DO(file_append.create_rec(vec_t(), 0,
 				    vec_t(pdest, tsz),
@@ -127,6 +129,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 }
 
 
+
 /********************************************************************* 
  *
  *  @fn:    bulkload_index
@@ -134,7 +137,7 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
  *  @brief: Iterates a file and inserts (one by one) the corresponding 
  *          entries to the specified index. 
  *
- *  @note:  The index file should already been created by create_index()  
+ *  @note:  The index file should have already been created by create_index()
  *
  *********************************************************************/
 
@@ -147,57 +150,87 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     
     W_DO(db->begin_xct());
     
-    /* 1. open a (table) scan iterator over the table */
+    /* 1. open a (table) scan iterator over the table and create 
+     * an index helper loader thread 
+     */
+
     table_scan_iter_impl* iter;
     W_DO(get_iter_for_file_scan(db, iter));
 
-    bool        eof;
-    register int tuple_count = 0;
-    register int mark = COMMIT_ACTION_COUNT;
+    bool eof = false;
     table_row_t row(this);
     time_t tstart = time(NULL);
-    char* pdest = NULL;
-    int key_sz = 0;
+    int rowscanned = 0;
 
-    /* 2. iterate over the whole table and 
-     *    insert the corresponding index entries */
-    W_DO(iter->next(db, eof, row));
+    // fire up the index loading helper
+    guard<index_loading_smt_t> idxld = new 
+        index_loading_smt_t(c_str("idxld"), db, this, index, &row);    
+    idxld->fork();
+
+    /* 2. iterate over the whole table and insert the corresponding 
+     *    index entries, using the index loading helper thread 
+     */
     while (!eof) {
 
-        //        row.print_tuple();
-        
-        key_sz = format_key(index, &row, pdest);
-        assert (pdest); // (ip) if NULL invalid key
-        
-	W_DO(db->create_assoc(index->fid(),
-                              vec_t(pdest, key_sz),
-                              vec_t(&(row._rid), sizeof(rid_t))));
-	W_DO(iter->next(db, eof, row));
-	tuple_count++;
+        bool was_consumed = false;
+        while (!was_consumed) {
 
-	if (tuple_count >= mark) { 
-            W_DO(db->commit_xct());
-            TRACE( TRACE_DEBUG, "index(%s): %d\n", index->name(), tuple_count);
-            W_DO(db->begin_xct());
-            mark += COMMIT_ACTION_COUNT;
-	}
+            //*** START: CS ***//
+            pthread_mutex_lock(&idxld->_cs_mutex);
+
+            if (idxld->_has_consumed) {
+                // if the consumer is waiting 
+            
+                //*** PRODUCE ***//
+                W_DO(iter->next(db, eof, row));
+                idxld->_has_consumed = false;
+                was_consumed = true;
+                idxld->_start = true;
+
+                if (eof)
+                    idxld->_finish = true;
+                else
+                    rowscanned++;
+            }
+        
+            pthread_mutex_unlock(&idxld->_cs_mutex);
+            //*** EOF: CS ***//
+        }
     }
-    W_DO(db->commit_xct());
     delete iter;
-    
-    if (pdest)
-        delete [] pdest;
+
+    W_DO(db->commit_xct());
+
+    // join the index loading helper and check value
+    idxld->join();
+    if (idxld->rv()) {
+        TRACE( TRACE_ALWAYS, "Error in Index (%s) loading helper...\n",
+               index->name());
+        return (RC(se_ERROR_IN_IDX_LOAD));
+    }
 
     /* 5. print stats */
     time_t tstop = time(NULL);
+    int idxcount = idxld->count();
     TRACE( TRACE_DEBUG, "Index (%s) loaded (%d) entries in (%d) secs...\n",
-           index->name(), tuple_count, (tstop - tstart));
+           index->name(), idxcount, (tstop - tstart));
+    // make sure that the correct number of rows were inserted
+    assert (rowscanned == idxcount); 
 
     return (RCOK);
 }
 
 
-/* bulkload an index - find index by name */
+
+/********************************************************************* 
+ *
+ *  @fn:    bulkload_index (by name)
+ *  
+ *  @brief: Finds the appropriate index given the passed name, and
+ *          calls the bulkload_index function that does the actual loading.
+ *
+ *********************************************************************/
+
 w_rc_t table_desc_t::bulkload_index(ss_m* db,
                                     const char* name)
 {
@@ -209,7 +242,16 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
 }
 
 
-/* bulkloads all indexes */
+
+/********************************************************************* 
+ *
+ *  @fn:    bulkload_all_indexes
+ *  
+ *  @brief: Iterates over all the indexes of the table, and
+ *          calls the bulkload_index function that does the loading.
+ *
+ *********************************************************************/
+
 w_rc_t table_desc_t::bulkload_all_indexes(ss_m* db)
 {
     TRACE( TRACE_DEBUG, "Start building indices for (%s)\n", _name);
@@ -264,7 +306,9 @@ w_rc_t  table_desc_t::index_probe(ss_m* db,
     /* 2. find the tuple in the B+tree */
 
     char* pdest = NULL;
-    int key_sz = format_key(index, ptuple, pdest);
+    int   bufsz = 0;
+
+    int key_sz = format_key(index, ptuple, pdest, bufsz);
     assert (pdest); // (ip) if NULL invalid key
 
     W_DO(ss_m::find_assoc(index->fid(),
@@ -447,7 +491,9 @@ w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
 
     /* 2. append the tuple */
     char* pdest = NULL;
-    int tsz = tuple->format(pdest);
+    int   bufsz = 0;
+
+    int tsz = tuple->format(pdest, bufsz);
     assert (pdest); // (ip) if NULL invalid
 
     W_DO(db->create_rec(fid(), vec_t(), tsz,
@@ -460,7 +506,7 @@ w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
     int ksz = 0;
 
     while (index) {
-        ksz = tuple->format_key(index, pdest);
+        ksz = tuple->format_key(index, pdest, bufsz);
         assert (pdest); // (ip) if dest == NULL there is invalid key
 
 	W_DO(db->create_assoc(index->fid(),
@@ -503,7 +549,9 @@ w_rc_t table_desc_t::update_tuple(ss_m* db, table_row_t* tuple)
 
     /* 2. update record */
     char* pdest = NULL;
-    int tsz = tuple->format(pdest);
+    int   bufsz = 0;
+
+    int tsz = tuple->format(pdest, bufsz);
     assert (pdest); // (ip) if NULL invalid
 
     if (current_size < tsz) {
@@ -549,10 +597,11 @@ w_rc_t  table_desc_t::delete_tuple(ss_m* db, table_row_t* ptuple)
     /* 2. delete all the corresponding index entries */
     index_desc_t* index = _indexes;
     char* pdest = NULL;
+    int   bufsz = 0;
     int key_sz = 0;
 
     while (index) {
-        key_sz = format_key(index, ptuple, pdest);
+        key_sz = format_key(index, ptuple, pdest, bufsz);
         assert (pdest); // (ip) if NULL invalid key
 
 	W_DO(index->find_fid(db));
@@ -728,13 +777,15 @@ w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
     index_scan_iter_impl* iter;
 
     table_row_t lowtuple(this);
-    char* lowkey = NULL;
-    int   lowsz  = min_key(index, &lowtuple, lowkey);
+    char* lowkey  = NULL;
+    int   lobufsz = 0;
+    int   lowsz   = min_key(index, &lowtuple, lowkey, lobufsz);
     assert (lowkey);
 
     table_row_t hightuple(this);
     char* highkey = NULL;
-    int   highsz  = max_key(index, &hightuple, highkey);
+    int   hibufsz = 0;
+    int   highsz  = max_key(index, &hightuple, highkey, hibufsz);
     assert (highkey);
 
     W_DO(get_iter_for_index_scan(db, index, iter,
@@ -785,18 +836,28 @@ w_rc_t table_desc_t::print_table(ss_m* db)
     W_DO(db->begin_xct());
 
     table_scan_iter_impl* iter;
+    int count = 0;
     W_DO(get_iter_for_file_scan(db, iter));
 
     bool        eof = false;
     table_row_t row(this);
     W_DO(iter->next(db, eof, row));
     while (!eof) {
-	row.print_value(fout);
+        //	row.print_value(fout);
+        //        row.print_tuple();
+        count++;
 	W_DO(iter->next(db, eof, row));
     }
 
     W_DO(db->commit_xct());
     delete iter;
+
+    fout << "Table : " << _name << endl;
+    fout << "Tuples: " << count << endl;
+
+    TRACE( TRACE_DEBUG, "Table (%s) printed (%d) tuples\n",
+           _name, count);
+
 
     return RCOK;
 }
@@ -836,7 +897,8 @@ void table_desc_t::print_desc(ostream& os)
  *
  *  @brief:   Return a string of the tuple (array of pvalues[]) formatted 
  *            to the appropriate disk format so it can be pushed down to 
- *            data pages in Shore.
+ *            data pages in Shore. The size of the data buffer is in 
+ *            parameter (bufsz).
  *
  *  @warning: This function should be the inverse of the load() 
  *            function changes to one of the two functions should be
@@ -846,7 +908,7 @@ void table_desc_t::print_desc(ostream& os)
  *
  *********************************************************************/
 
-const int table_row_t::format(char* &dest)
+const int table_row_t::format(char* &dest, int &bufsz)
 {
     int var_count  = 0;
     int fixed_size = 0;
@@ -895,8 +957,9 @@ const int table_row_t::format(char* &dest)
     /* 2. allocate space for formatted data */
 
     assert (tupsize);
-    if ((!dest) /* (strlen(dest) < tupsize) */ ) {
+    if ((!dest) || (bufsz < tupsize)) {
         // new larger buffer needs to be allocated
+        bufsz = tupsize;
         char* tmp = dest;
 	dest = new char[tupsize];
         if (tmp)
@@ -973,7 +1036,7 @@ const int table_row_t::format(char* &dest)
  *
  *********************************************************************/
 
-bool table_row_t::load(const char* data)
+const bool table_row_t::load(const char* data)
 {
     int var_count  = 0;
     int fixed_size = 0;

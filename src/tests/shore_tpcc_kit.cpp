@@ -72,8 +72,8 @@ public:
     int test() {
         W_DO(_env->loaddata());
         //_env->check_consistency();
-        W_DO(tpcc_run_xct(_env));
-        //print_tables();
+        W_DO(tpcc_run_xct(_env, XCT_PAYMENT)); // run only PAYMENT
+        print_tables();
         return (0);
     }
 
@@ -129,13 +129,15 @@ w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid)
 }
 
 
-void test_smt_t::print_tables() {
-
+void test_smt_t::print_tables() 
+{
     /* describes all the tables */
     _env->warehouse()->print_table(_env->db());
     _env->district()->print_table(_env->db());
     _env->customer()->print_table(_env->db());
     _env->history()->print_table(_env->db());
+
+    return;
     _env->new_order()->print_table(_env->db());
     _env->order()->print_table(_env->db());
     _env->orderline()->print_table(_env->db());

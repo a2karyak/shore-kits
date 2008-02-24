@@ -176,7 +176,9 @@ SM_SHORE = \
    $(SM)/shore/shore_file_desc.cpp \
    $(SM)/shore/shore_field.cpp \
    $(SM)/shore/shore_table.cpp \
-   $(SM)/shore/shore_env.cpp
+   $(SM)/shore/shore_env.cpp \
+   $(SM)/shore/shore_helper_loader.cpp
+
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 

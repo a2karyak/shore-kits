@@ -16,7 +16,7 @@ ENTER_NAMESPACE(tpcc);
 
 
 // uncomment line below to use produce the same input
-#define USE_SAME_INPUT
+//#define USE_SAME_INPUT
 
 
 /********************************************************************* 
@@ -115,9 +115,15 @@ payment_input_t create_payment_input(int sf)
     }
     else {
         // remote warehouse
-        do {
-            pin._remote_wh_id = URand(1, sf);
-        } while (pin._home_wh_id != pin._remote_wh_id);
+        if (sf == 1) {
+            pin._remote_wh_id = 1;
+        }
+        else {
+            // pick a remote wh (different from the home_wh)
+            do {
+                pin._remote_wh_id = URand(1, sf);
+            } while (pin._home_wh_id == pin._remote_wh_id);
+        }
         pin._remote_d_id = URand(1, 10);
     }
     
@@ -138,8 +144,7 @@ payment_input_t create_payment_input(int sf)
     pin._remote_wh_id = 1;
     pin._remote_d_id =  3;
     pin._v_cust_ident_selection = 50;
-    //    pin._c_id =  1500;        
-    pin._c_id =  1;        
+    pin._c_id =  1500;        
     //pin._c_last = NULL;
     pin._h_amount = 1000.00;
     pin._h_date = time(NULL);

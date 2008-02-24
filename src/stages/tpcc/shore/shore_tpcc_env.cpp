@@ -10,6 +10,7 @@
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "stages/tpcc/common/tpcc_trx_input.h"
 #include "sm/shore/shore_sort_buf.h"
+#include "sm/shore/shore_helper_loader.h"
 
 
 using namespace shore;
@@ -99,25 +100,25 @@ w_rc_t ShoreTPCCEnv::loaddata()
     tpcc_table_t* ptable = NULL;
 
     // (ip) for debug loading only the first 2 tables (WH, DISTR)
-    int num_tbl = 4; // if 4 == PAYMENT TABLES
-    //int num_tbl = _table_list.size();
+    //    int num_tbl = 4; // if 4 == PAYMENT TABLES
+    int num_tbl = _table_list.size();
 
     int cnt = 0;
-    tpcc_loading_smt_t* loaders[SHORE_TPCC_TABLES];
+    table_loading_smt_t* loaders[SHORE_TPCC_TABLES];
     time_t tstart = time(NULL);
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
         table_iter != _table_list.end(); table_iter++)
         {
             ptable = *table_iter;
-            loaders[cnt] = new tpcc_loading_smt_t(c_str("ld%d", cnt), 
-                                                  _pssm, ptable, 
-                                                  _scaling_factor);
+            loaders[cnt] = new table_loading_smt_t(c_str("ld%d", cnt), 
+                                                   _pssm, ptable, 
+                                                   _scaling_factor);
             cnt++;
         }
 
 
-#if 1 
+#if 0 
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -178,14 +179,14 @@ w_rc_t ShoreTPCCEnv::check_consistency()
     tpcc_table_t* ptable = NULL;
     int num_tbl = _table_list.size();
     int cnt = 0;
-    guard<tpcc_checking_smt_t> checkers[SHORE_TPCC_TABLES];
+    guard<table_checking_smt_t> checkers[SHORE_TPCC_TABLES];
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
         table_iter != _table_list.end(); table_iter++)
         {
             ptable = *table_iter;
-            checkers[cnt] = new tpcc_checking_smt_t(c_str("chk%d", cnt), _pssm, 
-                                                    ptable);
+            checkers[cnt] = new table_checking_smt_t(c_str("chk%d", cnt), 
+                                                     _pssm, ptable);
             cnt++;
         }
 
@@ -434,7 +435,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id, trx_result_tuple_t& atrt)
 
 
 // uncomment the line below if want to dump (part of) the trx results
-#define PRINT_TRX_RESULTS
+//#define PRINT_TRX_RESULTS
 
 
 /******************************************************************** 
@@ -467,8 +468,6 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     table_row_t rst(&_stock);
     table_row_t rol(&_order_line);
     trt.reset(UNSUBMITTED, xct_id);
-
-    return (RCOK); // (ip) To remove
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
@@ -526,6 +525,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     adist.D_NEXT_O_ID++;
 
 
+#if 0
     /* UPDATE district
      * SET d_next_o_id = :next_o_id+1
      * WHERE CURRENT OF dist_cur
@@ -665,6 +665,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     TRACE( TRACE_TRX_FLOW, "App: %d NO:add-tuple (%d) (%d) (%d)\n", 
            xct_id, adist.D_NEXT_O_ID, pnoin->_d_id, pnoin->_wh_id);
     W_DO(_new_order.add_tuple(_pssm, &rno));
+#endif
 
 
 #ifdef PRINT_TRX_RESULTS
@@ -773,7 +774,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	W_DO(c_iter->next(_pssm, eof, rcust));
 	while (!eof) {
 	    rcust.get_value(0, c_id_list[count++]);            
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next\n", xct_id);
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", xct_id, c_id_list[count]);
 	    W_DO(c_iter->next(_pssm, eof, rcust));
 	}
 	delete c_iter;
@@ -826,10 +827,15 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rcust.get_value(20, acust.C_DATA_1, 251);
     rcust.get_value(21, acust.C_DATA_2, 251);
 
+    TRACE( TRACE_DEBUG, "%s\n", acust.tuple_to_str().data()); 
+
     // update customer fields
     acust.C_BALANCE -= ppin->_h_amount;
     acust.C_YTD_PAYMENT += ppin->_h_amount;
     acust.C_PAYMENT_CNT++;
+
+
+    TRACE( TRACE_DEBUG, "%s\n", acust.tuple_to_str().data()); 
 
     // if bad customer
     if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
@@ -874,8 +880,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "D_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-update-ytd1 (%d)\n", 
-           xct_id, ppin->_home_wh_id);
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-update-ytd1 (%d) (%d)\n", 
+           xct_id, ppin->_home_wh_id, ppin->_home_d_id);
     W_DO(_district.update_ytd(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id, ppin->_h_amount));
 
     /* SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
@@ -885,8 +891,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "D_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-index-probe (%d) (%d)\n", 
-           xct_id, ppin->_home_d_id, ppin->_home_wh_id);
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-index-probe (%d) (%d) (%.2f)\n", 
+           xct_id, ppin->_home_d_id, ppin->_home_wh_id, ppin->_h_amount);
     W_DO(_district.index_probe(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id));
 
     tpcc_district_tuple adistr;
@@ -904,8 +910,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      * plan: index probe on "W_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd2 (%d)\n", 
-           xct_id, ppin->_home_wh_id);
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd2 (%d) (%.2f)\n", 
+           xct_id, ppin->_home_wh_id, ppin->_h_amount);
     W_DO(_warehouse.update_ytd(_pssm, &rwh, ppin->_home_wh_id, ppin->_h_amount));
 
     tpcc_warehouse_tuple awh;
@@ -990,8 +996,6 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     table_row_t rordline(&_order_line);
     trt.reset(UNSUBMITTED, xct_id);
 
-    return (RCOK); // (ip) To remove
-
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
 
@@ -1052,6 +1056,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     rcust.get_value(16, acust.C_BALANCE);
 
 
+#if 0
     /* 2. retrieve the last order of this customer */
 
     /* SELECT o_id, o_entry_d, o_carrier_id
@@ -1111,7 +1116,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     }
     delete ol_iter;
     delete [] porderlines;
-
+#endif
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1167,11 +1172,10 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     table_row_t rcust(&_customer);
     trt.reset(UNSUBMITTED, xct_id);
 
-    return (RCOK); // (ip) To remove
-
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
 
+#if 0
     /* process each district separately */
     for (short d_id = 1; d_id < DISTRICTS_PER_WAREHOUSE; d_id ++) {
 
@@ -1308,7 +1312,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	rcust.get_value(16, balance);
 	rcust.set_value(16, balance+total_amount);
     }
-
+#endif
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1381,6 +1385,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     rdist.get_value(10, next_o_id);
 
 
+#if 0    
     /*
      *   SELECT COUNT(DISTRICT(s_i_id)) INTO :stock_count
      *   FROM order_line, stock
@@ -1445,7 +1450,6 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     int last_i_id = -1;
     int count = 0;
 
-#if 0    
     /* 2c. Nested loop join order_line with stock */
     W_DO(ol_list_sort_iter.next(_pssm, eof, rsb));
     while (!eof) {
@@ -1500,64 +1504,6 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     trt.set_state(COMMITTED);
 
     return (RCOK);
-}
-
-
-
-/****************************************************************** 
- *
- * HELPER THREADS
- *
- ******************************************************************/
-
-
-/****************************************************************** 
- *
- * class tpcc_loading_smt_t
- *
- ******************************************************************/
-
-void tpcc_loading_smt_t::work()
-{
-    char fname[MAX_FILENAME_LEN];
-    strcpy(fname, SHORE_TPCC_DATA_DIR);
-    strcat(fname, "/");
-    strcat(fname, _ptable->name());
-    strcat(fname, ".dat");
-    TRACE( TRACE_DEBUG, "Loading (%s) from (%s)\n", 
-           _ptable->name(), fname);
-    time_t ttablestart = time(NULL);
-    w_rc_t e = _ptable->load_from_file(_pssm, fname);
-    time_t ttablestop = time(NULL);
-    if (e != RCOK) {
-        TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
-               _ptable->name());
-        _rv = 1;
-        return;
-    }
-
-    TRACE( TRACE_DEBUG, "Table (%s) loaded in (%d) secs...\n",
-           _ptable->name(), (ttablestop - ttablestart));
-    _rv = 0;
-}
-
-
-
-/****************************************************************** 
- *
- * class tpcc_checking_smt_t
- *
- ******************************************************************/
-
-void tpcc_checking_smt_t::work()
-{
-    TRACE( TRACE_DEBUG, "Checking (%s)\n", _ptable->name());
-    if (!_ptable->check_all_indexes(_pssm)) {
-        TRACE( TRACE_DEBUG, "Inconsistency in (%s)\n", _ptable->name());
-    }
-    else {
-        TRACE( TRACE_DEBUG, "(%s) OK...\n", _ptable->name());
-    }
 }
 
 

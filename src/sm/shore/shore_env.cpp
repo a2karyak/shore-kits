@@ -348,7 +348,8 @@ void ShoreEnv::usage(option_group_t& options)
 
 void ShoreEnv::readconfig(string conf_file)
 {
-    TRACE( TRACE_DEBUG, "Reading configuration file (%s)\n", conf_file);
+    TRACE( TRACE_DEBUG, "Reading configuration file (%s)\n", 
+           (char*)conf_file.c_str());
     
     ConfigFile  sh_config(conf_file);   // config file reader
     string tmp;

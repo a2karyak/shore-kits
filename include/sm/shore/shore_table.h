@@ -238,12 +238,12 @@ public:
     /* --- helper functions for bulkloading indices --- */
     /* ------------------------------------------------ */
 
-    char*     index_keydesc(index_desc_t* index);                              /* index key description */
-    const int format_key(index_desc_t* index, table_row_t* prow, char* &dest); /* format the key value */
-    const int min_key(index_desc_t* index, table_row_t* prow, char* &dest);    /* set indexed fields of the row to minimum */
-    const int max_key(index_desc_t* index, table_row_t* prow, char* &dest);    /* set indexed fields of the row to maximum */
-    const int key_size(index_desc_t* index, const table_row_t* prow) const;    /* length of the formatted key */
-    const int maxkeysize(index_desc_t* index) const;                           /* max key size */
+    char*     index_keydesc(index_desc_t* index);                                          /* index key description */
+    const int format_key(index_desc_t* index, table_row_t* prow, char* &dest, int &bufsz); /* format the key value */
+    const int min_key(index_desc_t* index, table_row_t* prow, char* &dest, int &bufsz);    /* set indexed fields of the row to minimum */
+    const int max_key(index_desc_t* index, table_row_t* prow, char* &dest, int &bufsz);    /* set indexed fields of the row to maximum */
+    const int key_size(index_desc_t* index, const table_row_t* prow) const;                /* length of the formatted key */
+    const int maxkeysize(index_desc_t* index) const;                                       /* max key size */
 
 
     /* ---------------------- */
@@ -427,14 +427,14 @@ struct table_row_t
     /* --- conversion between disk format and memory format --- */
     /* -------------------------------------------------------- */
 
-    const int format(char* &dest);  /* disk format of tuple */
+    const int  format(char* &dest, int &bufsz);  /* disk format of tuple */
+    const bool load(const char* string);         /* load tuple from disk format */ 
+    const int  size() const;                     /* disk space needed for tuple */
 
-    int   size() const;             /* disk space needed for tuple */
-    bool  load(const char* string); /* load tuple from disk format */ 
+    const int  format_key(index_desc_t* index, char* &dest, int &bufsz);  /* put the index key to the buffer */
+    const bool load_key(const char* string, index_desc_t* index);         /* load key fields */
+    const int  key_size(index_desc_t* index) const;                       /* return index key size */
 
-    const bool load_key(const char* string, index_desc_t* index); /* load key fields */
-    const int  format_key(index_desc_t* index, char* &dest);      /* put the index key to the buffer */
-    const int  key_size(index_desc_t* index) const;               /* return index key size */
 
 
     /* ---------------------- */
@@ -613,7 +613,8 @@ public:
 
         if (!eof) {
             char* pdest  = NULL;
-            int   key_sz = tuple.format_key(_file, pdest);
+            int bufsz = 0;
+            int   key_sz = tuple.format_key(_file, pdest, bufsz);
             assert (pdest); // (ip) if dest == NULL there is invalid key
 
             vec_t    key(pdest, key_sz);
@@ -682,7 +683,8 @@ inline char* table_desc_t::index_keydesc(index_desc_t* idx)
  * @brief:    Gets an index and for a selected row it copies to the
  *            passed buffer only the fields that are contained in the 
  *            index and returns the size of the newly allocated buffer, 
- *            which is the key_size for the index.
+ *            which is the key_size for the index. The size of the 
+ *            data buffer is in parameter (bufsz).
  *
  *  @warning: This function should be the inverse of the load_key() 
  *            function changes to one of the two functions should be
@@ -695,17 +697,24 @@ inline char* table_desc_t::index_keydesc(index_desc_t* idx)
 
 inline const int table_desc_t::format_key(index_desc_t* index,
                                           table_row_t* prow,
-                                          char* &dest)
+                                          char* &dest,
+                                          int &bufsz)
 {
     assert (index);
     assert (prow);
+
+    /* 1. calculate the key size */
 
     //    int isz = key_size(index, prow);
     int isz = key_size(index, prow);
     assert (isz);
 
-    if ((!dest) /* || (strlen(dest) < isz) */ ) {
+    
+    /* 2. allocate buffer space, if necessary */
+
+    if ((!dest) || (bufsz < isz)) {
         // new larger buffer needs to be allocated
+        bufsz = isz;
         char* tmp = dest;
         dest = new char[isz];
         if (tmp)
@@ -714,6 +723,8 @@ inline const int table_desc_t::format_key(index_desc_t* index,
     // in any case, clean up the buffer
     memset (dest, 0, isz);
 
+
+    /* 3. write the buffer */
 
     register offset_t offset = 0;
     for (int i=0; i<index->field_count(); i++) {
@@ -748,25 +759,27 @@ inline const int table_desc_t::format_key(index_desc_t* index,
 
 inline const int table_desc_t::min_key(index_desc_t* index, 
                                        table_row_t* prow,
-                                       char* &dest)
+                                       char* &dest,
+                                       int &bufsz)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
 	prow->_pvalues[field_index].set_min_value();
     }
-    return (format_key(index, prow, dest));
+    return (format_key(index, prow, dest, bufsz));
 }
 
 
 inline const int table_desc_t::max_key(index_desc_t* index, 
                                        table_row_t* prow,
-                                       char* &dest)
+                                       char* &dest,
+                                       int &bufsz)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
 	prow->_pvalues[field_index].set_max_value();
     }
-    return (format_key(index, prow, dest));
+    return (format_key(index, prow, dest, bufsz));
 }
 
 
@@ -896,7 +909,7 @@ inline const int table_desc_t::maxsize()
  *
  ******************************************************************/
 
-inline int table_row_t::size() const
+inline const int table_row_t::size() const
 {
     int size = 0;
     int null_count = 0;
@@ -917,17 +930,19 @@ inline int table_row_t::size() const
 	    size += _pvalues[i].realsize();
 	    size += sizeof(offset_t);
 	}
-	else size += _pvalues[i].realsize();
+	else size += _pvalues[i].maxsize();
     }
     if (null_count) size += (null_count >> 3) + 1;
     return (size);
 }
 
 
-inline const int table_row_t::format_key(index_desc_t* index, char* &dest)
+inline const int table_row_t::format_key(index_desc_t* index, 
+                                         char* &dest,
+                                         int &bufsz)
 {
     assert (_ptable);
-    return (_ptable->format_key(index, this, dest));
+    return (_ptable->format_key(index, this, dest, bufsz));
 }
 
 

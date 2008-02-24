@@ -75,7 +75,10 @@ class sort_iter_impl;
 
 /**********************************************************************
  *
- * @class: sort_buffer
+ * @class:   sort_buffer
+ *
+ * @warning: NO THREAD-SAFE the caller should make sure that only a 
+ *           thread is accessing objects of this class
  *
  **********************************************************************/
 
@@ -92,6 +95,7 @@ protected:
     tatas_lock      _sorted_lock; 
 
     char*           _dest;         /* used for the tuple->format() */
+    int             _bfsz;         /* buffer size */
 
     /* count _tuple_size and allocate buffer */
     void init();
@@ -104,7 +108,7 @@ public:
     sort_buffer_t(int field_count)
         : table_desc_t("SORT_BUF", field_count), _sort_buf(NULL),
           _tuple_size(0), _tuple_count(0), _buf_size(0), 
-          _is_sorted(false), _dest(NULL)          
+          _is_sorted(false), _dest(NULL), _bfsz(0)
     { 
     }
 
@@ -245,7 +249,7 @@ inline void sort_buffer_t::add_tuple(table_row_t& atuple)
     }
 
     /* add the current tuple to the end of the buffer */
-    atuple.format(_dest);
+    atuple.format(_dest, _bfsz);
     assert (_dest);
     memcpy(_sort_buf+(_tuple_count*_tuple_size), _dest, _tuple_size);
     _tuple_count++;

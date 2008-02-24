@@ -41,7 +41,7 @@ ENTER_NAMESPACE(shore);
 
 #define  DELIM_CHAR            '|'
 
-#define  COMMIT_ACTION_COUNT  1000
+#define  COMMIT_ACTION_COUNT  2000
 
 #define  MIN_SMALLINT     0
 #define  MAX_SMALLINT     1<<15

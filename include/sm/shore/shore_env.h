@@ -25,6 +25,10 @@ using std::map;
 /******** Constants ********/
 
 
+static const int SHORE_NUM_OF_RETRIES = 3;
+
+#define SHORE_TABLE_DATA_DIR "tpcc_sf"
+
 #define SHORE_DEFAULT_CONF_FILE "shore.conf"
 
 static const string SHORE_DEF_SM_OPTIONS[][3]  = {

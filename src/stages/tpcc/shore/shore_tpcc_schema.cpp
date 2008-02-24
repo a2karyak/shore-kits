@@ -157,7 +157,8 @@ w_rc_t customer_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(0, 0);
 
     char* lowkey = NULL;
-    int   lowsz  = format_key(index, ptuple, lowkey);
+    int   lobufsz = 0;
+    int   lowsz  = format_key(index, ptuple, lowkey, lobufsz);
     assert (lowkey);
 
     char   temp[2];
@@ -166,7 +167,8 @@ w_rc_t customer_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(3, temp);
 
     char* highkey = NULL;
-    int   highsz  = format_key(index, ptuple, highkey);
+    int   hibufsz = 0;
+    int   highsz  = format_key(index, ptuple, highkey, hibufsz);
     assert (highkey);
     
 
@@ -191,10 +193,6 @@ w_rc_t customer_t::index_probe(ss_m* db,
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    
-    // (ip) for debugging
-    ptuple->print_tuple();
-
     return (table_desc_t::index_probe(db, "C_INDEX", ptuple));
 }
 
@@ -260,14 +258,16 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(3, (int)0);  /* assuming that ol_number starts from 1 */
 
     char* lowkey = NULL;
-    int   lowsz  = format_key(index, ptuple, lowkey);
+    int   lobufsz = 0;
+    int   lowsz  = format_key(index, ptuple, lowkey, lobufsz);
     assert (lowkey);
 
     /* get the highest key value */
     ptuple->set_value(0, high_o_id+1);
 
     char* highkey = NULL;
-    int   highsz  = format_key(index, ptuple, highkey);
+    int   hibufsz = 0;
+    int   highsz  = format_key(index, ptuple, highkey, hibufsz);
     assert (highkey);
     
     /* get the tuple iterator (not index only scan) */
@@ -299,14 +299,16 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(3, 0);
 
     char* lowkey = NULL;
-    int   lowsz  = format_key(index, ptuple, lowkey);
+    int   lobufsz = 0;
+    int   lowsz  = format_key(index, ptuple, lowkey, lobufsz);
     assert (lowkey);
 
     /* get the highest key value */
     ptuple->set_value(0, o_id+1);
 
     char* highkey = NULL;
-    int   highsz  = format_key(index, ptuple, highkey);
+    int   hibufsz = 0;
+    int   highsz  = format_key(index, ptuple, highkey, hibufsz);
     assert (highkey);
 
     W_DO(get_iter_for_index_scan(db, index, iter,
@@ -350,14 +352,16 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(3, c_id);
 
     char* lowkey = NULL;
-    int   lowsz  = format_key(index, ptuple, lowkey);
+    int   lobufsz = 0;
+    int   lowsz  = format_key(index, ptuple, lowkey, lobufsz);
     assert (lowkey);
 
     /* get the highest key value */
     ptuple->set_value(3, c_id+1);
 
     char* highkey = NULL;
-    int   highsz  = format_key(index, ptuple, highkey);
+    int   hibufsz = 0;
+    int   highsz  = format_key(index, ptuple, highkey, hibufsz);
     assert (highkey);
 
     W_DO(get_iter_for_index_scan(db, index, iter,
@@ -395,14 +399,16 @@ w_rc_t   new_order_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(0, 0);
 
     char* lowkey = NULL;
-    int   lowsz  = format_key(index, ptuple, lowkey);
+    int   lobufsz = 0;
+    int   lowsz  = format_key(index, ptuple, lowkey, lobufsz);
     assert (lowkey);
 
     /* get the highest key value */
     ptuple->set_value(1, d_id+1);
 
     char* highkey = NULL;
-    int   highsz  = format_key(index, ptuple, highkey);
+    int   hibufsz = 0;
+    int   highsz  = format_key(index, ptuple, highkey, hibufsz);
     assert (highkey);
 
     /* get the tuple iterator (index only scan) */
@@ -648,8 +654,9 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
     register int count = 0;
     register int mark = COMMIT_ACTION_COUNT;
     table_row_t awh_tuple(this);
-
+    
     char* pdest = NULL;
+    int   bufsz = 0;
     int   tsz   = 0; 
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -657,7 +664,7 @@ w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
 	random(&awh_tuple, w_id);
 
         // append it to the table
-        tsz = awh_tuple.format(pdest);
+        tsz = awh_tuple.format(pdest, bufsz);
         assert (pdest);
 	W_DO(file_append.create_rec(vec_t(), (smsize_t)0,
 				    vec_t(pdest, tsz),
@@ -795,6 +802,7 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
     table_row_t ad_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int   tsz   = 0; 
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -803,7 +811,7 @@ w_rc_t district_t::bulkload(ss_m* db, int w_num)
 	    random(&ad_tuple, d_id, w_id, CUSTOMERS_PER_DISTRICT+1);
 
             // append it to the table
-            tsz = ad_tuple.format(pdest);
+            tsz = ad_tuple.format(pdest, bufsz);
             assert (pdest);
 	    W_DO(file_append.create_rec(vec_t(), 0,
 					vec_t(pdest, tsz),
@@ -1002,6 +1010,7 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
     table_row_t ac_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1011,7 +1020,7 @@ w_rc_t customer_t::bulkload(ss_m* db, int w_num)
 		random(&ac_tuple, c_id, d_id, w_id);
 
                 // append it to the table
-                tsz = ac_tuple.format(pdest);
+                tsz = ac_tuple.format(pdest, bufsz);
                 assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(pdest, tsz),
@@ -1129,6 +1138,7 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
     table_row_t ah_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1137,7 +1147,7 @@ w_rc_t  history_t::bulkload(ss_m* db, int w_num)
 		random(&ah_tuple, c_id, d_id, w_id);
 
                 // append it to the table
-                tsz = ah_tuple.format(pdest);
+                tsz = ah_tuple.format(pdest, bufsz);
                 assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(pdest, tsz),
@@ -1232,6 +1242,7 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
     table_row_t anu_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1240,7 +1251,7 @@ w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
 		random(&anu_tuple, o_id, d_id, w_id);
 
                 // append it to the table
-                tsz = anu_tuple.format(pdest);
+                tsz = anu_tuple.format(pdest, bufsz);
                 assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(pdest, tsz),
@@ -1387,6 +1398,7 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, int* cnt_array)
     table_row_t ao_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1398,7 +1410,7 @@ w_rc_t order_t::bulkload(ss_m* db, int w_num, int* cnt_array)
 		random(&ao_tuple, o_id, _tpccrnd.random_1_3000(), d_id, w_id, ol_cnt);
 
                 // append it to the table
-                tsz = ao_tuple.format(pdest);
+                tsz = ao_tuple.format(pdest, bufsz);
                 assert (pdest);
 		W_DO(file_append.create_rec(vec_t(), 0,
 					    vec_t(pdest, tsz),
@@ -1551,6 +1563,7 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, int* cnt_array)
     int mark = COMMIT_ACTION_COUNT;
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1570,7 +1583,7 @@ w_rc_t order_line_t::bulkload(ss_m* db, int w_num, int* cnt_array)
 		    }
 
                     // append it to the table
-                    tsz = aol_tuple.format(pdest);
+                    tsz = aol_tuple.format(pdest, bufsz);
                     assert (pdest);                    
 		    W_DO(file_append.create_rec(vec_t(), 0,
 						vec_t(pdest, tsz),
@@ -1674,13 +1687,14 @@ w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
     table_row_t ai_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int i_id = 1; i_id <= ITEMS; i_id++) {
 	random(&ai_tuple, i_id);
 
         // append it to the table
-        tsz = ai_tuple.format(pdest);
+        tsz = ai_tuple.format(pdest, bufsz);
         assert (pdest);
 	W_DO(file_append.create_rec(vec_t(), 0,
 				    vec_t(pdest, tsz),
@@ -1852,6 +1866,7 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
     table_row_t as_tuple(this);
 
     char* pdest = NULL;
+    int   bufsz = 0;
     int tsz = 0;
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
@@ -1859,7 +1874,7 @@ w_rc_t stock_t::bulkload(ss_m* db, int w_num)
 	    random(&as_tuple, s_id, w_id);
 
             // append it to the table
-            tsz = as_tuple.format(pdest);
+            tsz = as_tuple.format(pdest, bufsz);
             assert (pdest);
 	    W_DO(file_append.create_rec(vec_t(), 0,
 					vec_t(pdest, tsz),

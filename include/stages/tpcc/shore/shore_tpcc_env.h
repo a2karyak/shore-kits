@@ -15,7 +15,6 @@
 
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_const.h"
-#include "stages/tpcc/common/tpcc_struct.h"
 #include "stages/tpcc/common/tpcc_input.h"
 #include "stages/tpcc/common/trx_packet.h"
 
@@ -287,78 +286,6 @@ public:
 }; // EOF ShoreTPCCEnv
     
     
-
-
-/****************************************************************** 
- *
- *  @class tpcc_loading_smt_t
- *
- *  @brief An smthread inherited class that it is used for spawning
- *         multiple tpcc loading threads. 
- *
- ******************************************************************/
-
-class tpcc_loading_smt_t : public thread_t 
-{
-private:
-    ss_m*         _pssm;
-    tpcc_table_t* _ptable;
-    const int     _sf;
-    int           _rv;
-
-public:
-    
-    tpcc_loading_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable, 
-                       const int asf) 
-	: thread_t(tname), _pssm(assm), _ptable(atable), _sf(asf)
-    {
-        assert (_pssm);
-        assert (_ptable);
-        assert (_sf);
-    }
-
-    ~tpcc_loading_smt_t() { }
-
-    // thread entrance
-    void work();
-
-    inline int rv() { return (_rv); }
-    inline tpcc_table_t* table() { return (_ptable); }
-
-}; // EOF: tpcc_loading_smt_t
-
-
-
-/****************************************************************** 
- *
- *  @class tpcc_checking_smt_t
- *
- *  @brief An smthread inherited class that it is used for spawning
- *         multiple tpcc checking consistency threads. 
- *
- ******************************************************************/
-
-class tpcc_checking_smt_t : public thread_t 
-{
-private:
-    ss_m*         _pssm;
-    tpcc_table_t* _ptable;   
-
-public:
-    
-    tpcc_checking_smt_t(c_str tname, ss_m* assm, tpcc_table_t* atable) 
-	: thread_t(tname), _pssm(assm), _ptable(atable)
-    {
-        assert (_pssm);
-        assert (_ptable);
-    }
-
-    ~tpcc_checking_smt_t() { }
-
-    // thread entrance
-    void work();
-
-}; // EOF: tpcc_checking_smt_t
 
 
 EXIT_NAMESPACE(tpcc);
