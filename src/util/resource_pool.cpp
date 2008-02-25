@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file resource_pool.cpp
  *
@@ -51,23 +52,28 @@ struct waiter_node_s
 
 /* method definitions */
 
-/**
- *  @brief Reserve 'n' copies of the resource.
+
+/*********************************************************************
  *
- *  @param rp The resource pool.
+ *  @fn:     reserve
  *
- *  @param n Wait for this many resources to appear unreserved. If n
- *  is larger than the pool capacity, the behavior is undefined.
+ *  @brief:  Reserve 'n' copies of the resource.
+ *
+ *  @param:  rp - The resource pool.
+ *
+ *  @param:  n - Wait for this many resources to appear unreserved. If n
+ *               is larger than the pool capacity, the behavior is undefined.
+ *
+ *  @return: void
  *
  *  THE CALLER MUST BE HOLDING THE INTERNAL MUTEX ('mutexp' used to
  *  initialize 'rp') WHEN CALLING THIS FUNCTION. THE CALLER WILL HOLD
  *  THIS MUTEX WHEN THE FUNCTION RETURNS.
  *
- *  @return void
- */
+ *********************************************************************/
+
 void resource_pool_t::reserve(int n)
-{
-  
+{  
   /* Error checking. If 'n' is larger than the pool capacity, we will
      never be able to satisfy the request. */
   TASSERT(n <= _capacity);
@@ -79,19 +85,21 @@ void resource_pool_t::reserve(int n)
         _non_idle);
   
   /* Checks:
-     
-     - If there are other threads waiting, add ourselves to the queue
-       of waiters so we can maintain FIFO ordering.
-
-     - If there are no waiting threads, but the number of unreserved
-       threads is too small, add ourselves to the queue of waiters. */
+   *   
+   * - If there are other threads waiting, add ourselves to the queue
+   *   of waiters so we can maintain FIFO ordering.
+   *
+   * - If there are no waiting threads, but the number of unreserved
+   *   threads is too small, add ourselves to the queue of waiters. 
+   */
   int num_unreserved = _capacity - _reserved;
   if (!static_list_is_empty(&_waiters) || (num_unreserved < n)) {
 
     wait_for_turn(n);
     
     /* If we are here, we have been granted the resources. The thread
-       which gave them to us has already updated the pool's state. */
+     * which gave them to us has already updated the pool's state. 
+     */
     TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s after_woken %d:%d:%d\n",
           _name.data(),
           _capacity,
@@ -114,44 +122,39 @@ void resource_pool_t::reserve(int n)
 }
 
 
-
-/** 
- *  @brief Unreserve the specified number of resources.
+/*********************************************************************
  *
- *  @param rp The resource pool.
+ *  @fn:     unreserve
+ *
+ *  @brief:  Unreserve the specified number of resources.
+ *
+ *  @param:  rp - The resource pool.
+ *
+ *  @return: void
  *
  *  THE CALLER MUST BE HOLDING THE INTERNAL MUTEX ('mutexp' used to
  *  initialize 'rp') WHEN CALLING THIS FUNCTION. THE CALLER WILL HOLD
  *  THIS MUTEX WHEN THE FUNCTION RETURNS.
  *
- *  @return void
- */
+ *********************************************************************/
+
 void resource_pool_t::unreserve(int n)
 {
   /* error checking */
   TASSERT(_reserved >= n);
   TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s was %d:%d:%d\n",
-        _name.data(),
-        _capacity,
-        _reserved,
-        _non_idle);
+        _name.data(), _capacity, _reserved, _non_idle);
 
   /* update the 'reserved' count */
   _reserved -= n;
 
   TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s now %d:%d:%d\n",
-        _name.data(),
-        _capacity,
-        _reserved,
-        _non_idle);
+        _name.data(), _capacity, _reserved, _non_idle);
 
   waiter_wake();
   
   TRACE(TRACE_RESOURCE_POOL & TRACE_ALWAYS, "%s after_waking %d:%d:%d\n",
-        _name.data(),
-        _capacity,
-        _reserved,
-        _non_idle);
+        _name.data(), _capacity, _reserved, _non_idle);
 }
 
 

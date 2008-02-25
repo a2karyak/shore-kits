@@ -3,6 +3,7 @@
 
 #include "tests/common.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "sm/shore/shore_helper_loader.h"
 
 
 using namespace shore;
@@ -56,7 +57,7 @@ public:
         _rv = test();
     }
 
-    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int num_xct = DF_TRX_PER_THR, int xct_type = 0);
+    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int xct_type = 0, int num_xct = DF_TRX_PER_THR);
     w_rc_t tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type = 0, int xctid = 0);    
 
     w_rc_t xct_new_order(ShoreTPCCEnv* env, int xctid);
@@ -146,7 +147,7 @@ void test_smt_t::print_tables()
 }
 
 
-w_rc_t test_smt_t::tpcc_run_xct(ShoreTPCCEnv* env, int num_xct, int xct_type)
+w_rc_t test_smt_t::tpcc_run_xct(ShoreTPCCEnv* env, int xct_type, int num_xct)
 {
     for (int i=0; i<num_xct; i++) {
         //        TRACE( TRACE_DEBUG, "%d . ", i);
@@ -181,47 +182,6 @@ w_rc_t test_smt_t::tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
     return RCOK;
 }
 
-
-
-///////////////////////////////////////////////////////////
-// @class close_smt_t
-//
-// @brief An smthread-based class for tests
-
-class close_smt_t : public thread_t {
-private:
-    ShoreTPCCEnv* _env;    
-
-public:
-    int	_rv;
-    
-    close_smt_t(ShoreTPCCEnv* env, c_str tname) 
-	: thread_t(tname), 
-          _env(env), _rv(0)
-    {
-    }
-
-    ~close_smt_t() {
-    }
-
-
-    // thread entrance
-    void work() {
-        assert (_env);
-        TRACE( TRACE_ALWAYS, "Closing env...\n");
-        if (_env) {
-            delete (_env);
-            _env = NULL;
-        }        
-    }
-
-
-    /** @note Those two functions should be implemented by every
-     *        smthread-inherited class that runs using run_smthread()
-     */
-    inline int retval() { return (_rv); }
-    
-}; // EOF: close_smt_t
 
 
 // uncomment below to run 4 threads concurrently
@@ -288,7 +248,7 @@ int main(int argc, char* argv[])
 
 
     // close Shore env
-    close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));    
+    close_smt_t* clt = new close_smt_t(c_str("clt"), shore_env);
     clt->fork();
     clt->join();
     if (clt->_rv) {

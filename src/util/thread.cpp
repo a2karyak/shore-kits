@@ -118,14 +118,15 @@ void thread_t::reset_rand() {
 
 #ifdef USE_SMTHREAD_AS_BASE
 
+
 /*********************************************************************
  *
- * @fn    run
+ *  @fn:    run
  *  
- * @brief Setups the context of a cordoba (smthread_t derived) thread_t
+ *  @brief: Setups the context of a cordoba (smthread_t derived) thread_t
  *
- * @note  This function is wrapped with the initialization and destroy
- *        of a sthread. 
+ *  @note:  This function is wrapped with the initialization and destroy
+ *          of a sthread. 
  *
  *********************************************************************/
 
@@ -134,7 +135,7 @@ inline void thread_t::run()
     clh_lock::thread_init_manager();
     clh_rwlock::thread_init_manager();
 
-    setupthr();
+    setupthr(); // Setups the pool and the TLS variables
     
     thread_t* thread  = THREAD_KEY_SELF;
     thread_pool* pool = THREAD_POOL;
@@ -193,17 +194,19 @@ thread_t* thread_get_self(void)
 }
 
 
-
-/**
- *  @brief Creates a new thread and starts it.
+/*********************************************************************
  *
- *  @param thread A pointer to a pthread_t that will store the ID of
- *  the newly created thread.
+ *  @brief:  Creates a new thread and starts it.
  *
- *  @param t - A thread that contains the function to run.
+ *  @param:  thread - A pointer to a pthread_t that will store the ID of
+ *           the newly created thread.
  *
- *  @return 0 on success. Non-zero on error.
- */
+ *  @param:  t - A thread that contains the function to run.
+ *
+ *  @return: tid - The thread id of the newly created thread. Needed, 
+ *           for the caller to destroy (join) the thread.
+ *
+ *********************************************************************/
 
 pthread_t thread_create(thread_t* t, thread_pool* pool)
 {
@@ -221,7 +224,7 @@ pthread_t thread_create(thread_t* t, thread_pool* pool)
     err = pthread_create(&tid, &pattr, start_thread, new thread_args(t, pool));
     THROW_IF(ThreadException, err);
 
-    return tid;
+    return (tid);
 }
 
 
@@ -382,19 +385,24 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 }
 
 
+
 /*********************************************************************
  *
- *  @brief thread_main function for newly created threads. Receives a
- *  thread_t object as its argument and it calls its run() function.
+ *  @fn:     start_thread
  *
- *  @param thread_object A thread_t*.
+ *  @brief:  thread_main function for newly created threads. Receives a
+ *           thread_t object as its argument and it calls its run() function.
  *
- *  @return The value returned by thread_object->run().
+ *  @param:  thread_object A thread_t*.
+ *
+ *  @return: The value returned by thread_object->run().
  *
  *********************************************************************/
 
 void* start_thread(void* thread_object)
 {
+    cout << "(+)" << endl;
+
     clh_lock::thread_init_manager();
     clh_rwlock::thread_init_manager();
     
@@ -452,8 +460,6 @@ void thread_pool::stop() {
 
 static void setup_thread(thread_args* args) 
 {
-    cout << "(+)" << endl;
-
     thread_t* thread  = args->t;
     thread_pool* pool = args->p;
 
@@ -470,3 +476,35 @@ static void setup_thread(thread_args* args)
     thread->reset_rand();
 }
 
+
+
+#ifdef USE_SMTHREAD_AS_BASE
+
+/*********************************************************************
+ *  
+ *  @fn:    wait_for_sthread_clients
+ *
+ *  @brief: Wait for an array of created clients (sthread-derived) threads
+ *           to exit. 
+ *
+ *  @param: threads - An array of sthreads.
+ *
+ *  @param: num_thread_ids - The number of valid thread IDs in the
+ *  thread_ids array.
+ *
+ *********************************************************************/
+
+void wait_for_sthread_clients(sthread_t** threads, int num_thread_ids) 
+{
+    // wait for client threads to receive error message
+    for (int i = 0; i < num_thread_ids; i++) {
+        // join should not really fail unless we are doing
+        // something seriously wrong...
+        threads[i]->join();
+        
+        //int join_ret = pthread_join(thread_ids[i], NULL);
+        //assert(join_ret == 0);
+    }
+}
+
+#endif /** USE_SMTHREAD_AS_BASE */

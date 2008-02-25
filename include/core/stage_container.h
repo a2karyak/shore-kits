@@ -58,7 +58,7 @@ protected:
     debug_mutex_t _container_lock;
     pthread_cond_t  _container_queue_nonempty;
     
-    c_str                   _container_name;
+    c_str _container_name;
     //    ContainerQueue          _container_queue;
 
     list <stage_adaptor_t*> _container_current_stages;
@@ -81,7 +81,7 @@ public:
 
     ~stage_container_t();
   
-    const c_str &get_name(){ return _container_name; }
+    const c_str &get_name(){ return (_container_name); }
 
     void enqueue(packet_t* packet);
 
@@ -111,18 +111,19 @@ private:
     int _next_thread;
 
     /* Used to track the reservation of worker threads by clients who
-       want to submit queries. A client is responsible for reserving
-       all required workers before submitting the query.
-
-       This pool's capacity should be the number of worker threads
-       that exist for this stage. Every packet list in the container
-       queue must have a worker reserved for it.
-
-       Workers can report themselves as idle or non-idle when they
-       enter and exit process_packet().
-    */
+     * want to submit queries. A client is responsible for reserving
+     * all required workers before submitting the query.
+     *
+     * This pool's capacity should be the number of worker threads
+     * that exist for this stage. Every packet list in the container
+     * queue must have a worker reserved for it.
+     *
+     * Workers can report themselves as idle or non-idle when they
+     * enter and exit process_packet().
+     */
     resource_pool_t _rp;
-};
+
+}; // EOF: stage_container_t
 
 
 
@@ -234,8 +235,8 @@ struct stage_factory_t {
  *  The template specifies which stage to construct.
  */
 template<class STAGE>
-struct stage_factory : public stage_factory_t {
-
+struct stage_factory : public stage_factory_t 
+{
   virtual stage_t* create_stage() {
     return new STAGE();
   }

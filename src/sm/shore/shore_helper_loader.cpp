@@ -20,6 +20,44 @@ using namespace shore;
 
 /****************************************************************** 
  *
+ * class db_init_smt_t
+ *
+ ******************************************************************/
+
+void db_init_smt_t::work()
+{
+    if (!_env->is_initialized()) {
+        if (_env->init()) {
+            // Couldn't initialize the Shore environment
+            // cannot proceed
+            TRACE( TRACE_ALWAYS, "Couldn't initialize Shore...\n");
+            assert (false);
+            return;
+        }
+    }
+
+    // if reached this point everything went ok
+    TRACE( TRACE_DEBUG, "Shore initialized...\n");
+    _rv = 0;
+}
+
+
+/****************************************************************** 
+ *
+ * class db_load_smt_t
+ *
+ ******************************************************************/
+
+void db_load_smt_t::work()
+{
+    _rc = _env->loaddata();
+    _rv = 0;
+}
+
+
+
+/****************************************************************** 
+ *
  * class table_loading_smt_t
  *
  ******************************************************************/
@@ -94,6 +132,9 @@ w_rc_t index_loading_smt_t::do_help()
     bool  consumption = false;
     int   ispin  = 0;
 
+    CRITICAL_SECTION(hcs, &_cs_mutex);
+    hcs.pause();
+
     while(!_start) {
         ispin++;
     }
@@ -103,7 +144,7 @@ w_rc_t index_loading_smt_t::do_help()
     while (true) {
 
         //*** START: CS ***//
-        pthread_mutex_lock(&_cs_mutex);
+        hcs.resume();
 
         if (!_has_consumed) {
             // if new row waiting
@@ -127,7 +168,7 @@ w_rc_t index_loading_smt_t::do_help()
             consumption   = true; // a consumption just happened
         }
 
-        pthread_mutex_unlock(&_cs_mutex);
+        hcs.pause();
         //*** EOF: CS ***//
 
         if (consumption) {
@@ -145,10 +186,8 @@ w_rc_t index_loading_smt_t::do_help()
     }
     // final commit
     W_DO(_pssm->commit_xct());
-    pthread_mutex_unlock(&_cs_mutex);
 
     // if we reached this point everything went ok
-    TRACE( TRACE_DEBUG, "Finishing index (%s) loading...\n", _pindex->name());
     return (RCOK);
 }
 

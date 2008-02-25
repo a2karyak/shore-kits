@@ -100,8 +100,8 @@ w_rc_t ShoreTPCCEnv::loaddata()
     tpcc_table_t* ptable = NULL;
 
     // (ip) for debug loading only the first 2 tables (WH, DISTR)
-    //    int num_tbl = 4; // if 4 == PAYMENT TABLES
-    int num_tbl = _table_list.size();
+    int num_tbl = 4; // if 4 == PAYMENT TABLES
+    //    int num_tbl = _table_list.size();
 
     int cnt = 0;
     table_loading_smt_t* loaders[SHORE_TPCC_TABLES];
@@ -118,7 +118,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
         }
 
 
-#if 0 
+#if 1
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -767,9 +767,9 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 	W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
                                          c_w, c_d, ppin->_c_last));
 
-	int   c_id_list[17];
-	int   count = 0;
-	bool  eof;
+	int c_id_list[17];
+	int count = 0;
+	bool eof;
 
 	W_DO(c_iter->next(_pssm, eof, rcust));
 	while (!eof) {
@@ -827,15 +827,10 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rcust.get_value(20, acust.C_DATA_1, 251);
     rcust.get_value(21, acust.C_DATA_2, 251);
 
-    TRACE( TRACE_DEBUG, "%s\n", acust.tuple_to_str().data()); 
-
     // update customer fields
     acust.C_BALANCE -= ppin->_h_amount;
     acust.C_YTD_PAYMENT += ppin->_h_amount;
     acust.C_PAYMENT_CNT++;
-
-
-    TRACE( TRACE_DEBUG, "%s\n", acust.tuple_to_str().data()); 
 
     // if bad customer
     if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
@@ -892,7 +887,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
      */
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-index-probe (%d) (%d) (%.2f)\n", 
-           xct_id, ppin->_home_d_id, ppin->_home_wh_id, ppin->_h_amount);
+           xct_id, ppin->_home_wh_id, ppin->_home_d_id, ppin->_h_amount);
     W_DO(_district.index_probe(_pssm, &rdist, ppin->_home_d_id, ppin->_home_wh_id));
 
     tpcc_district_tuple adistr;

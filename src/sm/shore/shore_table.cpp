@@ -165,6 +165,10 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     // fire up the index loading helper
     guard<index_loading_smt_t> idxld = new 
         index_loading_smt_t(c_str("idxld"), db, this, index, &row);    
+
+    CRITICAL_SECTION(cs, &idxld->_cs_mutex);
+    cs.pause();
+
     idxld->fork();
 
     /* 2. iterate over the whole table and insert the corresponding 
@@ -176,7 +180,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
         while (!was_consumed) {
 
             //*** START: CS ***//
-            pthread_mutex_lock(&idxld->_cs_mutex);
+            cs.resume();
 
             if (idxld->_has_consumed) {
                 // if the consumer is waiting 
@@ -193,7 +197,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
                     rowscanned++;
             }
         
-            pthread_mutex_unlock(&idxld->_cs_mutex);
+            cs.pause();
             //*** EOF: CS ***//
         }
     }

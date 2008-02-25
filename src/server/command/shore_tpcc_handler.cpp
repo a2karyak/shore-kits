@@ -15,7 +15,7 @@
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
-
+#include "sm/shore/shore_helper_loader.h"
 
 
 // Shore-TPCC drivers header files
@@ -67,6 +67,16 @@ void shore_tpcc_handler_t::init() {
         // will configure and start
         shore_env = new ShoreTPCCEnv(SHORE_DEFAULT_CONF_FILE);
 
+        // the initialization must be executed in a shore context
+        db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), shore_env);
+        initializer->fork();
+        initializer->join();        
+        if (initializer) {
+            delete (initializer);
+            initializer = NULL;
+        }
+
+
         // register drivers...
         add_driver("shore_new_order_baseline", 
                    new shore_tpcc_new_order_baseline_driver(c_str("SHORE_NEW_ORDER_BASELINE")));
@@ -93,10 +103,13 @@ void shore_tpcc_handler_t::init() {
 }
 
 
-/** @fn shutdown
+/*********************************************************************
  *
- *  @brief Do the appropriate shutdown
- */
+ *  @fn:    shutdown
+ *
+ *  @brief: Do the appropriate shutdown
+ *
+ *********************************************************************/
 
 void shore_tpcc_handler_t::shutdown() {
 
@@ -105,20 +118,25 @@ void shore_tpcc_handler_t::shutdown() {
     // use a global thread-safe state machine to ensure that
     // the db close function is called exactly once
 
-    critical_section_t cs(state_mutex);
+    CRITICAL_SECTION(cs, state_mutex);
 
     if ( state == SHORE_TPCC_HANDLER_INITIALIZED ) {
         
         // close Storage manager
         TRACE(TRACE_ALWAYS, "... closing db\n");
-        closing_smt_t* closer = new closing_smt_t(shore_env, c_str("closer"));
-        int* r=NULL;
-        run_smthread(closer, r);
-//         if (*r)
-//             cerr << "Error in closing..." << endl;
-//         delete (r);
-        delete (closer);
-        closer = NULL;
+
+        // close Shore env
+        close_smt_t* clt = new close_smt_t(c_str("clt"), shore_env);
+        clt->fork();
+        clt->join();
+        if (clt->_rv) {
+            TRACE( TRACE_ALWAYS, "*** Error in closing thread... ***\n");
+        }
+
+        if (clt) {
+            delete (clt);
+            clt = NULL;
+        }
         
         state = SHORE_TPCC_HANDLER_SHUTDOWN;
     }
@@ -177,15 +195,22 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     // Load data
     if( !strcmp(driver_tag, "parse")) {
         // Load data to the Shore Database
-        cout << "Loading..." << endl;
-        int* r=NULL;
-        loading_smt_t* loader = new loading_smt_t(shore_env, c_str("loader"));
-        run_smthread(loader, r);
-//         if (*r) 
-//             cerr << "Error in loading... " << endl;
-//         delete (r);
-        delete (loader);
-        loader = NULL;
+        // This shold be done within a Shore context
+
+        db_load_smt_t* loader = new db_load_smt_t(c_str("loader"), shore_env);
+        loader->fork();
+        loader->join();
+        if (loader->_rc) {
+            TRACE( TRACE_ALWAYS, "Problem loading the database\n", 
+                   loader->_rc.err_num());
+            assert (false);
+        }
+
+        if (loader) {
+            delete (loader);
+            loader = NULL;
+        }
+
         return;
     }
 
@@ -193,6 +218,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     // 'du' tag handled differently from all others...
     if (!strcmp(driver_tag, "du"))
     {
+        assert (false); // (ip) untested
         cout << "Getting stats..." << endl;
         int* r=NULL;
         du_smt_t* duer = new du_smt_t(shore_env, c_str("duer"));

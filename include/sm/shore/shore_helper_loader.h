@@ -21,6 +21,75 @@ ENTER_NAMESPACE(shore);
     
 /****************************************************************** 
  *
+ *  @class: db_init_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used for initiating
+ *          the Shore environment
+ *
+ ******************************************************************/
+
+class db_init_smt_t : public thread_t 
+{
+private:
+    ShoreEnv* _env;
+    int       _rv;
+
+public:
+    
+    db_init_smt_t(c_str tname, ShoreEnv* db) 
+	: thread_t(tname), _env(db)
+    {
+        assert (_env);
+    }
+
+    ~db_init_smt_t() { }
+
+    // thread entrance
+    void work();
+
+    inline int rv() { return (_rv); }
+
+}; // EOF: db_init_smt_t
+
+
+    
+/****************************************************************** 
+ *
+ *  @class: db_load_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used for loading
+ *          the Shore database
+ *
+ ******************************************************************/
+
+class db_load_smt_t : public thread_t 
+{
+private:
+    ShoreEnv* _env;
+    int       _rv;
+
+public:
+    
+    db_load_smt_t(c_str tname, ShoreEnv* db) 
+	: thread_t(tname), _env(db)
+    {
+        assert (_env);
+    }
+
+    ~db_load_smt_t() { }
+
+    // thread entrance
+    void work();
+
+    inline int rv() { return (_rv); }
+    w_rc_t    _rc;
+
+}; // EOF: db_load_smt_t
+
+
+    
+/****************************************************************** 
+ *
  *  @class: table_loading_smt_t
  *
  *  @brief: An smthread inherited class that it is used for spawning
@@ -96,12 +165,9 @@ public:
         assert (_ptable);
         assert (_pindex);
         assert (_prow);
-
-        pthread_mutex_init(&_cs_mutex, NULL);
     }
 
     ~index_loading_smt_t() { 
-        pthread_mutex_unlock(&_cs_mutex);
     }
 
     inline int rv() { return (_rv); }
@@ -113,7 +179,9 @@ public:
     int    count() { return (_t_count); }
 
     table_row_t*    _prow;
-    pthread_mutex_t _cs_mutex;
+    //    mcs_lock      _cs_mutex; /* (?) */
+    tatas_lock      _cs_mutex; /* (215) */
+    //    pthread_mutex_t _cs_mutex; /* (263) */
     bool            _has_consumed;
     bool            _start;
     bool            _finish;
@@ -152,6 +220,52 @@ public:
     void work();
 
 }; // EOF: table_checking_smt_t
+
+
+
+/****************************************************************** 
+ *
+ *  @class close_smt_t
+ *
+ *  @brief An smthread inherited class that it is used just for
+ *         closing the database.
+ *
+ ******************************************************************/
+
+class close_smt_t : public thread_t {
+private:
+    ShoreEnv* _env;    
+
+public:
+    int	_rv;
+    
+    close_smt_t(c_str tname, ShoreEnv* env) 
+	: thread_t(tname), 
+          _env(env), _rv(0)
+    {
+    }
+
+    ~close_smt_t() {
+    }
+
+
+    // thread entrance
+    void work() {
+        assert (_env);
+        TRACE( TRACE_ALWAYS, "Closing env...\n");
+        if (_env) {
+            delete (_env);
+            _env = NULL;
+        }        
+    }
+
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     */
+    inline int retval() { return (_rv); }
+    
+}; // EOF: close_smt_t
 
 
 

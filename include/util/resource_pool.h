@@ -1,3 +1,4 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file resource_pool.h
  *

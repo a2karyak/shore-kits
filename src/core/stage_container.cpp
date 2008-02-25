@@ -86,13 +86,18 @@ stage_container_t::stage_container_t(const c_str &container_name,
 
 
 
-/**
- *  @brief Stage container destructor. Should only be invoked after a
- *  shutdown() has successfully returned and no more worker threads
- *  are in the system. We will delete every entry of the container
- *  queue.
- */
-stage_container_t::~stage_container_t(void) {
+/*********************************************************************
+ *
+ *  @brief: Stage container destructor. 
+ *
+ *  @note:  Should only be invoked after a shutdown() has successfully
+ *          returned and no more worker threads are in the system. We 
+ *          will delete every entry of the container queue.
+ *
+ *********************************************************************/
+
+stage_container_t::~stage_container_t(void) 
+{
     // There should be no worker threads accessing the packet queue when
     // this function is called. Otherwise, we get race conditions and
     // invalid memory accesses.
@@ -101,19 +106,26 @@ stage_container_t::~stage_container_t(void) {
     thread_mutex_destroy(_container_lock);
     thread_cond_destroy(_container_queue_nonempty);
     for(int i=0; i < _next_thread; i++)
-	delete _queue_slices[i];
+	delete (_queue_slices[i]);
 }
 
 
-/**
- * A wrapper to allow us to run multiple threads off of one stage
- * container. It might be possible to make stage_container_t inherit
- * from thread_t and instantiate it directly multiple times, but
- * thread-local state like the RNG would be too risky to use.
- */
-struct stage_thread : thread_t {
+/*********************************************************************
+ * 
+ *  @class: stage_thread - Class for worker threads
+ *
+ *  A wrapper to allow us to run multiple threads off of one stage
+ *  container. It might be possible to make stage_container_t inherit
+ *  from thread_t and instantiate it directly multiple times, but
+ *  thread-local state like the RNG would be too risky to use.
+ *
+ *********************************************************************/
+
+struct stage_thread : thread_t 
+{
     stage_container_t* _sc;
     int _which;
+
     stage_thread(const c_str &name, stage_container_t* sc, int which)
         : thread_t(name), _sc(sc), _which(which)
     {        
@@ -122,7 +134,8 @@ struct stage_thread : thread_t {
     virtual void work() {
         _sc->run(_which);
     }
-};
+
+}; // EOF: stage_thread
 
 
 
@@ -185,7 +198,8 @@ packet_list_t* stage_container_t::container_queue_dequeue(int which) {
 	thread_cond_wait(slice->_cond, slice->_lock);
 
     if(slice->_dequeue_op_count == 10000) {
-	printf("Slice %d encountered %d%% waits\n", which, 100*slice->_dequeue_wait_count/slice->_dequeue_op_count);
+	printf("Slice %d encountered %d%% waits\n", 
+               which, 100*slice->_dequeue_wait_count/slice->_dequeue_op_count);
 	slice->_dequeue_op_count = slice->_dequeue_wait_count = 0;
     }
     
@@ -198,49 +212,78 @@ packet_list_t* stage_container_t::container_queue_dequeue(int which) {
 
 
 
-/**
- *  @brief Create another worker thread.
+/*********************************************************************
  *
- *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
- */
-void stage_container_t::create_worker() {
-    
+ *  @fn:    create_worker
+ *
+ *  @brief: Create another worker thread.
+ *
+ *  !!! THE CALLER MUST BE HOLDING THE _container_lock MUTEX !!!
+ *
+ *********************************************************************/
+
+/*** XXX: In order to run with sthread-derived classes instead of calling
+ *        the thread_create function it calls the sthread::fork()
+ */ 
+void stage_container_t::create_worker() 
+{    
     // create another worker thread
-    c_str thread_name("%s_THREAD_%d", _container_name.data(), _next_thread);
+    c_str thread_name("%s_THR_%d", _container_name.data(), _next_thread);
     thread_t* thread = new stage_thread(thread_name, this, _next_thread);
 
     if (TRACE_WORKER_CREATE)
         TRACE(TRACE_ALWAYS, "Creating thread %s\n", thread_name.data());
 
-    // must update _queue_slices *before* updating _next_thread or spawning the thread
+    // must update _queue_slices *before* updating _next_thread 
+    // or spawning the thread
     DistributedQueueSlice* slice = new DistributedQueueSlice;
     _queue_slices.push_back(slice);
     _next_thread++;
+
+#ifdef USE_SMTHREAD_AS_BASE
+    thread->fork();
+#else
     thread_create(thread, &_pool);
+#endif
 
     // notify resource pool
     _rp.notify_capacity_increase(1);
 }
 
 
+/*********************************************************************
+ *
+ *  @fn:    reserve
+ *
+ *  @brief: Public function wrapper of the _reserve. It acquires the 
+ *          container lock and calls the _reserve.
+ *
+ *  @param: n The number of workers.
+ *
+ *********************************************************************/
 
-void stage_container_t::reserve(int n) {
+void stage_container_t::reserve(int n) 
+{
     // * * * BEGIN CRITICAL SECTION * * *
     critical_section_t cs(_container_lock);
     _reserve(n);
 }
 
 
-/**
- *  @brief Reserve the specified number of workers.
+/*********************************************************************
  *
- *  @param n The number of workers.
+ *  @fn:    _reserve
  *
- *  THE CALLER MUST BE HOLDING THE _container_lock MUTEX.
- */
-void stage_container_t::_reserve(int n) {
-    
+ *  @brief: Reserve the specified number of workers.
+ *
+ *  @param: n The number of workers.
+ *
+ *  !!! THE CALLER MUST BE HOLDING THE _container_lock MUTEX !!!
+ *
+ *********************************************************************/
 
+void stage_container_t::_reserve(int n) 
+{   
     assert(n > 0);
 
 
@@ -302,16 +345,20 @@ void stage_container_t::_reserve(int n) {
 };
 
 
-
-/**
- *  @brief Unreserve the specified number of workers.
+/*********************************************************************
  *
- *  @param n The number of workers.
+ *  @fn:    unreserve
+ * 
+ *  @brief: Unreserve the specified number of workers.
  *
- *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
- */
-void stage_container_t::unreserve(int n) {
+ *  @param: n - The number of workers.
+ *
+ *  !!! THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX !!!
+ *
+ *********************************************************************/
 
+void stage_container_t::unreserve(int n) 
+{
     assert(n > 0);
 
     // * * * BEGIN CRITICAL SECTION * * *
@@ -452,13 +499,17 @@ void stage_container_t::enqueue(packet_t* packet) {
 };
 
 
-
-/**
- *  @brief Worker threads for this stage should invoke this
- *  function. It will return when the stage shuts down.
+/*********************************************************************
  *
- *  THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX.
- */
+ *  @fn:    run
+ *
+ *  @brief: Worker threads for this stage should invoke this function.
+ *          It will return when the stage shuts down.
+ *
+ *  !!! THE CALLER MUST NOT BE HOLDING THE _container_lock MUTEX !!!
+ *
+ *********************************************************************/
+
 void stage_container_t::run(int id) {
 
     // lower my priority a bit so the clients run first

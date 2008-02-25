@@ -48,13 +48,15 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 		      int timeout_ms);
 
 template <class T>
-T* thread_join(pthread_t tid) {
+T* thread_join(pthread_t tid) 
+{
     // the union keeps gcc happy about the "type-punned" pointer
     // access going on here. Otherwise, -O3 could break the code.
     union {
         void *p;
         T *v;
     } u;
+
     if(pthread_join(tid, &u.p))
         THROW(ThreadException);
 
@@ -95,7 +97,7 @@ struct thread_pool
 }; // EOF: thread_pool
 
 
-/** define USE_SMTHRAD_AS_BASE if there is need the base thread class 
+/** define USE_SMTHREAD_AS_BASE if there is need the base thread class 
  *  to derive from the smthread_t class (Shore threads)
  */
 #define USE_SMTHREAD_AS_BASE
@@ -196,12 +198,17 @@ protected:
 }; // EOF: thread_t
 
 
+#ifdef USE_SMTHREAD_AS_BASE
+void wait_for_sthread_clients(sthread_t** threads, int num_thread_ids);
+#endif
+
 
 /**
  *  @brief wraps up a class instance and a member function to look
  *  like a thread_t. Use the convenience function below to
  *  instantiate.
  */
+
 template <class Class, class Functor>
 class member_func_thread_t : public thread_t {
     Class *_instance;
