@@ -515,6 +515,7 @@ w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
         ksz = tuple->format_key(index, pdest, bufsz);
         assert (pdest); // (ip) if dest == NULL there is invalid key
 
+        W_DO(index->find_fid(db));
 	W_DO(db->create_assoc(index->fid(),
                               vec_t(pdest, ksz),
                               vec_t(&(tuple->_rid), sizeof(rid_t))));

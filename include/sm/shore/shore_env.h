@@ -47,9 +47,10 @@ static const string SHORE_DEF_DEV_OPTIONS[][2] = {
     { "device", "tbl_tpcc/shore" },
     { "devicequota", "102400" },
     { "clobberdev", "1" },
+    { "loadatadir", SHORE_TABLE_DATA_DIR }
 };
 
-static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 3;
+static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 4;
 
 
 
@@ -117,18 +118,18 @@ protected:
 
     // Device and volume. There is a single volume per device. 
     // The whole environment resides in a single volume.
-    devid_t             _devid;       // device id
-    vid_t*              _pvid;        // volume id
-    stid_t              _root_iid;    // root id of the volume
-    pthread_mutex_t     _vol_mutex;   // volume mutex
-    lvid_t              _lvid;        // logical volume id (unnecessary, using physical ids)
-    unsigned int        _vol_cnt;     // volume count (unnecessary, always 1)
+    devid_t            _devid;     // device id
+    vid_t*             _pvid;      // volume id
+    stid_t             _root_iid;  // root id of the volume
+    pthread_mutex_t    _vol_mutex; // volume mutex
+    lvid_t             _lvid;      // logical volume id (unnecessary, using physical ids)
+    unsigned int       _vol_cnt;   // volume count (unnecessary, always 1)
 
     // Configuration variables
-    option_group_t*     _popts;       // config options
-    string              _cname;       // config filename
-    map<string,string>  _sm_opts;     // map of options for the sm
-    map<string,string>  _dev_opts;    // map of options for the device    
+    option_group_t*    _popts;     // config options
+    string             _cname;     // config filename
+    map<string,string> _sm_opts;   // map of options for the sm
+    map<string,string> _dev_opts;  // map of options for the device    
 
     // Stats
     env_stats_t         _env_stats; 
@@ -137,7 +138,7 @@ protected:
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
     void printconfig();
-    void dump();
+
 
     // Storage manager access functions
     int  configure_sm();
@@ -182,6 +183,7 @@ public:
     virtual int init();
     virtual int close();
     virtual int statistics();
+    virtual void dump();
 
     virtual w_rc_t loaddata()=0;
     virtual w_rc_t check_consistency()=0;
@@ -189,6 +191,7 @@ public:
 
     // inline access methods
     inline ss_m* db() { return(_pssm); }
+    //    inline lvid_t* vid() { return(&_lvid); }
     inline vid_t* vid() { return(_pvid); }
 
     inline bool is_initialized() { 

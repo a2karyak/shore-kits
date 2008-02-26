@@ -79,7 +79,10 @@ public:
     ~db_load_smt_t() { }
 
     // thread entrance
-    void work();
+    void work() {
+        _rc = _env->loaddata();
+        _rv = 0;
+    }
 
     inline int rv() { return (_rv); }
     w_rc_t    _rc;
@@ -102,18 +105,21 @@ class table_loading_smt_t : public thread_t
 private:
     ss_m*         _pssm;
     table_desc_t* _ptable;
-    const int     _sf;
+    const int     _sf;    
+    const char*   _datadir;
     int           _rv;
 
 public:
     
     table_loading_smt_t(c_str tname, ss_m* assm, table_desc_t* atable, 
-                        const int asf) 
-	: thread_t(tname), _pssm(assm), _ptable(atable), _sf(asf)
+                        const int asf, const char* adatadir) 
+	: thread_t(tname), _pssm(assm), _ptable(atable), _sf(asf),
+          _datadir(adatadir)
     {
         assert (_pssm);
         assert (_ptable);
         assert (_sf);
+        assert (_datadir);
     }
 
     ~table_loading_smt_t() { }
@@ -206,7 +212,7 @@ class table_checking_smt_t : public thread_t
 {
 private:
     ss_m*         _pssm;
-    table_desc_t* _ptable;   
+    table_desc_t* _ptable; 
 
 public:
     
@@ -242,7 +248,7 @@ private:
 public:
     int	_rv;
     
-    close_smt_t(c_str tname, ShoreEnv* env) 
+    close_smt_t(ShoreEnv* env, c_str tname) 
 	: thread_t(tname), 
           _env(env), _rv(0)
     {
@@ -257,6 +263,7 @@ public:
         assert (_env);
         TRACE( TRACE_ALWAYS, "Closing env...\n");
         if (_env) {
+            _env->close();
             delete (_env);
             _env = NULL;
         }        
@@ -269,6 +276,50 @@ public:
     inline int retval() { return (_rv); }
     
 }; // EOF: close_smt_t
+
+
+
+/****************************************************************** 
+ *
+ *  @class dump_smt_t
+ *
+ *  @brief An smthread inherited class that it is used just for
+ *         dumping the database.
+ *
+ ******************************************************************/
+
+class dump_smt_t : public thread_t {
+private:
+    ShoreEnv* _env;    
+
+public:
+    int	_rv;
+    
+    dump_smt_t(ShoreEnv* env, c_str tname) 
+	: thread_t(tname), 
+          _env(env), _rv(0)
+    {
+    }
+
+    ~dump_smt_t() {
+    }
+
+
+    // thread entrance
+    void work() {
+        assert (_env);
+        TRACE( TRACE_DEBUG, "Dumping...\n");
+        _env->dump();
+        _rv = 0;
+    }
+
+
+    /** @note Those two functions should be implemented by every
+     *        smthread-inherited class that runs using run_smthread()
+     */
+    inline int retval() { return (_rv); }
+    
+}; // EOF: dump_smt_t
 
 
 

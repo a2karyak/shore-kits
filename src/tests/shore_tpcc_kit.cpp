@@ -132,18 +132,7 @@ w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid)
 
 void test_smt_t::print_tables() 
 {
-    /* describes all the tables */
-    _env->warehouse()->print_table(_env->db());
-    _env->district()->print_table(_env->db());
-    _env->customer()->print_table(_env->db());
-    _env->history()->print_table(_env->db());
-
-    return;
-    _env->new_order()->print_table(_env->db());
-    _env->order()->print_table(_env->db());
-    _env->orderline()->print_table(_env->db());
-    _env->item()->print_table(_env->db());
-    _env->stock()->print_table(_env->db());
+    _env->dump();
 }
 
 
@@ -248,7 +237,7 @@ int main(int argc, char* argv[])
 
 
     // close Shore env
-    close_smt_t* clt = new close_smt_t(c_str("clt"), shore_env);
+    close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
     clt->fork();
     clt->join();
     if (clt->_rv) {

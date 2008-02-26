@@ -126,7 +126,7 @@ void shore_tpcc_handler_t::shutdown() {
         TRACE(TRACE_ALWAYS, "... closing db\n");
 
         // close Shore env
-        close_smt_t* clt = new close_smt_t(c_str("clt"), shore_env);
+        close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
         clt->fork();
         clt->join();
         if (clt->_rv) {
@@ -188,7 +188,6 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         {
             TRACE(TRACE_ALWAYS, "%s\n", it->first.data());
         }
-
         return;
     }
 
@@ -211,10 +210,32 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
             delete (loader);
             loader = NULL;
         }
-
         return;
     }
 
+
+    // Continue only if data loaded
+    if(!shore_env->is_loaded()) {
+	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' to load one\n");
+	return;
+    }
+
+    // 'dump' tag handled differently from all others...
+    if (!strcmp(driver_tag, "dump"))
+    {
+        dump_smt_t* dumper = new dump_smt_t(shore_env, c_str("dumper"));
+        dumper->fork();
+        dumper->join();
+        if (dumper->retval()) {
+            TRACE( TRACE_ALWAYS, "Problem dumping the database\n");
+        }
+
+        if (dumper) {
+            delete (dumper);
+            dumper = NULL;
+        }
+        return;
+    }
 
     // 'du' tag handled differently from all others...
     if (!strcmp(driver_tag, "du"))
@@ -230,11 +251,6 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     }
 
 
-    // Continue only if data loaded
-    if(!shore_env->is_loaded()) {
-	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' to load one\n");
-	return;
-    }
 
     // Parses new run data
     if ( sscanf(command, "%*s %*s %d %d %d %s",

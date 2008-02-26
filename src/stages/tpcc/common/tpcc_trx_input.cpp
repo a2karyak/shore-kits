@@ -19,6 +19,7 @@ ENTER_NAMESPACE(tpcc);
 //#define USE_SAME_INPUT
 
 // uncommend line below to produce "safe" (tested code paths) input
+#undef USE_SAFE_PATHS
 #define USE_SAFE_PATHS 
 
 

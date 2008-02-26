@@ -398,20 +398,21 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
 
 				    
 
-w_rc_t   new_order_t::get_iter_by_index(ss_m* db,
-					index_scan_iter_impl * & iter,
-                                        table_row_t* ptuple,
-					const int w_id,
-					const int d_id)
+w_rc_t new_order_t::get_iter_by_index(ss_m* db,
+                                      index_scan_iter_impl* &iter,
+                                      table_row_t* ptuple,
+                                      const int w_id,
+                                      const int d_id)
 {
     /* find the index structure */
     index_desc_t * index = find_index("NO_INDEX");
     assert (index);
 
     /* get the lowest key value */
+    ptuple->set_value(0, 0);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    ptuple->set_value(0, 0);
+
 
     char* lowkey = NULL;
     int   lobufsz = 0;

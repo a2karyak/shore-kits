@@ -179,6 +179,7 @@ private:
     tpcc_stats_t _tpcc_stats; 
 
 
+
     /* --- kit baseline trxs --- */
     w_rc_t xct_new_order(new_order_input_t* no_input, 
                          const int xct_id, 
@@ -243,6 +244,7 @@ public:
     void set_qf(const int aQF);
     inline int get_sf() { return (_scaling_factor); }
     inline tpcc_table_list_t* table_list() { return (&_table_list); }
+    void dump();
 
 
     /** Public methods */    

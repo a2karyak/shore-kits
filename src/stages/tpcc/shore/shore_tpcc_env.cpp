@@ -103,9 +103,12 @@ w_rc_t ShoreTPCCEnv::loaddata()
     //    int num_tbl = 4; // if 4 == PAYMENT TABLES
     int num_tbl = _table_list.size();
 
+    const char* loaddatadir = _dev_opts[SHORE_DEF_DEV_OPTIONS[3][0]].c_str();
     int cnt = 0;
     table_loading_smt_t* loaders[SHORE_TPCC_TABLES];
     time_t tstart = time(NULL);
+
+    TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir);
 
     for(tpcc_table_list_iter table_iter = _table_list.begin(); 
         table_iter != _table_list.end(); table_iter++)
@@ -113,7 +116,8 @@ w_rc_t ShoreTPCCEnv::loaddata()
             ptable = *table_iter;
             loaders[cnt] = new table_loading_smt_t(c_str("ld%d", cnt), 
                                                    _pssm, ptable, 
-                                                   _scaling_factor);
+                                                   _scaling_factor,
+                                                   loaddatadir);
             cnt++;
         }
 
@@ -235,6 +239,26 @@ void ShoreTPCCEnv::set_qf(const int aQF)
     else {
         TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
     }
+}
+
+
+
+void ShoreTPCCEnv::dump()
+{
+    tpcc_table_t* ptable = NULL;
+    int cnt = 0;
+    for(tpcc_table_list_iter table_iter = _table_list.begin(); 
+        table_iter != _table_list.end(); table_iter++)
+        {
+            ptable = *table_iter;
+            ptable->print_table(this->_pssm);
+            cnt++;
+
+            // (ip) print only the first 4 tables
+            if (cnt == 4)
+                break;
+        }
+    
 }
 
 
@@ -573,7 +597,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
         tpcc_stock_tuple astock;
         TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-index-probe (%d) (%d)\n", 
                xct_id, ol_i_id, ol_supply_w_id);
-	W_DO(_stock.index_probe_forupdate(_pssm, &rst, ol_i_id, ol_supply_w_id));       
+	W_DO(_stock.index_probe_forupdate(_pssm, &rst, ol_i_id, ol_supply_w_id));
 
         rst.get_value(0, astock.S_I_ID);
         rst.get_value(1, astock.S_W_ID);
@@ -1189,7 +1213,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
         table_row_t rsb(&o_id_list);
 
 
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-iter-by-index (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-new-order-iter-by-index (%d) (%d)\n", 
                xct_id, w_id, d_id);
 
         index_scan_iter_impl* no_iter;
@@ -1230,7 +1254,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 * plan: index scan on "NO_INDEX"
 	 */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:delete-by-index (%d) (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:delete-new-order-by-index (%d) (%d) (%d)\n", 
                xct_id, w_id, d_id, no_o_id);
 
 	W_DO(_new_order.delete_by_index(_pssm, &rno, w_id, d_id, no_o_id));
@@ -1247,7 +1271,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:index-probe (%d) (%d) (%d)\n", 
-               xct_id, no_o_id, d_id, w_id);
+               xct_id, w_id, d_id, no_o_id);
 
 	rord.set_value(0, no_o_id);
 	rord.set_value(2, d_id);
@@ -1269,8 +1293,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 */
 
 
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-iter-by-index (%d) (%d) (%d)\n", 
-               xct_id, no_o_id, d_id, w_id);
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d DEL:get-orderline-iter-by-index (%d) (%d) (%d)\n", 
+               xct_id, w_id, d_id, no_o_id);
 
 	int total_amount = 0;
         index_scan_iter_impl* ol_iter;
@@ -1300,9 +1325,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:index-probe (%d) (%d) (%d)\n", 
-               xct_id, c_id, d_id, w_id);
+               xct_id, w_id, d_id, c_id);
 
-	W_DO(_customer.index_probe(_pssm, &rcust, c_id, d_id, w_id));
+	W_DO(_customer.index_probe(_pssm, &rcust, c_id, w_id, d_id));
 
 	double   balance;
 	rcust.get_value(16, balance);
@@ -1499,6 +1524,9 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
     return (RCOK);
 }
+
+
+
 
 
 EXIT_NAMESPACE(tpcc);

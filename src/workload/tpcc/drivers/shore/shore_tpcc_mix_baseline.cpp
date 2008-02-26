@@ -31,9 +31,9 @@ void shore_tpcc_mix_baseline_driver::submit(void* disp, memObject_t*)
     case XCT_PAYMENT:
         p_pay_baseline_driver->submit(disp, NULL);  break;
     case XCT_ORDER_STATUS:
-        //        p_ordst_baseline_driver->submit(disp, NULL);  break;
+        p_ordst_baseline_driver->submit(disp, NULL);  break;
     case XCT_DELIVERY:
-        //        p_del_baseline_driver->submit(disp, NULL);  break;
+        p_del_baseline_driver->submit(disp, NULL);  break;
     case XCT_STOCK_LEVEL:
         p_stlev_baseline_driver->submit(disp, NULL);  break;        
     default:

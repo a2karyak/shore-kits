@@ -39,7 +39,7 @@ payment_input_t& payment_input_t::operator= (const payment_input_t& rhs)
 
 void payment_input_t::describe(int id)
 {
-    TRACE( TRACE_TRX_FLOW,
+    TRACE( TRACE_DEBUG, // TRACE_TRX_FLOW,
            "\nPAYMENT: ID=%d\nWH_ID=%d\t\tD_ID=%d\n"  \
            "SEL_WH=%d\tSEL_IDENT=%d\n"  \
            "REM_WH_ID=%d\tREM_D_ID=%d\n"        \

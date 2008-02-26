@@ -44,19 +44,6 @@ void db_init_smt_t::work()
 
 /****************************************************************** 
  *
- * class db_load_smt_t
- *
- ******************************************************************/
-
-void db_load_smt_t::work()
-{
-    _rc = _env->loaddata();
-    _rv = 0;
-}
-
-
-/****************************************************************** 
- *
  * class table_loading_smt_t
  *
  ******************************************************************/
@@ -64,7 +51,7 @@ void db_load_smt_t::work()
 void table_loading_smt_t::work()
 {
     char fname[MAX_FILENAME_LEN];
-    strcpy(fname, SHORE_TABLE_DATA_DIR);
+    strcpy(fname, _datadir);
     strcat(fname, "/");
     strcat(fname, _ptable->name());
     strcat(fname, ".dat");
@@ -139,6 +126,7 @@ w_rc_t index_loading_smt_t::do_help()
     }
 
     W_DO(_pssm->begin_xct());    
+    W_DO(_pindex->find_fid(_pssm));
     
     while (true) {
 

@@ -167,8 +167,12 @@ int ShoreEnv::close_sm()
 //     cout << "Destroying volume..." << endl;
 //     W_COERCE(_pssm->destroy_vol(_lvid));
     
-//     cout << "Dismounting all devices... " << endl;
-//     W_COERCE(_pssm->dismount_all());
+    TRACE( TRACE_ALWAYS, "Dismounting all devices...\n");
+    w_rc_t e = _pssm->dismount_all();
+    if (e) {
+        TRACE( TRACE_ALWAYS, "Problem in dismounting [0x%x]\n",
+               e.err_num());
+    }
 
 //     cout << "Committing... " << endl ;
 //     W_COERCE(_pssm->commit_xct());
@@ -265,14 +269,14 @@ int ShoreEnv::configure_sm()
 
 /****************************************************************** 
  *
- * @fn     start_sm()
+ *  @fn:     start_sm()
  *
- * @brief  Start Shore storage manager. 
- *         - Format and mount the device
- *         - Create the volume in the device 
- *         (Shore limitation: only 1 volume per device)
+ *  @brief:  Start Shore storage manager. 
+ *           - Format and mount the device
+ *           - Create the volume in the device 
+ *           (Shore limitation: only 1 volume per device)
  *
- * @return 0 on success, non-zero otherwise
+ *  @return: 0 on success, non-zero otherwise
  *
  ******************************************************************/
 
@@ -300,25 +304,57 @@ int ShoreEnv::start_sm()
     assert (quota>0);
 
     if (clobber) {
-        TRACE( TRACE_DEBUG, "Formatting a new device (%s) with a (%d)kB quota\n",
+        // if didn't clobber then the db is already loaded
+        CRITICAL_SECTION(cs, _load_mutex);
+
+        TRACE( TRACE_DEBUG, "Formatting a new device (%s) with a (%d) kB quota\n",
                device, quota);
 
 	// create and mount device
 	// http://www.cs.wisc.edu/shore/1.0/man/device.ssm.html
 	W_COERCE(_pssm->format_dev(device, quota, true));
-        TRACE( TRACE_DEBUG, "Formatting completed...\n");
-    }
+        TRACE( TRACE_DEBUG, "Formatting device completed...\n");
 
-    // mount it...
-    W_COERCE(_pssm->mount_dev(device, _vol_cnt, _devid));
+        // mount it...
+        W_COERCE(_pssm->mount_dev(device, _vol_cnt, _devid));
+        TRACE( TRACE_DEBUG, "Mounting (new) device completed...\n");
+
+        // create volume 
+        // (only one per device supported, so this is kind of silly)
+        // see http://www.cs.wisc.edu/shore/1.0/man/volume.ssm.html
+        W_COERCE(_pssm->generate_new_lvid(_lvid));
+        W_COERCE(_pssm->create_vol(device, _lvid, quota, false, *_pvid));
+
+        // set that the database is not loaded
+        _loaded = false;
+    }
+    else {
+        // if didn't clobber then the db is already loaded
+        CRITICAL_SECTION(cs, _load_mutex);
+
+        TRACE( TRACE_DEBUG, "Using device (%s)\n", device);
+
+        // mount it...
+        W_COERCE(_pssm->mount_dev(device, _vol_cnt, _devid));
+        TRACE( TRACE_DEBUG, 
+               "Mounting (old) device completed. Volumes found: (%d)...\n", 
+               _vol_cnt);
+        
+        // get the list of volumes in order to set (_lvid)
+        lvid_t* volume_list;
+        unsigned int volume_cnt;
+        W_COERCE(_pssm->list_volumes(device, volume_list, volume_cnt));
+        
+        assert (volume_cnt); // there should be at least one volume
+
+        _lvid = volume_list[0];
+        delete [] volume_list;                 
+
+        // "speculate" that the database is loaded
+        _loaded = true;
+    }
     
     // Using the physical ID interface
-
-    // create volume 
-    // (only one per device supported, so this is kind of silly)
-    // see http://www.cs.wisc.edu/shore/1.0/man/volume.ssm.html
-    W_COERCE(_pssm->generate_new_lvid(_lvid));
-    W_COERCE(_pssm->create_vol(device, _lvid, quota, false, *_pvid));
 
     // If we reached this point the sm has started correctly
     return (0);
@@ -341,10 +377,14 @@ void ShoreEnv::usage(option_group_t& options)
 }
 
 
-/** @fn    readconfig
+
+/****************************************************************** 
+ *
+ * @fn    readconfig
  *
  *  @brief Reads configuration file
- */ 
+ *
+ ******************************************************************/
 
 void ShoreEnv::readconfig(string conf_file)
 {
@@ -368,10 +408,14 @@ void ShoreEnv::readconfig(string conf_file)
 }
 
 
-/** @fn    printconfig
+
+/****************************************************************** 
+ *
+ * @fn    printconfig
  *
  *  @brief Prints configuration
- */ 
+ *
+ ******************************************************************/
 
 void ShoreEnv::printconfig() {
     TRACE( TRACE_DEBUG, "Printing configuration\n");
@@ -397,11 +441,10 @@ void ShoreEnv::printconfig() {
 
 void ShoreEnv::dump() {
 
-    assert (false); // TO DO
-    assert (false); // TO DO: Remove TRACE
-
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
     TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
+
+    cout << "Not implemented..." << endl;
 
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
 }
