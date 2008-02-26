@@ -1187,3 +1187,12 @@ void table_row_t::print_tuple()
         }
     }
 }
+
+#include <strstream>
+char const* db_pretty_print(table_row_t const* rec, int i=0, char const* s=0) {
+    static char data[1024];
+    std::strstream inout(data, sizeof(data));
+    ((table_row_t*)rec)->print_value(inout);
+    inout << std::ends;
+    return data;
+}

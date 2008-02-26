@@ -372,7 +372,7 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
     assert (lowkey);
 
     /* get the highest key value */
-    ptuple->set_value(3, c_id+1);
+    ptuple->set_value(1, c_id+1);
 
     char* highkey = NULL;
     int   hibufsz = 0;
