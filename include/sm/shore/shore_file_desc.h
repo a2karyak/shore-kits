@@ -106,8 +106,8 @@ public:
         pthread_mutex_init(&_fschema_mutex, NULL);
 
         // Copy name
- 	memset(_name, 0, MAX_FNAME_LEN);
-	memcpy(_name, name, strlen(name));
+	if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+	    throw "file_desc_t::_name too long!\n";
     }
 
     virtual ~file_desc_t() 
@@ -158,7 +158,7 @@ public:
 
 class file_info_t {
 private:
-    c_str              _fname;        // file name
+    char              _fname[MAX_FNAME_LEN];        // file name
     file_type_t        _ftype;        // {regular,primary idx, idx, ...}
     std::pair<int,int> _record_size;  // size of each column of the file record
 
@@ -171,10 +171,12 @@ public:
 
     // Constructor
     file_info_t(const stid_t& fid,
-                const c_str fname, 
+                const char* fname, 
                 const file_type_t ftype = FT_REGULAR)
-        : _fid(fid), _fname(fname), _ftype(ftype)
+        : _fid(fid), _ftype(ftype)
     {
+	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+	    throw "file_info_t::_fname too long!\n";
     }
 
     // TODO REMOVE no argument consturctor
