@@ -18,6 +18,9 @@ ENTER_NAMESPACE(tpcc);
 // uncomment line below to use produce the same input
 //#define USE_SAME_INPUT
 
+// uncommend line below to produce "safe" (tested code paths) input
+#define USE_SAFE_PATHS 
+
 
 /********************************************************************* 
  *
@@ -126,8 +129,13 @@ payment_input_t create_payment_input(int sf)
         }
         pin._remote_d_id = URand(1, 10);
     }
-    
+
+#ifdef USE_SAFE_PATHS
+    pin._v_cust_ident_selection = URand(61, 100); // 60 - 40
+#else
     pin._v_cust_ident_selection = URand(1, 100); // 60 - 40
+#endif
+
     if (pin._v_cust_ident_selection <= 60) {
         // Calls the function that returns the correct cust_last
         generate_cust_last(NURand(255,0,999), pin._c_last);    
@@ -177,7 +185,12 @@ order_status_input_t create_order_status_input(int sf)
 
     osin._wh_id    = URand(1, sf);
     osin._d_id     = URand(1, 10);
+
+#ifdef USE_SAFE_PATHS
+    osin._c_select = URand(61, 100);
+#else
     osin._c_select = URand(1, 100); /* 60% - 40% */
+#endif
 
     if (osin._c_select <= 60) {
         // Calls the function that returns the correct cust_last

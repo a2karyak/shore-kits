@@ -235,8 +235,12 @@ public:
 
 
     /* --- access methods --- */
+    void print_tpcc_stats() { 
+        _tpcc_stats.print_trx_stats(); 
+        _env_stats.print_env_stats(); 
+    }
+
     void set_qf(const int aQF);
-    inline int get_qf() { return (_queried_factor); }
     inline int get_sf() { return (_scaling_factor); }
     inline tpcc_table_list_t* table_list() { return (&_table_list); }
 

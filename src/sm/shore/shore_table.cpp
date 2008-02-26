@@ -176,19 +176,19 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
      */
     while (!eof) {
 
-        bool was_consumed = false;
-        while (!was_consumed) {
+        bool row_consumed = false;
+        while (!row_consumed) {
 
             //*** START: CS ***//
             cs.resume();
 
-            if (idxld->_has_consumed) {
+            if (!idxld->_has_to_consume) {
                 // if the consumer is waiting 
             
                 //*** PRODUCE ***//
                 W_DO(iter->next(db, eof, row));
-                idxld->_has_consumed = false;
-                was_consumed = true;
+                idxld->_has_to_consume = true;
+                row_consumed = true;
                 idxld->_start = true;
 
                 if (eof)
@@ -216,10 +216,12 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     /* 5. print stats */
     time_t tstop = time(NULL);
     int idxcount = idxld->count();
-    TRACE( TRACE_DEBUG, "Index (%s) loaded (%d) entries in (%d) secs...\n",
+    TRACE( TRACE_TRX_FLOW, "Index (%s) loaded (%d) entries in (%d) secs...\n",
            index->name(), idxcount, (tstop - tstart));
     // make sure that the correct number of rows were inserted
     assert (rowscanned == idxcount); 
+
+    cs.hand_off();
 
     return (RCOK);
 }

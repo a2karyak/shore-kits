@@ -55,7 +55,6 @@ void db_load_smt_t::work()
 }
 
 
-
 /****************************************************************** 
  *
  * class table_loading_smt_t
@@ -129,7 +128,7 @@ w_rc_t index_loading_smt_t::do_help()
     int   bufsz  = 0;
     int   key_sz = 0;
     int   mark   = COMMIT_ACTION_COUNT;
-    bool  consumption = false;
+    bool  cons_happened = false;
     int   ispin  = 0;
 
     CRITICAL_SECTION(hcs, &_cs_mutex);
@@ -146,7 +145,7 @@ w_rc_t index_loading_smt_t::do_help()
         //*** START: CS ***//
         hcs.resume();
 
-        if (!_has_consumed) {
+        if (_has_to_consume) {
             // if new row waiting
 
             // if signalled to finish
@@ -164,24 +163,27 @@ w_rc_t index_loading_smt_t::do_help()
                                      vec_t(pdest, key_sz),
                                      vec_t(&(_prow->_rid), sizeof(rid_t))));
             
-            _has_consumed = true;
-            consumption   = true; // a consumption just happened
+            _has_to_consume = false;
+            cons_happened = true; // a consumption just happened
         }
 
         hcs.pause();
         //*** EOF: CS ***//
 
-        if (consumption) {
+        if (cons_happened) {
             // It just consumed a row, increase the counters
             _t_count++;
             
             if (_t_count >= mark) { 
                 W_DO(_pssm->commit_xct());
-                TRACE( TRACE_DEBUG, "index(%s): %d\n", _pindex->name(), _t_count);
+                if ((_t_count % 10000) == 0)
+                    TRACE( TRACE_TRX_FLOW, "index(%s): %d\n", _pindex->name(), _t_count);
+                else
+                    TRACE( TRACE_DEBUG, "index(%s): %d\n", _pindex->name(), _t_count);
                 W_DO(_pssm->begin_xct());
                 mark += COMMIT_ACTION_COUNT;
             }
-            consumption = false;
+            cons_happened = false;
         }
     }
     // final commit

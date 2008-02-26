@@ -174,6 +174,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         if (queried_warehouses>0) {
             TRACE( TRACE_ALWAYS, "Queried WHs = (%d)\n", queried_warehouses);
             selectedQueriedSF = queried_warehouses;
+            shore_env->set_qf(selectedQueriedSF);
         }
         return;
     }
@@ -293,6 +294,10 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
        the workload execution. */
     workload_t::results_t results;
     w.run(results);
+
+    /* Print shore_env stats */
+    assert (shore_env);
+    shore_env->print_tpcc_stats();
 
     /* Report results. We'll use the workload name for its
        description. */

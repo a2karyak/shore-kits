@@ -158,16 +158,19 @@ public:
     index_loading_smt_t(c_str tname, ss_m* assm, table_desc_t* aptable,
                         index_desc_t* apindex, table_row_t* aprow) 
 	: thread_t(tname), _pssm(assm), _ptable(aptable), _pindex(apindex),
-          _t_count(0), _prow(aprow), _has_consumed(true), 
+          _t_count(0), _prow(aprow), _has_to_consume(false), 
           _start(false), _finish(false)
     {
         assert (_pssm);
         assert (_ptable);
         assert (_pindex);
         assert (_prow);
+
+        //        pthread_mutex_init(&_cs_mutex, NULL);
     }
 
     ~index_loading_smt_t() { 
+        //        pthread_mutex_destroy(&_cs_mutex);
     }
 
     inline int rv() { return (_rv); }
@@ -179,10 +182,10 @@ public:
     int    count() { return (_t_count); }
 
     table_row_t*    _prow;
-    //    mcs_lock      _cs_mutex; /* (?) */
-    tatas_lock      _cs_mutex; /* (215) */
+    mcs_lock      _cs_mutex; /* (?) */
+    //    tatas_lock      _cs_mutex; /* (215) */
     //    pthread_mutex_t _cs_mutex; /* (263) */
-    bool            _has_consumed;
+    bool            _has_to_consume;
     bool            _start;
     bool            _finish;
 

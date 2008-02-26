@@ -110,8 +110,7 @@ w_rc_t district_t::update_ytd(ss_m* db,
     ptuple->set_value(0, d_id);
     ptuple->set_value(1, w_id);
 
-    // W_DO(table_desc_t::index_probe(shore, "D_INDEX"));
-    // cout << "APP: " << xct()->tid() << " Update district " << w_id << " " << d_id << endl;
+
     W_DO(table_desc_t::index_probe_forupdate(db, "D_INDEX", ptuple));
 
     double d_ytd;
@@ -128,7 +127,7 @@ w_rc_t district_t::update_next_o_id(ss_m* db,
                                     const int next_o_id)
 {
     ptuple->set_value(10, next_o_id);
-    // cout << "APP: " << xct()->tid() << " Update district.next-o-id " << next_o_id << endl;
+
     W_DO(update_tuple(db, ptuple));
     return (RCOK);
 }
@@ -138,6 +137,7 @@ w_rc_t district_t::update_next_o_id(ss_m* db,
 /* ---------------- */
 /* --- CUSTOMER --- */
 /* ---------------- */
+
 
 w_rc_t customer_t::get_iter_by_index(ss_m* db,
                                      index_scan_iter_impl* &iter,
@@ -149,12 +149,15 @@ w_rc_t customer_t::get_iter_by_index(ss_m* db,
     index_desc_t* index = find_index("C_NAME_INDEX");
     assert (index);
 
+    // C_NAME_INDEX: {2 - 1 - 5 - 3 - 0}
+
     // prepare the key to be probed
-    ptuple->set_value(2, w_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(5, c_last);
-    ptuple->set_value(3, "");
     ptuple->set_value(0, 0);
+    ptuple->set_value(1, d_id);
+    ptuple->set_value(2, w_id);
+    ptuple->set_value(3, "");
+    ptuple->set_value(5, c_last);
+
 
     char* lowkey = NULL;
     int   lobufsz = 0;
@@ -324,6 +327,13 @@ w_rc_t order_line_t::get_iter_by_index(ss_m* db,
     return (RCOK);
 }
 
+
+
+/* ------------- */
+/* --- ORDER --- */
+/* ------------- */
+
+
 w_rc_t order_t::update_carrier_by_index(ss_m* db,
                                         table_row_t* ptuple,
                                         const int carrier_id)
@@ -337,7 +347,7 @@ w_rc_t order_t::update_carrier_by_index(ss_m* db,
 }
 
 w_rc_t order_t::get_iter_by_index(ss_m* db,
-                                  index_scan_iter_impl* & iter,
+                                  index_scan_iter_impl* &iter,
                                   table_row_t* ptuple,
                                   const int w_id,
                                   const int d_id,
@@ -347,9 +357,14 @@ w_rc_t order_t::get_iter_by_index(ss_m* db,
     assert (index);
 
     ptuple->set_value(0, 0);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    ptuple->set_value(3, c_id);
+    ptuple->set_value(1, c_id);
+    ptuple->set_value(2, d_id);
+    ptuple->set_value(3, w_id);
+
+//     ptuple->set_value(0, 0);
+//     ptuple->set_value(1, d_id);
+//     ptuple->set_value(2, w_id);
+//     ptuple->set_value(3, c_id);
 
     char* lowkey = NULL;
     int   lobufsz = 0;
@@ -477,7 +492,6 @@ w_rc_t  item_t::index_probe_forupdate(ss_m* db,
 /* ------------- */
 
 
-
 w_rc_t stock_t::index_probe(ss_m* db,
                             table_row_t* ptuple,
                             const int  i_id,
@@ -512,10 +526,10 @@ w_rc_t  stock_t::update_tuple(ss_m* db,
                               table_row_t* ptuple,
                               const tpcc_stock_tuple* pstock)
 {
+    ptuple->set_value(2, pstock->S_REMOTE_CNT);
     ptuple->set_value(3, pstock->S_QUANTITY);
     ptuple->set_value(4, pstock->S_ORDER_CNT);
     ptuple->set_value(5, pstock->S_YTD);
-    ptuple->set_value(2, pstock->S_REMOTE_CNT);
 
     W_DO(table_desc_t::update_tuple(db, ptuple));
     return (RCOK);

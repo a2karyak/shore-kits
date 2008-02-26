@@ -52,17 +52,17 @@ public:
 class new_order_input_t : public trx_input_t {
 public:
 
-    short   _wh_id;         /* input: URand(1,SF) */
-    short   _d_id;          /* input: URand(1,10) */
-    short   _c_id;          /* input: NURand(1023,1,3000) */
-    short   _ol_cnt;        /* input: number of items URand(5,15) */
-    short   _rbk;           /* input: rollback URand(1,100) */
+    int   _wh_id;         /* input: URand(1,SF) */
+    int   _d_id;          /* input: URand(1,10) */
+    int   _c_id;          /* input: NURand(1023,1,3000) */
+    int   _ol_cnt;        /* input: number of items URand(5,15) */
+    int   _rbk;           /* input: rollback URand(1,100) */
 
     struct  _ol_item_info {
-        int     _ol_i_id;             /* input: NURand(8191,1,100000) */
-        short   _ol_supply_wh_select; /* input: URand(1,100) */
-        short   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
-        short   _ol_quantity;         /* input: URand(1,10) */        
+        int   _ol_i_id;             /* input: NURand(8191,1,100000) */
+        short _ol_supply_wh_select; /* input: URand(1,100) */
+        int   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
+        int   _ol_quantity;         /* input: URand(1,10) */        
     }  items[MAX_OL_PER_ORDER];
 
     /** If _supply_wh_id = _wh_id for each item 
@@ -115,16 +115,16 @@ public:
      *  10) H_DATE char* : the payment time
      */
 
-    int _home_wh_id;             /* input: URand(1,SF) */
-    int _home_d_id;              /* input: URand(1,10) */
-    int _v_cust_wh_selection;    /* input: URand(1,100) - 85%-15% */
-    int _remote_wh_id;           /* input: URand(1,SF) */
-    int _remote_d_id;            /* input: URand(1,10) */
-    int _v_cust_ident_selection; /* input: URand(1,100) - 60%-40% */
-    int _c_id;                   /* input: NURand(1023,1,3000) */
-    char _c_last[16];            /* input: NURand(255,0,999) */
-    double _h_amount;            /* input: URand(1.00,5.000) */
-    int _h_date;
+    int    _home_wh_id;             /* input: URand(1,SF) */
+    int    _home_d_id;              /* input: URand(1,10) */
+    int    _v_cust_wh_selection;    /* input: URand(1,100) - 85%-15% */
+    int    _remote_wh_id;           /* input: URand(1,SF) */
+    int    _remote_d_id;            /* input: URand(1,10) */
+    int    _v_cust_ident_selection; /* input: URand(1,100) - 60%-40% */
+    int    _c_id;                   /* input: NURand(1023,1,3000) */
+    char   _c_last[16];             /* input: NURand(255,0,999) */
+    double _h_amount;               /* input: URand(1.00,5.000) */
+    int    _h_date; 
 
     // Construction/Destructions
     payment_input_t() 
@@ -183,7 +183,6 @@ public:
 
 
 
-
 /*********************************************************************
  * 
  * delivery_input_t
@@ -195,8 +194,8 @@ public:
 class delivery_input_t : public trx_input_t {
 public:
 
-    short    _wh_id;         /* input: URand(1,SF) */
-    short    _carrier_id;    /* input: URand(1,10) */
+    int    _wh_id;         /* input: URand(1,SF) */
+    short  _carrier_id;    /* input: URand(1,10) */
 
 
     // Construction/Destructions
@@ -218,7 +217,6 @@ public:
 
 
 
-
 /*********************************************************************
  * 
  * stock_level_input_t
@@ -230,9 +228,9 @@ public:
 class stock_level_input_t : public trx_input_t {
 public:
 
-    short    _wh_id;         /* input */
-    short    _d_id;          /* input */
-    short    _threshold;     /* input */
+    int   _wh_id;         /* input */
+    int   _d_id;          /* input */
+    short _threshold;     /* input */
 
     // Construction/Destructions
     stock_level_input_t() 

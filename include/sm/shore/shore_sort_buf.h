@@ -87,15 +87,15 @@ class sort_buffer_t : public table_desc_t
     friend class sort_iter_impl;
 
 protected:
-    char*           _sort_buf;     /* memory buffer */
-    int             _tuple_size;   /* tuple size */
-    int             _tuple_count;  /* # of tuples in buffer */
-    int             _buf_size;     /* size of the buffer (in # of tuples) */
-    bool            _is_sorted;    /* shows if sorted */
-    tatas_lock      _sorted_lock; 
+    char*       _sort_buf;     /* memory buffer */
+    int         _tuple_size;   /* tuple size */
+    int         _tuple_count;  /* # of tuples in buffer */
+    int         _buf_size;     /* size of the buffer (in # of tuples) */
+    bool        _is_sorted;    /* shows if sorted */
+    tatas_lock  _sorted_lock; 
 
-    char*           _dest;         /* used for the tuple->format() */
-    int             _bfsz;         /* buffer size */
+    char*       _dest;         /* used for the tuple->format() */
+    int         _bfsz;         /* buffer size */
 
     /* count _tuple_size and allocate buffer */
     void init();
@@ -125,9 +125,9 @@ public:
     void setup(const int index, sqltype_t type, const int len = 0) 
     {
         assert((index>=0) && (index<_field_count));
+        _desc[index].setup(type, "", len);
         assert(!_desc[index].is_variable_length());
         assert(!_desc[index].allow_null());
-        _desc[index].setup(type, "", len);
     }
 
     /* add current tuple to the sort buffer */
@@ -144,6 +144,7 @@ public:
         return (false);
     }
 
+    inline int count() { return (_tuple_count); }
 
 }; // EOF: sort_buffer_t
 

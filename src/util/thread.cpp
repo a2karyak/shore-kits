@@ -154,7 +154,7 @@ inline void thread_t::run()
 
 inline void thread_t::setupthr()
 {
-    cout << "+" << endl;
+    //    cout << "+" << endl;
 
     if(!_ppool)
 	_ppool = &default_thread_pool;
@@ -401,7 +401,7 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 
 void* start_thread(void* thread_object)
 {
-    cout << "(+)" << endl;
+    //    cout << "(+)" << endl;
 
     clh_lock::thread_init_manager();
     clh_rwlock::thread_init_manager();
