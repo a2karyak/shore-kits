@@ -389,7 +389,8 @@ public:
     inline pthread_mutex_t* get_cnt_mutex() { return (_pcnt_array_mutex); }
      
     /* random tuple generator */
-    void   random(table_row_t* ptuple, int id, int c_id, int d_id, int w_id, int ol_cnt);
+    void random(table_row_t* ptuple, int id, int c_id, int d_id, 
+                int w_id, int ol_cnt);
 
     w_rc_t bulkload(ss_m* db, int w_num);
 

@@ -107,7 +107,14 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 
 	if(i >= mark) {
 	    W_COERCE(db->commit_xct());
-            TRACE( TRACE_DEBUG, "load(%s): %d\n", name(), tuple_count);
+
+            if ((i % 100000) == 0) { // every 100K inserts
+                TRACE( TRACE_ALWAYS, "load(%s): %d\n", name(), tuple_count);
+            }
+            else {
+                TRACE( TRACE_DEBUG, "load(%s): %d\n", name(), tuple_count);
+            }
+
 	    W_COERCE(db->begin_xct());
 	    mark += COMMIT_ACTION_COUNT;
 	}	    
@@ -119,9 +126,8 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 
     if (pdest)
         delete [] pdest;
-
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
+    
+    TRACE( TRACE_ALWAYS, "(%s) # of records inserted: %d\n",
            _name, tuple_count);
 
     /* 4. update the index structures */
@@ -143,6 +149,76 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
 
 w_rc_t table_desc_t::bulkload_index(ss_m* db,
                                     index_desc_t* index)
+{
+    assert (index);
+
+    TRACE( TRACE_DEBUG, "Building index: %s\n", index->name());
+    
+    W_DO(db->begin_xct());
+    W_DO(index->find_fid(db));
+    
+    /* 1. open a (table) scan iterator over the table and create 
+     * an index helper loader thread 
+     */
+
+    table_scan_iter_impl* iter;
+    W_DO(get_iter_for_file_scan(db, iter));
+
+    bool   eof = false;
+    table_row_t row(this);
+    time_t tstart = time(NULL);
+    int    rowscanned = 0;
+    char*  pdest  = NULL;
+    int    bufsz  = 0;
+    int    key_sz = 0;
+    int    mark   = COMMIT_ACTION_COUNT;
+
+    /* 2. iterate over the whole table and insert the corresponding 
+     *    index entries, using the index loading helper thread 
+     */
+    W_DO(iter->next(db, eof, row));
+    while (!eof) {
+        
+        key_sz = format_key(index, &row, pdest, bufsz);
+        assert (pdest); // (ip) if NULL invalid key
+            
+        W_DO(db->create_assoc(index->fid(),
+                                 vec_t(pdest, key_sz),
+                                 vec_t(&(row._rid), sizeof(rid_t))));
+            
+            
+        if (rowscanned >= mark) { 
+            W_DO(db->chain_xct());
+
+            if ((rowscanned % 10000) == 0) { // every 100K
+                TRACE( TRACE_ALWAYS, "index(%s): %d\n", index->name(), rowscanned);
+            }
+            else {
+                TRACE( TRACE_TRX_FLOW, "index(%s): %d\n", index->name(), rowscanned);
+            }
+            
+            mark += COMMIT_ACTION_COUNT;
+        }            
+
+        W_DO(iter->next(db, eof, row));
+        rowscanned++;   
+    }
+    delete iter;
+
+    W_DO(db->commit_xct());
+
+    /* 5. print stats */
+    time_t tstop = time(NULL);
+    TRACE( TRACE_ALWAYS, "Index (%s) loaded (%d) entries in (%d) secs...\n",
+           index->name(), rowscanned, (tstop - tstart));
+
+    return (RCOK);
+}
+
+
+
+w_rc_t table_desc_t::bulkload_index_with_helper(ss_m* db,
+                                                index_desc_t* index)
 {
     assert (index);
 
@@ -179,6 +255,9 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
         bool row_consumed = false;
         while (!row_consumed) {
 
+            if ((row_consumed % 100) == 0)
+                W_DO(db->chain_xct());
+
             //*** START: CS ***//
             cs.resume();
 
@@ -199,6 +278,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
         
             cs.pause();
             //*** EOF: CS ***//
+
         }
     }
     delete iter;
@@ -216,7 +296,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     /* 5. print stats */
     time_t tstop = time(NULL);
     int idxcount = idxld->count();
-    TRACE( TRACE_TRX_FLOW, "Index (%s) loaded (%d) entries in (%d) secs...\n",
+    TRACE( TRACE_ALWAYS, "Index (%s) loaded (%d) entries in (%d) secs...\n",
            index->name(), idxcount, (tstop - tstart));
     // make sure that the correct number of rows were inserted
     assert (rowscanned == idxcount); 
@@ -1174,14 +1254,14 @@ void table_row_t::print_value(ostream& os)
 void table_row_t::print_tuple()
 {
     assert (_ptable);
-    TRACE( TRACE_DEBUG, "Tuple (%s)\n", _ptable->name());
+    TRACE( TRACE_TRX_FLOW, "Tuple (%s)\n", _ptable->name());
     
     char* sbuf = NULL;
     int sz = 0;
     for (int i=0; i<_field_cnt; i++) {
         sz = _pvalues[i].get_debug_str(sbuf);
         if (sbuf) {
-            TRACE( TRACE_DEBUG, "%d. %s (%d)\n", i, sbuf, sz);
+            TRACE( TRACE_TRX_FLOW, "%d. %s (%d)\n", i, sbuf, sz);
             delete [] sbuf;
             sbuf = NULL;
         }

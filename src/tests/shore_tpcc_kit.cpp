@@ -10,8 +10,11 @@ using namespace shore;
 using namespace tpcc;
 
 
-// default value for transaction executed per thread
-#define DF_TRX_PER_THR 10
+// default number of threads
+#define DF_NUM_OF_THR  10
+
+// default number of transactions executed per thread
+#define DF_TRX_PER_THR 100
 
 
 ///////////////////////////////////////////////////////////
@@ -184,9 +187,23 @@ int main(int argc, char* argv[])
 
     // Instanciate the Shore Environment
     shore_env = new ShoreTPCCEnv("shore.conf", 1, 1);
+
+    int numOfThreads = DF_NUM_OF_THR;
+    int numOfTrxs    = DF_TRX_PER_THR;
+
+    if (argc>1) {
+        int tmp_thr = atoi(argv[1]);
+        assert (tmp_thr);
+        numOfThreads = tmp_thr;
+    }
+    if (argc>2) {
+        int tmp_trx = atoi(argv[2]);
+        assert (tmp_trx);
+        numOfTrxs = tmp_trx;
+    }
     
     // Load data to the Shore Database
-    TRACE( TRACE_ALWAYS, "Starting...\n");
+    TRACE( TRACE_ALWAYS, "Starting (%d) threads (%d) trxs each...\n");
     guard<test_smt_t> tt1 = new test_smt_t(shore_env, c_str("tt1"));
 
 #ifdef USE_MT_TPCC_THREADS 

@@ -137,8 +137,6 @@ protected:
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
-    void printconfig();
-
 
     // Storage manager access functions
     int  configure_sm();
@@ -184,6 +182,7 @@ public:
     virtual int close();
     virtual int statistics();
     virtual void dump();
+    virtual void conf();
 
     virtual w_rc_t loaddata()=0;
     virtual w_rc_t check_consistency()=0;

@@ -223,6 +223,7 @@ public:
     w_rc_t  bulkload_all_indexes(ss_m* db);
     w_rc_t  bulkload_index(ss_m* db, const char* name);
     w_rc_t  bulkload_index(ss_m* db, index_desc_t* idx);
+    w_rc_t  bulkload_index_with_helper(ss_m* db, index_desc_t* idx);
 
     /* check consistency between the indexes and table
      *   true:  consistent

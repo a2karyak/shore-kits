@@ -167,15 +167,29 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         return;
     }
 
-    // 'wh' tag sets the number of queried warehouses
-    if (!strcmp(driver_tag, "wh")) {
+    // 'scaling' tag sets the scaling factor of warehouses
+    if (!strcmp(driver_tag, "scaling")) {
+        int num_warehouses = 0;
+        sscanf(command, "%*s %*s %d", &num_warehouses);
+        if (num_warehouses>0) {
+            shore_env->set_sf(num_warehouses);
+        }
+        TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", shore_env->get_sf());
+        TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", shore_env->get_qf());
+        return;
+    }
+
+
+    // 'queried' tag sets the number of queried warehouses
+    if (!strcmp(driver_tag, "queried")) {
         int queried_warehouses = 0;
         sscanf(command, "%*s %*s %d", &queried_warehouses);
         if (queried_warehouses>0) {
-            TRACE( TRACE_ALWAYS, "Queried WHs = (%d)\n", queried_warehouses);
             selectedQueriedSF = queried_warehouses;
-            shore_env->set_qf(selectedQueriedSF);
+            shore_env->set_qf(queried_warehouses);
         }
+        TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", shore_env->get_sf());
+        TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", shore_env->get_qf());
         return;
     }
 

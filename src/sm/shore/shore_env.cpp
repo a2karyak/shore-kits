@@ -67,7 +67,7 @@ int ShoreEnv::init()
 
     // Read configuration options
     readconfig(_cname);
-    //    printconfig();
+    //conf();
     
     // Start the storage manager
     if (configure_sm()) {
@@ -411,26 +411,26 @@ void ShoreEnv::readconfig(string conf_file)
 
 /****************************************************************** 
  *
- * @fn    printconfig
+ *  @fn:    conf
  *
- *  @brief Prints configuration
+ *  @brief: Prints configuration
  *
  ******************************************************************/
 
-void ShoreEnv::printconfig() {
-    TRACE( TRACE_DEBUG, "Printing configuration\n");
+void ShoreEnv::conf() {
+    TRACE( TRACE_DEBUG, "ShoreEnv configuration\n");
     
     // Print storage manager options
     map<string,string>::iterator sm_iter;
     TRACE( TRACE_DEBUG, "** SM options\n");
     for ( sm_iter = _sm_opts.begin(); sm_iter != _sm_opts.end(); sm_iter++)
-        cout << sm_iter->first << " \t| " << sm_iter->second << endl;
+        cout << "(" << sm_iter->first << ") (" << sm_iter->second << ")" << endl;
 
     // Print device options
     map<string,string>::iterator dev_iter;
     TRACE( TRACE_DEBUG, "** Device options\n");
     for ( dev_iter = _dev_opts.begin(); dev_iter != _dev_opts.end(); dev_iter++)
-        cout << dev_iter->first << " \t| " << dev_iter->second << endl;    
+        cout << "(" << dev_iter->first << ") (" << dev_iter->second << ")" << endl;    
 }
 
 

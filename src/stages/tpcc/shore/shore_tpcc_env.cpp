@@ -122,7 +122,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
         }
 
 
-#if 1
+#if 0
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -228,16 +228,27 @@ w_rc_t ShoreTPCCEnv::check_consistency()
 }
 
 
-
 void ShoreTPCCEnv::set_qf(const int aQF)
 {
     if ((aQF >= 0) && (aQF <= _scaling_factor)) {
-        critical_section_t cs(_queried_mutex);
-        TRACE( TRACE_ALWAYS, "New Queried factor: %d\n", aQF);
+        CRITICAL_SECTION( cs, _queried_mutex);
+        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
         _queried_factor = aQF;
     }
     else {
         TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
+    }
+}
+
+void ShoreTPCCEnv::set_sf(const int aSF)
+{
+    if (aSF > 0) {
+        CRITICAL_SECTION( cs, _scaling_mutex);
+        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
+        _scaling_factor = aSF;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
     }
 }
 
@@ -416,37 +427,37 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
 
 w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id, trx_result_tuple_t& atrt)
 {
-    new_order_input_t noin = create_no_input();
+    new_order_input_t noin = create_no_input(_queried_factor);
     return (run_new_order(xct_id, noin, atrt));
 }
 
 
 w_rc_t ShoreTPCCEnv::run_payment(const int xct_id, trx_result_tuple_t& atrt)
 {
-    payment_input_t pin = create_payment_input();
+    payment_input_t pin = create_payment_input(_queried_factor);
     return (run_payment(xct_id, pin, atrt));
 }
 
 
 w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id, trx_result_tuple_t& atrt)
 {
-    order_status_input_t ordin = create_order_status_input();
+    order_status_input_t ordin = create_order_status_input(_queried_factor);
     return (run_order_status(xct_id, ordin, atrt));
 }
 
 
 w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id, trx_result_tuple_t& atrt)
 {
-    delivery_input_t delin = create_delivery_input();
+    delivery_input_t delin = create_delivery_input(_queried_factor);
     return (run_delivery(xct_id, delin, atrt));
 }
 
 
 w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id, trx_result_tuple_t& atrt)
 {
-    stock_level_input_t slin = create_stock_level_input();
-    return (run_stock_level(xct_id, slin, atrt));
-}
+    stock_level_input_t slin = create_stock_level_input(_queried_factor);
+     return (run_stock_level(xct_id, slin, atrt));
+ }
 
 
 
@@ -562,98 +573,98 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     for (int item_cnt = 0; item_cnt < pnoin->_ol_cnt; item_cnt++) {
 
         /* 4. for all items update item, stock, and order line */
-	register int ol_i_id = pnoin->items[item_cnt]._ol_i_id;
-	register int ol_supply_w_id = pnoin->items[item_cnt]._ol_supply_wh_id;
+        register int ol_i_id = pnoin->items[item_cnt]._ol_i_id;
+        register int ol_supply_w_id = pnoin->items[item_cnt]._ol_supply_wh_id;
 
 
-	/* SELECT i_price, i_name, i_data
-	 * FROM item
-	 * WHERE i_id = :ol_i_id
-	 *
-	 * plan: index probe on "I_INDEX"
-	 */
+        /* SELECT i_price, i_name, i_data
+         * FROM item
+         * WHERE i_id = :ol_i_id
+         *
+         * plan: index probe on "I_INDEX"
+         */
 
         tpcc_item_tuple aitem;
         TRACE( TRACE_TRX_FLOW, "App: %d NO:item-index-probe (%d)\n", 
                xct_id, ol_i_id);
-	W_DO(_item.index_probe(_pssm, &ritem, ol_i_id));
+        W_DO(_item.index_probe(_pssm, &ritem, ol_i_id));
 
         ritem.get_value(4, aitem.I_DATA, 51);
-	ritem.get_value(3, aitem.I_PRICE);
-	ritem.get_value(2, aitem.I_NAME, 25);
+        ritem.get_value(3, aitem.I_PRICE);
+        ritem.get_value(2, aitem.I_NAME, 25);
 
         int item_amount = aitem.I_PRICE * pnoin->items[item_cnt]._ol_quantity; 
         total_amount += item_amount;
         //	info->items[item_cnt].ol_amount = amount;
 
 
-	/* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
-	 * FROM stock
-	 * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
-	 *
-	 * plan: index probe on "S_INDEX"
-	 */
+        /* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
+         * FROM stock
+         * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
+         *
+         * plan: index probe on "S_INDEX"
+         */
 
         tpcc_stock_tuple astock;
         TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-index-probe (%d) (%d)\n", 
                xct_id, ol_i_id, ol_supply_w_id);
-	W_DO(_stock.index_probe_forupdate(_pssm, &rst, ol_i_id, ol_supply_w_id));
+        W_DO(_stock.index_probe_forupdate(_pssm, &rst, ol_i_id, ol_supply_w_id));
 
         rst.get_value(0, astock.S_I_ID);
         rst.get_value(1, astock.S_W_ID);
         rst.get_value(5, astock.S_YTD);
         astock.S_YTD += pnoin->items[item_cnt]._ol_quantity;
-	rst.get_value(2, astock.S_REMOTE_CNT);        
+        rst.get_value(2, astock.S_REMOTE_CNT);        
         rst.get_value(3, astock.S_QUANTITY);
         astock.S_QUANTITY -= pnoin->items[item_cnt]._ol_quantity;
         if (astock.S_QUANTITY < 10) astock.S_QUANTITY += 91;
         rst.get_value(6+pnoin->_d_id, astock.S_DIST[6+pnoin->_d_id], 25);
-	rst.get_value(16, astock.S_DATA, 51);
+        rst.get_value(16, astock.S_DATA, 51);
 
         char c_s_brand_generic;
-	if (strstr(aitem.I_DATA, "ORIGINAL") != NULL && 
+        if (strstr(aitem.I_DATA, "ORIGINAL") != NULL && 
             strstr(astock.S_DATA, "ORIGINAL") != NULL)
-	    c_s_brand_generic = 'B';
-	else c_s_brand_generic = 'G';
+            c_s_brand_generic = 'B';
+        else c_s_brand_generic = 'G';
 
-	rst.get_value(4, astock.S_ORDER_CNT);
+        rst.get_value(4, astock.S_ORDER_CNT);
         astock.S_ORDER_CNT++;
 
-	if (pnoin->_wh_id != ol_supply_w_id) {
+        if (pnoin->_wh_id != ol_supply_w_id) {
             astock.S_REMOTE_CNT++;
-	    all_local = 1;
-	}
+            all_local = 1;
+        }
 
 
-	/* UPDATE stock
-	 * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
-	 * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
-	 */
+        /* UPDATE stock
+         * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
+         * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
+         */
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-update-tuple (%d) (%d) (%d)\n", 
                xct_id, astock.S_ORDER_CNT, astock.S_YTD, astock.S_REMOTE_CNT);
-	W_DO(_stock.update_tuple(_pssm, &rst, &astock));
+        W_DO(_stock.update_tuple(_pssm, &rst, &astock));
 
 
-	/* INSERT INTO order_line
-	 * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
-	 *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
-	 */
+        /* INSERT INTO order_line
+         * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
+         *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
+         */
 
-	rol.set_value(0, adist.D_NEXT_O_ID);
-	rol.set_value(1, pnoin->_d_id);
-	rol.set_value(2, pnoin->_wh_id);
-	rol.set_value(3, item_cnt+1);
-	rol.set_value(4, ol_i_id);
-	rol.set_value(5, ol_supply_w_id);
-	rol.set_value(6, tstamp);
-	rol.set_value(7, pnoin->items[item_cnt]._ol_quantity);
-	rol.set_value(8, item_amount);
-	rol.set_value(9, astock.S_DIST[6+pnoin->_d_id]);
+        rol.set_value(0, adist.D_NEXT_O_ID);
+        rol.set_value(1, pnoin->_d_id);
+        rol.set_value(2, pnoin->_wh_id);
+        rol.set_value(3, item_cnt+1);
+        rol.set_value(4, ol_i_id);
+        rol.set_value(5, ol_supply_w_id);
+        rol.set_value(6, tstamp);
+        rol.set_value(7, pnoin->items[item_cnt]._ol_quantity);
+        rol.set_value(8, item_amount);
+        rol.set_value(9, astock.S_DIST[6+pnoin->_d_id]);
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:add-tuple (%d)\n", 
                xct_id, adist.D_NEXT_O_ID);
-	W_DO(_order_line.add_tuple(_pssm, &rol));
+        W_DO(_order_line.add_tuple(_pssm, &rol));
 
     } /* end for loop */
 
@@ -663,7 +674,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     /* INSERT INTO orders
      * VALUES (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
      */
-   
+
     rord.set_value(0, adist.D_NEXT_O_ID);
     rord.set_value(1, pnoin->_c_id);
     rord.set_value(2, pnoin->_d_id);
@@ -773,37 +784,38 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
         /* 3a. if no customer selected already use the index on the customer name */
 
-	/* SELECT  c_id, c_first
-	 * FROM customer
-	 * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
-	 * ORDER BY c_first
-	 *
-	 * plan: index only scan on "C_NAME_INDEX"
-	 */
+        /* SELECT  c_id, c_first
+         * FROM customer
+         * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
+         * ORDER BY c_first
+         *
+         * plan: index only scan on "C_NAME_INDEX"
+         */
 
         assert (ppin->_v_cust_ident_selection <= 60);
 
         index_scan_iter_impl* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
                xct_id, ppin->_c_last);
-	W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
+        W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
                                          c_w, c_d, ppin->_c_last));
 
-	int c_id_list[17];
-	int count = 0;
-	bool eof;
+        int c_id_list[17];
+        int count = 0;
+        bool eof;
 
-	W_DO(c_iter->next(_pssm, eof, rcust));
-	while (!eof) {
-	    rcust.get_value(0, c_id_list[count++]);            
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", xct_id, c_id_list[count]);
-	    W_DO(c_iter->next(_pssm, eof, rcust));
-	}
-	delete c_iter;
+        W_DO(c_iter->next(_pssm, eof, rcust));
+        while (!eof) {
+            rcust.get_value(0, c_id_list[count++]);            
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", 
+                   xct_id, c_id_list[count]);
+            W_DO(c_iter->next(_pssm, eof, rcust));
+        }
+        delete c_iter;
         assert (count);
 
-	/* find the customer id in the middle of the list */
-	ppin->_c_id = c_id_list[(count+1)/2-1];
+        /* find the customer id in the middle of the list */
+        ppin->_c_id = c_id_list[(count+1)/2-1];
     }
     assert (ppin->_c_id>0);
 
@@ -858,37 +870,37 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
         /* 10% of customers */
 
-	/* SELECT c_data
-	 * FROM customer 
-	 * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
-	 * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
-	 *
-	 * plan: index probe on "C_INDEX"
-	 */
+        /* SELECT c_data
+         * FROM customer 
+         * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
+         * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
+         *
+         * plan: index probe on "C_INDEX"
+         */
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:cust-index-probe-forupdate (%d) (%d) (%d)\n", 
                xct_id, ppin->_c_id, c_w, c_d);        
-	W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, c_w, c_d));
+        W_DO(_customer.index_probe_forupdate(_pssm, &rcust, ppin->_c_id, c_w, c_d));
 
         // update the data
-	char c_new_data_1[251];
+        char c_new_data_1[251];
         char c_new_data_2[251];
-	sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
-		ppin->_c_id, c_d, c_w, ppin->_home_d_id, 
+        sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
+                ppin->_c_id, c_d, c_w, ppin->_home_d_id, 
                 ppin->_home_wh_id, ppin->_h_amount);
 
         int len = strlen(c_new_data_1);
-	strncat(c_new_data_1, acust.C_DATA_1, 250-len);
+        strncat(c_new_data_1, acust.C_DATA_1, 250-len);
         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
-	W_DO(_customer.update_tuple(_pssm, &rcust, acust, c_new_data_1, c_new_data_2));
+        W_DO(_customer.update_tuple(_pssm, &rcust, acust, c_new_data_1, c_new_data_2));
     }
     else { /* good customer */
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
-	W_DO(_customer.update_tuple(_pssm, &rcust, acust, NULL, NULL));
+        W_DO(_customer.update_tuple(_pssm, &rcust, acust, NULL, NULL));
     }
 
     /* UPDATE district SET d_ytd = d_ytd + :h_amount
@@ -938,7 +950,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rwh.get_value(4, awh.W_CITY, 21);
     rwh.get_value(5, awh.W_STATE, 3);
     rwh.get_value(6, awh.W_ZIP, 10);
-    
+
 
     /* INSERT INTO history
      * VALUES (:c_id, :c_d_id, :c_w_id, :d_id, :w_id, :curr_tmstmp, :ih_amount, :h_data)
@@ -1018,36 +1030,36 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 
     /* 1a. select customer based on name */
     if (pstin->_c_id == 0) {
-	/* SELECT  c_id, c_first
-	 * FROM customer
-	 * WHERE c_last = :c_last AND c_w_id = :w_id AND c_d_id = :d_id
-	 * ORDER BY c_first
-	 *
-	 * plan: index only scan on "C_NAME_INDEX"
-	 */
+        /* SELECT  c_id, c_first
+         * FROM customer
+         * WHERE c_last = :c_last AND c_w_id = :w_id AND c_d_id = :d_id
+         * ORDER BY c_first
+         *
+         * plan: index only scan on "C_NAME_INDEX"
+         */
 
         assert (pstin->_c_select <= 60);
         assert (pstin->_c_last);
 
         index_scan_iter_impl* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
-	W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
+        W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
                                          w_id, d_id, pstin->_c_last));
 
-	int  c_id_list[17];
-	int  count = 0;
-	bool eof;
+        int  c_id_list[17];
+        int  count = 0;
+        bool eof;
 
-	W_DO(c_iter->next(_pssm, eof, rcust));
-	while (!eof) {
-	    rcust.get_value(0, c_id_list[count++]);            
+        W_DO(c_iter->next(_pssm, eof, rcust));
+        while (!eof) {
+            rcust.get_value(0, c_id_list[count++]);            
             TRACE( TRACE_TRX_FLOW, "App: %d ORDST:iter-next\n", xct_id);
-	    W_DO(c_iter->next(_pssm, eof, rcust));
-	}
-	delete c_iter;
+            W_DO(c_iter->next(_pssm, eof, rcust));
+        }
+        delete c_iter;
 
-	/* find the customer id in the middle of the list */
-	pstin->_c_id = c_id_list[(count+1)/2-1];
+        /* find the customer id in the middle of the list */
+        pstin->_c_id = c_id_list[(count+1)/2-1];
     }
     assert (pstin->_c_id>0);
 
@@ -1082,31 +1094,33 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
      *
      * plan: index scan on "C_CUST_INDEX"
      */
-
+     
     index_scan_iter_impl* o_iter;
     TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-order-iter-by-index\n", xct_id);
     W_DO(_order.get_iter_by_index(_pssm, o_iter, &rord,
-				  w_id, d_id, pstin->_c_id));
+                                  w_id, d_id, pstin->_c_id));
 
     tpcc_order_tuple aorder;
     bool eof;
     W_DO(o_iter->next(_pssm, eof, rord));
     while (!eof) {
-	rord.get_value(0, aorder.O_ID);
-	rord.get_value(4, aorder.O_ENTRY_D);
-	rord.get_value(5, aorder.O_CARRIER_ID);
+        rord.get_value(0, aorder.O_ID);
+        rord.get_value(4, aorder.O_ENTRY_D);
+        rord.get_value(5, aorder.O_CARRIER_ID);
         rord.get_value(6, aorder.O_OL_CNT);
 
-	W_DO(o_iter->next(_pssm, eof, rord));
+        rord.print_tuple();
+
+        W_DO(o_iter->next(_pssm, eof, rord));
     }
     delete o_iter;
-
+     
     // we should have retrieved a valid id and ol_cnt for the order               
     assert (aorder.O_ID);
     assert (aorder.O_OL_CNT);
-
+     
     /* 3. retrieve all the orderlines that correspond to the last order */
-    
+     
     /* SELECT ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_delivery_d 
      * FROM order_line 
      * WHERE ol_w_id = :H00003 AND ol_d_id = :H00004 AND ol_o_id = :H00016 
@@ -1117,7 +1131,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     index_scan_iter_impl* ol_iter;
     TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
     W_DO(_order_line.get_iter_by_index(_pssm, ol_iter, &rordline,
-				       w_id, d_id, aorder.O_ID));
+                                       w_id, d_id, aorder.O_ID));
 
     tpcc_orderline_tuple* porderlines = new tpcc_orderline_tuple[aorder.O_OL_CNT];
     int i=0;

@@ -242,6 +242,8 @@ public:
     }
 
     void set_qf(const int aQF);
+    inline int get_qf() { return (_queried_factor); }
+    void set_sf(const int aSF);
     inline int get_sf() { return (_scaling_factor); }
     inline tpcc_table_list_t* table_list() { return (&_table_list); }
     void dump();

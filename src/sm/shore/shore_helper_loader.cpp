@@ -67,7 +67,7 @@ void table_loading_smt_t::work()
         return;
     }
 
-    TRACE( TRACE_DEBUG, "Table (%s) loaded in (%d) secs...\n",
+    TRACE( TRACE_ALWAYS, "Table (%s) loaded in (%d) secs...\n",
            _ptable->name(), (ttablestop - ttablestart));
     _rv = 0;
 }
@@ -164,10 +164,14 @@ w_rc_t index_loading_smt_t::do_help()
             
             if (_t_count >= mark) { 
                 W_DO(_pssm->commit_xct());
-                if ((_t_count % 10000) == 0)
+
+                if ((_t_count % 100000) == 0) { // every 100K
+                    TRACE( TRACE_ALWAYS, "index(%s): %d\n", _pindex->name(), _t_count);
+                }
+                else {
                     TRACE( TRACE_TRX_FLOW, "index(%s): %d\n", _pindex->name(), _t_count);
-                else
-                    TRACE( TRACE_DEBUG, "index(%s): %d\n", _pindex->name(), _t_count);
+                }
+
                 W_DO(_pssm->begin_xct());
                 mark += COMMIT_ACTION_COUNT;
             }
@@ -176,6 +180,9 @@ w_rc_t index_loading_smt_t::do_help()
     }
     // final commit
     W_DO(_pssm->commit_xct());
+
+//     TRACE( TRACE_ALWAYS, "Checkpointing\n");
+//     W_DO(_pssm->checkpoint());
 
     // if we reached this point everything went ok
     return (RCOK);

@@ -158,7 +158,6 @@ w_rc_t customer_t::get_iter_by_index(ss_m* db,
     ptuple->set_value(3, "");
     ptuple->set_value(5, c_last);
 
-
     char* lowkey = NULL;
     int   lobufsz = 0;
     int   lowsz  = format_key(index, ptuple, lowkey, lobufsz);

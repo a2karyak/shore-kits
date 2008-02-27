@@ -158,9 +158,9 @@ public:
 
 class file_info_t {
 private:
-    char              _fname[MAX_FNAME_LEN];        // file name
-    file_type_t        _ftype;        // {regular,primary idx, idx, ...}
-    std::pair<int,int> _record_size;  // size of each column of the file record
+    char              _fname[MAX_FNAME_LEN]; // file name
+    file_type_t        _ftype;               // {regular,primary idx, idx, ...}
+    std::pair<int,int> _record_size;         // size of each column of the file record
 
     rid_t        _first_rid;   // first record
     rid_t        _cur_rid;     // current tuple id 
