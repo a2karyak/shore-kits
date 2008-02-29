@@ -223,6 +223,7 @@ public:
     w_rc_t  bulkload_all_indexes(ss_m* db);
     w_rc_t  bulkload_index(ss_m* db, const char* name);
     w_rc_t  bulkload_index(ss_m* db, index_desc_t* idx);
+    w_rc_t  bulkload_index_with_iterations(ss_m* db, index_desc_t* index);
     w_rc_t  bulkload_index_with_helper(ss_m* db, index_desc_t* idx);
 
     /* check consistency between the indexes and table
@@ -358,16 +359,21 @@ typedef std::list<table_desc_t*> table_list_t;
 
 
 /* ---------------------------------------------------------------
+ *
  * @struct: table_row_t
  *
- * @brief: Represents a row (record) of a table. It is used instead
- *         so that multiple threads can operate concurrently on a
- *         table
+ * @brief:  Represents a row (record) of a table. It is used instead
+ *          so that multiple threads can operate concurrently on a
+ *          table
  *
  * --------------------------------------------------------------- */
 
 struct table_row_t 
 {    
+    static int _static_format_mallocs;
+    static int _static_format_key_mallocs;
+
+
     table_desc_t*  _ptable;           /* pointer back to the table */
     int            _field_cnt;        /* number of fields */
     bool           _is_setup;         /* flag if already setup */
@@ -720,6 +726,8 @@ inline const int table_desc_t::format_key(index_desc_t* index,
         dest = new char[isz];
         if (tmp)
             delete [] tmp;
+
+        prow->_static_format_key_mallocs++;
     }
     // in any case, clean up the buffer
     memset (dest, 0, isz);

@@ -10,11 +10,26 @@ using namespace shore;
 using namespace tpcc;
 
 
+// default database size (scaling factor)
+const int DF_NUM_OF_WHS = 10;
+
+// default queried number of warehouses (queried factor)
+const int DF_NUM_OF_QUERIED_WHS = 10;
+
+// default value if spread threads at WHs
+const int DF_SPREAD_THREADS_TO_WHS = 1;
+
 // default number of threads
-#define DF_NUM_OF_THR  10
+const int DF_NUM_OF_THR  = 10;
+
+// maximum number of threads
+const int MAX_NUM_OF_THR = 100;
 
 // default number of transactions executed per thread
-#define DF_TRX_PER_THR 100
+const int DF_TRX_PER_THR = 100;
+
+// default transaction id to be executed
+const int DF_TRX_ID = XCT_PAYMENT;
 
 
 ///////////////////////////////////////////////////////////
@@ -25,24 +40,42 @@ using namespace tpcc;
 class test_smt_t : public thread_t {
 private:
     ShoreTPCCEnv* _env;    
-    tpcc_random_gen_t _tpccrnd;         
+
+    // workload parameters
+    int _wh;
+    int _trxid;
+    int _notrxs;
+
+    tpcc_random_gen_t _tpccrnd; // (ip) deprecated
 
 public:
     int	_rv;
     
-    test_smt_t(ShoreTPCCEnv* env, c_str tname) 
+    test_smt_t(ShoreTPCCEnv* env, 
+               int sWH, int trxId, int numOfTrxs, 
+               c_str tname) 
 	: thread_t(tname), 
-          _env(env), _rv(0)
+          _env(env), _wh(sWH), _trxid(trxId), _notrxs(numOfTrxs), _rv(0)
     {
-        TRACE( TRACE_ALWAYS, "Hello...\n");
-        _tpccrnd = tpcc_random_gen_t(NULL);
+        assert (_env);
+        assert (_notrxs);
+        assert (_wh>=0);
+
+        _tpccrnd = tpcc_random_gen_t(NULL); // (ip) deprecated
     }
 
 
-    ~test_smt_t() {
-        TRACE( TRACE_ALWAYS, "Bye...\n");
-    }
+    ~test_smt_t() { }
 
+
+    w_rc_t run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct);
+    w_rc_t run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid);    
+
+    w_rc_t xct_new_order(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_payment(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_order_status(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_delivery(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_stock_level(ShoreTPCCEnv* env, int xctid);
 
 
     // thread entrance
@@ -60,26 +93,16 @@ public:
         _rv = test();
     }
 
-    w_rc_t tpcc_run_xct(ShoreTPCCEnv* env, int xct_type = 0, int num_xct = DF_TRX_PER_THR);
-    w_rc_t tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type = 0, int xctid = 0);    
-
-    w_rc_t xct_new_order(ShoreTPCCEnv* env, int xctid);
-    w_rc_t xct_payment(ShoreTPCCEnv* env, int xctid);
-    w_rc_t xct_order_status(ShoreTPCCEnv* env, int xctid);
-    w_rc_t xct_delivery(ShoreTPCCEnv* env, int xctid);
-    w_rc_t xct_stock_level(ShoreTPCCEnv* env, int xctid);
-
-    void print_tables();
-
-
     // methods
     int test() {
         W_DO(_env->loaddata());
         //_env->check_consistency();
-        W_DO(tpcc_run_xct(_env, XCT_PAYMENT)); // run only PAYMENT
-        print_tables();
+        W_DO(run_xcts(_env, _trxid, _notrxs));
+        //print_tables();
         return (0);
     }
+
+    void print_tables();
 
     /** @note Those two functions should be implemented by every
      *        smthread-inherited class that runs using run_smthread()
@@ -94,7 +117,7 @@ w_rc_t test_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid)
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    env->run_new_order(xctid, atrt);    
+    env->run_new_order(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
@@ -102,7 +125,7 @@ w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid)
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    env->run_payment(xctid, atrt);    
+    env->run_payment(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
@@ -110,7 +133,7 @@ w_rc_t test_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid)
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    env->run_order_status(xctid, atrt);    
+    env->run_order_status(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
@@ -119,7 +142,7 @@ w_rc_t test_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid)
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    env->run_delivery(xctid, atrt);    
+    env->run_delivery(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
@@ -128,7 +151,7 @@ w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid)
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    env->run_stock_level(xctid, atrt);    
+    env->run_stock_level(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
@@ -139,26 +162,23 @@ void test_smt_t::print_tables()
 }
 
 
-w_rc_t test_smt_t::tpcc_run_xct(ShoreTPCCEnv* env, int xct_type, int num_xct)
+w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 {
     for (int i=0; i<num_xct; i++) {
-        //        TRACE( TRACE_DEBUG, "%d . ", i);
-        tpcc_run_one_xct(env, xct_type, i);
-        sleep(10);
+        run_one_tpcc_xct(env, xct_type, i);
     }
     return (RCOK);
 }
 
 
  
-w_rc_t test_smt_t::tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
+w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
 {
-    int  this_type = xct_type;
-    if (this_type == 0) {        
-        this_type = _tpccrnd.random_xct_type(rand()%100);
+    if (xct_type == 0) {        
+        xct_type = _tpccrnd.random_xct_type(rand()%100);
     }
     
-    switch (this_type) {
+    switch (xct_type) {
     case XCT_NEW_ORDER:
         W_DO(xct_new_order(env, xctid));  break;
     case XCT_PAYMENT:
@@ -175,9 +195,25 @@ w_rc_t test_smt_t::tpcc_run_one_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
 }
 
 
+//////////////////////////////
 
-// uncomment below to run 4 threads concurrently
-//#define USE_MT_TPCC_THREADS
+
+//////////////////////////////
+
+
+void print_usage(char* argv[]) 
+{
+    TRACE( TRACE_ALWAYS, "\nUsage:\n" \
+           "%s <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID>]\n" \
+           "\nParameters: " \
+           "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
+           "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
+           "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
+           "<NUM_THRS>    : Number of threads used (optional)\n" \
+           "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
+           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n",
+           argv[0]);
+}
 
 
 int main(int argc, char* argv[]) 
@@ -185,73 +221,126 @@ int main(int argc, char* argv[])
     // initialize cordoba threads
     thread_init();
 
-    // Instanciate the Shore Environment
-    shore_env = new ShoreTPCCEnv("shore.conf", 1, 1);
 
-    int numOfThreads = DF_NUM_OF_THR;
-    int numOfTrxs    = DF_TRX_PER_THR;
+    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
+               //              | TRACE_QUERY_RESULTS
+               //              | TRACE_PACKET_FLOW
+               //               | TRACE_RECORD_FLOW
+               //                              | TRACE_TRX_FLOW
+               //               | TRACE_DEBUG
+              );
 
-    if (argc>1) {
-        int tmp_thr = atoi(argv[1]);
-        assert (tmp_thr);
-        numOfThreads = tmp_thr;
+
+    /* 0. Parse Parameters */
+    int numOfWHs        = DF_NUM_OF_WHS;    
+    int numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
+    int spreadThreads   = DF_SPREAD_THREADS_TO_WHS;
+    int numOfThreads    = DF_NUM_OF_THR;
+    int numOfTrxs       = DF_TRX_PER_THR;
+    int selectedTrxID   = DF_TRX_ID;
+
+    if (argc<3) {
+        print_usage(argv);
+        return (1);
     }
-    if (argc>2) {
-        int tmp_trx = atoi(argv[2]);
-        assert (tmp_trx);
-        numOfTrxs = tmp_trx;
-    }
+
+    int tmp = atoi(argv[1]);
+    if (tmp>0)
+        numOfWHs = tmp;
+
+    tmp = atoi(argv[2]);
+    if (tmp>0)
+        numOfQueriedWHs = tmp;
+    assert (numOfQueriedWHs <= numOfWHs);
+
+    if (argc>3)
+        spreadThreads = atoi(argv[3]);
     
-    // Load data to the Shore Database
-    TRACE( TRACE_ALWAYS, "Starting (%d) threads (%d) trxs each...\n");
-    guard<test_smt_t> tt1 = new test_smt_t(shore_env, c_str("tt1"));
+    if (argc>4) {
+        tmp = atoi(argv[4]);
+        if ((tmp>0) && (tmp<=MAX_NUM_OF_THR)) {
+            numOfThreads = tmp;
+            if (spreadThreads && (tmp > numOfQueriedWHs))
+                numOfThreads = numOfQueriedWHs;
+        }
+    }
 
-#ifdef USE_MT_TPCC_THREADS 
-    guard<test_smt_t> tt2 = new test_smt_t(shore_env, c_str("tt2"));
-    guard<test_smt_t> tt3 = new test_smt_t(shore_env, c_str("tt3"));
-    guard<test_smt_t> tt4 = new test_smt_t(shore_env, c_str("tt4"));
-#endif
+    if (argc>5) {
+        tmp = atoi(argv[5]);
+        if (tmp>0)
+            numOfTrxs = tmp;
+    }
 
-    /* 1. fork the loading threads */
-    tt1->fork();
+    if (argc>6) {
+        selectedTrxID = atoi(argv[6]);
+    }
 
-#ifdef USE_MT_TPCC_THREADS
-    tt2->fork();
-    tt3->fork();
-    tt4->fork();
-#endif    
+    // Print out configuration
+    TRACE( TRACE_ALWAYS, "\n\n" \
+           "Num of WHs     : %d\n" \
+           "Queried WHs    : %d\n" \
+           "Spread Threads : %s\n" \
+           "Num of Threads : %d\n" \
+           "Num of Trxs    : %d\n" \
+           "Trx ID         : %d\n", 
+           numOfWHs, numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
+           numOfThreads, numOfTrxs, selectedTrxID);
+
+    /* 1. Instanciate the Shore Environment */
+    shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
+
+
+    // the initialization must be executed in a shore context
+    db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), shore_env);
+    initializer->fork();
+    initializer->join();        
+    if (initializer) {
+        delete (initializer);
+        initializer = NULL;
+    }    
+    shore_env->print_sf();
+    
+        
+    TRACE( TRACE_ALWAYS, "Starting (%d) threads with (%d) trxs each...\n",
+           numOfThreads, numOfTrxs);
+    test_smt_t* testers[MAX_NUM_OF_THR];
+
+    time_t ttablestart = time(NULL);
+    int wh_id = 0;
+    for (int i=0; i<numOfThreads; i++) {
+        // create & fork (numOfThreads) threads
+        if (spreadThreads)
+            wh_id = i+1;
+        testers[i] = new test_smt_t(shore_env, wh_id, selectedTrxID,
+                                    numOfTrxs, c_str("tt%d", i));
+        testers[i]->fork();
+    }        
 
     /* 2. join the loading threads */
-    tt1->join();        
-    if (tt1->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in testing...\n");
-        TRACE( TRACE_ALWAYS, "Exiting...\n");
-        assert (false);
-    }    
+    for (int i=0; i<numOfThreads; i++) {
+        testers[i]->join();
+        if (testers[i]->_rv) {
+            TRACE( TRACE_ALWAYS, "Error in testing...\n");
+            TRACE( TRACE_ALWAYS, "Exiting...\n");
+            assert (false);
+        }    
+        delete (testers[i]);
+    }
+    time_t ttablestop = time(NULL);
 
-#ifdef USE_MT_TPCC_THREADS
-    tt2->join();        
-    if (tt2->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in testing...\n");
-        TRACE( TRACE_ALWAYS, "Exiting...\n");
-        assert (false);
-    }    
+    TRACE( TRACE_ALWAYS, "*******\n" \
+           "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%d)\nTPS:     (%.2f)\n",
+           numOfThreads, numOfTrxs, (ttablestop - ttablestart),
+           (double)(numOfThreads*numOfTrxs)/(double)(ttablestop - ttablestart));
 
-    tt3->join();        
-    if (tt3->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in testing...\n");
-        TRACE( TRACE_ALWAYS, "Exiting...\n");
-        assert (false);
-    }    
 
-    tt4->join();        
-    if (tt4->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in testing...\n");
-        TRACE( TRACE_ALWAYS, "Exiting...\n");
-        assert (false);
-    }    
-#endif
+    TRACE( TRACE_ALWAYS, "\nformat= (%d)\nformat_key= (%d)\n",
+           table_row_t::_static_format_mallocs,
+           table_row_t::_static_format_key_mallocs);
 
+
+    TRACE( TRACE_ALWAYS, "\n****** DISABLE PROFILING ****\n");
+    sleep(20); // give some time for ending the profiling
 
     // close Shore env
     close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));

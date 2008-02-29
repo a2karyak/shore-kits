@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file inmem_payment_begin.h
+/** @file shore_payment_begin.h
  *
- *  @brief Interface for the InMemory TPC-C Begin stage
+ *  @brief Interface for the Shore TPC-C Begin stage
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __INMEM_TPCC_PAYMENT_BEGIN_H
-#define __INMEM_TPCC_PAYMENT_BEGIN_H
+#ifndef __SHORE_TPCC_PAYMENT_BEGIN_H
+#define __SHORE_TPCC_PAYMENT_BEGIN_H
 
 #include <cstdio>
 
@@ -17,13 +17,13 @@
 #include "scheduler.h"
 
 #include "stages/tpcc/common/trx_packet.h"
-#include "stages/tpcc/inmem/inmem_payment_functions.h"
+#include "stages/tpcc/shore/shore_payment_functions.h"
 
-#include "stages/tpcc/inmem/inmem_payment_upd_wh.h"
-#include "stages/tpcc/inmem/inmem_payment_upd_distr.h"
-#include "stages/tpcc/inmem/inmem_payment_upd_cust.h"
-#include "stages/tpcc/inmem/inmem_payment_ins_hist.h"
-#include "stages/tpcc/inmem/inmem_payment_finalize.h"
+#include "stages/tpcc/shore/shore_payment_upd_wh.h"
+#include "stages/tpcc/shore/shore_payment_upd_distr.h"
+#include "stages/tpcc/shore/shore_payment_upd_cust.h"
+#include "stages/tpcc/shore/shore_payment_ins_hist.h"
+#include "stages/tpcc/shore/shore_payment_finalize.h"
 
 using namespace qpipe;
 using namespace tpcc_payment;
@@ -31,7 +31,7 @@ using namespace tpcc_payment;
 
 /* exported datatypes */
 
-class inmem_payment_begin_packet_t : public trx_packet_t {
+class shore_payment_begin_packet_t : public trx_packet_t {
   
 public:
 
@@ -42,7 +42,7 @@ public:
 
 
     /**
-     *  @brief inmem_payment_begin_packet_t constructor.
+     *  @brief shore_payment_begin_packet_t constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -61,7 +61,7 @@ public:
      *  @param All the PAYMENT transaction input variables
      */
 
-    inmem_payment_begin_packet_t(const c_str    &packet_id,
+    shore_payment_begin_packet_t(const c_str    &packet_id,
                                  tuple_fifo*     output_buffer,
                                  tuple_filter_t* output_filter,
                                  const payment_input_t a_p_input)
@@ -76,7 +76,7 @@ public:
     }
 
 
-    virtual ~inmem_payment_begin_packet_t() { }
+    virtual ~shore_payment_begin_packet_t() { }
     
 
     // FIXME: (ip) Correct the plan creation
@@ -109,7 +109,7 @@ public:
 
 
 /**
- *  @brief INMEM_PAYMENT_BEGIN stage. 
+ *  @brief SHORE_PAYMENT_BEGIN stage. 
  *
  *  1) Assigns a unique id to the submitted PAYMENT transaction
  *
@@ -118,7 +118,7 @@ public:
  *  finalization packet (PAYMENT_FINALIZE)
  */
 
-class inmem_payment_begin_stage_t : public stage_t {
+class shore_payment_begin_stage_t : public stage_t {
 
 protected:
 
@@ -130,56 +130,56 @@ protected:
 public:
 
     static const c_str DEFAULT_STAGE_NAME;
-    typedef inmem_payment_begin_packet_t stage_packet_t;
+    typedef shore_payment_begin_packet_t stage_packet_t;
 
-    inmem_payment_begin_stage_t();
+    shore_payment_begin_stage_t();
  
-    ~inmem_payment_begin_stage_t() { 
-	TRACE(TRACE_DEBUG, "INMEM_PAYMENT_BEGIN destructor\n");	
+    ~shore_payment_begin_stage_t() { 
+	TRACE(TRACE_DEBUG, "SHORE_PAYMENT_BEGIN destructor\n");	
     }
 
     /** @brief Returns the next trx_id */
     int get_next_counter();
 
-    /** @brief Retuns a inmem_payment_upd_wh_packet_t */
+    /** @brief Retuns a shore_payment_upd_wh_packet_t */
     trx_packet_t* 
-    create_inmem_payment_upd_wh_packet(const c_str& client_prefix,
+    create_shore_payment_upd_wh_packet(const c_str& client_prefix,
                                        tuple_fifo* uwh_buffer,
                                        tuple_filter_t* uwh_filter,
                                        int a_trx_id,
                                        payment_input_t* p_pin);
     
 
-    /** @brief Returns a inmem_payment_upd_distr_packet_t */
+    /** @brief Returns a shore_payment_upd_distr_packet_t */
     trx_packet_t* 
-    create_inmem_payment_upd_distr_packet(const c_str& client_prefix,
+    create_shore_payment_upd_distr_packet(const c_str& client_prefix,
                                           tuple_fifo* ud_buffer,
                                           tuple_filter_t* ud_filter,
                                           int a_trx_id,
                                           payment_input_t* p_pin);
     
 
-    /** @brief Returns a inmem_payment_upd_cust_packet_t */
+    /** @brief Returns a shore_payment_upd_cust_packet_t */
     trx_packet_t* 
-    create_inmem_payment_upd_cust_packet(const c_str& client_prefix,
+    create_shore_payment_upd_cust_packet(const c_str& client_prefix,
                                          tuple_fifo* uc_buffer,
                                          tuple_filter_t* uc_filter,
                                          int a_trx_id,
                                          payment_input_t* p_pin);
     
 
-    /** @brief Returns an inmem_payment_ins_hist_packet_t */
+    /** @brief Returns an shore_payment_ins_hist_packet_t */
     trx_packet_t* 
-    create_inmem_payment_ins_hist_packet(const c_str& client_prefix,
+    create_shore_payment_ins_hist_packet(const c_str& client_prefix,
                                          tuple_fifo* ih_buffer,
                                          tuple_filter_t* ih_filter,
                                          int a_trx_id,
                                          payment_input_t* p_pin);
     
 
-    /** @brief Returns an inmem_payment_finalize_packet_t */
+    /** @brief Returns an shore_payment_finalize_packet_t */
     trx_packet_t* 
-    create_inmem_payment_finalize_packet(const c_str& client_prefix,
+    create_shore_payment_finalize_packet(const c_str& client_prefix,
                                          tuple_fifo* fin_buffer,
                                          tuple_filter_t* fin_filter,
                                          int a_trx_id,
@@ -190,7 +190,7 @@ public:
     
     
     
-}; // EOF inmem_payment_begin_stage_t
+}; // EOF shore_payment_begin_stage_t
 
 
 

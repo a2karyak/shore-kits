@@ -35,7 +35,7 @@ tpcc_random_gen_t ShoreTPCCEnv::_atpccrndgen(NULL);
  ********************************************************************/
 
 void tpcc_stats_t::print_trx_stats() 
-{
+{   
     TRACE( TRACE_STATISTICS, "=====================================\n");
     TRACE( TRACE_STATISTICS, "TPC-C Database transaction statistics\n");
     TRACE( TRACE_STATISTICS, "NEW-ORDER\n");
@@ -89,7 +89,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
     /* 0. lock the loading status and the scaling factor */
     critical_section_t load_cs(_load_mutex);
     if (_loaded) {
-        TRACE( TRACE_ALWAYS, 
+        TRACE( TRACE_TRX_FLOW, 
                "Env already loaded. Doing nothing...\n");
         return (RCOK);
     }        
@@ -110,8 +110,8 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
     TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir);
 
-    for(tpcc_table_list_iter table_iter = _table_list.begin(); 
-        table_iter != _table_list.end(); table_iter++)
+    for (tpcc_table_list_iter table_iter = _table_list.begin(); 
+         table_iter != _table_list.end(); table_iter++)
         {
             ptable = *table_iter;
             loaders[cnt] = new table_loading_smt_t(c_str("ld%d", cnt), 
@@ -122,7 +122,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
         }
 
 
-#if 0
+#if 1
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -240,6 +240,7 @@ void ShoreTPCCEnv::set_qf(const int aQF)
     }
 }
 
+
 void ShoreTPCCEnv::set_sf(const int aSF)
 {
     if (aSF > 0) {
@@ -253,7 +254,6 @@ void ShoreTPCCEnv::set_sf(const int aSF)
 }
 
 
-
 void ShoreTPCCEnv::dump()
 {
     tpcc_table_t* ptable = NULL;
@@ -264,10 +264,6 @@ void ShoreTPCCEnv::dump()
             ptable = *table_iter;
             ptable->print_table(this->_pssm);
             cnt++;
-
-            // (ip) print only the first 4 tables
-            if (cnt == 4)
-                break;
         }
     
 }
@@ -425,38 +421,48 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
 
 /* --- without input specified --- */
 
-w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id, trx_result_tuple_t& atrt)
+w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id, 
+                                   trx_result_tuple_t& atrt,
+                                   int specificWH)
 {
-    new_order_input_t noin = create_no_input(_queried_factor);
+    new_order_input_t noin = create_no_input(_queried_factor, specificWH);
     return (run_new_order(xct_id, noin, atrt));
 }
 
 
-w_rc_t ShoreTPCCEnv::run_payment(const int xct_id, trx_result_tuple_t& atrt)
+w_rc_t ShoreTPCCEnv::run_payment(const int xct_id, 
+                                 trx_result_tuple_t& atrt,
+                                   int specificWH)
 {
-    payment_input_t pin = create_payment_input(_queried_factor);
+    payment_input_t pin = create_payment_input(_queried_factor, specificWH);
     return (run_payment(xct_id, pin, atrt));
 }
 
 
-w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id, trx_result_tuple_t& atrt)
+w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id, 
+                                      trx_result_tuple_t& atrt,
+                                      int specificWH)
 {
-    order_status_input_t ordin = create_order_status_input(_queried_factor);
+    order_status_input_t ordin = create_order_status_input(_queried_factor, specificWH);
     return (run_order_status(xct_id, ordin, atrt));
 }
 
 
-w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id, trx_result_tuple_t& atrt)
+w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id, 
+                                  trx_result_tuple_t& atrt,
+                                  int specificWH)
 {
-    delivery_input_t delin = create_delivery_input(_queried_factor);
+    delivery_input_t delin = create_delivery_input(_queried_factor, specificWH);
     return (run_delivery(xct_id, delin, atrt));
 }
 
 
-w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id, trx_result_tuple_t& atrt)
+w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id, 
+                                     trx_result_tuple_t& atrt,
+                                     int specificWH)
 {
-    stock_level_input_t slin = create_stock_level_input(_queried_factor);
-     return (run_stock_level(xct_id, slin, atrt));
+    stock_level_input_t slin = create_stock_level_input(_queried_factor, specificWH);
+    return (run_stock_level(xct_id, slin, atrt));
  }
 
 

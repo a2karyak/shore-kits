@@ -168,10 +168,11 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     table_row_t row(this);
     time_t tstart = time(NULL);
     int    rowscanned = 0;
-    char*  pdest  = NULL;
-    int    bufsz  = 0;
-    int    key_sz = 0;
-    int    mark   = COMMIT_ACTION_COUNT;
+    char*  pdest    = NULL;
+    int    bufsz    = 0;
+    int    key_sz   = 0;
+    int    mark     = COMMIT_ACTION_COUNT;
+
 
     /* 2. iterate over the whole table and insert the corresponding 
      *    index entries, using the index loading helper thread 
@@ -185,7 +186,6 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
         W_DO(db->create_assoc(index->fid(),
                                  vec_t(pdest, key_sz),
                                  vec_t(&(row._rid), sizeof(rid_t))));
-            
             
         if (rowscanned >= mark) { 
             W_DO(db->chain_xct());
@@ -206,6 +206,97 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     delete iter;
 
     W_DO(db->commit_xct());
+
+    /* 5. print stats */
+    time_t tstop = time(NULL);
+    TRACE( TRACE_ALWAYS, "Index (%s) loaded (%d) entries in (%d) secs...\n",
+           index->name(), rowscanned, (tstop - tstart));
+
+    return (RCOK);
+}
+
+
+w_rc_t table_desc_t::bulkload_index_with_iterations(ss_m* db,
+                                                    index_desc_t* index)
+{
+    assert (index);
+
+    TRACE( TRACE_DEBUG, "Building index: %s\n", index->name());
+
+    bool   eof = false;
+    table_row_t row(this);
+    time_t tstart = time(NULL);
+    int    rowscanned = 0;
+    char*  pdest    = NULL;
+    int    bufsz    = 0;
+    int    key_sz   = 0;
+    int    itermark = COMMIT_ACTION_COUNT_WITH_ITER;
+    int    mark     = COMMIT_ACTION_COUNT;
+
+    bool   finish = false;
+    int    iters  = 0;
+
+    // scan/idx insert iterations
+    while (!finish) {
+    
+        iters++;
+        W_DO(db->begin_xct());
+        W_DO(index->find_fid(db));
+    
+        /* 1. open a (table) scan iterator over the table and create 
+         * an index helper loader thread 
+         */
+
+        int scanned_in_iter = 0; // count rows scanned in this iter 
+        int ins_in_iter = 0; // count rows inserted in this iter
+        table_scan_iter_impl* iter;
+        W_DO(get_iter_for_file_scan(db, iter));
+
+        /* 2. iterate over the whole table and insert the corresponding 
+         *    index entries, using the index loading helper thread 
+         */
+        W_DO(iter->next(db, eof, row));
+        while (!eof) {
+        
+            scanned_in_iter++;
+
+            // skip the first (rowscanned) rows
+            if (scanned_in_iter > rowscanned) {
+                // do insert
+                key_sz = format_key(index, &row, pdest, bufsz);
+                assert (pdest); // (ip) if NULL invalid key
+            
+                W_DO(db->create_assoc(index->fid(),
+                                      vec_t(pdest, key_sz),
+                                      vec_t(&(row._rid), sizeof(rid_t))));            
+
+                if (rowscanned >= mark) { 
+                    TRACE( TRACE_TRX_FLOW, "index(%s): (%d:%d)\n", 
+                           index->name(), iters, rowscanned);
+                    mark += COMMIT_ACTION_COUNT;
+                }
+            
+                if (rowscanned >= itermark) { 
+                    W_DO(db->commit_xct());
+                    TRACE( TRACE_ALWAYS, "index(%s): (%d:%d)\n", 
+                           index->name(), iters, rowscanned);
+                    itermark += COMMIT_ACTION_COUNT_WITH_ITER;
+                    W_DO(db->begin_xct());
+                }
+                rowscanned++;   
+                ins_in_iter++;
+            }            
+                
+            W_DO(iter->next(db, eof, row));
+
+        }
+        delete iter;
+        W_DO(db->commit_xct());
+
+        // if no rows inserted in the iteration, then it is time to finish
+        if (!ins_in_iter)
+            finish = true;
+    }
 
     /* 5. print stats */
     time_t tstop = time(NULL);
@@ -346,7 +437,8 @@ w_rc_t table_desc_t::bulkload_all_indexes(ss_m* db)
 
     while (index) {
 	// build one index at each iteration.
-        w_rc_t e = bulkload_index(db, index);
+        //        w_rc_t e = bulkload_index(db, index);
+        w_rc_t e = bulkload_index_with_iterations(db, index);
         if (e) {
             TRACE( TRACE_ALWAYS, "Index (%s) loading aborted [0x%x]\n",
                    index->name(), e.err_num());
@@ -995,6 +1087,9 @@ void table_desc_t::print_desc(ostream& os)
  *
  *********************************************************************/
 
+int table_row_t::_static_format_mallocs = 0;
+int table_row_t::_static_format_key_mallocs = 0;
+
 const int table_row_t::format(char* &dest, int &bufsz)
 {
     int var_count  = 0;
@@ -1051,6 +1146,8 @@ const int table_row_t::format(char* &dest, int &bufsz)
 	dest = new char[tupsize];
         if (tmp)
             delete [] tmp;
+
+        _static_format_mallocs++;
     }
     // in any case, clean up the buffer
     memset (dest, 0, tupsize);

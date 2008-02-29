@@ -28,20 +28,19 @@ ENTER_NAMESPACE(shore);
 
 /******** Exported constants ********/
 
-#define  MAX_FNAME_LEN         40
-#define  MAX_TABLENAME_LEN     40
-#define  MAX_FIELDNAME_LEN     40
+const int MAX_FNAME_LEN     = 40;
+const int MAX_TABLENAME_LEN = 40;
+const int MAX_FIELDNAME_LEN = 40;
 
+const int MAX_KEYDESC_LEN   = 40;
+const int MAX_FILENAME_LEN  = 100;
 
-#define  MAX_KEYDESC_LEN       40
-#define  MAX_FILENAME_LEN     100
-
-#define  MAX_BODY_SIZE       1024
-
+const int MAX_BODY_SIZE     = 1024;
 
 #define  DELIM_CHAR            '|'
 
-#define  COMMIT_ACTION_COUNT  2000
+const int COMMIT_ACTION_COUNT           = 2000;   /* 2K */
+const int COMMIT_ACTION_COUNT_WITH_ITER = 500000; /* 500K */
 
 #define  MIN_SMALLINT     0
 #define  MAX_SMALLINT     1<<15

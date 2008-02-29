@@ -213,15 +213,19 @@ public:
         pthread_mutex_init(&_queried_mutex, NULL);
         
         /* add the tables to the list */
+        // (ip) Adding them in descending file order, so that the large
+        //      files to be loaded at the begining. Expection is the
+        //      WH and DISTR which are always the first two.
         _table_list.push_back(&_warehouse);
         _table_list.push_back(&_district);
+
+        _table_list.push_back(&_stock);
+        _table_list.push_back(&_order_line);
         _table_list.push_back(&_customer);
         _table_list.push_back(&_history);
-        _table_list.push_back(&_new_order);
         _table_list.push_back(&_order);
-        _table_list.push_back(&_order_line);
+        _table_list.push_back(&_new_order);
         _table_list.push_back(&_item);
-        _table_list.push_back(&_stock);
 
         assert (_table_list.size() == SHORE_TPCC_TABLES);
     }
@@ -241,6 +245,7 @@ public:
         _env_stats.print_env_stats(); 
     }
 
+    void print_sf();
     void set_qf(const int aQF);
     inline int get_qf() { return (_queried_factor); }
     void set_sf(const int aSF);
@@ -271,11 +276,21 @@ public:
     /* --- kit baseline trxs --- */
 
     /* --- without input specified --- */
-    w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt);
-    w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt);
-    w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt);
-    w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt);
-    w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt);
+    w_rc_t run_new_order(const int xct_id, 
+                         trx_result_tuple_t& atrt,
+                         int specificWH);
+    w_rc_t run_payment(const int xct_id, 
+                       trx_result_tuple_t& atrt,
+                       int specificWH);
+    w_rc_t run_order_status(const int xct_id, 
+                            trx_result_tuple_t& atrt,
+                            int specificWH);
+    w_rc_t run_delivery(const int xct_id, 
+                        trx_result_tuple_t& atrt,
+                        int specificWH);
+    w_rc_t run_stock_level(const int xct_id, 
+                           trx_result_tuple_t& atrt,
+                           int specificWH);
 
     /* --- with input specified --- */
     w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin,
@@ -292,7 +307,16 @@ public:
     static tpcc_random_gen_t _atpccrndgen;
 
 }; // EOF ShoreTPCCEnv
-    
+
+
+
+inline void ShoreTPCCEnv::print_sf()
+{
+    TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
+    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", shore_env->get_sf());
+    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", shore_env->get_qf());
+}
+
     
 
 

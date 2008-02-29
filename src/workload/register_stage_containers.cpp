@@ -17,34 +17,24 @@
 
 
 // OLTP-related constants
-#define MAX_NUM_TRXS     32
+const int MAX_NUM_TRXS = 32;
 
 
 // DSS-related constants
 //#define MAX_NUM_CLIENTS 16
-#define MAX_NUM_CLIENTS 256
-#define MAX_NUM_TSCAN_THREADS             MAX_NUM_CLIENTS * 2 // Q4, Q16 have two scans
-#define MAX_NUM_AGGREGATE_THREADS         MAX_NUM_CLIENTS
-#define MAX_NUM_PARTIAL_AGGREGATE_THREADS MAX_NUM_CLIENTS * 2 // Q1 uses two partial aggregates
-#define MAX_NUM_HASH_JOIN_THREADS         MAX_NUM_CLIENTS
-#define MAX_NUM_FUNC_CALL_THREADS         MAX_NUM_CLIENTS
-#define MAX_NUM_SORT_THREADS              MAX_NUM_CLIENTS * 2 // Q16 uses two sorts
-#define MAX_NUM_SORTED_IN_STAGE_THREADS   MAX_NUM_CLIENTS
+const int MAX_NUM_CLIENTS = 256;
+const int MAX_NUM_TSCAN_THREADS             = MAX_NUM_CLIENTS * 2; // Q4, Q16 have two scans
+const int MAX_NUM_AGGREGATE_THREADS         = MAX_NUM_CLIENTS;
+const int MAX_NUM_PARTIAL_AGGREGATE_THREADS = MAX_NUM_CLIENTS * 2; // Q1 uses two partial aggregates
+const int MAX_NUM_HASH_JOIN_THREADS         = MAX_NUM_CLIENTS;
+const int MAX_NUM_FUNC_CALL_THREADS         = MAX_NUM_CLIENTS;
+const int MAX_NUM_SORT_THREADS              = MAX_NUM_CLIENTS * 2; // Q16 uses two sorts
+const int MAX_NUM_SORTED_IN_STAGE_THREADS   = MAX_NUM_CLIENTS;
 
 
 
-void register_stage_containers(int environment) {
-
-
-    if (environment != QUERY_ENV) {
-        selectedQueriedSF = QUERIED_TPCC_SCALING_FACTOR;
-        TRACE( TRACE_ALWAYS, "\n*****************\n" \
-               "Registering TRX environment\n" \
-               "SCALING FACTOR \t\t= (%d)\nQUERIED WAREHOUSES \t= (%d)\n" \
-               "*****************\n",
-               TPCC_SCALING_FACTOR, selectedQueriedSF);
-    }
-    
+void register_stage_containers(int environment) 
+{
     switch (environment) {
 
         /** OLTP stages registration */

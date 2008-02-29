@@ -19,15 +19,20 @@ ENTER_NAMESPACE(tpcc);
 
 /** Exported functionality */
 
-payment_input_t      create_payment_input(int sf = QUERIED_TPCC_SCALING_FACTOR);
+payment_input_t      create_payment_input(int sf = QUERIED_TPCC_SCALING_FACTOR,
+                                          int specificWH = 0);
 
-new_order_input_t    create_no_input(int sf = QUERIED_TPCC_SCALING_FACTOR);
+new_order_input_t    create_no_input(int sf = QUERIED_TPCC_SCALING_FACTOR,
+                                     int specificWH = 0);
 
-order_status_input_t create_order_status_input(int sf = QUERIED_TPCC_SCALING_FACTOR);
+order_status_input_t create_order_status_input(int sf = QUERIED_TPCC_SCALING_FACTOR,
+                                               int specificWH = 0);
 
-delivery_input_t     create_delivery_input(int sf = QUERIED_TPCC_SCALING_FACTOR);
+delivery_input_t     create_delivery_input(int sf = QUERIED_TPCC_SCALING_FACTOR,
+                                           int specificWH = 0);
 
-stock_level_input_t  create_stock_level_input(int sf = QUERIED_TPCC_SCALING_FACTOR);
+stock_level_input_t  create_stock_level_input(int sf = QUERIED_TPCC_SCALING_FACTOR,
+                                              int specificWH = 0);
 
 
 EXIT_NAMESPACE(tpcc);

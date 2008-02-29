@@ -32,7 +32,7 @@ ENTER_NAMESPACE(tpcc);
  *
  *********************************************************************/ 
 
-new_order_input_t create_no_input(int sf) 
+new_order_input_t create_no_input(int sf, int specificWH) 
 {
     // check scaling factor
     assert(sf > 0);
@@ -42,7 +42,11 @@ new_order_input_t create_no_input(int sf)
 
 #ifndef USE_SAME_INPUT    
 
-    noin._wh_id  = URand(1, sf);
+    if (specificWH>0)
+        noin._wh_id = specificWH;
+    else
+        noin._wh_id = URand(1, sf);
+    
     noin._d_id   = URand(1, 10);
     noin._c_id   = NURand(1023, 1, 3000);
     noin._ol_cnt = URand(5, 15);
@@ -96,7 +100,7 @@ new_order_input_t create_no_input(int sf)
  *
  *********************************************************************/ 
 
-payment_input_t create_payment_input(int sf) 
+payment_input_t create_payment_input(int sf, int specificWH) 
 {
     // check scaling factor
     assert(sf > 0);
@@ -106,7 +110,11 @@ payment_input_t create_payment_input(int sf)
 
 #ifndef USE_SAME_INPUT
 
-    pin._home_wh_id = URand(1, sf);
+    if (specificWH>0)
+        pin._home_wh_id = specificWH;
+    else
+        pin._home_wh_id = URand(1, sf);
+
     pin._home_d_id = URand(1, 10);    
     pin._h_amount = (long)URand(100, 500000)/(long)100.00;
     pin._h_date = time(NULL);
@@ -174,7 +182,7 @@ payment_input_t create_payment_input(int sf)
  *
  *********************************************************************/ 
 
-order_status_input_t create_order_status_input(int sf)
+order_status_input_t create_order_status_input(int sf, int specificWH)
 {
     // check scaling factor
     assert(sf > 0);
@@ -184,7 +192,11 @@ order_status_input_t create_order_status_input(int sf)
 
 #ifndef USE_SAME_INPUT    
 
-    osin._wh_id    = URand(1, sf);
+    if (specificWH>0)
+        osin._wh_id = specificWH;
+    else
+        osin._wh_id    = URand(1, sf);
+
     osin._d_id     = URand(1, 10);
 
 #ifdef USE_SAFE_PATHS
@@ -225,7 +237,7 @@ order_status_input_t create_order_status_input(int sf)
  *
  *********************************************************************/ 
 
-delivery_input_t create_delivery_input(int sf)
+delivery_input_t create_delivery_input(int sf, int specificWH)
 {
     // check scaling factor
     assert(sf > 0);
@@ -235,7 +247,11 @@ delivery_input_t create_delivery_input(int sf)
 
 #ifndef USE_SAME_INPUT    
 
-    din._wh_id      = URand(1, sf);
+    if (specificWH>0)
+        din._wh_id = specificWH;
+    else
+        din._wh_id = URand(1, sf);
+
     din._carrier_id = URand(1, 10);
 
 #else
@@ -259,7 +275,7 @@ delivery_input_t create_delivery_input(int sf)
  *
  *********************************************************************/ 
 
-stock_level_input_t create_stock_level_input(int sf)
+stock_level_input_t create_stock_level_input(int sf, int specificWH)
 {
     // check scaling factor
     assert(sf > 0);
@@ -269,7 +285,11 @@ stock_level_input_t create_stock_level_input(int sf)
 
 #ifndef USE_SAME_INPUT    
 
-    slin._wh_id     = URand(1, sf);
+    if (specificWH>0)
+        slin._wh_id = 0;
+    else
+        slin._wh_id = URand(1, sf);
+
     slin._d_id      = URand(1, 10);
     slin._threshold = URand(10, 20);
 

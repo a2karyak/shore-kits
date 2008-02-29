@@ -75,7 +75,7 @@ void shore_tpcc_handler_t::init() {
             delete (initializer);
             initializer = NULL;
         }
-
+        shore_env->print_sf();
 
         // register drivers...
         add_driver("shore_new_order_baseline", 
@@ -174,8 +174,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         if (num_warehouses>0) {
             shore_env->set_sf(num_warehouses);
         }
-        TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", shore_env->get_sf());
-        TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", shore_env->get_qf());
+        shore_env->print_sf();
         return;
     }
 
@@ -188,8 +187,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
             selectedQueriedSF = queried_warehouses;
             shore_env->set_qf(queried_warehouses);
         }
-        TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", shore_env->get_sf());
-        TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", shore_env->get_qf());
+        shore_env->print_sf();
         return;
     }
 
