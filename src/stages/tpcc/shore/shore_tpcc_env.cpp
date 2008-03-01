@@ -122,7 +122,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
         }
 
 
-#if 1
+#if 0
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -511,6 +511,20 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     table_row_t rst(&_stock);
     table_row_t rol(&_order_line);
     trt.reset(UNSUBMITTED, xct_id);
+    rep_row_t areprow;
+    // allocate space for the biggest of the 8 table representations
+    areprow.set(_customer.maxsize()); 
+
+
+    rwh._rep = &areprow;
+    rdist._rep = &areprow;
+    rcust._rep = &areprow;
+    rno._rep = &areprow;
+    rord._rep = &areprow;
+    ritem._rep = &areprow;
+    rst._rep = &areprow;
+    rol._rep = &areprow;
+
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
@@ -706,7 +720,6 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
            xct_id, adist.D_NEXT_O_ID, pnoin->_d_id, pnoin->_wh_id);
     W_DO(_new_order.add_tuple(_pssm, &rno));
 
-
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
@@ -750,7 +763,6 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     assert (_initialized);
     assert (_loaded);
 
-
     // payment trx touches 4 tables: 
     // warehouse, district, customer, and history
     table_row_t rwh(&_warehouse);
@@ -758,6 +770,14 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     table_row_t rcust(&_customer);
     table_row_t rhist(&_history);
     trt.reset(UNSUBMITTED, xct_id);
+    rep_row_t areprow;
+    // allocate space for the biggest of the 4 table representations
+    areprow.set(_customer.maxsize()); 
+
+    rwh._rep = &areprow;
+    rdist._rep = &areprow;
+    rcust._rep = &areprow;
+    rhist._rep = &areprow;
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
@@ -800,10 +820,14 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
         assert (ppin->_v_cust_ident_selection <= 60);
 
+        // (ip) could use a trash stack here
+        rep_row_t lowrep;
+        rep_row_t highrep;
+
         index_scan_iter_impl* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
                xct_id, ppin->_c_last);
-        W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
+        W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, lowrep, highrep,
                                          c_w, c_d, ppin->_c_last));
 
         int c_id_list[17];
@@ -1030,6 +1054,22 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     table_row_t rord(&_order);
     table_row_t rordline(&_order_line);
     trt.reset(UNSUBMITTED, xct_id);
+    rep_row_t areprow;
+    // allocate space for the biggest of the 3 table representations
+    areprow.set(_customer.maxsize()); 
+
+    rcust._rep = &areprow;
+    rord._rep = &areprow;
+    rordline._rep = &areprow;
+
+
+    // (ip) could use a trash stack here
+    rep_row_t lowrep;
+    rep_row_t highrep;
+    // allocate space for the biggest of the (customer) and (order)
+    // table representations
+    lowrep.set(_customer.maxsize()); 
+    highrep.set(_customer.maxsize()); 
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
@@ -1049,7 +1089,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 
         index_scan_iter_impl* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
-        W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, 
+        W_DO(_customer.get_iter_by_index(_pssm, c_iter, &rcust, lowrep, highrep,
                                          w_id, d_id, pstin->_c_last));
 
         int  c_id_list[17];
@@ -1103,7 +1143,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
      
     index_scan_iter_impl* o_iter;
     TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-order-iter-by-index\n", xct_id);
-    W_DO(_order.get_iter_by_index(_pssm, o_iter, &rord,
+    W_DO(_order.get_iter_by_index(_pssm, o_iter, &rord, lowrep, highrep,
                                   w_id, d_id, pstin->_c_id));
 
     tpcc_order_tuple aorder;
@@ -1115,7 +1155,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
         rord.get_value(5, aorder.O_CARRIER_ID);
         rord.get_value(6, aorder.O_OL_CNT);
 
-        rord.print_tuple();
+        //        rord.print_tuple();
 
         W_DO(o_iter->next(_pssm, eof, rord));
     }
@@ -1137,6 +1177,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     index_scan_iter_impl* ol_iter;
     TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
     W_DO(_order_line.get_iter_by_index(_pssm, ol_iter, &rordline,
+                                       lowrep, highrep,
                                        w_id, d_id, aorder.O_ID));
 
     tpcc_orderline_tuple* porderlines = new tpcc_orderline_tuple[aorder.O_OL_CNT];
@@ -1210,9 +1251,28 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     table_row_t rordline(&_order_line);
     table_row_t rcust(&_customer);
     trt.reset(UNSUBMITTED, xct_id);
+    rep_row_t areprow;
+    // allocate space for the biggest of the 4 table representations
+    areprow.set(_customer.maxsize()); 
+
+    rno._rep = &areprow;
+    rord._rep = &areprow;
+    rordline._rep = &areprow;
+    rcust._rep = &areprow;
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
+
+
+    // (ip) could use a trash stack here
+    rep_row_t lowrep;
+    rep_row_t highrep;
+    rep_row_t sortrep;
+    // allocate space for the biggest of the (new_order) and (orderline)
+    // table representations
+    lowrep.set(_order_line.maxsize()); 
+    highrep.set(_order_line.maxsize()); 
+    sortrep.set(_order_line.maxsize()); 
 
 
     /* process each district separately */
@@ -1228,17 +1288,18 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 */
 
         // setup a sort buffer of SMALLINTS
-	sort_buffer_t o_id_list(1);
+	sort_buffer_t o_id_list(1, &sortrep);
 	o_id_list.setup(0, SQL_INT);
         table_row_t rsb(&o_id_list);
 
-
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-new-order-iter-by-index (%d) (%d)\n", 
                xct_id, w_id, d_id);
-
+    
         index_scan_iter_impl* no_iter;
-	W_DO(_new_order.get_iter_by_index(_pssm, no_iter, &rno, w_id, d_id));
-	bool  eof;
+	W_DO(_new_order.get_iter_by_index(_pssm, no_iter, &rno, 
+                                          lowrep, highrep,
+                                          w_id, d_id));
+	bool eof;
 
         // iterate over all new_orders and load their no_o_ids to the sort buffer
 	W_DO(no_iter->next(_pssm, eof, rno));
@@ -1255,8 +1316,6 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
         
 	int no_o_id = 0;
         sort_iter_impl o_id_list_iter(_pssm, &o_id_list);
-
-        //	W_DO(o_id_list.get_iter_sort_buffer(o_id_list_iter));
 
         // get the first entry (min value)
 	W_DO(o_id_list_iter.next(_pssm, eof, rsb));
@@ -1320,6 +1379,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	int total_amount = 0;
         index_scan_iter_impl* ol_iter;
 	W_DO(_order_line.get_iter_by_index(_pssm, ol_iter, &rordline, 
+                                           lowrep, highrep,
                                            w_id, d_id, no_o_id));
 
         // iterate over all the orderlines for the particular order
@@ -1402,7 +1462,13 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     table_row_t rordline(&_order_line);
     table_row_t rstock(&_stock);
     trt.reset(UNSUBMITTED, xct_id);
+    rep_row_t areprow;
+    // allocate space for the biggest of the 3 table representations
+    areprow.set(_district.maxsize()); 
 
+    rdist._rep = &areprow;
+    rordline._rep = &areprow;
+    rstock._rep = &areprow;
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
@@ -1446,14 +1512,25 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
     TRACE( TRACE_TRX_FLOW, "App: %d STO:get-iter-by-index (%d) (%d) (%d) (%d)\n", 
            xct_id, pslin->_wh_id, pslin->_d_id, next_o_id-20, next_o_id);
+   
+    // (ip) could use a trash stack here
+    rep_row_t lowrep;
+    rep_row_t highrep;
+    rep_row_t sortrep;
+    // allocate space for the biggest of the (new_order) and (orderline)
+    // table representations
+    lowrep.set(_order_line.maxsize()); 
+    highrep.set(_order_line.maxsize()); 
+    sortrep.set(_order_line.maxsize()); 
+    
 
     index_scan_iter_impl* ol_iter;
     W_DO(_order_line.get_iter_by_index(_pssm, ol_iter, &rordline,
+                                       lowrep, highrep,
 				       pslin->_wh_id, pslin->_d_id,
 				       next_o_id-20, next_o_id));
 
-
-    sort_buffer_t ol_list(4);
+    sort_buffer_t ol_list(4, &sortrep);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
     ol_list.setup(1, SQL_INT);  /* OL_W_ID */
     ol_list.setup(2, SQL_INT);  /* OL_D_ID */

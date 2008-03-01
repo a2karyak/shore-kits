@@ -83,11 +83,10 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
     register int tuple_count = 0;
     register int mark = COMMIT_ACTION_COUNT;
 
-    table_row_t  tuple(this);
+    table_row_t tuple(this);
     bool btread = false;
     char linebuffer[MAX_LINE_LENGTH];
-    char* pdest = NULL;
-    int   bufsz = 0;
+    rep_row_t arep;
     int tsz = 0;
 
     for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
@@ -95,14 +94,11 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
         // read tuple and put it in a table_row_t
         btread = read_tuple_from_line(tuple, linebuffer);
 
-        // (ip) for debugging
-        //if (!strcmp(name(), "CUSTOMER")) tuple.print_tuple();
-
         // append it to the table
-        tsz = tuple.format(pdest, bufsz);
-        assert (pdest); // (ip) if NULL invalid
+        tsz = tuple.format(arep);
+        assert (arep._dest); // (ip) if NULL invalid
 	W_DO(file_append.create_rec(vec_t(), 0,
-				    vec_t(pdest, tsz),
+				    vec_t(arep._dest, tsz),
 				    tuple._rid));
 
 	if(i >= mark) {
@@ -123,9 +119,6 @@ w_rc_t table_desc_t::load_from_file(ss_m* db, const char* fname)
     
     /* 3. commit and print statistics */
     W_DO(db->commit_xct());
-
-    if (pdest)
-        delete [] pdest;
     
     TRACE( TRACE_ALWAYS, "(%s) # of records inserted: %d\n",
            _name, tuple_count);
@@ -168,8 +161,7 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     table_row_t row(this);
     time_t tstart = time(NULL);
     int    rowscanned = 0;
-    char*  pdest    = NULL;
-    int    bufsz    = 0;
+    rep_row_t arep;
     int    key_sz   = 0;
     int    mark     = COMMIT_ACTION_COUNT;
 
@@ -180,20 +172,20 @@ w_rc_t table_desc_t::bulkload_index(ss_m* db,
     W_DO(iter->next(db, eof, row));
     while (!eof) {
         
-        key_sz = format_key(index, &row, pdest, bufsz);
-        assert (pdest); // (ip) if NULL invalid key
+        key_sz = format_key(index, &row, arep);
+        assert (arep._dest); // (ip) if NULL invalid key
             
         W_DO(db->create_assoc(index->fid(),
-                                 vec_t(pdest, key_sz),
+                                 vec_t(arep._dest, key_sz),
                                  vec_t(&(row._rid), sizeof(rid_t))));
             
         if (rowscanned >= mark) { 
             W_DO(db->chain_xct());
 
-            if ((rowscanned % 10000) == 0) { // every 100K
+            if ((rowscanned % 100000) == 0) { // every 100K
                 TRACE( TRACE_ALWAYS, "index(%s): %d\n", index->name(), rowscanned);
             }
-            else {
+            else if ((rowscanned % 10000) == 0) { // every 10K
                 TRACE( TRACE_TRX_FLOW, "index(%s): %d\n", index->name(), rowscanned);
             }
             
@@ -227,8 +219,7 @@ w_rc_t table_desc_t::bulkload_index_with_iterations(ss_m* db,
     table_row_t row(this);
     time_t tstart = time(NULL);
     int    rowscanned = 0;
-    char*  pdest    = NULL;
-    int    bufsz    = 0;
+    rep_row_t arep;
     int    key_sz   = 0;
     int    itermark = COMMIT_ACTION_COUNT_WITH_ITER;
     int    mark     = COMMIT_ACTION_COUNT;
@@ -263,11 +254,11 @@ w_rc_t table_desc_t::bulkload_index_with_iterations(ss_m* db,
             // skip the first (rowscanned) rows
             if (scanned_in_iter > rowscanned) {
                 // do insert
-                key_sz = format_key(index, &row, pdest, bufsz);
-                assert (pdest); // (ip) if NULL invalid key
+                key_sz = format_key(index, &row, arep);
+                assert (arep._dest); // (ip) if NULL invalid key
             
                 W_DO(db->create_assoc(index->fid(),
-                                      vec_t(pdest, key_sz),
+                                      vec_t(arep._dest, key_sz),
                                       vec_t(&(row._rid), sizeof(rid_t))));            
 
                 if (rowscanned >= mark) { 
@@ -438,7 +429,8 @@ w_rc_t table_desc_t::bulkload_all_indexes(ss_m* db)
     while (index) {
 	// build one index at each iteration.
         //        w_rc_t e = bulkload_index(db, index);
-        w_rc_t e = bulkload_index_with_iterations(db, index);
+        //w_rc_t e = bulkload_index_with_iterations(db, index);
+        w_rc_t e = bulkload_index(db, index);
         if (e) {
             TRACE( TRACE_ALWAYS, "Index (%s) loading aborted [0x%x]\n",
                    index->name(), e.err_num());
@@ -474,6 +466,7 @@ w_rc_t  table_desc_t::index_probe(ss_m* db,
 {
     assert (index);
     assert (ptuple); 
+    assert (ptuple->_rep);
 
     bool     found = false;
     smsize_t len = sizeof(rid_t);
@@ -482,19 +475,14 @@ w_rc_t  table_desc_t::index_probe(ss_m* db,
     W_DO(index->check_fid(db));
 
     /* 2. find the tuple in the B+tree */
-
-    char* pdest = NULL;
-    int   bufsz = 0;
-
-    int key_sz = format_key(index, ptuple, pdest, bufsz);
-    assert (pdest); // (ip) if NULL invalid key
+    int key_sz = format_key(index, ptuple, *ptuple->_rep);
+    assert (ptuple->_rep->_dest); // (ip) if NULL invalid key
 
     W_DO(ss_m::find_assoc(index->fid(),
-			  vec_t(pdest, key_sz),
+			  vec_t(ptuple->_rep->_dest, key_sz),
 			  &(ptuple->_rid),
 			  len,
 			  found));
-    delete [] pdest;
 
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
@@ -660,23 +648,21 @@ bool  table_desc_t::create_primary_idx(const char* name,
  *
  *********************************************************************/
 
-w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
+w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* ptuple)
 {
-    assert (tuple);
+    assert (ptuple);
+    assert (ptuple->_rep);
 
     /* 1. find the file */
     W_DO(check_fid(db));
 
     /* 2. append the tuple */
-    char* pdest = NULL;
-    int   bufsz = 0;
-
-    int tsz = tuple->format(pdest, bufsz);
-    assert (pdest); // (ip) if NULL invalid
+    int tsz = ptuple->format(*ptuple->_rep);
+    assert (ptuple->_rep->_dest); // (ip) if NULL invalid
 
     W_DO(db->create_rec(fid(), vec_t(), tsz,
-                        vec_t(pdest, tsz),
-                        tuple->_rid));
+                        vec_t(ptuple->_rep->_dest, tsz),
+                        ptuple->_rid));
 
 
     /* 3. update the indexes */
@@ -684,19 +670,17 @@ w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
     int ksz = 0;
 
     while (index) {
-        ksz = tuple->format_key(index, pdest, bufsz);
-        assert (pdest); // (ip) if dest == NULL there is invalid key
+        ksz = ptuple->format_key(index, *ptuple->_rep);
+        assert (ptuple->_rep->_dest); // (ip) if dest == NULL there is invalid key
 
         W_DO(index->find_fid(db));
 	W_DO(db->create_assoc(index->fid(),
-                              vec_t(pdest, ksz),
-                              vec_t(&(tuple->_rid), sizeof(rid_t))));
+                              vec_t(ptuple->_rep->_dest, ksz),
+                              vec_t(&(ptuple->_rid), sizeof(rid_t))));
 
         /* move to next index */
 	index = index->next();
     }
-    delete [] pdest;
-
     return (RCOK);
 }
 
@@ -714,36 +698,33 @@ w_rc_t table_desc_t::add_tuple(ss_m* db, table_row_t* tuple)
  *
  *********************************************************************/
 
-w_rc_t table_desc_t::update_tuple(ss_m* db, table_row_t* tuple)
+w_rc_t table_desc_t::update_tuple(ss_m* db, table_row_t* ptuple)
 {
-    assert (tuple);
+    assert (ptuple);
+    assert (ptuple->_rep);
 
-    if (!tuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
     /* 1. pin record */
     pin_i pin;
-    W_DO(pin.pin(tuple->rid(), 0, EX));
+    W_DO(pin.pin(ptuple->rid(), 0, EX));
 
     int current_size = pin.body_size();
 
     /* 2. update record */
-    char* pdest = NULL;
-    int   bufsz = 0;
-
-    int tsz = tuple->format(pdest, bufsz);
-    assert (pdest); // (ip) if NULL invalid
+    int tsz = ptuple->format(*ptuple->_rep);
+    assert (ptuple->_rep->_dest); // (ip) if NULL invalid
 
     if (current_size < tsz) {
-        w_rc_t rc = db->append_rec(tuple->rid(),
+        w_rc_t rc = db->append_rec(ptuple->rid(),
                                    zvec_t(tsz - current_size),
                                    true);
         // on error unpin 
         if (rc!=(RCOK)) pin.unpin();
         W_DO(rc);
     }
-    w_rc_t rc = db->update_rec(tuple->rid(), 0, 
-                               vec_t(pdest, tsz));
-    delete [] pdest;
+    w_rc_t rc = db->update_rec(ptuple->rid(), 0, 
+                               vec_t(ptuple->_rep->_dest, tsz));
 
     /* 3. unpin */
     pin.unpin();
@@ -767,6 +748,7 @@ w_rc_t table_desc_t::update_tuple(ss_m* db, table_row_t* tuple)
 w_rc_t  table_desc_t::delete_tuple(ss_m* db, table_row_t* ptuple)
 {
     assert (ptuple);
+    assert (ptuple->_rep);
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
@@ -775,17 +757,15 @@ w_rc_t  table_desc_t::delete_tuple(ss_m* db, table_row_t* ptuple)
 
     /* 2. delete all the corresponding index entries */
     index_desc_t* index = _indexes;
-    char* pdest = NULL;
-    int   bufsz = 0;
     int key_sz = 0;
 
     while (index) {
-        key_sz = format_key(index, ptuple, pdest, bufsz);
-        assert (pdest); // (ip) if NULL invalid key
+        key_sz = format_key(index, ptuple, *ptuple->_rep);
+        assert (ptuple->_rep->_dest); // (ip) if NULL invalid key
 
 	W_DO(index->find_fid(db));
 	W_DO(db->destroy_assoc(index->fid(),
-                               vec_t(pdest, key_sz),
+                               vec_t(ptuple->_rep->_dest, key_sz),
                                vec_t(&(ptuple->_rid), sizeof(rid_t))));
 
         /* move to next index */
@@ -956,25 +936,21 @@ w_rc_t table_desc_t::scan_index(ss_m* db, index_desc_t* index)
     index_scan_iter_impl* iter;
 
     table_row_t lowtuple(this);
-    char* lowkey  = NULL;
-    int   lobufsz = 0;
-    int   lowsz   = min_key(index, &lowtuple, lowkey, lobufsz);
-    assert (lowkey);
+    rep_row_t lowrep;
+    int lowsz = min_key(index, &lowtuple, lowrep);
+    assert (lowrep._dest);
 
     table_row_t hightuple(this);
-    char* highkey = NULL;
-    int   hibufsz = 0;
-    int   highsz  = max_key(index, &hightuple, highkey, hibufsz);
-    assert (highkey);
+    rep_row_t highrep;
+    int highsz = max_key(index, &hightuple, highrep);
+    assert (highrep._dest);
 
     W_DO(get_iter_for_index_scan(db, index, iter,
 				 scan_index_i::ge,
-				 vec_t(lowkey, lowsz),
+				 vec_t(lowrep._dest, lowsz),
 				 scan_index_i::le,
-				 vec_t(highkey, highsz),
+				 vec_t(highrep._dest, highsz),
 				 false));
-    delete [] highkey;
-    delete [] lowkey;
 
     /* 2. iterate over all index records */
     bool        eof;
@@ -1018,7 +994,7 @@ w_rc_t table_desc_t::print_table(ss_m* db)
     int count = 0;
     W_DO(get_iter_for_file_scan(db, iter));
 
-    bool        eof = false;
+    bool eof = false;
     table_row_t row(this);
     W_DO(iter->next(db, eof, row));
     while (!eof) {
@@ -1087,10 +1063,9 @@ void table_desc_t::print_desc(ostream& os)
  *
  *********************************************************************/
 
-int table_row_t::_static_format_mallocs = 0;
-int table_row_t::_static_format_key_mallocs = 0;
+//int rep_row_t::_static_format_mallocs = 0;
 
-const int table_row_t::format(char* &dest, int &bufsz)
+const int table_row_t::format(rep_row_t &arep)
 {
     int var_count  = 0;
     int fixed_size = 0;
@@ -1134,23 +1109,11 @@ const int table_row_t::format(char* &dest, int &bufsz)
     // In the total tuple length add the size of the bitmap that
     // shows which fields can be NULL 
     if (null_count) tupsize += (null_count >> 3) + 1;
+    assert (tupsize);
 
 
     /* 2. allocate space for formatted data */
-
-    assert (tupsize);
-    if ((!dest) || (bufsz < tupsize)) {
-        // new larger buffer needs to be allocated
-        bufsz = tupsize;
-        char* tmp = dest;
-	dest = new char[tupsize];
-        if (tmp)
-            delete [] tmp;
-
-        _static_format_mallocs++;
-    }
-    // in any case, clean up the buffer
-    memset (dest, 0, tupsize);
+    arep.set(tupsize);
 
 
     /* 3. format the data */
@@ -1173,7 +1136,7 @@ const int table_row_t::format(char* &dest, int &bufsz)
 	if (_pvalues[i].field_desc()->allow_null()) {
 	    null_index++;
 	    if (_pvalues[i].is_null()) {
-		SET_NULL_FLAG(dest, null_index);
+		SET_NULL_FLAG(arep._dest, null_index);
 	    }
 	}
 
@@ -1182,13 +1145,13 @@ const int table_row_t::format(char* &dest, int &bufsz)
         // buffer, to position  (buffer + var_offset)
         // and increase the var_offset.
 	if (_pvalues[i].is_variable_length()) {
-	    _pvalues[i].copy_value(dest + var_offset);
+	    _pvalues[i].copy_value(arep._dest + var_offset);
             register int offset = _pvalues[i].realsize(); 
 	    var_offset += offset;
 
 	    // set the offset 
             offset_t len = offset;
-	    memcpy(VAR_SLOT(dest, var_slot_offset), &len, sizeof(offset_t));
+	    memcpy(VAR_SLOT(arep._dest, var_slot_offset), &len, sizeof(offset_t));
 	    var_slot_offset += sizeof(offset_t);
 	}
 	else {
@@ -1196,7 +1159,7 @@ const int table_row_t::format(char* &dest, int &bufsz)
             // fixed length part of the buffer, to position 
             // (buffer + fixed_offset)
             // and increase the fixed_offset
-	    _pvalues[i].copy_value(dest + fixed_offset);
+	    _pvalues[i].copy_value(arep._dest + fixed_offset);
 	    fixed_offset += _pvalues[i].maxsize();
 	}
     }
@@ -1347,6 +1310,7 @@ void table_row_t::print_value(ostream& os)
 }
 
 
+
 /* For debug use only: print the tuple */
 void table_row_t::print_tuple()
 {
@@ -1365,6 +1329,7 @@ void table_row_t::print_tuple()
     }
 }
 
+
 #include <strstream>
 char const* db_pretty_print(table_row_t const* rec, int i=0, char const* s=0) {
     static char data[1024];
@@ -1373,3 +1338,4 @@ char const* db_pretty_print(table_row_t const* rec, int i=0, char const* s=0) {
     inout << std::ends;
     return data;
 }
+

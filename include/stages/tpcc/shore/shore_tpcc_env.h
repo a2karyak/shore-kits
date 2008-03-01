@@ -11,6 +11,8 @@
 #define __SHORE_TPCC_ENV_H
 
 #include "sm_vas.h"
+//#include "atomic_trash_stack.h"
+
 #include "util.h"
 
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
@@ -40,6 +42,8 @@ using std::map;
 
 class ShoreTPCCEnv;
 extern ShoreTPCCEnv* shore_env;
+
+//typedef atomic_trash_stack<char*> ts_buf_t;
 
 
 
@@ -169,6 +173,10 @@ private:
 
     tpcc_table_list_t  _table_list;
 
+
+    /** trash stack */
+    //    ts_buf_t*       _ts_buf;
+
     /** scaling factors */
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
     pthread_mutex_t _scaling_mutex;
@@ -228,6 +236,9 @@ public:
         _table_list.push_back(&_item);
 
         assert (_table_list.size() == SHORE_TPCC_TABLES);
+
+        // init trash stack
+        //_ts_customer = new ts_buf_t(_customer.maxsize());
     }
 
     ~ShoreTPCCEnv() 
@@ -236,6 +247,10 @@ public:
         pthread_mutex_destroy(&_queried_mutex);
                 
         _table_list.clear();
+
+        // delete trash stack
+        //        if (_ts_customer)
+        //            delete (_ts_customer);
     }
 
 

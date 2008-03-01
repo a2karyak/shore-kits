@@ -94,8 +94,7 @@ protected:
     bool        _is_sorted;    /* shows if sorted */
     tatas_lock  _sorted_lock; 
 
-    char*       _dest;         /* used for the tuple->format() */
-    int         _bfsz;         /* buffer size */
+    rep_row_t*  _preprow;      /* used for the tuple->format() */
 
     /* count _tuple_size and allocate buffer */
     void init();
@@ -105,10 +104,10 @@ protected:
 
 public:
 
-    sort_buffer_t(int field_count)
+    sort_buffer_t(int field_count, rep_row_t* aprow)
         : table_desc_t("SORT_BUF", field_count), _sort_buf(NULL),
-          _tuple_size(0), _tuple_count(0), _buf_size(0), 
-          _is_sorted(false), _dest(NULL), _bfsz(0)
+          _tuple_size(0), _tuple_count(0), _buf_size(0), _preprow(aprow),
+          _is_sorted(false)
     { 
     }
 
@@ -116,9 +115,6 @@ public:
     { 
         if (_sort_buf)
             delete [] _sort_buf;
-
-        if (_dest)
-            delete [] _dest;
     }
 
     /* set the schema - accepts only fixed length */
@@ -250,9 +246,9 @@ inline void sort_buffer_t::add_tuple(table_row_t& atuple)
     }
 
     /* add the current tuple to the end of the buffer */
-    atuple.format(_dest, _bfsz);
-    assert (_dest);
-    memcpy(_sort_buf+(_tuple_count*_tuple_size), _dest, _tuple_size);
+    atuple.format(*_preprow);
+    assert (_preprow->_dest);
+    memcpy(_sort_buf+(_tuple_count*_tuple_size), _preprow->_dest, _tuple_size);
     _tuple_count++;
     _is_sorted = false;    
 }

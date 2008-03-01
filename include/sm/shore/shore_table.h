@@ -116,7 +116,50 @@ class table_scan_iter_impl;
 class index_scan_iter_impl;
 
 
+
 /* ---------------------------------------------------------------
+ *
+ * @struct: rep_row_t
+ *
+ * @brief:  A simple structure with a pointer to a buffer and its
+ *          corresponding size.
+ *
+ * @note:   Not thread-safe, the caller should regulate access.
+ *
+ * --------------------------------------------------------------- */
+
+struct rep_row_t 
+{    
+    char*     _dest;  /* pointer to a buffer */
+    int       _bufsz; /* buffer size */
+
+    rep_row_t() 
+        : _dest(NULL), _bufsz(0)
+    { 
+    }
+
+    rep_row_t(char* &dest, int &bufsz) 
+        : _dest(dest), _bufsz(0)
+    { }
+
+    ~rep_row_t() {
+        if (_dest) {
+            delete [] _dest;
+            _dest = NULL;
+        }
+    }
+
+    void set(const int new_bufsz);
+
+    //    static int _static_format_mallocs;
+
+}; // EOF: rep_row_t
+
+
+
+
+/* ---------------------------------------------------------------
+ *
  * @class: table_desc_t
  *
  * @brief: Description of a Shore table.
@@ -240,12 +283,12 @@ public:
     /* --- helper functions for bulkloading indices --- */
     /* ------------------------------------------------ */
 
-    char*     index_keydesc(index_desc_t* index);                                          /* index key description */
-    const int format_key(index_desc_t* index, table_row_t* prow, char* &dest, int &bufsz); /* format the key value */
-    const int min_key(index_desc_t* index, table_row_t* prow, char* &dest, int &bufsz);    /* set indexed fields of the row to minimum */
-    const int max_key(index_desc_t* index, table_row_t* prow, char* &dest, int &bufsz);    /* set indexed fields of the row to maximum */
-    const int key_size(index_desc_t* index, const table_row_t* prow) const;                /* length of the formatted key */
-    const int maxkeysize(index_desc_t* index) const;                                       /* max key size */
+    char*     index_keydesc(index_desc_t* index);                                  /* index key description */
+    const int format_key(index_desc_t* index, table_row_t* prow, rep_row_t &arep); /* format the key value */
+    const int min_key(index_desc_t* index, table_row_t* prow, rep_row_t &arep);    /* set indexed fields of the row to minimum */
+    const int max_key(index_desc_t* index, table_row_t* prow, rep_row_t &arep);    /* set indexed fields of the row to maximum */
+    const int key_size(index_desc_t* index, const table_row_t* prow) const;        /* length of the formatted key */
+    const int maxkeysize(index_desc_t* index) const;                               /* max key size */
 
 
     /* ---------------------- */
@@ -358,6 +401,7 @@ typedef std::list<table_desc_t*> table_list_t;
 
 
 
+
 /* ---------------------------------------------------------------
  *
  * @struct: table_row_t
@@ -370,37 +414,29 @@ typedef std::list<table_desc_t*> table_list_t;
 
 struct table_row_t 
 {    
-    static int _static_format_mallocs;
-    static int _static_format_key_mallocs;
-
-
-    table_desc_t*  _ptable;           /* pointer back to the table */
-    int            _field_cnt;        /* number of fields */
-    bool           _is_setup;         /* flag if already setup */
+    table_desc_t*  _ptable;       /* pointer back to the table */
+    int            _field_cnt;    /* number of fields */
+    bool           _is_setup;     /* flag if already setup */
     
-    rid_t          _rid;              /* record id */    
-    field_value_t* _pvalues;          /* set of values */
+    rid_t          _rid;          /* record id */    
+    field_value_t* _pvalues;      /* set of values */
+
+    rep_row_t*     _rep;          /* a pointer to a row representation struct */
 
 
     /* -------------------- */
     /* --- construction --- */
     /* -------------------- */
 
-    table_row_t()
-        : _ptable(NULL), _field_cnt(0), _is_setup(false), 
-          _rid(rid_t::null), _pvalues(NULL)
-    {
-    }
-        
-
     table_row_t(table_desc_t* ptd)
-        : _ptable(NULL), _field_cnt(0), _is_setup(false), 
-          _rid(rid_t::null), _pvalues(NULL)
+        : _field_cnt(0), _is_setup(false), 
+          _rid(rid_t::null), _pvalues(NULL), _rep(NULL)
     {
+        assert (ptd);
         setup(ptd);
     }
 
-    
+            
     ~table_row_t() 
     {
         if (_pvalues)
@@ -408,7 +444,10 @@ struct table_row_t
     }
 
 
-    /* setup row according to table description, asserts if NULL */
+    /* ----------------------------------------------------------------- */
+    /* --- setup row according to table description, asserts if NULL --- */
+    /* ----------------------------------------------------------------- */
+
     void setup(table_desc_t* ptd) 
     {
         assert (ptd);
@@ -434,13 +473,13 @@ struct table_row_t
     /* --- conversion between disk format and memory format --- */
     /* -------------------------------------------------------- */
 
-    const int  format(char* &dest, int &bufsz);  /* disk format of tuple */
-    const bool load(const char* string);         /* load tuple from disk format */ 
-    const int  size() const;                     /* disk space needed for tuple */
+    const int  format(rep_row_t &arep);   /* disk format of tuple */
+    const bool load(const char* string);  /* load tuple from disk format */ 
+    const int  size() const;              /* disk space needed for tuple */
 
-    const int  format_key(index_desc_t* index, char* &dest, int &bufsz);  /* put the index key to the buffer */
-    const bool load_key(const char* string, index_desc_t* index);         /* load key fields */
-    const int  key_size(index_desc_t* index) const;                       /* return index key size */
+    const bool load_key(const char* string, index_desc_t* index);  /* load key fields */
+    const int  format_key(index_desc_t* index, rep_row_t &arep);   /* put the index key to the buffer */
+    const int  key_size(index_desc_t* index) const;                /* return index key size */
 
 
 
@@ -448,9 +487,9 @@ struct table_row_t
     /* --- access methods --- */
     /* ---------------------- */
 
-    inline rid_t   rid() const { return (_rid); }
-    inline void    set_rid(const rid_t& rid) { _rid = rid; }
-    inline bool    is_rid_valid() const { return _rid != rid_t::null; }
+    inline rid_t rid() const { return (_rid); }
+    inline void  set_rid(const rid_t& rid) { _rid = rid; }
+    inline bool  is_rid_valid() const { return _rid != rid_t::null; }
 
 
     /* ------------------------ */
@@ -490,12 +529,13 @@ struct table_row_t
 
 
 
-/* ---------------------------------------------------------------------
+/* ---------------------------------------------------------------
+ *
  * @class: table_scan_iter_impl
  *
  * @brief: Declaration of a table (file) scan iterator
  *
- * --------------------------------------------------------------------- */
+ * --------------------------------------------------------------- */
 
 typedef tuple_iter_t<table_desc_t, scan_file_i, table_row_t> table_scan_iter_t;
 
@@ -614,17 +654,16 @@ public:
 
     w_rc_t next(ss_m* db, bool& eof, table_row_t& tuple) 
     {
-        assert(_opened);
+        assert (_opened);
+        assert (tuple._rep);
 
         W_DO(_scan->next(eof));
 
         if (!eof) {
-            char* pdest  = NULL;
-            int bufsz = 0;
-            int   key_sz = tuple.format_key(_file, pdest, bufsz);
-            assert (pdest); // (ip) if dest == NULL there is invalid key
+            int key_sz = tuple.format_key(_file, *tuple._rep);
+            assert (tuple._rep->_dest); // (ip) if dest == NULL there is invalid key
 
-            vec_t    key(pdest, key_sz);
+            vec_t    key(tuple._rep->_dest, key_sz);
 
             rid_t    rid;
             vec_t    record(&rid, sizeof(rid_t));
@@ -644,8 +683,6 @@ public:
                     return RC(se_WRONG_DISK_DATA);
                 pin.unpin();
             }
-
-            delete [] pdest;
         }    
         return (RCOK);
     }
@@ -704,44 +741,28 @@ inline char* table_desc_t::index_keydesc(index_desc_t* idx)
 
 inline const int table_desc_t::format_key(index_desc_t* index,
                                           table_row_t* prow,
-                                          char* &dest,
-                                          int &bufsz)
+                                          rep_row_t &arep)
 {
     assert (index);
     assert (prow);
 
     /* 1. calculate the key size */
-
-    //    int isz = key_size(index, prow);
     int isz = key_size(index, prow);
     assert (isz);
 
     
     /* 2. allocate buffer space, if necessary */
-
-    if ((!dest) || (bufsz < isz)) {
-        // new larger buffer needs to be allocated
-        bufsz = isz;
-        char* tmp = dest;
-        dest = new char[isz];
-        if (tmp)
-            delete [] tmp;
-
-        prow->_static_format_key_mallocs++;
-    }
-    // in any case, clean up the buffer
-    memset (dest, 0, isz);
+    arep.set(isz);
 
 
     /* 3. write the buffer */
-
     register offset_t offset = 0;
     for (int i=0; i<index->field_count(); i++) {
         register int ix = index->key_index(i);
         register field_value_t* pfv = &prow->_pvalues[ix];
 
         // copy value
-        if (!pfv->copy_value(dest+offset)) {
+        if (!pfv->copy_value(arep._dest+offset)) {
             assert (false); // (ip) problem in copying value
             return (0);
         }
@@ -768,27 +789,25 @@ inline const int table_desc_t::format_key(index_desc_t* index,
 
 inline const int table_desc_t::min_key(index_desc_t* index, 
                                        table_row_t* prow,
-                                       char* &dest,
-                                       int &bufsz)
+                                       rep_row_t &arep)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
 	prow->_pvalues[field_index].set_min_value();
     }
-    return (format_key(index, prow, dest, bufsz));
+    return (format_key(index, prow, arep));
 }
 
 
 inline const int table_desc_t::max_key(index_desc_t* index, 
                                        table_row_t* prow,
-                                       char* &dest,
-                                       int &bufsz)
+                                       rep_row_t &arep)
 {
     for (int i=0; i<index->field_count(); i++) {
 	int field_index = index->key_index(i);
 	prow->_pvalues[field_index].set_max_value();
     }
-    return (format_key(index, prow, dest, bufsz));
+    return (format_key(index, prow, arep));
 }
 
 
@@ -902,6 +921,34 @@ inline const int table_desc_t::maxsize()
 
 
 
+
+/******************************************************************
+ * 
+ * struct rep_row_t methods 
+ *
+ ******************************************************************/
+
+inline void rep_row_t::set(const int new_bufsz)
+{
+    if ((!_dest) || (_bufsz < new_bufsz)) {
+
+        char* tmp = _dest;
+        _dest = new char[new_bufsz];
+
+        if (tmp) {
+            delete [] tmp;
+            tmp = NULL;
+        } 
+
+        //        rep_row_t::_static_format_mallocs++;
+    }
+
+    // in any case, clean up the buffer
+    memset (_dest, 0, new_bufsz);
+}
+
+
+
 /******************************************************************
  * 
  * class table_row_t methods 
@@ -943,22 +990,6 @@ inline const int table_row_t::size() const
     }
     if (null_count) size += (null_count >> 3) + 1;
     return (size);
-}
-
-
-inline const int table_row_t::format_key(index_desc_t* index, 
-                                         char* &dest,
-                                         int &bufsz)
-{
-    assert (_ptable);
-    return (_ptable->format_key(index, this, dest, bufsz));
-}
-
-
-inline const int table_row_t::key_size(index_desc_t* index) const
-{
-    assert (_ptable);
-    return (_ptable->key_size(index, this));
 }
 
 
@@ -1131,6 +1162,29 @@ inline  bool table_row_t::get_value(const int index,
     return true;
 }
 
+
+
+
+/******************************************************************
+ * 
+ * table_row_t functions
+ *
+ ******************************************************************/
+
+
+inline const int table_row_t::format_key(index_desc_t* index, 
+                                         rep_row_t &arep)
+{
+    assert (_ptable);
+    return (_ptable->format_key(index, this, arep));
+}
+
+
+inline const int table_row_t::key_size(index_desc_t* index) const
+{
+    assert (_ptable);
+    return (_ptable->key_size(index, this));
+}
 
 
 EXIT_NAMESPACE(shore);

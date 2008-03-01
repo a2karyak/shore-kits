@@ -205,7 +205,7 @@ void print_usage(char* argv[])
 {
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
            "%s <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID>]\n" \
-           "\nParameters: " \
+           "\nParameters:\n" \
            "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
@@ -300,47 +300,46 @@ int main(int argc, char* argv[])
     }    
     shore_env->print_sf();
     
-        
-    TRACE( TRACE_ALWAYS, "Starting (%d) threads with (%d) trxs each...\n",
-           numOfThreads, numOfTrxs);
+    const int iIterations = 6;
     test_smt_t* testers[MAX_NUM_OF_THR];
+    for (int j=0; j<iIterations; j++) {
 
-    time_t ttablestart = time(NULL);
-    int wh_id = 0;
-    for (int i=0; i<numOfThreads; i++) {
-        // create & fork (numOfThreads) threads
-        if (spreadThreads)
-            wh_id = i+1;
-        testers[i] = new test_smt_t(shore_env, wh_id, selectedTrxID,
-                                    numOfTrxs, c_str("tt%d", i));
-        testers[i]->fork();
-    }        
+        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
+               (j+1), iIterations);
+        TRACE( TRACE_ALWAYS, "Starting (%d) threads with (%d) trxs each...\n",
+               numOfThreads, numOfTrxs);
 
-    /* 2. join the loading threads */
-    for (int i=0; i<numOfThreads; i++) {
-        testers[i]->join();
-        if (testers[i]->_rv) {
-            TRACE( TRACE_ALWAYS, "Error in testing...\n");
-            TRACE( TRACE_ALWAYS, "Exiting...\n");
-            assert (false);
-        }    
-        delete (testers[i]);
+        time_t ttablestart = time(NULL);
+        int wh_id = 0;
+        for (int i=0; i<numOfThreads; i++) {
+            // create & fork (numOfThreads) threads
+            if (spreadThreads)
+                wh_id = i+1;
+            testers[i] = new test_smt_t(shore_env, wh_id, selectedTrxID,
+                                        numOfTrxs, c_str("tt%d", i));
+            testers[i]->fork();
+        }        
+
+        /* 2. join the loading threads */
+        for (int i=0; i<numOfThreads; i++) {
+            testers[i]->join();
+            if (testers[i]->_rv) {
+                TRACE( TRACE_ALWAYS, "Error in testing...\n");
+                TRACE( TRACE_ALWAYS, "Exiting...\n");
+                assert (false);
+            }    
+            delete (testers[i]);
+        }
+        time_t ttablestop = time(NULL);
+
+        TRACE( TRACE_ALWAYS, "*******\n" \
+               "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%d)\nTPS:     (%.2f)\n",
+               numOfThreads, numOfTrxs, (ttablestop - ttablestart),
+               (double)(numOfThreads*numOfTrxs)/(double)(ttablestop - ttablestart));
     }
-    time_t ttablestop = time(NULL);
 
-    TRACE( TRACE_ALWAYS, "*******\n" \
-           "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%d)\nTPS:     (%.2f)\n",
-           numOfThreads, numOfTrxs, (ttablestop - ttablestart),
-           (double)(numOfThreads*numOfTrxs)/(double)(ttablestop - ttablestart));
-
-
-    TRACE( TRACE_ALWAYS, "\nformat= (%d)\nformat_key= (%d)\n",
-           table_row_t::_static_format_mallocs,
-           table_row_t::_static_format_key_mallocs);
-
-
-    TRACE( TRACE_ALWAYS, "\n****** DISABLE PROFILING ****\n");
-    sleep(20); // give some time for ending the profiling
+//     TRACE( TRACE_ALWAYS, "\nmallocs= (%d)\n",
+//            rep_row_t::_static_format_mallocs);
 
     // close Shore env
     close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));

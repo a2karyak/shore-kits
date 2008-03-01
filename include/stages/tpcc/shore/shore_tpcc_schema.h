@@ -255,6 +255,8 @@ public:
     w_rc_t get_iter_by_index(ss_m* db,
                              index_scan_iter_impl* & iter,
                              table_row_t* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
                              const int w_id,
                              const int d_id,
                              const char* c_last);
@@ -334,6 +336,8 @@ public:
     w_rc_t get_iter_by_index(ss_m* db,
                              index_scan_iter_impl* &iter,
                              table_row_t* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
                              const int w_id,
                              const int d_id);
 
@@ -402,6 +406,8 @@ public:
     w_rc_t get_iter_by_index(ss_m * shore,
                              index_scan_iter_impl* & iter,
                              table_row_t* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
                              const int w_id,
                              const int d_id,
                              const int c_id);
@@ -460,6 +466,8 @@ public:
     w_rc_t get_iter_by_index(ss_m* db,
                              index_scan_iter_impl* &it,
                              table_row_t* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
                              const int w_id,
                              const int d_id,
                              const int low_o_id,
@@ -468,6 +476,8 @@ public:
     w_rc_t get_iter_by_index(ss_m* db,
                              index_scan_iter_impl* &iter,
                              table_row_t* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
                              const int w_id,
                              const int d_id,
                              const int o_id);

@@ -144,7 +144,7 @@ w_rc_t index_loading_smt_t::do_help()
 
             //            _prow->print_tuple();
         
-            key_sz = _ptable->format_key(_pindex, _prow, pdest, bufsz);
+            key_sz = _ptable->format_key(_pindex, _prow, *_prow->_rep);
             assert (pdest); // (ip) if NULL invalid key
             
             W_DO(_pssm->create_assoc(_pindex->fid(),

@@ -286,7 +286,7 @@ stock_level_input_t create_stock_level_input(int sf, int specificWH)
 #ifndef USE_SAME_INPUT    
 
     if (specificWH>0)
-        slin._wh_id = 0;
+        slin._wh_id = specificWH;
     else
         slin._wh_id = URand(1, sf);
 
