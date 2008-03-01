@@ -31,6 +31,9 @@ const int DF_TRX_PER_THR = 100;
 // default transaction id to be executed
 const int DF_TRX_ID = XCT_PAYMENT;
 
+// default number of iterations
+const int DF_NUM_OF_ITERS = 5;
+
 
 ///////////////////////////////////////////////////////////
 // @class test_smt_t
@@ -211,7 +214,8 @@ void print_usage(char* argv[])
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
-           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n",
+           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n",
            argv[0]);
 }
 
@@ -226,7 +230,7 @@ int main(int argc, char* argv[])
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
-               //                              | TRACE_TRX_FLOW
+               | TRACE_TRX_FLOW
                //               | TRACE_DEBUG
               );
 
@@ -238,6 +242,7 @@ int main(int argc, char* argv[])
     int numOfThreads    = DF_NUM_OF_THR;
     int numOfTrxs       = DF_TRX_PER_THR;
     int selectedTrxID   = DF_TRX_ID;
+    int iterations      = DF_NUM_OF_ITERS;
 
     if (argc<3) {
         print_usage(argv);
@@ -275,6 +280,10 @@ int main(int argc, char* argv[])
         selectedTrxID = atoi(argv[6]);
     }
 
+    if (argc>7) {
+        iterations = atoi(argv[7]);
+    }
+
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
            "Num of WHs     : %d\n" \
@@ -282,9 +291,10 @@ int main(int argc, char* argv[])
            "Spread Threads : %s\n" \
            "Num of Threads : %d\n" \
            "Num of Trxs    : %d\n" \
-           "Trx ID         : %d\n", 
+           "Trx ID         : %d\n" \
+           "Iterations     : %d\n", 
            numOfWHs, numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
-           numOfThreads, numOfTrxs, selectedTrxID);
+           numOfThreads, numOfTrxs, selectedTrxID, iterations);
 
     /* 1. Instanciate the Shore Environment */
     shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
@@ -300,12 +310,11 @@ int main(int argc, char* argv[])
     }    
     shore_env->print_sf();
     
-    const int iIterations = 6;
     test_smt_t* testers[MAX_NUM_OF_THR];
-    for (int j=0; j<iIterations; j++) {
+    for (int j=0; j<iterations; j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
-               (j+1), iIterations);
+               (j+1), iterations);
         TRACE( TRACE_ALWAYS, "Starting (%d) threads with (%d) trxs each...\n",
                numOfThreads, numOfTrxs);
 

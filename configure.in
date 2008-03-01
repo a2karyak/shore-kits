@@ -386,10 +386,10 @@ if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9 -lcurses"
 
 # optimize *a lot* flags
-    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+#    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 
 # debugging flags
-#    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
+    CXXFLAGS="-xtarget=ultraT1 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
 fi
 
 # Adding curses lib

@@ -168,8 +168,6 @@ struct rep_row_t
 
 class table_desc_t : public file_desc_t 
 {
-    //    friend class table_scan_iter_impl;
-   
 protected:
 
     /* ------------------- */
