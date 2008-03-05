@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
-               | TRACE_TRX_FLOW
+               //| TRACE_TRX_FLOW
                //               | TRACE_DEBUG
               );
 
@@ -318,7 +318,7 @@ int main(int argc, char* argv[])
         TRACE( TRACE_ALWAYS, "Starting (%d) threads with (%d) trxs each...\n",
                numOfThreads, numOfTrxs);
 
-        time_t ttablestart = time(NULL);
+	stopwatch_t timer;
         int wh_id = 0;
         for (int i=0; i<numOfThreads; i++) {
             // create & fork (numOfThreads) threads
@@ -339,12 +339,11 @@ int main(int argc, char* argv[])
             }    
             delete (testers[i]);
         }
-        time_t ttablestop = time(NULL);
 
+	double delay = timer.time();
         TRACE( TRACE_ALWAYS, "*******\n" \
-               "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%d)\nTPS:     (%.2f)\n",
-               numOfThreads, numOfTrxs, (ttablestop - ttablestart),
-               (double)(numOfThreads*numOfTrxs)/(double)(ttablestop - ttablestart));
+               "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%.2f)\nTPS:     (%.2f)\n",
+               numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
     }
 
 //     TRACE( TRACE_ALWAYS, "\nmallocs= (%d)\n",
