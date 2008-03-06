@@ -204,6 +204,28 @@ w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
 //////////////////////////////
 
 
+const char* translate_trx_id(const int trx_id) 
+{
+    switch (trx_id) {
+    case (XCT_NEW_ORDER):
+        return ("NewOrder");
+        break;
+    case (XCT_PAYMENT):
+        return ("Payment");
+        break;
+    case (XCT_ORDER_STATUS):
+        return ("OrderStatus");
+        break;
+    case (XCT_DELIVERY):
+        return ("Delivery");
+        break;
+    case (XCT_STOCK_LEVEL):
+        return ("StockLevel");
+    default:
+        return ("Mix");
+    }
+}
+
 void print_usage(char* argv[]) 
 {
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
@@ -230,7 +252,7 @@ int main(int argc, char* argv[])
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
-               //| TRACE_TRX_FLOW
+               //               | TRACE_TRX_FLOW
                //               | TRACE_DEBUG
               );
 
@@ -291,10 +313,11 @@ int main(int argc, char* argv[])
            "Spread Threads : %s\n" \
            "Num of Threads : %d\n" \
            "Num of Trxs    : %d\n" \
-           "Trx ID         : %d\n" \
+           "Trx            : %s\n" \
            "Iterations     : %d\n", 
            numOfWHs, numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
-           numOfThreads, numOfTrxs, selectedTrxID, iterations);
+           numOfThreads, numOfTrxs, translate_trx_id(selectedTrxID), 
+           iterations);
 
     /* 1. Instanciate the Shore Environment */
     shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
@@ -321,7 +344,7 @@ int main(int argc, char* argv[])
 	stopwatch_t timer;
         int wh_id = 0;
         for (int i=0; i<numOfThreads; i++) {
-            // create & fork (numOfThreads) threads
+            // create & fork (numOfThreads) testing threads
             if (spreadThreads)
                 wh_id = i+1;
             testers[i] = new test_smt_t(shore_env, wh_id, selectedTrxID,
@@ -329,7 +352,7 @@ int main(int argc, char* argv[])
             testers[i]->fork();
         }        
 
-        /* 2. join the loading threads */
+        /* 2. join the tester threads */
         for (int i=0; i<numOfThreads; i++) {
             testers[i]->join();
             if (testers[i]->_rv) {

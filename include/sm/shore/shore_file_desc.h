@@ -5,7 +5,6 @@
  *  @brief:  Descriptors for Shore files/indexes, and structures that help in
  *           keeping track of the created files/indexes.
  *
- *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
  *
  */
@@ -77,6 +76,7 @@ enum file_type_t {
 
 class file_desc_t {
 protected:
+
     pthread_mutex_t _fschema_mutex;        // file schema mutex
     char            _name[MAX_FNAME_LEN];  // file name
     int             _field_count;          // # of fields
@@ -96,7 +96,7 @@ public:
     /* --- construction --- */
     /* -------------------- */
 
-    file_desc_t(const char* name, int fcnt)
+    file_desc_t(const char* name, const int fcnt)
         : _field_count(fcnt), _fid(stid_t::null),
           _vid(vid_t::null), _root_iid(stid_t::null)
     {

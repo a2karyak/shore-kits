@@ -81,7 +81,8 @@ TESTS = \
    tests/tpcc_kit \
    tests/old_shore_load \
    tests/raii_file \
-   tests/config_file_example
+   tests/config_file_example \
+   tests/row_cache
 
 
 DBGEN = \
@@ -176,6 +177,7 @@ SM_SHORE = \
    $(SM)/shore/shore_file_desc.cpp \
    $(SM)/shore/shore_field.cpp \
    $(SM)/shore/shore_table.cpp \
+   $(SM)/shore/shore_row.cpp \
    $(SM)/shore/shore_env.cpp \
    $(SM)/shore/shore_helper_loader.cpp
 
@@ -247,6 +249,8 @@ SG_INMEM_TRX = \
 SG_SHORE_TRX = \
    $(SG)/tpcc/shore/shore_tpcc_random.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_schema_man.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_schema_gen.cpp \
    $(SG)/tpcc/shore/shore_tpcc_env.cpp \
    $(SG)/tpcc/shore/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp \
@@ -473,6 +477,7 @@ tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
 tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
 tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
+tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 
 
 # exec files that need Shore
@@ -482,6 +487,8 @@ tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_LDADD = $(TEST_LIBS)
 tests_old_shore_load_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_old_shore_load_LDADD = $(TEST_LIBS)
+tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_row_cache_LDADD = $(TEST_LIBS)
 
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)

@@ -30,7 +30,8 @@ ENTER_NAMESPACE(shore);
  ******************************************************************/
 
 template <class file_desc, class file_scanner, class rowpointer>
-class tuple_iter_t {
+class tuple_iter_t 
+{
 protected:
     ss_m*         _db;
     bool          _opened;  /* whether the init is successful */

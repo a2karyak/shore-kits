@@ -11,8 +11,6 @@
 #define __SHORE_TPCC_ENV_H
 
 #include "sm_vas.h"
-//#include "atomic_trash_stack.h"
-
 #include "util.h"
 
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
@@ -22,7 +20,7 @@
 
 #include "sm/shore/shore_env.h"
 
-#include "stages/tpcc/shore/shore_tpcc_schema.h"
+#include "stages/tpcc/shore/shore_tpcc_schema_man.h"
 
 #include <map>
 
@@ -161,21 +159,31 @@ private:
     // TPC-C tables
 
     /** all the tables */
-    warehouse_t        _warehouse;
-    district_t         _district;
-    customer_t         _customer;
-    history_t          _history;
-    new_order_t        _new_order;
-    order_t            _order;
-    order_line_t       _order_line;
-    item_t             _item;
-    stock_t            _stock;
+    warehouse_t          _warehouse_desc;
+    district_t           _district_desc;
+    customer_t           _customer_desc;
+    history_t            _history_desc;
+    new_order_t          _new_order_desc;
+    order_t              _order_desc;
+    order_line_t         _order_line_desc;
+    item_t               _item_desc;
+    stock_t              _stock_desc;
 
-    tpcc_table_list_t  _table_list;
+    tpcc_table_list_t    _table_desc_list;
 
 
-    /** trash stack */
-    //    ts_buf_t*       _ts_buf;
+    /** all the table managers */
+    guard<warehouse_man_impl>  _pwarehouse_man;
+    guard<district_man_impl>   _pdistrict_man;
+    guard<customer_man_impl>   _pcustomer_man;
+    guard<history_man_impl>    _phistory_man;
+    guard<new_order_man_impl>  _pnew_order_man;
+    guard<order_man_impl>      _porder_man;
+    guard<order_line_man_impl> _porder_line_man;
+    guard<item_man_impl>       _pitem_man;
+    guard<stock_man_impl>      _pstock_man;
+
+    table_man_list_t           _table_man_list;
 
     /** scaling factors */
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
@@ -184,8 +192,7 @@ private:
     pthread_mutex_t _queried_mutex;
 
     /** some stats */
-    tpcc_stats_t _tpcc_stats; 
-
+    tpcc_stats_t   _tpcc_stats; 
 
 
     /* --- kit baseline trxs --- */
@@ -211,7 +218,7 @@ public:
     ShoreTPCCEnv(string confname, 
                  int aSF = TPCC_SCALING_FACTOR, 
                  int aQF = QUERIED_TPCC_SCALING_FACTOR) 
-        : ShoreEnv(confname), _scaling_factor(aSF), _queried_factor(aSF)
+        : ShoreEnv(confname), _scaling_factor(aSF), _queried_factor(aQF)
     {
         assert (aSF > 0);
         assert (aQF > 0);
@@ -219,53 +226,82 @@ public:
 
         pthread_mutex_init(&_scaling_mutex, NULL);
         pthread_mutex_init(&_queried_mutex, NULL);
-        
-        /* add the tables to the list */
+
+        // initiate the table managers
+        _pwarehouse_man  = new warehouse_man_impl(&_warehouse_desc);
+        _pdistrict_man   = new district_man_impl(&_district_desc);
+        _pstock_man      = new stock_man_impl(&_stock_desc);
+        _porder_line_man = new order_line_man_impl(&_order_line_desc);
+        _pcustomer_man   = new customer_man_impl(&_customer_desc);
+        _phistory_man    = new history_man_impl(&_history_desc);
+        _porder_man      = new order_man_impl(&_order_desc);
+        _pnew_order_man  = new new_order_man_impl(&_new_order_desc);
+        _pitem_man       = new item_man_impl(&_item_desc);
+
+        // XXX: !!! Warning !!!
+        //
+        // The two tables should have the description and the manager
+        // of the same table in the same position
+        //
+
+        /* add the table managers to a list */
         // (ip) Adding them in descending file order, so that the large
         //      files to be loaded at the begining. Expection is the
         //      WH and DISTR which are always the first two.
-        _table_list.push_back(&_warehouse);
-        _table_list.push_back(&_district);
+        _table_man_list.push_back(_pwarehouse_man);
+        _table_man_list.push_back(_pdistrict_man);
+        _table_man_list.push_back(_pstock_man);
+        _table_man_list.push_back(_porder_line_man);
+        _table_man_list.push_back(_pcustomer_man);
+        _table_man_list.push_back(_phistory_man);
+        _table_man_list.push_back(_porder_man);
+        _table_man_list.push_back(_pnew_order_man);
+        _table_man_list.push_back(_pitem_man);
 
-        _table_list.push_back(&_stock);
-        _table_list.push_back(&_order_line);
-        _table_list.push_back(&_customer);
-        _table_list.push_back(&_history);
-        _table_list.push_back(&_order);
-        _table_list.push_back(&_new_order);
-        _table_list.push_back(&_item);
+        assert (_table_man_list.size() == SHORE_TPCC_TABLES);
 
-        assert (_table_list.size() == SHORE_TPCC_TABLES);
+        
+        /* add the table descriptions to a list */
+        _table_desc_list.push_back(&_warehouse_desc);
+        _table_desc_list.push_back(&_district_desc);
+        _table_desc_list.push_back(&_stock_desc);
+        _table_desc_list.push_back(&_order_line_desc);
+        _table_desc_list.push_back(&_customer_desc);
+        _table_desc_list.push_back(&_history_desc);
+        _table_desc_list.push_back(&_order_desc);
+        _table_desc_list.push_back(&_new_order_desc);
+        _table_desc_list.push_back(&_item_desc);
 
-        // init trash stack
-        //_ts_customer = new ts_buf_t(_customer.maxsize());
+        assert (_table_desc_list.size() == SHORE_TPCC_TABLES);
     }
+
 
     ~ShoreTPCCEnv() 
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
                 
-        _table_list.clear();
-
-        // delete trash stack
-        //        if (_ts_customer)
-        //            delete (_ts_customer);
+        _table_desc_list.clear();
+        _table_man_list.clear();     
     }
 
 
-    /* --- access methods --- */
+    /* --- statistics --- */
     void print_tpcc_stats() { 
         _tpcc_stats.print_trx_stats(); 
         _env_stats.print_env_stats(); 
     }
 
+    /* --- scaling and querying factor --- */
     void print_sf();
     void set_qf(const int aQF);
     inline int get_qf() { return (_queried_factor); }
     void set_sf(const int aSF);
     inline int get_sf() { return (_scaling_factor); }
-    inline tpcc_table_list_t* table_list() { return (&_table_list); }
+
+
+    inline tpcc_table_list_t* table_desc_list() { return (&_table_desc_list); }
+    inline table_man_list_t*  table_man_list() { return (&_table_man_list); }
     void dump();
 
 
@@ -277,15 +313,26 @@ public:
 
 
     /* --- access to the tables --- */
-    warehouse_t*  warehouse() { return (&_warehouse); }
-    district_t*   district()  { return (&_district); }
-    customer_t*   customer()  { return (&_customer); }
-    history_t*    history()   { return (&_history); }
-    new_order_t*  new_order() { return (&_new_order); }
-    order_t*      order()     { return (&_order); }
-    order_line_t* orderline() { return (&_order_line); }
-    item_t*       item()      { return (&_item); }
-    stock_t*      stock()     { return (&_stock); }
+    warehouse_t*  warehouse() { return (&_warehouse_desc); }
+    district_t*   district()  { return (&_district_desc); }
+    customer_t*   customer()  { return (&_customer_desc); }
+    history_t*    history()   { return (&_history_desc); }
+    new_order_t*  new_order() { return (&_new_order_desc); }
+    order_t*      order()     { return (&_order_desc); }
+    order_line_t* orderline() { return (&_order_line_desc); }
+    item_t*       item()      { return (&_item_desc); }
+    stock_t*      stock()     { return (&_stock_desc); }
+
+    /* --- access to the table managers --- */
+    warehouse_man_impl*  warehouse_man() { return (_pwarehouse_man); }
+    district_man_impl*   district_man()  { return (_pdistrict_man); }
+    customer_man_impl*   customer_man()  { return (_pcustomer_man); }
+    history_man_impl*    history_man()   { return (_phistory_man); }
+    new_order_man_impl*  new_order_man() { return (_pnew_order_man); }
+    order_man_impl*      order_man()     { return (_porder_man); }
+    order_line_man_impl* orderline_man() { return (_porder_line_man); }
+    item_man_impl*       item_man()      { return (_pitem_man); }
+    stock_man_impl*      stock_man()     { return (_pstock_man); }
 
 
     /* --- kit baseline trxs --- */

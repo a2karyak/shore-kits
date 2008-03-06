@@ -14,7 +14,6 @@
  *  allocated at setup time for fixed length fields and at set_value
  *  time for variable length fields.
  *
- *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
  *
  */
@@ -27,51 +26,60 @@
 #include "sm/shore/shore_file_desc.h"
 
 
-
-
 ENTER_NAMESPACE(shore);
 
 
 /*--------------------------------------------------------------------
- * helper classes and functions
+ *
+ * @class: timestamp_t
+ *
+ * @brief: Helper for the SQL_TIME type. Value for timestamp field.
+ *
+ * @note:  Deprecated  
+ *
  *--------------------------------------------------------------------*/
 
-/* Value for timestamp field */
-class timestamp_t {
+class timestamp_t 
+{
 private:
-    time_t   _time;
+    time_t _time;
 
 public:
-    timestamp_t() { _time = time(NULL); }
 
-    static   int size() { return sizeof(time_t); }
-    char *   string() const {
-	char *temp = ctime(&_time);
+    timestamp_t() { _time = time(NULL); }
+    ~timestamp_t() { }
+
+    static int  size() { return sizeof(time_t); }
+    const char* string() const {
+	char* temp = ctime(&_time);
 	temp[strlen(temp)-1] = '\0';
-	return temp;
+	return (temp);
     }
-};
+
+}; // EOF: timestamp_t
 
 
 
 /*---------------------------------------------------------------------
  * 
- * sql_type_t
+ * @enum:  sql_type_t
  *
- * Currently supported sql types
+ * @brief: Enumuration of the supported sql types
  *
  *--------------------------------------------------------------------*/
 
-enum  sqltype_t {
+enum  sqltype_t 
+{
     SQL_SMALLINT,   /* SMALLINT */
     SQL_INT,        /* INTEGER */
     SQL_FLOAT,      /* FLOAT */
     SQL_VARCHAR,    /* VARCHAR */
     SQL_CHAR,       /* CHAR */
-    SQL_TIME,       /* TIMESTAMP */
-    SQL_NUMERIC,    /* NUMERIC */
-    SQL_SNUMERIC    /* SIGNED NUMERIC */
-};
+    SQL_TIME,       /* TIMESTAMP */      /* (ip) Deprecated, use SQL_FLOAT instead */
+    SQL_NUMERIC,    /* NUMERIC */        /* (ip) Not tested */
+    SQL_SNUMERIC    /* SIGNED NUMERIC */ /* (ip) Not tested */
+
+}; // EOF: sqltyple_t
 
 
 
@@ -81,65 +89,89 @@ enum  sqltype_t {
  *
  * @brief: Description of a table field (column)
  *
- * @note:  This class is not thread safe. Thus, it is up to the caller
- *         to ensure thread safety. It is dangerous two threads to 
- *         modifyconcurrently the same field_desc_t object.
- *
  *********************************************************************/
 
 class field_desc_t {
 private:
-    char        _name[MAX_FIELDNAME_LEN];   /* field name */
-    char*       _keydesc;                   /* buffer for key description */
 
-    sqltype_t   _type;                      /* type */
-    short       _size;                      /* max_size */
-    bool        _allow_null;                /* allow null? */
+    tatas_lock _fielddesc_lock;           /* lock for the modifying methods */
+    char       _name[MAX_FIELDNAME_LEN];  /* field name */
+    char       _keydesc[MAX_KEYDESC_LEN]; /* buffer for key description */
 
+    sqltype_t  _type;                     /* type */
+    short      _size;                     /* max_size */
+    bool       _allow_null;               /* allow null? */
+    bool       _is_setup;                 /* is setup? */
+
+    const char* field_desc_t::_set_keydesc();
 
 public:
 
+    /* -------------------- */
     /* --- construction --- */
+    /* -------------------- */
 
     field_desc_t()
-	: _keydesc(NULL), _type(SQL_SMALLINT), _size(0), _allow_null(true)
+	:  _type(SQL_SMALLINT), _size(0), 
+          _allow_null(true), _is_setup(false)
     { 
-        _name[0] = '\0'; 
+        memset(_name, 0, MAX_FIELDNAME_LEN);
+        memset(_keydesc, 0, MAX_KEYDESC_LEN);
     }
     
-    ~field_desc_t() { 
-        if (_keydesc)
-            delete _keydesc;
+    ~field_desc_t() 
+    { 
     }
 
 
+    /* ---------------------- */
     /* --- access methods --- */
+    /* ---------------------- */
 
-    const char* name() const { return _name; }
+    const char* name() const { 
+        assert (_is_setup); 
+        return (_name); 
+    }
 
-    static bool is_variable_length(sqltype_t type) { 
+    inline bool is_variable_length(sqltype_t type) const { 
+        assert (_is_setup);
         return (type == SQL_VARCHAR); 
     }
 
     inline bool is_variable_length() const { 
-        return is_variable_length(_type); 
+        return (is_variable_length(_type)); 
     }
 
-    inline int       fieldmaxsize() const { return _size; }
-    inline sqltype_t type() const { return _type; }
-    inline bool      allow_null() const { return _allow_null; }
+    inline int fieldmaxsize() const { 
+        assert (_is_setup);
+        return (_size); 
+    }
+
+    inline sqltype_t type() const { 
+        assert (_is_setup);
+        return (_type); 
+    }
+
+    inline bool allow_null() const { 
+        assert (_is_setup);
+        return (_allow_null); 
+    }
 
     /* return key description for index creation */
-    const char* keydesc();
+    const char* keydesc() {
+        assert (_is_setup);
+        CRITICAL_SECTION(fkd_cs, _fielddesc_lock);
+        return (_set_keydesc());
+    }
 
     /* set the type description for the field. */
-    void   setup(const sqltype_t type,
-                 const char* name,
-                 const short size = 0,
-                 const bool allow_null = false);
+    void setup(const sqltype_t type,
+               const char* name,
+               const short size = 0,
+               const bool allow_null = false);
 
     /* for debugging */
-    void    print_desc(ostream& os = cout);
+    void print_desc(ostream& os = cout);
 
 }; // EOF: field_desc_t
 
@@ -147,50 +179,52 @@ public:
 
 /*********************************************************************
  *
- * @struct field_value_t
+ * @struct:  field_value_t
  *
- * @brief Value of a table field
+ * @brief:   Value of a table field
+ * 
+ * @warning: !!! NOT-THREAD SAFE !!!
  *
- * @note This structure is not thread safe. Thus, it is up to the caller
- *       to ensure thread safety. It is dangerous two threads to modify
- *       concurrently the same field_value_t object.
+ * @note:    This structure is NOT thread safe. Thus, it is up to the caller
+ *           to ensure thread safety. It is dangerous two threads to modify
+ *           concurrently the same field_value_t object.
  *
  *********************************************************************/
 
-struct field_value_t {
-
-    /* --- member variables --- */
-
-    field_desc_t*    _pfield_desc;   /* description of the field */
-    bool             _is_setup;      /* flag if already setup */
-    bool             _null_flag;     /* null value? */
+struct field_value_t 
+{
+    /** if set it shows that the field_value is setup */
+    field_desc_t* _pfield_desc; /* pointer to the description of the field */
+    bool          _null_flag;   /* null value? */
 
     /* value of a field */
     union s_field_value_t {
-	short        _smallint;      /* SMALLINT */
-	int          _int;           /* INT */
-	double       _float;         /* FLOAT */
-	timestamp_t* _time;          /* TIME or DATE */
-	char*        _string;        /* CHAR, VARCHAR, NUMERIC */
-    }   _value;                      /* holding the value */
+	short        _smallint; /* SMALLINT */
+	int          _int;      /* INT */
+	double       _float;    /* FLOAT */
+	timestamp_t* _time;     /* TIME or DATE */
+	char*        _string;   /* CHAR, VARCHAR, NUMERIC */
+    }   _value;   
 
-    char*    _data;         /* buffer for _value._time or _value._string */
-    int      _data_size;    /* current size of the data buffer */
-    int      _real_size;    /* current size of the value */
-    int      _max_size;     /* maximum possible size of the buffer/value */
+    char* _data;      /* buffer for _value._time or _value._string */
+    int   _data_size; /* allocated size of the data buffer (watermark) */
+    int   _real_size; /* current size of the value */
+    int   _max_size;  /* maximum possible size of the buffer (shortcut) */
 
 
+    /* -------------------- */
     /* --- construction --- */
+    /* -------------------- */
 
     field_value_t() 
-        :  _pfield_desc(NULL), _is_setup(false), _null_flag(true), _data(NULL), 
+        :  _pfield_desc(NULL), _null_flag(true), _data(NULL), 
            _data_size(0), _real_size(0), _max_size(0)
     { 
     }
 
 
     field_value_t(field_desc_t* pfd) 
-        : _pfield_desc(pfd), _is_setup(false), _null_flag(true), _data(NULL), 
+        : _pfield_desc(pfd), _null_flag(true), _data(NULL), 
           _data_size(0), _real_size(0), _max_size(0)
     { 
         setup(pfd); /* It will assert if pfd = NULL */
@@ -205,20 +239,34 @@ struct field_value_t {
     }
 
 
-    /* setup according to the given field_dest_t */
+    /* ------------------------- */
+    /* --- setup field value --- */
+    /* ------------------------- */
+
+    /* setup according to the given field_desc_t */
     void setup(field_desc_t* pfd);
 
-    inline bool          is_setup() { return (_is_setup); }
-    inline field_desc_t* field_desc() { return (_pfield_desc); }
+    /* clear value */
+    void reset();
 
+    inline bool is_setup() { return ( _pfield_desc ? true : false); }
+
+    /* access field description */
+    inline field_desc_t* field_desc() { return (_pfield_desc); }
+    inline void set_field_desc(field_desc_t* fd) { 
+        assert (fd); 
+        _pfield_desc = fd; 
+    }
 
     /* return realsize of value */
     inline int realsize() const { 
+        assert (_pfield_desc);
         return (_real_size);
     }
 
     /* return maxsize of value */
     inline int maxsize() const { 
+        assert (_pfield_desc);
         return (_max_size);
     }
 
@@ -236,15 +284,20 @@ struct field_value_t {
     void set_max_value();    
 
     /* null field */
-    inline bool is_null() const { return (_null_flag); }
+    inline bool is_null() const { 
+        assert (_pfield_desc);
+        return (_null_flag); 
+    }
+
     inline void set_null() { 
+        assert (_pfield_desc);
         assert (_pfield_desc->allow_null()); 
         _null_flag = true; 
     }
 
     /* var length */
     inline bool is_variable_length() { 
-        assert (_is_setup); 
+        assert (_pfield_desc); 
         return (_pfield_desc->is_variable_length()); 
     }
 
@@ -275,14 +328,11 @@ struct field_value_t {
 
     bool load_value_from_file(ifstream& is, const char delim);
 
-    /* access field description */
-    inline field_desc_t* get_field_desc() { return (_pfield_desc); }
-    inline void set_field_desc(field_desc_t* fd) { 
-        assert (fd); 
-        _pfield_desc = fd; 
-    }
 
-    /* debugging */
+    /* ----------------- */
+    /* --- debugging --- */
+    /* ----------------- */
+
     void      print_value(ostream& os = cout);
     const int get_debug_str(char* &buf);
 
@@ -310,8 +360,9 @@ inline void field_desc_t::setup(sqltype_t type,
                                 short size,
                                 bool allow_null)
 {
+    CRITICAL_SECTION(setup_cs, _fielddesc_lock);
+
     // name of field
-    memset(_name, '\0', MAX_FIELDNAME_LEN);
     strncpy(_name, name, MAX_FIELDNAME_LEN);
     _type = type;
 
@@ -337,23 +388,36 @@ inline void field_desc_t::setup(sqltype_t type,
         break;
     }
 
+    // set the key desc
+    _set_keydesc();
+
     // set if this field can contain null values
     _allow_null = allow_null;
+
+    // now let the rest functionality to be accessed
+    _is_setup = true;
 }
 
 
 
 /*********************************************************************
  *
- *  @fn:    keydesc
+ *  @fn:    _set_keydesc
  *
- *  @brief: Returns a string with the key description
+ *  @brief: Private function. Returns a string with the key description
+ *
+ *  @note:  Private function, it does not lock the key desc lock. The 
+ *          public function only locks.
  *
  *********************************************************************/
 
-inline const char* field_desc_t::keydesc()
+inline const char* field_desc_t::_set_keydesc()
 {
-    if (!_keydesc) _keydesc = (char*)malloc( MAX_KEYDESC_LEN );
+    if (strlen(_keydesc)>1)
+        return (&_keydesc[0]);
+
+    // else construct the _keydesc
+    //if (!_keydesc) _keydesc = (char*)malloc( MAX_KEYDESC_LEN );
   
     switch (_type) {
     case SQL_SMALLINT:  sprintf(_keydesc, "i%d", _size); break;
@@ -366,7 +430,7 @@ inline const char* field_desc_t::keydesc()
     case SQL_SNUMERIC:
         sprintf(_keydesc, "b%d", _size);  break;
     }
-    return (_keydesc);
+    return (&_keydesc[0]);
 }
 
 
@@ -391,7 +455,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
     assert (pfd);
 
     // if it is already setup for this field do nothing
-    if (_is_setup && _pfield_desc == pfd)
+    if (_pfield_desc == pfd)
         return;
 
     _pfield_desc = pfd;
@@ -412,6 +476,8 @@ inline void field_value_t::setup(field_desc_t* pfd)
         _data_size = sz;
         _real_size = sz; 
         _max_size = sz;
+        if (_data)
+            free (_data);
         _data = (char*)malloc(sz);
         _value._time = (timestamp_t*)_data;
         break;    
@@ -420,7 +486,8 @@ inline void field_value_t::setup(field_desc_t* pfd)
         /* real_size is re-set at runtime, at the set_value() function */       
         _real_size = 0;
         /* we don't know how much space is already allocated for data
-         * thus, we are not changing its value */
+         * thus, we are not changing its value 
+         */
         _value._string = _data;
         break;
     case SQL_CHAR:
@@ -431,12 +498,14 @@ inline void field_value_t::setup(field_desc_t* pfd)
         _max_size = sz;
 
         if ((_data_size>=sz) && (_data)) {
-            // if already _data has the appropriate allocate space
+            // if already _data has enough allocated space
             // just memset the area
             memset(_data, 0, _data_size);
         }
         else {
             // else allocate the buffer
+            if (_data)
+                free (_data);
             _data = (char*)malloc(sz);
             memset(_data, 0, sz);
             _data_size = sz;
@@ -445,8 +514,43 @@ inline void field_value_t::setup(field_desc_t* pfd)
         _value._string = _data;
         break;
     }    
+}
 
-    _is_setup = true;
+
+
+/*********************************************************************
+ *
+ *  @fn:    reset
+ *
+ *  @brief: Field specific reset for the value
+ *
+ *********************************************************************/
+
+inline void field_value_t::reset()
+{
+    assert (_pfield_desc);
+
+    _null_flag = true;
+    register int sz = 0;
+    switch (_pfield_desc->type()) {
+    case SQL_SMALLINT:
+        _value._smallint = 0;
+        break;
+    case SQL_INT:
+        _value._int = 0;
+        break;
+    case SQL_FLOAT:
+        _value._float = 0;
+        break;    
+    case SQL_TIME:
+    case SQL_VARCHAR:
+    case SQL_CHAR:
+    case SQL_NUMERIC:
+    case SQL_SNUMERIC:
+        if (_data && _data_size)
+            memset(_data, 0, _data_size);
+        break;
+    }
 }
 
 
@@ -475,13 +579,13 @@ inline void field_value_t::alloc_space(const int len)
 
     // if not, release previously allocated space and allocate new
     if (_data) { 
-	if (_data) free(_data);
+	free(_data);
     }
     _data = (char*)malloc(len);
     _data_size = len;
 
     // clear the contents of the allocated buffer
-    memset(_data, '\0', _data_size);
+    memset(_data, 0, _data_size);
 
     // the string value points to the allocated buffer
     _value._string = _data;
@@ -528,9 +632,13 @@ inline void field_value_t::set_value(const void* data,
 
 
 
-/* ----------------------------------------- */
-/* ---- Setting min/max value functions ---- */
-/* ----------------------------------------- */
+/*********************************************************************
+ *
+ *  @fn:    set min/max value function
+ *
+ *  @brief: Set the min/max possible value for this field type
+ *
+ *********************************************************************/
 
 inline void field_value_t::set_min_value()
 {
@@ -597,7 +705,7 @@ inline void field_value_t::set_max_value()
  *
  *  @fn:    copy_value
  *
- *  @brief: Copies the 'current' value of of the field to an address
+ *  @brief: Copy the 'current' value of of the field to an address
  *
  *********************************************************************/
 
@@ -631,54 +739,6 @@ inline bool field_value_t::copy_value(void* data) const
     }
 
     return (true);
-}
-
-
-/** DEPRECATED: slow */
-inline bool field_value_t::load_value_from_file(ifstream & is,
-                                                const char delim)
-{
-    assert (_pfield_desc);
-
-    char* string;
-    string = new char [10*_pfield_desc->fieldmaxsize()];
-    is.get(string, 10*_pfield_desc->fieldmaxsize(), delim);
-    if (strlen(string) == 0) {
-        delete [] string;
-        return false;
-    }
-
-    if (strcmp(string, "(null)") == 0) {
-        assert(_pfield_desc->allow_null());
-        _null_flag = true;
-        delete [] string;
-        return true;
-    }
-
-    _null_flag = false;
-
-    switch (_pfield_desc->type()) {
-    case SQL_SMALLINT:  _value._smallint = atoi(string); break;
-    case SQL_INT:       _value._int = atoi(string); break;
-    case SQL_FLOAT:     _value._float = atof(string); break;
-    case SQL_TIME:      break;
-    case SQL_VARCHAR:   {
-        if (string[0] == '\"') string[strlen(string)-1] = '\0';
-        set_var_string_value(string+1, strlen(string)-1);
-        break;
-    }
-    case SQL_CHAR:  {
-        if (string[0] == '\"') string[strlen(string)-1] = '\0';
-        set_fixed_string_value(string+1, strlen(string)-1);
-        break;
-    } 
-    case SQL_NUMERIC:
-    case SQL_SNUMERIC:
-        set_fixed_string_value(string, strlen(string));
-        break;
-    }
-    delete [] string;
-    return true;
 }
 
 
@@ -745,7 +805,7 @@ inline void field_value_t::set_tstamp_value(const timestamp_t& data)
  *
  *  @fn:    set_fixed_string_value
  *
- *  @brief: Copies the string to the data buffer using fixed lengths
+ *  @brief: Copy the string to the data buffer using fixed lengths
  *
  *********************************************************************/
 
@@ -770,7 +830,7 @@ inline void field_value_t::set_fixed_string_value(const char* string,
  *
  *  @fn:    set_var_string_value
  *
- *  @brief: Copies the string to the data buffer and sets real_size
+ *  @brief: Copy the string to the data buffer and set real_size
  *
  *  @note:  Only len chars are copied. If len > field->fieldsize() then only
  *          fieldsize() chars are copied.
@@ -853,7 +913,6 @@ inline timestamp_t& field_value_t::get_tstamp_value() const
     assert (_pfield_desc->type() == SQL_TIME);
     return *(_value._time);
 }
-
 
 
 

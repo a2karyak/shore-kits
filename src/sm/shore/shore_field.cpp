@@ -4,7 +4,6 @@
  *
  *  @brief:  Implementation of the table field description and value
  *
- *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
  *
  */
@@ -15,10 +14,11 @@ using namespace shore;
 
 
 
-/* ----------------------------------- */
-/* --- @class field_desc_t methods --- */
-/* ------------------------------------*/
-
+/*********************************************************************
+ *
+ *  field_desc_t methods
+ *
+ *********************************************************************/
 
 void  field_desc_t::print_desc(ostream & os)
 {
@@ -53,9 +53,79 @@ void  field_desc_t::print_desc(ostream & os)
 
 
 
-/* ------------------------------------ */
-/* --- @class field_value_t methods --- */
-/* -------------------------------------*/
+/*********************************************************************
+ *
+ *  field_value_t methods
+ *
+ *********************************************************************/
+
+
+/*********************************************************************
+ *
+ *  @fn:    load_value_from_file
+ *
+ *  @brief: Return a string with the value of the specific type and value. 
+ *          Used for debugging purposes.
+ *  
+ *  @note:  (ip) Deprecated
+ *
+ *********************************************************************/
+
+/** DEPRECATED: slow */
+bool field_value_t::load_value_from_file(ifstream & is,
+                                         const char delim)
+{
+    assert (_pfield_desc);
+
+    char* string;
+    string = new char [10*_pfield_desc->fieldmaxsize()];
+    is.get(string, 10*_pfield_desc->fieldmaxsize(), delim);
+    if (strlen(string) == 0) {
+        delete [] string;
+        return false;
+    }
+
+    if (strcmp(string, "(null)") == 0) {
+        assert(_pfield_desc->allow_null());
+        _null_flag = true;
+        delete [] string;
+        return true;
+    }
+
+    _null_flag = false;
+
+    switch (_pfield_desc->type()) {
+    case SQL_SMALLINT:  _value._smallint = atoi(string); break;
+    case SQL_INT:       _value._int = atoi(string); break;
+    case SQL_FLOAT:     _value._float = atof(string); break;
+    case SQL_TIME:      break;
+    case SQL_VARCHAR:   {
+        if (string[0] == '\"') string[strlen(string)-1] = '\0';
+        set_var_string_value(string+1, strlen(string)-1);
+        break;
+    }
+    case SQL_CHAR:  {
+        if (string[0] == '\"') string[strlen(string)-1] = '\0';
+        set_fixed_string_value(string+1, strlen(string)-1);
+        break;
+    } 
+    case SQL_NUMERIC:
+    case SQL_SNUMERIC:
+        set_fixed_string_value(string, strlen(string));
+        break;
+    }
+    delete [] string;
+    return true;
+}
+
+
+/*********************************************************************
+ *
+ *  @fn:    print_value
+ *
+ *  @brief: Output the value to the passed output stream
+ *
+ *********************************************************************/
 
 void  field_value_t::print_value(ostream & os)
 {
@@ -111,6 +181,7 @@ void  field_value_t::print_value(ostream & os)
 const int field_value_t::get_debug_str(char* &buf)
 {
     assert (_pfield_desc);
+
     int sz = _max_size;
     buf = new char[MAX_LINE_LENGTH];
     memset(buf, '\0', MAX_LINE_LENGTH);

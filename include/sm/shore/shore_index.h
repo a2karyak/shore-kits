@@ -26,6 +26,8 @@
 ENTER_NAMESPACE(shore);
 
 
+class table_desc_t;
+
 
 /******************************************************************
  *
@@ -40,13 +42,20 @@ ENTER_NAMESPACE(shore);
 
 class index_desc_t : public file_desc_t 
 {
-private:
-    int*          _key;          /* index of fields in the index */
-    bool          _unique;       /* whether allow duplicates or not */
-    bool          _primary;      /* it is primary or not */
-    int           _maxkeysize;   /* maximum key size */
+    friend class table_desc_t;
 
-    index_desc_t* _next;         /* linked list of all indices */
+private:
+
+    int*          _key;                      /* index of fields in the base table */
+    bool          _unique;                   /* whether allow duplicates or not */
+    bool          _primary;                  /* it is primary or not */
+
+    index_desc_t* _next;                     /* linked list of all indices */
+
+    char          _keydesc[MAX_KEYDESC_LEN]; /* buffer for the index key description */
+    tatas_lock    _keydesc_lock;             /* lock for the key desc */
+    int           _maxkeysize;               /* maximum key size */
+    tatas_lock    _maxkey_lock;              /* lock for the maximum key size */
 
 public:
 
@@ -54,14 +63,17 @@ public:
     /* --- constructor --- */
     /* ------------------- */
 
-    index_desc_t(const char* name, int fieldcnt, const int* fields,
+    index_desc_t(const char* name, const int fieldcnt, const int* fields,
                  bool unique = true, bool primary = false)
         : file_desc_t(name, fieldcnt),
-          _unique(unique), _primary(primary), _maxkeysize(0), _next(NULL) 
+          _unique(unique), _primary(primary), _next(NULL), 
+          _maxkeysize(0) 
     {
         // Copy the indexes of keys
         _key = new int[_field_count];
         for (int i=0; i<_field_count; i++) _key[i] = fields[i];
+
+        memset(_keydesc, 0, MAX_KEYDESC_LEN);
     }
 
     ~index_desc_t() { 
@@ -80,10 +92,10 @@ public:
     inline bool is_unique() const { return (_unique); }
     inline bool is_primary() const { return (_primary); }
 
-    tatas_lock  _maxkey_lock;  /* lock for the maximum key size */
     inline int  get_keysize() { return (_maxkeysize); }
     inline void set_keysize(const int sz) {
         assert (sz>0);
+        CRITICAL_SECTION(idx_keysz_cs, _maxkey_lock);
         _maxkeysize = sz;
     }
 
@@ -111,7 +123,6 @@ public:
 	if (_next) return _next->find_by_name(name);
 	return (NULL);
     }
-
 
 
     /* --- index manipulation --- */

@@ -4,7 +4,6 @@
  *
  *  @brief:  Declaration of the TPC-C tables
  *
- *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
  *
  */
@@ -12,12 +11,14 @@
 #ifndef __SHORE_TPCC_SCHEMA_H
 #define __SHORE_TPCC_SCHEMA_H
 
+#include <math.h>
+
 #include "sm_vas.h"
 #include "util.h"
 
 #include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_tbl_parsers.h"
-#include "sm/shore/shore_table.h"
+#include "sm/shore/shore_table_man.h"
 #include "stages/tpcc/shore/shore_tpcc_random.h"
 
 
@@ -57,13 +58,13 @@ ENTER_NAMESPACE(tpcc);
 
 
 /*  --------------------------------------------------------------
- *  @class tpcc_table_t
  *
- *  @brief Base class for all the TPC-C tables.
+ *  @class: tpcc_table_desc_t
  *
- *  @note  It simply extends the table_desc_t class with a 
- *         tpcc_random_gen_t member variable and a pure virtual
- *         bulkloading function.
+ *  @brief: Base class for all the TPC-C tables
+ *
+ *  @note:  It simply extends the table_desc_t class with a 
+ *          tpcc_random_gen_t member variable.
  *
  *  --------------------------------------------------------------- */
 
@@ -80,9 +81,6 @@ public:
 
     virtual ~tpcc_table_t() { }
 
-    virtual w_rc_t bulkload(ss_m* db, int w_num)=0;
-
-
 }; // EOF: tpcc_table_t
 
 
@@ -90,14 +88,13 @@ typedef std::list<tpcc_table_t*> tpcc_table_list_t;
 typedef std::list<tpcc_table_t*>::iterator tpcc_table_list_iter;
 
 
+/* -------------------------------------------------- */
+/* --- All the tables used in the TPC-C benchmark --- */
+/* -------------------------------------------------- */
 
 
-/* -------------------------------------- */
-/* all the tables used in tpcc benchmarks */
-/* -------------------------------------- */
-
-
-class warehouse_t : public tpcc_table_t {
+class warehouse_t : public tpcc_table_t 
+{
 public:
     warehouse_t() : tpcc_table_t("WAREHOUSE", TPCC_WAREHOUSE_FCOUNT) {
         /* table schema */
@@ -118,32 +115,17 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-    /* --- access the table --- */
-    w_rc_t index_probe(ss_m* db, 
-                       table_row_t* ptuple, 
-                       const int w_id);
-    
-    w_rc_t index_probe_forupdate(ss_m* db, 
-                                 table_row_t* ptuple, 
-                                 const int w_id);
-
-    
-    w_rc_t update_ytd(ss_m* db,
-                      table_row_t* ptuple,
-                      const int w_id,
-                      const double h_amount);
-
     /** deprecated */
-    
+
+    /* random tuple generator */    
     void   random(table_row_t* ptuple, int w_id);
-    
-    w_rc_t bulkload(ss_m* db, int w_num);
-    
+
 }; // EOF: warehouse_t
 
 
 
-class district_t : public tpcc_table_t {
+class district_t : public tpcc_table_t 
+{
 public:
     district_t() : tpcc_table_t("DISTRICT", TPCC_DISTRICT_FCOUNT) {
         /* table schema */
@@ -164,45 +146,19 @@ public:
         create_index("D_INDEX", keys, 2);
     }
 
-
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
-
-    /* --- access the table --- */
-    w_rc_t index_probe(ss_m* db,
-                       table_row_t* ptuple,
-                       const int d_id,
-                       const int w_id);
-
-    w_rc_t index_probe_forupdate(ss_m* db,
-                                 table_row_t* ptuple,
-                                 const int d_id,
-                                 const int w_id);
-
-
-    w_rc_t update_ytd(ss_m* db,
-                      table_row_t* ptuple,
-                      const int d_id,
-                      const int w_id,
-                      const double h_amount);
-
-    w_rc_t update_next_o_id(ss_m* db,
-                            table_row_t* ptuple,
-                            const int  next_o_id);
 
     /** deprecated */
 
-
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, int w_id, int next_o_id);
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: district_t
 
 
 
-class customer_t : public tpcc_table_t {
+class customer_t : public tpcc_table_t 
+{
 public:
     customer_t() : tpcc_table_t("CUSTOMER", TPCC_CUSTOMER_FCOUNT) {
         /* table schema */
@@ -242,48 +198,17 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-
     /** deprecated */
-
 
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, int d_id, int w_id);
-
-    w_rc_t bulkload(ss_m* db, int w_num);
-
-    /* index only access */
-    w_rc_t get_iter_by_index(ss_m* db,
-                             index_scan_iter_impl* & iter,
-                             table_row_t* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const char* c_last);
-
-    w_rc_t index_probe(ss_m* db,
-                       table_row_t* ptuple,
-                       const int c_id,
-                       const int w_id,
-                       const int d_id);
-
-    w_rc_t index_probe_forupdate(ss_m* db,
-                                 table_row_t* ptuple,
-                                 const int c_id,
-                                 const int w_id,
-                                 const int d_id);
-
-    w_rc_t update_tuple(ss_m* db,
-                        table_row_t* ptuple,
-                        const tpcc_customer_tuple acustomer,
-                        const char* adata1 = NULL,
-                        const char* adata2 = NULL);
 
 }; // EOF: customer_t
 
 
 
-class history_t : public tpcc_table_t {
+class history_t : public tpcc_table_t 
+{
 public:
     history_t() : tpcc_table_t("HISTORY", TPCC_HISTORY_FCOUNT) {
         /* table schema */
@@ -305,12 +230,11 @@ public:
     /* random tuple generator */
     void   random(table_row_t* ptuple, int c_id, int c_d_id, int c_w_id);
 
-    w_rc_t bulkload(ss_m* db, int w_num);
-
 }; // EOF: history_t
 
 
-class new_order_t : public tpcc_table_t {
+class new_order_t : public tpcc_table_t 
+{
 public:
     new_order_t() : tpcc_table_t("NEW_ORDER", TPCC_NEW_ORDER_FCOUNT) {
         /* table schema */
@@ -331,31 +255,11 @@ public:
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, int d_id, int w_id);
 
-    w_rc_t bulkload(ss_m* db, int w_num);
-     
-    w_rc_t get_iter_by_index(ss_m* db,
-                             index_scan_iter_impl* &iter,
-                             table_row_t* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id);
-
-    w_rc_t delete_by_index(ss_m* db,
-                           table_row_t* ptuple,
-                           const int  w_id,
-                           const int  d_id,
-                           const int  o_id);
-     
 }; // EOF: new_order_t
 
 
-class order_t : public tpcc_table_t {
-private:
-    int* _pcnt_array;
-    pthread_mutex_t* _pcnt_array_mutex;
-    w_rc_t bulkload(ss_m* db, int w_num, int* apcnt_array);
-    
+class order_t : public tpcc_table_t 
+{    
 public:
     order_t() : tpcc_table_t("ORDER", TPCC_ORDER_FCOUNT) {
         /* table schema */
@@ -381,47 +285,17 @@ public:
 
 
     /** deprecated */
-
-    /* cnt_array */
-    void produce_cnt_array(int w_num, pthread_mutex_t* parray_mutex);
-    inline void free_cnt_array() {
-        if (_pcnt_array)
-            free(_pcnt_array);
-        _pcnt_array = NULL;
-    }
-    inline int* get_cnt_array() { return (_pcnt_array); }
-    inline pthread_mutex_t* get_cnt_mutex() { return (_pcnt_array_mutex); }
      
     /* random tuple generator */
     void random(table_row_t* ptuple, int id, int c_id, int d_id, 
                 int w_id, int ol_cnt);
 
-    w_rc_t bulkload(ss_m* db, int w_num);
-
-    /* table operations */
-    w_rc_t update_carrier_by_index(ss_m* db,
-                                   table_row_t* ptuple,
-                                   const int carrier_id);
-    
-    w_rc_t get_iter_by_index(ss_m * shore,
-                             index_scan_iter_impl* & iter,
-                             table_row_t* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const int c_id);
-
 }; // EOF: order_t
 
 
 
-class order_line_t : public tpcc_table_t {
-private:
-    int* _pcnt_array;
-    pthread_mutex_t* _pcnt_array_mutex;
-    w_rc_t bulkload(ss_m* db, int w_num, int* apcnt_array);
-
+class order_line_t : public tpcc_table_t 
+{
 public:
     order_line_t() : tpcc_table_t("ORDERLINE", TPCC_ORDER_LINE_FCOUNT) {
 	/* table schema */
@@ -443,49 +317,18 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-
     /** deprecated */
-
-    /* cnt_array */
-
-    /** @note: the cnt_array should be created by order_t */
-    inline void set_cnt_array(int* apcnt_array, pthread_mutex_t* pmutex) { 
-        _pcnt_array_mutex = pmutex; assert(_pcnt_array_mutex);
-        _pcnt_array = apcnt_array; assert(_pcnt_array); 
-    }
-    inline int* get_cnt_array() { return (_pcnt_array); }
-    inline pthread_mutex_t* get_cnt_mutex() { return (_pcnt_array_mutex); }
 
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, int d_id, int w_id,
                   int ol_index, bool delivery=true);
 
-    w_rc_t bulkload(ss_m* db, int w_num);
-
-    /* --- access methods --- */
-    w_rc_t get_iter_by_index(ss_m* db,
-                             index_scan_iter_impl* &it,
-                             table_row_t* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const int low_o_id,
-                             const int high_o_id);
-
-    w_rc_t get_iter_by_index(ss_m* db,
-                             index_scan_iter_impl* &iter,
-                             table_row_t* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const int o_id);
-
 }; // EOF: order_line_t
 
 
-class item_t : public tpcc_table_t {
+
+class item_t : public tpcc_table_t 
+{
 public:
     item_t() : tpcc_table_t("ITEM", TPCC_ITEM_FCOUNT) {
 	/* table schema */
@@ -508,20 +351,11 @@ public:
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id);
 
-    w_rc_t bulkload(ss_m* db, int w_num);
-
-    w_rc_t index_probe(ss_m* ddb, 
-                       table_row_t* ptuple,
-                       const int i_id);
-
-    w_rc_t index_probe_forupdate(ss_m* db, 
-                                 table_row_t* ptuple,
-                                 const int i_id);
-
 }; // EOF: item_t
 
 
-class stock_t : public tpcc_table_t {
+class stock_t : public tpcc_table_t 
+{
 public:
     stock_t() : tpcc_table_t("STOCK", TPCC_STOCK_FCOUNT) {
 	/* table schema */
@@ -553,29 +387,36 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-
     /** deprecated */
 
     /* random tuple generator */
     void   random(table_row_t* ptuple, int id, int w_id);
 
-    w_rc_t bulkload(ss_m* db, int w_num);
-
-    w_rc_t index_probe(ss_m* db,
-                       table_row_t* ptuple,
-                       const int i_id,
-                       const int w_id);
-
-    w_rc_t index_probe_forupdate(ss_m* db,
-                                 table_row_t* ptuple,
-                                 const int i_id,
-                                 const int w_id);
-
-    w_rc_t update_tuple(ss_m* db,
-                        table_row_t* ptuple,
-                        const tpcc_stock_tuple* pstock);
-
 }; // EOF: stock_t
+
+
+// loaders
+typedef table_loading_smt_impl<warehouse_t>  wh_loader_t;
+typedef table_loading_smt_impl<district_t>   dist_loader_t;
+typedef table_loading_smt_impl<stock_t>      st_loader_t;
+typedef table_loading_smt_impl<order_line_t> ol_loader_t;
+typedef table_loading_smt_impl<customer_t>   cust_loader_t;
+typedef table_loading_smt_impl<history_t>    hist_loader_t;
+typedef table_loading_smt_impl<order_t>      ord_loader_t;
+typedef table_loading_smt_impl<new_order_t>  no_loader_t;
+typedef table_loading_smt_impl<item_t>       it_loader_t;
+
+// checkers
+typedef table_checking_smt_impl<warehouse_t>  wh_checker_t;
+typedef table_checking_smt_impl<district_t>   dist_checker_t;
+typedef table_checking_smt_impl<stock_t>      st_checker_t;
+typedef table_checking_smt_impl<order_line_t> ol_checker_t;
+typedef table_checking_smt_impl<customer_t>   cust_checker_t;
+typedef table_checking_smt_impl<history_t>    hist_checker_t;
+typedef table_checking_smt_impl<order_t>      ord_checker_t;
+typedef table_checking_smt_impl<new_order_t>  no_checker_t;
+typedef table_checking_smt_impl<item_t>       it_checker_t;
+
 
 
 EXIT_NAMESPACE(tpcc);

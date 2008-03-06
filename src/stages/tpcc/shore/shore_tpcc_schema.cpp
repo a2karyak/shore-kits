@@ -4,544 +4,44 @@
  *
  *  @brief:  Implementation of the TPC-C tables
  *
- *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
  *
  */
 
 
-#include <math.h>
-
 #include "stages/tpcc/shore/shore_tpcc_schema.h"
-#include "stages/tpcc/shore/shore_tpcc_random.h"
 
 
 using namespace shore;
 using namespace tpcc;
 
-#define  MAX_INT_LEN     60
-#define  MAX_LONG_LEN    550
 
-
-
-/*============== Access methods on tables =====================*/
-
-
-
-/* ----------------- */
-/* --- WAREHOUSE --- */
-/* ----------------- */
-
-
-
-w_rc_t warehouse_t::index_probe(ss_m* db,
-                                table_row_t* ptuple,
-                                const int w_id)
-{
-    ptuple->set_value(0, w_id);
-    W_DO(table_desc_t::index_probe(db, "W_INDEX", ptuple));
-    return (RCOK);
-}
-
-w_rc_t warehouse_t::index_probe_forupdate(ss_m* db,
-                                          table_row_t* ptuple,
-                                          const int w_id)
-{
-    ptuple->set_value(0, w_id);
-    W_DO(table_desc_t::index_probe_forupdate(db, "W_INDEX", ptuple));
-    return (RCOK);
-}
-
-w_rc_t warehouse_t::update_ytd(ss_m* db,
-                               table_row_t* ptuple,
-                               const int w_id,
-                               const double amount)
-{
-    ptuple->set_value(0, w_id);
-    
-    // W_DO(table_desc_t::index_probe(shore, "W_INDEX"));
-    // cout << "APP: " << xct()->tid() << " Update warehouse " << w_id << endl;
-    W_DO(table_desc_t::index_probe_forupdate(db, "W_INDEX", ptuple));
-
-    double ytd;
-    ptuple->get_value(8, ytd);
-    ytd += amount;
-    ptuple->set_value(8, ytd);
-    W_DO(update_tuple(db, ptuple));
-
-    return (RCOK);
-}
-
-
-
-/* ---------------- */
-/* --- DISTRICT --- */
-/* ---------------- */
-
-/* get the district tuple by following the index on (d_id, w_id) */
-w_rc_t district_t::index_probe(ss_m* db,
-                               table_row_t* ptuple,
-                               const int d_id,
-                               const int w_id)
-{
-    /* probing to get the tuple */
-    ptuple->set_value(0, d_id);
-    ptuple->set_value(1, w_id);
-    return (table_desc_t::index_probe(db, "D_INDEX", ptuple));
-}
-
-w_rc_t district_t::index_probe_forupdate(ss_m* db,
-                                         table_row_t* ptuple,
-                                         const int d_id,
-                                         const int w_id)
-{
-    /* probing to get the tuple */
-    ptuple->set_value(0, d_id);
-    ptuple->set_value(1, w_id);
-    return (table_desc_t::index_probe_forupdate(db, "D_INDEX", ptuple));
-}
-
-w_rc_t district_t::update_ytd(ss_m* db,
-                              table_row_t* ptuple,
-                              const int d_id,
-                              const int w_id,
-                              const double amount)
-{
-    ptuple->set_value(0, d_id);
-    ptuple->set_value(1, w_id);
-
-
-    W_DO(table_desc_t::index_probe_forupdate(db, "D_INDEX", ptuple));
-
-    double d_ytd;
-    ptuple->get_value(9, d_ytd);
-    d_ytd += amount;
-    ptuple->set_value(9, d_ytd);
-    W_DO(update_tuple(db, ptuple));
-
-    return (RCOK);
-}
-
-w_rc_t district_t::update_next_o_id(ss_m* db,
-                                    table_row_t* ptuple,
-                                    const int next_o_id)
-{
-    ptuple->set_value(10, next_o_id);
-
-    W_DO(update_tuple(db, ptuple));
-    return (RCOK);
-}
-
-
-
-/* ---------------- */
-/* --- CUSTOMER --- */
-/* ---------------- */
-
-
-w_rc_t customer_t::get_iter_by_index(ss_m* db,
-                                     index_scan_iter_impl* &iter,
-                                     table_row_t* ptuple,
-                                     rep_row_t &replow,
-                                     rep_row_t &rephigh,
-                                     const int w_id,
-                                     const int d_id,
-                                     const char* c_last)
-{
-    index_desc_t* index = find_index("C_NAME_INDEX");
-    assert (index);
-
-    // C_NAME_INDEX: {2 - 1 - 5 - 3 - 0}
-
-    // prepare the key to be probed
-    ptuple->set_value(0, 0);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    ptuple->set_value(3, "");
-    ptuple->set_value(5, c_last);
-
-    int lowsz = format_key(index, ptuple, replow);
-    assert (replow._dest);
-
-    char   temp[2];
-    temp[0] = MAX('z', 'Z')+1;
-    temp[1] = '\0';
-    ptuple->set_value(3, temp);
-
-    int highsz = format_key(index, ptuple, rephigh);
-    assert (rephigh._dest);    
-
-    /* index only access */
-    W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz),
-				 false));
-    return (RCOK);
-}
-
-w_rc_t customer_t::index_probe(ss_m* db,
-                               table_row_t* ptuple,
-                               const int c_id,
-                               const int w_id,
-                               const int d_id)
-{
-    ptuple->set_value(0, c_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    return (table_desc_t::index_probe(db, "C_INDEX", ptuple));
-}
-
-w_rc_t customer_t::index_probe_forupdate(ss_m * db,
-                                         table_row_t* ptuple,                                         
-                                         const int c_id,
-                                         const int w_id,
-                                         const int d_id)
-{
-    ptuple->set_value(0, c_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    return (table_desc_t::index_probe_forupdate(db, "C_INDEX", ptuple));
-}
-
-w_rc_t customer_t::update_tuple(ss_m* db,
-                                table_row_t* ptuple,
-                                const tpcc_customer_tuple acustomer,
-                                const char* adata1,
-                                const char* adata2)
-{
-    ptuple->set_value(16, acustomer.C_BALANCE);
-    ptuple->set_value(17, acustomer.C_YTD_PAYMENT);
-    ptuple->set_value(19, acustomer.C_PAYMENT_CNT);
-
-    if (adata1)
-	ptuple->set_value(20, adata1);
-
-    if (adata2)
-	ptuple->set_value(21, adata2);
-
-    W_DO(table_desc_t::update_tuple(db, ptuple));
-
-    return (RCOK);
-}
-
-
-
-
-/* ----------------- */
-/* --- ORDERLINE --- */
-/* ----------------- */
-
-
-
-/* index range scan on order_line */
-w_rc_t order_line_t::get_iter_by_index(ss_m* db,
-                                       index_scan_iter_impl* & iter,
-                                       table_row_t* ptuple,
-                                       rep_row_t &replow,
-                                       rep_row_t &rephigh,
-                                       const int w_id,
-                                       const int d_id,
-                                       const int low_o_id,
-                                       const int high_o_id)
-{
-    /* pointer to the index */
-    index_desc_t * index = find_index("OL_INDEX");
-    assert (index);
-
-    /* get the lowest key value */
-    ptuple->set_value(0, low_o_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    ptuple->set_value(3, (int)0);  /* assuming that ol_number starts from 1 */
-
-    int lowsz = format_key(index, ptuple, replow);
-    assert (replow._dest);
-
-    /* get the highest key value */
-    ptuple->set_value(0, high_o_id+1);
-
-    int highsz = format_key(index, ptuple, rephigh);
-    assert (rephigh._dest);
-    
-    /* get the tuple iterator (not index only scan) */
-    W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz),
-				 true));
-    return (RCOK);
-}
-
-
-w_rc_t order_line_t::get_iter_by_index(ss_m* db,
-                                       index_scan_iter_impl* &iter,
-                                       table_row_t* ptuple,
-                                       rep_row_t &replow,
-                                       rep_row_t &rephigh,
-                                       const int w_id,
-                                       const int d_id,
-                                       const int o_id)
-{
-    index_desc_t  * index = find_index("OL_INDEX");
-    assert (index);
-
-    ptuple->set_value(0, o_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    ptuple->set_value(3, 0);
-
-    int lowsz = format_key(index, ptuple, replow);
-    assert (replow._dest);
-
-    /* get the highest key value */
-    ptuple->set_value(0, o_id+1);
-
-    int highsz = format_key(index, ptuple, rephigh);
-    assert (rephigh._dest);
-
-    W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge,
-				 vec_t(replow._dest, lowsz),
-				 scan_index_i::lt,
-				 vec_t(rephigh._dest, highsz),
-				 true));
-    return (RCOK);
-}
-
-
-
-/* ------------- */
-/* --- ORDER --- */
-/* ------------- */
-
-
-w_rc_t order_t::update_carrier_by_index(ss_m* db,
-                                        table_row_t* ptuple,
-                                        const int carrier_id)
-{
-    W_DO(index_probe_forupdate(db, "O_INDEX", ptuple));
-
-    ptuple->set_value(5, carrier_id);
-    W_DO(update_tuple(db, ptuple));
-
-    return (RCOK);
-}
-
-w_rc_t order_t::get_iter_by_index(ss_m* db,
-                                  index_scan_iter_impl* &iter,
-                                  table_row_t* ptuple,
-                                  rep_row_t &replow,
-                                  rep_row_t &rephigh,
-                                  const int w_id,
-                                  const int d_id,
-                                  const int c_id)
-{
-    index_desc_t * index = find_index("O_CUST_INDEX");
-    assert (index);
-
-    ptuple->set_value(0, 0);
-    ptuple->set_value(1, c_id);
-    ptuple->set_value(2, d_id);
-    ptuple->set_value(3, w_id);
-
-//     ptuple->set_value(0, 0);
-//     ptuple->set_value(1, d_id);
-//     ptuple->set_value(2, w_id);
-//     ptuple->set_value(3, c_id);
-
-    int lowsz = format_key(index, ptuple, replow);
-    assert (replow._dest);
-
-    /* get the highest key value */
-    ptuple->set_value(1, c_id+1);
-
-    int highsz  = format_key(index, ptuple, rephigh);
-    assert (rephigh._dest);
-
-    W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz),
-				 true));
-    return (RCOK);
-}
-
-
-
-/* ----------------- */
-/* --- NEW_ORDER --- */
-/* ----------------- */
-
-				    
-
-w_rc_t new_order_t::get_iter_by_index(ss_m* db,
-                                      index_scan_iter_impl* &iter,
-                                      table_row_t* ptuple,
-                                      rep_row_t &replow,
-                                      rep_row_t &rephigh,
-                                      const int w_id,
-                                      const int d_id)
-{
-    /* find the index structure */
-    index_desc_t * index = find_index("NO_INDEX");
-    assert (index);
-
-    /* get the lowest key value */
-    ptuple->set_value(0, 0);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-
-    int lowsz = format_key(index, ptuple, replow);
-    assert (replow._dest);
-
-    /* get the highest key value */
-    ptuple->set_value(1, d_id+1);
-
-    int highsz = format_key(index, ptuple, rephigh);
-    assert (rephigh._dest);
-
-    /* get the tuple iterator (index only scan) */
-    W_DO(get_iter_for_index_scan(db, index, iter,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
-    return (RCOK);
-}
-
-w_rc_t new_order_t::delete_by_index(ss_m* db,
-                                    table_row_t* ptuple,
-				    const int w_id,
-				    const int d_id,
-				    const int o_id)
-{
-    ptuple->set_value(0, o_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    W_DO(table_desc_t::index_probe(db, "NO_INDEX", ptuple));
-    W_DO(table_desc_t::delete_tuple(db, ptuple));
-
-    return (RCOK);
-}
-
-
-
-/* ------------ */
-/* --- ITEM --- */
-/* ------------ */
-
-
-w_rc_t item_t::index_probe(ss_m* db, 
-                           table_row_t* ptuple,
-                           const int i_id)
-{
-    index_desc_t* index = find_index("I_INDEX");
-    assert (index);
-
-    ptuple->set_value(0, i_id);
-    W_DO(table_desc_t::index_probe(db, index, ptuple));
-
-    return (RCOK);
-}
-
-w_rc_t  item_t::index_probe_forupdate(ss_m* db, 
-                                      table_row_t* ptuple,
-                                      const int i_id)
-{
-    index_desc_t * index = find_index("I_INDEX");
-    assert (index);
-
-    ptuple->set_value(0, i_id);
-    W_DO(table_desc_t::index_probe_forupdate(db, index, ptuple));
-
-    return (RCOK);
-}
-
-
-
-/* ------------- */
-/* --- STOCK --- */
-/* ------------- */
-
-
-w_rc_t stock_t::index_probe(ss_m* db,
-                            table_row_t* ptuple,
-                            const int  i_id,
-                            const int  w_id)
-{
-    index_desc_t * index = find_index("S_INDEX");
-    assert (index);
-
-    ptuple->set_value(0, i_id);
-    ptuple->set_value(1, w_id);
-    W_DO(table_desc_t::index_probe(db, index, ptuple));
-
-    return (RCOK);
-}
-
-w_rc_t stock_t::index_probe_forupdate(ss_m* db,
-                                      table_row_t* ptuple,
-                                      const int  i_id,
-                                      const int  w_id)
-{
-    index_desc_t * index = find_index("S_INDEX");
-    assert (index);
-
-    ptuple->set_value(0, i_id);
-    ptuple->set_value(1, w_id);
-    W_DO(table_desc_t::index_probe_forupdate(db, index, ptuple));
-
-    return (RCOK);
-}
-
-w_rc_t  stock_t::update_tuple(ss_m* db,
-                              table_row_t* ptuple,
-                              const tpcc_stock_tuple* pstock)
-{
-    ptuple->set_value(2, pstock->S_REMOTE_CNT);
-    ptuple->set_value(3, pstock->S_QUANTITY);
-    ptuple->set_value(4, pstock->S_ORDER_CNT);
-    ptuple->set_value(5, pstock->S_YTD);
-
-    W_DO(table_desc_t::update_tuple(db, ptuple));
-    return (RCOK);
-}
-
-
-/*=================== loading utility =========================*/
+/*********************************************************************
+ *
+ * loading utility
+ *
+ *********************************************************************/
 
 /*
  * There are two methods for each table:
  *
- * 1. random(), which creates a random tuple.
+ * 1. read_tuple_from_line(), which reads a tuple from a buffer.
  *
- * 2. bulkload(), which populates the table and inserts
- * tuples to Shore files.
- *
- */
-
-/* 
- * Implementation of bulkloading.
- *
- * For each table, we need to load two pieces of information:
- *
- * 1. tuples themselves.
- * 2. indices on the table.
- *
- * The loading process consists of two parts.
- *
- * 1. Building the base table. This involves calling
- * begin_create_table() before adding tuples to the table and
- * calling end_create_table() after all the tuples have been
- * added to the tuple. 
- *
- * 2. Building the indices. The bulkloading functionality is
- * implemented in table_desc_t.  The program can just call
- * bulkload_index() to populate all the indices defined on
- * the table.
+ * 2. random(), which creates a random tuple.
  *
  */
 
-/*==========================================================
+
+
+const int MAX_INT_LEN  = 60;
+const int MAX_LONG_LEN = 550;
+
+
+/*********************************************************************
+ *
  * class warehouse_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool warehouse_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -618,60 +118,12 @@ void  warehouse_t::random(table_row_t* ptuple, int w_id)
     ptuple->set_value(8, (double)300000);
 }
 
-w_rc_t  warehouse_t::bulkload(ss_m* db, int w_num)
-{
-    cout << "Loading " << _name << " table ..." << endl;
 
-    _tpccrnd.init_random(23);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the warehouse table */
-    W_DO(create_table(db));
-
-    /* 2. append the tuples */
-    append_file_i  file_append(_fid);
-    
-    // add tuples to table and index
-    register int count = 0;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t awh_tuple(this);
-
-    rep_row_t reprow;    
-    int tsz = 0; 
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-        // generate a random tuple
-	random(&awh_tuple, w_id);
-
-        // append it to the table
-        tsz = awh_tuple.format(reprow);
-        assert (reprow._dest);
-	W_DO(file_append.create_rec(vec_t(), (smsize_t)0,
-				    vec_t(reprow._dest, tsz),
-				    awh_tuple._rid));
-
-	if (count >= mark) {
-	    W_DO(db->commit_xct());
-            cerr << "table(" << _name << "): " << count << endl;
-	    W_DO(db->begin_xct());
-            mark += COMMIT_ACTION_COUNT;
-	}
-	count++;
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return (bulkload_all_indexes(db));
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class district_t
- *==========================================================
- */
-
+ *
+ *********************************************************************/
 
 bool district_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -758,60 +210,12 @@ void district_t::random(table_row_t* ptuple, int id, int w_id, int next_o_id)
     ptuple->set_value(10, next_o_id);
 }
 
-w_rc_t district_t::bulkload(ss_m* db, int w_num)
-{
-    cout << "Loading " << _name << " table ..." << endl;
 
-    _tpccrnd.init_random(44);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the district table */
-    W_DO(create_table(db));
-
-    /* 2. append the tuples */
-    append_file_i  file_append(_fid);
-    
-    // add tuples to table and index
-    register int count = 0;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t ad_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0; 
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-            // generate a random district tuple
-	    random(&ad_tuple, d_id, w_id, CUSTOMERS_PER_DISTRICT+1);
-
-            // append it to the table
-            tsz = ad_tuple.format(reprow);
-            assert (reprow._dest);
-	    W_DO(file_append.create_rec(vec_t(), 0,
-					vec_t(reprow._dest, tsz),
-					ad_tuple._rid));
-	    count++;
-	    if (count >= mark) {
-		W_DO(db->commit_xct());
-                cerr << "table(" << _name << "): " << count << endl;
-		W_DO(db->begin_xct());
-                mark += COMMIT_ACTION_COUNT;
-	    }
-	}
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class customer_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool customer_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -960,63 +364,12 @@ void  customer_t::random(table_row_t* ptuple, int id, int d_id, int w_id)
     ptuple->set_value(20, string);
 }
 
-w_rc_t customer_t::bulkload(ss_m* db, int w_num)
-{
-    cout << "Loading " << _name << " table ..." << endl;
 
-    _tpccrnd.init_random(10);
-
-    W_DO(db->begin_xct());
-  
-    /* 1. create the customer table */
-    W_DO(create_table(db));
-
-    /* 2. append the tuples */
-    append_file_i  file_append(_fid);
-
-    // add tuples to the table 
-    int count = 0;
-    int mark = COMMIT_ACTION_COUNT;
-    table_row_t ac_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    for (int c_id = 1; c_id <= CUSTOMERS_PER_DISTRICT; c_id++) {
-                // generate a random customer tuple
-		random(&ac_tuple, c_id, d_id, w_id);
-
-                // append it to the table
-                tsz = ac_tuple.format(reprow);
-                assert (reprow._dest);
-		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(reprow._dest, tsz),
-					    ac_tuple._rid));
-
-		if (count >= mark) {
-		    W_DO(db->commit_xct());
-                    cerr << "table(" << _name << "): " << count << endl;
-		    W_DO(db->begin_xct());
-                    mark += COMMIT_ACTION_COUNT;
-		}
-		count++;
-	    }
-	}
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class history_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool history_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -1082,62 +435,12 @@ void  history_t::random(table_row_t* ptuple, int c_id, int c_d_id, int c_w_id)
     ptuple->set_value(7, string);
 }
 
-w_rc_t  history_t::bulkload(ss_m* db, int w_num)
-{
-    cout << "Loading " << _name << " table ..." << endl;
 
-    _tpccrnd.init_random(15);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the history table */
-    W_DO(create_table(db));
-
-    /* 2. append the tuples */
-    append_file_i  file_append(_fid);
-
-    // add tuples to the table 
-    register int count = 1;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t ah_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    for (int c_id = 1; c_id <= CUSTOMERS_PER_DISTRICT; c_id++) {
-		random(&ah_tuple, c_id, d_id, w_id);
-
-                // append it to the table
-                tsz = ah_tuple.format(reprow);
-                assert (reprow._dest);
-		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(reprow._dest, tsz),
-					    ah_tuple._rid));
-
-		if (count >= mark) {
-		    W_DO(db->commit_xct());
-                    cerr << "table(" << _name << "): " << count << endl;
-		    W_DO(db->begin_xct());
-                    mark += COMMIT_ACTION_COUNT;
-		}
-		count++;
-	    }
-	}
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class new_order_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool new_order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -1174,68 +477,12 @@ void new_order_t::random(table_row_t* ptuple, int id, int d_id, int w_id)
     ptuple->set_value(2, w_id);
 }
 
-w_rc_t new_order_t::bulkload(ss_m* db, int w_num)
-{
-    int o_id_lo = CUSTOMERS_PER_DISTRICT - NU_ORDERS_PER_DISTRICT + 1;
-    if (o_id_lo < 0) {
-	o_id_lo = CUSTOMERS_PER_DISTRICT - (CUSTOMERS_PER_DISTRICT / 3) + 1;
-	cerr << "**** WARNING **** NU_ORDERS_PER_DISTRICT is > CUSTOMERS_PER_DISTRICT" << endl;
-	cerr << "                  Loading New-Order with 1/3 of CUSTOMERS_PER_DISTRICT" << endl;
-    }
 
-    cout << "Loading " << _name << " table ..." << endl;
-
-    _tpccrnd.init_random(99);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the new_order table */
-    W_DO(create_table(db));
-
-    /* 2. append tuples */
-    append_file_i  file_append(_fid);
-    // add tuples to the table 
-    register int count = 1;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t anu_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    for (int o_id = o_id_lo ; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
-		random(&anu_tuple, o_id, d_id, w_id);
-
-                // append it to the table
-                tsz = anu_tuple.format(reprow);
-                assert (reprow._dest);
-		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(reprow._dest, tsz),
-					    anu_tuple._rid));
-
-		if (count >= mark) {
-		    W_DO(db->commit_xct());
-                    cerr << "table(" << _name << "): " << count << endl;
-		    W_DO(db->begin_xct());
-                    mark += COMMIT_ACTION_COUNT;
-		}
-		count++;
-	    }
-	}
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class order_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -1267,7 +514,8 @@ bool order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void order_t::random(table_row_t* ptuple, int id, int c_id, int d_id, int w_id, int ol_cnt)
+void order_t::random(table_row_t* ptuple, int id, int c_id, int d_id, 
+                     int w_id, int ol_cnt)
 {
     int int_num;
     timestamp_t  time;
@@ -1305,93 +553,11 @@ void order_t::random(table_row_t* ptuple, int id, int c_id, int d_id, int w_id, 
 }
 
 
-void order_t::produce_cnt_array(int w_num, pthread_mutex_t* parray_mutex)
-{
-    cerr << "building cnt_array... " << endl;
-    // first init and lock the mutex
-    assert (parray_mutex);
-    _pcnt_array_mutex = parray_mutex;
-    pthread_mutex_lock(_pcnt_array_mutex);
-    
-    // then create the cnt_array
-    _pcnt_array = (int*)malloc(sizeof(int)*w_num*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
-    assert(_pcnt_array);
-    for (int i=0; i<w_num; i++)
-	_tpccrnd.random_ol_cnt((short*)_pcnt_array+i*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
-    
-}
-
-w_rc_t order_t::bulkload(ss_m* db, int w_num)
-{
-    assert (_pcnt_array);
-    return (bulkload(db, w_num, _pcnt_array));
-}
-
-
-w_rc_t order_t::bulkload(ss_m* db, int w_num, int* cnt_array)
-{
-    cout << "Loading " << _name << " table ..." << endl;
-
-    int index = 0;
-
-    _tpccrnd.init_random(42);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the order table */
-    W_DO(create_table(db));
-
-    /* 2. append tuples */
-    append_file_i  file_append(_fid);
-
-    // add tuples to the table 
-    register int count = 1;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t ao_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    _tpccrnd.seed_1_3000();
-
-	    for (int o_id = 1; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
-		int ol_cnt = cnt_array[index++];
-		random(&ao_tuple, o_id, _tpccrnd.random_1_3000(), d_id, w_id, ol_cnt);
-
-                // append it to the table
-                tsz = ao_tuple.format(reprow);
-                assert (reprow._dest);
-		W_DO(file_append.create_rec(vec_t(), 0,
-					    vec_t(reprow._dest, tsz),
-					    ao_tuple._rid));
-
-		if (count >= mark) {
-		    W_DO(db->commit_xct());
-                    cerr << "table(" << _name << "): " << count << endl;
-		    W_DO(db->begin_xct());
-                    mark += COMMIT_ACTION_COUNT;
-		}
-		count++;                
-	    }
-	}
-    }
-    W_DO(db->commit_xct());
-
-    // release cnt_array mutex
-    pthread_mutex_unlock(_pcnt_array_mutex);
-    
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class order_line_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool order_line_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -1475,88 +641,11 @@ void order_line_t::random(table_row_t* ptuple, int id,
 }
 
 
-w_rc_t order_line_t::bulkload(ss_m* db, int w_num)
-{
-    // get cnt_array mutex 
-    assert (_pcnt_array_mutex);
-    critical_section_t cs(*_pcnt_array_mutex);
-    assert (_pcnt_array);
-
-    // do the loading
-    return (bulkload(db, w_num, _pcnt_array));
-}
-
-
-w_rc_t order_line_t::bulkload(ss_m* db, int w_num, int* cnt_array)
-{
-    cout << "Loading " << _name << " table ..." << endl;
-
-    int index = 0;
-
-    //  init_random(42, 13);
-    _tpccrnd.init_random(47);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the order_line table */
-    W_DO(create_table(db));
-
-    /* 2. append tuples */
-    append_file_i  file_append(_fid);
-
-    // add tuples to the table 
-    int count = 1;
-    int mark = COMMIT_ACTION_COUNT;
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    _tpccrnd.seed_1_3000();
-
-	    for (int o_id = 1; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
-		int ol_cnt = cnt_array[index++];
-	  
-		for (int ol_id = 1; ol_id <= ol_cnt; ol_id++) {
-                    table_row_t aol_tuple(this);
-		    if (o_id < 2101) {
-			random(&aol_tuple, o_id, d_id, w_id, ol_id);
-		    }
-		    else {
-			random(&aol_tuple, o_id, d_id, w_id, ol_id, false);
-		    }
-
-                    // append it to the table
-                    tsz = aol_tuple.format(reprow);
-                    assert (reprow._dest);                    
-		    W_DO(file_append.create_rec(vec_t(), 0,
-						vec_t(reprow._dest, tsz),
-						aol_tuple._rid));
-
-		    if (count >= mark) {
-			W_DO(db->commit_xct());
-                        cerr << "table(" << _name << "): " << count << endl;
-			W_DO(db->begin_xct());
-                        mark += COMMIT_ACTION_COUNT;
-		    }
-		    count++;
-		}
-	    }
-	}
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class item_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool item_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -1607,58 +696,12 @@ void item_t::random(table_row_t* ptuple, int id)
     ptuple->set_value(4, string);
 }
 
-w_rc_t item_t::bulkload(ss_m* db, int /* w_num */)
-{
-    cout << "Loading " << _name << " table ..." << endl;
 
-    _tpccrnd.init_random(13);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the item table */
-    W_DO(create_table(db));
-
-    /* 2. append tuples */
-    append_file_i  file_append(_fid);
-
-    // add tuples to the table 
-    register int count = 0;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t ai_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int i_id = 1; i_id <= ITEMS; i_id++) {
-	random(&ai_tuple, i_id);
-
-        // append it to the table
-        tsz = ai_tuple.format(reprow);
-        assert (reprow._dest);
-	W_DO(file_append.create_rec(vec_t(), 0,
-				    vec_t(reprow._dest, tsz),
-				    ai_tuple._rid));
-
-	if (count >= mark) {
-	    W_DO(db->commit_xct());
-            cerr << "table(" << _name << "): " << count << endl;
-	    W_DO(db->begin_xct());
-            mark += COMMIT_ACTION_COUNT;
-	}
-	count++;
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
-}
-
-/*==========================================================
+/*********************************************************************
+ *
  * class stock_t
- *==========================================================
- */
+ *
+ *********************************************************************/
 
 bool stock_t::read_tuple_from_line(table_row_t& tuple, char* buf)
 {
@@ -1778,54 +821,4 @@ void stock_t::random(table_row_t* ptuple, int id, int w_id)
     /* data */
     _tpccrnd.string_with_original(string, 26, 50, 10.5, &hit);
     ptuple->set_value(16, string);
-}
-
-w_rc_t stock_t::bulkload(ss_m* db, int w_num)
-{
-    cout << "Loading " << _name << " table ..." << endl;
-
-    _tpccrnd.init_random(7);
-
-    W_DO(db->begin_xct());
-
-    /* 1. create the stock table */
-    W_DO(create_table(db));
-
-    /* 2. append tuples */
-    append_file_i  file_append(_fid);
-
-    // add tuples to the table 
-    register int count = 0;
-    register int mark = COMMIT_ACTION_COUNT;
-    table_row_t as_tuple(this);
-
-    rep_row_t reprow;
-    int tsz = 0;
-
-    for (int w_id = 1; w_id <= w_num; w_id++) {
-	for (int s_id = 1; s_id <= STOCK_PER_WAREHOUSE; s_id++) {
-	    random(&as_tuple, s_id, w_id);
-
-            // append it to the table
-            tsz = as_tuple.format(reprow);
-            assert (reprow._dest);
-	    W_DO(file_append.create_rec(vec_t(), 0,
-					vec_t(reprow._dest, tsz),
-					as_tuple._rid));
-
-	    if (count >= mark) {
-		W_DO(db->commit_xct());
-                cerr << "table(" << _name << "): " << count << endl;
-		W_DO(db->begin_xct());
-                mark += COMMIT_ACTION_COUNT;
-	    }
-	    count++;
-	}
-    }
-    W_DO(db->commit_xct());
-
-    TRACE( TRACE_DEBUG, "(%s) # of records inserted: %d\n",
-           _name, count);
-
-    return bulkload_all_indexes(db);
 }

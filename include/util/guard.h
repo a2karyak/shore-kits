@@ -227,7 +227,7 @@ public:
 
     // The value that represents "null" for typename T. Impl usually
     // descends from this class so this makes a handy default
-    // implmentation
+    // implementation
     static T null_value() {
         return NULL;
     }
