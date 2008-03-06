@@ -21,6 +21,11 @@
 #include "shore_row.h"
 
 
+// define cache stats to get some statistics about the tuple cache
+#undef CACHE_STATS
+//#define CACHE_STATS
+
+
 ENTER_NAMESPACE(shore);
 
 
@@ -60,20 +65,24 @@ private:
     tuple_node* volatile _head;
 
     TableDesc* _ptable; 
-    
+
+#ifdef CACHE_STATS    
     // stats
-    // (ip) to be removed
     int _tuple_requests; 
     tatas_lock _requests_lock;
     int _tuple_setups;
     tatas_lock _setups_lock;
+#endif
 
     /* Creates a new tuple node
      */
     tuple_node* create_node() 
     {
+#ifdef CACHE_STATS
         CRITICAL_SECTION( scs, _setups_lock);
         ++_tuple_setups;
+#endif
+
         return (new tuple_node(_ptable));
     }
                 
@@ -81,12 +90,17 @@ private:
 public:
 
     row_cache_t(TableDesc* ptable, int init_count = 0) 
-        : _head(NULL), _ptable(ptable), _tuple_requests(0), _tuple_setups(0)
+        : _head(NULL), _ptable(ptable)
+#ifdef CACHE_STATS
+        , _tuple_requests(0), _tuple_setups(0)
+#endif
     { 
         assert (_ptable);
         assert (init_count >= 0); 
         for (int i=0; i<init_count; i++) {
+#ifdef CACHE_STATS
             ++_tuple_setups;
+#endif
             tuple_node* aptn = new tuple_node(_ptable);
             giveback(aptn);
         }
@@ -104,8 +118,10 @@ public:
             cur = next;
             ++icount;
         }
-        
+
+#ifdef CACHE_STATS        
         print_stats();
+#endif
         TRACE( TRACE_STATISTICS, "Deleted: (%d)\n", icount);
     }
 
@@ -118,18 +134,18 @@ public:
         int cnt = 0;
         for (tuple_node* cur=_head; cur; ) {
             fprintf( stderr, "walking (%d)\n", ++cnt);
-            //     cur->_tuple->print_tuple_no_tracing();
             cur = cur->_next;
         }
     }
-    
+
+#ifdef CACHE_STATS    
     int  setup_count() { return (_tuple_setups); }
     int  request_count() { return (_tuple_requests); }
     void print_stats() {
         TRACE( TRACE_STATISTICS, "Requests: (%d)\n", _tuple_requests);
         TRACE( TRACE_STATISTICS, "Setups  : (%d)\n", _tuple_setups);
     }
- 
+#endif 
 
     /* Return an unused object, if cache empty allocate and return a new one
      */
@@ -146,8 +162,10 @@ public:
 	    old_value = cur_value;
 	}
 
+#ifdef CACHE_STATS
         CRITICAL_SECTION( rcs, _requests_lock);
         ++_tuple_requests;
+#endif
 
 	return (old_value? old_value : create_node());
     }
