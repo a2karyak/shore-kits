@@ -369,9 +369,6 @@ int main(int argc, char* argv[])
                numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
     }
 
-//     TRACE( TRACE_ALWAYS, "\nmallocs= (%d)\n",
-//            rep_row_t::_static_format_mallocs);
-
     // close Shore env
     close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
     clt->fork();

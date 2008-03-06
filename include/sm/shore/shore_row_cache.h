@@ -41,7 +41,6 @@ struct tuple_node_impl
                     tuple_node_impl* next = NULL)
         : _next(next)
     {
-        assert (_tuple);
         assert (aptable);
         _tuple = new table_tuple(aptable);
     }
@@ -63,7 +62,6 @@ class row_cache_t
 private:
 
     tuple_node* volatile _head;
-
     TableDesc* _ptable; 
 
 #ifdef CACHE_STATS    
@@ -109,7 +107,8 @@ public:
     
     /* Destroys the cache, deleting all the objects it is hoarding.
      */
-    ~row_cache_t() {
+    ~row_cache_t() 
+    {
         // no lock needed -- nobody should be using me any more...
         int icount = 0;
         for (tuple_node* cur=_head; cur; ) {
@@ -128,9 +127,12 @@ public:
 
     /* For debugging
      */
-    void walkthrough() {
+    void walkthrough() 
+    {
+#ifdef CACHE_STATS
         fprintf( stderr, "requests (%d)\n", _tuple_requests);
         fprintf( stderr, "setups   (%d)\n", _tuple_setups);
+#endif
         int cnt = 0;
         for (tuple_node* cur=_head; cur; ) {
             fprintf( stderr, "walking (%d)\n", ++cnt);

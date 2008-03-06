@@ -15,6 +15,7 @@
 
 using namespace shore;
 
+
 ENTER_NAMESPACE(tpcc);
 
 
@@ -569,28 +570,45 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
 //     row_impl<order_line_t> rol(&_order_line_desc);
 
     warehouse_node_t* pwh_node = _pwarehouse_man->get_tuple();
+    assert (pwh_node);
     row_impl<warehouse_t>* prwh = pwh_node->_tuple;
+    assert (prwh);
 
     district_node_t* pdistr_node = _pdistrict_man->get_tuple();
+    assert (pdistr_node);
     row_impl<district_t>* prdist = pdistr_node->_tuple;
+    assert (prdist);
 
     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
+    assert (pcust_node);
     row_impl<customer_t>* prcust = pcust_node->_tuple;
+    assert (prcust);
 
     new_order_node_t* pno_node = _pnew_order_man->get_tuple();
+    assert (pno_node);
     row_impl<new_order_t>* prno = pno_node->_tuple;
+    assert (prno);
 
     order_node_t* pord_node = _porder_man->get_tuple();
+    assert (pord_node);
     row_impl<order_t>* prord = pord_node->_tuple;
+    assert (prord);
 
     item_node_t* pitem_node = _pitem_man->get_tuple();
+    assert (pitem_node);
     row_impl<item_t>* pritem = pitem_node->_tuple;
+    assert (pritem);
 
     stock_node_t* pst_node = _pstock_man->get_tuple();
+    assert (pst_node);
     row_impl<stock_t>* prst = pst_node->_tuple;
+    assert (prst);
 
     order_line_node_t* pol_node = _porder_line_man->get_tuple();
+    assert (pol_node);
     row_impl<order_line_t>* prol = pol_node->_tuple;
+    assert (prol);
+
     
     trt.reset(UNSUBMITTED, xct_id);
     rep_row_t areprow(_pcustomer_man->ts());
@@ -601,6 +619,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
 
     prwh->_rep = &areprow;
     prdist->_rep = &areprow;
+
     prcust->_rep = &areprow;
     prno->_rep = &areprow;
     prord->_rep = &areprow;
@@ -865,17 +884,25 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
     // get table tuples from the caches
     warehouse_node_t* pwh_node = _pwarehouse_man->get_tuple();
+    assert (pwh_node);
     row_impl<warehouse_t>* prwh = pwh_node->_tuple;
+    assert (prwh);
 
     district_node_t* pdistr_node = _pdistrict_man->get_tuple();
+    assert (pdistr_node);
     row_impl<district_t>* prdist = pdistr_node->_tuple;
+    assert (prdist);
 
     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
+    assert (pcust_node);
     row_impl<customer_t>* prcust = pcust_node->_tuple;
+    assert (prcust);
 
     history_node_t* phist_node = _phistory_man->get_tuple();
+    assert (phist_node);
     row_impl<history_t>* prhist = phist_node->_tuple;
-    
+    assert (prhist);
+
 
 
     trt.reset(UNSUBMITTED, xct_id);
@@ -1174,13 +1201,19 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 
 
     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
+    assert (pcust_node);
     row_impl<customer_t>* prcust = pcust_node->_tuple;
+    assert (prcust);
 
     order_node_t* pord_node = _porder_man->get_tuple();
+    assert (pord_node);
     row_impl<order_t>* prord = pord_node->_tuple;
+    assert (prord);
 
     order_line_node_t* pol_node = _porder_line_man->get_tuple();
+    assert (pol_node);
     row_impl<order_line_t>* prol = pol_node->_tuple;
+    assert (prol);
     
 
 
@@ -1389,16 +1422,24 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 //     row_impl<customer_t>   rcust(&_customer_desc);
 
     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
+    assert (pcust_node);
     row_impl<customer_t>* prcust = pcust_node->_tuple;
+    assert (prcust);
 
     new_order_node_t* pno_node = _pnew_order_man->get_tuple();
+    assert (pno_node);
     row_impl<new_order_t>* prno = pno_node->_tuple;
+    assert (prno);
 
     order_node_t* pord_node = _porder_man->get_tuple();
+    assert (pord_node);
     row_impl<order_t>* prord = pord_node->_tuple;
+    assert (prord);
 
     order_line_node_t* pol_node = _porder_line_man->get_tuple();
+    assert (pol_node);
     row_impl<order_line_t>* prol = pol_node->_tuple;
+    assert (prol);
     
 
     trt.reset(UNSUBMITTED, xct_id);
@@ -1622,13 +1663,19 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
 
     district_node_t* pdistr_node = _pdistrict_man->get_tuple();
+    assert (pdistr_node);
     row_impl<district_t>* prdist = pdistr_node->_tuple;
+    assert (prdist);
 
     stock_node_t* pst_node = _pstock_man->get_tuple();
+    assert (pst_node);
     row_impl<stock_t>* prst = pst_node->_tuple;
+    assert (prst);
 
     order_line_node_t* pol_node = _porder_line_man->get_tuple();
+    assert (pol_node);
     row_impl<order_line_t>* prol = pol_node->_tuple;
+    assert (prol);
 
     trt.reset(UNSUBMITTED, xct_id);
     rep_row_t areprow(_pdistrict_man->ts());
