@@ -115,8 +115,10 @@ public:
     void walkthrough() {
         fprintf( stderr, "requests (%d)\n", _tuple_requests);
         fprintf( stderr, "setups   (%d)\n", _tuple_setups);
+        int cnt = 0;
         for (tuple_node* cur=_head; cur; ) {
-            cur->_tuple->print_tuple_no_tracing();
+            fprintf( stderr, "walking (%d)\n", ++cnt);
+            //     cur->_tuple->print_tuple_no_tracing();
             cur = cur->_next;
         }
     }
