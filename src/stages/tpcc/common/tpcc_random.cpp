@@ -63,6 +63,7 @@ int URand(int low, int high) {
   }
   */
 
+  //return (low + sthread_t::me()->rand());
   return (low + randgenp->rand(d));
 }
 
@@ -77,7 +78,9 @@ int URand(int low, int high) {
 int NURand(int A, int low, int high) {
 
   thread_t* self = thread_get_self();
+  assert (self);
   randgen_t* randgenp = self->randgen();
+  assert (randgenp);
 
   return ( (((random(0, A, randgenp) | random(low, high, randgenp)) 
              + random(0, A, randgenp)) 

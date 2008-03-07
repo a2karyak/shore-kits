@@ -11,8 +11,15 @@
 #endif
 
 
-class randgen_t {
+#undef USE_STHREAD_RAND
+#define USE_STHREAD_RAND
 
+#ifdef USE_STHREAD_RAND
+#include "sm_vas.h"
+#endif
+
+class randgen_t 
+{
     unsigned int _seed;
     
 public:
@@ -47,12 +54,26 @@ public:
     int rand(int n) {
         assert(n > 0);
 
-        if ((n & -n) == n)  // i.e., n is a power of 2
+#ifdef USE_STHREAD_RAND       
+        int k = sthread_t::me()->rand();
+#endif
+
+        if ((n & -n) == n) {  
+            // i.e., n is a power of 2
+#ifdef USE_STHREAD_RAND
+            return (int)((n * (uint64_t)k) / (RAND_MAX+1));
+#else
             return (int)((n * (uint64_t)rand()) / (RAND_MAX+1));
+#endif
+        }
 
         int bits, val;
         do {
+#ifdef USE_STHREAD_RAND
+            bits = k;
+#else
             bits = rand();
+#endif
             val = bits % n;
         } while(bits - val + (n-1) < 0);
         
