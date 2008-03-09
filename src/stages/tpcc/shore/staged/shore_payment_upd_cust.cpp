@@ -1,25 +1,21 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/inmem/inmem_payment_upd_cust.h"
-# include "util.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_cust.h"
+#include "util.h"
 
+const c_str shore_payment_upd_cust_packet_t::PACKET_TYPE = "SHORE_PAYMENT_UPD_CUST";
 
-using namespace tpcc_payment;
-
-
-const c_str inmem_payment_upd_cust_packet_t::PACKET_TYPE = "INMEM_PAYMENT_UPD_CUST";
-
-const c_str inmem_payment_upd_cust_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_UPD_CUST_STAGE";
+const c_str shore_payment_upd_cust_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_UPD_CUST_STAGE";
 
 
 
 /**
- *  @brief inmem_payment_upd_cust constructor
+ *  @brief shore_payment_upd_cust constructor
  */
 
-inmem_payment_upd_cust_stage_t::inmem_payment_upd_cust_stage_t() {
-    
-    TRACE(TRACE_TRX_FLOW, "INMEM_PAYMENT_UPD_CUST constructor\n");
+shore_payment_upd_cust_stage_t::shore_payment_upd_cust_stage_t() 
+{    
+    TRACE(TRACE_TRX_FLOW, "SHORE_PAYMENT_UPD_CUST constructor\n");
 }
 
 
@@ -31,20 +27,22 @@ inmem_payment_upd_cust_stage_t::inmem_payment_upd_cust_stage_t() {
  *  @throw May throw exceptions on error.
  */
 
-void inmem_payment_upd_cust_stage_t::process_packet() {
-
+void shore_payment_upd_cust_stage_t::process_packet() 
+{
     adaptor_t* adaptor = _adaptor;
 
-    inmem_payment_upd_cust_packet_t* packet = 
-	(inmem_payment_upd_cust_packet_t*)adaptor->get_packet();
+    shore_payment_upd_cust_packet_t* packet = 
+	(shore_payment_upd_cust_packet_t*)adaptor->get_packet();
 
     //    packet->describe_trx();
 
-    if (staged_updateInMemCustomer(&packet->_pin, inmem_env)) {
-        TRACE( TRACE_TRX_FLOW, 
-               "Error in Customer Update.\n");
-        
-        assert (1==0); // Not implemented yet
+    trx_result_tuple_t atrt;
+    if (shore_env->staged_updateShoreCustomer(&packet->_pin, 
+                                              packet->get_trx_id(),
+                                              atrt) != RCOK) {
+        TRACE( TRACE_ALWAYS, 
+               "Error in Customer Update.\n");        
+        assert (false); // Error handling not implemented yet
     }
 
 

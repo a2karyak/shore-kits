@@ -36,18 +36,15 @@ extern "C" void* run(void* arg)
     int k = 0;
 
     // DO WORK()
-    //    fprintf( stdout, "%d working...\n", iter);
     for (int j=0; j<(iter+ITERS); j++) {
 #if 1
-        warehouse_node_t* awh_node = _pwh_man->get_tuple();
-        row_impl<warehouse_t>* rwh = awh_node->_tuple;
-        rwh->set_value(0, j);
-        //        rwh.print_tuple();
-        rwh->get_value(0, k);
-        //fprintf( stdout, "%d (%d)...\n", iter, k);
-        _pwh_man->give_tuple(awh_node);
+        row_impl<warehouse_t>* prwh = _pwh_man->get_tuple();
+        prwh->set_value(0, j);
+        prwh->get_value(0, k);
+        //        fprintf( stdout, "%d (%d)...\n", iter, k);
+        _pwh_man->give_tuple(prwh);
 #else
-#if 0
+#if 1
         row_impl<warehouse_t> rwh(&_warehouse_desc);
         rwh.set_value(0, j);
         rwh.get_value(0, k);
@@ -64,7 +61,6 @@ extern "C" void* run(void* arg)
 	double d;
 	void* vptr;
     } u = {timer.time()};
-    //    fprintf( stdout, "%d finishing...\n", iter);
 
     return (NULL);
 }
@@ -106,11 +102,9 @@ int main()
             double wall = 1e6*timer.time()/k;
             fprintf( stdout, "wall=%.2f\n", wall);
         }
-
     }
 
-    _pwh_man->get_cache()->walkthrough();
-    //    _pwh_man->print_cache_stats();
+    _pwh_man->print_cache_stats();
 
     delete (_pwh_man);
 

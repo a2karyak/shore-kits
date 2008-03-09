@@ -1,24 +1,24 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/inmem/inmem_payment_finalize.h"
-# include "util.h"
+#include "stages/tpcc/shore/staged/shore_payment_finalize.h"
+#include "util.h"
 
 
-const c_str inmem_payment_finalize_packet_t::PACKET_TYPE = "INMEM_PAYMENT_FINALIZE";
+const c_str shore_payment_finalize_packet_t::PACKET_TYPE = "SHORE_PAYMENT_FINALIZE";
 
-const c_str inmem_payment_finalize_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_FINALIZE_STAGE";
+const c_str shore_payment_finalize_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_FINALIZE_STAGE";
 
 
 /**
- *  @brief inmem_payment_finalize constructor
+ *  @brief shore_payment_finalize constructor
  */
 
-inmem_payment_finalize_stage_t::inmem_payment_finalize_stage_t() {    
-    TRACE(TRACE_DEBUG, "INMEM_PAYMENT_FINALIZE constructor\n");
+shore_payment_finalize_stage_t::shore_payment_finalize_stage_t() {    
+    TRACE(TRACE_DEBUG, "SHORE_PAYMENT_FINALIZE constructor\n");
 }
 
 
-/** FIXME: (ip) THIS STAGE Should be generic and NOT specific to INMEM_PAYMENT trx. */
+/** FIXME: (ip) THIS STAGE Should be generic and NOT specific to SHORE_PAYMENT trx. */
 
 /**
  *  @brief Commits if every sub-transaction is ok, otherwise broadcasts a message
@@ -29,17 +29,17 @@ inmem_payment_finalize_stage_t::inmem_payment_finalize_stage_t() {
  *  @throw May throw exceptions on error.
  */
 
-void inmem_payment_finalize_stage_t::process_packet() {
+void shore_payment_finalize_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
 
-    inmem_payment_finalize_packet_t* packet = 
-	(inmem_payment_finalize_packet_t*)adaptor->get_packet();
+    shore_payment_finalize_packet_t* packet = 
+	(shore_payment_finalize_packet_t*)adaptor->get_packet();
 
     packet->describe_trx();
 
 
-    /* First dispatch all the inmem_payment packets */
+    /* First dispatch all the shore_payment packets */
     dispatcher_t::dispatch_packet(packet->_upd_wh);
     dispatcher_t::dispatch_packet(packet->_upd_distr);
     dispatcher_t::dispatch_packet(packet->_upd_cust);

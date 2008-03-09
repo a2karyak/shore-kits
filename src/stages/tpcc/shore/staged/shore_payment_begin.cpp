@@ -7,8 +7,8 @@
  *  @author Ippokratis Pandis (ipandis)
  */
 
-# include "stages/tpcc/shore/shore_payment_begin.h"
-# include "workload/common.h"
+#include "stages/tpcc/shore/staged/shore_payment_begin.h"
+#include "workload/common.h"
 
 
 
@@ -29,11 +29,11 @@ class shore_payment_begin_process_tuple_t : public process_tuple_t {
 
 public:
 
-    virtual void begin() {
+    void begin() {
         TRACE( TRACE_DEBUG, "*** SHORE_PAYMENT_BEGIN RESULTS\n" );
     }
 
-    virtual void process(const tuple_t& output) {
+    void process(const tuple_t& output) {
         trx_result_tuple_t* r = aligned_cast<trx_result_tuple_t>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** SHORE_PAYMENT_BEGIN TRX=%d RESULT=%s\n",
               r->get_id(),

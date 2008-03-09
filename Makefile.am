@@ -252,12 +252,20 @@ SG_SHORE_TRX = \
    $(SG)/tpcc/shore/shore_tpcc_schema_man.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema_gen.cpp \
    $(SG)/tpcc/shore/shore_tpcc_env.cpp \
-   $(SG)/tpcc/shore/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp \
    $(SG)/tpcc/shore/shore_new_order_baseline.cpp \
    $(SG)/tpcc/shore/shore_order_status_baseline.cpp \
    $(SG)/tpcc/shore/shore_delivery_baseline.cpp \
    $(SG)/tpcc/shore/shore_stock_level_baseline.cpp
+
+SG_SHORE_STAGED_TRX = \
+   $(SG)/tpcc/shore/staged/shore_payment_functions.cpp \
+   $(SG)/tpcc/shore/staged/shore_payment_begin.cpp \
+   $(SG)/tpcc/shore/staged/shore_payment_finalize.cpp \
+   $(SG)/tpcc/shore/staged/shore_payment_ins_hist.cpp \
+   $(SG)/tpcc/shore/staged/shore_payment_upd_cust.cpp \
+   $(SG)/tpcc/shore/staged/shore_payment_upd_distr.cpp \
+   $(SG)/tpcc/shore/staged/shore_payment_upd_wh.cpp
 
 
 
@@ -270,7 +278,9 @@ lib_libstages_a_SOURCES = \
    $(SG_BDB_TRX) \
    $(SG_INMEM_TRX) \
    $(SG_SHORE) \
-   $(SG_SHORE_TRX)
+   $(SG_SHORE_TRX) \
+   $(SG_SHORE_STAGED_TRX)
+
 
 
 

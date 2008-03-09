@@ -21,7 +21,7 @@
 ENTER_NAMESPACE(qpipe);
 
 
-#define NO_VALID_TRX_ID -1
+const int NO_VALID_TRX_ID = -1;
 
 
 
@@ -57,7 +57,7 @@ inline char* translate_state(TrxState aState) {
 
 /******************************************************************** 
  *
- * @class trx_result_tuple_t
+ * @class trx_packet_t
  *
  * @brief Definition of the transactional packets.
  *        A transactional packet has a unique identifier for the 

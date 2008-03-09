@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file inmem_payment_finalize.h
+/** @file shore_payment_finalize.h
  *
- *  @brief Interface for the InMemory TPC-C Finalize stage
+ *  @brief Interface for the Shoreory TPC-C Finalize stage
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __INMEM_TPCC_PAYMENT_FINALIZE_H
-#define __INMEM_TPCC_PAYMENT_FINALIZE_H
+#ifndef __SHORE_TPCC_PAYMENT_FINALIZE_H
+#define __SHORE_TPCC_PAYMENT_FINALIZE_H
 
 #include <cstdio>
 
@@ -18,10 +18,10 @@
 
 #include "stages/tpcc/common/trx_packet.h"
 
-#include "stages/tpcc/inmem/inmem_payment_upd_wh.h"
-#include "stages/tpcc/inmem/inmem_payment_upd_distr.h"
-#include "stages/tpcc/inmem/inmem_payment_upd_cust.h"
-#include "stages/tpcc/inmem/inmem_payment_ins_hist.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_wh.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_distr.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_cust.h"
+#include "stages/tpcc/shore/staged/shore_payment_ins_hist.h"
 
 
 using namespace qpipe;
@@ -30,7 +30,7 @@ using namespace qpipe;
 
 /* exported datatypes */
 
-class inmem_payment_finalize_packet_t : public trx_packet_t {
+class shore_payment_finalize_packet_t : public trx_packet_t {
   
 public:
 
@@ -40,10 +40,10 @@ public:
     // Removed the guards
 
     // The input packets
-    inmem_payment_upd_wh_packet_t* _upd_wh;
-    inmem_payment_upd_distr_packet_t* _upd_distr;
-    inmem_payment_upd_cust_packet_t* _upd_cust;
-    inmem_payment_ins_hist_packet_t* _ins_hist;
+    shore_payment_upd_wh_packet_t* _upd_wh;
+    shore_payment_upd_distr_packet_t* _upd_distr;
+    shore_payment_upd_cust_packet_t* _upd_cust;
+    shore_payment_ins_hist_packet_t* _ins_hist;
 
     // The input buffers
     tuple_fifo* _upd_wh_buffer;
@@ -53,7 +53,7 @@ public:
     
 
     /**
-     *  @brief inmem_payment_finalize_packet_t constructor.
+     *  @brief shore_payment_finalize_packet_t constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -74,7 +74,7 @@ public:
      *  @param The four packets that make the payment transaction
      */
 
-    inmem_payment_finalize_packet_t(const c_str    &packet_id,
+    shore_payment_finalize_packet_t(const c_str    &packet_id,
                                     tuple_fifo*     output_buffer,
                                     tuple_filter_t* output_filter,
                                     const int a_trx_id,
@@ -88,10 +88,10 @@ public:
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-          _upd_wh((inmem_payment_upd_wh_packet_t*)upd_wh),
-          _upd_distr((inmem_payment_upd_distr_packet_t*)upd_distr),
-          _upd_cust((inmem_payment_upd_cust_packet_t*)upd_cust),
-          _ins_hist((inmem_payment_ins_hist_packet_t*)ins_hist),
+          _upd_wh((shore_payment_upd_wh_packet_t*)upd_wh),
+          _upd_distr((shore_payment_upd_distr_packet_t*)upd_distr),
+          _upd_cust((shore_payment_upd_cust_packet_t*)upd_cust),
+          _ins_hist((shore_payment_ins_hist_packet_t*)ins_hist),
           _upd_wh_buffer(upd_wh->output_buffer()),
           _upd_distr_buffer(upd_distr->output_buffer()),
           _upd_cust_buffer(upd_cust->output_buffer()),
@@ -111,7 +111,7 @@ public:
     }
 
 
-    virtual ~inmem_payment_finalize_packet_t() { }
+    virtual ~shore_payment_finalize_packet_t() { }
 
     void describe_trx() {
         TRACE( TRACE_DEBUG,
@@ -156,18 +156,18 @@ public:
         TRACE( TRACE_TRX_FLOW, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
     }
 
-}; // END OF CLASS: inmem_payment_finalize_packet_t
+}; // END OF CLASS: shore_payment_finalize_packet_t
 
 
 
 /**
- *  @brief INMEM_PAYMENT_FINALIZE stage. 
+ *  @brief SHORE_PAYMENT_FINALIZE stage. 
  *
- *  The stage at the end of each INMEM_PAYMENT transaction. It is the one which
+ *  The stage at the end of each SHORE_PAYMENT transaction. It is the one which
  *  coordinates the commit/rollback between the parallel executing parts.
  */
 
-class inmem_payment_finalize_stage_t : public stage_t {
+class shore_payment_finalize_stage_t : public stage_t {
 
 protected:
 
@@ -176,15 +176,15 @@ protected:
 public:
 
     static const c_str DEFAULT_STAGE_NAME;
-    typedef inmem_payment_finalize_packet_t stage_packet_t;
+    typedef shore_payment_finalize_packet_t stage_packet_t;
 
-    inmem_payment_finalize_stage_t();
+    shore_payment_finalize_stage_t();
     
-    virtual ~inmem_payment_finalize_stage_t() { 
-	TRACE(TRACE_DEBUG, "INMEM_PAYMENT_FINALIZE destructor\n");	
+    virtual ~shore_payment_finalize_stage_t() { 
+	TRACE(TRACE_DEBUG, "SHORE_PAYMENT_FINALIZE destructor\n");	
     }
     
-}; // END OF CLASS: inmem_payment_finalize_stage_t
+}; // END OF CLASS: shore_payment_finalize_stage_t
 
 
 

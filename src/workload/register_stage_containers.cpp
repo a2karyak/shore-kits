@@ -63,6 +63,21 @@ void register_stage_containers(int environment)
         register_stage<shore_order_status_baseline_stage_t>(MAX_NUM_TRXS, false);
         register_stage<shore_delivery_baseline_stage_t>(MAX_NUM_TRXS, false);
         register_stage<shore_stock_level_baseline_stage_t>(MAX_NUM_TRXS, false);
+
+
+        // Staged transactions
+
+        // for Payment
+        register_stage<shore_payment_begin_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_payment_upd_wh_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_payment_upd_distr_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_payment_upd_cust_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_payment_ins_hist_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_payment_finalize_stage_t>(MAX_NUM_TRXS, false); 
+
+        // for NewOrder
+
+
         break;
 
     case TRX_MEM_ENV:

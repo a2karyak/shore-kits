@@ -291,22 +291,25 @@ public:
 
     row_cache* get_cache() { assert (_pcache); return (_pcache); }
 
-    tuple_node_impl<TableDesc>* get_tuple() {
+    table_tuple* get_tuple() 
+    {
         assert (_pcache);
         return (_pcache->borrow());
     }
     
 
-    void give_tuple(tuple_node_impl<TableDesc>* ptn) {
+    void give_tuple(table_tuple* ptt) 
+    {
         assert (_pcache);
-        _pcache->giveback(ptn);
+        _pcache->giveback(ptt);
     }
 
-    void print_cache_stats() {
+    void print_cache_stats() 
+    {
         assert (_pcache);
         TRACE( TRACE_STATISTICS, "(%s) tuple cache statistics\n", 
                _ptable->name());
-        _pcache->print_stats();
+        //_pcache->print_stats();
     }
 
 }; // EOF: table_man_impl

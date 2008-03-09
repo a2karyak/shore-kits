@@ -1,15 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file inmem_payment_ins_hist.h
+/** @file shore_payment_ins_hist.h
  *
- *  @brief Interface for the inmem_payment_insert_history stage,
+ *  @brief Interface for the shore_payment_insert_history stage,
  *  part of the payment_staged transaction.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __INMEM_TPCC_PAYMENT_INS_HIST_H
-#define __INMEM_TPCC_PAYMENT_INS_HIST_H
+#ifndef __SHORE_TPCC_PAYMENT_INS_HIST_H
+#define __SHORE_TPCC_PAYMENT_INS_HIST_H
 
 #include <cstdio>
 
@@ -17,15 +17,18 @@
 #include "util.h"
 
 #include "stages/tpcc/common/trx_packet.h"
-#include "stages/tpcc/inmem/inmem_payment_functions.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
 using namespace qpipe;
+using namespace shore;
+using namespace tpcc;
 
 
 /* exported datatypes */
 
-class inmem_payment_ins_hist_packet_t : public trx_packet_t {
+class shore_payment_ins_hist_packet_t : public trx_packet_t 
+{
   
 public:
 
@@ -43,9 +46,12 @@ public:
 
     payment_input_t _pin;
 
+    char _wh_name[STRSIZE(10)];
+    char _d_name [STRSIZE(10)];
+
 
     /**
-     *  @brief inmem_payment_ins_hist_packet_t constructor.
+     *  @brief shore_payment_ins_hist_packet_t constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -68,7 +74,7 @@ public:
      *  @param cust_distr_id The customer district id
      */
 
-    inmem_payment_ins_hist_packet_t(const c_str    &packet_id,
+    shore_payment_ins_hist_packet_t(const c_str    &packet_id,
                                     tuple_fifo*     output_buffer,
                                     tuple_filter_t* output_filter,
                                     const int a_trx_id,
@@ -82,10 +88,12 @@ public:
                        ),
           _pin(*p_pin)
     {
+        memset(_wh_name, 0, 11);
+        memset(_d_name, 0, 11);
     }
 
 
-    virtual ~inmem_payment_ins_hist_packet_t()  { }
+    virtual ~shore_payment_ins_hist_packet_t()  { }
 
         
     void describe_trx() {
@@ -119,18 +127,18 @@ public:
         /* no inputs */
     }
 
-}; // END OF CLASS: inmem_payment_ins_hist_packet_t
+}; // END OF CLASS: shore_payment_ins_hist_packet_t
 
 
 
 /**
- *  @brief INMEM_PAYMENT_INS_HIST stage. 
+ *  @brief SHORE_PAYMENT_INS_HIST stage. 
  *
  *  A new row is inserted into the HISTORY table as
  *  (_C_ID, _C_D_ID, _C_WH_ID, _WH_ID, _D_ID)
  */
 
-class inmem_payment_ins_hist_stage_t : public stage_t {
+class shore_payment_ins_hist_stage_t : public stage_t {
 
 protected:
 
@@ -139,15 +147,15 @@ protected:
 public:
 
     static const c_str DEFAULT_STAGE_NAME;
-    typedef inmem_payment_ins_hist_packet_t stage_packet_t;
+    typedef shore_payment_ins_hist_packet_t stage_packet_t;
 
-    inmem_payment_ins_hist_stage_t();
+    shore_payment_ins_hist_stage_t();
     
-    virtual ~inmem_payment_ins_hist_stage_t() { 
-	TRACE(TRACE_DEBUG, "INMEM_PAYMENT_INS_HIST destructor\n");
+    virtual ~shore_payment_ins_hist_stage_t() { 
+	TRACE(TRACE_DEBUG, "SHORE_PAYMENT_INS_HIST destructor\n");
     }
     
-}; // END OF CLASS: inmem_payment_ins_hist_stage_t
+}; // END OF CLASS: shore_payment_ins_hist_stage_t
 
 
 

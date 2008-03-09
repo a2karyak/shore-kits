@@ -1,15 +1,15 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file inmem_payment_upd_distr.h
+/** @file shore_payment_upd_distr.h
  *
- *  @brief Interface for the inmem_payment_update_district stage,
+ *  @brief Interface for the shore_payment_update_district stage,
  *  part of the payment_staged transaction.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __INMEM_TPCC_PAYMENT_UPD_DISTR_H
-#define __INMEM_TPCC_PAYMENT_UPD_DISTR_H
+#ifndef __SHORE_TPCC_PAYMENT_UPD_DISTR_H
+#define __SHORE_TPCC_PAYMENT_UPD_DISTR_H
 
 #include <cstdio>
 
@@ -17,23 +17,23 @@
 #include "util.h"
 
 #include "stages/tpcc/common/trx_packet.h"
-#include "stages/tpcc/inmem/inmem_payment_functions.h"
-
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 using namespace qpipe;
-
+using namespace shore;
+using namespace tpcc;
 
 
 /* exported datatypes */
 
-class inmem_payment_upd_distr_packet_t : public trx_packet_t {
+class shore_payment_upd_distr_packet_t : public trx_packet_t {
   
 public:
 
     static const c_str PACKET_TYPE;
 
     /**
-     *  @brief INMEM_PAYMENT_UPD_WH transaction inputs:
+     *  @brief SHORE_PAYMENT_UPD_WH transaction inputs:
      *  
      *  1) WH_ID int: warehouse id
      *  2) DISTR_ID int: district id
@@ -45,7 +45,7 @@ public:
 
 
     /**
-     *  @brief inmem_payment_upd_distr_packet_t constructor.
+     *  @brief shore_payment_upd_distr_packet_t constructor.
      *
      *  @param packet_id The ID of this packet. This should point to a
      *  block of bytes allocated with malloc(). This packet will take
@@ -67,7 +67,7 @@ public:
      *  @param h_amount The payment amount
      */
 
-    inmem_payment_upd_distr_packet_t(const c_str    &packet_id,
+    shore_payment_upd_distr_packet_t(const c_str    &packet_id,
                                      tuple_fifo*     output_buffer,
                                      tuple_filter_t* output_filter,
                                      const int a_trx_id,
@@ -84,7 +84,7 @@ public:
     }
 
 
-    virtual ~inmem_payment_upd_distr_packet_t() { }
+    virtual ~shore_payment_upd_distr_packet_t() { }
 
 
     void describe_trx() {
@@ -114,19 +114,19 @@ public:
         /* no inputs */
     }
 
-}; // END OF CLASS: inmem_payment_upd_distr_packet_t
+}; // END OF CLASS: shore_payment_upd_distr_packet_t
 
 
 
 /**
- *  @brief INMEM_PAYMENT_UPD_DISTR stage. 
+ *  @brief SHORE_PAYMENT_UPD_DISTR stage. 
  *
  *  The row in the DISTRICT table with matching D_W_ID and D_ID is selected.
  *  D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE, and D_ZIP are retrieved,
  *  and D_YTD, the district's year-to-date balance, is increased by H_AMOUNT
  */
 
-class inmem_payment_upd_distr_stage_t : public stage_t {
+class shore_payment_upd_distr_stage_t : public stage_t {
 
 protected:
 
@@ -135,15 +135,15 @@ protected:
 public:
 
     static const c_str DEFAULT_STAGE_NAME;
-    typedef inmem_payment_upd_distr_packet_t stage_packet_t;
+    typedef shore_payment_upd_distr_packet_t stage_packet_t;
 
-    inmem_payment_upd_distr_stage_t();
+    shore_payment_upd_distr_stage_t();
     
-    virtual ~inmem_payment_upd_distr_stage_t() { 
-	TRACE(TRACE_DEBUG, "INMEM_PAYMENT_UPD_DISTR destructor\n");
+    virtual ~shore_payment_upd_distr_stage_t() { 
+	TRACE(TRACE_DEBUG, "SHORE_PAYMENT_UPD_DISTR destructor\n");
     }
     
-}; // END OF CLASS: inmem_payment_upd_distr_stage_t
+}; // END OF CLASS: shore_payment_upd_distr_stage_t
 
 
 

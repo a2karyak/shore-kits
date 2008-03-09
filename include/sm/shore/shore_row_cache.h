@@ -18,7 +18,7 @@
 
 #include "util/guard.h"
 
-#include "shore_row.h"
+#include "shore_row_impl.h"
 
 
 // define cache stats to get some statistics about the tuple cache
@@ -29,39 +29,13 @@
 ENTER_NAMESPACE(shore);
 
 
-template <class TableDesc>
-struct tuple_node_impl
-{ 
-    typedef row_impl<TableDesc> table_tuple;
-
-    table_tuple* _tuple;
-    tuple_node_impl* _next; 
-
-    tuple_node_impl(TableDesc* aptable, 
-                    tuple_node_impl* next = NULL)
-        : _next(next)
-    {
-        assert (aptable);
-        _tuple = new table_tuple(aptable);
-    }
-        
-    ~tuple_node_impl()
-    {
-        if (_tuple)
-            delete (_tuple);
-    }
-
-}; // EOF: tuple_node_impl
-
 
 template <class TableDesc>
-class row_cache_t 
+class row_cache_t : protected atomic_stack
 {
-    typedef tuple_node_impl<TableDesc> tuple_node;
-    
+    typedef row_impl<TableDesc> table_tuple;
 private:
 
-    tuple_node* volatile _head;
     TableDesc* _ptable; 
 
 #ifdef CACHE_STATS    
@@ -70,75 +44,100 @@ private:
     tatas_lock _requests_lock;
     int _tuple_setups;
     tatas_lock _setups_lock;
-#endif
-
-    /* Creates a new tuple node
-     */
-    tuple_node* create_node() 
-    {
-#ifdef CACHE_STATS
-        CRITICAL_SECTION( scs, _setups_lock);
-        ++_tuple_setups;
-#endif
-
-        return (new tuple_node(_ptable));
-    }
-                
+#endif              
 
 public:
 
-    row_cache_t(TableDesc* ptable, int init_count = 0) 
-        : _head(NULL), _ptable(ptable)
+    row_cache_t(TableDesc* ptable, int init_count=10) 
+        : atomic_stack(-sizeof(ptr)),
+          _ptable(ptable)
 #ifdef CACHE_STATS
         , _tuple_requests(0), _tuple_setups(0)
 #endif
     { 
         assert (_ptable);
         assert (init_count >= 0); 
+
+        // start with a non-empty pool, so that threads don't race
+        // at the beginning
+        ptr* head = NULL;
+        for (int i=0; i<init_count; i++) {                       
+            vpn u = {borrow()};
+            u.p->next = head;
+            head = u.p;
+        }
+
         for (int i=0; i<init_count; i++) {
-#ifdef CACHE_STATS
-            ++_tuple_setups;
-#endif
-            tuple_node* aptn = new tuple_node(_ptable);
-            giveback(aptn);
+            pvn p;
+            p.p = head;
+            head = head->next;
+            giveback((table_tuple*)p.v);
         }
     }
 
     
-    /* Destroys the cache, deleting all the objects it is hoarding.
+    /* Destroys the cache, calling the destructor for all the objects 
+     * it is hoarding.
      */
     ~row_cache_t() 
     {
-        // no lock needed -- nobody should be using me any more...
+        vpn val;
+        void* v = NULL;
         int icount = 0;
-        for (tuple_node* cur=_head; cur; ) {
-            tuple_node* next = cur->_next;
-            delete (cur);
-            cur = next;
+        while ( (v=pop()) ) {
+            val.v = v;
+            val.n += +_offset; // back up to the real
+            ((table_tuple*)v)->freevalues();
+            free(val.v);
             ++icount;
         }
 
-#ifdef CACHE_STATS        
-        print_stats();
-#endif
-        TRACE( TRACE_STATISTICS, "Deleted: (%d)\n", icount);
+        TRACE( TRACE_STATISTICS, "Deleted: (%d) (%s)\n", icount, _ptable->name());
     }
 
-
-    /* For debugging
+    /* Return an unused object, if cache empty allocate and return a new one
      */
-    void walkthrough() 
+    table_tuple* borrow() 
     {
 #ifdef CACHE_STATS
-        fprintf( stderr, "requests (%d)\n", _tuple_requests);
-        fprintf( stderr, "setups   (%d)\n", _tuple_setups);
+        CRITICAL_SECTION( rcs, _requests_lock);
+        ++_tuple_requests;
 #endif
-        int cnt = 0;
-        for (tuple_node* cur=_head; cur; ) {
-            fprintf( stderr, "walking (%d)\n", ++cnt);
-            cur = cur->_next;
-        }
+
+        void* val = pop();
+        if (val) return ((table_tuple*)(val));
+
+#ifdef CACHE_STATS
+        CRITICAL_SECTION( scs, _setups_lock);
+        ++_tuple_setups;
+#endif
+
+        // allocates and setups a new table_tuple
+        vpn u = { malloc(sizeof(table_tuple)) };
+        if (!u.v) u.v = null();
+        table_tuple* rp = (table_tuple*)prepare(u);
+        rp->setup(_ptable);
+	return (rp);
     }
+    
+    /* Returns an object to the cache. The object is reset and put on the
+     * free list.
+     */
+    void giveback(table_tuple* ptn) 
+    {        
+        assert (ptn);
+        assert (ptn->_ptable == _ptable);
+
+        // reset the object
+        ptn->reset();
+        
+        // avoid pointer aliasing problems with the optimizer
+        union { table_tuple* t; void* v; } u = {ptn};
+        
+        // give it back
+        push(u.v);
+    }    
+
 
 #ifdef CACHE_STATS    
     int  setup_count() { return (_tuple_setups); }
@@ -148,54 +147,6 @@ public:
         TRACE( TRACE_STATISTICS, "Setups  : (%d)\n", _tuple_setups);
     }
 #endif 
-
-    /* Return an unused object, if cache empty allocate and return a new one
-     */
-    tuple_node* borrow() 
-    {
-	tuple_node* old_value = _head;
-	while(old_value) {
-	    tuple_node* cur_value = 
-                (tuple_node*) atomic_cas_ptr(&_head, old_value, old_value->_next);
-	    if(old_value == cur_value)
-		break; // if CAS successful (old_value) has the old head
-
-	    // try again...
-	    old_value = cur_value;
-	}
-
-#ifdef CACHE_STATS
-        CRITICAL_SECTION( rcs, _requests_lock);
-        ++_tuple_requests;
-#endif
-
-	return (old_value? old_value : create_node());
-    }
-    
-
-    /* Returns an object to the cache. The object is reset and put on the
-     * free list.
-     */
-    void giveback(tuple_node* ptn) 
-    {        
-        assert (ptn);
-        // reset the object
-        ptn->_tuple->reset();
-      
-        // enqueue it
-        tuple_node* old_value = _head;
-        while (1) {
-            ptn->_next = old_value;
-            membar_producer();
-            tuple_node* cur_value = (tuple_node*) 
-                atomic_cas_ptr(&_head, old_value, ptn);
-            if(old_value == cur_value)
-                break; // if CAS successful (ptn) is the new head
-
-            // try again...
-            old_value = cur_value;
-        }
-    }    
 
 }; // EOF: row_cache_t
 

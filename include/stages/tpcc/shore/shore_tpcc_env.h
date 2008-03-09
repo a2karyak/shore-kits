@@ -211,6 +211,7 @@ private:
     w_rc_t xct_stock_level(stock_level_input_t* level_input, 
                            const int xct_id, 
                            trx_result_tuple_t& trt);
+
     
 public:    
 
@@ -365,6 +366,25 @@ public:
                         trx_result_tuple_t& atrt);
     w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin,
                            trx_result_tuple_t& atrt);
+
+
+
+    /* --- kit staged trxs --- */
+    w_rc_t staged_updateShoreWarehouse(payment_input_t* ppin, 
+                                       const int xct_id, 
+                                       trx_result_tuple_t& trt);
+    w_rc_t staged_updateShoreDistrict(payment_input_t* ppin, 
+                                      const int xct_id, 
+                                      trx_result_tuple_t& trt);
+    w_rc_t staged_updateShoreCustomer(payment_input_t* ppin, 
+                                      const int xct_id, 
+                                      trx_result_tuple_t& trt);
+    w_rc_t staged_insertShoreHistory(payment_input_t* ppin, 
+                                     char* p_wh_name,
+                                     char* p_d_name,
+                                     const int xct_id, 
+                                     trx_result_tuple_t& trt);
+
 
     static tpcc_random_gen_t _atpccrndgen;
 

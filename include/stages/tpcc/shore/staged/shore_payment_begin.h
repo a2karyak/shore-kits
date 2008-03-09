@@ -17,16 +17,17 @@
 #include "scheduler.h"
 
 #include "stages/tpcc/common/trx_packet.h"
-#include "stages/tpcc/shore/shore_payment_functions.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
-#include "stages/tpcc/shore/shore_payment_upd_wh.h"
-#include "stages/tpcc/shore/shore_payment_upd_distr.h"
-#include "stages/tpcc/shore/shore_payment_upd_cust.h"
-#include "stages/tpcc/shore/shore_payment_ins_hist.h"
-#include "stages/tpcc/shore/shore_payment_finalize.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_wh.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_distr.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_cust.h"
+#include "stages/tpcc/shore/staged/shore_payment_ins_hist.h"
+#include "stages/tpcc/shore/staged/shore_payment_finalize.h"
 
 using namespace qpipe;
-using namespace tpcc_payment;
+using namespace shore;
+using namespace tpcc;
 
 
 /* exported datatypes */

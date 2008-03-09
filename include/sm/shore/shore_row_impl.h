@@ -48,6 +48,11 @@ struct row_impl : public table_row_t
         assert (ptd);
         setup(ptd);
     }
+
+    row_impl()
+        : _ptable(NULL)
+    {
+    }
         
     ~row_impl() 
     {
@@ -68,13 +73,15 @@ struct row_impl : public table_row_t
             return (1);
         }
 
+//         if (_pvalues) {
+//             delete [] _pvalues;
+//             _pvalues = NULL;
+//         }
+
         // else do the normal setup
         _ptable = ptd;
         _field_cnt = ptd->field_count();
         assert (_field_cnt>0);
-
-        if (_pvalues)
-            delete [] _pvalues;
         _pvalues = new field_value_t[_field_cnt];
         for (int i=0; i<_field_cnt; i++)
             _pvalues[i].setup(ptd->desc(i));
@@ -82,15 +89,6 @@ struct row_impl : public table_row_t
         _is_setup = true;
         return (0);
     }
-
-
-    /* clear the tuple and prepare it for re-use */
-    void reset() { 
-        assert (_is_setup);
-        assert (_ptable);
-        for (int i=0; i<_field_cnt; i++)
-            _pvalues[i].reset();
-    }        
 
 }; // EOF: row_impl
 

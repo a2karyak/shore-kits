@@ -21,23 +21,6 @@ ENTER_NAMESPACE(tpcc);
 
 
 
-/* -------------------------------- */
-/* --- Used by the tuple caches --- */
-/* -------------------------------- */
-
-// tuple_nodes
-typedef tuple_node_impl<warehouse_t>  warehouse_node_t;
-typedef tuple_node_impl<district_t>   district_node_t;
-typedef tuple_node_impl<stock_t>      stock_node_t;
-typedef tuple_node_impl<order_line_t> order_line_node_t;
-typedef tuple_node_impl<customer_t>   customer_node_t;
-typedef tuple_node_impl<history_t>    history_node_t;
-typedef tuple_node_impl<order_t>      order_node_t;
-typedef tuple_node_impl<new_order_t>  new_order_node_t;
-typedef tuple_node_impl<item_t>       item_node_t;
-
-
-
 /* ------------------------------------------------------------------ */
 /* --- The managers of all the tables used in the TPC-C benchmark --- */
 /* ------------------------------------------------------------------ */
@@ -58,7 +41,7 @@ public:
     {
     }
 
-    /* --- access the table --- */
+    /* --- access specific tuples  --- */
     w_rc_t index_probe(ss_m* db, 
                        warehouse_tuple* ptuple, 
                        const int w_id);
@@ -66,10 +49,10 @@ public:
     w_rc_t index_probe_forupdate(ss_m* db, 
                                  warehouse_tuple* ptuple, 
                                  const int w_id);
-    
+
+    /* --- update a retrieved tuple --- */
     w_rc_t update_ytd(ss_m* db,
                       warehouse_tuple* ptuple,
-                      const int w_id,
                       const double h_amount);
 
     /** deprecated */
@@ -95,7 +78,7 @@ public:
     {
     }
 
-    /* --- access the table --- */
+    /* --- access specific tuples --- */
     w_rc_t index_probe(ss_m* db,
                        district_tuple* ptuple,
                        const int d_id,
@@ -107,10 +90,9 @@ public:
                                  const int w_id);
 
 
+    /* --- update a retrieved tuple --- */
     w_rc_t update_ytd(ss_m* db,
                       district_tuple* ptuple,
-                      const int d_id,
-                      const int w_id,
                       const double h_amount);
 
     w_rc_t update_next_o_id(ss_m* db,
@@ -142,7 +124,7 @@ public:
     {
     }
 
-    /* --- access the table --- */
+    /* --- access specific tuples --- */
     w_rc_t get_iter_by_index(ss_m* db,
                              customer_index_iter* &iter,
                              customer_tuple* ptuple,
@@ -166,7 +148,7 @@ public:
 
     w_rc_t update_tuple(ss_m* db,
                         customer_tuple* ptuple,
-                        const tpcc_customer_tuple acustomer,
+                        const tpcc_customer_tuple& acustomer,
                         const char* adata1 = NULL,
                         const char* adata2 = NULL);
 
@@ -218,7 +200,7 @@ public:
     {
     }
 
-    /* --- access the table --- */     
+    /* --- access specific tuples --- */     
     w_rc_t get_iter_by_index(ss_m* db,
                              new_order_index_iter* &iter,
                              new_order_tuple* ptuple,
@@ -262,7 +244,7 @@ public:
     {
     }
 
-    /* --- access the table --- */     
+    /* --- access specific tuples --- */     
     w_rc_t update_carrier_by_index(ss_m* db,
                                    order_tuple* ptuple,
                                    const int carrier_id);

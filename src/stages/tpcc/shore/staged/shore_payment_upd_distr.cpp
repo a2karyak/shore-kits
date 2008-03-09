@@ -1,25 +1,21 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-# include "stages/tpcc/inmem/inmem_payment_upd_distr.h"
-# include "util.h"
+#include "stages/tpcc/shore/staged/shore_payment_upd_distr.h"
+#include "util.h"
 
+const c_str shore_payment_upd_distr_packet_t::PACKET_TYPE = "SHORE_PAYMENT_UPD_DISTR";
 
-using namespace tpcc_payment;
-
-
-const c_str inmem_payment_upd_distr_packet_t::PACKET_TYPE = "INMEM_PAYMENT_UPD_DISTR";
-
-const c_str inmem_payment_upd_distr_stage_t::DEFAULT_STAGE_NAME = "INMEM_PAYMENT_UPD_DISTR_STAGE";
+const c_str shore_payment_upd_distr_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_UPD_DISTR_STAGE";
 
 
 
 /**
- *  @brief inmem_payment_upd_distr constructor
+ *  @brief shore_payment_upd_distr constructor
  */
 
-inmem_payment_upd_distr_stage_t::inmem_payment_upd_distr_stage_t() {
+shore_payment_upd_distr_stage_t::shore_payment_upd_distr_stage_t() {
     
-    TRACE(TRACE_TRX_FLOW, "INMEM_PAYMENT_UPD_DISTR constructor\n");
+    TRACE(TRACE_TRX_FLOW, "SHORE_PAYMENT_UPD_DISTR constructor\n");
 }
 
 
@@ -31,16 +27,24 @@ inmem_payment_upd_distr_stage_t::inmem_payment_upd_distr_stage_t() {
  *  @throw May throw exceptions on error.
  */
 
-void inmem_payment_upd_distr_stage_t::process_packet() {
+void shore_payment_upd_distr_stage_t::process_packet() {
 
     adaptor_t* adaptor = _adaptor;
 
-    inmem_payment_upd_distr_packet_t* packet = 
-	(inmem_payment_upd_distr_packet_t*)adaptor->get_packet();
+    shore_payment_upd_distr_packet_t* packet = 
+	(shore_payment_upd_distr_packet_t*)adaptor->get_packet();
 
     //    packet->describe_trx();
 
-    staged_updateInMemDistrict(&packet->_pin, inmem_env);
+    trx_result_tuple_t atrt;
+    if (shore_env->staged_updateShoreDistrict(&packet->_pin, 
+                                              packet->get_trx_id(),
+                                              atrt) != RCOK) {
+        TRACE( TRACE_ALWAYS, 
+               "Error in District Update\n");
+        assert (false); // Error handling not implemented yet
+    }
+
 
 
     // create output tuple
