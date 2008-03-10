@@ -48,7 +48,7 @@ private:
 
 public:
 
-    row_cache_t(TableDesc* ptable, int init_count=10) 
+    row_cache_t(TableDesc* ptable, int init_count=50) 
         : atomic_stack(-sizeof(ptr)),
           _ptable(ptable)
 #ifdef CACHE_STATS
