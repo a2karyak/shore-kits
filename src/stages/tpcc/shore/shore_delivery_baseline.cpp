@@ -28,14 +28,6 @@ shore_delivery_baseline_stage_t::shore_delivery_baseline_stage_t()
     TRACE(TRACE_DEBUG, "SHORE_DELIVERY_BASELINE constructor\n");
 }
 
-struct alloc_guard {
-    char* _ptr;
-    alloc_guard(int size) : _ptr((char*) pool()->alloc(size)) { }
-    ~alloc_guard() { pool()->free(_ptr); }
-    operator char*() { return _ptr; }
-    DECLARE_POOL_ALLOC_POOL(alloc_guard);
-};
-
 /**
  *  @brief Execute TPC-C Delivery transaction is a conventional way 
  *  using Shore underneath

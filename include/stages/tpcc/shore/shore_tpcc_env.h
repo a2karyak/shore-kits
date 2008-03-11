@@ -293,6 +293,11 @@ public:
         _env_stats.print_env_stats(); 
     }
 
+    tpcc_stats_t* get_tpcc_stats() {
+        return (&_tpcc_stats);
+    }
+
+
     /* --- scaling and querying factor --- */
     void print_sf();
     void set_qf(const int aQF);
@@ -370,20 +375,33 @@ public:
 
 
     /* --- kit staged trxs --- */
-    w_rc_t staged_updateShoreWarehouse(payment_input_t* ppin, 
-                                       const int xct_id, 
-                                       trx_result_tuple_t& trt);
-    w_rc_t staged_updateShoreDistrict(payment_input_t* ppin, 
-                                      const int xct_id, 
-                                      trx_result_tuple_t& trt);
-    w_rc_t staged_updateShoreCustomer(payment_input_t* ppin, 
-                                      const int xct_id, 
-                                      trx_result_tuple_t& trt);
-    w_rc_t staged_insertShoreHistory(payment_input_t* ppin, 
-                                     char* p_wh_name,
-                                     char* p_d_name,
-                                     const int xct_id, 
-                                     trx_result_tuple_t& trt);
+    w_rc_t staged_pay_updateShoreWarehouse(payment_input_t* ppin, 
+                                           const int xct_id, 
+                                           trx_result_tuple_t& trt);
+    w_rc_t staged_pay_updateShoreDistrict(payment_input_t* ppin, 
+                                          const int xct_id, 
+                                          trx_result_tuple_t& trt);
+    w_rc_t staged_pay_updateShoreCustomer(payment_input_t* ppin, 
+                                          const int xct_id, 
+                                          trx_result_tuple_t& trt);
+    w_rc_t staged_pay_insertShoreHistory(payment_input_t* ppin, 
+                                         char* p_wh_name,
+                                         char* p_d_name,
+                                         const int xct_id, 
+                                         trx_result_tuple_t& trt);
+
+    w_rc_t staged_no_outside_loop(new_order_input_t* pnoin, 
+                                  time_t tstamp,
+                                  const int xct_id, 
+                                  trx_result_tuple_t& trt);
+
+    w_rc_t staged_no_one_ol(ol_item_info* polin,
+                            time_t tstamp, 
+                            int a_wh_id,
+                            int a_d_id,
+                            int item_cnt,
+                            const int xct_id, 
+                            trx_result_tuple_t& trt);
 
 
     static tpcc_random_gen_t _atpccrndgen;

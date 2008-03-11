@@ -24,7 +24,7 @@ ENTER_NAMESPACE(tpcc);
 
 // uncomment line below to use inputs for rollback
 #undef USE_GENERATE_INPUTS_FOR_ROLLBACK
-#define USE_GENERATE_INPUTS_FOR_ROLLBACK
+//#define USE_GENERATE_INPUTS_FOR_ROLLBACK
 
 // uncomment line below to query local WHs only
 #undef USE_ONLY_LOCAL_WHS

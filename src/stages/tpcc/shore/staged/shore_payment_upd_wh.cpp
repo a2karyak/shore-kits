@@ -1,7 +1,9 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "stages/tpcc/shore/staged/shore_payment_upd_wh.h"
-#include "util.h"
+
+using namespace qpipe;
+using namespace shore;
 
 const c_str shore_payment_upd_wh_packet_t::PACKET_TYPE = "SHORE_PAYMENT_UPD_WH";
 
@@ -13,11 +15,10 @@ const c_str shore_payment_upd_wh_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_UP
  *  @brief shore_payment_upd_wh constructor
  */
 
-shore_payment_upd_wh_stage_t::shore_payment_upd_wh_stage_t() {
-    
-    TRACE(TRACE_DEBUG, "SHORE_PAYMENT_UPD_WH constructor\n");
+shore_payment_upd_wh_stage_t::shore_payment_upd_wh_stage_t() 
+{    
+    TRACE(TRACE_TRX_FLOW, "SHORE_PAYMENT_UPD_WH constructor\n");
 }
-
 
 /**
  *  @brief Update warehouse table according to $2.5.2.2
@@ -44,10 +45,9 @@ void shore_payment_upd_wh_stage_t::process_packet() {
     }
     
     trx_result_tuple_t atrt;
-    if (shore_env->staged_updateShoreWarehouse(&packet->_pin, 
-                                               packet->get_trx_id(),
-                                               atrt) != RCOK) {
-    }
+    e = shore_env->staged_pay_updateShoreWarehouse(&packet->_pin, 
+                                                   packet->get_trx_id(),
+                                                   atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 
@@ -67,22 +67,17 @@ void shore_payment_upd_wh_stage_t::process_packet() {
                "Error in Commit...\n");
         assert (false); // Error handling not implemented yet
     }
-    
-    assert (false); // TODO
-
 
     // create output tuple
     // "I" own tup, so allocate space for it in the stack
-    //    size_t dest_size = packet->output_buffer()->tuple_size();
-    //    char* dest_data = new char[dest_size];
-    //    tuple_t* dest = new tuple_t(dest_data, dest_size);
+    size_t dest_size = packet->output_buffer()->tuple_size();    
+    alloc_guard dest_data = dest_size;
+    tuple_t dest(dest_data, dest_size);
 
-    //    int* dest_tmp;
-    //    dest_tmp = aligned_cast<int>(dest.data);
-
-    //    *dest_tmp = my_trx_id;
-
-    //    adaptor->output(dest);
+    int* dest_result_int;
+    dest_result_int = aligned_cast<int>(dest.data);    
+    *dest_result_int = atrt.get_state();    
+    adaptor->output(dest);
      
 } // process_packet
 

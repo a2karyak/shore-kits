@@ -266,6 +266,7 @@ SG_SHORE_STAGED_TRX = \
    $(SG)/tpcc/shore/staged/shore_payment_upd_cust.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_upd_distr.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_upd_wh.cpp \
+   $(SG)/tpcc/shore/staged/shore_new_order_functions.cpp \
    $(SG)/tpcc/shore/staged/shore_new_order_begin.cpp \
    $(SG)/tpcc/shore/staged/shore_new_order_finalize.cpp \
    $(SG)/tpcc/shore/staged/shore_new_order_outside_loop.cpp \

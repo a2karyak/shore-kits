@@ -44,13 +44,11 @@ void shore_new_order_outside_loop_stage_t::process_packet() {
     }
     
     trx_result_tuple_t atrt;
-
-    assert (false); // (ip) Call the neworder-outsideloop()
-//     if (shore_env->staged_updateShoreWarehouse(&packet->_pin, 
-//                                                packet->get_trx_id(),
-//                                                atrt) != RCOK) {
-//     }
-
+    shore_env->staged_no_outside_loop(&packet->_noin, 
+                                      packet->_tstamp,
+                                      packet->get_trx_id(),
+                                      atrt);
+        
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 
                "Error in Warehouse Update...\n");

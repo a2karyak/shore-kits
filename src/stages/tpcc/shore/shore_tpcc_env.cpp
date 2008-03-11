@@ -851,27 +851,15 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     // warehouse, district, customer, and history
 
     // get table tuples from the caches
-//     warehouse_node_t* pwh_node = _pwarehouse_man->get_tuple();
-//     assert (pwh_node);
-//     row_impl<warehouse_t>* prwh = pwh_node->_tuple;
     row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
     assert (prwh);
 
-//     district_node_t* pdistr_node = _pdistrict_man->get_tuple();
-//     assert (pdistr_node);
-//     row_impl<district_t>* prdist = pdistr_node->_tuple;
     row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-//     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
-//     assert (pcust_node);
-//     row_impl<customer_t>* prcust = pcust_node->_tuple;
     row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
-//     history_node_t* phist_node = _phistory_man->get_tuple();
-//     assert (phist_node);
-//     row_impl<history_t>* prhist = phist_node->_tuple;
     row_impl<history_t>* prhist = _phistory_man->get_tuple();
     assert (prhist);
 

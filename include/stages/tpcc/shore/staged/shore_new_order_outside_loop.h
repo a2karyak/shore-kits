@@ -40,6 +40,7 @@ public:
      */
     
     new_order_input_t _noin;
+    time_t _tstamp;
 
 
     /**
@@ -68,7 +69,8 @@ public:
                                           tuple_fifo*     output_buffer,
                                           tuple_filter_t* output_filter,
                                           const int a_trx_id,
-                                          const new_order_input_t* p_noin)
+                                          const new_order_input_t* p_noin,
+                                          const time_t a_tstamp)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                        create_plan(a_trx_id, p_noin->_wh_id, p_noin->_d_id, 
                                    p_noin->_c_id, p_noin->_ol_cnt),
@@ -76,7 +78,7 @@ public:
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-          _noin(*p_noin)
+          _noin(*p_noin), _tstamp(a_tstamp)
     {
     }
     

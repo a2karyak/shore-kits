@@ -40,6 +40,10 @@ public:
      */
     
     ol_item_info _nolin;
+    time_t _tstamp;
+    int _wh_id;
+    int _d_id;
+    int _item_cnt;
 
 
     /**
@@ -68,7 +72,11 @@ public:
                                     tuple_fifo*     output_buffer,
                                     tuple_filter_t* output_filter,
                                     const int a_trx_id,
-                                    const ol_item_info* p_nolin)
+                                    const ol_item_info* p_nolin,
+                                    const time_t a_tstamp,
+                                    const int a_wh_id,
+                                    const int a_d_id,
+                                    const int a_item_cnt)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                        create_plan(a_trx_id, p_nolin->_ol_i_id, 
                                    p_nolin->_ol_supply_wh_id),
@@ -76,7 +84,8 @@ public:
                        true,  /* unreserve worker on completion */
                        a_trx_id
                        ),
-          _nolin(*p_nolin)
+          _nolin(*p_nolin), _tstamp(a_tstamp), 
+          _wh_id(a_wh_id), _d_id(a_d_id), _item_cnt(a_item_cnt)
     {
     }
     

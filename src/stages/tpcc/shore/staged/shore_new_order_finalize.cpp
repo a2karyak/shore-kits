@@ -51,31 +51,34 @@ void shore_new_order_finalize_stage_t::process_packet()
     int trx_status = 0;
     int* trx_data;
     tuple_t trx_result;
+    int rollback = 0;
 
     /* Get the results of each sub-transaction */
     trx_status = packet->_outside_buffer->get_tuple(trx_result);    
     
     if (!trx_status && !(trx_data = aligned_cast<int>(trx_result.data))) {
-        // should abort
-        //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
-        packet->set_trx_state(POISSONED);
-        packet->rollback();
+        rollback = 1;
     }
 
     for (int i=0; i<packet->_ol_cnt; i++) {
         trx_status = packet->_list_one_ol_buffer[i]->get_tuple(trx_result);
     
         if (!trx_status && !(trx_data = aligned_cast<int>(trx_result.data))) {
-            // should abort
-            //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
-            packet->set_trx_state(POISSONED);
-            packet->rollback();
+            rollback = 1;
         }
     }
 
-    // if reached this point should commit
-    packet->commit();
-    packet->set_trx_state(COMMITTED);
+    if (rollback == 1) {
+        // should abort
+        //TRACE( TRACE_ALWAYS, "ST=(%d) D=(%d)\n", trx_status, *trx_data);
+        packet->set_trx_state(POISSONED);
+        packet->rollback();
+    }
+    else {
+        // if reached this point should commit
+        packet->set_trx_state(COMMITTED);
+        packet->commit();
+    }
 
 } // process_packet
 

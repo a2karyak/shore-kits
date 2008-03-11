@@ -202,6 +202,9 @@ public:
         return (_loaded); 
     }
 
+    env_stats_t* get_env_stats() { return (&_env_stats); }
+
+
     inline pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }
     inline pthread_mutex_t* get_vol_mutex() { return (&_vol_mutex); }
     inline pthread_mutex_t* get_load_mutex() { return (&_load_mutex); }

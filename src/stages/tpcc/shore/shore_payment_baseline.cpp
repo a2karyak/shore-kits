@@ -18,7 +18,6 @@ const c_str shore_payment_baseline_packet_t::PACKET_TYPE = "SHORE_PAYMENT_BASELI
 
 const c_str shore_payment_baseline_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_BASELINE_STAGE";
 
-
 /**
  *  @brief shore_payment_baseline_stage_t constructor
  */
@@ -27,14 +26,6 @@ shore_payment_baseline_stage_t::shore_payment_baseline_stage_t()
 {    
     TRACE(TRACE_DEBUG, "SHORE_PAYMENT_BASELINE constructor\n");
 }
-
-struct alloc_guard {
-    char* _ptr;
-    alloc_guard(int size) : _ptr((char*) pool()->alloc(size)) { }
-    ~alloc_guard() { pool()->free(_ptr); }
-    operator char*() { return _ptr; }
-    DECLARE_POOL_ALLOC_POOL(alloc_guard);
-};
 
 /**
  *  @brief Execute TPC-C Payment transaction is a conventional way 
@@ -57,8 +48,6 @@ void shore_payment_baseline_stage_t::process_packet() {
 
     trx_result_tuple_t atrt;
     shore_env->run_payment(packet->get_trx_id(), packet->_p_in, atrt);
-
-    TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
     
     // writing output 
 
@@ -70,10 +59,8 @@ void shore_payment_baseline_stage_t::process_packet() {
     tuple_t dest(dest_data, dest_size);
     
     trx_result_tuple_t* dest_result_tuple;
-    dest_result_tuple = aligned_cast<trx_result_tuple_t>(dest.data);
-    
-    *dest_result_tuple = atrt;
-    
+    dest_result_tuple = aligned_cast<trx_result_tuple_t>(dest.data);    
+    *dest_result_tuple = atrt;    
     adaptor->output(dest);
 
 } // process_packet

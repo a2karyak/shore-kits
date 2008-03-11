@@ -55,6 +55,14 @@ inline char* translate_state(TrxState aState) {
 /** Exported classes and data structures */
 
 
+struct alloc_guard {
+    char* _ptr;
+    alloc_guard(int size) : _ptr((char*) pool()->alloc(size)) { }
+    ~alloc_guard() { pool()->free(_ptr); }
+    operator char*() { return _ptr; }
+    DECLARE_POOL_ALLOC_POOL(alloc_guard);
+};
+
 /******************************************************************** 
  *
  * @class trx_packet_t

@@ -28,14 +28,6 @@ shore_order_status_baseline_stage_t::shore_order_status_baseline_stage_t()
     TRACE(TRACE_DEBUG, "SHORE_ORDER_STATUS_BASELINE constructor\n");
 }
 
-struct alloc_guard {
-    char* _ptr;
-    alloc_guard(int size) : _ptr((char*) pool()->alloc(size)) { }
-    ~alloc_guard() { pool()->free(_ptr); }
-    operator char*() { return _ptr; }
-    DECLARE_POOL_ALLOC_POOL(alloc_guard);
-};
-
 /**
  *  @brief Execute TPC-C Order_Status transaction is a conventional way 
  *  using Shore underneath

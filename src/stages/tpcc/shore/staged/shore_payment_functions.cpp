@@ -27,7 +27,7 @@ using namespace tpcc;
 
 /******************************************************************** 
  *
- *  @fn:     staged_updateShoreWarehouse
+ *  @fn:     staged_pay_updateShoreWarehouse
  *
  *  @brief:  Updates the Shore Warehouse.
  *
@@ -37,9 +37,9 @@ using namespace tpcc;
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::staged_updateShoreWarehouse(payment_input_t* ppin, 
-                                                 const int xct_id, 
-                                                 trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::staged_pay_updateShoreWarehouse(payment_input_t* ppin, 
+                                                     const int xct_id, 
+                                                     trx_result_tuple_t& trt)
 {
     assert (ppin);
     assert (_pssm);
@@ -47,9 +47,6 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreWarehouse(payment_input_t* ppin,
     assert (_loaded);
 
     // get table tuple from the cache
-//     warehouse_node_t* pwh_node = _pwarehouse_man->get_tuple();
-//     assert (pwh_node);
-//     row_impl<warehouse_t>* prwh = pwh_node->_tuple;
     row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
     assert (prwh);
 
@@ -86,7 +83,6 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreWarehouse(payment_input_t* ppin,
     prwh->get_value(6, awh.W_ZIP, 10);
 
     // give back the tuple
-//     _pwarehouse_man->give_tuple(pwh_node);
     _pwarehouse_man->give_tuple(prwh);
 
     // if we reached this point everything went ok
@@ -99,7 +95,7 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreWarehouse(payment_input_t* ppin,
 
 /******************************************************************** 
  *
- *  @fn:     staged_updateShoreDistrict
+ *  @fn:     staged_pay_updateShoreDistrict
  *
  *  @brief:  Updates the Shore District 
  *
@@ -109,9 +105,9 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreWarehouse(payment_input_t* ppin,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::staged_updateShoreDistrict(payment_input_t* ppin, 
-                                                const int xct_id, 
-                                                trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::staged_pay_updateShoreDistrict(payment_input_t* ppin, 
+                                                    const int xct_id, 
+                                                    trx_result_tuple_t& trt)
 {
     assert (ppin);
     assert (_pssm);
@@ -119,9 +115,6 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreDistrict(payment_input_t* ppin,
     assert (_loaded);
     
     // get table tuple from the caches
-//     district_node_t* pdistr_node = _pdistrict_man->get_tuple();
-//     assert (pdistr_node);
-//     row_impl<district_t>* prdist = pdistr_node->_tuple;
     row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
@@ -184,7 +177,7 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreDistrict(payment_input_t* ppin,
 
 /******************************************************************** 
  *
- *  @fn:     staged_updateShoreDistrict
+ *  @fn:     staged_pay_updateShoreDistrict
  *
  *  @brief:  Updates the Shore District 
  *
@@ -194,18 +187,16 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreDistrict(payment_input_t* ppin,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::staged_updateShoreCustomer(payment_input_t* ppin, 
-                                                const int xct_id, 
-                                                trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin, 
+                                                    const int xct_id, 
+                                                    trx_result_tuple_t& trt)
 {
     assert (ppin);
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
 
-//     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
-//     assert (pcust_node);
-//     row_impl<customer_t>* prcust = pcust_node->_tuple;
+    // get table tuple from the caches
     row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
@@ -355,7 +346,7 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreCustomer(payment_input_t* ppin,
 
 /******************************************************************** 
  *
- *  @fn:     staged_insertShoreHistory
+ *  @fn:     staged_pay_insertShoreHistory
  *
  *  @brief:  Inserts into Shore History.
  *
@@ -365,11 +356,11 @@ w_rc_t ShoreTPCCEnv::staged_updateShoreCustomer(payment_input_t* ppin,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::staged_insertShoreHistory(payment_input_t* ppin, 
-                                               char* p_wh_name,
-                                               char* p_d_name,
-                                               const int xct_id,
-                                               trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::staged_pay_insertShoreHistory(payment_input_t* ppin, 
+                                                   char* p_wh_name,
+                                                   char* p_d_name,
+                                                   const int xct_id,
+                                                   trx_result_tuple_t& trt)
 {
     assert (ppin);
     assert (_pssm);
@@ -377,9 +368,6 @@ w_rc_t ShoreTPCCEnv::staged_insertShoreHistory(payment_input_t* ppin,
     assert (_loaded);
 
     // get table tuple from the caches
-//     history_node_t* phist_node = _phistory_man->get_tuple();
-//     assert (phist_node);
-//     row_impl<history_t>* prhist = phist_node->_tuple;
     row_impl<history_t>* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
