@@ -119,14 +119,14 @@ public:
  *  finalization packet (PAYMENT_FINALIZE)
  */
 
-class shore_payment_begin_stage_t : public stage_t {
-
+class shore_payment_begin_stage_t : public stage_t 
+{
 protected:
 
     virtual void process_packet();
 
     static int _trx_counter;
-    static pthread_mutex_t _trx_counter_mutex;
+    static tatas_lock _trx_counter_lock;
     
 public:
 

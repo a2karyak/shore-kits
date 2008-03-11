@@ -28,7 +28,8 @@
 #include "workload/tpcc/drivers/shore/shore_tpcc_mix_baseline.h"
 
 // staged
-//#include "workload/tpcc/drivers/shore/shore_tpcc_payment_staged.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_payment_staged.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_new_order_staged.h"
 
 
 using namespace tpcc;
@@ -58,7 +59,7 @@ void shore_tpcc_handler_t::init() {
     // use a global thread-safe state machine to ensure that db_open()
     // is called exactly once
 
-    critical_section_t cs(state_mutex);
+    CRITICAL_SECTION( cs, state_mutex);
 
     if ( state == SHORE_TPCC_HANDLER_UNINITIALIZED ) {
 
@@ -78,6 +79,8 @@ void shore_tpcc_handler_t::init() {
         shore_env->print_sf();
 
         // register drivers...
+
+        // BASELINE
         add_driver("shore_new_order_baseline", 
                    new shore_tpcc_new_order_baseline_driver(c_str("SHORE_NEW_ORDER_BASELINE")));
         add_driver("shore_payment_baseline", 
@@ -90,6 +93,14 @@ void shore_tpcc_handler_t::init() {
                    new shore_tpcc_stock_level_baseline_driver(c_str("SHORE_STOCK_LEVEL_BASELINE")));
         add_driver("shore_mix_baseline", 
                    new shore_tpcc_mix_baseline_driver(c_str("SHORE_MIX_BASELINE")));
+
+
+        // STAGED
+        add_driver("shore_payment_staged", 
+                   new shore_tpcc_payment_staged_driver(c_str("SHORE_PAYMENT_STAGED")));
+        add_driver("shore_new_order_staged", 
+                   new shore_tpcc_new_order_staged_driver(c_str("SHORE_NEW_ORDER_STAGED")));
+
 
         // register dispatcher policies...
         add_scheduler_policy("OS",        new scheduler::policy_os_t());
@@ -235,6 +246,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     // 'dump' tag handled differently from all others...
     if (!strcmp(driver_tag, "dump"))
     {
+        assert (false); // (ip) untested
         dump_smt_t* dumper = new dump_smt_t(shore_env, c_str("dumper"));
         dumper->fork();
         dumper->join();
@@ -338,7 +350,8 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
 void shore_tpcc_handler_t::print_usage(const char* command_tag)
 {
     TRACE(TRACE_ALWAYS, "Usage: %s"
-          " list | <driver_tag> <num_clients> <num_iterations> <think_time> <scheduler_policy_tag>"
+          " list|scaling|queried|parse|\n" \
+          "<driver_tag> <num_clients> <num_iterations> <think_time> <scheduler_policy_tag>"
           "\n",
           command_tag);
 }

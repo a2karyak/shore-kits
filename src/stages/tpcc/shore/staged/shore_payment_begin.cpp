@@ -18,7 +18,7 @@ const c_str shore_payment_begin_stage_t::DEFAULT_STAGE_NAME = "SHORE_PAYMENT_BEG
 
 
 int shore_payment_begin_stage_t::_trx_counter = 0;
-pthread_mutex_t shore_payment_begin_stage_t::_trx_counter_mutex = PTHREAD_MUTEX_INITIALIZER;
+tatas_lock shore_payment_begin_stage_t::_trx_counter_lock;
 
 
 /**
@@ -73,7 +73,7 @@ void shore_payment_begin_stage_t::process_packet() {
     packet->set_trx_id(my_trx_id);
 
     /* Prints out the packet info */
-    packet->describe_trx();
+    //    packet->describe_trx();
 
     /* STEP 2: Submits appropriate shore_payment_* packets */
     
@@ -196,7 +196,7 @@ void shore_payment_begin_stage_t::process_packet() {
 
 int shore_payment_begin_stage_t::get_next_counter() {
 
-    critical_section_t cs( _trx_counter_mutex );
+    CRITICAL_SECTION( ccs, _trx_counter_lock);
 
     //    TRACE( TRACE_ALWAYS, "counter: %d\n", _trx_counter);
 
@@ -298,7 +298,9 @@ shore_payment_begin_stage_t::create_shore_payment_ins_hist_packet(const c_str& c
                                             ih_buffer,
                                             ih_filter,
                                             a_trx_id,
-                                            p_pin);
+                                            p_pin,
+                                            "warehouse", /* (ip) TODO!! */
+                                            "district"); 
 
     return (shore_payment_ins_hist_packet);
 }
@@ -322,13 +324,13 @@ shore_payment_begin_stage_t::create_shore_payment_finalize_packet(const c_str& c
 
     shore_payment_finalize_packet_t* shore_payment_finalize_packet =
         new shore_payment_finalize_packet_t(packet_name,
-                                      fin_buffer,
-                                      fin_filter,
-                                      a_trx_id,
-                                      upd_wh,
-                                      upd_distr,
-                                      upd_cust,
-                                      ins_hist);
+                                            fin_buffer,
+                                            fin_filter,
+                                            a_trx_id,
+                                            upd_wh,
+                                            upd_distr,
+                                            upd_cust,
+                                            ins_hist);
     
     return (shore_payment_finalize_packet);
 }

@@ -444,7 +444,7 @@ void ShoreEnv::dump() {
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
     TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
 
-    cout << "Not implemented..." << endl;
+    TRACE( TRACE_ALWAYS, "Not implemented...\n");
 
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
 }

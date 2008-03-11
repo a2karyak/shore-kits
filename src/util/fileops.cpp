@@ -93,7 +93,7 @@ int fileops_check_file_directory(const char* path)
   struct stat buf;
   int stat_ret = stat(path, &buf);
   if (stat_ret != 0) {
-    DEBUG_TRACE("stat(%s, ...) failed\n", path);
+    DEBUG_TRACE("stat(\"%s\", ...) failed\n", path);
     return FILEOPS_ERROR_NOT_FOUND;
   }
 

@@ -76,6 +76,10 @@ void register_stage_containers(int environment)
         register_stage<shore_payment_finalize_stage_t>(MAX_NUM_TRXS, false); 
 
         // for NewOrder
+        register_stage<shore_new_order_begin_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_new_order_outside_loop_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_new_order_one_ol_stage_t>(MAX_NUM_TRXS, false); 
+        register_stage<shore_new_order_finalize_stage_t>(MAX_NUM_TRXS, false); 
 
 
         break;

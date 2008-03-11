@@ -53,7 +53,7 @@ void shore_stock_level_baseline_stage_t::process_packet() {
 	(shore_stock_level_baseline_packet_t*)adaptor->get_packet();
 
     // Prints out the packet info
-    packet->describe_trx();
+    //    packet->describe_trx();
 
     trx_result_tuple_t atrt;
     shore_env->run_stock_level(packet->get_trx_id(), packet->_sl_in, atrt);

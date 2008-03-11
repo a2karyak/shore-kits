@@ -29,22 +29,20 @@ shore_payment_finalize_stage_t::shore_payment_finalize_stage_t() {
  *  @throw May throw exceptions on error.
  */
 
-void shore_payment_finalize_stage_t::process_packet() {
-
+void shore_payment_finalize_stage_t::process_packet() 
+{
     adaptor_t* adaptor = _adaptor;
 
     shore_payment_finalize_packet_t* packet = 
 	(shore_payment_finalize_packet_t*)adaptor->get_packet();
 
-    packet->describe_trx();
-
+    //    packet->describe_trx();
 
     /* First dispatch all the shore_payment packets */
     dispatcher_t::dispatch_packet(packet->_upd_wh);
     dispatcher_t::dispatch_packet(packet->_upd_distr);
     dispatcher_t::dispatch_packet(packet->_upd_cust);
     dispatcher_t::dispatch_packet(packet->_ins_hist);
-
 
     /* Variables used to determine the transaction status.
        All stages return a single integer indicating success/failure */

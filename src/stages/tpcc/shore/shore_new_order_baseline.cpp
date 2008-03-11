@@ -54,7 +54,7 @@ void shore_new_order_baseline_stage_t::process_packet()
 	(shore_new_order_baseline_packet_t*)adaptor->get_packet();
 
     // Prints out the packet info
-    packet->describe_trx();
+    //    packet->describe_trx();
 
     trx_result_tuple_t atrt;
     shore_env->run_new_order(packet->get_trx_id(), packet->_no_in, atrt);

@@ -21,4 +21,14 @@
 
 
 
+// SHORE-STAGED-PAYMENT
+#include "stages/tpcc/shore/staged/shore_new_order_outside_loop.h"
+#include "stages/tpcc/shore/staged/shore_new_order_one_ol.h"
+#include "stages/tpcc/shore/staged/shore_new_order_finalize.h"
+
+/** @note payment_begin should be declared last */
+#include "stages/tpcc/shore/staged/shore_new_order_begin.h"
+
+
+
 #endif 

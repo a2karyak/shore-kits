@@ -18,9 +18,17 @@ ENTER_NAMESPACE(tpcc);
 // uncomment line below to use produce the same input
 //#define USE_SAME_INPUT
 
-// uncommend line below to produce "safe" (tested code paths) input
+// uncomment line below to produce "safe" (tested code paths) input
 #undef USE_SAFE_PATHS
 #define USE_SAFE_PATHS 
+
+// uncomment line below to use inputs for rollback
+#undef USE_GENERATE_INPUTS_FOR_ROLLBACK
+#define USE_GENERATE_INPUTS_FOR_ROLLBACK
+
+// uncomment line below to query local WHs only
+#undef USE_ONLY_LOCAL_WHS
+//#define USE_ONLY_LOCAL_WHS
 
 
 /********************************************************************* 
@@ -58,6 +66,7 @@ new_order_input_t create_no_input(int sf, int specificWH)
         noin.items[i]._ol_supply_wh_select = URand(1, 100); // 1 - 99
         noin.items[i]._ol_quantity = URand(1, 10);
 
+#ifndef USE_ONLY_LOCAL_WHS
         if (noin.items[i]._ol_supply_wh_select == 1) {
             /* remote new_order */
             noin.items[i]._ol_supply_wh_id = URand(1, sf);
@@ -66,7 +75,19 @@ new_order_input_t create_no_input(int sf, int specificWH)
             /* home new_order */ 
             noin.items[i]._ol_supply_wh_id = noin._wh_id;
         }
+#else
+        noin.items[i]._ol_supply_wh_id = noin._wh_id;
+#endif
     }
+
+#ifdef USE_GENERATE_INPUTS_FOR_ROLLBACK
+    if (noin._rbk == 1) {   
+        // generate an input that it will cause a rollback
+        noin.items[noin._ol_cnt-1]._ol_i_id = -1;
+        TRACE( TRACE_TRX_FLOW, "Bad input...\n");
+    }
+#endif
+
 
 #else
     // same input
@@ -120,6 +141,8 @@ payment_input_t create_payment_input(int sf, int specificWH)
     pin._h_date = time(NULL);
 
     pin._v_cust_wh_selection = URand(1, 100); // 85 - 15        
+
+#ifndef USE_ONLY_LOCAL_WHS
     if (pin._v_cust_wh_selection <= 85) {
         // all local payment
         pin._remote_wh_id = pin._home_wh_id;
@@ -138,6 +161,12 @@ payment_input_t create_payment_input(int sf, int specificWH)
         }
         pin._remote_d_id = URand(1, 10);
     }
+#else
+    pin._v_cust_wh_selection = 50;
+    pin._remote_wh_id = pin._home_wh_id;
+    pin._remote_d_id = pin._home_d_id;
+#endif
+
 
 #ifdef USE_SAFE_PATHS
     pin._v_cust_ident_selection = URand(61, 100); // 60 - 40

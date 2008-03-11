@@ -49,7 +49,21 @@ public:
  *
  *********************************************************************/
 
-class new_order_input_t : public trx_input_t {
+struct ol_item_info 
+{
+    int   _ol_i_id;             /* input: NURand(8191,1,100000) */
+    short _ol_supply_wh_select; /* input: URand(1,100) */
+    int   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
+    int   _ol_quantity;         /* input: URand(1,10) */        
+
+    // Assignmet operator
+    ol_item_info& operator= (const ol_item_info& rhs);
+
+}; // EOF: ol_item_info
+
+
+class new_order_input_t : public trx_input_t 
+{
 public:
 
     int   _wh_id;         /* input: URand(1,SF) */
@@ -58,12 +72,7 @@ public:
     int   _ol_cnt;        /* input: number of items URand(5,15) */
     int   _rbk;           /* input: rollback URand(1,100) */
 
-    struct  _ol_item_info {
-        int   _ol_i_id;             /* input: NURand(8191,1,100000) */
-        short _ol_supply_wh_select; /* input: URand(1,100) */
-        int   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
-        int   _ol_quantity;         /* input: URand(1,10) */        
-    }  items[MAX_OL_PER_ORDER];
+    ol_item_info items[MAX_OL_PER_ORDER]; /* input: for each ol item */
 
     /** If _supply_wh_id = _wh_id for each item 
      *  then trx called home, else remote 
@@ -79,6 +88,7 @@ public:
 
     // Assignment operator
     new_order_input_t& operator= (const new_order_input_t& rhs);
+
 
     // Methods
     void describe(int id);

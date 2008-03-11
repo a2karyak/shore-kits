@@ -43,7 +43,7 @@ void shore_tpcc_delivery_baseline_driver::submit(void* disp, memObject_t*) {
     trx_packet_t* bp_packet = 
 	create_shore_delivery_baseline_packet(bp_buffer, 
                                               bp_filter,
-                                              selectedQueriedSF);
+                                              shore_env->get_qf());
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);

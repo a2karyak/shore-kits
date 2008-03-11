@@ -1208,57 +1208,63 @@ w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db,
     }    
     TRACE( TRACE_DEBUG, "Loading (%s) table from (%s) file...\n", 
            _ptable->name(), filename);
-    
-    W_DO(db->begin_xct());
-    
-    /* 1. create the warehouse table */
-    W_DO(_ptable->create_table(db));
-         
-    /* 2. append the tuples */
-    append_file_i file_append(_ptable->fid());    
-
-    /* 3a. read the file line-by-line */
-    /* 3b. convert each line to a tuple for this table */
-    /* 3c. insert tuple to table */
     register int tuple_count = 0;
     register int mark = COMMIT_ACTION_COUNT;
 
-    table_tuple tuple(_ptable);
-    bool btread = false;
-    char linebuffer[MAX_LINE_LENGTH];
-    rep_row_t arep(_pts);
-    int tsz = 0;
-
-    for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
-
-        // read tuple and put it in a table_row_t
-        btread = _ptable->read_tuple_from_line(tuple, linebuffer);
-
-        // append it to the table
-        tsz = format(&tuple, arep);
-        assert (arep._dest); // (ip) if NULL invalid
-	W_DO(file_append.create_rec(vec_t(), 0,
-				    vec_t(arep._dest, tsz),
-				    tuple._rid));
-
-	if(i >= mark) {
-	    W_COERCE(db->commit_xct());
-
-            if ((i % 100000) == 0) { // every 100K inserts
-                TRACE( TRACE_ALWAYS, "load(%s): %d\n", _ptable->name(), tuple_count);
-            }
-            else {
-                TRACE( TRACE_DEBUG, "load(%s): %d\n", _ptable->name(), tuple_count);
-            }
-
-	    W_COERCE(db->begin_xct());
-	    mark += COMMIT_ACTION_COUNT;
-	}	    
-        tuple_count++;
-    }
+    if (db) {
     
-    /* 3. commit and print statistics */
-    W_DO(db->commit_xct());
+        W_DO(db->begin_xct());
+    
+        /* 1. create the warehouse table */
+        W_DO(_ptable->create_table(db));
+         
+        /* 2. append the tuples */
+        append_file_i file_append(_ptable->fid());    
+
+        /* 3a. read the file line-by-line */
+        /* 3b. convert each line to a tuple for this table */
+        /* 3c. insert tuple to table */
+        table_tuple tuple(_ptable);
+        bool btread = false;
+        char linebuffer[MAX_LINE_LENGTH];
+        rep_row_t arep(_pts);
+        int tsz = 0;
+
+        for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
+
+            // read tuple and put it in a table_row_t
+            btread = _ptable->read_tuple_from_line(tuple, linebuffer);
+
+            // append it to the table
+            tsz = format(&tuple, arep);
+            assert (arep._dest); // (ip) if NULL invalid
+            W_DO(file_append.create_rec(vec_t(), 0,
+                                        vec_t(arep._dest, tsz),
+                                        tuple._rid));
+
+            if(i >= mark) {
+                W_COERCE(db->commit_xct());
+
+                if ((i % 100000) == 0) { // every 100K inserts
+                    TRACE( TRACE_ALWAYS, "load(%s): %d\n", _ptable->name(), tuple_count);
+                }
+                else {
+                    TRACE( TRACE_DEBUG, "load(%s): %d\n", _ptable->name(), tuple_count);
+                }
+
+                W_COERCE(db->begin_xct());
+                mark += COMMIT_ACTION_COUNT;
+            }	    
+            tuple_count++;
+        }
+    
+        /* 3. commit and print statistics */
+        W_DO(db->commit_xct());
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid db\n");
+        assert (false);
+    }
     
     TRACE( TRACE_ALWAYS, "(%s) # of records inserted: %d\n",
            _ptable->name(), tuple_count);

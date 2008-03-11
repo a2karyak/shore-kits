@@ -68,9 +68,29 @@ void payment_input_t::gen_input(int sf)
 /* --- NEW_ORDER_INPUT --- */
 /* ----------------------- */
 
+ol_item_info& ol_item_info::operator= (const ol_item_info& rhs)
+{
+    _ol_i_id = rhs._ol_i_id;
+    _ol_supply_wh_select = rhs._ol_supply_wh_select;
+    _ol_supply_wh_id = rhs._ol_supply_wh_id;
+    _ol_quantity = rhs._ol_quantity;
+
+    return (*this);
+}
+
 new_order_input_t& new_order_input_t::operator= (const new_order_input_t& rhs) 
 {
-    assert (false); // (ip) Not implemented yet
+    // copy input
+    _wh_id = rhs._wh_id;
+    _d_id = rhs._d_id;
+    _c_id = rhs._c_id;
+    _ol_cnt = rhs._ol_cnt;
+    _rbk = rhs._rbk;
+
+    for (int i=0; i<rhs._ol_cnt; i++) {
+        items[i] = rhs.items[i];
+    }
+
     return (*this);
 }
 

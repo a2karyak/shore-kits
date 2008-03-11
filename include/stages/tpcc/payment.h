@@ -57,7 +57,7 @@
 #include "stages/tpcc/shore/shore_payment_baseline.h"
 
 
-// INMEM-STAGED-PAYMENT
+// SHORE-STAGED-PAYMENT
 #include "stages/tpcc/shore/staged/shore_payment_upd_wh.h"
 #include "stages/tpcc/shore/staged/shore_payment_upd_distr.h"
 #include "stages/tpcc/shore/staged/shore_payment_upd_cust.h"

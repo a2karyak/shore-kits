@@ -78,7 +78,9 @@ public:
                                     tuple_fifo*     output_buffer,
                                     tuple_filter_t* output_filter,
                                     const int a_trx_id,
-                                    const payment_input_t* p_pin)
+                                    const payment_input_t* p_pin,
+                                    const char* a_wh_name,
+                                    const char* a_d_name)
         : trx_packet_t(packet_id, PACKET_TYPE, output_buffer, output_filter,
                        create_plan(a_trx_id, p_pin->_home_wh_id, p_pin->_home_d_id, 
                                    p_pin->_c_id, p_pin->_home_wh_id, p_pin->_home_d_id),
@@ -89,7 +91,9 @@ public:
           _pin(*p_pin)
     {
         memset(_wh_name, 0, 11);
+        strncpy(_wh_name, a_wh_name, (strlen(a_wh_name)>11? 11 : strlen(a_wh_name)));
         memset(_d_name, 0, 11);
+        strncpy(_d_name, a_d_name, (strlen(a_d_name)>11? 11 : strlen(a_d_name)));
     }
 
 

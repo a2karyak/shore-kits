@@ -42,8 +42,8 @@ void shore_tpcc_stock_level_baseline_driver::submit(void* disp, memObject_t*) {
     // stock_level_baseline_packet
     trx_packet_t* bp_packet = 
 	create_shore_stock_level_baseline_packet( bp_buffer, 
-                                              bp_filter,
-                                              selectedQueriedSF);
+                                                  bp_filter,
+                                                  shore_env->get_qf());
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);

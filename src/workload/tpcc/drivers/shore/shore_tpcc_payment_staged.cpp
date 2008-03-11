@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file shore_tpcc_payment_baseline.cpp
+/** @file shore_tpcc_payment_staged.cpp
  *
- *  @brief Implements client that submits SHORE_PAYMENT_BASELINE transaction requests,
+ *  @brief Implements client that submits SHORE_PAYMENT_STAGED transaction requests,
  *  according to the TPCC specification.
  *
  *  @author Ippokratis Pandis (ipandis)
@@ -11,7 +11,7 @@
 #include "scheduler.h"
 #include "util.h"
 #include "workload/common.h"
-#include "workload/tpcc/drivers/shore/shore_tpcc_payment_baseline.h"
+#include "workload/tpcc/drivers/shore/shore_tpcc_payment_staged.h"
 
 
 using namespace qpipe;
@@ -21,7 +21,7 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
-void shore_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
+void shore_tpcc_payment_staged_driver::submit(void* disp, memObject_t*) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 
@@ -39,11 +39,11 @@ void shore_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
         new trivial_filter_t(sizeof(trx_result_tuple_t));
     
 
-    // payment_baseline_packet
+    // payment_staged_packet
     trx_packet_t* bp_packet = 
-	create_shore_payment_baseline_packet( bp_buffer, 
-                                              bp_filter,
-                                              shore_env->get_qf());
+	create_shore_payment_staged_packet( bp_buffer, 
+                                            bp_filter,
+                                            shore_env->get_qf());
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);
@@ -55,15 +55,15 @@ void shore_tpcc_payment_baseline_driver::submit(void* disp, memObject_t*) {
 }
 
 
-/** @fn create_shore_payment_baseline_packet
+/** @fn create_shore_payment_staged_packet
  *
- *  @brief Creates a new SHORE_PAYMENT_BASELINE request, given the scaling factor (sf) 
+ *  @brief Creates a new SHORE_PAYMENT_STAGED request, given the scaling factor (sf) 
  *  of the database
  */
 
 trx_packet_t* 
-shore_tpcc_payment_baseline_driver::
-create_shore_payment_baseline_packet(tuple_fifo* bp_output_buffer,
+shore_tpcc_payment_staged_driver::
+create_shore_payment_staged_packet(tuple_fifo* bp_output_buffer,
                                      tuple_filter_t* bp_output_filter,
                                      int sf) 
 {
@@ -73,12 +73,12 @@ create_shore_payment_baseline_packet(tuple_fifo* bp_output_buffer,
 
     tpcc::payment_input_t pin = create_payment_input(sf);
     
-    static c_str packet_name = "SHORE_PAYMENT_BASELINE_CLIENT";
+    static c_str packet_name = "SHORE_PAYMENT_STAGED_CLIENT";
 
-    payment_packet = new shore_payment_baseline_packet_t(packet_name,
-                                                         bp_output_buffer,
-                                                         bp_output_filter,
-                                                         pin);
+    payment_packet = new shore_payment_begin_packet_t(packet_name,
+                                                      bp_output_buffer,
+                                                      bp_output_filter,
+                                                      pin);
     
     return (payment_packet);
 }

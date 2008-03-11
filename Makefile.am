@@ -265,7 +265,11 @@ SG_SHORE_STAGED_TRX = \
    $(SG)/tpcc/shore/staged/shore_payment_ins_hist.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_upd_cust.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_upd_distr.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_upd_wh.cpp
+   $(SG)/tpcc/shore/staged/shore_payment_upd_wh.cpp \
+   $(SG)/tpcc/shore/staged/shore_new_order_begin.cpp \
+   $(SG)/tpcc/shore/staged/shore_new_order_finalize.cpp \
+   $(SG)/tpcc/shore/staged/shore_new_order_outside_loop.cpp \
+   $(SG)/tpcc/shore/staged/shore_new_order_one_ol.cpp
 
 
 
@@ -331,7 +335,6 @@ WL_TPCC = \
    $(SW)/tpcc/tpcc_compare.cpp
 
 
-
 WL_BDB_COMMON = \
    $(SW)/common/bdb_env.cpp \
    $(SW)/common/bdb_txn.cpp \
@@ -352,9 +355,11 @@ WL_INMEM_TPCC_PAYMENT = \
 WL_SHORE_COMMON = \
    $(SW)/tpcc/shore_tpcc_load.cpp
 
-WL_SHORE_TPCC_PAYMENT = \
+WL_SHORE_TPCC = \
    $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_staged.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp \
+   $(SW)/tpcc/drivers/shore/shore_tpcc_payment_staged.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_order_status_baseline.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_delivery_baseline.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_stock_level_baseline.cpp \
@@ -370,7 +375,7 @@ lib_libworkload_a_SOURCES = \
    $(WL_BDB_TPCC_PAYMENT) \
    $(WL_INMEM_TPCC_PAYMENT) \
    $(WL_SHORE_COMMON) \
-   $(WL_SHORE_TPCC_PAYMENT)
+   $(WL_SHORE_TPCC)
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
