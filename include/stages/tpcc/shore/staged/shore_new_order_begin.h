@@ -148,7 +148,8 @@ public:
                                                tuple_fifo* iout_buffer,
                                                tuple_filter_t* iout_filter,
                                                int a_trx_id,
-                                               new_order_input_t* p_noin);
+                                               new_order_input_t* p_noin,
+                                               const time_t a_tstamp);
 
     /** @brief Returns an shore_new_order_one_ol_packet_t */
     trx_packet_t* 
@@ -156,7 +157,11 @@ public:
                                          tuple_fifo* iol_buffer,
                                          tuple_filter_t* iol_filter,
                                          int a_trx_id,
-                                         ol_item_info* p_nolin);
+                                         ol_item_info* p_nolin,
+                                         const time_t a_tstamp,
+                                         const int a_wh,
+                                         const int a_d,
+                                         const int a_item_cnt);
     
 
     /** @brief Returns an shore_new_order_finalize_packet_t */

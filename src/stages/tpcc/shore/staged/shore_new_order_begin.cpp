@@ -93,12 +93,14 @@ void shore_new_order_begin_stage_t::process_packet()
     tuple_fifo* buffer = new tuple_fifo(sizeof(int));
     tuple_filter_t* filter = new trivial_filter_t(sizeof(int));
 
+    time_t tstamp = time(NULL);
     trx_packet_t* outside_loop_packet = 
         create_shore_new_order_outside_loop_packet( packet->_packet_id,
                                                     buffer,
                                                     filter,
                                                     packet->get_trx_id(),
-                                                    &packet->_no_in);
+                                                    &packet->_no_in,
+                                                    tstamp);
 
     // 2b. SHORE_NEW_ORDER_ONE_OL
     // create ol_cnt packets
@@ -116,7 +118,11 @@ void shore_new_order_begin_stage_t::process_packet()
                                                   buffer,
                                                   filter,
                                                   packet->get_trx_id(),
-                                                  &packet->_no_in.items[i]);
+                                                  &packet->_no_in.items[i],
+                                                  tstamp,
+                                                  packet->_no_in._wh_id,
+                                                  packet->_no_in._d_id,
+                                                  i);
         ol_packets[i]->assign_query_state(qs);
     } 
 
@@ -191,7 +197,8 @@ shore_new_order_begin_stage_t::create_shore_new_order_outside_loop_packet(const 
                                                                           tuple_fifo* iout_buffer,
                                                                           tuple_filter_t* iout_filter,
                                                                           int a_trx_id,
-                                                                          new_order_input_t* p_noin)
+                                                                          new_order_input_t* p_noin,
+                                                                          const time_t a_tstamp)
 {
     c_str packet_name("%s_shore_new_order_upd_wh", client_prefix.data());
 
@@ -200,7 +207,8 @@ shore_new_order_begin_stage_t::create_shore_new_order_outside_loop_packet(const 
                                                   iout_buffer,
                                                   iout_filter,
                                                   a_trx_id,
-                                                  p_noin);
+                                                  p_noin,
+                                                  a_tstamp);
 
     return (shore_new_order_outside_loop_packet);
 }
@@ -215,7 +223,11 @@ shore_new_order_begin_stage_t::create_shore_new_order_one_ol_packet(const c_str&
                                                                     tuple_fifo* iol_buffer,
                                                                     tuple_filter_t* iol_filter,
                                                                     int a_trx_id,
-                                                                    ol_item_info* p_nolin)
+                                                                    ol_item_info* p_nolin,
+                                                                    const time_t a_tstamp,
+                                                                    const int a_wh,
+                                                                    const int a_d,
+                                                                    const int a_item_cnt)
 {
     c_str packet_name("%s_shore_new_order_one_ol", client_prefix.data());
     
@@ -224,7 +236,8 @@ shore_new_order_begin_stage_t::create_shore_new_order_one_ol_packet(const c_str&
                                             iol_buffer,
                                             iol_filter,
                                             a_trx_id,
-                                            p_nolin);
+                                            p_nolin,a_tstamp,
+                                            a_wh, a_d, a_item_cnt);
     
     return (shore_new_order_one_ol_packet);
 }
