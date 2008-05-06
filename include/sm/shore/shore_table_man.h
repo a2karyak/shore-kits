@@ -955,7 +955,7 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 
     /* 3. read the tuple */
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lmode));
+    W_DO(pin.pin(ptuple->rid(), 0, lmode, LATCH_SH));
     if (!load(ptuple, pin.body())) return RC(se_WRONG_DISK_DATA);
     pin.unpin();
 
@@ -1058,15 +1058,12 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     assert (ptuple->_rep->_dest); // (ip) if NULL invalid
 
     if (current_size < tsz) {
-        w_rc_t rc = db->append_rec(ptuple->rid(),
-                                   zvec_t(tsz - current_size),
-                                   true);
+        w_rc_t rc = pin.append_rec(zvec_t(tsz - current_size));
         // on error unpin 
         if (rc!=(RCOK)) pin.unpin();
         W_DO(rc);
     }
-    w_rc_t rc = db->update_rec(ptuple->rid(), 0, 
-                               vec_t(ptuple->_rep->_dest, tsz));
+    w_rc_t rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz));
 
     /* 3. unpin */
     pin.unpin();
