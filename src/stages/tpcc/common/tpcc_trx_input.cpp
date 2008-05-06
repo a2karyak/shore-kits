@@ -27,8 +27,8 @@ ENTER_NAMESPACE(tpcc);
 //#define USE_GENERATE_INPUTS_FOR_ROLLBACK
 
 // uncomment line below to query local WHs only
-#undef USE_ONLY_LOCAL_WHS
-//#define USE_ONLY_LOCAL_WHS
+//#undef USE_ONLY_LOCAL_WHS
+#define USE_ONLY_LOCAL_WHS
 
 
 /********************************************************************* 
