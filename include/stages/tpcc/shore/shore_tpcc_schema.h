@@ -63,20 +63,16 @@ ENTER_NAMESPACE(tpcc);
  *
  *  @brief: Base class for all the TPC-C tables
  *
- *  @note:  It simply extends the table_desc_t class with a 
- *          tpcc_random_gen_t member variable.
+ *  @note:  It simply extends the table_desc_t class
  *
  *  --------------------------------------------------------------- */
 
 class tpcc_table_t : public table_desc_t {
 public:
 
-    tpcc_random_gen_t _tpccrnd;
-
     tpcc_table_t(const char* name, int fieldcnt)
         : table_desc_t(name, fieldcnt)
     {
-        _tpccrnd.reset();
     }
 
     virtual ~tpcc_table_t() { }
@@ -115,11 +111,6 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-    /** deprecated */
-
-    /* random tuple generator */    
-    void   random(table_row_t* ptuple, int w_id);
-
 }; // EOF: warehouse_t
 
 
@@ -147,11 +138,6 @@ public:
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int id, int w_id, int next_o_id);
 
 }; // EOF: district_t
 
@@ -198,11 +184,6 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int id, int d_id, int w_id);
-
 }; // EOF: customer_t
 
 
@@ -224,12 +205,6 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int c_id, int c_d_id, int c_w_id);
-
 }; // EOF: history_t
 
 
@@ -248,12 +223,6 @@ public:
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
-
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int id, int d_id, int w_id);
 
 }; // EOF: new_order_t
 
@@ -283,13 +252,6 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-
-    /** deprecated */
-     
-    /* random tuple generator */
-    void random(table_row_t* ptuple, int id, int c_id, int d_id, 
-                int w_id, int ol_cnt);
-
 }; // EOF: order_t
 
 
@@ -317,12 +279,6 @@ public:
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
 
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int id, int d_id, int w_id,
-                  int ol_index, bool delivery=true);
-
 }; // EOF: order_line_t
 
 
@@ -344,12 +300,6 @@ public:
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
-
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int id);
 
 }; // EOF: item_t
 
@@ -386,11 +336,6 @@ public:
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
-    /** deprecated */
-
-    /* random tuple generator */
-    void   random(table_row_t* ptuple, int id, int w_id);
 
 }; // EOF: stock_t
 

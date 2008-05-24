@@ -159,7 +159,8 @@ lib_libsm_a_SOURCES = \
 SG=$(top_srcdir)/src/stages
 
 SG_COMMON = \
-   $(SG)/common/process_query.cpp
+   $(SG)/common/process_query.cpp \
+   $(SG)/common/predicates.cpp
 
 SG_TPCC_COMMON = \
    $(SG)/tpcc/common/tpcc_input.cpp \

@@ -75,49 +75,6 @@ bool warehouse_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void  warehouse_t::random(table_row_t* ptuple, int w_id)
-{
-    char    int_string[MAX_INT_LEN];
-    double  double_number;
-
-    assert (false); // (ip) deprecated
-
-    /* id */
-    ptuple->set_value(0, w_id);
-
-    /* name */
-    _tpccrnd.random_a_string(int_string, 6, 10);
-    ptuple->set_value(1, int_string);
-
-    /* street1 */
-    _tpccrnd.random_a_string(int_string, 10, 20);
-    ptuple->set_value(2, int_string);
-
-    /* street2 */
-    _tpccrnd.random_a_string(int_string, 10, 20);
-    ptuple->set_value(3, int_string);
-
-    /* city */
-    _tpccrnd.random_a_string(int_string, 10, 20);
-    ptuple->set_value(4, int_string);
-
-    /* state */
-    _tpccrnd.random_a_string(int_string, 2, 2);
-    ptuple->set_value(5, int_string);
-
-    /* zip */
-    _tpccrnd.random_n_string(int_string, 4, 4);
-    strcat(int_string, "11111");
-    ptuple->set_value(6, int_string);
-
-    /* tax */
-    double_number = ((double) _tpccrnd.random_integer(0,2000))/(double)10000.0;
-    ptuple->set_value(7, double_number);
-
-    /* ytd */
-    ptuple->set_value(8, (double)300000);
-}
-
 
 /*********************************************************************
  *
@@ -159,55 +116,6 @@ bool district_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     tuple.set_value(10, record.second.D_NEXT_O_ID);
 
     return (true);
-}
-
-void district_t::random(table_row_t* ptuple, int id, int w_id, int next_o_id)
-{
-    char   int_string[MAX_INT_LEN] = "test";
-    double double_number;
-
-    assert (false); // (ip) deprecated
-
-    /* id */
-    ptuple->set_value(0, id);
-
-    /* w_id */
-    ptuple->set_value(1, w_id);
-
-    /* name */
-    _tpccrnd.random_a_string(int_string, 6, 10);
-    ptuple->set_value(2, int_string);
-
-    /* street1 */
-    _tpccrnd.random_a_string(int_string, 10, 20);
-    ptuple->set_value(3, int_string);
-
-    /* street2 */
-    _tpccrnd.random_a_string(int_string, 10, 20);
-    ptuple->set_value(4, int_string);
-
-    /* city */
-    _tpccrnd.random_a_string(int_string, 10, 20);
-    ptuple->set_value(5, int_string);
-
-    /* state */
-    _tpccrnd.random_a_string(int_string, 2, 2);
-    ptuple->set_value(6, int_string);
-
-    /* zip */
-    _tpccrnd.random_n_string(int_string, 4, 4);
-    strcat(int_string, "11111");
-    ptuple->set_value(7, int_string);
-
-    /* tax */
-    double_number = ((double)_tpccrnd.random_integer(0, 2000))/(double)10000.0;
-    ptuple->set_value(8, double_number);
-
-    /* ytd */
-    ptuple->set_value(9, (double)300000);
-
-    /* next_o_id */
-    ptuple->set_value(10, next_o_id);
 }
 
 
@@ -275,95 +183,6 @@ bool customer_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void  customer_t::random(table_row_t* ptuple, int id, int d_id, int w_id)
-{
-
-    assert (false); // (ip) modified the schema
-    assert (false); // (ip) deprecated
-
-
-    double  double_number;
-    char    string[MAX_LONG_LEN];
-    timestamp_t  time;
-
-    /* id */
-    ptuple->set_value(0, id);
-
-    /* d_id */
-    ptuple->set_value(1, d_id);
-
-    /* w_id */
-    ptuple->set_value(2, w_id);
-
-    /* first */
-    _tpccrnd.random_a_string(string, 8, 16);
-    ptuple->set_value(3, string);
-
-    /* middle */
-    ptuple->set_value(4, string);
-
-    /* last */
-    _tpccrnd.random_last_name(string, id);
-    ptuple->set_value(5, string);
-
-    /* street1 */
-    _tpccrnd.random_a_string(string, 10, 20);
-    ptuple->set_value(6, string);
-
-    /* street2 */
-    _tpccrnd.random_a_string(string, 10, 20);
-    ptuple->set_value(7, string);
-
-    /* city */
-    _tpccrnd.random_a_string(string, 10, 20);
-    ptuple->set_value(8, string);
-
-    /* state */
-    _tpccrnd.random_a_string(string, 2, 2);
-    ptuple->set_value(9, string);
-
-    /* zip */
-    _tpccrnd.random_n_string(string, 4, 4);
-    strcat(string, "11111");
-    ptuple->set_value(10, string);
-
-    /* phone */
-    _tpccrnd.random_n_string(string, 16, 16);
-    ptuple->set_value(11, string);
-
-    /* since */
-    ptuple->set_value(12, time);
-
-    /* credit */
-    if (_tpccrnd.random_float_val_return(0.0, 100.0) < 10.2)
-	strcpy(string, "BC");
-    else strcpy(string, "GC");
-    ptuple->set_value(13, string);
-
-    /* credit_limit */
-    ptuple->set_value(14, (double)50000);
-
-    /* discount */
-    double_number = ((double)_tpccrnd.random_integer(0, 5000))/(double)10000.0;
-    ptuple->set_value(15, double_number);
-
-    /* balance */
-    ptuple->set_value(16, (double)0);
-
-    /* ytd_payment */
-    ptuple->set_value(17, (double)-10);
-
-    /* payment_cnt */
-    ptuple->set_value(18, (int)10);
-
-    /* delivery_cnt */
-    ptuple->set_value(19, (int)1);
-
-    /* data */
-    _tpccrnd.random_a_string(string, 300, 500);
-    ptuple->set_value(20, string);
-}
-
 
 /*********************************************************************
  *
@@ -401,40 +220,6 @@ bool history_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void  history_t::random(table_row_t* ptuple, int c_id, int c_d_id, int c_w_id)
-{
-    char  string[MAX_INT_LEN];
-    timestamp_t  time;
-
-    assert (false); // (ip) Modified schema
-    assert (false); // (ip) deprecated
-
-    /* c_id */
-    ptuple->set_value(0, c_id);
-
-    /* c_d_id */
-    ptuple->set_value(1, c_d_id);
-
-    /* c_w_id */
-    ptuple->set_value(2, c_w_id);
-
-    /* d_id */
-    ptuple->set_value(3, c_d_id);
-
-    /* w_id */
-    ptuple->set_value(4, c_w_id);
-
-    /* date */
-    ptuple->set_value(5, time);
-
-    /* amount */
-    ptuple->set_value(6, 1000);
-
-    /* data */
-    _tpccrnd.random_a_string(string, 12, 24);
-    ptuple->set_value(7, string);
-}
-
 
 /*********************************************************************
  *
@@ -460,21 +245,6 @@ bool new_order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     tuple.set_value(2, record.first.NO_W_ID);
 
     return (true);
-}
-
-void new_order_t::random(table_row_t* ptuple, int id, int d_id, int w_id)
-{
-
-    assert (false); // (ip) deprecated
-
-    /* o_id */
-    ptuple->set_value(0, id);
-
-    /* d_id */
-    ptuple->set_value(1, d_id);
-
-    /* w_id */
-    ptuple->set_value(2, w_id);
 }
 
 
@@ -512,44 +282,6 @@ bool order_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     tuple.set_value(7, record.second.O_ALL_LOCAL);
 
     return (true);
-}
-
-void order_t::random(table_row_t* ptuple, int id, int c_id, int d_id, 
-                     int w_id, int ol_cnt)
-{
-    int int_num;
-    timestamp_t  time;
-    char   string[MAX_INT_LEN];
-
-    assert (false); // (ip) modified schema
-    assert (false); // (ip) deprecated
-
-
-    /* id */
-    ptuple->set_value(0, id);
-
-    /* d_id */
-    ptuple->set_value(1, d_id);
-
-    /* w_id */
-    ptuple->set_value(2, w_id);
-
-    /* c_id */
-    ptuple->set_value(3, c_id);
-
-    /* entry_d */
-    ptuple->set_value(4, time);
-
-    /* carrier_id */
-    if (id < 2101) int_num = _tpccrnd.random_integer(1,10);
-    else int_num = 0;
-    ptuple->set_value(5, int_num);
-
-    /* ol_cnt */
-    ptuple->set_value(6, ol_cnt);
-
-    /* all_local */
-    ptuple->set_value(7, 1);
 }
 
 
@@ -593,53 +325,6 @@ bool order_line_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void order_line_t::random(table_row_t* ptuple, int id,
-			  int d_id,
-			  int w_id,
-			  int ol_index,
-			  bool delivery)
-{
-    char   string[MAX_INT_LEN];
-    timestamp_t  time;
-
-    assert (false); // (ip) deprecated
-
-    /* o_id */
-    ptuple->set_value(0, id);
-
-    /* d_id */
-    ptuple->set_value(1, d_id);
-
-    /* w_id */
-    ptuple->set_value(2, w_id);
-
-    /* number */
-    ptuple->set_value(3, ol_index);
-
-    /* i_id */
-    ptuple->set_value(4, _tpccrnd.random_integer(1, ITEMS));
-
-    /* supply_w_id */
-    ptuple->set_value(5, w_id);
-
-    /* delivery */
-    if (delivery) {
-	ptuple->set_value(6, time);
-    }
-    else 
-        ptuple->set_null(6);
-
-    /* quantity */
-    ptuple->set_value(7, (int)5);
-
-    /* amount */
-    ptuple->set_value(8, _tpccrnd.random_integer(1, 999999));
-
-    /* dist_info */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(9, string);
-}
-
 
 /*********************************************************************
  *
@@ -671,31 +356,6 @@ bool item_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     return (true);
 }
 
-void item_t::random(table_row_t* ptuple, int id)
-{
-    char   string[MAX_INT_LEN];
-    int    hit;
-
-    assert (false); // (ip) deprecated
-
-    /* id */
-    ptuple->set_value(0, id);
-
-    /* im_id */
-    ptuple->set_value(1, (int)_tpccrnd.random_integer(1, 10000));
-
-    /* name */
-    _tpccrnd.random_a_string(string, 14, 24);
-    ptuple->set_value(2, string);
-
-    /* price */
-    ptuple->set_value(3, _tpccrnd.random_integer(100, 10000));
-
-    /* data */
-    _tpccrnd.string_with_original(string, 26, 50, 10.5, &hit);
-    ptuple->set_value(4, string);
-}
-
 
 /*********************************************************************
  *
@@ -712,7 +372,6 @@ bool stock_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     record = parser.parse_row(buf);
 
     /* 2. convert the object to a table_row_t */
-
 
     /* i_id */
     tuple.set_value(0, record.second.S_I_ID);
@@ -750,75 +409,4 @@ bool stock_t::read_tuple_from_line(table_row_t& tuple, char* buf)
     tuple.set_value(16, record.second.S_DATA);
 
     return (true);
-}
-
-void stock_t::random(table_row_t* ptuple, int id, int w_id)
-{
-    char   string[MAX_INT_LEN];
-    int    hit;
-
-    assert (false); // (ip) Modified schema
-    assert (false); // (ip) deprecated
-
-    /* i_id */
-    ptuple->set_value(0, id);
-
-    /* w_id */
-    ptuple->set_value(1, w_id);
-
-    /* quantity */
-    ptuple->set_value(2, (int)_tpccrnd.random_integer(10, 100));
-
-    /* dist0 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(3, string);
-
-    /* dist1 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(4, string);
-
-    /* dist2 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(5, string);
-
-    /* dist3 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(6, string);
-
-    /* dist4 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(7, string);
-
-    /* dist5 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(8, string);
-
-    /* dist6 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(9, string);
-
-    /* dist7 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(10, string);
-
-    /* dist8 */
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(11, string);
-
-    /* dist9 */ 
-    _tpccrnd.random_a_string(string, 24, 24);
-    ptuple->set_value(12, string);
-
-    /* ytd */
-    ptuple->set_value(13, (int)0);
-
-    /* order_cnt */
-    ptuple->set_value(14, (int)0);
-
-    /* remote_cnt */
-    ptuple->set_value(15, (int)0);
-
-    /* data */
-    _tpccrnd.string_with_original(string, 26, 50, 10.5, &hit);
-    ptuple->set_value(16, string);
 }
