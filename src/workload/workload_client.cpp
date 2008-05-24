@@ -31,10 +31,7 @@ workload_client_t::workload_client_t(const c_str      &name,
       _wait(wait),
       _num_iterations(num_iterations),
       _think_time_sec(think_time_sec)
-{
-    // allocate any memory required for this driver
-    allocate_resources();
-            
+{            
     // reset timer
     execution_time_t::reset(_etime);
 }
@@ -45,9 +42,6 @@ inline workload_client_t::~workload_client_t() {
     // we don't own the execution_time_t
     // we don't own the driver_t
     // we don't own the client_wait_t
-
-    // we own our memory object
-    deallocate_resources();
 }
 
 
@@ -70,7 +64,7 @@ void workload_client_t::work() {
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' started at %lld\n",
 	      _driver->description().data(), qtime.now());
 
-        _driver->submit(_driver_arg, &_mem);
+        _driver->submit(_driver_arg);
 
 	TRACE(TRACE_RESPONSE_TIME, "Query '%s' finished at %lld\n",
 	      _driver->description().data(), qtime.now());

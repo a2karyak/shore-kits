@@ -6,7 +6,6 @@
 #include <cassert>
 #include <cstddef>
 #include <unistd.h>
-#include <db_cxx.h>
 #include "util/trace.h"
 #include "util/exception.h"
 
@@ -378,102 +377,6 @@ struct fd_guard_t : guard_base_t<int, fd_guard_t> {
 };
 
 
-
-
-/**
- * @brief Support class for cursor_guard_t
- */
-struct cursor_info_t {
-    Db* _db;
-    Dbc* _cursor;
-    cursor_info_t(Db* db, Dbc* cursor)
-        : _db(db), _cursor(cursor)
-    {
-    }
-};
-
-/**
- * @brief Ensures that a BDB cursor gets closed. The Db* is necessary
- * for error reporting
- */
-struct cursor_guard_t : guard_base_t<cursor_info_t, cursor_guard_t> {
-    typedef guard_base_t<cursor_info_t, cursor_guard_t> Base;
-    static cursor_info_t open_cursor(Db* db) {
-        Dbc *dbc;
-        int ret = db->cursor(NULL, &dbc, 0);
-        if(ret) {
-            db->err(ret, "db->cursor() failed: ");
-            THROW1(BdbException, "Unable to open DB cursor");
-        }
-
-        return cursor_info_t(db, dbc);
-    }
-    cursor_guard_t(Db* db)
-        : Base(open_cursor(db))
-    {
-    }
-    cursor_guard_t(Db* db, Dbc* cursor)
-        : Base(cursor_info_t(db, cursor))
-    {
-    }
-    cursor_guard_t(const cursor_info_t &info)
-        : Base(info)
-    {
-    }
-    static void guard_action(cursor_info_t &info) {
-        if(info._cursor) {
-            int ret = info._cursor->close();
-            if(ret)
-                info._db->err(ret, "_cursor->close() failed: ");
-        }
-    }
-    static cursor_info_t null_value() {
-        return cursor_info_t(NULL, NULL);
-    }
-    static bool different(const cursor_info_t &a, const cursor_info_t &b) {
-        return a._cursor != b._cursor;
-    }
-    operator Dbc*() const {
-        return Base::get()._cursor;
-    }
-    Dbc &operator *() const {
-        return *Base::get()._cursor;
-    }
-    Dbc* operator ->() const {
-        return Base::get()._cursor;
-    }
-};
-
-struct dbt_guard_t : guard_base_t<Dbt, dbt_guard_t> {
-    typedef guard_base_t<Dbt, dbt_guard_t> Base;
-
-    // The blob must be aligned for int accesses and a multiple of
-    // 1024 bytes long.
-    dbt_guard_t(size_t len)
-        : Base(Dbt(new int[len/sizeof(int)], len))
-    {
-        _obj.set_flags(DB_DBT_USERMEM);
-        _obj.set_ulen(_obj.get_size());
-    }
-    static void guard_action(const Dbt &dbt) {
-        delete [] (int*) dbt.get_data();
-    }
-    static Dbt null_value() {
-        return Dbt();
-    }
-    static bool different(const Dbt &a, const Dbt &b) {
-        return a.get_data() != b.get_data();
-    }
-    operator Dbt*() const {
-        return &_obj;
-    }
-    Dbt &operator *() const {
-        return _obj;
-    }
-    Dbt* operator ->() const {
-        return &_obj;
-    }
-};
 
 
 #endif

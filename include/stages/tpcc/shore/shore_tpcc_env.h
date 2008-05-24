@@ -13,10 +13,11 @@
 #include "sm_vas.h"
 #include "util.h"
 
+#include "core/trx_packet.h"
+
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_input.h"
-#include "stages/tpcc/common/trx_packet.h"
 
 #include "sm/shore/shore_env.h"
 

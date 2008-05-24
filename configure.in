@@ -21,7 +21,7 @@ AC_MSG_NOTICE(Configuring Cordoba)
 
 # Set here the version numbers
 CORDOBA_VERSION_MAJOR="stagetrx"
-CORDOBA_VERSION_MINOR=1
+CORDOBA_VERSION_MINOR=2
 CORDOBA_VERSION_REV=0
 CORDOBA_VERSION=$CORDOBA_VERSION_MAJOR.$CORDOBA_VERSION_MINOR.$CORDOBA_VERSION_REV
 
@@ -132,25 +132,21 @@ fi
 case "$target" in
   # Sparc Solaris
   *sparc*sun*)
-    BDB_HOME_DEFAULT="$HOME/apps/berkeleydb"
     BOOST_HOME_DEFAULT="$HOME/apps/boost"
     SHORE_HOME_DEFAULT="$HOME/apps/shore"
     ;;
 
   *ppc*)
-    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
     BOOST_HOME_DEFAULT="/usr/software/boost"
     SHORE_HOME_DEFAULT="/usr/software/shore"
     ;;
 
   *ia64*)
-    BDB_HOME_DEFAULT="$HOME/work/apps/berkeleydb"
     BOOST_HOME_DEFAULT="$HOME/work/apps/boost"
     SHORE_HOME_DEFAULT="$HOME/work/apps/shore"
     ;;
 
  *)
-    BDB_HOME_DEFAULT="/usr/software/berkeleydb"
     BOOST_HOME_DEFAULT="/usr/software/boost"
     SHORE_HOME_DEFAULT="/usr/software/shore"
     ;;
@@ -159,7 +155,6 @@ esac
 # getting user parameters
 AC_ARG_VAR(BOOST_HOME, Location of Boost Installation; default is $BOOST_HOME_DEFAULT)
 AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
-AC_ARG_VAR(BDB_HOME, Location of Berkeley DB Installation; default is $BDB_HOME_DEFAULT)
 
 
 # this specifies the root of the source tree; it's just the
@@ -202,31 +197,6 @@ fi
 
 AC_MSG_RESULT($SHORE_HOME)
 
-
-# get berkeley db location and version (not implem)
-AC_MSG_CHECKING(BerkeleyDB directory)
-if test -z $BDB_HOME; then
-    BDB_HOME=$BDB_HOME_DEFAULT
-fi
-
-if ! test -d $BDB_HOME -a -f $BDB_HOME/include/db.h; then
-    AC_ERROR([
-            BerkeleyDB at $BDB_HOME not found;
-            Please run ./configure BDB_HOME=where berkeleydb is located])
-fi
-
-AC_MSG_RESULT($BDB_HOME)
-
-# berkeleydb version
-AC_MSG_CHECKING(BerkeleyDB version)
-
-bdb_ver=`cat $BDB_HOME/include/db.h | grep 'DB_VERSION_STRING' | sed 's/^.*Berkeley DB //'`
-bdb_major=`echo $bdb_ver | sed 's/\..*$//'`
-[bdb_mid=`echo $bdb_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
-[bdb_minor=`echo $bdb_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/:.*$//'`]
-
-BDB_VERSION="$bdb_major.$bdb_mid.$bdb_minor"
-AC_MSG_RESULT($BDB_VERSION)
 
 
 # ----------- platform-specific code -------------
@@ -307,8 +277,6 @@ NEWLINE="\\
 #features="$features socket=yes"
 
 # cordoba features
-features="bdb=yes"              # configure for BerkeleyDB
-features="$features inmem=yes"  # configure for in-memory
 features="$features shore=yes"  # configure for shore 
 
 CORDOBA_FEATURES=""
@@ -334,14 +302,6 @@ done
 
 
 echo $CORDOBA_FEATURES
-
-# *** no longer needed
-# At least one architecture must be enabled
-#if ! (echo $CORDOBA_FEATURES | $EGREP "(tpcc)|(tpch)" >/dev/null); then
-#    AC_MSG_ERROR([
-#      At least one of the tpcc, tpch workloads must be enabled.
-#    ])
-#fi
 
 
 ## Now produce the CORDOBA_FEATURES_DEFINES
@@ -441,8 +401,6 @@ Cordoba configuration:
   CC Compiler:              CC                   $CC    
   CXX Compiler:             CXX                  $CXX
   CC version                CXX_VERSION          $CORDOBA_CXX_VERSION
-  BerkeleyDB home:          BDB_HOME             $BDB_HOME
-  BerkeleyDB version:       BDB_VERSION          $BDB_VERSION
   Boost home:               BOOST_HOME           $BOOST_HOME
   Shore home:               SHORE_HOME           $SHORE_HOME
   Architecture/OS:          ARCHOS               $ARCHOS

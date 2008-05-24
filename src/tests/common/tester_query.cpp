@@ -4,14 +4,6 @@
 
 #include "scheduler.h"
 
-#include "workload/tpch/tpch_db.h"
-#include "workload/tpcc/tpcc_db.h"
-
-
-using namespace tpcc;
-using namespace tpch;
-
-
 
 ////////////////////////////
 ///// Staged execution /////
@@ -37,15 +29,10 @@ query_info_t query_init(int argc, char* argv[], int env) {
     // open database
     switch (env) {
 
-    case (QUERY_ENV): 
-        tpch::db_open(); 
-        break;
-
     case (TRX_MEM_ENV):
         break;
 
     default:
-        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
         break;
     }
 
@@ -63,11 +50,9 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
 
     TRACE_SET(TESTER_TRACE_MASK);
 
-    memObject_t mem;
-
     for(int i=0; i < info.num_iterations; i++) {
         stopwatch_t timer;
-        driver->submit(info._policy, &mem);
+        driver->submit(info._policy);
         TRACE(TRACE_STATISTICS, "Query executed in %.3lf s\n", timer.time());
     }
 
@@ -75,15 +60,10 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
     // open database
     switch (env) {
 
-    case (QUERY_ENV): 
-        tpch::db_close(); 
-        break;
-
     case (TRX_MEM_ENV):
         break;
 
     default:
-        tpcc::db_close();
         break;
     }
 
@@ -129,15 +109,10 @@ query_info_t query_single_thr_init(int argc, char* argv[], int env) {
     // open database
     switch (env) {
 
-    case (QUERY_ENV): 
-        tpch::db_open(); 
-        break;
-
     case (TRX_MEM_ENV):
         break;
 
     default:
-        tpcc::db_open(BDB_TPCC_LOGGING_METHOD, BDB_TPCC_DB_OPEN_FLAGS);
         break;
     }
 

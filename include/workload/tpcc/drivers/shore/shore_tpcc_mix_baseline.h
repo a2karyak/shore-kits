@@ -69,7 +69,7 @@ public:
             delete (p_stlev_baseline_driver);
     }
     
-    virtual void submit(void* disp, memObject_t* mem);
+    virtual void submit(void* disp);
 };
 
 

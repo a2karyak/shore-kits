@@ -4,8 +4,6 @@
 #define __WORKLOAD_CLIENT_H
 
 
-#include "memory/mem_obj.h"
-
 #include "workload/driver.h"
 #include "workload/client_sync.h"
 #include "workload/measurements.h"
@@ -36,8 +34,6 @@ private:
     int _think_time_sec;
 
 public:
-
-    memObject_t _mem;
     
 
     workload_client_t(const c_str      &name,
@@ -51,17 +47,6 @@ public:
     virtual ~workload_client_t();
 
     virtual void work();
-
-    virtual void allocate_resources() {
-        assert(_driver);
-        _driver->f_allocate(&_mem);
-    }
-
-    virtual void deallocate_resources() {
-        assert(_driver);
-        _driver->f_deallocate(&_mem);
-    }
-
 
 }; // EOF workload_client
 

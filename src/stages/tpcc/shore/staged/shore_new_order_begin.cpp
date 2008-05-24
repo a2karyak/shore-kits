@@ -8,7 +8,7 @@
  */
 
 #include "stages/tpcc/shore/staged/shore_new_order_begin.h"
-#include "workload/common.h"
+#include "stages/common.h"
 
 
 

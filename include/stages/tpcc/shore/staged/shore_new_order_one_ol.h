@@ -16,7 +16,7 @@
 #include "core.h"
 #include "util.h"
 
-#include "stages/tpcc/common/trx_packet.h"
+#include "core/trx_packet.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 
 using namespace qpipe;

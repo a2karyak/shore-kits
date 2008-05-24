@@ -6,8 +6,10 @@
  */
 
 #include <ltdl.h>
+
+#include "workload/driver_directory.h"
+
 #include "server/command/load_handler.h"
-#include "server/command/tpch_handler.h"
 
 
 #ifdef __SUNPRO_CC
@@ -18,11 +20,11 @@ using namespace workload;
 
 typedef scheduler::policy_t* (*policy_factory)();
 typedef workload::driver_t* (*driver_factory)(const c_str& description,
-                                               driver_directory_t* directory);
+                                              driver_directory_t* directory);
 typedef command_handler_t* (*command_factory)();
 
 extern void add_command(const char*  command_tag, command_handler_t* handler);
-extern tpch_handler_t* tpch_handler;
+
 
 void load_handler_t::init() {
     assert(lt_dlinit() == 0);
@@ -74,7 +76,8 @@ void load_handler_t::handle_command(char const* command) {
             }
 
             printf("Registering policy '%s'\n", policy);
-            tpch_handler->add_scheduler_policy(policy, f());
+            assert (false); // not implemented
+            //tpch_handler->add_scheduler_policy(policy, f());
         }
     }
     else if(!strcasecmp(subcommand, "driver")) {
@@ -89,7 +92,8 @@ void load_handler_t::handle_command(char const* command) {
             }
 
             printf("Registering driver '%s'\n", driver);
-            tpch_handler->add_driver(driver, f(driver, tpch_handler));
+            assert (false); // not implemented
+            //tpch_handler->add_driver(driver, f(driver, tpch_handler));
         }
     }
     else if(!strcasecmp(subcommand, "command")) {

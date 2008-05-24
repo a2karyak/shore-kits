@@ -10,7 +10,7 @@
 
 #include "scheduler.h"
 #include "util.h"
-#include "workload/common.h"
+#include "stages/common.h"
 #include "workload/tpcc/drivers/shore/shore_tpcc_new_order_baseline.h"
 
 
@@ -21,7 +21,7 @@ using namespace tpcc;
 ENTER_NAMESPACE(workload);
 
 
-void shore_tpcc_new_order_baseline_driver::submit(void* disp, memObject_t*) {
+void shore_tpcc_new_order_baseline_driver::submit(void* disp) {
  
     scheduler::policy_t* dp = (scheduler::policy_t*)disp;
 

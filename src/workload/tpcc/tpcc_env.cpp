@@ -17,19 +17,9 @@
 using namespace tpcc;
 
 
-// BDB indexes
-
-// (ip) Should decide which indexes to create
-
-/*
-Db* tpch::tpch_lineitem_shipdate = NULL;
-Db* tpch::tpch_lineitem_shipdate_idx = NULL;
-*/
-
 /* exported data structures */
 
 #define TABLE(name) { TBL_FILENAME_##name, \
-                      BDB_FILENAME_##name, \
                       TABLE_ID_##name,     \
                       NULL, \
                       tpcc_bt_compare_fn_##name, \

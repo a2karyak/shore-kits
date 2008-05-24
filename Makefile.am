@@ -9,7 +9,7 @@ SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -
 
 
 # GLOBAL includes
-INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include -I$(BOOST_HOME) $(SHORE_INCLUDES)
+INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES)
 
 # List of libraries
 lib_LIBRARIES = \
@@ -18,71 +18,32 @@ lib_LIBRARIES = \
    lib/libdbgen.a lib/libsm.a
 
 # GLOBAL ld
-LDADD = $(lib_LIBRARIES) $(BDB_HOME)/lib/libdb_cxx.a $(SHORE_LDADD)
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD)
 
-
-#\
-   tests/max_timers \
-   tests/thread_cputime
 
 TESTS = \
    tests/alloc \
    tests/cpu_binding \
-   tests/rand_array_access \
    tests/trace \
    tests/itimer_keypress \
    tests/itimer_threads \
-   tests/constants \
    tests/bitvector \
    tests/hashtable \
-   tests/send_tuples \
-   tests/tuple_buffer \
    tests/context_set \
    tests/context_makecontext \
    tests/context_producer_consumer \
-   tests/tpch_struct_sizes \
-   tests/fscan_stage \
-   tests/fdump_stage \
-   tests/tscan_stage \
-   tests/customer_load \
-   tests/func_call_stage \
-   tests/aggregate_stage \
-   tests/merge_stage \
-   tests/sort_stage \
-   tests/hash_join_stage \
-   tests/bnl_in_stage \
-   tests/q4 \
-   tests/q6 \
-   tests/q6_disp \
-   tests/q13 \
-   tests/q14 \
-   tests/q12 \
-   tests/q16 \
-   tests/q19 \
-   tests/q1 \
-   tests/q4 \
    tests/hash_map \
-   tests/grouper \
    tests/busy_wait \
    tests/busy_wait_all \
-   tests/payment \
-   tests/payment_baseline \
-   tests/payment_single_thr \
-   tests/inmem_payment_single_thr \
    tests/acounter \
-   tests/tpch_load \
-   tests/tpcc_load \
-   tests/tpcc_load_mt \
-   tests/tpcc_load_confirm \
    tests/clh_lock \
    tests/clh_rwlock \
    tests/bptree \
-   tests/tpcc_load_shore \
-   tests/tpcc_kit \
-   tests/old_shore_load \
    tests/raii_file \
    tests/config_file_example \
-   tests/row_cache
+   tests/row_cache \
+   tests/tpcc_load_shore \
+   tests/tpcc_kit
 
 
 DBGEN = \
@@ -90,8 +51,7 @@ DBGEN = \
 
 
 
-
-bin_PROGRAMS = qpipe $(TESTS) $(DBGEN)
+bin_PROGRAMS = stagedtrx $(TESTS) $(DBGEN)
 
 tests: $(TESTS)
 
@@ -144,6 +104,7 @@ SC=$(top_srcdir)/src/core
 lib_libcore_a_SOURCES = \
 	$(SC)/dispatcher.cpp \
 	$(SC)/packet.cpp \
+	$(SC)/trx_packet.cpp \
 	$(SC)/stage_container.cpp \
 	$(SC)/tuple.cpp \
 	$(SC)/tuple_fifo.cpp \
@@ -196,57 +157,18 @@ lib_libsm_a_SOURCES = \
 ################################################################################
 
 SG=$(top_srcdir)/src/stages
-SG_MAIN = \
-   $(SG)/fscan.cpp \
-   $(SG)/fdump.cpp \
-   $(SG)/tscan.cpp \
-   $(SG)/aggregate.cpp \
-   $(SG)/partial_aggregate.cpp \
-   $(SG)/hash_aggregate.cpp \
-   $(SG)/sorted_in.cpp \
-   $(SG)/hash_join.cpp \
-   $(SG)/pipe_hash_join.cpp \
-   $(SG)/func_call.cpp \
-   $(SG)/merge.cpp \
-   $(SG)/sort.cpp \
-   $(SG)/bnl_join.cpp \
-   $(SG)/bnl_in.cpp \
-   $(SG)/echo.cpp \
-   $(SG)/sieve.cpp
 
 SG_COMMON = \
-   $(SG)/common/process_query.cpp \
-   $(SG)/common/predicates.cpp 
+   $(SG)/common/process_query.cpp
 
-SG_TRX_COMMON = \
-   $(SG)/tpcc/common/trx_packet.cpp \
+SG_TPCC_COMMON = \
    $(SG)/tpcc/common/tpcc_input.cpp \
    $(SG)/tpcc/common/tpcc_trx_input.cpp \
    $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
    $(SG)/tpcc/common/tpcc_random.cpp
 
-SG_BDB_TRX = \
-   $(SG)/tpcc/bdb/payment_functions.cpp \
-   $(SG)/tpcc/bdb/payment_baseline.cpp \
-   $(SG)/tpcc/bdb/payment_begin.cpp \
-   $(SG)/tpcc/bdb/payment_upd_wh.cpp \
-   $(SG)/tpcc/bdb/payment_upd_distr.cpp \
-   $(SG)/tpcc/bdb/payment_upd_cust.cpp \
-   $(SG)/tpcc/bdb/payment_ins_hist.cpp \
-   $(SG)/tpcc/bdb/payment_finalize.cpp
-
-SG_INMEM_TRX = \
-   $(SG)/tpcc/inmem/inmem_payment_functions.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_baseline.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_begin.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_upd_wh.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_upd_distr.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_upd_cust.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_ins_hist.cpp \
-   $(SG)/tpcc/inmem/inmem_payment_finalize.cpp
-
-SG_SHORE_TRX = \
+SG_TPCC_SHORE = \
    $(SG)/tpcc/shore/shore_tpcc_random.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema_man.cpp \
@@ -258,7 +180,7 @@ SG_SHORE_TRX = \
    $(SG)/tpcc/shore/shore_delivery_baseline.cpp \
    $(SG)/tpcc/shore/shore_stock_level_baseline.cpp
 
-SG_SHORE_STAGED_TRX = \
+SG_TPCC_SHORE_STAGED = \
    $(SG)/tpcc/shore/staged/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_begin.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_finalize.cpp \
@@ -277,14 +199,10 @@ SG_SHORE_STAGED_TRX = \
 lib_libstages_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
 lib_libstages_a_SOURCES = \
-   $(SG_MAIN) \
    $(SG_COMMON) \
-   $(SG_TRX_COMMON) \
-   $(SG_BDB_TRX) \
-   $(SG_INMEM_TRX) \
-   $(SG_SHORE) \
-   $(SG_SHORE_TRX) \
-   $(SG_SHORE_STAGED_TRX)
+   $(SG_TPCC_COMMON) \
+   $(SG_TPCC_SHORE) \
+   $(SG_TPCC_SHORE_STAGED)
 
 
 
@@ -302,61 +220,9 @@ WL_BASE = \
    $(SW)/register_stage_containers.cpp \
    $(SW)/dispatcher_globals.cpp
 
-WL_COMMON = \
-   $(SW)/common/table_load.cpp \
-   $(SW)/common/table_compare.cpp
-
-WL_TPCH = \
-   $(SW)/tpch/tpch_db.cpp \
-   $(SW)/tpch/tpch_env.cpp \
-   $(SW)/tpch/tpch_tbl_parsers.cpp \
-   $(SW)/tpch/tpch_tbl_readers.cpp \
-   $(SW)/tpch/tpch_compare.cpp \
-   $(SW)/tpch/tpch_type_convert.cpp \
-   $(SW)/tpch/drivers/merge_test.cpp  \
-   $(SW)/tpch/q6_packet.cpp \
-   $(SW)/tpch/drivers/tpch_q1.cpp  \
-   $(SW)/tpch/drivers/tpch_q4.cpp  \
-   $(SW)/tpch/drivers/tpch_q6.cpp  \
-   $(SW)/tpch/drivers/tpch_q12.cpp \
-   $(SW)/tpch/drivers/tpch_q13.cpp \
-   $(SW)/tpch/drivers/tpch_q14.cpp \
-   $(SW)/tpch/drivers/tpch_q16.cpp \
-   $(SW)/tpch/drivers/tpch_q19.cpp \
-   $(SW)/tpch/drivers/tpch_m_1_4_6_12.cpp \
-   $(SW)/tpch/drivers/tpch_upto13.cpp \
-   $(SW)/tpch/drivers/tpch_m146.cpp \
-   $(SW)/tpch/drivers/tpch_m14612.cpp \
-   $(SW)/tpch/drivers/tpch_sim_mix.cpp
-
-WL_TPCC = \
-   $(SW)/tpcc/tpcc_db.cpp \
-   $(SW)/tpcc/tpcc_env.cpp \
-   $(SW)/tpcc/tpcc_tbl_readers.cpp \
-   $(SW)/tpcc/tpcc_compare.cpp
-
-
-WL_BDB_COMMON = \
-   $(SW)/common/bdb_env.cpp \
-   $(SW)/common/bdb_txn.cpp \
-   $(SW)/tpcc/bdb_tbl_parsers.cpp
-
-WL_BDB_TPCC_PAYMENT = \
-   $(SW)/tpcc/drivers/bdb/tpcc_payment.cpp \
-   $(SW)/tpcc/drivers/bdb/tpcc_payment_baseline.cpp \
-   $(SW)/tpcc/drivers/bdb/tpcc_payment_nos.cpp \
-   $(SW)/tpcc/drivers/bdb/tpcc_payment_single_thr.cpp
-
-WL_INMEM_TPCC_PAYMENT = \
-   $(SW)/tpcc/inmem_tpcc_env.cpp \
-   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_baseline.cpp \
-   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_staged.cpp \
-   $(SW)/tpcc/drivers/inmem/inmem_tpcc_payment_single_thr.cpp
-
-WL_SHORE_COMMON = \
-   $(SW)/tpcc/shore_tpcc_load.cpp
 
 WL_SHORE_TPCC = \
+   $(SW)/tpcc/shore_tpcc_load.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_baseline.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_staged.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp \
@@ -369,13 +235,6 @@ WL_SHORE_TPCC = \
 
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
-   $(WL_COMMON) \
-   $(WL_TPCH) \
-   $(WL_TPCC) \
-   $(WL_BDB_COMMON) \
-   $(WL_BDB_TPCC_PAYMENT) \
-   $(WL_INMEM_TPCC_PAYMENT) \
-   $(WL_SHORE_COMMON) \
    $(WL_SHORE_TPCC)
 
 
@@ -418,11 +277,10 @@ lib_libtest_a_CXXFLAGS = $(AM_CXXFLAGS)
 
 lib_libtest_a_SOURCES = \
    $(STC)/drive_stage.cpp \
-   $(STC)/int_tuple_writer.cpp \
    $(STC)/tester_query.cpp \
    $(STC)/cpu_bind.cpp \
-   $(STC)/busy_wait.cpp \
-   $(STC)/q6_client.cpp
+   $(STC)/busy_wait.cpp
+
 
 
 ################################################################################
@@ -435,65 +293,35 @@ ST = $(top_srcdir)/src/tests
 
 TEST_LIBS = lib/libtest.a $(LDADD)
 
+#########
+#
+# SOURCES
+#
+#########
+
 tests_alloc_SOURCES = $(ST)/test_alloc.cpp
 tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
-tests_rand_array_access_SOURCES = $(ST)/test_rand_array_access.cpp
 tests_trace_SOURCES = $(ST)/test_trace.cpp
 tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
 tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
-#tests_thread_cputime_SOURCES = $(ST)/test_thread_cputime.cpp
-#tests_max_timers_SOURCES = $(ST)/test_max_timers.cpp
-tests_constants_SOURCES = $(ST)/test_constants.cpp
 tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
 tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
-tests_send_tuples_SOURCES = $(ST)/test_send_tuples.cpp
-tests_tuple_buffer_SOURCES = $(ST)/test_tuple_buffer.cpp
 tests_context_set_SOURCES = = $(ST)/test_context_set.cpp
 tests_context_makecontext_SOURCES = $(ST)/test_context_makecontext.cpp
 tests_context_producer_consumer_SOURCES = $(ST)/test_context_producer_consumer.cpp
-
-tests_fdump_stage_SOURCES = $(ST)/test_fdump_stage.cpp
-tests_merge_stage_SOURCES = $(ST)/test_merge_stage.cpp
-tests_sort_stage_SOURCES = $(ST)/test_sort_stage.cpp
-tests_fscan_stage_SOURCES = $(ST)/test_fscan_stage.cpp
-tests_tscan_stage_SOURCES = $(ST)/test_tscan_stage.cpp
-tests_customer_load_SOURCES = $(ST)/test_customer_load.cpp
-tests_func_call_stage_SOURCES = $(ST)/test_func_call_stage.cpp
-tests_aggregate_stage_SOURCES = $(ST)/test_aggregate_stage.cpp
-tests_hash_join_stage_SOURCES = $(ST)/test_hash_join_stage.cpp
-tests_bnl_in_stage_SOURCES = $(ST)/test_bnl_in_stage.cpp
-tests_tpch_struct_sizes_SOURCES = $(ST)/tpch_struct_sizes.cpp
-tests_q4_SOURCES = $(ST)/test_q4.cpp
-tests_q6_SOURCES = $(ST)/test_q6.cpp
-tests_q13_SOURCES = $(ST)/test_q13.cpp
-tests_q14_SOURCES = $(ST)/test_q14.cpp
-tests_q12_SOURCES = $(ST)/test_q12.cpp
-tests_q16_SOURCES = $(ST)/test_q16.cpp
-tests_q19_SOURCES = $(ST)/test_q19.cpp
-tests_q6_disp_SOURCES = $(ST)/test_q6_disp.cpp
-tests_q1_SOURCES = $(ST)/test_q1.cpp
 tests_hash_map_SOURCES = $(ST)/test_hash_map.cpp
-tests_grouper_SOURCES = $(ST)/grouper.cpp
 tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
 tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
-tests_payment_SOURCES = $(ST)/test_payment.cpp
-tests_payment_baseline_SOURCES = $(ST)/test_payment_baseline.cpp
-tests_payment_single_thr_SOURCES = $(ST)/test_payment_single_thr.cpp
-tests_inmem_payment_single_thr_SOURCES = $(ST)/test_inmem_payment_single_thr.cpp
 tests_acounter_SOURCES = $(ST)/test_acounter.cpp
-tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
-tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
-tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
-tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
-tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
-tests_old_shore_load_SOURCES = $(ST)/old_shore_load.cpp
-tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
-tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
 tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
+tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
+
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
+tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
+tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
 
 
 # exec files that need Shore
@@ -501,49 +329,21 @@ tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_load_shore_LDADD = $(TEST_LIBS)
 tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_LDADD = $(TEST_LIBS)
-tests_old_shore_load_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_old_shore_load_LDADD = $(TEST_LIBS)
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
 
+#######
+#
+# LDADD
+#
+#######
+
 tests_cpu_binding_LDADD = $(TEST_LIBS)
-tests_rand_array_access_LDADD = $(TEST_LIBS)
-#tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
-#tests_max_timers_LDADD = lib/libutil.a -lrt
 tests_trace_LDADD = $(TEST_LIBS)
-tests_tuple_buffer_LDADD = $(TEST_LIBS)
 tests_bitvector_LDADD = $(TEST_LIBS)
-tests_fdump_stage_LDADD = $(TEST_LIBS)
-tests_merge_stage_LDADD = $(TEST_LIBS)
-tests_sort_stage_LDADD = $(TEST_LIBS)
-tests_fscan_stage_LDADD = $(TEST_LIBS)
-tests_tscan_stage_LDADD = $(TEST_LIBS)
-tests_func_call_stage_LDADD = $(TEST_LIBS)
-tests_aggregate_stage_LDADD = $(TEST_LIBS)
-tests_hash_join_stage_LDADD = $(TEST_LIBS)
-tests_bnl_in_stage_LDADD = $(TEST_LIBS)
-tests_tpch_struct_sizes_LDADD = $(TEST_LIBS)
-tests_q4_LDADD = $(TEST_LIBS)
-tests_q6_LDADD = $(TEST_LIBS)
-tests_q13_LDADD = $(TEST_LIBS)
-tests_q14_LDADD = $(TEST_LIBS)
-tests_q12_LDADD = $(TEST_LIBS)
-tests_q16_LDADD = $(TEST_LIBS)
-tests_q19_LDADD = $(TEST_LIBS)
-tests_q6_disp_LDADD = $(TEST_LIBS)
-tests_q1_LDADD = $(TEST_LIBS)
 tests_hash_map_LDADD = $(TEST_LIBS)
-tests_grouper_LDADD = $(TEST_LIBS)
 tests_busy_wait_LDADD = $(TEST_LIBS)
 tests_busy_wait_all_LDADD = $(TEST_LIBS)
-tests_payment_LDADD = $(TEST_LIBS)
-tests_payment_baseline_LDADD = $(TEST_LIBS)
-tests_payment_single_thr_LDADD = $(TEST_LIBS)
-tests_inmem_payment_single_thr_LDADD = $(TEST_LIBS)
-tests_tpch_load_LDADD = $(TEST_LIBS)
-tests_tpcc_load_LDADD = $(TEST_LIBS)
-tests_tpcc_load_mt_LDADD = $(TEST_LIBS)
-tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
 tests_bptree_LDADD = $(TEST_LIBS)
 tests_clh_lock_LDADD = $(TEST_LIBS)
 tests_clh_rwlock_LDADD = $(TEST_LIBS)
@@ -561,26 +361,23 @@ SE = $(top_srcdir)/src/server
 
 # FIXME: FRJ: removed because CC doesn't like it. Need to track down
 # its version and select between the two properly.
-#qpipe_LDFLAGS = -Wl,-export-dynamic
+#stagedtrx_LDFLAGS = -Wl,-export-dynamic
 
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
-# FIXME: IP: addition to make gcc @ ia64 find <ltdl.h>. Should't hurt anybody else...
-qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
-qpipe_LDADD = $(LDADD) \
-	-lreadline \
-	-lltdl
+# FIXME: IP: addition to make gcc @ ia64 find <ltdl.h>. Shouldn't hurt anybody else...
+stagedtrx_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
+stagedtrx_LDADD = $(LDADD) \
+		-lreadline \
+		-lltdl
 
 COMMANDS = \
    $(SE)/command/printer.cpp \
    $(SE)/command/load_handler.cpp \
-   $(SE)/command/tpch_handler.cpp \
-   $(SE)/command/bdb_tpcc_handler.cpp \
-   $(SE)/command/inmem_tpcc_handler.cpp \
    $(SE)/command/shore_tpcc_handler.cpp \
    $(SE)/command/tracer.cpp
 
 
-qpipe_SOURCES = \
+stagedtrx_SOURCES = \
    $(SE)/server.cpp \
    $(SE)/command_set.cpp \
    $(SE)/interactive_mode.cpp \

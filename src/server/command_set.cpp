@@ -16,10 +16,7 @@
 #include "server/command/tracer.h"
 
 // Special purpose command handlers
-#include "server/command/tpch_handler.h"
 #include "server/command/load_handler.h"
-#include "server/command/bdb_tpcc_handler.h"
-#include "server/command/inmem_tpcc_handler.h"
 #include "server/command/shore_tpcc_handler.h"
 
 
@@ -95,25 +92,9 @@ void register_command_handlers( const int environment ) {
     switch (environment) {
 
         /** OLTP commands */
-
-    case TRX_BDB_ENV:
-        add_command("bdb", new tpcc_handler_t());
-        break;
-
     case TRX_SHORE_ENV:
-        add_command("shore", new shore_tpcc_handler_t());
-        break;
-
-    case TRX_MEM_ENV:
-        add_command("inmem", new inmem_tpcc_handler_t());
-        break;
-
-
-        /** DSS commands */
-
-    case QUERY_ENV:
     default:
-        add_command("tpch",  new tpch_handler_t());
+        add_command("shore", new shore_tpcc_handler_t());
         break;
     }
 }

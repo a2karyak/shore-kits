@@ -36,7 +36,7 @@ public:
     ~shore_tpcc_new_order_staged_driver() { 
     }
     
-    virtual void submit(void* disp, memObject_t* mem);
+    virtual void submit(void* disp);
 
     trx_packet_t* create_shore_new_order_staged_packet(tuple_fifo* bp_buffer,
                                                        tuple_filter_t* bp_filter,

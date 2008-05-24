@@ -36,7 +36,7 @@ public:
     ~shore_tpcc_order_status_baseline_driver() { 
     }
     
-    virtual void submit(void* disp, memObject_t* mem);
+    virtual void submit(void* disp);
 
     trx_packet_t* create_shore_order_status_baseline_packet(tuple_fifo* bp_buffer,
                                                             tuple_filter_t* bp_filter,

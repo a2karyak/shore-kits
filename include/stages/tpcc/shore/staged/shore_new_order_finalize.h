@@ -16,7 +16,7 @@
 #include "util.h"
 #include "scheduler.h"
 
-#include "stages/tpcc/common/trx_packet.h"
+#include "core/trx_packet.h"
 
 #include "stages/tpcc/shore/staged/shore_new_order_outside_loop.h"
 #include "stages/tpcc/shore/staged/shore_new_order_one_ol.h"

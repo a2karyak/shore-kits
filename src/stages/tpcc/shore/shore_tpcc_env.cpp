@@ -927,22 +927,26 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
                                                lowrep, highrep,
                                                c_w, c_d, ppin->_c_last));
 
-        int c_id_list[17];
+        vector<int> v_c_id;
+        int a_c_id = 0;
         int count = 0;
         bool eof;
 
         W_DO(c_iter->next(_pssm, eof, *prcust));
         while (!eof) {
-            prcust->get_value(0, c_id_list[count++]);            
+            count++;
+            prcust->get_value(0, a_c_id);
+            v_c_id.push_back(a_c_id);
+
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", 
-                   xct_id, c_id_list[count]);
+                   xct_id, a_c_id);
             W_DO(c_iter->next(_pssm, eof, *prcust));
         }
         delete c_iter;
         assert (count);
 
         /* find the customer id in the middle of the list */
-        ppin->_c_id = c_id_list[(count+1)/2-1];
+        ppin->_c_id = v_c_id[(count+1)/2-1];
     }
     assert (ppin->_c_id>0);
 
