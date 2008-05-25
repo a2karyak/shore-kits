@@ -64,7 +64,8 @@ w_rc_t warehouse_man_impl::bulkload(ss_m* db, int w_num)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(23);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(23);
 
     W_DO(db->begin_xct());
 
@@ -84,7 +85,8 @@ w_rc_t warehouse_man_impl::bulkload(ss_m* db, int w_num)
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
         // generate a random tuple
-	_ptable->random(&awh_tuple, w_id);
+        assert (false); // not implemented
+	//_ptable->random(&awh_tuple, w_id);
 
         // append it to the table
         tsz = format(&awh_tuple, reprow);
@@ -121,7 +123,8 @@ w_rc_t district_man_impl::bulkload(ss_m* db, int w_num)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(44);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(44);
 
     W_DO(db->begin_xct());
 
@@ -142,7 +145,8 @@ w_rc_t district_man_impl::bulkload(ss_m* db, int w_num)
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
             // generate a random district tuple
-	    _ptable->random(&ad_tuple, d_id, w_id, CUSTOMERS_PER_DISTRICT+1);
+            assert (false); // not implemented
+            //_ptable->random(&ad_tuple, d_id, w_id, CUSTOMERS_PER_DISTRICT+1);
 
             // append it to the table
             tsz = format(&ad_tuple, reprow);
@@ -179,7 +183,8 @@ w_rc_t customer_man_impl::bulkload(ss_m* db, int w_num)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(10);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(10);
 
     W_DO(db->begin_xct());
   
@@ -201,7 +206,8 @@ w_rc_t customer_man_impl::bulkload(ss_m* db, int w_num)
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    for (int c_id = 1; c_id <= CUSTOMERS_PER_DISTRICT; c_id++) {
                 // generate a random customer tuple
-		_ptable->random(&ac_tuple, c_id, d_id, w_id);
+                assert (false); // not implemented
+		//_ptable->random(&ac_tuple, c_id, d_id, w_id);
 
                 // append it to the table
                 tsz = format(&ac_tuple, reprow);
@@ -240,7 +246,8 @@ w_rc_t history_man_impl::bulkload(ss_m* db, int w_num)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(15);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(15);
 
     W_DO(db->begin_xct());
 
@@ -261,7 +268,9 @@ w_rc_t history_man_impl::bulkload(ss_m* db, int w_num)
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    for (int c_id = 1; c_id <= CUSTOMERS_PER_DISTRICT; c_id++) {
-		_ptable->random(&ah_tuple, c_id, d_id, w_id);
+
+                assert (false); // not implemented
+		//_ptable->random(&ah_tuple, c_id, d_id, w_id);
 
                 // append it to the table
                 tsz = format(&ah_tuple, reprow);
@@ -307,7 +316,8 @@ w_rc_t new_order_man_impl::bulkload(ss_m* db, int w_num)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(99);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(99);
 
     W_DO(db->begin_xct());
 
@@ -327,8 +337,10 @@ w_rc_t new_order_man_impl::bulkload(ss_m* db, int w_num)
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
 	    for (int o_id = o_id_lo ; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
+
                 // generate a random tuple
-		_ptable->random(&anu_tuple, o_id, d_id, w_id);
+                assert (false); // not implemented
+		//_ptable->random(&anu_tuple, o_id, d_id, w_id);
 
                 // append it to the table
                 tsz = format(&anu_tuple, reprow);
@@ -374,8 +386,10 @@ void order_man_impl::produce_cnt_array(int w_num, pthread_mutex_t* parray_mutex)
     // then create the cnt_array
     _pcnt_array = (int*)malloc(sizeof(int)*w_num*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
     assert(_pcnt_array);
-    for (int i=0; i<w_num; i++)
-	_ptable->_tpccrnd.random_ol_cnt((short*)_pcnt_array+i*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
+    for (int i=0; i<w_num; i++) {
+        assert (false); // not implemented	
+        //_ptable->_tpccrnd.random_ol_cnt((short*)_pcnt_array+i*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT);
+    }
     
 }
 
@@ -392,7 +406,9 @@ w_rc_t order_man_impl::bulkload(ss_m* db, int w_num, int* cnt_array)
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
     int index = 0;
-    _ptable->_tpccrnd.init_random(42);
+
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(42);
 
     W_DO(db->begin_xct());
 
@@ -412,14 +428,16 @@ w_rc_t order_man_impl::bulkload(ss_m* db, int w_num, int* cnt_array)
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    _ptable->_tpccrnd.seed_1_3000();
+
+            assert (false); // not implemented
+	    //_ptable->_tpccrnd.seed_1_3000();
 
 	    for (int o_id = 1; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
 		int ol_cnt = cnt_array[index++];
+
                 // generate a random tuple
-		_ptable->random(&ao_tuple, o_id, 
-                                _ptable->_tpccrnd.random_1_3000(), 
-                                d_id, w_id, ol_cnt);
+                assert (false); // not implemented                                
+		//_ptable->random(&ao_tuple, o_id, _ptable->_tpccrnd.random_1_3000(), d_id, w_id, ol_cnt);
 
                 // append it to the table
                 tsz = format(&ao_tuple, reprow);
@@ -474,8 +492,10 @@ w_rc_t order_line_man_impl::bulkload(ss_m* db, int w_num, int* cnt_array)
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
     int index = 0;
+    
     //  init_random(42, 13);
-    _ptable->_tpccrnd.init_random(47);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(47);
 
     W_DO(db->begin_xct());
 
@@ -495,7 +515,9 @@ w_rc_t order_line_man_impl::bulkload(ss_m* db, int w_num, int* cnt_array)
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id++) {
-	    _ptable->_tpccrnd.seed_1_3000();
+	    
+            assert (false); // not implemented
+            //_ptable->_tpccrnd.seed_1_3000();
 
 	    for (int o_id = 1; o_id <= CUSTOMERS_PER_DISTRICT; o_id++) {
 		int ol_cnt = cnt_array[index++];
@@ -503,10 +525,12 @@ w_rc_t order_line_man_impl::bulkload(ss_m* db, int w_num, int* cnt_array)
 		for (int ol_id = 1; ol_id <= ol_cnt; ol_id++) {
                     // generate a random tuple
 		    if (o_id < 2101) {
-			_ptable->random(&aol_tuple, o_id, d_id, w_id, ol_id);
+                        assert (false); // not implemented
+			//_ptable->random(&aol_tuple, o_id, d_id, w_id, ol_id);
 		    }
 		    else {
-			_ptable->random(&aol_tuple, o_id, d_id, w_id, ol_id, false);
+                        assert (false); // not implemented
+			//_ptable->random(&aol_tuple, o_id, d_id, w_id, ol_id, false);
 		    }
 
                     // append it to the table
@@ -547,7 +571,8 @@ w_rc_t item_man_impl::bulkload(ss_m* db, int /* w_num */)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(13);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(13);
 
     W_DO(db->begin_xct());
 
@@ -566,8 +591,10 @@ w_rc_t item_man_impl::bulkload(ss_m* db, int /* w_num */)
     int tsz = 0;
 
     for (int i_id = 1; i_id <= ITEMS; i_id++) {
+        
         // generate a random tuple
-	_ptable->random(&ai_tuple, i_id);
+        assert (false); // not implemented
+	//_ptable->random(&ai_tuple, i_id);
 
         // append it to the table
         tsz = format(&ai_tuple, reprow);
@@ -604,7 +631,8 @@ w_rc_t stock_man_impl::bulkload(ss_m* db, int w_num)
     assert (_ptable);
     TRACE( TRACE_ALWAYS, "Loading (%s) table ...\n", _ptable->name());
 
-    _ptable->_tpccrnd.init_random(7);
+    assert (false); // not implemented
+    //_ptable->_tpccrnd.init_random(7);
 
     W_DO(db->begin_xct());
 
@@ -624,8 +652,10 @@ w_rc_t stock_man_impl::bulkload(ss_m* db, int w_num)
 
     for (int w_id = 1; w_id <= w_num; w_id++) {
 	for (int s_id = 1; s_id <= STOCK_PER_WAREHOUSE; s_id++) {
+            
             // generate a random tuple
-	    _ptable->random(&as_tuple, s_id, w_id);
+            assert (false); // not implemented
+	    //_ptable->random(&as_tuple, s_id, w_id);
 
             // append it to the table
             tsz = format(&as_tuple, reprow);
