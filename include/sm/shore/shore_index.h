@@ -48,7 +48,8 @@ private:
 
     int*          _key;                      /* index of fields in the base table */
     bool          _unique;                   /* whether allow duplicates or not */
-    bool          _primary;                  /* it is primary or not */
+    bool          _primary;                  /* is it primary or not */
+    bool          _nolock;                   /* is it using locking or not */ 
 
     index_desc_t* _next;                     /* linked list of all indices */
 
@@ -64,10 +65,10 @@ public:
     /* ------------------- */
 
     index_desc_t(const char* name, const int fieldcnt, const int* fields,
-                 bool unique = true, bool primary = false)
+                 bool unique=true, bool primary=false, bool nolock=false)
         : file_desc_t(name, fieldcnt),
-          _unique(unique), _primary(primary), _next(NULL), 
-          _maxkeysize(0) 
+          _unique(unique), _primary(primary), _nolock(nolock),
+          _next(NULL), _maxkeysize(0) 
     {
         // Copy the indexes of keys
         _key = new int[_field_count];
@@ -91,6 +92,7 @@ public:
 
     inline bool is_unique() const { return (_unique); }
     inline bool is_primary() const { return (_primary); }
+    inline bool is_relaxed() const { return (_nolock); }
 
     inline int  get_keysize() { return (_maxkeysize); }
     inline void set_keysize(const int sz) {

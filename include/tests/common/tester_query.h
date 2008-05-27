@@ -36,8 +36,9 @@ struct query_info_t {
 /** Exported functions */
 
 // Staged execution
-query_info_t query_init(int argc, char* argv[], int env = QUERY_ENV);
-void query_main(query_info_t& info, workload::driver_t* driver, int env = QUERY_ENV);
+query_info_t query_init(int argc, char* argv[], int env = TRX_SHORE_ENV);
+void query_main(query_info_t& info, workload::driver_t* driver, 
+                int env = TRX_SHORE_ENV);
 
 // Conventional (single-thread per request) execution
 query_info_t query_single_thr_init(int argc, char* argv[], int env);

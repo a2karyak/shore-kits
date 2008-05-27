@@ -60,7 +60,7 @@ w_rc_t table_desc_t::create_table(ss_m* db)
                               (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
                               ss_m::t_regular,
                               index_keydesc(index),
-                              ss_m::t_cc_kvl,
+                              (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
                               iid));
 	index->set_fid(iid);
 
@@ -98,9 +98,11 @@ bool table_desc_t::create_index(const char* name,
                                 const int* fields,
                                 const int num,
                                 const bool unique,
-                                const bool primary)
+                                const bool primary,
+                                const bool nolock)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, fields, unique);
+    index_desc_t* p_index = new index_desc_t(name, num, fields, 
+                                             unique, primary, nolock);
 
     /* check the validity of the index */
     for (int i=0; i<num; i++)  {
@@ -127,9 +129,10 @@ bool table_desc_t::create_index(const char* name,
 
 bool table_desc_t::create_primary_idx(const char* name,
                                       const int* fields,
-                                      const int num)
+                                      const int num,
+                                      const bool nolock)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, fields, true, true);
+    index_desc_t* p_index = new index_desc_t(name, num, fields, true, true, nolock);
 
     /* check the validity of the index */
     for (int i=0; i<num; i++) {

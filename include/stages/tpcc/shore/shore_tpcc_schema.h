@@ -56,6 +56,18 @@ ENTER_NAMESPACE(tpcc);
  */
 
 
+/*
+ * Define CREATE_NOLOCKING_INDEXES in order to create indexes that do 
+ * not use locking -- used by stagedtrx
+ */
+#undef  CREATE_NOLOCKING_INDEXES
+//#define CREATE_NOLOCKING_INDEXES
+
+#undef  CREATE_CUST_NOLOCK_INDEXES
+#define CREATE_CUST_NOLOCK_INDEXES
+
+
+
 
 /*  --------------------------------------------------------------
  *
@@ -106,7 +118,11 @@ public:
         
         /* create unique index w_index on (w_id) */
         int  keys[1] = { 0 };
-        create_index("W_INDEX", keys, 1);
+        create_primary_idx("W_INDEX", keys, 1);
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("W_INDEX_NOLOCK", keys, 1);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -134,7 +150,11 @@ public:
 
         /* create unique index d_index on (d_id, w_id) */
         int keys[2] = { 0, 1 };
-        create_index("D_INDEX", keys, 2);
+        create_primary_idx("D_INDEX", keys, 2);
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("D_INDEX_NOLOCK", keys, 2);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -174,11 +194,21 @@ public:
 
         /* create unique index c_index on (w_id, d_id, c_id) */
         int keys1[3] = {2, 1, 0 };
-        create_index("C_INDEX", keys1, 3);
+        create_primary_idx("C_INDEX", keys1, 3);
 
         /* create index c_name_index on (w_id, d_id, last, first, id) */
         int keys2[5] = {2, 1, 5, 3, 0};
         create_index("C_NAME_INDEX", keys2, 5, false);
+
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("C_INDEX_NOLOCK", keys1, 3);
+        create_index("C_NAME_INDEX_NOLOCK", keys2, 5, false);
+#endif
+
+#ifdef CREATE_CUST_NOLOCK_INDEXES
+        create_index("C_INDEX_NOLOCK", keys1, 3);
+#endif
     }
 
 
@@ -219,7 +249,11 @@ public:
 
         /* create unique index no_index on (w_id, d_id, o_id) */
         int keys[3] = {2, 1, 0};
-        create_index("NO_INDEX", keys, 3);
+        create_primary_idx("NO_INDEX", keys, 3);
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("NO_INDEX_NOLOCK", keys, 3);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -248,6 +282,12 @@ public:
         /* create unique index o_cust_index on (w_id, d_id, c_id, o_id) */
         int keys2[4] = {3, 2, 1, 0};
         create_index("O_CUST_INDEX", keys2, 4);
+
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("O_INDEX_NOLOCK", keys1, 3);
+        create_index("O_CUST_INDEX_NOLOCK", keys2, 4);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -274,7 +314,12 @@ public:
 
 	/* create unique index ol_index on (w_id, d_id, o_id, ol_number) */
 	int keys[4] = {2, 1, 0, 3};
-	create_index("OL_INDEX", keys, 4, false);
+	create_primary_idx("OL_INDEX", keys, 4);
+        //	create_index("OL_INDEX", keys, 4, false); /* old: not unique */
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("OL_INDEX_NOLOCK", keys, 4);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -296,7 +341,11 @@ public:
 	
 	/* create unique index on i_index on (i_id) */
 	int keys[1] = {0};
-	create_index("I_INDEX", keys, 1);
+	create_primary_idx("I_INDEX", keys, 1);
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("I_INDEX_NOLOCK", keys, 1);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -332,7 +381,11 @@ public:
 
 	/* create unique index s_index on (w_id, i_id) */
 	int keys[2] = { 0, 1 };
-	create_index("S_INDEX", keys, 2);
+	create_primary_idx("S_INDEX", keys, 2);
+
+#ifdef CREATE_NOLOCKING_INDEXES
+        create_index("S_INDEX_NOLOCK", keys, 2);
+#endif
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);

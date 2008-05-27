@@ -230,7 +230,7 @@ const char* translate_trx_id(const int trx_id)
 void print_usage(char* argv[]) 
 {
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID>]\n" \
+           "%s <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
            "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \

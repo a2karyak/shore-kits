@@ -12,12 +12,12 @@
 // Engine environment
 
 // DSS environment
-#define QUERY_ENV     1
+//#define QUERY_ENV     1
 
 // variations of OLTP environments
-#define TRX_BDB_ENV   2
+//#define TRX_BDB_ENV   2
 #define TRX_SHORE_ENV 3
-#define TRX_MEM_ENV   4
+//#define TRX_MEM_ENV   4
 
 void register_stage_containers(int environment);
 

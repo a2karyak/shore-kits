@@ -165,9 +165,11 @@ public:
         strcat(fname, ".dat");
         TRACE( TRACE_DEBUG, "Loading (%s) from (%s)\n", 
                _ptable->name(), fname);
-        time_t ttablestart = time(NULL);
+
+        stopwatch_t timer;
         w_rc_t e = _pmanager->load_from_file(_pssm, fname);
-        time_t ttablestop = time(NULL);
+        double delay = timer.time();
+
         if (e != RCOK) {
             TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
                    _ptable->name());
@@ -175,8 +177,8 @@ public:
             return;
         }
 
-        TRACE( TRACE_ALWAYS, "Table (%s) loaded in (%d) secs...\n",
-               _ptable->name(), (ttablestop - ttablestart));
+        TRACE( TRACE_ALWAYS, "Table (%s) loaded in (%.2f)secs...\n",
+               _ptable->name(), delay);
         _rv = 0;
     }
 

@@ -27,14 +27,14 @@ query_info_t query_init(int argc, char* argv[], int env) {
 
     
     // open database
-    switch (env) {
+//     switch (env) {
 
-    case (TRX_MEM_ENV):
-        break;
+//     case (TRX_MEM_ENV):
+//         break;
 
-    default:
-        break;
-    }
+//     default:
+//         break;
+//     }
 
 
     query_info_t info;
@@ -58,14 +58,14 @@ void query_main(query_info_t& info, workload::driver_t* driver, int env) {
 
 
     // open database
-    switch (env) {
+//     switch (env) {
 
-    case (TRX_MEM_ENV):
-        break;
+//     case (TRX_MEM_ENV):
+//         break;
 
-    default:
-        break;
-    }
+//     default:
+//         break;
+//     }
 
 }
 
@@ -107,14 +107,14 @@ query_info_t query_single_thr_init(int argc, char* argv[], int env) {
 
     
     // open database
-    switch (env) {
+//     switch (env) {
 
-    case (TRX_MEM_ENV):
-        break;
+//     case (TRX_MEM_ENV):
+//         break;
 
-    default:
-        break;
-    }
+//     default:
+//         break;
+//     }
 
 
     query_info_t info;
