@@ -29,6 +29,7 @@ const int XCT_CUST_NO_LOCK_TREE   = 11;
 const int XCT_STOCK_KVL_LOCK_TREE = 12;
 const int XCT_STOCK_NO_LOCK_TREE  = 13;
 
+
 // default transaction id to be executed
 const int DF_TRX_ID = XCT_CUST_KVL_LOCK_TREE;
 
@@ -129,6 +130,7 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock)
     assert (env);
     if (nolock) {
         TRACE( TRACE_DEBUG, "CUST-TREE-NO-LOCK");
+
     }
     else {
         TRACE( TRACE_DEBUG, "CUST-TREE-KVL-LOCK");
