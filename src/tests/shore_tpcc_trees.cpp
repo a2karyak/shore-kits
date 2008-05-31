@@ -129,11 +129,11 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock)
 { 
     assert (env);
     if (nolock) {
-        TRACE( TRACE_DEBUG, "CUST-TREE-NO-LOCK");
+        TRACE( TRACE_ALWAYS, "CUST-TREE-NO-LOCK\n");
 
     }
     else {
-        TRACE( TRACE_DEBUG, "CUST-TREE-KVL-LOCK");
+        TRACE( TRACE_ALWAYS, "CUST-TREE-KVL-LOCK\n");
     }
     return (RCOK); 
 }
@@ -142,10 +142,10 @@ w_rc_t test_tree_smt_t::xct_stock_tree(ShoreTPCCEnv* env, bool nolock)
 { 
     assert (env);
     if (nolock) {
-        TRACE( TRACE_DEBUG, "STOCK-TREE-NO-LOCK");
+        TRACE( TRACE_DEBUG, "STOCK-TREE-NO-LOCK\n");
     }
     else {
-        TRACE( TRACE_DEBUG, "STOCK-TREE-KVL-LOCK");
+        TRACE( TRACE_DEBUG, "STOCK-TREE-KVL-LOCK\n");
     }
     return (RCOK); 
 }

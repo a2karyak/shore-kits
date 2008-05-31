@@ -22,6 +22,12 @@ using namespace tpcc;
  *
  *********************************************************************/
 
+
+/**** CAREFUL: all the random() functions have been disabled ****/
+
+
+
+
 /*
  * There is one method for each table:
  *

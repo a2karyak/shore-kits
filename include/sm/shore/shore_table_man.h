@@ -1317,7 +1317,7 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index(ss_m* db,
     rep_row_t arep(_pts);
     int key_sz = 0;
     int mark = COMMIT_ACTION_COUNT;
-    time_t tstart = time(NULL);
+    stopwatch_t timer;
 
 
     /* 2. iterate over the whole table and insert the corresponding 
@@ -1350,9 +1350,9 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index(ss_m* db,
     W_DO(db->commit_xct());
 
     /* 5. print stats */
-    time_t tstop = time(NULL);
-    TRACE( TRACE_ALWAYS, "Index (%s) loaded (%d) entries in (%d) secs...\n",
-           pindex->name(), rowscanned, (tstop - tstart));
+    double delay = timer.time();
+    TRACE( TRACE_ALWAYS, "Index (%s) loaded (%d) entries in (%.2f) secs...\n",
+           pindex->name(), rowscanned, delay);
 
     return (RCOK);
 }
