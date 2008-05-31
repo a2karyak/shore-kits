@@ -51,6 +51,8 @@ private:
     int _trxid;
     int _notrxs;
 
+    rep_row_t *preprow;
+
 public:
     int	_rv;
     
@@ -63,6 +65,8 @@ public:
         assert (_env);
         assert (_notrxs);
         assert (_wh>=0);
+
+
     }
 
 
@@ -70,8 +74,8 @@ public:
 
     w_rc_t test_trees();
 
-    w_rc_t xct_cust_tree(ShoreTPCCEnv* env, bool nolock);
-    w_rc_t xct_stock_tree(ShoreTPCCEnv* env, bool nolock);
+    w_rc_t xct_cust_tree(ShoreTPCCEnv* env, bool nolock, rep_row_t arp);
+    w_rc_t xct_stock_tree(ShoreTPCCEnv* env, bool nolock, rep_row_t arp);
 
 
     // thread entrance
@@ -101,22 +105,24 @@ w_rc_t test_tree_smt_t::test_trees()
 {
     W_DO(_env->loaddata());
 
+    rep_row_t areprow(_env->customer_man()->ts());
+
     W_DO(_env->db()->begin_xct());
 
     for (int i=0; i<_notrxs; i++) {
 
         switch (_trxid) {
         case XCT_CUST_KVL_LOCK_TREE:
-            xct_cust_tree(_env, true);
+            xct_cust_tree(_env, true, areprow);
             break;
         case XCT_CUST_NO_LOCK_TREE:
-            xct_cust_tree(_env, false);
+            xct_cust_tree(_env, false, areprow);
             break;
         case XCT_STOCK_KVL_LOCK_TREE:
-            xct_stock_tree(_env, true);
+            xct_stock_tree(_env, true, areprow);
             break;
         case XCT_STOCK_NO_LOCK_TREE:
-            xct_stock_tree(_env, false);
+            xct_stock_tree(_env, false, areprow);
             break;    
         default:
             printf("nada..\n");
@@ -130,10 +136,10 @@ w_rc_t test_tree_smt_t::test_trees()
 }
 
 
-w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock) 
+w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock, rep_row_t arp) 
 { 
     assert (env);
-
+    assert (_wh>0);
 
     // prepare the random input (customer key to probe)
     int in_wh = rand(_wh);
@@ -141,7 +147,7 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock)
     int in_c  = rand(_wh * DISTRICTS_PER_WAREHOUSE * CUSTOMERS_PER_DISTRICT);
     decimal c_balance; 
     row_impl<customer_t>* prcust = _env->customer_man()->get_tuple();
-
+    prcust->_rep = &arp;
 
     TRACE( TRACE_DEBUG, "(%d) (%d) (%d)\n", in_wh, in_d, in_c);
 
@@ -160,15 +166,22 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock)
     return (RCOK); 
 }
 
-w_rc_t test_tree_smt_t::xct_stock_tree(ShoreTPCCEnv* env, bool nolock) 
+w_rc_t test_tree_smt_t::xct_stock_tree(ShoreTPCCEnv* env, bool nolock, rep_row_t arp) 
 { 
     assert (env);
 
+    assert(false); // need to generate random stock input
+
+    row_impl<stock_t>* prst = _env->stock_man()->get_tuple();
+    prst->_rep = &arp;
+
     if (nolock) {
         TRACE( TRACE_DEBUG, "STOCK-TREE-NO-LOCK\n");
+        assert(false); // need to call index_probe_no_lock
     }
     else {
         TRACE( TRACE_DEBUG, "STOCK-TREE-KVL-LOCK\n");
+        assert(false); // need to call index_probe
     }
     return (RCOK); 
 }
@@ -276,10 +289,9 @@ int main(int argc, char* argv[])
                (j+1), iterations);
 
 	stopwatch_t timer;
-        int wh_id = 0;
 
         // create & fork testing thread
-        tester = new test_tree_smt_t(shore_env, wh_id, selectedTrxID,
+        tester = new test_tree_smt_t(shore_env, numOfQueriedWHs, selectedTrxID,
                                      numOfTrxs, c_str("tt"));
         tester->fork();
 
