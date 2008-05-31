@@ -140,6 +140,13 @@ public:
                        const int w_id,
                        const int d_id);
 
+    w_rc_t index_probe_by_name(ss_m* db,
+                               const char* idx_name,
+                               customer_tuple* ptuple,
+                               const int c_id,
+                               const int w_id,
+                               const int d_id);
+
     w_rc_t index_probe_forupdate(ss_m* db,
                                  customer_tuple* ptuple,
                                  const int c_id,

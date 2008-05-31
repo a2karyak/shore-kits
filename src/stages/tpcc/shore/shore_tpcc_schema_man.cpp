@@ -187,11 +187,22 @@ w_rc_t customer_man_impl::index_probe(ss_m* db,
                                       const int d_id)
 {
     assert (ptuple);
+    return (index_probe_by_name(db, "C_INDEX", ptuple, c_id, w_id, d_id));
+}
+
+w_rc_t customer_man_impl::index_probe_by_name(ss_m* db,
+                                              const char* idx_name,
+                                              customer_tuple* ptuple,
+                                              const int c_id,
+                                              const int w_id,
+                                              const int d_id)
+{
+    assert (idx_name);
 
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    return (index_probe_by_name(db, "C_INDEX", ptuple));
+    return (table_man_impl<customer_t>::index_probe_by_name(db, idx_name, ptuple));
 }
 
 w_rc_t customer_man_impl::index_probe_forupdate(ss_m * db,

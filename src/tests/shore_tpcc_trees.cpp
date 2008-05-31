@@ -101,6 +101,8 @@ w_rc_t test_tree_smt_t::test_trees()
 {
     W_DO(_env->loaddata());
 
+    W_DO(_env->db()->begin_xct());
+
     for (int i=0; i<_notrxs; i++) {
 
         switch (_trxid) {
@@ -121,6 +123,9 @@ w_rc_t test_tree_smt_t::test_trees()
             break;
         }        
     }    
+
+    W_DO(_env->db()->commit_xct());
+
     return (RCOK);
 }
 
@@ -128,12 +133,29 @@ w_rc_t test_tree_smt_t::test_trees()
 w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock) 
 { 
     assert (env);
+
+
+    // prepare the random input (customer key to probe)
+    int in_wh = rand(_wh);
+    int in_d  = rand(_wh * DISTRICTS_PER_WAREHOUSE);
+    int in_c  = rand(_wh * DISTRICTS_PER_WAREHOUSE * CUSTOMERS_PER_DISTRICT);
+    decimal c_balance; 
+    row_impl<customer_t>* prcust = _env->customer_man()->get_tuple();
+
+
+    TRACE( TRACE_DEBUG, "(%d) (%d) (%d)\n", in_wh, in_d, in_c);
+
     if (nolock) {
         TRACE( TRACE_ALWAYS, "CUST-TREE-NO-LOCK\n");
-
+        _env->customer_man()->index_probe_by_name(_env->db(), "C_INDEX_NOLOCK", prcust, in_c, in_wh, in_d); 
+        prcust->get_value(16, c_balance);
+        TRACE( TRACE_DEBUG, "(%d) (%d) (%d) (%.2f)\n", in_wh, in_d, in_c, c_balance.to_double());
     }
     else {
         TRACE( TRACE_ALWAYS, "CUST-TREE-KVL-LOCK\n");
+        _env->customer_man()->index_probe_by_name(_env->db(), "C_INDEX", prcust, in_c, in_wh, in_d); 
+        prcust->get_value(16, c_balance);
+        TRACE( TRACE_DEBUG, "(%d) (%d) (%d) (%.2f)\n", in_wh, in_d, in_c, c_balance.to_double());
     }
     return (RCOK); 
 }
@@ -141,6 +163,7 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock)
 w_rc_t test_tree_smt_t::xct_stock_tree(ShoreTPCCEnv* env, bool nolock) 
 { 
     assert (env);
+
     if (nolock) {
         TRACE( TRACE_DEBUG, "STOCK-TREE-NO-LOCK\n");
     }
