@@ -68,6 +68,9 @@ const int DF_TRX_ID = XCT_CUST_KVL_LOCK_TREE;
 const int DF_NUM_OF_ITERS = 5;
 
 
+// commit every that many trx
+const int COMMIT_INTERVAL = 2;
+
 
 ///////////////////////////////////////////////////////////
 // @class test_tree_smt_t
@@ -135,6 +138,7 @@ w_rc_t test_tree_smt_t::test_trees()
 {
     W_DO(_env->loaddata());
 
+    int flag = COMMIT_INTERVAL;
     rep_row_t areprow(_env->customer_man()->ts());
 
     W_DO(_env->db()->begin_xct());
@@ -159,6 +163,15 @@ w_rc_t test_tree_smt_t::test_trees()
             printf("nada..\n");
             break;
         }        
+
+
+        if (i > flag) {
+            W_DO(_env->db()->commit_xct());
+            flag += COMMIT_INTERVAL;
+            W_DO(_env->db()->begin_xct());
+        }
+
+
     }    
 
     W_DO(_env->db()->commit_xct());
@@ -281,7 +294,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               | TRACE_DEBUG
+               //               | TRACE_DEBUG
               );
 
 
@@ -450,7 +463,6 @@ void print_usage(char* cmdtag)
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
            "%s <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS>]\n" \
            "\nParameters:\n" \
-           "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix)\n" \
            "<UPD_TRX>     : Will the trx update the tuple or only probe?\n" \
@@ -553,8 +565,6 @@ int process_command(const char* command) {
            numOfQueriedWHs, translate_trx_id(selectedTrxID), 
            (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
 
-    return (0);
-
     
     test_tree_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iterations; j++) {
@@ -589,11 +599,12 @@ int process_command(const char* command) {
 
 	double delay = timer.time();
         TRACE( TRACE_ALWAYS, "*******\n" \
-               "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%.2f)\nTPS:     (%.2f)\n",
+               "Threads: (%d)\n" \
+               "Trxs:    (%d)\n" \
+               "Secs:    (%.2f)\n" \
+               "TPS:     (%.2f)\n",
                numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
     }
 
-
-    // else 
     return (NEXT_CONTINUE);
 }
