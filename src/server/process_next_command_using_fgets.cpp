@@ -1,9 +1,12 @@
 
 #include "server/process_next_command_using_fgets.h"
-#include "server/config.h"
+
+#include "util/config.h"
+#include "util/chomp.h"
+
 #include "server/print.h"
 #include "server/command_set.h"
-#include "util/chomp.h"
+
 
 
 

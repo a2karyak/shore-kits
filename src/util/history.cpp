@@ -1,8 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 
-#include "server/history.h"
-#include "server/config.h"
+#include "util/history.h"
 #include "util/c_str.h"
 #include "util/trace.h"
 

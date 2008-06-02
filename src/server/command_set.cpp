@@ -6,9 +6,11 @@
  */
 
 #include "util.h"
+
+#include "util/config.h"
+
 #include "server/command_set.h"
 #include "server/print.h"
-#include "server/config.h"
 #include "server/command/command_handler.h"
 
 // General purpose command handlers

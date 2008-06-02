@@ -14,8 +14,7 @@
 #include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "server/config.h"
-#include "server/history.h"
+#include "util/history.h"
 
 
 using namespace shore;

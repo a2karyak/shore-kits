@@ -2,9 +2,11 @@
 
 
 #include "util.h"
+
+#include "util/config.h"
+
 #include "server/command/tracer.h"
 #include "server/print.h"
-#include "server/config.h"
 
 
 #ifdef __SUNPRO_CC

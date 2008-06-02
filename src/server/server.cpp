@@ -1,12 +1,12 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util.h"
+#include "util/config.h"
 //#include "core/tuple_fifo_directory.h"
 #include "server/print.h"
 #include "server/interactive_mode.h"
 #include "server/network_mode.h"
 #include "server/command_set.h"
-#include "server/config.h"
 #include "workload/register_stage_containers.h"
 
 

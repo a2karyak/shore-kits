@@ -3,7 +3,7 @@
 #ifndef _HISTORY_H
 #define _HISTORY_H
 
-#include "server/config.h"
+#include "util/config.h"
 
 
 #if USE_READLINE

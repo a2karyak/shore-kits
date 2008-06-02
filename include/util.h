@@ -30,5 +30,6 @@
 #include "util/bptree.h"
 #include "util/file.h"
 #include "util/progress.h"
+#include "util/history.h"
 
 #endif

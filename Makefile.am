@@ -9,7 +9,7 @@ SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -
 
 
 # GLOBAL includes
-INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES)
+INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/local/include
 
 # List of libraries
 lib_LIBRARIES = \
@@ -18,7 +18,7 @@ lib_LIBRARIES = \
    lib/libdbgen.a lib/libsm.a
 
 # GLOBAL ld
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD)
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
 
 
 TESTS = \
@@ -90,8 +90,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_lock.cpp \
 	$(SU)/clh_rwlock.cpp \
 	$(SU)/clh_profile.cpp \
-        $(SU)/store_string.cpp
-
+        $(SU)/store_string.cpp \
+        $(SU)/history.cpp
 
 
 
@@ -374,7 +374,6 @@ SE = $(top_srcdir)/src/server
 # FIXME: IP: addition to make gcc @ ia64 find <ltdl.h>. Shouldn't hurt anybody else...
 stagedtrx_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
 stagedtrx_LDADD = $(LDADD) \
-		-lreadline \
 		-lltdl
 
 COMMANDS = \
@@ -388,7 +387,6 @@ stagedtrx_SOURCES = \
    $(SE)/server.cpp \
    $(SE)/command_set.cpp \
    $(SE)/interactive_mode.cpp \
-   $(SE)/history.cpp \
    $(SE)/process_next_command_using_fgets.cpp \
    $(SE)/network_mode.cpp \
    $(COMMANDS)

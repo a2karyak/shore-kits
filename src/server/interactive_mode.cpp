@@ -1,9 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "server/config.h"
+//#include "server/config.h"
+#include "util/history.h"
+
 #include "server/print.h"
 #include "server/command_set.h"
-#include "server/history.h"
 #include "server/process_next_command_using_fgets.h"
 
 
