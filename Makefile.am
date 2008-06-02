@@ -335,8 +335,8 @@ tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_LDADD = $(TEST_LIBS)
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
-tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_shore_trees_LDADD = $(TEST_LIBS)
+tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include
+tests_shore_trees_LDADD = $(TEST_LIBS) -lreadline
 
 
 #######

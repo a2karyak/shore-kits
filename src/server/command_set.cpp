@@ -253,6 +253,7 @@ static void dispatch_command(const char* command) {
  *
  *  @return true if command is to quit.
  */
+
 bool check_quit(const char* command) {
 
     if (( strcasecmp(command, "quit") == 0 ) ||

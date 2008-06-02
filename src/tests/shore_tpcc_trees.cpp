@@ -10,8 +10,26 @@
 #include "sm/shore/shore_helper_loader.h"
 
 
+// needed for the command prompt
+#include <stdio.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+#include "server/config.h"
+#include "server/history.h"
+
+
 using namespace shore;
 using namespace tpcc;
+
+
+
+// need for the command prompt
+#define NEXT_CONTINUE 1
+#define NEXT_QUIT     2
+
+int  process_command(const char* command);
+bool check_quit(const char* command);
+int  process_one_command();
 
 
 // default database size (scaling factor)
@@ -293,127 +311,15 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               | TRACE_DEBUG
+               //               | TRACE_DEBUG
               );
 
-
-    /* 0. Parse Parameters */
-    int numOfWHs        = DF_NUM_OF_WHS;    
-    int numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
-    int selectedTrxID   = DF_TRX_ID;
-    int updTuple        = DF_UPDATE_TUPLE;
-    int numOfThreads    = DF_NUM_OF_THREADS;
-    int numOfTrxs       = DF_TRX_PER_THR;
-    int iterations      = DF_NUM_OF_ITERS;
-
-    if (argc<5) {
-        print_usage(argv);
-        return (1);
-    }
-
-    // required
-    int tmp = atoi(argv[1]);
-    if (tmp>0)
-        numOfWHs = tmp;
-
-    tmp = atoi(argv[2]);
-    if (tmp>0)
-        numOfQueriedWHs = tmp;
-    assert (numOfQueriedWHs <= numOfWHs);
-
-    tmp = atoi(argv[3]);
-    if (tmp>0)
-        selectedTrxID = tmp;
-
-    tmp = atoi(argv[4]);
-    updTuple = tmp;
-
-    // optional
-    if (argc>5) {
-        tmp = atoi(argv[5]);
-        if ((tmp>0) && (tmp<=numOfQueriedWHs) && (tmp<=MAX_NUM_OF_THR)) {
-            numOfThreads = tmp;
-        }
-        else {
-            assert (false);
-            numOfThreads = numOfQueriedWHs;
-        }
-    }
-
-    if (argc>6) {
-        tmp = atoi(argv[6]);
-        if (tmp>0)
-            numOfTrxs = tmp;
-    }
-
-    if (argc>7) {
-        tmp = atoi(argv[7]);
-        if (tmp>0)
-            iterations = tmp;
-    }
-
-    // Print out configuration
-    TRACE( TRACE_ALWAYS, "\n\n" \
-           "Num of WHs     : %d\n" \
-           "Queried WHs    : %d\n" \
-           "Trxs ID        : %s\n" \
-           "Update Tuple   : %s\n" \
-           "Num of Threads : %d\n" \
-           "Num of Trxs    : %d\n" \
-           "Iterations     : %d\n", 
-           numOfWHs, numOfQueriedWHs, translate_trx_id(selectedTrxID), 
-           (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
-
-    /* 1. Instanciate the Shore Environment */
-    shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
-
-
-    // the initialization must be executed in a shore context
-    db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), shore_env);
-    initializer->fork();
-    initializer->join();        
-    if (initializer) {
-        delete (initializer);
-        initializer = NULL;
+    bool save_history = history_open();
+    int state = NEXT_CONTINUE;
+    while (state == NEXT_CONTINUE) {
+        process_one_command();
     }    
-    shore_env->print_sf();
-    
-    test_tree_smt_t* testers[MAX_NUM_OF_THR];
-    for (int j=0; j<iterations; j++) {
 
-        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
-               (j+1), iterations);
-
-        int wh_id = 0;
-	stopwatch_t timer;
-
-        for (int i=0; i<numOfThreads; i++) {
-
-            // create & fork testing threads
-            wh_id++;
-            testers[i] = new test_tree_smt_t(shore_env, wh_id, selectedTrxID, 
-                                             updTuple, numOfTrxs, c_str("tt%d", i));
-            testers[i]->fork();
-
-        }
-
-        /* 2. join the tester threads */
-        for (int i=0; i<numOfThreads; i++) {
-
-            testers[i]->join();
-            if (testers[i]->_rv) {
-                TRACE( TRACE_ALWAYS, "Error in testing...\n");
-                TRACE( TRACE_ALWAYS, "Exiting...\n");
-                assert (false);
-            }    
-            delete (testers[i]);
-        }
-
-	double delay = timer.time();
-        TRACE( TRACE_ALWAYS, "*******\n" \
-               "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%.2f)\nTPS:     (%.2f)\n",
-               numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
-    }
 
     // close Shore env
     close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
@@ -429,5 +335,195 @@ int main(int argc, char* argv[])
         clt = NULL;
     }
 
+
+    if (save_history) {
+        TRACE( TRACE_ALWAYS, "Saving history...\n");
+        history_close();
+    }
+
+
     return (0);
+}
+
+
+
+int process_one_command() {
+
+    char *command = (char*)NULL;
+
+
+    // If the buffer has already been allocated, return the memory to
+    // the free pool.
+    if (command != NULL) {
+        free(command);
+        command = (char*)NULL;
+    }
+
+
+    // Get a line from the user.
+    command = readline(QPIPE_PROMPT);
+    if (command == NULL) {
+        // EOF
+        return (NEXT_QUIT);
+    }
+
+
+    // history control
+    if (*command) {
+        // non-empty line...
+        add_history(command);
+    }
+
+    return (process_command(command));
+}
+
+
+
+bool check_quit(const char* command) {
+
+    if (( strcasecmp(command, "quit") == 0 ) ||
+        ( strcasecmp(command, "quit;") == 0 ) ||
+        ( strcasecmp(command, "q") == 0 ) ||
+        ( strcasecmp(command, "q;") == 0 ) ||
+        ( strcasecmp(command, "exit") == 0 ) ||
+        ( strcasecmp(command, "exit;") == 0 ) )
+        // quit command!
+        return (true);
+
+    return (false);
+}
+
+int process_command(const char* command) {
+
+    // check for quit...
+    if ( check_quit(command) )
+        // quit command! 
+       return (NEXT_QUIT);
+
+    TRACE( TRACE_DEBUG, "Do something!!\n");
+
+
+
+//     /* 0. Parse Parameters */
+//     int numOfWHs        = DF_NUM_OF_WHS;    
+//     int numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
+//     int selectedTrxID   = DF_TRX_ID;
+//     int updTuple        = DF_UPDATE_TUPLE;
+//     int numOfThreads    = DF_NUM_OF_THREADS;
+//     int numOfTrxs       = DF_TRX_PER_THR;
+//     int iterations      = DF_NUM_OF_ITERS;
+
+
+//     if (argc<5) {
+//         print_usage(argv);
+//         return (1);
+//     }
+
+//     // required
+//     int tmp = atoi(argv[1]);
+//     if (tmp>0)
+//         numOfWHs = tmp;
+
+//     tmp = atoi(argv[2]);
+//     if (tmp>0)
+//         numOfQueriedWHs = tmp;
+//     assert (numOfQueriedWHs <= numOfWHs);
+
+//     tmp = atoi(argv[3]);
+//     if (tmp>0)
+//         selectedTrxID = tmp;
+
+//     tmp = atoi(argv[4]);
+//     updTuple = tmp;
+
+//     // optional
+//     if (argc>5) {
+//         tmp = atoi(argv[5]);
+//         if ((tmp>0) && (tmp<=numOfQueriedWHs) && (tmp<=MAX_NUM_OF_THR)) {
+//             numOfThreads = tmp;
+//         }
+//         else {
+//             assert (false);
+//             numOfThreads = numOfQueriedWHs;
+//         }
+//     }
+
+//     if (argc>6) {
+//         tmp = atoi(argv[6]);
+//         if (tmp>0)
+//             numOfTrxs = tmp;
+//     }
+
+//     if (argc>7) {
+//         tmp = atoi(argv[7]);
+//         if (tmp>0)
+//             iterations = tmp;
+//     }
+
+//     // Print out configuration
+//     TRACE( TRACE_ALWAYS, "\n\n" \
+//            "Num of WHs     : %d\n" \
+//            "Queried WHs    : %d\n" \
+//            "Trxs ID        : %s\n" \
+//            "Update Tuple   : %s\n" \
+//            "Num of Threads : %d\n" \
+//            "Num of Trxs    : %d\n" \
+//            "Iterations     : %d\n", 
+//            numOfWHs, numOfQueriedWHs, translate_trx_id(selectedTrxID), 
+//            (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
+
+//     /* 1. Instanciate the Shore Environment */
+//     shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
+
+
+//     // the initialization must be executed in a shore context
+//     db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), shore_env);
+//     initializer->fork();
+//     initializer->join();        
+//     if (initializer) {
+//         delete (initializer);
+//         initializer = NULL;
+//     }    
+//     shore_env->print_sf();
+    
+//     test_tree_smt_t* testers[MAX_NUM_OF_THR];
+//     for (int j=0; j<iterations; j++) {
+
+//         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
+//                (j+1), iterations);
+
+//         int wh_id = 0;
+// 	stopwatch_t timer;
+
+//         for (int i=0; i<numOfThreads; i++) {
+
+//             // create & fork testing threads
+//             wh_id++;
+//             testers[i] = new test_tree_smt_t(shore_env, wh_id, selectedTrxID, 
+//                                              updTuple, numOfTrxs, c_str("tt%d", i));
+//             testers[i]->fork();
+
+//         }
+
+//         /* 2. join the tester threads */
+//         for (int i=0; i<numOfThreads; i++) {
+
+//             testers[i]->join();
+//             if (testers[i]->_rv) {
+//                 TRACE( TRACE_ALWAYS, "Error in testing...\n");
+//                 TRACE( TRACE_ALWAYS, "Exiting...\n");
+//                 assert (false);
+//             }    
+//             delete (testers[i]);
+//         }
+
+// 	double delay = timer.time();
+//         TRACE( TRACE_ALWAYS, "*******\n" \
+//                "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%.2f)\nTPS:     (%.2f)\n",
+//                numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
+//     }
+
+
+    // else 
+    return (NEXT_CONTINUE);
 }
