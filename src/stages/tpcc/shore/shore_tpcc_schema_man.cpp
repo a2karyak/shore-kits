@@ -240,6 +240,20 @@ w_rc_t customer_man_impl::update_tuple(ss_m* db,
     return (table_man_impl<customer_t>::update_tuple(db, ptuple));
 }
 
+w_rc_t customer_man_impl::update_discount_balance(ss_m* db,
+                                                  customer_tuple* ptuple,
+                                                  const decimal discount,
+                                                  const decimal balance)
+{
+    assert (ptuple);
+    assert (discount>=0);
+
+    ptuple->set_value(15, discount);
+    ptuple->set_value(16, balance);
+
+    return (table_man_impl<customer_t>::update_tuple(db, ptuple));
+}
+
 
 
 /* ----------------- */

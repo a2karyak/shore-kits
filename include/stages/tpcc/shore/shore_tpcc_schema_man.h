@@ -159,6 +159,11 @@ public:
                         const char* adata1 = NULL,
                         const char* adata2 = NULL);
 
+    w_rc_t update_discount_balance(ss_m* db,
+                                   customer_tuple* ptuple,
+                                   const decimal discount,
+                                   const decimal balance);
+
     /** deprecated */
 
     w_rc_t bulkload(ss_m* db, int w_num);

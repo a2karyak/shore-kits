@@ -121,7 +121,8 @@ public:
         create_primary_idx("W_INDEX", keys, 1);
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("W_INDEX_NOLOCK", keys, 1);
+        // last param (nolock) is set to true
+        create_index("W_INDEX_NOLOCK", keys, 1, true, false, true);
 #endif
     }
 
@@ -153,7 +154,8 @@ public:
         create_primary_idx("D_INDEX", keys, 2);
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("D_INDEX_NOLOCK", keys, 2);
+        // last param (nolock) is set to true
+        create_index("D_INDEX_NOLOCK", keys, 2, true, false, true);
 #endif
     }
 
@@ -202,12 +204,14 @@ public:
 
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("C_INDEX_NOLOCK", keys1, 3);
-        create_index("C_NAME_INDEX_NOLOCK", keys2, 5, false);
-#endif
-
+        // last param (nolock) is set to true
+        create_index("C_INDEX_NOLOCK", keys1, 3, true, false, true);
+        create_index("C_NAME_INDEX_NOLOCK", keys2, 5, false, false, true);
+#else
 #ifdef CREATE_CUST_NOLOCK_INDEXES
-        create_index("C_INDEX_NOLOCK", keys1, 3);
+        // last param (nolock) is set to true
+        create_index("C_INDEX_NOLOCK", keys1, 3, true, false, true);
+#endif
 #endif
     }
 
@@ -252,7 +256,8 @@ public:
         create_primary_idx("NO_INDEX", keys, 3);
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("NO_INDEX_NOLOCK", keys, 3);
+        // last param (nolock) is set to true
+        create_index("NO_INDEX_NOLOCK", keys, 3, true, false, true);
 #endif
     }
 
@@ -285,8 +290,9 @@ public:
 
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("O_INDEX_NOLOCK", keys1, 3);
-        create_index("O_CUST_INDEX_NOLOCK", keys2, 4);
+        // last param (nolock) is set to true
+        create_index("O_INDEX_NOLOCK", keys1, 3, true, false, true);
+        create_index("O_CUST_INDEX_NOLOCK", keys2, 4, true, false, true);
 #endif
     }
 
@@ -318,7 +324,8 @@ public:
         //	create_index("OL_INDEX", keys, 4, false); /* old: not unique */
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("OL_INDEX_NOLOCK", keys, 4);
+        // last param (nolock) is set to true
+        create_index("OL_INDEX_NOLOCK", keys, 4, true, false, true);
 #endif
     }
 
@@ -344,7 +351,8 @@ public:
 	create_primary_idx("I_INDEX", keys, 1);
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("I_INDEX_NOLOCK", keys, 1);
+        // last param (nolock) is set to true        
+        create_index("I_INDEX_NOLOCK", keys, 1, true, false, true);
 #endif
     }
 
@@ -384,7 +392,8 @@ public:
 	create_primary_idx("S_INDEX", keys, 2);
 
 #ifdef CREATE_NOLOCKING_INDEXES
-        create_index("S_INDEX_NOLOCK", keys, 2);
+        // last param (nolock) is set to true
+        create_index("S_INDEX_NOLOCK", keys, 2, true, false, true);
 #endif
     }
 

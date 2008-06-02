@@ -12,7 +12,7 @@
 
 
 #undef USE_STHREAD_RAND
-#define USE_STHREAD_RAND
+//#define USE_STHREAD_RAND
 
 #ifdef USE_STHREAD_RAND
 #include "sm_vas.h"
