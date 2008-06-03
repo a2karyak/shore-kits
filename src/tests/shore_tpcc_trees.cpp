@@ -21,7 +21,6 @@ using namespace shore;
 using namespace tpcc;
 
 
-
 // needed for the command prompt
 #define NEXT_CONTINUE 1
 #define NEXT_QUIT     2
@@ -294,7 +293,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
+               | TRACE_DEBUG
               );
 
 

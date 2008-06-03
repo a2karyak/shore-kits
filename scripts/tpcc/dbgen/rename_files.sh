@@ -2,7 +2,7 @@
 
 # @file rename_files.sh
 # 
-# @brief The stagedtrx loaded (<base_dir>/tests/tpcc_load) needs the flat data
+# @brief The stagedtrx loader (<base_dir>/tests/tpcc_load) needs the flat data
 # files with specific filenames. This script simply renames the files generated
 # by the dbgen-generate-files.pl tool accordingly.
 #
