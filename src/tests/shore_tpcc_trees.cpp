@@ -9,26 +9,11 @@
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
-
-// needed for the command prompt
-#include <stdio.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include "util/history.h"
+#include "util/shell.h"
 
 
 using namespace shore;
 using namespace tpcc;
-
-
-// needed for the command prompt
-#define NEXT_CONTINUE 1
-#define NEXT_QUIT     2
-
-int  process_command(const char* command);
-bool check_quit(const char* command);
-int  process_one_command();
-// EOF: needed for the command prompt
 
 
 // Instanciate and close the Shore environment
@@ -276,6 +261,241 @@ w_rc_t test_tree_smt_t::xct_stock_tree(ShoreTPCCEnv* env, bool nolock,
     return (RCOK); 
 }
 
+/** EOF: test_tree_smt_t functions */
+
+
+//////////////////////////////
+
+
+//////////////////////////////
+
+
+class tree_test_shell_t : public shell_t 
+{ 
+public:
+
+    tree_test_shell_t(const char* prompt = QPIPE_PROMPT) 
+        : shell_t(prompt)
+        {
+        }
+
+    ~tree_test_shell_t() { }
+
+    // shell interface
+    int process_command(const char* command) { return (PROMPT_NEXT_QUIT); }
+    void print_usage(int argc, char* argv[]) { }
+
+}; // EOF: tree_test_shell_t
+
+
+// class tree_test_shell_t : public shell_t 
+// {
+// private:
+
+//     // helper functions
+//     const char* translate_trx_id(const int trx_id);
+ 
+// public:
+
+//     tree_test_shell_t(const char* prompt) 
+//         : shell_t(prompt)
+//         {
+//         }
+
+//     ~tree_test_shell_t() { }
+
+//     // shell interface
+//     int process_command(const char* command);
+//     void print_usage(int argc, char* argv[]);
+
+// }; // EOF: tree_test_shell_t
+
+
+
+/** tree_test_shell_t helper functions */
+
+
+// const char* tree_test_shell_t::translate_trx_id(const int trx_id) 
+// {
+//     switch (trx_id) {
+//     case (XCT_CUST_KVL_LOCK_TREE):
+//         return ("CustomerProbe-KVL");
+//         break;
+//     case (XCT_CUST_NO_LOCK_TREE):
+//         return ("CustomerProbe-NoLock");
+//         break;
+//     case (XCT_STOCK_KVL_LOCK_TREE):
+//         return ("StockProbe-KVL");
+//         break;
+//     case (XCT_STOCK_NO_LOCK_TREE):
+//         return ("StockProbe-NoLock");
+//         break;
+//     default:
+//         TRACE( TRACE_ALWAYS, "Unknown TRX\n");
+//         assert (false);
+//         return ("Error!!");
+//     }
+// }
+
+
+// /** tree_test_shell_t interface */
+
+
+// void tree_test_shell_t::print_usage(int argc, char* argv[]) 
+// {
+//     assert (argc>=1);
+
+//     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
+//            "%s <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS>]\n" \
+//            "\nParameters:\n" \
+//            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
+//            "<TRX_ID>      : Transaction ID to be executed (0=mix)\n" \
+//            "<UPD_TRX>     : Will the trx update the tuple or only probe?\n" \
+//            "<NUM_THREADS> : Number of concurrent threads (Default=1) (optional)\n" \
+//            "<NUM_TRXS>    : Number of trxs per thread (Default=100) (optional)\n" \
+//            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n",
+//            argv[0]);
+    
+//     TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
+// }
+
+
+// int tree_test_shell_t::process_command(const char* command)
+// {
+
+//     /* 0. Parse Parameters */
+//     int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
+//     int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
+//     int selectedTrxID       = DF_TRX_ID;
+//     int tmp_selectedTrxID   = DF_TRX_ID;
+//     int updTuple            = DF_UPDATE_TUPLE;
+//     int tmp_updTuple        = DF_UPDATE_TUPLE;
+//     int numOfThreads        = DF_NUM_OF_THREADS;
+//     int tmp_numOfThreads    = DF_NUM_OF_THREADS;
+//     int numOfTrxs           = DF_TRX_PER_THR;
+//     int tmp_numOfTrxs       = DF_TRX_PER_THR;
+//     int iterations          = DF_NUM_OF_ITERS;
+//     int tmp_iterations      = DF_NUM_OF_ITERS;
+
+//     char command_tag[SERVER_COMMAND_BUFFER_SIZE];
+
+//     // Parses new test run data
+//     if ( sscanf(command, "%s %d %d %d %d %d %d",
+//                 &command_tag,
+//                 &tmp_numOfQueriedWHs,
+//                 &tmp_selectedTrxID,
+//                 &tmp_updTuple,
+//                 &tmp_numOfThreads,
+//                 &tmp_numOfTrxs,
+//                 &tmp_iterations) < 4 ) 
+//     {
+//         char* params[1];
+//         params[0] = command_tag;
+//         print_usage(1, params);
+//         return (1);
+//     }
+
+
+//     // REQUIRED Parameters
+
+//     // 1- number of queried warehouses - numOfQueriedWHs
+//     if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
+//         numOfQueriedWHs = tmp_numOfQueriedWHs;
+//     else
+//         numOfQueriedWHs = _numOfWHs;
+//     assert (numOfQueriedWHs <= _numOfWHs);
+
+//     // 2- selected trx
+//     if (tmp_selectedTrxID>0)
+//         selectedTrxID = tmp_selectedTrxID;
+
+//     // 3- do update trx
+//     updTuple = tmp_updTuple;
+
+
+
+//     // OPTIONAL Parameters
+
+
+//     // 4- number of threads - numOfThreads
+//     if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=numOfQueriedWHs) && 
+//         (tmp_numOfThreads<=MAX_NUM_OF_THR)) {
+//             numOfThreads = tmp_numOfThreads;
+//         }
+//     else {
+//         numOfThreads = numOfQueriedWHs;
+//     }
+    
+//     // 5- number of trxs - numOfTrxs
+//     if (tmp_numOfTrxs>0)
+//         numOfTrxs = tmp_numOfTrxs;
+
+//     // 6- number of iterations - iterations
+//     if (tmp_iterations>0)
+//         iterations = tmp_iterations;
+
+
+//     // Print out configuration
+//     TRACE( TRACE_ALWAYS, "\n\n" \
+//            "Queried WHs    : %d\n" \
+//            "Trxs ID        : %s\n" \
+//            "Update Tuple   : %s\n" \
+//            "Num of Threads : %d\n" \
+//            "Num of Trxs    : %d\n" \
+//            "Iterations     : %d\n", 
+//            numOfQueriedWHs, translate_trx_id(selectedTrxID), 
+//            (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
+
+//     return (PROMPT_NEXT_CONTINUE);
+
+//     test_tree_smt_t* testers[MAX_NUM_OF_THR];
+//     for (int j=0; j<iterations; j++) {
+
+//         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
+//                (j+1), iterations);
+
+//         int wh_id = 0;
+// 	stopwatch_t timer;
+
+//         for (int i=0; i<numOfThreads; i++) {
+
+//             // create & fork testing threads
+//             wh_id++;
+//             testers[i] = new test_tree_smt_t(shore_env, wh_id, selectedTrxID, 
+//                                              updTuple, numOfTrxs, c_str("tt%d", i));
+//             testers[i]->fork();
+
+//         }
+
+//         /* 2. join the tester threads */
+//         for (int i=0; i<numOfThreads; i++) {
+
+//             testers[i]->join();
+//             if (testers[i]->_rv) {
+//                 TRACE( TRACE_ALWAYS, "Error in testing...\n");
+//                 TRACE( TRACE_ALWAYS, "Exiting...\n");
+//                 assert (false);
+//             }    
+//             delete (testers[i]);
+//         }
+
+// 	double delay = timer.time();
+//         TRACE( TRACE_ALWAYS, "*******\n" \
+//                "Threads: (%d)\n" \
+//                "Trxs:    (%d)\n" \
+//                "Secs:    (%.2f)\n" \
+//                "TPS:     (%.2f)\n",
+//                numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
+//     }
+
+//     return (PROMPT_NEXT_CONTINUE);
+// }
+
+/** EOF: tree_test_shell_t functions */
+
+
+
+
 //////////////////////////////
 
 
@@ -287,7 +507,6 @@ int main(int argc, char* argv[])
     // initialize cordoba threads
     thread_init();
 
-
     TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
@@ -297,28 +516,28 @@ int main(int argc, char* argv[])
               );
 
 
+    // test of shell
+//     tree_test_shell_t tshell;
+//     tshell.start();
+
+    TRACE( TRACE_DEBUG, "end of shell...\n");
+    return (0);
+
+
     /* 1. Instanciate the Shore environment */
     if (inst_env(argc, argv))
         return (1);
 
 
-    /* 2. Start loop of commands */
-    bool save_history = history_open();
-    int state = NEXT_CONTINUE;
-    while (state == NEXT_CONTINUE) {
-        state = process_one_command();
-    }    
+    /* 2. Start processing commands */
+    assert (false);
+//     tree_test_shell_t shell("treetester");
+//     shell.start();
 
 
     /* 3. Close the Shore environment */
     if (shore_env)
         close_env();
-
-    /* 4. Save command history */
-    if (save_history) {
-        TRACE( TRACE_ALWAYS, "Saving history...\n");
-        history_close();
-    }
 
     return (0);
 }
@@ -387,223 +606,3 @@ int close_env() {
     return (0);
 }
 
-
-// Needed for command prompt
-int process_one_command() {
-
-    char *command = (char*)NULL;
-
-    // If the buffer has already been allocated, return the memory to
-    // the free pool.
-    if (command != NULL) {
-        free(command);
-        command = (char*)NULL;
-    }
-
-    // Get a line from the user.
-    command = readline(QPIPE_PROMPT);
-    if (command == NULL) {
-        // EOF
-        return (NEXT_QUIT);
-    }
-
-    // history control
-    if (*command) {
-        // non-empty line...
-        add_history(command);
-    }
-
-    return (process_command(command));
-}
-
-
-
-bool check_quit(const char* command) {
-
-    if (( strcasecmp(command, "quit") == 0 ) ||
-        ( strcasecmp(command, "quit;") == 0 ) ||
-        ( strcasecmp(command, "q") == 0 ) ||
-        ( strcasecmp(command, "q;") == 0 ) ||
-        ( strcasecmp(command, "exit") == 0 ) ||
-        ( strcasecmp(command, "exit;") == 0 ) )
-        // quit command!
-        return (true);
-
-    return (false);
-}
-//// EOF: needed for command prompt
-
-
-
-const char* translate_trx_id(const int trx_id) 
-{
-    switch (trx_id) {
-    case (XCT_CUST_KVL_LOCK_TREE):
-        return ("CustomerProbe-KVL");
-        break;
-    case (XCT_CUST_NO_LOCK_TREE):
-        return ("CustomerProbe-NoLock");
-        break;
-    case (XCT_STOCK_KVL_LOCK_TREE):
-        return ("StockProbe-KVL");
-        break;
-    case (XCT_STOCK_NO_LOCK_TREE):
-        return ("StockProbe-NoLock");
-        break;
-    default:
-        TRACE( TRACE_ALWAYS, "Unknown TRX\n");
-        assert (false);
-        return ("Error!!");
-    }
-}
-
-void print_usage(char* cmdtag) 
-{
-    TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS>]\n" \
-           "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
-           "<TRX_ID>      : Transaction ID to be executed (0=mix)\n" \
-           "<UPD_TRX>     : Will the trx update the tuple or only probe?\n" \
-           "<NUM_THREADS> : Number of concurrent threads (Default=1) (optional)\n" \
-           "<NUM_TRXS>    : Number of trxs per thread (Default=100) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n",
-           cmdtag);
-    
-    TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
-}
-
-
-int process_command(const char* command) {
-
-    // check for quit...
-    if ( check_quit(command) )
-        // quit command! 
-       return (NEXT_QUIT);
-
-
-    /* 0. Parse Parameters */
-    int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
-    int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
-    int selectedTrxID       = DF_TRX_ID;
-    int tmp_selectedTrxID   = DF_TRX_ID;
-    int updTuple            = DF_UPDATE_TUPLE;
-    int tmp_updTuple        = DF_UPDATE_TUPLE;
-    int numOfThreads        = DF_NUM_OF_THREADS;
-    int tmp_numOfThreads    = DF_NUM_OF_THREADS;
-    int numOfTrxs           = DF_TRX_PER_THR;
-    int tmp_numOfTrxs       = DF_TRX_PER_THR;
-    int iterations          = DF_NUM_OF_ITERS;
-    int tmp_iterations      = DF_NUM_OF_ITERS;
-
-
-    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
-
-    // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d",
-                &command_tag,
-                &tmp_numOfQueriedWHs,
-                &tmp_selectedTrxID,
-                &tmp_updTuple,
-                &tmp_numOfThreads,
-                &tmp_numOfTrxs,
-                &tmp_iterations) < 4 ) 
-    {
-        print_usage(command_tag);
-        return (1);
-    }
-
-
-    // REQUIRED Parameters
-
-    // 1- number of queried warehouses - numOfQueriedWHs
-    if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
-        numOfQueriedWHs = tmp_numOfQueriedWHs;
-    else
-        numOfQueriedWHs = _numOfWHs;
-    assert (numOfQueriedWHs <= _numOfWHs);
-
-    // 2- selected trx
-    if (tmp_selectedTrxID>0)
-        selectedTrxID = tmp_selectedTrxID;
-
-    // 3- do update trx
-    updTuple = tmp_updTuple;
-
-
-
-    // OPTIONAL Parameters
-
-
-    // 4- number of threads - numOfThreads
-    if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=numOfQueriedWHs) && 
-        (tmp_numOfThreads<=MAX_NUM_OF_THR)) {
-            numOfThreads = tmp_numOfThreads;
-        }
-    else {
-        numOfThreads = numOfQueriedWHs;
-    }
-    
-    // 5- number of trxs - numOfTrxs
-    if (tmp_numOfTrxs>0)
-        numOfTrxs = tmp_numOfTrxs;
-
-    // 6- number of iterations - iterations
-    if (tmp_iterations>0)
-        iterations = tmp_iterations;
-
-
-    // Print out configuration
-    TRACE( TRACE_ALWAYS, "\n\n" \
-           "Queried WHs    : %d\n" \
-           "Trxs ID        : %s\n" \
-           "Update Tuple   : %s\n" \
-           "Num of Threads : %d\n" \
-           "Num of Trxs    : %d\n" \
-           "Iterations     : %d\n", 
-           numOfQueriedWHs, translate_trx_id(selectedTrxID), 
-           (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
-
-    
-    test_tree_smt_t* testers[MAX_NUM_OF_THR];
-    for (int j=0; j<iterations; j++) {
-
-        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
-               (j+1), iterations);
-
-        int wh_id = 0;
-	stopwatch_t timer;
-
-        for (int i=0; i<numOfThreads; i++) {
-
-            // create & fork testing threads
-            wh_id++;
-            testers[i] = new test_tree_smt_t(shore_env, wh_id, selectedTrxID, 
-                                             updTuple, numOfTrxs, c_str("tt%d", i));
-            testers[i]->fork();
-
-        }
-
-        /* 2. join the tester threads */
-        for (int i=0; i<numOfThreads; i++) {
-
-            testers[i]->join();
-            if (testers[i]->_rv) {
-                TRACE( TRACE_ALWAYS, "Error in testing...\n");
-                TRACE( TRACE_ALWAYS, "Exiting...\n");
-                assert (false);
-            }    
-            delete (testers[i]);
-        }
-
-	double delay = timer.time();
-        TRACE( TRACE_ALWAYS, "*******\n" \
-               "Threads: (%d)\n" \
-               "Trxs:    (%d)\n" \
-               "Secs:    (%.2f)\n" \
-               "TPS:     (%.2f)\n",
-               numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
-    }
-
-    return (NEXT_CONTINUE);
-}

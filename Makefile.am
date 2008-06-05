@@ -44,8 +44,8 @@ TESTS = \
    tests/row_cache \
    tests/tpcc_load_shore \
    tests/tpcc_kit \
-   tests/shore_trees
-
+   tests/shore_trees \
+   tests/simple
 
 
 DBGEN = \
@@ -91,7 +91,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_rwlock.cpp \
 	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp \
-        $(SU)/history.cpp
+        $(SU)/history.cpp \
+        $(SU)/shell.cpp
 
 
 
@@ -327,6 +328,8 @@ tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
 
+tests_simple_SOURCES = $(ST)/simple_test.cpp
+
 
 # exec files that need Shore
 tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
@@ -337,6 +340,8 @@ tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
 tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include
 tests_shore_trees_LDADD = $(TEST_LIBS) -lreadline
+
+tests_simple_LDADD = $(TEST_LIBS) -lreadline
 
 
 #######
