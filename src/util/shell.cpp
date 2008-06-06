@@ -90,7 +90,8 @@ int shell_t::process_one_command()
     // update stats
     _cmd_counter++;
 
-    return (process_command(command));
+    return (PROMPT_NEXT_QUIT);
+       //return (process_command(command));
 }
 
 

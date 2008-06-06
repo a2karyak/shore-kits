@@ -68,7 +68,7 @@ protected:
 public: 
 
     // constructor - destructor
-    shell_t(const char* command = QPIPE_PROMPT, bool save_history = true)
+    shell_t(const char* command, bool save_history)
         : _cmd_counter(0), _save_history(save_history)    
     {
         _cmd_prompt = new char[PROMPT_COMMAND_BUFFER_SIZE];
@@ -92,13 +92,62 @@ public:
     // shell entry point
     const int start();
 
-    // override this function for processing arbitraty commands
-    virtual int process_command(const char* command) { return (PROMPT_NEXT_CONTINUE); }
+//     // override this function for processing arbitraty commands
+//     virtual int process_command(const char* command) { return (PROMPT_NEXT_CONTINUE); }
 
-    // override for usage
-    virtual void print_usage(int argc, char* argv[]) { }
+//     // override for usage
+//     virtual void print_usage(int argc, char* argv[]) { }
 
 }; // EOF: shell_t 
+
+
+
+// constants
+#define SHELL_COMMAND_BUFFER_SIZE 64
+#define SHELL_NEXT_CONTINUE       1
+#define SHELL_NEXT_QUIT           2
+
+class kati_t {
+
+private:
+
+    char* _cmd_prompt;
+    int   _cmd_counter;
+    bool  _save_history;
+    int   _state;
+
+    // basic shell functionality
+    int process_one() { printf("+"); return (0); }
+    bool check_quit(const char* command) { return (true); }
+
+public:
+
+
+    kati_t(const char* prompt, bool save_history) 
+        : _cmd_counter(0), _save_history(save_history), _state(SHELL_NEXT_CONTINUE)
+    {
+        if (prompt)
+            strncpy(_cmd_prompt, prompt, strlen(prompt));
+    }
+
+    virtual ~kati_t() { }
+
+    virtual int process_command(const char* cmd)=0;
+    virtual int print_usage(const char* cmd)=0;
+
+    int start() { 
+        
+        for(int i=0; i<5; i++) {
+            process_one(); 
+        }
+
+        process_command("kati");
+        print_usage("allo");
+        return (0);
+    }
+
+};
+
 
 
 #endif /* __UTIL_SHELL_H */
