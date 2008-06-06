@@ -7,11 +7,12 @@
  *  @note See trace.cpp.
  */
 
-#ifndef __TRACE_H
-#define __TRACE_H
+#ifndef __UTIL_TRACE_H
+#define __UTIL_TRACE_H
 
 #include <cstdarg>             /* for varargs */
 #include <stdint.h>            /* for uint32_t */
+
 #include "util/compat.h"
 #include "trace/trace_types.h"
 
@@ -93,4 +94,4 @@ unsigned int trace_get();
 
 
 
-#endif // _TRACE_H
+#endif // __UTIL_TRACE_H

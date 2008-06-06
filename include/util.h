@@ -1,3 +1,5 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __UTIL_H
 #define __UTIL_H
 
@@ -31,5 +33,6 @@
 #include "util/file.h"
 #include "util/progress.h"
 #include "util/history.h"
+#include "util/shell.h"
 
-#endif
+#endif /** __UTIL_H */

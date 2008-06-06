@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _SERVER_CONFIG_H
-#define _SERVER_CONFIG_H
+#ifndef __UTIL_SERVER_CONFIG_H
+#define __UTIL_SERVER_CONFIG_H
 
 #define SERVER_COMMAND_BUFFER_SIZE 1024
 
@@ -19,4 +19,4 @@
 #define QPIPE_NETWORK_MODE_DEFAULT_LISTEN_PORT 10000
 
 
-#endif
+#endif /** __UTIL_SERVER_CONFIG_H */

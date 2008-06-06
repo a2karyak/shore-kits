@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   shell.cpp
+/** @file:   stagedtrx_shell.cpp
  *
- *  @brief:  Implementation of an abstract shell class for the test cases
+ *  @brief:  Implementation of an abstract stagedtrx_shell class for the test cases
  *
  *  @author: Ippokratis Pandis (ipandis)
  *
@@ -10,7 +10,7 @@
  */
 
 
-#include "util/shell.h"
+#include "util/stagedtrx_shell.h"
 
 
 /*********************************************************************
@@ -24,7 +24,7 @@
  *
  *********************************************************************/
 
-const int shell_t::start() 
+const int stagedtrx_shell_t::start() 
 {
     /* 1. Open saved command history (optional) */
     if (_save_history)
@@ -53,11 +53,11 @@ const int shell_t::start()
  *
  *  @fn:    process_one_command
  *  
- *  @brief: Basic checks done by any shell
+ *  @brief: Basic checks done by any stagedtrx_shell
  *
  *********************************************************************/
 
-int shell_t::process_one_command() 
+int stagedtrx_shell_t::process_one_command() 
 {
     char *command = (char*)NULL;
 
@@ -103,7 +103,7 @@ int shell_t::process_one_command()
  *
  *********************************************************************/
 
-bool shell_t::check_quit(const char* command) 
+bool stagedtrx_shell_t::check_quit(const char* command) 
 {
     if (( strcasecmp(command, "quit") == 0 ) ||
         ( strcasecmp(command, "quit;") == 0 ) ||

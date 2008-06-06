@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _HISTORY_H
-#define _HISTORY_H
+#ifndef __UTIL_HISTORY_H
+#define __UTIL_HISTORY_H
 
 #include "util/config.h"
 
@@ -14,4 +14,4 @@ bool history_close();
 #endif
 
 
-#endif
+#endif /** __UTIL_HISTORY_H */

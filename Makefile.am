@@ -92,7 +92,7 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp \
         $(SU)/history.cpp \
-        $(SU)/shell.cpp
+        $(SU)/stagedtrx_shell.cpp
 
 
 
@@ -341,7 +341,8 @@ tests_row_cache_LDADD = $(TEST_LIBS)
 tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include
 tests_shore_trees_LDADD = $(TEST_LIBS) -lreadline
 
-tests_simple_LDADD = $(TEST_LIBS) -lreadline
+tests_simple_CXXFLAGS = $(AM_CXXFLAGS) 
+tests_simple_LDADD = $(TEST_LIBS)
 
 
 #######
