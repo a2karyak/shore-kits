@@ -92,7 +92,7 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp \
         $(SU)/history.cpp \
-        $(SU)/stagedtrx_shell.cpp
+        $(SU)/shell.cpp
 
 
 

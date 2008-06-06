@@ -1,16 +1,16 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   stagedtrx_shell.h
+/** @file:   shell.h
  *
- *  @brief:  Abstract stagedtrx_shell class for the test cases
+ *  @brief:  Abstract shell class for the test cases
  *
  *  @author: Ippokratis Pandis (ipandis)
  *
  *  @buf:    Should trap on Ctrl+C
  */
 
-#ifndef __UTIL_STAGEDTRX_SHELL_H
-#define __UTIL_STAGEDTRX_SHELL_H
+#ifndef __UTIL_SHELL_H
+#define __UTIL_SHELL_H
 
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
@@ -34,9 +34,9 @@
 
 /*********************************************************************
  *
- *  abstract class: stagedtrx_shell_t
+ *  abstract class: shell_t
  *
- *  brief:          Base class for stagedtrx_shells.
+ *  brief:          Base class for shells.
  *
  *  usage:          - Inherit from this class
  *                  - Implement the process_command() function
@@ -44,7 +44,7 @@
  *
  *********************************************************************/
 
-class stagedtrx_shell_t 
+class shell_t 
 {
 private:
 
@@ -53,7 +53,7 @@ private:
     bool  _save_history;
     int   _state;
 
-    // basic stagedtrx_shell functionality
+    // basic shell functionality
     int process_one_command();    
     bool check_quit(const char* command);
 
@@ -68,20 +68,20 @@ protected:
 public: 
 
     // constructor - destructor
-    stagedtrx_shell_t(const char* command = QPIPE_PROMPT, bool save_history = true)
+    shell_t(const char* command = QPIPE_PROMPT, bool save_history = true)
         : _cmd_counter(0), _save_history(save_history)    
     {
         _cmd_prompt = new char[PROMPT_COMMAND_BUFFER_SIZE];
         if (command)
             strncpy(_cmd_prompt, command, strlen(command));
 
-        TRACE( TRACE_DEBUG, "Stagedtrx_Shell (%s) : created\n", _cmd_prompt);
+        TRACE( TRACE_DEBUG, "Shell (%s) : created\n", _cmd_prompt);
     }
 
 
-    virtual ~stagedtrx_shell_t() {
+    virtual ~shell_t() {
 
-        TRACE( TRACE_DEBUG, "Stagedtrx_Shell (%s): (%d) commands processed...\n", 
+        TRACE( TRACE_DEBUG, "Shell (%s): (%d) commands processed...\n", 
                _cmd_prompt, _cmd_counter);
 
         if (_cmd_prompt)
@@ -89,17 +89,17 @@ public:
     }
 
 
-    // stagedtrx_shell entry point
+    // shell entry point
     const int start();
 
     // override this function for processing arbitraty commands
-    virtual int process_command(const char* command)=0;
+    virtual int process_command(const char* command) { return (PROMPT_NEXT_CONTINUE); }
 
     // override for usage
-    virtual void print_usage(int argc, char* argv[])=0;
+    virtual void print_usage(int argc, char* argv[]) { }
 
-}; // EOF: stagedtrx_shell_t 
+}; // EOF: shell_t 
 
 
-#endif /* __UTIL_STAGEDTRX_SHELL_H */
+#endif /* __UTIL_SHELL_H */
 

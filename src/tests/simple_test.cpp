@@ -1,34 +1,34 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "util/stagedtrx_shell.h"
+#include "util/shell.h"
 
-class tree_shell : public stagedtrx_shell_t
-{
-public:
+// class tree_shell : public shell_t
+// {
+// public:
 
-    tree_shell()
-        : stagedtrx_shell_t()
-    {
-    }
+//     tree_shell()
+//         : shell_t()
+//     {
+//     }
 
-    ~tree_shell() { }
+//     ~tree_shell() { }
 
-    int process_command(const char* command) {
-        printf(".");
-        return (0);
-    }
+//     int process_command(const char* command) {
+//         printf(".");
+//         return (0);
+//     }
 
-    void print_usage(int argc, char* argv[]) {
-        printf("_");
-    }         
+//     void print_usage(int argc, char* argv[]) {
+//         printf("_");
+//     }         
 
-};
+// };
 
 
 int main(int argc, char* argv[]) 
 {
     // test of shell
-    tree_shell tshell;
+    shell_t tshell;
     tshell.start();
     return (0);
 }
