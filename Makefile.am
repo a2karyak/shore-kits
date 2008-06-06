@@ -91,8 +91,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_rwlock.cpp \
 	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp \
-        $(SU)/history.cpp \
-        $(SU)/shell.cpp
+        $(SU)/history.cpp
+
 
 
 

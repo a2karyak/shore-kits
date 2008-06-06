@@ -44,70 +44,13 @@
  *
  *********************************************************************/
 
-class shell_t 
-{
-private:
-
-    char* _cmd_prompt;
-    int   _cmd_counter;
-    bool  _save_history;
-    int   _state;
-
-    // basic shell functionality
-    int process_one_command();    
-    bool check_quit(const char* command);
-
-protected:
-
-    // constants
-    static const int PROMPT_COMMAND_BUFFER_SIZE = 64;
-    static const int PROMPT_NEXT_CONTINUE = 1;
-    static const int PROMPT_NEXT_QUIT     = 2;
-
-
-public: 
-
-    // constructor - destructor
-    shell_t(const char* command, bool save_history)
-        : _cmd_counter(0), _save_history(save_history)    
-    {
-        _cmd_prompt = new char[PROMPT_COMMAND_BUFFER_SIZE];
-        if (command)
-            strncpy(_cmd_prompt, command, strlen(command));
-
-        TRACE( TRACE_DEBUG, "Shell (%s) : created\n", _cmd_prompt);
-    }
-
-
-    virtual ~shell_t() {
-
-        TRACE( TRACE_DEBUG, "Shell (%s): (%d) commands processed...\n", 
-               _cmd_prompt, _cmd_counter);
-
-        if (_cmd_prompt)
-            delete (_cmd_prompt);
-    }
-
-
-    // shell entry point
-    const int start();
-
-//     // override this function for processing arbitraty commands
-//     virtual int process_command(const char* command) { return (PROMPT_NEXT_CONTINUE); }
-
-//     // override for usage
-//     virtual void print_usage(int argc, char* argv[]) { }
-
-}; // EOF: shell_t 
-
-
 
 // constants
 #define SHELL_COMMAND_BUFFER_SIZE 64
 #define SHELL_NEXT_CONTINUE       1
 #define SHELL_NEXT_QUIT           2
 
-class kati_t {
+class shell_t {
 
 private:
 
@@ -116,33 +59,117 @@ private:
     bool  _save_history;
     int   _state;
 
-    // basic shell functionality
-    int process_one() { printf("+"); return (0); }
-    bool check_quit(const char* command) { return (true); }
-
 public:
 
 
-    kati_t(const char* prompt, bool save_history) 
+    shell_t(const char* prompt = QPIPE_PROMPT, bool save_history = true) 
         : _cmd_counter(0), _save_history(save_history), _state(SHELL_NEXT_CONTINUE)
     {
+        _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
         if (prompt)
             strncpy(_cmd_prompt, prompt, strlen(prompt));
     }
 
-    virtual ~kati_t() { }
+    virtual ~shell_t() 
+    {
+        if (_cmd_prompt)
+            delete (_cmd_prompt);       
+    }
 
     virtual int process_command(const char* cmd)=0;
     virtual int print_usage(const char* cmd)=0;
 
-    int start() { 
+
+    // basic shell functionality
+    int process_one() { 
+
+        char *command = (char*)NULL;
+
+        // If the buffer has already been allocated, return the memory to
+        // the free pool.
+        if (command != NULL) {
+            free(command);
+            command = (char*)NULL;
+        }
         
-        for(int i=0; i<5; i++) {
-            process_one(); 
+        // Get a line from the user.
+        command = readline(_cmd_prompt);
+        if (command == NULL) {
+            // EOF
+            return (SHELL_NEXT_QUIT);
+        }
+        
+        // history control
+        if (*command) {
+            // non-empty line...
+            add_history(command);
+        }
+        
+        // check for quit...
+        if ( check_quit(command) ) {
+            // quit command! 
+            return (SHELL_NEXT_QUIT);
         }
 
-        process_command("kati");
-        print_usage("allo");
+        // check for help...
+        if ( check_help(command) ) {
+            // quit command! 
+            return (print_usage(command));
+        }
+
+        // increase stats
+        _cmd_counter++;
+
+        return (process_command(command));
+    }
+
+    bool check_quit(const char* command) { 
+
+        if (( strcasecmp(command, "quit") == 0 ) ||
+            ( strcasecmp(command, "quit;") == 0 ) ||
+            ( strcasecmp(command, "q") == 0 ) ||
+            ( strcasecmp(command, "q;") == 0 ) ||
+            ( strcasecmp(command, "exit") == 0 ) ||
+            ( strcasecmp(command, "exit;") == 0 ) )
+            // quit command!
+            return (true);
+        
+        return (false);
+    }
+
+    bool check_help(const char* command) { 
+
+        if (( strcasecmp(command, "help") == 0 ) ||
+            ( strcasecmp(command, "help;") == 0 ) ||
+            ( strcasecmp(command, "h") == 0 ) ||
+            ( strcasecmp(command, "h;") == 0 ) )
+            // help command!
+            return (true);
+        
+        return (false);
+    }
+    
+    const int get_command_cnt() { return (_cmd_counter); }
+
+
+    int start() 
+    {         
+        /* 1. Open saved command history (optional) */
+        if (_save_history)
+            _save_history = history_open();
+        
+        /* 2. Command loop */
+        _state = SHELL_NEXT_CONTINUE;
+        while (_state == SHELL_NEXT_CONTINUE) {
+            _state = process_one();
+        }    
+        
+        /* 3. Save command history (optional) */
+        if (_save_history) {
+            TRACE( TRACE_ALWAYS, "Saving history...\n");
+            history_close();
+        }
+        
         return (0);
     }
 
