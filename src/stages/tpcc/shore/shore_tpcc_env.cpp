@@ -22,7 +22,7 @@ ENTER_NAMESPACE(tpcc);
 /** Exported variables */
 
 ShoreTPCCEnv* shore_env;
-tpcc_random_gen_t ShoreTPCCEnv::_atpccrndgen(NULL);
+
 
 /** Exported functions */
 

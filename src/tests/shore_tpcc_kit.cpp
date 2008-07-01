@@ -49,8 +49,6 @@ private:
     int _trxid;
     int _notrxs;
 
-    tpcc_random_gen_t _tpccrnd; // (ip) deprecated
-
 public:
     int	_rv;
     
@@ -63,8 +61,6 @@ public:
         assert (_env);
         assert (_notrxs);
         assert (_wh>=0);
-
-        _tpccrnd = tpcc_random_gen_t(NULL); // (ip) deprecated
     }
 
 
@@ -179,7 +175,7 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
 {
     if (xct_type == 0) {        
-        xct_type = _tpccrnd.random_xct_type(rand()%100);
+        xct_type = rand(100);       
     }
     
     switch (xct_type) {

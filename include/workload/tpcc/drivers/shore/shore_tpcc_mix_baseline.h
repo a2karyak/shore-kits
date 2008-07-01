@@ -20,6 +20,9 @@
 #include "workload/tpcc/drivers/shore/shore_tpcc_stock_level_baseline.h"
 
 
+// For random number generator (rng)
+#include <boost/random.hpp>
+
 using namespace qpipe;
 using namespace tpcc;
 
@@ -36,6 +39,8 @@ private:
     shore_tpcc_order_status_baseline_driver* p_ordst_baseline_driver;
     shore_tpcc_delivery_baseline_driver*     p_del_baseline_driver;
     shore_tpcc_stock_level_baseline_driver*  p_stlev_baseline_driver;
+
+    boost::rand48 rng;
 
 public:
 

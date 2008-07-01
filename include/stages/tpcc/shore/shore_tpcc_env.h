@@ -405,8 +405,6 @@ public:
                             trx_result_tuple_t& trt);
 
 
-    static tpcc_random_gen_t _atpccrndgen;
-
 }; // EOF ShoreTPCCEnv
 
 

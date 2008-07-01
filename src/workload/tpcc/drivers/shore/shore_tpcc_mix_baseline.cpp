@@ -23,7 +23,7 @@ ENTER_NAMESPACE(workload);
 
 void shore_tpcc_mix_baseline_driver::submit(void* disp) 
 { 
-    int this_type =  ShoreTPCCEnv::_atpccrndgen.random_xct_type(rand()%100);
+    int this_type =  rng()%(100);
     
     switch (this_type) {
     case XCT_NEW_ORDER:
