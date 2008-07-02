@@ -109,7 +109,7 @@ void thread_t::reset_rand() {
     assert(fd != -1);
     int read_size = ::read(fd, &new_seed, sizeof(new_seed));
     assert(read_size == sizeof(new_seed));
-    close(fd);
+    ::close(fd);
 
     /* reset _randgen using new seed */
     _randgen.reset(new_seed);
