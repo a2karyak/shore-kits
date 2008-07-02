@@ -107,7 +107,16 @@ public:
             }
         }
         // run test
-        _rv = test_trees();
+        w_rc_t e = test_trees();
+        if (e) {
+            TRACE( TRACE_ALWAYS, "Tree testing failed [0x%x]\n", e.err_num());
+            w_rc_t e_abort = _env->db()->abort_xct();
+            if (e_abort) {
+                TRACE( TRACE_ALWAYS, "Aborting failed [0x%x]\n", e_abort.err_num());
+            }
+        }
+
+        _rv = e;        
     }
 
     /** @note Those two functions should be implemented by every
@@ -398,9 +407,7 @@ int tree_test_shell_t::process_command(const char* command)
     updTuple = tmp_updTuple;
 
 
-
     // OPTIONAL Parameters
-
 
     // 4- number of threads - numOfThreads
     if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=numOfQueriedWHs) && 
@@ -431,7 +438,7 @@ int tree_test_shell_t::process_command(const char* command)
            numOfQueriedWHs, translate_trx_id(selectedTrxID), 
            (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
 
-    return (SHELL_NEXT_CONTINUE);
+    //    return (SHELL_NEXT_CONTINUE);
 
     test_tree_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iterations; j++) {
@@ -466,11 +473,14 @@ int tree_test_shell_t::process_command(const char* command)
 
 	double delay = timer.time();
         TRACE( TRACE_ALWAYS, "*******\n" \
+               "WHs:     (%d)\n" \
+               "Update:  (%s)\n" \
                "Threads: (%d)\n" \
                "Trxs:    (%d)\n" \
                "Secs:    (%.2f)\n" \
                "TPS:     (%.2f)\n",
-               numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
+               numOfQueriedWHs, (updTuple ? "Yes" : "No"), numOfThreads, 
+               numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
     }
 
     return (SHELL_NEXT_CONTINUE);
@@ -497,7 +507,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               | TRACE_DEBUG
+               //               | TRACE_DEBUG
               );
 
     /* 1. Instanciate the Shore environment */
