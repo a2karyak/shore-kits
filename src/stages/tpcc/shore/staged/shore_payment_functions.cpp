@@ -62,7 +62,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreWarehouse(payment_input_t* ppin,
            "App: %d PAY:warehouse-idx-probe (%d)\n", 
            xct_id, ppin->_home_wh_id);
 
-    W_DO(_pwarehouse_man->index_probe_forupdate(_pssm, prwh, ppin->_home_wh_id));   
+    W_DO(_pwarehouse_man->wh_index_probe_forupdate(_pssm, prwh, ppin->_home_wh_id));   
 
     /* UPDATE warehouse SET w_ytd = wytd + :h_amount
      * WHERE w_id = :w_id
@@ -72,7 +72,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreWarehouse(payment_input_t* ppin,
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd2 (%d)\n", 
            xct_id, ppin->_home_wh_id);
-    W_DO(_pwarehouse_man->update_ytd(_pssm, prwh, ppin->_h_amount));
+    W_DO(_pwarehouse_man->wh_update_ytd(_pssm, prwh, ppin->_h_amount));
 
     tpcc_warehouse_tuple awh;
     prwh->get_value(1, awh.W_NAME, 11);
@@ -130,9 +130,9 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreDistrict(payment_input_t* ppin,
            "App: %d PAY:district-idx-probe (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
 
-    W_DO(_pdistrict_man->index_probe_forupdate(_pssm, prdist,
-                                               ppin->_home_d_id, 
-                                               ppin->_home_wh_id));
+    W_DO(_pdistrict_man->dist_index_probe_forupdate(_pssm, prdist,
+                                                    ppin->_home_d_id, 
+                                                    ppin->_home_wh_id));
 
     /* UPDATE district SET d_ytd = d_ytd + :h_amount
      * WHERE d_id = :d_id AND d_w_id = :w_id
@@ -142,7 +142,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreDistrict(payment_input_t* ppin,
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-update-ytd1 (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
-    W_DO(_pdistrict_man->update_ytd(_pssm, prdist, ppin->_h_amount));
+    W_DO(_pdistrict_man->dist_update_ytd(_pssm, prdist, ppin->_h_amount));
 
 
     /* SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
@@ -231,9 +231,9 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin,
         index_scan_iter_impl<customer_t>* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
                xct_id, ppin->_c_last);
-        W_DO(_pcustomer_man->get_iter_by_index(_pssm, c_iter, prcust, 
-                                               lowrep, highrep,
-                                               c_w, c_d, ppin->_c_last));
+        W_DO(_pcustomer_man->cust_get_iter_by_index(_pssm, c_iter, prcust, 
+                                                    lowrep, highrep,
+                                                    c_w, c_d, ppin->_c_last));
 
         int c_id_list[17];
         int count = 0;
@@ -269,8 +269,8 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin,
            "App: %d PAY:cust-idx-probe-forupdate (%d) (%d) (%d)\n", 
            xct_id, c_w, c_d, ppin->_c_id);
 
-    W_DO(_pcustomer_man->index_probe_forupdate(_pssm, prcust, 
-                                               ppin->_c_id, c_w, c_d));
+    W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
+                                                    ppin->_c_id, c_w, c_d));
 
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;
@@ -327,11 +327,11 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin,
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
-        W_DO(_pcustomer_man->update_tuple(_pssm, prcust, acust, c_new_data_1, c_new_data_2));
+        W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, c_new_data_1, c_new_data_2));
     }
     else { /* good customer */
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
-        W_DO(_pcustomer_man->update_tuple(_pssm, prcust, acust, NULL, NULL));
+        W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, NULL, NULL));
     }
 
     // give back the tuple

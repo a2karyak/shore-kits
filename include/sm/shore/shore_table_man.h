@@ -173,38 +173,46 @@ public:
     /* idx probe */
     w_rc_t   index_probe(ss_m* db,
                          index_desc_t* pidx,
-                         table_tuple* ptuple,
-                         lock_mode_t lmode = SH); /* one of: SH, EX */
+                         table_tuple*  ptuple,
+                         lock_mode_t   lock_mode = SH,          /* one of: NL, SH, EX */
+                         latch_mode_t  latch_mode = LATCH_SH);  /* one of: LATCH_SH, LATCH_EX */
 
-    /* probe idx in EX mode */
+    /* probe idx in EX (& LATCH_EX) mode */
     w_rc_t   index_probe_forupdate(ss_m* db,
                                    index_desc_t* pidx,
-                                   table_tuple* ptuple)
+                                   table_tuple*  ptuple)
     {
-        return (index_probe(db, pidx, ptuple, EX));
+        return (index_probe(db, pidx, ptuple, EX, LATCH_EX));
     }
 
     /* probe primary idx */
-    w_rc_t   probe_primary(ss_m* db, 
-                           table_tuple* ptuple, 
-                           lock_mode_t lmode = SH) /* one of SH, EX */
+    w_rc_t   index_probe_primary(ss_m* db, 
+                                 table_tuple* ptuple, 
+                                 lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
+                                 latch_mode_t latch_mode = LATCH_SH) /* one of: LATCH_SH, LATCH_EX */
     {
         assert (_primary_idx);
-        return (index_probe(db, _primary_idx, ptuple, lmode));
+        return (index_probe(db, _primary_idx, ptuple, lock_mode, latch_mode));
     }
+
+
+    // by name probes
+
 
     /* idx probe - based on idx name */
     w_rc_t   index_probe_by_name(ss_m* db, 
-                                 const char* idx_name, 
-                                 table_tuple* ptuple) 
+                                 const char*  idx_name, 
+                                 table_tuple* ptuple,
+                                 lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
+                                 latch_mode_t latch_mode = LATCH_SH) /* one of: LATCH_SH, LATCH_EX */
     {
         assert (_ptable);
         index_desc_t* pindex = _ptable->find_index(idx_name);
         assert(pindex);
-        return (index_probe(db, pindex, ptuple));
+        return (index_probe(db, pindex, ptuple, lock_mode, latch_mode));
     }
 
-    /* probe idx in EX mode - based on idx name */
+    /* probe idx in EX (& LATCH_EX) mode - based on idx name */
     w_rc_t   index_probe_forupdate_by_name(ss_m* db, 
                                            const char* idx_name,
                                            table_tuple* ptuple) 
@@ -221,7 +229,7 @@ public:
     /* -------------------------- */
 
     w_rc_t    add_tuple(ss_m* db, table_tuple* ptuple);
-    w_rc_t    update_tuple(ss_m* db, table_tuple* ptuple);
+    w_rc_t    update_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
     w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple);
 
 
@@ -402,7 +410,8 @@ class index_scan_iter_impl :
 private:
 
     table_manager* _pmanager;
-    bool _need_tuple;
+    bool           _need_tuple;
+    lock_mode_t    _lock_mode;
 
 public:
 
@@ -413,8 +422,10 @@ public:
     index_scan_iter_impl(ss_m* db,
                          index_desc_t* pindex,
                          table_manager* pmanager,
-                         bool need_tuple = false)
-        : tuple_iter_t(db, pindex), _pmanager(pmanager), _need_tuple(need_tuple)
+                         bool need_tuple = false,
+                         lock_mode_t lock_mode = SH) // EX or SH
+        : tuple_iter_t(db, pindex), _pmanager(pmanager), 
+          _need_tuple(need_tuple), _lock_mode(lock_mode)
     { 
         assert (_pmanager);
         /** @note We need to know the bounds of the iscan before
@@ -431,8 +442,10 @@ public:
                          scan_index_i::cmp_t cmp1, const cvec_t& bound1,
                          scan_index_i::cmp_t cmp2, const cvec_t& bound2,
                          const int maxkeysize,
-                         bool need_tuple) 
-        : tuple_iter_t(db, pindex), _pmanager(pmanager), _need_tuple(need_tuple)
+                         bool need_tuple,
+                         lock_mode_t lock_mode) 
+        : tuple_iter_t(db, pindex), _pmanager(pmanager), 
+          _need_tuple(need_tuple), _lock_mode(lock_mode)
     { 
         assert (_pmanager);
         W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2, maxkeysize));
@@ -458,6 +471,7 @@ public:
             _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2);
             _opened = true;
         }
+
         return (RCOK);
     }
 
@@ -471,7 +485,7 @@ public:
 
         if (!eof) {
             int key_sz = _pmanager->format_key(_file, &tuple, *tuple._rep);
-            assert (tuple._rep->_dest); // (ip) if dest == NULL there is invalid key
+            assert (tuple._rep->_dest); // (ip) if dest == NULL there is an invalid key
 
             vec_t    key(tuple._rep->_dest, key_sz);
 
@@ -488,7 +502,7 @@ public:
 
             if (_need_tuple) {
                 pin_i  pin;
-                W_DO(pin.pin(rid, 0));
+                W_DO(pin.pin(rid, 0, _lock_mode));
                 if (!_pmanager->load(&tuple, pin.body()))
                     return RC(se_WRONG_DISK_DATA);
                 pin.unpin();
@@ -924,8 +938,9 @@ inline const int table_man_impl<TableDesc>::key_size(index_desc_t* pindex,
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
                                               index_desc_t* pindex,
-                                              table_tuple* ptuple,
-                                              lock_mode_t lmode)
+                                              table_tuple*  ptuple,
+                                              lock_mode_t   lock_mode,
+                                              latch_mode_t  latch_mode)
 {
     assert (_ptable);
     assert (pindex);
@@ -935,10 +950,8 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     bool     found = false;
     smsize_t len = sizeof(rid_t);
 
-
     /* 1. ensure valid index */
     W_DO(pindex->check_fid(db));
-
 
     /* 2. find the tuple in the B+tree */
     int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
@@ -952,10 +965,20 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
-
     /* 3. read the tuple */
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lmode));
+
+    if (pindex->is_relaxed()) {
+        // if index created with NO-LOCK option 
+        // (we ignore the lock_mode and use NL)
+        W_DO(pin.pin(ptuple->rid(), 0, NL, latch_mode));
+    }
+    else {
+        // if normal index
+        W_DO(pin.pin(ptuple->rid(), 0, lock_mode, latch_mode));
+    }
+
+
     if (!load(ptuple, pin.body())) return RC(se_WRONG_DISK_DATA);
     pin.unpin();
 
@@ -1029,7 +1052,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
  *
  *  @fn:    update_tuple
  *
- *  @brief: Upldates a tuple from a table
+ *  @brief: Updates a tuple from a table
  *
  *  @note:  This function should be called in the context of a trx.
  *          The passed tuple should be valid.
@@ -1039,7 +1062,8 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db, 
-                                               table_tuple* ptuple)
+                                               table_tuple* ptuple,
+                                               lock_mode_t  lm)
 {
     assert (_ptable);
     assert (ptuple);
@@ -1049,7 +1073,7 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
 
     /* 1. pin record */
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, EX));
+    W_DO(pin.pin(ptuple->rid(), 0, lm, LATCH_EX));
 
     int current_size = pin.body_size();
 
@@ -1732,9 +1756,7 @@ w_rc_t table_man_impl<TableDesc>::scan_index(ss_m* db,
     TRACE( TRACE_DEBUG, "Scanning index (%s) for table (%s)\n", 
            pindex->name(), _ptable->name());
 
-
     /* 1. open a index scanner */
-
     index_iter* iter;
 
     table_tuple lowtuple(_ptable);
@@ -1754,12 +1776,11 @@ w_rc_t table_man_impl<TableDesc>::scan_index(ss_m* db,
 				 vec_t(highrep._dest, highsz),
 				 false));
 
-
     /* 2. iterate over all index records */
-
     bool        eof;
     int         count = 0;    
     table_tuple row(_ptable);
+
     W_DO(iter->next(db, eof, row));
     while (!eof) {	
 	pin_i  pin;

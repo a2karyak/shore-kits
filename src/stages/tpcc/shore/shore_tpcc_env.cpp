@@ -616,7 +616,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d NO:warehouse-idx-probe (%d)\n", 
            xct_id, pnoin->_wh_id);
-    W_DO(_pwarehouse_man->index_probe(_pssm, prwh, pnoin->_wh_id));
+    W_DO(_pwarehouse_man->wh_index_probe(_pssm, prwh, pnoin->_wh_id));
 
     tpcc_warehouse_tuple awh;
     prwh->get_value(7, awh.W_TAX);
@@ -626,8 +626,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d NO:district-idx-probe (%d) (%d)\n", 
            xct_id, pnoin->_wh_id, pnoin->_d_id);
-    W_DO(_pdistrict_man->index_probe_forupdate(_pssm, prdist, 
-                                               pnoin->_d_id, pnoin->_wh_id));
+    W_DO(_pdistrict_man->dist_index_probe_forupdate(_pssm, prdist, 
+                                                    pnoin->_d_id, pnoin->_wh_id));
 
     /* SELECT d_tax, d_next_o_id
      * FROM district
@@ -646,8 +646,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d NO:customer-idx-probe (%d) (%d) (%d)\n", 
            xct_id, pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id);
-    W_DO(_pcustomer_man->index_probe(_pssm, prcust, pnoin->_c_id, 
-                                     pnoin->_wh_id, pnoin->_d_id));
+    W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, pnoin->_c_id, 
+                                          pnoin->_wh_id, pnoin->_d_id));
 
     tpcc_customer_tuple  acust;
     prcust->get_value(15, acust.C_DISCOUNT);
@@ -661,7 +661,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
      */
 
     TRACE( TRACE_TRX_FLOW, "App: %d NO:district-upd-next-o-id\n", xct_id);
-    W_DO(_pdistrict_man->update_next_o_id(_pssm, prdist, adist.D_NEXT_O_ID));
+    W_DO(_pdistrict_man->dist_update_next_o_id(_pssm, prdist, adist.D_NEXT_O_ID));
     double total_amount = 0;
     int all_local = 0;
 
@@ -682,7 +682,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
         tpcc_item_tuple aitem;
         TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-probe (%d)\n", 
                xct_id, ol_i_id);
-        W_DO(_pitem_man->index_probe(_pssm, pritem, ol_i_id));
+        W_DO(_pitem_man->it_index_probe(_pssm, pritem, ol_i_id));
 
         pritem->get_value(4, aitem.I_DATA, 51);
         pritem->get_value(3, aitem.I_PRICE);
@@ -702,8 +702,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
         tpcc_stock_tuple astock;
         TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-probe (%d) (%d)\n", 
                xct_id, ol_i_id, ol_supply_w_id);
-        W_DO(_pstock_man->index_probe_forupdate(_pssm, prst, 
-                                                ol_i_id, ol_supply_w_id));
+        W_DO(_pstock_man->st_index_probe_forupdate(_pssm, prst, 
+                                                   ol_i_id, ol_supply_w_id));
 
         prst->get_value(0, astock.S_I_ID);
         prst->get_value(1, astock.S_W_ID);
@@ -738,7 +738,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple (%d) (%d)\n", 
                xct_id, astock.S_W_ID, astock.S_I_ID);
-        W_DO(_pstock_man->update_tuple(_pssm, prst, &astock));
+        W_DO(_pstock_man->st_update_tuple(_pssm, prst, &astock));
 
 
         /* INSERT INTO order_line
@@ -884,7 +884,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
            "App: %d PAY:warehouse-idx-probe (%d)\n", 
            xct_id, ppin->_home_wh_id);
 
-    W_DO(_pwarehouse_man->index_probe_forupdate(_pssm, prwh, ppin->_home_wh_id));   
+    W_DO(_pwarehouse_man->wh_index_probe_forupdate(_pssm, prwh, ppin->_home_wh_id));   
 
 
     /* 2. retrieve district for update */
@@ -892,9 +892,9 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
            "App: %d PAY:district-idx-probe (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
 
-    W_DO(_pdistrict_man->index_probe_forupdate(_pssm, prdist,
-                                         ppin->_home_d_id, 
-                                         ppin->_home_wh_id));
+    W_DO(_pdistrict_man->dist_index_probe_forupdate(_pssm, prdist,
+                                                    ppin->_home_d_id, 
+                                                    ppin->_home_wh_id));
 
 
     /* 3. retrieve customer for update */
@@ -923,9 +923,9 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         index_scan_iter_impl<customer_t>* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
                xct_id, ppin->_c_last);
-        W_DO(_pcustomer_man->get_iter_by_index(_pssm, c_iter, prcust, 
-                                               lowrep, highrep,
-                                               c_w, c_d, ppin->_c_last));
+        W_DO(_pcustomer_man->cust_get_iter_by_index(_pssm, c_iter, prcust, 
+                                                    lowrep, highrep,
+                                                    c_w, c_d, ppin->_c_last));
 
         vector<int> v_c_id;
         int a_c_id = 0;
@@ -965,7 +965,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
            "App: %d PAY:cust-idx-probe-forupdate (%d) (%d) (%d)\n", 
            xct_id, c_w, c_d, ppin->_c_id);
 
-    W_DO(_pcustomer_man->index_probe_forupdate(_pssm, prcust, ppin->_c_id, c_w, c_d));
+    W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
+                                                    ppin->_c_id, c_w, c_d));
 
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;
@@ -1022,11 +1023,11 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
-        W_DO(_pcustomer_man->update_tuple(_pssm, prcust, acust, c_new_data_1, c_new_data_2));
+        W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, c_new_data_1, c_new_data_2));
     }
     else { /* good customer */
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
-        W_DO(_pcustomer_man->update_tuple(_pssm, prcust, acust, NULL, NULL));
+        W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, NULL, NULL));
     }
 
     /* UPDATE district SET d_ytd = d_ytd + :h_amount
@@ -1041,7 +1042,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd (%d) (%d)\n", 
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
-    W_DO(_pdistrict_man->update_ytd(_pssm, prdist, ppin->_h_amount));
+    W_DO(_pdistrict_man->dist_update_ytd(_pssm, prdist, ppin->_h_amount));
 
     tpcc_district_tuple adistr;
     prdist->get_value(2, adistr.D_NAME, 11);
@@ -1064,7 +1065,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", 
            xct_id, ppin->_home_wh_id);
-    W_DO(_pwarehouse_man->update_ytd(_pssm, prwh, ppin->_h_amount));
+    W_DO(_pwarehouse_man->wh_update_ytd(_pssm, prwh, ppin->_h_amount));
 
     tpcc_warehouse_tuple awh;
     prwh->get_value(1, awh.W_NAME, 11);
@@ -1208,8 +1209,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 
         index_scan_iter_impl<customer_t>* c_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-get-iter-by-name-idx\n", xct_id);
-        W_DO(_pcustomer_man->get_iter_by_index(_pssm, c_iter, prcust, lowrep, highrep,
-                                         w_id, d_id, pstin->_c_last));
+        W_DO(_pcustomer_man->cust_get_iter_by_index(_pssm, c_iter, prcust, lowrep, highrep,
+                                                    w_id, d_id, pstin->_c_last));
 
         int  c_id_list[17];
         int  count = 0;
@@ -1241,7 +1242,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d ORDST:cust-idx-probe-forupdate (%d) (%d) (%d)\n", 
            xct_id, w_id, d_id, pstin->_c_id);
-    W_DO(_pcustomer_man->index_probe(_pssm, prcust, pstin->_c_id, w_id, d_id));
+    W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, 
+                                          pstin->_c_id, w_id, d_id));
 
     tpcc_customer_tuple acust;
     prcust->get_value(3,  acust.C_FIRST, 17);
@@ -1262,8 +1264,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
      
     index_scan_iter_impl<order_t>* o_iter;
     TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-order-iter-by-index\n", xct_id);
-    W_DO(_porder_man->get_iter_by_index(_pssm, o_iter, prord, lowrep, highrep,
-                                  w_id, d_id, pstin->_c_id));
+    W_DO(_porder_man->ord_get_iter_by_index(_pssm, o_iter, prord, lowrep, highrep,
+                                            w_id, d_id, pstin->_c_id));
 
     tpcc_order_tuple aorder;
     bool eof;
@@ -1295,9 +1297,9 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 
     index_scan_iter_impl<order_line_t>* ol_iter;
     TRACE( TRACE_TRX_FLOW, "App: %d ORDST:get-iter-by-index\n", xct_id);
-    W_DO(_porder_line_man->get_iter_by_index(_pssm, ol_iter, prol,
-                                             lowrep, highrep,
-                                             w_id, d_id, aorder.O_ID));
+    W_DO(_porder_line_man->ol_get_iter_by_index(_pssm, ol_iter, prol,
+                                                lowrep, highrep,
+                                                w_id, d_id, aorder.O_ID));
 
     tpcc_orderline_tuple* porderlines = new tpcc_orderline_tuple[aorder.O_OL_CNT];
     int i=0;
@@ -1440,9 +1442,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
                xct_id, w_id, d_id);
     
         index_scan_iter_impl<new_order_t>* no_iter;
-	W_DO(_pnew_order_man->get_iter_by_index(_pssm, no_iter, prno, 
-                                                lowrep, highrep,
-                                                w_id, d_id));
+	W_DO(_pnew_order_man->no_get_iter_by_index(_pssm, no_iter, prno, 
+                                                   lowrep, highrep,
+                                                   w_id, d_id));
 	bool eof;
 
         // iterate over all new_orders and load their no_o_ids to the sort buffer
@@ -1480,7 +1482,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:delete-new-order-by-index (%d) (%d) (%d)\n", 
                xct_id, w_id, d_id, no_o_id);
 
-	W_DO(_pnew_order_man->delete_by_index(_pssm, prno, w_id, d_id, no_o_id));
+	W_DO(_pnew_order_man->no_delete_by_index(_pssm, prno, w_id, d_id, no_o_id));
 
 
         /* 3a. Update the carrier for the delivered order (in the orders table) */
@@ -1499,7 +1501,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	prord->set_value(0, no_o_id);
 	prord->set_value(2, d_id);
 	prord->set_value(3, w_id);
-	W_DO(_porder_man->update_carrier_by_index(_pssm, prord, carrier_id));
+	W_DO(_porder_man->ord_update_carrier_by_index(_pssm, prord, carrier_id));
 
 	int  c_id;
 	prord->get_value(1, c_id);
@@ -1522,9 +1524,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
 	int total_amount = 0;
         index_scan_iter_impl<order_line_t>* ol_iter;
-	W_DO(_porder_line_man->get_iter_by_index(_pssm, ol_iter, prol, 
-                                                 lowrep, highrep,
-                                                 w_id, d_id, no_o_id));
+	W_DO(_porder_line_man->ol_get_iter_by_index(_pssm, ol_iter, prol, 
+                                                    lowrep, highrep,
+                                                    w_id, d_id, no_o_id));
 
         // iterate over all the orderlines for the particular order
 	W_DO(ol_iter->next(_pssm, eof, *prol));
@@ -1551,7 +1553,8 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:idx-probe (%d) (%d) (%d)\n", 
                xct_id, w_id, d_id, c_id);
 
-	W_DO(_pcustomer_man->index_probe(_pssm, prcust, c_id, w_id, d_id));
+	W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, 
+                                              c_id, w_id, d_id));
 
 	double   balance;
 	prcust->get_value(16, balance);
@@ -1649,7 +1652,8 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     TRACE( TRACE_TRX_FLOW, "App: %d STO:idx-probe (%d) (%d)\n", 
            xct_id, pslin->_d_id, pslin->_wh_id);
 
-    W_DO(_pdistrict_man->index_probe(_pssm, prdist, pslin->_d_id, pslin->_wh_id));
+    W_DO(_pdistrict_man->dist_index_probe(_pssm, prdist, 
+                                          pslin->_d_id, pslin->_wh_id));
 
     int next_o_id = 0;
     prdist->get_value(10, next_o_id);
@@ -1688,10 +1692,10 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     
 
     index_scan_iter_impl<order_line_t>* ol_iter;
-    W_DO(_porder_line_man->get_iter_by_index(_pssm, ol_iter, prol,
-                                       lowrep, highrep,
-				       pslin->_wh_id, pslin->_d_id,
-				       next_o_id-20, next_o_id));
+    W_DO(_porder_line_man->ol_get_iter_by_index(_pssm, ol_iter, prol,
+                                                lowrep, highrep,
+                                                pslin->_wh_id, pslin->_d_id,
+                                                next_o_id-20, next_o_id));
 
     sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
@@ -1745,7 +1749,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
         TRACE( TRACE_TRX_FLOW, "App: %d STO:idx-probe (%d) (%d)\n", 
                xct_id, i_id, w_id);
 
-	W_DO(_pstock_man->index_probe(_pssm, prst, i_id, w_id));
+	W_DO(_pstock_man->st_index_probe(_pssm, prst, i_id, w_id));
 
         // check if stock quantity below threshold 
 	int quantity;

@@ -42,18 +42,18 @@ public:
     }
 
     /* --- access specific tuples  --- */
-    w_rc_t index_probe(ss_m* db, 
-                       warehouse_tuple* ptuple, 
-                       const int w_id);
+    w_rc_t wh_index_probe(ss_m* db, 
+                          warehouse_tuple* ptuple, 
+                          const int w_id);
     
-    w_rc_t index_probe_forupdate(ss_m* db, 
-                                 warehouse_tuple* ptuple, 
-                                 const int w_id);
+    w_rc_t wh_index_probe_forupdate(ss_m* db, 
+                                    warehouse_tuple* ptuple, 
+                                    const int w_id);
 
     /* --- update a retrieved tuple --- */
-    w_rc_t update_ytd(ss_m* db,
-                      warehouse_tuple* ptuple,
-                      const double h_amount);
+    w_rc_t wh_update_ytd(ss_m* db,
+                         warehouse_tuple* ptuple,
+                         const double h_amount);
 
     /** deprecated */
     
@@ -79,25 +79,25 @@ public:
     }
 
     /* --- access specific tuples --- */
-    w_rc_t index_probe(ss_m* db,
-                       district_tuple* ptuple,
-                       const int d_id,
-                       const int w_id);
+    w_rc_t dist_index_probe(ss_m* db,
+                            district_tuple* ptuple,
+                            const int d_id,
+                            const int w_id);
 
-    w_rc_t index_probe_forupdate(ss_m* db,
-                                 district_tuple* ptuple,
-                                 const int d_id,
-                                 const int w_id);
+    w_rc_t dist_index_probe_forupdate(ss_m* db,
+                                      district_tuple* ptuple,
+                                      const int d_id,
+                                      const int w_id);
 
 
     /* --- update a retrieved tuple --- */
-    w_rc_t update_ytd(ss_m* db,
-                      district_tuple* ptuple,
-                      const double h_amount);
+    w_rc_t dist_update_ytd(ss_m* db,
+                           district_tuple* ptuple,
+                           const double h_amount);
 
-    w_rc_t update_next_o_id(ss_m* db,
-                            district_tuple* ptuple,
-                            const int  next_o_id);
+    w_rc_t dist_update_next_o_id(ss_m* db,
+                                 district_tuple* ptuple,
+                                 const int  next_o_id);
 
     /** deprecated */
 
@@ -125,44 +125,44 @@ public:
     }
 
     /* --- access specific tuples --- */
-    w_rc_t get_iter_by_index(ss_m* db,
-                             customer_index_iter* &iter,
+    w_rc_t cust_get_iter_by_index(ss_m* db,
+                                  customer_index_iter* &iter,
+                                  customer_tuple* ptuple,
+                                  rep_row_t &replow,
+                                  rep_row_t &rephigh,
+                                  const int w_id,
+                                  const int d_id,
+                                  const char* c_last);
+
+    w_rc_t cust_index_probe(ss_m* db,
+                            customer_tuple* ptuple,
+                            const int c_id,
+                            const int w_id,
+                            const int d_id);
+    
+    w_rc_t cust_index_probe_by_name(ss_m* db,
+                                    const char* idx_name,
+                                    customer_tuple* ptuple,
+                                    const int c_id,
+                                    const int w_id,
+                                    const int d_id);
+
+    w_rc_t cust_index_probe_forupdate(ss_m* db,
+                                      customer_tuple* ptuple,
+                                      const int c_id,
+                                      const int w_id,
+                                      const int d_id);
+
+    w_rc_t cust_update_tuple(ss_m* db,
                              customer_tuple* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const char* c_last);
-
-    w_rc_t index_probe(ss_m* db,
-                       customer_tuple* ptuple,
-                       const int c_id,
-                       const int w_id,
-                       const int d_id);
-
-    w_rc_t index_probe_by_name(ss_m* db,
-                               const char* idx_name,
-                               customer_tuple* ptuple,
-                               const int c_id,
-                               const int w_id,
-                               const int d_id);
-
-    w_rc_t index_probe_forupdate(ss_m* db,
-                                 customer_tuple* ptuple,
-                                 const int c_id,
-                                 const int w_id,
-                                 const int d_id);
-
-    w_rc_t update_tuple(ss_m* db,
-                        customer_tuple* ptuple,
-                        const tpcc_customer_tuple& acustomer,
-                        const char* adata1 = NULL,
-                        const char* adata2 = NULL);
-
-    w_rc_t update_discount_balance(ss_m* db,
-                                   customer_tuple* ptuple,
-                                   const decimal discount,
-                                   const decimal balance);
+                             const tpcc_customer_tuple& acustomer,
+                             const char* adata1 = NULL,
+                             const char* adata2 = NULL);
+    
+    w_rc_t cust_update_discount_balance(ss_m* db,
+                                        customer_tuple* ptuple,
+                                        const decimal discount,
+                                        const decimal balance);
 
     /** deprecated */
 
@@ -213,20 +213,20 @@ public:
     }
 
     /* --- access specific tuples --- */     
-    w_rc_t get_iter_by_index(ss_m* db,
-                             new_order_index_iter* &iter,
-                             new_order_tuple* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id);
+    w_rc_t no_get_iter_by_index(ss_m* db,
+                                new_order_index_iter* &iter,
+                                new_order_tuple* ptuple,
+                                rep_row_t &replow,
+                                rep_row_t &rephigh,
+                                const int w_id,
+                                const int d_id);
 
-    w_rc_t delete_by_index(ss_m* db,
-                           new_order_tuple* ptuple,
-                           const int w_id,
-                           const int d_id,
-                           const int o_id);
-
+    w_rc_t no_delete_by_index(ss_m* db,
+                              new_order_tuple* ptuple,
+                              const int w_id,
+                              const int d_id,
+                              const int o_id);
+    
     /** deprecated */
 
     w_rc_t bulkload(ss_m* db, int w_num);
@@ -256,20 +256,20 @@ public:
     {
     }
 
-    /* --- access specific tuples --- */     
-    w_rc_t update_carrier_by_index(ss_m* db,
-                                   order_tuple* ptuple,
-                                   const int carrier_id);
-    
-    w_rc_t get_iter_by_index(ss_m* db,
-                             order_index_iter* &iter,
-                             order_tuple* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const int c_id);
+    /* --- access specific tuples --- */         
+    w_rc_t ord_get_iter_by_index(ss_m* db,
+                                 order_index_iter* &iter,
+                                 order_tuple* ptuple,
+                                 rep_row_t &replow,
+                                 rep_row_t &rephigh,
+                                 const int w_id,
+                                 const int d_id,
+                                 const int c_id);
 
+    w_rc_t ord_update_carrier_by_index(ss_m* db,
+                                       order_tuple* ptuple,
+                                       const int carrier_id);
+    
     /** deprecated */
 
     /* cnt_array */
@@ -311,24 +311,24 @@ public:
     }
 
     /* --- access the table --- */
-    w_rc_t get_iter_by_index(ss_m* db,
-                             order_line_index_iter* &iter,
-                             order_line_tuple* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const int low_o_id,
-                             const int high_o_id);
-
-    w_rc_t get_iter_by_index(ss_m* db,
-                             order_line_index_iter* &iter,
-                             order_line_tuple* ptuple,
-                             rep_row_t &replow,
-                             rep_row_t &rephigh,
-                             const int w_id,
-                             const int d_id,
-                             const int o_id);
+    w_rc_t ol_get_iter_by_index(ss_m* db,
+                                order_line_index_iter* &iter,
+                                order_line_tuple* ptuple,
+                                rep_row_t &replow,
+                                rep_row_t &rephigh,
+                                const int w_id,
+                                const int d_id,
+                                const int low_o_id,
+                                const int high_o_id);
+    
+    w_rc_t ol_get_iter_by_index(ss_m* db,
+                                order_line_index_iter* &iter,
+                                order_line_tuple* ptuple,
+                                rep_row_t &replow,
+                                rep_row_t &rephigh,
+                                const int w_id,
+                                const int d_id,
+                                const int o_id);
 
     /** deprecated */
 
@@ -366,11 +366,11 @@ public:
     }
 
     /* --- access the table --- */
-    w_rc_t index_probe(ss_m* ddb, 
+    w_rc_t it_index_probe(ss_m* ddb, 
                        item_tuple* ptuple,
                        const int i_id);
 
-    w_rc_t index_probe_forupdate(ss_m* db, 
+    w_rc_t it_index_probe_forupdate(ss_m* db, 
                                  item_tuple* ptuple,
                                  const int i_id);
 
@@ -400,19 +400,20 @@ public:
     }
 
     /* --- access the table --- */
-    w_rc_t index_probe(ss_m* db,
-                       stock_tuple* ptuple,
-                       const int i_id,
-                       const int w_id);
+    w_rc_t st_index_probe(ss_m* db,
+                          stock_tuple* ptuple,
+                          const int i_id,
+                          const int w_id);
 
-    w_rc_t index_probe_forupdate(ss_m* db,
-                                 stock_tuple* ptuple,
-                                 const int i_id,
-                                 const int w_id);
+    w_rc_t st_index_probe_forupdate(ss_m* db,
+                                    stock_tuple* ptuple,
+                                    const int i_id,
+                                    const int w_id);
 
-    w_rc_t update_tuple(ss_m* db,
-                        stock_tuple* ptuple,
-                        const tpcc_stock_tuple* pstock);
+    w_rc_t st_update_tuple(ss_m* db,
+                           stock_tuple* ptuple,
+                           const tpcc_stock_tuple* pstock);
+
     /** deprecated */
 
     w_rc_t bulkload(ss_m* db, int w_num);

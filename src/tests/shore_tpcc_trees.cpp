@@ -20,10 +20,19 @@ using namespace tpcc;
 int inst_env(int argc, char* argv[]);
 int close_env();
 
+
+// enum of the various tree tests
+const int XCT_CUST_KVL_LOCK_TREE  = 10;
+const int XCT_CUST_NO_LOCK_TREE   = 11;
+const int XCT_STOCK_KVL_LOCK_TREE = 12;
+const int XCT_STOCK_NO_LOCK_TREE  = 13;
+
+
+//// Default values of the parameters for the run
+
 // default database size (scaling factor)
 const int DF_NUM_OF_WHS = 10;
 int _numOfWHs           = DF_NUM_OF_WHS;    
-
 
 // default queried number of warehouses (queried factor)
 const int DF_NUM_OF_QUERIED_WHS = 10;
@@ -38,22 +47,15 @@ const int MAX_NUM_OF_THR    = 100;
 // default number of transactions executed per thread
 const int DF_TRX_PER_THR = 100;
 
-// enum of the various trees
-const int XCT_CUST_KVL_LOCK_TREE  = 10;
-const int XCT_CUST_NO_LOCK_TREE   = 11;
-const int XCT_STOCK_KVL_LOCK_TREE = 12;
-const int XCT_STOCK_NO_LOCK_TREE  = 13;
-
-
 // default transaction id to be executed
 const int DF_TRX_ID = XCT_CUST_KVL_LOCK_TREE;
 
 // default number of iterations
 const int DF_NUM_OF_ITERS = 5;
 
+// default commit every that many trx
+const int DF_COMMIT_INTERVAL = 2;
 
-// commit every that many trx
-const int COMMIT_INTERVAL = 2;
 
 
 ///////////////////////////////////////////////////////////
@@ -70,20 +72,24 @@ private:
     int _trxid;
     int _updtuple;
     int _notrxs;
+    int _ci;
 
 public:
     int	_rv;
     
     test_tree_smt_t(ShoreTPCCEnv* env, 
-                    int sWH, int trxID, int updTuple, int numOfTrxs, 
+                    int sWH, int trxID, int updTuple, 
+                    int numOfTrxs, int commitInterval,
                     c_str tname) 
 	: thread_t(tname), _env(env), 
-          _wh(sWH), _trxid(trxID), _updtuple(updTuple), _notrxs(numOfTrxs),
+          _wh(sWH), _trxid(trxID), _updtuple(updTuple), 
+          _notrxs(numOfTrxs), _ci(commitInterval),
           _rv(0)
     {
         assert (_env);
-        assert (_notrxs);
         assert (_wh>=0);
+        assert (_notrxs);
+        assert (_ci);
     }
 
 
@@ -131,7 +137,7 @@ w_rc_t test_tree_smt_t::test_trees()
 {
     W_DO(_env->loaddata());
 
-    int flag = COMMIT_INTERVAL;
+    int flag = _ci;
     rep_row_t areprow(_env->customer_man()->ts());
 
     W_DO(_env->db()->begin_xct());
@@ -160,7 +166,7 @@ w_rc_t test_tree_smt_t::test_trees()
 
         if (i > flag) {
             W_DO(_env->db()->commit_xct());
-            flag += COMMIT_INTERVAL;
+            flag += _ci;
             W_DO(_env->db()->begin_xct());
         }
 
@@ -193,23 +199,23 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock,
 
     if (nolock) {
         TRACE( TRACE_DEBUG, "CUST-TREE-NO-LOCK\n");
-        e = _env->customer_man()->index_probe_by_name(_env->db(), 
-                                                      "C_INDEX_NOLOCK", 
-                                                      prcust, 
-                                                      in_c, in_wh, in_d); 
+        e = _env->customer_man()->cust_index_probe_by_name(_env->db(), 
+                                                           "C_INDEX_NOLOCK", 
+                                                           prcust, 
+                                                           in_c, in_wh, in_d); 
     }
     else {
         if (updtuple) {
             TRACE( TRACE_DEBUG, "CUST-TREE-KVL-LOCK-WITH-UPD\n");
-            e = _env->customer_man()->index_probe_forupdate(_env->db(), 
-                                                            prcust, 
-                                                            in_c, in_wh, in_d); 
+            e = _env->customer_man()->cust_index_probe_forupdate(_env->db(), 
+                                                                 prcust, 
+                                                                 in_c, in_wh, in_d); 
         }
         else {
             TRACE( TRACE_DEBUG, "CUST-TREE-KVL-LOCK-NO-UPD\n");
-            e = _env->customer_man()->index_probe_by_name(_env->db(), 
-                                                          "C_INDEX", prcust, 
-                                                          in_c, in_wh, in_d); 
+            e = _env->customer_man()->cust_index_probe_by_name(_env->db(), 
+                                                               "C_INDEX", prcust, 
+                                                               in_c, in_wh, in_d); 
         }
     }
 
@@ -231,10 +237,10 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock,
         c_balance++;
         TRACE( TRACE_DEBUG, "UPD-TUPLE (%.3f) (%.2f)\n", 
                c_discount.to_double(), c_balance.to_double());
-        e = _env->customer_man()->update_discount_balance(_env->db(),
-                                                          prcust,
-                                                          c_discount,
-                                                          c_balance);
+        e = _env->customer_man()->cust_update_discount_balance(_env->db(),
+                                                               prcust,
+                                                               c_discount,
+                                                               c_balance);
             
         if (e) {
             TRACE( TRACE_ALWAYS, "Tuple update failed [0x%x]\n", e.err_num());
@@ -341,14 +347,15 @@ int tree_test_shell_t::print_usage(const char* command)
     assert (command);
 
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS>]\n" \
+           "%s <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS> <COMMIT_INT>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix)\n" \
            "<UPD_TRX>     : Will the trx update the tuple or only probe?\n" \
            "<NUM_THREADS> : Number of concurrent threads (Default=1) (optional)\n" \
            "<NUM_TRXS>    : Number of trxs per thread (Default=100) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n",
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
+           "<COMMIT_INT>  : Commit Interval (Default=10) (optional)\n",
            command);
     
     TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
@@ -372,18 +379,21 @@ int tree_test_shell_t::process_command(const char* command)
     int tmp_numOfTrxs       = DF_TRX_PER_THR;
     int iterations          = DF_NUM_OF_ITERS;
     int tmp_iterations      = DF_NUM_OF_ITERS;
+    int commit_interval     = DF_COMMIT_INTERVAL;
+    int tmp_ci              = DF_COMMIT_INTERVAL;
 
     char command_tag[SERVER_COMMAND_BUFFER_SIZE];
 
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedWHs,
                 &tmp_selectedTrxID,
                 &tmp_updTuple,
                 &tmp_numOfThreads,
                 &tmp_numOfTrxs,
-                &tmp_iterations) < 4 ) 
+                &tmp_iterations,
+                &tmp_ci) < 4 ) 
     {
         print_usage(command_tag);
         return (SHELL_NEXT_CONTINUE);
@@ -426,19 +436,23 @@ int tree_test_shell_t::process_command(const char* command)
     if (tmp_iterations>0)
         iterations = tmp_iterations;
 
+    // 7- commit interval (trxs per commit) - commit_interval
+    if (tmp_ci>0)
+        commit_interval = tmp_ci;
+
 
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "Queried WHs    : %d\n" \
-           "Trxs ID        : %s\n" \
-           "Update Tuple   : %s\n" \
-           "Num of Threads : %d\n" \
-           "Num of Trxs    : %d\n" \
-           "Iterations     : %d\n", 
+           "Queried WHs     : %d\n" \
+           "Trxs ID         : %s\n" \
+           "Update Tuple    : %s\n" \
+           "Num of Threads  : %d\n" \
+           "Num of Trxs     : %d\n" \
+           "Iterations      : %d\n" \
+           "Commit Interval : %d\n", 
            numOfQueriedWHs, translate_trx_id(selectedTrxID), 
-           (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, iterations);
-
-    //    return (SHELL_NEXT_CONTINUE);
+           (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, 
+           iterations, commit_interval);
 
     test_tree_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iterations; j++) {
@@ -454,7 +468,8 @@ int tree_test_shell_t::process_command(const char* command)
             // create & fork testing threads
             wh_id++;
             testers[i] = new test_tree_smt_t(shore_env, wh_id, selectedTrxID, 
-                                             updTuple, numOfTrxs, c_str("tt%d", i));
+                                             updTuple, numOfTrxs, commit_interval,
+                                             c_str("tt%d", i));
             testers[i]->fork();
 
         }
