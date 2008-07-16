@@ -21,7 +21,7 @@ ENTER_NAMESPACE(tpcc);
 
 /** Exported variables */
 
-ShoreTPCCEnv* shore_env;
+ShoreTPCCEnv* _g_shore_env;
 
 
 /** Exported functions */

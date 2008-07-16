@@ -66,17 +66,17 @@ void shore_tpcc_handler_t::init() {
         // Create the Shore environment instance
         // @note Once the user decide to load the data the system 
         // will configure and start
-        shore_env = new ShoreTPCCEnv(SHORE_DEFAULT_CONF_FILE);
+        _g_shore_env = new ShoreTPCCEnv(SHORE_DEFAULT_CONF_FILE);
 
         // the initialization must be executed in a shore context
-        db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), shore_env);
+        db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _g_shore_env);
         initializer->fork();
         initializer->join();        
         if (initializer) {
             delete (initializer);
             initializer = NULL;
         }
-        shore_env->print_sf();
+        _g_shore_env->print_sf();
 
         // register drivers...
 
@@ -124,7 +124,7 @@ void shore_tpcc_handler_t::init() {
 
 void shore_tpcc_handler_t::shutdown() {
 
-    assert(shore_env);
+    assert(_g_shore_env);
 
     // use a global thread-safe state machine to ensure that
     // the db close function is called exactly once
@@ -137,7 +137,7 @@ void shore_tpcc_handler_t::shutdown() {
         TRACE(TRACE_ALWAYS, "... closing db\n");
 
         // close Shore env
-        close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
+        close_smt_t* clt = new close_smt_t(_g_shore_env, c_str("clt"));
         clt->fork();
         clt->join();
         if (clt->_rv) {
@@ -157,7 +157,7 @@ void shore_tpcc_handler_t::shutdown() {
 
 void shore_tpcc_handler_t::handle_command(const char* command) {
 
-    assert(shore_env);
+    assert(_g_shore_env);
 
     int num_clients;
     int num_iterations;
@@ -183,9 +183,9 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         int num_warehouses = 0;
         sscanf(command, "%*s %*s %d", &num_warehouses);
         if (num_warehouses>0) {
-            shore_env->set_sf(num_warehouses);
+            _g_shore_env->set_sf(num_warehouses);
         }
-        shore_env->print_sf();
+        _g_shore_env->print_sf();
         return;
     }
 
@@ -196,9 +196,9 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         sscanf(command, "%*s %*s %d", &queried_warehouses);
         if (queried_warehouses>0) {
             selectedQueriedSF = queried_warehouses;
-            shore_env->set_qf(queried_warehouses);
+            _g_shore_env->set_qf(queried_warehouses);
         }
-        shore_env->print_sf();
+        _g_shore_env->print_sf();
         return;
     }
 
@@ -220,7 +220,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         // Load data to the Shore Database
         // This shold be done within a Shore context
 
-        db_load_smt_t* loader = new db_load_smt_t(c_str("loader"), shore_env);
+        db_load_smt_t* loader = new db_load_smt_t(c_str("loader"), _g_shore_env);
         loader->fork();
         loader->join();
         if (loader->_rc) {
@@ -238,7 +238,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
 
 
     // Continue only if data loaded
-    if(!shore_env->is_loaded()) {
+    if(!_g_shore_env->is_loaded()) {
 	TRACE(TRACE_ALWAYS, "No database loaded. Please use 'parse' to load one\n");
 	return;
     }
@@ -247,7 +247,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     if (!strcmp(driver_tag, "dump"))
     {
         assert (false); // (ip) untested
-        dump_smt_t* dumper = new dump_smt_t(shore_env, c_str("dumper"));
+        dump_smt_t* dumper = new dump_smt_t(_g_shore_env, c_str("dumper"));
         dumper->fork();
         dumper->join();
         if (dumper->retval()) {
@@ -267,7 +267,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         assert (false); // (ip) untested
         cout << "Getting stats..." << endl;
         int* r=NULL;
-        du_smt_t* duer = new du_smt_t(shore_env, c_str("duer"));
+        du_smt_t* duer = new du_smt_t(_g_shore_env, c_str("duer"));
         run_smthread<du_smt_t,int>(duer,r);
         delete (duer);
         duer = NULL;
@@ -336,8 +336,8 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
     w.run(results);
 
     /* Print shore_env stats */
-    assert (shore_env);
-    shore_env->print_tpcc_stats();
+    assert (_g_shore_env);
+    _g_shore_env->print_tpcc_stats();
 
     /* Report results. We'll use the workload name for its
        description. */

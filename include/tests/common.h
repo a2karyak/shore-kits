@@ -8,5 +8,7 @@
 #include "tests/common/tester_thread.h"
 #include "tests/common/tester_query.h"
 
+#include "tests/common/tester_shore_env.h"
+
 
 #endif

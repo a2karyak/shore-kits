@@ -146,8 +146,8 @@ public:
     inline void rollback() 
     {        
         TRACE( TRACE_TRX_FLOW, "~~~ Should Rollback TRX=%d ~~~\n", _trx_id);
-        shore_env->get_tpcc_stats()->inc_pay_att();
-        shore_env->get_env_stats()->inc_trx_att();
+        _g_shore_env->get_tpcc_stats()->inc_pay_att();
+        _g_shore_env->get_env_stats()->inc_trx_att();
     }
 
 
@@ -156,8 +156,8 @@ public:
     inline void commit() 
     {
         TRACE( TRACE_TRX_FLOW, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
-        shore_env->get_tpcc_stats()->inc_pay_com();
-        shore_env->get_env_stats()->inc_trx_com();
+        _g_shore_env->get_tpcc_stats()->inc_pay_com();
+        _g_shore_env->get_env_stats()->inc_trx_com();
     }
 
 }; // END OF CLASS: shore_payment_finalize_packet_t

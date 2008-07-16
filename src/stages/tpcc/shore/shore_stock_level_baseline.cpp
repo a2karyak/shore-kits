@@ -48,7 +48,7 @@ void shore_stock_level_baseline_stage_t::process_packet() {
     //    packet->describe_trx();
 
     trx_result_tuple_t atrt;
-    shore_env->run_stock_level(packet->get_trx_id(), packet->_sl_in, atrt);
+    _g_shore_env->run_stock_level(packet->get_trx_id(), packet->_sl_in, atrt);
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
     

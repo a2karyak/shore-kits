@@ -47,7 +47,7 @@ void shore_payment_baseline_stage_t::process_packet() {
     //    packet->describe_trx();
 
     trx_result_tuple_t atrt;
-    shore_env->run_payment(packet->get_trx_id(), packet->_p_in, atrt);
+    _g_shore_env->run_payment(packet->get_trx_id(), packet->_p_in, atrt);
     
     // writing output 
 

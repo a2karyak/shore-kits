@@ -1,14 +1,26 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-// CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
+// CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_kit_shell.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
+
+/** @file:   shore_tpcc_kit_shell.cpp
+ *
+ *  @brief:  Test shore tpc-c kit with shell
+ *
+ *  @author: Ippokratis Pandis, July 2008
+ *
+ */
 
 #include "tests/common.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
+#include "util/shell.h"
+
 
 using namespace shore;
 using namespace tpcc;
 
+
+// Default parameters for the runs
 
 // default value if spread threads at WHs
 const int DF_SPREAD_THREADS_TO_WHS = 1;
@@ -28,6 +40,9 @@ const int DF_TRX_ID = XCT_PAYMENT;
 // default number of iterations
 const int DF_NUM_OF_ITERS = 5;
 
+// default use sli
+const int DF_USE_SLI = 1;
+
 
 ///////////////////////////////////////////////////////////
 // @class test_smt_t
@@ -42,15 +57,18 @@ private:
     int _wh;
     int _trxid;
     int _notrxs;
+    int _use_sli;
 
 public:
     int	_rv;
     
     test_smt_t(ShoreTPCCEnv* env, 
-               int sWH, int trxId, int numOfTrxs, 
+               int sWH, int trxId, int numOfTrxs, int useSLI,
                c_str tname) 
 	: thread_t(tname), 
-          _env(env), _wh(sWH), _trxid(trxId), _notrxs(numOfTrxs), _rv(0)
+          _env(env), _wh(sWH), _trxid(trxId), _notrxs(numOfTrxs), 
+          _use_sli(useSLI),
+          _rv(0)
     {
         assert (_env);
         assert (_notrxs);
@@ -82,6 +100,10 @@ public:
                 return;
             }
         }
+
+        // check SLI
+        ss_m::set_sli_enabled(_use_sli);
+
         // run test
         _rv = test();
     }
@@ -189,13 +211,48 @@ w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
 }
 
 
+/** EOF: test_tree_smt_t functions */
+
+
+
 //////////////////////////////
 
 
 //////////////////////////////
 
 
-const char* translate_trx_id(const int trx_id) 
+class tpcc_kit_shell_t : public shell_t 
+{
+private:
+
+    // helper functions
+    const char* translate_trx_id(const int trx_id);
+ 
+public:
+
+    tpcc_kit_shell_t(const char* prompt) 
+        : shell_t(prompt)
+        {
+        }
+
+    ~tpcc_kit_shell_t() 
+    { 
+        TRACE( TRACE_ALWAYS, "Exiting... (%d) commands processed\n",
+               get_command_cnt());
+    }
+
+    // shell interface
+    int process_command(const char* command);
+    int print_usage(const char* command);
+
+}; // EOF: tpcc_kit_shell_t
+
+
+
+/** tpcc_kit_shell_t helper functions */
+
+
+const char* tpcc_kit_shell_t::translate_trx_id(const int trx_id) 
 {
     switch (trx_id) {
     case (XCT_NEW_ORDER):
@@ -212,136 +269,148 @@ const char* translate_trx_id(const int trx_id)
         break;
     case (XCT_STOCK_LEVEL):
         return ("StockLevel");
+        break;
     default:
         return ("Mix");
     }
 }
 
-void print_usage(char* argv[]) 
+
+/** tpcc_kit_shell_t interface */
+
+
+int tpcc_kit_shell_t::print_usage(const char* command) 
 {
+    assert (command);
+
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
+           "%s <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI>]\n" \
            "\nParameters:\n" \
-           "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n",
-           argv[0]);
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
+           "<SLI>         : Use SLI (Default=1-Yes) (optional)\n",
+           command);
+    
+    TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
+
+    return (SHELL_NEXT_CONTINUE);
 }
 
 
-int main(int argc, char* argv[]) 
+int tpcc_kit_shell_t::process_command(const char* command)
 {
-    // initialize cordoba threads
-    thread_init();
-
-
-    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
-               //              | TRACE_QUERY_RESULTS
-               //              | TRACE_PACKET_FLOW
-               //               | TRACE_RECORD_FLOW
-               //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
-              );
-
-
     /* 0. Parse Parameters */
-    int numOfWHs        = DF_NUM_OF_WHS;    
-    int numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
-    int spreadThreads   = DF_SPREAD_THREADS_TO_WHS;
-    int numOfThreads    = DF_NUM_OF_THR;
-    int numOfTrxs       = DF_TRX_PER_THR;
-    int selectedTrxID   = DF_TRX_ID;
-    int iterations      = DF_NUM_OF_ITERS;
+    int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
+    int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
+    int spreadThreads       = DF_SPREAD_THREADS_TO_WHS;
+    int tmp_spreadThreads   = DF_SPREAD_THREADS_TO_WHS;
+    int numOfThreads        = DF_NUM_OF_THR;
+    int tmp_numOfThreads    = DF_NUM_OF_THR;
+    int numOfTrxs           = DF_TRX_PER_THR;
+    int tmp_numOfTrxs       = DF_TRX_PER_THR;
+    int selectedTrxID       = DF_TRX_ID;
+    int tmp_selectedTrxID   = DF_TRX_ID;
+    int iterations          = DF_NUM_OF_ITERS;
+    int tmp_iterations      = DF_NUM_OF_ITERS;
+    int use_sli             = DF_USE_SLI;
+    int tmp_use_sli         = DF_USE_SLI;
 
-    if (argc<3) {
-        print_usage(argv);
-        return (1);
+
+    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
+
+    // Parses new test run data
+    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+                &command_tag,
+                &tmp_numOfQueriedWHs,
+                &tmp_spreadThreads,
+                &tmp_numOfThreads,
+                &tmp_numOfTrxs,
+                &tmp_selectedTrxID,
+                &tmp_iterations,
+                &tmp_use_sli) < 2 ) 
+    {
+        print_usage(command_tag);
+        return (SHELL_NEXT_CONTINUE);
     }
 
-    int tmp = atoi(argv[1]);
-    if (tmp>0)
-        numOfWHs = tmp;
 
-    tmp = atoi(argv[2]);
-    if (tmp>0)
-        numOfQueriedWHs = tmp;
-    assert (numOfQueriedWHs <= numOfWHs);
+    // REQUIRED Parameters
 
-    if (argc>3)
-        spreadThreads = atoi(argv[3]);
+    // 1- number of queried warehouses - numOfQueriedWHs
+    if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
+        numOfQueriedWHs = tmp_numOfQueriedWHs;
+    else
+        numOfQueriedWHs = _numOfWHs;
+    assert (numOfQueriedWHs <= _numOfWHs);
+
+
+    // OPTIONAL Parameters
+
+    // 2- spread trxs
+    spreadThreads = tmp_spreadThreads;
+
+    // 3- number of threads - numOfThreads
+    if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=MAX_NUM_OF_THR)) {
+        numOfThreads = tmp_numOfThreads;
+        if (spreadThreads && (numOfThreads > numOfQueriedWHs))
+            numOfThreads = numOfQueriedWHs;
+    }
+    else {
+        numOfThreads = numOfQueriedWHs;
+    }
     
-    if (argc>4) {
-        tmp = atoi(argv[4]);
-        if ((tmp>0) && (tmp<=MAX_NUM_OF_THR)) {
-            numOfThreads = tmp;
-            if (spreadThreads && (tmp > numOfQueriedWHs))
-                numOfThreads = numOfQueriedWHs;
-        }
-    }
+    // 4- number of trxs - numOfTrxs
+    if (tmp_numOfTrxs>0)
+        numOfTrxs = tmp_numOfTrxs;
 
-    if (argc>5) {
-        tmp = atoi(argv[5]);
-        if (tmp>0)
-            numOfTrxs = tmp;
-    }
+    // 5- selected trx
+    if (tmp_selectedTrxID>0)
+        selectedTrxID = tmp_selectedTrxID;
 
-    if (argc>6) {
-        selectedTrxID = atoi(argv[6]);
-    }
+    // 6- number of iterations - iterations
+    if (tmp_iterations>0)
+        iterations = tmp_iterations;
 
-    if (argc>7) {
-        iterations = atoi(argv[7]);
-    }
+    // 7- use sli   
+    use_sli = tmp_use_sli;
+
 
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "Num of WHs     : %d\n" \
            "Queried WHs    : %d\n" \
            "Spread Threads : %s\n" \
            "Num of Threads : %d\n" \
            "Num of Trxs    : %d\n" \
            "Trx            : %s\n" \
-           "Iterations     : %d\n", 
-           numOfWHs, numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
+           "Iterations     : %d\n" \
+           "Use SLI        : %s\n", 
+           numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
            numOfThreads, numOfTrxs, translate_trx_id(selectedTrxID), 
-           iterations);
+           iterations, (use_sli ? "Yes" : "No"));
 
-    /* 1. Instanciate the Shore Environment */
-    _g_shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
-
-
-    // the initialization must be executed in a shore context
-    db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _g_shore_env);
-    initializer->fork();
-    initializer->join();        
-    if (initializer) {
-        delete (initializer);
-        initializer = NULL;
-    }    
-    _g_shore_env->print_sf();
-    
     test_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iterations; j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iterations);
-        TRACE( TRACE_ALWAYS, "Starting (%d) threads with (%d) trxs each...\n",
-               numOfThreads, numOfTrxs);
 
-	stopwatch_t timer;
         int wh_id = 0;
+	stopwatch_t timer;
+
         for (int i=0; i<numOfThreads; i++) {
-            // create & fork (numOfThreads) testing threads
+            // create & fork testing threads
             if (spreadThreads)
                 wh_id = i+1;
-            testers[i] = new test_smt_t(_g_shore_env, wh_id, selectedTrxID,
-                                        numOfTrxs, c_str("tt%d", i));
+            testers[i] = new test_smt_t(_g_shore_env, wh_id, selectedTrxID, 
+                                        numOfTrxs, use_sli,
+                                        c_str("tpcc%d", i));
             testers[i]->fork();
-        }        
+
+        }
 
         /* 2. join the tester threads */
         for (int i=0; i<numOfThreads; i++) {
@@ -356,23 +425,57 @@ int main(int argc, char* argv[])
 
 	double delay = timer.time();
         TRACE( TRACE_ALWAYS, "*******\n" \
-               "Threads: (%d)\nTrxs:    (%d)\nSecs:    (%.2f)\nTPS:     (%.2f)\n",
-               numOfThreads, numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
+               "WHs:     (%d)\n" \
+               "Spread:  (%s)\n" \
+               "Threads: (%d)\n" \
+               "Trxs:    (%d)\n" \
+               "SLI:     (%s)\n" \
+               "Secs:    (%.2f)\n" \
+               "TPS:     (%.2f)\n",
+               numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), numOfThreads, 
+               numOfTrxs, (use_sli ? "Yes" : "No"), delay, 
+               numOfThreads*numOfTrxs/delay);
     }
 
-    // close Shore env
-    close_smt_t* clt = new close_smt_t(_g_shore_env, c_str("clt"));
-    clt->fork();
-    clt->join();
-    if (clt->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
+    return (SHELL_NEXT_CONTINUE);
+}
+
+/** EOF: tpcc_kit_shell_t functions */
+
+
+//////////////////////////////
+
+
+//////////////////////////////
+
+
+int main(int argc, char* argv[]) 
+{
+    // initialize cordoba threads
+    thread_init();
+
+    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
+               //              | TRACE_QUERY_RESULTS
+               //              | TRACE_PACKET_FLOW
+               //               | TRACE_RECORD_FLOW
+               //               | TRACE_TRX_FLOW
+               //               | TRACE_DEBUG
+              );
+
+    /* 1. Instanciate the Shore environment */
+    if (inst_test_env(argc, argv))
         return (1);
-    }
 
-    if (clt) {
-        delete (clt);
-        clt = NULL;
-    }
+
+    /* 2. Start processing commands */
+    tpcc_kit_shell_t kit_shell("(tpcckit) ");
+    kit_shell.start();
+
+    /* 3. Close the Shore environment */
+    if (_g_shore_env)
+        close_test_env();
 
     return (0);
 }
+
+

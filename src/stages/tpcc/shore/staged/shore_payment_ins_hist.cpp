@@ -36,7 +36,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
 
     //    packet->describe_trx();
 
-    w_rc_t e = shore_env->db()->begin_xct();
+    w_rc_t e = _g_shore_env->db()->begin_xct();
     if (e != RCOK) {
         TRACE( TRACE_ALWAYS,
                "Problem in beginning TRX...\n");
@@ -44,7 +44,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
     }
 
     trx_result_tuple_t atrt;
-    e = shore_env->staged_pay_insertShoreHistory(&packet->_pin, 
+    e = _g_shore_env->staged_pay_insertShoreHistory(&packet->_pin, 
                                                  packet->_wh_name,
                                                  packet->_d_name,
                                                  packet->get_trx_id(), 
@@ -53,7 +53,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 
                "Error in History Insert...\n");
-        e = shore_env->db()->abort_xct();
+        e = _g_shore_env->db()->abort_xct();
 
         if (e != RCOK) {
             TRACE( TRACE_ALWAYS,
@@ -62,7 +62,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
         }
     }
 
-    e = shore_env->db()->commit_xct();
+    e = _g_shore_env->db()->commit_xct();
     if (e != RCOK) {
         TRACE( TRACE_ALWAYS, 
                "Error in Commit...\n");

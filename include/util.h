@@ -34,5 +34,6 @@
 #include "util/progress.h"
 #include "util/history.h"
 #include "util/shell.h"
+#include "util/countdown.h"
 
 #endif /** __UTIL_H */

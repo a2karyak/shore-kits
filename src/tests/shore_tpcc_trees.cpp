@@ -7,18 +7,12 @@
 
 #include "tests/common.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h"
-#include "sm/shore/shore_helper_loader.h"
 
 #include "util/shell.h"
 
 
 using namespace shore;
 using namespace tpcc;
-
-
-// Instanciate and close the Shore environment
-int inst_env(int argc, char* argv[]);
-int close_env();
 
 
 // enum of the various tree tests
@@ -29,13 +23,6 @@ const int XCT_STOCK_NO_LOCK_TREE  = 13;
 
 
 //// Default values of the parameters for the run
-
-// default database size (scaling factor)
-const int DF_NUM_OF_WHS = 10;
-int _numOfWHs           = DF_NUM_OF_WHS;    
-
-// default queried number of warehouses (queried factor)
-const int DF_NUM_OF_QUERIED_WHS = 10;
 
 // default type of trx
 const int DF_UPDATE_TUPLE = 0;
@@ -467,7 +454,7 @@ int tree_test_shell_t::process_command(const char* command)
 
             // create & fork testing threads
             wh_id++;
-            testers[i] = new test_tree_smt_t(shore_env, wh_id, selectedTrxID, 
+            testers[i] = new test_tree_smt_t(_g_shore_env, wh_id, selectedTrxID, 
                                              updTuple, numOfTrxs, commit_interval,
                                              c_str("tt%d", i));
             testers[i]->fork();
@@ -526,7 +513,7 @@ int main(int argc, char* argv[])
               );
 
     /* 1. Instanciate the Shore environment */
-    if (inst_env(argc, argv))
+    if (inst_test_env(argc, argv))
         return (1);
 
 
@@ -535,73 +522,10 @@ int main(int argc, char* argv[])
     tshell.start();
 
     /* 3. Close the Shore environment */
-    if (shore_env)
-        close_env();
+    if (_g_shore_env)
+        close_test_env();
 
     return (0);
 }
 
-
-void print_wh_usage(char* argv[]) 
-{
-    TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_WHS>\n" \
-           "\nParameters:\n" \
-           "<NUM_WHS>     : The number of WHs of the DB (database scaling factor)\n" \
-           ,argv[0]);
-}
-
-// Instanciate the Shore environment, 
-// Opens the database and sets the appropriate number of WHs
-// Returns 1 on error
-int inst_env(int argc, char* argv[]) 
-{
-    /* 1. Parse numOfWHs */
-    if (argc<2) {
-        print_wh_usage(argv);
-        return (1);
-    }
-
-    int tmp_numOfWHs = atoi(argv[1]);
-    if (tmp_numOfWHs>0)
-        _numOfWHs = tmp_numOfWHs;
-
-    /* 2. Initialize Shore environment */
-    /* 1. Instanciate the Shore Environment */
-    shore_env = new ShoreTPCCEnv("shore.conf", _numOfWHs, _numOfWHs);
-
-
-    // the initialization must be executed in a shore context
-    db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), shore_env);
-    initializer->fork();
-    initializer->join();        
-    if (initializer) {
-        delete (initializer);
-        initializer = NULL;
-    }    
-    shore_env->print_sf();
-
-
-    return (0);
-}
-
-
-int close_env() {
-
-    // close Shore env
-    close_smt_t* clt = new close_smt_t(shore_env, c_str("clt"));
-    clt->fork();
-    clt->join();
-    if (clt->_rv) {
-        TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
-        return (1);
-    }
-
-    if (clt) {
-        delete (clt);
-        clt = NULL;
-    }
-
-    return (0);
-}
 

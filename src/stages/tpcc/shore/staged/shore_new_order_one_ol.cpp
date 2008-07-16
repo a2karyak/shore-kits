@@ -36,7 +36,7 @@ void shore_new_order_one_ol_stage_t::process_packet() {
 
     //    packet->describe_trx();
 
-    w_rc_t e = shore_env->db()->begin_xct();
+    w_rc_t e = _g_shore_env->db()->begin_xct();
     if (e != RCOK) {
         TRACE( TRACE_ALWAYS,
                "Problem in beginning TRX...\n");
@@ -44,18 +44,18 @@ void shore_new_order_one_ol_stage_t::process_packet() {
     }
     
     trx_result_tuple_t atrt;
-    shore_env->staged_no_one_ol(&packet->_nolin, 
-                                packet->_tstamp,
-                                packet->_wh_id,
-                                packet->_d_id,
-                                packet->_item_cnt,
-                                packet->get_trx_id(),
-                                atrt);
+    _g_shore_env->staged_no_one_ol(&packet->_nolin, 
+                                   packet->_tstamp,
+                                   packet->_wh_id,
+                                   packet->_d_id,
+                                   packet->_item_cnt,
+                                   packet->get_trx_id(),
+                                   atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 
                "Error in Warehouse Update...\n");
-        e = shore_env->db()->abort_xct();
+        e = _g_shore_env->db()->abort_xct();
 
         if (e != RCOK) {
             TRACE( TRACE_ALWAYS,
@@ -64,7 +64,7 @@ void shore_new_order_one_ol_stage_t::process_packet() {
         }
     }
 
-    e = shore_env->db()->commit_xct();
+    e = _g_shore_env->db()->commit_xct();
     if (e != RCOK) {
         TRACE( TRACE_ALWAYS, 
                "Error in Commit...\n");

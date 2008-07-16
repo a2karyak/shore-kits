@@ -36,7 +36,7 @@ void shore_payment_upd_cust_stage_t::process_packet()
 
     //    packet->describe_trx();
 
-    w_rc_t e = shore_env->db()->begin_xct();
+    w_rc_t e = _g_shore_env->db()->begin_xct();
     if (e != RCOK) {
         TRACE( TRACE_ALWAYS,
                "Problem in beginning TRX...\n");
@@ -44,14 +44,14 @@ void shore_payment_upd_cust_stage_t::process_packet()
     }
 
     trx_result_tuple_t atrt;
-    e = shore_env->staged_pay_updateShoreCustomer(&packet->_pin, 
+    e = _g_shore_env->staged_pay_updateShoreCustomer(&packet->_pin, 
                                                   packet->get_trx_id(),
                                                   atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 
                "Error in Customer Update...\n");
-        e = shore_env->db()->abort_xct();
+        e = _g_shore_env->db()->abort_xct();
 
         if (e != RCOK) {
             TRACE( TRACE_ALWAYS,
@@ -60,7 +60,7 @@ void shore_payment_upd_cust_stage_t::process_packet()
         }
     }
 
-    e = shore_env->db()->commit_xct();
+    e = _g_shore_env->db()->commit_xct();
     if (e != RCOK) {
         TRACE( TRACE_ALWAYS, 
                "Error in Commit...\n");

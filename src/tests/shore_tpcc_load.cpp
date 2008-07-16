@@ -16,12 +16,12 @@ using namespace tpcc;
 int main(int argc, char* argv[]) {
 
     // Instanciate the Shore Environment
-    shore_env = new ShoreTPCCEnv("shore.conf");
+    _g_shore_env = new ShoreTPCCEnv("shore.conf");
     
     // Load data to the Shore Database
     int* r = NULL;
     TRACE( TRACE_ALWAYS, "Loading... ");
-    loading_smt_t* loader = new loading_smt_t(shore_env, c_str("loader"));
+    loading_smt_t* loader = new loading_smt_t(_g_shore_env, c_str("loader"));
     run_smthread<loading_smt_t,int>(loader, r);
 //     if (*r) {
 //         cerr << "Error in loading... " << endl;
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 
     // Load data to the Shore Database
     TRACE( TRACE_ALWAYS, "Closing... ");
-    closing_smt_t* closer = new closing_smt_t(shore_env, c_str("closer"));
+    closing_smt_t* closer = new closing_smt_t(_g_shore_env, c_str("closer"));
     run_smthread<closing_smt_t,int>(closer, r);
     delete (closer);
 

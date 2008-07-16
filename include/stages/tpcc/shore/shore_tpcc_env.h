@@ -40,7 +40,7 @@ using std::map;
 /******** Exported variables ********/
 
 class ShoreTPCCEnv;
-extern ShoreTPCCEnv* shore_env;
+extern ShoreTPCCEnv* _g_shore_env;
 
 //typedef atomic_trash_stack<char*> ts_buf_t;
 
@@ -412,8 +412,8 @@ public:
 inline void ShoreTPCCEnv::print_sf()
 {
     TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
-    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", shore_env->get_sf());
-    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", shore_env->get_qf());
+    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
+    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
 }
 
     
