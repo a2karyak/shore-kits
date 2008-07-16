@@ -110,3 +110,98 @@ void print_wh_usage(char* argv[])
 
 
 
+
+/********************************************************************* 
+ *
+ *  test_smt_t functions
+ *
+ *********************************************************************/
+
+w_rc_t test_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_new_order(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_payment(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+w_rc_t test_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_order_status(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+
+w_rc_t test_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_delivery(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+
+w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->run_stock_level(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+
+void test_smt_t::print_tables() 
+{
+    _env->dump();
+}
+
+
+w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
+{
+    for (int i=0; i<num_xct; i++) {
+
+        run_one_tpcc_xct(env, xct_type, i);
+    }
+    return (RCOK);
+}
+
+
+ 
+w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
+{
+    if (xct_type == 0) {        
+        xct_type = rand(100);       
+    }
+    
+    switch (xct_type) {
+    case XCT_NEW_ORDER:
+        W_DO(xct_new_order(env, xctid));  break;
+    case XCT_PAYMENT:
+        W_DO(xct_payment(env, xctid)); break;
+    case XCT_ORDER_STATUS:
+        W_DO(xct_order_status(env, xctid)); break;
+    case XCT_DELIVERY:
+        W_DO(xct_delivery(env, xctid)); break;
+    case XCT_STOCK_LEVEL:
+        W_DO(xct_stock_level(env, xctid)); break;
+    }
+
+    return RCOK;
+}
+
+
+/** EOF: test_tree_smt_t functions */
+
+
+
+
