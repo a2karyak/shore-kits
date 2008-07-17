@@ -92,6 +92,9 @@ public:
                 return;
             }
         }
+	// enable SLI
+	ss_m::set_sli_enabled(true);
+	
         // run test
         _rv = test();
     }
