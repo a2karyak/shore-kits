@@ -24,12 +24,24 @@ using namespace tpcc;
 //// Default values for the environment
 
 // default database size (scaling factor)
-const int DF_NUM_OF_WHS = 10;
+const int DF_NUM_OF_WHS         = 10;
 extern int _numOfWHs;
-
 
 // default queried number of warehouses (queried factor)
 const int DF_NUM_OF_QUERIED_WHS = 10;
+
+// default number of threads
+const int DF_NUM_OF_THR         = 5;
+
+// maximum number of threads
+const int MAX_NUM_OF_THR        = 100;
+
+// default number of transactions executed per thread
+const int DF_TRX_PER_THR        = 100;
+
+// default number of iterations
+const int DF_NUM_OF_ITERS       = 5;
+
 
 // Instanciate and close the Shore environment
 int inst_test_env(int argc, char* argv[]);

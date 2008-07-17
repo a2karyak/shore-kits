@@ -13,20 +13,8 @@ using namespace tpcc;
 // default value if spread threads at WHs
 const int DF_SPREAD_THREADS_TO_WHS = 1;
 
-// default number of threads
-const int DF_NUM_OF_THR  = 10;
-
-// maximum number of threads
-const int MAX_NUM_OF_THR = 100;
-
-// default number of transactions executed per thread
-const int DF_TRX_PER_THR = 100;
-
 // default transaction id to be executed
 const int DF_TRX_ID = XCT_PAYMENT;
-
-// default number of iterations
-const int DF_NUM_OF_ITERS = 5;
 
 
 //////////////////////////////

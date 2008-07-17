@@ -27,10 +27,10 @@ int countdown_t::remaining() const
 bool countdown_t::post(bool is_error) 
 {
     int old_value = *&_state;
-    while(old_value >= 2*NUMBER) {
-        int new_value = is_error? ERROR : old_value-1;
+    while (old_value >= 2*NUMBER) {
+        int new_value = (is_error? ERROR : old_value-1);
         int cur_value = atomic_cas_32(&_state, old_value, new_value);
-        if(cur_value == old_value) {
+        if (cur_value == old_value) {
             assert(is_error || new_value >= NUMBER);
             return (is_error);
         }

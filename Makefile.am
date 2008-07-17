@@ -46,7 +46,8 @@ TESTS = \
    tests/tpcc_kit \
    tests/tpcc_kit_shell \
    tests/shore_trees \
-   tests/simple
+   tests/simple \
+   tests/shore_rvp
 
 
 DBGEN = \
@@ -329,6 +330,7 @@ tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
 tests_tpcc_kit_shell_SOURCES = $(ST)/shore_tpcc_kit_shell.cpp
+tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
 
@@ -342,6 +344,8 @@ tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_LDADD = $(TEST_LIBS)
 tests_tpcc_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_shell_LDADD = $(TEST_LIBS) -lreadline
+tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
 tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include

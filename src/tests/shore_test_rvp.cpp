@@ -1,8 +1,11 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-// CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
-// file: shore_tpcc_trees.cpp
-// desc: Tests the performance of the Shore B-tree under various consistency modes.
+/** @file:   shore_rvp.cpp
+ *
+ *  @brief:  Tests the performance of the Rendez-Vouz points.
+ *
+ *  @author: Ippokratis Pandis (ipandis)
+ */
 
 
 #include "tests/common.h"
@@ -13,6 +16,10 @@
 
 using namespace shore;
 using namespace tpcc;
+
+
+
+//// Default values of the parameters for the run
 
 
 // enum of the various tree tests
