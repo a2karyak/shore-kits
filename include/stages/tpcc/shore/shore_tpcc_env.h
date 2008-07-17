@@ -287,6 +287,13 @@ public:
         _table_man_list.clear();     
     }
 
+    virtual int post_init();
+
+private:
+    w_rc_t _post_init_impl();
+
+public:
+
 
     /* --- statistics --- */
     void print_tpcc_stats() { 

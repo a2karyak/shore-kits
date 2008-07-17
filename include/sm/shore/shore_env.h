@@ -179,6 +179,7 @@ public:
 
     /** Public methods */    
     virtual int init();
+    virtual int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
     virtual int close();
     virtual int statistics();
     virtual void dump();

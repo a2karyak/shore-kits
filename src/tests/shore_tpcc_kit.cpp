@@ -48,7 +48,7 @@ const char* translate_trx_id(const int trx_id)
 void print_usage(char* argv[]) 
 {
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
+           "test <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
            "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
@@ -56,8 +56,7 @@ void print_usage(char* argv[])
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n",
-           argv[0]);
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n");
 }
 
 

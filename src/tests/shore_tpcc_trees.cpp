@@ -324,7 +324,7 @@ int tree_test_shell_t::print_usage(const char* command)
     assert (command);
 
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS> <COMMIT_INT>]\n" \
+           "test <NUM_QUERIED>  <TRX_ID> <UPD_TRX> [<NUM_THREADS> <NUM_TRXS> <ITERATIONS> <COMMIT_INT>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix)\n" \
@@ -332,8 +332,7 @@ int tree_test_shell_t::print_usage(const char* command)
            "<NUM_THREADS> : Number of concurrent threads (Default=1) (optional)\n" \
            "<NUM_TRXS>    : Number of trxs per thread (Default=100) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<COMMIT_INT>  : Commit Interval (Default=10) (optional)\n",
-           command);
+           "<COMMIT_INT>  : Commit Interval (Default=10) (optional)\n");
     
     TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
 

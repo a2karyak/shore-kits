@@ -326,6 +326,161 @@ void ShoreTPCCEnv::dump()
 }
 
 
+/********************************************************************
+ *
+ * Make sure the WH table is padded to one record per page
+ *
+ * For the dataset sizes we can afford to run, all WH records fit on a
+ * single page, leading to massive latch contention even though each
+ * thread updates a different WH tuple.
+ *
+ * If the WH records are big enough, do nothing; otherwise replicate
+ * the existing WH table and index with padding, drop the originals,
+ * and install the new files in the directory.
+ *
+ *********************************************************************/
+
+int ShoreTPCCEnv::post_init() 
+{
+    TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
+
+    W_COERCE(db()->begin_xct());
+    w_rc_t rc = _post_init_impl();
+    if(rc) {
+	cerr << "-> WH padding failed with: " << rc << endl;
+	db()->abort_xct();
+	return (rc.err_num());
+    }
+    else {
+	TRACE( TRACE_ALWAYS, "-> Done\n");
+	db()->commit_xct();
+	return (0);
+    }
+}
+
+
+/********************************************************************* 
+ *
+ *  @fn:    _post_init_impl
+ *
+ *  @brief: Makes sure the WH table is padded to one record per page
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTPCCEnv::_post_init_impl() 
+{
+    ss_m* db = this->db();
+    
+    // lock the WH table 
+    warehouse_t* wh = warehouse();
+    index_desc_t* idx = wh->indexes();
+    int icount = wh->index_count();
+    W_DO(wh->find_fid(db));
+    stid_t wh_fid = wh->fid();
+
+    // lock the table and index(es) for exclusive access
+    W_DO(db->lock(wh_fid, EX));
+    for(int i=0; i < icount; i++) {
+	W_DO(idx[i].check_fid(db));
+	W_DO(db->lock(idx[i].fid(), EX));
+    }
+
+    guard<ats_char_t> pts = new ats_char_t(wh->maxsize());
+    
+    /* copy and pad all tuples smaller than 4k
+
+       WARNING: this code assumes that existing tuples are packed
+       densly so that all padded tuples are added after the last
+       unpadded one
+    */
+    bool eof;
+    static int const PADDED_SIZE = 4096; // we know you can't fit two 4k records on a single page
+    array_guard_t<char> padding = new char[PADDED_SIZE];
+    std::vector<rid_t> hit_list;
+    {
+	guard<warehouse_man_impl::table_iter> iter;
+	{
+	    warehouse_man_impl::table_iter* tmp;
+	    W_DO(warehouse_man()->get_iter_for_file_scan(db, tmp));
+	    iter = tmp;
+	}
+
+	int count = 0;
+	warehouse_man_impl::table_tuple row(wh);
+	rep_row_t arep(pts);
+	int psize = wh->maxsize()+1;
+
+	W_DO(iter->next(db, eof, row));	
+	while (1) {
+	    pin_i* handle = iter->cursor();
+	    if (!handle) {
+		TRACE(TRACE_ALWAYS, "\n-> Reached EOF. Search complete\n");
+		break;
+	    }
+
+	    // figure out how big the old record is
+	    int hsize = handle->hdr_size();
+	    int bsize = handle->body_size();
+	    if(bsize == psize) {
+		TRACE(TRACE_ALWAYS, "\n-> Found padded WH record. Stopping search\n");
+		break;
+	    }
+	    else if (bsize > psize) {
+		// too big... shrink it down to save on logging
+		handle->truncate_rec(bsize - psize);
+	    }
+	    else {
+		// copy and pad the record (and mark the old one for deletion)
+		rid_t new_rid;
+		vec_t hvec(handle->hdr(), hsize);
+		vec_t dvec(handle->body(), bsize);
+		vec_t pvec(padding, psize-bsize);
+		W_DO(db->create_rec(wh_fid, hvec, PADDED_SIZE, dvec, new_rid));
+		W_DO(db->append_rec(new_rid, pvec, false));
+
+                // mark the old record for deletion
+		hit_list.push_back(handle->rid());
+
+		// update the index(es)
+		vec_t rvec(&row._rid, sizeof(rid_t));
+		vec_t nrvec(&new_rid, sizeof(new_rid));
+		for(int i=0; i < icount; i++) {
+		    int key_sz = warehouse_man()->format_key(idx+i, &row, arep);
+		    vec_t kvec(arep._dest, key_sz);
+
+		    /* destroy the old mapping and replace it with the new
+		       one.  If it turns out this is super-slow, we can
+		       look into probing the index with a cursor and
+		       updating it directly.
+		    */
+		    stid_t fid = idx[i].fid();
+		    W_DO(db->destroy_assoc(fid, kvec, rvec));
+
+		    // now put the entry back with the new rid
+		    W_DO(db->create_assoc(fid, kvec, nrvec));
+		}
+	    }
+	    
+	    // next!
+	    count++;
+	    fprintf(stderr, ".");
+	    W_DO(iter->next(db, eof, row));
+	}
+        fprintf(stderr, "\n");
+
+	// put the iter out of scope
+    }
+
+    // delete the old records     
+    int hlsize = hit_list.size();
+    TRACE(TRACE_ALWAYS, "-> Deleting (%d) old unpadded records\n", hlsize);
+    for(int i=0; i < hlsize; i++) {
+	W_DO(db->destroy_rec(hit_list[i]));
+    }
+
+    return (RCOK);
+}
+
 
 /******************************************************************** 
  *
@@ -903,7 +1058,9 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     int c_w = ( ppin->_v_cust_wh_selection > 85 ? ppin->_home_wh_id : ppin->_remote_wh_id);
     int c_d = ( ppin->_v_cust_wh_selection > 85 ? ppin->_home_d_id : ppin->_remote_d_id);
 
-    if (ppin->_c_id == 0) {
+    if (ppin->_v_cust_ident_selection <= 60) {
+
+        // if (ppin->_c_id == 0) {
 
         /* 3a. if no customer selected already use the index on the customer name */
 
@@ -916,6 +1073,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
          */
 
         assert (ppin->_v_cust_ident_selection <= 60);
+        assert (ppin->_c_id == 0); // (ip) just checks the generator output
 
         rep_row_t lowrep(_pcustomer_man->ts());
         rep_row_t highrep(_pcustomer_man->ts());

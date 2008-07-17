@@ -28,7 +28,7 @@ ENTER_NAMESPACE(tpcc);
 
 // uncomment line below to query local WHs only
 #undef USE_ONLY_LOCAL_WHS
-//#define USE_ONLY_LOCAL_WHS
+#define USE_ONLY_LOCAL_WHS
 
 
 /********************************************************************* 
@@ -140,9 +140,8 @@ payment_input_t create_payment_input(int sf, int specificWH)
     pin._h_amount = (long)URand(100, 500000)/(long)100.00;
     pin._h_date = time(NULL);
 
-    pin._v_cust_wh_selection = URand(1, 100); // 85 - 15        
-
 #ifndef USE_ONLY_LOCAL_WHS
+    pin._v_cust_wh_selection = URand(1, 100); // 85 - 15        
     if (pin._v_cust_wh_selection <= 85) {
         // all local payment
         pin._remote_wh_id = pin._home_wh_id;

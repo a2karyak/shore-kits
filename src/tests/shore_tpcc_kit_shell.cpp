@@ -98,7 +98,7 @@ int tpcc_kit_shell_t::print_usage(const char* command)
     assert (command);
 
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI>]\n" \
+           "test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
@@ -106,8 +106,7 @@ int tpcc_kit_shell_t::print_usage(const char* command)
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<SLI>         : Use SLI (Default=1-Yes) (optional)\n",
-           command);
+           "<SLI>         : Use SLI (Default=1-Yes) (optional)\n");
     
     TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
 

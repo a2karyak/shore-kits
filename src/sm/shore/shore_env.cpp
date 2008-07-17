@@ -69,15 +69,22 @@ int ShoreEnv::init()
     readconfig(_cname);
     //conf();
     
-    // Start the storage manager
+    // Apply configuration to the storage manager
     if (configure_sm()) {
         TRACE( TRACE_ALWAYS, "Error configuring Shore\n");
         return (1);
     }
 
+    // Start the storage manager
     if (start_sm()) {
         TRACE( TRACE_ALWAYS, "Error starting Shore\n");
         return (2);
+    }
+
+    // Call the (virtual) post-initialization function
+    if (int rval = post_init()) {
+        TRACE( TRACE_ALWAYS, "Error in Shore post-init\n");
+        return (rval);
     }
 
     // if we reached this point the environment is properly initialized
