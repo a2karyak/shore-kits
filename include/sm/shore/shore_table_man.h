@@ -84,6 +84,7 @@ class index_scan_iter_impl;
 template <class TableDesc>
 class table_man_impl : public table_man_t
 {
+public:
     typedef row_impl<TableDesc> table_tuple; 
     typedef table_scan_iter_impl<TableDesc> table_iter;
     typedef index_scan_iter_impl<TableDesc> index_iter;
@@ -366,6 +367,13 @@ public:
         return (RCOK);
     }
 
+    pin_i* cursor() {
+	pin_i *rval;
+	bool eof;
+	_scan->cursor(rval, eof);
+	return eof? NULL : rval;
+    }
+    
     w_rc_t next(ss_m* db, bool& eof, table_tuple& tuple) {
         assert (_pmanager);
         if (!_opened) open_scan(db);

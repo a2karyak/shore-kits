@@ -80,6 +80,11 @@ int ShoreEnv::init()
         return (2);
     }
 
+    if(int rval = post_init()) {
+	TRACE( TRACE_ALWAYS, "Error in Shore post-init\n");
+	return rval;
+    }
+    
     // if we reached this point the environment is properly initialized
     _initialized = true;
     TRACE( TRACE_DEBUG, "ShoreEnv initialized\n");
