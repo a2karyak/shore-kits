@@ -1599,19 +1599,11 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	bool eof;
         // iterate over all new_orders and load their no_o_ids to the sort buffer
 	W_DO(no_iter->next(_pssm, eof, *prno));
-	assert(!eof);
-	int min_no_o_id;
-	prno->get_value(0, min_no_o_id);
-	while (!eof) {
-	    int anoid;
-	    prno->get_value(0, anoid);
-	    min_no_o_id = std::min(min_no_o_id, anoid);
+	if(eof) continue; // skip this district
 
-	    W_DO(no_iter->next(_pssm, eof, *prno));
-	}
+	int no_o_id;
+	prno->get_value(0, no_o_id);
 	delete no_iter;
-        
-	int no_o_id = min_no_o_id;
         assert (no_o_id);
 
 
