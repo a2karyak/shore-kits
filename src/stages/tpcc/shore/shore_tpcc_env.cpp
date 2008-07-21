@@ -1589,13 +1589,6 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 *
 	 * plan: index scan on "NO_INDEX"
 	 */
-
-        // setup a sort buffer of SMALLINTS
-	sort_buffer_t o_id_list(1);
-	o_id_list.setup(0, SQL_INT);
-        sort_man_impl o_id_sorter(&o_id_list, &sortrep);
-        row_impl<sort_buffer_t> rsb(&o_id_list);
-
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:get-new-order-iter-by-index (%d) (%d)\n", 
                xct_id, w_id, d_id);
     
@@ -1604,28 +1597,21 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
                                                    lowrep, highrep,
                                                    w_id, d_id));
 	bool eof;
-
         // iterate over all new_orders and load their no_o_ids to the sort buffer
 	W_DO(no_iter->next(_pssm, eof, *prno));
+	assert(!eof);
+	int min_no_o_id;
+	prno->get_value(0, min_no_o_id);
 	while (!eof) {
 	    int anoid;
 	    prno->get_value(0, anoid);
-            rsb.set_value(0, anoid);
-	    o_id_sorter.add_tuple(rsb);
+	    min_no_o_id = std::min(min_no_o_id, anoid);
 
 	    W_DO(no_iter->next(_pssm, eof, *prno));
 	}
 	delete no_iter;
-        assert (o_id_sorter.count());
         
-	int no_o_id = 0;
-        sort_iter_impl o_id_list_iter(_pssm, &o_id_list, &o_id_sorter);
-
-        // get the first entry (min value)
-	W_DO(o_id_list_iter.next(_pssm, eof, rsb));
-	if (!eof)
-	    rsb.get_value(0, no_o_id);
-	else continue;
+	int no_o_id = min_no_o_id;
         assert (no_o_id);
 
 
