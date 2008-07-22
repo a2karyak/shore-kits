@@ -82,9 +82,12 @@ int ShoreEnv::init()
     }
 
     // Call the (virtual) post-initialization function
-    if (int rval = post_init()) {
-        TRACE( TRACE_ALWAYS, "Error in Shore post-init\n");
-        return (rval);
+    int clobber = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[2][0]].c_str());
+    if (!clobber) {
+        if (int rval = post_init()) {
+            TRACE( TRACE_ALWAYS, "Error in Shore post-init\n");
+            return (rval);
+        }
     }
 
     // if we reached this point the environment is properly initialized

@@ -29,6 +29,8 @@
 ENTER_NAMESPACE(shore);
 
 
+const int DEFAULT_INIT_ROW_COUNT = 50;
+
 
 template <class TableDesc>
 class row_cache_t : protected atomic_stack
@@ -48,7 +50,7 @@ private:
 
 public:
 
-    row_cache_t(TableDesc* ptable, int init_count=50) 
+    row_cache_t(TableDesc* ptable, int init_count=DEFAULT_INIT_ROW_COUNT) 
         : atomic_stack(-sizeof(ptr)),
           _ptable(ptable)
 #ifdef CACHE_STATS
@@ -92,7 +94,7 @@ public:
             ++icount;
         }
 
-        TRACE( TRACE_STATISTICS, "Deleted: (%d) (%s)\n", icount, _ptable->name());
+        TRACE( TRACE_TRX_FLOW, "Deleted: (%d) (%s)\n", icount, _ptable->name());
     }
 
     /* Return an unused object, if cache empty allocate and return a new one

@@ -103,13 +103,15 @@ public:
     /* --- Constructor --- */
     /* ------------------- */
 
-    table_man_impl(TableDesc* aTableDesc)
+    table_man_impl(TableDesc* aTableDesc, 
+                   int row_count=DEFAULT_INIT_ROW_COUNT)
         : _ptable(aTableDesc)
     {
         assert (_ptable);
+        assert (row_count>=0);
 
         // init tuple cache
-        _pcache = new row_cache(_ptable);
+        _pcache = new row_cache(_ptable, row_count);
 
         // init trash stack
         _pts = new ats_char_t(_ptable->maxsize());

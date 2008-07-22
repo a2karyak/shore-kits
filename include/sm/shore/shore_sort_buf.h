@@ -154,8 +154,8 @@ protected:
 
 public:
 
-    sort_man_impl(sort_buffer_t* aSortBufferDesc, rep_row_t* aprow)
-        : table_man_impl<sort_buffer_t>(aSortBufferDesc),
+    sort_man_impl(sort_buffer_t* aSortBufferDesc, rep_row_t* aprow, int row_count)
+        : table_man_impl<sort_buffer_t>(aSortBufferDesc, row_count),
           _sort_buf(NULL), _tuple_size(0), _tuple_count(0), _buf_size(0), 
           _preprow(aprow), _is_sorted(false)
     {
@@ -253,8 +253,10 @@ inline void sort_man_impl::init()
 
     /* calculate tuple size */
     _tuple_size = 0;
-    for (int i=0; i<_tuple_count; i++)
-             _tuple_size += _ptable->desc(i)->fieldmaxsize();
+
+    //for (int i=0; i<_tuple_count; i++)
+    for (int i=0; i<_ptable->field_count(); i++)
+        _tuple_size += _ptable->desc(i)->fieldmaxsize();
 
     /* allocate size for MIN_TUPLES_FOR_SORT tuples */
     _sort_buf = new char[MIN_TUPLES_FOR_SORT*_tuple_size]; 

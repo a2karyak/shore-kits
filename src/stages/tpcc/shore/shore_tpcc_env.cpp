@@ -1838,7 +1838,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     ol_list.setup(1, SQL_INT);  /* OL_W_ID */
     ol_list.setup(2, SQL_INT);  /* OL_D_ID */
     ol_list.setup(3, SQL_INT);  /* OL_O_ID */
-    sort_man_impl ol_sorter(&ol_list, &sortrep);
+    sort_man_impl ol_sorter(&ol_list, &sortrep, 2);
     row_impl<sort_buffer_t> rsb(&ol_list);
 
     // iterate over all selected orderlines and add them to the sorted buffer

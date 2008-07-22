@@ -68,7 +68,7 @@ struct row_impl : public table_row_t
         assert (ptd);
 
         // if it is already setup for this table just reset it
-        if ((_ptable == ptd) && (_is_setup)) {
+        if ((_ptable == ptd) && (_pvalues != NULL) && (_is_setup)) {
             reset();
             return (1);
         }
