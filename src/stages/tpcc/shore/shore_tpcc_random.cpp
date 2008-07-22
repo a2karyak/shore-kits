@@ -105,38 +105,6 @@ int tpcc_random_gen_t::random_n_string(char* out_buffer,
 }
 
 
-/* --- peacks a random xct type given the benchmark specification --- */
-
-int tpcc_random_gen_t::random_xct_type(int selected)
-{
-    int random_type = selected;
-    if (random_type < 0)
-        random_type = random_integer(0, 99);
-    assert (random_type >= 0);
-
-    int sum = 0;
-    sum+=PROB_NEWORDER;
-    if (random_type < sum)
-	return XCT_NEW_ORDER;
-
-    sum+=PROB_PAYMENT;
-    if (random_type < sum)
-	return XCT_PAYMENT;
-
-    sum+=PROB_ORDER_STATUS;
-    if (random_type < sum)
-	return XCT_ORDER_STATUS;
-
-    sum+=PROB_DELIVERY;
-    if (random_type < sum)
-	return XCT_DELIVERY;
-
-    sum+=PROB_STOCK_LEVEL;
-    if (random_type < sum)
-	return XCT_STOCK_LEVEL;
-}
-
-
 
 /* --- tpcc specific random functions --- */
 

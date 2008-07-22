@@ -139,6 +139,12 @@ const int PROB_DELIVERY     = 4;
 const int PROB_STOCK_LEVEL  = 4;
 
 
+/* --- Helper functions --- */
+
+
+/* --- translates or picks a random xct type given the benchmark specification --- */
+
+int random_xct_type(int selected);
 
 
 EXIT_NAMESPACE(tpcc);

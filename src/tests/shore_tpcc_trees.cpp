@@ -386,7 +386,7 @@ int tree_test_shell_t::process_command(const char* command)
     assert (numOfQueriedWHs <= _numOfWHs);
 
     // 2- selected trx
-    if (tmp_selectedTrxID>0)
+    if (tmp_selectedTrxID>=0)
         selectedTrxID = tmp_selectedTrxID;
 
     // 3- do update trx

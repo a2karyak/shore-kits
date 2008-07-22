@@ -181,7 +181,7 @@ int tpcc_kit_shell_t::process_command(const char* command)
         numOfTrxs = tmp_numOfTrxs;
 
     // 5- selected trx
-    if (tmp_selectedTrxID>0)
+    if (tmp_selectedTrxID>=0)
         selectedTrxID = tmp_selectedTrxID;
 
     // 6- number of iterations - iterations

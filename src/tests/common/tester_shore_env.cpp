@@ -180,7 +180,7 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
 {
     if (xct_type == 0) {        
-        xct_type = rand(100);       
+        xct_type = random_xct_type(rand(100));
     }
     
     switch (xct_type) {

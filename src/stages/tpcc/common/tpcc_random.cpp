@@ -8,7 +8,9 @@
  *  @version Based on TPC-C Standard Specification Revision 5.4 (Apr 2005)
  */
 
+
 #include "stages/tpcc//common/tpcc_random.h"
+#include "stages/tpcc//common/tpcc_const.h"
 
 
 ENTER_NAMESPACE(tpcc);
@@ -139,6 +141,44 @@ int generate_cust_last(int select, char* dest)
   dest[iLen] = '\0';
   
   return (iLen);
+}
+
+
+
+
+/** @func random_xct_type
+ *
+ *  @brief Translates or picks a random xct type given the benchmark specification
+ */
+
+
+int random_xct_type(int selected)
+{
+    int random_type = selected;
+    if (random_type < 0)
+        random_type = rand()%100;
+    assert (random_type >= 0);
+
+    int sum = 0;
+    sum+=PROB_NEWORDER;
+    if (random_type < sum)
+	return XCT_NEW_ORDER;
+
+    sum+=PROB_PAYMENT;
+    if (random_type < sum)
+	return XCT_PAYMENT;
+
+    sum+=PROB_ORDER_STATUS;
+    if (random_type < sum)
+	return XCT_ORDER_STATUS;
+
+    sum+=PROB_DELIVERY;
+    if (random_type < sum)
+	return XCT_DELIVERY;
+
+    sum+=PROB_STOCK_LEVEL;
+    if (random_type < sum)
+	return XCT_STOCK_LEVEL;
 }
 
 
