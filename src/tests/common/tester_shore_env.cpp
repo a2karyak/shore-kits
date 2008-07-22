@@ -108,8 +108,13 @@ void print_wh_usage(char* argv[])
 }
 
 
-
-
+static bool _abort_test = false;
+void test_smt_t::abort_test() {
+    _abort_test = true;
+}
+void test_smt_t::resume_test() {
+    _abort_test = false;
+}
 
 /********************************************************************* 
  *
@@ -169,7 +174,8 @@ void test_smt_t::print_tables()
 w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 {
     for (int i=0; i<num_xct; i++) {
-
+	if(_abort_test)
+	    break;
         run_one_tpcc_xct(env, xct_type, i);
     }
     return (RCOK);

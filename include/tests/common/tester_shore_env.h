@@ -69,6 +69,9 @@ private:
 
 public:
     int	_rv;
+
+    static void abort_test();
+    static void resume_test();
     
     test_smt_t(ShoreTPCCEnv* env, 
                int sWH, int trxId, int numOfTrxs, int useSLI,

@@ -58,6 +58,7 @@ public:
     // shell interface
     int process_command(const char* command);
     int print_usage(const char* command);
+    virtual int SIGINT_handler();
 
 }; // EOF: tpcc_kit_shell_t
 
@@ -135,6 +136,9 @@ int tpcc_kit_shell_t::process_command(const char* command)
 
     char command_tag[SERVER_COMMAND_BUFFER_SIZE];
 
+    // make sure any previous abort is cleared
+    test_smt_t::resume_test();
+    
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d",
                 &command_tag,
@@ -251,6 +255,16 @@ int tpcc_kit_shell_t::process_command(const char* command)
     }
 
     return (SHELL_NEXT_CONTINUE);
+}
+
+int tpcc_kit_shell_t::SIGINT_handler() {
+    if(_processing_command) {
+	test_smt_t::abort_test();
+	return 0;
+    }
+
+    // fallback...
+    return shell_t::SIGINT_handler();
 }
 
 /** EOF: tpcc_kit_shell_t functions */

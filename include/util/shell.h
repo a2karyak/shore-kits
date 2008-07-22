@@ -26,6 +26,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <assert.h>
+#include <signal.h>
 
 #include "util/config.h"
 #include "util/history.h"
@@ -59,11 +60,21 @@ private:
     bool  _save_history;
     int   _state;
 
+    static shell_t* &instance() { static shell_t* _instance; return _instance; }
+    static void sig_handler(int sig) {
+	assert(sig == SIGINT && instance());	
+	if( int rval=instance()->SIGINT_handler() )
+	    exit(rval);
+    }
+    
+protected:
+    bool _processing_command;
+    
 public:
 
 
     shell_t(const char* prompt = QPIPE_PROMPT, bool save_history = true) 
-        : _cmd_counter(0), _save_history(save_history), _state(SHELL_NEXT_CONTINUE)
+        : _cmd_counter(0), _save_history(save_history), _state(SHELL_NEXT_CONTINUE), _processing_command(false)
     {
         _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
         if (prompt)
@@ -78,6 +89,7 @@ public:
 
     virtual int process_command(const char* cmd)=0;
     virtual int print_usage(const char* cmd)=0;
+    virtual int SIGINT_handler() { return ECANCELED; /* exit immediately */ }
 
 
     // basic shell functionality
@@ -120,7 +132,10 @@ public:
         // increase stats
         _cmd_counter++;
 
-        return (process_command(command));
+	_processing_command = true;
+        int rval = process_command(command);
+	_processing_command = false;
+	return rval;
     }
 
     bool check_quit(const char* command) { 
@@ -153,7 +168,17 @@ public:
 
 
     int start() 
-    {         
+    {
+	/* 0. Install SIGINT handler */
+	instance() = this;
+	struct sigaction sa;
+	struct sigaction sa_old;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = &shell_t::sig_handler;
+	if(sigaction(SIGINT, &sa, &sa_old) < 0)
+	    exit(1);
+	
         /* 1. Open saved command history (optional) */
         if (_save_history)
             _save_history = history_open();
@@ -169,7 +194,10 @@ public:
             TRACE( TRACE_ALWAYS, "Saving history...\n");
             history_close();
         }
-        
+
+	/* 4. Restore old signal handler (probably unnecessary) */
+	sigaction(SIGINT, &sa_old, 0);
+	
         return (0);
     }
 
