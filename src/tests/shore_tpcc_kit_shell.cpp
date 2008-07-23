@@ -248,10 +248,14 @@ int tpcc_kit_shell_t::process_command(const char* command)
                "Trxs:    (%d)\n" \
                "SLI:     (%s)\n" \
                "Secs:    (%.2f)\n" \
-               "TPS:     (%.2f)\n",
+               "TPS:     (%.2f)\n" \
+               "tpm-C:   (%.2f)\n",
                numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), numOfThreads, 
                numOfTrxs, (use_sli ? "Yes" : "No"), delay, 
-               numOfThreads*numOfTrxs/delay);
+               numOfThreads*numOfTrxs/delay,
+               60*_g_shore_env->get_tmp_tpcc_stats()->get_no_com()/delay);
+
+        _g_shore_env->reset_tmp_tpcc_stats();
     }
 
     return (SHELL_NEXT_CONTINUE);

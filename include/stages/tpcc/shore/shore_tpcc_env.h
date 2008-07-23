@@ -83,6 +83,28 @@ struct tpcc_stats_t
         print_trx_stats();
     }
 
+    // Reset counters
+    void reset() {
+        // grabs all the locks and resets
+        CRITICAL_SECTION(res_no_cs, _no_lock);
+        CRITICAL_SECTION(res_pay_cs, _pay_lock);
+        CRITICAL_SECTION(res_ord_cs, _ord_lock);
+        CRITICAL_SECTION(res_del_cs, _del_lock);
+        CRITICAL_SECTION(res_sto_cs, _sto_lock);
+        
+        _no_att = 0;
+        _no_com = 0;
+        _pay_att = 0;
+        _pay_com = 0;
+        _ord_att = 0;
+        _ord_com = 0;
+        _del_att = 0;
+        _del_com = 0;
+        _sto_att = 0;
+        _sto_com = 0;
+    }
+
+
 
     // Prints stats
     void print_trx_stats();
@@ -97,6 +119,11 @@ struct tpcc_stats_t
         CRITICAL_SECTION(com_no_cs, _no_lock);
         ++_no_att;
         return (++_no_com); 
+    }
+
+    int get_no_com() {
+        CRITICAL_SECTION(read_no_cs, _no_lock);
+        return (_no_com);
     }
 
     int inc_pay_att() { 
@@ -193,7 +220,8 @@ private:
     pthread_mutex_t _queried_mutex;
 
     /** some stats */
-    tpcc_stats_t   _tpcc_stats; 
+    tpcc_stats_t   _tpcc_stats;     // the stats for the whole env life (never reset)
+    tpcc_stats_t   _tmp_tpcc_stats; // temp stats (reset between runs)
 
 
     /* --- kit baseline trxs --- */
@@ -303,6 +331,18 @@ public:
 
     tpcc_stats_t* get_tpcc_stats() {
         return (&_tpcc_stats);
+    }
+
+    void print_temp_tpcc_stats() {
+        _tmp_tpcc_stats.print_trx_stats();
+    }
+
+    tpcc_stats_t* get_tmp_tpcc_stats() {
+        return (&_tmp_tpcc_stats);
+    }
+
+    void reset_tmp_tpcc_stats() {
+        _tmp_tpcc_stats.reset();
     }
 
 
