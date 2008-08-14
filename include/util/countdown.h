@@ -14,7 +14,8 @@
 #include <cassert>
 #include <atomic.h>
 
-struct countdown_t {
+struct countdown_t 
+{
 public:
 
     // constructor - sets the number to count down
@@ -37,6 +38,9 @@ private:
     void operator=(countdown_t const &);
 
 }; // EOF: struct countdown_t
+
+
+typedef countdown_t* countdownPtr;
 
 
 #endif /* __UTIL_COUNTDOWN_H */

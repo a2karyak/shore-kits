@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _STAGE_H
-#define _STAGE_H
+#ifndef __STAGE_H
+#define __STAGE_H
 
 #include "core/tuple.h"
 #include "core/packet.h"
@@ -18,9 +18,8 @@ ENTER_NAMESPACE(qpipe);
  *  completed) and a process_next_packet() function that worker
  *  threads can call to process the packets.
  */
-class stage_t {
-
-
+class stage_t 
+{
 public:
 
     /**
@@ -29,10 +28,9 @@ public:
      *  it needs to read from the primary packet and send results out
      *  to every packet in the stage.
      */
-    struct adaptor_t {
-
+    struct adaptor_t 
+    {
     private:
-
         guard<page> _page;
 
     public:
@@ -82,9 +80,9 @@ public:
         void flush() {
             if(!_page->empty())
                 output(_page);
-        }
-        
-    };
+        } 
+       
+    }; // EOF: stage_t::adaptor_t
 
 
 protected:
@@ -133,10 +131,10 @@ public:
         
 	process_packet();
     }
-};
 
+}; // EOF: stage_t
 
 
 EXIT_NAMESPACE(qpipe);
 
-#endif
+#endif /* __STAGE_H */

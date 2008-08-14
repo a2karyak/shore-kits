@@ -202,7 +202,7 @@ w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
         W_DO(xct_stock_level(env, xctid)); break;
     }
 
-    return RCOK;
+    return (RCOK);
 }
 
 

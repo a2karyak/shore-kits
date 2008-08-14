@@ -17,13 +17,6 @@ countdown_t::countdown_t(int count)
     assert (count>0);
 }
 
-int countdown_t::remaining() const 
-{
-    int old_value = *&_state;
-    return ((old_value == ERROR) ? -1 : old_value/NUMBER); 
-}
-
-
 bool countdown_t::post(bool is_error) 
 {
     int old_value = *&_state;
@@ -40,12 +33,19 @@ bool countdown_t::post(bool is_error)
     }
 
     // did some other thread report an error?
-    if(old_value ==  ERROR)
-        return false;
+    if (old_value ==  ERROR) {
+        return (false);
+    }
  
     // we're the last caller -- no more atomic ops needed
     assert(old_value == NUMBER);
     _state = (is_error? ERROR : 0);
     return (true);
+}
+
+int countdown_t::remaining() const 
+{
+    int old_value = *&_state;
+    return ((old_value == ERROR) ? -1 : old_value/NUMBER); 
 }
 

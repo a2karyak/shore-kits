@@ -57,7 +57,8 @@ void print_wh_usage(char* argv[]);
 //
 // @brief An smthread-based class for tests
 
-class test_smt_t : public thread_t {
+class test_smt_t : public thread_t 
+{
 private:
     ShoreTPCCEnv* _env;    
 

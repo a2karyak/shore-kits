@@ -1,14 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _STAGE_CONTAINTER_H
-#define _STAGE_CONTAINTER_H
+#ifndef __STAGE_CONTAINTER_H
+#define __STAGE_CONTAINTER_H
 
 #include "util.h"
 #include "core/packet.h"
 #include "core/stage.h"
 
 using std::list;
-
 
 
 ENTER_NAMESPACE(qpipe);
@@ -127,8 +126,8 @@ private:
 
 
 
-class stage_container_t::stage_adaptor_t : public stage_t::adaptor_t {
-
+class stage_container_t::stage_adaptor_t : public stage_t::adaptor_t 
+{
 protected:
         
     // adaptor synch vars
@@ -213,13 +212,16 @@ protected:
 private:
 
     void output_page(page* p);
-};
 
-struct stage_factory_t {
+}; // EOF: stage_container_t::stage_adaptor_t
+
+
+struct stage_factory_t 
+{
   virtual stage_t* create_stage()=0;
   virtual ~stage_factory_t() { }
 
-};
+}; // EOF: stage_factory_t
 
 
 
@@ -242,7 +244,9 @@ struct stage_factory : public stage_factory_t
   }
 
   virtual ~stage_factory() { }
-};
+
+}; // EOF: stage_factory
+
 
 EXIT_NAMESPACE(qpipe);
 
