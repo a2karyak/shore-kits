@@ -28,6 +28,7 @@ public:
     // return remaining threads or -1 if error
     int remaining() const;
  
+
 private:
 
     enum { ERROR=0x1, NUMBER=0x2 };

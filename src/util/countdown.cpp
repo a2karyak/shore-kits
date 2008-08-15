@@ -12,7 +12,7 @@
 
 
 countdown_t::countdown_t(int count)
-    : _state(NUMBER*count)
+    : _state(count*NUMBER)
 {
     assert (count>0);
 }
@@ -21,7 +21,7 @@ bool countdown_t::post(bool is_error)
 {
     int old_value = *&_state;
     while (old_value >= 2*NUMBER) {
-        int new_value = (is_error? ERROR : old_value-1);
+        int new_value = (is_error? ERROR : old_value-NUMBER);
         int cur_value = atomic_cas_32(&_state, old_value, new_value);
         if (cur_value == old_value) {
             assert(is_error || new_value >= NUMBER);
@@ -33,7 +33,7 @@ bool countdown_t::post(bool is_error)
     }
 
     // did some other thread report an error?
-    if (old_value ==  ERROR) {
+    if (old_value == ERROR) {
         return (false);
     }
  
