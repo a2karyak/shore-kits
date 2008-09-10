@@ -241,22 +241,26 @@ int tpcc_kit_shell_t::process_command(const char* command)
         }
 
 	double delay = timer.time();
-        int nords = _g_shore_env->get_tmp_tpcc_stats()->get_no_com();
+        int trxs_att  = _g_shore_env->get_tmp_tpcc_stats()->get_total_attempted();
+        int trxs_com  = _g_shore_env->get_tmp_tpcc_stats()->get_total_committed();
+        int nords_com = _g_shore_env->get_tmp_tpcc_stats()->get_no_com();
         TRACE( TRACE_ALWAYS, "*******\n" \
-               "WHs:     (%d)\n" \
-               "Spread:  (%s)\n" \
-               "SLI:     (%s)\n" \
-               "Threads: (%d)\n" \
-               "Trxs:    (%d)\n" \
-               "Secs:    (%.2f)\n" \
-               "nords:   (%d)\n" \
-               "TPS:     (%.2f)\n" \
-               "tpm-C:   (%.2f)\n",
+               "WHs:      (%d)\n" \
+               "Spread:   (%s)\n" \
+               "SLI:      (%s)\n" \
+               "Threads:  (%d)\n" \
+               "Trxs Att: (%d)\n" \
+               "Trxs Com: (%d)\n" \
+               "NOrd Com: (%d)\n"   \
+               "Secs:     (%.2f)\n" \
+               "TPS:      (%.2f)\n" \
+               "tpm-C:    (%.2f)\n",
                numOfQueriedWHs, 
                (spreadThreads ? "Yes" : "No"), (use_sli ? "Yes" : "No"), 
-               numOfThreads, numOfTrxs, delay, nords, 
-               numOfThreads*numOfTrxs/delay,
-               60*nords/delay);
+               numOfThreads, trxs_att, trxs_com, nords_com, 
+               delay, 
+               trxs_com/delay,
+               60*nords_com/delay);
 
         _g_shore_env->reset_tmp_tpcc_stats();
     }

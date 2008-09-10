@@ -170,6 +170,24 @@ struct tpcc_stats_t
         return (++_sto_com); 
     }
 
+    int get_total_committed() {
+        CRITICAL_SECTION(com_no_cs,  _no_lock);
+        CRITICAL_SECTION(com_pay_cs, _pay_lock);
+        CRITICAL_SECTION(com_ord_cs, _ord_lock);
+        CRITICAL_SECTION(com_del_cs, _del_lock);
+        CRITICAL_SECTION(com_sto_cs, _sto_lock);
+        return (_no_com + _pay_com + _ord_com + _del_com + _sto_com);
+    }
+
+    int get_total_attempted() {
+        CRITICAL_SECTION(att_no_cs,  _no_lock);
+        CRITICAL_SECTION(att_pay_cs, _pay_lock);
+        CRITICAL_SECTION(att_ord_cs, _ord_lock);
+        CRITICAL_SECTION(att_del_cs, _del_lock);
+        CRITICAL_SECTION(att_sto_cs, _sto_lock);
+        return (_no_att + _pay_att + _ord_att + _del_att + _sto_att);
+    }
+
 }; // EOF tpcc_stats_t
 
 
