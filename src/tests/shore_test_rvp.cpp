@@ -82,13 +82,21 @@ public:
 
 w_rc_t test_rvp_smt_t::test_rvps()
 {
+    int waited=0;
     for (int i=0; i<_nochks; i++) {
 
         if (_pp_rvp[i]->post()) {
-            TRACE( TRACE_DEBUG, "finishing check %d\n", i);
+            // last caller
+            TRACE( TRACE_DEBUG, "finishing (%d)  - waited (%d)\n", i, waited);
         }
-    }
-    
+        else {
+            // wait (spinning)
+            while (_pp_rvp[i]->remaining()>0)
+                waited++;
+
+            TRACE( TRACE_DEBUG, "going next (%d) - waited (%d)\n", i, waited);
+        }
+    }    
 
     return (RCOK);
 }
@@ -98,6 +106,7 @@ w_rc_t test_rvp_smt_t::test_rvps()
 
 
 //////////////////////////////
+
 
 
 //////////////////////////////
@@ -239,6 +248,14 @@ int rvp_test_shell_t::process_command(const char* command)
                "ChksPS:  (%.2f)\n",
                numOfThreads, numOfChks, delay, 
                numOfChks/delay);
+
+        for (int k=0; k<numOfChks; k++) {
+            if (pprvps[k])
+                delete (pprvps[k]);        
+        }
+        if (pprvps)
+            delete [] pprvps;
+
     }
 
     return (SHELL_NEXT_CONTINUE);
