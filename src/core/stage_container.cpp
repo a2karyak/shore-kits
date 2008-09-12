@@ -64,15 +64,20 @@ void* stage_container_t::static_run_stage_wrapper(stage_t* stage,
 
 // container methods
 
-/**
- *  @brief Stage constructor.
+
+/*********************************************************************
  *
- *  @param container_name The name of this stage container. Useful for
+ *  @brief: Stage container constructor.
+ *
+ *  @param: container_name The name of this stage container. Useful for
  *  printing debug information. The constructor will create a copy of
  *  this string, so the caller should deallocate it if necessary.
- */
+ *
+ *********************************************************************/
+
 stage_container_t::stage_container_t(const c_str &container_name,
-				     stage_factory_t* stage_maker, int active_count, int max_count)
+				     stage_factory_t* stage_maker, 
+                                     int active_count, int max_count)
     : _container_lock(thread_mutex_create()),
       _container_queue_nonempty(thread_cond_create()),
       _container_name(container_name), _stage_maker(stage_maker),

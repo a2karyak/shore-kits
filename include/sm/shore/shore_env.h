@@ -96,6 +96,17 @@ struct env_stats_t
 
 
 /******************************************************************** 
+ *
+ * @enum  MeasurementState
+ *
+ * @brief Possible states of a measurement in the Shore Enviroment
+ *
+ ********************************************************************/
+
+enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE };
+
+
+/******************************************************************** 
  * 
  *  ShoreEnv
  *  
@@ -134,6 +145,10 @@ protected:
     // Stats
     env_stats_t         _env_stats; 
 
+    // Measurement state
+    MeasurementState    _measure;
+    tatas_lock          _measure_lock;
+
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
@@ -150,7 +165,8 @@ public:
     ShoreEnv(string confname) :
         _pssm(NULL), _initialized(false), _init_mutex(thread_mutex_create()),
         _loaded(false), _load_mutex(thread_mutex_create()),
-        _vol_mutex(thread_mutex_create()), _cname(confname)
+        _vol_mutex(thread_mutex_create()), _cname(confname),
+        _measure(MST_UNDEF)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
@@ -198,12 +214,24 @@ public:
         CRITICAL_SECTION(cs, _init_mutex); 
         return (_initialized); 
     }
+
     inline bool is_loaded() { 
         CRITICAL_SECTION(cs, _load_mutex);
         return (_loaded); 
     }
 
     env_stats_t* get_env_stats() { return (&_env_stats); }
+
+    inline void set_measure(MeasurementState aMeasurementState) {
+        assert (aMeasurementState != MST_UNDEF);
+        CRITICAL_SECTION(measure_cs, _measure_lock);
+        _measure = aMeasurementState;
+    }
+
+    inline MeasurementState get_measure() {
+        CRITICAL_SECTION(measure_cs, _measure_lock);
+        return (_measure);
+    }
 
 
     inline pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }

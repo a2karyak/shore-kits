@@ -519,9 +519,13 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
     if (e) {
         TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
-        _tpcc_stats.inc_no_att();
-        _tmp_tpcc_stats.inc_no_att();
-        _env_stats.inc_trx_att();
+        
+        if (_measure == MST_MEASURE) {
+            _tpcc_stats.inc_no_att();
+            _tmp_tpcc_stats.inc_no_att();
+            _env_stats.inc_trx_att();
+        }
+
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -529,9 +533,13 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
     }
 
     TRACE( TRACE_TRX_FLOW, "Xct (%d) NewOrder completed\n", xct_id);
-    _tpcc_stats.inc_no_com();
-    _tmp_tpcc_stats.inc_no_com();
-    _env_stats.inc_trx_com();
+
+    if (_measure == MST_MEASURE) {
+        _tpcc_stats.inc_no_com();
+        _tmp_tpcc_stats.inc_no_com();
+        _env_stats.inc_trx_com();
+    }
+
     return (RCOK); 
 }
 
@@ -545,9 +553,13 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
     if (e) {
         TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
-        _tpcc_stats.inc_pay_att();
-        _tmp_tpcc_stats.inc_pay_att();
-        _env_stats.inc_trx_att();
+
+        if (_measure == MST_MEASURE) {
+            _tpcc_stats.inc_pay_att();
+            _tmp_tpcc_stats.inc_pay_att();
+            _env_stats.inc_trx_att();
+        }
+
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -555,9 +567,13 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
     }
 
     TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment completed\n", xct_id);
-    _tpcc_stats.inc_pay_com();
-    _tmp_tpcc_stats.inc_pay_com();
-    _env_stats.inc_trx_com();
+
+    if (_measure == MST_MEASURE) {
+        _tpcc_stats.inc_pay_com();
+        _tmp_tpcc_stats.inc_pay_com();
+        _env_stats.inc_trx_com();
+    }
+
     return (RCOK); 
 }
 
@@ -571,9 +587,13 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
     if (e) {
         TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
-        _tpcc_stats.inc_ord_att();
-        _tmp_tpcc_stats.inc_ord_att();
-        _env_stats.inc_trx_att();
+
+        if (_measure == MST_MEASURE) {
+            _tpcc_stats.inc_ord_att();
+            _tmp_tpcc_stats.inc_ord_att();
+            _env_stats.inc_trx_att();
+        }
+
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -581,9 +601,13 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
     }
 
     TRACE( TRACE_TRX_FLOW, "Xct (%d) OrderStatus completed\n", xct_id);
-    _tpcc_stats.inc_ord_com();
-    _tmp_tpcc_stats.inc_ord_com();
-    _env_stats.inc_trx_com();
+
+    if (_measure == MST_MEASURE) {
+        _tpcc_stats.inc_ord_com();
+        _tmp_tpcc_stats.inc_ord_com();
+        _env_stats.inc_trx_com();
+    }
+
     return (RCOK); 
 }
 
@@ -597,9 +621,13 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
     if (e) {
         TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
-        _tpcc_stats.inc_del_att();
-        _tmp_tpcc_stats.inc_del_att();
-        _env_stats.inc_trx_att();
+
+        if (_measure == MST_MEASURE) {        
+            _tpcc_stats.inc_del_att();
+            _tmp_tpcc_stats.inc_del_att();
+            _env_stats.inc_trx_att();
+        }
+
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -607,9 +635,13 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
     }
 
     TRACE( TRACE_TRX_FLOW, "Xct (%d) Delivery completed\n", xct_id);
-    _tpcc_stats.inc_del_com();
-    _tmp_tpcc_stats.inc_del_com();
-    _env_stats.inc_trx_com();
+
+    if (_measure == MST_MEASURE) {    
+        _tpcc_stats.inc_del_com();
+        _tmp_tpcc_stats.inc_del_com();
+        _env_stats.inc_trx_com();
+    }
+
     return (RCOK); 
 }
 
@@ -623,9 +655,13 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
     if (e) {
         TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
-        _tpcc_stats.inc_sto_att();
-        _tmp_tpcc_stats.inc_sto_att();
-        _env_stats.inc_trx_att();
+
+        if (_measure == MST_MEASURE) {
+            _tpcc_stats.inc_sto_att();
+            _tmp_tpcc_stats.inc_sto_att();
+            _env_stats.inc_trx_att();
+        }
+
         W_DO(_pssm->abort_xct());
 
         // (ip) could retry
@@ -633,9 +669,13 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
     }
 
     TRACE( TRACE_TRX_FLOW, "Xct (%d) StockLevel completed\n", xct_id);
-    _tpcc_stats.inc_sto_com();
-    _tmp_tpcc_stats.inc_sto_com();
-    _env_stats.inc_trx_com();
+
+    if (_measure == MST_MEASURE) {
+        _tpcc_stats.inc_sto_com();
+        _tmp_tpcc_stats.inc_sto_com();
+        _env_stats.inc_trx_com();
+    }
+
     return (RCOK); 
 }
 

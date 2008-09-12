@@ -165,7 +165,8 @@ int main(int argc, char* argv[])
             // create & fork (numOfThreads) testing threads
             if (spreadThreads)
                 wh_id = i+1;
-            testers[i] = new test_smt_t(_g_shore_env, wh_id, selectedTrxID,
+            testers[i] = new test_smt_t(_g_shore_env, MT_NUM_OF_TRXS,
+                                        wh_id, selectedTrxID,
                                         numOfTrxs, 0, c_str("tt%d", i));
             testers[i]->fork();
         }        

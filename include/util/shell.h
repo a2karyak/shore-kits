@@ -51,6 +51,7 @@
 #define SHELL_NEXT_CONTINUE       1
 #define SHELL_NEXT_QUIT           2
 
+
 class shell_t {
 
 private:

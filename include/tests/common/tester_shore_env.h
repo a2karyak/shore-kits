@@ -39,6 +39,9 @@ const int MAX_NUM_OF_THR        = 100;
 // default number of transactions executed per thread
 const int DF_TRX_PER_THR        = 100;
 
+// default duration for time-based measurements (in secs)
+const int DF_DURATION           = 20;
+
 // default number of iterations
 const int DF_NUM_OF_ITERS       = 5;
 
@@ -52,6 +55,20 @@ void print_wh_usage(char* argv[]);
 
 
 
+
+/******************************************************************** 
+ *
+ * @enum  MeasurementType
+ *
+ * @brief Possible measurement types for tester thread
+ *
+ ********************************************************************/
+
+const int DF_WARMUP_INTERVAL = 2; // 2 secs
+
+enum MeasurementType { MT_UNDEF, MT_NUM_OF_TRXS, MT_TIME_DUR };
+
+
 ///////////////////////////////////////////////////////////
 // @class test_smt_t
 //
@@ -60,12 +77,15 @@ void print_wh_usage(char* argv[]);
 class test_smt_t : public thread_t 
 {
 private:
+
     ShoreTPCCEnv* _env;    
 
     // workload parameters
+    MeasurementType _measure_type;
     int _wh;
     int _trxid;
     int _notrxs;
+
     int _use_sli;
 
 public:
@@ -75,16 +95,20 @@ public:
     static void resume_test();
     
     test_smt_t(ShoreTPCCEnv* env, 
+               MeasurementType aType,
                int sWH, int trxId, int numOfTrxs, int useSLI,
                c_str tname) 
 	: thread_t(tname), 
-          _env(env), _wh(sWH), _trxid(trxId), _notrxs(numOfTrxs), 
+          _env(env), _measure_type(aType),
+          _wh(sWH), _trxid(trxId), 
+          _notrxs(numOfTrxs), 
           _use_sli(useSLI),
           _rv(0)
     {
         assert (_env);
-        assert (_notrxs);
+        assert (_measure_type != MT_UNDEF);
         assert (_wh>=0);
+        assert (_notrxs || (_measure_type == MT_TIME_DUR));
     }
 
 
@@ -123,9 +147,7 @@ public:
     // methods
     int test() {
         W_DO(_env->loaddata());
-        //_env->check_consistency();
         W_DO(run_xcts(_env, _trxid, _notrxs));
-        //print_tables();
         return (0);
     }
 

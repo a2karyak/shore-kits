@@ -173,11 +173,28 @@ void test_smt_t::print_tables()
 
 w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 {
-    for (int i=0; i<num_xct; i++) {
-	if(_abort_test)
-	    break;
-        run_one_tpcc_xct(env, xct_type, i);
+    int i=0;
+
+    switch (_measure_type) {
+
+    case (MT_NUM_OF_TRXS):
+        for (i=0; i<num_xct; i++) {
+            if(_abort_test)
+                break;
+            run_one_tpcc_xct(env, xct_type, i);
+        }
+        break;
+
+    case (MT_TIME_DUR):
+        
+        while (true) {
+            if (_env->get_measure() == MST_DONE)
+                break;
+            run_one_tpcc_xct(env, xct_type, i++);
+        }
+        break;        
     }
+
     return (RCOK);
 }
 
