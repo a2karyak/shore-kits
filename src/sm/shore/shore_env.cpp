@@ -179,7 +179,7 @@ int ShoreEnv::close_sm()
     
     TRACE( TRACE_ALWAYS, "Dismounting all devices...\n");
     w_rc_t e = _pssm->dismount_all();
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Problem in dismounting [0x%x]\n",
                e.err_num());
     }
@@ -253,7 +253,7 @@ int ShoreEnv::configure_sm()
     err << ends;
 
     // configure
-    if (rc) {
+    if (rc.is_error()) {
 	cerr << "Error configuring Shore: " << endl;
 	cerr << "\t" << w_error_t::error_string(rc.err_num()) << endl;
 	cerr << "\t" << err.c_str() << endl;
@@ -264,7 +264,7 @@ int ShoreEnv::configure_sm()
     // verify 
     w_reset_strstream(err);
     rc = _popts->check_required(&err);
-    if (rc) {
+    if (rc.is_error()) {
 	cerr << "These required options are not set:" << endl;
 	cerr << err.c_str() << endl;
 	usage(*_popts);

@@ -170,7 +170,7 @@ public:
         w_rc_t e = _pmanager->load_from_file(_pssm, fname);
         double delay = timer.time();
 
-        if (e != RCOK) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
                    _ptable->name());
             _rv = 1;
@@ -330,14 +330,14 @@ public:
     // thread entrance
     void work() {
         w_rc_t e = do_help();
-        if (e) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Index (%s) loading aborted [0x%x]\n", 
                    _pindex->name(), e.err_num());
        
             int iretries = 0;
             w_rc_t abrt_rc = _pssm->abort_xct();
         
-            while (!abrt_rc) {
+            while (!abrt_rc.is_error()) {
                 iretries++;
                 abrt_rc = _pssm->abort_xct();
                 if (iretries > SHORE_NUM_OF_RETRIES)

@@ -346,7 +346,7 @@ int ShoreTPCCEnv::post_init()
 
     W_COERCE(db()->begin_xct());
     w_rc_t rc = _post_init_impl();
-    if(rc) {
+    if(rc.is_error()) {
 	cerr << "-> WH padding failed with: " << rc << endl;
 	db()->abort_xct();
 	return (rc.err_num());
@@ -516,7 +516,7 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "%d. NEW-ORDER...\n", xct_id);     
     
     w_rc_t e = xct_new_order(&anoin, xct_id, atrt);
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
         
@@ -526,7 +526,11 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
             _env_stats.inc_trx_att();
         }
 
-        W_DO(_pssm->abort_xct());
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder abort failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
 
         // (ip) could retry
         return (e);
@@ -550,7 +554,7 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "%d. PAYMENT...\n", xct_id);     
     
     w_rc_t e = xct_payment(&apin, xct_id, atrt);
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -559,8 +563,12 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
             _tmp_tpcc_stats.inc_pay_att();
             _env_stats.inc_trx_att();
         }
-
-        W_DO(_pssm->abort_xct());
+	
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) Payment abort failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
 
         // (ip) could retry
         return (e);
@@ -584,7 +592,7 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "%d. ORDER-STATUS...\n", xct_id);     
     
     w_rc_t e = xct_order_status(&aordstin, xct_id, atrt);
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -593,8 +601,12 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
             _tmp_tpcc_stats.inc_ord_att();
             _env_stats.inc_trx_att();
         }
-
-        W_DO(_pssm->abort_xct());
+	
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus abort failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
 
         // (ip) could retry
         return (e);
@@ -618,7 +630,7 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "%d. DELIVERY...\n", xct_id);     
     
     w_rc_t e = xct_delivery(&adelin, xct_id, atrt);
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -628,7 +640,11 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
             _env_stats.inc_trx_att();
         }
 
-        W_DO(_pssm->abort_xct());
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) Delivery abort failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
 
         // (ip) could retry
         return (e);
@@ -652,7 +668,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "%d. STOCK-LEVEL...\n", xct_id);     
     
     w_rc_t e = xct_stock_level(&astoin, xct_id, atrt);
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -662,7 +678,11 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
             _env_stats.inc_trx_att();
         }
 
-        W_DO(_pssm->abort_xct());
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel abort failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
 
         // (ip) could retry
         return (e);
@@ -1629,7 +1649,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
 
     /* process each district separately */
-    for (int d_id = 1; d_id < DISTRICTS_PER_WAREHOUSE; d_id ++) {
+    for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id ++) {
 
         /* 1. Get the new_order of the district, with the min value */
 
@@ -1745,6 +1765,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	double   balance;
 	prcust->get_value(16, balance);
 	prcust->set_value(16, balance+total_amount);
+	W_DO(_pcustomer_man->update_tuple(_pssm, prcust));
     }
 
 #ifdef PRINT_TRX_RESULTS

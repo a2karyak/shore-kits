@@ -1100,7 +1100,7 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
         w_rc_t rc = pin.append_rec(zvec_t(tsz - current_size));
 
         // on error unpin 
-        if (rc!=(RCOK)) pin.unpin();
+        if (rc.is_error()) pin.unpin();
         W_DO(rc);
     }
 
@@ -1637,7 +1637,7 @@ w_rc_t table_man_impl<TableDesc>::bulkload_all_indexes(ss_m* db)
         //        w_rc_t e = bulkload_index(db, index);
         //w_rc_t e = bulkload_index_with_iterations(db, index);
         w_rc_t e = bulkload_index(db, pindex);
-        if (e) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Index (%s) loading aborted [0x%x]\n",
                    pindex->name(), e.err_num());
             assert (false); // (ip) should never happen
@@ -1670,7 +1670,7 @@ bool table_man_impl<TableDesc>::check_all_indexes(ss_m* db)
 
     while (pindex) {
 	w_rc_t rc = check_index(db, pindex);
-	if (rc) {
+	if (rc.is_error()) {
             TRACE( TRACE_ALWAYS, "Index checking error in (%s) (%s)\n", 
                    _ptable->name(), pindex->name());
 	    cerr << "Due to " << rc << endl;

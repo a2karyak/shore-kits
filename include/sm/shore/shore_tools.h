@@ -130,14 +130,14 @@ w_rc_t run_xct(ss_m* ssm, Transaction &t) {
     w_rc_t e;
     do {
 	e = ssm->begin_xct();
-	if(e)
+	if(e.is_error())
 	    break;
 	e = t(ssm);
-	if(e)
+	if(e.is_error())
 	    e = ssm->abort_xct();
 	else
 	    e = ssm->commit_xct();
-    } while(e && e.err_num() == smlevel_0::eDEADLOCK);
+    } while(e.is_error() && e.err_num() == smlevel_0::eDEADLOCK);
     return e;
 }
 

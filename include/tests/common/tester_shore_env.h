@@ -146,9 +146,9 @@ public:
 
     // methods
     int test() {
-        W_DO(_env->loaddata());
-        W_DO(run_xcts(_env, _trxid, _notrxs));
-        return (0);
+        w_rc_t rc = _env->loaddata();
+	if(rc.is_error()) return rc.err_num();
+        return run_xcts(_env, _trxid, _notrxs).err_num();
     }
 
     void print_tables();

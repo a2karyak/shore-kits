@@ -37,7 +37,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
     //    packet->describe_trx();
 
     w_rc_t e = _g_shore_env->db()->begin_xct();
-    if (e != RCOK) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS,
                "Problem in beginning TRX...\n");
         assert (false); // Error handling not implemented yet
@@ -55,7 +55,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
                "Error in History Insert...\n");
         e = _g_shore_env->db()->abort_xct();
 
-        if (e != RCOK) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS,
                    "Error in Abort...\n");
             assert (false); // Error handling not implemented yet
@@ -63,7 +63,7 @@ void shore_payment_ins_hist_stage_t::process_packet()
     }
 
     e = _g_shore_env->db()->commit_xct();
-    if (e != RCOK) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, 
                "Error in Commit...\n");
         assert (false); // Error handling not implemented yet
