@@ -223,7 +223,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         db_load_smt_t* loader = new db_load_smt_t(c_str("loader"), _g_shore_env);
         loader->fork();
         loader->join();
-        if (loader->_rc) {
+        if (loader->_rc.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem loading the database\n", 
                    loader->_rc.err_num());
             assert (false);

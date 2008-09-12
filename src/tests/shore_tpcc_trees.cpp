@@ -91,15 +91,15 @@ public:
         }
         // run test
         w_rc_t e = test_trees();
-        if (e) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Tree testing failed [0x%x]\n", e.err_num());
             w_rc_t e_abort = _env->db()->abort_xct();
-            if (e_abort) {
+            if (e_abort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Aborting failed [0x%x]\n", e_abort.err_num());
             }
         }
 
-        _rv = e;        
+        _rv = e.is_error();
     }
 
     /** @note Those two functions should be implemented by every
@@ -196,7 +196,7 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock,
         }
     }
 
-    if (e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Probe failed [0x%x]\n", e.err_num());
         _env->customer_man()->give_tuple(prcust);
         return (e);
@@ -219,7 +219,7 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock,
                                                                c_discount,
                                                                c_balance);
             
-        if (e) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Tuple update failed [0x%x]\n", e.err_num());
             _env->customer_man()->give_tuple(prcust);
             return (e);

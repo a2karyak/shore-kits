@@ -24,5 +24,5 @@ using namespace dora;
 
 void worker_t::work() 
 {  
-  TRACE( TRACE_ALWAYS, "working...\n");
+    TRACE( TRACE_ALWAYS, "working...\n");
 }

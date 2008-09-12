@@ -94,14 +94,14 @@ int run_smthread(SMThread* t, SMTReturn* &r)
 	W_FATAL(fcOUTOFMEMORY);
 
     w_rc_t e = t->fork();
-    if(e) {
+    if(e.is_error()) {
         TRACE( TRACE_ALWAYS, "Error forking thread (%s)...\n", 
                t->name());
 	return (1);
     }
 
     e = t->join();
-    if(e) {
+    if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Error joining thread (%s)...\n", 
                t->name());
 	return (2);

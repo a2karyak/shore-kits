@@ -64,12 +64,12 @@ public:
 
         // run test
         w_rc_t e = test_rvps();
-        if (e) {
+        if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "RVP testing failed [0x%x]\n", e.err_num());
             assert (false); // TODO - error occured
         }
 
-        _rv = e;        
+        _rv = e.is_error();
     }
 
     /** @note Those two functions should be implemented by every
