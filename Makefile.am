@@ -15,7 +15,7 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
    lib/libstages.a lib/libcore.a lib/libutil.a \
-   lib/libdbgen.a lib/libsm.a
+   lib/libdbgen.a lib/libsm.a lib/libdora.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -47,7 +47,8 @@ TESTS = \
    tests/tpcc_kit_shell \
    tests/shore_trees \
    tests/simple \
-   tests/shore_rvp
+   tests/shore_rvp \
+   tests/shore_fgl
 
 
 DBGEN = \
@@ -251,6 +252,23 @@ lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHOR
 
 ################################################################################
 #
+# src/dora/
+#
+################################################################################
+
+SD=$(top_srcdir)/src/dora
+SD_BASE = \
+   $(SD)/worker.cpp
+
+lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+
+lib_libdora_a_SOURCES = \
+   $(SD_BASE)
+
+
+
+################################################################################
+#
 # src/workload/ (dbgen)
 #
 ################################################################################
@@ -331,6 +349,7 @@ tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
 tests_tpcc_kit_shell_SOURCES = $(ST)/shore_tpcc_kit_shell.cpp
 tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
+tests_shore_fgl_SOURCES = $(ST)/shore_test_fgl.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
 
@@ -346,6 +365,8 @@ tests_tpcc_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_shell_LDADD = $(TEST_LIBS) -lreadline
 tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
+tests_shore_fgl_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_shore_fgl_LDADD = $(TEST_LIBS) -lreadline
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
 tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include
