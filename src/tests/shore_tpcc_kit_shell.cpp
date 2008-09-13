@@ -31,6 +31,9 @@ const int DF_TRX_ID = XCT_PAYMENT;
 // default use sli
 const int DF_USE_SLI = 1;
 
+extern "C" void alarm_handler(int sig) {
+    _g_shore_env->set_measure(MST_DONE);
+}
 
 //////////////////////////////
 
@@ -47,6 +50,13 @@ public:
     tpcc_kit_shell_t(const char* prompt) 
         : shell_t(prompt)
         {
+	    struct sigaction sa;
+	    struct sigaction sa_old;
+	    sa.sa_flags = 0;
+	    sigemptyset(&sa.sa_mask);
+	    sa.sa_handler = &alarm_handler;
+	    if(sigaction(SIGALRM, &sa, &sa_old) < 0)
+		exit(1);
         }
 
     ~tpcc_kit_shell_t() 
@@ -320,7 +330,6 @@ int tpcc_kit_shell_t::process_cmd_TEST(const char* command, char* command_tag)
     return (SHELL_NEXT_CONTINUE);
 }
 
-
 int tpcc_kit_shell_t::process_cmd_MEASURE(const char* command, char* command_tag)
 {
     TRACE( TRACE_ALWAYS, "measuring...\n");
@@ -437,18 +446,13 @@ int tpcc_kit_shell_t::process_cmd_MEASURE(const char* command, char* command_tag
 
         }
 
-	stopwatch_t timer;
-
         // TODO: give them some time (2secs) to start-up
         sleep(DF_WARMUP_INTERVAL);
 
         // set measurement state
         _g_shore_env->set_measure(MST_MEASURE);
-        sleep(duration);
-
-        // set measurement state
-        _g_shore_env->set_measure(MST_DONE);
-	double delay = timer.time() - DF_WARMUP_INTERVAL;
+	alarm(duration);
+	stopwatch_t timer;
 
         /* 2. join the tester threads */
         for (int i=0; i<numOfThreads; i++) {
@@ -460,6 +464,9 @@ int tpcc_kit_shell_t::process_cmd_MEASURE(const char* command, char* command_tag
             }    
             delete (testers[i]);
         }
+
+	double delay = timer.time();
+	alarm(0); // cancel the alarm, if any
 
         int trxs_att  = _g_shore_env->get_tmp_tpcc_stats()->get_total_attempted();
         int trxs_com  = _g_shore_env->get_tmp_tpcc_stats()->get_total_committed();
@@ -491,7 +498,6 @@ int tpcc_kit_shell_t::process_cmd_MEASURE(const char* command, char* command_tag
 
     return (SHELL_NEXT_CONTINUE);
 }
-
 
 int tpcc_kit_shell_t::SIGINT_handler() {
     if(_processing_command) {

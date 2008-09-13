@@ -188,7 +188,7 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
     case (MT_TIME_DUR):
         
         while (true) {
-            if (_env->get_measure() == MST_DONE)
+            if (_abort_test || _env->get_measure() == MST_DONE)
                 break;
             run_one_tpcc_xct(env, xct_type, i++);
         }
