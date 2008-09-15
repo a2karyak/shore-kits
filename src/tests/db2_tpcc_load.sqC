@@ -1,0 +1,461 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+// CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_load.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
+
+#include <sqlenv.h>
+#include <sqlutil.h>
+
+#include "util/progress.h"
+#include "util/c_str.h"
+#include "workload/tpcc/tpcc_tbl_parsers.h"
+#include <utility>
+#include "util/stopwatch.h"
+
+#include <string.h>
+#include <thread.h>
+#include <synch.h>
+
+using namespace tpcc;
+
+DEFINE_TPCC_PARSER(ORDER) {
+    
+    // split line into tab separated parts
+    record_t record;
+    char* lasts;
+    char* tmp = strtok_r(linebuffer, "|", &lasts);
+    record.first.O_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.O_C_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.O_D_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.first.O_W_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.O_ENTRY_D = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.O_CARRIER_ID = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.O_OL_CNT = atoi(tmp);
+    tmp = strtok_r(NULL, "|", &lasts);
+    record.second.O_ALL_LOCAL = atoi(tmp);
+
+    return record;
+}
+
+
+// all threads check this regularly to see whether they should quit
+// due to another thread failing.
+bool volatile error = false;
+
+struct open_file {
+    char const* _name;
+    FILE* _fd;
+    
+    open_file(char const* name, char const* flags) : _name(name), _fd(fopen(name, flags)) { }
+    operator FILE*() { return _fd; }
+    operator char const*() { return _name; }
+    ~open_file() { if(_fd) fclose(_fd); }
+};
+
+struct db2_rc { int rc; };
+struct db2_sqlcode { int sqlcode; };
+
+struct db2_context {
+    void* _ctx;
+    db2_context() {
+	struct sqlca sqlca;
+	int rc = sqleBeginCtx(&_ctx, SQL_CTX_CREATE_ONLY, NULL, &sqlca);
+	if(rc) {
+	    db2_rc e = {rc};
+	    throw e;
+	}
+	if(sqlca.sqlcode < 0) {
+	    db2_sqlcode e = {sqlca.sqlcode};
+	    throw e;
+	}
+    }
+    ~db2_context() {
+	struct sqlca sqlca;
+	
+	// destructors aren't allowed to throw...
+	sqleEndCtx(&_ctx, SQL_CTX_FREE_ONLY, NULL, &sqlca);
+    }
+};
+struct attached_db2_context {
+    db2_context &_ctx;
+    attached_db2_context(db2_context &ctx)
+	: _ctx(ctx)
+    {
+	struct sqlca sqlca;
+	sqleAttachToCtx(_ctx._ctx, NULL, &sqlca);
+    }
+    ~attached_db2_context() {
+	struct sqlca sqlca;
+	sqleDetachFromCtx(_ctx._ctx, NULL, &sqlca);
+    }
+};
+
+struct insert_thread {
+    int _tid;
+    open_file _file;
+    
+    insert_thread(int tid, char const* fname)
+	: _tid(tid), _file(fname, "r")
+    {
+    }
+    void run();
+    virtual void insert_row(char* linebuffer)=0;
+    virtual void commit()=0;
+    virtual void rollback()=0;
+    virtual ~insert_thread() { }
+
+};
+
+struct db2_insert_thread : insert_thread {
+    // needs to be in scope any time a thread talks to db2
+    struct sqlca sqlca;
+    
+    db2_insert_thread(int tid, char const* fname)
+	: insert_thread(tid, fname)
+    {
+	EXEC SQL connect to shorecmp;
+    }
+
+    ~db2_insert_thread() {
+	EXEC SQL connect reset;
+    }
+    
+    virtual void insert_row(char* linebuffer)=0;
+    virtual void commit() {
+	EXEC SQL commit;
+	check_sqlca();
+    }
+    virtual void rollback() {
+	EXEC SQL rollback;
+	check_sqlca();
+    }
+    
+    void check_sqlca() {
+	if(sqlca.sqlcode < 0)
+	    throw sqlca.sqlcode;
+    }
+
+};
+
+struct db2_order_insert_thread : db2_insert_thread {
+    typedef parse_tpcc_ORDER::record_t record_t;
+    parse_tpcc_ORDER _parser;
+
+    db2_order_insert_thread(int tid, char const* fname)
+	: db2_insert_thread(tid, fname)
+    {
+    }
+    virtual void insert_row(char* linebuffer);
+};
+
+void db2_order_insert_thread::insert_row(char* linebuffer) {
+
+    record_t record = _parser.parse_row(linebuffer);
+
+    EXEC SQL BEGIN DECLARE SECTION;
+    struct {
+	// primary key
+	sqlint32 O_ID;
+	sqlint32 O_C_ID;
+	sqlint32 O_D_ID;
+	sqlint32 O_W_ID;
+	
+	// other values
+	char O_ENTRY_D[27]; // timestamps require 27 chars, including null terminator
+	sqlint32 O_CARRIER_ID;
+	sqlint32 O_OL_CNT;
+	sqlint32 O_ALL_LOCAL;
+    } order_rec = {
+	record.first.O_ID, record.first.O_C_ID, record.first.O_D_ID, record.first.O_W_ID,
+	"1998-12-25-17.12.30.000000", record.second.O_CARRIER_ID,
+	record.second.O_OL_CNT, record.second.O_ALL_LOCAL
+    };
+    EXEC SQL END DECLARE SECTION;
+
+    switch(_tid) {
+    case 0:
+	EXEC SQL insert into table00 values (:order_rec);
+	break;
+    case 1:
+	EXEC SQL insert into table01 values (:order_rec);
+	break;
+    case 2:
+	EXEC SQL insert into table02 values (:order_rec);
+	break;
+    case 3:
+	EXEC SQL insert into table03 values (:order_rec);
+	break;
+    case 4:
+	EXEC SQL insert into table04 values (:order_rec);
+	break;
+    case 5:
+	EXEC SQL insert into table05 values (:order_rec);
+	break;
+    case 6:
+	EXEC SQL insert into table06 values (:order_rec);
+	break;
+    case 7:
+	EXEC SQL insert into table07 values (:order_rec);
+	break;
+    case 8:
+	EXEC SQL insert into table08 values (:order_rec);
+	break;
+    case 9:
+	EXEC SQL insert into table09 values (:order_rec);
+	break;
+
+    case 10:
+	EXEC SQL insert into table10 values (:order_rec);
+	break;
+    case 11:
+	EXEC SQL insert into table11 values (:order_rec);
+	break;
+    case 12:
+	EXEC SQL insert into table12 values (:order_rec);
+	break;
+    case 13:
+	EXEC SQL insert into table13 values (:order_rec);
+	break;
+    case 14:
+	EXEC SQL insert into table14 values (:order_rec);
+	break;
+    case 15:
+	EXEC SQL insert into table15 values (:order_rec);
+	break;
+    case 16:
+	EXEC SQL insert into table16 values (:order_rec);
+	break;
+    case 17:
+	EXEC SQL insert into table17 values (:order_rec);
+	break;
+    case 18:
+	EXEC SQL insert into table18 values (:order_rec);
+	break;
+    case 19:
+	EXEC SQL insert into table19 values (:order_rec);
+	break;
+
+    case 20:
+	EXEC SQL insert into table20 values (:order_rec);
+	break;
+    case 21:
+	EXEC SQL insert into table21 values (:order_rec);
+	break;
+    case 22:
+	EXEC SQL insert into table22 values (:order_rec);
+	break;
+    case 23:
+	EXEC SQL insert into table23 values (:order_rec);
+	break;
+    case 24:
+	EXEC SQL insert into table24 values (:order_rec);
+	break;
+    case 25:
+	EXEC SQL insert into table25 values (:order_rec);
+	break;
+    case 26:
+	EXEC SQL insert into table26 values (:order_rec);
+	break;
+    case 27:
+	EXEC SQL insert into table27 values (:order_rec);
+	break;
+    case 28:
+	EXEC SQL insert into table28 values (:order_rec);
+	break;
+    case 29:
+	EXEC SQL insert into table29 values (:order_rec);
+	break;
+
+    case 30:
+	EXEC SQL insert into table20 values (:order_rec);
+	break;
+    case 31:
+	EXEC SQL insert into table21 values (:order_rec);
+	break;
+    case 32:
+	EXEC SQL insert into table22 values (:order_rec);
+	break;
+    case 33:
+	EXEC SQL insert into table23 values (:order_rec);
+	break;
+    case 34:
+	EXEC SQL insert into table24 values (:order_rec);
+	break;
+    case 35:
+	EXEC SQL insert into table25 values (:order_rec);
+	break;
+    case 36:
+	EXEC SQL insert into table26 values (:order_rec);
+	break;
+    case 37:
+	EXEC SQL insert into table27 values (:order_rec);
+	break;
+    case 38:
+	EXEC SQL insert into table28 values (:order_rec);
+	break;
+    case 39:
+	EXEC SQL insert into table29 values (:order_rec);
+	break;
+	
+
+    case 40:
+	EXEC SQL insert into table20 values (:order_rec);
+	break;
+    case 41:
+	EXEC SQL insert into table21 values (:order_rec);
+	break;
+    case 42:
+	EXEC SQL insert into table22 values (:order_rec);
+	break;
+    case 43:
+	EXEC SQL insert into table23 values (:order_rec);
+	break;
+    case 44:
+	EXEC SQL insert into table24 values (:order_rec);
+	break;
+    case 45:
+	EXEC SQL insert into table25 values (:order_rec);
+	break;
+    case 46:
+	EXEC SQL insert into table26 values (:order_rec);
+	break;
+    case 47:
+	EXEC SQL insert into table27 values (:order_rec);
+	break;
+    case 48:
+	EXEC SQL insert into table28 values (:order_rec);
+	break;
+    case 49:
+	EXEC SQL insert into table29 values (:order_rec);
+	break;
+	
+    default:
+	throw "Too many threads!";
+    };
+    check_sqlca();
+}
+
+void insert_thread::run() {
+    static int const LOOPS = 5;
+    static int const INTERVAL = 1000;
+    int i=0;
+    int mark = INTERVAL;
+    char linebuffer[MAX_LINE_LENGTH];
+    unsigned long progress = 0;
+    for(int j=0; j < LOOPS; j++) {
+	fseek(_file, 0, SEEK_SET);
+	for(; fgets(linebuffer, MAX_LINE_LENGTH, _file); i++) {
+	    insert_row(linebuffer);
+	    //	    progress_update(&progress);
+	    if(i >= mark) {
+		commit();
+		mark += INTERVAL;
+	    }
+	}
+    }
+    fprintf(stderr, "Thread %d loaded %d records\n", _tid, i);
+
+    // done!
+    commit();
+}
+
+static int const ROUNDS = 3;
+pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t global_master_cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t global_slave_cond = PTHREAD_COND_INITIALIZER;
+int global_round = 0;
+int global_ready = 0;
+
+db2_context* contexts;
+int threads;
+
+extern "C" void* run(void* arg) {
+    long tid = (long) arg;
+    attached_db2_context ctx(contexts[tid]);
+    fprintf(stderr, "Thread %d started\n", tid);
+
+    db2_order_insert_thread t(tid, "tbl_tpcc/order.dat");
+    
+    for(int i=0; i <= ROUNDS; i++) {
+	// tell the master we're ready to start
+	pthread_mutex_lock(&global_mutex);
+	global_ready++;
+	pthread_cond_signal(&global_master_cond);
+	pthread_mutex_unlock(&global_mutex);
+
+	if(i == ROUNDS)
+	    break;
+
+	// wait for the signal
+	pthread_mutex_lock(&global_mutex);
+	while(global_round <= i)
+	    pthread_cond_wait(&global_slave_cond, &global_mutex);
+	pthread_mutex_unlock(&global_mutex);
+	
+	t.run();
+    }
+    return NULL;
+}
+
+static int const THREADS = 50;
+int main(int argc, char* argv[]) {
+    do {
+	if(argc == 2) {
+	    threads = atoi(argv[1]);
+	    if(threads > 0 && threads <= THREADS)
+		break;
+	}
+
+	fprintf(stderr, "Usage: ./load_tpcc_db2 <num-threads>\n");
+	exit(-1);
+    } while(0);
+    
+    // tell the compiler we're managing multiple connections (rather
+    // than the default of using one connection for all threads and
+    // enforcing mutual exclusion)
+    int rc = sqleSetTypeCtx(SQL_CTX_MULTI_MANUAL);
+    if(rc) {
+	fprintf(stderr, "Unable to set up multiple contexts: %d\n", rc);
+    }
+
+    // create contexts
+    struct sqlca sqlca; // required in any function that talks to db2
+    contexts = new db2_context[threads];
+
+    
+    // spawn threads
+#ifdef USE_SOLARIS_THREADS
+    thread_t tids[THREADS];
+    for(int i=0; i < threads; i++)
+	thr_create(NULL, 0, run, (void*) i, THR_BOUND | THR_DETACHED, &tids[i]);
+
+    for(int i=0; i < threads; i++)
+	thr_join(tids[i], NULL);
+#else
+    pthread_t tids[THREADS];
+    for(int i=0; i < threads; i++)
+	pthread_create(&tids[i], NULL, run, (void*) i);
+
+    for(int i=0; i <= ROUNDS; i++) {
+	stopwatch_t timer;
+	pthread_mutex_lock(&global_mutex);
+	while(global_ready != threads)
+	    pthread_cond_wait(&global_master_cond, &global_mutex);
+	global_ready = 0;
+	global_round++;
+	pthread_cond_broadcast(&global_slave_cond);
+	pthread_mutex_unlock(&global_mutex);
+	
+	fprintf(stderr, "Total execution time: %.3lf s\n", timer.time());
+    }
+    for(int i=0; i < threads; i++)
+	pthread_join(tids[i], NULL);
+#endif
+    fprintf(stderr, "Exiting...\n");
+    delete contexts;
+    return 0;
+}
