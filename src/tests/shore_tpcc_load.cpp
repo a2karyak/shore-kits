@@ -4,10 +4,15 @@
 #include "sm_vas.h"
 #include "util/progress.h"
 #include "util/c_str.h"
+#include "util/guard.h"
+#include "util/stopwatch.h"
 #include "workload/tpcc/tpcc_tbl_parsers.h"
 #include <utility>
+#include <sstream>
 
 using namespace tpcc;
+
+static int const RECORDS = 30000;
 
 /* create an smthread based class for all sm-related work */
 class smthread_user_t : public smthread_t {
@@ -28,6 +33,7 @@ public:
 struct file_info_t {
     std::pair<int,int> _record_size;
     stid_t 	_table_id;
+    stid_t	_index_id;
     rid_t 	_first_rid;
 };
 
@@ -46,22 +52,6 @@ public:
     }
     virtual void run()=0;
     ~parse_thread() {}
-};
-
-template <class Parser>
-struct parser_impl : public parse_thread {
-    parser_impl(c_str fname, ss_m* ssm, vid_t vid)
-	: parse_thread(fname, ssm, vid)
-    {
-    }
-    void run();
-};
-
-struct test_parser : public parser_impl<parse_tpcc_ORDER> {
-    test_parser(int tid, ss_m* ssm, vid_t vid)
-	: parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
-    {
-    }
 };
 
 /* Runs a transaction, checking for deadlock and retrying
@@ -83,6 +73,31 @@ w_rc_t run_xct(ss_m* ssm, Transaction &t) {
     } while(e && e.err_num() == smlevel_0::eDEADLOCK);
     return e;
 }
+
+template <class Parser>
+struct parser_impl : public parse_thread {
+    parser_impl(c_str fname, ss_m* ssm, vid_t vid)
+	: parse_thread(fname, ssm, vid)
+    {
+	typedef typename Parser::record_t record_t;
+	static size_t const ksize = sizeof(record_t::first_type);
+	static size_t const bsize = Parser().has_body()? sizeof(record_t::second_type) : 0;
+	
+	// blow away the previous file, if any
+	create_volume_xct<Parser> cvxct(_vid, _fname.data(), _info, ksize+bsize);
+	W_COERCE(run_xct(_ssm, cvxct));
+     
+    }
+    void run();
+};
+
+struct test_parser : public parser_impl<parse_tpcc_ORDER> {
+    test_parser(int tid, ss_m* ssm, vid_t vid)
+	: parser_impl(c_str("tbl_tpcc/test-%02d.dat", tid), ssm, vid)
+    {
+    }
+};
+
 pthread_mutex_t vol_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 template<class Parser>
@@ -96,7 +111,11 @@ struct create_volume_xct {
     {
     }
     w_rc_t operator()(ss_m* ssm) {
-	CRITICAL_SECTION(cs, vol_mutex);
+	struct critical_section {
+	    critical_section() { pthread_mutex_lock(&vol_mutex); }
+	    ~critical_section() { pthread_mutex_unlock(&vol_mutex); }
+	} cs;
+	//	CRITICAL_SECTION(cs, vol_mutex);
 	stid_t root_iid;
 	vec_t table_name(_table_name, strlen(_table_name));
 	unsigned size = sizeof(_info);
@@ -113,6 +132,8 @@ struct create_volume_xct {
 	cout << "Creating table ``" << _table_name
 	     << "'' with " << _bytes << " bytes per record" << endl;
 	W_DO(ssm->create_file(_vid, _info._table_id, smlevel_3::t_regular));
+	W_DO(ssm->create_index(_vid, smlevel_0::t_btree, smlevel_3::t_regular, Parser::describe_key(),
+			       smlevel_0::t_cc_kvl, _info._index_id));
 	W_DO(ss_m::vol_root_index(_vid, root_iid));
 	W_DO(ss_m::create_assoc(root_iid, table_name, table_info));
 	return RCOK;
@@ -135,15 +156,13 @@ void parser_impl<Parser>::run() {
     static size_t const ksize = sizeof(record_t::first_type);
     static size_t const bsize = parser.has_body()? sizeof(record_t::second_type) : 0;
 
-    // blow away the previous file, if any
-    file_info_t info;
-    create_volume_xct<Parser> cvxct(_vid, _fname.data(), info, ksize+bsize);
-    W_COERCE(run_xct(_ssm, cvxct));
-     
     sm_stats_info_t stats;
     memset(&stats, 0, sizeof(stats));
     sm_stats_info_t* dummy; // needed to keep xct commit from deleting our stats...
-    
+
+    int i=0;
+    for(int loop=0; loop < 4; loop++) {
+	fseek(fd, 0, SEEK_SET);
     W_COERCE(_ssm->begin_xct());
     
     // insert records one by one...
@@ -151,20 +170,24 @@ void parser_impl<Parser>::run() {
     vec_t head(&record.first, ksize);
     vec_t body(&record.second, bsize);
     rid_t rid;
+    vec_t idx(&rid, sizeof(rid_t));
     bool first = true;
-    static int const INTERVAL = 100000;
+    static int const INTERVAL = 1000;
     int mark = INTERVAL;
-    int i;
     
-    for(i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
+    for(; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
 	record = parser.parse_row(linebuffer);
-	W_COERCE(_ssm->create_rec(info._table_id, head, bsize, body, rid));
+	W_COERCE(_ssm->create_rec(_info._table_id, head, bsize, body, rid));
+	W_COERCE(_ssm->create_assoc(_info._index_id, head, idx));
 	if(first)
-	    info._first_rid = rid;
-	
+	    _info._first_rid = rid;
+	if(i >= RECORDS) break;
 	first = false;
-	progress_update(&progress);
+	//	progress_update(&progress);
 	if(i >= mark) {
+	    if((i % 10000) == 0)
+		printf(" [%d]", pthread_self());
+	    fflush(stdout);
 	    W_COERCE(_ssm->commit_xct(dummy));
 	    W_COERCE(_ssm->begin_xct());
 	    mark += INTERVAL;
@@ -174,10 +197,13 @@ void parser_impl<Parser>::run() {
     
     // done!
     W_COERCE(_ssm->commit_xct(dummy));
-    info._record_size = std::make_pair(ksize, bsize);
-    progress_done(parser.table_name());
-    _info = info;
-    cout << "Successfully loaded " << i << " records" << endl;
+    }
+    _info._record_size = std::make_pair(ksize, bsize);
+    //    progress_done(parser.table_name());
+    //stringstream ss;
+    //ss << me()->thread_stats();
+    //ss << ends;
+    //    printf("Successfully loaded %d records\n%s", i, ss.str().c_str());
     if ( fclose(fd) ) {
 	TRACE(TRACE_ALWAYS, "fclose() failed on %s\n", _fname.data());
 	// TOOD: return an error code or something
@@ -194,7 +220,18 @@ usage(option_group_t& options)
     options.print_usage(true, cerr);
 }
 
+#define DEST_DIR "log"
+
+static int const MAX_THREADS = 32;
+int active_threads = 8;
+
 void smthread_user_t::run() {
+    if(argc == 2) {
+	int n = atoi(argv[1]);
+	if(n > 0 && n <= MAX_THREADS)
+	    active_threads = n;
+    }
+    cout << "Running with " << active_threads << " threads" << endl;
     option_group_t options(1);
 
     cout << "Configuring Shore..." << endl;
@@ -205,11 +242,11 @@ void smthread_user_t::run() {
     // initialize the options we care about..
     static char const* opts[] = {
 	"fake-command-line",
-	"-sm_bufpoolsize", "102400", // in kB
+	"-sm_bufpoolsize", "409600", // in kB
 	//	"-sm_logging", "no", // temporary
-	"-sm_logdir", "log",
-	"-sm_logsize", "102400", // in kB
-	"-sm_logbufsize", "10240", // in kB
+	"-sm_logdir", DEST_DIR,
+	"-sm_logsize", "409600", // in kB
+	"-sm_logbufsize", "102400", // in kB
 	"-sm_diskrw", "/export/home/ryanjohn/projects/shore-lomond/installed/bin/diskrw",
 	"-sm_errlog", "info", // one of {none emerg fatal alert internal error warning info debug}
     };
@@ -239,8 +276,8 @@ void smthread_user_t::run() {
     // format? and mount the database...
     // TODO: make these command-line options!
     bool clobber = true;
-    char const* device = "tbl_tpcc/shore";
-    int quota = 100*1024; // 100 MB
+    char const* device = DEST_DIR "/shoredb";
+    int quota = 1000*1024; // in kB
     if(clobber) {
 	cout << "Formatting a new device ``" << device
 	     << "'' with a " << quota << "kB quota" << endl;
@@ -258,7 +295,7 @@ void smthread_user_t::run() {
     lvid_t lvid; // this is a "crutch for those... using the physical ID... interface"
     vid_t vid(1);
     if(clobber) {
-	// create volume (only one per device supported, so this is kind of silly)
+ 	// create volume (only one per device supported, so this is kind of silly)
 	// see http://www.cs.wisc.edu/shore/1.0/man/volume.ssm.html
 	W_COERCE(ssm->generate_new_lvid(lvid));
 	W_COERCE(ssm->create_vol(device, lvid, quota, false, vid));
@@ -276,21 +313,22 @@ void smthread_user_t::run() {
     }
 
 #if 1
-    static int const THREADS = 8;
-    guard<parse_thread> threads[THREADS];
-    for(int i=0; i < THREADS; i++)
+    guard<parse_thread> threads[MAX_THREADS];
+    for(int i=0; i < active_threads; i++)
 	threads[i] = new test_parser(i, ssm.get(), vid);
-    for(int i=0; i < THREADS; i++)
+    stopwatch_t timer;
+    for(int i=0; i < active_threads; i++)
 	threads[i]->fork();
 
     sm_stats_info_t stats;
     memset(&stats, 0, sizeof(stats));
-    for(int i=0; i < THREADS; i++) {
+    for(int i=0; i < active_threads; i++) {
 	threads[i]->join();
 	//stats += threads[i]->_stats;
     }
+    fprintf(stderr, "\nCompleted in %.2lf seconds\n", timer.time());
     ss_m::gather_stats(stats, false);
-    //    cout << stats << endl;
+    //cout << stats << endl;
 	
 #else
     //create and spawn threads...

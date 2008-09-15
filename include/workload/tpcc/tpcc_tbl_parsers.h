@@ -25,8 +25,8 @@ ENTER_NAMESPACE(tpcc);
     struct parse_tpcc_##tname { \
 	    typedef std::pair<key, body> record_t;	\
 	    record_t parse_row(char* linebuffer) const; \
-	    char const* describe_key() const { return key_desc; } \
-	    char const* table_name() const { return #tname; } \
+	    static char const* describe_key() { return key_desc; } \
+	    static char const* table_name() { return #tname; } \
 	    bool has_body() const { return body_flag; } \
     }
 

@@ -17,7 +17,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/time.h>
-#include "util.h"
+#include "util/decimal.h"
 
 
 ENTER_NAMESPACE(tpcc);

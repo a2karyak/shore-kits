@@ -14,6 +14,7 @@
 
 #include "workload/tpcc/tpcc_tbl_parsers.h"
 
+#include <stdlib.h>
 
 #define SECOND_PADDING
 #define DUPLICATES_PADDING 1000

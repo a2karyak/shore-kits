@@ -1,4 +1,14 @@
 # -*- makefile -*-
+DB2=/opt/IBM/db2/V9.5
+
+.SUFFIXES = .C .sqC
+
+.sqC.C:
+	$(DB2)/bin/db2 connect to shorecmp
+	$(DB2)/bin/db2 prep $<
+	$(DB2)/bin/db2 connect reset
+	$(DB2)/bin/db2 terminate
+
 INCLUDES = -I$(top_srcdir)/include -I$(BDB_HOME)/include
 
 lib_LIBRARIES = \
@@ -60,6 +70,9 @@ TESTS = \
    tests/tpcc_load \
    tests/tpcc_load_mt \
    tests/tpcc_load_shore \
+   tests/tpcc_load_db2 \
+   tests/tpcc_load_postgres \
+   tests/tpcc_load_bdb \
    tests/tpcc_load_confirm 
 
 
@@ -354,11 +367,15 @@ tests_tpch_load_SOURCES = $(ST)/test_tpch_load.cpp
 tests_tpcc_load_SOURCES = $(ST)/test_tpcc_load.cpp
 tests_tpcc_load_mt_SOURCES = $(ST)/test_tpcc_load_mt.cpp
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
+tests_tpcc_load_db2_SOURCES = $(ST)/db2_tpcc_load.C
 
 tests_tpcc_load_confirm_SOURCES = $(ST)/test_tpcc_load_confirm.cpp
 
 SHORE=$(HOME)/projects/shore-lomond-temp/src
+MYSQL=$(HOME)/apps/mysql
 tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config
+tests_tpcc_load_db2_CXXFLAGS = $(AM_CXXFLAGS) -I$(DB2)/include
+tests_tpcc_load_mysql_CXXFLAGS = $(AM_CXXFLAGS) -I$(MYSQL)/include/mysql
 tests_cpu_binding_LDADD = $(TEST_LIBS)
 tests_rand_array_access_LDADD = $(TEST_LIBS)
 #tests_thread_cputime_LDADD = $(TEST_LIBS) -lrt
@@ -397,6 +414,9 @@ tests_tpch_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_LDADD = $(TEST_LIBS)
 tests_tpcc_load_mt_LDADD = $(TEST_LIBS)
 tests_tpcc_load_shore_LDADD = $(TEST_LIBS)  -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon 
+tests_tpcc_load_db2_LDADD = $(TEST_LIBS)  -L$(DB2)/lib64 -ldb2
+tests_tpcc_load_db2_LDADD = $(TEST_LIBS)  -L$(DB2)/lib64 -ldb2
+tests_tpcc_load_db2_LDFLAGS = -R$(DB2)/lib64
 tests_tpcc_load_confirm_LDADD = $(TEST_LIBS)
 
 
