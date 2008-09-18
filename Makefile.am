@@ -257,14 +257,19 @@ lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHOR
 ################################################################################
 
 SD=$(top_srcdir)/src/dora
-SD_BASE = \
-   $(SD)/worker.cpp
+#SD_BASE = \
+#   $(SD)/mapper.cpp
+
+SD_TPCC = \
+   $(SD)/tpcc/pay_impl.cpp
+
 
 lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
 lib_libdora_a_SOURCES = \
-   $(SD_BASE)
+   $(SD_TPCC)
 
+#   $(SD_BASE)
 
 
 ################################################################################

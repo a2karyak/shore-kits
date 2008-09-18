@@ -16,6 +16,9 @@
 
 
 #include "dora/worker.h"
+#include "dora/range_partition.h"
+#include "dora/action.h"
+
 
 
 using namespace shore;
@@ -84,7 +87,7 @@ public:
     inline int retval() { return (_rv); }
 
     void aTest() {
-        worker_t aWorker(_env, c_str("aworker"));
+        worker_t<int> aWorker(_env, NULL, c_str("aworker"));
         aWorker.fork();
     }
 
