@@ -25,13 +25,17 @@ using namespace dora;
 w_rc_t pay_upd_wh_impl::trx_exec() 
 {  
     TRACE( TRACE_ALWAYS, "executing...\n");
+    
+    trx_result_tuple_t atrt;
+    w_rc_t e = _ptpcc_env->staged_pay_updateShoreWarehouse(&_pin, 0, atrt);
 
-    assert (0); // TODO
+    if (atrt.get_state() == POISSONED) {
+        TRACE( TRACE_ALWAYS, 
+               "Error in Warehouse Update...\n");
+        set_decision(AD_ABORT);
+        return (e);
+    }    
 
-    assert (_pmyworker);
-    assert (_pmypartition);
-
-    // WH UPDATE
-
+    set_decision(AD_COMMIT);
     return (RCOK);
 }

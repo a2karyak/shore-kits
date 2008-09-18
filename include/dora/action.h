@@ -26,6 +26,20 @@ using namespace shore;
 
 /******************************************************************** 
  *
+ * @enum:  ActionDecision
+ *
+ * @brief: Possible decision of an action
+ *
+ * @note:  Abort is decided when something goes wrong with own action
+ *         Die if some other action (of the same trx) decides to abort
+ *
+ ********************************************************************/
+
+enum ActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
+
+
+/******************************************************************** 
+ *
  * @class: action_t
  *
  * @brief: Abstract template-based class for the actions
@@ -39,24 +53,25 @@ class action_t
 {
 protected:
 
-    ShoreEnv*   _env;    
+    ShoreEnv*    _env;    
 
-    int         _field_count;
-    DataType*   _down;
-    DataType*   _up;
+    int          _field_count;
+    DataType*    _down;
+    DataType*    _up;
 
-    countdown_t _prvp;
+    countdown_t* _prvp;
 
     // trx-specific
-    xct_t*      _xct;
-    tid_t       _tid;
+    xct_t*         _xct;
+    tid_t          _tid;
+    ActionDecision _decision;
 
 public:
 
     action_t(ShoreEnv* env, int field_count, countdown_t* prvp, xct_t* pxct)
         : _env(env), 
           _field_count(field_count), _down(NULL), _up(NULL),
-          _prvp(prvp), _xct(pxct)
+          _prvp(prvp), _xct(pxct), _decision(AD_UNDECIDED)
     {
         assert (_env);
         assert (_field_count>0);
@@ -79,15 +94,23 @@ public:
 
     
     /** access methods */
-    xct_t* get_xct() { return (_xct); }
-    tid_t  get_tid() { return (_tid); }
+
+    inline xct_t* get_xct() { return (_xct); }
+    inline tid_t  get_tid() { return (_tid); }
+
+    inline countdown_t* get_rvp() { return (_prvp); }    
     
-    int update_xct(xct_t* axct) {
+    inline int update_xct(xct_t* axct) {
         assert (axct);
         _xct = axct;
         _tid = ss_m::xct_to_tid(_xct);
         return (0);
     }
+
+    
+    inline void set_decision(const ActionDecision& ad) { _decision = ad; }
+    inline ActionDecision get_decision() { return (_decision); }
+
     
     /** trx-related operations */
     virtual w_rc_t trx_exec()=0;     // pure virtual

@@ -141,7 +141,7 @@ public:
 
 
     // thread entrance
-    void work() {
+    inline void work() {
 
         // while paused loop and sleep
         while (_control == WC_PAUSED)
@@ -152,14 +152,23 @@ public:
             assert (_partition);
         
             // 1. dequeue an action
-            part_action* action = _partition.dequeue();
+            part_action* pa = _partition.dequeue();
             
             // 2. attach to xct
-            
+            ss_m::attach_xct(pa->get_xct());
             
             // 3. serve action
+            pa->trx_exec();
             
-            // 4. commit
+            // 4. commit - use default commit
+            if (pa->get_rvp()->post()) {
+                // last caller
+                pa->trx_rvp();
+            }
+            else {
+                // detach
+                ss_m::detach_xct(pa->get_xct());
+            }
         }
     }
 

@@ -20,11 +20,7 @@
 #include "stages/tpcc/common/tpcc_input.h"
 #include "stages/tpcc/common/tpcc_trx_input.h"
 
-
-// to remove
-#include "dora/partition.h"
-#include "dora/range_partition.h"
-#include "dora/worker.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -46,32 +42,26 @@ class pay_upd_wh_impl : public action_t<int>
 {
 private:
 
-    // to remove
-    worker_t<int>*    _pmyworker;
-    partition_t<int>* _pmypartition;
-
-    payment_input_t   _pin;
+    ShoreTPCCEnv*   _ptpcc_env;
+    payment_input_t _pin;
 
 public:
 
-    pay_upd_wh_impl(ShoreEnv* env, countdown_t* prvp, xct_t* pxct, 
+    pay_upd_wh_impl(ShoreTPCCEnv* tpccenv, countdown_t* prvp, xct_t* pxct, 
                     payment_input_t* pin)
-        : action_t<int>(env, 1, prvp, pxct), 
-          _pmyworker(NULL), _pmypartition(NULL),
-          _pin(*pin)
+        : action_t<int>(tpccenv, 1, prvp, pxct), 
+          _ptpcc_env(tpccenv), _pin(*pin)
     {
+        assert (_ptpcc_env);
     }
 
     ~pay_upd_wh_impl() { 
-        if (_pmyworker)
-            delete _pmyworker;
-
-        if (_pmypartition)
-            delete _pmypartition;
     }
+
     
     /** trx-related operations */
     w_rc_t trx_exec();
+
 
 private:
 
