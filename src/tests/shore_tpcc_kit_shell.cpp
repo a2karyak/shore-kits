@@ -175,9 +175,11 @@ int tpcc_kit_shell_t::process_command(const char* command)
     return (SHELL_NEXT_CONTINUE);
 }
 
+static bool volatile canceled = false;
 
 int tpcc_kit_shell_t::process_cmd_TEST(const char* command, char* command_tag)
 {
+    canceled = false;
     /* 0. Parse Parameters */
     int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
     int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
@@ -332,6 +334,7 @@ int tpcc_kit_shell_t::process_cmd_TEST(const char* command, char* command_tag)
 
 int tpcc_kit_shell_t::process_cmd_MEASURE(const char* command, char* command_tag)
 {
+    canceled = false;
     TRACE( TRACE_ALWAYS, "measuring...\n");
 
     /* 0. Parse Parameters */
@@ -500,7 +503,8 @@ int tpcc_kit_shell_t::process_cmd_MEASURE(const char* command, char* command_tag
 }
 
 int tpcc_kit_shell_t::SIGINT_handler() {
-    if(_processing_command) {
+    if(_processing_command && !canceled) {
+	canceled = true;
 	test_smt_t::abort_test();
 	return 0;
     }
