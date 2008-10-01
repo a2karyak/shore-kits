@@ -273,6 +273,7 @@ public:
 
     /**  true:  consistent
      *   false: inconsistent */
+    virtual w_rc_t check_all_indexes_together(ss_m* db)=0;
     virtual bool   check_all_indexes(ss_m* db)=0;
     virtual w_rc_t check_index(ss_m* db, index_desc_t* pidx)=0;
     virtual w_rc_t scan_all_indexes(ss_m* db)=0;

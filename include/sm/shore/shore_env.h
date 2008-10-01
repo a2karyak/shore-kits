@@ -201,6 +201,7 @@ public:
     virtual void dump();
     virtual void conf();
 
+    virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;
     virtual w_rc_t check_consistency()=0;
 

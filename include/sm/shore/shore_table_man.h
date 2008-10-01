@@ -276,6 +276,7 @@ public:
 
     /**  true:  consistent
      *   false: inconsistent */
+    w_rc_t check_all_indexes_together(ss_m* db);
     bool   check_all_indexes(ss_m* db);
     w_rc_t check_index(ss_m* db, index_desc_t* pidx);
     w_rc_t scan_all_indexes(ss_m* db);
@@ -1647,6 +1648,76 @@ w_rc_t table_man_impl<TableDesc>::bulkload_all_indexes(ss_m* db)
 
     TRACE( TRACE_DEBUG, "End building indices for (%s)\n", _ptable->name());
     return (RCOK);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    check_all_indexes_together
+ *
+ *  @brief: Check all indexes with a single file scan
+ *
+ *  @note:  Can be used for warm-up for memory-fitting databases
+ *
+ ********************************************************************/
+
+template <class TableDesc>
+w_rc_t table_man_impl<TableDesc>::check_all_indexes_together(ss_m* db)
+{
+    assert (_ptable);
+
+    TRACE( TRACE_DEBUG, "Checking consistency of the indexes on table (%s)\n",
+           _ptable->name());
+
+    time_t tstart = time(NULL);
+    
+    W_DO(db->begin_xct());
+    index_desc_t* pindex = NULL;
+
+    // get a table iterator
+    table_iter* iter;
+    W_DO(get_iter_for_file_scan(db, iter));
+
+    // scan the entire file    
+    bool eof = false;
+    table_tuple tuple(_ptable);
+    W_DO(iter->next(db, eof, tuple));
+    while (!eof) {
+        // remember the rid just scanned
+        rid_t tablerid = tuple.rid();
+
+        // probe all indexes
+        pindex = _ptable->indexes();
+        while (pindex) {
+            w_rc_t rc = index_probe(db, pindex, &tuple);
+
+            if (rc.is_error()) {
+                TRACE( TRACE_ALWAYS, "Index probe error in (%s) (%s) (%d)\n", 
+                       _ptable->name(), pindex->name(), tablerid);
+                cerr << "Due to " << rc << endl;
+                return RC(se_INCONSISTENT_INDEX);
+            }            
+
+            if (tablerid != tuple.rid()) {
+                TRACE( TRACE_ALWAYS, "Inconsistent index... (%d)-(%d)",
+                       tablerid, tuple.rid());
+                return RC(se_INCONSISTENT_INDEX);
+            }
+            pindex = pindex->next();
+        }
+
+	W_DO(iter->next(db, eof, tuple));
+    }
+    delete (iter);
+
+    W_DO(db->commit_xct());
+    time_t tstop = time(NULL);
+
+    TRACE( TRACE_DEBUG, "Indexes on table (%s) found consistent in (%d) secs...\n",
+           _ptable->name(), tstop-tstart);
+    
+    return (RCOK);
+
 }
 
 
