@@ -129,6 +129,12 @@ const int XCT_ORDER_STATUS  = 3;
 const int XCT_DELIVERY      = 4;
 const int XCT_STOCK_LEVEL   = 5;
 
+const int XCT_DORA_NEW_ORDER     = 101;
+const int XCT_DORA_PAYMENT       = 102;
+const int XCT_DORA_ORDER_STATUS  = 103;
+const int XCT_DORA_DELIVERY      = 104;
+const int XCT_DORA_STOCK_LEVEL   = 105;
+
 
 /* --- probabilities for the TPC-C MIX --- */
 

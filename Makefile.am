@@ -48,7 +48,7 @@ TESTS = \
    tests/shore_trees \
    tests/simple \
    tests/shore_rvp \
-   tests/shore_fgl
+   tests/dora_kit_shell
 
 
 DBGEN = \
@@ -95,7 +95,8 @@ lib_libutil_a_SOURCES = \
 	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp \
         $(SU)/history.cpp \
-        $(SU)/countdown.cpp
+        $(SU)/countdown.cpp \
+        $(SU)/shell.cpp
 
 
 
@@ -146,6 +147,7 @@ SM_SHORE = \
    $(SM)/shore/shore_field.cpp \
    $(SM)/shore/shore_table.cpp \
    $(SM)/shore/shore_row.cpp \
+   $(SM)/shore/shore_sort_buf.cpp \
    $(SM)/shore/shore_env.cpp \
    $(SM)/shore/shore_helper_loader.cpp
 
@@ -261,6 +263,7 @@ SD=$(top_srcdir)/src/dora
 #   $(SD)/mapper.cpp
 
 SD_TPCC = \
+   $(SD)/tpcc/dora_tpcc_xct.cpp \
    $(SD)/tpcc/pay_impl.cpp
 
 
@@ -310,7 +313,8 @@ lib_libtest_a_SOURCES = \
    $(STC)/tester_query.cpp \
    $(STC)/cpu_bind.cpp \
    $(STC)/busy_wait.cpp \
-   $(STC)/tester_shore_env.cpp
+   $(STC)/tester_shore_env.cpp \
+   $(STC)/tester_shore_kit_shell.cpp
 
 
 
@@ -353,8 +357,8 @@ tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
 tests_tpcc_kit_shell_SOURCES = $(ST)/shore_tpcc_kit_shell.cpp
+tests_dora_kit_shell_SOURCES = $(ST)/dora_kit_shell.cpp
 tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
-tests_shore_fgl_SOURCES = $(ST)/shore_test_fgl.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
 
@@ -368,10 +372,10 @@ tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_LDADD = $(TEST_LIBS)
 tests_tpcc_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_shell_LDADD = $(TEST_LIBS) -lreadline
+tests_dora_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_dora_kit_shell_LDADD = $(TEST_LIBS) -lreadline
 tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
-tests_shore_fgl_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_shore_fgl_LDADD = $(TEST_LIBS) -lreadline
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
 tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include

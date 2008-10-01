@@ -18,8 +18,10 @@
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_input.h"
+#include "stages/tpcc/common/tpcc_trx_input.h"
 
 #include "sm/shore/shore_env.h"
+#include "sm/shore/shore_sort_buf.h"
 
 #include "stages/tpcc/shore/shore_tpcc_schema_man.h"
 
@@ -259,6 +261,24 @@ private:
                            const int xct_id, 
                            trx_result_tuple_t& trt);
 
+
+    /* --- kit dora trxs --- */
+    w_rc_t xct_dora_new_order(new_order_input_t* no_input, 
+                              const int xct_id, 
+                              trx_result_tuple_t& trt);
+    w_rc_t xct_dora_payment(payment_input_t* pay_input, 
+                            const int xct_id, 
+                            trx_result_tuple_t& trt);
+    w_rc_t xct_dora_order_status(order_status_input_t* status_input, 
+                                 const int xct_id, 
+                                 trx_result_tuple_t& trt);
+    w_rc_t xct_dora_delivery(delivery_input_t* deliv_input, 
+                             const int xct_id, 
+                             trx_result_tuple_t& trt);
+    w_rc_t xct_dora_stock_level(stock_level_input_t* level_input, 
+                                const int xct_id, 
+                                trx_result_tuple_t& trt);
+
     
 public:    
 
@@ -288,7 +308,7 @@ public:
 
         // XXX: !!! Warning !!!
         //
-        // The two tables should have the description and the manager
+        // The two lists should have the description and the manager
         // of the same table in the same position
         //
 
@@ -381,6 +401,7 @@ public:
 
     /* --- operations over tables --- */
     w_rc_t loaddata();  
+    w_rc_t warmup();
     w_rc_t check_consistency();
 
 
@@ -440,7 +461,42 @@ public:
 
 
 
+    /* --- kit dora trxs --- */
+
+    /* --- without input specified --- */
+    w_rc_t dora_new_order(const int xct_id, 
+                          trx_result_tuple_t& atrt,
+                          int specificWH);
+    w_rc_t dora_payment(const int xct_id, 
+                        trx_result_tuple_t& atrt,
+                        int specificWH);
+    w_rc_t dora_order_status(const int xct_id, 
+                             trx_result_tuple_t& atrt,
+                             int specificWH);
+    w_rc_t dora_delivery(const int xct_id, 
+                         trx_result_tuple_t& atrt,
+                         int specificWH);
+    w_rc_t dora_stock_level(const int xct_id, 
+                            trx_result_tuple_t& atrt,
+                            int specificWH);
+
+    /* --- with input specified --- */
+    w_rc_t dora_new_order(const int xct_id, new_order_input_t& anoin,
+                          trx_result_tuple_t& atrt);
+    w_rc_t dora_payment(const int xct_id, payment_input_t& apin,
+                        trx_result_tuple_t& atrt);
+    w_rc_t dora_order_status(const int xct_id, order_status_input_t& aordstin,
+                             trx_result_tuple_t& atrt);
+    w_rc_t dora_delivery(const int xct_id, delivery_input_t& adelin,
+                         trx_result_tuple_t& atrt);
+    w_rc_t dora_stock_level(const int xct_id, stock_level_input_t& astoin,
+                            trx_result_tuple_t& atrt);
+
+
+
     /* --- kit staged trxs --- */
+
+    /* staged payment */
     w_rc_t staged_pay_updateShoreWarehouse(payment_input_t* ppin, 
                                            const int xct_id, 
                                            trx_result_tuple_t& trt);
@@ -456,6 +512,7 @@ public:
                                          const int xct_id, 
                                          trx_result_tuple_t& trt);
 
+    /* staged new order */
     w_rc_t staged_no_outside_loop(new_order_input_t* pnoin, 
                                   time_t tstamp,
                                   const int xct_id, 

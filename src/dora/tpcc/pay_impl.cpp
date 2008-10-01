@@ -27,7 +27,7 @@ w_rc_t pay_upd_wh_impl::trx_exec()
     TRACE( TRACE_ALWAYS, "executing...\n");
     
     trx_result_tuple_t atrt;
-    w_rc_t e = _ptpcc_env->staged_pay_updateShoreWarehouse(&_pin, 0, atrt);
+    w_rc_t e = _ptpcc_env->staged_pay_updateShoreWarehouse(_ppin, 0, atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 

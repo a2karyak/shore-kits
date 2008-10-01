@@ -10,13 +10,6 @@ using namespace shore;
 using namespace tpcc;
 
 
-// default value if spread threads at WHs
-const int DF_SPREAD_THREADS_TO_WHS = 1;
-
-// default transaction id to be executed
-const int DF_TRX_ID = XCT_PAYMENT;
-
-
 //////////////////////////////
 
 

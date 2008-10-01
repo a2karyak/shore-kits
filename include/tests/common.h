@@ -9,6 +9,7 @@
 #include "tests/common/tester_query.h"
 
 #include "tests/common/tester_shore_env.h"
+#include "tests/common/tester_shore_kit_shell.h"
 
 
 #endif

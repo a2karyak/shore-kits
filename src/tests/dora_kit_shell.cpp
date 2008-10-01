@@ -1,11 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-// CC -m64 -xarch=ultraT1 -xs -g -I $SHORE_INCLUDE_DIR shore_tpcc_kit_shell.cpp -o shore_tpcc_load -L $SHORE_LIB_DIR -mt -lsm -lsthread -lfc -lcommon -lpthread
 
-/** @file:   shore_tpcc_kit_shell.cpp
+/** @file:   dora_kit_shell.cpp
  *
- *  @brief:  Test shore tpc-c kit with shell
+ *  @brief:  Test shore/dora tpc-c kit with shell
  *
- *  @author: Ippokratis Pandis, July 2008
+ *  @author: Ippokratis Pandis, Sept 2008
  *
  */
 
@@ -15,17 +14,18 @@
 
 #include "util/shell.h"
 
+#include "dora/worker.h"
+
 
 using namespace shore;
 using namespace tpcc;
+using namespace dora;
 
-
-// Default parameters for the runs
 
 //////////////////////////////
 
 
-class tpcc_kit_shell_t : public shore_kit_shell_t 
+class dora_tpcc_kit_shell_t : public shore_kit_shell_t 
 {
 private:
 
@@ -34,14 +34,12 @@ private:
  
 public:
 
-    tpcc_kit_shell_t(const char* prompt) 
+    dora_tpcc_kit_shell_t(const char* prompt) 
         : shore_kit_shell_t(prompt, _g_shore_env)
         {
         }
 
-    ~tpcc_kit_shell_t() 
-    { 
-    }
+    ~dora_tpcc_kit_shell_t() { }
 
     // impl of supported commands
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
@@ -53,16 +51,18 @@ public:
                                   const int iSelectedTrx, const int iIterations,
                                   const int iUseSLI);    
 
-}; // EOF: tpcc_kit_shell_t
+}; // EOF: dora_tpcc_kit_shell_t
 
 
 
-/** tpcc_kit_shell_t helper functions */
+/** dora_tpcc_kit_shell_t helper functions */
 
 
-const char* tpcc_kit_shell_t::translate_trx_id(const int trx_id) 
+const char* dora_tpcc_kit_shell_t::translate_trx_id(const int trx_id) 
 {
     switch (trx_id) {
+        
+        // Regular
     case (XCT_NEW_ORDER):
         return ("NewOrder");
         break;
@@ -78,26 +78,42 @@ const char* tpcc_kit_shell_t::translate_trx_id(const int trx_id)
     case (XCT_STOCK_LEVEL):
         return ("StockLevel");
         break;
+
+        // DORA
+    case (XCT_DORA_NEW_ORDER):
+        return ("DORANewOrder");
+        break;
+    case (XCT_DORA_PAYMENT):
+        return ("DORAPayment");
+        break;
+    case (XCT_DORA_ORDER_STATUS):
+        return ("DORAOrderStatus");
+        break;
+    case (XCT_DORA_DELIVERY):
+        return ("DORADelivery");
+        break;
+    case (XCT_DORA_STOCK_LEVEL):
+        return ("DORAStockLevel");
+        break;
+
     default:
         return ("Mix");
     }
 }
 
 
-
-/** tpcc_kit_shell_t functions */
+/** dora_tpcc_kit_shell_t functions */
 
 
 /** cmd: TEST **/
 
-
-int tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs, 
-                                     const int iSpread,
-                                     const int iNumOfThreads, 
-                                     const int iNumOfTrxs,
-                                     const int iSelectedTrx, 
-                                     const int iIterations,
-                                     const int iUseSLI)
+int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs, 
+                                          const int iSpread,
+                                          const int iNumOfThreads, 
+                                          const int iNumOfTrxs,
+                                          const int iSelectedTrx, 
+                                          const int iIterations,
+                                          const int iUseSLI)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
@@ -111,6 +127,9 @@ int tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
            iQueriedWHs, (iSpread ? "Yes" : "No"), 
            iNumOfThreads, iNumOfTrxs, translate_trx_id(iSelectedTrx),
            iIterations, (iUseSLI ? "Yes" : "No"));
+
+
+    assert (0); // TODO: change it from here for DORA
 
     test_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
@@ -180,15 +199,16 @@ int tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
 }
 
 
+
 /** cmd: MEASURE **/
 
-int tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs, 
-                                        const int iSpread,
-                                        const int iNumOfThreads, 
-                                        const int iDuration,
-                                        const int iSelectedTrx, 
-                                        const int iIterations,
-                                        const int iUseSLI)
+int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs, 
+                                             const int iSpread,
+                                             const int iNumOfThreads, 
+                                             const int iDuration,
+                                             const int iSelectedTrx, 
+                                             const int iIterations,
+                                             const int iUseSLI)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
@@ -202,6 +222,8 @@ int tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
            iQueriedWHs, (iSpread ? "Yes" : "No"), 
            iNumOfThreads, iDuration, translate_trx_id(iSelectedTrx), 
            iIterations, (iUseSLI ? "Yes" : "No"));
+
+    assert (0); // TODO: change it from here for DORA
 
     test_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
@@ -283,13 +305,14 @@ int tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
     return (SHELL_NEXT_CONTINUE);
 }
 
-/** EOF: tpcc_kit_shell_t functions */
+/** EOF: dora_tpcc_kit_shell_t functions */
 
 
 //////////////////////////////
 
 
 //////////////////////////////
+
 
 int main(int argc, char* argv[]) 
 {
@@ -310,8 +333,8 @@ int main(int argc, char* argv[])
 
 
     /* 2. Start processing commands */
-    tpcc_kit_shell_t kit_shell("(tpcckit) ");
-    kit_shell.start();
+    dora_tpcc_kit_shell_t dora_kit_shell("(dora-tpcc-kit) ");
+    dora_kit_shell.start();
 
     /* 3. Close the Shore environment */
     if (_g_shore_env)
@@ -319,3 +342,5 @@ int main(int argc, char* argv[])
 
     return (0);
 }
+
+

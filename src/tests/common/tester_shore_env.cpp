@@ -108,6 +108,30 @@ void print_wh_usage(char* argv[])
 }
 
 
+/********************************************************************* 
+ *
+ *  @fn:    print_tables
+ *
+ *  @brief: Dumps the contents of all the tables 
+ *
+ *  @note:  Used only for debugging
+ *
+ *********************************************************************/
+
+void test_smt_t::print_tables() 
+{
+    _env->dump();
+}
+
+
+/********************************************************************* 
+ *
+ *  @fn:    abort/resume_test
+ *
+ *  @brief: Used for SIGINT functionality
+ *
+ *********************************************************************/
+
 static bool _abort_test = false;
 void test_smt_t::abort_test() {
     _abort_test = true;
@@ -116,9 +140,80 @@ void test_smt_t::resume_test() {
     _abort_test = false;
 }
 
+
 /********************************************************************* 
  *
- *  test_smt_t functions
+ *  @fn:    run_xcts
+ *
+ *  @brief: Entry point for running the trxs 
+ *
+ *********************************************************************/
+
+w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
+{
+    int i=0;
+
+    switch (_measure_type) {
+
+    case (MT_NUM_OF_TRXS):
+        for (i=0; i<num_xct; i++) {
+            if(_abort_test)
+                break;
+            run_one_tpcc_xct(env, xct_type, i);
+        }
+        break;
+
+    case (MT_TIME_DUR):
+        
+        while (true) {
+            if (_abort_test || _env->get_measure() == MST_DONE)
+                break;
+            run_one_tpcc_xct(env, xct_type, i++);
+        }
+        break;        
+    }
+
+    return (RCOK);
+}
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    run_one_tpcc_xct
+ *
+ *  @brief: Entry point for running one trx 
+ *
+ *  @note:  The execution of this trx will not be stopped even if the
+ *          measure internal has expired.
+ *
+ *********************************************************************/
+ 
+w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
+{
+    if (xct_type == 0) {        
+        xct_type = random_xct_type(rand(100));
+    }
+    
+    switch (xct_type) {
+    case XCT_NEW_ORDER:
+        W_DO(xct_new_order(env, xctid));  break;
+    case XCT_PAYMENT:
+        W_DO(xct_payment(env, xctid)); break;
+    case XCT_ORDER_STATUS:
+        W_DO(xct_order_status(env, xctid)); break;
+    case XCT_DELIVERY:
+        W_DO(xct_delivery(env, xctid)); break;
+    case XCT_STOCK_LEVEL:
+        W_DO(xct_stock_level(env, xctid)); break;
+    }
+
+    return (RCOK);
+}
+
+/********************************************************************* 
+ *
+ *  test_smt_t - regular xct functions
  *
  *********************************************************************/
 
@@ -165,65 +260,58 @@ w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid)
 }
 
 
-void test_smt_t::print_tables() 
-{
-    _env->dump();
+
+/********************************************************************* 
+ *
+ *  test_smt_t - dora xct functions
+ *
+ *********************************************************************/
+
+w_rc_t test_smt_t::xct_dora_new_order(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->dora_new_order(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+w_rc_t test_smt_t::xct_dora_payment(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->dora_payment(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+w_rc_t test_smt_t::xct_dora_order_status(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->dora_order_status(xctid, atrt, _wh);    
+    return (RCOK); 
 }
 
 
-w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
-{
-    int i=0;
-
-    switch (_measure_type) {
-
-    case (MT_NUM_OF_TRXS):
-        for (i=0; i<num_xct; i++) {
-            if(_abort_test)
-                break;
-            run_one_tpcc_xct(env, xct_type, i);
-        }
-        break;
-
-    case (MT_TIME_DUR):
-        
-        while (true) {
-            if (_abort_test || _env->get_measure() == MST_DONE)
-                break;
-            run_one_tpcc_xct(env, xct_type, i++);
-        }
-        break;        
-    }
-
-    return (RCOK);
+w_rc_t test_smt_t::xct_dora_delivery(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->dora_delivery(xctid, atrt, _wh);    
+    return (RCOK); 
 }
 
 
- 
-w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
-{
-    if (xct_type == 0) {        
-        xct_type = random_xct_type(rand(100));
-    }
-    
-    switch (xct_type) {
-    case XCT_NEW_ORDER:
-        W_DO(xct_new_order(env, xctid));  break;
-    case XCT_PAYMENT:
-        W_DO(xct_payment(env, xctid)); break;
-    case XCT_ORDER_STATUS:
-        W_DO(xct_order_status(env, xctid)); break;
-    case XCT_DELIVERY:
-        W_DO(xct_delivery(env, xctid)); break;
-    case XCT_STOCK_LEVEL:
-        W_DO(xct_stock_level(env, xctid)); break;
-    }
-
-    return (RCOK);
+w_rc_t test_smt_t::xct_dora_stock_level(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    env->dora_stock_level(xctid, atrt, _wh);    
+    return (RCOK); 
 }
 
 
-/** EOF: test_tree_smt_t functions */
+
+/** EOF: test_smt_t functions */
 
 
 

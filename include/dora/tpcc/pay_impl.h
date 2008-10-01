@@ -42,17 +42,18 @@ class pay_upd_wh_impl : public action_t<int>
 {
 private:
 
-    ShoreTPCCEnv*   _ptpcc_env;
-    payment_input_t _pin;
+    ShoreTPCCEnv*    _ptpcc_env;
+    payment_input_t* _ppin;
 
 public:
 
     pay_upd_wh_impl(ShoreTPCCEnv* tpccenv, countdown_t* prvp, xct_t* pxct, 
                     payment_input_t* pin)
         : action_t<int>(tpccenv, 1, prvp, pxct), 
-          _ptpcc_env(tpccenv), _pin(*pin)
+          _ptpcc_env(tpccenv), _ppin(pin)
     {
         assert (_ptpcc_env);
+        assert (_ppin);
     }
 
     ~pay_upd_wh_impl() { 
@@ -76,5 +77,5 @@ private:
 
 EXIT_NAMESPACE(dora);
 
-#endif /** __DORA_ACTION_H */
+#endif /** __DORA_PAY_IMPL_H */
 

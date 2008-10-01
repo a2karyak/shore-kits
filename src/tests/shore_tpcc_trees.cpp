@@ -27,9 +27,6 @@ const int XCT_STOCK_NO_LOCK_TREE  = 13;
 // default type of trx
 const int DF_UPDATE_TUPLE = 0;
 
-// default transaction id to be executed
-const int DF_TRX_ID = XCT_CUST_KVL_LOCK_TREE;
-
 // default commit every that many trx
 const int DF_COMMIT_INTERVAL = 2;
 
