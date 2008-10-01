@@ -84,9 +84,9 @@ private:
 
     // status
     WorkerState    _state;
-    WorkerControl  _control;
+    volatile WorkerControl _control;
+    tatas_lock     _control_lock;
     DataOwnerState _data_owner;
-    tatas_lock     _state_lock;
 
     // data
     ShoreEnv*      _env;    
@@ -109,23 +109,32 @@ public:
     }
 
     ~worker_t() { 
-        TRACE( TRACE_DEBUG, 
+        TRACE( TRACE_STATISTICS, "Processed (%d) - waited (%d)\n",
+               _processed, _paused_wait);
     }
 
 
     /** access methods */
     
-    void set_control(WorkerControl awc) {
+    bool set_control(WorkerControl awc) {
         // only two transitions are allowed
         // paused -> active -> stopped
-        CRITICAL_SECTION(wtcs, _state_lock);
-        if ((_control == WC_PAUSED) && (awc == WC_ACTIVE))
+        CRITICAL_SECTION(wtcs, _control_lock);
+        if ((_control == WC_PAUSED) && (awc == WC_ACTIVE)) {
             _control = WC_ACTIVE;
-        elseif ((_control == WC_ACTIVE) && (awc == WC_STOPPED))
+            return (true);
+        }
+
+        if ((_control == WC_ACTIVE) && (awc == WC_STOPPED)) {
             _control = WC_STOPPED;
+            return (true);
+        }
+
+        return (false);
     }
 
-    WorkerControl get_control() {
+    inline WorkerControl get_control() {
+        CRITICAL_SECTION(wtcs, _control_lock);
         return (_control);
     }
 
@@ -144,15 +153,22 @@ public:
     inline void work() {
 
         // while paused loop and sleep
-        while (_control == WC_PAUSED)
+        while (get_control() == WC_PAUSED)
             paused++;
 
         // do active loop
-        while (_control == WC_ACTIVE) {
+        while (get_control() == WC_ACTIVE) {
             assert (_partition);
         
             // 1. dequeue an action
-            part_action* pa = _partition.dequeue();
+            part_action* pa = NULL;
+            do {
+                pa = _partition.dequeue();
+                // do loop as long as status is active
+                if (get_control() != WC_ACTIVE)
+                    return;
+            } while (pa == NULL);
+            assert (pa);
             
             // 2. attach to xct
             ss_m::attach_xct(pa->get_xct());
