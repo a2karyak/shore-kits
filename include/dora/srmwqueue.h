@@ -11,6 +11,9 @@
  *  @author Ryan Johnson (ryanjohn)
  */
 
+#ifndef __DORA_SRMW_QUEUE_H
+#define __DORA_SRMW_QUEUE_H
+
 #include <sthread.h>
 #include <vector>
 
@@ -31,19 +34,21 @@ struct srmwqueue {
     srmwqueue() : _empty(true) { }
     
     action_t* pop() {
-	if(_read_pos == _for_readers.end() && !wait_for_input())
-	    return NULL;
+	if ((_read_pos == _for_readers.end()) && (!wait_for_input()))
+	    return (NULL);
 
-	return *(_read_pos++);
+	return (*(_read_pos++));
     }
 
     void push(action_t* a) {
+        assert (a);
 	CRITICAL_SECTION(cs, _lock);
 	_for_writers.push_back(a);
 	_empty = false;
     }
   
     bool wait_for_input(WorkerControl volatile* wc) {
+        assert (a);
 	while(*&_empty) {
 	    if(*wc != WC_ACTIVE)
 		return false;
@@ -60,4 +65,10 @@ struct srmwqueue {
 	return true;
     }
   
-};
+}; // EOF: struct srmwqueue
+
+
+EXIT_NAMESPACE(dora);
+
+#endif /** __DORA_SRMW_QUEUE_H */
+
