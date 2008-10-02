@@ -77,6 +77,7 @@ template <class DataType>
 class worker_t : public thread_t 
 {
 public:
+
     typedef partition_t<DataType> partition;
     typedef action_t<DataType>    part_action;
 
@@ -92,6 +93,10 @@ private:
     ShoreEnv*      _env;    
     partition*     _partition;
 
+    // needed for linked-list of workers
+    worker_t<DataType>* _next;
+    tatas_lock          _next_lock;
+
     // statistics
     int            _paused_wait;
     int            _processed;
@@ -103,6 +108,7 @@ public:
         : thread_t(tname), 
           _env(env), _partition(apart),
           _state(WS_UNDEF), _control(WC_PAUSED), _data_owner(DOS_UNDEF),
+          _next(NULL),
           _paused_wait(0), _processed(0)
     {
         assert (_env);

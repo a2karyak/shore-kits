@@ -1,6 +1,5 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-
 /** @file srmwqueue.h
  *
  *  @brief A single-reader, multiple-writer queue.
@@ -22,36 +21,38 @@
 
 ENTER_NAMESPACE(dora);
 
-template<class action_t>
-struct srmwqueue {
-    typedef std::vector<action_t*> action_list;
+template<class action>
+struct srmwqueue 
+{
+    typedef std::vector<action*> action_list;
     action_list _for_writers;
     action_list _for_readers;
-    action_list::iterator _read_pos;
+    typename action_list::iterator _read_pos;
     mcs_lock _lock;
     int volatile _empty;
 
     srmwqueue() : _empty(true) { }
     
-    action_t* pop() {
+    action* pop() {
 	if ((_read_pos == _for_readers.end()) && (!wait_for_input()))
 	    return (NULL);
 
 	return (*(_read_pos++));
     }
 
-    void push(action_t* a) {
+    void push(action* a) {
         assert (a);
 	CRITICAL_SECTION(cs, _lock);
 	_for_writers.push_back(a);
 	_empty = false;
     }
-  
+
+    // spins until new input is set
     bool wait_for_input(WorkerControl volatile* wc) {
         assert (a);
-	while(*&_empty) {
-	    if(*wc != WC_ACTIVE)
-		return false;
+	while (*&_empty) {
+	    if (*wc != WC_ACTIVE)
+		return (false);
 	}
     
 	{
@@ -62,7 +63,7 @@ struct srmwqueue {
 	}
     
 	_read_pos = _for_readers.begin();
-	return true;
+	return (true);
     }
   
 }; // EOF: struct srmwqueue

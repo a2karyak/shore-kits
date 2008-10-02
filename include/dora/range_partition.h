@@ -71,7 +71,8 @@ private:
     /** returns true if BaseDown < Contender <= BaseUp */
     inline const bool is_between(const DataType* baseDown, 
                                  const DataType* baseUp, 
-                                 const DataType* contender) const;
+                                 const DataType* contDown,
+                                 const DataType* contUp) const;
 
 public:
 
@@ -171,21 +172,25 @@ inline const bool range_partition_impl<DataType>::is_smaller_equal(const DataTyp
  *
  * @fn:    is_between
  *
- * @brief: Returns true if BaseDown < Contender <= BaseUp
+ * @brief: Returns true if (BaseDown < ContenderDown) (ContenderUp <= BaseUp)
  *
  ******************************************************************/
 
 template <class DataType>
 inline const bool range_partition_impl<DataType>::is_between(const DataType* baseDown,
                                                              const DataType* baseUp,
-                                                             const DataType* contender) const
+                                                             const DataType* contDown,
+                                                             const DataType* contUp) const
 {
     assert (baseDown);
     assert (baseUp);
-    assert (contender);
+    assert (contDown);
+    assert (contUp);
 
     for (int i=0; i<_part_field_cnt; i++) {
-        if ((baseDown[i] > contender[i]) || (baseUp[i]<=contender[i]))
+        assert (baseDown<=baseUp);
+        assert (contDown<=contUp);
+        if ((baseDown[i] > contDown[i]) || (baseUp[i]<=contUp[i]))
             return (false);
     }
     return (true);
@@ -238,7 +243,7 @@ template <class DataType>
 const bool range_partition_impl<DataType>::verify(part_action* pAction)
 {
     assert (_rp_state == RPS_SET);
-    return (is_between(_down, _up, pAction->get_value()));
+    return (is_between(_down, _up, pAction->down(), pAction->up()));
 }   
 
 

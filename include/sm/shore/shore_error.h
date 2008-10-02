@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   shore_file_desc.h
+/** @file:   shore_error.h
  *
  *  @brief:  Enumuration of Shore-related errors
  *
@@ -11,6 +11,8 @@
 
 #ifndef __SHORE_ERROR_H
 #define __SHORE_ERROR_H
+
+#include "util/namespace.h"
 
 
 ENTER_NAMESPACE(shore);

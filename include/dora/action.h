@@ -143,6 +143,9 @@ public:
     
     /** access methods */
 
+    DataType* down() { return (_down); }
+    DataType* up()   { return (_up); }
+
     inline xct_t* get_xct() { return (_xct); }
     inline tid_t  get_tid() { return (_tid); }
 
@@ -164,6 +167,8 @@ public:
     virtual w_rc_t trx_exec()=0;     // pure virtual
     virtual w_rc_t trx_rvp();        // default action on rvp - commit trx
 
+    // lock for the whole action
+    tatas_lock     _action_lock;
 
 private:
 
