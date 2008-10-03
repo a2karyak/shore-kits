@@ -195,7 +195,7 @@ public:
         TRACE( TRACE_DEBUG, "Keys (%d)\n", sz);
         for (ll_map_const_it it=_ll_map.begin(); it!=_ll_map.end(); ++it) {
             cout << "K (" << it->first << ")"; 
-            cout << " - L (" << it->second << ")";
+            cout << " - L (" << it->second << ")\n";
         }
     }
 
@@ -273,7 +273,7 @@ public:
     // releases all the acquired ll by a trx
     void release(tid_t axct) {
         trx_range r = _trx_key_mm.equal_range(axct);
-        TRACE( TRACE_DEBUG, "Searching (%d) -> ", axct);
+        TRACE( TRACE_DEBUG, "Releasing (%d)\n", axct);
         for (trx_key_mm_it it=r.first; it!=r.second; ++it) {           
             // release ll for key from the key-to-ll map
             _key_ll_m.release((*it).second);

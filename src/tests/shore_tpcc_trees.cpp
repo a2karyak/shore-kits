@@ -174,7 +174,7 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock,
     if (nolock) {
         TRACE( TRACE_DEBUG, "CUST-TREE-NO-LOCK\n");
         e = _env->customer_man()->cust_index_probe_by_name(_env->db(), 
-                                                           "C_INDEX_NOLOCK", 
+                                                           "C_INDEX_NL", 
                                                            prcust, 
                                                            in_c, in_wh, in_d); 
     }

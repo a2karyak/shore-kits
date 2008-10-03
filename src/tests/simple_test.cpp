@@ -22,8 +22,8 @@ class simple_shore_shell : public shore_kit_shell_t
 {
 public:
 
-    simple_shore_shell()
-        : shore_kit_shell_t("(allou) ", NULL)
+    simple_shore_shell(ShoreTPCCEnv* tpccenv)
+        : shore_kit_shell_t("(allou) ", tpccenv)
     { }
 
     ~simple_shore_shell() 
@@ -98,7 +98,7 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
             akey.push_back(d); // DISTR
             akey.push_back(c); // CUST
 
-            TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d)", 
+            TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d)\n", 
                    atid, adlm, wh, d, c);
             
             // acquire
@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               | TRACE_DEBUG
+               //               | TRACE_DEBUG
               );
 
 
@@ -159,11 +159,18 @@ int main(int argc, char* argv[])
     if (inst_test_env(argc, argv))
         return (1);
 
+    // make sure data is loaded
+    w_rc_t rcl = _g_shore_env->loaddata();
+    if (rcl.is_error()) {
+        return (SHELL_NEXT_QUIT);
+    }
+    
+
     // create the customer partition
     _pCustPart = new irp_impl(_g_shore_env, _g_shore_env->customer(), 3);
 
     // start processing commands
-    simple_shore_shell sss;
+    simple_shore_shell sss(_g_shore_env);
     sss.start();
 
     // delete the partition

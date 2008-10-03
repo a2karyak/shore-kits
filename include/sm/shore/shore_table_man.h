@@ -1682,13 +1682,22 @@ w_rc_t table_man_impl<TableDesc>::check_all_indexes_together(ss_m* db)
     bool eof = false;
     table_tuple tuple(_ptable);
     W_DO(iter->next(db, eof, tuple));
+
+    int ituple_cnt=0;
+    int idx_cnt=0;
+
     while (!eof) {
         // remember the rid just scanned
         rid_t tablerid = tuple.rid();
 
+        ituple_cnt++;
+
         // probe all indexes
         pindex = _ptable->indexes();
         while (pindex) {
+
+            idx_cnt++;
+
             w_rc_t rc = index_probe(db, pindex, &tuple);
 
             if (rc.is_error()) {

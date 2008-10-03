@@ -6,7 +6,6 @@
  *  @brief:  Test shore tpc-c kit with shell
  *
  *  @author: Ippokratis Pandis, July 2008
- *
  */
 
 #include "tests/common.h"
@@ -99,6 +98,8 @@ int tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
                                      const int iIterations,
                                      const int iUseSLI)
 {
+    assert (_g_shore_env->is_initialized());    
+
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
            "Queried WHs    : %d\n" \
@@ -190,6 +191,8 @@ int tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
                                         const int iIterations,
                                         const int iUseSLI)
 {
+    assert (_g_shore_env->is_initialized());    
+
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
            "Queried WHs    : %d\n" \
@@ -301,7 +304,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
+               //| TRACE_DEBUG
               );
 
     /* 1. Instanciate the Shore environment */

@@ -420,7 +420,10 @@ public:
     // thread entrance
     void work() {
         TRACE( TRACE_DEBUG, "Checking (%s)\n", _ptable->name());
-        if (!_pmanager->check_all_indexes(_pssm)) {
+
+        //if (!_pmanager->check_all_indexes(_pssm)) {
+        w_rc_t e = _pmanager->check_all_indexes_together(_pssm);
+        if (e.is_error()) {
             TRACE( TRACE_DEBUG, "Inconsistency in (%s)\n", _ptable->name());
         }
         else {

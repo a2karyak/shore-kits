@@ -117,7 +117,9 @@ template<typename DataType>
 std::ostream& operator<< (std::ostream& os,
                           const key_wrapper_t<DataType>& rhs)
 {
-    os << "SKATA";
+    for (int i=0; i<rhs._key_v.size(); i++) {
+        os << rhs._key_v[i] << "|";
+    }
     return (os);
 }
 

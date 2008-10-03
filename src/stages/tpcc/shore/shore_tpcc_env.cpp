@@ -148,7 +148,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 //             cnt++;
 //        }
 
-#if 1
+#if 0
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
@@ -161,6 +161,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
             TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
                    loaders[i]->table()->name());
             delete loaders[i];
+            assert (0); // should not happen
             return RC(se_ERROR_IN_LOAD);
         }
         TRACE( TRACE_TRX_FLOW, "Loader (%d) [%s] joined...\n", 
@@ -176,6 +177,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
             TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
                    loaders[i]->table()->name());
             //            delete loaders[i];
+            assert (0); // should not happen
             return RC(se_ERROR_IN_LOAD);
         }        
         //        delete loaders[i];
@@ -294,27 +296,27 @@ w_rc_t ShoreTPCCEnv::check_consistency()
 
 w_rc_t ShoreTPCCEnv::warmup()
 {
-    int num_tbl = _table_desc_list.size();
-    table_man_t*  pmanager = NULL;
-    table_man_list_iter table_man_iter;
+//     int num_tbl = _table_desc_list.size();
+//     table_man_t*  pmanager = NULL;
+//     table_man_list_iter table_man_iter;
 
-    time_t tstart = time(NULL);
+//     time_t tstart = time(NULL);
 
-    for ( table_man_iter = _table_man_list.begin(); 
-          table_man_iter != _table_man_list.end(); 
-          table_man_iter++)
-        {
-            pmanager = *table_man_iter;
-            W_DO(pmanager->check_all_indexes_together(db()));
-        }
+//     for ( table_man_iter = _table_man_list.begin(); 
+//           table_man_iter != _table_man_list.end(); 
+//           table_man_iter++)
+//         {
+//             pmanager = *table_man_iter;
+//             W_DO(pmanager->check_all_indexes_together(db()));
+//         }
 
-    time_t tstop = time(NULL);
+//     time_t tstop = time(NULL);
 
-    /* 2. print stats */
-    TRACE( TRACE_DEBUG, "Checking of (%d) tables finished in (%d) secs...\n",
-           num_tbl, (tstop - tstart));
+//     /* 2. print stats */
+//     TRACE( TRACE_DEBUG, "Checking of (%d) tables finished in (%d) secs...\n",
+//            num_tbl, (tstop - tstart));
 
-    return (RCOK);
+    return (check_consistency());
 }
 
 

@@ -55,18 +55,12 @@ static const string SHORE_DEF_DEV_OPTIONS[][2] = {
     { "device", "tbl_tpcc/shore" },
     { "devicequota", "102400" },
     { "clobberdev", "1" },
-    { "loadatadir", SHORE_TABLE_DATA_DIR }
+    { "loadatadir", SHORE_TABLE_DATA_DIR },
+    { "maxcpucount", "64" },
+    { "activecpucount", "64" }
 };
 
-static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 4;
-
-
-static const string SHORE_DEF_SYS_OPTIONS[][2] = {
-    { "max_cpu_count", "64" },
-    { "active_cpu_count", "64" }
-};
-
-static const int    SHORE_NUM_DEF_SYS_OPTIONS  = 2;
+static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 6;
 
 
 
@@ -157,7 +151,7 @@ protected:
     string             _cname;     // config filename
     map<string,string> _sm_opts;   // map of options for the sm
     map<string,string> _dev_opts;  // map of options for the device    
-    map<string,string> _sys_opts;  // map of options for the system    
+    //    map<string,string> _sys_opts;  // map of options for the system    
 
     // Processor info
     int                 _max_cpu_count;    // hard limit

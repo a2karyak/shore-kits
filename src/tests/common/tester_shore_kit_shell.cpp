@@ -36,7 +36,7 @@ int shore_kit_shell_t::print_usage(const char* command)
 {
     assert (command);
 
-    TRACE( TRACE_ALWAYS, "\n\nSupported commands: WARMUP/TEST/MEASURE\n\n" );
+    TRACE( TRACE_ALWAYS, "\n\nSupported commands: LOAD/WARMUP/TEST/MEASURE\n\n" );
 
     TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
            "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
@@ -140,6 +140,21 @@ void shore_kit_shell_t::usage_cmd_WARMUP()
 }
 
 
+/******************************************************************** 
+ *
+ *  @fn:    usage_cmd_LOAD
+ *
+ *  @brief: Prints the usage for LOAD cmd
+ *
+ ********************************************************************/
+
+void shore_kit_shell_t::usage_cmd_LOAD() 
+{
+    TRACE( TRACE_ALWAYS, "LOAD Usage:\n\n" \
+           "*** load\n");
+}
+
+
 
 /******************************************************************** 
  *
@@ -162,6 +177,11 @@ int shore_kit_shell_t::process_command(const char* command)
         print_usage(command_tag);
         return (SHELL_NEXT_CONTINUE);
     }
+
+    // LOAD cmd
+//     if (strcasecmp(command_tag, "LOAD") == 0) {
+//         return (process_cmd_LOAD(command, command_tag));
+//     }
 
     // WARMUP cmd
     if (strcasecmp(command_tag, "WARMUP") == 0) {
@@ -199,6 +219,16 @@ int shore_kit_shell_t::process_command(const char* command)
 int shore_kit_shell_t::process_cmd_WARMUP(const char* command, 
                                           char* command_tag)
 {
+    assert (_env);
+    assert (_env->is_initialized());
+
+    // first check if env initialized and loaded
+    // try to load and abort on error
+    w_rc_t rcl = _env->loaddata();
+    if (rcl.is_error()) {
+        return (SHELL_NEXT_QUIT);
+    }
+
     /* 0. Parse Parameters */
     int numOfQueriedWHs     = DF_WARMUP_QUERIED_WHS;
     int tmp_numOfQueriedWHs = DF_WARMUP_QUERIED_WHS;
@@ -257,6 +287,31 @@ int shore_kit_shell_t::process_cmd_WARMUP(const char* command,
 }
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    process_cmd_LOAD
+ *
+ *  @brief: Parses the LOAD cmd and calls the virtual impl function
+ *
+ ********************************************************************/
+
+int shore_kit_shell_t::process_cmd_LOAD(const char* command, 
+                                        char* command_tag)
+{
+    assert (_env);
+    assert (_env->is_initialized());
+
+    if (_env->is_loaded()) {
+        TRACE( TRACE_ALWAYS, "Environment already loaded\n");
+        return (SHELL_NEXT_CONTINUE);
+    }
+
+    // call the virtual function that implements the test    
+    return (_cmd_LOAD_impl());
+}
+
+
 /******************************************************************** 
  *
  *  @fn:    process_cmd_TEST
@@ -268,6 +323,17 @@ int shore_kit_shell_t::process_cmd_WARMUP(const char* command,
 int shore_kit_shell_t::process_cmd_TEST(const char* command, 
                                         char* command_tag)
 {
+    assert (_env);
+    assert (_env->is_initialized());
+
+    // first check if env initialized and loaded
+    // try to load and abort on error
+    w_rc_t rcl = _env->loaddata();
+    if (rcl.is_error()) {
+        return (SHELL_NEXT_QUIT);
+    }
+
+
     /* 0. Parse Parameters */
     int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
     int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
@@ -358,6 +424,16 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
 int shore_kit_shell_t::process_cmd_MEASURE(const char* command, 
                                            char* command_tag)
 {
+    assert (_env);
+    assert (_env->is_initialized());
+
+    // first check if env initialized and loaded
+    // try to load and abort on error
+    w_rc_t rcl = _env->loaddata();
+    if (rcl.is_error()) {
+        return (SHELL_NEXT_QUIT);
+    }
+
     TRACE( TRACE_ALWAYS, "measuring...\n");
 
     /* 0. Parse Parameters */
@@ -475,12 +551,40 @@ int shore_kit_shell_t::_cmd_WARMUP_impl(const int iQueriedWHs,
     TRACE( TRACE_ALWAYS, "warming up...\n");
 
     assert (_env);
-    w_rc_t rc = _env->warmup();            
+    assert (_env->is_initialized());
+    assert (_env->is_loaded());
+
     // if warmup fails abort
-    if (rc.is_error()) {
+    w_rc_t rcw = _env->warmup();            
+    if (rcw.is_error()) {
         assert (0); // should not fail
         return (SHELL_NEXT_QUIT);
     }
+    return (SHELL_NEXT_CONTINUE);            
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    _cmd_LOAD_impl
+ *
+ *  @brief: Implementation of the LOAD cmd
+ *
+ ********************************************************************/
+
+int shore_kit_shell_t::_cmd_LOAD_impl()
+{
+    TRACE( TRACE_ALWAYS, "loading...\n");
+
+    assert (_env);
+    assert (_env->is_initialized());
+
+    w_rc_t rcl = _env->loaddata();
+    if (rcl.is_error()) {
+        TRACE( TRACE_ALWAYS, "Problem loading data\n");
+        return (SHELL_NEXT_QUIT);
+    }
+    assert (_env->is_loaded());
     return (SHELL_NEXT_CONTINUE);            
 }
 

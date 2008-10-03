@@ -425,18 +425,21 @@ const int ShoreEnv::_set_sys_params()
     TRACE( TRACE_DEBUG, "Setting sys params\n");
 
     // cpu info - first checks if valid input    
-    int tmp_max_cpu_count = atoi(_sys_opts[SHORE_DEF_SYS_OPTIONS[0][0]].c_str());
-    int tmp_active_cpu_count = atoi(_sys_opts[SHORE_DEF_SYS_OPTIONS[1][0]].c_str());    
+    int tmp_max_cpu_count = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[4][0]].c_str());
+    int tmp_active_cpu_count = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[5][0]].c_str());    
     if ((tmp_active_cpu_count>0) && (tmp_active_cpu_count<=tmp_max_cpu_count)) {
         CRITICAL_SECTION(cpu_cnt_cs, _cpu_count_lock);
         _max_cpu_count = tmp_max_cpu_count;
-        _active_cpu_count = _active_cpu_count;
+        _active_cpu_count = tmp_active_cpu_count;
     }
     else {
         TRACE( TRACE_ALWAYS, "Incorrect CPU count input: Max (%d) - Active (%d)\n",
                tmp_max_cpu_count, tmp_active_cpu_count);
         problem=1;
     }        
+    assert(_max_cpu_count);
+    assert(_active_cpu_count);
+    assert(_active_cpu_count<=_max_cpu_count);
     print_cpus();
     return (problem);
 }
@@ -463,9 +466,9 @@ void ShoreEnv::usage(option_group_t& options)
 
 /****************************************************************** 
  *
- * @fn    readconfig
+ *  @fn:    readconfig
  *
- *  @brief Reads configuration file
+ *  @brief: Reads configuration file
  *
  ******************************************************************/
 
@@ -478,23 +481,31 @@ void ShoreEnv::readconfig(string conf_file)
     string tmp;
 
     // Parse SM parameters
-    for (int i = 0; i < SHORE_NUM_DEF_SM_OPTIONS; i++) {
+    for (int i=0; i<SHORE_NUM_DEF_SM_OPTIONS; i++) {
         sh_config.readInto(tmp, SHORE_DEF_SM_OPTIONS[i][1], SHORE_DEF_SM_OPTIONS[i][2]);
+        TRACE( TRACE_DEBUG, "(%d) (%s) (%s)\n", i, 
+               SHORE_DEF_SM_OPTIONS[i][0].c_str(), tmp.c_str());
         _sm_opts[SHORE_DEF_SM_OPTIONS[i][0]] = tmp;
     }    
 
     // Parse DEVICE parameters
-    for (int i = 0; i < SHORE_NUM_DEF_DEV_OPTIONS; i++) {
-        sh_config.readInto(tmp, SHORE_DEF_DEV_OPTIONS[i][0], SHORE_DEF_DEV_OPTIONS[i][1]);
-        _dev_opts[SHORE_DEF_DEV_OPTIONS[i][0]] = tmp;
+    for (int j=0; j<SHORE_NUM_DEF_DEV_OPTIONS; j++) {
+        sh_config.readInto(tmp, SHORE_DEF_DEV_OPTIONS[j][0], SHORE_DEF_DEV_OPTIONS[j][1]);
+        TRACE( TRACE_DEBUG, "(%d) (%s) (%s)\n", j,
+               SHORE_DEF_DEV_OPTIONS[j][0].c_str(), tmp.c_str());
+        _dev_opts[SHORE_DEF_DEV_OPTIONS[j][0]] = tmp;
     }
-
 
     // Parse SYSTEM parameters
-    for (int i = 0; i < SHORE_NUM_DEF_SYS_OPTIONS; i++) {
-        sh_config.readInto(tmp, SHORE_DEF_SYS_OPTIONS[i][0], SHORE_DEF_SYS_OPTIONS[i][1]);
-        _sys_opts[SHORE_DEF_SYS_OPTIONS[i][0]] = tmp;
-    }
+//     for (int k=0; k<SHORE_NUM_DEF_SYS_OPTIONS; k++) {
+//         sh_config.readInto(tmp, SHORE_DEF_SYS_OPTIONS[k][0], SHORE_DEF_SYS_OPTIONS[k][1]);
+//         _sys_opts.insert(pair<string,string>(SHORE_DEF_SYS_OPTIONS[k][0],tmp));
+//         TRACE( TRACE_DEBUG, "(%d) (%s) (%s) (%s)\n", k,
+//                SHORE_DEF_SYS_OPTIONS[k][0].c_str(), _sys_opts[SHORE_DEF_SYS_OPTIONS[k][0]].c_str(),
+//                tmp.c_str());
+//         _sys_opts[SHORE_DEF_SYS_OPTIONS[k][0]] = tmp;
+//     }
+
 }
 
 
@@ -524,10 +535,10 @@ void ShoreEnv::conf() {
 
 
     // Print sys options
-    map<string,string>::iterator sys_iter;
-    TRACE( TRACE_DEBUG, "** System options\n");
-    for ( sys_iter = _sys_opts.begin(); sys_iter != _sys_opts.end(); sys_iter++)
-        cout << "(" << sys_iter->first << ") (" << sys_iter->second << ")" << endl;  
+//     map<string,string>::iterator sys_iter;
+//     TRACE( TRACE_DEBUG, "** System options\n");
+//     for ( sys_iter = _sys_opts.begin(); sys_iter != _sys_opts.end(); sys_iter++)
+//         cout << "(" << sys_iter->first << ") (" << sys_iter->second << ")" << endl;  
 }
 
 

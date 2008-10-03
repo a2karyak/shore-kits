@@ -42,7 +42,7 @@ extern bool volatile _g_canceled;
  *          - Call the start() function
  *
  *
- *  @note:  Supported commands - { TEST/MEASURE/WARMUP }
+ *  @note:  Supported commands - { TEST/MEASURE/WARMUP/LOAD }
  *  @note:  To add new command function process_command() should be overridden 
  *  @note:  SIGINT handling
  *
@@ -59,6 +59,9 @@ public:
     shore_kit_shell_t(const char* prompt, ShoreEnv* env) 
         : shell_t(prompt), _env(env)
         {
+            assert (_env);
+
+            // install signal handler
 	    struct sigaction sa;
 	    struct sigaction sa_old;
 	    sa.sa_flags = 0;
@@ -81,16 +84,21 @@ public:
     virtual int process_cmd_TEST(const char* command, char* command_tag);
     virtual int process_cmd_MEASURE(const char* command, char* command_tag);
     virtual int process_cmd_WARMUP(const char* command, char* command_tag);    
+    virtual int process_cmd_LOAD(const char* command, char* command_tag);        
 
     virtual void usage_cmd_TEST();
     virtual void usage_cmd_MEASURE();
     virtual void usage_cmd_WARMUP();    
+    virtual void usage_cmd_LOAD();    
 
     // virtual implementation of the {WARMUP/TEST/MEASURE} 
-    // WARMUP is virtual
+    // WARMUP/LOAD are virtual
     // TEST/MEASURE are pure virtual
     virtual int _cmd_WARMUP_impl(const int iQueriedWHs, const int iTrxs, 
                                  const int iDuration, const int iIterations);
+    virtual int _cmd_LOAD_impl();
+
+
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
