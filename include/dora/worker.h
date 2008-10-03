@@ -13,6 +13,12 @@
 
 #include <cstdio>
 
+// for binding LWP to cores
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
+
+
 #include "util.h"
 #include "sm/shore/shore_env.h"
 
@@ -67,9 +73,13 @@ enum DataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
 
 /******************************************************************** 
  *
- * @class worker_t
+ * @class: worker_t
  *
- * @brief An smthread-based class for the worker threads
+ * @brief: An smthread-based class for the worker threads
+ *
+ * @note:  By default the worker thread is not bound to any processor.
+ *         The creator of the worker thread (the partition) needs to
+ *         decide where and if it will bind it somewhere.
  *
  ********************************************************************/
 
@@ -101,15 +111,21 @@ private:
     int            _paused_wait;
     int            _processed;
 
+    // processor binding
+    bool           _is_bound;
+    processorid_t  _prs_id;
+
 public:
 
-    worker_t(ShoreEnv* env, partition* apart,
-             c_str tname) 
+    worker_t(ShoreEnv* env, partition* apart,             
+             c_str tname,
+             processorid_t aprsid = PBIND_NONE) 
         : thread_t(tname), 
           _env(env), _partition(apart),
           _state(WS_UNDEF), _control(WC_PAUSED), _data_owner(DOS_UNDEF),
           _next(NULL),
-          _paused_wait(0), _processed(0)
+          _paused_wait(0), _processed(0),
+          _is_bound(false), _prs_id(aprsid)
     {
         assert (_env);
     }
@@ -158,9 +174,27 @@ public:
     // thread entrance
     inline void work() {
 
+        // state (WC_PAUSED)
+
         // while paused loop and sleep
-        while (get_control() == WC_PAUSED)
+        while (get_control() == WC_PAUSED) {
             paused++;
+            sleep(1);
+        }
+
+
+        // bind to the specified processor
+        if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
+            TRACE( TRACE_ALWAYS, "Cannot bind to processor (%d)\n", _prs_id);
+            _is_bound = false;
+        }
+        else {
+            TRACE( TRACE_DEBUG, "Binded to processor (%d)\n", _prs_id);
+            _is_bound = true;
+        }
+
+
+        // state (WC_ACTIVE)
 
         // do active loop
         while (get_control() == WC_ACTIVE) {

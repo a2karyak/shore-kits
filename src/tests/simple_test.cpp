@@ -10,6 +10,11 @@
 #include "dora.h"
 
 using namespace dora;
+using namespace tpcc;
+
+typedef range_partition_impl<int>   irp_impl; 
+typedef typename irp_impl::part_key irp_impl_key;
+irp_impl* _pCustPart;
 
 
 //class simple_shore_shell : public shell_t
@@ -74,28 +79,39 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
     TRACE( TRACE_ALWAYS, "testing... (%d) commands processed\n",
            get_command_cnt());
 
-    range_partition_impl<int> aCustPart(_g_shore_env, _g_shore_env->customer(), 3);
-    tid_t atid;
-    int y=0;
-    for (int i=0; i<iNumOfTrxs; i++) {
-        TRACE( TRACE_DEBUG, "false\n");
-        key_wrapper_t<int> akey;
-        akey.push_back(i);
+    // does (iIterations) iterations
+    for (int i=0; i<iIterations; i++) {
 
-        key_wrapper_t<int> bkey;
-        bkey.push_back(y);
+        // get a "trx_id"
+        _pCustPart->dump();    
+        tid_t atid(i,0);
 
-        if (akey<bkey) {
-            TRACE( TRACE_DEBUG, "true\n");
+        // for every transaction acquires (iSelectedTrx) random keys
+        for (int j=0;j<iSelectedTrx;j++) {            
+
+            DoraLockMode adlm = DoraLockModeArray[rand()%DL_CC_MODES]; // random lmode
+            irp_impl_key akey;
+            int wh = URand(1,iQueriedWHs);
+            int d = URand(1, 10);
+            int c = NURand(1023, 1, 3000);
+            akey.push_back(wh); // WH
+            akey.push_back(d); // DISTR
+            akey.push_back(c); // CUST
+
+            TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d)", 
+                   atid, adlm, wh, d, c);
+            
+            // acquire
+            _pCustPart->plm()->acquire(atid,akey,adlm);
         }
-        else {
-            TRACE( TRACE_DEBUG, "false\n");
-        }
-        
-        aCustPart.plm()->acquire(atid, akey);        
+        // release all
+        _pCustPart->plm()->dump();
+        _pCustPart->plm()->release(atid);
     }
-    aCustPart.plm()->release(atid);
-    aCustPart.reset();
+
+    _pCustPart->dump();
+    _pCustPart->reset();
+    _pCustPart->dump();
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -143,9 +159,19 @@ int main(int argc, char* argv[])
     if (inst_test_env(argc, argv))
         return (1);
 
+    // create the customer partition
+    _pCustPart = new irp_impl(_g_shore_env, _g_shore_env->customer(), 3);
+
     // start processing commands
     simple_shore_shell sss;
     sss.start();
+
+    // delete the partition
+    if (_pCustPart) {
+        delete (_pCustPart);
+        _pCustPart=NULL;
+    }
+
 
     /* 3. Close the Shore environment */
     if (_g_shore_env)

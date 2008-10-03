@@ -22,6 +22,8 @@
 
 #include "sm/shore/shore_env.h"
 
+#include "stages/tpcc/common/tpcc_random.h"
+
 
 ENTER_NAMESPACE(dora);
 
@@ -30,6 +32,9 @@ using std::map;
 using std::multimap;
 using std::vector;
 
+
+struct ll_entry;
+std::ostream& operator<<(std::ostream& os, const ll_entry& rhs);
 
 
 /******************************************************************** 
@@ -47,8 +52,13 @@ using std::vector;
 enum DoraLockMode {
     DL_CC_NOLOCK    = 0,
     DL_CC_SHARED    = 1,
-    DL_CC_EXCL      = 2
+    DL_CC_EXCL      = 2,
+
+    DL_CC_MODES     = 3
 };
+
+static DoraLockMode DoraLockModeArray[DL_CC_MODES] =
+    { DL_CC_NOLOCK, DL_CC_SHARED, DL_CC_EXCL };
 
 
 
@@ -59,9 +69,10 @@ enum DoraLockMode {
  *
  ********************************************************************/
 
-static int DoraLockModeMatrix[3][3] = { {1, 1, 1},
-                                        {1, 1, 0},
-                                        {1, 0, 0} };
+static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
+                                                            {1, 1, 0},
+                                                            {1, 0, 0} };
+
 
 
 /******************************************************************** 
@@ -105,6 +116,11 @@ struct ll_entry
 
 }; // EOF: struct ll_entry
 
+std::ostream& operator<<(std::ostream& os, const ll_entry& rhs) 
+{
+    os << "lm (" << rhs._ll << ") - c (" << rhs._counter << ") ";
+    return (os);
+}
 
 
 /******************************************************************** 
@@ -177,7 +193,7 @@ public:
     void dump() const {
         int sz = _ll_map.size();
         TRACE( TRACE_DEBUG, "Keys (%d)\n", sz);
-        for (ll_map_const_it it=_ll_map.begin(); it!=_ll_map.endi(); ++it) {
+        for (ll_map_const_it it=_ll_map.begin(); it!=_ll_map.end(); ++it) {
             cout << "K (" << it->first << ")"; 
             cout << " - L (" << it->second << ")";
         }
@@ -215,16 +231,23 @@ public:
 
     typedef multimap<tid_t,key>                  trx_key_mm;
     typedef typename trx_key_mm::iterator        trx_key_mm_it;
+    typedef typename trx_key_mm::const_iterator  trx_key_mm_cit;
     typedef pair<tid_t,key>                      trx_key_pair;
     typedef pair<trx_key_mm_it, trx_key_mm_it>   trx_range;
-
-//     typedef pair<trx_key_mm_cit, trx_key_mm_cit> trx_range_const;
-//     typedef typename trx_key_mm::const_iterator  trx_key_mm_cit;
 
 private:
 
     key_ll_map _key_ll_m;   // map of keys to logical locks 
     trx_key_mm _trx_key_mm; // map of trxs to keys    
+
+    // helper functions
+    void _dump_trx_key_mm() const {
+        TRACE( TRACE_DEBUG, "(%d) trx-key pairs\n", _trx_key_mm.size());
+        for (trx_key_mm_cit cit=_trx_key_mm.begin(); cit!=_trx_key_mm.end(); ++cit) {
+            cout << "TRX (" << cit->first << ")";
+            cout << " - K (" << cit->second << ")";
+        }
+    }
 
 public:
 
@@ -270,6 +293,12 @@ public:
     void reset() {
         _key_ll_m.reset();
         _trx_key_mm.clear();
+    }
+
+    // for debugging
+    void dump() const {
+        _key_ll_m.dump();                
+        _dump_trx_key_mm();
     }
 
 }; // EOF: struct lock_man_t

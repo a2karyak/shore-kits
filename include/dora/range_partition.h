@@ -17,6 +17,8 @@
 #include "sm/shore/shore_env.h"
 
 #include "dora/partition.h"
+#include "dora/key.h"
+
 
 
 ENTER_NAMESPACE(dora);
@@ -53,65 +55,39 @@ class range_partition_impl : public partition_t<DataType>
 {
 private:
 
-    int _part_field_cnt;
     RangePartitionState _rp_state;
+    int _part_field_cnt;
 
-    DataType* _down;
-    DataType* _up;
-
+    // the two bounds
+    part_key _down;
+    part_key _up;
 
     /** helper functions */
 
-    /** returns true if Contender > Base */
-    inline const bool is_greater(const DataType* base, const DataType* contender) const;
-
-    /** returns true if Contender <= Base */
-    inline const bool is_smaller_equal(const DataType* base, const DataType* contender) const;
-
-    /** returns true if BaseDown < Contender <= BaseUp */
-    inline const bool is_between(const DataType* baseDown, 
-                                 const DataType* baseUp, 
-                                 const DataType* contDown,
-                                 const DataType* contUp) const;
+    const bool _is_between(const part_key& contDown, 
+                           const part_key& contUp) const;
 
 public:
 
     range_partition_impl(ShoreEnv* env, table_desc_t* ptable, int field_cnt) 
         : partition_t(env, ptable),
-          _part_field_cnt(field_cnt),
           _rp_state(RPS_UNSET),
-          _down(NULL), _up(NULL)
+          _part_field_cnt(field_cnt)
     {
         assert (_part_field_cnt>0);
-        _down = new DataType[_part_field_cnt];
-        _up = new DataType[_part_field_cnt];
     }
 
 
-    ~range_partition_impl() 
-    { 
-        if (_down)
-            delete [] _down;
+    ~range_partition_impl() { }    
 
-        if (_up)
-            delete [] _up;
-    }    
+    const part_key* down() { return (&_down); }
+    const part_key* up()   { return (&_up); }    
 
+    // sets new limits
+    const bool resize(const part_key& downLimit, const part_key& upLimit);
 
-    const DataType* get_down() { return (_down); }
-    const DataType* get_up() { return (_up); }
-       
-
-
-    /** sets new limits */
-    const bool resize(DataType* downLimit, DataType* upLimit);
-
-
-    /** returns true if action can be enqueued here */
-    const bool verify(part_action* pAction);
-
-    /** enqueues action, false on error */
-    const bool enqueue(part_action* pAction);
+    // returns true if action can be enqueued here
+    const bool verify(const part_action& action) const;
 
 }; // EOF: range_partition_impl
 
@@ -122,80 +98,20 @@ public:
 
 /****************************************************************** 
  *
- * @fn:    is_greater
- *
- * @brief: Returns true if Contender > Base
- *
- ******************************************************************/
-
-template <class DataType>
-inline const bool range_partition_impl<DataType>::is_greater(const DataType* base,
-                                                             const DataType* contender) const
-{
-    assert (base);
-    assert (contender);
-
-    for (int i=0; i<_part_field_cnt; i++) {
-        if (base[i]>=contender[i]) 
-            return (false);
-    }
-    return (true);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:    is_smalller_equal
- *
- * @brief: Returns true if Contender <= Base
- *
- ******************************************************************/
-
-template <class DataType>
-inline const bool range_partition_impl<DataType>::is_smaller_equal(const DataType* base,
-                                                                   const DataType* contender) const
-{
-    assert (base);
-    assert (contender);
-
-    for (int i=0; i<_part_field_cnt; i++) {
-        if (base[i]<contender[i]) 
-            return (false);
-    }
-    return (true);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:    is_between
+ * @fn:    _is_between
  *
  * @brief: Returns true if (BaseDown < ContenderDown) (ContenderUp <= BaseUp)
  *
  ******************************************************************/
 
 template <class DataType>
-inline const bool range_partition_impl<DataType>::is_between(const DataType* baseDown,
-                                                             const DataType* baseUp,
-                                                             const DataType* contDown,
-                                                             const DataType* contUp) const
+inline const bool range_partition_impl<DataType>::_is_between(const part_key& contDown,
+                                                              const part_key& contUp) const
 {
-    assert (baseDown);
-    assert (baseUp);
-    assert (contDown);
-    assert (contUp);
-
-    for (int i=0; i<_part_field_cnt; i++) {
-        assert (baseDown<=baseUp);
-        assert (contDown<=contUp);
-        if ((baseDown[i] > contDown[i]) || (baseUp[i]<=contUp[i]))
-            return (false);
-    }
-    return (true);
+    assert (_down<=_up);
+    assert (contDown<=contUp);
+    return ((_down<=contDown) && (contUp<=_up));
 }
-
 
 
 
@@ -209,22 +125,17 @@ inline const bool range_partition_impl<DataType>::is_between(const DataType* bas
  ******************************************************************/
 
 template <class DataType>
-const bool range_partition_impl<DataType>::resize(DataType* downLimit, DataType* upLimit) 
+inline const bool range_partition_impl<DataType>::resize(const part_key& downLimit, 
+                                                         const part_key& upLimit) 
 {
-    assert (downLimit);
-    assert (upLimit);
-
-    if (is_smalller_equal(downLimit, upLimit)) {
+    if (upLimit<downLimit) {
         TRACE( TRACE_ALWAYS, "Error in new bounds\n");
         return (false);
     }
 
     // copy new limits
-    for (int i=0; i<_part_field_cnt; i++) {
-        _down[i] = downLimit[i];
-        _up[i] = upLimit[i];
-    }
-
+    _down = downLimit;
+    _up = upLimit;
     _rp_state = RPS_SET;
     return (true);
 }
@@ -240,38 +151,11 @@ const bool range_partition_impl<DataType>::resize(DataType* downLimit, DataType*
  ******************************************************************/
  
 template <class DataType>
-const bool range_partition_impl<DataType>::verify(part_action* pAction)
+const bool range_partition_impl<DataType>::verify(const part_action& action) const
 {
     assert (_rp_state == RPS_SET);
-    return (is_between(_down, _up, pAction->down(), pAction->up()));
+    return (_is_between(action.down(), action.up()));
 }   
-
-
-
-/****************************************************************** 
- *
- * @fn:    enqueue()
- *
- * @brief: Enqueues action, false on error.
- *
- ******************************************************************/
-
-template <class DataType>
-const bool range_partition_impl<DataType>::enqueue(part_action* pAction)
-{
-    assert (_rp_state == RPS_SET);
-    if (!verify(pAction)) {
-        TRACE( TRACE_ALWAYS, "Enqueued to the wrong partition\n");
-        return (false);
-    }
-
-    TRACE( TRACE_DEBUG, "enqueuing...\n");
-
-    assert (0); // TODO: enqueue action to partition queue
-    // queue.put(pAction);
-
-    return (false);
-}
 
 
 

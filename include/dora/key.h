@@ -36,6 +36,11 @@ using std::vector;
 const char KS_DELIMETER[] = "|";
 
 
+template<typename DataType> struct key_wrapper_t;
+template<typename DataType> std::ostream& operator<< (std::ostream& os,
+                                                      const key_wrapper_t<DataType>& rhs);
+
+
 
 /******************************************************************** 
  *
@@ -88,33 +93,13 @@ struct key_wrapper_t
 
 
     // comparison operators
-    bool operator<(const key_wrapper_t<DataType>& rhs) const {        
-        // the two keys need to have equal number of fields
-        assert (_key_v.size()==rhs._key_v.size());
-        for (int i=0; i<_key_v.size(); i++) {
-        // goes over the key fields until one inequality is found
-            if (_key_v[i]==rhs._key_v[i])
-                continue;
-            return (_key_v[i]<rhs._key_v[i]);        
-        }
-        return (false); // irreflexivity - f(x,x) must be false
-    }
-
-    bool operator==(const key_wrapper_t<DataType>& rhs) const {
-        // the two keys need to have equal number of fields
-        assert (_key_v.size()==rhs._key_v.size());
-        for (int i=0; i<_key_v.size(); i++) {
-            // goes over the key fields until one inequality is found
-            if (_key_v[i]==rhs._key_v[i])
-                continue;
-            return (false);        
-        }
-        return (true);
-    }
+    bool operator<(const key_wrapper_t<DataType>& rhs) const;
+    bool operator==(const key_wrapper_t<DataType>& rhs) const;
+    bool operator<=(const key_wrapper_t<DataType>& rhs) const;
 
     // friend function
-//     friend std::ostream& operator<<(std::ostream& os, 
-//                                     const key_wrapper_t<DataType>& rhs);        
+    template<class DataType> friend std::ostream& operator<< (std::ostream& os, 
+                                                              const key_wrapper_t<DataType>& rhs);
 
     // helper functions
     inline void copy_vector(const data_ptr_vec aVec) {
@@ -126,6 +111,63 @@ struct key_wrapper_t
     }
 
 }; // EOF: struct key_wrapper_t
+
+
+template<typename DataType> 
+std::ostream& operator<< (std::ostream& os,
+                          const key_wrapper_t<DataType>& rhs)
+{
+    os << "SKATA";
+    return (os);
+}
+
+
+/** struct key_wrapper_t methods */
+
+// comparison operators
+
+// less
+template<class DataType>
+bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) const {
+    // the two keys need to have equal number of fields
+    assert (_key_v.size()==rhs._key_v.size());
+    for (int i=0; i<_key_v.size(); i++) {
+        // goes over the key fields until one inequality is found
+        if (_key_v[i]==rhs._key_v[i])
+            continue;
+        return (_key_v[i]<rhs._key_v[i]);        
+    }
+    return (false); // irreflexivity - f(x,x) must be false
+}
+
+// equal
+template<class DataType>
+bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) const {
+    // the two keys need to have equal number of fields
+    assert (_key_v.size()==rhs._key_v.size());
+    for (int i=0; i<_key_v.size(); i++) {
+        // goes over the key fields until one inequality is found
+        if (_key_v[i]==rhs._key_v[i])
+            continue;
+        return (false);        
+    }
+    return (true);
+}
+
+// less or equal
+template<class DataType>
+bool key_wrapper_t<DataType>::operator<=(const key_wrapper_t<DataType>& rhs) const {
+    // the two keys need to have equal number of fields
+    assert (_key_v.size()==rhs._key_v.size());
+    for (int i=0; i<_key_v.size(); i++) {
+        // goes over the key fields
+        if (_key_v[i]==rhs._key_v[i])
+            continue;
+        return (_key_v[i]<rhs._key_v[i]);        
+    }
+    // if reached this point all fields are equal so the two keys are equal
+    return (true); 
+}
 
 
 

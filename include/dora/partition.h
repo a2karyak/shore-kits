@@ -135,21 +135,32 @@ public:
     // resets the partition
     int reset(const int standby_sz = DF_NUM_OF_STANDBY_THRS);
 
-    /** returns true if action can be enqueued here */
-    virtual const bool verify(part_action* pAction)=0;
+    // dumps information
+    void dump() const {
+        TRACE( TRACE_DEBUG, "Policy            (%d)\n", _part_policy);
+        TRACE( TRACE_DEBUG, "Active Thr Status (%d)\n", _pat_state);
+        TRACE( TRACE_DEBUG, "Active Thr Count  (%d)\n", _pat_count);
+        _plm.dump();
+    }
+        
 
-    /** enqueues action, false on error */
-    const bool enqueue(part_action* pAction);    
-
-    /** dequeues action */
-    part_action* dequeue();
-
-    /** partition state and active threads */
+    // partition state and active threads
     const PartitionActiveThreadState get_pat_state();
     const PartitionActiveThreadState dec_active_thr();
     const PartitionActiveThreadState inc_active_thr();
 
+    // get lock manager
     part_lock_man* plm() { return (&_plm); }
+
+
+    // returns true if action can be enqueued it this partition
+    virtual const bool verify(const part_action& action) const =0;
+
+    // enqueues action, false on error
+    const bool enqueue(part_action* paction);    
+
+    // dequeues action
+    part_action* dequeue();
 
 
 private:
@@ -169,6 +180,45 @@ protected:
 
 /** partition_t interface */
 
+
+/****************************************************************** 
+ *
+ * @fn:    dequeue()
+ *
+ * @brief: Returns the action at the head of the queue
+ *
+ ******************************************************************/
+
+template <class DataType>
+action_t<DataType>* partition_t<DataType>::dequeue() 
+{
+    TRACE( TRACE_TRX_FLOW, "dequeuing...\n");
+    return (_queue.pop());
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    enqueue()
+ *
+ * @brief: Enqueues action, false on error.
+ *
+ ******************************************************************/
+
+template <class DataType>
+const bool partition_t<DataType>::enqueue(part_action* pAction)
+{
+    assert (_part_policy!=PP_UNDEF);
+    if (!verify(*pAction)) {
+        TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
+        return (false);
+    }
+
+    TRACE( TRACE_TRX_FLOW, "Enqueuing...\n");
+    _queue.push(pAction);
+    return (true);
+}
 
 
 
@@ -235,6 +285,7 @@ const PartitionActiveThreadState partition_t<DataType>::get_pat_state()
 }
 
 
+
 /****************************************************************** 
  *
  * @fn:     dec_active_thr()
@@ -284,23 +335,6 @@ const PartitionActiveThreadState partition_t<DataType>::inc_active_thr()
     }
     assert (_pat_count>0);
     return (_pat_state);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:    dequeue()
- *
- * @brief: Returns the action at the head of the queue
- *
- ******************************************************************/
-
-template <class DataType>
-action_t<DataType>* partition_t<DataType>::dequeue() 
-{
-    TRACE( TRACE_TRX_FLOW, "dequeuing...\n");
-    return (_queue.pop());
 }
 
 

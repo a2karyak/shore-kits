@@ -15,6 +15,8 @@
 
 #include "util.h"
 
+#include "dora/key.h"
+
 #include "sm/shore/shore_env.h"
 
 #include <atomic.h>
@@ -99,13 +101,17 @@ enum ActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
 template <class DataType>
 class action_t
 {
+public:
+    
+    typedef key_wrapper_t<DataType> key;
+
 protected:
 
     ShoreEnv*    _env;    
 
     int          _field_count;
-    DataType*    _down;
-    DataType*    _up;
+    key          _down;
+    key          _up;
 
     countdown_t* _prvp;
 
@@ -118,7 +124,7 @@ public:
 
     action_t(ShoreEnv* env, int field_count, countdown_t* prvp, xct_t* pxct)
         : _env(env), 
-          _field_count(field_count), _down(NULL), _up(NULL),
+          _field_count(field_count),
           _prvp(prvp), _xct(pxct), _decision(AD_UNDECIDED)
     {
         assert (_env);
@@ -126,25 +132,19 @@ public:
         assert (_prvp);
         assert (_xct);
 
-        _down = new DataType[_field_count];
-        _up   = new DataType[_field_count];
-
         _tid = ss_m::xct_to_tid(_xct);
     }
 
-    virtual ~action_t() {
-        if (_down)
-            delete [] _down;
-        
-        if (_up)
-            delete [] _up;
-    }
+    virtual ~action_t() { }
 
     
     /** access methods */
 
-    DataType* down() { return (_down); }
-    DataType* up()   { return (_up); }
+    key& down() { return (_down); }
+    const key& down() const { return (_down); }
+    key& up() { return (_up); }
+    const key& up() const { return (_up); }
+
 
     inline xct_t* get_xct() { return (_xct); }
     inline tid_t  get_tid() { return (_tid); }

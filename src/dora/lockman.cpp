@@ -9,12 +9,10 @@
 
 #include "dora/lockman.h"
 
-using namespace dora;
 
-
-// friend function
-std::ostream& operator<<(std::ostream& os, const ll_entry& rhs)
-{
-    os << "lm (" << rhs._ll << ") - c (" << rhs._counter << ") ";
-    return (os);
-}
+// // friend function
+// std::ostream& operator<<(std::ostream& os, const dora::ll_entry& rhs)
+// {
+//     os << "lm (" << rhs._ll << ") - c (" << rhs._counter << ") ";
+//     return (os);
+// }
