@@ -68,6 +68,12 @@ int ShoreEnv::init()
     // Read configuration options
     readconfig(_cname);
     //conf();
+
+    // Set sys params
+    if (_set_sys_params()) {
+        TRACE( TRACE_ALWAYS, "Problem in setting system parameters\n");
+    }
+
     
     // Apply configuration to the storage manager
     if (configure_sm()) {
@@ -371,8 +377,75 @@ int ShoreEnv::start_sm()
 }
 
 
+/****************************************************************** 
+ *
+ *  @fn:    set_{max/active}_cpu_count()
+ *
+ *  @brief: Setting new cpu counts
+ *
+ *  @note:  Setting max cpu count is disabled. This value can be set
+ *          only at the config file.
+ *
+ ******************************************************************/
+
+// void ShoreEnv::set_max_cpu_count(const int maxcpucnt) 
+// {
+//     assert (maxcpucnt);
+//     CRITICAL_SECTION(cpu_cnt_cs, _cpu_count_lock);
+//     _max_cpu_count = maxcpucnt;
+// }
+
+
+void ShoreEnv::set_active_cpu_count(const int actcpucnt) 
+{
+    assert (actcpucnt);
+    CRITICAL_SECTION(cpu_cnt_cs, _cpu_count_lock);
+    _active_cpu_count = actcpucnt;
+}
+
+
 
 /** Helper functions */
+
+
+
+/****************************************************************** 
+ *
+ *  @fn:     _set_sys_params()
+ *
+ *  @brief:  Sets system params set in the configuration file
+ *
+ *  @return: Returns 0 on success
+ *
+ ******************************************************************/
+
+const int ShoreEnv::_set_sys_params()
+{
+    int problem = 0;
+    TRACE( TRACE_DEBUG, "Setting sys params\n");
+
+    // cpu info - first checks if valid input    
+    int tmp_max_cpu_count = atoi(_sys_opts[SHORE_DEF_SYS_OPTIONS[0][0]].c_str());
+    int tmp_active_cpu_count = atoi(_sys_opts[SHORE_DEF_SYS_OPTIONS[1][0]].c_str());    
+    if ((tmp_active_cpu_count>0) && (tmp_active_cpu_count<=tmp_max_cpu_count)) {
+        CRITICAL_SECTION(cpu_cnt_cs, _cpu_count_lock);
+        _max_cpu_count = tmp_max_cpu_count;
+        _active_cpu_count = _active_cpu_count;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Incorrect CPU count input: Max (%d) - Active (%d)\n",
+               tmp_max_cpu_count, tmp_active_cpu_count);
+        problem=1;
+    }        
+    print_cpus();
+    return (problem);
+}
+
+
+void ShoreEnv::print_cpus() const { 
+    TRACE( TRACE_ALWAYS, "MaxCPU=(%d) - ActiveCPU=(%d)\n", 
+           _max_cpu_count, _active_cpu_count);
+}
 
 
 /** @fn    usage
@@ -415,6 +488,13 @@ void ShoreEnv::readconfig(string conf_file)
         sh_config.readInto(tmp, SHORE_DEF_DEV_OPTIONS[i][0], SHORE_DEF_DEV_OPTIONS[i][1]);
         _dev_opts[SHORE_DEF_DEV_OPTIONS[i][0]] = tmp;
     }
+
+
+    // Parse SYSTEM parameters
+    for (int i = 0; i < SHORE_NUM_DEF_SYS_OPTIONS; i++) {
+        sh_config.readInto(tmp, SHORE_DEF_SYS_OPTIONS[i][0], SHORE_DEF_SYS_OPTIONS[i][1]);
+        _sys_opts[SHORE_DEF_SYS_OPTIONS[i][0]] = tmp;
+    }
 }
 
 
@@ -441,6 +521,13 @@ void ShoreEnv::conf() {
     TRACE( TRACE_DEBUG, "** Device options\n");
     for ( dev_iter = _dev_opts.begin(); dev_iter != _dev_opts.end(); dev_iter++)
         cout << "(" << dev_iter->first << ") (" << dev_iter->second << ")" << endl;    
+
+
+    // Print sys options
+    map<string,string>::iterator sys_iter;
+    TRACE( TRACE_DEBUG, "** System options\n");
+    for ( sys_iter = _sys_opts.begin(); sys_iter != _sys_opts.end(); sys_iter++)
+        cout << "(" << sys_iter->first << ") (" << sys_iter->second << ")" << endl;  
 }
 
 

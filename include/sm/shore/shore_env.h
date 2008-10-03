@@ -16,6 +16,12 @@
 #include <map>
 
 
+// for binding LWP to cores
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
+
+
 ENTER_NAMESPACE(shore);
 
 using std::map;
@@ -25,7 +31,9 @@ using std::map;
 /******** Constants ********/
 
 
-static const int SHORE_NUM_OF_RETRIES = 3;
+static const int SHORE_DEF_NUM_OF_CORES     = 32; // default number of cores
+
+static const int SHORE_NUM_OF_RETRIES       = 3;
 
 #define SHORE_TABLE_DATA_DIR "tpcc_sf"
 
@@ -51,6 +59,14 @@ static const string SHORE_DEF_DEV_OPTIONS[][2] = {
 };
 
 static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 4;
+
+
+static const string SHORE_DEF_SYS_OPTIONS[][2] = {
+    { "max_cpu_count", "64" },
+    { "active_cpu_count", "64" }
+};
+
+static const int    SHORE_NUM_DEF_SYS_OPTIONS  = 2;
 
 
 
@@ -141,6 +157,12 @@ protected:
     string             _cname;     // config filename
     map<string,string> _sm_opts;   // map of options for the sm
     map<string,string> _dev_opts;  // map of options for the device    
+    map<string,string> _sys_opts;  // map of options for the system    
+
+    // Processor info
+    int                 _max_cpu_count;    // hard limit
+    int                 _active_cpu_count; // soft limit
+    tatas_lock          _cpu_count_lock;
 
     // Stats
     env_stats_t         _env_stats; 
@@ -166,7 +188,9 @@ public:
         _pssm(NULL), _initialized(false), _init_mutex(thread_mutex_create()),
         _loaded(false), _load_mutex(thread_mutex_create()),
         _vol_mutex(thread_mutex_create()), _cname(confname),
-        _measure(MST_UNDEF)
+        _measure(MST_UNDEF),
+        _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
+        _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
@@ -242,6 +266,20 @@ public:
     inline bool get_loaded_no_cs() { return (_loaded); }
     inline void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
     inline void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
+
+    // cpu count functions
+    void print_cpus() const;
+    inline const int get_max_cpu_count() const { return (_max_cpu_count); }
+    inline const int get_active_cpu_count() const { return (_active_cpu_count); }
+    void set_active_cpu_count(const int actcpucnt);
+    // disabled - max_count can be set only on conf
+    //    void set_max_cpu_count(const int maxcpucnt); 
+
+private:
+   
+    // returns 0 on success
+    const int _set_sys_params();
+
 
 }; // EOF ShoreEnv
 
