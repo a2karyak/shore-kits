@@ -212,10 +212,8 @@ int tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iIterations);
 
-
         // set measurement state
         _g_shore_env->set_measure(MST_WARMUP);
-
 
         int wh_id = 0;
 
@@ -228,8 +226,13 @@ int tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
                                         wh_id, iSelectedTrx, 
                                         0, iUseSLI,
                                         c_str("tpcc%d", i));
-            testers[i]->fork();
 
+            if (!testers[i]) {
+                TRACE( TRACE_ALWAYS, "Problem creating (%d) thread\n", i);
+                assert (0); // should not happen
+            }
+
+            testers[i]->fork();
         }
 
         // TODO: give them some time (2secs) to start-up

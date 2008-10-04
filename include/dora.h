@@ -4,6 +4,7 @@
 #define __DORA_H
 
 #include "dora/dora_error.h"
+#include "dora/common.h"
 #include "dora/key.h"
 #include "dora/action.h"
 #include "dora/srmwqueue.h"

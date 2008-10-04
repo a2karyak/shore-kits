@@ -57,7 +57,7 @@ template<typename DataType> std::ostream& operator<< (std::ostream& os,
 template<typename DataType>
 struct key_wrapper_t
 {
-    typedef vector<DataType*> data_ptr_vec;
+    typedef vector<DataType> data_ptr_vec;
     typedef typename data_ptr_vec::iterator data_ptr_vec_it;
 
     // the vector with the entries - of the same type
@@ -88,7 +88,7 @@ struct key_wrapper_t
 
     // push one item
     void push_back(DataType& anitem) {
-        _key_v.push_back(&anitem);
+        _key_v.push_back(anitem);
     }
 
 

@@ -245,7 +245,7 @@ private:
         TRACE( TRACE_DEBUG, "(%d) trx-key pairs\n", _trx_key_mm.size());
         for (trx_key_mm_cit cit=_trx_key_mm.begin(); cit!=_trx_key_mm.end(); ++cit) {
             cout << "TRX (" << cit->first << ")";
-            cout << " - K (" << cit->second << ")";
+            cout << " - K (" << cit->second << ")\n";
         }
     }
 
@@ -276,9 +276,9 @@ public:
         TRACE( TRACE_DEBUG, "Releasing (%d)\n", axct);
         for (trx_key_mm_it it=r.first; it!=r.second; ++it) {           
             // release ll for key from the key-to-ll map
+            cout << "Release - " << (*it).second << endl;
             _key_ll_m.release((*it).second);
-        }         
-        
+        }                 
         // remove trx-related entries from the trx-to-key map
         _trx_key_mm.erase(axct);
     }

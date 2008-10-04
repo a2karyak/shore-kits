@@ -71,11 +71,6 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
                                        const int iIterations,
                                        const int iUseSLI)
 {
-    typedef key_wrapper_t<int> intkey;
-    intkey a,b;
-    std::less<intkey> sls;
-
-
     TRACE( TRACE_ALWAYS, "testing... (%d) commands processed\n",
            get_command_cnt());
 
@@ -85,6 +80,7 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
         // get a "trx_id"
         _pCustPart->dump();    
         tid_t atid(i,0);
+        cout << atid << endl;
 
         // for every transaction acquires (iSelectedTrx) random keys
         for (int j=0;j<iSelectedTrx;j++) {            
@@ -99,10 +95,17 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
             akey.push_back(c); // CUST
 
             TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d)\n", 
-                   atid, adlm, wh, d, c);
+                   atid, wh, d, c, adlm);
             
             // acquire
-            _pCustPart->plm()->acquire(atid,akey,adlm);
+            if (_pCustPart->plm()->acquire(atid,akey,adlm)) {
+                TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d) - ACQUIRED\n", 
+                       atid, wh, d, c, adlm);
+            }
+            else {
+                TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d) - FAILED\n", 
+                       atid, wh, d, c, adlm);
+            }
         }
         // release all
         _pCustPart->plm()->dump();
@@ -151,7 +154,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
+               | TRACE_DEBUG
               );
 
 

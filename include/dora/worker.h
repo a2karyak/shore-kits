@@ -20,6 +20,9 @@
 
 
 #include "util.h"
+#include "dora.h"
+
+
 #include "sm/shore/shore_env.h"
 
 
@@ -29,46 +32,18 @@ ENTER_NAMESPACE(dora);
 using namespace shore;
 
 
-
 /******************************************************************** 
  *
- * @enum  WorkerState
+ * @enum:  WorkingState
  *
- * @brief Possible states of a worker thread
+ * @brief: Possible states while working on a task
  *
- * @note  Finished = Done assigned job but still trx not decided
- *        (Finished != Idle)
+ * @note:  Finished = Done assigned job but still trx not decided
+ *         (Finished != Idle)
  *
  ********************************************************************/
 
-enum WorkerState { WS_UNDEF, WS_IDLE, WS_ASSIGNED, WS_FINISHED };
-
-
-
-/******************************************************************** 
- *
- * @enum  WorkerControl
- *
- * @brief States for controling a worker thread
- *
- * @note  A thread initially is paused then it starts working until
- *        someone changes the status to stopped.
- *
- ********************************************************************/
-
-enum WorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
-
-
-/******************************************************************** 
- *
- * @enum  DataOwnerState
- *
- * @brief Owning status for the worker thread of the data partition
- *
- ********************************************************************/
-
-enum DataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
-
+enum WorkingState { WS_UNDEF, WS_IDLE, WS_ASSIGNED, WS_FINISHED };
 
 
 /******************************************************************** 
@@ -80,7 +55,8 @@ enum DataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
  * @note:  By default the worker thread is not bound to any processor.
  *         The creator of the worker thread (the partition) needs to
  *         decide where and if it will bind it somewhere.
- *
+ * @note:  Implemented as a state machine.
+ * 
  ********************************************************************/
 
 template <class DataType>
@@ -94,10 +70,11 @@ public:
 private:
 
     // status
-    WorkerState    _state;
-    volatile WorkerControl _control;
-    tatas_lock     _control_lock;
-    DataOwnerState _data_owner;
+    WorkingState            _state;
+    WorkerControl volatile  _control;
+    tatas_lock              _control_lock;
+    DataOwnerState volatile _data_owner;
+    tatas_lock              _data_owner_lock;
 
     // data
     ShoreEnv*      _env;    
@@ -110,10 +87,19 @@ private:
     // statistics
     int            _paused_wait;
     int            _processed;
+    tatas_lock     _stats_lock;
 
     // processor binding
     bool           _is_bound;
     processorid_t  _prs_id;
+
+
+    // states
+    const int _work_PAUSED_impl();
+    const int _work_ACTIVE_impl();
+    const int _work_STOPPED_impl();
+
+    void _print_stats_impl();
 
 public:
 
@@ -130,37 +116,12 @@ public:
         assert (_env);
     }
 
-    ~worker_t() { 
-        TRACE( TRACE_STATISTICS, "Processed (%d) - waited (%d)\n",
-               _processed, _paused_wait);
-    }
+    ~worker_t() { }
 
 
     /** access methods */
-    
-    bool set_control(WorkerControl awc) {
-        // only two transitions are allowed
-        // paused -> active -> stopped
-        CRITICAL_SECTION(wtcs, _control_lock);
-        if ((_control == WC_PAUSED) && (awc == WC_ACTIVE)) {
-            _control = WC_ACTIVE;
-            return (true);
-        }
 
-        if ((_control == WC_ACTIVE) && (awc == WC_STOPPED)) {
-            _control = WC_STOPPED;
-            return (true);
-        }
-
-        return (false);
-    }
-
-    inline WorkerControl get_control() {
-        CRITICAL_SECTION(wtcs, _control_lock);
-        return (_control);
-    }
-
-    
+    // partition related
     void set_partition(partition* apart) {
         assert (apart);
         _partition = apart;
@@ -170,66 +131,278 @@ public:
         return (_partition);
     }
 
+    // data owner state
+    void set_data_owner_state(const DataOwnerState ados) {
+        assert ((ados==DOS_ALONE)||(ados==DOS_MULTIPLE));
+        CRITICAL_SECTION(dos_cs, _data_owner_lock);
+        _data_owner = ados;
+    }
+
+    const DataOwnerState get_data_owner_state() {
+        return (_data_owner);
+    }
+
+
+    void set_next(worker_t<DataType>* apworker) {
+        assert (apworker);
+        CRITICAL_SECTION(next_cs, _next_lock);
+        _next = apworker;
+    }
+
+
+    // thread control
+    bool set_control(WorkerControl awc) {
+        //
+        // Allowed transition matrix:
+        //
+        // |------------------------------------|
+        // |(new)   | PAUSED | ACTIVE | STOPPED |
+        // |(old)   |        |        |         |
+        // |------------------------------------|
+        // |PAUSED  |        |    Y   |    Y    |
+        // |ACTIVE  |   Y    |        |    Y    |
+        // |STOPPED |        |        |         |
+        // |------------------------------------|
+        //
+        {
+            CRITICAL_SECTION(wtcs, _control_lock);
+            if ((_control == WC_PAUSED) && 
+                ((awc == WC_ACTIVE) || (awc == WC_STOPPED))) {
+                _control = awc;
+                return (true);
+            }
+
+            if ((_control == WC_ACTIVE) && 
+                ((awc == WC_PAUSED) || (awc == WC_STOPPED))) {
+                _control = awc;
+                return (true);
+            }
+        }
+        TRACE( TRACE_DEBUG, "Not allowed transition (%d)-->(%d)\n",
+               _control, awc);
+        return (false);
+    }
+
+    inline WorkerControl get_control() {
+        return (_control);
+    }
+
+    
+    // thread control commands
+    inline void stop() {
+        set_control(WC_STOPPED);
+    }
+
+    inline void start() {
+        set_control(WC_ACTIVE);
+    }
+
+    inline void pause() {
+        set_control(WC_PAUSED);
+    }        
+
+    inline void stats() {
+        _print_stats_impl();
+    }
+
+    // state implementation
+    inline const int work_PAUSED() {
+        return (_work_PAUSED_impl());
+    }
+        
+    inline const int work_ACTIVE() {
+        return (_work_ACTIVE_impl());
+    }
+
+    inline const int work_STOPPED() {
+        return (_work_STOPPED_impl());
+    }
+
 
     // thread entrance
     inline void work() {
-
-        // state (WC_PAUSED)
-
-        // while paused loop and sleep
-        while (get_control() == WC_PAUSED) {
-            paused++;
-            sleep(1);
-        }
-
-
-        // bind to the specified processor
-        if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-            TRACE( TRACE_ALWAYS, "Cannot bind to processor (%d)\n", _prs_id);
-            _is_bound = false;
-        }
-        else {
-            TRACE( TRACE_DEBUG, "Binded to processor (%d)\n", _prs_id);
-            _is_bound = true;
-        }
-
-
-        // state (WC_ACTIVE)
-
-        // do active loop
-        while (get_control() == WC_ACTIVE) {
-            assert (_partition);
-        
-            // 1. dequeue an action
-            part_action* pa = NULL;
-            do {
-                pa = _partition.dequeue();
-                // do loop as long as status is active
-                if (get_control() != WC_ACTIVE)
+        // state machine
+        while (true) {
+            switch (get_control()) {
+            case (WC_PAUSED):
+                if (work_PAUSED())
                     return;
-            } while (pa == NULL);
-            assert (pa);
-            
-            // 2. attach to xct
-            ss_m::attach_xct(pa->get_xct());
-            
-            // 3. serve action
-            pa->trx_exec();
-            
-            // 4. commit - use default commit
-            if (pa->get_rvp()->post()) {
-                // last caller
-                pa->trx_rvp();
-            }
-            else {
-                // detach
-                ss_m::detach_xct(pa->get_xct());
+                break;
+
+            case (WC_ACTIVE):
+                if (work_ACTIVE())
+                    return;
+                break;
+
+            case (WC_STOPPED): // exits
+                work_STOPPED();
+                return;
+                break;
+
+            default:
+                assert(0); // should not be in any other state
             }
         }
     }
 
-
 }; // EOF: worker_t
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     _work_PAUSED_impl()
+ *
+ * @brief:  Implementation of the PAUSED state
+ *
+ * @return: 0 on success
+ * 
+ ******************************************************************/
+
+template <class DataType>
+inline const int worker_t<DataType>::_work_PAUSED_impl()
+{
+    TRACE( TRACE_DEBUG, "Pausing...\n");
+
+    // state (WC_PAUSED)
+
+    // while paused loop and sleep
+    while (get_control() == WC_PAUSED) {
+        {
+            CRITICAL_SECTION(stats_cs, _stats_lock);
+            ++_paused_wait;
+        }
+        sleep(1);
+    }
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     _work_ACTIVE_impl()
+ *
+ * @brief:  Implementation of the ACTIVE state
+ *
+ * @return: 0 on success
+ * 
+ ******************************************************************/
+
+template <class DataType>
+inline const int worker_t<DataType>::_work_ACTIVE_impl()
+{    
+    TRACE( TRACE_DEBUG, "Activating...\n");
+
+    // bind to the specified processor
+    if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
+        TRACE( TRACE_ALWAYS, "Cannot bind to processor (%d)\n", _prs_id);
+        _is_bound = false;
+    }
+    else {
+        TRACE( TRACE_DEBUG, "Binded to processor (%d)\n", _prs_id);
+        _is_bound = true;
+    }
+
+    // state (WC_ACTIVE)
+
+    // Start serving actions from the partition
+    while (get_control() == WC_ACTIVE) {
+        assert (_partition);
+        
+        // 1. dequeue an action - it will spin inside the queue
+        part_action* pa = NULL;
+        do {
+            pa = _partition->dequeue(&_control);
+
+            // if signalled to stop
+            // propagate signal to next thread in the list, if any
+            if (get_control() != WC_ACTIVE) {
+                return (0);
+            }
+        } while (pa == NULL);
+        assert (pa);
+            
+        // 2. attach to xct
+        attach_xct(pa->get_xct());
+            
+        // 3. serve action
+        pa->trx_exec();
+            
+        // 4. commit - use default commit
+        if (pa->get_rvp()->post()) {
+            // last caller
+            // execute the code of this rendezvous point
+            pa->trx_rvp();
+        }
+        else {
+            // not last caller, simply detach from trx
+            detach_xct(pa->get_xct());
+        }
+
+        // 5. update stats
+        {
+            CRITICAL_SECTION(stats_cs, _stats_lock);
+            ++_processed;
+        }
+    }
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     _work_STOPPED_impl()
+ *
+ * @brief:  Implementation of the STOPPED state. 
+ *          (1) It stops, joins and deletes the next thread in the list
+ *          (2) It clears any internal state
+ *
+ * @return: 0 on success
+ * 
+ ******************************************************************/
+
+template <class DataType>
+const int worker_t<DataType>::_work_STOPPED_impl()
+{
+    TRACE( TRACE_DEBUG, "Stopping...\n");
+
+    // state (WC_STOPPED)
+
+    // if signalled to stop
+    // propagate signal to next thread in the list, if any
+    CRITICAL_SECTION(next_cs, _next_lock);
+    if (_next) { 
+        // if someone is linked behind stop it and join it 
+        _next->stop();
+        _next->join();
+        delete (_next);
+    }        
+    _next = NULL; // join() ?
+
+    // any cleanup code should be here
+
+    // print statistics
+    stats();
+
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     _print_stats_impl()
+ *
+ * @brief:  Printing stats
+ * 
+ ******************************************************************/
+
+template <class DataType>
+void worker_t<DataType>::_print_stats_impl()
+{
+    CRITICAL_SECTION(stats_cs, _stats_lock);
+    TRACE( TRACE_STATISTICS, "Processed (%d)\n", _processed);
+    TRACE( TRACE_STATISTICS, "Waited (%d)\n", _paused_wait);
+}
 
 
 
