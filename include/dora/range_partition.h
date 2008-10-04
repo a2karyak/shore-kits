@@ -69,8 +69,10 @@ private:
 
 public:
 
-    range_partition_impl(ShoreEnv* env, table_desc_t* ptable, int field_cnt) 
-        : partition_t(env, ptable),
+    range_partition_impl(ShoreEnv* env, table_desc_t* ptable,                          
+                         const int field_cnt,
+                         int apartid = 0, processorid_t aprsid = PBIND_NONE) 
+        : partition_t(env, ptable, apartid, aprsid),
           _rp_state(RPS_UNSET),
           _part_field_cnt(field_cnt)
     {

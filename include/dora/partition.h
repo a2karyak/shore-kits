@@ -18,11 +18,7 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
 
-#include "dora/action.h"
-#include "dora/srmwqueue.h"
-#include "dora/lockman.h"
-#include "dora/worker.h"
-
+#include "dora.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -32,25 +28,7 @@ using namespace shore;
 
 
 template<class DataType> class worker_t;
-enum WorkerControl;
 
-
-int DF_NUM_OF_STANDBY_THRS = 5;
-
-
-/******************************************************************** 
- *
- * @enum:  PartitionPolicy
- *
- * @brief: Possible types of a data partition
- *
- *         - PP_RANGE  : range partitioning
- *         - PP_HASH   : hash-based partitioning
- *         - PP_PREFIX : prefix-based partitioning (predicate)
- *
- ********************************************************************/
-
-enum PartitionPolicy { PP_UNDEF, PP_RANGE, PP_HASH, PP_PREFIX };
 
 
 /******************************************************************** 
@@ -156,9 +134,12 @@ public:
     /** Control partition */
 
     // resets/initializes the partition, possibly to a new processor
-    virtual const int reset(const int standby_sz = DF_NUM_OF_STANDBY_THRS,
-                            const processorid_t aprsid = PBIND_NONE);
+    virtual const int reset(const processorid_t aprsid = PBIND_NONE,
+                            const int standby_sz = DF_NUM_OF_STANDBY_THRS);
 
+
+    // stops the partition
+    virtual void stop();
 
 
     /** Action-related methods */
@@ -166,8 +147,8 @@ public:
     // returns true if action can be enqueued it this partition
     virtual const bool verify(const part_action& action) const =0;
 
-    // enqueues action, false on error
-    const bool enqueue(part_action* paction);    
+    // enqueues action, 0 on success
+    const int enqueue(part_action* paction);    
 
     // dequeues action
     part_action* dequeue(WorkerControl volatile* pwc);
@@ -228,24 +209,53 @@ action_t<DataType>* partition_t<DataType>::dequeue(WorkerControl volatile* pwc)
 
 /****************************************************************** 
  *
- * @fn:    enqueue()
+ * @fn:     enqueue()
  *
- * @brief: Enqueues action, false on error.
+ * @brief:  Enqueues action
+ *
+ * @return: 0 on success, see dora_error.h for error codes
  *
  ******************************************************************/
 
 template <class DataType>
-const bool partition_t<DataType>::enqueue(part_action* pAction)
+const int partition_t<DataType>::enqueue(part_action* pAction)
 {
     assert (_part_policy!=PP_UNDEF);
     if (!verify(*pAction)) {
         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
-        return (false);
+        return (de_WRONG_PARTITION);
     }
 
     TRACE( TRACE_TRX_FLOW, "Enqueuing...\n");
     _queue.push(pAction);
-    return (true);
+    return (0);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     stop()
+ *
+ * @brief:  Stops the partition
+ *          - Stops and deletes all workers
+ *          - Clears data structures
+ *
+ ******************************************************************/
+
+template <class DataType>
+void partition_t<DataType>::stop()
+{        
+    TRACE( TRACE_DEBUG, "stopping..");
+
+    // 1. stop the worker & standby threads
+    _stop_threads();
+
+    // 2. clear queue 
+    _queue.clear();
+    
+    // 3. reset lock-manager
+    _plm.reset();
 }
 
 
@@ -265,9 +275,11 @@ const bool partition_t<DataType>::enqueue(part_action* pAction)
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::reset(const processorid_t aprsid, 
+const int partition_t<DataType>::reset(const processorid_t aprsid,
                                        const int poolsz)
 {        
+    TRACE( TRACE_DEBUG, "poolsz (%d) - cpu (%d)", poolsz, aprsid);
+
     // 1. stop the worker & standby threads
     _stop_threads();
 
@@ -433,6 +445,8 @@ const int partition_t<DataType>::_stop_threads()
     }
     _standby = NULL; // join()?
     _standby_cnt = 0;
+
+    TRACE( TRACE_DEBUG, "Worker threads stopped\n");
 
     // thread stats
     CRITICAL_SECTION(pat_cs, _pat_count_lock);

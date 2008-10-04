@@ -33,7 +33,8 @@
 #include "util/file.h"
 #include "util/progress.h"
 #include "util/history.h"
-#include "util/shell.h"
 #include "util/countdown.h"
+#include "util/shell.h"
+
 
 #endif /** __UTIL_H */

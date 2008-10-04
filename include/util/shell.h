@@ -35,6 +35,7 @@
 
 
 
+
 /*********************************************************************
  *
  *  @abstract class: shell_t
@@ -49,9 +50,9 @@
 
 
 // constants
-#define SHELL_COMMAND_BUFFER_SIZE 64
-#define SHELL_NEXT_CONTINUE       1
-#define SHELL_NEXT_QUIT           2
+const int SHELL_COMMAND_BUFFER_SIZE = 64;
+const int SHELL_NEXT_CONTINUE       = 1;
+const int SHELL_NEXT_QUIT           = 2;
 
 
 extern "C" void sig_handler_fwd(int sig);
@@ -112,6 +113,7 @@ public:
     int start();
 
 }; // EOF: shell_t
+
 
 
 #endif /* __UTIL_SHELL_H */

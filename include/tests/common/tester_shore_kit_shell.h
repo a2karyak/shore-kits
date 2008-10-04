@@ -31,6 +31,69 @@ extern "C" void alarm_handler(int sig);
 extern bool volatile _g_canceled;
 
 
+
+/******************************************************************** 
+ *
+ * @enum:  DBControl
+ *
+ * @brief: States of a controlled DB
+ *
+ ********************************************************************/
+
+enum DBControl { DBC_UNDEF, DBC_PAUSED, DBC_ACTIVE, DBC_STOPPED };
+
+
+/*********************************************************************
+ *
+ *  @abstract class: db_iface
+ *
+ *  @brief:          Interface of basic shell commands for dbs
+ *
+ *  @usage:          - Inherit from this class
+ *                   - Implement the process_{START/STOP/PAUSE/RESUME} fuctions
+ *
+ *********************************************************************/
+
+class db_iface
+{
+private:
+
+    DBControl  _dbc;
+    //tatas_lock _dbc_lock;
+
+public:
+
+    db_iface() { }
+
+    virtual ~db_iface() { }
+
+
+    // Access methods
+
+    const DBControl dbc() const { 
+        //CRITICAL_SECTION(dbc_cs, _dbc_lock);
+        return(_dbc); 
+    }
+    
+    void set_dbc(const DBControl adbc) {
+        assert (adbc!=DBC_UNDEF);
+        //CRITICAL_SECTION(dbc_cs, _dbc_lock);
+        _dbc = adbc;
+    }
+
+    
+    // Interface 
+    
+    virtual const int process_START_cmd()=0;
+    virtual const int process_STOP_cmd()=0;
+    virtual const int process_PAUSE_cmd()=0;
+    virtual const int process_RESUME_cmd()=0;
+    
+    
+}; // EOF: db_iface
+
+
+
 /*********************************************************************
  *
  *  @abstract class: shore_kit_shell_t

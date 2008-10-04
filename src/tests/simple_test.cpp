@@ -8,13 +8,14 @@
 #include "sm/shore/shore_helper_loader.h"
 
 #include "dora.h"
+#include "dora/tpcc/dora_tpcc.h"
+
 
 using namespace dora;
 using namespace tpcc;
 
-typedef range_partition_impl<int>   irp_impl; 
-typedef typename irp_impl::part_key irp_impl_key;
-irp_impl* _pCustPart;
+
+dora_tpcc_db* _g_dora;
 
 
 //class simple_shore_shell : public shell_t
@@ -31,10 +32,6 @@ public:
         TRACE( TRACE_ALWAYS, "Exiting... (%d) commands processed\n",
                get_command_cnt());
     }
-
-
-//     int process_command(const char* cmd);
-//     int print_usage(const char* cmd);
 
 
     // impl of supported commands
@@ -78,7 +75,7 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
     for (int i=0; i<iIterations; i++) {
 
         // get a "trx_id"
-        _pCustPart->dump();    
+        _g_dora->cus(0)->dump();    
         tid_t atid(i,0);
         cout << atid << endl;
 
@@ -86,10 +83,10 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
         for (int j=0;j<iSelectedTrx;j++) {            
 
             DoraLockMode adlm = DoraLockModeArray[rand()%DL_CC_MODES]; // random lmode
-            irp_impl_key akey;
+            dora_tpcc_db::ikey akey;
             int wh = URand(1,iQueriedWHs);
             int d = URand(1, 10);
-            int c = NURand(1023, 1, 3000);
+            int c = 1;//NURand(1023, 1, 3000);
             akey.push_back(wh); // WH
             akey.push_back(d); // DISTR
             akey.push_back(c); // CUST
@@ -98,7 +95,7 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
                    atid, wh, d, c, adlm);
             
             // acquire
-            if (_pCustPart->plm()->acquire(atid,akey,adlm)) {
+            if (_g_dora->cus(0)->plm()->acquire(atid,akey,adlm)) {
                 TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d) - ACQUIRED\n", 
                        atid, wh, d, c, adlm);
             }
@@ -108,13 +105,13 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
             }
         }
         // release all
-        _pCustPart->plm()->dump();
-        _pCustPart->plm()->release(atid);
+        _g_dora->cus(0)->plm()->dump();
+        _g_dora->cus(0)->plm()->release(atid);
     }
 
-    _pCustPart->dump();
-    _pCustPart->reset();
-    _pCustPart->dump();
+    // should be empty here!
+    _g_dora->cus(0)->plm()->dump();
+
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -134,6 +131,9 @@ int simple_shore_shell::_cmd_MEASURE_impl(const int iQueriedWHs,
     TRACE( TRACE_ALWAYS, "measuring... (%d) commands processed\n",
            get_command_cnt());
 
+
+    _g_dora->cus(0)->reset();
+    _g_dora->cus(0)->dump();
     
     
     return (SHELL_NEXT_CONTINUE);
@@ -169,18 +169,22 @@ int main(int argc, char* argv[])
     }
     
 
+    // create and start the dora-tpcc-db
+    _g_dora = new dora_tpcc_db(_g_shore_env);
+    assert (_g_dora);
+    _g_dora->start();
+
     // create the customer partition
-    _pCustPart = new irp_impl(_g_shore_env, _g_shore_env->customer(), 3);
+    
 
     // start processing commands
     simple_shore_shell sss(_g_shore_env);
     sss.start();
 
-    // delete the partition
-    if (_pCustPart) {
-        delete (_pCustPart);
-        _pCustPart=NULL;
-    }
+
+    // stop and delete the dora-tpcc-db
+    _g_dora->stop();
+    delete (_g_dora);
 
 
     /* 3. Close the Shore environment */

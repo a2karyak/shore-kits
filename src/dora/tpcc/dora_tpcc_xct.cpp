@@ -4,7 +4,7 @@
  *
  *  @brief:  Declaration of the Shore DORA transactions
  *
- *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Ippokratis Pandis, Sept 2008
  */
 
 #include "stages/tpcc/shore/shore_tpcc_env.h"

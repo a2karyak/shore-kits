@@ -116,12 +116,6 @@ struct ll_entry
 
 }; // EOF: struct ll_entry
 
-std::ostream& operator<<(std::ostream& os, const ll_entry& rhs) 
-{
-    os << "lm (" << rhs._ll << ") - c (" << rhs._counter << ") ";
-    return (os);
-}
-
 
 /******************************************************************** 
  *

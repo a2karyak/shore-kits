@@ -14,8 +14,8 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 # List of libraries
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libutil.a \
-   lib/libdbgen.a lib/libsm.a lib/libdora.a
+   lib/libstages.a lib/libcore.a lib/libdora.a lib/libutil.a \
+   lib/libdbgen.a lib/libsm.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -263,6 +263,7 @@ SD_BASE = \
    $(SD)/lockman.cpp
 
 SD_TPCC = \
+   $(SD)/tpcc/dora_tpcc.cpp \
    $(SD)/tpcc/dora_tpcc_xct.cpp \
    $(SD)/tpcc/pay_impl.cpp
 
@@ -380,7 +381,7 @@ tests_row_cache_LDADD = $(TEST_LIBS)
 tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include
 tests_shore_trees_LDADD = $(TEST_LIBS) -lreadline
 
-tests_simple_CXXFLAGS = $(AM_CXXFLAGS) 
+tests_simple_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_simple_LDADD = $(TEST_LIBS)
 
 
