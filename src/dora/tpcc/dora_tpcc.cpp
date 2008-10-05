@@ -41,6 +41,12 @@ const int dora_tpcc_db::stop()
  *
  * @brief: Starts the DORA TPC-C
  *
+ * @note:  Creates a corresponding number of partitions per table.
+ *         The decision about the number of partitions per table may 
+ *         be based among others on:
+ *         - _env->_sf : the database scaling factor
+ *         - _env->_{max,active}_cpu_count: {hard,soft} cpu counts
+ *
  ******************************************************************/
 
 const int dora_tpcc_db::start()
@@ -53,6 +59,7 @@ const int dora_tpcc_db::start()
 
     int range = _tpccenv->get_active_cpu_count();
     processorid_t icpu(0);
+    int sf = _tpccenv->get_sf();
 
     // WAREHOUSE
     _wh_irpt = new irp_table_impl(_tpccenv, _tpccenv->warehouse(), icpu, range, WH_IRP_KEY);
@@ -87,9 +94,13 @@ const int dora_tpcc_db::start()
         return (de_GEN_TABLE);
     }
     assert (_cu_irpt);
-    _cu_irpt->create_one_part();
+    // creates SF partitions for customers
+    for (int i=0; i<sf; i++) {
+        _cu_irpt->create_one_part();
+    }
     _irptp_vec.push_back(_cu_irpt);
-    icpu = _next_cpu(icpu, _cu_irpt);
+    icpu = _next_cpu(icpu, _cu_irpt, sf);
+    
 
 
     // HISTORY
@@ -104,7 +115,7 @@ const int dora_tpcc_db::start()
     _irptp_vec.push_back(_hi_irpt);
     icpu = _next_cpu(icpu, _hi_irpt);    
 
-
+    /*
     // NEW-ORDER
     _no_irpt = new irp_table_impl(_tpccenv, _tpccenv->new_order(), icpu, range, NO_IRP_KEY);
     if (!_no_irpt) {
@@ -168,7 +179,7 @@ const int dora_tpcc_db::start()
     _st_irpt->create_one_part();
     _irptp_vec.push_back(_st_irpt);
     icpu = _next_cpu(icpu, _st_irpt);    
-    
+    */
 
     TRACE( TRACE_ALWAYS, "Starting tables...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
@@ -218,9 +229,10 @@ void dora_tpcc_db::dump() const
  ******************************************************************/
 
 const processorid_t dora_tpcc_db::_next_cpu(const processorid_t aprd,
-                                            const irp_table_impl* atable)
+                                            const irp_table_impl* atable,
+                                            const int step)
 {
-    processorid_t nextprs = ((aprd+DF_CPU_STEP_TABLES) % _tpccenv->get_active_cpu_count());
+    processorid_t nextprs = ((aprd+step) % _tpccenv->get_active_cpu_count());
     TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);
 }

@@ -278,7 +278,7 @@ template <class DataType>
 const int partition_t<DataType>::reset(const processorid_t aprsid,
                                        const int poolsz)
 {        
-    TRACE( TRACE_DEBUG, "poolsz (%d) - cpu (%d)", poolsz, aprsid);
+    TRACE( TRACE_DEBUG, "poolsz (%d) - cpu (%d)\n", poolsz, aprsid);
 
     // 1. stop the worker & standby threads
     _stop_threads();

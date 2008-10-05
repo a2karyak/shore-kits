@@ -149,7 +149,8 @@ private:
 
     // algorithm for deciding the distribution of tables 
     const processorid_t _next_cpu(const processorid_t aprd,
-                                  const irp_table_impl* atable);
+                                  const irp_table_impl* atable,
+                                  const int step=DF_CPU_STEP_TABLES);
 
         
 }; // EOF: dora_tpcc_db
