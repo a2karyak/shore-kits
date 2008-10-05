@@ -58,21 +58,21 @@ extern ShoreTPCCEnv* _g_shore_env;
 
 struct tpcc_stats_t 
 {
-    int        _no_att;
-    int        _no_com;
-    tatas_lock _no_lock;
-    int        _pay_att;
-    int        _pay_com;
-    tatas_lock _pay_lock;
-    int        _ord_att;
-    int        _ord_com;
-    tatas_lock _ord_lock;
-    int        _del_att;
-    int        _del_com;
-    tatas_lock _del_lock;
-    int        _sto_att;
-    int        _sto_com;
-    tatas_lock _sto_lock;
+    int volatile  _no_att;
+    int volatile  _no_com;
+    tatas_lock    _no_lock;
+    int volatile  _pay_att;
+    int volatile  _pay_com;
+    tatas_lock    _pay_lock;
+    int volatile  _ord_att;
+    int volatile  _ord_com;
+    tatas_lock    _ord_lock;
+    int volatile  _del_att;
+    int volatile  _del_com;
+    tatas_lock    _del_lock;
+    int volatile  _sto_att;
+    int volatile  _sto_com;
+    tatas_lock    _sto_lock;
 
     tpcc_stats_t() 
         : _no_att(0), _no_com(0), _pay_att(0), _pay_com(0), _ord_att(0),
@@ -82,7 +82,7 @@ struct tpcc_stats_t
 
     ~tpcc_stats_t()
     {
-        print_trx_stats();
+        //print_trx_stats();
     }
 
     // Reset counters
@@ -107,9 +107,8 @@ struct tpcc_stats_t
     }
 
 
-
     // Prints stats
-    void print_trx_stats();
+    void print_trx_stats() const;
 
     // Access methods
     int inc_no_att() { 
@@ -240,8 +239,8 @@ private:
     pthread_mutex_t _queried_mutex;
 
     /** some stats */
-    tpcc_stats_t   _tpcc_stats;     // the stats for the whole env life (never reset)
-    tpcc_stats_t   _tmp_tpcc_stats; // temp stats (reset between runs)
+    tpcc_stats_t   _total_tpcc_stats;     // the stats for the whole env life (never reset)
+    tpcc_stats_t   _session_tpcc_stats; // temp stats (reset between runs)
 
 
     /* --- kit baseline trxs --- */
@@ -263,35 +262,33 @@ private:
 
 
     /* --- kit dora trxs --- */
-    w_rc_t xct_dora_new_order(new_order_input_t* no_input, 
+    w_rc_t _dora_new_order(new_order_input_t* no_input, 
+                           const int xct_id, 
+                           trx_result_tuple_t& trt);
+    w_rc_t _dora_payment(payment_input_t* pay_input, 
+                         const int xct_id, 
+                         trx_result_tuple_t& trt);
+    w_rc_t _dora_order_status(order_status_input_t* status_input, 
                               const int xct_id, 
                               trx_result_tuple_t& trt);
-    w_rc_t xct_dora_payment(payment_input_t* pay_input, 
-                            const int xct_id, 
-                            trx_result_tuple_t& trt);
-    w_rc_t xct_dora_order_status(order_status_input_t* status_input, 
-                                 const int xct_id, 
-                                 trx_result_tuple_t& trt);
-    w_rc_t xct_dora_delivery(delivery_input_t* deliv_input, 
+    w_rc_t _dora_delivery(delivery_input_t* deliv_input, 
+                          const int xct_id, 
+                          trx_result_tuple_t& trt);
+    w_rc_t _dora_stock_level(stock_level_input_t* level_input, 
                              const int xct_id, 
                              trx_result_tuple_t& trt);
-    w_rc_t xct_dora_stock_level(stock_level_input_t* level_input, 
-                                const int xct_id, 
-                                trx_result_tuple_t& trt);
+
 
     
 public:    
 
     /** Construction  */
-    ShoreTPCCEnv(string confname, 
-                 int aSF = TPCC_SCALING_FACTOR, 
-                 int aQF = QUERIED_TPCC_SCALING_FACTOR) 
-        : ShoreEnv(confname), _scaling_factor(aSF), _queried_factor(aQF)
+    ShoreTPCCEnv(string confname)
+        : ShoreEnv(confname), 
+          _scaling_factor(TPCC_SCALING_FACTOR), 
+          _queried_factor(QUERIED_TPCC_SCALING_FACTOR)
     {
-        assert (aSF > 0);
-        assert (aQF > 0);
-        assert (aSF >= aQF);
-
+        // read the scaling factor from the configuration file
         pthread_mutex_init(&_scaling_mutex, NULL);
         pthread_mutex_init(&_queried_mutex, NULL);
 
@@ -351,6 +348,8 @@ public:
                 
         _table_desc_list.clear();
         _table_man_list.clear();     
+
+        print_total_tpcc_stats();
     }
 
     virtual int post_init();
@@ -362,27 +361,27 @@ public:
 
 
     /* --- statistics --- */
-    void print_tpcc_stats() { 
-        _tpcc_stats.print_trx_stats(); 
+    void print_total_tpcc_stats() const { 
+        _total_tpcc_stats.print_trx_stats(); 
         _env_stats.print_env_stats(); 
     }
 
-    tpcc_stats_t* get_tpcc_stats() {
-        return (&_tpcc_stats);
+    tpcc_stats_t* get_total_tpcc_stats() {
+        return (&_total_tpcc_stats);
     }
 
-    void print_temp_tpcc_stats() {
-        _tmp_tpcc_stats.print_trx_stats();
+    void print_session_tpcc_stats() const {
+        _session_tpcc_stats.print_trx_stats();
     }
 
-    tpcc_stats_t* get_tmp_tpcc_stats() {
-        return (&_tmp_tpcc_stats);
+    tpcc_stats_t* get_session_tpcc_stats() {
+        return (&_session_tpcc_stats);
     }
 
-    void reset_tmp_tpcc_stats() {
-        _tmp_tpcc_stats.reset();
+    void reset_session_tpcc_stats() {
+        _session_tpcc_stats.reset();
     }
-
+    
 
     /* --- scaling and querying factor --- */
     void print_sf();
@@ -458,6 +457,8 @@ public:
                         trx_result_tuple_t& atrt);
     w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin,
                            trx_result_tuple_t& atrt);
+
+
 
 
 

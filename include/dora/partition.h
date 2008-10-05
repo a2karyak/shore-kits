@@ -246,7 +246,7 @@ const int partition_t<DataType>::enqueue(part_action* pAction)
 template <class DataType>
 void partition_t<DataType>::stop()
 {        
-    TRACE( TRACE_DEBUG, "stopping..");
+    TRACE( TRACE_DEBUG, "Stopping..\n");
 
     // 1. stop the worker & standby threads
     _stop_threads();
@@ -278,7 +278,8 @@ template <class DataType>
 const int partition_t<DataType>::reset(const processorid_t aprsid,
                                        const int poolsz)
 {        
-    TRACE( TRACE_DEBUG, "poolsz (%d) - cpu (%d)\n", poolsz, aprsid);
+    TRACE( TRACE_DEBUG, "part (%s-%d) - pool (%d) - cpu (%d)\n", 
+           _table->name(), _part_id, poolsz, aprsid);
 
     // 1. stop the worker & standby threads
     _stop_threads();
@@ -427,12 +428,15 @@ inline const int partition_t<DataType>::_start_owner()
 template <class DataType>
 const int partition_t<DataType>::_stop_threads()
 {
+    int i = 0;
+
     // owner
     CRITICAL_SECTION(owner_cs, _owner_lock);
     if (_owner) {
         _owner->stop();
         _owner->join();
         delete (_owner);
+        ++i;
     }    
     _owner = NULL; // join()?
 
@@ -442,11 +446,13 @@ const int partition_t<DataType>::_stop_threads()
         _standby->stop();
         _standby->join();
         delete (_standby);
+        ++i;
     }
     _standby = NULL; // join()?
     _standby_cnt = 0;
 
-    TRACE( TRACE_DEBUG, "Worker threads stopped\n");
+    TRACE( TRACE_DEBUG, "part (%s-%d) - (%d) threads stopped\n",
+           _table->name(), _part_id, i);
 
     // thread stats
     CRITICAL_SECTION(pat_cs, _pat_count_lock);

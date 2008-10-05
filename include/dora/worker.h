@@ -375,6 +375,7 @@ const int worker_t<DataType>::_work_STOPPED_impl()
         // if someone is linked behind stop it and join it 
         _next->stop();
         _next->join();
+        TRACE( TRACE_DEBUG, "Next joined...\n");
         delete (_next);
     }        
     _next = NULL; // join() ?

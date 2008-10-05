@@ -30,20 +30,11 @@ int _numOfWHs = DF_NUM_OF_WHS;
  *********************************************************************/
 
 int inst_test_env(int argc, char* argv[]) 
-{
-    /* 1. Parse numOfWHs */
-    if (argc<2) {
-        print_wh_usage(argv);
-        return (1);
-    }
+{    
+    /* 1. Instanciate the Shore Environment */
+    _g_shore_env = new ShoreTPCCEnv("shore.conf");
 
-    int tmp_numOfWHs = atoi(argv[1]);
-    if (tmp_numOfWHs>0)
-        _numOfWHs = tmp_numOfWHs;
-
-    /* 2. Instanciate the Shore Environment */
-    _g_shore_env = new ShoreTPCCEnv("shore.conf", _numOfWHs, _numOfWHs);
-
+    /* 2. Initialize the Shore Environment - sets also SF */
     // the initialization must be executed in a shore context
     db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _g_shore_env);
     initializer->fork();
@@ -54,7 +45,13 @@ int inst_test_env(int argc, char* argv[])
     }    
     assert (_g_shore_env);
     _g_shore_env->print_sf();
+    _numOfWHs = _g_shore_env->get_sf();
 
+    /* 2. If param numOfQueriedWHs */
+    if (argc>1) {
+        int numQueriedOfWHs = atoi(argv[1]);
+        _g_shore_env->set_qf(numQueriedOfWHs);
+    }
     return (0);
 }
 
@@ -101,9 +98,9 @@ int close_test_env()
 void print_wh_usage(char* argv[]) 
 {
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "%s <NUM_WHS>\n" \
+           "%s [<NUM_QUERIED_WHS>]\n" \
            "\nParameters:\n" \
-           "<NUM_WHS>     : The number of WHs of the DB (database scaling factor)\n" \
+           "<NUM_QUERIED_WHS>     : (optional) The number of WHs of the DB (database scaling factor)\n" \
            ,argv[0]);
 }
 
@@ -155,6 +152,7 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 
     switch (_measure_type) {
 
+        // case of number-of-trxs-based measurement
     case (MT_NUM_OF_TRXS):
         for (i=0; i<num_xct; i++) {
             if(_abort_test)
@@ -163,8 +161,8 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
         }
         break;
 
-    case (MT_TIME_DUR):
-        
+        // case of duration-based measurement
+    case (MT_TIME_DUR):        
         while (true) {
             if (_abort_test || _env->get_measure() == MST_DONE)
                 break;
@@ -196,6 +194,8 @@ w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
     }
     
     switch (xct_type) {
+        
+        // BASELINE TRXS
     case XCT_NEW_ORDER:
         W_DO(xct_new_order(env, xctid));  break;
     case XCT_PAYMENT:
@@ -206,6 +206,19 @@ w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
         W_DO(xct_delivery(env, xctid)); break;
     case XCT_STOCK_LEVEL:
         W_DO(xct_stock_level(env, xctid)); break;
+
+
+        // DORA TRXS
+    case XCT_DORA_NEW_ORDER:
+        W_DO(xct_dora_new_order(env, xctid));  break;
+    case XCT_DORA_PAYMENT:
+        W_DO(xct_dora_payment(env, xctid)); break;
+    case XCT_DORA_ORDER_STATUS:
+        W_DO(xct_dora_order_status(env, xctid)); break;
+    case XCT_DORA_DELIVERY:
+        W_DO(xct_dora_delivery(env, xctid)); break;
+    case XCT_DORA_STOCK_LEVEL:
+        W_DO(xct_dora_stock_level(env, xctid)); break;
     }
 
     return (RCOK);

@@ -337,7 +337,7 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
 
     /* Print shore_env stats */
     assert (_g_shore_env);
-    _g_shore_env->print_tpcc_stats();
+    _g_shore_env->print_session_tpcc_stats();
 
     /* Report results. We'll use the workload name for its
        description. */

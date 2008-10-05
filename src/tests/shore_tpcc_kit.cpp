@@ -41,9 +41,8 @@ const char* translate_trx_id(const int trx_id)
 void print_usage(char* argv[]) 
 {
     TRACE( TRACE_ALWAYS, "\nUsage:\n" \
-           "test <NUM_WHS> <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
+           "test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
-           "<NUM_WHS>     : The number of WHs of the DB (scaling factor)\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
@@ -69,7 +68,6 @@ int main(int argc, char* argv[])
 
 
     /* 0. Parse Parameters */
-    int numOfWHs        = DF_NUM_OF_WHS;    
     int numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
     int spreadThreads   = DF_SPREAD_THREADS_TO_WHS;
     int numOfThreads    = DF_NUM_OF_THR;
@@ -77,25 +75,20 @@ int main(int argc, char* argv[])
     int selectedTrxID   = DF_TRX_ID;
     int iterations      = DF_NUM_OF_ITERS;
 
-    if (argc<3) {
+    if (argc<2) {
         print_usage(argv);
         return (1);
     }
 
     int tmp = atoi(argv[1]);
     if (tmp>0)
-        numOfWHs = tmp;
-
-    tmp = atoi(argv[2]);
-    if (tmp>0)
         numOfQueriedWHs = tmp;
-    assert (numOfQueriedWHs <= numOfWHs);
 
-    if (argc>3)
-        spreadThreads = atoi(argv[3]);
+    if (argc>2)
+        spreadThreads = atoi(argv[2]);
     
-    if (argc>4) {
-        tmp = atoi(argv[4]);
+    if (argc>3) {
+        tmp = atoi(argv[3]);
         if ((tmp>0) && (tmp<=MAX_NUM_OF_THR)) {
             numOfThreads = tmp;
             if (spreadThreads && (tmp > numOfQueriedWHs))
@@ -103,36 +96,34 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (argc>5) {
-        tmp = atoi(argv[5]);
+    if (argc>4) {
+        tmp = atoi(argv[4]);
         if (tmp>0)
             numOfTrxs = tmp;
     }
 
-    if (argc>6) {
-        selectedTrxID = atoi(argv[6]);
+    if (argc>5) {
+        selectedTrxID = atoi(argv[5]);
     }
 
-    if (argc>7) {
-        iterations = atoi(argv[7]);
+    if (argc>6) {
+        iterations = atoi(argv[6]);
     }
 
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "Num of WHs     : %d\n" \
            "Queried WHs    : %d\n" \
            "Spread Threads : %s\n" \
            "Num of Threads : %d\n" \
            "Num of Trxs    : %d\n" \
            "Trx            : %s\n" \
            "Iterations     : %d\n", 
-           numOfWHs, numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
+           numOfQueriedWHs, (spreadThreads ? "Yes" : "No"), 
            numOfThreads, numOfTrxs, translate_trx_id(selectedTrxID), 
            iterations);
 
     /* 1. Instanciate the Shore Environment */
-    _g_shore_env = new ShoreTPCCEnv("shore.conf", numOfWHs, numOfQueriedWHs);
-
+    _g_shore_env = new ShoreTPCCEnv("shore.conf");
 
     // the initialization must be executed in a shore context
     db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _g_shore_env);

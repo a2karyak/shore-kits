@@ -33,37 +33,72 @@ ShoreTPCCEnv* _g_shore_env;
  *
  ********************************************************************/
 
-void tpcc_stats_t::print_trx_stats() 
+void tpcc_stats_t::print_trx_stats() const
 {   
     TRACE( TRACE_STATISTICS, "=====================================\n");
     TRACE( TRACE_STATISTICS, "TPC-C Database transaction statistics\n");
     TRACE( TRACE_STATISTICS, "NEW-ORDER\n");
-    CRITICAL_SECTION(no_cs,  _no_lock);
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _no_att);
     TRACE( TRACE_STATISTICS, "Committed: %d\n", _no_com);
     TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_no_att-_no_com));
     TRACE( TRACE_STATISTICS, "PAYMENT\n");
-    CRITICAL_SECTION(pay_cs, _pay_lock);
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _pay_att);
     TRACE( TRACE_STATISTICS, "Committed: %d\n", _pay_com);
     TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_pay_att-_pay_com));
     TRACE( TRACE_STATISTICS, "ORDER-STATUS\n");
-    CRITICAL_SECTION(ord_cs, _ord_lock);
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _ord_att);
     TRACE( TRACE_STATISTICS, "Committed: %d\n", _ord_com);
     TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_ord_att-_ord_com));
     TRACE( TRACE_STATISTICS, "DELIVERY\n");
-    CRITICAL_SECTION(del_cs, _del_lock);
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _del_att);
     TRACE( TRACE_STATISTICS, "Committed: %d\n", _del_com);
     TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_del_att-_del_com));
     TRACE( TRACE_STATISTICS, "STOCK-LEVEL\n");
-    CRITICAL_SECTION(sto_cs, _sto_lock);
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _sto_att);
     TRACE( TRACE_STATISTICS, "Committed: %d\n", _sto_com);
     TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_sto_att-_sto_com));
     TRACE( TRACE_STATISTICS, "=====================================\n");
 }
+
+
+
+/** ShoreTPCCEnv Helper functions */
+
+/******************************************************************** 
+ *
+ *  @fn:    set_sf/qf
+ *
+ *  @brief: Set the scaling and queried factors
+ *
+ ********************************************************************/
+
+void ShoreTPCCEnv::set_qf(const int aQF)
+{
+    if ((aQF >= 0) && (aQF <= _scaling_factor)) {
+        CRITICAL_SECTION( cs, _queried_mutex);
+        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
+        _queried_factor = aQF;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
+    }
+}
+
+
+void ShoreTPCCEnv::set_sf(const int aSF)
+{
+
+    if (aSF > 0) {
+        CRITICAL_SECTION( cs, _scaling_mutex);
+        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
+        _scaling_factor = aSF;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
+    }
+}
+
+
 
 
 
@@ -322,57 +357,20 @@ w_rc_t ShoreTPCCEnv::warmup()
 
 /******************************************************************** 
  *
- *  @fn:    set_sf/qf
- *
- *  @brief: Set the scaling and queried factors
- *
- ********************************************************************/
-
-void ShoreTPCCEnv::set_qf(const int aQF)
-{
-    if ((aQF >= 0) && (aQF <= _scaling_factor)) {
-        CRITICAL_SECTION( cs, _queried_mutex);
-        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
-        _queried_factor = aQF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
-    }
-}
-
-
-void ShoreTPCCEnv::set_sf(const int aSF)
-{
-    if (aSF > 0) {
-        CRITICAL_SECTION( cs, _scaling_mutex);
-        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
-        _scaling_factor = aSF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
-    }
-}
-
-
-
-/******************************************************************** 
- *
  *  @fn:    dump
  *
- *  @brief: Print infor for all the tables in the environment
+ *  @brief: Print information for all the tables in the environment
  *
  ********************************************************************/
 
 void ShoreTPCCEnv::dump()
 {
     table_man_t* ptable_man = NULL;
-    int cnt = 0;
     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
         table_man_iter != _table_man_list.end(); table_man_iter++)
         {
             ptable_man = *table_man_iter;
             ptable_man->print_table(this->_pssm);
-            cnt++;
         }
     
 }
@@ -394,6 +392,15 @@ void ShoreTPCCEnv::dump()
 
 int ShoreTPCCEnv::post_init() 
 {
+    int tmp_sf = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[6][0]].c_str());
+    TRACE( TRACE_DEBUG, "conf-WHs=(%d)\n", tmp_sf);
+    if (tmp_sf>0) {
+        set_sf(tmp_sf);
+        set_qf(tmp_sf);
+    }
+    assert (_queried_factor<=_scaling_factor);        
+
+
     TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
 
     W_COERCE(db()->begin_xct());
@@ -573,8 +580,8 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
                xct_id, e.err_num());
         
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_no_att();
-            _tmp_tpcc_stats.inc_no_att();
+            _total_tpcc_stats.inc_no_att();
+            _session_tpcc_stats.inc_no_att();
             _env_stats.inc_trx_att();
         }
 
@@ -591,8 +598,8 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) NewOrder completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_no_com();
-        _tmp_tpcc_stats.inc_no_com();
+        _total_tpcc_stats.inc_no_com();
+        _session_tpcc_stats.inc_no_com();
         _env_stats.inc_trx_com();
     }
 
@@ -611,8 +618,8 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_pay_att();
-            _tmp_tpcc_stats.inc_pay_att();
+            _total_tpcc_stats.inc_pay_att();
+            _session_tpcc_stats.inc_pay_att();
             _env_stats.inc_trx_att();
         }
 	
@@ -629,8 +636,8 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_pay_com();
-        _tmp_tpcc_stats.inc_pay_com();
+        _total_tpcc_stats.inc_pay_com();
+        _session_tpcc_stats.inc_pay_com();
         _env_stats.inc_trx_com();
     }
 
@@ -649,8 +656,8 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_ord_att();
-            _tmp_tpcc_stats.inc_ord_att();
+            _total_tpcc_stats.inc_ord_att();
+            _session_tpcc_stats.inc_ord_att();
             _env_stats.inc_trx_att();
         }
 	
@@ -667,8 +674,8 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) OrderStatus completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_ord_com();
-        _tmp_tpcc_stats.inc_ord_com();
+        _total_tpcc_stats.inc_ord_com();
+        _session_tpcc_stats.inc_ord_com();
         _env_stats.inc_trx_com();
     }
 
@@ -687,8 +694,8 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {        
-            _tpcc_stats.inc_del_att();
-            _tmp_tpcc_stats.inc_del_att();
+            _total_tpcc_stats.inc_del_att();
+            _session_tpcc_stats.inc_del_att();
             _env_stats.inc_trx_att();
         }
 
@@ -705,8 +712,8 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) Delivery completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {    
-        _tpcc_stats.inc_del_com();
-        _tmp_tpcc_stats.inc_del_com();
+        _total_tpcc_stats.inc_del_com();
+        _session_tpcc_stats.inc_del_com();
         _env_stats.inc_trx_com();
     }
 
@@ -725,8 +732,8 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_sto_att();
-            _tmp_tpcc_stats.inc_sto_att();
+            _total_tpcc_stats.inc_sto_att();
+            _session_tpcc_stats.inc_sto_att();
             _env_stats.inc_trx_att();
         }
 
@@ -743,8 +750,8 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) StockLevel completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_sto_com();
-        _tmp_tpcc_stats.inc_sto_com();
+        _total_tpcc_stats.inc_sto_com();
+        _session_tpcc_stats.inc_sto_com();
         _env_stats.inc_trx_com();
     }
 

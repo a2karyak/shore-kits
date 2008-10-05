@@ -24,6 +24,85 @@ bool volatile _g_canceled = false;
 /** shore_kit_shell_t interface */
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    print_throughput
+ *
+ *  @brief: Prints the throughput given measurement delay
+ *
+ ********************************************************************/
+
+void shore_kit_shell_t::print_throughput(const int iQueriedWHs, const int iSpread, 
+                                         const int iNumOfThreads, const int iUseSLI, 
+                                         const double delay) const
+{
+    assert (_env);
+    int trxs_att  = _env->get_session_tpcc_stats()->get_total_attempted();
+    int trxs_com  = _env->get_session_tpcc_stats()->get_total_committed();
+    int nords_com = _env->get_session_tpcc_stats()->get_no_com();
+
+    TRACE( TRACE_ALWAYS, "*******\n"            \
+           "WHs:      (%d)\n"                   \
+           "Spread:   (%s)\n"                   \
+           "SLI:      (%s)\n"                   \
+           "Threads:  (%d)\n"                   \
+           "Trxs Att: (%d)\n"                   \
+           "Trxs Com: (%d)\n"                   \
+           "NOrd Com: (%d)\n"       \
+           "Secs:     (%.2f)\n"     \
+           "TPS:      (%.2f)\n"                 \
+           "tpm-C:    (%.2f)\n",
+           iQueriedWHs, 
+           (iSpread ? "Yes" : "No"), (iUseSLI ? "Yes" : "No"), 
+           iNumOfThreads, trxs_att, trxs_com, nords_com, 
+           delay, 
+           trxs_com/delay,
+           60*nords_com/delay);
+}
+
+
+void shore_kit_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
+                                           const int iNumOfThreads, const int iDuration,
+                                           const int iSelectedTrx, const int iIterations,
+                                           const int iUseSLI) const
+{
+    // Print out configuration
+    TRACE( TRACE_ALWAYS, "\n\n" \
+           "Queried WHs    : %d\n" \
+           "Spread Threads : %s\n" \
+           "Num of Threads : %d\n" \
+           "Duration       : %d\n" \
+           "Trx            : %s\n" \
+           "Iterations     : %d\n" \
+           "Use SLI        : %s\n", 
+           iQueriedWHs, (iSpread ? "Yes" : "No"), 
+           iNumOfThreads, iDuration, translate_trx_id(iSelectedTrx), 
+           iIterations, (iUseSLI ? "Yes" : "No"));
+}
+
+
+void shore_kit_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread, 
+                                        const int iNumOfThreads, const int iNumOfTrxs,
+                                        const int iSelectedTrx, const int iIterations,
+                                        const int iUseSLI) const
+{
+    // Print out configuration
+    TRACE( TRACE_ALWAYS, "\n\n" \
+           "Queried WHs    : %d\n" \
+           "Spread Threads : %s\n" \
+           "Num of Threads : %d\n" \
+           "Num of Trxs    : %d\n" \
+           "Trx            : %s\n" \
+           "Iterations     : %d\n" \
+           "Use SLI        : %s\n", 
+           iQueriedWHs, (iSpread ? "Yes" : "No"), 
+           iNumOfThreads, iNumOfTrxs, translate_trx_id(iSelectedTrx),
+           iIterations, (iUseSLI ? "Yes" : "No"));
+}
+
+
+
 /******************************************************************** 
  *
  *  @fn:    print_usage
@@ -179,9 +258,9 @@ int shore_kit_shell_t::process_command(const char* command)
     }
 
     // LOAD cmd
-//     if (strcasecmp(command_tag, "LOAD") == 0) {
-//         return (process_cmd_LOAD(command, command_tag));
-//     }
+    if (strcasecmp(command_tag, "LOAD") == 0) {
+        return (process_cmd_LOAD(command, command_tag));
+    }
 
     // WARMUP cmd
     if (strcasecmp(command_tag, "WARMUP") == 0) {

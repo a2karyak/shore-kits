@@ -139,7 +139,7 @@ public:
     inline void rollback() 
     {        
         TRACE( TRACE_TRX_FLOW, "~~~ Should Rollback TRX=%d ~~~\n", _trx_id);
-        _g_shore_env->get_tpcc_stats()->inc_no_att();
+        _g_shore_env->get_session_tpcc_stats()->inc_no_att();
         _g_shore_env->get_env_stats()->inc_trx_att();
     }
 
@@ -149,7 +149,7 @@ public:
     inline void commit() 
     {
         TRACE( TRACE_TRX_FLOW, "~~~ Should Commit: TRX=%d ~~~~\n", _trx_id);
-        _g_shore_env->get_tpcc_stats()->inc_no_com();
+        _g_shore_env->get_session_tpcc_stats()->inc_no_com();
         _g_shore_env->get_env_stats()->inc_trx_com();
     }
 

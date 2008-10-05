@@ -25,16 +25,12 @@ using namespace shore;
 using namespace tpcc;
 
 
-// max field counts for (int) keys of tpc-c tables
-const int WH_IRP_KEY = 1;
-const int DI_IRP_KEY = 2;
-const int CU_IRP_KEY = 3;
-const int HI_IRP_KEY = 6;
-const int NO_IRP_KEY = 3;
-const int OR_IRP_KEY = 4;
-const int IT_IRP_KEY = 1;
-const int OL_IRP_KEY = 4;
-const int ST_IRP_KEY = 2;
+
+/******** Exported variables ********/
+
+class dora_tpcc_db;
+extern dora_tpcc_db* _g_dora;
+
 
 
 /******************************************************************** 
@@ -63,6 +59,7 @@ private:
 
     // the shore env
     ShoreTPCCEnv* _tpccenv;    
+
 
     // a vector of pointers to integer-range-partitioned tables
     irpTablePtrVector _irptp_vec;    
@@ -145,6 +142,7 @@ public:
     // dumps information
     void dump() const;
 
+
 private:
 
     // algorithm for deciding the distribution of tables 
@@ -154,6 +152,7 @@ private:
 
         
 }; // EOF: dora_tpcc_db
+
 
 
 EXIT_NAMESPACE(dora);

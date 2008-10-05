@@ -60,14 +60,14 @@ w_rc_t ShoreTPCCEnv::dora_new_order(const int xct_id,
     
     assert (0); // TODO - TEST
 
-    w_rc_t e = xct_dora_new_order(&anoin, xct_id, atrt);
+    w_rc_t e = _dora_new_order(&anoin, xct_id, atrt);
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
         
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_no_att();
-            _tmp_tpcc_stats.inc_no_att();
+            _total_tpcc_stats.inc_no_att();
+            _session_tpcc_stats.inc_no_att();
             _env_stats.inc_trx_att();
         }
 
@@ -84,8 +84,8 @@ w_rc_t ShoreTPCCEnv::dora_new_order(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) NewOrder completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_no_com();
-        _tmp_tpcc_stats.inc_no_com();
+        _total_tpcc_stats.inc_no_com();
+        _session_tpcc_stats.inc_no_com();
         _env_stats.inc_trx_com();
     }
 
@@ -97,38 +97,38 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
                                   payment_input_t& apin,
                                   trx_result_tuple_t& atrt)
 {
-    TRACE( TRACE_TRX_FLOW, "%d. PAYMENT...\n", xct_id);     
+    TRACE( TRACE_TRX_FLOW, "%d. DORA - PAYMENT...\n", xct_id);     
 
-    assert (0); // TODO - TEST
+//     assert (0); // TODO - TEST
     
-    w_rc_t e = xct_dora_payment(&apin, xct_id, atrt);
-    if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
-               xct_id, e.err_num());
+//     w_rc_t e = xct_dora_payment(&apin, xct_id, atrt);
+//     if (e.is_error()) {
+//         TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
+//                xct_id, e.err_num());
 
-        if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_pay_att();
-            _tmp_tpcc_stats.inc_pay_att();
-            _env_stats.inc_trx_att();
-        }
+//         if (_measure == MST_MEASURE) {
+//             _total_tpcc_stats.inc_pay_att();
+//             _session_tpcc_stats.inc_pay_att();
+//             _env_stats.inc_trx_att();
+//         }
 	
-	w_rc_t e2 = _pssm->abort_xct();
-	if(e2.is_error()) {
-	    TRACE( TRACE_ALWAYS, "Xct (%d) Payment abort failed [0x%x]\n", 
-		   xct_id, e2.err_num());
-	}
+// 	w_rc_t e2 = _pssm->abort_xct();
+// 	if(e2.is_error()) {
+// 	    TRACE( TRACE_ALWAYS, "Xct (%d) Payment abort failed [0x%x]\n", 
+// 		   xct_id, e2.err_num());
+// 	}
 
-        // (ip) could retry
-        return (e);
-    }
+//         // (ip) could retry
+//         return (e);
+//     }
 
-    TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment completed\n", xct_id);
+//     TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment completed\n", xct_id);
 
-    if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_pay_com();
-        _tmp_tpcc_stats.inc_pay_com();
-        _env_stats.inc_trx_com();
-    }
+//     if (_measure == MST_MEASURE) {
+//         _total_tpcc_stats.inc_pay_com();
+//         _session_tpcc_stats.inc_pay_com();
+//         _env_stats.inc_trx_com();
+//     }
 
     return (RCOK); 
 }
@@ -142,14 +142,14 @@ w_rc_t ShoreTPCCEnv::dora_order_status(const int xct_id,
 
     assert (0); // TODO - TEST
     
-    w_rc_t e = xct_dora_order_status(&aordstin, xct_id, atrt);
+    w_rc_t e = _dora_order_status(&aordstin, xct_id, atrt);
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_ord_att();
-            _tmp_tpcc_stats.inc_ord_att();
+            _total_tpcc_stats.inc_ord_att();
+            _session_tpcc_stats.inc_ord_att();
             _env_stats.inc_trx_att();
         }
 	
@@ -166,8 +166,8 @@ w_rc_t ShoreTPCCEnv::dora_order_status(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) OrderStatus completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_ord_com();
-        _tmp_tpcc_stats.inc_ord_com();
+        _total_tpcc_stats.inc_ord_com();
+        _session_tpcc_stats.inc_ord_com();
         _env_stats.inc_trx_com();
     }
 
@@ -183,14 +183,14 @@ w_rc_t ShoreTPCCEnv::dora_delivery(const int xct_id,
 
     assert (0); // TODO - TEST    
 
-    w_rc_t e = xct_dora_delivery(&adelin, xct_id, atrt);
+    w_rc_t e = _dora_delivery(&adelin, xct_id, atrt);
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {        
-            _tpcc_stats.inc_del_att();
-            _tmp_tpcc_stats.inc_del_att();
+            _total_tpcc_stats.inc_del_att();
+            _session_tpcc_stats.inc_del_att();
             _env_stats.inc_trx_att();
         }
 
@@ -207,8 +207,8 @@ w_rc_t ShoreTPCCEnv::dora_delivery(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) Delivery completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {    
-        _tpcc_stats.inc_del_com();
-        _tmp_tpcc_stats.inc_del_com();
+        _total_tpcc_stats.inc_del_com();
+        _session_tpcc_stats.inc_del_com();
         _env_stats.inc_trx_com();
     }
 
@@ -223,14 +223,14 @@ w_rc_t ShoreTPCCEnv::dora_stock_level(const int xct_id,
 
     assert (0); // TODO - TEST
     
-    w_rc_t e = xct_dora_stock_level(&astoin, xct_id, atrt);
+    w_rc_t e = _dora_stock_level(&astoin, xct_id, atrt);
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
 
         if (_measure == MST_MEASURE) {
-            _tpcc_stats.inc_sto_att();
-            _tmp_tpcc_stats.inc_sto_att();
+            _total_tpcc_stats.inc_sto_att();
+            _session_tpcc_stats.inc_sto_att();
             _env_stats.inc_trx_att();
         }
 
@@ -247,8 +247,8 @@ w_rc_t ShoreTPCCEnv::dora_stock_level(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Xct (%d) StockLevel completed\n", xct_id);
 
     if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_sto_com();
-        _tmp_tpcc_stats.inc_sto_com();
+        _total_tpcc_stats.inc_sto_com();
+        _session_tpcc_stats.inc_sto_com();
         _env_stats.inc_trx_com();
     }
 
@@ -330,9 +330,9 @@ w_rc_t ShoreTPCCEnv::dora_stock_level(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::xct_dora_new_order(new_order_input_t* pnoin, 
-                                        const int xct_id, 
-                                        trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::_dora_new_order(new_order_input_t* pnoin, 
+                                     const int xct_id, 
+                                     trx_result_tuple_t& trt)
 {
     assert (0); // TODO - TEST
 
@@ -625,9 +625,9 @@ w_rc_t ShoreTPCCEnv::xct_dora_new_order(new_order_input_t* pnoin,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::xct_dora_payment(payment_input_t* ppin, 
-                                      const int xct_id, 
-                                      trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::_dora_payment(payment_input_t* ppin, 
+                                   const int xct_id, 
+                                   trx_result_tuple_t& trt)
 {
     assert (0); // TODO - TEST
 
@@ -930,9 +930,9 @@ w_rc_t ShoreTPCCEnv::xct_dora_payment(payment_input_t* ppin,
  ********************************************************************/
 
 
-w_rc_t ShoreTPCCEnv::xct_dora_order_status(order_status_input_t* pstin, 
-                                           const int xct_id, 
-                                           trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::_dora_order_status(order_status_input_t* pstin, 
+                                        const int xct_id, 
+                                        trx_result_tuple_t& trt)
 {
     assert (0); // TODO - TEST
 
@@ -1150,9 +1150,9 @@ w_rc_t ShoreTPCCEnv::xct_dora_order_status(order_status_input_t* pstin,
  ********************************************************************/
 
 
-w_rc_t ShoreTPCCEnv::xct_dora_delivery(delivery_input_t* pdin, 
-                                       const int xct_id, 
-                                       trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::_dora_delivery(delivery_input_t* pdin, 
+                                    const int xct_id, 
+                                    trx_result_tuple_t& trt)
 {
     assert (0); // TODO - TEST
 
@@ -1373,9 +1373,9 @@ w_rc_t ShoreTPCCEnv::xct_dora_delivery(delivery_input_t* pdin,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::xct_dora_stock_level(stock_level_input_t* pslin, 
-                                          const int xct_id, 
-                                          trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::_dora_stock_level(stock_level_input_t* pslin, 
+                                       const int xct_id, 
+                                       trx_result_tuple_t& trt)
 {
     assert (0); // TODO - TEST
 

@@ -15,8 +15,6 @@ using namespace dora;
 using namespace tpcc;
 
 
-dora_tpcc_db* _g_dora;
-
 
 //class simple_shore_shell : public shell_t
 class simple_shore_shell : public shore_kit_shell_t
@@ -45,6 +43,11 @@ public:
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const int iUseSLI);    
+
+    // helper functions
+    virtual const char* translate_trx_id(const int trx_id) const { 
+        return ("Nada simple...\n");
+    }
     
 }; // EOF: class simple_shore_shell
 
@@ -173,8 +176,6 @@ int main(int argc, char* argv[])
     _g_dora = new dora_tpcc_db(_g_shore_env);
     assert (_g_dora);
     _g_dora->start();
-
-    // create the customer partition
     
 
     // start processing commands

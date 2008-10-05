@@ -24,6 +24,7 @@
 #include "util/shell.h"
 #include "tests/common/tester_shore_env.h"
 #include "sm/shore/shore_env.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h" // TODO (ip) It should not get the specific TPCC Shore Env
 
 
 extern "C" void alarm_handler(int sig);
@@ -115,11 +116,11 @@ class shore_kit_shell_t : public shell_t
 {
 protected:
 
-    ShoreEnv* _env;
+    ShoreTPCCEnv* _env;
 
 public:
 
-    shore_kit_shell_t(const char* prompt, ShoreEnv* env) 
+    shore_kit_shell_t(const char* prompt, ShoreTPCCEnv* env) 
         : shell_t(prompt), _env(env)
         {
             assert (_env);
@@ -154,6 +155,10 @@ public:
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
 
+    // pure virtual - translate to string the supported trxs
+    virtual const char* translate_trx_id(const int iSelectedTrx) const=0;
+
+
     // virtual implementation of the {WARMUP/TEST/MEASURE} 
     // WARMUP/LOAD are virtual
     // TEST/MEASURE are pure virtual
@@ -170,6 +175,22 @@ public:
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const int iUseSLI)=0;    
+
+protected:
+
+    void print_throughput(const int iQueriedWHs, const int iSpread, 
+                          const int iNumOfThreads, const int iUseSLI, 
+                          const double delay) const;
+    
+    void print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
+                            const int iNumOfThreads, const int iDuration,
+                            const int iSelectedTrx, const int iIterations,
+                            const int iUseSLI) const;
+
+    void print_TEST_info(const int iQueriedWHs, const int iSpread, 
+                         const int iNumOfThreads, const int iNumOfTrxs,
+                         const int iSelectedTrx, const int iIterations,
+                         const int iUseSLI) const;
 
 }; // EOF: shore_kit_shell_t
 

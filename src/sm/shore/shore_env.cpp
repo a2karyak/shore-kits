@@ -27,9 +27,8 @@ using namespace shore;
  *
  ********************************************************************/
 
-void env_stats_t::print_env_stats() 
+void env_stats_t::print_env_stats() const
 {
-    CRITICAL_SECTION(ntrx_cs, _ntrx_lock);
     TRACE( TRACE_STATISTICS, "===============================\n");
     TRACE( TRACE_STATISTICS, "Database transaction statistics\n");
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _ntrx_att);

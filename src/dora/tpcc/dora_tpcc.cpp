@@ -17,6 +17,25 @@ using namespace tpcc;
 
 
 
+/******** Exported variables ********/
+
+dora_tpcc_db* dora::_g_dora;
+
+
+
+// max field counts for (int) keys of tpc-c tables
+const int WH_IRP_KEY = 1;
+const int DI_IRP_KEY = 2;
+const int CU_IRP_KEY = 3;
+const int HI_IRP_KEY = 6;
+const int NO_IRP_KEY = 3;
+const int OR_IRP_KEY = 4;
+const int IT_IRP_KEY = 1;
+const int OL_IRP_KEY = 4;
+const int ST_IRP_KEY = 2;
+
+
+
 /****************************************************************** 
  *
  * @fn:    stop()

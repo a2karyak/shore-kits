@@ -216,14 +216,6 @@ w_rc_t action_t<DataType>::trx_rvp()
 
     TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment completed\n", _tid);
 
-    /*
-    if (_measure == MST_MEASURE) {
-        _tpcc_stats.inc_pay_com();
-        _tmp_tpcc_stats.inc_pay_com();
-        _env_stats.inc_trx_com();
-    }
-    */
-
 
     return (RCOK);
 }

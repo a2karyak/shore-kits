@@ -57,11 +57,14 @@ static const string SHORE_DEF_DEV_OPTIONS[][2] = {
     { "clobberdev", "1" },
     { "loadatadir", SHORE_TABLE_DATA_DIR },
     { "maxcpucount", "64" },
-    { "activecpucount", "64" }
+    { "activecpucount", "64" },
+    { "sf", "10" }
 };
 
-static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 6;
+static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 7;
 
+
+// TODO: (ip) Create a separate structure for SYSTEM options 
 
 
 /****************************************************************** 
@@ -88,7 +91,7 @@ struct env_stats_t
         print_env_stats();
     }
 
-    void print_env_stats();
+    void print_env_stats() const;
 
     int inc_trx_att() {
         CRITICAL_SECTION(g_att_cs, _ntrx_lock);
