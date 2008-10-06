@@ -72,6 +72,7 @@ public:
 template <class DataType>
 inline const int range_part_table_impl<DataType>::create_one_part()
 {
+    // 1. a new partition object
     rp_impl* aprpi = new rp_impl(_env, _table, _field_count, _pcnt, _next_prs_id);
     if (!aprpi) {
         TRACE( TRACE_ALWAYS, "Problem in creating partition (%d) for (%s)\n", 
@@ -81,15 +82,15 @@ inline const int range_part_table_impl<DataType>::create_one_part()
     }
     assert (aprpi);
 
-    // 1. add to vector
-    // 2. increase counter
-    // 3. update next cpu
+    // 2. add to vector
+    // 3. increase counter of partitions
     {
         CRITICAL_SECTION(conf_cs, _pcgf_lock);
         _ppvec.push_back(aprpi);
-        ++_pcnt;
+        ++_pcnt;        
     }
 
+    // 5. update next cpu
     {
         CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
         _next_prs_id = next_cpu(_next_prs_id);

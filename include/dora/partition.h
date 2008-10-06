@@ -220,7 +220,7 @@ action_t<DataType>* partition_t<DataType>::dequeue(WorkerControl volatile* pwc)
 template <class DataType>
 const int partition_t<DataType>::enqueue(part_action* pAction)
 {
-    assert (_part_policy!=PP_UNDEF);
+    //    assert (_part_policy!=PP_UNDEF);
     if (!verify(*pAction)) {
         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
         return (de_WRONG_PARTITION);

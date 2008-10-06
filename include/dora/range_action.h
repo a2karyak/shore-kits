@@ -41,20 +41,18 @@ protected:
 
 public:
 
-    range_action_impl() : _action_t() { }
+    range_action_impl() : action_t<DataType>() { }
 
     virtual ~range_action_impl() { }
     
     /** access methods */
 
-    void set_keys(const key& adown, const key& aup) {
-        CRITICAL_SECTION(action_cs, _action_lock);
-        assert (_keys.size()==0); // make sure using an empty action
-        _down = adown;
-        _key = aup;
-        _keys.push_back(&_down);
-        _keys.push_back(&_up);
+    void set_key_range() {
+        calc_keys();
+        _set_keys();
     }
+
+    virtual void calc_keys()=0; // pure virtual 
 
     key& down() { return (_down); }
     const key& down() const { return (_down); }
@@ -65,6 +63,15 @@ public:
     virtual w_rc_t trx_exec()=0;             // pure virtual
 
 private:
+
+    void _set_keys() {
+        CRITICAL_SECTION(action_cs, _action_lock);
+        assert (_keys.size()==0); // make sure using an empty action
+        //         _down = adown;
+        //         _key = aup;
+        _keys.push_back(&_down);
+        _keys.push_back(&_up);
+    }
 
     // copying not allowed
     range_action_impl(range_action_impl const &);

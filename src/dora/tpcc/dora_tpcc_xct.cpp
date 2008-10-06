@@ -44,6 +44,7 @@ w_rc_t midway_pay_rvp::run()
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
     p_ins_hist_pay_action->set_input(_tid, _xct, _ptpccenv, _pin);
+    assert (p_ins_hist_pay_action);
     frvp->set_pih(p_ins_hist_pay_action);
     p_ins_hist_pay_action->_awh=_awh;
     p_ins_hist_pay_action->_adist=_adist;
@@ -60,6 +61,8 @@ w_rc_t midway_pay_rvp::run()
 
 void midway_pay_rvp::cleanup() 
 {
+    TRACE( TRACE_DEBUG, "Cleaning...\n");
+
     // clean house
     _g_dora->give_action(_puw);
     _g_dora->give_action(_pud);
@@ -518,10 +521,12 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     // 1. Initiate transaction
     W_DO(_pssm->begin_xct(atid));
     xct_t* pxct = ss_m::tid_to_xct(atid);    
+    assert (pxct);
 
     // 2. Setup the next RVP
     midway_pay_rvp* rvp = new midway_pay_rvp(this, apin, 3); // PH1 consists of 3 packets
-
+    assert (rvp);
+    
     // 3. generate and enqueue all actions
     //
     // For each generated action. Decide about partition and enqueue it.
@@ -535,6 +540,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     // @note: Enqueuing in order of trx size 
 
     upd_cust_pay_action_impl* p_upd_cust_pay_action = _g_dora->get_upd_cust_pay_action();
+    assert (p_upd_cust_pay_action);
     p_upd_cust_pay_action->set_input(atid, pxct, this, apin);
     rvp->set_puc(p_upd_cust_pay_action);
     if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, apin._home_wh_id)) { // SF CUSTOMER partitions
@@ -543,6 +549,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     }
 
     upd_dist_pay_action_impl* p_upd_dist_pay_action = _g_dora->get_upd_dist_pay_action();
+    assert (p_upd_dist_pay_action);
     p_upd_dist_pay_action->set_input(atid, pxct, this, apin);
     rvp->set_pud(p_upd_dist_pay_action);
     p_upd_dist_pay_action->_m_rvp=rvp;
@@ -552,6 +559,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     }
 
     upd_wh_pay_action_impl*   p_upd_wh_pay_action   = _g_dora->get_upd_wh_pay_action();
+    assert (p_upd_wh_pay_action);
     p_upd_wh_pay_action->set_input(atid, pxct, this, apin);
     rvp->set_puw(p_upd_wh_pay_action);
     p_upd_wh_pay_action->_m_rvp=rvp;

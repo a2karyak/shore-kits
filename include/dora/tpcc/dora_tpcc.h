@@ -138,17 +138,20 @@ public:
     virtual ~pay_action_impl() { }
 
     virtual w_rc_t trx_exec()=0; // pure virtual
+    virtual void calc_keys()=0; // pure virtual 
 
-    void set_input(tid_t atid,
-                   xct_t* apxct,
-                   ShoreTPCCEnv* penv, 
-                   const payment_input_t& pin) 
+    virtual void set_input(tid_t atid,
+                           xct_t* apxct,
+                           ShoreTPCCEnv* penv, 
+                           const payment_input_t& pin) 
     {
         assert (apxct);
         assert (penv);
         set(atid,apxct);
         _ptpccenv = penv;
         _pin = pin;
+
+        set_key_range(); // set key range for this action
     }
     
 }; // EOF: pay_action_impl
@@ -161,6 +164,10 @@ public:
     ~upd_wh_pay_action_impl() { }
     w_rc_t trx_exec();    
     midway_pay_rvp* _m_rvp;
+    void calc_keys() {
+        _down.push_back(_pin._home_wh_id);
+        _up.push_back(_pin._home_wh_id);
+    }
 }; // EOF: upd_wh_pay_action_impl
 
 // UPD_DIST_PAY_ACTION
@@ -171,6 +178,12 @@ public:
     ~upd_dist_pay_action_impl() { }
     w_rc_t trx_exec();    
     midway_pay_rvp* _m_rvp;
+    void calc_keys() {
+        _down.push_back(_pin._home_wh_id);
+        _down.push_back(_pin._home_d_id);
+        _up.push_back(_pin._home_wh_id);
+        _up.push_back(_pin._home_d_id);
+    }
 }; // EOF: upd_wh_pay_action_impl
 
 // UPD_CUST_PAY_ACTION
@@ -180,6 +193,14 @@ public:
     upd_cust_pay_action_impl() : pay_action_impl() { }
     ~upd_cust_pay_action_impl() { }
     w_rc_t trx_exec();   
+    void calc_keys() {
+        _down.push_back(_pin._home_wh_id);
+        _down.push_back(_pin._home_d_id);
+        _down.push_back(_pin._c_id);
+        _up.push_back(_pin._home_wh_id);
+        _up.push_back(_pin._home_d_id);
+        _up.push_back(_pin._c_id);
+    }
 }; // EOF: upd_cust_pay_action_impl
 
 // INS_HIST_PAY_ACTION
@@ -191,6 +212,10 @@ public:
     w_rc_t trx_exec();    
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple _adist;    
+    void calc_keys() {
+        _down.push_back(_pin._home_wh_id);
+        _up.push_back(_pin._home_wh_id);
+    }
 }; // EOF: ins_hist_pay_action_impl
 
 
@@ -326,51 +351,59 @@ public:
     // @note: On but borrowing first it makes sure that it is empty
     //
     upd_wh_pay_action_impl* get_upd_wh_pay_action() {
-        assert (_upd_wh_pay_cache);
-        upd_wh_pay_action_impl* paction = _upd_wh_pay_cache->borrow();
-        assert (paction);
-        assert (paction->keys()->size()==0);
+//         assert (_upd_wh_pay_cache);
+//         upd_wh_pay_action_impl* paction = _upd_wh_pay_cache->borrow();
+//         assert (paction);
+//         assert (paction->keys()->size()==0);
+        upd_wh_pay_action_impl* paction = new upd_wh_pay_action_impl();
         return (paction);
     }
     void give_action(upd_wh_pay_action_impl* pirpa) {
         assert (_upd_wh_pay_cache);
-        _upd_wh_pay_cache->giveback(pirpa);
+//         _upd_wh_pay_cache->giveback(pirpa);
+        if (pirpa) delete pirpa;
     }
 
     upd_dist_pay_action_impl* get_upd_dist_pay_action() {
         assert (_upd_dist_pay_cache);
-        upd_dist_pay_action_impl* paction = _upd_dist_pay_cache->borrow();
-        assert (paction);
-        assert (paction->keys()->size()==0);
+//         upd_dist_pay_action_impl* paction = _upd_dist_pay_cache->borrow();
+//         assert (paction);
+//         assert (paction->keys()->size()==0);
+        upd_dist_pay_action_impl* paction = new upd_dist_pay_action_impl();
         return (paction);
     }
     void give_action(upd_dist_pay_action_impl* pirpa) {
         assert (_upd_dist_pay_cache);
-        _upd_dist_pay_cache->giveback(pirpa);
+//         _upd_dist_pay_cache->giveback(pirpa);
+        if (pirpa) delete pirpa;
     }
 
     upd_cust_pay_action_impl* get_upd_cust_pay_action() {
-        assert (_upd_cust_pay_cache);
-        upd_cust_pay_action_impl* paction = _upd_cust_pay_cache->borrow();
-        assert (paction);
-        assert (paction->keys()->size()==0);
+//         assert (_upd_cust_pay_cache);
+//         upd_cust_pay_action_impl* paction = _upd_cust_pay_cache->borrow();
+//         assert (paction);
+//         assert (paction->keys()->size()==0);
+        upd_cust_pay_action_impl* paction = new upd_cust_pay_action_impl();
         return (paction);
     }
     void give_action(upd_cust_pay_action_impl* pirpa) {
-        assert (_upd_cust_pay_cache);
-        _upd_cust_pay_cache->giveback(pirpa);
+//         assert (_upd_cust_pay_cache);
+//         _upd_cust_pay_cache->giveback(pirpa);
+        if (pirpa) delete pirpa;
     }
 
     ins_hist_pay_action_impl* get_ins_hist_pay_action() {
-        assert (_ins_hist_pay_cache);
-        ins_hist_pay_action_impl* paction = _ins_hist_pay_cache->borrow();
-        assert (paction);
-        assert (paction->keys()->size()==0);
+//         assert (_ins_hist_pay_cache);
+//         ins_hist_pay_action_impl* paction = _ins_hist_pay_cache->borrow();
+//         assert (paction);
+//         assert (paction->keys()->size()==0);
+        ins_hist_pay_action_impl* paction = new ins_hist_pay_action_impl();
         return (paction);
     }
     void give_action(ins_hist_pay_action_impl* pirpa) {
         assert (_ins_hist_pay_cache);
-        _ins_hist_pay_cache->giveback(pirpa);
+//         _ins_hist_pay_cache->giveback(pirpa);
+        if (pirpa) delete pirpa;
     }
 
 

@@ -61,6 +61,15 @@ const int dora_tpcc_db::start()
     processorid_t icpu(0);
     int sf = _tpccenv->get_sf();
 
+    // used for setting up the key ranges
+    ikey partDown;
+    ikey partUp;
+
+    // we are doing the partitioning based on the number of warehouses
+    int aboundary = 0;
+    partDown.push_back(aboundary);
+    partUp.push_back(sf);
+
     // WAREHOUSE
     _wh_irpt = new irp_table_impl(_tpccenv, _tpccenv->warehouse(), icpu, range, WH_IRP_KEY);
     if (!_wh_irpt) {
@@ -70,6 +79,7 @@ const int dora_tpcc_db::start()
     }
     assert (_wh_irpt);    
     _wh_irpt->create_one_part();    
+    _wh_irpt->get_part(0)->resize(partDown,partUp);
     _irptp_vec.push_back(_wh_irpt);
     icpu = _next_cpu(icpu, _wh_irpt);
 
@@ -82,8 +92,22 @@ const int dora_tpcc_db::start()
     }
     assert (_di_irpt);
     _di_irpt->create_one_part();
+    _di_irpt->get_part(0)->resize(partDown,partUp);
     _irptp_vec.push_back(_di_irpt);
-    icpu = _next_cpu(icpu, _di_irpt);
+    icpu = _next_cpu(icpu, _di_irpt);    
+
+    // HISTORY
+    _hi_irpt = new irp_table_impl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
+    if (!_hi_irpt) {
+        TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
+        assert (0); // should not happen
+        return (de_GEN_TABLE);
+    }
+    assert (_hi_irpt);
+    _hi_irpt->create_one_part();
+    _hi_irpt->get_part(0)->resize(partDown,partUp);
+    _irptp_vec.push_back(_hi_irpt);
+    icpu = _next_cpu(icpu, _hi_irpt);    
 
 
     // CUSTOMER
@@ -97,23 +121,16 @@ const int dora_tpcc_db::start()
     // creates SF partitions for customers
     for (int i=0; i<sf; i++) {
         _cu_irpt->create_one_part();
+        partDown.reset();
+        partDown.push_back(i);
+        partUp.reset();
+        aboundary=i+1;
+        partUp.push_back(aboundary);
+        _cu_irpt->get_part(i)->resize(partDown,partUp);
     }
     _irptp_vec.push_back(_cu_irpt);
     icpu = _next_cpu(icpu, _cu_irpt, sf);
-    
 
-
-    // HISTORY
-    _hi_irpt = new irp_table_impl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
-    if (!_hi_irpt) {
-        TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
-        assert (0); // should not happen
-        return (de_GEN_TABLE);
-    }
-    assert (_hi_irpt);
-    _hi_irpt->create_one_part();
-    _irptp_vec.push_back(_hi_irpt);
-    icpu = _next_cpu(icpu, _hi_irpt);    
 
     /*
     // NEW-ORDER

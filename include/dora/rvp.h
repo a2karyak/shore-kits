@@ -46,7 +46,9 @@ public:
 
     rvp_t() : _xct(NULL), _decision(AD_UNDECIDED) { }
 
-    virtual ~rvp_t() { }
+    virtual ~rvp_t() { 
+        cout << "RVP (" << _tid << ") bye..\n";
+    }
     
     /** access methods */
 

@@ -136,7 +136,7 @@ public:
 
     inline void set(tid_t atid, xct_t* axct) {
         assert (axct);
-        assert (_tid == ss_m::xct_to_tid(axct));
+        assert (atid == ss_m::xct_to_tid(axct));
         _tid = atid;
         _xct = axct;
     }

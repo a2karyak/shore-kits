@@ -131,8 +131,7 @@ std::ostream& operator<< (std::ostream& os,
 // less
 template<class DataType>
 bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) const {
-    // the two keys need to have equal number of fields
-    assert (_key_v.size()==rhs._key_v.size());
+    assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields until one inequality is found
         if (_key_v[i]==rhs._key_v[i])
@@ -145,8 +144,7 @@ bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) cons
 // equal
 template<class DataType>
 bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) const {
-    // the two keys need to have equal number of fields
-    assert (_key_v.size()==rhs._key_v.size());
+    assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields until one inequality is found
         if (_key_v[i]==rhs._key_v[i])
@@ -159,8 +157,7 @@ bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) con
 // less or equal
 template<class DataType>
 bool key_wrapper_t<DataType>::operator<=(const key_wrapper_t<DataType>& rhs) const {
-    // the two keys need to have equal number of fields
-    assert (_key_v.size()==rhs._key_v.size());
+    assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields
         if (_key_v[i]==rhs._key_v[i])
