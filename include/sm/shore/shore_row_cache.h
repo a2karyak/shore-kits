@@ -35,7 +35,10 @@ const int DEFAULT_INIT_ROW_COUNT = 50;
 template <class TableDesc>
 class row_cache_t : protected atomic_stack
 {
+public:
+    
     typedef row_impl<TableDesc> table_tuple;
+
 private:
 
     TableDesc* _ptable; 

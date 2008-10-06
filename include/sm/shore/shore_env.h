@@ -165,8 +165,8 @@ protected:
     env_stats_t         _env_stats; 
 
     // Measurement state
-    MeasurementState    _measure;
-    tatas_lock          _measure_lock;
+    MeasurementState volatile _measure;
+    tatas_lock                _measure_lock;
 
     // Helper functions
     void usage(option_group_t& options);
@@ -244,16 +244,13 @@ public:
 
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
-    inline void set_measure(MeasurementState aMeasurementState) {
+    inline void set_measure(const MeasurementState aMeasurementState) {
         assert (aMeasurementState != MST_UNDEF);
         CRITICAL_SECTION(measure_cs, _measure_lock);
         _measure = aMeasurementState;
     }
 
-    inline MeasurementState get_measure() {
-        CRITICAL_SECTION(measure_cs, _measure_lock);
-        return (_measure);
-    }
+    inline const MeasurementState get_measure() { return (_measure); }
 
 
     inline pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }
