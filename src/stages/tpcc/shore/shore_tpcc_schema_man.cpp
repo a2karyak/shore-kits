@@ -32,8 +32,7 @@ w_rc_t warehouse_man_impl::wh_index_probe(ss_m* db,
                                           warehouse_tuple* ptuple,
                                           const int w_id)
 {
-    assert (ptuple);
-    
+    assert (ptuple);    
     ptuple->set_value(0, w_id);
     return (index_probe_by_name(db, "W_INDEX", ptuple));
 }
@@ -42,10 +41,18 @@ w_rc_t warehouse_man_impl::wh_index_probe_forupdate(ss_m* db,
                                                     warehouse_tuple* ptuple,
                                                     const int w_id)
 {
-    assert (ptuple);
-    
+    assert (ptuple);    
     ptuple->set_value(0, w_id);
     return (index_probe_forupdate_by_name(db, "W_INDEX", ptuple));
+}
+
+w_rc_t warehouse_man_impl::wh_index_probe_nl(ss_m* db,
+                                             warehouse_tuple* ptuple,
+                                             const int w_id)
+{
+    assert (ptuple);    
+    ptuple->set_value(0, w_id);
+    return (index_probe_nl_by_name(db, "W_INDEX_NL", ptuple));
 }
 
 w_rc_t warehouse_man_impl::wh_update_ytd(ss_m* db,
@@ -79,7 +86,6 @@ w_rc_t district_man_impl::dist_index_probe(ss_m* db,
                                            const int w_id)
 {
     assert (ptuple);
-
     ptuple->set_value(0, d_id);
     ptuple->set_value(1, w_id);
     return (index_probe_by_name(db, "D_INDEX", ptuple));
@@ -91,10 +97,20 @@ w_rc_t district_man_impl::dist_index_probe_forupdate(ss_m* db,
                                                      const int w_id)
 {
     assert (ptuple);
-
     ptuple->set_value(0, d_id);
     ptuple->set_value(1, w_id);
     return (index_probe_forupdate_by_name(db, "D_INDEX", ptuple));
+}
+
+w_rc_t district_man_impl::dist_index_probe_nl(ss_m* db,
+                                              district_tuple* ptuple,
+                                              const int d_id,
+                                              const int w_id)
+{
+    assert (ptuple);
+    ptuple->set_value(0, d_id);
+    ptuple->set_value(1, w_id);
+    return (index_probe_nl_by_name(db, "D_INDEX_NL", ptuple));
 }
 
 w_rc_t district_man_impl::dist_update_ytd(ss_m* db,
@@ -198,7 +214,6 @@ w_rc_t customer_man_impl::cust_index_probe_by_name(ss_m* db,
                                                    const int d_id)
 {
     assert (idx_name);
-
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
@@ -212,11 +227,23 @@ w_rc_t customer_man_impl::cust_index_probe_forupdate(ss_m * db,
                                                      const int d_id)
 {
     assert (ptuple);
-
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
     return (index_probe_forupdate_by_name(db, "C_INDEX", ptuple));
+}
+
+w_rc_t customer_man_impl::cust_index_probe_nl(ss_m * db,
+                                              customer_tuple* ptuple,
+                                              const int c_id,
+                                              const int w_id,
+                                              const int d_id)
+{
+    assert (ptuple);
+    ptuple->set_value(0, c_id);
+    ptuple->set_value(1, d_id);
+    ptuple->set_value(2, w_id);
+    return (index_probe_forupdate_by_name(db, "C_INDEX_NL", ptuple));
 }
 
 w_rc_t customer_man_impl::cust_update_tuple(ss_m* db,
@@ -226,7 +253,6 @@ w_rc_t customer_man_impl::cust_update_tuple(ss_m* db,
                                             const char* adata2)
 {
     assert (ptuple);
-
     ptuple->set_value(16, acustomer.C_BALANCE);
     ptuple->set_value(17, acustomer.C_YTD_PAYMENT);
     ptuple->set_value(19, acustomer.C_PAYMENT_CNT);
@@ -247,7 +273,6 @@ w_rc_t customer_man_impl::cust_update_discount_balance(ss_m* db,
 {
     assert (ptuple);
     assert (discount>=0);
-
     ptuple->set_value(15, discount);
     ptuple->set_value(16, balance);
     return (update_tuple(db, ptuple));

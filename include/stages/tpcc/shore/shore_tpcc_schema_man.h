@@ -34,12 +34,9 @@ public:
 
     warehouse_man_impl(warehouse_t* aWarehouseDesc)
         : table_man_impl<warehouse_t>(aWarehouseDesc)
-    {
-    }
+    { }
 
-    ~warehouse_man_impl()
-    {
-    }
+    ~warehouse_man_impl() { }
 
     /* --- access specific tuples  --- */
     w_rc_t wh_index_probe(ss_m* db, 
@@ -49,6 +46,10 @@ public:
     w_rc_t wh_index_probe_forupdate(ss_m* db, 
                                     warehouse_tuple* ptuple, 
                                     const int w_id);
+    
+    w_rc_t wh_index_probe_nl(ss_m* db, 
+                             warehouse_tuple* ptuple, 
+                             const int w_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t wh_update_ytd(ss_m* db,
@@ -71,12 +72,9 @@ public:
 
     district_man_impl(district_t* aDistrictDesc)
         : table_man_impl<district_t>(aDistrictDesc)
-    {
-    }
+    { }
 
-    ~district_man_impl()
-    {
-    }
+    ~district_man_impl() { }
 
     /* --- access specific tuples --- */
     w_rc_t dist_index_probe(ss_m* db,
@@ -89,6 +87,10 @@ public:
                                       const int d_id,
                                       const int w_id);
 
+    w_rc_t dist_index_probe_nl(ss_m* db,
+                               district_tuple* ptuple,
+                               const int d_id,
+                               const int w_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t dist_update_ytd(ss_m* db,
@@ -117,12 +119,9 @@ public:
 
     customer_man_impl(customer_t* aCustomerDesc)
         : table_man_impl<customer_t>(aCustomerDesc)
-    {
-    }
+    { }
 
-    ~customer_man_impl()
-    {
-    }
+    ~customer_man_impl() { }
 
     /* --- access specific tuples --- */
     w_rc_t cust_get_iter_by_index(ss_m* db,
@@ -153,6 +152,12 @@ public:
                                       const int w_id,
                                       const int d_id);
 
+    w_rc_t cust_index_probe_nl(ss_m* db,
+                               customer_tuple* ptuple,
+                               const int c_id,
+                               const int w_id,
+                               const int d_id);
+
     w_rc_t cust_update_tuple(ss_m* db,
                              customer_tuple* ptuple,
                              const tpcc_customer_tuple& acustomer,
@@ -181,12 +186,9 @@ public:
 
     history_man_impl(history_t* aHistoryDesc)
         : table_man_impl<history_t>(aHistoryDesc)
-    {
-    }
+    { }
 
-    ~history_man_impl()
-    {
-    }
+    ~history_man_impl() { }
 
     /** deprecated */
 

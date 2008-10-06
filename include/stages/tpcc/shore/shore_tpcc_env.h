@@ -265,9 +265,6 @@ private:
     w_rc_t _dora_new_order(new_order_input_t* no_input, 
                            const int xct_id, 
                            trx_result_tuple_t& trt);
-    w_rc_t _dora_payment(payment_input_t* pay_input, 
-                         const int xct_id, 
-                         trx_result_tuple_t& trt);
     w_rc_t _dora_order_status(order_status_input_t* status_input, 
                               const int xct_id, 
                               trx_result_tuple_t& trt);
