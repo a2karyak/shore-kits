@@ -68,14 +68,13 @@ private:
 
 public:
 
-    midway_pay_rvp(trx_result_tuple_t* presult,
+    midway_pay_rvp(tid_t atid, xct_t* axct,
+                   trx_result_tuple_t* presult,
                    ShoreTPCCEnv* penv, 
-                   payment_input_t ppin, 
-                   const int intra_trx_cnt) 
-        : rvp_t(presult), _ptpccenv(penv), _pin(ppin)
-    { 
-        _countdown.reset(intra_trx_cnt);
-    }
+                   payment_input_t ppin) 
+        : rvp_t(atid, axct, presult, 3),  // consists of three packets
+          _ptpccenv(penv), _pin(ppin)
+    { }
 
     ~midway_pay_rvp() { }
     
@@ -87,7 +86,6 @@ public:
     void set_puw(upd_wh_pay_action_impl*   puw) { _puw = puw; }
     void set_pud(upd_dist_pay_action_impl* pud) { _pud = pud; }
     void set_puc(upd_cust_pay_action_impl* puc) { _puc = puc; }
-
 
     // the interface
     w_rc_t run();
@@ -109,11 +107,13 @@ private:
 
 public:
 
-    final_pay_rvp(trx_result_tuple_t* presult,
+    final_pay_rvp(tid_t atid, xct_t* axct,
+                  trx_result_tuple_t* presult,
                   ShoreTPCCEnv* penv) 
-        : terminal_rvp_t(), _ptpccenv(penv) 
+        : terminal_rvp_t(atid, axct, presult, 1), 
+          _ptpccenv(penv) 
     { }
-
+    
     ~final_pay_rvp() { }
 
     // access methods for the list of actions
@@ -156,7 +156,7 @@ public:
         assert (apxct);
         assert (prvp);
         assert (penv);
-        set(atid,apxct, prvp);
+        set(atid, apxct, prvp);
         _ptpccenv = penv;
         _pin = pin;
 
@@ -202,6 +202,7 @@ public:
     upd_cust_pay_action_impl() : pay_action_impl() { }
     ~upd_cust_pay_action_impl() { }
     w_rc_t trx_exec();   
+    midway_pay_rvp* _m_rvp;
     void calc_keys() {
         _down.push_back(_pin._home_wh_id);
         _down.push_back(_pin._home_d_id);

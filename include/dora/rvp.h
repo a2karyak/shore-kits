@@ -49,9 +49,15 @@ protected:
 
 public:
 
-    rvp_t(trx_result_tuple_t* presult = NULL) 
-        : _xct(NULL), _decision(AD_UNDECIDED), _result(presult) 
-    { }
+    rvp_t(tid_t atid, xct_t* axct,
+          trx_result_tuple_t* presult, 
+          const int intra_trx_cnt) 
+        : _tid(atid), _xct(axct), _result(presult), _countdown(intra_trx_cnt),
+          _decision(AD_UNDECIDED)
+    { 
+        assert (_xct);
+        assert (intra_trx_cnt>0);
+    }
 
     virtual ~rvp_t() { }
     
@@ -85,11 +91,11 @@ public:
 
     // for the cache
     void reset() {
+        assert (0); // should not be called if not from cache 
         TRACE( TRACE_DEBUG, "Reseting (%d)\n", _tid);
         _xct = NULL;
         _decision = AD_UNDECIDED;
         _result = NULL;
-        assert (0);
     }    
 
 private:
@@ -115,7 +121,12 @@ class terminal_rvp_t : public rvp_t
 {
 public:
 
-    terminal_rvp_t() : rvp_t() { }
+    terminal_rvp_t(tid_t atid, xct_t* axct, 
+                   trx_result_tuple_t* presult, 
+                   const int intra_trx_cnt) 
+        : rvp_t(atid, axct, presult, intra_trx_cnt) 
+    { }
+
     virtual ~terminal_rvp_t() { }
     
     virtual void cleanup()=0; // does any clean up

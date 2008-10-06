@@ -115,7 +115,7 @@ inline const bool range_partition_impl<DataType>::_is_between(const part_key& co
 {
     assert (_down<=_up);
     assert (contDown<=contUp);
-    cout << "Checking (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
+    //    cout << "Checking (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
 
     // !!! WARNING !!!
     // The partition boundaries should always be on the left side 
@@ -149,7 +149,7 @@ inline const bool range_partition_impl<DataType>::resize(const part_key& downLim
     _rp_state = RPS_SET;
 
     TRACE( TRACE_DEBUG, "RangePartition resized\n");
-    cout << "Down: " << _down << " - Up: " << _up << "\n";
+    //cout << "Down: " << _down << " - Up: " << _up << "\n";
     return (true);
 }
 
