@@ -119,7 +119,7 @@ inline const bool range_partition_impl<DataType>::_is_between(const part_key& co
 
     // !!! WARNING !!!
     // The partition boundaries should always be on the left side
-    return ((_down<=contDown) && !(_up<contUp));
+    return ((_down<contDown) && !(_up<=contUp));
 }
 
 

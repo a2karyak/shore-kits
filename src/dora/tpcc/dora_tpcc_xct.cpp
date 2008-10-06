@@ -41,9 +41,13 @@ w_rc_t midway_pay_rvp::run()
     // 1. Setup the next RVP
     assert (_result);
     final_pay_rvp* frvp = new final_pay_rvp(_result, _ptpccenv);
+    assert (frvp);
 
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
+    TRACE( TRACE_DEBUG, "(%d)\n", _tid);
+    assert (_xct);
+
     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     assert (p_ins_hist_pay_action);
     frvp->set_pih(p_ins_hist_pay_action);

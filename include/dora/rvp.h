@@ -85,9 +85,11 @@ public:
 
     // for the cache
     void reset() {
+        TRACE( TRACE_DEBUG, "Reseting (%d)\n", _tid);
         _xct = NULL;
         _decision = AD_UNDECIDED;
         _result = NULL;
+        assert (0);
     }    
 
 private:
