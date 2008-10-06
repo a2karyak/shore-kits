@@ -31,6 +31,170 @@ using namespace tpcc;
 class dora_tpcc_db;
 extern dora_tpcc_db* _g_dora;
 
+/******** EOF Exported variables ********/
+
+const int DF_ACTION_CACHE_SZ = 100;
+
+
+
+class upd_wh_pay_action_impl;
+class upd_dist_pay_action_impl;
+class upd_cust_pay_action_impl;
+class ins_hist_pay_action_impl;
+
+
+/** PAYMENT RVP **/
+
+// Phase 1 of Payment
+// Submits the history packet
+class midway_pay_rvp : public rvp_t
+{
+private:
+
+    // the data needed for communication
+    tpcc_warehouse_tuple _awh;
+    tpcc_district_tuple  _adist;
+
+    // the list of action to be remembered to be given back
+    upd_wh_pay_action_impl*   _puw;
+    upd_dist_pay_action_impl* _pud;
+    upd_cust_pay_action_impl* _puc;
+
+    // pointer to the payment input
+    payment_input_t           _pin;
+
+    // pointer to the shore env
+    ShoreTPCCEnv* _ptpccenv;
+
+public:
+
+    midway_pay_rvp(ShoreTPCCEnv* penv, payment_input_t ppin, const int intra_trx_cnt) 
+        : rvp_t(), _ptpccenv(penv), _pin(ppin)
+    { 
+        _countdown.reset(intra_trx_cnt);
+    }
+
+    ~midway_pay_rvp() { }
+    
+    // access methods for the communicated data
+    tpcc_warehouse_tuple* wh() { return (&_awh); }
+    tpcc_district_tuple* dist() { return (&_adist); }    
+
+    // access methods for the list of actions
+    void set_puw(upd_wh_pay_action_impl*   puw) { _puw = puw; }
+    void set_pud(upd_dist_pay_action_impl* pud) { _pud = pud; }
+    void set_puc(upd_cust_pay_action_impl* puc) { _puc = puc; }
+
+
+    // the interface
+    w_rc_t run();
+    void  cleanup();
+
+}; // EOF: midway_pay_rvp
+
+
+// Terminal Phase of Payment
+class final_pay_rvp : public terminal_rvp_t
+{
+private:
+
+    // the list of actions to be remembered to be given back
+    ins_hist_pay_action_impl* _pih;
+
+    // pointer to the shore env
+    ShoreTPCCEnv* _ptpccenv;
+
+public:
+
+    final_pay_rvp(ShoreTPCCEnv* penv) : terminal_rvp_t(), _ptpccenv(penv) { }
+    ~final_pay_rvp() { }
+
+    // access methods for the list of actions
+    void set_pih(ins_hist_pay_action_impl* pih) { _pih = pih; }
+
+    // required 
+    void upd_committed_stats(); // update the committed trx stats
+    void upd_aborted_stats(); // update the committed trx stats
+
+    // the interface
+    w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
+    void cleanup();
+
+}; // EOF: final_pay_rvp
+
+
+/** PAYMENT ACTIONS **/
+
+// ABSTRACT PAYMENT ACTION
+class pay_action_impl : public range_action_impl<int>
+{
+protected:
+    ShoreTPCCEnv*   _ptpccenv;
+    payment_input_t _pin;
+
+public:
+    
+    pay_action_impl() : range_action_impl(), _ptpccenv(NULL) { }
+    virtual ~pay_action_impl() { }
+
+    virtual w_rc_t trx_exec()=0; // pure virtual
+
+    void set_input(tid_t atid,
+                   xct_t* apxct,
+                   ShoreTPCCEnv* penv, 
+                   const payment_input_t& pin) 
+    {
+        assert (apxct);
+        assert (penv);
+        set(atid,apxct);
+        _ptpccenv = penv;
+        _pin = pin;
+    }
+    
+}; // EOF: pay_action_impl
+
+// UPD_WH_PAY_ACTION
+class upd_wh_pay_action_impl : public pay_action_impl
+{
+public:    
+    upd_wh_pay_action_impl() : pay_action_impl() { }
+    ~upd_wh_pay_action_impl() { }
+    w_rc_t trx_exec();    
+    midway_pay_rvp* _m_rvp;
+}; // EOF: upd_wh_pay_action_impl
+
+// UPD_DIST_PAY_ACTION
+class upd_dist_pay_action_impl : public pay_action_impl
+{
+public:   
+    upd_dist_pay_action_impl() : pay_action_impl() { }
+    ~upd_dist_pay_action_impl() { }
+    w_rc_t trx_exec();    
+    midway_pay_rvp* _m_rvp;
+}; // EOF: upd_wh_pay_action_impl
+
+// UPD_CUST_PAY_ACTION
+class upd_cust_pay_action_impl : public pay_action_impl
+{
+public:    
+    upd_cust_pay_action_impl() : pay_action_impl() { }
+    ~upd_cust_pay_action_impl() { }
+    w_rc_t trx_exec();   
+}; // EOF: upd_cust_pay_action_impl
+
+// INS_HIST_PAY_ACTION
+class ins_hist_pay_action_impl : public pay_action_impl
+{
+public:    
+    ins_hist_pay_action_impl() : pay_action_impl() { }
+    ~ins_hist_pay_action_impl() { }
+    w_rc_t trx_exec();    
+    tpcc_warehouse_tuple _awh;
+    tpcc_district_tuple _adist;    
+}; // EOF: ins_hist_pay_action_impl
+
+
+
 
 
 /******************************************************************** 
@@ -47,11 +211,17 @@ public:
 
     typedef range_partition_impl<int>   irp_impl; 
     typedef range_part_table_impl<int>  irp_table_impl;
-    typedef irp_impl::part_action       iaction;
+    typedef irp_impl::range_action      irp_action;
     typedef irp_impl::part_key          ikey;
 
     typedef vector<irp_table_impl*>     irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
+
+    
+    typedef action_cache_t<upd_wh_pay_action_impl>   upd_wh_pay_action_cache;
+    typedef action_cache_t<upd_dist_pay_action_impl> upd_dist_pay_action_cache;
+    typedef action_cache_t<upd_cust_pay_action_impl> upd_cust_pay_action_cache;
+    typedef action_cache_t<ins_hist_pay_action_impl> ins_hist_pay_action_cache;
 
 private:
 
@@ -59,7 +229,6 @@ private:
 
     // the shore env
     ShoreTPCCEnv* _tpccenv;    
-
 
     // a vector of pointers to integer-range-partitioned tables
     irpTablePtrVector _irptp_vec;    
@@ -76,15 +245,50 @@ private:
     irp_table_impl* _st_irpt; // STOCK
 
 
+    // cache of actions (per action tpcc trx)
+    upd_wh_pay_action_cache*   _upd_wh_pay_cache;        /* pointer to a upd wh payment action cache */
+    upd_dist_pay_action_cache* _upd_dist_pay_cache;      /* pointer to a upd dist payment action cache */
+    upd_cust_pay_action_cache* _upd_cust_pay_cache;      /* pointer to a upd cust payment action cache */
+    ins_hist_pay_action_cache* _ins_hist_pay_cache;      /* pointer to a ins hist payment action cache */
+
+
 public:
 
     dora_tpcc_db(ShoreTPCCEnv* tpccenv)
         : _tpccenv(tpccenv)
     {
         assert (_tpccenv);
+
+        // initialize action caches
+        _upd_wh_pay_cache   = new upd_wh_pay_action_cache(DF_ACTION_CACHE_SZ);
+        _upd_dist_pay_cache = new upd_dist_pay_action_cache(DF_ACTION_CACHE_SZ);
+        _upd_cust_pay_cache = new upd_cust_pay_action_cache(DF_ACTION_CACHE_SZ);
+        _ins_hist_pay_cache = new ins_hist_pay_action_cache(DF_ACTION_CACHE_SZ);
     }
 
-    ~dora_tpcc_db() { }    
+    ~dora_tpcc_db() { 
+        // delete action caches
+        if (_upd_wh_pay_cache) {
+            // print_cache_stats();
+            delete (_upd_wh_pay_cache);
+            _upd_wh_pay_cache = NULL;
+        }
+        if (_upd_dist_pay_cache) {
+            // print_cache_stats();
+            delete (_upd_dist_pay_cache);
+            _upd_dist_pay_cache = NULL;
+        }
+        if (_upd_cust_pay_cache) {
+            // print_cache_stats();
+            delete (_upd_cust_pay_cache);
+            _upd_cust_pay_cache = NULL;
+        }
+        if (_ins_hist_pay_cache) {
+            // print_cache_stats();
+            delete (_ins_hist_pay_cache);
+            _ins_hist_pay_cache = NULL;
+        }
+    }    
 
 
     /** Access methods */
@@ -92,6 +296,81 @@ public:
     inline irp_impl* get_part(const table_pos, const int part_pos) {
         assert (table_pos<_irptp_vec.size());        
         return (_irptp_vec[table_pos]->get_part(part_pos));
+    }
+
+
+    // action cache related actions
+
+    // returns the cache
+    upd_wh_pay_action_cache* get_upd_wh_pay_cache() { 
+        assert (_upd_wh_pay_cache); 
+        return (_upd_wh_pay_cache); 
+    }
+    upd_dist_pay_action_cache* get_upd_dist_pay_cache() { 
+        assert (_upd_dist_pay_cache); 
+        return (_upd_dist_pay_cache); 
+    }
+    upd_cust_pay_action_cache* get_upd_cust_pay_cache() { 
+        assert (_upd_cust_pay_cache); 
+        return (_upd_cust_pay_cache); 
+    }
+    ins_hist_pay_action_cache* get_ins_hist_pay_cache() { 
+        assert (_ins_hist_pay_cache); 
+        return (_ins_hist_pay_cache); 
+    }
+
+
+    //
+    // borrow and release an action
+    //
+    // @note: On but borrowing first it makes sure that it is empty
+    //
+    upd_wh_pay_action_impl* get_upd_wh_pay_action() {
+        assert (_upd_wh_pay_cache);
+        upd_wh_pay_action_impl* paction = _upd_wh_pay_cache->borrow();
+        assert (paction);
+        assert (paction->keys()->size()==0);
+        return (paction);
+    }
+    void give_action(upd_wh_pay_action_impl* pirpa) {
+        assert (_upd_wh_pay_cache);
+        _upd_wh_pay_cache->giveback(pirpa);
+    }
+
+    upd_dist_pay_action_impl* get_upd_dist_pay_action() {
+        assert (_upd_dist_pay_cache);
+        upd_dist_pay_action_impl* paction = _upd_dist_pay_cache->borrow();
+        assert (paction);
+        assert (paction->keys()->size()==0);
+        return (paction);
+    }
+    void give_action(upd_dist_pay_action_impl* pirpa) {
+        assert (_upd_dist_pay_cache);
+        _upd_dist_pay_cache->giveback(pirpa);
+    }
+
+    upd_cust_pay_action_impl* get_upd_cust_pay_action() {
+        assert (_upd_cust_pay_cache);
+        upd_cust_pay_action_impl* paction = _upd_cust_pay_cache->borrow();
+        assert (paction);
+        assert (paction->keys()->size()==0);
+        return (paction);
+    }
+    void give_action(upd_cust_pay_action_impl* pirpa) {
+        assert (_upd_cust_pay_cache);
+        _upd_cust_pay_cache->giveback(pirpa);
+    }
+
+    ins_hist_pay_action_impl* get_ins_hist_pay_action() {
+        assert (_ins_hist_pay_cache);
+        ins_hist_pay_action_impl* paction = _ins_hist_pay_cache->borrow();
+        assert (paction);
+        assert (paction->keys()->size()==0);
+        return (paction);
+    }
+    void give_action(ins_hist_pay_action_impl* pirpa) {
+        assert (_ins_hist_pay_cache);
+        _ins_hist_pay_cache->giveback(pirpa);
     }
 
 
@@ -120,15 +399,16 @@ public:
 
     /** Control Database */
 
-    // {Start/Stop} the system 
+    // {Start/Stop/Resume/Pause} the system 
     const int start();
     const int stop();
-
+    const int resume();
+    const int pause();
     
     /** Client API */
     
     // enqueues action, false on error
-    inline const int enqueue(iaction* paction, 
+    inline const int enqueue(irp_action* paction, 
                              irp_table_impl* ptable, 
                              const int part_pos) 
     {

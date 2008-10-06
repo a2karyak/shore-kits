@@ -305,7 +305,9 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
 
     // state (WC_ACTIVE)
 
+
     // Start serving actions from the partition
+    w_rc_t e;
     while (get_control() == WC_ACTIVE) {
         assert (_partition);
         
@@ -326,13 +328,26 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         attach_xct(pa->get_xct());
             
         // 3. serve action
-        pa->trx_exec();
+        e = pa->trx_exec();
+        if (e.is_error()) {
+            TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
+                   pa->get_tid(), e.err_num());
+            assert(0);
+            return (de_WORKER_RUN_XCT);
+        }
             
-        // 4. commit - use default commit
-        if (pa->get_rvp()->post()) {
+        // 4. finalize processing
+        rvp_t* aprvp = pa->get_rvp();
+        if (aprvp->post()) {
             // last caller
             // execute the code of this rendezvous point
-            pa->trx_rvp();
+            e = aprvp->run();            
+            if (e.is_error()) {
+                TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
+                       pa->get_tid(), e.err_num());
+                assert(0);
+                return (de_WORKER_DETACH_XCT);
+            }
         }
         else {
             // not last caller, simply detach from trx

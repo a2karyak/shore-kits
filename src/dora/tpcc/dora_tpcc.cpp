@@ -35,25 +35,6 @@ const int OL_IRP_KEY = 4;
 const int ST_IRP_KEY = 2;
 
 
-
-/****************************************************************** 
- *
- * @fn:    stop()
- *
- * @brief: Stops the DORA TPC-C
- *
- ******************************************************************/
-
-const int dora_tpcc_db::stop()
-{
-    TRACE( TRACE_DEBUG, "Stopping...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->stop();
-    }
-    return (0);
-}
-
-
 /****************************************************************** 
  *
  * @fn:    start()
@@ -207,6 +188,59 @@ const int dora_tpcc_db::start()
 
     return (0);
 }
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    stop()
+ *
+ * @brief: Stops the DORA TPC-C
+ *
+ ******************************************************************/
+
+const int dora_tpcc_db::stop()
+{
+    TRACE( TRACE_DEBUG, "Stopping...\n");
+    for (int i=0; i<_irptp_vec.size(); i++) {
+        _irptp_vec[i]->stop();
+    }
+    return (0);
+}
+
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    resume()
+ *
+ * @brief: Resumes the DORA TPC-C
+ *
+ ******************************************************************/
+
+const int dora_tpcc_db::resume()
+{
+    assert (0); // TODO (ip)
+    return (0);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    pause()
+ *
+ * @brief: Pauses the DORA TPC-C
+ *
+ ******************************************************************/
+
+const int dora_tpcc_db::pause()
+{
+    assert (0); // TODO (ip)
+    return (0);
+}
+
 
 
 /****************************************************************** 

@@ -15,7 +15,7 @@
 
 #include "util.h"
 
-#include "dora/key.h"
+#include "dora.h"
 
 #include "sm/shore/shore_env.h"
 
@@ -74,19 +74,6 @@ ENTER_NAMESPACE(dora);
 using namespace shore;
 
 
-/******************************************************************** 
- *
- * @enum:  ActionDecision
- *
- * @brief: Possible decision of an action
- *
- * @note:  Abort is decided when something goes wrong with own action
- *         Die if some other action (of the same trx) decides to abort
- *
- ********************************************************************/
-
-enum ActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
-
 
 /******************************************************************** 
  *
@@ -107,68 +94,66 @@ public:
 
 protected:
 
-    ShoreEnv*    _env;    
+    // rendez-vous point
+    rvp_t*         _prvp;
 
-    int          _field_count;
-    key          _down;
-    key          _up;
-
-    countdown_t* _prvp;
+    // a vector of pointers to keys
+    vector<key*>   _keys;
 
     // trx-specific
-    xct_t*         _xct;
+    xct_t*         _xct; // Not the owner
     tid_t          _tid;
-    ActionDecision _decision;
 
 public:
 
-    action_t(ShoreEnv* env, int field_count, countdown_t* prvp, xct_t* pxct)
-        : _env(env), 
-          _field_count(field_count),
-          _prvp(prvp), _xct(pxct), _decision(AD_UNDECIDED)
-    {
-        assert (_env);
-        assert (_field_count>0);
-        assert (_prvp);
-        assert (_xct);
-
-        _tid = ss_m::xct_to_tid(_xct);
-    }
+    action_t() : _prvp(NULL) { }
 
     virtual ~action_t() { }
-
     
     /** access methods */
 
-    key& down() { return (_down); }
-    const key& down() const { return (_down); }
-    key& up() { return (_up); }
-    const key& up() const { return (_up); }
+    vector<key*> *keys() { return (&_keys); }    
+
+
+    rvp_t* get_rvp() { return (_prvp); }
 
 
     inline xct_t* get_xct() { return (_xct); }
     inline tid_t  get_tid() { return (_tid); }
-
-    inline countdown_t* get_rvp() { return (_prvp); }    
     
-    inline int update_xct(xct_t* axct) {
+    inline void set_xct(xct_t* axct) {
         assert (axct);
         _xct = axct;
         _tid = ss_m::xct_to_tid(_xct);
-        return (0);
+        return (_tid);
+    }
+
+    inline void set_tid(tid_t atid) {
+        _tid = atid;
+        _xct = ss_m::tid_to_xct(_tid);
+        return (_tid);
+    }
+
+    inline void set(tid_t atid, xct_t* axct) {
+        assert (axct);
+        assert (_tid == ss_m::xct_to_tid(axct));
+        _tid = atid;
+        _xct = axct;
     }
 
     
-    inline void set_decision(const ActionDecision& ad) { _decision = ad; }
-    inline ActionDecision get_decision() { return (_decision); }
-
-    
     /** trx-related operations */
-    virtual w_rc_t trx_exec()=0;     // pure virtual
-    virtual w_rc_t trx_rvp();        // default action on rvp - commit trx
+    virtual w_rc_t trx_exec()=0;          // pure virtual
+
+    // for the cache
+    void reset() {
+        _xct = NULL;
+        _prvp = NULL;
+        _keys.clear();
+    }
 
     // lock for the whole action
-    tatas_lock     _action_lock;
+    tatas_lock     _action_lock;    
 
 private:
 
@@ -177,49 +162,6 @@ private:
     void operator=(action_t const &);
     
 }; // EOF: action_t
-
-
-
-/****************************************************************** 
- *
- * @fn:    trx_rvp()
- *
- * @brief: Code executed at rvp (rendez-vous point)
- *
- * @note:  The default action is to commit. However, it may be overlapped
- *
- ******************************************************************/
-
-template <class DataType>
-w_rc_t action_t<DataType>::trx_rvp()
-{
-    assert (_env);
-    assert (_xct);
-
-    w_rc_t ecommit = _env->db()->commit_xct();
-    
-    if (ecommit.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
-               _tid, ecommit.err_num());
-
-        // TODO: if (_measure == MST_MEASURE) update_aborted_stats();
-
-        w_rc_t eabort = _env->db()->abort_xct();
-        if (eabort.is_error()) {
-            TRACE( TRACE_ALWAYS, "Xct (%d) abort faied [0x%x]\n",
-                   _tid, eabort.err_num());
-        }
-
-        return (ecommit);
-    }
-
-
-    TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment completed\n", _tid);
-
-
-    return (RCOK);
-}
-
 
 
 EXIT_NAMESPACE(dora);

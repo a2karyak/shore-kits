@@ -34,6 +34,10 @@ enum {
     de_WRONG_PARTITION         = 0x820012,
     de_WRONG_WORKER            = 0x820013,
 
+    de_WORKER_ATTACH_XCT       = 0x820021,
+    de_WORKER_DETACH_XCT       = 0x820022,
+    de_WORKER_RUN_XCT          = 0x820023,
+
     de_INCOMPATIBLE_LOCKS      = 0x820021
 };
 

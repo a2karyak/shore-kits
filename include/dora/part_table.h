@@ -6,7 +6,7 @@
  *
  *  @note   Implemented as a vector of partitions and a routing
  *
- *  @author Ippokratis Pandis, Oct 2008)
+ *  @author Ippokratis Pandis, Oct 2008
  */
 
 

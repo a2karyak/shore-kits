@@ -16,8 +16,7 @@
 #include "util.h"
 #include "sm/shore/shore_env.h"
 
-#include "dora/partition.h"
-#include "dora/key.h"
+#include "dora.h"
 
 
 
@@ -53,6 +52,10 @@ enum RangePartitionState { RPS_UNSET, RPS_SET };
 template <class DataType>
 class range_partition_impl : public partition_t<DataType>
 {
+public:
+    
+    typedef range_action_impl<DataType> range_action;
+
 private:
 
     RangePartitionState _rp_state;
@@ -89,7 +92,7 @@ public:
     const bool resize(const part_key& downLimit, const part_key& upLimit);
 
     // returns true if action can be enqueued here
-    const bool verify(const part_action& action) const;
+    const bool verify(part_action& rangeaction);
 
 }; // EOF: range_partition_impl
 
@@ -153,10 +156,11 @@ inline const bool range_partition_impl<DataType>::resize(const part_key& downLim
  ******************************************************************/
  
 template <class DataType>
-const bool range_partition_impl<DataType>::verify(const part_action& action) const
+const bool range_partition_impl<DataType>::verify(part_action& rangeaction)
 {
     assert (_rp_state == RPS_SET);
-    return (_is_between(action.down(), action.up()));
+    assert (rangeaction.keys()->size()==2);
+    return (_is_between(*rangeaction.keys()->front(), *rangeaction.keys()->back()));
 }   
 
 

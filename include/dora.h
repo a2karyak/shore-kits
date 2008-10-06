@@ -8,6 +8,7 @@
 
 #include "dora/key.h"
 #include "dora/srmwqueue.h"
+#include "dora/rvp.h"
 
 #include "dora/action.h"
 #include "dora/lockman.h"
@@ -15,6 +16,9 @@
 #include "dora/partition.h"
 #include "dora/part_table.h"
 
+#include "dora/action_cache.h"
+
+#include "dora/range_action.h"
 #include "dora/range_partition.h"
 #include "dora/range_part_table.h"
 

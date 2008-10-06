@@ -145,7 +145,7 @@ public:
     /** Action-related methods */
 
     // returns true if action can be enqueued it this partition
-    virtual const bool verify(const part_action& action) const =0;
+    virtual const bool verify(part_action& action)=0;
 
     // enqueues action, 0 on success
     const int enqueue(part_action* paction);    

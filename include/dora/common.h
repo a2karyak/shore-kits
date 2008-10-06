@@ -32,8 +32,26 @@ const int DF_NUM_OF_STANDBY_THRS         = 0; // TODO: (ip) assume main-memory
 
 template<class DataType> class partition_t;
 
+class rvp_t;
+class terminal_rvp_t;
+
 
 // ENUMS
+
+
+/******************************************************************** 
+ *
+ * @enum:  ActionDecision
+ *
+ * @brief: Possible decision of an action
+ *
+ * @note:  Abort is decided when something goes wrong with own action
+ *         Die if some other action (of the same trx) decides to abort
+ *
+ ********************************************************************/
+
+enum ActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
+
 
 
 /******************************************************************** 

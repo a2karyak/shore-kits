@@ -4,7 +4,7 @@
  *
  *  @brief Range partitioned table class in DORA
  *
- *  @author Ippokratis Pandis, Oct 2008)
+ *  @author Ippokratis Pandis, Oct 2008
  */
 
 
