@@ -45,12 +45,12 @@ protected:
     // trx-specific
     xct_t*              _xct; // Not the owner
     tid_t               _tid;
-    trx_result_tuple_t* _result;
+    trx_result_tuple_t _result;
 
 public:
 
     rvp_t(tid_t atid, xct_t* axct,
-          trx_result_tuple_t* presult, 
+          trx_result_tuple_t &presult, 
           const int intra_trx_cnt) 
         : _tid(atid), _xct(axct), _result(presult), _countdown(intra_trx_cnt),
           _decision(AD_UNDECIDED)
@@ -68,10 +68,9 @@ public:
     inline xct_t* get_xct() { return (_xct); }
     inline tid_t  get_tid() { return (_tid); }
    
-    inline void set(tid_t atid, xct_t* axct, trx_result_tuple_t* presult) {
+    inline void set(tid_t atid, xct_t* axct, trx_result_tuple_t &presult) {
         assert (axct);
         assert (_tid == ss_m::xct_to_tid(axct));
-        assert (presult);
         _tid = atid;
         _xct = axct;
         _result = presult;
@@ -95,7 +94,7 @@ public:
         TRACE( TRACE_DEBUG, "Reseting (%d)\n", _tid);
         _xct = NULL;
         _decision = AD_UNDECIDED;
-        _result = NULL;
+        _result = trx_result_tuple_t();
     }    
 
 private:
@@ -122,7 +121,7 @@ class terminal_rvp_t : public rvp_t
 public:
 
     terminal_rvp_t(tid_t atid, xct_t* axct, 
-                   trx_result_tuple_t* presult, 
+                   trx_result_tuple_t &presult, 
                    const int intra_trx_cnt) 
         : rvp_t(atid, axct, presult, intra_trx_cnt) 
     { }

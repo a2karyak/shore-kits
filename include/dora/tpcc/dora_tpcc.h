@@ -69,7 +69,7 @@ private:
 public:
 
     midway_pay_rvp(tid_t atid, xct_t* axct,
-                   trx_result_tuple_t* presult,
+                   trx_result_tuple_t &presult,
                    ShoreTPCCEnv* penv, 
                    payment_input_t ppin) 
         : rvp_t(atid, axct, presult, 3),  // consists of three packets
@@ -108,7 +108,7 @@ private:
 public:
 
     final_pay_rvp(tid_t atid, xct_t* axct,
-                  trx_result_tuple_t* presult,
+                  trx_result_tuple_t &presult,
                   ShoreTPCCEnv* penv) 
         : terminal_rvp_t(atid, axct, presult, 1), 
           _ptpccenv(penv) 

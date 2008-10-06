@@ -28,7 +28,6 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 {
     assert (_xct);
     assert (penv);
-    assert (_result);
 
     // try to commit
     w_rc_t ecommit = penv->db()->commit_xct();
@@ -45,6 +44,10 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
                    _tid, eabort.err_num());
         }
 
+	// signal cond var
+	if(_result.get_notify())
+	    _result.get_notify()->signal();
+
         // do clean up
         cleanup();
         return (ecommit);
@@ -53,7 +56,9 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     
     TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", _tid);
 
-    assert (0); // TODO (ip) - Signal Cond Var
+    // signal cond var
+    if(_result.get_notify())
+	_result.get_notify()->signal();
 
     // do clean up
     cleanup();

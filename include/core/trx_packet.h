@@ -157,6 +157,23 @@ public:
 }; // EOF trx_packet
 
 
+struct condex {
+    pthread_cond_t _cond;
+    pthread_mutex_t _lock;
+    bool _fired;
+    //    condex() : _fired(false) { pthread_cond_init(&_cond); pthread_mutex_init(&_lock); }
+    void signal() {
+	CRITICAL_SECTION(cs, _lock);
+	_fired = true;
+	pthread_cond_signal(&_cond);
+    }
+    void wait() {
+	CRITICAL_SECTION(cs, _lock);
+	while(!_fired)
+	    pthread_cond_wait(&_cond,&_lock);
+	_fired = false;
+    }
+};
 
 /******************************************************************** 
  *
@@ -174,7 +191,9 @@ private:
 
     TrxState R_STATE;
     int R_ID;
+    condex* _notify;
 
+    
     /** Private access methods */
 
     inline void set_id(int anID) { R_ID = anID; }
@@ -183,19 +202,17 @@ public:
 
     /** construction - destruction */
 
-    trx_result_tuple_t() { reset(UNDEF, -1); }
+    trx_result_tuple_t() { reset(UNDEF, -1, NULL); }
 
     trx_result_tuple_t(TrxState aTrxState, int anID) { 
-        reset(aTrxState, anID); 
+        reset(aTrxState, anID, NULL);
     }
 
     ~trx_result_tuple_t() { }
 
     /** @fn copy constructor */
     trx_result_tuple_t(const trx_result_tuple_t& t) {
-
-        R_STATE = t.R_STATE;
-        R_ID = t.R_ID;
+	reset(t.R_STATE, t.R_ID, t._notify);
     }
     
     
@@ -204,8 +221,7 @@ public:
     /** @fn copy assingment */
     trx_result_tuple_t& operator=(const trx_result_tuple_t& t) {
         
-        R_STATE = t.R_STATE;
-        R_ID = t.R_ID;
+        reset(t.R_STATE, t.R_ID, t._notify);
         
         return (*this);
     }
@@ -219,7 +235,9 @@ public:
     }
 
     /** Access methods */
-
+    void set_notify(condex* notify) { _notify = notify; }
+    condex* get_notify() { return _notify; }
+    
     inline int get_id() { return (R_ID); }
 
     inline void set_state(TrxState aState) { 
@@ -231,14 +249,14 @@ public:
 
     inline char* say_state() { return (translate_state(R_STATE)); }
 
-    inline void reset(TrxState aTrxState, int anID) {
-
+    inline void reset(TrxState aTrxState, int anID, condex* notify=NULL) {
         // check for validity of inputs
         assert ((aTrxState >= UNDEF) && (aTrxState <= ROLLBACKED));
         assert (anID >= NO_VALID_TRX_ID);
 
         R_STATE = aTrxState;
         R_ID = anID;
+	_notify = notify;
     }
         
 }; // EOF: trx_result_tuple_t

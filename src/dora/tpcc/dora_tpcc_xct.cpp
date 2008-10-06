@@ -39,7 +39,6 @@ ENTER_NAMESPACE(dora);
 w_rc_t midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
-    assert (_result);
     assert (_xct);
 
     final_pay_rvp* frvp = new final_pay_rvp(_tid, _xct, _result, _ptpccenv);
@@ -531,7 +530,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 
     // 2. Setup the next RVP
     midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct,
-                                             &atrt, this, apin); // PH1 consists of 3 packets
+                                             atrt, this, apin); // PH1 consists of 3 packets
     assert (rvp);
     
     // 3. generate and enqueue all actions
@@ -604,7 +603,7 @@ w_rc_t ShoreTPCCEnv::dora_order_status(const int xct_id,
 
     // 2. Setup the next RVP
     final_pay_rvp* rvp = new final_pay_rvp(atid, pxct,
-                                           &atrt, this);
+                                           atrt, this);
     assert (rvp);
 
     ins_hist_pay_action_impl*   p_ins_hist_pay_action   = _g_dora->get_ins_hist_pay_action();
