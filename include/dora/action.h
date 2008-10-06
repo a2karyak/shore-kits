@@ -134,11 +134,13 @@ public:
         return (_tid);
     }
 
-    inline void set(tid_t atid, xct_t* axct) {
+    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp) {
         assert (axct);
         assert (atid == ss_m::xct_to_tid(axct));
+        assert (prvp);
         _tid = atid;
         _xct = axct;
+        _prvp = prvp;
     }
 
     

@@ -28,6 +28,7 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 {
     assert (_xct);
     assert (penv);
+    assert (_result);
 
     // try to commit
     w_rc_t ecommit = penv->db()->commit_xct();
@@ -51,6 +52,8 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     upd_committed_stats(); // hook - update committed stats
     
     TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", _tid);
+
+    assert (0); // TODO (ip) - Signal Cond Var
 
     // do clean up
     cleanup();

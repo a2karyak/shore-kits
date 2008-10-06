@@ -15,6 +15,10 @@
 
 #include "dora.h"
 
+#include "core/trx_packet.h"
+
+using namespace qpipe;
+
 
 ENTER_NAMESPACE(dora);
 
@@ -39,16 +43,17 @@ protected:
     ActionDecision _decision;
 
     // trx-specific
-    xct_t*         _xct; // Not the owner
-    tid_t          _tid;
+    xct_t*              _xct; // Not the owner
+    tid_t               _tid;
+    trx_result_tuple_t* _result;
 
 public:
 
-    rvp_t() : _xct(NULL), _decision(AD_UNDECIDED) { }
+    rvp_t(trx_result_tuple_t* presult = NULL) 
+        : _xct(NULL), _decision(AD_UNDECIDED), _result(presult) 
+    { }
 
-    virtual ~rvp_t() { 
-        cout << "RVP (" << _tid << ") bye..\n";
-    }
+    virtual ~rvp_t() { }
     
     /** access methods */
 
@@ -57,11 +62,13 @@ public:
     inline xct_t* get_xct() { return (_xct); }
     inline tid_t  get_tid() { return (_tid); }
    
-    inline void set(tid_t atid, xct_t* axct) {
+    inline void set(tid_t atid, xct_t* axct, trx_result_tuple_t* presult) {
         assert (axct);
         assert (_tid == ss_m::xct_to_tid(axct));
+        assert (presult);
         _tid = atid;
         _xct = axct;
+        _result = presult;
     }
 
     // Decision related
@@ -80,6 +87,7 @@ public:
     void reset() {
         _xct = NULL;
         _decision = AD_UNDECIDED;
+        _result = NULL;
     }    
 
 private:

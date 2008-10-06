@@ -68,8 +68,11 @@ private:
 
 public:
 
-    midway_pay_rvp(ShoreTPCCEnv* penv, payment_input_t ppin, const int intra_trx_cnt) 
-        : rvp_t(), _ptpccenv(penv), _pin(ppin)
+    midway_pay_rvp(trx_result_tuple_t* presult,
+                   ShoreTPCCEnv* penv, 
+                   payment_input_t ppin, 
+                   const int intra_trx_cnt) 
+        : rvp_t(presult), _ptpccenv(penv), _pin(ppin)
     { 
         _countdown.reset(intra_trx_cnt);
     }
@@ -106,7 +109,11 @@ private:
 
 public:
 
-    final_pay_rvp(ShoreTPCCEnv* penv) : terminal_rvp_t(), _ptpccenv(penv) { }
+    final_pay_rvp(trx_result_tuple_t* presult,
+                  ShoreTPCCEnv* penv) 
+        : terminal_rvp_t(), _ptpccenv(penv) 
+    { }
+
     ~final_pay_rvp() { }
 
     // access methods for the list of actions
@@ -142,12 +149,14 @@ public:
 
     virtual void set_input(tid_t atid,
                            xct_t* apxct,
+                           rvp_t* prvp,
                            ShoreTPCCEnv* penv, 
                            const payment_input_t& pin) 
     {
         assert (apxct);
+        assert (prvp);
         assert (penv);
-        set(atid,apxct);
+        set(atid,apxct, prvp);
         _ptpccenv = penv;
         _pin = pin;
 

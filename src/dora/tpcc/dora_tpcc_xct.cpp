@@ -39,11 +39,12 @@ ENTER_NAMESPACE(dora);
 w_rc_t midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
-    final_pay_rvp* frvp = new final_pay_rvp(_ptpccenv);
+    assert (_result);
+    final_pay_rvp* frvp = new final_pay_rvp(_result, _ptpccenv);
 
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
-    p_ins_hist_pay_action->set_input(_tid, _xct, _ptpccenv, _pin);
+    p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     assert (p_ins_hist_pay_action);
     frvp->set_pih(p_ins_hist_pay_action);
     p_ins_hist_pay_action->_awh=_awh;
@@ -514,8 +515,6 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     assert (_g_dora);
     TRACE( TRACE_TRX_FLOW, "%d. DORA - PAYMENT...\n", xct_id);         
 
-    TRACE( TRACE_TRX_FLOW, "%d. DORA - should have 2 customer actions...\n", xct_id);             
-
     tid_t atid;   
 
     // 1. Initiate transaction
@@ -524,7 +523,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     assert (pxct);
 
     // 2. Setup the next RVP
-    midway_pay_rvp* rvp = new midway_pay_rvp(this, apin, 3); // PH1 consists of 3 packets
+    midway_pay_rvp* rvp = new midway_pay_rvp(&atrt, this, apin, 3); // PH1 consists of 3 packets
     assert (rvp);
     
     // 3. generate and enqueue all actions
@@ -541,7 +540,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 
     upd_cust_pay_action_impl* p_upd_cust_pay_action = _g_dora->get_upd_cust_pay_action();
     assert (p_upd_cust_pay_action);
-    p_upd_cust_pay_action->set_input(atid, pxct, this, apin);
+    p_upd_cust_pay_action->set_input(atid, pxct, rvp, this, apin);
     rvp->set_puc(p_upd_cust_pay_action);
     if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, apin._home_wh_id)) { // SF CUSTOMER partitions
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
@@ -550,7 +549,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 
     upd_dist_pay_action_impl* p_upd_dist_pay_action = _g_dora->get_upd_dist_pay_action();
     assert (p_upd_dist_pay_action);
-    p_upd_dist_pay_action->set_input(atid, pxct, this, apin);
+    p_upd_dist_pay_action->set_input(atid, pxct, rvp, this, apin);
     rvp->set_pud(p_upd_dist_pay_action);
     p_upd_dist_pay_action->_m_rvp=rvp;
     if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, 0)) { // One DISTRICT partition
@@ -560,7 +559,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 
     upd_wh_pay_action_impl*   p_upd_wh_pay_action   = _g_dora->get_upd_wh_pay_action();
     assert (p_upd_wh_pay_action);
-    p_upd_wh_pay_action->set_input(atid, pxct, this, apin);
+    p_upd_wh_pay_action->set_input(atid, pxct, rvp, this, apin);
     rvp->set_puw(p_upd_wh_pay_action);
     p_upd_wh_pay_action->_m_rvp=rvp;
     if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, 0)) { // One WAREHOUSE partition
