@@ -338,10 +338,13 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
             
         // 4. finalize processing
         rvp_t* aprvp = pa->get_rvp();
+        assert (aprvp);
         if (aprvp->post()) {
             // last caller
             // execute the code of this rendezvous point
+            TRACE( TRACE_TRX_FLOW, "Last caller for (%d)\n", pa->get_tid());
             e = aprvp->run();            
+            assert (e.ptr());
             if (e.is_error()) {
                 TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
                        pa->get_tid(), e.err_num());
