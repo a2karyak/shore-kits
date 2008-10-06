@@ -11,10 +11,12 @@
 #include "util/countdown.h"
 
 
-countdown_t::countdown_t(int count)
-    : _state(count*NUMBER)
+void countdown_t::reset(const int newcount)
 {
-    assert (count>0);
+    // previous usage should have finished
+    // previous usage may succeeded (0) or failed (ERROR)
+    assert ((_state==0) || (_state==ERROR)); 
+    _state = newcount*NUMBER;
 }
 
 bool countdown_t::post(bool is_error) 

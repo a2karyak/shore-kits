@@ -19,7 +19,7 @@ struct countdown_t
 public:
 
     // constructor - sets the number to count down
-    countdown_t(int count);
+    countdown_t(int count=0) : _state(count*NUMBER) { }
 
     // reduce thread count by one (or post an error) and return true if
     // the operation completed the countdown
@@ -28,6 +28,8 @@ public:
     // return remaining threads or -1 if error
     int remaining() const;
  
+    // reset - should be called only when count == 0
+    void reset(const int newcount); 
 
 private:
 
