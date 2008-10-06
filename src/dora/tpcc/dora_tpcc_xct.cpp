@@ -55,6 +55,7 @@ w_rc_t midway_pay_rvp::run()
     p_ins_hist_pay_action->_adist=_adist;
     if (_g_dora->his()->enqueue(p_ins_hist_pay_action, 0)) { // One HISTORY partition
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
+            assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
     }
 
@@ -548,6 +549,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     rvp->set_puc(p_upd_cust_pay_action);
     if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, apin._home_wh_id)) { // SF CUSTOMER partitions
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
+            assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
     }
 
@@ -558,6 +560,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     p_upd_dist_pay_action->_m_rvp=rvp;
     if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, 0)) { // One DISTRICT partition
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_PAY\n");
+            assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
     }
 
@@ -568,6 +571,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     p_upd_wh_pay_action->_m_rvp=rvp;
     if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, 0)) { // One WAREHOUSE partition
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
+            assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
     }
 

@@ -115,11 +115,12 @@ inline const bool range_partition_impl<DataType>::_is_between(const part_key& co
 {
     assert (_down<=_up);
     assert (contDown<=contUp);
-    //    cout << "Checking if (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
+    cout << "Checking (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
 
     // !!! WARNING !!!
-    // The partition boundaries should always be on the left side
-    return ((_down<contDown) && !(_up<=contUp));
+    // The partition boundaries should always be on the left side 
+    // because their size can be smaller than the size of the key checked
+    return ((_down<=contDown) && !(_up<contUp));
 }
 
 
