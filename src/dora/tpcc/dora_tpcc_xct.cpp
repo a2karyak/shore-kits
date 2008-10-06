@@ -45,7 +45,7 @@ w_rc_t midway_pay_rvp::run()
 
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
-    TRACE( TRACE_DEBUG, "(%d)\n", _tid);
+    //    TRACE( TRACE_DEBUG, "(%d)\n", _tid);
     assert (_xct);
 
     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
