@@ -326,6 +326,7 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
             
         // 2. attach to xct
         attach_xct(pa->get_xct());
+        TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", pa->get_tid());
             
         // 3. serve action
         e = pa->trx_exec();
@@ -339,32 +340,45 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         // 4. finalize processing
         rvp_t* aprvp = pa->get_rvp();
         assert (aprvp);
-        if (aprvp->post()) {
-            // last caller
-            // execute the code of this rendezvous point
-            e = aprvp->run();            
-            if (e.is_error()) {
-                TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
-                       pa->get_tid(), e.err_num());
-                assert(0);
-                return (de_WORKER_DETACH_XCT);
-            }
+        
+        {
+            // make sure that the detaches from worker threads
+            // serving the same trx will happen in the order they post()
+            CRITICAL_SECTION(detach_lock_cs, aprvp->_detach_lock);
+            if (aprvp->post()) {
+                // last caller
+
+                // if it was an intermediate RVP first it needs to be detached
+                // it first needs to be deattached and then run the code because
+                // we can have races between the commit() of the next phase and
+                // the detach of the current. 
             
-            // if it was an intermediate RVP it needs to be deattached
-            e = aprvp->release(this);
-            if (e.is_error()) {
-                TRACE( TRACE_ALWAYS, "Problem releasing rvp for xct (%d) [0x%x]\n",
-                       pa->get_tid(), e.err_num());
-                assert(0);
-                return (de_WORKER_DETACH_XCT);
-            }
+                // @note: !!! Only terminal_rvp_t can commit !!!
+                e = aprvp->release(this);
+                if (e.is_error()) {
+                    TRACE( TRACE_ALWAYS, "Problem releasing rvp for xct (%d) [0x%x]\n",
+                           pa->get_tid(), e.err_num());
+                    assert(0);
+                    return (de_WORKER_DETACH_XCT);
+                }
+
+                // execute the code of this rendez-vous point
+                e = aprvp->run();            
+                if (e.is_error()) {
+                    TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
+                           pa->get_tid(), e.err_num());
+                    assert(0);
+                    return (de_WORKER_DETACH_XCT);
+                }
                     
-        }
-        else {
-            // not last caller, simply detach from trx
-            TRACE( TRACE_DEBUG, "Deattaching from (%d)\n", pa->get_tid());
-            detach_xct(pa->get_xct());
-        }
+            }
+            else {
+                // not last caller, simply detach from trx
+                TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", pa->get_tid());
+                detach_xct(pa->get_xct());
+            }
+
+        } // EOF detach_lock_cs
 
         // 5. update stats
         {

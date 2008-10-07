@@ -328,6 +328,15 @@ public:
 
     /** Access methods */
 
+    // locks for the transactions - one mutex per transaction
+    // needed for having a total order 
+    // across actions of different trxs
+    mcs_lock _nord_lock;
+    mcs_lock _pay_lock;
+    mcs_lock _orderst_lock;
+    mcs_lock _deliv_lock;
+    mcs_lock _stocklev_lock;
+
     inline irp_impl* get_part(const table_pos, const int part_pos) {
         assert (table_pos<_irptp_vec.size());        
         return (_irptp_vec[table_pos]->get_part(part_pos));

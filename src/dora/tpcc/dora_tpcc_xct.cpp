@@ -120,7 +120,7 @@ void final_pay_rvp::cleanup()
 w_rc_t upd_wh_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    TRACE( TRACE_TRX_FLOW, "upd warehouse\n");
+    //    TRACE( TRACE_TRX_FLOW, "upd warehouse\n");
     //    _pin.describe(0);
 
     // get table tuple from the cache
@@ -177,7 +177,7 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
 w_rc_t upd_dist_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    TRACE( TRACE_TRX_FLOW, "upd district\n");
+    //    TRACE( TRACE_TRX_FLOW, "upd district\n");
     //    _pin.describe(0);
 
     // get table tuple from the cache
@@ -235,7 +235,7 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
 w_rc_t upd_cust_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    TRACE( TRACE_TRX_FLOW, "upd customer\n");
+    //    TRACE( TRACE_TRX_FLOW, "upd customer\n");
     //    _pin.describe(0);
 
     // get table tuple from the cache
@@ -517,14 +517,13 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
                                   trx_result_tuple_t& atrt)
 {
     assert (_g_dora);
-    TRACE( TRACE_TRX_FLOW, "%d. DORA - PAYMENT...\n", xct_id);         
-
-    tid_t atid;   
 
     // 1. Initiate transaction
+    tid_t atid;   
     W_DO(_pssm->begin_xct(atid));
     xct_t* pxct = ss_m::tid_to_xct(atid);    
     assert (pxct);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the next RVP
     midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct,
@@ -542,43 +541,62 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     // 3d. Enqueue it
 
     // @note: Enqueuing in order of trx size 
+    // @note: Getting a mutex because all the trxs need to enqueue their actions
+    //        in some total order.
 
     upd_cust_pay_action_impl* p_upd_cust_pay_action = _g_dora->get_upd_cust_pay_action();
     assert (p_upd_cust_pay_action);
     p_upd_cust_pay_action->set_input(atid, pxct, rvp, this, apin);
     rvp->set_puc(p_upd_cust_pay_action);
     p_upd_cust_pay_action->_m_rvp=rvp;
-    if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, apin._home_wh_id)) { // SF CUSTOMER partitions
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-    }
+
 
     upd_dist_pay_action_impl* p_upd_dist_pay_action = _g_dora->get_upd_dist_pay_action();
     assert (p_upd_dist_pay_action);
     p_upd_dist_pay_action->set_input(atid, pxct, rvp, this, apin);
     rvp->set_pud(p_upd_dist_pay_action);
     p_upd_dist_pay_action->_m_rvp=rvp;
-    if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, 0)) { // One DISTRICT partition
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_PAY\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-    }
 
     upd_wh_pay_action_impl*   p_upd_wh_pay_action   = _g_dora->get_upd_wh_pay_action();
     assert (p_upd_wh_pay_action);
     p_upd_wh_pay_action->set_input(atid, pxct, rvp, this, apin);
     rvp->set_puw(p_upd_wh_pay_action);
     p_upd_wh_pay_action->_m_rvp=rvp;
-    if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, 0)) { // One WAREHOUSE partition
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_PAY\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-    }
 
-    // 4. detatch self from xct
-    me()->detach_xct(pxct);
-    
+    // start enqueueing all the enqueues should appear atomic
+    // that is there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    { // DETACH_LOCK_CS
+
+        // the worker threads may finish up before the client detaches
+        CRITICAL_SECTION(detatch_lock_cs, rvp->_detach_lock);
+
+        { // PAY_ENQUEUE_CS
+            CRITICAL_SECTION(pay_enqueue_cs, _g_dora->_pay_lock);
+            if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, (apin._home_wh_id-1))) { // SF CUSTOMER partitions
+                TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+            if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, 0)) { // One DISTRICT partition
+                TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_PAY\n");
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+            if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, 0)) { // One WAREHOUSE partition
+                TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_PAY\n");
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+        } // PAY_ENQUEUE_CS
+
+
+        // 4. detatch self from xct
+        TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", atid);
+        me()->detach_xct(pxct);
+    } // DETACH_LOCK_CS    
+
     return (RCOK); 
 }
 

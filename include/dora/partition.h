@@ -201,7 +201,7 @@ protected:
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue(WorkerControl volatile* pwc)
 {
-    TRACE( TRACE_TRX_FLOW, "Dequeuing...\n");
+    //    TRACE( TRACE_TRX_FLOW, "Dequeuing...\n");
     return (_queue.pop(pwc));
 }
 
@@ -226,7 +226,7 @@ const int partition_t<DataType>::enqueue(part_action* pAction)
         return (de_WRONG_PARTITION);
     }
 
-    TRACE( TRACE_TRX_FLOW, "Enqueuing...\n");
+    //    TRACE( TRACE_TRX_FLOW, "Enqueuing...\n");
     _queue.push(pAction);
     return (0);
 }
