@@ -78,10 +78,18 @@ const int dora_tpcc_db::start()
         return (de_GEN_TABLE);
     }
     assert (_wh_irpt);    
-    _wh_irpt->create_one_part();    
-    _wh_irpt->get_part(0)->resize(partDown,partUp);
+    // creates SF partitions for warehouses
+    for (int i=0; i<sf; i++) {
+        _wh_irpt->create_one_part();
+        partDown.reset();
+        partDown.push_back(i);
+        partUp.reset();
+        aboundary=i+1;
+        partUp.push_back(aboundary);
+        _wh_irpt->get_part(i)->resize(partDown,partUp);
+    }
     _irptp_vec.push_back(_wh_irpt);
-    icpu = _next_cpu(icpu, _wh_irpt);
+    icpu = _next_cpu(icpu, _wh_irpt, sf);
 
     // DISTRICT
     _di_irpt = new irp_table_impl(_tpccenv, _tpccenv->district(), icpu, range, DI_IRP_KEY);
@@ -91,10 +99,18 @@ const int dora_tpcc_db::start()
         return (de_GEN_TABLE);
     }
     assert (_di_irpt);
-    _di_irpt->create_one_part();
-    _di_irpt->get_part(0)->resize(partDown,partUp);
+    // creates SF partitions for districts
+    for (int i=0; i<sf; i++) {
+        _di_irpt->create_one_part();
+        partDown.reset();
+        partDown.push_back(i);
+        partUp.reset();
+        aboundary=i+1;
+        partUp.push_back(aboundary);
+        _di_irpt->get_part(i)->resize(partDown,partUp);
+    }
     _irptp_vec.push_back(_di_irpt);
-    icpu = _next_cpu(icpu, _di_irpt);    
+    icpu = _next_cpu(icpu, _di_irpt, sf);    
 
     // HISTORY
     _hi_irpt = new irp_table_impl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
@@ -104,10 +120,18 @@ const int dora_tpcc_db::start()
         return (de_GEN_TABLE);
     }
     assert (_hi_irpt);
-    _hi_irpt->create_one_part();
-    _hi_irpt->get_part(0)->resize(partDown,partUp);
+    // creates SF partitions for districts
+    for (int i=0; i<sf; i++) {
+        _hi_irpt->create_one_part();
+        partDown.reset();
+        partDown.push_back(i);
+        partUp.reset();
+        aboundary=i+1;
+        partUp.push_back(aboundary);
+        _hi_irpt->get_part(i)->resize(partDown,partUp);
+    }
     _irptp_vec.push_back(_hi_irpt);
-    icpu = _next_cpu(icpu, _hi_irpt);    
+    icpu = _next_cpu(icpu, _hi_irpt, sf);    
 
 
     // CUSTOMER

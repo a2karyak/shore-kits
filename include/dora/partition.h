@@ -147,6 +147,9 @@ public:
     // returns true if action can be enqueued it this partition
     virtual const bool verify(part_action& action)=0;
 
+    // enqueue lock needed to enforce an ordering across trxs
+    mcs_lock _enqueue_lock;
+
     // enqueues action, 0 on success
     const int enqueue(part_action* paction);    
 
@@ -164,7 +167,7 @@ public:
         TRACE( TRACE_DEBUG, "Active Thr Count  (%d)\n", _pat_count);
         _plm.dump();
     }
-        
+
 
 
 private:

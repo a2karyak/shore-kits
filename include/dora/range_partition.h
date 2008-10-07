@@ -97,7 +97,6 @@ public:
 }; // EOF: range_partition_impl
 
 
-
 /** Helper functions */
 
 
@@ -110,8 +109,8 @@ public:
  ******************************************************************/
 
 template <class DataType>
-inline const bool range_partition_impl<DataType>::_is_between(const part_key& contDown,
-                                                              const part_key& contUp) const
+const bool range_partition_impl<DataType>::_is_between(const part_key& contDown,
+                                                       const part_key& contUp) const
 {
     assert (_down<=_up);
     assert (contDown<=contUp);
@@ -135,8 +134,8 @@ inline const bool range_partition_impl<DataType>::_is_between(const part_key& co
  ******************************************************************/
 
 template <class DataType>
-inline const bool range_partition_impl<DataType>::resize(const part_key& downLimit, 
-                                                         const part_key& upLimit) 
+const bool range_partition_impl<DataType>::resize(const part_key& downLimit, 
+                                                  const part_key& upLimit) 
 {
     if (upLimit<downLimit) {
         TRACE( TRACE_ALWAYS, "Error in new bounds\n");

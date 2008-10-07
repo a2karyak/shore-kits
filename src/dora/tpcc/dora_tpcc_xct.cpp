@@ -53,7 +53,8 @@ w_rc_t midway_pay_rvp::run()
     frvp->set_pih(p_ins_hist_pay_action);
     p_ins_hist_pay_action->_awh=_awh;
     p_ins_hist_pay_action->_adist=_adist;
-    if (_g_dora->his()->enqueue(p_ins_hist_pay_action, 0)) { // One HISTORY partition
+    int mypartition = _pin._home_wh_id-1;
+    if (_g_dora->his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -66,8 +67,6 @@ w_rc_t midway_pay_rvp::run()
 
 void midway_pay_rvp::cleanup() 
 {
-    TRACE( TRACE_DEBUG, "Cleaning...\n");
-
     // clean house
     _g_dora->give_action(_puw);
     _g_dora->give_action(_pud);
@@ -544,52 +543,70 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     // @note: Getting a mutex because all the trxs need to enqueue their actions
     //        in some total order.
 
-    upd_cust_pay_action_impl* p_upd_cust_pay_action = _g_dora->get_upd_cust_pay_action();
-    assert (p_upd_cust_pay_action);
-    p_upd_cust_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_puc(p_upd_cust_pay_action);
-    p_upd_cust_pay_action->_m_rvp=rvp;
-
-
-    upd_dist_pay_action_impl* p_upd_dist_pay_action = _g_dora->get_upd_dist_pay_action();
-    assert (p_upd_dist_pay_action);
-    p_upd_dist_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_pud(p_upd_dist_pay_action);
-    p_upd_dist_pay_action->_m_rvp=rvp;
-
-    upd_wh_pay_action_impl*   p_upd_wh_pay_action   = _g_dora->get_upd_wh_pay_action();
-    assert (p_upd_wh_pay_action);
-    p_upd_wh_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_puw(p_upd_wh_pay_action);
-    p_upd_wh_pay_action->_m_rvp=rvp;
-
-    // start enqueueing all the enqueues should appear atomic
-    // that is there should be a total order across trxs 
-    // (it terms of the sequence actions are enqueued)
 
     { // DETACH_LOCK_CS
 
         // the worker threads may finish up before the client detaches
         CRITICAL_SECTION(detatch_lock_cs, rvp->_detach_lock);
 
-        { // PAY_ENQUEUE_CS
-            CRITICAL_SECTION(pay_enqueue_cs, _g_dora->_pay_lock);
-            if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, (apin._home_wh_id-1))) { // SF CUSTOMER partitions
+        upd_cust_pay_action_impl* p_upd_cust_pay_action = _g_dora->get_upd_cust_pay_action();
+        assert (p_upd_cust_pay_action);
+        p_upd_cust_pay_action->set_input(atid, pxct, rvp, this, apin);
+        rvp->set_puc(p_upd_cust_pay_action);
+        p_upd_cust_pay_action->_m_rvp=rvp;
+
+        upd_dist_pay_action_impl* p_upd_dist_pay_action = _g_dora->get_upd_dist_pay_action();
+        assert (p_upd_dist_pay_action);
+        p_upd_dist_pay_action->set_input(atid, pxct, rvp, this, apin);
+        rvp->set_pud(p_upd_dist_pay_action);
+        p_upd_dist_pay_action->_m_rvp=rvp;
+
+        upd_wh_pay_action_impl*   p_upd_wh_pay_action   = _g_dora->get_upd_wh_pay_action();
+        assert (p_upd_wh_pay_action);
+        p_upd_wh_pay_action->set_input(atid, pxct, rvp, this, apin);
+        rvp->set_puw(p_upd_wh_pay_action);
+        p_upd_wh_pay_action->_m_rvp=rvp;
+
+        // start enqueueing all the enqueues should appear atomic
+        // that is there should be a total order across trxs 
+        // (it terms of the sequence actions are enqueued)
+
+        {
+            //CRITICAL_SECTION(pay_enqueue_cs, _g_dora->_pay_lock);
+            int mypartition = apin._home_wh_id-1;
+            CRITICAL_SECTION(cus_part_cs, _g_dora->cus(mypartition)->_enqueue_lock);
+
+            if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, mypartition)) { // (SF) CUSTOMER partitions
                 TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
                 assert (0); 
                 return (RC(de_PROBLEM_ENQUEUE));
             }
-            if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, 0)) { // One DISTRICT partition
-                TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_PAY\n");
-                assert (0); 
-                return (RC(de_PROBLEM_ENQUEUE));
+
+            
+            {
+                CRITICAL_SECTION(dis_part_cs, _g_dora->dis(mypartition)->_enqueue_lock);
+                cus_part_cs.exit();
+
+                if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, mypartition)) { // (SF) DISTRICT partitions
+                    TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_PAY\n");
+                    assert (0); 
+                    return (RC(de_PROBLEM_ENQUEUE));
+                }
+
+                {
+                    // WH_PART_CS
+                    CRITICAL_SECTION(wh_part_cs, _g_dora->whs(mypartition)->_enqueue_lock);
+                    dis_part_cs.exit();
+            
+                    if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, mypartition)) { // (SF) WAREHOUSE partitions
+                        TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_PAY\n");
+                        assert (0); 
+                        return (RC(de_PROBLEM_ENQUEUE));
+                    }
+                    wh_part_cs.exit();
+                }
             }
-            if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, 0)) { // One WAREHOUSE partition
-                TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_PAY\n");
-                assert (0); 
-                return (RC(de_PROBLEM_ENQUEUE));
-            }
-        } // PAY_ENQUEUE_CS
+        }
 
 
         // 4. detatch self from xct

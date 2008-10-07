@@ -106,6 +106,7 @@ public:
 
     tatas_lock     _detach_lock; // enforces order across detaches
 
+
 private:
 
     // copying not allowed
