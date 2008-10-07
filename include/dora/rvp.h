@@ -97,6 +97,13 @@ public:
         _result = trx_result_tuple_t();
     }    
 
+
+    // hack to make the intermediate RVPs be detached
+    virtual w_rc_t release(thread_t* aworker) { 
+        aworker->detach_xct(_xct);
+        return (RCOK); 
+    }
+
 private:
 
     // copying not allowed
@@ -135,6 +142,9 @@ public:
 
     virtual void upd_committed_stats()=0; // update the committed trx stats
     virtual void upd_aborted_stats()=0;   // update the committed trx stats
+
+    // hack to make the intermediate RVPs be detached
+    w_rc_t release(thread_t* aworker) { return (RCOK); } // does nothing in case of terminal rvp
 
 protected:
 

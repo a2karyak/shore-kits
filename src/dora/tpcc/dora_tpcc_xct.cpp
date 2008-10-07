@@ -48,7 +48,6 @@ w_rc_t midway_pay_rvp::run()
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
     //    TRACE( TRACE_DEBUG, "(%d)\n", _tid);
 
-
     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     assert (p_ins_hist_pay_action);
     frvp->set_pih(p_ins_hist_pay_action);
@@ -61,8 +60,7 @@ w_rc_t midway_pay_rvp::run()
     }
 
     // 1. Cleanup
-    cleanup();
-
+    cleanup();    
     return (RCOK);
 }
 
@@ -123,7 +121,7 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
 {
     assert (_ptpccenv);
     TRACE( TRACE_TRX_FLOW, "upd warehouse\n");
-    _pin.describe(0);
+    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
@@ -180,7 +178,7 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
 {
     assert (_ptpccenv);
     TRACE( TRACE_TRX_FLOW, "upd district\n");
-    _pin.describe(0);
+    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
@@ -238,7 +236,7 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
 {
     assert (_ptpccenv);
     TRACE( TRACE_TRX_FLOW, "upd customer\n");
-    _pin.describe(0);
+    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
@@ -415,7 +413,7 @@ w_rc_t ins_hist_pay_action_impl::trx_exec()
 {
     assert (_ptpccenv);
     TRACE( TRACE_TRX_FLOW, "ins history\n");
-    _pin.describe(0);
+    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<history_t>* prhist = _ptpccenv->history_man()->get_tuple();

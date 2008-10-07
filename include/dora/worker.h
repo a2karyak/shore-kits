@@ -342,18 +342,27 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         if (aprvp->post()) {
             // last caller
             // execute the code of this rendezvous point
-            TRACE( TRACE_TRX_FLOW, "Last caller for (%d)\n", pa->get_tid());
             e = aprvp->run();            
-            assert (e.ptr());
             if (e.is_error()) {
                 TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
                        pa->get_tid(), e.err_num());
                 assert(0);
                 return (de_WORKER_DETACH_XCT);
             }
+            
+            // if it was an intermediate RVP it needs to be deattached
+            e = aprvp->release(this);
+            if (e.is_error()) {
+                TRACE( TRACE_ALWAYS, "Problem releasing rvp for xct (%d) [0x%x]\n",
+                       pa->get_tid(), e.err_num());
+                assert(0);
+                return (de_WORKER_DETACH_XCT);
+            }
+                    
         }
         else {
             // not last caller, simply detach from trx
+            TRACE( TRACE_DEBUG, "Deattaching from (%d)\n", pa->get_tid());
             detach_xct(pa->get_xct());
         }
 
