@@ -327,8 +327,16 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         // 2. attach to xct
         attach_xct(pa->get_xct());
         TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", pa->get_tid());
+
+        // 3. get pointer to rvp
+        rvp_t* aprvp = pa->get_rvp();
+//         assert (aprvp);
+//         {
+//             int iattached = aprvp->inc_attached();
+//             assert (iattached); // at least one should be attached at this point
+//         }
             
-        // 3. serve action
+        // 4. serve action
         e = pa->trx_exec();
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
@@ -337,14 +345,11 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
             return (de_WORKER_RUN_XCT);
         }
             
-        // 4. finalize processing
-        rvp_t* aprvp = pa->get_rvp();
-        assert (aprvp);
-        
+        // 5. finalize processing        
         {
             // make sure that the detaches from worker threads
             // serving the same trx will happen in the order they post()
-            CRITICAL_SECTION(detach_lock_cs, aprvp->_detach_lock);
+            CRITICAL_SECTION(detach_cs, aprvp->_detach_lock);
             if (aprvp->post()) {
                 // last caller
 

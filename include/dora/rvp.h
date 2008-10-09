@@ -40,7 +40,8 @@ protected:
 
     // the countdown
     countdown_t    _countdown;
-    ActionDecision _decision;
+    ActionDecision volatile _decision;
+    tatas_lock     _decision_lock;
 
     // trx-specific
     xct_t*              _xct; // Not the owner
@@ -53,6 +54,7 @@ public:
           trx_result_tuple_t &presult, 
           const int intra_trx_cnt) 
         : _tid(atid), _xct(axct), _result(presult), _countdown(intra_trx_cnt),
+          _attach_cnt(0),
           _decision(AD_UNDECIDED)
     { 
         assert (_xct);
@@ -86,7 +88,10 @@ public:
 
     virtual void cleanup()=0; // does any clean up
 
-    bool post(bool is_error=false) { return (_countdown.post(is_error)); }
+    bool post(bool is_error=false) { 
+        assert (_countdown.remaining()); // before posting check if there is to post 
+        return (_countdown.post(is_error)); 
+    }
 
     // for the cache
     void reset() {
@@ -104,8 +109,29 @@ public:
         return (RCOK); 
     }
 
-    tatas_lock     _detach_lock; // enforces order across detaches
+    // decides to abort this trx
+    virtual ActionDecision abort() { 
+        CRITICAL_SECTION(decision_cs, _decision_lock);
+        _decision = AD_ABORT;
+        return (_decision);
+    }
 
+
+    // in order to coordinate between threads of the same trx
+    tatas_lock     _detach_lock; // enforces order across detaches
+    int volatile   _attach_cnt;  // enforces at least one thread to be attached
+    tatas_lock     _attach_lock; // enforces order across detaches
+
+    const int get_attached() {
+        CRITICAL_SECTION(attach_cs, _attach_lock);
+        return (_attach_cnt);
+    }
+
+    const int inc_attached() {
+        CRITICAL_SECTION(attach_cs, _attach_lock);
+        ++_attach_cnt;
+        return (_attach_cnt);
+    }
 
 private:
 
