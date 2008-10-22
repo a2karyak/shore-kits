@@ -25,6 +25,120 @@ bool volatile _g_canceled = false;
 
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    load_{trxs,bp}_map
+ *
+ *  @brief: Loads the basic supported trxs and binding policies maps
+ *
+ *  @note:  Calls the append_{trxs,bp}_map function for possible extensions
+ *
+ ********************************************************************/
+
+
+// TRXS //
+
+void shore_kit_shell_t::load_trxs_map(void)
+{
+    // Baseline TPC-C trxs
+    _sup_trxs[XCT_MIX]          = "Mix";
+    _sup_trxs[XCT_NEW_ORDER]    = "NewOrder";
+    _sup_trxs[XCT_PAYMENT]      = "Payment";
+    _sup_trxs[XCT_ORDER_STATUS] = "OrderStatus";
+    _sup_trxs[XCT_DELIVERY]     = "Delivery";
+    _sup_trxs[XCT_STOCK_LEVEL]  = "StockLevel";
+
+    // Microbenchmarks
+    _sup_trxs[XCT_BENCH_WHS]   = "Bench-WHs";
+    _sup_trxs[XCT_BENCH_CUST]  = "Bench-CUSTs";
+
+    // Call virtual
+    append_trxs_map();
+}
+
+void shore_kit_shell_t::print_sup_trxs(void) const 
+{
+    TRACE( TRACE_ALWAYS, "Supported TRXs\n");
+    for (mapSupTrxsConstIt cit= _sup_trxs.begin();
+         cit != _sup_trxs.end(); cit++)
+            TRACE( TRACE_ALWAYS, "%d -> %s\n", cit->first, cit->second.c_str());
+}
+
+const char* shore_kit_shell_t::translate_trx(const int iSelectedTrx) const
+{
+    mapSupTrxsConstIt cit = _sup_trxs.find(iSelectedTrx);
+    if (cit != _sup_trxs.end())
+        return (cit->second.c_str());
+    return ("Unsupported TRX");
+}
+
+
+// BP - Binding Policies //
+
+void shore_kit_shell_t::load_bp_map(void)
+{
+    // Basic binding policies
+    _sup_bps[BT_NONE]          = "NoBinding";
+    _sup_bps[BT_NEXT]          = "Adjacent";
+    _sup_bps[BT_SPREAD]        = "SpreadToCores";
+
+    // Call virtual
+    append_bp_map();
+}
+
+void shore_kit_shell_t::print_sup_bp(void) 
+{
+    TRACE( TRACE_ALWAYS, "Supported Binding Policies\n");
+    for (mapBindPolsIt cit= _sup_bps.begin();
+         cit != _sup_bps.end(); cit++)
+            TRACE( TRACE_ALWAYS, "%d -> %s\n", cit->first, cit->second.c_str());
+}
+
+const char* shore_kit_shell_t::translate_bp(const eBindingType abt)
+{
+    mapBindPolsIt it = _sup_bps.find(abt);
+    if (it != _sup_bps.end())
+        return (it->second.c_str());
+    return ("Unsupported Binding Policy");
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    next_cpu()
+ *
+ * @brief: Decides what is the next cpu for the forking clients 
+ *
+ * @note:  This decision is based on:
+ *         - abt                     - the selected binding type
+ *         - aprd                    - the current cpu
+ *         - _env->_max_cpu_count    - the maximum cpu count (hard-limit)
+ *         - _env->_active_cpu_count - the active cpu count (soft-limit)
+ *         - this->_start_prs_id     - the first assigned cpu for the table
+ *
+ ******************************************************************/
+
+processorid_t shore_kit_shell_t::next_cpu(const eBindingType abt, 
+                                          const processorid_t aprd) 
+{
+    processorid_t nextprs;
+    switch (abt) {
+    case (BT_NONE):
+        return (PBIND_NONE);
+    case (BT_NEXT):
+        nextprs = ((aprd+1) % _env->get_active_cpu_count());
+        return (nextprs);
+    case (BT_SPREAD):
+        static const int NIAGARA_II_STEP = 8;
+        nextprs = ((aprd+NIAGARA_II_STEP) % _env->get_active_cpu_count());
+        return (nextprs);
+    }
+    assert (0); // Should not reach this point
+    return (nextprs);
+}
+
+
 /******************************************************************** 
  *
  *  @fn:    print_throughput
@@ -35,7 +149,7 @@ bool volatile _g_canceled = false;
 
 void shore_kit_shell_t::print_throughput(const int iQueriedWHs, const int iSpread, 
                                          const int iNumOfThreads, const int iUseSLI, 
-                                         const double delay) const
+                                         const double delay, const eBindingType abt)
 {
     assert (_env);
     int trxs_att  = _env->get_session_tpcc_stats()->get_total_attempted();
@@ -46,6 +160,7 @@ void shore_kit_shell_t::print_throughput(const int iQueriedWHs, const int iSprea
            "WHs:      (%d)\n"                   \
            "Spread:   (%s)\n"                   \
            "SLI:      (%s)\n"                   \
+           "Binding:  (%s)\n"                   \
            "Threads:  (%d)\n"                   \
            "Trxs Att: (%d)\n"                   \
            "Trxs Com: (%d)\n"                   \
@@ -55,52 +170,54 @@ void shore_kit_shell_t::print_throughput(const int iQueriedWHs, const int iSprea
            "tpm-C:    (%.2f)\n",
            iQueriedWHs, 
            (iSpread ? "Yes" : "No"), (iUseSLI ? "Yes" : "No"), 
+           translate_bp(abt),
            iNumOfThreads, trxs_att, trxs_com, nords_com, 
            delay, 
            trxs_com/delay,
            60*nords_com/delay);
 }
 
-
 void shore_kit_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
                                            const int iNumOfThreads, const int iDuration,
                                            const int iSelectedTrx, const int iIterations,
-                                           const int iUseSLI) const
+                                           const int iUseSLI, const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
            "Queried WHs    : %d\n" \
            "Spread Threads : %s\n" \
+           "Binding        : %s\n" \
            "Num of Threads : %d\n" \
            "Duration       : %d\n" \
            "Trx            : %s\n" \
            "Iterations     : %d\n" \
            "Use SLI        : %s\n", 
            iQueriedWHs, (iSpread ? "Yes" : "No"), 
-           iNumOfThreads, iDuration, translate_trx_id(iSelectedTrx), 
+           translate_bp(abt),
+           iNumOfThreads, iDuration, translate_trx(iSelectedTrx), 
            iIterations, (iUseSLI ? "Yes" : "No"));
 }
-
 
 void shore_kit_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread, 
                                         const int iNumOfThreads, const int iNumOfTrxs,
                                         const int iSelectedTrx, const int iIterations,
-                                        const int iUseSLI) const
+                                        const int iUseSLI, const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
            "Queried WHs    : %d\n" \
            "Spread Threads : %s\n" \
+           "Binding        : %s\n" \
            "Num of Threads : %d\n" \
            "Num of Trxs    : %d\n" \
            "Trx            : %s\n" \
            "Iterations     : %d\n" \
            "Use SLI        : %s\n", 
            iQueriedWHs, (iSpread ? "Yes" : "No"), 
-           iNumOfThreads, iNumOfTrxs, translate_trx_id(iSelectedTrx),
+           translate_bp(abt),
+           iNumOfThreads, iNumOfTrxs, translate_trx(iSelectedTrx),
            iIterations, (iUseSLI ? "Yes" : "No"));
 }
-
 
 
 /******************************************************************** 
@@ -126,7 +243,7 @@ int shore_kit_shell_t::print_usage(const char* command)
            "<ITERATIONS>  : Number of iterations (Default=3) (optional)\n\n");
 
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
-           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI>]\n" \
+           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI> <BINDING>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
@@ -134,10 +251,11 @@ int shore_kit_shell_t::print_usage(const char* command)
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<SLI>         : Use SLI (Default=0-No) (optional)\n\n");
+           "<SLI>         : Use SLI (Default=0-No) (optional)\n" \
+           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
 
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n" \
-           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <SLI>]\n" \
+           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <SLI> <BINDING>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
@@ -145,9 +263,13 @@ int shore_kit_shell_t::print_usage(const char* command)
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<SLI>         : Use SLI (Default=0-No) (optional)\n");
+           "<SLI>         : Use SLI (Default=0-No) (optional)\n" \
+           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n");
     
     TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
+
+    print_sup_trxs();
+    print_sup_bp();
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -164,7 +286,7 @@ int shore_kit_shell_t::print_usage(const char* command)
 void shore_kit_shell_t::usage_cmd_TEST() 
 {
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
-           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI>]\n" \
+           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI> <BINDING>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
@@ -172,7 +294,8 @@ void shore_kit_shell_t::usage_cmd_TEST()
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<SLI>         : Use SLI (Default=0-No) (optional)\n\n");
+           "<SLI>         : Use SLI (Default=0-No) (optional)\n" \
+           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
 }
 
 
@@ -187,7 +310,7 @@ void shore_kit_shell_t::usage_cmd_TEST()
 void shore_kit_shell_t::usage_cmd_MEASURE() 
 {
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
-           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <SLI>]\n" \
+           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <SLI> <BINDING>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
@@ -195,7 +318,8 @@ void shore_kit_shell_t::usage_cmd_MEASURE()
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<SLI>         : Use SLI (Default=0-No) (optional)\n");
+           "<SLI>         : Use SLI (Default=0-No) (optional)\n" \
+           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
 }
 
 
@@ -246,6 +370,8 @@ void shore_kit_shell_t::usage_cmd_LOAD()
 int shore_kit_shell_t::process_command(const char* command)
 {
     _g_canceled = false;
+
+    _current_prs_id = _start_prs_id;
 
     char command_tag[SERVER_COMMAND_BUFFER_SIZE];
 
@@ -414,23 +540,25 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
 
 
     /* 0. Parse Parameters */
-    int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
-    int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
-    int spreadThreads       = DF_SPREAD_THREADS_TO_WHS;
-    int tmp_spreadThreads   = DF_SPREAD_THREADS_TO_WHS;
-    int numOfThreads        = DF_NUM_OF_THR;
-    int tmp_numOfThreads    = DF_NUM_OF_THR;
-    int numOfTrxs           = DF_TRX_PER_THR;
-    int tmp_numOfTrxs       = DF_TRX_PER_THR;
-    int selectedTrxID       = DF_TRX_ID;
-    int tmp_selectedTrxID   = DF_TRX_ID;
-    int iterations          = DF_NUM_OF_ITERS;
-    int tmp_iterations      = DF_NUM_OF_ITERS;
-    int use_sli             = DF_USE_SLI;
-    int tmp_use_sli         = DF_USE_SLI;
+    int numOfQueriedWHs      = DF_NUM_OF_QUERIED_WHS;
+    int tmp_numOfQueriedWHs  = DF_NUM_OF_QUERIED_WHS;
+    int spreadThreads        = DF_SPREAD_THREADS_TO_WHS;
+    int tmp_spreadThreads    = DF_SPREAD_THREADS_TO_WHS;
+    int numOfThreads         = DF_NUM_OF_THR;
+    int tmp_numOfThreads     = DF_NUM_OF_THR;
+    int numOfTrxs            = DF_TRX_PER_THR;
+    int tmp_numOfTrxs        = DF_TRX_PER_THR;
+    int selectedTrxID        = DF_TRX_ID;
+    int tmp_selectedTrxID    = DF_TRX_ID;
+    int iterations           = DF_NUM_OF_ITERS;
+    int tmp_iterations       = DF_NUM_OF_ITERS;
+    int use_sli              = DF_USE_SLI;
+    int tmp_use_sli          = DF_USE_SLI;
+    eBindingType binding     = DF_BINDING_TYPE;
+    eBindingType tmp_binding = DF_BINDING_TYPE;
     
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %d %d %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedWHs,
                 &tmp_spreadThreads,
@@ -438,7 +566,8 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
                 &tmp_numOfTrxs,
                 &tmp_selectedTrxID,
                 &tmp_iterations,
-                &tmp_use_sli) < 2 ) 
+                &tmp_use_sli,
+                &tmp_binding) < 2 ) 
     {
         usage_cmd_TEST();
         return (SHELL_NEXT_CONTINUE);
@@ -485,9 +614,17 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
     // 7- use sli   
     use_sli = tmp_use_sli;
 
+    // 8- binding type   
+    if (tmp_binding>BT_NONE) {        
+        mapBindPolsIt cit = _sup_bps.find(tmp_binding);
+        if (cit!= _sup_bps.end())
+            binding = tmp_binding;
+    }
+
     // call the virtual function that implements the test    
     return (_cmd_TEST_impl(numOfQueriedWHs, spreadThreads, numOfThreads,
-                           numOfTrxs, selectedTrxID, iterations, use_sli));
+                           numOfTrxs, selectedTrxID, iterations, use_sli, 
+                           binding));
 }
 
 
@@ -516,23 +653,25 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
     TRACE( TRACE_ALWAYS, "measuring...\n");
 
     /* 0. Parse Parameters */
-    int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
-    int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
-    int spreadThreads       = DF_SPREAD_THREADS_TO_WHS;
-    int tmp_spreadThreads   = DF_SPREAD_THREADS_TO_WHS;
-    int numOfThreads        = DF_NUM_OF_THR;
-    int tmp_numOfThreads    = DF_NUM_OF_THR;
-    int duration            = DF_DURATION;
-    int tmp_duration        = DF_DURATION;
-    int selectedTrxID       = DF_TRX_ID;
-    int tmp_selectedTrxID   = DF_TRX_ID;
-    int iterations          = DF_NUM_OF_ITERS;
-    int tmp_iterations      = DF_NUM_OF_ITERS;
-    int use_sli             = DF_USE_SLI;
-    int tmp_use_sli         = DF_USE_SLI;
+    int numOfQueriedWHs      = DF_NUM_OF_QUERIED_WHS;
+    int tmp_numOfQueriedWHs  = DF_NUM_OF_QUERIED_WHS;
+    int spreadThreads        = DF_SPREAD_THREADS_TO_WHS;
+    int tmp_spreadThreads    = DF_SPREAD_THREADS_TO_WHS;
+    int numOfThreads         = DF_NUM_OF_THR;
+    int tmp_numOfThreads     = DF_NUM_OF_THR;
+    int duration             = DF_DURATION;
+    int tmp_duration         = DF_DURATION;
+    int selectedTrxID        = DF_TRX_ID;
+    int tmp_selectedTrxID    = DF_TRX_ID;
+    int iterations           = DF_NUM_OF_ITERS;
+    int tmp_iterations       = DF_NUM_OF_ITERS;
+    int use_sli              = DF_USE_SLI;
+    int tmp_use_sli          = DF_USE_SLI;
+    eBindingType binding     = DF_BINDING_TYPE;
+    eBindingType tmp_binding = DF_BINDING_TYPE;
     
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %d %d %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedWHs,
                 &tmp_spreadThreads,
@@ -540,7 +679,8 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
                 &tmp_duration,
                 &tmp_selectedTrxID,
                 &tmp_iterations,
-                &tmp_use_sli) < 2 ) 
+                &tmp_use_sli,
+                &tmp_binding) < 2 ) 
     {
         usage_cmd_MEASURE();
         return (SHELL_NEXT_CONTINUE);
@@ -587,9 +727,14 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
     // 7- use sli   
     use_sli = tmp_use_sli;
 
+    // 8- binding type   
+    if (tmp_binding>BT_NONE)
+        binding = tmp_binding;
+
     // call the virtual function that implements the measurement    
     return (_cmd_MEASURE_impl(numOfQueriedWHs, spreadThreads, numOfThreads,
-                              duration, selectedTrxID, iterations, use_sli));
+                              duration, selectedTrxID, iterations, use_sli,
+                              binding));
 }
 
 

@@ -21,10 +21,15 @@
 #include <cstring>
 #endif
 
+#include <map>
+
 #include "util/shell.h"
 #include "tests/common/tester_shore_env.h"
 #include "sm/shore/shore_env.h"
 #include "stages/tpcc/shore/shore_tpcc_env.h" // TODO (ip) It should not get the specific TPCC Shore Env
+
+
+using std::map;
 
 
 extern "C" void alarm_handler(int sig);
@@ -117,6 +122,19 @@ class shore_kit_shell_t : public shell_t
 protected:
 
     ShoreTPCCEnv* _env;
+    processorid_t _start_prs_id;
+    processorid_t _current_prs_id;    
+
+    // supported trxs
+    typedef map<int,string>              mapSupTrxs;
+    typedef mapSupTrxs::iterator         mapSupTrxsIt;
+    typedef mapSupTrxs::const_iterator   mapSupTrxsConstIt;
+    mapSupTrxs _sup_trxs;
+
+    // supported binding policies
+    typedef map<eBindingType,string>      mapBindPols;
+    typedef mapBindPols::iterator         mapBindPolsIt;    
+    mapBindPols _sup_bps;
 
 public:
 
@@ -133,11 +151,13 @@ public:
 	    sa.sa_handler = &alarm_handler;
 	    if(sigaction(SIGALRM, &sa, &sa_old) < 0)
 		exit(1);
+
+            // load supported trxs and binding policies maps
+            load_trxs_map();
+            load_bp_map();
         }
 
-    virtual ~shore_kit_shell_t() 
-    { 
-    }
+    virtual ~shore_kit_shell_t()  { }
 
     // shell interface
     virtual int process_command(const char* command);
@@ -155,8 +175,15 @@ public:
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
 
-    // pure virtual - translate to string the supported trxs
-    virtual const char* translate_trx_id(const int iSelectedTrx) const=0;
+    // supported trxs and binding policies
+    void print_sup_trxs(void) const;
+    void print_sup_bp(void);
+    void load_trxs_map(void);
+    void load_bp_map(void);
+    virtual void append_trxs_map(void) { }
+    virtual void append_bp_map(void)   { }
+    const char* translate_trx(const int iSelectedTrx) const;
+    const char* translate_bp(const eBindingType abt);
 
 
     // virtual implementation of the {WARMUP/TEST/MEASURE} 
@@ -164,33 +191,37 @@ public:
     // TEST/MEASURE are pure virtual
     virtual int _cmd_WARMUP_impl(const int iQueriedWHs, const int iTrxs, 
                                  const int iDuration, const int iIterations);
-    virtual int _cmd_LOAD_impl();
-
+    virtual int _cmd_LOAD_impl(void);
 
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
-                               const int iUseSLI)=0;
+                               const int iUseSLI, const eBindingType abt)=0;
     virtual int _cmd_MEASURE_impl(const int iQueriedWHs, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
-                                  const int iUseSLI)=0;    
+                                  const int iUseSLI, const eBindingType abt)=0;    
+
+    // for the client processor binding policy
+    virtual processorid_t next_cpu(const eBindingType abt,
+                                   const processorid_t aprd);
+
 
 protected:
 
     void print_throughput(const int iQueriedWHs, const int iSpread, 
                           const int iNumOfThreads, const int iUseSLI, 
-                          const double delay) const;
+                          const double delay, const eBindingType abt);
     
     void print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
                             const int iNumOfThreads, const int iDuration,
                             const int iSelectedTrx, const int iIterations,
-                            const int iUseSLI) const;
+                            const int iUseSLI, const eBindingType abt);
 
     void print_TEST_info(const int iQueriedWHs, const int iSpread, 
                          const int iNumOfThreads, const int iNumOfTrxs,
                          const int iSelectedTrx, const int iIterations,
-                         const int iUseSLI) const;
+                         const int iUseSLI, const eBindingType abt);
 
 }; // EOF: shore_kit_shell_t
 

@@ -42,16 +42,15 @@ public:
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
-                               const int iUseSLI);
+                               const int iUseSLI, const eBindingType abt);
     virtual int _cmd_MEASURE_impl(const int iQueriedWHs, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
-                                  const int iUseSLI);    
+                                  const int iUseSLI, const eBindingType abt);    
 
     virtual int process_cmd_LOAD(const char* command, char* command_tag);        
 
-    // helper functions
-    virtual const char* translate_trx_id(const int trx_id) const;
+    virtual void append_trxs_map(void); // appends the DORA-TRXs
 
 }; // EOF: dora_tpcc_kit_shell_t
 
@@ -59,52 +58,20 @@ public:
 
 /** dora_tpcc_kit_shell_t helper functions */
 
-
-const char* dora_tpcc_kit_shell_t::translate_trx_id(const int trx_id) const
+void dora_tpcc_kit_shell_t::append_trxs_map(void)
 {
-    switch (trx_id) {
-        
-        // Regular
-    case (XCT_NEW_ORDER):
-        return ("NewOrder");
-        break;
-    case (XCT_PAYMENT):
-        return ("Payment");
-        break;
-    case (XCT_ORDER_STATUS):
-        return ("OrderStatus");
-        break;
-    case (XCT_DELIVERY):
-        return ("Delivery");
-        break;
-    case (XCT_STOCK_LEVEL):
-        return ("StockLevel");
-        break;
+    // Baseline TPC-C trxs
+    _sup_trxs[XCT_DORA_MIX]          = "DORA-Mix";
+    _sup_trxs[XCT_DORA_NEW_ORDER]    = "DORA-NewOrder";
+    _sup_trxs[XCT_DORA_PAYMENT]      = "DORA-Payment";
+    _sup_trxs[XCT_DORA_ORDER_STATUS] = "DORA-OrderStatus";
+    _sup_trxs[XCT_DORA_DELIVERY]     = "DORA-Delivery";
+    _sup_trxs[XCT_DORA_STOCK_LEVEL]  = "DORA-StockLevel";
 
-        // DORA
-    case (XCT_DORA_NEW_ORDER):
-        return ("DORA-NewOrder");
-        break;
-    case (XCT_DORA_PAYMENT):
-        return ("DORA-Payment");
-        break;
-    case (XCT_DORA_ORDER_STATUS):
-        return ("DORA-OrderStatus");
-        break;
-    case (XCT_DORA_DELIVERY):
-        return ("DORA-Delivery");
-        break;
-    case (XCT_DORA_STOCK_LEVEL):
-        return ("DORA-StockLevel");
-        break;
-
-    default:
-        return ("Mix");
-    }
+    // Microbenchmarks
+    _sup_trxs[XCT_DORA_BENCH_WHS]   = "DORA-Bench-WHs";
+    _sup_trxs[XCT_DORA_BENCH_CUST]  = "DORA-Bench-CUSTs";
 }
-
-
-/** dora_tpcc_kit_shell_t functions */
 
 
 /** cmd: TEST **/
@@ -115,11 +82,12 @@ int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
                                           const int iNumOfTrxs,
                                           const int iSelectedTrx, 
                                           const int iIterations,
-                                          const int iUseSLI)
+                                          const int iUseSLI,
+                                          const eBindingType abt)
 {
     // print test information
     print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
-                    iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI);
+                    iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI, abt);
 
     test_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
@@ -127,10 +95,12 @@ int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iIterations);
 
+        // reset starting cpu and wh id
+        _current_prs_id = _start_prs_id;
+        int wh_id = 0;
+
         // set measurement state to measure - start counting everything
         _env->set_measure(MST_MEASURE);
-
-        int wh_id = 0;
 	stopwatch_t timer;
 
         for (int i=0; i<iNumOfThreads; i++) {
@@ -140,9 +110,10 @@ int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
             testers[i] = new test_smt_t(_env, MT_NUM_OF_TRXS,
                                         wh_id, iSelectedTrx, 
                                         iNumOfTrxs, iUseSLI,
-                                        c_str("dora-cl-%d", i));
+                                        c_str("dora-cl-%d", i),
+                                        _current_prs_id);
             testers[i]->fork();
-
+            _current_prs_id = next_cpu(abt, _current_prs_id);
         }
 
         /* 2. join the tester threads */
@@ -159,7 +130,7 @@ int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
 	double delay = timer.time();
 
         // print throughput and reset session stats
-        print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay);
+        print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
         _env->reset_session_tpcc_stats();
     }
 
@@ -178,11 +149,12 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
                                              const int iDuration,
                                              const int iSelectedTrx, 
                                              const int iIterations,
-                                             const int iUseSLI)
+                                             const int iUseSLI,
+                                             const eBindingType abt)
 {
     // print measurement info
     print_MEASURE_info(iQueriedWHs, iSpread, iNumOfThreads, iDuration, 
-                       iSelectedTrx, iIterations, iUseSLI);
+                       iSelectedTrx, iIterations, iUseSLI, abt);
 
     // create and fork client threads
     test_smt_t* testers[MAX_NUM_OF_THR];
@@ -191,10 +163,12 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iIterations);
 
+        // reset starting cpu and wh id
+        _current_prs_id = _start_prs_id;
+        int wh_id = 0;
+
         // set measurement state
         _env->set_measure(MST_WARMUP);
-
-        int wh_id = 0;
 
         // create threads
         for (int i=0; i<iNumOfThreads; i++) {
@@ -204,9 +178,11 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
             testers[i] = new test_smt_t(_env, MT_TIME_DUR,
                                         wh_id, iSelectedTrx, 
                                         0, iUseSLI,
-                                        c_str("dora-cl-%d", i));
+                                        c_str("dora-cl-%d", i),
+                                        _current_prs_id);
             assert (testers[i]);
             testers[i]->fork();
+            _current_prs_id = next_cpu(abt, _current_prs_id);
         }
 
         // TODO: give them some time (2secs) to start-up
@@ -214,7 +190,6 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
 
         // set measurement state
         _env->set_measure(MST_MEASURE);
-
         alarm(iDuration);
 	stopwatch_t timer;
 
@@ -234,7 +209,7 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
 	alarm(0); // cancel the alarm, if any
 
         // print throughput and reset session stats
-        print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay);
+        print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
         _env->reset_session_tpcc_stats();
     }
 

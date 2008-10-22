@@ -591,6 +591,10 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
 		   xct_id, e2.err_num());
 	}
 
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
         // (ip) could retry
         return (e);
     }
@@ -602,6 +606,10 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
         _session_tpcc_stats.inc_no_com();
         _env_stats.inc_trx_com();
     }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
 
     return (RCOK); 
 }
@@ -629,6 +637,10 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
 		   xct_id, e2.err_num());
 	}
 
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
         // (ip) could retry
         return (e);
     }
@@ -640,6 +652,10 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
         _session_tpcc_stats.inc_pay_com();
         _env_stats.inc_trx_com();
     }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
 
     return (RCOK); 
 }
@@ -667,6 +683,10 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
 		   xct_id, e2.err_num());
 	}
 
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
         // (ip) could retry
         return (e);
     }
@@ -678,6 +698,10 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
         _session_tpcc_stats.inc_ord_com();
         _env_stats.inc_trx_com();
     }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
 
     return (RCOK); 
 }
@@ -699,6 +723,10 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
             _env_stats.inc_trx_att();
         }
 
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
 	w_rc_t e2 = _pssm->abort_xct();
 	if(e2.is_error()) {
 	    TRACE( TRACE_ALWAYS, "Xct (%d) Delivery abort failed [0x%x]\n", 
@@ -716,6 +744,10 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
         _session_tpcc_stats.inc_del_com();
         _env_stats.inc_trx_com();
     }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
 
     return (RCOK); 
 }
@@ -737,6 +769,10 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
             _env_stats.inc_trx_att();
         }
 
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
 	w_rc_t e2 = _pssm->abort_xct();
 	if(e2.is_error()) {
 	    TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel abort failed [0x%x]\n", 
@@ -754,6 +790,10 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
         _session_tpcc_stats.inc_sto_com();
         _env_stats.inc_trx_com();
     }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
 
     return (RCOK); 
 }

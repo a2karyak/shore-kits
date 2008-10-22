@@ -13,12 +13,22 @@
 #define __TESTER_SHORE_ENV_H
 
 
+// for binding LWP to cores
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
+
+
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
 
 using namespace shore;
 using namespace tpcc;
+
+
+// enumuration of different binding types
+enum eBindingType { BT_NONE=0, BT_NEXT=1, BT_SPREAD=2 };
 
 
 /** Default values for the environment **/
@@ -58,6 +68,8 @@ const int DF_NUM_OF_ITERS          = 5;
 // default use sli
 const int DF_USE_SLI               = 0;
 
+// default processor binding
+const eBindingType DF_BINDING_TYPE = BT_NONE;
 
 
 /** Default values for the warmups **/
@@ -73,6 +85,7 @@ const int DF_WARMUP_DURATION    = 20;
 
 // default number of iterations during warmup
 const int DF_WARMUP_ITERS       = 3;
+
 
 
 
@@ -103,7 +116,7 @@ enum MeasurementType { MT_UNDEF, MT_NUM_OF_TRXS, MT_TIME_DUR };
 ///////////////////////////////////////////////////////////
 // @class test_smt_t
 //
-// @brief An smthread-based class for tests
+// @brief An smthread-based class for the test clients
 
 class test_smt_t : public thread_t 
 {
@@ -119,6 +132,10 @@ private:
 
     int _use_sli;
 
+    // for processor binding
+    bool          _is_bound;
+    processorid_t _prs_id;
+
 public:
     int	_rv;
 
@@ -128,12 +145,14 @@ public:
     test_smt_t(ShoreTPCCEnv* env, 
                MeasurementType aType,
                int sWH, int trxId, int numOfTrxs, int useSLI,
-               c_str tname) 
+               c_str tname,
+               processorid_t aprsid = PBIND_NONE) 
 	: thread_t(tname), 
           _env(env), _measure_type(aType),
           _wh(sWH), _trxid(trxId), 
           _notrxs(numOfTrxs), 
           _use_sli(useSLI),
+          _is_bound(false), _prs_id(aprsid),
           _rv(0)
     {
         assert (_env);
@@ -166,6 +185,19 @@ public:
 
     // thread entrance
     void work() {
+
+        // 1. bind to the specified processor
+        if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
+            TRACE( TRACE_ALWAYS, "Cannot bind to processor (%d)\n", _prs_id);
+            _is_bound = false;
+        }
+        else {
+            TRACE( TRACE_DEBUG, "Binded to processor (%d)\n", _prs_id);
+            _is_bound = true;
+        }
+
+
+        // 2. init env in not initialized
         if (!_env->is_initialized()) {
             if (_env->init()) {
                 // Couldn't initialize the Shore environment
@@ -176,10 +208,10 @@ public:
             }
         }
 
-        // check SLI
+        // 3. set SLI option
         ss_m::set_sli_enabled(_use_sli);
 
-        // run test
+        // 4. run test
         _rv = test();
     }
 
@@ -189,6 +221,9 @@ public:
 	if(rc.is_error()) return rc.err_num();
         return (run_xcts(_env, _trxid, _notrxs).err_num());
     }
+
+    
+    const bool is_bound() const { return (_is_bound); }
 
     void print_tables();
 

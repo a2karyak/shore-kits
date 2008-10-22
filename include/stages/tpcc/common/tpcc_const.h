@@ -123,17 +123,27 @@ const int SHORE_TPCC_TABLES    = 9;
 /* --- TPC-C TRANSACTION MIX --- */
 /* ----------------------------- */
 
+const int XCT_MIX           = 0;
 const int XCT_NEW_ORDER     = 1;
 const int XCT_PAYMENT       = 2;
 const int XCT_ORDER_STATUS  = 3;
 const int XCT_DELIVERY      = 4;
 const int XCT_STOCK_LEVEL   = 5;
 
+
+const int XCT_BENCH_WHS  = 11;
+const int XCT_BENCH_CUST = 12;
+
+
+const int XCT_DORA_MIX           = 100;
 const int XCT_DORA_NEW_ORDER     = 101;
 const int XCT_DORA_PAYMENT       = 102;
 const int XCT_DORA_ORDER_STATUS  = 103;
 const int XCT_DORA_DELIVERY      = 104;
 const int XCT_DORA_STOCK_LEVEL   = 105;
+
+const int XCT_DORA_BENCH_WHS  = 111;
+const int XCT_DORA_BENCH_CUST = 112;
 
 
 /* --- probabilities for the TPC-C MIX --- */

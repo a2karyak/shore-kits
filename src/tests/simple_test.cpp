@@ -38,16 +38,11 @@ public:
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
-                               const int iUseSLI);
+                               const int iUseSLI, const eBindingType abt);
     virtual int _cmd_MEASURE_impl(const int iQueriedWHs, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
-                                  const int iUseSLI);    
-
-    // helper functions
-    virtual const char* translate_trx_id(const int trx_id) const { 
-        return ("Nada simple...\n");
-    }
+                                  const int iUseSLI, const eBindingType abt);    
     
 }; // EOF: class simple_shore_shell
 
@@ -69,7 +64,8 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
                                        const int iNumOfTrxs,
                                        const int iSelectedTrx, 
                                        const int iIterations,
-                                       const int iUseSLI)
+                                       const int iUseSLI,
+                                       const eBindingType abt)
 {
     TRACE( TRACE_ALWAYS, "testing... (%d) commands processed\n",
            get_command_cnt());
@@ -114,8 +110,6 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
 
     // should be empty here!
     _g_dora->cus(0)->plm()->dump();
-
-
     return (SHELL_NEXT_CONTINUE);
 }
 
@@ -129,15 +123,14 @@ int simple_shore_shell::_cmd_MEASURE_impl(const int iQueriedWHs,
                                           const int iDuration,
                                           const int iSelectedTrx, 
                                           const int iIterations,
-                                          const int iUseSLI)
+                                          const int iUseSLI,
+                                          const eBindingType abt)
 {
     TRACE( TRACE_ALWAYS, "measuring... (%d) commands processed\n",
            get_command_cnt());
 
-
     _g_dora->cus(0)->reset();
-    _g_dora->cus(0)->dump();
-    
+    _g_dora->cus(0)->dump();    
     
     return (SHELL_NEXT_CONTINUE);
 }
