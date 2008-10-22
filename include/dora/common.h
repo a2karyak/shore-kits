@@ -11,7 +11,10 @@
 #ifndef __DORA_COMMON_H
 #define __DORA_COMMON_H
 
+#include "sm_vas.h"
+
 #include "util/namespace.h"
+
 
 
 ENTER_NAMESPACE(dora);
@@ -41,7 +44,7 @@ class terminal_rvp_t;
 
 /******************************************************************** 
  *
- * @enum:  ActionDecision
+ * @enum:  eActionDecision
  *
  * @brief: Possible decision of an action
  *
@@ -50,13 +53,51 @@ class terminal_rvp_t;
  *
  ********************************************************************/
 
-enum ActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
+enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
 
 
 
 /******************************************************************** 
  *
- * @enum:  WorkerControl
+ * @enum:  eWorkingState
+ *
+ * @brief: Possible states while working on a task
+ *
+ * @note:  Finished = Done assigned job but still trx not decided
+ *         (Finished != Idle)
+ *
+ ********************************************************************/
+
+enum eWorkingState { WS_UNDEF, WS_EMPTY,
+                     WS_IDLE_LOOP, WS_IDLE_CONDVAR, 
+                     WS_ASSIGNED, WS_FINISHED };
+
+// Struct that wraps a eWorkingState, and a lock
+struct WorkingState
+{
+    eWorkingState volatile  _working_state;
+    tatas_lock              _working_lock;
+
+    WorkingState() : _working_state(WS_UNDEF) { }
+
+    ~WorkingState() { }
+
+    void set_state(const eWorkingState aws) {
+        CRITICAL_SECTION(ws_cs, _working_lock);
+        _working_state = aws;
+    }
+
+    const eWorkingState get_state() {
+        return (*&_working_state);
+    }
+
+}; // EOF: WorkingState
+
+
+
+/******************************************************************** 
+ *
+ * @enum:  eWorkerControl
  *
  * @brief: States for controling a worker thread
  *
@@ -65,24 +106,24 @@ enum ActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
  *
  ********************************************************************/
 
-enum WorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
+enum eWorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
 
 
 /******************************************************************** 
  *
- * @enum:  DataOwnerState
+ * @enum:  eDataOwnerState
  *
  * @brief: Owning status for the worker thread of the data partition
  *
  ********************************************************************/
 
-enum DataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
+enum eDataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
 
 
 
 /******************************************************************** 
  *
- * @enum:  PartitionPolicy
+ * @enum:  ePartitionPolicy
  *
  * @brief: Possible types of a data partition
  *
@@ -92,7 +133,7 @@ enum DataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
  *
  ********************************************************************/
 
-enum PartitionPolicy { PP_UNDEF, PP_RANGE, PP_HASH, PP_PREFIX };
+enum ePartitionPolicy { PP_UNDEF, PP_RANGE, PP_HASH, PP_PREFIX };
 
 
 

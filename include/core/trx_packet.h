@@ -3,7 +3,7 @@
 /** @file trx_packet.h
  *
  *  @brief A trx_packet is a normal packet with a transaction id, status identifier,
- *  and a corresponding db-specific (currently BerkeleyDB) transaction handle.
+ *  and a corresponding transaction handle.
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -16,6 +16,7 @@
 
 #include "core.h"
 #include "stages/common/process_tuple.h"
+#include "util/condex.h"
 
 
 ENTER_NAMESPACE(qpipe);
@@ -157,24 +158,6 @@ public:
 }; // EOF trx_packet
 
 
-struct condex {
-    pthread_cond_t _cond;
-    pthread_mutex_t _lock;
-    bool _fired;
-    //    condex() : _fired(false) { pthread_cond_init(&_cond); pthread_mutex_init(&_lock); }
-    void signal() {
-	CRITICAL_SECTION(cs, _lock);
-	_fired = true;
-	pthread_cond_signal(&_cond);
-    }
-    void wait() {
-	CRITICAL_SECTION(cs, _lock);
-	while(!_fired)
-	    pthread_cond_wait(&_cond,&_lock);
-	_fired = false;
-    }
-};
-
 /******************************************************************** 
  *
  * @class trx_result_tuple_t
@@ -187,25 +170,18 @@ class trx_result_tuple_t
 {
 private:
 
-    /** Member variables */
-
     TrxState R_STATE;
     int R_ID;
     condex* _notify;
-
-    
-    /** Private access methods */
-
-    inline void set_id(int anID) { R_ID = anID; }
-
+   
 public:
 
     /** construction - destruction */
 
     trx_result_tuple_t() { reset(UNDEF, -1, NULL); }
 
-    trx_result_tuple_t(TrxState aTrxState, int anID) { 
-        reset(aTrxState, anID, NULL);
+    trx_result_tuple_t(TrxState aTrxState, int anID, condex* apcx = NULL) { 
+        reset(aTrxState, anID, apcx);
     }
 
     ~trx_result_tuple_t() { }
@@ -213,19 +189,13 @@ public:
     /** @fn copy constructor */
     trx_result_tuple_t(const trx_result_tuple_t& t) {
 	reset(t.R_STATE, t.R_ID, t._notify);
-    }
-    
-    
-
+    }      
 
     /** @fn copy assingment */
-    trx_result_tuple_t& operator=(const trx_result_tuple_t& t) {
-        
-        reset(t.R_STATE, t.R_ID, t._notify);
-        
+    trx_result_tuple_t& operator=(const trx_result_tuple_t& t) {        
+        reset(t.R_STATE, t.R_ID, t._notify);        
         return (*this);
     }
-
     
     /** @fn equality operator */
     friend bool operator==(const trx_result_tuple_t& t, 
@@ -234,22 +204,22 @@ public:
         return ((t.R_STATE == s.R_STATE) && (t.R_ID == s.R_ID));
     }
 
-    /** Access methods */
-    void set_notify(condex* notify) { _notify = notify; }
-    condex* get_notify() { return _notify; }
-    
-    inline int get_id() { return (R_ID); }
 
+    /** Access methods */
+    condex* get_notify() const { return (_notify); }
+    void set_notify(condex* notify) { _notify = notify; }
+    
+    inline int get_id() const { return (R_ID); }
+    inline void set_id(const int aID) { R_ID = aID; }
+
+    inline TrxState get_state() { return (R_STATE); }
+    inline char* say_state() { return (translate_state(R_STATE)); }
     inline void set_state(TrxState aState) { 
        assert ((aState >= UNDEF) && (aState <= ROLLBACKED));
        R_STATE = aState;
     }
-    
-    inline TrxState get_state() { return (R_STATE); }
 
-    inline char* say_state() { return (translate_state(R_STATE)); }
-
-    inline void reset(TrxState aTrxState, int anID, condex* notify=NULL) {
+    inline void reset(TrxState aTrxState, int anID, condex* notify) {
         // check for validity of inputs
         assert ((aTrxState >= UNDEF) && (aTrxState <= ROLLBACKED));
         assert (anID >= NO_VALID_TRX_ID);

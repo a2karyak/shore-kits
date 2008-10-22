@@ -88,6 +88,8 @@ const int DF_WARMUP_ITERS       = 3;
 
 
 
+// default batch size
+const int BATCH_SIZE = 30;
 
 
 // Instanciate and close the Shore environment
@@ -113,12 +115,15 @@ const int DF_WARMUP_INTERVAL = 2; // 2 secs
 enum MeasurementType { MT_UNDEF, MT_NUM_OF_TRXS, MT_TIME_DUR };
 
 
-///////////////////////////////////////////////////////////
-// @class test_smt_t
-//
-// @brief An smthread-based class for the test clients
+/******************************************************************** 
+ *
+ * @enum:  client_smt_t
+ *
+ * @brief: An smthread-based class for the test clients
+ *
+ ********************************************************************/
 
-class test_smt_t : public thread_t 
+class client_smt_t : public thread_t 
 {
 private:
 
@@ -132,6 +137,9 @@ private:
 
     int _use_sli;
 
+    // used for submitting batches
+    condex_pair* _cp;
+
     // for processor binding
     bool          _is_bound;
     processorid_t _prs_id;
@@ -142,7 +150,7 @@ public:
     static void abort_test();
     static void resume_test();
     
-    test_smt_t(ShoreTPCCEnv* env, 
+    client_smt_t(ShoreTPCCEnv* env, 
                MeasurementType aType,
                int sWH, int trxId, int numOfTrxs, int useSLI,
                c_str tname,
@@ -159,11 +167,22 @@ public:
         assert (_measure_type != MT_UNDEF);
         assert (_wh>=0);
         assert (_notrxs || (_measure_type == MT_TIME_DUR));
+
+        _cp = new condex_pair();
+        assert (_cp);
     }
 
 
-    ~test_smt_t() { }
+    ~client_smt_t() { 
+        if (_cp) {
+            delete (_cp);
+            _cp = NULL;
+        }
+    }
+        
 
+    void submit_batch(ShoreTPCCEnv* env, int xct_type, 
+                      int& trx_cnt, const int batch_size = BATCH_SIZE);
 
     w_rc_t run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct);
     w_rc_t run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid);    
@@ -218,7 +237,7 @@ public:
     // methods
     int test() {
         w_rc_t rc = _env->loaddata();
-	if(rc.is_error()) return rc.err_num();
+        if(rc.is_error()) return rc.err_num();
         return (run_xcts(_env, _trxid, _notrxs).err_num());
     }
 
@@ -232,7 +251,7 @@ public:
      */
     inline int retval() { return (_rv); }
 
-}; // EOF: test_smt_t
+}; // EOF: client_smt_t
 
 
 

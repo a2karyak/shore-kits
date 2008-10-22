@@ -34,20 +34,6 @@ using namespace shore;
 
 /******************************************************************** 
  *
- * @enum:  WorkingState
- *
- * @brief: Possible states while working on a task
- *
- * @note:  Finished = Done assigned job but still trx not decided
- *         (Finished != Idle)
- *
- ********************************************************************/
-
-enum WorkingState { WS_UNDEF, WS_IDLE, WS_ASSIGNED, WS_FINISHED };
-
-
-/******************************************************************** 
- *
  * @class: worker_t
  *
  * @brief: An smthread-based class for the worker threads
@@ -69,12 +55,15 @@ public:
 
 private:
 
-    // status
-    WorkingState            _state;
-    WorkerControl volatile  _control;
-    tatas_lock              _control_lock;
-    DataOwnerState volatile _data_owner;
-    tatas_lock              _data_owner_lock;
+    // status variables
+    eWorkerControl volatile  _control;
+    tatas_lock               _control_lock;
+    eDataOwnerState volatile _data_owner;
+    tatas_lock               _data_owner_lock;
+
+    // cond var for sleeping instead of looping after a while
+    WorkingState             _working;
+    condex                   _notify;
 
     // data
     ShoreEnv*      _env;    
@@ -108,7 +97,7 @@ public:
              processorid_t aprsid = PBIND_NONE) 
         : thread_t(tname), 
           _env(env), _partition(apart),
-          _state(WS_UNDEF), _control(WC_PAUSED), _data_owner(DOS_UNDEF),
+          _control(WC_PAUSED), _data_owner(DOS_UNDEF),
           _next(NULL),
           _paused_wait(0), _processed(0),
           _is_bound(false), _prs_id(aprsid)
@@ -131,18 +120,34 @@ public:
         return (_partition);
     }
 
+    // needed for setting the partition's queue
+    eWorkerControl volatile* pwc() { return (&_control); }
+    WorkingState* pws() { return (&_working); }
+    condex* pcx() { return (&_notify); }
+
+
     // data owner state
-    void set_data_owner_state(const DataOwnerState ados) {
+    void set_data_owner_state(const eDataOwnerState ados) {
         assert ((ados==DOS_ALONE)||(ados==DOS_MULTIPLE));
         CRITICAL_SECTION(dos_cs, _data_owner_lock);
         _data_owner = ados;
     }
 
-    const DataOwnerState get_data_owner_state() {
-        return (_data_owner);
+    const eDataOwnerState get_data_owner_state() {
+        return (*&_data_owner);
+    }
+
+    // working state
+    void set_working_state(const eWorkingState aws) {
+        _working.set_state(aws);
+    }
+
+    const eWorkingState get_working_state() {
+        return (_working.get_state());
     }
 
 
+    // for the linked list
     void set_next(worker_t<DataType>* apworker) {
         assert (apworker);
         CRITICAL_SECTION(next_cs, _next_lock);
@@ -151,7 +156,7 @@ public:
 
 
     // thread control
-    bool set_control(WorkerControl awc) {
+    bool set_control(const eWorkerControl awc) {
         //
         // Allowed transition matrix:
         //
@@ -166,13 +171,13 @@ public:
         //
         {
             CRITICAL_SECTION(wtcs, _control_lock);
-            if ((_control == WC_PAUSED) && 
+            if ((*&_control == WC_PAUSED) && 
                 ((awc == WC_ACTIVE) || (awc == WC_STOPPED))) {
                 _control = awc;
                 return (true);
             }
 
-            if ((_control == WC_ACTIVE) && 
+            if ((*&_control == WC_ACTIVE) && 
                 ((awc == WC_PAUSED) || (awc == WC_STOPPED))) {
                 _control = awc;
                 return (true);
@@ -183,14 +188,16 @@ public:
         return (false);
     }
 
-    inline WorkerControl get_control() {
-        return (_control);
+    inline eWorkerControl get_control() {
+        return (*&_control);
     }
 
     
     // thread control commands
-    inline void stop() {
+    inline void stop() {    
         set_control(WC_STOPPED);
+        if (get_working_state() == WS_IDLE_CONDVAR)
+            _notify.signal();
     }
 
     inline void start() {
@@ -311,10 +318,14 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
     while (get_control() == WC_ACTIVE) {
         assert (_partition);
         
-        // 1. dequeue an action - it will spin inside the queue
+        // 1. dequeue an action 
+        // it will spin inside the queue or (after a while) wait on a cond var
         part_action* pa = NULL;
         do {
-            pa = _partition->dequeue(&_control);
+
+            // TODO: (ip) Make sure that the queue has pointers this worker's controls
+
+            pa = _partition->dequeue();
 
             // if signalled to stop
             // propagate signal to next thread in the list, if any
@@ -324,13 +335,14 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         } while (pa == NULL);
         assert (pa);
             
+
         // 2. attach to xct
         attach_xct(pa->get_xct());
         TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", pa->get_tid());
 
         // 3. get pointer to rvp
         rvp_t* aprvp = pa->get_rvp();
-//         assert (aprvp);
+        assert (aprvp);
 //         {
 //             int iattached = aprvp->inc_attached();
 //             assert (iattached); // at least one should be attached at this point
@@ -346,46 +358,51 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         }
             
         // 5. finalize processing        
-        {
-            // make sure that the detaches from worker threads
-            // serving the same trx will happen in the order they post()
-            CRITICAL_SECTION(detach_cs, aprvp->_detach_lock);
-            if (aprvp->post()) {
-                // last caller
 
-                // if it was an intermediate RVP first it needs to be detached
-                // it first needs to be deattached and then run the code because
-                // we can have races between the commit() of the next phase and
-                // the detach of the current. 
+        // make sure that the detaches from worker threads
+        // serving the same trx will happen in the order they post()
+        CRITICAL_SECTION(detach_cs, aprvp->_detach_lock);
+        if (aprvp->post()) {
+            // last caller
+
+            // if it was an intermediate RVP 
+            // it first needs to be deattached and then run the code because
+            // we can have races between the commit() of the next phase and
+            // the detach of the current. 
             
-                // @note: !!! Only terminal_rvp_t can commit !!!
-                e = aprvp->release(this);
-                if (e.is_error()) {
-                    TRACE( TRACE_ALWAYS, "Problem releasing rvp for xct (%d) [0x%x]\n",
-                           pa->get_tid(), e.err_num());
-                    assert(0);
-                    return (de_WORKER_DETACH_XCT);
-                }
-
-                // execute the code of this rendez-vous point
-                e = aprvp->run();            
-                if (e.is_error()) {
-                    TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
-                           pa->get_tid(), e.err_num());
-                    assert(0);
-                    return (de_WORKER_DETACH_XCT);
-                }
-                    
-            }
-            else {
-                // not last caller, simply detach from trx
-                TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", pa->get_tid());
-                detach_xct(pa->get_xct());
+            // @note: !!! Only terminal_rvp_t can commit !!!
+            TRACE( TRACE_TRX_FLOW, "Releasing (%d)\n", pa->get_tid());
+            e = aprvp->release(this);
+            if (e.is_error()) {
+                TRACE( TRACE_ALWAYS, "Problem releasing rvp for xct (%d) [0x%x]\n",
+                       pa->get_tid(), e.err_num());
+                assert(0);
+                return (de_WORKER_DETACH_XCT);
             }
 
-        } // EOF detach_lock_cs
+            // execute the code of this rendez-vous point
+            e = aprvp->run();            
+            if (e.is_error()) {
+                TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
+                       pa->get_tid(), e.err_num());
+                assert(0);
+                return (de_WORKER_DETACH_XCT);
+            }
+                
+            // exit CS and delete RVP
+            detach_cs.exit();
+            delete (aprvp); 
+            aprvp = NULL;
+        }
+        else {
+            // not last caller, simply detach from trx
+            TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", pa->get_tid());
+            detach_xct(pa->get_xct());
+            detach_cs.exit();
+        }
 
-        // 5. update stats
+
+        // 6. update worker stats
         {
             CRITICAL_SECTION(stats_cs, _stats_lock);
             ++_processed;
@@ -400,7 +417,7 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
  * @fn:     _work_STOPPED_impl()
  *
  * @brief:  Implementation of the STOPPED state. 
- *          (1) It stops, joins and deletes the next thread in the list
+ *          (1) It stops, joins and deletes the next thread(s) in the list
  *          (2) It clears any internal state
  *
  * @return: 0 on success

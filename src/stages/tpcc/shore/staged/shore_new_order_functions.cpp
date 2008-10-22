@@ -66,7 +66,8 @@ w_rc_t ShoreTPCCEnv::staged_no_outside_loop(new_order_input_t* pnoin,
     prord->_rep = &areprow;
 
     // assume that sub-task will fail
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(POISSONED);
 
     /* SELECT c_discount, c_last, c_credit, w_tax
      * FROM customer, warehouse
@@ -213,7 +214,8 @@ w_rc_t ShoreTPCCEnv::staged_no_one_ol(ol_item_info* polin,
     prol->_rep = &areprow;
 
     // assume that sub-task will fail
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(POISSONED);    
 
 
     /* 4. for all items update item, stock, and order line */

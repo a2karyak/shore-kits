@@ -109,6 +109,7 @@ public:
     action_t() : _prvp(NULL) { }
 
     virtual ~action_t() { }
+
     
     /** access methods */
 

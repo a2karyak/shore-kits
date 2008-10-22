@@ -89,7 +89,7 @@ int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
     print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
                     iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI, abt);
 
-    test_smt_t* testers[MAX_NUM_OF_THR];
+    client_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
@@ -107,11 +107,11 @@ int dora_tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
             // create & fork testing threads
             if (iSpread)
                 wh_id = i+1;
-            testers[i] = new test_smt_t(_env, MT_NUM_OF_TRXS,
-                                        wh_id, iSelectedTrx, 
-                                        iNumOfTrxs, iUseSLI,
-                                        c_str("dora-cl-%d", i),
-                                        _current_prs_id);
+            testers[i] = new client_smt_t(_env, MT_NUM_OF_TRXS,
+                                          wh_id, iSelectedTrx, 
+                                          iNumOfTrxs, iUseSLI,
+                                          c_str("dora-cl-%d", i),
+                                          _current_prs_id);
             testers[i]->fork();
             _current_prs_id = next_cpu(abt, _current_prs_id);
         }
@@ -157,7 +157,7 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
                        iSelectedTrx, iIterations, iUseSLI, abt);
 
     // create and fork client threads
-    test_smt_t* testers[MAX_NUM_OF_THR];
+    client_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
@@ -175,11 +175,11 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
             // create & fork testing threads
             if (iSpread)
                 wh_id = i+1;
-            testers[i] = new test_smt_t(_env, MT_TIME_DUR,
-                                        wh_id, iSelectedTrx, 
-                                        0, iUseSLI,
-                                        c_str("dora-cl-%d", i),
-                                        _current_prs_id);
+            testers[i] = new client_smt_t(_env, MT_TIME_DUR,
+                                          wh_id, iSelectedTrx, 
+                                          0, iUseSLI,
+                                          c_str("dora-cl-%d", i),
+                                          _current_prs_id);
             assert (testers[i]);
             testers[i]->fork();
             _current_prs_id = next_cpu(abt, _current_prs_id);
@@ -244,8 +244,8 @@ int main(int argc, char* argv[])
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
-               //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
+               | TRACE_TRX_FLOW
+               | TRACE_DEBUG
               );
 
     /* 1. Instanciate the Shore environment */

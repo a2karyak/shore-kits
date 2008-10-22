@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
     }    
     _g_shore_env->print_sf();
     
-    test_smt_t* testers[MAX_NUM_OF_THR];
+    client_smt_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iterations; j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
@@ -149,9 +149,9 @@ int main(int argc, char* argv[])
             // create & fork (numOfThreads) testing threads
             if (spreadThreads)
                 wh_id = i+1;
-            testers[i] = new test_smt_t(_g_shore_env, MT_NUM_OF_TRXS,
-                                        wh_id, selectedTrxID,
-                                        numOfTrxs, 0, c_str("tt%d", i));
+            testers[i] = new client_smt_t(_g_shore_env, MT_NUM_OF_TRXS,
+                                          wh_id, selectedTrxID,
+                                          numOfTrxs, 0, c_str("tt%d", i));
             testers[i]->fork();
         }        
 

@@ -60,8 +60,14 @@ w_rc_t midway_pay_rvp::run()
             return (RC(de_PROBLEM_ENQUEUE));
     }
 
-    // 1. Cleanup
+    // 3. Cleanup (usually deletes/gives back previous actions)
     cleanup();    
+
+    int iwaited = 0;
+    while (frvp->get_attached()==0) {
+        iwaited++;        
+    }
+
     return (RCOK);
 }
 
@@ -573,7 +579,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
         // Start enqueueing 
         //
         // All the enqueues should appear atomic
-        // that is there should be a total order across trxs 
+        // That is, there should be a total order across trxs 
         // (it terms of the sequence actions are enqueued)
 
         {
@@ -612,13 +618,13 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
         // 4. detatch self from xct
 
         // do a loop until somebody else is attached
-        int iwaited = 0;
-//         while (rvp->get_attached()==0) {
-//             iwaited++;        
-//         }
+        //         int iwaited = 0;
+        //         while (rvp->get_attached()==0) {
+        //             iwaited++;        
+        //         }
         me()->detach_xct(pxct);
 
-        TRACE( TRACE_TRX_FLOW, "Deattached from (%d) waited (%d)\n", atid, iwaited);
+        TRACE( TRACE_TRX_FLOW, "Deattached from (%d)\n", atid);
 
     } // DETACH_LOCK_CS    
 

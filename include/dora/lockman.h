@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& os, const ll_entry& rhs);
 
 /******************************************************************** 
  *
- * @enum:  DoraLockMode
+ * @enum:  eDoraLockMode
  *
  * @brief: Possible lock types in DORA
  *
@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const ll_entry& rhs);
  *
  ********************************************************************/
 
-enum DoraLockMode {
+enum eDoraLockMode {
     DL_CC_NOLOCK    = 0,
     DL_CC_SHARED    = 1,
     DL_CC_EXCL      = 2,
@@ -57,7 +57,7 @@ enum DoraLockMode {
     DL_CC_MODES     = 3
 };
 
-static DoraLockMode DoraLockModeArray[DL_CC_MODES] =
+static eDoraLockMode DoraLockModeArray[DL_CC_MODES] =
     { DL_CC_NOLOCK, DL_CC_SHARED, DL_CC_EXCL };
 
 
@@ -88,7 +88,7 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
 struct ll_entry
 {
     // data
-    DoraLockMode _ll;      // logical lock
+    eDoraLockMode _ll;      // logical lock
     int          _counter; // transaction counter
     tatas_lock   _lock;    // latch
 
@@ -96,7 +96,7 @@ struct ll_entry
 
     // decrease counter by 1
     // when decreasing counter need to check if it last
-    const DoraLockMode dec_counter() {
+    const eDoraLockMode dec_counter() {
         CRITICAL_SECTION(lme_cs, _lock);
         assert (_counter>0);
         --_counter;
@@ -163,7 +163,7 @@ public:
 
     // acquire, return true on success
     // false means not compatible
-    const bool acquire(const key& aKey, const DoraLockMode& adlm) {
+    const bool acquire(const key& aKey, const eDoraLockMode& adlm) {
         ll_entry* ple = &_ll_map[aKey];
         assert (ple);
         CRITICAL_SECTION(le_cs, ple->_lock);
@@ -253,7 +253,7 @@ public:
 
 
     // acquire ll of a key on behalf of a trx
-    const bool acquire(tid_t axct, key akey, DoraLockMode adlm = DL_CC_NOLOCK) {        
+    const bool acquire(tid_t axct, key akey, eDoraLockMode adlm = DL_CC_NOLOCK) {        
         // if lock acquisition successful,
         // associate key to trx
         if (_key_ll_m.acquire(akey, adlm)) {

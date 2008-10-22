@@ -55,7 +55,8 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreWarehouse(payment_input_t* ppin,
     prwh->_rep = &areprow;
 
     // assume that sub-task will fail
-    trt.reset(POISSONED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(POISSONED);
 
     /* 1. retrieve warehouse for update */
     TRACE( TRACE_TRX_FLOW, 
@@ -123,7 +124,8 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreDistrict(payment_input_t* ppin,
     prdist->_rep = &areprow;
 
     // assume that sub-task will fail
-    trt.reset(POISSONED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(POISSONED);
 
     /* 2. retrieve district for update */
     TRACE( TRACE_TRX_FLOW, 
@@ -205,7 +207,8 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin,
     prcust->_rep = &areprow;
 
     // assume that sub-task will fail
-    trt.reset(POISSONED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(POISSONED);
 
     // find the customer wh and d
     int c_w = ( ppin->_v_cust_wh_selection > 85 ? ppin->_home_wh_id : ppin->_remote_wh_id);
@@ -376,7 +379,8 @@ w_rc_t ShoreTPCCEnv::staged_pay_insertShoreHistory(payment_input_t* ppin,
     prhist->_rep = &areprow;
 
     // assume that sub-task will fail
-    trt.reset(POISSONED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(POISSONED);
 
     // find the customer wh and d
     int c_w = ( ppin->_v_cust_wh_selection > 85 ? ppin->_home_wh_id : ppin->_remote_wh_id);

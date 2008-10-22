@@ -907,8 +907,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (prol);
 
-    
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 8 table representations
@@ -1187,8 +1187,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     row_impl<history_t>* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
-
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -1498,8 +1498,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (prol);
 
-
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 3 table representations
@@ -1698,32 +1698,20 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
     // delivery trx touches 4 tables: 
     // new_order, order, orderline, and customer
-//     customer_node_t* pcust_node = _pcustomer_man->get_tuple();
-//     assert (pcust_node);
-//     row_impl<customer_t>* prcust = pcust_node->_tuple;
     row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
-//     new_order_node_t* pno_node = _pnew_order_man->get_tuple();
-//     assert (pno_node);
-//     row_impl<new_order_t>* prno = pno_node->_tuple;
     row_impl<new_order_t>* prno = _pnew_order_man->get_tuple();
     assert (prno);
 
-//     order_node_t* pord_node = _porder_man->get_tuple();
-//     assert (pord_node);
-//     row_impl<order_t>* prord = pord_node->_tuple;
     row_impl<order_t>* prord = _porder_man->get_tuple();
     assert (prord);
 
-//     order_line_node_t* pol_node = _porder_line_man->get_tuple();
-//     assert (pol_node);
-//     row_impl<order_line_t>* prol = pol_node->_tuple;
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
-    assert (prol);
-    
+    assert (prol);    
 
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -1915,25 +1903,17 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
     // stock level trx touches 4 tables: 
     // district, orderline, and stock
-//     district_node_t* pdistr_node = _pdistrict_man->get_tuple();
-//     assert (pdistr_node);
-//     row_impl<district_t>* prdist = pdistr_node->_tuple;
     row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-//     stock_node_t* pst_node = _pstock_man->get_tuple();
-//     assert (pst_node);
-//     row_impl<stock_t>* prst = pst_node->_tuple;
     row_impl<stock_t>* prst = _pstock_man->get_tuple();
     assert (prst);
 
-//     order_line_node_t* pol_node = _porder_line_man->get_tuple();
-//     assert (pol_node);
-//     row_impl<order_line_t>* prol = pol_node->_tuple;
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (prol);
 
-    trt.reset(UNSUBMITTED, xct_id);
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pdistrict_man->ts());
 
     // allocate space for the biggest of the 3 table representations

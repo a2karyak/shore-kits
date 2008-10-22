@@ -376,7 +376,7 @@ int shore_kit_shell_t::process_command(const char* command)
     char command_tag[SERVER_COMMAND_BUFFER_SIZE];
 
     // make sure any previous abort is cleared
-    test_smt_t::resume_test();
+    client_smt_t::resume_test();
 
     if ( sscanf(command, "%s", &command_tag) < 1) {
         print_usage(command_tag);
@@ -750,7 +750,7 @@ int shore_kit_shell_t::SIGINT_handler()
 {
     if(_processing_command && !_g_canceled) {
 	_g_canceled = true;
-	test_smt_t::abort_test();
+	client_smt_t::abort_test();
 	return 0;
     }
 

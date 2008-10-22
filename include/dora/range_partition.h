@@ -29,13 +29,13 @@ using namespace shore;
 
 /******************************************************************** 
  *
- * @enum:  RangePartitionState
+ * @enum:  eRangePartitionState
  *
  * @brief: Status for the range data partition
  *
  ********************************************************************/
 
-enum RangePartitionState { RPS_UNSET, RPS_SET };
+enum eRangePartitionState { RPS_UNSET, RPS_SET };
 
 
 
@@ -58,7 +58,7 @@ public:
 
 private:
 
-    RangePartitionState _rp_state;
+    eRangePartitionState _rp_state;
     int _part_field_cnt;
 
     // the two bounds

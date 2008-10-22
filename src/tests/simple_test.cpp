@@ -81,7 +81,7 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
         // for every transaction acquires (iSelectedTrx) random keys
         for (int j=0;j<iSelectedTrx;j++) {            
 
-            DoraLockMode adlm = DoraLockModeArray[rand()%DL_CC_MODES]; // random lmode
+            eDoraLockMode adlm = DoraLockModeArray[rand()%DL_CC_MODES]; // random lmode
             dora_tpcc_db::ikey akey;
             int wh = URand(1,iQueriedWHs);
             int d = URand(1, 10);

@@ -1,8 +1,10 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef _CHOMP_H
-#define _CHOMP_H
+#ifndef __UTIL_CHOMP_H
+#define __UTIL_CHOMP_H
 
 void chomp_newline(char* str);
 void chomp_carriage_return(char* str);
 
-#endif
+#endif /** __UTIL_CHOMP_H */
+

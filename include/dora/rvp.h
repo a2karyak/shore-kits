@@ -39,9 +39,9 @@ class rvp_t
 protected:
 
     // the countdown
-    countdown_t    _countdown;
-    ActionDecision volatile _decision;
-    tatas_lock     _decision_lock;
+    countdown_t              _countdown;
+    eActionDecision volatile _decision;
+    tatas_lock               _decision_lock;
 
     // trx-specific
     xct_t*              _xct; // Not the owner
@@ -80,8 +80,8 @@ public:
 
     // Decision related
 
-    inline void set_decision(const ActionDecision& ad) { _decision = ad; }
-    inline ActionDecision get_decision() { return (_decision); }
+    inline void set_decision(const eActionDecision& ad) { _decision = ad; }
+    inline eActionDecision get_decision() { return (_decision); }
 
     /** trx-related operations */
     virtual w_rc_t run()=0; // default action on rvp - commit trx
@@ -105,12 +105,18 @@ public:
 
     // hack to make the intermediate RVPs be detached
     virtual w_rc_t release(thread_t* aworker) { 
+
+//         // do a loop until somebody else is attached
+//         int iwaited = 0;
+//         while (rvp->get_attached()==0) {
+//             iwaited++;        
+//         }
         aworker->detach_xct(_xct);
         return (RCOK); 
     }
 
     // decides to abort this trx
-    virtual ActionDecision abort() { 
+    virtual eActionDecision abort() { 
         CRITICAL_SECTION(decision_cs, _decision_lock);
         _decision = AD_ABORT;
         return (_decision);
@@ -140,6 +146,7 @@ private:
     void operator=(rvp_t const &);
     
 }; // EOF: rvp_t
+
 
 
 /******************************************************************** 

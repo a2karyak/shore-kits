@@ -35,6 +35,7 @@
 #include "util/history.h"
 #include "util/countdown.h"
 #include "util/shell.h"
+#include "util/condex.h"
 
 
 #endif /** __UTIL_H */

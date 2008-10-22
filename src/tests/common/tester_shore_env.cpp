@@ -115,7 +115,7 @@ void print_wh_usage(char* argv[])
  *
  *********************************************************************/
 
-void test_smt_t::print_tables() 
+void client_smt_t::print_tables() 
 {
     _env->dump();
 }
@@ -130,11 +130,35 @@ void test_smt_t::print_tables()
  *********************************************************************/
 
 static bool _abort_test = false;
-void test_smt_t::abort_test() {
+void client_smt_t::abort_test() {
     _abort_test = true;
 }
-void test_smt_t::resume_test() {
+void client_smt_t::resume_test() {
     _abort_test = false;
+}
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    submit_batch
+ *
+ *  @brief: Submits a batch of trxs and always uses the last trx to
+ *          wait on its cond var
+ *
+ *********************************************************************/
+
+void client_smt_t::submit_batch(ShoreTPCCEnv* env, int xct_type, 
+                              int& trx_cnt, const int batch_sz) 
+{       
+    for(int j=1; j <= batch_sz; j++) {
+        if (j == batch_sz) {
+            _cp->take_one = true;
+            _cp->index = 1-_cp->index;
+        }
+        run_one_tpcc_xct(env, xct_type, trx_cnt++);
+        _cp->take_one = false;
+    }
 }
 
 
@@ -145,20 +169,8 @@ void test_smt_t::resume_test() {
  *  @brief: Entry point for running the trxs 
  *
  *********************************************************************/
-// horrible dirty hack..
-static __thread struct condex_pair {
-    condex wait[2];
-    int index;
-    bool take_one;
-} my_condex = {
-    {
-	{PTHREAD_COND_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, false},
-	{PTHREAD_COND_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, false},
-    },
-    0, false
-};
 
-w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
+w_rc_t client_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 {
     int i=0;
 
@@ -174,42 +186,28 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
         break;
 
         // case of duration-based measurement
-    case (MT_TIME_DUR): {
-	static int const BATCH_SIZE = 30;
-	struct condex_pair* cp = &my_condex;
-	
-#define SUBMIT_BATCH()					\
-	for(int j=1; j <= BATCH_SIZE; j++) {		\
-	    if(j == BATCH_SIZE) {			\
-		cp->take_one = true;			\
-		cp->index = 1 - cp->index;		\
-	    }						\
-	    run_one_tpcc_xct(env, xct_type, i++);	\
-	    cp->take_one = false;			\
-	}
-	
+    case (MT_TIME_DUR):
 	
 	// submit the first two batches...
-	SUBMIT_BATCH();
-	SUBMIT_BATCH();
+	submit_batch(env, xct_type, i);
+	submit_batch(env, xct_type, i);
 
 	// main loop
         while (true) {
 	    // wait for the first to complete
-	    cp->wait[1-cp->index].wait();
+	    _cp->wait[1-_cp->index].wait();
 
 	    // check for exit...
 	    if(_abort_test || _env->get_measure() == MST_DONE)
 		break;
 
 	    // submit a replacement batch...
-	    SUBMIT_BATCH();
+	    submit_batch(env, xct_type, i);
         }
 	
 	// wait for the last batch to complete...
-	cp->wait[cp->index].wait();	
+	_cp->wait[_cp->index].wait();	
         break;
-    }
     }
 
     return (RCOK);
@@ -228,7 +226,7 @@ w_rc_t test_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
  *
  *********************************************************************/
  
-w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
+w_rc_t client_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
 {
     if (xct_type == 0) {        
         xct_type = random_xct_type(rand(100));
@@ -267,58 +265,53 @@ w_rc_t test_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid)
 
 /********************************************************************* 
  *
- *  test_smt_t - regular xct functions
+ *  client_smt_t - regular xct functions
  *
  *********************************************************************/
 
-w_rc_t test_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_new_order(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->run_new_order(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
-w_rc_t test_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->run_payment(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
-w_rc_t test_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_order_status(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->run_order_status(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
 
-w_rc_t test_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_delivery(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->run_delivery(xctid, atrt, _wh);
     return (RCOK); 
 }
 
 
-w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->run_stock_level(xctid, atrt, _wh);    
     return (RCOK); 
 }
@@ -327,65 +320,60 @@ w_rc_t test_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid)
 
 /********************************************************************* 
  *
- *  test_smt_t - dora xct functions
+ *  client_smt_t - dora xct functions
  *
  *********************************************************************/
 
-w_rc_t test_smt_t::xct_dora_new_order(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_dora_new_order(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->dora_new_order(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
-w_rc_t test_smt_t::xct_dora_payment(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_dora_payment(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->dora_payment(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
-w_rc_t test_smt_t::xct_dora_order_status(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_dora_order_status(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->dora_order_status(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
 
-w_rc_t test_smt_t::xct_dora_delivery(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_dora_delivery(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->dora_delivery(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
 
-w_rc_t test_smt_t::xct_dora_stock_level(ShoreTPCCEnv* env, int xctid) 
+w_rc_t client_smt_t::xct_dora_stock_level(ShoreTPCCEnv* env, int xctid) 
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    struct condex_pair* cp = &my_condex;
-    if(cp->take_one) atrt.set_notify(cp->wait+cp->index);
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->dora_stock_level(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
 
 
-/** EOF: test_smt_t functions */
+/** EOF: client_smt_t functions */
 
 
 

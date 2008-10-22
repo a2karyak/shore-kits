@@ -33,7 +33,7 @@ template<class DataType> class worker_t;
 
 /******************************************************************** 
  *
- * @enum:  PATState
+ * @enum:  ePATState
  *
  * @brief: Working thread status for the partition
  *
@@ -42,7 +42,7 @@ template<class DataType> class worker_t;
  *
  ********************************************************************/
 
-enum PATState { PATS_UNDEF, PATS_SINGLE, PATS_MULTIPLE };
+enum ePATState { PATS_UNDEF, PATS_SINGLE, PATS_MULTIPLE };
 
 
 
@@ -71,13 +71,13 @@ protected:
     ShoreEnv*       _env;    
     table_desc_t*   _table;
 
-    int             _part_id;
-    PartitionPolicy _part_policy;
+    int              _part_id;
+    ePartitionPolicy _part_policy;
 
     // partition active thread state and count
-    PATState volatile _pat_state; 
-    int volatile      _pat_count;
-    tatas_lock        _pat_count_lock;
+    ePATState volatile _pat_state; 
+    int volatile       _pat_count;
+    tatas_lock         _pat_count_lock;
 
     // pointers to primary owner and pool of standby worker threads
     part_worker*   _owner;        // primary owner
@@ -114,17 +114,17 @@ public:
     /** Access methods */
 
     // partition policy
-    const PartitionPolicy get_part_policy() { return (_part_policy); }
+    const ePartitionPolicy get_part_policy() { return (_part_policy); }
 
-    void set_part_policy(const PartitionPolicy aPartPolicy) {
+    void set_part_policy(const ePartitionPolicy aPartPolicy) {
         assert (aPartPolicy!=PP_UNDEF);
         _part_policy == aPartPolicy;
     }
 
     // partition state and active threads
-    const PATState get_pat_state();
-    const PATState dec_active_thr();
-    const PATState inc_active_thr();
+    const ePATState get_pat_state();
+    const ePATState dec_active_thr();
+    const ePATState inc_active_thr();
 
     // get lock manager
     part_lock_man* plm() { return (&_plm); }
@@ -154,7 +154,7 @@ public:
     const int enqueue(part_action* paction);    
 
     // dequeues action
-    part_action* dequeue(WorkerControl volatile* pwc);
+    part_action* dequeue();
 
 
 
@@ -173,17 +173,17 @@ public:
 private:
 
     // thread control
-    const int    _start_owner();
-    const int    _stop_threads();
-    const int    _generate_primary();
-    const int    _generate_standby_pool(const int sz, 
-                                       int& pool_sz,
-                                       const processorid_t aprsid = PBIND_NONE);
+    const int _start_owner();
+    const int _stop_threads();
+    const int _generate_primary();
+    const int _generate_standby_pool(const int sz, 
+                                     int& pool_sz,
+                                     const processorid_t aprsid = PBIND_NONE);
     part_worker* _generate_worker(const processorid_t aprsid, c_str wname);    
 
 protected:    
 
-    const int isFree(part_key akey, DoraLockMode lmode);
+    const int isFree(part_key akey, eDoraLockMode lmode);
 
 
 }; // EOF: partition_t
@@ -202,10 +202,10 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-action_t<DataType>* partition_t<DataType>::dequeue(WorkerControl volatile* pwc)
+action_t<DataType>* partition_t<DataType>::dequeue()
 {
     //    TRACE( TRACE_TRX_FLOW, "Dequeuing...\n");
-    return (_queue.pop(pwc));
+    return (_queue.pop());
 }
 
 
@@ -249,7 +249,8 @@ const int partition_t<DataType>::enqueue(part_action* pAction)
 template <class DataType>
 void partition_t<DataType>::stop()
 {        
-    TRACE( TRACE_DEBUG, "Stopping..\n");
+    TRACE( TRACE_DEBUG, "Stopping part (%s-%d)..\n",
+           _table->name(), _part_id);
 
     // 1. stop the worker & standby threads
     _stop_threads();
@@ -303,7 +304,8 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
 
     // generate primary
     if (_generate_primary()) {
-        TRACE (TRACE_ALWAYS, "Failed to generate primary thread\n");
+        TRACE (TRACE_ALWAYS, "part (%s-%d) Failed to generate primary thread\n",
+               _table->name(), _part_id);
         assert (0); // should not happen
         return (de_GEN_PRIMARY_WORKER);
     }
@@ -317,8 +319,10 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
 
     // generate standby pool   
     if (_generate_standby_pool(poolsz, _standby_cnt, aprsid)) {
-        TRACE (TRACE_ALWAYS, "Failed to generate pool of (%d) threads\n", poolsz);
-        TRACE (TRACE_ALWAYS, "Pool of only (%d) threads generated\n", _standby_cnt);
+        TRACE (TRACE_ALWAYS, "part (%s-%d) Failed to generate pool of (%d) threads\n",
+               _table->name(), _part_id, poolsz);
+        TRACE (TRACE_ALWAYS, "part (%s-%d) Pool of only (%d) threads generated\n", 
+               _table->name(), _part_id, _standby_cnt);
         return (de_GEN_STANDBY_POOL);
     }
     return (0);
@@ -338,7 +342,7 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
  ******************************************************************/
 
 template <class DataType>
-const PATState partition_t<DataType>::get_pat_state() 
+const ePATState partition_t<DataType>::get_pat_state() 
 { 
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     return (_pat_state); 
@@ -358,7 +362,7 @@ const PATState partition_t<DataType>::get_pat_state()
  ******************************************************************/
 
 template <class DataType>
-const PATState partition_t<DataType>::dec_active_thr() 
+const ePATState partition_t<DataType>::dec_active_thr() 
 {
     assert (_pat_count>1);
     assert (_pat_state==PATS_MULTIPLE);
@@ -385,7 +389,7 @@ const PATState partition_t<DataType>::dec_active_thr()
  ******************************************************************/
 
 template <class DataType>
-const PATState partition_t<DataType>::inc_active_thr() 
+const ePATState partition_t<DataType>::inc_active_thr() 
 {
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     _pat_count++;
@@ -408,6 +412,8 @@ const PATState partition_t<DataType>::inc_active_thr()
  * @fn:     _start_owner()
  *
  * @brief:  Kick starts the owner
+ *
+ * @note:   Assumes that the owner_cs is already locked
  *
  ******************************************************************/
 
@@ -442,6 +448,9 @@ const int partition_t<DataType>::_stop_threads()
         ++i;
     }    
     _owner = NULL; // join()?
+
+    // reset queue's worker control pointers
+    _queue.set(NULL,NULL,NULL); 
 
     // standy
     CRITICAL_SECTION(standby_cs, _standby_lock);
@@ -538,6 +547,7 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
  * @fn:     _generate_primary()
  *
  * @brief:  Generates a worker thread, promotes it to primary owner, 
+ *          sets the queue to point to primary owner's controls,
  *          and forks it
  *
  * @return: Retuns 0 on sucess
@@ -549,7 +559,7 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
 template <class DataType>
 const int partition_t<DataType>::_generate_primary() 
 {
-    assert (!_owner); // prevent losing thread pointer 
+    assert (_owner==NULL); // prevent losing thread pointer 
 
     part_worker* pworker = _generate_worker(_prs_id, 
                                             c_str("%s-P-%d-PRI",_table->name(), _part_id));
@@ -560,6 +570,9 @@ const int partition_t<DataType>::_generate_primary()
 
     _owner = pworker;
     _owner->set_data_owner_state(DOS_ALONE);
+
+    // pass worker thread controls to queue
+    _queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
 
     _owner->fork();
 

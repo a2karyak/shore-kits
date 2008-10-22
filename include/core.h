@@ -1,3 +1,5 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
 #ifndef __CORE_H
 #define __CORE_H
 
