@@ -71,15 +71,17 @@ public:
 
     part_table_t(ShoreEnv* env, table_desc_t* ptable,
                  const processorid_t aprs,
-                 const int arange,
+                 const int acpurange,
                  const int apcnt = DF_NUM_OF_PARTITIONS_PER_TABLE) 
         : _env(env), _table(ptable), 
-          _start_prs_id(aprs), _next_prs_id(aprs), _prs_range(arange)
+          _pcnt(apcnt),
+          _start_prs_id(aprs), _next_prs_id(aprs), 
+          _prs_range(acpurange)
     {
         assert (_env);
         assert (_table);        
         assert (aprs<=_env->get_max_cpu_count());
-        assert (arange<=_env->get_active_cpu_count());
+        assert (acpurange<=_env->get_active_cpu_count());
 
         assert (apcnt);
         //config(apcnt);

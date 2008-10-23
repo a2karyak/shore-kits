@@ -40,7 +40,9 @@ struct srmwqueue
     condex* _pcx;
     tatas_lock _ws_lock;    
 
-    srmwqueue() : _empty(true), _pwc(NULL), _pws(NULL), _pcx(NULL)  { }
+    srmwqueue() : _empty(true), _pwc(NULL), _pws(NULL), _pcx(NULL) { 
+        _read_pos = _for_readers.begin();
+    }
 
     ~srmwqueue() { }
 

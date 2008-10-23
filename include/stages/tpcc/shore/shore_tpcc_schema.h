@@ -68,7 +68,7 @@ ENTER_NAMESPACE(tpcc);
  */
 
 #undef  CREATE_ONLY_NL_IDXS
-#define CREATE_ONLY_NL_IDXS
+//#define CREATE_ONLY_NL_IDXS
 
 #undef  CREATE_NL_IDXS
 //#define CREATE_NL_IDXS

@@ -349,14 +349,14 @@ if test "$ARCHOS" = "SPARC_SUN"; then
 #    CXXFLAGS="-errtags=yes -xtarget=native -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 
 # optimize *a lot* flags - normal
-#     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 
 # debugging flags + datarace
-    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
+#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
 
 # debugging flags + purify
 # !!! Warning does not work with DBX !!!
-#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -mt -lpthread -library=stlport4"
+#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
 fi
 
 # Adding curses lib

@@ -135,8 +135,10 @@ protected:
 
 public:
 
-    shore_kit_shell_t(const char* prompt, ShoreTPCCEnv* env) 
-        : shell_t(prompt), _env(env)
+    shore_kit_shell_t(const char* prompt, ShoreTPCCEnv* env, 
+                      processorid_t acpustart = PBIND_NONE) 
+        : shell_t(prompt), _env(env),
+          _start_prs_id(acpustart), _current_prs_id(acpustart)
         {
             assert (_env);
 

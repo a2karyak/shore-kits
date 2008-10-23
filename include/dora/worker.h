@@ -464,8 +464,8 @@ template <class DataType>
 void worker_t<DataType>::_print_stats_impl()
 {
     CRITICAL_SECTION(stats_cs, _stats_lock);
-    TRACE( TRACE_STATISTICS, "Processed (%d)\n", _processed);
-    TRACE( TRACE_STATISTICS, "Waited (%d)\n", _paused_wait);
+    TRACE( TRACE_TRX_FLOW, "Processed (%d)\n", _processed);
+    TRACE( TRACE_TRX_FLOW, "Waited (%d)\n", _paused_wait);
 }
 
 
