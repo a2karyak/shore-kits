@@ -85,7 +85,7 @@ public:
     virtual ~shell_t() 
     {
         if (_cmd_prompt)
-            delete (_cmd_prompt);       
+            delete [] _cmd_prompt;       
     }
 
 

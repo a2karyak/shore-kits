@@ -98,15 +98,15 @@ private:
     irp_table_impl* _ol_irpt; // ORDER-LINE
     irp_table_impl* _st_irpt; // STOCK
 
-    // caches of actions 
-    // one cache per action of each of the supported trxs
-    upd_wh_pay_action_cache*   _upd_wh_pay_cache;        /* pointer to a upd wh payment action cache */
-    upd_dist_pay_action_cache* _upd_dist_pay_cache;      /* pointer to a upd dist payment action cache */
-    upd_cust_pay_action_cache* _upd_cust_pay_cache;      /* pointer to a upd cust payment action cache */
-    ins_hist_pay_action_cache* _ins_hist_pay_cache;      /* pointer to a ins hist payment action cache */
+//     // caches of actions 
+//     // one cache per action of each of the supported trxs
+//     upd_wh_pay_action_cache*   _upd_wh_pay_cache;        /* pointer to a upd wh payment action cache */
+//     upd_dist_pay_action_cache* _upd_dist_pay_cache;      /* pointer to a upd dist payment action cache */
+//     upd_cust_pay_action_cache* _upd_cust_pay_cache;      /* pointer to a upd cust payment action cache */
+//     ins_hist_pay_action_cache* _ins_hist_pay_cache;      /* pointer to a ins hist payment action cache */
 
-    upd_wh_mb_action_cache* _mb_wh_cache;
-    upd_cust_mb_action_cache* _mb_cust_cache;
+//     upd_wh_mb_action_cache* _mb_wh_cache;
+//     upd_cust_mb_action_cache* _mb_cust_cache;
 
 public:
     
@@ -175,14 +175,14 @@ public:
 
     /** action cache related actions */
 
-    // returns the cache
-    upd_wh_pay_action_cache* get_upd_wh_pay_cache();
-    upd_dist_pay_action_cache* get_upd_dist_pay_cache();
-    upd_cust_pay_action_cache* get_upd_cust_pay_cache();
-    ins_hist_pay_action_cache* get_ins_hist_pay_cache();
+//     // returns the cache
+//     upd_wh_pay_action_cache* get_upd_wh_pay_cache();
+//     upd_dist_pay_action_cache* get_upd_dist_pay_cache();
+//     upd_cust_pay_action_cache* get_upd_cust_pay_cache();
+//     ins_hist_pay_action_cache* get_ins_hist_pay_cache();
 
-    upd_wh_mb_action_cache* get_upd_wh_mb_action_cache();
-    upd_cust_mb_action_cache* get_upd_cust_mb_action_cache();
+//     upd_wh_mb_action_cache* get_upd_wh_mb_action_cache();
+//     upd_cust_mb_action_cache* get_upd_cust_mb_action_cache();
 
 
     // borrow and release an action

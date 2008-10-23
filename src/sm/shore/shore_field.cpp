@@ -77,8 +77,7 @@ bool field_value_t::load_value_from_file(ifstream & is,
 {
     assert (_pfield_desc);
 
-    char* string;
-    string = new char [10*_pfield_desc->fieldmaxsize()];
+    char* string = new char [10*_pfield_desc->fieldmaxsize()];
     is.get(string, 10*_pfield_desc->fieldmaxsize(), delim);
     if (strlen(string) == 0) {
         delete [] string;

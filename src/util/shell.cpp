@@ -103,13 +103,13 @@ int shell_t::process_one()
     }
         
     // check for quit...
-    if ( check_quit(command) ) {
+    if (check_quit(command)) {
         // quit command! 
         return (SHELL_NEXT_QUIT);
     }
 
     // check for help...
-    if ( check_help(command) ) {
+    if (check_help(command)) {
         // help command! 
         return (print_usage(command));
     }

@@ -340,6 +340,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt
         assert (p_upd_cust_mb_action);
         p_upd_cust_mb_action->set_input(atid, pxct, frvp, this, whid);
         frvp->_puc = p_upd_cust_mb_action;
+        membar_producer();
 
         // Start enqueueing 
         //
