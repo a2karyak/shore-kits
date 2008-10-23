@@ -23,7 +23,11 @@ public:
 
     simple_shore_shell(ShoreTPCCEnv* tpccenv)
         : shore_kit_shell_t("(allou) ", tpccenv)
-    { }
+    {
+        // load supported trxs and binding policies maps
+        load_trxs_map();
+        load_bp_map(); 
+    }
 
     ~simple_shore_shell() 
     { 
@@ -43,6 +47,9 @@ public:
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const int iUseSLI, const eBindingType abt);    
+
+    virtual void append_trxs_map(void) { }
+    virtual void append_bp_map(void) { }
     
 }; // EOF: class simple_shore_shell
 

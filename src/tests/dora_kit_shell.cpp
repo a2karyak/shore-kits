@@ -33,8 +33,11 @@ public:
 
     dora_tpcc_kit_shell_t(const char* prompt) 
         : shore_kit_shell_t(prompt, _g_shore_env)
-        {
-        }
+    {
+        // load supported trxs and binding policies maps
+        load_trxs_map();
+        load_bp_map();
+    }
 
     ~dora_tpcc_kit_shell_t() { }
 
@@ -51,6 +54,7 @@ public:
     virtual int process_cmd_LOAD(const char* command, char* command_tag);        
 
     virtual void append_trxs_map(void); // appends the DORA-TRXs
+    virtual void append_bp_map(void) { }
 
 }; // EOF: dora_tpcc_kit_shell_t
 
@@ -69,8 +73,8 @@ void dora_tpcc_kit_shell_t::append_trxs_map(void)
     _sup_trxs[XCT_DORA_STOCK_LEVEL]  = "DORA-StockLevel";
 
     // Microbenchmarks
-    _sup_trxs[XCT_DORA_BENCH_WHS]   = "DORA-Bench-WHs";
-    _sup_trxs[XCT_DORA_BENCH_CUST]  = "DORA-Bench-CUSTs";
+    _sup_trxs[XCT_DORA_MBENCH_WH]    = "DORA-MBench-WHs";
+    _sup_trxs[XCT_DORA_MBENCH_CUST]  = "DORA-MBench-CUSTs";
 }
 
 

@@ -131,8 +131,8 @@ const int XCT_DELIVERY      = 4;
 const int XCT_STOCK_LEVEL   = 5;
 
 
-const int XCT_BENCH_WHS  = 11;
-const int XCT_BENCH_CUST = 12;
+const int XCT_MBENCH_WH   = 11;
+const int XCT_MBENCH_CUST = 12;
 
 
 const int XCT_DORA_MIX           = 100;
@@ -142,8 +142,8 @@ const int XCT_DORA_ORDER_STATUS  = 103;
 const int XCT_DORA_DELIVERY      = 104;
 const int XCT_DORA_STOCK_LEVEL   = 105;
 
-const int XCT_DORA_BENCH_WHS  = 111;
-const int XCT_DORA_BENCH_CUST = 112;
+const int XCT_DORA_MBENCH_WH   = 111;
+const int XCT_DORA_MBENCH_CUST = 112;
 
 
 /* --- probabilities for the TPC-C MIX --- */

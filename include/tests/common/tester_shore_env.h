@@ -194,12 +194,19 @@ public:
     w_rc_t xct_delivery(ShoreTPCCEnv* env, int xctid);
     w_rc_t xct_stock_level(ShoreTPCCEnv* env, int xctid);
 
+    w_rc_t xct_mbench_wh(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_mbench_cust(ShoreTPCCEnv* env, int xctid);
+
+
     // dora trx impl
     w_rc_t xct_dora_new_order(ShoreTPCCEnv* env, int xctid);
     w_rc_t xct_dora_payment(ShoreTPCCEnv* env, int xctid);
     w_rc_t xct_dora_order_status(ShoreTPCCEnv* env, int xctid);
     w_rc_t xct_dora_delivery(ShoreTPCCEnv* env, int xctid);
     w_rc_t xct_dora_stock_level(ShoreTPCCEnv* env, int xctid);
+
+    w_rc_t xct_dora_mbench_wh(ShoreTPCCEnv* env, int xctid);
+    w_rc_t xct_dora_mbench_cust(ShoreTPCCEnv* env, int xctid);
 
 
     // thread entrance

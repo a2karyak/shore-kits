@@ -104,7 +104,6 @@ struct env_stats_t
         return (++_ntrx_com);
     }
 
-
 }; // EOF env_stats_t
 
 

@@ -264,6 +264,8 @@ SD_BASE = \
    $(SD)/rvp.cpp
 
 SD_TPCC = \
+   $(SD)/tpcc/dora_payment.cpp \
+   $(SD)/tpcc/dora_mbench.cpp \
    $(SD)/tpcc/dora_tpcc.cpp \
    $(SD)/tpcc/dora_tpcc_xct.cpp
 

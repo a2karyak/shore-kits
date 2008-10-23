@@ -50,8 +50,8 @@ void shore_kit_shell_t::load_trxs_map(void)
     _sup_trxs[XCT_STOCK_LEVEL]  = "StockLevel";
 
     // Microbenchmarks
-    _sup_trxs[XCT_BENCH_WHS]   = "Bench-WHs";
-    _sup_trxs[XCT_BENCH_CUST]  = "Bench-CUSTs";
+    _sup_trxs[XCT_MBENCH_WH]    = "MBench-WHs";
+    _sup_trxs[XCT_MBENCH_CUST]  = "MBench-CUSTs";
 
     // Call virtual
     append_trxs_map();

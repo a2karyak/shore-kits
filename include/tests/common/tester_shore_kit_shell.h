@@ -73,7 +73,6 @@ public:
 
     virtual ~db_iface() { }
 
-
     // Access methods
 
     const DBControl dbc() const { 
@@ -88,13 +87,11 @@ public:
     }
 
     
-    // Interface 
-    
+    // Interface     
     virtual const int process_START_cmd()=0;
     virtual const int process_STOP_cmd()=0;
     virtual const int process_PAUSE_cmd()=0;
-    virtual const int process_RESUME_cmd()=0;
-    
+    virtual const int process_RESUME_cmd()=0;    
     
 }; // EOF: db_iface
 
@@ -151,10 +148,6 @@ public:
 	    sa.sa_handler = &alarm_handler;
 	    if(sigaction(SIGALRM, &sa, &sa_old) < 0)
 		exit(1);
-
-            // load supported trxs and binding policies maps
-            load_trxs_map();
-            load_bp_map();
         }
 
     virtual ~shore_kit_shell_t()  { }
@@ -180,8 +173,8 @@ public:
     void print_sup_bp(void);
     void load_trxs_map(void);
     void load_bp_map(void);
-    virtual void append_trxs_map(void) { }
-    virtual void append_bp_map(void)   { }
+    virtual void append_trxs_map(void)=0;
+    virtual void append_bp_map(void)=0;
     const char* translate_trx(const int iSelectedTrx) const;
     const char* translate_bp(const eBindingType abt);
 

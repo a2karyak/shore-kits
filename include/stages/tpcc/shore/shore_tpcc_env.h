@@ -74,9 +74,14 @@ struct tpcc_stats_t
     int volatile  _sto_com;
     tatas_lock    _sto_lock;
 
+    int volatile  _other_att;
+    int volatile  _other_com;
+    tatas_lock    _other_lock;    
+
     tpcc_stats_t() 
         : _no_att(0), _no_com(0), _pay_att(0), _pay_com(0), _ord_att(0),
-          _ord_com(0), _del_att(0), _del_com(0), _sto_att(0), _sto_com(0)
+          _ord_com(0), _del_att(0), _del_com(0), _sto_att(0), _sto_com(0),
+          _other_att(0), _other_com(0)
     {
     }
 
@@ -93,7 +98,8 @@ struct tpcc_stats_t
         CRITICAL_SECTION(res_ord_cs, _ord_lock);
         CRITICAL_SECTION(res_del_cs, _del_lock);
         CRITICAL_SECTION(res_sto_cs, _sto_lock);
-        
+        CRITICAL_SECTION(res_other_cs, _other_lock);
+                
         _no_att = 0;
         _no_com = 0;
         _pay_att = 0;
@@ -104,6 +110,8 @@ struct tpcc_stats_t
         _del_com = 0;
         _sto_att = 0;
         _sto_com = 0;
+        _other_att = 0;
+        _other_com = 0;
     }
 
 
@@ -171,13 +179,25 @@ struct tpcc_stats_t
         return (++_sto_com); 
     }
 
+    int inc_other_att() { 
+        CRITICAL_SECTION(att_other_cs, _other_lock);
+        return (++_other_att); 
+    }
+
+    int inc_other_com() { 
+        CRITICAL_SECTION(com_other_cs, _other_lock);
+        ++_other_att;
+        return (++_other_com); 
+    }
+
     int get_total_committed() {
         CRITICAL_SECTION(com_no_cs,  _no_lock);
         CRITICAL_SECTION(com_pay_cs, _pay_lock);
         CRITICAL_SECTION(com_ord_cs, _ord_lock);
         CRITICAL_SECTION(com_del_cs, _del_lock);
         CRITICAL_SECTION(com_sto_cs, _sto_lock);
-        return (_no_com + _pay_com + _ord_com + _del_com + _sto_com);
+        CRITICAL_SECTION(com_other_cs, _other_lock);
+        return (_no_com + _pay_com + _ord_com + _del_com + _sto_com + _other_com);
     }
 
     int get_total_attempted() {
@@ -186,7 +206,8 @@ struct tpcc_stats_t
         CRITICAL_SECTION(att_ord_cs, _ord_lock);
         CRITICAL_SECTION(att_del_cs, _del_lock);
         CRITICAL_SECTION(att_sto_cs, _sto_lock);
-        return (_no_att + _pay_att + _ord_att + _del_att + _sto_att);
+        CRITICAL_SECTION(att_other_cs, _other_lock);
+        return (_no_att + _pay_att + _ord_att + _del_att + _sto_att + _other_att);
     }
 
 }; // EOF tpcc_stats_t
@@ -260,21 +281,9 @@ private:
                            const int xct_id, 
                            trx_result_tuple_t& trt);
 
-
-    /* --- kit dora trxs --- */
-    w_rc_t _dora_new_order(new_order_input_t* no_input, 
-                           const int xct_id, 
-                           trx_result_tuple_t& trt);
-    w_rc_t _dora_order_status(order_status_input_t* status_input, 
-                              const int xct_id, 
-                              trx_result_tuple_t& trt);
-    w_rc_t _dora_delivery(delivery_input_t* deliv_input, 
-                          const int xct_id, 
-                          trx_result_tuple_t& trt);
-    w_rc_t _dora_stock_level(stock_level_input_t* level_input, 
-                             const int xct_id, 
-                             trx_result_tuple_t& trt);
-
+    /* --- baseline mbench --- */
+    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, const int whid);
+    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, const int whid);
 
     
 public:    
@@ -381,7 +390,7 @@ public:
     
 
     /* --- scaling and querying factor --- */
-    void print_sf();
+    void print_sf(void);
     void set_qf(const int aQF);
     inline int get_qf() { return (_queried_factor); }
     void set_sf(const int aSF);
@@ -426,74 +435,50 @@ public:
 
     /* --- kit baseline trxs --- */
 
-    /* --- without input specified --- */
-    w_rc_t run_new_order(const int xct_id, 
-                         trx_result_tuple_t& atrt,
-                         int specificWH);
-    w_rc_t run_payment(const int xct_id, 
-                       trx_result_tuple_t& atrt,
-                       int specificWH);
-    w_rc_t run_order_status(const int xct_id, 
-                            trx_result_tuple_t& atrt,
-                            int specificWH);
-    w_rc_t run_delivery(const int xct_id, 
-                        trx_result_tuple_t& atrt,
-                        int specificWH);
-    w_rc_t run_stock_level(const int xct_id, 
-                           trx_result_tuple_t& atrt,
-                           int specificWH);
-
     /* --- with input specified --- */
-    w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin,
-                         trx_result_tuple_t& atrt);
-    w_rc_t run_payment(const int xct_id, payment_input_t& apin,
-                       trx_result_tuple_t& atrt);
-    w_rc_t run_order_status(const int xct_id, order_status_input_t& aordstin,
-                            trx_result_tuple_t& atrt);
-    w_rc_t run_delivery(const int xct_id, delivery_input_t& adelin,
-                        trx_result_tuple_t& atrt);
-    w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin,
-                           trx_result_tuple_t& atrt);
+    w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
+    w_rc_t run_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
+    w_rc_t run_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
+    w_rc_t run_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
+    w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
 
+    /* --- without input specified --- */
+    w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
+    /* --- baseline mbench --- */
+    w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, const int specificWH);
+    w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, const int specificWH);
 
 
 
     /* --- kit dora trxs --- */
 
-    /* --- without input specified --- */
-    w_rc_t dora_new_order(const int xct_id, 
-                          trx_result_tuple_t& atrt,
-                          int specificWH);
-    w_rc_t dora_payment(const int xct_id, 
-                        trx_result_tuple_t& atrt,
-                        int specificWH);
-    w_rc_t dora_order_status(const int xct_id, 
-                             trx_result_tuple_t& atrt,
-                             int specificWH);
-    w_rc_t dora_delivery(const int xct_id, 
-                         trx_result_tuple_t& atrt,
-                         int specificWH);
-    w_rc_t dora_stock_level(const int xct_id, 
-                            trx_result_tuple_t& atrt,
-                            int specificWH);
-
     /* --- with input specified --- */
-    w_rc_t dora_new_order(const int xct_id, new_order_input_t& anoin,
-                          trx_result_tuple_t& atrt);
-    w_rc_t dora_payment(const int xct_id, payment_input_t& apin,
-                        trx_result_tuple_t& atrt);
-    w_rc_t dora_order_status(const int xct_id, order_status_input_t& aordstin,
-                             trx_result_tuple_t& atrt);
-    w_rc_t dora_delivery(const int xct_id, delivery_input_t& adelin,
-                         trx_result_tuple_t& atrt);
-    w_rc_t dora_stock_level(const int xct_id, stock_level_input_t& astoin,
-                            trx_result_tuple_t& atrt);
+    w_rc_t dora_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
+    w_rc_t dora_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
+    w_rc_t dora_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
+    w_rc_t dora_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
+    w_rc_t dora_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
+
+    /* --- without input specified --- */
+    w_rc_t dora_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+
+    /* --- dora mbench --- */
+    w_rc_t dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, const int whid);
+    w_rc_t dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, const int whid);
 
 
 
+    // *** DEPRECATED ***//
     /* --- kit staged trxs --- */
-
     /* staged payment */
     w_rc_t staged_pay_updateShoreWarehouse(payment_input_t* ppin, 
                                            const int xct_id, 
@@ -526,17 +511,7 @@ public:
 
 
 }; // EOF ShoreTPCCEnv
-
-
-
-inline void ShoreTPCCEnv::print_sf()
-{
-    TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
-    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
-    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
-}
-
-    
+   
 
 
 EXIT_NAMESPACE(tpcc);

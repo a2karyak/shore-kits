@@ -105,12 +105,6 @@ public:
 
     // hack to make the intermediate RVPs be detached
     virtual w_rc_t release(thread_t* aworker) { 
-
-//         // do a loop until somebody else is attached
-//         int iwaited = 0;
-//         while (rvp->get_attached()==0) {
-//             iwaited++;        
-//         }
         aworker->detach_xct(_xct);
         return (RCOK); 
     }
@@ -123,16 +117,17 @@ public:
     }
 
 
-    // in order to coordinate between threads of the same trx
+    // coordinates detach sequence between threads of the same trx
     tatas_lock     _detach_lock; // enforces order across detaches
+
+
+    // keeps track on the number of attached threads - not used
     int volatile   _attach_cnt;  // enforces at least one thread to be attached
     tatas_lock     _attach_lock; // enforces order across detaches
-
     const int get_attached() {
         CRITICAL_SECTION(attach_cs, _attach_lock);
         return (_attach_cnt);
     }
-
     const int inc_attached() {
         CRITICAL_SECTION(attach_cs, _attach_lock);
         ++_attach_cnt;

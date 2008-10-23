@@ -10,6 +10,8 @@
 #include "stages/tpcc/shore/shore_tpcc_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
+#include "stages/tpcc/common/tpcc_random.h"
+
 
 using namespace shore;
 
@@ -57,6 +59,10 @@ void tpcc_stats_t::print_trx_stats() const
     TRACE( TRACE_STATISTICS, "Attempted: %d\n", _sto_att);
     TRACE( TRACE_STATISTICS, "Committed: %d\n", _sto_com);
     TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_sto_att-_sto_com));
+    TRACE( TRACE_STATISTICS, "OTHER\n");
+    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _other_att);
+    TRACE( TRACE_STATISTICS, "Committed: %d\n", _other_com);
+    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_other_att-_other_com));
     TRACE( TRACE_STATISTICS, "=====================================\n");
 }
 
@@ -96,6 +102,14 @@ void ShoreTPCCEnv::set_sf(const int aSF)
     else {
         TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
     }
+}
+
+
+void ShoreTPCCEnv::print_sf(void)
+{
+    TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
+    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
+    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
 }
 
 
@@ -1349,11 +1363,11 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-upd-tuple\n", xct_id);
         W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, c_new_data_1, c_new_data_2));
     }
     else { /* good customer */
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", xct_id);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-upd-tuple\n", xct_id);
         W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, NULL, NULL));
     }
 
@@ -2079,6 +2093,305 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
     return (RCOK);
 }
+
+
+
+/******************************************************************** 
+ *
+ * MBENCHES
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCCEnv::run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, 
+                                     const int whid)
+{
+    TRACE( TRACE_TRX_FLOW, "%d. MBENCH-CUST...\n", xct_id);     
+    
+    w_rc_t e = _run_mbench_cust(xct_id, atrt, whid);
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "Xct (%d) MBench-Cust aborted [0x%x]\n", 
+               xct_id, e.err_num());
+
+        if (_measure == MST_MEASURE) {
+            _total_tpcc_stats.inc_other_com();
+            _session_tpcc_stats.inc_other_com();
+            _env_stats.inc_trx_att();
+        }
+	
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) MBench-Cust failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
+
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
+        // (ip) could retry
+        return (e);
+    }
+
+    TRACE( TRACE_TRX_FLOW, "Xct (%d) MBench-Cust completed\n", xct_id);
+
+    if (_measure == MST_MEASURE) {
+        _total_tpcc_stats.inc_other_com();
+        _session_tpcc_stats.inc_other_com();
+        _env_stats.inc_trx_com();
+    }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
+
+    return (RCOK); 
+}
+
+w_rc_t ShoreTPCCEnv::_run_mbench_cust(const int xct_id, trx_result_tuple_t& trt, 
+                                      const int whid)
+{
+    // ensure a valid environment    
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // generates the input
+    int did = URand(1,10);
+    int cid = NURand(1023,1,3000);
+    double amount = (double)URand(1,1000);
+    // mbench trx touches 1 table: 
+    // customer
+
+    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    assert (prcust);
+
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
+    rep_row_t areprow(_pcustomer_man->ts());
+
+    // allocate space for the table representation
+    areprow.set(_customer_desc.maxsize()); 
+    prcust->_rep = &areprow;
+
+    /* 0. initiate transaction */
+    W_DO(_pssm->begin_xct());
+
+    /* 1. retrieve customer for update */
+
+    /* SELECT c_first, c_middle, c_last, c_street_1, c_street_2, c_city, 
+     * c_state, c_zip, c_phone, c_since, c_credit, c_credit_lim, 
+     * c_discount, c_balance, c_ytd_payment, c_payment_cnt 
+     * FROM customer 
+     * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
+     * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
+     *
+     * plan: index probe on "C_INDEX"
+     */
+
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d PAY:cust-idx-probe-forupdate (%d) (%d) (%d)\n", 
+           xct_id, whid, did, cid);
+
+    W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
+                                                    cid, whid, did));
+
+    double c_balance, c_ytd_payment;
+    int    c_payment_cnt;
+    tpcc_customer_tuple acust;
+
+    // retrieve customer
+    prcust->get_value(3,  acust.C_FIRST, 17);
+    prcust->get_value(4,  acust.C_MIDDLE, 3);
+    prcust->get_value(5,  acust.C_LAST, 17);
+    prcust->get_value(6,  acust.C_STREET_1, 21);
+    prcust->get_value(7,  acust.C_STREET_2, 21);
+    prcust->get_value(8,  acust.C_CITY, 21);
+    prcust->get_value(9,  acust.C_STATE, 3);
+    prcust->get_value(10, acust.C_ZIP, 10);
+    prcust->get_value(11, acust.C_PHONE, 17);
+    prcust->get_value(12, acust.C_SINCE);
+    prcust->get_value(13, acust.C_CREDIT, 3);
+    prcust->get_value(14, acust.C_CREDIT_LIM);
+    prcust->get_value(15, acust.C_DISCOUNT);
+    prcust->get_value(16, acust.C_BALANCE);
+    prcust->get_value(17, acust.C_YTD_PAYMENT);
+    prcust->get_value(18, acust.C_LAST_PAYMENT);
+    prcust->get_value(19, acust.C_PAYMENT_CNT);
+    prcust->get_value(20, acust.C_DATA_1, 251);
+    prcust->get_value(21, acust.C_DATA_2, 251);
+
+    // update customer fields
+    acust.C_BALANCE -= amount;
+    acust.C_YTD_PAYMENT += amount;
+    acust.C_PAYMENT_CNT++;
+
+    // if bad customer
+    if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
+        /* 10% of customers */
+
+        /* SELECT c_data
+         * FROM customer 
+         * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
+         * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
+         *
+         * plan: index probe on "C_INDEX"
+         */
+
+        // update the data
+        char c_new_data_1[251];
+        char c_new_data_2[251];
+        sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
+                cid, did, whid, did, whid, amount);
+
+        int len = strlen(c_new_data_1);
+        strncat(c_new_data_1, acust.C_DATA_1, 250-len);
+        strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
+        strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
+
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-upd-tuple\n", xct_id);
+        W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, c_new_data_1, c_new_data_2));
+    }
+    else { /* good customer */
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-upd-tuple\n", xct_id);
+        W_DO(_pcustomer_man->cust_update_tuple(_pssm, prcust, acust, NULL, NULL));
+    }
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prcust->print_tuple();
+#endif
+
+    // give back the tuples
+    _pcustomer_man->give_tuple(prcust);
+
+    /* 4. commit */
+    W_DO(_pssm->commit_xct());
+
+    // if we reached this point everything went ok
+    trt.set_state(COMMITTED);
+    return (RCOK);
+} // EOF: MBENCH-CUST
+
+
+w_rc_t ShoreTPCCEnv::run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, 
+                                   const int whid)
+{
+    TRACE( TRACE_TRX_FLOW, "%d. MBENCH-WH...\n", xct_id);     
+    
+    w_rc_t e = _run_mbench_wh(xct_id, atrt, whid);
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "Xct (%d) MBench-Wh aborted [0x%x]\n", 
+               xct_id, e.err_num());
+
+        if (_measure == MST_MEASURE) {
+            _total_tpcc_stats.inc_other_com();
+            _session_tpcc_stats.inc_other_com();
+            _env_stats.inc_trx_att();
+        }
+	
+	w_rc_t e2 = _pssm->abort_xct();
+	if(e2.is_error()) {
+	    TRACE( TRACE_ALWAYS, "Xct (%d) MBench-Wh failed [0x%x]\n", 
+		   xct_id, e2.err_num());
+	}
+
+	// signal cond var
+	if(atrt.get_notify())
+	    atrt.get_notify()->signal();
+
+        // (ip) could retry
+        return (e);
+    }
+
+    TRACE( TRACE_TRX_FLOW, "Xct (%d) MBench-Wh completed\n", xct_id);
+
+    if (_measure == MST_MEASURE) {
+        _total_tpcc_stats.inc_other_com();
+        _session_tpcc_stats.inc_other_com();
+        _env_stats.inc_trx_com();
+    }
+
+    // signal cond var
+    if(atrt.get_notify())
+        atrt.get_notify()->signal();
+
+    return (RCOK); 
+}
+
+w_rc_t ShoreTPCCEnv::_run_mbench_wh(const int xct_id, trx_result_tuple_t& trt, 
+                                    const int whid)
+{
+    // ensure a valid environment    
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // generate the input
+    double amount = (double)URand(1,1000);
+
+    // mbench trx touches 1 table: 
+    // warehouse
+
+    // get table tuples from the caches
+    row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
+    assert (prwh);
+
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
+    rep_row_t areprow(_pwarehouse_man->ts());
+
+    // allocate space for the biggest of the 4 table representations
+    areprow.set(_warehouse_desc.maxsize()); 
+    prwh->_rep = &areprow;
+
+    /* 0. initiate transaction */
+    W_DO(_pssm->begin_xct());
+
+    /* 1. retrieve warehouse for update */
+    TRACE( TRACE_TRX_FLOW, 
+           "App: %d PAY:warehouse-idx-probe (%d)\n", xct_id, whid);
+
+    W_DO(_pwarehouse_man->wh_index_probe_forupdate(_pssm, prwh, whid));
+
+    /* UPDATE warehouse SET w_ytd = wytd + :h_amount
+     * WHERE w_id = :w_id
+     *
+     * SELECT w_name, w_street_1, w_street_2, w_city, w_state, w_zip
+     * FROM warehouse
+     * WHERE w_id = :w_id
+     *
+     * plan: index probe on "W_INDEX"
+     */
+
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", xct_id, whid);
+    W_DO(_pwarehouse_man->wh_update_ytd(_pssm, prwh, amount));
+
+    tpcc_warehouse_tuple awh;
+    prwh->get_value(1, awh.W_NAME, 11);
+    prwh->get_value(2, awh.W_STREET_1, 21);
+    prwh->get_value(3, awh.W_STREET_2, 21);
+    prwh->get_value(4, awh.W_CITY, 21);
+    prwh->get_value(5, awh.W_STATE, 3);
+    prwh->get_value(6, awh.W_ZIP, 10);
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prwh->print_tuple();
+#endif
+
+    // give back the tuples
+    _pwarehouse_man->give_tuple(prwh);
+
+    /* 4. commit */
+    W_DO(_pssm->commit_xct());
+
+    // if we reached this point everything went ok
+    trt.set_state(COMMITTED);
+    return (RCOK);
+
+} // EOF: MBENCH-WH
 
 
 

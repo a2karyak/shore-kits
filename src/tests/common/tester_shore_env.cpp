@@ -151,6 +151,7 @@ void client_smt_t::resume_test() {
 void client_smt_t::submit_batch(ShoreTPCCEnv* env, int xct_type, 
                               int& trx_cnt, const int batch_sz) 
 {       
+    assert (batch_sz);
     for(int j=1; j <= batch_sz; j++) {
         if (j == batch_sz) {
             _cp->take_one = true;
@@ -178,12 +179,20 @@ w_rc_t client_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 
         // case of number-of-trxs-based measurement
     case (MT_NUM_OF_TRXS):
-        for (i=0; i<num_xct; i++) {
-            if(_abort_test)
-                break;
-            run_one_tpcc_xct(env, xct_type, i);
-        }
+
+        // submit a batch of num_xct trxs
+        submit_batch(env, xct_type, i, num_xct);
+        // wait for the batch to complete
+        // note: in the test case there is no double buffering
+        _cp->wait[_cp->index].wait();
         break;
+
+//         for (i=0; i<num_xct; i++) {
+//             if(_abort_test)
+//                 break;
+//             run_one_tpcc_xct(env, xct_type, i);
+//         }
+//         break;
 
         // case of duration-based measurement
     case (MT_TIME_DUR):
@@ -234,7 +243,7 @@ w_rc_t client_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid
     
     switch (xct_type) {
         
-        // BASELINE TRXS
+        // TPC-C BASELINE
     case XCT_NEW_ORDER:
         W_DO(xct_new_order(env, xctid));  break;
     case XCT_PAYMENT:
@@ -245,9 +254,13 @@ w_rc_t client_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid
         W_DO(xct_delivery(env, xctid)); break;
     case XCT_STOCK_LEVEL:
         W_DO(xct_stock_level(env, xctid)); break;
+        // MBENCH BASELINE
+    case XCT_MBENCH_WH:
+        W_DO(xct_mbench_wh(env, xctid)); break;
+    case XCT_MBENCH_CUST:
+        W_DO(xct_mbench_cust(env, xctid)); break;
 
-
-        // DORA TRXS
+        // TPC-C DORA
     case XCT_DORA_NEW_ORDER:
         W_DO(xct_dora_new_order(env, xctid));  break;
     case XCT_DORA_PAYMENT:
@@ -258,10 +271,15 @@ w_rc_t client_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid
         W_DO(xct_dora_delivery(env, xctid)); break;
     case XCT_DORA_STOCK_LEVEL:
         W_DO(xct_dora_stock_level(env, xctid)); break;
+        // MBENCH DORA
+    case XCT_DORA_MBENCH_WH:
+        W_DO(xct_dora_mbench_wh(env, xctid)); break;
+    case XCT_DORA_MBENCH_CUST:
+        W_DO(xct_dora_mbench_cust(env, xctid)); break;
     }
-
     return (RCOK);
 }
+
 
 /********************************************************************* 
  *
@@ -282,7 +300,8 @@ w_rc_t client_smt_t::xct_payment(ShoreTPCCEnv* env, int xctid)
 { 
     assert (env);
     trx_result_tuple_t atrt;
-    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    if (_cp->take_one) 
+        atrt.set_notify(_cp->wait+_cp->index);
     env->run_payment(xctid, atrt, _wh);    
     return (RCOK); 
 }
@@ -313,6 +332,26 @@ w_rc_t client_smt_t::xct_stock_level(ShoreTPCCEnv* env, int xctid)
     trx_result_tuple_t atrt;
     if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     env->run_stock_level(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+
+
+w_rc_t client_smt_t::xct_mbench_wh(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    env->run_mbench_wh(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+w_rc_t client_smt_t::xct_mbench_cust(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    env->run_mbench_cust(xctid, atrt, _wh);    
     return (RCOK); 
 }
 
@@ -371,6 +410,24 @@ w_rc_t client_smt_t::xct_dora_stock_level(ShoreTPCCEnv* env, int xctid)
     return (RCOK); 
 }
 
+
+w_rc_t client_smt_t::xct_dora_mbench_wh(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    env->dora_mbench_wh(xctid, atrt, _wh);    
+    return (RCOK); 
+}
+
+w_rc_t client_smt_t::xct_dora_mbench_cust(ShoreTPCCEnv* env, int xctid) 
+{ 
+    assert (env);
+    trx_result_tuple_t atrt;
+    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    env->dora_mbench_cust(xctid, atrt, _wh);    
+    return (RCOK); 
+}
 
 
 /** EOF: client_smt_t functions */

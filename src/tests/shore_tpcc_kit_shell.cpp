@@ -30,9 +30,11 @@ public:
 
     tpcc_kit_shell_t(const char* prompt) 
         : shore_kit_shell_t(prompt, _g_shore_env)
-        {
-        }
-
+    {
+        // load supported trxs and binding policies maps
+        load_trxs_map();
+        load_bp_map();
+    }
     ~tpcc_kit_shell_t() { }
 
     // impl of supported commands
@@ -44,6 +46,9 @@ public:
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const int iUseSLI, const eBindingType abt);    
+
+    virtual void append_trxs_map(void) { }
+    virtual void append_bp_map(void) { }
 
 }; // EOF: tpcc_kit_shell_t
 
