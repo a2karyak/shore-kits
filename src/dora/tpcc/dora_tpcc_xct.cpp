@@ -77,7 +77,9 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
     W_DO(_pssm->begin_xct(atid));
-    xct_t* pxct = ss_m::tid_to_xct(atid);    
+    //xct_t* pxct = ss_m::tid_to_xct(atid);    
+    xct_t* pxct = smthread_t::me()->xct();
+
     assert (pxct);
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
@@ -286,7 +288,8 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt
     // 1. Initiate transaction
     tid_t atid;   
     W_DO(_pssm->begin_xct(atid));
-    xct_t* pxct = ss_m::tid_to_xct(atid);    
+    //    xct_t* pxct = ss_m::tid_to_xct(atid);    
+    xct_t* pxct = smthread_t::me()->xct();
     assert (pxct);
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
@@ -347,7 +350,8 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, 
     // 1. Initiate transaction
     tid_t atid;   
     W_DO(_pssm->begin_xct(atid));
-    xct_t* pxct = ss_m::tid_to_xct(atid);    
+    //    xct_t* pxct = ss_m::tid_to_xct(atid);    
+    xct_t* pxct = smthread_t::me()->xct();
     assert (pxct);
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
