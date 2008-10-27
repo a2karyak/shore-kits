@@ -80,6 +80,7 @@ public:
           _part_field_cnt(field_cnt)
     {
         assert (_part_field_cnt>0);
+        set_part_policy(PP_RANGE);
     }
 
 

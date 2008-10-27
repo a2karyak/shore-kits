@@ -48,14 +48,19 @@ protected:
     tid_t               _tid;
     trx_result_tuple_t _result;
 
+    int                 _xct_id;
+
+    // keeps track on the number of attached threads - not used
+    int volatile   _attach_cnt;  // enforces at least one thread to be attached
+    tatas_lock     _attach_lock; // enforces order across detaches
+
 public:
 
-    rvp_t(tid_t atid, xct_t* axct,
-          trx_result_tuple_t &presult, 
-          const int intra_trx_cnt) 
-        : _tid(atid), _xct(axct), _result(presult), _countdown(intra_trx_cnt),
-          _attach_cnt(0),
-          _decision(AD_UNDECIDED)
+    rvp_t(tid_t atid, xct_t* axct, const int axctid,
+          trx_result_tuple_t &presult, const int intra_trx_cnt) 
+        : _countdown(intra_trx_cnt), _decision(AD_UNDECIDED),
+          _tid(atid), _xct(axct), _xct_id(axctid),
+          _result(presult), _attach_cnt(0)
     { 
         assert (_xct);
         assert (intra_trx_cnt>0);
@@ -67,21 +72,13 @@ public:
 
     // TRX-ID Related
 
-    inline xct_t* get_xct() { return (_xct); }
-    inline tid_t  get_tid() { return (_tid); }
-   
-    inline void set(tid_t atid, xct_t* axct, trx_result_tuple_t &presult) {
-        assert (axct);
-        assert (_tid == ss_m::xct_to_tid(axct));
-        _tid = atid;
-        _xct = axct;
-        _result = presult;
-    }
+    inline xct_t* get_xct() const { return (_xct); }
+    inline tid_t  get_tid() const { return (_tid); }
 
     // Decision related
 
     inline void set_decision(const eActionDecision& ad) { _decision = ad; }
-    inline eActionDecision get_decision() { return (_decision); }
+    inline eActionDecision get_decision() const { return (_decision); }
 
     /** trx-related operations */
     virtual w_rc_t run()=0; // default action on rvp - commit trx
@@ -100,6 +97,7 @@ public:
         _xct = NULL;
         _decision = AD_UNDECIDED;
         _result = trx_result_tuple_t();
+        _xct_id = 0;
     }    
 
 
@@ -116,16 +114,10 @@ public:
         return (_decision);
     }
 
-
     // coordinates detach sequence between threads of the same trx
     tatas_lock     _detach_lock; // enforces order across detaches
 
-
-    // keeps track on the number of attached threads - not used
-    int volatile   _attach_cnt;  // enforces at least one thread to be attached
-    tatas_lock     _attach_lock; // enforces order across detaches
-    const int get_attached() {
-        CRITICAL_SECTION(attach_cs, _attach_lock);
+    const int get_attached() const {
         return (_attach_cnt);
     }
     const int inc_attached() {
@@ -158,10 +150,9 @@ class terminal_rvp_t : public rvp_t
 {
 public:
 
-    terminal_rvp_t(tid_t atid, xct_t* axct, 
-                   trx_result_tuple_t &presult, 
-                   const int intra_trx_cnt) 
-        : rvp_t(atid, axct, presult, intra_trx_cnt) 
+    terminal_rvp_t(tid_t atid, xct_t* axct, const int axctid, 
+                   trx_result_tuple_t &presult, const int intra_trx_cnt) 
+        : rvp_t(atid, axct, axctid, presult, intra_trx_cnt) 
     { }
 
     virtual ~terminal_rvp_t() { }

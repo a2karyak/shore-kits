@@ -343,10 +343,8 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         // 3. get pointer to rvp
         rvp_t* aprvp = pa->get_rvp();
         assert (aprvp);
-//         {
-//             int iattached = aprvp->inc_attached();
-//             assert (iattached); // at least one should be attached at this point
-//         }
+        int iattached = aprvp->inc_attached();
+        assert (iattached); // at least one should be attached at this point
             
         // 4. serve action
         e = pa->trx_exec();

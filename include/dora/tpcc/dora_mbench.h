@@ -41,11 +41,10 @@ private:
     // pointer to the shore env
     ShoreTPCCEnv* _ptpccenv;
 public:
-    final_mb_rvp(tid_t atid, xct_t* axct,
-                 trx_result_tuple_t &presult,
-                 ShoreTPCCEnv* penv,
-                 const int intra_trx_cnt) 
-        : terminal_rvp_t(atid, axct, presult, intra_trx_cnt), 
+    final_mb_rvp(tid_t atid, xct_t* axct, const int axctid,
+                 trx_result_tuple_t &presult, const int intra_trx_cnt, 
+                 ShoreTPCCEnv* penv) 
+        : terminal_rvp_t(atid, axct, axctid, presult, intra_trx_cnt), 
           _ptpccenv(penv) 
     { }
     virtual ~final_mb_rvp() { }
@@ -76,10 +75,10 @@ public:
     // the list of actions to be remembered to be given back
     upd_wh_mb_action_impl* _puwh;
 
-    final_mb_wh_rvp(tid_t atid, xct_t* axct,
+    final_mb_wh_rvp(tid_t atid, xct_t* axct, const int axctid,
                     trx_result_tuple_t &presult,
                     ShoreTPCCEnv* penv) 
-        : final_mb_rvp(atid, axct, presult, penv, 1),
+        : final_mb_rvp(atid, axct, axctid, presult, 1, penv),
           _puwh(NULL)
     { }
     ~final_mb_wh_rvp() { }
@@ -134,10 +133,9 @@ class final_mb_cust_rvp : public final_mb_rvp
 public:
     // the list of actions to be remembered to be given back
     upd_cust_mb_action_impl* _puc;
-    final_mb_cust_rvp(tid_t atid, xct_t* axct,
-                    trx_result_tuple_t &presult,
-                    ShoreTPCCEnv* penv) 
-        : final_mb_rvp(atid, axct, presult, penv, 1),
+    final_mb_cust_rvp(tid_t atid, xct_t* axct, const int axctid,
+                      trx_result_tuple_t &presult, ShoreTPCCEnv* penv) 
+        : final_mb_rvp(atid, axct, axctid, presult, 1, penv),
           _puc(NULL)
     { }
     ~final_mb_cust_rvp() { }

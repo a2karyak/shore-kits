@@ -98,69 +98,69 @@ const int dora_tpcc_db::start()
     _irptp_vec.push_back(_wh_irpt);
     icpu = _next_cpu(icpu, _wh_irpt, sf);
 
-    // DISTRICT
-    _di_irpt = new irp_table_impl(_tpccenv, _tpccenv->district(), icpu, range, DI_IRP_KEY);
-    if (!_di_irpt) {
-        TRACE( TRACE_ALWAYS, "Problem in creating (DISTRICT) irp-table\n");
-        assert (0); // should not happen
-        return (de_GEN_TABLE);
-    }
-    assert (_di_irpt);
-    // creates SF partitions for districts
-    for (int i=0; i<sf; i++) {
-        _di_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
-        aboundary=i+1;
-        partUp.push_back(aboundary);
-        _di_irpt->get_part(i)->resize(partDown,partUp);
-    }
-    _irptp_vec.push_back(_di_irpt);
-    icpu = _next_cpu(icpu, _di_irpt, sf);    
+//     // DISTRICT
+//     _di_irpt = new irp_table_impl(_tpccenv, _tpccenv->district(), icpu, range, DI_IRP_KEY);
+//     if (!_di_irpt) {
+//         TRACE( TRACE_ALWAYS, "Problem in creating (DISTRICT) irp-table\n");
+//         assert (0); // should not happen
+//         return (de_GEN_TABLE);
+//     }
+//     assert (_di_irpt);
+//     // creates SF partitions for districts
+//     for (int i=0; i<sf; i++) {
+//         _di_irpt->create_one_part();
+//         partDown.reset();
+//         partDown.push_back(i);
+//         partUp.reset();
+//         aboundary=i+1;
+//         partUp.push_back(aboundary);
+//         _di_irpt->get_part(i)->resize(partDown,partUp);
+//     }
+//     _irptp_vec.push_back(_di_irpt);
+//     icpu = _next_cpu(icpu, _di_irpt, sf);    
 
-    // HISTORY
-    _hi_irpt = new irp_table_impl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
-    if (!_hi_irpt) {
-        TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
-        assert (0); // should not happen
-        return (de_GEN_TABLE);
-    }
-    assert (_hi_irpt);
-    // creates SF partitions for districts
-    for (int i=0; i<sf; i++) {
-        _hi_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
-        aboundary=i+1;
-        partUp.push_back(aboundary);
-        _hi_irpt->get_part(i)->resize(partDown,partUp);
-    }
-    _irptp_vec.push_back(_hi_irpt);
-    icpu = _next_cpu(icpu, _hi_irpt, sf);    
+//     // HISTORY
+//     _hi_irpt = new irp_table_impl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
+//     if (!_hi_irpt) {
+//         TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
+//         assert (0); // should not happen
+//         return (de_GEN_TABLE);
+//     }
+//     assert (_hi_irpt);
+//     // creates SF partitions for districts
+//     for (int i=0; i<sf; i++) {
+//         _hi_irpt->create_one_part();
+//         partDown.reset();
+//         partDown.push_back(i);
+//         partUp.reset();
+//         aboundary=i+1;
+//         partUp.push_back(aboundary);
+//         _hi_irpt->get_part(i)->resize(partDown,partUp);
+//     }
+//     _irptp_vec.push_back(_hi_irpt);
+//     icpu = _next_cpu(icpu, _hi_irpt, sf);    
 
 
-    // CUSTOMER
-    _cu_irpt = new irp_table_impl(_tpccenv, _tpccenv->customer(), icpu, range, CU_IRP_KEY);
-    if (!_cu_irpt) {
-        TRACE( TRACE_ALWAYS, "Problem in creating (CUSTOMER) irp-table\n");
-        assert (0); // should not happen
-        return (de_GEN_TABLE);
-    }
-    assert (_cu_irpt);
-    // creates SF partitions for customers
-    for (int i=0; i<sf; i++) {
-        _cu_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
-        aboundary=i+1;
-        partUp.push_back(aboundary);
-        _cu_irpt->get_part(i)->resize(partDown,partUp);
-    }
-    _irptp_vec.push_back(_cu_irpt);
-    icpu = _next_cpu(icpu, _cu_irpt, sf);
+//     // CUSTOMER
+//     _cu_irpt = new irp_table_impl(_tpccenv, _tpccenv->customer(), icpu, range, CU_IRP_KEY);
+//     if (!_cu_irpt) {
+//         TRACE( TRACE_ALWAYS, "Problem in creating (CUSTOMER) irp-table\n");
+//         assert (0); // should not happen
+//         return (de_GEN_TABLE);
+//     }
+//     assert (_cu_irpt);
+//     // creates SF partitions for customers
+//     for (int i=0; i<sf; i++) {
+//         _cu_irpt->create_one_part();
+//         partDown.reset();
+//         partDown.push_back(i);
+//         partUp.reset();
+//         aboundary=i+1;
+//         partUp.push_back(aboundary);
+//         _cu_irpt->get_part(i)->resize(partDown,partUp);
+//     }
+//     _irptp_vec.push_back(_cu_irpt);
+//     icpu = _next_cpu(icpu, _cu_irpt, sf);
 
 
     /*

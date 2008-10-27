@@ -58,11 +58,11 @@ private:
     ShoreTPCCEnv* _ptpccenv;
 public:
 
-    midway_pay_rvp(tid_t atid, xct_t* axct,
+    midway_pay_rvp(tid_t atid, xct_t* axct, const int axctid,
                    trx_result_tuple_t &presult,
                    ShoreTPCCEnv* penv, 
                    payment_input_t ppin) 
-        : rvp_t(atid, axct, presult, 3),  // consists of three packets
+        : rvp_t(atid, axct, axctid, presult, 3),  // consists of three packets
           _ptpccenv(penv), _pin(ppin)
     { }
 
@@ -102,10 +102,10 @@ private:
 
 public:
 
-    final_pay_rvp(tid_t atid, xct_t* axct,
+    final_pay_rvp(tid_t atid, xct_t* axct, const int axctid,
                   trx_result_tuple_t &presult,
                   ShoreTPCCEnv* penv) 
-        : terminal_rvp_t(atid, axct, presult, 1), 
+        : terminal_rvp_t(atid, axct, axctid, presult, 1), 
           _ptpccenv(penv) 
     { }
     

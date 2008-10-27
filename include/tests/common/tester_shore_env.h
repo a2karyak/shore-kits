@@ -89,7 +89,7 @@ const int DF_WARMUP_ITERS       = 3;
 
 
 // default batch size
-const int BATCH_SIZE = 30;
+const int BATCH_SIZE = 10;
 
 
 // Instanciate and close the Shore environment

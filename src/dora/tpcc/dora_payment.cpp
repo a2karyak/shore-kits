@@ -41,7 +41,7 @@ w_rc_t midway_pay_rvp::run()
     // 1. Setup the next RVP
     assert (_xct);
 
-    final_pay_rvp* frvp = new final_pay_rvp(_tid, _xct, _result, _ptpccenv);
+    final_pay_rvp* frvp = new final_pay_rvp(_tid, _xct, _xct_id, _result, _ptpccenv);
     assert (frvp);
 
     // 2. Generate and enqueue action

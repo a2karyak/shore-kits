@@ -63,13 +63,21 @@ enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
  *
  * @brief: Possible states while working on a task
  *
- * @note:  Finished = Done assigned job but still trx not decided
- *         (Finished != Idle)
+ * States:
+ *
+ * UNDEF        = Unitialized
+ * EMPTY        = Initialized but stopped
+ * IDLE_LOOP    = Idle and spinning on the queue
+ * IDLE_CONDVAR = Idle and sleeping on the condvar
+ * FOR_COMMIT   = Serving to-be-committed requests
+ * ASSIGNED     = Serving a normal request
+ * FINISHED     = Done assigned job but still trx not decided
  *
  ********************************************************************/
 
 enum eWorkingState { WS_UNDEF, WS_EMPTY,
                      WS_IDLE_LOOP, WS_IDLE_CONDVAR, 
+                     WS_FOR_COMMIT,
                      WS_ASSIGNED, WS_FINISHED };
 
 // Struct that wraps a eWorkingState, and a lock

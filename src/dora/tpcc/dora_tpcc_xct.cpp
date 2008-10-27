@@ -82,7 +82,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the next RVP
-    midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct,
+    midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct, xct_id,
                                              atrt, this, apin); // PH1 consists of 3 packets
     assert (rvp);
     
@@ -185,39 +185,10 @@ w_rc_t ShoreTPCCEnv::dora_order_status(const int xct_id,
                                        order_status_input_t& aordstin,
                                        trx_result_tuple_t& atrt)
 {
-    assert (_g_dora);
-    TRACE( TRACE_TRX_FLOW, "%d. DORA - EMPTY...\n", xct_id);     
+    TRACE( TRACE_TRX_FLOW, "%d. ORDER-STATUS...\n", xct_id);
 
-    tid_t atid;   
-
-    // 1. Initiate transaction
-    W_DO(_pssm->begin_xct(atid));
-    xct_t* pxct = ss_m::tid_to_xct(atid);    
-    assert (pxct);
-
-    payment_input_t apin;
-
-    // 2. Setup the next RVP
-    final_pay_rvp* rvp = new final_pay_rvp(atid, pxct,
-                                           atrt, this);
-    assert (rvp);
-
-    ins_hist_pay_action_impl*   p_ins_hist_pay_action   = _g_dora->get_ins_hist_pay_action();
-    assert (p_ins_hist_pay_action);
-    p_ins_hist_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_pih(p_ins_hist_pay_action);
-    tpcc_warehouse_tuple awh;
-    tpcc_district_tuple adist;
-    p_ins_hist_pay_action->_awh = awh;
-    p_ins_hist_pay_action->_adist = adist;
-    if (_g_dora->his()->enqueue(p_ins_hist_pay_action, 0)) { // One HISTORY partition
-            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-    }
-
-    // 4. detatch self from xct
-    me()->detach_xct(pxct);
+    // 1. enqueue all actions
+    assert (0);
 
     return (RCOK); 
 }
@@ -320,7 +291,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the final RVP
-    final_mb_cust_rvp* frvp = new final_mb_cust_rvp(atid, pxct, atrt, this);
+    final_mb_cust_rvp* frvp = new final_mb_cust_rvp(atid, pxct, xct_id, atrt, this);
     assert (frvp);
     
     // 3. generate and enqueue action
@@ -381,7 +352,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, 
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the final RVP
-    final_mb_wh_rvp* frvp = new final_mb_wh_rvp(atid, pxct, atrt, this);
+    final_mb_wh_rvp* frvp = new final_mb_wh_rvp(atid, pxct, xct_id, atrt, this);
     assert (frvp);
     
     // 3. generate and enqueue action
@@ -423,8 +394,12 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, 
         }
 
         // 4. detatch self from xct
+        // wait first for someone to attach
+        int waited=0;
+        while (!frvp->get_attached())
+            ++waited;
         me()->detach_xct(pxct);
-        TRACE( TRACE_TRX_FLOW, "Deattached from (%d)\n", atid);
+        TRACE( TRACE_TRX_FLOW, "Deattached from (%d) waited (%d)\n", atid, waited);
 
     } // DETACH_LOCK_CS    
     return (RCOK); 
