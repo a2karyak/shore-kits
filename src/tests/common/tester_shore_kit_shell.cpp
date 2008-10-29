@@ -232,7 +232,7 @@ int shore_kit_shell_t::print_usage(const char* command)
 {
     assert (command);
 
-    TRACE( TRACE_ALWAYS, "\n\nSupported commands: LOAD/WARMUP/TEST/MEASURE\n\n" );
+    TRACE( TRACE_ALWAYS, "\n\nSupported commands: TRXS/LOAD/WARMUP/TEST/MEASURE\n\n" );
 
     TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
            "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
@@ -383,6 +383,11 @@ int shore_kit_shell_t::process_command(const char* command)
         return (SHELL_NEXT_CONTINUE);
     }
 
+    // TRXS cmd
+    if (strcasecmp(command_tag, "TRXS") == 0) {
+        return (process_cmd_TRXS(command, command_tag));
+    }
+
     // LOAD cmd
     if (strcasecmp(command_tag, "LOAD") == 0) {
         return (process_cmd_LOAD(command, command_tag));
@@ -501,6 +506,22 @@ int shore_kit_shell_t::process_cmd_WARMUP(const char* command,
  *
  ********************************************************************/
 
+int shore_kit_shell_t::process_cmd_TRXS(const char* command, 
+                                        char* command_tag)
+{
+    print_sup_trxs();
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    process_cmd_LOAD
+ *
+ *  @brief: Parses the LOAD cmd and calls the virtual impl function
+ *
+ ********************************************************************/
+
 int shore_kit_shell_t::process_cmd_LOAD(const char* command, 
                                         char* command_tag)
 {
@@ -604,8 +625,14 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
         numOfTrxs = tmp_numOfTrxs;
 
     // 5- selected trx
-    if (tmp_selectedTrxID>=0)
+    mapSupTrxsConstIt stip = _sup_trxs.find(tmp_selectedTrxID);
+    if (stip!=_sup_trxs.end()) {
         selectedTrxID = tmp_selectedTrxID;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Unsupported TRX\n");
+        return (SHELL_NEXT_CONTINUE);
+    }
 
     // 6- number of iterations - iterations
     if (tmp_iterations>0)
@@ -615,11 +642,15 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
     use_sli = tmp_use_sli;
 
     // 8- binding type   
-    if (tmp_binding>BT_NONE) {        
-        mapBindPolsIt cit = _sup_bps.find(tmp_binding);
-        if (cit!= _sup_bps.end())
-            binding = tmp_binding;
+    mapBindPolsIt cit = _sup_bps.find(tmp_binding);
+    if (cit!= _sup_bps.end()) {
+        binding = tmp_binding;
     }
+    else {
+        TRACE( TRACE_ALWAYS, "Unsupported Binding\n");
+        return (SHELL_NEXT_CONTINUE);
+    }
+
 
     // call the virtual function that implements the test    
     return (_cmd_TEST_impl(numOfQueriedWHs, spreadThreads, numOfThreads,
@@ -717,8 +748,14 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
         duration = tmp_duration;
 
     // 5- selected trx
-    if (tmp_selectedTrxID>=0)
+    mapSupTrxsConstIt stip = _sup_trxs.find(tmp_selectedTrxID);
+    if (stip!=_sup_trxs.end()) {
         selectedTrxID = tmp_selectedTrxID;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Unsupported TRX\n");
+        return (SHELL_NEXT_CONTINUE);
+    }
 
     // 6- number of iterations - iterations
     if (tmp_iterations>0)
@@ -728,8 +765,14 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
     use_sli = tmp_use_sli;
 
     // 8- binding type   
-    if (tmp_binding>BT_NONE)
+    mapBindPolsIt cit = _sup_bps.find(tmp_binding);
+    if (cit!= _sup_bps.end()) {
         binding = tmp_binding;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Unsupported Binding\n");
+        return (SHELL_NEXT_CONTINUE);
+    }
 
     // call the virtual function that implements the measurement    
     return (_cmd_MEASURE_impl(numOfQueriedWHs, spreadThreads, numOfThreads,

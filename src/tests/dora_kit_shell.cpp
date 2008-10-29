@@ -64,6 +64,9 @@ public:
 
 void dora_tpcc_kit_shell_t::append_trxs_map(void)
 {
+    // clears the supported trx because they don't run with DORA
+    _sup_trxs.clear();
+
     // Baseline TPC-C trxs
     _sup_trxs[XCT_DORA_MIX]          = "DORA-Mix";
     _sup_trxs[XCT_DORA_NEW_ORDER]    = "DORA-NewOrder";

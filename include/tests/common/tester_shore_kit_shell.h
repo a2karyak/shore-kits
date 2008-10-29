@@ -164,6 +164,7 @@ public:
     virtual int process_cmd_MEASURE(const char* command, char* command_tag);
     virtual int process_cmd_WARMUP(const char* command, char* command_tag);    
     virtual int process_cmd_LOAD(const char* command, char* command_tag);        
+    virtual int process_cmd_TRXS(const char* command, char* command_tag);     
 
     virtual void usage_cmd_TEST();
     virtual void usage_cmd_MEASURE();
