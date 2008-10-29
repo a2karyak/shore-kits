@@ -71,6 +71,7 @@ public:
 
     typedef range_partition_impl<int>   irp_impl; 
     typedef range_part_table_impl<int>  irp_table_impl;
+
     typedef irp_impl::range_action      irp_action;
     typedef irp_impl::part_key          ikey;
 

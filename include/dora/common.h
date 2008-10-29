@@ -34,6 +34,9 @@ const int DF_NUM_OF_STANDBY_THRS         = 0; // TODO: (ip) assume main-memory
 // CLASSES
 
 template<class DataType> class partition_t;
+template<class DataType> class worker_t;
+template<class DataType> class action_t;
+
 
 class rvp_t;
 class terminal_rvp_t;

@@ -17,30 +17,33 @@
 #include <vector>
 
 #include "util.h"
-#include "dora/action.h"
+#include "dora/common.h"
 
 ENTER_NAMESPACE(dora);
 
 // How many loops it will spin before wait on cond var
-const int IDLE_LOOPS = 10000;
+const int IDLE_LOOPS = 1000;
 
 template<class Action>
 struct srmwqueue 
 {
-    typedef std::vector<Action*> Action_list;
+    typedef std::vector<Action*> ActionVec;
 
-    Action_list _for_writers;
-    Action_list _for_readers;
-    typename Action_list::iterator _read_pos;
-    mcs_lock _lock;
+    ActionVec _for_writers;
+    ActionVec _for_readers;
+    typename ActionVec::iterator _read_pos;
+    mcs_lock     _lock;
     int volatile _empty;
-
+    
+    // reader thread controls
     eWorkerControl volatile* _pwc;
     WorkingState* _pws;
     condex* _pcx;
     tatas_lock _ws_lock;    
 
-    srmwqueue() : _empty(true), _pwc(NULL), _pws(NULL), _pcx(NULL) { 
+    srmwqueue() : 
+        _empty(true), _pwc(NULL), _pws(NULL), _pcx(NULL) 
+    { 
         _read_pos = _for_readers.begin();
     }
 
@@ -56,6 +59,9 @@ struct srmwqueue
         _pcx = pcx;
     }
 
+    int is_empty(void) const {
+        return (*&_empty);
+    }
 
     // spins until new input is set
     bool wait_for_input() 
@@ -82,7 +88,8 @@ struct srmwqueue
             if (++loopcnt > IDLE_LOOPS) {
                 loopcnt = 0;
                 CRITICAL_SECTION(upg_ws_cs, _ws_lock);
-                // check once more if still empty 
+
+                // check once more if still empty, before going to sleep
                 if (*&_empty) {
                     // update state, release lock and sleep on cond var
                     TRACE( TRACE_DEBUG, "CondVar sleeping...\n");
@@ -112,7 +119,7 @@ struct srmwqueue
     }
     
     Action* pop() {
-        // pops an action, or waits for an action to show up
+        // pops an action from the input vector, or waits for one to show up
 	if ((_read_pos == _for_readers.end()) && (!wait_for_input()))
 	    return (NULL);
 	return (*(_read_pos++));
@@ -129,6 +136,7 @@ struct srmwqueue
         CRITICAL_SECTION(cs, _lock);
         _for_writers.push_back(a);
         _empty = false;
+        cs.exit();
         
         // wake up if assigned worker thread sleeping
         CRITICAL_SECTION(ws_cs, _ws_lock);
@@ -136,10 +144,11 @@ struct srmwqueue
             TRACE( TRACE_DEBUG, "CondVar signaling...\n");
             _pws->set_state(WS_ASSIGNED);
             _pcx->signal();
-        }        
+        }                
     }
 
     void clear() {
+        // clear public vectors
         {
             CRITICAL_SECTION(cs, _lock);
             _for_writers.clear();

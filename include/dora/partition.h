@@ -26,9 +26,8 @@ ENTER_NAMESPACE(dora);
 
 using namespace shore;
 
-
-template<class DataType> class worker_t;
-
+// template<class DataType> class worker_t;
+// template<class DataType> class partition_t;
 
 
 /******************************************************************** 
@@ -61,7 +60,10 @@ public:
 
     typedef action_t<DataType>      part_action;
     typedef worker_t<DataType>      part_worker;
-    typedef srmwqueue<part_action>  part_queue;
+
+    typedef srmwqueue<part_action>         part_queue;
+    typedef std::list<part_action*>        ActionList;
+    typedef typename ActionList::iterator  ActionListIt; 
 
     typedef key_wrapper_t<DataType> part_key;
     typedef lock_man_t<DataType>    part_lock_man;
@@ -90,11 +92,50 @@ protected:
     // processor binding
     processorid_t  _prs_id;
 
-    // queue of requests
-    part_queue     _queue; 
-
     // lock manager for the partition
     part_lock_man  _plm;
+
+
+    // Each partition has three lists of Actions
+    //
+    // 1. (_committed_list)
+    //    The list of actions that were committed.
+    //    If an action is committed the partition's lock manager needs to remove
+    //    all the locks occupied by this particular action.
+    //
+    // 2. (_input_queue)
+    //    The queue were multiple writers input new requests (Actions).
+    //    This is the main entrance point for new requests for the partition. 
+    //  
+    // 3. (_wait_list)
+    //    A list of actions that were dequeued by the input queue but
+    //    the lock manager didn't allow them to proceed due to (logical lock) 
+    //    conflicts with other outstanding transactions.
+    //
+    //
+    // The active worker thread does the following cycle:
+    //
+    // - Checks if there is any action to be committed, and releases the 
+    //   corresponding locks.
+    // - If indeed there were actions committed goes over the list of 
+    //   waiting (unserved) actions since now some of them may be able
+    //   to proceed.
+    // - If no actions were committed and the list of waiting is searched
+    //   then is goes to the queue and waits for new inputs
+    //
+
+    // queue of new Actions
+    // single reader - multiple writers
+    part_queue    _input_queue; 
+
+    // list of Actions that have been dequeued but not served, because
+    // there was a lock conflict with an outstanding trx
+    ActionList    _wait_list;
+    ActionListIt  _wait_it;
+
+    // queue of committed Actions
+    // single reader - multiple writers
+    part_queue    _committed_queue;
 
 public:
 
@@ -103,11 +144,14 @@ public:
         : _env(env), _table(ptable), 
           _part_policy(PP_UNDEF), _pat_state(PATS_UNDEF), _pat_count(0),
           _owner(NULL), _standby(NULL), _standby_cnt(DF_NUM_OF_STANDBY_THRS),
-          _part_id(apartid), _prs_id(PBIND_NONE)
+          _part_id(apartid), _prs_id(PBIND_NONE)          
     {
         assert (_env);
         assert (_table);
+
+        _wait_it = _wait_list.begin();
     }
+
 
     virtual ~partition_t() { }    
 
@@ -115,10 +159,9 @@ public:
 
     // partition policy
     const ePartitionPolicy get_part_policy() { return (_part_policy); }
-
     void set_part_policy(const ePartitionPolicy aPartPolicy) {
         assert (aPartPolicy!=PP_UNDEF);
-        _part_policy == aPartPolicy;
+        _part_policy = aPartPolicy;
     }
 
     // partition state and active threads
@@ -128,7 +171,6 @@ public:
 
     // get lock manager
     part_lock_man* plm() { return (&_plm); }
-
 
 
     /** Control partition */
@@ -150,12 +192,23 @@ public:
     // enqueue lock needed to enforce an ordering across trxs
     mcs_lock _enqueue_lock;
 
-    // enqueues action, 0 on success
-    const int enqueue(part_action* paction);    
 
-    // dequeues action
+    // input for normal actions
+    // enqueues action, 0 on success
+    const int enqueue(part_action* pAction);
     part_action* dequeue();
 
+    // deque of actions to be committed
+    const int enqueue_commit(part_action* apa);
+    part_action* dequeue_commit();
+    int has_committed(void) const { return (!_committed_queue.is_empty()); }
+
+    // list of waiting actions - taken from input queue but not served
+    const int enqueue_wait(part_action* apa);
+    int has_waiting(void) const { return (!_wait_list.empty()); }
+    part_action* get_first_wait(void); // takes the iterator to the beginning of the list
+    part_action* get_next_wait(void);  // goes to the next action on the list
+    void remove_wait(void); // removes the currently pointed action
 
 
     /** For debugging */
@@ -193,28 +246,12 @@ protected:
 /** partition_t interface */
 
 
-/****************************************************************** 
- *
- * @fn:    dequeue()
- *
- * @brief: Returns the action at the head of the queue
- *
- ******************************************************************/
-
-template <class DataType>
-action_t<DataType>* partition_t<DataType>::dequeue()
-{
-    //    TRACE( TRACE_TRX_FLOW, "Dequeuing...\n");
-    return (_queue.pop());
-}
-
-
 
 /****************************************************************** 
  *
  * @fn:     enqueue()
  *
- * @brief:  Enqueues action
+ * @brief:  Enqueues action at the input queue
  *
  * @return: 0 on success, see dora_error.h for error codes
  *
@@ -223,16 +260,155 @@ action_t<DataType>* partition_t<DataType>::dequeue()
 template <class DataType>
 const int partition_t<DataType>::enqueue(part_action* pAction)
 {
-    //    assert (_part_policy!=PP_UNDEF);
+    assert (_part_policy!=PP_UNDEF);
     if (!verify(*pAction)) {
         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
         return (de_WRONG_PARTITION);
     }
 
     //    TRACE( TRACE_TRX_FLOW, "Enqueuing...\n");
-    _queue.push(pAction);
+    pAction->set_partition(this);
+    _input_queue.push(pAction);
     return (0);
 }
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    dequeue()
+ *
+ * @brief: Returns the action at the head of the input queue
+ *
+ ******************************************************************/
+
+template <class DataType>
+action_t<DataType>* partition_t<DataType>::dequeue()
+{
+    //    TRACE( TRACE_TRX_FLOW, "Dequeuing...\n");
+    return (_input_queue.pop());
+}
+
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     enqueue_commit()
+ *
+ * @brief:  Pushes an action to the partition's committed actions list
+ *
+ ******************************************************************/
+
+template <class DataType>
+const int partition_t<DataType>::enqueue_commit(part_action* pAction)
+{
+    assert (_part_policy!=PP_UNDEF);
+    assert (pAction->get_partition()==this);
+
+    TRACE( TRACE_TRX_FLOW, "Enqueuing committed...\n");
+    _committed_queue.push(pAction);
+    return (0);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     dequeue_commit()
+ *
+ * @brief:  Returns the action at the head of the committed queue
+ *
+ ******************************************************************/
+
+template <class DataType>
+action_t<DataType>* partition_t<DataType>::dequeue_commit()
+{
+    assert (has_committed());
+    TRACE( TRACE_TRX_FLOW, "Dequeuing committed...\n");
+    return (_committed_queue.pop());
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     enqueue_wait()
+ *
+ * @brief:  Pushes an action to the partition's waiting actions list
+ *
+ ******************************************************************/
+
+template <class DataType>
+const int partition_t<DataType>::enqueue_wait(part_action* pAction)
+{
+    assert (_part_policy!=PP_UNDEF);
+    assert (pAction->get_partition()==this);
+
+    TRACE( TRACE_TRX_FLOW, "Enqueuing waiting...\n");
+    _wait_list.push_back(pAction);    
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     get_first_wait()
+ *
+ * @brief:  Takes the iterator to the beginning of the waiting list,
+ *          and returns the action
+ *
+ * @return: NULL if empty. Otherwise, the action
+ *
+ ******************************************************************/
+
+template <class DataType>
+action_t<DataType>* partition_t<DataType>::get_first_wait(void)
+{
+    _wait_it = _wait_list.begin();
+    if (_wait_list.empty())
+        return (NULL);
+    return (*_wait_it);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     get_next_wait()
+ *
+ * @brief:  Returns the next action on the list, advances the iterator
+ *          by one
+ *
+ * @return: NULL if empty. Otherwise, the action
+ *
+ ******************************************************************/
+
+template <class DataType>
+action_t<DataType>* partition_t<DataType>::get_next_wait(void)
+{
+    if (_wait_list.empty())
+        return (NULL);
+    if (++_wait_it == _wait_list.end())
+        get_first_wait();
+    return (*_wait_it);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     remove_wait()
+ *
+ * @brief:  Removes the currently pointed action from the waiting list
+ *
+ ******************************************************************/
+
+template <class DataType>
+void partition_t<DataType>::remove_wait(void)
+{
+    assert (!_wait_list.empty());
+    _wait_it = _wait_list.erase(_wait_it);
+}
+
 
 
 
@@ -256,7 +432,7 @@ void partition_t<DataType>::stop()
     _stop_threads();
 
     // 2. clear queue 
-    _queue.clear();
+    _input_queue.clear();
     
     // 3. reset lock-manager
     _plm.reset();
@@ -289,7 +465,7 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
     _stop_threads();
 
     // 2. clear queue 
-    _queue.clear();
+    _input_queue.clear();
     
     // 3. reset lock-manager
     _plm.reset();
@@ -450,7 +626,7 @@ const int partition_t<DataType>::_stop_threads()
     _owner = NULL; // join()?
 
     // reset queue's worker control pointers
-    _queue.set(NULL,NULL,NULL); 
+    _input_queue.set(NULL,NULL,NULL); 
 
     // standy
     CRITICAL_SECTION(standby_cs, _standby_lock);
@@ -572,7 +748,7 @@ const int partition_t<DataType>::_generate_primary()
     _owner->set_data_owner_state(DOS_ALONE);
 
     // pass worker thread controls to queue
-    _queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
+    _input_queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
 
     _owner->fork();
 

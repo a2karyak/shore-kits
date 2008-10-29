@@ -31,21 +31,23 @@ ENTER_NAMESPACE(dora);
 void final_mb_rvp::upd_committed_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() == MST_MEASURE) {
-        _ptpccenv->get_total_tpcc_stats()->inc_other_com();
-        _ptpccenv->get_session_tpcc_stats()->inc_other_com();
-        _ptpccenv->get_env_stats()->inc_trx_com();
+    if (_ptpccenv->get_measure() != MST_MEASURE) {
+        return;
     }
+    _ptpccenv->get_total_tpcc_stats()->inc_other_com();
+    _ptpccenv->get_session_tpcc_stats()->inc_other_com();
+    _ptpccenv->get_env_stats()->inc_trx_com();
 }                     
 
 void final_mb_rvp::upd_aborted_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() == MST_MEASURE) {
-        _ptpccenv->get_total_tpcc_stats()->inc_other_att();
-        _ptpccenv->get_session_tpcc_stats()->inc_other_att();
-        _ptpccenv->get_env_stats()->inc_trx_att();
+    if (_ptpccenv->get_measure() != MST_MEASURE) {
+        return;
     }
+    _ptpccenv->get_total_tpcc_stats()->inc_other_att();
+    _ptpccenv->get_session_tpcc_stats()->inc_other_att();
+    _ptpccenv->get_env_stats()->inc_trx_att();
 }                     
 
 

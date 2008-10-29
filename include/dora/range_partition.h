@@ -16,7 +16,10 @@
 #include "util.h"
 #include "sm/shore/shore_env.h"
 
-#include "dora.h"
+#include "dora/partition.h"
+
+//#include "dora.h"
+//#include "dora/action.h"
 
 
 
@@ -55,6 +58,7 @@ class range_partition_impl : public partition_t<DataType>
 public:
     
     typedef range_action_impl<DataType> range_action;
+    using partition_t<DataType>::part_key;
 
 private:
 
@@ -62,7 +66,7 @@ private:
     int _part_field_cnt;
 
     // the two bounds
-    part_key _down;
+    typename partition_t<DataType>::part_key _down;
     part_key _up;
 
     /** helper functions */

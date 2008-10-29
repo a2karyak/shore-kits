@@ -91,6 +91,7 @@ class action_t
 public:
     
     typedef key_wrapper_t<DataType> key;
+    typedef partition_t<DataType>*   partitionPtr;
 
 protected:
 
@@ -104,9 +105,14 @@ protected:
     xct_t*         _xct; // Not the owner
     tid_t          _tid;
 
+    //pointer to the partition
+    partitionPtr   _partition;
+
 public:
 
-    action_t() : _prvp(NULL) { }
+    action_t() : 
+        _prvp(NULL), _xct(NULL), _partition(NULL) 
+    { }
 
     virtual ~action_t() { }
 
@@ -115,21 +121,18 @@ public:
 
     vector<key*> *keys() { return (&_keys); }    
 
-
     rvp_t* get_rvp() { return (_prvp); }
 
-
-    inline xct_t* get_xct() { return (_xct); }
-    inline tid_t  get_tid() { return (_tid); }
-    
-    inline void set_xct(xct_t* axct) {
+    inline xct_t* get_xct() { return (_xct); }    
+    inline void   set_xct(xct_t* axct) {
         assert (axct);
         _xct = axct;
         _tid = ss_m::xct_to_tid(_xct);
         return (_tid);
     }
 
-    inline void set_tid(tid_t atid) {
+    inline tid_t get_tid() { return (_tid); }
+    inline void  set_tid(tid_t atid) {
         _tid = atid;
         _xct = ss_m::tid_to_xct(_tid);
         return (_tid);
@@ -139,19 +142,30 @@ public:
         assert (axct);
         assert (atid == ss_m::xct_to_tid(axct));
         assert (prvp);
+
+        CRITICAL_SECTION(action_cs, _action_lock);
         _tid = atid;
         _xct = axct;
         _prvp = prvp;
     }
 
+
+    inline partitionPtr get_partition() const { return (_partition); }
+    inline void set_partition(const partitionPtr ap) {
+        assert (ap);
+        _partition = ap;
+    }
+    
     
     /** trx-related operations */
     virtual w_rc_t trx_exec()=0;          // pure virtual
 
     // for the cache
     void reset() {
+        CRITICAL_SECTION(action_cs, _action_lock);
         _xct = NULL;
         _prvp = NULL;
+
         _keys.clear();
     }
 

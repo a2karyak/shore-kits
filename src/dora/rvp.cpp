@@ -29,6 +29,9 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     assert (_xct);
     assert (penv);
 
+    // attach to this xct
+    smthread_t::me()->attach_xct(_xct);
+
     // try to commit
     w_rc_t ecommit = penv->db()->commit_xct();
     

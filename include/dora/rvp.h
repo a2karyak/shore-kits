@@ -11,13 +11,15 @@
 #ifndef __DORA_RVP_H
 #define __DORA_RVP_H
 
-#include "util/countdown.h"
-
-#include "dora.h"
-
+#include "sm/shore/shore_env.h"
 #include "core/trx_packet.h"
 
+#include "util/countdown.h"
+
+#include "dora/common.h"
+
 using namespace qpipe;
+using namespace shore;
 
 
 ENTER_NAMESPACE(dora);
@@ -46,21 +48,16 @@ protected:
     // trx-specific
     xct_t*              _xct; // Not the owner
     tid_t               _tid;
-    trx_result_tuple_t _result;
-
+    trx_result_tuple_t  _result;
     int                 _xct_id;
-
-    // keeps track on the number of attached threads - not used
-    int volatile   _attach_cnt;  // enforces at least one thread to be attached
-    tatas_lock     _attach_lock; // enforces order across detaches
 
 public:
 
     rvp_t(tid_t atid, xct_t* axct, const int axctid,
-          trx_result_tuple_t &presult, const int intra_trx_cnt) 
+          trx_result_tuple_t& presult, const int intra_trx_cnt) 
         : _countdown(intra_trx_cnt), _decision(AD_UNDECIDED),
           _tid(atid), _xct(axct), _xct_id(axctid),
-          _result(presult), _attach_cnt(0)
+          _result(presult)
     { 
         assert (_xct);
         assert (intra_trx_cnt>0);
@@ -82,29 +79,11 @@ public:
 
     /** trx-related operations */
     virtual w_rc_t run()=0; // default action on rvp - commit trx
-
     virtual void cleanup()=0; // does any clean up
 
     bool post(bool is_error=false) { 
-        assert (_countdown.remaining()); // before posting check if there is to post 
+        //assert (_countdown.remaining()); // before posting check if there is to post 
         return (_countdown.post(is_error)); 
-    }
-
-    // for the cache
-    void reset() {
-        assert (0); // should not be called if not from cache 
-        TRACE( TRACE_DEBUG, "Reseting (%d)\n", _tid);
-        _xct = NULL;
-        _decision = AD_UNDECIDED;
-        _result = trx_result_tuple_t();
-        _xct_id = 0;
-    }    
-
-
-    // hack to make the intermediate RVPs be detached
-    virtual w_rc_t release(thread_t* aworker) { 
-        aworker->detach_xct(_xct);
-        return (RCOK); 
     }
 
     // decides to abort this trx
@@ -112,18 +91,6 @@ public:
         CRITICAL_SECTION(decision_cs, _decision_lock);
         _decision = AD_ABORT;
         return (_decision);
-    }
-
-    // coordinates detach sequence between threads of the same trx
-    tatas_lock     _detach_lock; // enforces order across detaches
-
-    const int get_attached() const {
-        return (_attach_cnt);
-    }
-    const int inc_attached() {
-        CRITICAL_SECTION(attach_cs, _attach_lock);
-        ++_attach_cnt;
-        return (_attach_cnt);
     }
 
 private:
@@ -164,9 +131,6 @@ public:
 
     virtual void upd_committed_stats()=0; // update the committed trx stats
     virtual void upd_aborted_stats()=0;   // update the committed trx stats
-
-    // hack to make the intermediate RVPs be detached
-    w_rc_t release(thread_t* aworker) { return (RCOK); } // does nothing in case of terminal rvp
 
 protected:
 

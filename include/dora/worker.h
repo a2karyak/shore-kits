@@ -76,7 +76,6 @@ private:
     // statistics
     int            _paused_wait;
     int            _processed;
-    tatas_lock     _stats_lock;
 
     // processor binding
     bool           _is_bound;
@@ -275,10 +274,7 @@ inline const int worker_t<DataType>::_work_PAUSED_impl()
 
     // while paused loop and sleep
     while (get_control() == WC_PAUSED) {
-        {
-            CRITICAL_SECTION(stats_cs, _stats_lock);
-            ++_paused_wait;
-        }
+        ++_paused_wait;
         sleep(1);
     }
     return (0);
@@ -315,96 +311,77 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
 
     // Start serving actions from the partition
     w_rc_t e;
+    part_action* apa = NULL;
+    rvp_t* aprvp = NULL;
     while (get_control() == WC_ACTIVE) {
         assert (_partition);
         
+        apa = NULL;
+        aprvp = NULL;
+
         // 1. dequeue an action 
         // it will spin inside the queue or (after a while) wait on a cond var
-        part_action* pa = NULL;
         do {
-
             // TODO: (ip) Make sure that the queue has pointers this worker's controls
 
-            pa = _partition->dequeue();
+            apa = _partition->dequeue();
 
             // if signalled to stop
             // propagate signal to next thread in the list, if any
             if (get_control() != WC_ACTIVE) {
                 return (0);
             }
-        } while (pa == NULL);
-        assert (pa);
+        } while (apa == NULL);
+        assert (apa);
             
 
         // 2. attach to xct
-        attach_xct(pa->get_xct());
-        TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", pa->get_tid());
+        attach_xct(apa->get_xct());
+        TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", apa->get_tid());
+
 
         // 3. get pointer to rvp
-        rvp_t* aprvp = pa->get_rvp();
+        aprvp = apa->get_rvp();
         assert (aprvp);
-        int iattached = aprvp->inc_attached();
-        assert (iattached); // at least one should be attached at this point
+
             
         // 4. serve action
-        e = pa->trx_exec();
+        e = apa->trx_exec();
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
-                   pa->get_tid(), e.err_num());
+                   apa->get_tid(), e.err_num());
             assert(0);
             return (de_WORKER_RUN_XCT);
         }
             
         // 5. finalize processing        
 
-        // make sure that the detaches from worker threads
-        // serving the same trx will happen in the order they post()
-        CRITICAL_SECTION(detach_cs, aprvp->_detach_lock);
+        // 5a. detach from trx
+        TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", apa->get_tid());
+        detach_xct(apa->get_xct());
+
         if (aprvp->post()) {
             // last caller
-
-            // if it was an intermediate RVP 
-            // it first needs to be deattached and then run the code because
-            // we can have races between the commit() of the next phase and
-            // the detach of the current. 
-            
-            // @note: !!! Only terminal_rvp_t can commit !!!
-            TRACE( TRACE_TRX_FLOW, "Releasing (%d)\n", pa->get_tid());
-            e = aprvp->release(this);
-            if (e.is_error()) {
-                TRACE( TRACE_ALWAYS, "Problem releasing rvp for xct (%d) [0x%x]\n",
-                       pa->get_tid(), e.err_num());
-                assert(0);
-                return (de_WORKER_DETACH_XCT);
-            }
 
             // execute the code of this rendez-vous point
             e = aprvp->run();            
             if (e.is_error()) {
                 TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
-                       pa->get_tid(), e.err_num());
+                       apa->get_tid(), e.err_num());
                 assert(0);
-                return (de_WORKER_DETACH_XCT);
+                return (de_WORKER_RUN_RVP);
             }
-                
-            // exit CS and delete RVP
-            detach_cs.exit();
+
+            // TODO (ip) - Enqueue committed actions
+            
+            // delete rvp
+            assert (aprvp);
             delete (aprvp); 
             aprvp = NULL;
         }
-        else {
-            // not last caller, simply detach from trx
-            TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", pa->get_tid());
-            detach_xct(pa->get_xct());
-            detach_cs.exit();
-        }
-
 
         // 6. update worker stats
-        {
-            CRITICAL_SECTION(stats_cs, _stats_lock);
-            ++_processed;
-        }
+        ++_processed;
     }
     return (0);
 }
@@ -461,7 +438,6 @@ const int worker_t<DataType>::_work_STOPPED_impl()
 template <class DataType>
 void worker_t<DataType>::_print_stats_impl()
 {
-    CRITICAL_SECTION(stats_cs, _stats_lock);
     TRACE( TRACE_TRX_FLOW, "Processed (%d)\n", _processed);
     TRACE( TRACE_TRX_FLOW, "Waited (%d)\n", _paused_wait);
 }

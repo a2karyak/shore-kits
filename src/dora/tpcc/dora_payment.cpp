@@ -46,19 +46,25 @@ w_rc_t midway_pay_rvp::run()
 
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
-    //    TRACE( TRACE_DEBUG, "(%d)\n", _tid);
-
     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     assert (p_ins_hist_pay_action);
     frvp->set_pih(p_ins_hist_pay_action);
     p_ins_hist_pay_action->_awh=_awh;
     p_ins_hist_pay_action->_adist=_adist;
     int mypartition = _pin._home_wh_id-1;
+
+    // TODO (ip) IMHO there is no need to get this lock
+
+    // HIS_PART_CS
+    CRITICAL_SECTION(his_part_cs, _g_dora->his(mypartition)->_enqueue_lock);
+
     if (_g_dora->his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
     }
+
+    his_part_cs.exit();
 
     // 3. Cleanup (usually deletes/gives back previous actions)
     cleanup();    
@@ -85,21 +91,25 @@ void midway_pay_rvp::cleanup()
 void final_pay_rvp::upd_committed_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() == MST_MEASURE) {
-        _ptpccenv->get_total_tpcc_stats()->inc_pay_com();
-        _ptpccenv->get_session_tpcc_stats()->inc_pay_com();
-        _ptpccenv->get_env_stats()->inc_trx_com();
+    if (_ptpccenv->get_measure() != MST_MEASURE) {
+        return;
     }
+
+    _ptpccenv->get_total_tpcc_stats()->inc_pay_com();
+    _ptpccenv->get_session_tpcc_stats()->inc_pay_com();
+    _ptpccenv->get_env_stats()->inc_trx_com();    
 }                     
 
 void final_pay_rvp::upd_aborted_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() == MST_MEASURE) {
-        _ptpccenv->get_total_tpcc_stats()->inc_pay_att();
-        _ptpccenv->get_session_tpcc_stats()->inc_pay_att();
-        _ptpccenv->get_env_stats()->inc_trx_att();
+    if (_ptpccenv->get_measure() != MST_MEASURE) {
+        return;
     }
+
+    _ptpccenv->get_total_tpcc_stats()->inc_pay_att();
+    _ptpccenv->get_session_tpcc_stats()->inc_pay_att();
+    _ptpccenv->get_env_stats()->inc_trx_att();
 }                     
 
 void final_pay_rvp::cleanup() 
@@ -124,8 +134,6 @@ void final_pay_rvp::cleanup()
 w_rc_t upd_wh_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    //    TRACE( TRACE_TRX_FLOW, "upd warehouse\n");
-    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
@@ -180,8 +188,6 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
 w_rc_t upd_dist_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    //    TRACE( TRACE_TRX_FLOW, "upd district\n");
-    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
@@ -238,8 +244,6 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
 w_rc_t upd_cust_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    //    TRACE( TRACE_TRX_FLOW, "upd customer\n");
-    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
@@ -412,8 +416,6 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
 w_rc_t ins_hist_pay_action_impl::trx_exec() 
 {
     assert (_ptpccenv);
-    TRACE( TRACE_TRX_FLOW, "ins history\n");
-    //    _pin.describe(0);
 
     // get table tuple from the cache
     row_impl<history_t>* prhist = _ptpccenv->history_man()->get_tuple();

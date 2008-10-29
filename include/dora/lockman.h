@@ -54,7 +54,7 @@ enum eDoraLockMode {
     DL_CC_SHARED    = 1,
     DL_CC_EXCL      = 2,
 
-    DL_CC_MODES     = 3
+    DL_CC_MODES     = 3 // @careful: Not an actual lock mode
 };
 
 static eDoraLockMode DoraLockModeArray[DL_CC_MODES] =
@@ -88,7 +88,7 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
 struct ll_entry
 {
     // data
-    eDoraLockMode _ll;      // logical lock
+    eDoraLockMode _ll;     // logical lock
     int          _counter; // transaction counter
     tatas_lock   _lock;    // latch
 
@@ -124,12 +124,13 @@ struct ll_entry
  * @brief:  Template-based class for maintaining a map between keys
  *          of the partition and the status of their logical locks.
  *
+ *          (Acquire) Returns false if locked in incompatible mode.
+ *
  * @note:   It is based on a map of key_wrapper_t to ll_entry
  * @note:   Never removes entries. The map will be increasing as long
  *          as new keys are queried.
- *
  * @note:   We can have a background thread that removes entries from
- *          the map if it size becomes a problem.
+ *          the map if its size becomes a problem.
  *
  ********************************************************************/
 
@@ -169,8 +170,9 @@ public:
         CRITICAL_SECTION(le_cs, ple->_lock);
         // if compatible set new lock mode and increase counter
         if (DoraLockModeMatrix[ple->_ll,adlm]) {
-            ple->_ll = adlm;
             ple->inc_counter();
+            // update the lock mode only if not DL_CC_NO_LOCK
+            if (adlm != DL_CC_NOLOCK) ple->_ll = adlm; 
             return (true);
         }
         return (false);
@@ -251,7 +253,6 @@ public:
         cout << "Trx (" << _trx_key_mm.size() << "\n";
     }
 
-
     // acquire ll of a key on behalf of a trx
     const bool acquire(tid_t axct, key akey, eDoraLockMode adlm = DL_CC_NOLOCK) {        
         // if lock acquisition successful,
@@ -263,8 +264,7 @@ public:
         return (false);
     }
                 
-
-    // releases all the acquired ll by a trx
+    // releases all the acquired lls by a trx
     void release(tid_t axct) {
         trx_range r = _trx_key_mm.equal_range(axct);
         TRACE( TRACE_DEBUG, "Releasing (%d)\n", axct);
@@ -277,10 +277,8 @@ public:
         _trx_key_mm.erase(axct);
     }
 
-
     // releases action
     void release(action& a) {
-        CRITICAL_SECTION(action_cs, a._action_lock);
         release(a.get_xct());
     }
 
