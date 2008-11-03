@@ -507,7 +507,7 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		rid_t new_rid;
 		vec_t hvec(handle->hdr(), hsize);
 		vec_t dvec(handle->body(), bsize);
-		vec_t pvec(padding, psize-bsize);
+		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(wh_fid, hvec, PADDED_SIZE, dvec, new_rid));
 		W_DO(db->append_rec(new_rid, pvec, false));
 
