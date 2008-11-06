@@ -59,8 +59,16 @@ struct srmwqueue
         _pcx = pcx;
     }
 
+    // returns true if the passed control is the same
+    const bool is_control(eWorkerControl volatile* pwc) 
+    {
+        return (_pwc==pwc);
+    }
+    
+
+    // !!! @note: should be called only by the reader !!!
     int is_empty(void) const {
-        return (*&_empty);
+        return ((_read_pos == _for_readers.end()) && (*&_empty));
     }
 
     // spins until new input is set
@@ -133,10 +141,11 @@ struct srmwqueue
         assert (_pcx);
 
         // push action
-        CRITICAL_SECTION(cs, _lock);
-        _for_writers.push_back(a);
-        _empty = false;
-        cs.exit();
+        {
+            CRITICAL_SECTION(cs, _lock);
+            _for_writers.push_back(a);
+            _empty = false;
+        }
         
         // wake up if assigned worker thread sleeping
         CRITICAL_SECTION(ws_cs, _ws_lock);

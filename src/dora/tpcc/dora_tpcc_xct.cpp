@@ -85,31 +85,29 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the next RVP
+    // PH1 consists of 3 packets
     midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct, xct_id,
-                                             atrt, this, apin); // PH1 consists of 3 packets
+                                             atrt, this, apin); 
     assert (rvp);
     
     // 3. Generate the actions    
-    upd_cust_pay_action_impl* p_upd_cust_pay_action = 
-        _g_dora->get_upd_cust_pay_action();
-    assert (p_upd_cust_pay_action);
-    p_upd_cust_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_puc(p_upd_cust_pay_action);
-    p_upd_cust_pay_action->_m_rvp=rvp;
+    upd_cust_pay_action_impl* pay_upd_cust = _g_dora->get_upd_cust_pay_action();
+    assert (pay_upd_cust);
+    pay_upd_cust->set_input(atid, pxct, rvp, this, apin);
+    pay_upd_cust->_m_rvp=rvp;
+    rvp->add_action(pay_upd_cust);
 
-    upd_dist_pay_action_impl* p_upd_dist_pay_action = 
-        _g_dora->get_upd_dist_pay_action();
-    assert (p_upd_dist_pay_action);
-    p_upd_dist_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_pud(p_upd_dist_pay_action);
-    p_upd_dist_pay_action->_m_rvp=rvp;
+    upd_dist_pay_action_impl* pay_upd_dist = _g_dora->get_upd_dist_pay_action();
+    assert (pay_upd_dist);
+    pay_upd_dist->set_input(atid, pxct, rvp, this, apin);
+    pay_upd_dist->_m_rvp=rvp;
+    rvp->add_action(pay_upd_dist);
 
-    upd_wh_pay_action_impl*   p_upd_wh_pay_action   = 
-        _g_dora->get_upd_wh_pay_action();
-    assert (p_upd_wh_pay_action);
-    p_upd_wh_pay_action->set_input(atid, pxct, rvp, this, apin);
-    rvp->set_puw(p_upd_wh_pay_action);
-    p_upd_wh_pay_action->_m_rvp=rvp;
+    upd_wh_pay_action_impl* pay_upd_wh = _g_dora->get_upd_wh_pay_action();
+    assert (pay_upd_wh);
+    pay_upd_wh->set_input(atid, pxct, rvp, this, apin);
+    pay_upd_wh->_m_rvp=rvp;
+    rvp->add_action(pay_upd_wh);
 
 
     // 4. Detatch self from xct
@@ -132,8 +130,8 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
         CRITICAL_SECTION(wh_part_cs, _g_dora->whs(mypartition)->_enqueue_lock);
             
         // (SF) WAREHOUSE partitions
-        if (_g_dora->whs()->enqueue(p_upd_wh_pay_action, mypartition)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_PAY\n");
+        if (_g_dora->whs()->enqueue(pay_upd_wh, mypartition)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_WH\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
@@ -143,8 +141,8 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
         wh_part_cs.exit();
 
         // (SF) WAREHOUSE partitions
-        if (_g_dora->dis()->enqueue(p_upd_dist_pay_action, mypartition)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_PAY\n");
+        if (_g_dora->dis()->enqueue(pay_upd_dist, mypartition)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_DIST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
@@ -154,8 +152,8 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
         dis_part_cs.exit();
 
         // (SF) WAREHOUSE partitions
-        if (_g_dora->cus()->enqueue(p_upd_cust_pay_action, mypartition)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
+        if (_g_dora->cus()->enqueue(pay_upd_cust, mypartition)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
@@ -278,16 +276,15 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_cust_rvp* frvp = new final_mb_cust_rvp(atid, pxct, xct_id, atrt, this);
+    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, this);
     assert (frvp);
 
     
     // 3. Generate the actions
-    upd_cust_mb_action_impl*   p_upd_cust_mb_action   = 
-        _g_dora->get_upd_cust_mb_action();
-    assert (p_upd_cust_mb_action);
-    p_upd_cust_mb_action->set_input(atid, pxct, frvp, this, whid);
-    frvp->_puc = p_upd_cust_mb_action;
+    upd_cust_mb_action_impl* upd_cust = _g_dora->get_upd_cust_mb_action();
+    assert (upd_cust);
+    upd_cust->set_input(atid, pxct, frvp, this, whid);
+    frvp->add_action(upd_cust);
 
 
     // 4. Detatch self from xct
@@ -308,12 +305,11 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id,
         // CUS_PART_CS
         CRITICAL_SECTION(cus_part_cs, _g_dora->cus(mypartition)->_enqueue_lock);
         // (SF) CUSTOMER partitions
-        if (_g_dora->cus()->enqueue(p_upd_cust_mb_action, mypartition)) { 
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST_PAY\n");
+        if (_g_dora->cus()->enqueue(upd_cust, mypartition)) { 
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
-        cus_part_cs.exit();            
     }
 
     return (RCOK); 
@@ -334,16 +330,15 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_wh_rvp* frvp = new final_mb_wh_rvp(atid, pxct, xct_id, atrt, this);
+    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, this);
     assert (frvp);
     
 
     // 3. Generate the actions
-    upd_wh_mb_action_impl*   p_upd_wh_mb_action   = 
-        _g_dora->get_upd_wh_mb_action();
-    assert (p_upd_wh_mb_action);
-    p_upd_wh_mb_action->set_input(atid, pxct, frvp, this, whid);
-    frvp->_puwh = p_upd_wh_mb_action;
+    upd_wh_mb_action_impl* upd_wh = _g_dora->get_upd_wh_mb_action();
+    assert (upd_wh);
+    upd_wh->set_input(atid, pxct, frvp, this, whid);
+    frvp->add_action(upd_wh);
 
 
     // 4. Detatch self from xct
@@ -363,12 +358,11 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id,
         // WH_PART_CS
         CRITICAL_SECTION(wh_part_cs, _g_dora->whs(mypartition)->_enqueue_lock);
         // (SF) WAREHOUSE partitions
-        if (_g_dora->whs()->enqueue(p_upd_wh_mb_action, mypartition)) {
+        if (_g_dora->whs()->enqueue(upd_wh, mypartition)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_MB\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
-        wh_part_cs.exit();
     }
 
     return (RCOK); 

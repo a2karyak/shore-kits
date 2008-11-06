@@ -34,7 +34,7 @@ class range_part_table_impl : public part_table_t< range_partition_impl<DataType
 {
 public:
 
-    typedef  range_partition_impl<DataType> rp_impl;
+    typedef  range_partition_impl<DataType> rpImpl;
 
 private:
 
@@ -73,7 +73,7 @@ template <class DataType>
 inline const int range_part_table_impl<DataType>::create_one_part()
 {
     // 1. a new partition object
-    rp_impl* aprpi = new rp_impl(_env, _table, _field_count, _pcnt, _next_prs_id);
+    rpImpl* aprpi = new rpImpl(_env, _table, _field_count, _pcnt, _next_prs_id);
     if (!aprpi) {
         TRACE( TRACE_ALWAYS, "Problem in creating partition (%d) for (%s)\n", 
                _pcnt, _table->name());

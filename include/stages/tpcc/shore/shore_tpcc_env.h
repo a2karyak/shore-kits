@@ -227,17 +227,17 @@ private:
     // TPC-C tables
 
     /** all the tables */
-    warehouse_t          _warehouse_desc;
-    district_t           _district_desc;
-    customer_t           _customer_desc;
-    history_t            _history_desc;
-    new_order_t          _new_order_desc;
-    order_t              _order_desc;
-    order_line_t         _order_line_desc;
-    item_t               _item_desc;
-    stock_t              _stock_desc;
+    guard<warehouse_t>         _pwarehouse_desc;
+    guard<district_t>          _pdistrict_desc;
+    guard<customer_t>          _pcustomer_desc;
+    guard<history_t>           _phistory_desc;
+    guard<new_order_t>         _pnew_order_desc;
+    guard<order_t>             _porder_desc;
+    guard<order_line_t>        _porder_line_desc;
+    guard<item_t>              _pitem_desc;
+    guard<stock_t>             _pstock_desc;
 
-    tpcc_table_list_t    _table_desc_list;
+    tpcc_table_desc_list       _table_desc_list;
 
 
     /** all the table managers */
@@ -297,53 +297,6 @@ public:
         // read the scaling factor from the configuration file
         pthread_mutex_init(&_scaling_mutex, NULL);
         pthread_mutex_init(&_queried_mutex, NULL);
-
-        // initiate the table managers
-        _pwarehouse_man  = new warehouse_man_impl(&_warehouse_desc);
-        _pdistrict_man   = new district_man_impl(&_district_desc);
-        _pstock_man      = new stock_man_impl(&_stock_desc);
-        _porder_line_man = new order_line_man_impl(&_order_line_desc);
-        _pcustomer_man   = new customer_man_impl(&_customer_desc);
-        _phistory_man    = new history_man_impl(&_history_desc);
-        _porder_man      = new order_man_impl(&_order_desc);
-        _pnew_order_man  = new new_order_man_impl(&_new_order_desc);
-        _pitem_man       = new item_man_impl(&_item_desc);
-
-        // XXX: !!! Warning !!!
-        //
-        // The two lists should have the description and the manager
-        // of the same table in the same position
-        //
-
-        /* add the table managers to a list */
-        // (ip) Adding them in descending file order, so that the large
-        //      files to be loaded at the begining. Expection is the
-        //      WH and DISTR which are always the first two.
-        _table_man_list.push_back(_pwarehouse_man);
-        _table_man_list.push_back(_pdistrict_man);
-        _table_man_list.push_back(_pstock_man);
-        _table_man_list.push_back(_porder_line_man);
-        _table_man_list.push_back(_pcustomer_man);
-        _table_man_list.push_back(_phistory_man);
-        _table_man_list.push_back(_porder_man);
-        _table_man_list.push_back(_pnew_order_man);
-        _table_man_list.push_back(_pitem_man);
-
-        assert (_table_man_list.size() == SHORE_TPCC_TABLES);
-
-        
-        /* add the table descriptions to a list */
-        _table_desc_list.push_back(&_warehouse_desc);
-        _table_desc_list.push_back(&_district_desc);
-        _table_desc_list.push_back(&_stock_desc);
-        _table_desc_list.push_back(&_order_line_desc);
-        _table_desc_list.push_back(&_customer_desc);
-        _table_desc_list.push_back(&_history_desc);
-        _table_desc_list.push_back(&_order_desc);
-        _table_desc_list.push_back(&_new_order_desc);
-        _table_desc_list.push_back(&_item_desc);
-
-        assert (_table_desc_list.size() == SHORE_TPCC_TABLES);
     }
 
 
@@ -359,6 +312,7 @@ public:
     }
 
     virtual int post_init();
+    virtual int load_schema();
 
 private:
     w_rc_t _post_init_impl();
@@ -397,7 +351,7 @@ public:
     inline int get_sf() { return (_scaling_factor); }
 
 
-    inline tpcc_table_list_t* table_desc_list() { return (&_table_desc_list); }
+    inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
     inline table_man_list_t*  table_man_list() { return (&_table_man_list); }
     void dump();
 
@@ -411,15 +365,15 @@ public:
 
 
     /* --- access to the tables --- */
-    warehouse_t*  warehouse() { return (&_warehouse_desc); }
-    district_t*   district()  { return (&_district_desc); }
-    customer_t*   customer()  { return (&_customer_desc); }
-    history_t*    history()   { return (&_history_desc); }
-    new_order_t*  new_order() { return (&_new_order_desc); }
-    order_t*      order()     { return (&_order_desc); }
-    order_line_t* orderline() { return (&_order_line_desc); }
-    item_t*       item()      { return (&_item_desc); }
-    stock_t*      stock()     { return (&_stock_desc); }
+    warehouse_t*  warehouse() { return (_pwarehouse_desc.get()); }
+    district_t*   district()  { return (_pdistrict_desc.get()); }
+    customer_t*   customer()  { return (_pcustomer_desc.get()); }
+    history_t*    history()   { return (_phistory_desc.get()); }
+    new_order_t*  new_order() { return (_pnew_order_desc.get()); }
+    order_t*      order()     { return (_porder_desc.get()); }
+    order_line_t* orderline() { return (_porder_line_desc.get()); }
+    item_t*       item()      { return (_pitem_desc.get()); }
+    stock_t*      stock()     { return (_pstock_desc.get()); }
 
     /* --- access to the table managers --- */
     warehouse_man_impl*  warehouse_man() { return (_pwarehouse_man); }

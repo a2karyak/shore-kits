@@ -69,8 +69,8 @@ const int dora_tpcc_db::start()
     int sf = _tpccenv->get_sf();
 
     // used for setting up the key ranges
-    ikey partDown;
-    ikey partUp;
+    irpImplKey partDown;
+    irpImplKey partUp;
 
     // we are doing the partitioning based on the number of warehouses
     int aboundary = 0;
@@ -78,7 +78,7 @@ const int dora_tpcc_db::start()
     partUp.push_back(sf);
 
     // WAREHOUSE
-    _wh_irpt = new irp_table_impl(_tpccenv, _tpccenv->warehouse(), icpu, range, WH_IRP_KEY);
+    _wh_irpt = new irpTableImpl(_tpccenv, _tpccenv->warehouse(), icpu, range, WH_IRP_KEY);
     if (!_wh_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (WAREHOUSE) irp-table\n");
         assert (0); // should not happen
@@ -99,7 +99,7 @@ const int dora_tpcc_db::start()
     icpu = _next_cpu(icpu, _wh_irpt, sf);
 
     // DISTRICT
-    _di_irpt = new irp_table_impl(_tpccenv, _tpccenv->district(), icpu, range, DI_IRP_KEY);
+    _di_irpt = new irpTableImpl(_tpccenv, _tpccenv->district(), icpu, range, DI_IRP_KEY);
     if (!_di_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (DISTRICT) irp-table\n");
         assert (0); // should not happen
@@ -120,7 +120,7 @@ const int dora_tpcc_db::start()
     icpu = _next_cpu(icpu, _di_irpt, sf);    
 
     // HISTORY
-    _hi_irpt = new irp_table_impl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
+    _hi_irpt = new irpTableImpl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
         assert (0); // should not happen
@@ -142,7 +142,7 @@ const int dora_tpcc_db::start()
 
 
     // CUSTOMER
-    _cu_irpt = new irp_table_impl(_tpccenv, _tpccenv->customer(), icpu, range, CU_IRP_KEY);
+    _cu_irpt = new irpTableImpl(_tpccenv, _tpccenv->customer(), icpu, range, CU_IRP_KEY);
     if (!_cu_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (CUSTOMER) irp-table\n");
         assert (0); // should not happen
@@ -165,7 +165,7 @@ const int dora_tpcc_db::start()
 
     /*
     // NEW-ORDER
-    _no_irpt = new irp_table_impl(_tpccenv, _tpccenv->new_order(), icpu, range, NO_IRP_KEY);
+    _no_irpt = new irpTableImpl(_tpccenv, _tpccenv->new_order(), icpu, range, NO_IRP_KEY);
     if (!_no_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (NEW-ORDER) irp-table\n");
         assert (0); // should not happen
@@ -178,7 +178,7 @@ const int dora_tpcc_db::start()
 
 
     // ORDER
-    _or_irpt = new irp_table_impl(_tpccenv, _tpccenv->order(), icpu, range, OR_IRP_KEY);
+    _or_irpt = new irpTableImpl(_tpccenv, _tpccenv->order(), icpu, range, OR_IRP_KEY);
     if (!_or_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER) irp-table\n");
         assert (0); // should not happen
@@ -191,7 +191,7 @@ const int dora_tpcc_db::start()
 
 
     // ITEM
-    _it_irpt = new irp_table_impl(_tpccenv, _tpccenv->item(), icpu, range, IT_IRP_KEY);
+    _it_irpt = new irpTableImpl(_tpccenv, _tpccenv->item(), icpu, range, IT_IRP_KEY);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ITEM) irp-table\n");
         assert (0); // should not happen
@@ -204,7 +204,7 @@ const int dora_tpcc_db::start()
 
 
     // ORDER-LINE
-    _ol_irpt = new irp_table_impl(_tpccenv, _tpccenv->orderline(), icpu, range, OL_IRP_KEY);
+    _ol_irpt = new irpTableImpl(_tpccenv, _tpccenv->orderline(), icpu, range, OL_IRP_KEY);
     if (!_ol_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER-LINE) irp-table\n");
         assert (0); // should not happen
@@ -217,7 +217,7 @@ const int dora_tpcc_db::start()
 
 
     // STOCK
-    _st_irpt = new irp_table_impl(_tpccenv, _tpccenv->stock(), icpu, range, ST_IRP_KEY);
+    _st_irpt = new irpTableImpl(_tpccenv, _tpccenv->stock(), icpu, range, ST_IRP_KEY);
     if (!_st_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (STOCK) irp-table\n");
         assert (0); // should not happen
@@ -330,7 +330,7 @@ void dora_tpcc_db::dump() const
  ******************************************************************/
 
 const processorid_t dora_tpcc_db::_next_cpu(const processorid_t aprd,
-                                            const irp_table_impl* atable,
+                                            const irpTableImpl* atable,
                                             const int step)
 {
     processorid_t nextprs = ((aprd+step) % _tpccenv->get_active_cpu_count());

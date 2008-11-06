@@ -36,8 +36,8 @@ class range_action_impl : public action_t<DataType>
 protected:
 
     // the range of keys
-    key _down;
-    key _up;
+    Key _down;
+    Key _up;
 
 public:
 
@@ -54,10 +54,10 @@ public:
 
     virtual void calc_keys()=0; // pure virtual 
 
-    key& down() { return (_down); }
-    const key& down() const { return (_down); }
-    key& up() { return (_up); }
-    const key& up() const { return (_up); }
+    Key& down() { return (_down); }
+    const Key& down() const { return (_down); }
+    Key& up() { return (_up); }
+    const Key& up() const { return (_up); }
     
     /** trx-related operations */
     virtual w_rc_t trx_exec()=0;             // pure virtual

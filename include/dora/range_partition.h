@@ -57,8 +57,8 @@ class range_partition_impl : public partition_t<DataType>
 {
 public:
     
-    typedef range_action_impl<DataType> range_action;
-    using partition_t<DataType>::part_key;
+    typedef range_action_impl<DataType> RangeAction;
+    using partition_t<DataType>::PartKey;
 
 private:
 
@@ -66,13 +66,13 @@ private:
     int _part_field_cnt;
 
     // the two bounds
-    typename partition_t<DataType>::part_key _down;
-    part_key _up;
+    typename partition_t<DataType>::PartKey _down;
+    PartKey _up;
 
     /** helper functions */
 
-    const bool _is_between(const part_key& contDown, 
-                           const part_key& contUp) const;
+    const bool _is_between(const PartKey& contDown, 
+                           const PartKey& contUp) const;
 
 public:
 
@@ -90,14 +90,14 @@ public:
 
     ~range_partition_impl() { }    
 
-    const part_key* down() { return (&_down); }
-    const part_key* up()   { return (&_up); }    
+    const PartKey* down() { return (&_down); }
+    const PartKey* up()   { return (&_up); }    
 
     // sets new limits
-    const bool resize(const part_key& downLimit, const part_key& upLimit);
+    const bool resize(const PartKey& downLimit, const PartKey& upLimit);
 
     // returns true if action can be enqueued here
-    const bool verify(part_action& rangeaction);
+    const bool verify(PartAction& rangeaction);
 
 }; // EOF: range_partition_impl
 
@@ -114,8 +114,8 @@ public:
  ******************************************************************/
 
 template <class DataType>
-const bool range_partition_impl<DataType>::_is_between(const part_key& contDown,
-                                                       const part_key& contUp) const
+const bool range_partition_impl<DataType>::_is_between(const PartKey& contDown,
+                                                       const PartKey& contUp) const
 {
     assert (_down<=_up);
     assert (contDown<=contUp);
@@ -139,8 +139,8 @@ const bool range_partition_impl<DataType>::_is_between(const part_key& contDown,
  ******************************************************************/
 
 template <class DataType>
-const bool range_partition_impl<DataType>::resize(const part_key& downLimit, 
-                                                  const part_key& upLimit) 
+const bool range_partition_impl<DataType>::resize(const PartKey& downLimit, 
+                                                  const PartKey& upLimit) 
 {
     if (upLimit<downLimit) {
         TRACE( TRACE_ALWAYS, "Error in new bounds\n");
@@ -168,7 +168,7 @@ const bool range_partition_impl<DataType>::resize(const part_key& downLimit,
  ******************************************************************/
  
 template <class DataType>
-const bool range_partition_impl<DataType>::verify(part_action& rangeaction)
+const bool range_partition_impl<DataType>::verify(PartAction& rangeaction)
 {
     assert (_rp_state == RPS_SET);
     assert (rangeaction.keys()->size()==2);

@@ -35,7 +35,7 @@ static const int SHORE_DEF_NUM_OF_CORES     = 32; // default number of cores
 
 static const int SHORE_NUM_OF_RETRIES       = 3;
 
-#define SHORE_TABLE_DATA_DIR "tpcc_sf"
+#define SHORE_TABLE_DATA_DIR "databases"
 
 #define SHORE_DEFAULT_CONF_FILE "shore.conf"
 
@@ -52,16 +52,17 @@ static const string SHORE_DEF_SM_OPTIONS[][3]  = {
 static const int    SHORE_NUM_DEF_SM_OPTIONS   = 7;
 
 static const string SHORE_DEF_DEV_OPTIONS[][2] = {
-    { "device", "tbl_tpcc/shore" },
+    { "device", "databases/shore" },
     { "devicequota", "102400" },
     { "clobberdev", "1" },
     { "loadatadir", SHORE_TABLE_DATA_DIR },
     { "maxcpucount", "64" },
     { "activecpucount", "64" },
-    { "sf", "10" }
+    { "sf", "10" },
+    { "system", "baseline" }
 };
 
-static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 7;
+static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 8;
 
 
 // TODO: (ip) Create a separate structure for SYSTEM options 
@@ -220,6 +221,11 @@ public:
     virtual int statistics();
     virtual void dump();
     virtual void conf();
+
+    // Loads the database schema after the config file is read, and before the storage
+    // manager is started.
+    // Should return >0 on error
+    virtual int load_schema()=0; 
 
     virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;

@@ -68,7 +68,81 @@ void tpcc_stats_t::print_trx_stats() const
 
 
 
-/** ShoreTPCCEnv Helper functions */
+/******************************************************************** 
+ *
+ * ShoreTPCCEnv functions
+ *
+ ********************************************************************/ 
+
+int ShoreTPCCEnv::load_schema()
+{
+    // get the sysname type from the configuration
+    string sysname = _dev_opts[SHORE_DEF_DEV_OPTIONS[7][0]];
+    TRACE( TRACE_ALWAYS, "Sysname : %s\n", sysname.c_str());
+
+    // create the schema
+    _pwarehouse_desc  = new warehouse_t(sysname);
+    _pdistrict_desc   = new district_t(sysname);
+    _pcustomer_desc   = new customer_t(sysname);
+    _phistory_desc    = new history_t(sysname);
+    _pnew_order_desc  = new new_order_t(sysname);
+    _porder_desc      = new order_t(sysname);
+    _porder_line_desc = new order_line_t(sysname);
+    _pitem_desc       = new item_t(sysname);
+    _pstock_desc      = new stock_t(sysname);
+
+
+    // initiate the table managers
+    _pwarehouse_man  = new warehouse_man_impl(_pwarehouse_desc.get());
+    _pdistrict_man   = new district_man_impl(_pdistrict_desc.get());
+    _pstock_man      = new stock_man_impl(_pstock_desc.get());
+    _porder_line_man = new order_line_man_impl(_porder_line_desc.get());
+    _pcustomer_man   = new customer_man_impl(_pcustomer_desc.get());
+    _phistory_man    = new history_man_impl(_phistory_desc.get());
+    _porder_man      = new order_man_impl(_porder_desc.get());
+    _pnew_order_man  = new new_order_man_impl(_pnew_order_desc.get());
+    _pitem_man       = new item_man_impl(_pitem_desc.get());
+
+    // XXX: !!! Warning !!!
+    //
+    // The two lists should have the description and the manager
+    // of the same table in the same position
+    //
+
+    /* add the table managers to a list */
+    // (ip) Adding them in descending file order, so that the large
+    //      files to be loaded at the begining. Expection is the
+    //      WH and DISTR which are always the first two.
+    _table_man_list.push_back(_pwarehouse_man);
+    _table_man_list.push_back(_pdistrict_man);
+    _table_man_list.push_back(_pstock_man);
+    _table_man_list.push_back(_porder_line_man);
+    _table_man_list.push_back(_pcustomer_man);
+    _table_man_list.push_back(_phistory_man);
+    _table_man_list.push_back(_porder_man);
+    _table_man_list.push_back(_pnew_order_man);
+    _table_man_list.push_back(_pitem_man);
+
+    assert (_table_man_list.size() == SHORE_TPCC_TABLES);
+
+        
+    /* add the table descriptions to a list */
+    _table_desc_list.push_back(_pwarehouse_desc.get());
+    _table_desc_list.push_back(_pdistrict_desc.get());
+    _table_desc_list.push_back(_pstock_desc.get());
+    _table_desc_list.push_back(_porder_line_desc.get());
+    _table_desc_list.push_back(_pcustomer_desc.get());
+    _table_desc_list.push_back(_phistory_desc.get());
+    _table_desc_list.push_back(_porder_desc.get());
+    _table_desc_list.push_back(_pnew_order_desc.get());
+    _table_desc_list.push_back(_pitem_desc.get());
+
+    assert (_table_desc_list.size() == SHORE_TPCC_TABLES);
+    
+    
+    return (0);
+}
+
 
 /******************************************************************** 
  *
@@ -155,23 +229,23 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
     // manually create the loading threads
     loaders[0] = new wh_loader_t(c_str("ld-WH"), _pssm, _pwarehouse_man,
-                                 &_warehouse_desc, _scaling_factor, loaddatadir);
+                                 _pwarehouse_desc.get(), _scaling_factor, loaddatadir);
     loaders[1] = new dist_loader_t(c_str("ld-DIST"), _pssm, _pdistrict_man,
-                                   &_district_desc, _scaling_factor, loaddatadir);
+                                   _pdistrict_desc.get(), _scaling_factor, loaddatadir);
     loaders[2] = new st_loader_t(c_str("ld-ST"), _pssm, _pstock_man,
-                                 &_stock_desc, _scaling_factor, loaddatadir);
+                                 _pstock_desc.get(), _scaling_factor, loaddatadir);
     loaders[3] = new ol_loader_t(c_str("ld-OL"), _pssm, _porder_line_man,
-                                 &_order_line_desc, _scaling_factor, loaddatadir);
+                                 _porder_line_desc.get(), _scaling_factor, loaddatadir);
     loaders[4] = new cust_loader_t(c_str("ld-CUST"), _pssm, _pcustomer_man,
-                                   &_customer_desc, _scaling_factor, loaddatadir);
+                                   _pcustomer_desc.get(), _scaling_factor, loaddatadir);
     loaders[5] = new hist_loader_t(c_str("ld-HIST"), _pssm, _phistory_man,
-                                   &_history_desc, _scaling_factor, loaddatadir);
+                                   _phistory_desc.get(), _scaling_factor, loaddatadir);
     loaders[6] = new ord_loader_t(c_str("ld-ORD"), _pssm, _porder_man,
-                                  &_order_desc, _scaling_factor, loaddatadir);
+                                  _porder_desc.get(), _scaling_factor, loaddatadir);
     loaders[7] = new no_loader_t(c_str("ld-NO"), _pssm, _pnew_order_man,
-                                 &_new_order_desc, _scaling_factor, loaddatadir);
+                                 _pnew_order_desc.get(), _scaling_factor, loaddatadir);
     loaders[8] = new it_loader_t(c_str("ld-IT"), _pssm, _pitem_man,
-                                 &_item_desc, _scaling_factor, loaddatadir);
+                                 _pitem_desc.get(), _scaling_factor, loaddatadir);
 
     time_t tstart = time(NULL);    
     
@@ -266,23 +340,23 @@ w_rc_t ShoreTPCCEnv::check_consistency()
 
     // manually create the loading threads
     checkers[0] = new wh_checker_t(c_str("chk-WH"), _pssm, 
-                                   _pwarehouse_man, &_warehouse_desc);
+                                   _pwarehouse_man, _pwarehouse_desc.get());
     checkers[1] = new dist_checker_t(c_str("chk-DIST"), _pssm, 
-                                     _pdistrict_man, &_district_desc);
+                                     _pdistrict_man, _pdistrict_desc.get());
     checkers[2] = new st_checker_t(c_str("chk-ST"), _pssm, 
-                                   _pstock_man, &_stock_desc);
+                                   _pstock_man, _pstock_desc.get());
     checkers[3] = new ol_checker_t(c_str("chk-OL"), _pssm, 
-                                   _porder_line_man, &_order_line_desc);
+                                   _porder_line_man, _porder_line_desc.get());
     checkers[4] = new cust_checker_t(c_str("chk-CUST"), _pssm, 
-                                     _pcustomer_man, &_customer_desc);
+                                     _pcustomer_man, _pcustomer_desc.get());
     checkers[5] = new hist_checker_t(c_str("chk-HIST"), _pssm, 
-                                     _phistory_man, &_history_desc);
+                                     _phistory_man, _phistory_desc.get());
     checkers[6] = new ord_checker_t(c_str("chk-ORD"), _pssm, 
-                                    _porder_man, &_order_desc);
+                                    _porder_man, _porder_desc.get());
     checkers[7] = new no_checker_t(c_str("chk-NO"), _pssm, 
-                                   _pnew_order_man, &_new_order_desc);
+                                   _pnew_order_man, _pnew_order_desc.get());
     checkers[8] = new it_checker_t(c_str("chk-IT"), _pssm, 
-                                   _pitem_man, &_item_desc);
+                                   _pitem_man, _pitem_desc.get());
 
 
 //     tpcc_table_t* ptable   = NULL;
@@ -931,7 +1005,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 8 table representations
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
 
     prwh->_rep = &areprow;
     prdist->_rep = &areprow;
@@ -1211,7 +1285,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 4 table representations
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
 
     prwh->_rep = &areprow;
     prdist->_rep = &areprow;
@@ -1522,7 +1596,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 3 table representations
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
 
     prcust->_rep = &areprow;
     prord->_rep = &areprow;
@@ -1534,8 +1608,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
 
     // allocate space for the biggest of the (customer) and (order)
     // table representations
-    lowrep.set(_customer_desc.maxsize()); 
-    highrep.set(_customer_desc.maxsize()); 
+    lowrep.set(_pcustomer_desc->maxsize()); 
+    highrep.set(_pcustomer_desc->maxsize()); 
 
     /* 0. initiate transaction */
     W_DO(_pssm->begin_xct());
@@ -1734,7 +1808,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 4 table representations
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
 
     prno->_rep = &areprow;
     prord->_rep = &areprow;
@@ -1749,9 +1823,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     rep_row_t sortrep(_porder_line_man->ts());
     // allocate space for the biggest of the (new_order) and (orderline)
     // table representations
-    lowrep.set(_order_line_desc.maxsize()); 
-    highrep.set(_order_line_desc.maxsize()); 
-    sortrep.set(_order_line_desc.maxsize()); 
+    lowrep.set(_porder_line_desc->maxsize()); 
+    highrep.set(_porder_line_desc->maxsize()); 
+    sortrep.set(_porder_line_desc->maxsize()); 
 
 
     /* process each district separately */
@@ -1936,7 +2010,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     rep_row_t areprow(_pdistrict_man->ts());
 
     // allocate space for the biggest of the 3 table representations
-    areprow.set(_district_desc.maxsize()); 
+    areprow.set(_pdistrict_desc->maxsize()); 
 
     prdist->_rep = &areprow;
     prol->_rep = &areprow;
@@ -1991,9 +2065,9 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     rep_row_t sortrep(_porder_line_man->ts());
     // allocate space for the biggest of the (new_order) and (orderline)
     // table representations
-    lowrep.set(_order_line_desc.maxsize()); 
-    highrep.set(_order_line_desc.maxsize()); 
-    sortrep.set(_order_line_desc.maxsize()); 
+    lowrep.set(_porder_line_desc->maxsize()); 
+    highrep.set(_porder_line_desc->maxsize()); 
+    sortrep.set(_porder_line_desc->maxsize()); 
     
 
     index_scan_iter_impl<order_line_t>* ol_iter;
@@ -2176,7 +2250,7 @@ w_rc_t ShoreTPCCEnv::_run_mbench_cust(const int xct_id, trx_result_tuple_t& trt,
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the table representation
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
     prcust->_rep = &areprow;
 
     /* 0. initiate transaction */
@@ -2349,7 +2423,7 @@ w_rc_t ShoreTPCCEnv::_run_mbench_wh(const int xct_id, trx_result_tuple_t& trt,
     rep_row_t areprow(_pwarehouse_man->ts());
 
     // allocate space for the biggest of the 4 table representations
-    areprow.set(_warehouse_desc.maxsize()); 
+    areprow.set(_pwarehouse_desc->maxsize()); 
     prwh->_rep = &areprow;
 
     /* 0. initiate transaction */

@@ -41,6 +41,7 @@ enum {
 
     de_INTERMEDIATE_XCT        = 0x820025,
     de_TERMINAL_XCT            = 0x820026,
+    de_NOTIFY_COMMITTED        = 0x820028,
 
     de_INCOMPATIBLE_LOCKS      = 0x820031
 };

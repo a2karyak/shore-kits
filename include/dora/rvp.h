@@ -38,6 +38,11 @@ ENTER_NAMESPACE(dora);
 
 class rvp_t
 {
+public:
+
+    typedef vector<base_action_t*> baseActionsList;
+    typedef baseActionsList::iterator baseActionsIt;
+
 protected:
 
     // the countdown
@@ -50,6 +55,9 @@ protected:
     tid_t               _tid;
     trx_result_tuple_t  _result;
     int                 _xct_id;
+
+    // list of actions that report to this rvp
+    baseActionsList     _actions;
 
 public:
 
@@ -65,21 +73,29 @@ public:
 
     virtual ~rvp_t() { }
     
-    /** access methods */
 
-    // TRX-ID Related
+    // access methods
 
+    // TRX-ID-related
     inline xct_t* get_xct() const { return (_xct); }
     inline tid_t  get_tid() const { return (_tid); }
 
-    // Decision related
+    // Actions-related
+    const int add_action(base_action_t* paction);
 
+    // Decision-related
     inline void set_decision(const eActionDecision& ad) { _decision = ad; }
     inline eActionDecision get_decision() const { return (_decision); }
 
-    /** trx-related operations */
-    virtual w_rc_t run()=0; // default action on rvp - commit trx
-    virtual void cleanup()=0; // does any clean up
+
+    // interface
+    // default action on rvp - commit trx
+    virtual w_rc_t run()=0;  
+
+    // notifies for any committed actions 
+    // only the final_rvps may notify
+    // for midway rvps it should be a noop
+    virtual const int notify() { return(0); } 
 
     bool post(bool is_error=false) { 
         //assert (_countdown.remaining()); // before posting check if there is to post 
@@ -123,11 +139,10 @@ public:
     { }
 
     virtual ~terminal_rvp_t() { }
-    
-    virtual void cleanup()=0; // does any clean up
 
-    /** trx-related operations */
-    virtual w_rc_t run()=0; // default action on rvp - commit trx    
+    // interface
+    virtual w_rc_t run()=0;   // default action on rvp - commit trx           
+    const int notify();       // notifies for committed actions
 
     virtual void upd_committed_stats()=0; // update the committed trx stats
     virtual void upd_aborted_stats()=0;   // update the committed trx stats

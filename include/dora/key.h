@@ -57,17 +57,17 @@ template<typename DataType> std::ostream& operator<< (std::ostream& os,
 template<typename DataType>
 struct key_wrapper_t
 {
-    typedef vector<DataType> data_ptr_vec;
-    typedef typename data_ptr_vec::iterator data_ptr_vec_it;
+    typedef vector<DataType> DataPtrVec;
+    typedef typename DataPtrVec::iterator DataPtrVecIt;
 
     // the vector with the entries - of the same type
-    data_ptr_vec _key_v;
+    DataPtrVec _key_v;
 
     // empty constructor
     key_wrapper_t() { }
 
     // argument constructor
-    key_wrapper_t(const data_ptr_vec aVector) {
+    key_wrapper_t(const DataPtrVec& aVector) {
         copy_vector(aVector);
     }
     
@@ -102,12 +102,9 @@ struct key_wrapper_t
                                                               const key_wrapper_t<DataType>& rhs);
 
     // helper functions
-    inline void copy_vector(const data_ptr_vec aVec) {
+    inline void copy_vector(const DataPtrVec& aVec) {
         assert (_key_v.empty());
-        for (int i=0; i<aVec.size(); i++) {
-            _key_v.push_back(aVec[i]);
-        }
-        assert (_key_v.size()==aVec.size());
+        _key_v = aVec; // copy vector content
     }
 
 }; // EOF: struct key_wrapper_t

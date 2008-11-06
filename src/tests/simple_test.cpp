@@ -89,7 +89,7 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
         for (int j=0;j<iSelectedTrx;j++) {            
 
             eDoraLockMode adlm = DoraLockModeArray[rand()%DL_CC_MODES]; // random lmode
-            dora_tpcc_db::ikey akey;
+            dora_tpcc_db::irpImplKey akey;
             int wh = URand(1,iQueriedWHs);
             int d = URand(1, 10);
             int c = 1;//NURand(1023, 1, 3000);

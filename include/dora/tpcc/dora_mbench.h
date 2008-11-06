@@ -41,21 +41,51 @@ private:
     // pointer to the shore env
     ShoreTPCCEnv* _ptpccenv;
 public:
+
     final_mb_rvp(tid_t atid, xct_t* axct, const int axctid,
                  trx_result_tuple_t &presult, const int intra_trx_cnt, 
                  ShoreTPCCEnv* penv) 
         : terminal_rvp_t(atid, axct, axctid, presult, intra_trx_cnt), 
           _ptpccenv(penv) 
     { }
+
     virtual ~final_mb_rvp() { }
-    // required 
-    void upd_committed_stats(); // update the committed trx stats
-    void upd_aborted_stats(); // update the committed trx stats
+
     // the interface
     w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
-    virtual void cleanup() { } // no clean up to do
+    void upd_committed_stats(); // update the committed trx stats
+    void upd_aborted_stats(); // update the committed trx stats
+
 }; // EOF: final_mb_rvp
 
+
+
+/******************************************************************** 
+ *
+ * MBench Actions
+ *
+ * @class: Generic class for mbench actions
+ *
+ ********************************************************************/
+
+class mb_action_impl : public range_action_impl<int>
+{
+protected:
+    ShoreTPCCEnv* _ptpccenv;
+    int _whid;
+public:
+    mb_action_impl() :
+        range_action_impl<int>(), _ptpccenv(NULL), _whid(-1) 
+    { }
+
+    virtual ~mb_action_impl() { }
+
+    // interface
+    virtual w_rc_t trx_exec()=0; // pure virtual    
+    const bool trx_acq_locks();
+    virtual void calc_keys()=0; // pure virtual 
+
+}; // EOF: mb_action_impl
 
 
 /******************************************************************** 
@@ -68,36 +98,12 @@ public:
  *
  ********************************************************************/
 
-// final_mb_wh_rvp
-class final_mb_wh_rvp : public final_mb_rvp
+class upd_wh_mb_action_impl : public mb_action_impl
 {
-public:
-    // the list of actions to be remembered to be given back
-    upd_wh_mb_action_impl* _puwh;
-
-    final_mb_wh_rvp(tid_t atid, xct_t* axct, const int axctid,
-                    trx_result_tuple_t &presult,
-                    ShoreTPCCEnv* penv) 
-        : final_mb_rvp(atid, axct, axctid, presult, 1, penv),
-          _puwh(NULL)
-    { }
-    ~final_mb_wh_rvp() { }
-    void cleanup() {
-        assert (_puwh);
-        _g_dora->give_action(_puwh);
-    }
-}; // EOF: final_mb_wh_rvp
-
-// UPD_WH_MB_ACTION
-class upd_wh_mb_action_impl : public range_action_impl<int>
-{
-private:
-    ShoreTPCCEnv* _ptpccenv;
-    int _whid;
-public:    
-    upd_wh_mb_action_impl() : range_action_impl<int>(), 
-                              _ptpccenv(NULL), _whid(-1) { }
+public:        
+    upd_wh_mb_action_impl()  { }    
     ~upd_wh_mb_action_impl() { }
+
     void set_input(tid_t atid, xct_t* apxct, rvp_t* aprvp, 
                    ShoreTPCCEnv* penv, const int awh) { 
         assert (apxct);
@@ -108,6 +114,7 @@ public:
         _whid=awh; 
         set_key_range();
     }
+    
     w_rc_t trx_exec();        
     void calc_keys() {
         _down.push_back(_whid);
@@ -127,37 +134,19 @@ public:
  *
  ********************************************************************/
 
-// final_mb_cust_rvp
-class final_mb_cust_rvp : public final_mb_rvp
-{
-public:
-    // the list of actions to be remembered to be given back
-    upd_cust_mb_action_impl* _puc;
-    final_mb_cust_rvp(tid_t atid, xct_t* axct, const int axctid,
-                      trx_result_tuple_t &presult, ShoreTPCCEnv* penv) 
-        : final_mb_rvp(atid, axct, axctid, presult, 1, penv),
-          _puc(NULL)
-    { }
-    ~final_mb_cust_rvp() { }
-    void cleanup() {
-        assert (_puc);
-        _g_dora->give_action(_puc);
-    }
-}; // EOF: final_mb_cust_rvp
-
 // UPD_CUST_MB_ACTION
-class upd_cust_mb_action_impl : public range_action_impl<int>
+class upd_cust_mb_action_impl : public mb_action_impl
 {
 private:
-    ShoreTPCCEnv* _ptpccenv;
-    int _whid;
     int _did;
     int _cid;
 public:    
-    upd_cust_mb_action_impl() : 
-        range_action_impl<int>(),
-        _ptpccenv(NULL), _whid(-1) { }
+
+    upd_cust_mb_action_impl() :
+        _did(-1), _cid(-1)
+    { }    
     ~upd_cust_mb_action_impl() { }
+    
     void set_input(tid_t atid, xct_t* apxct, rvp_t* aprvp,
                    ShoreTPCCEnv* penv, const int awh) {
         assert (apxct);
@@ -170,6 +159,7 @@ public:
         _cid = NURand(1023,1,3000);
         set_key_range();
     }
+
     w_rc_t trx_exec();        
     void calc_keys() {
         _down.push_back(_whid);
@@ -179,6 +169,7 @@ public:
         _up.push_back(_did);
         _up.push_back(_cid);
     }
+
 }; // EOF: upd_cust_mb_action_impl
 
 

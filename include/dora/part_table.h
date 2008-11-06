@@ -44,7 +44,7 @@ public:
 
     typedef vector<Partition*> PartitionPtrVector;
     typedef typename vector<Partition*>::iterator pvpIt;
-    typedef typename Partition::part_action Action;
+    typedef typename Partition::PartAction Action;
 
 protected:
 

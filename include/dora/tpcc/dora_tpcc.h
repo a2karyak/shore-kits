@@ -69,13 +69,13 @@ class dora_tpcc_db
 {
 public:
 
-    typedef range_partition_impl<int>   irp_impl; 
-    typedef range_part_table_impl<int>  irp_table_impl;
+    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_part_table_impl<int>  irpTableImpl;
 
-    typedef irp_impl::range_action      irp_action;
-    typedef irp_impl::part_key          ikey;
+    typedef irpImpl::RangeAction      irpAction;
+    typedef irpImpl::PartKey          irpImplKey;
 
-    typedef vector<irp_table_impl*>     irpTablePtrVector;
+    typedef vector<irpTableImpl*>     irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
 
 private:
@@ -89,15 +89,15 @@ private:
     irpTablePtrVector _irptp_vec;    
 
     // the list of pointer to irp-tables
-    irp_table_impl* _wh_irpt; // WAREHOUSE
-    irp_table_impl* _di_irpt; // DISTRICT
-    irp_table_impl* _cu_irpt; // CUSTOMER
-    irp_table_impl* _hi_irpt; // HISTORY
-    irp_table_impl* _no_irpt; // NEW-ORDER
-    irp_table_impl* _or_irpt; // ORDER
-    irp_table_impl* _it_irpt; // ITEM
-    irp_table_impl* _ol_irpt; // ORDER-LINE
-    irp_table_impl* _st_irpt; // STOCK
+    irpTableImpl* _wh_irpt; // WAREHOUSE
+    irpTableImpl* _di_irpt; // DISTRICT
+    irpTableImpl* _cu_irpt; // CUSTOMER
+    irpTableImpl* _hi_irpt; // HISTORY
+    irpTableImpl* _no_irpt; // NEW-ORDER
+    irpTableImpl* _or_irpt; // ORDER
+    irpTableImpl* _it_irpt; // ITEM
+    irpTableImpl* _ol_irpt; // ORDER-LINE
+    irpTableImpl* _st_irpt; // STOCK
 
 //     // caches of actions 
 //     // one cache per action of each of the supported trxs
@@ -117,32 +117,32 @@ public:
 
     /** Partition-related methods */
 
-    inline irp_impl* get_part(const table_pos, const int part_pos) {
+    inline irpImpl* get_part(const table_pos, const int part_pos) {
         assert (table_pos<_irptp_vec.size());        
         return (_irptp_vec[table_pos]->get_part(part_pos));
     }
 
     // Access irp-tables
-    irp_table_impl* whs() const { return (_wh_irpt); }
-    irp_table_impl* dis() const { return (_di_irpt); }
-    irp_table_impl* cus() const { return (_cu_irpt); }
-    irp_table_impl* his() const { return (_hi_irpt); }
-    irp_table_impl* nor() const { return (_no_irpt); }
-    irp_table_impl* ord() const { return (_or_irpt); }
-    irp_table_impl* ite() const { return (_it_irpt); }
-    irp_table_impl* oli() const { return (_ol_irpt); }
-    irp_table_impl* sto() const { return (_st_irpt); }
+    irpTableImpl* whs() const { return (_wh_irpt); }
+    irpTableImpl* dis() const { return (_di_irpt); }
+    irpTableImpl* cus() const { return (_cu_irpt); }
+    irpTableImpl* his() const { return (_hi_irpt); }
+    irpTableImpl* nor() const { return (_no_irpt); }
+    irpTableImpl* ord() const { return (_or_irpt); }
+    irpTableImpl* ite() const { return (_it_irpt); }
+    irpTableImpl* oli() const { return (_ol_irpt); }
+    irpTableImpl* sto() const { return (_st_irpt); }
 
     // Access specific partitions
-    irp_impl* whs(const int pos) const { return (_wh_irpt->get_part(pos)); }
-    irp_impl* dis(const int pos) const { return (_di_irpt->get_part(pos)); }
-    irp_impl* cus(const int pos) const { return (_cu_irpt->get_part(pos)); }
-    irp_impl* his(const int pos) const { return (_hi_irpt->get_part(pos)); }
-    irp_impl* nor(const int pos) const { return (_no_irpt->get_part(pos)); }
-    irp_impl* ord(const int pos) const { return (_or_irpt->get_part(pos)); }
-    irp_impl* ite(const int pos) const { return (_it_irpt->get_part(pos)); }
-    irp_impl* oli(const int pos) const { return (_ol_irpt->get_part(pos)); }
-    irp_impl* sto(const int pos) const { return (_st_irpt->get_part(pos)); }
+    irpImpl* whs(const int pos) const { return (_wh_irpt->get_part(pos)); }
+    irpImpl* dis(const int pos) const { return (_di_irpt->get_part(pos)); }
+    irpImpl* cus(const int pos) const { return (_cu_irpt->get_part(pos)); }
+    irpImpl* his(const int pos) const { return (_hi_irpt->get_part(pos)); }
+    irpImpl* nor(const int pos) const { return (_no_irpt->get_part(pos)); }
+    irpImpl* ord(const int pos) const { return (_or_irpt->get_part(pos)); }
+    irpImpl* ite(const int pos) const { return (_it_irpt->get_part(pos)); }
+    irpImpl* oli(const int pos) const { return (_ol_irpt->get_part(pos)); }
+    irpImpl* sto(const int pos) const { return (_st_irpt->get_part(pos)); }
 
 
     /** Control Database */
@@ -157,8 +157,8 @@ public:
     /** Client API */
     
     // enqueues action, false on error
-    inline const int enqueue(irp_action* paction, 
-                             irp_table_impl* ptable, 
+    inline const int enqueue(irpAction* paction, 
+                             irpTableImpl* ptable, 
                              const int part_pos) 
     {
         assert (paction);
@@ -207,7 +207,7 @@ private:
 
     // algorithm for deciding the distribution of tables 
     const processorid_t _next_cpu(const processorid_t aprd,
-                                  const irp_table_impl* atable,
+                                  const irpTableImpl* atable,
                                   const int step=DF_CPU_STEP_TABLES);
 
         

@@ -251,8 +251,8 @@ int main(int argc, char* argv[])
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
-               //| TRACE_TRX_FLOW
-               //| TRACE_DEBUG
+               | TRACE_TRX_FLOW
+               | TRACE_DEBUG
               );
 
     /* 1. Instanciate the Shore environment */

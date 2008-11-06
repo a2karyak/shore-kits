@@ -51,7 +51,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreWarehouse(payment_input_t* ppin,
     assert (prwh);
 
     rep_row_t areprow(_pwarehouse_man->ts());
-    areprow.set(_warehouse_desc.maxsize()); 
+    areprow.set(_pwarehouse_desc->maxsize()); 
     prwh->_rep = &areprow;
 
     // assume that sub-task will fail
@@ -120,7 +120,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreDistrict(payment_input_t* ppin,
     assert (prdist);
 
     rep_row_t areprow(_pdistrict_man->ts());
-    areprow.set(_district_desc.maxsize()); 
+    areprow.set(_pdistrict_desc->maxsize()); 
     prdist->_rep = &areprow;
 
     // assume that sub-task will fail
@@ -203,7 +203,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin,
     assert (prcust);
 
     rep_row_t areprow(_pcustomer_man->ts());
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
     prcust->_rep = &areprow;
 
     // assume that sub-task will fail
@@ -375,7 +375,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_insertShoreHistory(payment_input_t* ppin,
     assert (prhist);
 
     rep_row_t areprow(_phistory_man->ts());
-    areprow.set(_history_desc.maxsize()); 
+    areprow.set(_phistory_desc->maxsize()); 
     prhist->_rep = &areprow;
 
     // assume that sub-task will fail

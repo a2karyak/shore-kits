@@ -58,7 +58,7 @@ w_rc_t ShoreTPCCEnv::staged_no_outside_loop(new_order_input_t* pnoin,
     assert (prord);
 
     rep_row_t areprow(_pcustomer_man->ts());
-    areprow.set(_customer_desc.maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize()); 
     prwh->_rep = &areprow;
     prdist->_rep = &areprow;
     prcust->_rep = &areprow;
@@ -208,7 +208,7 @@ w_rc_t ShoreTPCCEnv::staged_no_one_ol(ol_item_info* polin,
     
     // allocate space for the biggest of the 8 table representations
     rep_row_t areprow(_porder_line_man->ts());
-    areprow.set(_order_line_desc.maxsize()); 
+    areprow.set(_porder_line_desc->maxsize()); 
     pritem->_rep = &areprow;
     prst->_rep = &areprow;
     prol->_rep = &areprow;

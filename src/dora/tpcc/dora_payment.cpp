@@ -46,14 +46,16 @@ w_rc_t midway_pay_rvp::run()
 
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
-    p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     assert (p_ins_hist_pay_action);
-    frvp->set_pih(p_ins_hist_pay_action);
+    p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     p_ins_hist_pay_action->_awh=_awh;
     p_ins_hist_pay_action->_adist=_adist;
+
+    frvp->add_action(p_ins_hist_pay_action);
+
     int mypartition = _pin._home_wh_id-1;
 
-    // TODO (ip) IMHO there is no need to get this lock
+    // Q: (ip) does it have to get this lock?
 
     // HIS_PART_CS
     CRITICAL_SECTION(his_part_cs, _g_dora->his(mypartition)->_enqueue_lock);
@@ -64,19 +66,7 @@ w_rc_t midway_pay_rvp::run()
             return (RC(de_PROBLEM_ENQUEUE));
     }
 
-    his_part_cs.exit();
-
-    // 3. Cleanup (usually deletes/gives back previous actions)
-    cleanup();    
     return (RCOK);
-}
-
-void midway_pay_rvp::cleanup() 
-{
-    // clean house
-    _g_dora->give_action(_puw);
-    _g_dora->give_action(_pud);
-    _g_dora->give_action(_puc);
 }
 
 
@@ -112,12 +102,6 @@ void final_pay_rvp::upd_aborted_stats()
     _ptpccenv->get_env_stats()->inc_trx_att();
 }                     
 
-void final_pay_rvp::cleanup() 
-{
-    // clean house
-    _g_dora->give_action(_pih);
-}
-
 
 
 /******************************************************************** 
@@ -130,6 +114,14 @@ void final_pay_rvp::cleanup()
  * (4) INSERT-HISTORY
  *
  ********************************************************************/
+
+const bool pay_action_impl::trx_acq_locks()
+{
+    // all the Payment trxs are probes to a single tuple
+    assert (_partition);
+    
+    return (false);
+}
 
 w_rc_t upd_wh_pay_action_impl::trx_exec() 
 {
@@ -162,9 +154,9 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", 
            _tid, _pin._home_wh_id);
-    W_DO(_ptpccenv->warehouse_man()->wh_update_ytd(_ptpccenv->db(), 
-                                                   prwh, 
-                                                   _pin._h_amount));
+    W_DO(_ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
+                                                      prwh, 
+                                                      _pin._h_amount));
 
     tpcc_warehouse_tuple* awh = _m_rvp->wh();
     prwh->get_value(1, awh->W_NAME, 11);
@@ -218,9 +210,9 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd (%d) (%d)\n", 
            _tid, _pin._home_wh_id, _pin._home_d_id);
-    W_DO(_ptpccenv->district_man()->dist_update_ytd(_ptpccenv->db(), 
-                                                    prdist, 
-                                                    _pin._h_amount));
+    W_DO(_ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
+                                                       prdist, 
+                                                       _pin._h_amount));
 
     tpcc_district_tuple* adistr = _m_rvp->dist();
     prdist->get_value(2, adistr->D_NAME, 11);
@@ -387,19 +379,19 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", _tid);
-        W_DO(_ptpccenv->customer_man()->cust_update_tuple(_ptpccenv->db(), 
-                                                          prcust, 
-                                                          acust, 
-                                                          c_new_data_1, 
-                                                          c_new_data_2));
+        W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+                                                             prcust, 
+                                                             acust, 
+                                                             c_new_data_1, 
+                                                             c_new_data_2));
     }
     else { /* good customer */
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", _tid);
-        W_DO(_ptpccenv->customer_man()->cust_update_tuple(_ptpccenv->db(), 
-                                                          prcust, 
-                                                          acust, 
-                                                          NULL, 
-                                                          NULL));
+        W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+                                                             prcust, 
+                                                             acust, 
+                                                             NULL, 
+                                                             NULL));
     }
 
 #ifdef PRINT_TRX_RESULTS

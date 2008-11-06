@@ -8,9 +8,43 @@
  */
 
 #include "dora/rvp.h"
+#include "dora/action.h"
 
 
 using namespace dora;
+
+
+/****************************************************************** 
+ *
+ * @fn:    add_action()
+ *
+ * @brief: Adds an action to the list of actions of a rvp
+ *
+ ******************************************************************/
+
+const int rvp_t::add_action(base_action_t* paction) 
+{
+    assert (paction);
+    assert (this==paction->get_rvp());
+    _actions.push_back(paction);
+    return (_actions.size());
+}
+
+/****************************************************************** 
+ *
+ * @fn:    notify()
+ *
+ * @brief: Notifies for any committed actions
+ *
+ ******************************************************************/
+
+const int terminal_rvp_t::notify()
+{
+    for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it)
+        (*it)->notify();
+    return (_actions.size());
+}
+
 
 
 /****************************************************************** 
@@ -50,9 +84,6 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 	// signal cond var
 	if(_result.get_notify())
 	    _result.get_notify()->signal();
-
-        // do clean up
-        cleanup();
         return (ecommit);
     }
     upd_committed_stats(); // hook - update committed stats
@@ -62,8 +93,5 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     // signal cond var
     if(_result.get_notify())
 	_result.get_notify()->signal();
-
-    // do clean up
-    cleanup();
     return (RCOK);
 }

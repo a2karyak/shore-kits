@@ -80,10 +80,16 @@ int ShoreEnv::init()
         return (1);
     }
 
+    // Load the database schema
+    if (load_schema()) {
+        TRACE( TRACE_ALWAYS, "Error loading the database schema\n");
+        return (2);
+    }
+
     // Start the storage manager
     if (start_sm()) {
-        TRACE( TRACE_ALWAYS, "Error starting Shore\n");
-        return (2);
+        TRACE( TRACE_ALWAYS, "Error starting Shore database\n");
+        return (3);
     }
 
     // Call the (virtual) post-initialization function
@@ -421,7 +427,6 @@ void ShoreEnv::set_active_cpu_count(const int actcpucnt)
 const int ShoreEnv::_set_sys_params()
 {
     int problem = 0;
-    TRACE( TRACE_DEBUG, "Setting sys params\n");
 
     // cpu info - first checks if valid input    
     int tmp_max_cpu_count = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[4][0]].c_str());

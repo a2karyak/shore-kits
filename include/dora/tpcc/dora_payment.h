@@ -48,10 +48,6 @@ private:
     // the data needed for communication
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple  _adist;
-    // the list of actions to be remembered to be given back
-    upd_wh_pay_action_impl*   _puw;
-    upd_dist_pay_action_impl* _pud;
-    upd_cust_pay_action_impl* _puc;
     // pointer to the payment input
     payment_input_t           _pin;
     // pointer to the shore env
@@ -71,13 +67,8 @@ public:
     // access methods for the communicated data
     tpcc_warehouse_tuple* wh() { return (&_awh); }
     tpcc_district_tuple* dist() { return (&_adist); }    
-    // access methods for the list of actions
-    void set_puw(upd_wh_pay_action_impl*   puw) { _puw = puw; }
-    void set_pud(upd_dist_pay_action_impl* pud) { _pud = pud; }
-    void set_puc(upd_cust_pay_action_impl* puc) { _puc = puc; }
     // the interface
     w_rc_t run();
-    void  cleanup();
 
 }; // EOF: midway_pay_rvp
 
@@ -94,12 +85,8 @@ public:
 class final_pay_rvp : public terminal_rvp_t
 {
 private:
-
-    // the list of actions to be remembered to be given back
-    ins_hist_pay_action_impl* _pih;
     // pointer to the shore env
     ShoreTPCCEnv* _ptpccenv;
-
 public:
 
     final_pay_rvp(tid_t atid, xct_t* axct, const int axctid,
@@ -111,14 +98,10 @@ public:
     
     ~final_pay_rvp() { }
 
-    // access methods for the list of actions
-    void set_pih(ins_hist_pay_action_impl* pih) { _pih = pih; }
-    // required 
+    // interface
+    w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
     void upd_committed_stats(); // update the committed trx stats
     void upd_aborted_stats(); // update the committed trx stats
-    // the interface
-    w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
-    void cleanup();
 
 }; // EOF: final_pay_rvp
 
@@ -140,6 +123,8 @@ public:
  * @abstract class: pay_action_impl
  *
  * @brief:          Holds a payment input and a pointer to ShoreTPCCEnv
+ *                  Also implements the trx_acq_locks since all the
+ *                  Payment actions are probes to a single tuple
  *
  ********************************************************************/
 
@@ -154,7 +139,8 @@ public:
     
     pay_action_impl() : range_action_impl(), _ptpccenv(NULL) { }
     virtual ~pay_action_impl() { }
-    virtual w_rc_t trx_exec()=0; // pure virtual
+    virtual w_rc_t trx_exec()=0; // pure virtual    
+    const bool trx_acq_locks();
     virtual void calc_keys()=0; // pure virtual 
     virtual void set_input(tid_t atid,
                            xct_t* apxct,

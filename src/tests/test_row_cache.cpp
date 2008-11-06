@@ -24,7 +24,7 @@ static long const COUNT = 1l << 20;
 
 volatile bool ready;
 
-warehouse_t _warehouse_desc;
+warehouse_t _warehouse_desc(string("baseline"));
 warehouse_man_impl* _pwh_man;
 
 #include <unistd.h>

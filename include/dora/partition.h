@@ -26,9 +26,6 @@ ENTER_NAMESPACE(dora);
 
 using namespace shore;
 
-// template<class DataType> class worker_t;
-// template<class DataType> class partition_t;
-
 
 /******************************************************************** 
  *
@@ -58,15 +55,18 @@ class partition_t
 {
 public:
 
-    typedef action_t<DataType>      part_action;
-    typedef worker_t<DataType>      part_worker;
+    typedef action_t<DataType>      PartAction;
+    typedef worker_t<DataType>      PartWorker;
 
-    typedef srmwqueue<part_action>         part_queue;
-    typedef std::list<part_action*>        ActionList;
+    typedef srmwqueue<PartAction>         PartQueue;
+    typedef std::list<PartAction*>        ActionList;
     typedef typename ActionList::iterator  ActionListIt; 
 
-    typedef key_wrapper_t<DataType> part_key;
-    typedef lock_man_t<DataType>    part_lock_man;
+    typedef key_wrapper_t<DataType>       PartKey;
+    typedef vector<PartKey>               PartKeyVec;
+    typedef vector<PartKey*>              PartKeyPtrVec;
+    typedef typename PartKeyVec::iterator PartKeyVecIt;
+    typedef lock_man_t<DataType>          PartLockManager;
 
 protected:
 
@@ -82,10 +82,10 @@ protected:
     tatas_lock         _pat_count_lock;
 
     // pointers to primary owner and pool of standby worker threads
-    part_worker*   _owner;        // primary owner
+    PartWorker*   _owner;        // primary owner
     tatas_lock     _owner_lock;
 
-    part_worker*   _standby;      // standby pool
+    PartWorker*   _standby;      // standby pool
     int            _standby_cnt;
     tatas_lock     _standby_lock;
 
@@ -93,7 +93,7 @@ protected:
     processorid_t  _prs_id;
 
     // lock manager for the partition
-    part_lock_man  _plm;
+    PartLockManager  _plm;
 
 
     // Each partition has three lists of Actions
@@ -126,7 +126,7 @@ protected:
 
     // queue of new Actions
     // single reader - multiple writers
-    part_queue    _input_queue; 
+    PartQueue    _input_queue; 
 
     // list of Actions that have been dequeued but not served, because
     // there was a lock conflict with an outstanding trx
@@ -135,7 +135,7 @@ protected:
 
     // queue of committed Actions
     // single reader - multiple writers
-    part_queue    _committed_queue;
+    PartQueue    _committed_queue;
 
 public:
 
@@ -170,7 +170,7 @@ public:
     const ePATState inc_active_thr();
 
     // get lock manager
-    part_lock_man* plm() { return (&_plm); }
+    PartLockManager* plm() { return (&_plm); }
 
 
     /** Control partition */
@@ -186,8 +186,13 @@ public:
 
     /** Action-related methods */
 
+    // releases a trx
+    void release(tid_t atid) { _plm.release(atid); }
+    const bool acquire(PartKeyPtrVec& akeyvec);
+
     // returns true if action can be enqueued it this partition
-    virtual const bool verify(part_action& action)=0;
+    virtual const bool verify(PartAction& action)=0;
+
 
     // enqueue lock needed to enforce an ordering across trxs
     mcs_lock _enqueue_lock;
@@ -195,19 +200,25 @@ public:
 
     // input for normal actions
     // enqueues action, 0 on success
-    const int enqueue(part_action* pAction);
-    part_action* dequeue();
+    const int enqueue(PartAction* pAction);
+    PartAction* dequeue();
+    const bool is_input_owner(PartWorker* aworker) {
+        return (_input_queue.is_control(aworker->pwc()));
+    }
 
     // deque of actions to be committed
-    const int enqueue_commit(part_action* apa);
-    part_action* dequeue_commit();
+    const int enqueue_commit(PartAction* apa);
+    PartAction* dequeue_commit();
     int has_committed(void) const { return (!_committed_queue.is_empty()); }
+    const bool is_committed_owner(PartWorker* aworker) {
+        return (_committed_queue.is_control(aworker->pwc()));
+    }
 
     // list of waiting actions - taken from input queue but not served
-    const int enqueue_wait(part_action* apa);
+    const int enqueue_wait(PartAction* apa);
     int has_waiting(void) const { return (!_wait_list.empty()); }
-    part_action* get_first_wait(void); // takes the iterator to the beginning of the list
-    part_action* get_next_wait(void);  // goes to the next action on the list
+    PartAction* get_first_wait(void); // takes the iterator to the beginning of the list
+    PartAction* get_next_wait(void);  // goes to the next action on the list
     void remove_wait(void); // removes the currently pointed action
 
 
@@ -232,11 +243,11 @@ private:
     const int _generate_standby_pool(const int sz, 
                                      int& pool_sz,
                                      const processorid_t aprsid = PBIND_NONE);
-    part_worker* _generate_worker(const processorid_t aprsid, c_str wname);    
+    PartWorker* _generate_worker(const processorid_t aprsid, c_str wname);    
 
 protected:    
 
-    const int isFree(part_key akey, eDoraLockMode lmode);
+    const int isFree(PartKey akey, eDoraLockMode lmode);
 
 
 }; // EOF: partition_t
@@ -249,6 +260,26 @@ protected:
 
 /****************************************************************** 
  *
+ * @fn:     acquire()
+ *
+ * @brief:  Tries to acquire all the locks from list of keys, if it
+ *          fails it releases any acquired.
+ *
+ * @return: (true) on success
+ *
+ ******************************************************************/
+
+template <class DataType>
+const bool partition_t<DataType>::acquire(PartKeyPtrVec& akeyvec)
+{
+
+    assert (0); // TODO
+
+    return (0);
+}
+
+/****************************************************************** 
+ *
  * @fn:     enqueue()
  *
  * @brief:  Enqueues action at the input queue
@@ -258,7 +289,7 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue(part_action* pAction)
+const int partition_t<DataType>::enqueue(PartAction* pAction)
 {
     assert (_part_policy!=PP_UNDEF);
     if (!verify(*pAction)) {
@@ -301,7 +332,7 @@ action_t<DataType>* partition_t<DataType>::dequeue()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue_commit(part_action* pAction)
+const int partition_t<DataType>::enqueue_commit(PartAction* pAction)
 {
     assert (_part_policy!=PP_UNDEF);
     assert (pAction->get_partition()==this);
@@ -340,7 +371,7 @@ action_t<DataType>* partition_t<DataType>::dequeue_commit()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue_wait(part_action* pAction)
+const int partition_t<DataType>::enqueue_wait(PartAction* pAction)
 {
     assert (_part_policy!=PP_UNDEF);
     assert (pAction->get_partition()==this);
@@ -379,7 +410,8 @@ action_t<DataType>* partition_t<DataType>::get_first_wait(void)
  * @brief:  Returns the next action on the list, advances the iterator
  *          by one
  *
- * @return: NULL if empty. Otherwise, the action
+ * @return: NULL if empty, or at the end of the list. 
+ *          Otherwise, the next action
  *
  ******************************************************************/
 
@@ -389,7 +421,7 @@ action_t<DataType>* partition_t<DataType>::get_next_wait(void)
     if (_wait_list.empty())
         return (NULL);
     if (++_wait_it == _wait_list.end())
-        get_first_wait();
+        return(NULL);
     return (*_wait_it);
 }
 
@@ -431,8 +463,10 @@ void partition_t<DataType>::stop()
     // 1. stop the worker & standby threads
     _stop_threads();
 
-    // 2. clear queue 
+    // 2. clear queues
     _input_queue.clear();
+    _wait_list.clear();
+    _committed_queue.clear();
     
     // 3. reset lock-manager
     _plm.reset();
@@ -464,8 +498,10 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
     // 1. stop the worker & standby threads
     _stop_threads();
 
-    // 2. clear queue 
+    // 2. clear queues
     _input_queue.clear();
+    _wait_list.clear();
+    _committed_queue.clear();
     
     // 3. reset lock-manager
     _plm.reset();
@@ -625,8 +661,10 @@ const int partition_t<DataType>::_stop_threads()
     }    
     _owner = NULL; // join()?
 
-    // reset queue's worker control pointers
+    // reset queues' worker control pointers
     _input_queue.set(NULL,NULL,NULL); 
+    _committed_queue.set(NULL,NULL,NULL); 
+
 
     // standy
     CRITICAL_SECTION(standby_cs, _standby_lock);
@@ -672,8 +710,8 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
 {
     assert (!_standby); // prevent losing thread pointer 
 
-    part_worker* pworker = NULL;
-    part_worker* pprev_worker = NULL;
+    PartWorker* pworker = NULL;
+    PartWorker* pprev_worker = NULL;
     pool_sz=0;
 
     if (sz>0) {
@@ -737,7 +775,7 @@ const int partition_t<DataType>::_generate_primary()
 {
     assert (_owner==NULL); // prevent losing thread pointer 
 
-    part_worker* pworker = _generate_worker(_prs_id, 
+    PartWorker* pworker = _generate_worker(_prs_id, 
                                             c_str("%s-P-%d-PRI",_table->name(), _part_id));
     if (!pworker) {
         TRACE( TRACE_ALWAYS, "Problem generating worker thread\n");
@@ -747,8 +785,9 @@ const int partition_t<DataType>::_generate_primary()
     _owner = pworker;
     _owner->set_data_owner_state(DOS_ALONE);
 
-    // pass worker thread controls to queue
+    // pass worker thread controls to the two queues
     _input_queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
+    _committed_queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
 
     _owner->fork();
 
@@ -774,7 +813,7 @@ inline worker_t<DataType>* partition_t<DataType>::_generate_worker(const process
 {
     // 1. create worker thread
     // 2. set self as worker's partition
-    part_worker* pworker = new part_worker(_env, this, strname, prsid); 
+    PartWorker* pworker = new PartWorker(_env, this, strname, prsid); 
     return (pworker);
 }
 

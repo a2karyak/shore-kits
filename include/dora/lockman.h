@@ -139,15 +139,15 @@ class key_ll_map_t
 {
 public:
 
-    typedef key_wrapper_t<DataType> key;
-    typedef map<key, ll_entry> ll_map;
-    typedef typename ll_map::iterator ll_map_it;
-    typedef typename ll_map::const_iterator ll_map_const_it;
+    typedef key_wrapper_t<DataType>        Key;
+    typedef map<Key, ll_entry>             LLMap;
+    typedef typename LLMap::iterator       LLMapIt;
+    typedef typename LLMap::const_iterator LLMapCit;
 
 private: 
 
     // data
-    ll_map _ll_map; // map of logical locks - each key has its own ll
+    LLMap _ll_map; // map of logical locks - each key has its own ll
 
 public:
 
@@ -164,7 +164,7 @@ public:
 
     // acquire, return true on success
     // false means not compatible
-    const bool acquire(const key& aKey, const eDoraLockMode& adlm) {
+    const bool acquire(const Key& aKey, const eDoraLockMode& adlm) {
         ll_entry* ple = &_ll_map[aKey];
         assert (ple);
         CRITICAL_SECTION(le_cs, ple->_lock);
@@ -179,7 +179,7 @@ public:
     }
                 
     // release        
-    const void release(const key& aKey) {
+    const void release(const Key& aKey) {
         ll_entry* ple = &_ll_map[aKey];
         assert (ple);
         ple->dec_counter();
@@ -189,7 +189,7 @@ public:
     void dump() const {
         int sz = _ll_map.size();
         TRACE( TRACE_DEBUG, "Keys (%d)\n", sz);
-        for (ll_map_const_it it=_ll_map.begin(); it!=_ll_map.end(); ++it) {
+        for (LLMapCit it=_ll_map.begin(); it!=_ll_map.end(); ++it) {
             cout << "K (" << it->first << ")"; 
             cout << " - L (" << it->second << ")\n";
         }
@@ -217,29 +217,29 @@ class lock_man_t
 {
 public:
 
-    typedef action_t<DataType>        action;
+    typedef action_t<DataType>        Action;
 
-    typedef key_wrapper_t<DataType>   key;
-    typedef key_ll_map_t<DataType>    key_ll_map;
+    typedef key_wrapper_t<DataType>   Key;
+    typedef key_ll_map_t<DataType>    KeyLLMap;
 
-    typedef vector<key>               key_list;
-    typedef vector<tid_t>             tid_list;
+    typedef vector<Key>               KeyList;
+    typedef vector<tid_t>             TidList;
 
-    typedef multimap<tid_t,key>                  trx_key_mm;
-    typedef typename trx_key_mm::iterator        trx_key_mm_it;
-    typedef typename trx_key_mm::const_iterator  trx_key_mm_cit;
-    typedef pair<tid_t,key>                      trx_key_pair;
-    typedef pair<trx_key_mm_it, trx_key_mm_it>   trx_range;
+    typedef multimap<tid_t,Key>                 TrxKeyMap;
+    typedef typename TrxKeyMap::iterator        TrxKeyMapIt;
+    typedef typename TrxKeyMap::const_iterator  TrxKeyMapCit;
+    typedef pair<tid_t,Key>                     TrxKeyPair;
+    typedef pair<TrxKeyMapIt,TrxKeyMapIt>       TrxRange;
 
 private:
 
-    key_ll_map _key_ll_m;   // map of keys to logical locks 
-    trx_key_mm _trx_key_mm; // map of trxs to keys    
+    KeyLLMap  _key_ll_m;   // map of keys to logical locks 
+    TrxKeyMap _trx_key_mm; // map of trxs to keys    
 
     // helper functions
     void _dump_trx_key_mm() const {
         TRACE( TRACE_DEBUG, "(%d) trx-key pairs\n", _trx_key_mm.size());
-        for (trx_key_mm_cit cit=_trx_key_mm.begin(); cit!=_trx_key_mm.end(); ++cit) {
+        for (TrxKeyMapCit cit=_trx_key_mm.begin(); cit!=_trx_key_mm.end(); ++cit) {
             cout << "TRX (" << cit->first << ")";
             cout << " - K (" << cit->second << ")\n";
         }
@@ -254,32 +254,32 @@ public:
     }
 
     // acquire ll of a key on behalf of a trx
-    const bool acquire(tid_t axct, key akey, eDoraLockMode adlm = DL_CC_NOLOCK) {        
+    const bool acquire(tid_t atid, Key akey, eDoraLockMode adlm = DL_CC_NOLOCK) {        
         // if lock acquisition successful,
         // associate key to trx
         if (_key_ll_m.acquire(akey, adlm)) {
-            _trx_key_mm.insert( trx_key_pair(axct, akey));
+            _trx_key_mm.insert( TrxKeyPair(atid, akey));
             return (true);
         }
         return (false);
     }
                 
     // releases all the acquired lls by a trx
-    void release(tid_t axct) {
-        trx_range r = _trx_key_mm.equal_range(axct);
-        TRACE( TRACE_DEBUG, "Releasing (%d)\n", axct);
-        for (trx_key_mm_it it=r.first; it!=r.second; ++it) {           
+    void release(tid_t atid) {
+        TrxRange r = _trx_key_mm.equal_range(atid);
+        TRACE( TRACE_DEBUG, "Releasing (%d)\n", atid);
+        for (TrxKeyMapIt it=r.first; it!=r.second; ++it) {           
             // release ll for key from the key-to-ll map
             cout << "Release - " << (*it).second << endl;
             _key_ll_m.release((*it).second);
         }                 
         // remove trx-related entries from the trx-to-key map
-        _trx_key_mm.erase(axct);
+        _trx_key_mm.erase(atid);
     }
 
     // releases action
-    void release(action& a) {
-        release(a.get_xct());
+    void release(Action& a) {
+        release(a.get_tid());
     }
 
     void reset() {

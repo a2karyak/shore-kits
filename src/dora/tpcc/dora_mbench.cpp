@@ -51,6 +51,22 @@ void final_mb_rvp::upd_aborted_stats()
 }                     
 
 
+
+/******************************************************************** 
+ *
+ * MBench Actions
+ *
+ ********************************************************************/
+
+const bool mb_action_impl::trx_acq_locks()
+{
+    // all the MBench trxs are probes to a single tuple
+    assert (_partition);
+    KeyPtrVec aKeyPtrList;
+    aKeyPtrList.push_back(&_down);
+    return (_partition->acquire(aKeyPtrList));
+}
+
 /******************************************************************** 
  *
  * MBench WH
@@ -93,9 +109,9 @@ w_rc_t upd_wh_mb_action_impl::trx_exec()
      */
 
     TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", _tid, _whid);
-    W_DO(_ptpccenv->warehouse_man()->wh_update_ytd(_ptpccenv->db(), 
-                                                   prwh, 
-                                                   amount));
+    W_DO(_ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
+                                                      prwh, 
+                                                      amount));
 
     tpcc_warehouse_tuple awh;
     prwh->get_value(1, awh.W_NAME, 11);
@@ -191,7 +207,7 @@ w_rc_t upd_cust_mb_action_impl::trx_exec()
     acust.C_PAYMENT_CNT++;
 
     // if bad customer
-    if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
+    if ((acust.C_CREDIT[0] == 'B') && (acust.C_CREDIT[1] == 'C')) { 
         /* 10% of customers */
 
         /* SELECT c_data
@@ -213,19 +229,19 @@ w_rc_t upd_cust_mb_action_impl::trx_exec()
         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple\n", _tid);
-        W_DO(_ptpccenv->customer_man()->cust_update_tuple(_ptpccenv->db(), 
-                                                          prcust, acust, 
-                                                          c_new_data_1, 
-                                                          c_new_data_2));
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple-nl\n", _tid);
+        W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+                                                             prcust, acust, 
+                                                             c_new_data_1, 
+                                                             c_new_data_2));
     }
     else { /* good customer */
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple\n", _tid);
-        W_DO(_ptpccenv->customer_man()->cust_update_tuple(_ptpccenv->db(), 
-                                                          prcust, 
-                                                          acust, 
-                                                          NULL, 
-                                                          NULL));
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple-nl\n", _tid);
+        W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+                                                             prcust, 
+                                                             acust, 
+                                                             NULL, 
+                                                             NULL));
     }
 
 #ifdef PRINT_TRX_RESULTS

@@ -252,7 +252,7 @@ public:
 
     w_rc_t    add_tuple(ss_m* db, table_tuple* ptuple);
     w_rc_t    update_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
-    w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple);
+    w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
 
 
     /* ------------------------------------------- */
@@ -1149,7 +1149,8 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
 
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db, 
-                                               table_tuple* ptuple)
+                                               table_tuple* ptuple,
+                                               lock_mode_t)
 {
     assert (_ptable);
     assert (ptuple);

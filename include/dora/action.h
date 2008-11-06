@@ -77,72 +77,37 @@ using namespace shore;
 
 /******************************************************************** 
  *
- * @class: action_t
+ * @class: base_action_t
  *
- * @brief: Abstract template-based class for the actions
- *
- * @note:  Actions are similar with packets in staged dbs
+ * @brief: (non-template-based) abstract base class for the actions
  *
  ********************************************************************/
 
-template <class DataType>
-class action_t
+class base_action_t
 {
-public:
-    
-    typedef key_wrapper_t<DataType> key;
-    typedef partition_t<DataType>*   partitionPtr;
-
 protected:
 
     // rendez-vous point
     rvp_t*         _prvp;
 
-    // a vector of pointers to keys
-    vector<key*>   _keys;
-
     // trx-specific
     xct_t*         _xct; // Not the owner
     tid_t          _tid;
 
-    //pointer to the partition
-    partitionPtr   _partition;
-
 public:
 
-    action_t() : 
-        _prvp(NULL), _xct(NULL), _partition(NULL) 
+    base_action_t() :
+        _prvp(NULL), _xct(NULL)
     { }
 
-    virtual ~action_t() { }
+    virtual ~base_action_t() { }
 
-    
-    /** access methods */
-
-    vector<key*> *keys() { return (&_keys); }    
-
-    rvp_t* get_rvp() { return (_prvp); }
-
+    // access methods
+    inline rvp_t* get_rvp() { return (_prvp); }
     inline xct_t* get_xct() { return (_xct); }    
-    inline void   set_xct(xct_t* axct) {
-        assert (axct);
-        _xct = axct;
-        _tid = ss_m::xct_to_tid(_xct);
-        return (_tid);
-    }
-
     inline tid_t get_tid() { return (_tid); }
-    inline void  set_tid(tid_t atid) {
-        _tid = atid;
-        _xct = ss_m::tid_to_xct(_tid);
-        return (_tid);
-    }
 
     inline void set(tid_t atid, xct_t* axct, rvp_t* prvp) {
-        assert (axct);
-        assert (atid == ss_m::xct_to_tid(axct));
-        assert (prvp);
-
         CRITICAL_SECTION(action_cs, _action_lock);
         _tid = atid;
         _xct = axct;
@@ -150,27 +115,102 @@ public:
     }
 
 
-    inline partitionPtr get_partition() const { return (_partition); }
-    inline void set_partition(const partitionPtr ap) {
+    // interface
+
+    // executes action body
+    virtual w_rc_t trx_exec()=0;          
+
+    // acquires the required locks in order to proceed
+    virtual const bool trx_acq_locks()=0;
+
+    // releases acquired locks
+    virtual void trx_rel_locks()=0;
+
+    // enqueues self on the committed list of committed actions
+    virtual void notify()=0; 
+
+
+    // lock for the whole action
+    tatas_lock     _action_lock;    
+
+private:
+
+    // copying not allowed
+    base_action_t(base_action_t const &);
+    void operator=(base_action_t const &);
+
+}; // EOF: base_action_t
+
+
+
+/******************************************************************** 
+ *
+ * @class: action_t
+ *
+ * @brief: (template-based) Aabstract class for the actions
+ *
+ * @note:  Actions are similar with packets in staged dbs
+ *
+ ********************************************************************/
+
+template <class DataType>
+class action_t : public base_action_t
+{
+public:
+    
+    typedef key_wrapper_t<DataType>  Key;
+    typedef vector<Key>              KeyVec;
+    typedef vector<Key*>             KeyPtrVec;
+    typedef partition_t<DataType>    Partition;
+
+protected:
+
+    // a vector of pointers to keys
+    vector<Key*>   _keys;
+
+    //pointer to the partition
+    Partition*     _partition;
+
+public:
+
+    action_t() : 
+        base_action_t(), _partition(NULL) 
+    { }
+
+    virtual ~action_t() { }
+
+    
+    // access methods
+    vector<Key*> *keys() { return (&_keys); }    
+
+    inline Partition* get_partition() const { return (_partition); }
+    inline void set_partition(Partition* ap) {
         assert (ap);
         _partition = ap;
     }
     
     
-    /** trx-related operations */
-    virtual w_rc_t trx_exec()=0;          // pure virtual
+    // interface
+    virtual w_rc_t trx_exec()=0;
+    virtual const bool trx_acq_locks()=0;
+
+    void trx_rel_locks() {
+        assert (_partition);
+        _partition->release(_tid);
+    }
+    void notify() {
+        assert (_partition);
+        _partition->enqueue_commit(this);
+    }
+
 
     // for the cache
     void reset() {
         CRITICAL_SECTION(action_cs, _action_lock);
         _xct = NULL;
         _prvp = NULL;
-
         _keys.clear();
     }
-
-    // lock for the whole action
-    tatas_lock     _action_lock;    
 
 private:
 
