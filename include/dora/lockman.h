@@ -201,6 +201,31 @@ public:
 
 /******************************************************************** 
  *
+ * @class: key_ll_t
+ *
+ * @brief: Key and lock mode structure
+ *
+ ********************************************************************/
+
+template<class DataType>
+struct key_lm_t
+{
+    typedef key_wrapper_t<DataType> Key;
+    Key*          _pkey;
+    eDoraLockMode _lm;
+
+    key_lm_t(Key* akp, eDoraLockMode lm) {
+        _pkey = akp;
+        _lm = lm;
+    }
+
+    ~key_lm_t() { }
+
+}; // EOF: key_lm_t
+
+
+/******************************************************************** 
+ *
  * @class: lock_man_t
  *
  * @brief: Lock manager for the locks of a partition
@@ -221,6 +246,7 @@ public:
 
     typedef key_wrapper_t<DataType>   Key;
     typedef key_ll_map_t<DataType>    KeyLLMap;
+    typedef key_lm_t<DataType>        KeyPrtLmPair;
 
     typedef vector<Key>               KeyList;
     typedef vector<tid_t>             TidList;
@@ -254,18 +280,23 @@ public:
     }
 
     // acquire ll of a key on behalf of a trx
-    const bool acquire(tid_t atid, Key akey, eDoraLockMode adlm = DL_CC_NOLOCK) {        
+    const bool acquire(tid_t& atid, Key* akey, eDoraLockMode adlm = DL_CC_NOLOCK) {  
         // if lock acquisition successful,
         // associate key to trx
-        if (_key_ll_m.acquire(akey, adlm)) {
-            _trx_key_mm.insert( TrxKeyPair(atid, akey));
+        if (_key_ll_m.acquire(*akey, adlm)) {
+            _trx_key_mm.insert(TrxKeyPair(atid, *akey));
+            dump();
             return (true);
         }
         return (false);
     }
+
+    const bool acquire(tid_t& atid, KeyPrtLmPair& aKeyLmPair) {
+        return (acquire(atid, aKeyLmPair._pkey, aKeyLmPair._lm));
+    }
                 
     // releases all the acquired lls by a trx
-    void release(tid_t atid) {
+    void release(tid_t& atid) {
         TrxRange r = _trx_key_mm.equal_range(atid);
         TRACE( TRACE_DEBUG, "Releasing (%d)\n", atid);
         for (TrxKeyMapIt it=r.first; it!=r.second; ++it) {           
@@ -275,6 +306,8 @@ public:
         }                 
         // remove trx-related entries from the trx-to-key map
         _trx_key_mm.erase(atid);
+
+        dump();
     }
 
     // releases action

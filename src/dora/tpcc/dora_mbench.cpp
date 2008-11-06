@@ -60,11 +60,12 @@ void final_mb_rvp::upd_aborted_stats()
 
 const bool mb_action_impl::trx_acq_locks()
 {
-    // all the MBench trxs are probes to a single tuple
+    // all the MBench trxs are (EX) probes to a single tuple
     assert (_partition);
-    KeyPtrVec aKeyPtrList;
-    aKeyPtrList.push_back(&_down);
-    return (_partition->acquire(aKeyPtrList));
+    LockRequestVec alrvec;
+    LockRequest alr(&_down,DL_CC_EXCL);
+    alrvec.push_back(alr);    
+    return (_partition->acquire(_tid,alrvec));
 }
 
 /******************************************************************** 
@@ -94,7 +95,7 @@ w_rc_t upd_wh_mb_action_impl::trx_exec()
 
     /* 1. retrieve warehouse for update */
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d PAY:warehouse-idx-probe (%d)\n", _tid, _whid);
+           "App: %d PAY:warehouse-idx-probe-nl (%d)\n", _tid, _whid);
     W_DO(_ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
                                                        _whid));
 
@@ -108,7 +109,7 @@ w_rc_t upd_wh_mb_action_impl::trx_exec()
      * plan: index probe on "W_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", _tid, _whid);
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", _tid, _whid);
     W_DO(_ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
                                                       prwh, 
                                                       amount));
@@ -170,7 +171,7 @@ w_rc_t upd_cust_mb_action_impl::trx_exec()
      */
 
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d PAY:cust-idx-probe-forupdate (%d) (%d) (%d)\n", 
+           "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
            _tid, _whid, _did, _cid);
 
     W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 

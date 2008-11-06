@@ -119,7 +119,7 @@ const bool pay_action_impl::trx_acq_locks()
 {
     // all the Payment trxs are probes to a single tuple
     assert (_partition);
-    
+    assert (0);    
     return (false);
 }
 

@@ -224,18 +224,23 @@ int main(int argc, char* argv[])
     if (inst_test_env(argc, argv))
         return (1);
 
+    /* 2. Make sure that the correct schema is used */
+    if (_g_shore_env->get_sysname().compare("dora")==0) {
+        TRACE( TRACE_ALWAYS, "Incorrect schema at configuration file\nExiting...\n");
+        return (1);
+    }
 
-    /* 2. Make sure data is loaded */
+    /* 3. Make sure data is loaded */
     w_rc_t rcl = _g_shore_env->loaddata();
     if (rcl.is_error()) {
         return (SHELL_NEXT_QUIT);
     }
 
-    /* 3. Start processing commands */
+    /* 4. Start processing commands */
     tpcc_kit_shell_t kit_shell("(tpcckit) ");
     kit_shell.start();
 
-    /* 4. Close the Shore environment */
+    /* 5. Close the Shore environment */
     if (_g_shore_env)
         close_test_env();
 

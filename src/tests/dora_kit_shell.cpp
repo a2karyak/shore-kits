@@ -259,27 +259,33 @@ int main(int argc, char* argv[])
     if (inst_test_env(argc, argv))
         return (1);
 
-    /* 2. Make sure data is loaded */
+    /* 2. Make sure that the correct schema is used */
+    if (_g_shore_env->get_sysname().compare("dora")!=0) {
+        TRACE( TRACE_ALWAYS, "Incorrect schema at configuration file\nExiting...\n");
+        return (1);
+    }
+
+    /* 3. Make sure data is loaded */
     w_rc_t rcl = _g_shore_env->loaddata();
     if (rcl.is_error()) {
         return (SHELL_NEXT_QUIT);
     }
 
-    /* 3. Create and start the dora-tpcc-db VAS */
+    /* 4. Create and start the dora-tpcc-db VAS */
     assert (_g_shore_env);
     _g_dora = new dora_tpcc_db(_g_shore_env);
     assert (_g_dora);
     _g_dora->start();
 
-    /* 4. Start processing commands */
+    /* 5. Start processing commands */
     dora_tpcc_kit_shell_t dora_kit_shell("(dora-tpcc-kit) ");
     dora_kit_shell.start();
 
-    /* 5. stop and delete the dora-tpcc-db */
+    /* 6. stop and delete the dora-tpcc-db */
     _g_dora->stop();
     delete (_g_dora);
 
-    /* 6. Close the Shore environment */
+    /* 7. Close the Shore environment */
     if (_g_shore_env)
         close_test_env();
 

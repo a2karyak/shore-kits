@@ -77,19 +77,19 @@ void tpcc_stats_t::print_trx_stats() const
 int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
-    string sysname = _dev_opts[SHORE_DEF_DEV_OPTIONS[7][0]];
-    TRACE( TRACE_ALWAYS, "Sysname : %s\n", sysname.c_str());
+    _sysname = _dev_opts[SHORE_DEF_DEV_OPTIONS[7][0]];
+    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
-    _pwarehouse_desc  = new warehouse_t(sysname);
-    _pdistrict_desc   = new district_t(sysname);
-    _pcustomer_desc   = new customer_t(sysname);
-    _phistory_desc    = new history_t(sysname);
-    _pnew_order_desc  = new new_order_t(sysname);
-    _porder_desc      = new order_t(sysname);
-    _porder_line_desc = new order_line_t(sysname);
-    _pitem_desc       = new item_t(sysname);
-    _pstock_desc      = new stock_t(sysname);
+    _pwarehouse_desc  = new warehouse_t(_sysname);
+    _pdistrict_desc   = new district_t(_sysname);
+    _pcustomer_desc   = new customer_t(_sysname);
+    _phistory_desc    = new history_t(_sysname);
+    _pnew_order_desc  = new new_order_t(_sysname);
+    _porder_desc      = new order_t(_sysname);
+    _porder_line_desc = new order_line_t(_sysname);
+    _pitem_desc       = new item_t(_sysname);
+    _pstock_desc      = new stock_t(_sysname);
 
 
     // initiate the table managers

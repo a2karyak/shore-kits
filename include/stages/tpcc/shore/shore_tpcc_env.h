@@ -253,6 +253,9 @@ private:
 
     table_man_list_t           _table_man_list;
 
+    /** system name */
+    string          _sysname;
+
     /** scaling factors */
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
     pthread_mutex_t _scaling_mutex;
@@ -350,6 +353,8 @@ public:
     void set_sf(const int aSF);
     inline int get_sf() { return (_scaling_factor); }
 
+
+    inline string get_sysname() { return (_sysname); }
 
     inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
     inline table_man_list_t*  table_man_list() { return (&_table_man_list); }

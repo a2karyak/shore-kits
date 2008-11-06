@@ -58,15 +58,16 @@ public:
     typedef action_t<DataType>      PartAction;
     typedef worker_t<DataType>      PartWorker;
 
-    typedef srmwqueue<PartAction>         PartQueue;
-    typedef std::list<PartAction*>        ActionList;
+    typedef srmwqueue<PartAction>          PartQueue;
+    typedef std::list<PartAction*>         ActionList;
     typedef typename ActionList::iterator  ActionListIt; 
 
-    typedef key_wrapper_t<DataType>       PartKey;
-    typedef vector<PartKey>               PartKeyVec;
-    typedef vector<PartKey*>              PartKeyPtrVec;
-    typedef typename PartKeyVec::iterator PartKeyVecIt;
-    typedef lock_man_t<DataType>          PartLockManager;
+    typedef key_wrapper_t<DataType>           PartKey;
+    typedef key_lm_t<DataType>                LockRequest;  // pair of <Key,LM>
+    typedef vector<LockRequest>               LockRequestVec;
+    typedef typename LockRequestVec::iterator LockRequestVecIt;
+
+    typedef lock_man_t<DataType>              PartLockManager;
 
 protected:
 
@@ -83,14 +84,14 @@ protected:
 
     // pointers to primary owner and pool of standby worker threads
     PartWorker*   _owner;        // primary owner
-    tatas_lock     _owner_lock;
+    tatas_lock    _owner_lock;
 
     PartWorker*   _standby;      // standby pool
-    int            _standby_cnt;
-    tatas_lock     _standby_lock;
+    int           _standby_cnt;
+    tatas_lock    _standby_lock;
 
     // processor binding
-    processorid_t  _prs_id;
+    processorid_t _prs_id;
 
     // lock manager for the partition
     PartLockManager  _plm;
@@ -187,8 +188,8 @@ public:
     /** Action-related methods */
 
     // releases a trx
-    void release(tid_t atid) { _plm.release(atid); }
-    const bool acquire(PartKeyPtrVec& akeyvec);
+    void release(tid_t& atid) { _plm.release(atid); }
+    const bool acquire(tid_t& atid, LockRequestVec& arvec);
 
     // returns true if action can be enqueued it this partition
     virtual const bool verify(PartAction& action)=0;
@@ -236,6 +237,12 @@ public:
 
 private:
 
+    // lock-man
+    inline const bool _acquire_key(tid_t& atid, LockRequest& alr) {
+        return (_plm.acquire(atid,alr));
+    }
+                
+
     // thread control
     const int _start_owner();
     const int _stop_threads();
@@ -270,13 +277,20 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-const bool partition_t<DataType>::acquire(PartKeyPtrVec& akeyvec)
+const bool partition_t<DataType>::acquire(tid_t& atid, LockRequestVec& arvec)
 {
+    for (int i=0; i<arvec.size(); ++i) {
+        if (!_acquire_key(atid, arvec[i])) {
+            // if a key cannot be acquired, 
+            // release all the locks and return false
+            release(atid);
+            return (false);
+        }
+    }
 
-    assert (0); // TODO
-
-    return (0);
+    return (true);
 }
+
 
 /****************************************************************** 
  *

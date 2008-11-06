@@ -85,6 +85,10 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
         tid_t atid(i,0);
         cout << atid << endl;
 
+        typedef dora::key_lm_t<int> LockRequest;
+        typedef vector<LockRequest> LockRequestVec;
+        LockRequestVec alrvec;
+            
         // for every transaction acquires (iSelectedTrx) random keys
         for (int j=0;j<iSelectedTrx;j++) {            
 
@@ -99,9 +103,14 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
 
             TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d)\n", 
                    atid, wh, d, c, adlm);
+
+
+            alrvec.clear();
+            LockRequest alr(&akey,adlm);
+            alrvec.push_back(alr);    
             
             // acquire
-            if (_g_dora->cus(0)->plm()->acquire(atid,akey,adlm)) {
+            if (_g_dora->cus(0)->acquire(atid,alrvec)) {
                 TRACE( TRACE_DEBUG, "TRX (%d) - K (%d|%d|%d) - LM (%d) - ACQUIRED\n", 
                        atid, wh, d, c, adlm);
             }

@@ -161,6 +161,8 @@ public:
     typedef key_wrapper_t<DataType>  Key;
     typedef vector<Key>              KeyVec;
     typedef vector<Key*>             KeyPtrVec;
+    typedef key_lm_t<DataType>       LockRequest;  // pair of <Key,LM>
+    typedef vector<LockRequest>      LockRequestVec;
     typedef partition_t<DataType>    Partition;
 
 protected:

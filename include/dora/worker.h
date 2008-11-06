@@ -490,7 +490,7 @@ inline const int worker_t<DataType>::_serve_action(PartAction* paction)
     }          
 
     // 4. detach from trx
-    TRACE( TRACE_TRX_FLOW, "Deattaching from (%d)\n", paction->get_tid());
+    TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->get_tid());
     detach_xct(paction->get_xct());
 
     // 5. finalize processing        

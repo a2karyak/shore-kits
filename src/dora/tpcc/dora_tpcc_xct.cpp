@@ -112,7 +112,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 
     // 4. Detatch self from xct
     me()->detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Deattached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
 
     // For each action
@@ -289,7 +289,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id,
 
     // 4. Detatch self from xct
     me()->detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Deattached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
 
     // For each action
@@ -343,7 +343,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id,
 
     // 4. Detatch self from xct
     smthread_t::me()->detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Deattached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // For each action
     // 5a. Decide about partition
