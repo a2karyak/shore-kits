@@ -117,10 +117,12 @@ void final_pay_rvp::upd_aborted_stats()
 
 const bool pay_action_impl::trx_acq_locks()
 {
-    // all the Payment trxs are probes to a single tuple
+    // all the Payment trxs are (EX) probes to a single tuple
     assert (_partition);
-    assert (0);    
-    return (false);
+    LockRequestVec alrvec;
+    LockRequest alr(&_down,DL_CC_EXCL);
+    alrvec.push_back(alr);    
+    return (_partition->acquire(_tid,alrvec));
 }
 
 w_rc_t upd_wh_pay_action_impl::trx_exec() 

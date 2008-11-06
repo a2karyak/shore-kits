@@ -285,8 +285,8 @@ private:
                            trx_result_tuple_t& trt);
 
     /* --- baseline mbench --- */
-    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, const int whid);
-    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, const int whid);
+    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int whid);
+    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int whid);
 
     
 public:    
@@ -409,8 +409,8 @@ public:
     w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
     /* --- baseline mbench --- */
-    w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, const int specificWH);
-    w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, const int specificWH);
+    w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
 
 
@@ -431,8 +431,8 @@ public:
     w_rc_t dora_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
     /* --- dora mbench --- */
-    w_rc_t dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, const int whid);
-    w_rc_t dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, const int whid);
+    w_rc_t dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int whid);
+    w_rc_t dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int whid);
 
 
 

@@ -77,6 +77,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 {
     assert (_g_dora);
 
+
     // 1. Initiate transaction
     tid_t atid;   
     W_DO(_pssm->begin_xct(atid));
@@ -261,11 +262,70 @@ w_rc_t ShoreTPCCEnv::dora_stock_level(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id, 
-                                      trx_result_tuple_t& atrt, 
-                                      const int whid)
+w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id, 
+                                    trx_result_tuple_t& atrt, 
+                                    int whid)
 {
     assert (_g_dora);
+    // pick a valid wh id
+    if (whid==0) 
+        whid = URand(1,_scaling_factor); 
+
+    // 1. Initiate transaction
+    tid_t atid;   
+    W_DO(_pssm->begin_xct(atid));
+    xct_t* pxct = smthread_t::me()->xct();
+    assert (pxct);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+
+    // 2. Setup the final RVP
+    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, this);
+    assert (frvp);
+    
+
+    // 3. Generate the actions
+    upd_wh_mb_action_impl* upd_wh = _g_dora->get_upd_wh_mb_action();
+    assert (upd_wh);
+    upd_wh->set_input(atid, pxct, frvp, this, whid);
+    frvp->add_action(upd_wh);
+
+
+    // 4. Detatch self from xct
+    smthread_t::me()->detach_xct(pxct);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // For each action
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    //
+    // All the enqueues should appear atomic
+    // That is, there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    {        
+        int mypartition = whid-1;
+        // WH_PART_CS
+        CRITICAL_SECTION(wh_part_cs, _g_dora->whs(mypartition)->_enqueue_lock);
+        // (SF) WAREHOUSE partitions
+        if (_g_dora->whs()->enqueue(upd_wh, mypartition)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_MB\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK); 
+}
+
+w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id, 
+                                      trx_result_tuple_t& atrt, 
+                                      int whid)
+{
+    assert (_g_dora);
+    // pick a valid wh id
+    if (whid==0) 
+        whid = URand(1,_scaling_factor); 
 
     // 1. Initiate transaction
     tid_t atid;   
@@ -307,59 +367,6 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id,
         // (SF) CUSTOMER partitions
         if (_g_dora->cus()->enqueue(upd_cust, mypartition)) { 
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-        }
-    }
-
-    return (RCOK); 
-}
-
-w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id, 
-                                    trx_result_tuple_t& atrt, 
-                                    const int whid)
-{
-    assert (_g_dora);
-
-    // 1. Initiate transaction
-    tid_t atid;   
-    W_DO(_pssm->begin_xct(atid));
-    xct_t* pxct = smthread_t::me()->xct();
-    assert (pxct);
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-
-
-    // 2. Setup the final RVP
-    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, this);
-    assert (frvp);
-    
-
-    // 3. Generate the actions
-    upd_wh_mb_action_impl* upd_wh = _g_dora->get_upd_wh_mb_action();
-    assert (upd_wh);
-    upd_wh->set_input(atid, pxct, frvp, this, whid);
-    frvp->add_action(upd_wh);
-
-
-    // 4. Detatch self from xct
-    smthread_t::me()->detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
-
-    // For each action
-    // 5a. Decide about partition
-    // 5b. Enqueue
-    //
-    // All the enqueues should appear atomic
-    // That is, there should be a total order across trxs 
-    // (it terms of the sequence actions are enqueued)
-
-    {
-        int mypartition = whid-1;
-        // WH_PART_CS
-        CRITICAL_SECTION(wh_part_cs, _g_dora->whs(mypartition)->_enqueue_lock);
-        // (SF) WAREHOUSE partitions
-        if (_g_dora->whs()->enqueue(upd_wh, mypartition)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_MB\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
