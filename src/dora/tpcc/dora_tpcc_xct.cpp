@@ -280,7 +280,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, this);
+    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, 1, this);
     assert (frvp);
     
 
@@ -336,7 +336,7 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, this);
+    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, 1, this);
     assert (frvp);
 
     

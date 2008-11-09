@@ -43,9 +43,11 @@ private:
 public:
 
     final_mb_rvp(tid_t atid, xct_t* axct, const int axctid,
-                 trx_result_tuple_t &presult, const int intra_trx_cnt, 
+                 trx_result_tuple_t &presult, 
+                 const int intra_trx_cnt, const int total_actions,
                  ShoreTPCCEnv* penv) 
-        : terminal_rvp_t(atid, axct, axctid, presult, intra_trx_cnt), 
+        : terminal_rvp_t(atid, axct, axctid, presult, 
+                         intra_trx_cnt, total_actions), 
           _ptpccenv(penv) 
     { }
 

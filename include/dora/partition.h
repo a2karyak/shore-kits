@@ -284,7 +284,7 @@ const bool partition_t<DataType>::acquire(tid_t& atid, LockRequestVec& arvec)
             // if a key cannot be acquired, 
             // release all the locks and return false
             release(atid);
-            TRACE( TRACE_TRX_FLOW, "Cannot acquire all for (%d)\n", atid);
+            //TRACE( TRACE_TRX_FLOW, "Cannot acquire all for (%d)\n", atid);
             return (false);
         }
     }
@@ -463,6 +463,7 @@ void partition_t<DataType>::remove_wait(void)
     TRACE( TRACE_TRX_FLOW, "Removing wait (%d) from (%s-%d)\n", 
            (*_wait_it)->get_tid(), _table->name(), _part_id);
     _wait_it = _wait_list.erase(_wait_it);
+    --_wait_it;
 }
 
 

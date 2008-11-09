@@ -57,6 +57,7 @@ w_rc_t midway_pay_rvp::run()
     // Q: (ip) does it have to get this lock?
 
     // HIS_PART_CS
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
     CRITICAL_SECTION(his_part_cs, _g_dora->his(mypartition)->_enqueue_lock);
 
     if (_g_dora->his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions

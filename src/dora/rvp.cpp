@@ -26,7 +26,8 @@ using namespace dora;
 const int rvp_t::copy_actions(baseActionsList& actionList)
 {
     _actions = actionList;
-    return (_actions.size());
+    //return (_actions.size());
+    return (0);
 }
 
 
@@ -43,7 +44,8 @@ const int rvp_t::add_action(base_action_t* paction)
     assert (paction);
     assert (this==paction->get_rvp());
     _actions.push_back(paction);
-    return (_actions.size());
+    //return (_actions.size());
+    return (0);
 }
 
 

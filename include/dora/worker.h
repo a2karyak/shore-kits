@@ -146,9 +146,12 @@ public:
    
     // sleep-wake up
     inline const int condex_sleep() { 
-        // can sleep only if in WS_LOOP or WS_INPUT_Q mode
+        // can sleep only if in WS_LOOP
+        // (if on WS_COMMIT_Q or WS_INPUT_Q mode means that a
+        //  COMMIT or INPUT action were enqueued during this
+        //  LOOP so there is no need to sleep).
         CRITICAL_SECTION(ws_cs, _ws_lock);
-        if ((*&_ws==WS_LOOP)||(*&_ws==WS_INPUT_Q)) {
+        if (*&_ws==WS_LOOP) {
             _ws=WS_SLEEP;
             ws_cs.exit();
             _notify.wait();
@@ -395,7 +398,7 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
                     // if it can acquire all the locks, go ahead and serve 
                     // this action. then, remove it from the waiting list
                     _serve_action(apa);
-                    _partition->remove_wait();
+                    _partition->remove_wait(); // the iterator should point to the previous element
                 }
 
                 if (_partition->has_committed())

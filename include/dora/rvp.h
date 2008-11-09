@@ -62,13 +62,16 @@ protected:
 public:
 
     rvp_t(tid_t atid, xct_t* axct, const int axctid,
-          trx_result_tuple_t& presult, const int intra_trx_cnt) 
+          trx_result_tuple_t& presult, 
+          const int intra_trx_cnt, const int total_actions) 
         : _countdown(intra_trx_cnt), _decision(AD_UNDECIDED),
           _tid(atid), _xct(axct), _xct_id(axctid),
           _result(presult)
     { 
         assert (_xct);
         assert (intra_trx_cnt>0);
+        assert (total_actions>=intra_trx_cnt);
+        _actions.reserve(total_actions);
     }
 
     virtual ~rvp_t() { }
@@ -135,8 +138,9 @@ class terminal_rvp_t : public rvp_t
 public:
 
     terminal_rvp_t(tid_t atid, xct_t* axct, const int axctid, 
-                   trx_result_tuple_t &presult, const int intra_trx_cnt) 
-        : rvp_t(atid, axct, axctid, presult, intra_trx_cnt) 
+                   trx_result_tuple_t &presult, 
+                   const int intra_trx_cnt, const int total_actions) 
+        : rvp_t(atid, axct, axctid, presult, intra_trx_cnt, total_actions) 
     { }
 
     virtual ~terminal_rvp_t() { }
