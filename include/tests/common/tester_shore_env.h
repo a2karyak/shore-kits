@@ -222,7 +222,6 @@ public:
             _is_bound = true;
         }
 
-
         // 2. init env in not initialized
         if (!_env->is_initialized()) {
             if (_env->init()) {

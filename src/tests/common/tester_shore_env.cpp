@@ -31,18 +31,25 @@ int _numOfWHs = DF_NUM_OF_WHS;
 
 int inst_test_env(int argc, char* argv[]) 
 {    
-    /* 1. Instanciate the Shore Environment */
-    _g_shore_env = new ShoreTPCCEnv("shore.conf");
+    // 1. Instanciate the Shore Environment
+    _g_shore_env = new ShoreTPCCEnv(SHORE_CONF_FILE);
 
     /* 2. Initialize the Shore Environment - sets also SF */
     // the initialization must be executed in a shore context
     db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _g_shore_env);
+    assert (initializer);
     initializer->fork();
-    initializer->join();        
-    if (initializer) {
-        delete (initializer);
-        initializer = NULL;
-    }    
+    initializer->join(); 
+    int rv = initializer->rv();
+
+    delete (initializer);
+    initializer = NULL;
+
+    if (rv) {
+        TRACE( TRACE_ALWAYS, "Exiting...\n");
+        return (rv);
+    }
+
     assert (_g_shore_env);
     _g_shore_env->print_sf();
     _numOfWHs = _g_shore_env->get_sf();
@@ -237,8 +244,14 @@ w_rc_t client_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
  
 w_rc_t client_smt_t::run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid) 
 {
-    if (xct_type == 0) {        
+    // if BASELINE TPC-C MIX
+    if (xct_type == XCT_MIX) {        
         xct_type = random_xct_type(rand(100));
+    }
+
+    // if DORA TPC-C MIX
+    if (xct_type == XCT_DORA_MIX) {        
+        xct_type = XCT_DORA_MIX + random_xct_type(rand(100));
     }
     
     switch (xct_type) {

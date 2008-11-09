@@ -66,7 +66,7 @@ void shore_tpcc_handler_t::init() {
         // Create the Shore environment instance
         // @note Once the user decide to load the data the system 
         // will configure and start
-        _g_shore_env = new ShoreTPCCEnv(SHORE_DEFAULT_CONF_FILE);
+        _g_shore_env = new ShoreTPCCEnv(SHORE_CONF_FILE);
 
         // the initialization must be executed in a shore context
         db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _g_shore_env);

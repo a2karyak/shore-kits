@@ -77,7 +77,7 @@ void tpcc_stats_t::print_trx_stats() const
 int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = _dev_opts[SHORE_DEF_DEV_OPTIONS[7][0]];
+    _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
@@ -220,7 +220,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
     /* 1. create the loader threads */
 
     int num_tbl = _table_desc_list.size();
-    const char* loaddatadir = _dev_opts[SHORE_DEF_DEV_OPTIONS[3][0]].c_str();
+    const char* loaddatadir = _dev_opts[SHORE_DB_OPTIONS[3][0]].c_str();
     int cnt = 0;
 
     TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir);
@@ -480,14 +480,12 @@ void ShoreTPCCEnv::dump()
 
 int ShoreTPCCEnv::post_init() 
 {
-    int tmp_sf = atoi(_dev_opts[SHORE_DEF_DEV_OPTIONS[6][0]].c_str());
+    int tmp_sf = atoi(_dev_opts[SHORE_DB_OPTIONS[3][0]].c_str());
     TRACE( TRACE_DEBUG, "conf-WHs=(%d)\n", tmp_sf);
-    if (tmp_sf>0) {
-        set_sf(tmp_sf);
-        set_qf(tmp_sf);
-    }
-    assert (_queried_factor<=_scaling_factor);        
-
+    assert (tmp_sf);
+    set_sf(tmp_sf);
+    set_qf(tmp_sf);
+    assert (_queried_factor<=_scaling_factor); 
 
     TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
 
@@ -561,20 +559,22 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 	while (1) {
 	    pin_i* handle = iter->cursor();
 	    if (!handle) {
-		TRACE(TRACE_ALWAYS, "\n-> Reached EOF. Search complete\n");
+                cout << endl;
+		TRACE(TRACE_ALWAYS, " -> Reached EOF. Search complete (%d)\n", count);
 		break;
 	    }
 
 	    // figure out how big the old record is
 	    int hsize = handle->hdr_size();
 	    int bsize = handle->body_size();
-	    if(bsize == psize) {
-		TRACE(TRACE_ALWAYS, "\n-> Found padded WH record. Stopping search\n");
+	    if (bsize == psize) {
+		TRACE(TRACE_ALWAYS, " -> Found padded WH record. Stopping search (%d)\n", count);
 		break;
 	    }
 	    else if (bsize > psize) {
 		// too big... shrink it down to save on logging
 		handle->truncate_rec(bsize - psize);
+                fprintf(stderr, "+");
 	    }
 	    else {
 		// copy and pad the record (and mark the old one for deletion)
@@ -606,11 +606,11 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		    // now put the entry back with the new rid
 		    W_DO(db->create_assoc(fid, kvec, nrvec));
 		}
+                fprintf(stderr, ".");
 	    }
 	    
 	    // next!
 	    count++;
-	    fprintf(stderr, ".");
 	    W_DO(iter->next(db, eof, row));
 	}
         fprintf(stderr, "\n");

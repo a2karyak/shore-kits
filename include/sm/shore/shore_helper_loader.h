@@ -31,7 +31,6 @@ ENTER_NAMESPACE(shore);
 class db_init_smt_t : public thread_t 
 {
 private:
-
     ShoreEnv* _env;
     int       _rv;
 

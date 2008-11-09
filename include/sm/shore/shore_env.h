@@ -31,41 +31,72 @@ using std::map;
 /******** Constants ********/
 
 
-static const int SHORE_DEF_NUM_OF_CORES     = 32; // default number of cores
+const int SHORE_DEF_NUM_OF_CORES     = 32; // default number of cores
 
-static const int SHORE_NUM_OF_RETRIES       = 3;
+const int SHORE_NUM_OF_RETRIES       = 3;
 
-#define SHORE_TABLE_DATA_DIR "databases"
+#define SHORE_TABLE_DATA_DIR  "databases"
+#define SHORE_CONF_FILE       "shore.conf"
 
-#define SHORE_DEFAULT_CONF_FILE "shore.conf"
+const string CONFIG_PARAM       = "config";
+const string CONFIG_PARAM_VALUE = "invalid";
 
-static const string SHORE_DEF_SM_OPTIONS[][3]  = {
-    { "-sm_bufpoolsize", "bufpoolsize", "102400" },
+
+// !!!
+// shore.conf should have values with the corresponding configuration suffix
+// for all the database-instance-dependent parameters
+// !!!
+
+
+// SHORE_SYS_OPTIONS:
+// Database-independent options 
+const string SHORE_SYS_OPTIONS[][2] = {
+    { "clobberdev", "0" },
+    { "maxcpucount", "0" },
+    { "activecpucount", "0" },
+};
+
+const int    SHORE_NUM_SYS_OPTIONS  = 3;
+
+
+// SHORE_SYS_SM_OPTIONS: 
+// Those options are appended as parameters when starting Shore
+// Those are the database-independent
+const string SHORE_SYS_SM_OPTIONS[][3]  = {
     { "-sm_logging", "logging", "yes" },
+    { "-sm_diskrw", "diskrw", "diskrw" },
+    { "-sm_errlog", "errlog", "info" },
+    { "-sm_fake_io_delay", "fakeiodelay", "0" },
+    { "-sm_page_writers", "pagecleaners", "1" }
+};
+
+const int    SHORE_NUM_SYS_SM_OPTIONS   = 5;
+
+
+// SHORE_DB_SM_OPTIONS: 
+// Those options are appended as parameters when starting Shore
+// Thore are the database-instance-specific
+const string SHORE_DB_SM_OPTIONS[][3]  = {
+    { "-sm_bufpoolsize", "bufpoolsize", "0" },
     { "-sm_logdir", "logdir", "log" },
-    { "-sm_logsize", "logsize", "102400" },
-    { "-sm_logbufsize", "logbufsize", "10240" },
-    { "-sm_diskrw", "diskrw", "/export/home/ipandis/DEV/shore-lomond/installed/bin/diskrw" },
-    { "-sm_errlog", "errlog", "info" }
+    { "-sm_logsize", "logsize", "0" },
+    { "-sm_logbufsize", "logbufsize", "0" },
 };
 
-static const int    SHORE_NUM_DEF_SM_OPTIONS   = 7;
+const int    SHORE_NUM_DB_SM_OPTIONS   = 4;
 
-static const string SHORE_DEF_DEV_OPTIONS[][2] = {
+
+// SHORE_DB_OPTIONS
+// Database-instance-specific options
+const string SHORE_DB_OPTIONS[][2] = {
     { "device", "databases/shore" },
-    { "devicequota", "102400" },
-    { "clobberdev", "1" },
+    { "devicequota", "0" },
     { "loadatadir", SHORE_TABLE_DATA_DIR },
-    { "maxcpucount", "64" },
-    { "activecpucount", "64" },
-    { "sf", "10" },
-    { "system", "baseline" }
+    { "sf", "0" },
+    { "system", "invalid" }
 };
 
-static const int    SHORE_NUM_DEF_DEV_OPTIONS  = 8;
-
-
-// TODO: (ip) Create a separate structure for SYSTEM options 
+const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 
 /****************************************************************** 
@@ -84,13 +115,9 @@ struct env_stats_t
 
     env_stats_t() 
         : _ntrx_att(0), _ntrx_com(0)
-    {
-    }
+    { }
 
-    ~env_stats_t()
-    {
-        print_env_stats();
-    }
+    ~env_stats_t() { }
 
     void print_env_stats() const;
 
@@ -152,17 +179,17 @@ protected:
     // Configuration variables
     option_group_t*    _popts;     // config options
     string             _cname;     // config filename
-    map<string,string> _sm_opts;   // map of options for the sm
-    map<string,string> _dev_opts;  // map of options for the device    
-    //    map<string,string> _sys_opts;  // map of options for the system    
+    map<string,string> _sys_opts;  // db-instance-independent options  
+    map<string,string> _sm_opts;   // db-instance-specific options that are passed to Shore
+    map<string,string> _dev_opts;  // db-instance-specific options    
 
     // Processor info
-    int                 _max_cpu_count;    // hard limit
-    int                 _active_cpu_count; // soft limit
-    tatas_lock          _cpu_count_lock;
+    int                _max_cpu_count;    // hard limit
+    int                _active_cpu_count; // soft limit
+    tatas_lock         _cpu_count_lock;
 
     // Stats
-    env_stats_t         _env_stats; 
+    env_stats_t        _env_stats; 
 
     // Measurement state
     MeasurementState volatile _measure;

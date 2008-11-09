@@ -77,6 +77,17 @@ int simple_shore_shell::_cmd_TEST_impl(const int iQueriedWHs,
     TRACE( TRACE_ALWAYS, "testing... (%d) commands processed\n",
            get_command_cnt());
 
+    for (int i=0;i<DL_CC_MODES;i++) {
+        for (int j=0;j<DL_CC_MODES;j++) {
+            cout << i << "-" << j << "-> " << DoraLockModeMatrix[i][j];
+            if (DoraLockModeMatrix[i][j])
+                cout << " Good" << endl;
+            else
+                cout << " NO" << endl;
+        }
+    }
+        
+
     // does (iIterations) iterations
     for (int i=0; i<iIterations; i++) {
 

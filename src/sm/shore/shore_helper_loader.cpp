@@ -27,11 +27,10 @@ using namespace shore;
 void db_init_smt_t::work()
 {
     if (!_env->is_initialized()) {
-        if (_env->init()) {
+        if (_rv = _env->init()) {
             // Couldn't initialize the Shore environment
             // cannot proceed
             TRACE( TRACE_ALWAYS, "Couldn't initialize Shore...\n");
-            assert (false);
             return;
         }
     }
