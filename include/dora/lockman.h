@@ -169,7 +169,7 @@ public:
         assert (ple);
         CRITICAL_SECTION(le_cs, ple->_lock);
         // if compatible set new lock mode and increase counter
-        if (DoraLockModeMatrix[ple->_ll,adlm]) {
+        if (DoraLockModeMatrix[ple->_ll][adlm]) {
             ple->inc_counter();
             // update the lock mode only if not DL_CC_NO_LOCK
             if (adlm != DL_CC_NOLOCK) ple->_ll = adlm; 
@@ -285,7 +285,7 @@ public:
         // associate key to trx
         if (_key_ll_m.acquire(*akey, adlm)) {
             _trx_key_mm.insert(TrxKeyPair(atid, *akey));
-            dump();
+            //            dump();
             return (true);
         }
         return (false);
@@ -298,16 +298,16 @@ public:
     // releases all the acquired lls by a trx
     void release(tid_t& atid) {
         TrxRange r = _trx_key_mm.equal_range(atid);
-        TRACE( TRACE_DEBUG, "Releasing (%d)\n", atid);
         for (TrxKeyMapIt it=r.first; it!=r.second; ++it) {           
             // release ll for key from the key-to-ll map
-            cout << "Release - " << (*it).second << endl;
+            //            cout << "Release - " << (*it).second << endl;
+            TRACE( TRACE_DEBUG, "Releasing something from (%d)\n", atid);
             _key_ll_m.release((*it).second);
         }                 
         // remove trx-related entries from the trx-to-key map
         _trx_key_mm.erase(atid);
 
-        dump();
+        //dump();
     }
 
     // releases action
