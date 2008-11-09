@@ -33,12 +33,16 @@ const int DF_NUM_OF_STANDBY_THRS         = 0; // TODO: (ip) assume main-memory
 
 // CLASSES
 
-class base_action_t;
+
 class rvp_t;
 class terminal_rvp_t;
 
 template<class DataType> class partition_t;
+
+class base_worker_t;
 template<class DataType> class worker_t;
+
+class base_action_t;
 template<class DataType> class action_t;
 
 
@@ -63,52 +67,6 @@ enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
 
 /******************************************************************** 
  *
- * @enum:  eWorkingState
- *
- * @brief: Possible states while working on a task
- *
- * States:
- *
- * UNDEF        = Unitialized
- * EMPTY        = Initialized but stopped
- * IDLE_LOOP    = Idle and spinning on the queue
- * IDLE_CONDVAR = Idle and sleeping on the condvar
- * FOR_COMMIT   = Serving to-be-committed requests
- * ASSIGNED     = Serving a normal request
- * FINISHED     = Done assigned job but still trx not decided
- *
- ********************************************************************/
-
-enum eWorkingState { WS_UNDEF, WS_EMPTY,
-                     WS_IDLE_LOOP, WS_IDLE_CONDVAR, 
-                     WS_FOR_COMMIT,
-                     WS_ASSIGNED, WS_FINISHED };
-
-// Struct that wraps a eWorkingState, and a lock
-struct WorkingState
-{
-    eWorkingState volatile  _working_state;
-    tatas_lock              _working_lock;
-
-    WorkingState() : _working_state(WS_UNDEF) { }
-
-    ~WorkingState() { }
-
-    void set_state(const eWorkingState aws) {
-        CRITICAL_SECTION(ws_cs, _working_lock);
-        _working_state = aws;
-    }
-
-    const eWorkingState get_state() {
-        return (*&_working_state);
-    }
-
-}; // EOF: WorkingState
-
-
-
-/******************************************************************** 
- *
  * @enum:  eWorkerControl
  *
  * @brief: States for controling a worker thread
@@ -119,6 +77,31 @@ struct WorkingState
  ********************************************************************/
 
 enum eWorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
+
+
+/******************************************************************** 
+ *
+ * @enum:  eWorkingState
+ *
+ * @brief: Possible states while worker thread active
+ *
+ * States:
+ *
+ * UNDEF     = Unitialized
+ * LOOP      = Idle and spinning
+ * SLEEP     = Sleeping on the condvar
+ * COMMIT_Q  = Serving to-be-committed requests
+ * INPUT_Q   = Serving a normal request
+ * FINISHED  = Done assigned job but still trx not decided
+ *
+ ********************************************************************/
+
+enum eWorkingState { WS_UNDEF, 
+                     WS_LOOP, 
+                     WS_SLEEP, 
+                     WS_COMMIT_Q, 
+                     WS_INPUT_Q,
+                     WS_FINISHED };
 
 
 /******************************************************************** 

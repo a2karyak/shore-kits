@@ -92,11 +92,11 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     assert (rvp);
     
     // 3. Generate the actions    
-    upd_cust_pay_action_impl* pay_upd_cust = _g_dora->get_upd_cust_pay_action();
-    assert (pay_upd_cust);
-    pay_upd_cust->set_input(atid, pxct, rvp, this, apin);
-    pay_upd_cust->_m_rvp=rvp;
-    rvp->add_action(pay_upd_cust);
+    upd_wh_pay_action_impl* pay_upd_wh = _g_dora->get_upd_wh_pay_action();
+    assert (pay_upd_wh);
+    pay_upd_wh->set_input(atid, pxct, rvp, this, apin);
+    pay_upd_wh->_m_rvp=rvp;
+    rvp->add_action(pay_upd_wh);
 
     upd_dist_pay_action_impl* pay_upd_dist = _g_dora->get_upd_dist_pay_action();
     assert (pay_upd_dist);
@@ -104,11 +104,11 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
     pay_upd_dist->_m_rvp=rvp;
     rvp->add_action(pay_upd_dist);
 
-    upd_wh_pay_action_impl* pay_upd_wh = _g_dora->get_upd_wh_pay_action();
-    assert (pay_upd_wh);
-    pay_upd_wh->set_input(atid, pxct, rvp, this, apin);
-    pay_upd_wh->_m_rvp=rvp;
-    rvp->add_action(pay_upd_wh);
+    upd_cust_pay_action_impl* pay_upd_cust = _g_dora->get_upd_cust_pay_action();
+    assert (pay_upd_cust);
+    pay_upd_cust->set_input(atid, pxct, rvp, this, apin);
+    pay_upd_cust->_m_rvp=rvp;
+    rvp->add_action(pay_upd_cust);
 
 
     // 4. Detatch self from xct
@@ -140,7 +140,7 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
         // DIS_PART_CS
         CRITICAL_SECTION(dis_part_cs, _g_dora->dis(mypartition)->_enqueue_lock);
         wh_part_cs.exit();
-
+        
         // (SF) WAREHOUSE partitions
         if (_g_dora->dis()->enqueue(pay_upd_dist, mypartition)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_DIST\n");

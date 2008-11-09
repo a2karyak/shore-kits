@@ -34,9 +34,10 @@ using namespace shore;
 
 /******************************************************************** 
  *
- * @class: worker_t
+ * @class: base_worker_t
  *
- * @brief: An smthread-based class for the worker threads
+ * @brief: An smthread-based non-template abstract base class for the 
+ *         worker threads
  *
  * @note:  By default the worker thread is not bound to any processor.
  *         The creator of the worker thread (the partition) needs to
@@ -45,88 +46,71 @@ using namespace shore;
  * 
  ********************************************************************/
 
-template <class DataType>
-class worker_t : public thread_t 
+class base_worker_t : public thread_t 
 {
-public:
-
-    typedef partition_t<DataType> Partition;
-    typedef action_t<DataType>    PartAction;
-
-private:
+protected:
 
     // status variables
     eWorkerControl volatile  _control;
     tatas_lock               _control_lock;
     eDataOwnerState volatile _data_owner;
     tatas_lock               _data_owner_lock;
+    eWorkingState volatile   _ws;
+    tatas_lock               _ws_lock;
 
     // cond var for sleeping instead of looping after a while
-    WorkingState             _working;
     condex                   _notify;
 
     // data
-    ShoreEnv*      _env;    
-    Partition*     _partition;
+    ShoreEnv*                _env;    
 
     // needed for linked-list of workers
-    worker_t<DataType>* _next;
-    tatas_lock          _next_lock;
+    base_worker_t*           _next;
+    tatas_lock               _next_lock;
 
     // statistics
-    int            _paused_wait;
-    int            _processed;
+    int                      _processed;
+    int                      _problems;
 
     // processor binding
-    bool           _is_bound;
-    processorid_t  _prs_id;
-
+    bool                     _is_bound;
+    processorid_t            _prs_id;
 
     // states
-    const int _work_PAUSED_impl();
-    const int _work_ACTIVE_impl();
-    const int _work_STOPPED_impl();
+    virtual const int _work_PAUSED_impl();
+    virtual const int _work_ACTIVE_impl()=0;
+    virtual const int _work_STOPPED_impl();
 
-    void _print_stats_impl();
-
-    // serves one action
-    const int _serve_action(PartAction* paction);
+    void _print_stats_impl() const;
 
 public:
 
-    worker_t(ShoreEnv* env, Partition* apart,             
-             c_str tname,
-             processorid_t aprsid = PBIND_NONE) 
+    base_worker_t(ShoreEnv* env, c_str tname, processorid_t aprsid) 
         : thread_t(tname), 
-          _env(env), _partition(apart),
-          _control(WC_PAUSED), _data_owner(DOS_UNDEF),
-          _next(NULL),
-          _paused_wait(0), _processed(0),
+          _env(env),
+          _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
+          _next(NULL), _processed(0), _problems(0), 
           _is_bound(false), _prs_id(aprsid)
     {
         assert (_env);
     }
 
-    ~worker_t() { }
-
-
-    /** access methods */
-
-    // partition related
-    void set_partition(Partition* apart) {
-        assert (apart);
-        _partition = apart;
+    virtual ~base_worker_t() { 
+        stats();
     }
 
-    Partition* get_partition() {
-        return (_partition);
+
+
+    // access methods //
+
+    // for the linked list
+    void set_next(base_worker_t* apworker) {
+        assert (apworker);
+        CRITICAL_SECTION(next_cs, _next_lock);
+        _next = apworker;
     }
 
-    // needed for setting the partition's queue
-    eWorkerControl volatile* pwc() { return (&_control); }
-    WorkingState* pws() { return (&_working); }
-    condex* pcx() { return (&_notify); }
-
+    base_worker_t* get_next() { return (_next); }
 
     // data owner state
     void set_data_owner_state(const eDataOwnerState ados) {
@@ -135,30 +119,57 @@ public:
         _data_owner = ados;
     }
 
-    const eDataOwnerState get_data_owner_state() {
-        return (*&_data_owner);
-    }
+    const bool is_alone_owner() { return (*&_data_owner==DOS_ALONE); }
 
     // working state
-    void set_working_state(const eWorkingState aws) {
-        _working.set_state(aws);
+    inline void set_ws(const eWorkingState new_ws) {
+        CRITICAL_SECTION(ws_cs, _ws_lock);
+        eWorkingState old_ws = *&_ws;
+        _ws=new_ws;
+        if ((old_ws==WS_SLEEP)&&(new_ws!=WS_SLEEP)) {
+            // wake up if sleeping
+            membar_producer();
+            condex_wakeup();
+        }
     }
 
-    const eWorkingState get_working_state() {
-        return (_working.get_state());
+    inline const eWorkingState get_ws() { return (*&_ws); }
+
+    inline const bool can_continue(const eWorkingState my_ws) {
+        CRITICAL_SECTION(ws_cs, _ws_lock);
+        return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
+    }
+
+    inline const bool is_sleeping(void) {
+        return (*&_ws==WS_SLEEP);
+    }
+   
+    // sleep-wake up
+    inline const int condex_sleep() { 
+        // can sleep only if in WS_LOOP or WS_INPUT_Q mode
+        CRITICAL_SECTION(ws_cs, _ws_lock);
+        if ((*&_ws==WS_LOOP)||(*&_ws==WS_INPUT_Q)) {
+            _ws=WS_SLEEP;
+            ws_cs.exit();
+            _notify.wait();
+            return (1);
+        }
+        return (0); 
+    }
+
+    inline void condex_wakeup() { 
+        assert (*&_ws!=WS_SLEEP); // the caller should have already changed it
+        _notify.signal(); 
     }
 
 
-    // for the linked list
-    void set_next(worker_t<DataType>* apworker) {
-        assert (apworker);
-        CRITICAL_SECTION(next_cs, _next_lock);
-        _next = apworker;
-    }
+    // working states //
 
 
     // thread control
-    bool set_control(const eWorkerControl awc) {
+    inline eWorkerControl get_control() { return (*&_control); }
+
+    inline bool set_control(const eWorkerControl awc) {
         //
         // Allowed transition matrix:
         //
@@ -189,44 +200,27 @@ public:
                _control, awc);
         return (false);
     }
-
-    inline eWorkerControl get_control() {
-        return (*&_control);
-    }
-
     
-    // thread control commands
+    // commands
     inline void stop() {    
         set_control(WC_STOPPED);
-        if (get_working_state() == WS_IDLE_CONDVAR)
-            _notify.signal();
+        if (is_sleeping()) _notify.signal();
     }
 
     inline void start() {
         set_control(WC_ACTIVE);
+        if (is_sleeping()) _notify.signal();
     }
 
     inline void pause() {
         set_control(WC_PAUSED);
+        if (is_sleeping()) _notify.signal();
     }        
 
-    inline void stats() {
-        _print_stats_impl();
-    }
-
     // state implementation
-    inline const int work_PAUSED() {
-        return (_work_PAUSED_impl());
-    }
-        
-    inline const int work_ACTIVE() {
-        return (_work_ACTIVE_impl());
-    }
-
-    inline const int work_STOPPED() {
-        return (_work_STOPPED_impl());
-    }
-
+    inline const int work_PAUSED()  { return (_work_PAUSED_impl());  }        
+    inline const int work_ACTIVE()  { return (_work_ACTIVE_impl());  }
+    inline const int work_STOPPED() { return (_work_STOPPED_impl()); }
 
     // thread entrance
     inline void work() {
@@ -254,34 +248,67 @@ public:
         }
     }
 
-}; // EOF: worker_t
+
+    // helper //
+
+    void stats() { _print_stats_impl(); }
+    
+}; // EOF: base_worker_t
 
 
 
-/****************************************************************** 
+
+/******************************************************************** 
  *
- * @fn:     _work_PAUSED_impl()
+ * @class: worker_t
  *
- * @brief:  Implementation of the PAUSED state
- *
- * @return: 0 on success
+ * @brief: A template-based class for the worker threads
  * 
- ******************************************************************/
+ ********************************************************************/
 
 template <class DataType>
-inline const int worker_t<DataType>::_work_PAUSED_impl()
+class worker_t : public base_worker_t
 {
-    TRACE( TRACE_DEBUG, "Pausing...\n");
+public:
 
-    // state (WC_PAUSED)
+    typedef partition_t<DataType> Partition;
+    typedef action_t<DataType>    PartAction;
 
-    // while paused loop and sleep
-    while (get_control() == WC_PAUSED) {
-        ++_paused_wait;
-        sleep(1);
+private:
+    
+    Partition*     _partition;
+
+    // states
+    const int _work_ACTIVE_impl(); 
+
+    // serves one action
+    const int _serve_action(PartAction* paction);
+
+public:
+
+    worker_t(ShoreEnv* env, Partition* apart, c_str tname,
+             processorid_t aprsid = PBIND_NONE) 
+        : base_worker_t(env, tname, aprsid),
+          _partition(apart)
+    { }
+
+    ~worker_t() { }
+
+
+    /** access methods */
+
+    // partition related
+    void set_partition(Partition* apart) {
+        assert (apart);
+        _partition = apart;
     }
-    return (0);
-}
+
+    Partition* get_partition() {
+        return (_partition);
+    }
+
+}; // EOF: worker_t
+
 
 
 /****************************************************************** 
@@ -319,23 +346,30 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
     while (get_control() == WC_ACTIVE) {
         assert (_partition);
         
-        // reset the flags
+        // reset the flags for the new loop
         apa = NULL;
         bHadCommitted = 0; // an action had committed in this cycle
+        set_ws(WS_LOOP);
+
+        // 1. check if signalled to stop
+        // propagate signal to next thread in the list, if any
+        if (get_control() != WC_ACTIVE) {
+            return (0);
+        }
 
 
         // committed actions
 
-        // 1. first release any committed actions
+        // 2. first release any committed actions
         while (_partition->has_committed()) {           
-            assert (_partition->is_committed_owner(this));
+            //            assert (_partition->is_committed_owner(this));
 
             // 1a. get the first committed
             bHadCommitted = 1;
             apa = _partition->dequeue_commit();
             assert (apa);
-            TRACE( TRACE_TRX_FLOW, "Committed trx (%d)\n", apa->get_tid());
-            assert (_partition==apa->get_partition());
+            TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->get_tid());
+            //            assert (_partition==apa->get_partition());
 
             // 1b. release the locks acquired for this action
             apa->trx_rel_locks();
@@ -348,42 +382,43 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
 
         // waiting actions
 
-        // 2. if there were committed, go over the waiting list
+        // 3. if there were committed, go over the waiting list
         // Q: (ip) we may have a threshold value before we iterate the waiting list
-        while (bHadCommitted && (_partition->has_waiting())) {
+        if (bHadCommitted && (_partition->has_waiting())) {
 
             // iterate over all actions and serve as many as possible
             apa = _partition->get_first_wait();
             assert (apa);
+            TRACE( TRACE_TRX_FLOW, "First waiting (%d)\n", apa->get_tid());
             while (apa) {
-                TRACE( TRACE_TRX_FLOW, "Waiting trx (%d)\n", apa->get_tid());
                 if (apa->trx_acq_locks()) {
                     // if it can acquire all the locks, go ahead and serve 
                     // this action. then, remove it from the waiting list
                     _serve_action(apa);
                     _partition->remove_wait();
                 }
+
+                if (_partition->has_committed())
+                    break;
                 
                 // loop over all waiting actions
                 apa = _partition->get_next_wait();
+                if (apa)
+                    TRACE( TRACE_TRX_FLOW, "Next waiting (%d)\n", apa->get_tid());
             }            
         }
 
 
         // new (input) actions
 
-        // 3. dequeue an action from the (main) input queue
+        // 4. dequeue an action from the (main) input queue
         // it will spin inside the queue or (after a while) wait on a cond var
-        assert (_partition->is_input_owner(this));
+        //        assert (_partition->is_input_owner(this));
+        if (_partition->has_committed())
+            continue;
         apa = _partition->dequeue();
 
-        // if signalled to stop
-        // propagate signal to next thread in the list, if any
-        if (get_control() != WC_ACTIVE) {
-            return (0);
-        }
-
-        // 4. check if it can execute the particular action
+        // 5. check if it can execute the particular action
         if (apa) {
             TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->get_tid());
             if (!apa->trx_acq_locks()) {
@@ -397,64 +432,9 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
                 _serve_action(apa);
             }
         }
+
     }
     return (0);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     _work_STOPPED_impl()
- *
- * @brief:  Implementation of the STOPPED state. 
- *          (1) It stops, joins and deletes the next thread(s) in the list
- *          (2) It clears any internal state
- *
- * @return: 0 on success
- * 
- ******************************************************************/
-
-template <class DataType>
-const int worker_t<DataType>::_work_STOPPED_impl()
-{
-    TRACE( TRACE_DEBUG, "Stopping...\n");
-
-    // state (WC_STOPPED)
-
-    // if signalled to stop
-    // propagate signal to next thread in the list, if any
-    CRITICAL_SECTION(next_cs, _next_lock);
-    if (_next) { 
-        // if someone is linked behind stop it and join it 
-        _next->stop();
-        _next->join();
-        TRACE( TRACE_DEBUG, "Next joined...\n");
-        delete (_next);
-    }        
-    _next = NULL; // join() ?
-
-    // any cleanup code should be here
-
-    // print statistics
-    stats();
-
-    return (0);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     _print_stats_impl()
- *
- * @brief:  Printing stats
- * 
- ******************************************************************/
-
-template <class DataType>
-void worker_t<DataType>::_print_stats_impl()
-{
-    TRACE( TRACE_TRX_FLOW, "Processed (%d)\n", _processed);
-    TRACE( TRACE_TRX_FLOW, "Waited (%d)\n", _paused_wait);
 }
 
 
@@ -470,7 +450,7 @@ void worker_t<DataType>::_print_stats_impl()
  ******************************************************************/
 
 template <class DataType>
-inline const int worker_t<DataType>::_serve_action(PartAction* paction)
+const int worker_t<DataType>::_serve_action(PartAction* paction)
 {
     // 1. get pointer to rvp
     rvp_t* aprvp = paction->get_rvp();
@@ -485,6 +465,7 @@ inline const int worker_t<DataType>::_serve_action(PartAction* paction)
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
                paction->get_tid(), e.err_num());
+        ++_problems;
         assert(0);
         return (de_WORKER_RUN_XCT);
     }          
@@ -500,7 +481,7 @@ inline const int worker_t<DataType>::_serve_action(PartAction* paction)
         // execute the code of this rendez-vous point
         e = aprvp->run();            
         if (e.is_error()) {
-            TRACE( TRACE_ALWAYS, "Problem runing rvp for xct (%d) [0x%x]\n",
+            TRACE( TRACE_ALWAYS, "Problem running rvp for xct (%d) [0x%x]\n",
                    paction->get_tid(), e.err_num());
             assert(0);
             return (de_WORKER_RUN_RVP);
@@ -521,6 +502,7 @@ inline const int worker_t<DataType>::_serve_action(PartAction* paction)
 
     // 6. update worker stats
     ++_processed;    
+    return (0);
 }
 
 

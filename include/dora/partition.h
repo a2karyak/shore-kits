@@ -203,16 +203,16 @@ public:
     // enqueues action, 0 on success
     const int enqueue(PartAction* pAction);
     PartAction* dequeue();
-    const bool is_input_owner(PartWorker* aworker) {
-        return (_input_queue.is_control(aworker->pwc()));
+    const bool is_input_owner(base_worker_t* aworker) {
+        return (_input_queue.is_control(aworker));
     }
 
     // deque of actions to be committed
     const int enqueue_commit(PartAction* apa);
     PartAction* dequeue_commit();
-    int has_committed(void) const { return (!_committed_queue.is_empty()); }
-    const bool is_committed_owner(PartWorker* aworker) {
-        return (_committed_queue.is_control(aworker->pwc()));
+    inline int has_committed(void) const { return (!_committed_queue.is_empty()); }
+    const bool is_committed_owner(base_worker_t* aworker) {
+        return (_committed_queue.is_control(aworker));
     }
 
     // list of waiting actions - taken from input queue but not served
@@ -284,10 +284,12 @@ const bool partition_t<DataType>::acquire(tid_t& atid, LockRequestVec& arvec)
             // if a key cannot be acquired, 
             // release all the locks and return false
             release(atid);
+            TRACE( TRACE_TRX_FLOW, "Cannot acquire all for (%d)\n", atid);
             return (false);
         }
     }
 
+    TRACE( TRACE_TRX_FLOW, "Acquired all for (%d)\n", atid);
     return (true);
 }
 
@@ -311,7 +313,6 @@ const int partition_t<DataType>::enqueue(PartAction* pAction)
         return (de_WRONG_PARTITION);
     }
 
-    //    TRACE( TRACE_TRX_FLOW, "Enqueuing...\n");
     pAction->set_partition(this);
     _input_queue.push(pAction);
     return (0);
@@ -330,7 +331,6 @@ const int partition_t<DataType>::enqueue(PartAction* pAction)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue()
 {
-    //    TRACE( TRACE_TRX_FLOW, "Dequeuing...\n");
     return (_input_queue.pop());
 }
 
@@ -351,7 +351,8 @@ const int partition_t<DataType>::enqueue_commit(PartAction* pAction)
     assert (_part_policy!=PP_UNDEF);
     assert (pAction->get_partition()==this);
 
-    TRACE( TRACE_TRX_FLOW, "Enqueuing committed...\n");
+    TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
+           pAction->get_tid(), _table->name(), _part_id);
     _committed_queue.push(pAction);
     return (0);
 }
@@ -370,7 +371,6 @@ template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue_commit()
 {
     assert (has_committed());
-    TRACE( TRACE_TRX_FLOW, "Dequeuing committed...\n");
     return (_committed_queue.pop());
 }
 
@@ -390,7 +390,7 @@ const int partition_t<DataType>::enqueue_wait(PartAction* pAction)
     assert (_part_policy!=PP_UNDEF);
     assert (pAction->get_partition()==this);
 
-    TRACE( TRACE_TRX_FLOW, "Enqueuing waiting...\n");
+    TRACE( TRACE_TRX_FLOW, "Enq waiting (%d)\n", pAction->get_tid());
     _wait_list.push_back(pAction);    
     return (0);
 }
@@ -410,9 +410,9 @@ const int partition_t<DataType>::enqueue_wait(PartAction* pAction)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::get_first_wait(void)
 {
-    _wait_it = _wait_list.begin();
     if (_wait_list.empty())
         return (NULL);
+    _wait_it = _wait_list.begin();
     return (*_wait_it);
 }
 
@@ -432,10 +432,18 @@ action_t<DataType>* partition_t<DataType>::get_first_wait(void)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::get_next_wait(void)
 {
+    // 1. if empty, return NULL
     if (_wait_list.empty())
         return (NULL);
-    if (++_wait_it == _wait_list.end())
+
+    // 2. advance iterator by one
+    ++_wait_it;
+
+    // 3. if at the end of list, return NULL
+    if (_wait_it == _wait_list.end())
         return(NULL);
+
+    // 4. else return the pointer action
     return (*_wait_it);
 }
 
@@ -452,6 +460,8 @@ template <class DataType>
 void partition_t<DataType>::remove_wait(void)
 {
     assert (!_wait_list.empty());
+    TRACE( TRACE_TRX_FLOW, "Removing wait (%d) from (%s-%d)\n", 
+           (*_wait_it)->get_tid(), _table->name(), _part_id);
     _wait_it = _wait_list.erase(_wait_it);
 }
 
@@ -676,8 +686,8 @@ const int partition_t<DataType>::_stop_threads()
     _owner = NULL; // join()?
 
     // reset queues' worker control pointers
-    _input_queue.set(NULL,NULL,NULL); 
-    _committed_queue.set(NULL,NULL,NULL); 
+    _input_queue.set(WS_UNDEF,NULL); 
+    _committed_queue.set(WS_UNDEF,NULL); 
 
 
     // standy
@@ -800,8 +810,8 @@ const int partition_t<DataType>::_generate_primary()
     _owner->set_data_owner_state(DOS_ALONE);
 
     // pass worker thread controls to the two queues
-    _input_queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
-    _committed_queue.set(_owner->pwc(), _owner->pws(), _owner->pcx());  
+    _input_queue.set(WS_INPUT_Q,_owner);  
+    _committed_queue.set(WS_COMMIT_Q,_owner);  
 
     _owner->fork();
 

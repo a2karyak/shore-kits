@@ -261,6 +261,7 @@ lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHOR
 SD=$(top_srcdir)/src/dora
 SD_BASE = \
    $(SD)/lockman.cpp \
+   $(SD)/worker.cpp \
    $(SD)/rvp.cpp
 
 SD_TPCC = \

@@ -14,6 +14,22 @@
 using namespace dora;
 
 
+
+/****************************************************************** 
+ *
+ * @fn:    add_action()
+ *
+ * @brief: Adds an action to the list of actions of a rvp
+ *
+ ******************************************************************/
+
+const int rvp_t::copy_actions(baseActionsList& actionList)
+{
+    _actions = actionList;
+    return (_actions.size());
+}
+
+
 /****************************************************************** 
  *
  * @fn:    add_action()
@@ -29,6 +45,7 @@ const int rvp_t::add_action(base_action_t* paction)
     _actions.push_back(paction);
     return (_actions.size());
 }
+
 
 /****************************************************************** 
  *

@@ -32,17 +32,17 @@ struct srmwqueue
     ActionVec _for_writers;
     ActionVec _for_readers;
     typename ActionVec::iterator _read_pos;
-    mcs_lock     _lock;
-    int volatile _empty;
+    mcs_lock      _lock;
+    int volatile  _empty;
+
+    eWorkingState _my_ws;
     
-    // reader thread controls
-    eWorkerControl volatile* _pwc;
-    WorkingState* _pws;
-    condex* _pcx;
-    tatas_lock _ws_lock;    
+    // owner thread
+    base_worker_t* _owner;
+    tatas_lock     _owner_lock;    
 
     srmwqueue() : 
-        _empty(true), _pwc(NULL), _pws(NULL), _pcx(NULL) 
+        _empty(true), _my_ws(WS_UNDEF), _owner(NULL) 
     { 
         _read_pos = _for_readers.begin();
     }
@@ -51,20 +51,14 @@ struct srmwqueue
 
 
     // sets the pointer of the queue to the controls of a specific worker thread
-    void set(eWorkerControl volatile* pwc, WorkingState* pws, condex* pcx) {
-        CRITICAL_SECTION(ws_cs, _ws_lock);
-        // sets variables
-        _pwc = pwc;
-        _pws = pws;
-        _pcx = pcx;
+    void set(eWorkingState aws, base_worker_t* owner) {
+        CRITICAL_SECTION(q_cs, _owner_lock);
+        _my_ws = aws;
+        _owner = owner;
     }
 
     // returns true if the passed control is the same
-    const bool is_control(eWorkerControl volatile* pwc) 
-    {
-        return (_pwc==pwc);
-    }
-    
+    const bool is_control(base_worker_t* athread) const { return (_owner==athread); }  
 
     // !!! @note: should be called only by the reader !!!
     int is_empty(void) const {
@@ -74,44 +68,37 @@ struct srmwqueue
     // spins until new input is set
     bool wait_for_input() 
     {
-        assert (_pwc);
-        assert (_pws);
-        assert (_pcx);
-
+        assert (_owner);
         int loopcnt = 0;
 
-        // 1. initially spin
-        CRITICAL_SECTION(start_ws_cs, _ws_lock);
-        _pws->set_state(WS_IDLE_LOOP);
-        start_ws_cs.exit();
-
+        // 1. start spinning
 	while (*&_empty) {
-	    if (*_pwc != WC_ACTIVE) {
-                CRITICAL_SECTION(empty_ws_cs, _ws_lock);
-                _pws->set_state(WS_EMPTY);
+
+            // 2. if thread was signalled to stop
+	    if (_owner->get_control() != WC_ACTIVE) {
+                _owner->set_ws(WS_FINISHED);
 		return (false);
             }
 
-            // 2. if spinned too much, start waiting on the condvar
+            // 3. if thread was signalled to go to other queue
+            if (!_owner->can_continue(_my_ws)) return (false);
+            
+            // 4. if spinned too much, start waiting on the condex
             if (++loopcnt > IDLE_LOOPS) {
                 loopcnt = 0;
-                CRITICAL_SECTION(upg_ws_cs, _ws_lock);
+                
+                TRACE( TRACE_DEBUG, "Condex sleeping (%d)...\n", _my_ws);
+                assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
+                loopcnt = _owner->condex_sleep();
+                TRACE( TRACE_DEBUG, "Condex woke (%d) (%d)...\n", _my_ws, loopcnt);
 
-                // check once more if still empty, before going to sleep
-                if (*&_empty) {
-                    // update state, release lock and sleep on cond var
-                    TRACE( TRACE_DEBUG, "CondVar sleeping...\n");
-                    _pws->set_state(WS_IDLE_CONDVAR);
-                    upg_ws_cs.exit();
-                    _pcx->wait();
-                    TRACE( TRACE_DEBUG, "CondVar woke...\n");
-                    
-                    // after it wakes up, should do the loop again.
-                    // if something has been pushed then _empty will be false
-                    // and it will proceed normally.
-                    // if signalled because the worker thread stops it will
-                    // do a loop and return false.
-                }
+                // after it wakes up, should do the loop again.
+                // if something has been pushed then _empty will be false
+                // and it will proceed normally.
+                // if signalled because it should stop, it will do a loop 
+                // and return false.
+                // if signalled because it should go to other queue, it will
+                // do a loop and return false.
             }
 	}
     
@@ -135,10 +122,7 @@ struct srmwqueue
 
     void push(Action* a) {
         assert (a);
-
-        assert (_pwc);
-        assert (_pws);
-        assert (_pcx);
+        assert (_owner);
 
         // push action
         {
@@ -148,22 +132,23 @@ struct srmwqueue
         }
         
         // wake up if assigned worker thread sleeping
-        CRITICAL_SECTION(ws_cs, _ws_lock);
-        if (_pws->get_state() == WS_IDLE_CONDVAR) {
-            TRACE( TRACE_DEBUG, "CondVar signaling...\n");
-            _pws->set_state(WS_ASSIGNED);
-            _pcx->signal();
-        }                
+        _owner->set_ws(_my_ws);
     }
 
+    // resets queue
     void clear() {
-        // clear public vectors
+        // clear owner
+        {
+            CRITICAL_SECTION(q_cs, _owner_lock);
+            _owner = NULL;
+        }
+        // clear lists
         {
             CRITICAL_SECTION(cs, _lock);
             _for_writers.clear();
+            _empty = true;
         }
         _for_readers.clear();
-        _empty = true;
     }    
   
 }; // EOF: struct srmwqueue

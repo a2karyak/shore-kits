@@ -40,9 +40,9 @@ w_rc_t midway_pay_rvp::run()
 {
     // 1. Setup the next RVP
     assert (_xct);
-
     final_pay_rvp* frvp = new final_pay_rvp(_tid, _xct, _xct_id, _result, _ptpccenv);
     assert (frvp);
+    frvp->copy_actions(_actions);
 
     // 2. Generate and enqueue action
     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
@@ -50,7 +50,6 @@ w_rc_t midway_pay_rvp::run()
     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
     p_ins_hist_pay_action->_awh=_awh;
     p_ins_hist_pay_action->_adist=_adist;
-
     frvp->add_action(p_ins_hist_pay_action);
 
     int mypartition = _pin._home_wh_id-1;
@@ -138,7 +137,7 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
 
     /* 1. retrieve warehouse for update */
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d PAY:warehouse-idx-probe (%d)\n", 
+           "App: %d PAY:warehouse-idx-probe-nl (%d)\n", 
            _tid, _pin._home_wh_id);
 
     W_DO(_ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
@@ -154,7 +153,7 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
      * plan: index probe on "W_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
            _tid, _pin._home_wh_id);
     W_DO(_ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
                                                       prwh, 
@@ -192,7 +191,7 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
 
     /* 1. retrieve district for update */
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d PAY:district-idx-probe (%d) (%d)\n", 
+           "App: %d PAY:district-idx-probe-nl (%d) (%d)\n", 
            _tid, _pin._home_wh_id, _pin._home_d_id);
 
     W_DO(_ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), 
@@ -210,7 +209,7 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
      * plan: index probe on "D_INDEX"
      */
 
-    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd (%d) (%d)\n", 
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
            _tid, _pin._home_wh_id, _pin._home_d_id);
     W_DO(_ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
                                                        prdist, 
@@ -320,7 +319,7 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
      */
 
     TRACE( TRACE_TRX_FLOW, 
-           "App: %d PAY:cust-idx-probe-forupdate (%d) (%d) (%d)\n", 
+           "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
            _tid, c_w, c_d, _pin._c_id);
 
     W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
@@ -380,7 +379,7 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", _tid);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
         W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                              prcust, 
                                                              acust, 
@@ -388,7 +387,7 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
                                                              c_new_data_2));
     }
     else { /* good customer */
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple\n", _tid);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
         W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                              prcust, 
                                                              acust, 

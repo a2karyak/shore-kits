@@ -81,6 +81,7 @@ public:
     inline tid_t  get_tid() const { return (_tid); }
 
     // Actions-related
+    const int copy_actions(baseActionsList& actionList);
     const int add_action(base_action_t* paction);
 
     // Decision-related
