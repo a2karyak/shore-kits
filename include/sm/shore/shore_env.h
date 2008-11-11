@@ -10,10 +10,21 @@
 #ifndef __SHORE_ENV_H
 #define __SHORE_ENV_H
 
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#else
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#endif
+
 #include "sm_vas.h"
 #include "util.h"
 
 #include <map>
+
 
 
 // for binding LWP to cores
@@ -133,6 +144,80 @@ struct env_stats_t
     }
 
 }; // EOF env_stats_t
+
+
+
+/******************************************************************** 
+ *
+ * @enum:  eDBControl
+ *
+ * @brief: States of a controlled DB
+ *
+ ********************************************************************/
+
+enum eDBControl { DBC_UNDEF, DBC_PAUSED, DBC_ACTIVE, DBC_STOPPED };
+
+
+/*********************************************************************
+ *
+ *  @abstract class: db_iface
+ *
+ *  @brief:          Interface of basic shell commands for dbs
+ *
+ *  @usage:          - Inherit from this class
+ *                   - Implement the process_{START/STOP/PAUSE/RESUME} fuctions
+ *
+ *********************************************************************/
+
+class db_iface
+{
+public:
+    typedef map<string,string>        envVarMap;
+    typedef envVarMap::iterator       envVarIt;
+    typedef envVarMap::const_iterator envVarConstIt;
+
+private:
+
+    eDBControl _dbc;
+    tatas_lock _dbc_lock;
+
+public:
+
+    db_iface() 
+        : _dbc(DBC_UNDEF)
+    { }
+    virtual ~db_iface() { }
+
+    // Access methods
+
+    const eDBControl dbc() { 
+        CRITICAL_SECTION(dbc_cs, _dbc_lock);
+        return(_dbc); 
+    }
+    
+    void set_dbc(const eDBControl adbc) {
+        assert (adbc!=DBC_UNDEF);
+        CRITICAL_SECTION(dbc_cs, _dbc_lock);
+        _dbc = adbc;
+    }
+    
+    // Interface     
+    virtual const int start()=0;
+    virtual const int stop()=0;
+    virtual const int pause()=0;
+    virtual const int resume()=0;    
+    virtual const int newrun()=0;    
+    virtual const int set(envVarMap* vars)=0;    
+    virtual const int dump()=0;    
+
+//     virtual const int process_START_cmd()=0;
+//     virtual const int process_STOP_cmd()=0;
+//     virtual const int process_PAUSE_cmd()=0;
+//     virtual const int process_RESUME_cmd()=0;    
+//     virtual const int process_SET_cmd()=0;    
+    
+}; // EOF: db_iface
+
 
 
 /******************************************************************** 

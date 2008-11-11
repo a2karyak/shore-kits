@@ -982,39 +982,38 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     bool     found = false;
     smsize_t len = sizeof(rid_t);
 
-    /* 1. ensure valid index */
+
+    // 0. if index created with NO-LOCK option (DORA) then:
+    //    - ignore lock mode (use NL)
+    //    - find_assoc ignoring any locks
+    bool ignoreLocks = false;
+    if (pindex->is_relaxed()) {
+        lock_mode   = NL;
+        ignoreLocks = true;
+    }
+
+    // 1. ensure valid index
     W_DO(pindex->check_fid(db));
 
-    /* 2. find the tuple in the B+tree */
+    // 2. find the tuple in the index
     int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
-    assert (ptuple->_rep->_dest); // (ip) if NULL invalid key
+    assert (ptuple->_rep->_dest); // if NULL invalid key
 
     W_DO(ss_m::find_assoc(pindex->fid(),
 			  vec_t(ptuple->_rep->_dest, key_sz),
 			  &(ptuple->_rid),
 			  len,
-			  found));
+			  found,
+                          ignoreLocks));
 
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
-    /* 3. read the tuple */
+    // 3. read the tuple
     pin_i pin;
-
-    if (pindex->is_relaxed()) {
-        // if index created with NO-LOCK option 
-        // (we ignore the lock_mode and use NL)
-        W_DO(pin.pin(ptuple->rid(), 0, NL, latch_mode));
-    }
-    else {
-        // if normal index
-        W_DO(pin.pin(ptuple->rid(), 0, lock_mode, latch_mode));
-    }
-
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, latch_mode));
 
     if (!load(ptuple, pin.body())) return RC(se_WRONG_DISK_DATA);
     pin.unpin();
-
-    //    ptuple->print_tuple();
   
     return (RCOK);
 }
@@ -1103,32 +1102,41 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
-    /* 1. pin record */
-    pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lm, LATCH_EX));
+    // 0. figure out what mode will be used
+    latch_mode_t pin_latch_mode = LATCH_EX;
+    bool bIgnoreLock = false;
+    if (lm==NL) {
+        //        pin_latch_mode = LATCH_SH;
+        bIgnoreLock = true;
+    }
 
+    // 1. pin record
+    pin_i pin;
+    W_DO(pin.pin(ptuple->rid(), 0, lm, pin_latch_mode));
     int current_size = pin.body_size();
 
-    /* 2. update record */
+    // 2. update record
     int tsz = format(ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // (ip) if NULL invalid
 
+    // 2a. if updated record cannot fit in the previous spot
+    w_rc_t rc;
     if (current_size < tsz) {
-//         w_rc_t rc = db->append_rec(ptuple->rid(),
-//                                    zvec_t(tsz - current_size),
-//                                    true);
-        w_rc_t rc = pin.append_rec(zvec_t(tsz - current_size));
+        rc = pin.append_rec(zvec_t(tsz - current_size));
 
         // on error unpin 
-        if (rc.is_error()) pin.unpin();
+        if (rc.is_error()) {
+            TRACE( TRACE_DEBUG, "Error updating (by append) record\n");
+            pin.unpin();
+        }
         W_DO(rc);
     }
 
-//     w_rc_t rc = db->update_rec(ptuple->rid(), 0, 
-//                                vec_t(ptuple->_rep->_dest, tsz));
-    w_rc_t rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz));
+    // 2b. else, simply update
+    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLock);
+    if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
-    /* 3. unpin */
+    // 3. unpin
     pin.unpin();
     return (rc);
 }
