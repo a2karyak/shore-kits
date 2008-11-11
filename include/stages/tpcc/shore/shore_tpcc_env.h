@@ -287,7 +287,7 @@ private:
     /* --- baseline mbench --- */
     w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int whid);
     w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int whid);
-
+    
     
 public:    
 
@@ -467,6 +467,30 @@ public:
                             int item_cnt,
                             const int xct_id, 
                             trx_result_tuple_t& trt);
+
+
+
+    // update statistics
+
+    // !!! unsafe - may cause deadlock if non-other trxs are updating stats also
+    int _inc_other_com() { 
+        CRITICAL_SECTION(com_other_cs, _total_tpcc_stats._other_lock);
+        ++_total_tpcc_stats._other_att;
+        ++_total_tpcc_stats._other_com;
+        ++_session_tpcc_stats._other_att;
+        ++_session_tpcc_stats._other_com;
+        ++_env_stats._ntrx_att;
+        ++_env_stats._ntrx_com;        
+        return (0); 
+    }
+    int _inc_other_att() { 
+        CRITICAL_SECTION(com_other_cs, _total_tpcc_stats._other_lock);
+        ++_total_tpcc_stats._other_att;
+        ++_session_tpcc_stats._other_att;
+        ++_env_stats._ntrx_att;
+        return (0); 
+    }
+
 
 
 }; // EOF ShoreTPCCEnv

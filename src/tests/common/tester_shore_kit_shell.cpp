@@ -25,7 +25,6 @@ bool volatile _g_canceled = false;
 
 
 
-
 /******************************************************************** 
  *
  *  @fn:    load_{trxs,bp}_map
@@ -270,6 +269,7 @@ int shore_kit_shell_t::print_usage(const char* command)
 
     print_sup_trxs();
     print_sup_bp();
+    print_env();
 
     return (SHELL_NEXT_CONTINUE);
 }

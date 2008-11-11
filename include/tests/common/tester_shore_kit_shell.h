@@ -21,8 +21,6 @@
 #include <cstring>
 #endif
 
-#include <map>
-
 #include "util/shell.h"
 #include "tests/common/tester_shore_env.h"
 #include "sm/shore/shore_env.h"
@@ -36,64 +34,6 @@ extern "C" void alarm_handler(int sig);
 
 extern bool volatile _g_canceled;
 
-
-
-/******************************************************************** 
- *
- * @enum:  DBControl
- *
- * @brief: States of a controlled DB
- *
- ********************************************************************/
-
-enum DBControl { DBC_UNDEF, DBC_PAUSED, DBC_ACTIVE, DBC_STOPPED };
-
-
-/*********************************************************************
- *
- *  @abstract class: db_iface
- *
- *  @brief:          Interface of basic shell commands for dbs
- *
- *  @usage:          - Inherit from this class
- *                   - Implement the process_{START/STOP/PAUSE/RESUME} fuctions
- *
- *********************************************************************/
-
-class db_iface
-{
-private:
-
-    DBControl  _dbc;
-    //tatas_lock _dbc_lock;
-
-public:
-
-    db_iface() { }
-
-    virtual ~db_iface() { }
-
-    // Access methods
-
-    const DBControl dbc() const { 
-        //CRITICAL_SECTION(dbc_cs, _dbc_lock);
-        return(_dbc); 
-    }
-    
-    void set_dbc(const DBControl adbc) {
-        assert (adbc!=DBC_UNDEF);
-        //CRITICAL_SECTION(dbc_cs, _dbc_lock);
-        _dbc = adbc;
-    }
-
-    
-    // Interface     
-    virtual const int process_START_cmd()=0;
-    virtual const int process_STOP_cmd()=0;
-    virtual const int process_PAUSE_cmd()=0;
-    virtual const int process_RESUME_cmd()=0;    
-    
-}; // EOF: db_iface
 
 
 
@@ -123,14 +63,14 @@ protected:
     processorid_t _current_prs_id;    
 
     // supported trxs
-    typedef map<int,string>              mapSupTrxs;
-    typedef mapSupTrxs::iterator         mapSupTrxsIt;
-    typedef mapSupTrxs::const_iterator   mapSupTrxsConstIt;
+    typedef map<int,string>                     mapSupTrxs;
+    typedef mapSupTrxs::iterator                mapSupTrxsIt;
+    typedef mapSupTrxs::const_iterator          mapSupTrxsConstIt;
     mapSupTrxs _sup_trxs;
 
     // supported binding policies
-    typedef map<eBindingType,string>      mapBindPols;
-    typedef mapBindPols::iterator         mapBindPolsIt;    
+    typedef map<eBindingType,string>            mapBindPols;
+    typedef mapBindPols::iterator               mapBindPolsIt;    
     mapBindPols _sup_bps;
 
 public:
@@ -164,12 +104,13 @@ public:
     virtual int process_cmd_MEASURE(const char* command, char* command_tag);
     virtual int process_cmd_WARMUP(const char* command, char* command_tag);    
     virtual int process_cmd_LOAD(const char* command, char* command_tag);        
-    virtual int process_cmd_TRXS(const char* command, char* command_tag);     
+    virtual int process_cmd_TRXS(const char* command, char* command_tag); 
 
     virtual void usage_cmd_TEST();
     virtual void usage_cmd_MEASURE();
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
+
 
     // supported trxs and binding policies
     void print_sup_trxs(void) const;

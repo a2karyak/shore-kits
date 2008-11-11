@@ -194,13 +194,6 @@ w_rc_t client_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
         _cp->wait[_cp->index].wait();
         break;
 
-//         for (i=0; i<num_xct; i++) {
-//             if(_abort_test)
-//                 break;
-//             run_one_tpcc_xct(env, xct_type, i);
-//         }
-//         break;
-
         // case of duration-based measurement
     case (MT_TIME_DUR):
 	
