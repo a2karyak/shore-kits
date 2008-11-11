@@ -14,6 +14,47 @@
 ENTER_NAMESPACE(dora);
 
 
+
+/****************************************************************** 
+ *
+ * @fn:     print_stats(), reset()
+ *
+ * @brief:  Helper functions for the worker stats
+ * 
+ ******************************************************************/
+
+void worker_stats_t::print_stats() const
+{
+    TRACE( TRACE_DEBUG, "Processed      (%d)\n", _processed);
+    TRACE( TRACE_DEBUG, "Problems       (%d)\n", _problems);
+
+    TRACE( TRACE_DEBUG, "Wait checked   (%d)\n", _checked_waiting);
+    TRACE( TRACE_DEBUG, "Wait served    (%d)\n", _served_waiting);
+
+    TRACE( TRACE_DEBUG, "Input checked  (%d)\n", _checked_input);
+    TRACE( TRACE_DEBUG, "Input served   (%d)\n", _served_input);
+
+    TRACE( TRACE_DEBUG, "Sleeped        (%d)\n", _condex_sleep);
+    TRACE( TRACE_DEBUG, "Failed sleeped (%d)\n", _failed_sleep);
+}
+
+void worker_stats_t::reset()
+{
+    _processed = 0;
+    _problems  = 0;
+
+    _checked_waiting = 0;
+    _served_waiting  = 0;
+
+    _checked_input = 0;
+    _served_input  = 0;
+
+    _condex_sleep = 0;
+    _failed_sleep = 0;
+}
+
+
+
 /****************************************************************** 
  *
  * @fn:     _work_PAUSED_impl()
@@ -76,20 +117,6 @@ const int base_worker_t::_work_STOPPED_impl()
     return (0);
 }
 
-
-/****************************************************************** 
- *
- * @fn:     _print_stats_impl()
- *
- * @brief:  Printing stats
- * 
- ******************************************************************/
-
-void base_worker_t::_print_stats_impl() const
-{
-    TRACE( TRACE_TRX_FLOW, "Processed (%d)\n", _processed);
-    TRACE( TRACE_TRX_FLOW, "Problems  (%d)\n", _problems);
-}
 
 
 EXIT_NAMESPACE(dora);

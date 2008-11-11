@@ -16,6 +16,7 @@
 
 
 #include "dora/tpcc/dora_tpcc.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -56,7 +57,7 @@ class ol_midway_nord_rvp : public rvp_t
     int it_cnt;
     time_t t_stamp;
     int it_amount;
-    char s_dist[STRSIZE(24)];
+    char s_dist[25];
     int all_local;
     // pointer to the payment input
     new_order_input_t*   _pnoin;

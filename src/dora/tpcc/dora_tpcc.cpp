@@ -234,6 +234,7 @@ const int dora_tpcc_db::start()
         _irptp_vec[i]->reset();
     }
 
+    set_dbc(DBC_ACTIVE);
     return (0);
 }
 
@@ -253,6 +254,7 @@ const int dora_tpcc_db::stop()
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->stop();
     }
+    set_dbc(DBC_STOPPED);
     return (0);
 }
 
@@ -270,6 +272,7 @@ const int dora_tpcc_db::stop()
 const int dora_tpcc_db::resume()
 {
     assert (0); // TODO (ip)
+    set_dbc(DBC_ACTIVE);
     return (0);
 }
 
@@ -286,9 +289,49 @@ const int dora_tpcc_db::resume()
 const int dora_tpcc_db::pause()
 {
     assert (0); // TODO (ip)
+    set_dbc(DBC_PAUSED);
     return (0);
 }
 
+
+
+/****************************************************************** 
+ *
+ * @fn:    newrun()
+ *
+ * @brief: Prepares the DORA TPC-C DB for a new run
+ *
+ ******************************************************************/
+
+const int dora_tpcc_db::newrun()
+{
+    TRACE( TRACE_DEBUG, "Preparing for new run...\n");
+    for (int i=0; i<_irptp_vec.size(); i++) {
+        _irptp_vec[i]->prepareNewRun();
+    }
+    return (0);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    set()
+ *
+ * @brief: Given a map of strings it updates the db environment
+ *
+ ******************************************************************/
+
+const int dora_tpcc_db::set(envVarMap* vars)
+{
+    TRACE( TRACE_DEBUG, "Reading set...\n");
+    for (envVarConstIt cit = vars->begin(); cit != vars->end(); ++cit)
+        TRACE( TRACE_DEBUG, "(%s) (%s)\n", 
+               cit->first.c_str(), 
+               cit->second.c_str());
+    TRACE( TRACE_DEBUG, "*** unimplemented ***\n");
+    return (0);
+}
 
 
 /****************************************************************** 
@@ -299,11 +342,12 @@ const int dora_tpcc_db::pause()
  *
  ******************************************************************/
 
-void dora_tpcc_db::dump() const
+const int dora_tpcc_db::dump()
 {
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->dump();
     }
+    return (0);
 }
 
 
@@ -336,193 +380,6 @@ const processorid_t dora_tpcc_db::_next_cpu(const processorid_t aprd,
     processorid_t nextprs = ((aprd+step) % _tpccenv->get_active_cpu_count());
     TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);
-}
-
-
-
-
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////
-
-
-dora_tpcc_db::dora_tpcc_db(ShoreTPCCEnv* tpccenv)
-    : _tpccenv(tpccenv)
-{
-    assert (_tpccenv);
-
-//     // initialize action caches
-//     _upd_wh_pay_cache   = new upd_wh_pay_action_cache(DF_ACTION_CACHE_SZ);
-//     _upd_dist_pay_cache = new upd_dist_pay_action_cache(DF_ACTION_CACHE_SZ);
-//     _upd_cust_pay_cache = new upd_cust_pay_action_cache(DF_ACTION_CACHE_SZ);
-//     _ins_hist_pay_cache = new ins_hist_pay_action_cache(DF_ACTION_CACHE_SZ);
-
-//     _mb_wh_cache   = new upd_wh_mb_action_cache(DF_ACTION_CACHE_SZ);
-//     _mb_cust_cache = new upd_cust_mb_action_cache(DF_ACTION_CACHE_SZ);
-}
-
-
-dora_tpcc_db::~dora_tpcc_db() 
-{ 
-//     // delete action caches
-//     if (_upd_wh_pay_cache) {
-//         // print_cache_stats();
-//         delete (_upd_wh_pay_cache);
-//         _upd_wh_pay_cache = NULL;
-//     }
-//     if (_upd_dist_pay_cache) {
-//         // print_cache_stats();
-//         delete (_upd_dist_pay_cache);
-//         _upd_dist_pay_cache = NULL;
-//     }
-//     if (_upd_cust_pay_cache) {
-//         // print_cache_stats();
-//         delete (_upd_cust_pay_cache);
-//         _upd_cust_pay_cache = NULL;
-//     }
-//     if (_ins_hist_pay_cache) {
-//         // print_cache_stats();
-//         delete (_ins_hist_pay_cache);
-//         _ins_hist_pay_cache = NULL;
-//     }
-
-
-//     if (_mb_wh_cache) {
-//         // print_cache_stats();
-//         delete (_mb_wh_cache);
-//         _mb_wh_cache = NULL;
-//     }
-//     if (_mb_cust_cache) {
-//         // print_cache_stats();
-//         delete (_mb_cust_cache);
-//         _mb_cust_cache = NULL;
-//     }
-}    
-
-
-
-
-/////////////////////////////////////////////////////////////////////
-
-
-
-// // action cache related actions
-
-// // returns the cache
-// upd_wh_pay_action_cache* dora_tpcc_db::get_upd_wh_pay_cache() { 
-//     assert (_upd_wh_pay_cache); 
-//     return (_upd_wh_pay_cache); 
-// }
-// upd_dist_pay_action_cache* dora_tpcc_db::get_upd_dist_pay_cache() { 
-//     assert (_upd_dist_pay_cache); 
-//     return (_upd_dist_pay_cache); 
-// }
-// upd_cust_pay_action_cache* dora_tpcc_db::get_upd_cust_pay_cache() { 
-//     assert (_upd_cust_pay_cache); 
-//     return (_upd_cust_pay_cache); 
-// }
-// ins_hist_pay_action_cache* dora_tpcc_db::get_ins_hist_pay_cache() { 
-//     assert (_ins_hist_pay_cache); 
-//     return (_ins_hist_pay_cache); 
-// }
-
-
-// upd_wh_mb_action_cache* dora_tpcc_db::get_upd_wh_mb_action_cache() {
-//     assert (_mb_wh_cache); 
-//     return (_mb_wh_cache); 
-// }
-// upd_cust_mb_action_cache* dora_tpcc_db::get_upd_cust_mb_action_cache() {
-//     assert (_mb_cust_cache); 
-//     return (_mb_cust_cache); 
-// }
-
-
-
-//
-// borrow and release an action
-//
-// @note: On borrowing, first it makes sure that it is empty
-//
-upd_wh_pay_action_impl* dora_tpcc_db::get_upd_wh_pay_action() {
-    //         assert (_upd_wh_pay_cache);
-    //         upd_wh_pay_action_impl* paction = _upd_wh_pay_cache->borrow();
-    //         assert (paction);
-    //         assert (paction->keys()->size()==0);
-    upd_wh_pay_action_impl* paction = new upd_wh_pay_action_impl();
-    return (paction);
-}
-void dora_tpcc_db::give_action(upd_wh_pay_action_impl* pirpa) {
-    //assert (_upd_wh_pay_cache);
-    //         _upd_wh_pay_cache->giveback(pirpa);
-    assert (pirpa);
-    delete (pirpa);
-}
-
-upd_dist_pay_action_impl* dora_tpcc_db::get_upd_dist_pay_action() {
-    //assert (_upd_dist_pay_cache);
-    //         upd_dist_pay_action_impl* paction = _upd_dist_pay_cache->borrow();
-    //         assert (paction);
-    //         assert (paction->keys()->size()==0);
-    upd_dist_pay_action_impl* paction = new upd_dist_pay_action_impl();
-    return (paction);
-}
-void dora_tpcc_db::give_action(upd_dist_pay_action_impl* pirpa) {
-    //assert (_upd_dist_pay_cache);
-    //         _upd_dist_pay_cache->giveback(pirpa);
-    assert (pirpa);
-    delete (pirpa);
-}
-
-upd_cust_pay_action_impl* dora_tpcc_db::get_upd_cust_pay_action() {
-    //         assert (_upd_cust_pay_cache);
-    //         upd_cust_pay_action_impl* paction = _upd_cust_pay_cache->borrow();
-    //         assert (paction);
-    //         assert (paction->keys()->size()==0);
-    upd_cust_pay_action_impl* paction = new upd_cust_pay_action_impl();
-    return (paction);
-}
-void dora_tpcc_db::give_action(upd_cust_pay_action_impl* pirpa) {
-    //         assert (_upd_cust_pay_cache);
-    //         _upd_cust_pay_cache->giveback(pirpa);
-    assert (pirpa);
-    delete (pirpa);
-}
-
-ins_hist_pay_action_impl* dora_tpcc_db::get_ins_hist_pay_action() {
-    //         assert (_ins_hist_pay_cache);
-    //         ins_hist_pay_action_impl* paction = _ins_hist_pay_cache->borrow();
-    //         assert (paction);
-    //         assert (paction->keys()->size()==0);
-    ins_hist_pay_action_impl* paction = new ins_hist_pay_action_impl();
-    return (paction);
-}
-void dora_tpcc_db::give_action(ins_hist_pay_action_impl* pirpa) {
-    //assert (_ins_hist_pay_cache);
-    //         _ins_hist_pay_cache->giveback(pirpa);
-    assert (pirpa);
-    delete (pirpa);
-}
-
-
-
-upd_wh_mb_action_impl* dora_tpcc_db::get_upd_wh_mb_action() {
-    upd_wh_mb_action_impl* paction = new upd_wh_mb_action_impl();
-    return (paction);
-}
-void dora_tpcc_db::give_action(upd_wh_mb_action_impl* pirpa) {
-    assert (pirpa);
-    delete (pirpa);
-}
-upd_cust_mb_action_impl* dora_tpcc_db::get_upd_cust_mb_action() {
-    upd_cust_mb_action_impl* paction = new upd_cust_mb_action_impl();
-    return (paction);
-}
-void dora_tpcc_db::give_action(upd_cust_mb_action_impl* pirpa) {
-    assert (pirpa);
-    delete (pirpa);
 }
 
 

@@ -11,6 +11,7 @@
  */
 
 #include "dora/tpcc/dora_payment.h"
+#include "dora/tpcc/dora_tpcc.h"
 
 
 using namespace dora;
@@ -40,17 +41,16 @@ w_rc_t midway_pay_rvp::run()
 {
     // 1. Setup the next RVP
     assert (_xct);
-    final_pay_rvp* frvp = new final_pay_rvp(_tid, _xct, _xct_id, _result, _ptpccenv);
+    final_pay_rvp* frvp = new (_g_dora->_final_pay_rvp_pool) final_pay_rvp;
     assert (frvp);
+    frvp->set(_tid,_xct,_xct_id,_result,_ptpccenv,&_g_dora->_final_pay_rvp_pool);
     frvp->copy_actions(_actions);
 
     // 2. Generate and enqueue action
-    ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
-    assert (p_ins_hist_pay_action);
-    p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
-    p_ins_hist_pay_action->_awh=_awh;
-    p_ins_hist_pay_action->_adist=_adist;
-    frvp->add_action(p_ins_hist_pay_action);
+    ins_hist_pay_action* ins_hist_pay = new (_g_dora->_ins_hist_pay_pool) ins_hist_pay_action;
+    assert (ins_hist_pay);
+    ins_hist_pay->set(_tid,_xct,frvp,_pin,_awh,_adist,_ptpccenv,&_g_dora->_ins_hist_pay_pool);
+    frvp->add_action(ins_hist_pay);
 
     int mypartition = _pin._home_wh_id-1;
 
@@ -60,7 +60,7 @@ w_rc_t midway_pay_rvp::run()
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
     CRITICAL_SECTION(his_part_cs, _g_dora->his(mypartition)->_enqueue_lock);
 
-    if (_g_dora->his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions
+    if (_g_dora->his()->enqueue(ins_hist_pay, mypartition)) { // (SF) HISTORY partitions
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -115,7 +115,7 @@ void final_pay_rvp::upd_aborted_stats()
  *
  ********************************************************************/
 
-const bool pay_action_impl::trx_acq_locks()
+const bool pay_action::trx_acq_locks()
 {
     // all the Payment trxs are (EX) probes to a single tuple
     assert (_partition);
@@ -125,7 +125,7 @@ const bool pay_action_impl::trx_acq_locks()
     return (_partition->acquire(_tid,alrvec));
 }
 
-w_rc_t upd_wh_pay_action_impl::trx_exec() 
+w_rc_t upd_wh_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -179,7 +179,7 @@ w_rc_t upd_wh_pay_action_impl::trx_exec()
     return (RCOK);
 }
 
-w_rc_t upd_dist_pay_action_impl::trx_exec() 
+w_rc_t upd_dist_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -235,7 +235,7 @@ w_rc_t upd_dist_pay_action_impl::trx_exec()
     return (RCOK);
 }
 
-w_rc_t upd_cust_pay_action_impl::trx_exec() 
+w_rc_t upd_cust_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -407,7 +407,7 @@ w_rc_t upd_cust_pay_action_impl::trx_exec()
     return (RCOK);
 }
 
-w_rc_t ins_hist_pay_action_impl::trx_exec() 
+w_rc_t ins_hist_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 

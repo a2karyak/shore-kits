@@ -32,6 +32,51 @@ ENTER_NAMESPACE(dora);
 using namespace shore;
 
 
+
+/******************************************************************** 
+ *
+ * @struct: worker_stats_t
+ *
+ * @brief:  Worker statistics
+ * 
+ * @note:   No lock-protected. Assumes that only the assigned worker thread
+ *          will modify it.
+ *
+ ********************************************************************/
+
+struct worker_stats_t
+{
+    int _processed;
+    int _problems;
+
+    int _checked_waiting;
+    int _served_waiting;
+
+    int _checked_input;
+    int _served_input;
+    
+    int _condex_sleep;
+    int _failed_sleep;
+
+
+    worker_stats_t() 
+        : _processed(0), _problems(0),
+          _checked_waiting(0), _served_waiting(0),
+          _checked_input(0), _served_input(0),
+          _condex_sleep(0), _failed_sleep(0)
+    { }
+
+    ~worker_stats_t() { }
+      
+    void print_stats() const;
+
+    void reset();
+
+    void print_and_reset() { print_stats(); reset(); }
+
+}; // EOF: worker_stats_t
+
+
 /******************************************************************** 
  *
  * @class: base_worker_t
@@ -69,8 +114,7 @@ protected:
     tatas_lock               _next_lock;
 
     // statistics
-    int                      _processed;
-    int                      _problems;
+    worker_stats_t           _stats;
 
     // processor binding
     bool                     _is_bound;
@@ -89,8 +133,7 @@ public:
         : thread_t(tname), 
           _env(env),
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
-          _next(NULL), _processed(0), _problems(0), 
-          _is_bound(false), _prs_id(aprsid)
+          _next(NULL), _is_bound(false), _prs_id(aprsid)
     {
         assert (_env);
     }
@@ -155,8 +198,10 @@ public:
             _ws=WS_SLEEP;
             ws_cs.exit();
             _notify.wait();
+            ++_stats._condex_sleep;
             return (1);
         }
+        ++_stats._failed_sleep;
         return (0); 
     }
 
@@ -254,7 +299,7 @@ public:
 
     // helper //
 
-    void stats() { _print_stats_impl(); }
+    void stats() { _stats.print_stats(); }
     
 }; // EOF: base_worker_t
 
@@ -330,7 +375,8 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
     TRACE( TRACE_DEBUG, "Activating...\n");
 
     // bind to the specified processor
-    if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
+    //if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
+    if (processor_bind(P_LWPID, P_MYID, PBIND_NONE, NULL)) { // no-binding
         TRACE( TRACE_ALWAYS, "Cannot bind to processor (%d)\n", _prs_id);
         _is_bound = false;
     }
@@ -378,7 +424,7 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
             apa->trx_rel_locks();
 
             // 1c. the action has done its cycle, and can be deleted
-            delete (apa);
+            apa->giveback();
             apa = NULL;
         }            
 
@@ -394,11 +440,13 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
             assert (apa);
             TRACE( TRACE_TRX_FLOW, "First waiting (%d)\n", apa->get_tid());
             while (apa) {
+                ++_stats._checked_waiting;
                 if (apa->trx_acq_locks()) {
                     // if it can acquire all the locks, go ahead and serve 
                     // this action. then, remove it from the waiting list
                     _serve_action(apa);
                     _partition->remove_wait(); // the iterator should point to the previous element
+                    ++_stats._served_waiting;
                 }
 
                 if (_partition->has_committed())
@@ -424,6 +472,7 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
         // 5. check if it can execute the particular action
         if (apa) {
             TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->get_tid());
+            ++_stats._checked_input;
             if (!apa->trx_acq_locks()) {
                 // 4a. if it cannot acquire all the locks, 
                 //     enqueue this action to the waiting list
@@ -433,6 +482,7 @@ inline const int worker_t<DataType>::_work_ACTIVE_impl()
                 // 4b. if it can acquire all the locks, 
                 //     go ahead and serve this action
                 _serve_action(apa);
+                ++_stats._served_input;
             }
         }
 
@@ -468,7 +518,7 @@ const int worker_t<DataType>::_serve_action(PartAction* paction)
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
                paction->get_tid(), e.err_num());
-        ++_problems;
+        ++_stats._problems;
         assert(0);
         return (de_WORKER_RUN_XCT);
     }          
@@ -499,12 +549,12 @@ const int worker_t<DataType>::_serve_action(PartAction* paction)
                comActions, paction->get_tid());
             
         // delete rvp
-        delete (aprvp); 
+        aprvp->giveback();
         aprvp = NULL;
     }
 
     // 6. update worker stats
-    ++_processed;    
+    ++_stats._processed;    
     return (0);
 }
 

@@ -69,7 +69,7 @@ enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
  *
  * @enum:  eWorkerControl
  *
- * @brief: States for controling a worker thread
+ * @brief: States for controling a worker thread 
  *
  * @note:  A thread initially is paused then it starts working until
  *         someone changes the status to stopped.
@@ -77,6 +77,8 @@ enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
  ********************************************************************/
 
 enum eWorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
+
+
 
 
 /******************************************************************** 

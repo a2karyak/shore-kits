@@ -59,25 +59,35 @@ protected:
     // list of actions that report to this rvp
     baseActionsList     _actions;
 
+    // reset rvp
+    void _set(tid_t atid, xct_t* axct, const int axctid,
+              trx_result_tuple_t& presult, 
+              const int intra_trx_cnt, const int total_actions) 
+    { 
+        assert (axct);
+        assert (intra_trx_cnt>0);
+        assert (total_actions>=intra_trx_cnt);
+        _countdown.reset(intra_trx_cnt);
+        _decision = AD_UNDECIDED;
+        _tid = atid;
+        _xct = axct;
+        _xct_id = axctid;
+        _result = presult;
+        _actions.reserve(total_actions);
+    }
+
 public:
+
+    rvp_t() : _xct(NULL) { }
 
     rvp_t(tid_t atid, xct_t* axct, const int axctid,
           trx_result_tuple_t& presult, 
           const int intra_trx_cnt, const int total_actions) 
-        : _countdown(intra_trx_cnt), _decision(AD_UNDECIDED),
-          _tid(atid), _xct(axct), _xct_id(axctid),
-          _result(presult)
     { 
-        assert (_xct);
-        assert (intra_trx_cnt>0);
-        assert (total_actions>=intra_trx_cnt);
-        _actions.reserve(total_actions);
+        _set(atid,axct,axctid,presult,intra_trx_cnt,total_actions);
     }
 
-    virtual ~rvp_t() { }
-    
-
-    // access methods
+    virtual ~rvp_t() { _xct = NULL; }    
 
     // TRX-ID-related
     inline xct_t* get_xct() const { return (_xct); }
@@ -100,6 +110,9 @@ public:
     // only the final_rvps may notify
     // for midway rvps it should be a noop
     virtual const int notify() { return(0); } 
+
+    // should give memory back to the atomic trash stack
+    virtual void giveback()=0;
 
     bool post(bool is_error=false) { 
         //assert (_countdown.remaining()); // before posting check if there is to post 
@@ -136,6 +149,8 @@ private:
 class terminal_rvp_t : public rvp_t
 {
 public:
+
+    terminal_rvp_t() : rvp_t() { }
 
     terminal_rvp_t(tid_t atid, xct_t* axct, const int axctid, 
                    trx_result_tuple_t &presult, 

@@ -135,6 +135,13 @@ public:
         return (0);
     }
 
+    // prepares all partitions for a new run
+    const int prepareNewRun() {
+        for (int i=0; i<_ppvec.size(); i++)
+            _ppvec[i]->prepareNewRun();
+        return (0);
+    }
+
 
     /** Action-related methods */
     // enqueues action, false on error

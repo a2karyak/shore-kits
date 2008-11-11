@@ -11,6 +11,7 @@
  */
 
 #include "dora/tpcc/dora_mbench.h"
+#include "dora/tpcc/dora_tpcc.h"
 
 
 using namespace dora;
@@ -34,9 +35,7 @@ void final_mb_rvp::upd_committed_stats()
     if (_ptpccenv->get_measure() != MST_MEASURE) {
         return;
     }
-    _ptpccenv->get_total_tpcc_stats()->inc_other_com();
-    _ptpccenv->get_session_tpcc_stats()->inc_other_com();
-    _ptpccenv->get_env_stats()->inc_trx_com();
+    _ptpccenv->_inc_other_com();
 }                     
 
 void final_mb_rvp::upd_aborted_stats() 
@@ -45,9 +44,7 @@ void final_mb_rvp::upd_aborted_stats()
     if (_ptpccenv->get_measure() != MST_MEASURE) {
         return;
     }
-    _ptpccenv->get_total_tpcc_stats()->inc_other_att();
-    _ptpccenv->get_session_tpcc_stats()->inc_other_att();
-    _ptpccenv->get_env_stats()->inc_trx_att();
+    _ptpccenv->_inc_other_att();
 }                     
 
 
@@ -58,7 +55,7 @@ void final_mb_rvp::upd_aborted_stats()
  *
  ********************************************************************/
 
-const bool mb_action_impl::trx_acq_locks()
+const bool mb_action::trx_acq_locks()
 {
     // all the MBench trxs are (EX) probes to a single tuple
     assert (_partition);
@@ -76,7 +73,7 @@ const bool mb_action_impl::trx_acq_locks()
  *
  ********************************************************************/
 
-w_rc_t upd_wh_mb_action_impl::trx_exec() 
+w_rc_t upd_wh_mb_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -142,7 +139,7 @@ w_rc_t upd_wh_mb_action_impl::trx_exec()
  *
  ********************************************************************/
 
-w_rc_t upd_cust_mb_action_impl::trx_exec() 
+w_rc_t upd_cust_mb_action::trx_exec() 
 {
     assert (_ptpccenv);
 

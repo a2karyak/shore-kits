@@ -87,27 +87,27 @@ w_rc_t ShoreTPCCEnv::dora_payment(const int xct_id,
 
     // 2. Setup the next RVP
     // PH1 consists of 3 packets
-    midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct, xct_id,
-                                             atrt, this, apin); 
+    midway_pay_rvp* rvp = new (_g_dora->_midway_pay_rvp_pool) midway_pay_rvp;
     assert (rvp);
+    rvp->set(atid,pxct,xct_id,atrt,apin,this,&_g_dora->_midway_pay_rvp_pool);
+
+//     midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct, xct_id,
+//                                              atrt, this, apin); 
     
     // 3. Generate the actions    
-    upd_wh_pay_action_impl* pay_upd_wh = _g_dora->get_upd_wh_pay_action();
+    upd_wh_pay_action* pay_upd_wh = new (_g_dora->_upd_wh_pay_pool) upd_wh_pay_action;
     assert (pay_upd_wh);
-    pay_upd_wh->set_input(atid, pxct, rvp, this, apin);
-    pay_upd_wh->_m_rvp=rvp;
+    pay_upd_wh->set(atid,pxct,rvp,apin,this,rvp,&_g_dora->_upd_wh_pay_pool);
     rvp->add_action(pay_upd_wh);
 
-    upd_dist_pay_action_impl* pay_upd_dist = _g_dora->get_upd_dist_pay_action();
+    upd_dist_pay_action* pay_upd_dist = new (_g_dora->_upd_dist_pay_pool) upd_dist_pay_action;
     assert (pay_upd_dist);
-    pay_upd_dist->set_input(atid, pxct, rvp, this, apin);
-    pay_upd_dist->_m_rvp=rvp;
+    pay_upd_dist->set(atid,pxct,rvp,apin,this,rvp,&_g_dora->_upd_dist_pay_pool);
     rvp->add_action(pay_upd_dist);
 
-    upd_cust_pay_action_impl* pay_upd_cust = _g_dora->get_upd_cust_pay_action();
+    upd_cust_pay_action* pay_upd_cust = new (_g_dora->_upd_cust_pay_pool) upd_cust_pay_action;
     assert (pay_upd_cust);
-    pay_upd_cust->set_input(atid, pxct, rvp, this, apin);
-    pay_upd_cust->_m_rvp=rvp;
+    pay_upd_cust->set(atid,pxct,rvp,apin,this,rvp,&_g_dora->_upd_cust_pay_pool);
     rvp->add_action(pay_upd_cust);
 
 
@@ -280,14 +280,15 @@ w_rc_t ShoreTPCCEnv::dora_mbench_wh(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, 1, this);
+    final_mb_rvp* frvp = new (_g_dora->_final_mb_rvp_pool) final_mb_rvp; 
     assert (frvp);
+    frvp->set(atid,pxct,xct_id,atrt,1,1,this,&_g_dora->_final_mb_rvp_pool);
     
 
     // 3. Generate the actions
-    upd_wh_mb_action_impl* upd_wh = _g_dora->get_upd_wh_mb_action();
+    upd_wh_mb_action* upd_wh = new (_g_dora->_upd_wh_mb_pool) upd_wh_mb_action;
     assert (upd_wh);
-    upd_wh->set_input(atid, pxct, frvp, this, whid);
+    upd_wh->set(atid,pxct,frvp,whid,this,&_g_dora->_upd_wh_mb_pool);
     frvp->add_action(upd_wh);
 
 
@@ -336,14 +337,15 @@ w_rc_t ShoreTPCCEnv::dora_mbench_cust(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = new final_mb_rvp(atid, pxct, xct_id, atrt, 1, 1, this);
+    final_mb_rvp* frvp = new (_g_dora->_final_mb_rvp_pool) final_mb_rvp; 
     assert (frvp);
+    frvp->set(atid,pxct,xct_id,atrt,1,1,this,&_g_dora->_final_mb_rvp_pool);
 
     
     // 3. Generate the actions
-    upd_cust_mb_action_impl* upd_cust = _g_dora->get_upd_cust_mb_action();
+    upd_cust_mb_action* upd_cust = new (_g_dora->_upd_cust_mb_pool) upd_cust_mb_action;
     assert (upd_cust);
-    upd_cust->set_input(atid, pxct, frvp, this, whid);
+    upd_cust->set(atid,pxct,frvp,whid,this,&_g_dora->_upd_cust_mb_pool);
     frvp->add_action(upd_cust);
 
 

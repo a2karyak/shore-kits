@@ -70,13 +70,17 @@ struct key_wrapper_t
     key_wrapper_t(const DataPtrVec& aVector) {
         copy_vector(aVector);
     }
+
+    key_wrapper_t(const int keysz) {
+        reserve(keysz);
+    }
     
     // copy constructor
     key_wrapper_t<DataType>& operator=(const key_wrapper_t<DataType>& rhs) {
         copy_vector(rhs._key_v);
         return (*this);
     }
-
+    
 
     // destructor
     ~key_wrapper_t() { }
@@ -91,21 +95,26 @@ struct key_wrapper_t
         _key_v.push_back(anitem);
     }
 
+    // reserve vector space
+    void reserve(const int keysz) {
+        assert (keysz);
+        _key_v.reserve(keysz);
+    }
 
     // comparison operators
     bool operator<(const key_wrapper_t<DataType>& rhs) const;
     bool operator==(const key_wrapper_t<DataType>& rhs) const;
     bool operator<=(const key_wrapper_t<DataType>& rhs) const;
 
-    // friend function
-    template<class DataType> friend std::ostream& operator<< (std::ostream& os, 
-                                                              const key_wrapper_t<DataType>& rhs);
-
     // helper functions
     inline void copy_vector(const DataPtrVec& aVec) {
         assert (_key_v.empty());
         _key_v = aVec; // copy vector content
     }
+
+    // friend function
+    template<class DataType> friend std::ostream& operator<< (std::ostream& os, 
+                                                              const key_wrapper_t<DataType>& rhs);
 
 }; // EOF: struct key_wrapper_t
 

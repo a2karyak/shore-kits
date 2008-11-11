@@ -34,18 +34,33 @@ template <class DataType>
 class range_action_impl : public action_t<DataType>
 {
 protected:
-
     // the range of keys
     Key _down;
     Key _up;
 
+    inline void _range_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                               const int keylen) 
+    {
+        // the range action has two keys: 
+        // the low and hi value that determine the range
+        _act_set(atid,axct,prvp,2); 
+        assert (keylen);
+        _down.reserve(keylen);
+        _up.reserve(keylen);
+    }
+
 public:
 
-    range_action_impl() : action_t<DataType>() { }
-
-    virtual ~range_action_impl() { }
+    range_action_impl() :
+        action_t<DataType>()
+    { }
+    virtual ~range_action_impl() { 
+        _down.reset();
+        _up.reset();
+    }
     
-    /** access methods */
+
+    // access methods
 
     void set_key_range() {
         calc_keys();
@@ -59,16 +74,17 @@ public:
     Key& up() { return (_up); }
     const Key& up() const { return (_up); }
     
-    /** trx-related operations */
-    virtual w_rc_t trx_exec()=0;             // pure virtual
+
+    // interface 
+
+    virtual w_rc_t trx_exec()=0;
+    virtual const bool trx_acq_locks()=0;
+    virtual void giveback()=0;
 
 private:
 
     void _set_keys() {
-        CRITICAL_SECTION(action_cs, _action_lock);
-        assert (_keys.size()==0); // make sure using an empty action
-        //         _down = adown;
-        //         _key = aup;
+        assert (_keys.empty()); // make sure using an empty action
         _keys.push_back(&_down);
         _keys.push_back(&_up);
     }

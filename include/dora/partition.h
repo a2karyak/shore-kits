@@ -172,7 +172,7 @@ public:
 
     // get lock manager
     PartLockManager* plm() { return (&_plm); }
-
+    
 
     /** Control partition */
 
@@ -184,8 +184,11 @@ public:
     // stops the partition
     virtual void stop();
 
+    // prepares the partition for a new run
+    virtual void prepareNewRun();
 
-    /** Action-related methods */
+
+    //// Action-related methods
 
     // releases a trx
     void release(tid_t& atid) { _plm.release(atid); }
@@ -223,7 +226,7 @@ public:
     void remove_wait(void); // removes the currently pointed action
 
 
-    /** For debugging */
+    //// Debugging
 
     // dumps information
     void dump() const {
@@ -639,8 +642,27 @@ const ePATState partition_t<DataType>::inc_active_thr()
 }
 
 
+/****************************************************************** 
+ *
+ * @fn:     prepareNewRun()
+ *
+ * @brief:  Prepares the partition for a new run
+ *          Clears the lm and the queues (if the have anything)
+ *
+ ******************************************************************/
 
-/** partition_t helper functions */
+template <class DataType>
+void partition_t<DataType>::prepareNewRun() 
+{
+    _input_queue.clear(false); // clear queue but not remove owner
+    _committed_queue.clear(false);
+    _wait_list.clear();    
+    _plm.reset();
+}
+
+
+
+//// partition_t helper functions
 
 
 

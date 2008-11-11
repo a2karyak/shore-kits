@@ -14,12 +14,13 @@
 #include <cstdio>
 
 #include "util.h"
-#include "dora.h"
 
-// #include "dora/tpcc/dora_payment.h"
-// #include "dora/tpcc/dora_mbench.h"
+#include "dora/tpcc/dora_payment.h"
+#include "dora/tpcc/dora_mbench.h"
 
 #include "stages/tpcc/shore/shore_tpcc_env.h"
+
+#include "dora.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -40,20 +41,21 @@ extern dora_tpcc_db* _g_dora;
 const int DF_ACTION_CACHE_SZ = 100;
 
 
-// Forward declarations
-class upd_wh_pay_action_impl;
-class upd_dist_pay_action_impl;
-class upd_cust_pay_action_impl;
-class ins_hist_pay_action_impl;    
-typedef action_cache_t<upd_wh_pay_action_impl>   upd_wh_pay_action_cache;
-typedef action_cache_t<upd_dist_pay_action_impl> upd_dist_pay_action_cache;
-typedef action_cache_t<upd_cust_pay_action_impl> upd_cust_pay_action_cache;
-typedef action_cache_t<ins_hist_pay_action_impl> ins_hist_pay_action_cache;
+// // Forward declarations
 
-class upd_wh_mb_action_impl;
-class upd_cust_mb_action_impl;
-typedef action_cache_t<upd_wh_mb_action_impl> upd_wh_mb_action_cache;
-typedef action_cache_t<upd_cust_mb_action_impl> upd_cust_mb_action_cache;
+// // TPC-C PAYMENT
+// class midway_pay_rvp;
+// class final_pay_rvp;
+// class upd_wh_pay_action_impl;
+// class upd_dist_pay_action_impl;
+// class upd_cust_pay_action_impl;
+// class ins_hist_pay_action_impl;    
+
+
+// // MBenches
+// class final_mb_rvp;
+// class upd_wh_mb_action_impl;
+// class upd_cust_mb_action_impl;
 
 
 
@@ -65,7 +67,7 @@ typedef action_cache_t<upd_cust_mb_action_impl> upd_cust_mb_action_cache;
  *
  ********************************************************************/
 
-class dora_tpcc_db
+class dora_tpcc_db : public db_iface
 {
 public:
 
@@ -75,12 +77,10 @@ public:
     typedef irpImpl::RangeAction      irpAction;
     typedef irpImpl::PartKey          irpImplKey;
 
-    typedef vector<irpTableImpl*>     irpTablePtrVector;
+    typedef vector<irpTableImpl*>       irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
 
 private:
-
-    // member variables
 
     // the shore env
     ShoreTPCCEnv* _tpccenv;    
@@ -99,23 +99,45 @@ private:
     irpTableImpl* _ol_irpt; // ORDER-LINE
     irpTableImpl* _st_irpt; // STOCK
 
-//     // caches of actions 
-//     // one cache per action of each of the supported trxs
-//     upd_wh_pay_action_cache*   _upd_wh_pay_cache;        /* pointer to a upd wh payment action cache */
-//     upd_dist_pay_action_cache* _upd_dist_pay_cache;      /* pointer to a upd dist payment action cache */
-//     upd_cust_pay_action_cache* _upd_cust_pay_cache;      /* pointer to a upd cust payment action cache */
-//     ins_hist_pay_action_cache* _ins_hist_pay_cache;      /* pointer to a ins hist payment action cache */
-
-//     upd_wh_mb_action_cache* _mb_wh_cache;
-//     upd_cust_mb_action_cache* _mb_cust_cache;
-
 public:
     
 
-    dora_tpcc_db(ShoreTPCCEnv* tpccenv);
-    ~dora_tpcc_db();
+    dora_tpcc_db(ShoreTPCCEnv* tpccenv)
+        : db_iface(), _tpccenv(tpccenv)
+    {
+        assert (_tpccenv);
+    }
+    ~dora_tpcc_db() { 
+        if (dbc()!=DBC_STOPPED) stop();
+    }
 
-    /** Partition-related methods */
+
+    //// Control Database
+
+    // {Start/Stop/Resume/Pause} the system 
+    const int start();
+    const int stop();
+    const int resume();
+    const int pause();
+    const int newrun();
+    const int set(envVarMap* vars);
+    const int dump();
+    
+    //// Client API
+    
+    // enqueues action, false on error
+    inline const int enqueue(irpAction* paction, 
+                             irpTableImpl* ptable, 
+                             const int part_pos) 
+    {
+        assert (paction);
+        assert (ptable);
+        return (ptable->enqueue(paction, part_pos));
+    }
+
+
+
+    //// Partition-related methods
 
     inline irpImpl* get_part(const table_pos, const int part_pos) {
         assert (table_pos<_irptp_vec.size());        
@@ -145,62 +167,25 @@ public:
     irpImpl* sto(const int pos) const { return (_st_irpt->get_part(pos)); }
 
 
-    /** Control Database */
 
-    // {Start/Stop/Resume/Pause} the system 
-    const int start();
-    const int stop();
-    const int resume();
-    const int pause();
-
-    
-    /** Client API */
-    
-    // enqueues action, false on error
-    inline const int enqueue(irpAction* paction, 
-                             irpTableImpl* ptable, 
-                             const int part_pos) 
-    {
-        assert (paction);
-        assert (ptable);
-        return (ptable->enqueue(paction, part_pos));
-    }
+    //// atomic trash stacks
 
 
-    /** For debugging */
+    // TPC-C Payment
+    atomic_class_stack<final_pay_rvp>  _final_pay_rvp_pool;
+    atomic_class_stack<midway_pay_rvp> _midway_pay_rvp_pool;
 
-    // dumps information
-    void dump() const;
-
-
-
-    /** action cache related actions */
-
-//     // returns the cache
-//     upd_wh_pay_action_cache* get_upd_wh_pay_cache();
-//     upd_dist_pay_action_cache* get_upd_dist_pay_cache();
-//     upd_cust_pay_action_cache* get_upd_cust_pay_cache();
-//     ins_hist_pay_action_cache* get_ins_hist_pay_cache();
-
-//     upd_wh_mb_action_cache* get_upd_wh_mb_action_cache();
-//     upd_cust_mb_action_cache* get_upd_cust_mb_action_cache();
+    atomic_class_stack<upd_wh_pay_action>     _upd_wh_pay_pool; 
+    atomic_class_stack<upd_dist_pay_action>   _upd_dist_pay_pool;    
+    atomic_class_stack<upd_cust_pay_action>   _upd_cust_pay_pool;    
+    atomic_class_stack<ins_hist_pay_action>   _ins_hist_pay_pool;    
 
 
-    // borrow and release an action
-    upd_wh_pay_action_impl* get_upd_wh_pay_action();
-    void give_action(upd_wh_pay_action_impl* pirpa);
-    upd_dist_pay_action_impl* get_upd_dist_pay_action();
-    void give_action(upd_dist_pay_action_impl* pirpa);
-    upd_cust_pay_action_impl* get_upd_cust_pay_action();
-    void give_action(upd_cust_pay_action_impl* pirpa);
-    ins_hist_pay_action_impl* get_ins_hist_pay_action();
-    void give_action(ins_hist_pay_action_impl* pirpa);
+    // MBenches
+    atomic_class_stack<final_mb_rvp>   _final_mb_rvp_pool;
 
-    upd_wh_mb_action_impl* get_upd_wh_mb_action();
-    void give_action(upd_wh_mb_action_impl* pirpa);
-    upd_cust_mb_action_impl* get_upd_cust_mb_action();
-    void give_action(upd_cust_mb_action_impl* pirpa);
-
+    atomic_class_stack<upd_wh_mb_action>      _upd_wh_mb_pool;    
+    atomic_class_stack<upd_cust_mb_action>    _upd_cust_mb_pool;    
 
 
 private:

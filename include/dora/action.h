@@ -14,7 +14,6 @@
 #include <cstdio>
 
 #include "util.h"
-
 #include "dora.h"
 
 #include "sm/shore/shore_env.h"
@@ -94,25 +93,28 @@ protected:
     xct_t*         _xct; // Not the owner
     tid_t          _tid;
 
+
+    // base action init
+    inline void _base_set(tid_t atid, xct_t* axct, rvp_t* prvp) {
+        _tid = atid;
+        _xct = axct;
+        _prvp = prvp;
+    }
+
 public:
 
     base_action_t() :
         _prvp(NULL), _xct(NULL)
     { }
-
-    virtual ~base_action_t() { }
+    virtual ~base_action_t() { 
+        _xct = NULL;
+        _prvp = NULL;
+    }
 
     // access methods
     inline rvp_t* get_rvp() { return (_prvp); }
     inline xct_t* get_xct() { return (_xct); }    
     inline tid_t get_tid() { return (_tid); }
-
-    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp) {
-        CRITICAL_SECTION(action_cs, _action_lock);
-        _tid = atid;
-        _xct = axct;
-        _prvp = prvp;
-    }
 
 
     // interface
@@ -129,9 +131,8 @@ public:
     // enqueues self on the committed list of committed actions
     virtual void notify()=0; 
 
-
-    // lock for the whole action
-    tatas_lock     _action_lock;    
+    // should give memory back to the atomic trash stack
+    virtual void giveback()=0;
 
 private:
 
@@ -173,16 +174,27 @@ protected:
     //pointer to the partition
     Partition*     _partition;
 
+    inline void _act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                         const int numkeys)
+    {
+        _base_set(atid,axct,prvp);
+        assert (numkeys);
+        _keys.reserve(numkeys);
+    }
+
 public:
 
     action_t() : 
         base_action_t(), _partition(NULL) 
     { }
-
-    virtual ~action_t() { }
+    virtual ~action_t() { 
+        _partition = NULL;
+        _keys.clear();
+    }
 
     
     // access methods
+
     vector<Key*> *keys() { return (&_keys); }    
 
     inline Partition* get_partition() const { return (_partition); }
@@ -190,11 +202,13 @@ public:
         assert (ap);
         _partition = ap;
     }
-    
+   
     
     // interface
+
     virtual w_rc_t trx_exec()=0;
     virtual const bool trx_acq_locks()=0;
+    virtual void giveback()=0;
 
     void trx_rel_locks() {
         assert (_partition);
@@ -203,15 +217,6 @@ public:
     void notify() {
         assert (_partition);
         _partition->enqueue_commit(this);
-    }
-
-
-    // for the cache
-    void reset() {
-        CRITICAL_SECTION(action_cs, _action_lock);
-        _xct = NULL;
-        _prvp = NULL;
-        _keys.clear();
     }
 
 private:

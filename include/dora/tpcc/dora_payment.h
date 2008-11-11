@@ -15,7 +15,8 @@
 #define __DORA_TPCC_PAYMENT_H
 
 
-#include "dora/tpcc/dora_tpcc.h"
+#include "dora.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -45,28 +46,35 @@ using namespace tpcc;
 class midway_pay_rvp : public rvp_t
 {
 private:
-    // the data needed for communication
+    typedef atomic_class_stack<midway_pay_rvp> rvp_pool;
+    rvp_pool* _pool;
+    ShoreTPCCEnv* _ptpccenv;
+    // data needed for the next phase
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple  _adist;
-    // pointer to the payment input
-    payment_input_t           _pin;
-    // pointer to the shore env
-    ShoreTPCCEnv* _ptpccenv;
+    payment_input_t      _pin;
 public:
+    midway_pay_rvp() : rvp_t(), _pool(NULL), _ptpccenv(NULL) { }
+    ~midway_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
 
-    midway_pay_rvp(tid_t atid, xct_t* axct, const int axctid,
-                   trx_result_tuple_t &presult,
-                   ShoreTPCCEnv* penv, 
-                   payment_input_t ppin) 
-        : rvp_t(atid, axct, axctid, presult, 3, 3),  // consists of three packets
-          _ptpccenv(penv), _pin(ppin)
-    { }
+    // access methods
+    inline void set(tid_t atid, xct_t* axct, const int& axctid,
+                    trx_result_tuple_t& presult, 
+                    const payment_input_t& ppin, 
+                    ShoreTPCCEnv* penv, rvp_pool* pp) 
+    { 
+        _set(atid,axct,axctid,presult,3,3);
+        _pin = ppin;
+        assert (penv);
+        _ptpccenv = penv;
+        assert (pp);
+        _pool = pp;
+    }
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
 
-    ~midway_pay_rvp() { }
-    
-    // access methods for the communicated data
     tpcc_warehouse_tuple* wh() { return (&_awh); }
     tpcc_district_tuple* dist() { return (&_adist); }    
+
     // the interface
     w_rc_t run();
 
@@ -85,18 +93,25 @@ public:
 class final_pay_rvp : public terminal_rvp_t
 {
 private:
-    // pointer to the shore env
+    typedef atomic_class_stack<final_pay_rvp> rvp_pool;
+    rvp_pool* _pool;
     ShoreTPCCEnv* _ptpccenv;
 public:
+    final_pay_rvp() : terminal_rvp_t(), _pool(NULL), _ptpccenv(NULL) { }
+    ~final_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
 
-    final_pay_rvp(tid_t atid, xct_t* axct, const int axctid,
-                  trx_result_tuple_t &presult,
-                  ShoreTPCCEnv* penv) 
-        : terminal_rvp_t(atid, axct, axctid, presult, 1, 4), 
-          _ptpccenv(penv) 
-    { }
-    
-    ~final_pay_rvp() { }
+    // access methods
+    inline void set(tid_t atid, xct_t* axct, const int axctid,
+                    trx_result_tuple_t& presult, 
+                    ShoreTPCCEnv* penv, rvp_pool* pp) 
+    { 
+        _set(atid,axct,axctid,presult,1,4);
+        assert (penv);
+        _ptpccenv = penv;
+        assert (pp);
+        _pool = pp;
+    }
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
 
     // interface
     w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
@@ -109,18 +124,18 @@ public:
 //
 // ACTIONS
 //
-// (0) pay_action_impl - generic that holds a payment input
+// (0) pay_action - generic that holds a payment input
 //
-// (1) upd_wh_pay_action_impl
-// (2) upd_dist_pay_action_impl
-// (3) upd_cust_pay_action_impl
-// (4) ins_hist_pay_action_impl
+// (1) upd_wh_pay_action
+// (2) upd_dist_pay_action
+// (3) upd_cust_pay_action
+// (4) ins_hist_pay_action
 // 
 
 
 /******************************************************************** 
  *
- * @abstract class: pay_action_impl
+ * @abstract class: pay_action
  *
  * @brief:          Holds a payment input and a pointer to ShoreTPCCEnv
  *                  Also implements the trx_acq_locks since all the
@@ -128,58 +143,77 @@ public:
  *
  ********************************************************************/
 
-class pay_action_impl : public range_action_impl<int>
+class pay_action : public range_action_impl<int>
 {
 protected:
-
     ShoreTPCCEnv*   _ptpccenv;
     payment_input_t _pin;
 
-public:
-    
-    pay_action_impl() : range_action_impl(), _ptpccenv(NULL) { }
-    virtual ~pay_action_impl() { }
-    virtual w_rc_t trx_exec()=0; // pure virtual    
-    const bool trx_acq_locks();
-    virtual void calc_keys()=0; // pure virtual 
-    virtual void set_input(tid_t atid,
-                           xct_t* apxct,
-                           rvp_t* prvp,
-                           ShoreTPCCEnv* penv, 
-                           const payment_input_t& pin) 
+    inline void _pay_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                             const int keylen, const payment_input_t& pin, 
+                             ShoreTPCCEnv* penv) 
     {
-        assert (apxct);
-        assert (prvp);
-        assert (penv);
-        set(atid, apxct, prvp);
-        _ptpccenv = penv;
+        _range_act_set(atid,axct,prvp,keylen); 
         _pin = pin;
+        assert (penv);
+        _ptpccenv = penv;
         set_key_range(); // set key range for this action
     }
+
+public:
     
-}; // EOF: pay_action_impl
+    pay_action() 
+        : range_action_impl<int>(), _ptpccenv(NULL) 
+    { }
+    virtual ~pay_action() { }
+
+    virtual w_rc_t trx_exec()=0;    
+    virtual void calc_keys()=0; 
+
+    const bool trx_acq_locks(); // all payment actions are unique probes
+    
+}; // EOF: pay_action
 
 
 // UPD_WH_PAY_ACTION
-class upd_wh_pay_action_impl : public pay_action_impl
+class upd_wh_pay_action : public pay_action
 {
+private:
+    typedef atomic_class_stack<upd_wh_pay_action> act_pool;
+    act_pool*       _pool;
 public:    
-    upd_wh_pay_action_impl() : pay_action_impl() { }
-    ~upd_wh_pay_action_impl() { }
+    upd_wh_pay_action() : pay_action() { }
+    ~upd_wh_pay_action() { }
     w_rc_t trx_exec();    
     midway_pay_rvp* _m_rvp;
     void calc_keys() {
         _down.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_wh_id);
     }
-}; // EOF: upd_wh_pay_action_impl
+    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                    const payment_input_t& pin,
+                    ShoreTPCCEnv* penv, 
+                    midway_pay_rvp* amrvp, act_pool* pp) 
+    {
+        _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (WH)
+        assert (amrvp);
+        _m_rvp = amrvp;
+        assert (pp);
+        _pool = pp;
+    }
+
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+}; // EOF: upd_wh_pay_action
 
 // UPD_DIST_PAY_ACTION
-class upd_dist_pay_action_impl : public pay_action_impl
+class upd_dist_pay_action : public pay_action
 {
+private:
+    typedef atomic_class_stack<upd_dist_pay_action> act_pool;
+    act_pool*       _pool;
 public:   
-    upd_dist_pay_action_impl() : pay_action_impl() { }
-    ~upd_dist_pay_action_impl() { }
+    upd_dist_pay_action() : pay_action() { }
+    ~upd_dist_pay_action() { }
     w_rc_t trx_exec();    
     midway_pay_rvp* _m_rvp;
     void calc_keys() {
@@ -188,14 +222,30 @@ public:
         _up.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_d_id);
     }
-}; // EOF: upd_wh_pay_action_impl
+    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                    const payment_input_t& pin,
+                    ShoreTPCCEnv* penv, 
+                    midway_pay_rvp* amrvp, act_pool* pp) 
+    {
+        _pay_act_set(atid,axct,prvp,2,pin,penv);  // key is (WH|DIST)
+        assert (amrvp);
+        _m_rvp = amrvp;
+        assert (pp);
+        _pool = pp;
+    }
+
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+}; // EOF: upd_wh_pay_action
 
 // UPD_CUST_PAY_ACTION
-class upd_cust_pay_action_impl : public pay_action_impl
+class upd_cust_pay_action : public pay_action
 {
+private:
+    typedef atomic_class_stack<upd_cust_pay_action> act_pool;
+    act_pool*       _pool;
 public:    
-    upd_cust_pay_action_impl() : pay_action_impl() { }
-    ~upd_cust_pay_action_impl() { }
+    upd_cust_pay_action() : pay_action() { }
+    ~upd_cust_pay_action() { }
     w_rc_t trx_exec();   
     midway_pay_rvp* _m_rvp;
     void calc_keys() {
@@ -206,14 +256,30 @@ public:
         _up.push_back(_pin._home_d_id);
         _up.push_back(_pin._c_id);
     }
-}; // EOF: upd_cust_pay_action_impl
+    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                    const payment_input_t& pin,
+                    ShoreTPCCEnv* penv, 
+                    midway_pay_rvp* amrvp, act_pool* pp) 
+    {
+        _pay_act_set(atid,axct,prvp,3,pin,penv);  // key is (WH|DIST|CUST)
+        assert (amrvp);
+        _m_rvp = amrvp;
+        assert (pp);
+        _pool = pp;
+    }
+
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+}; // EOF: upd_cust_pay_action
 
 // INS_HIST_PAY_ACTION
-class ins_hist_pay_action_impl : public pay_action_impl
+class ins_hist_pay_action : public pay_action
 {
+private:
+    typedef atomic_class_stack<ins_hist_pay_action> act_pool;
+    act_pool*       _pool;
 public:    
-    ins_hist_pay_action_impl() : pay_action_impl() { }
-    ~ins_hist_pay_action_impl() { }
+    ins_hist_pay_action() : pay_action() { }
+    ~ins_hist_pay_action() { }
     w_rc_t trx_exec();    
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple _adist;    
@@ -221,7 +287,21 @@ public:
         _down.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_wh_id);
     }
-}; // EOF: ins_hist_pay_action_impl
+    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                    const payment_input_t& pin,
+                    tpcc_warehouse_tuple awh,
+                    tpcc_district_tuple adist,
+                    ShoreTPCCEnv* penv, act_pool* pp) 
+    {
+        _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (HIST)
+        _awh = awh;
+        _adist = adist;
+        assert (pp);
+        _pool = pp;
+    }
+
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+}; // EOF: ins_hist_pay_action
 
 
 

@@ -14,7 +14,9 @@
 #ifndef __DORA_MBENCHES_H
 #define __DORA_MBENCHES_H
 
-#include "dora/tpcc/dora_tpcc.h"
+
+#include "dora.h"
+#include "stages/tpcc/shore/shore_tpcc_env.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -38,20 +40,26 @@ using namespace tpcc;
 class final_mb_rvp : public terminal_rvp_t
 {
 private:
-    // pointer to the shore env
+    typedef atomic_class_stack<final_mb_rvp> rvp_pool;
+    rvp_pool* _pool;
     ShoreTPCCEnv* _ptpccenv;
 public:
-
-    final_mb_rvp(tid_t atid, xct_t* axct, const int axctid,
-                 trx_result_tuple_t &presult, 
-                 const int intra_trx_cnt, const int total_actions,
-                 ShoreTPCCEnv* penv) 
-        : terminal_rvp_t(atid, axct, axctid, presult, 
-                         intra_trx_cnt, total_actions), 
-          _ptpccenv(penv) 
-    { }
-
-    virtual ~final_mb_rvp() { }
+    final_mb_rvp() : terminal_rvp_t(), _pool(NULL), _ptpccenv(NULL) { }
+    ~final_mb_rvp() { _pool=NULL; _ptpccenv=NULL; }
+    
+    // access methods
+    inline void set(tid_t atid, xct_t* axct, const int axctid,
+                    trx_result_tuple_t& presult, 
+                    const int intra_trx_cnt, const int total_actions,
+                    ShoreTPCCEnv* penv, rvp_pool* pp) 
+    { 
+        _set(atid,axct,axctid,presult,intra_trx_cnt,total_actions);
+        assert (penv);
+        _ptpccenv = penv;
+        assert (pp);
+        _pool = pp;
+    }
+    inline void giveback() { assert (_pool); _pool->destroy(this); }
 
     // the interface
     w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
@@ -70,51 +78,62 @@ public:
  *
  ********************************************************************/
 
-class mb_action_impl : public range_action_impl<int>
+class mb_action : public range_action_impl<int>
 {
 protected:
     ShoreTPCCEnv* _ptpccenv;
     int _whid;
-public:
-    mb_action_impl() :
-        range_action_impl<int>(), _ptpccenv(NULL), _whid(-1) 
-    { }
 
-    virtual ~mb_action_impl() { }
+    inline void _mb_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+                            const int keylen, ShoreTPCCEnv* penv, 
+                            const int awh)
+    {
+        _range_act_set(atid,axct,prvp,keylen); 
+        assert (penv);
+        _ptpccenv = penv;
+        _whid=awh;
+        set_key_range(); // set key range for this action
+    }
+
+public:
+    mb_action() : range_action_impl<int>(), _ptpccenv(NULL), _whid(-1) { }
+    virtual ~mb_action() { }
 
     // interface
     virtual w_rc_t trx_exec()=0; // pure virtual    
-    const bool trx_acq_locks();
     virtual void calc_keys()=0; // pure virtual 
 
-}; // EOF: mb_action_impl
+    const bool trx_acq_locks(); // all mbenches are unique probes
+
+}; // EOF: mb_action
 
 
 /******************************************************************** 
  *
  * MBench WH
  *
- * @class: upd_wh_mb_action_impl
+ * @class: upd_wh_mb_action
  *
  * @brief: Updates a WH
  *
  ********************************************************************/
 
-class upd_wh_mb_action_impl : public mb_action_impl
+class upd_wh_mb_action : public mb_action
 {
+private:
+    typedef atomic_class_stack<upd_wh_mb_action> act_pool;
+    act_pool*       _pool;
 public:        
-    upd_wh_mb_action_impl()  { }    
-    ~upd_wh_mb_action_impl() { }
-
-    void set_input(tid_t atid, xct_t* apxct, rvp_t* aprvp, 
-                   ShoreTPCCEnv* penv, const int awh) { 
-        assert (apxct);
-        assert (aprvp);
-        assert (penv);
-        set(atid, apxct, aprvp);
-        _ptpccenv = penv;
-        _whid=awh; 
-        set_key_range();
+    upd_wh_mb_action() : mb_action() { }    
+    ~upd_wh_mb_action() { }
+    inline void set(tid_t atid, xct_t* apxct, rvp_t* aprvp, 
+                    const int awh, ShoreTPCCEnv* penv, act_pool* pp) 
+    { 
+        assert (pp);
+        _pool = pp;
+        _mb_act_set(atid,apxct,aprvp,1,penv,awh);  // key is (WH)
+        // call to mb_act_set() should be the last one
+        // because it will call the calc_keys() 
     }
     
     w_rc_t trx_exec();        
@@ -122,7 +141,9 @@ public:
         _down.push_back(_whid);
         _up.push_back(_whid);
     }
-}; // EOF: upd_wh_mb_action_impl
+
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+}; // EOF: upd_wh_mb_action
 
 
 
@@ -130,36 +151,34 @@ public:
  *
  * MBench CUST
  *
- * @class: upd_cust_mb_action_impl
+ * @class: upd_cust_mb_action
  *
  * @brief: Updates a CUSTOMER
  *
  ********************************************************************/
 
 // UPD_CUST_MB_ACTION
-class upd_cust_mb_action_impl : public mb_action_impl
+class upd_cust_mb_action : public mb_action
 {
 private:
+    typedef atomic_class_stack<upd_cust_mb_action> act_pool;
+    act_pool*       _pool;
     int _did;
     int _cid;
 public:    
+    upd_cust_mb_action() : mb_action(), _did(-1), _cid(-1) { }    
+    ~upd_cust_mb_action() { }
 
-    upd_cust_mb_action_impl() :
-        _did(-1), _cid(-1)
-    { }    
-    ~upd_cust_mb_action_impl() { }
-    
-    void set_input(tid_t atid, xct_t* apxct, rvp_t* aprvp,
-                   ShoreTPCCEnv* penv, const int awh) {
-        assert (apxct);
-        assert (aprvp);
-        assert (penv);
-        set(atid, apxct, aprvp);
-        _ptpccenv = penv; 
-        _whid=awh;
+    inline void set(tid_t atid, xct_t* apxct, rvp_t* aprvp, 
+                    const int awh, ShoreTPCCEnv* penv, act_pool* pp) 
+    { 
         _did = URand(1,10); // generate the other two needed vars
         _cid = NURand(1023,1,3000);
-        set_key_range();
+        assert (pp);
+        _pool = pp;
+        _mb_act_set(atid,apxct,aprvp,1,penv,awh);  // key is (WH|DIST|CUST)
+        // call to mb_act_set() should be the last one
+        // because it will call the calc_keys() 
     }
 
     w_rc_t trx_exec();        
@@ -172,7 +191,8 @@ public:
         _up.push_back(_cid);
     }
 
-}; // EOF: upd_cust_mb_action_impl
+    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+}; // EOF: upd_cust_mb_action
 
 
 EXIT_NAMESPACE(dora);

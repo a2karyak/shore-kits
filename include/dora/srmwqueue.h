@@ -136,9 +136,9 @@ struct srmwqueue
     }
 
     // resets queue
-    void clear() {
+    void clear(const bool removeOwner=true) {
         // clear owner
-        {
+        if (removeOwner) {
             CRITICAL_SECTION(q_cs, _owner_lock);
             _owner = NULL;
         }
