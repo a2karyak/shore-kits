@@ -114,6 +114,18 @@ int shell_t::process_one()
         return (print_usage(command));
     }
 
+    // check for set...
+    if (check_set(command)) {
+        // set command! 
+        return (parse_set(command));
+    }
+
+    // check for env...
+    if (check_env(command)) {
+        // env command! 
+        return (print_env());
+    }
+
     // increase stats
     _cmd_counter++;
 
@@ -142,7 +154,6 @@ bool shell_t::check_quit(const char* command)
         ( strcasecmp(command, "exit;") == 0 ) )
         // quit command!
         return (true);
-
     return (false);
 }
 
@@ -162,8 +173,70 @@ bool shell_t::check_help(const char* command)
         ( strcasecmp(command, "h") == 0 ) ||
         ( strcasecmp(command, "h;") == 0 ) )
         // help command!
-        return (true);
-        
+        return (true);        
     return (false);
 }
 
+
+
+/*********************************************************************
+ *
+ *  @fn:    {usage,check,parse,print}_{set,env}
+ *  
+ *  @brief: Shell environment variables related functions 
+ *
+ *********************************************************************/
+
+bool shell_t::check_set(const char* command) 
+{    
+    if (( strcasecmp(command, "set") == 0 ) ||
+        ( strcasecmp(command, "set;") == 0 ) ||
+        ( strcasecmp(command, "s") == 0 ) ||
+        ( strcasecmp(command, "s;") == 0 ) )
+        // set command!
+        return (true);        
+    return (false);
+}
+
+
+void shell_t::usage_set(void) const
+{
+    TRACE( TRACE_ALWAYS, "SET Usage:\n\n"                               \
+           "*** set [<PARAM_NAME=PARAM_VALUE>*]\n"                      \
+           "\nParameters:\n"                                            \
+           "<PARAM_NAME>  : The name of the environment variable to set\n" \
+           "<PARAM_VALUE> : The new value of the env variable\n\n");
+}
+
+
+int shell_t::parse_set(const char* command) 
+{
+    TRACE( TRACE_ALWAYS, "Setting variables\n");    
+
+    TRACE( TRACE_ALWAYS, "unimplemented...\n");        
+
+    usage_set();
+    print_env();
+
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+bool shell_t::check_env(const char* command) 
+{    
+    if (( strcasecmp(command, "env") == 0 ) ||
+        ( strcasecmp(command, "env;") == 0 ) ||
+        ( strcasecmp(command, "e") == 0 ) ||
+        ( strcasecmp(command, "e;") == 0 ) )
+        // set command!
+        return (true);        
+    return (false);
+}
+
+int shell_t::print_env(void) const
+{    
+    TRACE( TRACE_ALWAYS, "Environment variables\n");
+    for (envVarConstIt cit= _env_vars.begin(); cit != _env_vars.end(); cit++)
+        TRACE( TRACE_ALWAYS, "%s -> %s\n", cit->first.c_str(), cit->second.c_str());    
+    return (SHELL_NEXT_CONTINUE);
+}

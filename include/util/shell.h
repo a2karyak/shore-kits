@@ -23,17 +23,18 @@
 #endif
 
 
+#include <map>
+
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <assert.h>
 #include <signal.h>
 #include <errno.h>
 
-#include "util/config.h"
-#include "util/history.h"
-#include "util/trace.h"
+#include "util.h"
 
 
+using namespace std;
 
 
 /*********************************************************************
@@ -66,6 +67,12 @@ private:
     int   _cmd_counter;
     bool  _save_history;
     int   _state;
+
+    // shell environment parameters
+    typedef map<string,string>::iterator        envVarIt;
+    typedef map<string,string>::const_iterator  envVarConstIt;
+    map<string,string> _env_vars;
+
     
 protected:
     bool _processing_command;
@@ -106,9 +113,15 @@ public:
     int process_one();
     bool check_quit(const char* command);
     bool check_help(const char* command);
+
+    // shell environment variables
+    bool check_set(const char* command);
+    void usage_set(void) const;
+    int parse_set(const char* command);
+    bool check_env(const char* command);
+    int print_env(void) const;
     
     const int get_command_cnt() { return (_cmd_counter); }
-
 
     int start();
 

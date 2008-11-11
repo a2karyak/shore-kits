@@ -15,7 +15,7 @@ void countdown_t::reset(const int newcount)
 {
     // previous usage should have finished
     // previous usage may succeeded (0) or failed (ERROR)
-    assert ((_state==0) || (_state==ERROR)); 
+    //    assert ((_state==0) || (_state==ERROR)); 
     _state = newcount*NUMBER;
 }
 
