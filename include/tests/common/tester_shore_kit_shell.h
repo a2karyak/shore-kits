@@ -77,8 +77,6 @@ protected:
     typedef mapBindPols::iterator               mapBindPolsIt;    
     mapBindPols _sup_bps;
 
-    tracer_t _trace_handler;
-
 public:
 
     shore_kit_shell_t(const char* prompt, ShoreTPCCEnv* env, 
@@ -116,6 +114,8 @@ public:
     virtual void usage_cmd_MEASURE();
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
+
+    virtual const int register_commands() { return (SHELL_NEXT_CONTINUE); }
 
 
     // supported trxs and binding policies

@@ -248,12 +248,14 @@ int main(int argc, char* argv[])
     // initialize cordoba threads
     thread_init();
 
-    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
+    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS 
+               //               | TRACE_NETWORK 
+               //               | TRACE_CPU_BINDING
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-                              | TRACE_DEBUG
+               //| TRACE_DEBUG
               );
 
     /* 1. Instanciate the Shore environment */

@@ -376,12 +376,6 @@ int shore_kit_shell_t::process_command(const char* cmd,
     // make sure any previous abort is cleared
     client_smt_t::resume_test();
 
-    // TRACE cmd
-    if (strcasecmp(cmd_tag, "TRACE") == 0) {
-        _trace_handler.handle_command(cmd);
-        return (SHELL_NEXT_CONTINUE);
-    }
-
     // TRXS cmd
     if (strcasecmp(cmd_tag, "TRXS") == 0) {
         return (process_cmd_TRXS(cmd, cmd_tag));

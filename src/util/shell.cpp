@@ -23,175 +23,6 @@ void sig_handler_fwd(int sig)
 
 /*********************************************************************
  *
- *  @fn:    setVar/getVar/readConfVar
- *  
- *  @brief: Environment variables manipulation
- *          
- *********************************************************************/
-
-
-// helper: reads the conf file for a specific param
-// !!! the caller should have the lock !!!
-string envVar::_readConfVar(const string& sParam, const string& sDefValue)
-{
-    if (sParam.empty()||sDefValue.empty()) {
-        TRACE( TRACE_ALWAYS, "Invalid Param or Value input\n");
-        return ("");
-    }
-    assert (_pfparser);
-    string tmp;
-    // probe config file
-    _pfparser->readInto(tmp,sParam,sDefValue); 
-    // set entry in the env map
-    _evm[sParam] = tmp;
-    TRACE( TRACE_DEBUG, "(%s) (%s)\n", sParam.c_str(), tmp.c_str());
-    return (tmp);
-}
-
-// sets a new parameter
-const int envVar::setVar(const string& sParam, const string& sValue)
-{
-    if ((!sParam.empty())&&(!sValue.empty())) {
-        TRACE( TRACE_DEBUG, "(%s) (%s)\n", sParam.c_str(), sValue.c_str());
-        CRITICAL_SECTION(evm_cs,_lock);
-        _evm[sParam] = sValue;
-        return (_evm.size());
-    }
-    return (0);
-}
-
-const int envVar::setVarInt(const string& sParam, const int& iValue)
-{    
-    return (setVar(sParam,_toString(iValue)));
-}
-
-
-// refreshes all the env vars from the conf file
-const int envVar::refreshVars(void)
-{
-    TRACE( TRACE_DEBUG, "Refreshing environment variables\n");
-    CRITICAL_SECTION(evm_cs,_lock);
-    for (envVarIt it= _evm.begin(); it != _evm.end(); ++it)
-        _readConfVar(it->first,it->second);    
-    return (0);
-}
-
-
-// checks the map for a specific param
-// if it doesn't find it checks also the config file
-string envVar::getVar(const string& sParam, const string& sDefValue)
-{
-    if (sParam.empty()) {
-        TRACE( TRACE_ALWAYS, "Invalid Param input\n");
-        return ("");
-    }
-
-    CRITICAL_SECTION(evm_cs,_lock);
-    envVarIt it = _evm.find(sParam);
-    if (it==_evm.end()) {        
-        //TRACE( TRACE_DEBUG, "(%s) param not set. Searching conf\n", sParam.c_str()); 
-        return (_readConfVar(sParam,sDefValue));
-    }
-    return (it->second);
-}
-
-int envVar::getVarInt(const string& sParam, const int& iDefValue)
-{
-    return (atoi(getVar(sParam,_toString(iDefValue)).c_str()));
-}
-
-// checks if a specific param is set at the map or (fallback) the conf file
-void envVar::checkVar(const string& sParam)
-{
-    string r;
-    CRITICAL_SECTION(evm_cs,_lock);
-    // first searches the map
-    envVarIt it = _evm.find(sParam);
-    if (it!=_evm.end()) {
-        r = it->second + " (map)";
-    }
-    else {
-        // if not found on map, searches the conf file
-        if (_pfparser->keyExists(sParam)) {
-            _pfparser->readInto(r,sParam,string("Not found"));
-            r = r + " (conf)";
-        }
-        else {
-            r = string("Not found");
-        }        
-    }
-    TRACE( TRACE_ALWAYS, "%s -> %s\n", sParam.c_str(), r.c_str()); 
-}
-
-
-// prints all the env vars
-void envVar::printVars(void)
-{
-    TRACE( TRACE_DEBUG, "Environment variables\n");
-    CRITICAL_SECTION(evm_cs,_lock);
-    for (envVarConstIt cit= _evm.begin(); cit != _evm.end(); ++cit)
-        TRACE( TRACE_DEBUG, "%s -> %s\n", cit->first.c_str(), cit->second.c_str()); 
-}
-
-// sets as input another conf file
-void envVar::setConfFile(const string& sConfFile)
-{
-    assert (!sConfFile.empty());
-    CRITICAL_SECTION(evm_cs,_lock);
-    _cfname = sConfFile;
-    _pfparser = new ConfigFile(_cfname);
-    assert (_pfparser);
-}
-
-// parses a SET request
-const int envVar::parseOneSetReq(const string& in)
-{
-    string param;
-    string value;
-    boost::char_separator<char> valuesep("=");            
-
-    tokenizer valuetok(in, valuesep);  
-    tokit vit = valuetok.begin();
-    if (vit == valuetok.end()) {
-        TRACE( TRACE_DEBUG, "(%s) is malformed\n", in);
-        return(1);
-    }
-    param = *vit;
-    ++vit;
-    if (vit == valuetok.end()) {
-        TRACE( TRACE_DEBUG, "(%s) is malformed\n", in);
-        return(2);
-    }
-    value = *vit;
-    TRACE( TRACE_DEBUG, "%s -> %s\n", param.c_str(), value.c_str()); 
-    CRITICAL_SECTION(evm_cs,_lock);
-    _evm[param] = value;
-    return(0);
-}
-    
-// parses a string of (multiple) SET requests
-const int envVar::parseSetReq(const string& in)
-{
-    int cnt=0;
-
-    // FORMAT: SET [<clause_name>=<clause_value>]*
-    boost::char_separator<char> clausesep(" ");
-    tokenizer clausetok(in, clausesep);
-    tokit cit = clausetok.begin();
-    ++cit; // omit the SET cmd
-    for (; cit != clausetok.end(); ++cit) {
-        parseOneSetReq(*cit);
-        ++cnt;
-    }
-    return (cnt);
-}
-
-
-
-
-
-/*********************************************************************
- *
  *  @fn:    start
  *  
  *  @brief: Starts a loop of commands. 
@@ -203,7 +34,7 @@ const int envVar::parseSetReq(const string& in)
 
 int shell_t::start() 
 {
-    /* 0. Install SIGINT handler */
+    // 0. Install SIGINT handler
     instance() = this;
     struct sigaction sa;
     struct sigaction sa_old;
@@ -216,23 +47,29 @@ int shell_t::start()
     if(sigaction(SIGINT, &sa, &sa_old) < 0)
         exit(1);
 	
-    /* 1. Open saved command history (optional) */
+    // 1. Init all commands
+    init_cmds();
+
+    // 2. Open saved command history (optional)
     if (_save_history)
         _save_history = history_open();
         
-    /* 2. Command loop */
+    // 3. Command loop
     _state = SHELL_NEXT_CONTINUE;
     while (_state == SHELL_NEXT_CONTINUE) {
         _state = process_one();
     }    
         
-    /* 3. Save command history (optional) */
+    // 4. Save command history (optional)
     if (_save_history) {
         TRACE( TRACE_ALWAYS, "Saving history...\n");
         history_close();
     }
 
-    /* 4. Restore old signal handler (probably unnecessary) */
+    // 5. Close all commands
+    close_cmds();
+
+    // 6. Restore old signal handler (probably unnecessary)
     sigaction(SIGINT, &sa_old, 0);
 	
     return (0);
@@ -250,71 +87,47 @@ int shell_t::start()
 
 int shell_t::process_one() 
 {
-    char *command = (char*)NULL;
-
-    // If the buffer has already been allocated, return the memory to
-    // the free pool.
-    if (command != NULL) {
-        free(command);
-        command = (char*)NULL;
-    }
+    char *cmd = (char*)NULL;
         
     // Get a line from the user.
-    command = readline(_cmd_prompt);
-    if (command == NULL) {
+    cmd = readline(_cmd_prompt);
+    if (cmd == NULL) {
         // EOF
         return (SHELL_NEXT_QUIT);
     }
 
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    CRITICAL_SECTION(sh_cs,_lock);
 
-    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
-
-    if ( sscanf(command, "%s", &command_tag) < 1) {
-        print_usage(command_tag);
+    if ( sscanf(cmd, "%s", &cmd_tag) < 1) {
+        _help_cmd->list_cmds();
         return (SHELL_NEXT_CONTINUE);
     }
         
     // history control
-    if (*command) {
+    if (*cmd) {
         // non-empty line...
-        add_history(command);
-    }
-        
-    // check for quit...
-    if (check_quit(&command_tag[0])) {
-        // quit command! 
-        return (SHELL_NEXT_QUIT);
-    }
-
-    // check for help...
-    if (check_help(&command_tag[0])) {
-        // help command! 
-        return (print_usage(&command_tag[0]));
-    }
-
-    // check for set...
-    if (check_set(&command_tag[0])) {
-        // set command! 
-        return (parse_set(command));
-    }
-
-    // check for reconf...
-    if (check_reconf(&command_tag[0])) {
-        // set command! 
-        return (reconf());
-    }
-
-    // check for env...
-    if (check_env(&command_tag[0])) {
-        // env command! 
-        return (serve_env(command));
+        add_history(cmd);
     }
 
     // increase stats
     _cmd_counter++;
 
     _processing_command = true;
-    int rval = process_command(command, command_tag);
+
+    int rval;
+    cmdMapIt cmdit = _cmds.find(cmd_tag);
+    if (cmdit == _cmds.end()) {
+        rval = process_command(cmd, cmd_tag);
+
+//         TRACE( TRACE_ALWAYS, "Command (%s) not found...\n", cmd_tag);
+//         _help_cmd->list_cmds();
+
+    }
+    else {
+        rval = cmdit->second->handle(cmd_tag);
+    }
+
     _processing_command = false;
     return (rval);
 }
@@ -322,68 +135,199 @@ int shell_t::process_one()
 
 /*********************************************************************
  *
- *  @fn:    check_quit
+ *  @fn:    add_cmd()
  *  
- *  @brief: Checks for a set of known quit commands
+ *  @brief: Registers a shell command    
  *
  *********************************************************************/
 
-bool shell_t::check_quit(const char* command) 
+const int shell_t::add_cmd(command_handler_t* acmd) 
 {
-    if (( strcasecmp(command, "quit") == 0 ) ||
-        ( strcasecmp(command, "quit;") == 0 ) ||
-        ( strcasecmp(command, "q") == 0 ) ||
-        ( strcasecmp(command, "q;") == 0 ) ||
-        ( strcasecmp(command, "exit") == 0 ) ||
-        ( strcasecmp(command, "exit;") == 0 ) )
-        // quit command!
-        return (true);
-    return (false);
+    assert (acmd);
+    assert (!acmd->name().empty());
+    cmdMapIt cmdit;
+
+    // register main name
+    cmdit = _cmds.find(acmd->name());
+    if (cmdit!=_cmds.end()) {
+        TRACE( TRACE_ALWAYS, "Cmd (%s) already registered\n", acmd->name().c_str());
+        return (0);
+    }
+    else {
+        TRACE( TRACE_DEBUG, "Registering cmd (%s)\n", acmd->name().c_str());        
+        _cmds[acmd->name()] = acmd;
+    }
+
+    // register aliases
+    int regs=0; // counts aliases registered
+    vector<string>* apl = acmd->aliases();
+    assert (apl);
+    for (vector<string>::iterator alit = apl->begin(); alit != apl->end(); ++alit) {
+        cmdit = _aliases.find(*alit);
+        if (cmdit!=_aliases.end()) {
+            TRACE( TRACE_ALWAYS, "Alias (%s) already registered\n", (*alit).c_str());
+        }
+        else {
+            TRACE( TRACE_DEBUG, "Registering alias (%s)\n", (*alit).c_str());
+            _aliases[*alit]=acmd;
+            ++regs;
+        }
+    }
+    assert (regs); // at least one alias should be registered
+    return (0);
+}
+
+       
+const int shell_t::init_cmds()
+{
+    CRITICAL_SECTION(sh_cs,_lock);
+    for (cmdMapIt it = _cmds.begin(); it != _cmds.end(); ++it) {
+        it->second->init();
+    }
+    return (0);
+}
+
+const int shell_t::close_cmds()
+{
+    CRITICAL_SECTION(sh_cs,_lock);
+    for (cmdMapIt it = _cmds.begin(); it != _cmds.end(); ++it) {
+        it->second->close();
+    }
+    return (0);
 }
 
 
 /*********************************************************************
  *
- *  @fn:    check_help
- *  
- *  @brief: Checks for a set of known help commands
+ *  @brief: Few basic commands
  *
  *********************************************************************/
 
-bool shell_t::check_help(const char* command) 
-{    
-    if (( strcasecmp(command, "help") == 0 ) ||
-        ( strcasecmp(command, "help;") == 0 ) ||
-        ( strcasecmp(command, "h") == 0 ) ||
-        ( strcasecmp(command, "h;") == 0 ) )
-        // help command!
-        return (true);        
-    return (false);
+
+const int shell_t::_register_commands() 
+{
+
+    //    register_commands(); // call the virtual
+
+    // add own
+
+    _tracer_cmd = new trace_cmd_t();        
+    _tracer_cmd->setaliases();
+    add_cmd(_tracer_cmd.get());
+
+    _conf_cmd = new conf_cmd_t();        
+    _conf_cmd->setaliases();
+    add_cmd(_conf_cmd.get());
+
+    _env_cmd = new env_cmd_t();        
+    _env_cmd->setaliases();
+    add_cmd(_env_cmd.get());
+
+    _set_cmd = new set_cmd_t();        
+    _set_cmd->setaliases();
+    add_cmd(_set_cmd.get());
+
+    _help_cmd = new help_cmd_t(&_cmds);        
+    _help_cmd->setaliases();
+    add_cmd(_help_cmd.get());
+
+    _quit_cmd = new quit_cmd_t();        
+    _quit_cmd->setaliases();
+    add_cmd(_quit_cmd.get());
+
+    return (0);
 }
+
+
 
 
 
 /*********************************************************************
  *
- *  @fn:    {usage,check,parse,print}_{set,env}
- *  
+ *  QUIT
+ *
+ *********************************************************************/
+
+void quit_cmd_t::setaliases() 
+{
+    _name = string("quit");
+    _aliases.push_back("quit");
+    _aliases.push_back("q");
+    _aliases.push_back("exit");
+}
+
+
+/*********************************************************************
+ *
+ *  HELP
+ *
+ *********************************************************************/
+
+void help_cmd_t::setaliases() 
+{
+    _name = string("help");
+    _aliases.push_back("help");
+    _aliases.push_back("h");
+}
+
+
+void help_cmd_t::list_cmds()
+{
+    TRACE( TRACE_ALWAYS, "Available commands: \n");
+    TRACE( TRACE_ALWAYS, "(press \"help <cmd>\" for more info about a specific cmd)\n");
+    for (cmdMapIt it = _pcmds->begin(); it != _pcmds->end(); ++it) {
+        TRACE( TRACE_ALWAYS, " %s - %s\n", it->first.c_str(), it->second->desc().c_str());
+    }
+}
+
+const int help_cmd_t::handle(const char* cmd) 
+{
+    char help_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];    
+    if ( sscanf(cmd, "%s %s", &help_tag, &cmd_tag) < 2) {
+        // prints the list of commands
+        list_cmds();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    // otherwise prints usage of a specific command
+    cmdMapIt it = _pcmds->find(cmd_tag);
+    if (it==_pcmds->end()) {
+        TRACE( TRACE_ALWAYS,"Cmd (%s) not found\n", cmd_tag);
+        return (SHELL_NEXT_CONTINUE);
+    }
+    it->second->usage();
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+/*********************************************************************
+ *
  *  @brief: Shell environment variables related functions 
  *
  *********************************************************************/
 
-bool shell_t::check_set(const char* command) 
+
+/*********************************************************************
+ *
+ *  SET
+ *
+ *********************************************************************/
+
+void set_cmd_t::setaliases() 
 {    
-    if (( strcasecmp(command, "set") == 0 ) ||
-        ( strcasecmp(command, "set;") == 0 ) ||
-        ( strcasecmp(command, "s") == 0 ) ||
-        ( strcasecmp(command, "s;") == 0 ) )
-        // set command!
-        return (true);        
-    return (false);
+    _name = string("set");
+    _aliases.push_back("set");
+    _aliases.push_back("s");
 }
 
+const int set_cmd_t::handle(const char* cmd) 
+{
+    assert (ev);
+    ev->parseSetReq(cmd);
+    return (SHELL_NEXT_CONTINUE);
+}
 
-void shell_t::usage_set(void) const
+void set_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "SET Usage:\n\n"                               \
            "*** set [<PARAM_NAME=PARAM_VALUE>*]\n"                      \
@@ -393,51 +337,63 @@ void shell_t::usage_set(void) const
 }
 
 
-int shell_t::parse_set(const char* command) 
-{
-    envVar::instance()->parseSetReq(command);
-    return (SHELL_NEXT_CONTINUE);
+/*********************************************************************
+ *
+ *  ENV
+ *
+ *********************************************************************/
+
+void env_cmd_t::setaliases() 
+{    
+    _name = string("env");
+    _aliases.push_back("env");
+    _aliases.push_back("e");
 }
 
-
-bool shell_t::check_env(const char* command) 
+const int env_cmd_t::handle(const char* cmd)
 {    
-    if (( strcasecmp(command, "env") == 0 ) ||
-        ( strcasecmp(command, "env;") == 0 ) ||
-        ( strcasecmp(command, "e") == 0 ) ||
-        ( strcasecmp(command, "e;") == 0 ) )
-        // set command!
-        return (true);        
-    return (false);
-}
-
-int shell_t::serve_env(const char* command)
-{    
+    assert (ev);
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char env_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(command, "%s %s", &cmd_tag, &env_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", &cmd_tag, &env_tag) < 2) {
         // prints all the env
-        envVar::instance()->printVars();    
+        ev->printVars();    
         return (SHELL_NEXT_CONTINUE);
     }
-    envVar::instance()->checkVar(env_tag);
+    ev->checkVar(env_tag);
     return (SHELL_NEXT_CONTINUE);
 }
 
-
-bool shell_t::check_reconf(const char* command) 
-{    
-    if (( strcasecmp(command, "reconf") == 0 ) ||
-        ( strcasecmp(command, "r;") == 0 ) ||
-        ( strcasecmp(command, "conf") == 0 ) ||
-        ( strcasecmp(command, "c;") == 0 ) )
-        // set command!
-        return (true);        
-    return (false);
+void env_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "ENV Usage:\n\n"                               \
+           "*** env [PARAM]\n"                      \
+           "\nParameters:\n"                                            \
+           "env         - Print all the environment variables\n" \
+           "env <PARAM> - Print the value of a specific env variable\n\n");
 }
 
-int shell_t::reconf(void)
+
+/*********************************************************************
+ *
+ *  CONF
+ *
+ *********************************************************************/
+
+void conf_cmd_t::setaliases() 
 {    
-    envVar::instance()->refreshVars();
+    _name = string("conf");
+    _aliases.push_back("conf");
+    _aliases.push_back("c");
+}
+
+const int conf_cmd_t::handle(const char* cmd)
+{    
+    ev->refreshVars();
     return (SHELL_NEXT_CONTINUE);
+}
+
+void conf_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "CONF - Tries to reread all the set env vars from the config file\n");
 }

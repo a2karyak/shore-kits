@@ -506,7 +506,7 @@ void ShoreEnv::readconfig(string conf_file)
         _dev_opts[SHORE_DB_OPTIONS[i][0]] = tmp;
     }
 
-    ev->printVars();
+    //ev->printVars();
 }
 
 

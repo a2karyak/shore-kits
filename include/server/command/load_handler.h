@@ -13,6 +13,13 @@ public:
     virtual void init();
     virtual void handle_command(const char* command);
     virtual void shutdown();    
+
+    void close() { assert(0); }
+    const int handle(const char* cmd) { return (SHELL_NEXT_CONTINUE); }
+    void setaliases() { assert(0); }
+    void usage() { assert(0); }
+    const string desc() { return (string("")); }               
+
 };
 
 #endif /** __SERVER_CMD_LOAD_HANDLER_H */

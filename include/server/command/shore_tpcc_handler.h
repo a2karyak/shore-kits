@@ -69,6 +69,14 @@ public:
     
     driver_t* lookup_driver(const c_str &tag);
 
+
+    void close() { assert(0); }
+    const int handle(const char* cmd) { return (SHELL_NEXT_CONTINUE); }
+    void setaliases() { assert(0); }
+    void usage() { assert(0); }
+    const string desc() { return (string("")); }               
+
+
 }; // EOF shore_tpcc_handler_t
 
 

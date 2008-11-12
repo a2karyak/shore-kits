@@ -59,6 +59,13 @@ class help_command_handler : public command_handler_t {
 	for(command_map::iterator it=command_mappings.begin(); it != command_mappings.end(); ++it)
 	    printf("%s\n", it->first.data());
     }
+
+    void init() { assert(0); }
+    void close() { assert(0); }
+    const int handle(const char* cmd) { return (SHELL_NEXT_CONTINUE); }
+    void setaliases() { assert(0); }
+    void usage() { assert(0); }
+    const string desc() { return (string("")); }               
 };
 
 /* definitions of exported functions */
@@ -84,7 +91,7 @@ void register_command_handlers( const int environment ) {
     // Utilities
     add_command("help", new help_command_handler());
     add_command("print", new printer_t());
-    add_command("tracer", new tracer_t());
+    add_command("tracer", new trace_cmd_t());
 
     // Data Loads
     add_command("load", new load_handler_t());
@@ -152,7 +159,7 @@ void shutdown_command_handlers(void) {
         // the map...
         if (handler != NULL) {
 
-            handler->shutdown();
+            handler->close();
             
             // We would like to delete the command handlers, but we don't
             // really own them. We don't know how many times this same
@@ -241,7 +248,7 @@ static void dispatch_command(const char* command) {
 
     // pass the handler the whole command... this lets us register the
     // same handler for multiple commands
-    handler->handle_command(command);
+    handler->handle(command);
 }
 
 

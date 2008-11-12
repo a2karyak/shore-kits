@@ -279,6 +279,8 @@ public:
                get_command_cnt());
     }
 
+    const int register_commands() { return (SHELL_NEXT_CONTINUE); }
+
     // shell interface
     int process_command(const char* command, const char* cmd_tag);
     int print_usage(const char* command);

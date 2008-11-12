@@ -213,11 +213,11 @@ public:
 
         // 1. bind to the specified processor
         if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-            TRACE( TRACE_ALWAYS, "Cannot bind to processor (%d)\n", _prs_id);
+            TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
             _is_bound = false;
         }
         else {
-            TRACE( TRACE_DEBUG, "Binded to processor (%d)\n", _prs_id);
+            TRACE( TRACE_CPU_BINDING, "Binded to processor (%d)\n", _prs_id);
             _is_bound = true;
         }
 

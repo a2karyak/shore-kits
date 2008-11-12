@@ -1,7 +1,7 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#ifndef __UTIL_CMD_TRACER_H
-#define __UTIL_CMD_TRACER_H
+#ifndef __UTIL_CMD_TRACE_H
+#define __UTIL_CMD_TRACE_H
 
 
 #include <map>
@@ -11,18 +11,23 @@
 using std::map;
 
 
-class tracer_t : public command_handler_t 
+class trace_cmd_t : public command_handler_t 
 {
     map<c_str, int> _known_types;
     
 public:
 
-    tracer_t() { init(); }
-    virtual ~tracer_t() { }
+    trace_cmd_t() { init(); }
+    ~trace_cmd_t() { }
 
-    virtual void init();
-    virtual void handle_command(const char* command);
+    void init();
+    void close() { }
 
+    const int handle(const char* cmd);
+
+    void setaliases();
+    void usage();
+    const string desc() { return (string("Manipulates tracing level")); }               
 
 private:
     
@@ -30,11 +35,10 @@ private:
     void disable(const char* type);
     void print_enabled_types();
     void print_known_types();
-    void print_usage(const char* command_tag);
 
-}; // EOF: tracer_t
+}; // EOF: trace_cmd_t
 
 
-#endif /** __UTIL_CMD_TRACER_H */
+#endif /** __UTIL_CMD_TRACE_H */
 
 

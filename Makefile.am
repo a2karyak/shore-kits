@@ -97,6 +97,7 @@ UTIL = \
         $(SU)/history.cpp \
         $(SU)/countdown.cpp \
         $(SU)/confparser.cpp \
+        $(SU)/envvar.cpp \
         $(SU)/shell.cpp
 
 UTIL_CMD = \

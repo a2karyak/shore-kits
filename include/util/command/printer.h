@@ -15,6 +15,14 @@ public:
 
     virtual void handle_command(const char* command);
 
+
+    void init() { assert(0); }
+    void close() { assert(0); }
+    const int handle(const char* cmd) { return (SHELL_NEXT_CONTINUE); }
+    void setaliases() { assert(0); }
+    void usage() { assert(0); }
+    const string desc() { return (string("")); }               
+
 }; // EOF: printer_t
 
 #endif /** __UTIL_CMD_PRINTER_H */
