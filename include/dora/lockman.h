@@ -301,7 +301,7 @@ public:
         for (TrxKeyMapIt it=r.first; it!=r.second; ++it) {           
             // release ll for key from the key-to-ll map
             //            cout << "Release - " << (*it).second << endl;
-            TRACE( TRACE_DEBUG, "Releasing something from (%d)\n", atid);
+            TRACE( TRACE_TRX_FLOW, "Releasing something from (%d)\n", atid);
             _key_ll_m.release((*it).second);
         }                 
         // remove trx-related entries from the trx-to-key map

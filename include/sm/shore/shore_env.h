@@ -49,7 +49,7 @@ const int SHORE_NUM_OF_RETRIES       = 3;
 #define SHORE_TABLE_DATA_DIR  "databases"
 #define SHORE_CONF_FILE       "shore.conf"
 
-const string CONFIG_PARAM       = "config";
+const string CONFIG_PARAM       = "db-config";
 const string CONFIG_PARAM_VALUE = "invalid";
 
 
@@ -62,9 +62,9 @@ const string CONFIG_PARAM_VALUE = "invalid";
 // SHORE_SYS_OPTIONS:
 // Database-independent options 
 const string SHORE_SYS_OPTIONS[][2] = {
-    { "clobberdev", "0" },
-    { "maxcpucount", "0" },
-    { "activecpucount", "0" },
+    { "db-clobberdev", "0" },
+    { "sys-maxcpucount", "0" },
+    { "sys-activecpucount", "0" },
 };
 
 const int    SHORE_NUM_SYS_OPTIONS  = 3;
@@ -74,11 +74,11 @@ const int    SHORE_NUM_SYS_OPTIONS  = 3;
 // Those options are appended as parameters when starting Shore
 // Those are the database-independent
 const string SHORE_SYS_SM_OPTIONS[][3]  = {
-    { "-sm_logging", "logging", "yes" },
-    { "-sm_diskrw", "diskrw", "diskrw" },
-    { "-sm_errlog", "errlog", "info" },
-    { "-sm_fake_io_delay", "fakeiodelay", "0" },
-    { "-sm_page_writers", "pagecleaners", "1" }
+    { "-sm_logging", "shore-logging", "yes" },
+    { "-sm_diskrw", "shore-diskrw", "diskrw" },
+    { "-sm_errlog", "shore-errlog", "info" },
+    { "-sm_fake_io_delay", "shore-fakeiodelay", "0" },
+    { "-sm_page_writers", "shore-pagecleaners", "1" }
 };
 
 const int    SHORE_NUM_SYS_SM_OPTIONS   = 5;
@@ -315,11 +315,6 @@ public:
             delete (_pvid);
             _pvid = NULL;
         }
-        
-//         if (_pssm) {
-//             delete (_pssm);
-//             _pssm = NULL;
-//         }
 
         pthread_mutex_destroy(&_init_mutex);
         pthread_mutex_destroy(&_vol_mutex);

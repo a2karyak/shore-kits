@@ -34,6 +34,7 @@
 #include "util/progress.h"
 #include "util/history.h"
 #include "util/countdown.h"
+#include "util/confparser.h"
 #include "util/shell.h"
 #include "util/condex.h"
 

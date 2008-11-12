@@ -5,9 +5,7 @@
  *  @brief  Program to demonstrate ConfigFile class
  */
 
-#include "sm/shore/shore_conf.h"
-
-using namespace shore;
+#include "util/confparser.h"
 
 using std::string;
 using std::cout;

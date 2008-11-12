@@ -16,8 +16,8 @@
 #include "workload/driver.h"
 #include "workload/driver_directory.h"
 #include "workload/workload.h"
-#include "server/command/command_handler.h"
 
+#include "util/command/command_handler.h"
 #include "util/config.h"
 #include "server/print.h"
 

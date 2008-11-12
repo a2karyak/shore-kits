@@ -196,10 +196,13 @@ w_rc_t client_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 
         // case of duration-based measurement
     case (MT_TIME_DUR):
+
+        // retrieve the default batch size
+        int batchsz = envVar::instance()->getVarInt("cl-batchsz",BATCH_SIZE);
 	
 	// submit the first two batches...
-	submit_batch(env, xct_type, i);
-	submit_batch(env, xct_type, i);
+	submit_batch(env, xct_type, i, batchsz);
+	submit_batch(env, xct_type, i, batchsz);
 
 	// main loop
         while (true) {
@@ -211,7 +214,7 @@ w_rc_t client_smt_t::run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct)
 		break;
 
 	    // submit a replacement batch...
-	    submit_batch(env, xct_type, i);
+	    submit_batch(env, xct_type, i, batchsz);
         }
 	
 	// wait for the last batch to complete...

@@ -709,8 +709,8 @@ const int partition_t<DataType>::_stop_threads()
     _owner = NULL; // join()?
 
     // reset queues' worker control pointers
-    _input_queue.set(WS_UNDEF,NULL); 
-    _committed_queue.set(WS_UNDEF,NULL); 
+    _input_queue.set(WS_UNDEF,NULL,0); 
+    _committed_queue.set(WS_UNDEF,NULL,0); 
 
 
     // standy
@@ -832,9 +832,12 @@ const int partition_t<DataType>::_generate_primary()
     _owner = pworker;
     _owner->set_data_owner_state(DOS_ALONE);
 
+    // read from env params the loopcnt
+    int lc = envVar::instance()->getVarInt("dora-queueloops",0);
+
     // pass worker thread controls to the two queues
-    _input_queue.set(WS_INPUT_Q,_owner);  
-    _committed_queue.set(WS_COMMIT_Q,_owner);  
+    _input_queue.set(WS_INPUT_Q,_owner,lc);  
+    _committed_queue.set(WS_COMMIT_Q,_owner,lc);  
 
     _owner->fork();
 

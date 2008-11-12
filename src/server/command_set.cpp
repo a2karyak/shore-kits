@@ -8,14 +8,15 @@
 #include "util.h"
 
 #include "util/config.h"
+#include "util/command/command_handler.h"
 
 #include "server/command_set.h"
 #include "server/print.h"
-#include "server/command/command_handler.h"
+
 
 // General purpose command handlers
-#include "server/command/printer.h"
-#include "server/command/tracer.h"
+#include "util/command/printer.h"
+#include "util/command/tracer.h"
 
 // Special purpose command handlers
 #include "server/command/load_handler.h"

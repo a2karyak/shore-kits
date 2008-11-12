@@ -2,8 +2,7 @@
 
 
 #include "util.h"
-#include "server/command/printer.h"
-#include "server/print.h"
+#include "util/command/printer.h"
 
 
 #ifdef __SUNPRO_CC

@@ -172,17 +172,16 @@ public:
         assert (_cp);
     }
 
-
     ~client_smt_t() { 
         if (_cp) {
             delete (_cp);
             _cp = NULL;
         }
     }
-        
+       
 
     void submit_batch(ShoreTPCCEnv* env, int xct_type, 
-                      int& trx_cnt, const int batch_size = BATCH_SIZE);
+                      int& trx_cnt, const int batch_size);
 
     w_rc_t run_xcts(ShoreTPCCEnv* env, int xct_type, int num_xct);
     w_rc_t run_one_tpcc_xct(ShoreTPCCEnv* env, int xct_type, int xctid);    

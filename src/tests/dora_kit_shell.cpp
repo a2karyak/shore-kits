@@ -51,7 +51,7 @@ public:
                                   const int iSelectedTrx, const int iIterations,
                                   const int iUseSLI, const eBindingType abt);    
 
-    virtual int process_cmd_LOAD(const char* command, char* command_tag);        
+    virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
 
     virtual void append_trxs_map(void); // appends the DORA-TRXs
     virtual void append_bp_map(void) { }
@@ -226,7 +226,8 @@ int dora_tpcc_kit_shell_t::_cmd_MEASURE_impl(const int iQueriedWHs,
 }
 
 
-int dora_tpcc_kit_shell_t::process_cmd_LOAD(const char* command, char* command_tag)
+int dora_tpcc_kit_shell_t::process_cmd_LOAD(const char* command, 
+                                            const char* command_tag)
 {
     TRACE( TRACE_DEBUG, "Gotcha\n");
     return (SHELL_NEXT_CONTINUE);
@@ -252,7 +253,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
+                              | TRACE_DEBUG
               );
 
     /* 1. Instanciate the Shore environment */

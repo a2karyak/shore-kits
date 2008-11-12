@@ -280,7 +280,7 @@ public:
     }
 
     // shell interface
-    int process_command(const char* command);
+    int process_command(const char* command, const char* cmd_tag);
     int print_usage(const char* command);
 
 }; // EOF: tree_test_shell_t
@@ -337,7 +337,7 @@ int tree_test_shell_t::print_usage(const char* command)
 }
 
 
-int tree_test_shell_t::process_command(const char* command)
+int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
 {
     /* 0. Parse Parameters */
     int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
@@ -355,11 +355,9 @@ int tree_test_shell_t::process_command(const char* command)
     int commit_interval     = DF_COMMIT_INTERVAL;
     int tmp_ci              = DF_COMMIT_INTERVAL;
 
-    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
-
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
-                &command_tag,
+    if ( sscanf(cmd, "%s %d %d %d %d %d %d %d",
+                &cmd_tag,
                 &tmp_numOfQueriedWHs,
                 &tmp_selectedTrxID,
                 &tmp_updTuple,
@@ -368,7 +366,7 @@ int tree_test_shell_t::process_command(const char* command)
                 &tmp_iterations,
                 &tmp_ci) < 4 ) 
     {
-        print_usage(command_tag);
+        print_usage(cmd_tag);
         return (SHELL_NEXT_CONTINUE);
     }
 

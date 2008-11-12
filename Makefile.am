@@ -14,8 +14,8 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 # List of libraries
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libdora.a lib/libutil.a \
-   lib/libdbgen.a lib/libsm.a
+   lib/libstages.a lib/libcore.a lib/libdora.a lib/libsm.a lib/libutil.a \
+   lib/libdbgen.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -70,8 +70,8 @@ dbgen: $(DBGEN)
 ################################################################################
 
 SU=$(top_srcdir)/src/util
-lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
-lib_libutil_a_SOURCES = \
+
+UTIL = \
 	$(SU)/c_str.cpp \
 	$(SU)/fnv.cpp \
 	$(SU)/hash_functions.cpp \
@@ -96,9 +96,19 @@ lib_libutil_a_SOURCES = \
         $(SU)/store_string.cpp \
         $(SU)/history.cpp \
         $(SU)/countdown.cpp \
+        $(SU)/confparser.cpp \
         $(SU)/shell.cpp
 
+UTIL_CMD = \
+        $(SU)/command/tracer.cpp \
+        $(SU)/command/printer.cpp
 
+
+lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
+
+lib_libutil_a_SOURCES = \
+	$(UTIL) \
+        $(UTIL_CMD)
 
 
 
@@ -142,7 +152,6 @@ lib_libscheduler_a_SOURCES = \
 
 SM=$(top_srcdir)/src/sm
 SM_SHORE = \
-   $(SM)/shore/shore_conf.cpp \
    $(SM)/shore/shore_file_desc.cpp \
    $(SM)/shore/shore_field.cpp \
    $(SM)/shore/shore_table.cpp \
@@ -428,10 +437,9 @@ stagedtrx_LDADD = $(LDADD) \
 		-lltdl
 
 COMMANDS = \
-   $(SE)/command/printer.cpp \
    $(SE)/command/load_handler.cpp \
-   $(SE)/command/shore_tpcc_handler.cpp \
-   $(SE)/command/tracer.cpp
+   $(SE)/command/shore_tpcc_handler.cpp
+
 
 
 stagedtrx_SOURCES = \

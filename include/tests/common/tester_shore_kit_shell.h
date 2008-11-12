@@ -27,6 +27,10 @@
 #include "stages/tpcc/shore/shore_tpcc_env.h" // TODO (ip) It should not get the specific TPCC Shore Env
 
 
+#include "util/command/tracer.h"
+#include "util/command/printer.h"
+
+
 using std::map;
 
 
@@ -73,6 +77,8 @@ protected:
     typedef mapBindPols::iterator               mapBindPolsIt;    
     mapBindPols _sup_bps;
 
+    tracer_t _trace_handler;
+
 public:
 
     shore_kit_shell_t(const char* prompt, ShoreTPCCEnv* env, 
@@ -95,16 +101,16 @@ public:
     virtual ~shore_kit_shell_t()  { }
 
     // shell interface
-    virtual int process_command(const char* command);
+    virtual int process_command(const char* command, const char* command_tag);
     virtual int print_usage(const char* command);
     virtual int SIGINT_handler();
 
     // supported commands and their usage
-    virtual int process_cmd_TEST(const char* command, char* command_tag);
-    virtual int process_cmd_MEASURE(const char* command, char* command_tag);
-    virtual int process_cmd_WARMUP(const char* command, char* command_tag);    
-    virtual int process_cmd_LOAD(const char* command, char* command_tag);        
-    virtual int process_cmd_TRXS(const char* command, char* command_tag); 
+    virtual int process_cmd_TEST(const char* command, const char* command_tag);
+    virtual int process_cmd_MEASURE(const char* command, const char* command_tag);
+    virtual int process_cmd_WARMUP(const char* command, const char* command_tag);    
+    virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
+    virtual int process_cmd_TRXS(const char* command, const char* command_tag); 
 
     virtual void usage_cmd_TEST();
     virtual void usage_cmd_MEASURE();

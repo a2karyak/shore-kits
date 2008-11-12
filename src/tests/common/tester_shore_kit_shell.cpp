@@ -269,7 +269,6 @@ int shore_kit_shell_t::print_usage(const char* command)
 
     print_sup_trxs();
     print_sup_bp();
-    print_env();
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -367,48 +366,48 @@ void shore_kit_shell_t::usage_cmd_LOAD()
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_command(const char* command)
+int shore_kit_shell_t::process_command(const char* cmd,
+                                       const char* cmd_tag)
 {
     _g_canceled = false;
 
     _current_prs_id = _start_prs_id;
 
-    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
-
     // make sure any previous abort is cleared
     client_smt_t::resume_test();
 
-    if ( sscanf(command, "%s", &command_tag) < 1) {
-        print_usage(command_tag);
+    // TRACE cmd
+    if (strcasecmp(cmd_tag, "TRACE") == 0) {
+        _trace_handler.handle_command(cmd);
         return (SHELL_NEXT_CONTINUE);
     }
 
     // TRXS cmd
-    if (strcasecmp(command_tag, "TRXS") == 0) {
-        return (process_cmd_TRXS(command, command_tag));
+    if (strcasecmp(cmd_tag, "TRXS") == 0) {
+        return (process_cmd_TRXS(cmd, cmd_tag));
     }
 
     // LOAD cmd
-    if (strcasecmp(command_tag, "LOAD") == 0) {
-        return (process_cmd_LOAD(command, command_tag));
+    if (strcasecmp(cmd_tag, "LOAD") == 0) {
+        return (process_cmd_LOAD(cmd, cmd_tag));
     }
 
     // WARMUP cmd
-    if (strcasecmp(command_tag, "WARMUP") == 0) {
-        return (process_cmd_WARMUP(command, command_tag));
+    if (strcasecmp(cmd_tag, "WARMUP") == 0) {
+        return (process_cmd_WARMUP(cmd, cmd_tag));
     }
     
     // TEST cmd
-    if (strcasecmp(command_tag, "TEST") == 0) {
-        return (process_cmd_TEST(command, command_tag));
+    if (strcasecmp(cmd_tag, "TEST") == 0) {
+        return (process_cmd_TEST(cmd, cmd_tag));
     }
 
     // MEASURE cmd
-    if (strcasecmp(command_tag, "MEASURE") == 0) {
-        return (process_cmd_MEASURE(command, command_tag));
+    if (strcasecmp(cmd_tag, "MEASURE") == 0) {
+        return (process_cmd_MEASURE(cmd, cmd_tag));
     }
     else {
-        print_usage(command_tag);
+        print_usage(cmd_tag);
         return (SHELL_NEXT_CONTINUE);
     }        
 
@@ -420,6 +419,46 @@ int shore_kit_shell_t::process_command(const char* command)
 
 /******************************************************************** 
  *
+ *  @fn:    process_cmd_TRXS
+ *
+ *  @brief: Parses the TRXS cmd and calls the virtual impl function
+ *
+ ********************************************************************/
+
+int shore_kit_shell_t::process_cmd_TRXS(const char* command, 
+                                        const char* command_tag)
+{
+    print_sup_trxs();
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    process_cmd_LOAD
+ *
+ *  @brief: Parses the LOAD cmd and calls the virtual impl function
+ *
+ ********************************************************************/
+
+int shore_kit_shell_t::process_cmd_LOAD(const char* command, 
+                                        const char* command_tag)
+{
+    assert (_env);
+    assert (_env->is_initialized());
+
+    if (_env->is_loaded()) {
+        TRACE( TRACE_ALWAYS, "Environment already loaded\n");
+        return (SHELL_NEXT_CONTINUE);
+    }
+
+    // call the virtual function that implements the test    
+    return (_cmd_LOAD_impl());
+}
+
+
+/******************************************************************** 
+ *
  *  @fn:    process_cmd_WARMUP
  *
  *  @brief: Parses the WARMUP cmd and calls the virtual impl function
@@ -427,7 +466,7 @@ int shore_kit_shell_t::process_command(const char* command)
  ********************************************************************/
 
 int shore_kit_shell_t::process_cmd_WARMUP(const char* command, 
-                                          char* command_tag)
+                                          const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -439,15 +478,16 @@ int shore_kit_shell_t::process_cmd_WARMUP(const char* command,
         return (SHELL_NEXT_QUIT);
     }
 
-    /* 0. Parse Parameters */
-    int numOfQueriedWHs     = DF_WARMUP_QUERIED_WHS;
-    int tmp_numOfQueriedWHs = DF_WARMUP_QUERIED_WHS;
-    int numOfTrxs           = DF_WARMUP_TRX_PER_THR;
-    int tmp_numOfTrxs       = DF_WARMUP_TRX_PER_THR;
-    int duration            = DF_WARMUP_DURATION;
-    int tmp_duration        = DF_WARMUP_DURATION;
-    int iterations          = DF_WARMUP_ITERS;
-    int tmp_iterations      = DF_WARMUP_ITERS;
+    // 0. Parse Parameters
+    envVar* ev = envVar::instance();
+    int numOfQueriedWHs     = ev->getVarInt("test-num-queried",DF_WARMUP_QUERIED_WHS);
+    int tmp_numOfQueriedWHs = numOfQueriedWHs;
+    int numOfTrxs           = ev->getVarInt("test-num-trxs",DF_WARMUP_TRX_PER_THR);
+    int tmp_numOfTrxs       = numOfTrxs;
+    int duration            = ev->getVarInt("measure-duration",DF_WARMUP_DURATION);
+    int tmp_duration        = duration;
+    int iterations          = ev->getVarInt("test-iterations",DF_WARMUP_ITERS);
+    int tmp_iterations      = iterations;
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d",
@@ -498,45 +538,6 @@ int shore_kit_shell_t::process_cmd_WARMUP(const char* command,
 
 
 
-/******************************************************************** 
- *
- *  @fn:    process_cmd_LOAD
- *
- *  @brief: Parses the LOAD cmd and calls the virtual impl function
- *
- ********************************************************************/
-
-int shore_kit_shell_t::process_cmd_TRXS(const char* command, 
-                                        char* command_tag)
-{
-    print_sup_trxs();
-    return (SHELL_NEXT_CONTINUE);
-}
-
-
-/******************************************************************** 
- *
- *  @fn:    process_cmd_LOAD
- *
- *  @brief: Parses the LOAD cmd and calls the virtual impl function
- *
- ********************************************************************/
-
-int shore_kit_shell_t::process_cmd_LOAD(const char* command, 
-                                        char* command_tag)
-{
-    assert (_env);
-    assert (_env->is_initialized());
-
-    if (_env->is_loaded()) {
-        TRACE( TRACE_ALWAYS, "Environment already loaded\n");
-        return (SHELL_NEXT_CONTINUE);
-    }
-
-    // call the virtual function that implements the test    
-    return (_cmd_LOAD_impl());
-}
-
 
 /******************************************************************** 
  *
@@ -547,7 +548,7 @@ int shore_kit_shell_t::process_cmd_LOAD(const char* command,
  ********************************************************************/
 
 int shore_kit_shell_t::process_cmd_TEST(const char* command, 
-                                        char* command_tag)
+                                        const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -559,24 +560,24 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
         return (SHELL_NEXT_QUIT);
     }
 
-
-    /* 0. Parse Parameters */
-    int numOfQueriedWHs      = DF_NUM_OF_QUERIED_WHS;
-    int tmp_numOfQueriedWHs  = DF_NUM_OF_QUERIED_WHS;
-    int spreadThreads        = DF_SPREAD_THREADS_TO_WHS;
-    int tmp_spreadThreads    = DF_SPREAD_THREADS_TO_WHS;
-    int numOfThreads         = DF_NUM_OF_THR;
-    int tmp_numOfThreads     = DF_NUM_OF_THR;
-    int numOfTrxs            = DF_TRX_PER_THR;
-    int tmp_numOfTrxs        = DF_TRX_PER_THR;
-    int selectedTrxID        = DF_TRX_ID;
-    int tmp_selectedTrxID    = DF_TRX_ID;
-    int iterations           = DF_NUM_OF_ITERS;
-    int tmp_iterations       = DF_NUM_OF_ITERS;
-    int use_sli              = DF_USE_SLI;
-    int tmp_use_sli          = DF_USE_SLI;
-    eBindingType binding     = DF_BINDING_TYPE;
-    eBindingType tmp_binding = DF_BINDING_TYPE;
+    // 0. Parse Parameters
+    envVar* ev = envVar::instance();
+    int numOfQueriedWHs      = ev->getVarInt("test-num-queried",DF_NUM_OF_QUERIED_WHS);
+    int tmp_numOfQueriedWHs  = numOfQueriedWHs;
+    int spreadThreads        = ev->getVarInt("test-spread",DF_SPREAD_THREADS_TO_WHS);
+    int tmp_spreadThreads    = spreadThreads;
+    int numOfThreads         = ev->getVarInt("test-num-threads",DF_NUM_OF_THR);
+    int tmp_numOfThreads     = numOfThreads;
+    int numOfTrxs            = ev->getVarInt("test-num-trxs",DF_TRX_PER_THR);
+    int tmp_numOfTrxs        = numOfTrxs;
+    int selectedTrxID        = ev->getVarInt("test-trx-id",DF_TRX_ID);
+    int tmp_selectedTrxID    = selectedTrxID;
+    int iterations           = ev->getVarInt("test-iterations",DF_NUM_OF_ITERS);
+    int tmp_iterations       = iterations;
+    int use_sli              = ev->getVarInt("test-sli",DF_USE_SLI);
+    int tmp_use_sli          = use_sli;
+    eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
+    eBindingType tmp_binding = binding;
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d %d",
@@ -669,7 +670,7 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
  ********************************************************************/
 
 int shore_kit_shell_t::process_cmd_MEASURE(const char* command, 
-                                           char* command_tag)
+                                           const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -681,25 +682,25 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
         return (SHELL_NEXT_QUIT);
     }
 
-    TRACE( TRACE_ALWAYS, "measuring...\n");
+    // 0. Parse Parameters
+    envVar* ev = envVar::instance();
+    int numOfQueriedWHs      = ev->getVarInt("measure-num-queried",DF_NUM_OF_QUERIED_WHS);
+    int tmp_numOfQueriedWHs  = numOfQueriedWHs;
+    int spreadThreads        = ev->getVarInt("measure-spread",DF_SPREAD_THREADS_TO_WHS);
+    int tmp_spreadThreads    = spreadThreads;
+    int numOfThreads         = ev->getVarInt("measure-num-threads",DF_NUM_OF_THR);
+    int tmp_numOfThreads     = numOfThreads;
+    int duration             = ev->getVarInt("measure-duration",DF_DURATION);
+    int tmp_duration         = duration;
+    int selectedTrxID        = ev->getVarInt("measure-trx-id",DF_TRX_ID);
+    int tmp_selectedTrxID    = selectedTrxID;
+    int iterations           = ev->getVarInt("measure-iterations",DF_NUM_OF_ITERS);
+    int tmp_iterations       = iterations;
+    int use_sli              = ev->getVarInt("measure-sli",DF_USE_SLI);
+    int tmp_use_sli          = use_sli;
+    eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
+    eBindingType tmp_binding = binding;
 
-    /* 0. Parse Parameters */
-    int numOfQueriedWHs      = DF_NUM_OF_QUERIED_WHS;
-    int tmp_numOfQueriedWHs  = DF_NUM_OF_QUERIED_WHS;
-    int spreadThreads        = DF_SPREAD_THREADS_TO_WHS;
-    int tmp_spreadThreads    = DF_SPREAD_THREADS_TO_WHS;
-    int numOfThreads         = DF_NUM_OF_THR;
-    int tmp_numOfThreads     = DF_NUM_OF_THR;
-    int duration             = DF_DURATION;
-    int tmp_duration         = DF_DURATION;
-    int selectedTrxID        = DF_TRX_ID;
-    int tmp_selectedTrxID    = DF_TRX_ID;
-    int iterations           = DF_NUM_OF_ITERS;
-    int tmp_iterations       = DF_NUM_OF_ITERS;
-    int use_sli              = DF_USE_SLI;
-    int tmp_use_sli          = DF_USE_SLI;
-    eBindingType binding     = DF_BINDING_TYPE;
-    eBindingType tmp_binding = DF_BINDING_TYPE;
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d %d",

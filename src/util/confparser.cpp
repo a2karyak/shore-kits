@@ -1,16 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file   conf_file.cpp
+/** @file   confparser.cpp
  *
  *  @brief  Class for reading named values from configuration files
  *
  *  @note   See file tests/config_file_example.cpp for more examples.
  */
 
-#include "sm/shore/shore_conf.h"
-
-
-ENTER_NAMESPACE(shore);
+#include "util/confparser.h"
 
 
 ConfigFile::ConfigFile( string filename, string delimiter,
@@ -155,5 +152,3 @@ std::istream& operator>>( std::istream& is, ConfigFile& cf )
     return is;
 }
 
-
-EXIT_NAMESPACE(shore);

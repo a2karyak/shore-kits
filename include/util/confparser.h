@@ -37,15 +37,15 @@
 //   config.readInto( title, "title", string("Untitled") );
 // 
 
-/** @file   conf_file.h
+/** @file   confparser.h
  *
  *  @brief  Class for reading named values from configuration files
  *
  *  @note   See file tests/config_file_example.cpp for more examples.
  */
 
-#ifndef __SHORE_CONFIGFILE_H
-#define __SHORE_CONFIGFILE_H
+#ifndef __UTIL_CONFPARSER_H
+#define __UTIL_CONFPARSER_H
 
 #include "util/namespace.h"
 
@@ -59,9 +59,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
-
-ENTER_NAMESPACE(shore);
 
 
 using std::string;
@@ -159,7 +156,7 @@ public:
 }; // EOF: ConfigFile
 
 
-/* static */
+// static
 template<class T>
 string ConfigFile::T_as_string( const T& t )
 {
@@ -171,7 +168,7 @@ string ConfigFile::T_as_string( const T& t )
 }
 
 
-/* static */
+// static
 template<class T>
 T ConfigFile::string_as_T( const string& s )
 {
@@ -184,7 +181,7 @@ T ConfigFile::string_as_T( const string& s )
 }
 
 
-/* static */
+// static
 template<>
 inline string ConfigFile::string_as_T<string>( const string& s )
 {
@@ -194,7 +191,7 @@ inline string ConfigFile::string_as_T<string>( const string& s )
 }
 
 
-/* static */
+// static
 template<>
 inline bool ConfigFile::string_as_T<bool>( const string& s )
 {
@@ -275,6 +272,4 @@ void ConfigFile::add( string key, const T& value )
 }
 
 
-EXIT_NAMESPACE(shore);
-
-#endif  /* __SHORE_CONFIGFILE_H */
+#endif  /* __UTIL_CONFPARSER_H */

@@ -2,11 +2,9 @@
 
 
 #include "util.h"
-
 #include "util/config.h"
+#include "util/command/tracer.h"
 
-#include "server/command/tracer.h"
-#include "server/print.h"
 
 
 #ifdef __SUNPRO_CC
@@ -34,13 +32,15 @@ void tracer_t::init()
     ADD_TYPE(TRACE_TEMP_FILE);
     ADD_TYPE(TRACE_CPU_BINDING);
     ADD_TYPE(TRACE_QUERY_RESULTS);
-    ADD_TYPE(TRACE_WORK_SHARING);
+    ADD_TYPE(TRACE_STATISTICS);
+    ADD_TYPE(TRACE_NETWORK);
     ADD_TYPE(TRACE_RESPONSE_TIME);
     ADD_TYPE(TRACE_WORK_SHARING);
     ADD_TYPE(TRACE_TRX_FLOW);
     ADD_TYPE(TRACE_KEY_COMP);
     ADD_TYPE(TRACE_RECORD_FLOW);
 
+    ADD_TYPE(TRACE_DEBUG);
 };
 
 

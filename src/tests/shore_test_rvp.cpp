@@ -128,7 +128,7 @@ public:
     }
 
     // shell interface
-    int process_command(const char* command);
+    int process_command(const char* cmd, const char* cmd_tag);
     int print_usage(const char* command);
 
 }; // EOF: rvp_test_shell_t
@@ -152,7 +152,7 @@ int rvp_test_shell_t::print_usage(const char* command)
 }
 
 
-int rvp_test_shell_t::process_command(const char* command)
+int rvp_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
 {
     /* 0. Parse Parameters */
     int numOfThreads        = DF_NUM_OF_THR;
@@ -162,16 +162,14 @@ int rvp_test_shell_t::process_command(const char* command)
     int iterations          = DF_NUM_OF_ITERS;
     int tmp_iterations      = DF_NUM_OF_ITERS;
 
-    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
-
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d",
-                &command_tag,
+    if ( sscanf(cmd, "%s %d %d %d",
+                &cmd_tag,
                 &tmp_numOfThreads,
                 &tmp_numOfChks,
                 &tmp_iterations) < 2)
     {
-        print_usage(command_tag);
+        print_usage(cmd_tag);
         return (SHELL_NEXT_CONTINUE);
     }
 

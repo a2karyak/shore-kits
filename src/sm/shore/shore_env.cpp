@@ -8,7 +8,7 @@
  */
 
 
-#include "sm/shore/shore_conf.h"
+#include "util/confparser.h"
 #include "sm/shore/shore_env.h"
 
 
@@ -466,13 +466,14 @@ void ShoreEnv::readconfig(string conf_file)
 {
     TRACE( TRACE_DEBUG, "Reading config file (%s)\n", conf_file.c_str());
     
-    ConfigFile sh_config(conf_file);   // config file reader
     string tmp;
     int i=0;
+    envVar* ev = envVar::instance();
+    ev->setConfFile(conf_file);
 
     // Parse the configuration which will use (suffix)
-    string configsuf;
-    sh_config.readInto(configsuf, CONFIG_PARAM, CONFIG_PARAM_VALUE);
+    string configsuf = ev->getVar(CONFIG_PARAM,CONFIG_PARAM_VALUE);
+
     // configsuf should have taken a valid value
     assert (configsuf.compare(CONFIG_PARAM_VALUE)!=0); 
     TRACE( TRACE_ALWAYS, "Reading configuration (%s)\n", configsuf.c_str());
@@ -480,40 +481,32 @@ void ShoreEnv::readconfig(string conf_file)
     // Parse SYSTEM parameters
     TRACE( TRACE_DEBUG, "Reading SYS options\n");
     for (i; i<SHORE_NUM_SYS_OPTIONS; i++) {
-        sh_config.readInto(tmp, SHORE_SYS_OPTIONS[i][0], SHORE_SYS_OPTIONS[i][1]);
-        TRACE( TRACE_DEBUG, "(%d) (%s) (%s)\n", i,
-               SHORE_SYS_OPTIONS[i][0].c_str(), tmp.c_str());
+        tmp = ev->getVar(SHORE_SYS_OPTIONS[i][0],SHORE_SYS_OPTIONS[i][1]);
         _sys_opts[SHORE_SYS_OPTIONS[i][0]] = tmp;
     }
 
     // Parse SYS-SM (database-independent) parameters
     TRACE( TRACE_DEBUG, "Reading SYS-SM options\n");
     for (i=0; i<SHORE_NUM_SYS_SM_OPTIONS; i++) {
-        sh_config.readInto(tmp, SHORE_SYS_SM_OPTIONS[i][1], SHORE_SYS_SM_OPTIONS[i][2]);
-        TRACE( TRACE_DEBUG, "(%d) (%s) (%s)\n", i, 
-               SHORE_SYS_SM_OPTIONS[i][0].c_str(), tmp.c_str());
+        tmp = ev->getVar(SHORE_SYS_SM_OPTIONS[i][1],SHORE_SYS_SM_OPTIONS[i][2]);
         _sm_opts[SHORE_SYS_SM_OPTIONS[i][0]] = tmp;
     }    
 
     // Parse DB-SM (database-specific) parameters
     TRACE( TRACE_DEBUG, "Reading DB-SM options\n");
     for (i=0; i<SHORE_NUM_DB_SM_OPTIONS; i++) {
-        sh_config.readInto(tmp, configsuf + "-" + SHORE_DB_SM_OPTIONS[i][1], SHORE_DB_SM_OPTIONS[i][2]);
-        TRACE( TRACE_DEBUG, "(%d) (%s) (%s)\n", i, 
-               SHORE_DB_SM_OPTIONS[i][0].c_str(), tmp.c_str());
+        tmp = ev->getVar(configsuf + "-" + SHORE_DB_SM_OPTIONS[i][1],SHORE_DB_SM_OPTIONS[i][2]);
         _sm_opts[SHORE_DB_SM_OPTIONS[i][0]] = tmp;
     }    
 
     // Parse DB-specific parameters
     TRACE( TRACE_DEBUG, "Reading DB options\n");
     for (i=0; i<SHORE_NUM_DB_OPTIONS; i++) {
-        sh_config.readInto(tmp, configsuf + "-" + SHORE_DB_OPTIONS[i][0], SHORE_DB_OPTIONS[i][1]);
-        TRACE( TRACE_DEBUG, "(%d) (%s) (%s)\n", i,
-               SHORE_DB_OPTIONS[i][0].c_str(), tmp.c_str());
+        tmp = ev->getVar(configsuf + "-" + SHORE_DB_OPTIONS[i][0],SHORE_DB_OPTIONS[i][1]);
         _dev_opts[SHORE_DB_OPTIONS[i][0]] = tmp;
     }
 
-    //    conf(); // print configuration
+    ev->printVars();
 }
 
 

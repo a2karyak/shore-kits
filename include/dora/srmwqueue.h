@@ -21,9 +21,6 @@
 
 ENTER_NAMESPACE(dora);
 
-// How many loops it will spin before wait on cond var
-const int IDLE_LOOPS = 1000;
-
 template<class Action>
 struct srmwqueue 
 {
@@ -36,6 +33,8 @@ struct srmwqueue
     int volatile  _empty;
 
     eWorkingState _my_ws;
+
+    int _loops;
     
     // owner thread
     base_worker_t* _owner;
@@ -46,15 +45,16 @@ struct srmwqueue
     { 
         _read_pos = _for_readers.begin();
     }
-
     ~srmwqueue() { }
 
 
     // sets the pointer of the queue to the controls of a specific worker thread
-    void set(eWorkingState aws, base_worker_t* owner) {
+    void set(eWorkingState aws, base_worker_t* owner, const int& loops) 
+    {
         CRITICAL_SECTION(q_cs, _owner_lock);
         _my_ws = aws;
         _owner = owner;
+        _loops = loops;
     }
 
     // returns true if the passed control is the same
@@ -84,13 +84,13 @@ struct srmwqueue
             if (!_owner->can_continue(_my_ws)) return (false);
             
             // 4. if spinned too much, start waiting on the condex
-            if (++loopcnt > IDLE_LOOPS) {
+            if (++loopcnt > _loops) {
                 loopcnt = 0;
                 
-                TRACE( TRACE_DEBUG, "Condex sleeping (%d)...\n", _my_ws);
+                TRACE( TRACE_TRX_FLOW, "Condex sleeping (%d)...\n", _my_ws);
                 assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
                 loopcnt = _owner->condex_sleep();
-                TRACE( TRACE_DEBUG, "Condex woke (%d) (%d)...\n", _my_ws, loopcnt);
+                TRACE( TRACE_TRX_FLOW, "Condex woke (%d) (%d)...\n", _my_ws, loopcnt);
 
                 // after it wakes up, should do the loop again.
                 // if something has been pushed then _empty will be false
