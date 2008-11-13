@@ -11,10 +11,7 @@
 #ifndef __DORA_COMMON_H
 #define __DORA_COMMON_H
 
-#include "sm_vas.h"
-
 #include "util/namespace.h"
-
 
 
 ENTER_NAMESPACE(dora);
@@ -38,9 +35,7 @@ class rvp_t;
 class terminal_rvp_t;
 
 template<class DataType> class partition_t;
-
-class base_worker_t;
-template<class DataType> class worker_t;
+template<class DataType> class dora_worker_t;
 
 class base_action_t;
 template<class DataType> class action_t;
@@ -48,6 +43,7 @@ template<class DataType> class action_t;
 
 
 // ENUMS
+
 
 
 /******************************************************************** 
@@ -62,59 +58,6 @@ template<class DataType> class action_t;
  ********************************************************************/
 
 enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
-
-
-
-/******************************************************************** 
- *
- * @enum:  eWorkerControl
- *
- * @brief: States for controling a worker thread 
- *
- * @note:  A thread initially is paused then it starts working until
- *         someone changes the status to stopped.
- *
- ********************************************************************/
-
-enum eWorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
-
-
-
-
-/******************************************************************** 
- *
- * @enum:  eWorkingState
- *
- * @brief: Possible states while worker thread active
- *
- * States:
- *
- * UNDEF     = Unitialized
- * LOOP      = Idle and spinning
- * SLEEP     = Sleeping on the condvar
- * COMMIT_Q  = Serving to-be-committed requests
- * INPUT_Q   = Serving a normal request
- * FINISHED  = Done assigned job but still trx not decided
- *
- ********************************************************************/
-
-enum eWorkingState { WS_UNDEF, 
-                     WS_LOOP, 
-                     WS_SLEEP, 
-                     WS_COMMIT_Q, 
-                     WS_INPUT_Q,
-                     WS_FINISHED };
-
-
-/******************************************************************** 
- *
- * @enum:  eDataOwnerState
- *
- * @brief: Owning status for the worker thread of the data partition
- *
- ********************************************************************/
-
-enum eDataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
 
 
 

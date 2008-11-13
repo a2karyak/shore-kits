@@ -1,17 +1,16 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_shore_kit_shell.cpp
+/** @file:   tester_shore_shell.cpp
  *
  *  @brief:  Implementation of shell class for testing Shore environments
  *
- *  @author: Ippokratis Pandis (ipandis), Sept 2008
- *
+ *  @author: Ippokratis Pandis, Sept 2008
  */
 
-#include "tests/common/tester_shore_kit_shell.h"
+#include "tests/common/tester_shore_shell.h"
+#include "tests/common/tester_shore_client.h"
 
 using namespace shore;
-
 
 
 extern "C" void alarm_handler(int sig) {
@@ -21,42 +20,21 @@ extern "C" void alarm_handler(int sig) {
 bool volatile _g_canceled = false;
 
 
-/** shore_kit_shell_t interface */
-
+//// shore_shell_t interface ////
 
 
 /******************************************************************** 
  *
- *  @fn:    load_{trxs,bp}_map
+ *  @fn:    {trxs,bp}_map
  *
- *  @brief: Loads the basic supported trxs and binding policies maps
- *
- *  @note:  Calls the append_{trxs,bp}_map function for possible extensions
+ *  @brief: The supported trxs and binding policies maps
  *
  ********************************************************************/
 
 
-// TRXS //
+// TRXS - Supported Transactions //
 
-void shore_kit_shell_t::load_trxs_map(void)
-{
-    // Baseline TPC-C trxs
-    _sup_trxs[XCT_MIX]          = "Mix";
-    _sup_trxs[XCT_NEW_ORDER]    = "NewOrder";
-    _sup_trxs[XCT_PAYMENT]      = "Payment";
-    _sup_trxs[XCT_ORDER_STATUS] = "OrderStatus";
-    _sup_trxs[XCT_DELIVERY]     = "Delivery";
-    _sup_trxs[XCT_STOCK_LEVEL]  = "StockLevel";
-
-    // Microbenchmarks
-    _sup_trxs[XCT_MBENCH_WH]    = "MBench-WHs";
-    _sup_trxs[XCT_MBENCH_CUST]  = "MBench-CUSTs";
-
-    // Call virtual
-    append_trxs_map();
-}
-
-void shore_kit_shell_t::print_sup_trxs(void) const 
+void shore_shell_t::print_sup_trxs(void) const 
 {
     TRACE( TRACE_ALWAYS, "Supported TRXs\n");
     for (mapSupTrxsConstIt cit= _sup_trxs.begin();
@@ -64,7 +42,7 @@ void shore_kit_shell_t::print_sup_trxs(void) const
             TRACE( TRACE_ALWAYS, "%d -> %s\n", cit->first, cit->second.c_str());
 }
 
-const char* shore_kit_shell_t::translate_trx(const int iSelectedTrx) const
+const char* shore_shell_t::translate_trx(const int iSelectedTrx) const
 {
     mapSupTrxsConstIt cit = _sup_trxs.find(iSelectedTrx);
     if (cit != _sup_trxs.end())
@@ -75,18 +53,7 @@ const char* shore_kit_shell_t::translate_trx(const int iSelectedTrx) const
 
 // BP - Binding Policies //
 
-void shore_kit_shell_t::load_bp_map(void)
-{
-    // Basic binding policies
-    _sup_bps[BT_NONE]          = "NoBinding";
-    _sup_bps[BT_NEXT]          = "Adjacent";
-    _sup_bps[BT_SPREAD]        = "SpreadToCores";
-
-    // Call virtual
-    append_bp_map();
-}
-
-void shore_kit_shell_t::print_sup_bp(void) 
+void shore_shell_t::print_sup_bp(void) 
 {
     TRACE( TRACE_ALWAYS, "Supported Binding Policies\n");
     for (mapBindPolsIt cit= _sup_bps.begin();
@@ -94,7 +61,7 @@ void shore_kit_shell_t::print_sup_bp(void)
             TRACE( TRACE_ALWAYS, "%d -> %s\n", cit->first, cit->second.c_str());
 }
 
-const char* shore_kit_shell_t::translate_bp(const eBindingType abt)
+const char* shore_shell_t::translate_bp(const eBindingType abt)
 {
     mapBindPolsIt it = _sup_bps.find(abt);
     if (it != _sup_bps.end())
@@ -118,7 +85,7 @@ const char* shore_kit_shell_t::translate_bp(const eBindingType abt)
  *
  ******************************************************************/
 
-processorid_t shore_kit_shell_t::next_cpu(const eBindingType abt, 
+processorid_t shore_shell_t::next_cpu(const eBindingType abt, 
                                           const processorid_t aprd) 
 {
     processorid_t nextprs;
@@ -140,43 +107,13 @@ processorid_t shore_kit_shell_t::next_cpu(const eBindingType abt,
 
 /******************************************************************** 
  *
- *  @fn:    print_throughput
+ *  @fn:    print_CMD_info
  *
- *  @brief: Prints the throughput given measurement delay
+ *  @brief: Prints command-specific info
  *
  ********************************************************************/
 
-void shore_kit_shell_t::print_throughput(const int iQueriedWHs, const int iSpread, 
-                                         const int iNumOfThreads, const int iUseSLI, 
-                                         const double delay, const eBindingType abt)
-{
-    assert (_env);
-    int trxs_att  = _env->get_session_tpcc_stats()->get_total_attempted();
-    int trxs_com  = _env->get_session_tpcc_stats()->get_total_committed();
-    int nords_com = _env->get_session_tpcc_stats()->get_no_com();
-
-    TRACE( TRACE_ALWAYS, "*******\n"            \
-           "WHs:      (%d)\n"                   \
-           "Spread:   (%s)\n"                   \
-           "SLI:      (%s)\n"                   \
-           "Binding:  (%s)\n"                   \
-           "Threads:  (%d)\n"                   \
-           "Trxs Att: (%d)\n"                   \
-           "Trxs Com: (%d)\n"                   \
-           "NOrd Com: (%d)\n"       \
-           "Secs:     (%.2f)\n"     \
-           "TPS:      (%.2f)\n"                 \
-           "tpm-C:    (%.2f)\n",
-           iQueriedWHs, 
-           (iSpread ? "Yes" : "No"), (iUseSLI ? "Yes" : "No"), 
-           translate_bp(abt),
-           iNumOfThreads, trxs_att, trxs_com, nords_com, 
-           delay, 
-           trxs_com/delay,
-           60*nords_com/delay);
-}
-
-void shore_kit_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
+void shore_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
                                            const int iNumOfThreads, const int iDuration,
                                            const int iSelectedTrx, const int iIterations,
                                            const int iUseSLI, const eBindingType abt)
@@ -197,7 +134,7 @@ void shore_kit_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpr
            iIterations, (iUseSLI ? "Yes" : "No"));
 }
 
-void shore_kit_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread, 
+void shore_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread, 
                                         const int iNumOfThreads, const int iNumOfTrxs,
                                         const int iSelectedTrx, const int iIterations,
                                         const int iUseSLI, const eBindingType abt)
@@ -227,7 +164,7 @@ void shore_kit_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread
  *
  ********************************************************************/
 
-int shore_kit_shell_t::print_usage(const char* command) 
+int shore_shell_t::print_usage(const char* command) 
 {
     assert (command);
 
@@ -282,7 +219,7 @@ int shore_kit_shell_t::print_usage(const char* command)
  *
  ********************************************************************/
 
-void shore_kit_shell_t::usage_cmd_TEST() 
+void shore_shell_t::usage_cmd_TEST() 
 {
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
            "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <SLI> <BINDING>]\n" \
@@ -306,7 +243,7 @@ void shore_kit_shell_t::usage_cmd_TEST()
  *
  ********************************************************************/
 
-void shore_kit_shell_t::usage_cmd_MEASURE() 
+void shore_shell_t::usage_cmd_MEASURE() 
 {
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
            "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <SLI> <BINDING>]\n" \
@@ -330,7 +267,7 @@ void shore_kit_shell_t::usage_cmd_MEASURE()
  *
  ********************************************************************/
 
-void shore_kit_shell_t::usage_cmd_WARMUP() 
+void shore_shell_t::usage_cmd_WARMUP() 
 {
     TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
            "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
@@ -350,7 +287,7 @@ void shore_kit_shell_t::usage_cmd_WARMUP()
  *
  ********************************************************************/
 
-void shore_kit_shell_t::usage_cmd_LOAD() 
+void shore_shell_t::usage_cmd_LOAD() 
 {
     TRACE( TRACE_ALWAYS, "LOAD Usage:\n\n" \
            "*** load\n");
@@ -366,15 +303,15 @@ void shore_kit_shell_t::usage_cmd_LOAD()
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_command(const char* cmd,
-                                       const char* cmd_tag)
+int shore_shell_t::process_command(const char* cmd,
+                                   const char* cmd_tag)
 {
     _g_canceled = false;
 
     _current_prs_id = _start_prs_id;
 
     // make sure any previous abort is cleared
-    client_smt_t::resume_test();
+    base_client_t::resume_test();
 
     // TRXS cmd
     if (strcasecmp(cmd_tag, "TRXS") == 0) {
@@ -401,6 +338,7 @@ int shore_kit_shell_t::process_command(const char* cmd,
         return (process_cmd_MEASURE(cmd, cmd_tag));
     }
     else {
+        TRACE( TRACE_ALWAYS, "Unknown command (%s)\n", cmd);
         print_usage(cmd_tag);
         return (SHELL_NEXT_CONTINUE);
     }        
@@ -419,7 +357,7 @@ int shore_kit_shell_t::process_command(const char* cmd,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_cmd_TRXS(const char* command, 
+int shore_shell_t::process_cmd_TRXS(const char* command, 
                                         const char* command_tag)
 {
     print_sup_trxs();
@@ -435,7 +373,7 @@ int shore_kit_shell_t::process_cmd_TRXS(const char* command,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_cmd_LOAD(const char* command, 
+int shore_shell_t::process_cmd_LOAD(const char* command, 
                                         const char* command_tag)
 {
     assert (_env);
@@ -459,7 +397,7 @@ int shore_kit_shell_t::process_cmd_LOAD(const char* command,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_cmd_WARMUP(const char* command, 
+int shore_shell_t::process_cmd_WARMUP(const char* command, 
                                           const char* command_tag)
 {
     assert (_env);
@@ -541,7 +479,7 @@ int shore_kit_shell_t::process_cmd_WARMUP(const char* command,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_cmd_TEST(const char* command, 
+int shore_shell_t::process_cmd_TEST(const char* command, 
                                         const char* command_tag)
 {
     assert (_env);
@@ -663,7 +601,7 @@ int shore_kit_shell_t::process_cmd_TEST(const char* command,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::process_cmd_MEASURE(const char* command, 
+int shore_shell_t::process_cmd_MEASURE(const char* command, 
                                            const char* command_tag)
 {
     assert (_env);
@@ -784,11 +722,11 @@ int shore_kit_shell_t::process_cmd_MEASURE(const char* command,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::SIGINT_handler() 
+int shore_shell_t::SIGINT_handler() 
 {
     if(_processing_command && !_g_canceled) {
 	_g_canceled = true;
-	client_smt_t::abort_test();
+	base_client_t::abort_test();
 	return 0;
     }
 
@@ -805,7 +743,7 @@ int shore_kit_shell_t::SIGINT_handler()
  *
  ********************************************************************/
 
-int shore_kit_shell_t::_cmd_WARMUP_impl(const int iQueriedWHs, 
+int shore_shell_t::_cmd_WARMUP_impl(const int iQueriedWHs, 
                                         const int iTrxs, 
                                         const int iDuration, 
                                         const int iIterations)
@@ -834,7 +772,7 @@ int shore_kit_shell_t::_cmd_WARMUP_impl(const int iQueriedWHs,
  *
  ********************************************************************/
 
-int shore_kit_shell_t::_cmd_LOAD_impl()
+int shore_shell_t::_cmd_LOAD_impl()
 {
     TRACE( TRACE_ALWAYS, "loading...\n");
 
@@ -852,4 +790,4 @@ int shore_kit_shell_t::_cmd_LOAD_impl()
 
 
 
-/** EOF: shore_kit_shell_t functions */
+//// EOF: shore_shell_t functions ////

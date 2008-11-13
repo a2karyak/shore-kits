@@ -136,6 +136,9 @@ public:
     // parses a string of SET requests
     const int parseSetReq(const string& in);
 
+    // gets db-config and then <db-config>-system
+    string getSysname();
+
 }; // EOF: envVar
 
 

@@ -56,7 +56,7 @@ class partition_t
 public:
 
     typedef action_t<DataType>      PartAction;
-    typedef worker_t<DataType>      PartWorker;
+    typedef dora_worker_t<DataType> PartWorker;
 
     typedef srmwqueue<PartAction>          PartQueue;
     typedef std::list<PartAction*>         ActionList;
@@ -858,8 +858,8 @@ const int partition_t<DataType>::_generate_primary()
  ******************************************************************/
 
 template <class DataType>
-inline worker_t<DataType>* partition_t<DataType>::_generate_worker(const processorid_t prsid,
-                                                                   c_str strname) 
+inline dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const processorid_t prsid,
+                                                                        c_str strname) 
 {
     // 1. create worker thread
     // 2. set self as worker's partition

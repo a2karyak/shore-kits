@@ -56,8 +56,8 @@ public:
 
 
     // init/close
-    virtual void init()=0;
-    virtual void close()=0;
+    virtual void init() { /* default do nothing */ };
+    virtual void close() { /* default do nothing */ };
 
     // by default should return SHELL_NEXT_CONTINUE
     virtual const int handle(const char* cmd)=0; 
@@ -69,7 +69,7 @@ public:
     aliasList* aliases() { return (&_aliases); }
 
     // should print usage
-    virtual void usage()=0;
+    virtual void usage() { /* default do nothing */ };
 
     // should return short description
     virtual const string desc()=0;

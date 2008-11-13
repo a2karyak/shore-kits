@@ -30,32 +30,7 @@ using namespace shore;
 using namespace tpcc;
 
 
-
-/******** Exported variables ********/
-
-class dora_tpcc_db;
-extern dora_tpcc_db* _g_dora;
-
-/******** EOF Exported variables ********/
-
 const int DF_ACTION_CACHE_SZ = 100;
-
-
-// // Forward declarations
-
-// // TPC-C PAYMENT
-// class midway_pay_rvp;
-// class final_pay_rvp;
-// class upd_wh_pay_action_impl;
-// class upd_dist_pay_action_impl;
-// class upd_cust_pay_action_impl;
-// class ins_hist_pay_action_impl;    
-
-
-// // MBenches
-// class final_mb_rvp;
-// class upd_wh_mb_action_impl;
-// class upd_cust_mb_action_impl;
 
 
 
@@ -67,7 +42,7 @@ const int DF_ACTION_CACHE_SZ = 100;
  *
  ********************************************************************/
 
-class dora_tpcc_db : public db_iface
+class DoraTPCCEnv : public ShoreTPCCEnv
 {
 public:
 
@@ -81,9 +56,6 @@ public:
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
 
 private:
-
-    // the shore env
-    ShoreTPCCEnv* _tpccenv;    
 
     // a vector of pointers to integer-range-partitioned tables
     irpTablePtrVector _irptp_vec;    
@@ -102,14 +74,10 @@ private:
 public:
     
 
-    dora_tpcc_db(ShoreTPCCEnv* tpccenv)
-        : db_iface(), _tpccenv(tpccenv)
-    {
-        assert (_tpccenv);
-    }
-    ~dora_tpcc_db() { 
-        if (dbc()!=DBC_STOPPED) stop();
-    }
+    DoraTPCCEnv(string confname)
+        : ShoreTPCCEnv(confname)
+    { }
+    ~DoraTPCCEnv() { }
 
 
     //// Control Database
@@ -145,26 +113,26 @@ public:
     }
 
     // Access irp-tables
-    irpTableImpl* whs() const { return (_wh_irpt); }
-    irpTableImpl* dis() const { return (_di_irpt); }
-    irpTableImpl* cus() const { return (_cu_irpt); }
-    irpTableImpl* his() const { return (_hi_irpt); }
-    irpTableImpl* nor() const { return (_no_irpt); }
-    irpTableImpl* ord() const { return (_or_irpt); }
-    irpTableImpl* ite() const { return (_it_irpt); }
-    irpTableImpl* oli() const { return (_ol_irpt); }
-    irpTableImpl* sto() const { return (_st_irpt); }
+    inline irpTableImpl* whs() const { return (_wh_irpt); }
+    inline irpTableImpl* dis() const { return (_di_irpt); }
+    inline irpTableImpl* cus() const { return (_cu_irpt); }
+    inline irpTableImpl* his() const { return (_hi_irpt); }
+    inline irpTableImpl* nor() const { return (_no_irpt); }
+    inline irpTableImpl* ord() const { return (_or_irpt); }
+    inline irpTableImpl* ite() const { return (_it_irpt); }
+    inline irpTableImpl* oli() const { return (_ol_irpt); }
+    inline irpTableImpl* sto() const { return (_st_irpt); }
 
     // Access specific partitions
-    irpImpl* whs(const int pos) const { return (_wh_irpt->get_part(pos)); }
-    irpImpl* dis(const int pos) const { return (_di_irpt->get_part(pos)); }
-    irpImpl* cus(const int pos) const { return (_cu_irpt->get_part(pos)); }
-    irpImpl* his(const int pos) const { return (_hi_irpt->get_part(pos)); }
-    irpImpl* nor(const int pos) const { return (_no_irpt->get_part(pos)); }
-    irpImpl* ord(const int pos) const { return (_or_irpt->get_part(pos)); }
-    irpImpl* ite(const int pos) const { return (_it_irpt->get_part(pos)); }
-    irpImpl* oli(const int pos) const { return (_ol_irpt->get_part(pos)); }
-    irpImpl* sto(const int pos) const { return (_st_irpt->get_part(pos)); }
+    inline irpImpl* whs(const int pos) const { return (_wh_irpt->get_part(pos)); }
+    inline irpImpl* dis(const int pos) const { return (_di_irpt->get_part(pos)); }
+    inline irpImpl* cus(const int pos) const { return (_cu_irpt->get_part(pos)); }
+    inline irpImpl* his(const int pos) const { return (_hi_irpt->get_part(pos)); }
+    inline irpImpl* nor(const int pos) const { return (_no_irpt->get_part(pos)); }
+    inline irpImpl* ord(const int pos) const { return (_or_irpt->get_part(pos)); }
+    inline irpImpl* ite(const int pos) const { return (_it_irpt->get_part(pos)); }
+    inline irpImpl* oli(const int pos) const { return (_ol_irpt->get_part(pos)); }
+    inline irpImpl* sto(const int pos) const { return (_st_irpt->get_part(pos)); }
 
 
 
@@ -188,6 +156,40 @@ public:
     atomic_class_stack<upd_cust_mb_action>    _upd_cust_mb_pool;    
 
 
+
+    //// TRXs
+
+
+    // --- kit DORA trxs --- //
+
+    // --- baseline mbench --- //
+    w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+
+
+
+    /* --- kit dora trxs --- */
+
+    /* --- with input specified --- */
+    w_rc_t dora_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
+    w_rc_t dora_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
+    w_rc_t dora_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
+    w_rc_t dora_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
+    w_rc_t dora_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
+
+    /* --- without input specified --- */
+    w_rc_t dora_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t dora_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+
+    /* --- dora mbench --- */
+    w_rc_t dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int whid);
+    w_rc_t dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int whid);
+
+
+
 private:
 
     // algorithm for deciding the distribution of tables 
@@ -196,7 +198,7 @@ private:
                                   const int step=DF_CPU_STEP_TABLES);
 
         
-}; // EOF: dora_tpcc_db
+}; // EOF: DoraTPCCEnv
 
 
 

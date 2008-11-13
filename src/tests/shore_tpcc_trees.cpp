@@ -498,18 +498,18 @@ int main(int argc, char* argv[])
                //               | TRACE_DEBUG
               );
 
-    /* 1. Instanciate the Shore environment */
-    if (inst_test_env(argc, argv))
-        return (1);
+//     /* 1. Instanciate the Shore environment */
+//     if (inst_test_env(argc, argv))
+//         return (1);
 
 
     /* 2. Start processing commands */
     tree_test_shell_t tshell("(tree) ");
     tshell.start();
 
-    /* 3. Close the Shore environment */
-    if (_g_shore_env)
-        close_test_env();
+//     /* 3. Close the Shore environment */
+//     if (_g_shore_env)
+//         close_test_env();
 
     return (0);
 }

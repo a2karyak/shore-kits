@@ -56,7 +56,7 @@ void env_stats_t::print_env_stats() const
  *
  *********************************************************************/
 
-int ShoreEnv::init() 
+const int ShoreEnv::init() 
 {
     CRITICAL_SECTION(cs,_init_mutex);
     if (_initialized) {
@@ -119,7 +119,7 @@ int ShoreEnv::init()
  *
  *********************************************************************/
 
-int ShoreEnv::close() 
+const int ShoreEnv::close() 
 {
     CRITICAL_SECTION(cs, _init_mutex);
     if (!_initialized) {
@@ -143,7 +143,7 @@ int ShoreEnv::close()
  *
  ********************************************************************/
 
-int ShoreEnv::statistics() 
+const int ShoreEnv::statistics() 
 {
     CRITICAL_SECTION(cs, _init_mutex);
     if (!_initialized) {
@@ -519,7 +519,7 @@ void ShoreEnv::readconfig(string conf_file)
  *
  ******************************************************************/
 
-void ShoreEnv::conf() {
+const int ShoreEnv::conf() {
     TRACE( TRACE_DEBUG, "ShoreEnv configuration\n");
     
     // Print storage manager options
@@ -536,6 +536,7 @@ void ShoreEnv::conf() {
     for ( iter = _dev_opts.begin(); iter != _dev_opts.end(); iter++)
         cout << "(" << iter->first << ") (" << iter->second << ")" << endl;    
 
+    return (0);
 }
 
 
@@ -544,7 +545,7 @@ void ShoreEnv::conf() {
  *  @brief Dumps the data
  */
 
-void ShoreEnv::dump() {
+const int ShoreEnv::dump() {
 
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
     TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
@@ -552,4 +553,5 @@ void ShoreEnv::dump() {
     TRACE( TRACE_ALWAYS, "Not implemented...\n");
 
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
+    return (0);
 }

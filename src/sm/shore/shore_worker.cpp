@@ -1,17 +1,17 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file worker.cpp
+/** @file:   shore_worker.cpp
  *
- *  @brief Declaration of the worker threads in DORA
+ *  @brief:  Declaration of the worker threads in Shore
  *
- *  @author Ippokratis Pandis (ipandis)
+ *  @author: Ippokratis Pandis (ipandis)
  */
 
 
-#include "dora/worker.h"
+#include "sm/shore/shore_worker.h"
 
 
-ENTER_NAMESPACE(dora);
+ENTER_NAMESPACE(shore);
 
 
 
@@ -119,4 +119,4 @@ const int base_worker_t::_work_STOPPED_impl()
 
 
 
-EXIT_NAMESPACE(dora);
+EXIT_NAMESPACE(shore);

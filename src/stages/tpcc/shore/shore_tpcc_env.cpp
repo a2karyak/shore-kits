@@ -74,7 +74,7 @@ void tpcc_stats_t::print_trx_stats() const
  *
  ********************************************************************/ 
 
-int ShoreTPCCEnv::load_schema()
+const int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
@@ -109,7 +109,8 @@ int ShoreTPCCEnv::load_schema()
     // of the same table in the same position
     //
 
-    /* add the table managers to a list */
+    //// add the table managers to a list
+
     // (ip) Adding them in descending file order, so that the large
     //      files to be loaded at the begining. Expection is the
     //      WH and DISTR which are always the first two.
@@ -124,9 +125,8 @@ int ShoreTPCCEnv::load_schema()
     _table_man_list.push_back(_pitem_man);
 
     assert (_table_man_list.size() == SHORE_TPCC_TABLES);
-
         
-    /* add the table descriptions to a list */
+    //// add the table descriptions to a list
     _table_desc_list.push_back(_pwarehouse_desc.get());
     _table_desc_list.push_back(_pdistrict_desc.get());
     _table_desc_list.push_back(_pstock_desc.get());
@@ -138,8 +138,7 @@ int ShoreTPCCEnv::load_schema()
     _table_desc_list.push_back(_pitem_desc.get());
 
     assert (_table_desc_list.size() == SHORE_TPCC_TABLES);
-    
-    
+        
     return (0);
 }
 
@@ -451,7 +450,7 @@ w_rc_t ShoreTPCCEnv::warmup()
  *
  ********************************************************************/
 
-void ShoreTPCCEnv::dump()
+const int ShoreTPCCEnv::dump()
 {
     table_man_t* ptable_man = NULL;
     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
@@ -460,7 +459,7 @@ void ShoreTPCCEnv::dump()
             ptable_man = *table_man_iter;
             ptable_man->print_table(this->_pssm);
         }
-    
+    return (0);
 }
 
 
@@ -478,7 +477,7 @@ void ShoreTPCCEnv::dump()
  *
  *********************************************************************/
 
-int ShoreTPCCEnv::post_init() 
+const int ShoreTPCCEnv::post_init() 
 {
     int tmp_sf = atoi(_dev_opts[SHORE_DB_OPTIONS[3][0]].c_str());
     TRACE( TRACE_DEBUG, "conf-WHs=(%d)\n", tmp_sf);

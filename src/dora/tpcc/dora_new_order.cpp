@@ -45,7 +45,7 @@ ENTER_NAMESPACE(dora);
 //     frvp->copy_actions(_actions);
 
 //     // 2. Generate and enqueue action
-//     ins_hist_pay_action_impl* p_ins_hist_pay_action = _g_dora->get_ins_hist_pay_action();
+//     ins_hist_pay_action_impl* p_ins_hist_pay_action = get_ins_hist_pay_action();
 //     assert (p_ins_hist_pay_action);
 //     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
 //     p_ins_hist_pay_action->_awh=_awh;
@@ -58,9 +58,9 @@ ENTER_NAMESPACE(dora);
 
 //     // HIS_PART_CS
 //     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
-//     CRITICAL_SECTION(his_part_cs, _g_dora->his(mypartition)->_enqueue_lock);
+//     CRITICAL_SECTION(his_part_cs, his(mypartition)->_enqueue_lock);
 
-//     if (_g_dora->his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions
+//     if (his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions
 //             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
 //             assert (0); 
 //             return (RC(de_PROBLEM_ENQUEUE));

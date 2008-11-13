@@ -41,15 +41,15 @@ w_rc_t midway_pay_rvp::run()
 {
     // 1. Setup the next RVP
     assert (_xct);
-    final_pay_rvp* frvp = new (_g_dora->_final_pay_rvp_pool) final_pay_rvp;
+    final_pay_rvp* frvp = new (_ptpccenv->_final_pay_rvp_pool) final_pay_rvp;
     assert (frvp);
-    frvp->set(_tid,_xct,_xct_id,_result,_ptpccenv,&_g_dora->_final_pay_rvp_pool);
+    frvp->set(_tid,_xct,_xct_id,_result,_ptpccenv,&_ptpccenv->_final_pay_rvp_pool);
     frvp->copy_actions(_actions);
 
     // 2. Generate and enqueue action
-    ins_hist_pay_action* ins_hist_pay = new (_g_dora->_ins_hist_pay_pool) ins_hist_pay_action;
+    ins_hist_pay_action* ins_hist_pay = new (_ptpccenv->_ins_hist_pay_pool) ins_hist_pay_action;
     assert (ins_hist_pay);
-    ins_hist_pay->set(_tid,_xct,frvp,_pin,_awh,_adist,_ptpccenv,&_g_dora->_ins_hist_pay_pool);
+    ins_hist_pay->set(_tid,_xct,frvp,_pin,_awh,_adist,_ptpccenv,&_ptpccenv->_ins_hist_pay_pool);
     frvp->add_action(ins_hist_pay);
 
     int mypartition = _pin._home_wh_id-1;
@@ -58,9 +58,9 @@ w_rc_t midway_pay_rvp::run()
 
     // HIS_PART_CS
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
-    CRITICAL_SECTION(his_part_cs, _g_dora->his(mypartition)->_enqueue_lock);
+    CRITICAL_SECTION(his_part_cs, _ptpccenv->his(mypartition)->_enqueue_lock);
 
-    if (_g_dora->his()->enqueue(ins_hist_pay, mypartition)) { // (SF) HISTORY partitions
+    if (_ptpccenv->his()->enqueue(ins_hist_pay, mypartition)) { // (SF) HISTORY partitions
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -77,6 +77,11 @@ w_rc_t midway_pay_rvp::run()
  * PAYMENT FINAL RVP
  *
  ********************************************************************/
+
+w_rc_t final_pay_rvp::run() {
+    assert (_ptpccenv); 
+    return (_run(_ptpccenv)); 
+}
 
 void final_pay_rvp::upd_committed_stats() 
 {

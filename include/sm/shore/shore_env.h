@@ -201,20 +201,22 @@ public:
         _dbc = adbc;
     }
     
-    // Interface     
+
+    // DB INTERFACE     
+
+    virtual const int conf()=0;    
+    virtual const int set(envVarMap* vars)=0;    
+    virtual const int load_schema()=0;
+    virtual const int init()=0;
+    virtual const int open()=0;
+    virtual const int close()=0;
     virtual const int start()=0;
     virtual const int stop()=0;
     virtual const int pause()=0;
     virtual const int resume()=0;    
     virtual const int newrun()=0;    
-    virtual const int set(envVarMap* vars)=0;    
+    virtual const int statistics()=0;    
     virtual const int dump()=0;    
-
-//     virtual const int process_START_cmd()=0;
-//     virtual const int process_STOP_cmd()=0;
-//     virtual const int process_PAUSE_cmd()=0;
-//     virtual const int process_RESUME_cmd()=0;    
-//     virtual const int process_SET_cmd()=0;    
     
 }; // EOF: db_iface
 
@@ -240,7 +242,7 @@ enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE };
  *
  ********************************************************************/
 
-class ShoreEnv 
+class ShoreEnv : public db_iface
 {
 protected:       
 
@@ -255,18 +257,18 @@ protected:
     // Device and volume. There is a single volume per device. 
     // The whole environment resides in a single volume.
     devid_t            _devid;     // device id
-    vid_t*             _pvid;      // volume id
+    guard<vid_t>       _pvid;      // volume id
     stid_t             _root_iid;  // root id of the volume
     pthread_mutex_t    _vol_mutex; // volume mutex
     lvid_t             _lvid;      // logical volume id (unnecessary, using physical ids)
     unsigned int       _vol_cnt;   // volume count (unnecessary, always 1)
 
     // Configuration variables
-    option_group_t*    _popts;     // config options
-    string             _cname;     // config filename
-    map<string,string> _sys_opts;  // db-instance-independent options  
-    map<string,string> _sm_opts;   // db-instance-specific options that are passed to Shore
-    map<string,string> _dev_opts;  // db-instance-specific options    
+    guard<option_group_t>   _popts;     // config options
+    string                  _cname;     // config filename
+    map<string,string>      _sys_opts;  // db-instance-independent options  
+    map<string,string>      _sm_opts;   // db-instance-specific options that are passed to Shore
+    map<string,string>      _dev_opts;  // db-instance-specific options    
 
     // Processor info
     int                _max_cpu_count;    // hard limit
@@ -280,6 +282,9 @@ protected:
     MeasurementState volatile _measure;
     tatas_lock                _measure_lock;
 
+    // system name
+    string          _sysname;
+
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
@@ -292,56 +297,56 @@ protected:
     
 public:
 
-    /** Construction  */
-    ShoreEnv(string confname) :
-        _pssm(NULL), _initialized(false), _init_mutex(thread_mutex_create()),
-        _loaded(false), _load_mutex(thread_mutex_create()),
-        _vol_mutex(thread_mutex_create()), _cname(confname),
-        _measure(MST_UNDEF),
-        _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
-        _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
+    // Construction  //
+    ShoreEnv(string confname) 
+        : db_iface(),
+          _pssm(NULL), _initialized(false), _init_mutex(thread_mutex_create()),
+          _loaded(false), _load_mutex(thread_mutex_create()),
+          _vol_mutex(thread_mutex_create()), _cname(confname),
+          _measure(MST_UNDEF),
+          _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
+          _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
     }
 
-    virtual ~ShoreEnv() {         
-        if (_popts) {
-            delete (_popts);
-            _popts = NULL;
-        }
-
-        if (_pvid) {
-            delete (_pvid);
-            _pvid = NULL;
-        }
-
+    virtual ~ShoreEnv() 
+    {         
+        if (dbc()!=DBC_STOPPED) stop();
         pthread_mutex_destroy(&_init_mutex);
         pthread_mutex_destroy(&_vol_mutex);
         pthread_mutex_destroy(&_load_mutex);
     }
 
-    /** Public methods */    
-    virtual int init();
-    virtual int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
-    virtual int close();
-    virtual int statistics();
-    virtual void dump();
-    virtual void conf();
+
+    // DB INTERFACE
+
+    virtual const int conf();
+    virtual const int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual const int init();
+    virtual const int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
+    virtual const int open() { return(0); /* do nothing */ };
+    virtual const int close();
+    virtual const int start() { return(0); /* do nothing */ };
+    virtual const int stop() { return(0); /* do nothing */ };
+    virtual const int pause() { return(0); /* do nothing */ };
+    virtual const int resume() { return(0); /* do nothing */ };    
+    virtual const int newrun() { return(0); /* do nothing */ };
+    virtual const int statistics();
+    virtual const int dump();
 
     // Loads the database schema after the config file is read, and before the storage
     // manager is started.
     // Should return >0 on error
-    virtual int load_schema()=0; 
+    virtual const int load_schema()=0; 
 
     virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;
     virtual w_rc_t check_consistency()=0;
-
-
+       
     // inline access methods
     inline ss_m* db() { return(_pssm); }
-    //    inline lvid_t* vid() { return(&_lvid); }
     inline vid_t* vid() { return(_pvid); }
 
     inline bool is_initialized() { 
@@ -354,14 +359,15 @@ public:
         return (_loaded); 
     }
 
+    inline string sysname() { return (_sysname); }
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
-    inline void set_measure(const MeasurementState aMeasurementState) {
+    
+    void set_measure(const MeasurementState aMeasurementState) {
         assert (aMeasurementState != MST_UNDEF);
         CRITICAL_SECTION(measure_cs, _measure_lock);
         _measure = aMeasurementState;
     }
-
     inline const MeasurementState get_measure() { return (_measure); }
 
 

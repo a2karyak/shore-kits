@@ -23,11 +23,6 @@ int main(int argc, char* argv[]) {
     TRACE( TRACE_ALWAYS, "Loading... ");
     loading_smt_t* loader = new loading_smt_t(_g_shore_env, c_str("loader"));
     run_smthread<loading_smt_t,int>(loader, r);
-//     if (*r) {
-//         cerr << "Error in loading... " << endl;
-//         cerr << "Exiting... " << endl;
-//         return (1);
-//     }
     delete (loader);
 
     // Load data to the Shore Database

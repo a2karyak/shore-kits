@@ -223,7 +223,7 @@ struct tpcc_stats_t
 
 class ShoreTPCCEnv : public ShoreEnv
 {
-private:       
+protected:       
     // TPC-C tables
 
     /** all the tables */
@@ -253,21 +253,18 @@ private:
 
     table_man_list_t           _table_man_list;
 
-    /** system name */
-    string          _sysname;
-
-    /** scaling factors */
+    // scaling factors
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
     pthread_mutex_t _scaling_mutex;
     int             _queried_factor; /* queried factor - how many of the WHs queried */
     pthread_mutex_t _queried_mutex;
 
-    /** some stats */
+    // some stats
     tpcc_stats_t   _total_tpcc_stats;     // the stats for the whole env life (never reset)
     tpcc_stats_t   _session_tpcc_stats; // temp stats (reset between runs)
 
 
-    /* --- kit baseline trxs --- */
+    // --- kit baseline trxs --- //
     w_rc_t xct_new_order(new_order_input_t* no_input, 
                          const int xct_id, 
                          trx_result_tuple_t& trt);
@@ -283,10 +280,6 @@ private:
     w_rc_t xct_stock_level(stock_level_input_t* level_input, 
                            const int xct_id, 
                            trx_result_tuple_t& trt);
-
-    /* --- baseline mbench --- */
-    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int whid);
-    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int whid);
     
     
 public:    
@@ -314,8 +307,19 @@ public:
         print_total_tpcc_stats();
     }
 
-    virtual int post_init();
-    virtual int load_schema();
+
+    // DB INTERFACE
+
+    virtual const int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual const int open() { return(0); /* do nothing */ };
+    virtual const int start() { return(0); /* do nothing */ };
+    virtual const int stop() { return(0); /* do nothing */ };
+    virtual const int pause() { return(0); /* do nothing */ };
+    virtual const int resume() { return(0); /* do nothing */ };    
+    virtual const int newrun() { return(0); /* do nothing */ };
+
+    virtual const int post_init();
+    virtual const int load_schema();
 
 private:
     w_rc_t _post_init_impl();
@@ -323,7 +327,7 @@ private:
 public:
 
 
-    /* --- statistics --- */
+    // --- statistics --- //
     void print_total_tpcc_stats() const { 
         _total_tpcc_stats.print_trx_stats(); 
         _env_stats.print_env_stats(); 
@@ -346,93 +350,74 @@ public:
     }
     
 
-    /* --- scaling and querying factor --- */
+    // --- scaling and querying factor --- //
     void print_sf(void);
     void set_qf(const int aQF);
     inline int get_qf() { return (_queried_factor); }
     void set_sf(const int aSF);
     inline int get_sf() { return (_scaling_factor); }
 
-
-    inline string get_sysname() { return (_sysname); }
-
     inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
     inline table_man_list_t*  table_man_list() { return (&_table_man_list); }
-    void dump();
+    const int dump();
 
 
-    /** Public methods */    
+    // Public methods //    
 
-    /* --- operations over tables --- */
+    // --- operations over tables --- //
     w_rc_t loaddata();  
     w_rc_t warmup();
     w_rc_t check_consistency();
 
 
-    /* --- access to the tables --- */
-    warehouse_t*  warehouse() { return (_pwarehouse_desc.get()); }
-    district_t*   district()  { return (_pdistrict_desc.get()); }
-    customer_t*   customer()  { return (_pcustomer_desc.get()); }
-    history_t*    history()   { return (_phistory_desc.get()); }
-    new_order_t*  new_order() { return (_pnew_order_desc.get()); }
-    order_t*      order()     { return (_porder_desc.get()); }
-    order_line_t* orderline() { return (_porder_line_desc.get()); }
-    item_t*       item()      { return (_pitem_desc.get()); }
-    stock_t*      stock()     { return (_pstock_desc.get()); }
-
-    /* --- access to the table managers --- */
-    warehouse_man_impl*  warehouse_man() { return (_pwarehouse_man); }
-    district_man_impl*   district_man()  { return (_pdistrict_man); }
-    customer_man_impl*   customer_man()  { return (_pcustomer_man); }
-    history_man_impl*    history_man()   { return (_phistory_man); }
-    new_order_man_impl*  new_order_man() { return (_pnew_order_man); }
-    order_man_impl*      order_man()     { return (_porder_man); }
-    order_line_man_impl* orderline_man() { return (_porder_line_man); }
-    item_man_impl*       item_man()      { return (_pitem_man); }
-    stock_man_impl*      stock_man()     { return (_pstock_man); }
+    // --- access to the tables --- //
+    inline warehouse_t*  warehouse() { return (_pwarehouse_desc.get()); }
+    inline district_t*   district()  { return (_pdistrict_desc.get()); }
+    inline customer_t*   customer()  { return (_pcustomer_desc.get()); }
+    inline history_t*    history()   { return (_phistory_desc.get()); }
+    inline new_order_t*  new_order() { return (_pnew_order_desc.get()); }
+    inline order_t*      order()     { return (_porder_desc.get()); }
+    inline order_line_t* orderline() { return (_porder_line_desc.get()); }
+    inline item_t*       item()      { return (_pitem_desc.get()); }
+    inline stock_t*      stock()     { return (_pstock_desc.get()); }
 
 
-    /* --- kit baseline trxs --- */
+    // --- access to the table managers --- //
+    inline warehouse_man_impl*  warehouse_man() { return (_pwarehouse_man); }
+    inline district_man_impl*   district_man()  { return (_pdistrict_man); }
+    inline customer_man_impl*   customer_man()  { return (_pcustomer_man); }
+    inline history_man_impl*    history_man()   { return (_phistory_man); }
+    inline new_order_man_impl*  new_order_man() { return (_pnew_order_man); }
+    inline order_man_impl*      order_man()     { return (_porder_man); }
+    inline order_line_man_impl* orderline_man() { return (_porder_line_man); }
+    inline item_man_impl*       item_man()      { return (_pitem_man); }
+    inline stock_man_impl*      stock_man()     { return (_pstock_man); }
 
-    /* --- with input specified --- */
+
+
+    // --- kit baseline trxs --- //
+
+    // --- with input specified --- //
     w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
     w_rc_t run_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
     w_rc_t run_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
     w_rc_t run_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
     w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
 
-    /* --- without input specified --- */
+    // --- without input specified --- //
     w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
-    /* --- baseline mbench --- */
+    // --- baseline mbench --- //
     w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
 
-
-    /* --- kit dora trxs --- */
-
-    /* --- with input specified --- */
-    w_rc_t dora_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
-    w_rc_t dora_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
-    w_rc_t dora_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
-    w_rc_t dora_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
-    w_rc_t dora_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
-
-    /* --- without input specified --- */
-    w_rc_t dora_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t dora_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t dora_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t dora_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t dora_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-
-    /* --- dora mbench --- */
-    w_rc_t dora_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int whid);
-    w_rc_t dora_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int whid);
 
 
 
@@ -490,8 +475,6 @@ public:
         ++_env_stats._ntrx_att;
         return (0); 
     }
-
-
 
 }; // EOF ShoreTPCCEnv
    

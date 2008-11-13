@@ -57,14 +57,9 @@ class envVar;
 
 class quit_cmd_t : public command_handler_t {
 public:
-    quit_cmd_t() { }
-    ~quit_cmd_t() { }
-    void init() { }
-    void close() { }
     void setaliases();
     const int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
-    void usage() { TRACE( TRACE_ALWAYS, "Exits the system\n"); }
-    const string desc() { return (string("quit")); }               
+    const string desc() { return (string("Quit")); }               
 };
 
 
@@ -74,27 +69,22 @@ private:
 public:
     help_cmd_t(cmdMap* pcmds) : _pcmds(pcmds) { assert(pcmds); }
     ~help_cmd_t() { }
-    void init() { }
-    void close() { }
     void setaliases();
     const int handle(const char* cmd);
     void usage() { 
         TRACE( TRACE_ALWAYS, "HELP       - prints usage\n"); 
         TRACE( TRACE_ALWAYS, "HELP <cmd> - prints detailed help for <cmd>\n"); 
     }
-    const string desc() { return (string("help")); }              
-
+    const string desc() { return (string("Help")); }              
     void list_cmds();
 }; 
+
 
 class set_cmd_t : public command_handler_t {
 private:
     envVar* ev;
 public:
-    set_cmd_t() { }
-    ~set_cmd_t() { }
     void init() { ev = envVar::instance(); }
-    void close() { }
     void setaliases();
     const int handle(const char* cmd);
     void usage();
@@ -105,10 +95,7 @@ class env_cmd_t : public command_handler_t {
 private:
     envVar* ev;
 public:
-    env_cmd_t() { }
-    ~env_cmd_t() { }
     void init() { ev = envVar::instance(); }
-    void close() { }
     void setaliases();
     const int handle(const char* cmd);
     void usage();
@@ -119,10 +106,7 @@ class conf_cmd_t : public command_handler_t {
 private:
     envVar* ev;
 public:
-    conf_cmd_t() { }
-    ~conf_cmd_t() { }
     void init() { ev = envVar::instance(); }
-    void close() { }
     void setaliases();
     const int handle(const char* cmd);
     void usage();
@@ -149,8 +133,7 @@ public:
 class shell_t 
 {
 private:
-    char* _cmd_prompt;
-    int   _cmd_counter;
+
     bool  _save_history;
     int   _state;
 
@@ -165,28 +148,30 @@ private:
     const int _register_commands();    
 
 protected:
+
     mcs_lock _lock;
     cmdMap _cmds;
     cmdMap _aliases;
     bool _processing_command;
+
+    char* _cmd_prompt;
+    int   _cmd_counter;
     
 public:
 
     shell_t(const char* prompt = QPIPE_PROMPT, bool save_history = true) 
         : _cmd_counter(0), _save_history(save_history), 
-          _state(SHELL_NEXT_CONTINUE), _processing_command(false)
+          _state(SHELL_NEXT_CONTINUE), _processing_command(false),
+          _tracer_cmd(NULL)
     {
         _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
-        if (prompt)
-            strncpy(_cmd_prompt, prompt, strlen(prompt));
-
+        if (prompt) strncpy(_cmd_prompt, prompt, strlen(prompt));
         _register_commands();
     }
 
-    virtual ~shell_t() 
-    {
-        if (_cmd_prompt)
-            delete [] _cmd_prompt;       
+    virtual ~shell_t() { 
+        if (_cmd_prompt) delete [] _cmd_prompt;
+        _cmd_prompt = NULL;
     }
 
 

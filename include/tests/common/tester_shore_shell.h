@@ -1,15 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_shore_kit_shell.h
+/** @file:   tester_shore_shell.h
  *
  *  @brief:  Abstract shell class for testing Shore environments 
  *
- *  @author: Ippokratis Pandis (ipandis), Sept 2008
- *
+ *  @author: Ippokratis Pandis, Sept 2008
  */
 
-#ifndef __TESTER_SHORE_KIT_SHELL_H
-#define __TESTER_SHORE_KIT_SHELL_H
+#ifndef __TESTER_SHORE_SHELL_H
+#define __TESTER_SHORE_SHELL_H
 
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
@@ -22,14 +21,8 @@
 #endif
 
 #include "util/shell.h"
-#include "tests/common/tester_shore_env.h"
+#include "tests/common/tester_shore_client.h"
 #include "sm/shore/shore_env.h"
-#include "stages/tpcc/shore/shore_tpcc_env.h" // TODO (ip) It should not get the specific TPCC Shore Env
-
-
-#include "util/command/tracer.h"
-#include "util/command/printer.h"
-
 
 using std::map;
 
@@ -40,10 +33,41 @@ extern bool volatile _g_canceled;
 
 
 
+/*********************************************************************
+ *
+ *  @class: shore_guard_t
+ *
+ *  @brief: Ensures that the Shore environment gets closed
+ *
+ *********************************************************************/
+
+struct shore_guard_t : pointer_guard_base_t<ShoreEnv, shore_guard_t> 
+{
+    shore_guard_t(ShoreEnv *ptr=NULL)
+        : pointer_guard_base_t<ShoreEnv, shore_guard_t>(ptr)
+    { }
+
+    static void guard_action(ShoreEnv *ptr) 
+    {
+        if (ptr) {
+            close_smt_t* clt = new close_smt_t(ptr, c_str("clt"));
+            assert (clt);
+            clt->fork();
+            clt->join();
+            int rv = clt->_rv;
+            delete (clt);
+            clt = NULL;
+            if (clt->_rv) {
+                TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
+            }
+        }
+    }
+};
+
 
 /*********************************************************************
  *
- *  @abstract class: shore_kit_shell_t
+ *  @abstract class: shore_shell_t
  *
  *  @brief: Base class for shells for Shore environment
  *
@@ -58,18 +82,19 @@ extern bool volatile _g_canceled;
  *
  *********************************************************************/
 
-class shore_kit_shell_t : public shell_t 
+class shore_shell_t : public shell_t 
 {
 protected:
 
-    ShoreTPCCEnv* _env;
+    guard<ShoreEnv> _env;
     processorid_t _start_prs_id;
     processorid_t _current_prs_id;    
 
     // supported trxs
-    typedef map<int,string>                     mapSupTrxs;
-    typedef mapSupTrxs::iterator                mapSupTrxsIt;
-    typedef mapSupTrxs::const_iterator          mapSupTrxsConstIt;
+    typedef map<int,string>            mapSupTrxs;
+    typedef mapSupTrxs::iterator       mapSupTrxsIt;
+    typedef mapSupTrxs::const_iterator mapSupTrxsConstIt;
+
     mapSupTrxs _sup_trxs;
 
     // supported binding policies
@@ -79,24 +104,23 @@ protected:
 
 public:
 
-    shore_kit_shell_t(const char* prompt, ShoreTPCCEnv* env, 
-                      processorid_t acpustart = PBIND_NONE) 
-        : shell_t(prompt), _env(env),
-          _start_prs_id(acpustart), _current_prs_id(acpustart)
-        {
-            assert (_env);
+    shore_shell_t(const char* prompt, processorid_t acpustart = PBIND_NONE) 
+        : shell_t(prompt), 
+          _env(NULL), _start_prs_id(acpustart), _current_prs_id(acpustart)
+    {
+        // install signal handler
+        struct sigaction sa;
+        struct sigaction sa_old;
+        sa.sa_flags = 0;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_handler = &alarm_handler;
+        if(sigaction(SIGALRM, &sa, &sa_old) < 0)
+            exit(1);
+    }
+    virtual ~shore_shell_t() { }    
 
-            // install signal handler
-	    struct sigaction sa;
-	    struct sigaction sa_old;
-	    sa.sa_flags = 0;
-	    sigemptyset(&sa.sa_mask);
-	    sa.sa_handler = &alarm_handler;
-	    if(sigaction(SIGALRM, &sa, &sa_old) < 0)
-		exit(1);
-        }
-
-    virtual ~shore_kit_shell_t()  { }
+    // access methods
+    ShoreEnv* db() { return(_env.get()); }
 
     // shell interface
     virtual int process_command(const char* command, const char* command_tag);
@@ -118,13 +142,14 @@ public:
     virtual const int register_commands() { return (SHELL_NEXT_CONTINUE); }
 
 
+    // Instanciate and close the Shore environment
+    virtual const int inst_test_env(int argc, char* argv[])=0;
+
     // supported trxs and binding policies
+    virtual const int load_trxs_map(void)=0;
+    virtual const int load_bp_map(void)=0;
     void print_sup_trxs(void) const;
     void print_sup_bp(void);
-    void load_trxs_map(void);
-    void load_bp_map(void);
-    virtual void append_trxs_map(void)=0;
-    virtual void append_bp_map(void)=0;
     const char* translate_trx(const int iSelectedTrx) const;
     const char* translate_bp(const eBindingType abt);
 
@@ -152,9 +177,9 @@ public:
 
 protected:
 
-    void print_throughput(const int iQueriedWHs, const int iSpread, 
-                          const int iNumOfThreads, const int iUseSLI, 
-                          const double delay, const eBindingType abt);
+    virtual void print_throughput(const int iQueriedWHs, const int iSpread, 
+                                  const int iNumOfThreads, const int iUseSLI, 
+                                  const double delay, const eBindingType abt) { /* default do nothing */ };
     
     void print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
                             const int iNumOfThreads, const int iDuration,
@@ -166,9 +191,9 @@ protected:
                          const int iSelectedTrx, const int iIterations,
                          const int iUseSLI, const eBindingType abt);
 
-}; // EOF: shore_kit_shell_t
+}; // EOF: shore_shell_t
 
 
 
-#endif /* __TESTER_SHORE_KIT_SHELL_H */
+#endif /* __TESTER_SHORE_SHELL_H */
 

@@ -6,7 +6,6 @@
  *
  *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
- *
  */
 
 #ifndef __TPCC_CONST_H

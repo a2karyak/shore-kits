@@ -7,7 +7,6 @@
 #include "dora/common.h"
 
 #include "dora/key.h"
-#include "dora/srmwqueue.h"
 #include "dora/rvp.h"
 
 #include "dora/action.h"

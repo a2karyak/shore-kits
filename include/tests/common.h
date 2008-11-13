@@ -8,8 +8,8 @@
 #include "tests/common/tester_thread.h"
 #include "tests/common/tester_query.h"
 
-#include "tests/common/tester_shore_env.h"
-#include "tests/common/tester_shore_kit_shell.h"
+#include "tests/common/tester_shore_shell.h"
+#include "tests/common/tester_shore_client.h"
 
 
-#endif
+#endif /** __TESTS_COMMON_H */

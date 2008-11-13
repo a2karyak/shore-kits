@@ -25,6 +25,8 @@ ENTER_NAMESPACE(dora);
 using namespace shore;
 using namespace tpcc;
 
+class DoraTPCCEnv;
+
 
 //
 // RVPS
@@ -48,7 +50,7 @@ class midway_pay_rvp : public rvp_t
 private:
     typedef atomic_class_stack<midway_pay_rvp> rvp_pool;
     rvp_pool* _pool;
-    ShoreTPCCEnv* _ptpccenv;
+    DoraTPCCEnv* _ptpccenv;
     // data needed for the next phase
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple  _adist;
@@ -61,7 +63,7 @@ public:
     inline void set(tid_t atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
                     const payment_input_t& ppin, 
-                    ShoreTPCCEnv* penv, rvp_pool* pp) 
+                    DoraTPCCEnv* penv, rvp_pool* pp) 
     { 
         _set(atid,axct,axctid,presult,3,3);
         _pin = ppin;
@@ -95,7 +97,7 @@ class final_pay_rvp : public terminal_rvp_t
 private:
     typedef atomic_class_stack<final_pay_rvp> rvp_pool;
     rvp_pool* _pool;
-    ShoreTPCCEnv* _ptpccenv;
+    DoraTPCCEnv* _ptpccenv;
 public:
     final_pay_rvp() : terminal_rvp_t(), _pool(NULL), _ptpccenv(NULL) { }
     ~final_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
@@ -103,7 +105,7 @@ public:
     // access methods
     inline void set(tid_t atid, xct_t* axct, const int axctid,
                     trx_result_tuple_t& presult, 
-                    ShoreTPCCEnv* penv, rvp_pool* pp) 
+                    DoraTPCCEnv* penv, rvp_pool* pp) 
     { 
         _set(atid,axct,axctid,presult,1,4);
         assert (penv);
@@ -114,7 +116,7 @@ public:
     inline void giveback() { assert (_pool); _pool->destroy(this); }    
 
     // interface
-    w_rc_t run() { assert (_ptpccenv); return (_run(_ptpccenv)); }
+    w_rc_t run();
     void upd_committed_stats(); // update the committed trx stats
     void upd_aborted_stats(); // update the committed trx stats
 
@@ -146,12 +148,12 @@ public:
 class pay_action : public range_action_impl<int>
 {
 protected:
-    ShoreTPCCEnv*   _ptpccenv;
+    DoraTPCCEnv*   _ptpccenv;
     payment_input_t _pin;
 
     inline void _pay_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
                              const int keylen, const payment_input_t& pin, 
-                             ShoreTPCCEnv* penv) 
+                             DoraTPCCEnv* penv) 
     {
         _range_act_set(atid,axct,prvp,keylen); 
         _pin = pin;
@@ -192,7 +194,7 @@ public:
     }
     inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
-                    ShoreTPCCEnv* penv, 
+                    DoraTPCCEnv* penv, 
                     midway_pay_rvp* amrvp, act_pool* pp) 
     {
         _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (WH)
@@ -224,7 +226,7 @@ public:
     }
     inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
-                    ShoreTPCCEnv* penv, 
+                    DoraTPCCEnv* penv, 
                     midway_pay_rvp* amrvp, act_pool* pp) 
     {
         _pay_act_set(atid,axct,prvp,2,pin,penv);  // key is (WH|DIST)
@@ -258,7 +260,7 @@ public:
     }
     inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
-                    ShoreTPCCEnv* penv, 
+                    DoraTPCCEnv* penv, 
                     midway_pay_rvp* amrvp, act_pool* pp) 
     {
         _pay_act_set(atid,axct,prvp,3,pin,penv);  // key is (WH|DIST|CUST)
@@ -291,7 +293,7 @@ public:
                     const payment_input_t& pin,
                     tpcc_warehouse_tuple awh,
                     tpcc_district_tuple adist,
-                    ShoreTPCCEnv* penv, act_pool* pp) 
+                    DoraTPCCEnv* penv, act_pool* pp) 
     {
         _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (HIST)
         _awh = awh;

@@ -463,7 +463,7 @@ public:
     // thread entrance
     void work() {
         assert (_env);
-        TRACE( TRACE_ALWAYS, "Closing env...\n");
+        TRACE( TRACE_ALWAYS, "Closing Shore...\n");
         if (_env) {
             _env->close();
             delete (_env);

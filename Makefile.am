@@ -43,13 +43,10 @@ TESTS = \
    tests/config_file_example \
    tests/row_cache \
    tests/tpcc_load_shore \
-   tests/tpcc_kit \
    tests/tpcc_kit_shell \
    tests/shore_trees \
    tests/simple \
-   tests/shore_rvp \
-   tests/dora_kit_shell
-
+   tests/shore_rvp
 
 DBGEN = \
    dbgen_tpcc
@@ -159,7 +156,9 @@ SM_SHORE = \
    $(SM)/shore/shore_row.cpp \
    $(SM)/shore/shore_sort_buf.cpp \
    $(SM)/shore/shore_env.cpp \
-   $(SM)/shore/shore_helper_loader.cpp
+   $(SM)/shore/shore_helper_loader.cpp \
+   $(SM)/shore/shore_client.cpp \
+   $(SM)/shore/shore_worker.cpp
 
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
@@ -271,7 +270,6 @@ lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHOR
 SD=$(top_srcdir)/src/dora
 SD_BASE = \
    $(SD)/lockman.cpp \
-   $(SD)/worker.cpp \
    $(SD)/rvp.cpp
 
 SD_TPCC = \
@@ -328,8 +326,8 @@ lib_libtest_a_SOURCES = \
    $(STC)/tester_query.cpp \
    $(STC)/cpu_bind.cpp \
    $(STC)/busy_wait.cpp \
-   $(STC)/tester_shore_env.cpp \
-   $(STC)/tester_shore_kit_shell.cpp
+   $(STC)/tester_shore_client.cpp \
+   $(STC)/tester_shore_shell.cpp
 
 
 
@@ -370,9 +368,7 @@ tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
-tests_tpcc_kit_SOURCES = $(ST)/shore_tpcc_kit.cpp
-tests_tpcc_kit_shell_SOURCES = $(ST)/shore_tpcc_kit_shell.cpp
-tests_dora_kit_shell_SOURCES = $(ST)/dora_kit_shell.cpp
+tests_tpcc_kit_shell_SOURCES = $(ST)/dora_kit_shell.cpp
 tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
@@ -383,12 +379,9 @@ tests_simple_SOURCES = $(ST)/simple_test.cpp
 # exec files that need Shore
 tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_load_shore_LDADD = $(TEST_LIBS)
-tests_tpcc_kit_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_tpcc_kit_LDADD = $(TEST_LIBS)
 tests_tpcc_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_shell_LDADD = $(TEST_LIBS) -lreadline
-tests_dora_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_dora_kit_shell_LDADD = $(TEST_LIBS) -lreadline
+
 tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)

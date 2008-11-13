@@ -11,16 +11,18 @@
  *  @author: Ryan Johnson (ryanjohn)
  */
 
-#ifndef __DORA_SRMW_QUEUE_H
-#define __DORA_SRMW_QUEUE_H
+#ifndef __SHORE_SRMW_QUEUE_H
+#define __SHORE_SRMW_QUEUE_H
 
 #include <sthread.h>
 #include <vector>
 
 #include "util.h"
-#include "dora/common.h"
+#include "shore.h"
 
-ENTER_NAMESPACE(dora);
+
+ENTER_NAMESPACE(shore);
+
 
 template<class Action>
 struct srmwqueue 
@@ -155,7 +157,7 @@ struct srmwqueue
 }; // EOF: struct srmwqueue
 
 
-EXIT_NAMESPACE(dora);
+EXIT_NAMESPACE(shore);
 
-#endif /** __DORA_SRMW_QUEUE_H */
+#endif /** __SHORE_SRMW_QUEUE_H */
 

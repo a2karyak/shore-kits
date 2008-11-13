@@ -116,8 +116,8 @@ int shell_t::process_one()
     _processing_command = true;
 
     int rval;
-    cmdMapIt cmdit = _cmds.find(cmd_tag);
-    if (cmdit == _cmds.end()) {
+    cmdMapIt cmdit = _aliases.find(cmd_tag);
+    if (cmdit == _aliases.end()) {
         rval = process_command(cmd, cmd_tag);
 
 //         TRACE( TRACE_ALWAYS, "Command (%s) not found...\n", cmd_tag);
@@ -125,7 +125,7 @@ int shell_t::process_one()
 
     }
     else {
-        rval = cmdit->second->handle(cmd_tag);
+        rval = cmdit->second->handle(cmd);
     }
 
     _processing_command = false;
@@ -273,8 +273,7 @@ void help_cmd_t::setaliases()
 
 void help_cmd_t::list_cmds()
 {
-    TRACE( TRACE_ALWAYS, "Available commands: \n");
-    TRACE( TRACE_ALWAYS, "(press \"help <cmd>\" for more info about a specific cmd)\n");
+    TRACE( TRACE_ALWAYS, "Available commands (help <cmd>): \n\n");
     for (cmdMapIt it = _pcmds->begin(); it != _pcmds->end(); ++it) {
         TRACE( TRACE_ALWAYS, " %s - %s\n", it->first.c_str(), it->second->desc().c_str());
     }

@@ -19,13 +19,19 @@ using namespace shore;
 using namespace tpcc;
 
 
-// Default parameters for the runs
-
-//////////////////////////////
-
+/******************************************************************** 
+ *
+ * @enum:  tpcc_kit_shell_t
+ *
+ * @brief: The Baseline TPC-C kit shell class
+ *
+ ********************************************************************/
 
 class tpcc_kit_shell_t : public shore_kit_shell_t 
 { 
+private:
+    ShoreTPCCEnv* _tpccdb;
+
 public:
 
     tpcc_kit_shell_t(const char* prompt) 
@@ -36,6 +42,8 @@ public:
         load_bp_map();
     }
     ~tpcc_kit_shell_t() { }
+
+    virtual const int& inst_test_env(int argc, char* argv[]);
 
     // impl of supported commands
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
@@ -51,6 +59,52 @@ public:
     virtual void append_bp_map(void) { }
 
 }; // EOF: tpcc_kit_shell_t
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:      inst_test_env
+ *
+ *  @brief:   Instanciates the Shore Baseline environment, 
+ *            Opens the database and sets the appropriate number of WHs
+ *  
+ *  @returns: 1 on error
+ *
+ *********************************************************************/
+
+int inst_test_env(int argc, char* argv[]) 
+{    
+    // 1. Instanciate the Shore Baseline Environment
+    _tpccdb = new ShoreTPCCEnv(SHORE_CONF_FILE);
+
+    // 2. Initialize the Shore Environment
+    // the initialization must be executed in a shore context
+    db_init_smt_t* initializer = new db_init_smt_t(c_str("init"), _tpccdb);
+    assert (initializer);
+    initializer->fork();
+    initializer->join(); 
+    int rv = initializer->rv();
+    delete (initializer);
+    initializer = NULL;
+
+    if (rv) {
+        TRACE( TRACE_ALWAYS, "Exiting...\n");
+        return (rv);
+    }
+
+    assert (_tpccdb);
+    _tpccdb->print_sf();
+    _numOfWHs = _tpccdb->get_sf();
+
+    // 3. set also SF - if param set
+    if (argc>1) {
+        int numQueriedOfWHs = atoi(argv[1]);
+        _tpccdb->set_qf(numQueriedOfWHs);
+    }
+    return (0);
+}
+
 
 /** cmd: TEST **/
 
@@ -69,7 +123,7 @@ int tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
     print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
                     iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI, abt);
 
-    client_smt_t* testers[MAX_NUM_OF_THR];
+    baseline_client_t* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
@@ -87,11 +141,13 @@ int tpcc_kit_shell_t::_cmd_TEST_impl(const int iQueriedWHs,
             // create & fork testing threads
             if (iSpread)
                 wh_id = i+1;
-            testers[i] = new client_smt_t(_env, MT_NUM_OF_TRXS,
-                                          wh_id, iSelectedTrx, 
-                                          iNumOfTrxs, iUseSLI,
-                                          c_str("tpcc%d", i),
-                                          _current_prs_id);
+            testers[i] = new baseline_client_t(c_str("tpcc%d", i), _env, 
+                                               MT_NUM_OF_TRXS, iNumOfTrxs, 
+                                               iUseSLI, _current_prs_id,
+                                               wh_id, iSelectedTrx, 
+                                               
+                                               
+                                               );
             testers[i]->fork();
             _current_prs_id = next_cpu(abt, _current_prs_id);
         }
@@ -220,29 +276,28 @@ int main(int argc, char* argv[])
                //| TRACE_DEBUG
               );
 
-    // 1. Instanciate the Shore environment
-    if (inst_test_env(argc, argv))
+    // 1. Initialize shell
+    tpcc_kit_shell_t kit("(tpcckit) ");
+
+    // 2. Instanciate the Shore environment
+    if (kit->inst_test_env(argc, argv))
         return (1);
 
-    // 2. Make sure that the correct schema is used
-    if (_g_shore_env->get_sysname().compare("dora")==0) {
+    // 3. Make sure that the correct schema is used
+    if (kit.db()->sysname().compare("baseline")!=0) {
         TRACE( TRACE_ALWAYS, "Incorrect schema at configuration file\nExiting...\n");
         return (1);
     }
 
-    // 3. Make sure data is loaded
-    w_rc_t rcl = _g_shore_env->loaddata();
+    // 4. Make sure data is loaded
+    w_rc_t rcl = kit.db()->loaddata();
     if (rcl.is_error()) {
         return (SHELL_NEXT_QUIT);
     }
 
-    // 4. Start processing commands
-    tpcc_kit_shell_t kit_shell("(tpcckit) ");
-    kit_shell.start();
+    // 5. Start processing commands
+    kit.start();
 
-    /* 5. Close the Shore environment */
-    if (_g_shore_env)
-        close_test_env();
-
+    // 6. the Shore environment will close at the destructor of the kit
     return (0);
 }

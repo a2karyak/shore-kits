@@ -24,12 +24,6 @@ ENTER_NAMESPACE(dora);
 
 
 
-/******** Exported variables ********/
-
-dora_tpcc_db* _g_dora;
-
-
-
 // max field counts for (int) keys of tpc-c tables
 const int WH_IRP_KEY = 1;
 const int DI_IRP_KEY = 2;
@@ -56,7 +50,7 @@ const int ST_IRP_KEY = 2;
  *
  ******************************************************************/
 
-const int dora_tpcc_db::start()
+const int DoraTPCCEnv::start()
 {
     TRACE( TRACE_DEBUG, "Creating tables...\n");
  
@@ -64,9 +58,9 @@ const int dora_tpcc_db::start()
     // 2. Add them to the vector
     // 3. Reset each table
 
-    int range = _tpccenv->get_active_cpu_count();
+    int range = get_active_cpu_count();
     processorid_t icpu(0);
-    int sf = _tpccenv->get_sf();
+    int sf = get_sf();
 
     // used for setting up the key ranges
     irpImplKey partDown;
@@ -78,7 +72,7 @@ const int dora_tpcc_db::start()
     partUp.push_back(sf);
 
     // WAREHOUSE
-    _wh_irpt = new irpTableImpl(_tpccenv, _tpccenv->warehouse(), icpu, range, WH_IRP_KEY);
+    _wh_irpt = new irpTableImpl(this, warehouse(), icpu, range, WH_IRP_KEY);
     if (!_wh_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (WAREHOUSE) irp-table\n");
         assert (0); // should not happen
@@ -99,7 +93,7 @@ const int dora_tpcc_db::start()
     icpu = _next_cpu(icpu, _wh_irpt, sf);
 
     // DISTRICT
-    _di_irpt = new irpTableImpl(_tpccenv, _tpccenv->district(), icpu, range, DI_IRP_KEY);
+    _di_irpt = new irpTableImpl(this, district(), icpu, range, DI_IRP_KEY);
     if (!_di_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (DISTRICT) irp-table\n");
         assert (0); // should not happen
@@ -120,7 +114,7 @@ const int dora_tpcc_db::start()
     icpu = _next_cpu(icpu, _di_irpt, sf);    
 
     // HISTORY
-    _hi_irpt = new irpTableImpl(_tpccenv, _tpccenv->history(), icpu, range, HI_IRP_KEY);
+    _hi_irpt = new irpTableImpl(this, this->history(), icpu, range, HI_IRP_KEY);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
         assert (0); // should not happen
@@ -142,7 +136,7 @@ const int dora_tpcc_db::start()
 
 
     // CUSTOMER
-    _cu_irpt = new irpTableImpl(_tpccenv, _tpccenv->customer(), icpu, range, CU_IRP_KEY);
+    _cu_irpt = new irpTableImpl(this, this->customer(), icpu, range, CU_IRP_KEY);
     if (!_cu_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (CUSTOMER) irp-table\n");
         assert (0); // should not happen
@@ -165,7 +159,7 @@ const int dora_tpcc_db::start()
 
     /*
     // NEW-ORDER
-    _no_irpt = new irpTableImpl(_tpccenv, _tpccenv->new_order(), icpu, range, NO_IRP_KEY);
+    _no_irpt = new irpTableImpl(this, this->new_order(), icpu, range, NO_IRP_KEY);
     if (!_no_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (NEW-ORDER) irp-table\n");
         assert (0); // should not happen
@@ -178,7 +172,7 @@ const int dora_tpcc_db::start()
 
 
     // ORDER
-    _or_irpt = new irpTableImpl(_tpccenv, _tpccenv->order(), icpu, range, OR_IRP_KEY);
+    _or_irpt = new irpTableImpl(this, this->order(), icpu, range, OR_IRP_KEY);
     if (!_or_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER) irp-table\n");
         assert (0); // should not happen
@@ -191,7 +185,7 @@ const int dora_tpcc_db::start()
 
 
     // ITEM
-    _it_irpt = new irpTableImpl(_tpccenv, _tpccenv->item(), icpu, range, IT_IRP_KEY);
+    _it_irpt = new irpTableImpl(this, this->item(), icpu, range, IT_IRP_KEY);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ITEM) irp-table\n");
         assert (0); // should not happen
@@ -204,7 +198,7 @@ const int dora_tpcc_db::start()
 
 
     // ORDER-LINE
-    _ol_irpt = new irpTableImpl(_tpccenv, _tpccenv->orderline(), icpu, range, OL_IRP_KEY);
+    _ol_irpt = new irpTableImpl(this, this->orderline(), icpu, range, OL_IRP_KEY);
     if (!_ol_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER-LINE) irp-table\n");
         assert (0); // should not happen
@@ -217,7 +211,7 @@ const int dora_tpcc_db::start()
 
 
     // STOCK
-    _st_irpt = new irpTableImpl(_tpccenv, _tpccenv->stock(), icpu, range, ST_IRP_KEY);
+    _st_irpt = new irpTableImpl(this, this->stock(), icpu, range, ST_IRP_KEY);
     if (!_st_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (STOCK) irp-table\n");
         assert (0); // should not happen
@@ -248,7 +242,7 @@ const int dora_tpcc_db::start()
  *
  ******************************************************************/
 
-const int dora_tpcc_db::stop()
+const int DoraTPCCEnv::stop()
 {
     TRACE( TRACE_DEBUG, "Stopping...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
@@ -269,7 +263,7 @@ const int dora_tpcc_db::stop()
  *
  ******************************************************************/
 
-const int dora_tpcc_db::resume()
+const int DoraTPCCEnv::resume()
 {
     assert (0); // TODO (ip)
     set_dbc(DBC_ACTIVE);
@@ -286,7 +280,7 @@ const int dora_tpcc_db::resume()
  *
  ******************************************************************/
 
-const int dora_tpcc_db::pause()
+const int DoraTPCCEnv::pause()
 {
     assert (0); // TODO (ip)
     set_dbc(DBC_PAUSED);
@@ -303,7 +297,7 @@ const int dora_tpcc_db::pause()
  *
  ******************************************************************/
 
-const int dora_tpcc_db::newrun()
+const int DoraTPCCEnv::newrun()
 {
     TRACE( TRACE_DEBUG, "Preparing for new run...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
@@ -322,7 +316,7 @@ const int dora_tpcc_db::newrun()
  *
  ******************************************************************/
 
-const int dora_tpcc_db::set(envVarMap* vars)
+const int DoraTPCCEnv::set(envVarMap* vars)
 {
     TRACE( TRACE_DEBUG, "Reading set...\n");
     for (envVarConstIt cit = vars->begin(); cit != vars->end(); ++cit)
@@ -342,7 +336,7 @@ const int dora_tpcc_db::set(envVarMap* vars)
  *
  ******************************************************************/
 
-const int dora_tpcc_db::dump()
+const int DoraTPCCEnv::dump()
 {
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->dump();
@@ -363,21 +357,21 @@ const int dora_tpcc_db::dump()
  * @note:  This decision  can be based among others on:
  *
  *         - aprd                    - the current cpu
- *         - _tpccenv->_max_cpu_count    - the maximum cpu count (hard-limit)
- *         - _tpccenv->_active_cpu_count - the active cpu count (soft-limit)
+ *         - this->_max_cpu_count    - the maximum cpu count (hard-limit)
+ *         - this->_active_cpu_count - the active cpu count (soft-limit)
  *         - this->_start_prs_id     - the first assigned cpu for the table
  *         - this->_prs_range        - a range of cpus assigned for the table
- *         - _tpccenv->_sf               - the scaling factor of the tpcc-db
+ *         - this->_sf               - the scaling factor of the tpcc-db
  *         - this->_vec.size()       - the number of tables
  *         - atable                  - the current table
  *
  ******************************************************************/
 
-const processorid_t dora_tpcc_db::_next_cpu(const processorid_t aprd,
+const processorid_t DoraTPCCEnv::_next_cpu(const processorid_t aprd,
                                             const irpTableImpl* atable,
                                             const int step)
 {
-    processorid_t nextprs = ((aprd+step) % _tpccenv->get_active_cpu_count());
+    processorid_t nextprs = ((aprd+step) % this->get_active_cpu_count());
     TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);
 }
