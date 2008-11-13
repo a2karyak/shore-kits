@@ -1,13 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file srmwqueue.h
+/** @file:  srmwqueue.h
  *
- *  @brief A single-reader, multiple-writer queue.
+ *  @brief: A single-reader, multiple-writer queue.
  *
- *  Queue size is unbounded and the reader spins while waiting for new
- *  elements to arrive.
+ *  Queue size is unbounded and the (shore_worker) reader initially spins while 
+ *  waiting for new elements to arrive and then sleeps on a condex.
  *
- *  @author Ryan Johnson (ryanjohn)
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Ryan Johnson (ryanjohn)
  */
 
 #ifndef __DORA_SRMW_QUEUE_H
