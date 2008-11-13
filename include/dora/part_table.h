@@ -143,7 +143,8 @@ public:
     }
 
 
-    /** Action-related methods */
+    /////  Action-related methods
+
     // enqueues action, false on error
     inline const int enqueue(Action* paction, const int part) {
         assert (part<_pcnt);
@@ -152,7 +153,13 @@ public:
 
 
 
-    /** For debugging */
+    // For debugging
+
+    // information
+    void info() const {
+        TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
+        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
+    }        
 
     // dumps information
     void dump() const {

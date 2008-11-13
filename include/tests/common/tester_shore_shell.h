@@ -133,13 +133,14 @@ public:
     virtual int process_cmd_WARMUP(const char* command, const char* command_tag);    
     virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
     virtual int process_cmd_TRXS(const char* command, const char* command_tag); 
+    //    virtual int process_cmd_RESTART(const char* command, const char* command_tag)=0;
 
     virtual void usage_cmd_TEST();
     virtual void usage_cmd_MEASURE();
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
 
-    virtual const int register_commands() { return (SHELL_NEXT_CONTINUE); }
+    virtual const int register_commands()=0;
 
 
     // Instanciate and close the Shore environment

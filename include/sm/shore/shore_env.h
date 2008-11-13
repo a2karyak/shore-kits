@@ -212,11 +212,13 @@ public:
     virtual const int close()=0;
     virtual const int start()=0;
     virtual const int stop()=0;
+    virtual const int restart()=0;
     virtual const int pause()=0;
     virtual const int resume()=0;    
     virtual const int newrun()=0;    
     virtual const int statistics()=0;    
     virtual const int dump()=0;    
+    virtual const int info()=0;    
     
 }; // EOF: db_iface
 
@@ -330,11 +332,13 @@ public:
     virtual const int close();
     virtual const int start() { return(0); /* do nothing */ };
     virtual const int stop() { return(0); /* do nothing */ };
+    virtual const int restart();
     virtual const int pause() { return(0); /* do nothing */ };
     virtual const int resume() { return(0); /* do nothing */ };    
     virtual const int newrun() { return(0); /* do nothing */ };
     virtual const int statistics();
     virtual const int dump();
+    virtual const int info()=0;    
 
     // Loads the database schema after the config file is read, and before the storage
     // manager is started.
@@ -387,7 +391,7 @@ public:
     // disabled - max_count can be set only on conf
     //    void set_max_cpu_count(const int maxcpucnt); 
 
-private:
+protected:
    
     // returns 0 on success
     const int _set_sys_params();

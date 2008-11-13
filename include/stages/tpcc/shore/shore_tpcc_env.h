@@ -312,14 +312,17 @@ public:
 
     virtual const int set(envVarMap* vars) { return(0); /* do nothing */ };
     virtual const int open() { return(0); /* do nothing */ };
-    virtual const int start() { return(0); /* do nothing */ };
-    virtual const int stop() { return(0); /* do nothing */ };
     virtual const int pause() { return(0); /* do nothing */ };
     virtual const int resume() { return(0); /* do nothing */ };    
     virtual const int newrun() { return(0); /* do nothing */ };
 
     virtual const int post_init();
     virtual const int load_schema();
+
+    virtual const int conf();
+    virtual const int start() { return(0); /* do nothing */ };
+    virtual const int stop() { return(0); /* do nothing */ };
+    virtual const int info();
 
 private:
     w_rc_t _post_init_impl();
@@ -356,6 +359,7 @@ public:
     inline int get_qf() { return (_queried_factor); }
     void set_sf(const int aSF);
     inline int get_sf() { return (_scaling_factor); }
+    const int upd_sf();
 
     inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
     inline table_man_list_t*  table_man_list() { return (&_table_man_list); }

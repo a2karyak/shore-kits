@@ -513,6 +513,29 @@ void ShoreEnv::readconfig(string conf_file)
 
 /****************************************************************** 
  *
+ * @fn:    restart()
+ *
+ * @brief: Re-starts the environment
+ *
+ * @note:  - Stops everything
+ *         - Rereads configuration
+ *         - Starts everything
+ *
+ ******************************************************************/
+
+const int ShoreEnv::restart()
+{
+    TRACE( TRACE_DEBUG, "Restarting (%s)...\n", _sysname);
+    stop();
+    conf();
+    _set_sys_params();
+    start();
+    return(0);
+}
+
+
+/****************************************************************** 
+ *
  *  @fn:    conf
  *
  *  @brief: Prints configuration

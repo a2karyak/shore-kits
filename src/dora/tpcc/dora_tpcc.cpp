@@ -52,16 +52,15 @@ const int ST_IRP_KEY = 2;
 
 const int DoraTPCCEnv::start()
 {
-    TRACE( TRACE_DEBUG, "Creating tables...\n");
- 
     // 1. Creates partitioned tables
     // 2. Add them to the vector
     // 3. Reset each table
 
     int range = get_active_cpu_count();
     processorid_t icpu(0);
-    int sf = get_sf();
-
+    int sf = upd_sf();
+    TRACE( TRACE_DEBUG, "Creating tables. SF=(%d)...\n", sf);
+ 
     // used for setting up the key ranges
     irpImplKey partDown;
     irpImplKey partUp;
@@ -249,6 +248,7 @@ const int DoraTPCCEnv::stop()
         _irptp_vec[i]->stop();
     }
     set_dbc(DBC_STOPPED);
+    _irptp_vec.clear();
     return (0);
 }
 
@@ -343,6 +343,27 @@ const int DoraTPCCEnv::dump()
     }
     return (0);
 }
+
+
+/****************************************************************** 
+ *
+ * @fn:    info()
+ *
+ * @brief: Information about the current state of DORA
+ *
+ ******************************************************************/
+
+const int DoraTPCCEnv::info()
+{
+    TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
+    int sz=_irptp_vec.size();
+    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
+    for (int i=0;i<sz;++i) {
+        _irptp_vec[i]->info();
+    }
+    return (0);
+}
+
 
 
 

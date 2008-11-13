@@ -82,6 +82,42 @@ public:
 
     virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
 
+
+
+    // cmd - RESTART
+    struct restart_cmd_t : public command_handler_t {
+        DB* _pdb;
+        restart_cmd_t(DB* adb) : _pdb(adb) { };
+        ~restart_cmd_t() { }
+        void setaliases() { _name = string("restart"); _aliases.push_back("restart"); }
+        const int handle(const char* cmd) { assert (_pdb); _pdb->stop(); _pdb->start(); return (SHELL_NEXT_CONTINUE); }
+        const string desc() { return (string("Restart")); }               
+    };
+    guard<restart_cmd_t> _restarter;
+
+    // cmd - INFO
+    struct info_cmd_t : public command_handler_t {
+        DB* _pdb;
+        info_cmd_t(DB* adb) : _pdb(adb) { };
+        ~info_cmd_t() { }
+        void setaliases() { _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
+        const int handle(const char* cmd) { assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
+        const string desc() { return (string("Print info about the state of db instance")); }
+    };
+    guard<info_cmd_t> _informer;
+
+    virtual const int register_commands() {
+
+        _restarter = new restart_cmd_t(_tpccdb);
+        _restarter->setaliases();
+        add_cmd(_restarter.get());
+
+        _informer = new info_cmd_t(_tpccdb);
+        _informer->setaliases();
+        add_cmd(_informer.get());
+        return (0);
+    }
+
 protected:
 
 
@@ -174,9 +210,11 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
         TRACE( TRACE_ALWAYS, "No supported binding policies...\nExiting...");
         return (1);
     }
-       
 
-    // 5. Start the VAS
+    // 5. Now that everything is set, register any additional commands
+    register_commands();
+
+    // 6. Start the VAS
     return (_tpccdb->start());
 }
 

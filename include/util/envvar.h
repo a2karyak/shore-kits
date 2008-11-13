@@ -138,6 +138,8 @@ public:
 
     // gets db-config and then <db-config>-system
     string getSysname();
+    string getSysVar(string sParam);
+    const int getSysVarInt(string sParam);
 
 }; // EOF: envVar
 

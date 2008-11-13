@@ -100,7 +100,7 @@ int shell_t::process_one()
     CRITICAL_SECTION(sh_cs,_lock);
 
     if ( sscanf(cmd, "%s", &cmd_tag) < 1) {
-        _help_cmd->list_cmds();
+        _helper->list_cmds();
         return (SHELL_NEXT_CONTINUE);
     }
         
@@ -206,34 +206,31 @@ const int shell_t::close_cmds()
 
 const int shell_t::_register_commands() 
 {
-
-    //    register_commands(); // call the virtual
-
     // add own
 
-    _tracer_cmd = new trace_cmd_t();        
-    _tracer_cmd->setaliases();
-    add_cmd(_tracer_cmd.get());
+    _tracer = new trace_cmd_t();        
+    _tracer->setaliases();
+    add_cmd(_tracer.get());
 
-    _conf_cmd = new conf_cmd_t();        
-    _conf_cmd->setaliases();
-    add_cmd(_conf_cmd.get());
+    _confer = new conf_cmd_t();        
+    _confer->setaliases();
+    add_cmd(_confer.get());
 
-    _env_cmd = new env_cmd_t();        
-    _env_cmd->setaliases();
-    add_cmd(_env_cmd.get());
+    _enver = new env_cmd_t();        
+    _enver->setaliases();
+    add_cmd(_enver.get());
 
-    _set_cmd = new set_cmd_t();        
-    _set_cmd->setaliases();
-    add_cmd(_set_cmd.get());
+    _seter = new set_cmd_t();        
+    _seter->setaliases();
+    add_cmd(_seter.get());
 
-    _help_cmd = new help_cmd_t(&_cmds);        
-    _help_cmd->setaliases();
-    add_cmd(_help_cmd.get());
+    _helper = new help_cmd_t(&_cmds);        
+    _helper->setaliases();
+    add_cmd(_helper.get());
 
-    _quit_cmd = new quit_cmd_t();        
-    _quit_cmd->setaliases();
-    add_cmd(_quit_cmd.get());
+    _quiter = new quit_cmd_t();        
+    _quiter->setaliases();
+    add_cmd(_quiter.get());
 
     return (0);
 }

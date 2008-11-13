@@ -61,15 +61,15 @@ private:
     irpTablePtrVector _irptp_vec;    
 
     // the list of pointer to irp-tables
-    irpTableImpl* _wh_irpt; // WAREHOUSE
-    irpTableImpl* _di_irpt; // DISTRICT
-    irpTableImpl* _cu_irpt; // CUSTOMER
-    irpTableImpl* _hi_irpt; // HISTORY
-    irpTableImpl* _no_irpt; // NEW-ORDER
-    irpTableImpl* _or_irpt; // ORDER
-    irpTableImpl* _it_irpt; // ITEM
-    irpTableImpl* _ol_irpt; // ORDER-LINE
-    irpTableImpl* _st_irpt; // STOCK
+    guard<irpTableImpl> _wh_irpt; // WAREHOUSE
+    guard<irpTableImpl> _di_irpt; // DISTRICT
+    guard<irpTableImpl> _cu_irpt; // CUSTOMER
+    guard<irpTableImpl> _hi_irpt; // HISTORY
+    guard<irpTableImpl> _no_irpt; // NEW-ORDER
+    guard<irpTableImpl> _or_irpt; // ORDER
+    guard<irpTableImpl> _it_irpt; // ITEM
+    guard<irpTableImpl> _ol_irpt; // ORDER-LINE
+    guard<irpTableImpl> _st_irpt; // STOCK
 
 public:
     
@@ -90,7 +90,9 @@ public:
     const int newrun();
     const int set(envVarMap* vars);
     const int dump();
-    
+    virtual const int conf() { return (ShoreTPCCEnv::conf()); }
+    virtual const int info();    
+
     //// Client API
     
     // enqueues action, false on error
@@ -113,26 +115,26 @@ public:
     }
 
     // Access irp-tables
-    inline irpTableImpl* whs() const { return (_wh_irpt); }
-    inline irpTableImpl* dis() const { return (_di_irpt); }
-    inline irpTableImpl* cus() const { return (_cu_irpt); }
-    inline irpTableImpl* his() const { return (_hi_irpt); }
-    inline irpTableImpl* nor() const { return (_no_irpt); }
-    inline irpTableImpl* ord() const { return (_or_irpt); }
-    inline irpTableImpl* ite() const { return (_it_irpt); }
-    inline irpTableImpl* oli() const { return (_ol_irpt); }
-    inline irpTableImpl* sto() const { return (_st_irpt); }
+    inline irpTableImpl* whs() { return (_wh_irpt.get()); }
+    inline irpTableImpl* dis() { return (_di_irpt.get()); }
+    inline irpTableImpl* cus() { return (_cu_irpt.get()); }
+    inline irpTableImpl* his() { return (_hi_irpt.get()); }
+    inline irpTableImpl* nor() { return (_no_irpt.get()); }
+    inline irpTableImpl* ord() { return (_or_irpt.get()); }
+    inline irpTableImpl* ite() { return (_it_irpt.get()); }
+    inline irpTableImpl* oli() { return (_ol_irpt.get()); }
+    inline irpTableImpl* sto() { return (_st_irpt.get()); }
 
     // Access specific partitions
-    inline irpImpl* whs(const int pos) const { return (_wh_irpt->get_part(pos)); }
-    inline irpImpl* dis(const int pos) const { return (_di_irpt->get_part(pos)); }
-    inline irpImpl* cus(const int pos) const { return (_cu_irpt->get_part(pos)); }
-    inline irpImpl* his(const int pos) const { return (_hi_irpt->get_part(pos)); }
-    inline irpImpl* nor(const int pos) const { return (_no_irpt->get_part(pos)); }
-    inline irpImpl* ord(const int pos) const { return (_or_irpt->get_part(pos)); }
-    inline irpImpl* ite(const int pos) const { return (_it_irpt->get_part(pos)); }
-    inline irpImpl* oli(const int pos) const { return (_ol_irpt->get_part(pos)); }
-    inline irpImpl* sto(const int pos) const { return (_st_irpt->get_part(pos)); }
+    inline irpImpl* whs(const int pos) { return (_wh_irpt->get_part(pos)); }
+    inline irpImpl* dis(const int pos) { return (_di_irpt->get_part(pos)); }
+    inline irpImpl* cus(const int pos) { return (_cu_irpt->get_part(pos)); }
+    inline irpImpl* his(const int pos) { return (_hi_irpt->get_part(pos)); }
+    inline irpImpl* nor(const int pos) { return (_no_irpt->get_part(pos)); }
+    inline irpImpl* ord(const int pos) { return (_or_irpt->get_part(pos)); }
+    inline irpImpl* ite(const int pos) { return (_it_irpt->get_part(pos)); }
+    inline irpImpl* oli(const int pos) { return (_ol_irpt->get_part(pos)); }
+    inline irpImpl* sto(const int pos) { return (_st_irpt->get_part(pos)); }
 
 
 

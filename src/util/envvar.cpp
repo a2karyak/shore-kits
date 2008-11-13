@@ -127,6 +127,20 @@ string envVar::getSysname()
     return (getVar(config,"invalid"));
 }
 
+string envVar::getSysVar(string sParam)
+{
+    string config = getVar("db-config","invalid");
+    config = config + "-" + sParam;
+    return (getVar(config,""));
+}
+
+const envVar::getSysVarInt(string sParam)
+{
+    string config = getVar("db-config","invalid");
+    config = config + "-" + sParam;
+    return (getVarInt(config,0));
+}
+
 
 
 

@@ -55,18 +55,15 @@ typedef cmdMap::iterator cmdMapIt;
 class envVar;
 
 
-class quit_cmd_t : public command_handler_t {
-public:
+struct quit_cmd_t : public command_handler_t {
     void setaliases();
     const int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
     const string desc() { return (string("Quit")); }               
 };
 
 
-class help_cmd_t : public command_handler_t {
-private:
+struct help_cmd_t : public command_handler_t {
     cmdMap* _pcmds; // pointer to the supported commands
-public:
     help_cmd_t(cmdMap* pcmds) : _pcmds(pcmds) { assert(pcmds); }
     ~help_cmd_t() { }
     void setaliases();
@@ -80,10 +77,8 @@ public:
 }; 
 
 
-class set_cmd_t : public command_handler_t {
-private:
+struct set_cmd_t : public command_handler_t {
     envVar* ev;
-public:
     void init() { ev = envVar::instance(); }
     void setaliases();
     const int handle(const char* cmd);
@@ -91,10 +86,8 @@ public:
     const string desc() { return (string("Sets env vars")); }               
 };
 
-class env_cmd_t : public command_handler_t {
-private:
+struct env_cmd_t : public command_handler_t {
     envVar* ev;
-public:
     void init() { ev = envVar::instance(); }
     void setaliases();
     const int handle(const char* cmd);
@@ -102,10 +95,8 @@ public:
     const string desc() { return (string("Prints env vars")); }               
 };
 
-class conf_cmd_t : public command_handler_t {
-private:
+struct conf_cmd_t : public command_handler_t {
     envVar* ev;
-public:
     void init() { ev = envVar::instance(); }
     void setaliases();
     const int handle(const char* cmd);
@@ -138,12 +129,12 @@ private:
     int   _state;
 
     // cmds
-    guard<quit_cmd_t> _quit_cmd;
-    guard<help_cmd_t> _help_cmd;
-    guard<set_cmd_t>  _set_cmd;
-    guard<env_cmd_t>  _env_cmd;
-    guard<conf_cmd_t> _conf_cmd;
-    guard<trace_cmd_t>   _tracer_cmd;
+    guard<quit_cmd_t> _quiter;
+    guard<help_cmd_t> _helper;
+    guard<set_cmd_t>  _seter;
+    guard<env_cmd_t>  _enver;
+    guard<conf_cmd_t> _confer;
+    guard<trace_cmd_t>   _tracer;
     
     const int _register_commands();    
 
@@ -162,7 +153,7 @@ public:
     shell_t(const char* prompt = QPIPE_PROMPT, bool save_history = true) 
         : _cmd_counter(0), _save_history(save_history), 
           _state(SHELL_NEXT_CONTINUE), _processing_command(false),
-          _tracer_cmd(NULL)
+          _tracer(NULL)
     {
         _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
         if (prompt) strncpy(_cmd_prompt, prompt, strlen(prompt));

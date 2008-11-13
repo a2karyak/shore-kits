@@ -177,6 +177,17 @@ void ShoreTPCCEnv::set_sf(const int aSF)
     }
 }
 
+const int ShoreTPCCEnv::upd_sf()
+{
+    // update whs
+    int tmp_sf = envVar::instance()->getSysVarInt("sf");
+    assert (tmp_sf);
+    set_sf(tmp_sf);
+    set_qf(tmp_sf);
+    print_sf();
+    return (_scaling_factor);
+}
+
 
 void ShoreTPCCEnv::print_sf(void)
 {
@@ -185,6 +196,11 @@ void ShoreTPCCEnv::print_sf(void)
     TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
 }
 
+const int ShoreTPCCEnv::info()
+{
+    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", _scaling_factor);
+    return (0);
+}
 
 
 
@@ -463,6 +479,15 @@ const int ShoreTPCCEnv::dump()
 }
 
 
+const int ShoreTPCCEnv::conf()
+{
+    // reread the params
+    ShoreEnv::conf();
+    upd_sf();
+    return (0);
+}
+
+
 /********************************************************************
  *
  * Make sure the WH table is padded to one record per page
@@ -479,13 +504,7 @@ const int ShoreTPCCEnv::dump()
 
 const int ShoreTPCCEnv::post_init() 
 {
-    int tmp_sf = atoi(_dev_opts[SHORE_DB_OPTIONS[3][0]].c_str());
-    TRACE( TRACE_DEBUG, "conf-WHs=(%d)\n", tmp_sf);
-    assert (tmp_sf);
-    set_sf(tmp_sf);
-    set_qf(tmp_sf);
-    assert (_queried_factor<=_scaling_factor); 
-
+    conf();
     TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
 
     W_COERCE(db()->begin_xct());

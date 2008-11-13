@@ -368,7 +368,7 @@ tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 
 tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
-tests_tpcc_kit_shell_SOURCES = $(ST)/shore_kit_shell.cpp
+tests_tpcc_kit_shell_SOURCES = $(ST)/tpcc_kit_shell.cpp
 tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
