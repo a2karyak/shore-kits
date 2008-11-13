@@ -833,7 +833,7 @@ const int partition_t<DataType>::_generate_primary()
     _owner->set_data_owner_state(DOS_ALONE);
 
     // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("dora-queueloops",0);
+    int lc = envVar::instance()->getVarInt("db-queueloops",0);
 
     // pass worker thread controls to the two queues
     _input_queue.set(WS_INPUT_Q,_owner,lc);  

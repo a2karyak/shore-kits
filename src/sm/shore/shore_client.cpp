@@ -83,7 +83,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     case (MT_TIME_DUR):
 
         // retrieve the default batch size
-        batchsz = envVar::instance()->getVarInt("cl-batchsz",BATCH_SIZE);
+        batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
 	
 	// submit the first two batches...
 	submit_batch(xct_type, i, batchsz);

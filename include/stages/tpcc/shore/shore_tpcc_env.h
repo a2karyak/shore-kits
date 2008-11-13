@@ -24,6 +24,7 @@
 #include "sm/shore/shore_sort_buf.h"
 
 #include "stages/tpcc/shore/shore_tpcc_schema_man.h"
+#include "stages/tpcc/shore/shore_tpcc_worker.h"
 
 #include <map>
 
@@ -43,8 +44,6 @@ using std::map;
 
 class ShoreTPCCEnv;
 extern ShoreTPCCEnv* _g_shore_env;
-
-//typedef atomic_trash_stack<char*> ts_buf_t;
 
 
 
@@ -223,7 +222,18 @@ struct tpcc_stats_t
 
 class ShoreTPCCEnv : public ShoreEnv
 {
+public:
+    typedef tpcc_worker_t        Worker;
+    typedef tpcc_worker_t*       WorkerPtr;
+    typedef vector<WorkerPtr>    WorkerPool;
+    typedef WorkerPool::iterator WorkerIt;
+
 protected:       
+
+    WorkerPool      _workers;            // list of worker threads
+    int             _worker_cnt;         
+
+
     // TPC-C tables
 
     /** all the tables */
@@ -281,12 +291,15 @@ protected:
                            const int xct_id, 
                            trx_result_tuple_t& trt);
     
+
+private:
+    w_rc_t _post_init_impl();
     
 public:    
 
     /** Construction  */
     ShoreTPCCEnv(string confname)
-        : ShoreEnv(confname), 
+        : ShoreEnv(confname), _worker_cnt(0),
           _scaling_factor(TPCC_SCALING_FACTOR), 
           _queried_factor(QUERIED_TPCC_SCALING_FACTOR)
     {
@@ -320,14 +333,9 @@ public:
     virtual const int load_schema();
 
     virtual const int conf();
-    virtual const int start() { return(0); /* do nothing */ };
-    virtual const int stop() { return(0); /* do nothing */ };
+    virtual const int start();
+    virtual const int stop();
     virtual const int info();
-
-private:
-    w_rc_t _post_init_impl();
-
-public:
 
 
     // --- statistics --- //
@@ -401,6 +409,9 @@ public:
 
     // --- kit baseline trxs --- //
 
+    w_rc_t run_one_xct(int xct_type, const int xctid, const int whid, trx_result_tuple_t& trt);
+
+
     // --- with input specified --- //
     w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
     w_rc_t run_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
@@ -457,7 +468,7 @@ public:
                             const int xct_id, 
                             trx_result_tuple_t& trt);
 
-
+    
 
     // update statistics
 
@@ -479,6 +490,20 @@ public:
         ++_env_stats._ntrx_att;
         return (0); 
     }
+
+
+    const int upd_worker_cnt();
+
+    // accesses a worker from the pool
+    inline tpcc_worker_t* tpccworker(const int idx) { 
+        assert (idx>=0);
+        return (_workers[idx%_worker_cnt]); 
+    } 
+
+    //// request atomic trash stack
+    typedef atomic_class_stack<tpcc_request_t> RequestStack;
+    RequestStack _request_pool;
+
 
 }; // EOF ShoreTPCCEnv
    

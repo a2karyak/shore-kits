@@ -145,6 +145,83 @@ const int ShoreTPCCEnv::load_schema()
 
 /******************************************************************** 
  *
+ *  @fn:    info()
+ *
+ *  @brief: Prints information about the current db instance status
+ *
+ ********************************************************************/
+
+const int ShoreTPCCEnv::info()
+{
+    TRACE( TRACE_ALWAYS, "SF          = (%d)\n", _scaling_factor);
+    TRACE( TRACE_ALWAYS, "Worker pool = (%d)\n", _worker_cnt);
+    return (0);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    start()
+ *
+ *  @brief: Starts the tpcc env
+ *
+ ********************************************************************/
+
+const int ShoreTPCCEnv::start()
+{
+    upd_sf();
+    upd_worker_cnt();
+
+    assert (_workers.empty());
+
+    TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
+    info();
+
+    // read from env params the loopcnt
+    int lc = envVar::instance()->getVarInt("db-queueloops",0);    
+
+    WorkerPtr aworker;
+    for (int i=0; i<_worker_cnt; i++) {
+        aworker = new Worker(this,this,c_str("worker-%d", i));
+        _workers.push_back(aworker);
+        aworker->init(lc);
+        aworker->start();
+        aworker->fork();
+    }
+    return (0);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    stop()
+ *
+ *  @brief: Stops the tpcc env
+ *
+ ********************************************************************/
+
+const int ShoreTPCCEnv::stop()
+{
+    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
+    info();
+
+    int i=0;
+    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
+        i++;
+        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
+        if (*it) {
+            (*it)->stop();
+            (*it)->join();
+            delete (*it);
+        }
+    }
+    _workers.clear();
+    return (0);
+}
+
+
+/******************************************************************** 
+ *
  *  @fn:    set_sf/qf
  *
  *  @brief: Set the scaling and queried factors
@@ -196,11 +273,16 @@ void ShoreTPCCEnv::print_sf(void)
     TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
 }
 
-const int ShoreTPCCEnv::info()
+
+const int ShoreTPCCEnv::upd_worker_cnt()
 {
-    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", _scaling_factor);
-    return (0);
+    // update worker thread cnt
+    int workers = envVar::instance()->getVarInt("db-workers",0);
+    assert (workers);
+    _worker_cnt = workers;
+    return (_worker_cnt);
 }
+
 
 
 
@@ -484,6 +566,7 @@ const int ShoreTPCCEnv::conf()
     // reread the params
     ShoreEnv::conf();
     upd_sf();
+    upd_worker_cnt();
     return (0);
 }
 
@@ -655,6 +738,52 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
  * (2) The xct_XXX functions are the implementation of the transactions
  *
  ********************************************************************/
+
+
+/********************************************************************* 
+ *
+ *  @fn:    run_one_xct
+ *
+ *  @brief: Baseline client - Entry point for running one trx 
+ *
+ *  @note:  The execution of this trx will not be stopped even if the
+ *          measure internal has expired.
+ *
+ *********************************************************************/
+
+w_rc_t ShoreTPCCEnv::run_one_xct(int xct_type, const int xctid, 
+                                 const int whid, trx_result_tuple_t& trt)
+{
+    // if BASELINE TPC-C MIX
+    if (xct_type == XCT_MIX) {        
+        xct_type = random_xct_type(rand()%100);
+    }
+    
+    switch (xct_type) {
+        
+        // TPC-C BASELINE
+    case XCT_NEW_ORDER:
+        return (run_new_order(xctid,trt,whid));
+    case XCT_PAYMENT:
+        return (run_payment(xctid,trt,whid));;
+    case XCT_ORDER_STATUS:
+        return (run_order_status(xctid,trt,whid));
+    case XCT_DELIVERY:
+        return (run_delivery(xctid,trt,whid));
+    case XCT_STOCK_LEVEL:
+        return (run_stock_level(xctid,trt,whid));
+
+        // MBENCH BASELINE
+    case XCT_MBENCH_WH:
+        return (run_mbench_wh(xctid,trt,whid));
+    case XCT_MBENCH_CUST:
+        return (run_mbench_cust(xctid,trt,whid)); 
+    default:
+        assert (0); // UNKNOWN TRX-ID
+    }
+    return (RCOK);
+}
+
 
 
 /******************************************************************** 
@@ -1036,8 +1165,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     prol->_rep = &areprow;
 
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
 
 
     /* SELECT c_discount, c_last, c_credit, w_tax
@@ -1310,8 +1439,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     prcust->_rep = &areprow;
     prhist->_rep = &areprow;
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
 
 
     /* 1. retrieve warehouse for update */
@@ -1554,6 +1683,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
     /* 4. commit */
     W_DO(_pssm->commit_xct());
+    //W_DO(_pssm->commit_xct());
 
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
@@ -1629,8 +1759,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     lowrep.set(_pcustomer_desc->maxsize()); 
     highrep.set(_pcustomer_desc->maxsize()); 
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
 
     /* 1a. select customer based on name */
     if (pstin->_c_id == 0) {
@@ -1833,8 +1963,8 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     prol->_rep = &areprow;
     prcust->_rep = &areprow;
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
 
     rep_row_t lowrep(_porder_line_man->ts());
     rep_row_t highrep(_porder_line_man->ts());
@@ -2034,8 +2164,8 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     prol->_rep = &areprow;
     prst->_rep = &areprow;
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
     
     /* 1. get next_o_id from the district */
 
@@ -2271,8 +2401,8 @@ w_rc_t ShoreTPCCEnv::_run_mbench_cust(const int xct_id, trx_result_tuple_t& trt,
     areprow.set(_pcustomer_desc->maxsize()); 
     prcust->_rep = &areprow;
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
 
     /* 1. retrieve customer for update */
 
@@ -2444,8 +2574,8 @@ w_rc_t ShoreTPCCEnv::_run_mbench_wh(const int xct_id, trx_result_tuple_t& trt,
     areprow.set(_pwarehouse_desc->maxsize()); 
     prwh->_rep = &areprow;
 
-    /* 0. initiate transaction */
-    W_DO(_pssm->begin_xct());
+//     /* 0. initiate transaction */
+//     W_DO(_pssm->begin_xct());
 
     /* 1. retrieve warehouse for update */
     TRACE( TRACE_TRX_FLOW, 

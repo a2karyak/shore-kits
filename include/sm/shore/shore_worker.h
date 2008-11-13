@@ -295,8 +295,6 @@ public:
 
     void stats() { _stats.print_stats(); }
 
-
-
 private:
 
     // copying not allowed

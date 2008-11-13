@@ -110,6 +110,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
     PartAction* apa = NULL;
     int bHadCommitted = 0;
 
+    // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
         assert (_partition);
         
@@ -117,13 +118,6 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
         apa = NULL;
         bHadCommitted = 0; // an action had committed in this cycle
         set_ws(WS_LOOP);
-
-        // 1. check if signalled to stop
-        // propagate signal to next thread in the list, if any
-        if (get_control() != WC_ACTIVE) {
-            return (0);
-        }
-
 
         // committed actions
 

@@ -56,37 +56,30 @@ private:
     // workload parameters
     ShoreTPCCEnv* _tpccdb;    
     int _wh;
+    tpcc_worker_t* _worker;
 
 public:
 
     baseline_tpcc_client_t() { }     
 
-    baseline_tpcc_client_t(c_str tname, ShoreTPCCEnv* env, 
+    baseline_tpcc_client_t(c_str tname, const int id, ShoreTPCCEnv* env, 
                            MeasurementType aType, int trxid, int numOfTrxs, int useSLI,
                            processorid_t aprsid, int sWH) 
-	: base_client_t(tname,env,aType,trxid,numOfTrxs,useSLI,aprsid),
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
           _tpccdb(env), _wh(sWH)
     {
         assert (env);
         assert (_wh>=0);
+
+        // pick worker thread
+        _worker = _tpccdb->tpccworker(_id);
+        assert (_worker);
     }
 
     ~baseline_tpcc_client_t() { }
 
-    // regular trx impl
-    w_rc_t xct_new_order(int xctid);
-    w_rc_t xct_payment(int xctid);
-    w_rc_t xct_order_status(int xctid);
-    w_rc_t xct_delivery(int xctid);
-    w_rc_t xct_stock_level(int xctid);
-
-    w_rc_t xct_mbench_wh(int xctid);
-    w_rc_t xct_mbench_cust(int xctid);
-
-
     // every client class should implement this functions
     static const int load_sup_xct(mapSupTrxs& map);
-
 
     // INTERFACE 
 
@@ -114,10 +107,10 @@ public:
 
     dora_tpcc_client_t() { }     
 
-    dora_tpcc_client_t(c_str tname, DoraTPCCEnv* env, 
+    dora_tpcc_client_t(c_str tname, const int id, DoraTPCCEnv* env, 
                        MeasurementType aType, int trxid, int numOfTrxs, int useSLI,
                        processorid_t aprsid, int sWH) 
-	: base_client_t(tname,env,aType,trxid,numOfTrxs,useSLI,aprsid),
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
           _tpccdb(env), _wh(sWH)
     {
         assert (env);
@@ -126,19 +119,8 @@ public:
 
     ~dora_tpcc_client_t() { }
 
-    // dora trx impl
-    w_rc_t xct_dora_new_order(int xctid);
-    w_rc_t xct_dora_payment(int xctid);
-    w_rc_t xct_dora_order_status(int xctid);
-    w_rc_t xct_dora_delivery(int xctid);
-    w_rc_t xct_dora_stock_level(int xctid);
-
-    w_rc_t xct_dora_mbench_wh(int xctid);
-    w_rc_t xct_dora_mbench_cust(int xctid);
-
     // every client class should implement this functions
     static const int load_sup_xct(mapSupTrxs& map);
-
 
     // INTERFACE 
 

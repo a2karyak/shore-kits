@@ -158,13 +158,13 @@ public:
     // information
     void info() const {
         TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
-        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
+        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt-1);
     }        
 
     // dumps information
     void dump() const {
         TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
-        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
+        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt-1);
         for (int i=0; i<_ppvec.size(); i++)
             _ppvec[i]->dump();
     }        

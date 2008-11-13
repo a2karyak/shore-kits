@@ -20,17 +20,18 @@
 #include <cstring>
 #endif
 
-#include "sm_vas.h"
-#include "util.h"
-
 #include <map>
-
-
 
 // for binding LWP to cores
 #include <sys/types.h>
 #include <sys/processor.h>
 #include <sys/procset.h>
+
+
+
+#include "sm_vas.h"
+#include "util.h"
+
 
 
 ENTER_NAMESPACE(shore);
@@ -224,6 +225,7 @@ public:
 
 
 
+
 /******************************************************************** 
  *
  * @enum  MeasurementState
@@ -246,9 +248,12 @@ enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE };
 
 class ShoreEnv : public db_iface
 {
+public:
+    typedef map<string,string> ParamMap;
+
 protected:       
 
-    ss_m* _pssm;                    // database handle
+    ss_m*           _pssm;               // database handle
 
     // Status variables
     bool            _initialized; 
@@ -268,9 +273,10 @@ protected:
     // Configuration variables
     guard<option_group_t>   _popts;     // config options
     string                  _cname;     // config filename
-    map<string,string>      _sys_opts;  // db-instance-independent options  
-    map<string,string>      _sm_opts;   // db-instance-specific options that are passed to Shore
-    map<string,string>      _dev_opts;  // db-instance-specific options    
+
+    ParamMap      _sys_opts;  // db-instance-independent options  
+    ParamMap      _sm_opts;   // db-instance-specific options that are passed to Shore
+    ParamMap      _dev_opts;  // db-instance-specific options    
 
     // Processor info
     int                _max_cpu_count;    // hard limit
@@ -302,7 +308,8 @@ public:
     // Construction  //
     ShoreEnv(string confname) 
         : db_iface(),
-          _pssm(NULL), _initialized(false), _init_mutex(thread_mutex_create()),
+          _pssm(NULL), 
+          _initialized(false), _init_mutex(thread_mutex_create()),
           _loaded(false), _load_mutex(thread_mutex_create()),
           _vol_mutex(thread_mutex_create()), _cname(confname),
           _measure(MST_UNDEF),
@@ -352,6 +359,7 @@ public:
     // inline access methods
     inline ss_m* db() { return(_pssm); }
     inline vid_t* vid() { return(_pvid); }
+
 
     inline bool is_initialized() { 
         CRITICAL_SECTION(cs, _init_mutex); 

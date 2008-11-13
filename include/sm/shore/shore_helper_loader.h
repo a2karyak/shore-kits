@@ -18,6 +18,9 @@
 
 ENTER_NAMESPACE(shore);
     
+
+class ShoreEnv;
+
     
 /****************************************************************** 
  *
@@ -79,11 +82,7 @@ public:
     ~db_load_smt_t() { }
 
     // thread entrance
-    void work() {
-        _rc = _env->loaddata();
-        _rv = 0;
-    }
-
+    void work();
     inline int rv() { return (_rv); }
     w_rc_t    _rc;
 
@@ -459,18 +458,7 @@ public:
     ~close_smt_t() {
     }
 
-
-    // thread entrance
-    void work() {
-        assert (_env);
-        TRACE( TRACE_ALWAYS, "Closing Shore...\n");
-        if (_env) {
-            _env->close();
-            delete (_env);
-            _env = NULL;
-        }        
-    }
-
+    void work();
 
     /** @note Those two functions should be implemented by every
      *        smthread-inherited class that runs using run_smthread()
@@ -506,15 +494,7 @@ public:
     ~dump_smt_t() {
     }
 
-
-    // thread entrance
-    void work() {
-        assert (_env);
-        TRACE( TRACE_DEBUG, "Dumping...\n");
-        _env->dump();
-        _rv = 0;
-    }
-
+    void work();
 
     /** @note Those two functions should be implemented by every
      *        smthread-inherited class that runs using run_smthread()

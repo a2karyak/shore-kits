@@ -193,6 +193,7 @@ SG_TPCC_SHORE = \
    $(SG)/tpcc/shore/shore_tpcc_schema_man.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema_gen.cpp \
    $(SG)/tpcc/shore/shore_tpcc_env.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_worker.cpp \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp \
    $(SG)/tpcc/shore/shore_new_order_baseline.cpp \
    $(SG)/tpcc/shore/shore_order_status_baseline.cpp \

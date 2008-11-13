@@ -130,6 +130,7 @@ protected:
     bool          _is_bound;
     processorid_t _prs_id;
 
+    int _id; // thread id
     int _rv;
 
 public:
@@ -140,10 +141,10 @@ public:
           _rv(1)
     { }
     
-    base_client_t(c_str tname, ShoreEnv* env, 
+    base_client_t(c_str tname, const int id, ShoreEnv* env, 
                   MeasurementType aType, int trxid, int numOfTrxs, int useSLI,
                   processorid_t aprsid = PBIND_NONE) 
-	: thread_t(tname), _env(env), 
+	: thread_t(tname), _id(id), _env(env), 
           _measure_type(aType), _trxid(trxid), _notrxs(numOfTrxs), _use_sli(useSLI),
           _is_bound(false), _prs_id(aprsid), _rv(0)
     {
@@ -188,6 +189,7 @@ public:
     }
     
     // access methods
+    const int id() { return (_id); }
     const bool is_bound() const { return (_is_bound); }
     inline int rv() { return (_rv); }
     
