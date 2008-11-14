@@ -150,7 +150,7 @@ void envVar::printVars(void)
     TRACE( TRACE_DEBUG, "Environment variables\n");
     CRITICAL_SECTION(evm_cs,_lock);
     for (envVarConstIt cit= _evm.begin(); cit != _evm.end(); ++cit)
-        TRACE( TRACE_DEBUG, "%s -> %s\n", cit->first.c_str(), cit->second.c_str()); 
+        TRACE( TRACE_STATISTICS, "%s -> %s\n", cit->first.c_str(), cit->second.c_str()); 
 }
 
 
