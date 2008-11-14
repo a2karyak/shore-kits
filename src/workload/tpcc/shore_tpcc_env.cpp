@@ -660,7 +660,6 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 	while (1) {
 	    pin_i* handle = iter->cursor();
 	    if (!handle) {
-                cout << endl;
 		TRACE(TRACE_ALWAYS, " -> Reached EOF. Search complete (%d)\n", count);
 		break;
 	    }

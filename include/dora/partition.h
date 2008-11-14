@@ -226,6 +226,10 @@ public:
     void remove_wait(void); // removes the currently pointed action
 
 
+
+    // stats
+    void statistics() const {assert (_owner); _owner->stats();}
+
     //// Debugging
 
     // dumps information

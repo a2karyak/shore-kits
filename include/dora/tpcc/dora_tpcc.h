@@ -80,6 +80,8 @@ public:
     ~DoraTPCCEnv() { }
 
 
+
+
     //// Control Database
 
     // {Start/Stop/Resume/Pause} the system 
@@ -92,6 +94,7 @@ public:
     const int dump();
     virtual const int conf() { return (ShoreTPCCEnv::conf()); }
     virtual const int info();    
+    virtual const int statistics();    
 
     //// Client API
     

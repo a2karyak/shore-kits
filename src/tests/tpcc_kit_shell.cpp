@@ -89,8 +89,11 @@ public:
         DB* _pdb;
         restart_cmd_t(DB* adb) : _pdb(adb) { };
         ~restart_cmd_t() { }
-        void setaliases() { _name = string("restart"); _aliases.push_back("restart"); }
-        const int handle(const char* cmd) { assert (_pdb); _pdb->stop(); _pdb->start(); return (SHELL_NEXT_CONTINUE); }
+        void setaliases() { 
+            _name = string("restart"); _aliases.push_back("restart"); }
+        const int handle(const char* cmd) { 
+            assert (_pdb); _pdb->stop(); _pdb->start(); 
+            return (SHELL_NEXT_CONTINUE); }
         const string desc() { return (string("Restart")); }               
     };
     guard<restart_cmd_t> _restarter;
@@ -100,14 +103,42 @@ public:
         DB* _pdb;
         info_cmd_t(DB* adb) : _pdb(adb) { };
         ~info_cmd_t() { }
-        void setaliases() { _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
-        const int handle(const char* cmd) { assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
+        void setaliases() { 
+            _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
+        const int handle(const char* cmd) { 
+            assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
         const string desc() { return (string("Print info about the state of db instance")); }
     };
     guard<info_cmd_t> _informer;
 
-    virtual const int register_commands() {
+    // cmd - STATS
+    struct stats_cmd_t : public command_handler_t {
+        DB* _pdb;
+        stats_cmd_t(DB* adb) : _pdb(adb) { };
+        ~stats_cmd_t() { }
+        void setaliases() { 
+            _name = string("stats"); _aliases.push_back("stats"); _aliases.push_back("st"); }
+        const int handle(const char* cmd) { 
+            assert (_pdb); _pdb->statistics(); return (SHELL_NEXT_CONTINUE); }
+        const string desc() { return (string("Print statistics")); }
+    };
+    guard<stats_cmd_t> _stater;
 
+    // cmd - DUMP
+    struct dump_cmd_t : public command_handler_t {
+        DB* _pdb;
+        dump_cmd_t(DB* adb) : _pdb(adb) { };
+        ~dump_cmd_t() { }
+        void setaliases() { 
+            _name = string("dump"); _aliases.push_back("dump"); _aliases.push_back("d"); }
+        const int handle(const char* cmd) { 
+            assert (_pdb); _pdb->dump(); return (SHELL_NEXT_CONTINUE); }
+        const string desc() { return (string("Dump db instance data")); }
+    };
+    guard<dump_cmd_t> _dumper;
+
+    virtual const int register_commands() 
+    {
         _restarter = new restart_cmd_t(_tpccdb);
         _restarter->setaliases();
         add_cmd(_restarter.get());
@@ -115,6 +146,15 @@ public:
         _informer = new info_cmd_t(_tpccdb);
         _informer->setaliases();
         add_cmd(_informer.get());
+
+        _stater = new stats_cmd_t(_tpccdb);
+        _stater->setaliases();
+        add_cmd(_stater.get());
+
+        _dumper = new dump_cmd_t(_tpccdb);
+        _dumper->setaliases();
+        add_cmd(_dumper.get());
+
         return (0);
     }
 

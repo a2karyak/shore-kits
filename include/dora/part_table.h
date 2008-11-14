@@ -10,7 +10,7 @@
  */
 
 
-#ifndef __DORA_PART_TABLE_H_
+#ifndef __DORA_PART_TABLE_H
 #define __DORA_PART_TABLE_H
 
 #include <cstdio>
@@ -156,9 +156,17 @@ public:
     // For debugging
 
     // information
+    void statistics() const {
+        TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
+        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt-1);
+        for (int i=0; i<_ppvec.size(); i++)
+            _ppvec[i]->statistics();
+    }        
+
+    // information
     void info() const {
-        TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
-        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt-1);
+        TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
+        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt-1);
     }        
 
     // dumps information

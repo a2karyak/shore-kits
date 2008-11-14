@@ -25,7 +25,7 @@ ENTER_NAMESPACE(shore);
 
 void worker_stats_t::print_stats() const
 {
-    TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
+    //    TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
     //    TRACE( TRACE_STATISTICS, "Problems       (%d)\n", _problems);
 
     TRACE( TRACE_STATISTICS, "Wait checked   (%d)\n", _checked_waiting);

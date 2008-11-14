@@ -338,7 +338,9 @@ const int DoraTPCCEnv::set(envVarMap* vars)
 
 const int DoraTPCCEnv::dump()
 {
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    int sz=_irptp_vec.size();
+    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
+    for (int i=0; i<sz; i++) {
         _irptp_vec[i]->dump();
     }
     return (0);
@@ -363,6 +365,27 @@ const int DoraTPCCEnv::info()
     }
     return (0);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    statistics
+ *
+ *  @brief: Prints statistics for DORA 
+ *
+ ********************************************************************/
+
+const int DoraTPCCEnv::statistics() 
+{
+    int sz=_irptp_vec.size();
+    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
+    for (int i=0;i<sz;++i) {
+        _irptp_vec[i]->statistics();
+    }
+    return (0);
+}
+
 
 
 
