@@ -117,7 +117,7 @@ lib_libutil_a_SOURCES = \
 ################################################################################
 
 SC=$(top_srcdir)/src/core
-lib_libcore_a_SOURCES = \
+SC_BASE = \
 	$(SC)/dispatcher.cpp \
 	$(SC)/packet.cpp \
 	$(SC)/trx_packet.cpp \
@@ -126,6 +126,8 @@ lib_libcore_a_SOURCES = \
 	$(SC)/tuple_fifo.cpp \
 	$(SC)/tuple_fifo_directory.cpp
 
+lib_libcore_a_SOURCES = \
+	$(SC_BASE)
 
 
 
@@ -136,9 +138,13 @@ lib_libcore_a_SOURCES = \
 ################################################################################
 
 SS=$(top_srcdir)/src/scheduler
-lib_libscheduler_a_SOURCES = \
+SS_BASE = \
 	$(SS)/cpu.cpp \
 	$(SS)/cpu_set.cpp
+
+
+lib_libscheduler_a_SOURCES = \
+	$(SS_BASE)
 
 
 
@@ -180,27 +186,85 @@ SG_COMMON = \
    $(SG)/common/process_query.cpp \
    $(SG)/common/predicates.cpp
 
-SG_TPCC_COMMON = \
+
+lib_libstages_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+
+lib_libstages_a_SOURCES = \
+   $(SG_COMMON)
+
+
+
+
+################################################################################
+#
+# src/dora/
+#
+################################################################################
+
+SD=$(top_srcdir)/src/dora
+DO_BASE = \
+   $(SD)/lockman.cpp \
+   $(SD)/rvp.cpp
+
+
+
+lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+
+lib_libdora_a_SOURCES = \
+   $(DO_BASE)
+
+
+################################################################################
+#
+# src/workload/
+#
+################################################################################
+
+
+
+SW=$(top_srcdir)/src/workload
+WL_BASE = \
+   $(SW)/workload.cpp \
+   $(SW)/workload_client.cpp \
+   $(SW)/register_stage_containers.cpp \
+   $(SW)/dispatcher_globals.cpp
+
+WL_TPCC_COMMON = \
    $(SG)/tpcc/common/tpcc_input.cpp \
    $(SG)/tpcc/common/tpcc_trx_input.cpp \
    $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
    $(SG)/tpcc/common/tpcc_random.cpp
 
-SG_TPCC_SHORE = \
+WL_SG_TPCC_SHORE = \
    $(SG)/tpcc/shore/shore_tpcc_random.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema_man.cpp \
    $(SG)/tpcc/shore/shore_tpcc_schema_gen.cpp \
    $(SG)/tpcc/shore/shore_tpcc_env.cpp \
-   $(SG)/tpcc/shore/shore_tpcc_worker.cpp \
+   $(SG)/tpcc/shore/shore_tpcc_worker.cpp
+
+WL_TPCC_SHORE = \
+   $(SW)/tpcc/shore_tpcc_load.cpp \
+   $(SW)/tpcc/shore_tpcc_xct.cpp
+
+WL_TPCC_DORA = \
+   $(SD)/tpcc/dora_payment.cpp \
+   $(SD)/tpcc/dora_new_order.cpp \
+   $(SD)/tpcc/dora_mbench.cpp \
+   $(SD)/tpcc/dora_tpcc.cpp \
+   $(SD)/tpcc/dora_tpcc_xct.cpp
+
+
+############## DEPRECATED ##################################
+WL_TPCC_SHORE_STAGES_DEPR = \
    $(SG)/tpcc/shore/shore_payment_baseline.cpp \
    $(SG)/tpcc/shore/shore_new_order_baseline.cpp \
    $(SG)/tpcc/shore/shore_order_status_baseline.cpp \
    $(SG)/tpcc/shore/shore_delivery_baseline.cpp \
    $(SG)/tpcc/shore/shore_stock_level_baseline.cpp
 
-SG_TPCC_SHORE_STAGED = \
+WL_TPCC_SHORE_STAGED_DEPR = \
    $(SG)/tpcc/shore/staged/shore_payment_functions.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_begin.cpp \
    $(SG)/tpcc/shore/staged/shore_payment_finalize.cpp \
@@ -214,35 +278,7 @@ SG_TPCC_SHORE_STAGED = \
    $(SG)/tpcc/shore/staged/shore_new_order_outside_loop.cpp \
    $(SG)/tpcc/shore/staged/shore_new_order_one_ol.cpp
 
-
-
-lib_libstages_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-
-lib_libstages_a_SOURCES = \
-   $(SG_COMMON) \
-   $(SG_TPCC_COMMON) \
-   $(SG_TPCC_SHORE) \
-   $(SG_TPCC_SHORE_STAGED)
-
-
-
-
-################################################################################
-#
-# src/workload/
-#
-################################################################################
-
-SW=$(top_srcdir)/src/workload
-WL_BASE = \
-   $(SW)/workload.cpp \
-   $(SW)/workload_client.cpp \
-   $(SW)/register_stage_containers.cpp \
-   $(SW)/dispatcher_globals.cpp
-
-
-WL_SHORE_TPCC = \
-   $(SW)/tpcc/shore_tpcc_load.cpp \
+WL_TPCC_SHORE_DRIVERS_DEPR = \
    $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_baseline.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_staged.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp \
@@ -251,42 +287,23 @@ WL_SHORE_TPCC = \
    $(SW)/tpcc/drivers/shore/shore_tpcc_delivery_baseline.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_stock_level_baseline.cpp \
    $(SW)/tpcc/drivers/shore/shore_tpcc_mix_baseline.cpp
-
+#############################################################
 
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
-   $(WL_SHORE_TPCC)
+   $(WL_TPCC_COMMON) \
+   $(WL_SG_TPCC_SHORE) \
+   $(WL_TPCC_SHORE) \
+   $(WL_TPCC_DORA) \
+   $(WL_TPCC_SHORE_STAGES_DEPR) \
+   $(WL_TPCC_SHORE_STAGED_DEPR) \
+   $(WL_TPCC_SHORE_DRIVERS_DEPR)
+
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
 
-
-################################################################################
-#
-# src/dora/
-#
-################################################################################
-
-SD=$(top_srcdir)/src/dora
-SD_BASE = \
-   $(SD)/lockman.cpp \
-   $(SD)/rvp.cpp
-
-SD_TPCC = \
-   $(SD)/tpcc/dora_payment.cpp \
-   $(SD)/tpcc/dora_new_order.cpp \
-   $(SD)/tpcc/dora_mbench.cpp \
-   $(SD)/tpcc/dora_tpcc.cpp \
-   $(SD)/tpcc/dora_tpcc_xct.cpp
-
-
-
-lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-
-lib_libdora_a_SOURCES = \
-   $(SD_BASE) \
-   $(SD_TPCC)
 
 
 ################################################################################

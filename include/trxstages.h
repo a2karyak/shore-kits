@@ -12,12 +12,12 @@
 
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 
-// transactional stages
-#include "stages/tpcc/new_order.h"
-#include "stages/tpcc/payment.h"
-#include "stages/tpcc/order_status.h"
-#include "stages/tpcc/delivery.h"
-#include "stages/tpcc/stock_level.h"
+// // transactional stages
+// #include "stages/tpcc/new_order.h"
+// #include "stages/tpcc/payment.h"
+// #include "stages/tpcc/order_status.h"
+// #include "stages/tpcc/delivery.h"
+// #include "stages/tpcc/stock_level.h"
 
 
 

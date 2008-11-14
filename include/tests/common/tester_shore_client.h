@@ -73,7 +73,7 @@ public:
 
         // pick worker thread
         _worker = _tpccdb->tpccworker(_id);
-        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().c_str());
+        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
         assert (_worker);
     }
 

@@ -20,7 +20,7 @@
 
 // Special purpose command handlers
 #include "server/command/load_handler.h"
-#include "server/command/shore_tpcc_handler.h"
+//#include "server/command/shore_tpcc_handler.h"
 
 
 #include "workload/register_stage_containers.h"
@@ -104,7 +104,7 @@ void register_command_handlers( const int environment ) {
         /** OLTP commands */
     case TRX_SHORE_ENV:
     default:
-        add_command("shore", new shore_tpcc_handler_t());
+        //add_command("shore", new shore_tpcc_handler_t());
         break;
     }
 }
