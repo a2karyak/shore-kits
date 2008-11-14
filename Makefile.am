@@ -236,17 +236,16 @@ WL_TPCC_COMMON = \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
    $(SG)/tpcc/common/tpcc_random.cpp
 
-WL_SG_TPCC_SHORE = \
-   $(SG)/tpcc/shore/shore_tpcc_random.cpp \
-   $(SG)/tpcc/shore/shore_tpcc_schema.cpp \
-   $(SG)/tpcc/shore/shore_tpcc_schema_man.cpp \
-   $(SG)/tpcc/shore/shore_tpcc_schema_gen.cpp \
-   $(SG)/tpcc/shore/shore_tpcc_env.cpp \
-   $(SG)/tpcc/shore/shore_tpcc_worker.cpp
-
 WL_TPCC_SHORE = \
-   $(SW)/tpcc/shore_tpcc_load.cpp \
-   $(SW)/tpcc/shore_tpcc_xct.cpp
+   $(SW)/tpcc/shore_tpcc_random.cpp \
+   $(SW)/tpcc/shore_tpcc_schema.cpp \
+   $(SW)/tpcc/shore_tpcc_schema_man.cpp \
+   $(SW)/tpcc/shore_tpcc_schema_gen.cpp \
+   $(SW)/tpcc/shore_tpcc_env.cpp \
+   $(SW)/tpcc/shore_tpcc_xct.cpp \
+   $(SW)/tpcc/shore_tpcc_worker.cpp \
+   $(SW)/tpcc/shore_tpcc_load.cpp
+
 
 WL_TPCC_DORA = \
    $(SD)/tpcc/dora_payment.cpp \
