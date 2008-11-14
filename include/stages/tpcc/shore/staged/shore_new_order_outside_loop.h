@@ -17,7 +17,7 @@
 #include "util.h"
 
 #include "core/trx_packet.h"
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 
 using namespace qpipe;
 using namespace shore;

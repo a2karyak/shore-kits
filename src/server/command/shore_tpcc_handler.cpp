@@ -13,7 +13,7 @@
 // Shore-TPCC data-structures
 #include "sm/shore/shore_tools.h"
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
 #include "sm/shore/shore_helper_loader.h"
 

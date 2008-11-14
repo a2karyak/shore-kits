@@ -18,7 +18,7 @@
 
 #include "core/trx_packet.h"
 
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 
 #include "stages/tpcc/shore/staged/shore_payment_upd_wh.h"
 #include "stages/tpcc/shore/staged/shore_payment_upd_distr.h"

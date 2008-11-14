@@ -11,7 +11,7 @@
 #ifndef __SHORE_TPCC_SCHEMA_MANAGER_H
 #define __SHORE_TPCC_SCHEMA_MANAGER_H
 
-#include "stages/tpcc/shore/shore_tpcc_schema.h"
+#include "workload/tpcc/shore_tpcc_schema.h"
 
 
 using namespace shore;

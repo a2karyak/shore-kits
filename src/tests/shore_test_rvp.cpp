@@ -9,7 +9,7 @@
 
 
 #include "tests/common.h"
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 
 #include "util/shell.h"
 #include "util/countdown.h"

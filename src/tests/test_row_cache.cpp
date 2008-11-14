@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 #include "sm/shore/shore_row_cache.h"
-#include "stages/tpcc/shore/shore_tpcc_schema.h"
-#include "stages/tpcc/shore/shore_tpcc_schema_man.h"
+#include "workload/tpcc/shore_tpcc_schema.h"
+#include "workload/tpcc/shore_tpcc_schema_man.h"
 
 
 // only works on sparc...

@@ -9,7 +9,7 @@
  *
  */
 
-#include "stages/tpcc/shore/shore_tpcc_schema_man.h"
+#include "workload/tpcc/shore_tpcc_schema_man.h"
 
 
 using namespace shore;

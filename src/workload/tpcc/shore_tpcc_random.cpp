@@ -9,7 +9,7 @@
  *
  */
 
-#include "stages/tpcc/shore/shore_tpcc_random.h"
+#include "workload/tpcc/shore_tpcc_random.h"
 
 
 using namespace tpcc;

@@ -4,7 +4,7 @@
 
 #include "tests/common/tester_shore_shell.h"
 
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
 #include "dora.h"

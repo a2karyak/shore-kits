@@ -23,8 +23,8 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_sort_buf.h"
 
-#include "stages/tpcc/shore/shore_tpcc_schema_man.h"
-#include "stages/tpcc/shore/shore_tpcc_worker.h"
+#include "workload/tpcc/shore_tpcc_schema_man.h"
+#include "workload/tpcc/shore_tpcc_worker.h"
 
 #include <map>
 

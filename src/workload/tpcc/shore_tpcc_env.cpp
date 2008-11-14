@@ -7,7 +7,7 @@
  *  @author: Ippokratis Pandis (ipandis)
  */
 
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
 #include "stages/tpcc/common/tpcc_random.h"

@@ -19,7 +19,7 @@
 #include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_tbl_parsers.h"
 #include "sm/shore/shore_table_man.h"
-#include "stages/tpcc/shore/shore_tpcc_random.h"
+#include "workload/tpcc/shore_tpcc_random.h"
 
 
 using namespace shore;

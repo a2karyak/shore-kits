@@ -8,7 +8,7 @@
  */
 
 
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 
 
 using namespace qpipe;

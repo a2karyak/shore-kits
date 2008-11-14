@@ -11,7 +11,7 @@
 #define __TEST_SHORE_CLIENT_H
 
 #include "stages/tpcc/common/tpcc_const.h"
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 #include "dora/tpcc/dora_tpcc.h"
 
 using namespace tpcc;

@@ -8,8 +8,8 @@
  *
  */
 
-#include "stages/tpcc/shore/shore_tpcc_schema_man.h"
-#include "stages/tpcc/shore/shore_tpcc_random.h"
+#include "workload/tpcc/shore_tpcc_schema_man.h"
+#include "workload/tpcc/shore_tpcc_random.h"
 
 
 using namespace shore;

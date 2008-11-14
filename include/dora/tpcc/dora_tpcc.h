@@ -18,7 +18,7 @@
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_mbench.h"
 
-#include "stages/tpcc/shore/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_env.h"
 
 #include "dora.h"
 
