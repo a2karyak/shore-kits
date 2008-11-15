@@ -317,32 +317,33 @@ w_rc_t ShoreTPCCEnv::loaddata()
     /* 1. create the loader threads */
 
     int num_tbl = _table_desc_list.size();
-    const char* loaddatadir = _dev_opts[SHORE_DB_OPTIONS[3][0]].c_str();
+    //const char* loaddatadir = _dev_opts[SHORE_DB_OPTIONS[3][0]].c_str();
+    string loaddatadir = envVar::instance()->getSysVar("loadatadir");
     int cnt = 0;
 
-    TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir);
+    TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir.c_str());
 
     guard<table_loading_smt_t> loaders[SHORE_TPCC_TABLES];
 
     // manually create the loading threads
     loaders[0] = new wh_loader_t(c_str("ld-WH"), _pssm, _pwarehouse_man,
-                                 _pwarehouse_desc.get(), _scaling_factor, loaddatadir);
+                                 _pwarehouse_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[1] = new dist_loader_t(c_str("ld-DIST"), _pssm, _pdistrict_man,
-                                   _pdistrict_desc.get(), _scaling_factor, loaddatadir);
+                                   _pdistrict_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[2] = new st_loader_t(c_str("ld-ST"), _pssm, _pstock_man,
-                                 _pstock_desc.get(), _scaling_factor, loaddatadir);
+                                 _pstock_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[3] = new ol_loader_t(c_str("ld-OL"), _pssm, _porder_line_man,
-                                 _porder_line_desc.get(), _scaling_factor, loaddatadir);
+                                 _porder_line_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[4] = new cust_loader_t(c_str("ld-CUST"), _pssm, _pcustomer_man,
-                                   _pcustomer_desc.get(), _scaling_factor, loaddatadir);
+                                   _pcustomer_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[5] = new hist_loader_t(c_str("ld-HIST"), _pssm, _phistory_man,
-                                   _phistory_desc.get(), _scaling_factor, loaddatadir);
+                                   _phistory_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[6] = new ord_loader_t(c_str("ld-ORD"), _pssm, _porder_man,
-                                  _porder_desc.get(), _scaling_factor, loaddatadir);
+                                  _porder_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[7] = new no_loader_t(c_str("ld-NO"), _pssm, _pnew_order_man,
-                                 _pnew_order_desc.get(), _scaling_factor, loaddatadir);
+                                 _pnew_order_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[8] = new it_loader_t(c_str("ld-IT"), _pssm, _pitem_man,
-                                 _pitem_desc.get(), _scaling_factor, loaddatadir);
+                                 _pitem_desc.get(), _scaling_factor, loaddatadir.c_str());
 
     time_t tstart = time(NULL);    
     
@@ -364,7 +365,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 //                                                    pmanager, 
 //                                                    ptable, 
 //                                                    _scaling_factor, 
-//                                                    loaddatadir);
+//                                                    loaddatadir.c_str());
 //             cnt++;
 //        }
 
