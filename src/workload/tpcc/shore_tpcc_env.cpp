@@ -369,7 +369,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 //             cnt++;
 //        }
 
-#if 0
+#if 1
     /* 3. fork the loading threads (PARALLEL) */
     for(int i=0; i<num_tbl; i++) {
 	loaders[i]->fork();
