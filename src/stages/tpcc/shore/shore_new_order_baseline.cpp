@@ -49,7 +49,7 @@ void shore_new_order_baseline_stage_t::process_packet()
     //    packet->describe_trx();
 
     trx_result_tuple_t atrt;
-    _g_shore_env->run_new_order(packet->get_trx_id(), packet->_no_in, atrt);
+    assert(0);//_g_shore_env->run_new_order(packet->get_trx_id(), packet->_no_in, atrt);
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
     

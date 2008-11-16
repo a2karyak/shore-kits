@@ -44,11 +44,11 @@ void shore_payment_ins_hist_stage_t::process_packet()
     }
 
     trx_result_tuple_t atrt;
-    e = _g_shore_env->staged_pay_insertShoreHistory(&packet->_pin, 
-                                                 packet->_wh_name,
-                                                 packet->_d_name,
-                                                 packet->get_trx_id(), 
-                                                 atrt);
+    assert(0);//e = _g_shore_env->staged_pay_insertShoreHistory(&packet->_pin, 
+//                                                  packet->_wh_name,
+//                                                  packet->_d_name,
+//                                                  packet->get_trx_id(), 
+//                                                  atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 

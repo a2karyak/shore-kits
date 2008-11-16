@@ -440,9 +440,10 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
 
             // create & fork testing threads
             wh_id++;
-            testers[i] = new test_tree_smt_t(_g_shore_env, wh_id, selectedTrxID, 
-                                             updTuple, numOfTrxs, commit_interval,
-                                             c_str("tt%d", i));
+            assert(0);testers[i] = NULL;
+            //            new test_tree_smt_t(_g_shore_env, wh_id, selectedTrxID, 
+            //                                              updTuple, numOfTrxs, commit_interval,
+            //                                              c_str("tt%d", i));
             testers[i]->fork();
 
         }

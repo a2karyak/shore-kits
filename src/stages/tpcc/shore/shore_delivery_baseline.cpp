@@ -48,7 +48,7 @@ void shore_delivery_baseline_stage_t::process_packet() {
     //    packet->describe_trx();
 
     trx_result_tuple_t atrt;
-    _g_shore_env->run_delivery(packet->get_trx_id(), packet->_d_in, atrt);
+    assert(0);//_g_shore_env->run_delivery(packet->get_trx_id(), packet->_d_in, atrt);
 
     TRACE( TRACE_TRX_FLOW, "DONE. NOTIFYING CLIENT\n" );
     

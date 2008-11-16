@@ -53,7 +53,8 @@ DBGEN = \
 
 
 
-bin_PROGRAMS = stagedtrx $(TESTS) $(DBGEN)
+#bin_PROGRAMS = stagedtrx $(TESTS) $(DBGEN)
+bin_PROGRAMS = $(TESTS) $(DBGEN)
 
 tests: $(TESTS)
 

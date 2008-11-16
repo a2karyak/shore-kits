@@ -17,7 +17,7 @@
 #include "sm/shore/shore_file_desc.h"
 #include "sm/shore/shore_tools.h"
 
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "sm/shore/shore_env.h"
 
 #include <utility>
 
@@ -50,13 +50,13 @@ ENTER_NAMESPACE(tpcc);
 
 class loading_smt_t : public smthread_t {
 private:
-    ShoreTPCCEnv* _env;    
+    ShoreEnv* _env;    
     c_str _lname;
 
 public:
     int	_rv;
     
-    loading_smt_t(ShoreTPCCEnv* env, c_str lname) 
+    loading_smt_t(ShoreEnv* env, c_str lname) 
 	: smthread_t(t_regular), 
           _env(env), _lname(lname), _rv(0)
     {
@@ -87,13 +87,13 @@ public:
 
 class closing_smt_t : public smthread_t {
 private:
-    ShoreTPCCEnv* _env;    
+    ShoreEnv* _env;    
     c_str _tname;
 
 public:
     int	_rv;
     
-    closing_smt_t(ShoreTPCCEnv* env, c_str cname) 
+    closing_smt_t(ShoreEnv* env, c_str cname) 
 	: smthread_t(t_regular), 
           _env(env), _tname(cname),_rv(0)
     {
@@ -121,13 +121,13 @@ public:
 
 class du_smt_t : public smthread_t {
 private:
-    ShoreTPCCEnv* _env;    
+    ShoreEnv* _env;    
     c_str _dname;
 
 public:
     int	_rv;
     
-    du_smt_t(ShoreTPCCEnv* env, c_str dname) 
+    du_smt_t(ShoreEnv* env, c_str dname) 
 	: smthread_t(t_regular), 
           _env(env), _dname(dname), _rv(0)
     {
@@ -160,11 +160,11 @@ protected:
     file_info_t _info;
     c_str _load_fname;
     sm_stats_info_t _stats;
-    ShoreTPCCEnv* _env;
+    ShoreEnv* _env;
     
 public:
 
-    shore_parse_thread(c_str fname, ShoreTPCCEnv* env)
+    shore_parse_thread(c_str fname, ShoreEnv* env)
 	: _load_fname(fname), _env(env)
     {
 	memset(&_stats, 0, sizeof(_stats));
@@ -184,7 +184,7 @@ public:
 
 template <class Parser>
 struct shore_parser_impl : public shore_parse_thread {
-    shore_parser_impl(c_str fname, ShoreTPCCEnv* env)
+    shore_parser_impl(c_str fname, ShoreEnv* env)
 	: shore_parse_thread(fname, env)
     {
     }
@@ -270,7 +270,7 @@ void shore_parser_impl<Parser>::run() {
 
 #define DEFINE_SHORE_TPCC_PARSER_IMPL(tname) \
     struct shore_parser_impl_##tname : public shore_parser_impl<parse_tpcc_##tname> { \
-            shore_parser_impl_##tname(int tid, ShoreTPCCEnv* env) \
+            shore_parser_impl_##tname(int tid, ShoreEnv* env) \
             : shore_parser_impl(c_str("%s/%s", SHORE_TPCC_DATA_DIR, SHORE_TPCC_DATA_##tname), env) {}}
 
 DEFINE_SHORE_TPCC_PARSER_IMPL(WAREHOUSE);

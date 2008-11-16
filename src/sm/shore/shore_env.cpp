@@ -12,7 +12,13 @@
 #include "sm/shore/shore_env.h"
 
 
-using namespace shore;
+ENTER_NAMESPACE(shore);
+
+
+
+/** Exported variables */
+
+ShoreEnv* _g_shore_env;
 
 
 /** Exported functions */
@@ -581,3 +587,7 @@ const int ShoreEnv::dump() {
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
     return (0);
 }
+
+
+
+EXIT_NAMESPACE(shore);

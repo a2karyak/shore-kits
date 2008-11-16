@@ -44,13 +44,13 @@ void shore_new_order_one_ol_stage_t::process_packet() {
     }
     
     trx_result_tuple_t atrt;
-    _g_shore_env->staged_no_one_ol(&packet->_nolin, 
-                                   packet->_tstamp,
-                                   packet->_wh_id,
-                                   packet->_d_id,
-                                   packet->_item_cnt,
-                                   packet->get_trx_id(),
-                                   atrt);
+    assert(0);//_g_shore_env->staged_no_one_ol(&packet->_nolin, 
+//                                    packet->_tstamp,
+//                                    packet->_wh_id,
+//                                    packet->_d_id,
+//                                    packet->_item_cnt,
+//                                    packet->get_trx_id(),
+//                                    atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 

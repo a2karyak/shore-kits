@@ -40,10 +40,11 @@ void shore_tpcc_new_order_baseline_driver::submit(void* disp) {
     
 
     // new_order_baseline_packet
-    trx_packet_t* bp_packet = 
-	create_shore_new_order_baseline_packet(bp_buffer, 
-                                               bp_filter,
-                                               _g_shore_env->get_qf());
+    assert(0);
+    trx_packet_t* bp_packet = NULL;
+	// create_shore_new_order_baseline_packet(bp_buffer, 
+//                                                bp_filter,
+//                                                _g_shore_env->get_qf());
     
     qpipe::query_state_t* qs = dp->query_state_create();
     bp_packet->assign_query_state(qs);

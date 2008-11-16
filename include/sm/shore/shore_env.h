@@ -36,6 +36,7 @@
 
 ENTER_NAMESPACE(shore);
 
+
 using std::map;
 
 
@@ -223,6 +224,15 @@ public:
     
 }; // EOF: db_iface
 
+
+
+
+
+
+/******** Exported variables ********/
+
+class ShoreEnv;
+extern ShoreEnv* _g_shore_env;
 
 
 

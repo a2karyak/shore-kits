@@ -45,9 +45,9 @@ void shore_payment_upd_wh_stage_t::process_packet() {
     }
     
     trx_result_tuple_t atrt;
-    e = _g_shore_env->staged_pay_updateShoreWarehouse(&packet->_pin, 
-                                                      packet->get_trx_id(),
-                                                      atrt);
+    assert(0);//e = _g_shore_env->staged_pay_updateShoreWarehouse(&packet->_pin, 
+//                                                       packet->get_trx_id(),
+//                                                       atrt);
 
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 

@@ -15,6 +15,7 @@
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_load.h"
+#include "sm/shore/shore_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
 
@@ -76,7 +77,7 @@ void shore_tpcc_handler_t::init() {
             delete (initializer);
             initializer = NULL;
         }
-        _g_shore_env->print_sf();
+        //_g_shore_env->print_sf();
 
         // register drivers...
 
@@ -183,9 +184,9 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         int num_warehouses = 0;
         sscanf(command, "%*s %*s %d", &num_warehouses);
         if (num_warehouses>0) {
-            _g_shore_env->set_sf(num_warehouses);
+            assert(0);//_g_shore_env->set_sf(num_warehouses);
         }
-        _g_shore_env->print_sf();
+        assert(0);//_g_shore_env->print_sf();
         return;
     }
 
@@ -196,9 +197,9 @@ void shore_tpcc_handler_t::handle_command(const char* command) {
         sscanf(command, "%*s %*s %d", &queried_warehouses);
         if (queried_warehouses>0) {
             selectedQueriedSF = queried_warehouses;
-            _g_shore_env->set_qf(queried_warehouses);
+            assert(0);//_g_shore_env->set_qf(queried_warehouses);
         }
-        _g_shore_env->print_sf();
+        assert(0);//_g_shore_env->print_sf();
         return;
     }
 

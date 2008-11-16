@@ -40,12 +40,6 @@ ENTER_NAMESPACE(tpcc);
 using std::map;
 
 
-/******** Exported variables ********/
-
-class ShoreTPCCEnv;
-extern ShoreTPCCEnv* _g_shore_env;
-
-
 
 /****************************************************************** 
  *

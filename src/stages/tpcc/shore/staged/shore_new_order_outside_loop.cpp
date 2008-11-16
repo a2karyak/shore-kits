@@ -44,10 +44,10 @@ void shore_new_order_outside_loop_stage_t::process_packet() {
     }
     
     trx_result_tuple_t atrt;
-    _g_shore_env->staged_no_outside_loop(&packet->_noin, 
-                                      packet->_tstamp,
-                                      packet->get_trx_id(),
-                                      atrt);
+    assert(0);//_g_shore_env->staged_no_outside_loop(&packet->_noin, 
+//                                       packet->_tstamp,
+//                                       packet->get_trx_id(),
+//                                       atrt);
         
     if (atrt.get_state() == POISSONED) {
         TRACE( TRACE_ALWAYS, 

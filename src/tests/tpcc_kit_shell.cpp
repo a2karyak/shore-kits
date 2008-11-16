@@ -28,6 +28,7 @@ using namespace dora;
 
 
 
+
 //////////////////////////////
 
 
@@ -423,8 +424,8 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
 
         // set measurement state
         _env->set_measure(MST_MEASURE);
-        //alarm(iDuration);
-        sleep(iDuration);
+        alarm(iDuration);
+        //sleep(iDuration);
 	stopwatch_t timer;
 
         // 2. join the tester threads
@@ -439,7 +440,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         }
 
 	double delay = timer.time();
-	//alarm(0); // cancel the alarm, if any
+	alarm(0); // cancel the alarm, if any
 
         // print throughput and reset session stats
         print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
@@ -528,6 +529,9 @@ int main(int argc, char* argv[])
     if (rcl.is_error()) {
         return (4);
     }
+
+    // set the global variable to the kit's db - for alarm() to work
+    _g_shore_env = kit->db();
 
     // 5. Start processing commands
     kit->start();

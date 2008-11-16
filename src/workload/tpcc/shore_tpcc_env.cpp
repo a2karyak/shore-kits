@@ -19,10 +19,6 @@ using namespace shore;
 ENTER_NAMESPACE(tpcc);
 
 
-/** Exported variables */
-
-ShoreTPCCEnv* _g_shore_env;
-
 
 /** Exported functions */
 
