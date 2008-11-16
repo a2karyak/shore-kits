@@ -1430,6 +1430,8 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (prol);
 
+    w_rc_t e = RCOK;
+
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pdistrict_man->ts());
@@ -1456,8 +1458,9 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     TRACE( TRACE_TRX_FLOW, "App: %d STO:idx-probe (%d) (%d)\n", 
            xct_id, pslin->_wh_id, pslin->_d_id);
 
-    W_DO(_pdistrict_man->dist_index_probe(_pssm, prdist, 
-                                          pslin->_wh_id, pslin->_d_id));
+    e = _pdistrict_man->dist_index_probe(_pssm, prdist, 
+                                         pslin->_wh_id, pslin->_d_id);
+    if (e.is_error()) { goto done; }
 
     int next_o_id = 0;
     prdist->get_value(10, next_o_id);
@@ -1496,10 +1499,11 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     
 
     index_scan_iter_impl<order_line_t>* ol_iter;
-    W_DO(_porder_line_man->ol_get_range_iter_by_index(_pssm, ol_iter, prol,
-                                                      lowrep, highrep,
-                                                      pslin->_wh_id, pslin->_d_id,
-                                                      next_o_id-20, next_o_id));
+    e = _porder_line_man->ol_get_range_iter_by_index(_pssm, ol_iter, prol,
+                                                     lowrep, highrep,
+                                                     pslin->_wh_id, pslin->_d_id,
+                                                     next_o_id-20, next_o_id);
+    if (e.is_error()) { goto done; }
 
     sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
@@ -1511,8 +1515,11 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
     // iterate over all selected orderlines and add them to the sorted buffer
     bool eof;
-    W_DO(ol_iter->next(_pssm, eof, *prol));
+    e = ol_iter->next(_pssm, eof, *prol);
     while (!eof) {
+
+        if (e.is_error()) { goto done; }
+
 	/* put the value into the sorted buffer */
 	int temp_oid, temp_iid;
 	int temp_wid, temp_did;        
@@ -1532,7 +1539,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 //         TRACE( TRACE_TRX_FLOW, "App: %d STO:ol-iter-next (%d) (%d) (%d) (%d)\n", 
 //                xct_id, temp_wid, temp_did, temp_oid, temp_iid);
   
-	W_DO(ol_iter->next(_pssm, eof, *prol));
+	e = ol_iter->next(_pssm, eof, *prol);
     }
     delete ol_iter;
     assert (ol_sorter.count());
@@ -1543,8 +1550,10 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     int count = 0;
 
     /* 2c. Nested loop join order_line with stock */
-    W_DO(ol_list_sort_iter.next(_pssm, eof, rsb));
+    e = ol_list_sort_iter.next(_pssm, eof, rsb);
     while (!eof) {
+
+        if (e.is_error()) { goto done; }
 
 	/* use the index to find the corresponding stock tuple */
 	int i_id;
@@ -1553,10 +1562,11 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 	rsb.get_value(0, i_id);
 	rsb.get_value(1, w_id);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe (%d) (%d)\n", 
-               xct_id, w_id, i_id);
+//         TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe (%d) (%d)\n", 
+//                xct_id, w_id, i_id);
 
-	W_DO(_pstock_man->st_index_probe(_pssm, prst, w_id, i_id));
+	e = _pstock_man->st_index_probe(_pssm, prst, w_id, i_id);
+        if (e.is_error()) { goto done; }
 
         // check if stock quantity below threshold 
 	int quantity;
@@ -1580,7 +1590,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
 
 	}
 
-	W_DO(ol_list_sort_iter.next(_pssm, eof, rsb));
+	e = ol_list_sort_iter.next(_pssm, eof, rsb);
     }
 
 #ifdef PRINT_TRX_RESULTS
@@ -1591,10 +1601,6 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     rstock.print_tuple();
 #endif
 
-    _pdistrict_man->give_tuple(prdist);
-    _pstock_man->give_tuple(prst);
-    _porder_line_man->give_tuple(prol);
-
   
     /* 3. commit */
     W_DO(_pssm->commit_xct());
@@ -1602,7 +1608,13 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
 
-    return (RCOK);
+done:    
+    // return the tuples to the cache
+    _pdistrict_man->give_tuple(prdist);
+    _pstock_man->give_tuple(prst);
+    _porder_line_man->give_tuple(prol);
+
+    return (e);
 }
 
 
