@@ -494,8 +494,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d NO:customer-idx-probe (%d) (%d) (%d)\n", 
            xct_id, pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id);
-    W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, pnoin->_c_id, 
-                                          pnoin->_wh_id, pnoin->_d_id));
+    W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, 
+                                          pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id));
 
     tpcc_customer_tuple  acust;
     prcust->get_value(15, acust.C_DISCOUNT);
@@ -820,7 +820,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
            xct_id, c_w, c_d, ppin->_c_id);
 
     W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
-                                                    ppin->_c_id, c_w, c_d));
+                                                    c_w, c_d, ppin->_c_id));
 
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;
@@ -1089,7 +1089,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
            "App: %d ORDST:cust-idx-probe-upd (%d) (%d) (%d)\n", 
            xct_id, w_id, d_id, pstin->_c_id);
     W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, 
-                                          pstin->_c_id, w_id, d_id));
+                                          w_id, d_id, pstin->_c_id));
 
     tpcc_customer_tuple acust;
     prcust->get_value(3,  acust.C_FIRST, 17);
@@ -1362,7 +1362,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 	 * plan: index probe on "C_INDEX"
 	 */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:idx-probe-upd (%d) (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd (%d) (%d) (%d)\n", 
                xct_id, w_id, d_id, c_id);
 
 	W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
@@ -1699,7 +1699,7 @@ w_rc_t ShoreTPCCEnv::_run_mbench_cust(const int xct_id, trx_result_tuple_t& trt,
            xct_id, whid, did, cid);
 
     W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
-                                                    cid, whid, did));
+                                                    whid, did, cid));
 
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;

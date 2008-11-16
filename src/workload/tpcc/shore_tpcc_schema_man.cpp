@@ -219,20 +219,20 @@ w_rc_t customer_man_impl::cust_get_iter_by_index(ss_m* db,
 
 w_rc_t customer_man_impl::cust_index_probe(ss_m* db,
                                            customer_tuple* ptuple,
-                                           const int c_id,
                                            const int w_id,
-                                           const int d_id)
+                                           const int d_id,
+                                           const int c_id)
 {
     assert (ptuple);
-    return (cust_index_probe_by_name(db, "C_INDEX", ptuple, c_id, w_id, d_id));
+    return (cust_index_probe_by_name(db, "C_INDEX", ptuple, w_id, d_id, c_id));
 }
 
 w_rc_t customer_man_impl::cust_index_probe_by_name(ss_m* db,
                                                    const char* idx_name,
                                                    customer_tuple* ptuple,
-                                                   const int c_id,
                                                    const int w_id,
-                                                   const int d_id)
+                                                   const int d_id,
+                                                   const int c_id)
 {
     assert (idx_name);
     ptuple->set_value(0, c_id);
@@ -243,9 +243,9 @@ w_rc_t customer_man_impl::cust_index_probe_by_name(ss_m* db,
 
 w_rc_t customer_man_impl::cust_index_probe_forupdate(ss_m * db,
                                                      customer_tuple* ptuple,
-                                                     const int c_id,
                                                      const int w_id,
-                                                     const int d_id)
+                                                     const int d_id,
+                                                     const int c_id)
 {
     assert (ptuple);
     ptuple->set_value(0, c_id);
@@ -256,9 +256,9 @@ w_rc_t customer_man_impl::cust_index_probe_forupdate(ss_m * db,
 
 w_rc_t customer_man_impl::cust_index_probe_nl(ss_m * db,
                                               customer_tuple* ptuple,
-                                              const int c_id,
                                               const int w_id,
-                                              const int d_id)
+                                              const int d_id,
+                                              const int c_id)
 {
     assert (ptuple);
     ptuple->set_value(0, c_id);
