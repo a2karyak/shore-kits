@@ -377,7 +377,7 @@ w_rc_t new_order_man_impl::no_delete_by_index(ss_m* db,
     ptuple->set_value(0, o_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    W_DO(index_probe_by_name(db, "NO_INDEX", ptuple));
+    W_DO(index_probe_forupdate_by_name(db, "NO_INDEX", ptuple));
     W_DO(delete_tuple(db, ptuple));
 
     return (RCOK);

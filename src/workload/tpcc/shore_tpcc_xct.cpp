@@ -58,7 +58,8 @@ w_rc_t ShoreTPCCEnv::run_one_xct(int xct_type, const int xctid,
     case XCT_DELIVERY:
         return (run_delivery(xctid,trt,whid));
     case XCT_STOCK_LEVEL:
-        return (run_stock_level(xctid,trt,whid));
+        return (run_payment(xctid,trt,whid));;
+        //return (run_stock_level(xctid,trt,whid));
 
         // MBENCH BASELINE
     case XCT_MBENCH_WH:
@@ -98,7 +99,7 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
     
     w_rc_t e = xct_new_order(&anoin, xct_id, atrt);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) NewOrder aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
         
 	w_rc_t e2 = _pssm->abort_xct();
@@ -145,7 +146,7 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
     
     w_rc_t e = xct_payment(&apin, xct_id, atrt);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) Payment aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
 
 	w_rc_t e2 = _pssm->abort_xct();
@@ -192,7 +193,7 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
     
     w_rc_t e = xct_order_status(&aordstin, xct_id, atrt);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) OrderStatus aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
 
         w_rc_t e2 = _pssm->abort_xct();
@@ -239,7 +240,7 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
     
     w_rc_t e = xct_delivery(&adelin, xct_id, atrt);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) Delivery aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
 
 	w_rc_t e2 = _pssm->abort_xct();
@@ -286,7 +287,7 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
     
     w_rc_t e = xct_stock_level(&astoin, xct_id, atrt);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) StockLevel aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
 
 	w_rc_t e2 = _pssm->abort_xct();
@@ -450,10 +451,6 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     pritem->_rep = &areprow;
     prst->_rep = &areprow;
     prol->_rep = &areprow;
-
-
-//     /* 0. initiate transaction */
-//     W_DO(_pssm->begin_xct());
 
 
     /* SELECT c_discount, c_last, c_credit, w_tax
@@ -1617,7 +1614,7 @@ w_rc_t ShoreTPCCEnv::run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt,
     
     w_rc_t e = _run_mbench_cust(xct_id, atrt, whid);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) MBench-Cust aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) MBench-Cust aborted [0x%x]\n", 
                xct_id, e.err_num());
 	
 	w_rc_t e2 = _pssm->abort_xct();
@@ -1790,7 +1787,7 @@ w_rc_t ShoreTPCCEnv::run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt,
     
     w_rc_t e = _run_mbench_wh(xct_id, atrt, whid);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) MBench-Wh aborted [0x%x]\n", 
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) MBench-Wh aborted [0x%x]\n", 
                xct_id, e.err_num());
 	
 	w_rc_t e2 = _pssm->abort_xct();

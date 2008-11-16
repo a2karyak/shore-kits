@@ -42,7 +42,7 @@ const int DF_SPREAD_THREADS        = 1;
 const int DF_NUM_OF_THR            = 5;
 
 // maximum number of threads
-const int MAX_NUM_OF_THR           = 100;
+const int MAX_NUM_OF_THR           = 1000;
 
 // default number of transactions executed per thread
 const int DF_TRX_PER_THR           = 100;

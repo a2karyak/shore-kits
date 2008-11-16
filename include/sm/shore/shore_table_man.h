@@ -1166,10 +1166,9 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
-    /* 1. delete the tuple */
-    W_DO(db->destroy_rec(ptuple->rid()));
+    rid_t todelete = ptuple->rid();
 
-    /* 2. delete all the corresponding index entries */
+    /* 1. delete all the corresponding index entries */
     index_desc_t* pindex = _ptable->indexes();
     int key_sz = 0;
 
@@ -1180,11 +1179,14 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 	W_DO(pindex->find_fid(db));
 	W_DO(db->destroy_assoc(pindex->fid(),
                                vec_t(ptuple->_rep->_dest, key_sz),
-                               vec_t(&(ptuple->_rid), sizeof(rid_t))));
+                               vec_t(&(todelete), sizeof(rid_t))));
 
         /* move to next index */
 	pindex = pindex->next();
     }
+
+    /* 2. delete the tuple */
+    W_DO(db->destroy_rec(todelete));
 
     /* invalidate tuple */
     ptuple->set_rid(rid_t::null);
