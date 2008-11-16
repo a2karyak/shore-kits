@@ -375,7 +375,7 @@ public:
     table_scan_iter_impl(ss_m* db, 
                          TableDesc* ptable,
                          table_manager* pmanager) 
-        : tuple_iter_t(db, ptable), _pmanager(pmanager)
+        : tuple_iter_t(db, ptable, true), _pmanager(pmanager)
     { 
         assert (_pmanager);
         W_COERCE(open_scan(_db)); 
@@ -456,7 +456,7 @@ public:
                          table_manager* pmanager,
                          bool need_tuple = false,
                          lock_mode_t lock_mode = SH) // EX or SH
-        : tuple_iter_t(db, pindex), _pmanager(pmanager), 
+        : tuple_iter_t(db, pindex, true), _pmanager(pmanager), 
           _need_tuple(need_tuple), _lock_mode(lock_mode)
     { 
         assert (_pmanager);
@@ -476,7 +476,7 @@ public:
                          const int maxkeysize,
                          bool need_tuple,
                          lock_mode_t lock_mode) 
-        : tuple_iter_t(db, pindex), _pmanager(pmanager), 
+        : tuple_iter_t(db, pindex, true), _pmanager(pmanager), 
           _need_tuple(need_tuple), _lock_mode(lock_mode)
     { 
         assert (_pmanager);

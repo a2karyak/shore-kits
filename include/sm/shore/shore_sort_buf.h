@@ -162,7 +162,7 @@ private:
 public:
 
     sort_iter_impl(ss_m* db, sort_buffer_t* psortbuf, sort_man_impl* psortman)
-        : tuple_iter_t(db, psortbuf), _manager(psortman), _index(0)
+        : tuple_iter_t(db, psortbuf, false), _manager(psortman), _index(0)
     { 
         assert (_manager);
         assert (_file);

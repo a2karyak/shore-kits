@@ -112,7 +112,7 @@ const int tpcc_worker_t::_serve_action(Request* prequest)
                                     prequest->_whid,
                                     prequest->_result);
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
+        TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
                prequest->_tid, e.err_num());
         ++_stats._problems;
         //        assert(0);
