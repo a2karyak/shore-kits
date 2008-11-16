@@ -133,8 +133,8 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreDistrict(payment_input_t* ppin,
            xct_id, ppin->_home_wh_id, ppin->_home_d_id);
 
     W_DO(_pdistrict_man->dist_index_probe_forupdate(_pssm, prdist,
-                                                    ppin->_home_d_id, 
-                                                    ppin->_home_wh_id));
+                                                    ppin->_home_wh_id,
+                                                    ppin->_home_d_id));
 
     /* UPDATE district SET d_ytd = d_ytd + :h_amount
      * WHERE d_id = :d_id AND d_w_id = :w_id
@@ -273,7 +273,7 @@ w_rc_t ShoreTPCCEnv::staged_pay_updateShoreCustomer(payment_input_t* ppin,
            xct_id, c_w, c_d, ppin->_c_id);
 
     W_DO(_pcustomer_man->cust_index_probe_forupdate(_pssm, prcust, 
-                                                    ppin->_c_id, c_w, c_d));
+                                                    c_w, c_d, ppin->_c_id));
 
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;

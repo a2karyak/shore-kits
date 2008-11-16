@@ -149,8 +149,8 @@ const int ShoreTPCCEnv::load_schema()
 
 const int ShoreTPCCEnv::info()
 {
-    TRACE( TRACE_ALWAYS, "SF          = (%d)\n", _scaling_factor);
-    TRACE( TRACE_ALWAYS, "Worker pool = (%d)\n", _worker_cnt);
+    TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
+    TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
     return (0);
 }
 
@@ -178,7 +178,7 @@ const int ShoreTPCCEnv::start()
 
     WorkerPtr aworker;
     for (int i=0; i<_worker_cnt; i++) {
-        aworker = new Worker(this,this,c_str("worker-%d", i));
+        aworker = new Worker(this,this,c_str("work-%d", i));
         _workers.push_back(aworker);
         aworker->init(lc);
         aworker->start();

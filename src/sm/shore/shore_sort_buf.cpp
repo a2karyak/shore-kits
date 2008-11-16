@@ -14,7 +14,7 @@ using namespace shore;
 
 
 
-const int MIN_TUPLES_FOR_SORT = 100;
+const int MIN_TUPLES_FOR_SORT = 250;
 
 
 /**********************************************************************
@@ -89,6 +89,9 @@ void sort_man_impl::init()
         _tuple_size += _ptable->desc(i)->fieldmaxsize();
 
     /* allocate size for MIN_TUPLES_FOR_SORT tuples */
+    assert (!_sort_buf); // ensure that it will be init only once 
+    assert (_tuple_count==0);
+    assert (_buf_size==0);
     _sort_buf = new char[MIN_TUPLES_FOR_SORT*_tuple_size]; 
     _buf_size = MIN_TUPLES_FOR_SORT;
 
@@ -146,6 +149,8 @@ void sort_man_impl::add_tuple(sorter_tuple& atuple)
 
         _sort_buf = tmp;
         _buf_size *= 2;
+
+        //fprintf(stderr,"+\n");
     }
 
     /* add the current tuple to the end of the buffer */

@@ -176,20 +176,20 @@ w_rc_t test_tree_smt_t::xct_cust_tree(ShoreTPCCEnv* env, bool nolock,
         e = _env->customer_man()->cust_index_probe_by_name(_env->db(), 
                                                            "C_INDEX_NL", 
                                                            prcust, 
-                                                           in_c, in_wh, in_d); 
+                                                           in_wh, in_d, in_c); 
     }
     else {
         if (updtuple) {
             TRACE( TRACE_DEBUG, "CUST-TREE-KVL-LOCK-WITH-UPD\n");
             e = _env->customer_man()->cust_index_probe_forupdate(_env->db(), 
                                                                  prcust, 
-                                                                 in_c, in_wh, in_d); 
+                                                                 in_wh, in_d, in_c); 
         }
         else {
             TRACE( TRACE_DEBUG, "CUST-TREE-KVL-LOCK-NO-UPD\n");
             e = _env->customer_man()->cust_index_probe_by_name(_env->db(), 
                                                                "C_INDEX", prcust, 
-                                                               in_c, in_wh, in_d); 
+                                                               in_wh, in_d, in_c); 
         }
     }
 

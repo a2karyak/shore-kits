@@ -91,7 +91,7 @@ w_rc_t ShoreTPCCEnv::staged_no_outside_loop(new_order_input_t* pnoin,
            "App: %d NO:district-idx-probe (%d) (%d)\n", 
            xct_id, pnoin->_wh_id, pnoin->_d_id);
     W_DO(_pdistrict_man->dist_index_probe_forupdate(_pssm, prdist, 
-                                                    pnoin->_d_id, pnoin->_wh_id));
+                                                    pnoin->_wh_id, pnoin->_d_id));
 
     /* SELECT d_tax, d_next_o_id
      * FROM district
@@ -110,8 +110,8 @@ w_rc_t ShoreTPCCEnv::staged_no_outside_loop(new_order_input_t* pnoin,
     TRACE( TRACE_TRX_FLOW, 
            "App: %d NO:customer-idx-probe (%d) (%d) (%d)\n", 
            xct_id, pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id);
-    W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, pnoin->_c_id, 
-                                          pnoin->_wh_id, pnoin->_d_id));
+    W_DO(_pcustomer_man->cust_index_probe(_pssm, prcust, 
+                                          pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id));
 
     tpcc_customer_tuple  acust;
     prcust->get_value(15, acust.C_DISCOUNT);
@@ -252,7 +252,7 @@ w_rc_t ShoreTPCCEnv::staged_no_one_ol(ol_item_info* polin,
     TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-probe (%d) (%d)\n", 
            xct_id, ol_i_id, ol_supply_w_id);
     W_DO(_pstock_man->st_index_probe_forupdate(_pssm, prst, 
-                                               ol_i_id, ol_supply_w_id));
+                                               ol_supply_w_id, ol_i_id));
 
     prst->get_value(0, astock.S_I_ID);
     prst->get_value(1, astock.S_W_ID);

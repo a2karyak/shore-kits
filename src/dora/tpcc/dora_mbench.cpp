@@ -172,7 +172,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
            _tid, _whid, _did, _cid);
 
     W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
-                                                        _cid, _whid, _did));
+                                                        _whid, _did, _cid));
     
     double c_balance, c_ytd_payment;
     int    c_payment_cnt;

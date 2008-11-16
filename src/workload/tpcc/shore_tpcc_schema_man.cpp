@@ -89,8 +89,8 @@ w_rc_t warehouse_man_impl::wh_update_ytd_nl(ss_m* db,
 
 w_rc_t district_man_impl::dist_index_probe(ss_m* db,
                                            district_tuple* ptuple,
-                                           const int d_id,
-                                           const int w_id)
+                                           const int w_id,
+                                           const int d_id)
 {
     assert (ptuple);
     ptuple->set_value(0, d_id);
@@ -100,8 +100,8 @@ w_rc_t district_man_impl::dist_index_probe(ss_m* db,
 
 w_rc_t district_man_impl::dist_index_probe_forupdate(ss_m* db,
                                                      district_tuple* ptuple,
-                                                     const int d_id,
-                                                     const int w_id)
+                                                     const int w_id,
+                                                     const int d_id)
 {
     assert (ptuple);
     ptuple->set_value(0, d_id);
@@ -111,8 +111,8 @@ w_rc_t district_man_impl::dist_index_probe_forupdate(ss_m* db,
 
 w_rc_t district_man_impl::dist_index_probe_nl(ss_m* db,
                                               district_tuple* ptuple,
-                                              const int d_id,
-                                              const int w_id)
+                                              const int w_id,
+                                              const int d_id)
 {
     assert (ptuple);
     ptuple->set_value(0, d_id);
@@ -493,15 +493,15 @@ w_rc_t order_man_impl::ord_update_carrier_by_index_nl(ss_m* db,
 /* ----------------- */
 
 
-w_rc_t order_line_man_impl::ol_get_iter_by_index(ss_m* db,
-                                                 order_line_index_iter* &iter,
-                                                 order_line_tuple* ptuple,
-                                                 rep_row_t &replow,
-                                                 rep_row_t &rephigh,
-                                                 const int w_id,
-                                                 const int d_id,
-                                                 const int low_o_id,
-                                                 const int high_o_id)
+w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
+                                                       order_line_index_iter* &iter,
+                                                       order_line_tuple* ptuple,
+                                                       rep_row_t &replow,
+                                                       rep_row_t &rephigh,
+                                                       const int w_id,
+                                                       const int d_id,
+                                                       const int low_o_id,
+                                                       const int high_o_id)
 {
     assert (ptuple);
 
@@ -534,14 +534,14 @@ w_rc_t order_line_man_impl::ol_get_iter_by_index(ss_m* db,
 }
 
 
-w_rc_t order_line_man_impl::ol_get_iter_by_index(ss_m* db,
-                                                 order_line_index_iter* &iter,
-                                                 order_line_tuple* ptuple,
-                                                 rep_row_t &replow,
-                                                 rep_row_t &rephigh,
-                                                 const int w_id,
-                                                 const int d_id,
-                                                 const int o_id)
+w_rc_t order_line_man_impl::ol_get_probe_iter_by_index(ss_m* db,
+                                                       order_line_index_iter* &iter,
+                                                       order_line_tuple* ptuple,
+                                                       rep_row_t &replow,
+                                                       rep_row_t &rephigh,
+                                                       const int w_id,
+                                                       const int d_id,
+                                                       const int o_id)
 {
     assert (ptuple);
 
@@ -553,7 +553,7 @@ w_rc_t order_line_man_impl::ol_get_iter_by_index(ss_m* db,
     ptuple->set_value(0, o_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    ptuple->set_value(3, 0);
+    ptuple->set_value(3, (int)0);
 
     int lowsz = format_key(pindex, ptuple, replow);
     assert (replow._dest);
@@ -616,8 +616,8 @@ w_rc_t item_man_impl::it_index_probe_nl(ss_m* db,
 
 w_rc_t stock_man_impl::st_index_probe(ss_m* db,
                                       stock_tuple* ptuple,
-                                      const int i_id,
-                                      const int w_id)
+                                      const int w_id,
+                                      const int i_id)
 {
     assert (ptuple);
     ptuple->set_value(0, i_id);
@@ -627,8 +627,8 @@ w_rc_t stock_man_impl::st_index_probe(ss_m* db,
 
 w_rc_t stock_man_impl::st_index_probe_forupdate(ss_m* db,
                                                 stock_tuple* ptuple,
-                                                const int i_id,
-                                                const int w_id)
+                                                const int w_id,
+                                                const int i_id)
 {
     assert (ptuple);
     ptuple->set_value(0, i_id);
@@ -638,8 +638,8 @@ w_rc_t stock_man_impl::st_index_probe_forupdate(ss_m* db,
 
 w_rc_t stock_man_impl::st_index_probe_nl(ss_m* db,
                                          stock_tuple* ptuple,
-                                         const int i_id,
-                                         const int w_id)
+                                         const int w_id,
+                                         const int i_id)
 {
     assert (ptuple);
     ptuple->set_value(0, i_id);

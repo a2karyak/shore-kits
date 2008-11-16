@@ -84,18 +84,18 @@ public:
     /* --- access specific tuples --- */
     w_rc_t dist_index_probe(ss_m* db,
                             district_tuple* ptuple,
-                            const int d_id,
-                            const int w_id);
+                            const int w_id,
+                            const int d_id);
 
     w_rc_t dist_index_probe_forupdate(ss_m* db,
                                       district_tuple* ptuple,
-                                      const int d_id,
-                                      const int w_id);
+                                      const int w_id,
+                                      const int d_id);
 
     w_rc_t dist_index_probe_nl(ss_m* db,
                                district_tuple* ptuple,
-                               const int d_id,
-                               const int w_id);
+                               const int w_id,
+                               const int d_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t dist_update_ytd(ss_m* db,
@@ -357,24 +357,24 @@ public:
     }
 
     /* --- access the table --- */
-    w_rc_t ol_get_iter_by_index(ss_m* db,
-                                order_line_index_iter* &iter,
-                                order_line_tuple* ptuple,
-                                rep_row_t &replow,
-                                rep_row_t &rephigh,
-                                const int w_id,
-                                const int d_id,
-                                const int low_o_id,
-                                const int high_o_id);
+    w_rc_t ol_get_range_iter_by_index(ss_m* db,
+                                      order_line_index_iter* &iter,
+                                      order_line_tuple* ptuple,
+                                      rep_row_t &replow,
+                                      rep_row_t &rephigh,
+                                      const int w_id,
+                                      const int d_id,
+                                      const int low_o_id,
+                                      const int high_o_id);
     
-    w_rc_t ol_get_iter_by_index(ss_m* db,
-                                order_line_index_iter* &iter,
-                                order_line_tuple* ptuple,
-                                rep_row_t &replow,
-                                rep_row_t &rephigh,
-                                const int w_id,
-                                const int d_id,
-                                const int o_id);
+    w_rc_t ol_get_probe_iter_by_index(ss_m* db,
+                                      order_line_index_iter* &iter,
+                                      order_line_tuple* ptuple,
+                                      rep_row_t &replow,
+                                      rep_row_t &rephigh,
+                                      const int w_id,
+                                      const int d_id,
+                                      const int o_id);
 
     /** deprecated */
 
@@ -452,18 +452,18 @@ public:
     /* --- access the table --- */
     w_rc_t st_index_probe(ss_m* db,
                           stock_tuple* ptuple,
-                          const int i_id,
-                          const int w_id);
+                          const int w_id,
+                          const int i_id);
 
     w_rc_t st_index_probe_forupdate(ss_m* db,
                                     stock_tuple* ptuple,
-                                    const int i_id,
-                                    const int w_id);
+                                    const int w_id,
+                                    const int i_id);
 
     w_rc_t st_index_probe_nl(ss_m* db,
                              stock_tuple* ptuple,
-                             const int i_id,
-                             const int w_id);
+                             const int w_id,
+                             const int i_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t st_update_tuple(ss_m* db,

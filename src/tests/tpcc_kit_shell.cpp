@@ -343,7 +343,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
             // create & fork testing threads
             if (iSpread)
                 wh_id = i+1;
-            testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _tpccdb, 
+            testers[i] = new Client(c_str("CL-%d",i), i, _tpccdb, 
                                     MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs, iUseSLI,
                                     _current_prs_id, wh_id);
             assert (testers[i]);

@@ -197,8 +197,7 @@ ENTER_NAMESPACE(dora);
 
 //     W_DO(_ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), 
 //                                                         prdist,
-//                                                         _pin._home_d_id, 
-//                                                         _pin._home_wh_id));    
+//                                                         _pin._home_wh_id, _pin._home_d_id));    
 
 //     /* UPDATE district SET d_ytd = d_ytd + :h_amount
 //      * WHERE d_id = :d_id AND d_w_id = :w_id
@@ -324,7 +323,7 @@ ENTER_NAMESPACE(dora);
 //            _tid, c_w, c_d, _pin._c_id);
 
 //     W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
-//                                                         _pin._c_id, c_w, c_d));
+//                                                         c_w, c_d, _pin._c_id));
     
 //     double c_balance, c_ytd_payment;
 //     int    c_payment_cnt;
