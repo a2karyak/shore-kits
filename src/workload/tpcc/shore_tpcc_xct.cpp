@@ -462,6 +462,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
      * plan: index probe on "W_INDEX", index probe on "C_INDEX"
      */
 
+    { // make gotos safe
     /* 1. retrieve warehouse (read-only) */
     TRACE( TRACE_TRX_FLOW, 
            "App: %d NO:warehouse-idx-probe (%d)\n", 
@@ -665,7 +666,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     /* 6. finalize trx */
     e = _pssm->commit_xct();
     if (e.is_error()) { goto done; }
-
+}
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
 
@@ -750,6 +751,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 //     /* 0. initiate transaction */
 //     W_DO(_pssm->begin_xct());
 
+    { // make gotos safe
 
     /* 1. retrieve warehouse for update */
     TRACE( TRACE_TRX_FLOW, 
@@ -989,7 +991,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
     /* 4. commit */
     e = _pssm->commit_xct();
     if (e.is_error()) { goto done; }
-
+}
 
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
@@ -1075,6 +1077,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     lowrep.set(_pcustomer_desc->maxsize()); 
     highrep.set(_pcustomer_desc->maxsize()); 
 
+    { // make gotos safe
 //     /* 0. initiate transaction */
 //     W_DO(_pssm->begin_xct());
 
@@ -1219,7 +1222,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
     /* 4. commit */
     e = _pssm->commit_xct();
     if (e.is_error()) { goto done; }
-
+}
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
 
@@ -1308,7 +1311,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     highrep.set(_porder_line_desc->maxsize()); 
     sortrep.set(_porder_line_desc->maxsize()); 
 
-
+    { // make gotos safe
     /* process each district separately */
     for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id ++) {
 
@@ -1452,7 +1455,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     /* 4. commit */
     e = _pssm->commit_xct();
     if (e.is_error()) { goto done; }
-
+}
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
 
@@ -1523,6 +1526,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     prol->_rep = &areprow;
     prst->_rep = &areprow;
 
+    { // make gotos safe
 //     /* 0. initiate transaction */
 //     W_DO(_pssm->begin_xct());
     
@@ -1685,7 +1689,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     /* 3. commit */
     e = _pssm->commit_xct();
     if (e.is_error()) { goto done; }
-
+    }
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
 
