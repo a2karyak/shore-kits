@@ -1003,8 +1003,14 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 			  vec_t(ptuple->_rep->_dest, key_sz),
 			  &(ptuple->_rid),
 			  len,
-			  found,
-                          ignoreLocks));
+			  found));
+
+    //    W_DO(ss_m::find_assoc(pindex->fid(),
+    //			  vec_t(ptuple->_rep->_dest, key_sz),
+    //			  &(ptuple->_rid),
+    //			  len,
+    //			  found,
+    //                          ignoreLocks));
 
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
@@ -1133,7 +1139,8 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     }
 
     // 2b. else, simply update
-    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLock);
+    //rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLock);
+    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
     // 3. unpin
@@ -1253,6 +1260,29 @@ w_rc_t table_man_impl<TableDesc>::get_iter_for_index_scan(ss_m* db,
  *
  *********************************************************************/
 
+#define CHECK_FOR_DEADLOCK(action, on_deadlock)				\
+    do {								\
+	w_rc_t rc = action;						\
+	if(rc.is_error()) {						\
+	    W_COERCE(db->abort_xct());					\
+	    if(rc.err_num() == smlevel_0::eDEADLOCK) {			\
+		TRACE( TRACE_ALWAYS, "load(%s): %d: deadlock detected. Retrying.n", _ptable->name(), tuple_count); \
+		W_DO(db->begin_xct());					\
+		on_deadlock;						\
+	    }								\
+	    W_DO(rc);							\
+	}								\
+	else {								\
+	    break;							\
+	}								\
+    } while(1) 
+
+struct table_creation_lock {
+    static pthread_mutex_t* get_lock() {
+	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+	return &lock;
+    }
+};
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db, 
                                                  const char* fname)
@@ -1282,12 +1312,31 @@ w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db,
     register int tuple_count = 0;
     register int mark = COMMIT_ACTION_COUNT;
 
+    w_rc_t rc;
     if (db) {
+	{
+	    CRITICAL_SECTION(cs, table_creation_lock::get_lock());
+	    W_DO(db->begin_xct());
     
-        W_DO(db->begin_xct());
-    
-        /* 1. create the warehouse table */
-        W_DO(_ptable->create_table(db));
+	    /* 1. create the warehouse table */
+	    do { 
+		w_rc_t rc = _ptable->create_table(db);				
+		if(rc.is_error()) {						
+		    W_COERCE(db->abort_xct());					
+		    if(rc.err_num() == smlevel_0::eDEADLOCK || rc.err_num() == smlevel_0::eLOCKTIMEOUT) {			
+			TRACE( TRACE_ALWAYS, "load(%s): %d: deadlock detected. Retrying.n", _ptable->name(), tuple_count); 
+			W_DO(db->begin_xct());					
+			continue;						
+		    }								
+		    W_DO(rc);							
+		}								
+		else {								
+		    break;							
+		} 
+	    } while(1) ;
+	    W_DO(db->commit_xct());
+	    W_DO(db->begin_xct());
+	}
          
         /* 2. append the tuples */
         append_file_i file_append(_ptable->fid());    
@@ -1301,21 +1350,40 @@ w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db,
         rep_row_t arep(_pts);
         int tsz = 0;
 
+	long saved_file_pointer = 0;
+	long saved_tuple_count = 0;
+	long saved_i = 0;
         for(int i=0; fgets(linebuffer, MAX_LINE_LENGTH, fd); i++) {
-
             // read tuple and put it in a table_row_t
             btread = _ptable->read_tuple_from_line(tuple, linebuffer);
 
             // append it to the table
             tsz = format(&tuple, arep);
             assert (arep._dest); // (ip) if NULL invalid
-            W_DO(file_append.create_rec(vec_t(), 0,
-                                        vec_t(arep._dest, tsz),
-                                        tuple._rid));
+	    do { 
+		w_rc_t rc = file_append.create_rec(vec_t(), 0,
+						   vec_t(arep._dest, tsz),
+						   tuple._rid);
+		    if(rc.is_error()) {						
+			W_COERCE(db->abort_xct());					
+			if(rc.err_num() == smlevel_0::eDEADLOCK) {			
+			    TRACE( TRACE_ALWAYS, "load(%s): %d: deadlock detected. Retrying.n", _ptable->name(), tuple_count); 
+			    W_DO(db->begin_xct());					
+			    goto recover;						
+			}								
+			W_DO(rc);							
+		    }								
+		    else {								
+			break;							
+		    } 
+	    } while(1) ;
+		
 
             if(i >= mark) {
-                W_COERCE(db->commit_xct());
-
+                W_DO(db->commit_xct());
+		saved_file_pointer = ftell(fd);
+		saved_tuple_count = tuple_count;
+		saved_i = i;
                 if ((i % 100000) == 0) { // every 100K inserts
                     TRACE( TRACE_ALWAYS, "load(%s): %d\n", _ptable->name(), tuple_count);
                 }
@@ -1323,10 +1391,18 @@ w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db,
                     TRACE( TRACE_DEBUG, "load(%s): %d\n", _ptable->name(), tuple_count);
                 }
 
-                W_COERCE(db->begin_xct());
+                W_DO(db->begin_xct());
                 mark += COMMIT_ACTION_COUNT;
             }	    
             tuple_count++;
+	    continue;
+	    
+	recover:
+	    // oops! deadlock detected. revert to "last known good"
+	    // and continue loading.
+	    fseek(fd, saved_file_pointer, SEEK_SET);
+	    tuple_count = saved_tuple_count;
+	    i = saved_i;
         }
     
         /* 3. commit and print statistics */
