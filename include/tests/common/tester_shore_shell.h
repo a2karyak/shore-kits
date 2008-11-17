@@ -41,28 +41,24 @@ extern bool volatile _g_canceled;
  *
  *********************************************************************/
 
-struct shore_guard_t : pointer_guard_base_t<ShoreEnv, shore_guard_t> 
-{
-    shore_guard_t(ShoreEnv *ptr=NULL)
-        : pointer_guard_base_t<ShoreEnv, shore_guard_t>(ptr)
-    { }
 
-    static void guard_action(ShoreEnv *ptr) 
-    {
-        if (ptr) {
-            close_smt_t* clt = new close_smt_t(ptr, c_str("clt"));
-            assert (clt);
-            clt->fork();
-            clt->join();
-            int rv = clt->_rv;
-            delete (clt);
-            clt = NULL;
-            if (clt->_rv) {
-                TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
-            }
-        }
+template<>
+inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
+    if (ptr) {
+	close_smt_t* clt = new close_smt_t(ptr, c_str("clt"));
+	assert (clt);
+	clt->fork();
+	clt->join();
+	int rv = clt->_rv;
+	if (rv) {
+	    TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
+	}
+	delete (clt);
+	clt = NULL;
+	    
+	delete ptr;
     }
-};
+}
 
 
 /*********************************************************************
