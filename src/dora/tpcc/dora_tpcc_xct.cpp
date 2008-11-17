@@ -81,9 +81,6 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
     midway_pay_rvp* rvp = new (_midway_pay_rvp_pool) midway_pay_rvp;
     assert (rvp);
     rvp->set(atid,pxct,xct_id,atrt,apin,this,&_midway_pay_rvp_pool);
-
-//     midway_pay_rvp* rvp = new midway_pay_rvp(atid, pxct, xct_id,
-//                                              atrt, this, apin); 
     
     // 3. Generate the actions    
     upd_wh_pay_action* pay_upd_wh = new (_upd_wh_pay_pool) upd_wh_pay_action;
