@@ -303,7 +303,7 @@ public:
     }
 
 
-    ~ShoreTPCCEnv() 
+    virtual ~ShoreTPCCEnv() 
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
