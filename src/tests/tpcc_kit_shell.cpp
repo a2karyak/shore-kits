@@ -235,12 +235,12 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
 
     // 3. set SF - if param valid
     assert (_tpccdb);
-    _tpccdb->print_sf();
-    _numOfWHs = _tpccdb->get_sf();
     if (argc>1) {
         int numQueriedOfWHs = atoi(argv[1]);
         _tpccdb->set_qf(numQueriedOfWHs);
     }
+    _numOfWHs = _tpccdb->get_sf();
+
 
     // 4. Load supported trxs and bps
     if (!load_trxs_map()) {

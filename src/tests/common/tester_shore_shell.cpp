@@ -420,6 +420,8 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
     int tmp_duration        = duration;
     int iterations          = ev->getVarInt("test-iterations",DF_WARMUP_ITERS);
     int tmp_iterations      = iterations;
+
+
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d",
@@ -510,6 +512,15 @@ int shore_shell_t::process_cmd_TEST(const char* command,
     int tmp_use_sli          = use_sli;
     eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
     eBindingType tmp_binding = binding;
+
+
+    // update the SF
+    int tmp_sf = ev->getSysVarInt("sf");
+    if (tmp_sf) {
+        TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
+        _numOfWHs = tmp_sf;
+    }
+
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d %d",
@@ -632,6 +643,13 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     int tmp_use_sli          = use_sli;
     eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
     eBindingType tmp_binding = binding;
+
+    // update the SF
+    int tmp_sf = ev->getSysVarInt("sf");
+    if (tmp_sf) {
+        TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
+        _numOfWHs = tmp_sf;
+    }
 
     
     // Parses new test run data

@@ -357,6 +357,14 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
     int commit_interval     = DF_COMMIT_INTERVAL;
     int tmp_ci              = DF_COMMIT_INTERVAL;
 
+    // update the SF
+    int tmp_sf = envVar::instance()->getSysVarInt("sf");
+    if (tmp_sf) {
+        TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
+        _numOfWHs = tmp_sf;
+    }
+
+
     // Parses new test run data
     if ( sscanf(cmd, "%s %d %d %d %d %d %d %d",
                 &cmd_tag,
