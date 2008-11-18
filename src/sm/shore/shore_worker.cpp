@@ -28,14 +28,20 @@ void worker_stats_t::print_stats() const
     //    TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
     //    TRACE( TRACE_STATISTICS, "Problems       (%d)\n", _problems);
 
-    TRACE( TRACE_STATISTICS, "Wait checked   (%d)\n", _checked_waiting);
-    TRACE( TRACE_STATISTICS, "Wait served    (%d)\n", _served_waiting);
+    // don't display anything if no input
+    if (_served_input==0) {
+        TRACE( TRACE_STATISTICS, "No input\n");
+        return;
+    }
 
     TRACE( TRACE_STATISTICS, "Input checked  (%d)\n", _checked_input);
     TRACE( TRACE_STATISTICS, "Input served   (%d)\n", _served_input);
 
+    TRACE( TRACE_STATISTICS, "Wait checked   (%d)\n", _checked_waiting);
+    TRACE( TRACE_STATISTICS, "Wait served    (%d)\n", _served_waiting);
+
     TRACE( TRACE_STATISTICS, "Sleeped        (%d)\n", _condex_sleep);
-    TRACE( TRACE_STATISTICS, "Failed sleeped (%d)\n", _failed_sleep);
+    //    TRACE( TRACE_STATISTICS, "Failed sleeped (%d)\n", _failed_sleep);
 }
 
 void worker_stats_t::reset()
@@ -112,7 +118,7 @@ const int base_worker_t::_work_STOPPED_impl()
     // any cleanup code should be here
 
     // print statistics
-    stats();
+    //    stats();
 
     return (0);
 }

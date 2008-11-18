@@ -293,7 +293,11 @@ public:
 
     // helper //
 
-    void stats() { _stats.print_stats(); }
+    void stats() { 
+        TRACE( TRACE_STATISTICS, "(%s)\n", 
+               thread_name().data());
+        _stats.print_stats(); 
+    }
 
 private:
 

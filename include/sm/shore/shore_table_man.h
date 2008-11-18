@@ -999,19 +999,19 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // if NULL invalid key
 
+//     W_DO(ss_m::find_assoc(pindex->fid(),
+// 			  vec_t(ptuple->_rep->_dest, key_sz),
+// 			  &(ptuple->_rid),
+// 			  len,
+// 			  found));
+
     W_DO(ss_m::find_assoc(pindex->fid(),
-			  vec_t(ptuple->_rep->_dest, key_sz),
-			  &(ptuple->_rid),
-			  len,
-			  found));
-
-    //    W_DO(ss_m::find_assoc(pindex->fid(),
-    //			  vec_t(ptuple->_rep->_dest, key_sz),
-    //			  &(ptuple->_rid),
-    //			  len,
-    //			  found,
-    //                          ignoreLocks));
-
+    			  vec_t(ptuple->_rep->_dest, key_sz),
+    			  &(ptuple->_rid),
+    			  len,
+    			  found,
+                          ignoreLocks));
+    
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
     // 3. read the tuple
@@ -1139,8 +1139,8 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     }
 
     // 2b. else, simply update
-    //rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLock);
-    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
+    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLock);
+    //rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
     // 3. unpin
