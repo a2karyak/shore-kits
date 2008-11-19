@@ -47,7 +47,7 @@ inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
     if (ptr) {
 	close_smt_t* clt = new close_smt_t(ptr, c_str("clt"));
 	assert (clt);
-	clt->fork();
+	clt->fork(); // pointer is deleted by clt thread
 	clt->join();
 	int rv = clt->_rv;
 	if (rv) {
@@ -55,8 +55,6 @@ inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
 	}
 	delete (clt);
 	clt = NULL;
-	    
-	delete ptr;
     }
 }
 
