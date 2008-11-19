@@ -189,6 +189,11 @@ int ShoreEnv::close_sm()
         return (1);
     }
 
+
+    // Disabling fake io delay, if any
+    _pssm->disable_fake_disk_latency(*_pvid);
+
+
     TRACE( TRACE_ALWAYS, "Dismounting all devices...\n");
     w_rc_t e = _pssm->dismount_all();
     if (e.is_error()) {
@@ -292,6 +297,7 @@ int ShoreEnv::configure_sm()
  *           - Format and mount the device
  *           - Create the volume in the device 
  *           (Shore limitation: only 1 volume per device)
+ *           - Set the fakeiodelay params
  *
  *  @return: 0 on success, non-zero otherwise
  *
@@ -370,8 +376,26 @@ int ShoreEnv::start_sm()
         // "speculate" that the database is loaded
         _loaded = true;
     }
+
+    // setting the fake io disk latency
+    envVar* ev = envVar::instance();
+    int enableFakeIO = ev->getVarInt("shore-fakeiodelay-enable",1);
+    TRACE( TRACE_DEBUG, "Is fake I/O delay enabled: (%d)\n", enableFakeIO);
+    if (enableFakeIO) {
+        _pssm->enable_fake_disk_latency(*_pvid);
+    }
+    else {
+        _pssm->disable_fake_disk_latency(*_pvid);
+    }
+    int ioLatency = ev->getVarInt("shore-fakeiodelay",0);
+    TRACE( TRACE_DEBUG, "I/O delay latency set: (%d)\n", ioLatency);
+    W_COERCE(_pssm->set_fake_disk_latency(*_pvid,ioLatency));
+
     
     // Using the physical ID interface
+
+
+
 
     // If we reached this point the sm has started correctly
     return (0);

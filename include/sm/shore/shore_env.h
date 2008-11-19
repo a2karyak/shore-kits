@@ -67,6 +67,8 @@ const string SHORE_SYS_OPTIONS[][2] = {
     { "db-clobberdev", "0" },
     { "sys-maxcpucount", "0" },
     { "sys-activecpucount", "0" },
+    { "shore-fakeiodelay", "0" },
+    { "shore-fakeiodelay-enable", "0" }
 };
 
 const int    SHORE_NUM_SYS_OPTIONS  = 3;
