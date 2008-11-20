@@ -377,9 +377,10 @@ int ShoreEnv::start_sm()
         _loaded = true;
     }
 
-    // setting the fake io disk latency
+    // setting the fake io disk latency - after we mount 
+    // (let the volume be formatted and mounted without any fake io latency)
     envVar* ev = envVar::instance();
-    int enableFakeIO = ev->getVarInt("shore-fakeiodelay-enable",1);
+    int enableFakeIO = ev->getVarInt("shore-fakeiodelay-enable",0);
     TRACE( TRACE_DEBUG, "Is fake I/O delay enabled: (%d)\n", enableFakeIO);
     if (enableFakeIO) {
         _pssm->enable_fake_disk_latency(*_pvid);
@@ -572,7 +573,8 @@ const int ShoreEnv::restart()
  *
  ******************************************************************/
 
-const int ShoreEnv::conf() {
+const int ShoreEnv::conf() 
+{
     TRACE( TRACE_DEBUG, "ShoreEnv configuration\n");
     
     // Print storage manager options
@@ -589,6 +591,55 @@ const int ShoreEnv::conf() {
     for ( iter = _dev_opts.begin(); iter != _dev_opts.end(); iter++)
         cout << "(" << iter->first << ") (" << iter->second << ")" << endl;    
 
+    return (0);
+}
+
+
+
+/****************************************************************** 
+ *
+ *  @fn:    {enable,disable}_fake_disk_latency
+ *
+ *  @brief: Enables/disables the fake IO disk latency
+ *
+ ******************************************************************/
+
+const int ShoreEnv::disable_fake_disk_latency() 
+{
+    // Disabling fake io delay, if any
+    w_rc_t e = _pssm->disable_fake_disk_latency(*_pvid);
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "Problem in disabling fake IO delay [0x%x]\n",
+               e.err_num());
+        return (1);
+    }
+    envVar* ev = envVar::instance();
+    ev->setVarInt("shore-fakeiodelay-enable",0);
+    ev->setVarInt("shore-fakeiodelay",0);
+    return (0);
+}
+
+const int ShoreEnv::enable_fake_disk_latency(const int adelay) 
+{
+    if (!adelay>0) return (1);
+
+    // Enabling fake io delay
+    w_rc_t e = _pssm->set_fake_disk_latency(*_pvid,adelay);
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "Problem in setting fake IO delay [0x%x]\n",
+               e.err_num());
+        return (2);
+    }
+
+    e = _pssm->enable_fake_disk_latency(*_pvid);
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "Problem in enabling fake IO delay [0x%x]\n",
+               e.err_num());
+        return (3);
+    }   
+    envVar* ev = envVar::instance();
+    ev->setVarInt("shore-fakeiodelay-enable",1);
+    ev->setVarInt("shore-fakeiodelay",adelay);
     return (0);
 }
 

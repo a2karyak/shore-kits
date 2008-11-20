@@ -140,6 +140,13 @@ public:
 
     virtual const int register_commands() 
     {
+        // FROM TESTER_SHORE_SHELL
+        _fakeioer = new fake_iodelay_cmd_t(_tpccdb);
+        _fakeioer->setaliases();
+        add_cmd(_fakeioer.get());
+
+
+        // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_tpccdb);
         _restarter->setaliases();
         add_cmd(_restarter.get());
@@ -482,8 +489,8 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //| TRACE_DEBUG
-              );
+               | TRACE_DEBUG
+               );
 
     // 1. Get env vars
     envVar* ev = envVar::instance();       

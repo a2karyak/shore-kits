@@ -41,7 +41,6 @@ extern bool volatile _g_canceled;
  *
  *********************************************************************/
 
-
 template<>
 inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
     if (ptr) {
@@ -57,6 +56,31 @@ inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
 	clt = NULL;
     }
 }
+
+
+
+
+
+/*********************************************************************
+ *
+ *  @class: fake_io_delay_cmd_t
+ *
+ *  @brief: Handler for the "iodelay" command
+ *
+ *********************************************************************/
+
+// cmd - IODELAY
+struct fake_iodelay_cmd_t : public command_handler_t {
+    ShoreEnv* _env;
+    fake_iodelay_cmd_t(ShoreEnv* env) : _env(env) { };
+    ~fake_iodelay_cmd_t() { }
+    void setaliases() { 
+        _name = string("iodelay"); 
+        _aliases.push_back("iodelay"); _aliases.push_back("io"); }
+    const int handle(const char* cmd);
+    void usage();
+    const string desc() { return (string("Sets the fake I/O disk delay")); }
+};
 
 
 /*********************************************************************
@@ -84,6 +108,9 @@ protected:
     processorid_t _start_prs_id;
     processorid_t _current_prs_id;    
 
+    // supported cmds
+    guard<fake_iodelay_cmd_t> _fakeioer;
+
     // supported trxs
     typedef map<int,string>            mapSupTrxs;
     typedef mapSupTrxs::iterator       mapSupTrxsIt;
@@ -109,7 +136,7 @@ public:
         sigemptyset(&sa.sa_mask);
         sa.sa_handler = &alarm_handler;
         if(sigaction(SIGALRM, &sa, &sa_old) < 0)
-            exit(1);
+            exit(1);        
     }
     virtual ~shore_shell_t() { }    
 

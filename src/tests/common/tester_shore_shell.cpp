@@ -809,3 +809,39 @@ int shore_shell_t::_cmd_LOAD_impl()
 
 
 //// EOF: shore_shell_t functions ////
+
+
+
+/*********************************************************************
+ *
+ *  fake_io_delay_cmd_t: "iodelay" command
+ *
+ *********************************************************************/
+
+void fake_iodelay_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "IODELAY Usage:\n\n"                               \
+           "*** iodelay <DELAY>\n"                      \
+           "\nParameters:\n"                                            \
+           "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
+}
+
+const int fake_iodelay_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char iodelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
+    if ( sscanf(cmd, "%s %s", &cmd_tag, &iodelay_tag) < 2) {
+        // prints all the env
+        usage();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    assert (_env);
+    int delay = atoi(iodelay_tag);
+    if (!delay>0) {
+        _env->disable_fake_disk_latency();
+    }
+    else {
+        _env->enable_fake_disk_latency(delay);
+    }
+    return (SHELL_NEXT_CONTINUE);
+}

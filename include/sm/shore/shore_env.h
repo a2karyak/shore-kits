@@ -81,11 +81,10 @@ const string SHORE_SYS_SM_OPTIONS[][3]  = {
     { "-sm_logging", "shore-logging", "yes" },
     { "-sm_diskrw", "shore-diskrw", "diskrw" },
     { "-sm_errlog", "shore-errlog", "info" },
-    { "-sm_fake_io_delay", "shore-fakeiodelay", "0" },
-    { "-sm_page_writers", "shore-pagecleaners", "1" }
+    { "-sm_num_page_writers", "shore-pagecleaners", "16" }
 };
 
-const int    SHORE_NUM_SYS_SM_OPTIONS   = 5;
+const int    SHORE_NUM_SYS_SM_OPTIONS   = 4;
 
 
 // SHORE_DB_SM_OPTIONS: 
@@ -410,6 +409,11 @@ public:
     void set_active_cpu_count(const int actcpucnt);
     // disabled - max_count can be set only on conf
     //    void set_max_cpu_count(const int maxcpucnt); 
+
+
+    // fake io delay interface
+    const int disable_fake_disk_latency();
+    const int enable_fake_disk_latency(const int adelay);
 
 protected:
    
