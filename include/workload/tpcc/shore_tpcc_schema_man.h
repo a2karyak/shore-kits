@@ -147,7 +147,9 @@ public:
                                   rep_row_t &rephigh,
                                   const int w_id,
                                   const int d_id,
-                                  const char* c_last);
+                                  const char* c_last,
+                                  lock_mode_t alm = SH,
+                                  bool need_tuple = false);
 
     w_rc_t cust_index_probe(ss_m* db,
                             customer_tuple* ptuple,
@@ -253,7 +255,9 @@ public:
                                 rep_row_t &replow,
                                 rep_row_t &rephigh,
                                 const int w_id,
-                                const int d_id);
+                                const int d_id,
+                                lock_mode_t alm = SH,
+                                bool need_tuple = false);
 
     /* --- update a retrieved tuple --- */
     w_rc_t no_delete_by_index(ss_m* db,
@@ -305,7 +309,9 @@ public:
                                  rep_row_t &rephigh,
                                  const int w_id,
                                  const int d_id,
-                                 const int c_id);
+                                 const int c_id,
+                                 lock_mode_t alm = SH,
+                                 bool need_tuple = true);
 
     /* --- update a retrieved tuple --- */
     w_rc_t ord_update_carrier_by_index(ss_m* db,
@@ -365,7 +371,9 @@ public:
                                       const int w_id,
                                       const int d_id,
                                       const int low_o_id,
-                                      const int high_o_id);
+                                      const int high_o_id,
+                                      lock_mode_t alm = SH,
+                                      bool need_tuple = true);
     
     w_rc_t ol_get_probe_iter_by_index(ss_m* db,
                                       order_line_index_iter* iter,
@@ -374,7 +382,9 @@ public:
                                       rep_row_t &rephigh,
                                       const int w_id,
                                       const int d_id,
-                                      const int o_id);
+                                      const int o_id,
+                                      lock_mode_t alm = SH,
+                                      bool need_tuple = true);
 
     /** deprecated */
 
