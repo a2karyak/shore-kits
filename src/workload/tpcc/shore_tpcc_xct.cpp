@@ -798,9 +798,10 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
             rep_row_t lowrep(_pcustomer_man->ts());
             rep_row_t highrep(_pcustomer_man->ts());
 
-            guard< index_scan_iter_impl<customer_t> > c_iter;
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-by-name-idx (%s)\n", 
                    xct_id, ppin->_c_last);
+
+            guard<index_scan_iter_impl<customer_t> > c_iter;
             e = _pcustomer_man->cust_get_iter_by_index(_pssm, c_iter.get(), prcust, 
                                                        lowrep, highrep,
                                                        c_w, c_d, ppin->_c_last);
@@ -1097,8 +1098,9 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
             assert (pstin->_c_select <= 60);
             assert (pstin->_c_last);
 
-            guard<index_scan_iter_impl<customer_t> > c_iter;
             TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-by-name-idx\n", xct_id);
+
+            guard<index_scan_iter_impl<customer_t> > c_iter;
             e = _pcustomer_man->cust_get_iter_by_index(_pssm, c_iter.get(), prcust, lowrep, highrep,
                                                        w_id, d_id, pstin->_c_last);
             if (e.is_error()) { goto done; }
@@ -1157,8 +1159,9 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
          * plan: index scan on "C_CUST_INDEX"
          */
      
-        guard<index_scan_iter_impl<order_t> > o_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ord-iter-by-idx\n", xct_id);
+
+        guard<index_scan_iter_impl<order_t> > o_iter;
         e = _porder_man->ord_get_iter_by_index(_pssm, o_iter.get(), prord, lowrep, highrep,
                                                w_id, d_id, pstin->_c_id);
         if (e.is_error()) { goto done; }
@@ -1193,8 +1196,9 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
          * plan: index scan on "OL_INDEX"
          */
 
-        guard<index_scan_iter_impl<order_line_t> > ol_iter;
         TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ol-iter-by-idx\n", xct_id);
+
+        guard<index_scan_iter_impl<order_line_t> > ol_iter;
         e = _porder_line_man->ol_get_probe_iter_by_index(_pssm, ol_iter.get(), prol,
                                                          lowrep, highrep,
                                                          w_id, d_id, aorder.O_ID);

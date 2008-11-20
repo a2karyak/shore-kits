@@ -141,7 +141,7 @@ public:
 
     /* --- access specific tuples --- */
     w_rc_t cust_get_iter_by_index(ss_m* db,
-                                  customer_index_iter* &iter,
+                                  customer_index_iter* iter,
                                   customer_tuple* ptuple,
                                   rep_row_t &replow,
                                   rep_row_t &rephigh,
@@ -248,7 +248,7 @@ public:
 
     /* --- access specific tuples --- */     
     w_rc_t no_get_iter_by_index(ss_m* db,
-                                new_order_index_iter* &iter,
+                                new_order_index_iter* iter,
                                 new_order_tuple* ptuple,
                                 rep_row_t &replow,
                                 rep_row_t &rephigh,
@@ -299,7 +299,7 @@ public:
 
     /* --- access specific tuples --- */         
     w_rc_t ord_get_iter_by_index(ss_m* db,
-                                 order_index_iter* &iter,
+                                 order_index_iter* iter,
                                  order_tuple* ptuple,
                                  rep_row_t &replow,
                                  rep_row_t &rephigh,
@@ -358,7 +358,7 @@ public:
 
     /* --- access the table --- */
     w_rc_t ol_get_range_iter_by_index(ss_m* db,
-                                      order_line_index_iter* &iter,
+                                      order_line_index_iter* iter,
                                       order_line_tuple* ptuple,
                                       rep_row_t &replow,
                                       rep_row_t &rephigh,
@@ -368,7 +368,7 @@ public:
                                       const int high_o_id);
     
     w_rc_t ol_get_probe_iter_by_index(ss_m* db,
-                                      order_line_index_iter* &iter,
+                                      order_line_index_iter* iter,
                                       order_line_tuple* ptuple,
                                       rep_row_t &replow,
                                       rep_row_t &rephigh,

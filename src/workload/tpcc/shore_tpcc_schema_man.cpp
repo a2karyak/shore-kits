@@ -174,7 +174,7 @@ w_rc_t district_man_impl::dist_update_next_o_id_nl(ss_m* db,
 
 
 w_rc_t customer_man_impl::cust_get_iter_by_index(ss_m* db,
-                                                 customer_index_iter* &iter,
+                                                 customer_index_iter* iter,
                                                  customer_tuple* ptuple,
                                                  rep_row_t &replow,
                                                  rep_row_t &rephigh,
@@ -328,7 +328,7 @@ w_rc_t customer_man_impl::cust_update_discount_balance_nl(ss_m* db,
 
 				    
 w_rc_t new_order_man_impl::no_get_iter_by_index(ss_m* db,
-                                                new_order_index_iter* &iter,
+                                                new_order_index_iter* iter,
                                                 new_order_tuple* ptuple,
                                                 rep_row_t &replow,
                                                 rep_row_t &rephigh,
@@ -413,7 +413,7 @@ w_rc_t new_order_man_impl::no_delete_by_index_nl(ss_m* db,
 
 
 w_rc_t order_man_impl::ord_get_iter_by_index(ss_m* db,
-                                             order_index_iter* &iter,
+                                             order_index_iter* iter,
                                              order_tuple* ptuple,
                                              rep_row_t &replow,
                                              rep_row_t &rephigh,
@@ -494,7 +494,7 @@ w_rc_t order_man_impl::ord_update_carrier_by_index_nl(ss_m* db,
 
 
 w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
-                                                       order_line_index_iter* &iter,
+                                                       order_line_index_iter* iter,
                                                        order_line_tuple* ptuple,
                                                        rep_row_t &replow,
                                                        rep_row_t &rephigh,
@@ -535,7 +535,7 @@ w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
 
 
 w_rc_t order_line_man_impl::ol_get_probe_iter_by_index(ss_m* db,
-                                                       order_line_index_iter* &iter,
+                                                       order_line_index_iter* iter,
                                                        order_line_tuple* ptuple,
                                                        rep_row_t &replow,
                                                        rep_row_t &rephigh,
