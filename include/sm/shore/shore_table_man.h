@@ -260,16 +260,18 @@ public:
     /* ------------------------------------------- */
 
     w_rc_t get_iter_for_file_scan(ss_m* db,
-				  table_iter* &iter);
+				  table_iter* &iter,
+                                  lock_mode_t alm = SH);
 
     w_rc_t get_iter_for_index_scan(ss_m* db,
 				   index_desc_t* pindex,
 				   index_iter* &iter,
+                                   lock_mode_t alm,
+                                   bool need_tuple,
 				   scan_index_i::cmp_t c1,
 				   const cvec_t & bound1,
 				   scan_index_i::cmp_t c2,
-				   const cvec_t & bound2,
-				   bool need_tuple = false);
+				   const cvec_t & bound2);
 
     /* ------------------------------------------ */
     /* --- populate table with data from file --- */
@@ -359,6 +361,7 @@ template <class TableDesc>
 class table_scan_iter_impl : 
     public tuple_iter_t<TableDesc, scan_file_i, row_impl<TableDesc> >
 {
+public:
     typedef row_impl<TableDesc> table_tuple;
     typedef table_man_impl<TableDesc> table_manager;
 
@@ -374,8 +377,9 @@ public:
 
     table_scan_iter_impl(ss_m* db, 
                          TableDesc* ptable,
-                         table_manager* pmanager) 
-        : tuple_iter_t(db, ptable, true), _pmanager(pmanager)
+                         table_manager* pmanager,
+                         lock_mode_t alm) 
+        : tuple_iter_t(db, ptable, alm, true), _pmanager(pmanager)
     { 
         assert (_pmanager);
         W_COERCE(open_scan(_db)); 
@@ -391,7 +395,7 @@ public:
     w_rc_t open_scan(ss_m* db) {
         if (!_opened) {
             W_DO(_file->check_fid(db));
-            _scan = new scan_file_i(_file->fid(), ss_m::t_cc_record);
+            _scan = new scan_file_i(_file->fid(), ss_m::t_cc_record, false, _lm);
             _opened = true;
         }
         return (RCOK);
@@ -436,14 +440,13 @@ template <class TableDesc>
 class index_scan_iter_impl : 
     public tuple_iter_t<index_desc_t, scan_index_i, row_impl<TableDesc> >
 {
+public:
     typedef row_impl<TableDesc> table_tuple;
     typedef table_man_impl<TableDesc> table_manager;
 
 private:
-
     table_manager* _pmanager;
     bool           _need_tuple;
-    lock_mode_t    _lock_mode;
 
 public:
 
@@ -454,16 +457,16 @@ public:
     index_scan_iter_impl(ss_m* db,
                          index_desc_t* pindex,
                          table_manager* pmanager,
-                         bool need_tuple = false,
-                         lock_mode_t lock_mode = SH) // EX or SH
-        : tuple_iter_t(db, pindex, true), _pmanager(pmanager), 
-          _need_tuple(need_tuple), _lock_mode(lock_mode)
+                         lock_mode_t alm,    // alm = SH
+                         bool need_tuple)    // need_tuple = false
+        : tuple_iter_t(db, pindex, alm, true), 
+          _pmanager(pmanager), _need_tuple(need_tuple)
     { 
         assert (_pmanager);
-        /** @note We need to know the bounds of the iscan before
-         *        opening the iterator. That's why we cannot open
-         *        the iterator upon construction.
-         *        Needs explicit call to open_scan(...)
+        /** @note: We need to know the bounds of the iscan before
+         *         opening the iterator. That's why we cannot open
+         *         the iterator upon construction.
+         *         Needs explicit call to open_scan(...)
          */        
     }
 
@@ -471,22 +474,19 @@ public:
     index_scan_iter_impl(ss_m* db,
                          index_desc_t* pindex,
                          table_manager* pmanager,
+                         lock_mode_t alm,
+                         bool need_tuple,
                          scan_index_i::cmp_t cmp1, const cvec_t& bound1,
                          scan_index_i::cmp_t cmp2, const cvec_t& bound2,
-                         const int maxkeysize,
-                         bool need_tuple,
-                         lock_mode_t lock_mode) 
-        : tuple_iter_t(db, pindex, true), _pmanager(pmanager), 
-          _need_tuple(need_tuple), _lock_mode(lock_mode)
+                         const int maxkeysize) 
+        : tuple_iter_t(db, pindex, alm, true), 
+          _pmanager(pmanager), _need_tuple(need_tuple)
     { 
         assert (_pmanager);
         W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2, maxkeysize));
     }
-
         
-    ~index_scan_iter_impl() { 
-        close_scan();             
-    };
+    ~index_scan_iter_impl() { close_scan(); };
 
 
     /* ------------------------ */        
@@ -500,7 +500,8 @@ public:
     {
         if (!_opened) {
             W_DO(_file->check_fid(db));
-            _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2);
+            _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2,
+                                     false, ss_m::t_cc_kvl, _lm);
             _opened = true;
         }
 
@@ -534,7 +535,7 @@ public:
 
             if (_need_tuple) {
                 pin_i  pin;
-                W_DO(pin.pin(rid, 0, _lock_mode));
+                W_DO(pin.pin(rid, 0, _lm));
                 if (!_pmanager->load(&tuple, pin.body()))
                     return RC(se_WRONG_DISK_DATA);
                 pin.unpin();
@@ -1219,10 +1220,11 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::get_iter_for_file_scan(ss_m* db,
-                                                         table_iter* &iter)
+                                                         table_iter* &iter,
+                                                         lock_mode_t alm)
 {
     assert (_ptable);
-    iter = new table_scan_iter_impl<TableDesc>(db, _ptable, this);
+    iter = new table_scan_iter_impl<TableDesc>(db, _ptable, this, alm);
     if (iter->opened()) return (RCOK);
     return RC(se_OPEN_SCAN_ERROR);
 }
@@ -1232,17 +1234,17 @@ template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::get_iter_for_index_scan(ss_m* db,
                                                           index_desc_t* index,
                                                           index_iter* &iter,
+                                                          lock_mode_t alm,
+                                                          bool need_tuple,
                                                           scan_index_i::cmp_t c1,
                                                           const cvec_t& bound1,
                                                           scan_index_i::cmp_t c2,
-                                                          const cvec_t& bound2,
-                                                          bool need_tuple)
+                                                          const cvec_t& bound2)
 {
     assert (_ptable);
-    iter = new index_scan_iter_impl<TableDesc>(db, index, this, need_tuple);
+    iter = new index_scan_iter_impl<TableDesc>(db, index, this, alm, need_tuple);
     W_DO(iter->open_scan(db, c1, bound1, c2, bound2, 
                          _ptable->index_maxkeysize(index)));
-
     if (iter->opened())  return (RCOK);
     return RC(se_OPEN_SCAN_ERROR);
 }
@@ -1972,11 +1974,12 @@ w_rc_t table_man_impl<TableDesc>::scan_index(ss_m* db,
     assert (highrep._dest);
 
     W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 SH, 
+                                 false,
 				 scan_index_i::ge,
 				 vec_t(lowrep._dest, lowsz),
 				 scan_index_i::le,
-				 vec_t(highrep._dest, highsz),
-				 false));
+				 vec_t(highrep._dest, highsz)));
 
     /* 2. iterate over all index records */
     bool        eof;

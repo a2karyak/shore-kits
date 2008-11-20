@@ -152,6 +152,7 @@ typedef tuple_iter_t<sort_buffer_t, int, row_impl<sort_buffer_t> > sort_scan_t;
 
 class sort_iter_impl : public sort_scan_t 
 {
+public:
     typedef row_impl<sort_buffer_t> table_tuple;
 
 private:
@@ -162,7 +163,7 @@ private:
 public:
 
     sort_iter_impl(ss_m* db, sort_buffer_t* psortbuf, sort_man_impl* psortman)
-        : tuple_iter_t(db, psortbuf, false), _manager(psortman), _index(0)
+        : tuple_iter_t(db, psortbuf, NL, false), _manager(psortman), _index(0)
     { 
         assert (_manager);
         assert (_file);

@@ -1334,7 +1334,8 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
             guard<index_scan_iter_impl<new_order_t> > no_iter;
             e = _pnew_order_man->no_get_iter_by_index(_pssm, no_iter.get(), prno, 
                                                       lowrep, highrep,
-                                                      w_id, d_id);
+                                                      w_id, d_id,
+                                                      EX, false);
             if (e.is_error()) { goto done; }
 
             bool eof;

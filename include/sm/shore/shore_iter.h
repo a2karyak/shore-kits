@@ -38,21 +38,21 @@ protected:
     file_desc*    _file;
     file_scanner* _scan;
 
+    lock_mode_t   _lm;
     bool          _shoulddelete;    
     
 public:
     // Constructor
-    tuple_iter_t(ss_m* db, file_desc* file, bool shoulddelete)
+    tuple_iter_t(ss_m* db, file_desc* file, 
+                 lock_mode_t alm, bool shoulddelete)
+        //                 lock_mode_t alm = SH, bool shoulddelete = false)
         : _db(db), _opened(false), _file(file), _scan(NULL), 
-          _shoulddelete(shoulddelete)
+          _lm(alm), _shoulddelete(shoulddelete)
     { 
         assert (_db);
     }
 
-    virtual ~tuple_iter_t() 
-    { 
-        close_scan();
-    }
+    virtual ~tuple_iter_t() { close_scan(); }
 
     // Access methods
     bool opened() const { return (_opened); }

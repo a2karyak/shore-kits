@@ -180,7 +180,9 @@ w_rc_t customer_man_impl::cust_get_iter_by_index(ss_m* db,
                                                  rep_row_t &rephigh,
                                                  const int w_id,
                                                  const int d_id,
-                                                 const char* c_last)
+                                                 const char* c_last,
+                                                 lock_mode_t alm,
+                                                 bool need_tuple)
 {
     assert (ptuple);
 
@@ -211,9 +213,9 @@ w_rc_t customer_man_impl::cust_get_iter_by_index(ss_m* db,
 
     /* index only access */
     W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
 				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz),
-				 false));
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
 }
 
@@ -333,7 +335,9 @@ w_rc_t new_order_man_impl::no_get_iter_by_index(ss_m* db,
                                                 rep_row_t &replow,
                                                 rep_row_t &rephigh,
                                                 const int w_id,
-                                                const int d_id)
+                                                const int d_id,
+                                                lock_mode_t alm,
+                                                bool need_tuple)
 {
     assert (ptuple);
 
@@ -358,6 +362,7 @@ w_rc_t new_order_man_impl::no_get_iter_by_index(ss_m* db,
 
     /* get the tuple iterator (index only scan) */
     W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
 				 scan_index_i::ge, vec_t(replow._dest, lowsz),
 				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
@@ -374,10 +379,10 @@ w_rc_t new_order_man_impl::no_delete_by_index(ss_m* db,
     // 1. idx probe new_order
     // 2. deletes the retrieved new_order
 
-    ptuple->set_value(0, o_id);
-    ptuple->set_value(1, d_id);
-    ptuple->set_value(2, w_id);
-    W_DO(index_probe_forupdate_by_name(db, "NO_INDEX", ptuple));
+//     ptuple->set_value(0, o_id);
+//     ptuple->set_value(1, d_id);
+//     ptuple->set_value(2, w_id);
+//     W_DO(index_probe_forupdate_by_name(db, "NO_INDEX", ptuple));
     W_DO(delete_tuple(db, ptuple));
 
     return (RCOK);
@@ -419,7 +424,9 @@ w_rc_t order_man_impl::ord_get_iter_by_index(ss_m* db,
                                              rep_row_t &rephigh,
                                              const int w_id,
                                              const int d_id,
-                                             const int c_id)
+                                             const int c_id,
+                                             lock_mode_t alm,
+                                             bool need_tuple)
 {
     assert (ptuple);
 
@@ -444,9 +451,9 @@ w_rc_t order_man_impl::ord_get_iter_by_index(ss_m* db,
     assert (rephigh._dest);
 
     W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
 				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz),
-				 true));
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
 }
 
@@ -501,7 +508,9 @@ w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
                                                        const int w_id,
                                                        const int d_id,
                                                        const int low_o_id,
-                                                       const int high_o_id)
+                                                       const int high_o_id,
+                                                       lock_mode_t alm,
+                                                       bool need_tuple)
 {
     assert (ptuple);
 
@@ -527,9 +536,9 @@ w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
     
     /* get the tuple iterator (not index only scan) */
     W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
 				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::lt, vec_t(rephigh._dest, highsz),
-				 true));
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
 }
 
@@ -541,7 +550,9 @@ w_rc_t order_line_man_impl::ol_get_probe_iter_by_index(ss_m* db,
                                                        rep_row_t &rephigh,
                                                        const int w_id,
                                                        const int d_id,
-                                                       const int o_id)
+                                                       const int o_id,
+                                                       lock_mode_t alm,
+                                                       bool need_tuple)
 {
     assert (ptuple);
 
@@ -565,11 +576,9 @@ w_rc_t order_line_man_impl::ol_get_probe_iter_by_index(ss_m* db,
     assert (rephigh._dest);
 
     W_DO(get_iter_for_index_scan(db, pindex, iter,
-				 scan_index_i::ge,
-				 vec_t(replow._dest, lowsz),
-				 scan_index_i::lt,
-				 vec_t(rephigh._dest, highsz),
-				 true));
+                                 alm, need_tuple,
+				 scan_index_i::ge, vec_t(replow._dest, lowsz),
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
 }
 
