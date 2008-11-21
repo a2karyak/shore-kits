@@ -48,7 +48,7 @@ private:
     const int _work_ACTIVE_impl(); 
 
     // serves one action
-    const int _serve_action(PartAction* paction);
+    const int _serve_action(base_action_t* paction);
 
 public:
 
@@ -109,6 +109,8 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
     w_rc_t e;
     PartAction* apa = NULL;
     int bHadCommitted = 0;
+    BaseActionPtrList actionReadyList;
+
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
@@ -119,78 +121,48 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
         bHadCommitted = 0; // an action had committed in this cycle
         set_ws(WS_LOOP);
 
+        
         // committed actions
 
         // 2. first release any committed actions
         while (_partition->has_committed()) {           
-            //            assert (_partition->is_committed_owner(this));
-
             // 1a. get the first committed
             bHadCommitted = 1;
             apa = _partition->dequeue_commit();
             assert (apa);
-            TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->get_tid());
-            //            assert (_partition==apa->get_partition());
-
+            TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
+            
             // 1b. release the locks acquired for this action
-            apa->trx_rel_locks();
+            actionReadyList = apa->trx_rel_locks();
+            TRACE( TRACE_TRX_FLOW, "Received (%d) ready\n", actionReadyList.size());
 
             // 1c. the action has done its cycle, and can be deleted
             apa->giveback();
             apa = NULL;
+
+            // 1d. serve any ready to execute actions 
+            //     (those actions became ready due to apa's lock releases)
+            for (BaseActionPtrIt it=actionReadyList.begin(); it!=actionReadyList.end(); ++it) {
+                _serve_action(*it);
+                ++_stats._served_waiting;
+            }
         }            
-
-
-        // waiting actions
-
-        // 3. if there were committed, go over the waiting list
-        // Q: (ip) we may have a threshold value before we iterate the waiting list
-        if (bHadCommitted && (_partition->has_waiting())) {
-
-            // iterate over all actions and serve as many as possible
-            apa = _partition->get_first_wait();
-            assert (apa);
-            TRACE( TRACE_TRX_FLOW, "First waiting (%d)\n", apa->get_tid());
-            while (apa) {
-                ++_stats._checked_waiting;
-                if (apa->trx_acq_locks()) {
-                    // if it can acquire all the locks, go ahead and serve 
-                    // this action. then, remove it from the waiting list
-                    _serve_action(apa);
-                    _partition->remove_wait(); // the iterator should point to the previous element
-                    ++_stats._served_waiting;
-                }
-
-                if (_partition->has_committed())
-                    break;
-                
-                // loop over all waiting actions
-                apa = _partition->get_next_wait();
-                if (apa)
-                    TRACE( TRACE_TRX_FLOW, "Next waiting (%d)\n", apa->get_tid());
-            }            
-        }
 
 
         // new (input) actions
 
-        // 4. dequeue an action from the (main) input queue
+        // 3. dequeue an action from the (main) input queue
         // it will spin inside the queue or (after a while) wait on a cond var
-        //        assert (_partition->is_input_owner(this));
         if (_partition->has_committed())
             continue;
         apa = _partition->dequeue();
 
         // 5. check if it can execute the particular action
         if (apa) {
-            TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->get_tid());
+            TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid());
             ++_stats._checked_input;
-            if (!apa->trx_acq_locks()) {
-                // 4a. if it cannot acquire all the locks, 
-                //     enqueue this action to the waiting list
-                _partition->enqueue_wait(apa);
-            }
-            else {
+
+            if (apa->trx_acq_locks()) {
                 // 4b. if it can acquire all the locks, 
                 //     go ahead and serve this action
                 _serve_action(apa);
@@ -215,29 +187,38 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
  ******************************************************************/
 
 template <class DataType>
-const int dora_worker_t<DataType>::_serve_action(PartAction* paction)
+const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 {
+    // 0. make sure that the action has all the keys it needs
+    assert (paction);
+    assert (paction->is_ready());
+
     // 1. get pointer to rvp
-    rvp_t* aprvp = paction->get_rvp();
+    rvp_t* aprvp = paction->rvp();
     assert (aprvp);
 
     // 2. attach to xct
-    attach_xct(paction->get_xct());
-    TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->get_tid());
+    attach_xct(paction->xct());
+    TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
             
     // 3. serve action
     w_rc_t e = paction->trx_exec();
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
-               paction->get_tid(), e.err_num());
+               paction->tid(), e.err_num());
         ++_stats._problems;
-        assert(0);
+
+        stringstream os;
+        os << e << ends;
+        string str = os.str();
+        TRACE( TRACE_ALWAYS, "\n%s\n", str.c_str());
+
         return (de_WORKER_RUN_XCT);
     }          
 
     // 4. detach from trx
-    TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->get_tid());
-    detach_xct(paction->get_xct());
+    TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid());
+    detach_xct(paction->xct());
 
     // 5. finalize processing        
     if (aprvp->post()) {
@@ -247,18 +228,14 @@ const int dora_worker_t<DataType>::_serve_action(PartAction* paction)
         e = aprvp->run();            
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem running rvp for xct (%d) [0x%x]\n",
-                   paction->get_tid(), e.err_num());
-            assert(0);
+                   paction->tid(), e.err_num());
             return (de_WORKER_RUN_RVP);
-
-            // TODO (ip) instead of asserting it should either notify final rvp about failure,
-            //           or abort
         }
 
         // enqueue committed actions
         int comActions = aprvp->notify();
 //         TRACE( TRACE_TRX_FLOW, "(%d) actions committed for xct (%d)\n",
-//                comActions, paction->get_tid());
+//                comActions, paction->tid());
             
         // delete rvp
         aprvp->giveback();

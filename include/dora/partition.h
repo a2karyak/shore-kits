@@ -63,7 +63,7 @@ public:
     typedef typename ActionList::iterator  ActionListIt; 
 
     typedef key_wrapper_t<DataType>           PartKey;
-    typedef key_lm_t<DataType>                LockRequest;  // pair of <Key,LM>
+    typedef key_ale_t<DataType>               LockRequest;  // pair of <Key,ActionLLEntry>
     typedef vector<LockRequest>               LockRequestVec;
     typedef typename LockRequestVec::iterator LockRequestVecIt;
 
@@ -97,7 +97,7 @@ protected:
     PartLockManager  _plm;
 
 
-    // Each partition has three lists of Actions
+    // Each partition has two lists of Actions
     //
     // 1. (_committed_list)
     //    The list of actions that were committed.
@@ -107,32 +107,21 @@ protected:
     // 2. (_input_queue)
     //    The queue were multiple writers input new requests (Actions).
     //    This is the main entrance point for new requests for the partition. 
-    //  
-    // 3. (_wait_list)
-    //    A list of actions that were dequeued by the input queue but
-    //    the lock manager didn't allow them to proceed due to (logical lock) 
-    //    conflicts with other outstanding transactions.
     //
     //
     // The active worker thread does the following cycle:
     //
     // - Checks if there is any action to be committed, and releases the 
     //   corresponding locks.
-    // - If indeed there were actions committed goes over the list of 
-    //   waiting (unserved) actions since now some of them may be able
-    //   to proceed.
-    // - If no actions were committed and the list of waiting is searched
-    //   then is goes to the queue and waits for new inputs
+    // - The release of committed actions, may make waiting actions
+    //   to grab the locks and be ready to be executed. The worker
+    //   executes all those.
+    // - If no actions were committe, it goes to the queue and waits for new inputs.
     //
 
     // queue of new Actions
     // single reader - multiple writers
     PartQueue    _input_queue; 
-
-    // list of Actions that have been dequeued but not served, because
-    // there was a lock conflict with an outstanding trx
-    ActionList    _wait_list;
-    ActionListIt  _wait_it;
 
     // queue of committed Actions
     // single reader - multiple writers
@@ -149,8 +138,6 @@ public:
     {
         assert (_env);
         assert (_table);
-
-        _wait_it = _wait_list.begin();
     }
 
 
@@ -191,7 +178,7 @@ public:
     //// Action-related methods
 
     // releases a trx
-    void release(tid_t& atid) { _plm.release(atid); }
+    BaseActionPtrList release(PartAction* action) { return (_plm.release_all(action)); }
     const bool acquire(tid_t& atid, LockRequestVec& arvec);
 
     // returns true if action can be enqueued it this partition
@@ -218,15 +205,6 @@ public:
         return (_committed_queue.is_control(aworker));
     }
 
-    // list of waiting actions - taken from input queue but not served
-    const int enqueue_wait(PartAction* apa);
-    int has_waiting(void) const { return (!_wait_list.empty()); }
-    PartAction* get_first_wait(void); // takes the iterator to the beginning of the list
-    PartAction* get_next_wait(void);  // goes to the next action on the list
-    void remove_wait(void); // removes the currently pointed action
-
-
-
     // stats
     void statistics() const {assert (_owner); _owner->stats();}
 
@@ -245,8 +223,8 @@ public:
 private:
 
     // lock-man
-    inline const bool _acquire_key(tid_t& atid, LockRequest& alr) {
-        return (_plm.acquire(atid,alr));
+    inline const bool _acquire_key(LockRequest& alr) {
+        return (_plm.acquire(alr));
     }
                 
 
@@ -276,8 +254,8 @@ protected:
  *
  * @fn:     acquire()
  *
- * @brief:  Tries to acquire all the locks from list of keys, if it
- *          fails it releases any acquired.
+ * @brief:  Tries to acquire all the locks from a list of keys on 
+ *          behalf of a trx.
  *
  * @return: (true) on success
  *
@@ -286,18 +264,19 @@ protected:
 template <class DataType>
 const bool partition_t<DataType>::acquire(tid_t& atid, LockRequestVec& arvec)
 {
+    bool bResult = true;
     for (int i=0; i<arvec.size(); ++i) {
-        if (!_acquire_key(atid, arvec[i])) {
-            // if a key cannot be acquired, 
-            // release all the locks and return false
-            release(atid);
-            //TRACE( TRACE_TRX_FLOW, "Cannot acquire all for (%d)\n", atid);
-            return (false);
+        assert (atid == arvec[i].tid());
+        // request to acquire all the locks for this partition
+        if (!_acquire_key(arvec[i])) {
+            // if a key cannot be acquired, return false
+            TRACE( TRACE_TRX_FLOW, "Cannot acquire for (%d)\n", atid);
+            bResult = false;
         }
     }
 
-    TRACE( TRACE_TRX_FLOW, "Acquired all for (%d)\n", atid);
-    return (true);
+    if (bResult) TRACE( TRACE_TRX_FLOW, "Acquired all for (%d)\n", atid);
+    return (bResult);
 }
 
 
@@ -355,11 +334,10 @@ action_t<DataType>* partition_t<DataType>::dequeue()
 template <class DataType>
 const int partition_t<DataType>::enqueue_commit(PartAction* pAction)
 {
-    assert (_part_policy!=PP_UNDEF);
     assert (pAction->get_partition()==this);
 
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
-           pAction->get_tid(), _table->name(), _part_id);
+           pAction->tid(), _table->name(), _part_id);
     _committed_queue.push(pAction);
     return (0);
 }
@@ -382,96 +360,6 @@ action_t<DataType>* partition_t<DataType>::dequeue_commit()
 }
 
 
-
-/****************************************************************** 
- *
- * @fn:     enqueue_wait()
- *
- * @brief:  Pushes an action to the partition's waiting actions list
- *
- ******************************************************************/
-
-template <class DataType>
-const int partition_t<DataType>::enqueue_wait(PartAction* pAction)
-{
-    assert (_part_policy!=PP_UNDEF);
-    assert (pAction->get_partition()==this);
-
-    TRACE( TRACE_TRX_FLOW, "Enq waiting (%d)\n", pAction->get_tid());
-    _wait_list.push_back(pAction);    
-    return (0);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     get_first_wait()
- *
- * @brief:  Takes the iterator to the beginning of the waiting list,
- *          and returns the action
- *
- * @return: NULL if empty. Otherwise, the action
- *
- ******************************************************************/
-
-template <class DataType>
-action_t<DataType>* partition_t<DataType>::get_first_wait(void)
-{
-    if (_wait_list.empty())
-        return (NULL);
-    _wait_it = _wait_list.begin();
-    return (*_wait_it);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     get_next_wait()
- *
- * @brief:  Returns the next action on the list, advances the iterator
- *          by one
- *
- * @return: NULL if empty, or at the end of the list. 
- *          Otherwise, the next action
- *
- ******************************************************************/
-
-template <class DataType>
-action_t<DataType>* partition_t<DataType>::get_next_wait(void)
-{
-    // 1. if empty, return NULL
-    if (_wait_list.empty())
-        return (NULL);
-
-    // 2. advance iterator by one
-    ++_wait_it;
-
-    // 3. if at the end of list, return NULL
-    if (_wait_it == _wait_list.end())
-        return(NULL);
-
-    // 4. else return the pointer action
-    return (*_wait_it);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     remove_wait()
- *
- * @brief:  Removes the currently pointed action from the waiting list
- *
- ******************************************************************/
-
-template <class DataType>
-void partition_t<DataType>::remove_wait(void)
-{
-    assert (!_wait_list.empty());
-    TRACE( TRACE_TRX_FLOW, "Removing wait (%d) from (%s-%d)\n", 
-           (*_wait_it)->get_tid(), _table->name(), _part_id);
-    _wait_it = _wait_list.erase(_wait_it);
-    --_wait_it;
-}
 
 
 
@@ -497,7 +385,6 @@ void partition_t<DataType>::stop()
 
     // 2. clear queues
     _input_queue.clear();
-    _wait_list.clear();
     _committed_queue.clear();
     
     // 3. reset lock-manager
@@ -532,7 +419,6 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
 
     // 2. clear queues
     _input_queue.clear();
-    _wait_list.clear();
     _committed_queue.clear();
     
     // 3. reset lock-manager
@@ -658,10 +544,11 @@ const ePATState partition_t<DataType>::inc_active_thr()
 template <class DataType>
 void partition_t<DataType>::prepareNewRun() 
 {
+    // make sure that no key is left locked    
+    assert (_plm.is_clean());
+    _plm.reset();
     _input_queue.clear(false); // clear queue but not remove owner
     _committed_queue.clear(false);
-    _wait_list.clear();    
-    _plm.reset();
 }
 
 
@@ -759,7 +646,7 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
                                                         int& pool_sz,
                                                         const processorid_t aprsid)
 {
-    assert (!_standby); // prevent losing thread pointer 
+    assert (_standby==NULL); // prevent losing thread pointer 
 
     PartWorker* pworker = NULL;
     PartWorker* pprev_worker = NULL;
