@@ -798,14 +798,17 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
             rep_row_t lowrep(_pcustomer_man->ts());
             rep_row_t highrep(_pcustomer_man->ts());
 
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-by-name-idx (%s)\n", 
-                   xct_id, ppin->_c_last);
-
-            guard<index_scan_iter_impl<customer_t> > c_iter;
-            e = _pcustomer_man->cust_get_iter_by_index(_pssm, c_iter.get(), prcust, 
-                                                       lowrep, highrep,
-                                                       c_w, c_d, ppin->_c_last);
-            if (e.is_error()) { goto done; }
+            guard< index_scan_iter_impl<customer_t> > c_iter;
+	    {
+		index_scan_iter_impl<customer_t>* tmp_c_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-by-name-idx (%s)\n", 
+		       xct_id, ppin->_c_last);
+		e = _pcustomer_man->cust_get_iter_by_index(_pssm, tmp_c_iter, prcust, 
+							   lowrep, highrep,
+							   c_w, c_d, ppin->_c_last);
+		c_iter = tmp_c_iter;
+		if (e.is_error()) { goto done; }
+	    }
 
             vector<int> v_c_id;
             int a_c_id = 0;
@@ -1098,12 +1101,16 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
             assert (pstin->_c_select <= 60);
             assert (pstin->_c_last);
 
-            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-by-name-idx\n", xct_id);
-
             guard<index_scan_iter_impl<customer_t> > c_iter;
-            e = _pcustomer_man->cust_get_iter_by_index(_pssm, c_iter.get(), prcust, lowrep, highrep,
-                                                       w_id, d_id, pstin->_c_last);
-            if (e.is_error()) { goto done; }
+	    {
+		index_scan_iter_impl<customer_t>* tmp_c_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-by-name-idx\n", xct_id);
+		e = _pcustomer_man->cust_get_iter_by_index(_pssm, tmp_c_iter, prcust,
+							   lowrep, highrep,
+							   w_id, d_id, pstin->_c_last);
+		c_iter = tmp_c_iter;
+		if (e.is_error()) { goto done; }
+	    }
 
             int  c_id_list[17];
             int  count = 0;
@@ -1159,12 +1166,16 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
          * plan: index scan on "C_CUST_INDEX"
          */
      
-        TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ord-iter-by-idx\n", xct_id);
-
         guard<index_scan_iter_impl<order_t> > o_iter;
-        e = _porder_man->ord_get_iter_by_index(_pssm, o_iter.get(), prord, lowrep, highrep,
-                                               w_id, d_id, pstin->_c_id);
-        if (e.is_error()) { goto done; }
+	{
+	    index_scan_iter_impl<order_t>* tmp_o_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ord-iter-by-idx\n", xct_id);
+	    e = _porder_man->ord_get_iter_by_index(_pssm, tmp_o_iter, prord,
+						   lowrep, highrep,
+						   w_id, d_id, pstin->_c_id);
+	    o_iter = tmp_o_iter;
+	    if (e.is_error()) { goto done; }
+	}
 
         tpcc_order_tuple aorder;
         bool eof;
@@ -1196,13 +1207,16 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
          * plan: index scan on "OL_INDEX"
          */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ol-iter-by-idx\n", xct_id);
-
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
-        e = _porder_line_man->ol_get_probe_iter_by_index(_pssm, ol_iter.get(), prol,
-                                                         lowrep, highrep,
-                                                         w_id, d_id, aorder.O_ID);
-        if (e.is_error()) { goto done; }
+	{
+	    index_scan_iter_impl<order_line_t>* tmp_ol_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ol-iter-by-idx\n", xct_id);
+	    e = _porder_line_man->ol_get_probe_iter_by_index(_pssm, tmp_ol_iter, prol,
+							     lowrep, highrep,
+							     w_id, d_id, aorder.O_ID);
+	    ol_iter = tmp_ol_iter;
+	    if (e.is_error()) { goto done; }
+	}
         
         porderlines = new tpcc_orderline_tuple[aorder.O_OL_CNT];
         int i=0;
@@ -1331,12 +1345,16 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
             TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx (%d) (%d)\n", 
                    xct_id, w_id, d_id);
     
-            guard<index_scan_iter_impl<new_order_t> > no_iter;
-            e = _pnew_order_man->no_get_iter_by_index(_pssm, no_iter.get(), prno, 
-                                                      lowrep, highrep,
-                                                      w_id, d_id,
-                                                      EX, false);
-            if (e.is_error()) { goto done; }
+	    guard<index_scan_iter_impl<new_order_t> > no_iter;
+	    {
+		index_scan_iter_impl<new_order_t>* tmp_no_iter;
+		e = _pnew_order_man->no_get_iter_by_index(_pssm, tmp_no_iter, prno, 
+							  lowrep, highrep,
+							  w_id, d_id,
+							  EX, false);
+		no_iter = tmp_no_iter;
+		if (e.is_error()) { goto done; }
+	    }
 
             bool eof;
 
@@ -1349,7 +1367,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
             int no_o_id;
             prno->get_value(0, no_o_id);
             assert (no_o_id);
-
+	    
 
             /* 2. Delete the retrieved new order */        
 
@@ -1407,11 +1425,15 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
             int total_amount = 0;
             guard<index_scan_iter_impl<order_line_t> > ol_iter;
-            e = _porder_line_man->ol_get_probe_iter_by_index(_pssm, ol_iter.get(), prol, 
-                                                             lowrep, highrep,
-                                                             w_id, d_id, no_o_id);
-            if (e.is_error()) { goto done; }
-
+	    {
+		index_scan_iter_impl<order_line_t>* tmp_ol_iter;
+		e = _porder_line_man->ol_get_probe_iter_by_index(_pssm, tmp_ol_iter, prol, 
+								 lowrep, highrep,
+								 w_id, d_id, no_o_id);
+		ol_iter = tmp_ol_iter;
+		if (e.is_error()) { goto done; }
+	    }
+	    
             // iterate over all the orderlines for the particular order
             e = ol_iter->next(_pssm, eof, *prol);
             if (e.is_error()) { goto done; }
@@ -1587,11 +1609,15 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     
 
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
-        e = _porder_line_man->ol_get_range_iter_by_index(_pssm, ol_iter.get(), prol,
-                                                         lowrep, highrep,
-                                                         pslin->_wh_id, pslin->_d_id,
-                                                         next_o_id-20, next_o_id);
-        if (e.is_error()) { goto done; }
+	{
+	    index_scan_iter_impl<order_line_t>* tmp_ol_iter;
+	    e = _porder_line_man->ol_get_range_iter_by_index(_pssm, tmp_ol_iter, prol,
+							     lowrep, highrep,
+							     pslin->_wh_id, pslin->_d_id,
+							     next_o_id-20, next_o_id);
+	    ol_iter = tmp_ol_iter;
+	    if (e.is_error()) { goto done; }
+	}
 
         sort_buffer_t ol_list(4);
         ol_list.setup(0, SQL_INT);  /* OL_I_ID */

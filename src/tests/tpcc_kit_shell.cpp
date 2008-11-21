@@ -438,6 +438,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         // 2. join the tester threads
         for (int i=0; i<iNumOfThreads; i++) {
             testers[i]->join();
+	    fprintf(stderr,".");
             if (testers[i]->rv()) {
                 TRACE( TRACE_ALWAYS, "Error in testing...\n");
                 assert (false);
