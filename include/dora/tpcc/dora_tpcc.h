@@ -77,7 +77,8 @@ public:
     DoraTPCCEnv(string confname)
         : ShoreTPCCEnv(confname)
     { }
-    ~DoraTPCCEnv() { }
+
+    virtual ~DoraTPCCEnv() { }
 
 
 

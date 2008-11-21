@@ -51,9 +51,24 @@ protected:
 
 public:
 
-    range_action_impl() :
-        action_t<DataType>()
+    range_action_impl()
+        : action_t<DataType>()
     { }
+
+    range_action_impl(const range_action_impl& rhs)
+        : action_t<DataType>(rhs), _down(rhs._down), _up(rhs._up)
+    { }
+
+    range_action_impl operator=(const range_action_impl& rhs)
+    {
+        if (this != &rhs) {
+            action_t<DataType>::operator=(rhs);
+            _down = rhs._down;
+            _up = rhs._up;
+        }
+        return (*this);
+    }
+
     virtual ~range_action_impl() { 
         _down.reset();
         _up.reset();
@@ -88,10 +103,6 @@ private:
         _keys.push_back(&_down);
         _keys.push_back(&_up);
     }
-
-    // copying not allowed
-    range_action_impl(range_action_impl const &);
-    void operator=(range_action_impl const &);
     
 }; // EOF: range_action_impl
 

@@ -17,6 +17,21 @@ using namespace dora;
 
 /****************************************************************** 
  *
+ * @fn:    assignment operator
+ *
+ ******************************************************************/
+
+rvp_t& rvp_t::operator=(const rvp_t& rhs)
+{
+    if (this != &rhs) {
+        _set(rhs._tid,rhs._xct,rhs._xct_id,rhs._result,
+             rhs._countdown.remaining(),rhs._actions.size());        
+    }
+    return (*this);
+}
+
+/****************************************************************** 
+ *
  * @fn:    add_action()
  *
  * @brief: Adds an action to the list of actions of a rvp
@@ -42,7 +57,7 @@ const int rvp_t::copy_actions(baseActionsList& actionList)
 const int rvp_t::add_action(base_action_t* paction) 
 {
     assert (paction);
-    assert (this==paction->get_rvp());
+    assert (this==paction->rvp());
     _actions.push_back(paction);
     //return (_actions.size());
     return (0);

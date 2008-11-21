@@ -22,6 +22,7 @@
 #endif
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "dora/dora_error.h"
@@ -57,17 +58,17 @@ template<typename DataType> std::ostream& operator<< (std::ostream& os,
 template<typename DataType>
 struct key_wrapper_t
 {
-    typedef vector<DataType> DataPtrVec;
-    typedef typename DataPtrVec::iterator DataPtrVecIt;
+    typedef vector<DataType>           DataVec;
+    typedef typename DataVec::iterator DataVecIt;
 
     // the vector with the entries - of the same type
-    DataPtrVec _key_v;
+    DataVec _key_v;
 
     // empty constructor
     key_wrapper_t() { }
 
     // argument constructor
-    key_wrapper_t(const DataPtrVec& aVector) {
+    key_wrapper_t(const DataVec& aVector) {
         copy_vector(aVector);
     }
 
@@ -107,9 +108,16 @@ struct key_wrapper_t
     bool operator<=(const key_wrapper_t<DataType>& rhs) const;
 
     // helper functions
-    inline void copy_vector(const DataPtrVec& aVec) {
+    inline void copy_vector(const DataVec& aVec) {
         assert (_key_v.empty());
         _key_v = aVec; // copy vector content
+    }
+
+    string toString() {
+        std::ostringstream out = string("");
+        for (DataVecIt it=_key_v.begin(); it!=_key_v.end(); ++it)
+            out << out << (*it) << "|";
+        return (out.str());
     }
 
     // friend function
@@ -117,6 +125,7 @@ struct key_wrapper_t
                                                               const key_wrapper_t<DataType>& rhs);
 
 }; // EOF: struct key_wrapper_t
+
 
 
 template<typename DataType> 
@@ -128,6 +137,8 @@ std::ostream& operator<< (std::ostream& os,
     }
     return (os);
 }
+
+
 
 
 /** struct key_wrapper_t methods */

@@ -61,7 +61,7 @@ protected:
 
     // reset rvp
     void _set(tid_t atid, xct_t* axct, const int axctid,
-              trx_result_tuple_t& presult, 
+              const trx_result_tuple_t& presult, 
               const int intra_trx_cnt, const int total_actions) 
     { 
         assert (axct);
@@ -84,14 +84,24 @@ public:
           trx_result_tuple_t& presult, 
           const int intra_trx_cnt, const int total_actions) 
     { 
-        _set(atid,axct,axctid,presult,intra_trx_cnt,total_actions);
+        _set(atid, axct, axctid, presult,
+             intra_trx_cnt, total_actions);
     }
 
     virtual ~rvp_t() { _xct = NULL; }    
 
+    // copying allowed
+    rvp_t(const rvp_t& rhs)
+    {
+        _set(rhs._tid, rhs._xct, rhs._xct_id, rhs._result,
+             rhs._countdown.remaining(), rhs._actions.size());
+    }
+    rvp_t& operator=(const rvp_t& rhs);
+
+
     // TRX-ID-related
-    inline xct_t* get_xct() const { return (_xct); }
-    inline tid_t  get_tid() const { return (_tid); }
+    inline xct_t* xct() const { return (_xct); }
+    inline tid_t  tid() const { return (_tid); }
 
     // Actions-related
     const int copy_actions(baseActionsList& actionList);
@@ -101,18 +111,6 @@ public:
     inline void set_decision(const eActionDecision& ad) { _decision = ad; }
     inline eActionDecision get_decision() const { return (_decision); }
 
-
-    // interface
-    // default action on rvp - commit trx
-    virtual w_rc_t run()=0;  
-
-    // notifies for any committed actions 
-    // only the final_rvps may notify
-    // for midway rvps it should be a noop
-    virtual const int notify() { return(0); } 
-
-    // should give memory back to the atomic trash stack
-    virtual void giveback()=0;
 
     bool post(bool is_error=false) { 
         //assert (_countdown.remaining()); // before posting check if there is to post 
@@ -126,11 +124,19 @@ public:
         return (_decision);
     }
 
-private:
 
-    // copying not allowed
-    rvp_t(rvp_t const &);
-    void operator=(rvp_t const &);
+    // INTERFACE 
+
+    // default action on rvp - commit trx
+    virtual w_rc_t run()=0;  
+
+    // notifies for any committed actions 
+    // only the final_rvps may notify
+    // for midway rvps it should be a noop
+    virtual const int notify() { return(0); } 
+
+    // should give memory back to the atomic trash stack
+    virtual void giveback()=0;
     
 }; // EOF: rvp_t
 
@@ -157,6 +163,15 @@ public:
                    const int intra_trx_cnt, const int total_actions) 
         : rvp_t(atid, axct, axctid, presult, intra_trx_cnt, total_actions) 
     { }
+
+    terminal_rvp_t(const terminal_rvp_t& rhs)
+        : rvp_t(rhs)
+    { }
+
+    terminal_rvp_t& operator=(const terminal_rvp_t& rhs) {
+        terminal_rvp_t::operator=(rhs);
+        return (*this);
+    }
 
     virtual ~terminal_rvp_t() { }
 

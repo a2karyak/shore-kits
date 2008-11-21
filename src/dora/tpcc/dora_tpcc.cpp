@@ -59,7 +59,7 @@ const int DoraTPCCEnv::start()
     int range = get_active_cpu_count();
     processorid_t icpu(0);
     int sf = upd_sf();
-    TRACE( TRACE_DEBUG, "Creating tables. SF=(%d)...\n", sf);
+    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", sf);
  
     // used for setting up the key ranges
     irpImplKey partDown;
@@ -222,7 +222,7 @@ const int DoraTPCCEnv::start()
     icpu = _next_cpu(icpu, _st_irpt);    
     */
 
-    TRACE( TRACE_ALWAYS, "Starting tables...\n");
+    TRACE( TRACE_DEBUG, "Starting tables...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->reset();
     }

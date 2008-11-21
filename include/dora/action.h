@@ -84,6 +84,10 @@ using namespace shore;
 
 class base_action_t
 {
+public:
+
+    typedef vector<base_action_t*>   BaseActionPtrList;
+
 protected:
 
     // rendez-vous point
@@ -93,31 +97,72 @@ protected:
     xct_t*         _xct; // Not the owner
     tid_t          _tid;
 
+    int            _keys_needed;
 
     // base action init
-    inline void _base_set(tid_t atid, xct_t* axct, rvp_t* prvp) {
+    inline void _base_set(tid_t atid, xct_t* axct, rvp_t* prvp, const int numkeys) 
+    {
         _tid = atid;
         _xct = axct;
         _prvp = prvp;
+        _keys_needed = numkeys;
     }
 
 public:
 
     base_action_t() :
-        _prvp(NULL), _xct(NULL)
+        _prvp(NULL), _xct(NULL), _keys_needed(0)
     { }
+
     virtual ~base_action_t() { 
         _xct = NULL;
         _prvp = NULL;
+        _keys_needed = 0;
     }
 
     // access methods
-    inline rvp_t* get_rvp() { return (_prvp); }
-    inline xct_t* get_xct() { return (_xct); }    
-    inline tid_t get_tid() { return (_tid); }
+    inline rvp_t* rvp() { return (_prvp); }
+    inline xct_t* xct() { return (_xct); }    
+    inline tid_t  tid() { return (_tid); }
 
 
-    // interface
+    // needed keys operations
+
+    inline const int needed() { return (_keys_needed); }
+
+    inline const bool is_ready() { 
+        // if it does not need any other keys, 
+        // it is ready to proceed
+        return (_keys_needed==0);
+    }
+
+    inline const int setkeys(const int numLocks = 1) {
+        assert (numLocks);
+        _keys_needed = numLocks;
+        return (_keys_needed);
+    } 
+
+    inline const bool gotkeys(const int numLocks = 1) {
+        // called when acquired a number of locks
+        // decreases the needed keys counter 
+        // and returns if it is ready to proceed        
+
+        // should need at least numLocks locks
+        assert ((_keys_needed-numLocks)>=0); 
+        _keys_needed -= numLocks;
+        return (_keys_needed==0);
+    }
+
+
+    // copying allowed
+    base_action_t(base_action_t const& rhs)
+        : _prvp(rhs._prvp), _xct(rhs._xct), 
+          _tid(rhs._tid), _keys_needed(rhs._keys_needed)
+    { }
+    base_action_t& operator=(base_action_t const& rhs);
+
+
+    // INTERFACE
 
     // executes action body
     virtual w_rc_t trx_exec()=0;          
@@ -126,19 +171,13 @@ public:
     virtual const bool trx_acq_locks()=0;
 
     // releases acquired locks
-    virtual void trx_rel_locks()=0;
+    virtual BaseActionPtrList trx_rel_locks()=0;
 
     // enqueues self on the committed list of committed actions
     virtual void notify()=0; 
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
-
-private:
-
-    // copying not allowed
-    base_action_t(base_action_t const &);
-    void operator=(base_action_t const &);
 
 }; // EOF: base_action_t
 
@@ -162,7 +201,7 @@ public:
     typedef key_wrapper_t<DataType>  Key;
     typedef vector<Key>              KeyVec;
     typedef vector<Key*>             KeyPtrVec;
-    typedef key_lm_t<DataType>       LockRequest;  // pair of <Key,LM>
+    typedef key_ale_t<DataType>      LockRequest;  // pair of <Key,LockActionReq>
     typedef vector<LockRequest>      LockRequestVec;
     typedef partition_t<DataType>    Partition;
 
@@ -177,7 +216,7 @@ protected:
     inline void _act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
                          const int numkeys)
     {
-        _base_set(atid,axct,prvp);
+        _base_set(atid,axct,prvp,numkeys);
         assert (numkeys);
         _keys.reserve(numkeys);
     }
@@ -192,6 +231,20 @@ public:
         _keys.clear();
     }
 
+
+    // copying allowed
+    action_t(action_t const& rhs) 
+        : base_action_t(rhs), _keys(rhs._keys), _partition(rhs._partition)
+    { }
+
+    action_t& operator=(action_t const& rhs) {
+        if (this != &rhs) {
+            base_action_t::operator=(rhs);
+            _keys = rhs._keys;
+            _partition = rhs._partition;
+        }
+    }
+
     
     // access methods
 
@@ -204,28 +257,24 @@ public:
     }
    
     
-    // interface
+    // INTEFACE
 
     virtual w_rc_t trx_exec()=0;
     virtual const bool trx_acq_locks()=0;
     virtual void giveback()=0;
 
-    void trx_rel_locks() {
+    BaseActionPtrList trx_rel_locks() {
         assert (_partition);
-        _partition->release(_tid);
+        return (_partition->release(this));
     }
+
     void notify() {
         assert (_partition);
         _partition->enqueue_commit(this);
     }
-
-private:
-
-    // copying not allowed
-    action_t(action_t const &);
-    void operator=(action_t const &);
     
 }; // EOF: action_t
+
 
 
 EXIT_NAMESPACE(dora);
