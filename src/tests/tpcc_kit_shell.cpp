@@ -374,6 +374,10 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
         // print throughput and reset session stats
         print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
         _tpccdb->reset_session_tpcc_stats();
+
+
+        // give some time (2secs) to clean-up
+        sleep(DF_WARMUP_INTERVAL);
     }
 
     // set measurement state
@@ -453,6 +457,10 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         // print throughput and reset session stats
         print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
         _tpccdb->reset_session_tpcc_stats();
+
+
+        // give some time (2secs) to clean-up
+        sleep(DF_WARMUP_INTERVAL);
     }
 
     // set measurement state
@@ -490,7 +498,7 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //               | TRACE_DEBUG
+               //| TRACE_DEBUG
                );
 
     // 1. Get env vars

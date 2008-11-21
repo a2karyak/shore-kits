@@ -120,14 +120,14 @@ void shore_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpread,
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "Queried WHs    : %d\n" \
-           "Spread Threads : %s\n" \
-           "Binding        : %s\n" \
-           "Num of Threads : %d\n" \
-           "Duration       : %d\n" \
-           "Trx            : %s\n" \
-           "Iterations     : %d\n" \
-           "Use SLI        : %s\n", 
+           "QueriedWHs:    (%d)\n" \
+           "SpreadThreads: (%s)\n" \
+           "Binding:       (%s)\n" \
+           "NumOfThreads:  (%d)\n" \
+           "Duration:      (%d)\n" \
+           "Trx:           (%s)\n" \
+           "Iterations:    (%d)\n" \
+           "UseSLI:        (%s)\n", 
            iQueriedWHs, (iSpread ? "Yes" : "No"), 
            translate_bp(abt),
            iNumOfThreads, iDuration, translate_trx(iSelectedTrx), 
@@ -141,14 +141,14 @@ void shore_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread,
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "Queried WHs    : %d\n" \
-           "Spread Threads : %s\n" \
-           "Binding        : %s\n" \
-           "Num of Threads : %d\n" \
-           "Num of Trxs    : %d\n" \
-           "Trx            : %s\n" \
-           "Iterations     : %d\n" \
-           "Use SLI        : %s\n", 
+           "QueriedWHs:     (%d)\n" \
+           "Spread Threads: (%s)\n" \
+           "Binding:        (%s)\n" \
+           "NumOfThreads:   (%d)\n" \
+           "NumOfTrxs:      (%d)\n" \
+           "Trx:            (%s)\n" \
+           "Iterations:     (%d)\n" \
+           "Use SLI:        (%s)\n", 
            iQueriedWHs, (iSpread ? "Yes" : "No"), 
            translate_bp(abt),
            iNumOfThreads, iNumOfTrxs, translate_trx(iSelectedTrx),
