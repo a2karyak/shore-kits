@@ -100,32 +100,39 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     // attach to this xct
     smthread_t::me()->attach_xct(_xct);
 
-    // try to commit
-    w_rc_t ecommit = penv->db()->commit_xct();
-    
-    if (ecommit.is_error()) {
-        TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
-               _tid, ecommit.err_num());
-
-        upd_aborted_stats(); // hook - update aborted stats
-
-        w_rc_t eabort = penv->db()->abort_xct();
-        if (eabort.is_error()) {
+    // try to commit    
+    w_rc_t rcdec;
+    if (_decision == AD_ABORT) {
+        rcdec = penv->db()->abort_xct();
+        if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
-                   _tid, eabort.err_num());
+                   _tid, rcdec.err_num());
         }
-
-	// signal cond var
-	if(_result.get_notify())
-	    _result.get_notify()->signal();
-        return (ecommit);
+        else {
+            TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid);
+            upd_aborted_stats(); // hook - update aborted stats
+        }
     }
-    upd_committed_stats(); // hook - update committed stats
-    
-    TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", _tid);
+    else {
+        rcdec = penv->db()->commit_xct();    
+        if (rcdec.is_error()) {
+            TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
+                   _tid, rcdec.err_num());
+            upd_aborted_stats(); // hook - update aborted stats
+            w_rc_t eabort = penv->db()->abort_xct();
+            if (eabort.is_error()) {
+                TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
+                       _tid, eabort.err_num());
+            }
+        }
+        else {
+            TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid);
+            upd_committed_stats(); // hook - update committed stats
+        }
+    }               
 
     // signal cond var
     if(_result.get_notify())
 	_result.get_notify()->signal();
-    return (RCOK);
+    return (rcdec);
 }

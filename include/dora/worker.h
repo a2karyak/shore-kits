@@ -193,6 +193,9 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     assert (paction);
     assert (paction->is_ready());
 
+    bool is_error = false;
+    int r_code = 0;
+
     // 1. get pointer to rvp
     rvp_t* aprvp = paction->rvp();
     assert (aprvp);
@@ -208,12 +211,13 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
                paction->tid(), e.err_num());
         ++_stats._problems;
 
+        is_error = true;
+        r_code = de_WORKER_RUN_XCT;
+
         stringstream os;
         os << e << ends;
         string str = os.str();
-        TRACE( TRACE_ALWAYS, "\n%s\n", str.c_str());
-
-        return (de_WORKER_RUN_XCT);
+        TRACE( TRACE_DEBUG, "\n%s\n", str.c_str());
     }          
 
     // 4. detach from trx
@@ -221,7 +225,7 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     detach_xct(paction->xct());
 
     // 5. finalize processing        
-    if (aprvp->post()) {
+    if (aprvp->post(is_error)) {
         // last caller
 
         // execute the code of this rendez-vous point
@@ -229,13 +233,11 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem running rvp for xct (%d) [0x%x]\n",
                    paction->tid(), e.err_num());
-            return (de_WORKER_RUN_RVP);
+            r_code = de_WORKER_RUN_RVP;
         }
 
         // enqueue committed actions
         int comActions = aprvp->notify();
-//         TRACE( TRACE_TRX_FLOW, "(%d) actions committed for xct (%d)\n",
-//                comActions, paction->tid());
             
         // delete rvp
         aprvp->giveback();
@@ -244,7 +246,7 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
     // 6. update worker stats
     ++_stats._processed;    
-    return (0);
+    return (r_code);
 }
 
 

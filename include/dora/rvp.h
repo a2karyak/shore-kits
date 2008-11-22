@@ -112,9 +112,12 @@ public:
     inline eActionDecision get_decision() const { return (_decision); }
 
 
-    bool post(bool is_error=false) { 
-        //assert (_countdown.remaining()); // before posting check if there is to post 
-        return (_countdown.post(is_error)); 
+    inline bool post(bool is_error=false) { 
+        if (is_error) {
+            CRITICAL_SECTION(decision_cs,_decision_lock);
+            _decision = AD_ABORT;
+        }
+        return (_countdown.post(false)); 
     }
 
     // decides to abort this trx
