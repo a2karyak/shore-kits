@@ -60,7 +60,7 @@ protected:
     baseActionsList     _actions;
 
     // reset rvp
-    void _set(tid_t atid, xct_t* axct, const int axctid,
+    void _set(const tid_t& atid, xct_t* axct, const int axctid,
               const trx_result_tuple_t& presult, 
               const int intra_trx_cnt, const int total_actions) 
     { 
@@ -80,7 +80,7 @@ public:
 
     rvp_t() : _xct(NULL) { }
 
-    rvp_t(tid_t atid, xct_t* axct, const int axctid,
+    rvp_t(const tid_t& atid, xct_t* axct, const int axctid,
           trx_result_tuple_t& presult, 
           const int intra_trx_cnt, const int total_actions) 
     { 
@@ -161,7 +161,7 @@ public:
 
     terminal_rvp_t() : rvp_t() { }
 
-    terminal_rvp_t(tid_t atid, xct_t* axct, const int axctid, 
+    terminal_rvp_t(const tid_t& atid, xct_t* axct, const int axctid, 
                    trx_result_tuple_t &presult, 
                    const int intra_trx_cnt, const int total_actions) 
         : rvp_t(atid, axct, axctid, presult, intra_trx_cnt, total_actions) 

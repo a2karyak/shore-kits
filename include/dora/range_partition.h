@@ -17,9 +17,12 @@
 #include "sm/shore/shore_env.h"
 
 #include "dora/partition.h"
+#include "dora/key.h"
+#include "dora/action.h"
+
 
 //#include "dora.h"
-//#include "dora/action.h"
+
 
 
 
@@ -27,6 +30,7 @@ ENTER_NAMESPACE(dora);
 
 
 using namespace shore;
+
 
 
 
@@ -58,7 +62,10 @@ class range_partition_impl : public partition_t<DataType>
 public:
     
     typedef range_action_impl<DataType> RangeAction;
-    using partition_t<DataType>::PartKey;
+
+    typedef action_t<DataType>          Action;
+    typedef key_wrapper_t<DataType>     Key;
+    //    using partition_t<DataType>::Key;
 
 private:
 
@@ -66,13 +73,13 @@ private:
     int _part_field_cnt;
 
     // the two bounds
-    typename partition_t<DataType>::PartKey _down;
-    PartKey _up;
+    typename partition_t<DataType>::Key _down;
+    Key _up;
 
     /** helper functions */
 
-    const bool _is_between(const PartKey& contDown, 
-                           const PartKey& contUp) const;
+    const bool _is_between(const Key& contDown, 
+                           const Key& contUp) const;
 
 public:
 
@@ -90,14 +97,14 @@ public:
 
     ~range_partition_impl() { }    
 
-    const PartKey* down() { return (&_down); }
-    const PartKey* up()   { return (&_up); }    
+    const Key* down() { return (&_down); }
+    const Key* up()   { return (&_up); }    
 
     // sets new limits
-    const bool resize(const PartKey& downLimit, const PartKey& upLimit);
+    const bool resize(const Key& downLimit, const Key& upLimit);
 
     // returns true if action can be enqueued here
-    const bool verify(PartAction& rangeaction);
+    const bool verify(Action& rangeaction);
 
 }; // EOF: range_partition_impl
 
@@ -114,8 +121,8 @@ public:
  ******************************************************************/
 
 template <class DataType>
-const bool range_partition_impl<DataType>::_is_between(const PartKey& contDown,
-                                                       const PartKey& contUp) const
+const bool range_partition_impl<DataType>::_is_between(const Key& contDown,
+                                                       const Key& contUp) const
 {
     assert (_down<=_up);
     assert (contDown<=contUp);
@@ -139,8 +146,8 @@ const bool range_partition_impl<DataType>::_is_between(const PartKey& contDown,
  ******************************************************************/
 
 template <class DataType>
-const bool range_partition_impl<DataType>::resize(const PartKey& downLimit, 
-                                                  const PartKey& upLimit) 
+const bool range_partition_impl<DataType>::resize(const Key& downLimit, 
+                                                  const Key& upLimit) 
 {
     if (upLimit<downLimit) {
         TRACE( TRACE_ALWAYS, "Error in new bounds\n");
@@ -168,7 +175,7 @@ const bool range_partition_impl<DataType>::resize(const PartKey& downLimit,
  ******************************************************************/
  
 template <class DataType>
-const bool range_partition_impl<DataType>::verify(PartAction& rangeaction)
+const bool range_partition_impl<DataType>::verify(Action& rangeaction)
 {
     assert (_rp_state == RPS_SET);
     assert (rangeaction.keys()->size()==2);

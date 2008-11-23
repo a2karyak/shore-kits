@@ -48,7 +48,7 @@ public:
     ~final_mb_rvp() { _pool=NULL; _ptpccenv=NULL; }
     
     // access methods
-    inline void set(tid_t atid, xct_t* axct, const int axctid,
+    inline void set(const tid_t& atid, xct_t* axct, const int axctid,
                     trx_result_tuple_t& presult, 
                     const int intra_trx_cnt, const int total_actions,
                     ShoreTPCCEnv* penv, rvp_pool* pp) 
@@ -84,7 +84,7 @@ protected:
     ShoreTPCCEnv* _ptpccenv;
     int _whid;
 
-    inline void _mb_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void _mb_act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                             const int keylen, ShoreTPCCEnv* penv, 
                             const int awh)
     {
@@ -126,7 +126,7 @@ private:
 public:        
     upd_wh_mb_action() : mb_action() { }    
     ~upd_wh_mb_action() { }
-    inline void set(tid_t atid, xct_t* apxct, rvp_t* aprvp, 
+    inline void set(const tid_t& atid, xct_t* apxct, rvp_t* aprvp, 
                     const int awh, ShoreTPCCEnv* penv, act_pool* pp) 
     { 
         assert (pp);
@@ -169,7 +169,7 @@ public:
     upd_cust_mb_action() : mb_action(), _did(-1), _cid(-1) { }    
     ~upd_cust_mb_action() { }
 
-    inline void set(tid_t atid, xct_t* apxct, rvp_t* aprvp, 
+    inline void set(const tid_t& atid, xct_t* apxct, rvp_t* aprvp, 
                     const int awh, ShoreTPCCEnv* penv, act_pool* pp) 
     { 
         _did = URand(1,10); // generate the other two needed vars

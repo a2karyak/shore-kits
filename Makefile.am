@@ -206,6 +206,7 @@ SD=$(top_srcdir)/src/dora
 DO_BASE = \
    $(SD)/lockman.cpp \
    $(SD)/action.cpp \
+   $(SD)/partition.cpp \
    $(SD)/rvp.cpp
 
 

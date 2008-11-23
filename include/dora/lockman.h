@@ -29,6 +29,9 @@
 ENTER_NAMESPACE(dora);
 
 
+
+
+
 using std::map;
 using std::multimap;
 using std::vector;
@@ -42,7 +45,7 @@ struct LogicalLock;
 std::ostream& operator<<(std::ostream& os, const LogicalLock& rhs);
 
 class base_action_t;
-
+typedef vector<base_action_t*>       BaseActionPtrList;
 
 
 /******************************************************************** 
@@ -85,98 +88,123 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
 
 /******************************************************************** 
  *
- * @struct: ActionLLEntry
+ * @struct: ActionLockReq
  *
- * @brief:  Struct for representing an Action entry to the list of holder
+ * @brief:  Struct for representing an Action entry to the list of holders
  *          of a logical lock
  *
  ********************************************************************/
 
-struct ActionLLEntry
+struct ActionLockReq
 {
-    ActionLLEntry()  
-        : _action(NULL), _dlm(DL_CC_NOLOCK)
+    ActionLockReq()  
+        : _action(NULL)
     { }
 
-    ActionLLEntry(base_action_t* action, const eDoraLockMode adlm = DL_CC_NOLOCK)
-        : _action(action), _dlm(adlm)
+    ActionLockReq(base_action_t* action, tid_t& atid,
+                  const eDoraLockMode adlm = DL_CC_NOLOCK)
+        : _action(action), _tid(atid), _dlm(adlm)
     { }
 
-    ~ActionLLEntry() 
+    ~ActionLockReq() 
     { 
         _action = NULL;
-        _dlm = DL_CC_NOLOCK;
+    }
+
+    // copying allowed
+    ActionLockReq(const ActionLockReq& rhs)
+        : _action(rhs._action), _tid(rhs._tid), _dlm(rhs._dlm)
+    { }
+
+    ActionLockReq& operator=(const ActionLockReq& rhs)
+    { 
+        _action = rhs._action;
+        _tid = rhs._tid;
+        _dlm = rhs._dlm;
+        return (*this);
     }
 
     // access methods
-    const eDoraLockMode dlm() { return (_dlm); }
-    tid_t tid();
+    inline const eDoraLockMode dlm() { return (_dlm); }
     inline base_action_t* action() { return (_action); }
+    inline tid_t* tid() { return (&_tid); }
 
     // friend function
-    friend std::ostream& operator<<(std::ostream& os, const ActionLLEntry& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const ActionLockReq& rhs);
 
-private:
+
+protected:
 
     // data
     base_action_t* _action;
+    tid_t          _tid;
     eDoraLockMode  _dlm;
 
-}; // EOF: ActionLLEntry
-    
 
-typedef vector<ActionLLEntry>             ActionLLEntryVec;
-typedef ActionLLEntryVec::iterator        ActionLLEntryVecIt;
-typedef ActionLLEntryVec::const_iterator  ActionLLEntryVecCit;
+}; // EOF: ActionLockReq
 
-typedef deque<ActionLLEntry>                ActionLLEntryDeque;
-typedef ActionLLEntryDeque::iterator        ActionLLEntryDequeIt;
-typedef ActionLLEntryDeque::const_iterator  ActionLLEntryDequeCit;
 
-typedef base_action_t*              BaseActionPtr;
-typedef vector<BaseActionPtr>       BaseActionPtrList;
-typedef BaseActionPtrList::iterator BaseActionPtrIt;
+typedef vector<ActionLockReq>             ActionLockReqVec;
+typedef ActionLockReqVec::iterator        ActionLockReqVecIt;
+typedef deque<ActionLockReq>              ActionLockReqDeque;
+typedef ActionLockReqDeque::iterator      ActionLockReqDequeIt;
+
 
 
 /******************************************************************** 
  *
- * @class: key_ale_t
+ * @struct: KALReq_t
  *
- * @brief: Key and Action Logical lock Entry (request) structure
+ * @brief:  Template-based class that extends the Action Lock request 
+ *          with a pointer to a key
  *
  ********************************************************************/
 
 template<class DataType>
-struct key_ale_t
+struct KALReq_t : public ActionLockReq
 {
     typedef key_wrapper_t<DataType> Key;
+    typedef action_t<DataType>      Action;
 
-    key_ale_t(Key* akp, ActionLLEntry& ale) {
-        assert (akp);
-        _key = akp;
-        _ale = alr;
+    KALReq_t()
+        : ActionLockReq(), _pkey(NULL)
+    { }
+
+    KALReq_t(const ActionLockReq& alr, Key* akey)
+        : ActionLockReq(alr), _key(akey)
+    { }
+
+    KALReq_t(base_action_t* action, const eDoraLockMode adlm, Key* akey)
+        : ActionLockReq(action,action->tid(),adlm), _key(akey)
+    { }
+
+    ~KALReq_t()
+    { 
+        _key = NULL;
     }
 
-    key_ale_t(Key* akp, base_action_t* action, const eDoraLockMode& alm) {
-        assert (akp);
-        assert (action);
-        _key = akp;
-        _ale = ActionLLEntry(action,alm);
+    // copying allowed
+    KALReq_t(const KALReq_t& rhs)
+        : ActionLockReq(rhs), _key(rhs._key)
+    { }
+
+    KALReq_t& operator=(const KALReq_t& rhs) {
+        if (this!=rhs) {
+            ActionLockReq::operator=(rhs);
+            _key = rhs._key;
+        }
+        return (*this);
     }
 
-    ~key_ale_t() { }
 
-    inline Key* key() { return (_key); }
-    inline ActionLLEntry& ale() { return (_ale); }
-    inline tid_t tid() { return (_ale.tid()); }
+    // access methods
+    Key* key() { return (_key); }
 
-private:
+    // data
+    Key* _key;
 
-    Key*          _key;
-    ActionLLEntry _ale;
 
-}; // EOF: key_ale_t
-
+}; // EOF: KALReq_t
 
 
 
@@ -195,9 +223,16 @@ private:
 
 struct LogicalLock
 {    
+    typedef base_action_t*         BaseActionPtr;
+    typedef vector<base_action_t*> BaseActionPtrList;
+
     LogicalLock() 
-        : _dlm(DL_CC_NOLOCK)
-    { }
+        : _dlm(DL_CC_NOLOCK),_waiters(30)
+    { 
+        _owners.reserve(2);
+        _owners.clear();
+        _waiters.clear();
+    }
 
     ~LogicalLock() 
     { 
@@ -205,25 +240,25 @@ struct LogicalLock
     }
 
 
-    const eDoraLockMode dlm() { return (_dlm); }
-    ActionLLEntryVec&   owners() { return (_owners); }
-    ActionLLEntryDeque& waiters() { return (_waiters); }
+    const eDoraLockMode dlm() const { return (_dlm); }
+    const ActionLockReqVec&   owners() const { return (_owners); }
+    const ActionLockReqDeque& waiters() const { return (_waiters); }
 
     // acquire operation
     // if it fails, it enqueues the trx_ll_entry to the queue of waiters
     // and returns false
-    const bool acquire(ActionLLEntry& areq);
+    const bool acquire(ActionLockReq& alr);
 
-    // release operation, returns a list of promoted actions
-    // the lock manager should
+    // release operation, appends to the list of promoted actions and returns the
+    // number of promoted. The lock manager should
     // (1) associate the promoted with the particular key in the trx-to-key map
     // (2) decide which of those are ready to run and return them to the worker
-    BaseActionPtrList release(base_action_t* anowner);
+    const int release(BaseActionPtr anowner, BaseActionPtrList& promotedList);
 
     // is clean
     // returns true if no locked
-    const bool is_clean() { 
-        return ((_dlm == DL_CC_NOLOCK) && (_owners.empty()) && (_waiters.empty())); 
+    inline const bool is_clean() { 
+        return ((_owners.empty()) && (_waiters.empty())); 
     }
 
     const bool has_owners()  { return (!_owners.empty()); }
@@ -233,16 +268,14 @@ struct LogicalLock
         _owners.clear();
         _waiters.clear();
     }
-
-
+    
+private:
 
     // data
     eDoraLockMode        _dlm;       // logical lock
-    ActionLLEntryVec     _owners;    // vector of owners
-    ActionLLEntryDeque   _waiters;   // deque of waiters - we want to push/pop both sides
+    ActionLockReqVec     _owners;    // vector of owners
+    ActionLockReqDeque   _waiters;   // deque of waiters - we want to push/pop both sides
 
-    
-private:
 
     // can acquire
     const bool _head_can_acquire();
@@ -255,7 +288,7 @@ private:
 
 /******************************************************************** 
  *
- * @struct: key_ll_map_t
+ * @struct: KeyLockMap
  *
  * @brief:  Template-based class for maintaining a map between keys
  *          of the partition and the status of their logical locks.
@@ -271,30 +304,63 @@ private:
  ********************************************************************/
 
 template<class DataType>
-struct key_ll_map_t
+struct KeyLockMap
 {
     typedef key_wrapper_t<DataType>        Key;
+    typedef vector<Key>                    KeyList;
+
+    typedef KALReq_t<DataType>             KALReq;
+    typedef KALReq_t<DataType>*            KALReqPtr;
+
     typedef map<Key, LogicalLock>          LLMap;
     typedef typename LLMap::iterator       LLMapIt;
     typedef typename LLMap::const_iterator LLMapCit;
 
-    key_ll_map_t() { }
-    ~key_ll_map_t() { }
+    KeyLockMap() { }
+    ~KeyLockMap() { }
 
 
     // acquire, return true on success
     // false means not compatible
-    inline const bool acquire(const Key& aKey, ActionLLEntry& ale) {
-        LogicalLock* ll = &_ll_map[aKey];
+    inline const bool acquire(KALReq& akalr) {
+        LogicalLock* ll = &_ll_map[*akalr._key];
         assert (ll);
-        return (ll->acquire(ale));
+
+        ostringstream out;
+        string sout;
+        out << *akalr._key << endl;
+        out << "sz: " << _ll_map.size() << " " << ll << endl;
+        sout = out.str();
+        TRACE( TRACE_ALWAYS, "ACQ - %s", sout.c_str());
+        out.str("");
+        out.clear();
+
+        return (ll->acquire(akalr));
     }
                 
     // release        
-    inline BaseActionPtrList release(const Key& aKey, base_action_t* action) {
-        LogicalLock* ll = &_ll_map[aKey];
+    inline const int release(const Key& aKey, 
+                             BaseActionPtr paction,
+                             BaseActionPtrList& promotedList) 
+    {
+        _ll_map_it = _ll_map.find(aKey);
+        LogicalLock* ll = &_ll_map_it->second;
+        //LogicalLock* ll = &_ll_map[aKey];
         assert (ll);
-        return (ll->release(action));
+
+
+        ostringstream out;
+        string sout;
+        out << aKey << endl;
+        out << "sz: " << _ll_map.size() << " " << ll << endl;
+        sout = out.str();
+        TRACE( TRACE_ALWAYS, "REL - %s", sout.c_str());
+        out.str("");
+        out.clear();
+
+        int rhs = ll->release(paction,promotedList);
+        if (ll->is_clean()) _ll_map.erase(_ll_map_it);
+        return (rhs);
     }
 
 
@@ -332,12 +398,14 @@ struct key_ll_map_t
         }
     }
 
-private: 
+protected:
 
     // data
-    LLMap _ll_map; // map of logical locks - each key has its own ll
+    LLMap   _ll_map;    // map of logical locks - each key has its own ll
+    LLMapIt _ll_map_it; 
 
-}; // EOF: struct key_ll_map_t
+}; // EOF: struct KeyLockMap
+
 
 
 
@@ -361,9 +429,9 @@ struct lock_man_t
     typedef action_t<DataType>        Action;
 
     typedef key_wrapper_t<DataType>   Key;
-    typedef key_ll_map_t<DataType>    KeyLLMap;
-
+    typedef KeyLockMap<DataType>      KeyLLMap;
     typedef vector<Key>               KeyList;
+    typedef vector<Key*>              KeyPtrList;
 
     typedef multimap<tid_t,Key>                 TrxKeyMap;
     typedef typename TrxKeyMap::iterator        TrxKeyMapIt;
@@ -371,7 +439,9 @@ struct lock_man_t
     typedef pair<tid_t,Key>                     TrxKeyPair;
     typedef pair<TrxKeyMapIt,TrxKeyMapIt>       TrxRange;
 
-    typedef key_ale_t<DataType>       KeyActionLockRequest;
+    typedef KALReq_t<DataType>    KALReq;
+    typedef KALReq_t<DataType>*   KALReqPtr;
+    typedef vector<KALReqPtr>     KALReqPtrVec;
 
 
     lock_man_t() { }
@@ -379,81 +449,67 @@ struct lock_man_t
 
 
     // acquire ll of a key on behalf of a trx
-    inline const bool acquire(KeyActionLockRequest& akalr) 
+    inline const bool acquire(KALReq& akalr) 
     {
         bool rhs = false;
 
         // if lock acquisition successful,
         // associate key to trx
-        rhs = _key_ll_m.acquire(*akalr.key(), akalr.ale());
+        rhs = _key_ll_m.acquire(akalr);
         if (rhs) {
-            _trx_key_mm.insert(TrxKeyPair(akalr.tid(), *akalr.key()));
+            //cout << "I = " << akalr.action()->tid() << "-" << *akalr._key << endl;
+            _trx_key_mm.insert(TrxKeyPair(akalr.action()->tid(), *akalr._key));
         }
         return (rhs);
     }
 
-    // releases all the acquired LLs by a trx
+    // releases all the LLs help by a particular trx
     // returns a list of actions that are ready to run
-    inline BaseActionPtrList release_all(Action* paction) 
+    inline const int release_all(Action* paction, 
+                                 BaseActionPtrList& readyList, 
+                                 BaseActionPtrList& promotedList) 
     {
-        assert (paction->is_ready());
+        assert (paction);
+        assert (readyList.empty() && promotedList.empty());
 
-        BaseActionPtrList readyList;
-        BaseActionPtrList promotedList;
-        KeyList promotedKeyList;
-
-        tid_t atid = paction->tid();
-        TrxRange r = _trx_key_mm.equal_range(atid);
+        const tid_t& tidToRelease = paction->tid();
+        TrxRange r = _trx_key_mm.equal_range(tidToRelease);
+        KeyPtrList keyList;
         
-        TRACE( TRACE_TRX_FLOW, "Releasing (%d)\n", atid);
+        TRACE( TRACE_TRX_FLOW, "Releasing (%d)\n", tidToRelease);
 
 
         // 1. Release all the keys associated with this trx (from the trx-to-key map
-
-        BaseActionPtrList alist;
         for (TrxKeyMapIt it=r.first; it!=r.second; ++it) {           
-            // release one LL
-            alist = _key_ll_m.release((*it).second,paction);
 
-            // receive a list of promoted actions - due to this LL release
-            promotedList.insert(promotedList.end(),alist.begin(),alist.end()); // append the list
-
-            // append the corresponding key that many times in the promoted key list
-            promotedKeyList.insert(promotedKeyList.end(),alist.size(),(*it).second);
+            // release one LL            
+            Key theKey = (*it).second;
+            int numPromoted = _key_ll_m.release(theKey,paction,promotedList);
+            keyList.insert(keyList.end(),numPromoted,&theKey); // copy x times the key
         }                 
 
 
         // 2. Remove associations of this trx from the trx-to-key map
+        _trx_key_mm.erase(tidToRelease);
 
-        _trx_key_mm.erase(atid);
 
-
-        // 3. Iterate over all the promoted actions
-
-        // 3a. Associate each action (tid) with the key in the trx-to-key map
-        // 3b. If they are ready to execute return them to the worker 
-
+        // 3. Iterate over all the promoted actions          
         int sz = promotedList.size();
-        assert (sz==promotedKeyList.size());
-        BaseActionPtr ap = NULL;
-        tid_t readytid;
+        assert (sz==keyList.size());
+        for (int i=0; i<sz; ++i) {
 
-        for (int i=0; i<sz; i++) {          
+            // 2a. Associate each action (tid) with the key in the trx-to-key map
+            BaseActionPtr ap = promotedList[i];
+            _trx_key_mm.insert(TrxKeyPair(ap->tid(), *keyList[i]));
 
-            // associate trx with key
-            ap = promotedList[i];
-            readytid = ap->tid();
-            _trx_key_mm.insert(TrxKeyPair(readytid, promotedKeyList[i]));
-
-            // if the promoted action is ready add it to the list
+            // 2b. If they are ready to execute return them as ready to the worker 
             ap->gotkeys(1);
             if (ap->is_ready()) {
-                TRACE( TRACE_TRX_FLOW, "(%d) ready (%d)\n", atid, readytid);
+                TRACE( TRACE_TRX_FLOW, "(%d) ready (%d)\n", tidToRelease, ap->tid());
                 readyList.push_back(ap);
-            }                    
-
-        }
-        return (readyList);
+            }
+        }                
+        return (0);
     }
 
 

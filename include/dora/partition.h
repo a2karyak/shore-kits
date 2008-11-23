@@ -55,19 +55,19 @@ class partition_t
 {
 public:
 
-    typedef action_t<DataType>      PartAction;
-    typedef dora_worker_t<DataType> PartWorker;
+    typedef action_t<DataType>      Action;
+    typedef dora_worker_t<DataType> Worker;
 
-    typedef srmwqueue<PartAction>          PartQueue;
-    typedef std::list<PartAction*>         ActionList;
-    typedef typename ActionList::iterator  ActionListIt; 
+    typedef srmwqueue<Action>        Queue;
+    typedef vector<base_action_t*>   BaseActionPtrList;
 
-    typedef key_wrapper_t<DataType>           PartKey;
-    typedef key_ale_t<DataType>               LockRequest;  // pair of <Key,ActionLLEntry>
-    typedef vector<LockRequest>               LockRequestVec;
-    typedef typename LockRequestVec::iterator LockRequestVecIt;
+    typedef KALReq_t<DataType>    KALReq;
+    typedef KALReq_t<DataType>*   KALReqPtr;
+    typedef vector<KALReqPtr>     KALReqPtrVec;
 
-    typedef lock_man_t<DataType>              PartLockManager;
+    typedef key_wrapper_t<DataType>    Key;
+    typedef lock_man_t<DataType>       LockManager;
+
 
 protected:
 
@@ -83,10 +83,10 @@ protected:
     tatas_lock         _pat_count_lock;
 
     // pointers to primary owner and pool of standby worker threads
-    PartWorker*   _owner;        // primary owner
+    Worker*       _owner;        // primary owner
     tatas_lock    _owner_lock;
 
-    PartWorker*   _standby;      // standby pool
+    Worker*   _standby;      // standby pool
     int           _standby_cnt;
     tatas_lock    _standby_lock;
 
@@ -94,7 +94,7 @@ protected:
     processorid_t _prs_id;
 
     // lock manager for the partition
-    PartLockManager  _plm;
+    LockManager  _plm;
 
 
     // Each partition has two lists of Actions
@@ -121,11 +121,11 @@ protected:
 
     // queue of new Actions
     // single reader - multiple writers
-    PartQueue    _input_queue; 
+    Queue    _input_queue; 
 
     // queue of committed Actions
     // single reader - multiple writers
-    PartQueue    _committed_queue;
+    Queue    _committed_queue;
 
 public:
 
@@ -145,6 +145,9 @@ public:
 
     /** Access methods */
 
+    const int part_id() const { return (_part_id); }
+    const table_desc_t* table() const { return (_table); } 
+
     // partition policy
     const ePartitionPolicy get_part_policy() { return (_part_policy); }
     void set_part_policy(const ePartitionPolicy aPartPolicy) {
@@ -158,7 +161,7 @@ public:
     const ePATState inc_active_thr();
 
     // get lock manager
-    PartLockManager* plm() { return (&_plm); }
+    LockManager* plm() { return (&_plm); }
     
 
     /** Control partition */
@@ -178,11 +181,16 @@ public:
     //// Action-related methods
 
     // releases a trx
-    BaseActionPtrList release(PartAction* action) { return (_plm.release_all(action)); }
-    const bool acquire(tid_t& atid, LockRequestVec& arvec);
+    inline const int release(Action* action,
+                             BaseActionPtrList& readyList, 
+                             BaseActionPtrList& promotedList) 
+    { 
+        return (_plm.release_all(action,readyList,promotedList)); 
+    }
+    const bool acquire(const KALReqPtrVec& akalvec);
 
     // returns true if action can be enqueued it this partition
-    virtual const bool verify(PartAction& action)=0;
+    virtual const bool verify(Action& action)=0;
 
 
     // enqueue lock needed to enforce an ordering across trxs
@@ -191,16 +199,21 @@ public:
 
     // input for normal actions
     // enqueues action, 0 on success
-    const int enqueue(PartAction* pAction);
-    PartAction* dequeue();
+    const int enqueue(Action* pAction);
+    Action* dequeue();
+    inline const int has_input(void) const { 
+        return (!_input_queue.is_empty()); 
+    }    
     const bool is_input_owner(base_worker_t* aworker) {
         return (_input_queue.is_control(aworker));
     }
 
     // deque of actions to be committed
-    const int enqueue_commit(PartAction* apa);
-    PartAction* dequeue_commit();
-    inline int has_committed(void) const { return (!_committed_queue.is_empty()); }
+    const int enqueue_commit(Action* apa);
+    Action* dequeue_commit();
+    inline const int has_committed(void) const { 
+        return (!_committed_queue.is_empty()); 
+    }
     const bool is_committed_owner(base_worker_t* aworker) {
         return (_committed_queue.is_control(aworker));
     }
@@ -223,8 +236,8 @@ public:
 private:
 
     // lock-man
-    inline const bool _acquire_key(LockRequest& alr) {
-        return (_plm.acquire(alr));
+    inline const bool _acquire_key(KALReq& akalr) {
+        return (_plm.acquire(akalr));
     }
                 
 
@@ -235,11 +248,11 @@ private:
     const int _generate_standby_pool(const int sz, 
                                      int& pool_sz,
                                      const processorid_t aprsid = PBIND_NONE);
-    PartWorker* _generate_worker(const processorid_t aprsid, c_str wname);    
+    Worker* _generate_worker(const processorid_t aprsid, c_str wname);    
 
 protected:    
 
-    const int isFree(PartKey akey, eDoraLockMode lmode);
+    const int isFree(Key akey, eDoraLockMode lmode);
 
 
 }; // EOF: partition_t
@@ -262,20 +275,23 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-const bool partition_t<DataType>::acquire(tid_t& atid, LockRequestVec& arvec)
+const bool partition_t<DataType>::acquire(const KALReqPtrVec& arvec)
 {
+    typedef KALReqPtrVec::iterator kalit;
     bool bResult = true;
-    for (int i=0; i<arvec.size(); ++i) {
-        assert (atid == arvec[i].tid());
+    int i=0;
+    for (kalit it=arvec.begin(); it!=arvec.end(); ++it) {
         // request to acquire all the locks for this partition
-        if (!_acquire_key(arvec[i])) {
+        ++i;
+        if (!_acquire_key(*(*it))) {
             // if a key cannot be acquired, return false
-            TRACE( TRACE_TRX_FLOW, "Cannot acquire for (%d)\n", atid);
+            TRACE( TRACE_TRX_FLOW, "Cannot acquire for (%d)\n", 
+                   *((*it)->tid()));
             bResult = false;
         }
     }
 
-    if (bResult) TRACE( TRACE_TRX_FLOW, "Acquired all for (%d)\n", atid);
+    assert(i); // makes sure that the action acquires at least one key
     return (bResult);
 }
 
@@ -291,7 +307,7 @@ const bool partition_t<DataType>::acquire(tid_t& atid, LockRequestVec& arvec)
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue(PartAction* pAction)
+const int partition_t<DataType>::enqueue(Action* pAction)
 {
     assert (_part_policy!=PP_UNDEF);
     if (!verify(*pAction)) {
@@ -332,7 +348,7 @@ action_t<DataType>* partition_t<DataType>::dequeue()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue_commit(PartAction* pAction)
+const int partition_t<DataType>::enqueue_commit(Action* pAction)
 {
     assert (pAction->get_partition()==this);
 
@@ -648,8 +664,8 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
 {
     assert (_standby==NULL); // prevent losing thread pointer 
 
-    PartWorker* pworker = NULL;
-    PartWorker* pprev_worker = NULL;
+    Worker* pworker = NULL;
+    Worker* pprev_worker = NULL;
     pool_sz=0;
 
     if (sz>0) {
@@ -713,7 +729,7 @@ const int partition_t<DataType>::_generate_primary()
 {
     assert (_owner==NULL); // prevent losing thread pointer 
 
-    PartWorker* pworker = _generate_worker(_prs_id, 
+    Worker* pworker = _generate_worker(_prs_id, 
                                             c_str("%s-P-%d-PRI",_table->name(), _part_id));
     if (!pworker) {
         TRACE( TRACE_ALWAYS, "Problem generating worker thread\n");
@@ -754,7 +770,7 @@ inline dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const pr
 {
     // 1. create worker thread
     // 2. set self as worker's partition
-    PartWorker* pworker = new PartWorker(_env, this, strname, prsid); 
+    Worker* pworker = new Worker(_env, this, strname, prsid); 
     return (pworker);
 }
 

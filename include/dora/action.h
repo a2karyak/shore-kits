@@ -73,6 +73,11 @@ ENTER_NAMESPACE(dora);
 using namespace shore;
 
 
+class base_action_t;
+typedef base_action_t*              BaseActionPtr;
+typedef vector<BaseActionPtr>       BaseActionPtrList;
+typedef BaseActionPtrList::iterator BaseActionPtrIt;
+
 
 /******************************************************************** 
  *
@@ -84,10 +89,6 @@ using namespace shore;
 
 class base_action_t
 {
-public:
-
-    typedef vector<base_action_t*>   BaseActionPtrList;
-
 protected:
 
     // rendez-vous point
@@ -100,7 +101,7 @@ protected:
     int            _keys_needed;
 
     // base action init
-    inline void _base_set(tid_t atid, xct_t* axct, rvp_t* prvp, const int numkeys) 
+    inline void _base_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, const int numkeys) 
     {
         _tid = atid;
         _xct = axct;
@@ -124,7 +125,7 @@ public:
     inline rvp_t* rvp() { return (_prvp); }
     inline xct_t* xct() { return (_xct); }    
     inline tid_t  tid() { return (_tid); }
-
+    inline const tid_t tid() const { return (_tid); }
 
     // needed keys operations
 
@@ -171,7 +172,8 @@ public:
     virtual const bool trx_acq_locks()=0;
 
     // releases acquired locks
-    virtual BaseActionPtrList trx_rel_locks()=0;
+    virtual const int trx_rel_locks(BaseActionPtrList& readyList, 
+                                    BaseActionPtrList& promotedList)=0;
 
     // enqueues self on the committed list of committed actions
     virtual void notify()=0; 
@@ -201,9 +203,11 @@ public:
     typedef key_wrapper_t<DataType>  Key;
     typedef vector<Key>              KeyVec;
     typedef vector<Key*>             KeyPtrVec;
-    typedef key_ale_t<DataType>      LockRequest;  // pair of <Key,LockActionReq>
-    typedef vector<LockRequest>      LockRequestVec;
     typedef partition_t<DataType>    Partition;
+
+    typedef KALReq_t<DataType>       KALReq;
+    typedef KALReq*                  KALReqPtr;
+    typedef vector<KALReqPtr>        KALReqPtrVec;
 
 protected:
 
@@ -213,7 +217,7 @@ protected:
     //pointer to the partition
     Partition*     _partition;
 
-    inline void _act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void _act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                          const int numkeys)
     {
         _base_set(atid,axct,prvp,numkeys);
@@ -243,12 +247,13 @@ public:
             _keys = rhs._keys;
             _partition = rhs._partition;
         }
+        return (*this);
     }
 
     
     // access methods
 
-    vector<Key*> *keys() { return (&_keys); }    
+    vector<Key*>* keys() { return (&_keys); }    
 
     inline Partition* get_partition() const { return (_partition); }
     inline void set_partition(Partition* ap) {
@@ -263,9 +268,11 @@ public:
     virtual const bool trx_acq_locks()=0;
     virtual void giveback()=0;
 
-    BaseActionPtrList trx_rel_locks() {
+    const int trx_rel_locks(BaseActionPtrList& readyList, 
+                            BaseActionPtrList& promotedList) 
+    {
         assert (_partition);
-        return (_partition->release(this));
+        return (_partition->release(this,readyList,promotedList));
     }
 
     void notify() {

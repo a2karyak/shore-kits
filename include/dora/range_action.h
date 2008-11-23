@@ -38,7 +38,7 @@ protected:
     Key _down;
     Key _up;
 
-    inline void _range_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void _range_act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                                const int keylen) 
     {
         // the range action has two keys: 

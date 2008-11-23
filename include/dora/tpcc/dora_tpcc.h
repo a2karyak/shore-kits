@@ -49,8 +49,8 @@ public:
     typedef range_partition_impl<int>   irpImpl; 
     typedef range_part_table_impl<int>  irpTableImpl;
 
-    typedef irpImpl::RangeAction      irpAction;
-    typedef irpImpl::PartKey          irpImplKey;
+    typedef irpImpl::RangeAction  irpAction;
+    typedef irpImpl::Key          irpImplKey;
 
     typedef vector<irpTableImpl*>       irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;

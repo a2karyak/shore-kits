@@ -64,7 +64,7 @@ class ol_midway_nord_rvp : public rvp_t
     // pointer to the shore env
     ShoreTPCCEnv* _ptpccenv;
 
-    ol_midway_nord_rvp(tid_t atid, xct_t* axct, const int axctid,
+    ol_midway_nord_rvp(const tid_t& atid, xct_t* axct, const int axctid,
                        trx_result_tuple_t &presult,
                        ShoreTPCCEnv* penv, new_order_input_t* pnoin) 
         : rvp_t(atid, axct, axctid, presult, 2, 2),  // consists of three packets

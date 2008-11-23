@@ -38,7 +38,7 @@ class dora_worker_t : public base_worker_t
 public:
 
     typedef partition_t<DataType> Partition;
-    typedef action_t<DataType>    PartAction;
+    typedef action_t<DataType>    Action;
 
 private:
     
@@ -106,11 +106,11 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
     // state (WC_ACTIVE)
 
     // Start serving actions from the partition
-    w_rc_t e;
-    PartAction* apa = NULL;
-    int bHadCommitted = 0;
+    Action* apa = NULL;
     BaseActionPtrList actionReadyList;
-
+    BaseActionPtrList actionPromotedList;
+    actionReadyList.clear();
+    actionPromotedList.clear();
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
@@ -118,46 +118,48 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
         
         // reset the flags for the new loop
         apa = NULL;
-        bHadCommitted = 0; // an action had committed in this cycle
         set_ws(WS_LOOP);
-
         
         // committed actions
 
         // 2. first release any committed actions
+
         while (_partition->has_committed()) {           
-            // 1a. get the first committed
-            bHadCommitted = 1;
+
+            // 2a. get the first committed
             apa = _partition->dequeue_commit();
             assert (apa);
             TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
             
-            // 1b. release the locks acquired for this action
-            actionReadyList = apa->trx_rel_locks();
+            // 2b. release the locks acquired for this action
+            apa->trx_rel_locks(actionReadyList,actionPromotedList);
             TRACE( TRACE_TRX_FLOW, "Received (%d) ready\n", actionReadyList.size());
 
-            // 1c. the action has done its cycle, and can be deleted
+            // 2c. the action has done its cycle, and can be deleted
             apa->giveback();
             apa = NULL;
 
-            // 1d. serve any ready to execute actions 
+            // 2d. serve any ready to execute actions 
             //     (those actions became ready due to apa's lock releases)
             for (BaseActionPtrIt it=actionReadyList.begin(); it!=actionReadyList.end(); ++it) {
                 _serve_action(*it);
                 ++_stats._served_waiting;
             }
-        }            
 
+            // clear the two lists
+            actionReadyList.clear();
+            actionPromotedList.clear();
+        }            
 
         // new (input) actions
 
         // 3. dequeue an action from the (main) input queue
-        // it will spin inside the queue or (after a while) wait on a cond var
-        if (_partition->has_committed())
-            continue;
+
+        // @note: it will spin inside the queue or (after a while) wait on a cond var
+
         apa = _partition->dequeue();
 
-        // 5. check if it can execute the particular action
+        // 4. check if it can execute the particular action
         if (apa) {
             TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid());
             ++_stats._checked_input;

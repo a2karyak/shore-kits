@@ -149,6 +149,11 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
         TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
 
+//         stringstream os;
+//         os << e << ends;
+//         string str = os.str();
+//         TRACE( TRACE_ALWAYS, "\n%s\n", str.c_str());
+
 	w_rc_t e2 = _pssm->abort_xct();
 	if(e2.is_error()) {
 	    TRACE( TRACE_ALWAYS, "Xct (%d) Payment abort failed [0x%x]\n", 

@@ -60,7 +60,7 @@ public:
     ~midway_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
 
     // access methods
-    inline void set(tid_t atid, xct_t* axct, const int& axctid,
+    inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
                     const payment_input_t& ppin, 
                     DoraTPCCEnv* penv, rvp_pool* pp) 
@@ -103,7 +103,7 @@ public:
     ~final_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
 
     // access methods
-    inline void set(tid_t atid, xct_t* axct, const int axctid,
+    inline void set(const tid_t& atid, xct_t* axct, const int axctid,
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_pool* pp) 
     { 
@@ -151,7 +151,7 @@ protected:
     DoraTPCCEnv*   _ptpccenv;
     payment_input_t _pin;
 
-    inline void _pay_act_set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void _pay_act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                              const int keylen, const payment_input_t& pin, 
                              DoraTPCCEnv* penv) 
     {
@@ -192,7 +192,7 @@ public:
         _down.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_wh_id);
     }
-    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, 
                     midway_pay_rvp* amrvp, act_pool* pp) 
@@ -224,7 +224,7 @@ public:
         _up.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_d_id);
     }
-    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, 
                     midway_pay_rvp* amrvp, act_pool* pp) 
@@ -258,7 +258,7 @@ public:
         _up.push_back(_pin._home_d_id);
         _up.push_back(_pin._c_id);
     }
-    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, 
                     midway_pay_rvp* amrvp, act_pool* pp) 
@@ -289,7 +289,7 @@ public:
         _down.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_wh_id);
     }
-    inline void set(tid_t atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
                     tpcc_warehouse_tuple awh,
                     tpcc_district_tuple adist,

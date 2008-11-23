@@ -68,7 +68,7 @@ static unsigned int trace_current_setting = ~0u;
 
 
 /**
- *  @brief Covert the specified message into a single string and
+ *  @brief Convert the specified message into a single string and
  *  process it.
  *
  *  @param trace_type The message type. This determines how we will
