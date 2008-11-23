@@ -134,7 +134,7 @@ public:
         : _env(env), _table(ptable), 
           _part_policy(PP_UNDEF), _pat_state(PATS_UNDEF), _pat_count(0),
           _owner(NULL), _standby(NULL), _standby_cnt(DF_NUM_OF_STANDBY_THRS),
-          _part_id(apartid), _prs_id(PBIND_NONE)          
+          _part_id(apartid), _prs_id(aprsid)          
     {
         assert (_env);
         assert (_table);
@@ -730,7 +730,7 @@ const int partition_t<DataType>::_generate_primary()
     assert (_owner==NULL); // prevent losing thread pointer 
 
     Worker* pworker = _generate_worker(_prs_id, 
-                                            c_str("%s-P-%d-PRI",_table->name(), _part_id));
+                                       c_str("%s-P-%d-PRI",_table->name(), _part_id));
     if (!pworker) {
         TRACE( TRACE_ALWAYS, "Problem generating worker thread\n");
         return (de_GEN_WORKER);

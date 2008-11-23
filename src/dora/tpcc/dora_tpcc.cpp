@@ -57,7 +57,7 @@ const int DoraTPCCEnv::start()
     // 3. Reset each table
 
     int range = get_active_cpu_count();
-    processorid_t icpu(0);
+    processorid_t icpu(8);
     int sf = upd_sf();
     TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", sf);
  
@@ -243,7 +243,7 @@ const int DoraTPCCEnv::start()
 
 const int DoraTPCCEnv::stop()
 {
-    TRACE( TRACE_DEBUG, "Stopping...\n");
+    TRACE( TRACE_ALWAYS, "Stopping...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->stop();
     }
@@ -414,7 +414,7 @@ const int DoraTPCCEnv::statistics()
 const processorid_t DoraTPCCEnv::_next_cpu(const processorid_t aprd,
                                             const irpTableImpl* atable,
                                             const int step)
-{
+{    
     processorid_t nextprs = ((aprd+step) % this->get_active_cpu_count());
     TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);

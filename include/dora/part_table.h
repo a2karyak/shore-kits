@@ -31,9 +31,9 @@ using namespace shore;
 
 /******************************************************************** 
  *
- * @class: partition_t
+ * @class: part_table_t
  *
- * @brief: Abstract class for the data partitions
+ * @brief: Class for representing a table as a set of (data) partitions
  *
  ********************************************************************/
 

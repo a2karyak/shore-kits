@@ -93,8 +93,8 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
     //    TRACE( TRACE_DEBUG, "Activating...\n");
 
     // bind to the specified processor
-    //if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-    if (processor_bind(P_LWPID, P_MYID, PBIND_NONE, NULL)) { // no-binding
+    if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
+        //if (processor_bind(P_LWPID, P_MYID, PBIND_NONE, NULL)) { // no-binding
         TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
         _is_bound = false;
     }
