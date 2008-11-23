@@ -124,11 +124,11 @@ const bool pay_action::trx_acq_locks()
 {
     // all the Payment trxs are (EX) probes to a single tuple
     assert (_partition);
-    LockRequestVec alrvec;
-    LockRequest alr(&_down,this,DL_CC_EXCL);
-    setkeys(1);
-    alrvec.push_back(alr);    
-    return (_partition->acquire(_tid,alrvec));
+    setkeys(1); // indicates that it needs only 1 key
+    KALReqPtrVec aklrvec;
+    KALReq aklr(this,DL_CC_EXCL,&_down);
+    aklrvec.push_back(&aklr);    
+    return (_partition->acquire(aklrvec));
 }
 
 w_rc_t upd_wh_pay_action::trx_exec() 

@@ -119,8 +119,6 @@ ENTER_NAMESPACE(dora);
 // {
 //     // all the Payment trxs are (EX) probes to a single tuple
 //     assert (_partition);
-//     LockRequestVec alrvec;
-//     LockRequest alr(&_down,DL_CC_EXCL);
 //     alrvec.push_back(alr);    
 //     return (_partition->acquire(_tid,alrvec));
 // }

@@ -27,4 +27,5 @@ base_action_t& base_action_t::operator=(const base_action_t& rhs)
 }
 
 
+
 EXIT_NAMESPACE(dora);

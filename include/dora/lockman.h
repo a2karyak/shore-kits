@@ -101,7 +101,7 @@ struct ActionLockReq
         : _action(NULL)
     { }
 
-    ActionLockReq(base_action_t* action, tid_t& atid,
+    ActionLockReq(base_action_t* action, const tid_t& atid,
                   const eDoraLockMode adlm = DL_CC_NOLOCK)
         : _action(action), _tid(atid), _dlm(adlm)
     { }
@@ -325,16 +325,6 @@ struct KeyLockMap
     inline const bool acquire(KALReq& akalr) {
         LogicalLock* ll = &_ll_map[*akalr._key];
         assert (ll);
-
-        ostringstream out;
-        string sout;
-        out << *akalr._key << endl;
-        out << "sz: " << _ll_map.size() << " " << ll << endl;
-        sout = out.str();
-        TRACE( TRACE_ALWAYS, "ACQ - %s", sout.c_str());
-        out.str("");
-        out.clear();
-
         return (ll->acquire(akalr));
     }
                 
@@ -348,21 +338,19 @@ struct KeyLockMap
         //LogicalLock* ll = &_ll_map[aKey];
         assert (ll);
 
-
-        ostringstream out;
-        string sout;
-        out << aKey << endl;
-        out << "sz: " << _ll_map.size() << " " << ll << endl;
-        sout = out.str();
-        TRACE( TRACE_ALWAYS, "REL - %s", sout.c_str());
-        out.str("");
-        out.clear();
+//         ostringstream out;
+//         string sout;
+//         out << aKey << endl;
+//         out << "sz: " << _ll_map.size() << " " << ll << endl;
+//         sout = out.str();
+//         TRACE( TRACE_ALWAYS, "REL - %s", sout.c_str());
+//         out.str("");
+//         out.clear();
 
         int rhs = ll->release(paction,promotedList);
         if (ll->is_clean()) _ll_map.erase(_ll_map_it);
         return (rhs);
     }
-
 
 
     // clear map
@@ -457,6 +445,15 @@ struct lock_man_t
         // associate key to trx
         rhs = _key_ll_m.acquire(akalr);
         if (rhs) {
+
+//             ostringstream out;
+//             string sout;
+//             out << *akalr.tid() << " -> " << *akalr._key << endl;
+//             sout = out.str();
+//             TRACE( TRACE_ALWAYS, "%s", sout.c_str());
+//             out.str("");
+//             out.clear();
+
             //cout << "I = " << akalr.action()->tid() << "-" << *akalr._key << endl;
             _trx_key_mm.insert(TrxKeyPair(akalr.action()->tid(), *akalr._key));
         }
@@ -472,9 +469,9 @@ struct lock_man_t
         assert (paction);
         assert (readyList.empty() && promotedList.empty());
 
-        const tid_t& tidToRelease = paction->tid();
+        const tid_t tidToRelease = paction->tid();
         TrxRange r = _trx_key_mm.equal_range(tidToRelease);
-        KeyPtrList keyList;
+        KeyList keyList;
         
         TRACE( TRACE_TRX_FLOW, "Releasing (%d)\n", tidToRelease);
 
@@ -483,9 +480,9 @@ struct lock_man_t
         for (TrxKeyMapIt it=r.first; it!=r.second; ++it) {           
 
             // release one LL            
-            Key theKey = (*it).second;
-            int numPromoted = _key_ll_m.release(theKey,paction,promotedList);
-            keyList.insert(keyList.end(),numPromoted,&theKey); // copy x times the key
+            const Key& refKey = (*it).second;          
+            int numPromoted = _key_ll_m.release(refKey,paction,promotedList);
+            keyList.insert(keyList.end(),numPromoted,refKey); // copy x times the key
         }                 
 
 
@@ -500,7 +497,16 @@ struct lock_man_t
 
             // 2a. Associate each action (tid) with the key in the trx-to-key map
             BaseActionPtr ap = promotedList[i];
-            _trx_key_mm.insert(TrxKeyPair(ap->tid(), *keyList[i]));
+
+//             ostringstream out;
+//             string sout;
+//             out << ap->tid() << " -> " << keyList[i] << endl;
+//             sout = out.str();
+//             TRACE( TRACE_ALWAYS, "%s", sout.c_str());
+//             out.str("");
+//             out.clear();
+
+            _trx_key_mm.insert(TrxKeyPair(ap->tid(), keyList[i]));
 
             // 2b. If they are ready to execute return them as ready to the worker 
             ap->gotkeys(1);

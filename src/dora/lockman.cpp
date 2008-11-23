@@ -21,26 +21,65 @@ ENTER_NAMESPACE(dora);
 
 /******************************************************************** 
  *
- * @struct: ActionLLEntry
+ * @struct: ActionLockReq
  *
  ********************************************************************/ 
-
-
-tid_t ActionLLEntry::tid() { 
-    assert (_action); 
-    return (_action->tid()); 
-}
-
 
 //// Helper functions
 
 
-std::ostream& operator<<(std::ostream& os, const ActionLLEntry& rhs) 
+std::ostream& operator<<(std::ostream& os, const ActionLockReq& rhs) 
 {
-    os << "(" << rhs._action->tid() << ") (" << rhs._dlm << ") (" << rhs._action->needed() << ")";
+    os << "(" << rhs._tid << ") (" << rhs._dlm << ") (" << rhs._action << ")";
     return (os);
 }
 
+
+
+
+struct pretty_printer {
+    ostringstream _out;
+    string _tmp;
+    operator ostream&() { return _out; }
+    operator char const*() { _tmp = _out.str(); _out.str(""); return _tmp.c_str(); }
+};
+
+
+static void _print_logical_lock_maps(std::ostream &out, LogicalLock const &ll) 
+{
+    int o = ll.owners().size();
+    int w = ll.waiters().size();
+    out << "Owners " << o << endl;
+    for (int i=0; i<o; ++i) {
+        out << i << ". " << ll.owners()[i] << endl;
+    }
+    out << "Waiters " << o << endl;
+    for (int i=0; i<w; ++i) {
+        out << i << ". " << ll.waiters()[i] << endl;
+    }
+}
+
+char const* db_pretty_print(LogicalLock const* ll, int i=0, char const* s=0) 
+{
+    static pretty_printer pp;
+    _print_logical_lock_maps(pp, *ll);
+    return pp;
+}
+
+
+static void _print_key(std::ostream &out, key_wrapper_t<int> const &key) 
+{    
+    for (int i=0; i<key._key_v.size(); ++i) {
+        out << key._key_v[i] << endl;
+    }
+}
+
+char const* db_pretty_print(key_wrapper_t<int> const* key, int i=0, char const* s=0) 
+{
+    static pretty_printer pp;
+    _print_key(pp, *key);
+    return pp;
+}
 
 
 
@@ -57,7 +96,7 @@ std::ostream& operator<<(std::ostream& os, const ActionLLEntry& rhs)
  * @fn:     release()
  *
  * @brief:  Releases the lock on behalf of the particular action,
- *          and returns a vector of promoted actions.
+ *          and updates the vector of promoted actions.
  *          The lock manager should that receives this list should:
  *          (1) associate the promoted action with the particular key in the trx-to-key map
  *          (2) decide which of those are ready to run and return them to the worker
@@ -66,25 +105,24 @@ std::ostream& operator<<(std::ostream& os, const ActionLLEntry& rhs)
  *
  ********************************************************************/ 
 
-vector<base_action_t*> LogicalLock::release(base_action_t* anowner)
+const int LogicalLock::release(base_action_t* anowner, 
+                               BaseActionPtrList& promotedList)
 {
-    BaseActionPtrList promotedList;
-    bool found = false;
-    bool updated_ready = false;
-    
     assert (anowner);
-    
+    bool found = false;    
     tid_t atid = anowner->tid();
-    int i=0;
-    for (ActionLLEntryVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
-        ++i;
-        TRACE( TRACE_TRX_FLOW, "Checking (%d) - Owner-%d (%d)\n", atid, i, (*it).tid());
+    int ipromoted = 0;
 
-        if (atid==(*it).tid()) {
+    for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
+        tid_t* ownertid = (*it).tid();
+        assert (ownertid);
+        TRACE( TRACE_TRX_FLOW, "Checking (%d) - Owner(%d)\n", atid, *ownertid);
+
+        if (atid==*ownertid) {
             found = true;
 
             // remove from list
-            _owners.erase(_owners.begin()+i);
+            _owners.erase(it);
 
             // upgrade the dlm
             // if indeed dlm has changed upgrade some of the waiters
@@ -94,7 +132,7 @@ vector<base_action_t*> LogicalLock::release(base_action_t* anowner)
 
                 // as long as they are waiters that can be upgraded to owners
                 while (_head_can_acquire()) {
-                    ActionLLEntry head = _waiters.front();
+                    ActionLockReq head = _waiters.front();
                     action = head.action();
                     
                     // add head of waiters to the promoted list (which will be returned)
@@ -103,6 +141,7 @@ vector<base_action_t*> LogicalLock::release(base_action_t* anowner)
 
                     // add head of waiters to the owners list
                     _owners.push_back(head);
+                    ++ipromoted;
 
                     // remove head from the waiters list
                     _waiters.pop_front();
@@ -117,22 +156,7 @@ vector<base_action_t*> LogicalLock::release(base_action_t* anowner)
 
     // assert if this trx is not in the list of owners
     if (!found) assert (0);
-
-#ifdef LOCKDEBUG
-    // for sanity check, 
-    // TODO: (IP) should be removed
-    for (ActionLLEntryVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
-        if (atid==(*it).tid())
-            assert (0); // asserts if owner not removed
-    }
-    for (ActionLLEntryDequeIt it=_waiters.begin(); it!=_waiters.end(); ++it) {
-        if (atid==(*it).tid())
-            assert (0); // asserts if owner not removed
-    }
-#endif
-
-    // return the new list of ready to run actions
-    return (promotedList);
+    return (ipromoted);
 }
 
 
@@ -148,35 +172,32 @@ vector<base_action_t*> LogicalLock::release(base_action_t* anowner)
  *
  ********************************************************************/ 
 
-const bool LogicalLock::acquire(ActionLLEntry& areq)
+const bool LogicalLock::acquire(ActionLockReq& alr)
 {
+    assert (alr.action());
     // check if compatible
-    if (DoraLockModeMatrix[_dlm][areq.dlm()]) {
 
-#ifdef LOCKDEBUG
-        // for sanity check, 
-        // TODO: (IP) should be removed
-        for (int i=0; i=_owners.size(); ++i) {
-            if (!DoraLockModeMatrix[_dlm][_owners[i].dlm()]) 
-                assert (0); // asserts if two owners have incompatible modes
-        }
-#endif
+    if (DoraLockModeMatrix[_dlm][alr.dlm()]) {
+
 
         // if compatible, enqueue to the owners
-        _owners.push_back(areq);
-        areq.action()->gotkeys(1);
+        _owners.push_back(alr);
+        alr.action()->gotkeys(1);
 
         // update lock mode
-        if (areq.dlm() != DL_CC_NOLOCK) _dlm = areq.dlm();
+        if (alr.dlm() != DL_CC_NOLOCK) _dlm = alr.dlm();
 
+
+
+        // indicate acquire success
         return (true);
     }        
 
     // not compatible, enqueue to the waiting list
     assert (_owners.size());
-    _waiters.push_back(areq);    
+    _waiters.push_back(alr);    
 
-    // return the new lm
+    // indicate failure to acquire
     return (false);
 }
 
@@ -215,7 +236,7 @@ const bool LogicalLock::_upd_dlm()
     eDoraLockMode odlm = DL_CC_NOLOCK;
     bool changed = false;    
 
-    for (ActionLLEntryVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
+    for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
         odlm = (*it).dlm();
         if (!DoraLockModeMatrix[new_dlm][odlm]) 
             assert (0); // asserts if two owners have incompatible modes
@@ -238,16 +259,17 @@ const bool LogicalLock::_upd_dlm()
 
 std::ostream& operator<<(std::ostream& os, const LogicalLock& rhs) 
 {
-    os << "lock:   " << rhs._dlm << endl;
-    os << "owners:\n";
-    for (int i=0; i=rhs._owners.size(); ++i) {
-        os << i << ". " << rhs._owners[i] << endl;
+    os << "lock:   " << rhs.dlm() << endl; 
+    os << "owners: " << rhs.owners().size() << endl; 
+    for (int i=0; i<rhs.owners().size(); ++i) {
+        os << rhs.owners()[i] << endl;
     }
 
-    os << "waiters:\n";
-    for (int i=0; i=rhs._waiters.size(); ++i) {
-        os << i << ". " << rhs._waiters[i] << endl;
+    os << "waiters: " << rhs.waiters().size() << endl;
+    for (int i=0; i<rhs.waiters().size(); ++i) {
+        os << rhs.waiters()[i] << endl;
     }
+
     return (os);
 }
 
