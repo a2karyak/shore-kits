@@ -17,13 +17,6 @@ using namespace shore;
 /** Exported functions */
 
 
-
-/****************************************************************** 
- *
- * class db_init_smt_t
- *
- ******************************************************************/
-
 void db_init_smt_t::work()
 {
     if (!_env->is_initialized()) {
@@ -41,7 +34,12 @@ void db_init_smt_t::work()
 }
 
 
-
+void db_log_smt_t::work() 
+{
+    assert (_env);
+    _env->db()->flushlog();
+    _rv = 0;
+}
 
 
 void db_load_smt_t::work() 

@@ -415,6 +415,10 @@ public:
     const int disable_fake_disk_latency();
     const int enable_fake_disk_latency(const int adelay);
 
+
+    // does a log flush
+    const int checkpoint();
+
 protected:
    
     // returns 0 on success

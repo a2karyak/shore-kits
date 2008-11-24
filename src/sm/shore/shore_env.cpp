@@ -10,6 +10,8 @@
 
 #include "util/confparser.h"
 #include "sm/shore/shore_env.h"
+#include "sm/shore/shore_helper_loader.h"
+
 
 
 ENTER_NAMESPACE(shore);
@@ -230,9 +232,9 @@ void ShoreEnv::gatherstats_sm()
 
 /******************************************************************** 
  *
- * @fn     configure_sm
+ *  @fn:     configure_sm
  *
- *  @brief  Configure Shore environment
+ *  @brief:  Configure Shore environment
  *
  *  @return: 0 on sucess, non-zero otherwise
  *
@@ -401,6 +403,31 @@ int ShoreEnv::start_sm()
     // If we reached this point the sm has started correctly
     return (0);
 }
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:      checkpoint()
+ *
+ *  @brief:   Takes a db checkpoint - forces the log to the disk
+ *
+ *  @note:    Used between iterations
+ *
+ *********************************************************************/
+
+const int ShoreEnv::checkpoint() 
+{    
+    db_log_smt_t* flusher = new db_log_smt_t(c_str("flusher"), this);
+    assert (flusher);
+    flusher->fork();
+    flusher->join(); 
+    int rv = flusher->rv();
+    delete (flusher);
+    flusher = NULL;
+    return (rv);
+}
+
 
 
 /****************************************************************** 

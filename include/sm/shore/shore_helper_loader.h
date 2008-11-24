@@ -55,6 +55,39 @@ public:
 }; // EOF: db_init_smt_t
 
 
+/****************************************************************** 
+ *
+ *  @class: db_log_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used for flushing 
+ *          the log
+ *
+ ******************************************************************/
+
+class db_log_smt_t : public thread_t 
+{
+private:
+    ShoreEnv* _env;
+    int       _rv;
+
+public:
+    
+    db_log_smt_t(c_str tname, ShoreEnv* db) 
+	: thread_t(tname), _env(db)
+    {
+        assert (_env);
+    }
+
+    ~db_log_smt_t() { }
+
+    // thread entrance
+    void work();
+
+    inline int rv() { return (_rv); }
+
+}; // EOF: db_init_smt_t
+
+
     
 /****************************************************************** 
  *
