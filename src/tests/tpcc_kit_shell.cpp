@@ -266,6 +266,9 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
     return (_tpccdb->start());
 }
 
+
+
+
 /******************************************************************** 
  *
  *  @fn:    print_throughput
@@ -376,9 +379,14 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
         _tpccdb->reset_session_tpcc_stats();
 
 
-        // give some time (2secs) to clean-up
-        sleep(DF_WARMUP_INTERVAL);
+        // flush the log before the next iteration
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        _env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
     }
+
+    // print processor usage info
+    _cpustater->myinfo.print();
 
     // set measurement state
     _env->set_measure(MST_DONE);
@@ -436,7 +444,6 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         // set measurement state
         _env->set_measure(MST_MEASURE);
         alarm(iDuration);
-        //sleep(iDuration);
 	stopwatch_t timer;
 
         // 2. join the tester threads
@@ -459,9 +466,14 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         _tpccdb->reset_session_tpcc_stats();
 
 
-        // give some time (2secs) to clean-up
-        sleep(DF_WARMUP_INTERVAL);
+        // flush the log before the next iteration
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        _env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
     }
+
+    // print processor usage info
+    _cpustater->myinfo.print();
 
     // set measurement state
     _env->set_measure(MST_DONE);

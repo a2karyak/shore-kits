@@ -1,38 +1,53 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-#include "tests/common.h"
 
-#include "tests/common/tester_shore_shell.h"
+#include <procfs.h>
 
-#include "workload/tpcc/shore_tpcc_env.h"
-#include "sm/shore/shore_helper_loader.h"
+#include <iostream>
+#include <fstream>
 
-#include "dora.h"
-#include "dora/tpcc/dora_tpcc.h"
+#include "util/prcinfo.h"
 
+using namespace std;
 
-using namespace dora;
-using namespace tpcc;
+ifstream::pos_type size;
 
-
-
-
-int main(int argc, char* argv[]) 
+int main () 
 {
-    thread_init();
 
+    processinfo_t aprcinfo;
 
-    TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
-               //              | TRACE_QUERY_RESULTS
-               //              | TRACE_PACKET_FLOW
-               //               | TRACE_RECORD_FLOW
-               //               | TRACE_TRX_FLOW
-               | TRACE_DEBUG
-              );
+    sleep(1);
 
-
-    return (0);
+    for (int i=0; i<1200; i++) {
+        printf(".");
+    }
+    
+    aprcinfo.print();
+    
+    return 0;
 }
+
+
+// #include "tests/common/tester_common.h"
+// int main(int argc, char* argv[]) 
+// {
+//     thread_init();
+
+//     open("/proc/self");
+
+
+//     TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS | TRACE_NETWORK | TRACE_CPU_BINDING
+//                //              | TRACE_QUERY_RESULTS
+//                //              | TRACE_PACKET_FLOW
+//                //               | TRACE_RECORD_FLOW
+//                //               | TRACE_TRX_FLOW
+//                | TRACE_DEBUG
+//                );
+
+
+//     return (0);
+// }
 
 
 

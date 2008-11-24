@@ -31,6 +31,7 @@
 #include "util/command/command_handler.h"
 #include "util/command/tracer.h"
 #include "util/envvar.h"
+#include "util/prcinfo.h"
 
 #include "util.h"
 
@@ -105,6 +106,15 @@ struct conf_cmd_t : public command_handler_t {
 };
 
 
+struct cpustat_cmd_t : public command_handler_t {
+    processinfo_t myinfo;
+    void setaliases();
+    const int handle(const char* cmd);
+    void usage();
+    const string desc() { return (string("Process cpu usage/statitics")); }
+};
+
+
 
 
 /*********************************************************************
@@ -123,7 +133,7 @@ struct conf_cmd_t : public command_handler_t {
 
 class shell_t 
 {
-private:
+protected:
 
     bool  _save_history;
     int   _state;
@@ -135,7 +145,10 @@ private:
     guard<env_cmd_t>  _enver;
     guard<conf_cmd_t> _confer;
     guard<trace_cmd_t>   _tracer;
-    
+    guard<cpustat_cmd_t> _cpustater;
+
+
+
     const int _register_commands();    
 
 protected:
@@ -152,8 +165,7 @@ public:
 
     shell_t(const char* prompt = QPIPE_PROMPT, bool save_history = true) 
         : _cmd_counter(0), _save_history(save_history), 
-          _state(SHELL_NEXT_CONTINUE), _processing_command(false),
-          _tracer(NULL)
+          _state(SHELL_NEXT_CONTINUE), _processing_command(false)
     {
         _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
         if (prompt) strncpy(_cmd_prompt, prompt, strlen(prompt));

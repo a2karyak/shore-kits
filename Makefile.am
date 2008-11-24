@@ -96,6 +96,7 @@ UTIL = \
         $(SU)/countdown.cpp \
         $(SU)/confparser.cpp \
         $(SU)/envvar.cpp \
+        $(SU)/prcinfo.cpp \
         $(SU)/shell.cpp
 
 UTIL_CMD = \

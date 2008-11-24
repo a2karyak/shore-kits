@@ -212,6 +212,10 @@ const int shell_t::_register_commands()
     _tracer->setaliases();
     add_cmd(_tracer.get());
 
+    _cpustater = new cpustat_cmd_t();        
+    _cpustater->setaliases();
+    add_cmd(_cpustater.get());
+
     _confer = new conf_cmd_t();        
     _confer->setaliases();
     add_cmd(_confer.get());
@@ -392,4 +396,29 @@ const int conf_cmd_t::handle(const char* cmd)
 void conf_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "CONF - Tries to reread all the set env vars from the config file\n");
+}
+
+
+/*********************************************************************
+ *
+ *  CPUSTAT
+ *
+ *********************************************************************/
+
+void cpustat_cmd_t::setaliases() 
+{    
+    _name = string("cpu");
+    _aliases.push_back("cpu");
+    _aliases.push_back("cpustats");
+}
+
+const int cpustat_cmd_t::handle(const char* cmd)
+{    
+    myinfo.print();
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void cpustat_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "CPUSTAT - Prints cpu usage for the process\n");
 }

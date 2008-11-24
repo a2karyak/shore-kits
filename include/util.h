@@ -37,6 +37,7 @@
 #include "util/confparser.h"
 #include "util/envvar.h"
 #include "util/shell.h"
+#include "util/prcinfo.h"
 #include "util/condex.h"
 
 

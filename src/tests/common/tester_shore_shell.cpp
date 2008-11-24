@@ -313,6 +313,10 @@ int shore_shell_t::process_command(const char* cmd,
     // make sure any previous abort is cleared
     base_client_t::resume_test();
 
+
+    // print processor usage info
+    _cpustater->myinfo.reset();
+
     // TRXS cmd
     if (strcasecmp(cmd_tag, "TRXS") == 0) {
         return (process_cmd_TRXS(cmd, cmd_tag));
