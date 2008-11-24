@@ -58,12 +58,15 @@ private:
     int _wh;
     tpcc_worker_t* _worker;
 
+    
+
 public:
 
     baseline_tpcc_client_t() { }     
 
     baseline_tpcc_client_t(c_str tname, const int id, ShoreTPCCEnv* env, 
-                           MeasurementType aType, int trxid, int numOfTrxs, int useSLI,
+                           const MeasurementType aType, const int trxid, 
+                           const int numOfTrxs, const int useSLI,
                            processorid_t aprsid, int sWH) 
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
           _tpccdb(env), _wh(sWH)
@@ -109,7 +112,8 @@ public:
     dora_tpcc_client_t() { }     
 
     dora_tpcc_client_t(c_str tname, const int id, DoraTPCCEnv* env, 
-                       MeasurementType aType, int trxid, int numOfTrxs, int useSLI,
+                       const MeasurementType aType, const int trxid, 
+                       const int numOfTrxs, const int useSLI,
                        processorid_t aprsid, int sWH) 
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
           _tpccdb(env), _wh(sWH)

@@ -44,6 +44,10 @@ void base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz)
     assert (batch_sz);
     assert (_cp);
     for(int j=1; j <= batch_sz; j++) {
+
+        // adding think time
+        usleep(_think_time);
+
         if (j == batch_sz) {
             _cp->take_one = true;
             _cp->index = 1-_cp->index;
@@ -67,6 +71,14 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     int i=0;
     int batchsz=1;
 
+    // retrieve the default batch size and think time
+    batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
+    _think_time = envVar::instance()->getVarInt("db-cl-thinktime",THINK_TIME);
+
+    if ((_think_time>0) && (batchsz>1)) {
+        TRACE( TRACE_ALWAYS, "error: Batchsz=%d && ThinkTime=%d\n", batchsz, _think_time);
+    }
+
     switch (_measure_type) {
 
         // case of number-of-trxs-based measurement
@@ -81,9 +93,6 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 
         // case of duration-based measurement
     case (MT_TIME_DUR):
-
-        // retrieve the default batch size
-        batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
 	
 	// submit the first two batches...
 	submit_batch(xct_type, i, batchsz);

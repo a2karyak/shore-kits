@@ -76,6 +76,9 @@ const int DF_WARMUP_ITERS       = 3;
 // default batch size
 const int BATCH_SIZE = 10;
 
+// default think time
+const int THINK_TIME = 0;
+
 
 // Instanciate and close the Shore environment
 int inst_test_env(int argc, char* argv[]);
@@ -123,6 +126,8 @@ protected:
     int _notrxs;
     int _use_sli;
 
+    int _think_time; // in microseconds
+
     // used for submitting batches
     guard<condex_pair> _cp;
 
@@ -137,15 +142,17 @@ public:
 
     base_client_t() 
         : thread_t("none"), _env(NULL), _measure_type(MT_UNDEF), 
-          _trxid(-1), _notrxs(-1), _use_sli(-1), _is_bound(false), _prs_id(PBIND_NONE),
+          _trxid(-1), _notrxs(-1), _use_sli(-1), _think_time(0),
+          _is_bound(false), _prs_id(PBIND_NONE),
           _rv(1)
     { }
     
     base_client_t(c_str tname, const int id, ShoreEnv* env, 
-                  MeasurementType aType, int trxid, int numOfTrxs, int useSLI,
+                  const MeasurementType aType, const int trxid, 
+                  const int numOfTrxs, const int useSLI,                   
                   processorid_t aprsid = PBIND_NONE) 
-	: thread_t(tname), _id(id), _env(env), 
-          _measure_type(aType), _trxid(trxid), _notrxs(numOfTrxs), _use_sli(useSLI),
+	: thread_t(tname), _id(id), _env(env), _measure_type(aType), 
+          _trxid(trxid), _notrxs(numOfTrxs), _use_sli(useSLI), _think_time(0),
           _is_bound(false), _prs_id(aprsid), _rv(0)
     {
         assert (_env);
