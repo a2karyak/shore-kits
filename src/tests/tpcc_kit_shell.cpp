@@ -393,7 +393,54 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
     return (SHELL_NEXT_CONTINUE);
 }
 
+namespace tpcc {
 
+struct xct_count {
+    int nord;
+    int stock;
+    int delivery;
+    int payment;
+    int status;
+    xct_count &operator+=(xct_count const& other) {
+	nord += other.nord;
+	stock += other.stock;
+	delivery += other.delivery;
+	payment += other.payment;
+	status += other.status;
+	return *this;
+    }
+    xct_count &operator-=(xct_count const& other) {
+	nord -= other.nord;
+	stock -= other.stock;
+	delivery -= other.delivery;
+	payment -= other.payment;
+	status -= other.status;
+	return *this;
+    }
+};
+struct xct_stats {
+    xct_count attempted;
+    xct_count failed;
+    xct_stats &operator+=(xct_stats const &other) {
+	attempted += other.attempted;
+	failed += other.failed;
+	return *this;
+    };
+    xct_stats &operator-=(xct_stats const &other) {
+	attempted -= other.attempted;
+	failed -= other.failed;
+	return *this;
+    };
+};
+
+extern xct_stats shell_get_xct_stats();
+}
+
+namespace shore {
+    extern void shell_expect_clients(int count);
+    extern void shell_await_clients();
+
+}
 
 /** cmd: MEASURE **/
 
@@ -413,17 +460,13 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
 
     // create and fork client threads
     Client* testers[MAX_NUM_OF_THR];
-    for (int j=0; j<iIterations; j++) {
-
-        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
-               (j+1), iIterations);
-
         // reset starting cpu and wh id
         _current_prs_id = _start_prs_id;
         int wh_id = 0;
 
         // set measurement state
         _env->set_measure(MST_WARMUP);
+	shell_expect_clients(iNumOfThreads);
 
         // 1. create and fork client threads
         for (int i=0; i<iNumOfThreads; i++) {
@@ -439,14 +482,56 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         }
 
         // give them some time (2secs) to start-up
-        sleep(DF_WARMUP_INTERVAL);
+	shell_await_clients();
+
+    
+    for (int j=0; j<iIterations; j++) {
+
+        sleep(1);
+        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
+               (j+1), iIterations);
 
         // set measurement state
+	TRACE(TRACE_ALWAYS, "begin measurement\n");
         _env->set_measure(MST_MEASURE);
-        alarm(iDuration);
+	xct_stats statsb = shell_get_xct_stats();
+	//        alarm(iDuration);
 	stopwatch_t timer;
+	_cpustater->myinfo.reset();
+	sleep(iDuration);
+	xct_stats stats = shell_get_xct_stats();
+	stats -= statsb;
+	
+	double delay = timer.time();
+	_cpustater->myinfo.print();
+	TRACE(TRACE_ALWAYS, "end measurement\n");
+
+	int attempted = stats.attempted.nord+stats.attempted.payment+stats.attempted.status+stats.attempted.stock+stats.attempted.delivery;
+	int failed = stats.failed.nord+stats.failed.payment+stats.failed.status+stats.failed.stock+stats.failed.delivery;
+	int nord = stats.attempted.nord-stats.failed.nord;
+	
+	printf("WH:\t%d\n"
+	       "Spread:\t%s\n"
+	       "SLI:\t%s\n"
+	       "Threads:\t%d\n"
+	       "Trx Att:\t%d\n"
+	       "Trx Abt:\t%d\n"
+	       "NOrd Com:\t%d\n"
+	       "Secs:\t%.2lf\n"
+	       "TPS:\t%.2lf\n"
+	       "tpm-C:\t%.2lf\n",
+	       iQueriedWHs, iSpread? "yes" : "no", iUseSLI? "yes" : "no", iNumOfThreads,
+	       attempted, failed, nord,
+	       delay, (attempted-failed)/delay, 60*nord/delay);
+	       
+        // print throughput and reset session stats
+        //print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
+	//        _tpccdb->reset_session_tpcc_stats();
+
+    }
 
         // 2. join the tester threads
+	_env->set_measure(MST_DONE);
         for (int i=0; i<iNumOfThreads; i++) {
             testers[i]->join();
 	    fprintf(stderr,".");
@@ -458,22 +543,10 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
             delete (testers[i]);
         }
 
-	double delay = timer.time();
-	alarm(0); // cancel the alarm, if any
-
-        // print throughput and reset session stats
-        print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
-        _tpccdb->reset_session_tpcc_stats();
-
-
-        // flush the log before the next iteration
-        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
-        _env->checkpoint();
-        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
-    }
+	//	alarm(0); // cancel the alarm, if any
 
     // print processor usage info
-    _cpustater->myinfo.print();
+    //    _cpustater->myinfo.print();
 
     // set measurement state
     _env->set_measure(MST_DONE);

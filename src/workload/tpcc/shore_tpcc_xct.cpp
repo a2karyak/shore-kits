@@ -10,6 +10,9 @@
 #include "workload/tpcc/shore_tpcc_env.h"
 #include "stages/tpcc/common/tpcc_random.h"
 
+#include <vector>
+#include <numeric>
+#include <algorithm>
 
 using namespace shore;
 
@@ -88,6 +91,69 @@ w_rc_t ShoreTPCCEnv::run_one_xct(int xct_type, const int xctid,
  *
  ********************************************************************/
 
+struct xct_count {
+    int nord;
+    int stock;
+    int delivery;
+    int payment;
+    int status;
+    xct_count &operator+=(xct_count const& other) {
+	nord += other.nord;
+	stock += other.stock;
+	delivery += other.delivery;
+	payment += other.payment;
+	status += other.status;
+	return *this;
+    }
+    xct_count &operator-=(xct_count const& other) {
+	nord -= other.nord;
+	stock -= other.stock;
+	delivery -= other.delivery;
+	payment -= other.payment;
+	status -= other.status;
+	return *this;
+    }
+};
+struct xct_stats {
+    xct_count attempted;
+    xct_count failed;
+    xct_stats &operator+=(xct_stats const &other) {
+	attempted += other.attempted;
+	failed += other.failed;
+	return *this;
+    };
+    xct_stats &operator-=(xct_stats const &other) {
+	attempted -= other.attempted;
+	failed -= other.failed;
+	return *this;
+    };
+};
+
+static __thread xct_stats my_stats;
+typedef std::map<pthread_t, xct_stats*> statmap_t;
+static statmap_t statmap;
+static pthread_mutex_t statmap_lock = PTHREAD_MUTEX_INITIALIZER;
+
+// hooks for tpcc_worker_t::_work_ACTIVE_impl
+extern void worker_thread_init() {
+    CRITICAL_SECTION(cs, statmap_lock);
+    statmap[pthread_self()] = &my_stats;
+}
+extern void worker_thread_fini() {
+    CRITICAL_SECTION(cs, statmap_lock);
+    statmap.erase(pthread_self());
+}
+
+// hook for the shell to get totals
+extern xct_stats shell_get_xct_stats() {
+    CRITICAL_SECTION(cs, statmap_lock);
+    xct_stats rval;
+    rval -= rval; // dirty hack to set all zeros
+    for(statmap_t::iterator it=statmap.begin(); it != statmap.end(); ++it) 
+	rval += *it->second;
+
+    return rval;
+}
 
 /* --- with input specified --- */
 
@@ -96,9 +162,10 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
                                    trx_result_tuple_t& atrt)
 {
     TRACE( TRACE_TRX_FLOW, "%d. NEW-ORDER...\n", xct_id);     
-    
+    ++my_stats.attempted.nord;
     w_rc_t e = xct_new_order(&anoin, xct_id, atrt);
     if (e.is_error()) {
+	++my_stats.failed.nord;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) NewOrder aborted [0x%x]\n", 
                xct_id, e.err_num());
         
@@ -116,8 +183,8 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
             return (e);
         }
 
-        _total_tpcc_stats.inc_no_att();
-        _session_tpcc_stats.inc_no_att();
+//        _total_tpcc_stats.inc_no_att();
+//        _session_tpcc_stats.inc_no_att();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -132,8 +199,8 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
         return (RCOK);
     }
 
-    _total_tpcc_stats.inc_no_com();
-    _session_tpcc_stats.inc_no_com();
+//    _total_tpcc_stats.inc_no_com();
+//    _session_tpcc_stats.inc_no_com();
     _env_stats.inc_trx_com();
     return (RCOK); 
 }
@@ -144,8 +211,10 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
 {
     TRACE( TRACE_TRX_FLOW, "%d. PAYMENT...\n", xct_id);     
     
+    ++my_stats.attempted.payment;
     w_rc_t e = xct_payment(&apin, xct_id, atrt);
     if (e.is_error()) {
+	++my_stats.failed.payment;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) Payment aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -168,8 +237,8 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
             return (e);
         }
 
-        _total_tpcc_stats.inc_pay_att();
-        _session_tpcc_stats.inc_pay_att();
+//        _total_tpcc_stats.inc_pay_att();
+//        _session_tpcc_stats.inc_pay_att();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -184,8 +253,8 @@ w_rc_t ShoreTPCCEnv::run_payment(const int xct_id,
         return (RCOK); 
     }
 
-    _total_tpcc_stats.inc_pay_com();
-    _session_tpcc_stats.inc_pay_com();
+//    _total_tpcc_stats.inc_pay_com();
+//    _session_tpcc_stats.inc_pay_com();
     _env_stats.inc_trx_com();
     return (RCOK); 
 }
@@ -195,9 +264,11 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
                                       trx_result_tuple_t& atrt)
 {
     TRACE( TRACE_TRX_FLOW, "%d. ORDER-STATUS...\n", xct_id);     
-    
+
+    ++my_stats.attempted.status;
     w_rc_t e = xct_order_status(&aordstin, xct_id, atrt);
     if (e.is_error()) {
+	++my_stats.failed.status;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) OrderStatus aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -215,8 +286,8 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
             return (e);
         }
 
-        _total_tpcc_stats.inc_ord_att();
-        _session_tpcc_stats.inc_ord_att();
+//        _total_tpcc_stats.inc_ord_att();
+//        _session_tpcc_stats.inc_ord_att();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -231,8 +302,8 @@ w_rc_t ShoreTPCCEnv::run_order_status(const int xct_id,
         return (RCOK);
     }
 
-    _total_tpcc_stats.inc_ord_com();
-    _session_tpcc_stats.inc_ord_com();
+//    _total_tpcc_stats.inc_ord_com();
+//    _session_tpcc_stats.inc_ord_com();
     _env_stats.inc_trx_com();
     return (RCOK); 
 }
@@ -242,9 +313,11 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
                                   trx_result_tuple_t& atrt)
 {
     TRACE( TRACE_TRX_FLOW, "%d. DELIVERY...\n", xct_id);     
-    
+
+    ++my_stats.attempted.delivery;
     w_rc_t e = xct_delivery(&adelin, xct_id, atrt);
     if (e.is_error()) {
+	++my_stats.failed.delivery;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) Delivery aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -262,8 +335,8 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
             return (e);
         }
 
-        _total_tpcc_stats.inc_del_att();
-        _session_tpcc_stats.inc_del_att();
+//        _total_tpcc_stats.inc_del_att();
+//        _session_tpcc_stats.inc_del_att();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -278,8 +351,8 @@ w_rc_t ShoreTPCCEnv::run_delivery(const int xct_id,
         return (RCOK); 
     }
 
-    _total_tpcc_stats.inc_del_com();
-    _session_tpcc_stats.inc_del_com();
+//    _total_tpcc_stats.inc_del_com();
+//    _session_tpcc_stats.inc_del_com();
     _env_stats.inc_trx_com();
     return (RCOK); 
 }
@@ -289,9 +362,11 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
                                      trx_result_tuple_t& atrt)
 {
     TRACE( TRACE_TRX_FLOW, "%d. STOCK-LEVEL...\n", xct_id);     
-    
+
+    ++my_stats.attempted.stock;
     w_rc_t e = xct_stock_level(&astoin, xct_id, atrt);
     if (e.is_error()) {
+	++my_stats.failed.stock;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) StockLevel aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -309,8 +384,8 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
             return (e);
         }
 
-        _total_tpcc_stats.inc_sto_att();
-        _session_tpcc_stats.inc_sto_att();
+//        _total_tpcc_stats.inc_sto_att();
+//        _session_tpcc_stats.inc_sto_att();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -325,8 +400,8 @@ w_rc_t ShoreTPCCEnv::run_stock_level(const int xct_id,
         return (RCOK);
     }
 
-    _total_tpcc_stats.inc_sto_com();
-    _session_tpcc_stats.inc_sto_com();
+//    _total_tpcc_stats.inc_sto_com();
+//    _session_tpcc_stats.inc_sto_com();
     _env_stats.inc_trx_com();
     return (RCOK); 
 }
@@ -1281,7 +1356,7 @@ done:
  * @note: Delivers one new_order (undelivered order) from each district
  *
  ********************************************************************/
-
+unsigned int delivery_abort_ctr = 0;
 
 w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin, 
                                   const int xct_id, 
@@ -1293,6 +1368,8 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     assert (_initialized);
     assert (_loaded);
 
+    static bool const SPLIT_TRX = false;
+    
     register int w_id       = pdin->_wh_id;
     register int carrier_id = pdin->_carrier_id; 
     time_t ts_start = time(NULL);
@@ -1332,12 +1409,22 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
     // table representations
     lowrep.set(_porder_line_desc->maxsize()); 
     highrep.set(_porder_line_desc->maxsize()); 
-    sortrep.set(_porder_line_desc->maxsize()); 
+    sortrep.set(_porder_line_desc->maxsize());
 
+    std::vector<int> dlist(DISTRICTS_PER_WAREHOUSE);
+    std::iota(dlist.begin(), dlist.end(), 1);
+    if(SPLIT_TRX)
+	std::random_shuffle(dlist.begin(), dlist.end());
+
+    int d_id;
+    
+ again:
     { // make gotos safe
 
         /* process each district separately */
-        for (int d_id = 1; d_id <= DISTRICTS_PER_WAREHOUSE; d_id ++) {
+	while(dlist.size()) {
+	    d_id = dlist.back();
+	    dlist.pop_back();	    
 
             /* 1. Get the new_order of the district, with the min value */
 
@@ -1481,6 +1568,13 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
             e = _pcustomer_man->update_tuple(_pssm, prcust);
             if (e.is_error()) { goto done; }
+
+	    if(SPLIT_TRX && dlist.size()) {
+		e = _pssm->commit_xct();
+		if (e.is_error()) { goto done; }
+		e = _pssm->begin_xct();
+		if (e.is_error()) { goto done; }
+	    }
         }
 
         /* 4. commit */
@@ -1503,6 +1597,13 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 #endif
 
 done:
+    if(SPLIT_TRX && e.err_num() == smlevel_0::eDEADLOCK) {
+	W_COERCE(_pssm->abort_xct());
+	W_DO(_pssm->begin_xct());
+	atomic_inc_32(&delivery_abort_ctr);
+	dlist.push_back(d_id); // retry the failed trx
+	goto again;
+    }
     // return the tuples to the cache
     _pcustomer_man->give_tuple(prcust);
     _pnew_order_man->give_tuple(prno);
@@ -1768,8 +1869,8 @@ w_rc_t ShoreTPCCEnv::run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt,
             return (e);
         }
 
-        _total_tpcc_stats.inc_other_com();
-        _session_tpcc_stats.inc_other_com();
+//        _total_tpcc_stats.inc_other_com();
+//        _session_tpcc_stats.inc_other_com();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -1784,8 +1885,8 @@ w_rc_t ShoreTPCCEnv::run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt,
         return (RCOK);
     }
 
-    _total_tpcc_stats.inc_other_com();
-    _session_tpcc_stats.inc_other_com();
+//    _total_tpcc_stats.inc_other_com();
+//    _session_tpcc_stats.inc_other_com();
     _env_stats.inc_trx_com();
     return (RCOK); 
 }
@@ -1955,8 +2056,8 @@ w_rc_t ShoreTPCCEnv::run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt,
             return (e);
         }
 
-        _total_tpcc_stats.inc_other_com();
-        _session_tpcc_stats.inc_other_com();
+//        _total_tpcc_stats.inc_other_com();
+//        _session_tpcc_stats.inc_other_com();
         _env_stats.inc_trx_att();
         return (e);
     }
@@ -1971,8 +2072,8 @@ w_rc_t ShoreTPCCEnv::run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt,
         return (RCOK);
     }
 
-    _total_tpcc_stats.inc_other_com();
-    _session_tpcc_stats.inc_other_com();
+//    _total_tpcc_stats.inc_other_com();
+//    _session_tpcc_stats.inc_other_com();
     _env_stats.inc_trx_com();    
     return (RCOK); 
 }

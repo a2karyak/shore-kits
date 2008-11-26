@@ -44,6 +44,9 @@ void tpcc_worker_t::enqueue(Request* arequest)
  * 
  ******************************************************************/
 
+extern void worker_thread_init();
+extern void worker_thread_fini();
+
 const int tpcc_worker_t::_work_ACTIVE_impl()
 {    
     //    TRACE( TRACE_DEBUG, "Activating...\n");
@@ -60,7 +63,7 @@ const int tpcc_worker_t::_work_ACTIVE_impl()
     }
 
     // state (WC_ACTIVE)
-
+    worker_thread_init();
     // Start serving actions from the partition
     w_rc_t e;
     Request* ar = NULL;
@@ -84,6 +87,7 @@ const int tpcc_worker_t::_work_ACTIVE_impl()
             ++_stats._served_input;
         }
     }
+    worker_thread_fini();
     return (0);
 }
 

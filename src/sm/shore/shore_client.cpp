@@ -57,6 +57,22 @@ void base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz)
     }
 }
 
+static pthread_mutex_t client_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t client_cond = PTHREAD_COND_INITIALIZER;
+static int client_needed_count;
+extern void shell_expect_clients(int count) {
+    client_needed_count = count;
+}
+extern void shell_await_clients() {
+    CRITICAL_SECTION(cs, client_mutex);
+    while(client_needed_count)
+	pthread_cond_wait(&client_cond, &client_mutex);
+}
+void client_ready() {
+    CRITICAL_SECTION(cs, client_mutex);
+    if(! --client_needed_count)
+	pthread_cond_signal(&client_cond);
+}
 
 /********************************************************************* 
  *
@@ -71,6 +87,8 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     int i=0;
     int batchsz=1;
 
+    client_ready();
+    
     // retrieve the default batch size and think time
     batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
     _think_time = envVar::instance()->getVarInt("db-cl-thinktime",THINK_TIME);
