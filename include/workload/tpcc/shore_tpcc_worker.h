@@ -102,8 +102,9 @@ private:
 public:
 
     tpcc_worker_t(ShoreEnv* env,ShoreTPCCEnv* tpcc, //ugly
-                  c_str tname, processorid_t aprsid = PBIND_NONE) 
-        : base_worker_t(env, tname, aprsid), _tpccdb(tpcc)
+                  c_str tname, 
+                  processorid_t aprsid = PBIND_NONE, const int use_sli = 0) 
+        : base_worker_t(env, tname, aprsid, use_sli), _tpccdb(tpcc)
     { 
         assert (env);
     }

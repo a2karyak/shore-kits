@@ -197,7 +197,7 @@ void processinfo_t::prtime(string label, timestruc_t* ts)
 {
     char buf[32];
     hr_min_sec(buf, ts->tv_sec);
-    cerr << label << buf << "." << (u_int)ts->tv_nsec/1000000 << endl;
+    cout << label << buf << "." << (u_int)ts->tv_nsec/1000000 << endl;
 }
 
 

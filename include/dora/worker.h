@@ -53,8 +53,8 @@ private:
 public:
 
     dora_worker_t(ShoreEnv* env, Partition* apart, c_str tname,
-                  processorid_t aprsid = PBIND_NONE) 
-        : base_worker_t(env, tname, aprsid),
+                  processorid_t aprsid = PBIND_NONE, const int use_sli = 0) 
+        : base_worker_t(env, tname, aprsid, use_sli),
           _partition(apart)
     { }
 

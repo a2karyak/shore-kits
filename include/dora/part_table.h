@@ -71,20 +71,16 @@ public:
 
     part_table_t(ShoreEnv* env, table_desc_t* ptable,
                  const processorid_t aprs,
-                 const int acpurange,
-                 const int apcnt = DF_NUM_OF_PARTITIONS_PER_TABLE) 
+                 const int acpurange) 
         : _env(env), _table(ptable), 
-          _pcnt(apcnt),
           _start_prs_id(aprs), _next_prs_id(aprs), 
-          _prs_range(acpurange)
+          _prs_range(acpurange),
+          _pcnt(0)
     {
         assert (_env);
         assert (_table);        
         assert (aprs<=_env->get_max_cpu_count());
         assert (acpurange<=_env->get_active_cpu_count());
-
-        assert (apcnt);
-        //config(apcnt);
     }
 
     virtual ~part_table_t() { }    
@@ -243,7 +239,8 @@ inline const int part_table_t<Partition>::create_one_part()
 template <typename Partition>
 const int part_table_t<Partition>::reset()
 {
-    TRACE( TRACE_DEBUG, "Reseting...\n");
+    TRACE( TRACE_DEBUG, "Reseting (%s)...\n", _table->name());
+    _next_prs_id = _start_prs_id;
     for (int i=0; i<_ppvec.size(); i++) {
         _ppvec[i]->reset(_next_prs_id);
         CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
@@ -273,10 +270,11 @@ const int part_table_t<Partition>::reset()
  ******************************************************************/
 
 template <typename Partition>
-inline processorid_t part_table_t<Partition>::next_cpu(const processorid_t aprd) 
+processorid_t part_table_t<Partition>::next_cpu(const processorid_t aprd) 
 {
-    processorid_t nextprs = ((aprd+DF_CPU_STEP_PARTITIONS) % _env->get_active_cpu_count());
-    TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
+    int partition_step = envVar::instance()->getVarInt("dora-cpu-partition-step",
+                                                       DF_CPU_STEP_PARTITIONS);
+    processorid_t nextprs = ((aprd+partition_step) % _env->get_active_cpu_count());
     return (nextprs);
 }
 
@@ -296,7 +294,7 @@ inline processorid_t part_table_t<Partition>::next_cpu(const processorid_t aprd)
 template <typename Partition>
 const int part_table_t<Partition>::_create_one_part()
 {
-    TRACE( TRACE_DEBUG, "Creating one partition...\n");  
+    //    TRACE( TRACE_DEBUG, "(%s) creating one partition...\n", _table->name());  
     assert (0); // TODO
     return (0);
 }

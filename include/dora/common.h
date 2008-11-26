@@ -19,9 +19,10 @@ ENTER_NAMESPACE(dora);
 
 // CONSTANTS
 
-const int DF_CPU_RANGE           = 4;         // cpu range for each table
-const int DF_CPU_STEP_TABLES     = 4;         // next-cpu among different tables
-const int DF_CPU_STEP_PARTITIONS = 1;         // next-cpu among partitions of the same table
+const int DF_CPU_RANGE           = 8;         // cpu range for each table
+const int DF_CPU_STARTING        = 2;         // starting cpu
+const int DF_CPU_STEP_TABLES     = 16;        // next-cpu among different tables
+const int DF_CPU_STEP_PARTITIONS = 2;         // next-cpu among partitions of the same table
 
 const int DF_NUM_OF_PARTITIONS_PER_TABLE = 1; // number of partitions per table
 const int DF_NUM_OF_STANDBY_THRS         = 0; // TODO: (ip) assume main-memory 

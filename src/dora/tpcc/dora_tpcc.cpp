@@ -36,6 +36,7 @@ const int OL_IRP_KEY = 4;
 const int ST_IRP_KEY = 2;
 
 
+
 /****************************************************************** 
  *
  * @fn:    start()
@@ -56,8 +57,12 @@ const int DoraTPCCEnv::start()
     // 2. Add them to the vector
     // 3. Reset each table
 
+    envVar* ev = envVar::instance();
+    int starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
+    int cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
+
     int range = get_active_cpu_count();
-    processorid_t icpu(8);
+    processorid_t icpu(starting_cpu);
     int sf = upd_sf();
     TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", sf);
  
@@ -69,6 +74,8 @@ const int DoraTPCCEnv::start()
     int aboundary = 0;
     partDown.push_back(aboundary);
     partUp.push_back(sf);
+   
+    
 
     // WAREHOUSE
     _wh_irpt = new irpTableImpl(this, warehouse(), icpu, range, WH_IRP_KEY);
@@ -89,7 +96,7 @@ const int DoraTPCCEnv::start()
         _wh_irpt->get_part(i)->resize(partDown,partUp);
     }
     _irptp_vec.push_back(_wh_irpt);
-    icpu = _next_cpu(icpu, _wh_irpt, sf);
+    icpu = _next_cpu(icpu, _wh_irpt, cpu_table_step);
 
     // DISTRICT
     _di_irpt = new irpTableImpl(this, district(), icpu, range, DI_IRP_KEY);
@@ -110,7 +117,7 @@ const int DoraTPCCEnv::start()
         _di_irpt->get_part(i)->resize(partDown,partUp);
     }
     _irptp_vec.push_back(_di_irpt);
-    icpu = _next_cpu(icpu, _di_irpt, sf);    
+    icpu = _next_cpu(icpu, _di_irpt, cpu_table_step);    
 
     // HISTORY
     _hi_irpt = new irpTableImpl(this, this->history(), icpu, range, HI_IRP_KEY);
@@ -131,7 +138,7 @@ const int DoraTPCCEnv::start()
         _hi_irpt->get_part(i)->resize(partDown,partUp);
     }
     _irptp_vec.push_back(_hi_irpt);
-    icpu = _next_cpu(icpu, _hi_irpt, sf);    
+    icpu = _next_cpu(icpu, _hi_irpt, cpu_table_step);    
 
 
     // CUSTOMER
@@ -153,7 +160,7 @@ const int DoraTPCCEnv::start()
         _cu_irpt->get_part(i)->resize(partDown,partUp);
     }
     _irptp_vec.push_back(_cu_irpt);
-    icpu = _next_cpu(icpu, _cu_irpt, sf);
+    icpu = _next_cpu(icpu, _cu_irpt, cpu_table_step);
 
 
     /*
@@ -412,11 +419,11 @@ const int DoraTPCCEnv::statistics()
  ******************************************************************/
 
 const processorid_t DoraTPCCEnv::_next_cpu(const processorid_t aprd,
-                                            const irpTableImpl* atable,
-                                            const int step)
+                                           const irpTableImpl* atable,
+                                           const int step)
 {    
     processorid_t nextprs = ((aprd+step) % this->get_active_cpu_count());
-    TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
+    //TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);
 }
 

@@ -159,8 +159,13 @@ const bool range_partition_impl<DataType>::resize(const Key& downLimit,
     _up = upLimit;
     _rp_state = RPS_SET;
 
-    TRACE( TRACE_DEBUG, "RangePartition resized\n");
-    //cout << "Down: " << _down << " - Up: " << _up << "\n";
+    ostringstream out;
+    string sout;
+    out << _down << "-" << _up;
+    sout = out.str();
+
+    TRACE( TRACE_DEBUG, "RangePartition (%s-%d) resized (%s)\n", 
+           _table->name(), _part_id, sout.c_str());
     return (true);
 }
 

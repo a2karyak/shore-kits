@@ -174,7 +174,7 @@ const int ShoreTPCCEnv::start()
     info();
 
     // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-queueloops",0);    
+    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
 
     WorkerPtr aworker;
     for (int i=0; i<_worker_cnt; i++) {
