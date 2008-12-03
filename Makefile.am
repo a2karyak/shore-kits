@@ -97,6 +97,7 @@ UTIL = \
         $(SU)/confparser.cpp \
         $(SU)/envvar.cpp \
         $(SU)/prcinfo.cpp \
+        $(SU)/stl_pool.cpp \
         $(SU)/shell.cpp
 
 UTIL_CMD = \
