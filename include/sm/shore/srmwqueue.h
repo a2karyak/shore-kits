@@ -27,11 +27,12 @@ ENTER_NAMESPACE(shore);
 template<class Action>
 struct srmwqueue 
 {
-    typedef std::vector<Action*> ActionVec;
+    typedef typename PooledVec<Action*>::Type ActionVec;
+    typedef typename ActionVec::iterator ActionVecIt;
 
-    ActionVec _for_writers;
-    ActionVec _for_readers;
-    typename ActionVec::iterator _read_pos;
+    guard<ActionVec> _for_writers;
+    guard<ActionVec> _for_readers;
+    ActionVecIt _read_pos;
     mcs_lock      _lock;
     int volatile  _empty;
 
@@ -43,10 +44,13 @@ struct srmwqueue
     base_worker_t* _owner;
     tatas_lock     _owner_lock;    
 
-    srmwqueue() : 
-        _empty(true), _my_ws(WS_UNDEF), _owner(NULL) 
+    srmwqueue(Pool* actionPtrPool) : 
+        _empty(true), _my_ws(WS_UNDEF), _owner(NULL)
     { 
-        _read_pos = _for_readers.begin();
+        assert (actionPtrPool);
+        _for_writers = new ActionVec(actionPtrPool);
+        _for_readers = new ActionVec(actionPtrPool);
+        _read_pos = _for_readers->begin();
     }
     ~srmwqueue() { }
 
@@ -65,7 +69,7 @@ struct srmwqueue
 
     // !!! @note: should be called only by the reader !!!
     int is_empty(void) const {
-        return ((_read_pos == _for_readers.end()) && (*&_empty));
+        return ((_read_pos == _for_readers->end()) && (*&_empty));
     }
 
     // spins until new input is set
@@ -89,9 +93,12 @@ struct srmwqueue
             // 4. if spinned too much, start waiting on the condex
             if (++loopcnt > _loops) {
                 loopcnt = 0;
-                
+
+                //if (!_owner->can_continue_cs(_my_ws)) return (false);
+            
+    
                 TRACE( TRACE_TRX_FLOW, "Condex sleeping (%d)...\n", _my_ws);
-                assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
+                //assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
                 loopcnt = _owner->condex_sleep();
                 TRACE( TRACE_TRX_FLOW, "Condex woke (%d) (%d)...\n", _my_ws, loopcnt);
 
@@ -107,18 +114,18 @@ struct srmwqueue
     
 	{
 	    CRITICAL_SECTION(cs, _lock);
-	    _for_readers.clear();
-	    _for_writers.swap(_for_readers);
+	    _for_readers->erase(_for_readers->begin(),_for_readers->end());
+	    _for_writers->swap(*_for_readers);
 	    _empty = true;
 	}
     
-	_read_pos = _for_readers.begin();
+	_read_pos = _for_readers->begin();
 	return (true);
     }
     
     Action* pop() {
         // pops an action from the input vector, or waits for one to show up
-	if ((_read_pos == _for_readers.end()) && (!wait_for_input()))
+	if ((_read_pos == _for_readers->end()) && (!wait_for_input()))
 	    return (NULL);
 	return (*(_read_pos++));
     }
@@ -130,7 +137,7 @@ struct srmwqueue
         // push action
         {
             CRITICAL_SECTION(cs, _lock);
-            _for_writers.push_back(a);
+            _for_writers->push_back(a);
             _empty = false;
         }
         
@@ -148,10 +155,10 @@ struct srmwqueue
         // clear lists
         {
             CRITICAL_SECTION(cs, _lock);
-            _for_writers.clear();
+            _for_writers->erase(_for_writers->begin(),_for_writers->end());
             _empty = true;
         }
-        _for_readers.clear();
+        _for_readers->erase(_for_readers->begin(),_for_readers->end());
     }    
   
 }; // EOF: struct srmwqueue

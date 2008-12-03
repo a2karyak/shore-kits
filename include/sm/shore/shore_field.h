@@ -185,10 +185,6 @@ public:
  * 
  * @warning: !!! NOT-THREAD SAFE !!!
  *
- * @note:    This structure is NOT thread safe. Thus, it is up to the caller
- *           to ensure thread safety. It is dangerous two threads to modify
- *           concurrently the same field_value_t object.
- *
  *********************************************************************/
 
 struct field_value_t 

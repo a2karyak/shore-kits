@@ -42,6 +42,7 @@ public:
 private:
 
     TableDesc* _ptable; 
+    const int _nbytes;
 
 #ifdef CACHE_STATS    
     // stats
@@ -54,7 +55,7 @@ private:
 public:
 
     row_cache_t(TableDesc* ptable, int init_count=DEFAULT_INIT_ROW_COUNT) 
-        : atomic_stack(-sizeof(ptr)),
+        : atomic_stack(-sizeof(ptr)),_nbytes(sizeof(table_tuple)+sizeof(ptr)),
           _ptable(ptable)
 #ifdef CACHE_STATS
         , _tuple_requests(0), _tuple_setups(0)
@@ -118,7 +119,7 @@ public:
 #endif
 
         // allocates and setups a new table_tuple
-        vpn u = { malloc(sizeof(table_tuple)) };
+        vpn u = { malloc(_nbytes) };
         if (!u.v) u.v = null();
         table_tuple* rp = (table_tuple*)prepare(u);
         rp->setup(_ptable);

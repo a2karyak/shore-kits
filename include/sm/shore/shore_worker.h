@@ -176,6 +176,11 @@ public:
     inline const eWorkingState get_ws() { return (*&_ws); }
 
     inline const bool can_continue(const eWorkingState my_ws) {
+        //    CRITICAL_SECTION(ws_cs, _ws_lock);
+        return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
+    }
+
+    inline const bool can_continue_cs(const eWorkingState my_ws) {
         CRITICAL_SECTION(ws_cs, _ws_lock);
         return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
     }

@@ -46,7 +46,7 @@ void base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz)
     for(int j=1; j <= batch_sz; j++) {
 
         // adding think time
-        usleep(_think_time);
+        //usleep(_think_time);
 
         if (j == batch_sz) {
             _cp->take_one = true;
@@ -119,6 +119,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 	// main loop
         while (true) {
 	    // wait for the first to complete
+            TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", i, _cp->wait[1-_cp->index]);
 	    _cp->wait[1-_cp->index].wait();
 
 	    // check for exit...
@@ -130,6 +131,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         }
 	
 	// wait for the last batch to complete...
+        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", i, _cp->wait[1-_cp->index]);
 	_cp->wait[_cp->index].wait();	
         break;
 
