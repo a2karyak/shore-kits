@@ -64,6 +64,13 @@ public:
  * @note:  The Object needs to implement the cacheable_iface
  * 
  ********************************************************************/
+template <typename T>
+class object_cache_t;
+
+template <typename T>
+void* operator new(size_t nbytes, object_cache_t<T>& cache) ;
+template <typename T>
+void operator delete(void* ptr, object_cache_t<T>& cache) ;
 
 template <typename Object>
 class object_cache_t : protected atomic_stack
@@ -102,6 +109,10 @@ private:
     }
 
 public:
+
+    // these guys need to access the underlying object cache
+    friend void* operator new<>(size_t, object_cache_t<Object>&);
+    friend void operator delete<>(void*, object_cache_t<Object>&);
 
 
     object_cache_t(Pool** stlpools, int init_count = DEFAULT_INIT_OBJECT_COUNT) 
@@ -167,7 +178,7 @@ public:
         ++_object_setups;
 #endif
 
-        Object* temp = new (this) Object();
+        Object* temp = new (*this) Object();
         temp->setup(_stl_pools);
         return (temp);
     }
@@ -199,13 +210,6 @@ public:
     }
 #endif 
 
-    // these guys need to access the underlying object cache
-    template <typename T> 
-    friend void* operator new(size_t, object_cache_t<T>*);
-
-    template <typename T> 
-    friend void operator delete(void*, object_cache_t<T>*);
-
 }; // EOF: object_cache_t
 
 
@@ -215,10 +219,10 @@ public:
  */
 
 template <typename T>
-inline void* operator new(size_t nbytes, object_cache_t<T>* cache) 
+inline void* operator new(size_t nbytes, object_cache_t<T>& cache) 
 {
-    assert(cache->_nbytes >= nbytes);
-    return (cache->_do_alloc());
+    assert(cache._nbytes >= nbytes);
+    return (cache._do_alloc());
 }
 
 
@@ -228,9 +232,9 @@ inline void* operator new(size_t nbytes, object_cache_t<T>* cache)
    must still call cache::destroy()
  */
 template <typename T>
-inline void operator delete(void* ptr, object_cache_t<T>* cache) 
+inline void operator delete(void* ptr, object_cache_t<T>& cache) 
 {
-    cache->giveback((T*)ptr);
+    cache.giveback((T*)ptr);
 }
 
 
