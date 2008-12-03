@@ -39,6 +39,9 @@
 #include "util/shell.h"
 #include "util/prcinfo.h"
 #include "util/condex.h"
+#include "util/stl_pooled_alloc.h"
+#include "util/stl_pool.h"
+#include "util/cache.h"
 
 
 #endif /** __UTIL_H */
