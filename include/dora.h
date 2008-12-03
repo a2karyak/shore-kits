@@ -5,8 +5,8 @@
 
 
 // define the ONLYDORA if want to test the DORA mechanism without Shore-mt
-//#undef ONLYDORA
-#define ONLYDORA
+#undef ONLYDORA
+//#define ONLYDORA
 
 
 
