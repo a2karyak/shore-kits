@@ -184,9 +184,9 @@ inline bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rh
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i = 0; i <_key_v.size(); ++i) {
         // goes over the key fields until one inequality is found
-        if (_key_v.at(i)==rhs._key_v.at(i))
+        if (_key_v[i]==rhs._key_v[i])
             continue;
-        return (_key_v.at(i)<rhs._key_v.at(i));        
+        return (_key_v[i]<rhs._key_v[i]);
     }
     return (false); // irreflexivity - f(x,x) must be false
 }
@@ -198,7 +198,7 @@ inline bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& r
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields until one inequality is found
-        if (_key_v.at(i)==rhs._key_v.at(i))
+        if (_key_v[i]==rhs._key_v[i])
             continue;
         return (false);        
     }
@@ -212,9 +212,9 @@ inline bool key_wrapper_t<DataType>::operator<=(const key_wrapper_t<DataType>& r
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields
-        if (_key_v.at(i)==rhs._key_v.at(i))
+        if (_key_v[i]==rhs._key_v[i])
             continue;
-        return (_key_v.at(i)<rhs._key_v.at(i));        
+        return (_key_v[i]<rhs._key_v[i]);
     }
     // if reached this point all fields are equal so the two keys are equal
     return (true); 

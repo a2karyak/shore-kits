@@ -405,6 +405,8 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
         _current_prs_id = _start_prs_id;
         int wh_id = 0;
 
+        xct_stats statsb = shell_get_xct_stats();
+
         // set measurement state to measure - start counting everything
         _env->set_measure(MST_MEASURE);
 	stopwatch_t timer;
@@ -436,6 +438,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
 	double delay = timer.time();
 
         xct_stats stats = shell_get_xct_stats();
+        stats -= statsb;
 
         int attempted = stats.attempted.nord+stats.attempted.payment
             +stats.attempted.status+stats.attempted.stock+stats.attempted.delivery
