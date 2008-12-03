@@ -14,12 +14,7 @@
 #include <cstdio>
 
 #include "util.h"
-
-#include "dora/tpcc/dora_payment.h"
-#include "dora/tpcc/dora_mbench.h"
-
 #include "workload/tpcc/shore_tpcc_env.h"
-
 #include "dora.h"
 
 
@@ -30,7 +25,81 @@ using namespace shore;
 using namespace tpcc;
 
 
+
+
+const int KEYPTR_PER_ACTION_POOL_SZ = 60;
+const int KALREQ_PER_ACTION_POOL_SZ = 30;
+const int DT_PER_ACTION_POOL_SZ = 360;
+
+
+
+typedef Pool* PoolPtr;
+
+const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
+
+
+                //_poolArray[0] = _baseActionPtrPool = new Pool(sizeof(base_action_t*), ACTIONS_PER_RVP_POOL_SZ); \
+
+#define DECLARE_RVP_CACHE(Type)                         \
+    struct Type##_cache   {                             \
+            guard< object_cache_t<Type> > _cache;       \
+            guard<Pool> _baseActionPtrPool;             \
+            guard<PoolPtr> _poolArray;                  \
+            Type##_cache() {                            \
+                _poolArray = new PoolPtr[1];            \
+                _cache = new object_cache_t<Type>(_poolArray.get()); }  \
+            ~Type##_cache() { _cache.done(); _baseActionPtrPool.done(); } };
+
+
+#define DECLARE_TLS_RVP_CACHE(Type)              \
+    DECLARE_RVP_CACHE(Type);                     \
+    DECLARE_TLS(Type##_cache,my_##Type##_cache);
+
+
+//                 _poolArray[0] = _keyPtrPool = new Pool(sizeof(key_wrapper_t<Datatype>*), KEYPTR_PER_ACTION_POOL_SZ); \
+//                 _poolArray[1] = _kalReqPool = new Pool(sizeof(KALReq_t<Datatype>), KALREQ_PER_ACTION_POOL_SZ); \
+//                 _poolArray[2] = _dtPool = new Pool(sizeof(Datatype), DT_PER_ACTION_POOL_SZ); \
+
+#define DECLARE_ACTION_CACHE(Type,Datatype)             \
+    struct Type##_cache  {                              \
+            guard<object_cache_t<Type> > _cache;        \
+            guard<Pool> _keyPtrPool;                    \
+            guard<Pool> _kalReqPool;                    \
+            guard<Pool> _dtPool;                        \
+            guard<PoolPtr> _poolArray;                  \
+            Type##_cache() {                            \
+                _poolArray = new PoolPtr[3];            \
+                _cache = new object_cache_t<Type>(_poolArray.get()); }  \
+            ~Type##_cache() { _cache.done(); } };
+
+
+
+#define DECLARE_TLS_ACTION_CACHE(Type,Datatype)      \
+    DECLARE_ACTION_CACHE(Type,Datatype);             \
+    DECLARE_TLS(Type##_cache,my_##Type##_cache);
+
+
+
+
+
 const int DF_ACTION_CACHE_SZ = 100;
+
+
+// Forward decl
+
+// TPC-C Payment
+class final_pay_rvp;
+class midway_pay_rvp;
+class upd_wh_pay_action;
+class upd_dist_pay_action;
+class upd_cust_pay_action;
+class ins_hist_pay_action;
+
+// MBenches
+class final_mb_rvp;
+class upd_wh_mb_action;
+class upd_cust_mb_action;
+
 
 
 
@@ -71,14 +140,22 @@ private:
     guard<irpTableImpl> _ol_irpt; // ORDER-LINE
     guard<irpTableImpl> _st_irpt; // STOCK
 
+    //guard<Pool> _int_dtpool;
+
 public:
     
 
     DoraTPCCEnv(string confname)
         : ShoreTPCCEnv(confname)
-    { }
+    { 
+        //_int_dtpool = new Pool(sizeof(int),4);
+    }
 
-    virtual ~DoraTPCCEnv() { }
+    virtual ~DoraTPCCEnv() 
+    { 
+        stop();
+        //_int_dtpool.done();
+    }
 
 
 
@@ -142,27 +219,6 @@ public:
 
 
 
-    //// atomic trash stacks
-
-
-    // TPC-C Payment
-    atomic_class_stack<final_pay_rvp>  _final_pay_rvp_pool;
-    atomic_class_stack<midway_pay_rvp> _midway_pay_rvp_pool;
-
-    atomic_class_stack<upd_wh_pay_action>     _upd_wh_pay_pool; 
-    atomic_class_stack<upd_dist_pay_action>   _upd_dist_pay_pool;    
-    atomic_class_stack<upd_cust_pay_action>   _upd_cust_pay_pool;    
-    atomic_class_stack<ins_hist_pay_action>   _ins_hist_pay_pool;    
-
-
-    // MBenches
-    atomic_class_stack<final_mb_rvp>   _final_mb_rvp_pool;
-
-    atomic_class_stack<upd_wh_mb_action>      _upd_wh_mb_pool;    
-    atomic_class_stack<upd_cust_mb_action>    _upd_cust_mb_pool;    
-
-
-
     //// TRXs
 
 
@@ -196,10 +252,50 @@ public:
 
 
 
+
+    //typedef PooledVec<base_action_t*>::Type baseActionsList;
+    typedef vector<base_action_t*> baseActionsList;
+
+
+    // TPC-C Payment
+    final_pay_rvp* NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                  trx_result_tuple_t& presult,
+                                  baseActionsList& actions);
+
+    midway_pay_rvp* NewMidayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                                   trx_result_tuple_t& presult,
+                                   const payment_input_t& pin);
+
+    upd_wh_pay_action* NewUpdWhPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
+                                         const payment_input_t& pin);
+
+    upd_dist_pay_action* NewUpdDistPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
+                                             const payment_input_t& pin);
+
+    upd_cust_pay_action* NewUpdCustPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
+                                             const payment_input_t& pin);
+
+    ins_hist_pay_action* NewInsHistPayAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                             const payment_input_t& pin,
+                                             const tpcc_warehouse_tuple& awh,
+                                             const tpcc_district_tuple& adist);
+
+    // MBenches
+    final_mb_rvp* NewFinalMbRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                trx_result_tuple_t& presult);
+
+    upd_wh_mb_action* NewUpdWhMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                       const int whid);
+
+    upd_cust_mb_action* NewUpdCustMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                           const int whid);
+
+
+
 private:
 
     // algorithm for deciding the distribution of tables 
-    const processorid_t _next_cpu(const processorid_t aprd,
+    const processorid_t _next_cpu(const processorid_t& aprd,
                                   const irpTableImpl* atable,
                                   const int step=DF_CPU_STEP_TABLES);
 

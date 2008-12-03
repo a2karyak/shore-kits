@@ -41,16 +41,21 @@ private:
     // range-partition field count
     int _field_count;
 
+    // per partition key estimation
+    int _key_estimation;
+
 public:
 
     range_part_table_impl(ShoreEnv* env, table_desc_t* ptable,
                           const processorid_t aprs,
                           const int arange,
-                          const int field_count) 
+                          const int field_count,
+                          const int keyEstimation) 
         : part_table_t(env, ptable, aprs, arange), 
-          _field_count(field_count)
+          _field_count(field_count), _key_estimation(keyEstimation)
     {
         assert (_field_count>0);
+        assert (_key_estimation>0);
     }
 
     ~range_part_table_impl() { }    
@@ -75,7 +80,7 @@ const int range_part_table_impl<DataType>::create_one_part()
     ++_pcnt;        
 
     // 1. a new partition object
-    rpImpl* aprpi = new rpImpl(_env, _table, _field_count, _pcnt, _next_prs_id);
+    rpImpl* aprpi = new rpImpl(_env, _table, _field_count, _key_estimation, _pcnt, _next_prs_id);
     if (!aprpi) {
         TRACE( TRACE_ALWAYS, "Problem in creating partition (%d) for (%s)\n", 
                _pcnt, _table->name());

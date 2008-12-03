@@ -40,17 +40,13 @@ ENTER_NAMESPACE(dora);
 w_rc_t midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
+#ifndef ONLYDORA
     assert (_xct);
-    final_pay_rvp* frvp = new (_ptpccenv->_final_pay_rvp_pool) final_pay_rvp;
-    assert (frvp);
-    frvp->set(_tid,_xct,_xct_id,_result,_ptpccenv,&_ptpccenv->_final_pay_rvp_pool);
-    frvp->copy_actions(_actions);
+#endif
+    final_pay_rvp* frvp = _ptpccenv->NewFinalPayRvp(_tid,_xct,_xct_id,_result,_actions);
 
     // 2. Generate and enqueue action
-    ins_hist_pay_action* ins_hist_pay = new (_ptpccenv->_ins_hist_pay_pool) ins_hist_pay_action;
-    assert (ins_hist_pay);
-    ins_hist_pay->set(_tid,_xct,frvp,_pin,_awh,_adist,_ptpccenv,&_ptpccenv->_ins_hist_pay_pool);
-    frvp->add_action(ins_hist_pay);
+    ins_hist_pay_action* ins_hist_pay = _ptpccenv->NewInsHistPayAction(_tid,_xct,frvp,_pin,_awh,_adist);
 
     int mypartition = _pin._home_wh_id-1;
 
@@ -86,25 +82,27 @@ w_rc_t final_pay_rvp::run() {
 void final_pay_rvp::upd_committed_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() != MST_MEASURE) {
-        return;
-    }
+//     if (_ptpccenv->get_measure() != MST_MEASURE) {
+//         return;
+//     }
 
-    _ptpccenv->get_total_tpcc_stats()->inc_pay_com();
-    _ptpccenv->get_session_tpcc_stats()->inc_pay_com();
-    _ptpccenv->get_env_stats()->inc_trx_com();    
+//     _ptpccenv->get_total_tpcc_stats()->inc_pay_com();
+//     _ptpccenv->get_session_tpcc_stats()->inc_pay_com();
+//     _ptpccenv->get_env_stats()->inc_trx_com();    
+    _ptpccenv->_inc_pay_att();
 }                     
 
 void final_pay_rvp::upd_aborted_stats() 
 {
-    assert (_ptpccenv);
-    if (_ptpccenv->get_measure() != MST_MEASURE) {
-        return;
-    }
+//     assert (_ptpccenv);
+//     if (_ptpccenv->get_measure() != MST_MEASURE) {
+//         return;
+//     }
 
-    _ptpccenv->get_total_tpcc_stats()->inc_pay_att();
-    _ptpccenv->get_session_tpcc_stats()->inc_pay_att();
-    _ptpccenv->get_env_stats()->inc_trx_att();
+//     _ptpccenv->get_total_tpcc_stats()->inc_pay_att();
+//     _ptpccenv->get_session_tpcc_stats()->inc_pay_att();
+//     _ptpccenv->get_env_stats()->inc_trx_att();
+    _ptpccenv->_inc_pay_failed();
 }                     
 
 
@@ -119,17 +117,6 @@ void final_pay_rvp::upd_aborted_stats()
  * (4) INSERT-HISTORY
  *
  ********************************************************************/
-
-const bool pay_action::trx_acq_locks()
-{
-    // all the Payment trxs are (EX) probes to a single tuple
-    assert (_partition);
-    setkeys(1); // indicates that it needs only 1 key
-    KALReqPtrVec aklrvec;
-    KALReq aklr(this,DL_CC_EXCL,&_down);
-    aklrvec.push_back(&aklr);    
-    return (_partition->acquire(aklrvec));
-}
 
 w_rc_t upd_wh_pay_action::trx_exec() 
 {
@@ -151,8 +138,12 @@ w_rc_t upd_wh_pay_action::trx_exec()
                "App: %d PAY:warehouse-idx-probe-nl (%d)\n", 
                _tid, _pin._home_wh_id);
 
+
+#ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
                                                           _pin._home_wh_id);      
+#endif
+
         if (e.is_error()) { goto done; }
 
         /* UPDATE warehouse SET w_ytd = wytd + :h_amount
@@ -167,9 +158,13 @@ w_rc_t upd_wh_pay_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
                _tid, _pin._home_wh_id);
+
+#ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
                                                          prwh, 
                                                          _pin._h_amount);
+#endif
+
         if (e.is_error()) { goto done; }
 
         tpcc_warehouse_tuple* awh = _m_rvp->wh();
@@ -215,8 +210,11 @@ w_rc_t upd_dist_pay_action::trx_exec()
                "App: %d PAY:district-idx-probe-nl (%d) (%d)\n", 
                _tid, _pin._home_wh_id, _pin._home_d_id);
 
+#ifndef ONLYDORA
         e = _ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), prdist,
                                                            _pin._home_wh_id, _pin._home_d_id);    
+#endif
+
         if (e.is_error()) { goto done; }
 
 
@@ -232,9 +230,13 @@ w_rc_t upd_dist_pay_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
                _tid, _pin._home_wh_id, _pin._home_d_id);
+
+#ifndef ONLYDORA
         e = _ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
                                                           prdist, 
                                                           _pin._h_amount);
+#endif
+
         if (e.is_error()) { goto done; }
 
         tpcc_district_tuple* adistr = _m_rvp->dist();
@@ -284,6 +286,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
 
     { // make gotos safe
 
+#ifndef ONLYDORA
         if (_pin._v_cust_ident_selection <= 60) {
 
             // if (ppin->_c_id == 0) {
@@ -310,10 +313,13 @@ w_rc_t upd_cust_pay_action::trx_exec()
             guard<index_scan_iter_impl<customer_t> > c_iter;
             {
                 index_scan_iter_impl<customer_t>* tmp_c_iter;
+
+
                 e = _ptpccenv->customer_man()->cust_get_iter_by_index(_ptpccenv->db(), 
                                                                       tmp_c_iter, prcust, 
                                                                       lowrep, highrep,
                                                                       c_w, c_d, _pin._c_last);
+
                 c_iter = tmp_c_iter;
                 if (e.is_error()) { goto done; }
             }
@@ -341,6 +347,8 @@ w_rc_t upd_cust_pay_action::trx_exec()
             _pin._c_id = v_c_id[(count+1)/2-1];
         }
         assert (_pin._c_id>0);
+#endif
+
 
         /* 3. retrieve customer for update */
 
@@ -358,8 +366,11 @@ w_rc_t upd_cust_pay_action::trx_exec()
                "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
                _tid, c_w, c_d, _pin._c_id);
 
+#ifndef ONLYDORA
         e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
                                                            c_w, c_d, _pin._c_id);
+#endif
+
         if (e.is_error()) { goto done; }    
     
         double c_balance, c_ytd_payment;
@@ -417,20 +428,27 @@ w_rc_t upd_cust_pay_action::trx_exec()
             strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
+
+#ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 c_new_data_1, 
                                                                 c_new_data_2);
+#endif
+
             if (e.is_error()) { goto done; }
         }
         else { /* good customer */
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
+
+#ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 NULL, 
                                                                 NULL);
+#endif
             if (e.is_error()) { goto done; }
         }
 
@@ -486,7 +504,11 @@ w_rc_t ins_hist_pay_action::trx_exec()
     { // make goto safe 
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", _tid);
+
+#ifndef ONLYDORA
         e = _ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist);
+#endif
+
         if (e.is_error()) { goto done; }
 
     } // goto 

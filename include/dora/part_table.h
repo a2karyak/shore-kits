@@ -122,7 +122,7 @@ public:
     }
 
     // decide the next processor
-    virtual processorid_t next_cpu(const processorid_t aprd);
+    virtual processorid_t next_cpu(const processorid_t& aprd);
 
     // stops all partitions
     const int stop() {
@@ -270,10 +270,14 @@ const int part_table_t<Partition>::reset()
  ******************************************************************/
 
 template <typename Partition>
-processorid_t part_table_t<Partition>::next_cpu(const processorid_t aprd) 
+processorid_t part_table_t<Partition>::next_cpu(const processorid_t& aprd) 
 {
+    int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
+    if (binding==0)
+        return (PBIND_NONE);
+
     int partition_step = envVar::instance()->getVarInt("dora-cpu-partition-step",
-                                                       DF_CPU_STEP_PARTITIONS);
+                                                       DF_CPU_STEP_PARTITIONS);    
     processorid_t nextprs = ((aprd+partition_step) % _env->get_active_cpu_count());
     return (nextprs);
 }

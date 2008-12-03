@@ -22,6 +22,7 @@ base_action_t& base_action_t::operator=(const base_action_t& rhs)
     _xct = rhs._xct;
     _tid = rhs._tid;
     _keys_needed = rhs._keys_needed;
+    _keys_set = rhs._keys_set;
   }
   return (*this);
 }

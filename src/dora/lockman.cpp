@@ -50,12 +50,15 @@ static void _print_logical_lock_maps(std::ostream &out, LogicalLock const &ll)
     int o = ll.owners().size();
     int w = ll.waiters().size();
     out << "Owners " << o << endl;
-    for (int i=0; i<o; ++i) {
+    int i=0;
+    for (i=0; i<o; ++i) {
         out << i << ". " << ll.owners()[i] << endl;
     }
     out << "Waiters " << o << endl;
-    for (int i=0; i<w; ++i) {
-        out << i << ". " << ll.waiters()[i] << endl;
+    i=0;
+    for (ActionLockReqListCit it=ll.waiters().begin(); it!=ll.waiters().end(); ++it) {
+
+        out << ++i << ". " << (*it) << endl;
     }
 }
 
@@ -70,7 +73,7 @@ char const* db_pretty_print(LogicalLock const* ll, int i=0, char const* s=0)
 static void _print_key(std::ostream &out, key_wrapper_t<int> const &key) 
 {    
     for (int i=0; i<key._key_v.size(); ++i) {
-        out << key._key_v[i] << endl;
+        out << key._key_v.at(i) << endl;
     }
 }
 
@@ -89,6 +92,16 @@ char const* db_pretty_print(key_wrapper_t<int> const* key, int i=0, char const* 
  *
  ********************************************************************/ 
 
+LogicalLock::LogicalLock(ActionLockReq& anowner)
+    : _dlm(anowner.dlm())
+{
+    // construct a logical lock with an owner already
+    _owners.reserve(1);
+    _owners.push_back(anowner);
+    anowner.action()->gotkeys(1);
+}
+
+
 
 
 /******************************************************************** 
@@ -105,7 +118,7 @@ char const* db_pretty_print(key_wrapper_t<int> const* key, int i=0, char const* 
  *
  ********************************************************************/ 
 
-const int LogicalLock::release(base_action_t* anowner, 
+const int LogicalLock::release(BaseActionPtr anowner, 
                                BaseActionPtrList& promotedList)
 {
     assert (anowner);
@@ -179,15 +192,12 @@ const bool LogicalLock::acquire(ActionLockReq& alr)
 
     if (DoraLockModeMatrix[_dlm][alr.dlm()]) {
 
-
         // if compatible, enqueue to the owners
         _owners.push_back(alr);
         alr.action()->gotkeys(1);
 
         // update lock mode
         if (alr.dlm() != DL_CC_NOLOCK) _dlm = alr.dlm();
-
-
 
         // indicate acquire success
         return (true);
@@ -266,8 +276,8 @@ std::ostream& operator<<(std::ostream& os, const LogicalLock& rhs)
     }
 
     os << "waiters: " << rhs.waiters().size() << endl;
-    for (int i=0; i<rhs.waiters().size(); ++i) {
-        os << rhs.waiters()[i] << endl;
+    for (ActionLockReqListCit it=rhs.waiters().begin(); it!=rhs.waiters().end(); ++it) {
+        os << (*it) << endl;
     }
 
     return (os);

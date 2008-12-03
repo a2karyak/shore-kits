@@ -8,7 +8,10 @@
  */
 
 
+#include "dora/tpcc/dora_payment.h"
+#include "dora/tpcc/dora_mbench.h"
 #include "dora/tpcc/dora_tpcc.h"
+
 
 ENTER_NAMESPACE(dora);
 
@@ -71,36 +74,35 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
 {
     // 1. Initiate transaction
     tid_t atid;   
+
+#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
+#endif
+
     xct_t* pxct = smthread_t::me()->xct();
+
+#ifndef ONLYDORA
     assert (pxct);
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the next RVP
     // PH1 consists of 3 packets
-    midway_pay_rvp* rvp = new (_midway_pay_rvp_pool) midway_pay_rvp;
-    assert (rvp);
-    rvp->set(atid,pxct,xct_id,atrt,apin,this,&_midway_pay_rvp_pool);
+    midway_pay_rvp* rvp = NewMidayPayRvp(atid,pxct,xct_id,atrt,apin);
     
     // 3. Generate the actions    
-    upd_wh_pay_action* pay_upd_wh = new (_upd_wh_pay_pool) upd_wh_pay_action;
-    assert (pay_upd_wh);
-    pay_upd_wh->set(atid,pxct,rvp,apin,this,rvp,&_upd_wh_pay_pool);
-    rvp->add_action(pay_upd_wh);
-
-    upd_dist_pay_action* pay_upd_dist = new (_upd_dist_pay_pool) upd_dist_pay_action;
-    assert (pay_upd_dist);
-    pay_upd_dist->set(atid,pxct,rvp,apin,this,rvp,&_upd_dist_pay_pool);
-    rvp->add_action(pay_upd_dist);
-
-    upd_cust_pay_action* pay_upd_cust = new (_upd_cust_pay_pool) upd_cust_pay_action;
-    assert (pay_upd_cust);
-    pay_upd_cust->set(atid,pxct,rvp,apin,this,rvp,&_upd_cust_pay_pool);
-    rvp->add_action(pay_upd_cust);
+    upd_wh_pay_action* pay_upd_wh     = NewUpdWhPayAction(atid,pxct,rvp,apin);
+    upd_dist_pay_action* pay_upd_dist = NewUpdDistPayAction(atid,pxct,rvp,apin);
+    upd_cust_pay_action* pay_upd_cust = NewUpdCustPayAction(atid,pxct,rvp,apin);
 
 
     // 4. Detatch self from xct
+
+#ifndef ONLYDORA
     me()->detach_xct(pxct);
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
 
@@ -113,35 +115,36 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {
-        int mypartition = apin._home_wh_id-1;
+        int whpartition = apin._home_wh_id-1;
+        //int dpartition = apin._home_d_id-1;
 
         // WH_PART_CS
-        CRITICAL_SECTION(wh_part_cs, whs(mypartition)->_enqueue_lock);
+        CRITICAL_SECTION(wh_part_cs, whs(whpartition)->_enqueue_lock);
             
         // (SF) WAREHOUSE partitions
-        if (whs()->enqueue(pay_upd_wh, mypartition)) {
+        if (whs()->enqueue(pay_upd_wh, whpartition)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_WH\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
         // DIS_PART_CS
-        CRITICAL_SECTION(dis_part_cs, dis(mypartition)->_enqueue_lock);
+        CRITICAL_SECTION(dis_part_cs, dis(whpartition)->_enqueue_lock);
         wh_part_cs.exit();
         
         // (SF) WAREHOUSE partitions
-        if (dis()->enqueue(pay_upd_dist, mypartition)) {
+        if (dis()->enqueue(pay_upd_dist, whpartition)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_DIST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
         // CUS_PART_CS
-        CRITICAL_SECTION(cus_part_cs, cus(mypartition)->_enqueue_lock);
+        CRITICAL_SECTION(cus_part_cs, cus(whpartition)->_enqueue_lock);
         dis_part_cs.exit();
 
         // (SF) WAREHOUSE partitions
-        if (cus()->enqueue(pay_upd_cust, mypartition)) {
+        if (cus()->enqueue(pay_upd_cust, whpartition)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -260,27 +263,31 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
 
     // 1. Initiate transaction
     tid_t atid;   
+
+#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
+#endif
+
     xct_t* pxct = smthread_t::me()->xct();
+
+#ifndef ONLYDORA
     assert (pxct);
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
-
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = new (_final_mb_rvp_pool) final_mb_rvp; 
-    assert (frvp);
-    frvp->set(atid,pxct,xct_id,atrt,1,1,this,&_final_mb_rvp_pool);
-    
+    final_mb_rvp* frvp = NewFinalMbRvp(atid,pxct,xct_id,atrt);    
 
     // 3. Generate the actions
-    upd_wh_mb_action* upd_wh = new (_upd_wh_mb_pool) upd_wh_mb_action;
-    assert (upd_wh);
-    upd_wh->set(atid,pxct,frvp,whid,this,&_upd_wh_mb_pool);
-    frvp->add_action(upd_wh);
-
+    upd_wh_mb_action* upd_wh = NewUpdWhMbAction(atid,pxct,frvp,whid);
 
     // 4. Detatch self from xct
+
+#ifndef ONLYDORA
     smthread_t::me()->detach_xct(pxct);
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // For each action
@@ -307,8 +314,8 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
 }
 
 w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id, 
-                                      trx_result_tuple_t& atrt, 
-                                      int whid)
+                                     trx_result_tuple_t& atrt, 
+                                     int whid)
 {
     // pick a valid wh id
     if (whid==0) 
@@ -316,27 +323,32 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
 
     // 1. Initiate transaction
     tid_t atid;   
+
+#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
+#endif
+
     xct_t* pxct = smthread_t::me()->xct();
+
+#ifndef ONLYDORA
     assert (pxct);
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = new (_final_mb_rvp_pool) final_mb_rvp; 
-    assert (frvp);
-    frvp->set(atid,pxct,xct_id,atrt,1,1,this,&_final_mb_rvp_pool);
-
+    final_mb_rvp* frvp = NewFinalMbRvp(atid,pxct,xct_id,atrt);
     
     // 3. Generate the actions
-    upd_cust_mb_action* upd_cust = new (_upd_cust_mb_pool) upd_cust_mb_action;
-    assert (upd_cust);
-    upd_cust->set(atid,pxct,frvp,whid,this,&_upd_cust_mb_pool);
-    frvp->add_action(upd_cust);
-
+    upd_cust_mb_action* upd_cust = NewUpdCustMbAction(atid,pxct,frvp,whid);
 
     // 4. Detatch self from xct
+
+#ifndef ONLYDORA
     me()->detach_xct(pxct);
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
 

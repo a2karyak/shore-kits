@@ -129,8 +129,6 @@ class ol_midway_nord_rvp : public rvp_t
 //  * @abstract class: pay_action_impl
 //  *
 //  * @brief:          Holds a payment input and a pointer to ShoreTPCCEnv
-//  *                  Also implements the trx_acq_locks since all the
-//  *                  Payment actions are probes to a single tuple
 //  *
 //  ********************************************************************/
 
@@ -146,7 +144,6 @@ class ol_midway_nord_rvp : public rvp_t
 //     pay_action_impl() : range_action_impl(), _ptpccenv(NULL) { }
 //     virtual ~pay_action_impl() { }
 //     virtual w_rc_t trx_exec()=0; // pure virtual    
-//     const bool trx_acq_locks();
 //     virtual void calc_keys()=0; // pure virtual 
 //     virtual void set_input(tid_t atid,
 //                            xct_t* apxct,
@@ -160,7 +157,6 @@ class ol_midway_nord_rvp : public rvp_t
 //         set(atid, apxct, prvp);
 //         _ptpccenv = penv;
 //         _pin = pin;
-//         set_key_range(); // set key range for this action
 //     }
     
 // }; // EOF: pay_action_impl

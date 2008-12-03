@@ -35,6 +35,17 @@ const int IT_IRP_KEY = 1;
 const int OL_IRP_KEY = 4;
 const int ST_IRP_KEY = 2;
 
+// key estimations for each partition of the tpc-c tables
+const int WH_KEY_EST = 100;
+const int DI_KEY_EST = 1000;
+const int CU_KEY_EST = 30000;
+const int HI_KEY_EST = 100;
+const int NO_KEY_EST = 3;
+const int OR_KEY_EST = 4;
+const int IT_KEY_EST = 1;
+const int OL_KEY_EST = 4;
+const int ST_KEY_EST = 2;
+
 
 
 /****************************************************************** 
@@ -66,19 +77,19 @@ const int DoraTPCCEnv::start()
     int sf = upd_sf();
     TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", sf);
  
-    // used for setting up the key ranges
-    irpImplKey partDown;
-    irpImplKey partUp;
+    // used for setting up the key ranges    
+    guard<irpImplKey> partDown = new irpImplKey();
+    guard<irpImplKey> partUp = new irpImplKey();
 
     // we are doing the partitioning based on the number of warehouses
     int aboundary = 0;
-    partDown.push_back(aboundary);
-    partUp.push_back(sf);
+    partDown->push_back(aboundary);
+    partUp->push_back(sf);
    
     
 
     // WAREHOUSE
-    _wh_irpt = new irpTableImpl(this, warehouse(), icpu, range, WH_IRP_KEY);
+    _wh_irpt = new irpTableImpl(this, warehouse(), icpu, range, WH_IRP_KEY, WH_KEY_EST);
     if (!_wh_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (WAREHOUSE) irp-table\n");
         assert (0); // should not happen
@@ -88,18 +99,18 @@ const int DoraTPCCEnv::start()
     // creates SF partitions for warehouses
     for (int i=0; i<sf; i++) {
         _wh_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
+        partDown->reset();
+        partDown->push_back(i);
+        partUp->reset();
         aboundary=i+1;
-        partUp.push_back(aboundary);
-        _wh_irpt->get_part(i)->resize(partDown,partUp);
+        partUp->push_back(aboundary);
+        _wh_irpt->get_part(i)->resize(*partDown,*partUp);
     }
     _irptp_vec.push_back(_wh_irpt);
     icpu = _next_cpu(icpu, _wh_irpt, cpu_table_step);
 
     // DISTRICT
-    _di_irpt = new irpTableImpl(this, district(), icpu, range, DI_IRP_KEY);
+    _di_irpt = new irpTableImpl(this, district(), icpu, range, DI_IRP_KEY, DI_KEY_EST);
     if (!_di_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (DISTRICT) irp-table\n");
         assert (0); // should not happen
@@ -109,18 +120,18 @@ const int DoraTPCCEnv::start()
     // creates SF partitions for districts
     for (int i=0; i<sf; i++) {
         _di_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
+        partDown->reset();
+        partDown->push_back(i);
+        partUp->reset();
         aboundary=i+1;
-        partUp.push_back(aboundary);
-        _di_irpt->get_part(i)->resize(partDown,partUp);
+        partUp->push_back(aboundary);
+        _di_irpt->get_part(i)->resize(*partDown,*partUp);
     }
     _irptp_vec.push_back(_di_irpt);
     icpu = _next_cpu(icpu, _di_irpt, cpu_table_step);    
 
     // HISTORY
-    _hi_irpt = new irpTableImpl(this, this->history(), icpu, range, HI_IRP_KEY);
+    _hi_irpt = new irpTableImpl(this, this->history(), icpu, range, HI_IRP_KEY, HI_KEY_EST);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
         assert (0); // should not happen
@@ -130,19 +141,19 @@ const int DoraTPCCEnv::start()
     // creates SF partitions for districts
     for (int i=0; i<sf; i++) {
         _hi_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
+        partDown->reset();
+        partDown->push_back(i);
+        partUp->reset();
         aboundary=i+1;
-        partUp.push_back(aboundary);
-        _hi_irpt->get_part(i)->resize(partDown,partUp);
+        partUp->push_back(aboundary);
+        _hi_irpt->get_part(i)->resize(*partDown,*partUp);
     }
     _irptp_vec.push_back(_hi_irpt);
     icpu = _next_cpu(icpu, _hi_irpt, cpu_table_step);    
 
 
     // CUSTOMER
-    _cu_irpt = new irpTableImpl(this, this->customer(), icpu, range, CU_IRP_KEY);
+    _cu_irpt = new irpTableImpl(this, this->customer(), icpu, range, CU_IRP_KEY, CU_KEY_EST);
     if (!_cu_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (CUSTOMER) irp-table\n");
         assert (0); // should not happen
@@ -152,12 +163,12 @@ const int DoraTPCCEnv::start()
     // creates SF partitions for customers
     for (int i=0; i<sf; i++) {
         _cu_irpt->create_one_part();
-        partDown.reset();
-        partDown.push_back(i);
-        partUp.reset();
+        partDown->reset();
+        partDown->push_back(i);
+        partUp->reset();
         aboundary=i+1;
-        partUp.push_back(aboundary);
-        _cu_irpt->get_part(i)->resize(partDown,partUp);
+        partUp->push_back(aboundary);
+        _cu_irpt->get_part(i)->resize(*partDown,*partUp);
     }
     _irptp_vec.push_back(_cu_irpt);
     icpu = _next_cpu(icpu, _cu_irpt, cpu_table_step);
@@ -165,7 +176,7 @@ const int DoraTPCCEnv::start()
 
     /*
     // NEW-ORDER
-    _no_irpt = new irpTableImpl(this, this->new_order(), icpu, range, NO_IRP_KEY);
+    _no_irpt = new irpTableImpl(this, this->new_order(), icpu, range, NO_IRP_KEY, NO_KEY_EST);
     if (!_no_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (NEW-ORDER) irp-table\n");
         assert (0); // should not happen
@@ -178,7 +189,7 @@ const int DoraTPCCEnv::start()
 
 
     // ORDER
-    _or_irpt = new irpTableImpl(this, this->order(), icpu, range, OR_IRP_KEY);
+    _or_irpt = new irpTableImpl(this, this->order(), icpu, range, OR_IRP_KEY, OR_KEY_EST);
     if (!_or_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER) irp-table\n");
         assert (0); // should not happen
@@ -191,7 +202,7 @@ const int DoraTPCCEnv::start()
 
 
     // ITEM
-    _it_irpt = new irpTableImpl(this, this->item(), icpu, range, IT_IRP_KEY);
+    _it_irpt = new irpTableImpl(this, this->item(), icpu, range, IT_IRP_KEY, IT_KEY_EST);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ITEM) irp-table\n");
         assert (0); // should not happen
@@ -204,7 +215,7 @@ const int DoraTPCCEnv::start()
 
 
     // ORDER-LINE
-    _ol_irpt = new irpTableImpl(this, this->orderline(), icpu, range, OL_IRP_KEY);
+    _ol_irpt = new irpTableImpl(this, this->orderline(), icpu, range, OL_IRP_KEY, OL_KEY_EST);
     if (!_ol_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER-LINE) irp-table\n");
         assert (0); // should not happen
@@ -217,7 +228,7 @@ const int DoraTPCCEnv::start()
 
 
     // STOCK
-    _st_irpt = new irpTableImpl(this, this->stock(), icpu, range, ST_IRP_KEY);
+    _st_irpt = new irpTableImpl(this, this->stock(), icpu, range, ST_IRP_KEY, ST_KEY_EST);
     if (!_st_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (STOCK) irp-table\n");
         assert (0); // should not happen
@@ -418,13 +429,170 @@ const int DoraTPCCEnv::statistics()
  *
  ******************************************************************/
 
-const processorid_t DoraTPCCEnv::_next_cpu(const processorid_t aprd,
+const processorid_t DoraTPCCEnv::_next_cpu(const processorid_t& aprd,
                                            const irpTableImpl* atable,
                                            const int step)
 {    
+    int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
+    if (binding==0)
+        return (PBIND_NONE);
+
     processorid_t nextprs = ((aprd+step) % this->get_active_cpu_count());
     //TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);
+}
+
+
+
+
+
+
+/******************************************************************** 
+ *
+ *  Thread-local action and rvp object caches
+ *
+ ********************************************************************/
+
+
+DECLARE_TLS_RVP_CACHE(final_pay_rvp);
+DECLARE_TLS_RVP_CACHE(midway_pay_rvp);
+
+
+DECLARE_TLS_ACTION_CACHE(upd_wh_pay_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_dist_pay_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_cust_pay_action,int);
+DECLARE_TLS_ACTION_CACHE(ins_hist_pay_action,int);
+
+     
+
+
+// TPC-C Payment RVPs
+
+final_pay_rvp* 
+DoraTPCCEnv::NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                            trx_result_tuple_t& presult,
+                            baseActionsList& actions)
+{
+    final_pay_rvp* myrvp = my_final_pay_rvp_cache->_cache->borrow();
+    assert (myrvp);
+    myrvp->set(atid,axct,axctid,presult,this,my_final_pay_rvp_cache->_cache.get());
+    myrvp->copy_actions(actions);
+    return (myrvp);    
+}
+
+
+midway_pay_rvp*  
+DoraTPCCEnv::NewMidayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                            trx_result_tuple_t& presult,
+                            const payment_input_t& pin)
+{
+    midway_pay_rvp* myrvp = my_midway_pay_rvp_cache->_cache->borrow();
+    assert (myrvp);
+    myrvp->set(atid,axct,axctid,presult,pin,this,my_midway_pay_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+
+// TPC-C Payment Actions
+
+upd_wh_pay_action*  
+DoraTPCCEnv::NewUpdWhPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
+                               const payment_input_t& pin)
+{
+    upd_wh_pay_action* myaction = my_upd_wh_pay_action_cache->_cache->borrow();
+    assert (myaction);
+    myaction->set(atid,axct,prvp,pin,this,my_upd_wh_pay_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);        
+}
+
+
+upd_dist_pay_action*  
+DoraTPCCEnv::NewUpdDistPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
+                                 const payment_input_t& pin)
+{
+    upd_dist_pay_action* myaction = my_upd_dist_pay_action_cache->_cache->borrow();
+    assert (myaction);
+    myaction->set(atid,axct,prvp,pin,this,my_upd_dist_pay_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);            
+}
+
+
+
+upd_cust_pay_action*  
+DoraTPCCEnv::NewUpdCustPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
+                                 const payment_input_t& pin)
+{
+    upd_cust_pay_action* myaction = my_upd_cust_pay_action_cache->_cache->borrow();
+    assert (myaction);
+    myaction->set(atid,axct,prvp,pin,this,my_upd_cust_pay_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);        
+}
+
+
+ins_hist_pay_action*  
+DoraTPCCEnv::NewInsHistPayAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                 const payment_input_t& pin,
+                                 const tpcc_warehouse_tuple& awh,
+                                 const tpcc_district_tuple& adist)
+{
+    ins_hist_pay_action* myaction = my_ins_hist_pay_action_cache->_cache->borrow();
+    assert (myaction);
+    myaction->set(atid,axct,prvp,pin,awh,adist,this,my_ins_hist_pay_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);    
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+// MBenches RVP //
+
+
+
+DECLARE_TLS_RVP_CACHE(final_mb_rvp);
+
+DECLARE_TLS_ACTION_CACHE(upd_wh_mb_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_cust_mb_action,int);
+
+
+final_mb_rvp*  
+DoraTPCCEnv::NewFinalMbRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                           trx_result_tuple_t& presult)
+{
+    final_mb_rvp* myrvp = my_final_mb_rvp_cache->_cache->borrow();
+    assert (myrvp);
+    myrvp->set(atid,axct,axctid,presult,1,1,this,my_final_mb_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+
+
+// MBenches Actions
+
+upd_wh_mb_action*  
+DoraTPCCEnv::NewUpdWhMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                              const int whid)
+{
+    upd_wh_mb_action* myaction = my_upd_wh_mb_action_cache->_cache->borrow();
+    assert (myaction);
+    myaction->set(atid,axct,prvp,whid,this,my_upd_wh_mb_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);    
+}
+
+
+upd_cust_mb_action*  
+DoraTPCCEnv::NewUpdCustMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                const int whid)
+{
+    upd_cust_mb_action* myaction = my_upd_cust_mb_action_cache->_cache->borrow();
+    assert (myaction);
+    myaction->set(atid,axct,prvp,whid,this,my_upd_cust_mb_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);    
 }
 
 

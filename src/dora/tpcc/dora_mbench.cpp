@@ -13,8 +13,6 @@
 #include "dora/tpcc/dora_mbench.h"
 #include "dora/tpcc/dora_tpcc.h"
 
-
-using namespace dora;
 using namespace shore;
 using namespace tpcc;
 
@@ -32,19 +30,19 @@ ENTER_NAMESPACE(dora);
 void final_mb_rvp::upd_committed_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() != MST_MEASURE) {
-        return;
-    }
-    _ptpccenv->_inc_other_com();
+//     if (_ptpccenv->get_measure() != MST_MEASURE) {
+//         return;
+//     }
+    _ptpccenv->_inc_other_att();
 }                     
 
 void final_mb_rvp::upd_aborted_stats() 
 {
     assert (_ptpccenv);
-    if (_ptpccenv->get_measure() != MST_MEASURE) {
-        return;
-    }
-    _ptpccenv->_inc_other_att();
+//     if (_ptpccenv->get_measure() != MST_MEASURE) {
+//         return;
+//     }
+    _ptpccenv->_inc_other_failed();
 }                     
 
 
@@ -54,17 +52,6 @@ void final_mb_rvp::upd_aborted_stats()
  * MBench Actions
  *
  ********************************************************************/
-
-const bool mb_action::trx_acq_locks()
-{
-    // all the MBench trxs are (EX) probes to a single tuple
-    assert (_partition);
-    setkeys(1); // indicates that it needs only 1 key
-    KALReqPtrVec aklrvec;
-    KALReq aklr(this,DL_CC_EXCL,&_down);
-    aklrvec.push_back(&aklr);    
-    return (_partition->acquire(aklrvec));
-}
 
 /******************************************************************** 
  *
@@ -98,8 +85,12 @@ w_rc_t upd_wh_mb_action::trx_exec()
         /* 1. retrieve warehouse for update */
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:warehouse-idx-probe-nl (%d)\n", _tid, _whid);
+
+#ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
                                                           _whid);
+#endif
+
         if (e.is_error()) { goto done; }
 
 
@@ -114,9 +105,13 @@ w_rc_t upd_wh_mb_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", _tid, _whid);
+
+#ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
                                                          prwh, 
-                                                         amount);
+                                                        amount);
+#endif 
+
         if (e.is_error()) { goto done; }
 
         tpcc_warehouse_tuple awh;
@@ -186,8 +181,11 @@ w_rc_t upd_cust_mb_action::trx_exec()
                "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
                _tid, _whid, _did, _cid);
 
+#ifndef ONLYDORA
         e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
                                                            _whid, _did, _cid);
+#endif
+
         if (e.is_error()) { goto done; }
 
     
@@ -245,19 +243,27 @@ w_rc_t upd_cust_mb_action::trx_exec()
             strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple-nl\n", _tid);
+
+#ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                                 prcust, acust, 
                                                                 c_new_data_1, 
                                                                 c_new_data_2);
+#endif
+
             if (e.is_error()) { goto done; }
         }
         else { /* good customer */
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple-nl\n", _tid);
+
+#ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 NULL, 
                                                                 NULL);
+#endif
+
             if (e.is_error()) { goto done; }
         }
 

@@ -18,6 +18,7 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
 
+#include "dora/lockman.h"
 #include "dora.h"
 
 
@@ -41,6 +42,9 @@ using namespace shore;
 enum ePATState { PATS_UNDEF, PATS_SINGLE, PATS_MULTIPLE };
 
 
+const int ACTIONS_PER_INPUT_QUEUE_POOL_SZ = 60;
+const int ACTIONS_PER_COMMIT_QUEUE_POOL_SZ = 60;
+
 
 /******************************************************************** 
  *
@@ -55,18 +59,15 @@ class partition_t
 {
 public:
 
-    typedef action_t<DataType>      Action;
-    typedef dora_worker_t<DataType> Worker;
+    typedef action_t<DataType>         Action;
+    typedef dora_worker_t<DataType>    Worker;
+    typedef srmwqueue<Action>          Queue;
+    typedef typename key_wrapper_t<DataType>    Key;
+    typedef typename lock_man_t<DataType>       LockManager;
 
-    typedef srmwqueue<Action>        Queue;
-    typedef vector<base_action_t*>   BaseActionPtrList;
-
-    typedef KALReq_t<DataType>    KALReq;
-    typedef KALReq_t<DataType>*   KALReqPtr;
-    typedef vector<KALReqPtr>     KALReqPtrVec;
-
-    typedef key_wrapper_t<DataType>    Key;
-    typedef lock_man_t<DataType>       LockManager;
+    typedef KALReq_t<DataType> KALReq;
+    //typedef typename PooledVec<KALReq>::Type     KALReqVec;
+    typedef vector<KALReq>     KALReqVec;
 
 
 protected:
@@ -94,7 +95,7 @@ protected:
     processorid_t _prs_id;
 
     // lock manager for the partition
-    LockManager  _plm;
+    guard<LockManager>  _plm;
 
 
     // Each partition has two lists of Actions
@@ -121,15 +122,22 @@ protected:
 
     // queue of new Actions
     // single reader - multiple writers
-    Queue    _input_queue; 
+    guard<Queue>    _input_queue; 
 
     // queue of committed Actions
     // single reader - multiple writers
-    Queue    _committed_queue;
+    guard<Queue>    _committed_queue;
+
+    // pools for actions for the srmwqueues
+    guard<Pool>     _actionptr_input_pool;
+    guard<Pool>     _actionptr_commit_pool;
+
 
 public:
 
-    partition_t(ShoreEnv* env, table_desc_t* ptable, int apartid = 0, 
+    partition_t(ShoreEnv* env, table_desc_t* ptable, 
+                const int keyEstimation,
+                const int apartid = 0, 
                 processorid_t aprsid = PBIND_NONE) 
         : _env(env), _table(ptable), 
           _part_policy(PP_UNDEF), _pat_state(PATS_UNDEF), _pat_count(0),
@@ -138,12 +146,22 @@ public:
     {
         assert (_env);
         assert (_table);
+
+        _plm = new LockManager(keyEstimation);
+
+
+        _actionptr_input_pool = new Pool(sizeof(Action*),ACTIONS_PER_INPUT_QUEUE_POOL_SZ);
+        _input_queue = new Queue(_actionptr_input_pool.get());
+
+        _actionptr_commit_pool = new Pool(sizeof(Action*),ACTIONS_PER_COMMIT_QUEUE_POOL_SZ);
+        _committed_queue = new Queue(_actionptr_commit_pool.get());
     }
 
 
     virtual ~partition_t() { }    
 
-    /** Access methods */
+
+    //// Access methods ////
 
     const int part_id() const { return (_part_id); }
     const table_desc_t* table() const { return (_table); } 
@@ -161,10 +179,12 @@ public:
     const ePATState inc_active_thr();
 
     // get lock manager
-    LockManager* plm() { return (&_plm); }
+    LockManager* plm() { return (_plm); }
     
 
-    /** Control partition */
+
+    //// Partition Control ////
+
 
     // resets/initializes the partition, possibly to a new processor
     virtual const int reset(const processorid_t aprsid = PBIND_NONE,
@@ -178,18 +198,25 @@ public:
     virtual void prepareNewRun();
 
 
-    //// Action-related methods
+
+    //// Action-related methods ////
+
 
     // releases a trx
     inline const int release(Action* action,
                              BaseActionPtrList& readyList, 
                              BaseActionPtrList& promotedList) 
     { 
-        return (_plm.release_all(action,readyList,promotedList)); 
+        return (_plm->release_all(action,readyList,promotedList)); 
     }
-    const bool acquire(const KALReqPtrVec& akalvec);
 
-    // returns true if action can be enqueued it this partition
+    inline const bool acquire(KALReqVec& akalvec) 
+    {
+        return (_plm->acquire_all(akalvec));
+    }
+
+
+    // returns true if action can be enqueued in this partition
     virtual const bool verify(Action& action)=0;
 
 
@@ -202,44 +229,41 @@ public:
     const int enqueue(Action* pAction);
     Action* dequeue();
     inline const int has_input(void) const { 
-        return (!_input_queue.is_empty()); 
+        return (!_input_queue->is_empty()); 
     }    
     const bool is_input_owner(base_worker_t* aworker) {
-        return (_input_queue.is_control(aworker));
+        return (_input_queue->is_control(aworker));
     }
 
     // deque of actions to be committed
     const int enqueue_commit(Action* apa);
     Action* dequeue_commit();
     inline const int has_committed(void) const { 
-        return (!_committed_queue.is_empty()); 
+        return (!_committed_queue->is_empty()); 
     }
     const bool is_committed_owner(base_worker_t* aworker) {
-        return (_committed_queue.is_control(aworker));
+        return (_committed_queue->is_control(aworker));
     }
+
+
+
+
+    //// Debugging ////
 
     // stats
     void statistics() const {assert (_owner); _owner->stats();}
 
-    //// Debugging
-
     // dumps information
-    void dump() const {
+    void dump() {
         TRACE( TRACE_DEBUG, "Policy            (%d)\n", _part_policy);
         TRACE( TRACE_DEBUG, "Active Thr Status (%d)\n", _pat_state);
         TRACE( TRACE_DEBUG, "Active Thr Count  (%d)\n", _pat_count);
-        _plm.dump();
+        _plm->dump();
     }
 
 
 
-private:
-
-    // lock-man
-    inline const bool _acquire_key(KALReq& akalr) {
-        return (_plm.acquire(akalr));
-    }
-                
+private:                
 
     // thread control
     const int _start_owner();
@@ -265,39 +289,6 @@ protected:
 
 /****************************************************************** 
  *
- * @fn:     acquire()
- *
- * @brief:  Tries to acquire all the locks from a list of keys on 
- *          behalf of a trx.
- *
- * @return: (true) on success
- *
- ******************************************************************/
-
-template <class DataType>
-const bool partition_t<DataType>::acquire(const KALReqPtrVec& arvec)
-{
-    typedef KALReqPtrVec::iterator kalit;
-    bool bResult = true;
-    int i=0;
-    for (kalit it=arvec.begin(); it!=arvec.end(); ++it) {
-        // request to acquire all the locks for this partition
-        ++i;
-        if (!_acquire_key(*(*it))) {
-            // if a key cannot be acquired, return false
-            TRACE( TRACE_TRX_FLOW, "Cannot acquire for (%d)\n", 
-                   *((*it)->tid()));
-            bResult = false;
-        }
-    }
-
-    assert(i); // makes sure that the action acquires at least one key
-    return (bResult);
-}
-
-
-/****************************************************************** 
- *
  * @fn:     enqueue()
  *
  * @brief:  Enqueues action at the input queue
@@ -316,7 +307,7 @@ const int partition_t<DataType>::enqueue(Action* pAction)
     }
 
     pAction->set_partition(this);
-    _input_queue.push(pAction);
+    _input_queue->push(pAction);
     return (0);
 }
 
@@ -333,7 +324,7 @@ const int partition_t<DataType>::enqueue(Action* pAction)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue()
 {
-    return (_input_queue.pop());
+    return (_input_queue->pop());
 }
 
 
@@ -354,7 +345,7 @@ const int partition_t<DataType>::enqueue_commit(Action* pAction)
 
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
            pAction->tid(), _table->name(), _part_id);
-    _committed_queue.push(pAction);
+    _committed_queue->push(pAction);
     return (0);
 }
 
@@ -372,7 +363,7 @@ template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue_commit()
 {
     assert (has_committed());
-    return (_committed_queue.pop());
+    return (_committed_queue->pop());
 }
 
 
@@ -393,18 +384,15 @@ action_t<DataType>* partition_t<DataType>::dequeue_commit()
 template <class DataType>
 void partition_t<DataType>::stop()
 {        
-//     TRACE( TRACE_DEBUG, "Stopping part (%s-%d)..\n",
-//            _table->name(), _part_id);
-
     // 1. stop the worker & standby threads
     _stop_threads();
 
     // 2. clear queues
-    _input_queue.clear();
-    _committed_queue.clear();
+    _input_queue->clear();
+    _committed_queue->clear();
     
     // 3. reset lock-manager
-    _plm.reset();
+    _plm->reset();
 }
 
 
@@ -434,11 +422,11 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
     _stop_threads();
 
     // 2. clear queues
-    _input_queue.clear();
-    _committed_queue.clear();
+    _input_queue->clear();
+    _committed_queue->clear();
     
     // 3. reset lock-manager
-    _plm.reset();
+    _plm->reset();
 
 
     // 4. lock the primary and standby pool and generate workers
@@ -561,10 +549,10 @@ template <class DataType>
 void partition_t<DataType>::prepareNewRun() 
 {
     // make sure that no key is left locked    
-    assert (_plm.is_clean());
-    _plm.reset();
-    _input_queue.clear(false); // clear queue but not remove owner
-    _committed_queue.clear(false);
+    assert (_plm->is_clean());
+    _plm->reset();
+    _input_queue->clear(false); // clear queue but not remove owner
+    _committed_queue->clear(false);
 }
 
 
@@ -616,8 +604,8 @@ const int partition_t<DataType>::_stop_threads()
     _owner = NULL; // join()?
 
     // reset queues' worker control pointers
-    _input_queue.set(WS_UNDEF,NULL,0); 
-    _committed_queue.set(WS_UNDEF,NULL,0); 
+    _input_queue->set(WS_UNDEF,NULL,0); 
+    _committed_queue->set(WS_UNDEF,NULL,0); 
 
 
     // standy
@@ -747,8 +735,8 @@ const int partition_t<DataType>::_generate_primary()
     int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);
 
     // pass worker thread controls to the two queues
-    _input_queue.set(WS_INPUT_Q,_owner,lc);  
-    _committed_queue.set(WS_COMMIT_Q,_owner,lc);  
+    _input_queue->set(WS_INPUT_Q,_owner,lc);  
+    _committed_queue->set(WS_COMMIT_Q,_owner,lc);  
 
     _owner->fork();
 

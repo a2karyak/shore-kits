@@ -25,7 +25,7 @@
 #include <sstream>
 #include <vector>
 
-#include "dora/dora_error.h"
+#include "dora.h"
 
 #include "sm/shore/shore_env.h"
 
@@ -58,8 +58,10 @@ template<typename DataType> std::ostream& operator<< (std::ostream& os,
 template<typename DataType>
 struct key_wrapper_t
 {
-    typedef vector<DataType>           DataVec;
-    typedef typename DataVec::iterator DataVecIt;
+    //typedef typename PooledVec<DataType>::Type        DataVec;
+    typedef vector<DataType>        DataVec;
+    typedef typename DataVec::iterator       DataVecIt;
+    typedef typename DataVec::const_iterator DataVecCit;
 
     // the vector with the entries - of the same type
     DataVec _key_v;
@@ -67,17 +69,18 @@ struct key_wrapper_t
     // empty constructor
     key_wrapper_t() { }
 
-    // argument constructor
-    key_wrapper_t(const DataVec& aVector) {
-        copy_vector(aVector);
-    }
-
-    key_wrapper_t(const int keysz) {
-        reserve(keysz);
+    // copying needs to be allowed (stl...)
+    key_wrapper_t(const key_wrapper_t<DataType>& rhs)
+    {
+        // if already set do not reallocate        
+        //        _key_v = new DataVec( rhs._key_v->get_allocator() );
+        copy_vector(rhs._key_v);
     }
     
     // copy constructor
-    key_wrapper_t<DataType>& operator=(const key_wrapper_t<DataType>& rhs) {
+    key_wrapper_t<DataType>& operator=(const key_wrapper_t<DataType>& rhs) 
+    {        
+        //_key_v = new DataVec( rhs._key_v->get_allocator() );
         copy_vector(rhs._key_v);
         return (*this);
     }
@@ -86,20 +89,33 @@ struct key_wrapper_t
     // destructor
     ~key_wrapper_t() { }
 
-    // reset
-    void reset() {
-        _key_v.clear();
-    }
-
     // push one item
-    void push_back(DataType& anitem) {
+    inline void push_back(DataType& anitem) {
         _key_v.push_back(anitem);
     }
 
     // reserve vector space
-    void reserve(const int keysz) {
+    inline void reserve(const int keysz) {
         assert (keysz);
         _key_v.reserve(keysz);
+    }
+
+
+    // drops the key
+    //inline void drop() { if (_key_v) delete (_key_v); }
+
+    inline void copy(const key_wrapper_t<DataType>& rhs) 
+    {
+        copy_vector(rhs._key_v);
+    }
+    
+
+    // helper functions
+    inline void copy_vector(const DataVec& aVec) 
+    {
+        assert (_key_v.empty());
+        _key_v.reserve(aVec.size());
+        _key_v.assign(aVec.begin(),aVec.end()); // copy vector content
     }
 
     // comparison operators
@@ -107,11 +123,27 @@ struct key_wrapper_t
     bool operator==(const key_wrapper_t<DataType>& rhs) const;
     bool operator<=(const key_wrapper_t<DataType>& rhs) const;
 
-    // helper functions
-    inline void copy_vector(const DataVec& aVec) {
-        assert (_key_v.empty());
-        _key_v = aVec; // copy vector content
+
+    // CACHEABLE INTERFACE
+
+
+    void setup(Pool** stl_pool_alloc_list) 
+    {
+        //assert (stl_pool_alloc_list);
+
+        // it must have 1 pool lists: 
+        // stl_pool_list[0]: DataType pool
+//         assert (stl_pool_alloc_list[0]); 
+//         _key_v = new DataVec( stl_pool_alloc_list[0] );
     }
+
+    void reset() 
+    {
+        // clear contents
+        _key_v.erase(_key_v.begin(),_key_v.end());
+    }
+
+
 
     string toString() {
         std::ostringstream out = string("");
@@ -124,6 +156,8 @@ struct key_wrapper_t
     template<class DataType> friend std::ostream& operator<< (std::ostream& os, 
                                                               const key_wrapper_t<DataType>& rhs);
 
+
+
 }; // EOF: struct key_wrapper_t
 
 
@@ -132,39 +166,39 @@ template<typename DataType>
 std::ostream& operator<< (std::ostream& os,
                           const key_wrapper_t<DataType>& rhs)
 {
-    for (int i=0; i<rhs._key_v.size(); i++) {
-        os << rhs._key_v[i] << "|";
+    typedef key_wrapper_t<DataType>::DataVecCit KeyDataIt;
+    for (KeyDataIt it = rhs._key_v.begin(); it != rhs._key_v.end(); ++it) {
+        os << (*it) << "|";
     }
     return (os);
 }
 
 
+//// COMPARISON OPERATORS ////
 
-
-/** struct key_wrapper_t methods */
-
-// comparison operators
 
 // less
 template<class DataType>
-bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) const {
+inline bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) const 
+{
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
-    for (int i=0; i<_key_v.size(); i++) {
+    for (int i = 0; i <_key_v.size(); ++i) {
         // goes over the key fields until one inequality is found
-        if (_key_v[i]==rhs._key_v[i])
+        if (_key_v.at(i)==rhs._key_v.at(i))
             continue;
-        return (_key_v[i]<rhs._key_v[i]);        
+        return (_key_v.at(i)<rhs._key_v.at(i));        
     }
     return (false); // irreflexivity - f(x,x) must be false
 }
 
 // equal
 template<class DataType>
-bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) const {
+inline bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) const 
+{
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields until one inequality is found
-        if (_key_v[i]==rhs._key_v[i])
+        if (_key_v.at(i)==rhs._key_v.at(i))
             continue;
         return (false);        
     }
@@ -173,13 +207,14 @@ bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) con
 
 // less or equal
 template<class DataType>
-bool key_wrapper_t<DataType>::operator<=(const key_wrapper_t<DataType>& rhs) const {
+inline bool key_wrapper_t<DataType>::operator<=(const key_wrapper_t<DataType>& rhs) const 
+{
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields
-        if (_key_v[i]==rhs._key_v[i])
+        if (_key_v.at(i)==rhs._key_v.at(i))
             continue;
-        return (_key_v[i]<rhs._key_v[i]);        
+        return (_key_v.at(i)<rhs._key_v.at(i));        
     }
     // if reached this point all fields are equal so the two keys are equal
     return (true); 

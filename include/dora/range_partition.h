@@ -63,8 +63,8 @@ public:
     
     typedef range_action_impl<DataType> RangeAction;
 
-    typedef action_t<DataType>          Action;
-    typedef key_wrapper_t<DataType>     Key;
+    typedef typename action_t<DataType>          Action;
+    typedef typename key_wrapper_t<DataType>     Key;
     //    using partition_t<DataType>::Key;
 
 private:
@@ -73,8 +73,10 @@ private:
     int _part_field_cnt;
 
     // the two bounds
-    typename partition_t<DataType>::Key _down;
-    Key _up;
+    Key _part_down;
+    Key _part_up;
+
+    //guard<Pool> _keypool;
 
     /** helper functions */
 
@@ -85,17 +87,23 @@ public:
 
     range_partition_impl(ShoreEnv* env, table_desc_t* ptable,                          
                          const int field_cnt,
-                         int apartid = 0, processorid_t aprsid = PBIND_NONE) 
-        : partition_t(env, ptable, apartid, aprsid),
+                         const int keyEstimation,
+                         const int apartid = 0, processorid_t aprsid = PBIND_NONE) 
+        : partition_t(env, ptable, keyEstimation, apartid, aprsid),
           _rp_state(RPS_UNSET),
           _part_field_cnt(field_cnt)
     {
         assert (_part_field_cnt>0);
         set_part_policy(PP_RANGE);
+
+//         _keypool = new Pool(sizeof(DataType),4);
+//         _down = new Key( _keypool.get() );
+//         _up = new Key ( _keypool.get() );
     }
 
 
-    ~range_partition_impl() { }    
+    ~range_partition_impl() { }
+
 
     const Key* down() { return (&_down); }
     const Key* up()   { return (&_up); }    
@@ -124,14 +132,14 @@ template <class DataType>
 const bool range_partition_impl<DataType>::_is_between(const Key& contDown,
                                                        const Key& contUp) const
 {
-    assert (_down<=_up);
+    //assert (_part_down<=_part_up);
     assert (contDown<=contUp);
     //    cout << "Checking (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
 
     // !!! WARNING !!!
     // The partition boundaries should always be on the left side 
     // because their size can be smaller than the size of the key checked
-    return ((_down<=contDown) && !(_up<contUp));
+    return ((_part_down<=contDown) && !(_part_up<contUp));
 }
 
 
@@ -155,13 +163,13 @@ const bool range_partition_impl<DataType>::resize(const Key& downLimit,
     }
 
     // copy new limits
-    _down = downLimit;
-    _up = upLimit;
+    _part_down.copy(downLimit);
+    _part_up.copy(upLimit);
     _rp_state = RPS_SET;
 
     ostringstream out;
     string sout;
-    out << _down << "-" << _up;
+    out << _part_down << "-" << _part_up;
     sout = out.str();
 
     TRACE( TRACE_DEBUG, "RangePartition (%s-%d) resized (%s)\n", 

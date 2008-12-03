@@ -16,7 +16,7 @@
 
 #include "util/countdown.h"
 
-#include "dora/common.h"
+#include "dora.h"
 
 using namespace qpipe;
 using namespace shore;
@@ -40,7 +40,8 @@ class rvp_t
 {
 public:
 
-    typedef vector<base_action_t*> baseActionsList;
+    //typedef PooledVec<base_action_t*>::Type    baseActionsList;
+    typedef vector<base_action_t*>    baseActionsList;
     typedef baseActionsList::iterator baseActionsIt;
 
 protected:
@@ -59,12 +60,14 @@ protected:
     // list of actions that report to this rvp
     baseActionsList     _actions;
 
-    // reset rvp
+    // set rvp
     void _set(const tid_t& atid, xct_t* axct, const int axctid,
               const trx_result_tuple_t& presult, 
               const int intra_trx_cnt, const int total_actions) 
     { 
+#ifndef ONLYDORA
         assert (axct);
+#endif
         assert (intra_trx_cnt>0);
         assert (total_actions>=intra_trx_cnt);
         _countdown.reset(intra_trx_cnt);
@@ -73,6 +76,8 @@ protected:
         _xct = axct;
         _xct_id = axctid;
         _result = presult;
+
+        //assert (_actions );
         _actions.reserve(total_actions);
     }
 
@@ -95,6 +100,7 @@ public:
     {
         _set(rhs._tid, rhs._xct, rhs._xct_id, rhs._result,
              rhs._countdown.remaining(), rhs._actions.size());
+        copy_actions(rhs._actions);
     }
     rvp_t& operator=(const rvp_t& rhs);
 
@@ -104,7 +110,7 @@ public:
     inline tid_t  tid() const { return (_tid); }
 
     // Actions-related
-    const int copy_actions(baseActionsList& actionList);
+    const int copy_actions(const baseActionsList& actionList);
     const int add_action(base_action_t* paction);
 
     // Decision-related
@@ -140,6 +146,28 @@ public:
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
+
+
+
+    // CACHEABLE INTERFACE
+
+    void setup(Pool** stl_pool_alloc_list) 
+    {
+        //assert (stl_pool_alloc_list);
+
+        // it must have 1 pool lists: 
+        // stl_pool_alloc_list[0]: base_action_t* pool
+        // assert (stl_pool_alloc_list[0]); 
+        //_actions = new baseActionsList( stl_pool_alloc_list[0] );
+    }
+
+    void reset() 
+    {
+        // clear contents
+        _actions.erase(_actions.begin(),_actions.end());
+        _xct = NULL;
+    }
+
     
 }; // EOF: rvp_t
 
@@ -171,7 +199,8 @@ public:
         : rvp_t(rhs)
     { }
 
-    terminal_rvp_t& operator=(const terminal_rvp_t& rhs) {
+    terminal_rvp_t& operator=(const terminal_rvp_t& rhs) 
+    {
         terminal_rvp_t::operator=(rhs);
         return (*this);
     }

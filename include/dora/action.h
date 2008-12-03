@@ -74,9 +74,9 @@ using namespace shore;
 
 
 class base_action_t;
-typedef base_action_t*              BaseActionPtr;
-typedef vector<BaseActionPtr>       BaseActionPtrList;
-typedef BaseActionPtrList::iterator BaseActionPtrIt;
+//typedef PooledVec<base_action_t*>::Type       BaseActionPtrList;
+typedef vector<base_action_t*>       BaseActionPtrList;
+typedef BaseActionPtrList::iterator  BaseActionPtrIt;
 
 
 /******************************************************************** 
@@ -100,26 +100,29 @@ protected:
 
     int            _keys_needed;
 
+    // flag showing that this action has set its keys
+    bool           _keys_set;
+
+
     // base action init
-    inline void _base_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, const int numkeys) 
+    inline void _base_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+                          const int numkeys, const bool keysset) 
     {
         _tid = atid;
         _xct = axct;
         _prvp = prvp;
         _keys_needed = numkeys;
+        _keys_set = 0;
     }
 
 public:
 
     base_action_t() :
-        _prvp(NULL), _xct(NULL), _keys_needed(0)
+        _prvp(NULL), _xct(NULL), _keys_needed(0), _keys_set(0)
     { }
 
-    virtual ~base_action_t() { 
-        _xct = NULL;
-        _prvp = NULL;
-        _keys_needed = 0;
-    }
+    virtual ~base_action_t() { }
+
 
     // access methods
     inline rvp_t* rvp() { return (_prvp); }
@@ -130,6 +133,7 @@ public:
     // needed keys operations
 
     inline const int needed() { return (_keys_needed); }
+    inline const bool are_keys_set() { return (_keys_set); }
 
     inline const bool is_ready() { 
         // if it does not need any other keys, 
@@ -158,8 +162,10 @@ public:
     // copying allowed
     base_action_t(base_action_t const& rhs)
         : _prvp(rhs._prvp), _xct(rhs._xct), 
-          _tid(rhs._tid), _keys_needed(rhs._keys_needed)
+          _tid(rhs._tid), _keys_needed(rhs._keys_needed),
+          _keys_set(rhs._keys_set)
     { }
+
     base_action_t& operator=(base_action_t const& rhs);
 
 
@@ -175,6 +181,9 @@ public:
     virtual const int trx_rel_locks(BaseActionPtrList& readyList, 
                                     BaseActionPtrList& promotedList)=0;
 
+    // hook to update the keys for this action
+    virtual const int trx_upd_keys()=0; 
+
     // enqueues self on the committed list of committed actions
     virtual void notify()=0; 
 
@@ -189,7 +198,7 @@ public:
  *
  * @class: action_t
  *
- * @brief: (template-based) Aabstract class for the actions
+ * @brief: (template-based) abstract class for the actions
  *
  * @note:  Actions are similar with packets in staged dbs
  *
@@ -201,50 +210,62 @@ class action_t : public base_action_t
 public:
     
     typedef key_wrapper_t<DataType>  Key;
-    typedef vector<Key>              KeyVec;
+    //typedef typename PooledVec<Key*>::Type    KeyPtrVec;
     typedef vector<Key*>             KeyPtrVec;
+
     typedef partition_t<DataType>    Partition;
 
     typedef KALReq_t<DataType>       KALReq;
-    typedef KALReq*                  KALReqPtr;
-    typedef vector<KALReqPtr>        KALReqPtrVec;
+    //typedef typename PooledVec<KALReq>::Type  KALReqVec;
+    typedef vector<KALReq>           KALReqVec;
 
 protected:
 
     // a vector of pointers to keys
-    vector<Key*>   _keys;
+    KeyPtrVec  _keys;
+
+    // a vector of requests for keys
+    KALReqVec  _requests;
 
     //pointer to the partition
-    Partition*     _partition;
+    Partition*  _partition;
+
 
     inline void _act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
-                         const int numkeys)
+                         const int numkeys, const bool keysset=0)
     {
-        _base_set(atid,axct,prvp,numkeys);
+        _base_set(atid,axct,prvp,numkeys,keysset);
+
         assert (numkeys);
         _keys.reserve(numkeys);
+        _requests.reserve(1);
     }
+
 
 public:
 
     action_t() : 
-        base_action_t(), _partition(NULL) 
+        base_action_t(), _partition(NULL)
     { }
-    virtual ~action_t() { 
-        _partition = NULL;
-        _keys.clear();
+
+    virtual ~action_t() 
+    { 
+//         if (_keys) delete (_keys);
+//         if (_requests) delete (_requests);
     }
 
 
     // copying allowed
     action_t(action_t const& rhs) 
-        : base_action_t(rhs), _keys(rhs._keys), _partition(rhs._partition)
-    { }
+        : base_action_t(rhs), _keys(rhs._keys), _requests(rhs._requests), _partition(rhs._partition)
+    { assert (0); }
 
     action_t& operator=(action_t const& rhs) {
         if (this != &rhs) {
+            assert (0);
             base_action_t::operator=(rhs);
             _keys = rhs._keys;
+            _requests = rhs._requests;
             _partition = rhs._partition;
         }
         return (*this);
@@ -253,32 +274,67 @@ public:
     
     // access methods
 
-    vector<Key*>* keys() { return (&_keys); }    
+    KeyPtrVec* keys() { return (&_keys); }    
+    KALReqVec* requests() { return (&_requests); }
 
     inline Partition* get_partition() const { return (_partition); }
     inline void set_partition(Partition* ap) {
-        assert (ap);
-        _partition = ap;
+        assert (ap); _partition = ap;
     }
    
     
+
     // INTEFACE
 
     virtual w_rc_t trx_exec()=0;
-    virtual const bool trx_acq_locks()=0;
-    virtual void giveback()=0;
 
-    const int trx_rel_locks(BaseActionPtrList& readyList, 
-                            BaseActionPtrList& promotedList) 
+    const bool trx_acq_locks() 
     {
         assert (_partition);
+        trx_upd_keys();
+        return (_partition->acquire(_requests));
+    }
+
+    const int trx_rel_locks(BaseActionPtrList& readyList, 
+                            BaseActionPtrList& promotedList)
+    {
+        assert (_partition);
+        trx_upd_keys();
         return (_partition->release(this,readyList,promotedList));
     }
 
-    void notify() {
+
+    virtual const int trx_upd_keys()=0;
+
+    void notify() 
+    {
         assert (_partition);
         _partition->enqueue_commit(this);
     }
+
+    virtual void giveback()=0;                            
+
+
+    virtual void setup(Pool** stl_pool_alloc_list) 
+    {
+        //assert (stl_pool_alloc_list);
+
+        // it must have 2 pool lists: 
+        // stl_pool_list[0]: KeyPtr pool
+        // stl_pool_list[1]: KALReq pool
+//         assert (stl_pool_alloc_list[0] && stl_pool_alloc_list[1]); 
+
+//         _keys = new KeyPtrVec( stl_pool_alloc_list[0] );
+//         _requests = new KALReqVec( stl_pool_alloc_list[1] );        
+    }
+
+    virtual void reset() 
+    {
+        // clear contents
+        _keys.erase(_keys.begin(),_keys.end());
+        _requests.erase(_requests.begin(),_requests.end());
+    }
+
     
 }; // EOF: action_t
 

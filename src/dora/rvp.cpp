@@ -25,7 +25,8 @@ rvp_t& rvp_t::operator=(const rvp_t& rhs)
 {
     if (this != &rhs) {
         _set(rhs._tid,rhs._xct,rhs._xct_id,rhs._result,
-             rhs._countdown.remaining(),rhs._actions.size());        
+             rhs._countdown.remaining(),rhs._actions.size());
+        copy_actions(rhs._actions);
     }
     return (*this);
 }
@@ -38,10 +39,11 @@ rvp_t& rvp_t::operator=(const rvp_t& rhs)
  *
  ******************************************************************/
 
-const int rvp_t::copy_actions(baseActionsList& actionList)
+const int rvp_t::copy_actions(const baseActionsList& actionList)
 {
-    _actions = actionList;
-    //return (_actions.size());
+    //assert (actionList);
+    _actions.reserve(actionList.size());
+    _actions.assign(actionList.begin(),actionList.end()); // copy list content
     return (0);
 }
 
@@ -59,7 +61,6 @@ const int rvp_t::add_action(base_action_t* paction)
     assert (paction);
     assert (this==paction->rvp());
     _actions.push_back(paction);
-    //return (_actions.size());
     return (0);
 }
 
@@ -91,14 +92,16 @@ const int terminal_rvp_t::notify()
  * @note:  There are hooks for updating the correct stats
  *
  ******************************************************************/
-
 w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 {
-    assert (_xct);
+    //    assert (_xct);
     assert (penv);
 
     // attach to this xct
+
+#ifndef ONLYDORA
     smthread_t::me()->attach_xct(_xct);
+#endif
 
     // try to commit    
     w_rc_t rcdec;
@@ -114,16 +117,23 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
         }
     }
     else {
+
+#ifndef ONLYDORA
         rcdec = penv->db()->commit_xct();    
+#endif
+
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
                    _tid, rcdec.err_num());
             upd_aborted_stats(); // hook - update aborted stats
+
+#ifndef ONLYDORA
             w_rc_t eabort = penv->db()->abort_xct();
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                        _tid, eabort.err_num());
             }
+#endif
         }
         else {
             TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid);
@@ -132,7 +142,11 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     }               
 
     // signal cond var
-    if(_result.get_notify())
+    if(_result.get_notify()) {
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", _tid, _result.get_notify());
 	_result.get_notify()->signal();
+    }
+    else
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
     return (rcdec);
 }

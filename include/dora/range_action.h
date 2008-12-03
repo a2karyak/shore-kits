@@ -34,6 +34,7 @@ template <class DataType>
 class range_action_impl : public action_t<DataType>
 {
 protected:
+
     // the range of keys
     Key _down;
     Key _up;
@@ -57,11 +58,12 @@ public:
 
     range_action_impl(const range_action_impl& rhs)
         : action_t<DataType>(rhs), _down(rhs._down), _up(rhs._up)
-    { }
+    { assert (0); }
 
     range_action_impl operator=(const range_action_impl& rhs)
     {
         if (this != &rhs) {
+            assert (0); // IP: to check
             action_t<DataType>::operator=(rhs);
             _down = rhs._down;
             _up = rhs._up;
@@ -69,41 +71,61 @@ public:
         return (*this);
     }
 
-    virtual ~range_action_impl() { 
-        _down.reset();
-        _up.reset();
-    }
+    virtual ~range_action_impl() 
+    { 
+//         if (_down) delete (_down);
+//         if (_up) delete (_up);
+    }    
     
 
-    // access methods
+    // INTERFACE 
 
-    void set_key_range() {
-        calc_keys();
-        _set_keys();
-    }
-
-    virtual void calc_keys()=0; // pure virtual 
-
-    Key& down() { return (_down); }
-    const Key& down() const { return (_down); }
-    Key& up() { return (_up); }
-    const Key& up() const { return (_up); }
-    
-
-    // interface 
+    virtual void calc_keys()=0; 
 
     virtual w_rc_t trx_exec()=0;
-    virtual const bool trx_acq_locks()=0;
-    virtual void giveback()=0;
 
-private:
+    virtual const int trx_upd_keys()
+    {
+        if (_keys_set) return (1); // if already set do not recalculate        
 
-    void _set_keys() {
+        calc_keys();
+
         assert (_keys.empty()); // make sure using an empty action
         _keys.push_back(&_down);
         _keys.push_back(&_up);
+
+        setkeys(1); // indicates that it needs only 1 key
+        _requests.push_back(KALReq(this,DL_CC_EXCL,&_down)); // range action
+
+        _keys_set = 1;
+        return (0);
     }
-    
+
+    virtual void giveback()=0;
+
+    virtual void setup(Pool** stl_pool_list)
+    {
+        //        action_t<DataType>::setup(stl_pool_list);
+
+        // it must have 3 pool lists
+        // stl_pool_list[0]: KeyPtr pool
+        // stl_pool_list[1]: KALReq pool
+        // stl_pool_list[2]: DataType pool (for the Keys)
+//         assert (stl_pool_list[2]);         
+
+//         _down = new Key( stl_pool_list[2] );
+//         _up = new Key( stl_pool_list[2] );
+    }
+
+    virtual void reset()
+    {
+        action_t<DataType>::reset();
+
+        // clear contents
+        _down.reset();
+        _up.reset();
+    }
+
 }; // EOF: range_action_impl
 
 

@@ -39,6 +39,7 @@ public:
 
     typedef partition_t<DataType> Partition;
     typedef action_t<DataType>    Action;
+    
 
 private:
     
@@ -87,10 +88,22 @@ public:
  * 
  ******************************************************************/
 
+EXIT_NAMESPACE(dora);
+
+ENTER_NAMESPACE(tpcc);
+extern void worker_thread_init();
+extern void worker_thread_fini();
+EXIT_NAMESPACE(tpcc);
+
+ENTER_NAMESPACE(dora);
+
+
 template <class DataType>
 inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 {    
     //    TRACE( TRACE_DEBUG, "Activating...\n");
+    int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
+    if (binding==0) _prs_id = PBIND_NONE;
 
     // bind to the specified processor
     if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
@@ -111,6 +124,9 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
     BaseActionPtrList actionPromotedList;
     actionReadyList.clear();
     actionPromotedList.clear();
+
+
+    worker_thread_init();
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
@@ -171,8 +187,10 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
                 ++_stats._served_input;
             }
         }
-
     }
+
+    worker_thread_fini();
+
     return (0);
 }
 
@@ -203,7 +221,11 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     assert (aprvp);
 
     // 2. attach to xct
+
+#ifndef ONLYDORA
     attach_xct(paction->xct());
+#endif
+
     TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
             
     // 3. serve action
@@ -224,7 +246,10 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
     // 4. detach from trx
     TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid());
+
+#ifndef ONLYDORA
     detach_xct(paction->xct());
+#endif
 
     // 5. finalize processing        
     if (aprvp->post(is_error)) {

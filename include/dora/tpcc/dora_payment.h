@@ -17,6 +17,7 @@
 
 #include "dora.h"
 #include "workload/tpcc/shore_tpcc_env.h"
+#include "dora/tpcc/dora_tpcc.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -24,8 +25,6 @@ ENTER_NAMESPACE(dora);
 
 using namespace shore;
 using namespace tpcc;
-
-class DoraTPCCEnv;
 
 
 //
@@ -48,31 +47,31 @@ class DoraTPCCEnv;
 class midway_pay_rvp : public rvp_t
 {
 private:
-    typedef atomic_class_stack<midway_pay_rvp> rvp_pool;
-    rvp_pool* _pool;
+    typedef object_cache_t<midway_pay_rvp> rvp_cache;
+    rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
     // data needed for the next phase
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple  _adist;
     payment_input_t      _pin;
 public:
-    midway_pay_rvp() : rvp_t(), _pool(NULL), _ptpccenv(NULL) { }
-    ~midway_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
+    midway_pay_rvp() : rvp_t(), _cache(NULL), _ptpccenv(NULL) { }
+    ~midway_pay_rvp() { _cache=NULL; _ptpccenv=NULL; }
 
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
                     const payment_input_t& ppin, 
-                    DoraTPCCEnv* penv, rvp_pool* pp) 
+                    DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        _set(atid,axct,axctid,presult,3,3);
         _pin = ppin;
         assert (penv);
         _ptpccenv = penv;
-        assert (pp);
-        _pool = pp;
+        assert (pc);
+        _cache = pc;
+        _set(atid,axct,axctid,presult,3,3);
     }
-    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+    inline void giveback() { assert (_cache); _cache->giveback(this); }    
 
     tpcc_warehouse_tuple* wh() { return (&_awh); }
     tpcc_district_tuple* dist() { return (&_adist); }    
@@ -95,25 +94,25 @@ public:
 class final_pay_rvp : public terminal_rvp_t
 {
 private:
-    typedef atomic_class_stack<final_pay_rvp> rvp_pool;
-    rvp_pool* _pool;
+    typedef object_cache_t<final_pay_rvp> rvp_cache;
     DoraTPCCEnv* _ptpccenv;
+    rvp_cache* _cache;
 public:
-    final_pay_rvp() : terminal_rvp_t(), _pool(NULL), _ptpccenv(NULL) { }
-    ~final_pay_rvp() { _pool=NULL; _ptpccenv=NULL; }
+    final_pay_rvp() : terminal_rvp_t(), _cache(NULL), _ptpccenv(NULL) { }
+    ~final_pay_rvp() { _cache=NULL; _ptpccenv=NULL; }
 
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int axctid,
                     trx_result_tuple_t& presult, 
-                    DoraTPCCEnv* penv, rvp_pool* pp) 
+                    DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        _set(atid,axct,axctid,presult,1,4);
         assert (penv);
         _ptpccenv = penv;
-        assert (pp);
-        _pool = pp;
+        assert (pc);
+        _cache = pc;
+        _set(atid,axct,axctid,presult,1,4);
     }
-    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+    inline void giveback() { assert (_ptpccenv); _cache->giveback(this); }    
 
     // interface
     w_rc_t run();
@@ -140,8 +139,6 @@ public:
  * @abstract class: pay_action
  *
  * @brief:          Holds a payment input and a pointer to ShoreTPCCEnv
- *                  Also implements the trx_acq_locks since all the
- *                  Payment actions are probes to a single tuple
  *
  ********************************************************************/
 
@@ -159,20 +156,15 @@ protected:
         _pin = pin;
         assert (penv);
         _ptpccenv = penv;
-        set_key_range(); // set key range for this action
+        trx_upd_keys(); // set the keys
     }
 
-public:
-    
-    pay_action() 
-        : range_action_impl<int>(), _ptpccenv(NULL) 
-    { }
+public:    
+    pay_action() : range_action_impl<int>(), _ptpccenv(NULL) { }
     virtual ~pay_action() { }
 
     virtual w_rc_t trx_exec()=0;    
     virtual void calc_keys()=0; 
-
-    const bool trx_acq_locks(); // all payment actions are unique probes
     
 }; // EOF: pay_action
 
@@ -181,8 +173,8 @@ public:
 class upd_wh_pay_action : public pay_action
 {
 private:
-    typedef atomic_class_stack<upd_wh_pay_action> act_pool;
-    act_pool*       _pool;
+    typedef object_cache_t<upd_wh_pay_action> act_cache;
+    act_cache*       _cache;
 public:    
     upd_wh_pay_action() : pay_action() { }
     ~upd_wh_pay_action() { }
@@ -192,27 +184,27 @@ public:
         _down.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_wh_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp, 
                     const payment_input_t& pin,
-                    DoraTPCCEnv* penv, 
-                    midway_pay_rvp* amrvp, act_pool* pp) 
+                    DoraTPCCEnv* penv, act_cache* pc) 
     {
+        assert (prvp);
+        _m_rvp = prvp;
+        assert (pc);
+        _cache = pc;
         _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (WH)
-        assert (amrvp);
-        _m_rvp = amrvp;
-        assert (pp);
-        _pool = pp;
     }
-
-    inline void giveback() { assert (_pool); _pool->destroy(this); }    
+    inline void giveback() { assert (_cache); _cache->giveback(this); }    
+   
 }; // EOF: upd_wh_pay_action
+
 
 // UPD_DIST_PAY_ACTION
 class upd_dist_pay_action : public pay_action
 {
 private:
-    typedef atomic_class_stack<upd_dist_pay_action> act_pool;
-    act_pool*       _pool;
+    typedef object_cache_t<upd_dist_pay_action> act_cache;
+    act_cache*       _cache;
 public:   
     upd_dist_pay_action() : pay_action() { }
     ~upd_dist_pay_action() { }
@@ -224,27 +216,27 @@ public:
         _up.push_back(_pin._home_wh_id);
         _up.push_back(_pin._home_d_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* amrvp, 
                     const payment_input_t& pin,
-                    DoraTPCCEnv* penv, 
-                    midway_pay_rvp* amrvp, act_pool* pp) 
+                    DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _pay_act_set(atid,axct,prvp,2,pin,penv);  // key is (WH|DIST)
         assert (amrvp);
         _m_rvp = amrvp;
-        assert (pp);
-        _pool = pp;
+        assert (pc);
+        _cache = pc;
+        _pay_act_set(atid,axct,amrvp,2,pin,penv);  // key is (WH|DIST)
     }
+    inline void giveback() { assert (_cache); _cache->giveback(this); }    
 
-    inline void giveback() { assert (_pool); _pool->destroy(this); }    
 }; // EOF: upd_wh_pay_action
+
 
 // UPD_CUST_PAY_ACTION
 class upd_cust_pay_action : public pay_action
 {
 private:
-    typedef atomic_class_stack<upd_cust_pay_action> act_pool;
-    act_pool*       _pool;
+    typedef object_cache_t<upd_cust_pay_action> act_cache;
+    act_cache*       _cache;
 public:    
     upd_cust_pay_action() : pay_action() { }
     ~upd_cust_pay_action() { }
@@ -258,27 +250,27 @@ public:
         _up.push_back(_pin._home_d_id);
         _up.push_back(_pin._c_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp, 
                     const payment_input_t& pin,
-                    DoraTPCCEnv* penv, 
-                    midway_pay_rvp* amrvp, act_pool* pp) 
+                    DoraTPCCEnv* penv, act_cache* pc) 
     {
+        assert (prvp);
+        _m_rvp = prvp;
+        assert (pc);
+        _cache = pc;
         _pay_act_set(atid,axct,prvp,3,pin,penv);  // key is (WH|DIST|CUST)
-        assert (amrvp);
-        _m_rvp = amrvp;
-        assert (pp);
-        _pool = pp;
     }
+    inline void giveback() { assert (_cache); _cache->giveback(this); }    
 
-    inline void giveback() { assert (_pool); _pool->destroy(this); }    
 }; // EOF: upd_cust_pay_action
+
 
 // INS_HIST_PAY_ACTION
 class ins_hist_pay_action : public pay_action
 {
 private:
-    typedef atomic_class_stack<ins_hist_pay_action> act_pool;
-    act_pool*       _pool;
+    typedef object_cache_t<ins_hist_pay_action> act_cache;
+    act_cache*       _cache;
 public:    
     ins_hist_pay_action() : pay_action() { }
     ~ins_hist_pay_action() { }
@@ -291,18 +283,18 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
-                    tpcc_warehouse_tuple awh,
-                    tpcc_district_tuple adist,
-                    DoraTPCCEnv* penv, act_pool* pp) 
+                    const tpcc_warehouse_tuple& awh,
+                    const tpcc_district_tuple& adist,
+                    DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (HIST)
         _awh = awh;
         _adist = adist;
-        assert (pp);
-        _pool = pp;
+        assert (pc);
+        _cache = pc;
+        _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (HIST)
     }
+    inline void giveback() { assert (_cache); _cache->giveback(this); }
 
-    inline void giveback() { assert (_pool); _pool->destroy(this); }    
 }; // EOF: ins_hist_pay_action
 
 

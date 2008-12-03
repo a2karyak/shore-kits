@@ -115,13 +115,6 @@ ENTER_NAMESPACE(dora);
 //  *
 //  ********************************************************************/
 
-// const bool pay_action_impl::trx_acq_locks()
-// {
-//     // all the Payment trxs are (EX) probes to a single tuple
-//     assert (_partition);
-//     alrvec.push_back(alr);    
-//     return (_partition->acquire(_tid,alrvec));
-// }
 
 // w_rc_t upd_wh_pay_action_impl::trx_exec() 
 // {
