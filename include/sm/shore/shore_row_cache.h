@@ -52,6 +52,25 @@ private:
     tatas_lock _setups_lock;
 #endif              
 
+    // start with a non-empty pool, so that threads don't race
+    // at the beginning
+    struct mylink {
+        table_tuple* _pobj;
+        mylink* _next;
+        mylink() : _pobj(NULL), _next(NULL) { }
+        mylink(table_tuple* obj, mylink* next) : _pobj(obj), _next(next) { }
+        ~mylink() { }
+    };        
+
+    
+    table_tuple* _do_alloc() 
+    {
+        vpn u = { malloc(_nbytes) };
+        if (!u.v) u.v = null();
+        table_tuple* pobj = (table_tuple*)prepare(u);
+	return (pobj);
+    }
+
 public:
 
     row_cache_t(TableDesc* ptable, int init_count=DEFAULT_INIT_ROW_COUNT) 
@@ -64,20 +83,21 @@ public:
         assert (_ptable);
         assert (init_count >= 0); 
 
-        // start with a non-empty pool, so that threads don't race
-        // at the beginning
-        ptr* head = NULL;
-        for (int i=0; i<init_count; i++) {                       
-            vpn u = {borrow()};
-            u.p->next = head;
-            head = u.p;
+        mylink head;
+        mylink* node = NULL;
+
+        // create (init_count) objects, and push them to the cache
+        for (int i=0; i<init_count; i++) {
+            table_tuple* u = borrow();
+            node = new mylink(u,head._next);
+            head._next = node;
         }
 
         for (int i=0; i<init_count; i++) {
-            pvn p;
-            p.p = head;
-            head = head->next;
-            giveback((table_tuple*)p.v);
+            giveback(node->_pobj);
+            head._next = node;
+            node = node->_next;
+            delete (head._next);
         }
     }
 
@@ -93,7 +113,7 @@ public:
         while ( (v=pop()) ) {
             val.v = v;
             val.n += +_offset; // back up to the real
-            ((table_tuple*)v)->freevalues();
+            ((table_tuple*)v)->~table_tuple();
             free(val.v);
             ++icount;
         }
@@ -118,12 +138,9 @@ public:
         ++_tuple_setups;
 #endif
 
-        // allocates and setups a new table_tuple
-        vpn u = { malloc(_nbytes) };
-        if (!u.v) u.v = null();
-        table_tuple* rp = (table_tuple*)prepare(u);
-        rp->setup(_ptable);
-	return (rp);
+        table_tuple* temp = new (this) table_tuple();
+        temp->setup(_ptable);
+	return (temp);
     }
     
     /* Returns an object to the cache. The object is reset and put on the
@@ -134,11 +151,11 @@ public:
         assert (ptn);
         assert (ptn->_ptable == _ptable);
 
-        // reset the object
-        ptn->reset();
-        
         // avoid pointer aliasing problems with the optimizer
         union { table_tuple* t; void* v; } u = {ptn};
+
+        // reset the object
+        u.t->reset();
         
         // give it back
         push(u.v);
@@ -154,7 +171,41 @@ public:
     }
 #endif 
 
+    // these guys need to access the underlying object cache
+    template <typename T> 
+    friend void* operator new(size_t, row_cache_t<T>*);
+
+    template <typename T> 
+    friend void operator delete(void*, row_cache_t<T>*);
+
 }; // EOF: row_cache_t
+
+
+
+/* Usage: Object* pobj = new (object_cache_t<Object>) Object(...)
+   when finished, call object_cache_t<Object>::destroy(pobj) instead of delete.
+ */
+
+template <typename T>
+inline void* operator new(size_t nbytes, row_cache_t<T>* cache) 
+{
+    assert(cache->_nbytes >= nbytes);
+    return (cache->_do_alloc());
+}
+
+
+/* Called automatically by the compiler if T's constructor throws
+   (otherwise memory would leak).
+   Unfortunately, there is no "delete (cache)" syntax in C++ so the user
+   must still call cache::destroy()
+ */
+template <typename T>
+inline void operator delete(void* ptr, row_cache_t<T>* cache) 
+{
+    typedef row_impl<T> table_tuple;
+    cache->giveback((table_tuple*)ptr);
+}
+
 
 
 EXIT_NAMESPACE(shore);
