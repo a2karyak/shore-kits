@@ -29,7 +29,7 @@ using namespace shore;
 void tpcc_worker_t::enqueue(Request* arequest)
 {
     assert (arequest);
-    _queue.push(arequest);
+    _pqueue->push(arequest);
 }
 
 
@@ -79,7 +79,7 @@ const int tpcc_worker_t::_work_ACTIVE_impl()
 
         // 2. dequeue a request from the (main) input queue
         // it will spin inside the queue or (after a while) wait on a cond var
-        ar = _queue.pop();
+        ar = _pqueue->pop();
 
         // 3. execute the particular request
         if (ar) {

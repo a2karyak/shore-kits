@@ -67,12 +67,22 @@ w_rc_t baseline_tpcc_client_t::run_one_xct(int xct_type, int xctid)
     
     // 2. Set input
     trx_result_tuple_t atrt;
-    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    if (_cp->take_one) {
+        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d)\n", atid);
+        atrt.set_notify(_cp->wait+_cp->index);
+    }
+
+
+    // pick a valid wh id
+    int whid = _wh;
+    if (_wh==0) 
+        whid = URand(1,_qf); 
+
 
     // 3. Get one action from the trash stack
     assert (_tpccdb);
     tpcc_request_t* arequest = new (_tpccdb->_request_pool) tpcc_request_t;
-    arequest->set(pxct,atid,xctid,atrt,xct_type,_wh);    
+    arequest->set(pxct,atid,xctid,atrt,xct_type,whid);    
 
     // 4. enqueue to worker thread
     assert (_worker);
@@ -128,6 +138,11 @@ w_rc_t dora_tpcc_client_t::run_one_xct(int xct_type, int xctid)
         xct_type = XCT_DORA_MIX + random_xct_type(rand(100));
     }
 
+    // pick a valid wh id
+    int whid = _wh;
+    if (_wh==0) 
+        whid = URand(1,_qf); 
+
     trx_result_tuple_t atrt;
     if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
     
@@ -135,21 +150,21 @@ w_rc_t dora_tpcc_client_t::run_one_xct(int xct_type, int xctid)
 
         // TPC-C DORA
     case XCT_DORA_NEW_ORDER:
-        return (_tpccdb->dora_new_order(xctid,atrt,_wh));
+        return (_tpccdb->dora_new_order(xctid,atrt,whid));
     case XCT_DORA_PAYMENT:
-        return (_tpccdb->dora_payment(xctid,atrt,_wh));
+        return (_tpccdb->dora_payment(xctid,atrt,whid));
     case XCT_DORA_ORDER_STATUS:
-        return (_tpccdb->dora_order_status(xctid,atrt,_wh));
+        return (_tpccdb->dora_order_status(xctid,atrt,whid));
     case XCT_DORA_DELIVERY:
-        return (_tpccdb->dora_delivery(xctid,atrt,_wh));
+        return (_tpccdb->dora_delivery(xctid,atrt,whid));
     case XCT_DORA_STOCK_LEVEL:
-        return (_tpccdb->dora_stock_level(xctid,atrt,_wh));
+        return (_tpccdb->dora_stock_level(xctid,atrt,whid));
 
         // MBENCH DORA
     case XCT_DORA_MBENCH_WH:
-        return (_tpccdb->dora_mbench_wh(xctid,atrt,_wh));
+        return (_tpccdb->dora_mbench_wh(xctid,atrt,whid));
     case XCT_DORA_MBENCH_CUST:
-        return (_tpccdb->dora_mbench_cust(xctid,atrt,_wh));
+        return (_tpccdb->dora_mbench_cust(xctid,atrt,whid));
 
     default:
         assert (0); // UNKNOWN TRX-ID

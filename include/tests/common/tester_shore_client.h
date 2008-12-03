@@ -57,7 +57,7 @@ private:
     ShoreTPCCEnv* _tpccdb;    
     int _wh;
     tpcc_worker_t* _worker;
-
+    int _qf;
     
 
 public:
@@ -67,12 +67,12 @@ public:
     baseline_tpcc_client_t(c_str tname, const int id, ShoreTPCCEnv* env, 
                            const MeasurementType aType, const int trxid, 
                            const int numOfTrxs, const int useSLI,
-                           processorid_t aprsid, int sWH) 
+                           processorid_t aprsid, const int sWH, const int qf) 
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
-          _tpccdb(env), _wh(sWH)
+          _tpccdb(env), _wh(sWH), _qf(qf)
     {
         assert (env);
-        assert (_wh>=0);
+        assert (_wh>=0 && _qf>0);
 
         // pick worker thread
         _worker = _tpccdb->tpccworker(_id);
@@ -82,7 +82,7 @@ public:
 
     ~baseline_tpcc_client_t() { }
 
-    // every client class should implement this functions
+    // every client class should implement this function
     static const int load_sup_xct(mapSupTrxs& map);
 
     // INTERFACE 
@@ -106,6 +106,7 @@ private:
     // workload parameters
     DoraTPCCEnv* _tpccdb;    
     int _wh;
+    int _qf;
 
 public:
 
@@ -113,18 +114,18 @@ public:
 
     dora_tpcc_client_t(c_str tname, const int id, DoraTPCCEnv* env, 
                        const MeasurementType aType, const int trxid, 
-                       const int numOfTrxs, const int useSLI,
-                       processorid_t aprsid, int sWH) 
+                       const int numOfTrxs, const int useSLI, 
+                       processorid_t aprsid, const int sWH, const int qf)  
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
-          _tpccdb(env), _wh(sWH)
+          _tpccdb(env), _wh(sWH), _qf(qf)
     {
         assert (env);
-        assert (_wh>=0);
+        assert (_wh>=0 && _qf>0);
     }
 
     ~dora_tpcc_client_t() { }
 
-    // every client class should implement this functions
+    // every client class should implement this function
     static const int load_sup_xct(mapSupTrxs& map);
 
     // INTERFACE 

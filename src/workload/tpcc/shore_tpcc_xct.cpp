@@ -97,20 +97,23 @@ struct xct_count {
     int delivery;
     int payment;
     int status;
-    xct_count &operator+=(xct_count const& other) {
-	nord += other.nord;
-	stock += other.stock;
-	delivery += other.delivery;
-	payment += other.payment;
-	status += other.status;
+    int other;
+    xct_count &operator+=(xct_count const& rhs) {
+	nord += rhs.nord;
+	stock += rhs.stock;
+	delivery += rhs.delivery;
+	payment += rhs.payment;
+	status += rhs.status;
+        other += rhs.other;
 	return *this;
     }
-    xct_count &operator-=(xct_count const& other) {
-	nord -= other.nord;
-	stock -= other.stock;
-	delivery -= other.delivery;
-	payment -= other.payment;
-	status -= other.status;
+    xct_count &operator-=(xct_count const& rhs) {
+	nord -= rhs.nord;
+	stock -= rhs.stock;
+	delivery -= rhs.delivery;
+	payment -= rhs.payment;
+	status -= rhs.status;
+        other -= rhs.other;
 	return *this;
     }
 };
@@ -134,7 +137,7 @@ typedef std::map<pthread_t, xct_stats*> statmap_t;
 static statmap_t statmap;
 static pthread_mutex_t statmap_lock = PTHREAD_MUTEX_INITIALIZER;
 
-// hooks for tpcc_worker_t::_work_ACTIVE_impl
+// hooks for worker_t::_work_ACTIVE_impl
 extern void worker_thread_init() {
     CRITICAL_SECTION(cs, statmap_lock);
     statmap[pthread_self()] = &my_stats;
@@ -154,6 +157,24 @@ extern xct_stats shell_get_xct_stats() {
 
     return rval;
 }
+
+
+void ShoreTPCCEnv::_inc_other_att() {
+    ++my_stats.attempted.other;
+}
+
+void ShoreTPCCEnv::_inc_other_failed() {
+    ++my_stats.failed.other;
+}
+
+void ShoreTPCCEnv::_inc_pay_att() {
+    ++my_stats.attempted.payment;
+}
+
+void ShoreTPCCEnv::_inc_pay_failed() {
+    ++my_stats.failed.payment;
+}
+
 
 /* --- with input specified --- */
 
@@ -421,7 +442,7 @@ w_rc_t ShoreTPCCEnv::run_new_order(const int xct_id,
 
 w_rc_t ShoreTPCCEnv::run_payment(const int xct_id, 
                                  trx_result_tuple_t& atrt,
-                                   int specificWH)
+                                 int specificWH)
 {
     payment_input_t pin = create_payment_input(_queried_factor, specificWH);
     return (run_payment(xct_id, pin, atrt));
@@ -1849,9 +1870,10 @@ w_rc_t ShoreTPCCEnv::run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt,
                                      const int whid)
 {
     TRACE( TRACE_TRX_FLOW, "%d. MBENCH-CUST...\n", xct_id);     
-    
+    ++my_stats.attempted.other;
     w_rc_t e = _run_mbench_cust(xct_id, atrt, whid);
     if (e.is_error()) {
+        ++my_stats.failed.other;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) MBench-Cust aborted [0x%x]\n", 
                xct_id, e.err_num());
 	
@@ -1892,12 +1914,16 @@ w_rc_t ShoreTPCCEnv::run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt,
 }
 
 w_rc_t ShoreTPCCEnv::_run_mbench_cust(const int xct_id, trx_result_tuple_t& trt, 
-                                      const int whid)
+                                      int whid)
 {
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
+
+    // pick a valid wh id
+    if (whid==0) 
+        whid = URand(1,_scaling_factor); 
 
     // generates the input
     int did = URand(1,10);
@@ -2036,9 +2062,11 @@ w_rc_t ShoreTPCCEnv::run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt,
                                    const int whid)
 {
     TRACE( TRACE_TRX_FLOW, "%d. MBENCH-WH...\n", xct_id);     
-    
+
+    ++my_stats.attempted.other;
     w_rc_t e = _run_mbench_wh(xct_id, atrt, whid);
     if (e.is_error()) {
+        ++my_stats.failed.other;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) MBench-Wh aborted [0x%x]\n", 
                xct_id, e.err_num());
 	
@@ -2079,12 +2107,16 @@ w_rc_t ShoreTPCCEnv::run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt,
 }
 
 w_rc_t ShoreTPCCEnv::_run_mbench_wh(const int xct_id, trx_result_tuple_t& trt, 
-                                    const int whid)
+                                    int whid)
 {
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
+
+    // pick a valid wh id
+    if (whid==0) 
+        whid = URand(1,_scaling_factor); 
 
     // generate the input
     double amount = (double)URand(1,1000);

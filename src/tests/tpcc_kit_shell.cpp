@@ -310,89 +310,6 @@ void kit_t<Client,DB>::print_throughput(const int iQueriedWHs, const int iSpread
 
 
 
-
-
-/********************************************************************* 
- *
- * COMMANDS
- *
- *********************************************************************/
-
-/** cmd: TEST **/
-
-template<class Client,class DB>
-int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs, 
-                                     const int iSpread,
-                                     const int iNumOfThreads, 
-                                     const int iNumOfTrxs,
-                                     const int iSelectedTrx, 
-                                     const int iIterations,
-                                     const int iUseSLI,
-                                     const eBindingType abt)
-{
-    // print test information
-    print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
-                    iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI, abt);
-
-    Client* testers[MAX_NUM_OF_THR];
-    for (int j=0; j<iIterations; j++) {
-
-        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
-               (j+1), iIterations);
-
-        // reset starting cpu and wh id
-        _current_prs_id = _start_prs_id;
-        int wh_id = 0;
-
-        // set measurement state to measure - start counting everything
-        _env->set_measure(MST_MEASURE);
-	stopwatch_t timer;
-
-        // 1. create and fork client clients
-        for (int i=0; i<iNumOfThreads; i++) {
-            // create & fork testing threads
-            if (iSpread)
-                wh_id = i+1;
-            testers[i] = new Client(c_str("CL-%d",i), i, _tpccdb, 
-                                    MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs, iUseSLI,
-                                    _current_prs_id, wh_id);
-            assert (testers[i]);
-            testers[i]->fork();
-            _current_prs_id = next_cpu(abt, _current_prs_id);
-        }
-
-        // 2. join the tester threads
-        for (int i=0; i<iNumOfThreads; i++) {
-            testers[i]->join();
-            if (testers[i]->rv()) {
-                TRACE( TRACE_ALWAYS, "Error in testing...\n");
-                TRACE( TRACE_ALWAYS, "Exiting...\n");
-                assert (false);
-            }    
-            delete (testers[i]);
-        }
-
-	double delay = timer.time();
-
-        // print throughput and reset session stats
-        print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
-        _tpccdb->reset_session_tpcc_stats();
-
-
-        // flush the log before the next iteration
-        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
-        _env->checkpoint();
-        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
-    }
-
-    // print processor usage info
-    _cpustater->myinfo.print();
-
-    // set measurement state
-    _env->set_measure(MST_DONE);
-    return (SHELL_NEXT_CONTINUE);
-}
-
 namespace tpcc {
 
 struct xct_count {
@@ -401,20 +318,23 @@ struct xct_count {
     int delivery;
     int payment;
     int status;
-    xct_count &operator+=(xct_count const& other) {
-	nord += other.nord;
-	stock += other.stock;
-	delivery += other.delivery;
-	payment += other.payment;
-	status += other.status;
+    int other;
+    xct_count &operator+=(xct_count const& rhs) {
+	nord += rhs.nord;
+	stock += rhs.stock;
+	delivery += rhs.delivery;
+	payment += rhs.payment;
+	status += rhs.status;
+        other += rhs.other;
 	return *this;
     }
-    xct_count &operator-=(xct_count const& other) {
-	nord -= other.nord;
-	stock -= other.stock;
-	delivery -= other.delivery;
-	payment -= other.payment;
-	status -= other.status;
+    xct_count &operator-=(xct_count const& rhs) {
+	nord -= rhs.nord;
+	stock -= rhs.stock;
+	delivery -= rhs.delivery;
+	payment -= rhs.payment;
+	status -= rhs.status;
+        other -= rhs.other;
 	return *this;
     }
 };
@@ -442,6 +362,124 @@ namespace shore {
 
 }
 
+void print_xct_stats(const xct_stats& stats) 
+{
+}
+
+
+
+
+
+
+/********************************************************************* 
+ *
+ * COMMANDS
+ *
+ *********************************************************************/
+
+/** cmd: TEST **/
+
+template<class Client,class DB>
+int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs, 
+                                     const int iSpread,
+                                     const int iNumOfThreads, 
+                                     const int iNumOfTrxs,
+                                     const int iSelectedTrx, 
+                                     const int iIterations,
+                                     const int iUseSLI,
+                                     const eBindingType abt)
+{
+    // print test information
+    print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
+                    iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI, abt);
+
+    _tpccdb->upd_sf();
+
+    Client* testers[MAX_NUM_OF_THR];
+    for (int j=0; j<iIterations; j++) {
+
+        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
+               (j+1), iIterations);
+
+        // reset starting cpu and wh id
+        _current_prs_id = _start_prs_id;
+        int wh_id = 0;
+
+        // set measurement state to measure - start counting everything
+        _env->set_measure(MST_MEASURE);
+	stopwatch_t timer;
+
+        // 1. create and fork client clients
+        for (int i=0; i<iNumOfThreads; i++) {
+            // create & fork testing threads
+            if (iSpread)
+                wh_id = i+1;
+            testers[i] = new Client(c_str("CL-%d",i), i, _tpccdb, 
+                                    MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs, iUseSLI,
+                                    _current_prs_id, wh_id, iQueriedWHs);
+            assert (testers[i]);
+            testers[i]->fork();
+            _current_prs_id = next_cpu(abt, _current_prs_id);
+        }
+
+        // 2. join the tester threads
+        for (int i=0; i<iNumOfThreads; i++) {
+            testers[i]->join();
+            if (testers[i]->rv()) {
+                TRACE( TRACE_ALWAYS, "Error in testing...\n");
+                TRACE( TRACE_ALWAYS, "Exiting...\n");
+                assert (false);
+            }    
+            delete (testers[i]);
+        }
+
+	double delay = timer.time();
+
+        xct_stats stats = shell_get_xct_stats();
+
+        int attempted = stats.attempted.nord+stats.attempted.payment
+            +stats.attempted.status+stats.attempted.stock+stats.attempted.delivery
+            +stats.attempted.other;
+        int failed = stats.failed.nord+stats.failed.payment
+            +stats.failed.status+stats.failed.stock+stats.failed.delivery
+            +stats.failed.other;
+        int nord = stats.attempted.nord-stats.failed.nord;
+	
+        printf("WH:\t%d\n"
+               "Spread:\t%s\n"
+               "SLI:\t%s\n"
+               "Threads:\t%d\n"
+               "Trx Att:\t%d\n"
+               "Trx Abt:\t%d\n"
+               "NOrd Com:\t%d\n"
+               "Secs:\t%.2lf\n"
+               "TPS:\t%.2lf\n"
+               "tpm-C:\t%.2lf\n",
+               iQueriedWHs, iSpread? "yes" : "no", iUseSLI? "yes" : "no", iNumOfThreads,
+               attempted, failed, nord,
+               delay, (attempted-failed)/delay, 60*nord/delay);
+
+
+        // flush the log before the next iteration
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        //_env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
+
+//         // print throughput and reset session stats
+//         print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
+//         _tpccdb->reset_session_tpcc_stats();
+
+    }
+
+    // print processor usage info
+    //    _cpustater->myinfo.print();
+
+    // set measurement state
+    _env->set_measure(MST_DONE);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
 /** cmd: MEASURE **/
 
 template<class Client,class DB>
@@ -457,6 +495,8 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
     // print measurement info
     print_MEASURE_info(iQueriedWHs, iSpread, iNumOfThreads, iDuration, 
                        iSelectedTrx, iIterations, iUseSLI, abt);
+
+    _tpccdb->upd_sf();
 
     // create and fork client threads
     Client* testers[MAX_NUM_OF_THR];
@@ -475,7 +515,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
                 wh_id = i+1;
             testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _tpccdb, 
                                     MT_TIME_DUR, iSelectedTrx, 0, iUseSLI,
-                                    _current_prs_id, wh_id);
+                                    _current_prs_id, wh_id, iQueriedWHs);
             assert (testers[i]);
             testers[i]->fork();
             _current_prs_id = next_cpu(abt, _current_prs_id);
@@ -503,27 +543,36 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
 	stats -= statsb;
 	
 	double delay = timer.time();
-	_cpustater->myinfo.print();
+	//_cpustater->myinfo.print();
 	TRACE(TRACE_ALWAYS, "end measurement\n");
 
-	int attempted = stats.attempted.nord+stats.attempted.payment+stats.attempted.status+stats.attempted.stock+stats.attempted.delivery;
-	int failed = stats.failed.nord+stats.failed.payment+stats.failed.status+stats.failed.stock+stats.failed.delivery;
-	int nord = stats.attempted.nord-stats.failed.nord;
+        int attempted = stats.attempted.nord+stats.attempted.payment
+            +stats.attempted.status+stats.attempted.stock+stats.attempted.delivery
+            +stats.attempted.other;
+        int failed = stats.failed.nord+stats.failed.payment
+            +stats.failed.status+stats.failed.stock+stats.failed.delivery
+            +stats.failed.other;
+        int nord = stats.attempted.nord-stats.failed.nord;
 	
-	printf("WH:\t%d\n"
-	       "Spread:\t%s\n"
-	       "SLI:\t%s\n"
-	       "Threads:\t%d\n"
-	       "Trx Att:\t%d\n"
-	       "Trx Abt:\t%d\n"
-	       "NOrd Com:\t%d\n"
-	       "Secs:\t%.2lf\n"
-	       "TPS:\t%.2lf\n"
-	       "tpm-C:\t%.2lf\n",
-	       iQueriedWHs, iSpread? "yes" : "no", iUseSLI? "yes" : "no", iNumOfThreads,
-	       attempted, failed, nord,
-	       delay, (attempted-failed)/delay, 60*nord/delay);
+        printf("WH:\t%d\n"
+               "Spread:\t%s\n"
+               "SLI:\t%s\n"
+               "Threads:\t%d\n"
+               "Trx Att:\t%d\n"
+               "Trx Abt:\t%d\n"
+               "NOrd Com:\t%d\n"
+               "Secs:\t%.2lf\n"
+               "TPS:\t%.2lf\n"
+               "tpm-C:\t%.2lf\n",
+               iQueriedWHs, iSpread? "yes" : "no", iUseSLI? "yes" : "no", iNumOfThreads,
+               attempted, failed, nord,
+               delay, (attempted-failed)/delay, 60*nord/delay);
 	       
+        // flush the log before the next iteration
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        _env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
+
         // print throughput and reset session stats
         //print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
 	//        _tpccdb->reset_session_tpcc_stats();
@@ -534,7 +583,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
 	_env->set_measure(MST_DONE);
         for (int i=0; i<iNumOfThreads; i++) {
             testers[i]->join();
-	    fprintf(stderr,".");
+	    //fprintf(stderr,".");
             if (testers[i]->rv()) {
                 TRACE( TRACE_ALWAYS, "Error in testing...\n");
                 assert (false);
@@ -544,7 +593,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         }
 
 	//	alarm(0); // cancel the alarm, if any
-
+        
     // print processor usage info
     //    _cpustater->myinfo.print();
 

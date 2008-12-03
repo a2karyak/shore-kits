@@ -41,6 +41,26 @@ using std::map;
 
 
 
+
+
+#define DEFINE_TUPLE_INTERFACE(Type, Name)     \
+    Type* get_##Name##_tuple();                \
+    void  give_##Name##_tuple(Type* atuple);
+
+
+#define DECLARE_TUPLE_INTERFACE(Type, Name, PoolName, TableObjectName)    \
+    DECLARE_TLS(block_alloc<Type>, PoolName);                             \
+    Type* ShoreTPCCEnv::get_##Name##_tuple() {                            \
+        Type* tuple = new (*PoolName) Type;                               \
+        assert (tuple); tuple->setup(TableObjectName);                    \
+        return (tuple); }                                                 \
+    void ShoreTPCCEnv::give_##Name##_tuple(Type* atuple) {                \
+        PoolName->destroy(atuple); }
+
+
+
+
+
 /****************************************************************** 
  *
  *  @struct: tpcc_stats_t
@@ -401,6 +421,37 @@ public:
 
 
 
+
+
+    ///// TLS ////
+
+//     typedef row_impl<warehouse_t>  warehouse_tuple;
+//     typedef row_impl<district_t>   district_tuple;
+//     typedef row_impl<customer_t>   customer_tuple;
+//     typedef row_impl<history_t>    history_tuple;
+//     typedef row_impl<new_order_t>  new_order_tuple;
+//     typedef row_impl<order_t>      order_tuple;
+//     typedef row_impl<order_line_t> order_line_tuple;
+//     typedef row_impl<item_t>       item_tuple;
+//     typedef row_impl<stock_t>      stock_tuple;
+
+
+
+//     DEFINE_TUPLE_INTERFACE(warehouse_tuple,warehouse)
+//     DEFINE_TUPLE_INTERFACE(district_tuple,district)
+//     DEFINE_TUPLE_INTERFACE(customer_tuple,customer)
+//     DEFINE_TUPLE_INTERFACE(history_tuple,history)
+//     DEFINE_TUPLE_INTERFACE(new_order_tuple,new_order)
+//     DEFINE_TUPLE_INTERFACE(order_tuple,order)
+//     DEFINE_TUPLE_INTERFACE(order_line_tuple,order_line)
+//     DEFINE_TUPLE_INTERFACE(item_tuple,item)
+//     DEFINE_TUPLE_INTERFACE(stock_tuple,stock)
+    
+
+
+
+
+
     // --- kit baseline trxs --- //
 
     w_rc_t run_one_xct(int xct_type, const int xctid, const int whid, trx_result_tuple_t& trt);
@@ -425,6 +476,7 @@ public:
     w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
     w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+
 
 
 
@@ -465,26 +517,10 @@ public:
     
 
     // update statistics
-
-    // !!! unsafe - may cause deadlock if non-other trxs are updating stats also
-    int _inc_other_com() { 
-        CRITICAL_SECTION(com_other_cs, _total_tpcc_stats._other_lock);
-        ++_total_tpcc_stats._other_att;
-        ++_total_tpcc_stats._other_com;
-        ++_session_tpcc_stats._other_att;
-        ++_session_tpcc_stats._other_com;
-        ++_env_stats._ntrx_att;
-        ++_env_stats._ntrx_com;        
-        return (0); 
-    }
-    int _inc_other_att() { 
-        CRITICAL_SECTION(com_other_cs, _total_tpcc_stats._other_lock);
-        ++_total_tpcc_stats._other_att;
-        ++_session_tpcc_stats._other_att;
-        ++_env_stats._ntrx_att;
-        return (0); 
-    }
-
+    void _inc_other_att();
+    void _inc_other_failed();
+    void _inc_pay_att();
+    void _inc_pay_failed();
 
     const int upd_worker_cnt();
 

@@ -82,6 +82,8 @@ struct tpcc_request_t
  * 
  ********************************************************************/
 
+const int REQUESTS_PER_WORKER_POOL_SZ = 60;
+
 class tpcc_worker_t : public base_worker_t
 {
 public:
@@ -90,8 +92,9 @@ public:
 
 private:
 
-    ShoreTPCCEnv* _tpccdb;
-    Queue         _queue;
+    ShoreTPCCEnv*  _tpccdb;
+    guard<Queue>         _pqueue;
+    guard<Pool>          _actionpool;
 
     // states
     const int _work_ACTIVE_impl(); 
@@ -107,13 +110,15 @@ public:
         : base_worker_t(env, tname, aprsid, use_sli), _tpccdb(tpcc)
     { 
         assert (env);
+        _actionpool = new Pool(sizeof(Request*),REQUESTS_PER_WORKER_POOL_SZ);
+        _pqueue = new Queue( _actionpool.get() );
     }
     ~tpcc_worker_t() { }
 
     // access methods
     void enqueue(Request* arequest);
     void init(const int lc) {
-        _queue.set(WS_INPUT_Q,this,lc);
+        _pqueue->set(WS_INPUT_Q,this,lc);
     }
         
 
