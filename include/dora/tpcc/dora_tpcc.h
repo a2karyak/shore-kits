@@ -13,6 +13,8 @@
 
 #include <cstdio>
 
+#include "tls.h"
+
 #include "util.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 #include "dora.h"
