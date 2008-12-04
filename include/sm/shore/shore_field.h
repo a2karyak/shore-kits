@@ -148,7 +148,7 @@ public:
     }
 
     inline sqltype_t type() const { 
-        assert (_is_setup);
+        //assert (_is_setup);
         return (_type); 
     }
 
@@ -524,7 +524,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
 
 inline void field_value_t::reset()
 {
-    assert (_pfield_desc);
+    //assert (_pfield_desc);
 
     _null_flag = true;
     register int sz = 0;
@@ -545,7 +545,6 @@ inline void field_value_t::reset()
     case SQL_SNUMERIC:
         if (_data && _data_size)
             memset(_data, 0, _data_size);
-        break;
     }
 }
 

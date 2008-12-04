@@ -135,7 +135,8 @@ public:
         assert (_env);        
     }
 
-    virtual ~base_worker_t() { 
+    virtual ~base_worker_t() 
+    { 
         //        stats();
     }
 
@@ -162,33 +163,44 @@ public:
     const bool is_alone_owner() { return (*&_data_owner==DOS_ALONE); }
 
     // working state
-    inline void set_ws(const eWorkingState new_ws) {
+    inline eWorkingState set_ws(const eWorkingState new_ws) {
         CRITICAL_SECTION(ws_cs, _ws_lock);
         eWorkingState old_ws = *&_ws;
+
+        if ((old_ws==WS_COMMIT_Q)&&(new_ws!=WS_LOOP)) {
+            // ignore notice if flag is already set to commit
+            return (old_ws); 
+        }
         _ws=new_ws;
+        ws_cs.exit();
         if ((old_ws==WS_SLEEP)&&(new_ws!=WS_SLEEP)) {
             // wake up if sleeping
-            membar_producer();
+            //membar_producer();
             condex_wakeup();
         }
+        return (old_ws);
     }
 
-    inline const eWorkingState get_ws() { return (*&_ws); }
+    inline eWorkingState get_ws() { return (*&_ws); }
+
 
     inline const bool can_continue(const eWorkingState my_ws) {
         //    CRITICAL_SECTION(ws_cs, _ws_lock);
         return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
     }
 
+
     inline const bool can_continue_cs(const eWorkingState my_ws) {
         CRITICAL_SECTION(ws_cs, _ws_lock);
         return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
     }
 
+
     inline const bool is_sleeping(void) {
         return (*&_ws==WS_SLEEP);
     }
    
+
     // sleep-wake up
     inline const int condex_sleep() { 
         // can sleep only if in WS_LOOP
@@ -206,6 +218,7 @@ public:
         ++_stats._failed_sleep;
         return (0); 
     }
+
 
     inline void condex_wakeup() { 
         assert (*&_ws!=WS_SLEEP); // the caller should have already changed it
