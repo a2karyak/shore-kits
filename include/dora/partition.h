@@ -158,7 +158,14 @@ public:
     }
 
 
-    virtual ~partition_t() { }    
+    virtual ~partition_t() 
+    { 
+        _input_queue.done();
+        _actionptr_input_pool.done();
+        
+        _committed_queue.done();
+        _actionptr_commit_pool.done();
+    }    
 
 
     //// Access methods ////

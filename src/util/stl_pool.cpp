@@ -37,7 +37,7 @@ Pool::~Pool()
     sleep(1);
   }
   assert( m_used == 0 && m_overflow == 0 && "can't destroy a pool with outstanding allocations" );
-  std::cout << m_overflow << std::endl;
+  //zstd::cout << m_overflow << std::endl;
 }
 	
 void* Pool::Allocate()
