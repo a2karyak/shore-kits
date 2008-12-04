@@ -104,17 +104,20 @@ public:
     /* ------------------- */
 
     table_man_impl(TableDesc* aTableDesc, 
-                   int row_count=DEFAULT_INIT_ROW_COUNT)
+                   int row_count=DEFAULT_INIT_ROW_COUNT,
+                   bool construct_cache=true)
         : _ptable(aTableDesc)
     {
         assert (_ptable);
         assert (row_count>=0);
 
         // init tuple cache
-        _pcache = new row_cache(_ptable, row_count);
+        if (construct_cache) {
+            _pcache = new row_cache(_ptable, row_count);
 
-        // init trash stack
-        _pts = new ats_char_t(_ptable->maxsize());
+            // init trash stack            
+            _pts = new ats_char_t(_ptable->maxsize());
+        }
     }
     
     virtual ~table_man_impl() 

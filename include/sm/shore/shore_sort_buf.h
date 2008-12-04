@@ -108,7 +108,7 @@ protected:
 public:
 
     sort_man_impl(sort_buffer_t* aSortBufferDesc, rep_row_t* aprow, int row_count)
-        : table_man_impl<sort_buffer_t>(aSortBufferDesc, row_count),
+        : table_man_impl<sort_buffer_t>(aSortBufferDesc, row_count, false),
           _sort_buf(NULL), _tuple_size(0), _tuple_count(0), _buf_size(0), 
           _preprow(aprow), _is_sorted(false)
     {
