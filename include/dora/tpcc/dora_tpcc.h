@@ -119,7 +119,6 @@ public:
     typedef range_part_table_impl<int>  irpTableImpl;
 
     typedef irpImpl::RangeAction  irpAction;
-    typedef irpImpl::Key          irpImplKey;
 
     typedef vector<irpTableImpl*>       irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
@@ -139,6 +138,23 @@ private:
     guard<irpTableImpl> _it_irpt; // ITEM
     guard<irpTableImpl> _ol_irpt; // ORDER-LINE
     guard<irpTableImpl> _st_irpt; // STOCK
+
+
+    // tpcc setup variables
+    int _starting_cpu;
+    int _cpu_table_step;
+    int _cpu_range;
+    int _sf;
+
+    int _wh_per_part_wh;
+    int _wh_per_part_dist;
+    int _wh_per_part_cust;
+    int _wh_per_part_hist;
+    int _wh_per_part_nord;
+    int _wh_per_part_ord;
+    int _wh_per_part_item;
+    int _wh_per_part_oline;
+    int _wh_per_part_stock;
 
     //guard<Pool> _int_dtpool;
 
@@ -170,9 +186,13 @@ public:
     const int newrun();
     const int set(envVarMap* vars);
     const int dump();
-    virtual const int conf() { return (ShoreTPCCEnv::conf()); }
+    virtual const int conf();
     virtual const int info();    
     virtual const int statistics();    
+
+
+
+
 
     //// Client API
     
@@ -190,7 +210,7 @@ public:
 
     //// Partition-related methods
 
-    inline irpImpl* get_part(const table_pos, const int part_pos) {
+    inline irpImpl* table_part(const int table_pos, const int part_pos) {
         assert (table_pos<_irptp_vec.size());        
         return (_irptp_vec[table_pos]->get_part(part_pos));
     }
@@ -205,17 +225,6 @@ public:
     inline irpTableImpl* ite() { return (_it_irpt.get()); }
     inline irpTableImpl* oli() { return (_ol_irpt.get()); }
     inline irpTableImpl* sto() { return (_st_irpt.get()); }
-
-    // Access specific partitions
-    inline irpImpl* whs(const int pos) { return (_wh_irpt->get_part(pos)); }
-    inline irpImpl* dis(const int pos) { return (_di_irpt->get_part(pos)); }
-    inline irpImpl* cus(const int pos) { return (_cu_irpt->get_part(pos)); }
-    inline irpImpl* his(const int pos) { return (_hi_irpt->get_part(pos)); }
-    inline irpImpl* nor(const int pos) { return (_no_irpt->get_part(pos)); }
-    inline irpImpl* ord(const int pos) { return (_or_irpt->get_part(pos)); }
-    inline irpImpl* ite(const int pos) { return (_it_irpt->get_part(pos)); }
-    inline irpImpl* oli(const int pos) { return (_ol_irpt->get_part(pos)); }
-    inline irpImpl* sto(const int pos) { return (_st_irpt->get_part(pos)); }
 
 
 
@@ -298,6 +307,8 @@ private:
     const processorid_t _next_cpu(const processorid_t& aprd,
                                   const irpTableImpl* atable,
                                   const int step=DF_CPU_STEP_TABLES);
+
+
 
         
 }; // EOF: DoraTPCCEnv

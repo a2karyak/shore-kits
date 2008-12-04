@@ -19,6 +19,9 @@ using namespace shore;
 using namespace tpcc;
 
 
+typedef range_partition_impl<int>   irpImpl; 
+
+
 /******** Exported functions  ********/
 
 
@@ -115,36 +118,39 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {
-        int whpartition = apin._home_wh_id-1;
-        //int dpartition = apin._home_d_id-1;
+        int wh = apin._home_wh_id-1;
+
+        // first, figure out to which partitions to enqueue
+        irpImpl* my_wh_part   = whs()->myPart(wh);
+        irpImpl* my_dist_part = dis()->myPart(wh);
+        irpImpl* my_cust_part = cus()->myPart(wh);
+
+        // then, start enqueueing
 
         // WH_PART_CS
-        CRITICAL_SECTION(wh_part_cs, whs(whpartition)->_enqueue_lock);
+        CRITICAL_SECTION(wh_part_cs, my_wh_part->_enqueue_lock);
             
-        // (SF) WAREHOUSE partitions
-        if (whs()->enqueue(pay_upd_wh, whpartition)) {
+        if (my_wh_part->enqueue(pay_upd_wh)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_WH\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
         // DIS_PART_CS
-        CRITICAL_SECTION(dis_part_cs, dis(whpartition)->_enqueue_lock);
+        CRITICAL_SECTION(dis_part_cs, my_dist_part->_enqueue_lock);
         wh_part_cs.exit();
-        
-        // (SF) WAREHOUSE partitions
-        if (dis()->enqueue(pay_upd_dist, whpartition)) {
+
+        if (my_dist_part->enqueue(pay_upd_dist)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_DIST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
         // CUS_PART_CS
-        CRITICAL_SECTION(cus_part_cs, cus(whpartition)->_enqueue_lock);
+        CRITICAL_SECTION(cus_part_cs, my_cust_part->_enqueue_lock);
         dis_part_cs.exit();
 
-        // (SF) WAREHOUSE partitions
-        if (cus()->enqueue(pay_upd_cust, whpartition)) {
+        if (my_cust_part->enqueue(pay_upd_cust)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -266,6 +272,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
 
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
+    //    W_DO(_pssm->set_lock_cache_enable(false);
 #endif
 
     xct_t* pxct = smthread_t::me()->xct();
@@ -299,11 +306,11 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {        
-        int mypartition = whid-1;
+        irpImpl* mypartition = whs()->myPart(whid-1);
+
         // WH_PART_CS
-        CRITICAL_SECTION(wh_part_cs, whs(mypartition)->_enqueue_lock);
-        // (SF) WAREHOUSE partitions
-        if (whs()->enqueue(upd_wh, mypartition)) {
+        CRITICAL_SECTION(wh_part_cs, mypartition->_enqueue_lock);
+        if (mypartition->enqueue(upd_wh)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_MB\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -361,11 +368,11 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {
-        int mypartition = whid-1;
+        irpImpl* mypartition = cus()->myPart(whid-1);
+        
         // CUS_PART_CS
-        CRITICAL_SECTION(cus_part_cs, cus(mypartition)->_enqueue_lock);
-        // (SF) CUSTOMER partitions
-        if (cus()->enqueue(upd_cust, mypartition)) { 
+        CRITICAL_SECTION(cus_part_cs, mypartition->_enqueue_lock);
+        if (mypartition->enqueue(upd_cust)) { 
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));

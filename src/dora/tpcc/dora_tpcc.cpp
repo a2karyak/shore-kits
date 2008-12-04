@@ -65,180 +65,123 @@ const int ST_KEY_EST = 2;
 const int DoraTPCCEnv::start()
 {
     // 1. Creates partitioned tables
-    // 2. Add them to the vector
-    // 3. Reset each table
+    // 2. Adds them to the vector
+    // 3. Resets each table
 
-    envVar* ev = envVar::instance();
-    int starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
-    int cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
+    conf(); // re-configure
 
-    int range = get_active_cpu_count();
-    processorid_t icpu(starting_cpu);
-    int sf = upd_sf();
-    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", sf);
- 
-    // used for setting up the key ranges    
-    guard<irpImplKey> partDown = new irpImplKey();
-    guard<irpImplKey> partUp = new irpImplKey();
+    processorid_t icpu(_starting_cpu);
 
-    // we are doing the partitioning based on the number of warehouses
-    int aboundary = 0;
-    partDown->push_back(aboundary);
-    partUp->push_back(sf);
-   
-    
+    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", _sf);    
 
     // WAREHOUSE
-    _wh_irpt = new irpTableImpl(this, warehouse(), icpu, range, WH_IRP_KEY, WH_KEY_EST);
+    _wh_irpt = new irpTableImpl(this, warehouse(), icpu, _cpu_range, 
+                                WH_IRP_KEY, WH_KEY_EST, _wh_per_part_wh, _sf);
     if (!_wh_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (WAREHOUSE) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_wh_irpt);    
-    // creates SF partitions for warehouses
-    for (int i=0; i<sf; i++) {
-        _wh_irpt->create_one_part();
-        partDown->reset();
-        partDown->push_back(i);
-        partUp->reset();
-        aboundary=i+1;
-        partUp->push_back(aboundary);
-        _wh_irpt->get_part(i)->resize(*partDown,*partUp);
-    }
-    _irptp_vec.push_back(_wh_irpt);
-    icpu = _next_cpu(icpu, _wh_irpt, cpu_table_step);
+    _irptp_vec.push_back(_wh_irpt.get());
+    icpu = _next_cpu(icpu, _wh_irpt, _cpu_table_step);
+
 
     // DISTRICT
-    _di_irpt = new irpTableImpl(this, district(), icpu, range, DI_IRP_KEY, DI_KEY_EST);
+    _di_irpt = new irpTableImpl(this, district(), icpu, _cpu_range, 
+                                DI_IRP_KEY, DI_KEY_EST, _wh_per_part_dist, _sf);
     if (!_di_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (DISTRICT) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_di_irpt);
-    // creates SF partitions for districts
-    for (int i=0; i<sf; i++) {
-        _di_irpt->create_one_part();
-        partDown->reset();
-        partDown->push_back(i);
-        partUp->reset();
-        aboundary=i+1;
-        partUp->push_back(aboundary);
-        _di_irpt->get_part(i)->resize(*partDown,*partUp);
-    }
-    _irptp_vec.push_back(_di_irpt);
-    icpu = _next_cpu(icpu, _di_irpt, cpu_table_step);    
+    _irptp_vec.push_back(_di_irpt.get());
+    icpu = _next_cpu(icpu, _di_irpt, _cpu_table_step);    
+
 
     // HISTORY
-    _hi_irpt = new irpTableImpl(this, this->history(), icpu, range, HI_IRP_KEY, HI_KEY_EST);
+    _hi_irpt = new irpTableImpl(this, history(), icpu, _cpu_range, 
+                                HI_IRP_KEY, HI_KEY_EST, _wh_per_part_hist, _sf);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (HISTORY) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_hi_irpt);
-    // creates SF partitions for districts
-    for (int i=0; i<sf; i++) {
-        _hi_irpt->create_one_part();
-        partDown->reset();
-        partDown->push_back(i);
-        partUp->reset();
-        aboundary=i+1;
-        partUp->push_back(aboundary);
-        _hi_irpt->get_part(i)->resize(*partDown,*partUp);
-    }
-    _irptp_vec.push_back(_hi_irpt);
-    icpu = _next_cpu(icpu, _hi_irpt, cpu_table_step);    
+    _irptp_vec.push_back(_hi_irpt.get());
+    icpu = _next_cpu(icpu, _hi_irpt, _cpu_table_step);    
 
 
     // CUSTOMER
-    _cu_irpt = new irpTableImpl(this, this->customer(), icpu, range, CU_IRP_KEY, CU_KEY_EST);
+    _cu_irpt = new irpTableImpl(this, customer(), icpu, _cpu_range, 
+                                CU_IRP_KEY, CU_KEY_EST, _wh_per_part_cust, _sf);
     if (!_cu_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (CUSTOMER) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_cu_irpt);
-    // creates SF partitions for customers
-    for (int i=0; i<sf; i++) {
-        _cu_irpt->create_one_part();
-        partDown->reset();
-        partDown->push_back(i);
-        partUp->reset();
-        aboundary=i+1;
-        partUp->push_back(aboundary);
-        _cu_irpt->get_part(i)->resize(*partDown,*partUp);
-    }
-    _irptp_vec.push_back(_cu_irpt);
-    icpu = _next_cpu(icpu, _cu_irpt, cpu_table_step);
+    _irptp_vec.push_back(_cu_irpt.get());
+    icpu = _next_cpu(icpu, _cu_irpt, _cpu_table_step);
 
-
-    /*
+   
     // NEW-ORDER
-    _no_irpt = new irpTableImpl(this, this->new_order(), icpu, range, NO_IRP_KEY, NO_KEY_EST);
+    _no_irpt = new irpTableImpl(this, new_order(), icpu, _cpu_range, 
+                                NO_IRP_KEY, NO_KEY_EST, _wh_per_part_nord, _sf);
     if (!_no_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (NEW-ORDER) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_no_irpt);
-    _no_irpt->create_one_part();
-    _irptp_vec.push_back(_no_irpt);
-    icpu = _next_cpu(icpu, _no_irpt);    
+    _irptp_vec.push_back(_no_irpt.get());
+    icpu = _next_cpu(icpu, _no_irpt, _cpu_table_step);    
 
 
     // ORDER
-    _or_irpt = new irpTableImpl(this, this->order(), icpu, range, OR_IRP_KEY, OR_KEY_EST);
+    _or_irpt = new irpTableImpl(this, order(), icpu, _cpu_range, 
+                                OR_IRP_KEY, OR_KEY_EST, _wh_per_part_ord, _sf);
     if (!_or_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_or_irpt);
-    _or_irpt->create_one_part();
-    _irptp_vec.push_back(_or_irpt);
-    icpu = _next_cpu(icpu, _or_irpt);    
+    _irptp_vec.push_back(_or_irpt.get());
+    icpu = _next_cpu(icpu, _or_irpt, _cpu_table_step);    
 
 
     // ITEM
-    _it_irpt = new irpTableImpl(this, this->item(), icpu, range, IT_IRP_KEY, IT_KEY_EST);
+    _it_irpt = new irpTableImpl(this, item(), icpu, _cpu_range, 
+                                IT_IRP_KEY, IT_KEY_EST, _wh_per_part_item, _sf);
     if (!_hi_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ITEM) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_it_irpt);
-    _it_irpt->create_one_part();
-    _irptp_vec.push_back(_it_irpt);
-    icpu = _next_cpu(icpu, _it_irpt);    
+    _irptp_vec.push_back(_it_irpt.get());
+    icpu = _next_cpu(icpu, _it_irpt, _cpu_table_step);    
 
 
     // ORDER-LINE
-    _ol_irpt = new irpTableImpl(this, this->orderline(), icpu, range, OL_IRP_KEY, OL_KEY_EST);
+    _ol_irpt = new irpTableImpl(this, orderline(), icpu, _cpu_range, 
+                                OL_IRP_KEY, OL_KEY_EST, _wh_per_part_oline, _sf);
     if (!_ol_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER-LINE) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
-    assert (_ol_irpt);
-    _ol_irpt->create_one_part();
-    _irptp_vec.push_back(_ol_irpt);
-    icpu = _next_cpu(icpu, _ol_irpt);    
+    _irptp_vec.push_back(_ol_irpt.get());
+    icpu = _next_cpu(icpu, _ol_irpt, _cpu_table_step);    
 
 
     // STOCK
-    _st_irpt = new irpTableImpl(this, this->stock(), icpu, range, ST_IRP_KEY, ST_KEY_EST);
+    _st_irpt = new irpTableImpl(this, stock(), icpu, _cpu_range, 
+                                ST_IRP_KEY, ST_KEY_EST, _wh_per_part_stock, _sf);
     if (!_st_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (STOCK) irp-table\n");
         assert (0); // should not happen
         return (de_GEN_TABLE);
     }
     assert (_st_irpt);
-    _st_irpt->create_one_part();
-    _irptp_vec.push_back(_st_irpt);
-    icpu = _next_cpu(icpu, _st_irpt);    
-    */
+    _irptp_vec.push_back(_st_irpt.get());
+    icpu = _next_cpu(icpu, _st_irpt, _cpu_table_step);    
+
 
     TRACE( TRACE_DEBUG, "Starting tables...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
@@ -264,9 +207,10 @@ const int DoraTPCCEnv::stop()
     TRACE( TRACE_ALWAYS, "Stopping...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->stop();
+        //delete (_irptp_vec[i]); // guard
     }
-    set_dbc(DBC_STOPPED);
     _irptp_vec.clear();
+    set_dbc(DBC_STOPPED);
     return (0);
 }
 
@@ -304,6 +248,47 @@ const int DoraTPCCEnv::pause()
     set_dbc(DBC_PAUSED);
     return (0);
 }
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    conf()
+ *
+ * @brief: Re-reads configuration
+ *
+ ******************************************************************/
+
+const int DoraTPCCEnv::conf()
+{
+    ShoreTPCCEnv::conf();
+
+    TRACE( TRACE_DEBUG, "configuring dora-tpcc\n");
+
+    envVar* ev = envVar::instance();
+
+    _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
+    _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
+
+    _cpu_range = get_active_cpu_count();
+    _sf = upd_sf();
+
+
+    _wh_per_part_wh    = ev->getVarInt("dora-tpcc-wh-per-part-wh",0);
+    _wh_per_part_dist  = ev->getVarInt("dora-tpcc-wh-per-part-dist",0);
+    _wh_per_part_cust  = ev->getVarInt("dora-tpcc-wh-per-part-cust",0);
+    _wh_per_part_hist  = ev->getVarInt("dora-tpcc-wh-per-part-hist",0);
+    _wh_per_part_nord  = ev->getVarInt("dora-tpcc-wh-per-part-nord",0);
+    _wh_per_part_ord   = ev->getVarInt("dora-tpcc-wh-per-part-ord",0);
+    _wh_per_part_item  = ev->getVarInt("dora-tpcc-wh-per-part-item",0);
+    _wh_per_part_oline = ev->getVarInt("dora-tpcc-wh-per-part-oline",0);
+    _wh_per_part_stock = ev->getVarInt("dora-tpcc-wh-per-part-stock",0);
+    
+
+    return (0);
+}
+
+
 
 
 

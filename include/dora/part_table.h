@@ -64,36 +64,52 @@ protected:
     tatas_lock         _next_prs_lock;
 
 
-    // (ip) TODO
-    //mapping table - which is build at runtime
+    // per partition key estimation
+    int                _key_estimation;
+
+    // for the enqueue function
+    int                _whs_per_part; 
+    int                _total_whs; 
+
+    // TODO: 
+    // mapping table - which is build at runtime
+    
 
 public:
 
     part_table_t(ShoreEnv* env, table_desc_t* ptable,
                  const processorid_t aprs,
-                 const int acpurange) 
+                 const int acpurange,
+                 const int keyEstimation,
+                 const int whsperpart,
+                 const int totalwhs) 
         : _env(env), _table(ptable), 
           _start_prs_id(aprs), _next_prs_id(aprs), 
-          _prs_range(acpurange),
+          _prs_range(acpurange), _key_estimation(keyEstimation), 
+          _whs_per_part(whsperpart), _total_whs(totalwhs),
           _pcnt(0)
     {
         assert (_env);
         assert (_table);        
         assert (aprs<=_env->get_max_cpu_count());
         assert (acpurange<=_env->get_active_cpu_count());
+        assert (_key_estimation);
+        assert (_total_whs && _whs_per_part);
+        if (_whs_per_part > _total_whs) _whs_per_part=_total_whs;
     }
 
     virtual ~part_table_t() { }    
 
 
-    /** Access methods */
+    // Access methods //
     PartitionPtrVector* get_vector() const { return (&_ppvec); }
     Partition* get_part(const int pos) const {
         assert (pos<_ppvec.size());
         return (_ppvec[pos]);
     }
 
-    /** Control table */
+
+    //// Control table ////
 
     // configure partitions
     virtual const int config(const int apcnt);
@@ -126,8 +142,11 @@ public:
 
     // stops all partitions
     const int stop() {
-        for (int i=0; i<_ppvec.size(); i++)
+        for (int i=0; i<_ppvec.size(); i++) {
             _ppvec[i]->stop();
+            delete (_ppvec[i]);
+        }
+        _ppvec.clear();
         return (0);
     }
 

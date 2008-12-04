@@ -47,16 +47,14 @@ w_rc_t midway_pay_rvp::run()
 
     // 2. Generate and enqueue action
     ins_hist_pay_action* ins_hist_pay = _ptpccenv->NewInsHistPayAction(_tid,_xct,frvp,_pin,_awh,_adist);
+    typedef range_partition_impl<int>   irpImpl; 
+    irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);
 
-    int mypartition = _pin._home_wh_id-1;
-
-    // Q: (ip) does it have to get this lock?
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
 
     // HIS_PART_CS
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
-    CRITICAL_SECTION(his_part_cs, _ptpccenv->his(mypartition)->_enqueue_lock);
-
-    if (_ptpccenv->his()->enqueue(ins_hist_pay, mypartition)) { // (SF) HISTORY partitions
+    CRITICAL_SECTION(his_part_cs, hist_part->_enqueue_lock);
+    if (hist_part->enqueue(ins_hist_pay)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));

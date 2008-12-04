@@ -34,33 +34,57 @@ class range_part_table_impl : public part_table_t< range_partition_impl<DataType
 {
 public:
 
-    typedef  range_partition_impl<DataType> rpImpl;
+    typedef range_partition_impl<DataType> rpImpl;
+    typedef key_wrapper_t<DataType>        Key;
 
 private:
 
     // range-partition field count
     int _field_count;
-
-    // per partition key estimation
-    int _key_estimation;
-
+    
 public:
 
     range_part_table_impl(ShoreEnv* env, table_desc_t* ptable,
                           const processorid_t aprs,
                           const int arange,
                           const int field_count,
-                          const int keyEstimation) 
-        : part_table_t(env, ptable, aprs, arange), 
-          _field_count(field_count), _key_estimation(keyEstimation)
+                          const int keyEstimation,
+                          const int whsperpart,
+                          const int totalwhs) 
+        : part_table_t(env, ptable, aprs, arange, keyEstimation, whsperpart, totalwhs), 
+          _field_count(field_count)
     {
         assert (_field_count>0);
-        assert (_key_estimation>0);
+
+        // setup partitions
+        Key partDown;
+        Key partUp;
+        int aboundary=0;
+
+        // we are doing the partitioning based on the number of warehouses
+        int parts_added = 0;
+
+        for (int i=0; i<_total_whs; i+=_whs_per_part) {
+            create_one_part();
+            partDown.reset();
+            partDown.push_back(i);
+            partUp.reset();
+            aboundary=i+_whs_per_part;
+            partUp.push_back(aboundary);
+            _ppvec[parts_added]->resize(partDown,partUp);
+            ++parts_added;
+        }
+        TRACE( TRACE_DEBUG, "Table (%s) - (%d) partitions\n", _table->name(), parts_added);
+        
     }
 
     ~range_part_table_impl() { }    
 
     const int create_one_part();
+
+    inline rpImpl* myPart(const int wh) {
+        return (_ppvec[wh/_whs_per_part]);
+    }
 
 }; // EOF: range_part_table_impl
 
