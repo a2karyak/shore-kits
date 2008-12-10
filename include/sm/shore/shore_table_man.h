@@ -171,6 +171,7 @@ public:
                         const table_tuple* ptuple) const;
 
 
+    int get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const;
 
     /* ---------------------------- */
     /* --- access through index --- */
@@ -496,14 +497,14 @@ public:
     /* --- iscan operations --- */
     /* ------------------------ */
 
-    w_rc_t open_scan(ss_m* db,
+    w_rc_t open_scan(ss_m* db, int pnum,
                      scan_index_i::cmp_t c1, const cvec_t& bound1,
                      scan_index_i::cmp_t c2, const cvec_t& bound2,
                      const int maxkeysize)
     {
         if (!_opened) {
             W_DO(_file->check_fid(db));
-            _scan = new scan_index_i(_file->fid(), c1, bound1, c2, bound2,
+            _scan = new scan_index_i(_file->fid(pnum), c1, bound1, c2, bound2,
                                      false, ss_m::t_cc_kvl, _lm);
             _opened = true;
         }
@@ -1009,7 +1010,8 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 // 			  len,
 // 			  found));
 
-    W_DO(ss_m::find_assoc(pindex->fid(),
+    int pnum = get_pnum(pindex, ptuple);
+    W_DO(ss_m::find_assoc(pindex->fid(pnum),
     			  vec_t(ptuple->_rep->_dest, key_sz),
     			  &(ptuple->_rid),
     			  len,
@@ -1034,6 +1036,17 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 /* --- tuple manipulation --- */
 /* -------------------------- */
 
+template <class TableDesc>
+int table_man_impl<TableDesc>::get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const {
+    assert(ptuple);
+    assert(pindex);
+    if(!pindex->is_partitioned())
+	return 0;
+
+    int first_key;
+    ptuple->get_value(pindex->key_index(0), first_key);
+    return first_key % pindex->get_partition_count();
+}
 
 /********************************************************************* 
  *
@@ -1076,8 +1089,9 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
         ksz = format_key(index, ptuple, *ptuple->_rep);
         assert (ptuple->_rep->_dest); // (ip) if dest == NULL there is invalid key
 
-        W_DO(index->find_fid(db));
-	W_DO(db->create_assoc(index->fid(),
+	int pnum = get_pnum(index, ptuple);
+        W_DO(index->find_fid(db, pnum));
+	W_DO(db->create_assoc(index->fid(pnum),
                               vec_t(ptuple->_rep->_dest, ksz),
                               vec_t(&(ptuple->_rid), sizeof(rid_t))));
 
@@ -1187,8 +1201,9 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
         key_sz = format_key(pindex, ptuple, *ptuple->_rep);
         assert (ptuple->_rep->_dest); // (ip) if NULL invalid key
 
-	W_DO(pindex->find_fid(db));
-	W_DO(db->destroy_assoc(pindex->fid(),
+	int pnum = get_pnum(pindex, ptuple);
+	W_DO(pindex->find_fid(db, pnum));
+	W_DO(db->destroy_assoc(pindex->fid(pnum),
                                vec_t(ptuple->_rep->_dest, key_sz),
                                vec_t(&(todelete), sizeof(rid_t))));
 
@@ -1245,8 +1260,17 @@ w_rc_t table_man_impl<TableDesc>::get_iter_for_index_scan(ss_m* db,
                                                           const cvec_t& bound2)
 {
     assert (_ptable);
+    int pnum = 0;
+    if(index->is_partitioned()) {
+	int cnt = bound1.copy_to(&pnum, sizeof(int));
+	assert(cnt == sizeof(int));
+	int pnum2;
+	cnt = bound2.copy_to(&pnum2, sizeof(int));
+	assert(cnt == sizeof(int));
+	assert(pnum == pnum2);
+    }
     iter = new index_scan_iter_impl<TableDesc>(db, index, this, alm, need_tuple);
-    W_DO(iter->open_scan(db, c1, bound1, c2, bound2, 
+    W_DO(iter->open_scan(db, pnum, c1, bound1, c2, bound2, 
                          _ptable->index_maxkeysize(index)));
     if (iter->opened())  return (RCOK);
     return RC(se_OPEN_SCAN_ERROR);
@@ -1453,7 +1477,8 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index(ss_m* db,
     TRACE( TRACE_DEBUG, "Building index: %s\n", pindex->name());
     
     W_DO(db->begin_xct());
-    W_DO(pindex->find_fid(db));
+    for(int i=0; i < pindex->get_partition_count(); i++)
+	W_DO(pindex->find_fid(db, i));
     
 
     /* 1. open a (table) scan iterator over the table and create 
@@ -1480,8 +1505,9 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index(ss_m* db,
         
         key_sz = format_key(pindex, &row, arep);
         assert (arep._dest); // (ip) if NULL invalid key
-            
-        W_DO(db->create_assoc(pindex->fid(),
+
+	int pnum = get_pnum(pindex, &row);
+        W_DO(db->create_assoc(pindex->fid(pnum),
                               vec_t(arep._dest, key_sz),
                               vec_t(&(row._rid), sizeof(rid_t))));
             
@@ -1536,7 +1562,8 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index_with_iterations(ss_m* db,
     
         iters++;
         W_DO(db->begin_xct());
-        W_DO(pindex->find_fid(db));
+	for(int i=0; i < pindex->get_partition_count(); i++)
+	    W_DO(pindex->find_fid(db, i));
 
     
         /* 1. open a (table) scan iterator over the table and create 
@@ -1563,7 +1590,8 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index_with_iterations(ss_m* db,
                 key_sz = format_key(pindex, &row, arep);
                 assert (arep._dest); // (ip) if NULL invalid key
             
-                W_DO(db->create_assoc(pindex->fid(),
+		int pnum = get_pnum(pindex, &row);
+                W_DO(db->create_assoc(pindex->fid(pnum),
                                       vec_t(arep._dest, key_sz),
                                       vec_t(&(row._rid), sizeof(rid_t))));            
 
@@ -1959,6 +1987,7 @@ w_rc_t table_man_impl<TableDesc>::scan_index(ss_m* db,
 {
     assert (_ptable);
     assert (pindex);
+    assert (!pindex->is_partitioned());
 
     TRACE( TRACE_DEBUG, "Scanning index (%s) for table (%s)\n", 
            pindex->name(), _ptable->name());

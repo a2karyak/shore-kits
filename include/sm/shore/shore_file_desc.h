@@ -75,6 +75,7 @@ enum file_type_t {
  *  --------------------------------------------------------------- */
 
 class file_desc_t {
+    friend class index_desc_t;
 protected:
 
     pthread_mutex_t _fschema_mutex;        // file schema mutex

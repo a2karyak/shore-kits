@@ -625,7 +625,8 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
     W_DO(db->lock(wh_fid, EX));
     for(int i=0; i < icount; i++) {
 	W_DO(idx[i].check_fid(db));
-	W_DO(db->lock(idx[i].fid(), EX));
+	for(int j=0; j < idx[i].get_partition_count(); j++)
+	    W_DO(db->lock(idx[i].fid(j), EX));
     }
 
     guard<ats_char_t> pts = new ats_char_t(wh->maxsize());
@@ -697,7 +698,8 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		       look into probing the index with a cursor and
 		       updating it directly.
 		    */
-		    stid_t fid = idx[i].fid();
+		    int pnum = _pwarehouse_man->get_pnum(&idx[i], &row);
+		    stid_t fid = idx[i].fid(pnum);
 		    W_DO(db->destroy_assoc(fid, kvec, rvec));
 
 		    // now put the entry back with the new rid

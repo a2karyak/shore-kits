@@ -94,7 +94,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index w_index on (w_id)
-            create_primary_idx("W_INDEX", keys, 1);
+            create_primary_idx("W_INDEX", 0, keys, 1);
         }
 
         // dora - NL indexes
@@ -105,7 +105,7 @@ public:
 
             // create unique index w_index on (w_id)
             // last param (nolock) is set to true
-            create_primary_idx("W_INDEX_NL", keys, 1, true);
+            create_primary_idx("W_INDEX_NL", 0, keys, 1, true);
         }
 
         // both - regular + NL indexes
@@ -115,9 +115,9 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index w_index on (w_id)
-            create_primary_idx("W_INDEX", keys, 1);
+            create_primary_idx("W_INDEX", 0, keys, 1);
             // last param (nolock) is set to true
-            create_index("W_INDEX_NL", keys, 1, true, false, true);
+            create_index("W_INDEX_NL", 0, keys, 1, true, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -160,7 +160,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index d_index on (d_id, w_id)
-            create_primary_idx("D_INDEX", keys, 2);
+            create_primary_idx("D_INDEX", 0, keys, 2);
         }
 
         // dora - NL indexes
@@ -171,7 +171,7 @@ public:
 
             // create unique index d_index on (d_id, w_id)
             // last param (nolock) is set to true
-            create_primary_idx("D_INDEX_NL", keys, 2, true);
+            create_primary_idx("D_INDEX_NL", 0, keys, 2, true);
         }
 
         // both - regular + NL indexes
@@ -181,9 +181,9 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index d_index on (d_id, w_id)
-            create_primary_idx("D_INDEX", keys, 2);
+            create_primary_idx("D_INDEX", 0, keys, 2);
             // last param (nolock) is set to true
-            create_index("D_INDEX_NL", keys, 2, true, false, true);
+            create_index("D_INDEX_NL", 0, keys, 2, true, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -242,10 +242,10 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index c_index on (w_id, d_id, c_id)
-            create_primary_idx("C_INDEX", keys1, 3);
+            create_primary_idx("C_INDEX", 0, keys1, 3);
 
             // create index c_name_index on (w_id, d_id, last, first, id)
-            create_index("C_NAME_INDEX", keys2, 5, false);
+            create_index("C_NAME_INDEX", 0, keys2, 5, false);
         }
 
         // dora - NL indexes
@@ -256,11 +256,11 @@ public:
 
             // create unique index c_index on (w_id, d_id, c_id)
             // last param (nolock) is set to true
-            create_primary_idx("C_INDEX_NL", keys1, 3, true);
+            create_primary_idx("C_INDEX_NL", 0, keys1, 3, true);
 
             // create index c_name_index on (w_id, d_id, last, first, id)
             // last param (nolock) is set to true
-            create_index("C_NAME_INDEX_NL", keys2, 5, false, false, true);     
+            create_index("C_NAME_INDEX_NL", 0, keys2, 5, false, false, true);     
         }
 
         // both - regular + NL indexes
@@ -270,14 +270,14 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index c_index on (w_id, d_id, c_id)
-            create_primary_idx("C_INDEX", keys1, 3);
+            create_primary_idx("C_INDEX", 0, keys1, 3);
 
             // create index c_name_index on (w_id, d_id, last, first, id)
-            create_index("C_NAME_INDEX", keys2, 5, false);
+            create_index("C_NAME_INDEX", 0, keys2, 5, false);
 
             // last param (nolock) is set to true
-            create_index("C_INDEX_NL", keys1, 3, true, false, true);
-            create_index("C_NAME_INDEX_NL", keys2, 5, false, false, true);
+            create_index("C_INDEX_NL", 0, keys1, 3, true, false, true);
+            create_index("C_NAME_INDEX_NL", 0, keys2, 5, false, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -336,7 +336,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index no_index on (w_id, d_id, o_id)
-            create_primary_idx("NO_INDEX", keys, 3);
+            create_primary_idx("NO_INDEX", 0, keys, 3);
         }
 
         // dora - NL indexes
@@ -347,7 +347,7 @@ public:
 
             // create unique index no_index on (w_id, d_id, o_id)
             // last param (nolock) is set to true
-            create_primary_idx("NO_INDEX_NL", keys, 3, true);        
+            create_primary_idx("NO_INDEX_NL", 0, keys, 3, true);        
         }
 
         // both - regular + NL indexes
@@ -357,9 +357,9 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index no_index on (w_id, d_id, o_id)
-            create_primary_idx("NO_INDEX", keys, 3);
+            create_primary_idx("NO_INDEX", 0, keys, 3);
             // last param (nolock) is set to true
-            create_index("NO_INDEX_NL", keys, 3, true, false, true);       
+            create_index("NO_INDEX_NL", 0, keys, 3, true, false, true);       
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -401,10 +401,10 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index o_index on (w_id, d_id, o_id)
-            create_index("O_INDEX", keys1, 3);
+            create_index("O_INDEX", 0, keys1, 3);
             
             // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
-            create_index("O_CUST_INDEX", keys2, 4);
+            create_index("O_CUST_INDEX", 0, keys2, 4);
         }
 
         // dora - NL indexes
@@ -415,11 +415,11 @@ public:
 
             // create unique index o_index on (w_id, d_id, o_id)
             // last param (nolock) is set to true
-            create_index("O_INDEX_NL", keys1, 3, true, false, true);
+            create_index("O_INDEX_NL", 0, keys1, 3, true, false, true);
 
             // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
             // last param (nolock) is set to true
-            create_index("O_CUST_INDEX_NL", keys2, 4, true, false, true);
+            create_index("O_CUST_INDEX_NL", 0, keys2, 4, true, false, true);
         }
 
         // both - regular + NL indexes
@@ -430,14 +430,14 @@ public:
 
 
             // create unique index o_index on (w_id, d_id, o_id)
-            create_index("O_INDEX", keys1, 3);
+            create_index("O_INDEX", 0, keys1, 3);
             
             // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
-            create_index("O_CUST_INDEX", keys2, 4);
+            create_index("O_CUST_INDEX", 0, keys2, 4);
 
             // last param (nolock) is set to true
-            create_index("O_INDEX_NL", keys1, 3, true, false, true);
-            create_index("O_CUST_INDEX_NL", keys2, 4, true, false, true);
+            create_index("O_INDEX_NL", 0, keys1, 3, true, false, true);
+            create_index("O_CUST_INDEX_NL", 0, keys2, 4, true, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -480,7 +480,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index ol_index on (w_id, d_id, o_id, ol_number)
-            create_primary_idx("OL_INDEX", keys, 4);
+            create_primary_idx("OL_INDEX", 10, keys, 4);
         }
 
         // dora - NL indexes
@@ -491,7 +491,7 @@ public:
 
             // create unique index ol_index on (w_id, d_id, o_id, ol_number)
             // last param (nolock) is set to true
-            create_primary_idx("OL_INDEX_NL", keys, 4, true);
+            create_primary_idx("OL_INDEX_NL", 10, keys, 4, true);
         }
 
         // both - regular + NL indexes
@@ -501,9 +501,9 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index ol_index on (w_id, d_id, o_id, ol_number)
-            create_primary_idx("OL_INDEX", keys, 4);
+            create_primary_idx("OL_INDEX", 10, keys, 4);
             // last param (nolock) is set to true
-            create_index("OL_INDEX_NL", keys, 4, true, false, true);
+            create_index("OL_INDEX_NL", 10, keys, 4, true, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -540,7 +540,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
             // create unique index on i_index on (i_id)
-            create_primary_idx("I_INDEX", keys, 1);
+            create_primary_idx("I_INDEX", 0, keys, 1);
         }
 
         // dora - NL indexes
@@ -551,7 +551,7 @@ public:
 
             // create unique index on i_index on (i_id)
             // last param (nolock) is set to true        
-            create_primary_idx("I_INDEX_NL", keys, 1, true);
+            create_primary_idx("I_INDEX_NL", 0, keys, 1, true);
         }
 
         // both - regular + NL indexes
@@ -561,9 +561,9 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index on i_index on (i_id)
-            create_primary_idx("I_INDEX", keys, 1);
+            create_primary_idx("I_INDEX", 0, keys, 1);
             // last param (nolock) is set to true        
-            create_index("I_INDEX_NL", keys, 1, true, false, true);
+            create_index("I_INDEX_NL", 0, keys, 1, true, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created
@@ -615,7 +615,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index s_index on (w_id, i_id)
-            create_primary_idx("S_INDEX", keys, 2);
+            create_primary_idx("S_INDEX", 0, keys, 2);
         }
 
         // dora - NL indexes
@@ -626,7 +626,7 @@ public:
 
             // create unique index s_index on (w_id, i_id)
             // last param (nolock) is set to true
-            create_primary_idx("S_INDEX_NL", keys, 2, true);
+            create_primary_idx("S_INDEX_NL", 0, keys, 2, true);
         }
 
         // both - regular + NL indexes
@@ -636,9 +636,9 @@ public:
             TRACE( TRACE_DEBUG, "Both idxs for (%s)\n", _name);
 
             // create unique index s_index on (w_id, i_id)
-            create_primary_idx("S_INDEX", keys, 2);
+            create_primary_idx("S_INDEX", 0, keys, 2);
             // last param (nolock) is set to true
-            create_index("S_INDEX_NL", keys, 2, true, false, true);
+            create_index("S_INDEX_NL", 0, keys, 2, true, false, true);
         }
 
         assert (idxs_created==1); // make sure that idxs were created

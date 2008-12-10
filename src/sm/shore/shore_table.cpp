@@ -56,25 +56,51 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 	stid_t iid;
 
         /* create index */
-	W_DO(db->create_index(_vid,
-                              (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
-                              ss_m::t_regular,
-                              index_keydesc(index),
-                              (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
-                              iid));
-	index->set_fid(iid);
+	if(index->is_partitioned()) {
+	    for(int i=0; i < index->get_partition_count(); i++) {
+		W_DO(db->create_index(_vid,
+				      (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
+				      ss_m::t_regular,
+				      index_keydesc(index),
+				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+				      iid));
+		index->set_fid(i, iid);
+		
+		/* add index entry to the metadata tree */
+		if (index->is_primary())
+		    file.set_ftype(FT_PRIMARY_IDX);
+		else
+		    file.set_ftype(FT_IDX);
+		
+		file.set_fid(iid);
+		char tmp[100];
+		sprintf(tmp, "%s_%d", index->name(), i);
+		W_DO(db->create_assoc(root_iid(),
+				      vec_t(tmp, strlen(tmp)),
+				      vec_t(&file, sizeof(file_info_t))));
+	    }
+	}
+	else {
+	    W_DO(db->create_index(_vid,
+				  (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
+				  ss_m::t_regular,
+				  index_keydesc(index),
+				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+				  iid));
+	    index->set_fid(0, iid);
 
-        /* add index entry to the metadata tree */
-        if (index->is_primary())
-            file.set_ftype(FT_PRIMARY_IDX);
-        else
-            file.set_ftype(FT_IDX);
+	    /* add index entry to the metadata tree */
+	    if (index->is_primary())
+		file.set_ftype(FT_PRIMARY_IDX);
+	    else
+		file.set_ftype(FT_IDX);
 
-	file.set_fid(iid);
-	W_DO(db->create_assoc(root_iid(),
-                              vec_t(index->name(), strlen(index->name())),
-                              vec_t(&file, sizeof(file_info_t))));
-				
+	    file.set_fid(iid);
+	    W_DO(db->create_assoc(root_iid(),
+				  vec_t(index->name(), strlen(index->name())),
+				  vec_t(&file, sizeof(file_info_t))));
+	}
+	
         /* move to next index */
 	index = index->next();
     }
@@ -95,13 +121,14 @@ w_rc_t table_desc_t::create_table(ss_m* db)
  ******************************************************************/
 
 bool table_desc_t::create_index(const char* name,
+				int partitions,
                                 const int* fields,
                                 const int num,
                                 const bool unique,
                                 const bool primary,
                                 const bool nolock)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, fields, 
+    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
                                              unique, primary, nolock);
 
     /* check the validity of the index */
@@ -128,11 +155,12 @@ bool table_desc_t::create_index(const char* name,
 
 
 bool table_desc_t::create_primary_idx(const char* name,
+				      int partitions,
                                       const int* fields,
                                       const int num,
                                       const bool nolock)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, fields, true, true, nolock);
+    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
 
     /* check the validity of the index */
     for (int i=0; i<num; i++) {

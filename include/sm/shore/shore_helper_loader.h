@@ -296,7 +296,8 @@ public:
         }
 
         W_DO(_pssm->begin_xct());    
-        W_DO(_pindex->find_fid(_pssm));
+	for(int i=0; i < _pindex->get_partition_count(); i++)
+	    W_DO(_pindex->find_fid(_pssm, i));
     
         while (true) {
 
@@ -317,7 +318,8 @@ public:
                 key_sz = _pmanager->format_key(_pindex, _ptuple, *_ptuple->_rep);
                 assert (pdest); // (ip) if NULL invalid key
             
-                W_DO(_pssm->create_assoc(_pindex->fid(),
+		int pnum = _pmanager->get_pnum(_pindex, _ptuple);
+                W_DO(_pssm->create_assoc(_pindex->fid(pnum),
                                          vec_t(pdest, key_sz),
                                          vec_t(&(_ptuple->_rid), sizeof(rid_t))));
             

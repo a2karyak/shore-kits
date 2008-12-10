@@ -11,6 +11,7 @@
  */
 
 #include "sm/shore/shore_file_desc.h"
+#include "sm/shore/shore_index.h"
 
 using namespace shore;
 
@@ -87,3 +88,41 @@ w_rc_t file_desc_t::find_fid(ss_m* db)
 
     return RCOK;
 }
+
+/************************************************************************
+ * FRJ: Dirty, nasty hack... but oh well!
+ ***********************************************************************/
+
+w_rc_t index_desc_t::find_fid(ss_m* db, int pnum) {
+    assert(pnum >= 0 && pnum < _partition_count);
+    if(is_partitioned()) {
+	// if valid fid don't bother to lookup
+	if (is_fid_valid(pnum))
+	    return RCOK;
+
+	file_info_t   info;
+	bool          found = false;
+	smsize_t      infosize = sizeof(file_info_t);
+
+	if (!_base.is_root_valid()) W_DO(_base.find_root_iid(db));
+
+	char tmp[100];
+	sprintf(tmp, "%s_%d", _base._name, pnum);
+	W_DO(ss_m::find_assoc(_base.root_iid(),
+			      vec_t(tmp, strlen(tmp)),
+			      &info, infosize,
+			      found));
+	_partition_stids[pnum] = info.fid();
+    
+	if (!found) {
+	    cerr << "Problem finding index " << tmp << endl;
+	    return RC(se_TABLE_NOT_FOUND);
+	}
+
+	return RCOK;
+    }
+    else {
+	return _base.find_fid(db);
+    }
+}
+
