@@ -1004,13 +1004,13 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // if NULL invalid key
 
-//     W_DO(ss_m::find_assoc(pindex->fid(),
+    int pnum = get_pnum(pindex, ptuple);
+//     W_DO(ss_m::find_assoc(pindex->fid(pnum),
 // 			  vec_t(ptuple->_rep->_dest, key_sz),
 // 			  &(ptuple->_rid),
 // 			  len,
 // 			  found));
 
-    int pnum = get_pnum(pindex, ptuple);
     W_DO(ss_m::find_assoc(pindex->fid(pnum),
     			  vec_t(ptuple->_rep->_dest, key_sz),
     			  &(ptuple->_rid),
@@ -1262,12 +1262,14 @@ w_rc_t table_man_impl<TableDesc>::get_iter_for_index_scan(ss_m* db,
     assert (_ptable);
     int pnum = 0;
     if(index->is_partitioned()) {
-	int cnt = bound1.copy_to(&pnum, sizeof(int));
+	int key0 = 0;
+	int cnt = bound1.copy_to(&key0, sizeof(int));
 	assert(cnt == sizeof(int));
-	int pnum2;
-	cnt = bound2.copy_to(&pnum2, sizeof(int));
+	int other_key0;
+	cnt = bound2.copy_to(&other_key0, sizeof(int));
 	assert(cnt == sizeof(int));
-	assert(pnum == pnum2);
+	assert(key0 == other_key0);
+	pnum = key0 % index->get_partition_count();
     }
     iter = new index_scan_iter_impl<TableDesc>(db, index, this, alm, need_tuple);
     W_DO(iter->open_scan(db, pnum, c1, bound1, c2, bound2, 
