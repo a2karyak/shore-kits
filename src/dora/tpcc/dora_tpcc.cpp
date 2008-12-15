@@ -12,6 +12,7 @@
 
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_mbench.h"
+#include "tls.h"
 
 
 using namespace dora;
