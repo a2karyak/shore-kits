@@ -93,7 +93,7 @@ public:
 protected:
 
     TableDesc* _ptable;      /* pointer back to the table description */
-    row_cache* _pcache;      /* pointer to a tuple cache */
+    guard<row_cache> _pcache;      /* pointer to a tuple cache */
     guard<ats_char_t> _pts;  /* trash stack */
 
 
@@ -120,17 +120,6 @@ public:
         }
     }
     
-    virtual ~table_man_impl() 
-    {
-        // delete tuple cache
-        if (_pcache) {
-            // print_cache_stats();
-            delete (_pcache);
-            _pcache = NULL;
-        }
-    }
-
-
     /* ----------------------------- */
     /* --- formatting operations --- */
     /* ----------------------------- */
