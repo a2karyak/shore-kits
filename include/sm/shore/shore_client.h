@@ -53,9 +53,6 @@ const int DF_DURATION              = 20;
 // default number of iterations
 const int DF_NUM_OF_ITERS          = 5;
 
-// default use sli
-const int DF_USE_SLI               = 0;
-
 // default processor binding
 const eBindingType DF_BINDING_TYPE = BT_NONE;
 
@@ -124,7 +121,6 @@ protected:
     MeasurementType _measure_type;
     int _trxid;
     int _notrxs;
-    int _use_sli;
 
     int _think_time; // in microseconds
 
@@ -142,17 +138,17 @@ public:
 
     base_client_t() 
         : thread_t("none"), _env(NULL), _measure_type(MT_UNDEF), 
-          _trxid(-1), _notrxs(-1), _use_sli(-1), _think_time(0),
+          _trxid(-1), _notrxs(-1), _think_time(0),
           _is_bound(false), _prs_id(PBIND_NONE),
           _rv(1)
     { }
     
     base_client_t(c_str tname, const int id, ShoreEnv* env, 
                   const MeasurementType aType, const int trxid, 
-                  const int numOfTrxs, const int useSLI,                   
+                  const int numOfTrxs,
                   processorid_t aprsid = PBIND_NONE) 
 	: thread_t(tname), _id(id), _env(env), _measure_type(aType), 
-          _trxid(trxid), _notrxs(numOfTrxs), _use_sli(useSLI), _think_time(0),
+          _trxid(trxid), _notrxs(numOfTrxs), _think_time(0),
           _is_bound(false), _prs_id(aprsid), _rv(0)
     {
         assert (_env);
@@ -187,9 +183,6 @@ public:
                 return;
             }
         }
-
-        // 3. set SLI option
-        ss_m::set_sli_enabled(_use_sli);
 
         // 4. run workload
         powerrun();

@@ -68,10 +68,11 @@ const string SHORE_SYS_OPTIONS[][2] = {
     { "sys-maxcpucount", "0" },
     { "sys-activecpucount", "0" },
     { "shore-fakeiodelay", "0" },
-    { "shore-fakeiodelay-enable", "0" }
+    { "shore-fakeiodelay-enable", "0" },
+    { "shore-sli_enable", "0" },
 };
 
-const int    SHORE_NUM_SYS_OPTIONS  = 3;
+const int    SHORE_NUM_SYS_OPTIONS  = 6;
 
 
 // SHORE_SYS_SM_OPTIONS: 
@@ -414,6 +415,7 @@ public:
     // fake io delay interface
     const int disable_fake_disk_latency();
     const int enable_fake_disk_latency(const int adelay);
+    int set_sli_enabled(bool enable);
 
 
     // does a log flush

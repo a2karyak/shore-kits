@@ -394,6 +394,10 @@ int ShoreEnv::start_sm()
     TRACE( TRACE_DEBUG, "I/O delay latency set: (%d)\n", ioLatency);
     W_COERCE(_pssm->set_fake_disk_latency(*_pvid,ioLatency));
 
+
+    int enableSLI = ev->getVarInt("shore-sli-enable",0);
+    TRACE( TRACE_DEBUG, "Is SLI enabled: (%d)\n", enableSLI);
+    _pssm->set_sli_enabled(enableSLI);
     
     // Using the physical ID interface
 
@@ -671,6 +675,13 @@ const int ShoreEnv::enable_fake_disk_latency(const int adelay)
 }
 
 
+int ShoreEnv::set_sli_enabled(bool enabled)
+{
+    _pssm->set_sli_enabled(enabled);
+    envVar* env = envVar::instance();
+    env->setVarInt("shore-sli-enable", enabled);
+    return 0;
+}
 
 
 

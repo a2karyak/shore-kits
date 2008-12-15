@@ -66,9 +66,9 @@ public:
 
     baseline_tpcc_client_t(c_str tname, const int id, ShoreTPCCEnv* env, 
                            const MeasurementType aType, const int trxid, 
-                           const int numOfTrxs, const int useSLI,
+                           const int numOfTrxs, 
                            processorid_t aprsid, const int sWH, const int qf) 
-	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
           _tpccdb(env), _wh(sWH), _qf(qf)
     {
         assert (env);
@@ -114,9 +114,9 @@ public:
 
     dora_tpcc_client_t(c_str tname, const int id, DoraTPCCEnv* env, 
                        const MeasurementType aType, const int trxid, 
-                       const int numOfTrxs, const int useSLI, 
+                       const int numOfTrxs, 
                        processorid_t aprsid, const int sWH, const int qf)  
-	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,useSLI,aprsid),
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
           _tpccdb(env), _wh(sWH), _qf(qf)
     {
         assert (env);

@@ -83,6 +83,20 @@ struct fake_iodelay_cmd_t : public command_handler_t {
 };
 
 
+// cmd - sli
+struct sli_enable_cmd_t : public command_handler_t {
+    ShoreEnv* _env;
+    sli_enable_cmd_t(ShoreEnv* env) : _env(env) { };
+    ~sli_enable_cmd_t() { }
+    void setaliases() { 
+        _name = string("sli-enable"); 
+        _aliases.push_back("sli-enable"); _aliases.push_back("sli"); _aliases.push_back("enable-sli"); }
+    const int handle(const char* cmd);
+    void usage();
+    const string desc() { return (string("Enables/disables SLI (requires worker restart)")); }
+};
+
+
 /*********************************************************************
  *
  *  @abstract class: shore_shell_t
@@ -110,6 +124,7 @@ protected:
 
     // supported cmds
     guard<fake_iodelay_cmd_t> _fakeioer;
+    guard<sli_enable_cmd_t> _slier;
 
     // supported trxs
     typedef map<int,string>            mapSupTrxs;
@@ -186,11 +201,11 @@ public:
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
-                               const int iUseSLI, const eBindingType abt)=0;
+                               const eBindingType abt)=0;
     virtual int _cmd_MEASURE_impl(const int iQueriedWHs, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
-                                  const int iUseSLI, const eBindingType abt)=0;    
+                                  const eBindingType abt)=0;    
 
     // for the client processor binding policy
     virtual processorid_t next_cpu(const eBindingType abt,
@@ -200,18 +215,18 @@ public:
 protected:
 
     virtual void print_throughput(const int iQueriedWHs, const int iSpread, 
-                                  const int iNumOfThreads, const int iUseSLI, 
+                                  const int iNumOfThreads,
                                   const double delay, const eBindingType abt) { /* default do nothing */ };
     
     void print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
                             const int iNumOfThreads, const int iDuration,
                             const int iSelectedTrx, const int iIterations,
-                            const int iUseSLI, const eBindingType abt);
+                            const eBindingType abt);
 
     void print_TEST_info(const int iQueriedWHs, const int iSpread, 
                          const int iNumOfThreads, const int iNumOfTrxs,
                          const int iSelectedTrx, const int iIterations,
-                         const int iUseSLI, const eBindingType abt);
+                         const eBindingType abt);
 
 }; // EOF: shore_shell_t
 

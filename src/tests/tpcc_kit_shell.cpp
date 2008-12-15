@@ -75,11 +75,11 @@ public:
     virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
-                               const int iUseSLI, const eBindingType abt);
+                               const eBindingType abt);
     virtual int _cmd_MEASURE_impl(const int iQueriedWHs, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
-                                  const int iUseSLI, const eBindingType abt);    
+                                  const eBindingType abt);    
 
     virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
 
@@ -145,6 +145,11 @@ public:
         _fakeioer->setaliases();
         add_cmd(_fakeioer.get());
 
+        // FROM TESTER_SHORE_SHELL
+        _slier = new sli_enable_cmd_t(_tpccdb);
+        _slier->setaliases();
+        add_cmd(_slier.get());
+
 
         // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_tpccdb);
@@ -170,7 +175,7 @@ protected:
 
 
     virtual void print_throughput(const int iQueriedWHs, const int iSpread, 
-                                  const int iNumOfThreads, const int iUseSLI, 
+                                  const int iNumOfThreads,
                                   const double delay, const eBindingType abt);
 
 }; // EOF: kit_t
@@ -279,7 +284,7 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
 
 template<class Client,class DB>
 void kit_t<Client,DB>::print_throughput(const int iQueriedWHs, const int iSpread, 
-                                        const int iNumOfThreads, const int iUseSLI, 
+                                        const int iNumOfThreads, 
                                         const double delay, const eBindingType abt)
 {
     assert (_env);
@@ -290,7 +295,6 @@ void kit_t<Client,DB>::print_throughput(const int iQueriedWHs, const int iSpread
     TRACE( TRACE_ALWAYS, "*******\n"            \
            "WHs:      (%d)\n"                   \
            "Spread:   (%s)\n"                   \
-           "SLI:      (%s)\n"                   \
            "Binding:  (%s)\n"                   \
            "Threads:  (%d)\n"                   \
            "Trxs Att: (%d)\n"                   \
@@ -300,7 +304,7 @@ void kit_t<Client,DB>::print_throughput(const int iQueriedWHs, const int iSpread
            "TPS:      (%.2f)\n"                 \
            "tpm-C:    (%.2f)\n",
            iQueriedWHs, 
-           (iSpread ? "Yes" : "No"), (iUseSLI ? "Yes" : "No"), 
+           (iSpread ? "Yes" : "No"),
            translate_bp(abt),
            iNumOfThreads, trxs_att, trxs_com, nords_com, 
            delay, 
@@ -386,12 +390,11 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
                                      const int iNumOfTrxs,
                                      const int iSelectedTrx, 
                                      const int iIterations,
-                                     const int iUseSLI,
                                      const eBindingType abt)
 {
     // print test information
     print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
-                    iNumOfTrxs, iSelectedTrx, iIterations, iUseSLI, abt);
+                    iNumOfTrxs, iSelectedTrx, iIterations, abt);
 
     _tpccdb->upd_sf();
 
@@ -417,7 +420,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
             if (iSpread)
                 wh_id = i+1;
             testers[i] = new Client(c_str("CL-%d",i), i, _tpccdb, 
-                                    MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs, iUseSLI,
+                                    MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs,
                                     _current_prs_id, wh_id, iQueriedWHs);
             assert (testers[i]);
             testers[i]->fork();
@@ -458,7 +461,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
                "Secs:\t%.2lf\n"
                "TPS:\t%.2lf\n"
                "tpm-C:\t%.2lf\n",
-               iQueriedWHs, iSpread? "yes" : "no", iUseSLI? "yes" : "no", iNumOfThreads,
+               iQueriedWHs, iSpread? "yes" : "no", iNumOfThreads,
                attempted, failed, nord,
                delay, (attempted-failed)/delay, 60*nord/delay);
 
@@ -492,12 +495,11 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
                                         const int iDuration,
                                         const int iSelectedTrx, 
                                         const int iIterations,
-                                        const int iUseSLI,
                                         const eBindingType abt)
 {
     // print measurement info
     print_MEASURE_info(iQueriedWHs, iSpread, iNumOfThreads, iDuration, 
-                       iSelectedTrx, iIterations, iUseSLI, abt);
+                       iSelectedTrx, iIterations, abt);
 
     _tpccdb->upd_sf();
 
@@ -517,7 +519,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
             if (iSpread)
                 wh_id = i+1;
             testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _tpccdb, 
-                                    MT_TIME_DUR, iSelectedTrx, 0, iUseSLI,
+                                    MT_TIME_DUR, iSelectedTrx, 0,
                                     _current_prs_id, wh_id, iQueriedWHs);
             assert (testers[i]);
             testers[i]->fork();
@@ -540,7 +542,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
 	xct_stats statsb = shell_get_xct_stats();
 	//        alarm(iDuration);
 	stopwatch_t timer;
-	_cpustater->myinfo.reset();
+	//	_cpustater->myinfo.reset();
 	sleep(iDuration);
 	xct_stats stats = shell_get_xct_stats();
 	stats -= statsb;
@@ -557,19 +559,18 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
             +stats.failed.other;
         int nord = stats.attempted.nord-stats.failed.nord;
 	
-        printf("WH:\t%d\n"
-               "Spread:\t%s\n"
-               "SLI:\t%s\n"
-               "Threads:\t%d\n"
-               "Trx Att:\t%d\n"
-               "Trx Abt:\t%d\n"
-               "NOrd Com:\t%d\n"
-               "Secs:\t%.2lf\n"
-               "TPS:\t%.2lf\n"
-               "tpm-C:\t%.2lf\n",
-               iQueriedWHs, iSpread? "yes" : "no", iUseSLI? "yes" : "no", iNumOfThreads,
-               attempted, failed, nord,
-               delay, (attempted-failed)/delay, 60*nord/delay);
+	printf("WH:\t%d\n"
+	       "Spread:\t%s\n"
+	       "Threads:\t%d\n"
+	       "Trx Att:\t%d\n"
+	       "Trx Abt:\t%d\n"
+	       "NOrd Com:\t%d\n"
+	       "Secs:\t%.2lf\n"
+	       "TPS:\t%.2lf\n"
+	       "tpm-C:\t%.2lf\n",
+	       iQueriedWHs, iSpread? "yes" : "no", iNumOfThreads,
+	       attempted, failed, nord,
+	       delay, (attempted-failed)/delay, 60*nord/delay);
 	       
         // flush the log before the next iteration
         TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
@@ -577,7 +578,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
         TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
 
         // print throughput and reset session stats
-        //print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
+        //print_throughput(iQueriedWHs, iSpread, iNumOfThreads, delay, abt);
 	//        _tpccdb->reset_session_tpcc_stats();
 
     }
