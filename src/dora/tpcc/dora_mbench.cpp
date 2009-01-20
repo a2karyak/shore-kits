@@ -29,7 +29,7 @@ ENTER_NAMESPACE(dora);
 
 void final_mb_rvp::upd_committed_stats() 
 {
-    assert (_ptpccenv);
+    w_assert3 (_ptpccenv);
 //     if (_ptpccenv->get_measure() != MST_MEASURE) {
 //         return;
 //     }
@@ -38,7 +38,7 @@ void final_mb_rvp::upd_committed_stats()
 
 void final_mb_rvp::upd_aborted_stats() 
 {
-    assert (_ptpccenv);
+    w_assert3 (_ptpccenv);
 //     if (_ptpccenv->get_measure() != MST_MEASURE) {
 //         return;
 //     }
@@ -63,7 +63,7 @@ void final_mb_rvp::upd_aborted_stats()
 
 w_rc_t upd_wh_mb_action::trx_exec() 
 {
-    assert (_ptpccenv);
+    w_assert3 (_ptpccenv);
 
     // generate the input
     double amount = (double)URand(1,1000);
@@ -73,7 +73,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
 
     // get table tuples from the caches
     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
-    assert (prwh);
+    w_assert3 (prwh);
     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
     areprow.set(_ptpccenv->warehouse()->maxsize()); 
     prwh->_rep = &areprow;
@@ -147,7 +147,7 @@ done:
 
 w_rc_t upd_cust_mb_action::trx_exec() 
 {
-    assert (_ptpccenv);
+    w_assert3 (_ptpccenv);
 
     // generates the input
     double amount = (double)URand(1,1000);
@@ -156,7 +156,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
-    assert (prcust);
+    w_assert3 (prcust);
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
     areprow.set(_ptpccenv->customer()->maxsize()); 
     prcust->_rep = &areprow;

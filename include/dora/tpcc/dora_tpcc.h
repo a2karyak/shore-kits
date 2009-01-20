@@ -40,8 +40,6 @@ typedef Pool* PoolPtr;
 const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 
-                //_poolArray[0] = _baseActionPtrPool = new Pool(sizeof(base_action_t*), ACTIONS_PER_RVP_POOL_SZ); \
-
 #define DECLARE_RVP_CACHE(Type)                         \
     struct Type##_cache   {                             \
             guard< object_cache_t<Type> > _cache;       \
@@ -57,10 +55,6 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     DECLARE_RVP_CACHE(Type);                     \
     DECLARE_TLS(Type##_cache,my_##Type##_cache);
 
-
-//                 _poolArray[0] = _keyPtrPool = new Pool(sizeof(key_wrapper_t<Datatype>*), KEYPTR_PER_ACTION_POOL_SZ); \
-//                 _poolArray[1] = _kalReqPool = new Pool(sizeof(KALReq_t<Datatype>), KALREQ_PER_ACTION_POOL_SZ); \
-//                 _poolArray[2] = _dtPool = new Pool(sizeof(Datatype), DT_PER_ACTION_POOL_SZ); \
 
 #define DECLARE_ACTION_CACHE(Type,Datatype)             \
     struct Type##_cache  {                              \
@@ -87,7 +81,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 const int DF_ACTION_CACHE_SZ = 100;
 
 
-// Forward decl
+// Forward declarations
+
+// MBenches
+class final_mb_rvp;
+class upd_wh_mb_action;
+class upd_cust_mb_action;
 
 // TPC-C Payment
 class final_pay_rvp;
@@ -97,10 +96,10 @@ class upd_dist_pay_action;
 class upd_cust_pay_action;
 class ins_hist_pay_action;
 
-// MBenches
-class final_mb_rvp;
-class upd_wh_mb_action;
-class upd_cust_mb_action;
+// TPC-C OrderStatus
+class final_ordst_rvp;
+class r_cust_ordst_action;
+class r_ol_ordst_action;
 
 
 
@@ -268,6 +267,17 @@ public:
     typedef vector<base_action_t*> baseActionsList;
 
 
+    // MBenches
+    final_mb_rvp* NewFinalMbRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                trx_result_tuple_t& presult);
+
+    upd_wh_mb_action* NewUpdWhMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                       const int whid);
+
+    upd_cust_mb_action* NewUpdCustMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                           const int whid);
+
+
     // TPC-C Payment
     final_pay_rvp* NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid, 
                                   trx_result_tuple_t& presult,
@@ -291,16 +301,18 @@ public:
                                              const tpcc_warehouse_tuple& awh,
                                              const tpcc_district_tuple& adist);
 
-    // MBenches
-    final_mb_rvp* NewFinalMbRvp(const tid_t& atid, xct_t* axct, const int axctid, 
-                                trx_result_tuple_t& presult);
 
-    upd_wh_mb_action* NewUpdWhMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
-                                       const int whid);
 
-    upd_cust_mb_action* NewUpdCustMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
-                                           const int whid);
+    // TPC-C OrderStatus
+    final_ordst_rvp* NewFinalOrdStRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                      trx_result_tuple_t& presult);
 
+    r_cust_ordst_action* NewRCustOrdStAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                             const order_status_input_t& ordstin);
+
+    r_ol_ordst_action* NewROlOrdStAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                         const order_status_input_t& ordstin,
+                                         const tpcc_order_tuple& aorder);
 
 
 private:

@@ -255,6 +255,7 @@ WL_TPCC_SHORE = \
 WL_TPCC_DORA = \
    $(SD)/tpcc/dora_payment.cpp \
    $(SD)/tpcc/dora_new_order.cpp \
+   $(SD)/tpcc/dora_order_status.cpp \
    $(SD)/tpcc/dora_mbench.cpp \
    $(SD)/tpcc/dora_tpcc.cpp \
    $(SD)/tpcc/dora_tpcc_xct.cpp

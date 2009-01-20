@@ -54,9 +54,9 @@ public:
                     const int intra_trx_cnt, const int total_actions,
                     ShoreTPCCEnv* penv, rvp_cache* pc) 
     { 
-        assert (pc);
+        w_assert3 (pc);
         _cache = pc;
-        assert (penv);
+        w_assert3 (penv);
         _ptpccenv = penv;
         _set(atid,axct,axctid,presult,intra_trx_cnt,total_actions);
 

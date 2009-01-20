@@ -10,8 +10,10 @@
 
 #include "dora/tpcc/dora_tpcc.h"
 
-#include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_mbench.h"
+#include "dora/tpcc/dora_payment.h"
+#include "dora/tpcc/dora_order_status.h"
+
 #include "tls.h"
 
 
@@ -440,6 +442,59 @@ const processorid_t DoraTPCCEnv::_next_cpu(const processorid_t& aprd,
  ********************************************************************/
 
 
+// MBenches RVP //
+
+
+
+DECLARE_TLS_RVP_CACHE(final_mb_rvp);
+
+DECLARE_TLS_ACTION_CACHE(upd_wh_mb_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_cust_mb_action,int);
+
+
+final_mb_rvp*  
+DoraTPCCEnv::NewFinalMbRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                           trx_result_tuple_t& presult)
+{
+    final_mb_rvp* myrvp = my_final_mb_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,1,1,this,my_final_mb_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+
+
+// MBenches Actions
+
+upd_wh_mb_action*  
+DoraTPCCEnv::NewUpdWhMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                              const int whid)
+{
+    upd_wh_mb_action* myaction = my_upd_wh_mb_action_cache->_cache->borrow();
+    w_assert3 (myaction);
+    myaction->set(atid,axct,prvp,whid,this,my_upd_wh_mb_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);    
+}
+
+
+upd_cust_mb_action*  
+DoraTPCCEnv::NewUpdCustMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                const int whid)
+{
+    upd_cust_mb_action* myaction = my_upd_cust_mb_action_cache->_cache->borrow();
+    w_assert3 (myaction);
+    myaction->set(atid,axct,prvp,whid,this,my_upd_cust_mb_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);    
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+// TPC-C PAYMENT
+
 DECLARE_TLS_RVP_CACHE(final_pay_rvp);
 DECLARE_TLS_RVP_CACHE(midway_pay_rvp);
 
@@ -460,7 +515,7 @@ DoraTPCCEnv::NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
                             baseActionsList& actions)
 {
     final_pay_rvp* myrvp = my_final_pay_rvp_cache->_cache->borrow();
-    assert (myrvp);
+    w_assert3 (myrvp);
     myrvp->set(atid,axct,axctid,presult,this,my_final_pay_rvp_cache->_cache.get());
     myrvp->copy_actions(actions);
     return (myrvp);    
@@ -473,7 +528,7 @@ DoraTPCCEnv::NewMidayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
                             const payment_input_t& pin)
 {
     midway_pay_rvp* myrvp = my_midway_pay_rvp_cache->_cache->borrow();
-    assert (myrvp);
+    w_assert3 (myrvp);
     myrvp->set(atid,axct,axctid,presult,pin,this,my_midway_pay_rvp_cache->_cache.get());
     return (myrvp);    
 }
@@ -486,7 +541,7 @@ DoraTPCCEnv::NewUpdWhPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* p
                                const payment_input_t& pin)
 {
     upd_wh_pay_action* myaction = my_upd_wh_pay_action_cache->_cache->borrow();
-    assert (myaction);
+    w_assert3(myaction);
     myaction->set(atid,axct,prvp,pin,this,my_upd_wh_pay_action_cache->_cache.get());
     prvp->add_action(myaction);
     return (myaction);        
@@ -498,7 +553,7 @@ DoraTPCCEnv::NewUpdDistPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp*
                                  const payment_input_t& pin)
 {
     upd_dist_pay_action* myaction = my_upd_dist_pay_action_cache->_cache->borrow();
-    assert (myaction);
+    w_assert3 (myaction);
     myaction->set(atid,axct,prvp,pin,this,my_upd_dist_pay_action_cache->_cache.get());
     prvp->add_action(myaction);
     return (myaction);            
@@ -511,7 +566,7 @@ DoraTPCCEnv::NewUpdCustPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp*
                                  const payment_input_t& pin)
 {
     upd_cust_pay_action* myaction = my_upd_cust_pay_action_cache->_cache->borrow();
-    assert (myaction);
+    w_assert3 (myaction);
     myaction->set(atid,axct,prvp,pin,this,my_upd_cust_pay_action_cache->_cache.get());
     prvp->add_action(myaction);
     return (myaction);        
@@ -525,7 +580,7 @@ DoraTPCCEnv::NewInsHistPayAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
                                  const tpcc_district_tuple& adist)
 {
     ins_hist_pay_action* myaction = my_ins_hist_pay_action_cache->_cache->borrow();
-    assert (myaction);
+    w_assert3 (myaction);
     myaction->set(atid,axct,prvp,pin,awh,adist,this,my_ins_hist_pay_action_cache->_cache.get());
     prvp->add_action(myaction);
     return (myaction);    
@@ -534,52 +589,62 @@ DoraTPCCEnv::NewInsHistPayAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-// MBenches RVP //
 
 
+///////////////////////////////////////////////////////////////////////////////////////
 
-DECLARE_TLS_RVP_CACHE(final_mb_rvp);
+// TPC-C ORDER STATUS
 
-DECLARE_TLS_ACTION_CACHE(upd_wh_mb_action,int);
-DECLARE_TLS_ACTION_CACHE(upd_cust_mb_action,int);
+DECLARE_TLS_RVP_CACHE(final_ordst_rvp);
+
+DECLARE_TLS_ACTION_CACHE(r_cust_ordst_action,int);
+DECLARE_TLS_ACTION_CACHE(r_ol_ordst_action,int);
+     
 
 
-final_mb_rvp*  
-DoraTPCCEnv::NewFinalMbRvp(const tid_t& atid, xct_t* axct, const int axctid, 
-                           trx_result_tuple_t& presult)
+// TPC-C OrderStatus RVPs
+
+final_ordst_rvp* 
+DoraTPCCEnv::NewFinalOrdStRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                              trx_result_tuple_t& presult)
 {
-    final_mb_rvp* myrvp = my_final_mb_rvp_cache->_cache->borrow();
-    assert (myrvp);
-    myrvp->set(atid,axct,axctid,presult,1,1,this,my_final_mb_rvp_cache->_cache.get());
-    return (myrvp);    
+    final_ordst_rvp* myrvp = my_final_ordst_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,this,my_final_ordst_rvp_cache->_cache.get());
+    return (myrvp);
 }
 
 
+// TPC-C OrderStatus Actions
 
-// MBenches Actions
-
-upd_wh_mb_action*  
-DoraTPCCEnv::NewUpdWhMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
-                              const int whid)
+r_cust_ordst_action*  
+DoraTPCCEnv::NewRCustOrdStAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                 const order_status_input_t& ordstin)
 {
-    upd_wh_mb_action* myaction = my_upd_wh_mb_action_cache->_cache->borrow();
-    assert (myaction);
-    myaction->set(atid,axct,prvp,whid,this,my_upd_wh_mb_action_cache->_cache.get());
+    r_cust_ordst_action* myaction = my_r_cust_ordst_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,ordstin,this,my_r_cust_ordst_action_cache->_cache.get());
     prvp->add_action(myaction);
-    return (myaction);    
+    return (myaction);
 }
 
-
-upd_cust_mb_action*  
-DoraTPCCEnv::NewUpdCustMbAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
-                                const int whid)
+r_ol_ordst_action*  
+DoraTPCCEnv::NewROlOrdStAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                               const order_status_input_t& ordstin,
+                               const tpcc_order_tuple& aorder)
 {
-    upd_cust_mb_action* myaction = my_upd_cust_mb_action_cache->_cache->borrow();
-    assert (myaction);
-    myaction->set(atid,axct,prvp,whid,this,my_upd_cust_mb_action_cache->_cache.get());
+    r_ol_ordst_action* myaction = my_r_ol_ordst_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,ordstin,aorder,this,my_r_ol_ordst_action_cache->_cache.get());
     prvp->add_action(myaction);
-    return (myaction);    
+    return (myaction);
 }
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
 
 
 
