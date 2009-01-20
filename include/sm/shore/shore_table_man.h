@@ -22,8 +22,7 @@
  * FUNCTIONALITY 
  *
  * Operations on single tuples, including adding, updating, and index probe are
- * provided as well, as part of either the (table_man_impl) or (tuple_imple) 
- * classes.
+ * provided as well, as part of either the (table_man_impl) class.
  */
 
 #ifndef __SHORE_TABLE_MANAGER_H
@@ -463,7 +462,7 @@ public:
          */        
     }
 
-    /** In case we know the bounds of the iscan a priory */
+    /** In case we know the bounds of the iscan a-priori */
     index_scan_iter_impl(ss_m* db,
                          index_desc_t* pindex,
                          table_manager* pmanager,

@@ -70,9 +70,10 @@ const string SHORE_SYS_OPTIONS[][2] = {
     { "shore-fakeiodelay", "0" },
     { "shore-fakeiodelay-enable", "0" },
     { "shore-sli_enable", "0" },
+    { "system", "invalid" },
 };
 
-const int    SHORE_NUM_SYS_OPTIONS  = 6;
+const int    SHORE_NUM_SYS_OPTIONS  = 7;
 
 
 // SHORE_SYS_SM_OPTIONS: 
@@ -108,10 +109,9 @@ const string SHORE_DB_OPTIONS[][2] = {
     { "devicequota", "0" },
     { "loadatadir", SHORE_TABLE_DATA_DIR },
     { "sf", "0" },
-    { "system", "invalid" }
 };
 
-const int    SHORE_NUM_DB_OPTIONS  = 5;
+const int    SHORE_NUM_DB_OPTIONS  = 4;
 
 
 /****************************************************************** 

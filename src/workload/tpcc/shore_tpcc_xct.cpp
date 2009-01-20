@@ -167,12 +167,44 @@ void ShoreTPCCEnv::_inc_other_failed() {
     ++my_stats.failed.other;
 }
 
+void ShoreTPCCEnv::_inc_nord_att() {
+    ++my_stats.attempted.nord;
+}
+
+void ShoreTPCCEnv::_inc_nord_failed() {
+    ++my_stats.failed.nord;
+}
+
 void ShoreTPCCEnv::_inc_pay_att() {
     ++my_stats.attempted.payment;
 }
 
 void ShoreTPCCEnv::_inc_pay_failed() {
     ++my_stats.failed.payment;
+}
+
+void ShoreTPCCEnv::_inc_ordst_att() {
+    ++my_stats.attempted.status;
+}
+
+void ShoreTPCCEnv::_inc_ordst_failed() {
+    ++my_stats.failed.status;
+}
+
+void ShoreTPCCEnv::_inc_deliv_att() {
+    ++my_stats.attempted.delivery;
+}
+
+void ShoreTPCCEnv::_inc_deliv_failed() {
+    ++my_stats.failed.delivery;
+}
+
+void ShoreTPCCEnv::_inc_stock_att() {
+    ++my_stats.attempted.stock;
+}
+
+void ShoreTPCCEnv::_inc_stock_failed() {
+    ++my_stats.failed.stock;
 }
 
 
@@ -919,9 +951,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
             e = c_iter->next(_pssm, eof, *prcust);
             if (e.is_error()) { goto done; }
             while (!eof) {
-
-                // put the retrieved customer to the vector
-                count++;
+                // push the retrieved customer id to the vector
+                ++count;
                 prcust->get_value(0, a_c_id);
                 v_c_id.push_back(a_c_id);
 
@@ -932,7 +963,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
             }
             assert (count);
 
-            /* find the customer id in the middle of the list */
+            // 3b. find the customer id in the middle of the list
             ppin->_c_id = v_c_id[(count+1)/2-1];
         }
         assert (ppin->_c_id>0);
@@ -1244,7 +1275,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
          */
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d ORDST:cust-idx-probe-upd (%d) (%d) (%d)\n", 
+               "App: %d ORDST:cust-idx-probe (%d) (%d) (%d)\n", 
                xct_id, w_id, d_id, pstin->_c_id);
         e = _pcustomer_man->cust_index_probe(_pssm, prcust, 
                                              w_id, d_id, pstin->_c_id);
@@ -1264,7 +1295,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(order_status_input_t* pstin,
          * WHERE o_w_id = :w_id AND o_d_id = :d_id AND o_c_id = :o_c_id
          * ORDER BY o_id DESC
          *
-         * plan: index scan on "C_CUST_INDEX"
+         * plan: index scan on "O_CUST_INDEX"
          */
      
         guard<index_scan_iter_impl<order_t> > o_iter;
@@ -1475,7 +1506,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
             e = no_iter->next(_pssm, eof, *prno);
             if (e.is_error()) { goto done; }
 
-            if(eof) continue; // skip this district
+            if (eof) continue; // skip this district
 
             int no_o_id;
             prno->get_value(0, no_o_id);

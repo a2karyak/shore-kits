@@ -151,6 +151,16 @@ public:
                                   lock_mode_t alm = SH,
                                   bool need_tuple = false);
 
+    w_rc_t cust_get_iter_by_index_nl(ss_m* db,
+                                     customer_index_iter* &iter,
+                                     customer_tuple* ptuple,
+                                     rep_row_t &replow,
+                                     rep_row_t &rephigh,
+                                     const int w_id,
+                                     const int d_id,
+                                     const char* c_last,
+                                     bool need_tuple = false);
+
     w_rc_t cust_index_probe(ss_m* db,
                             customer_tuple* ptuple,
                             const int w_id,
@@ -259,6 +269,15 @@ public:
                                 lock_mode_t alm = SH,
                                 bool need_tuple = false);
 
+    w_rc_t no_get_iter_by_index_nl(ss_m* db,
+                                   new_order_index_iter* &iter,
+                                   new_order_tuple* ptuple,
+                                   rep_row_t &replow,
+                                   rep_row_t &rephigh,
+                                   const int w_id,
+                                   const int d_id,
+                                   bool need_tuple = false);
+
     /* --- update a retrieved tuple --- */
     w_rc_t no_delete_by_index(ss_m* db,
                               new_order_tuple* ptuple,
@@ -312,6 +331,16 @@ public:
                                  const int c_id,
                                  lock_mode_t alm = SH,
                                  bool need_tuple = true);
+
+    w_rc_t ord_get_iter_by_index_nl(ss_m* db,
+                                    order_index_iter* &iter,
+                                    order_tuple* ptuple,
+                                    rep_row_t &replow,
+                                    rep_row_t &rephigh,
+                                    const int w_id,
+                                    const int d_id,
+                                    const int c_id,
+                                    bool need_tuple = true);
 
     /* --- update a retrieved tuple --- */
     w_rc_t ord_update_carrier_by_index(ss_m* db,
@@ -374,6 +403,17 @@ public:
                                       const int high_o_id,
                                       lock_mode_t alm = SH,
                                       bool need_tuple = true);
+
+    w_rc_t ol_get_range_iter_by_index_nl(ss_m* db,
+                                         order_line_index_iter* &iter,
+                                         order_line_tuple* ptuple,
+                                         rep_row_t &replow,
+                                         rep_row_t &rephigh,
+                                         const int w_id,
+                                         const int d_id,
+                                         const int low_o_id,
+                                         const int high_o_id,
+                                         bool need_tuple = true);
     
     w_rc_t ol_get_probe_iter_by_index(ss_m* db,
                                       order_line_index_iter* &iter,
@@ -385,6 +425,16 @@ public:
                                       const int o_id,
                                       lock_mode_t alm = SH,
                                       bool need_tuple = true);
+    
+    w_rc_t ol_get_probe_iter_by_index_nl(ss_m* db,
+                                         order_line_index_iter* &iter,
+                                         order_line_tuple* ptuple,
+                                         rep_row_t &replow,
+                                         rep_row_t &rephigh,
+                                         const int w_id,
+                                         const int d_id,
+                                         const int o_id,
+                                         bool need_tuple = true);
 
     /** deprecated */
 

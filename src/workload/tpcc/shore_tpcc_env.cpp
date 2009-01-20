@@ -73,7 +73,7 @@ void tpcc_stats_t::print_trx_stats() const
 const int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
+    _sysname = _sys_opts[SHORE_SYS_OPTIONS[6][0]];
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema

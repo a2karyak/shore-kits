@@ -122,9 +122,10 @@ void envVar::checkVar(const string& sParam)
 
 string envVar::getSysname()
 {
-    string config = getVar("db-config","invalid");
-    config = config + "-system";
-    return (getVar(config,"invalid"));
+    //string config = getVar("db-config","invalid");
+    //config = config + "-system";
+    string system = "system";
+    return (getVar(system,"invalid"));
 }
 
 string envVar::getSysVar(string sParam)

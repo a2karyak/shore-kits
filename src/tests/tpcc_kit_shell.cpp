@@ -453,7 +453,6 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
 	
         printf("WH:\t%d\n"
                "Spread:\t%s\n"
-               "SLI:\t%s\n"
                "Threads:\t%d\n"
                "Trx Att:\t%d\n"
                "Trx Abt:\t%d\n"

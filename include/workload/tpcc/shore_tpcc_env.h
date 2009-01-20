@@ -331,7 +331,7 @@ public:
         _table_desc_list.clear();
         _table_man_list.clear();     
 
-        print_total_tpcc_stats();
+        //print_total_tpcc_stats();
     }
 
 
@@ -519,8 +519,16 @@ public:
     // update statistics
     void _inc_other_att();
     void _inc_other_failed();
+    void _inc_nord_att();
+    void _inc_nord_failed();
     void _inc_pay_att();
     void _inc_pay_failed();
+    void _inc_ordst_att();
+    void _inc_ordst_failed();
+    void _inc_deliv_att();
+    void _inc_deliv_failed();
+    void _inc_stock_att();
+    void _inc_stock_failed();
 
     const int upd_worker_cnt();
 
