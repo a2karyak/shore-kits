@@ -45,7 +45,7 @@ protected:
         // the range action has two keys: 
         // the low and hi value that determine the range
         _act_set(atid,axct,prvp,2); 
-        assert (keylen);
+        w_assert3 (keylen);
         _down.reserve(keylen);
         _up.reserve(keylen);
     }
@@ -90,7 +90,7 @@ public:
 
         calc_keys();
 
-        assert (_keys.empty()); // make sure using an empty action
+        w_assert3 (_keys.empty()); // make sure using an empty action
         _keys.push_back(&_down);
         _keys.push_back(&_up);
 

@@ -130,7 +130,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
-        assert (_partition);
+        w_assert3 (_partition);
         
         // reset the flags for the new loop
         apa = NULL;
@@ -144,7 +144,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 
             // 2a. get the first committed
             apa = _partition->dequeue_commit();
-            assert (apa);
+            w_assert3 (apa);
             TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
             
             // 2b. release the locks acquired for this action
@@ -210,15 +210,15 @@ template <class DataType>
 const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 {
     // 0. make sure that the action has all the keys it needs
-    assert (paction);
-    assert (paction->is_ready());
+    w_assert3 (paction);
+    w_assert3 (paction->is_ready());
 
     bool is_error = false;
     int r_code = 0;
 
     // 1. get pointer to rvp
     rvp_t* aprvp = paction->rvp();
-    assert (aprvp);
+    w_assert3 (aprvp);
 
     // 2. attach to xct
 

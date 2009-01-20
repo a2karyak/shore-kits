@@ -77,7 +77,7 @@ protected:
         _xct_id = axctid;
         _result = presult;
 
-        //assert (_actions );
+        w_assert3 (_actions );
         _actions.reserve(total_actions);
     }
 
@@ -153,7 +153,7 @@ public:
 
     void setup(Pool** stl_pool_alloc_list) 
     {
-        //assert (stl_pool_alloc_list);
+        w_assert3 (stl_pool_alloc_list);
 
         // it must have 1 pool lists: 
         // stl_pool_alloc_list[0]: base_action_t* pool

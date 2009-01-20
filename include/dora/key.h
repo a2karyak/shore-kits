@@ -129,7 +129,7 @@ struct key_wrapper_t
 
     void setup(Pool** stl_pool_alloc_list) 
     {
-        //assert (stl_pool_alloc_list);
+        w_assert3 (stl_pool_alloc_list);
 
         // it must have 1 pool lists: 
         // stl_pool_list[0]: DataType pool
@@ -177,6 +177,18 @@ std::ostream& operator<< (std::ostream& os,
 //// COMPARISON OPERATORS ////
 
 
+
+// @todo - IP: I am not sure if the rhs.size should be larger than the key.size.
+//             for example for range queries, the queried key may be a shorter version
+//             of the keys in the structure.
+//
+// workaround: 
+//
+// minsize = min(_key_v.size(), rhs._key_v.size());
+// for (int i=0; i<minsize; ++) { ... }
+//
+
+
 // less
 template<class DataType>
 inline bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) const 
@@ -194,7 +206,7 @@ inline bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rh
 // equal
 template<class DataType>
 inline bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) const 
-{
+{    
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
     for (int i=0; i<_key_v.size(); i++) {
         // goes over the key fields until one inequality is found

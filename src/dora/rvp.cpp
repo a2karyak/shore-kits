@@ -41,7 +41,7 @@ rvp_t& rvp_t::operator=(const rvp_t& rhs)
 
 const int rvp_t::copy_actions(const baseActionsList& actionList)
 {
-    //assert (actionList);
+    w_assert3 (actionList);
     _actions.reserve(actionList.size());
     _actions.assign(actionList.begin(),actionList.end()); // copy list content
     return (0);
@@ -58,8 +58,8 @@ const int rvp_t::copy_actions(const baseActionsList& actionList)
 
 const int rvp_t::add_action(base_action_t* paction) 
 {
-    assert (paction);
-    assert (this==paction->rvp());
+    w_assert3 (paction);
+    w_assert3 (this==paction->rvp());
     _actions.push_back(paction);
     return (0);
 }
@@ -94,19 +94,23 @@ const int terminal_rvp_t::notify()
  ******************************************************************/
 w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 {
-    //    assert (_xct);
-    assert (penv);
+    w_assert3 (penv);
 
     // attach to this xct
 
 #ifndef ONLYDORA
+    w_assert3 (_xct);
     smthread_t::me()->attach_xct(_xct);
 #endif
 
     // try to commit    
     w_rc_t rcdec;
     if (_decision == AD_ABORT) {
+
+#ifndef ONLYDORA
         rcdec = penv->db()->abort_xct();
+#endif
+
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                    _tid, rcdec.err_num());

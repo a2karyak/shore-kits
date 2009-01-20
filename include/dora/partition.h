@@ -307,11 +307,11 @@ protected:
 template <class DataType>
 const int partition_t<DataType>::enqueue(Action* pAction)
 {
-    assert (_part_policy!=PP_UNDEF);
-    if (!verify(*pAction)) {
-        TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
-        return (de_WRONG_PARTITION);
-    }
+    w_assert3(verify(*pAction));
+//     if (!verify(*pAction)) {
+//         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
+//         return (de_WRONG_PARTITION);
+//     }
 
     pAction->set_partition(this);
     _input_queue->push(pAction);
@@ -348,7 +348,7 @@ action_t<DataType>* partition_t<DataType>::dequeue()
 template <class DataType>
 const int partition_t<DataType>::enqueue_commit(Action* pAction)
 {
-    assert (pAction->get_partition()==this);
+    w_assert3 (pAction->get_partition()==this);
 
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
            pAction->tid(), _table->name(), _part_id);
@@ -369,7 +369,7 @@ const int partition_t<DataType>::enqueue_commit(Action* pAction)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue_commit()
 {
-    assert (has_committed());
+    w_assert3 (has_committed());
     return (_committed_queue->pop());
 }
 
