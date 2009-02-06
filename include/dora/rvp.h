@@ -104,6 +104,8 @@ public:
     }
     rvp_t& operator=(const rvp_t& rhs);
 
+    trx_result_tuple_t result() { return (_result); }
+
 
     // TRX-ID-related
     inline xct_t* xct() const { return (_xct); }
@@ -111,6 +113,7 @@ public:
 
     // Actions-related
     const int copy_actions(const baseActionsList& actionList);
+    const int append_actions(const baseActionsList& actionList);
     const int add_action(base_action_t* paction);
 
     // Decision-related

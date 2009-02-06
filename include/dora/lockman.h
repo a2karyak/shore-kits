@@ -105,6 +105,8 @@ struct ActionLockReq
     inline base_action_t* action() { return (_action); }
     inline tid_t* tid() { return (&_tid); }
 
+    inline bool isSame(const ActionLockReq& alr) { return (_tid==alr._tid); }
+
     // friend function
     friend std::ostream& operator<<(std::ostream& os, const ActionLockReq& rhs);
 
@@ -339,6 +341,8 @@ public:
     // false means not compatible
     inline const bool acquire(KALReq& akalr) 
     {
+        bool bAcquire = false;
+
         // IP: applying the efficientAddOrUpdate optimization from "Effective STL" pp. 110.
         _ll_map_it = _ll_map->lower_bound(*akalr._key);
         
@@ -346,7 +350,7 @@ public:
             !(_ll_map->key_comp()(*akalr._key,_ll_map_it->first))) {
             
             // update
-            return (_ll_map_it->second.acquire(akalr));
+            bAcquire = _ll_map_it->second.acquire(akalr);
         }
         else {
             // insert
@@ -357,12 +361,11 @@ public:
 
             _ll_map->insert(_ll_map_it,LLMapVT(*akey,akalr));
             _key_cache->giveback(akey);
-            return (true);
+            bAcquire = true;
         }
 
-//         LogicalLock* ll = &(*_ll_map)[*akalr._key];
-//         assert (ll);
-//         return (ll->acquire(akalr));
+        if (bAcquire) akalr.action()->gotkeys(1);
+        return (bAcquire);
     }
                 
     // release        
@@ -378,7 +381,6 @@ public:
 
         _ll_map_it = _ll_map->find(aKey);
         LogicalLock* ll = &_ll_map_it->second;
-        //LogicalLock* ll = &_ll_map[aKey];
         assert (ll);
 
         int rhs = ll->release(paction,promotedList);

@@ -98,7 +98,6 @@ LogicalLock::LogicalLock(ActionLockReq& anowner)
     // construct a logical lock with an owner already
     _owners.reserve(1);
     _owners.push_back(anowner);
-    anowner.action()->gotkeys(1);
 }
 
 
@@ -188,13 +187,35 @@ const int LogicalLock::release(BaseActionPtr anowner,
 const bool LogicalLock::acquire(ActionLockReq& alr)
 {
     w_assert3 (alr.action());
-    // check if compatible
 
+    // 1. Check if already possesing this lock
+    for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
+        if (alr.isSame((*it))) {
+            if (DoraLockModeMatrix[_dlm][alr.dlm()]) {
+                // update lock mode
+                if (alr.dlm() != DL_CC_NOLOCK) _dlm = alr.dlm();
+
+                // no need to do anything else
+                return (true); 
+            }
+            else {
+                // !!! TODO: HANDLE UPGRADE REQUESTS
+                TRACE (TRACE_ALWAYS, "Handle upgrade requests (%d) (%d)!\n", _dlm, alr.dlm());
+                assert (0);
+                return (false);
+            }
+        }
+    }
+    // if we reached this point, then the trx is not already owner of this lock
+ 
+
+    // 2. Need to acquire from the beginning
+
+    // check if compatible
     if (DoraLockModeMatrix[_dlm][alr.dlm()]) {
 
         // if compatible, enqueue to the owners
         _owners.push_back(alr);
-        alr.action()->gotkeys(1);
 
         // update lock mode
         if (alr.dlm() != DL_CC_NOLOCK) _dlm = alr.dlm();

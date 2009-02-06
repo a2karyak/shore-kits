@@ -33,17 +33,35 @@ rvp_t& rvp_t::operator=(const rvp_t& rhs)
 
 /****************************************************************** 
  *
- * @fn:    add_action()
+ * @fn:    copy_actions()
  *
- * @brief: Adds an action to the list of actions of a rvp
+ * @brief: Initiates the list of actions of a rvp
  *
  ******************************************************************/
 
 const int rvp_t::copy_actions(const baseActionsList& actionList)
 {
-    w_assert3 (actionList);
     _actions.reserve(actionList.size());
     _actions.assign(actionList.begin(),actionList.end()); // copy list content
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    append_actions()
+ *
+ * @brief: Appends a list of actions to the list of actions of a rvp
+ *
+ * @note:  Thread-safe
+ *
+ ******************************************************************/
+
+const int rvp_t::append_actions(const baseActionsList& actionList)
+{
+    CRITICAL_SECTION(action_cs, _decision_lock);
+    // append new actionList to the end of the list
+    _actions.insert(_actions.end(), actionList.begin(),actionList.end()); 
     return (0);
 }
 
