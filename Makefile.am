@@ -53,7 +53,6 @@ DBGEN = \
 
 
 
-#bin_PROGRAMS = stagedtrx $(TESTS) $(DBGEN)
 bin_PROGRAMS = $(TESTS) $(DBGEN)
 
 tests: $(TESTS)
@@ -256,6 +255,8 @@ WL_TPCC_DORA = \
    $(SD)/tpcc/dora_payment.cpp \
    $(SD)/tpcc/dora_new_order.cpp \
    $(SD)/tpcc/dora_order_status.cpp \
+   $(SD)/tpcc/dora_stock_level.cpp \
+   $(SD)/tpcc/dora_delivery.cpp \
    $(SD)/tpcc/dora_mbench.cpp \
    $(SD)/tpcc/dora_tpcc.cpp \
    $(SD)/tpcc/dora_tpcc_xct.cpp
@@ -433,36 +434,3 @@ tests_clh_lock_LDADD = $(TEST_LIBS)
 tests_clh_rwlock_LDADD = $(TEST_LIBS)
 tests_raii_file_LDADD = $(TEST_LIBS)
 tests_config_file_example_LDADD = $(TEST_LIBS)
-
-
-################################################################################
-#
-# src/server/
-#
-################################################################################
-
-SE = $(top_srcdir)/src/server
-
-# FIXME: FRJ: removed because CC doesn't like it. Need to track down
-# its version and select between the two properly.
-#stagedtrx_LDFLAGS = -Wl,-export-dynamic
-
-# FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
-# FIXME: IP: addition to make gcc @ ia64 find <ltdl.h>. Shouldn't hurt anybody else...
-stagedtrx_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
-stagedtrx_LDADD = $(LDADD) \
-		-lltdl
-
-COMMANDS = \
-   $(SE)/command/load_handler.cpp \
-   $(SE)/command/shore_tpcc_handler.cpp
-
-
-
-stagedtrx_SOURCES = \
-   $(SE)/server.cpp \
-   $(SE)/command_set.cpp \
-   $(SE)/interactive_mode.cpp \
-   $(SE)/process_next_command_using_fgets.cpp \
-   $(SE)/network_mode.cpp \
-   $(COMMANDS)

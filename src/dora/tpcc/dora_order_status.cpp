@@ -22,6 +22,7 @@ using namespace tpcc;
 
 ENTER_NAMESPACE(dora);
 
+#define PRINT_TRX_RESULTS
 
 //
 // RVPS
@@ -36,34 +37,18 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-w_rc_t final_ordst_rvp::run() {
-    assert (_ptpccenv); 
+w_rc_t final_ordst_rvp::run() 
+{
     return (_run(_ptpccenv)); 
 }
 
 void final_ordst_rvp::upd_committed_stats() 
 {
-    w_assert3 (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-
-//     _ptpccenv->get_total_tpcc_stats()->inc_ordst_com();
-//     _ptpccenv->get_session_tpcc_stats()->inc_ordst_com();
-//     _ptpccenv->get_env_stats()->inc_trx_com();    
     _ptpccenv->_inc_ordst_att();
 }                     
 
 void final_ordst_rvp::upd_aborted_stats() 
 {
-//     assert (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-
-//     _ptpccenv->get_total_tpcc_stats()->inc_ordst_att();
-//     _ptpccenv->get_session_tpcc_stats()->inc_ordst_att();
-//     _ptpccenv->get_env_stats()->inc_trx_att();
     _ptpccenv->_inc_ordst_failed();
 }                     
 
@@ -198,8 +183,14 @@ w_rc_t r_ol_ordst_action::trx_exec()
             prol->get_value(6, porderlines[i].OL_DELIVERY_D);
             prol->get_value(7, porderlines[i].OL_QUANTITY);
             prol->get_value(8, porderlines[i].OL_AMOUNT);
-            i++;
 
+#ifdef PRINT_TRX_RESULTS
+            TRACE( TRACE_TRX_FLOW, "(%d) %d - %d - %d - %d\n", 
+                   i, porderlines[i].OL_I_ID, porderlines[i].OL_SUPPLY_W_ID,
+                   porderlines[i].OL_QUANTITY, porderlines[i].OL_AMOUNT);
+#endif
+
+            i++;
             e = ol_iter->next(_ptpccenv->db(), eof, *prol);
             if (e.is_error()) { goto done; }
         }
@@ -210,7 +201,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
-    prhist->print_tuple();
+    prol->print_tuple();
 #endif
 
 done:

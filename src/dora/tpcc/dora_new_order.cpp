@@ -25,424 +25,705 @@ ENTER_NAMESPACE(dora);
 //
 // RVPS
 //
-// (1) midway_pay_rvp
-// (2) final_pay_rvp
+// (1) final_nord_rvp
+// (2) midway_nord_rvp
 //
 
 
-// /******************************************************************** 
-//  *
-//  * PAYMENT MIDWAY RVP
-//  *
-//  ********************************************************************/
+/******************************************************************** 
+ *
+ * NEWORDER MIDWAY RVP - enqueues the I(ORD) - I(NORD) - OL_CNT x I(OL) actions
+ *
+ ********************************************************************/
 
-// w_rc_t midway_pay_rvp::run() 
-// {
-//     // 1. Setup the next RVP
-//     assert (_xct);
-//     final_pay_rvp* frvp = new final_pay_rvp(_tid, _xct, _xct_id, _result, _ptpccenv);
-//     assert (frvp);
-//     frvp->copy_actions(_actions);
+w_rc_t midway_nord_rvp::run() 
+{
+    // 1. the next rvp (final_rvp) is already set
+    //    so it needs to only append the actions
+    assert (_final_rvp);
+    _final_rvp->append_actions(_actions);
 
-//     // 2. Generate and enqueue action
-//     ins_hist_pay_action_impl* p_ins_hist_pay_action = get_ins_hist_pay_action();
-//     assert (p_ins_hist_pay_action);
-//     p_ins_hist_pay_action->set_input(_tid, _xct, frvp, _ptpccenv, _pin);
-//     p_ins_hist_pay_action->_awh=_awh;
-//     p_ins_hist_pay_action->_adist=_adist;
-//     frvp->add_action(p_ins_hist_pay_action);
+    register int whid    = _noin._wh_id;
+    register int did     = _noin._d_id;
+    register int nextoid = _noin._d_next_o_id;
+    register int olcnt   = _noin._ol_cnt;
 
-//     int mypartition = _pin._home_wh_id-1;
-
-//     // Q: (ip) does it have to get this lock?
-
-//     // HIS_PART_CS
-//     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
-//     CRITICAL_SECTION(his_part_cs, his(mypartition)->_enqueue_lock);
-
-//     if (his()->enqueue(p_ins_hist_pay_action, mypartition)) { // (SF) HISTORY partitions
-//             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
-//             assert (0); 
-//             return (RC(de_PROBLEM_ENQUEUE));
-//     }
-
-//     return (RCOK);
-// }
+    typedef range_partition_impl<int>   irpImpl; 
 
 
+    // 2. Generate and enqueue actions
+
+    // 2a. Insert (ORD)
+    ins_ord_nord_action* ins_ord_nord = _ptpccenv->NewInsOrdNordAction(_tid,_xct,_final_rvp,
+                                                                       whid,did,nextoid,
+                                                                       _noin._c_id,
+                                                                       _noin._tstamp,
+                                                                       olcnt,
+                                                                       _noin._all_local);
+
+    irpImpl* my_ord_part = _ptpccenv->ord()->myPart(whid-1);
 
 
-// /******************************************************************** 
-//  *
-//  * PAYMENT FINAL RVP
-//  *
-//  ********************************************************************/
+    // 2b. Insert (NORD)
+    ins_nord_nord_action* ins_nord_nord = _ptpccenv->NewInsNordNordAction(_tid,_xct,_final_rvp,
+                                                                          whid,did,nextoid);
 
-// void final_pay_rvp::upd_committed_stats() 
-// {
-//     assert (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-
-//     _ptpccenv->get_total_tpcc_stats()->inc_pay_com();
-//     _ptpccenv->get_session_tpcc_stats()->inc_pay_com();
-//     _ptpccenv->get_env_stats()->inc_trx_com();    
-// }                     
-
-// void final_pay_rvp::upd_aborted_stats() 
-// {
-//     assert (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-
-//     _ptpccenv->get_total_tpcc_stats()->inc_pay_att();
-//     _ptpccenv->get_session_tpcc_stats()->inc_pay_att();
-//     _ptpccenv->get_env_stats()->inc_trx_att();
-// }                     
+    irpImpl* my_nord_part = _ptpccenv->nor()->myPart(whid-1);
 
 
+    // 5. Enqueue the (Midway->Final) actions
+    {
+        // ORD_PART_CS
+        CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
 
-// /******************************************************************** 
-//  *
-//  * PAYMENT TPC-C DORA ACTIONS
-//  *
-//  * (1) UPDATE-WAREHOUSE
-//  * (2) UPDATE-DISTRICT
-//  * (3) UPDATE-CUSTOMER
-//  * (4) INSERT-HISTORY
-//  *
-//  ********************************************************************/
+        if (my_ord_part->enqueue(ins_ord_nord)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_ORD_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
 
+        // NORD_PART_CS
+        CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
+        ord_part_cs.exit();
 
-// w_rc_t upd_wh_pay_action_impl::trx_exec() 
-// {
-//     assert (_ptpccenv);
-
-//     // get table tuple from the cache
-//     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
-//     assert (prwh);
-//     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
-//     areprow.set(_ptpccenv->warehouse()->maxsize()); 
-//     prwh->_rep = &areprow;
-
-//     /* 1. retrieve warehouse for update */
-//     TRACE( TRACE_TRX_FLOW, 
-//            "App: %d PAY:warehouse-idx-probe-nl (%d)\n", 
-//            _tid, _pin._home_wh_id);
-
-//     W_DO(_ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
-//                                                        _pin._home_wh_id));      
-
-//     /* UPDATE warehouse SET w_ytd = wytd + :h_amount
-//      * WHERE w_id = :w_id
-//      *
-//      * SELECT w_name, w_street_1, w_street_2, w_city, w_state, w_zip
-//      * FROM warehouse
-//      * WHERE w_id = :w_id
-//      *
-//      * plan: index probe on "W_INDEX"
-//      */
-
-//     TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
-//            _tid, _pin._home_wh_id);
-//     W_DO(_ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
-//                                                       prwh, 
-//                                                       _pin._h_amount));
-
-//     tpcc_warehouse_tuple* awh = _m_rvp->wh();
-//     prwh->get_value(1, awh->W_NAME, 11);
-//     prwh->get_value(2, awh->W_STREET_1, 21);
-//     prwh->get_value(3, awh->W_STREET_2, 21);
-//     prwh->get_value(4, awh->W_CITY, 21);
-//     prwh->get_value(5, awh->W_STATE, 3);
-//     prwh->get_value(6, awh->W_ZIP, 10);
-
-// #ifdef PRINT_TRX_RESULTS
-//     // at the end of the transaction 
-//     // dumps the status of all the table rows used
-//     prwh->print_tuple();
-// #endif
-
-//     // give back the tuple
-//     _ptpccenv->warehouse_man()->give_tuple(prwh);
-//     return (RCOK);
-// }
-
-// w_rc_t upd_dist_pay_action_impl::trx_exec() 
-// {
-//     assert (_ptpccenv);
-
-//     // get table tuple from the cache
-//     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
-//     assert (prdist);
-//     rep_row_t areprow(_ptpccenv->district_man()->ts());
-//     areprow.set(_ptpccenv->district()->maxsize()); 
-//     prdist->_rep = &areprow;
-
-//     /* 1. retrieve district for update */
-//     TRACE( TRACE_TRX_FLOW, 
-//            "App: %d PAY:district-idx-probe-nl (%d) (%d)\n", 
-//            _tid, _pin._home_wh_id, _pin._home_d_id);
-
-//     W_DO(_ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), 
-//                                                         prdist,
-//                                                         _pin._home_wh_id, _pin._home_d_id));    
-
-//     /* UPDATE district SET d_ytd = d_ytd + :h_amount
-//      * WHERE d_id = :d_id AND d_w_id = :w_id
-//      *
-//      * SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
-//      * FROM district
-//      * WHERE d_id = :d_id AND d_w_id = :w_id
-//      *
-//      * plan: index probe on "D_INDEX"
-//      */
-
-//     TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
-//            _tid, _pin._home_wh_id, _pin._home_d_id);
-//     W_DO(_ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
-//                                                        prdist, 
-//                                                        _pin._h_amount));
-
-//     tpcc_district_tuple* adistr = _m_rvp->dist();
-//     prdist->get_value(2, adistr->D_NAME, 11);
-//     prdist->get_value(3, adistr->D_STREET_1, 21);
-//     prdist->get_value(4, adistr->D_STREET_2, 21);
-//     prdist->get_value(5, adistr->D_CITY, 21);
-//     prdist->get_value(6, adistr->D_STATE, 3);
-//     prdist->get_value(7, adistr->D_ZIP, 10);
-
-// #ifdef PRINT_TRX_RESULTS
-//     // at the end of the transaction 
-//     // dumps the status of all the table rows used
-//     prdist->print_tuple();
-// #endif
-
-//     // give back the tuple
-//     _ptpccenv->district_man()->give_tuple(prdist);
-//     return (RCOK);
-// }
-
-// w_rc_t upd_cust_pay_action_impl::trx_exec() 
-// {
-//     assert (_ptpccenv);
-
-//     // get table tuple from the cache
-//     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
-//     assert (prcust);
-//     rep_row_t areprow(_ptpccenv->customer_man()->ts());
-//     areprow.set(_ptpccenv->customer()->maxsize()); 
-//     prcust->_rep = &areprow;
-
-//     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//     // TODO (ip) THOSE TWO SHOULD BE TWO DIFFERENT ACTIONS AND THE CLIENT SHOULD
-//     //           DECIDE, GIVEN THE _pin, WHICH OF THE TWO ACTIONS TO ENQUEUE
-//     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-//     // find the customer wh and d
-//     int c_w = (_pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id);
-//     int c_d = (_pin._v_cust_wh_selection>85 ? _pin._home_d_id : _pin._remote_d_id);
-
-//     if (_pin._v_cust_ident_selection <= 60) {
-
-//         // if (ppin->_c_id == 0) {
-
-//         /* 3a. if no customer selected already use the index on the customer name */
-
-//         /* SELECT  c_id, c_first
-//          * FROM customer
-//          * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
-//          * ORDER BY c_first
-//          *
-//          * plan: index only scan on "C_NAME_INDEX"
-//          */
-
-//         assert (_pin._v_cust_ident_selection <= 60);
-//         assert (_pin._c_id == 0); // (ip) just checks the generator output
-
-//         rep_row_t lowrep(_ptpccenv->customer_man()->ts());
-//         rep_row_t highrep(_ptpccenv->customer_man()->ts());
-
-//         index_scan_iter_impl<customer_t>* c_iter;
-//         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
-//                _tid, _pin._c_last);
-//         W_DO(_ptpccenv->customer_man()->cust_get_iter_by_index(_ptpccenv->db(), 
-//                                                                c_iter, prcust, 
-//                                                                lowrep, highrep,
-//                                                                c_w, c_d, 
-//                                                                _pin._c_last));
-
-//         vector<int> v_c_id;
-//         int a_c_id = 0;
-//         int count = 0;
-//         bool eof;
-
-//         W_DO(c_iter->next(_ptpccenv->db(), eof, *prcust));
-//         while (!eof) {
-//             count++;
-//             prcust->get_value(0, a_c_id);
-//             v_c_id.push_back(a_c_id);
-
-//             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", 
-//                    _tid, a_c_id);
-//             W_DO(c_iter->next(_ptpccenv->db(), eof, *prcust));
-//         }
-//         delete c_iter;
-//         assert (count);
-
-//         /* find the customer id in the middle of the list */
-//         _pin._c_id = v_c_id[(count+1)/2-1];
-//     }
-//     assert (_pin._c_id>0);
-
-//     /* 3. retrieve customer for update */
-
-//     /* SELECT c_first, c_middle, c_last, c_street_1, c_street_2, c_city, 
-//      * c_state, c_zip, c_phone, c_since, c_credit, c_credit_lim, 
-//      * c_discount, c_balance, c_ytd_payment, c_payment_cnt 
-//      * FROM customer 
-//      * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
-//      * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
-//      *
-//      * plan: index probe on "C_INDEX"
-//      */
-
-//     TRACE( TRACE_TRX_FLOW, 
-//            "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
-//            _tid, c_w, c_d, _pin._c_id);
-
-//     W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
-//                                                         c_w, c_d, _pin._c_id));
+        if (my_nord_part->enqueue(ins_nord_nord)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_NORD_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
     
-//     double c_balance, c_ytd_payment;
-//     int    c_payment_cnt;
-//     tpcc_customer_tuple acust;
 
-//     // retrieve customer
-//     prcust->get_value(3,  acust.C_FIRST, 17);
-//     prcust->get_value(4,  acust.C_MIDDLE, 3);
-//     prcust->get_value(5,  acust.C_LAST, 17);
-//     prcust->get_value(6,  acust.C_STREET_1, 21);
-//     prcust->get_value(7,  acust.C_STREET_2, 21);
-//     prcust->get_value(8,  acust.C_CITY, 21);
-//     prcust->get_value(9,  acust.C_STATE, 3);
-//     prcust->get_value(10, acust.C_ZIP, 10);
-//     prcust->get_value(11, acust.C_PHONE, 17);
-//     prcust->get_value(12, acust.C_SINCE);
-//     prcust->get_value(13, acust.C_CREDIT, 3);
-//     prcust->get_value(14, acust.C_CREDIT_LIM);
-//     prcust->get_value(15, acust.C_DISCOUNT);
-//     prcust->get_value(16, acust.C_BALANCE);
-//     prcust->get_value(17, acust.C_YTD_PAYMENT);
-//     prcust->get_value(18, acust.C_LAST_PAYMENT);
-//     prcust->get_value(19, acust.C_PAYMENT_CNT);
-//     prcust->get_value(20, acust.C_DATA_1, 251);
-//     prcust->get_value(21, acust.C_DATA_2, 251);
 
-//     // update customer fields
-//     acust.C_BALANCE -= _pin._h_amount;
-//     acust.C_YTD_PAYMENT += _pin._h_amount;
-//     acust.C_PAYMENT_CNT++;
+    // 2c. OL_CNT x Insert (OL)
 
-//     // if bad customer
-//     if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
-//         /* 10% of customers */
+    for (int i=0;i<olcnt;i++) {
+                
+        // 8a. Generate the actions
+        ins_ol_nord_action* ins_ol_nord = _ptpccenv->NewInsOlNordAction(_tid,_xct,_final_rvp,
+                                                                        whid,did,nextoid,i,
+                                                                        _noin.items[i],_noin._tstamp);
 
-//         /* SELECT c_data
-//          * FROM customer 
-//          * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
-//          * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
-//          *
-//          * plan: index probe on "C_INDEX"
-//          */
+        {
+            irpImpl* my_ol_part = _ptpccenv->oli()->myPart(whid-1);
 
-//         // update the data
-//         char c_new_data_1[251];
-//         char c_new_data_2[251];
-//         sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
-//                 _pin._c_id, c_d, c_w, _pin._home_d_id, 
-//                 _pin._home_wh_id, _pin._h_amount);
+            // ITEM_PART_CS
+            CRITICAL_SECTION(oli_part_cs, my_ol_part->_enqueue_lock);
 
-//         int len = strlen(c_new_data_1);
-//         strncat(c_new_data_1, acust.C_DATA_1, 250-len);
-//         strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
-//         strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
+            if (my_ol_part->enqueue(ins_ol_nord)) {
+                TRACE( TRACE_DEBUG, "Problem in enqueueing INS_OL_NORD-%d\n", i);
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+        }
+    }
 
-//         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
-//         W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
-//                                                              prcust, 
-//                                                              acust, 
-//                                                              c_new_data_1, 
-//                                                              c_new_data_2));
-//     }
-//     else { /* good customer */
-//         TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
-//         W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
-//                                                              prcust, 
-//                                                              acust, 
-//                                                              NULL, 
-//                                                              NULL));
-//     }
+    return (RCOK);
+}
 
-// #ifdef PRINT_TRX_RESULTS
-//     // at the end of the transaction 
-//     // dumps the status of all the table rows used
-//     prcust->print_tuple();
-// #endif
 
-//     // give back the tuple
-//     _ptpccenv->customer_man()->give_tuple(prcust);
-//     return (RCOK);
-// }
 
-// w_rc_t ins_hist_pay_action_impl::trx_exec() 
-// {
-//     assert (_ptpccenv);
 
-//     // get table tuple from the cache
-//     row_impl<history_t>* prhist = _ptpccenv->history_man()->get_tuple();
-//     assert (prhist);
-//     rep_row_t areprow(_ptpccenv->history_man()->ts());
-//     areprow.set(_ptpccenv->history()->maxsize()); 
-//     prhist->_rep = &areprow;
+/******************************************************************** 
+ *
+ * NEW_ORDER FINAL RVP
+ *
+ ********************************************************************/
 
-//     // find the customer wh and d
-//     int c_w = (_pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id);
-//     int c_d = (_pin._v_cust_wh_selection>85 ? _pin._home_d_id : _pin._remote_d_id);
+w_rc_t final_nord_rvp::run() 
+{
+    return (_run(_ptpccenv)); 
+}
 
-//     /* INSERT INTO history
-//      * VALUES (:c_id, :c_d_id, :c_w_id, :d_id, :w_id, 
-//      *         :curr_tmstmp, :ih_amount, :h_data)
-//      */
+void final_nord_rvp::upd_committed_stats() 
+{
+    _ptpccenv->_inc_nord_att();
+}                     
 
-//     tpcc_history_tuple ahist;
-//     sprintf(ahist.H_DATA, "%s   %s", _awh.W_NAME, _adist.D_NAME);
-//     ahist.H_DATE = time(NULL);
+void final_nord_rvp::upd_aborted_stats() 
+{
+    _ptpccenv->_inc_nord_failed();
+}                     
 
-//     prhist->set_value(0, _pin._c_id);
-//     prhist->set_value(1, c_d);
-//     prhist->set_value(2, c_w);
-//     prhist->set_value(3, _pin._home_d_id);
-//     prhist->set_value(4, _pin._home_wh_id);
-//     prhist->set_value(5, ahist.H_DATE);
-//     prhist->set_value(6, _pin._h_amount * 100.0);
-//     prhist->set_value(7, ahist.H_DATA);
 
-//     TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", _tid);
-//     W_DO(_ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist));
 
-// #ifdef PRINT_TRX_RESULTS
-//     // at the end of the transaction 
-//     // dumps the status of all the table rows used
-//     prhist->print_tuple();
-// #endif
 
-//     // give back the tuple
-//     _ptpccenv->history_man()->give_tuple(prhist);
-//     return (RCOK);
-// }
+/******************************************************************** 
+ *
+ * NEWORDER TPC-C DORA ACTIONS
+ *
+ ********************************************************************/
+
+
+/******************************************************************** 
+ *
+ * - Start -> Final
+ *
+ * (1) R_WH_NORD_ACTION
+ * (2) R_CUST_NORD_ACTION
+ *
+ ********************************************************************/
+
+
+// R_WH_NORD_ACTION
+w_rc_t r_wh_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
+    w_assert3 (prwh);
+
+
+    rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
+    areprow.set(_ptpccenv->warehouse()->maxsize()); 
+    prwh->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* SELECT w_tax
+         * FROM warehouse
+         * WHERE w_id = :w_id
+         *
+         * plan: index probe on "W_INDEX"
+         */
+
+        /* 1. retrieve warehouse (read-only) */
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:wh-idx-nl (%d)\n", _tid, _wh_id);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), 
+                                                          prwh, _wh_id);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+        tpcc_warehouse_tuple awh;
+        prwh->get_value(7, awh.W_TAX);
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prwh->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->warehouse_man()->give_tuple(prwh);
+    return (e);
+}
+
+
+
+// R_CUST_NORD_ACTION
+w_rc_t r_cust_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
+    w_assert3 (prcust);
+
+    rep_row_t areprow(_ptpccenv->customer_man()->ts());
+    areprow.set(_ptpccenv->customer()->maxsize()); 
+    prcust->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* SELECT c_discount, c_last, c_credit
+         * FROM customer
+         * WHERE w_id = :w_id AND c_d_id = :d_id AND c_id = :c_id
+         *
+         * plan: index probe on "C_INDEX"
+         */
+
+
+        /* 1. retrieve customer (read-only) */
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d NO:cust-idx-nl (%d) (%d) (%d)\n", 
+               _tid, _wh_id, _d_id, _c_id);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->customer_man()->cust_index_probe(_ptpccenv->db(), prcust,
+                                                        _wh_id, _d_id, _c_id);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+        tpcc_customer_tuple  acust;
+        prcust->get_value(15, acust.C_DISCOUNT);
+        prcust->get_value(13, acust.C_CREDIT, 3);
+        prcust->get_value(5, acust.C_LAST, 17);
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prcust->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->customer_man()->give_tuple(prcust);
+    return (e);
+}
+
+
+
+
+
+
+
+/******************************************************************** 
+ *
+ * - Start -> Midway
+ *
+ * (3) UPD_DIST_NORD_ACTION
+ * (4) R_ITEM_NORD_ACTION
+ * (5) UPD_ITEM_NORD_ACTION
+ *
+ * @note: Those actions need to report something to the next (midway) RVP.
+ *        Therefore, at the end of each action there should be some 
+ *        update of data on the RVP.  
+ *
+ ********************************************************************/
+
+
+// UPD_DIST_NORD_ACTION
+w_rc_t upd_dist_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
+    w_assert3 (prdist);
+
+    rep_row_t areprow(_ptpccenv->district_man()->ts());
+    areprow.set(_ptpccenv->district()->maxsize()); 
+    prdist->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* SELECT d_tax, d_next_o_id
+         * FROM district
+         * WHERE d_id = :d_id AND d_w_id = :w_id
+         *
+         * plan: index probe on "D_INDEX"
+         */
+
+        /* 1. retrieve district for update */
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d NO:dist-idx-nl (%d) (%d)\n", _tid, _wh_id, _d_id);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), 
+                                                           prdist, 
+                                                           _wh_id, _d_id);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+        tpcc_district_tuple adist;
+        prdist->get_value(8, adist.D_TAX);
+        prdist->get_value(10, adist.D_NEXT_O_ID);
+        adist.D_NEXT_O_ID++;
+
+
+        /* UPDATE district
+         * SET d_next_o_id = :d_next_o_id+1
+         * WHERE CURRENT OF dist_cur
+         */
+
+
+        /* 2. update next_o_id */
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d NO:dist-upd-next-o-id-nl (%d)\n", 
+               _tid, adist.D_NEXT_O_ID);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->district_man()->dist_update_next_o_id_nl(_ptpccenv->db(), 
+                                                                prdist, 
+                                                                adist.D_NEXT_O_ID);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+        // update midway RVP 
+        _pmidway_rvp->_noin._d_next_o_id = adist.D_NEXT_O_ID;
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prdist->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->district_man()->give_tuple(prdist);
+    return (e);
+}
+
+
+
+// R_ITEM_NORD_ACTION
+w_rc_t r_item_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<item_t>* pritem = _ptpccenv->item_man()->get_tuple();
+    w_assert3 (pritem);
+
+    rep_row_t areprow(_ptpccenv->item_man()->ts());
+    areprow.set(_ptpccenv->item()->maxsize()); 
+    pritem->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* 4. probe item (read-only) */
+        register int ol_i_id = _pmidway_rvp->_noin.items[_ol_idx]._ol_i_id;
+        register int ol_supply_w_id = _pmidway_rvp->_noin.items[_ol_idx]._ol_supply_wh_id;
+
+
+        /* SELECT i_price, i_name, i_data
+         * FROM item
+         * WHERE i_id = :ol_i_id
+         *
+         * plan: index probe on "I_INDEX"
+         */
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl (%d)\n", 
+               _tid, ol_i_id);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->item_man()->it_index_probe_nl(_ptpccenv->db(), pritem, 
+                                                     ol_i_id);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+
+        // update midway RVP 
+        tpcc_item_tuple* pitem = &_pmidway_rvp->_noin.items[_ol_idx]._aitem;
+        pritem->get_value(4, pitem->I_DATA, 51);
+        pritem->get_value(3, pitem->I_PRICE);
+        pritem->get_value(2, pitem->I_NAME, 25);
+
+        _pmidway_rvp->_noin.items[_ol_idx]._item_amount = 
+            pitem->I_PRICE * _pmidway_rvp->_noin.items[_ol_idx]._ol_quantity; 
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    pritem->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->item_man()->give_tuple(pritem);
+    return (e);
+}
+
+
+
+// UPD_STO_NORD_ACTION
+w_rc_t upd_sto_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<stock_t>* prst = _ptpccenv->stock_man()->get_tuple();
+    w_assert3 (prst);
+
+    rep_row_t areprow(_ptpccenv->item_man()->ts());
+    areprow.set(_ptpccenv->stock()->maxsize()); 
+    prst->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* 4. probe stock (for update) */
+        register int ol_i_id = _pmidway_rvp->_noin.items[_ol_idx]._ol_i_id;
+        register int ol_supply_w_id = _pmidway_rvp->_noin.items[_ol_idx]._ol_supply_wh_id;
+
+
+        /* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
+         * FROM stock
+         * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
+         *
+         * plan: index probe on "S_INDEX"
+         */
+
+        tpcc_stock_tuple* pstock = &_pmidway_rvp->_noin.items[_ol_idx]._astock;
+        tpcc_item_tuple*  pitem  = &_pmidway_rvp->_noin.items[_ol_idx]._aitem;
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl (%d) (%d)\n", 
+               _tid, ol_supply_w_id, ol_i_id);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->stock_man()->st_index_probe_nl(_ptpccenv->db(), prst, 
+                                                      ol_supply_w_id, ol_i_id);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+        prst->get_value(0, pstock->S_I_ID);
+        prst->get_value(1, pstock->S_W_ID);
+        prst->get_value(5, pstock->S_YTD);
+        pstock->S_YTD += _pmidway_rvp->_noin.items[_ol_idx]._ol_quantity;
+        prst->get_value(2, pstock->S_REMOTE_CNT);        
+        prst->get_value(3, pstock->S_QUANTITY);
+        pstock->S_QUANTITY -= _pmidway_rvp->_noin.items[_ol_idx]._ol_quantity;
+        if (pstock->S_QUANTITY < 10) pstock->S_QUANTITY += 91;
+        prst->get_value(6+_d_id, pstock->S_DIST[6+_d_id], 25);
+        prst->get_value(16, pstock->S_DATA, 51);
+
+        char c_s_brand_generic;
+        if (strstr(pitem->I_DATA, "ORIGINAL") != NULL && 
+            strstr(pstock->S_DATA, "ORIGINAL") != NULL)
+            c_s_brand_generic = 'B';
+        else c_s_brand_generic = 'G';
+
+        prst->get_value(4, pstock->S_ORDER_CNT);
+        pstock->S_ORDER_CNT++;
+
+        if (_wh_id != ol_supply_w_id) pstock->S_REMOTE_CNT++;
+
+
+        /* UPDATE stock
+         * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
+         * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
+         */
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl (%d) (%d)\n", 
+               _tid, pstock->S_W_ID, pstock->S_I_ID);
+
+
+#ifndef ONLYDORA
+        e = _ptpccenv->stock_man()->st_update_tuple_nl(_ptpccenv->db(), prst, 
+                                                       pstock);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+        // update RVP
+        // The RVP is updated throught the pstock
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prst->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->stock_man()->give_tuple(prst);
+    return (e);
+}
+
+
+
+
+
+/******************************************************************** 
+ *
+ * - Midway -> Final
+ *
+ * (6) INS_ORD_NORD_ACTION
+ * (7) INS_NORD_NORD_ACTION
+ * (8) INS_OL_NORD_ACTION
+ *
+ ********************************************************************/
+
+
+// INS_ORD_NORD_ACTION
+w_rc_t ins_ord_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<order_t>* prord = _ptpccenv->order_man()->get_tuple();
+    w_assert3 (prord);
+
+
+    rep_row_t areprow(_ptpccenv->order_man()->ts());
+    areprow.set(_ptpccenv->order()->maxsize()); 
+    prord->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* 5. insert row to orders */
+
+        /* INSERT INTO orders
+         * VALUES (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
+         */
+
+        prord->set_value(0, _d_next_o_id);
+        prord->set_value(1, _c_id);
+        prord->set_value(2, _d_id);
+        prord->set_value(3, _wh_id);
+        prord->set_value(4, _tstamp);
+        prord->set_value(5, 0);
+        prord->set_value(6, _ol_cnt);
+        prord->set_value(7, _all_local);
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:ord-add-tuple-nl (%d)\n", 
+               _tid, _d_next_o_id);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->order_man()->add_tuple(_ptpccenv->db(), prord);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prord->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->order_man()->give_tuple(prord);
+    return (e);
+}
+
+
+
+// INS_NORD_NORD_ACTION
+w_rc_t ins_nord_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<new_order_t>* prno = _ptpccenv->new_order_man()->get_tuple();
+    w_assert3 (prno);
+
+
+    rep_row_t areprow(_ptpccenv->new_order_man()->ts());
+    areprow.set(_ptpccenv->new_order()->maxsize()); 
+    prno->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* 5. insert row to new_order */
+
+        /* INSERT INTO new_order VALUES (o_id, d_id, w_id)
+         */
+
+        prno->set_value(0, _d_next_o_id);
+        prno->set_value(1, _d_id);
+        prno->set_value(2, _wh_id);
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:nord-add-tuple (%d) (%d) (%d)\n", 
+               _tid, _wh_id, _d_id, _d_next_o_id);
+    
+#ifndef ONLYDORA
+        e = _ptpccenv->new_order_man()->add_tuple(_ptpccenv->db(), prno);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prno->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->new_order_man()->give_tuple(prno);
+    return (e);
+}
+
+
+
+// INS_OL_NORD_ACTION
+w_rc_t ins_ol_nord_action::trx_exec() 
+{
+    w_assert3 (_ptpccenv);
+
+    // get table tuple from the cache
+    row_impl<order_line_t>* prol = _ptpccenv->orderline_man()->get_tuple();
+    w_assert3 (prol);
+
+    rep_row_t areprow(_ptpccenv->orderline_man()->ts());
+    areprow.set(_ptpccenv->orderline()->maxsize()); 
+    prol->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        /* 4. insert row to order_line */
+
+        /* INSERT INTO order_line
+         * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
+         *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
+         */
+
+        prol->set_value(0, _d_next_o_id);
+        prol->set_value(1, _d_id);
+        prol->set_value(2, _wh_id);
+        prol->set_value(3, _ol_idx+1);
+        prol->set_value(4, _item_info._ol_i_id);
+        prol->set_value(5, _item_info._ol_supply_wh_id);
+        prol->set_value(6, _tstamp);
+        prol->set_value(7, _item_info._ol_quantity);
+        prol->set_value(8, _item_info._item_amount);
+        prol->set_value(9, _item_info._astock.S_DIST[6+_d_id]);
+
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d NO:orderline-add-tuple (%d) (%d) (%d) (%d)\n", 
+               _tid, _wh_id, _d_id, _d_next_o_id, _ol_idx+1);
+
+#ifndef ONLYDORA
+        e = _ptpccenv->orderline_man()->add_tuple(_ptpccenv->db(), prol);
+#endif
+
+        if (e.is_error()) { goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prol->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _ptpccenv->orderline_man()->give_tuple(prol);
+    return (e);
+}
+
+
+
 
 
 EXIT_NAMESPACE(dora);

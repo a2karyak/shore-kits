@@ -11,6 +11,9 @@
 #include "dora/tpcc/dora_mbench.h"
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_order_status.h"
+#include "dora/tpcc/dora_stock_level.h"
+#include "dora/tpcc/dora_delivery.h"
+#include "dora/tpcc/dora_new_order.h"
 #include "dora/tpcc/dora_tpcc.h"
 
 
@@ -63,10 +66,125 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
                                    new_order_input_t& anoin,
                                    trx_result_tuple_t& atrt)
 {
-    TRACE( TRACE_TRX_FLOW, "%d. DORA NEW-ORDER...\n", xct_id);     
+    // 1. Initiate transaction
+    tid_t atid;   
 
-    // 1. enqueue all actions
-    assert (0);
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+#ifndef ONLYDORA
+    assert (pxct);
+#endif
+
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    register int olcnt = anoin._ol_cnt;
+    register int whid  = anoin._wh_id;
+    register int did   = anoin._d_id;
+
+    // 2. Setup the final RVP
+    final_nord_rvp* frvp = NewFinalNordRvp(atid,pxct,xct_id,atrt,olcnt);
+
+
+    // 3. Detatch self from xct
+#ifndef ONLYDORA
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 4. Setup the (Start->Final) actions
+    r_wh_nord_action* r_wh_nord = NewRWhNordAction(atid,pxct,frvp,
+                                                   whid,did);
+
+    irpImpl* my_wh_part = whs()->myPart(whid-1);
+
+    r_cust_nord_action* r_cust_nord = NewRCustNordAction(atid,pxct,frvp,
+                                                         whid,did,anoin._c_id);
+
+    irpImpl* my_cust_part = cus()->myPart(whid-1);
+
+    // 5. Enqueue the (Start->Final) actions
+    {
+        // WH_PART_CS
+        CRITICAL_SECTION(wh_part_cs, my_wh_part->_enqueue_lock);
+
+        if (my_wh_part->enqueue(r_wh_nord)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_WH_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // CUST_PART_CS
+        CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
+        wh_part_cs.exit();
+
+        if (my_cust_part->enqueue(r_cust_nord)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_CUST_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+
+    // Enqueue the (Start->Midway) actions
+
+    // 6. Setup the next RVP
+    midway_nord_rvp* midrvp = NewMidwayNordRvp(atid,pxct,xct_id,frvp,anoin);    
+
+    // 7. Setup the UPD_DISTR action
+    upd_dist_nord_action* upd_dist_nord = NewUpdDistNordAction(atid,pxct,midrvp,
+                                                               whid,did);
+
+    irpImpl* my_dist_part = dis()->myPart(whid-1);
+
+    // 8. Enqueue the UPD_DISTR action
+    {
+        // DIST_PART_CS
+        CRITICAL_SECTION(dist_part_cs, my_dist_part->_enqueue_lock);
+
+        if (my_dist_part->enqueue(upd_dist_nord)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+
+    // 8. Setup and Enqueue the OLCNT R_ITEM and UPD_STO actions
+
+    for (int i=0;i<olcnt;i++) {
+                
+        // 8a. Generate the actions
+        r_item_nord_action* r_item_nord = NewRItemNordAction(atid,pxct,midrvp,whid,did,i);
+        upd_sto_nord_action* upd_sto_nord = NewUpdStoNordAction(atid,pxct,midrvp,whid,did,i);        
+
+        {
+            irpImpl* my_item_part = ite()->myPart(whid-1);
+            irpImpl* my_sto_part = sto()->myPart(whid-1);
+
+            // ITEM_PART_CS
+            CRITICAL_SECTION(item_part_cs, my_item_part->_enqueue_lock);
+
+            if (my_item_part->enqueue(r_item_nord)) {
+                TRACE( TRACE_DEBUG, "Problem in enqueueing R_ITEM_NORD-%d\n", i);
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+
+            // STO_PART_CS
+            CRITICAL_SECTION(sto_part_cs, my_sto_part->_enqueue_lock);
+            item_part_cs.exit();
+
+            if (my_sto_part->enqueue(upd_sto_nord)) {
+                TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_STO_NORD-%d\n", i);
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+        }
+    }
 
     return (RCOK); 
 }
@@ -93,7 +211,7 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
 
     // 2. Setup the next RVP
     // PH1 consists of 3 packets
-    midway_pay_rvp* rvp = NewMidayPayRvp(atid,pxct,xct_id,atrt,apin);
+    midway_pay_rvp* rvp = NewMidwayPayRvp(atid,pxct,xct_id,atrt,apin);
     
     // 3. Generate the actions    
     upd_wh_pay_action* pay_upd_wh     = NewUpdWhPayAction(atid,pxct,rvp,apin);
@@ -213,7 +331,10 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
     register int d_id = aordstin._d_id;
 
     tpcc_order_tuple aorder;
+    
 
+    r_cust_ordst_action* ordst_r_cust = NULL;
+    r_ol_ordst_action* ordst_r_ol = NULL;
 
     { // make gotos safe 
 
@@ -320,8 +441,8 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
 
     
     // 5. Generate the actions
-    r_cust_ordst_action* ordst_r_cust = NewRCustOrdStAction(atid,pxct,rvp,aordstin);
-    r_ol_ordst_action* ordst_r_ol = NewROlOrdStAction(atid,pxct,rvp,aordstin,aorder);
+    ordst_r_cust = NewRCustOrdStAction(atid,pxct,rvp,aordstin);
+    ordst_r_ol = NewROlOrdStAction(atid,pxct,rvp,aordstin,aorder);
     
 
     // 6. Detatch self from xct
@@ -405,22 +526,130 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
                                   delivery_input_t& adelin,
                                   trx_result_tuple_t& atrt)
 {
-    TRACE( TRACE_TRX_FLOW, "%d. DELIVERY...\n", xct_id);     
+    // 1. Initiate transaction
+    tid_t atid;   
 
-    // 1. enqueue all actions
-    assert (0);
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+#ifndef ONLYDORA
+    assert (pxct);
+#endif
+
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    // 2. Setup the final RVP
+    final_del_rvp* frvp = NewFinalDelRvp(atid,pxct,xct_id,atrt);
+
+
+    // 3. Detatch self from xct
+#ifndef ONLYDORA
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 4. Setup the next RVP and actions
+    // PH1 consists of DISTRICTS_PER_WAREHOUSE actions
+    for (int i=0;i<DISTRICTS_PER_WAREHOUSE;i++) {
+        // 4a. Generate an RVP
+        mid1_del_rvp* rvp = NewMid1DelRvp(atid,pxct,xct_id,frvp,i,adelin);
+    
+        // 4b. Generate an action
+        del_nord_del_action* del_del_nord = NewDelNordDelAction(atid,pxct,rvp,adelin,i);
+
+        // For each action
+        // 5a. Decide about partition
+        // 5b. Enqueue
+        //
+        // All the enqueues should appear atomic
+        // That is, there should be a total order across trxs 
+        // (it terms of the sequence actions are enqueued)
+
+        {
+            int wh = adelin._wh_id-1;
+
+            // first, figure out to which partitions to enqueue
+            irpImpl* my_nord_part = nor()->myPart(wh);
+
+            // then, start enqueueing
+
+            // NORD_PART_CS
+            CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
+
+            if (my_nord_part->enqueue(del_del_nord)) {
+                TRACE( TRACE_DEBUG, "Problem in enqueueing DEL_DEL_NORD-%d\n", i);
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+        }
+    }
 
     return (RCOK); 
 }
+
 
 w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id, 
                                      stock_level_input_t& astoin,
                                      trx_result_tuple_t& atrt)
 {
-    TRACE( TRACE_TRX_FLOW, "%d. STOCK-LEVEL...\n", xct_id);     
+    // 1. Initiate transaction
+    tid_t atid;   
 
-    // 1. enqueue all actions
-    assert (0);
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+#ifndef ONLYDORA
+    assert (pxct);
+#endif
+
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    // 2. Setup the next RVP
+    // PH1 consists of 1 packet
+    mid1_stock_rvp* rvp = NewMid1StockRvp(atid,pxct,xct_id,atrt,astoin);
+    
+    // 3. Generate the action
+    r_dist_stock_action* stock_r_dist = NewRDistStockAction(atid,pxct,rvp,astoin);
+
+    // 4. Detatch self from xct
+
+#ifndef ONLYDORA
+    me()->detach_xct(pxct);
+#endif
+
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // For each action
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    //
+    // All the enqueues should appear atomic
+    // That is, there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    {
+        int wh = astoin._wh_id-1;
+
+        // first, figure out to which partitions to enqueue
+        irpImpl* my_dist_part = dis()->myPart(wh);
+
+        // then, start enqueueing
+
+        // DIS_PART_CS
+        CRITICAL_SECTION(dis_part_cs, my_dist_part->_enqueue_lock);
+
+        if (my_dist_part->enqueue(stock_r_dist)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing STOCK_R_DIST\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
 
     return (RCOK); 
 }

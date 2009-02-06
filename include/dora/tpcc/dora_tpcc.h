@@ -34,6 +34,8 @@ const int KALREQ_PER_ACTION_POOL_SZ = 30;
 const int DT_PER_ACTION_POOL_SZ = 360;
 
 
+typedef vector<pair<int,int> > TwoIntVec;
+typedef TwoIntVec::iterator    TwoIntVecIt;
 
 typedef Pool* PoolPtr;
 
@@ -101,7 +103,34 @@ class final_ordst_rvp;
 class r_cust_ordst_action;
 class r_ol_ordst_action;
 
+// TPC-C StockLevel
+class mid1_stock_rvp;
+class mid2_stock_rvp;
+class final_stock_rvp;
+class r_dist_stock_action;
+class r_ol_stock_action;
+class r_st_stock_action;
 
+// TPC-C Delivery
+class mid1_del_rvp;
+class mid2_del_rvp;
+class final_del_rvp;
+class del_nord_del_action;
+class upd_ord_del_action;
+class upd_oline_del_action;
+class upd_cust_del_action;
+
+// TPC-C NewOrder
+class midway_nord_rvp;
+class final_nord_rvp;
+class r_wh_nord_action;
+class r_cust_nord_action;
+class upd_dist_nord_action;
+class r_item_nord_action;
+class upd_sto_nord_action;
+class ins_ord_nord_action;
+class ins_nord_nord_action;
+class ins_ol_nord_action;
 
 
 /******************************************************************** 
@@ -279,13 +308,13 @@ public:
 
 
     // TPC-C Payment
+    midway_pay_rvp* NewMidwayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                                    trx_result_tuple_t& presult,
+                                    const payment_input_t& pin);
+
     final_pay_rvp* NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid, 
                                   trx_result_tuple_t& presult,
                                   baseActionsList& actions);
-
-    midway_pay_rvp* NewMidayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
-                                   trx_result_tuple_t& presult,
-                                   const payment_input_t& pin);
 
     upd_wh_pay_action* NewUpdWhPayAction(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp,
                                          const payment_input_t& pin);
@@ -313,6 +342,122 @@ public:
     r_ol_ordst_action* NewROlOrdStAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
                                          const order_status_input_t& ordstin,
                                          const tpcc_order_tuple& aorder);
+
+
+    // TPC-C StockLevel
+    mid1_stock_rvp* NewMid1StockRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                    trx_result_tuple_t& presult,
+                                    const stock_level_input_t& slin);
+
+    mid2_stock_rvp* NewMid2StockRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                    trx_result_tuple_t& presult,
+                                    const stock_level_input_t& slin,
+                                    baseActionsList& actions);
+
+    final_stock_rvp* NewFinalStockRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                      trx_result_tuple_t& presult,
+                                      baseActionsList& actions);
+
+    r_dist_stock_action* NewRDistStockAction(const tid_t& atid, xct_t* axct, 
+                                             mid1_stock_rvp* prvp,
+                                             const stock_level_input_t& slin);
+
+    r_ol_stock_action* NewROlStockAction(const tid_t& atid, xct_t* axct, 
+                                         mid2_stock_rvp* prvp,
+                                         const stock_level_input_t& slin, 
+                                         const int nextid);
+
+    r_st_stock_action* NewRStStockAction(const tid_t& atid, xct_t* axct, 
+                                         rvp_t* prvp,
+                                         const stock_level_input_t& slin, TwoIntVec* pvwi);
+
+
+
+    // TPC-C Delivery
+    mid1_del_rvp* NewMid1DelRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                final_del_rvp* frvp, const int d_id,
+                                const delivery_input_t& din);
+
+    mid2_del_rvp* NewMid2DelRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                final_del_rvp* frvp, const int d_id,
+                                const delivery_input_t& din,
+                                baseActionsList& actions);
+
+    final_del_rvp* NewFinalDelRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                  trx_result_tuple_t& presult);
+
+    del_nord_del_action* NewDelNordDelAction(const tid_t& atid, xct_t* axct, 
+                                             mid1_del_rvp* prvp,
+                                             const delivery_input_t& din,
+                                             const int d_id);
+
+    upd_ord_del_action* NewUpdOrdDelAction(const tid_t& atid, xct_t* axct, 
+                                           mid2_del_rvp* prvp,
+                                           const delivery_input_t& din,
+                                           const int d_id, const int o_id);
+
+    upd_oline_del_action* NewUpdOlineDelAction(const tid_t& atid, xct_t* axct, 
+                                               mid2_del_rvp* prvp,
+                                               const delivery_input_t& din,
+                                               const int d_id, const int o_id);
+
+    upd_cust_del_action* NewUpdCustDelAction(const tid_t& atid, xct_t* axct, 
+                                             rvp_t* prvp,
+                                             const delivery_input_t& din,
+                                             const int d_id, const int c_id, const int amount);
+
+
+
+
+    // TPC-C NewOrder
+    midway_nord_rvp* NewMidwayNordRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                      final_nord_rvp* frvp, 
+                                      const new_order_input_t& noin);
+
+    final_nord_rvp* NewFinalNordRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                                    trx_result_tuple_t& presult, const int ol_cnt);
+
+    r_wh_nord_action* NewRWhNordAction(const tid_t& atid, xct_t* axct, 
+                                       rvp_t* prvp,
+                                       const int whid, const int did);
+
+    r_cust_nord_action* NewRCustNordAction(const tid_t& atid, xct_t* axct, 
+                                           rvp_t* prvp,
+                                           const int whid, const int did, 
+                                           const int cid);
+
+    upd_dist_nord_action* NewUpdDistNordAction(const tid_t& atid, xct_t* axct, 
+                                               midway_nord_rvp* pmidway_rvp,
+                                               const int whid, const int did);
+
+    r_item_nord_action* NewRItemNordAction(const tid_t& atid, xct_t* axct, 
+                                           midway_nord_rvp* pmidway_rvp,
+                                           const int whid, const int did,
+                                           const int olidx);
+
+    upd_sto_nord_action* NewUpdStoNordAction(const tid_t& atid, xct_t* axct, 
+                                             midway_nord_rvp* pmidway_rvp,
+                                             const int whid, const int did,
+                                             const int olidx);
+
+    ins_ord_nord_action* NewInsOrdNordAction(const tid_t& atid, xct_t* axct, 
+                                             rvp_t* prvp,
+                                             const int whid, const int did, 
+                                             const int nextoid, const int cid, 
+                                             const time_t tstamp, int olcnt, 
+                                             int alllocal);
+
+    ins_nord_nord_action* NewInsNordNordAction(const tid_t& atid, xct_t* axct, 
+                                               rvp_t* prvp,
+                                               const int whid, const int did, 
+                                               const int nextoid);
+
+    ins_ol_nord_action* NewInsOlNordAction(const tid_t& atid, xct_t* axct, 
+                                           rvp_t* prvp,
+                                           const int whid, const int did, 
+                                           const int nextoid, const int olidx,
+                                           const ol_item_info& iteminfo,
+                                           time_t tstamp);
 
 
 private:

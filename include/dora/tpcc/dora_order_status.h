@@ -61,7 +61,7 @@ public:
         _ptpccenv = penv;
         w_assert3 (pc);
         _cache = pc;
-        _set(atid,axct,axctid,presult,2,2);// 2 intratrx - 2 total actions
+        _set(atid,axct,axctid,presult,2,2); // 2 intratrx - 2 total actions
     }
     inline void giveback() { 
         w_assert3 (_ptpccenv); 

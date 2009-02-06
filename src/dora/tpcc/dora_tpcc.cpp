@@ -13,6 +13,9 @@
 #include "dora/tpcc/dora_mbench.h"
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_order_status.h"
+#include "dora/tpcc/dora_stock_level.h"
+#include "dora/tpcc/dora_delivery.h"
+#include "dora/tpcc/dora_new_order.h"
 
 #include "tls.h"
 
@@ -509,6 +512,18 @@ DECLARE_TLS_ACTION_CACHE(ins_hist_pay_action,int);
 
 // TPC-C Payment RVPs
 
+midway_pay_rvp*  
+DoraTPCCEnv::NewMidwayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                             trx_result_tuple_t& presult,
+                             const payment_input_t& pin)
+{
+    midway_pay_rvp* myrvp = my_midway_pay_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,pin,this,my_midway_pay_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+
 final_pay_rvp* 
 DoraTPCCEnv::NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid, 
                             trx_result_tuple_t& presult,
@@ -518,18 +533,6 @@ DoraTPCCEnv::NewFinalPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
     w_assert3 (myrvp);
     myrvp->set(atid,axct,axctid,presult,this,my_final_pay_rvp_cache->_cache.get());
     myrvp->copy_actions(actions);
-    return (myrvp);    
-}
-
-
-midway_pay_rvp*  
-DoraTPCCEnv::NewMidayPayRvp(const tid_t& atid, xct_t* axct, const int axctid,
-                            trx_result_tuple_t& presult,
-                            const payment_input_t& pin)
-{
-    midway_pay_rvp* myrvp = my_midway_pay_rvp_cache->_cache->borrow();
-    w_assert3 (myrvp);
-    myrvp->set(atid,axct,axctid,presult,pin,this,my_midway_pay_rvp_cache->_cache.get());
     return (myrvp);    
 }
 
@@ -641,6 +644,361 @@ DoraTPCCEnv::NewROlOrdStAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+// TPC-C STOCK LEVEL
+
+DECLARE_TLS_RVP_CACHE(mid1_stock_rvp);
+DECLARE_TLS_RVP_CACHE(mid2_stock_rvp);
+DECLARE_TLS_RVP_CACHE(final_stock_rvp);
+
+DECLARE_TLS_ACTION_CACHE(r_dist_stock_action,int);
+DECLARE_TLS_ACTION_CACHE(r_ol_stock_action,int);
+DECLARE_TLS_ACTION_CACHE(r_st_stock_action,int);
+     
+
+
+// TPC-C StockLevel RVPs
+
+mid1_stock_rvp*  
+DoraTPCCEnv::NewMid1StockRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                             trx_result_tuple_t& presult,
+                             const stock_level_input_t& slin)
+{
+    mid1_stock_rvp* myrvp = my_mid1_stock_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,slin,this,my_mid1_stock_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+mid2_stock_rvp*  
+DoraTPCCEnv::NewMid2StockRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                             trx_result_tuple_t& presult,
+                             const stock_level_input_t& slin,
+                             baseActionsList& actions)
+{
+    mid2_stock_rvp* myrvp = my_mid2_stock_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,slin,this,my_mid2_stock_rvp_cache->_cache.get());
+    myrvp->copy_actions(actions);
+    return (myrvp);    
+}
+
+final_stock_rvp* 
+DoraTPCCEnv::NewFinalStockRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                              trx_result_tuple_t& presult,
+                              baseActionsList& actions)
+{
+    final_stock_rvp* myrvp = my_final_stock_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,this,my_final_stock_rvp_cache->_cache.get());
+    myrvp->copy_actions(actions);
+    return (myrvp);
+}
+
+
+// TPC-C OrderStatus Actions
+
+r_dist_stock_action*  
+DoraTPCCEnv::NewRDistStockAction(const tid_t& atid, xct_t* axct, mid1_stock_rvp* mid1_rvp,
+                                 const stock_level_input_t& slin)
+{
+    r_dist_stock_action* myaction = my_r_dist_stock_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,mid1_rvp,slin,this,my_r_dist_stock_action_cache->_cache.get());
+    mid1_rvp->add_action(myaction);
+    return (myaction);
+}
+
+r_ol_stock_action*  
+DoraTPCCEnv::NewROlStockAction(const tid_t& atid, xct_t* axct, mid2_stock_rvp* mid2_rvp,
+                               const stock_level_input_t& slin, const int nextid)
+{
+    r_ol_stock_action* myaction = my_r_ol_stock_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,mid2_rvp,nextid,slin,this,my_r_ol_stock_action_cache->_cache.get());
+    mid2_rvp->add_action(myaction);
+    return (myaction);
+}
+
+r_st_stock_action*  
+DoraTPCCEnv::NewRStStockAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                               const stock_level_input_t& slin, TwoIntVec* pvwi)
+{
+    r_st_stock_action* myaction = my_r_st_stock_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,slin,pvwi,this,my_r_st_stock_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+// TPC-C DELIVERY
+
+DECLARE_TLS_RVP_CACHE(mid1_del_rvp);
+DECLARE_TLS_RVP_CACHE(mid2_del_rvp);
+DECLARE_TLS_RVP_CACHE(final_del_rvp);
+
+DECLARE_TLS_ACTION_CACHE(del_nord_del_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_ord_del_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_oline_del_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_cust_del_action,int);
+     
+
+
+// TPC-C Delivery RVPs
+
+mid1_del_rvp*  
+DoraTPCCEnv::NewMid1DelRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                           final_del_rvp* frvp, const int d_id,
+                           const delivery_input_t& din)
+{
+    mid1_del_rvp* myrvp = my_mid1_del_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,din,d_id,frvp,this,my_mid1_del_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+mid2_del_rvp*  
+DoraTPCCEnv::NewMid2DelRvp(const tid_t& atid, xct_t* axct, const int axctid,
+                           final_del_rvp* frvp, const int d_id,
+                           const delivery_input_t& din,
+                           baseActionsList& actions)
+{
+    mid2_del_rvp* myrvp = my_mid2_del_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,din,d_id,frvp,this,my_mid2_del_rvp_cache->_cache.get());
+    myrvp->copy_actions(actions);
+    return (myrvp);    
+}
+
+final_del_rvp* 
+DoraTPCCEnv::NewFinalDelRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                            trx_result_tuple_t& presult)
+{
+    final_del_rvp* myrvp = my_final_del_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,this,my_final_del_rvp_cache->_cache.get());
+    return (myrvp);
+}
+
+
+// TPC-C Delivery Actions
+
+del_nord_del_action*  
+DoraTPCCEnv::NewDelNordDelAction(const tid_t& atid, xct_t* axct, mid1_del_rvp* mid1_rvp,
+                                 const delivery_input_t& din, const int d_id)
+{
+    del_nord_del_action* myaction = my_del_nord_del_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,mid1_rvp,din,d_id,this,my_del_nord_del_action_cache->_cache.get());
+    mid1_rvp->add_action(myaction);
+    return (myaction);
+}
+
+upd_ord_del_action*  
+DoraTPCCEnv::NewUpdOrdDelAction(const tid_t& atid, xct_t* axct, mid2_del_rvp* mid2_rvp,
+                                const delivery_input_t& din, const int d_id, const int o_id)
+{
+    upd_ord_del_action* myaction = my_upd_ord_del_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,mid2_rvp,din,d_id,o_id,this,my_upd_ord_del_action_cache->_cache.get());
+    mid2_rvp->add_action(myaction);
+    return (myaction);
+}
+
+upd_oline_del_action*  
+DoraTPCCEnv::NewUpdOlineDelAction(const tid_t& atid, xct_t* axct, mid2_del_rvp* mid2_rvp,
+                                  const delivery_input_t& din, const int d_id, const int o_id)
+{
+    upd_oline_del_action* myaction = my_upd_oline_del_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,mid2_rvp,din,d_id,o_id,this,my_upd_oline_del_action_cache->_cache.get());
+    mid2_rvp->add_action(myaction);
+    return (myaction);
+}
+
+upd_cust_del_action*  
+DoraTPCCEnv::NewUpdCustDelAction(const tid_t& atid, xct_t* axct, rvp_t* prvp,
+                                 const delivery_input_t& din, 
+                                 const int d_id, const int c_id, const int amount)
+{
+    upd_cust_del_action* myaction = my_upd_cust_del_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,din,d_id,c_id,amount,this,my_upd_cust_del_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+// TPC-C NEWORDER
+
+DECLARE_TLS_RVP_CACHE(midway_nord_rvp);
+DECLARE_TLS_RVP_CACHE(final_nord_rvp);
+
+DECLARE_TLS_ACTION_CACHE(r_wh_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(r_cust_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_dist_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(r_item_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(upd_sto_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(ins_ord_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(ins_nord_nord_action,int);
+DECLARE_TLS_ACTION_CACHE(ins_ol_nord_action,int);
+     
+
+
+// TPC-C NewOrder RVPs
+midway_nord_rvp* 
+DoraTPCCEnv::NewMidwayNordRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                              final_nord_rvp* frvp, 
+                              const new_order_input_t& noin)
+{
+    midway_nord_rvp* myrvp = my_midway_nord_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,noin,frvp,this,my_midway_nord_rvp_cache->_cache.get());
+    return (myrvp);    
+}
+
+final_nord_rvp* 
+DoraTPCCEnv::NewFinalNordRvp(const tid_t& atid, xct_t* axct, const int axctid, 
+                             trx_result_tuple_t& presult, const int ol_cnt)
+{
+    final_nord_rvp* myrvp = my_final_nord_rvp_cache->_cache->borrow();
+    w_assert3 (myrvp);
+    myrvp->set(atid,axct,axctid,presult,ol_cnt,this,my_final_nord_rvp_cache->_cache.get());
+    return (myrvp);
+}
+
+
+// TPC-C NewOrder Actions
+
+r_wh_nord_action* 
+DoraTPCCEnv::NewRWhNordAction(const tid_t& atid, xct_t* axct, 
+                              rvp_t* prvp,
+                              const int whid, const int did)
+{
+    r_wh_nord_action* myaction = my_r_wh_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,whid,did,this,my_r_wh_nord_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
+
+
+r_cust_nord_action* 
+DoraTPCCEnv::NewRCustNordAction(const tid_t& atid, xct_t* axct, 
+                                rvp_t* prvp,
+                                const int whid, const int did, const int cid)
+{
+    r_cust_nord_action* myaction = my_r_cust_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,whid,did,cid,this,my_r_cust_nord_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
+
+
+upd_dist_nord_action* 
+DoraTPCCEnv::NewUpdDistNordAction(const tid_t& atid, xct_t* axct, 
+                                  midway_nord_rvp* pmidway_rvp,
+                                  const int whid, const int did)
+{
+    upd_dist_nord_action* myaction = my_upd_dist_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,pmidway_rvp,whid,did,this,my_upd_dist_nord_action_cache->_cache.get());
+    pmidway_rvp->add_action(myaction);
+    return (myaction);
+}
+
+
+r_item_nord_action* 
+DoraTPCCEnv::NewRItemNordAction(const tid_t& atid, xct_t* axct, 
+                                midway_nord_rvp* pmidway_rvp,
+                                const int whid, const int did,
+                                const int olidx)
+{
+    r_item_nord_action* myaction = my_r_item_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,pmidway_rvp,whid,did,olidx,this,my_r_item_nord_action_cache->_cache.get());
+    pmidway_rvp->add_action(myaction);
+    return (myaction);
+}
+
+
+upd_sto_nord_action* 
+DoraTPCCEnv::NewUpdStoNordAction(const tid_t& atid, xct_t* axct, 
+                                 midway_nord_rvp* pmidway_rvp,
+                                 const int whid, const int did,
+                                 const int olidx)
+{
+    upd_sto_nord_action* myaction = my_upd_sto_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,pmidway_rvp,whid,did,olidx,this,my_upd_sto_nord_action_cache->_cache.get());
+    pmidway_rvp->add_action(myaction);
+    return (myaction);
+}
+
+
+ins_ord_nord_action* 
+DoraTPCCEnv::NewInsOrdNordAction(const tid_t& atid, xct_t* axct, 
+                                 rvp_t* prvp,
+                                 const int whid, const int did, 
+                                 const int nextoid, const int cid, 
+                                 const time_t tstamp, int olcnt, int alllocal)
+{
+    ins_ord_nord_action* myaction = my_ins_ord_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,whid,did,nextoid,cid,tstamp,olcnt,alllocal,this,my_ins_ord_nord_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
+
+
+ins_nord_nord_action* 
+DoraTPCCEnv::NewInsNordNordAction(const tid_t& atid, xct_t* axct, 
+                                  rvp_t* prvp,
+                                  const int whid, const int did, 
+                                  const int nextoid)
+{
+    ins_nord_nord_action* myaction = my_ins_nord_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,whid,did,nextoid,this,my_ins_nord_nord_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
+
+
+ins_ol_nord_action* 
+DoraTPCCEnv::NewInsOlNordAction(const tid_t& atid, xct_t* axct, 
+                                rvp_t* prvp,
+                                const int whid, const int did, 
+                                const int nextoid, const int olidx,
+                                const ol_item_info& iteminfo,
+                                time_t tstamp)
+{
+    ins_ol_nord_action* myaction = my_ins_ol_nord_action_cache->_cache->borrow();
+    w_assert3(myaction);
+    myaction->set(atid,axct,prvp,whid,did,nextoid,olidx,iteminfo,tstamp,this,my_ins_ol_nord_action_cache->_cache.get());
+    prvp->add_action(myaction);
+    return (myaction);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////

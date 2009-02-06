@@ -72,34 +72,18 @@ w_rc_t midway_pay_rvp::run()
  *
  ********************************************************************/
 
-w_rc_t final_pay_rvp::run() {
-    assert (_ptpccenv); 
+w_rc_t final_pay_rvp::run() 
+{
     return (_run(_ptpccenv)); 
 }
 
 void final_pay_rvp::upd_committed_stats() 
 {
-    w_assert3 (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-
-//     _ptpccenv->get_total_tpcc_stats()->inc_pay_com();
-//     _ptpccenv->get_session_tpcc_stats()->inc_pay_com();
-//     _ptpccenv->get_env_stats()->inc_trx_com();    
     _ptpccenv->_inc_pay_att();
 }                     
 
 void final_pay_rvp::upd_aborted_stats() 
 {
-//     assert (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-
-//     _ptpccenv->get_total_tpcc_stats()->inc_pay_att();
-//     _ptpccenv->get_session_tpcc_stats()->inc_pay_att();
-//     _ptpccenv->get_env_stats()->inc_trx_att();
     _ptpccenv->_inc_pay_failed();
 }                     
 
@@ -361,7 +345,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
+               "App: %d PAY:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
                _tid, c_w, c_d, _pin._c_id);
 
 #ifndef ONLYDORA
