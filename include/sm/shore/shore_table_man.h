@@ -1383,18 +1383,19 @@ w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db,
 		w_rc_t rc = file_append.create_rec(vec_t(), 0,
 						   vec_t(arep._dest, tsz),
 						   tuple._rid);
-		    if(rc.is_error()) {						
-			W_COERCE(db->abort_xct());					
-			if(rc.err_num() == smlevel_0::eDEADLOCK) {			
-			    TRACE( TRACE_ALWAYS, "load(%s): %d: deadlock detected. Retrying.n", _ptable->name(), tuple_count); 
-			    W_DO(db->begin_xct());					
-			    goto recover;						
-			}								
-			W_DO(rc);							
-		    }								
-		    else {								
-			break;							
-		    } 
+                if (rc.is_error()) {						
+                    W_COERCE(db->abort_xct());				       
+                    if (rc.err_num() == smlevel_0::eDEADLOCK) {			
+                        TRACE( TRACE_ALWAYS, "load(%s): %d: Deadlock detected. Retrying\n", 
+                               _ptable->name(), tuple_count); 
+                        W_DO(db->begin_xct());					
+                        goto recover;						
+                    }								
+                    W_DO(rc);							
+                }								
+                else {								
+                    break;							
+                } 
 	    } while(1) ;
 		
 
@@ -1476,33 +1477,56 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index(ss_m* db,
      */
 
     table_iter* iter;
-    W_DO(get_iter_for_file_scan(db, iter));
 
     bool eof = false;
     table_tuple row(_ptable);
-    int rowscanned = 0;
     rep_row_t arep(_pts);
     int key_sz = 0;
     int mark = COMMIT_ACTION_COUNT;
     stopwatch_t timer;
 
+    w_rc_t rc;
+    int rowscanned = 0;
+    int rowscommitted = 0;
 
-    /* 2. iterate over the whole table and insert the corresponding 
-     *    index entries, using the index loading helper thread 
-     */
+
+ recover: // handle eDEADLOCK
+    
+    // get a new iterator over the table
+    W_DO(get_iter_for_file_scan(db, iter));
+
+    // skip the first "rowscommitted" rows 
+    for (int i=0; i<rowscommitted; i++) {
+        W_DO(iter->next(db, eof, row));
+    }
+    rowscanned = rowscommitted;
+    
     W_DO(iter->next(db, eof, row));
     while (!eof) {
         
         key_sz = format_key(pindex, &row, arep);
         assert (arep._dest); // (ip) if NULL invalid key
 
-	int pnum = get_pnum(pindex, &row);
-        W_DO(db->create_assoc(pindex->fid(pnum),
+        int pnum = get_pnum(pindex, &row);
+        rc = db->create_assoc(pindex->fid(pnum),
                               vec_t(arep._dest, key_sz),
-                              vec_t(&(row._rid), sizeof(rid_t))));
+                              vec_t(&(row._rid), sizeof(rid_t)));
+
+        if (rc.is_error()) {
+            W_COERCE(db->abort_xct());
+            if (rc.err_num() == smlevel_0::eDEADLOCK) {
+                TRACE (TRACE_ALWAYS, "index(%s): Deadlock detected at row (%d). Retrying\n",
+                       pindex->name(), rowscanned);
+                delete iter;
+                W_DO(db->begin_xct());
+                goto recover;
+            }
+            W_DO(rc);
+        }
             
         if (rowscanned >= mark) { 
             W_DO(db->chain_xct());
+            rowscommitted = rowscanned; // update checkpoint
 
             if ((rowscanned % 100000) == 0) { // every 100K
                 TRACE( TRACE_ALWAYS, "index(%s): %d\n", pindex->name(), rowscanned);

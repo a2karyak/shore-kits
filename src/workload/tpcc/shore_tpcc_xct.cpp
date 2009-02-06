@@ -539,9 +539,6 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
     assert (_initialized);
     assert (_loaded);
 
-    // get a timestamp
-    time_t tstamp = time(NULL);
-
     // new_order trx touches 8 tables:
     // warehouse, district, customer, neworder, order, item, stock, orderline
     row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
@@ -599,22 +596,13 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
 
         /* 1. retrieve warehouse (read-only) */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:warehouse-idx-probe (%d)\n", 
+               "App: %d NO:wh-idx-probe (%d)\n", 
                xct_id, pnoin->_wh_id);
         e = _pwarehouse_man->wh_index_probe(_pssm, prwh, pnoin->_wh_id);
         if (e.is_error()) { goto done; }
 
         tpcc_warehouse_tuple awh;
         prwh->get_value(7, awh.W_TAX);
-
-
-        /* 2. retrieve district for update */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:district-idx-upd (%d) (%d)\n", 
-               xct_id, pnoin->_wh_id, pnoin->_d_id);
-        e = _pdistrict_man->dist_index_probe_forupdate(_pssm, prdist, 
-                                                       pnoin->_wh_id, pnoin->_d_id);
-        if (e.is_error()) { goto done; }
 
 
         /* SELECT d_tax, d_next_o_id
@@ -624,6 +612,14 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
          * plan: index probe on "D_INDEX"
          */
 
+        /* 2. retrieve district for update */
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d NO:dist-idx-upd (%d) (%d)\n", 
+               xct_id, pnoin->_wh_id, pnoin->_d_id);
+        e = _pdistrict_man->dist_index_probe_forupdate(_pssm, prdist, 
+                                                       pnoin->_wh_id, pnoin->_d_id);
+        if (e.is_error()) { goto done; }
+
         tpcc_district_tuple adist;
         prdist->get_value(8, adist.D_TAX);
         prdist->get_value(10, adist.D_NEXT_O_ID);
@@ -632,10 +628,12 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
 
         /* 3. retrieve customer */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:customer-idx-probe (%d) (%d) (%d)\n", 
+               "App: %d NO:cust-idx-probe (%d) (%d) (%d)\n", 
                xct_id, pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id);
         e = _pcustomer_man->cust_index_probe(_pssm, prcust, 
-                                             pnoin->_wh_id, pnoin->_d_id, pnoin->_c_id);
+                                             pnoin->_wh_id, 
+                                             pnoin->_d_id, 
+                                             pnoin->_c_id);
         if (e.is_error()) { goto done; }
 
         tpcc_customer_tuple  acust;
@@ -650,18 +648,17 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
          */
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:district-upd-next-o-id (%d)\n", 
+               "App: %d NO:dist-upd-next-o-id (%d)\n", 
                xct_id, adist.D_NEXT_O_ID);
         e = _pdistrict_man->dist_update_next_o_id(_pssm, prdist, adist.D_NEXT_O_ID);
         if (e.is_error()) { goto done; }
 
 
         double total_amount = 0;
-        int all_local = 0;
 
-        for (int item_cnt = 0; item_cnt < pnoin->_ol_cnt; item_cnt++) {
+        for (int item_cnt=0; item_cnt<pnoin->_ol_cnt; item_cnt++) {
 
-            /* 4. for all items update item, stock, and order line */
+            /* 4. for all items read item, and update stock, and order line */
             register int ol_i_id = pnoin->items[item_cnt]._ol_i_id;
             register int ol_supply_w_id = pnoin->items[item_cnt]._ol_supply_wh_id;
 
@@ -724,7 +721,6 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
 
             if (pnoin->_wh_id != ol_supply_w_id) {
                 astock.S_REMOTE_CNT++;
-                all_local = 1;
             }
 
 
@@ -750,7 +746,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
             prol->set_value(3, item_cnt+1);
             prol->set_value(4, ol_i_id);
             prol->set_value(5, ol_supply_w_id);
-            prol->set_value(6, tstamp);
+            prol->set_value(6, pnoin->_tstamp);
             prol->set_value(7, pnoin->items[item_cnt]._ol_quantity);
             prol->set_value(8, item_amount);
             prol->set_value(9, astock.S_DIST[6+pnoin->_d_id]);
@@ -774,10 +770,10 @@ w_rc_t ShoreTPCCEnv::xct_new_order(new_order_input_t* pnoin,
         prord->set_value(1, pnoin->_c_id);
         prord->set_value(2, pnoin->_d_id);
         prord->set_value(3, pnoin->_wh_id);
-        prord->set_value(4, tstamp);
+        prord->set_value(4, pnoin->_tstamp);
         prord->set_value(5, 0);
         prord->set_value(6, pnoin->_ol_cnt);
-        prord->set_value(7, all_local);
+        prord->set_value(7, pnoin->_all_local);
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:ord-add-tuple (%d)\n", 
                xct_id, adist.D_NEXT_O_ID);
@@ -891,7 +887,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
         /* 1. retrieve warehouse for update */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:warehouse-idx-upd (%d)\n", 
+               "App: %d PAY:wh-idx-upd (%d)\n", 
                xct_id, ppin->_home_wh_id);
 
         e = _pwarehouse_man->wh_index_probe_forupdate(_pssm, prwh, 
@@ -901,7 +897,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
 
         /* 2. retrieve district for update */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:district-idx-upd (%d) (%d)\n", 
+               "App: %d PAY:dist-idx-upd (%d) (%d)\n", 
                xct_id, ppin->_home_wh_id, ppin->_home_d_id);
 
         e = _pdistrict_man->dist_index_probe_forupdate(_pssm, prdist,
@@ -1063,7 +1059,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(payment_input_t* ppin,
          * plan: index probe on "D_INDEX"
          */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:dist-upd-ytd (%d) (%d)\n", 
                xct_id, ppin->_home_wh_id, ppin->_home_d_id);
         e = _pdistrict_man->dist_update_ytd(_pssm, prdist, ppin->_h_amount);
         if (e.is_error()) { goto done; }
@@ -1428,9 +1424,6 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
     // delivery trx touches 4 tables: 
     // new_order, order, orderline, and customer
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
-    assert (prcust);
-
     row_impl<new_order_t>* prno = _pnew_order_man->get_tuple();
     assert (prno);
 
@@ -1439,6 +1432,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (prol);    
+
+    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    assert (prcust);
 
     w_rc_t e = RCOK;
 
@@ -1456,12 +1452,11 @@ w_rc_t ShoreTPCCEnv::xct_delivery(delivery_input_t* pdin,
 
     rep_row_t lowrep(_porder_line_man->ts());
     rep_row_t highrep(_porder_line_man->ts());
-    rep_row_t sortrep(_porder_line_man->ts());
+
     // allocate space for the biggest of the (new_order) and (orderline)
     // table representations
     lowrep.set(_porder_line_desc->maxsize()); 
     highrep.set(_porder_line_desc->maxsize()); 
-    sortrep.set(_porder_line_desc->maxsize());
 
     std::vector<int> dlist(DISTRICTS_PER_WAREHOUSE);
     std::iota(dlist.begin(), dlist.end(), 1);
@@ -1688,16 +1683,16 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
     assert (_initialized);
     assert (_loaded);
 
-    // stock level trx touches 4 tables: 
+    // stock level trx touches 3 tables: 
     // district, orderline, and stock
     row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-    row_impl<stock_t>* prst = _pstock_man->get_tuple();
-    assert (prst);
-
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (prol);
+
+    row_impl<stock_t>* prst = _pstock_man->get_tuple();
+    assert (prst);
 
     w_rc_t e = RCOK;
 
@@ -1723,7 +1718,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
          * (index scan on D_INDEX)
          */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d STO:idx-probe (%d) (%d)\n", 
+        TRACE( TRACE_TRX_FLOW, "App: %d STO:dist-idx-probe (%d) (%d)\n", 
                xct_id, pslin->_wh_id, pslin->_d_id);
 
         e = _pdistrict_man->dist_index_probe(_pssm, prdist, 
@@ -1742,13 +1737,13 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
          *       AND s_w_id = :w_id AND s_i_id = ol_i_id
          *       AND s_quantity < :threshold;
          *
-         *  Plan: 1. index scan on OL_INDEX 
-         *        2. sort ol tuples in the order of i_id from 1
-         *        3. index scan on S_INDEX
-         *        4. fetch stock with sargable on quantity from 3
-         *        5. nljoin on 2 and 4
-         *        6. unique on 5
-         *        7. group by on 6
+         *   Plan: 1. index scan on OL_INDEX 
+         *         2. sort ol tuples in the order of i_id from 1
+         *         3. index scan on S_INDEX
+         *         4. fetch stock with sargable on quantity from 3
+         *         5. nljoin on 2 and 4
+         *         6. unique on 5
+         *         7. group by on 6
          */
 
         /* 2a. Index scan on order_line table. */
@@ -1835,6 +1830,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(stock_level_input_t* pslin,
             //         TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe (%d) (%d)\n", 
             //                xct_id, w_id, i_id);
 
+            // 2d. Index probe the Stock
             e = _pstock_man->st_index_probe(_pssm, prst, w_id, i_id);
             if (e.is_error()) { goto done; }
 

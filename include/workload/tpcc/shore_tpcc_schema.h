@@ -280,7 +280,7 @@ public:
         _desc[6].setup(SQL_INT,   "O_OL_CNT");   
         _desc[7].setup(SQL_INT,   "O_ALL_LOCAL");
 
-        int keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID
+        int keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID }
 
         int keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
 
