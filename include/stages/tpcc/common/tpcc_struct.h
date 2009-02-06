@@ -4,7 +4,7 @@
  *
  *  @brief Exports structures that we store/load for the TPC-C database
  *
- *  @note Used for BDB/SHORE/INMEMORY implementations
+ *  @note Used for SHORE implementations
  *
  *  @author Ippokratis Pandis (ipandis)
  *

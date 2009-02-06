@@ -75,6 +75,9 @@ ol_item_info& ol_item_info::operator= (const ol_item_info& rhs)
     _ol_supply_wh_id = rhs._ol_supply_wh_id;
     _ol_quantity = rhs._ol_quantity;
 
+    _item_amount = rhs._item_amount;
+    _astock = rhs._astock;
+
     return (*this);
 }
 
@@ -86,6 +89,10 @@ new_order_input_t& new_order_input_t::operator= (const new_order_input_t& rhs)
     _c_id = rhs._c_id;
     _ol_cnt = rhs._ol_cnt;
     _rbk = rhs._rbk;
+
+    _tstamp = rhs._tstamp;
+    _all_local = rhs._all_local;
+    _d_next_o_id = rhs._d_next_o_id;
 
     for (int i=0; i<rhs._ol_cnt; i++) {
         items[i] = rhs.items[i];

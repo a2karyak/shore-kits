@@ -43,7 +43,7 @@ ENTER_NAMESPACE(tpcc);
 new_order_input_t create_no_input(int sf, int specificWH) 
 {
     // check scaling factor
-    assert(sf > 0);
+    assert(sf>0);
 
     // produce NEW_ORDER params according to tpcc spec v.5.9
     new_order_input_t noin;
@@ -60,6 +60,8 @@ new_order_input_t create_no_input(int sf, int specificWH)
     noin._ol_cnt = URand(5, 15);
     noin._rbk    = URand(1, 100); /* if rbk == 1 - ROLLBACK */
 
+    noin._tstamp = time(NULL);
+
     // generate the items order
     for (int i=0; i<noin._ol_cnt; i++) {
         noin.items[i]._ol_i_id = NURand(8191, 1, 100000);
@@ -70,6 +72,8 @@ new_order_input_t create_no_input(int sf, int specificWH)
         if (noin.items[i]._ol_supply_wh_select == 1) {
             /* remote new_order */
             noin.items[i]._ol_supply_wh_id = URand(1, sf);
+            if (noin.items[i]._ol_supply_wh_id != noin._wh_id)
+                noin._all_local = 0; // if indeed remote WH, then update all_local flag
         }
         else {
             /* home new_order */ 
@@ -77,7 +81,7 @@ new_order_input_t create_no_input(int sf, int specificWH)
         }
 #else
         noin.items[i]._ol_supply_wh_id = noin._wh_id;
-#endif
+#endif        
     }
 
 #ifdef USE_GENERATE_INPUTS_FOR_ROLLBACK
@@ -124,7 +128,7 @@ new_order_input_t create_no_input(int sf, int specificWH)
 payment_input_t create_payment_input(int sf, int specificWH) 
 {
     // check scaling factor
-    assert(sf > 0);
+    assert(sf>0);
 
     // produce PAYMENT params according to tpcc spec v.5.9
     payment_input_t pin;

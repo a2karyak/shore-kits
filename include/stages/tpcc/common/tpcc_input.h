@@ -12,6 +12,7 @@
 
 #include "util.h"
 #include "stages/tpcc/common/tpcc_const.h"
+#include "stages/tpcc/common/tpcc_struct.h"
 
 
 ENTER_NAMESPACE(tpcc);
@@ -56,6 +57,10 @@ struct ol_item_info
     int   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
     int   _ol_quantity;         /* input: URand(1,10) */        
 
+    int   _item_amount;         /* placeholder for the item amount */
+    tpcc_stock_tuple _astock;   /* placeholder for the stock tuple */
+    tpcc_item_tuple _aitem;     /* placeholder for the item tuple */
+
     // Assignmet operator
     ol_item_info& operator= (const ol_item_info& rhs);
 
@@ -66,11 +71,15 @@ class new_order_input_t : public trx_input_t
 {
 public:
 
-    int   _wh_id;         /* input: URand(1,SF) */
-    int   _d_id;          /* input: URand(1,10) */
-    int   _c_id;          /* input: NURand(1023,1,3000) */
-    int   _ol_cnt;        /* input: number of items URand(5,15) */
-    int   _rbk;           /* input: rollback URand(1,100) */
+    int    _wh_id;        /* input: URand(1,SF) */
+    int    _d_id;         /* input: URand(1,10) */
+    int    _c_id;         /* input: NURand(1023,1,3000) */
+    int    _ol_cnt;       /* input: number of items URand(5,15) */
+    int    _rbk;          /* input: rollback URand(1,100) */
+
+    time_t _tstamp;       /* placeholder for the trx start time */
+    int    _all_local;    /* placeholder if all orders are on local WHs */
+    int    _d_next_o_id;  /* placeholder for the next O_ID of the selected district */
 
     ol_item_info items[MAX_OL_PER_ORDER]; /* input: for each ol item */
 
@@ -80,9 +89,8 @@ public:
 
     // Construction/Destructions
     new_order_input_t() 
-        : _wh_id(0), _d_id(0), _c_id(0), _ol_cnt(0), _rbk(0)
-    { 
-    };    
+        : _wh_id(0), _d_id(0), _c_id(0), _ol_cnt(0), _rbk(0), _all_local(1), _d_next_o_id(-1)
+    { };    
 
     ~new_order_input_t() { };
 
