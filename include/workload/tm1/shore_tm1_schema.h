@@ -237,20 +237,6 @@ public:
 }; // EOF: call_forwarding_t
 
 
-
-// loaders
-typedef table_loading_smt_impl<subscriber_t>       s_loader_t;
-typedef table_loading_smt_impl<access_info_t>      ai_loader_t;
-typedef table_loading_smt_impl<special_facility_t> sf_loader_t;
-typedef table_loading_smt_impl<call_forwarding_t>  cf_loader_t;
-
-// checkers
-typedef table_checking_smt_impl<subscriber_t>       s_checker_t;
-typedef table_checking_smt_impl<access_info_t>      ai_checker_t;
-typedef table_checking_smt_impl<special_facility_t> sf_checker_t;
-typedef table_checking_smt_impl<call_forwarding_t>  cf_checker_t;
-
-
 EXIT_NAMESPACE(tm1);
 
 
