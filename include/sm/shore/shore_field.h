@@ -70,6 +70,7 @@ public:
 
 enum  sqltype_t 
 {
+    SQL_BIT,        /* BIT == BOOL */
     SQL_SMALLINT,   /* SMALLINT */
     SQL_INT,        /* INTEGER */
     SQL_FLOAT,      /* FLOAT */
@@ -79,7 +80,7 @@ enum  sqltype_t
     SQL_NUMERIC,    /* NUMERIC */        /* (ip) Not tested */
     SQL_SNUMERIC    /* SIGNED NUMERIC */ /* (ip) Not tested */
 
-}; // EOF: sqltyple_t
+}; // EOF: sqltype_t
 
 
 
@@ -195,6 +196,7 @@ struct field_value_t
 
     /* value of a field */
     union s_field_value_t {
+	bool         _bit;      /* BIT */
 	short        _smallint; /* SMALLINT */
 	int          _int;      /* INT */
 	double       _float;    /* FLOAT */
@@ -304,6 +306,7 @@ struct field_value_t
     /* set current value */
     void   set_value(const void* data, const int length);
     void   set_int_value(const int data);
+    void   set_bit_value(const bool data);
     void   set_smallint_value(const short data);
     void   set_float_value(const double data);
     void   set_decimal_value(const decimal data);
@@ -316,6 +319,7 @@ struct field_value_t
     /* get current value */
     int          get_int_value() const;
     short        get_smallint_value() const;
+    bool         get_bit_value() const;
     void         get_string_value(char* string, const int bufsize) const;
     double       get_float_value() const;
     decimal      get_decimal_value() const;
@@ -364,6 +368,9 @@ inline void field_desc_t::setup(sqltype_t type,
 
     // size of field
     switch (_type) {
+    case SQL_BIT:
+        _size = sizeof(bool);
+        break;
     case SQL_SMALLINT:
         _size = sizeof(short);
         break;
@@ -416,6 +423,7 @@ inline const char* field_desc_t::_set_keydesc()
     //if (!_keydesc) _keydesc = (char*)malloc( MAX_KEYDESC_LEN );
   
     switch (_type) {
+    case SQL_BIT:       sprintf(_keydesc, "i%d", _size); break;
     case SQL_SMALLINT:  sprintf(_keydesc, "i%d", _size); break;
     case SQL_INT:       sprintf(_keydesc, "i%d", _size); break;
     case SQL_FLOAT:     sprintf(_keydesc, "f%d", _size); break;
@@ -458,6 +466,9 @@ inline void field_value_t::setup(field_desc_t* pfd)
     register int sz = 0;
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+        _max_size = sizeof(bool);
+        break;
     case SQL_SMALLINT:
         _max_size = sizeof(short);
         break;
@@ -529,6 +540,9 @@ inline void field_value_t::reset()
     _null_flag = true;
     register int sz = 0;
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+        _value._bit = false;
+        break;
     case SQL_SMALLINT:
         _value._smallint = 0;
         break;
@@ -603,6 +617,7 @@ inline void field_value_t::set_value(const void* data,
     _null_flag = false;
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
     case SQL_SMALLINT:
     case SQL_INT:
     case SQL_FLOAT:
@@ -641,6 +656,9 @@ inline void field_value_t::set_min_value()
     _null_flag = false;
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+	_value._bit = false;
+	break;
     case SQL_SMALLINT:
 	_value._smallint = MIN_SMALLINT;
 	break;
@@ -670,6 +688,9 @@ inline void field_value_t::set_max_value()
     _null_flag = false;
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+	_value._bit = true;
+	break;
     case SQL_SMALLINT:
 	_value._smallint = MAX_SMALLINT;
 	break;
@@ -711,6 +732,9 @@ inline bool field_value_t::copy_value(void* data) const
     assert (_real_size>=0);
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+        memcpy(data, &_value._bit, _max_size);
+        break;
     case SQL_SMALLINT:
         memcpy(data, &_value._smallint, _max_size);
         break;
@@ -754,6 +778,14 @@ inline void field_value_t::set_int_value(const int data)
     _value._int = data;
 }
 
+
+inline void field_value_t::set_bit_value(const bool data)
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_BIT);
+    _null_flag = false;
+    _value._bit = data;
+}
 
 inline void field_value_t::set_smallint_value(const short data)
 {
@@ -860,6 +892,13 @@ inline int field_value_t::get_int_value() const
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_INT);
     return (_value._int);
+}
+
+inline bool field_value_t::get_bit_value() const
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_BIT);
+    return (_value._bit);
 }
 
 inline short field_value_t::get_smallint_value() const

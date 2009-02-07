@@ -28,6 +28,7 @@ ENTER_NAMESPACE(shore);
  * @note: To simplify the memory management, the sort buffer only works
  *        on fixed length fields.
  *        Supported sql_types_t: SQL_INT, SQL_SMALLINT.
+ *        Under test: SQL_BIT
  *
  **********************************************************************/
 

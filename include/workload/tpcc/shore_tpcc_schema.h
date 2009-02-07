@@ -33,7 +33,7 @@ ENTER_NAMESPACE(tpcc);
  *
  * TPC-C SCHEMA
  * 
- * This file contains the classes for tables in tpcc benchmark.
+ * This file contains the classes for tables in the TPC-C benchmark.
  * A class derived from tpcc_table_t (which inherits from table_desc_t) 
  * is created for each table in the databases.
  *

@@ -51,6 +51,16 @@ int compare_int(const void* d1, const void* d2)
 }
 
 
+int compare_bit(const void* d1, const void* d2)
+{
+    int data1 = *((bool*)d1);
+    int data2 = *((bool*)d2);
+    if (data1 > data2) return (1);
+    if (data1 == data2) return (0);
+    return (-1);
+}
+
+
 template <typename T>
 int compare(const void* d1, const void* d2)
 {
@@ -178,44 +188,61 @@ void sort_man_impl::sort()
 #if 0
     // displays buffer before/after sorting
     cout << "Before sorting: " << endl;
-    if (_desc[0].type() == SQL_SMALLINT) {
+    switch (_ptable->desc(0)->type()) {
+    case SQL_BIT:
+        for (int i=0; i<_tuple_count; i++) {
+            cout << ((bool*)(_sort_buf+i*_tuple_size))[0] << " ";
+        };
+        break;
+    case SQL_SMALLINT:
         for (int i=0; i<_tuple_count; i++) {
             cout << ((short*)(_sort_buf+i*_tuple_size))[0] << " ";
-        }
-        else if (_desc[0].type() == SQL_INT) {
-            for (int i=0; i<_tuple_count; i++) {
-                cout << ((int*)(_sort_buf+i*_tuple_size))[0] << " ";
-            }
-        }
-        cout << endl;
+        };
+        break;
+    case SQL_INT:
+        for (int i=0; i<_tuple_count; i++) {
+            cout << ((int*)(_sort_buf+i*_tuple_size))[0] << " ";
+        };
+        break;
     }
+    cout << endl;
+
 #endif
 
     // does the sorting
     switch (_ptable->desc(0)->type()) {
+    case SQL_BIT:
+        qsort(_sort_buf, _tuple_count, _tuple_size, compare_bit); break;
     case SQL_SMALLINT:
         qsort(_sort_buf, _tuple_count, _tuple_size, compare_smallint); break;
     case SQL_INT:
         qsort(_sort_buf, _tuple_count, _tuple_size, compare_int); break;
     default: 
         /* not implemented yet */
-        assert(false);
+        assert(0);
     }
     _is_sorted = true;
 
 #if 0
     cout << "After sorting: " << endl;
-    if (_desc[0].type() == SQL_SMALLINT) {
+    switch (_ptable->desc(0)->type()) {
+    case SQL_BIT:
+        for (int i=0; i<_tuple_count; i++) {
+            cout << ((bool*)(_sort_buf+i*_tuple_size))[0] << " ";
+        };
+        break;
+    case SQL_SMALLINT:
         for (int i=0; i<_tuple_count; i++) {
             cout << ((short*)(_sort_buf+i*_tuple_size))[0] << " ";
-        }
-        else if (_desc[0].type() == SQL_INT) {
-            for (int i=0; i<_tuple_count; i++) {
-                cout << ((int*)(_sort_buf+i*_tuple_size))[0] << " ";
-            }
-        }
-        cout << endl;
+        };
+        break;
+    case SQL_INT:
+        for (int i=0; i<_tuple_count; i++) {
+            cout << ((int*)(_sort_buf+i*_tuple_size))[0] << " ";
+        };
+        break;
     }
+    cout << endl;
 #endif
 }
 

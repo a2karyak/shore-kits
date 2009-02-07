@@ -24,6 +24,9 @@ void  field_desc_t::print_desc(ostream & os)
 {
     os << "Field " << _name << "\t";
     switch (_type) {
+    case SQL_BIT:
+	os << "Type: BIT \t size: " << sizeof(bool) << endl;
+	break;
     case SQL_SMALLINT:
 	os << "Type: SMALLINT \t size: " << sizeof(short) << endl;
 	break;
@@ -94,6 +97,7 @@ bool field_value_t::load_value_from_file(ifstream & is,
     _null_flag = false;
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:       _value._bit = atoi(string); break;
     case SQL_SMALLINT:  _value._smallint = atoi(string); break;
     case SQL_INT:       _value._int = atoi(string); break;
     case SQL_FLOAT:     _value._float = atof(string); break;
@@ -136,6 +140,9 @@ void  field_value_t::print_value(ostream & os)
     }
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+	os <<_value._bit;
+	break;
     case SQL_SMALLINT:
 	os <<_value._smallint;
 	break;
@@ -191,6 +198,9 @@ const int field_value_t::get_debug_str(char* &buf)
     }
 
     switch (_pfield_desc->type()) {
+    case SQL_BIT:
+        sprintf(buf, "SQL_BIT: \t%d", _value._bit);
+	break;
     case SQL_SMALLINT:
         sprintf(buf, "SQL_SMALLINT: \t%d", _value._smallint);
 	break;
