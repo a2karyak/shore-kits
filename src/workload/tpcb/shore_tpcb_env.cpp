@@ -1,22 +1,20 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   shore_tpcc_env.cpp
+/** @file:   shore_tpcb_env.cpp
  *
  *  @brief:  Declaration of the Shore TPC-C environment (database)
  *
  *  @author: Ippokratis Pandis (ipandis)
  */
 
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "workload/tpcb/shore_tpcb_env.h"
 #include "sm/shore/shore_helper_loader.h"
-
-#include "stages/tpcc/common/tpcc_random.h"
-
+#include <atomic.h>
 
 using namespace shore;
 
 
-ENTER_NAMESPACE(tpcc);
+ENTER_NAMESPACE(tpcb);
 
 
 
@@ -25,79 +23,28 @@ ENTER_NAMESPACE(tpcc);
 
 /******************************************************************** 
  *
- *  @fn:    print_trx_stats
- *
- *  @brief: Prints trx statistics
- *
- ********************************************************************/
-
-void tpcc_stats_t::print_trx_stats() const
-{   
-    TRACE( TRACE_STATISTICS, "=====================================\n");
-    TRACE( TRACE_STATISTICS, "TPC-C Database transaction statistics\n");
-    TRACE( TRACE_STATISTICS, "NEW-ORDER\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _no_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _no_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_no_att-_no_com));
-    TRACE( TRACE_STATISTICS, "PAYMENT\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _pay_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _pay_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_pay_att-_pay_com));
-    TRACE( TRACE_STATISTICS, "ORDER-STATUS\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _ord_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _ord_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_ord_att-_ord_com));
-    TRACE( TRACE_STATISTICS, "DELIVERY\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _del_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _del_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_del_att-_del_com));
-    TRACE( TRACE_STATISTICS, "STOCK-LEVEL\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _sto_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _sto_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_sto_att-_sto_com));
-    TRACE( TRACE_STATISTICS, "OTHER\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _other_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _other_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_other_att-_other_com));
-    TRACE( TRACE_STATISTICS, "=====================================\n");
-}
-
-
-
-/******************************************************************** 
- *
- * ShoreTPCCEnv functions
+ * ShoreTPCBEnv functions
  *
  ********************************************************************/ 
 
-const int ShoreTPCCEnv::load_schema()
+const int ShoreTPCBEnv::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
-    _pwarehouse_desc  = new warehouse_t(_sysname);
-    _pdistrict_desc   = new district_t(_sysname);
-    _pcustomer_desc   = new customer_t(_sysname);
+    _pbranch_desc  = new branch_t(_sysname);
+    _pteller_desc   = new teller_t(_sysname);
+    _paccount_desc   = new account_t(_sysname);
     _phistory_desc    = new history_t(_sysname);
-    _pnew_order_desc  = new new_order_t(_sysname);
-    _porder_desc      = new order_t(_sysname);
-    _porder_line_desc = new order_line_t(_sysname);
-    _pitem_desc       = new item_t(_sysname);
-    _pstock_desc      = new stock_t(_sysname);
 
 
     // initiate the table managers
-    _pwarehouse_man  = new warehouse_man_impl(_pwarehouse_desc.get());
-    _pdistrict_man   = new district_man_impl(_pdistrict_desc.get());
-    _pstock_man      = new stock_man_impl(_pstock_desc.get());
-    _porder_line_man = new order_line_man_impl(_porder_line_desc.get());
-    _pcustomer_man   = new customer_man_impl(_pcustomer_desc.get());
+    _pbranch_man  = new branch_man_impl(_pbranch_desc.get());
+    _pteller_man   = new teller_man_impl(_pteller_desc.get());
+    _paccount_man      = new account_man_impl(_paccount_desc.get());
     _phistory_man    = new history_man_impl(_phistory_desc.get());
-    _porder_man      = new order_man_impl(_porder_desc.get());
-    _pnew_order_man  = new new_order_man_impl(_pnew_order_desc.get());
-    _pitem_man       = new item_man_impl(_pitem_desc.get());
 
     // XXX: !!! Warning !!!
     //
@@ -110,30 +57,20 @@ const int ShoreTPCCEnv::load_schema()
     // (ip) Adding them in descending file order, so that the large
     //      files to be loaded at the begining. Expection is the
     //      WH and DISTR which are always the first two.
-    _table_man_list.push_back(_pwarehouse_man);
-    _table_man_list.push_back(_pdistrict_man);
-    _table_man_list.push_back(_pstock_man);
-    _table_man_list.push_back(_porder_line_man);
-    _table_man_list.push_back(_pcustomer_man);
+    _table_man_list.push_back(_pbranch_man);
+    _table_man_list.push_back(_pteller_man);
+    _table_man_list.push_back(_paccount_man);
     _table_man_list.push_back(_phistory_man);
-    _table_man_list.push_back(_porder_man);
-    _table_man_list.push_back(_pnew_order_man);
-    _table_man_list.push_back(_pitem_man);
 
-    assert (_table_man_list.size() == SHORE_TPCC_TABLES);
+    assert (_table_man_list.size() == 4);
         
     //// add the table descriptions to a list
-    _table_desc_list.push_back(_pwarehouse_desc.get());
-    _table_desc_list.push_back(_pdistrict_desc.get());
-    _table_desc_list.push_back(_pstock_desc.get());
-    _table_desc_list.push_back(_porder_line_desc.get());
-    _table_desc_list.push_back(_pcustomer_desc.get());
+    _table_desc_list.push_back(_pbranch_desc.get());
+    _table_desc_list.push_back(_pteller_desc.get());
+    _table_desc_list.push_back(_paccount_desc.get());
     _table_desc_list.push_back(_phistory_desc.get());
-    _table_desc_list.push_back(_porder_desc.get());
-    _table_desc_list.push_back(_pnew_order_desc.get());
-    _table_desc_list.push_back(_pitem_desc.get());
 
-    assert (_table_desc_list.size() == SHORE_TPCC_TABLES);
+    assert (_table_desc_list.size() == 4);
         
     return (0);
 }
@@ -147,7 +84,7 @@ const int ShoreTPCCEnv::load_schema()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::info()
+const int ShoreTPCBEnv::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
@@ -159,11 +96,11 @@ const int ShoreTPCCEnv::info()
  *
  *  @fn:    start()
  *
- *  @brief: Starts the tpcc env
+ *  @brief: Starts the tpcb env
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::start()
+const int ShoreTPCBEnv::start()
 {
     upd_sf();
     upd_worker_cnt();
@@ -192,11 +129,11 @@ const int ShoreTPCCEnv::start()
  *
  *  @fn:    stop()
  *
- *  @brief: Stops the tpcc env
+ *  @brief: Stops the tpcb env
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::stop()
+const int ShoreTPCBEnv::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
     info();
@@ -224,7 +161,7 @@ const int ShoreTPCCEnv::stop()
  *
  ********************************************************************/
 
-void ShoreTPCCEnv::set_qf(const int aQF)
+void ShoreTPCBEnv::set_qf(const int aQF)
 {
     if ((aQF >= 0) && (aQF <= _scaling_factor)) {
         CRITICAL_SECTION( cs, _queried_mutex);
@@ -237,7 +174,7 @@ void ShoreTPCCEnv::set_qf(const int aQF)
 }
 
 
-void ShoreTPCCEnv::set_sf(const int aSF)
+void ShoreTPCBEnv::set_sf(const int aSF)
 {
 
     if (aSF > 0) {
@@ -250,7 +187,7 @@ void ShoreTPCCEnv::set_sf(const int aSF)
     }
 }
 
-const int ShoreTPCCEnv::upd_sf()
+const int ShoreTPCBEnv::upd_sf()
 {
     // update whs
     int tmp_sf = envVar::instance()->getSysVarInt("sf");
@@ -262,15 +199,15 @@ const int ShoreTPCCEnv::upd_sf()
 }
 
 
-void ShoreTPCCEnv::print_sf(void)
+void ShoreTPCBEnv::print_sf(void)
 {
-    TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
+    TRACE( TRACE_ALWAYS, "*** ShoreTPCBEnv ***\n");
     TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
     TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
 }
 
 
-const int ShoreTPCCEnv::upd_worker_cnt()
+const int ShoreTPCBEnv::upd_worker_cnt()
 {
     // update worker thread cnt
     int workers = envVar::instance()->getVarInt("db-workers",0);
@@ -280,7 +217,75 @@ const int ShoreTPCCEnv::upd_worker_cnt()
 }
 
 
+class ShoreTPCBEnv::table_builder_t : public thread_t {
+    ShoreTPCBEnv* _env;
+    int _sf;
+    long _start;
+    long _count;
+public:
+    table_builder_t(ShoreTPCBEnv* env, int sf, long start, long count)
+	: thread_t("TPC-B loader"), _env(env), _sf(sf), _start(start), _count(count) { }
+    virtual void work();
+};
 
+struct ShoreTPCBEnv::table_creator_t : public thread_t {
+    ShoreTPCBEnv* _env;
+    int _sf;
+    long _psize;
+    long _pcount;
+    table_creator_t(ShoreTPCBEnv* env, int sf, long psize, long pcount)
+	: thread_t("TPC-B Table Creator"), _env(env), _sf(sf), _psize(psize), _pcount(pcount) { }
+    virtual void work();
+};
+
+void  ShoreTPCBEnv::table_creator_t::work() {
+    /* create the tables */
+    W_COERCE(_env->db()->begin_xct());
+    W_COERCE(_env->_pbranch_desc->create_table(_env->db()));
+    W_COERCE(_env->_pteller_desc->create_table(_env->db()));
+    W_COERCE(_env->_paccount_desc->create_table(_env->db()));
+    W_COERCE(_env->_phistory_desc->create_table(_env->db()));
+    W_COERCE(_env->db()->commit_xct());
+
+    /*
+      create 10k accounts in each partition to buffer workers from each other
+     */
+    for(long i=-1; i < _pcount; i++) {
+	long a_id = i*_psize;
+	populate_db_input_t in(_sf, a_id);
+	trx_result_tuple_t out;
+	fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	W_COERCE(_env->db()->begin_xct());
+	W_COERCE(_env->xct_populate_db(&in, a_id, out));
+    }
+}
+void ShoreTPCBEnv::table_builder_t::work() {
+    long total = _sf*ACCOUNTS_PER_BRANCH/ACCOUNTS_CREATED_PER_POP_XCT;
+    long which;
+    w_rc_t e;
+
+    for(int i=0; i < _count; i += ACCOUNTS_CREATED_PER_POP_XCT) {
+	long a_id = _start + i;
+	populate_db_input_t in(_sf, a_id);
+	trx_result_tuple_t out;
+	fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	W_COERCE(_env->db()->begin_xct());
+	e = _env->xct_populate_db(&in, a_id, out);
+	if(e.is_error()) {
+	    stringstream os;
+	    os << e << ends;
+	    string str = os.str();
+	    fprintf(stderr, "Eek! Unable to populate db for index %d due to:\n%s\n",
+		    i, str.c_str());
+	    
+	    w_rc_t e2 = _env->db()->abort_xct();
+	    if(e2.is_error()) {
+		TRACE( TRACE_ALWAYS, "Double-eek! Unable to abort trx for index %d due to [0x%x]\n", 
+		       which, e2.err_num());
+	    }
+	}
+    }
+}
 
 
 /********
@@ -293,13 +298,13 @@ const int ShoreTPCCEnv::upd_worker_cnt()
  *
  * @fn:    loaddata()
  *
- * @brief: Loads the data for all the TPCC tables, given the current
+ * @brief: Loads the data for all the TPCB tables, given the current
  *         scaling factor value. During the loading the SF cannot be
  *         changed.
  *
  ******************************************************************/
 
-w_rc_t ShoreTPCCEnv::loaddata() 
+w_rc_t ShoreTPCBEnv::loaddata() 
 {
     /* 0. lock the loading status and the scaling factor */
     CRITICAL_SECTION(load_cs, _load_mutex);
@@ -317,94 +322,54 @@ w_rc_t ShoreTPCCEnv::loaddata()
     string loaddatadir = envVar::instance()->getSysVar("loadatadir");
     int cnt = 0;
 
+    /* partly (no) thanks to Shore's next key index locking, and
+       partly due to page latch and SMO issues, we have ridiculous
+       deadlock rates if we try to throw lots of threads at a small
+       btree. To work around this we'll partition the space of
+       accounts into LOADERS_TO_USE segments and have a single thread
+       load the first 10k accounts from each partition before firing
+       up the real workers.
+     */
+    static int const LOADERS_TO_USE = 40;
+    long total_accounts = _scaling_factor*ACCOUNTS_PER_BRANCH;
+    w_assert1((total_accounts % LOADERS_TO_USE) == 0);
+    long accts_per_worker = total_accounts/LOADERS_TO_USE;
+    
+    time_t tstart = time(NULL);
+    
     TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir.c_str());
 
-    guard<table_loading_smt_t> loaders[SHORE_TPCC_TABLES];
-
-    // manually create the loading threads
-    loaders[0] = new wh_loader_t(c_str("ld-WH"), _pssm, _pwarehouse_man,
-                                 _pwarehouse_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[1] = new dist_loader_t(c_str("ld-DIST"), _pssm, _pdistrict_man,
-                                   _pdistrict_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[2] = new st_loader_t(c_str("ld-ST"), _pssm, _pstock_man,
-                                 _pstock_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[3] = new ol_loader_t(c_str("ld-OL"), _pssm, _porder_line_man,
-                                 _porder_line_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[4] = new cust_loader_t(c_str("ld-CUST"), _pssm, _pcustomer_man,
-                                   _pcustomer_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[5] = new hist_loader_t(c_str("ld-HIST"), _pssm, _phistory_man,
-                                   _phistory_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[6] = new ord_loader_t(c_str("ld-ORD"), _pssm, _porder_man,
-                                  _porder_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[7] = new no_loader_t(c_str("ld-NO"), _pssm, _pnew_order_man,
-                                 _pnew_order_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[8] = new it_loader_t(c_str("ld-IT"), _pssm, _pitem_man,
-                                 _pitem_desc.get(), _scaling_factor, loaddatadir.c_str());
-
-    time_t tstart = time(NULL);    
+    {
+	guard<table_creator_t> tc;
+	tc = new table_creator_t(this, _scaling_factor, accts_per_worker, LOADERS_TO_USE);
+	tc->fork();
+	tc->join();
+    }
     
-
-//     tpcc_table_t* ptable   = NULL;
-//     table_man_t*  pmanager = NULL;
-//     tpcc_table_list_iter table_desc_iter;
-//     table_man_list_iter table_man_iter;
-//     for ( table_desc_iter = _table_desc_list.begin() ,
-//               table_man_iter = _table_man_list.begin(); 
-//           table_desc_iter != _table_desc_list.end(); 
-//           table_desc_iter++, table_man_iter++)
-//         {
-//             ptable   = *table_desc_iter;
-//             pmanager = *table_man_iter;
-
-//             loaders[cnt] = new table_loading_smt_t(c_str("ld%d", cnt), 
-//                                                    _pssm, 
-//                                                    pmanager, 
-//                                                    ptable, 
-//                                                    _scaling_factor, 
-//                                                    loaddatadir.c_str());
-//             cnt++;
-//        }
-
-#if 1
-    /* 3. fork the loading threads (PARALLEL) */
-    for(int i=0; i<num_tbl; i++) {
+    /* This number is really flexible. Basically, it just needs to be
+       high enough to give good parallelism, while remaining low
+       enough not to cause too much contention. I pulled '40' out of
+       thin air.
+     */
+    guard<table_builder_t> loaders[LOADERS_TO_USE];
+    for(long i=0; i < LOADERS_TO_USE; i++) {
+	// the preloader thread picked up that first set of accounts...
+	long start = accts_per_worker*i+ACCOUNTS_CREATED_PER_POP_XCT;
+	long count = accts_per_worker-ACCOUNTS_CREATED_PER_POP_XCT;
+	loaders[i] = new table_builder_t(this, _scaling_factor, start, count);
 	loaders[i]->fork();
+    }
+    
+    for(int i=0; i<LOADERS_TO_USE; i++) {
+	loaders[i]->join();        
     }
 
     /* 4. join the loading threads */
-    for(int i=0; i<num_tbl; i++) {
-	loaders[i]->join();        
-        if (loaders[i]->rv()) {
-            TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
-                   loaders[i]->table()->name());
-            delete loaders[i];
-            assert (0); // should not happen
-            return RC(se_ERROR_IN_LOAD);
-        }
-        TRACE( TRACE_TRX_FLOW, "Loader (%d) [%s] joined...\n", 
-               i, loaders[i]->table()->name());
-        //        delete loaders[i];
-    }    
-#else 
-    /* 3. fork & join the loading threads SERIALLY */
-    for(int i=0; i<num_tbl; i++) {
-	loaders[i]->fork();
-	loaders[i]->join();        
-        if (loaders[i]->rv()) {
-            TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
-                   loaders[i]->table()->name());
-            //            delete loaders[i];
-            assert (0); // should not happen
-            return RC(se_ERROR_IN_LOAD);
-        }        
-        //        delete loaders[i];
-    }
-#endif
     time_t tstop = time(NULL);
 
     /* 5. print stats */
-    TRACE( TRACE_STATISTICS, "Loading finished. %d table loaded in (%d) secs...\n",
-           num_tbl, (tstop - tstart));
+    TRACE( TRACE_STATISTICS, "Loading finished. %d branches loaded in (%d) secs...\n",
+           _scaling_factor, (tstop - tstart));
 
     /* 6. notify that the env is loaded */
     _loaded = true;
@@ -424,81 +389,10 @@ w_rc_t ShoreTPCCEnv::loaddata()
  *
  ******************************************************************/
 
-w_rc_t ShoreTPCCEnv::check_consistency()
+w_rc_t ShoreTPCBEnv::check_consistency()
 {
-    /* 1. create the checker threads */
-    int num_tbl = _table_desc_list.size();
-    int cnt = 0;
-
-    guard<thread_t> checkers[SHORE_TPCC_TABLES];
-
-    // manually create the loading threads
-    checkers[0] = new wh_checker_t(c_str("chk-WH"), _pssm, 
-                                   _pwarehouse_man, _pwarehouse_desc.get());
-    checkers[1] = new dist_checker_t(c_str("chk-DIST"), _pssm, 
-                                     _pdistrict_man, _pdistrict_desc.get());
-    checkers[2] = new st_checker_t(c_str("chk-ST"), _pssm, 
-                                   _pstock_man, _pstock_desc.get());
-    checkers[3] = new ol_checker_t(c_str("chk-OL"), _pssm, 
-                                   _porder_line_man, _porder_line_desc.get());
-    checkers[4] = new cust_checker_t(c_str("chk-CUST"), _pssm, 
-                                     _pcustomer_man, _pcustomer_desc.get());
-    checkers[5] = new hist_checker_t(c_str("chk-HIST"), _pssm, 
-                                     _phistory_man, _phistory_desc.get());
-    checkers[6] = new ord_checker_t(c_str("chk-ORD"), _pssm, 
-                                    _porder_man, _porder_desc.get());
-    checkers[7] = new no_checker_t(c_str("chk-NO"), _pssm, 
-                                   _pnew_order_man, _pnew_order_desc.get());
-    checkers[8] = new it_checker_t(c_str("chk-IT"), _pssm, 
-                                   _pitem_man, _pitem_desc.get());
-
-
-//     tpcc_table_t* ptable   = NULL;
-//     table_man_t*  pmanager = NULL;
-//     tpcc_table_list_iter table_desc_iter;
-//     table_man_list_iter table_man_iter;
-//     for ( table_desc_iter = _table_desc_list.begin() ,
-//               table_man_iter = _table_man_list.begin(); 
-//           table_desc_iter != _table_desc_list.end(); 
-//           table_desc_iter++, table_man_iter++)
-//         {
-//             ptable   = *table_desc_iter;
-//             pmanager = *table_man_iter;
-
-//             checkers[cnt] = new table_checking_smt_t(c_str("chk%d", cnt), 
-//                                                      _pssm, pmanager, ptable);
-//             cnt++;
-//         }
-
-#if 1
-    /* 2. fork the threads */
-    cnt = 0;
-    time_t tstart = time(NULL);
-    for(int i=0; i<num_tbl; i++) {
-	checkers[i]->fork();
-    }
-
-    /* 3. join the threads */
-    cnt = 0;
-    for(int i=0; i < num_tbl; i++) {
-	checkers[i]->join();
-    }    
-    time_t tstop = time(NULL);
-#else
-    /* 2. fork & join the threads SERIALLY */
-    cnt = 0;
-    time_t tstart = time(NULL);
-    for(int i=0; i<num_tbl; i++) {
-	checkers[i]->fork();
-	checkers[i]->join();
-    }
-    time_t tstop = time(NULL);
-#endif
-    /* 4. print stats */
-    TRACE( TRACE_DEBUG, "Checking finished in (%d) secs...\n",
-           (tstop - tstart));
-    TRACE( TRACE_DEBUG, "%d tables checked...\n", num_tbl);
-    return (RCOK);
+    // not loaded from files, so no inconsistency possible
+    return RCOK;
 }
 
 
@@ -511,7 +405,7 @@ w_rc_t ShoreTPCCEnv::check_consistency()
  *
  ******************************************************************/
 
-w_rc_t ShoreTPCCEnv::warmup()
+w_rc_t ShoreTPCBEnv::warmup()
 {
 //     int num_tbl = _table_desc_list.size();
 //     table_man_t*  pmanager = NULL;
@@ -545,7 +439,7 @@ w_rc_t ShoreTPCCEnv::warmup()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::dump()
+const int ShoreTPCBEnv::dump()
 {
     table_man_t* ptable_man = NULL;
     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
@@ -558,7 +452,7 @@ const int ShoreTPCCEnv::dump()
 }
 
 
-const int ShoreTPCCEnv::conf()
+const int ShoreTPCBEnv::conf()
 {
     // reread the params
     ShoreEnv::conf();
@@ -582,7 +476,7 @@ const int ShoreTPCCEnv::conf()
  *
  *********************************************************************/
 
-const int ShoreTPCCEnv::post_init() 
+const int ShoreTPCBEnv::post_init() 
 {
     conf();
     TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
@@ -610,12 +504,15 @@ const int ShoreTPCCEnv::post_init()
  *
  *********************************************************************/ 
 
-w_rc_t ShoreTPCCEnv::_post_init_impl() 
+w_rc_t ShoreTPCBEnv::_post_init_impl() 
 {
     ss_m* db = this->db();
     
-    // lock the WH table 
-    warehouse_t* wh = warehouse();
+    // lock the WH table
+    typedef branch_t warehouse_t;
+    typedef branch_man_impl warehouse_man_impl;
+    
+    warehouse_t* wh = branch();
     index_desc_t* idx = wh->indexes();
     int icount = wh->index_count();
     W_DO(wh->find_fid(db));
@@ -645,7 +542,7 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 	guard<warehouse_man_impl::table_iter> iter;
 	{
 	    warehouse_man_impl::table_iter* tmp;
-	    W_DO(warehouse_man()->get_iter_for_file_scan(db, tmp));
+	    W_DO(branch_man()->get_iter_for_file_scan(db, tmp));
 	    iter = tmp;
 	}
 
@@ -690,7 +587,7 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		vec_t rvec(&row._rid, sizeof(rid_t));
 		vec_t nrvec(&new_rid, sizeof(new_rid));
 		for(int i=0; i < icount; i++) {
-		    int key_sz = warehouse_man()->format_key(idx+i, &row, arep);
+		    int key_sz = branch_man()->format_key(idx+i, &row, arep);
 		    vec_t kvec(arep._dest, key_sz);
 
 		    /* destroy the old mapping and replace it with the new
@@ -698,7 +595,7 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		       look into probing the index with a cursor and
 		       updating it directly.
 		    */
-		    int pnum = _pwarehouse_man->get_pnum(&idx[i], &row);
+		    int pnum = _pbranch_man->get_pnum(&idx[i], &row);
 		    stid_t fid = idx[i].fid(pnum);
 		    W_DO(db->destroy_assoc(fid, kvec, rvec));
 
@@ -761,4 +658,4 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
   
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(tpcb);

@@ -1,30 +1,27 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file shore_tpcc_env.h
+/** @file shore_tpcb_env.h
  *
  *  @brief Definition of the Shore TPC-C environment
  *
  *  @author Ippokratis Pandis (ipandis)
  */
 
-#ifndef __SHORE_TPCC_ENV_H
-#define __SHORE_TPCC_ENV_H
+#ifndef __SHORE_TPCB_ENV_H
+#define __SHORE_TPCB_ENV_H
 
 #include "sm_vas.h"
 #include "util.h"
 
 #include "core/trx_packet.h"
 
-#include "stages/tpcc/common/tpcc_scaling_factor.h"
-#include "stages/tpcc/common/tpcc_const.h"
-#include "stages/tpcc/common/tpcc_input.h"
-#include "stages/tpcc/common/tpcc_trx_input.h"
+#include "workload/tpcb/tpcb_input.h"
 
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_sort_buf.h"
 
-#include "workload/tpcc/shore_tpcc_schema_man.h"
-#include "workload/tpcc/shore_tpcc_worker.h"
+#include "workload/tpcb/shore_tpcb_schema_man.h"
+#include "workload/tpcb/shore_tpcb_worker.h"
 
 #include <map>
 
@@ -34,12 +31,16 @@ using namespace shore;
 
 
 
-ENTER_NAMESPACE(tpcc);
+ENTER_NAMESPACE(tpcb);
 
 
 using std::map;
 
 
+enum { XCT_ACCT_UPDATE, XCT_POPULATE_DB };
+enum { TELLERS_PER_BRANCH=10 };
+enum { ACCOUNTS_PER_BRANCH=100000 };
+enum { ACCOUNTS_CREATED_PER_POP_XCT=10000 }; // must evenly divide ACCOUNTS_PER_BRANCH
 
 
 
@@ -50,198 +51,35 @@ using std::map;
 
 #define DECLARE_TUPLE_INTERFACE(Type, Name, PoolName, TableObjectName)    \
     DECLARE_TLS(block_alloc<Type>, PoolName);                             \
-    Type* ShoreTPCCEnv::get_##Name##_tuple() {                            \
+    Type* ShoreTPCBEnv::get_##Name##_tuple() {                            \
         Type* tuple = new (*PoolName) Type;                               \
         assert (tuple); tuple->setup(TableObjectName);                    \
         return (tuple); }                                                 \
-    void ShoreTPCCEnv::give_##Name##_tuple(Type* atuple) {                \
+    void ShoreTPCBEnv::give_##Name##_tuple(Type* atuple) {                \
         PoolName->destroy(atuple); }
 
 
 
 
 
-/****************************************************************** 
- *
- *  @struct: tpcc_stats_t
- *
- *  @brief:  TPCC Environment statistics
- *
- ******************************************************************/
-
-struct tpcc_stats_t 
-{
-    int volatile  _no_att;
-    int volatile  _no_com;
-    tatas_lock    _no_lock;
-    int volatile  _pay_att;
-    int volatile  _pay_com;
-    tatas_lock    _pay_lock;
-    int volatile  _ord_att;
-    int volatile  _ord_com;
-    tatas_lock    _ord_lock;
-    int volatile  _del_att;
-    int volatile  _del_com;
-    tatas_lock    _del_lock;
-    int volatile  _sto_att;
-    int volatile  _sto_com;
-    tatas_lock    _sto_lock;
-
-    int volatile  _other_att;
-    int volatile  _other_com;
-    tatas_lock    _other_lock;    
-
-    tpcc_stats_t() 
-        : _no_att(0), _no_com(0), _pay_att(0), _pay_com(0), _ord_att(0),
-          _ord_com(0), _del_att(0), _del_com(0), _sto_att(0), _sto_com(0),
-          _other_att(0), _other_com(0)
-    {
-    }
-
-    ~tpcc_stats_t()
-    {
-        //print_trx_stats();
-    }
-
-    // Reset counters
-    void reset() {
-        // grabs all the locks and resets
-        CRITICAL_SECTION(res_no_cs, _no_lock);
-        CRITICAL_SECTION(res_pay_cs, _pay_lock);
-        CRITICAL_SECTION(res_ord_cs, _ord_lock);
-        CRITICAL_SECTION(res_del_cs, _del_lock);
-        CRITICAL_SECTION(res_sto_cs, _sto_lock);
-        CRITICAL_SECTION(res_other_cs, _other_lock);
-                
-        _no_att = 0;
-        _no_com = 0;
-        _pay_att = 0;
-        _pay_com = 0;
-        _ord_att = 0;
-        _ord_com = 0;
-        _del_att = 0;
-        _del_com = 0;
-        _sto_att = 0;
-        _sto_com = 0;
-        _other_att = 0;
-        _other_com = 0;
-    }
-
-
-    // Prints stats
-    void print_trx_stats() const;
-
-    // Access methods
-    int inc_no_att() { 
-        CRITICAL_SECTION(att_no_cs, _no_lock);
-        return (++_no_att); 
-    }
-
-    int inc_no_com() { 
-        CRITICAL_SECTION(com_no_cs, _no_lock);
-        ++_no_att;
-        return (++_no_com); 
-    }
-
-    int get_no_com() {
-        CRITICAL_SECTION(read_no_cs, _no_lock);
-        return (_no_com);
-    }
-
-    int inc_pay_att() { 
-        CRITICAL_SECTION(att_pay_cs, _pay_lock);
-        return (++_pay_att); 
-    }
-
-    int inc_pay_com() { 
-        CRITICAL_SECTION(com_pay_cs, _pay_lock);
-        ++_pay_att;
-        return (++_pay_com); 
-    }
-
-    int inc_ord_att() { 
-        CRITICAL_SECTION(att_ord_cs, _ord_lock);
-        return (++_ord_att); 
-    }
-
-    int inc_ord_com() { 
-        CRITICAL_SECTION(com_ord_cs, _ord_lock);
-        ++_ord_att;
-        return (++_ord_com); 
-    }
-
-    int inc_del_att() { 
-        CRITICAL_SECTION(att_del_cs, _del_lock);
-        return (++_del_att); 
-    }
-
-    int inc_del_com() { 
-        CRITICAL_SECTION(com_del_cs, _del_lock);
-        ++_del_att;
-        return (++_del_com); 
-    }
-
-    int inc_sto_att() { 
-        CRITICAL_SECTION(att_sto_cs, _sto_lock);
-        return (++_sto_att); 
-    }
-
-    int inc_sto_com() { 
-        CRITICAL_SECTION(com_sto_cs, _sto_lock);
-        ++_sto_att;
-        return (++_sto_com); 
-    }
-
-    int inc_other_att() { 
-        CRITICAL_SECTION(att_other_cs, _other_lock);
-        return (++_other_att); 
-    }
-
-    int inc_other_com() { 
-        CRITICAL_SECTION(com_other_cs, _other_lock);
-        ++_other_att;
-        return (++_other_com); 
-    }
-
-    int get_total_committed() {
-        CRITICAL_SECTION(com_no_cs,  _no_lock);
-        CRITICAL_SECTION(com_pay_cs, _pay_lock);
-        CRITICAL_SECTION(com_ord_cs, _ord_lock);
-        CRITICAL_SECTION(com_del_cs, _del_lock);
-        CRITICAL_SECTION(com_sto_cs, _sto_lock);
-        CRITICAL_SECTION(com_other_cs, _other_lock);
-        return (_no_com + _pay_com + _ord_com + _del_com + _sto_com + _other_com);
-    }
-
-    int get_total_attempted() {
-        CRITICAL_SECTION(att_no_cs,  _no_lock);
-        CRITICAL_SECTION(att_pay_cs, _pay_lock);
-        CRITICAL_SECTION(att_ord_cs, _ord_lock);
-        CRITICAL_SECTION(att_del_cs, _del_lock);
-        CRITICAL_SECTION(att_sto_cs, _sto_lock);
-        CRITICAL_SECTION(att_other_cs, _other_lock);
-        return (_no_att + _pay_att + _ord_att + _del_att + _sto_att + _other_att);
-    }
-
-}; // EOF tpcc_stats_t
-
-
 /******************************************************************** 
  * 
- *  ShoreTPCCEnv
+ *  ShoreTPCBEnv
  *  
- *  Shore TPC-C Database.
+ *  Shore TPC-B Database.
  *
  ********************************************************************/
 
-class ShoreTPCCEnv : public ShoreEnv
+class ShoreTPCBEnv : public ShoreEnv
 {
 public:
-    typedef tpcc_worker_t        Worker;
-    typedef tpcc_worker_t*       WorkerPtr;
+    typedef tpcb_worker_t        Worker;
+    typedef tpcb_worker_t*       WorkerPtr;
     typedef vector<WorkerPtr>    WorkerPool;
     typedef WorkerPool::iterator WorkerIt;
 
+    class table_builder_t;
+    class table_creator_t;
 protected:       
 
     WorkerPool      _workers;            // list of worker threads
@@ -251,29 +89,19 @@ protected:
     // TPC-C tables
 
     /** all the tables */
-    guard<warehouse_t>         _pwarehouse_desc;
-    guard<district_t>          _pdistrict_desc;
-    guard<customer_t>          _pcustomer_desc;
+    guard<branch_t>         _pbranch_desc;
+    guard<teller_t>          _pteller_desc;
+    guard<account_t>          _paccount_desc;
     guard<history_t>           _phistory_desc;
-    guard<new_order_t>         _pnew_order_desc;
-    guard<order_t>             _porder_desc;
-    guard<order_line_t>        _porder_line_desc;
-    guard<item_t>              _pitem_desc;
-    guard<stock_t>             _pstock_desc;
 
-    tpcc_table_desc_list       _table_desc_list;
+    tpcb_table_desc_list       _table_desc_list;
 
 
     /** all the table managers */
-    guard<warehouse_man_impl>  _pwarehouse_man;
-    guard<district_man_impl>   _pdistrict_man;
-    guard<customer_man_impl>   _pcustomer_man;
+    guard<branch_man_impl>  _pbranch_man;
+    guard<teller_man_impl>   _pteller_man;
+    guard<account_man_impl>   _paccount_man;
     guard<history_man_impl>    _phistory_man;
-    guard<new_order_man_impl>  _pnew_order_man;
-    guard<order_man_impl>      _porder_man;
-    guard<order_line_man_impl> _porder_line_man;
-    guard<item_man_impl>       _pitem_man;
-    guard<stock_man_impl>      _pstock_man;
 
     table_man_list_t           _table_man_list;
 
@@ -283,27 +111,9 @@ protected:
     int             _queried_factor; /* queried factor - how many of the WHs queried */
     pthread_mutex_t _queried_mutex;
 
-    // some stats
-    tpcc_stats_t   _total_tpcc_stats;     // the stats for the whole env life (never reset)
-    tpcc_stats_t   _session_tpcc_stats; // temp stats (reset between runs)
-
-
     // --- kit baseline trxs --- //
-    w_rc_t xct_new_order(new_order_input_t* no_input, 
-                         const int xct_id, 
-                         trx_result_tuple_t& trt);
-    w_rc_t xct_payment(payment_input_t* pay_input, 
-                       const int xct_id, 
-                       trx_result_tuple_t& trt);
-    w_rc_t xct_order_status(order_status_input_t* status_input, 
-                            const int xct_id, 
-                            trx_result_tuple_t& trt);
-    w_rc_t xct_delivery(delivery_input_t* deliv_input, 
-                        const int xct_id, 
-                        trx_result_tuple_t& trt);
-    w_rc_t xct_stock_level(stock_level_input_t* level_input, 
-                           const int xct_id, 
-                           trx_result_tuple_t& trt);
+    w_rc_t xct_populate_db(populate_db_input_t*, int xct_id, trx_result_tuple_t &trt);
+    w_rc_t xct_acct_update(acct_update_input_t*, int xct_id, trx_result_tuple_t& trt);
     
 
 private:
@@ -312,10 +122,10 @@ private:
 public:    
 
     /** Construction  */
-    ShoreTPCCEnv(string confname)
+    ShoreTPCBEnv(string confname)
         : ShoreEnv(confname), _worker_cnt(0),
-          _scaling_factor(TPCC_SCALING_FACTOR), 
-          _queried_factor(QUERIED_TPCC_SCALING_FACTOR)
+          _scaling_factor(100), 
+          _queried_factor(100)
     {
         // read the scaling factor from the configuration file
         pthread_mutex_init(&_scaling_mutex, NULL);
@@ -323,15 +133,13 @@ public:
     }
 
 
-    virtual ~ShoreTPCCEnv() 
+    virtual ~ShoreTPCBEnv() 
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
                 
         _table_desc_list.clear();
         _table_man_list.clear();     
-
-        print_total_tpcc_stats();
     }
 
 
@@ -352,29 +160,6 @@ public:
     virtual const int info();
 
 
-    // --- statistics --- //
-    void print_total_tpcc_stats() const { 
-        _total_tpcc_stats.print_trx_stats(); 
-        _env_stats.print_env_stats(); 
-    }
-
-    tpcc_stats_t* get_total_tpcc_stats() {
-        return (&_total_tpcc_stats);
-    }
-
-    void print_session_tpcc_stats() const {
-        _session_tpcc_stats.print_trx_stats();
-    }
-
-    tpcc_stats_t* get_session_tpcc_stats() {
-        return (&_session_tpcc_stats);
-    }
-
-    void reset_session_tpcc_stats() {
-        _session_tpcc_stats.reset();
-    }
-    
-
     // --- scaling and querying factor --- //
     void print_sf(void);
     void set_qf(const int aQF);
@@ -383,7 +168,7 @@ public:
     inline int get_sf() { return (_scaling_factor); }
     const int upd_sf();
 
-    inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
+    inline tpcb_table_desc_list* table_desc_list() { return (&_table_desc_list); }
     inline table_man_list_t*  table_man_list() { return (&_table_man_list); }
     const int dump();
 
@@ -397,57 +182,17 @@ public:
 
 
     // --- access to the tables --- //
-    inline warehouse_t*  warehouse() { return (_pwarehouse_desc.get()); }
-    inline district_t*   district()  { return (_pdistrict_desc.get()); }
-    inline customer_t*   customer()  { return (_pcustomer_desc.get()); }
+    inline branch_t*  branch() { return (_pbranch_desc.get()); }
+    inline teller_t*   teller()  { return (_pteller_desc.get()); }
+    inline account_t*   account()  { return (_paccount_desc.get()); }
     inline history_t*    history()   { return (_phistory_desc.get()); }
-    inline new_order_t*  new_order() { return (_pnew_order_desc.get()); }
-    inline order_t*      order()     { return (_porder_desc.get()); }
-    inline order_line_t* orderline() { return (_porder_line_desc.get()); }
-    inline item_t*       item()      { return (_pitem_desc.get()); }
-    inline stock_t*      stock()     { return (_pstock_desc.get()); }
 
 
     // --- access to the table managers --- //
-    inline warehouse_man_impl*  warehouse_man() { return (_pwarehouse_man); }
-    inline district_man_impl*   district_man()  { return (_pdistrict_man); }
-    inline customer_man_impl*   customer_man()  { return (_pcustomer_man); }
+    inline branch_man_impl*  branch_man() { return (_pbranch_man); }
+    inline teller_man_impl*   teller_man()  { return (_pteller_man); }
+    inline account_man_impl*   account_man()  { return (_paccount_man); }
     inline history_man_impl*    history_man()   { return (_phistory_man); }
-    inline new_order_man_impl*  new_order_man() { return (_pnew_order_man); }
-    inline order_man_impl*      order_man()     { return (_porder_man); }
-    inline order_line_man_impl* orderline_man() { return (_porder_line_man); }
-    inline item_man_impl*       item_man()      { return (_pitem_man); }
-    inline stock_man_impl*      stock_man()     { return (_pstock_man); }
-
-
-
-
-
-    ///// TLS ////
-
-//     typedef row_impl<warehouse_t>  warehouse_tuple;
-//     typedef row_impl<district_t>   district_tuple;
-//     typedef row_impl<customer_t>   customer_tuple;
-//     typedef row_impl<history_t>    history_tuple;
-//     typedef row_impl<new_order_t>  new_order_tuple;
-//     typedef row_impl<order_t>      order_tuple;
-//     typedef row_impl<order_line_t> order_line_tuple;
-//     typedef row_impl<item_t>       item_tuple;
-//     typedef row_impl<stock_t>      stock_tuple;
-
-
-
-//     DEFINE_TUPLE_INTERFACE(warehouse_tuple,warehouse)
-//     DEFINE_TUPLE_INTERFACE(district_tuple,district)
-//     DEFINE_TUPLE_INTERFACE(customer_tuple,customer)
-//     DEFINE_TUPLE_INTERFACE(history_tuple,history)
-//     DEFINE_TUPLE_INTERFACE(new_order_tuple,new_order)
-//     DEFINE_TUPLE_INTERFACE(order_tuple,order)
-//     DEFINE_TUPLE_INTERFACE(order_line_tuple,order_line)
-//     DEFINE_TUPLE_INTERFACE(item_tuple,item)
-//     DEFINE_TUPLE_INTERFACE(stock_tuple,stock)
-    
-
 
 
 
@@ -458,89 +203,34 @@ public:
 
 
     // --- with input specified --- //
-    w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
-    w_rc_t run_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
-    w_rc_t run_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
-    w_rc_t run_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
-    w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
+    w_rc_t run_populate_db(const int xct_id, populate_db_input_t& anoin, trx_result_tuple_t& atrt);
+    w_rc_t run_acct_update(const int xct_id, acct_update_input_t& apin, trx_result_tuple_t& atrt);
 
     // --- without input specified --- //
-    w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-
-    // --- baseline mbench --- //
-    w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_populate_db (const int xct_id, trx_result_tuple_t& atrt, int specificWH);
+    w_rc_t run_acct_update (const int xct_id, trx_result_tuple_t& atrt, int specificWH);
 
 
-
-
-
-
-    // *** DEPRECATED ***//
-    /* --- kit staged trxs --- */
-    /* staged payment */
-    w_rc_t staged_pay_updateShoreWarehouse(payment_input_t* ppin, 
-                                           const int xct_id, 
-                                           trx_result_tuple_t& trt);
-    w_rc_t staged_pay_updateShoreDistrict(payment_input_t* ppin, 
-                                          const int xct_id, 
-                                          trx_result_tuple_t& trt);
-    w_rc_t staged_pay_updateShoreCustomer(payment_input_t* ppin, 
-                                          const int xct_id, 
-                                          trx_result_tuple_t& trt);
-    w_rc_t staged_pay_insertShoreHistory(payment_input_t* ppin, 
-                                         char* p_wh_name,
-                                         char* p_d_name,
-                                         const int xct_id, 
-                                         trx_result_tuple_t& trt);
-
-    /* staged new order */
-    w_rc_t staged_no_outside_loop(new_order_input_t* pnoin, 
-                                  time_t tstamp,
-                                  const int xct_id, 
-                                  trx_result_tuple_t& trt);
-
-    w_rc_t staged_no_one_ol(ol_item_info* polin,
-                            time_t tstamp, 
-                            int a_wh_id,
-                            int a_d_id,
-                            int item_cnt,
-                            const int xct_id, 
-                            trx_result_tuple_t& trt);
-
-    
-
-    // update statistics
-    void _inc_other_att();
-    void _inc_other_failed();
-    void _inc_pay_att();
-    void _inc_pay_failed();
 
     const int upd_worker_cnt();
 
     // accesses a worker from the pool
-    inline tpcc_worker_t* tpccworker(const int idx) { 
+    inline tpcb_worker_t* tpcbworker(const int idx) { 
         assert (idx>=0);
         return (_workers[idx%_worker_cnt]); 
     } 
 
     //// request atomic trash stack
-    typedef atomic_class_stack<tpcc_request_t> RequestStack;
+    typedef atomic_class_stack<tpcb_request_t> RequestStack;
     RequestStack _request_pool;
 
 
-}; // EOF ShoreTPCCEnv
+}; // EOF ShoreTPCBEnv
    
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(tpcb);
 
 
-#endif /* __SHORE_TPCC_ENV_H */
+#endif /* __SHORE_TPCB_ENV_H */
 

@@ -9,41 +9,18 @@
  */
 
 #include "tests/common.h"
-#include "sm/shore/shore_helper_loader.h"
-
 #include "util/shell.h"
 
-#include "workload/tpcc/shore_tpcc_env.h"
-
-#include "dora.h"
-#include "dora/tpcc/dora_tpcc.h"
+#include "workload/tpcb/shore_tpcb_env.h"
 
 #include "tests/common/tester_shore_shell.h"
 #include "tests/common/tester_shore_client.h"
 
 using namespace shore;
-using namespace tpcc;
-using namespace dora;
+using namespace tpcb;
 
 
 
-
-
-//////////////////////////////
-
-
-// Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline, snDORA };
-
-// Map to associate string with then enum values
-
-static map<string,SysnameValue> mSysnameValue;
-
-void initsysnamemap() 
-{
-    mSysnameValue["baseline"] = snBaseline;
-    mSysnameValue["dora"] =     snDORA;
-}
 
 
 //////////////////////////////
@@ -52,7 +29,7 @@ template<class Client,class DB>
 class kit_t : public shore_shell_t
 { 
 private:
-    DB* _tpccdb;
+    DB* _tpcbdb;
 
 public:
 
@@ -72,11 +49,11 @@ public:
 
 
     // impl of supported commands
-    virtual int _cmd_TEST_impl(const int iQueriedWHs, const int iSpread,
+    virtual int _cmd_TEST_impl(const int iQueriedBranches, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
                                const eBindingType abt);
-    virtual int _cmd_MEASURE_impl(const int iQueriedWHs, const int iSpread,
+    virtual int _cmd_MEASURE_impl(const int iQueriedBranches, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const eBindingType abt);    
@@ -141,42 +118,39 @@ public:
     virtual const int register_commands() 
     {
         // FROM TESTER_SHORE_SHELL
-        _fakeioer = new fake_iodelay_cmd_t(_tpccdb);
+        _fakeioer = new fake_iodelay_cmd_t(_tpcbdb);
         _fakeioer->setaliases();
         add_cmd(_fakeioer.get());
 
         // FROM TESTER_SHORE_SHELL
-        _slier = new sli_enable_cmd_t(_tpccdb);
+        _slier = new sli_enable_cmd_t(_tpcbdb);
         _slier->setaliases();
         add_cmd(_slier.get());
 
+        _elrer = new elr_enable_cmd_t(_tpcbdb);
+        _elrer->setaliases();
+        add_cmd(_elrer.get());
+
 
         // TEMPLATE-BASED
-        _restarter = new restart_cmd_t(_tpccdb);
+        _restarter = new restart_cmd_t(_tpcbdb);
         _restarter->setaliases();
         add_cmd(_restarter.get());
 
-        _informer = new info_cmd_t(_tpccdb);
+        _informer = new info_cmd_t(_tpcbdb);
         _informer->setaliases();
         add_cmd(_informer.get());
 
-        _stater = new stats_cmd_t(_tpccdb);
+        _stater = new stats_cmd_t(_tpcbdb);
         _stater->setaliases();
         add_cmd(_stater.get());
 
-        _dumper = new dump_cmd_t(_tpccdb);
+        _dumper = new dump_cmd_t(_tpcbdb);
         _dumper->setaliases();
         add_cmd(_dumper.get());
 
         return (0);
     }
-
-protected:
-
-
-    virtual void print_throughput(const int iQueriedWHs, const int iSpread, 
-                                  const int iNumOfThreads,
-                                  const double delay, const eBindingType abt);
 
 }; // EOF: kit_t
 
@@ -218,7 +192,7 @@ const int kit_t<Client,DB>::load_bp_map(void)
  *  @fn:      inst_test_env
  *
  *  @brief:   Instanciates the Shore environment, 
- *            Opens the database and sets the appropriate number of WHs
+ *            Opens the database and sets the appropriate number of Branches
  *  
  *  @returns: 1 on error
  *
@@ -228,7 +202,7 @@ template<class Client,class DB>
 const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[]) 
 {    
     // 1. Instanciate the Shore Environment
-    _env = _tpccdb = new DB(SHORE_CONF_FILE);
+    _env = _tpcbdb = new DB(SHORE_CONF_FILE);
 
     // 2. Initialize the Shore Environment
     // the initialization must be executed in a shore context
@@ -246,12 +220,12 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
     }
 
     // 3. set SF - if param valid
-    assert (_tpccdb);
+    assert (_tpcbdb);
     if (argc>1) {
-        int numQueriedOfWHs = atoi(argv[1]);
-        _tpccdb->set_qf(numQueriedOfWHs);
+        int numQueriedOfBranches = atoi(argv[1]);
+        _tpcbdb->set_qf(numQueriedOfBranches);
     }
-    _numOfWHs = _tpccdb->get_sf();
+    _numOfWHs = _tpcbdb->get_sf();
 
 
     // 4. Load supported trxs and bps
@@ -268,83 +242,87 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
     register_commands();
 
     // 6. Start the VAS
-    return (_tpccdb->start());
+    return (_tpcbdb->start());
 }
-
 
 
 
 /******************************************************************** 
  *
- *  @fn:    print_throughput
+ * @enum:  baseline_tpcb_client_t
  *
- *  @brief: Prints the throughput given measurement delay
+ * @brief: The Baseline TPC-C kit smthread-based test client class
  *
  ********************************************************************/
 
-template<class Client,class DB>
-void kit_t<Client,DB>::print_throughput(const int iQueriedWHs, const int iSpread, 
-                                        const int iNumOfThreads, 
-                                        const double delay, const eBindingType abt)
+class baseline_tpcb_client_t : public base_client_t 
 {
-    assert (_env);
-    int trxs_att  = _tpccdb->get_session_tpcc_stats()->get_total_attempted();
-    int trxs_com  = _tpccdb->get_session_tpcc_stats()->get_total_committed();
-    int nords_com = _tpccdb->get_session_tpcc_stats()->get_no_com();
+private:
+    // workload parameters
+    ShoreTPCBEnv* _tpcbdb;    
+    int _wh;
+    tpcb_worker_t* _worker;
+    int _qf;
+    
 
-    TRACE( TRACE_ALWAYS, "*******\n"            \
-           "WHs:      (%d)\n"                   \
-           "Spread:   (%s)\n"                   \
-           "Binding:  (%s)\n"                   \
-           "Threads:  (%d)\n"                   \
-           "Trxs Att: (%d)\n"                   \
-           "Trxs Com: (%d)\n"                   \
-           "NOrd Com: (%d)\n"       \
-           "Secs:     (%.2f)\n"     \
-           "TPS:      (%.2f)\n"                 \
-           "tpm-C:    (%.2f)\n",
-           iQueriedWHs, 
-           (iSpread ? "Yes" : "No"),
-           translate_bp(abt),
-           iNumOfThreads, trxs_att, trxs_com, nords_com, 
-           delay, 
-           trxs_com/delay,
-           60*nords_com/delay);
+public:
+
+    baseline_tpcb_client_t() { }     
+
+    baseline_tpcb_client_t(c_str tname, const int id, ShoreTPCBEnv* env, 
+                           const MeasurementType aType, const int trxid, 
+                           const int numOfTrxs, 
+                           processorid_t aprsid, const int sWH, const int qf) 
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
+          _tpcbdb(env), _wh(sWH), _qf(qf)
+    {
+        assert (env);
+        assert (_wh>=0 && _qf>0);
+
+        // pick worker thread
+        _worker = _tpcbdb->tpcbworker(_id);
+        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
+        assert (_worker);
+    }
+
+    ~baseline_tpcb_client_t() { }
+
+    // INTERFACE 
+
+    w_rc_t run_one_xct(int xct_type, int xctid);    
+
+    static int load_sup_xct(mapSupTrxs& stmap)
+    {
+	// clears the supported trx map and loads its own
+	stmap.clear();
+
+	// Baseline TPC-C trxs
+	stmap[XCT_ACCT_UPDATE]          = "AccountUpdate";
+	stmap[XCT_POPULATE_DB]    = "PopulateDB";
+
+	return (stmap.size());
+    }
+}; // EOF: baseline_tpcb_client_t
+
+w_rc_t baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid) 
+{
+    // 1. Initiate and detach from transaction
+    tid_t atid = tid_t::null;
+    xct_t* pxct = 0;
+    
+    // 2. Set input
+    trx_result_tuple_t atrt;
+    W_DO(_tpcbdb->db()->begin_xct(atid));
+    return _tpcbdb->run_one_xct(xct_type, xctid, _wh, atrt);
 }
 
 
 
-namespace tpcc {
+namespace tpcb {
 
-struct xct_count {
-    int nord;
-    int stock;
-    int delivery;
-    int payment;
-    int status;
-    int other;
-    xct_count &operator+=(xct_count const& rhs) {
-	nord += rhs.nord;
-	stock += rhs.stock;
-	delivery += rhs.delivery;
-	payment += rhs.payment;
-	status += rhs.status;
-        other += rhs.other;
-	return *this;
-    }
-    xct_count &operator-=(xct_count const& rhs) {
-	nord -= rhs.nord;
-	stock -= rhs.stock;
-	delivery -= rhs.delivery;
-	payment -= rhs.payment;
-	status -= rhs.status;
-        other -= rhs.other;
-	return *this;
-    }
-};
 struct xct_stats {
-    xct_count attempted;
-    xct_count failed;
+    int attempted;
+    int failed;
     xct_stats &operator+=(xct_stats const &other) {
 	attempted += other.attempted;
 	failed += other.failed;
@@ -356,6 +334,7 @@ struct xct_stats {
 	return *this;
     };
 };
+
 
 extern xct_stats shell_get_xct_stats();
 }
@@ -384,7 +363,7 @@ void print_xct_stats(const xct_stats& stats)
 /** cmd: TEST **/
 
 template<class Client,class DB>
-int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs, 
+int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedBranches, 
                                      const int iSpread,
                                      const int iNumOfThreads, 
                                      const int iNumOfTrxs,
@@ -393,10 +372,10 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
                                      const eBindingType abt)
 {
     // print test information
-    print_TEST_info(iQueriedWHs, iSpread, iNumOfThreads, 
+    print_TEST_info(iQueriedBranches, iSpread, iNumOfThreads, 
                     iNumOfTrxs, iSelectedTrx, iIterations, abt);
 
-    _tpccdb->upd_sf();
+    _tpcbdb->upd_sf();
 
     Client* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
@@ -419,9 +398,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
             // create & fork testing threads
             if (iSpread)
                 wh_id = i+1;
-            testers[i] = new Client(c_str("CL-%d",i), i, _tpccdb, 
+            testers[i] = new Client(c_str("CL-%d",i), i, _tpcbdb, 
                                     MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs,
-                                    _current_prs_id, wh_id, iQueriedWHs);
+                                    _current_prs_id, wh_id, iQueriedBranches);
             assert (testers[i]);
             testers[i]->fork();
             _current_prs_id = next_cpu(abt, _current_prs_id);
@@ -442,38 +421,24 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
 
         xct_stats stats = shell_get_xct_stats();
         stats -= statsb;
-
-        int attempted = stats.attempted.nord+stats.attempted.payment
-            +stats.attempted.status+stats.attempted.stock+stats.attempted.delivery
-            +stats.attempted.other;
-        int failed = stats.failed.nord+stats.failed.payment
-            +stats.failed.status+stats.failed.stock+stats.failed.delivery
-            +stats.failed.other;
-        int nord = stats.attempted.nord-stats.failed.nord;
 	
-        printf("WH:\t%d\n"
+        printf("Branche:\t%d\n"
                "Spread:\t%s\n"
                "SLI:\t%s\n"
                "Threads:\t%d\n"
                "Trx Att:\t%d\n"
                "Trx Abt:\t%d\n"
-               "NOrd Com:\t%d\n"
                "Secs:\t%.2lf\n"
-               "TPS:\t%.2lf\n"
-               "tpm-C:\t%.2lf\n",
-               iQueriedWHs, iSpread? "yes" : "no", iNumOfThreads,
-               attempted, failed, nord,
-               delay, (attempted-failed)/delay, 60*nord/delay);
+               "TPS:\t%.2lf\n",
+               iQueriedBranches, iSpread? "yes" : "no", iNumOfThreads,
+               stats.attempted, stats.failed,
+               delay, (stats.attempted-stats.failed)/delay);
 
 
         // flush the log before the next iteration
         TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
         //_env->checkpoint();
         TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
-
-//         // print throughput and reset session stats
-//         print_throughput(iQueriedWHs, iSpread, iNumOfThreads, iUseSLI, delay, abt);
-//         _tpccdb->reset_session_tpcc_stats();
 
     }
 
@@ -489,7 +454,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedWHs,
 /** cmd: MEASURE **/
 
 template<class Client,class DB>
-int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs, 
+int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedBranches, 
                                         const int iSpread,
                                         const int iNumOfThreads, 
                                         const int iDuration,
@@ -498,10 +463,10 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
                                         const eBindingType abt)
 {
     // print measurement info
-    print_MEASURE_info(iQueriedWHs, iSpread, iNumOfThreads, iDuration, 
+    print_MEASURE_info(iQueriedBranches, iSpread, iNumOfThreads, iDuration, 
                        iSelectedTrx, iIterations, abt);
 
-    _tpccdb->upd_sf();
+    _tpcbdb->upd_sf();
 
     // create and fork client threads
     Client* testers[MAX_NUM_OF_THR];
@@ -518,9 +483,9 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
             // create & fork testing threads
             if (iSpread)
                 wh_id = i+1;
-            testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _tpccdb, 
+            testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _tpcbdb, 
                                     MT_TIME_DUR, iSelectedTrx, 0,
-                                    _current_prs_id, wh_id, iQueriedWHs);
+                                    _current_prs_id, wh_id, iQueriedBranches);
             assert (testers[i]);
             testers[i]->fork();
             _current_prs_id = next_cpu(abt, _current_prs_id);
@@ -551,35 +516,21 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedWHs,
 	//_cpustater->myinfo.print();
 	TRACE(TRACE_ALWAYS, "end measurement\n");
 
-        int attempted = stats.attempted.nord+stats.attempted.payment
-            +stats.attempted.status+stats.attempted.stock+stats.attempted.delivery
-            +stats.attempted.other;
-        int failed = stats.failed.nord+stats.failed.payment
-            +stats.failed.status+stats.failed.stock+stats.failed.delivery
-            +stats.failed.other;
-        int nord = stats.attempted.nord-stats.failed.nord;
-	
-	printf("WH:\t%d\n"
+	printf("Branches:\t%d\n"
 	       "Spread:\t%s\n"
 	       "Threads:\t%d\n"
 	       "Trx Att:\t%d\n"
 	       "Trx Abt:\t%d\n"
-	       "NOrd Com:\t%d\n"
 	       "Secs:\t%.2lf\n"
-	       "TPS:\t%.2lf\n"
-	       "tpm-C:\t%.2lf\n",
-	       iQueriedWHs, iSpread? "yes" : "no", iNumOfThreads,
-	       attempted, failed, nord,
-	       delay, (attempted-failed)/delay, 60*nord/delay);
+	       "TPS:\t%.2lf\n",
+	       iQueriedBranches, iSpread? "yes" : "no", iNumOfThreads,
+	       stats.attempted, stats.failed,
+	       delay, (stats.attempted-stats.failed)/delay);
 	       
         // flush the log before the next iteration
         TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
-
-        // print throughput and reset session stats
-        //print_throughput(iQueriedWHs, iSpread, iNumOfThreads, delay, abt);
-	//        _tpccdb->reset_session_tpcc_stats();
 
     }
 
@@ -617,8 +568,7 @@ int kit_t<Client,DB>::process_cmd_LOAD(const char* command,
 
 //////////////////////////////
 
-typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
-typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
+typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
 
 
 //////////////////////////////
@@ -641,7 +591,6 @@ int main(int argc, char* argv[])
 
     // 1. Get env vars
     envVar* ev = envVar::instance();       
-    initsysnamemap();
 
     // 2. Initialize shell
     guard<shore_shell_t> kit = NULL;
@@ -649,18 +598,7 @@ int main(int argc, char* argv[])
 
     TRACE( TRACE_ALWAYS, "Starting (%s) kit\n", sysname.c_str());
 
-    switch (mSysnameValue[sysname]) {
-    case snBaseline:
-        // shore.conf is set for Baseline
-        //
-        kit = new baselineTPCCKit("(tpcc) ");
-        break;
-    case snDORA:
-        // shore.conf is set for DORA
-        //TRACE( TRACE_ALWAYS, "Staring DORA-TPC-C Kit\n");
-        kit = new doraTPCCKit("(dora) ");
-        break;
-    }
+    kit = new baselineTPCBKit("(tpcb) ");
     assert (kit.get());
 
 
@@ -693,5 +631,4 @@ int main(int argc, char* argv[])
     // 6. the Shore environment will close at the destructor of the kit
     return (0);
 }
-
 

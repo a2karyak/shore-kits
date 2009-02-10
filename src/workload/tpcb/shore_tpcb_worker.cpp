@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:  shore_tpcc_worker.cpp
+/** @file:  shore_tpcb_worker.cpp
  *
  *  @brief: Implementation the worker threads in Baseline 
  *          (specialization of the Shore workers)
@@ -9,10 +9,10 @@
  */
 
 
-#include "workload/tpcc/shore_tpcc_env.h"
+#include "workload/tpcb/shore_tpcb_env.h"
 
 
-ENTER_NAMESPACE(tpcc);
+ENTER_NAMESPACE(tpcb);
 
 
 using namespace shore;
@@ -26,7 +26,7 @@ using namespace shore;
  * 
  ********************************************************************/
 
-void tpcc_worker_t::enqueue(Request* arequest)
+void tpcb_worker_t::enqueue(Request* arequest)
 {
     assert (arequest);
     _pqueue->push(arequest);
@@ -47,7 +47,7 @@ void tpcc_worker_t::enqueue(Request* arequest)
 extern void worker_thread_init();
 extern void worker_thread_fini();
 
-const int tpcc_worker_t::_work_ACTIVE_impl()
+const int tpcb_worker_t::_work_ACTIVE_impl()
 {    
     //    TRACE( TRACE_DEBUG, "Activating...\n");
 
@@ -103,21 +103,17 @@ const int tpcc_worker_t::_work_ACTIVE_impl()
  * 
  ******************************************************************/
 
-const int tpcc_worker_t::_serve_action(Request* prequest)
+const int tpcb_worker_t::_serve_action(Request* prequest)
 {
     // 1. attach to xct
     assert (prequest);
-#if 0
-    smthread_t::me()->attach_xct(prequest->_xct);
-#else
-    _tpccdb->db()->begin_xct(prequest->_tid);
-#endif
+    _tpcbdb->db()->begin_xct(prequest->_tid);
     TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", prequest->_tid);
             
     // 2. serve action
-    w_rc_t e = _tpccdb->run_one_xct(prequest->_xct_type,
+    w_rc_t e = _tpcbdb->run_one_xct(prequest->_xct_type,
                                     prequest->_xct_id,
-                                    prequest->_whid,
+                                    prequest->_branchid,
                                     prequest->_result);
     if (e.is_error()) {
         TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
@@ -134,4 +130,4 @@ const int tpcc_worker_t::_serve_action(Request* prequest)
 
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(tpcb);

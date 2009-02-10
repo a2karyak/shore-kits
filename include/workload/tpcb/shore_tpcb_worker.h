@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:  shore_tpcc_worker.h
+/** @file:  shore_tpcb_worker.h
  *
  *  @brief: Wrapper for the worker threads in Baseline 
  *          (specialization of the Shore workers)
@@ -9,33 +9,33 @@
  */
 
 
-#ifndef __SHORE_TPCC_WORKER_H
-#define __SHORE_TPCC_WORKER_H
+#ifndef __SHORE_TPCB_WORKER_H
+#define __SHORE_TPCB_WORKER_H
 
 
 #include "sm/shore/shore_worker.h"
 #include "core/trx_packet.h"
 
 
-ENTER_NAMESPACE(tpcc);
+ENTER_NAMESPACE(tpcb);
 
 
 using namespace qpipe;
 using namespace shore;
 
-class ShoreTPCCEnv;
+class ShoreTPCBEnv;
 
 
 
 /******************************************************************** 
  *
- * @struct: tpcc_action_t
+ * @struct: tpcb_action_t
  *
  * @brief:  Represents the requests in the Baseline system
  * 
  ********************************************************************/
 
-struct tpcc_request_t
+struct tpcb_request_t
 {
     // trx-specific
     xct_t*              _xct; // Not the owner
@@ -43,25 +43,25 @@ struct tpcc_request_t
     int                 _xct_id;
     trx_result_tuple_t  _result;
     int                 _xct_type;
-    int                 _whid;
+    int                 _branchid;
 
-    tpcc_request_t() 
+    tpcb_request_t() 
         : _xct(NULL),_xct_id(-1) 
     { }
 
-    tpcc_request_t(xct_t* axct, tid_t atid, const int axctid,
+    tpcb_request_t(xct_t* axct, tid_t atid, const int axctid,
                    trx_result_tuple_t& aresult, 
-                   const int axcttype, const int awhid)
+                   const int axcttype, const int abranchid)
         : _xct(axct),_tid(atid),_xct_id(axctid),_result(aresult),
-          _xct_type(axcttype), _whid(awhid)
+          _xct_type(axcttype), _branchid(abranchid)
     {
         assert (axct);
     }
 
-    ~tpcc_request_t() { }  
+    ~tpcb_request_t() { }  
 
     void set(xct_t* axct, tid_t atid, const int axctid,
-             trx_result_tuple_t& aresult, const int axcttype, const int awhid)
+             trx_result_tuple_t& aresult, const int axcttype, const int abranchid)
     {
         assert (xct);
         _xct = axct;
@@ -69,14 +69,14 @@ struct tpcc_request_t
         _xct_id = axctid;
         _result = aresult;
         _xct_type = axcttype;
-        _whid = awhid;
+        _branchid = abranchid;
     }
 };
 
 
 /******************************************************************** 
  *
- * @class: tpcc_worker_t
+ * @class: tpcb_worker_t
  *
  * @brief: The baseline system worker threads
  * 
@@ -84,15 +84,15 @@ struct tpcc_request_t
 
 const int REQUESTS_PER_WORKER_POOL_SZ = 60;
 
-class tpcc_worker_t : public base_worker_t
+class tpcb_worker_t : public base_worker_t
 {
 public:
-    typedef tpcc_request_t     Request;
+    typedef tpcb_request_t     Request;
     typedef srmwqueue<Request> Queue;
 
 private:
 
-    ShoreTPCCEnv*  _tpccdb;
+    ShoreTPCBEnv*  _tpcbdb;
     guard<Queue>         _pqueue;
     guard<Pool>          _actionpool;
 
@@ -104,16 +104,16 @@ private:
 
 public:
 
-    tpcc_worker_t(ShoreEnv* env,ShoreTPCCEnv* tpcc, //ugly
+    tpcb_worker_t(ShoreEnv* env,ShoreTPCBEnv* tpcb, //ugly
                   c_str tname, 
                   processorid_t aprsid = PBIND_NONE, const int use_sli = 0) 
-        : base_worker_t(env, tname, aprsid, use_sli), _tpccdb(tpcc)
+        : base_worker_t(env, tname, aprsid, use_sli), _tpcbdb(tpcb)
     { 
         assert (env);
         _actionpool = new Pool(sizeof(Request*),REQUESTS_PER_WORKER_POOL_SZ);
         _pqueue = new Queue( _actionpool.get() );
     }
-    ~tpcc_worker_t() { }
+    ~tpcb_worker_t() { }
 
     // access methods
     void enqueue(Request* arequest);
@@ -122,11 +122,11 @@ public:
     }
         
 
-}; // EOF: tpcc_worker_t
+}; // EOF: tpcb_worker_t
 
 
 
-EXIT_NAMESPACE(tpcc);
+EXIT_NAMESPACE(tpcb);
 
-#endif /** __SHORE_TPCC_WORKER_H */
+#endif /** __SHORE_TPCB_WORKER_H */
 
