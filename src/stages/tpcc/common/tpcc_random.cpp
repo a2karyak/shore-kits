@@ -9,8 +9,8 @@
  */
 
 
-#include "stages/tpcc//common/tpcc_random.h"
-#include "stages/tpcc//common/tpcc_const.h"
+#include "stages/tpcc/common/tpcc_random.h"
+#include "stages/tpcc/common/tpcc_const.h"
 
 
 ENTER_NAMESPACE(tpcc);
@@ -146,11 +146,14 @@ int generate_cust_last(int select, char* dest)
 
 
 
-/** @func random_xct_type
+/******************************************************************************* 
+ * 
+ *  @func:  random_xct_type
+ *  
+ *  @brief: Translates or picks a random xct type given the benchmark 
+ *          specification
  *
- *  @brief Translates or picks a random xct type given the benchmark specification
- */
-
+ *******************************************************************************/
 
 int random_xct_type(int selected)
 {
