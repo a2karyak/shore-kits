@@ -181,13 +181,13 @@ w_rc_t sf_man_impl::sf_get_idx_iter(ss_m* db,
 
     // prepare the key to be probed
     ptuple->set_value(0, sub_id);
-    ptuple->set_value(1, 1); // smallest SF_TYPE (1-4)
+    ptuple->set_value(1, (short)1); // smallest SF_TYPE (1-4)
 
     int lowsz = format_key(pindex, ptuple, replow);
     w_assert3 (replow._dest);
 
 
-    ptuple->set_value(1, 4); // largest SF_TYPE (1-4)
+    ptuple->set_value(1, (short)4); // largest SF_TYPE (1-4)
 
     int highsz = format_key(pindex, ptuple, rephigh);
     w_assert3 (rephigh._dest);    
@@ -288,7 +288,7 @@ w_rc_t cf_man_impl::cf_get_idx_iter(ss_m* db,
     w_assert3 (replow._dest);
 
 
-    ptuple->set_value(2, 24); // largest S_TIME
+    ptuple->set_value(2, (short)24); // largest S_TIME
 
     int highsz = format_key(pindex, ptuple, rephigh);
     w_assert3 (rephigh._dest);    

@@ -85,17 +85,22 @@ public:
         int  keys[1] = { 0 }; // IDX { W_ID }
 
         // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
 
-        // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
+        // baseline - Regular 
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+            // create unique index w_index on (w_id)
+            create_primary_idx("W_INDEX", 0, keys, 1);
+        }
 
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-        
-        // create unique index w_index on (w_id)
-        create_primary_idx("W_INDEX", 0, keys, 1);
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index w_index on (w_id)
+            // last param (nolock) is set to true
+            create_primary_idx("W_INDEX_NL", 0, keys, 1, true);
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -125,19 +130,21 @@ public:
 
         int keys[2] = { 0, 1 }; // IDX { D_ID, D_W_ID }
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
+        // baseline - Regular 
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name); 
+            // create unique index d_index on (d_id, w_id)
+            create_primary_idx("D_INDEX", 0, keys, 2);
+        }
+ 
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
 
-        // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-
-        // create unique index d_index on (d_id, w_id)
-        create_primary_idx("D_INDEX", 0, keys, 2);
-
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index d_index on (d_id, w_id)
+            // last param (nolock) is set to true
+            create_primary_idx("D_INDEX_NL", 0, keys, 2, true);
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -183,22 +190,29 @@ public:
         int keys2[5] = {2, 1, 5, 3, 0}; // IDX { C_W_ID, C_D_ID, C_LAST, C_FIRST, C_ID }
 
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
         // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+ 
+            // create unique index c_index on (w_id, d_id, c_id)
+            create_primary_idx("C_INDEX", 0, keys1, 3);
+ 
+            // create index c_name_index on (w_id, d_id, last, first, id)
+            create_index("C_NAME_INDEX", 0, keys2, 5, false);
+        }
 
-        // create unique index c_index on (w_id, d_id, c_id)
-        create_primary_idx("C_INDEX", 0, keys1, 3);
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
 
-        // create index c_name_index on (w_id, d_id, last, first, id)
-        create_index("C_NAME_INDEX", 0, keys2, 5, false);
+            // create unique index c_index on (w_id, d_id, c_id)
+            // last param (nolock) is set to true
+            create_primary_idx("C_INDEX_NL", 0, keys1, 3, true);
 
-        assert (idxs_created==1); // make sure that idxs were created
+            // create index c_name_index on (w_id, d_id, last, first, id)
+            // last param (nolock) is set to true
+            create_index("C_NAME_INDEX_NL", 0, keys2, 5, false, false, true);     
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -244,19 +258,22 @@ public:
 
         int keys[3] = {2, 1, 0}; // IDX { NO_W_ID, NO_D_ID, NO_O_ID }
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
+        // baseline - Regular
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+ 
+            // create unique index no_index on (w_id, d_id, o_id)
+            create_primary_idx("NO_INDEX", 0, keys, 3);
+        }
+ 
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
 
-        // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-
-        // create unique index no_index on (w_id, d_id, o_id)
-        create_primary_idx("NO_INDEX", 0, keys, 3);
-
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index no_index on (w_id, d_id, o_id)
+            // last param (nolock) is set to true
+            create_primary_idx("NO_INDEX_NL", 0, keys, 3, true);        
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -285,22 +302,30 @@ public:
         int keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
 
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
+         // baseline - regular indexes
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+ 
+            // create unique index o_index on (w_id, d_id, o_id)
+            create_index("O_INDEX", 0, keys1, 3);
+             
+            // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
+            create_index("O_CUST_INDEX", 0, keys2, 4);
+        }
+ 
 
-        // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-
-        // create unique index o_index on (w_id, d_id, o_id)
-        create_index("O_INDEX", 0, keys1, 3);
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
             
-        // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
-        create_index("O_CUST_INDEX", 0, keys2, 4);
-
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index o_index on (w_id, d_id, o_id)
+            // last param (nolock) is set to true
+            create_index("O_INDEX_NL", 0, keys1, 3, true, false, true);
+            
+            // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
+            // last param (nolock) is set to true
+            create_index("O_CUST_INDEX_NL", 0, keys2, 4, true, false, true);
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -329,20 +354,24 @@ public:
 
 	int keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
-
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
         // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+ 
+            // create unique index ol_index on (w_id, d_id, o_id, ol_number)
+            create_primary_idx("OL_INDEX", 10, keys, 4);
+        }
 
-        // create unique index ol_index on (w_id, d_id, o_id, ol_number)
-        create_primary_idx("OL_INDEX", 10, keys, 4);
+ 
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
 
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index ol_index on (w_id, d_id, o_id, ol_number)
+            // last param (nolock) is set to true
+            create_primary_idx("OL_INDEX_NL", 10, keys, 4, true);
+        }
+
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -366,19 +395,22 @@ public:
 	
 	int keys[1] = {0}; // IDX { I_ID }
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
         // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-            
-        // create unique index on i_index on (i_id)
-        create_primary_idx("I_INDEX", 0, keys, 1);
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+             
+            // create unique index on i_index on (i_id)
+            create_primary_idx("I_INDEX", 0, keys, 1);
+        }
+ 
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
 
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index on i_index on (i_id)
+            // last param (nolock) is set to true        
+            create_primary_idx("I_INDEX_NL", 0, keys, 1, true);
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);
@@ -417,19 +449,23 @@ public:
 
 	int keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
         // baseline - regular indexes
-        //        if (sysname.compare("baseline")==0) {
-        assert (idxs_created==0);
-        idxs_created=1;
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+ 
+            // create unique index s_index on (w_id, i_id)
+            create_primary_idx("S_INDEX", 0, keys, 2);
+        }
 
-        // create unique index s_index on (w_id, i_id)
-        create_primary_idx("S_INDEX", 0, keys, 2);
-
-        assert (idxs_created==1); // make sure that idxs were created
+ 
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+            
+            // create unique index s_index on (w_id, i_id)
+            // last param (nolock) is set to true
+            create_primary_idx("S_INDEX_NL", 0, keys, 2, true);
+        }
     }
 
     bool read_tuple_from_line(table_row_t& tuple, char* buf);

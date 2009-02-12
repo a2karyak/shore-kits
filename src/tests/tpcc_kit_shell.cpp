@@ -522,7 +522,8 @@ int main(int argc, char* argv[])
     TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", sysname.c_str(), benchmarkname.c_str());
 
 
-    if (benchmarkname == "tpcc") {
+    // TPC-C
+    if (benchmarkname.compare("tpcc")) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
@@ -539,8 +540,9 @@ int main(int argc, char* argv[])
             return (2);        
         }
     }
-    
-    if (benchmarkname == "tm1") {
+
+    // TM!
+    if (benchmarkname.compare("tm1")) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline

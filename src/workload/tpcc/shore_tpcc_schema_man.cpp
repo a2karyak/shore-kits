@@ -52,7 +52,7 @@ w_rc_t warehouse_man_impl::wh_index_probe_nl(ss_m* db,
 {
     assert (ptuple);    
     ptuple->set_value(0, w_id);
-    return (index_probe_nl_by_name(db, "W_INDEX", ptuple));
+    return (index_probe_nl_by_name(db, "W_INDEX_NL", ptuple));
 }
 
 w_rc_t warehouse_man_impl::wh_update_ytd(ss_m* db,
@@ -117,7 +117,7 @@ w_rc_t district_man_impl::dist_index_probe_nl(ss_m* db,
     assert (ptuple);
     ptuple->set_value(0, d_id);
     ptuple->set_value(1, w_id);
-    return (index_probe_nl_by_name(db, "D_INDEX", ptuple));
+    return (index_probe_nl_by_name(db, "D_INDEX_NL", ptuple));
 }
 
 w_rc_t district_man_impl::dist_update_ytd(ss_m* db,
@@ -188,7 +188,11 @@ w_rc_t customer_man_impl::cust_get_iter_by_index(ss_m* db,
 
     /* find the index */
     assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("C_NAME_INDEX");
+    index_desc_t* pindex = NULL;
+    if (alm == NL) 
+        pindex = _ptable->find_index("C_NAME_INDEX_NL");
+    else
+        pindex = _ptable->find_index("C_NAME_INDEX");
     assert (pindex);
 
     // C_NAME_INDEX: {2 - 1 - 5 - 3 - 0}
@@ -281,7 +285,7 @@ w_rc_t customer_man_impl::cust_index_probe_nl(ss_m * db,
     ptuple->set_value(0, c_id);
     ptuple->set_value(1, d_id);
     ptuple->set_value(2, w_id);
-    return (index_probe_nl_by_name(db, "C_INDEX", ptuple));
+    return (index_probe_nl_by_name(db, "C_INDEX_NL", ptuple));
 }
 
 w_rc_t customer_man_impl::cust_update_tuple(ss_m* db,
@@ -358,7 +362,11 @@ w_rc_t new_order_man_impl::no_get_iter_by_index(ss_m* db,
 
     /* find the index */
     assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("NO_INDEX");
+    index_desc_t* pindex = NULL;
+    if (alm == NL) 
+        pindex = _ptable->find_index("NO_INDEX_NL");
+    else
+        pindex = _ptable->find_index("NO_INDEX");    
     assert (pindex);
 
     /* get the lowest key value */
@@ -461,7 +469,11 @@ w_rc_t order_man_impl::ord_get_iter_by_index(ss_m* db,
 
     /* find index */
     assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("O_CUST_INDEX");
+    index_desc_t* pindex = NULL;
+    if (alm == NL) 
+        _ptable->find_index("O_CUST_INDEX_NL");
+    else
+        _ptable->find_index("O_CUST_INDEX");
     assert (pindex);
 
     /* get the lowest key value */
@@ -529,7 +541,7 @@ w_rc_t order_man_impl::ord_update_carrier_by_index_nl(ss_m* db,
     // 1. idx probe the order
     // 2. update carrier_id and update table
 
-    W_DO(index_probe_nl_by_name(db, "O_INDEX", ptuple));
+    W_DO(index_probe_nl_by_name(db, "O_INDEX_NL", ptuple));
 
     ptuple->set_value(5, carrier_id);
     W_DO(update_tuple(db, ptuple, NL));
@@ -562,7 +574,11 @@ w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
 
     /* pointer to the index */
     assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("OL_INDEX");
+    index_desc_t* pindex = NULL;
+    if (alm == NL) 
+        pindex = _ptable->find_index("OL_INDEX_NL");
+    else
+        pindex = _ptable->find_index("OL_INDEX");
     assert (pindex);
 
     /* get the lowest key value */
@@ -692,7 +708,7 @@ w_rc_t item_man_impl::it_index_probe_nl(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, i_id);
-    return (index_probe_nl_by_name(db, "I_INDEX", ptuple));
+    return (index_probe_nl_by_name(db, "I_INDEX_NL", ptuple));
 }
 
 
@@ -732,7 +748,7 @@ w_rc_t stock_man_impl::st_index_probe_nl(ss_m* db,
     assert (ptuple);
     ptuple->set_value(0, i_id);
     ptuple->set_value(1, w_id);
-    return (index_probe_nl_by_name(db, "S_INDEX", ptuple));
+    return (index_probe_nl_by_name(db, "S_INDEX_NL", ptuple));
 }
 
 w_rc_t  stock_man_impl::st_update_tuple(ss_m* db,
