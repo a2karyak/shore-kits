@@ -12,7 +12,7 @@
 using namespace shore;
 
 
-int _numOfWHs = DF_NUM_OF_WHS;
+int _theSF = DF_SF;
 
 
 
@@ -81,7 +81,7 @@ w_rc_t baseline_tpcc_client_t::run_one_xct(int xct_type, int xctid)
 
     // 3. Get one action from the trash stack
     assert (_tpccdb);
-    tpcc_request_t* arequest = new (_tpccdb->_request_pool) tpcc_request_t;
+    trx_request_t* arequest = new (_tpccdb->_request_pool) trx_request_t;
     arequest->set(pxct,atid,xctid,atrt,xct_type,whid);    
 
     // 4. enqueue to worker thread

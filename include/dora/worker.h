@@ -88,16 +88,6 @@ public:
  * 
  ******************************************************************/
 
-EXIT_NAMESPACE(dora);
-
-ENTER_NAMESPACE(tpcc);
-extern void worker_thread_init();
-extern void worker_thread_fini();
-EXIT_NAMESPACE(tpcc);
-
-ENTER_NAMESPACE(dora);
-
-
 template <class DataType>
 inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 {    
@@ -124,9 +114,6 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
     BaseActionPtrList actionPromotedList;
     actionReadyList.clear();
     actionPromotedList.clear();
-
-
-    worker_thread_init();
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
@@ -188,9 +175,6 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
             }
         }
     }
-
-    worker_thread_fini();
-
     return (0);
 }
 

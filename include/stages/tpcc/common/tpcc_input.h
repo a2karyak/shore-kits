@@ -54,7 +54,7 @@ struct ol_item_info
 {
     int   _ol_i_id;             /* input: NURand(8191,1,100000) */
     short _ol_supply_wh_select; /* input: URand(1,100) */
-    int   _ol_supply_wh_id;     /* input: x==1 -> URand(1, WHs) */
+    int   _ol_supply_wh_id;     /* input: x==1 -> URand(1, SF) */
     int   _ol_quantity;         /* input: URand(1,10) */        
 
     int   _item_amount;         /* placeholder for the item amount */

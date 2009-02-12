@@ -113,41 +113,41 @@ processorid_t shore_shell_t::next_cpu(const eBindingType abt,
  *
  ********************************************************************/
 
-void shore_shell_t::print_MEASURE_info(const int iQueriedWHs, const int iSpread, 
+void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread, 
                                            const int iNumOfThreads, const int iDuration,
                                            const int iSelectedTrx, const int iIterations,
                                            const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "QueriedWHs:    (%d)\n" \
+           "QueriedSF:     (%d)\n" \
            "SpreadThreads: (%s)\n" \
            "Binding:       (%s)\n" \
            "NumOfThreads:  (%d)\n" \
            "Duration:      (%d)\n" \
            "Trx:           (%s)\n" \
            "Iterations:    (%d)\n",
-           iQueriedWHs, (iSpread ? "Yes" : "No"), 
+           iQueriedSF, (iSpread ? "Yes" : "No"), 
            translate_bp(abt),
            iNumOfThreads, iDuration, translate_trx(iSelectedTrx), 
            iIterations);
 }
 
-void shore_shell_t::print_TEST_info(const int iQueriedWHs, const int iSpread, 
+void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread, 
                                         const int iNumOfThreads, const int iNumOfTrxs,
                                         const int iSelectedTrx, const int iIterations,
                                         const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n"
-           "QueriedWHs:     (%d)\n" \
+           "QueriedSF:      (%d)\n" \
            "Spread Threads: (%s)\n" \
            "Binding:        (%s)\n" \
            "NumOfThreads:   (%d)\n" \
            "NumOfTrxs:      (%d)\n" \
            "Trx:            (%s)\n" \
            "Iterations:     (%d)\n",
-           iQueriedWHs, (iSpread ? "Yes" : "No"), 
+           iQueriedSF, (iSpread ? "Yes" : "No"), 
            translate_bp(abt),
            iNumOfThreads, iNumOfTrxs, translate_trx(iSelectedTrx),
            iIterations);
@@ -171,7 +171,7 @@ int shore_shell_t::print_usage(const char* command)
     TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
            "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
            "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (Default=10) (optional)\n" \
+           "<NUM_QUERIED> : The SF queried (Default=10) (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (Default=1000) (optional)\n" \
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=3) (optional)\n\n");
@@ -179,8 +179,8 @@ int shore_shell_t::print_usage(const char* command)
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
            "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
            "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
-           "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
+           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
+           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
@@ -190,15 +190,15 @@ int shore_shell_t::print_usage(const char* command)
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n" \
            "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
            "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
-           "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
+           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
+           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
            "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n");
     
-    TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
+    TRACE( TRACE_ALWAYS, "\n\nCurrently Scaling factor = (%d)\n", _theSF);
 
     print_sup_trxs();
     print_sup_bp();
@@ -220,8 +220,8 @@ void shore_shell_t::usage_cmd_TEST()
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
            "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
            "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
-           "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
+           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
+           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
@@ -243,8 +243,8 @@ void shore_shell_t::usage_cmd_MEASURE()
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
            "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
            "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (queried factor)\n" \
-           "<SPREAD>      : Whether to spread threads to WHs (0=No, Otherwise=Yes, Default=No) (optional)\n" \
+           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
+           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
@@ -266,7 +266,7 @@ void shore_shell_t::usage_cmd_WARMUP()
     TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
            "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
            "\nParameters:\n" \
-           "<NUM_QUERIED> : The number of WHs queried (Default=10) (optional)\n" \
+           "<NUM_QUERIED> : The SF queried (Default=10) (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (Default=1000) (optional)\n" \
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<ITERATIONS>  : Number of iterations (Default=3) (optional)\n\n");
@@ -410,8 +410,8 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    int numOfQueriedWHs     = ev->getVarInt("test-num-queried",DF_WARMUP_QUERIED_WHS);
-    int tmp_numOfQueriedWHs = numOfQueriedWHs;
+    int numOfQueriedSF      = ev->getVarInt("test-num-queried",DF_WARMUP_QUERIED_SF);
+    int tmp_numOfQueriedSF  = numOfQueriedSF;
     int numOfTrxs           = ev->getVarInt("test-num-trxs",DF_WARMUP_TRX_PER_THR);
     int tmp_numOfTrxs       = numOfTrxs;
     int duration            = ev->getVarInt("measure-duration",DF_WARMUP_DURATION);
@@ -424,7 +424,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d",
                 &command_tag,
-                &tmp_numOfQueriedWHs,
+                &tmp_numOfQueriedSF,
                 &tmp_numOfTrxs,
                 &tmp_duration,
                 &tmp_iterations) < 1 ) 
@@ -436,12 +436,12 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
     // OPTIONAL Parameters
 
-    // 1- number of queried warehouses - numOfQueriedWHs
-    if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
-        numOfQueriedWHs = tmp_numOfQueriedWHs;
+    // 1- number of queried scaling factor - numOfQueriedSF
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+        numOfQueriedSF = tmp_numOfQueriedSF;
     else
-        numOfQueriedWHs = _numOfWHs;
-    assert (numOfQueriedWHs <= _numOfWHs);
+        numOfQueriedSF = _theSF;
+    assert (numOfQueriedSF <= _theSF);
     
     // 2- number of trxs - numOfTrxs
     if (tmp_numOfTrxs>0)
@@ -458,14 +458,14 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n\n" \
-           "Queried WHs    : %d\n" \
-           "Num of Trxs    : %d\n" \
-           "Duration       : %d\n" \
-           "Iterations     : %d\n", 
-           numOfQueriedWHs, numOfTrxs, duration, iterations);
+           "Queried SF   : %d\n" \
+           "Num of Trxs  : %d\n" \
+           "Duration     : %d\n" \
+           "Iterations   : %d\n", 
+           numOfQueriedSF, numOfTrxs, duration, iterations);
 
     // call the virtual function that implements the test    
-    return (_cmd_WARMUP_impl(numOfQueriedWHs, numOfTrxs, duration, iterations));
+    return (_cmd_WARMUP_impl(numOfQueriedSF, numOfTrxs, duration, iterations));
 }
 
 
@@ -494,9 +494,9 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    int numOfQueriedWHs      = ev->getVarInt("test-num-queried",DF_NUM_OF_QUERIED_WHS);
-    int tmp_numOfQueriedWHs  = numOfQueriedWHs;
-    int spreadThreads        = ev->getVarInt("test-spread",DF_SPREAD_THREADS_TO_WHS);
+    int numOfQueriedSF      = ev->getVarInt("test-num-queried",DF_NUM_OF_QUERIED_SF);
+    int tmp_numOfQueriedSF  = numOfQueriedSF;
+    int spreadThreads        = ev->getVarInt("test-spread",DF_SPREAD_THREADS);
     int tmp_spreadThreads    = spreadThreads;
     int numOfThreads         = ev->getVarInt("test-num-threads",DF_NUM_OF_THR);
     int tmp_numOfThreads     = numOfThreads;
@@ -514,14 +514,14 @@ int shore_shell_t::process_cmd_TEST(const char* command,
     int tmp_sf = ev->getSysVarInt("sf");
     if (tmp_sf) {
         TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
-        _numOfWHs = tmp_sf;
+        _theSF = tmp_sf;
     }
 
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d",
                 &command_tag,
-                &tmp_numOfQueriedWHs,
+                &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
                 &tmp_numOfTrxs,
@@ -536,12 +536,12 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
     // REQUIRED Parameters
 
-    // 1- number of queried warehouses - numOfQueriedWHs
-    if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
-        numOfQueriedWHs = tmp_numOfQueriedWHs;
+    // 1- number of queried Scaling factor - numOfQueriedSF
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+        numOfQueriedSF = tmp_numOfQueriedSF;
     else
-        numOfQueriedWHs = _numOfWHs;
-    assert (numOfQueriedWHs <= _numOfWHs);
+        numOfQueriedSF = _theSF;
+    assert (numOfQueriedSF <= _theSF);
 
 
     // OPTIONAL Parameters
@@ -552,11 +552,11 @@ int shore_shell_t::process_cmd_TEST(const char* command,
     // 3- number of threads - numOfThreads
     if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=MAX_NUM_OF_THR)) {
         numOfThreads = tmp_numOfThreads;
-        if (spreadThreads && (numOfThreads > numOfQueriedWHs))
-            numOfThreads = numOfQueriedWHs;
+        if (spreadThreads && (numOfThreads > numOfQueriedSF))
+            numOfThreads = numOfQueriedSF;
     }
     else {
-        numOfThreads = numOfQueriedWHs;
+        numOfThreads = numOfQueriedSF;
     }
     
     // 4- number of trxs - numOfTrxs
@@ -589,7 +589,7 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
 
     // call the virtual function that implements the test    
-    return (_cmd_TEST_impl(numOfQueriedWHs, spreadThreads, numOfThreads,
+    return (_cmd_TEST_impl(numOfQueriedSF, spreadThreads, numOfThreads,
                            numOfTrxs, selectedTrxID, iterations, 
                            binding));
 }
@@ -619,9 +619,9 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    int numOfQueriedWHs      = ev->getVarInt("measure-num-queried",DF_NUM_OF_QUERIED_WHS);
-    int tmp_numOfQueriedWHs  = numOfQueriedWHs;
-    int spreadThreads        = ev->getVarInt("measure-spread",DF_SPREAD_THREADS_TO_WHS);
+    int numOfQueriedSF      = ev->getVarInt("measure-num-queried",DF_NUM_OF_QUERIED_SF);
+    int tmp_numOfQueriedSF  = numOfQueriedSF;
+    int spreadThreads        = ev->getVarInt("measure-spread",DF_SPREAD_THREADS);
     int tmp_spreadThreads    = spreadThreads;
     int numOfThreads         = ev->getVarInt("measure-num-threads",DF_NUM_OF_THR);
     int tmp_numOfThreads     = numOfThreads;
@@ -638,14 +638,14 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     int tmp_sf = ev->getSysVarInt("sf");
     if (tmp_sf) {
         TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
-        _numOfWHs = tmp_sf;
+        _theSF = tmp_sf;
     }
 
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d",
                 &command_tag,
-                &tmp_numOfQueriedWHs,
+                &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
                 &tmp_duration,
@@ -660,12 +660,12 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
 
     // REQUIRED Parameters
 
-    // 1- number of queried warehouses - numOfQueriedWHs
-    if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
-        numOfQueriedWHs = tmp_numOfQueriedWHs;
+    // 1- number of queried warehouses - numOfQueriedSF
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+        numOfQueriedSF = tmp_numOfQueriedSF;
     else
-        numOfQueriedWHs = _numOfWHs;
-    assert (numOfQueriedWHs <= _numOfWHs);
+        numOfQueriedSF = _theSF;
+    assert (numOfQueriedSF <= _theSF);
 
 
     // OPTIONAL Parameters
@@ -676,11 +676,11 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     // 3- number of threads - numOfThreads
     if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=MAX_NUM_OF_THR)) {
         numOfThreads = tmp_numOfThreads;
-        if (spreadThreads && (numOfThreads > numOfQueriedWHs))
-            numOfThreads = numOfQueriedWHs;
+        if (spreadThreads && (numOfThreads > numOfQueriedSF))
+            numOfThreads = numOfQueriedSF;
     }
     else {
-        numOfThreads = numOfQueriedWHs;
+        numOfThreads = numOfQueriedSF;
     }
     
     // 4- duration of measurement - duration
@@ -712,7 +712,7 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     }
 
     // call the virtual function that implements the measurement    
-    return (_cmd_MEASURE_impl(numOfQueriedWHs, spreadThreads, numOfThreads,
+    return (_cmd_MEASURE_impl(numOfQueriedSF, spreadThreads, numOfThreads,
                               duration, selectedTrxID, iterations,
                               binding));
 }
@@ -747,10 +747,10 @@ int shore_shell_t::SIGINT_handler()
  *
  ********************************************************************/
 
-int shore_shell_t::_cmd_WARMUP_impl(const int iQueriedWHs, 
-                                        const int iTrxs, 
-                                        const int iDuration, 
-                                        const int iIterations)
+int shore_shell_t::_cmd_WARMUP_impl(const int iQueriedSF, 
+                                    const int iTrxs, 
+                                    const int iDuration, 
+                                    const int iIterations)
 {
     TRACE( TRACE_ALWAYS, "warming up...\n");
 

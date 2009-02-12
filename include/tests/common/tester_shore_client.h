@@ -21,24 +21,21 @@ using namespace dora;
 
 
 // default database size (scaling factor)
-const int DF_NUM_OF_WHS            = 10;
-extern int _numOfWHs;
+const int DF_SF            = 10;
+extern int _theSF;
 
 // Default values for the power-runs //
 
-// default queried number of warehouses (queried factor)
-const int DF_NUM_OF_QUERIED_WHS    = 10;
-
-// default value to spread threads at WHs
-const int DF_SPREAD_THREADS_TO_WHS = 1;
+// default queried factor
+const int DF_NUM_OF_QUERIED_SF    = 10;
 
 // default transaction id to be executed
 const int DF_TRX_ID                = XCT_PAYMENT;
 
 // Default values for the warmups //
 
-// default number of queried WHs during warmup
-const int DF_WARMUP_QUERIED_WHS = 10;
+// default number of queried SF during warmup
+const int DF_WARMUP_QUERIED_SF = 10;
 
 
 
@@ -56,7 +53,7 @@ private:
     // workload parameters
     ShoreTPCCEnv* _tpccdb;    
     int _wh;
-    tpcc_worker_t* _worker;
+    trx_worker_t<ShoreTPCCEnv>* _worker;
     int _qf;
     
 
@@ -75,7 +72,7 @@ public:
         assert (_wh>=0 && _qf>0);
 
         // pick worker thread
-        _worker = _tpccdb->tpccworker(_id);
+        _worker = _tpccdb->trxworker(_id);
         TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
         assert (_worker);
     }

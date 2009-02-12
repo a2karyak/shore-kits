@@ -25,47 +25,6 @@ ENTER_NAMESPACE(tpcc);
 
 /******************************************************************** 
  *
- *  @fn:    print_trx_stats
- *
- *  @brief: Prints trx statistics
- *
- ********************************************************************/
-
-void tpcc_stats_t::print_trx_stats() const
-{   
-    TRACE( TRACE_STATISTICS, "=====================================\n");
-    TRACE( TRACE_STATISTICS, "TPC-C Database transaction statistics\n");
-    TRACE( TRACE_STATISTICS, "NEW-ORDER\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _no_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _no_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_no_att-_no_com));
-    TRACE( TRACE_STATISTICS, "PAYMENT\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _pay_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _pay_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_pay_att-_pay_com));
-    TRACE( TRACE_STATISTICS, "ORDER-STATUS\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _ord_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _ord_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_ord_att-_ord_com));
-    TRACE( TRACE_STATISTICS, "DELIVERY\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _del_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _del_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_del_att-_del_com));
-    TRACE( TRACE_STATISTICS, "STOCK-LEVEL\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _sto_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _sto_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_sto_att-_sto_com));
-    TRACE( TRACE_STATISTICS, "OTHER\n");
-    TRACE( TRACE_STATISTICS, "Attempted: %d\n", _other_att);
-    TRACE( TRACE_STATISTICS, "Committed: %d\n", _other_com);
-    TRACE( TRACE_STATISTICS, "Aborted  : %d\n", (_other_att-_other_com));
-    TRACE( TRACE_STATISTICS, "=====================================\n");
-}
-
-
-
-/******************************************************************** 
- *
  * ShoreTPCCEnv functions
  *
  ********************************************************************/ 

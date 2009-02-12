@@ -25,7 +25,6 @@ ENTER_NAMESPACE(tpcc);
 
 
 /* use this for allocation of NULL-terminated strings */
-
 #define STRSIZE(x)(x+1)
 
 

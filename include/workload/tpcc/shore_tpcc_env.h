@@ -22,9 +22,10 @@
 
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_sort_buf.h"
+#include "sm/shore/shore_trx_worker.h"
 
 #include "workload/tpcc/shore_tpcc_schema_man.h"
-#include "workload/tpcc/shore_tpcc_worker.h"
+
 
 #include <map>
 
@@ -38,8 +39,6 @@ ENTER_NAMESPACE(tpcc);
 
 
 using std::map;
-
-
 
 
 
@@ -59,171 +58,72 @@ using std::map;
 
 
 
-
-
 /****************************************************************** 
  *
- *  @struct: tpcc_stats_t
+ *  @struct: ShoreTPCCEnv Stats
  *
  *  @brief:  TPCC Environment statistics
  *
  ******************************************************************/
 
-struct tpcc_stats_t 
+struct ShoreTPCCTrxCount 
 {
-    int volatile  _no_att;
-    int volatile  _no_com;
-    tatas_lock    _no_lock;
-    int volatile  _pay_att;
-    int volatile  _pay_com;
-    tatas_lock    _pay_lock;
-    int volatile  _ord_att;
-    int volatile  _ord_com;
-    tatas_lock    _ord_lock;
-    int volatile  _del_att;
-    int volatile  _del_com;
-    tatas_lock    _del_lock;
-    int volatile  _sto_att;
-    int volatile  _sto_com;
-    tatas_lock    _sto_lock;
+    int new_order;
+    int payment;
+    int order_status;
+    int delivery;
+    int stock_level;
 
-    int volatile  _other_att;
-    int volatile  _other_com;
-    tatas_lock    _other_lock;    
+    int other;
 
-    tpcc_stats_t() 
-        : _no_att(0), _no_com(0), _pay_att(0), _pay_com(0), _ord_att(0),
-          _ord_com(0), _del_att(0), _del_com(0), _sto_att(0), _sto_com(0),
-          _other_att(0), _other_com(0)
-    {
+    ShoreTPCCTrxCount& operator+=(ShoreTPCCTrxCount const& rhs) {
+        new_order += rhs.new_order; 
+        payment += rhs.payment; 
+        order_status += rhs.order_status;
+        delivery += rhs.delivery;
+        stock_level += rhs.stock_level; 
+        other += rhs.other;
+	return (*this);
     }
 
-    ~tpcc_stats_t()
-    {
-        //print_trx_stats();
+    ShoreTPCCTrxCount& operator-=(ShoreTPCCTrxCount const& rhs) {
+        new_order -= rhs.new_order; 
+        payment -= rhs.payment; 
+        order_status -= rhs.order_status;
+        delivery -= rhs.delivery;
+        stock_level -= rhs.stock_level; 
+        other -= rhs.other;
+	return (*this);
     }
 
-    // Reset counters
-    void reset() {
-        // grabs all the locks and resets
-        CRITICAL_SECTION(res_no_cs, _no_lock);
-        CRITICAL_SECTION(res_pay_cs, _pay_lock);
-        CRITICAL_SECTION(res_ord_cs, _ord_lock);
-        CRITICAL_SECTION(res_del_cs, _del_lock);
-        CRITICAL_SECTION(res_sto_cs, _sto_lock);
-        CRITICAL_SECTION(res_other_cs, _other_lock);
-                
-        _no_att = 0;
-        _no_com = 0;
-        _pay_att = 0;
-        _pay_com = 0;
-        _ord_att = 0;
-        _ord_com = 0;
-        _del_att = 0;
-        _del_com = 0;
-        _sto_att = 0;
-        _sto_com = 0;
-        _other_att = 0;
-        _other_com = 0;
+    const int total() const {
+        return (new_order+payment+order_status+delivery+stock_level+
+                other);
     }
 
+}; // EOF: ShoreTPCCTrxCount
 
-    // Prints stats
-    void print_trx_stats() const;
 
-    // Access methods
-    int inc_no_att() { 
-        CRITICAL_SECTION(att_no_cs, _no_lock);
-        return (++_no_att); 
+
+struct ShoreTPCCTrxStats
+{
+    ShoreTPCCTrxCount attempted;
+    ShoreTPCCTrxCount failed;
+
+    ShoreTPCCTrxStats& operator+=(ShoreTPCCTrxStats const& other) {
+        attempted += other.attempted;
+        failed    += other.failed;
+        return (*this);
     }
 
-    int inc_no_com() { 
-        CRITICAL_SECTION(com_no_cs, _no_lock);
-        ++_no_att;
-        return (++_no_com); 
+    ShoreTPCCTrxStats& operator-=(ShoreTPCCTrxStats const& other) {
+        attempted -= other.attempted;
+        failed    -= other.failed;
+        return (*this);
     }
 
-    int get_no_com() {
-        CRITICAL_SECTION(read_no_cs, _no_lock);
-        return (_no_com);
-    }
+}; // EOF: ShoreTPCCTrxStats
 
-    int inc_pay_att() { 
-        CRITICAL_SECTION(att_pay_cs, _pay_lock);
-        return (++_pay_att); 
-    }
-
-    int inc_pay_com() { 
-        CRITICAL_SECTION(com_pay_cs, _pay_lock);
-        ++_pay_att;
-        return (++_pay_com); 
-    }
-
-    int inc_ord_att() { 
-        CRITICAL_SECTION(att_ord_cs, _ord_lock);
-        return (++_ord_att); 
-    }
-
-    int inc_ord_com() { 
-        CRITICAL_SECTION(com_ord_cs, _ord_lock);
-        ++_ord_att;
-        return (++_ord_com); 
-    }
-
-    int inc_del_att() { 
-        CRITICAL_SECTION(att_del_cs, _del_lock);
-        return (++_del_att); 
-    }
-
-    int inc_del_com() { 
-        CRITICAL_SECTION(com_del_cs, _del_lock);
-        ++_del_att;
-        return (++_del_com); 
-    }
-
-    int inc_sto_att() { 
-        CRITICAL_SECTION(att_sto_cs, _sto_lock);
-        return (++_sto_att); 
-    }
-
-    int inc_sto_com() { 
-        CRITICAL_SECTION(com_sto_cs, _sto_lock);
-        ++_sto_att;
-        return (++_sto_com); 
-    }
-
-    int inc_other_att() { 
-        CRITICAL_SECTION(att_other_cs, _other_lock);
-        return (++_other_att); 
-    }
-
-    int inc_other_com() { 
-        CRITICAL_SECTION(com_other_cs, _other_lock);
-        ++_other_att;
-        return (++_other_com); 
-    }
-
-    int get_total_committed() {
-        CRITICAL_SECTION(com_no_cs,  _no_lock);
-        CRITICAL_SECTION(com_pay_cs, _pay_lock);
-        CRITICAL_SECTION(com_ord_cs, _ord_lock);
-        CRITICAL_SECTION(com_del_cs, _del_lock);
-        CRITICAL_SECTION(com_sto_cs, _sto_lock);
-        CRITICAL_SECTION(com_other_cs, _other_lock);
-        return (_no_com + _pay_com + _ord_com + _del_com + _sto_com + _other_com);
-    }
-
-    int get_total_attempted() {
-        CRITICAL_SECTION(att_no_cs,  _no_lock);
-        CRITICAL_SECTION(att_pay_cs, _pay_lock);
-        CRITICAL_SECTION(att_ord_cs, _ord_lock);
-        CRITICAL_SECTION(att_del_cs, _del_lock);
-        CRITICAL_SECTION(att_sto_cs, _sto_lock);
-        CRITICAL_SECTION(att_other_cs, _other_lock);
-        return (_no_att + _pay_att + _ord_att + _del_att + _sto_att + _other_att);
-    }
-
-}; // EOF tpcc_stats_t
 
 
 /******************************************************************** 
@@ -237,10 +137,12 @@ struct tpcc_stats_t
 class ShoreTPCCEnv : public ShoreEnv
 {
 public:
-    typedef tpcc_worker_t        Worker;
-    typedef tpcc_worker_t*       WorkerPtr;
+    typedef trx_worker_t<ShoreTPCCEnv>    Worker;
+    typedef trx_worker_t<ShoreTPCCEnv>*   WorkerPtr;
     typedef vector<WorkerPtr>    WorkerPool;
     typedef WorkerPool::iterator WorkerIt;
+
+    typedef std::map<pthread_t, ShoreTPCCTrxStats*> statmap_t;
 
 protected:       
 
@@ -280,12 +182,8 @@ protected:
     // scaling factors
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
     pthread_mutex_t _scaling_mutex;
-    int             _queried_factor; /* queried factor - how many of the WHs queried */
+    int             _queried_factor; /* queried factor */
     pthread_mutex_t _queried_mutex;
-
-    // some stats
-    tpcc_stats_t   _total_tpcc_stats;     // the stats for the whole env life (never reset)
-    tpcc_stats_t   _session_tpcc_stats; // temp stats (reset between runs)
 
 
     // --- kit baseline trxs --- //
@@ -330,8 +228,6 @@ public:
                 
         _table_desc_list.clear();
         _table_man_list.clear();     
-
-        //print_total_tpcc_stats();
     }
 
 
@@ -350,29 +246,6 @@ public:
     virtual const int start();
     virtual const int stop();
     virtual const int info();
-
-
-    // --- statistics --- //
-    void print_total_tpcc_stats() const { 
-        _total_tpcc_stats.print_trx_stats(); 
-        _env_stats.print_env_stats(); 
-    }
-
-    tpcc_stats_t* get_total_tpcc_stats() {
-        return (&_total_tpcc_stats);
-    }
-
-    void print_session_tpcc_stats() const {
-        _session_tpcc_stats.print_trx_stats();
-    }
-
-    tpcc_stats_t* get_session_tpcc_stats() {
-        return (&_session_tpcc_stats);
-    }
-
-    void reset_session_tpcc_stats() {
-        _session_tpcc_stats.reset();
-    }
     
 
     // --- scaling and querying factor --- //
@@ -386,6 +259,12 @@ public:
     inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
     inline table_man_list_t*  table_man_list() { return (&_table_man_list); }
     const int dump();
+
+    virtual void print_throughput(const int iQueriedSF, 
+                                  const int iSpread, 
+                                  const int iNumOfThreads,
+                                  const double delay);
+
 
 
     // Public methods //    
@@ -418,34 +297,6 @@ public:
     inline order_line_man_impl* orderline_man() { return (_porder_line_man); }
     inline item_man_impl*       item_man()      { return (_pitem_man); }
     inline stock_man_impl*      stock_man()     { return (_pstock_man); }
-
-
-
-
-
-    ///// TLS ////
-
-//     typedef row_impl<warehouse_t>  warehouse_tuple;
-//     typedef row_impl<district_t>   district_tuple;
-//     typedef row_impl<customer_t>   customer_tuple;
-//     typedef row_impl<history_t>    history_tuple;
-//     typedef row_impl<new_order_t>  new_order_tuple;
-//     typedef row_impl<order_t>      order_tuple;
-//     typedef row_impl<order_line_t> order_line_tuple;
-//     typedef row_impl<item_t>       item_tuple;
-//     typedef row_impl<stock_t>      stock_tuple;
-
-
-
-//     DEFINE_TUPLE_INTERFACE(warehouse_tuple,warehouse)
-//     DEFINE_TUPLE_INTERFACE(district_tuple,district)
-//     DEFINE_TUPLE_INTERFACE(customer_tuple,customer)
-//     DEFINE_TUPLE_INTERFACE(history_tuple,history)
-//     DEFINE_TUPLE_INTERFACE(new_order_tuple,new_order)
-//     DEFINE_TUPLE_INTERFACE(order_tuple,order)
-//     DEFINE_TUPLE_INTERFACE(order_line_tuple,order_line)
-//     DEFINE_TUPLE_INTERFACE(item_tuple,item)
-//     DEFINE_TUPLE_INTERFACE(stock_tuple,stock)
     
 
 
@@ -454,7 +305,7 @@ public:
 
     // --- kit baseline trxs --- //
 
-    w_rc_t run_one_xct(int xct_type, const int xctid, const int whid, trx_result_tuple_t& trt);
+    w_rc_t run_one_xct(int xct_type, const int xctid, const int specID, trx_result_tuple_t& trt);
 
 
     // --- with input specified --- //
@@ -479,41 +330,6 @@ public:
 
 
 
-
-
-
-    // *** DEPRECATED ***//
-    /* --- kit staged trxs --- */
-    /* staged payment */
-    w_rc_t staged_pay_updateShoreWarehouse(payment_input_t* ppin, 
-                                           const int xct_id, 
-                                           trx_result_tuple_t& trt);
-    w_rc_t staged_pay_updateShoreDistrict(payment_input_t* ppin, 
-                                          const int xct_id, 
-                                          trx_result_tuple_t& trt);
-    w_rc_t staged_pay_updateShoreCustomer(payment_input_t* ppin, 
-                                          const int xct_id, 
-                                          trx_result_tuple_t& trt);
-    w_rc_t staged_pay_insertShoreHistory(payment_input_t* ppin, 
-                                         char* p_wh_name,
-                                         char* p_d_name,
-                                         const int xct_id, 
-                                         trx_result_tuple_t& trt);
-
-    /* staged new order */
-    w_rc_t staged_no_outside_loop(new_order_input_t* pnoin, 
-                                  time_t tstamp,
-                                  const int xct_id, 
-                                  trx_result_tuple_t& trt);
-
-    w_rc_t staged_no_one_ol(ol_item_info* polin,
-                            time_t tstamp, 
-                            int a_wh_id,
-                            int a_d_id,
-                            int item_cnt,
-                            const int xct_id, 
-                            trx_result_tuple_t& trt);
-
     
 
     // update statistics
@@ -533,16 +349,28 @@ public:
     const int upd_worker_cnt();
 
     // accesses a worker from the pool
-    inline tpcc_worker_t* tpccworker(const int idx) { 
+    inline WorkerPtr trxworker(const int idx) { 
         assert (idx>=0);
         return (_workers[idx%_worker_cnt]); 
     } 
 
     //// request atomic trash stack
-    typedef atomic_class_stack<tpcc_request_t> RequestStack;
+    typedef atomic_class_stack<trx_request_t> RequestStack;
     RequestStack _request_pool;
 
+    // for thread-local stats
+    virtual void env_thread_init();
+    virtual void env_thread_fini();   
 
+    // stat map
+    statmap_t _statmap;
+
+    // snapshot taken at the beginning of each experiment    
+    ShoreTPCCTrxStats _last_stats;
+    virtual void reset_stats();
+    const ShoreTPCCTrxStats _get_stats();
+    
+    
 }; // EOF ShoreTPCCEnv
    
 
@@ -551,4 +379,3 @@ EXIT_NAMESPACE(tpcc);
 
 
 #endif /* __SHORE_TPCC_ENV_H */
-
