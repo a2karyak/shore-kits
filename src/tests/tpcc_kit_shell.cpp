@@ -523,7 +523,7 @@ int main(int argc, char* argv[])
 
 
     // TPC-C
-    if (benchmarkname.compare("tpcc")) {
+    if (benchmarkname.compare("tpcc")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
@@ -541,8 +541,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    // TM!
-    if (benchmarkname.compare("tm1")) {
+    // TM1
+    if (!benchmarkname.compare("tm1")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
@@ -558,7 +558,6 @@ int main(int argc, char* argv[])
             return (3);        
         }
     }
-
     assert (kit.get());
 
 
