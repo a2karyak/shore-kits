@@ -542,7 +542,7 @@ int main(int argc, char* argv[])
     }
 
     // TM1
-    if (!benchmarkname.compare("tm1")==0) {
+    if (benchmarkname.compare("tm1")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
