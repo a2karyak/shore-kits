@@ -333,7 +333,7 @@ int tree_test_shell_t::print_usage(const char* command)
            "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
            "<COMMIT_INT>  : Commit Interval (Default=10) (optional)\n");
     
-    TRACE( TRACE_ALWAYS, "\n\nCurrently numOfWHs = (%d)\n", _numOfWHs);
+    TRACE( TRACE_ALWAYS, "\n\nCurrent Scaling factor = (%d)\n", _theSF);
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -342,8 +342,8 @@ int tree_test_shell_t::print_usage(const char* command)
 int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
 {
     /* 0. Parse Parameters */
-    int numOfQueriedWHs     = DF_NUM_OF_QUERIED_WHS;
-    int tmp_numOfQueriedWHs = DF_NUM_OF_QUERIED_WHS;
+    int numOfQueriedSF     = DF_NUM_OF_QUERIED_WHS;
+    int tmp_numOfQueriedSF = DF_NUM_OF_QUERIED_WHS;
     int selectedTrxID       = DF_TRX_ID;
     int tmp_selectedTrxID   = DF_TRX_ID;
     int updTuple            = DF_UPDATE_TUPLE;
@@ -361,14 +361,14 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
     int tmp_sf = envVar::instance()->getSysVarInt("sf");
     if (tmp_sf) {
         TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
-        _numOfWHs = tmp_sf;
+        _theSF = tmp_sf;
     }
 
 
     // Parses new test run data
     if ( sscanf(cmd, "%s %d %d %d %d %d %d %d",
                 &cmd_tag,
-                &tmp_numOfQueriedWHs,
+                &tmp_numOfQueriedSF,
                 &tmp_selectedTrxID,
                 &tmp_updTuple,
                 &tmp_numOfThreads,
@@ -383,12 +383,12 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
 
     // REQUIRED Parameters
 
-    // 1- number of queried warehouses - numOfQueriedWHs
-    if ((tmp_numOfQueriedWHs>0) && (tmp_numOfQueriedWHs<=_numOfWHs))
-        numOfQueriedWHs = tmp_numOfQueriedWHs;
+    // 1- number of queried warehouses - numOfQueriedSF
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+        numOfQueriedSF = tmp_numOfQueriedSF;
     else
-        numOfQueriedWHs = _numOfWHs;
-    assert (numOfQueriedWHs <= _numOfWHs);
+        numOfQueriedSF = _theSF;
+    assert (numOfQueriedSF <= _theSF);
 
     // 2- selected trx
     if (tmp_selectedTrxID>=0)
@@ -401,12 +401,12 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
     // OPTIONAL Parameters
 
     // 4- number of threads - numOfThreads
-    if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=numOfQueriedWHs) && 
+    if ((tmp_numOfThreads>0) && (tmp_numOfThreads<=numOfQueriedSF) && 
         (tmp_numOfThreads<=MAX_NUM_OF_THR)) {
             numOfThreads = tmp_numOfThreads;
         }
     else {
-        numOfThreads = numOfQueriedWHs;
+        numOfThreads = numOfQueriedSF;
     }
     
     // 5- number of trxs - numOfTrxs
@@ -431,7 +431,7 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
            "Num of Trxs     : %d\n" \
            "Iterations      : %d\n" \
            "Commit Interval : %d\n", 
-           numOfQueriedWHs, translate_trx_id(selectedTrxID), 
+           numOfQueriedSF, translate_trx_id(selectedTrxID), 
            (updTuple ? "Yes" : "No"), numOfThreads, numOfTrxs, 
            iterations, commit_interval);
 
@@ -476,7 +476,7 @@ int tree_test_shell_t::process_command(const char* cmd, const char* cmd_tag)
                "Trxs:    (%d)\n" \
                "Secs:    (%.2f)\n" \
                "TPS:     (%.2f)\n",
-               numOfQueriedWHs, (updTuple ? "Yes" : "No"), numOfThreads, 
+               numOfQueriedSF, (updTuple ? "Yes" : "No"), numOfThreads, 
                numOfTrxs, delay, numOfThreads*numOfTrxs/delay);
     }
 

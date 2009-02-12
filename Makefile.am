@@ -42,9 +42,7 @@ TESTS = \
    tests/raii_file \
    tests/config_file_example \
    tests/row_cache \
-   tests/tpcc_load_shore \
    tests/tpcc_kit_shell \
-   tests/shore_trees \
    tests/simple \
    tests/shore_rvp
 
@@ -166,7 +164,8 @@ SM_SHORE = \
    $(SM)/shore/shore_env.cpp \
    $(SM)/shore/shore_helper_loader.cpp \
    $(SM)/shore/shore_client.cpp \
-   $(SM)/shore/shore_worker.cpp
+   $(SM)/shore/shore_worker.cpp \
+   $(SM)/shore/shore_trx_worker.cpp
 
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
@@ -247,8 +246,16 @@ WL_TPCC_SHORE = \
    $(SW)/tpcc/shore_tpcc_schema_gen.cpp \
    $(SW)/tpcc/shore_tpcc_env.cpp \
    $(SW)/tpcc/shore_tpcc_xct.cpp \
-   $(SW)/tpcc/shore_tpcc_worker.cpp \
    $(SW)/tpcc/shore_tpcc_load.cpp
+
+
+WL_TM1_SHORE = \
+   $(SW)/tm1/tm1_input.cpp \
+   $(SW)/tm1/shore_tm1_schema_man.cpp \
+   $(SW)/tm1/shore_tm1_env.cpp \
+   $(SW)/tm1/shore_tm1_xct.cpp \
+   $(SW)/tm1/shore_tm1_client.cpp
+
 
 
 WL_TPCC_DORA = \
@@ -262,49 +269,13 @@ WL_TPCC_DORA = \
    $(SD)/tpcc/dora_tpcc_xct.cpp
 
 
-############## DEPRECATED ##################################
-WL_TPCC_SHORE_STAGES_DEPR = \
-   $(SG)/tpcc/shore/shore_payment_baseline.cpp \
-   $(SG)/tpcc/shore/shore_new_order_baseline.cpp \
-   $(SG)/tpcc/shore/shore_order_status_baseline.cpp \
-   $(SG)/tpcc/shore/shore_delivery_baseline.cpp \
-   $(SG)/tpcc/shore/shore_stock_level_baseline.cpp
-
-WL_TPCC_SHORE_STAGED_DEPR = \
-   $(SG)/tpcc/shore/staged/shore_payment_functions.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_begin.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_finalize.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_ins_hist.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_upd_cust.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_upd_distr.cpp \
-   $(SG)/tpcc/shore/staged/shore_payment_upd_wh.cpp \
-   $(SG)/tpcc/shore/staged/shore_new_order_functions.cpp \
-   $(SG)/tpcc/shore/staged/shore_new_order_begin.cpp \
-   $(SG)/tpcc/shore/staged/shore_new_order_finalize.cpp \
-   $(SG)/tpcc/shore/staged/shore_new_order_outside_loop.cpp \
-   $(SG)/tpcc/shore/staged/shore_new_order_one_ol.cpp
-
-WL_TPCC_SHORE_DRIVERS_DEPR = \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_baseline.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_new_order_staged.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_payment_baseline.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_payment_staged.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_order_status_baseline.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_delivery_baseline.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_stock_level_baseline.cpp \
-   $(SW)/tpcc/drivers/shore/shore_tpcc_mix_baseline.cpp
-#############################################################
-
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
    $(WL_TPCC_COMMON) \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
-   $(WL_TPCC_DORA) \
-   $(WL_TPCC_SHORE_STAGES_DEPR) \
-   $(WL_TPCC_SHORE_STAGED_DEPR) \
-   $(WL_TPCC_SHORE_DRIVERS_DEPR)
-
+   $(WL_TM1_SHORE) \
+   $(WL_TPCC_DORA)
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
@@ -391,18 +362,14 @@ tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 
-tests_tpcc_load_shore_SOURCES = $(ST)/shore_tpcc_load.cpp
 tests_tpcc_kit_shell_SOURCES = $(ST)/tpcc_kit_shell.cpp
 tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
-tests_shore_trees_SOURCES = $(ST)/shore_tpcc_trees.cpp
 
 tests_simple_SOURCES = $(ST)/simple_test.cpp
 
 
 # exec files that need Shore
-tests_tpcc_load_shore_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_tpcc_load_shore_LDADD = $(TEST_LIBS)
 tests_tpcc_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_tpcc_kit_shell_LDADD = $(TEST_LIBS) -lreadline
 
@@ -410,8 +377,6 @@ tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
-tests_shore_trees_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES) -I/usr/local/include
-tests_shore_trees_LDADD = $(TEST_LIBS) -lreadline
 
 tests_simple_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_simple_LDADD = $(TEST_LIBS)
