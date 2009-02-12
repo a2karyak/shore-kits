@@ -260,15 +260,14 @@ void  ShoreTPCBEnv::table_creator_t::work() {
     }
 }
 void ShoreTPCBEnv::table_builder_t::work() {
-    long total = _sf*ACCOUNTS_PER_BRANCH/ACCOUNTS_CREATED_PER_POP_XCT;
-    long which;
     w_rc_t e;
 
     for(int i=0; i < _count; i += ACCOUNTS_CREATED_PER_POP_XCT) {
 	long a_id = _start + i;
 	populate_db_input_t in(_sf, a_id);
 	trx_result_tuple_t out;
-	fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	fprintf(stderr, ".");
+	//fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 	W_COERCE(_env->db()->begin_xct());
 	e = _env->xct_populate_db(&in, a_id, out);
 	if(e.is_error()) {
@@ -281,10 +280,11 @@ void ShoreTPCBEnv::table_builder_t::work() {
 	    w_rc_t e2 = _env->db()->abort_xct();
 	    if(e2.is_error()) {
 		TRACE( TRACE_ALWAYS, "Double-eek! Unable to abort trx for index %d due to [0x%x]\n", 
-		       which, e2.err_num());
+		       a_id, e2.err_num());
 	    }
 	}
     }
+    fprintf(stderr, "Finished loading account groups %d .. %d \n", _start, _start+_count);
 }
 
 

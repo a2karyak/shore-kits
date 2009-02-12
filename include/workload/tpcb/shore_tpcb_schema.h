@@ -136,7 +136,7 @@ public:
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
             // create unique index c_index on (w_id, d_id, c_id)
-            create_primary_idx("C_INDEX", 0, keys1, 1);
+            create_primary_idx("A_INDEX", 0, keys1, 1);
         assert (idxs_created==1); // make sure that idxs were created
     }
 

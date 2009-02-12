@@ -20,26 +20,13 @@ using namespace shore;
 
 ENTER_NAMESPACE(tpcb);
 
-// based on long erand48(unsigned short xi[3] );
-struct rng {
-    unsigned short xi[3];
-    rng() {
-	for(int i=0; i < 3; i++)
-	    xi[i] = (short)rand();
-    }
-    double get() { return erand48(xi); }
-    int get_int(int max) { return (int) (get()*max); }
-};
-
-DECLARE_TLS(rng, my_rng);
-
 acct_update_input_t::acct_update_input_t(int branches_queried, int specific_b_id)
-    : b_id((specific_b_id < 0)? my_rng->get_int(branches_queried) : specific_b_id)
-    , t_id(b_id*TELLERS_PER_BRANCH+my_rng->get_int(TELLERS_PER_BRANCH))
-    , a_id(my_rng->get_int(ACCOUNTS_PER_BRANCH))
-    , delta(my_rng->get_int(2000000)-1000000)
+    : b_id((specific_b_id < 0)? me()->randn(branches_queried) : specific_b_id)
+    , t_id(b_id*TELLERS_PER_BRANCH+me()->randn(TELLERS_PER_BRANCH))
+    , a_id(me()->randn(ACCOUNTS_PER_BRANCH))
+    , delta(me()->randn(2000000)-1000000)
 {
-    int a_b_id = (my_rng->get() < .85)? b_id : my_rng->get_int(branches_queried);
+    int a_b_id = (me()->drand() < .85)? b_id : me()->randn(branches_queried);
     a_id += a_b_id*ACCOUNTS_PER_BRANCH;
 }
 
@@ -94,15 +81,18 @@ w_rc_t ShoreTPCBEnv::run_one_xct(int xct_type, const int xctid,
 
 struct xct_stats {
     int attempted;
+    int deadlocked;
     int failed;
     xct_stats &operator+=(xct_stats const &other) {
 	attempted += other.attempted;
 	failed += other.failed;
+	deadlocked += other.deadlocked;
 	return *this;
     };
     xct_stats &operator-=(xct_stats const &other) {
 	attempted -= other.attempted;
 	failed -= other.failed;
+	deadlocked -= other.deadlocked;
 	return *this;
     };
 };
@@ -145,7 +135,10 @@ w_rc_t ShoreTPCBEnv::run_acct_update(const int xct_id,
     ++my_stats.attempted;
     w_rc_t e = xct_acct_update(&apin, xct_id, atrt);
     if (e.is_error()) {
-	++my_stats.failed;
+	if(e.err_num() != smlevel_0::eDEADLOCK) 
+	    ++my_stats.failed;
+	else
+	    ++my_stats.deadlocked;
         TRACE( TRACE_TRX_FLOW, "Xct (%d) Acct Update aborted [0x%x]\n", 
                xct_id, e.err_num());
 
@@ -330,7 +323,8 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin,
     trt.set_state(COMMITTED);
 
 
-#ifdef PRINT_TRX_RESULTS
+    //#ifdef PRINT_TRX_RESULTS
+#if 1
     // at the end of the transaction 
     // dumps the status of all the table rows used
     prb->print_tuple();

@@ -277,7 +277,7 @@ public:
           _tpcbdb(env), _wh(sWH), _qf(qf)
     {
         assert (env);
-        assert (_wh>=0 && _qf>0);
+        assert (_wh>=-1 && _qf>0);
 
         // pick worker thread
         _worker = _tpcbdb->tpcbworker(_id);
@@ -322,15 +322,18 @@ namespace tpcb {
 
 struct xct_stats {
     int attempted;
+    int deadlocked;
     int failed;
     xct_stats &operator+=(xct_stats const &other) {
 	attempted += other.attempted;
 	failed += other.failed;
+	deadlocked += other.deadlocked;
 	return *this;
     };
     xct_stats &operator-=(xct_stats const &other) {
 	attempted -= other.attempted;
 	failed -= other.failed;
+	deadlocked -= other.deadlocked;
 	return *this;
     };
 };
@@ -472,7 +475,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedBranches,
     Client* testers[MAX_NUM_OF_THR];
         // reset starting cpu and wh id
         _current_prs_id = _start_prs_id;
-        int wh_id = 0;
+        int wh_id = -1;
 
         // set measurement state
         _env->set_measure(MST_WARMUP);
@@ -482,7 +485,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedBranches,
         for (int i=0; i<iNumOfThreads; i++) {
             // create & fork testing threads
             if (iSpread)
-                wh_id = i+1;
+                wh_id = i;
             testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _tpcbdb, 
                                     MT_TIME_DUR, iSelectedTrx, 0,
                                     _current_prs_id, wh_id, iQueriedBranches);
@@ -520,18 +523,14 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedBranches,
 	       "Spread:\t%s\n"
 	       "Threads:\t%d\n"
 	       "Trx Att:\t%d\n"
-	       "Trx Abt:\t%d\n"
+	       "Trx DLK:\t%d\n"
+	       "Trx FAIL:\t%d\n"
 	       "Secs:\t%.2lf\n"
 	       "TPS:\t%.2lf\n",
 	       iQueriedBranches, iSpread? "yes" : "no", iNumOfThreads,
-	       stats.attempted, stats.failed,
-	       delay, (stats.attempted-stats.failed)/delay);
+	       stats.attempted, stats.deadlocked, stats.failed, 
+	       delay, (stats.attempted-stats.failed-stats.deadlocked)/delay);
 	       
-        // flush the log before the next iteration
-        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
-        _env->checkpoint();
-        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
-
     }
 
         // 2. join the tester threads
@@ -549,6 +548,12 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedBranches,
 
 	//	alarm(0); // cancel the alarm, if any
         
+        // flush the log before the next iteration
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+	stopwatch_t timer;
+        _env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end (took %d seconds)\n", int(timer.time()));
+
     // print processor usage info
     //    _cpustater->myinfo.print();
 
