@@ -17,39 +17,49 @@
 ENTER_NAMESPACE(tm1);
 
 
-/* --------------------------- */
-/* --- TM1 SCALING FACTORS --- */
-/* --------------------------- */
+// the scaling factor unit (arbitrarily chosen)
+// SF = 1 --> 100K Subscribers
+const int TM1_SUBS_PER_SF = 100000;
 
+
+const int TM1_DEF_SF = 10;
+const int TM1_DEF_QF = 10;
+
+
+// commit every 1000 new Subscribers
+const int TM1_LOADING_COMMIT_INTERVAL = 1000;
+const int TM1_LOADING_TRACE_INTERVAL  = 10000;
+
+
+// loading-related defaults
+const int TM1_LOADERS_TO_USE     = 40;
+const int TM1_MAX_NUM_OF_LOADERS = 128;
+const int TM1_SUBS_TO_PRELOAD = 2000; 
 
 
 /* --- standard scale -- */
 
-const int SUBSCR_WITH_1_AI = 25;
-const int SUBSCR_WITH_2_AI = 25;
-const int SUBSCR_WITH_3_AI = 25;
-const int SUBSCR_WITH_4_AI = 25;
+const int TM1_MIN_AI_PER_SUBSCR = 1;
+const int TM1_MAX_AI_PER_SUBSCR = 4;
 
-const int SUBSCR_WITH_1_SF = 25;
-const int SUBSCR_WITH_2_SF = 25;
-const int SUBSCR_WITH_3_SF = 25;
-const int SUBSCR_WITH_4_SF = 25;
+const int TM1_MIN_SF_PER_SUBSCR = 1;
+const int TM1_MAX_SF_PER_SUBSCR = 4;
 
-const int PROB_ACTIVE_SF_YES = 85;
-const int PROB_ACTIVE_SF_NO  = 15;
+const int TM1_MIN_CF_PER_SF = 0;
+const int TM1_MAX_CF_PER_SF = 3;
 
-const int SF_WITH_0_CALL_FWD = 25;
-const int SF_WITH_1_CALL_FWD = 25;
-const int SF_WITH_2_CALL_FWD = 25;
-const int SF_WITH_3_CALL_FWD = 25;
+const int TM1_PROB_ACTIVE_SF_YES = 85;
+const int TM1_PROB_ACTIVE_SF_NO  = 15;
 
 
 /* --- number of fields per table --- */
 
-const int TM1_SUBSCRIBERS_FCOUNT       = 34;
-const int TM1_ACCESS_INFO_FCOUNT       = 6;
-const int TM1_SPECIAL_FACILITY_FCOUNT  = 6;
-const int TM1_CALL_FORWARDING_FCOUNT   = 5;
+// @note It is the actual number of fields plus one for padding
+
+const int TM1_SUBSCRIBERS_FCOUNT       = 35; //34;
+const int TM1_ACCESS_INFO_FCOUNT       = 7;  //6;
+const int TM1_SPECIAL_FACILITY_FCOUNT  = 7;  //6;
+const int TM1_CALL_FORWARDING_FCOUNT   = 6;  //5;
 
 
 
@@ -57,48 +67,40 @@ const int TM1_CALL_FORWARDING_FCOUNT   = 5;
 /* --- TM1 TRANSACTION MIX --- */
 /* --------------------------- */
 
-const int XCT_TM1_MIX              = 20;
-const int XCT_TM1_GET_SUBSCR_DATA  = 21;
-const int XCT_TM1_GET_NEW_DEST     = 22;
-const int XCT_TM1_GET_ACCESS_DATA  = 23;
-const int XCT_TM1_UPD_SUBSCR_DATA  = 24;
-const int XCT_TM1_UPD_LOCATION     = 25;
-const int XCT_TM1_INS_CALL_FWD     = 26;
-const int XCT_TM1_DEL_CALL_FWD     = 27;
+const int XCT_TM1_MIX           = 20;
+const int XCT_TM1_GET_SUB_DATA  = 21;
+const int XCT_TM1_GET_NEW_DEST  = 22;
+const int XCT_TM1_GET_ACC_DATA  = 23;
+const int XCT_TM1_UPD_SUB_DATA  = 24;
+const int XCT_TM1_UPD_LOCATION  = 25;
+const int XCT_TM1_INS_CALL_FWD  = 26;
+const int XCT_TM1_DEL_CALL_FWD  = 27;
 
 
 
-const int XCT_TM1_DORA_MIX              = 120;
-const int XCT_TM1_DORA_GET_SUBSCR_DATA  = 121;
-const int XCT_TM1_DORA_GET_NEW_DEST     = 122;
-const int XCT_TM1_DORA_GET_ACCESS_DATA  = 123;
-const int XCT_TM1_DORA_UPD_SUBSCR_DATA  = 124;
-const int XCT_TM1_DORA_UPD_LOCATION     = 125;
-const int XCT_TM1_DORA_INS_CALL_FWD     = 126;
-const int XCT_TM1_DORA_DEL_CALL_FWD     = 127;
+const int XCT_TM1_DORA_MIX           = 120;
+const int XCT_TM1_DORA_GET_SUB_DATA  = 121;
+const int XCT_TM1_DORA_GET_NEW_DEST  = 122;
+const int XCT_TM1_DORA_GET_ACC_DATA  = 123;
+const int XCT_TM1_DORA_UPD_SUB_DATA  = 124;
+const int XCT_TM1_DORA_UPD_LOCATION  = 125;
+const int XCT_TM1_DORA_INS_CALL_FWD  = 126;
+const int XCT_TM1_DORA_DEL_CALL_FWD  = 127;
 
 
 
 /* --- probabilities for the TM1 MIX --- */
 
 // READ-ONLY (80%)
-const int PROB_TM1_GET_SUBSCR_DATA  = 35;
-const int PROB_TM1_NEW_DEST         = 10;
-const int PROB_TM1_ACCESS_DATA      = 35;
+const int PROB_TM1_GET_SUB_DATA  = 35;
+const int PROB_TM1_GET_NEW_DEST  = 10;
+const int PROB_TM1_GET_ACC_DATA  = 35;
 
 // UPDATE (20%)
-const int PROB_TM1_UPD_SUBSCR_DATA  = 2;
-const int PROB_TM1_UPD_LOCATION     = 14;
-const int PROB_TM1_INS_CALL_FWD     = 2;
-const int PROB_TM1_DEL_CALL_FWD     = 2;
-
-
-/* --- Helper functions --- */
-
-
-/* --- translates or picks a random xct type given the benchmark specification --- */
-
-int random_xct_tm1_type(int selected);
+const int PROB_TM1_UPD_SUB_DATA  = 2;
+const int PROB_TM1_UPD_LOCATION  = 14;
+const int PROB_TM1_INS_CALL_FWD  = 2;
+const int PROB_TM1_DEL_CALL_FWD  = 2;
 
 
 EXIT_NAMESPACE(tm1);
