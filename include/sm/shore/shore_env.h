@@ -273,6 +273,9 @@ protected:
     bool            _loaded;
     pthread_mutex_t _load_mutex;
 
+    pthread_mutex_t _statmap_mutex;
+    pthread_mutex_t _last_stats_mutex;
+
     // Device and volume. There is a single volume per device. 
     // The whole environment resides in a single volume.
     devid_t            _devid;     // device id
@@ -323,6 +326,8 @@ public:
           _pssm(NULL), 
           _initialized(false), _init_mutex(thread_mutex_create()),
           _loaded(false), _load_mutex(thread_mutex_create()),
+          _statmap_mutex(thread_mutex_create()),
+          _last_stats_mutex(thread_mutex_create()),
           _vol_mutex(thread_mutex_create()), _cname(confname),
           _measure(MST_UNDEF),
           _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
@@ -336,8 +341,10 @@ public:
     {         
         if (dbc()!=DBC_STOPPED) stop();
         pthread_mutex_destroy(&_init_mutex);
-        pthread_mutex_destroy(&_vol_mutex);
+        pthread_mutex_destroy(&_statmap_mutex);
+        pthread_mutex_destroy(&_last_stats_mutex);
         pthread_mutex_destroy(&_load_mutex);
+        pthread_mutex_destroy(&_vol_mutex);
     }
 
 
@@ -383,9 +390,6 @@ public:
         return (_loaded); 
     }
 
-    inline string sysname() { return (_sysname); }
-    env_stats_t* get_env_stats() { return (&_env_stats); }
-
     
     void set_measure(const MeasurementState aMeasurementState) {
         assert (aMeasurementState != MST_UNDEF);
@@ -420,6 +424,23 @@ public:
 
     // does a log flush
     const int checkpoint();
+
+
+    inline string sysname() { return (_sysname); }
+    env_stats_t* get_env_stats() { return (&_env_stats); }
+
+    // for thread-local stats
+    virtual void env_thread_init()=0;
+    virtual void env_thread_fini()=0;   
+
+    // throughput printing
+    virtual void print_throughput(const int iQueriedSF, 
+                                  const int iSpread, 
+                                  const int iNumOfThreads,
+                                  const double delay)=0;
+
+    virtual void reset_stats()=0;
+    
 
 protected:
    

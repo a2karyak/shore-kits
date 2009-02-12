@@ -35,7 +35,7 @@ enum eBindingType { BT_NONE=0, BT_NEXT=1, BT_SPREAD=2 };
 // Default values for the power-runs //
 
 
-// default value to spread threads at WHs
+// default value to spread threads
 const int DF_SPREAD_THREADS        = 1;
 
 // default number of threads

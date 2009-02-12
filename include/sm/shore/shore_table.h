@@ -218,7 +218,11 @@ public:
     /* --- populate table with data from file --- */
     /* ------------------------------------------ */
 
-    virtual bool read_tuple_from_line(table_row_t& tuple, char* buf)=0;
+    virtual bool read_tuple_from_line(table_row_t& tuple, char* buf) {
+        assert (0); // should not be called. used to be pure abstract
+        return (false);
+    }
+    
 
 
     /* ----------------- */

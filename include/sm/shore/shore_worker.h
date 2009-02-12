@@ -132,13 +132,10 @@ public:
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
           _next(NULL), _is_bound(false), _prs_id(aprsid), _use_sli(use_sli)
     {
-        assert (_env);        
+        w_assert3 (_env);        
     }
 
-    virtual ~base_worker_t() 
-    { 
-        //        stats();
-    }
+    virtual ~base_worker_t() { }
 
 
 
@@ -291,6 +288,7 @@ public:
         // 3. set SLI option
         ss_m::set_sli_enabled(_use_sli);
 
+        int rval = 0;
 
         // state machine
         while (true) {
@@ -301,7 +299,10 @@ public:
                 break;
 
             case (WC_ACTIVE):
-                if (work_ACTIVE())
+                _env->env_thread_init();
+                rval = work_ACTIVE();
+                _env->env_thread_fini();
+                if (rval)
                     return;
                 break;
 
@@ -320,8 +321,7 @@ public:
     // helper //
 
     void stats() { 
-        TRACE( TRACE_STATISTICS, "(%s)\n", 
-               thread_name().data());
+        TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());
         _stats.print_stats(); 
     }
 
@@ -330,10 +330,8 @@ private:
     // copying not allowed
     base_worker_t(base_worker_t const &);
     void operator=(base_worker_t const &);
-
     
 }; // EOF: base_worker_t
-
 
 
 EXIT_NAMESPACE(shore);
