@@ -221,6 +221,9 @@ void  ShoreTM1Env::table_creator_t::work()
     int sub_id = 0;
     for (int i=0; i<_loaders; i++) {
         W_COERCE(_env->db()->begin_xct());        
+        TRACE( TRACE_DEBUG, "Preloading (%d). Start (%d). Todo (%d)\n", 
+               i, (i*_subs_per_worker), _preloads_per_worker);
+            
         for (int j=0; j<_preloads_per_worker; j++) {
             sub_id = i*_subs_per_worker + j;
             W_COERCE(_env->xct_populate_one(sub_id));

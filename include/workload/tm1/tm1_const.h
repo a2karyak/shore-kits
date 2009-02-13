@@ -32,7 +32,8 @@ const int TM1_LOADING_TRACE_INTERVAL  = 10000;
 
 
 // loading-related defaults
-const int TM1_LOADERS_TO_USE     = 40;
+//const int TM1_LOADERS_TO_USE     = 40;
+const int TM1_LOADERS_TO_USE     = 1;
 const int TM1_MAX_NUM_OF_LOADERS = 128;
 const int TM1_SUBS_TO_PRELOAD = 2000; 
 
@@ -56,10 +57,19 @@ const int TM1_PROB_ACTIVE_SF_NO  = 15;
 
 // @note It is the actual number of fields plus one for padding
 
-const int TM1_SUBSCRIBERS_FCOUNT       = 35; //34;
-const int TM1_ACCESS_INFO_FCOUNT       = 7;  //6;
-const int TM1_SPECIAL_FACILITY_FCOUNT  = 7;  //6;
-const int TM1_CALL_FORWARDING_FCOUNT   = 6;  //5;
+const int TM1_SUB_FCOUNT  = 35; //34;
+const int TM1_AI_FCOUNT   = 7;  //6;
+const int TM1_SF_FCOUNT   = 7;  //6;
+const int TM1_CF_FCOUNT   = 6;  //5;
+
+
+// some field sizes
+const int TM1_SUB_NBR_SZ    = 15;
+const int TM1_AI_DATA3_SZ   = 3;
+const int TM1_AI_DATA4_SZ   = 5;
+const int TM1_SF_DATA_B_SZ  = 5;
+const int TM1_CF_NUMBERX_SZ = 15;
+
 
 
 

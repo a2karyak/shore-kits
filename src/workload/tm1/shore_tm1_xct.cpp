@@ -1,5 +1,4 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tm1_xct.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TM1 transactions
@@ -104,16 +103,18 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
     int trxs_abt  = current_stats.failed.total();
 
     TRACE( TRACE_ALWAYS, "*******\n"            \
-           "SF:       (%d)\n"                   \
-           "Spread:   (%s)\n"                   \
-           "Threads:  (%d)\n"                   \
-           "Trxs Att: (%d)\n"                   \
-           "Trxs Abt: (%d)\n"                   \
-           "Secs:     (%.2f)\n"                 \
-           "MQTh/s:   (%.2f)\n",
+           "SF:           (%d)\n"                   \
+           "Spread:       (%s)\n"                   \
+           "Threads:      (%d)\n"                   \
+           "Trxs Att:     (%d)\n"                   \
+           "Trxs Abt:     (%d)\n"                   \
+           "Success Rate: (%.1f%%)\n"               \
+           "Secs:         (%.2f)\n"                 \
+           "MQTh/s:       (%.2f)\n",
            iQueriedSF, 
            (iSpread ? "Yes" : "No"),
            iNumOfThreads, trxs_att, trxs_abt, 
+           ((double)100*(trxs_att-trxs_abt))/(double)trxs_att,
            delay, 
            (trxs_att-trxs_abt)/delay);
 }
@@ -142,7 +143,7 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
  *
  *********************************************************************/
 
-w_rc_t ShoreTM1Env::run_one_xct(int xct_type, const int xctid, 
+w_rc_t ShoreTM1Env::run_one_xct(const int xctid, int xct_type, 
                                 const int specificID, trx_result_tuple_t& trt)
 {
     // if BASELINE TM1 MIX
@@ -191,7 +192,6 @@ w_rc_t ShoreTM1Env::run_one_xct(int xct_type, const int xctid,
  ********************************************************************/
 
 
-
 DEFINE_TRX(ShoreTM1Env,get_sub_data);
 DEFINE_TRX(ShoreTM1Env,get_new_dest);
 DEFINE_TRX(ShoreTM1Env,get_acc_data);
@@ -200,15 +200,6 @@ DEFINE_TRX(ShoreTM1Env,upd_loc);
 DEFINE_TRX(ShoreTM1Env,ins_call_fwd);
 DEFINE_TRX(ShoreTM1Env,del_call_fwd);
 
-
-/******************************************************************** 
- *
- * @note: The functions below are private, the corresponding run_XXX are
- *        their public wrappers. The run_XXX are required because they
- *        do the trx abort in case something goes wrong inside the body
- *        of each of the transactions.
- *
- ********************************************************************/
 
 
 // uncomment the line below if want to dump (part of) the trx results
@@ -272,9 +263,9 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
         // POPULATE SUBSCRIBER
 
         prsub->set_value(0, sub_id);
-        char asubnbr[15];
-        memset(asubnbr,0,15);
-        sprintf(asubnbr,"%d",sub_id);
+        char asubnbr[STRSIZE(TM1_SUB_NBR_SZ)];
+        memset(asubnbr,0,STRSIZE(TM1_SUB_NBR_SZ));
+        sprintf(asubnbr,"%015d",sub_id);
         prsub->set_value(1, asubnbr);
 
         // BIT_XX
@@ -313,8 +304,8 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
         prsub->set_value(30, URandShort(0,255));
         prsub->set_value(31, URandShort(0,255));
 
-        prsub->set_value(32, URand(0,INT_MAX));
-        prsub->set_value(33, URand(0,INT_MAX));
+        prsub->set_value(32, URand(0,(2<<16)-1));
+        prsub->set_value(33, URand(0,(2<<16)-1));
 
         // PADDING
         prsub->set_value(34, "padding");
@@ -325,7 +316,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
 
         TRACE (TRACE_TRX_FLOW, "Added SUB - (%d)\n",sub_id);
 
-
+        short type;
 
         // POPULATE ACCESS_INFO
         
@@ -334,19 +325,20 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             prai->set_value(0, sub_id);
 
             // AI_TYPE
-            prai->set_value(1, i+1);
+            type = i+1;
+            prai->set_value(1, type);
 
             // DATA 1,2
             prai->set_value(2, URandShort(0,255));
             prai->set_value(3, URandShort(0,255));
 
             // DATA 3,4
-            char data3[3];
-            URandFillStrCaps(data3,3);
+            char data3[TM1_AI_DATA3_SZ];
+            URandFillStrCaps(data3,TM1_AI_DATA3_SZ);
             prai->set_value(4, data3);
 
-            char data4[5];
-            URandFillStrCaps(data4,5);
+            char data4[TM1_AI_DATA4_SZ];
+            URandFillStrCaps(data4,TM1_AI_DATA4_SZ);
             prai->set_value(5, data4);      
 
 
@@ -371,15 +363,16 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             prsf->set_value(0, sub_id);
             
             // SF_TYPE 
-            prsf->set_value(1, i+1);
+            type = i+1;
+            prsf->set_value(1, type);
 
             prsf->set_value(2, (URand(1,100)<85? true : false));
             prsf->set_value(3, URandShort(0,255));
             prsf->set_value(4, URandShort(0,255));
 
             // DATA_B
-            char datab[5];
-            URandFillStrCaps(datab,5);
+            char datab[TM1_SF_DATA_B_SZ];
+            URandFillStrCaps(datab,TM1_SF_DATA_B_SZ);
             prsf->set_value(5, datab);
 
 
@@ -400,16 +393,24 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             // decide how many CF to have for this SF
             num_cf = URand(TM1_MIN_CF_PER_SF,
                            TM1_MAX_CF_PER_SF);
+
+            short atime;
             
             for (j=0; j<num_cf; ++j) {
 
                 prcf->set_value(0, sub_id);
-                prcf->set_value(1, i+1);
-                prcf->set_value(2, j*8);
-                prcf->set_value(3, j*8 + URandShort(1,8));
+
+                type = i+1;
+                prcf->set_value(1, type);
+
+                atime = j*8;
+                prcf->set_value(2, atime);
+
+                atime = j*8 + URandShort(1,8);
+                prcf->set_value(3, atime);
                 
-                char numbx[15];
-                URandFillStrNumbx(numbx,15);
+                char numbx[TM1_CF_NUMBERX_SZ];
+                URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
                 prcf->set_value(4, numbx);                
 
                 // PADDING
@@ -492,7 +493,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
         // READ SUBSCRIBER
 
         prsub->get_value(0,  asub.S_ID);
-        prsub->get_value(1,  asub.SUB_NBR, 16);
+        prsub->get_value(1,  asub.SUB_NBR, 17);
 
         // BIT_XX
         prsub->get_value(2,  asub.BIT_XX[0]);
@@ -532,6 +533,11 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
 
         prsub->get_value(32, asub.MSC_LOCATION);
         prsub->get_value(33, asub.VLR_LOCATION);
+
+
+        // COMMIT
+        e = _pssm->commit_xct();
+        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -598,6 +604,8 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
     tm1_sf_t asf;
     tm1_cf_t acf;
     bool eof;
+    bool bFound = false;
+    
 
     /* SELECT cf.numberx
      * FROM   Special_Facility AS sf, Call_Forwarding AS cf
@@ -645,22 +653,33 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
             e = cf_iter->next(_pssm, eof, *prcf);
             if (e.is_error()) { goto done; }
+
             while (!eof) {
 
                 // check the retrieved CF e_time                
-                prcf->get_value(0, acf.END_TIME);
+                prcf->get_value(3, acf.END_TIME);
                 if (acf.END_TIME > gndin._e_time) {
                     prcf->get_value(4, acf.NUMBERX, 17);
                     TRACE( TRACE_TRX_FLOW, "App: %d GND: found (%d) (%d) (%s)\n", 
-                           gndin._e_time, acf.END_TIME, acf.NUMBERX);
+                           xct_id, gndin._e_time, acf.END_TIME, acf.NUMBERX);
+                    bFound = true;
                 }
                 
 		TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", xct_id);
                 e = cf_iter->next(_pssm, eof, *prcf);
                 if (e.is_error()) { goto done; }
-            }            
-
+            }
         }
+
+        if (!bFound) { 
+            e = RC(se_NO_CURRENT_TUPLE); 
+            goto done;
+        }
+
+
+        // COMMIT
+        e = _pssm->commit_xct();
+        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -742,8 +761,13 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 
         prai->get_value(2,  aai.DATA1);
         prai->get_value(3,  aai.DATA2);
-        prai->get_value(4,  aai.DATA3, 4);
-        prai->get_value(5,  aai.DATA4, 6);
+        prai->get_value(4,  aai.DATA3, 5);
+        prai->get_value(5,  aai.DATA4, 9);
+
+
+        // COMMIT
+        e = _pssm->commit_xct();
+        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -846,6 +870,11 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
 
         if (e.is_error()) { goto done; }
 
+
+        // COMMIT
+        e = _pssm->commit_xct();
+        if (e.is_error()) { goto done; }
+
     } // goto
 
     // if we reached this point everything went ok
@@ -921,6 +950,11 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
         
         e = _psub_man->update_tuple(_pssm, prsub);
 
+        if (e.is_error()) { goto done; }
+
+
+        // COMMIT
+        e = _pssm->commit_xct();
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -1042,24 +1076,26 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
 
         e = sf_iter->next(_pssm, eof, *prsf);
         if (e.is_error()) { goto done; }
+
         while (!eof) {
 
             // check the retrieved SF sf_type
             prsf->get_value(1, asf.SF_TYPE);
 
-            if (asf.SF_TYPE == icfin._e_time) {
+            if (asf.SF_TYPE == icfin._sf_type) {
                 TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
                        asub.S_ID, asf.SF_TYPE);
                 bFound = true;
                 break;
             }
             
-            TRACE( TRACE_TRX_FLOW, "App: %d GND:sf-idx-iter-next\n", xct_id);
+            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", xct_id);
             e = sf_iter->next(_pssm, eof, *prsf);
             if (e.is_error()) { goto done; }
         }            
                 
         if (bFound == false) { 
+            e = RC(se_NO_CURRENT_TUPLE); 
             goto done; 
         } 
         else {
@@ -1071,8 +1107,9 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
             e = _pcf_man->cf_idx_probe(_pssm, prcf, 
                                        icfin._s_id, icfin._sf_type, icfin._s_time);
             
-            
-            if (e.err_num() == smlevel_0::eNOTFOUND) { 
+            // idx probes return se_TUPLE_NOT_FOUND
+            if (e.err_num() == se_TUPLE_NOT_FOUND) { 
+
                 /* 4. Insert */                
                 prcf->set_value(0, icfin._s_id);
                 prcf->set_value(1, icfin._sf_type);
@@ -1089,10 +1126,15 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
             }             
             else {
                 // in any other case it should fail
+                e = RC(se_CANNOT_INSERT_TUPLE);
                 goto done;
             }
         }
         
+
+        // COMMIT
+        e = _pssm->commit_xct();
+        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -1201,6 +1243,11 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
         e = _pcf_man->delete_tuple(_pssm, prcf);
 
         if (e.is_error()) { goto done; }        
+
+
+        // COMMIT
+        e = _pssm->commit_xct();
+        if (e.is_error()) { goto done; }
 
     } // goto
 

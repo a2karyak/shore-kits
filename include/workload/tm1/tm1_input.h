@@ -44,7 +44,7 @@ const void URandFillStrNumbx(char* dest, const int sz);
 struct tm1_sub_t
 {
     int   S_ID;
-    char  SUB_NBR[STRSIZE(15)];
+    char  SUB_NBR[STRSIZE(TM1_SUB_NBR_SZ)];
     bool  BIT_XX[10];
     short HEX_XX[10];
     short BYTE2_XX[10];
@@ -59,8 +59,8 @@ struct tm1_ai_t
     short AI_TYPE;
     short DATA1;
     short DATA2;
-    char  DATA3[STRSIZE(3)];
-    char  DATA4[STRSIZE(5)];
+    char  DATA3[STRSIZE(TM1_AI_DATA3_SZ)];
+    char  DATA4[STRSIZE(TM1_AI_DATA4_SZ)];
 };
 
 
@@ -71,7 +71,7 @@ struct tm1_sf_t
     bool  IS_ACTIVE;
     short ERROR_CNTRL;
     short DATA_A;
-    char  DATA_B[STRSIZE(5)];
+    char  DATA_B[STRSIZE(TM1_SF_DATA_B_SZ)];
 };
 
 
@@ -81,7 +81,7 @@ struct tm1_cf_t
     short SF_TYPE;
     short START_TIME;
     short END_TIME;
-    char  NUMBERX[STRSIZE(15)];
+    char  NUMBERX[STRSIZE(TM1_CF_NUMBERX_SZ)];
 };
 
 
@@ -215,7 +215,7 @@ struct upd_loc_input_t
 
     int    _s_id;            /* input: URand(1,SF) */
     char   _sub_nbr[15];     /* input: string(URand(1,SF)) */
-    short  _vlr_loc;         /* input: URand(0,MAXINT) */
+    int    _vlr_loc;         /* input: URand(0,MAXINT) */
 
     upd_loc_input_t& operator= (const upd_loc_input_t& rhs);
 

@@ -325,6 +325,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
                     iNumOfTrxs, iSelectedTrx, iIterations, abt);
 
     _dbinst->upd_sf();
+    _dbinst->set_qf(iQueriedSF);
 
     Client* testers[MAX_NUM_OF_THR];
     for (int j=0; j<iIterations; j++) {
@@ -399,6 +400,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
                        iSelectedTrx, iIterations, abt);
 
     _dbinst->upd_sf();
+    _dbinst->set_qf(iQueriedSF);
 
     // create and fork client threads
     Client* testers[MAX_NUM_OF_THR];
