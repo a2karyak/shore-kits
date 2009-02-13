@@ -284,7 +284,7 @@ bool sort_man_impl::get_sorted(const int index, sorter_tuple* ptuple)
         if (index >=0 && index < _tuple_count) {
             return (load(ptuple, _sort_buf + (index*_tuple_size)));
         }
-        TRACE( TRACE_DEBUG, "out of bounds index...\n");
+        //TRACE( TRACE_DEBUG, "out of bounds index...\n");
         return (false);
     }
     TRACE( TRACE_DEBUG, "buffer not sorted yet...\n");

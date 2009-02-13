@@ -38,56 +38,6 @@ ENTER_NAMESPACE(tm1);
 using std::map;
 
 
-#define DECLARE_TRX(trx) \
-    w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
-    w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID);    \
-    w_rc_t xct_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
-    void   _inc_##trx##_att();  \
-    void   _inc_##trx##_failed();
-
-#define DECLARE_TABLE(table,manimpl,abbrv)       \
-    guard<table>     _p##abbrv##_desc;           \
-    guard<manimpl>   _p##abbrv##_man;            \
-    inline manimpl*  ##abbrv##_man() { return (_p##abbrv##_man); }
-
-
-#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                   \
-    w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in) { \
-        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);         \
-        ++my_stats.attempted.##trx;                                   \
-        w_rc_t e = xct_##trx(xct_id, atrt, in);                       \
-        if (e.is_error()) {                                           \
-            ++my_stats.failed.##trx;                                  \
-            TRACE( TRACE_TRX_FLOW, "Xct (%d) %s aborted [0x%x]\n", xct_id, #trx, e.err_num()); \
-            w_rc_t e2 = _pssm->abort_xct();                           \
-            if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) %s abort failed [0x%x]\n", xct_id, #trx, e2.err_num()); \
-            if (atrt.get_notify()) atrt.get_notify()->signal();       \
-            if (_measure!=MST_MEASURE) return (e);                    \
-            _env_stats.inc_trx_att();                                 \
-            return (e); }                                             \
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) %s completed\n", xct_id, #trx); \
-        if (atrt.get_notify()) atrt.get_notify()->signal();           \
-        if (_measure!=MST_MEASURE) return (RCOK);                     \
-        _env_stats.inc_trx_com();                                     \
-        return (RCOK); }
-
-#define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx)               \
-    w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID) { \
-        trx##_input_t in = create_##trx##_input(_scaling_factor, specificID);                   \
-        return (run_##trx(xct_id, atrt, in)); }
-
-
-#define DEFINE_TRX_STATS(cname,trx)                                   \
-    void cname::_inc_##trx##_att()    { ++my_stats.attempted.##trx; } \
-    void cname::_inc_##trx##_failed() { ++my_stats.failed.##trx; }
-
-
-#define DEFINE_TRX(cname,trx) \
-    DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx); \
-    DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx);    \
-    DEFINE_TRX_STATS(cname,trx);    
-
-
 
 
 
@@ -109,8 +59,6 @@ struct ShoreTM1TrxCount
     int ins_call_fwd;
     int del_call_fwd;
 
-    int other;
-
     ShoreTM1TrxCount& operator+=(ShoreTM1TrxCount const& rhs) {
         get_sub_data += rhs.get_sub_data;
         get_new_dest += rhs.get_new_dest;
@@ -119,7 +67,6 @@ struct ShoreTM1TrxCount
         upd_loc += rhs.upd_loc;
         ins_call_fwd += rhs.ins_call_fwd;
         del_call_fwd += rhs.del_call_fwd;
-        other += rhs.other;
 	return (*this);
     }
 
@@ -131,14 +78,12 @@ struct ShoreTM1TrxCount
         upd_loc -= rhs.upd_loc;
         ins_call_fwd -= rhs.ins_call_fwd;
         del_call_fwd -= rhs.del_call_fwd;
-        other -= rhs.other;
 	return (*this);
     }
 
     const int total() const {
         return (get_sub_data+get_new_dest+get_acc_data+
-                upd_sub_data+upd_loc+ins_call_fwd+del_call_fwd+
-                other);
+                upd_sub_data+upd_loc+ins_call_fwd+del_call_fwd);
     }
     
 }; // EOF: ShoreTM1TrxCount
@@ -209,9 +154,16 @@ public:
         : ShoreEnv(confname), _worker_cnt(0),
           _scaling_factor(TM1_DEF_SF),
           _queried_factor(TM1_DEF_QF)
-    { }
+    { 
+        pthread_mutex_init(&_scaling_mutex, NULL);
+        pthread_mutex_init(&_queried_mutex, NULL);
+    }
 
-    virtual ~ShoreTM1Env() { }
+    virtual ~ShoreTM1Env() 
+    {         
+        pthread_mutex_destroy(&_scaling_mutex);
+        pthread_mutex_destroy(&_queried_mutex);
+    }
 
 
     // DB INTERFACE
@@ -260,9 +212,9 @@ public:
     DECLARE_TABLE(call_forwarding_t,cf_man_impl,cf)
 
 
-    // --- kit baseline trxs --- //
+    // --- kit trxs --- //
 
-    w_rc_t run_one_xct(int xct_type, const int xctid, const int specificID,
+    w_rc_t run_one_xct(const int xctid, int xct_type, const int specificID,
                        trx_result_tuple_t& trt);
 
     DECLARE_TRX(get_sub_data)

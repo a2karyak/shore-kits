@@ -44,12 +44,12 @@ w_rc_t final_ordst_rvp::run()
 
 void final_ordst_rvp::upd_committed_stats() 
 {
-    _ptpccenv->_inc_ordst_att();
+    _ptpccenv->_inc_order_status_att();
 }                     
 
 void final_ordst_rvp::upd_aborted_stats() 
 {
-    _ptpccenv->_inc_ordst_failed();
+    _ptpccenv->_inc_order_status_failed();
 }                     
 
 
@@ -128,15 +128,15 @@ w_rc_t r_ol_ordst_action::trx_exec()
 
     // get table tuple from the cache
 
-    row_impl<order_line_t>* prol = _ptpccenv->orderline_man()->get_tuple();
+    row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
     w_assert3(prol);
 
-    rep_row_t areprow(_ptpccenv->orderline_man()->ts());
-    areprow.set(_ptpccenv->orderline()->maxsize()); 
+    rep_row_t areprow(_ptpccenv->order_line_man()->ts());
+    areprow.set(_ptpccenv->order_line()->maxsize()); 
     prol->_rep = &areprow;
 
-    rep_row_t lowrep(_ptpccenv->orderline_man()->ts());
-    rep_row_t highrep(_ptpccenv->orderline_man()->ts());
+    rep_row_t lowrep(_ptpccenv->order_line_man()->ts());
+    rep_row_t highrep(_ptpccenv->order_line_man()->ts());
 
     tpcc_orderline_tuple* porderlines = NULL;
 
@@ -163,7 +163,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
         {
             index_scan_iter_impl<order_line_t>* tmp_ol_iter;
             TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ol-iter-by-idx-nl\n", _tid);
-            e = _ptpccenv->orderline_man()->ol_get_probe_iter_by_index_nl(_ptpccenv->db(), 
+            e = _ptpccenv->order_line_man()->ol_get_probe_iter_by_index_nl(_ptpccenv->db(), 
                                                                           tmp_ol_iter, prol,
                                                                           lowrep, highrep,
                                                                           w_id, d_id, o_id);
@@ -206,7 +206,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
 
 done:
     // give back the tuple
-    _ptpccenv->orderline_man()->give_tuple(prol);   
+    _ptpccenv->order_line_man()->give_tuple(prol);   
     if (porderlines) delete [] porderlines;
     return (e);
 }

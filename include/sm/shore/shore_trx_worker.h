@@ -217,13 +217,13 @@ const int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
     TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", prequest->_tid);
             
     // 2. serve action
-    w_rc_t e = _db->run_one_xct(prequest->_xct_type,
-                                prequest->_xct_id,
+    w_rc_t e = _db->run_one_xct(prequest->_xct_id,
+                                prequest->_xct_type,
                                 prequest->_spec_id,
                                 prequest->_result);
     if (e.is_error()) {
-        TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
-               prequest->_tid, e.err_num());
+        TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) (%d) [0x%x]\n",
+               prequest->_tid, prequest->_xct_id, e.err_num());
         ++_stats._problems;
         return (1);
     }          

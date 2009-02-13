@@ -74,7 +74,8 @@ struct ShoreTPCCTrxCount
     int delivery;
     int stock_level;
 
-    int other;
+    int mbench_wh;
+    int mbench_cust;
 
     ShoreTPCCTrxCount& operator+=(ShoreTPCCTrxCount const& rhs) {
         new_order += rhs.new_order; 
@@ -82,7 +83,8 @@ struct ShoreTPCCTrxCount
         order_status += rhs.order_status;
         delivery += rhs.delivery;
         stock_level += rhs.stock_level; 
-        other += rhs.other;
+        mbench_wh += rhs.mbench_wh;
+        mbench_cust += rhs.mbench_cust;
 	return (*this);
     }
 
@@ -92,15 +94,16 @@ struct ShoreTPCCTrxCount
         order_status -= rhs.order_status;
         delivery -= rhs.delivery;
         stock_level -= rhs.stock_level; 
-        other -= rhs.other;
+        mbench_wh -= rhs.mbench_wh;
+        mbench_cust -= rhs.mbench_cust;
 	return (*this);
     }
 
     const int total() const {
         return (new_order+payment+order_status+delivery+stock_level+
-                other);
+                mbench_wh+mbench_cust);
     }
-
+    
 }; // EOF: ShoreTPCCTrxCount
 
 
@@ -150,35 +153,6 @@ protected:
     int             _worker_cnt;         
 
 
-    // TPC-C tables
-
-    /** all the tables */
-    guard<warehouse_t>         _pwarehouse_desc;
-    guard<district_t>          _pdistrict_desc;
-    guard<customer_t>          _pcustomer_desc;
-    guard<history_t>           _phistory_desc;
-    guard<new_order_t>         _pnew_order_desc;
-    guard<order_t>             _porder_desc;
-    guard<order_line_t>        _porder_line_desc;
-    guard<item_t>              _pitem_desc;
-    guard<stock_t>             _pstock_desc;
-
-    tpcc_table_desc_list       _table_desc_list;
-
-
-    /** all the table managers */
-    guard<warehouse_man_impl>  _pwarehouse_man;
-    guard<district_man_impl>   _pdistrict_man;
-    guard<customer_man_impl>   _pcustomer_man;
-    guard<history_man_impl>    _phistory_man;
-    guard<new_order_man_impl>  _pnew_order_man;
-    guard<order_man_impl>      _porder_man;
-    guard<order_line_man_impl> _porder_line_man;
-    guard<item_man_impl>       _pitem_man;
-    guard<stock_man_impl>      _pstock_man;
-
-    table_man_list_t           _table_man_list;
-
     // scaling factors
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
     pthread_mutex_t _scaling_mutex;
@@ -186,22 +160,9 @@ protected:
     pthread_mutex_t _queried_mutex;
 
 
-    // --- kit baseline trxs --- //
-    w_rc_t xct_new_order(new_order_input_t* no_input, 
-                         const int xct_id, 
-                         trx_result_tuple_t& trt);
-    w_rc_t xct_payment(payment_input_t* pay_input, 
-                       const int xct_id, 
-                       trx_result_tuple_t& trt);
-    w_rc_t xct_order_status(order_status_input_t* status_input, 
-                            const int xct_id, 
-                            trx_result_tuple_t& trt);
-    w_rc_t xct_delivery(delivery_input_t* deliv_input, 
-                        const int xct_id, 
-                        trx_result_tuple_t& trt);
-    w_rc_t xct_stock_level(stock_level_input_t* level_input, 
-                           const int xct_id, 
-                           trx_result_tuple_t& trt);
+
+    tpcc_table_desc_list       _table_desc_list;
+    table_man_list_t           _table_man_list;
     
 
 private:
@@ -215,7 +176,6 @@ public:
           _scaling_factor(TPCC_SCALING_FACTOR), 
           _queried_factor(QUERIED_TPCC_SCALING_FACTOR)
     {
-        // read the scaling factor from the configuration file
         pthread_mutex_init(&_scaling_mutex, NULL);
         pthread_mutex_init(&_queried_mutex, NULL);
     }
@@ -274,77 +234,33 @@ public:
     w_rc_t warmup();
     w_rc_t check_consistency();
 
-
-    // --- access to the tables --- //
-    inline warehouse_t*  warehouse() { return (_pwarehouse_desc.get()); }
-    inline district_t*   district()  { return (_pdistrict_desc.get()); }
-    inline customer_t*   customer()  { return (_pcustomer_desc.get()); }
-    inline history_t*    history()   { return (_phistory_desc.get()); }
-    inline new_order_t*  new_order() { return (_pnew_order_desc.get()); }
-    inline order_t*      order()     { return (_porder_desc.get()); }
-    inline order_line_t* orderline() { return (_porder_line_desc.get()); }
-    inline item_t*       item()      { return (_pitem_desc.get()); }
-    inline stock_t*      stock()     { return (_pstock_desc.get()); }
-
-
-    // --- access to the table managers --- //
-    inline warehouse_man_impl*  warehouse_man() { return (_pwarehouse_man); }
-    inline district_man_impl*   district_man()  { return (_pdistrict_man); }
-    inline customer_man_impl*   customer_man()  { return (_pcustomer_man); }
-    inline history_man_impl*    history_man()   { return (_phistory_man); }
-    inline new_order_man_impl*  new_order_man() { return (_pnew_order_man); }
-    inline order_man_impl*      order_man()     { return (_porder_man); }
-    inline order_line_man_impl* orderline_man() { return (_porder_line_man); }
-    inline item_man_impl*       item_man()      { return (_pitem_man); }
-    inline stock_man_impl*      stock_man()     { return (_pstock_man); }
+    
+    // TPCC Tables
+    DECLARE_TABLE(warehouse_t,warehouse_man_impl,warehouse)
+    DECLARE_TABLE(district_t,district_man_impl,district)
+    DECLARE_TABLE(customer_t,customer_man_impl,customer)
+    DECLARE_TABLE(history_t,history_man_impl,history)
+    DECLARE_TABLE(new_order_t,new_order_man_impl,new_order)
+    DECLARE_TABLE(order_t,order_man_impl,order)
+    DECLARE_TABLE(order_line_t,order_line_man_impl,order_line)
+    DECLARE_TABLE(item_t,item_man_impl,item)
+    DECLARE_TABLE(stock_t,stock_man_impl,stock)
     
 
+    // --- kit trxs --- //
 
+    w_rc_t run_one_xct(const int xctid, int xct_type, const int specID, 
+                       trx_result_tuple_t& trt);
 
+    DECLARE_TRX(new_order)
+    DECLARE_TRX(payment)
+    DECLARE_TRX(order_status)
+    DECLARE_TRX(delivery)
+    DECLARE_TRX(stock_level)
 
+    DECLARE_TRX(mbench_wh)
+    DECLARE_TRX(mbench_cust)
 
-    // --- kit baseline trxs --- //
-
-    w_rc_t run_one_xct(int xct_type, const int xctid, const int specID, trx_result_tuple_t& trt);
-
-
-    // --- with input specified --- //
-    w_rc_t run_new_order(const int xct_id, new_order_input_t& anoin, trx_result_tuple_t& atrt);
-    w_rc_t run_payment(const int xct_id, payment_input_t& apin, trx_result_tuple_t& atrt);
-    w_rc_t run_order_status(const int xct_id, order_status_input_t& aordstin, trx_result_tuple_t& atrt);
-    w_rc_t run_delivery(const int xct_id, delivery_input_t& adelin, trx_result_tuple_t& atrt);
-    w_rc_t run_stock_level(const int xct_id, stock_level_input_t& astoin, trx_result_tuple_t& atrt);
-
-    // --- without input specified --- //
-    w_rc_t run_new_order(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_payment(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_order_status(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_delivery(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_stock_level(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-
-    // --- baseline mbench --- //
-    w_rc_t run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t _run_mbench_cust(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-    w_rc_t _run_mbench_wh(const int xct_id, trx_result_tuple_t& atrt, int specificWH);
-
-
-
-    
-
-    // update statistics
-    void _inc_other_att();
-    void _inc_other_failed();
-    void _inc_nord_att();
-    void _inc_nord_failed();
-    void _inc_pay_att();
-    void _inc_pay_failed();
-    void _inc_ordst_att();
-    void _inc_ordst_failed();
-    void _inc_deliv_att();
-    void _inc_deliv_failed();
-    void _inc_stock_att();
-    void _inc_stock_failed();
 
     const int upd_worker_cnt();
 

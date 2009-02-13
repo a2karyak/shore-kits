@@ -137,12 +137,12 @@ w_rc_t final_nord_rvp::run()
 
 void final_nord_rvp::upd_committed_stats() 
 {
-    _ptpccenv->_inc_nord_att();
+    _ptpccenv->_inc_new_order_att();
 }                     
 
 void final_nord_rvp::upd_aborted_stats() 
 {
-    _ptpccenv->_inc_nord_failed();
+    _ptpccenv->_inc_new_order_failed();
 }                     
 
 
@@ -669,11 +669,11 @@ w_rc_t ins_ol_nord_action::trx_exec()
     w_assert3 (_ptpccenv);
 
     // get table tuple from the cache
-    row_impl<order_line_t>* prol = _ptpccenv->orderline_man()->get_tuple();
+    row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
     w_assert3 (prol);
 
-    rep_row_t areprow(_ptpccenv->orderline_man()->ts());
-    areprow.set(_ptpccenv->orderline()->maxsize()); 
+    rep_row_t areprow(_ptpccenv->order_line_man()->ts());
+    areprow.set(_ptpccenv->order_line()->maxsize()); 
     prol->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -699,11 +699,11 @@ w_rc_t ins_ol_nord_action::trx_exec()
         prol->set_value(9, _item_info._astock.S_DIST[6+_d_id]);
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:orderline-add-tuple (%d) (%d) (%d) (%d)\n", 
+               "App: %d NO:ol-add-tuple (%d) (%d) (%d) (%d)\n", 
                _tid, _wh_id, _d_id, _d_next_o_id, _ol_idx+1);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->orderline_man()->add_tuple(_ptpccenv->db(), prol);
+        e = _ptpccenv->order_line_man()->add_tuple(_ptpccenv->db(), prol);
 #endif
 
         if (e.is_error()) { goto done; }
@@ -718,7 +718,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
 
 done:
     // give back the tuple
-    _ptpccenv->orderline_man()->give_tuple(prol);
+    _ptpccenv->order_line_man()->give_tuple(prol);
     return (e);
 }
 

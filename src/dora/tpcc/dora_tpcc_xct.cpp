@@ -662,8 +662,8 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
                                    trx_result_tuple_t& atrt,
                                    int specificWH)
 {
-    new_order_input_t noin = create_no_input(_queried_factor, 
-                                             specificWH);
+    new_order_input_t noin = create_new_order_input(_queried_factor, 
+                                                    specificWH);
     return (dora_new_order(xct_id, noin, atrt));
 }
 

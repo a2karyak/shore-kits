@@ -33,17 +33,17 @@ ENTER_NAMESPACE(tpcc);
 
 /********************************************************************* 
  *
- *  @fn:    create_no_input
+ *  @fn:    create_new_order_input
  *
  *  @brief: Creates the input for a new NEW_ORDER request, 
  *          given the scaling factor (sf) of the database
  *
  *********************************************************************/ 
 
-new_order_input_t create_no_input(int sf, int specificWH) 
+new_order_input_t create_new_order_input(int sf, int specificWH) 
 {
     // check scaling factor
-    assert(sf>0);
+    w_assert3 (sf>0);
 
     // produce NEW_ORDER params according to tpcc spec v.5.9
     new_order_input_t noin;
@@ -128,7 +128,7 @@ new_order_input_t create_no_input(int sf, int specificWH)
 payment_input_t create_payment_input(int sf, int specificWH) 
 {
     // check scaling factor
-    assert(sf>0);
+    w_assert3 (sf>0);
 
     // produce PAYMENT params according to tpcc spec v.5.9
     payment_input_t pin;
@@ -217,7 +217,7 @@ payment_input_t create_payment_input(int sf, int specificWH)
 order_status_input_t create_order_status_input(int sf, int specificWH)
 {
     // check scaling factor
-    assert(sf > 0);
+    w_assert3 (sf > 0);
 
     // produce PAYMENT params according to tpcc spec v.5.4
     order_status_input_t osin;
@@ -272,7 +272,7 @@ order_status_input_t create_order_status_input(int sf, int specificWH)
 delivery_input_t create_delivery_input(int sf, int specificWH)
 {
     // check scaling factor
-    assert(sf > 0);
+    w_assert3 (sf > 0);
 
     // produce PAYMENT params according to tpcc spec v.5.9
     delivery_input_t din;
@@ -310,7 +310,7 @@ delivery_input_t create_delivery_input(int sf, int specificWH)
 stock_level_input_t create_stock_level_input(int sf, int specificWH)
 {
     // check scaling factor
-    assert(sf > 0);
+    w_assert3 (sf > 0);
 
     // produce PAYMENT params according to tpcc spec v.5.4
     stock_level_input_t slin;
@@ -335,6 +335,84 @@ stock_level_input_t create_stock_level_input(int sf, int specificWH)
     return (slin);
 
 }; // EOF: create_stock_level
+
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    create_mbench_wh_input
+ *
+ *  @brief: Creates the input for a new MBENCH_WH request, 
+ *          given the scaling factor (sf) of the database
+ *
+ *********************************************************************/ 
+
+mbench_wh_input_t create_mbench_wh_input(int sf, int specificWH)
+{
+    // check scaling factor
+    w_assert3 (sf > 0);
+
+    mbench_wh_input_t mwin;
+
+#ifndef USE_SAME_INPUT    
+
+    if (specificWH>0)
+        mwin._wh_id = specificWH;
+    else
+        mwin._wh_id = URand(1, sf);
+
+    mwin._amount = (double)URand(1,1000);
+
+#else
+    // same input
+    slin._wh_id  = 1;
+#endif        
+
+    return (mwin);
+
+}; // EOF: mbench_wh
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    create_mbench_cust_input
+ *
+ *  @brief: Creates the input for a new MBENCH_CUST request, 
+ *          given the scaling factor (sf) of the database
+ *
+ *********************************************************************/ 
+
+mbench_cust_input_t create_mbench_cust_input(int sf, int specificWH)
+{
+    // check scaling factor
+    w_assert3 (sf > 0);
+
+    mbench_cust_input_t mcin;
+
+#ifndef USE_SAME_INPUT    
+
+    if (specificWH>0)
+        mcin._wh_id = specificWH;
+    else
+        mcin._wh_id = URand(1, sf);
+
+    mcin._d_id = URand(1,10);
+    mcin._c_id = NURand(1023,1,3000);
+    mcin._amount = (double)URand(1,1000);
+
+#else
+    // same input
+    slin._wh_id  = 1;
+    slin._d_id   = 2;
+    slin._c_id   = 3;
+    slin._amount = 15;
+#endif        
+
+    return (mcin);
+
+}; // EOF: mbench_cust
 
 
 

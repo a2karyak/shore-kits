@@ -112,12 +112,12 @@ w_rc_t final_stock_rvp::run()
 
 void final_stock_rvp::upd_committed_stats() 
 {
-    _ptpccenv->_inc_stock_att();
+    _ptpccenv->_inc_stock_level_att();
 }                     
 
 void final_stock_rvp::upd_aborted_stats() 
 {
-    _ptpccenv->_inc_stock_failed();
+    _ptpccenv->_inc_stock_level_failed();
 }                     
 
 
@@ -194,21 +194,21 @@ w_rc_t r_ol_stock_action::trx_exec()
 
     // get table tuple from the cache
 
-    row_impl<order_line_t>* prol = _ptpccenv->orderline_man()->get_tuple();
+    row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
     w_assert3 (prol);
 
-    rep_row_t areprow(_ptpccenv->orderline_man()->ts());
-    areprow.set(_ptpccenv->orderline()->maxsize()); 
+    rep_row_t areprow(_ptpccenv->order_line_man()->ts());
+    areprow.set(_ptpccenv->order_line()->maxsize()); 
     prol->_rep = &areprow;
 
-    rep_row_t lowrep(_ptpccenv->orderline_man()->ts());
-    lowrep.set(_ptpccenv->orderline()->maxsize()); 
+    rep_row_t lowrep(_ptpccenv->order_line_man()->ts());
+    lowrep.set(_ptpccenv->order_line()->maxsize()); 
 
-    rep_row_t highrep(_ptpccenv->orderline_man()->ts());
-    highrep.set(_ptpccenv->orderline()->maxsize()); 
+    rep_row_t highrep(_ptpccenv->order_line_man()->ts());
+    highrep.set(_ptpccenv->order_line()->maxsize()); 
 
-    rep_row_t sortrep(_ptpccenv->orderline_man()->ts());
-    sortrep.set(_ptpccenv->orderline()->maxsize()); 
+    rep_row_t sortrep(_ptpccenv->order_line_man()->ts());
+    sortrep.set(_ptpccenv->order_line()->maxsize()); 
 
     sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
@@ -256,7 +256,7 @@ w_rc_t r_ol_stock_action::trx_exec()
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
 	{
 	    index_scan_iter_impl<order_line_t>* tmp_ol_iter;
-	    e = _ptpccenv->orderline_man()->ol_get_range_iter_by_index_nl(_ptpccenv->db(), 
+	    e = _ptpccenv->order_line_man()->ol_get_range_iter_by_index_nl(_ptpccenv->db(), 
                                                                           tmp_ol_iter, prol,
                                                                           lowrep, highrep,
                                                                           w_id, d_id,
@@ -332,7 +332,7 @@ w_rc_t r_ol_stock_action::trx_exec()
 
 done:
     // give back the tuple
-    _ptpccenv->orderline_man()->give_tuple(prol);   
+    _ptpccenv->order_line_man()->give_tuple(prol);   
     return (e);
 }
 

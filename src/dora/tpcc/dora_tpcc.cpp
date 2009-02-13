@@ -165,7 +165,7 @@ const int DoraTPCCEnv::start()
 
 
     // ORDER-LINE
-    _ol_irpt = new irpTableImpl(this, orderline(), icpu, _cpu_range, 
+    _ol_irpt = new irpTableImpl(this, order_line(), icpu, _cpu_range, 
                                 OL_IRP_KEY, OL_KEY_EST, _wh_per_part_oline, _sf);
     if (!_ol_irpt) {
         TRACE( TRACE_ALWAYS, "Problem in creating (ORDER-LINE) irp-table\n");

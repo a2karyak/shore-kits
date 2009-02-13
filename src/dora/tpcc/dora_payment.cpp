@@ -79,12 +79,12 @@ w_rc_t final_pay_rvp::run()
 
 void final_pay_rvp::upd_committed_stats() 
 {
-    _ptpccenv->_inc_pay_att();
+    _ptpccenv->_inc_payment_att();
 }                     
 
 void final_pay_rvp::upd_aborted_stats() 
 {
-    _ptpccenv->_inc_pay_failed();
+    _ptpccenv->_inc_payment_failed();
 }                     
 
 

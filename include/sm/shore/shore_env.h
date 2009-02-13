@@ -114,11 +114,68 @@ const string SHORE_DB_OPTIONS[][2] = {
 const int    SHORE_NUM_DB_OPTIONS  = 4;
 
 
+
+
+
+#define DECLARE_TRX(trx) \
+    w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
+    w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID);    \
+    w_rc_t xct_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
+    void   _inc_##trx##_att();  \
+    void   _inc_##trx##_failed();
+
+#define DECLARE_TABLE(table,manimpl,abbrv)       \
+    guard<table>     _p##abbrv##_desc;           \
+    guard<manimpl>   _p##abbrv##_man;            \
+    inline manimpl*  ##abbrv##_man() { return (_p##abbrv##_man); }      \
+    inline table*    ##abbrv() { return (_p##abbrv##_desc.get()); }
+
+
+#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                   \
+    w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in) { \
+        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);         \
+        ++my_stats.attempted.##trx;                                   \
+        w_rc_t e = xct_##trx(xct_id, atrt, in);                       \
+        if (e.is_error()) {                                           \
+            ++my_stats.failed.##trx;                                  \
+            TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
+            w_rc_t e2 = _pssm->abort_xct();                           \
+            if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
+            if (atrt.get_notify()) atrt.get_notify()->signal();       \
+            if (_measure!=MST_MEASURE) return (e);                    \
+            _env_stats.inc_trx_att();                                 \
+            return (e); }                                             \
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", xct_id);       \
+        if (atrt.get_notify()) atrt.get_notify()->signal();           \
+        if (_measure!=MST_MEASURE) return (RCOK);                     \
+        _env_stats.inc_trx_com();                                     \
+        return (RCOK); }
+
+#define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx)               \
+    w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID) { \
+        trx##_input_t in = create_##trx##_input(_scaling_factor, specificID);                   \
+        return (run_##trx(xct_id, atrt, in)); }
+
+
+#define DEFINE_TRX_STATS(cname,trx)                                   \
+    void cname::_inc_##trx##_att()    { ++my_stats.attempted.##trx; } \
+    void cname::_inc_##trx##_failed() { ++my_stats.failed.##trx; }
+
+
+#define DEFINE_TRX(cname,trx)                        \
+    DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx); \
+    DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx);    \
+    DEFINE_TRX_STATS(cname,trx);    
+
+
+
+
+
 /****************************************************************** 
  *
- *  @struct: tpcc_stats_t
+ *  @struct: env_stats_t
  *
- *  @brief:  TPCC Environment statistics
+ *  @brief:  Environment statistics - total trxs attempted/committed
  *
  ******************************************************************/
 

@@ -471,9 +471,9 @@ w_rc_t order_man_impl::ord_get_iter_by_index(ss_m* db,
     assert (_ptable);
     index_desc_t* pindex = NULL;
     if (alm == NL) 
-        _ptable->find_index("O_CUST_INDEX_NL");
+        pindex = _ptable->find_index("O_CUST_INDEX_NL");
     else
-        _ptable->find_index("O_CUST_INDEX");
+        pindex = _ptable->find_index("O_CUST_INDEX");
     assert (pindex);
 
     /* get the lowest key value */

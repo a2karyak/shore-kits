@@ -30,19 +30,13 @@ ENTER_NAMESPACE(dora);
 void final_mb_rvp::upd_committed_stats() 
 {
     w_assert3 (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-    _ptpccenv->_inc_other_att();
+    _ptpccenv->_inc_mbench_wh_att();
 }                     
 
 void final_mb_rvp::upd_aborted_stats() 
 {
     w_assert3 (_ptpccenv);
-//     if (_ptpccenv->get_measure() != MST_MEASURE) {
-//         return;
-//     }
-    _ptpccenv->_inc_other_failed();
+    _ptpccenv->_inc_mbench_wh_failed();
 }                     
 
 

@@ -21,27 +21,6 @@ ENTER_NAMESPACE(tpcc);
 /** Exported data structures */
 
 
-
-/*********************************************************************
- * 
- * @class bstract trx_input_t
- *
- * @brief Base class for the Input of any transaction
- *
- *********************************************************************/
-
-class trx_input_t {
-public:
-    trx_input_t() { }
-    virtual ~trx_input_t() { }
-    virtual void describe(int id)=0;
-    virtual void gen_input(int sf)=0;
-
-}; // EOF: trx_input_t
-
-
-
-
 /*********************************************************************
  * 
  * new_order_input_t
@@ -67,10 +46,8 @@ struct ol_item_info
 }; // EOF: ol_item_info
 
 
-class new_order_input_t : public trx_input_t 
+struct new_order_input_t
 {
-public:
-
     int    _wh_id;        /* input: URand(1,SF) */
     int    _d_id;         /* input: URand(1,10) */
     int    _c_id;         /* input: NURand(1023,1,3000) */
@@ -97,11 +74,6 @@ public:
     // Assignment operator
     new_order_input_t& operator= (const new_order_input_t& rhs);
 
-
-    // Methods
-    void describe(int id);
-    void gen_input(int id);
-
 }; // EOF new_order_input_t
 
 
@@ -115,9 +87,8 @@ public:
  *
  *********************************************************************/
 
-class payment_input_t : public trx_input_t {
-public:
-
+struct payment_input_t
+{
     /**
      *  @brief PAYMENT transaction inputs:
      *  
@@ -156,8 +127,6 @@ public:
     ~payment_input_t() { };
 
     payment_input_t& operator= (const payment_input_t& rhs);
-    void describe(int id=0);
-    void gen_input(int sf);
 
 }; // EOF payment_input_t
 
@@ -171,9 +140,8 @@ public:
  *
  *********************************************************************/
 
-class order_status_input_t : public trx_input_t {
-public:
-
+struct order_status_input_t
+{
     int   _wh_id;       /* input: URand(1,SF) */
     int   _d_id;        /* input: URand(1,10) */
     short _c_select;    /* input: URand(1,100) - 60%-40% */
@@ -193,10 +161,6 @@ public:
     // Assignment operator
     order_status_input_t& operator= (const order_status_input_t& rhs);
 
-    // Methods
-    void describe(int id=0);
-    void gen_input(int id);
-
 }; // EOF order_status_input_t
 
 
@@ -209,9 +173,8 @@ public:
  *
  *********************************************************************/
 
-class delivery_input_t : public trx_input_t {
-public:
-
+struct delivery_input_t
+{
     int    _wh_id;         /* input: URand(1,SF) */
     short  _carrier_id;    /* input: URand(1,10) */
 
@@ -227,10 +190,6 @@ public:
     // Assignment operator
     delivery_input_t& operator= (const delivery_input_t& rhs);
 
-    // Methods
-    void describe(int id=0);
-    void gen_input(int id);
-
 }; // EOF delivery_input_t
 
 
@@ -243,9 +202,8 @@ public:
  *
  *********************************************************************/
 
-class stock_level_input_t : public trx_input_t {
-public:
-
+struct stock_level_input_t
+{
     int   _wh_id;         /* input */
     int   _d_id;          /* input */
     short _threshold;     /* input */
@@ -262,16 +220,67 @@ public:
     // Assignment operator
     stock_level_input_t& operator= (const stock_level_input_t& rhs);
 
-    // Methods
-    void describe(int id=0);
-    void gen_input(int id);
-
 }; // EOF stock_level_input_t
 
 
 
-EXIT_NAMESPACE(tpcc);
+/*********************************************************************
+ * 
+ * mbench_wh_input_t
+ *
+ * Input for any MBENCH_WH transaction
+ *
+ *********************************************************************/
 
+struct mbench_wh_input_t
+{
+    int    _wh_id;    /* input */
+    double _amount;   /* input */
+
+    // Construction/Destructions
+    mbench_wh_input_t() 
+        : _wh_id(0), _amount(0)
+    { };
+    
+    ~mbench_wh_input_t() { };
+
+    // Assignment operator
+    mbench_wh_input_t& operator= (const mbench_wh_input_t& rhs);
+
+}; // EOF mbench_wh_input_t
+
+
+
+/*********************************************************************
+ * 
+ * mbench_cust_input_t
+ *
+ * Input for any MBENCH_CUST transaction
+ *
+ *********************************************************************/
+
+struct mbench_cust_input_t
+{
+    int    _wh_id;    /* input */
+    int    _d_id;     /* input */
+    int    _c_id;     /* input */
+    double _amount;   /* input */
+
+    // Construction/Destructions
+    mbench_cust_input_t() 
+        : _wh_id(0), _d_id(0), _c_id(0), _amount(0)
+    { };
+    
+    ~mbench_cust_input_t() { };
+
+    // Assignment operator
+    mbench_cust_input_t& operator= (const mbench_cust_input_t& rhs);
+
+}; // EOF mbench_cust_input_t
+
+
+
+EXIT_NAMESPACE(tpcc);
 
 #endif
 

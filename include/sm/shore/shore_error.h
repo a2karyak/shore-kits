@@ -26,6 +26,7 @@ enum {
   se_TABLE_NOT_FOUND          = 0x810004,
   se_TUPLE_NOT_FOUND          = 0x810005,
   se_NO_CURRENT_TUPLE         = 0x810006,
+  se_CANNOT_INSERT_TUPLE      = 0x810007,
   
   se_SCAN_OPEN_ERROR          = 0x810010,
   se_INCONSISTENT_INDEX       = 0x810012,
