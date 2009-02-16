@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   dora_kit_shell.cpp
+/** @file:   shore_kits.cpp
  *
- *  @brief:  Test shore/dora tpc-c kit with shell
+ *  @brief:  Test shore/dora kits
  *
  *  @author: Ippokratis Pandis, Sept 2008
  *
@@ -11,28 +11,28 @@
 #include "tests/common.h"
 #include "sm/shore/shore_helper_loader.h"
 
-#include "util/shell.h"
-
 #include "workload/tpcc/shore_tpcc_env.h"
+
+#include "workload/tm1/shore_tm1_env.h"
+#include "workload/tm1/shore_tm1_client.h"
+
+#include "workload/tpcb/shore_tpcb_env.h"
+#include "workload/tpcb/shore_tpcb_client.h"
 
 #include "dora.h"
 #include "dora/tpcc/dora_tpcc.h"
-
-#include "tests/common/tester_shore_shell.h"
-#include "tests/common/tester_shore_client.h"
-
-
-#include "workload/tm1/shore_tm1_client.h"
-#include "workload/tm1/shore_tm1_env.h"
 
 
 
 
 using namespace shore;
-using namespace tpcc;
-using namespace dora;
 
+using namespace tpcc;
 using namespace tm1;
+using namespace tpcb;
+
+
+using namespace dora;
 
 
 
@@ -59,7 +59,7 @@ void initsysnamemap()
 
 
 // Value-definitions of the different Benchmarks
-enum BenchmarkValue { bmTPCC, bmTM1 };
+enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB };
 
 // Map to associate string with then enum values
 
@@ -67,8 +67,9 @@ static map<string,BenchmarkValue> mBenchmarkValue;
 
 void initbenchmarkmap() 
 {
-    mBenchmarkValue["tpcc"] = bmTPCC;
-    mBenchmarkValue["tm1"]  = bmTM1;
+    mBenchmarkValue["tpcc"]  = bmTPCC;
+    mBenchmarkValue["tm1"]   = bmTM1;
+    mBenchmarkValue["tpcb"]  = bmTPCB;
 }
 
 
@@ -488,7 +489,14 @@ int kit_t<Client,DB>::process_cmd_LOAD(const char* command,
 typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
 
+
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
+//typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
+
+
+typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
+//typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
+
 
 
 //////////////////////////////
@@ -506,22 +514,24 @@ int main(int argc, char* argv[])
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW
                //               | TRACE_TRX_FLOW
-               //| TRACE_DEBUG
+               | TRACE_DEBUG
                );
 
     // 1. Get env vars
-    envVar* ev = envVar::instance();       
     initsysnamemap();
     initbenchmarkmap();
+    envVar* ev = envVar::instance();       
+    string sysname = ev->getSysname();
+    string benchmarkname = ev->getSysVar("benchmark");
 
 
     // 2. Initialize shell
     guard<shore_shell_t> kit = NULL;
-    string sysname = ev->getSysname();
-    string benchmarkname = ev->getVar("benchmark","invalid");
 
 
-    TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", sysname.c_str(), benchmarkname.c_str());
+    TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", 
+           benchmarkname.c_str(),
+           sysname.c_str());
 
 
     // TPC-C
@@ -529,12 +539,10 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
-            //
             kit = new baselineTPCCKit("(tpcc-base) ");
             break;
         case snDORA:
             // shore.conf is set for DORA
-            //TRACE( TRACE_ALWAYS, "Staring DORA-TPC-C Kit\n");
             kit = new doraTPCCKit("(tpcc-dora) ");
             break;
         default:
@@ -560,6 +568,25 @@ int main(int argc, char* argv[])
             return (3);        
         }
     }
+
+    // TPC-B
+    if (benchmarkname.compare("tpcb")==0) {
+        switch (mSysnameValue[sysname]) {
+        case snBaseline:
+            // shore.conf is set for Baseline
+            kit = new baselineTPCBKit("(tpcb-base) ");
+            break;
+        case snDORA:
+            // shore.conf is set for DORA
+            //kit = new doraTPCCKit("(tpcb-dora) ");
+            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            //break;
+        default:
+            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            return (3);        
+        }
+    }
+
     assert (kit.get());
 
 
@@ -567,15 +594,6 @@ int main(int argc, char* argv[])
     if (kit->inst_test_env(argc, argv))
         return (4);
 
-    // 3. Make sure that the correct schema is used
-    assert (kit->db());
-    if (kit->db()->sysname().compare(sysname)) {
-        TRACE( TRACE_ALWAYS, 
-               "Incorrect schema at configuration file" \
-               " Wanted (%s) - Found (%s)" \
-               "\nExiting...\n", kit->db()->sysname().c_str(), sysname.c_str());
-        return (4);
-    }
 
     // 4. Make sure data is loaded
     w_rc_t rcl = kit->db()->loaddata();

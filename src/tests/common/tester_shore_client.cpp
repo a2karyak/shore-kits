@@ -28,16 +28,16 @@ const int baseline_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap.clear();
 
     // Baseline TPC-C trxs
-    stmap[XCT_MIX]          = "Mix";
-    stmap[XCT_NEW_ORDER]    = "NewOrder";
-    stmap[XCT_PAYMENT]      = "Payment";
-    stmap[XCT_ORDER_STATUS] = "OrderStatus";
-    stmap[XCT_DELIVERY]     = "Delivery";
-    stmap[XCT_STOCK_LEVEL]  = "StockLevel";
+    stmap[XCT_MIX]          = "TPCC-Mix";
+    stmap[XCT_NEW_ORDER]    = "TPCC-NewOrder";
+    stmap[XCT_PAYMENT]      = "TPCC-Payment";
+    stmap[XCT_ORDER_STATUS] = "TPCC-OrderStatus";
+    stmap[XCT_DELIVERY]     = "TPCC-Delivery";
+    stmap[XCT_STOCK_LEVEL]  = "TPCC-StockLevel";
 
     // Microbenchmarks
-    stmap[XCT_MBENCH_WH]    = "MBench-WHs";
-    stmap[XCT_MBENCH_CUST]  = "MBench-CUSTs";
+    stmap[XCT_MBENCH_WH]    = "TPCC-MBench-WHs";
+    stmap[XCT_MBENCH_CUST]  = "TPCC-MBench-CUSTs";
 
     return (stmap.size());
 }
@@ -106,16 +106,16 @@ const int dora_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap.clear();
 
     // Baseline TPC-C trxs
-    stmap[XCT_DORA_MIX]          = "DORA-Mix";
-    stmap[XCT_DORA_NEW_ORDER]    = "DORA-NewOrder";
-    stmap[XCT_DORA_PAYMENT]      = "DORA-Payment";
-    stmap[XCT_DORA_ORDER_STATUS] = "DORA-OrderStatus";
-    stmap[XCT_DORA_DELIVERY]     = "DORA-Delivery";
-    stmap[XCT_DORA_STOCK_LEVEL]  = "DORA-StockLevel";
+    stmap[XCT_DORA_MIX]          = "DORA-TPCC-Mix";
+    stmap[XCT_DORA_NEW_ORDER]    = "DORA-TPCC-NewOrder";
+    stmap[XCT_DORA_PAYMENT]      = "DORA-TPCC-Payment";
+    stmap[XCT_DORA_ORDER_STATUS] = "DORA-TPCC-OrderStatus";
+    stmap[XCT_DORA_DELIVERY]     = "DORA-TPCC-Delivery";
+    stmap[XCT_DORA_STOCK_LEVEL]  = "DORA-TPCC-StockLevel";
 
     // Microbenchmarks
-    stmap[XCT_DORA_MBENCH_WH]    = "DORA-MBench-WHs";
-    stmap[XCT_DORA_MBENCH_CUST]  = "DORA-MBench-CUSTs";
+    stmap[XCT_DORA_MBENCH_WH]    = "DORA-TPCC-MBench-WHs";
+    stmap[XCT_DORA_MBENCH_CUST]  = "DORA-TPCC-MBench-CUSTs";
 
     return (stmap.size());
 }

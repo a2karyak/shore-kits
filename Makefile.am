@@ -42,7 +42,7 @@ TESTS = \
    tests/raii_file \
    tests/config_file_example \
    tests/row_cache \
-   tests/tpcc_kit_shell \
+   tests/shore_kits \
    tests/simple \
    tests/shore_rvp
 
@@ -95,6 +95,7 @@ UTIL = \
         $(SU)/envvar.cpp \
         $(SU)/prcinfo.cpp \
         $(SU)/stl_pool.cpp \
+        $(SU)/random_input.cpp \
         $(SU)/shell.cpp
 
 UTIL_CMD = \
@@ -164,9 +165,7 @@ SM_SHORE = \
    $(SM)/shore/shore_env.cpp \
    $(SM)/shore/shore_helper_loader.cpp \
    $(SM)/shore/shore_client.cpp \
-   $(SM)/shore/shore_worker.cpp \
-   $(SM)/shore/shore_trx_worker.cpp
-
+   $(SM)/shore/shore_worker.cpp
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
@@ -249,15 +248,6 @@ WL_TPCC_SHORE = \
    $(SW)/tpcc/shore_tpcc_load.cpp
 
 
-WL_TM1_SHORE = \
-   $(SW)/tm1/tm1_input.cpp \
-   $(SW)/tm1/shore_tm1_schema_man.cpp \
-   $(SW)/tm1/shore_tm1_env.cpp \
-   $(SW)/tm1/shore_tm1_xct.cpp \
-   $(SW)/tm1/shore_tm1_client.cpp
-
-
-
 WL_TPCC_DORA = \
    $(SD)/tpcc/dora_payment.cpp \
    $(SD)/tpcc/dora_new_order.cpp \
@@ -269,13 +259,31 @@ WL_TPCC_DORA = \
    $(SD)/tpcc/dora_tpcc_xct.cpp
 
 
+WL_TM1_SHORE = \
+   $(SW)/tm1/tm1_input.cpp \
+   $(SW)/tm1/shore_tm1_schema_man.cpp \
+   $(SW)/tm1/shore_tm1_env.cpp \
+   $(SW)/tm1/shore_tm1_xct.cpp \
+   $(SW)/tm1/shore_tm1_client.cpp
+
+
+WL_TPCB_SHORE = \
+   $(SW)/tpcb/tpcb_input.cpp \
+   $(SW)/tpcb/shore_tpcb_xct.cpp \
+   $(SW)/tpcb/shore_tpcb_schema_man.cpp \
+   $(SW)/tpcb/shore_tpcb_env.cpp \
+   $(SW)/tpcb/shore_tpcb_client.cpp
+
+
+
 lib_libworkload_a_SOURCES = \
    $(WL_BASE) \
    $(WL_TPCC_COMMON) \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
+   $(WL_TPCC_DORA) \
    $(WL_TM1_SHORE) \
-   $(WL_TPCC_DORA)
+   $(WL_TPCB_SHORE)
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
@@ -362,16 +370,17 @@ tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 
-tests_tpcc_kit_shell_SOURCES = $(ST)/tpcc_kit_shell.cpp
 tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 
 tests_simple_SOURCES = $(ST)/simple_test.cpp
 
+tests_shore_kits_SOURCES = $(ST)/shore_kits.cpp
+
 
 # exec files that need Shore
-tests_tpcc_kit_shell_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_tpcc_kit_shell_LDADD = $(TEST_LIBS) -lreadline
+tests_shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+tests_shore_kits_LDADD = $(TEST_LIBS) -lreadline
 
 tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
