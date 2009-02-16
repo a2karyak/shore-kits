@@ -22,7 +22,7 @@ using namespace tpcc;
 
 ENTER_NAMESPACE(dora);
 
-#define PRINT_TRX_RESULTS
+//#define PRINT_TRX_RESULTS
 
 //
 // RVPS

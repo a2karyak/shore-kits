@@ -28,8 +28,6 @@ ENTER_NAMESPACE(tpcc);
 
 /** Exported Functions */
 
-int URand(int low, int high);
-
 int NURand(int A, int low, int high);
 
 int generate_cust_last(int select, char* dest);
