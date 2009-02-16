@@ -42,6 +42,7 @@
 #include "util/stl_pooled_alloc.h"
 #include "util/stl_pool.h"
 #include "util/cache.h"
+#include "util/random_input.h"
 
 
 #endif /** __UTIL_H */

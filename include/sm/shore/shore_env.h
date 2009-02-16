@@ -70,10 +70,9 @@ const string SHORE_SYS_OPTIONS[][2] = {
     { "shore-fakeiodelay", "0" },
     { "shore-fakeiodelay-enable", "0" },
     { "shore-sli_enable", "0" },
-    { "system", "invalid" },
 };
 
-const int    SHORE_NUM_SYS_OPTIONS  = 7;
+const int    SHORE_NUM_SYS_OPTIONS  = 6;
 
 
 // SHORE_SYS_SM_OPTIONS: 
@@ -109,9 +108,10 @@ const string SHORE_DB_OPTIONS[][2] = {
     { "devicequota", "0" },
     { "loadatadir", SHORE_TABLE_DATA_DIR },
     { "sf", "0" },
+    { "system", "invalid" },
 };
 
-const int    SHORE_NUM_DB_OPTIONS  = 4;
+const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 
 
@@ -122,7 +122,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 4;
     w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID);    \
     w_rc_t xct_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
     void   _inc_##trx##_att();  \
-    void   _inc_##trx##_failed();
+    void   _inc_##trx##_failed()
+
 
 #define DECLARE_TABLE(table,manimpl,abbrv)       \
     guard<table>     _p##abbrv##_desc;           \
@@ -133,11 +134,13 @@ const int    SHORE_NUM_DB_OPTIONS  = 4;
 
 #define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                   \
     w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in) { \
-        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);         \
-        ++my_stats.attempted.##trx;                                   \
-        w_rc_t e = xct_##trx(xct_id, atrt, in);                       \
-        if (e.is_error()) {                                           \
-            ++my_stats.failed.##trx;                                  \
+        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
+        ++my_stats.attempted.##trx;                                     \
+        w_rc_t e = xct_##trx(xct_id, atrt, in);                         \
+        if (e.is_error()) {                                             \
+            if (e.err_num() != smlevel_0::eDEADLOCK)                    \
+                ++my_stats.failed.##trx;                                \
+            else ++my_stats.deadlocked.##trx##;                         \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
             w_rc_t e2 = _pssm->abort_xct();                           \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
@@ -165,7 +168,7 @@ const int    SHORE_NUM_DB_OPTIONS  = 4;
 #define DEFINE_TRX(cname,trx)                        \
     DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx); \
     DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx);    \
-    DEFINE_TRX_STATS(cname,trx);    
+    DEFINE_TRX_STATS(cname,trx)
 
 
 

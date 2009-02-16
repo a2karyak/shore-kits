@@ -296,9 +296,6 @@ public:
 }; // EOF: table_man_t
 
 
-typedef std::list<table_man_t*> table_man_list_t;
-typedef std::list<table_man_t*>::iterator table_man_list_iter;
-
 
 
 /****************************************************************** 
