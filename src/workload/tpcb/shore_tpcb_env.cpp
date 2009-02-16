@@ -4,12 +4,14 @@
  *
  *  @brief:  Declaration of the Shore TPC-C environment (database)
  *
- *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Ryan Johnson, Feb 2009
+ *  @author: Ippokratis Pandis, Feb 2009
  */
 
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "sm/shore/shore_helper_loader.h"
 #include <atomic.h>
+
 
 using namespace shore;
 
@@ -34,43 +36,17 @@ const int ShoreTPCBEnv::load_schema()
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
-    _pbranch_desc  = new branch_t(_sysname);
+    _pbranch_desc   = new branch_t(_sysname);
     _pteller_desc   = new teller_t(_sysname);
-    _paccount_desc   = new account_t(_sysname);
-    _phistory_desc    = new history_t(_sysname);
+    _paccount_desc  = new account_t(_sysname);
+    _phistory_desc  = new history_t(_sysname);
 
 
     // initiate the table managers
-    _pbranch_man  = new branch_man_impl(_pbranch_desc.get());
+    _pbranch_man   = new branch_man_impl(_pbranch_desc.get());
     _pteller_man   = new teller_man_impl(_pteller_desc.get());
-    _paccount_man      = new account_man_impl(_paccount_desc.get());
-    _phistory_man    = new history_man_impl(_phistory_desc.get());
-
-    // XXX: !!! Warning !!!
-    //
-    // The two lists should have the description and the manager
-    // of the same table in the same position
-    //
-
-    //// add the table managers to a list
-
-    // (ip) Adding them in descending file order, so that the large
-    //      files to be loaded at the begining. Expection is the
-    //      WH and DISTR which are always the first two.
-    _table_man_list.push_back(_pbranch_man);
-    _table_man_list.push_back(_pteller_man);
-    _table_man_list.push_back(_paccount_man);
-    _table_man_list.push_back(_phistory_man);
-
-    assert (_table_man_list.size() == 4);
-        
-    //// add the table descriptions to a list
-    _table_desc_list.push_back(_pbranch_desc.get());
-    _table_desc_list.push_back(_pteller_desc.get());
-    _table_desc_list.push_back(_paccount_desc.get());
-    _table_desc_list.push_back(_phistory_desc.get());
-
-    assert (_table_desc_list.size() == 4);
+    _paccount_man  = new account_man_impl(_paccount_desc.get());
+    _phistory_man  = new history_man_impl(_phistory_desc.get());
         
     return (0);
 }
@@ -217,6 +193,15 @@ const int ShoreTPCBEnv::upd_worker_cnt()
 }
 
 
+/****************************************************************** 
+ *
+ * @struct: table_creator_t
+ *
+ * @brief:  Helper class for creating the environment tables and
+ *          loading a number of records in a single-threaded fashion
+ *
+ ******************************************************************/
+
 class ShoreTPCBEnv::table_builder_t : public thread_t {
     ShoreTPCBEnv* _env;
     int _sf;
@@ -227,6 +212,46 @@ public:
 	: thread_t("TPC-B loader"), _env(env), _sf(sf), _start(start), _count(count) { }
     virtual void work();
 };
+
+void ShoreTPCBEnv::table_builder_t::work() {
+    w_rc_t e;
+
+    for(int i=0; i < _count; i += TPCB_ACCOUNTS_CREATED_PER_POP_XCT) {
+	long a_id = _start + i;
+	populate_db_input_t in(_sf, a_id);
+	trx_result_tuple_t out;
+	fprintf(stderr, ".");
+	//fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	W_COERCE(_env->db()->begin_xct());
+	e = _env->xct_populate_db(a_id, out, in);
+	if(e.is_error()) {
+	    stringstream os;
+	    os << e << ends;
+	    string str = os.str();
+	    fprintf(stderr, "Eek! Unable to populate db for index %d due to:\n%s\n",
+		    i, str.c_str());
+	    
+	    w_rc_t e2 = _env->db()->abort_xct();
+	    if(e2.is_error()) {
+		TRACE( TRACE_ALWAYS, "Double-eek! Unable to abort trx for index %d due to [0x%x]\n", 
+		       a_id, e2.err_num());
+	    }
+	}
+    }
+    fprintf(stderr, "Finished loading account groups %d .. %d \n", _start, _start+_count);
+}
+
+
+
+
+/****************************************************************** 
+ *
+ * @class: table_builder_t
+ *
+ * @brief:  Helper class for loading the environment tables
+ *
+ ******************************************************************/
+
 
 struct ShoreTPCBEnv::table_creator_t : public thread_t {
     ShoreTPCBEnv* _env;
@@ -254,37 +279,10 @@ void  ShoreTPCBEnv::table_creator_t::work() {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
 	trx_result_tuple_t out;
-	fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	fprintf(stderr, "Populating %d a_ids starting with %d\n", TPCB_ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 	W_COERCE(_env->db()->begin_xct());
-	W_COERCE(_env->xct_populate_db(&in, a_id, out));
+	W_COERCE(_env->xct_populate_db(a_id, out, in));
     }
-}
-void ShoreTPCBEnv::table_builder_t::work() {
-    w_rc_t e;
-
-    for(int i=0; i < _count; i += ACCOUNTS_CREATED_PER_POP_XCT) {
-	long a_id = _start + i;
-	populate_db_input_t in(_sf, a_id);
-	trx_result_tuple_t out;
-	fprintf(stderr, ".");
-	//fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
-	W_COERCE(_env->db()->begin_xct());
-	e = _env->xct_populate_db(&in, a_id, out);
-	if(e.is_error()) {
-	    stringstream os;
-	    os << e << ends;
-	    string str = os.str();
-	    fprintf(stderr, "Eek! Unable to populate db for index %d due to:\n%s\n",
-		    i, str.c_str());
-	    
-	    w_rc_t e2 = _env->db()->abort_xct();
-	    if(e2.is_error()) {
-		TRACE( TRACE_ALWAYS, "Double-eek! Unable to abort trx for index %d due to [0x%x]\n", 
-		       a_id, e2.err_num());
-	    }
-	}
-    }
-    fprintf(stderr, "Finished loading account groups %d .. %d \n", _start, _start+_count);
 }
 
 
@@ -317,9 +315,7 @@ w_rc_t ShoreTPCBEnv::loaddata()
 
     /* 1. create the loader threads */
 
-    int num_tbl = _table_desc_list.size();
-    //const char* loaddatadir = _dev_opts[SHORE_DB_OPTIONS[3][0]].c_str();
-    string loaddatadir = envVar::instance()->getSysVar("loadatadir");
+    int num_tbl = 4;
     int cnt = 0;
 
     /* partly (no) thanks to Shore's next key index locking, and
@@ -331,14 +327,12 @@ w_rc_t ShoreTPCBEnv::loaddata()
        up the real workers.
      */
     static int const LOADERS_TO_USE = 40;
-    long total_accounts = _scaling_factor*ACCOUNTS_PER_BRANCH;
+    long total_accounts = _scaling_factor*TPCB_ACCOUNTS_PER_BRANCH;
     w_assert1((total_accounts % LOADERS_TO_USE) == 0);
     long accts_per_worker = total_accounts/LOADERS_TO_USE;
     
     time_t tstart = time(NULL);
     
-    TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir.c_str());
-
     {
 	guard<table_creator_t> tc;
 	tc = new table_creator_t(this, _scaling_factor, accts_per_worker, LOADERS_TO_USE);
@@ -354,8 +348,8 @@ w_rc_t ShoreTPCBEnv::loaddata()
     guard<table_builder_t> loaders[LOADERS_TO_USE];
     for(long i=0; i < LOADERS_TO_USE; i++) {
 	// the preloader thread picked up that first set of accounts...
-	long start = accts_per_worker*i+ACCOUNTS_CREATED_PER_POP_XCT;
-	long count = accts_per_worker-ACCOUNTS_CREATED_PER_POP_XCT;
+	long start = accts_per_worker*i+TPCB_ACCOUNTS_CREATED_PER_POP_XCT;
+	long count = accts_per_worker-TPCB_ACCOUNTS_CREATED_PER_POP_XCT;
 	loaders[i] = new table_builder_t(this, _scaling_factor, start, count);
 	loaders[i]->fork();
     }
@@ -407,26 +401,6 @@ w_rc_t ShoreTPCBEnv::check_consistency()
 
 w_rc_t ShoreTPCBEnv::warmup()
 {
-//     int num_tbl = _table_desc_list.size();
-//     table_man_t*  pmanager = NULL;
-//     table_man_list_iter table_man_iter;
-
-//     time_t tstart = time(NULL);
-
-//     for ( table_man_iter = _table_man_list.begin(); 
-//           table_man_iter != _table_man_list.end(); 
-//           table_man_iter++)
-//         {
-//             pmanager = *table_man_iter;
-//             W_DO(pmanager->check_all_indexes_together(db()));
-//         }
-
-//     time_t tstop = time(NULL);
-
-//     /* 2. print stats */
-//     TRACE( TRACE_DEBUG, "Checking of (%d) tables finished in (%d) secs...\n",
-//            num_tbl, (tstop - tstart));
-
     return (check_consistency());
 }
 
@@ -441,13 +415,13 @@ w_rc_t ShoreTPCBEnv::warmup()
 
 const int ShoreTPCBEnv::dump()
 {
-    table_man_t* ptable_man = NULL;
-    for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
-        table_man_iter != _table_man_list.end(); table_man_iter++)
-        {
-            ptable_man = *table_man_iter;
-            ptable_man->print_table(this->_pssm);
-        }
+//     table_man_t* ptable_man = NULL;
+//     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
+//         table_man_iter != _table_man_list.end(); table_man_iter++)
+//         {
+//             ptable_man = *table_man_iter;
+//             ptable_man->print_table(this->_pssm);
+//         }
     return (0);
 }
 

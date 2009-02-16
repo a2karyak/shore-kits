@@ -2,9 +2,10 @@
 
 /** @file:   shore_tpcb_env.cpp
  *
- *  @brief:  Implementation of the Baseline Shore TPC-C transactions
+ *  @brief:  Implementation of the Baseline Shore TPC-B transactions
  *
- *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Ryan Johnson, Feb 2009
+ *  @author: Ippokratis Pandis, Feb 2009
  */
 
 #include "workload/tpcb/shore_tpcb_env.h"
@@ -15,20 +16,124 @@
 #include <numeric>
 #include <algorithm>
 
+
 using namespace shore;
 
 
 ENTER_NAMESPACE(tpcb);
 
-acct_update_input_t::acct_update_input_t(int branches_queried, int specific_b_id)
-    : b_id((specific_b_id < 0)? me()->randn(branches_queried) : specific_b_id)
-    , t_id(b_id*TELLERS_PER_BRANCH+me()->randn(TELLERS_PER_BRANCH))
-    , a_id(me()->randn(ACCOUNTS_PER_BRANCH))
-    , delta(me()->randn(2000000)-1000000)
+// acct_update_input_t::acct_update_input_t(int branches_queried, int specific_b_id)
+//     : b_id((specific_b_id < 0)? me()->randn(branches_queried) : specific_b_id)
+//     , t_id(b_id*TELLERS_PER_BRANCH+me()->randn(TELLERS_PER_BRANCH))
+//     , a_id(me()->randn(ACCOUNTS_PER_BRANCH))
+//     , delta(me()->randn(2000000)-1000000)
+// {
+//     int a_b_id = (me()->drand() < .85)? b_id : me()->randn(branches_queried);
+//     a_id += a_b_id*ACCOUNTS_PER_BRANCH;
+// }
+
+
+
+/******************************************************************** 
+ *
+ * Thread-local TPC-B TRXS Stats
+ *
+ ********************************************************************/
+
+static __thread ShoreTPCBTrxStats my_stats;
+
+void ShoreTPCBEnv::env_thread_init()
 {
-    int a_b_id = (me()->drand() < .85)? b_id : me()->randn(branches_queried);
-    a_id += a_b_id*ACCOUNTS_PER_BRANCH;
+    CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
+    _statmap[pthread_self()] = &my_stats;
 }
+
+void ShoreTPCBEnv::env_thread_fini()
+{
+    CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
+    _statmap.erase(pthread_self());
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    _get_stats
+ *
+ *  @brief: Returns a structure with the currently stats
+ *
+ ********************************************************************/
+
+const ShoreTPCBTrxStats ShoreTPCBEnv::_get_stats()
+{
+    CRITICAL_SECTION(cs, _statmap_mutex);
+    ShoreTPCBTrxStats rval;
+    rval -= rval; // dirty hack to set all zeros
+    for (statmap_t::iterator it=_statmap.begin(); it != _statmap.end(); ++it) 
+	rval += *it->second;
+    return (rval);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    reset_stats
+ *
+ *  @brief: Updates the last gathered statistics
+ *
+ ********************************************************************/
+
+void ShoreTPCBEnv::reset_stats()
+{
+    CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
+    _last_stats = _get_stats();
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    print_throughput
+ *
+ *  @brief: Prints the throughput given a measurement delay
+ *
+ ********************************************************************/
+
+void ShoreTPCBEnv::print_throughput(const int iQueriedSF, 
+                                    const int iSpread, 
+                                    const int iNumOfThreads, 
+                                    const double delay)
+{
+    CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
+
+    // get the current statistics
+    ShoreTPCBTrxStats current_stats = _get_stats();
+    
+    // now calculate the diff
+    current_stats -= _last_stats;
+        
+    int trxs_att  = current_stats.attempted.total();
+    int trxs_abt  = current_stats.failed.total();
+    int trxs_dld  = current_stats.deadlocked.total();
+
+    TRACE( TRACE_ALWAYS, "*******\n"             \
+           "QueriedSF: (%d)\n"                   \
+           "Spread:    (%s)\n"                   \
+           "Threads:   (%d)\n"                   \
+           "Trxs Att:  (%d)\n"                   \
+           "Trxs Abt:  (%d)\n"                   \
+           "Trxs Dld:  (%d)\n"                   \
+           "Secs:      (%.2f)\n"                 \
+           "TPS:       (%.2f)\n",
+           iQueriedSF, 
+           (iSpread ? "Yes" : "No"),
+           iNumOfThreads, trxs_att, trxs_abt, trxs_dld,
+           delay, 
+           (trxs_att-trxs_abt-trxs_dld)/delay);
+}
+
+
+
+
+
 
 /******************************************************************** 
  *
@@ -51,11 +156,13 @@ acct_update_input_t::acct_update_input_t(int branches_queried, int specific_b_id
  *
  *********************************************************************/
 
-w_rc_t ShoreTPCBEnv::run_one_xct(int xct_type, const int xctid, 
-                                 const int whid, trx_result_tuple_t& trt)
+w_rc_t ShoreTPCBEnv::run_one_xct(const int xctid,
+                                 int xct_type,
+                                 const int whid, 
+                                 trx_result_tuple_t& trt)
 {
     switch (xct_type) {
-    case XCT_ACCT_UPDATE:
+    case XCT_TPCB_ACCT_UPDATE:
 	return run_acct_update(xctid, trt, whid);
     default:
         assert (0); // UNKNOWN TRX-ID
@@ -79,128 +186,10 @@ w_rc_t ShoreTPCBEnv::run_one_xct(int xct_type, const int xctid,
  *
  ********************************************************************/
 
-struct xct_stats {
-    int attempted;
-    int deadlocked;
-    int failed;
-    xct_stats &operator+=(xct_stats const &other) {
-	attempted += other.attempted;
-	failed += other.failed;
-	deadlocked += other.deadlocked;
-	return *this;
-    };
-    xct_stats &operator-=(xct_stats const &other) {
-	attempted -= other.attempted;
-	failed -= other.failed;
-	deadlocked -= other.deadlocked;
-	return *this;
-    };
-};
 
-static __thread xct_stats my_stats;
-typedef std::map<pthread_t, xct_stats*> statmap_t;
-static statmap_t statmap;
-static pthread_mutex_t statmap_lock = PTHREAD_MUTEX_INITIALIZER;
+DEFINE_TRX(ShoreTPCBEnv,acct_update);
+DEFINE_TRX(ShoreTPCBEnv,populate_db);
 
-// hooks for worker_t::_work_ACTIVE_impl
-extern void worker_thread_init() {
-    CRITICAL_SECTION(cs, statmap_lock);
-    statmap[pthread_self()] = &my_stats;
-}
-extern void worker_thread_fini() {
-    CRITICAL_SECTION(cs, statmap_lock);
-    statmap.erase(pthread_self());
-}
-
-// hook for the shell to get totals
-extern xct_stats shell_get_xct_stats() {
-    CRITICAL_SECTION(cs, statmap_lock);
-    xct_stats rval;
-    rval -= rval; // dirty hack to set all zeros
-    for(statmap_t::iterator it=statmap.begin(); it != statmap.end(); ++it) 
-	rval += *it->second;
-
-    return rval;
-}
-
-
-/* --- with input specified --- */
-
-w_rc_t ShoreTPCBEnv::run_acct_update(const int xct_id, 
-                                 acct_update_input_t& apin,
-                                 trx_result_tuple_t& atrt)
-{
-    TRACE( TRACE_TRX_FLOW, "%d. ACCT UPDATE...\n", xct_id);     
-    
-    ++my_stats.attempted;
-    w_rc_t e = xct_acct_update(&apin, xct_id, atrt);
-    if (e.is_error()) {
-	if(e.err_num() != smlevel_0::eDEADLOCK) 
-	    ++my_stats.failed;
-	else
-	    ++my_stats.deadlocked;
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) Acct Update aborted [0x%x]\n", 
-               xct_id, e.err_num());
-
-//         stringstream os;
-//         os << e << ends;
-//         string str = os.str();
-//         TRACE( TRACE_ALWAYS, "\n%s\n", str.c_str());
-
-	w_rc_t e2 = _pssm->abort_xct();
-	if(e2.is_error()) {
-	    TRACE( TRACE_ALWAYS, "Xct (%d) Acct Update abort failed [0x%x]\n", 
-		   xct_id, e2.err_num());
-	}
-
-	// signal cond var
-	if(atrt.get_notify())
-	    atrt.get_notify()->signal();
-
-        if (_measure!=MST_MEASURE) {
-            return (e);
-        }
-
-//        _total_tpcb_stats.inc_pay_att();
-//        _session_tpcb_stats.inc_pay_att();
-        _env_stats.inc_trx_att();
-        return (e);
-    }
-
-    TRACE( TRACE_TRX_FLOW, "Xct (%d) Acct Update completed\n", xct_id);
-
-    // signal cond var
-    if(atrt.get_notify())
-        atrt.get_notify()->signal();
-
-    if (_measure!=MST_MEASURE) {
-        return (RCOK); 
-    }
-
-    return (RCOK); 
-}
-
-
-
-/* --- without input specified --- */
-
-w_rc_t ShoreTPCBEnv::run_acct_update(const int xct_id, 
-                                 trx_result_tuple_t& atrt,
-                                 int specificWH)
-{
-    acct_update_input_t pin(_queried_factor, specificWH);
-    return (run_acct_update(xct_id, pin, atrt));
-}
-
-
-/******************************************************************** 
- *
- * @note: The functions below are private, the corresponding run_XXX are
- *        their public wrappers. The run_XXX are required because they
- *        do the trx abort in case something goes wrong inside the body
- *        of each of the transactions.
- *
- ********************************************************************/
 
 
 // uncomment the line below if want to dump (part of) the trx results
@@ -212,14 +201,13 @@ w_rc_t ShoreTPCBEnv::run_acct_update(const int xct_id,
  * TPC-B Acct Update
  *
  ********************************************************************/
-w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin, 
-                                 const int xct_id, 
-                                 trx_result_tuple_t& trt)
+w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id, 
+                                     trx_result_tuple_t& trt,
+                                     acct_update_input_t& ppin)
 {
     w_rc_t e = RCOK;
 
     // ensure a valid environment    
-    assert (ppin);
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
@@ -264,11 +252,11 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin,
 	/*
 	  1. Update account
 	*/
-	e = _paccount_man->a_index_probe_forupdate(_pssm, pracct, ppin->a_id);
+	e = _paccount_man->a_index_probe_forupdate(_pssm, pracct, ppin.a_id);
         if (e.is_error()) { goto done; }
 
 	pracct->get_value(2, total);
-	pracct->set_value(2, total + ppin->delta);
+	pracct->set_value(2, total + ppin.delta);
 	e = _paccount_man->update_tuple(_pssm, pracct);
 	if (e.is_error()) { goto done; }
 
@@ -276,10 +264,10 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin,
 	/*
 	  2. Write to History
 	*/
-	prhist->set_value(0, ppin->b_id);
-	prhist->set_value(1, ppin->t_id);
-	prhist->set_value(2, ppin->a_id);
-	prhist->set_value(3, ppin->delta);
+	prhist->set_value(0, ppin.b_id);
+	prhist->set_value(1, ppin.t_id);
+	prhist->set_value(2, ppin.a_id);
+	prhist->set_value(3, ppin.delta);
 	prhist->set_value(4, time(NULL));
 	prhist->set_value(5, "padding");
         e = _phistory_man->add_tuple(_pssm, prhist);
@@ -289,11 +277,11 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin,
 	/*
 	  3. Update teller
 	 */
-	e = _pteller_man->t_index_probe_forupdate(_pssm, prt, ppin->t_id);
+	e = _pteller_man->t_index_probe_forupdate(_pssm, prt, ppin.t_id);
         if (e.is_error()) { goto done; }
 
 	prt->get_value(2, total);
-	prt->set_value(2, total + ppin->delta);
+	prt->set_value(2, total + ppin.delta);
 	e = _pteller_man->update_tuple(_pssm, prt);
 	if (e.is_error()) { goto done; }
 
@@ -301,11 +289,11 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin,
 	/*
 	  4. Update branch
 	 */
-	e = _pbranch_man->b_index_probe_forupdate(_pssm, prb, ppin->b_id);
+	e = _pbranch_man->b_index_probe_forupdate(_pssm, prb, ppin.b_id);
         if (e.is_error()) { goto done; }
 
 	prb->get_value(1, total);
-	prb->set_value(1, total + ppin->delta);
+	prb->set_value(1, total + ppin.delta);
 	e = _pbranch_man->update_tuple(_pssm, prb);
 	if (e.is_error()) { goto done; }
 	
@@ -323,8 +311,7 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(acct_update_input_t* ppin,
     trt.set_state(COMMITTED);
 
 
-    //#ifdef PRINT_TRX_RESULTS
-#if 1
+#ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
     prb->print_tuple();
@@ -348,14 +335,13 @@ done:
 
 
 
-w_rc_t ShoreTPCBEnv::xct_populate_db(populate_db_input_t* ppin, 
-				     const int xct_id, 
-				     trx_result_tuple_t& trt)
+w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id, 
+				     trx_result_tuple_t& trt,
+                                     populate_db_input_t& ppin)
 {
     w_rc_t e = RCOK;
 
     // ensure a valid environment    
-    assert (ppin);
     assert (_pssm);
     assert (_initialized);
     // we probably are *not* loaded!
@@ -363,7 +349,6 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(populate_db_input_t* ppin,
 
     // account update trx touches 4 tables:
     // branch, teller, account, and history -- just like TPC-C payment:
-    // branch, teller, account, and history
 
     // get table tuples from the caches
     row_impl<branch_t>* prb = _pbranch_man->get_tuple();
@@ -395,37 +380,37 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(populate_db_input_t* ppin,
 
     { // make gotos safe
 
-	if(ppin->_first_a_id < 0) {
+	if(ppin._first_a_id < 0) {
 	    /*
 	      Populate the branches and tellers
 	    */
-	    for(int i=0; i < ppin->_sf; i++) {
+	    for(int i=0; i < ppin._sf; i++) {
 		prb->set_value(0, i);
 		prb->set_value(1, 0.0);
 		prb->set_value(2, "padding");
 		e = _pbranch_man->add_tuple(_pssm, prb);
 		if (e.is_error()) { goto done; }
 	    }
-	    fprintf(stderr, "Loaded %d branches\n", ppin->_sf);
+	    fprintf(stderr, "Loaded %d branches\n", ppin._sf);
 	    
-	    for(int i=0; i < ppin->_sf*TELLERS_PER_BRANCH; i++) {
+	    for(int i=0; i < ppin._sf*TPCB_TELLERS_PER_BRANCH; i++) {
 		prt->set_value(0, i);
-		prt->set_value(1, i/TELLERS_PER_BRANCH);
+		prt->set_value(1, i/TPCB_TELLERS_PER_BRANCH);
 		prt->set_value(2, 0.0);
 		prt->set_value(3, "padding");
 		e = _pteller_man->add_tuple(_pssm, prt);
 		if (e.is_error()) { goto done; }
 	    }
-	    fprintf(stderr, "Loaded %d tellers\n", ppin->_sf*TELLERS_PER_BRANCH);
+	    fprintf(stderr, "Loaded %d tellers\n", ppin._sf*TPCB_TELLERS_PER_BRANCH);
 	}
 	else {
 	    /*
 	      Populate 10k accounts
 	    */
-	    for(int i=0; i < ACCOUNTS_CREATED_PER_POP_XCT; i++) {
-		int a_id = ppin->_first_a_id + (ACCOUNTS_CREATED_PER_POP_XCT-i-1);
+	    for(int i=0; i < TPCB_ACCOUNTS_CREATED_PER_POP_XCT; i++) {
+		int a_id = ppin._first_a_id + (TPCB_ACCOUNTS_CREATED_PER_POP_XCT-i-1);
 		pracct->set_value(0, a_id);
-		pracct->set_value(1, a_id/ACCOUNTS_PER_BRANCH);
+		pracct->set_value(1, a_id/TPCB_ACCOUNTS_PER_BRANCH);
 		pracct->set_value(2, 0.0);
 		pracct->set_value(3, "padding");
 		e = _paccount_man->add_tuple(_pssm, pracct);
