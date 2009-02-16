@@ -32,7 +32,7 @@ ENTER_NAMESPACE(tpcc);
 const int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = _sys_opts[SHORE_SYS_OPTIONS[6][0]];
+    _sysname = envVar::instance()->getSysname();
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
@@ -57,43 +57,7 @@ const int ShoreTPCCEnv::load_schema()
     _porder_man      = new order_man_impl(_porder_desc.get());
     _pnew_order_man  = new new_order_man_impl(_pnew_order_desc.get());
     _pitem_man       = new item_man_impl(_pitem_desc.get());
-
-    // XXX: !!! Warning !!!
-    //
-    // The two lists should have the description and the manager
-    // of the same table in the same position
-    //
-
-    //// add the table managers to a list
-
-    // (ip) Adding them in descending file order, so that the large
-    //      files to be loaded at the begining. Expection is the
-    //      WH and DISTR which are always the first two.
-    _table_man_list.push_back(_pwarehouse_man);
-    _table_man_list.push_back(_pdistrict_man);
-    _table_man_list.push_back(_pstock_man);
-    _table_man_list.push_back(_porder_line_man);
-    _table_man_list.push_back(_pcustomer_man);
-    _table_man_list.push_back(_phistory_man);
-    _table_man_list.push_back(_porder_man);
-    _table_man_list.push_back(_pnew_order_man);
-    _table_man_list.push_back(_pitem_man);
-
-    assert (_table_man_list.size() == SHORE_TPCC_TABLES);
-        
-    //// add the table descriptions to a list
-    _table_desc_list.push_back(_pwarehouse_desc.get());
-    _table_desc_list.push_back(_pdistrict_desc.get());
-    _table_desc_list.push_back(_pstock_desc.get());
-    _table_desc_list.push_back(_porder_line_desc.get());
-    _table_desc_list.push_back(_pcustomer_desc.get());
-    _table_desc_list.push_back(_phistory_desc.get());
-    _table_desc_list.push_back(_porder_desc.get());
-    _table_desc_list.push_back(_pnew_order_desc.get());
-    _table_desc_list.push_back(_pitem_desc.get());
-
-    assert (_table_desc_list.size() == SHORE_TPCC_TABLES);
-        
+                
     return (0);
 }
 
@@ -271,8 +235,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
     /* 1. create the loader threads */
 
-    int num_tbl = _table_desc_list.size();
-    //const char* loaddatadir = _dev_opts[SHORE_DB_OPTIONS[3][0]].c_str();
+    int num_tbl = SHORE_TPCC_TABLES;
     string loaddatadir = envVar::instance()->getSysVar("loadatadir");
     int cnt = 0;
 
@@ -302,27 +265,6 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
     time_t tstart = time(NULL);    
     
-
-//     tpcc_table_t* ptable   = NULL;
-//     table_man_t*  pmanager = NULL;
-//     tpcc_table_list_iter table_desc_iter;
-//     table_man_list_iter table_man_iter;
-//     for ( table_desc_iter = _table_desc_list.begin() ,
-//               table_man_iter = _table_man_list.begin(); 
-//           table_desc_iter != _table_desc_list.end(); 
-//           table_desc_iter++, table_man_iter++)
-//         {
-//             ptable   = *table_desc_iter;
-//             pmanager = *table_man_iter;
-
-//             loaders[cnt] = new table_loading_smt_t(c_str("ld%d", cnt), 
-//                                                    _pssm, 
-//                                                    pmanager, 
-//                                                    ptable, 
-//                                                    _scaling_factor, 
-//                                                    loaddatadir.c_str());
-//             cnt++;
-//        }
 
 #if 1
     /* 3. fork the loading threads (PARALLEL) */
@@ -386,7 +328,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 w_rc_t ShoreTPCCEnv::check_consistency()
 {
     /* 1. create the checker threads */
-    int num_tbl = _table_desc_list.size();
+    int num_tbl = SHORE_TPCC_TABLES;
     int cnt = 0;
 
     guard<thread_t> checkers[SHORE_TPCC_TABLES];
@@ -410,24 +352,6 @@ w_rc_t ShoreTPCCEnv::check_consistency()
                                    _pnew_order_man, _pnew_order_desc.get());
     checkers[8] = new it_checker_t(c_str("chk-IT"), _pssm, 
                                    _pitem_man, _pitem_desc.get());
-
-
-//     tpcc_table_t* ptable   = NULL;
-//     table_man_t*  pmanager = NULL;
-//     tpcc_table_list_iter table_desc_iter;
-//     table_man_list_iter table_man_iter;
-//     for ( table_desc_iter = _table_desc_list.begin() ,
-//               table_man_iter = _table_man_list.begin(); 
-//           table_desc_iter != _table_desc_list.end(); 
-//           table_desc_iter++, table_man_iter++)
-//         {
-//             ptable   = *table_desc_iter;
-//             pmanager = *table_man_iter;
-
-//             checkers[cnt] = new table_checking_smt_t(c_str("chk%d", cnt), 
-//                                                      _pssm, pmanager, ptable);
-//             cnt++;
-//         }
 
 #if 1
     /* 2. fork the threads */
@@ -472,26 +396,6 @@ w_rc_t ShoreTPCCEnv::check_consistency()
 
 w_rc_t ShoreTPCCEnv::warmup()
 {
-//     int num_tbl = _table_desc_list.size();
-//     table_man_t*  pmanager = NULL;
-//     table_man_list_iter table_man_iter;
-
-//     time_t tstart = time(NULL);
-
-//     for ( table_man_iter = _table_man_list.begin(); 
-//           table_man_iter != _table_man_list.end(); 
-//           table_man_iter++)
-//         {
-//             pmanager = *table_man_iter;
-//             W_DO(pmanager->check_all_indexes_together(db()));
-//         }
-
-//     time_t tstop = time(NULL);
-
-//     /* 2. print stats */
-//     TRACE( TRACE_DEBUG, "Checking of (%d) tables finished in (%d) secs...\n",
-//            num_tbl, (tstop - tstart));
-
     return (check_consistency());
 }
 
@@ -506,13 +410,13 @@ w_rc_t ShoreTPCCEnv::warmup()
 
 const int ShoreTPCCEnv::dump()
 {
-    table_man_t* ptable_man = NULL;
-    for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
-        table_man_iter != _table_man_list.end(); table_man_iter++)
-        {
-            ptable_man = *table_man_iter;
-            ptable_man->print_table(this->_pssm);
-        }
+//     table_man_t* ptable_man = NULL;
+//     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
+//         table_man_iter != _table_man_list.end(); table_man_iter++)
+//         {
+//             ptable_man = *table_man_iter;
+//             ptable_man->print_table(this->_pssm);
+//         }
     return (0);
 }
 

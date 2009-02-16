@@ -28,7 +28,7 @@ ENTER_NAMESPACE(tm1);
 const int ShoreTM1Env::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = _sys_opts[SHORE_SYS_OPTIONS[6][0]];
+    _sysname = envVar::instance()->getSysname();
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema

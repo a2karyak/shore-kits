@@ -1,10 +1,10 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file shore_tpcc_env.h
+/** @file:   shore_tpcc_env.h
  *
- *  @brief Definition of the Shore TPC-C environment
+ *  @brief:  Definition of the Shore TPC-C environment
  *
- *  @author Ippokratis Pandis (ipandis)
+ *  @author: Ippokratis Pandis (ipandis)
  */
 
 #ifndef __SHORE_TPCC_ENV_H
@@ -112,16 +112,19 @@ struct ShoreTPCCTrxStats
 {
     ShoreTPCCTrxCount attempted;
     ShoreTPCCTrxCount failed;
+    ShoreTPCCTrxCount deadlocked;
 
     ShoreTPCCTrxStats& operator+=(ShoreTPCCTrxStats const& other) {
-        attempted += other.attempted;
-        failed    += other.failed;
+        attempted  += other.attempted;
+        failed     += other.failed;
+        deadlocked += other.deadlocked;
         return (*this);
     }
 
     ShoreTPCCTrxStats& operator-=(ShoreTPCCTrxStats const& other) {
-        attempted -= other.attempted;
-        failed    -= other.failed;
+        attempted  -= other.attempted;
+        failed     -= other.failed;
+        deadlocked -= other.deadlocked;
         return (*this);
     }
 
@@ -160,11 +163,6 @@ protected:
     pthread_mutex_t _queried_mutex;
 
 
-
-    tpcc_table_desc_list       _table_desc_list;
-    table_man_list_t           _table_man_list;
-    
-
 private:
     w_rc_t _post_init_impl();
     
@@ -185,9 +183,6 @@ public:
     {
         pthread_mutex_destroy(&_scaling_mutex);
         pthread_mutex_destroy(&_queried_mutex);
-                
-        _table_desc_list.clear();
-        _table_man_list.clear();     
     }
 
 
@@ -216,8 +211,6 @@ public:
     inline int get_sf() { return (_scaling_factor); }
     const int upd_sf();
 
-    inline tpcc_table_desc_list* table_desc_list() { return (&_table_desc_list); }
-    inline table_man_list_t*  table_man_list() { return (&_table_man_list); }
     const int dump();
 
     virtual void print_throughput(const int iQueriedSF, 
@@ -236,15 +229,15 @@ public:
 
     
     // TPCC Tables
-    DECLARE_TABLE(warehouse_t,warehouse_man_impl,warehouse)
-    DECLARE_TABLE(district_t,district_man_impl,district)
-    DECLARE_TABLE(customer_t,customer_man_impl,customer)
-    DECLARE_TABLE(history_t,history_man_impl,history)
-    DECLARE_TABLE(new_order_t,new_order_man_impl,new_order)
-    DECLARE_TABLE(order_t,order_man_impl,order)
-    DECLARE_TABLE(order_line_t,order_line_man_impl,order_line)
-    DECLARE_TABLE(item_t,item_man_impl,item)
-    DECLARE_TABLE(stock_t,stock_man_impl,stock)
+    DECLARE_TABLE(warehouse_t,warehouse_man_impl,warehouse);
+    DECLARE_TABLE(district_t,district_man_impl,district);
+    DECLARE_TABLE(customer_t,customer_man_impl,customer);
+    DECLARE_TABLE(history_t,history_man_impl,history);
+    DECLARE_TABLE(new_order_t,new_order_man_impl,new_order);
+    DECLARE_TABLE(order_t,order_man_impl,order);
+    DECLARE_TABLE(order_line_t,order_line_man_impl,order_line);
+    DECLARE_TABLE(item_t,item_man_impl,item);
+    DECLARE_TABLE(stock_t,stock_man_impl,stock);
     
 
     // --- kit trxs --- //
@@ -252,14 +245,14 @@ public:
     w_rc_t run_one_xct(const int xctid, int xct_type, const int specID, 
                        trx_result_tuple_t& trt);
 
-    DECLARE_TRX(new_order)
-    DECLARE_TRX(payment)
-    DECLARE_TRX(order_status)
-    DECLARE_TRX(delivery)
-    DECLARE_TRX(stock_level)
+    DECLARE_TRX(new_order);
+    DECLARE_TRX(payment);
+    DECLARE_TRX(order_status);
+    DECLARE_TRX(delivery);
+    DECLARE_TRX(stock_level);
 
-    DECLARE_TRX(mbench_wh)
-    DECLARE_TRX(mbench_cust)
+    DECLARE_TRX(mbench_wh);
+    DECLARE_TRX(mbench_cust);
 
 
     const int upd_worker_cnt();

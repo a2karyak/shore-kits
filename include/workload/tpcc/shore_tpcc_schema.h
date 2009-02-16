@@ -56,9 +56,6 @@ ENTER_NAMESPACE(tpcc);
  */
 
 
-typedef std::list<table_desc_t*> tpcc_table_desc_list;
-typedef std::list<table_desc_t*>::iterator tpcc_table_desc_list_iter;
-
 
 /* -------------------------------------------------- */
 /* --- All the tables used in the TPC-C benchmark --- */

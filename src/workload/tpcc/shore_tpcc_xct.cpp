@@ -23,7 +23,7 @@ ENTER_NAMESPACE(tpcc);
 
 /******************************************************************** 
  *
- * Thread-local TM1 TRXS Stats
+ * Thread-local TPC-C TRXS Stats
  *
  ********************************************************************/
 
@@ -81,7 +81,7 @@ void ShoreTPCCEnv::reset_stats()
  *
  *  @fn:    print_throughput
  *
- *  @brief: Prints the throughput given measurement delay
+ *  @brief: Prints the throughput given a measurement delay
  *
  ********************************************************************/
 
@@ -100,7 +100,8 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
         
     int trxs_att  = current_stats.attempted.total();
     int trxs_abt  = current_stats.failed.total();
-    int nords_com = current_stats.attempted.new_order - current_stats.failed.new_order;
+    int trxs_dld  = current_stats.deadlocked.total();    
+    int nords_com = current_stats.attempted.new_order - current_stats.failed.new_order - current_stats.deadlocked.new_order;
 
     TRACE( TRACE_ALWAYS, "*******\n"            \
            "QueriedSF: (%d)\n"                   \
@@ -108,15 +109,16 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
            "Threads:   (%d)\n"                   \
            "Trxs Att:  (%d)\n"                   \
            "Trxs Abt:  (%d)\n"                   \
+           "Trxs Dld:  (%d)\n"                   \
            "NOrd Com:  (%d)\n"                   \
            "Secs:      (%.2f)\n"                 \
            "TPS:       (%.2f)\n"                 \
            "tpm-C:     (%.2f)\n",
            iQueriedSF, 
            (iSpread ? "Yes" : "No"),
-           iNumOfThreads, trxs_att, trxs_abt, nords_com, 
+           iNumOfThreads, trxs_att, trxs_abt, trxs_dld, nords_com, 
            delay, 
-           (trxs_att-trxs_abt)/delay,
+           (trxs_att-trxs_abt-trxs_dld)/delay,
            60*nords_com/delay);
 }
 

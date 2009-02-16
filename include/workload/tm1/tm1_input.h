@@ -11,32 +11,13 @@
 #ifndef __TM1_INPUT_H
 #define __TM1_INPUT_H
 
-#include "util.h"
+#include "util/random_input.h"
+
 #include "workload/tm1/tm1_const.h"
 
 
+
 ENTER_NAMESPACE(tm1);
-
-
-
-/** Exported helper functions */
-
-const int   URand(const int low, const int high);
-const bool  URandBool();
-const short URandShort(const short low, const short high);
-
-
-const char TM1_CAPS[]  = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
-const char TM1_NUMBX[] = { "012345789" }; 
-
-const void URandFillStrCaps(char* dest, const int sz);
-const void URandFillStrNumbx(char* dest, const int sz);
-
-
-
-
-/* use this for allocation of NULL-terminated strings */
-#define STRSIZE(x)(x+1)
 
 
 /** Exported data structures */

@@ -19,7 +19,6 @@
 #include "workload/tm1/tm1_input.h"
 
 #include "sm/shore/shore_env.h"
-#include "sm/shore/shore_sort_buf.h"
 #include "sm/shore/shore_trx_worker.h"
 
 #include "workload/tm1/shore_tm1_schema_man.h"
@@ -93,16 +92,19 @@ struct ShoreTM1TrxStats
 {
     ShoreTM1TrxCount attempted;
     ShoreTM1TrxCount failed;
+    ShoreTM1TrxCount deadlocked;
 
     ShoreTM1TrxStats& operator+=(ShoreTM1TrxStats const& other) {
-        attempted += other.attempted;
-        failed    += other.failed;
+        attempted  += other.attempted;
+        failed     += other.failed;
+        deadlocked += other.deadlocked;
         return (*this);
     }
 
     ShoreTM1TrxStats& operator-=(ShoreTM1TrxStats const& other) {
-        attempted -= other.attempted;
-        failed    -= other.failed;
+        attempted  -= other.attempted;
+        failed     -= other.failed;
+        deadlocked -= other.deadlocked;
         return (*this);
     }
 
@@ -206,10 +208,10 @@ public:
     w_rc_t xct_populate_one(const int sub_id);
 
     // TM1 tables
-    DECLARE_TABLE(subscriber_t,sub_man_impl,sub)
-    DECLARE_TABLE(access_info_t,ai_man_impl,ai)
-    DECLARE_TABLE(special_facility_t,sf_man_impl,sf)
-    DECLARE_TABLE(call_forwarding_t,cf_man_impl,cf)
+    DECLARE_TABLE(subscriber_t,sub_man_impl,sub);
+    DECLARE_TABLE(access_info_t,ai_man_impl,ai);
+    DECLARE_TABLE(special_facility_t,sf_man_impl,sf);
+    DECLARE_TABLE(call_forwarding_t,cf_man_impl,cf);
 
 
     // --- kit trxs --- //
@@ -217,13 +219,13 @@ public:
     w_rc_t run_one_xct(const int xctid, int xct_type, const int specificID,
                        trx_result_tuple_t& trt);
 
-    DECLARE_TRX(get_sub_data)
-    DECLARE_TRX(get_new_dest)
-    DECLARE_TRX(get_acc_data)
-    DECLARE_TRX(upd_sub_data)
-    DECLARE_TRX(upd_loc)
-    DECLARE_TRX(ins_call_fwd)
-    DECLARE_TRX(del_call_fwd)
+    DECLARE_TRX(get_sub_data);
+    DECLARE_TRX(get_new_dest);
+    DECLARE_TRX(get_acc_data);
+    DECLARE_TRX(upd_sub_data);
+    DECLARE_TRX(upd_loc);
+    DECLARE_TRX(ins_call_fwd);
+    DECLARE_TRX(del_call_fwd);
 
 
     const int upd_worker_cnt();

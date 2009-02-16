@@ -1,14 +1,14 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   test_tm1_client.h
+/** @file:   shore_tm1_client.h
  *
  *  @brief:  Defines various test clients (Baseline, DORA, etc..) for the TM1 benchmark
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
 
-#ifndef __TEST_TM1_CLIENT_H
-#define __TEST_TM1_CLIENT_H
+#ifndef __SHORE_TM1_CLIENT_H
+#define __SHORE_TM1_CLIENT_H
 
 
 #include "workload/tm1/shore_tm1_env.h"
@@ -117,4 +117,4 @@ public:
 EXIT_NAMESPACE(tm1);
 
 
-#endif /** __TEST_TM1_CLIENT_H */
+#endif /** __SHORE_TM1_CLIENT_H */

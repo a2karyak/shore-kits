@@ -16,67 +16,12 @@
 #include <cstring>
 #endif
 
-#include "util.h"
+
 #include "workload/tm1/tm1_input.h"
 
 
 
 ENTER_NAMESPACE(tm1);
-
-
-/*********************************************************************
- * 
- * @func URand(int, int)
- *
- *  @brief Generates a uniform random number between (low) and (high)
- *
- *********************************************************************/
-
-const int URand(const int low, const int high) 
-{
-  thread_t* self = thread_get_self();
-  w_assert3 (self);
-  randgen_t* randgenp = self->randgen();
-  w_assert3 (randgenp);
-
-  int d = high - low + 1;
-  return (low + randgenp->rand(d));
-}
-
-
-const bool URandBool()
-{
-    return (URand(0,1) ? true : false);
-}
-
-
-const short URandShort(const short low, const short high) 
-{
-  thread_t* self = thread_get_self();
-  w_assert3 (self);
-  randgen_t* randgenp = self->randgen();
-  w_assert3 (randgenp);
-
-  short d = high - low + 1;
-  return (low + (short)randgenp->rand(d));
-}
-
-const void URandFillStrCaps(char* dest, const int sz)
-{
-    w_assert3 (dest);
-    for (int i=0; i<sz; i++) {
-        dest[i] = TM1_CAPS[URand(0,sizeof(TM1_CAPS)-1)];
-    }
-}
-
-const void URandFillStrNumbx(char* dest, const int sz)
-{
-    w_assert3 (dest);
-    for (int i=0; i<sz; i++) {
-        dest[i] = TM1_NUMBX[URand(0,sizeof(TM1_NUMBX)-1)];
-    }
-}
-
 
 
 /* -------------------- */
