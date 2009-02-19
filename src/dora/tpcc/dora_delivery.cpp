@@ -45,11 +45,18 @@ w_rc_t mid1_del_rvp::run()
     assert (_xct);
 #endif
 
-    mid2_del_rvp* rvp2 = _ptpccenv->NewMid2DelRvp(_tid,_xct,_xct_id,_final_rvp,_d_id,_din,_actions);
+    mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_tid,_xct,_xct_id,_final_rvp->result(),_din,_actions);
+    rvp2->postset(_d_id,_final_rvp);
+
 
     // 2. Generate and enqueue actions
-    upd_ord_del_action* del_upd_ord = _ptpccenv->NewUpdOrdDelAction(_tid,_xct,rvp2,_din,_d_id,_o_id);
-    upd_oline_del_action* del_upd_oline = _ptpccenv->NewUpdOlineDelAction(_tid,_xct,rvp2,_din,_d_id,_o_id);
+    upd_ord_del_action* del_upd_ord = _ptpccenv->new_upd_ord_del_action(_tid,_xct,rvp2,_din);
+    del_upd_ord->postset(_d_id,_o_id);
+
+    upd_oline_del_action* del_upd_oline = _ptpccenv->new_upd_oline_del_action(_tid,_xct,rvp2,_din);
+    del_upd_oline->postset(_d_id,_o_id);
+
+
     typedef range_partition_impl<int>   irpImpl; 
 
     {
@@ -96,7 +103,9 @@ w_rc_t mid2_del_rvp::run()
     _final_rvp->append_actions(_actions);
 
     // 2. Generate and enqueue action
-    upd_cust_del_action* del_upd_cust = _ptpccenv->NewUpdCustDelAction(_tid,_xct,_final_rvp,_din,_d_id,_c_id,_amount);
+    upd_cust_del_action* del_upd_cust = _ptpccenv->new_upd_cust_del_action(_tid,_xct,_final_rvp,_din);
+    del_upd_cust->postset(_d_id,_c_id,_amount);
+
     typedef range_partition_impl<int>   irpImpl; 
 
     {
@@ -163,7 +172,7 @@ w_rc_t del_nord_del_action::trx_exec()
     w_assert3 (prno);
 
     rep_row_t areprow(_ptpccenv->new_order_man()->ts());
-    areprow.set(_ptpccenv->new_order()->maxsize()); 
+    areprow.set(_ptpccenv->new_order_desc()->maxsize()); 
     prno->_rep = &areprow;
 
     rep_row_t lowrep(_ptpccenv->new_order_man()->ts());
@@ -171,8 +180,8 @@ w_rc_t del_nord_del_action::trx_exec()
 
     // allocate space for the biggest of the (new_order) and (orderline)
     // table representations
-    lowrep.set(_ptpccenv->new_order()->maxsize()); 
-    highrep.set(_ptpccenv->new_order()->maxsize()); 
+    lowrep.set(_ptpccenv->new_order_desc()->maxsize()); 
+    highrep.set(_ptpccenv->new_order_desc()->maxsize()); 
 
     w_rc_t e = RCOK;
 
@@ -261,7 +270,7 @@ w_rc_t upd_ord_del_action::trx_exec()
     w_assert3 (prord);
 
     rep_row_t areprow(_ptpccenv->order_man()->ts());
-    areprow.set(_ptpccenv->order()->maxsize()); 
+    areprow.set(_ptpccenv->order_desc()->maxsize()); 
     prord->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -325,7 +334,7 @@ w_rc_t upd_oline_del_action::trx_exec()
     w_assert3 (prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
-    areprow.set(_ptpccenv->order_line()->maxsize()); 
+    areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
     prol->_rep = &areprow;
 
     rep_row_t lowrep(_ptpccenv->order_line_man()->ts());
@@ -333,8 +342,8 @@ w_rc_t upd_oline_del_action::trx_exec()
 
     // allocate space for the biggest of the (new_order) and (orderline)
     // table representations
-    lowrep.set(_ptpccenv->order_line()->maxsize()); 
-    highrep.set(_ptpccenv->order_line()->maxsize()); 
+    lowrep.set(_ptpccenv->order_line_desc()->maxsize()); 
+    highrep.set(_ptpccenv->order_line_desc()->maxsize()); 
 
     time_t ts_start = time(NULL);
 
@@ -426,7 +435,7 @@ w_rc_t upd_cust_del_action::trx_exec()
     w_assert3 (prcust);
 
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
-    areprow.set(_ptpccenv->customer()->maxsize()); 
+    areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
     w_rc_t e = RCOK;

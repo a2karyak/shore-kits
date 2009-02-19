@@ -106,7 +106,6 @@ protected:
         _ordstin = ordstin;
         w_assert3 (penv);
         _ptpccenv = penv;
-        trx_upd_keys(); // set the keys
     }
 
 public:    
@@ -173,13 +172,15 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const order_status_input_t& pordst,
-                    const tpcc_order_tuple& aord,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _aorder = aord;
         w_assert3 (pc);
         _cache = pc;
         _ordst_act_set(atid,axct,prvp,3,pordst,penv);  // key is (WH|DIST|O_ID)
+    }
+    inline void postset(const tpcc_order_tuple& aord)
+    {
+        _aorder = aord;
     }
     inline void giveback() { 
         w_assert3 (_cache); 

@@ -159,7 +159,6 @@ protected:
         _pin = pin;
         w_assert3 (penv);
         _ptpccenv = penv;
-        trx_upd_keys(); // set the keys
     }
 
 public:    
@@ -292,19 +291,21 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                     const payment_input_t& pin,
-                    const tpcc_warehouse_tuple& awh,
-                    const tpcc_district_tuple& adist,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _awh = awh;
-        _adist = adist;
         w_assert3 (pc);
         _cache = pc;
         _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (HIST)
     }
+    inline void postset(const tpcc_warehouse_tuple& awh,
+                        const tpcc_district_tuple& adist)
+    {
+        _awh = awh;
+        _adist = adist;
+    }
     inline void giveback() { 
         w_assert3 (_cache); 
-        _cache->giveback(this); }
+        _cache->giveback(this); }    
 
 }; // EOF: ins_hist_pay_action
 

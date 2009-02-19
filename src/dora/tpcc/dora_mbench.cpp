@@ -27,25 +27,9 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-void final_mb_rvp::upd_committed_stats() 
-{
-    w_assert3 (_ptpccenv);
-    _ptpccenv->_inc_mbench_wh_att();
-}                     
-
-void final_mb_rvp::upd_aborted_stats() 
-{
-    w_assert3 (_ptpccenv);
-    _ptpccenv->_inc_mbench_wh_failed();
-}                     
+DEFINE_DORA_FINAL_RVP_CLASS(final_mb_rvp,mbench_wh);
 
 
-
-/******************************************************************** 
- *
- * MBench Actions
- *
- ********************************************************************/
 
 /******************************************************************** 
  *
@@ -55,21 +39,25 @@ void final_mb_rvp::upd_aborted_stats()
  *
  ********************************************************************/
 
+void upd_wh_mb_action::calc_keys() 
+{
+    _down.push_back(_in._wh_id);
+    _up.push_back(_in._wh_id);
+}
+
+
 w_rc_t upd_wh_mb_action::trx_exec() 
 {
     w_assert3 (_ptpccenv);
-
-    // generate the input
-    double amount = (double)URand(1,1000);
 
     // mbench trx touches 1 table: 
     // warehouse
 
     // get table tuples from the caches
-    row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
+    row_impl<warehouse_t>* prwh = _penv->warehouse_man()->get_tuple();
     w_assert3 (prwh);
-    rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
-    areprow.set(_ptpccenv->warehouse()->maxsize()); 
+    rep_row_t areprow(_penv->warehouse_man()->ts());
+    areprow.set(_penv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -78,11 +66,10 @@ w_rc_t upd_wh_mb_action::trx_exec()
 
         /* 1. retrieve warehouse for update */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:warehouse-idx-probe-nl (%d)\n", _tid, _whid);
+               "App: %d PAY:wh-idx-nl (%d)\n", _tid, _in._wh_id);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
-                                                          _whid);
+        e = _penv->warehouse_man()->wh_index_probe_nl(_penv->db(), prwh, _in._wh_id);
 #endif
 
         if (e.is_error()) { goto done; }
@@ -98,12 +85,12 @@ w_rc_t upd_wh_mb_action::trx_exec()
          * plan: index probe on "W_INDEX"
          */
 
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", _tid, _whid);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
+               _tid, _in._wh_id);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
-                                                         prwh, 
-                                                        amount);
+        e = _penv->warehouse_man()->wh_update_ytd_nl(_penv->db(), prwh, 
+                                                     _in._amount);
 #endif 
 
         if (e.is_error()) { goto done; }
@@ -126,7 +113,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
 
 done:
     // give back the tuples
-    _ptpccenv->warehouse_man()->give_tuple(prwh);
+    _penv->warehouse_man()->give_tuple(prwh);
     return (e);
 }
 
@@ -139,20 +126,28 @@ done:
  *
  ********************************************************************/
 
+void upd_cust_mb_action::calc_keys() 
+{
+    _down.push_back(_in._wh_id);
+    _down.push_back(_in._d_id);
+    _down.push_back(_in._c_id);
+    _up.push_back(_in._wh_id);
+    _up.push_back(_in._d_id);
+    _up.push_back(_in._c_id);
+}
+
+
 w_rc_t upd_cust_mb_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
-
-    // generates the input
-    double amount = (double)URand(1,1000);
+    w_assert3 (_penv);
 
     // mbench trx touches 1 table: customer
 
     // get table tuple from the cache
-    row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
+    row_impl<customer_t>* prcust = _penv->customer_man()->get_tuple();
     w_assert3 (prcust);
-    rep_row_t areprow(_ptpccenv->customer_man()->ts());
-    areprow.set(_ptpccenv->customer()->maxsize()); 
+    rep_row_t areprow(_penv->customer_man()->ts());
+    areprow.set(_penv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -173,11 +168,11 @@ w_rc_t upd_cust_mb_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
-               _tid, _whid, _did, _cid);
+               _tid, _in._wh_id, _in._d_id, _in._c_id);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
-                                                           _whid, _did, _cid);
+        e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust, 
+                                                           _in._wh_id, _in._d_id, _in._c_id);
 #endif
 
         if (e.is_error()) { goto done; }
@@ -209,8 +204,8 @@ w_rc_t upd_cust_mb_action::trx_exec()
         prcust->get_value(21, acust.C_DATA_2, 251);
 
         // update customer fields
-        acust.C_BALANCE -= amount;
-        acust.C_YTD_PAYMENT += amount;
+        acust.C_BALANCE -= _in._amount;
+        acust.C_YTD_PAYMENT += _in._amount;
         acust.C_PAYMENT_CNT++;
 
         // if bad customer
@@ -229,7 +224,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
             char c_new_data_1[251];
             char c_new_data_2[251];
             sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
-                    _cid, _did, _whid, _did, _whid, amount);
+                    _in._c_id, _in._d_id, _in._wh_id, _in._d_id, _in._wh_id, _in._amount);
 
             int len = strlen(c_new_data_1);
             strncat(c_new_data_1, acust.C_DATA_1, 250-len);
@@ -239,7 +234,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple-nl\n", _tid);
 
 #ifndef ONLYDORA
-            e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+            e = _penv->customer_man()->cust_update_tuple_nl(_penv->db(), 
                                                                 prcust, acust, 
                                                                 c_new_data_1, 
                                                                 c_new_data_2);
@@ -251,7 +246,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple-nl\n", _tid);
 
 #ifndef ONLYDORA
-            e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+            e = _penv->customer_man()->cust_update_tuple_nl(_penv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 NULL, 
@@ -271,7 +266,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
 
 done:
     // give back the tuple
-    _ptpccenv->customer_man()->give_tuple(prcust);
+    _penv->customer_man()->give_tuple(prcust);
     return (e);
 }
 

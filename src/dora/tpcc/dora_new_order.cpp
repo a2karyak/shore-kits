@@ -54,19 +54,15 @@ w_rc_t midway_nord_rvp::run()
     // 2. Generate and enqueue actions
 
     // 2a. Insert (ORD)
-    ins_ord_nord_action* ins_ord_nord = _ptpccenv->NewInsOrdNordAction(_tid,_xct,_final_rvp,
-                                                                       whid,did,nextoid,
-                                                                       _noin._c_id,
-                                                                       _noin._tstamp,
-                                                                       olcnt,
-                                                                       _noin._all_local);
+    ins_ord_nord_action* ins_ord_nord = _ptpccenv->new_ins_ord_nord_action(_tid,_xct,_final_rvp,whid);
+    ins_ord_nord->postset(did,nextoid,_noin._c_id,_noin._tstamp,olcnt,_noin._all_local);
 
     irpImpl* my_ord_part = _ptpccenv->ord()->myPart(whid-1);
 
 
     // 2b. Insert (NORD)
-    ins_nord_nord_action* ins_nord_nord = _ptpccenv->NewInsNordNordAction(_tid,_xct,_final_rvp,
-                                                                          whid,did,nextoid);
+    ins_nord_nord_action* ins_nord_nord = _ptpccenv->new_ins_nord_nord_action(_tid,_xct,_final_rvp,whid);
+    ins_nord_nord->postset(did,nextoid);
 
     irpImpl* my_nord_part = _ptpccenv->nor()->myPart(whid-1);
 
@@ -100,9 +96,8 @@ w_rc_t midway_nord_rvp::run()
     for (int i=0;i<olcnt;i++) {
                 
         // 8a. Generate the actions
-        ins_ol_nord_action* ins_ol_nord = _ptpccenv->NewInsOlNordAction(_tid,_xct,_final_rvp,
-                                                                        whid,did,nextoid,i,
-                                                                        _noin.items[i],_noin._tstamp);
+        ins_ol_nord_action* ins_ol_nord = _ptpccenv->new_ins_ol_nord_action(_tid,_xct,_final_rvp,whid);
+        ins_ol_nord->postset(did,nextoid,i,_noin.items[i],_noin._tstamp);
 
         {
             irpImpl* my_ol_part = _ptpccenv->oli()->myPart(whid-1);
@@ -176,7 +171,7 @@ w_rc_t r_wh_nord_action::trx_exec()
 
 
     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
-    areprow.set(_ptpccenv->warehouse()->maxsize()); 
+    areprow.set(_ptpccenv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -229,7 +224,7 @@ w_rc_t r_cust_nord_action::trx_exec()
     w_assert3 (prcust);
 
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
-    areprow.set(_ptpccenv->customer()->maxsize()); 
+    areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -306,7 +301,7 @@ w_rc_t upd_dist_nord_action::trx_exec()
     w_assert3 (prdist);
 
     rep_row_t areprow(_ptpccenv->district_man()->ts());
-    areprow.set(_ptpccenv->district()->maxsize()); 
+    areprow.set(_ptpccenv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -386,7 +381,7 @@ w_rc_t r_item_nord_action::trx_exec()
     w_assert3 (pritem);
 
     rep_row_t areprow(_ptpccenv->item_man()->ts());
-    areprow.set(_ptpccenv->item()->maxsize()); 
+    areprow.set(_ptpccenv->item_desc()->maxsize()); 
     pritem->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -451,7 +446,7 @@ w_rc_t upd_sto_nord_action::trx_exec()
     w_assert3 (prst);
 
     rep_row_t areprow(_ptpccenv->item_man()->ts());
-    areprow.set(_ptpccenv->stock()->maxsize()); 
+    areprow.set(_ptpccenv->stock_desc()->maxsize()); 
     prst->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -564,7 +559,7 @@ w_rc_t ins_ord_nord_action::trx_exec()
 
 
     rep_row_t areprow(_ptpccenv->order_man()->ts());
-    areprow.set(_ptpccenv->order()->maxsize()); 
+    areprow.set(_ptpccenv->order_desc()->maxsize()); 
     prord->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -622,7 +617,7 @@ w_rc_t ins_nord_nord_action::trx_exec()
 
 
     rep_row_t areprow(_ptpccenv->new_order_man()->ts());
-    areprow.set(_ptpccenv->new_order()->maxsize()); 
+    areprow.set(_ptpccenv->new_order_desc()->maxsize()); 
     prno->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -673,7 +668,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
     w_assert3 (prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
-    areprow.set(_ptpccenv->order_line()->maxsize()); 
+    areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
     prol->_rep = &areprow;
 
     w_rc_t e = RCOK;

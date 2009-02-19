@@ -284,7 +284,7 @@ public:
    
     
 
-    // INTEFACE
+    // INTERFACE
 
     virtual w_rc_t trx_exec()=0;
 

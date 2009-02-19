@@ -68,8 +68,8 @@ protected:
     int                _key_estimation;
 
     // for the enqueue function
-    int                _whs_per_part; 
-    int                _total_whs; 
+    int                _sfs_per_part; 
+    int                _total_sf; 
 
     // TODO: 
     // mapping table - which is build at runtime
@@ -81,12 +81,12 @@ public:
                  const processorid_t aprs,
                  const int acpurange,
                  const int keyEstimation,
-                 const int whsperpart,
-                 const int totalwhs) 
+                 const int sfsperpart,
+                 const int totalsfs) 
         : _env(env), _table(ptable), 
           _start_prs_id(aprs), _next_prs_id(aprs), 
           _prs_range(acpurange), _key_estimation(keyEstimation), 
-          _whs_per_part(whsperpart), _total_whs(totalwhs),
+          _sfs_per_part(sfsperpart), _total_sf(totalsfs),
           _pcnt(0)
     {
         assert (_env);
@@ -94,8 +94,8 @@ public:
         assert (aprs<=_env->get_max_cpu_count());
         assert (acpurange<=_env->get_active_cpu_count());
         assert (_key_estimation);
-        assert (_total_whs && _whs_per_part);
-        if (_whs_per_part > _total_whs) _whs_per_part=_total_whs;
+        assert (_total_sf && _sfs_per_part);
+        if (_sfs_per_part > _total_sf) _sfs_per_part=_total_sf;
     }
 
     virtual ~part_table_t() { }    

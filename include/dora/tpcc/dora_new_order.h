@@ -56,17 +56,25 @@ public:
 
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int axctid,
-                    trx_result_tuple_t& presult, int ol_cnt,
+                    trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        assert (ol_cnt>0);
         w_assert3 (penv);
         _ptpccenv = penv;
         w_assert3 (pc);
         _cache = pc;
-        // [OL_CNT+4] intratrx - [3*OL_CNT+5] total actions        
-        _set(atid,axct,axctid,presult,ol_cnt+4,3*ol_cnt+5);
+
+        // NewOrder does not have 1 intratrx and 1 total actions but we set them at postset()
+        _set(atid,axct,axctid,presult,1,1);
     }
+    inline void postset(int ol_cnt)
+    {
+        // [OL_CNT+4] intratrx - [3*OL_CNT+5] total actions   
+        w_assert3 (ol_cnt);
+        _countdown.reset(ol_cnt+4);
+        _actions.reserve(3*ol_cnt+5);
+    }
+
     inline void giveback() { 
         w_assert3 (_ptpccenv); 
         _cache->giveback(this); }    
@@ -110,18 +118,21 @@ public:
 
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
+                    trx_result_tuple_t& presult, 
                     const new_order_input_t& noin, 
-                    final_nord_rvp* prvp,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _noin = noin;
-        w_assert3 (prvp);
-        _final_rvp = prvp;
         _ptpccenv = penv;
         w_assert3 (pc);
         _cache = pc;
         // [2*OL_CNT+1] intratrx - [2*OL_CNT+1] total actions        
-        _set(atid,axct,axctid,prvp->result(),2*noin._ol_cnt+1,2*noin._ol_cnt+1); 
+        _set(atid,axct,axctid,presult,2*noin._ol_cnt+1,2*noin._ol_cnt+1); 
+    }
+    inline void postset(final_nord_rvp* prvp)
+    {
+        w_assert3 (prvp);
+        _final_rvp = prvp;        
     }
     inline void giveback() { w_assert3 (_cache); 
         _cache->giveback(this); }    
@@ -176,7 +187,6 @@ protected:
         _d_id = did;
         w_assert3 (penv);
         _ptpccenv = penv;
-        trx_upd_keys(); // set the keys
     }
 
 public:    
@@ -215,12 +225,16 @@ public:
         _up.push_back(_wh_id);
     }
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp,
-                    const int whid, const int did,
+                    const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
         w_assert3 (pc);
         _cache = pc;
-        _nord_act_set(atid,axct,prvp,1,whid,did,penv);  // key is (WH)
+        _nord_act_set(atid,axct,prvp,1,whid,0,penv);  // key is (WH)
+    }
+    inline void postset(const int did)
+    {
+        _d_id = did;
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -249,13 +263,17 @@ public:
         _up.push_back(_c_id);
     }
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp,
-                    const int whid, const int did, const int cid,
+                    const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _c_id = cid;
         w_assert3 (pc);
         _cache = pc;
-        _nord_act_set(atid,axct,prvp,3,whid,did,penv);  // key is (WH|D|C)
+        _nord_act_set(atid,axct,prvp,3,whid,0,penv);  // key is (WH|D|C)
+    }
+    inline void postset(const int did, const int cid)
+    {
+        _d_id = did;
+        _c_id = cid;
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -297,14 +315,18 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, 
                     midway_nord_rvp* pmidway_rvp, 
-                    const int whid, const int did,
+                    const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
         w_assert3 (pmidway_rvp);
         _pmidway_rvp = pmidway_rvp;
         w_assert3 (pc);
         _cache = pc;
-        _nord_act_set(atid,axct,pmidway_rvp,2,whid,did,penv);  // key is (WH|D)
+        _nord_act_set(atid,axct,pmidway_rvp,2,whid,0,penv);  // key is (WH|D)
+    }
+    inline void postset(const int did)
+    {
+        _d_id = did;
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -331,15 +353,19 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, 
                     midway_nord_rvp* pmidway_rvp, 
-                    const int whid, const int did, const int olidx,
+                    const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _ol_idx = olidx;
         w_assert3 (pmidway_rvp);
         _pmidway_rvp = pmidway_rvp;
         w_assert3 (pc);
         _cache = pc;
-        _nord_act_set(atid,axct,pmidway_rvp,1,whid,did,penv);  // key is (I)
+        _nord_act_set(atid,axct,pmidway_rvp,1,whid,0,penv);  // key is (I)
+    }
+    inline void postset(const int did, const int olidx)
+    {
+        _d_id = did;
+        _ol_idx = olidx;
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -368,15 +394,19 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, 
                     midway_nord_rvp* pmidway_rvp, 
-                    const int whid, const int did, const int olidx,
+                    const int whid,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _ol_idx = olidx;
         w_assert3 (pmidway_rvp);
         _pmidway_rvp = pmidway_rvp;
         w_assert3 (pc);
         _cache = pc;
-        _nord_act_set(atid,axct,pmidway_rvp,2,whid,did,penv);  // key is (WH|I)
+        _nord_act_set(atid,axct,pmidway_rvp,2,whid,0,penv);  // key is (WH|I)
+    }
+    inline void postset(const int did, const int olidx)
+    {
+        _d_id = did;
+        _ol_idx = olidx;
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -428,18 +458,24 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, 
                     rvp_t* prvp, 
-                    const int whid, const int did, const int nextoid,
-                    const int cid, const time_t tstamp, int olcnt, int alllocal,
+                    const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
+        w_assert3 (pc);
+        _cache = pc;
+        _nord_act_set(atid,axct,prvp,3,whid,0,penv);  // key is (WH|D|OID)
+    }
+    inline void postset(const int did, const int nextoid,
+                        const int cid, const time_t tstamp, 
+                        const int olcnt, const int alllocal)
+    {
+        _d_id = did;
+
         _d_next_o_id = nextoid;
         _c_id = cid;
         _tstamp = tstamp;
         _ol_cnt = olcnt;
         _all_local = alllocal;
-        w_assert3 (pc);
-        _cache = pc;
-        _nord_act_set(atid,axct,prvp,3,whid,did,penv);  // key is (WH|D|OID)
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -469,14 +505,18 @@ public:
         _up.push_back(_d_next_o_id);
     }
     inline void set(const tid_t& atid, xct_t* axct, 
-                    rvp_t* prvp, 
-                    const int whid, const int did, const int nextoid,
+                    rvp_t* prvp, const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        _d_next_o_id = nextoid;
         w_assert3 (pc);
         _cache = pc;
-        _nord_act_set(atid,axct,prvp,3,whid,did,penv);  // key is (WH|D|OID)
+        _nord_act_set(atid,axct,prvp,3,whid,0,penv);  // key is (WH|D|OID)
+    }
+    inline void postset(const int did, const int nextoid)
+    {
+        _d_id = did;
+        
+        _d_next_o_id = nextoid;
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -512,19 +552,23 @@ public:
         _up.push_back(_ol_idx);
     }
     inline void set(const tid_t& atid, xct_t* axct, 
-                    rvp_t* prvp, 
-                    const int whid, const int did, const int nextoid,
-                    const int olidx, 
-                    const ol_item_info& iteminfo, time_t tstamp,
+                    rvp_t* prvp, const int whid,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
+        w_assert3 (pc);
+        _cache = pc;
+        _nord_act_set(atid,axct,prvp,4,whid,0,penv);  // key is (WH|D|OID|OLIDX)
+    }
+    inline void postset(const int did, const int nextoid,
+                        const int olidx, const ol_item_info& iteminfo, 
+                        const time_t tstamp)
+    {
+        _d_id = did;
+
         _ol_idx = olidx;
         _d_next_o_id = nextoid;
         _item_info = iteminfo;
         _tstamp = tstamp;
-        w_assert3 (pc);
-        _cache = pc;
-        _nord_act_set(atid,axct,prvp,4,whid,did,penv);  // key is (WH|D|OID|OLIDX)
     }
     inline void giveback() { 
         w_assert3 (_cache); 

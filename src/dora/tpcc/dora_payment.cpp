@@ -10,11 +10,11 @@
  *  @author: Ippokratis Pandis, Oct 2008
  */
 
+
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_tpcc.h"
 
 
-using namespace dora;
 using namespace shore;
 using namespace tpcc;
 
@@ -43,10 +43,11 @@ w_rc_t midway_pay_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    final_pay_rvp* frvp = _ptpccenv->NewFinalPayRvp(_tid,_xct,_xct_id,_result,_actions);
+    final_pay_rvp* frvp = _ptpccenv->new_final_pay_rvp(_tid,_xct,_xct_id,_result,_actions);
 
     // 2. Generate and enqueue action
-    ins_hist_pay_action* ins_hist_pay = _ptpccenv->NewInsHistPayAction(_tid,_xct,frvp,_pin,_awh,_adist);
+    ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_tid,_xct,frvp,_pin);
+    ins_hist_pay->postset(_awh,_adist);
     typedef range_partition_impl<int>   irpImpl; 
     irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);
 
@@ -108,7 +109,7 @@ w_rc_t upd_wh_pay_action::trx_exec()
     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
     w_assert3 (prwh);
     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
-    areprow.set(_ptpccenv->warehouse()->maxsize()); 
+    areprow.set(_ptpccenv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -117,7 +118,7 @@ w_rc_t upd_wh_pay_action::trx_exec()
 
         /* 1. retrieve warehouse for update */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:warehouse-idx-probe-nl (%d)\n", 
+               "App: %d PAY:wh-idx-nl (%d)\n", 
                _tid, _pin._home_wh_id);
 
 
@@ -180,7 +181,7 @@ w_rc_t upd_dist_pay_action::trx_exec()
     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
     w_assert3 (prdist);
     rep_row_t areprow(_ptpccenv->district_man()->ts());
-    areprow.set(_ptpccenv->district()->maxsize()); 
+    areprow.set(_ptpccenv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -189,7 +190,7 @@ w_rc_t upd_dist_pay_action::trx_exec()
 
         /* 1. retrieve district for update */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:district-idx-probe-nl (%d) (%d)\n", 
+               "App: %d PAY:dist-idx-nl (%d) (%d)\n", 
                _tid, _pin._home_wh_id, _pin._home_d_id);
 
 #ifndef ONLYDORA
@@ -252,7 +253,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
     w_assert3 (prcust);
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
-    areprow.set(_ptpccenv->customer()->maxsize()); 
+    areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -456,7 +457,7 @@ w_rc_t ins_hist_pay_action::trx_exec()
     row_impl<history_t>* prhist = _ptpccenv->history_man()->get_tuple();
     w_assert3 (prhist);
     rep_row_t areprow(_ptpccenv->history_man()->ts());
-    areprow.set(_ptpccenv->history()->maxsize()); 
+    areprow.set(_ptpccenv->history_desc()->maxsize()); 
     prhist->_rep = &areprow;
 
     w_rc_t e = RCOK;

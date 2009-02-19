@@ -110,12 +110,12 @@ const int terminal_rvp_t::notify()
  * @note:  There are hooks for updating the correct stats
  *
  ******************************************************************/
+
 w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 {
     w_assert3 (penv);
 
     // attach to this xct
-
 #ifndef ONLYDORA
     w_assert3 (_xct);
     smthread_t::me()->attach_xct(_xct);

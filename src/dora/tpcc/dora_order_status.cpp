@@ -71,7 +71,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
     w_assert3 (prcust);
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
-    areprow.set(_ptpccenv->customer()->maxsize()); 
+    areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -92,7 +92,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d ORDST:cust-idx-probe-nl (%d) (%d) (%d)\n", 
+               "App: %d ORDST:cust-idx-nl (%d) (%d) (%d)\n", 
                _tid, w_id, d_id, c_id);
 
 #ifndef ONLYDORA
@@ -132,7 +132,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
     w_assert3(prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
-    areprow.set(_ptpccenv->order_line()->maxsize()); 
+    areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
     prol->_rep = &areprow;
 
     rep_row_t lowrep(_ptpccenv->order_line_man()->ts());

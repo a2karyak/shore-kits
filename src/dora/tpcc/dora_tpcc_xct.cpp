@@ -2,7 +2,7 @@
 
 /** @file:   dora_tpcc_xct.cpp
  *
- *  @brief:  Declaration of the Shore DORA transactions as part of ShoreTPCCEnv
+ *  @brief:  Declaration of the Shore DORA transactions
  *
  *  @author: Ippokratis Pandis, Sept 2008
  */
@@ -14,6 +14,7 @@
 #include "dora/tpcc/dora_stock_level.h"
 #include "dora/tpcc/dora_delivery.h"
 #include "dora/tpcc/dora_new_order.h"
+
 #include "dora/tpcc/dora_tpcc.h"
 
 
@@ -60,11 +61,32 @@ typedef range_partition_impl<int>   irpImpl;
  ********************************************************************/
 
 
-/* --- with input specified --- */
 
-w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id, 
-                                   new_order_input_t& anoin,
-                                   trx_result_tuple_t& atrt)
+// --- without input specified --- //
+
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,new_order);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,payment);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,order_status);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,delivery);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,stock_level);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,mbench_wh);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,mbench_cust);
+
+
+
+
+// --- with input specified --- //
+
+/******************************************************************** 
+ *
+ * DORA TPC-C NEW_ORDER
+ *
+ ********************************************************************/
+
+
+w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
+                                   trx_result_tuple_t& atrt, 
+                                   new_order_input_t& anoin)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -86,7 +108,9 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
     register int did   = anoin._d_id;
 
     // 2. Setup the final RVP
-    final_nord_rvp* frvp = NewFinalNordRvp(atid,pxct,xct_id,atrt,olcnt);
+    final_nord_rvp* frvp = new_final_nord_rvp(atid,pxct,xct_id,atrt);
+    frvp->postset(olcnt);
+
 
 
     // 3. Detatch self from xct
@@ -96,13 +120,15 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 4. Setup the (Start->Final) actions
-    r_wh_nord_action* r_wh_nord = NewRWhNordAction(atid,pxct,frvp,
-                                                   whid,did);
+    r_wh_nord_action* r_wh_nord = new_r_wh_nord_action(atid,pxct,frvp,whid);
+    r_wh_nord->postset(did);
+
 
     irpImpl* my_wh_part = whs()->myPart(whid-1);
 
-    r_cust_nord_action* r_cust_nord = NewRCustNordAction(atid,pxct,frvp,
-                                                         whid,did,anoin._c_id);
+    r_cust_nord_action* r_cust_nord = new_r_cust_nord_action(atid,pxct,frvp,whid);
+    r_cust_nord->postset(did,anoin._c_id);
+
 
     irpImpl* my_cust_part = cus()->myPart(whid-1);
 
@@ -132,11 +158,14 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
     // Enqueue the (Start->Midway) actions
 
     // 6. Setup the next RVP
-    midway_nord_rvp* midrvp = NewMidwayNordRvp(atid,pxct,xct_id,frvp,anoin);    
+    midway_nord_rvp* midrvp = new_midway_nord_rvp(atid,pxct,xct_id,frvp->result(),anoin);    
+    midrvp->postset(frvp);
+
 
     // 7. Setup the UPD_DISTR action
-    upd_dist_nord_action* upd_dist_nord = NewUpdDistNordAction(atid,pxct,midrvp,
-                                                               whid,did);
+    upd_dist_nord_action* upd_dist_nord = new_upd_dist_nord_action(atid,pxct,midrvp,whid);
+    upd_dist_nord->postset(did);
+
 
     irpImpl* my_dist_part = dis()->myPart(whid-1);
 
@@ -158,8 +187,12 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
     for (int i=0;i<olcnt;i++) {
                 
         // 8a. Generate the actions
-        r_item_nord_action* r_item_nord = NewRItemNordAction(atid,pxct,midrvp,whid,did,i);
-        upd_sto_nord_action* upd_sto_nord = NewUpdStoNordAction(atid,pxct,midrvp,whid,did,i);        
+        r_item_nord_action* r_item_nord = new_r_item_nord_action(atid,pxct,midrvp,whid);
+        r_item_nord->postset(did,i);
+        
+
+        upd_sto_nord_action* upd_sto_nord = new_upd_sto_nord_action(atid,pxct,midrvp,whid);
+        upd_sto_nord->postset(did,i);
 
         {
             irpImpl* my_item_part = ite()->myPart(whid-1);
@@ -190,9 +223,16 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
 }
 
 
-w_rc_t DoraTPCCEnv::dora_payment(const int xct_id, 
-                                 payment_input_t& apin,
-                                 trx_result_tuple_t& atrt)
+
+/******************************************************************** 
+ *
+ * DORA TPC-C PAYMENT
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
+                                 trx_result_tuple_t& atrt, 
+                                 payment_input_t& apin)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -211,12 +251,12 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
 
     // 2. Setup the next RVP
     // PH1 consists of 3 packets
-    midway_pay_rvp* rvp = NewMidwayPayRvp(atid,pxct,xct_id,atrt,apin);
+    midway_pay_rvp* rvp = new_midway_pay_rvp(atid,pxct,xct_id,atrt,apin);
     
     // 3. Generate the actions    
-    upd_wh_pay_action* pay_upd_wh     = NewUpdWhPayAction(atid,pxct,rvp,apin);
-    upd_dist_pay_action* pay_upd_dist = NewUpdDistPayAction(atid,pxct,rvp,apin);
-    upd_cust_pay_action* pay_upd_cust = NewUpdCustPayAction(atid,pxct,rvp,apin);
+    upd_wh_pay_action* pay_upd_wh     = new_upd_wh_pay_action(atid,pxct,rvp,apin);
+    upd_dist_pay_action* pay_upd_dist = new_upd_dist_pay_action(atid,pxct,rvp,apin);
+    upd_cust_pay_action* pay_upd_cust = new_upd_cust_pay_action(atid,pxct,rvp,apin);
 
 
     // 4. Detatch self from xct
@@ -280,9 +320,16 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
 }
 
 
-w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id, 
-                                      order_status_input_t& aordstin,
-                                      trx_result_tuple_t& atrt)
+
+/******************************************************************** 
+ *
+ * DORA TPC-C ORDER_STATUS
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
+                                      trx_result_tuple_t& atrt, 
+                                      order_status_input_t& aordstin)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -302,7 +349,7 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
 
     // 2. Setup the next and final RVP
     // PH1 consists of 2 packets
-    final_ordst_rvp* rvp = NewFinalOrdStRvp(atid,pxct,xct_id,atrt);
+    final_ordst_rvp* rvp = new_final_ordst_rvp(atid,pxct,xct_id,atrt);
 
 
     // 3. Do all the possible secondary index probes
@@ -441,8 +488,10 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
 
     
     // 5. Generate the actions
-    ordst_r_cust = NewRCustOrdStAction(atid,pxct,rvp,aordstin);
-    ordst_r_ol = NewROlOrdStAction(atid,pxct,rvp,aordstin,aorder);
+    ordst_r_cust = new_r_cust_ordst_action(atid,pxct,rvp,aordstin);
+
+    ordst_r_ol = new_r_ol_ordst_action(atid,pxct,rvp,aordstin);
+    ordst_r_ol->postset(aorder);
     
 
     // 6. Detatch self from xct
@@ -457,10 +506,6 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
     // For each action
     // 7a. Decide about partition
     // 7b. Enqueue
-    //
-    // All the enqueues should appear atomic
-    // That is, there should be a total order across trxs 
-    // (it terms of the sequence actions are enqueued)
 
     {
         int wh = aordstin._wh_id-1;
@@ -500,7 +545,7 @@ done:
 
     // 9. if something went wrong no action has been enqueued yet.
     //    Therefore, it is responsibility of the dispatcher to execute the 
-    //    RVP abort code, in order to release the locks acquired during the 
+    //    RVP abort code, in order to release any locks acquired during the 
     //    secondary indexes probes.
     if (bAbort) {
         
@@ -522,9 +567,16 @@ done:
 }
 
 
-w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id, 
-                                  delivery_input_t& adelin,
-                                  trx_result_tuple_t& atrt)
+
+/******************************************************************** 
+ *
+ * DORA TPC-C DELIVERY
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
+                                  trx_result_tuple_t& atrt, 
+                                  delivery_input_t& adelin)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -542,7 +594,7 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the final RVP
-    final_del_rvp* frvp = NewFinalDelRvp(atid,pxct,xct_id,atrt);
+    final_del_rvp* frvp = new_final_del_rvp(atid,pxct,xct_id,atrt);
 
 
     // 3. Detatch self from xct
@@ -555,10 +607,13 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
     // PH1 consists of DISTRICTS_PER_WAREHOUSE actions
     for (int i=0;i<DISTRICTS_PER_WAREHOUSE;i++) {
         // 4a. Generate an RVP
-        mid1_del_rvp* rvp = NewMid1DelRvp(atid,pxct,xct_id,frvp,i,adelin);
+        mid1_del_rvp* rvp = new_mid1_del_rvp(atid,pxct,xct_id,frvp->result(),adelin);
+        rvp->postset(frvp,i);
     
         // 4b. Generate an action
-        del_nord_del_action* del_del_nord = NewDelNordDelAction(atid,pxct,rvp,adelin,i);
+        del_nord_del_action* del_del_nord = new_del_nord_del_action(atid,pxct,rvp,adelin);
+        del_del_nord->postset(i);
+
 
         // For each action
         // 5a. Decide about partition
@@ -591,9 +646,16 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
 }
 
 
-w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id, 
-                                     stock_level_input_t& astoin,
-                                     trx_result_tuple_t& atrt)
+
+/******************************************************************** 
+ *
+ * DORA TPC-C DELIVERY
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
+                                     trx_result_tuple_t& atrt, 
+                                     stock_level_input_t& astoin)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -612,10 +674,10 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
 
     // 2. Setup the next RVP
     // PH1 consists of 1 packet
-    mid1_stock_rvp* rvp = NewMid1StockRvp(atid,pxct,xct_id,atrt,astoin);
+    mid1_stock_rvp* rvp = new_mid1_stock_rvp(atid,pxct,xct_id,atrt,astoin);
     
     // 3. Generate the action
-    r_dist_stock_action* stock_r_dist = NewRDistStockAction(atid,pxct,rvp,astoin);
+    r_dist_stock_action* stock_r_dist = new_r_dist_stock_action(atid,pxct,rvp,astoin);
 
     // 4. Detatch self from xct
 
@@ -656,58 +718,6 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
 
 
 
-// --- without input specified --- //
-
-w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id, 
-                                   trx_result_tuple_t& atrt,
-                                   int specificWH)
-{
-    new_order_input_t noin = create_new_order_input(_queried_factor, 
-                                                    specificWH);
-    return (dora_new_order(xct_id, noin, atrt));
-}
-
-
-w_rc_t DoraTPCCEnv::dora_payment(const int xct_id, 
-                                 trx_result_tuple_t& atrt,
-                                 int specificWH)
-{
-    payment_input_t pin = create_payment_input(_queried_factor, 
-                                               specificWH);
-    return (dora_payment(xct_id, pin, atrt));
-}
-
-
-w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id, 
-                                      trx_result_tuple_t& atrt,
-                                      int specificWH)
-{
-    order_status_input_t ordin = create_order_status_input(_queried_factor, 
-                                                           specificWH);
-    return (dora_order_status(xct_id, ordin, atrt));
-}
-
-
-w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id, 
-                                  trx_result_tuple_t& atrt,
-                                  int specificWH)
-{
-    delivery_input_t delin = create_delivery_input(_queried_factor, 
-                                                   specificWH);
-    return (dora_delivery(xct_id, delin, atrt));
-}
-
-
-w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id, 
-                                     trx_result_tuple_t& atrt,
-                                     int specificWH)
-{
-    stock_level_input_t slin = create_stock_level_input(_queried_factor, 
-                                                        specificWH);
-    return (dora_stock_level(xct_id, slin, atrt));
-}
-
-
 
 /******************************************************************** 
  *
@@ -717,12 +727,8 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
 
 w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id, 
                                    trx_result_tuple_t& atrt, 
-                                   int whid)
+                                   mbench_wh_input_t& in)
 {
-    // pick a valid wh id
-    if (whid==0) 
-        whid = URand(1,_scaling_factor); 
-
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -740,10 +746,10 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = NewFinalMbRvp(atid,pxct,xct_id,atrt);    
+    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
 
     // 3. Generate the actions
-    upd_wh_mb_action* upd_wh = NewUpdWhMbAction(atid,pxct,frvp,whid);
+    upd_wh_mb_action* upd_wh = new_upd_wh_mb_action(atid,pxct,frvp,in);
 
     // 4. Detatch self from xct
 
@@ -762,7 +768,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {        
-        irpImpl* mypartition = whs()->myPart(whid-1);
+        irpImpl* mypartition = whs()->myPart(in._wh_id-1);
 
         // WH_PART_CS
         CRITICAL_SECTION(wh_part_cs, mypartition->_enqueue_lock);
@@ -778,12 +784,8 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
 
 w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id, 
                                      trx_result_tuple_t& atrt, 
-                                     int whid)
+                                     mbench_cust_input_t& in)
 {
-    // pick a valid wh id
-    if (whid==0) 
-        whid = URand(1,_scaling_factor); 
-
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -801,10 +803,10 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
 
 
     // 2. Setup the final RVP
-    final_mb_rvp* frvp = NewFinalMbRvp(atid,pxct,xct_id,atrt);
+    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
     
     // 3. Generate the actions
-    upd_cust_mb_action* upd_cust = NewUpdCustMbAction(atid,pxct,frvp,whid);
+    upd_cust_mb_action* upd_cust = new_upd_cust_mb_action(atid,pxct,frvp,in);
 
     // 4. Detatch self from xct
 
@@ -824,7 +826,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {
-        irpImpl* mypartition = cus()->myPart(whid-1);
+        irpImpl* mypartition = cus()->myPart(in._wh_id-1);
         
         // CUS_PART_CS
         CRITICAL_SECTION(cus_part_cs, mypartition->_enqueue_lock);

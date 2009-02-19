@@ -68,8 +68,8 @@ protected:
 #ifndef ONLYDORA
         assert (axct);
 #endif
-        assert (intra_trx_cnt>0);
-        assert (total_actions>=intra_trx_cnt);
+        w_assert3 (intra_trx_cnt>0);
+        w_assert3 (total_actions>=intra_trx_cnt);
         _countdown.reset(intra_trx_cnt);
         _decision = AD_UNDECIDED;
         _tid = atid;
@@ -86,7 +86,7 @@ public:
     rvp_t() : _xct(NULL) { }
 
     rvp_t(const tid_t& atid, xct_t* axct, const int axctid,
-          trx_result_tuple_t& presult, 
+          const trx_result_tuple_t& presult, 
           const int intra_trx_cnt, const int total_actions) 
     { 
         _set(atid, axct, axctid, presult,

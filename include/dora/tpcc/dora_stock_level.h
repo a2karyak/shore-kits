@@ -203,7 +203,6 @@ protected:
         _slin = stockin;
         w_assert3 (penv);
         _ptpccenv = penv;
-        trx_upd_keys(); // set the keys
     }
 
 public:    
@@ -271,16 +270,18 @@ public:
     }
     inline void set(const tid_t& atid, xct_t* axct, 
                     mid2_stock_rvp* pmid2_rvp, 
-                    const int nextid,
                     const stock_level_input_t& slin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
         w_assert3 (pmid2_rvp);
         _pmid2_rvp = pmid2_rvp;
-        _next_o_id = nextid;
         w_assert3 (pc);
         _cache = pc;
         _stock_act_set(atid,axct,pmid2_rvp,2,slin,penv);  // key is (WH|DIST)
+    }
+    inline void postset(const int nextid)
+    {
+        _next_o_id = nextid;        
     }
     inline void giveback() { 
         w_assert3 (_cache); 
@@ -305,14 +306,17 @@ public:
         _up.push_back(_slin._wh_id);
     }
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
-                    const stock_level_input_t& slin, TwoIntVec* pvwi,
+                    const stock_level_input_t& slin, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pvwi);
-        _pvwi = pvwi;
         w_assert3 (pc);
         _cache = pc;
         _stock_act_set(atid,axct,prvp,1,slin,penv);  // key is (WH)
+    }
+    inline void postset(TwoIntVec* pvwi)
+    {
+        w_assert3 (pvwi);
+        _pvwi = pvwi;        
     }
     inline void giveback() { 
         w_assert3 (_cache); 

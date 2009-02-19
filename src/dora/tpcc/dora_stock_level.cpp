@@ -46,10 +46,12 @@ w_rc_t mid1_stock_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    mid2_stock_rvp* rvp2 = _ptpccenv->NewMid2StockRvp(_tid,_xct,_xct_id,_result,_slin,_actions);
+    mid2_stock_rvp* rvp2 = _ptpccenv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_slin,_actions);
 
     // 2. Generate and enqueue action
-    r_ol_stock_action* r_ol_stock = _ptpccenv->NewROlStockAction(_tid,_xct,rvp2,_slin,_next_o_id);
+    r_ol_stock_action* r_ol_stock = _ptpccenv->new_r_ol_stock_action(_tid,_xct,rvp2,_slin);
+    r_ol_stock->postset(_next_o_id);
+
     typedef range_partition_impl<int>   irpImpl; 
     irpImpl* ol_part = _ptpccenv->oli()->myPart(_slin._wh_id-1);
 
@@ -79,10 +81,13 @@ w_rc_t mid2_stock_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    final_stock_rvp* frvp = _ptpccenv->NewFinalStockRvp(_tid,_xct,_xct_id,_result,_actions);
+    final_stock_rvp* frvp = _ptpccenv->new_final_stock_rvp(_tid,_xct,_xct_id,_result,_actions);
 
     // 2. Generate and enqueue action
-    r_st_stock_action* r_st_stock = _ptpccenv->NewRStStockAction(_tid,_xct,frvp,_slin,_pvwi);
+    r_st_stock_action* r_st_stock = _ptpccenv->new_r_st_stock_action(_tid,_xct,frvp,_slin);
+    r_st_stock->postset(_pvwi);
+
+
     typedef range_partition_impl<int>   irpImpl; 
     irpImpl* st_part = _ptpccenv->sto()->myPart(_slin._wh_id-1);
 
@@ -141,7 +146,7 @@ w_rc_t r_dist_stock_action::trx_exec()
     w_assert3 (prdist);
 
     rep_row_t areprow(_ptpccenv->district_man()->ts());
-    areprow.set(_ptpccenv->district()->maxsize()); 
+    areprow.set(_ptpccenv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
 
     w_rc_t e = RCOK;
@@ -198,17 +203,17 @@ w_rc_t r_ol_stock_action::trx_exec()
     w_assert3 (prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
-    areprow.set(_ptpccenv->order_line()->maxsize()); 
+    areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
     prol->_rep = &areprow;
 
     rep_row_t lowrep(_ptpccenv->order_line_man()->ts());
-    lowrep.set(_ptpccenv->order_line()->maxsize()); 
+    lowrep.set(_ptpccenv->order_line_desc()->maxsize()); 
 
     rep_row_t highrep(_ptpccenv->order_line_man()->ts());
-    highrep.set(_ptpccenv->order_line()->maxsize()); 
+    highrep.set(_ptpccenv->order_line_desc()->maxsize()); 
 
     rep_row_t sortrep(_ptpccenv->order_line_man()->ts());
-    sortrep.set(_ptpccenv->order_line()->maxsize()); 
+    sortrep.set(_ptpccenv->order_line_desc()->maxsize()); 
 
     sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
@@ -347,7 +352,7 @@ w_rc_t r_st_stock_action::trx_exec()
     w_assert3 (prst);
 
     rep_row_t areprow(_ptpccenv->stock_man()->ts());
-    areprow.set(_ptpccenv->stock()->maxsize()); 
+    areprow.set(_ptpccenv->stock_desc()->maxsize()); 
     prst->_rep = &areprow;
 
     w_rc_t e = RCOK;
