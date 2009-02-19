@@ -486,7 +486,7 @@ w_rc_t ShoreTPCBEnv::_post_init_impl()
     typedef branch_t warehouse_t;
     typedef branch_man_impl warehouse_man_impl;
     
-    warehouse_t* wh = branch();
+    warehouse_t* wh = branch_desc();
     index_desc_t* idx = wh->indexes();
     int icount = wh->index_count();
     W_DO(wh->find_fid(db));

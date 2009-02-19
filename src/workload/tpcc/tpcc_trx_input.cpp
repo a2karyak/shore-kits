@@ -9,7 +9,8 @@
 
 #include "util.h"
 #include "stages/tpcc/common/tpcc_random.h" 
-#include "stages/tpcc/common/tpcc_trx_input.h"
+
+#include "workload/tpcc/tpcc_trx_input.h"
 
 
 ENTER_NAMESPACE(tpcc);
@@ -366,7 +367,8 @@ mbench_wh_input_t create_mbench_wh_input(int sf, int specificWH)
 
 #else
     // same input
-    slin._wh_id  = 1;
+    mwin._wh_id  = 1;
+    mwin._amount = 150;
 #endif        
 
     return (mwin);
@@ -404,10 +406,10 @@ mbench_cust_input_t create_mbench_cust_input(int sf, int specificWH)
 
 #else
     // same input
-    slin._wh_id  = 1;
-    slin._d_id   = 2;
-    slin._c_id   = 3;
-    slin._amount = 15;
+    mcin._wh_id  = 1;
+    mcin._d_id   = 2;
+    mcin._c_id   = 3;
+    mcin._amount = 15;
 #endif        
 
     return (mcin);

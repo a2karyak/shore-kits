@@ -5,8 +5,8 @@
  *  @brief Implementation of the (common) inputs for the TPC-C trxs
  */
 
-#include "stages/tpcc/common/tpcc_input.h"
-#include "stages/tpcc/common/tpcc_trx_input.h"
+#include "workload/tpcc/tpcc_input.h"
+#include "workload/tpcc/tpcc_trx_input.h"
 
 using namespace tpcc;
 

@@ -125,11 +125,11 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     void   _inc_##trx##_failed()
 
 
-#define DECLARE_TABLE(table,manimpl,abbrv)       \
-    guard<table>     _p##abbrv##_desc;           \
-    guard<manimpl>   _p##abbrv##_man;            \
-    inline manimpl*  ##abbrv##_man() { return (_p##abbrv##_man); }      \
-    inline table*    ##abbrv() { return (_p##abbrv##_desc.get()); }
+#define DECLARE_TABLE(table,manimpl,abbrv)                              \
+    guard<manimpl>   _p##abbrv##_man;                                   \
+    inline manimpl*  abbrv##_man() { return (_p##abbrv##_man); }        \
+    guard<table>     _p##abbrv##_desc;                                  \
+    inline table*    abbrv##_desc() { return (_p##abbrv##_desc.get()); }
 
 
 #define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                   \

@@ -11,7 +11,8 @@
 #define __TPCC_TRX_INPUT_H
 
 #include "stages/tpcc/common/tpcc_scaling_factor.h"
-#include "stages/tpcc/common/tpcc_input.h" 
+
+#include "workload/tpcc/tpcc_input.h" 
 
 
 ENTER_NAMESPACE(tpcc);

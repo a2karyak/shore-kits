@@ -478,7 +478,7 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
     ss_m* db = this->db();
     
     // lock the WH table 
-    warehouse_t* wh = warehouse();
+    warehouse_t* wh = warehouse_desc();
     index_desc_t* idx = wh->indexes();
     int icount = wh->index_count();
     W_DO(wh->find_fid(db));

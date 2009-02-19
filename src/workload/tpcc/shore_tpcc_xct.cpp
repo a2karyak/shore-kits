@@ -197,6 +197,8 @@ w_rc_t ShoreTPCCEnv::run_one_xct(const int xctid, int xct_type,
  ********************************************************************/
 
 
+// --- without input specified --- //
+
 DEFINE_TRX(ShoreTPCCEnv,new_order);
 DEFINE_TRX(ShoreTPCCEnv,payment);
 DEFINE_TRX(ShoreTPCCEnv,order_status);
