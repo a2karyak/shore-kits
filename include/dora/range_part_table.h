@@ -49,9 +49,9 @@ public:
                           const int arange,
                           const int field_count,
                           const int keyEstimation,
-                          const int whsperpart,
-                          const int totalwhs) 
-        : part_table_t(env, ptable, aprs, arange, keyEstimation, whsperpart, totalwhs), 
+                          const int sfsperpart,
+                          const int totalsf) 
+        : part_table_t(env, ptable, aprs, arange, keyEstimation, sfsperpart, totalsf), 
           _field_count(field_count)
     {
         assert (_field_count>0);
@@ -64,12 +64,12 @@ public:
         // we are doing the partitioning based on the number of warehouses
         int parts_added = 0;
 
-        for (int i=0; i<_total_whs; i+=_whs_per_part) {
+        for (int i=0; i<_total_sf; i+=_sfs_per_part) {
             create_one_part();
             partDown.reset();
             partDown.push_back(i);
             partUp.reset();
-            aboundary=i+_whs_per_part;
+            aboundary=i+_sfs_per_part;
             partUp.push_back(aboundary);
             _ppvec[parts_added]->resize(partDown,partUp);
             ++parts_added;
@@ -82,8 +82,8 @@ public:
 
     const int create_one_part();
 
-    inline rpImpl* myPart(const int wh) {
-        return (_ppvec[wh/_whs_per_part]);
+    inline rpImpl* myPart(const int asf) {
+        return (_ppvec[asf/_sfs_per_part]);
     }
 
 }; // EOF: range_part_table_impl
