@@ -215,7 +215,7 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     // 3. serve action
     w_rc_t e = paction->trx_exec();
     if (e.is_error()) {
-        TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
+        TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
                paction->tid(), e.err_num());
         ++_stats._problems;
 
@@ -225,7 +225,7 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         stringstream os;
         os << e << ends;
         string str = os.str();
-        TRACE( TRACE_DEBUG, "\n%s\n", str.c_str());
+        TRACE( TRACE_TRX_FLOW, "\n%s\n", str.c_str());
     }          
 
     // 4. detach from trx

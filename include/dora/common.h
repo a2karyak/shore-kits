@@ -339,7 +339,8 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 #define DEFINE_DORA_FINAL_RVP_CLASS(cname,trx)                          \
     w_rc_t cname::run() { return (_run(_penv)); }                       \
     void cname::upd_committed_stats() { _penv->_inc_##trx##_att(); }    \
-    void cname::upd_aborted_stats() { _penv->_inc_##trx##_failed(); }
+    void cname::upd_aborted_stats() {                                   \
+        _penv->_inc_##trx##_att(); _penv->_inc_##trx##_failed(); }
 
 
 

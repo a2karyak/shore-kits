@@ -122,7 +122,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID);    \
     w_rc_t xct_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
     void   _inc_##trx##_att();  \
-    void   _inc_##trx##_failed()
+    void   _inc_##trx##_failed(); \
+    void   _inc_##trx##_dld()
 
 
 #define DECLARE_TABLE(table,manimpl,abbrv)                              \
@@ -162,7 +163,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 #define DEFINE_TRX_STATS(cname,trx)                                   \
     void cname::_inc_##trx##_att()    { ++my_stats.attempted.##trx; } \
-    void cname::_inc_##trx##_failed() { ++my_stats.failed.##trx; }
+    void cname::_inc_##trx##_failed() { ++my_stats.failed.##trx; }    \
+    void cname::_inc_##trx##_dld() { ++my_stats.deadlocked.##trx; }
 
 
 #define DEFINE_TRX(cname,trx)                        \
