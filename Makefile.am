@@ -232,13 +232,13 @@ WL_BASE = \
    $(SW)/dispatcher_globals.cpp
 
 WL_TPCC_COMMON = \
-   $(SG)/tpcc/common/tpcc_input.cpp \
-   $(SG)/tpcc/common/tpcc_trx_input.cpp \
    $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
    $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
    $(SG)/tpcc/common/tpcc_random.cpp
 
 WL_TPCC_SHORE = \
+   $(SW)/tpcc/tpcc_input.cpp \
+   $(SW)/tpcc/tpcc_trx_input.cpp \
    $(SW)/tpcc/shore_tpcc_random.cpp \
    $(SW)/tpcc/shore_tpcc_schema.cpp \
    $(SW)/tpcc/shore_tpcc_schema_man.cpp \
@@ -267,6 +267,12 @@ WL_TM1_SHORE = \
    $(SW)/tm1/shore_tm1_client.cpp
 
 
+WL_TM1_DORA = \
+   $(SD)/tm1/dora_tm1_impl.cpp \
+   $(SD)/tm1/dora_tm1.cpp \
+   $(SD)/tm1/dora_tm1_xct.cpp
+
+
 WL_TPCB_SHORE = \
    $(SW)/tpcb/tpcb_input.cpp \
    $(SW)/tpcb/shore_tpcb_xct.cpp \
@@ -283,7 +289,9 @@ lib_libworkload_a_SOURCES = \
    $(WL_TPCC_SHORE) \
    $(WL_TPCC_DORA) \
    $(WL_TM1_SHORE) \
+   $(WL_TM1_DORA) \
    $(WL_TPCB_SHORE)
+
 
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)

@@ -316,7 +316,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
         e = _psub_man->add_tuple(_pssm, prsub);
         if (e.is_error()) { goto done; }
 
-        TRACE (TRACE_TRX_FLOW, "Added SUB - (%d)\n",sub_id);
+        TRACE (TRACE_TRX_FLOW, "Added SUB - (%d)\n", sub_id);
 
         short type;
 
@@ -1025,9 +1025,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     highrep.set(_psf_desc->maxsize()); 
 
 
-    tm1_sub_t asub;
     tm1_sf_t  asf;
-    tm1_cf_t  acf;
     bool bFound = false;
     bool eof;
 
@@ -1047,7 +1045,6 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
      * VALUES (<s_id value subid>, <sf_type rnd sf_type>,
      *         <start_time rnd>, <end_time rnd>, 
      *         <numberx rndstr>);
-     *
      */
 
     { // make gotos safe
@@ -1060,7 +1057,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
                                          icfin._sub_nbr);
         if (e.is_error()) { goto done; }
 
-        prsub->get_value(0, asub.S_ID);
+        prsub->get_value(0, icfin._s_id);
 
         
         /* 2. Retrieve SpecialFacility (Read-only) */
@@ -1071,7 +1068,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
             TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter\n", xct_id);
             e = _psf_man->sf_get_idx_iter(_pssm, tmp_sf_iter, prsf,
                                           lowrep, highrep,
-                                          asub.S_ID);
+                                          icfin._s_id);
             sf_iter = tmp_sf_iter;
             if (e.is_error()) { goto done; }
         }
@@ -1086,7 +1083,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
 
             if (asf.SF_TYPE == icfin._sf_type) {
                 TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
-                       asub.S_ID, asf.SF_TYPE);
+                       xct_id, icfin._s_id, asf.SF_TYPE);
                 bFound = true;
                 break;
             }
@@ -1120,7 +1117,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
                 prcf->set_value(4, icfin._numberx);                
                 prcf->set_value(5, "padding");
                 
-                TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n");
+                TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
 
                 e = _pcf_man->add_tuple(_pssm, prcf);
 
@@ -1133,7 +1130,6 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
             }
         }
         
-
         // COMMIT
         e = _pssm->commit_xct();
         if (e.is_error()) { goto done; }
@@ -1150,7 +1146,6 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     prsf->print_tuple();
     prcf->print_tuple();
 #endif
-
 
 done:    
     // return the tuples to the cache
@@ -1198,9 +1193,6 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
     prcf->_rep = &areprow;
 
 
-    tm1_sub_t asub;
-
-
     /* SELECT <s_id bind subid s_id>
      * FROM Subscriber
      * WHERE sub_nbr = <sub_nbr rndstr>;
@@ -1226,21 +1218,21 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
                                          dcfin._sub_nbr);
         if (e.is_error()) { goto done; }
 
-        prsub->get_value(0, asub.S_ID);
+        prsub->get_value(0, dcfin._s_id);
 
 
         /* 2. Delete CallForwarding record */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:cf-idx-upd (%d) (%d) (%d)\n", 
+               "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
                xct_id, dcfin._s_id, dcfin._sf_type, dcfin._s_time);
 
         e = _pcf_man->cf_idx_upd(_pssm, prcf, 
-                                 asub.S_ID, dcfin._sf_type, dcfin._s_time);
+                                 dcfin._s_id, dcfin._sf_type, dcfin._s_time);
 
         if (e.is_error()) { goto done; }
 
 
-        TRACE (TRACE_TRX_FLOW, "App: %d ICF:del-cf\n");        
+        TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);        
 
         e = _pcf_man->delete_tuple(_pssm, prcf);
 

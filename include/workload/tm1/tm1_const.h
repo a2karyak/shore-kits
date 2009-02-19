@@ -21,6 +21,9 @@ ENTER_NAMESPACE(tm1);
 // SF = 1 --> 100K Subscribers
 const int TM1_SUBS_PER_SF = 100000;
 
+// DORA_SF = 1 --> 2K Subscribes
+const int TM1_SUBS_PER_DORA_PART = 2000;
+
 
 const int TM1_DEF_SF = 10;
 const int TM1_DEF_QF = 10;
@@ -87,15 +90,15 @@ const int XCT_TM1_INS_CALL_FWD  = 26;
 const int XCT_TM1_DEL_CALL_FWD  = 27;
 
 
-
-const int XCT_TM1_DORA_MIX           = 120;
-const int XCT_TM1_DORA_GET_SUB_DATA  = 121;
-const int XCT_TM1_DORA_GET_NEW_DEST  = 122;
-const int XCT_TM1_DORA_GET_ACC_DATA  = 123;
-const int XCT_TM1_DORA_UPD_SUB_DATA  = 124;
-const int XCT_TM1_DORA_UPD_LOCATION  = 125;
-const int XCT_TM1_DORA_INS_CALL_FWD  = 126;
-const int XCT_TM1_DORA_DEL_CALL_FWD  = 127;
+// @note: The DORA_XXX should be (DORA_MIX + REGULAR_TRX_ID)
+const int XCT_TM1_DORA_MIX           = 200;
+const int XCT_TM1_DORA_GET_SUB_DATA  = 221;
+const int XCT_TM1_DORA_GET_NEW_DEST  = 222;
+const int XCT_TM1_DORA_GET_ACC_DATA  = 223;
+const int XCT_TM1_DORA_UPD_SUB_DATA  = 224;
+const int XCT_TM1_DORA_UPD_LOCATION  = 225;
+const int XCT_TM1_DORA_INS_CALL_FWD  = 226;
+const int XCT_TM1_DORA_DEL_CALL_FWD  = 227;
 
 
 

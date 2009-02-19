@@ -12,12 +12,14 @@
 
 
 #include "workload/tm1/shore_tm1_env.h"
+#include "dora/tm1/dora_tm1.h"
 
 
 ENTER_NAMESPACE(tm1);
 
 
 using namespace shore;
+using namespace dora;
 
 
 
@@ -38,7 +40,6 @@ private:
     trx_worker_t<ShoreTM1Env>* _worker;
     int _qf;
     
-
 public:
 
     baseline_tm1_client_t() { }     
@@ -71,47 +72,49 @@ public:
 }; // EOF: baseline_tm1_client_t
 
 
-// /******************************************************************** 
-//  *
-//  * @enum:  dora_tm1_client_t
-//  *
-//  * @brief: The Baseline TPC-C kit smthread-based test client class
-//  *
-//  ********************************************************************/
 
-// class dora_tm1_client_t : public base_client_t 
-// {
-// private:
-//     // workload parameters
-//     DoraTM1Env* _tm1db;    
-//     int _wh;
-//     int _qf;
+/******************************************************************** 
+ *
+ * @enum:  dora_tm1_client_t
+ *
+ * @brief: The Baseline TPC-C kit smthread-based test client class
+ *
+ ********************************************************************/
 
-// public:
+class dora_tm1_client_t : public base_client_t 
+{
+private:
+    // workload parameters
+    DoraTM1Env* _tm1db;    
+    int _selid;
+    int _qf;
 
-//     dora_tm1_client_t() { }     
+public:
 
-//     dora_tm1_client_t(c_str tname, const int id, DoraTM1Env* env, 
-//                        const MeasurementType aType, const int trxid, 
-//                        const int numOfTrxs, 
-//                        processorid_t aprsid, const int sWH, const int qf)  
-// 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
-//           _tm1db(env), _wh(sWH), _qf(qf)
-//     {
-//         assert (env);
-//         assert (_wh>=0 && _qf>0);
-//     }
+    dora_tm1_client_t() { }     
 
-//     ~dora_tm1_client_t() { }
+    dora_tm1_client_t(c_str tname, const int id, DoraTM1Env* env, 
+                      const MeasurementType aType, const int trxid, 
+                      const int numOfTrxs, 
+                      processorid_t aprsid, const int selID, const int qf)  
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
+          _tm1db(env), _selid(selID), _qf(qf)
+    {
+        w_assert3 (env);
+        w_assert3 (_id>=0 && _qf>0);
+    }
 
-//     // every client class should implement this function
-//     static const int load_sup_xct(mapSupTrxs& map);
+    ~dora_tm1_client_t() { }
 
-//     // INTERFACE 
+    // every client class should implement this function
+    static const int load_sup_xct(mapSupTrxs& map);
 
-//     w_rc_t run_one_xct(int xct_type, int xctid);    
+    // INTERFACE 
+
+    w_rc_t run_one_xct(int xct_type, int xctid);    
     
-// }; // EOF: dora_tm1_client_t
+}; // EOF: dora_tm1_client_t
+
 
 
 EXIT_NAMESPACE(tm1);

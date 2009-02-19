@@ -21,6 +21,7 @@
 
 #include "dora.h"
 #include "dora/tpcc/dora_tpcc.h"
+#include "dora/tm1/dora_tm1.h"
 
 
 
@@ -491,7 +492,7 @@ typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
 
 
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
-//typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
+typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
 
 
 typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
@@ -560,9 +561,8 @@ int main(int argc, char* argv[])
             break;
         case snDORA:
             // shore.conf is set for DORA
-            //kit = new doraTPCCKit("(tm1-dora) ");
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            //break;
+            kit = new doraTM1Kit("(tm1-dora) ");
+            break;
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
             return (3);        
