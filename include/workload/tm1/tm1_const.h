@@ -18,11 +18,12 @@ ENTER_NAMESPACE(tm1);
 
 
 // the scaling factor unit (arbitrarily chosen)
-// SF = 1 --> 100K Subscribers
-const int TM1_SUBS_PER_SF = 100000;
+// SF = 1   --> 10K Subscribers
+// SF = 100 --> 1M  Subscribers
+const int TM1_SUBS_PER_SF = 10000;
 
-// DORA_SF = 1 --> 2K Subscribes
-const int TM1_SUBS_PER_DORA_PART = 2000;
+// DORA_SF = 1 --> 10K Subscribes (SF == DORA_SF)
+const int TM1_SUBS_PER_DORA_PART = 10000;
 
 
 const int TM1_DEF_SF = 10;
