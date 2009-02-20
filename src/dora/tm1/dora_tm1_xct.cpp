@@ -528,7 +528,7 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
     // 6b. Enqueue
 
     {        
-        irpImpl* my_sf_part = decide_part(sub(),in._s_id);
+        irpImpl* my_sf_part = decide_part(sf(),in._s_id);
         irpImpl* my_cf_part = decide_part(cf(),in._s_id);
 
         // SF_PART_CS
