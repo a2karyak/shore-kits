@@ -68,10 +68,14 @@ w_rc_t baseline_tm1_client_t::run_one_xct(int xct_type, int xctid)
         atrt.set_notify(_cp->wait+_cp->index);
     }
 
-    // pick a valid ID
-    int selid = _selid;
+    // pick a valid sf
+    register int selsf = _selid;
     if (_selid==0) 
-        selid = URand(1,_qf*TM1_SUBS_PER_SF); 
+        selsf = URand(1,_qf); 
+
+    // decide which ID inside that SF to use
+    register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+
 
     // 3. Get one action from the trash stack
     assert (_tm1db);
@@ -129,10 +133,16 @@ w_rc_t dora_tm1_client_t::run_one_xct(int xct_type, int xctid)
         xct_type = XCT_TM1_DORA_MIX + random_tm1_xct_type(rand(100));
     }
 
-    // pick a valid wh id
-    int selid = _selid;
+    // pick a valid sf
+    register int selsf = _selid;
+
+    // decide which SF to use
     if (_selid==0) 
-        selid = URand(1,_qf*TM1_SUBS_PER_SF); 
+        selsf = URand(1,_qf); 
+
+    // decide which ID inside that SF to use
+    register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+
 
     trx_result_tuple_t atrt;
     if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
