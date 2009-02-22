@@ -181,7 +181,7 @@ upd_loc_input_t create_upd_loc_input(int sf,
     else
         ulin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
    
-    sprintf(ulin._sub_nbr,"%016d",ulin._s_id);
+    sprintf(ulin._sub_nbr,"%015d",ulin._s_id);
     ulin._vlr_loc = URand(0,(2<<16)-1);
     return (ulin);
 }
@@ -217,11 +217,11 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int sf,
     else
         icfin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
 
-    sprintf(icfin._sub_nbr,"%016d",icfin._s_id);
+    sprintf(icfin._sub_nbr,"%015d",icfin._s_id);
     icfin._sf_type = URand(1,4);
     icfin._s_time = URand(0,2) * 8;
     icfin._e_time = URand(1,24);
-    sprintf(icfin._numberx,"%016d",URand(1,sf*TM1_SUBS_PER_SF));
+    sprintf(icfin._numberx,"%015d",URand(1,sf*TM1_SUBS_PER_SF));
     return (icfin);
 }
 
@@ -253,7 +253,7 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
     else
         dcfin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
 
-    sprintf(dcfin._sub_nbr,"%016d",dcfin._s_id);
+    sprintf(dcfin._sub_nbr,"%015d",dcfin._s_id);
     dcfin._sf_type = URand(1,4);
     dcfin._s_time = URand(0,2) * 8;
     return (dcfin);
