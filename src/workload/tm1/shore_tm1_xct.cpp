@@ -170,6 +170,13 @@ w_rc_t ShoreTM1Env::run_one_xct(const int xctid, int xct_type,
         return (run_ins_call_fwd(xctid,trt,specificID));
     case XCT_TM1_DEL_CALL_FWD:
         return (run_del_call_fwd(xctid,trt,specificID));
+    case XCT_TM1_CALL_FWD_MIX:
+        // evenly pick one of the {Ins/Del}CallFwd
+        if (URand(1,100)>50)
+            return (run_ins_call_fwd(xctid,trt,specificID));
+        else
+            return (run_del_call_fwd(xctid,trt,specificID));
+
 
     default:
         assert (0); // UNKNOWN TRX-ID

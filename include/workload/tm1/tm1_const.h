@@ -89,6 +89,7 @@ const int XCT_TM1_UPD_SUB_DATA  = 24;
 const int XCT_TM1_UPD_LOCATION  = 25;
 const int XCT_TM1_INS_CALL_FWD  = 26;
 const int XCT_TM1_DEL_CALL_FWD  = 27;
+const int XCT_TM1_CALL_FWD_MIX  = 29;
 
 
 // @note: The DORA_XXX should be (DORA_MIX + REGULAR_TRX_ID)
@@ -100,6 +101,7 @@ const int XCT_TM1_DORA_UPD_SUB_DATA  = 224;
 const int XCT_TM1_DORA_UPD_LOCATION  = 225;
 const int XCT_TM1_DORA_INS_CALL_FWD  = 226;
 const int XCT_TM1_DORA_DEL_CALL_FWD  = 227;
+const int XCT_TM1_DORA_CALL_FWD_MIX  = 229;
 
 
 

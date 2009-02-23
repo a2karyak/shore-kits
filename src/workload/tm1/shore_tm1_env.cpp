@@ -64,6 +64,64 @@ const int ShoreTM1Env::info()
 }
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    statistics
+ *
+ *  @brief: Prints statistics for TM1 
+ *
+ ********************************************************************/
+
+const int ShoreTM1Env::statistics() 
+{
+    // read the current trx statistics
+    CRITICAL_SECTION(cs, _statmap_mutex);
+    ShoreTM1TrxStats rval;
+    rval -= rval; // dirty hack to set all zeros
+    for (statmap_t::iterator it=_statmap.begin(); it != _statmap.end(); ++it) 
+	rval += *it->second;
+
+    TRACE( TRACE_STATISTICS, "GebSubData. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.get_sub_data,
+           rval.failed.get_sub_data,
+           rval.deadlocked.get_sub_data);
+
+    TRACE( TRACE_STATISTICS, "GebNewDest. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.get_new_dest,
+           rval.failed.get_new_dest,
+           rval.deadlocked.get_new_dest);
+
+    TRACE( TRACE_STATISTICS, "GebAccData. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.get_acc_data,
+           rval.failed.get_acc_data,
+           rval.deadlocked.get_acc_data);
+
+    TRACE( TRACE_STATISTICS, "UpdSubData. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.upd_sub_data,
+           rval.failed.upd_sub_data,
+           rval.deadlocked.upd_sub_data);
+
+    TRACE( TRACE_STATISTICS, "UpdLocation. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.upd_loc,
+           rval.failed.upd_loc,
+           rval.deadlocked.upd_loc);
+
+    TRACE( TRACE_STATISTICS, "InsCallFwd. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.ins_call_fwd,
+           rval.failed.ins_call_fwd,
+           rval.deadlocked.ins_call_fwd);
+
+    TRACE( TRACE_STATISTICS, "DelCallFwd. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.del_call_fwd,
+           rval.failed.del_call_fwd,
+           rval.deadlocked.del_call_fwd);
+
+    return (0);
+}
+
+
+
 /******************************************************************** 
  *
  *  @fn:    start()

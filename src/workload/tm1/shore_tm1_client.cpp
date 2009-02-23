@@ -35,6 +35,7 @@ const int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_UPD_LOCATION]    = "TM1-UpdLocation";
     stmap[XCT_TM1_INS_CALL_FWD]    = "TM1-InsCallFwd";
     stmap[XCT_TM1_DEL_CALL_FWD]    = "TM1-DelCallFwd";
+    stmap[XCT_TM1_CALL_FWD_MIX]    = "TM1-CallFwd-Mix";
     return (stmap.size());
 }
 
@@ -112,6 +113,7 @@ const int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_DORA_UPD_LOCATION]    = "DORA-TM1-UpdLocation";
     stmap[XCT_TM1_DORA_INS_CALL_FWD]    = "DORA-TM1-InsCallFwd";
     stmap[XCT_TM1_DORA_DEL_CALL_FWD]    = "DORA-TM1-DelCallFwd";
+    stmap[XCT_TM1_DORA_CALL_FWD_MIX]    = "DORA-TM1-CallFwd-Mix";
     return (stmap.size());
 }
 
@@ -164,6 +166,13 @@ w_rc_t dora_tm1_client_t::run_one_xct(int xct_type, int xctid)
         return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid));
     case XCT_TM1_DORA_DEL_CALL_FWD:
         return (_tm1db->dora_del_call_fwd(xctid,atrt,selid));
+    case XCT_TM1_DORA_CALL_FWD_MIX:
+        // evenly pick one of the {Ins/Del}CallFwd
+        if (URand(1,100)>50)
+            return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid));
+        else
+            return (_tm1db->dora_del_call_fwd(xctid,atrt,selid));
+
 
     default:
         assert (0); // UNKNOWN TRX-ID

@@ -183,6 +183,7 @@ public:
     virtual const int start();
     virtual const int stop();
     virtual const int info();
+    virtual const int statistics();    
     
 
     virtual w_rc_t warmup() { return(RCOK); /* do nothing */ };
