@@ -312,6 +312,9 @@ const int DoraTPCCEnv::info()
 
 const int DoraTPCCEnv::statistics() 
 {
+    // first print any parent statistics
+    ShoreTPCCEnv::statistics();
+
     int sz=_irptp_vec.size();
     TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
     for (int i=0;i<sz;++i) {

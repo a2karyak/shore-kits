@@ -78,6 +78,64 @@ const int ShoreTPCCEnv::info()
 }
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    statistics
+ *
+ *  @brief: Prints statistics for TPC-C 
+ *
+ ********************************************************************/
+
+const int ShoreTPCCEnv::statistics() 
+{
+    // read the current trx statistics
+    CRITICAL_SECTION(cs, _statmap_mutex);
+    ShoreTPCCTrxStats rval;
+    rval -= rval; // dirty hack to set all zeros
+    for (statmap_t::iterator it=_statmap.begin(); it != _statmap.end(); ++it) 
+	rval += *it->second;
+
+    TRACE( TRACE_STATISTICS, "NewOrder. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.new_order,
+           rval.failed.new_order,
+           rval.deadlocked.new_order);
+
+    TRACE( TRACE_STATISTICS, "Payment. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.payment,
+           rval.failed.payment,
+           rval.deadlocked.payment);
+
+    TRACE( TRACE_STATISTICS, "OrderStatus. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.order_status,
+           rval.failed.order_status,
+           rval.deadlocked.order_status);
+
+    TRACE( TRACE_STATISTICS, "Delivery. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.delivery,
+           rval.failed.delivery,
+           rval.deadlocked.delivery);
+
+    TRACE( TRACE_STATISTICS, "StockLevel. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.stock_level,
+           rval.failed.stock_level,
+           rval.deadlocked.stock_level);
+
+    TRACE( TRACE_STATISTICS, "MBenchWh. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_wh,
+           rval.failed.mbench_wh,
+           rval.deadlocked.mbench_wh);
+
+    TRACE( TRACE_STATISTICS, "MBenchCust. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_cust,
+           rval.failed.mbench_cust,
+           rval.deadlocked.mbench_cust);
+
+    return (0);
+}
+
+
+
 /******************************************************************** 
  *
  *  @fn:    start()
