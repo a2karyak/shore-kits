@@ -50,8 +50,10 @@ void worker_stats_t::print_stats() const
            _mid_aborts, (double)(100*_mid_aborts)/(double)_checked_input);
 #endif
 
-    TRACE( TRACE_STATISTICS, "Sleeped        (%d)\n", _condex_sleep);
-    TRACE( TRACE_STATISTICS, "Failed sleeped (%d)\n", _failed_sleep);
+    TRACE( TRACE_STATISTICS, "Sleeped        (%d) \t%.1f%%\n", 
+           _condex_sleep, (double)(100*_condex_sleep)/(double)_checked_input);
+    TRACE( TRACE_STATISTICS, "Failed sleeped (%d) \t%.1f%%\n", 
+           _failed_sleep, (double)(100*_failed_sleep)/(double)_checked_input);
 }
 
 void worker_stats_t::reset()
