@@ -324,8 +324,16 @@ public:
     // helper //
 
     void stats() { 
-        TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());
-        _stats.print_stats(); 
+        if (_stats._served_input == 0) {
+            TRACE( TRACE_DEBUG, "(%s) no data\n", thread_name().data());
+        }
+        else {
+            TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());
+            _stats.print_stats(); 
+        }
+
+        // clears after printing results
+        _stats.reset();
     }
 
 private:
