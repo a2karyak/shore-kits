@@ -26,6 +26,13 @@
 ENTER_NAMESPACE(shore);
 
 
+
+// Use this define to enable midway trx aborts
+//#undef MIDWAY_ABORTS
+#define MIDWAY_ABORTS
+
+
+
 /******************************************************************** 
  *
  * @struct: worker_stats_t
@@ -42,7 +49,6 @@ struct worker_stats_t
     int _processed;
     int _problems;
 
-    int _checked_waiting;
     int _served_waiting;
 
     int _checked_input;
@@ -52,14 +58,20 @@ struct worker_stats_t
     int _failed_sleep;
 
     int _early_aborts;
+
+#ifdef MIDWAY_ABORTS
     int _mid_aborts;
+#endif
 
     worker_stats_t() 
         : _processed(0), _problems(0),
-          _checked_waiting(0), _served_waiting(0),
+          _served_waiting(0),
           _checked_input(0), _served_input(0),
           _condex_sleep(0), _failed_sleep(0),
-          _early_aborts(0), _mid_aborts(0)
+          _early_aborts(0)
+#ifdef MIDWAY_ABORTS
+        , _mid_aborts(0)
+#endif
     { }
 
     ~worker_stats_t() { }
@@ -324,7 +336,7 @@ public:
     // helper //
 
     void stats() { 
-        if (_stats._served_input == 0) {
+        if (_stats._checked_input == 0) {
             TRACE( TRACE_DEBUG, "(%s) no data\n", thread_name().data());
         }
         else {

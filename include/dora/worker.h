@@ -218,12 +218,16 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         // 4. serve action
         e = paction->trx_exec();
         if (e.is_error()) {
-            if (e.err_num() == de_MID_ABORT) {
-                r_code = de_MID_ABORT;
+
+#ifdef MIDWAY_ABORTS
+            if (e.err_num() == de_MIDWAY_ABORT) {
+                r_code = de_MIDWAY_ABORT;
                 TRACE( TRACE_TRX_FLOW, "Midway abort (%d)\n", paction->tid());
                 ++_stats._mid_aborts;
             }
-            else {
+            else
+#endif 
+             {
                 TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
                        paction->tid(), e.err_num());
                 ++_stats._problems;

@@ -46,7 +46,7 @@ enum {
     de_INCOMPATIBLE_LOCKS      = 0x820031,
 
     de_EARLY_ABORT             = 0x820041,
-    de_MID_ABORT               = 0x820042
+    de_MIDWAY_ABORT            = 0x820042
 };
 
 
