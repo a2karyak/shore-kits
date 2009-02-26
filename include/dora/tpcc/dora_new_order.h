@@ -59,9 +59,9 @@ public:
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
 
         // NewOrder does not have 1 intratrx and 1 total actions but we set them at postset()
@@ -70,13 +70,13 @@ public:
     inline void postset(int ol_cnt)
     {
         // [OL_CNT+4] intratrx - [3*OL_CNT+5] total actions   
-        w_assert3 (ol_cnt);
+        assert (ol_cnt);
         _countdown.reset(ol_cnt+4);
         _actions.reserve(3*ol_cnt+5);
     }
 
     inline void giveback() { 
-        w_assert3 (_ptpccenv); 
+        assert (_ptpccenv); 
         _cache->giveback(this); }    
 
     // interface
@@ -124,17 +124,17 @@ public:
     { 
         _noin = noin;
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         // [2*OL_CNT+1] intratrx - [2*OL_CNT+1] total actions        
         _set(atid,axct,axctid,presult,2*noin._ol_cnt+1,2*noin._ol_cnt+1); 
     }
     inline void postset(final_nord_rvp* prvp)
     {
-        w_assert3 (prvp);
+        assert (prvp);
         _final_rvp = prvp;        
     }
-    inline void giveback() { w_assert3 (_cache); 
+    inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
    
     // the interface
@@ -185,7 +185,7 @@ protected:
         _range_act_set(atid,axct,prvp,keylen); 
         _wh_id = whid;
         _d_id = did;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
     }
 
@@ -228,7 +228,7 @@ public:
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,prvp,1,whid,0,penv);  // key is (WH)
     }
@@ -237,7 +237,7 @@ public:
         _d_id = did;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: r_wh_nord_action
@@ -266,7 +266,7 @@ public:
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,prvp,3,whid,0,penv);  // key is (WH|D|C)
     }
@@ -276,7 +276,7 @@ public:
         _c_id = cid;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: r_cust_nord_action
@@ -318,9 +318,9 @@ public:
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmidway_rvp);
+        assert (pmidway_rvp);
         _pmidway_rvp = pmidway_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,pmidway_rvp,2,whid,0,penv);  // key is (WH|D)
     }
@@ -329,7 +329,7 @@ public:
         _d_id = did;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_dist_nord_action
@@ -356,9 +356,9 @@ public:
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmidway_rvp);
+        assert (pmidway_rvp);
         _pmidway_rvp = pmidway_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,pmidway_rvp,1,whid,0,penv);  // key is (I)
     }
@@ -368,7 +368,7 @@ public:
         _ol_idx = olidx;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: r_item_nord_action
@@ -397,9 +397,9 @@ public:
                     const int whid,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmidway_rvp);
+        assert (pmidway_rvp);
         _pmidway_rvp = pmidway_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,pmidway_rvp,2,whid,0,penv);  // key is (WH|I)
     }
@@ -409,7 +409,7 @@ public:
         _ol_idx = olidx;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_sto_nord_action
@@ -461,7 +461,7 @@ public:
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,prvp,3,whid,0,penv);  // key is (WH|D|OID)
     }
@@ -478,7 +478,7 @@ public:
         _all_local = alllocal;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: ins_ord_nord_action
@@ -508,7 +508,7 @@ public:
                     rvp_t* prvp, const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,prvp,3,whid,0,penv);  // key is (WH|D|OID)
     }
@@ -519,7 +519,7 @@ public:
         _d_next_o_id = nextoid;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: ins_nord_nord_action
@@ -555,7 +555,7 @@ public:
                     rvp_t* prvp, const int whid,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _nord_act_set(atid,axct,prvp,4,whid,0,penv);  // key is (WH|D|OID|OLIDX)
     }
@@ -571,7 +571,7 @@ public:
         _tstamp = tstamp;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: ins_ol_nord_action

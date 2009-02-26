@@ -227,7 +227,7 @@ DEFINE_TRX(ShoreTM1Env,del_call_fwd);
 
 w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
 {
-    w_assert3 (sub_id>=0);
+    assert (sub_id>=0);
 
     w_rc_t e = RCOK;
 
@@ -461,14 +461,14 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 1 table:
     // Subscriber
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
@@ -583,17 +583,17 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 2 tables:
     // SpecialFacility and CallForwarding
     row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
-    w_assert3 (prsf);
+    assert (prsf);
 
     row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
-    w_assert3 (prcf);
+    assert (prcf);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
@@ -728,14 +728,14 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 1 table:
     // AccessInfo
     row_impl<access_info_t>* prai = _pai_man->get_tuple();
-    w_assert3 (prai);
+    assert (prai);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
@@ -812,17 +812,17 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 2 tables:
     // Subscriber, SpecialFacility
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
-    w_assert3 (prsf);
+    assert (prsf);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
@@ -920,14 +920,14 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 1 table:
     // Subscriber
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
@@ -1000,20 +1000,20 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 3 tables:
     // Subscriber, SpecialFacility, CallForwarding
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
-    w_assert3 (prsf);
+    assert (prsf);
 
     row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
-    w_assert3 (prcf);
+    assert (prcf);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);
@@ -1178,17 +1178,17 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
     w_rc_t e = RCOK;
 
     // ensure a valid environment
-    w_assert3 (_pssm);
-    w_assert3 (_initialized);
-    w_assert3 (_loaded);
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
 
     // get_sub_data touches 2 tables:
     // Subscriber, CallForwarding
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
-    w_assert3 (prcf);
+    assert (prcf);
 
     trt.set_id(xct_id);
     trt.set_state(UNSUBMITTED);

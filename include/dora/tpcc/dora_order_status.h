@@ -57,14 +57,14 @@ public:
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,2,2); // 2 intratrx - 2 total actions
     }
     inline void giveback() { 
-        w_assert3 (_ptpccenv); 
+        assert (_ptpccenv); 
         _cache->giveback(this); }    
 
     // interface
@@ -104,7 +104,7 @@ protected:
     {
         _range_act_set(atid,axct,prvp,keylen); 
         _ordstin = ordstin;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
     }
 
@@ -140,12 +140,12 @@ public:
                     const order_status_input_t& pordst,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _ordst_act_set(atid,axct,prvp,3,pordst,penv);  // key is (WH|DIST|CUST)
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_wh_ordst_action
@@ -174,7 +174,7 @@ public:
                     const order_status_input_t& pordst,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _ordst_act_set(atid,axct,prvp,3,pordst,penv);  // key is (WH|DIST|O_ID)
     }
@@ -183,7 +183,7 @@ public:
         _aorder = aord;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
 
 }; // EOF: r_ol_ordst_action

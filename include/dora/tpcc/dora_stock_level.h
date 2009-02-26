@@ -65,13 +65,13 @@ public:
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _slin = slin;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,1,1); // 1 intratrx - 1 total actions
     }
-    inline void giveback() { w_assert3 (_cache); 
+    inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
 
     void set_next_o_id(const int& nextid) { _next_o_id = nextid; }
@@ -113,13 +113,13 @@ public:
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _slin = slin;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,1,2); // 1 intratrx - 2 total actions
     }
-    inline void giveback() { w_assert3 (_cache); 
+    inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
 
     // the interface
@@ -152,14 +152,14 @@ public:
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,2,2); // 1 intratrx - 3 total actions
     }
     inline void giveback() { 
-        w_assert3 (_ptpccenv); 
+        assert (_ptpccenv); 
         _cache->giveback(this); }    
 
     // interface
@@ -201,7 +201,7 @@ protected:
     {
         _range_act_set(atid,axct,prvp,keylen); 
         _slin = stockin;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
     }
 
@@ -237,14 +237,14 @@ public:
                     const stock_level_input_t& slin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmid1_rvp);
+        assert (pmid1_rvp);
         _pmid1_rvp = pmid1_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _stock_act_set(atid,axct,pmid1_rvp,2,slin,penv);  // key is (WH|DIST)
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_wh_stock_action
@@ -273,9 +273,9 @@ public:
                     const stock_level_input_t& slin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmid2_rvp);
+        assert (pmid2_rvp);
         _pmid2_rvp = pmid2_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _stock_act_set(atid,axct,pmid2_rvp,2,slin,penv);  // key is (WH|DIST)
     }
@@ -284,7 +284,7 @@ public:
         _next_o_id = nextid;        
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
 
 }; // EOF: r_ol_stock_action
@@ -309,17 +309,17 @@ public:
                     const stock_level_input_t& slin, 
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _stock_act_set(atid,axct,prvp,1,slin,penv);  // key is (WH)
     }
     inline void postset(TwoIntVec* pvwi)
     {
-        w_assert3 (pvwi);
+        assert (pvwi);
         _pvwi = pvwi;        
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         if (_pvwi) delete _pvwi; _pvwi = NULL;
         _cache->giveback(this); }    
 

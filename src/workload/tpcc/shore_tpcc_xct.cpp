@@ -1601,7 +1601,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_wh(const int xct_id,
 
     // get table tuples from the caches
     row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
-    w_assert3 (prwh);
+    assert (prwh);
     
     w_rc_t e = RCOK;
 

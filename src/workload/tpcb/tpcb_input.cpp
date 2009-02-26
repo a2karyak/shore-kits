@@ -32,7 +32,7 @@ ENTER_NAMESPACE(tpcb);
 acct_update_input_t create_acct_update_input(int sf, 
                                              int specificBr)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     acct_update_input_t auin;
 
@@ -68,7 +68,7 @@ acct_update_input_t create_acct_update_input(int sf,
 populate_db_input_t create_populate_db_input(int sf, 
                                              int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
     populate_db_input_t pdbin(sf,specificSub);
     return (pdbin);
 }

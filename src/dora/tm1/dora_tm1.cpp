@@ -276,14 +276,15 @@ const int DoraTM1Env::info()
 
 const int DoraTM1Env::statistics() 
 {
-    // first print any parent statistics
-    ShoreTM1Env::statistics();
-
     int sz=_irptp_vec.size();
     TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
     for (int i=0;i<sz;++i) {
         _irptp_vec[i]->statistics();
     }
+
+    // first print any parent statistics
+    ShoreTM1Env::statistics();
+
     return (0);
 }
 

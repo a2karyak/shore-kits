@@ -139,11 +139,11 @@ void final_stock_rvp::upd_aborted_stats()
 
 w_rc_t r_dist_stock_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
-    w_assert3 (prdist);
+    assert (prdist);
 
     rep_row_t areprow(_ptpccenv->district_man()->ts());
     areprow.set(_ptpccenv->district_desc()->maxsize()); 
@@ -195,12 +195,12 @@ done:
 
 w_rc_t r_ol_stock_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
 
     row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
-    w_assert3 (prol);
+    assert (prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
     areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
@@ -345,11 +345,11 @@ done:
 
 w_rc_t r_st_stock_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<stock_t>* prst = _ptpccenv->stock_man()->get_tuple();
-    w_assert3 (prst);
+    assert (prst);
 
     rep_row_t areprow(_ptpccenv->stock_man()->ts());
     areprow.set(_ptpccenv->stock_desc()->maxsize()); 

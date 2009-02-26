@@ -53,13 +53,13 @@ void r_sub_gsd_action::calc_keys()
 
 w_rc_t r_sub_gsd_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
     row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
@@ -183,13 +183,13 @@ void r_sf_gnd_action::calc_keys()
 
 w_rc_t r_sf_gnd_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // SpecialFacility
     row_impl<special_facility_t>* prsf = _penv->sf_man()->get_tuple();
-    w_assert3 (prsf);
+    assert (prsf);
 
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
@@ -250,13 +250,13 @@ void r_cf_gnd_action::calc_keys()
 
 w_rc_t r_cf_gnd_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
     row_impl<call_forwarding_t>* prcf = _penv->cf_man()->get_tuple();
-    w_assert3 (prcf);
+    assert (prcf);
 
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 
@@ -357,13 +357,13 @@ void r_ai_gad_action::calc_keys()
 
 w_rc_t r_ai_gad_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // AccessInfo
     row_impl<access_info_t>* prai = _penv->ai_man()->get_tuple();
-    w_assert3 (prai);
+    assert (prai);
 
     rep_row_t areprow(_penv->ai_man()->ts());
     areprow.set(_penv->ai_desc()->maxsize()); 
@@ -445,13 +445,13 @@ void upd_sub_usd_action::calc_keys()
 
 w_rc_t upd_sub_usd_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
     row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
@@ -509,13 +509,13 @@ void upd_sf_usd_action::calc_keys()
 
 w_rc_t upd_sf_usd_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
     row_impl<special_facility_t>* prsf = _penv->sf_man()->get_tuple();
-    w_assert3 (prsf);
+    assert (prsf);
 
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
@@ -590,13 +590,13 @@ void upd_sub_ul_action::calc_keys()
 
 w_rc_t upd_sub_ul_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
     row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
@@ -677,13 +677,13 @@ void r_sf_icf_action::calc_keys()
 
 w_rc_t r_sf_icf_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // SpecialFacility
     row_impl<special_facility_t>* prsf = _penv->sf_man()->get_tuple();
-    w_assert3 (prsf);
+    assert (prsf);
 
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
@@ -777,13 +777,13 @@ void ins_cf_icf_action::calc_keys()
 
 w_rc_t ins_cf_icf_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
     row_impl<call_forwarding_t>* prcf = _penv->cf_man()->get_tuple();
-    w_assert3 (prcf);
+    assert (prcf);
 
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 
@@ -872,13 +872,13 @@ void del_cf_dcf_action::calc_keys()
 
 w_rc_t del_cf_dcf_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
     row_impl<call_forwarding_t>* prcf = _penv->cf_man()->get_tuple();
-    w_assert3 (prcf);
+    assert (prcf);
 
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 

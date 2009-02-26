@@ -104,7 +104,7 @@ public:
     // Access methods //
     PartitionPtrVector* get_vector() const { return (&_ppvec); }
     Partition* get_part(const int pos) const {
-        w_assert3 (pos<_ppvec.size());
+        assert (pos<_ppvec.size());
         return (_ppvec[pos]);
     }
 
@@ -162,7 +162,7 @@ public:
 
     // enqueues action, false on error
     inline const int enqueue(Action* paction, const int part) {
-        w_assert3 (part<_pcnt);
+        assert (part<_pcnt);
         return (_ppvec[part]->enqueue(paction));
     }
 

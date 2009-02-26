@@ -307,7 +307,7 @@ protected:
 template <class DataType>
 const int partition_t<DataType>::enqueue(Action* pAction)
 {
-    w_assert3(verify(*pAction));
+    //assert(verify(*pAction)); // TODO: Enable this
 //     if (!verify(*pAction)) {
 //         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
 //         return (de_WRONG_PARTITION);
@@ -348,7 +348,7 @@ action_t<DataType>* partition_t<DataType>::dequeue()
 template <class DataType>
 const int partition_t<DataType>::enqueue_commit(Action* pAction)
 {
-    w_assert3 (pAction->get_partition()==this);
+    assert (pAction->get_partition()==this);
 
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
            pAction->tid(), _table->name(), _part_id);
@@ -369,7 +369,7 @@ const int partition_t<DataType>::enqueue_commit(Action* pAction)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue_commit()
 {
-    w_assert3 (has_committed());
+    assert (has_committed());
     return (_committed_queue->pop());
 }
 

@@ -40,7 +40,7 @@ get_sub_data_input_t::operator= (const get_sub_data_input_t& rhs)
 get_sub_data_input_t create_get_sub_data_input(int sf, 
                                                int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     get_sub_data_input_t gsdin;
 
@@ -73,7 +73,7 @@ get_new_dest_input_t::operator= (const get_new_dest_input_t& rhs)
 get_new_dest_input_t create_get_new_dest_input(int sf, 
                                                int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     get_new_dest_input_t gndin;
 
@@ -106,7 +106,7 @@ get_acc_data_input_t::operator= (const get_acc_data_input_t& rhs)
 get_acc_data_input_t create_get_acc_data_input(int sf, 
                                                int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     get_acc_data_input_t gadin;
 
@@ -138,7 +138,7 @@ upd_sub_data_input_t::operator= (const upd_sub_data_input_t& rhs)
 upd_sub_data_input_t create_upd_sub_data_input(int sf, 
                                                int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     upd_sub_data_input_t usdin;
 
@@ -172,7 +172,7 @@ upd_loc_input_t::operator= (const upd_loc_input_t& rhs)
 upd_loc_input_t create_upd_loc_input(int sf, 
                                      int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     upd_loc_input_t ulin;
 
@@ -208,7 +208,7 @@ ins_call_fwd_input_t::operator= (const ins_call_fwd_input_t& rhs)
 ins_call_fwd_input_t create_ins_call_fwd_input(int sf, 
                                                int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     ins_call_fwd_input_t icfin;
 
@@ -244,7 +244,7 @@ del_call_fwd_input_t::operator= (const del_call_fwd_input_t& rhs)
 del_call_fwd_input_t create_del_call_fwd_input(int sf, 
                                                int specificSub)
 {
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     del_call_fwd_input_t dcfin;
 
@@ -276,7 +276,7 @@ const int random_tm1_xct_type(const int selected)
     int random_type = selected;
     if (random_type < 0)
         random_type = rand()%100;
-    w_assert3 (random_type >= 0);
+    assert (random_type >= 0);
 
     int sum = 0;
     sum+=PROB_TM1_GET_SUB_DATA;

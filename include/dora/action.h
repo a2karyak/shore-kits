@@ -142,7 +142,7 @@ public:
     }
 
     inline const int setkeys(const int numLocks = 1) {
-        w_assert3 (numLocks);
+        assert (numLocks);
         _keys_needed = numLocks;
         return (_keys_needed);
     } 
@@ -153,7 +153,7 @@ public:
         // and returns if it is ready to proceed        
 
         // should need at least numLocks locks
-        w_assert3 ((_keys_needed-numLocks)>=0); 
+        assert ((_keys_needed-numLocks)>=0); 
         _keys_needed -= numLocks;
         return (_keys_needed==0);
     }
@@ -236,7 +236,7 @@ protected:
     {
         _base_set(atid,axct,prvp,numkeys,keysset);
 
-        w_assert3 (numkeys);
+        assert (numkeys);
         _keys.reserve(numkeys);
         _requests.reserve(1);
     }
@@ -290,7 +290,7 @@ public:
 
     const bool trx_acq_locks() 
     {
-        w_assert3 (_partition);
+        assert (_partition);
         trx_upd_keys();
         return (_partition->acquire(_requests));
     }
@@ -298,7 +298,7 @@ public:
     const int trx_rel_locks(BaseActionPtrList& readyList, 
                             BaseActionPtrList& promotedList)
     {
-        w_assert3 (_partition);
+        assert (_partition);
         trx_upd_keys();
         return (_partition->release(this,readyList,promotedList));
     }
@@ -308,7 +308,7 @@ public:
 
     void notify() 
     {
-        w_assert3 (_partition);
+        assert (_partition);
         _partition->enqueue_commit(this);
     }
 
@@ -317,7 +317,7 @@ public:
 
     virtual void setup(Pool** stl_pool_alloc_list) 
     {
-        w_assert3 (stl_pool_alloc_list);
+        assert (stl_pool_alloc_list);
 
         // it must have 2 pool lists: 
         // stl_pool_list[0]: KeyPtr pool

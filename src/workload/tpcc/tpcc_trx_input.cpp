@@ -44,7 +44,7 @@ ENTER_NAMESPACE(tpcc);
 new_order_input_t create_new_order_input(int sf, int specificWH) 
 {
     // check scaling factor
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     // produce NEW_ORDER params according to tpcc spec v.5.9
     new_order_input_t noin;
@@ -129,7 +129,7 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
 payment_input_t create_payment_input(int sf, int specificWH) 
 {
     // check scaling factor
-    w_assert3 (sf>0);
+    assert (sf>0);
 
     // produce PAYMENT params according to tpcc spec v.5.9
     payment_input_t pin;
@@ -218,7 +218,7 @@ payment_input_t create_payment_input(int sf, int specificWH)
 order_status_input_t create_order_status_input(int sf, int specificWH)
 {
     // check scaling factor
-    w_assert3 (sf > 0);
+    assert (sf > 0);
 
     // produce PAYMENT params according to tpcc spec v.5.4
     order_status_input_t osin;
@@ -273,7 +273,7 @@ order_status_input_t create_order_status_input(int sf, int specificWH)
 delivery_input_t create_delivery_input(int sf, int specificWH)
 {
     // check scaling factor
-    w_assert3 (sf > 0);
+    assert (sf > 0);
 
     // produce PAYMENT params according to tpcc spec v.5.9
     delivery_input_t din;
@@ -311,7 +311,7 @@ delivery_input_t create_delivery_input(int sf, int specificWH)
 stock_level_input_t create_stock_level_input(int sf, int specificWH)
 {
     // check scaling factor
-    w_assert3 (sf > 0);
+    assert (sf > 0);
 
     // produce PAYMENT params according to tpcc spec v.5.4
     stock_level_input_t slin;
@@ -352,7 +352,7 @@ stock_level_input_t create_stock_level_input(int sf, int specificWH)
 mbench_wh_input_t create_mbench_wh_input(int sf, int specificWH)
 {
     // check scaling factor
-    w_assert3 (sf > 0);
+    assert (sf > 0);
 
     mbench_wh_input_t mwin;
 
@@ -389,7 +389,7 @@ mbench_wh_input_t create_mbench_wh_input(int sf, int specificWH)
 mbench_cust_input_t create_mbench_cust_input(int sf, int specificWH)
 {
     // check scaling factor
-    w_assert3 (sf > 0);
+    assert (sf > 0);
 
     mbench_cust_input_t mcin;
 

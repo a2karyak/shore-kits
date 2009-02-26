@@ -60,14 +60,14 @@ public:
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,DISTRICTS_PER_WAREHOUSE,4*DISTRICTS_PER_WAREHOUSE);
     }
     inline void giveback() { 
-        w_assert3 (_ptpccenv); 
+        assert (_ptpccenv); 
         _cache->giveback(this); }    
 
     // interface
@@ -113,7 +113,7 @@ public:
     { 
         _din = din;
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,1,1); // 1 intratrx - 1 total actions
     }
@@ -121,11 +121,11 @@ public:
     {
         _d_id = d_id;
 
-        w_assert3 (prvp);
+        assert (prvp);
         _final_rvp = prvp;
     }        
                         
-    inline void giveback() { w_assert3 (_cache); 
+    inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
 
     void set_o_id(const int aoid) { _o_id = aoid; } 
@@ -173,9 +173,8 @@ public:
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _din = din;
-        w_assert3 (prvp);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,2,3); // 2 intratrx - 3 total actions
     }
@@ -184,7 +183,7 @@ public:
         _d_id = d_id;
         _final_rvp = prvp;
     }
-    inline void giveback() { w_assert3 (_cache); 
+    inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
 
     void add_amount(const int anamount) { 
@@ -237,7 +236,7 @@ protected:
         _range_act_set(atid,axct,prvp,keylen); 
         _din = din;
         _d_id = did;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
     }
 
@@ -273,9 +272,9 @@ public:
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmid1_rvp);
+        assert (pmid1_rvp);
         _pmid1_rvp = pmid1_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _del_act_set(atid,axct,pmid1_rvp,2,din,0,penv);  // key is (WH|D)
     }
@@ -284,7 +283,7 @@ public:
         _d_id = d_id;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: del_nord_del_action
@@ -316,9 +315,9 @@ public:
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmid2_rvp);
+        assert (pmid2_rvp);
         _pmid2_rvp = pmid2_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _del_act_set(atid,axct,pmid2_rvp,3,din,0,penv);  // key is (WH|D|ORD)
     }
@@ -328,7 +327,7 @@ public:
         _o_id = o_id;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_ord_del_action
@@ -360,9 +359,9 @@ public:
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pmid2_rvp);
+        assert (pmid2_rvp);
         _pmid2_rvp = pmid2_rvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _del_act_set(atid,axct,pmid2_rvp,3,din,0,penv);  // key is (WH|D|ORD)
     }
@@ -372,7 +371,7 @@ public:
         _o_id = o_id;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_oline_del_action
@@ -404,7 +403,7 @@ public:
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _del_act_set(atid,axct,prvp,3,din,0,penv);  // key is (WH|D|C)
     }
@@ -416,7 +415,7 @@ public:
     }
 
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_cust_del_action

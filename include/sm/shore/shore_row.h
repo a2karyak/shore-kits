@@ -283,7 +283,7 @@ inline void rep_row_t::set(const int new_bufsz)
 
 inline const int table_row_t::size() const
 {
-    w_assert3 (_is_setup);
+    assert (_is_setup);
 
     int size = 0;
     int null_count = 0;
@@ -320,68 +320,68 @@ inline const int table_row_t::size() const
     
 inline void table_row_t::set_null(const int idx) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_null();
 }
 
 inline void table_row_t::set_value(const int idx, const int v) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_int_value(v);
 }
 
 inline void table_row_t::set_value(const int idx, const bool v) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_bit_value(v);
 }
 
 inline void table_row_t::set_value(const int idx, const short v) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_smallint_value(v);
 }
 
 inline void table_row_t::set_value(const int idx, const double v) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_float_value(v);
 }
 
 inline void table_row_t::set_value(const int idx, const decimal v) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_decimal_value(v);
 }
 
 inline void table_row_t::set_value(const int idx, const time_t v) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_is_setup && _pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_is_setup && _pvalues[idx].is_setup());
     _pvalues[idx].set_time_value(v);
 }
 
 inline void table_row_t::set_value(const int idx, const char* string) 
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
 
     register sqltype_t sqlt = _pvalues[idx].field_desc()->type();
-    w_assert3 (sqlt == SQL_VARCHAR || sqlt == SQL_CHAR );
+    assert (sqlt == SQL_VARCHAR || sqlt == SQL_CHAR );
 
     int len = strlen(string);
     if ( sqlt == SQL_VARCHAR ) { 
@@ -396,9 +396,9 @@ inline void table_row_t::set_value(const int idx, const char* string)
 
 inline void table_row_t::set_value(const int idx, const timestamp_t& time)
 {
-    w_assert3 (_is_setup);
-    w_assert3 (idx >= 0 && idx < _field_cnt);
-    w_assert3 (_pvalues[idx].is_setup());
+    assert (_is_setup);
+    assert (idx >= 0 && idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_value(&time, 0);
 }
 
@@ -413,8 +413,8 @@ inline void table_row_t::set_value(const int idx, const timestamp_t& time)
 inline bool table_row_t::get_value(const int index,
                                    int& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         value = 0;
         return false;
@@ -426,8 +426,8 @@ inline bool table_row_t::get_value(const int index,
 inline bool table_row_t::get_value(const int index,
                                    bool& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         value = false;
         return false;
@@ -439,8 +439,8 @@ inline bool table_row_t::get_value(const int index,
 inline bool table_row_t::get_value(const int index,
                                    short& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         value = 0;
         return false;
@@ -453,8 +453,8 @@ inline bool table_row_t::get_value(const int index,
                                     char* buffer,
                                     const int bufsize) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         buffer[0] = '\0';
         return (false);
@@ -469,8 +469,8 @@ inline bool table_row_t::get_value(const int index,
 inline bool table_row_t::get_value(const int index,
                                    double& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         value = 0;
         return false;
@@ -482,8 +482,8 @@ inline bool table_row_t::get_value(const int index,
 inline bool table_row_t::get_value(const int index,
                                    decimal& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         value = decimal(0);
         return false;        
@@ -495,8 +495,8 @@ inline bool table_row_t::get_value(const int index,
 inline bool table_row_t::get_value(const int index,
                                    time_t& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         return false;
     }
@@ -507,8 +507,8 @@ inline bool table_row_t::get_value(const int index,
 inline bool table_row_t::get_value(const int index,
                                     timestamp_t& value) const
 {
-    w_assert3 (_is_setup);
-    w_assert3(index >= 0 && index < _field_cnt);
+    assert (_is_setup);
+    assert(index >= 0 && index < _field_cnt);
     if (_pvalues[index].is_null()) {
         return false;
     }

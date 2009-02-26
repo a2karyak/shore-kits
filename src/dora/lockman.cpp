@@ -120,14 +120,14 @@ LogicalLock::LogicalLock(ActionLockReq& anowner)
 const int LogicalLock::release(BaseActionPtr anowner, 
                                BaseActionPtrList& promotedList)
 {
-    w_assert3 (anowner);
+    assert (anowner);
     bool found = false;    
     tid_t atid = anowner->tid();
     int ipromoted = 0;
 
     for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
         tid_t* ownertid = (*it).tid();
-        w_assert3 (ownertid);
+        assert (ownertid);
         TRACE( TRACE_TRX_FLOW, "Checking (%d) - Owner(%d)\n", atid, *ownertid);
 
         if (atid==*ownertid) {
@@ -186,7 +186,7 @@ const int LogicalLock::release(BaseActionPtr anowner,
 
 const bool LogicalLock::acquire(ActionLockReq& alr)
 {
-    w_assert3 (alr.action());
+    assert (alr.action());
 
     // 1. Check if already possesing this lock
     for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
@@ -225,7 +225,7 @@ const bool LogicalLock::acquire(ActionLockReq& alr)
     }        
 
     // not compatible, enqueue to the waiting list
-    w_assert3 (_owners.size());
+    assert (_owners.size());
     _waiters.push_back(alr);    
 
     // indicate failure to acquire

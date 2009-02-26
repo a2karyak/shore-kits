@@ -52,14 +52,14 @@ struct trx_request_t
         : _xct(axct),_tid(atid),_xct_id(axctid),_result(aresult),
           _xct_type(axcttype), _spec_id(aspecid)
     {
-        w_assert3 (axct);
+        assert (axct);
     }
     ~trx_request_t() { }  
 
     void set(xct_t* axct, tid_t atid, const int axctid,
              trx_result_tuple_t& aresult, const int axcttype, const int aspecid)
     {
-        w_assert3 (xct);
+        assert (xct);
         _xct = axct;
         _tid = atid;
         _xct_id = axctid;
@@ -136,7 +136,7 @@ public:
 template <class SubShoreEnv>
 void trx_worker_t<SubShoreEnv>::enqueue(Request* arequest)
 {
-    w_assert3 (arequest);
+    assert (arequest);
     _pqueue->push(arequest);
 }
 

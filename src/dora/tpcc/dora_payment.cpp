@@ -103,11 +103,11 @@ void final_pay_rvp::upd_aborted_stats()
 
 w_rc_t upd_wh_pay_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
-    w_assert3 (prwh);
+    assert (prwh);
     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
     areprow.set(_ptpccenv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
@@ -175,11 +175,11 @@ done:
 
 w_rc_t upd_dist_pay_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
-    w_assert3 (prdist);
+    assert (prdist);
     rep_row_t areprow(_ptpccenv->district_man()->ts());
     areprow.set(_ptpccenv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
@@ -247,11 +247,11 @@ done:
 
 w_rc_t upd_cust_pay_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
-    w_assert3 (prcust);
+    assert (prcust);
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
     areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
@@ -451,11 +451,11 @@ done:
 
 w_rc_t ins_hist_pay_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<history_t>* prhist = _ptpccenv->history_man()->get_tuple();
-    w_assert3 (prhist);
+    assert (prhist);
     rep_row_t areprow(_ptpccenv->history_man()->ts());
     areprow.set(_ptpccenv->history_desc()->maxsize()); 
     prhist->_rep = &areprow;

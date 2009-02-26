@@ -165,11 +165,11 @@ void final_del_rvp::upd_aborted_stats()
 
 w_rc_t del_nord_del_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<new_order_t>* prno = _ptpccenv->new_order_man()->get_tuple();
-    w_assert3 (prno);
+    assert (prno);
 
     rep_row_t areprow(_ptpccenv->new_order_man()->ts());
     areprow.set(_ptpccenv->new_order_desc()->maxsize()); 
@@ -263,11 +263,11 @@ done:
 
 w_rc_t upd_ord_del_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<order_t>* prord = _ptpccenv->order_man()->get_tuple();
-    w_assert3 (prord);
+    assert (prord);
 
     rep_row_t areprow(_ptpccenv->order_man()->ts());
     areprow.set(_ptpccenv->order_desc()->maxsize()); 
@@ -327,11 +327,11 @@ done:
 
 w_rc_t upd_oline_del_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
-    w_assert3 (prol);
+    assert (prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
     areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
@@ -428,11 +428,11 @@ done:
 
 w_rc_t upd_cust_del_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
-    w_assert3 (prcust);
+    assert (prcust);
 
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
     areprow.set(_ptpccenv->customer_desc()->maxsize()); 

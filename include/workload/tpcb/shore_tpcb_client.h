@@ -50,13 +50,13 @@ public:
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
           _tpcbdb(env), _selid(selID), _qf(qf)
     {
-        w_assert3 (env);
-        w_assert3 (_id>=0 && _qf>0);
+        assert (env);
+        assert (_id>=0 && _qf>0);
 
         // pick worker thread
         _worker = _tpcbdb->tpcbworker(_id);
         TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
-        w_assert3 (_worker);
+        assert (_worker);
     }
 
     ~baseline_tpcb_client_t() { }

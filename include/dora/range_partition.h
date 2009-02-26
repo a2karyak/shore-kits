@@ -132,8 +132,8 @@ template <class DataType>
 const bool range_partition_impl<DataType>::_is_between(const Key& contDown,
                                                        const Key& contUp) const
 {
-    w_assert3 (_part_down<=_part_up);
-    w_assert3 (contDown<=contUp);
+    assert (_part_down<=_part_up);
+    assert (contDown<=contUp);
     //    cout << "Checking (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
 
     // !!! WARNING !!!

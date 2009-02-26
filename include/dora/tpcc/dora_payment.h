@@ -65,13 +65,13 @@ public:
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _pin = ppin;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,3,3);
     }
-    inline void giveback() { w_assert3 (_cache); 
+    inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
 
     tpcc_warehouse_tuple* wh() { return (&_awh); }
@@ -107,14 +107,14 @@ public:
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _set(atid,axct,axctid,presult,1,4);
     }
     inline void giveback() { 
-        w_assert3 (_ptpccenv); 
+        assert (_ptpccenv); 
         _cache->giveback(this); }    
 
     // interface
@@ -157,7 +157,7 @@ protected:
     {
         _range_act_set(atid,axct,prvp,keylen); 
         _pin = pin;
-        w_assert3 (penv);
+        assert (penv);
         _ptpccenv = penv;
     }
 
@@ -190,14 +190,14 @@ public:
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (prvp);
+        assert (prvp);
         _m_rvp = prvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (WH)
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
    
 }; // EOF: upd_wh_pay_action
@@ -224,14 +224,14 @@ public:
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (amrvp);
+        assert (amrvp);
         _m_rvp = amrvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _pay_act_set(atid,axct,amrvp,2,pin,penv);  // key is (WH|DIST)
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
 
 }; // EOF: upd_wh_pay_action
@@ -260,14 +260,14 @@ public:
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (prvp);
+        assert (prvp);
         _m_rvp = prvp;
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _pay_act_set(atid,axct,prvp,3,pin,penv);  // key is (WH|DIST|CUST)
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
 
 }; // EOF: upd_cust_pay_action
@@ -293,7 +293,7 @@ public:
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
-        w_assert3 (pc);
+        assert (pc);
         _cache = pc;
         _pay_act_set(atid,axct,prvp,1,pin,penv);  // key is (HIST)
     }
@@ -304,7 +304,7 @@ public:
         _adist = adist;
     }
     inline void giveback() { 
-        w_assert3 (_cache); 
+        assert (_cache); 
         _cache->giveback(this); }    
 
 }; // EOF: ins_hist_pay_action

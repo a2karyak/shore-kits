@@ -19,7 +19,7 @@ struct countdown_t
 public:
 
     // constructor - sets the number to count down
-    countdown_t(int count=0) : _state(count*NUMBER) { }
+    countdown_t(int count=0) : _state(count*CD_NUMBER) { }
 
     // reduce thread count by one (or post an error) and return true if
     // the operation completed the countdown
@@ -33,8 +33,8 @@ public:
 
 private:
 
-    enum { ERROR=0x1, NUMBER=0x2 };
-    unsigned volatile _state;
+    enum { CD_ERROR=0x1, CD_NUMBER=0x2 };
+    unsigned int volatile _state;
 
     // copying not allowed
     countdown_t(countdown_t const &);

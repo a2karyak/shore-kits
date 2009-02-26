@@ -163,11 +163,11 @@ void final_nord_rvp::upd_aborted_stats()
 // R_WH_NORD_ACTION
 w_rc_t r_wh_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<warehouse_t>* prwh = _ptpccenv->warehouse_man()->get_tuple();
-    w_assert3 (prwh);
+    assert (prwh);
 
 
     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
@@ -217,11 +217,11 @@ done:
 // R_CUST_NORD_ACTION
 w_rc_t r_cust_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _ptpccenv->customer_man()->get_tuple();
-    w_assert3 (prcust);
+    assert (prcust);
 
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
     areprow.set(_ptpccenv->customer_desc()->maxsize()); 
@@ -294,11 +294,11 @@ done:
 // UPD_DIST_NORD_ACTION
 w_rc_t upd_dist_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
-    w_assert3 (prdist);
+    assert (prdist);
 
     rep_row_t areprow(_ptpccenv->district_man()->ts());
     areprow.set(_ptpccenv->district_desc()->maxsize()); 
@@ -374,11 +374,11 @@ done:
 // R_ITEM_NORD_ACTION
 w_rc_t r_item_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<item_t>* pritem = _ptpccenv->item_man()->get_tuple();
-    w_assert3 (pritem);
+    assert (pritem);
 
     rep_row_t areprow(_ptpccenv->item_man()->ts());
     areprow.set(_ptpccenv->item_desc()->maxsize()); 
@@ -439,11 +439,11 @@ done:
 // UPD_STO_NORD_ACTION
 w_rc_t upd_sto_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<stock_t>* prst = _ptpccenv->stock_man()->get_tuple();
-    w_assert3 (prst);
+    assert (prst);
 
     rep_row_t areprow(_ptpccenv->item_man()->ts());
     areprow.set(_ptpccenv->stock_desc()->maxsize()); 
@@ -551,11 +551,11 @@ done:
 // INS_ORD_NORD_ACTION
 w_rc_t ins_ord_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<order_t>* prord = _ptpccenv->order_man()->get_tuple();
-    w_assert3 (prord);
+    assert (prord);
 
 
     rep_row_t areprow(_ptpccenv->order_man()->ts());
@@ -609,11 +609,11 @@ done:
 // INS_NORD_NORD_ACTION
 w_rc_t ins_nord_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<new_order_t>* prno = _ptpccenv->new_order_man()->get_tuple();
-    w_assert3 (prno);
+    assert (prno);
 
 
     rep_row_t areprow(_ptpccenv->new_order_man()->ts());
@@ -661,11 +661,11 @@ done:
 // INS_OL_NORD_ACTION
 w_rc_t ins_ol_nord_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_ptpccenv);
 
     // get table tuple from the cache
     row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
-    w_assert3 (prol);
+    assert (prol);
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
     areprow.set(_ptpccenv->order_line_desc()->maxsize()); 

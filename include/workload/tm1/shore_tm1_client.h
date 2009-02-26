@@ -51,13 +51,13 @@ public:
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
           _tm1db(env), _selid(selID), _qf(qf)
     {
-        w_assert3 (env);
-        w_assert3 (_id>=0 && _qf>0);
+        assert (env);
+        assert (_id>=0 && _qf>0);
 
         // pick worker thread
         _worker = _tm1db->tm1worker(_id);
         TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
-        w_assert3 (_worker);
+        assert (_worker);
     }
 
     ~baseline_tm1_client_t() { }
@@ -100,8 +100,8 @@ public:
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
           _tm1db(env), _selid(selID), _qf(qf)
     {
-        w_assert3 (env);
-        w_assert3 (_id>=0 && _qf>0);
+        assert (env);
+        assert (_id>=0 && _qf>0);
     }
 
     ~dora_tm1_client_t() { }

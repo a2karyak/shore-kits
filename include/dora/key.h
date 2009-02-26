@@ -129,7 +129,7 @@ struct key_wrapper_t
 
     void setup(Pool** stl_pool_alloc_list) 
     {
-        w_assert3 (stl_pool_alloc_list);
+        assert (stl_pool_alloc_list);
 
         // it must have 1 pool lists: 
         // stl_pool_list[0]: DataType pool

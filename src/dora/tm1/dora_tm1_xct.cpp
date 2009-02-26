@@ -356,7 +356,7 @@ w_rc_t DoraTM1Env::dora_upd_loc(const int xct_id,
 
     // 2. Do the secondary index probe
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     // allocate space for the larger table representation
     rep_row_t areprow(_psub_man->ts());
@@ -478,7 +478,7 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
 
     // 2. Do the secondary index probe
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     // allocate space for the larger table representation
     rep_row_t areprow(_psub_man->ts());
@@ -612,7 +612,7 @@ w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id,
 
     // 2. Do the secondary index probe
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
-    w_assert3 (prsub);
+    assert (prsub);
 
     // allocate space for the larger table representation
     rep_row_t areprow(_psub_man->ts());

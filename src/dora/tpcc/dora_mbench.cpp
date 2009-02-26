@@ -48,14 +48,14 @@ void upd_wh_mb_action::calc_keys()
 
 w_rc_t upd_wh_mb_action::trx_exec() 
 {
-    w_assert3 (_ptpccenv);
+    assert (_penv);
 
     // mbench trx touches 1 table: 
     // warehouse
 
     // get table tuples from the caches
     row_impl<warehouse_t>* prwh = _penv->warehouse_man()->get_tuple();
-    w_assert3 (prwh);
+    assert (prwh);
     rep_row_t areprow(_penv->warehouse_man()->ts());
     areprow.set(_penv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
@@ -139,13 +139,13 @@ void upd_cust_mb_action::calc_keys()
 
 w_rc_t upd_cust_mb_action::trx_exec() 
 {
-    w_assert3 (_penv);
+    assert (_penv);
 
     // mbench trx touches 1 table: customer
 
     // get table tuple from the cache
     row_impl<customer_t>* prcust = _penv->customer_man()->get_tuple();
-    w_assert3 (prcust);
+    assert (prcust);
     rep_row_t areprow(_penv->customer_man()->ts());
     areprow.set(_penv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;

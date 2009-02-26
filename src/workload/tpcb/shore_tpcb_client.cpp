@@ -50,7 +50,7 @@ w_rc_t baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid)
     tid_t atid;   
     W_DO(_tpcbdb->db()->begin_xct(atid));
     xct_t* pxct = smthread_t::me()->xct();
-    w_assert3 (pxct);
+    assert (pxct);
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
     detach_xct(pxct);
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
