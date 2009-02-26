@@ -16,9 +16,9 @@
 const int URand(const int low, const int high) 
 {
   thread_t* self = thread_get_self();
-  w_assert3 (self);
+  assert (self);
   randgen_t* randgenp = self->randgen();
-  w_assert3 (randgenp);
+  assert (randgenp);
 
   int d = high - low + 1;
   return (low + randgenp->rand(d));
@@ -34,9 +34,9 @@ const bool URandBool()
 const short URandShort(const short low, const short high) 
 {
   thread_t* self = thread_get_self();
-  w_assert3 (self);
+  assert (self);
   randgen_t* randgenp = self->randgen();
-  w_assert3 (randgenp);
+  assert (randgenp);
 
   short d = high - low + 1;
   return (low + (short)randgenp->rand(d));
@@ -44,7 +44,7 @@ const short URandShort(const short low, const short high)
 
 const void URandFillStrCaps(char* dest, const int sz)
 {
-    w_assert3 (dest);
+    assert (dest);
     for (int i=0; i<sz; i++) {
         dest[i] = CAPS_CHAR_ARRAY[URand(0,sizeof(CAPS_CHAR_ARRAY)-1)];
     }
@@ -52,7 +52,7 @@ const void URandFillStrCaps(char* dest, const int sz)
 
 const void URandFillStrNumbx(char* dest, const int sz)
 {
-    w_assert3 (dest);
+    assert (dest);
     for (int i=0; i<sz; i++) {
         dest[i] = NUMBERS_CHAR_ARRAY[URand(0,sizeof(NUMBERS_CHAR_ARRAY)-1)];
     }

@@ -51,12 +51,15 @@ struct worker_stats_t
     int _condex_sleep;
     int _failed_sleep;
 
+    int _early_aborts;
+    int _mid_aborts;
 
     worker_stats_t() 
         : _processed(0), _problems(0),
           _checked_waiting(0), _served_waiting(0),
           _checked_input(0), _served_input(0),
-          _condex_sleep(0), _failed_sleep(0)
+          _condex_sleep(0), _failed_sleep(0),
+          _early_aborts(0), _mid_aborts(0)
     { }
 
     ~worker_stats_t() { }
@@ -132,7 +135,7 @@ public:
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
           _next(NULL), _is_bound(false), _prs_id(aprsid), _use_sli(use_sli)
     {
-        w_assert3 (_env);        
+        assert (_env);        
     }
 
     virtual ~base_worker_t() { }

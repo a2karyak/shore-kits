@@ -43,7 +43,10 @@ enum {
     de_TERMINAL_XCT            = 0x820026,
     de_NOTIFY_COMMITTED        = 0x820028,
 
-    de_INCOMPATIBLE_LOCKS      = 0x820031
+    de_INCOMPATIBLE_LOCKS      = 0x820031,
+
+    de_EARLY_ABORT             = 0x820041,
+    de_MID_ABORT               = 0x820042
 };
 
 

@@ -42,6 +42,9 @@ void worker_stats_t::print_stats() const
 
     TRACE( TRACE_STATISTICS, "Sleeped        (%d)\n", _condex_sleep);
     //    TRACE( TRACE_STATISTICS, "Failed sleeped (%d)\n", _failed_sleep);
+    
+    TRACE( TRACE_STATISTICS, "Early Aborts   (%d)\n", _early_aborts);
+    TRACE( TRACE_STATISTICS, "Midway Aborts  (%d)\n", _mid_aborts);
 }
 
 void worker_stats_t::reset()

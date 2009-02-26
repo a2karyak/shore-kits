@@ -47,9 +47,8 @@ public:
 protected:
 
     // the countdown
-    countdown_t              _countdown;
-    eActionDecision volatile _decision;
-    tatas_lock               _decision_lock;
+    countdown_t       _countdown;
+    ushort_t volatile _decision;
 
     // trx-specific
     xct_t*              _xct; // Not the owner
@@ -59,6 +58,7 @@ protected:
 
     // list of actions that report to this rvp
     baseActionsList     _actions;
+    tatas_lock          _actions_lock;
 
     // set rvp
     void _set(const tid_t& atid, xct_t* axct, const int axctid,
@@ -68,8 +68,8 @@ protected:
 #ifndef ONLYDORA
         assert (axct);
 #endif
-        w_assert3 (intra_trx_cnt>0);
-        w_assert3 (total_actions>=intra_trx_cnt);
+        assert (intra_trx_cnt>0);
+        assert (total_actions>=intra_trx_cnt);
         _countdown.reset(intra_trx_cnt);
         _decision = AD_UNDECIDED;
         _tid = atid;
@@ -77,7 +77,6 @@ protected:
         _xct_id = axctid;
         _result = presult;
 
-        w_assert3 (_actions );
         _actions.reserve(total_actions);
     }
 
@@ -116,24 +115,33 @@ public:
     const int append_actions(const baseActionsList& actionList);
     const int add_action(base_action_t* paction);
 
-    // Decision-related
-    inline void set_decision(const eActionDecision& ad) { _decision = ad; }
-    inline eActionDecision get_decision() const { return (_decision); }
-
 
     inline bool post(bool is_error=false) { 
-        if (is_error) {
-            CRITICAL_SECTION(decision_cs,_decision_lock);
-            _decision = AD_ABORT;
-        }
+        if (is_error) abort();        
         return (_countdown.post(false)); 
     }
 
     // decides to abort this trx
-    virtual eActionDecision abort() { 
-        CRITICAL_SECTION(decision_cs, _decision_lock);
-        _decision = AD_ABORT;
-        return (_decision);
+    inline const ushort_t abort() { 
+        ushort_t old_value = *&_decision;
+        while (true) {
+            ushort_t new_value = AD_ABORT;
+            ushort_t cur_value = atomic_cas_ushort(&_decision, old_value, new_value);
+            if (cur_value == old_value) {
+                // successful cas
+                return (new_value);
+            }
+            // try, try again
+            old_value = cur_value;
+        }
+
+        // should not reach this point
+        assert(0);
+        return (*&_decision);
+    }
+
+    inline const bool isAborted() {
+        return (*&_decision == AD_ABORT);
     }
 
 
@@ -156,7 +164,7 @@ public:
 
     void setup(Pool** stl_pool_alloc_list) 
     {
-        w_assert3 (stl_pool_alloc_list);
+        assert (stl_pool_alloc_list);
 
         // it must have 1 pool lists: 
         // stl_pool_alloc_list[0]: base_action_t* pool

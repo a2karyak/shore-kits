@@ -108,12 +108,12 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
  *
  * @brief: Possible decision of an action
  *
- * @note:  Abort is decided when something goes wrong with own action
- *         Die if some other action (of the same trx) decides to abort
+ * @note:  Abort - if something goes wrong with own action
+ *         Die - if some other action (of the same trx) decides to abort
  *
  ********************************************************************/
 
-enum eActionDecision { AD_UNDECIDED, AD_ABORT, AD_DEADLOCK, AD_COMMIT, AD_DIE };
+enum eActionDecision { AD_UNDECIDED = 0x1, AD_ABORT = 0x2, AD_DEADLOCK = 0x3, AD_COMMIT = 0x4, AD_DIE = 0x5 };
 
 
 
@@ -235,7 +235,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
     rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, trx_result_tuple_t& presult, const inputname& in) { \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
-        w_assert3 (myrvp);                                              \
+        assert (myrvp);                                              \
         myrvp->set(atid,axct,axctid,presult,in,this,my_##rvpname##_cache->_cache.get()); \
         return (myrvp); }
 
@@ -250,7 +250,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
     rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, trx_result_tuple_t& presult, const inputname& in, baseActionsList& actions) { \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
-        w_assert3 (myrvp);                                              \
+        assert (myrvp);                                              \
         myrvp->set(atid,axct,axctid,presult,in,this,my_##rvpname##_cache->_cache.get()); \
         myrvp->copy_actions(actions);                                   \
         return (myrvp); }
@@ -269,7 +269,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
     rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, trx_result_tuple_t& presult) { \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
-        w_assert3 (myrvp);                                              \
+        assert (myrvp);                                              \
         myrvp->set(atid,axct,axctid,presult,this,my_##rvpname##_cache->_cache.get()); \
         return (myrvp); }
 
@@ -285,7 +285,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
     rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, trx_result_tuple_t& presult, baseActionsList& actions) { \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
-        w_assert3 (myrvp);                                              \
+        assert (myrvp);                                              \
         myrvp->set(atid,axct,axctid,presult,this,my_##rvpname##_cache->_cache.get()); \
         myrvp->copy_actions(actions);                                   \
         return (myrvp); }
@@ -303,7 +303,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     DECLARE_TLS_ACTION_CACHE(actioname,actiontype);                     \
     actioname* classname::new_##actioname(const tid_t& atid, xct_t* axct, rvpname* prvp, const inputname& in) { \
         actioname* myaction = my_##actioname##_cache->_cache->borrow(); \
-        w_assert3 (myaction);                                           \
+        assert (myaction);                                           \
         myaction->set(atid,axct,prvp,in,this,my_##actioname##_cache->_cache.get()); \
         prvp->add_action(myaction);                                     \
         return (myaction); }
@@ -326,11 +326,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inline void set(const tid_t& atid, xct_t* axct, const int axctid, \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc) { \
-                w_assert3 (penv); _penv = penv;                         \
-                w_assert3 (pc); _cache = pc;                            \
+                assert (penv); _penv = penv;                         \
+                assert (pc); _cache = pc;                            \
                 _set(atid,axct,axctid,presult,intratrx,total); }        \
             inline void giveback() {                                    \
-                w_assert3 (_penv); _cache->giveback(this); }            \
+                assert (_penv); _cache->giveback(this); }            \
             w_rc_t run();                                               \
             void upd_committed_stats();                                 \
             void upd_aborted_stats(); }
@@ -357,11 +357,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
             inline void giveback() {                                    \
-                w_assert3 (_cache); _cache->giveback(this); }           \
+                assert (_cache); _cache->giveback(this); }           \
             inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
-                w_assert3 (pc); _cache = pc;                            \
-                w_assert3 (penv); _penv = penv;                         \
+                assert (pc); _cache = pc;                            \
+                assert (penv); _penv = penv;                         \
                 _in = in;                                               \
                 _range_act_set(atid,axct,prvp,keylen); }                \
             w_rc_t trx_exec();                                          \
@@ -380,12 +380,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
             inline void giveback() {                                    \
-                w_assert3 (_cache); _cache->giveback(this); }           \
+                assert (_cache); _cache->giveback(this); }           \
             inline void set(const tid_t& atid, xct_t* axct, rvpname* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
-                w_assert3 (pc); _cache = pc;                            \
-                w_assert3 (prvp); _prvp = prvp;                         \
-                w_assert3 (penv); _penv = penv;                         \
+                assert (pc); _cache = pc;                            \
+                assert (prvp); _prvp = prvp;                         \
+                assert (penv); _penv = penv;                         \
                 _in = in;                                               \
                 _range_act_set(aitd,axct,prvp,keylen); }                \
             w_rc_t trx_exec();                                          \

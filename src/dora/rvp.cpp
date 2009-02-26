@@ -59,7 +59,7 @@ const int rvp_t::copy_actions(const baseActionsList& actionList)
 
 const int rvp_t::append_actions(const baseActionsList& actionList)
 {
-    CRITICAL_SECTION(action_cs, _decision_lock);
+    CRITICAL_SECTION(action_cs, _actions_lock);
     // append new actionList to the end of the list
     _actions.insert(_actions.end(), actionList.begin(),actionList.end()); 
     return (0);
@@ -76,8 +76,8 @@ const int rvp_t::append_actions(const baseActionsList& actionList)
 
 const int rvp_t::add_action(base_action_t* paction) 
 {
-    w_assert3 (paction);
-    w_assert3 (this==paction->rvp());
+    assert (paction);
+    assert (this==paction->rvp());
     _actions.push_back(paction);
     return (0);
 }
@@ -113,11 +113,11 @@ const int terminal_rvp_t::notify()
 
 w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
 {
-    w_assert3 (penv);
+    assert (penv);
 
     // attach to this xct
 #ifndef ONLYDORA
-    w_assert3 (_xct);
+    assert (_xct);
     smthread_t::me()->attach_xct(_xct);
 #endif
 

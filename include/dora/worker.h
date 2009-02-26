@@ -117,7 +117,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
-        w_assert3 (_partition);
+        assert (_partition);
         
         // reset the flags for the new loop
         apa = NULL;
@@ -131,7 +131,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 
             // 2a. get the first committed
             apa = _partition->dequeue_commit();
-            w_assert3 (apa);
+            assert (apa);
             TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
             
             // 2b. release the locks acquired for this action
@@ -194,48 +194,63 @@ template <class DataType>
 const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 {
     // 0. make sure that the action has all the keys it needs
-    w_assert3 (paction);
-    w_assert3 (paction->is_ready());
+    assert (paction);
+    assert (paction->is_ready());
 
     bool is_error = false;
+    w_rc_t e = RCOK;
     int r_code = 0;
 
     // 1. get pointer to rvp
     rvp_t* aprvp = paction->rvp();
-    w_assert3 (aprvp);
+    assert (aprvp);
+    
 
-    // 2. attach to xct
+    // 2. before attaching check if this trx is still active
+    if (!aprvp->isAborted()) {
 
+        // 3. attach to xct
 #ifndef ONLYDORA
-    attach_xct(paction->xct());
+        attach_xct(paction->xct());
 #endif
-
-    TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
+        TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
             
-    // 3. serve action
-    w_rc_t e = paction->trx_exec();
-    if (e.is_error()) {
-        TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
-               paction->tid(), e.err_num());
-        ++_stats._problems;
+        // 4. serve action
+        e = paction->trx_exec();
+        if (e.is_error()) {
+            if (e.err_num() == de_MID_ABORT) {
+                r_code = de_MID_ABORT;
+                TRACE( TRACE_TRX_FLOW, "Midway abort (%d)\n", paction->tid());
+                ++_stats._mid_aborts;
+            }
+            else {
+                TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
+                       paction->tid(), e.err_num());
+                ++_stats._problems;
 
-        is_error = true;
-        r_code = de_WORKER_RUN_XCT;
+                is_error = true;
+                r_code = de_WORKER_RUN_XCT;
 
-        stringstream os;
-        os << e << ends;
-        string str = os.str();
-        TRACE( TRACE_TRX_FLOW, "\n%s\n", str.c_str());
-    }          
+                stringstream os;
+                os << e << ends;
+                string str = os.str();
+                TRACE( TRACE_TRX_FLOW, "\n%s\n", str.c_str());
+            }
+        }          
 
-    // 4. detach from trx
-    TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid());
-
+        // 5. detach from trx
+        TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid());
 #ifndef ONLYDORA
-    detach_xct(paction->xct());
+        detach_xct(paction->xct());
 #endif
+    }
+    else {
+        r_code = de_EARLY_ABORT;
+        TRACE( TRACE_TRX_FLOW, "Early abort (%d)\n", paction->tid());
+        ++_stats._early_aborts;
+    }
 
-    // 5. finalize processing        
+    // 6. finalize processing        
     if (aprvp->post(is_error)) {
         // last caller
 
