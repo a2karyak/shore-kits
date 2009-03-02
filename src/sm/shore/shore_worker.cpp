@@ -25,14 +25,15 @@ ENTER_NAMESPACE(shore);
 
 void worker_stats_t::print_stats() const
 {
-    //    TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
-    //    TRACE( TRACE_STATISTICS, "Problems       (%d)\n", _problems);
-
     // don't display anything if no input
     if (_checked_input==0) {
         TRACE( TRACE_STATISTICS, "No input\n");
         return;
     }
+
+    TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
+    TRACE( TRACE_STATISTICS, "Failure rate   (%d) \t%.1f%%\n", 
+           _problems, (double)(100*_problems)/(double)_processed);
 
     TRACE( TRACE_STATISTICS, "Input checked  (%d)\n", _checked_input);
 
@@ -42,11 +43,11 @@ void worker_stats_t::print_stats() const
     TRACE( TRACE_STATISTICS, "Wait served    (%d) \t%.1f%%\n", 
            _served_waiting, (double)(100*_served_waiting)/(double)_checked_input);
     
-    TRACE( TRACE_STATISTICS, "Early Aborts   (%d) \t%.1f%%\n", 
+    TRACE( TRACE_STATISTICS, "Early aborts   (%d) \t%.1f%%\n", 
            _early_aborts, (double)(100*_early_aborts)/(double)_checked_input);
 
 #ifdef MIDWAY_ABORTS
-    TRACE( TRACE_STATISTICS, "Midway Aborts  (%d) \t%.1f%%\n", 
+    TRACE( TRACE_STATISTICS, "Midway aborts  (%d) \t%.1f%%\n", 
            _mid_aborts, (double)(100*_mid_aborts)/(double)_checked_input);
 #endif
 
@@ -54,6 +55,22 @@ void worker_stats_t::print_stats() const
            _condex_sleep, (double)(100*_condex_sleep)/(double)_checked_input);
     TRACE( TRACE_STATISTICS, "Failed sleeped (%d) \t%.1f%%\n", 
            _failed_sleep, (double)(100*_failed_sleep)/(double)_checked_input);
+
+
+#ifdef WORKER_VERBOSE_STATS
+
+    TRACE( TRACE_STATISTICS, "Avg  serving   (%.3fms)\n", 
+           _serving_total/(double)(_processed-_early_aborts));
+    
+    TRACE( TRACE_STATISTICS, "Total wait     (%.2f)\n", _waiting_total);
+
+    for (int i=1; i<WAITING_WINDOW; i++) {
+        TRACE( TRACE_STATISTICS, "(%d -> %d). Wait (%.2f)\n",
+               i, i+1, _ww[(_ww_idx+i)%WAITING_WINDOW]);        
+    }
+
+#endif
+
 }
 
 void worker_stats_t::reset()
@@ -74,8 +91,39 @@ void worker_stats_t::reset()
 #ifdef MIDWAY_ABORTS    
     _mid_aborts = 0;
 #endif
+
+#ifdef WORKER_VERBOSE_STATS
+    _waiting_total = 0;
+    for (int i=0; i<WAITING_WINDOW; i++) _ww[i] = 0;
+    _ww_idx = 0;
+    _last_change = 0;
+    _serving_total = 0;
+#endif
 }
 
+
+#ifdef WORKER_VERBOSE_STATS
+
+void worker_stats_t::update_waited(const double queue_time)
+{
+    _waiting_total += queue_time;
+    _last_change += _for_last_change.time(); 
+    if (_last_change>1) {
+        // if more than 1 sec passed since the last ww_idx change, move it
+        _ww_idx = (_ww_idx + 1) % WAITING_WINDOW;
+        _ww[_ww_idx] = 0;
+        _last_change = 0;
+    }
+    // update waiting window (ww)
+    _ww[_ww_idx] += queue_time;
+}
+
+void worker_stats_t::update_served(const double serve_time_ms)
+{
+    _serving_total += serve_time_ms;
+}
+
+#endif
 
 
 /****************************************************************** 

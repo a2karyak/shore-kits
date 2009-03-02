@@ -27,9 +27,17 @@ ENTER_NAMESPACE(shore);
 
 
 
-// Use this define to enable midway trx aborts
+// Use this to enable midway trx aborts
 //#undef MIDWAY_ABORTS
 #define MIDWAY_ABORTS
+
+
+// Use this to enable verbode stats for worker threads
+//#undef WORKER_VERBOSE_STATS
+#define WORKER_VERBOSE_STATS
+
+
+const int WAITING_WINDOW = 5; // keep track the last 5 seconds
 
 
 
@@ -63,6 +71,20 @@ struct worker_stats_t
     int _mid_aborts;
 #endif
 
+#ifdef WORKER_VERBOSE_STATS
+    void update_waited(const double queue_time);
+
+    // own failures == _problems
+    double _waiting_total; // not only the last WAITING_WINDOW secs
+    double _ww[WAITING_WINDOW];
+    int _ww_idx; // index on the ww (waiting window) ring
+    double _last_change;
+    stopwatch_t _for_last_change;
+
+    void update_served(const double serve_time_ms);
+    double _serving_total;   // in msecs
+#endif
+
     worker_stats_t() 
         : _processed(0), _problems(0),
           _served_waiting(0),
@@ -71,6 +93,9 @@ struct worker_stats_t
           _early_aborts(0)
 #ifdef MIDWAY_ABORTS
         , _mid_aborts(0)
+#endif
+#ifdef WORKER_VERBOSE_STATS
+        , _waiting_total(0), _ww_idx(0), _last_change(0), _serving_total(0)
 #endif
     { }
 
@@ -336,8 +361,9 @@ public:
     // helper //
 
     void stats() { 
-        if (_stats._checked_input == 0) {
-            TRACE( TRACE_DEBUG, "(%s) no data\n", thread_name().data());
+        if (_stats._checked_input < 10) {
+            // don't print partitions which have served too few actions
+            TRACE( TRACE_DEBUG, "(%s) few data\n", thread_name().data());
         }
         else {
             TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());

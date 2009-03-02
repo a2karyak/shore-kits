@@ -313,6 +313,11 @@ const int partition_t<DataType>::enqueue(Action* pAction)
 //         return (de_WRONG_PARTITION);
 //     }
 
+
+#ifdef WORKER_VERBOSE_STATS
+    pAction->mark_enqueue();
+#endif
+
     pAction->set_partition(this);
     _input_queue->push(pAction);
     return (0);
@@ -369,7 +374,7 @@ const int partition_t<DataType>::enqueue_commit(Action* pAction)
 template <class DataType>
 action_t<DataType>* partition_t<DataType>::dequeue_commit()
 {
-    assert (has_committed());
+    //assert (has_committed());
     return (_committed_queue->pop());
 }
 

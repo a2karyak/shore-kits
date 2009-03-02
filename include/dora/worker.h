@@ -206,6 +206,11 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     assert (aprvp);
     
 
+#ifdef WORKER_VERBOSE_STATS
+    // 1a. update verbose statistics
+    _stats.update_waited(paction->waited());
+#endif
+
     // 2. before attaching check if this trx is still active
     if (!aprvp->isAborted()) {
 
@@ -214,9 +219,20 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         attach_xct(paction->xct());
 #endif
         TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
+
+
+#ifdef WORKER_VERBOSE_STATS
+        stopwatch_t serving_time;
+#endif
             
         // 4. serve action
         e = paction->trx_exec();
+
+#ifdef WORKER_VERBOSE_STATS
+        _stats.update_served(serving_time.time_ms());
+#endif
+
+
         if (e.is_error()) {
 
 #ifdef MIDWAY_ABORTS
@@ -230,11 +246,12 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
              {
                 TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
                        paction->tid(), e.err_num());
-                ++_stats._problems;
 
                 is_error = true;
                 r_code = de_WORKER_RUN_XCT;
 
+                ++_stats._problems;
+            
                 stringstream os;
                 os << e << ends;
                 string str = os.str();
@@ -274,8 +291,9 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         aprvp = NULL;
     }
 
-    // 6. update worker stats
+    // 7. update worker stats
     ++_stats._processed;    
+
     return (r_code);
 }
 

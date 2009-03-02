@@ -132,7 +132,6 @@ struct srmwqueue
 
     void push(Action* a) {
         assert (a);
-        assert (_owner);
 
         // push action
         {

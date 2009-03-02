@@ -17,6 +17,8 @@
 #include "dora.h"
 
 #include "sm/shore/shore_env.h"
+#include "sm/shore/shore_worker.h"
+
 
 #include <atomic.h>
 
@@ -104,6 +106,11 @@ protected:
     bool           _keys_set;
 
 
+#ifdef WORKER_VERBOSE_STATS
+    stopwatch_t    _since_enqueue;
+#endif
+
+
     // base action init
     inline void _base_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
                           const int numkeys, const bool keysset) 
@@ -189,6 +196,11 @@ public:
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
+
+#ifdef WORKER_VERBOSE_STATS
+    inline void mark_enqueue() { _since_enqueue.reset(); }
+    inline const double waited() { return (_since_enqueue.time()); }
+#endif
 
 }; // EOF: base_action_t
 
