@@ -337,7 +337,7 @@ int shore_shell_t::process_command(const char* cmd,
     }
     else {
         TRACE( TRACE_ALWAYS, "Unknown command (%s)\n", cmd);
-        print_usage(cmd_tag);
+        //print_usage(cmd_tag);
         return (SHELL_NEXT_CONTINUE);
     }        
 
@@ -356,7 +356,7 @@ int shore_shell_t::process_command(const char* cmd,
  ********************************************************************/
 
 int shore_shell_t::process_cmd_TRXS(const char* command, 
-                                        const char* command_tag)
+                                    const char* command_tag)
 {
     print_sup_trxs();
     return (SHELL_NEXT_CONTINUE);
@@ -372,7 +372,7 @@ int shore_shell_t::process_cmd_TRXS(const char* command,
  ********************************************************************/
 
 int shore_shell_t::process_cmd_LOAD(const char* command, 
-                                        const char* command_tag)
+                                    const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -396,7 +396,7 @@ int shore_shell_t::process_cmd_LOAD(const char* command,
  ********************************************************************/
 
 int shore_shell_t::process_cmd_WARMUP(const char* command, 
-                                          const char* command_tag)
+                                      const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -480,7 +480,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
  ********************************************************************/
 
 int shore_shell_t::process_cmd_TEST(const char* command, 
-                                        const char* command_tag)
+                                    const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -605,7 +605,7 @@ int shore_shell_t::process_cmd_TEST(const char* command,
  ********************************************************************/
 
 int shore_shell_t::process_cmd_MEASURE(const char* command, 
-                                           const char* command_tag)
+                                       const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());

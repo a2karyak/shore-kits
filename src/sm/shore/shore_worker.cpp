@@ -14,6 +14,11 @@
 ENTER_NAMESPACE(shore);
 
 
+#ifdef WORKER_VERBOSE_STATS
+#warning Verbose worker statistics enabled
+#endif
+
+
 
 /****************************************************************** 
  *
@@ -25,12 +30,6 @@ ENTER_NAMESPACE(shore);
 
 void worker_stats_t::print_stats() const
 {
-    // don't display anything if no input
-    if (_checked_input==0) {
-        TRACE( TRACE_STATISTICS, "No input\n");
-        return;
-    }
-
     TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
     TRACE( TRACE_STATISTICS, "Failure rate   (%d) \t%.1f%%\n", 
            _problems, (double)(100*_problems)/(double)_processed);
