@@ -236,6 +236,15 @@ const int shell_t::_register_commands()
     _quiter->setaliases();
     add_cmd(_quiter.get());
 
+    _echoer = new echo_cmd_t();        
+    _echoer->setaliases();
+    add_cmd(_echoer.get());
+
+    _breaker = new break_cmd_t();        
+    _breaker->setaliases();
+    add_cmd(_breaker.get());
+
+
     return (0);
 }
 

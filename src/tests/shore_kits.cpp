@@ -166,6 +166,7 @@ public:
         const string desc() { return (string("Dump db instance data")); }
     };
     guard<dump_cmd_t> _dumper;
+    
 
     virtual const int register_commands() 
     {

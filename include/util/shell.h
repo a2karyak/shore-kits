@@ -47,6 +47,7 @@ typedef map<string,command_handler_t*> cmdMap;
 typedef cmdMap::iterator cmdMapIt;
 
 
+
 /*********************************************************************
  *
  *  @brief: Few basic commands
@@ -116,6 +117,31 @@ struct cpustat_cmd_t : public command_handler_t {
 
 
 
+struct echo_cmd_t : public command_handler_t {
+    void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
+    const int handle(const char* cmd) {
+        printf("%s\n", cmd+strlen("echo "));
+        return (SHELL_NEXT_CONTINUE);
+    }
+    void usage() { TRACE( TRACE_ALWAYS, "usage: echo <string>\n"); }
+    const string desc() { return string("Echoes its input arguments to the screen"); }
+};
+
+
+
+struct break_cmd_t : public command_handler_t {
+    void setaliases() { _name = string("break"); _aliases.push_back("break"); }
+    const int handle(const char* cmd) {
+        raise(SIGINT);
+        return (SHELL_NEXT_CONTINUE);
+    }
+    void usage() { TRACE( TRACE_ALWAYS, "usage: break\n"); }
+    const string desc() { return string("Breaks into a debugger by raising ^C " \
+                                        "(terminates program if no debugger is active)"); }
+};
+
+
+
 
 /*********************************************************************
  *
@@ -146,7 +172,8 @@ protected:
     guard<conf_cmd_t> _confer;
     guard<trace_cmd_t>   _tracer;
     guard<cpustat_cmd_t> _cpustater;
-
+    guard<echo_cmd_t> _echoer;
+    guard<break_cmd_t> _breaker;
 
 
     const int _register_commands();    

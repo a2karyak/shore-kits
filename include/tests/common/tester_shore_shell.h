@@ -59,8 +59,6 @@ inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
 
 
 
-
-
 /*********************************************************************
  *
  *  @class: fake_io_delay_cmd_t
@@ -83,6 +81,15 @@ struct fake_iodelay_cmd_t : public command_handler_t {
 };
 
 
+
+/*********************************************************************
+ *
+ *  @class: sli_enable_cmd_t
+ *
+ *  @brief: Handler for the "sli" command
+ *
+ *********************************************************************/
+
 // cmd - sli
 struct sli_enable_cmd_t : public command_handler_t {
     ShoreEnv* _env;
@@ -95,6 +102,8 @@ struct sli_enable_cmd_t : public command_handler_t {
     void usage();
     const string desc() { return (string("Enables/disables SLI (requires worker restart)")); }
 };
+
+
 
 
 /*********************************************************************
