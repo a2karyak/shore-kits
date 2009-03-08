@@ -34,7 +34,7 @@ ENTER_NAMESPACE(shore);
 
 // Use this to enable verbode stats for worker threads
 //#undef WORKER_VERBOSE_STATS
-#define WORKER_VERBOSE_STATS
+//#define WORKER_VERBOSE_STATS
 
 
 const int WAITING_WINDOW = 5; // keep track the last 5 seconds

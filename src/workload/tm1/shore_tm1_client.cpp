@@ -33,9 +33,9 @@ const int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_GET_ACC_DATA]    = "TM1-GetAccData";
     stmap[XCT_TM1_UPD_SUB_DATA]    = "TM1-UpdSubData";
     stmap[XCT_TM1_UPD_LOCATION]    = "TM1-UpdLocation";
+    stmap[XCT_TM1_CALL_FWD_MIX]    = "TM1-CallFwd-Mix";
     stmap[XCT_TM1_INS_CALL_FWD]    = "TM1-InsCallFwd";
     stmap[XCT_TM1_DEL_CALL_FWD]    = "TM1-DelCallFwd";
-    stmap[XCT_TM1_CALL_FWD_MIX]    = "TM1-CallFwd-Mix";
     return (stmap.size());
 }
 
@@ -111,9 +111,9 @@ const int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_DORA_GET_ACC_DATA]    = "DORA-TM1-GetAccData";
     stmap[XCT_TM1_DORA_UPD_SUB_DATA]    = "DORA-TM1-UpdSubData";
     stmap[XCT_TM1_DORA_UPD_LOCATION]    = "DORA-TM1-UpdLocation";
+    stmap[XCT_TM1_DORA_CALL_FWD_MIX]    = "DORA-TM1-CallFwd-Mix";
     stmap[XCT_TM1_DORA_INS_CALL_FWD]    = "DORA-TM1-InsCallFwd";
     stmap[XCT_TM1_DORA_DEL_CALL_FWD]    = "DORA-TM1-DelCallFwd";
-    stmap[XCT_TM1_DORA_CALL_FWD_MIX]    = "DORA-TM1-CallFwd-Mix";
     return (stmap.size());
 }
 
