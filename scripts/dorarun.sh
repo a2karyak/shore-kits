@@ -30,8 +30,6 @@ TIME=$1; shift
 ITER=$1; shift
 WARMUP_MIX=$1; shift
 
-rm -rf log/*
-
 command()
 {
     echo echo $@
@@ -57,13 +55,11 @@ command collector archive off # we'll manually link in later...
 command cont
 
 # this sleep needs to be long enough to load the db!
-#sleep 60
-
-# (ip) - no db loading
-sleep 25
+# (ip) No need for db loading
+sleep 60
 
 ### kit
-command measure $SF 0 10 10 $WARMUP_MIX 3
+command measure $SF 0 10 20 $WARMUP_MIX 3
 command break
 command collector disable
 
@@ -92,10 +88,10 @@ run_one ()
 #CLIENT_SEQ=(1 3 7 15 23 31 35 39 43 47 51 55 59 63)
 
 # test
-CLIENT_SEQ=(1 3)
+#CLIENT_SEQ=(1 3)
 
 # tm1-dora sequence
-#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 63)
+CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78)
 
 for i in ${CLIENT_SEQ[@]}; do
     run_one $i
