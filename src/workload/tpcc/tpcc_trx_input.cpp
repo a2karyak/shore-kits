@@ -21,15 +21,33 @@ ENTER_NAMESPACE(tpcc);
 
 // uncomment line below to produce "safe" (tested code paths) input
 #undef USE_SAFE_PATHS
-#define USE_SAFE_PATHS 
+//#define USE_SAFE_PATHS 
 
 // uncomment line below to use inputs for rollback
 #undef USE_GENERATE_INPUTS_FOR_ROLLBACK
 //#define USE_GENERATE_INPUTS_FOR_ROLLBACK
 
 // uncomment line below to query local WHs only
-#undef USE_ONLY_LOCAL_WHS
+//#undef USE_ONLY_LOCAL_WHS
 #define USE_ONLY_LOCAL_WHS
+
+
+// prints out warnings about the configuration
+#ifdef USE_SAME_INPUT
+#warning TPCC - Uses trxs with same input
+#endif
+
+#ifdef USE_SAFE_PATHS
+#warning TPCC - Uses safe paths (no CUST_IDX_PROBES)
+#endif
+
+#ifdef USE_GENERATE_INPUTS_FOR_ROLLBACK
+#warning TPCC - Generates aborting xcts
+#endif
+
+#ifdef USE_ONLY_LOCAL_WHS
+#warning TPCC - Uses only local Warehouses 
+#endif
 
 
 /********************************************************************* 
