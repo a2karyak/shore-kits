@@ -850,20 +850,9 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
 
     { // make gotos safe
 
-        /* 1. Update Subscriber */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sub-idx-upd (%d)\n", 
-               xct_id, usdin._s_id);
-        e = _psub_man->sub_idx_upd(_pssm, prsub, 
-                                   usdin._s_id);
-        if (e.is_error()) { goto done; }
 
-        prsub->set_value(2, usdin._a_bit);
-        
-        e = _psub_man->update_tuple(_pssm, prsub);
-
-        if (e.is_error()) { goto done; }
-
+        // IP: Moving the Upd(SF) first because it is the only 
+        //     operation on this trx that may fail
 
         /* 2. Update SpecialFacility */
         TRACE( TRACE_TRX_FLOW, 
@@ -878,6 +867,24 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         e = _psf_man->update_tuple(_pssm, prsf);
 
         if (e.is_error()) { goto done; }
+
+        
+
+
+        /* 1. Update Subscriber */
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d USD:sub-idx-upd (%d)\n", 
+               xct_id, usdin._s_id);
+        e = _psub_man->sub_idx_upd(_pssm, prsub, 
+                                   usdin._s_id);
+        if (e.is_error()) { goto done; }
+
+        prsub->set_value(2, usdin._a_bit);
+        
+        e = _psub_man->update_tuple(_pssm, prsub);
+
+        if (e.is_error()) { goto done; }
+
 
 
         // COMMIT
