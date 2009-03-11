@@ -41,19 +41,25 @@ command()
 sleep 5
 
 ### kit
-command measure $HIGH 0 20 20 $XCT 2
+
+# (ip) for tpcc we have to warm it for at least 3mins
+#command measure $HIGH 0 20 20 $XCT 2
+#sleep 45
+
+command measure $HIGH 0 80 60 $XCT 3
+sleep 200
 
 
 run_one ()
 {
     # <clients>
     CLIENTS=$1
-
-    # make sure to get all the measurements before continuing!
-    sleep $((5+TIME*ITER))
     
     ### kit
     command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
+
+    # make sure to get all the measurements before continuing!
+    sleep $((5+TIME*ITER))
 }
 
 # tm1-sli sequence
