@@ -201,6 +201,14 @@ w_rc_t upd_dist_pay_action::trx_exec()
         if (e.is_error()) { goto done; }
 
 
+#ifdef ACCESS_RECORD_TRACE
+        stringstream st;
+        register int di = 10*(_pin._home_wh_id - 1) + _pin._home_d_id;
+        st << di;
+        _ptpccenv->add_rat(st.str());
+#endif        
+
+
         /* UPDATE district SET d_ytd = d_ytd + :h_amount
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *

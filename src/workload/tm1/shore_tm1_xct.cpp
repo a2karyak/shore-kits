@@ -30,13 +30,13 @@ ENTER_NAMESPACE(tm1);
 
 static __thread ShoreTM1TrxStats my_stats;
 
-void ShoreTM1Env::env_thread_init()
+void ShoreTM1Env::env_thread_init(base_worker_t*)
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap[pthread_self()] = &my_stats;
 }
 
-void ShoreTM1Env::env_thread_fini()
+void ShoreTM1Env::env_thread_fini(base_worker_t*)
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap.erase(pthread_self());

@@ -28,13 +28,18 @@ ENTER_NAMESPACE(shore);
 
 
 // Use this to enable midway trx aborts
-//#undef MIDWAY_ABORTS
+#undef MIDWAY_ABORTS
 #define MIDWAY_ABORTS
 
 
 // Use this to enable verbode stats for worker threads
-//#undef WORKER_VERBOSE_STATS
+#undef WORKER_VERBOSE_STATS
 //#define WORKER_VERBOSE_STATS
+
+
+// Define this flag to dump traces of record accesses
+#undef ACCESS_RECORD_TRACE
+//#define ACCESS_RECORD_TRACE
 
 
 const int WAITING_WINDOW = 5; // keep track the last 5 seconds
@@ -339,9 +344,14 @@ public:
                 break;
 
             case (WC_ACTIVE):
-                _env->env_thread_init();
+
+                _env->env_thread_init(this);
+
+                // does the real work
                 rval = work_ACTIVE();
-                _env->env_thread_fini();
+
+                _env->env_thread_fini(this);
+
                 if (rval)
                     return;
                 break;
@@ -358,7 +368,17 @@ public:
     }
 
 
+
     // helper //
+
+#ifdef ACCESS_RECORD_TRACE
+    ofstream _trace_file;
+    vector<string> _events;
+    void create_trace_dir(string dir);
+    void open_trace_file();
+    void close_trace_file();
+#endif
+
 
     void stats() { 
         if (_stats._checked_input < 10) {

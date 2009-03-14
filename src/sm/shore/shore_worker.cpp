@@ -122,7 +122,7 @@ void worker_stats_t::update_served(const double serve_time_ms)
     _serving_total += serve_time_ms;
 }
 
-#endif
+#endif // WORKER_VERBOSE_STATS
 
 
 /****************************************************************** 
@@ -186,6 +186,40 @@ const int base_worker_t::_work_STOPPED_impl()
 
     return (0);
 }
+
+
+
+
+#ifdef ACCESS_RECORD_TRACE
+#warning Tracing record accesses enabled
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <errno.h>
+void base_worker_t::create_trace_dir(string dir)
+{
+    mkdir(dir.c_str(),0777);
+}
+void base_worker_t::open_trace_file()
+{
+    string dir = envVar::instance()->getVar("dir-trace","RAT");
+    create_trace_dir(dir);
+    time_t second = time(NULL);
+    stringstream st;
+    st << second;
+    string fname = dir + string("/rat-") + st.str() + string("-") + this->thread_name() + string(".csv");
+    TRACE( TRACE_ALWAYS, "Opening file (%s)\n", fname.c_str());
+    _trace_file.open(fname.c_str());
+}
+void base_worker_t::close_trace_file()
+{
+    for (vector<string>::iterator it = _events.begin(); it != _events.end(); it++) {
+        _trace_file << this->thread_name() << "," << *it << endl;
+    }
+    _trace_file.close();
+    TRACE( TRACE_ALWAYS, "Closing file. (%d) events dumped\n", _events.size());
+}
+#endif // ACCESS_RECORD_TRACE
 
 
 

@@ -295,8 +295,11 @@ public:
 
 /******** Exported variables ********/
 
+class base_worker_t;
+
 class ShoreEnv;
 extern ShoreEnv* _g_shore_env;
+
 
 
 
@@ -492,8 +495,8 @@ public:
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
     // for thread-local stats
-    virtual void env_thread_init()=0;
-    virtual void env_thread_fini()=0;   
+    virtual void env_thread_init(base_worker_t* aworker)=0;
+    virtual void env_thread_fini(base_worker_t* aworker)=0;   
 
     // throughput printing
     virtual void print_throughput(const int iQueriedSF, 

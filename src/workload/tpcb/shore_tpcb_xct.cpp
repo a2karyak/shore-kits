@@ -42,13 +42,13 @@ ENTER_NAMESPACE(tpcb);
 
 static __thread ShoreTPCBTrxStats my_stats;
 
-void ShoreTPCBEnv::env_thread_init()
+void ShoreTPCBEnv::env_thread_init(base_worker_t*)
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap[pthread_self()] = &my_stats;
 }
 
-void ShoreTPCBEnv::env_thread_fini()
+void ShoreTPCBEnv::env_thread_fini(base_worker_t*)
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap.erase(pthread_self());

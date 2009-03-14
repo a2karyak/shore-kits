@@ -221,8 +221,8 @@ public:
     RequestStack _request_pool;
 
     // for thread-local stats
-    virtual void env_thread_init();
-    virtual void env_thread_fini();   
+    virtual void env_thread_init(base_worker_t* aworker);
+    virtual void env_thread_fini(base_worker_t* aworker);   
 
     // stat map
     statmap_t _statmap;
