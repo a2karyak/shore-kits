@@ -21,7 +21,7 @@ ENTER_NAMESPACE(tpcc);
 
 // uncomment line below to produce "safe" (tested code paths) input
 #undef USE_SAFE_PATHS
-//#define USE_SAFE_PATHS 
+#define USE_SAFE_PATHS 
 
 // uncomment line below to use inputs for rollback
 #undef USE_GENERATE_INPUTS_FOR_ROLLBACK

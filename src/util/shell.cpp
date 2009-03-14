@@ -119,10 +119,6 @@ int shell_t::process_one()
     cmdMapIt cmdit = _aliases.find(cmd_tag);
     if (cmdit == _aliases.end()) {
         rval = process_command(cmd, cmd_tag);
-
-//         TRACE( TRACE_ALWAYS, "Command (%s) not found...\n", cmd_tag);
-//         _help_cmd->list_cmds();
-
     }
     else {
         rval = cmdit->second->handle(cmd);
