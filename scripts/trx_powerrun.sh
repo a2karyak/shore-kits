@@ -42,12 +42,16 @@ sleep 5
 
 ### kit
 
+
+#warmup
 #command measure $HIGH 0 20 20 $XCT 2
 #sleep 45
 
-# (ip) for tpcc we have to warm it for at least 3mins
-command measure $HIGH 0 64 30 $XCT 2
-sleep 100
+
+# (ip) for tpcc we have to warm it for at least 5mins
+# TPC-C Warmup
+command measure $HIGH 1 $HIGH 60 $XCT 1
+sleep 60
 
 
 run_one ()
