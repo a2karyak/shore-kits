@@ -112,7 +112,11 @@ public:
         _actionpool = new Pool(sizeof(Request*),REQUESTS_PER_WORKER_POOL_SZ);
         _pqueue = new Queue( _actionpool.get() );
     }
-    ~trx_worker_t() { }
+    ~trx_worker_t() 
+    { 
+        _pqueue = NULL;
+        _actionpool = NULL;
+    }
 
     // access methods
     void enqueue(Request* arequest);

@@ -44,6 +44,7 @@ extern bool volatile _g_canceled;
 template<>
 inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
     if (ptr) {
+        ptr->stop();
 	close_smt_t* clt = new close_smt_t(ptr, c_str("clt"));
 	assert (clt);
 	clt->fork(); // pointer is deleted by clt thread
