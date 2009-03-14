@@ -36,3 +36,4 @@ mkdir -p $BASE_DIR
 CMD="source $EXPSHELL $LOW $HIGH $XCT $TIME $ITER | $TRXSHELL 2>&1 | tee $OUTFILE"
 echo "$CMD" | tee $OUTFILE
 ($EXPSHELL $LOW $HIGH $XCT $TIME $ITER | $TRXSHELL) 2>&1 | tee -a $OUTFILE
+

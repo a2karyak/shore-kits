@@ -42,12 +42,12 @@ sleep 5
 
 ### kit
 
-# (ip) for tpcc we have to warm it for at least 3mins
 #command measure $HIGH 0 20 20 $XCT 2
 #sleep 45
 
-command measure $HIGH 0 80 60 $XCT 3
-sleep 200
+# (ip) for tpcc we have to warm it for at least 3mins
+command measure $HIGH 0 64 30 $XCT 2
+sleep 100
 
 
 run_one ()
@@ -69,7 +69,7 @@ run_one ()
 #CLIENT_SEQ=(1 3)
 
 # tm1-dora sequence
-CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78)
+CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78 84 92 96 100)
 
 for i in ${CLIENT_SEQ[@]}; do
     if [ $i -ge $LOW ]; then
