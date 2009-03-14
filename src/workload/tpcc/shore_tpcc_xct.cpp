@@ -30,14 +30,40 @@ ENTER_NAMESPACE(tpcc);
 
 static __thread ShoreTPCCTrxStats my_stats;
 
-void ShoreTPCCEnv::env_thread_init()
+#ifdef ACCESS_RECORD_TRACE
+static __thread vector<string>* my_pevents;
+static __thread timeval my_tv;
+static __thread timeval my_tv_start;
+void ShoreTPCCEnv::add_rat(string event)
 {
+    stringstream st;
+    gettimeofday(&my_tv, NULL);
+    my_tv.tv_sec -= my_tv_start.tv_sec;
+    my_tv.tv_usec -= my_tv_start.tv_usec;
+    st << (my_tv.tv_sec*1000000ll + my_tv.tv_usec);
+    assert (my_pevents);
+    my_pevents->push_back(st.str() + string(",") + event);
+}
+#endif 
+
+void ShoreTPCCEnv::env_thread_init(base_worker_t* aworker)
+{
+#ifdef ACCESS_RECORD_TRACE
+    assert (aworker);
+    my_pevents = &aworker->_events;
+    gettimeofday(&my_tv_start, NULL);
+    aworker->open_trace_file();
+#endif    
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap[pthread_self()] = &my_stats;
 }
 
-void ShoreTPCCEnv::env_thread_fini()
+void ShoreTPCCEnv::env_thread_fini(base_worker_t* aworker)
 {
+#ifdef ACCESS_RECORD_TRACE
+    assert (aworker);
+    aworker->close_trace_file();
+#endif    
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap.erase(pthread_self());
 }
@@ -127,6 +153,513 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
 
 /******************************************************************** 
  *
+ * TPC-C Parallel Loading
+ *
+ ********************************************************************/
+
+/*
+  DATABASE POPULATION TRANSACTIONS
+
+  All tables other than ITEM (100k entries) scale with the number of warehouses:
+
+  District	10
+  New Order	9k
+  Customer	30k
+  History	30k
+  Order		30k
+  Stock		100k
+  Order Line	300k
+  
+  Other than District we can easily divide the dataset into 1000ths of
+  a warehouse, leading to the following unit of work:
+
+  9 NO, 30 {CUST, HIST, ORDER}, 100 STOCK, 300 OLINE
+*/
+#define A_C_ID          1023
+#define C_C_ID          127
+#define C_C_LAST        173
+#define C_OL_I_ID       1723
+#define A_C_LAST        255
+#define A_OL_I_ID       8191
+
+static char alnum[] =
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+static char *last_name_parts[] =
+    {
+	"BAR",
+	"OUGHT",
+	"ABLE",
+	"PRI",
+	"PRES",
+	"ESE",
+	"ANTI",
+	"CALLY",
+	"ATION",
+	"EING"
+    };
+
+static int rand_integer(int lo, int hi) {
+    return (URand(lo,hi));
+    //return sthread_t::randn(hi-lo+1) + lo;
+}
+
+/** @fn: create_random_a_string
+ *
+ *  @brief create a random alphanumeric string, of random length between lo and
+ *  hi and place them in designated buffer. Routine returns the actual
+ *  length.
+ *
+ *  @param lo - end of acceptable length range
+ *  @param hi - end of acceptable length range
+ *  
+ *  @output actual length
+ *  @output random alphanumeric string
+ */
+
+static int create_random_a_string( char *out_buffer, int length_lo, int length_hi ) {
+    int i, actual_length ;
+
+    actual_length = rand_integer( length_lo, length_hi ) ;
+
+    for (i = 0; i < actual_length; i++ ) {
+	out_buffer[i] = alnum[rand_integer( 0, 61 )] ;
+    }
+    out_buffer[actual_length] = '\0' ;
+
+    return (actual_length);
+}
+
+
+/** @fn: create_random_n_string
+ *
+ *  @brief:  create a random numeric string, of random length between lo and
+ *  hi and place them in designated buffer. Routine returns the actual
+ *  length.
+ *
+ *  @param lo - end of acceptable length range
+ *  @param hi - end of acceptable length range
+ *
+ *  @output actual length
+ *  @output random numeric string
+ */
+static int create_random_n_string( char *out_buffer, int length_lo, int length_hi ) {
+    int i, actual_length ;
+
+    actual_length = rand_integer( length_lo, length_hi ) ;
+
+    for (i = 0; i < actual_length; i++ )
+	{
+	    out_buffer[i] = (char)rand_integer( 48,57 ) ;
+	}
+    out_buffer[actual_length] = '\0' ;
+
+    return (actual_length);
+}
+
+/** @fn: NUrand_val */
+int NUrand_val ( int A, int x, int y, int C ) {
+    return((((rand_integer(0,A)|rand_integer(x,y))+C)%(y-x+1))+x);
+}
+
+/** @fn: create_a_string_with_original
+ * 
+ *  @brief: create a random alphanumeric string, of random length between lo and
+ *  hi and place them in designated buffer. Routine returns the actual
+ *  length. The word "ORIGINAL" is placed at a random location in the buffer at
+ *  random, for a given percent of the records. 
+ *
+ *  @note: Cannot use on strings of length less than 8. Lower limit must be > 8
+ */
+int create_a_string_with_original( char *out_buffer, int length_lo,
+				   int length_hi, int percent_to_set )
+{
+    int actual_length, start_pos ;
+
+    actual_length = create_random_a_string( out_buffer, length_lo, length_hi ) ;
+
+    if ( rand_integer( 1, 100 ) <= percent_to_set )
+	{
+	    start_pos = rand_integer( 0, actual_length-8 ) ;
+	    strncpy(out_buffer+start_pos,"ORIGINAL",8) ;
+	}
+
+    return (actual_length);
+}
+
+/** @fn: create_random_last_name
+ *
+ *  @brief: create_random_last_name generates a random number from 0 to 999
+ *    inclusive. a random name is generated by associating a random string
+ *    with each digit of the generated number. the three strings are
+ *    concatenated to generate the name
+ */
+int create_random_last_name(char *out_buffer, int cust_num) {
+    int random_num;
+
+    if (cust_num == 0)
+	random_num = NUrand_val( A_C_LAST, 0, 999, C_C_LAST );    //@d261133mte
+    else
+	random_num = cust_num - 1;
+
+    strcpy(out_buffer, last_name_parts[random_num / 100]);
+    random_num %= 100;
+    strcat(out_buffer, last_name_parts[random_num / 10]);
+    random_num %= 10;
+    strcat(out_buffer, last_name_parts[random_num]);
+
+    return(strlen(out_buffer));
+}
+
+w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int xct_id, trx_result_tuple_t &trt, populate_baseline_input_t& pbin)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+
+    row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
+    assert (prwh);
+
+    row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
+    assert (prdist);
+
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
+    // not sure which of the above 2 is biggest, but customer is bigger than all of them!
+    rep_row_t areprow(_pcustomer_man->ts());
+    prwh->_rep = &areprow;
+    prdist->_rep = &areprow;
+
+    
+    w_rc_t e = RCOK;
+
+    {
+	// generate warehouses, districts and ITEM tables
+	int wh = pbin._wh;
+	for(int i=1; i <= wh; i++) {
+	    for(int j=0; j <= DISTRICTS_PER_WAREHOUSE; j++) {
+		char name[11];
+		char street_1[21];
+		char street_2[21];
+		char city[21];
+		char state[3];
+		char zip[10];
+		double tax = rand_integer(0, 2000)/10000.0;
+	    
+		create_random_a_string( name,      6,10) ; /* create name */
+		create_random_a_string( street_1, 10,20) ; /* create street 1 */
+		create_random_a_string( street_2, 10,20) ; /* create street 2 */
+		create_random_a_string( city,     10,20) ; /* create city */
+		create_random_a_string( state,     2,2) ;  /* create state */
+		create_random_n_string( zip,       4,4) ;  /* create zip */
+		strcat(zip, "11111");
+
+		if(j == 0) {
+		    // warehouse
+		    prwh->set_value(0, i);
+		    prwh->set_value(1, name);
+		    prwh->set_value(2, street_1);
+		    prwh->set_value(3, street_2);
+		    prwh->set_value(4, city);
+		    prwh->set_value(5, state);
+		    prwh->set_value(6, zip);
+		    prwh->set_value(7, tax);
+		    prwh->set_value(8, 300000.0);
+		    e = _pwarehouse_man->add_tuple(_pssm, prwh);
+		}
+		else {
+		    // dist
+		    prdist->set_value(0, j);
+		    prdist->set_value(1, i);
+		    prdist->set_value(2, name);
+		    prdist->set_value(3, street_1);
+		    prdist->set_value(4, street_2);
+		    prdist->set_value(5, city);
+		    prdist->set_value(6, state);
+		    prdist->set_value(7, zip);
+		    prdist->set_value(8, tax);
+		    prdist->set_value(9, 300000.0);
+		    prdist->set_value(10, CUSTOMERS_PER_DISTRICT+1);
+		    e = _pdistrict_man->add_tuple(_pssm, prdist);
+		}
+		if(e.is_error()) { goto done; }
+	    }
+	}
+	
+	e = _pssm->commit_xct();
+	if(e.is_error()) { goto done; }
+	
+	trt.set_state(COMMITTED);
+    }
+ done:
+    _pwarehouse_man->give_tuple(prwh);
+    _pdistrict_man->give_tuple(prdist);
+    return e;
+}
+
+w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, trx_result_tuple_t &trt, populate_one_unit_input_t& pbuin)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+
+    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    assert (prcust);
+
+    row_impl<new_order_t>* prno = _pnew_order_man->get_tuple();
+    assert (prno);
+
+    row_impl<order_t>* prord = _porder_man->get_tuple();
+    assert (prord);
+
+    row_impl<item_t>* pritem = _pitem_man->get_tuple();
+    assert (pritem);
+
+    row_impl<history_t>* prhist = _phistory_man->get_tuple();
+    assert (prhist);
+
+    row_impl<stock_t>* prst = _pstock_man->get_tuple();
+    assert (prst);
+
+    row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
+    assert (pritem);
+    
+    trt.set_id(xct_id);
+    trt.set_state(UNSUBMITTED);
+    rep_row_t areprow(_pcustomer_man->ts());
+
+    // allocate space for the biggest of the 8 table representations
+    areprow.set(_pcustomer_desc->maxsize()); 
+
+    prcust->_rep = &areprow;
+    prno->_rep = &areprow;
+    prord->_rep = &areprow;
+    prhist->_rep = &areprow;
+    prst->_rep = &areprow;
+    prol->_rep = &areprow;
+    pritem->_rep = &areprow;
+
+    int unit = pbuin._unit;
+
+    w_rc_t e = RCOK;
+
+    {
+	/*
+	  ORDER, NORD, and OLINE (must be done together)
+	*/
+	double currtmstmp = time(0);
+	int wid = unit/UNIT_PER_WH + 1;
+	int did = ((unit/UNIT_PER_DIST) % DISTRICTS_PER_WAREHOUSE) + 1;
+	int base_oid = ((unit*ORDERS_PER_UNIT) % ORDERS_PER_DIST) + 1;
+	for(int i=0; i < ORDERS_PER_UNIT; i++) {
+	    int oid = base_oid + i;
+	    int o_cid = pbuin._cids[oid-1];
+	    // this one goes in the nord table, needs a non-null carrier
+	    bool is_new = (oid > 2100);
+	    int carrier = is_new? 0 : rand_integer(1, 10);
+	    int olines = rand_integer(MIN_OL_PER_ORDER, MAX_OL_PER_ORDER);
+	    int all_local = true;
+
+	    // olines
+	    for(int j=1; j <= olines; j++) {
+		char dist_info[25];
+		int item_num = rand_integer(1, ITEMS);
+		create_random_a_string(dist_info, 24, 24);
+		int amount = rand_integer(0, 999999);
+
+		// insert oline
+		prol->set_value(0, oid);
+		prol->set_value(1, did);
+		prol->set_value(2, wid);
+		prol->set_value(3, j);
+		prol->set_value(4, item_num);
+		prol->set_value(5, wid);
+		prol->set_value(6, is_new? 0.0 : currtmstmp);
+		prol->set_value(7, 5);
+		prol->set_value(8, amount);
+		prol->set_value(9, dist_info);
+		e = _porder_line_man->add_tuple(_pssm, prol);
+		if(e.is_error()) { goto done; }
+	    }
+
+	    // insert order
+	    prord->set_value(0, oid);
+	    prord->set_value(1, o_cid);
+	    prord->set_value(2, did);
+	    prord->set_value(3, wid);
+	    prord->set_value(4, currtmstmp);
+	    prord->set_value(5, carrier);
+	    prord->set_value(6, olines);
+	    prord->set_value(7, all_local);
+	    e = _porder_man->add_tuple(_pssm, prord);
+	    //fprintf(stderr, "base_oid: %d oid: %d cid: %d did: %d wid: %d\n", base_oid, oid, o_cid, did, wid);
+	    if(e.is_error()) { goto done; }
+
+	    if(is_new) {
+		// insert new order
+		prno->set_value(0, oid);
+		prno->set_value(1, did);
+		prno->set_value(2, wid);
+		e = _pnew_order_man->add_tuple(_pssm, prno);
+		if(e.is_error()) { goto done; }
+	    }
+	}
+
+	/*
+	  STOCK
+	*/
+	int stock_base = ((unit*STOCK_PER_UNIT) % STOCK_PER_WAREHOUSE) + 1;
+	for(int i=0; i < STOCK_PER_UNIT; i++) {
+	    char stock_dist[10][25];
+	    char stock_data[51];
+	    int stock_num = stock_base + i;
+	    int qty = rand_integer(10, 100);
+	    create_a_string_with_original(stock_data, 26, 50, 10);
+	    for(int j=0; j < sizeof(stock_dist)/sizeof(stock_dist[0]); j++) 
+		create_random_a_string(stock_dist[j], 24, 24);
+	
+	    // insert stock
+	    prst->set_value(0, stock_num);
+	    prst->set_value(1, wid);
+	    prst->set_value(2, (int)0);
+	    prst->set_value(3, qty);
+	    prst->set_value(4, (int)0);
+	    prst->set_value(5, (int)0);
+	    for(int k=0; k < 10; k++)
+		prst->set_value(6+k, stock_dist[k]);
+	
+	    prst->set_value(16, stock_data);
+	    e = _pstock_man->add_tuple(_pssm, prst);
+	    if(e.is_error()) { goto done; }
+
+	    /*
+	      ITEM
+	    */
+	    if(wid == 1) {
+		char item_name[25];
+		char item_data[51];
+		int im_id = rand_integer(1, 10000);
+		int item_price = rand_integer(100, 10000);
+		create_random_a_string( item_name, 14, 24);
+		create_a_string_with_original( item_data, 26, 50, 10) ;     
+
+		// insert item
+		pritem->set_value(0, stock_num);
+		pritem->set_value(1, im_id);
+		pritem->set_value(2, item_name);
+		pritem->set_value(3, item_price);
+		pritem->set_value(4, item_data);
+
+		e = _pitem_man->add_tuple(_pssm, pritem);
+		if(e.is_error()) { goto done; }
+	    }
+    
+	}
+
+	/*
+	  HIST
+	*/
+	int cid_base = ((unit*CUST_PER_UNIT) % CUSTOMERS_PER_DISTRICT) + 1;
+	for(int i=0; i < CUST_PER_UNIT; i++) {
+	    char hist_data[25] ;
+	    int cid = cid_base+i;
+	    double amount = 1000; // $10.00
+	    create_random_a_string(hist_data, 12, 24);
+	
+	    // insert hist
+	    prhist->set_value(0, cid);
+	    prhist->set_value(1, did);
+	    prhist->set_value(2, wid);
+	    prhist->set_value(3, did);
+	    prhist->set_value(4, did);
+	    prhist->set_value(5, currtmstmp);
+	    prhist->set_value(6, amount);
+	    prhist->set_value(7, hist_data);
+
+	    e = _phistory_man->add_tuple(_pssm, prhist);
+	    if(e.is_error()) { goto done; }
+	}
+
+	/*
+	  CUSTOMER
+	*/
+	for(int i=0; i < CUST_PER_UNIT; i++) {
+	    char cust_last[17];
+	    char cust_middle[3];
+	    char cust_first[17];
+	    char cust_street_1[21];
+	    char cust_street_2[21];
+	    char cust_city[21];
+	    char cust_state[3];
+	    char cust_zip[10];
+	    char cust_phone[17];
+	    char cust_credit[3];
+	    char cust_data1[251];
+	    char cust_data2[251];
+	    double cust_discount = rand_integer(0, 5000)/10000.0;
+	    int cid = cid_base + i;
+	
+	    create_random_last_name(cust_last, (cid <= 1000)? cid : 0);
+	    create_random_a_string( cust_first,     8,16) ; /* create first name */
+	    create_random_a_string( cust_street_1, 10,20) ; /* create street 1 */
+	    create_random_a_string( cust_street_2, 10,20) ; /* create street 2 */
+	    create_random_a_string( cust_city,     10,20) ; /* create city */
+	    create_random_a_string( cust_state,     2,2) ;  /* create state */
+	    create_random_n_string( cust_zip,       4,4) ;  /* create zip */
+	    strcat(cust_zip, "11111");
+	    create_random_n_string( cust_phone, 16,16) ;
+	    strcpy( cust_credit, (rand_integer( 1, 100 ) <= 10)? "BC" : "GC");
+	    create_random_a_string( cust_data1, 250, 250);
+	    create_random_a_string( cust_data2, 50,  250);
+
+	    // insert cust
+	    prcust->set_value(0, cid);
+	    prcust->set_value(1, did);
+	    prcust->set_value(2, wid);
+	    prcust->set_value(3, cust_first);
+	    prcust->set_value(4, "OE");
+	    prcust->set_value(5, cust_last);
+	    prcust->set_value(6, cust_street_1);
+	    prcust->set_value(7, cust_street_2);
+	    prcust->set_value(8, cust_city);
+	    prcust->set_value(9, cust_state);
+	    prcust->set_value(10, cust_zip);
+	    prcust->set_value(11, cust_phone);
+	    prcust->set_value(12, currtmstmp);
+	    prcust->set_value(13, cust_credit);
+	    prcust->set_value(14, 50000.0);
+	    prcust->set_value(15, cust_discount);
+	    prcust->set_value(16, 0.0);
+	    prcust->set_value(17, -10.0);
+	    prcust->set_value(18, 10.0);
+	    prcust->set_value(19, 1);
+	    prcust->set_value(20, cust_data1);
+	    prcust->set_value(21, cust_data2);
+
+	    _pcustomer_man->add_tuple(_pssm, prcust);
+	    if(e.is_error()) { goto done; }
+	}
+
+	e = _pssm->commit_xct();
+	if(e.is_error()) { goto done; }
+
+	trt.set_state(COMMITTED);
+    }
+ done:
+    _pcustomer_man->give_tuple(prcust);
+    _pnew_order_man->give_tuple(prno);
+    _porder_man->give_tuple(prord);
+    _phistory_man->give_tuple(prhist);
+    _pstock_man->give_tuple(prst);
+    _porder_line_man->give_tuple(prol);
+    _pitem_man->give_tuple(pritem);
+    return e;
+} 
+
+
+
+/******************************************************************** 
+ *
  * TPC-C TRXS
  *
  * (1) The run_XXX functions are wrappers to the real transactions
@@ -179,6 +712,7 @@ w_rc_t ShoreTPCCEnv::run_one_xct(const int xctid, int xct_type,
     }
     return (RCOK);
 }
+
 
 
 
@@ -590,6 +1124,13 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
         e = _pdistrict_man->dist_index_probe_forupdate(_pssm, prdist,
                                                        ppin._home_wh_id, ppin._home_d_id);
         if (e.is_error()) { goto done; }
+
+#ifdef ACCESS_RECORD_TRACE
+        stringstream st;
+        register int di = 10*(ppin._home_wh_id - 1) + ppin._home_d_id;
+        st << di;
+        add_rat(st.str());
+#endif        
 
         /* 3. retrieve customer for update */
 

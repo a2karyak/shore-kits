@@ -139,6 +139,17 @@ struct ShoreTPCCTrxStats
  *
  ********************************************************************/
 
+// For P-Loader 
+static int const NORD_PER_UNIT = 9;
+static int const CUST_PER_UNIT = 30;
+static int const HIST_PER_UNIT = 30;
+static int const ORDERS_PER_UNIT = 30;
+static int const STOCK_PER_UNIT = 100;
+static int const UNIT_PER_WH = 1000;
+static int const UNIT_PER_DIST = 100;
+static int const ORDERS_PER_DIST = 3000;
+
+
 class ShoreTPCCEnv : public ShoreEnv
 {
 public:
@@ -148,6 +159,10 @@ public:
     typedef WorkerPool::iterator WorkerIt;
 
     typedef std::map<pthread_t, ShoreTPCCTrxStats*> statmap_t;
+
+    class table_builder_t;
+    class table_creator_t;
+    class checkpointer_t;
 
 protected:       
 
@@ -254,6 +269,10 @@ public:
     DECLARE_TRX(mbench_wh);
     DECLARE_TRX(mbench_cust);
 
+    // P-Loader
+    DECLARE_TRX(populate_baseline);
+    DECLARE_TRX(populate_one_unit);
+    
 
     const int upd_worker_cnt();
 
@@ -268,11 +287,15 @@ public:
     RequestStack _request_pool;
 
     // for thread-local stats
-    virtual void env_thread_init();
-    virtual void env_thread_fini();   
+    virtual void env_thread_init(base_worker_t* aworker);
+    virtual void env_thread_fini(base_worker_t* aworker);   
 
     // stat map
     statmap_t _statmap;
+
+#ifdef ACCESS_RECORD_TRACE
+    void add_rat(string event);
+#endif
 
     // snapshot taken at the beginning of each experiment    
     ShoreTPCCTrxStats _last_stats;

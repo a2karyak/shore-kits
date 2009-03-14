@@ -280,6 +280,29 @@ struct mbench_cust_input_t
 
 
 
+/*********************************************************************
+ * 
+ * populate_*_input_t
+ *
+ * Input for populating TPC-C DB
+ *
+ *********************************************************************/
+
+struct populate_baseline_input_t 
+{
+    int _wh;
+};
+
+struct populate_one_unit_input_t 
+{
+    int _unit;
+    int* _cids;
+    
+};
+
+
+
+
 EXIT_NAMESPACE(tpcc);
 
 #endif

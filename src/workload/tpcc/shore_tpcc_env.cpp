@@ -20,7 +20,153 @@ ENTER_NAMESPACE(tpcc);
 
 
 
-/** Exported functions */
+/******************************************************************** 
+ *
+ * TPC-C Parallel Loading
+ *
+ ********************************************************************/
+
+
+struct ShoreTPCCEnv::checkpointer_t : public thread_t 
+{
+    ShoreTPCCEnv* _env;
+    checkpointer_t(ShoreTPCCEnv* env) 
+        : thread_t("TPC-C Load Checkpointer"), _env(env) { }
+    virtual void work();
+};
+
+class ShoreTPCCEnv::table_builder_t : public thread_t 
+{
+    ShoreTPCCEnv* _env;
+    long _start;
+    long _count;
+    int* _cids;
+public:
+    table_builder_t(ShoreTPCCEnv* env, long start, long count, int* cids)
+	: thread_t("TPC-C Loader"), _env(env), _start(start), _count(count), _cids(cids) { }
+    virtual void work();
+};
+
+struct ShoreTPCCEnv::table_creator_t : public thread_t 
+{
+    ShoreTPCCEnv* _env;
+    int _sf;
+    table_creator_t(ShoreTPCCEnv* env, int sf)
+	: thread_t("TPC-C Table Creator"), _env(env), _sf(sf) { }
+    virtual void work();
+};
+
+
+
+void ShoreTPCCEnv::checkpointer_t::work() 
+{
+    bool volatile* loaded = &_env->_loaded;
+    while(!*loaded) {
+	_env->set_measure(MST_MEASURE);
+		::sleep(60);
+	//	_env->set_measure(MST_PAUSE);
+	
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        _env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
+    }
+}
+
+
+void ShoreTPCCEnv::table_creator_t::work() 
+{
+    /* create the tables */
+    W_COERCE(_env->db()->begin_xct());
+    W_COERCE(_env->_pwarehouse_desc->create_table(_env->db()));
+    W_COERCE(_env->_pdistrict_desc->create_table(_env->db()));
+    W_COERCE(_env->_pcustomer_desc->create_table(_env->db()));
+    W_COERCE(_env->_phistory_desc->create_table(_env->db()));
+    W_COERCE(_env->_pnew_order_desc->create_table(_env->db()));
+    W_COERCE(_env->_porder_desc->create_table(_env->db()));
+    W_COERCE(_env->_porder_line_desc->create_table(_env->db()));
+    W_COERCE(_env->_pitem_desc->create_table(_env->db()));
+    W_COERCE(_env->_pstock_desc->create_table(_env->db()));
+    W_COERCE(_env->db()->commit_xct());
+
+    /* do the first transaction */
+    trx_result_tuple_t out;
+    populate_baseline_input_t in = {_sf};
+    W_COERCE(_env->db()->begin_xct());
+    W_COERCE(_env->xct_populate_baseline(0, out, in));
+
+#if 0
+    /*
+      create 10k accounts in each partition to buffer workers from each other
+     */
+    for(long i=-1; i < _pcount; i++) {
+	long a_id = i*_psize;
+	populate_db_input_t in(_sf, a_id);
+	trx_result_tuple_t out;
+	fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	W_COERCE(_env->db()->begin_xct());
+	W_COERCE(_env->xct_populate_db(&in, a_id, out));
+    }
+#endif
+}
+static void gen_cid_array(int* cid_array) {
+    for(int i=0; i < ORDERS_PER_DIST; i++)
+	cid_array[i] = i+1;
+    for(int i=0; i < ORDERS_PER_DIST; i++) {
+	std::swap(cid_array[i], cid_array[i+URand(0,ORDERS_PER_DIST-i-1)]);
+                  //sthread_t::randn(ORDERS_PER_DIST-i)]);
+    }
+}
+
+static unsigned long units_completed = 0;
+void ShoreTPCCEnv::table_builder_t::work() 
+{
+    w_rc_t e = RCOK;
+
+    /* There are up to three parts of my job: the parts at the
+       beginning and end which may overlap with other workers (need to
+       coordinate cids used for orders) and those which I fully own.
+
+       When coordination is needed we use the passed-in cid
+       permutation array; otherwise we generate our own.
+    */
+    int cid_array[ORDERS_PER_DIST];
+    gen_cid_array(cid_array);
+
+    int last_wh = 1;
+    for(int i=0 ; i < _count; i++) {
+	while(_env->get_measure() != MST_MEASURE)
+	    usleep(10000);
+	
+	long tid = _start + i;
+	int my_dist = tid/UNIT_PER_DIST;
+	int start_dist = (tid + UNIT_PER_DIST - 1)/UNIT_PER_DIST;
+	int end_dist = (tid + UNIT_PER_DIST)/UNIT_PER_DIST;
+	bool overlap = (start_dist*UNIT_PER_DIST < _start) || (end_dist*UNIT_PER_DIST >= _start+_count);
+	int *cids = overlap? _cids : cid_array+0;
+	populate_one_unit_input_t in = {tid, cids};
+	trx_result_tuple_t out;
+    retry:
+	W_COERCE(_env->db()->begin_xct());
+	e = _env->xct_populate_one_unit(tid, out, in);
+	if(e.is_error()) {
+	    W_COERCE(_env->db()->abort_xct());
+	    if(e.err_num() == smlevel_0::eDEADLOCK)
+		goto retry;
+	    
+	    stringstream os;
+	    os << e << ends;
+	    string str = os.str();
+	    fprintf(stderr, "Eek! Unable to populate db for index %d due to:\n%s\n",
+		    i, str.c_str());
+	}
+	long nval = atomic_inc_64_nv(&units_completed);
+	if(nval % UNIT_PER_WH == 0)
+	    fprintf(stderr, ".\n");
+    }
+    fprintf(stderr, "Finished loading units %d .. %d \n", _start, _start+_count);
+}
+
+
 
 
 /******************************************************************** 
@@ -290,10 +436,45 @@ w_rc_t ShoreTPCCEnv::loaddata()
         return (RCOK);
     }        
     CRITICAL_SECTION(scale_cs, _scaling_mutex);
+    time_t tstart = time(NULL);    
+    
+    int cid_array[ORDERS_PER_DIST];
+    gen_cid_array(cid_array);
 
     /* 1. create the loader threads */
-
     int num_tbl = SHORE_TPCC_TABLES;
+
+#define USE_SELF_GENERATED_DATA
+#ifdef USE_SELF_GENERATED_DATA
+    // P-Loader
+    {
+	guard<table_creator_t> tc;
+	tc = new table_creator_t(this, _scaling_factor);
+	tc->fork();
+	tc->join();
+    }
+    guard<checkpointer_t> chk(new checkpointer_t(this));
+    chk->fork();
+    
+    //static int const LOADERS = 1;
+    static int const LOADERS = 31;
+    guard<table_builder_t> loaders[LOADERS];
+    long total_units = _scaling_factor*UNIT_PER_WH;
+
+    // WARNING: unit_per_thread must divide by ORDERS_PER_UNIT!
+    long units_per_thread = (total_units + LOADERS-1)/LOADERS;
+    long divisor = ORDERS_PER_DIST/ORDERS_PER_UNIT;
+    units_per_thread = ((units_per_thread + divisor-1)/divisor)*divisor;
+    for(int i=0; i < LOADERS; i++) {
+	long start = i*units_per_thread;
+	long count = (start+units_per_thread > total_units)? total_units-start : units_per_thread;
+	loaders[i] = new table_builder_t(this, start, count, cid_array);
+	loaders[i]->fork();
+    }
+    for(int i=0; i < LOADERS; i++)
+	loaders[i]->join();
+#else
+
     string loaddatadir = envVar::instance()->getSysVar("loadatadir");
     int cnt = 0;
 
@@ -320,8 +501,6 @@ w_rc_t ShoreTPCCEnv::loaddata()
                                  _pnew_order_desc.get(), _scaling_factor, loaddatadir.c_str());
     loaders[8] = new it_loader_t(c_str("ld-IT"), _pssm, _pitem_man,
                                  _pitem_desc.get(), _scaling_factor, loaddatadir.c_str());
-
-    time_t tstart = time(NULL);    
     
 
 #if 1
@@ -359,6 +538,9 @@ w_rc_t ShoreTPCCEnv::loaddata()
         //        delete loaders[i];
     }
 #endif
+
+#endif // P-Loader
+
     time_t tstop = time(NULL);
 
     /* 5. print stats */
@@ -367,6 +549,11 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
     /* 6. notify that the env is loaded */
     _loaded = true;
+
+#ifdef USE_SELF_GENERATED_DATA
+    // P-Loader
+    chk->join();
+#endif 
 
     return (RCOK);
 }
