@@ -164,6 +164,12 @@ void ShoreTPCCEnv::table_builder_t::work()
 	    fprintf(stderr, ".\n");
     }
     fprintf(stderr, "Finished loading units %d .. %d \n", _start, _start+_count);
+
+    fprintf(stderr, "Starting post init\n");
+    W_COERCE(_env->db()->begin_xct());
+    W_COERCE(_env->_post_init_impl());
+    W_COERCE(_env->db()->commit_xct());
+
 }
 
 
