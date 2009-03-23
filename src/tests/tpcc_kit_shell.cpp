@@ -177,6 +177,9 @@ public:
         _slier->setaliases();
         add_cmd(_slier.get());
 
+        _elrer = new elr_enable_cmd_t(_dbinst);
+        _elrer->setaliases();
+        add_cmd(_elrer.get());
 
         // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_dbinst);

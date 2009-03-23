@@ -70,10 +70,11 @@ const string SHORE_SYS_OPTIONS[][2] = {
     { "shore-fakeiodelay", "0" },
     { "shore-fakeiodelay-enable", "0" },
     { "shore-sli_enable", "0" },
+    { "shore-elr_enable", "0" },
     { "system", "invalid" },
 };
 
-const int    SHORE_NUM_SYS_OPTIONS  = 7;
+const int    SHORE_NUM_SYS_OPTIONS  = 8;
 
 
 // SHORE_SYS_SM_OPTIONS: 
@@ -477,6 +478,7 @@ public:
     const int disable_fake_disk_latency();
     const int enable_fake_disk_latency(const int adelay);
     int set_sli_enabled(bool enable);
+    int set_elr_enabled(bool enable);
 
 
     // does a log flush

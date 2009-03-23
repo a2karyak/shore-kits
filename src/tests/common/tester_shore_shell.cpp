@@ -855,3 +855,26 @@ const int sli_enable_cmd_t::handle(const char* cmd)
     _env->set_sli_enabled(flag);
     return (SHELL_NEXT_CONTINUE);
 }
+
+void elr_enable_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "ELR ENABLE Usage:\n\n"                               \
+           "*** elr-enable <FLAG>\n"                      \
+           "\nParameters:\n"                                            \
+           "<FLAG> - 0 disables ELR, anything else enables it\n\n");
+}
+
+const int elr_enable_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char iodelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
+    if ( sscanf(cmd, "%s %s", &cmd_tag, &iodelay_tag) < 2) {
+        // prints all the env
+        usage();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    assert (_env);
+    int flag = atoi(iodelay_tag);
+    _env->set_elr_enabled(flag);
+    return (SHELL_NEXT_CONTINUE);
+}

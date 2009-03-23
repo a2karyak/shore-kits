@@ -399,6 +399,10 @@ int ShoreEnv::start_sm()
     TRACE( TRACE_DEBUG, "Is SLI enabled: (%d)\n", enableSLI);
     _pssm->set_sli_enabled(enableSLI);
     
+    int enableELR = ev->getVarInt("shore-elr-enable",0);
+    TRACE( TRACE_DEBUG, "Is ELR enabled: (%d)\n", enableELR);
+    _pssm->set_elr_enabled(enableELR);
+    
     // Using the physical ID interface
 
 
@@ -680,6 +684,14 @@ int ShoreEnv::set_sli_enabled(bool enabled)
     _pssm->set_sli_enabled(enabled);
     envVar* env = envVar::instance();
     env->setVarInt("shore-sli-enable", enabled);
+    return 0;
+}
+
+int ShoreEnv::set_elr_enabled(bool enabled)
+{
+    _pssm->set_elr_enabled(enabled);
+    envVar* env = envVar::instance();
+    env->setVarInt("shore-elr-enable", enabled);
     return 0;
 }
 

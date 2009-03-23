@@ -96,6 +96,17 @@ struct sli_enable_cmd_t : public command_handler_t {
     const string desc() { return (string("Enables/disables SLI (requires worker restart)")); }
 };
 
+struct elr_enable_cmd_t : public command_handler_t {
+    ShoreEnv* _env;
+    elr_enable_cmd_t(ShoreEnv* env) : _env(env) { };
+    ~elr_enable_cmd_t() { }
+    void setaliases() { 
+        _name = string("elr-enable"); 
+        _aliases.push_back("elr-enable"); _aliases.push_back("elr"); _aliases.push_back("enable-elr"); }
+    const int handle(const char* cmd);
+    void usage();
+    const string desc() { return (string("Enables/disables ELR (effective immediately)")); }
+};
 
 /*********************************************************************
  *
@@ -125,6 +136,7 @@ protected:
     // supported cmds
     guard<fake_iodelay_cmd_t> _fakeioer;
     guard<sli_enable_cmd_t> _slier;
+    guard<elr_enable_cmd_t> _elrer;
 
     // supported trxs
     typedef map<int,string>            mapSupTrxs;
