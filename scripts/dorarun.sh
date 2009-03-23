@@ -56,7 +56,7 @@ command cont
 
 # this sleep needs to be long enough to load the db!
 # (ip) No need for db loading
-sleep 60
+#sleep 60
 
 ### kit
 command measure $SF 0 10 20 $WARMUP_MIX 3

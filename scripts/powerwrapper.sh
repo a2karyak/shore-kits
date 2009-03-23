@@ -8,7 +8,7 @@
 # typical usage: 
 #
 # DORA-TM1
-# for ((trx=220; trx <= 226; trx++)); do ./scripts/powerwrapper.sh EXP basetm1 100 1 80 $trx 30 3; done
+# for ((trx=220; trx <= 226; trx++)); do ./scripts/powerwrapper.sh EXP basetm1 1 80 $trx 30 3; done
 
 # args: <base-dir> <name> <low> <high> <xctid> <time> <iter>
 if [ $# -lt 7 ]; then

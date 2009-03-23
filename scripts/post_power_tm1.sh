@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#@file:   scripts/post_power.sh 
-#@brief:  Post-processing output of powerwrapper 
+#@file:   scripts/post_power_tm1.sh 
+#@brief:  Post-processing output of powerwrapper for TM1
 #@author: Ippokratis Pandis
 
 # args: <file>
