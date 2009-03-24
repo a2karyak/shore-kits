@@ -10,7 +10,7 @@
 # for ((trx=20; trx <= 26; trx++)); do ./scripts/dbxrunwrapper.sh sli tm1 $trx ./scripts/slirun.sh 10000 10 3 20; done
 #
 # DORA-TM1
-# for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh exp tm1dora $trx ./scripts/dorarun.sh 100 10 3 200; done
+# for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh exp tm1dora $trx ./scripts/dorarun.sh 100 30 3 200; done
 # !! Note for DORA-TM1
 # Cannot distinguish between DORA and BASELINE. Therefore, 
 # (1) Edit shore.conf to point to the correct configuration (DORA or BASELINE)
@@ -38,6 +38,6 @@ TRXSHELL="tests/shore_kits"
 
 mkdir -p $DIR
 
-CMD="source $SCRIPT $DIR $XCT $* | dbx $TRXSHELL 2>&1 | tee $OUTFILE"
+CMD="source $SCRIPT $DIR $NAME $XCT $* | dbx $TRXSHELL 2>&1 | tee $OUTFILE"
 echo "$CMD" | tee $OUTFILE
 ($SCRIPT $DIR $NAME $XCT $* | dbx $TRXSHELL) 2>&1 | tee -a $OUTFILE

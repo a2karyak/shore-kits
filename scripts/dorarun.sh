@@ -56,12 +56,15 @@ command cont
 
 # this sleep needs to be long enough to load the db!
 # (ip) No need for db loading
-#sleep 60
+sleep 15
 
 ### kit
-command measure $SF 0 10 20 $WARMUP_MIX 3
+command measure $SF 0 10 10 $WARMUP_MIX 3
 command break
 command collector disable
+
+#sleep 30
+
 
 run_one ()
 {
@@ -74,7 +77,7 @@ run_one ()
     command collector enable
     command cont
     # make sure to get all the measurements before continuing!
-    sleep $((30+TIME*ITER))
+    sleep $((20+TIME*ITER))
     
     ### kit
     command measure $SF 1 $CLIENTS $TIME $XCT $ITER
@@ -91,7 +94,8 @@ run_one ()
 #CLIENT_SEQ=(1 3)
 
 # tm1-dora sequence
-CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78)
+#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78)
+CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64)
 
 for i in ${CLIENT_SEQ[@]}; do
     run_one $i
