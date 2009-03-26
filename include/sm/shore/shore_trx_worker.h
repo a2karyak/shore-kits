@@ -119,9 +119,9 @@ public:
     }
 
     // access methods
-    void enqueue(Request* arequest);
+    void enqueue(Request* arequest, const bool bWake=true);
     void init(const int lc) {
-        _pqueue->set(WS_INPUT_Q,this,lc);
+        _pqueue->set(WS_INPUT_Q,this,lc,0);
     }
         
 
@@ -138,10 +138,10 @@ public:
  ********************************************************************/
 
 template <class SubShoreEnv>
-void trx_worker_t<SubShoreEnv>::enqueue(Request* arequest)
+void trx_worker_t<SubShoreEnv>::enqueue(Request* arequest, const bool bWake)
 {
-    assert (arequest);
-    _pqueue->push(arequest);
+    //assert (arequest);
+    _pqueue->push(arequest,bWake);
 }
 
 

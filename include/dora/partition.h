@@ -233,7 +233,7 @@ public:
 
     // input for normal actions
     // enqueues action, 0 on success
-    const int enqueue(Action* pAction);
+    const int enqueue(Action* pAction, const bool bWake=false);
     Action* dequeue();
     inline const int has_input(void) const { 
         return (!_input_queue->is_empty()); 
@@ -243,7 +243,7 @@ public:
     }
 
     // deque of actions to be committed
-    const int enqueue_commit(Action* apa);
+    const int enqueue_commit(Action* apa, const bool bWake=false);
     Action* dequeue_commit();
     inline const int has_committed(void) const { 
         return (!_committed_queue->is_empty()); 
@@ -305,7 +305,7 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue(Action* pAction)
+const int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
 {
     //assert(verify(*pAction)); // TODO: Enable this
 //     if (!verify(*pAction)) {
@@ -313,13 +313,12 @@ const int partition_t<DataType>::enqueue(Action* pAction)
 //         return (de_WRONG_PARTITION);
 //     }
 
-
 #ifdef WORKER_VERBOSE_STATS
     pAction->mark_enqueue();
 #endif
 
     pAction->set_partition(this);
-    _input_queue->push(pAction);
+    _input_queue->push(pAction,bWake);
     return (0);
 }
 
@@ -351,13 +350,13 @@ action_t<DataType>* partition_t<DataType>::dequeue()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue_commit(Action* pAction)
+const int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 {
     assert (pAction->get_partition()==this);
 
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
            pAction->tid(), _table->name(), _part_id);
-    _committed_queue->push(pAction);
+    _committed_queue->push(pAction,bWake);
     return (0);
 }
 
@@ -616,8 +615,8 @@ const int partition_t<DataType>::_stop_threads()
     _owner = NULL; // join()?
 
     // reset queues' worker control pointers
-    _input_queue->set(WS_UNDEF,NULL,0); 
-    _committed_queue->set(WS_UNDEF,NULL,0); 
+    _input_queue->set(WS_UNDEF,NULL,0,0); 
+    _committed_queue->set(WS_UNDEF,NULL,0,0); 
 
 
     // standy
@@ -730,7 +729,9 @@ const int partition_t<DataType>::_generate_primary()
 {
     assert (_owner==NULL); // prevent losing thread pointer 
 
-    int use_sli = envVar::instance()->getVarInt("db-worker-sli",0);
+    envVar* pe = envVar::instance();
+
+    int use_sli = pe->getVarInt("db-worker-sli",0);
 
     Worker* pworker = _generate_worker(_prs_id, 
                                        c_str("%s-P-%d-PRI",_table->name(), _part_id),
@@ -744,11 +745,23 @@ const int partition_t<DataType>::_generate_primary()
     _owner->set_data_owner_state(DOS_ALONE);
 
     // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);
+    string sInpQ = c_str("%s-%s",_table->name(),"inp-q-sz").data();
+    string sComQ = c_str("%s-%s",_table->name(),"com-q-sz").data();
+
+    int lc = pe->getVarInt("db-worker-queueloops",0);
+    int thres_inp_q = pe->getVarInt(sInpQ,0);
+    int thres_com_q = pe->getVarInt(sComQ,0);
+
+    // it is safer the thresholds not to be larger than the client batch size
+    int batch_sz = pe->getVarInt("db-cl-batchsz",0);
+    if (batch_sz < thres_inp_q) thres_inp_q = batch_sz;
+    if (batch_sz < thres_com_q) thres_com_q = batch_sz;
+
+    //TRACE( TRACE_ALWAYS, "%s %d %d\n", _table->name(), thres_inp_q, thres_com_q);
 
     // pass worker thread controls to the two queues
-    _input_queue->set(WS_INPUT_Q,_owner,lc);  
-    _committed_queue->set(WS_COMMIT_Q,_owner,lc);  
+    _input_queue->set(WS_INPUT_Q,_owner,lc,thres_inp_q);  
+    _committed_queue->set(WS_COMMIT_Q,_owner,lc,thres_com_q);  
 
     _owner->fork();
 

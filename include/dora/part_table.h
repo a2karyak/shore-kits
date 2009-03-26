@@ -161,9 +161,9 @@ public:
     /////  Action-related methods
 
     // enqueues action, false on error
-    inline const int enqueue(Action* paction, const int part) {
+    inline const int enqueue(Action* paction, const bool bWake, const int part) {
         assert (part<_pcnt);
-        return (_ppvec[part]->enqueue(paction));
+        return (_ppvec[part]->enqueue(paction,bWake));
     }
 
 

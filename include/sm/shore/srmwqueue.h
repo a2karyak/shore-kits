@@ -38,14 +38,17 @@ struct srmwqueue
 
     eWorkingState _my_ws;
 
-    int _loops;
+    int _loops; // how many loops (spins) it will do before going to sleep (1=sleep immediately)
+    int _thres; // threshold value before waking up
+
     
     // owner thread
     base_worker_t* _owner;
     tatas_lock     _owner_lock;    
 
     srmwqueue(Pool* actionPtrPool) : 
-        _empty(true), _my_ws(WS_UNDEF), _owner(NULL)
+        _empty(true), _my_ws(WS_UNDEF), _owner(NULL),
+        _loops(0), _thres(0)
     { 
         assert (actionPtrPool);
         _for_writers = new ActionVec(actionPtrPool);
@@ -56,12 +59,13 @@ struct srmwqueue
 
 
     // sets the pointer of the queue to the controls of a specific worker thread
-    void set(eWorkingState aws, base_worker_t* owner, const int& loops) 
+    void set(eWorkingState aws, base_worker_t* owner, const int& loops, const int& thres) 
     {
         CRITICAL_SECTION(q_cs, _owner_lock);
         _my_ws = aws;
         _owner = owner;
         _loops = loops;
+        _thres = thres;
     }
 
     // returns true if the passed control is the same
@@ -94,8 +98,7 @@ struct srmwqueue
             if (++loopcnt > _loops) {
                 loopcnt = 0;
 
-                //if (!_owner->can_continue_cs(_my_ws)) return (false);
-            
+                //if (!_owner->can_continue_cs(_my_ws)) return (false);           
     
                 TRACE( TRACE_TRX_FLOW, "Condex sleeping (%d)...\n", _my_ws);
                 //assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
@@ -123,25 +126,30 @@ struct srmwqueue
 	return (true);
     }
     
-    Action* pop() {
+    inline Action* pop() {
         // pops an action from the input vector, or waits for one to show up
 	if ((_read_pos == _for_readers->end()) && (!wait_for_input()))
 	    return (NULL);
 	return (*(_read_pos++));
     }
 
-    void push(Action* a) {
-        assert (a);
+    inline void push(Action* a, const bool bWake) {
+        //assert (a);
+        register int queue_sz;
 
         // push action
         {
             CRITICAL_SECTION(cs, _lock);
             _for_writers->push_back(a);
             _empty = false;
+            queue_sz = _for_writers->size();
         }
-        
-        // wake up if assigned worker thread sleeping
-        _owner->set_ws(_my_ws);
+
+        // don't try to wake on every call. let for some requests to batch up
+        if ((queue_sz > _thres) || bWake) {        
+            // wake up if assigned worker thread sleeping
+            _owner->set_ws(_my_ws);
+        }
     }
 
     // resets queue

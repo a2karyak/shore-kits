@@ -51,7 +51,7 @@ w_rc_t midway_pay_rvp::run()
     typedef range_partition_impl<int>   irpImpl; 
     irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
 
     // HIS_PART_CS
     CRITICAL_SECTION(his_part_cs, hist_part->_enqueue_lock);

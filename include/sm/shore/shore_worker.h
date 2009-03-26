@@ -219,6 +219,7 @@ public:
             // wake up if sleeping
             //membar_producer();
             condex_wakeup();
+
         }
         return (old_ws);
     }

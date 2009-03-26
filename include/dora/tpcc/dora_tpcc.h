@@ -145,12 +145,13 @@ public:
     
     // enqueues action, false on error
     inline const int enqueue(irpAction* paction, 
+                             const bool bWake,
                              irpTableImpl* ptable, 
                              const int part_pos) 
     {
         assert (paction);
         assert (ptable);
-        return (ptable->enqueue(paction, part_pos));
+        return (ptable->enqueue(paction, bWake, part_pos));
     }
 
 
