@@ -104,18 +104,19 @@ public:
     }
 
 
-    /* ---------------------- */
+    /* --------------------------------- */
     /* --- exposed inherited methods --- */
-    /* ---------------------- */
+    /* --------------------------------- */
 
     const char*	name() const { return _base.name(); }
-    int           field_count() const { return _base.field_count(); }
+    const int   field_count() const { return _base.field_count(); }
     
 
 
-    /* ---------------------- */
+    /* -------------------------- */
     /* --- overridden methods --- */
-    /* ---------------------- */
+    /* -------------------------- */
+
     inline w_rc_t check_fid(ss_m* db) {
 	if(!is_partitioned())
 	    return _base.check_fid(db);

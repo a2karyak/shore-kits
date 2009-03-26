@@ -130,37 +130,37 @@ public:
     /* ---------------------- */
 
     const char* name() const { 
-        assert (_is_setup); 
+        //assert (_is_setup); 
         return (_name); 
     }
 
-    inline bool is_variable_length(sqltype_t type) const { 
-        assert (_is_setup);
+    inline const bool is_variable_length(sqltype_t type) const { 
+        //assert (_is_setup);
         return (type == SQL_VARCHAR); 
     }
 
-    inline bool is_variable_length() const { 
+    inline const bool is_variable_length() const { 
         return (is_variable_length(_type)); 
     }
 
-    inline int fieldmaxsize() const { 
-        assert (_is_setup);
+    inline const int fieldmaxsize() const { 
+        //assert (_is_setup);
         return (_size); 
     }
 
-    inline sqltype_t type() const { 
+    inline const sqltype_t type() const { 
         //assert (_is_setup);
         return (_type); 
     }
 
-    inline bool allow_null() const { 
-        assert (_is_setup);
+    inline const bool allow_null() const { 
+        //assert (_is_setup);
         return (_allow_null); 
     }
 
     /* return key description for index creation */
     const char* keydesc() {
-        assert (_is_setup);
+        //assert (_is_setup);
         CRITICAL_SECTION(fkd_cs, _fielddesc_lock);
         return (_set_keydesc());
     }

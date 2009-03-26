@@ -125,7 +125,7 @@ public:
     void          set_fid(stid_t fid) { _fid = fid; }
     vid_t         vid() { return _vid; }   
     stid_t        root_iid() { return _root_iid; }
-    int           field_count() const { return _field_count; } 
+    const int     field_count() const { return _field_count; } 
 
     bool          is_fid_valid() const { return (_fid != stid_t::null); }
     bool          is_vid_valid() { return (_vid != vid_t::null); }
