@@ -95,7 +95,10 @@ DECLARE_DORA_ACTION_NO_RVP_CLASS(upd_sub_ul_action,int,DoraTM1Env,upd_loc_input_
  *
  ********************************************************************/
 
-DECLARE_DORA_FINAL_RVP_CLASS(final_icf_rvp,DoraTM1Env,2,2);
+DECLARE_DORA_EMPTY_MIDWAY_RVP_CLASS(mid_icf_rvp,DoraTM1Env,ins_call_fwd_input_t,1,1);
+DECLARE_DORA_FINAL_RVP_CLASS(final_icf_rvp,DoraTM1Env,2,3);
+
+DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_sub_icf_action,int,DoraTM1Env,mid_icf_rvp,ins_call_fwd_input_t,1);
 
 DECLARE_DORA_ACTION_NO_RVP_CLASS(r_sf_icf_action,int,DoraTM1Env,ins_call_fwd_input_t,2);
 DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_cf_icf_action,int,DoraTM1Env,ins_call_fwd_input_t,3);
@@ -108,10 +111,12 @@ DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_cf_icf_action,int,DoraTM1Env,ins_call_fwd_i
  *
  ********************************************************************/
 
-DECLARE_DORA_FINAL_RVP_CLASS(final_dcf_rvp,DoraTM1Env,1,1);
+DECLARE_DORA_EMPTY_MIDWAY_RVP_CLASS(mid_dcf_rvp,DoraTM1Env,del_call_fwd_input_t,1,1);
+DECLARE_DORA_FINAL_RVP_CLASS(final_dcf_rvp,DoraTM1Env,1,2);
+
+DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_sub_dcf_action,int,DoraTM1Env,mid_dcf_rvp,del_call_fwd_input_t,1);
 
 DECLARE_DORA_ACTION_NO_RVP_CLASS(del_cf_dcf_action,int,DoraTM1Env,del_call_fwd_input_t,3);
-
 
 
 

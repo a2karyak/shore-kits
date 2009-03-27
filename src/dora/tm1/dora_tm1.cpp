@@ -395,7 +395,10 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_sub_ul_action,rvp_t,upd_loc_input_t,int,DoraTM1E
 // InsCallFwd //
 ////////////////
 
-DEFINE_DORA_FINAL_RVP_GEN_FUNC(final_icf_rvp,DoraTM1Env);
+DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_icf_rvp,ins_call_fwd_input_t,DoraTM1Env);
+DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp,DoraTM1Env);
+
+DEFINE_DORA_ACTION_GEN_FUNC(r_sub_icf_action,mid_icf_rvp,ins_call_fwd_input_t,int,DoraTM1Env);
 
 DEFINE_DORA_ACTION_GEN_FUNC(r_sf_icf_action,rvp_t,ins_call_fwd_input_t,int,DoraTM1Env);
 DEFINE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t,int,DoraTM1Env);
@@ -406,12 +409,13 @@ DEFINE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t,int,Dor
 // DelCallFwd //
 ////////////////
 
-DEFINE_DORA_FINAL_RVP_GEN_FUNC(final_dcf_rvp,DoraTM1Env);
+DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_dcf_rvp,del_call_fwd_input_t,DoraTM1Env);
+DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_dcf_rvp,DoraTM1Env);
+
+DEFINE_DORA_ACTION_GEN_FUNC(r_sub_dcf_action,mid_dcf_rvp,del_call_fwd_input_t,int,DoraTM1Env);
 
 DEFINE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t,int,DoraTM1Env);
 
 
 
-
 EXIT_NAMESPACE(dora);
-

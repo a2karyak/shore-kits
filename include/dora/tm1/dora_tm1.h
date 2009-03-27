@@ -67,7 +67,6 @@ class del_cf_dcf_action;
 
 
 
-
 /******************************************************************** 
  *
  * @class: dora_tm1
@@ -93,7 +92,6 @@ private:
     // a vector of pointers to integer-range-partitioned tables
     irpTablePtrVector _irptp_vec;    
 
-
     // tm1 setup variables
     int _starting_cpu;
     int _cpu_table_step;
@@ -102,7 +100,6 @@ private:
 
 public:
     
-
     DoraTM1Env(string confname)
         : ShoreTM1Env(confname)
     { }
@@ -154,9 +151,6 @@ public:
     }
 
 
-
-
-
     inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
         // partitioning function
         return (atable->myPart(aid / TM1_SUBS_PER_DORA_PART));
@@ -168,7 +162,6 @@ public:
     DECLARE_DORA_PARTS(ai);
     DECLARE_DORA_PARTS(sf);
     DECLARE_DORA_PARTS(cf);
-
 
 
 
@@ -248,7 +241,10 @@ public:
 
     DECLARE_DORA_TRX(ins_call_fwd);
 
-    DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_icf_rvp);
+    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_icf_rvp,ins_call_fwd_input_t);
+    DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_sub_icf_action,mid_icf_rvp,ins_call_fwd_input_t);
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_sf_icf_action,rvp_t,ins_call_fwd_input_t);
     DECLARE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t);
@@ -261,11 +257,12 @@ public:
 
     DECLARE_DORA_TRX(del_call_fwd);
 
-    DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_dcf_rvp);
+    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_dcf_rvp,del_call_fwd_input_t);
+    DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_dcf_rvp);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_sub_dcf_action,mid_dcf_rvp,del_call_fwd_input_t);
 
     DECLARE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t);
-
-
 
 
 private:
@@ -274,9 +271,6 @@ private:
     const processorid_t _next_cpu(const processorid_t& aprd,
                                   const irpTableImpl* atable,
                                   const int step=DF_CPU_STEP_TABLES);
-
-
-
         
 }; // EOF: DoraTM1Env
 

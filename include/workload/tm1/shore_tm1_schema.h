@@ -119,7 +119,7 @@ public:
             create_primary_idx("S_IDX", 0, keys1, 1);
 
             // create index sub_nbr_index on (sub_nbr)
-            create_index("SUB_NBR_IDX", 0, keys2, 1, false);
+            create_index("SUB_NBR_IDX", 0, keys2, 1, true, false);
         }
 
 
@@ -133,7 +133,7 @@ public:
 
             // create index sub_nbr_index on (sub_nbr)
             // last param (nolock) is set to true
-            create_index("SUB_NBR_IDX_NL", 0, keys2, 1, false, false, true);
+            create_index("SUB_NBR_IDX_NL", 0, keys2, 1, true, false, true);
         }       
     }
 

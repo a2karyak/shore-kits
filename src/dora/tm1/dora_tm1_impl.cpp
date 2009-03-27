@@ -636,21 +636,27 @@ w_rc_t upd_sub_ul_action::trx_exec()
          * plan: index probe on "SUB_IDX"
          */
 
-        // 1. Update Subscriber
+        // 1. Probe Subscriber through sec index
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d UL:sub-idx-nl (%d)\n", _tid, _in._s_id);
-
+               "App: %d UL:sub-nbr-idx-nl (%d)\n", _tid, _in._s_id);
 #ifndef ONLYDORA
-        e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
+        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
 #endif
         if (e.is_error()) { goto done; }
 
+        register int probed_sid;
+        prsub->get_value(0, probed_sid);
+        if (probed_sid != _in._s_id) {
+            TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
+                   probed_sid, _in._s_id);
+            e = RC(de_WRONG_IDX_DATA); goto done; }
+
         prsub->set_value(33, _in._vlr_loc);
 
+        // 2. Update tuple
 #ifndef ONLYDORA        
         e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
 #endif
-
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -674,7 +680,55 @@ done:
  *
  * DORA TM1 INS_CALL_FWD
  *
+ * (1) mid_icf_rvp
+ * (2) final_icf_rvp
+ *
  ********************************************************************/
+
+w_rc_t mid_icf_rvp::run() 
+{
+#ifndef ONLYDORA
+    assert (_xct);
+#endif
+
+    // 1. Setup the final RVP
+    final_icf_rvp* frvp = _penv->new_final_icf_rvp(_tid,_xct,_xct_id,_result,_actions);    
+
+    // 2. Generate the actions
+    r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_tid,_xct,frvp,_in);
+    ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_tid,_xct,frvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    typedef range_partition_impl<int>   irpImpl; 
+
+    // 3a. Decide about partition
+    // 3b. Enqueue
+
+    {        
+        irpImpl* my_sf_part = _penv->decide_part(_penv->sf(),_in._s_id);
+        irpImpl* my_cf_part = _penv->decide_part(_penv->cf(),_in._s_id);
+
+        // SF_PART_CS
+        CRITICAL_SECTION(sf_part_cs, my_sf_part->_enqueue_lock);
+        if (my_sf_part->enqueue(r_sf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_SF_ICF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // CF_PART_CS
+        CRITICAL_SECTION(cf_part_cs, my_cf_part->_enqueue_lock);
+        cf_part_cs.exit();
+        if (my_cf_part->enqueue(ins_cf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_CF_ICF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK);
+}
+
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_icf_rvp,ins_call_fwd);
 
@@ -683,10 +737,65 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_icf_rvp,ins_call_fwd);
  *
  * DORA TM1 INS_CALL_FWD ACTIONS
  *
- * (1) R-SF
- * (2) INS-CF
+ * (1) R-SUB
+ * (2) R-SF
+ * (3) INS-CF
  *
  ********************************************************************/
+
+
+void r_sub_icf_action::calc_keys()
+{
+    _down.push_back(_in._s_id);
+    _up.push_back(_in._s_id);
+}
+
+
+w_rc_t r_sub_icf_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    assert (prsub);
+
+    // allocate space for the larger table representation
+    rep_row_t areprow(_penv->sub_man()->ts());
+    areprow.set(_penv->sub_desc()->maxsize()); 
+    prsub->_rep = &areprow;
+
+    { // make gotos safe
+
+        // 1. Probe Subscriber sec index
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid, _in._s_id);
+#ifndef ONLYDORA
+        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
+#endif
+        if (e.is_error()) { goto done; }
+
+        register int probed_sid;
+        prsub->get_value(0, probed_sid);
+        if (probed_sid != _in._s_id) {
+            TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
+                   probed_sid, _in._s_id);
+            e = RC(de_WRONG_IDX_DATA); goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // dumps the status of all the table rows used
+    prsub->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->sub_man()->give_tuple(prsub);
+    return (e);
+}
+
 
 
 void r_sf_icf_action::calc_keys()
@@ -697,7 +806,6 @@ void r_sf_icf_action::calc_keys()
     _up.push_back(_in._s_id);
     _up.push_back(sftype);
 }
-
 
 
 w_rc_t r_sf_icf_action::trx_exec() 
@@ -732,7 +840,6 @@ w_rc_t r_sf_icf_action::trx_exec()
          *
          * plan: iter index on "SF_IDX"
          */
-
 
 #ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
@@ -807,7 +914,6 @@ void ins_cf_icf_action::calc_keys()
 }
 
 
-
 w_rc_t ins_cf_icf_action::trx_exec() 
 {
     assert (_penv);
@@ -856,7 +962,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
 #endif
 
 #ifndef ONLYDORA
-            e = _penv->cf_man()->add_tuple(_penv->db(), prcf);
+        e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
 #endif
             if (e.is_error()) { goto done; }
         }             
@@ -884,7 +990,45 @@ done:
  *
  * DORA TM1 DEL_CALL_FWD
  *
+ * (1) mid_dcf_rvp
+ * (2) final_dcf_rvp
+ *
  ********************************************************************/
+
+
+w_rc_t mid_dcf_rvp::run() 
+{
+#ifndef ONLYDORA
+    assert (_xct);
+#endif
+
+    // 1. Setup the final RVP
+    final_dcf_rvp* frvp = _penv->new_final_dcf_rvp(_tid,_xct,_xct_id,_result,_actions);    
+
+    // 2. Generate the actions
+    del_cf_dcf_action* del_cf = _penv->new_del_cf_dcf_action(_tid,_xct,frvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    typedef range_partition_impl<int>   irpImpl; 
+
+    // 3a. Decide about partition
+    // 3b. Enqueue
+
+    {        
+        irpImpl* my_cf_part = _penv->decide_part(_penv->cf(),_in._s_id);
+
+        // CF_PART_CS
+        CRITICAL_SECTION(cf_part_cs, my_cf_part->_enqueue_lock);
+        if (my_cf_part->enqueue(del_cf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing DEL_CF_ICF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK);
+}
+
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_dcf_rvp,del_call_fwd);
 
@@ -893,9 +1037,65 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_dcf_rvp,del_call_fwd);
  *
  * DORA TM1 DEL_CALL_FWD ACTIONS
  *
- * (1) DEL-CF
+ * (1) R-SUB
+ * (2) DEL-CF
  *
  ********************************************************************/
+
+
+void r_sub_dcf_action::calc_keys()
+{
+    _down.push_back(_in._s_id);
+    _up.push_back(_in._s_id);
+}
+
+
+w_rc_t r_sub_dcf_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    assert (prsub);
+
+    // allocate space for the larger table representation
+    rep_row_t areprow(_penv->sub_man()->ts());
+    areprow.set(_penv->sub_desc()->maxsize()); 
+    prsub->_rep = &areprow;
+
+    { // make gotos safe
+
+        // 1. Probe Subscriber sec index
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d DCF:sub-nbr-idx-nl (%d)\n", _tid, _in._s_id);
+#ifndef ONLYDORA
+        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
+#endif
+        if (e.is_error()) { goto done; }
+
+        register int probed_sid;
+        prsub->get_value(0, probed_sid);
+        if (probed_sid != _in._s_id) {
+            TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
+                   probed_sid, _in._s_id);
+            e = RC(de_WRONG_IDX_DATA); goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // dumps the status of all the table rows used
+    prsub->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->sub_man()->give_tuple(prsub);
+    return (e);
+}
+
+
 
 void del_cf_dcf_action::calc_keys()
 {
@@ -966,9 +1166,6 @@ done:
     _penv->cf_man()->give_tuple(prcf);
     return (e);
 }
-
-
-
 
 
 
