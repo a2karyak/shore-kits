@@ -55,6 +55,13 @@ w_rc_t table_desc_t::create_table(ss_m* db)
     while (index) {
 	stid_t iid;
 
+        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s) (%s)\n",
+               index->name(), 
+               (index->is_partitioned() ? "part" : "no part"), 
+               (index->is_unique() ? "unique" : "no unique"),
+               (index->is_relaxed() ? "relaxed" : "no relaxed"));
+               
+
         /* create index */
 	if(index->is_partitioned()) {
 	    for(int i=0; i < index->get_partition_count(); i++) {
@@ -120,6 +127,11 @@ w_rc_t table_desc_t::create_table(ss_m* db)
  *
  ******************************************************************/
 
+
+#warning Cannot update fields included at indexes - delete and insert again
+
+#warning Only the last field of an index can be of variable length
+
 bool table_desc_t::create_index(const char* name,
 				int partitions,
                                 const int* fields,
@@ -131,22 +143,22 @@ bool table_desc_t::create_index(const char* name,
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
                                              unique, primary, nolock);
 
-    /* check the validity of the index */
+    // check the validity of the index
     for (int i=0; i<num; i++)  {
         assert(fields[i] >= 0 && fields[i] < _field_count);
 
-        /* only the last field in the index can be variable lengthed */
+        // only the last field in the index can be variable lengthed
         // (ip) I am not sure if this is still true now
         if (_desc[fields[i]].is_variable_length() && i != num-1) {
             assert(false);
         }
     }
 
-    /* link it to the list */
+    // link it to the list
     if (_indexes == NULL) _indexes = p_index;
     else _indexes->insert(p_index);
 
-    /* add as primary */
+    // add as primary
     if (p_index->is_unique() && p_index->is_primary())
         _primary_idx = p_index;
 
@@ -162,21 +174,21 @@ bool table_desc_t::create_primary_idx(const char* name,
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
 
-    /* check the validity of the index */
+    // check the validity of the index
     for (int i=0; i<num; i++) {
         assert(fields[i] >= 0 && fields[i] < _field_count);
 
-        /* only the last field in the index can be variable lengthed */
+        // only the last field in the index can be variable lengthed
         if (_desc[fields[i]].is_variable_length() && i != num-1) {
             assert(false);
         }
     }
 
-    /* link it to the list of indexes */
+    // link it to the list of indexes
     if (_indexes == NULL) _indexes = p_index;
     else _indexes->insert(p_index);
 
-    /* make it the primary index */
+    // make it the primary index
     _primary_idx = p_index;
 
     return (true);
@@ -187,7 +199,8 @@ bool table_desc_t::create_primary_idx(const char* name,
 /* --- debugging --- */
 /* ----------------- */
 
-/* For debug use only: print the description for all the field. */
+
+// For debug use only: print the description for all the field
 void table_desc_t::print_desc(ostream& os)
 {
     os << "Schema for table " << _name << endl;
