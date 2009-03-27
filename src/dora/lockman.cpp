@@ -191,10 +191,17 @@ const bool LogicalLock::acquire(ActionLockReq& alr)
     // 1. Check if already possesing this lock
     for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
         if (alr.isSame((*it))) {
-            if (DoraLockModeMatrix[_dlm][alr.dlm()]) {
-                // update lock mode
-                if (alr.dlm() != DL_CC_NOLOCK) _dlm = alr.dlm();
 
+            // if it is the same
+            if (_dlm == alr.dlm()) {
+                // no need to do anything else
+                return (true);
+            }
+
+            // if it is the only owner
+            if (_owners.size()==1) {
+                // update lock mode to the more restrictive
+                if (_dlm < alr.dlm()) _dlm = alr.dlm();
                 // no need to do anything else
                 return (true); 
             }
