@@ -388,7 +388,6 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_cust_mb_action,rvp_t,mbench_cust_input_t,int,Dor
 
 
 DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(midway_pay_rvp,payment_input_t,DoraTPCCEnv);
-
 DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_pay_rvp,DoraTPCCEnv);
 
 

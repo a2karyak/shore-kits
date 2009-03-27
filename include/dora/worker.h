@@ -220,7 +220,6 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 #endif
         TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
 
-
 #ifdef WORKER_VERBOSE_STATS
         stopwatch_t serving_time;
 #endif
@@ -231,7 +230,6 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 #ifdef WORKER_VERBOSE_STATS
         _stats.update_served(serving_time.time_ms());
 #endif
-
 
         if (e.is_error()) {
 

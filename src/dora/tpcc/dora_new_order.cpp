@@ -72,7 +72,7 @@ w_rc_t midway_nord_rvp::run()
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
 
-        if (my_ord_part->enqueue(ins_ord_nord)) {
+        if (my_ord_part->enqueue(ins_ord_nord,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_ORD_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -82,7 +82,7 @@ w_rc_t midway_nord_rvp::run()
         CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
         ord_part_cs.exit();
 
-        if (my_nord_part->enqueue(ins_nord_nord)) {
+        if (my_nord_part->enqueue(ins_nord_nord,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_NORD_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -105,7 +105,7 @@ w_rc_t midway_nord_rvp::run()
             // ITEM_PART_CS
             CRITICAL_SECTION(oli_part_cs, my_ol_part->_enqueue_lock);
 
-            if (my_ol_part->enqueue(ins_ol_nord)) {
+            if (my_ol_part->enqueue(ins_ol_nord,_bWake)) {
                 TRACE( TRACE_DEBUG, "Problem in enqueueing INS_OL_NORD-%d\n", i);
                 assert (0); 
                 return (RC(de_PROBLEM_ENQUEUE));

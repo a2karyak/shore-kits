@@ -256,9 +256,9 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 	: thread_t("TM1-Table-Creator"), _env(env),
           _loaders(loaders),_subs_per_worker(subs_per_worker),_preloads_per_worker(preloads_per_worker)
     { 
-        w_assert1(loaders);
-        w_assert1(subs_per_worker);
-        w_assert1(preloads_per_worker>=0);
+        assert(loaders);
+        assert(subs_per_worker);
+        assert(preloads_per_worker>=0);
     }
     virtual void work();
 
@@ -279,7 +279,7 @@ void  ShoreTM1Env::table_creator_t::work()
     int sub_id = 0;
     for (int i=0; i<_loaders; i++) {
         W_COERCE(_env->db()->begin_xct());        
-        TRACE( TRACE_DEBUG, "Preloading (%d). Start (%d). Todo (%d)\n", 
+        TRACE( TRACE_ALWAYS, "Preloading (%d). Start (%d). Todo (%d)\n", 
                i, (i*_subs_per_worker), _preloads_per_worker);
             
         for (int j=0; j<_preloads_per_worker; j++) {
@@ -416,7 +416,7 @@ void ShoreTM1Env::table_builder_t::work()
 
 w_rc_t ShoreTM1Env::loaddata() 
 {
-    /* 0. lock the loading status */
+    // 0. lock the loading status
     CRITICAL_SECTION(load_cs, _load_mutex);
     if (_loaded) {
         TRACE( TRACE_TRX_FLOW, 
@@ -424,7 +424,7 @@ w_rc_t ShoreTM1Env::loaddata()
         return (RCOK);
     }        
 
-    /* 1. create the loader threads */
+    // 1. create the loader threads
 
     /* partly (no) thanks to Shore's next key index locking, and
        partly due to page latch and SMO issues, we have ridiculous

@@ -51,6 +51,7 @@ private:
     typedef object_cache_t<mid1_stock_rvp> rvp_cache;
     rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
+    bool _bWake;
     // data needed for the next phase
     stock_level_input_t  _slin;
     int                  _next_o_id;
@@ -61,10 +62,11 @@ public:
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const stock_level_input_t& slin,
+                    const stock_level_input_t& slin, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _slin = slin;
+        _bWake = bWake;
         assert (penv);
         _ptpccenv = penv;
         assert (pc);
@@ -98,6 +100,7 @@ private:
     typedef object_cache_t<mid2_stock_rvp> rvp_cache;
     rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
+    bool _bWake;
     // data needed for the next phase
     stock_level_input_t  _slin;
 public:
@@ -109,10 +112,11 @@ public:
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const stock_level_input_t& slin, 
+                    const stock_level_input_t& slin, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _slin = slin;
+        _bWake = bWake;
         assert (penv);
         _ptpccenv = penv;
         assert (pc);

@@ -45,7 +45,7 @@ w_rc_t mid1_del_rvp::run()
     assert (_xct);
 #endif
 
-    mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_tid,_xct,_xct_id,_final_rvp->result(),_din,_actions);
+    mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_tid,_xct,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
     rvp2->postset(_d_id,_final_rvp);
 
 
@@ -68,7 +68,7 @@ w_rc_t mid1_del_rvp::run()
         
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
-        if (my_ord_part->enqueue(del_upd_ord)) {
+        if (my_ord_part->enqueue(del_upd_ord,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing DEL_UPD_ORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -77,7 +77,7 @@ w_rc_t mid1_del_rvp::run()
         // OL_PART_CS
         CRITICAL_SECTION(ol_part_cs, my_oline_part->_enqueue_lock);
         ord_part_cs.exit();
-        if (my_oline_part->enqueue(del_upd_oline)) {
+        if (my_oline_part->enqueue(del_upd_oline,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing DEL_UPD_OL\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
@@ -116,7 +116,7 @@ w_rc_t mid2_del_rvp::run()
         
         // CUST_PART_CS
         CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
-        if (my_cust_part->enqueue(del_upd_cust)) {
+        if (my_cust_part->enqueue(del_upd_cust,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing DEL_UPD_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));

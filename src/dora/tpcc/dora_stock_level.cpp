@@ -46,7 +46,7 @@ w_rc_t mid1_stock_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    mid2_stock_rvp* rvp2 = _ptpccenv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_slin,_actions);
+    mid2_stock_rvp* rvp2 = _ptpccenv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_slin,_actions,_bWake);
 
     // 2. Generate and enqueue action
     r_ol_stock_action* r_ol_stock = _ptpccenv->new_r_ol_stock_action(_tid,_xct,rvp2,_slin);
@@ -59,7 +59,7 @@ w_rc_t mid1_stock_rvp::run()
 
     // OLI_PART_CS
     CRITICAL_SECTION(oli_part_cs, ol_part->_enqueue_lock);
-    if (ol_part->enqueue(r_ol_stock)) {
+    if (ol_part->enqueue(r_ol_stock,_bWake)) {
         TRACE( TRACE_DEBUG, "Problem in enqueueing R_OL_STOCK\n");
         assert (0); 
         return (RC(de_PROBLEM_ENQUEUE));
@@ -95,7 +95,7 @@ w_rc_t mid2_stock_rvp::run()
 
     // STO_PART_CS
     CRITICAL_SECTION(sto_part_cs, st_part->_enqueue_lock);
-    if (st_part->enqueue(r_st_stock)) {
+    if (st_part->enqueue(r_st_stock,_bWake)) {
         TRACE( TRACE_DEBUG, "Problem in enqueueing R_ST_STOCK\n");
         assert (0); 
         return (RC(de_PROBLEM_ENQUEUE));

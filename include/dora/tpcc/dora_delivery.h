@@ -94,6 +94,7 @@ private:
     typedef object_cache_t<mid1_del_rvp> rvp_cache;
     rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
+    bool _bWake;    
     // data needed for the next phase
     delivery_input_t _din;
     int _d_id;
@@ -108,10 +109,12 @@ public:
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const delivery_input_t& din, 
+                    const delivery_input_t& din, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _din = din;
+        _bWake = bWake;
+        assert (penv);
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;
@@ -153,6 +156,7 @@ private:
     typedef object_cache_t<mid2_del_rvp> rvp_cache;
     rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
+    bool _bWake;
     // data needed for the next phase
     delivery_input_t _din;
     int _d_id;
@@ -169,10 +173,11 @@ public:
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const delivery_input_t& din,
+                    const delivery_input_t& din, const bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _din = din;
+        _bWake = bWake;
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;

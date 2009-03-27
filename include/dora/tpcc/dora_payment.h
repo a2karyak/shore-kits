@@ -50,6 +50,7 @@ private:
     typedef object_cache_t<midway_pay_rvp> rvp_cache;
     rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
+    bool _bWake;
     // data needed for the next phase
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple  _adist;
@@ -61,10 +62,11 @@ public:
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const payment_input_t& ppin, 
+                    const payment_input_t& ppin, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _pin = ppin;
+        _bWake = bWake;
         assert (penv);
         _ptpccenv = penv;
         assert (pc);

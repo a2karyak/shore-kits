@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   dora_payment.h
+/** @file:   dora_new_order.h
  *
  *  @brief:  DORA TPC-C NEW_ORDER
  *
@@ -108,6 +108,7 @@ private:
     typedef object_cache_t<midway_nord_rvp> rvp_cache;
     rvp_cache* _cache;
     DoraTPCCEnv* _ptpccenv;
+    bool _bWake;
 public:
     // data needed for the next phase
     new_order_input_t _noin;
@@ -119,10 +120,11 @@ public:
     // access methods
     inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const new_order_input_t& noin, 
+                    const new_order_input_t& noin, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _noin = noin;
+        _bWake = bWake;
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;

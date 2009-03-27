@@ -55,7 +55,7 @@ w_rc_t midway_pay_rvp::run()
 
     // HIS_PART_CS
     CRITICAL_SECTION(his_part_cs, hist_part->_enqueue_lock);
-    if (hist_part->enqueue(ins_hist_pay)) {
+    if (hist_part->enqueue(ins_hist_pay,_bWake)) {
         TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HIST_PAY\n");
         assert (0); 
         return (RC(de_PROBLEM_ENQUEUE));

@@ -233,7 +233,7 @@ public:
 
     // input for normal actions
     // enqueues action, 0 on success
-    const int enqueue(Action* pAction, const bool bWake=false);
+    const int enqueue(Action* pAction, const bool bWake);
     Action* dequeue();
     inline const int has_input(void) const { 
         return (!_input_queue->is_empty()); 
@@ -243,7 +243,7 @@ public:
     }
 
     // deque of actions to be committed
-    const int enqueue_commit(Action* apa, const bool bWake=false);
+    const int enqueue_commit(Action* apa, const bool bWake=true);
     Action* dequeue_commit();
     inline const int has_committed(void) const { 
         return (!_committed_queue->is_empty()); 

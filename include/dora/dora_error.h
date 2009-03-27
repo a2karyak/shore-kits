@@ -44,6 +44,7 @@ enum {
     de_NOTIFY_COMMITTED        = 0x820028,
 
     de_INCOMPATIBLE_LOCKS      = 0x820031,
+    de_WRONG_IDX_DATA          = 0x820032,
 
     de_EARLY_ABORT             = 0x820041,
     de_MIDWAY_ABORT            = 0x820042

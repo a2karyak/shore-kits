@@ -57,9 +57,11 @@ w_rc_t baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid)
     
     // 2. Set input
     trx_result_tuple_t atrt;
+    bool bWake = false;
     if (_cp->take_one) {
         TRACE( TRACE_TRX_FLOW, "Sleeping on (%d)\n", atid);
         atrt.set_notify(_cp->wait+_cp->index);
+        bWake = true;
     }
 
     // pick a valid ID
@@ -74,7 +76,7 @@ w_rc_t baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid)
 
     // 4. enqueue to worker thread
     assert (_worker);
-    _worker->enqueue(arequest);
+    _worker->enqueue(arequest,bWake);
     return (RCOK);
 }
 

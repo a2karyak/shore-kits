@@ -64,9 +64,11 @@ w_rc_t baseline_tm1_client_t::run_one_xct(int xct_type, int xctid)
     
     // 2. Set input
     trx_result_tuple_t atrt;
+    bool bWake = false;
     if (_cp->take_one) {
         TRACE( TRACE_TRX_FLOW, "Sleeping on (%d)\n", atid);
         atrt.set_notify(_cp->wait+_cp->index);
+        bWake = true;
     }
 
     // pick a valid sf
@@ -85,7 +87,7 @@ w_rc_t baseline_tm1_client_t::run_one_xct(int xct_type, int xctid)
 
     // 4. enqueue to worker thread
     assert (_worker);
-    _worker->enqueue(arequest);
+    _worker->enqueue(arequest,bWake);
     return (RCOK);
 }
 
@@ -131,47 +133,53 @@ const int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 w_rc_t dora_tm1_client_t::run_one_xct(int xct_type, int xctid) 
 {
     // if DORA TM1 MIX
+    bool bWake = false;
     if (xct_type == XCT_TM1_DORA_MIX) {        
         xct_type = XCT_TM1_DORA_MIX + random_tm1_xct_type(rand(100));
+        bWake = true;
     }
 
     // pick a valid sf
     register int selsf = _selid;
 
     // decide which SF to use
-    if (_selid==0) 
+    if (_selid==0) {
         selsf = URand(1,_qf); 
+        bWake = true;
+    }
 
     // decide which ID inside that SF to use
     register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
 
-
     trx_result_tuple_t atrt;
-    if (_cp->take_one) atrt.set_notify(_cp->wait+_cp->index);
+    if (_cp->take_one) {
+        atrt.set_notify(_cp->wait+_cp->index);
+        bWake = true;
+    }
     
     switch (xct_type) {
 
         // TM1 DORA
     case XCT_TM1_DORA_GET_SUB_DATA:
-        return (_tm1db->dora_get_sub_data(xctid,atrt,selid));
+        return (_tm1db->dora_get_sub_data(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_GET_NEW_DEST:
-        return (_tm1db->dora_get_new_dest(xctid,atrt,selid));
+        return (_tm1db->dora_get_new_dest(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_GET_ACC_DATA:
-        return (_tm1db->dora_get_acc_data(xctid,atrt,selid));
+        return (_tm1db->dora_get_acc_data(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_UPD_SUB_DATA:
-        return (_tm1db->dora_upd_sub_data(xctid,atrt,selid));
+        return (_tm1db->dora_upd_sub_data(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_UPD_LOCATION:
-        return (_tm1db->dora_upd_loc(xctid,atrt,selid));
+        return (_tm1db->dora_upd_loc(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_INS_CALL_FWD:
-        return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid));
+        return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_DEL_CALL_FWD:
-        return (_tm1db->dora_del_call_fwd(xctid,atrt,selid));
+        return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_CALL_FWD_MIX:
         // evenly pick one of the {Ins/Del}CallFwd
         if (URand(1,100)>50)
-            return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid));
+            return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid,true)); // always wake in the mix
         else
-            return (_tm1db->dora_del_call_fwd(xctid,atrt,selid));
+            return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,true));
 
 
     default:
