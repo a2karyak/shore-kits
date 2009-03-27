@@ -1081,7 +1081,8 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
-                        ptuple->_rid));
+                        ptuple->_rid,
+                        bIgnoreLocks));
 
 
     // 4. update the indexes
@@ -1226,7 +1227,7 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
     }
 
     // 3. delete the tuple
-    W_DO(db->destroy_rec(todelete));
+    W_DO(db->destroy_rec(todelete,bIgnoreLocks));
 
     // invalidate tuple
     ptuple->set_rid(rid_t::null);
