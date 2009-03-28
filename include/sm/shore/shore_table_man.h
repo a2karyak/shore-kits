@@ -1079,9 +1079,12 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
     int tsz = format(ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // (ip) if NULL invalid
 
+    //fprintf(stdout, "add-bIgnore: (%d)\n", bIgnoreLocks);
+
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
                         ptuple->_rid,
+                        serial_t::null,
                         bIgnoreLocks));
 
 
@@ -1205,7 +1208,8 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
     // 1. figure out what mode will be used
     bool bIgnoreLocks = false;
     if (lm==NL) bIgnoreLocks = true;
-   
+
+    //fprintf(stdout, "del-bIgnore: (%d)\n", bIgnoreLocks);   
 
     // 2. delete all the corresponding index entries
     index_desc_t* pindex = _ptable->indexes();
