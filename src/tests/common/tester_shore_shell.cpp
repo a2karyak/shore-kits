@@ -554,8 +554,8 @@ int shore_shell_t::process_cmd_TEST(const char* command,
         numOfThreads = tmp_numOfThreads;
         //if (spreadThreads && (numOfThreads > numOfQueriedSF))
         //numOfThreads = numOfQueriedSF;
-        if (spreadThreads && ((numOfQueriedSF % numOfThreads)!=0)) {
-            TRACE( TRACE_ALWAYS, "Warning QueriedSF=(%d) and Threads=(%d)\n",
+        if (spreadThreads && ((numOfThreads % numOfQueriedSF)!=0)) {
+            TRACE( TRACE_ALWAYS, "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
                    numOfQueriedSF, numOfThreads);
         }
     }
@@ -682,7 +682,7 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
         numOfThreads = tmp_numOfThreads;
         //if (spreadThreads && (numOfThreads > numOfQueriedSF))
         //numOfThreads = numOfQueriedSF;
-        if (spreadThreads && ((numOfQueriedSF % numOfThreads)!=0)) {
+        if (spreadThreads && ((numOfThreads % numOfQueriedSF)!=0)) {
             TRACE( TRACE_ALWAYS, "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
                    numOfQueriedSF, numOfThreads);
         }
