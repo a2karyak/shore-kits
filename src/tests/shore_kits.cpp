@@ -351,7 +351,8 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         for (int i=0; i<iNumOfThreads; i++) {
             // create & fork testing threads
             if (iSpread)
-                wh_id = i+1;
+                wh_id = (i%iQueriedSF)+1;
+
             testers[i] = new Client(c_str("CL-%d",i), i, _dbinst, 
                                     MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs,
                                     _current_prs_id, wh_id, iQueriedSF);
@@ -419,7 +420,8 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
     for (int i=0; i<iNumOfThreads; i++) {
         // create & fork testing threads
         if (iSpread)
-            wh_id = i+1;
+            wh_id = (i%iQueriedSF)+1;
+
         testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _dbinst, 
                                 MT_TIME_DUR, iSelectedTrx, 0,
                                 _current_prs_id, wh_id, iQueriedSF);
