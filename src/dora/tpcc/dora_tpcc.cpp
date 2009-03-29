@@ -199,22 +199,26 @@ const int DoraTPCCEnv::conf()
 
     envVar* ev = envVar::instance();
 
+    // Get CPU and binding configuration
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
     _cpu_range = get_active_cpu_count();
     _sf = upd_sf();
 
+    // Get DORA and per table partition SFs
+    _dora_sf = ev->getSysVarInt("dora-sf");
+    assert (_dora_sf);
 
-    _sf_per_part_whs = ev->getVarInt("dora-tpcc-wh-per-part-wh",0);
-    _sf_per_part_dis = ev->getVarInt("dora-tpcc-wh-per-part-dist",0);
-    _sf_per_part_cus = ev->getVarInt("dora-tpcc-wh-per-part-cust",0);
-    _sf_per_part_his = ev->getVarInt("dora-tpcc-wh-per-part-hist",0);
-    _sf_per_part_nor = ev->getVarInt("dora-tpcc-wh-per-part-nord",0);
-    _sf_per_part_ord = ev->getVarInt("dora-tpcc-wh-per-part-ord",0);
-    _sf_per_part_ite = ev->getVarInt("dora-tpcc-wh-per-part-item",0);
-    _sf_per_part_oli = ev->getVarInt("dora-tpcc-wh-per-part-oline",0);
-    _sf_per_part_sto = ev->getVarInt("dora-tpcc-wh-per-part-stock",0);
+    _sf_per_part_whs = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-wh",1);
+    _sf_per_part_dis = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-dist",1);
+    _sf_per_part_cus = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-cust",1);
+    _sf_per_part_his = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-hist",1);
+    _sf_per_part_nor = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-nord",1);
+    _sf_per_part_ord = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-ord",1);
+    _sf_per_part_ite = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-item",1);
+    _sf_per_part_oli = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-oline",1);
+    _sf_per_part_sto = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-stock",1);
     
     return (0);
 }

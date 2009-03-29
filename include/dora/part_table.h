@@ -96,6 +96,8 @@ public:
         assert (_key_estimation);
         assert (_total_sf && _sfs_per_part);
         if (_sfs_per_part > _total_sf) _sfs_per_part=_total_sf;
+        fprintf(stdout, "Creating (%d/%d=%.1f) (%s) parts\n",
+                _total_sf, _sfs_per_part, (double)_total_sf/(double)_sfs_per_part, _table->name());
     }
 
     virtual ~part_table_t() { }    

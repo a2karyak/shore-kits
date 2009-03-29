@@ -165,21 +165,25 @@ const int DoraTM1Env::conf()
 
     envVar* ev = envVar::instance();
 
+    // Get CPU and binding configuration
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
     _cpu_range = get_active_cpu_count();
 
-    // For TM1 the DORA_SF is different than the SF of the database
-    // In particular, for each 'real' SF there are 20 DORA SFs
+    // For TM1 the DORA_SF is !not anymore! different than the SF of the database
+    // In particular, for each 'real' SF there is 1 DORA SF
     _sf = upd_sf() * TM1_SUBS_PER_SF / TM1_SUBS_PER_DORA_PART;
 
+    // Get DORA and per table partition SFs
+    _dora_sf = ev->getSysVarInt("dora-sf");
+    assert (_dora_sf);
 
-    _sf_per_part_sub = ev->getVarInt("dora-tm1-sf-per-part-sub",0);
-    _sf_per_part_ai  = ev->getVarInt("dora-tm1-sf-per-part-ai",0);
-    _sf_per_part_sf  = ev->getVarInt("dora-tm1-sf-per-part-sf",0);
-    _sf_per_part_cf  = ev->getVarInt("dora-tm1-sf-per-part-cf",0);
-    
+    _sf_per_part_sub = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-sub",1);
+    _sf_per_part_ai  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-ai",1);
+    _sf_per_part_sf  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-sf",1);
+    _sf_per_part_cf  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-cf",1);        
+
     return (0);
 }
 

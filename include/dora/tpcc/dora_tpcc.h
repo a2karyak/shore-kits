@@ -110,6 +110,8 @@ private:
     int _cpu_range;
     int _sf;
 
+    int _dora_sf;
+
 public:
     
 
