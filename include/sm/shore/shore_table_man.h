@@ -1085,7 +1085,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
                         vec_t(ptuple->_rep->_dest, tsz),
                         ptuple->_rid,
                         serial_t::null,
-                        bIgnoreLocks));
+                        false)); // bIgnoreLocks??
 
 
     // 4. update the indexes
