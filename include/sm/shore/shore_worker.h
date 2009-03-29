@@ -166,6 +166,8 @@ protected:
     virtual const int _work_PAUSED_impl();
     virtual const int _work_ACTIVE_impl()=0;
     virtual const int _work_STOPPED_impl();
+    virtual const int _pre_STOP_impl()=0;
+
 
     void _print_stats_impl() const;
 
@@ -180,9 +182,7 @@ public:
         assert (_env);        
     }
 
-    virtual ~base_worker_t() { }
-
-
+    virtual ~base_worker_t() { }    
 
     // access methods //
 
@@ -369,8 +369,12 @@ public:
     }
 
 
+    // helper //    
 
-    // helper //
+    const bool abort_one_trx(xct_t* axct);
+
+    void stats(); 
+
 
 #ifdef ACCESS_RECORD_TRACE
     ofstream _trace_file;
@@ -379,21 +383,6 @@ public:
     void open_trace_file();
     void close_trace_file();
 #endif
-
-
-    void stats() { 
-        if (_stats._checked_input < 10) {
-            // don't print partitions which have served too few actions
-            TRACE( TRACE_DEBUG, "(%s) few data\n", thread_name().data());
-        }
-        else {
-            TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());
-            _stats.print_stats(); 
-        }
-
-        // clears after printing results
-        _stats.reset();
-    }
 
 private:
 

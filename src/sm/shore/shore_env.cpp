@@ -197,6 +197,18 @@ int ShoreEnv::close_sm()
 
 
     TRACE( TRACE_ALWAYS, "Dismounting all devices...\n");
+
+    // check if any active xcts
+    register int activexcts = ss_m::num_active_xcts();
+    if (activexcts) {
+        TRACE (TRACE_ALWAYS, "\n*** Warning (%d) active xcts. Cannot dismount!!\n",
+               activexcts);
+        w_assert3 (false); // hmmm
+
+        W_IGNORE(ss_m::dump_xcts(cout));
+        cout << flush;                 
+    }
+
     w_rc_t e = _pssm->dismount_all();
     if (e.is_error()) {
         TRACE( TRACE_ALWAYS, "Problem in dismounting [0x%x]\n",

@@ -253,6 +253,8 @@ public:
     }
 
 
+    const int abort_all_enqueued();
+
 
 
     //// Debugging ////
@@ -395,14 +397,14 @@ action_t<DataType>* partition_t<DataType>::dequeue_commit()
 template <class DataType>
 void partition_t<DataType>::stop()
 {        
-    // 1. stop the worker & standby threads
+    // 2. stop the worker & standby threads
     _stop_threads();
 
-    // 2. clear queues
+    // 3. clear queues
     _input_queue->clear();
     _committed_queue->clear();
     
-    // 3. reset lock-manager
+    // 4. reset lock-manager
     _plm->reset();
 }
 
@@ -792,6 +794,56 @@ inline dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const pr
     return (pworker);
 }
 
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     abort_all_enqueued()
+ *
+ * @brief:  Goes over the queue and aborts any unprocessed request
+ * 
+ ******************************************************************/
+
+template <class DataType>
+const int partition_t<DataType>::abort_all_enqueued()
+{
+    // 1. go over all requests
+    Action* pa;
+    int reqs_read  = 0;
+    int reqs_write = 0;
+    int reqs_abt   = 0;
+
+    assert (_owner);
+
+    // go over the readers list
+    while (_input_queue->_read_pos != _input_queue->_for_readers->end()) {
+        pa = *(_input_queue->_read_pos++);
+        ++reqs_read;
+        if (_owner->abort_one_trx(pa->xct())) 
+            ++reqs_abt;        
+    }
+
+    // go over the writers list
+    {
+        CRITICAL_SECTION(q_cs, _input_queue->_lock);
+        for (_input_queue->_read_pos = _input_queue->_for_writers->begin();
+             _input_queue->_read_pos != _input_queue->_for_writers->end();
+             _input_queue->_read_pos++) 
+            {
+                pa = *(_input_queue->_read_pos);
+                ++reqs_write;
+                if (_owner->abort_one_trx(pa->xct())) 
+                    ++reqs_abt;
+            }
+    }
+
+    if ((reqs_read + reqs_write) > 0) {
+        TRACE( TRACE_ALWAYS, "(%d) aborted before stopping. (%d) (%d)\n", 
+               reqs_abt, reqs_read, reqs_write);
+    }
+    return (reqs_abt);
+}
 
 
 EXIT_NAMESPACE(dora);

@@ -167,8 +167,20 @@ const int base_worker_t::_work_STOPPED_impl()
 
     // state (WC_STOPPED)
 
-    // if signalled to stop
-    // propagate signal to next thread in the list, if any
+    // 1. Abort any trx attached
+    xct_t* ax = smthread_t::xct();
+    if (ax) {
+        abort_one_trx(ax);
+        TRACE( TRACE_ALWAYS, "Aborted one\n");
+    }
+
+
+    // 2. Clears queue
+    // Goes over all requests in the queue and aborts trxs
+    _pre_STOP_impl();
+
+
+    // 3. Propagate signal to next thread in the list, if any
     CRITICAL_SECTION(next_cs, _next_lock);
     if (_next) { 
         // if someone is linked behind stop it and join it 
@@ -181,14 +193,73 @@ const int base_worker_t::_work_STOPPED_impl()
 
     // any cleanup code should be here
 
-    // print statistics
-    //    stats();
+    // 4. Print statistics
+    // stats();
 
     return (0);
 }
 
 
 
+/****************************************************************** 
+ *
+ * @fn:     abort_one_trx()
+ *
+ * @brief:  Aborts the specific transaction
+ *
+ * @return: (true) on success
+ * 
+ ******************************************************************/
+
+const bool base_worker_t::abort_one_trx(xct_t* axct) 
+{    
+    assert (_env);
+    assert (axct);
+    smthread_t::me()->attach_xct(axct);
+    w_rc_t e = ss_m::abort_xct();
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "Xct abort failed [0x%x]\n", e.err_num());
+        return (false);
+    }    
+    return (true);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     stats()
+ *
+ * @brief:  Prints stats if at least 10 requests have been served
+ * 
+ ******************************************************************/
+
+void base_worker_t::stats() 
+{ 
+    if (_stats._checked_input < 10) {
+        // don't print partitions which have served too few actions
+        TRACE( TRACE_DEBUG, "(%s) few data\n", thread_name().data());
+    }
+    else {
+        TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());
+        _stats.print_stats(); 
+    }
+
+    // clears after printing results
+    _stats.reset();
+}
+
+
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     ACCESS_RECORD_TRACE
+ *
+ * @brief:  Tracing of record accesses
+ * 
+ ******************************************************************/
 
 #ifdef ACCESS_RECORD_TRACE
 #warning Tracing record accesses enabled

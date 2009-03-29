@@ -98,6 +98,8 @@ private:
     // states
     const int _work_ACTIVE_impl(); 
 
+    const int _pre_STOP_impl();
+
     // serves one action
     const int _serve_action(Request* prequest);
 
@@ -237,6 +239,54 @@ const int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
     return (0);
 }
 
+
+
+/****************************************************************** 
+ *
+ * @fn:     _pre_STOP_impl()
+ *
+ * @brief:  Goes over the queue and aborts any unprocessed request
+ * 
+ ******************************************************************/
+
+template <class SubShoreEnv>
+const int trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
+{
+    // 1. go over all requests
+    Request* pr;
+    int reqs_read  = 0;
+    int reqs_write = 0;
+    int reqs_abt   = 0;
+
+    assert (_pqueue);
+
+    // go over the readers list
+    for (; _pqueue->_read_pos != _pqueue->_for_readers->end(); _pqueue->_read_pos++) {
+        pr = *(_pqueue->_read_pos);
+        ++reqs_read;
+        if (abort_one_trx(pr->_xct)) ++reqs_abt;
+    }
+
+    // go over the writers list
+    {
+        CRITICAL_SECTION(q_cs, _pqueue->_lock);
+        for (_pqueue->_read_pos = _pqueue->_for_writers->begin();
+             _pqueue->_read_pos != _pqueue->_for_writers->end();
+             _pqueue->_read_pos++) 
+            {
+                pr = *(_pqueue->_read_pos);
+                ++reqs_write;
+                if (abort_one_trx(pr->_xct)) ++reqs_abt;
+            }
+    }
+
+    if ((reqs_read + reqs_write) > 0) {
+        TRACE( TRACE_ALWAYS, "(%d) aborted before stopping. (%d) (%d)\n", 
+               reqs_abt, reqs_read, reqs_write);
+    }
+    return (reqs_abt);
+}
+    
 
 
 
