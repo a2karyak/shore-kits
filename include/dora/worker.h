@@ -40,13 +40,14 @@ public:
     typedef partition_t<DataType> Partition;
     typedef action_t<DataType>    Action;
     
-
 private:
     
     Partition*     _partition;
 
     // states
     const int _work_ACTIVE_impl(); 
+
+    const int _pre_STOP_impl() { assert(_partition); return (_partition->abort_all_enqueued()); }
 
     // serves one action
     const int _serve_action(base_action_t* paction);
@@ -249,11 +250,14 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
                 r_code = de_WORKER_RUN_XCT;
 
                 ++_stats._problems;
-            
+
+#ifdef WORKER_VERBOSE_STATS            
+                // PERFBUG! - stl_alloc when creating a stringstream
                 stringstream os;
                 os << e << ends;
                 string str = os.str();
                 TRACE( TRACE_TRX_FLOW, "\n%s\n", str.c_str());
+#endif
             }
         }          
 
@@ -294,6 +298,8 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
     return (r_code);
 }
+
+
 
 
 
