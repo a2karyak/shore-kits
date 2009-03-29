@@ -4,7 +4,7 @@
 #@brief:  For a specific xct it executes powerruns for a set of different clients
 #@author: Ippokratis Pandis
 
-# args: <xctid> <time> <iter>
+# args: <low> <high> <xctid> <time> <iter>
 usage()
 {
     echo "Usage: $0 <low> <high> <xctid> <time> <iter>" >&2
@@ -41,7 +41,7 @@ command()
 
 
 #warmup
-command measure $HIGH 0 20 20 $XCT 1
+command measure $HIGH 0 20 10 $XCT 2
 sleep 20
 
 # TPC-C Warmup
