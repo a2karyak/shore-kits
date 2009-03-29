@@ -49,6 +49,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_gsd_rvp,get_sub_data);
 
 void r_sub_gsd_action::calc_keys()
 {
+    set_read_only();
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
 }
@@ -176,6 +177,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_gnd_rvp,get_new_dest);
 
 void r_sf_gnd_action::calc_keys()
 {
+    set_read_only();
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
@@ -244,6 +246,7 @@ done:
 
 void r_cf_gnd_action::calc_keys()
 {
+    set_read_only();
     int sftype = _in._sf_type;
     int stime = _in._s_time;
     _down.push_back(_in._s_id);
@@ -362,6 +365,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_gad_rvp,get_acc_data);
 
 void r_ai_gad_action::calc_keys()
 {
+    set_read_only();
     int aitype = _in._ai_type;
     _down.push_back(_in._s_id);
     _down.push_back(aitype);
@@ -746,6 +750,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_icf_rvp,ins_call_fwd);
 
 void r_sub_icf_action::calc_keys()
 {
+    set_read_only();
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
 }
@@ -800,6 +805,7 @@ done:
 
 void r_sf_icf_action::calc_keys()
 {
+    set_read_only();
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
@@ -1045,6 +1051,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_dcf_rvp,del_call_fwd);
 
 void r_sub_dcf_action::calc_keys()
 {
+    set_read_only();
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
 }

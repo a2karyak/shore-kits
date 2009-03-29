@@ -102,6 +102,9 @@ protected:
 
     int            _keys_needed;
 
+    // flag indicating whether this action is read-only or not
+    bool           _read_only;
+
     // flag showing that this action has set its keys
     bool           _keys_set;
 
@@ -110,22 +113,22 @@ protected:
     stopwatch_t    _since_enqueue;
 #endif
 
-
     // base action init
     inline void _base_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
-                          const int numkeys, const bool keysset) 
+                          const int numkeys, const bool ro, const bool keysset) 
     {
         _tid = atid;
         _xct = axct;
         _prvp = prvp;
         _keys_needed = numkeys;
+        _read_only = ro;
         _keys_set = 0;
     }
 
 public:
 
     base_action_t() :
-        _prvp(NULL), _xct(NULL), _keys_needed(0), _keys_set(0)
+        _prvp(NULL), _xct(NULL), _keys_needed(0), _read_only(false), _keys_set(0)
     { }
 
     virtual ~base_action_t() { }
@@ -137,8 +140,14 @@ public:
     inline tid_t  tid() { return (_tid); }
     inline const tid_t tid() const { return (_tid); }
 
-    // needed keys operations
+    // read only
+    inline const bool is_read_only() { return (_read_only==true); }
+    inline void set_read_only() { 
+        assert (!_keys_set); // this can happen only if keys are not set yet
+        _read_only = true;
+    }
 
+    // needed keys operations
     inline const int needed() { return (_keys_needed); }
     inline const bool are_keys_set() { return (_keys_set); }
 
@@ -170,6 +179,7 @@ public:
     base_action_t(base_action_t const& rhs)
         : _prvp(rhs._prvp), _xct(rhs._xct), 
           _tid(rhs._tid), _keys_needed(rhs._keys_needed),
+          _read_only(rhs._read_only),
           _keys_set(rhs._keys_set)
     { }
 
@@ -239,14 +249,14 @@ protected:
     // a vector of requests for keys
     KALReqVec  _requests;
 
-    //pointer to the partition
+    // pointer to the partition
     Partition*  _partition;
 
-
     inline void _act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
-                         const int numkeys, const bool keysset=0)
+                         const int numkeys, 
+                         const bool ro=false, const bool keysset=false)
     {
-        _base_set(atid,axct,prvp,numkeys,keysset);
+        _base_set(atid,axct,prvp,numkeys,ro,keysset);
 
         assert (numkeys);
         _keys.reserve(numkeys);
@@ -260,11 +270,7 @@ public:
         base_action_t(), _partition(NULL)
     { }
 
-    virtual ~action_t() 
-    { 
-//         if (_keys) delete (_keys);
-//         if (_requests) delete (_requests);
-    }
+    virtual ~action_t() { }
 
 
     // copying allowed
@@ -311,7 +317,8 @@ public:
                             BaseActionPtrList& promotedList)
     {
         assert (_partition);
-        trx_upd_keys();
+        assert (_keys_set); // at this point the keys should already be set (at trx_acq_locks)
+        //trx_upd_keys();
         return (_partition->release(this,readyList,promotedList));
     }
 

@@ -1,3 +1,4 @@
+
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file:   shore_table.h
@@ -173,12 +174,12 @@ public:
 
     index_desc_t* indexes() { return (_indexes); }
 
-    /* index by name */
+    // index by name
     index_desc_t* find_index(const char* index_name) { 
         return (_indexes ? _indexes->find_by_name(index_name) : NULL); 
     }
     
-    /* # of indexes */
+    // # of indexes
     int index_count() { return (_indexes->index_count()); } 
 
     index_desc_t* primary() { return (_primary_idx); }

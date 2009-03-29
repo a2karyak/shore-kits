@@ -94,8 +94,11 @@ public:
         _keys.push_back(&_down);
         _keys.push_back(&_up);
 
+        register eDoraLockMode req_lm = DL_CC_EXCL;
+        if (is_read_only()) req_lm = DL_CC_SHARED;
+
         setkeys(1); // indicates that it needs only 1 key
-        _requests.push_back(KALReq(this,DL_CC_EXCL,&_down)); // range action
+        _requests.push_back(KALReq(this,req_lm,&_down)); // range action
 
         _keys_set = 1;
         return (0);

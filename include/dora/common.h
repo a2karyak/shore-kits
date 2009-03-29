@@ -199,7 +199,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     inline irpTableImpl* abbrv() { return (_##abbrv##_irpt.get()); }
 
 
-#define GENERATE_DORA_PARTS(abbrv,tablename)    \
+#define GENERATE_DORA_PARTS(abbrv,tablename)                            \
     _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_IRP_KEY, abbrv##_KEY_EST, _sf_per_part_##abbrv, _sf); \
     if (!_##abbrv##_irpt) {                                             \
         TRACE( TRACE_ALWAYS, "Problem in creating irp-table\n");        \
