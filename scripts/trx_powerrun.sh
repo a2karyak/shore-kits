@@ -69,7 +69,8 @@ run_one ()
 #CLIENT_SEQ=(1 3)
 
 # tm1-dora sequence
-CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78 84 92 96 100)
+#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78 84 92 96 100)
+CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64)
 
 for i in ${CLIENT_SEQ[@]}; do
     if [ $i -ge $LOW ]; then

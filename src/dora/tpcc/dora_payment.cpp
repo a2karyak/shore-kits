@@ -497,7 +497,7 @@ w_rc_t ins_hist_pay_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", _tid);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist);
+        e = _ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist, NL);
 #endif
 
         if (e.is_error()) { goto done; }
