@@ -1081,11 +1081,19 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
     //fprintf(stdout, "add-bIgnore: (%d)\n", bIgnoreLocks);
 
+    //#warning Using bIgnoreLock on create_rec() it will not IX the store
+
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
                         ptuple->_rid,
                         serial_t::null,
-                        false)); // bIgnoreLocks??
+                        bIgnoreLocks)); // ?? 
+
+//     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
+//                         vec_t(ptuple->_rep->_dest, tsz),
+//                         ptuple->_rid,
+//                         serial_t::null,
+//                         false)); // bIgnoreLocks??
 
 
     // 4. update the indexes
