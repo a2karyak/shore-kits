@@ -80,12 +80,13 @@ const int    SHORE_NUM_SYS_OPTIONS  = 6;
 // Those are the database-independent
 const string SHORE_SYS_SM_OPTIONS[][3]  = {
     { "-sm_logging", "shore-logging", "yes" },
+    { "-sm_logisraw", "shore-logisraw", "no" },
     { "-sm_diskrw", "shore-diskrw", "diskrw" },
     { "-sm_errlog", "shore-errlog", "info" },
-    { "-sm_num_page_writers", "shore-pagecleaners", "16" }
+    { "-sm_num_page_writers", "shore-pagecleaners", "16" },
 };
 
-const int    SHORE_NUM_SYS_SM_OPTIONS   = 4;
+const int    SHORE_NUM_SYS_SM_OPTIONS   = 5;
 
 
 // SHORE_DB_SM_OPTIONS: 
@@ -96,9 +97,10 @@ const string SHORE_DB_SM_OPTIONS[][3]  = {
     { "-sm_logdir", "logdir", "log" },
     { "-sm_logsize", "logsize", "0" },
     { "-sm_logbufsize", "logbufsize", "0" },
+    { "-sm_logcount", "logcount", "10" },
 };
 
-const int    SHORE_NUM_DB_SM_OPTIONS   = 4;
+const int    SHORE_NUM_DB_SM_OPTIONS   = 5;
 
 
 // SHORE_DB_OPTIONS
