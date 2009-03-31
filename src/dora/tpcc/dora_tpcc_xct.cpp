@@ -330,236 +330,47 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);    
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
 
     xct_t* pxct = smthread_t::me()->xct();
 
+    // 2. Detatch self from xct
 #ifndef ONLYDORA
     assert (pxct);
-#endif
-
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);    
-
-
-    // 2. Setup the next and final RVP
-    // PH1 consists of 2 packets
-    final_ordst_rvp* rvp = new_final_ordst_rvp(atid,pxct,xct_id,atrt);
-
-
-    // 3. Do all the possible secondary index probes
-            
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
-    assert (prcust);
-
-    row_impl<order_t>* prord = _porder_man->get_tuple();
-    assert (prord);
-
-    rep_row_t areprow(_pcustomer_man->ts());
-    areprow.set(_pcustomer_desc->maxsize()); 
-
-    prcust->_rep = &areprow;
-    prord->_rep = &areprow;
-
-    rep_row_t lowrep(_pcustomer_man->ts());
-    rep_row_t highrep(_pcustomer_man->ts());
-    lowrep.set(_pcustomer_desc->maxsize()); 
-    highrep.set(_pcustomer_desc->maxsize()); 
-
-    w_rc_t e = RCOK;
-    bool bAbort = false;
-
-    register int w_id = aordstin._wh_id;
-    register int d_id = aordstin._d_id;
-
-    tpcc_order_tuple aorder;
-    
-
-    r_cust_ordst_action* ordst_r_cust = NULL;
-    r_ol_ordst_action* ordst_r_ol = NULL;
-
-    { // make gotos safe 
-
-        // 3. Determine the customer. 
-        //    A probe to the secondary index may be needed.    
-
-        // 3a. select customer based on name
-        if (aordstin._c_id == 0) {
-
-            /* SELECT  c_id, c_first
-             * FROM customer
-             * WHERE c_last = :c_last AND c_w_id = :w_id AND c_d_id = :d_id
-             * ORDER BY c_first
-             *
-             * plan: index only scan on "C_NAME_INDEX"
-             */
-
-            assert (aordstin._c_select <= 60);
-            assert (aordstin._c_last);
-
-#ifndef ONLYDORA
-            guard<index_scan_iter_impl<customer_t> > c_iter;
-            {
-                index_scan_iter_impl<customer_t>* tmp_c_iter;
-                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-by-name-idx\n", xct_id);
-
-                e = _pcustomer_man->cust_get_iter_by_index(_pssm, tmp_c_iter, prcust,
-                                                           lowrep, highrep,
-                                                           w_id, d_id, aordstin._c_last);
-                c_iter = tmp_c_iter;
-                if (e.is_error()) { bAbort = true; goto done; }
-            }
-
-            vector<int> v_c_id;
-            int  a_c_id;
-            int  count = 0;
-            bool eof;
-
-            e = c_iter->next(_pssm, eof, *prcust);
-            if (e.is_error()) { bAbort = true; goto done; }
-            while (!eof) {
-                // push the retrieved customer id to the vector
-                ++count;
-                prcust->get_value(0, a_c_id);
-
-                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-next (%d)\n", 
-                       xct_id, a_c_id);
-                e = c_iter->next(_pssm, eof, *prcust);
-                if (e.is_error()) { bAbort = true; goto done; }
-            }
-            
-            // 3b. find the customer id in the middle of the list
-            aordstin._c_id = v_c_id[(count+1)/2-1];
-#endif
-        }
-        assert (aordstin._c_id>0);
-
-
-        // 4. Retrieve the last order of this customer
-
-        /* SELECT o_id, o_entry_d, o_carrier_id
-         * FROM orders
-         * WHERE o_w_id = :w_id AND o_d_id = :d_id AND o_c_id = :o_c_id
-         * ORDER BY o_id DESC
-         *
-         * plan: index scan on "O_CUST_INDEX"
-         */
-     
-        guard<index_scan_iter_impl<order_t> > o_iter;
-        {
-            index_scan_iter_impl<order_t>* tmp_o_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ord-iter-by-idx\n", xct_id);
-            e = _porder_man->ord_get_iter_by_index(_pssm, tmp_o_iter, prord,
-                                                   lowrep, highrep,
-                                                   w_id, d_id, aordstin._c_id);
-            o_iter = tmp_o_iter;
-            if (e.is_error()) { bAbort = true; goto done; }
-        }
-
-        bool eof;
-
-        e = o_iter->next(_pssm, eof, *prord);
-        if (e.is_error()) { bAbort = true; goto done; }
-        while (!eof) {
-            prord->get_value(0, aorder.O_ID);
-            prord->get_value(4, aorder.O_ENTRY_D);
-            prord->get_value(5, aorder.O_CARRIER_ID);
-            prord->get_value(6, aorder.O_OL_CNT);
-
-            //        rord.print_tuple();
-
-            e = o_iter->next(_pssm, eof, *prord);
-            if (e.is_error()) { bAbort = true; goto done; }
-        }
-     
-        // we should have retrieved a valid id and ol_cnt for the order               
-        assert (aorder.O_ID);
-        assert (aorder.O_OL_CNT);
-
-    } // goto
-
-
-    // Now it is ready to create and enqueue the 2 actions
-
-    
-    // 5. Generate the actions
-    ordst_r_cust = new_r_cust_ordst_action(atid,pxct,rvp,aordstin);
-
-    ordst_r_ol = new_r_ol_ordst_action(atid,pxct,rvp,aordstin);
-    ordst_r_ol->postset(aorder);
-    
-
-    // 6. Detatch self from xct
-
-#ifndef ONLYDORA
     me()->detach_xct(pxct);
 #endif
-
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
+    // 2. Setup the next RVP
+    // PH1 consists of 1 packet
+    mid1_ordst_rvp* mid1_rvp = new_mid1_ordst_rvp(atid,pxct,xct_id,atrt,aordstin,bWake);
+    
+    // 3. Generate the action
+    r_cust_ordst_action* r_cust = new_r_cust_ordst_action(atid,pxct,mid1_rvp,aordstin);
 
     // For each action
-    // 7a. Decide about partition
-    // 7b. Enqueue
+    // 4a. Decide about partition
+    // 4b. Enqueue
 
     {
         int wh = aordstin._wh_id-1;
 
         // first, figure out to which partitions to enqueue
         irpImpl* my_cust_part = cus()->myPart(wh);
-        irpImpl* my_ol_part = oli()->myPart(wh);
-
-        // then, start enqueueing
 
         // CUST_PART_CS
         CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
             
-        if (my_cust_part->enqueue(ordst_r_cust,bWake)) {
+        if (my_cust_part->enqueue(r_cust,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing ORDST_R_CUST\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
-
-        // OL_PART_CS
-        CRITICAL_SECTION(ol_part_cs, my_ol_part->_enqueue_lock);
-        cust_part_cs.exit();
-
-        if (my_ol_part->enqueue(ordst_r_ol,bWake)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing ORDST_R_OL\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-        }
     }
-
-
-done:
-
-    // 8. Return the tuples to the cache
-    _pcustomer_man->give_tuple(prcust);
-    _porder_man->give_tuple(prord);  
-
-    // 9. if something went wrong no action has been enqueued yet.
-    //    Therefore, it is responsibility of the dispatcher to execute the 
-    //    RVP abort code, in order to release any locks acquired during the 
-    //    secondary indexes probes.
-    if (bAbort) {
-        
-        TRACE( TRACE_TRX_FLOW, "Dispatcher needs to abort (%d)\n", atid);
-
-        rvp->abort();
-        e = rvp->run();
-        if (e.is_error()) {
-            TRACE( TRACE_ALWAYS, "Problem running rvp for xct (%d) [0x%x]\n",
-                   atid, e.err_num());
-        }
-            
-        // delete rvp
-        rvp->giveback();
-        rvp = NULL;
-    }
-
-    return (e); 
+    return (RCOK); 
 }
 
 
@@ -646,7 +457,7 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
 
 /******************************************************************** 
  *
- * DORA TPC-C DELIVERY
+ * DORA TPC-C STOCK LEVEL
  *
  ********************************************************************/
 
@@ -658,32 +469,27 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
+
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
 
     xct_t* pxct = smthread_t::me()->xct();
 
+    // 2. Detatch self from xct
 #ifndef ONLYDORA
     assert (pxct);
+    me()->detach_xct(pxct);
 #endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-
-    // 2. Setup the next RVP
+    // 3. Setup the next RVP
     // PH1 consists of 1 packet
     mid1_stock_rvp* rvp = new_mid1_stock_rvp(atid,pxct,xct_id,atrt,astoin,bWake);
     
-    // 3. Generate the action
+    // 4. Generate the action
     r_dist_stock_action* stock_r_dist = new_r_dist_stock_action(atid,pxct,rvp,astoin);
-
-    // 4. Detatch self from xct
-
-#ifndef ONLYDORA
-    me()->detach_xct(pxct);
-#endif
-
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // For each action
     // 5a. Decide about partition
@@ -731,6 +537,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
     //    W_DO(_pssm->set_lock_cache_enable(false);
@@ -738,25 +545,19 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
 
     xct_t* pxct = smthread_t::me()->xct();
 
+    // 2. Detatch self from xct
 #ifndef ONLYDORA
     assert (pxct);
-#endif
-
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-
-    // 2. Setup the final RVP
-    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
-
-    // 3. Generate the actions
-    upd_wh_mb_action* upd_wh = new_upd_wh_mb_action(atid,pxct,frvp,in);
-
-    // 4. Detatch self from xct
-
-#ifndef ONLYDORA
     smthread_t::me()->detach_xct(pxct);
 #endif
-
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+
+    // 3. Setup the final RVP
+    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
+
+    // 4. Generate the actions
+    upd_wh_mb_action* upd_wh = new_upd_wh_mb_action(atid,pxct,frvp,in);
 
     // For each action
     // 5a. Decide about partition
@@ -789,33 +590,25 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
 
     xct_t* pxct = smthread_t::me()->xct();
 
+    // 2. Detatch self from xct
 #ifndef ONLYDORA
     assert (pxct);
-#endif
-
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-
-
-    // 2. Setup the final RVP
-    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
-    
-    // 3. Generate the actions
-    upd_cust_mb_action* upd_cust = new_upd_cust_mb_action(atid,pxct,frvp,in);
-
-    // 4. Detatch self from xct
-
-#ifndef ONLYDORA
     me()->detach_xct(pxct);
 #endif
-
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
+    // 3. Setup the final RVP
+    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
+    
+    // 4. Generate the actions
+    upd_cust_mb_action* upd_cust = new_upd_cust_mb_action(atid,pxct,frvp,in);
 
     // For each action
     // 5a. Decide about partition

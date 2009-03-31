@@ -89,6 +89,9 @@ order_status_input_t::operator= (const order_status_input_t& rhs)
     _d_id     = rhs._d_id;
     _c_select = rhs._c_select;
     _c_id     = rhs._c_id;
+        
+    _o_id = rhs._o_id;
+    _o_ol_cnt = rhs._o_ol_cnt;
     
     if (rhs._c_last) {
         store_string(_c_last, rhs._c_last);
@@ -123,6 +126,10 @@ stock_level_input_t::operator= (const stock_level_input_t& rhs)
     _wh_id     = rhs._wh_id;
     _d_id      = rhs._d_id;
     _threshold = rhs._threshold;
+
+    _next_o_id = rhs._next_o_id;
+    _o_ol_cnt = rhs._o_ol_cnt;
+    _pvwi = rhs._pvwi;
 
     return (*this);
 }

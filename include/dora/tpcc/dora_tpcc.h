@@ -44,8 +44,12 @@ class ins_hist_pay_action;
 
 // TPC-C OrderStatus
 class final_ordst_rvp;
+class mid1_ordst_rvp;
+class mid2_ordst_rvp;
 class r_cust_ordst_action;
+class r_ord_ordst_action;
 class r_ol_ordst_action;
+
 
 // TPC-C StockLevel
 class mid1_stock_rvp;
@@ -234,12 +238,16 @@ public:
     // TPC-C OrderStatus //
     ///////////////////////
 
-    DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_ordst_rvp);
+    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid1_ordst_rvp,order_status_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_cust_ordst_action,rvp_t,order_status_input_t);
+    DECLARE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(mid2_ordst_rvp,order_status_input_t);
+
+    DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_ordst_rvp);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_cust_ordst_action,mid1_ordst_rvp,order_status_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(r_ord_ordst_action,mid2_ordst_rvp,order_status_input_t);
+
     DECLARE_DORA_ACTION_GEN_FUNC(r_ol_ordst_action,rvp_t,order_status_input_t);
-    //const tpcc_order_tuple& aorder
-
 
 
     //////////////////////
@@ -251,13 +259,10 @@ public:
 
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_stock_rvp);
 
-
     DECLARE_DORA_ACTION_GEN_FUNC(r_dist_stock_action,mid1_stock_rvp,stock_level_input_t);
     DECLARE_DORA_ACTION_GEN_FUNC(r_ol_stock_action,mid2_stock_rvp,stock_level_input_t);
-    //const int nextid
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_st_stock_action,rvp_t,stock_level_input_t);
-    //TwoIntVec* pvwi
 
 
 

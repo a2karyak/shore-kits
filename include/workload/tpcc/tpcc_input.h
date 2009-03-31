@@ -148,10 +148,15 @@ struct order_status_input_t
     int   _c_id;        /* input: NURand(1023,1,3000) */
     char  _c_last[16];  /* input: NURand(255,0,999) */
 
+    // placeholders for o_id, and o_ol_cnt
+    int   _o_id;
+    int   _o_ol_cnt;
+
 
     // Construction/Destructions
     order_status_input_t() 
-        : _wh_id(0), _d_id(0), _c_select(0), _c_id(0)
+        : _wh_id(0), _d_id(0), _c_select(0), _c_id(0), 
+          _o_id(0), _o_ol_cnt(0)
     { 
         memset(_c_last, '\0', 16);
     };    
@@ -202,15 +207,25 @@ struct delivery_input_t
  *
  *********************************************************************/
 
+typedef vector<pair<int,int> > TwoIntVec;
+typedef TwoIntVec::iterator    TwoIntVecIt;
+
 struct stock_level_input_t
 {
     int   _wh_id;         /* input */
     int   _d_id;          /* input */
     short _threshold;     /* input */
 
+    // placeholders for o_id, and o_ol_cnt
+    int   _next_o_id;
+    int   _o_ol_cnt;
+    TwoIntVec* _pvwi;
+
+
     // Construction/Destructions
     stock_level_input_t() 
-        : _wh_id(0), _d_id(0), _threshold(0)
+        : _wh_id(0), _d_id(0), _threshold(0),
+          _o_ol_cnt(0), _pvwi(NULL)
     { 
     };
     

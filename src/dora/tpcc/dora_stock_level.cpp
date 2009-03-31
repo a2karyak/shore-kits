@@ -33,6 +33,8 @@ ENTER_NAMESPACE(dora);
 //
 
 
+DEFINE_DORA_FINAL_RVP_CLASS(final_stock_rvp,stock_level);
+
 
 /******************************************************************** 
  *
@@ -46,25 +48,26 @@ w_rc_t mid1_stock_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    mid2_stock_rvp* rvp2 = _ptpccenv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_slin,_actions,_bWake);
+    mid2_stock_rvp* rvp2 = _penv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
 
     // 2. Generate and enqueue action
-    r_ol_stock_action* r_ol_stock = _ptpccenv->new_r_ol_stock_action(_tid,_xct,rvp2,_slin);
-    r_ol_stock->postset(_next_o_id);
-
-    typedef range_partition_impl<int>   irpImpl; 
-    irpImpl* ol_part = _ptpccenv->oli()->myPart(_slin._wh_id-1);
+    r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_tid,_xct,rvp2,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
+    typedef range_partition_impl<int>   irpImpl; 
 
-    // OLI_PART_CS
-    CRITICAL_SECTION(oli_part_cs, ol_part->_enqueue_lock);
-    if (ol_part->enqueue(r_ol_stock,_bWake)) {
-        TRACE( TRACE_DEBUG, "Problem in enqueueing R_OL_STOCK\n");
-        assert (0); 
-        return (RC(de_PROBLEM_ENQUEUE));
+    {
+        irpImpl* ol_part = _penv->oli()->myPart(_in._wh_id-1);
+
+        // OLI_PART_CS
+        CRITICAL_SECTION(oli_part_cs, ol_part->_enqueue_lock);
+        if (ol_part->enqueue(r_ol_stock,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_OL_STOCK\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+        return (RCOK);
     }
-    return (RCOK);
 }
 
 
@@ -81,50 +84,29 @@ w_rc_t mid2_stock_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    final_stock_rvp* frvp = _ptpccenv->new_final_stock_rvp(_tid,_xct,_xct_id,_result,_actions);
 
-    // 2. Generate and enqueue action
-    r_st_stock_action* r_st_stock = _ptpccenv->new_r_st_stock_action(_tid,_xct,frvp,_slin);
-    r_st_stock->postset(_pvwi);
+    // 1. Set the final RVP
+    final_stock_rvp* frvp = _penv->new_final_stock_rvp(_tid,_xct,_xct_id,_result,_actions);
 
-
-    typedef range_partition_impl<int>   irpImpl; 
-    irpImpl* st_part = _ptpccenv->sto()->myPart(_slin._wh_id-1);
+    // 2. Generate the action
+    r_st_stock_action* r_st = _penv->new_r_st_stock_action(_tid,_xct,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
+    typedef range_partition_impl<int>   irpImpl; 
 
-    // STO_PART_CS
-    CRITICAL_SECTION(sto_part_cs, st_part->_enqueue_lock);
-    if (st_part->enqueue(r_st_stock,_bWake)) {
-        TRACE( TRACE_DEBUG, "Problem in enqueueing R_ST_STOCK\n");
-        assert (0); 
-        return (RC(de_PROBLEM_ENQUEUE));
+    { 
+        irpImpl* my_st_part = _penv->sto()->myPart(_in._wh_id-1);
+
+        // STO_PART_CS
+        CRITICAL_SECTION(sto_part_cs, my_st_part->_enqueue_lock);
+        if (my_st_part->enqueue(r_st,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_ST_STOCK\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
     }
     return (RCOK);
 }
-
-
-/******************************************************************** 
- *
- * STOCK LEVEL FINAL RVP
- *
- ********************************************************************/
-
-w_rc_t final_stock_rvp::run() 
-{
-    return (_run(_ptpccenv)); 
-}
-
-void final_stock_rvp::upd_committed_stats() 
-{
-    _ptpccenv->_inc_stock_level_att();
-}                     
-
-void final_stock_rvp::upd_aborted_stats() 
-{
-    _ptpccenv->_inc_stock_level_failed();
-}                     
-
 
 
 /******************************************************************** 
@@ -137,22 +119,31 @@ void final_stock_rvp::upd_aborted_stats()
  *
  ********************************************************************/
 
+void r_dist_stock_action::calc_keys()
+{
+    set_read_only();
+    _down.push_back(_in._wh_id);
+    _down.push_back(_in._d_id);
+    _up.push_back(_in._wh_id);
+    _up.push_back(_in._d_id);
+}
+
 w_rc_t r_dist_stock_action::trx_exec() 
 {
-    assert (_ptpccenv);
+    assert (_penv);
 
     // get table tuple from the cache
-    row_impl<district_t>* prdist = _ptpccenv->district_man()->get_tuple();
+    row_impl<district_t>* prdist = _penv->district_man()->get_tuple();
     assert (prdist);
 
-    rep_row_t areprow(_ptpccenv->district_man()->ts());
-    areprow.set(_ptpccenv->district_desc()->maxsize()); 
+    rep_row_t areprow(_penv->district_man()->ts());
+    areprow.set(_penv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
 
     w_rc_t e = RCOK;
 
-    register int w_id = _slin._wh_id;
-    register int d_id = _slin._d_id;
+    register int w_id = _in._wh_id;
+    register int d_id = _in._d_id;
 
     { // make gotos safe
     
@@ -169,15 +160,16 @@ w_rc_t r_dist_stock_action::trx_exec()
                _tid, w_id, d_id);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), prdist, w_id, d_id);
+        e = _penv->district_man()->dist_index_probe_nl(_penv->db(), prdist, w_id, d_id);
 #endif
 
         if (e.is_error()) { goto done; }
 
+        // pass the data to the RVP
         int next_o_id = 0;
         prdist->get_value(10, next_o_id);
-
-        _pmid1_rvp->set_next_o_id(next_o_id);
+        
+        _prvp->_in._next_o_id = next_o_id;
 
     } // goto
 
@@ -189,31 +181,44 @@ w_rc_t r_dist_stock_action::trx_exec()
 
 done:
     // give back the tuple
-    _ptpccenv->district_man()->give_tuple(prdist);
+    _penv->district_man()->give_tuple(prdist);
     return (e);
+}
+
+
+
+#warning Only 2 fields (WH,DI) determine the ORDERLINE table accesses! Not 3.
+
+void r_ol_stock_action::calc_keys()
+{
+    set_read_only();
+    _down.push_back(_in._wh_id);
+    _down.push_back(_in._d_id);
+    _up.push_back(_in._wh_id);
+    _up.push_back(_in._d_id);
 }
 
 w_rc_t r_ol_stock_action::trx_exec() 
 {
-    assert (_ptpccenv);
+    assert (_penv);
 
     // get table tuple from the cache
 
-    row_impl<order_line_t>* prol = _ptpccenv->order_line_man()->get_tuple();
+    row_impl<order_line_t>* prol = _penv->order_line_man()->get_tuple();
     assert (prol);
 
-    rep_row_t areprow(_ptpccenv->order_line_man()->ts());
-    areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
+    rep_row_t areprow(_penv->order_line_man()->ts());
+    areprow.set(_penv->order_line_desc()->maxsize()); 
     prol->_rep = &areprow;
 
-    rep_row_t lowrep(_ptpccenv->order_line_man()->ts());
-    lowrep.set(_ptpccenv->order_line_desc()->maxsize()); 
+    rep_row_t lowrep(_penv->order_line_man()->ts());
+    lowrep.set(_penv->order_line_desc()->maxsize()); 
 
-    rep_row_t highrep(_ptpccenv->order_line_man()->ts());
-    highrep.set(_ptpccenv->order_line_desc()->maxsize()); 
+    rep_row_t highrep(_penv->order_line_man()->ts());
+    highrep.set(_penv->order_line_desc()->maxsize()); 
 
-    rep_row_t sortrep(_ptpccenv->order_line_man()->ts());
-    sortrep.set(_ptpccenv->order_line_desc()->maxsize()); 
+    rep_row_t sortrep(_penv->order_line_man()->ts());
+    sortrep.set(_penv->order_line_desc()->maxsize()); 
 
     sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
@@ -223,14 +228,11 @@ w_rc_t r_ol_stock_action::trx_exec()
     sort_man_impl ol_sorter(&ol_list, &sortrep, 2);
     row_impl<sort_buffer_t> rsb(&ol_list);
 
-    assert (_pmid2_rvp->_pvwi==NULL);
-    _pmid2_rvp->_pvwi = new TwoIntVec();
-
     w_rc_t e = RCOK;
     bool eof;
 
-    register int w_id = _slin._wh_id;
-    register int d_id = _slin._d_id;
+    register int w_id = _in._wh_id;
+    register int d_id = _in._d_id;
     register int i_id = -1;
 
     { // make gotos safe 
@@ -255,24 +257,24 @@ w_rc_t r_ol_stock_action::trx_exec()
         /* 2a. Index scan on order_line table. */
 
         TRACE( TRACE_TRX_FLOW, "App: %d STO:ol-iter-by-idx (%d) (%d) (%d) (%d)\n", 
-               _tid, w_id, d_id, _next_o_id-20, _next_o_id);
+               _tid, w_id, d_id, _in._next_o_id-20, _in._next_o_id);
     
 #ifndef ONLYDORA
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
 	{
 	    index_scan_iter_impl<order_line_t>* tmp_ol_iter;
-	    e = _ptpccenv->order_line_man()->ol_get_range_iter_by_index_nl(_ptpccenv->db(), 
+	    e = _penv->order_line_man()->ol_get_range_iter_by_index_nl(_penv->db(), 
                                                                           tmp_ol_iter, prol,
                                                                           lowrep, highrep,
                                                                           w_id, d_id,
-                                                                          _next_o_id-20, _next_o_id);
+                                                                          _in._next_o_id-20, _in._next_o_id);
 	    ol_iter = tmp_ol_iter;
 	    if (e.is_error()) { goto done; }
 	}
 
         // iterate over all selected orderlines and add them to the sorted buffer
 
-        e = ol_iter->next(_ptpccenv->db(), eof, *prol);
+        e = ol_iter->next(_penv->db(), eof, *prol);
         while (!eof) {
 
             if (e.is_error()) { goto done; }
@@ -296,19 +298,23 @@ w_rc_t r_ol_stock_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d STO:ol-iter-next (%d) (%d) (%d) (%d)\n", 
                    _tid, temp_wid, temp_did, temp_oid, temp_iid);
   
-            e = ol_iter->next(_ptpccenv->db(), eof, *prol);
+            e = ol_iter->next(_penv->db(), eof, *prol);
         }
         assert (ol_sorter.count());
 #endif
 
         /* 2b. Sort orderline tuples on i_id */
-        sort_iter_impl ol_list_sort_iter(_ptpccenv->db(), &ol_list, &ol_sorter);
+        sort_iter_impl ol_list_sort_iter(_penv->db(), &ol_list, &ol_sorter);
         int last_i_id = -1;
         int count = 0;
 
         /* 2c. Load the vector with pairs of w_id, and i_it notify rvp */
-        _pmid2_rvp->_pvwi->reserve(ol_sorter.count());
-        e = ol_list_sort_iter.next(_ptpccenv->db(), eof, rsb);
+        assert (_prvp->_in._pvwi == NULL);
+        _prvp->_in._pvwi = new TwoIntVec();       
+        assert (_prvp->_in._pvwi);
+        _prvp->_in._pvwi->reserve(ol_sorter.count());
+
+        e = ol_list_sort_iter.next(_penv->db(), eof, rsb);
         if (e.is_error()) { goto done; }
         
         while (!eof) {
@@ -321,9 +327,9 @@ w_rc_t r_ol_stock_action::trx_exec()
                    _tid, w_id, i_id);
             
             // add pair to vector
-            _pmid2_rvp->_pvwi->push_back(pair<int,int>(w_id,i_id));            
-
-            e = ol_list_sort_iter.next(_ptpccenv->db(), eof, rsb);
+            _prvp->_in._pvwi->push_back(pair<int,int>(w_id,i_id));            
+            
+            e = ol_list_sort_iter.next(_penv->db(), eof, rsb);
             if (e.is_error()) { goto done; }
         }
 
@@ -337,29 +343,38 @@ w_rc_t r_ol_stock_action::trx_exec()
 
 done:
     // give back the tuple
-    _ptpccenv->order_line_man()->give_tuple(prol);   
+    _penv->order_line_man()->give_tuple(prol);   
     return (e);
 }
 
 
+#warning Only 1 field (WH) determines the STOCK table accesses! Not 2.
+
+void r_st_stock_action::calc_keys()
+{
+    set_read_only();
+    _down.push_back(_in._wh_id);
+    _up.push_back(_in._wh_id);
+}
 
 w_rc_t r_st_stock_action::trx_exec() 
 {
-    assert (_ptpccenv);
+    assert (_penv);
 
     // get table tuple from the cache
-    row_impl<stock_t>* prst = _ptpccenv->stock_man()->get_tuple();
+    row_impl<stock_t>* prst = _penv->stock_man()->get_tuple();
     assert (prst);
 
-    rep_row_t areprow(_ptpccenv->stock_man()->ts());
-    areprow.set(_ptpccenv->stock_desc()->maxsize()); 
+    rep_row_t areprow(_penv->stock_man()->ts());
+    areprow.set(_penv->stock_desc()->maxsize()); 
     prst->_rep = &areprow;
 
     w_rc_t e = RCOK;
 
-    int input_w_id = _slin._wh_id;
+    int input_w_id = _in._wh_id;
 
     register int w_id = 0;
+    register int d_id = 0;
     register int i_id = 0;
     register int quantity = 0;
 
@@ -370,27 +385,29 @@ w_rc_t r_st_stock_action::trx_exec()
 
 
         /* 2c. Nested loop join order_line with stock */
-        for (TwoIntVecIt it = _pvwi->begin(); it != _pvwi->end(); ++it) {
+        assert (_in._pvwi);
+        for (TwoIntVecIt it = _in._pvwi->begin(); it != _in._pvwi->end(); ++it) {
 
             /* use the index to find the corresponding stock tuple */
             w_id = (*it).first;
             i_id = (*it).second;
 
-            assert (input_w_id == w_id); // (IP) TODO check
+            // ensures that all the probed stocks belong to the same warehouse
+            assert (input_w_id == w_id); 
 
-            TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe (%d) (%d)\n", 
+            TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe-nl (%d) (%d)\n", 
                    _tid, w_id, i_id);
 
             // 2d. Index probe the Stock
 #ifndef ONLYDORA
-            e = _ptpccenv->stock_man()->st_index_probe_nl(_ptpccenv->db(), prst, w_id, i_id);
+            e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, w_id, i_id);
 #endif
             if (e.is_error()) { goto done; }
 
             // check if stock quantity below threshold 
             prst->get_value(3, quantity);
 
-            if (quantity < _slin._threshold) {
+            if (quantity < _in._threshold) {
                 /* Do join on the two tuples */
 
                 /* the work is to count the number of unique item id. We keep
@@ -418,8 +435,12 @@ w_rc_t r_st_stock_action::trx_exec()
 #endif
 
 done:
+    // delete the pvwi
+    if (_in._pvwi) { delete (_in._pvwi); _in._pvwi = NULL; }
+
     // give back the tuple
-    _ptpccenv->stock_man()->give_tuple(prst);
+    _penv->stock_man()->give_tuple(prst);
+
     return (e);
 }
 

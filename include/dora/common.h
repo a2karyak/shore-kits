@@ -141,9 +141,6 @@ const int KALREQ_PER_ACTION_POOL_SZ = 30;
 const int DT_PER_ACTION_POOL_SZ = 360;
 
 
-typedef vector<pair<int,int> > TwoIntVec;
-typedef TwoIntVec::iterator    TwoIntVecIt;
-
 typedef Pool* PoolPtr;
 
 const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
@@ -363,11 +360,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             typedef object_cache_t<cname> rvp_cache;                    \
             envname* _penv;                                             \
             rvp_cache* _cache;                                          \
-            inputname _in;                                              \
             bool _bWake;                                                \
     public:                                                             \
             cname() : rvp_t(), _cache(NULL), _penv(NULL) { }            \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
+            inputname _in;                                              \
             inline void set(const tid_t& atid, xct_t* axct, const int axctid, \
                             trx_result_tuple_t& presult,                \
                             const inputname& in, const bool bWake,      \
@@ -395,11 +392,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
             inline void giveback() {                                    \
-                assert (_cache); _cache->giveback(this); }           \
+                assert (_cache); _cache->giveback(this); }              \
             inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
-                assert (pc); _cache = pc;                            \
-                assert (penv); _penv = penv;                         \
+                assert (pc); _cache = pc;                               \
+                assert (penv); _penv = penv;                            \
                 _in = in;                                               \
                 _range_act_set(atid,axct,prvp,keylen); }                \
             w_rc_t trx_exec();                                          \
