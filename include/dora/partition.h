@@ -260,7 +260,11 @@ public:
     //// Debugging ////
 
     // stats
-    void statistics() const {assert (_owner); _owner->stats();}
+    void statistics(worker_stats_t& gather) {
+        assert (_owner); 
+        gather += _owner->get_stats();
+        _owner->reset_stats();
+    }
 
     // dumps information
     void dump() {

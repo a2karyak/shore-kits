@@ -251,13 +251,6 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
                 ++_stats._problems;
 
-#ifdef WORKER_VERBOSE_STATS            
-                // PERFBUG! - stl_alloc when creating a stringstream
-                stringstream os;
-                os << e << ends;
-                string str = os.str();
-                TRACE( TRACE_TRX_FLOW, "\n%s\n", str.c_str());
-#endif
             }
         }          
 
@@ -273,12 +266,21 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         ++_stats._early_aborts;
     }
 
+
+#ifdef WORKER_VERBOSE_STATS
+        stopwatch_t rvp_time;
+#endif
+
     // 6. finalize processing        
     if (aprvp->post(is_error)) {
         // last caller
-
         // execute the code of this rendez-vous point
         e = aprvp->run();            
+
+#ifdef WORKER_VERBOSE_STATS
+        _stats.update_rvp_exec_time(rvp_time.time_ms());
+#endif
+
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem running rvp for xct (%d) [0x%x]\n",
                    paction->tid(), e.err_num());
@@ -292,6 +294,9 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         aprvp->giveback();
         aprvp = NULL;
     }
+#ifdef WORKER_VERBOSE_STATS
+        _stats.update_rvp_notify_time(rvp_time.time_ms());
+#endif
 
     // 7. update worker stats
     ++_stats._processed;    

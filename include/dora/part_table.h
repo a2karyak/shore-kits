@@ -175,9 +175,14 @@ public:
     // information
     void statistics() const {
         TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
-        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt-1);
-        for (int i=0; i<_ppvec.size(); i++)
-            _ppvec[i]->statistics();
+        worker_stats_t gathered;
+        for (int i=0; i<_ppvec.size(); i++) {
+            _ppvec[i]->statistics(gathered);
+        }
+        if (gathered._checked_input > 10) {
+            TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt-1);
+            gathered.print_and_reset();
+        }
     }        
 
     // information

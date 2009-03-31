@@ -18,6 +18,10 @@ ENTER_NAMESPACE(shore);
 #warning Verbose worker statistics enabled
 #endif
 
+#ifdef WORKER_VERY_VERBOSE_STATS
+#warning Very verbose worker statistics enabled (avg time waiting window)
+#endif
+
 
 
 /****************************************************************** 
@@ -58,19 +62,59 @@ void worker_stats_t::print_stats() const
 
 #ifdef WORKER_VERBOSE_STATS
 
-    TRACE( TRACE_STATISTICS, "Avg  serving   (%.3fms)\n", 
+    TRACE( TRACE_STATISTICS, "Avg Action     (%.3fms)\n", 
            _serving_total/(double)(_processed-_early_aborts));
     
-    TRACE( TRACE_STATISTICS, "Total wait     (%.2f)\n", _waiting_total);
+    TRACE( TRACE_STATISTICS, "Avg RVP exec   (%.3fms)\n", _rvp_exec/(double)_processed);
+    TRACE( TRACE_STATISTICS, "Avg RVP notify (%.3fms)\n", _rvp_notify/(double)_processed);
+    
+    TRACE( TRACE_STATISTICS, "Avg in queue   (%.3f)\n", _waiting_total/(double)_processed);
 
+#ifdef WORKER_VERY_VERBOSE_STATS
     for (int i=1; i<WAITING_WINDOW; i++) {
         TRACE( TRACE_STATISTICS, "(%d -> %d). Wait (%.2f)\n",
                i, i+1, _ww[(_ww_idx+i)%WAITING_WINDOW]);        
     }
+#endif
+#endif
+}
 
+worker_stats_t& 
+worker_stats_t::operator+= (worker_stats_t const& rhs)
+{
+    _processed = rhs._processed;
+    _problems  = rhs._problems;
+
+    _served_waiting  = rhs._served_waiting;
+
+    _checked_input = rhs._checked_input;
+    _served_input  = rhs._served_input;
+
+    _condex_sleep = rhs._condex_sleep;
+    _failed_sleep = rhs._failed_sleep;
+
+    _early_aborts = rhs._early_aborts;
+
+#ifdef MIDWAY_ABORTS    
+    _mid_aborts = rhs._mid_aborts;
 #endif
 
+#ifdef WORKER_VERBOSE_STATS
+    _waiting_total = rhs._waiting_total;
+    _serving_total = rhs._serving_total;
+    _rvp_exec = rhs._rvp_exec;
+    _rvp_notify = rhs._rvp_notify;
+    
+#ifdef WORKER_VERY_VERBOSE_STATS
+    for (int i=0; i<WAITING_WINDOW; i++) _ww[i] = rhs._ww[i];
+    _ww_idx = rhs._ww_idx;
+    _last_change = rhs._last_change;
+#endif
+#endif
+
+    return (*this);
 }
+
 
 void worker_stats_t::reset()
 {
@@ -93,10 +137,15 @@ void worker_stats_t::reset()
 
 #ifdef WORKER_VERBOSE_STATS
     _waiting_total = 0;
+    _serving_total = 0;
+    _rvp_exec = 0;
+    _rvp_notify = 0;
+    
+#ifdef WORKER_VERY_VERBOSE_STATS
     for (int i=0; i<WAITING_WINDOW; i++) _ww[i] = 0;
     _ww_idx = 0;
     _last_change = 0;
-    _serving_total = 0;
+#endif
 #endif
 }
 
@@ -106,6 +155,7 @@ void worker_stats_t::reset()
 void worker_stats_t::update_waited(const double queue_time)
 {
     _waiting_total += queue_time;
+#ifdef WORKER_VERY_VERBOSE_STATS
     _last_change += _for_last_change.time(); 
     if (_last_change>1) {
         // if more than 1 sec passed since the last ww_idx change, move it
@@ -115,11 +165,22 @@ void worker_stats_t::update_waited(const double queue_time)
     }
     // update waiting window (ww)
     _ww[_ww_idx] += queue_time;
+#endif
 }
 
 void worker_stats_t::update_served(const double serve_time_ms)
 {
     _serving_total += serve_time_ms;
+}
+
+void worker_stats_t::update_rvp_exec_time(const double rvp_exec_time_ms)
+{
+    _rvp_exec += rvp_exec_time_ms;
+}
+
+void worker_stats_t::update_rvp_notify_time(const double rvp_notify_time_ms)
+{
+    _rvp_notify += rvp_notify_time_ms;
 }
 
 #endif // WORKER_VERBOSE_STATS

@@ -34,7 +34,12 @@ ENTER_NAMESPACE(shore);
 
 // Use this to enable verbode stats for worker threads
 #undef WORKER_VERBOSE_STATS
-//#define WORKER_VERBOSE_STATS
+#define WORKER_VERBOSE_STATS
+
+// ditto
+#undef WORKER_VERY_VERBOSE_STATS
+//#define WORKER_VERY_VERBOSE_STATS
+
 
 
 // Define this flag to dump traces of record accesses
@@ -77,17 +82,22 @@ struct worker_stats_t
 #endif
 
 #ifdef WORKER_VERBOSE_STATS
-    void update_waited(const double queue_time);
-
-    // own failures == _problems
-    double _waiting_total; // not only the last WAITING_WINDOW secs
-    double _ww[WAITING_WINDOW];
-    int _ww_idx; // index on the ww (waiting window) ring
-    double _last_change;
-    stopwatch_t _for_last_change;
-
     void update_served(const double serve_time_ms);
     double _serving_total;   // in msecs
+
+    void update_rvp_exec_time(const double rvp_exec_time);
+    void update_rvp_notify_time(const double rvp_notify_time);
+    double _rvp_exec;
+    double _rvp_notify;
+
+    void update_waited(const double queue_time);
+    double _waiting_total; // not only the last WAITING_WINDOW secs
+#ifdef WORKER_VERY_VERBOSE_STATS
+    double _ww[WAITING_WINDOW];
+    int _ww_idx; // index on the ww (waiting window) ring
+    stopwatch_t _for_last_change;
+    double _last_change;
+#endif 
 #endif
 
     worker_stats_t() 
@@ -100,7 +110,11 @@ struct worker_stats_t
         , _mid_aborts(0)
 #endif
 #ifdef WORKER_VERBOSE_STATS
-        , _waiting_total(0), _ww_idx(0), _last_change(0), _serving_total(0)
+        , _waiting_total(0), _serving_total(0), 
+          _rvp_exec(0), _rvp_notify(0)
+#ifdef WORKER_VERY_VERBOSE_STATS
+        , _ww_idx(0), _last_change(0)
+#endif
 #endif
     { }
 
@@ -111,6 +125,8 @@ struct worker_stats_t
     void reset();
 
     void print_and_reset() { print_stats(); reset(); }
+
+    worker_stats_t& operator+=(worker_stats_t const& rhs);
 
 }; // EOF: worker_stats_t
 
@@ -374,6 +390,9 @@ public:
     const bool abort_one_trx(xct_t* axct);
 
     void stats(); 
+
+    const worker_stats_t get_stats() { return (_stats); }
+    void reset_stats() { _stats.reset(); }
 
 
 #ifdef ACCESS_RECORD_TRACE
