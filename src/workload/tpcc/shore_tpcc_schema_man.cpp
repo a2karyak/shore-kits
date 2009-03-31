@@ -640,7 +640,11 @@ w_rc_t order_line_man_impl::ol_get_probe_iter_by_index(ss_m* db,
 
     /* find index */
     assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("OL_INDEX");
+    index_desc_t* pindex = NULL;
+    if (alm == NL) 
+        pindex = _ptable->find_index("OL_INDEX_NL");
+    else
+        pindex = _ptable->find_index("OL_INDEX");
     assert (pindex);
 
     ptuple->set_value(0, o_id);

@@ -190,7 +190,6 @@ w_rc_t sf_man_impl::sf_get_idx_iter(ss_m* db,
     int lowsz = format_key(pindex, ptuple, replow);
     assert (replow._dest);
 
-
     ptuple->set_value(1, (short)4); // largest SF_TYPE (1-4)
 
     int highsz = format_key(pindex, ptuple, rephigh);
