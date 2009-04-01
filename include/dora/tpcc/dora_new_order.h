@@ -222,10 +222,7 @@ public:
     r_wh_nord_action() : nord_action() { }
     ~r_wh_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_wh_id);
-        _up.push_back(_wh_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp,
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -256,14 +253,7 @@ public:
     r_cust_nord_action() : nord_action() { }
     ~r_cust_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_wh_id);
-        _down.push_back(_d_id);
-        _down.push_back(_c_id);
-        _up.push_back(_wh_id);
-        _up.push_back(_d_id);
-        _up.push_back(_c_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp,
                     const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -309,12 +299,7 @@ public:
     upd_dist_nord_action() : nord_action() { }
     ~upd_dist_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_wh_id);
-        _down.push_back(_d_id);
-        _up.push_back(_wh_id);
-        _up.push_back(_d_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, 
                     midway_nord_rvp* pmidway_rvp, 
                     const int whid, 
@@ -349,10 +334,7 @@ public:
     r_item_nord_action() : nord_action(), _ol_idx(-1) { }
     ~r_item_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_i_id);
-        _up.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_i_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, 
                     midway_nord_rvp* pmidway_rvp, 
                     const int whid, 
@@ -388,12 +370,7 @@ public:
     upd_sto_nord_action() : nord_action(), _ol_idx(-1) { }
     ~upd_sto_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_supply_wh_id);
-        _down.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_i_id);
-        _up.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_supply_wh_id);
-        _up.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_i_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, 
                     midway_nord_rvp* pmidway_rvp, 
                     const int whid,
@@ -450,14 +427,7 @@ public:
     { }
     ~ins_ord_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_wh_id);
-        _down.push_back(_d_id);
-        _down.push_back(_d_next_o_id);
-        _up.push_back(_wh_id);
-        _up.push_back(_d_id);
-        _up.push_back(_d_next_o_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, 
                     rvp_t* prvp, 
                     const int whid, 
@@ -498,14 +468,7 @@ public:
     ins_nord_nord_action() : nord_action(), _d_next_o_id(-1) { }
     ~ins_nord_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_wh_id);
-        _down.push_back(_d_id);
-        _down.push_back(_d_next_o_id);
-        _up.push_back(_wh_id);
-        _up.push_back(_d_id);
-        _up.push_back(_d_next_o_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, 
                     rvp_t* prvp, const int whid, 
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -543,16 +506,7 @@ public:
     ins_ol_nord_action() : nord_action(), _ol_idx(-1), _d_next_o_id(-1) { }
     ~ins_ol_nord_action() { }
     w_rc_t trx_exec();    
-    void calc_keys() {
-        _down.push_back(_wh_id);
-        _down.push_back(_d_id);
-        _down.push_back(_d_next_o_id);
-        _down.push_back(_ol_idx);
-        _up.push_back(_wh_id);
-        _up.push_back(_d_id);
-        _up.push_back(_d_next_o_id);
-        _up.push_back(_ol_idx);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, 
                     rvp_t* prvp, const int whid,
                     DoraTPCCEnv* penv, act_cache* pc) 

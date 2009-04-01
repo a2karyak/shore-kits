@@ -253,6 +253,15 @@ done:
 }
 
 
+
+void upd_cust_pay_action::calc_keys() 
+{
+    _down.push_back(_pin._home_wh_id);
+    _down.push_back(_pin._home_d_id);
+    _up.push_back(_pin._home_wh_id);
+    _up.push_back(_pin._home_d_id);
+}
+
 w_rc_t upd_cust_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -265,11 +274,6 @@ w_rc_t upd_cust_pay_action::trx_exec()
     prcust->_rep = &areprow;
 
     w_rc_t e = RCOK;
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO (ip) THOSE TWO SHOULD BE TWO DIFFERENT ACTIONS AND THE CLIENT SHOULD
-    //           DECIDE, GIVEN THE _pin, WHICH OF THE TWO ACTIONS TO ENQUEUE
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // find the customer wh and d
     int c_w = (_pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id);

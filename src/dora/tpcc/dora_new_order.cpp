@@ -161,6 +161,15 @@ void final_nord_rvp::upd_aborted_stats()
 
 
 // R_WH_NORD_ACTION
+
+void r_wh_nord_action::calc_keys() 
+{
+    set_read_only();
+    _down.push_back(_wh_id);
+    _up.push_back(_wh_id);
+}
+
+
 w_rc_t r_wh_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -214,7 +223,19 @@ done:
 
 
 
+
 // R_CUST_NORD_ACTION
+
+void r_cust_nord_action::calc_keys() 
+{
+    set_read_only();
+    _down.push_back(_wh_id);
+    _down.push_back(_d_id);
+    _up.push_back(_wh_id);
+    _up.push_back(_d_id);
+}
+
+
 w_rc_t r_cust_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -245,8 +266,8 @@ w_rc_t r_cust_nord_action::trx_exec()
                _tid, _wh_id, _d_id, _c_id);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->customer_man()->cust_index_probe(_ptpccenv->db(), prcust,
-                                                        _wh_id, _d_id, _c_id);
+        e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust,
+                                                           _wh_id, _d_id, _c_id);
 #endif
 
         if (e.is_error()) { goto done; }
@@ -292,6 +313,15 @@ done:
 
 
 // UPD_DIST_NORD_ACTION
+
+void upd_dist_nord_action::calc_keys() 
+{
+    _down.push_back(_wh_id);
+    _down.push_back(_d_id);
+    _up.push_back(_wh_id);
+    _up.push_back(_d_id);
+}
+
 w_rc_t upd_dist_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -372,6 +402,14 @@ done:
 
 
 // R_ITEM_NORD_ACTION
+
+void r_item_nord_action::calc_keys() 
+{
+    set_read_only();
+    _down.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_i_id);
+    _up.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_i_id);
+}
+
 w_rc_t r_item_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -437,6 +475,16 @@ done:
 
 
 // UPD_STO_NORD_ACTION
+
+#warning Only 1 field (WH) determines the STOCK table accesses! Not 2.
+
+void upd_sto_nord_action::calc_keys() 
+{
+    _down.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_supply_wh_id);
+    _up.push_back(_pmidway_rvp->_noin.items[_ol_idx]._ol_supply_wh_id);
+}
+
+
 w_rc_t upd_sto_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -549,6 +597,19 @@ done:
 
 
 // INS_ORD_NORD_ACTION
+
+
+#warning Only 2 fields (WH,DI) determine the ORDER table accesses! Not 3.
+
+void ins_ord_nord_action::calc_keys() 
+{
+    _down.push_back(_wh_id);
+    _down.push_back(_d_id);
+    _up.push_back(_wh_id);
+    _up.push_back(_d_id);
+}
+
+
 w_rc_t ins_ord_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -585,7 +646,7 @@ w_rc_t ins_ord_nord_action::trx_exec()
                _tid, _d_next_o_id);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->order_man()->add_tuple(_ptpccenv->db(), prord);
+        e = _ptpccenv->order_man()->add_tuple(_ptpccenv->db(), prord, NL);
 #endif
 
         if (e.is_error()) { goto done; }
@@ -607,6 +668,19 @@ done:
 
 
 // INS_NORD_NORD_ACTION
+
+
+#warning Only 2 fields (WH,DI) determine the NEW-ORDER table accesses! Not 3.
+
+void ins_nord_nord_action::calc_keys() 
+{
+    _down.push_back(_wh_id);
+    _down.push_back(_d_id);
+    _up.push_back(_wh_id);
+    _up.push_back(_d_id);
+}
+
+
 w_rc_t ins_nord_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -637,7 +711,7 @@ w_rc_t ins_nord_nord_action::trx_exec()
                _tid, _wh_id, _d_id, _d_next_o_id);
     
 #ifndef ONLYDORA
-        e = _ptpccenv->new_order_man()->add_tuple(_ptpccenv->db(), prno);
+        e = _ptpccenv->new_order_man()->add_tuple(_ptpccenv->db(), prno, NL);
 #endif
 
         if (e.is_error()) { goto done; }
@@ -659,6 +733,19 @@ done:
 
 
 // INS_OL_NORD_ACTION
+
+
+#warning Only 2 fields (WH,DI) determine the ORDERLINE table accesses! Not 3.
+
+void ins_ol_nord_action::calc_keys() 
+{
+    _down.push_back(_wh_id);
+    _down.push_back(_d_id);
+    _up.push_back(_wh_id);
+    _up.push_back(_d_id);
+}
+
+
 w_rc_t ins_ol_nord_action::trx_exec() 
 {
     assert (_ptpccenv);
@@ -698,7 +785,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
                _tid, _wh_id, _d_id, _d_next_o_id, _ol_idx+1);
 
 #ifndef ONLYDORA
-        e = _ptpccenv->order_line_man()->add_tuple(_ptpccenv->db(), prol);
+        e = _ptpccenv->order_line_man()->add_tuple(_ptpccenv->db(), prol, NL);
 #endif
 
         if (e.is_error()) { goto done; }

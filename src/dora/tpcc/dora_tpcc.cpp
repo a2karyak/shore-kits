@@ -43,13 +43,13 @@ const int sto_IRP_KEY = 2;
 // key estimations for each partition of the tpc-c tables
 const int whs_KEY_EST = 100;
 const int dis_KEY_EST = 1000;
-const int cus_KEY_EST = 30000;
-const int his_KEY_EST = 100;
-const int nor_KEY_EST = 3;
-const int ord_KEY_EST = 4;
-const int ite_KEY_EST = 1;
-const int oli_KEY_EST = 4;
-const int sto_KEY_EST = 2;
+const int cus_KEY_EST = 1000;
+const int his_KEY_EST = 1000;
+const int nor_KEY_EST = 1000;
+const int ord_KEY_EST = 1000;
+const int ite_KEY_EST = 1000;
+const int oli_KEY_EST = 1000;
+const int sto_KEY_EST = 1000;
 
 
 

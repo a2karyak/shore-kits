@@ -250,14 +250,7 @@ public:
     ~upd_cust_pay_action() { }
     w_rc_t trx_exec();   
     midway_pay_rvp* _m_rvp;
-    void calc_keys() {
-        _down.push_back(_pin._home_wh_id);
-        _down.push_back(_pin._home_d_id);
-        _down.push_back(_pin._c_id);
-        _up.push_back(_pin._home_wh_id);
-        _up.push_back(_pin._home_d_id);
-        _up.push_back(_pin._c_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
