@@ -169,7 +169,7 @@ protected:
     tatas_lock               _next_lock;
 
     // statistics
-    worker_stats_t           _stats;
+    worker_stats_t _stats;
 
     // processor binding
     bool                     _is_bound;
@@ -391,7 +391,7 @@ public:
 
     void stats(); 
 
-    const worker_stats_t get_stats() { return (_stats); }
+    worker_stats_t get_stats() { return (*&_stats); }
     void reset_stats() { _stats.reset(); }
 
 

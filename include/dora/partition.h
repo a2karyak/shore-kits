@@ -187,7 +187,9 @@ public:
 
     // get lock manager
     LockManager* plm() { return (_plm); }
-    
+
+    // get Owner thread
+    Worker* owner() { return (_owner); }
 
 
     //// Partition Control ////
@@ -262,6 +264,7 @@ public:
     // stats
     void statistics(worker_stats_t& gather) {
         assert (_owner); 
+        _owner->stats();
         gather += _owner->get_stats();
         _owner->reset_stats();
     }

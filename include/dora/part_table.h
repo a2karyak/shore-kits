@@ -180,7 +180,7 @@ public:
             _ppvec[i]->statistics(gathered);
         }
         if (gathered._checked_input > 10) {
-            TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt-1);
+            TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
             gathered.print_and_reset();
         }
     }        
@@ -188,13 +188,13 @@ public:
     // information
     void info() const {
         TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
-        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt-1);
+        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
     }        
 
     // dumps information
     void dump() const {
         TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
-        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt-1);
+        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
         for (int i=0; i<_ppvec.size(); i++)
             _ppvec[i]->dump();
     }        
