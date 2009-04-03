@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 #@file:   er_filter_dora.sh 
 #@brief:  Post-processing script for the output of dbx, for DORA 
@@ -19,32 +19,36 @@ parenthize()
     echo '('"$*"')'
 }
 
-BASE=$(in_stack ".*run_one.*")
-LM=$(in_stack "lock_m.*")
+# All server side + begin_xct
+BEGIN=$(in_stack ".*begin_xct.*")
+SERVE=$(in_stack ".*_serve_action.*")
 
+BASE=$(parenthize "$BEGIN || $SERVE")
+
+
+# Components in graphs
+LM=$(in_stack ".*lock_m.*")
+LOGM=$(in_stack ".*log.*")
+
+
+# Contention
 ATOMIC=$(is_leaf "atomic[^:]*")
-#MEMBAR=$(is_leaf "membar.*")
 PPMCS=$(is_leaf "ppmcs.*acquire.*")
 OCC_RWLOCK=$(is_leaf "occ_rwlock.*")
 SPIN=$(is_leaf ".*lock.*spin.*")
 MUTEX=$(is_leaf "mutex.*lock.*")
 
-#SLI=$(in_stack ".*sli_.*")
-DORA=$(is_leaf "dora.*")
-
 CONTENTION=$(parenthize "$ATOMIC || $PPMCS || $SPIN || $OCC_RWLOCK || $MUTEX")
 
-er_print -limit 5 \
+# DORA
+DORA=$(is_leaf "dora.*")
+
+
+er_print -limit 25 \
     -filters "$BASE" -functions \
-    -filters "$BASE && $DORA" -functions \
+    -filters "$BASE && $CONTENTION" -functions \
+    -filters "$BASE && $LM" -functions \
+    -filters "$BASE && $LM && $CONTENTION" -functions \
+    -filters "$BASE && $LOGM" -functions \
+    -filters "$BASE && $LOGM && $CONTENTION" -functions \
     $@
-
-
-# er_print -limit 5 \
-#     -filters "$BASE" -functions \
-#     -filters "$BASE && $LM" -functions \
-#     -filters "$BASE && $CONTENTION" -functions \
-#     -filters "$BASE && $LM && $CONTENTION" -functions \
-#     -filters "$BASE && $SLI" -functions \
-#     -filters "$BASE && $SLI && $CONTENTION" -functions \
-#     $@
