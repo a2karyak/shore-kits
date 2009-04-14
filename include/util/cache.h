@@ -151,14 +151,12 @@ public:
         int icount = 0;
         while ( (v=pop()) ) {
             val.v = v;
-            val.n += +_offset; // back up to the real
+            val.n += _offset; // back up to the real
             ((Object*)v)->~Object();
             free(val.v);
             ++icount;
         }
-        //TRACE( TRACE_TRX_FLOW, "Deleted: (%d)\n", icount);
-
-        //if (_stl_pools) delete [] _stl_pools;
+        //printf("Deleted: (%d)\n", icount);
     }
 
 
