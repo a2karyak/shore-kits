@@ -82,33 +82,34 @@ void worker_stats_t::print_stats() const
 worker_stats_t& 
 worker_stats_t::operator+= (worker_stats_t const& rhs)
 {
-    _processed = rhs._processed;
-    _problems  = rhs._problems;
+    _processed += rhs._processed;
+    _problems  += rhs._problems;
 
-    _served_waiting  = rhs._served_waiting;
+    _served_waiting += rhs._served_waiting;
 
-    _checked_input = rhs._checked_input;
-    _served_input  = rhs._served_input;
+    _checked_input += rhs._checked_input;
+    _served_input  += rhs._served_input;
 
-    _condex_sleep = rhs._condex_sleep;
-    _failed_sleep = rhs._failed_sleep;
+    _condex_sleep += rhs._condex_sleep;
+    _failed_sleep += rhs._failed_sleep;
 
-    _early_aborts = rhs._early_aborts;
+    _early_aborts += rhs._early_aborts;
 
 #ifdef MIDWAY_ABORTS    
-    _mid_aborts = rhs._mid_aborts;
+    _mid_aborts += rhs._mid_aborts;
 #endif
 
 #ifdef WORKER_VERBOSE_STATS
-    _waiting_total = rhs._waiting_total;
-    _serving_total = rhs._serving_total;
-    _rvp_exec = rhs._rvp_exec;
-    _rvp_notify = rhs._rvp_notify;
+    _waiting_total += rhs._waiting_total;
+    _serving_total += rhs._serving_total;
+
+    _rvp_exec   += rhs._rvp_exec;
+    _rvp_notify += rhs._rvp_notify;
     
 #ifdef WORKER_VERY_VERBOSE_STATS
-    for (int i=0; i<WAITING_WINDOW; i++) _ww[i] = rhs._ww[i];
-    _ww_idx = rhs._ww_idx;
-    _last_change = rhs._last_change;
+    for (int i=0; i<WAITING_WINDOW; i++) _ww[i] += rhs._ww[i];
+    _ww_idx += rhs._ww_idx;
+    _last_change += rhs._last_change;
 #endif
 #endif
 
@@ -138,6 +139,7 @@ void worker_stats_t::reset()
 #ifdef WORKER_VERBOSE_STATS
     _waiting_total = 0;
     _serving_total = 0;
+
     _rvp_exec = 0;
     _rvp_notify = 0;
     
