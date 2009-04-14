@@ -77,7 +77,7 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
     noin._d_id   = URand(1, 10);
     noin._c_id   = NURand(1023, 1, 3000);
     noin._ol_cnt = URand(5, 15);
-    noin._rbk    = URand(1, 100); /* if rbk == 1 - ROLLBACK */
+    noin._rbk    = URand(1, 100); // if rbk == 1 - ROLLBACK
 
     noin._tstamp = time(NULL);
 
@@ -89,13 +89,13 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
 
 #ifndef USE_ONLY_LOCAL_WHS
         if (noin.items[i]._ol_supply_wh_select == 1) {
-            /* remote new_order */
+            // remote new_order
             noin.items[i]._ol_supply_wh_id = URand(1, sf);
             if (noin.items[i]._ol_supply_wh_id != noin._wh_id)
                 noin._all_local = 0; // if indeed remote WH, then update all_local flag
         }
         else {
-            /* home new_order */ 
+            // home new_order
             noin.items[i]._ol_supply_wh_id = noin._wh_id;
         }
 #else

@@ -264,7 +264,7 @@ public:
     // stats
     void statistics(worker_stats_t& gather) {
         assert (_owner); 
-        _owner->stats();
+        //_owner->stats();
         gather += _owner->get_stats();
         _owner->reset_stats();
     }
