@@ -139,6 +139,13 @@ struct table_row_t
     rid_t          _rid;          /* record id */    
     field_value_t* _pvalues;      /* set of values */
 
+    // pre-calculated offsets
+    offset_t _fixed_offset;
+    offset_t _var_slot_offset;
+    offset_t _var_offset;
+    int      _null_count;
+
+
     rep_row_t*     _rep;          /* a pointer to a row representation struct */
 
 
@@ -148,7 +155,9 @@ struct table_row_t
 
     table_row_t() 
         : _field_cnt(0), _is_setup(false), 
-          _rid(rid_t::null), _pvalues(NULL), _rep(NULL)
+          _rid(rid_t::null), _pvalues(NULL), 
+          _fixed_offset(0),_var_slot_offset(0),_var_offset(0),_null_count(0),
+          _rep(NULL)
     { 
     }
         
@@ -163,7 +172,12 @@ struct table_row_t
 
     inline rid_t rid() const { return (_rid); }
     inline void  set_rid(const rid_t& rid) { _rid = rid; }
-    inline bool  is_rid_valid() const { return (_rid != rid_t::null); }
+    inline const bool  is_rid_valid() const { return (_rid != rid_t::null); }
+
+    inline const offset_t get_fixed_offset() const { return (_fixed_offset); }
+    inline const offset_t get_var_slot_offset() const { return (_var_slot_offset); }
+    inline const offset_t get_var_offset() const { return (_var_offset); }
+    inline const int get_null_count() const { return (_null_count); }
 
     const int size() const;
 
@@ -286,7 +300,6 @@ inline const int table_row_t::size() const
     assert (_is_setup);
 
     int size = 0;
-    int null_count = 0;
 
     /* for a fixed length field, it just takes as much as the
      * space for the value itself to store.
@@ -297,7 +310,6 @@ inline const int table_row_t::size() const
 
     for (int i=0; i<_field_cnt; i++) {
 	if (_pvalues[i]._pfield_desc->allow_null()) {
-	    null_count++;
 	    if (_pvalues[i].is_null()) continue;
 	}
 	if (_pvalues[i].is_variable_length()) {
@@ -306,7 +318,7 @@ inline const int table_row_t::size() const
 	}
 	else size += _pvalues[i].maxsize();
     }
-    if (null_count) size += (null_count >> 3) + 1;
+    if (_null_count) size += (_null_count >> 3) + 1;
     return (size);
 }
 

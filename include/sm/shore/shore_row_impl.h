@@ -73,18 +73,38 @@ struct row_impl : public table_row_t
             return (1);
         }
 
-//         if (_pvalues) {
-//             delete [] _pvalues;
-//             _pvalues = NULL;
-//         }
-
         // else do the normal setup
         _ptable = ptd;
         _field_cnt = ptd->field_count();
         assert (_field_cnt>0);
         _pvalues = new field_value_t[_field_cnt];
-        for (int i=0; i<_field_cnt; i++)
+
+        register int var_count  = 0;
+        register int fixed_size = 0;
+
+        // setup each field and calculate offsets along the way
+        for (int i=0; i<_field_cnt; i++) {
             _pvalues[i].setup(ptd->desc(i));
+
+            // count variable- and fixed-sized fields
+            if (_pvalues[i].is_variable_length())
+                var_count++;
+            else
+                fixed_size += _pvalues[i].maxsize();
+
+            // count null-able fields
+            if (_pvalues[i].field_desc()->allow_null())
+                _null_count++;            
+        }
+
+        // offset for fixed length field values
+        _fixed_offset = 0;
+        if (_null_count) _fixed_offset = ((_null_count-1) >> 3) + 1;
+        // offset for variable length field slots
+        _var_slot_offset = _fixed_offset + fixed_size; 
+        // offset for variable length field values
+        _var_offset = _var_slot_offset + sizeof(offset_t)*var_count;
+
 
         _is_setup = true;
         return (0);

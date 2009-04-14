@@ -577,21 +577,33 @@ template <class TableDesc>
 const int table_man_impl<TableDesc>::format(table_tuple* ptuple,
                                             rep_row_t &arep)
 {
-    assert (_ptable);
-
-    int var_count  = 0;
-    int fixed_size = 0;
-    int null_count = 0;
-    int tupsize    = 0;
+    // Format the data field by field
 
 
-    /* 1. calculate sizes related to the tuple, 
-     * - (tupsize)    : total space of the tuple 
-     * - (fixed_size) : the space occupied by the fixed length fields 
-     * - (null_count) : the number of null flags 
-     * - (var_count)  : the number of variable length fields 
-     */
+    // 1. Get the pre-calculated offsets
 
+    // current offset for fixed length field values
+    register offset_t fixed_offset = ptuple->get_fixed_offset();
+
+    // current offset for variable length field slots
+    register offset_t var_slot_offset = ptuple->get_var_slot_offset();
+
+    // current offset for variable length field values
+    register offset_t var_offset = ptuple->get_var_offset();
+
+    
+
+    // 2. calculate the total space of the tuple
+    //   (tupsize)    : total space of the tuple 
+
+    register int tupsize    = 0;
+
+    // look at shore_row_impl.h:100
+    register int null_count = ptuple->get_null_count();
+    register int fixed_size = ptuple->get_var_slot_offset() - ptuple->get_fixed_offset();
+
+
+    // loop over all the varialbe-sized fields and add their real size (set at ::set())
     for (int i=0; i<_ptable->field_count(); i++) {
 
 	if (ptuple->_pvalues[i].is_variable_length()) {
@@ -599,23 +611,20 @@ const int table_man_impl<TableDesc>::format(table_tuple* ptuple,
             // do nothing, else add to the total tuple length the (real)
             // size of the value plus the size of an offset.
 
-	    var_count++;
             if (ptuple->_pvalues[i].is_null()) continue;
             tupsize += ptuple->_pvalues[i].realsize();
             tupsize += sizeof(offset_t);
 	}
-	else {            
-            // If it is of FIXED length, then increase the total tuple
-            // length, as well as, the size of the fixed length part of
-            // to tuple by the fixed size of this type of field.
 
-            fixed_size += ptuple->_pvalues[i].maxsize();
-            tupsize += ptuple->_pvalues[i].maxsize();
-        }
+        // If it is of FIXED length, then increase the total tuple
+        // length, as well as, the size of the fixed length part of
+        // the tuple by the fixed size of this type of field.
 
-	if (ptuple->_pvalues[i].field_desc()->allow_null())  
-            null_count++;
+        // IP: The length of the fixed-sized fields is added after the loop
     }
+
+    // Add up the length of the fixed-sized fields
+    tupsize += fixed_size;
 
     // In the total tuple length add the size of the bitmap that
     // shows which fields can be NULL 
@@ -623,21 +632,15 @@ const int table_man_impl<TableDesc>::format(table_tuple* ptuple,
     assert (tupsize);
 
 
-    /* 2. allocate space for formatted data */
+
+    // 3. allocate space for the formatted data
     arep.set(tupsize);
 
 
-    /* 3. format the data */
 
-    // current offset for fixed length field values
-    offset_t fixed_offset = 0;
-    if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
-    // current offset for variable length field slots
-    offset_t var_slot_offset = fixed_offset + fixed_size; 
-    // current offset for variable length field values
-    offset_t var_offset = var_slot_offset + sizeof(offset_t)*var_count;
+    // 4. Copy the fields to the array, field by field
 
-    int null_index = -1;
+    register int null_index = -1;
     // iterate over all fields
     for (int i=0; i<_ptable->field_count(); i++) {
 
@@ -697,40 +700,23 @@ template <class TableDesc>
 const bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
                                            const char* data)
 {
-    assert (_ptable);
-
-    int var_count  = 0;
-    int fixed_size = 0;
-    int null_count = 0;
+    // Read the data field by field
 
 
-    /* 1. calculate sizes related to the tuple, 
-     * - (fixed_size) : the space occupied by the fixed length fields 
-     * - (null_count) : the number of null flags 
-     * - (var_count)  : the number of variable length fields 
-     *
-     */
-
-    for (int i=0; i<_ptable->field_count(); i++) {
-	if (ptuple->_pvalues[i].is_variable_length())
-	    var_count++;
-	else 
-            fixed_size += ptuple->_pvalues[i].maxsize();
-
-	if (ptuple->_pvalues[i].field_desc()->allow_null())  
-            null_count++;
-    }
-
-
-    /* 2. read the data field by field */
+    // 1. Get the pre-calculated offsets
 
     // current offset for fixed length field values
-    offset_t fixed_offset = 0;
-    if (null_count) fixed_offset = ((null_count-1) >> 3) + 1;
+    register offset_t fixed_offset = ptuple->get_fixed_offset();
+
     // current offset for variable length field slots
-    offset_t var_slot_offset = fixed_offset + fixed_size; 
+    register offset_t var_slot_offset = ptuple->get_var_slot_offset();
+
     // current offset for variable length field values
-    offset_t var_offset = var_slot_offset + sizeof(offset_t)*var_count;
+    register offset_t var_offset = ptuple->get_var_offset();
+
+
+
+    // 2. Read the data field by field
 
     int null_index = -1;
     for (int i=0; i<_ptable->field_count(); i++) {
