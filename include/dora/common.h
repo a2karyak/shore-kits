@@ -172,11 +172,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             guard<Pool> _keyPtrPool;                    \
             guard<Pool> _kalReqPool;                    \
             guard<Pool> _dtPool;                        \
-            guard<PoolPtr> _poolArray;                  \
+            array_guard_t<PoolPtr> _poolArray;          \
             Type##_cache() {                            \
                 _poolArray = new PoolPtr[3];            \
                 _cache = new object_cache_t<Type>(_poolArray.get()); }  \
-            ~Type##_cache() { _cache.done(); } };
+            ~Type##_cache() { _cache.done(); _poolArray.done(); } };
 
 
 
