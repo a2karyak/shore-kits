@@ -3,6 +3,7 @@
 /** @file tpcc_input.h
  *
  *  @brief Declaration of the (common) inputs for the TPC-C trxs
+ *  @brief Declaration of functions that generate the inputs for the TPCC TRXs
  *
  *  @author Ippokratis Pandis (ipandis)
  */
@@ -11,6 +12,8 @@
 #define __TPCC_INPUT_H
 
 #include "util.h"
+#include "stages/tpcc/common/tpcc_scaling_factor.h"
+
 #include "stages/tpcc/common/tpcc_const.h"
 #include "stages/tpcc/common/tpcc_struct.h"
 
@@ -314,6 +317,41 @@ struct populate_one_unit_input_t
     int* _cids;
     
 };
+
+
+
+
+
+
+
+
+/** Exported functionality */
+
+
+
+
+payment_input_t      create_payment_input(int sf,
+                                          int specificWH = 0);
+
+new_order_input_t    create_new_order_input(int sf,
+                                            int specificWH = 0);
+
+order_status_input_t create_order_status_input(int sf,
+                                               int specificWH = 0);
+
+delivery_input_t     create_delivery_input(int sf,
+                                           int specificWH = 0);
+
+stock_level_input_t  create_stock_level_input(int sf,
+                                              int specificWH = 0);
+
+mbench_wh_input_t  create_mbench_wh_input(int sf,
+                                          int specificWH = 0);
+
+mbench_cust_input_t  create_mbench_cust_input(int sf,
+                                              int specificWH = 0);
+
+
 
 
 

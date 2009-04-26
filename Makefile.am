@@ -239,7 +239,6 @@ WL_TPCC_COMMON = \
 
 WL_TPCC_SHORE = \
    $(SW)/tpcc/tpcc_input.cpp \
-   $(SW)/tpcc/tpcc_trx_input.cpp \
    $(SW)/tpcc/shore_tpcc_random.cpp \
    $(SW)/tpcc/shore_tpcc_schema.cpp \
    $(SW)/tpcc/shore_tpcc_schema_man.cpp \

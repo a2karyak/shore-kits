@@ -24,7 +24,6 @@
 
 #include "workload/tpcc/shore_tpcc_schema_man.h"
 #include "workload/tpcc/tpcc_input.h"
-#include "workload/tpcc/tpcc_trx_input.h"
 
 #include <map>
 
