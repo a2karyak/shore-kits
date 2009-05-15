@@ -50,10 +50,9 @@ public:
     ~timestamp_t() { }
 
     static int  size() { return sizeof(time_t); }
-    const char* string() const {
-	char* temp = ctime(&_time);
-	temp[strlen(temp)-1] = '\0';
-	return (temp);
+    void string(char* dest, const int len) const {
+	ctime_r(&_time, dest, len);
+	dest[len-1] = '\0';
     }
 
 }; // EOF: timestamp_t

@@ -36,7 +36,7 @@ char* timet_to_datestr(time_t time);
 /** time_t manipulation functions
  *
  *  @note These function use the Unix timezone functions
- *        like mktime() and localtime()
+ *        like mktime() and localtime_r()
  */
 
 /* Add or subtract a number of days, weeks or months */

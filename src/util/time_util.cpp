@@ -26,8 +26,10 @@
  */
 
 int datepart(char const* str, const time_t *pt) {
-    tm tm_struct;
-    tm_struct = *(localtime(pt));
+    struct tm tm_struct;
+
+    localtime_r(pt, &tm_struct);
+
     if(strcmp(str, "yy") == 0) {
         return (tm_struct.tm_year + 1900);
     }
@@ -78,7 +80,7 @@ char* timet_to_datestr(time_t time) {
 /** time_t manipulation functions.
  *
  *  @note The functions below use the Unix timezone functions like mktime()
- *         and localtime()
+ *         and localtime_r()
  */
 
 
@@ -125,7 +127,7 @@ static const int days_in_month[12] = {
 time_t time_add_day (time_t time, int days) {
     struct tm tm;
 
-    localtime_r (&time, &tm);
+    localtime_r(&time, &tm);
     tm.tm_mday += days;
     tm.tm_isdst = -1;
     
@@ -208,7 +210,7 @@ time_t time_day_begin (time_t t) {
 
   struct tm tm;
   
-  localtime_r (&t, &tm);
+  localtime_r(&t, &tm);
   tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
   tm.tm_isdst = -1;
   
@@ -230,7 +232,7 @@ time_t time_day_end (time_t t) {
 
   struct tm tm;
   
-  localtime_r (&t, &tm);
+  localtime_r(&t, &tm);
   tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
   tm.tm_mday++;
   tm.tm_isdst = -1;

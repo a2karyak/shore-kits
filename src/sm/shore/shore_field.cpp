@@ -153,7 +153,9 @@ void  field_value_t::print_value(ostream & os)
 	os << _value._float;
 	break;
     case SQL_TIME:
-	os << _value._time->string();
+        char mstr[32];
+        _value._time->string(mstr,32);
+	os << mstr;
 	break;
     case SQL_VARCHAR:
     case SQL_CHAR:
@@ -211,7 +213,9 @@ const int field_value_t::get_debug_str(char* &buf)
         sprintf(buf, "SQL_FLOAT:    \t%.2f", _value._float);
 	break;
     case SQL_TIME:
-        sprintf(buf, "SQL_TIME:     \t%s", _value._time->string());
+        char mstr[32];
+        _value._time->string(mstr,32);
+        sprintf(buf, "SQL_TIME:     \t%s", mstr);
 	break;
     case SQL_VARCHAR:
         strcat(buf, "SQL_VARCHAR:  \t");
