@@ -22,6 +22,7 @@ using namespace tpcc;
 
 ENTER_NAMESPACE(dora);
 
+
 //#define PRINT_TRX_RESULTS
 
 //
@@ -34,6 +35,7 @@ ENTER_NAMESPACE(dora);
 
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_stock_rvp,stock_level);
+
 
 
 /******************************************************************** 

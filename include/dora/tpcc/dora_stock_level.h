@@ -57,7 +57,7 @@ DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_dist_stock_action,int,DoraTPCCEnv,mid1_stoc
 // !!! 2 fields only (WH,DI) determine the ORDERLINE table accesses, not 3 !!!
 DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_ol_stock_action,int,DoraTPCCEnv,mid2_stock_rvp,stock_level_input_t,2);
 
-// !!! 1 field only (WH) determines the STOCK table accesses, not 
+// !!! 1 field only (WH) determines the STOCK table accesses, not 2!!!
 DECLARE_DORA_ACTION_NO_RVP_CLASS(r_st_stock_action,int,DoraTPCCEnv,stock_level_input_t,2);
 
 
