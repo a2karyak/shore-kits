@@ -69,7 +69,7 @@ class upd_oline_del_action;
 class upd_cust_del_action;
 
 // TPC-C NewOrder
-class midway_nord_rvp;
+class mid_nord_rvp;
 class final_nord_rvp;
 class r_wh_nord_action;
 class r_cust_nord_action;
@@ -307,50 +307,29 @@ public:
     ////////////////////
 
 
-    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(midway_nord_rvp,new_order_input_t);
-    //final_nord_rvp* frvp
+    DECLARE_DORA_MIDWAY_DYNAMIC_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t);
 
-    DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_nord_rvp);
-    // const int ol_cnt
+    DECLARE_DORA_FINAL_DYNAMIC_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp);
 
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_wh_nord_action,rvp_t,int);
-    //const int d_id
+    // Start -> Midway
+    DECLARE_DORA_ACTION_GEN_FUNC(r_wh_nord_action,mid_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,rvp_t,int);
-    //const int d_id
-    //const int c_id
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,mid_nord_rvp,no_item_nord_input_t);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid_nord_rvp,no_item_nord_input_t);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,with_item_nord_input_t);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,no_item_nord_input_t);
 
 
-    DECLARE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,midway_nord_rvp,int);
-    //const int d_id
+    // Midway -> Final
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,rvp_t,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_item_nord_action,midway_nord_rvp,int);
-    //const int d_id
-    //const int olidx
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,rvp_t,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,midway_nord_rvp,int);
-    //const int d_id
-    //const int olidx
-
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,rvp_t,int);
-    //const int d_id
-    //const int nextoid
-    //const cid
-    //const tstamp
-    //const int olcnt
-    //const int alllocal
-
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,rvp_t,int);
-    //const int d_id
-    //const int nextoid
-
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,int);
-    //const int d_id
-    //const int nextoid
-    //const int olidx
-    //const ol_item_info& iteminfo
-    //time_t tstamp
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,with_item_nord_input_t);
 
 
 private:
@@ -359,9 +338,6 @@ private:
     const processorid_t _next_cpu(const processorid_t& aprd,
                                   const irpTableImpl* atable,
                                   const int step=DF_CPU_STEP_TABLES);
-
-
-
         
 }; // EOF: DoraTPCCEnv
 

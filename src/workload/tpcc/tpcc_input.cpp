@@ -68,7 +68,9 @@ ol_item_info::operator= (const ol_item_info& rhs)
     _ol_quantity = rhs._ol_quantity;
 
     _item_amount = rhs._item_amount;
+
     _astock = rhs._astock;
+    _aitem = rhs._aitem;
 
     return (*this);
 }
@@ -87,9 +89,89 @@ new_order_input_t::operator= (const new_order_input_t& rhs)
     _all_local = rhs._all_local;
     _d_next_o_id = rhs._d_next_o_id;
 
+    _awh   = rhs._awh;
+    _acust = rhs._acust;
+    _adist = rhs._adist;
+
     for (int i=0; i<rhs._ol_cnt; i++) {
         items[i] = rhs.items[i];
     }
+
+    return (*this);
+}
+
+
+void 
+new_order_input_t::get_no_item_input(no_item_nord_input_t& anoin)
+{
+    anoin._wh_id = _wh_id;
+    anoin._d_id = _d_id;
+    anoin._c_id = _c_id;
+    anoin._ol_cnt = _ol_cnt;
+    anoin._rbk = _rbk;
+
+    anoin._tstamp = _tstamp;
+    anoin._all_local = _all_local;
+    anoin._d_next_o_id = _d_next_o_id;    
+}
+
+
+void 
+new_order_input_t::get_with_item_input(with_item_nord_input_t& awin, 
+                                       const int idx)
+{
+    awin._wh_id = _wh_id;
+    awin._d_id = _d_id;
+    awin._c_id = _c_id;
+    awin._ol_cnt = _ol_cnt;
+    awin._rbk = _rbk;
+
+    awin._tstamp = _tstamp;
+    awin._all_local = _all_local;
+    awin._d_next_o_id = _d_next_o_id;    
+
+    awin._ol_idx = idx;
+
+    awin.item = items[idx];
+}
+
+
+
+no_item_nord_input_t& 
+no_item_nord_input_t::operator= (const no_item_nord_input_t& rhs) 
+{
+    // copy input
+    _wh_id = rhs._wh_id;
+    _d_id = rhs._d_id;
+    _c_id = rhs._c_id;
+    _ol_cnt = rhs._ol_cnt;
+    _rbk = rhs._rbk;
+
+    _tstamp = rhs._tstamp;
+    _all_local = rhs._all_local;
+    _d_next_o_id = rhs._d_next_o_id;
+
+    return (*this);
+}
+
+
+with_item_nord_input_t& 
+with_item_nord_input_t::operator= (const with_item_nord_input_t& rhs) 
+{
+    // copy input
+    _wh_id = rhs._wh_id;
+    _d_id = rhs._d_id;
+    _c_id = rhs._c_id;
+    _ol_cnt = rhs._ol_cnt;
+    _rbk = rhs._rbk;
+
+    _tstamp = rhs._tstamp;
+    _all_local = rhs._all_local;
+    _d_next_o_id = rhs._d_next_o_id;
+
+    _ol_idx = rhs._ol_idx;
+
+    item = rhs.item;
 
     return (*this);
 }
