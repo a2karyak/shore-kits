@@ -40,22 +40,6 @@ using std::map;
 
 
 
-#define DEFINE_TUPLE_INTERFACE(Type, Name)     \
-    Type* get_##Name##_tuple();                \
-    void  give_##Name##_tuple(Type* atuple);
-
-
-#define DECLARE_TUPLE_INTERFACE(Type, Name, PoolName, TableObjectName)    \
-    DECLARE_TLS(block_alloc<Type>, PoolName);                             \
-    Type* ShoreTPCCEnv::get_##Name##_tuple() {                            \
-        Type* tuple = new (*PoolName) Type;                               \
-        assert (tuple); tuple->setup(TableObjectName);                    \
-        return (tuple); }                                                 \
-    void ShoreTPCCEnv::give_##Name##_tuple(Type* atuple) {                \
-        PoolName->destroy(atuple); }
-
-
-
 /****************************************************************** 
  *
  *  @struct: ShoreTPCCEnv Stats

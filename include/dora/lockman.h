@@ -296,7 +296,7 @@ protected:
 
     // cache of Keys
     guard< object_cache_t<Key> > _key_cache;
-    guard<Pool*> _key_pool_array;
+    array_guard_t<Pool*> _key_pool_array;
 
 public:
 

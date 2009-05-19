@@ -597,38 +597,6 @@ w_rc_t ShoreTPCBEnv::_post_init_impl()
 
     return (RCOK);
 }
-
-
-
-
-/********************************************************************* 
- *
- *  TLS row_impl objects
- *
- *********************************************************************/ 
-
-
-// typedef row_impl<warehouse_t>  warehouse_tuple;
-// typedef row_impl<district_t>   district_tuple;
-// typedef row_impl<customer_t>   customer_tuple;
-// typedef row_impl<history_t>    history_tuple;
-// typedef row_impl<new_order_t>  new_order_tuple;
-// typedef row_impl<order_t>      order_tuple;
-// typedef row_impl<order_line_t> order_line_tuple;
-// typedef row_impl<item_t>       item_tuple;
-// typedef row_impl<stock_t>      stock_tuple;
-
-
-
-// DECLARE_TUPLE_INTERFACE(warehouse_tuple,warehouse,warehouse_pool)
-// DECLARE_TUPLE_INTERFACE(district_tuple,district,district_pool)
-// DECLARE_TUPLE_INTERFACE(customer_tuple,customer,customer_pool)
-// DECLARE_TUPLE_INTERFACE(history_tuple,history,history_pool)
-// DECLARE_TUPLE_INTERFACE(new_order_tuple,new_order,new_order_pool)
-// DECLARE_TUPLE_INTERFACE(order_tuple,order,order_pool)
-// DECLARE_TUPLE_INTERFACE(order_line_tuple,order_line,order_line_pool)
-// DECLARE_TUPLE_INTERFACE(item_tuple,item,item_pool)
-// DECLARE_TUPLE_INTERFACE(stock_tuple,stock,stock_pool)
   
 
 
