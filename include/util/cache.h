@@ -80,12 +80,9 @@ private:
     const int _nbytes;
    
 #ifdef CACHE_STATS    
-private:
     // stats
     int _object_requests; 
-    tatas_lock _object_lock;
     int _object_setups;
-    tatas_lock _object_lock;
 #endif              
 
 

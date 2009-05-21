@@ -19,58 +19,7 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_worker.h"
 
-
-#include <atomic.h>
-
-template<int SIZE>
-struct is_valid_machine_word_size;
-
-template<>
-struct is_valid_machine_word_size<sizeof(int)> {
-  typedef unsigned int TYPE;
-  static TYPE atomic_cas(TYPE volatile* ptr, TYPE expected, TYPE value) {
-    return atomic_cas_32(ptr, expected, value);
-  }
-  static TYPE atomic_swap(TYPE volatile* ptr, TYPE value) {
-    return atomic_swap_32(ptr, value);
-  }
-};
-
-template<>
-struct is_valid_machine_word_size<sizeof(long)> {
-  typedef unsigned long TYPE;
-  static TYPE atomic_cas(TYPE volatile* ptr, TYPE expected, TYPE value) {
-    return atomic_cas_64(ptr, expected, value);
-  }
-  static TYPE atomic_swap(TYPE volatile* ptr, TYPE value) {
-    return atomic_swap_64(ptr, value);
-  }
-};
-
-template<typename T>
-T atomic_swap(T volatile* ptr, T value) {
-  typedef is_valid_machine_word_size<sizeof(T)> Helper;
-  typedef typename Helper::TYPE HTYPE;
-  union { T volatile* p; HTYPE volatile* h; } in = {ptr};
-  union { T v; HTYPE h; } v = {value};
-  union { HTYPE h; T v; } out = {Helper::atomic_swap(in.h, v.h)};
-  return out.v;
-}
-
-template<typename T>
-T atomic_cas(T volatile* ptr, T expected, T value) {
-  typedef is_valid_machine_word_size<sizeof(T)> Helper;
-  typedef typename Helper::TYPE HTYPE;
-  union { T volatile* p; HTYPE volatile* h; } in = {ptr};
-  union { T v; HTYPE h; } e = {expected}, v = {value};
-  union { HTYPE h; T v; } out = {Helper::atomic_cas(in.h, e.h, v.h)};
-  return out.v;
-}
-
-
-
 ENTER_NAMESPACE(dora);
-
 
 using namespace shore;
 

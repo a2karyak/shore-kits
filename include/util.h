@@ -43,6 +43,7 @@
 #include "util/stl_pool.h"
 #include "util/cache.h"
 #include "util/random_input.h"
+#include "util/atomic_ops.h"
 
 
 #endif /** __UTIL_H */

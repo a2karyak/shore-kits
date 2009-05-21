@@ -18,11 +18,10 @@
 
 #include "dora.h"
 
+ENTER_NAMESPACE(dora);
+
 using namespace qpipe;
 using namespace shore;
-
-
-ENTER_NAMESPACE(dora);
 
 
 /******************************************************************** 
