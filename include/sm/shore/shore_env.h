@@ -148,12 +148,12 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
             w_rc_t e2 = _pssm->abort_xct();                           \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
             if (atrt.get_notify()) atrt.get_notify()->signal();       \
-            if (_measure!=MST_MEASURE) return (e);                    \
+            if ((*&_measure)!=MST_MEASURE) return (e);                \
             _env_stats.inc_trx_att();                                 \
             return (e); }                                             \
         TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", xct_id);       \
         if (atrt.get_notify()) atrt.get_notify()->signal();           \
-        if (_measure!=MST_MEASURE) return (RCOK);                     \
+        if ((*&_measure)!=MST_MEASURE) return (RCOK);                 \
         _env_stats.inc_trx_com();                                     \
         return (RCOK); }
 
@@ -188,9 +188,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 struct env_stats_t 
 {
-    int        _ntrx_att;
-    int        _ntrx_com;
-    tatas_lock _ntrx_lock;
+    volatile uint_t _ntrx_att;
+    volatile uint_t _ntrx_com;
 
     env_stats_t() 
         : _ntrx_att(0), _ntrx_com(0)
@@ -200,16 +199,10 @@ struct env_stats_t
 
     void print_env_stats() const;
 
-    int inc_trx_att() {
-        CRITICAL_SECTION(g_att_cs, _ntrx_lock);
-        return (++_ntrx_att);
-    }
-
-    int inc_trx_com() {
-        CRITICAL_SECTION(g_com_cs, _ntrx_lock);
-        ++_ntrx_att;
-        return (++_ntrx_com);
-    }
+    inline uint_t inc_trx_att() { return (atomic_inc_uint_nv(&_ntrx_att)); }
+    inline uint_t inc_trx_com() {
+        atomic_inc_uint(&_ntrx_att);
+        return (atomic_inc_uint_nv(&_ntrx_com)); }
 
 }; // EOF env_stats_t
 
@@ -245,9 +238,7 @@ public:
     typedef envVarMap::const_iterator envVarConstIt;
 
 private:
-
-    eDBControl _dbc;
-    tatas_lock _dbc_lock;
+    volatile eDBControl _dbc;
 
 public:
 
@@ -258,15 +249,11 @@ public:
 
     // Access methods
 
-    const eDBControl dbc() { 
-        CRITICAL_SECTION(dbc_cs, _dbc_lock);
-        return(_dbc); 
-    }
+    const eDBControl dbc() { return(*&_dbc); }
     
     void set_dbc(const eDBControl adbc) {
         assert (adbc!=DBC_UNDEF);
-        CRITICAL_SECTION(dbc_cs, _dbc_lock);
-        _dbc = adbc;
+        atomic_swap(&_dbc, adbc);
     }
     
 
@@ -361,16 +348,15 @@ protected:
     ParamMap      _dev_opts;  // db-instance-specific options    
 
     // Processor info
-    int                _max_cpu_count;    // hard limit
-    int                _active_cpu_count; // soft limit
-    tatas_lock         _cpu_count_lock;
+    volatile uint_t _max_cpu_count;    // hard limit
+    volatile uint_t _active_cpu_count; // soft limit
+
 
     // Stats
     env_stats_t        _env_stats; 
 
     // Measurement state
     MeasurementState volatile _measure;
-    tatas_lock                _measure_lock;
 
     // system name
     string          _sysname;
@@ -428,10 +414,11 @@ public:
     virtual const int restart();
     virtual const int pause() { return(0); /* do nothing */ };
     virtual const int resume() { return(0); /* do nothing */ };    
-    virtual const int newrun() { return(0); /* do nothing */ };
+    virtual const int newrun()=0;
     virtual const int statistics();
     virtual const int dump();
     virtual const int info()=0;    
+
 
     // Loads the database schema after the config file is read, and before the storage
     // manager is started.
@@ -459,11 +446,10 @@ public:
 
     
     void set_measure(const MeasurementState aMeasurementState) {
-        assert (aMeasurementState != MST_UNDEF);
-        CRITICAL_SECTION(measure_cs, _measure_lock);
-        _measure = aMeasurementState;
+        //assert (aMeasurementState != MST_UNDEF);
+        atomic_swap(&_measure, aMeasurementState);
     }
-    inline const MeasurementState get_measure() { return (_measure); }
+    inline const MeasurementState get_measure() { return (*&_measure); }
 
 
     inline pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }
@@ -478,7 +464,7 @@ public:
     void print_cpus() const;
     inline const int get_max_cpu_count() const { return (_max_cpu_count); }
     inline const int get_active_cpu_count() const { return (_active_cpu_count); }
-    void set_active_cpu_count(const int actcpucnt);
+    void set_active_cpu_count(const uint_t actcpucnt);
     // disabled - max_count can be set only on conf
     //    void set_max_cpu_count(const int maxcpucnt); 
 

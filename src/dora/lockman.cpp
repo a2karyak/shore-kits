@@ -292,6 +292,42 @@ const bool LogicalLock::_upd_dlm()
 
 
 
+/******************************************************************** 
+ *
+ * @fn:     is_clean()
+ *
+ * @brief:  Returns (true) if the lock has no owners or waiters
+ *
+ ********************************************************************/ 
+
+const bool LogicalLock::is_clean() const
+{
+    bool isClean = (_owners.empty()) && (_waiters.empty()) && (_dlm == DL_CC_NOLOCK);
+
+    // Prints out the LogicalLock (for debugging)
+    if (!isClean) cout << "LL not clean: " << endl << *this << endl;
+
+    return (isClean);
+}
+
+
+/******************************************************************** 
+ *
+ * @fn:     reset()
+ *
+ * @brief:  Removes any entries from the owners and waiters, and sets lockmod
+ *
+ ********************************************************************/ 
+
+void LogicalLock::reset()
+{
+    _owners.clear();
+    _waiters.clear();
+    _dlm = DL_CC_NOLOCK;
+}
+
+
+
 //// Helper functions
 
 

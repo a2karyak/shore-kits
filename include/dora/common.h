@@ -30,6 +30,11 @@ using std::pair;
 
 // CONSTANTS
 
+// The minimum number of keys the need to be touched in order the corresponding
+// lock manager to clear the entries in the map before each new run
+const int D_MIN_KEYS_TOUCHED     = 10000;     
+
+
 const int DF_CPU_RANGE           = 8;         // cpu range for each table
 const int DF_CPU_STARTING        = 2;         // starting cpu
 const int DF_CPU_STEP_TABLES     = 16;        // next-cpu among different tables

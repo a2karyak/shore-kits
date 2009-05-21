@@ -457,11 +457,10 @@ const int ShoreEnv::checkpoint()
  *
  ******************************************************************/
 
-void ShoreEnv::set_active_cpu_count(const int actcpucnt) 
+void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt) 
 {
     assert (actcpucnt);
-    CRITICAL_SECTION(cpu_cnt_cs, _cpu_count_lock);
-    _active_cpu_count = actcpucnt;
+    atomic_swap_uint(&_active_cpu_count, actcpucnt);
 }
 
 
@@ -488,9 +487,8 @@ const int ShoreEnv::_set_sys_params()
     int tmp_active_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[2][0]].c_str());    
 
     if ((tmp_active_cpu_count>0) && (tmp_active_cpu_count<=tmp_max_cpu_count)) {
-        CRITICAL_SECTION(cpu_cnt_cs, _cpu_count_lock);
-        _max_cpu_count = tmp_max_cpu_count;
-        _active_cpu_count = tmp_active_cpu_count;
+        atomic_swap_uint(&_max_cpu_count,    tmp_max_cpu_count);
+        atomic_swap_uint(&_active_cpu_count, tmp_active_cpu_count);
     }
     else {
         TRACE( TRACE_ALWAYS, 

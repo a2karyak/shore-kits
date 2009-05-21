@@ -175,13 +175,25 @@ public:
     // information
     void statistics() const {
         TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
-        worker_stats_t gathered;
+
+        worker_stats_t ws_gathered;
+        int stl_sz;
+
         for (int i=0; i<_ppvec.size(); i++) {
-            _ppvec[i]->statistics(gathered);
+            // gather worker statistics
+            _ppvec[i]->statistics(ws_gathered);
+
+            // gather dora-related structures statistics
+            _ppvec[i]->stlsize(stl_sz);
         }
-        if (gathered._checked_input > 10) {
+
+        if (ws_gathered._checked_input > 10) {
             TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
-            gathered.print_and_reset();
+
+            // print worker stats
+            ws_gathered.print_and_reset();
+            // print dora stl stats
+            TRACE( TRACE_STATISTICS, "stl.entries (%d)\n", stl_sz);
         }
     }        
 

@@ -327,6 +327,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
     print_TEST_info(iQueriedSF, iSpread, iNumOfThreads, 
                     iNumOfTrxs, iSelectedTrx, iIterations, abt);
 
+    _dbinst->newrun();
     _dbinst->upd_sf();
     _dbinst->set_qf(iQueriedSF);
 
@@ -403,6 +404,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
     print_MEASURE_info(iQueriedSF, iSpread, iNumOfThreads, iDuration, 
                        iSelectedTrx, iIterations, abt);
 
+    _dbinst->newrun();
     _dbinst->upd_sf();
     _dbinst->set_qf(iQueriedSF);
 

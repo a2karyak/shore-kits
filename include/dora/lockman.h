@@ -32,7 +32,6 @@
 ENTER_NAMESPACE(dora);
 
 
-
 using std::map;
 using std::multimap;
 using std::vector;
@@ -218,14 +217,11 @@ struct LogicalLock
 
     // is clean
     // returns true if no locked
-    inline const bool is_clean() { 
-        return ((_owners.empty()) && (_waiters.empty())); 
-    }
+    const bool is_clean() const;
+    const bool has_owners() const  { return (!_owners.empty()); }
+    const bool has_waiters() const { return (!_waiters.empty()); }
 
-    const bool has_owners()  { return (!_owners.empty()); }
-    const bool has_waiters() { return (!_waiters.empty()); }
-
-    void reset() { }
+    void reset();
     
 private:
 
@@ -308,10 +304,9 @@ public:
         assert (_keyll_pool);
         _ll_map = new LLMap(std::less<Key>(),_keyll_pool.get());
 
-
         // setup Key cache
-//         _key_pool = new Pool(sizeof(Key), 1000);
-//         assert (_key_pool);
+        // _key_pool = new Pool(sizeof(Key), 1000);
+        // assert (_key_pool);
 
         _key_pool_array = new Pool*[1];
         assert (_key_pool_array);
@@ -392,6 +387,9 @@ public:
     //// Debugging ////
 
     // clear map
+    void clear() { _ll_map->clear(); }
+
+    // reset map
     void reset() {
         // clear all entries
         for (LLMapIt it=_ll_map->begin(); it!=_ll_map->end(); ++it) {
@@ -402,7 +400,7 @@ public:
     }
 
     // return the number of keys
-    const int keystouched() { return (_ll_map->size()); }
+    const int keystouched() const { return (_ll_map->size()); }
 
     // returns (true) if all locks are clean
     const bool is_clean() {
@@ -536,6 +534,7 @@ public:
 
     //// Debugging ////
 
+    const int keystouched() const { return (_key_ll_m->keystouched()); }
 
     void reset() { _key_ll_m->reset(); }
     void dump() { _key_ll_m->dump(); }

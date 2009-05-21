@@ -264,10 +264,15 @@ public:
     // stats
     void statistics(worker_stats_t& gather) {
         assert (_owner); 
-        //_owner->stats();
         gather += _owner->get_stats();
         _owner->reset_stats();
     }
+
+    void stlsize(int& gather) {
+        assert (_plm); 
+        gather += _plm->keystouched();
+    }
+
 
     // dumps information
     void dump() {
@@ -561,18 +566,45 @@ const ePATState partition_t<DataType>::inc_active_thr()
  * @fn:     prepareNewRun()
  *
  * @brief:  Prepares the partition for a new run
- *          Clears the lm and the queues (if the have anything)
+ *          Clears the lm and the queues (if they have anything)
+ *
+ * @note:   This function should be called only before new runs.
  *
  ******************************************************************/
 
 template <class DataType>
 void partition_t<DataType>::prepareNewRun() 
 {
-    // make sure that no key is left locked    
+    // 1. Needs to spin until worker is done "cleaning" 
+    // left-over actions/logical locks
+    assert (_owner);
+    while (!_owner->is_sleeping()) {
+        // spin //
+        TRACE( TRACE_ALWAYS, "Waiting for (%s-%d) to sleep\n", 
+               _table->name(), _part_id);
+        usleep(100);
+    }
+
+    // 2. Make sure that no key is left locked    
+    // If the owner is sleeping it means that either it has finished
+    // working and all the logical locks are clean, or there is a lock
+    // waiting for actions executed by other partitions to finish.
+    // This function is called before every new run. Hence, the latter
+    // case should not be happening
     assert (_plm->is_clean());
-    _plm->reset();
-    _input_queue->clear(false); // clear queue but not remove owner
+
+    // 3. Clear queues but not remove owner
+    _input_queue->clear(false); 
     _committed_queue->clear(false);
+
+    // 4. Reset lock manager map by removing all the entries.
+    // This should happen only if the size of the map exceeds
+    // a certain value
+    if (_plm->keystouched() > D_MIN_KEYS_TOUCHED) {
+        TRACE( TRACE_ALWAYS, "Cleaning LockMap (%s-%d) with (%d) keys\n",
+               _table->name(), _part_id, _plm->keystouched());
+        _plm->reset();
+    }
 }
 
 
