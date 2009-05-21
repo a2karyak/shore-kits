@@ -47,17 +47,16 @@ class index_desc_t
 private:
     file_desc_t _base;
 
-    int*          _key;                      /* index of fields in the base table */
-    bool          _unique;                   /* whether allow duplicates or not */
-    bool          _primary;                  /* is it primary or not */
-    bool          _nolock;                   /* is it using locking or not */ 
+    int*            _key;                      /* index of fields in the base table */
+    bool            _unique;                   /* whether allow duplicates or not */
+    bool            _primary;                  /* is it primary or not */
+    bool            _nolock;                   /* is it using locking or not */ 
 
-    index_desc_t* _next;                     /* linked list of all indices */
+    index_desc_t*   _next;                     /* linked list of all indices */
 
-    char          _keydesc[MAX_KEYDESC_LEN]; /* buffer for the index key description */
-    tatas_lock    _keydesc_lock;             /* lock for the key desc */
-    int           _maxkeysize;               /* maximum key size */
-    tatas_lock    _maxkey_lock;              /* lock for the maximum key size */
+    char            _keydesc[MAX_KEYDESC_LEN]; /* buffer for the index key description */
+    tatas_lock      _keydesc_lock;             /* lock for the key desc */
+    volatile uint_t _maxkeysize;               /* maximum key size */
 
     /* if _partition_count > 1, _partition_stids contains stids for
        all N partitions, otherwise it's NULL
@@ -160,13 +159,9 @@ public:
     inline bool is_relaxed() const { return (_nolock); }
     inline bool is_partitioned() const { return _partition_count > 1; }
 
-    inline int get_partition_count() const { return _partition_count; }
-    inline int  get_keysize() { return (_maxkeysize); }
-    inline void set_keysize(const int sz) {
-        assert (sz>0);
-        CRITICAL_SECTION(idx_keysz_cs, _maxkey_lock);
-        _maxkeysize = sz;
-    }
+    inline int  get_partition_count() const { return _partition_count; }
+    inline int  get_keysize() { return (*&_maxkeysize); }
+    inline void set_keysize(const uint_t sz) { atomic_swap_uint(&_maxkeysize, sz); }
 
     /* ---------------------------------- */
     /* --- index link list operations --- */
@@ -175,18 +170,18 @@ public:
 
     index_desc_t* next() const { return _next; }
 
-    /* total number of indexes on the table */
+    // total number of indexes on the table
     int index_count() const { 
         return (_next ? _next->index_count()+1 : 1); 
     }
 
-    /* insert a new index after the current index */
+    // insert a new index after the current index
     void insert(index_desc_t* new_node) {
 	new_node->_next = _next;
 	_next = new_node;
     }
 
-    /* find the index_desc_t by name */
+    // find the index_desc_t by name
     index_desc_t* find_by_name(const char* name) {
 	if (strcmp(name, _base._name) == 0) return (this);
 	if (_next) return _next->find_by_name(name);

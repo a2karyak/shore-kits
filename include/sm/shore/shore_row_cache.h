@@ -21,12 +21,13 @@
 #include "shore_row_impl.h"
 
 
+ENTER_NAMESPACE(shore);
+
+
+
 // define cache stats to get some statistics about the tuple cache
 #undef CACHE_STATS
 //#define CACHE_STATS
-
-
-ENTER_NAMESPACE(shore);
 
 
 const int DEFAULT_INIT_ROW_COUNT = 50;
@@ -35,21 +36,17 @@ const int DEFAULT_INIT_ROW_COUNT = 50;
 template <class TableDesc>
 class row_cache_t : protected atomic_stack
 {
-public:
-    
+public:    
     typedef row_impl<TableDesc> table_tuple;
 
 private:
-
     TableDesc* _ptable; 
     const int _nbytes;
 
 #ifdef CACHE_STATS    
     // stats
-    int _tuple_requests; 
-    tatas_lock _requests_lock;
-    int _tuple_setups;
-    tatas_lock _setups_lock;
+    volatile uint_t _tuple_requests; 
+    volatile uint_t _tuple_setups;
 #endif              
 
     // start with a non-empty pool, so that threads don't race
@@ -126,16 +123,14 @@ public:
     table_tuple* borrow() 
     {
 #ifdef CACHE_STATS
-        CRITICAL_SECTION( rcs, _requests_lock);
-        ++_tuple_requests;
+        atomic_inc_uint(&_tuple_requests);
 #endif
 
         void* val = pop();
         if (val) return ((table_tuple*)(val));
 
 #ifdef CACHE_STATS
-        CRITICAL_SECTION( scs, _setups_lock);
-        ++_tuple_setups;
+        atomic_inc_uint(&_tuple_setups);
 #endif
 
         table_tuple* temp = new (this) table_tuple();
@@ -163,11 +158,11 @@ public:
 
 
 #ifdef CACHE_STATS    
-    int  setup_count() { return (_tuple_setups); }
-    int  request_count() { return (_tuple_requests); }
+    uint_t  setup_count() { return (*&_tuple_setups); }
+    uint_t  request_count() { return (*&_tuple_requests); }
     void print_stats() {
-        TRACE( TRACE_STATISTICS, "Requests: (%d)\n", _tuple_requests);
-        TRACE( TRACE_STATISTICS, "Setups  : (%d)\n", _tuple_setups);
+        TRACE( TRACE_STATISTICS, "Requests: (%d)\n", *&_tuple_requests);
+        TRACE( TRACE_STATISTICS, "Setups  : (%d)\n", *&_tuple_setups);
     }
 #endif 
 

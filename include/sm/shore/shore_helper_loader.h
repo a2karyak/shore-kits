@@ -250,8 +250,6 @@ public:
 
     table_tuple* _ptuple;
     mcs_lock     _cs_mutex; /* (?) */
-    //    tatas_lock      _cs_mutex; /* (215) */
-    //    pthread_mutex_t _cs_mutex; /* (263) */
 
     bool         _has_to_consume;
     bool         _start;

@@ -1,4 +1,3 @@
-
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file:   shore_table.h
@@ -100,21 +99,20 @@ class table_desc_t : public file_desc_t
 {
 protected:
 
-    /* ------------------- */
-    /* --- table schema -- */
-    /* ------------------- */
+  /* ------------------- */
+  /* --- table schema -- */
+  /* ------------------- */
+  
+  field_desc_t*   _desc;               // schema - set of field descriptors
+  
+  index_desc_t*   _indexes;            // indexes on the table
+  index_desc_t*   _primary_idx;        // pointer to primary idx
+  
+  index_desc_t*   _nolock_primary_idx; // (optional) nolock primary index
 
-    field_desc_t* _desc;               /* schema - set of field descriptors */
+  volatile uint_t _maxsize;            // max tuple size for this table, shortcut
 
-    index_desc_t* _indexes;            /* indexes on the table */
-    index_desc_t* _primary_idx;        /* pointer to primary idx */
-
-    index_desc_t* _nolock_primary_idx; /* (optional) nolock primary index */
-
-    int           _maxsize;            /* max tuple size for this table, shortcut */
-    tatas_lock    _maxsize_lock;
-
-    int find_field_by_name(const char* field_name) const;
+  int find_field_by_name(const char* field_name) const;
 
 public:
 
@@ -364,7 +362,7 @@ inline const char* table_desc_t::index_keydesc(index_desc_t* idx)
 
 inline const int table_desc_t::index_maxkeysize(index_desc_t* idx) const
 {
-    register int size = 0;
+    register uint_t size = 0;
     if ((size = idx->get_keysize()) > 0) {
         // keysize has already been calculated
         // just return that value
@@ -372,8 +370,8 @@ inline const int table_desc_t::index_maxkeysize(index_desc_t* idx) const
     }
     
     // needs to calculate the (max)key for that index
-    register int ix = 0;
-    for (int i=0; i<idx->field_count(); i++) {
+    register uint_t ix = 0;
+    for (uint_t i=0; i<idx->field_count(); i++) {
         ix = idx->key_index(i);
         size += _desc[ix].fieldmaxsize();
     }    
@@ -396,22 +394,30 @@ inline const int table_desc_t::index_maxkeysize(index_desc_t* idx) const
 inline const int table_desc_t::maxsize()
 {
     // shortcut not to re-compute maxsize
-    if (_maxsize)
-        return (_maxsize);
+    if (*&_maxsize)
+        return (*&_maxsize);
 
     // calculate maximum size required   
-    int size = 0;
-    int var_count = 0;
-    int null_count = 0;
-    CRITICAL_SECTION(tb_maxsz_cs, _maxsize_lock);
+    uint_t size = 0;
+    uint_t var_count = 0;
+    uint_t null_count = 0;
     for (int i=0; i<_field_count; i++) {
         size += _desc[i].fieldmaxsize();
         if (_desc[i].allow_null()) null_count++;
         if (_desc[i].is_variable_length()) var_count++;
     }
+    
+    size += (var_count*sizeof(offset_t)) + (null_count>>3) + 1;
 
-    _maxsize = size + (var_count*sizeof(offset_t)) + (null_count>>3) + 1;
-    return (_maxsize);
+    // There is a small window from the time it checks if maxsize is already set,
+    // until the time it tries to set it up. In the meantime, another thread may
+    // has done the calculation already. If that had happened, the two threads 
+    // should have calculated the same maxsize, since it is the same table desc.
+    // In other words, the maxsize should be either 0 or equal to the size.
+    assert ((*&_maxsize==0) || (*&_maxsize==size));
+
+    atomic_swap_uint(&_maxsize, size);
+    return (*&_maxsize);
 }
 
 
