@@ -44,7 +44,6 @@ struct srmwqueue
     
     // owner thread
     base_worker_t* _owner;
-    tatas_lock     _owner_lock;    
 
     srmwqueue(Pool* actionPtrPool) : 
         _empty(true), _my_ws(WS_UNDEF), _owner(NULL),
@@ -61,7 +60,7 @@ struct srmwqueue
     // sets the pointer of the queue to the controls of a specific worker thread
     void set(eWorkingState aws, base_worker_t* owner, const int& loops, const int& thres) 
     {
-        CRITICAL_SECTION(q_cs, _owner_lock);
+        CRITICAL_SECTION(q_cs, _lock);
         _my_ws = aws;
         _owner = owner;
         _loops = loops;
@@ -72,7 +71,7 @@ struct srmwqueue
     const bool is_control(base_worker_t* athread) const { return (_owner==athread); }  
 
     // !!! @note: should be called only by the reader !!!
-    int is_empty(void) const {
+    inline int is_empty(void) const {
         return ((_read_pos == _for_readers->end()) && (*&_empty));
     }
 
@@ -97,8 +96,6 @@ struct srmwqueue
             // 4. if spinned too much, start waiting on the condex
             if (++loopcnt > _loops) {
                 loopcnt = 0;
-
-                //if (!_owner->can_continue_cs(_my_ws)) return (false);           
     
                 TRACE( TRACE_TRX_FLOW, "Condex sleeping (%d)...\n", _my_ws);
                 //assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
@@ -154,18 +151,20 @@ struct srmwqueue
 
     // resets queue
     void clear(const bool removeOwner=true) {
+        CRITICAL_SECTION(q_cs, _lock);
+
         // clear owner
-        if (removeOwner) {
-            CRITICAL_SECTION(q_cs, _owner_lock);
-            _owner = NULL;
-        }
+        if (removeOwner) _owner = NULL;
+
         // clear lists
-        {
-            CRITICAL_SECTION(cs, _lock);
-            _for_writers->erase(_for_writers->begin(),_for_writers->end());
-            _empty = true;
-        }
+        _for_writers->erase(_for_writers->begin(),_for_writers->end());
         _for_readers->erase(_for_readers->begin(),_for_readers->end());
+
+        // set the reading position to the beginning
+        _read_pos = _for_readers->begin();
+
+        // the queue is empty again
+        _empty = true;
     }    
   
 }; // EOF: struct srmwqueue
