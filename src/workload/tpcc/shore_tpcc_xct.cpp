@@ -1685,7 +1685,10 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
     highrep.set(_porder_line_desc->maxsize()); 
 
     std::vector<int> dlist(DISTRICTS_PER_WAREHOUSE);
-    std::iota(dlist.begin(), dlist.end(), 1);
+
+    for(int i=0; i < dlist.size(); i++)
+        dlist[i] = i+1;
+
     if(SPLIT_TRX)
 	std::random_shuffle(dlist.begin(), dlist.end());
 
