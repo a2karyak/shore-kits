@@ -39,7 +39,7 @@
 #include "sm_vas.h"
 #include "util.h"
 
-#include "workload/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/tpcc_const.h"
 #include "sm/shore/shore_table_man.h"
 
 using namespace shore;

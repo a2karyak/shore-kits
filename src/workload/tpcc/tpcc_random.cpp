@@ -32,8 +32,8 @@
  */
 
 
-#include "workload/tpcc/common/tpcc_random.h"
-#include "workload/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/tpcc_random.h"
+#include "workload/tpcc/tpcc_const.h"
 
 
 ENTER_NAMESPACE(tpcc);

@@ -103,14 +103,12 @@ lib_libsm_a_SOURCES = \
 
 SW=$(top_srcdir)/src/workload
 
-WL_TPCC_COMMON = \
-   $(SW)/tpcc/common/tpcc_random.cpp
-
 WL_TPCC_SHORE = \
    $(SW)/tpcc/tpcc_input.cpp \
    $(SW)/tpcc/shore_tpcc_schema_man.cpp \
    $(SW)/tpcc/shore_tpcc_env.cpp \
-   $(SW)/tpcc/shore_tpcc_xct.cpp
+   $(SW)/tpcc/shore_tpcc_xct.cpp \
+   $(SW)/tpcc/tpcc_random.cpp
 
 
 WL_TM1_SHORE = \
@@ -128,9 +126,7 @@ WL_TPCB_SHORE = \
    $(SW)/tpcb/shore_tpcb_client.cpp
 
 
-
 lib_libworkload_a_SOURCES = \
-   $(WL_TPCC_COMMON) \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
    $(WL_TM1_SHORE) \

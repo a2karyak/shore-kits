@@ -33,7 +33,7 @@
 #ifndef __TEST_SHORE_CLIENT_H
 #define __TEST_SHORE_CLIENT_H
 
-#include "workload/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/tpcc_const.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 
 using namespace tpcc;

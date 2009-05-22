@@ -31,7 +31,7 @@
  */
 
 #include "workload/tpcc/shore_tpcc_env.h"
-#include "workload/tpcc/common/tpcc_random.h"
+#include "workload/tpcc/tpcc_random.h"
 
 #include <vector>
 #include <numeric>

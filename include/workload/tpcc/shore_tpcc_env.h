@@ -40,7 +40,7 @@
 #include "sm/shore/shore_sort_buf.h"
 #include "sm/shore/shore_trx_worker.h"
 
-#include "workload/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/tpcc_const.h"
 
 #include "workload/tpcc/shore_tpcc_schema_man.h"
 #include "workload/tpcc/tpcc_input.h"

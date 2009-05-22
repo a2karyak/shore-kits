@@ -34,8 +34,8 @@
 #ifndef __TPCC_INPUT_H
 #define __TPCC_INPUT_H
 
-#include "workload/tpcc/common/tpcc_const.h"
-#include "workload/tpcc/common/tpcc_struct.h"
+#include "workload/tpcc/tpcc_const.h"
+#include "workload/tpcc/tpcc_struct.h"
 
 
 ENTER_NAMESPACE(tpcc);
