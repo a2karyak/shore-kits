@@ -56,23 +56,28 @@ b. Run shore_kits
 c. List of commands
 -----------------------
 
-i. The two basic commands for running experiments:
+i. The three basic commands for running experiments:
 
 measure - Executes a specific workload for a specific duration.
-          The user can set the number of clients, iterations, sf, and binding policy.
+          The user can set the number of clients, whether the requests will be spread, the
+          number of iterations, the scaling factor, and the thread binding policy.
+
 
 test    - For a specific workload each client executes a specific number of transactions.
-          The user can set the number of clients, iterations, sf, and binding policy.
+          The user can set the number of clients, whether the requests will be spread, the
+          number of iterations, the scaling factor, and the thread binding policy.
+          WARNING: The 'test' command is innacurate in terms of the reported throughput.
+
+trxs    - Lists the transactions supported by the current workload.
+
 
 
 ii. Additional commands:
 
 break   - Breaks into a debugger by raising ^C (terminates program if no debugger is active)
-conf    - Rereads env vars
 cpu     - Process cpu usage/statitics
-dump    - Dump db instance data
 echo    - Echoes its input arguments to the screen
-help    - Help
+help    - Prints help
 iodelay - Sets the fake I/O disk delay
 quit    - Quits
 stats   - Print statistics
@@ -86,17 +91,20 @@ help cmd - Prints cmd-specific information
 
 
 
-c. Typical usage scenario:
+c. Usage example:
 -----------------------
 
-On a 10wh TPC-C database run for 5mins a TPC-C Mix powerrun with 10 clients.
+Assuming a 10wh TPC-C database.
+
+- Execute 5 iterations of 1min runs of 20 clients running the TPC-C Mix.
+
+(tpcc-base) measure 10 0 20 60 0 5 0
 
 
-#> ./shore_kits
-...
-(tpcc-base) measure 10 0 10 60 0 5 0
+- Run 2 iterations of 30secs runs of 10 clients submitting only TPC-C NewOrder 
+  transactions, and each client uses a different warehouse.
 
-(tpcc-base) quit
+(tpcc-base) measure 10 1 10 30 2 1 
 
 
 
@@ -105,8 +113,9 @@ On a 10wh TPC-C database run for 5mins a TPC-C Mix powerrun with 10 clients.
 3. Contact
 -----------------------
 
-For any issues, reporting bugs etc.. please send email to:
+For any issues, reporting bugs etc. please send email to:
 
-dias+shorekits@epfl.ch OR ipandis+shoremt@ece.cmu.edu
- 
+shoremt@listes.epfl.ch
+
+
 
