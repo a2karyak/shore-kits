@@ -1,245 +1,112 @@
-QPipe & StageTRX Readme
+-----------------------
+Shore Kits Readme
 -----------------------
 
+TOC:
 
-REQUIRED directories:
-
-The system checks for the existence of the following directories. 
-
-- database_bdb_tpcc : Contains the database tables for the TPC-C DB.
-- database_bdb_tpch : Contains the database tables for the TPC-H DB.
-
-- tbl_tpcc : Contains the load tables for the TPC-C DB.
-- tbl_tpch : Contains the load tables for the TPC-H DB.
+1. Installing
+2. Running
+3. Contact
 
 
-----------
+
+-----------------------
+1. Installing
+-----------------------
+
+a. Prerequisites
+-----------------------
+
+- Download and compile Shore-mt. 
+
+- Link ~/apps/shore to the base dir for shore-mt
+
+#> ln -s <shore-mt-dir> ~/apps/shore 
 
 
-RUNNING STRAGETRX:
 
-1) Create flat load TPC-C files and rename them
+b. Compiling
+-----------------------
 
-#> dbgen-generate-files.pl (-h for help)
-e.g. dbgen-generate-files.pl -w 1 -d tbl_tpcc
-This will create flat files for 1WH in directory tbl_tpcc.
-
-#> cd tbl_tpcc
-#> <base_dir>/scripts/tpcc/dbgen/rename_files.sh
-This will rename the flat files to loader-friendly names.
+#> ./autogen.sh
+#> CXX=CC ./configure
+#> gmake -j
 
 
-2) Load TPC-C database
 
-#> ./tests/tpcc_load
+-----------------------
+2. Running
+-----------------------
+
+a. Edit shore.conf
+-----------------------
+
+In order to populate a new database set db-clobberdev=1. 
+If opening an already populated database set db-clobberdev=0.
 
 
-3) Run transactions
+b. Run shore_kits
+-----------------------
 
-#> ./qipetrx (alias for ./qpipe -trx)
-Start the stagetrx environment.
-(qpipe) tpcc list
-(qpipe) tpcc payment_baseline 1 1 0 OS
+#> ./shore_kits
 ...
+(tpcc-base)
 
 
+c. List of commands
+-----------------------
 
-----------
+i. The two basic commands for running experiments:
 
+measure - Executes a specific workload for a specific duration.
+          The user can set the number of clients, iterations, sf, and binding policy.
 
+test    - For a specific workload each client executes a specific number of transactions.
+          The user can set the number of clients, iterations, sf, and binding policy.
 
-CLEARING DATABASE LSNs:
 
-When moving databases or changing the logging mechanism we need to reset
-the LSNs of the database files. Otherwise, DbExceptions will raise. 
-This can be by three ways. 
+ii. Additional commands:
 
-(a) From the application, calling the DB_ENV->lsn_reset() method.
-(b) By the dba, using the -r option to the db_load utility.
-(c) By the dba, by dumping and reloading the database (db_dump and db_load).
+break   - Breaks into a debugger by raising ^C (terminates program if no debugger is active)
+conf    - Rereads env vars
+cpu     - Process cpu usage/statitics
+dump    - Dump db instance data
+echo    - Echoes its input arguments to the screen
+help    - Help
+iodelay - Sets the fake I/O disk delay
+quit    - Quits
+stats   - Print statistics
+trace   - Sets tracing level
 
-There is a script that resets the LSNs of all the table of the TPC-C database 
-automatically:
 
-#> cd database_bdb_tpcc/
-#> <base_dir>/scripts/tpcc/reset_db_lsns.sh
+iii. Help:
 
+help     - Prints the list of additional commands 
+help cmd - Prints cmd-specific information 
 
 
-----------
 
+c. Typical usage scenario:
+-----------------------
 
+On a 10wh TPC-C database run for 5mins a TPC-C Mix powerrun with 10 clients.
 
-QPIPE QUERIES:
 
-current_mix: 1, 4, 6, 12
-simulation: 1, 6, 13, 16
-SIGMOD2005: 1, 4, 6, 8, 12, 13, 14, 19
-old QPIPE src: 1, 4, 5, 6, 8, 9, 12, 13, 14, 16, 19
+#> ./shore_kits
+...
+(tpcc-base) measure 10 0 10 60 0 5 0
 
+(tpcc-base) quit
 
 
 
-Ryan suggested that we don't need the client buffer after all. A stage
-can terminate queries by invoking close() on the packets above him and
-invoking either dispatcher_t::remove_packet() or delete on the packets
-below. The close() propagates up the tree to the client...
 
-dispatcher_t::remove_packet(): Once a stage dispatches a packet, it
-cannot touch it or free it. The stage that received the packet is now
-responsible for freeing it.
+-----------------------
+3. Contact
+-----------------------
 
+For any issues, reporting bugs etc.. please send email to:
 
+dias+shorekits@epfl.ch OR ipandis+shoremt@ece.cmu.edu
+ 
 
-Moved stop_accepting_packets() into adaptor since we must check the
-flag AND add to the packet list in one critical section. We move
-_stage_next_tuple counter into the adaptor since we must increment it
-whenever we invoke output().
-
-
-----------
-
-
-PACKET TERMINATION
-
-(1) Query shutdown - need to propagate shutdown dow n the query
-    plan tree. We must distinguish between two cases
-
-    - shutting down a child that is running (we can simply close the
-      input buffer and rely on a worker thread destroying the packet)
-
-    - shutting down a child packet that have not been picked up by a
-      worker thread (we must delete the packet)
-
-(2) Merge shutdown - TWO PACKET WHICH HAVE BEEN MERGED RECEIVE THEIR
-    INPUT FROM THE SAME SOURCE. We need to shut down the input sources
-    which are no longer needed.
-
-(3) Error shutdown - If we cannot allocate a buffer that we need, we
-    need a way to ABORT the entire query. This can be done by
-    terminating the current stage, and sending a message directly to
-    the client to close its input buffer.
-
-
-
-----------
-
-
-
-SYSTEM SHUTDOWN
-
-We add the following fields to a stage
-
-- count of worker threads running
-- condition variable that is signaled when the stage exits
-
-We perform shutdown in two phases
-
-(1) Mark all stages as shut down. Now when worker threads finish their
-packets, they see this shutdown status and simply exit rather than
-going back to the stage_queue.
-
-(2) Kill off all queries (by closing their buffers and having the
-shutdown propagate). A worker thread handling packet P will learn of
-the shutdown when it tries to send anything to P's output buffer
-(alloc_tuple() or send_eof()). The worker thread will eventually
-delete all the packets in its stage, return to the container, discover
-that a shutdown is in progress, and exit.
-
-(3) Once all worker threads for a stage have exited, simply delete the
-stage. The stage destructor deletes every packet in its stage
-queue. We know that no one else can touch this queue since all workers
-have exited.
-
-
-----------
-
-
-
-PACKET PROCESSING
-
-- When a worker thread detects that an output buffer has been closed,
-  the thread should delete the buffer. It should also delete the
-  packet... DO NOT WORRY ABOUT packet's input buffer... The input
-  buffer really belongs to the stage.
-
-- When a worker thread has determined that there is no more data to
-  send a packet, it should invoke send_eof(). If send_eof() returns an
-  error, it means that the other end has already closed and the buffer
-  must be deleted. If send_eof() returns success, do not touch the
-  buffer again because it may be deleted at any time.
-
-  After invoking send_eof(), delete the packet.
-
-- When a worker thread has completed its stage's processing
-  (i.e. finished reading from its input buffer), it should return to
-  stage_t::run(). run() will walk through the packets. All packets
-  which have a non-zero mark will be re-enqueued. All packets which
-  have a zero mark will have send_eof() invoked...
-
-- output() will write the tuple to each packet and invoke send_eof()
-  on the buffers of the packets which have hit their mark. It will
-  remove and delete these packets.
-
-- Finally, if output() determines that all packets have been closed
-  pre-maturely, it invokes terminate() which must
-
-  - delete its (stage's) local state, including any child packets
-    which have not yet dispatched (delete packet + buffers).
-
-  - invoke close() on the output buffers (really our input buffer) of
-    any child packets it has dispatched
-
-    - If close() returns error, it means that the other side has sent
-      EOF. Since no other thread is holding this buffer, the buffer
-      should be deleted.
-
-
-----------
-
-
-include/
-
-Nothing except the module itself should touch .h files in its include
-sub-directory. For example, only .cpp files in src/engine are allowed
-to include .h files in include/engine, only .cpp files in src/trace
-are allowed to include .h files in include/trace, etc.
-
-dispatcher.h Exports basic dispatcher functionality. Currently
-provides a way for stage containers to register themselves with the
-dispatcher as well as a way to dispatch a packet using a specified
-packet type string. In the top level directory since it is used by
-unit tests and the server.
-
-functors.h Defines tuple functor base classes. Included in the top
-level directory since it is used by the engine and the generic
-functors module.
-
-packet.h Defines the packet base class. Included in the top level
-directory since it is used by the engine and by the workload
-submission code.
-
-qpipe_panic.h Defines the QPIPE_PANIC() macro which writes a TRACE
-message and aborts. Used by many modules when we hit software bugs and
-want to stop running so we can debug.
-
-stage_container.h Exports the stage_container_t class. Included in the
-top level directory since it is used by both the dispatcher and the
-engine.
-
-stage_factory.h Exports stage_factor_t class. Included in the top
-level directory since it is used by the stage_container_t class and
-the server.
-
-thread.h Exports the thread_t class which is the base of all other
-threads in the system. Also exports wrappers around pthread
-synchronization variables. Included in the top level directory since
-many modules contain classes which extend thread_t.
-
-trace.h Exports TRACE macro to other modules.
-
-tuple.h Exports tuple_t base class. Included in the top level
-directory since it is used by both the engine and the client code to
-read the final results.
-
-guard.h Exports generic guard datatypes to other modules.
