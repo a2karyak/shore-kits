@@ -42,11 +42,8 @@ UTIL = \
 	$(SU)/c_str.cpp \
 	$(SU)/thread.cpp \
 	$(SU)/time_util.cpp \
-	$(SU)/tmpfile.cpp \
 	$(SU)/trace.cpp \
-	$(SU)/tcp.cpp \
 	$(SU)/chomp.cpp \
-        $(SU)/fileops.cpp \
         $(SU)/progress.cpp \
 	$(SU)/pool_alloc.cpp \
         $(SU)/store_string.cpp \
