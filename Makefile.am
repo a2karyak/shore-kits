@@ -202,10 +202,8 @@ STC = $(top_srcdir)/src/tests/common
 lib_libtest_a_CXXFLAGS = $(AM_CXXFLAGS)
 
 lib_libtest_a_SOURCES = \
-   $(STC)/drive_stage.cpp \
    $(STC)/tester_query.cpp \
    $(STC)/cpu_bind.cpp \
-   $(STC)/busy_wait.cpp \
    $(STC)/tester_shore_client.cpp \
    $(STC)/tester_shore_shell.cpp
 
