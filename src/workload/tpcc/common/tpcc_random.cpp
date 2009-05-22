@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file workload/tpcc/drivers/common.cpp
+/** @file workload/tpcc/common/tpcc_random.cpp
  *  
  *  @brief Functions used for the generation of the inputs for 
  *         all the tpcc transaction.

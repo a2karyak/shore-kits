@@ -16,11 +16,6 @@
  #define TPCC_SCALING_FACTOR             10
 //# define TPCC_SCALING_FACTOR             100
 
-
-// Sets the range of warehouses queried
-// @note The tpcc_drivers create their requests bases on this value
-
-
 //# define QUERIED_TPCC_SCALING_FACTOR             1
 //# define QUERIED_TPCC_SCALING_FACTOR             8
 //# define QUERIED_TPCC_SCALING_FACTOR             10

@@ -11,9 +11,6 @@
 /*
  * Prints all field resource, usage and microstat accounting fields
  *
- * Borrowed largely from ptime.c
- * (Thanks Roger Faulkner and Mike Shapiro)
- *
  * @note: Taken from -  http://safari.oreilly.com/0131482092/app02lev1sec2 
  *
  */
