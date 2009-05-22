@@ -85,58 +85,7 @@ struct new_order_input_t
     // Assignment operator
     new_order_input_t& operator= (const new_order_input_t& rhs);
 
-    // Convertion functions
-    void get_no_item_input(no_item_nord_input_t& anoin);
-    void get_with_item_input(with_item_nord_input_t& awin, const int idx);
-
 }; // EOF: new_order_input_t
-
-
-// IP: The following two structs are used by DoraNewOrder
-
-// IP: General input for the no Item-related NewOrder actions
-struct no_item_nord_input_t
-{
-    int    _wh_id;        /* input: URand(1,SF) */
-    int    _d_id;         /* input: URand(1,10) */
-    int    _c_id;         /* input: NURand(1023,1,3000) */
-    int    _ol_cnt;       /* input: number of items URand(5,15) */
-    int    _rbk;          /* input: rollback URand(1,100) */
-
-    time_t _tstamp;       /* placeholder for the trx start time */
-    int    _all_local;    /* placeholder if all orders are on local WHs */
-    int    _d_next_o_id;  /* placeholder for the next O_ID of the selected district */
-
-    // Assignment operator
-    no_item_nord_input_t& operator= (const no_item_nord_input_t& rhs);
-
-}; // EOF: no_item_nord_input_t
-
-
-// IP: General input for the Item-related NewOrder actions
-struct with_item_nord_input_t
-{
-    int    _wh_id;        /* input: URand(1,SF) */
-    int    _d_id;         /* input: URand(1,10) */
-    int    _c_id;         /* input: NURand(1023,1,3000) */
-    int    _ol_cnt;       /* input: number of items URand(5,15) */
-    int    _rbk;          /* input: rollback URand(1,100) */
-
-    time_t _tstamp;       /* placeholder for the trx start time */
-    int    _all_local;    /* placeholder if all orders are on local WHs */
-    int    _d_next_o_id;  /* placeholder for the next O_ID of the selected district */
-
-    int    _ol_idx;       /* input: The item index */
-
-    ol_item_info item;    /* only 1 item info */
-
-    // Assignment operator
-    with_item_nord_input_t& operator= (const with_item_nord_input_t& rhs);
-
-}; // EOF: with_item_nord_input_t
-
-
-
 
 
 /*********************************************************************

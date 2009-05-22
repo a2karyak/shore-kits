@@ -22,10 +22,6 @@ ENTER_NAMESPACE(tm1);
 // SF = 100 --> 1M  Subscribers
 const int TM1_SUBS_PER_SF = 10000;
 
-// DORA_SF = 1 --> 10K Subscribes (SF == DORA_SF)
-const int TM1_SUBS_PER_DORA_PART = 10000;
-
-
 const int TM1_DEF_SF = 10;
 const int TM1_DEF_QF = 10;
 
@@ -91,20 +87,6 @@ const int XCT_TM1_CALL_FWD_MIX  = 26;
 
 const int XCT_TM1_INS_CALL_FWD  = 27;
 const int XCT_TM1_DEL_CALL_FWD  = 28;
-
-
-
-// @note: The DORA_XXX should be (DORA_MIX + REGULAR_TRX_ID)
-const int XCT_TM1_DORA_MIX           = 200;
-const int XCT_TM1_DORA_GET_SUB_DATA  = 221;
-const int XCT_TM1_DORA_GET_NEW_DEST  = 222;
-const int XCT_TM1_DORA_GET_ACC_DATA  = 223;
-const int XCT_TM1_DORA_UPD_SUB_DATA  = 224;
-const int XCT_TM1_DORA_UPD_LOCATION  = 225;
-const int XCT_TM1_DORA_CALL_FWD_MIX  = 226;
-
-const int XCT_TM1_DORA_INS_CALL_FWD  = 227;
-const int XCT_TM1_DORA_DEL_CALL_FWD  = 228;
 
 
 

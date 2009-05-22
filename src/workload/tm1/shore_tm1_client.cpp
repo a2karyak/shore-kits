@@ -2,8 +2,7 @@
 
 /** @file:   tester_tm1_env.cpp
  *
- *  @brief:  Implementation of the various test clients (Baseline, DORA, etc...) 
- *           for the TM1 benchmark
+ *  @brief:  Implementation of test client for the TM1 benchmark
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
@@ -88,103 +87,6 @@ w_rc_t baseline_tm1_client_t::run_one_xct(int xct_type, int xctid)
     // 4. enqueue to worker thread
     assert (_worker);
     _worker->enqueue(arequest,bWake);
-    return (RCOK);
-}
-
-
-
-
-
-/********************************************************************* 
- *
- *  dora_tm1_client_t
- *
-  *********************************************************************/
-
-const int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
-{
-    // clears the supported trx map and loads its own
-    stmap.clear();
-
-    // Baseline TM1 trxs
-    stmap[XCT_TM1_DORA_MIX]             = "DORA-TM1-Mix";
-    stmap[XCT_TM1_DORA_GET_SUB_DATA]    = "DORA-TM1-GetSubData";
-    stmap[XCT_TM1_DORA_GET_NEW_DEST]    = "DORA-TM1-GetNewDest";
-    stmap[XCT_TM1_DORA_GET_ACC_DATA]    = "DORA-TM1-GetAccData";
-    stmap[XCT_TM1_DORA_UPD_SUB_DATA]    = "DORA-TM1-UpdSubData";
-    stmap[XCT_TM1_DORA_UPD_LOCATION]    = "DORA-TM1-UpdLocation";
-    stmap[XCT_TM1_DORA_CALL_FWD_MIX]    = "DORA-TM1-CallFwd-Mix";
-    stmap[XCT_TM1_DORA_INS_CALL_FWD]    = "DORA-TM1-InsCallFwd";
-    stmap[XCT_TM1_DORA_DEL_CALL_FWD]    = "DORA-TM1-DelCallFwd";
-    return (stmap.size());
-}
-
-/********************************************************************* 
- *
- *  @fn:    run_one_xct
- *
- *  @brief: DORA TM1 client - Entry point for running one trx 
- *
- *  @note:  The execution of this trx will not be stopped even if the
- *          measure internal has expired.
- *
- *********************************************************************/
- 
-w_rc_t dora_tm1_client_t::run_one_xct(int xct_type, int xctid) 
-{
-    // if DORA TM1 MIX
-    bool bWake = false;
-    if (xct_type == XCT_TM1_DORA_MIX) {        
-        xct_type = XCT_TM1_DORA_MIX + random_tm1_xct_type(rand(100));
-        bWake = true;
-    }
-
-    // pick a valid sf
-    register int selsf = _selid;
-
-    // decide which SF to use
-    if (_selid==0) {
-        selsf = URand(1,_qf); 
-        bWake = true;
-    }
-
-    // decide which ID inside that SF to use
-    register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
-
-    trx_result_tuple_t atrt;
-    if (_cp->take_one) {
-        atrt.set_notify(_cp->wait+_cp->index);
-        bWake = true;
-    }
-    
-    switch (xct_type) {
-
-        // TM1 DORA
-    case XCT_TM1_DORA_GET_SUB_DATA:
-        return (_tm1db->dora_get_sub_data(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_GET_NEW_DEST:
-        return (_tm1db->dora_get_new_dest(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_GET_ACC_DATA:
-        return (_tm1db->dora_get_acc_data(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_UPD_SUB_DATA:
-        return (_tm1db->dora_upd_sub_data(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_UPD_LOCATION:
-        return (_tm1db->dora_upd_loc(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_INS_CALL_FWD:
-        return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_DEL_CALL_FWD:
-        return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,bWake));
-    case XCT_TM1_DORA_CALL_FWD_MIX:
-        // evenly pick one of the {Ins/Del}CallFwd
-        if (URand(1,100)>50)
-            return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid,true)); // always wake in the mix
-        else
-            return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,true));
-
-
-    default:
-        assert (0); // UNKNOWN TRX-ID
-    }
     return (RCOK);
 }
 

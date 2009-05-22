@@ -2,7 +2,7 @@
 
 /** @file:   tester_shore_env.cpp
  *
- *  @brief:  Implementation of the various test clients (Baseline, DORA, etc...)
+ *  @brief:  Implementation of test client
  *
  *  @author: Ippokratis Pandis, July 2008
  */
@@ -88,97 +88,6 @@ w_rc_t baseline_tpcc_client_t::run_one_xct(int xct_type, int xctid)
     _worker->enqueue(arequest,bWake);
     return (RCOK);
 }
-
-
-
-
-
-/********************************************************************* 
- *
- *  dora_tpcc_client_t
- *
-  *********************************************************************/
-
-const int dora_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
-{
-    // clears the supported trx map and loads its own
-    stmap.clear();
-
-    // Baseline TPC-C trxs
-    stmap[XCT_DORA_MIX]          = "DORA-TPCC-Mix";
-    stmap[XCT_DORA_NEW_ORDER]    = "DORA-TPCC-NewOrder";
-    stmap[XCT_DORA_PAYMENT]      = "DORA-TPCC-Payment";
-    stmap[XCT_DORA_ORDER_STATUS] = "DORA-TPCC-OrderStatus";
-    stmap[XCT_DORA_DELIVERY]     = "DORA-TPCC-Delivery";
-    stmap[XCT_DORA_STOCK_LEVEL]  = "DORA-TPCC-StockLevel";
-
-    // Microbenchmarks
-    stmap[XCT_DORA_MBENCH_WH]    = "DORA-TPCC-MBench-WHs";
-    stmap[XCT_DORA_MBENCH_CUST]  = "DORA-TPCC-MBench-CUSTs";
-
-    return (stmap.size());
-}
-
-/********************************************************************* 
- *
- *  @fn:    run_one_xct
- *
- *  @brief: DORA client - Entry point for running one trx 
- *
- *  @note:  The execution of this trx will not be stopped even if the
- *          measure internal has expired.
- *
- *********************************************************************/
- 
-w_rc_t dora_tpcc_client_t::run_one_xct(int xct_type, int xctid) 
-{
-    // if DORA TPC-C MIX
-    bool bWake = false;
-    if (xct_type == XCT_DORA_MIX) {        
-        xct_type = XCT_DORA_MIX + random_xct_type(rand(100));
-        bWake = true;
-    }
-
-    // pick a valid wh id
-    int whid = _wh;
-    if (_wh==0) {
-        whid = URand(1,_qf); 
-        bWake = true;
-    }
-
-    trx_result_tuple_t atrt;
-    if (_cp->take_one) {
-        atrt.set_notify(_cp->wait+_cp->index);
-        bWake = true;
-    }
-    
-    switch (xct_type) {
-
-        // TPC-C DORA
-    case XCT_DORA_NEW_ORDER:
-        return (_tpccdb->dora_new_order(xctid,atrt,whid,bWake));
-    case XCT_DORA_PAYMENT:
-        return (_tpccdb->dora_payment(xctid,atrt,whid,bWake));
-    case XCT_DORA_ORDER_STATUS:
-        return (_tpccdb->dora_order_status(xctid,atrt,whid,bWake));
-    case XCT_DORA_DELIVERY:
-        return (_tpccdb->dora_delivery(xctid,atrt,whid,bWake));
-    case XCT_DORA_STOCK_LEVEL:
-        return (_tpccdb->dora_stock_level(xctid,atrt,whid,bWake));
-
-        // MBENCH DORA
-    case XCT_DORA_MBENCH_WH:
-        return (_tpccdb->dora_mbench_wh(xctid,atrt,whid,bWake));
-    case XCT_DORA_MBENCH_CUST:
-        return (_tpccdb->dora_mbench_cust(xctid,atrt,whid,bWake));
-
-    default:
-        assert (0); // UNKNOWN TRX-ID
-    }
-    return (RCOK);
-}
-
-
 
 
 

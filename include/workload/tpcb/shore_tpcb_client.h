@@ -2,7 +2,7 @@
 
 /** @file:   shore_tpcb_client.h
  *
- *  @brief:  Defines various test clients (Baseline, DORA, etc..) for the TPC-B benchmark
+ *  @brief:  Defines test client for the TPC-B benchmark
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
@@ -69,49 +69,6 @@ public:
     w_rc_t run_one_xct(int xct_type, int xctid);    
 
 }; // EOF: baseline_tpcb_client_t
-
-
-// /******************************************************************** 
-//  *
-//  * @enum:  dora_tpcb_client_t
-//  *
-//  * @brief: The Baseline TPC-C kit smthread-based test client class
-//  *
-//  ********************************************************************/
-
-// class dora_tpcb_client_t : public base_client_t 
-// {
-// private:
-//     // workload parameters
-//     DoraTPCBEnv* _tpcbdb;    
-//     int _wh;
-//     int _qf;
-
-// public:
-
-//     dora_tpcb_client_t() { }     
-
-//     dora_tpcb_client_t(c_str tname, const int id, DoraTPCBEnv* env, 
-//                        const MeasurementType aType, const int trxid, 
-//                        const int numOfTrxs, 
-//                        processorid_t aprsid, const int sWH, const int qf)  
-// 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
-//           _tpcbdb(env), _wh(sWH), _qf(qf)
-//     {
-//         assert (env);
-//         assert (_wh>=0 && _qf>0);
-//     }
-
-//     ~dora_tpcb_client_t() { }
-
-//     // every client class should implement this function
-//     static const int load_sup_xct(mapSupTrxs& map);
-
-//     // INTERFACE 
-
-//     w_rc_t run_one_xct(int xct_type, int xctid);    
-    
-// }; // EOF: dora_tpcb_client_t
 
 
 EXIT_NAMESPACE(tpcb);

@@ -2,7 +2,7 @@
 
 /** @file:   shore_kits.cpp
  *
- *  @brief:  Test shore/dora kits
+ *  @brief:  Test shore kits
  *
  *  @author: Ippokratis Pandis, Sept 2008
  *
@@ -19,12 +19,6 @@
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "workload/tpcb/shore_tpcb_client.h"
 
-#include "dora.h"
-#include "dora/tpcc/dora_tpcc.h"
-#include "dora/tm1/dora_tm1.h"
-
-
-
 
 using namespace shore;
 
@@ -33,16 +27,11 @@ using namespace tm1;
 using namespace tpcb;
 
 
-using namespace dora;
-
-
-
-
 //////////////////////////////
 
 
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline, snDORA };
+enum SysnameValue { snBaseline };
 
 // Map to associate string with then enum values
 
@@ -51,7 +40,6 @@ static map<string,SysnameValue> mSysnameValue;
 void initsysnamemap() 
 {
     mSysnameValue["baseline"] = snBaseline;
-    mSysnameValue["dora"] =     snDORA;
 }
 
 
@@ -488,17 +476,8 @@ int kit_t<Client,DB>::process_cmd_LOAD(const char* command,
 //////////////////////////////
 
 typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
-typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
-
-
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
-typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
-
-
 typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
-//typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
-
-
 
 //////////////////////////////
 
@@ -542,10 +521,6 @@ int main(int argc, char* argv[])
             // shore.conf is set for Baseline
             kit = new baselineTPCCKit("(tpcc-base) ");
             break;
-        case snDORA:
-            // shore.conf is set for DORA
-            kit = new doraTPCCKit("(tpcc-dora) ");
-            break;
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
             return (2);        
@@ -558,10 +533,6 @@ int main(int argc, char* argv[])
         case snBaseline:
             // shore.conf is set for Baseline
             kit = new baselineTM1Kit("(tm1-base) ");
-            break;
-        case snDORA:
-            // shore.conf is set for DORA
-            kit = new doraTM1Kit("(tm1-dora) ");
             break;
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
@@ -576,11 +547,6 @@ int main(int argc, char* argv[])
             // shore.conf is set for Baseline
             kit = new baselineTPCBKit("(tpcb-base) ");
             break;
-        case snDORA:
-            // shore.conf is set for DORA
-            //kit = new doraTPCCKit("(tpcb-dora) ");
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            //break;
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
             return (3);        
