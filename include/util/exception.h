@@ -65,7 +65,7 @@
 
 
 // optional printf-like message allowed here
-class QPipeException : public std::exception
+class SClientException : public std::exception
 {
 
 private:
@@ -74,7 +74,7 @@ private:
 
 public:
 
-  QPipeException(const char* filename, int line_num, const char* function_name,
+  SClientException(const char* filename, int line_num, const char* function_name,
                  c_str const &m)
     : _message(c_str("%s:%d (%s):%s", filename, line_num, function_name, m.data()))
   {
@@ -84,15 +84,15 @@ public:
     return _message.data();
   }
  
-  virtual ~QPipeException() throw() { }
+  virtual ~SClientException() throw() { }
 };
 
 #define DEFINE_EXCEPTION(Name) \
-    class Name : public QPipeException { \
+    class Name : public SClientException { \
     public: \
         Name(const char* filename, int line_num, const char* function_name, \
              const char* m) \
-            : QPipeException(filename, line_num, function_name, m) \
+            : SClientException(filename, line_num, function_name, m) \
             { \
             } \
     }
@@ -104,7 +104,6 @@ inline c_str errno_to_str(int err=errno) {
 DEFINE_EXCEPTION(BadAlloc);
 DEFINE_EXCEPTION(OutOfRange);
 DEFINE_EXCEPTION(FileException);
-DEFINE_EXCEPTION(BdbException);
 DEFINE_EXCEPTION(TrxException);
 
 

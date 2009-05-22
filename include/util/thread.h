@@ -111,7 +111,7 @@ struct thread_pool
  *
  *  @class thread_t
  * 
- *  @brief QPIPE thread base class. Basically a thin wrapper around an
+ *  @brief shore-mt-client thread base class. Basically a thin wrapper around an
  *         internal method and a thread name.
  *
  *  @note  if USE_SMTHREAD_AS_BASE is defined it uses the smthread_t class

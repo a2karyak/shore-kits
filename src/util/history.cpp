@@ -32,7 +32,7 @@
 
 
 
-bool ensure_qpipe_directory_exists();
+bool ensure_sclient_directory_exists();
 bool try_history_load();
 bool history_save();
 
@@ -41,14 +41,14 @@ bool history_save();
 /**
  * @brief If we are using readline library, we probably want save a
    command history so we don't have to re-type the same commands every
-   time we start QPIPE. history_open() will return true if and only if
+   time we start SCLIENT. history_open() will return true if and only if
    one of the following conditions are met:
    
    the  configuration files exists and
 */
 bool history_open() {
 
-    if (!ensure_qpipe_directory_exists())
+    if (!ensure_sclient_directory_exists())
         return false;       
 
     if (!try_history_load())
@@ -69,7 +69,7 @@ bool history_close() {
 
 
 
-bool ensure_qpipe_directory_exists() {
+bool ensure_sclient_directory_exists() {
 
     char* home_directory = getenv("HOME");
     if (home_directory == NULL) {
@@ -78,12 +78,12 @@ bool ensure_qpipe_directory_exists() {
         return false;
     }
 
-    c_str qpipe_directory("%s/%s", home_directory, QPIPE_DIRECTORY_NAME);
+    c_str sclient_directory("%s/%s", home_directory, SCLIENT_DIRECTORY_NAME);
 
-    int mkdir_ret = mkdir(qpipe_directory.data(), S_IRWXU);
+    int mkdir_ret = mkdir(sclient_directory.data(), S_IRWXU);
     if ((mkdir_ret != 0) && (errno != EEXIST)) {
-        TRACE(TRACE_ALWAYS, "Could not create QPIPE config directory %s\n",
-              qpipe_directory.data());
+        TRACE(TRACE_ALWAYS, "Could not create SCLIENT config directory %s\n",
+              sclient_directory.data());
         return false;
     }
 
@@ -101,22 +101,22 @@ bool try_history_load() {
         return false;
     }
 
-    c_str qpipe_history_file("%s/%s/%s",
+    c_str sclient_history_file("%s/%s/%s",
                              home_directory,
-                             QPIPE_DIRECTORY_NAME,
-                             QPIPE_HISTORY_FILE);
+                             SCLIENT_DIRECTORY_NAME,
+                             SCLIENT_HISTORY_FILE);
 
-    int open_ret = open(qpipe_history_file.data(), O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
+    int open_ret = open(sclient_history_file.data(), O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
     if (open_ret == -1) {
-        TRACE(TRACE_ALWAYS, "Could not open QPIPE history file %s\n",
-              qpipe_history_file.data());
+        TRACE(TRACE_ALWAYS, "Could not open SCLIENT history file %s\n",
+              sclient_history_file.data());
         return false;
     }
     close(open_ret);
 
-    if ( read_history(qpipe_history_file.data()) ) {
-        TRACE(TRACE_ALWAYS, "Could not read QPIPE history file %s\n",
-              qpipe_history_file.data());
+    if ( read_history(sclient_history_file.data()) ) {
+        TRACE(TRACE_ALWAYS, "Could not read SCLIENT history file %s\n",
+              sclient_history_file.data());
         return false;
     }
 
@@ -134,14 +134,14 @@ bool history_save() {
         return false;
     }
 
-    c_str qpipe_history_file("%s/%s/%s",
+    c_str sclient_history_file("%s/%s/%s",
                              home_directory,
-                             QPIPE_DIRECTORY_NAME,
-                             QPIPE_HISTORY_FILE);
+                             SCLIENT_DIRECTORY_NAME,
+                             SCLIENT_HISTORY_FILE);
 
-    if ( write_history(qpipe_history_file.data()) ) {
-        TRACE(TRACE_ALWAYS, "Could not write QPIPE history file %s\n",
-              qpipe_history_file.data());
+    if ( write_history(sclient_history_file.data()) ) {
+        TRACE(TRACE_ALWAYS, "Could not write SCLIENT history file %s\n",
+              sclient_history_file.data());
         return false;
     }
 

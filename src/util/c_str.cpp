@@ -36,7 +36,7 @@ static owner_map* owners;
 .end
 
   Manually add that file onto the end of whatever command 'make' uses
-  to compile this file, rebuild libutil.ca, and relink qpipe. If you
+  to compile this file, rebuild libutil.ca, and relink. If you
   get errors about discarded symbols, compile c_str.cpp without debug
   info (sorry, I don't know what the real problem is).
  */

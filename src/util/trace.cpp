@@ -58,7 +58,7 @@ static void trace_stream(FILE* out_stream,
  *  @brief Bit vector representing the current set of messages to be
  *  printed. Should be set at runtime to turn different message types
  *  on and off. We initialize it here to enable all messages. That
- *  way, any messages we print during QPIPE startup will be printed.
+ *  way, any messages we print during client startup will be printed.
  */
 static unsigned int trace_current_setting = ~0u;
 

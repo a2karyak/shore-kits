@@ -190,7 +190,7 @@ protected:
     
 public:
 
-    shell_t(const char* prompt = QPIPE_PROMPT, bool save_history = true) 
+    shell_t(const char* prompt = SCLIENT_PROMPT, bool save_history = true) 
         : _cmd_counter(0), _save_history(save_history), 
           _state(SHELL_NEXT_CONTINUE), _processing_command(false)
     {
