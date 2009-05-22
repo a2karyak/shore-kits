@@ -10,20 +10,20 @@ AC_INIT(THIS_IS_SHORE_MT_CLIENT,2.0)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
 
-AC_SUBST(CL_FEATURES_DEFINES) 
+AC_SUBST(KITS_FEATURES_DEFINES) 
 AC_SUBST(NEWLINE)
 
 AC_PREREQ(2.50)
 AC_PROG_CXX
 AC_PROG_RANLIB
 
-AC_MSG_NOTICE(Configuring Shore-mt Client)
+AC_MSG_NOTICE(Configuring Shore Kits)
 
 # Set here the version numbers
-CL_VERSION_MAJOR="shore-mt-client"
-CL_VERSION_MINOR=2
-CL_VERSION_REV=0
-CL_VERSION=$CL_VERSION_MAJOR.$CL_VERSION_MINOR.$CL_VERSION_REV
+KITS_VERSION_MAJOR="shore-kits"
+KITS_VERSION_MINOR=2
+KITS_VERSION_REV=0
+KITS_VERSION=$KITS_VERSION_MAJOR.$KITS_VERSION_MINOR.$KITS_VERSION_REV
 
 # make sure I haven't forgotten to run autoconf
 if test configure -ot configure.in; then
@@ -55,18 +55,18 @@ binaryExists() {
 
 
 # ---------- Compiler Checking ----------
-CL_CC=`echo $CC |  sed 's/.*\///'`
+KITS_CC=`echo $CC |  sed 's/.*\///'`
 AC_MSG_CHECKING(CC)
-AC_MSG_RESULT($CL_CC)
+AC_MSG_RESULT($KITS_CC)
 
-CL_CXX=`echo $CXX |  sed 's/.*\///'`
+KITS_CXX=`echo $CXX |  sed 's/.*\///'`
 AC_MSG_CHECKING(CXX)
-AC_MSG_RESULT($CL_CXX)
+AC_MSG_RESULT($KITS_CXX)
 
-CL_CXX_VERSION="0.0"
+KITS_CXX_VERSION="0.0"
 
 
-if test "$CL_CC" = "cc"; then
+if test "$KITS_CC" = "cc"; then
    # ------ (SUN) C/C++ compiler ------
 
    # cc version
@@ -74,14 +74,14 @@ if test "$CL_CC" = "cc"; then
    #cc_ver=`$CXX -V | grep 'C++' | sed 's/^.*C++ //'`
    #cc_major=`echo $gcc_ver | sed 's/\..*$//'`
    #[cc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
-   #CL_CXX_VERSION="$cc_major.$cc_mid"
-   #AC_MSG_RESULT($CL_CXX_VERSION)
+   #KITS_CXX_VERSION="$cc_major.$cc_mid"
+   #AC_MSG_RESULT($KITS_CXX_VERSION)
 
    # *** Checking the compiler version (cc>=5.9)
    reqcc_major=5
    reqcc_mid=8
    #if test $cc_major -lt $reqcc_major -o $cc_mid -le $reqcc_mid; then
-      #AC_MSG_WARN([CC Compiler $CL_CC version $CL_CXX_VERSION is currently not supported by Shore-mt-client])
+      #AC_MSG_WARN([CC Compiler $KITS_CC version $KITS_CXX_VERSION is currently not supported by Shore-mt-client])
       #AC_MSG_WARN([Compiled successfully with cc Compiler $reqcc_major.$reqcc_mid or higher])
    #fi   
 
@@ -111,14 +111,14 @@ else
    [gcc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
    [gcc_minor=`echo $gcc_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/ .*$//'`]
 
-   CL_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
-   AC_MSG_RESULT($CL_CXX_VERSION)
+   KITS_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
+   AC_MSG_RESULT($KITS_CXX_VERSION)
 
    # *** Checking the compiler version (g++>=4)
    reqgcc_major=4
    reqgcc_mid=0
    if test $gcc_major -lt $reqgcc_major -o $gcc_mid -lt $reqgcc_mid; then
-      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $CL_CXX_VERSION is currently not supported by Shore-mt-client])
+      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $KITS_CXX_VERSION is currently not supported by Shore-mt-client])
       AC_MSG_WARN([Compiled successfully with GCC Compiler $reqgcc_major.$reqgcc_mid or higher])
    fi   
 fi 
@@ -155,8 +155,8 @@ AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DE
 # directory where ./configure runs, except on cygwin, which
 # overrides this below
 AC_MSG_CHECKING(Home directory)
-CL_HOME=`pwd`
-AC_MSG_RESULT($CL_HOME)
+KITS_HOME=`pwd`
+AC_MSG_RESULT($KITS_HOME)
 
 
 # SHORE
@@ -250,8 +250,8 @@ NEWLINE="\\
 
 features="$features shore=yes"  # configure for shore 
 
-CL_FEATURES=""
-CL_NOFEATURES=""
+KITS_FEATURES=""
+KITS_NOFEATURES=""
 
 # iterate over all features
 for f_val in $features
@@ -265,27 +265,27 @@ do
    curval=`eval $getcurval`
    AC_MSG_RESULT($curval)
    if test $curval = yes ;then
-      CL_FEATURES="$CL_FEATURES $f"
+      KITS_FEATURES="$KITS_FEATURES $f"
    else
-      CL_NOFEATURES="$CL_NOFEATURES $f"
+      KITS_NOFEATURES="$KITS_NOFEATURES $f"
    fi
 done
 
 
-echo $CL_FEATURES
+echo $KITS_FEATURES
 
 
-## Now produce the CL_FEATURES_DEFINES
-CL_FEATURES_DEFINES=""
+## Now produce the KITS_FEATURES_DEFINES
+KITS_FEATURES_DEFINES=""
 # Convert to upper  case
 [ac_toupper="'[a-z]' '[A-Z]'"]
-for f in `echo $CL_FEATURES | tr $ac_toupper`
+for f in `echo $KITS_FEATURES | tr $ac_toupper`
 do
-   CL_FEATURES_DEFINES="${CL_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
+   KITS_FEATURES_DEFINES="${KITS_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
 done
-for f in `echo $CL_NOFEATURES | tr $ac_toupper`
+for f in `echo $KITS_NOFEATURES | tr $ac_toupper`
 do
-   CL_FEATURES_DEFINES="${CL_FEATURES_DEFINES}@NEWLINE@export USE_$f="
+   KITS_FEATURES_DEFINES="${KITS_FEATURES_DEFINES}@NEWLINE@export USE_$f="
 done
 
 
@@ -294,11 +294,11 @@ done
 # write @ARCHOS@ somewhere in a written file to get it substituted
 AC_SUBST(ARCHOS)
 AC_SUBST(GCC_COMPILER)
-AC_SUBST(CL_HOME)
-AC_SUBST(CL_VERSION_MAJOR)
-AC_SUBST(CL_VERSION_MINOR)
-AC_SUBST(CL_VERSION_REV)
-AC_SUBST(CL_VERSION)
+AC_SUBST(KITS_HOME)
+AC_SUBST(KITS_VERSION_MAJOR)
+AC_SUBST(KITS_VERSION_MINOR)
+AC_SUBST(KITS_VERSION_REV)
+AC_SUBST(KITS_VERSION)
 
 # basic flags/libs every arch needs
 
@@ -368,13 +368,13 @@ AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
 # show the user what the variables have been set to
 cat <<EOF
 
-Shore-mt Client configuration:
-  Version:         CL_VERSION   $CL_VERSION
-  Home:            CL_HOME      $CL_HOME	
-  Features:        CL_FEATURES  $CL_FEATURES
-  CC Compiler:     CC           $CC    
-  CXX Compiler:    CXX          $CXX
-  CC version       CXX_VERSION  $CL_CXX_VERSION
-  Shore-mt home:   SHORE_HOME   $SHORE_HOME
-  Architecture/OS: ARCHOS       $ARCHOS
+Shore Kits configuration:
+  Version:         KITS_VERSION   $KITS_VERSION
+  Home:            KITS_HOME      $KITS_HOME	
+  Features:        KITS_FEATURES  $KITS_FEATURES
+  CC Compiler:     CC             $CC    
+  CXX Compiler:    CXX            $CXX
+  CC version       CXX_VERSION    $KITS_CXX_VERSION
+  Shore-mt home:   SHORE_HOME     $SHORE_HOME
+  Architecture/OS: ARCHOS         $ARCHOS
 EOF
