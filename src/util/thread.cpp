@@ -1,8 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
 #include "util/thread.h"
-#include "util/clh_lock.h"
-#include "util/clh_rwlock.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h> /* Added this for Enceladus. Maybe not work on lomond. */
@@ -132,9 +130,6 @@ void thread_t::reset_rand() {
 
 inline void thread_t::run()
 { 
-    clh_lock::thread_init_manager();
-    clh_rwlock::thread_init_manager();
-
     setupthr(); // Setups the pool and the TLS variables
     
     thread_t* thread  = THREAD_KEY_SELF;
@@ -143,19 +138,11 @@ inline void thread_t::run()
     pool->start();
     thread->work();    
     pool->stop();
-    
-    clh_lock::thread_destroy_manager();
-    clh_rwlock::thread_destroy_manager();
-    
-//     if(thread->delete_me())
-// 	delete thread;
- }
+}
 
 
 inline void thread_t::setupthr()
 {
-    //    cout << "+" << endl;
-
     if(!_ppool)
 	_ppool = &default_thread_pool;
 
@@ -401,11 +388,6 @@ bool thread_cond_wait(pthread_cond_t &cond, pthread_mutex_t &mutex,
 
 void* start_thread(void* thread_object)
 {
-    //    cout << "(+)" << endl;
-
-    clh_lock::thread_init_manager();
-    clh_rwlock::thread_init_manager();
-    
     thread_args* args = (thread_args*)thread_object;
     setup_thread(args);
     delete args;
@@ -417,9 +399,6 @@ void* start_thread(void* thread_object)
     pool->start();
     thread->work();    
     pool->stop();
-    
-    clh_lock::thread_destroy_manager();
-    clh_rwlock::thread_destroy_manager();
     
     if(thread->delete_me())
 	delete thread;

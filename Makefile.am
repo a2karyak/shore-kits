@@ -14,7 +14,7 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 
 # List of libraries
 lib_LIBRARIES = \
-   lib/libtest.a lib/libworkload.a lib/libsm.a lib/libutil.a lib/libdbgen.a
+   lib/libtest.a lib/libworkload.a lib/libsm.a lib/libutil.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -23,16 +23,11 @@ LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
 TESTS = \
    tests/shore_kits
 
-DBGEN = \
-   dbgen_tpcc
 
 
-
-bin_PROGRAMS = $(TESTS) $(DBGEN)
+bin_PROGRAMS = $(TESTS)
 
 tests: $(TESTS)
-
-dbgen: $(DBGEN)
 
 
 ################################################################################
@@ -45,8 +40,6 @@ SU=$(top_srcdir)/src/util
 
 UTIL = \
 	$(SU)/c_str.cpp \
-	$(SU)/fnv.cpp \
-	$(SU)/hash_functions.cpp \
 	$(SU)/thread.cpp \
 	$(SU)/time_util.cpp \
 	$(SU)/tmpfile.cpp \
@@ -58,9 +51,6 @@ UTIL = \
         $(SU)/itimer.cpp \
         $(SU)/progress.cpp \
 	$(SU)/pool_alloc.cpp \
-	$(SU)/clh_lock.cpp \
-	$(SU)/clh_rwlock.cpp \
-	$(SU)/clh_profile.cpp \
         $(SU)/store_string.cpp \
         $(SU)/history.cpp \
         $(SU)/countdown.cpp \
@@ -161,30 +151,6 @@ lib_libworkload_a_SOURCES = \
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
-
-
-
-################################################################################
-#
-# src/workload/ (dbgen)
-#
-################################################################################
-
-SDBGEN=$(top_srcdir)/src/workload
-
-WL_TPCC_DBGEN = \
-   $(SDBGEN)/tpcc/dbgen/gendata.cpp \
-   $(SDBGEN)/tpcc/dbgen/tpcc_misc.cpp \
-   $(SDBGEN)/tpcc/dbgen/tpcc_rnd.cpp
-
-lib_libdbgen_a_SOURCES = \
-   $(WL_TPCC_DBGEN)
-
-lib_libdbgen_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload
-
-dbgen_tpcc_SOURCES = $(SDBGEN)/tpcc/dbgen/gendata.cpp
-
-dbgen_tpcc_LDADD = lib/libdbgen.a $(LDADD)
 
 
 ################################################################################
