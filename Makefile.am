@@ -23,28 +23,7 @@ LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
 
 
 TESTS = \
-   tests/alloc \
-   tests/cpu_binding \
-   tests/trace \
-   tests/itimer_keypress \
-   tests/itimer_threads \
-   tests/bitvector \
-   tests/hashtable \
-   tests/context_set \
-   tests/context_makecontext \
-   tests/context_producer_consumer \
-   tests/hash_map \
-   tests/busy_wait \
-   tests/busy_wait_all \
-   tests/acounter \
-   tests/clh_lock \
-   tests/clh_rwlock \
-   tests/bptree \
-   tests/raii_file \
-   tests/config_file_example \
-   tests/row_cache \
-   tests/shore_kits \
-   tests/simple
+   tests/shore_kits
 
 DBGEN = \
    dbgen_tpcc
@@ -316,58 +295,14 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 #
 #########
 
-tests_alloc_SOURCES = $(ST)/test_alloc.cpp
-tests_cpu_binding_SOURCES = $(ST)/test_cpu_binding.cpp
-tests_trace_SOURCES = $(ST)/test_trace.cpp
-tests_itimer_keypress_SOURCES = $(ST)/test_itimer_keypress.cpp
-tests_itimer_threads_SOURCES = $(ST)/test_itimer_threads.cpp
-tests_bitvector_SOURCES = $(ST)/test_bitvector.cpp
-tests_hashtable_SOURCES = $(ST)/test_hashtable.cpp
-tests_context_set_SOURCES = = $(ST)/test_context_set.cpp
-tests_context_makecontext_SOURCES = $(ST)/test_context_makecontext.cpp
-tests_context_producer_consumer_SOURCES = $(ST)/test_context_producer_consumer.cpp
-tests_hash_map_SOURCES = $(ST)/test_hash_map.cpp
-tests_busy_wait_SOURCES = $(ST)/test_busy_wait.cpp
-tests_busy_wait_all_SOURCES = $(ST)/test_busy_wait_all.cpp
-tests_acounter_SOURCES = $(ST)/test_acounter.cpp
-tests_clh_lock_SOURCES = $(ST)/test_clh_lock.cpp
-tests_clh_rwlock_SOURCES = $(ST)/test_clh_rwlock.cpp
-tests_bptree_SOURCES = $(ST)/test_bptree.cpp
-tests_raii_file_SOURCES = $(ST)/test_file.cpp
-tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
-
-tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
-
-tests_simple_SOURCES = $(ST)/simple_test.cpp
-
 tests_shore_kits_SOURCES = $(ST)/shore_kits.cpp
 
 
-# exec files that need Shore
+#######
+#
+# CXXFLAGS/LDADD
+#
+#######
+
 tests_shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_kits_LDADD = $(TEST_LIBS) -lreadline
-
-tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_row_cache_LDADD = $(TEST_LIBS)
-
-tests_simple_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_simple_LDADD = $(TEST_LIBS)
-
-
-#######
-#
-# LDADD
-#
-#######
-
-tests_cpu_binding_LDADD = $(TEST_LIBS)
-tests_trace_LDADD = $(TEST_LIBS)
-tests_bitvector_LDADD = $(TEST_LIBS)
-tests_hash_map_LDADD = $(TEST_LIBS)
-tests_busy_wait_LDADD = $(TEST_LIBS)
-tests_busy_wait_all_LDADD = $(TEST_LIBS)
-tests_bptree_LDADD = $(TEST_LIBS)
-tests_clh_lock_LDADD = $(TEST_LIBS)
-tests_clh_rwlock_LDADD = $(TEST_LIBS)
-tests_raii_file_LDADD = $(TEST_LIBS)
-tests_config_file_example_LDADD = $(TEST_LIBS)
