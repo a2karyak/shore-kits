@@ -47,7 +47,6 @@ UTIL = \
 	$(SU)/c_str.cpp \
 	$(SU)/fnv.cpp \
 	$(SU)/hash_functions.cpp \
-	$(SU)/static_hash_map.cpp \
 	$(SU)/thread.cpp \
 	$(SU)/time_util.cpp \
 	$(SU)/tmpfile.cpp \
@@ -56,9 +55,6 @@ UTIL = \
 	$(SU)/rio.cpp \
 	$(SU)/chomp.cpp \
         $(SU)/fileops.cpp \
-        $(SU)/static_list_node.cpp \
-        $(SU)/static_list.cpp \
-        $(SU)/resource_pool.cpp \
         $(SU)/itimer.cpp \
         $(SU)/progress.cpp \
 	$(SU)/pool_alloc.cpp \
