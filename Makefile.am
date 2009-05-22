@@ -4,8 +4,8 @@
 # Shore related 
 SHORE = $(SHORE_HOME)/src
 SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW   -DW_LARGEFILE
-SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS) -I$(SHORE_HOME)/../ppmcs
-SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc -L$(SHORE_HOME)/../ppmcs -lppmcs
+SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS)
+SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc
 
 
 
@@ -44,8 +44,7 @@ TESTS = \
    tests/config_file_example \
    tests/row_cache \
    tests/shore_kits \
-   tests/simple \
-   tests/shore_rvp
+   tests/simple
 
 DBGEN = \
    dbgen_tpcc
@@ -378,7 +377,6 @@ tests_bptree_SOURCES = $(ST)/test_bptree.cpp
 tests_raii_file_SOURCES = $(ST)/test_file.cpp
 tests_config_file_example_SOURCES = $(ST)/config_file_example.cpp
 
-tests_shore_rvp_SOURCES = $(ST)/shore_test_rvp.cpp
 tests_row_cache_SOURCES = $(ST)/test_row_cache.cpp
 
 tests_simple_SOURCES = $(ST)/simple_test.cpp
@@ -390,8 +388,6 @@ tests_shore_kits_SOURCES = $(ST)/shore_kits.cpp
 tests_shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_shore_kits_LDADD = $(TEST_LIBS) -lreadline
 
-tests_shore_rvp_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_shore_rvp_LDADD = $(TEST_LIBS) -lreadline
 tests_row_cache_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 tests_row_cache_LDADD = $(TEST_LIBS)
 

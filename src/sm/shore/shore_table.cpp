@@ -55,11 +55,10 @@ w_rc_t table_desc_t::create_table(ss_m* db)
     while (index) {
 	stid_t iid;
 
-        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s) (%s)\n",
+        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s)\n",
                index->name(), 
                (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"),
-               (index->is_relaxed() ? "relaxed" : "no relaxed"));
+               (index->is_unique() ? "unique" : "no unique"));
                
 
         /* create index */
@@ -69,7 +68,7 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				      (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
 				      ss_m::t_regular,
 				      index_keydesc(index),
-				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+				      ss_m::t_cc_kvl,
 				      iid));
 		index->set_fid(i, iid);
 		
@@ -92,7 +91,7 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				  (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
 				  ss_m::t_regular,
 				  index_keydesc(index),
-				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+				  ss_m::t_cc_kvl,
 				  iid));
 	    index->set_fid(0, iid);
 
@@ -137,11 +136,10 @@ bool table_desc_t::create_index(const char* name,
                                 const int* fields,
                                 const int num,
                                 const bool unique,
-                                const bool primary,
-                                const bool nolock)
+                                const bool primary)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
-                                             unique, primary, nolock);
+                                             unique, primary);
 
     // check the validity of the index
     for (int i=0; i<num; i++)  {
@@ -169,10 +167,9 @@ bool table_desc_t::create_index(const char* name,
 bool table_desc_t::create_primary_idx(const char* name,
 				      int partitions,
                                       const int* fields,
-                                      const int num,
-                                      const bool nolock)
+                                      const int num)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
+    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true);
 
     // check the validity of the index
     for (int i=0; i<num; i++) {

@@ -108,8 +108,6 @@ protected:
   index_desc_t*   _indexes;            // indexes on the table
   index_desc_t*   _primary_idx;        // pointer to primary idx
   
-  index_desc_t*   _nolock_primary_idx; // (optional) nolock primary index
-
   volatile uint_t _maxsize;            // max tuple size for this table, shortcut
 
   int find_field_by_name(const char* field_name) const;
@@ -123,7 +121,7 @@ public:
     table_desc_t(const char* name, int fieldcnt)
         : file_desc_t(name, fieldcnt), 
           _indexes(NULL), 
-          _primary_idx(NULL), _nolock_primary_idx(NULL),
+          _primary_idx(NULL),
           _maxsize(0)
     {
         // Create placeholders for the field descriptors
@@ -156,14 +154,12 @@ public:
                         const int* fields,
                         const int num,
                         const bool unique=true,
-                        const bool primary=false,
-                        const bool nolock=false);
+                        const bool primary=false);
 
     bool   create_primary_idx(const char* name,
 			      int partitions,
                               const int* fields,
-                              const int num,
-                              const bool nolock=false);
+                              const int num);
 
 
     /* ------------------------ */
@@ -187,13 +183,6 @@ public:
     void set_primary(index_desc_t* idx) { 
         assert (idx->is_primary() && idx->is_unique());
         _primary_idx = idx; 
-    }
-
-    /* sets primary no-lock index, the index itself should be already set to
-     * nolock and unique */
-    void set_nolock_primary(index_desc_t* idx) { 
-        assert (idx->is_unique() && idx->is_relaxed());
-        _nolock_primary_idx = idx; 
     }
 
     const char* index_keydesc(index_desc_t* idx);
