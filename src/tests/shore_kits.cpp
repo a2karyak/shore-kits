@@ -484,7 +484,6 @@ typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
 
 int main(int argc, char* argv[]) 
 {
-    // initialize cordoba threads
     thread_init();
 
     TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS 

@@ -26,12 +26,6 @@
 ENTER_NAMESPACE(shore);
 
 
-
-// Use this to enable midway trx aborts
-#undef MIDWAY_ABORTS
-#define MIDWAY_ABORTS
-
-
 // Use this to enable verbode stats for worker threads
 #undef WORKER_VERBOSE_STATS
 #define WORKER_VERBOSE_STATS
@@ -39,12 +33,6 @@ ENTER_NAMESPACE(shore);
 // ditto
 #undef WORKER_VERY_VERBOSE_STATS
 //#define WORKER_VERY_VERBOSE_STATS
-
-
-
-// Define this flag to dump traces of record accesses
-#undef ACCESS_RECORD_TRACE
-//#define ACCESS_RECORD_TRACE
 
 
 const int WAITING_WINDOW = 5; // keep track the last 5 seconds
@@ -75,12 +63,6 @@ struct worker_stats_t
     int _condex_sleep;
     int _failed_sleep;
 
-    int _early_aborts;
-
-#ifdef MIDWAY_ABORTS
-    int _mid_aborts;
-#endif
-
 #ifdef WORKER_VERBOSE_STATS
     void update_served(const double serve_time_ms);
     double _serving_total;   // in msecs
@@ -104,11 +86,7 @@ struct worker_stats_t
         : _processed(0), _problems(0),
           _served_waiting(0),
           _checked_input(0), _served_input(0),
-          _condex_sleep(0), _failed_sleep(0),
-          _early_aborts(0)
-#ifdef MIDWAY_ABORTS
-        , _mid_aborts(0)
-#endif
+          _condex_sleep(0), _failed_sleep(0)
 #ifdef WORKER_VERBOSE_STATS
         , _waiting_total(0), _serving_total(0), 
           _rvp_exec(0), _rvp_notify(0)
@@ -387,15 +365,6 @@ public:
 
     worker_stats_t get_stats() { return (*&_stats); }
     void reset_stats() { _stats.reset(); }
-
-
-#ifdef ACCESS_RECORD_TRACE
-    ofstream _trace_file;
-    vector<string> _events;
-    void create_trace_dir(string dir);
-    void open_trace_file();
-    void close_trace_file();
-#endif
 
 private:
 

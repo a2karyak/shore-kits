@@ -45,17 +45,10 @@ void worker_stats_t::print_stats() const
 
     TRACE( TRACE_STATISTICS, "Wait served    (%d) \t%.1f%%\n", 
            _served_waiting, (double)(100*_served_waiting)/(double)_checked_input);
-    
-    TRACE( TRACE_STATISTICS, "Early aborts   (%d) \t%.1f%%\n", 
-           _early_aborts, (double)(100*_early_aborts)/(double)_checked_input);
-
-#ifdef MIDWAY_ABORTS
-    TRACE( TRACE_STATISTICS, "Midway aborts  (%d) \t%.1f%%\n", 
-           _mid_aborts, (double)(100*_mid_aborts)/(double)_checked_input);
-#endif
 
     TRACE( TRACE_STATISTICS, "Sleeped        (%d) \t%.1f%%\n", 
            _condex_sleep, (double)(100*_condex_sleep)/(double)_checked_input);
+
     TRACE( TRACE_STATISTICS, "Failed sleeped (%d) \t%.1f%%\n", 
            _failed_sleep, (double)(100*_failed_sleep)/(double)_checked_input);
 
@@ -63,7 +56,7 @@ void worker_stats_t::print_stats() const
 #ifdef WORKER_VERBOSE_STATS
 
     TRACE( TRACE_STATISTICS, "Avg Action     (%.3fms)\n", 
-           _serving_total/(double)(_processed-_early_aborts));
+           _serving_total/(double)(_processed));
     
     TRACE( TRACE_STATISTICS, "Avg RVP exec   (%.3fms)\n", _rvp_exec/(double)_processed);
     TRACE( TRACE_STATISTICS, "Avg RVP notify (%.3fms)\n", _rvp_notify/(double)_processed);
@@ -92,12 +85,6 @@ worker_stats_t::operator+= (worker_stats_t const& rhs)
 
     _condex_sleep += rhs._condex_sleep;
     _failed_sleep += rhs._failed_sleep;
-
-    _early_aborts += rhs._early_aborts;
-
-#ifdef MIDWAY_ABORTS    
-    _mid_aborts += rhs._mid_aborts;
-#endif
 
 #ifdef WORKER_VERBOSE_STATS
     _waiting_total += rhs._waiting_total;
@@ -129,12 +116,6 @@ void worker_stats_t::reset()
 
     _condex_sleep = 0;
     _failed_sleep = 0;
-
-    _early_aborts = 0;
-
-#ifdef MIDWAY_ABORTS    
-    _mid_aborts = 0;
-#endif
 
 #ifdef WORKER_VERBOSE_STATS
     _waiting_total = 0;
@@ -311,49 +292,6 @@ void base_worker_t::stats()
     // clears after printing results
     _stats.reset();
 }
-
-
-
-
-
-/****************************************************************** 
- *
- * @fn:     ACCESS_RECORD_TRACE
- *
- * @brief:  Tracing of record accesses
- * 
- ******************************************************************/
-
-#ifdef ACCESS_RECORD_TRACE
-#warning Tracing record accesses enabled
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
-void base_worker_t::create_trace_dir(string dir)
-{
-    mkdir(dir.c_str(),0777);
-}
-void base_worker_t::open_trace_file()
-{
-    string dir = envVar::instance()->getVar("dir-trace","RAT");
-    create_trace_dir(dir);
-    time_t second = time(NULL);
-    stringstream st;
-    st << second;
-    string fname = dir + string("/rat-") + st.str() + string("-") + this->thread_name() + string(".csv");
-    TRACE( TRACE_ALWAYS, "Opening file (%s)\n", fname.c_str());
-    _trace_file.open(fname.c_str());
-}
-void base_worker_t::close_trace_file()
-{
-    for (vector<string>::iterator it = _events.begin(); it != _events.end(); it++) {
-        _trace_file << this->thread_name() << "," << *it << endl;
-    }
-    _trace_file.close();
-    TRACE( TRACE_ALWAYS, "Closing file. (%d) events dumped\n", _events.size());
-}
-#endif // ACCESS_RECORD_TRACE
 
 
 

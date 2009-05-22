@@ -271,10 +271,6 @@ public:
     // stat map
     statmap_t _statmap;
 
-#ifdef ACCESS_RECORD_TRACE
-    void add_rat(string event);
-#endif
-
     // snapshot taken at the beginning of each experiment    
     ShoreTPCCTrxStats _last_stats;
     virtual void reset_stats();

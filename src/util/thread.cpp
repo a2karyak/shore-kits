@@ -121,7 +121,7 @@ void thread_t::reset_rand() {
  *
  *  @fn:    run
  *  
- *  @brief: Setups the context of a cordoba (smthread_t derived) thread_t
+ *  @brief: Setups the context of a (smthread_t derived) thread_t
  *
  *  @note:  This function is wrapped with the initialization and destroy
  *          of a sthread. 

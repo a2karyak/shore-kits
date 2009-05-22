@@ -30,40 +30,14 @@ ENTER_NAMESPACE(tpcc);
 
 static __thread ShoreTPCCTrxStats my_stats;
 
-#ifdef ACCESS_RECORD_TRACE
-static __thread vector<string>* my_pevents;
-static __thread timeval my_tv;
-static __thread timeval my_tv_start;
-void ShoreTPCCEnv::add_rat(string event)
-{
-    stringstream st;
-    gettimeofday(&my_tv, NULL);
-    my_tv.tv_sec -= my_tv_start.tv_sec;
-    my_tv.tv_usec -= my_tv_start.tv_usec;
-    st << (my_tv.tv_sec*1000000ll + my_tv.tv_usec);
-    assert (my_pevents);
-    my_pevents->push_back(st.str() + string(",") + event);
-}
-#endif 
-
 void ShoreTPCCEnv::env_thread_init(base_worker_t* aworker)
 {
-#ifdef ACCESS_RECORD_TRACE
-    assert (aworker);
-    my_pevents = &aworker->_events;
-    gettimeofday(&my_tv_start, NULL);
-    aworker->open_trace_file();
-#endif    
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap[pthread_self()] = &my_stats;
 }
 
 void ShoreTPCCEnv::env_thread_fini(base_worker_t* aworker)
 {
-#ifdef ACCESS_RECORD_TRACE
-    assert (aworker);
-    aworker->close_trace_file();
-#endif    
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap.erase(pthread_self());
 }
@@ -1124,13 +1098,6 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
         e = _pdistrict_man->dist_index_probe_forupdate(_pssm, prdist,
                                                        ppin._home_wh_id, ppin._home_d_id);
         if (e.is_error()) { goto done; }
-
-#ifdef ACCESS_RECORD_TRACE
-        stringstream st;
-        register int di = 10*(ppin._home_wh_id - 1) + ppin._home_d_id;
-        st << di;
-        add_rat(st.str());
-#endif        
 
         /* 3. retrieve customer for update */
 

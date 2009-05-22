@@ -141,10 +141,8 @@ protected:
 
 public:
 
-    //    virtual void run()=0;
-
     /** The previously used run() is already used by smthread core.
-     *  Thus, run() now does the cordoba::thread_t specific setup and
+     *  Thus, run() now does the thread_t specific setup and
      *  calls work(). That is, work() is the new entry function for
      *  thread_t instead of run().
      */
