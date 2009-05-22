@@ -222,18 +222,7 @@ public:
         assert ((descidx>=0) && (descidx<_field_count));
         assert (_desc);
         return (&(_desc[descidx]));
-    }
-
-
-    /* ------------------------------------------ */
-    /* --- populate table with data from file --- */
-    /* ------------------------------------------ */
-
-    virtual bool read_tuple_from_line(table_row_t& tuple, char* buf) {
-        assert (0); // should not be called. used to be pure abstract
-        return (false);
-    }
-    
+    }    
 
 
     /* ----------------- */
@@ -264,13 +253,6 @@ public:
     table_man_t() {}
 
     virtual ~table_man_t() {}
-
-
-    /* ------------------------------------------ */
-    /* --- populate table with data from file --- */
-    /* ------------------------------------------ */
-
-    virtual w_rc_t load_from_file(ss_m* db, const char* fname = NULL)=0;
 
 
     /* ------------------------------------ */

@@ -96,7 +96,6 @@ public:
 	create_primary_idx("B_INDEX", 0, keys, 1);
         assert (idxs_created==1); // make sure that idxs were created
     }
-    bool read_tuple_from_line(table_row_t& tuple, char* buf) { return false; }
 }; // EOF: branch_t
 
 
@@ -126,8 +125,6 @@ public:
 	create_primary_idx("T_INDEX", 0, keys, 1);
         assert (idxs_created==1); // make sure that idxs were created
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf) { return false; }
 }; // EOF: teller_t
 
 
@@ -159,8 +156,6 @@ public:
             create_primary_idx("A_INDEX", 0, keys1, 1);
         assert (idxs_created==1); // make sure that idxs were created
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf) { return false; }
 }; // EOF: account_t
 
 
@@ -181,17 +176,9 @@ public:
 
         // NO INDEXES
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf) { return false; }
 }; // EOF: history_t
 
 
-
-// loaders
-typedef table_loading_smt_impl<branch_t>  b_loader_t;
-typedef table_loading_smt_impl<teller_t>   t_loader_t;
-typedef table_loading_smt_impl<account_t>      a_loader_t;
-typedef table_loading_smt_impl<history_t>    hist_loader_t;
 
 // checkers
 typedef table_checking_smt_impl<branch_t>  b_checker_t;

@@ -88,12 +88,6 @@ public:
         assert(!_desc[index].allow_null());
     }
 
-    /* needed by table_desc_t in order not to be abstract */
-    bool read_tuple_from_line(table_row_t& , char* ) {
-        assert (false); // should not be called'
-        return (false);
-    }
-
 }; // EOF: sort_buffer_t
 
 

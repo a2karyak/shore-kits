@@ -40,7 +40,6 @@
 #include "util.h"
 
 #include "workload/tpcc/common/tpcc_const.h"
-#include "workload/tpcc/common/tpcc_tbl_parsers.h"
 #include "sm/shore/shore_table_man.h"
 #include "workload/tpcc/shore_tpcc_random.h"
 
@@ -113,9 +112,6 @@ public:
             create_primary_idx("W_INDEX", 0, keys, 1);
         }
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: warehouse_t
 
 
@@ -129,7 +125,7 @@ public:
         /* table schema */
         _desc[0].setup(SQL_INT,   "D_ID");     
         _desc[1].setup(SQL_INT,   "D_W_ID");   
-        _desc[2].setup(SQL_CHAR,  "D_NAME", 10);    /* VARCHAR(10) */ /* old: CHAR */
+        _desc[2].setup(SQL_CHAR,  "D_NAME", 10);    /* VARCHAR(10) */
         _desc[3].setup(SQL_CHAR,  "D_STREET1", 20);
         _desc[4].setup(SQL_CHAR,  "D_STREET2", 20);
         _desc[5].setup(SQL_CHAR,  "D_CITY", 20);
@@ -148,9 +144,6 @@ public:
             create_primary_idx("D_INDEX", 0, keys, 2);
         }
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: district_t
 
 
@@ -174,23 +167,20 @@ public:
         _desc[9].setup(SQL_CHAR,   "C_STATE", 2);   
         _desc[10].setup(SQL_CHAR,  "C_ZIP", 9);     
         _desc[11].setup(SQL_CHAR,  "C_PHONE", 16);  
-        _desc[12].setup(SQL_FLOAT, "C_SINCE");           /* old: TIME */
+        _desc[12].setup(SQL_FLOAT, "C_SINCE");           
         _desc[13].setup(SQL_CHAR,  "C_CREDIT", 2);  
-        _desc[14].setup(SQL_FLOAT, "C_CREDIT_LIM");      /* DECIMAL(12,2) */
+        _desc[14].setup(SQL_FLOAT, "C_CREDIT_LIM");      
         _desc[15].setup(SQL_FLOAT, "C_DISCOUNT");
-        _desc[16].setup(SQL_FLOAT, "C_BALANCE");         /* DECIMAL(12,2) */
-        _desc[17].setup(SQL_FLOAT, "C_YTD_PAYMENT");     /* DECIMAL(12,2) */
-        _desc[18].setup(SQL_FLOAT, "C_LAST_PAYMENT");    /* !! new !! */ /* - DECIMAL(12,2) */
-        _desc[19].setup(SQL_INT,   "C_PAYMENT_CNT");     /* used to be [18] */
-        //        _desc[19].setup(SQL_SMALLINT, "C_DELIVERY_CNT");
+        _desc[16].setup(SQL_FLOAT, "C_BALANCE");         
+        _desc[17].setup(SQL_FLOAT, "C_YTD_PAYMENT");     
+        _desc[18].setup(SQL_FLOAT, "C_LAST_PAYMENT");    
+        _desc[19].setup(SQL_INT,   "C_PAYMENT_CNT");     
         _desc[20].setup(SQL_CHAR,  "C_DATA_1", 250);
-        _desc[21].setup(SQL_CHAR,  "C_DATA_2", 250);     /* !! new !! */
-
+        _desc[21].setup(SQL_CHAR,  "C_DATA_2", 250);     
 
         int keys1[3] = {2, 1, 0 }; // IDX { C_W_ID, C_D_ID, C_ID }
 
         int keys2[5] = {2, 1, 5, 3, 0}; // IDX { C_W_ID, C_D_ID, C_LAST, C_FIRST, C_ID }
-
 
         // baseline - regular indexes
         if (sysname.compare("baseline")==0) {
@@ -203,9 +193,6 @@ public:
             create_index("C_NAME_INDEX", 0, keys2, 5, false);
         }
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: customer_t
 
 
@@ -222,15 +209,12 @@ public:
         _desc[2].setup(SQL_INT,   "H_C_W_ID"); 
         _desc[3].setup(SQL_INT,   "H_D_ID");   
         _desc[4].setup(SQL_INT,   "H_W_ID");    
-        _desc[5].setup(SQL_FLOAT, "H_DATE");     /* old: TIME */
-        _desc[6].setup(SQL_FLOAT, "H_AMOUNT");   /* old: INT */
+        _desc[5].setup(SQL_FLOAT, "H_DATE");    
+        _desc[6].setup(SQL_FLOAT, "H_AMOUNT");  
         _desc[7].setup(SQL_CHAR,  "H_DATA", 25); 
 
         // NO INDEXES
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: history_t
 
 
@@ -255,9 +239,6 @@ public:
             create_primary_idx("NO_INDEX", 0, keys, 3);
         } 
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: new_order_t
 
 
@@ -269,10 +250,10 @@ public:
     {
         /* table schema */
         _desc[0].setup(SQL_INT,   "O_ID");
-        _desc[1].setup(SQL_INT,   "O_C_ID");        /* prev [3] */
-        _desc[2].setup(SQL_INT,   "O_D_ID");        /* prev [1] */
-        _desc[3].setup(SQL_INT,   "O_W_ID");        /* prev [2] */
-        _desc[4].setup(SQL_FLOAT, "O_ENTRY_D");     /* old: TIME */
+        _desc[1].setup(SQL_INT,   "O_C_ID");       
+        _desc[2].setup(SQL_INT,   "O_D_ID");       
+        _desc[3].setup(SQL_INT,   "O_W_ID");       
+        _desc[4].setup(SQL_FLOAT, "O_ENTRY_D");    
         _desc[5].setup(SQL_INT,   "O_CARRIER_ID"); 
         _desc[6].setup(SQL_INT,   "O_OL_CNT");   
         _desc[7].setup(SQL_INT,   "O_ALL_LOCAL");
@@ -293,9 +274,6 @@ public:
             create_index("O_CUST_INDEX", 0, keys2, 4);
         }
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: order_t
 
 
@@ -313,10 +291,10 @@ public:
 	_desc[3].setup(SQL_INT,    "OL_NUMBER"); 
 	_desc[4].setup(SQL_INT,    "OL_I_ID");
 	_desc[5].setup(SQL_INT,    "OL_SUPPLY_W_ID");  
-	_desc[6].setup(SQL_FLOAT,  "OL_DELIVERY_D");    /* old: TIME */
+	_desc[6].setup(SQL_FLOAT,  "OL_DELIVERY_D");   
 	_desc[7].setup(SQL_INT,    "OL_QUANTITY");   
 	_desc[8].setup(SQL_INT,    "OL_AMOUNT");
-	_desc[9].setup(SQL_CHAR,   "OL_DIST_INFO", 25); /* old: CHAR */  
+	_desc[9].setup(SQL_CHAR,   "OL_DIST_INFO", 25);
 
 	int keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
@@ -328,9 +306,6 @@ public:
             create_primary_idx("OL_INDEX", 10, keys, 4);
         }
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: order_line_t
 
 
@@ -358,9 +333,6 @@ public:
             create_primary_idx("I_INDEX", 0, keys, 1);
         } 
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: item_t
 
 
@@ -373,11 +345,11 @@ public:
 	/* table schema */
 	_desc[0].setup(SQL_INT,    "S_I_ID");
 	_desc[1].setup(SQL_INT,    "S_W_ID");       
-	_desc[2].setup(SQL_INT,    "S_REMOTE_CNT"); /* prev [15] */
-	_desc[3].setup(SQL_INT,    "S_QUANTITY");   /* prev [2] */
-	_desc[4].setup(SQL_INT,    "S_ORDER_CNT");  /* prev [14] */
-	_desc[5].setup(SQL_INT,    "S_YTD");        /* prev [13] */
-	_desc[6].setup(SQL_CHAR,   "S_DIST0", 24);  /* prev [4] */
+	_desc[2].setup(SQL_INT,    "S_REMOTE_CNT");
+	_desc[3].setup(SQL_INT,    "S_QUANTITY");  
+	_desc[4].setup(SQL_INT,    "S_ORDER_CNT"); 
+	_desc[5].setup(SQL_INT,    "S_YTD");       
+	_desc[6].setup(SQL_CHAR,   "S_DIST0", 24); 
 	_desc[7].setup(SQL_CHAR,   "S_DIST1", 24);  
 	_desc[8].setup(SQL_CHAR,   "S_DIST2", 24);  
 	_desc[9].setup(SQL_CHAR,   "S_DIST3", 24);  
@@ -386,12 +358,8 @@ public:
 	_desc[12].setup(SQL_CHAR,  "S_DIST6", 24);  
 	_desc[13].setup(SQL_CHAR,  "S_DIST7", 24);  
 	_desc[14].setup(SQL_CHAR,  "S_DIST8", 24);  
-	_desc[15].setup(SQL_CHAR,  "S_DIST9", 24);      /* prev [12] */
-        //	_desc[13].setup(SQL_SMALLINT, "S_YTD");        
-        //	_desc[14].setup(SQL_SMALLINT, "S_ORDER_CNT");  
-        //	_desc[15].setup(SQL_SMALLINT, "S_REMOTE_CNT"); 
+	_desc[15].setup(SQL_CHAR,  "S_DIST9", 24);
 	_desc[16].setup(SQL_CHAR,  "S_DATA", 50); 
-
 
 	int keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
 
@@ -403,22 +371,8 @@ public:
             create_primary_idx("S_INDEX", 0, keys, 2);
         } 
     }
-
-    bool read_tuple_from_line(table_row_t& tuple, char* buf);
-
 }; // EOF: stock_t
 
-
-// loaders
-typedef table_loading_smt_impl<warehouse_t>  wh_loader_t;
-typedef table_loading_smt_impl<district_t>   dist_loader_t;
-typedef table_loading_smt_impl<stock_t>      st_loader_t;
-typedef table_loading_smt_impl<order_line_t> ol_loader_t;
-typedef table_loading_smt_impl<customer_t>   cust_loader_t;
-typedef table_loading_smt_impl<history_t>    hist_loader_t;
-typedef table_loading_smt_impl<order_t>      ord_loader_t;
-typedef table_loading_smt_impl<new_order_t>  no_loader_t;
-typedef table_loading_smt_impl<item_t>       it_loader_t;
 
 // checkers
 typedef table_checking_smt_impl<warehouse_t>  wh_checker_t;

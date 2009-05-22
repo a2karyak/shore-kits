@@ -189,57 +189,6 @@ public:
 }; // EOF: table_loading_smt_t
 
 
-template <class TableDesc>
-class table_loading_smt_impl : public table_loading_smt_t 
-{
-private:
-
-    table_man_impl<TableDesc>* _pmanager;
-
-public:
-    
-    table_loading_smt_impl(c_str tname, ss_m* assm, 
-                           table_man_impl<TableDesc>* amanager, 
-                           TableDesc* atable, 
-                           int asf, const char* adatadir) 
-	: table_loading_smt_t(tname, assm, atable, asf, adatadir), 
-          _pmanager(amanager)
-    {
-        assert (_pmanager);
-    }
-
-    ~table_loading_smt_impl() { }
-
-    // thread entrance
-    void work() {
-        char fname[MAX_FILENAME_LEN];
-        strcpy(fname, _datadir);
-        strcat(fname, "/");
-        strcat(fname, _ptable->name());
-        strcat(fname, ".dat");
-        TRACE( TRACE_DEBUG, "Loading (%s) from (%s)\n", 
-               _ptable->name(), fname);
-
-        stopwatch_t timer;
-        w_rc_t e = _pmanager->load_from_file(_pssm, fname);
-        double delay = timer.time();
-
-        if (e.is_error()) {
-            TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
-                   _ptable->name());
-            _rv = 1;
-            return;
-        }
-
-        TRACE( TRACE_ALWAYS, "Table (%s) loaded in (%.2f)secs...\n",
-               _ptable->name(), delay);
-        _rv = 0;
-    }
-
-}; // EOF: table_loading_smt_impl
-
-
-
 /****************************************************************** 
  *
  *  @class: index_loading_smt_t
