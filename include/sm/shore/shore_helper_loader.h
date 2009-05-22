@@ -311,10 +311,8 @@ public:
 
                 //*** CONSUME ***//
 
-                //            _prow->print_tuple();
-        
                 key_sz = _pmanager->format_key(_pindex, _ptuple, *_ptuple->_rep);
-                assert (pdest); // (ip) if NULL invalid key
+                assert (pdest); // if NULL invalid key
             
 		int pnum = _pmanager->get_pnum(_pindex, _ptuple);
                 W_DO(_pssm->create_assoc(_pindex->fid(pnum),

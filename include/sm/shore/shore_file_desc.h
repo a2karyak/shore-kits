@@ -85,9 +85,6 @@ protected:
     vid_t           _vid;                  // volume id
     stid_t          _root_iid;             // root id
 
-    // (ip) We need to add optimistic concurrencny for _vid and _root_iid
-    //    pthread_mutex_t _vol_mutex;           // mutex for the vid and root_iid
-
 public:
 
     stid_t          _fid;                  // physical id of the file

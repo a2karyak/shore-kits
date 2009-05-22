@@ -75,9 +75,9 @@ enum  sqltype_t
     SQL_FLOAT,      /* FLOAT */
     SQL_VARCHAR,    /* VARCHAR */
     SQL_CHAR,       /* CHAR */
-    SQL_TIME,       /* TIMESTAMP */      /* (ip) Deprecated, use SQL_FLOAT instead */
-    SQL_NUMERIC,    /* NUMERIC */        /* (ip) Not tested */
-    SQL_SNUMERIC    /* SIGNED NUMERIC */ /* (ip) Not tested */
+    SQL_TIME,       /* TIMESTAMP */      /* Deprecated, use SQL_FLOAT instead */
+    SQL_NUMERIC,    /* NUMERIC */        /* Not tested */
+    SQL_SNUMERIC    /* SIGNED NUMERIC */ /* Not tested */
 
 }; // EOF: sqltype_t
 

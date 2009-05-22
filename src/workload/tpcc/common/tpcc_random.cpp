@@ -70,8 +70,6 @@ int URand(int low, int high) {
 }
 
 
-/** FIXME: (ip) C has a constant value across ($2.1.6.1) */
-
 /** @func NURand(int, int, int)
  *
  *  @brief Generates a non-uniform random number

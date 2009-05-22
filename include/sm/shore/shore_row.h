@@ -259,8 +259,8 @@ inline void rep_row_t::set(const int new_bufsz)
     if ((!_dest) || (_bufsz < new_bufsz)) {
 
         char* tmp = _dest;
-        //        _dest = new char[new_bufsz];
-        // (ip) using the trash stack
+
+        // Using the trash stack
         assert (_pts);
         _dest = new(*_pts) char(new_bufsz);
 
@@ -270,8 +270,6 @@ inline void rep_row_t::set(const int new_bufsz)
             tmp = NULL;
         } 
         _bufsz = _pts->nbytes();
-        //        _bufsz = new_bufsz;
-        //        rep_row_t::_static_format_mallocs++;
     }
 
     // in any case, clean up the buffer

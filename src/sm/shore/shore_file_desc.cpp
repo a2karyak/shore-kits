@@ -31,14 +31,13 @@ using namespace shore;
  
 w_rc_t file_desc_t::find_root_iid(ss_m* db)
 {
-    // (ip) Disabled returns the single vid
-
 #if 0 
+    // Disabled returns the single vid
     vid_t  vid;    
     vid_t* vid_list = NULL;;
     u_int  vid_cnt = 0;
     
-    assert (false); // TODO (ip) defined device name
+    assert (false);
     W_DO(db->list_volumes("device_name", vid_list, vid_cnt));
 
     if (vid_cnt == 0)
@@ -49,7 +48,7 @@ w_rc_t file_desc_t::find_root_iid(ss_m* db)
     _vid = vid;
 #else
     // set the two static variables
-    _vid = 1; /* (ip) explicitly set volume id = 1 */
+    _vid = 1; /* explicitly set volume id = 1 */
 #endif
 
     W_DO(ss_m::vol_root_index(_vid, _root_iid));

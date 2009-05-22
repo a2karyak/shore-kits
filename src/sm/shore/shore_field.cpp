@@ -70,7 +70,7 @@ void  field_desc_t::print_desc(ostream & os)
  *  @brief: Return a string with the value of the specific type and value. 
  *          Used for debugging purposes.
  *  
- *  @note:  (ip) Deprecated
+ *  @note:  Deprecated
  *
  *********************************************************************/
 

@@ -146,7 +146,7 @@ bool table_desc_t::create_index(const char* name,
         assert(fields[i] >= 0 && fields[i] < _field_count);
 
         // only the last field in the index can be variable lengthed
-        // (ip) I am not sure if this is still true now
+        // IP: I am not sure if this is still true after the changes in shoremt
         if (_desc[fields[i]].is_variable_length() && i != num-1) {
             assert(false);
         }

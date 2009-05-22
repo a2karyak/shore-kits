@@ -495,7 +495,7 @@ public:
 
         if (!eof) {
             int key_sz = _pmanager->format_key(_file, &tuple, *tuple._rep);
-            assert (tuple._rep->_dest); // (ip) if dest == NULL there is an invalid key
+            assert (tuple._rep->_dest); // if dest == NULL there is an invalid key
 
             vec_t    key(tuple._rep->_dest, key_sz);
 
@@ -788,12 +788,12 @@ inline const int table_man_impl<TableDesc>::format_key(index_desc_t* pindex,
 
         // copy value
         if (!pfv->copy_value(arep._dest+offset)) {
-            assert (false); // (ip) problem in copying value
+            assert (false); // problem in copying value
             return (0);
         }
         
-        // (ip) previously it was making distinction whether
-        //      the field was of fixed or variable length
+        // IP: previously it was making distinction whether
+        // the field was of fixed or variable length
         offset += pfv->maxsize();
     }
     return (isz);
@@ -1031,7 +1031,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
     // 3. append the tuple
     int tsz = format(ptuple, *ptuple->_rep);
-    assert (ptuple->_rep->_dest); // (ip) if NULL invalid
+    assert (ptuple->_rep->_dest); // if NULL invalid
 
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
@@ -1044,7 +1044,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
     while (index) {
         ksz = format_key(index, ptuple, *ptuple->_rep);
-        assert (ptuple->_rep->_dest); // (ip) if dest == NULL there is invalid key
+        assert (ptuple->_rep->_dest); // if dest == NULL there is invalid key
 
 	int pnum = get_pnum(index, ptuple);
         W_DO(index->find_fid(db, pnum));
@@ -1155,7 +1155,7 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 
     while (pindex) {
         key_sz = format_key(pindex, ptuple, *ptuple->_rep);
-        assert (ptuple->_rep->_dest); // (ip) if NULL invalid key
+        assert (ptuple->_rep->_dest); // if NULL invalid key
 
 	int pnum = get_pnum(pindex, ptuple);
 	W_DO(pindex->find_fid(db, pnum));
@@ -1347,7 +1347,7 @@ w_rc_t table_man_impl<TableDesc>::load_from_file(ss_m* db,
 
             // append it to the table
             tsz = format(&tuple, arep);
-            assert (arep._dest); // (ip) if NULL invalid
+            assert (arep._dest); // if NULL invalid
 	    do { 
 		w_rc_t rc = file_append.create_rec(vec_t(), 0,
 						   vec_t(arep._dest, tsz),
@@ -1474,7 +1474,7 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index(ss_m* db,
     while (!eof) {
         
         key_sz = format_key(pindex, &row, arep);
-        assert (arep._dest); // (ip) if NULL invalid key
+        assert (arep._dest); // if NULL invalid key
 
         int pnum = get_pnum(pindex, &row);
         rc = db->create_assoc(pindex->fid(pnum),
@@ -1571,7 +1571,7 @@ w_rc_t table_man_impl<TableDesc>::bulkload_index_with_iterations(ss_m* db,
             if (scanned_in_iter > rowscanned) {
                 // do insert
                 key_sz = format_key(pindex, &row, arep);
-                assert (arep._dest); // (ip) if NULL invalid key
+                assert (arep._dest); // if NULL invalid key
             
 		int pnum = get_pnum(pindex, &row);
                 W_DO(db->create_assoc(pindex->fid(pnum),
@@ -1757,13 +1757,13 @@ w_rc_t table_man_impl<TableDesc>::bulkload_all_indexes(ss_m* db)
 
     while (pindex) {
 	// build one index at each iteration.
-        //        w_rc_t e = bulkload_index(db, index);
+
         //w_rc_t e = bulkload_index_with_iterations(db, index);
         w_rc_t e = bulkload_index(db, pindex);
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Index (%s) loading aborted [0x%x]\n",
                    pindex->name(), e.err_num());
-            assert (false); // (ip) should never happen
+            assert (false); // should not happen
         }
 	pindex = pindex->next();
     }
