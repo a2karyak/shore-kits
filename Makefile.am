@@ -15,7 +15,7 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 # List of libraries
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libdora.a lib/libsm.a lib/libutil.a \
+   lib/libstages.a lib/libcore.a lib/libsm.a lib/libutil.a \
    lib/libdbgen.a
 
 # GLOBAL ld
@@ -195,26 +195,6 @@ lib_libstages_a_SOURCES = \
 
 
 
-################################################################################
-#
-# src/dora/
-#
-################################################################################
-
-SD=$(top_srcdir)/src/dora
-DO_BASE = \
-   $(SD)/lockman.cpp \
-   $(SD)/action.cpp \
-   $(SD)/partition.cpp \
-   $(SD)/rvp.cpp
-
-
-
-lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-
-lib_libdora_a_SOURCES = \
-   $(DO_BASE)
-
 
 ################################################################################
 #
@@ -246,31 +226,12 @@ WL_TPCC_SHORE = \
    $(SW)/tpcc/shore_tpcc_xct.cpp \
    $(SW)/tpcc/shore_tpcc_load.cpp
 
-
-WL_TPCC_DORA = \
-   $(SD)/tpcc/dora_payment.cpp \
-   $(SD)/tpcc/dora_new_order.cpp \
-   $(SD)/tpcc/dora_order_status.cpp \
-   $(SD)/tpcc/dora_stock_level.cpp \
-   $(SD)/tpcc/dora_delivery.cpp \
-   $(SD)/tpcc/dora_mbench.cpp \
-   $(SD)/tpcc/dora_tpcc.cpp \
-   $(SD)/tpcc/dora_tpcc_xct.cpp
-
-
 WL_TM1_SHORE = \
    $(SW)/tm1/tm1_input.cpp \
    $(SW)/tm1/shore_tm1_schema_man.cpp \
    $(SW)/tm1/shore_tm1_env.cpp \
    $(SW)/tm1/shore_tm1_xct.cpp \
    $(SW)/tm1/shore_tm1_client.cpp
-
-
-WL_TM1_DORA = \
-   $(SD)/tm1/dora_tm1_impl.cpp \
-   $(SD)/tm1/dora_tm1.cpp \
-   $(SD)/tm1/dora_tm1_xct.cpp
-
 
 WL_TPCB_SHORE = \
    $(SW)/tpcb/tpcb_input.cpp \
@@ -286,9 +247,7 @@ lib_libworkload_a_SOURCES = \
    $(WL_TPCC_COMMON) \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
-   $(WL_TPCC_DORA) \
    $(WL_TM1_SHORE) \
-   $(WL_TM1_DORA) \
    $(WL_TPCB_SHORE)
 
 
