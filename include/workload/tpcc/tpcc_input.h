@@ -12,10 +12,10 @@
 #define __TPCC_INPUT_H
 
 #include "util.h"
-#include "stages/tpcc/common/tpcc_scaling_factor.h"
+#include "workload/tpcc/common/tpcc_scaling_factor.h"
 
-#include "stages/tpcc/common/tpcc_const.h"
-#include "stages/tpcc/common/tpcc_struct.h"
+#include "workload/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/common/tpcc_struct.h"
 
 
 ENTER_NAMESPACE(tpcc);

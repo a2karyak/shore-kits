@@ -14,7 +14,7 @@
 
 #include "util/namespace.h"
 #include <utility>
-#include "stages/tpcc/common/tpcc_struct.h"
+#include "workload/tpcc/common/tpcc_struct.h"
 
 
 ENTER_NAMESPACE(tpcc);

@@ -17,20 +17,15 @@
 #include "sm/shore/shore_sort_buf.h"
 #include "sm/shore/shore_trx_worker.h"
 
-#include "core/trx_packet.h"
-
-#include "stages/tpcc/common/tpcc_scaling_factor.h"
-#include "stages/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/common/tpcc_scaling_factor.h"
+#include "workload/tpcc/common/tpcc_const.h"
 
 #include "workload/tpcc/shore_tpcc_schema_man.h"
 #include "workload/tpcc/tpcc_input.h"
 
 #include <map>
 
-
-using namespace qpipe;
 using namespace shore;
-
 
 
 ENTER_NAMESPACE(tpcc);

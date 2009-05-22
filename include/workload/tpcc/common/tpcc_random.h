@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file stages/tpcc/common/tpcc_random.h
+/** @file workload/tpcc/common/tpcc_random.h
  *  
  *  @brief Functions used for the generation of the inputs for
  *         all the TPC-C transactions

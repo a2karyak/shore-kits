@@ -10,8 +10,6 @@
 
 #include "workload/tpcb/shore_tpcb_env.h"
 
-#include "core/trx_packet.h"
-
 #include <vector>
 #include <numeric>
 #include <algorithm>
@@ -21,16 +19,6 @@ using namespace shore;
 
 
 ENTER_NAMESPACE(tpcb);
-
-// acct_update_input_t::acct_update_input_t(int branches_queried, int specific_b_id)
-//     : b_id((specific_b_id < 0)? me()->randn(branches_queried) : specific_b_id)
-//     , t_id(b_id*TELLERS_PER_BRANCH+me()->randn(TELLERS_PER_BRANCH))
-//     , a_id(me()->randn(ACCOUNTS_PER_BRANCH))
-//     , delta(me()->randn(2000000)-1000000)
-// {
-//     int a_b_id = (me()->drand() < .85)? b_id : me()->randn(branches_queried);
-//     a_id += a_b_id*ACCOUNTS_PER_BRANCH;
-// }
 
 
 

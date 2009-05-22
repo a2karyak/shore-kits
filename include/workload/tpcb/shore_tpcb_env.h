@@ -14,8 +14,6 @@
 #include "sm_vas.h"
 #include "util.h"
 
-#include "core/trx_packet.h"
-
 #include "workload/tpcb/tpcb_input.h"
 
 #include "sm/shore/shore_env.h"
@@ -25,8 +23,6 @@
 
 #include <map>
 
-
-using namespace qpipe;
 using namespace shore;
 
 

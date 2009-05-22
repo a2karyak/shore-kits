@@ -16,8 +16,8 @@
 #include "sm_vas.h"
 #include "util.h"
 
-#include "stages/tpcc/common/tpcc_const.h"
-#include "stages/tpcc/common/tpcc_tbl_parsers.h"
+#include "workload/tpcc/common/tpcc_const.h"
+#include "workload/tpcc/common/tpcc_tbl_parsers.h"
 #include "sm/shore/shore_table_man.h"
 #include "workload/tpcc/shore_tpcc_random.h"
 

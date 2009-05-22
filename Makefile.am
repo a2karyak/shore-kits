@@ -126,9 +126,9 @@ lib_libsm_a_SOURCES = \
 SW=$(top_srcdir)/src/workload
 
 WL_TPCC_COMMON = \
-   $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
-   $(SG)/tpcc/common/tpcc_scaling_factor.cpp \
-   $(SG)/tpcc/common/tpcc_random.cpp
+   $(SW)/tpcc/common/tpcc_tbl_parsers.cpp \
+   $(SW)/tpcc/common/tpcc_scaling_factor.cpp \
+   $(SW)/tpcc/common/tpcc_random.cpp
 
 WL_TPCC_SHORE = \
    $(SW)/tpcc/tpcc_input.cpp \
@@ -137,8 +137,8 @@ WL_TPCC_SHORE = \
    $(SW)/tpcc/shore_tpcc_schema_man.cpp \
    $(SW)/tpcc/shore_tpcc_schema_gen.cpp \
    $(SW)/tpcc/shore_tpcc_env.cpp \
-   $(SW)/tpcc/shore_tpcc_xct.cpp \
-   $(SW)/tpcc/shore_tpcc_load.cpp
+   $(SW)/tpcc/shore_tpcc_xct.cpp
+
 
 WL_TM1_SHORE = \
    $(SW)/tm1/tm1_input.cpp \
@@ -202,8 +202,6 @@ STC = $(top_srcdir)/src/tests/common
 lib_libtest_a_CXXFLAGS = $(AM_CXXFLAGS)
 
 lib_libtest_a_SOURCES = \
-   $(STC)/tester_query.cpp \
-   $(STC)/cpu_bind.cpp \
    $(STC)/tester_shore_client.cpp \
    $(STC)/tester_shore_shell.cpp
 

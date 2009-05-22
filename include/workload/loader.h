@@ -14,7 +14,7 @@
 #include "util/c_str.h"
 #include "util/progress.h"
 #include "util/c_str.h"
-#include "stages/tpcc/common/tpcc_tbl_parsers.h"
+#include "workload/tpcc/common/tpcc_tbl_parsers.h"
 
 
 ENTER_NAMESPACE(qpipe);

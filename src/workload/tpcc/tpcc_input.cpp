@@ -10,7 +10,7 @@
 
 
 #include "util.h"
-#include "stages/tpcc/common/tpcc_random.h" 
+#include "workload/tpcc/common/tpcc_random.h" 
 #include "workload/tpcc/tpcc_input.h"
 
 

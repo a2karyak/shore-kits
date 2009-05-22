@@ -13,8 +13,6 @@
 #include "sm_vas.h"
 #include "util.h"
 
-#include "core/trx_packet.h"
-
 #include "workload/tm1/tm1_const.h"
 #include "workload/tm1/tm1_input.h"
 
@@ -25,10 +23,7 @@
 
 #include <map>
 
-
-using namespace qpipe;
 using namespace shore;
-
 
 
 ENTER_NAMESPACE(tm1);
