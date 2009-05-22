@@ -14,8 +14,8 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 
 # List of libraries
 lib_LIBRARIES = \
-   lib/libtest.a lib/libworkload.a lib/libscheduler.a \
-   lib/libstages.a lib/libcore.a lib/libsm.a lib/libutil.a \
+   lib/libtest.a lib/libworkload.a \
+   lib/libsm.a lib/libutil.a \
    lib/libdbgen.a
 
 # GLOBAL ld
@@ -92,44 +92,6 @@ lib_libutil_a_SOURCES = \
 
 ################################################################################
 #
-# src/core/
-#
-################################################################################
-
-SC=$(top_srcdir)/src/core
-SC_BASE = \
-	$(SC)/dispatcher.cpp \
-	$(SC)/packet.cpp \
-	$(SC)/trx_packet.cpp \
-	$(SC)/stage_container.cpp \
-	$(SC)/tuple.cpp \
-	$(SC)/tuple_fifo.cpp \
-	$(SC)/tuple_fifo_directory.cpp
-
-lib_libcore_a_SOURCES = \
-	$(SC_BASE)
-
-
-
-################################################################################
-#
-# src/scheduler/
-#
-################################################################################
-
-SS=$(top_srcdir)/src/scheduler
-SS_BASE = \
-	$(SS)/cpu.cpp \
-	$(SS)/cpu_set.cpp
-
-
-lib_libscheduler_a_SOURCES = \
-	$(SS_BASE)
-
-
-
-################################################################################
-#
 # src/sm/
 #
 ################################################################################
@@ -150,26 +112,6 @@ lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
 lib_libsm_a_SOURCES = \
 	$(SM_SHORE)
-
-
-
-################################################################################
-#
-# src/stages/
-#
-################################################################################
-
-SG=$(top_srcdir)/src/stages
-
-SG_COMMON = \
-   $(SG)/common/process_query.cpp \
-   $(SG)/common/predicates.cpp
-
-
-lib_libstages_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-
-lib_libstages_a_SOURCES = \
-   $(SG_COMMON)
 
 
 
