@@ -13,7 +13,7 @@
 #define __UTIL_STL_POOL
 
 #include <iostream>
-#include <boost/scoped_array.hpp>
+#include "util/guard.h"
 
 //! Simple pool class.
 class Pool
@@ -76,8 +76,8 @@ class Pool
   size_t volatile m_used;			//!< The number of pooled allocations.
   size_t volatile m_overflow;		//!< The number of non-pooled allocations.
 
-  boost::scoped_array<char> m_storage;	//!< The pool storage.
-  boost::scoped_array<void*> m_slots;		//!< The free list.
+  array_guard_t<char> m_storage;	//!< The pool storage.
+  array_guard_t<void*> m_slots;		//!< The free list.
 };
 
 

@@ -18,8 +18,8 @@ Pool::Pool( size_t granularity, size_t size )
 {
   if( m_size > 0 )
     {
-      m_storage.reset( new char[m_size*granularity] );
-      m_slots.reset( new void*[m_size] );
+      m_storage = new char[m_size*granularity];
+      m_slots = new void*[m_size];
 
       for( size_t i = 0; i < m_size; ++i )
         m_slots[i] = reinterpret_cast<void*>( m_storage.get() + i*granularity );

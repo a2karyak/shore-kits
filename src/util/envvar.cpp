@@ -173,21 +173,19 @@ const int envVar::parseOneSetReq(const string& in)
 {
     string param;
     string value;
-    boost::char_separator<char> valuesep("=");            
+    char valuesep = '=';
 
-    tokenizer valuetok(in, valuesep);  
-    tokit vit = valuetok.begin();
-    if (vit == valuetok.end()) {
+    size_t sepos = in.find(valuesep);
+    if(sepos == string::npos) {
         TRACE( TRACE_DEBUG, "(%s) is malformed\n", in);
         return(1);
     }
-    param = *vit;
-    ++vit;
-    if (vit == valuetok.end()) {
+    param = in.substr(0, sepos);
+    value = in.substr(sepos+1);
+    if (value.empty()) {
         TRACE( TRACE_DEBUG, "(%s) is malformed\n", in);
         return(2);
     }
-    value = *vit;
     TRACE( TRACE_DEBUG, "%s -> %s\n", param.c_str(), value.c_str()); 
     CRITICAL_SECTION(evm_cs,_lock);
     _evm[param] = value;
@@ -202,13 +200,14 @@ const int envVar::parseSetReq(const string& in)
     int cnt=0;
 
     // FORMAT: SET [<clause_name>=<clause_value>]*
-    boost::char_separator<char> clausesep(" ");
-    tokenizer clausetok(in, clausesep);
-    tokit cit = clausetok.begin();
-    ++cit; // omit the SET cmd
-    for (; cit != clausetok.end(); ++cit) {
-        parseOneSetReq(*cit);
-        ++cnt;
+    char clausesep = ' ';
+    size_t start = in.find(clausesep); // omit the SET cmd
+    size_t end;
+    for (; start != string::npos; start=end) {
+	start++; // skip the separator
+	end = in.find(clausesep, start);
+	parseOneSetReq(in.substr(start, end-start));
+	++cnt;
     }
     return (cnt);
 }

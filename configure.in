@@ -131,28 +131,23 @@ fi
 case "$target" in
   # Sparc Solaris
   *sparc*sun*)
-    BOOST_HOME_DEFAULT="$HOME/apps/boost"
     SHORE_HOME_DEFAULT="$HOME/apps/shore"
     ;;
 
   *ppc*)
-    BOOST_HOME_DEFAULT="/usr/software/boost"
     SHORE_HOME_DEFAULT="/usr/software/shore"
     ;;
 
   *ia64*)
-    BOOST_HOME_DEFAULT="$HOME/work/apps/boost"
     SHORE_HOME_DEFAULT="$HOME/work/apps/shore"
     ;;
 
  *)
-    BOOST_HOME_DEFAULT="/usr/software/boost"
     SHORE_HOME_DEFAULT="/usr/software/shore"
     ;;
 esac
 
 # getting user parameters
-AC_ARG_VAR(BOOST_HOME, Location of Boost Installation; default is $BOOST_HOME_DEFAULT)
 AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
 
 
@@ -162,23 +157,6 @@ AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DE
 AC_MSG_CHECKING(Home directory)
 CL_HOME=`pwd`
 AC_MSG_RESULT($CL_HOME)
-
-
-# BOOST
-AC_MSG_CHECKING(Boost directory)
-# if not a specific parameter try the default one
-if test -z $BOOST_HOME; then
-    BOOST_HOME=$BOOST_HOME_DEFAULT
-fi
-
-# check if valid boost dir
-if ! test -d $BOOST_HOME -a -f $BOOST_HOME/boost/array.hpp; then
-    AC_ERROR([
-            Not valid boost directory at $BOOST_HOME;
-            Please run ./configure BOOST_HOME=where boost is located])
-fi
-
-AC_MSG_RESULT($BOOST_HOME)
 
 
 # SHORE
@@ -397,7 +375,6 @@ Shore-mt Client configuration:
   CC Compiler:     CC           $CC    
   CXX Compiler:    CXX          $CXX
   CC version       CXX_VERSION  $CL_CXX_VERSION
-  Boost home:      BOOST_HOME   $BOOST_HOME
   Shore-mt home:   SHORE_HOME   $SHORE_HOME
   Architecture/OS: ARCHOS       $ARCHOS
 EOF

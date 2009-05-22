@@ -22,7 +22,6 @@
 
 
 #include <iostream>
-#include <boost/tokenizer.hpp>
 
 #include <map>
 
@@ -71,9 +70,6 @@ private:
     typedef map<string,string>        envVarMap;
     typedef envVarMap::iterator       envVarIt;
     typedef envVarMap::const_iterator envVarConstIt;
-
-    typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-    typedef tokenizer::iterator  tokit;
 
     envVarMap _evm;
     string _cfname;

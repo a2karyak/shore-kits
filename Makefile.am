@@ -10,7 +10,7 @@ SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -
 
 
 # GLOBAL includes
-INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/local/include
+INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include
 
 # List of libraries
 lib_LIBRARIES = \
@@ -21,14 +21,11 @@ LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
 
 
 TESTS = \
-   tests/shore_kits
+   shore_kits
 
 
 
 bin_PROGRAMS = $(TESTS)
-
-tests: $(TESTS)
-
 
 ################################################################################
 #
@@ -180,7 +177,7 @@ TEST_LIBS = lib/libtest.a $(LDADD)
 #
 #########
 
-tests_shore_kits_SOURCES = $(ST)/shore_kits.cpp
+shore_kits_SOURCES = $(ST)/shore_kits.cpp
 
 
 #######
@@ -189,5 +186,5 @@ tests_shore_kits_SOURCES = $(ST)/shore_kits.cpp
 #
 #######
 
-tests_shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-tests_shore_kits_LDADD = $(TEST_LIBS) -lreadline
+shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+shore_kits_LDADD = $(TEST_LIBS) -lreadline
