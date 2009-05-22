@@ -41,8 +41,6 @@
 
 #include "workload/tpcc/common/tpcc_const.h"
 #include "sm/shore/shore_table_man.h"
-#include "workload/tpcc/shore_tpcc_random.h"
-
 
 using namespace shore;
 

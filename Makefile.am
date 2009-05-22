@@ -104,14 +104,11 @@ lib_libsm_a_SOURCES = \
 SW=$(top_srcdir)/src/workload
 
 WL_TPCC_COMMON = \
-   $(SW)/tpcc/common/tpcc_scaling_factor.cpp \
    $(SW)/tpcc/common/tpcc_random.cpp
 
 WL_TPCC_SHORE = \
    $(SW)/tpcc/tpcc_input.cpp \
-   $(SW)/tpcc/shore_tpcc_random.cpp \
    $(SW)/tpcc/shore_tpcc_schema_man.cpp \
-   $(SW)/tpcc/shore_tpcc_schema_gen.cpp \
    $(SW)/tpcc/shore_tpcc_env.cpp \
    $(SW)/tpcc/shore_tpcc_xct.cpp
 

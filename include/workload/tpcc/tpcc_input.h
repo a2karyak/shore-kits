@@ -34,9 +34,6 @@
 #ifndef __TPCC_INPUT_H
 #define __TPCC_INPUT_H
 
-#include "util.h"
-#include "workload/tpcc/common/tpcc_scaling_factor.h"
-
 #include "workload/tpcc/common/tpcc_const.h"
 #include "workload/tpcc/common/tpcc_struct.h"
 

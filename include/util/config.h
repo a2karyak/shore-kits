@@ -36,7 +36,7 @@
 #define USE_READLINE 1
 
 // Default configuration values
-#define SCLIENT_DIRECTORY_NAME ".shoremtclient"
+#define SCLIENT_DIRECTORY_NAME ".shorekits"
 #define SCLIENT_HISTORY_FILE   "history"
 
 #define SCLIENT_NETWORK_MODE_DEFAULT_LISTEN_PORT 10000

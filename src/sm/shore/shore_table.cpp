@@ -145,7 +145,6 @@ w_rc_t table_desc_t::create_table(ss_m* db)
  *  @brief: Create a regular or primary index on the table
  *
  *  @note:  This only creates the index decription for the index in memory. 
- *          Call bulkload_index to create and populate the index on disks.
  *
  ******************************************************************/
 

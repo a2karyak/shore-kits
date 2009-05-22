@@ -77,11 +77,6 @@ public:
                          warehouse_tuple* ptuple,
                          const double h_amount,
                          lock_mode_t lm = EX);
-
-
-    /** deprecated */
-    
-    w_rc_t bulkload(ss_m* db, int w_num);
     
 }; // EOF: warehouse_man_impl
 
@@ -123,11 +118,6 @@ public:
                                  district_tuple* ptuple,
                                  const int  next_o_id,
                                  lock_mode_t lm = EX);
-
-
-    /** deprecated */
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: district_man_impl
 
@@ -196,11 +186,6 @@ public:
                                         const decimal discount,
                                         const decimal balance,
                                         lock_mode_t lm = EX);
-    
-
-    /** deprecated */
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: customer_man_impl
 
@@ -218,10 +203,6 @@ public:
     { }
 
     ~history_man_impl() { }
-
-    /** deprecated */
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: history_man_impl
 
@@ -261,11 +242,6 @@ public:
                               const int w_id,
                               const int d_id,
                               const int o_id);
-
-    
-    /** deprecated */
-
-    w_rc_t bulkload(ss_m* db, int w_num);
      
 }; // EOF: new_order_man_impl
 
@@ -275,11 +251,6 @@ class order_man_impl : public table_man_impl<order_t>
     typedef row_impl<order_t> order_tuple;
     typedef table_scan_iter_impl<order_t> order_table_iter;
     typedef index_scan_iter_impl<order_t> order_index_iter;
-
-private:
-    int* _pcnt_array;
-    pthread_mutex_t* _pcnt_array_mutex;
-    w_rc_t bulkload(ss_m* db, int w_num, int* apcnt_array);
 
 public:
 
@@ -310,21 +281,6 @@ public:
                                        order_tuple* ptuple,
                                        const int carrier_id);
 
-    
-    /** deprecated */
-
-    /* cnt_array */
-    void produce_cnt_array(int w_num, pthread_mutex_t* parray_mutex);
-    inline void free_cnt_array() {
-        if (_pcnt_array)
-            free(_pcnt_array);
-        _pcnt_array = NULL;
-    }
-    inline int* get_cnt_array() { return (_pcnt_array); }
-    inline pthread_mutex_t* get_cnt_mutex() { return (_pcnt_array_mutex); }
-
-    w_rc_t bulkload(ss_m* db, int w_num);
-
 }; // EOF: order_man_impl
 
 
@@ -334,11 +290,6 @@ class order_line_man_impl : public table_man_impl<order_line_t>
     typedef row_impl<order_line_t> order_line_tuple;
     typedef table_scan_iter_impl<order_line_t> order_line_table_iter;
     typedef index_scan_iter_impl<order_line_t> order_line_index_iter;
-
-private:
-    int* _pcnt_array;
-    pthread_mutex_t* _pcnt_array_mutex;
-    w_rc_t bulkload(ss_m* db, int w_num, int* apcnt_array);
 
 public:
 
@@ -375,21 +326,6 @@ public:
                                       const int o_id,
                                       lock_mode_t alm = SH,
                                       bool need_tuple = true);
-    
-
-    /** deprecated */
-
-    /* cnt_array */
-
-    /** @note: the cnt_array should be created by order_t */
-    inline void set_cnt_array(int* apcnt_array, pthread_mutex_t* pmutex) { 
-        _pcnt_array_mutex = pmutex; assert(_pcnt_array_mutex);
-        _pcnt_array = apcnt_array; assert(_pcnt_array); 
-    }
-    inline int* get_cnt_array() { return (_pcnt_array); }
-    inline pthread_mutex_t* get_cnt_mutex() { return (_pcnt_array_mutex); }
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: order_line_man_impl
 
@@ -420,11 +356,6 @@ public:
     w_rc_t it_index_probe_forupdate(ss_m* db, 
                                     item_tuple* ptuple,
                                     const int i_id);
-
-
-    /** deprecated */
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: item_man_impl
 
@@ -464,11 +395,6 @@ public:
                            stock_tuple* ptuple,
                            const tpcc_stock_tuple* pstock,
                            lock_mode_t lm = EX);
-
-
-    /** deprecated */
-
-    w_rc_t bulkload(ss_m* db, int w_num);
 
 }; // EOF: stock_man_impl
 

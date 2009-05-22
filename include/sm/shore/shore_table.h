@@ -168,10 +168,7 @@ public:
     w_rc_t create_table(ss_m* db);
 
 
-    /* create an index on the table (this only creates the index
-     * decription for the index in memory. call bulkload_index to
-     * create and populate the index on disks.
-     */
+    // create an index on the table
     bool   create_index(const char* name,
 			int partitions,
                         const int* fields,
@@ -253,17 +250,6 @@ public:
     table_man_t() {}
 
     virtual ~table_man_t() {}
-
-
-    /* ------------------------------------ */
-    /* --- bulkload the specified index --- */
-    /* ------------------------------------ */
-
-    virtual w_rc_t bulkload_all_indexes(ss_m* db)=0;
-    virtual w_rc_t bulkload_index(ss_m* db, const char* name)=0;
-    virtual w_rc_t bulkload_index(ss_m* db, index_desc_t* pindex)=0;
-    virtual w_rc_t bulkload_index_with_iterations(ss_m* db, index_desc_t* pindex)=0;
-    virtual w_rc_t bulkload_index_with_helper(ss_m* db, index_desc_t* pindex)=0;
 
 
     /* ------------------------------------------------------- */

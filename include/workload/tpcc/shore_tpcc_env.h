@@ -40,7 +40,6 @@
 #include "sm/shore/shore_sort_buf.h"
 #include "sm/shore/shore_trx_worker.h"
 
-#include "workload/tpcc/common/tpcc_scaling_factor.h"
 #include "workload/tpcc/common/tpcc_const.h"
 
 #include "workload/tpcc/shore_tpcc_schema_man.h"
@@ -55,6 +54,20 @@ ENTER_NAMESPACE(tpcc);
 
 
 using std::map;
+
+
+
+// Sets the scaling factor of the TPC-C database
+// @note Some data structures base their size on this value
+
+//# define TPCC_SCALING_FACTOR             1
+ #define TPCC_SCALING_FACTOR             10
+//# define TPCC_SCALING_FACTOR             100
+
+//# define QUERIED_TPCC_SCALING_FACTOR             1
+//# define QUERIED_TPCC_SCALING_FACTOR             8
+//# define QUERIED_TPCC_SCALING_FACTOR             10
+# define QUERIED_TPCC_SCALING_FACTOR             100
 
 
 
