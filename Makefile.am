@@ -45,10 +45,8 @@ UTIL = \
 	$(SU)/tmpfile.cpp \
 	$(SU)/trace.cpp \
 	$(SU)/tcp.cpp \
-	$(SU)/rio.cpp \
 	$(SU)/chomp.cpp \
         $(SU)/fileops.cpp \
-        $(SU)/itimer.cpp \
         $(SU)/progress.cpp \
 	$(SU)/pool_alloc.cpp \
         $(SU)/store_string.cpp \
