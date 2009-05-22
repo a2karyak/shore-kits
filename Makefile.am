@@ -14,9 +14,7 @@ INCLUDES = -I$(top_srcdir)/include -I$(BOOST_HOME) $(SHORE_INCLUDES) -I/usr/loca
 
 # List of libraries
 lib_LIBRARIES = \
-   lib/libtest.a lib/libworkload.a \
-   lib/libsm.a lib/libutil.a \
-   lib/libdbgen.a
+   lib/libtest.a lib/libworkload.a lib/libsm.a lib/libutil.a lib/libdbgen.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -126,11 +124,6 @@ lib_libsm_a_SOURCES = \
 
 
 SW=$(top_srcdir)/src/workload
-WL_BASE = \
-   $(SW)/workload.cpp \
-   $(SW)/workload_client.cpp \
-   $(SW)/register_stage_containers.cpp \
-   $(SW)/dispatcher_globals.cpp
 
 WL_TPCC_COMMON = \
    $(SG)/tpcc/common/tpcc_tbl_parsers.cpp \
@@ -164,14 +157,11 @@ WL_TPCB_SHORE = \
 
 
 lib_libworkload_a_SOURCES = \
-   $(WL_BASE) \
    $(WL_TPCC_COMMON) \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
    $(WL_TM1_SHORE) \
    $(WL_TPCB_SHORE)
-
-
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
