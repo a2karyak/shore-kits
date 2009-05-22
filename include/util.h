@@ -18,7 +18,6 @@
 #include "util/offsetof.h"
 #include "util/fileops.h"
 #include "util/tassert.h"
-#include "util/itimer.h"
 #include "util/acounter.h"
 #include "util/randgen.h"
 #include "util/store_string.h"
