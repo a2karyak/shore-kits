@@ -175,9 +175,6 @@ protected:
     bool                     _is_bound;
     processorid_t            _prs_id;
 
-    // sli
-    int                      _use_sli;
-
     // states
     virtual const int _work_PAUSED_impl();
     virtual const int _work_ACTIVE_impl()=0;
@@ -189,11 +186,11 @@ protected:
 
 public:
 
-    base_worker_t(ShoreEnv* env, c_str tname, processorid_t aprsid, const int use_sli) 
+    base_worker_t(ShoreEnv* env, c_str tname, processorid_t aprsid) 
         : thread_t(tname), 
           _env(env),
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
-          _next(NULL), _is_bound(false), _prs_id(aprsid), _use_sli(use_sli)
+          _next(NULL), _is_bound(false), _prs_id(aprsid)
     {
         assert (_env);        
     }
@@ -346,9 +343,6 @@ public:
 
     // thread entrance
     inline void work() {
-
-        // 3. set SLI option
-        ss_m::set_sli_enabled(_use_sli);
 
         int rval = 0;
 

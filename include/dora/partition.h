@@ -293,7 +293,7 @@ private:
     const int _generate_standby_pool(const int sz, 
                                      int& pool_sz,
                                      const processorid_t aprsid = PBIND_NONE);
-    Worker* _generate_worker(const processorid_t aprsid, c_str wname, const int use_sli);    
+    Worker* _generate_worker(const processorid_t aprsid, c_str wname);    
 
 protected:    
 
@@ -707,13 +707,8 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
 
     if (sz>0) {
         // 1. generate the head of standby pool
-
-        int use_sli = envVar::instance()->getVarInt("db-worker-sli",0);
-
-        // (ip) We can play with the binding of the standby threads
         pworker = _generate_worker(_prs_id, 
-                                   c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz),
-                                   use_sli);
+                                   c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz));
         if (!pworker) {
             TRACE( TRACE_ALWAYS, "Problem generating worker thread (%d)\n", pool_sz);
             return (de_GEN_WORKER);
@@ -731,8 +726,7 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
         for (pool_sz=1; pool_sz<sz; pool_sz++) {
             // 2. generate worker
             pworker = _generate_worker(_prs_id,
-                                       c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz),
-                                       use_sli);
+                                       c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz));
             if (!pworker) {
                 TRACE( TRACE_ALWAYS, "Problem generating worker thread (%d)\n", pool_sz);
                 return (de_GEN_WORKER);
@@ -772,11 +766,8 @@ const int partition_t<DataType>::_generate_primary()
 
     envVar* pe = envVar::instance();
 
-    int use_sli = pe->getVarInt("db-worker-sli",0);
-
     Worker* pworker = _generate_worker(_prs_id, 
-                                       c_str("%s-P-%d-PRI",_table->name(), _part_id),
-                                       use_sli);
+                                       c_str("%s-P-%d-PRI",_table->name(), _part_id));
     if (!pworker) {
         TRACE( TRACE_ALWAYS, "Problem generating worker thread\n");
         return (de_GEN_WORKER);
@@ -824,12 +815,11 @@ const int partition_t<DataType>::_generate_primary()
 
 template <class DataType>
 inline dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const processorid_t prsid,
-                                                                        c_str strname,
-                                                                        const use_sli) 
+                                                                        c_str strname) 
 {
     // 1. create worker thread
     // 2. set self as worker's partition
-    Worker* pworker = new Worker(_env, this, strname, prsid, use_sli); 
+    Worker* pworker = new Worker(_env, this, strname, prsid); 
     return (pworker);
 }
 

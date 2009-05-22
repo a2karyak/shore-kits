@@ -175,11 +175,6 @@ public:
         _fakeioer->setaliases();
         add_cmd(_fakeioer.get());
 
-        // FROM TESTER_SHORE_SHELL
-        _slier = new sli_enable_cmd_t(_dbinst);
-        _slier->setaliases();
-        add_cmd(_slier.get());
-
 
         // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_dbinst);

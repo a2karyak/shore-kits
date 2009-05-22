@@ -1,8 +1,8 @@
 m4_pattern_allow([^AC_PACKAGE])
 
-# configure.in for Cordoba         -*- sh -*-
+# configure.in for shmtclient         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
-AC_INIT(THIS_IS_CORDOBA,2.0)
+AC_INIT(THIS_IS_SHORE_MT_CLIENT,2.0)
 
 # find system type (using this macro means we must include
 # the files install-sh, config.sub, and config.guess (all from
@@ -10,20 +10,20 @@ AC_INIT(THIS_IS_CORDOBA,2.0)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
 
-AC_SUBST(CORDOBA_FEATURES_DEFINES) 
+AC_SUBST(CL_FEATURES_DEFINES) 
 AC_SUBST(NEWLINE)
 
 AC_PREREQ(2.50)
 AC_PROG_CXX
 AC_PROG_RANLIB
 
-AC_MSG_NOTICE(Configuring Cordoba)
+AC_MSG_NOTICE(Configuring Shore-mt Client)
 
 # Set here the version numbers
-CORDOBA_VERSION_MAJOR="stagetrx"
-CORDOBA_VERSION_MINOR=2
-CORDOBA_VERSION_REV=0
-CORDOBA_VERSION=$CORDOBA_VERSION_MAJOR.$CORDOBA_VERSION_MINOR.$CORDOBA_VERSION_REV
+CL_VERSION_MAJOR="shore-mt-client"
+CL_VERSION_MINOR=2
+CL_VERSION_REV=0
+CL_VERSION=$CL_VERSION_MAJOR.$CL_VERSION_MINOR.$CL_VERSION_REV
 
 # make sure I haven't forgotten to run autoconf
 if test configure -ot configure.in; then
@@ -55,34 +55,33 @@ binaryExists() {
 
 
 # ---------- Compiler Checking ----------
-CORDOBA_CC=`echo $CC |  sed 's/.*\///'`
+CL_CC=`echo $CC |  sed 's/.*\///'`
 AC_MSG_CHECKING(CC)
-AC_MSG_RESULT($CORDOBA_CC)
+AC_MSG_RESULT($CL_CC)
 
-CORDOBA_CXX=`echo $CXX |  sed 's/.*\///'`
+CL_CXX=`echo $CXX |  sed 's/.*\///'`
 AC_MSG_CHECKING(CXX)
-AC_MSG_RESULT($CORDOBA_CXX)
+AC_MSG_RESULT($CL_CXX)
 
-CORDOBA_CXX_VERSION="0.0"
+CL_CXX_VERSION="0.0"
 
 
-if test "$CORDOBA_CC" = "cc"; then
+if test "$CL_CC" = "cc"; then
    # ------ (SUN) C/C++ compiler ------
-   echo "using CC"
 
    # cc version
    #AC_MSG_CHECKING(compiler version)
    #cc_ver=`$CXX -V | grep 'C++' | sed 's/^.*C++ //'`
    #cc_major=`echo $gcc_ver | sed 's/\..*$//'`
    #[cc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
-   #CORDOBA_CXX_VERSION="$cc_major.$cc_mid"
-   #AC_MSG_RESULT($CORDOBA_CXX_VERSION)
+   #CL_CXX_VERSION="$cc_major.$cc_mid"
+   #AC_MSG_RESULT($CL_CXX_VERSION)
 
    # *** Checking the compiler version (cc>=5.9)
    reqcc_major=5
    reqcc_mid=8
    #if test $cc_major -lt $reqcc_major -o $cc_mid -le $reqcc_mid; then
-      #AC_MSG_WARN([CC Compiler $CORDOBA_CC version $CORDOBA_CXX_VERSION is currently not supported by Cordoba])
+      #AC_MSG_WARN([CC Compiler $CL_CC version $CL_CXX_VERSION is currently not supported by Shore-mt-client])
       #AC_MSG_WARN([Compiled successfully with cc Compiler $reqcc_major.$reqcc_mid or higher])
    #fi   
 
@@ -112,14 +111,14 @@ else
    [gcc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
    [gcc_minor=`echo $gcc_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/ .*$//'`]
 
-   CORDOBA_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
-   AC_MSG_RESULT($CORDOBA_CXX_VERSION)
+   CL_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
+   AC_MSG_RESULT($CL_CXX_VERSION)
 
    # *** Checking the compiler version (g++>=4)
    reqgcc_major=4
    reqgcc_mid=0
    if test $gcc_major -lt $reqgcc_major -o $gcc_mid -lt $reqgcc_mid; then
-      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $CORDOBA_CXX_VERSION is currently not supported by Cordoba])
+      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $CL_CXX_VERSION is currently not supported by Shore-mt-client])
       AC_MSG_WARN([Compiled successfully with GCC Compiler $reqgcc_major.$reqgcc_mid or higher])
    fi   
 fi 
@@ -127,7 +126,7 @@ fi
 
 
 
-# ----------- cordoba required libraries -------------
+# ----------- Shore-mt-client required libraries -------------
 # $target is typically processor-vendor-os
 case "$target" in
   # Sparc Solaris
@@ -161,8 +160,8 @@ AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DE
 # directory where ./configure runs, except on cygwin, which
 # overrides this below
 AC_MSG_CHECKING(Home directory)
-CORDOBA_HOME=`pwd`
-AC_MSG_RESULT($CORDOBA_HOME)
+CL_HOME=`pwd`
+AC_MSG_RESULT($CL_HOME)
 
 
 # BOOST
@@ -268,25 +267,19 @@ fi
 NEWLINE="\\
 "
 
-# CORDOBA FEATURES
+# Shore-mt Client FEATURES
 # Give a list of features with the defaults
 
-# *** old qpipe features
-#features="tpcc=yes tpch=yes"                    # workloads
-#features="$features tpccgen=yes tpchgen=yes"    # workload generators
-#features="$features socket=yes"
-
-# cordoba features
 features="$features shore=yes"  # configure for shore 
 
-CORDOBA_FEATURES=""
-CORDOBA_NOFEATURES=""
+CL_FEATURES=""
+CL_NOFEATURES=""
 
 # iterate over all features
 for f_val in $features
 do
    f=`echo $f_val | sed -e s%=.*$%%`
-   AC_MSG_CHECKING(whether to use Cordoba feature $f)
+   AC_MSG_CHECKING(whether to use Shore-mt-client feature $f)
    # default value from "features"
    defval=`echo $f_val | sed -e s%^.*=%%`
    # current value
@@ -294,27 +287,27 @@ do
    curval=`eval $getcurval`
    AC_MSG_RESULT($curval)
    if test $curval = yes ;then
-      CORDOBA_FEATURES="$CORDOBA_FEATURES $f"
+      CL_FEATURES="$CL_FEATURES $f"
    else
-      CORDOBA_NOFEATURES="$CORDOBA_NOFEATURES $f"
+      CL_NOFEATURES="$CL_NOFEATURES $f"
    fi
 done
 
 
-echo $CORDOBA_FEATURES
+echo $CL_FEATURES
 
 
-## Now produce the CORDOBA_FEATURES_DEFINES
-CORDOBA_FEATURES_DEFINES=""
+## Now produce the CL_FEATURES_DEFINES
+CL_FEATURES_DEFINES=""
 # Convert to upper  case
 [ac_toupper="'[a-z]' '[A-Z]'"]
-for f in `echo $CORDOBA_FEATURES | tr $ac_toupper`
+for f in `echo $CL_FEATURES | tr $ac_toupper`
 do
-   CORDOBA_FEATURES_DEFINES="${CORDOBA_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
+   CL_FEATURES_DEFINES="${CL_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
 done
-for f in `echo $CORDOBA_NOFEATURES | tr $ac_toupper`
+for f in `echo $CL_NOFEATURES | tr $ac_toupper`
 do
-   CORDOBA_FEATURES_DEFINES="${CORDOBA_FEATURES_DEFINES}@NEWLINE@export USE_$f="
+   CL_FEATURES_DEFINES="${CL_FEATURES_DEFINES}@NEWLINE@export USE_$f="
 done
 
 
@@ -323,11 +316,11 @@ done
 # write @ARCHOS@ somewhere in a written file to get it substituted
 AC_SUBST(ARCHOS)
 AC_SUBST(GCC_COMPILER)
-AC_SUBST(CORDOBA_HOME)
-AC_SUBST(CORDOBA_VERSION_MAJOR)
-AC_SUBST(CORDOBA_VERSION_MINOR)
-AC_SUBST(CORDOBA_VERSION_REV)
-AC_SUBST(CORDOBA_VERSION)
+AC_SUBST(CL_HOME)
+AC_SUBST(CL_VERSION_MAJOR)
+AC_SUBST(CL_VERSION_MINOR)
+AC_SUBST(CL_VERSION_REV)
+AC_SUBST(CL_VERSION)
 
 # basic flags/libs every arch needs
 
@@ -400,14 +393,14 @@ AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
 # show the user what the variables have been set to
 cat <<EOF
 
-Cordoba configuration:
-  Cordoba version:          CORDOBA_VERSION      $CORDOBA_VERSION
-  Cordoba home:             CORDOBA_HOME         $CORDOBA_HOME	
-  Cordoba features:         CORDOBA_FEATURES    $CORDOBA_FEATURES
-  CC Compiler:              CC                   $CC    
-  CXX Compiler:             CXX                  $CXX
-  CC version                CXX_VERSION          $CORDOBA_CXX_VERSION
-  Boost home:               BOOST_HOME           $BOOST_HOME
-  Shore home:               SHORE_HOME           $SHORE_HOME
-  Architecture/OS:          ARCHOS               $ARCHOS
+Shore-mt Client configuration:
+  Version:         CL_VERSION   $CL_VERSION
+  Home:            CL_HOME      $CL_HOME	
+  Features:        CL_FEATURES  $CL_FEATURES
+  CC Compiler:     CC           $CC    
+  CXX Compiler:    CXX          $CXX
+  CC version       CXX_VERSION  $CL_CXX_VERSION
+  Boost home:      BOOST_HOME   $BOOST_HOME
+  Shore-mt home:   SHORE_HOME   $SHORE_HOME
+  Architecture/OS: ARCHOS       $ARCHOS
 EOF

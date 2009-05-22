@@ -105,10 +105,10 @@ private:
 
 public:
 
-    trx_worker_t(ShoreEnv* env,SubShoreEnv* db, //ugly
+    trx_worker_t(ShoreEnv* env,SubShoreEnv* db,
                  c_str tname, 
-                 processorid_t aprsid = PBIND_NONE, const int use_sli = 0) 
-        : base_worker_t(env, tname, aprsid, use_sli), _db(db)
+                 processorid_t aprsid = PBIND_NONE) 
+        : base_worker_t(env, tname, aprsid), _db(db)
     { 
         assert (env);
         _actionpool = new Pool(sizeof(Request*),REQUESTS_PER_WORKER_POOL_SZ);

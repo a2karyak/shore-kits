@@ -963,15 +963,6 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     bool     found = false;
     smsize_t len = sizeof(rid_t);
 
-    // 0. if index created with NO-LOCK option (DORA) then:
-    //    - ignore lock mode (use NL)
-    //    - find_assoc ignoring any locks
-    bool bIgnoreLocks = false;
-    if (pindex->is_relaxed()) {
-        lock_mode   = NL;
-        bIgnoreLocks = true;
-    }
-
     // 1. ensure valid index
     W_DO(pindex->check_fid(db));
 
@@ -993,8 +984,7 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     			  vec_t(ptuple->_rep->_dest, key_sz),
     			  &(ptuple->_rid),
     			  len,
-    			  found,
-                          bIgnoreLocks));
+    			  found));
     
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
@@ -1056,31 +1046,14 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
     W_DO(_ptable->check_fid(db));
 
 
-    // 2. figure out what mode will be used
-    bool bIgnoreLocks = false;
-    if (lm==NL) bIgnoreLocks = true;
-
-
     // 3. append the tuple
     int tsz = format(ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // (ip) if NULL invalid
 
-    //fprintf(stdout, "add-bIgnore: (%d)\n", bIgnoreLocks);
-
-    //#warning Using bIgnoreLock on create_rec() it will not IX the store
-
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
                         ptuple->_rid,
-                        serial_t::null,
-                        bIgnoreLocks)); // ?? 
-
-//     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
-//                         vec_t(ptuple->_rep->_dest, tsz),
-//                         ptuple->_rid,
-//                         serial_t::null,
-//                         false)); // bIgnoreLocks??
-
+                        serial_t::null));
 
     // 4. update the indexes
     index_desc_t* index = _ptable->indexes();
@@ -1094,8 +1067,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
         W_DO(index->find_fid(db, pnum));
 	W_DO(db->create_assoc(index->fid(pnum),
                               vec_t(ptuple->_rep->_dest, ksz),
-                              vec_t(&(ptuple->_rid), sizeof(rid_t)),
-                              bIgnoreLocks));
+                              vec_t(&(ptuple->_rid), sizeof(rid_t))));
 
         // move to next index
 	index = index->next();
@@ -1133,11 +1105,6 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
 
     // 0. figure out what mode will be used
     latch_mode_t pin_latch_mode = LATCH_EX;
-    bool bIgnoreLocks = false;
-    if (lm==NL) {
-        //        pin_latch_mode = LATCH_SH;
-        bIgnoreLocks = true;
-    }
 
     // 1. pin record
     pin_i pin;
@@ -1162,7 +1129,7 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     }
 
     // 2b. else, simply update
-    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLocks);
+    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
     //rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
@@ -1199,12 +1166,6 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
     rid_t todelete = ptuple->rid();
 
 
-    // 1. figure out what mode will be used
-    bool bIgnoreLocks = false;
-    if (lm==NL) bIgnoreLocks = true;
-
-    //fprintf(stdout, "del-bIgnore: (%d)\n", bIgnoreLocks);   
-
     // 2. delete all the corresponding index entries
     index_desc_t* pindex = _ptable->indexes();
     int key_sz = 0;
@@ -1217,15 +1178,14 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 	W_DO(pindex->find_fid(db, pnum));
 	W_DO(db->destroy_assoc(pindex->fid(pnum),
                                vec_t(ptuple->_rep->_dest, key_sz),
-                               vec_t(&(todelete), sizeof(rid_t)),
-                               bIgnoreLocks));
+                               vec_t(&(todelete), sizeof(rid_t))));
 
         // move to next index
 	pindex = pindex->next();
     }
 
     // 3. delete the tuple
-    W_DO(db->destroy_rec(todelete,bIgnoreLocks));
+    W_DO(db->destroy_rec(todelete));
 
     // invalidate tuple
     ptuple->set_rid(rid_t::null);
