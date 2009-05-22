@@ -338,9 +338,6 @@ LDFLAGS="-lnsl -ldl -lm -lpthread "
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
 
-# optimize *a lot* flags - with errtags
-#    CXXFLAGS="-errtags=yes -xtarget=native -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
-
 # optimize *a lot* flags - normal
      CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 
