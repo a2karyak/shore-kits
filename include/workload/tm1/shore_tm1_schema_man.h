@@ -46,9 +46,6 @@ public:
                        sub_tuple* ptuple, 
                        const int s_id);
     
-    w_rc_t sub_idx_nl(ss_m* db, 
-                      sub_tuple* ptuple, 
-                      const int s_id);
 
     // secondary index
     w_rc_t sub_nbr_idx_probe(ss_m* db, 
@@ -59,9 +56,6 @@ public:
                            sub_tuple* ptuple, 
                            const char* s_nbr);
     
-    w_rc_t sub_nbr_idx_nl(ss_m* db, 
-                          sub_tuple* ptuple, 
-                          const char* s_nbr);
     
 }; // EOF: sub_man_impl
 
@@ -87,9 +81,6 @@ public:
                       ai_tuple* ptuple, 
                       const int s_id, const short ai_type);
     
-    w_rc_t ai_idx_nl(ss_m* db, 
-                     ai_tuple* ptuple, 
-                     const int s_id, const short ai_type);
     
 }; // EOF: ai_man_impl
 
@@ -117,9 +108,6 @@ public:
                       sf_tuple* ptuple, 
                       const int s_id, const short sf_type);
     
-    w_rc_t sf_idx_nl(ss_m* db, 
-                     sf_tuple* ptuple, 
-                     const int s_id, const short sf_type);
 
 
     /* --- access specific tuples with iter  --- */
@@ -132,13 +120,6 @@ public:
                            lock_mode_t alm = SH,
                            bool need_tuple = true);
 
-    w_rc_t sf_get_idx_iter_nl(ss_m* db,
-                              sf_idx_iter* &iter,
-                              sf_tuple* ptuple,
-                              rep_row_t &replow,
-                              rep_row_t &rephigh,
-                              const int sub_id,
-                              bool need_tuple = true);
     
 }; // EOF: sf_man_impl
 
@@ -166,9 +147,6 @@ public:
                       cf_tuple* ptuple, 
                       const int s_id, const short sf_type, const short stime);
     
-    w_rc_t cf_idx_nl(ss_m* db, 
-                     cf_tuple* ptuple, 
-                     const int s_id, const short sf_type, const short stime);
 
 
     /* --- access specific tuples with iter  --- */
@@ -182,16 +160,6 @@ public:
                            const short s_time,
                            lock_mode_t alm = SH,
                            bool need_tuple = true);
-
-    w_rc_t cf_get_idx_iter_nl(ss_m* db,
-                              cf_idx_iter* &iter,
-                              cf_tuple* ptuple,
-                              rep_row_t &replow,
-                              rep_row_t &rephigh,
-                              const int sub_id,
-                              const short sf_type,
-                              const short s_time,
-                              bool need_tuple = true);
 
     
     

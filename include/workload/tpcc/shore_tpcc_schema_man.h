@@ -47,9 +47,6 @@ public:
                                     warehouse_tuple* ptuple, 
                                     const int w_id);
     
-    w_rc_t wh_index_probe_nl(ss_m* db, 
-                             warehouse_tuple* ptuple, 
-                             const int w_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t wh_update_ytd(ss_m* db,
@@ -57,9 +54,6 @@ public:
                          const double h_amount,
                          lock_mode_t lm = EX);
 
-    w_rc_t wh_update_ytd_nl(ss_m* db,
-                            warehouse_tuple* ptuple,
-                            const double h_amount);
 
     /** deprecated */
     
@@ -92,10 +86,6 @@ public:
                                       const int w_id,
                                       const int d_id);
 
-    w_rc_t dist_index_probe_nl(ss_m* db,
-                               district_tuple* ptuple,
-                               const int w_id,
-                               const int d_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t dist_update_ytd(ss_m* db,
@@ -103,9 +93,6 @@ public:
                            const double h_amount,
                            lock_mode_t lm = EX);
 
-    w_rc_t dist_update_ytd_nl(ss_m* db,
-                              district_tuple* ptuple,
-                              const double h_amount);
 
 
     w_rc_t dist_update_next_o_id(ss_m* db,
@@ -113,9 +100,6 @@ public:
                                  const int  next_o_id,
                                  lock_mode_t lm = EX);
 
-    w_rc_t dist_update_next_o_id_nl(ss_m* db,
-                                    district_tuple* ptuple,
-                                    const int  next_o_id);
 
     /** deprecated */
 
@@ -151,15 +135,6 @@ public:
                                   lock_mode_t alm = SH,
                                   bool need_tuple = false);
 
-    w_rc_t cust_get_iter_by_index_nl(ss_m* db,
-                                     customer_index_iter* &iter,
-                                     customer_tuple* ptuple,
-                                     rep_row_t &replow,
-                                     rep_row_t &rephigh,
-                                     const int w_id,
-                                     const int d_id,
-                                     const char* c_last,
-                                     bool need_tuple = false);
 
     w_rc_t cust_index_probe(ss_m* db,
                             customer_tuple* ptuple,
@@ -180,11 +155,6 @@ public:
                                       const int d_id,
                                       const int c_id);
 
-    w_rc_t cust_index_probe_nl(ss_m* db,
-                               customer_tuple* ptuple,
-                               const int w_id,
-                               const int d_id,
-                               const int c_id);
 
 
     /* --- update a retrieved tuple --- */
@@ -195,11 +165,6 @@ public:
                              const char* adata2 = NULL,
                              lock_mode_t lm = EX);
 
-    w_rc_t cust_update_tuple_nl(ss_m* db,
-                                customer_tuple* ptuple,
-                                const tpcc_customer_tuple& acustomer,
-                                const char* adata1 = NULL,
-                                const char* adata2 = NULL);
 
     
     w_rc_t cust_update_discount_balance(ss_m* db,
@@ -208,10 +173,6 @@ public:
                                         const decimal balance,
                                         lock_mode_t lm = EX);
     
-    w_rc_t cust_update_discount_balance_nl(ss_m* db,
-                                           customer_tuple* ptuple,
-                                           const decimal discount,
-                                           const decimal balance);
 
     /** deprecated */
 
@@ -269,14 +230,6 @@ public:
                                 lock_mode_t alm = SH,
                                 bool need_tuple = false);
 
-    w_rc_t no_get_iter_by_index_nl(ss_m* db,
-                                   new_order_index_iter* &iter,
-                                   new_order_tuple* ptuple,
-                                   rep_row_t &replow,
-                                   rep_row_t &rephigh,
-                                   const int w_id,
-                                   const int d_id,
-                                   bool need_tuple = false);
 
     /* --- update a retrieved tuple --- */
     w_rc_t no_delete_by_index(ss_m* db,
@@ -285,11 +238,6 @@ public:
                               const int d_id,
                               const int o_id);
 
-    w_rc_t no_delete_by_index_nl(ss_m* db,
-                                 new_order_tuple* ptuple,
-                                 const int w_id,
-                                 const int d_id,
-                                 const int o_id);
     
     /** deprecated */
 
@@ -332,24 +280,12 @@ public:
                                  lock_mode_t alm = SH,
                                  bool need_tuple = true);
 
-    w_rc_t ord_get_iter_by_index_nl(ss_m* db,
-                                    order_index_iter* &iter,
-                                    order_tuple* ptuple,
-                                    rep_row_t &replow,
-                                    rep_row_t &rephigh,
-                                    const int w_id,
-                                    const int d_id,
-                                    const int c_id,
-                                    bool need_tuple = true);
 
     /* --- update a retrieved tuple --- */
     w_rc_t ord_update_carrier_by_index(ss_m* db,
                                        order_tuple* ptuple,
                                        const int carrier_id);
 
-    w_rc_t ord_update_carrier_by_index_nl(ss_m* db,
-                                          order_tuple* ptuple,
-                                          const int carrier_id);
     
     /** deprecated */
 
@@ -404,16 +340,6 @@ public:
                                       lock_mode_t alm = SH,
                                       bool need_tuple = true);
 
-    w_rc_t ol_get_range_iter_by_index_nl(ss_m* db,
-                                         order_line_index_iter* &iter,
-                                         order_line_tuple* ptuple,
-                                         rep_row_t &replow,
-                                         rep_row_t &rephigh,
-                                         const int w_id,
-                                         const int d_id,
-                                         const int low_o_id,
-                                         const int high_o_id,
-                                         bool need_tuple = true);
     
     w_rc_t ol_get_probe_iter_by_index(ss_m* db,
                                       order_line_index_iter* &iter,
@@ -426,15 +352,6 @@ public:
                                       lock_mode_t alm = SH,
                                       bool need_tuple = true);
     
-    w_rc_t ol_get_probe_iter_by_index_nl(ss_m* db,
-                                         order_line_index_iter* &iter,
-                                         order_line_tuple* ptuple,
-                                         rep_row_t &replow,
-                                         rep_row_t &rephigh,
-                                         const int w_id,
-                                         const int d_id,
-                                         const int o_id,
-                                         bool need_tuple = true);
 
     /** deprecated */
 
@@ -480,9 +397,6 @@ public:
                                     item_tuple* ptuple,
                                     const int i_id);
 
-    w_rc_t it_index_probe_nl(ss_m* db, 
-                             item_tuple* ptuple,
-                             const int i_id);
 
     /** deprecated */
 
@@ -520,10 +434,6 @@ public:
                                     const int w_id,
                                     const int i_id);
 
-    w_rc_t st_index_probe_nl(ss_m* db,
-                             stock_tuple* ptuple,
-                             const int w_id,
-                             const int i_id);
 
     /* --- update a retrieved tuple --- */
     w_rc_t st_update_tuple(ss_m* db,
@@ -531,9 +441,6 @@ public:
                            const tpcc_stock_tuple* pstock,
                            lock_mode_t lm = EX);
 
-    w_rc_t st_update_tuple_nl(ss_m* db,
-                              stock_tuple* ptuple,
-                              const tpcc_stock_tuple* pstock);
 
     /** deprecated */
 

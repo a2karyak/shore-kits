@@ -180,14 +180,6 @@ public:
         return (index_probe(db, pidx, ptuple, EX, LATCH_EX));
     }
 
-    /* probe idx in NL (& LATCH_SH) mode */
-    inline w_rc_t   index_probe_nl(ss_m* db,
-                                   index_desc_t* pidx,
-                                   table_tuple*  ptuple)
-    {
-        return (index_probe(db, pidx, ptuple, NL, LATCH_SH));
-    }
-
     /* probe primary idx */
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
@@ -219,15 +211,6 @@ public:
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
 	return (index_probe_forupdate(db, pindex, ptuple));
-    }
-
-    /* probe idx in NL (& LATCH_NL) mode - based on idx name */
-    inline w_rc_t   index_probe_nl_by_name(ss_m* db, 
-                                           const char* idx_name,
-                                           table_tuple* ptuple) 
-    { 
-	index_desc_t* pindex = _ptable->find_index(idx_name);
-	return (index_probe_nl(db, pindex, ptuple));
     }
 
 
