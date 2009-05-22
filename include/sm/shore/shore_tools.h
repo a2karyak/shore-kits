@@ -1,5 +1,5 @@
 /* -*- mode:C++; c-basic-offset:4 -*-
-     Shore-MT -- Multi-threaded port of the SHORE storage manager
+     Shore-kits -- Benchmark implementations for Shore-MT
    
                        Copyright (c) 2007-2009
       Data Intensive Applications and Systems Labaratory (DIAS)
