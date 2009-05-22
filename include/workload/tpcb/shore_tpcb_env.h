@@ -110,6 +110,7 @@ public:
 
     class table_builder_t;
     class table_creator_t;
+    struct checkpointer_t;
 
 protected:       
 

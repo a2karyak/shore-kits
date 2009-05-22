@@ -193,6 +193,15 @@ const int ShoreTPCBEnv::upd_worker_cnt()
 }
 
 
+struct ShoreTPCBEnv::checkpointer_t : public thread_t {
+    ShoreTPCBEnv* _env;
+    checkpointer_t(ShoreTPCBEnv* env) : thread_t("TPC-C Load Checkpointer"), _env(env) { }
+    virtual void work();
+};
+
+
+
+
 /****************************************************************** 
  *
  * @struct: table_creator_t
@@ -222,20 +231,20 @@ void ShoreTPCBEnv::table_builder_t::work() {
 	trx_result_tuple_t out;
 	fprintf(stderr, ".");
 	//fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+    retry:
 	W_COERCE(_env->db()->begin_xct());
 	e = _env->xct_populate_db(a_id, out, in);
 	if(e.is_error()) {
+	    W_COERCE(_env->db()->abort_xct());
+
+	    if(e.err_num() == smlevel_0::eDEADLOCK)
+		goto retry;
+	    
 	    stringstream os;
 	    os << e << ends;
 	    string str = os.str();
 	    fprintf(stderr, "Eek! Unable to populate db for index %d due to:\n%s\n",
 		    i, str.c_str());
-	    
-	    w_rc_t e2 = _env->db()->abort_xct();
-	    if(e2.is_error()) {
-		TRACE( TRACE_ALWAYS, "Double-eek! Unable to abort trx for index %d due to [0x%x]\n", 
-		       a_id, e2.err_num());
-	    }
 	}
     }
     fprintf(stderr, "Finished loading account groups %d .. %d \n", _start, _start+_count);
@@ -263,6 +272,23 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t {
     virtual void work();
 };
 
+void ShoreTPCBEnv::checkpointer_t::work() {
+    bool volatile* loaded = &_env->_loaded;
+    while(!*loaded) {
+	_env->set_measure(MST_MEASURE);
+	for(int i=0; i < 60 && !*loaded; i++) 
+	    ::sleep(1);
+	
+	//	_env->set_measure(MST_PAUSE);
+	
+        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        _env->checkpoint();
+        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
+    }
+}
+
+
+
 void  ShoreTPCBEnv::table_creator_t::work() {
     /* create the tables */
     W_COERCE(_env->db()->begin_xct());
@@ -283,6 +309,10 @@ void  ShoreTPCBEnv::table_creator_t::work() {
 	W_COERCE(_env->db()->begin_xct());
 	W_COERCE(_env->xct_populate_db(a_id, out, in));
     }
+
+    W_COERCE(_env->db()->begin_xct());
+    W_COERCE(_env->_post_init_impl());
+    W_COERCE(_env->db()->commit_xct());
 }
 
 
@@ -318,6 +348,9 @@ w_rc_t ShoreTPCBEnv::loaddata()
     int num_tbl = 4;
     int cnt = 0;
 
+    guard<checkpointer_t> chk(new checkpointer_t(this));
+    chk->fork();
+    
     /* partly (no) thanks to Shore's next key index locking, and
        partly due to page latch and SMO issues, we have ridiculous
        deadlock rates if we try to throw lots of threads at a small
@@ -326,16 +359,16 @@ w_rc_t ShoreTPCBEnv::loaddata()
        load the first 10k accounts from each partition before firing
        up the real workers.
      */
-    static int const LOADERS_TO_USE = 40;
+    int loaders_to_use = envVar::instance()->getVarInt("db-loaders",10);
     long total_accounts = _scaling_factor*TPCB_ACCOUNTS_PER_BRANCH;
-    w_assert1((total_accounts % LOADERS_TO_USE) == 0);
-    long accts_per_worker = total_accounts/LOADERS_TO_USE;
+    w_assert1((total_accounts % loaders_to_use) == 0);
+    long accts_per_worker = total_accounts/loaders_to_use;
     
     time_t tstart = time(NULL);
     
     {
 	guard<table_creator_t> tc;
-	tc = new table_creator_t(this, _scaling_factor, accts_per_worker, LOADERS_TO_USE);
+	tc = new table_creator_t(this, _scaling_factor, accts_per_worker, loaders_to_use);
 	tc->fork();
 	tc->join();
     }
@@ -345,8 +378,8 @@ w_rc_t ShoreTPCBEnv::loaddata()
        enough not to cause too much contention. I pulled '40' out of
        thin air.
      */
-    guard<table_builder_t> loaders[LOADERS_TO_USE];
-    for(long i=0; i < LOADERS_TO_USE; i++) {
+    array_guard_t< guard<table_builder_t> > loaders(new guard<table_builder_t>[loaders_to_use]);
+    for(long i=0; i < loaders_to_use; i++) {
 	// the preloader thread picked up that first set of accounts...
 	long start = accts_per_worker*i+TPCB_ACCOUNTS_CREATED_PER_POP_XCT;
 	long count = accts_per_worker-TPCB_ACCOUNTS_CREATED_PER_POP_XCT;
@@ -354,7 +387,7 @@ w_rc_t ShoreTPCBEnv::loaddata()
 	loaders[i]->fork();
     }
     
-    for(int i=0; i<LOADERS_TO_USE; i++) {
+    for(int i=0; i<loaders_to_use; i++) {
 	loaders[i]->join();        
     }
 
@@ -367,6 +400,7 @@ w_rc_t ShoreTPCBEnv::loaddata()
 
     /* 6. notify that the env is loaded */
     _loaded = true;
+    chk->join();
 
     return (RCOK);
 }

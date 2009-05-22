@@ -63,7 +63,8 @@ void ShoreTPCCEnv::checkpointer_t::work()
     bool volatile* loaded = &_env->_loaded;
     while(!*loaded) {
 	_env->set_measure(MST_MEASURE);
-		::sleep(60);
+	for(int i=0; i < 60 && ! *loaded; i++) 
+	    ::sleep(1);
 	//	_env->set_measure(MST_PAUSE);
 	
         TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
@@ -94,6 +95,10 @@ void ShoreTPCCEnv::table_creator_t::work()
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->xct_populate_baseline(0, out, in));
 
+    W_COERCE(_env->db()->begin_xct());
+    W_COERCE(_env->_post_init_impl());
+    W_COERCE(_env->db()->commit_xct());
+    
 #if 0
     /*
       create 10k accounts in each partition to buffer workers from each other
@@ -164,11 +169,6 @@ void ShoreTPCCEnv::table_builder_t::work()
 	    fprintf(stderr, ".\n");
     }
     fprintf(stderr, "Finished loading units %d .. %d \n", _start, _start+_count);
-
-    fprintf(stderr, "Starting post init\n");
-    W_COERCE(_env->db()->begin_xct());
-    W_COERCE(_env->_post_init_impl());
-    W_COERCE(_env->db()->commit_xct());
 
 }
 
@@ -450,8 +450,6 @@ w_rc_t ShoreTPCCEnv::loaddata()
     /* 1. create the loader threads */
     int num_tbl = SHORE_TPCC_TABLES;
 
-#define USE_SELF_GENERATED_DATA
-#ifdef USE_SELF_GENERATED_DATA
     // P-Loader
     {
 	guard<table_creator_t> tc;
@@ -462,90 +460,22 @@ w_rc_t ShoreTPCCEnv::loaddata()
     guard<checkpointer_t> chk(new checkpointer_t(this));
     chk->fork();
     
-    //static int const LOADERS = 1;
-    static int const LOADERS = 31;
-    guard<table_builder_t> loaders[LOADERS];
+    int loaders_to_use = envVar::instance()->getVarInt("db-loaders",10);
+    array_guard_t< guard<table_builder_t> > loaders(new guard<table_builder_t>[loaders_to_use]);
     long total_units = _scaling_factor*UNIT_PER_WH;
 
     // WARNING: unit_per_thread must divide by ORDERS_PER_UNIT!
-    long units_per_thread = (total_units + LOADERS-1)/LOADERS;
+    long units_per_thread = (total_units + loaders_to_use-1)/loaders_to_use;
     long divisor = ORDERS_PER_DIST/ORDERS_PER_UNIT;
     units_per_thread = ((units_per_thread + divisor-1)/divisor)*divisor;
-    for(int i=0; i < LOADERS; i++) {
+    for(int i=0; i < loaders_to_use; i++) {
 	long start = i*units_per_thread;
 	long count = (start+units_per_thread > total_units)? total_units-start : units_per_thread;
 	loaders[i] = new table_builder_t(this, start, count, cid_array);
 	loaders[i]->fork();
     }
-    for(int i=0; i < LOADERS; i++)
+    for(int i=0; i < loaders_to_use; i++)
 	loaders[i]->join();
-#else
-
-    string loaddatadir = envVar::instance()->getSysVar("loadatadir");
-    int cnt = 0;
-
-    TRACE( TRACE_DEBUG, "Loaddir (%s)\n", loaddatadir.c_str());
-
-    guard<table_loading_smt_t> loaders[SHORE_TPCC_TABLES];
-
-    // manually create the loading threads
-    loaders[0] = new wh_loader_t(c_str("ld-WH"), _pssm, _pwarehouse_man,
-                                 _pwarehouse_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[1] = new dist_loader_t(c_str("ld-DIST"), _pssm, _pdistrict_man,
-                                   _pdistrict_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[2] = new st_loader_t(c_str("ld-ST"), _pssm, _pstock_man,
-                                 _pstock_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[3] = new ol_loader_t(c_str("ld-OL"), _pssm, _porder_line_man,
-                                 _porder_line_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[4] = new cust_loader_t(c_str("ld-CUST"), _pssm, _pcustomer_man,
-                                   _pcustomer_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[5] = new hist_loader_t(c_str("ld-HIST"), _pssm, _phistory_man,
-                                   _phistory_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[6] = new ord_loader_t(c_str("ld-ORD"), _pssm, _porder_man,
-                                  _porder_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[7] = new no_loader_t(c_str("ld-NO"), _pssm, _pnew_order_man,
-                                 _pnew_order_desc.get(), _scaling_factor, loaddatadir.c_str());
-    loaders[8] = new it_loader_t(c_str("ld-IT"), _pssm, _pitem_man,
-                                 _pitem_desc.get(), _scaling_factor, loaddatadir.c_str());
-    
-
-#if 1
-    /* 3. fork the loading threads (PARALLEL) */
-    for(int i=0; i<num_tbl; i++) {
-	loaders[i]->fork();
-    }
-
-    /* 4. join the loading threads */
-    for(int i=0; i<num_tbl; i++) {
-	loaders[i]->join();        
-        if (loaders[i]->rv()) {
-            TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
-                   loaders[i]->table()->name());
-            delete loaders[i];
-            assert (0); // should not happen
-            return RC(se_ERROR_IN_LOAD);
-        }
-        TRACE( TRACE_TRX_FLOW, "Loader (%d) [%s] joined...\n", 
-               i, loaders[i]->table()->name());
-        //        delete loaders[i];
-    }    
-#else 
-    /* 3. fork & join the loading threads SERIALLY */
-    for(int i=0; i<num_tbl; i++) {
-	loaders[i]->fork();
-	loaders[i]->join();        
-        if (loaders[i]->rv()) {
-            TRACE( TRACE_ALWAYS, "Error while loading (%s) *****\n",
-                   loaders[i]->table()->name());
-            //            delete loaders[i];
-            assert (0); // should not happen
-            return RC(se_ERROR_IN_LOAD);
-        }        
-        //        delete loaders[i];
-    }
-#endif
-
-#endif // P-Loader
 
     time_t tstop = time(NULL);
 
@@ -555,11 +485,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
     /* 6. notify that the env is loaded */
     _loaded = true;
-
-#ifdef USE_SELF_GENERATED_DATA
-    // P-Loader
     chk->join();
-#endif 
 
     return (RCOK);
 }
