@@ -23,7 +23,7 @@
 
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_tpcb_env.cpp
+/** @file:   shore_tpcb_client.cpp
  *
  *  @brief:  Implementation of the test client for the TPCB benchmark
  *

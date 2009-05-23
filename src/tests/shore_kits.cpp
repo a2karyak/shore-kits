@@ -480,8 +480,6 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         delete (testers[i]);
     }
 
-	//	alarm(0); // cancel the alarm, if any
-
     // set measurement state
     _env->set_measure(MST_DONE);
     return (SHELL_NEXT_CONTINUE);
@@ -491,7 +489,7 @@ template<class Client,class DB>
 int kit_t<Client,DB>::process_cmd_LOAD(const char* command, 
                                        const char* command_tag)
 {
-    TRACE( TRACE_DEBUG, "Gotcha\n");
+    TRACE( TRACE_DEBUG, "Not implemented\n");
     return (SHELL_NEXT_CONTINUE);
 }
 

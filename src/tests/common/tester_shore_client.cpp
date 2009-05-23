@@ -25,18 +25,14 @@
 
 /** @file:   tester_shore_env.cpp
  *
- *  @brief:  Implementation of test client
+ *  @brief:  Implementation of the client for the TPCC benchmark
  *
  *  @author: Ippokratis Pandis, July 2008
  */
 
 #include "tests/common/tester_shore_client.h"
 
-using namespace shore;
-
-
-int _theSF = DF_SF;
-
+ENTER_NAMESPACE(tpcc);
 
 
 /********************************************************************* 
@@ -114,3 +110,4 @@ w_rc_t baseline_tpcc_client_t::run_one_xct(int xct_type, int xctid)
 
 
 
+EXIT_NAMESPACE(tpcc);

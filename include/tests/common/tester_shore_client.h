@@ -25,38 +25,21 @@
 
 /** @file:   test_shore_client.h
  *
- *  @brief:  Defines test client
+ *  @brief:  Defines the client for the TPCC benchmark
  *
  *  @author: Ippokratis Pandis, July 2008
  */
 
-#ifndef __TEST_SHORE_CLIENT_H
-#define __TEST_SHORE_CLIENT_H
+#ifndef __SHORE_TPCC_CLIENT_H
+#define __SHORE_TPCC_CLIENT_H
 
 #include "workload/tpcc/tpcc_const.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 
-using namespace tpcc;
+
+ENTER_NAMESPACE(tpcc);
+
 using namespace shore;
-
-
-// default database size (scaling factor)
-const int DF_SF            = 10;
-extern int _theSF;
-
-// Default values for the power-runs //
-
-// default queried factor
-const int DF_NUM_OF_QUERIED_SF    = 10;
-
-// default transaction id to be executed
-const int DF_TRX_ID                = XCT_PAYMENT;
-
-// Default values for the warmups //
-
-// default number of queried SF during warmup
-const int DF_WARMUP_QUERIED_SF = 10;
-
 
 
 /******************************************************************** 
@@ -109,4 +92,6 @@ public:
 }; // EOF: baseline_tpcc_client_t
 
 
-#endif /** __TEST_SHORE_CLIENT_H */
+EXIT_NAMESPACE(tpcc);
+
+#endif /** __SHORE_TPCC_CLIENT_H */

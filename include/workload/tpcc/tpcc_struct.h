@@ -25,14 +25,10 @@
 
 /** @file tpcc_struct.h
  *
- *  @brief Exports structures that we store/load for the TPC-C database
- *
- *  @note Used for SHORE implementations
+ *  @brief Data structures for the TPC-C database
  *
  *  @author Ippokratis Pandis (ipandis)
  *
- *  @history:
- *  10/29/07: The BPTree implementation need implementation of the ==,< operators
  */
 
 #ifndef __TPCC_STRUCT_H

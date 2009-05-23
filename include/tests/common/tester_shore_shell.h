@@ -56,6 +56,25 @@ extern bool volatile _g_canceled;
 
 
 
+// default database size (scaling factor)
+const int DF_SF            = 10;
+extern int _theSF;
+
+// Default values for the power-runs //
+
+// default queried factor
+const int DF_NUM_OF_QUERIED_SF    = 10;
+
+// default transaction id to be executed
+const int DF_TRX_ID                = -1;
+
+// Default values for the warmups //
+
+// default number of queried SF during warmup
+const int DF_WARMUP_QUERIED_SF = 10;
+
+
+
 /*********************************************************************
  *
  *  @class: shore_guard_t

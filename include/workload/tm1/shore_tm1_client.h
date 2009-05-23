@@ -25,7 +25,7 @@
 
 /** @file:   shore_tm1_client.h
  *
- *  @brief:  Defines test client for the TM1 benchmark
+ *  @brief:  Defines the client for the TM1 benchmark
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
@@ -38,7 +38,6 @@
 
 
 ENTER_NAMESPACE(tm1);
-
 
 using namespace shore;
 

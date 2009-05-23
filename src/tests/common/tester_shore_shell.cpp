@@ -43,6 +43,10 @@ extern "C" void alarm_handler(int sig) {
 bool volatile _g_canceled = false;
 
 
+
+int _theSF = DF_SF;
+
+
 //// shore_shell_t interface ////
 
 

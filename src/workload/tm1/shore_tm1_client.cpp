@@ -23,18 +23,16 @@
 
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_tm1_env.cpp
+/** @file:   shore_tm1_client.cpp
  *
- *  @brief:  Implementation of test client for the TM1 benchmark
+ *  @brief:  Implementation of the client for the TM1 benchmark
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
 
 #include "workload/tm1/shore_tm1_client.h"
 
-
 ENTER_NAMESPACE(tm1);
-
 
 
 /********************************************************************* 
