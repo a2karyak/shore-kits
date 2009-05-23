@@ -93,9 +93,6 @@ const int DF_WARMUP_ITERS       = 3;
 
 
 
-// default batch size
-const int BATCH_SIZE = 10;
-
 // default think time
 const int THINK_TIME = 0;
 
@@ -147,9 +144,6 @@ protected:
 
     int _think_time; // in microseconds
 
-    // used for submitting batches
-    guard<condex_pair> _cp;
-
     // for processor binding
     bool          _is_bound;
     processorid_t _prs_id;
@@ -177,7 +171,6 @@ public:
         assert (_env);
         assert (_measure_type != MT_UNDEF);
         assert (_notrxs || (_measure_type == MT_TIME_DUR));
-        _cp = new condex_pair();
     }
 
     virtual ~base_client_t() { }
@@ -224,8 +217,6 @@ public:
         return (run_xcts(_trxid, _notrxs).err_num());
     }
        
-    void submit_batch(int xct_type, int& trx_cnt, const int batch_size);
-
     static void abort_test();
     static void resume_test();
     static bool is_test_aborted();

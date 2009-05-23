@@ -91,7 +91,7 @@ T* thread_join(pthread_t tid)
  *
  *  @struct thread_pool
  * 
- *  @brief  Structure that represents a pool of (worker) threads
+ *  @brief  Structure that represents a pool of threads
  *
  *  @note   A request of a new thread is either granted immediately or 
  *          the requestor has to block until notified (by the conditional

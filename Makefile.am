@@ -49,7 +49,6 @@ UTIL = \
         $(SU)/confparser.cpp \
         $(SU)/envvar.cpp \
         $(SU)/prcinfo.cpp \
-        $(SU)/stl_pool.cpp \
         $(SU)/random_input.cpp \
         $(SU)/shell.cpp
 
@@ -82,7 +81,6 @@ SM_SHORE = \
    $(SM)/shore/shore_env.cpp \
    $(SM)/shore/shore_helper_loader.cpp \
    $(SM)/shore/shore_client.cpp \
-   $(SM)/shore/shore_worker.cpp \
    $(SM)/shore/shore_shell.cpp
 
 

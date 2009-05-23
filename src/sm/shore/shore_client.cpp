@@ -56,33 +56,6 @@ bool base_client_t::is_test_aborted() {
 
 
 
-/********************************************************************* 
- *
- *  @fn:    submit_batch
- *
- *  @brief: Submits a batch of trxs and always uses the last trx to
- *          wait on its cond var
- *
- *********************************************************************/
-
-void base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz) 
-{       
-    assert (batch_sz);
-    assert (_cp);
-    for(int j=1; j <= batch_sz; j++) {
-
-        // adding think time
-        //usleep(_think_time);
-
-        if (j == batch_sz) {
-            _cp->take_one = true;
-            _cp->index = 1-_cp->index;
-        }
-        run_one_xct(xct_type, trx_cnt++);
-        _cp->take_one = false;
-    }
-}
-
 static pthread_mutex_t client_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t client_cond = PTHREAD_COND_INITIALIZER;
 static int client_needed_count;
@@ -111,19 +84,13 @@ void client_ready() {
 w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 {
     int i=0;
-    int batchsz=1;
 
     client_ready();
 
     _env->env_thread_init();
     
-    // retrieve the default batch size and think time
-    batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
+    // retrieve the default think time
     _think_time = envVar::instance()->getVarInt("db-cl-thinktime",THINK_TIME);
-
-    if ((_think_time>0) && (batchsz>1)) {
-        TRACE( TRACE_ALWAYS, "error: Batchsz=%d && ThinkTime=%d\n", batchsz, _think_time);
-    }
 
     bool time_based = _measure_type == MT_TIME_DUR;
     assert(time_based || _measure_type == MT_NUM_OF_TRXS);

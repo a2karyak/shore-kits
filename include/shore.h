@@ -27,8 +27,6 @@
 #define __SHORE_H
 
 #include "sm/shore/common.h"
-#include "sm/shore/shore_worker.h"
-#include "sm/shore/srmwqueue.h"
 
 #include "sm/shore/shore_error.h"
 #include "sm/shore/shore_tools.h"
@@ -48,7 +46,6 @@
 
 #include "sm/shore/shore_client.h"
 #include "sm/shore/shore_trx_worker.h"
-#include "sm/shore/shore_worker.h"
 #include "sm/shore/shore_shell.h"
 
 

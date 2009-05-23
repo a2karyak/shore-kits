@@ -82,7 +82,6 @@ const int ShoreTM1Env::load_schema()
 const int ShoreTM1Env::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
-    TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
     return (0);
 }
 
@@ -156,24 +155,9 @@ const int ShoreTM1Env::statistics()
 const int ShoreTM1Env::start()
 {
     upd_sf();
-    upd_worker_cnt();
-
-    assert (_workers.empty());
 
     TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
     info();
-
-    // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
-
-    WorkerPtr aworker;
-    for (int i=0; i<_worker_cnt; i++) {
-        aworker = new Worker(this,this,c_str("work-%d", i));
-        _workers.push_back(aworker);
-        aworker->init(lc);
-        aworker->start();
-        aworker->fork();
-    }
     return (0);
 }
 
@@ -190,18 +174,6 @@ const int ShoreTM1Env::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
     info();
-
-    int i=0;
-    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
-        i++;
-        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
-        if (*it) {
-            (*it)->stop();
-            (*it)->join();
-            delete (*it);
-        }
-    }
-    _workers.clear();
     return (0);
 }
 
@@ -246,15 +218,6 @@ const int ShoreTM1Env::upd_sf()
     return (_scaling_factor);
 }
 
-
-const int ShoreTM1Env::upd_worker_cnt()
-{
-    // update worker thread cnt
-    int workers = envVar::instance()->getVarInt("db-workers",0);
-    assert (workers);
-    _worker_cnt = workers;
-    return (_worker_cnt);
-}
 
 
 
@@ -522,7 +485,6 @@ const int ShoreTM1Env::conf()
     // reread the params
     ShoreEnv::conf();
     upd_sf();
-    upd_worker_cnt();
     return (0);
 }
 

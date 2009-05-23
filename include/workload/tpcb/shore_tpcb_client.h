@@ -33,7 +33,7 @@
 #ifndef __SHORE_TPCB_CLIENT_H
 #define __SHORE_TPCB_CLIENT_H
 
-
+#include "sm/shore/shore_client.h"
 #include "workload/tpcb/shore_tpcb_env.h"
 
 
@@ -58,7 +58,6 @@ private:
     // workload parameters
     ShoreTPCBEnv* _tpcbdb;
     int _selid;
-    trx_worker_t<ShoreTPCBEnv>* _worker;
     int _qf;
     
 
@@ -75,11 +74,6 @@ public:
     {
         assert (env);
         assert (_id>=0 && _qf>0);
-
-        // pick worker thread
-        _worker = _tpcbdb->tpcbworker(_id);
-        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
-        assert (_worker);
     }
 
     ~baseline_tpcb_client_t() { }

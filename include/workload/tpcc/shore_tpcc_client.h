@@ -33,6 +33,8 @@
 #ifndef __SHORE_TPCC_CLIENT_H
 #define __SHORE_TPCC_CLIENT_H
 
+#include "sm/shore/shore_client.h"
+
 #include "workload/tpcc/tpcc_const.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 
@@ -56,7 +58,6 @@ private:
     // workload parameters
     ShoreTPCCEnv* _tpccdb;    
     int _wh;
-    trx_worker_t<ShoreTPCCEnv>* _worker;
     int _qf;
     
 
@@ -73,11 +74,6 @@ public:
     {
         assert (env);
         assert (_wh>=0 && _qf>0);
-
-        // pick worker thread
-        _worker = _tpccdb->trxworker(_id);
-        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
-        assert (_worker);
     }
 
     ~baseline_tpcc_client_t() { }

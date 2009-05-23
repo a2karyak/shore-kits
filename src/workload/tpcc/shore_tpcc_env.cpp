@@ -248,7 +248,6 @@ const int ShoreTPCCEnv::load_schema()
 const int ShoreTPCCEnv::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
-    TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
     return (0);
 }
 
@@ -322,24 +321,8 @@ const int ShoreTPCCEnv::statistics()
 const int ShoreTPCCEnv::start()
 {
     upd_sf();
-    upd_worker_cnt();
-
-    assert (_workers.empty());
-
     TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
     info();
-
-    // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
-
-    WorkerPtr aworker;
-    for (int i=0; i<_worker_cnt; i++) {
-        aworker = new Worker(this,this,c_str("work-%d", i));
-        _workers.push_back(aworker);
-        aworker->init(lc);
-        aworker->start();
-        aworker->fork();
-    }
     return (0);
 }
 
@@ -356,18 +339,6 @@ const int ShoreTPCCEnv::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
     info();
-
-    int i=0;
-    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
-        i++;
-        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
-        if (*it) {
-            (*it)->stop();
-            (*it)->join();
-            delete (*it);
-        }
-    }
-    _workers.clear();
     return (0);
 }
 
@@ -423,16 +394,6 @@ void ShoreTPCCEnv::print_sf(void)
     TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
     TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
     TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
-}
-
-
-const int ShoreTPCCEnv::upd_worker_cnt()
-{
-    // update worker thread cnt
-    int workers = envVar::instance()->getVarInt("db-workers",0);
-    assert (workers);
-    _worker_cnt = workers;
-    return (_worker_cnt);
 }
 
 
@@ -610,13 +571,6 @@ w_rc_t ShoreTPCCEnv::warmup()
 
 const int ShoreTPCCEnv::dump()
 {
-//     table_man_t* ptable_man = NULL;
-//     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
-//         table_man_iter != _table_man_list.end(); table_man_iter++)
-//         {
-//             ptable_man = *table_man_iter;
-//             ptable_man->print_table(this->_pssm);
-//         }
     return (0);
 }
 
@@ -626,7 +580,6 @@ const int ShoreTPCCEnv::conf()
     // reread the params
     ShoreEnv::conf();
     upd_sf();
-    upd_worker_cnt();
     return (0);
 }
 

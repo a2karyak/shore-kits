@@ -142,22 +142,12 @@ struct ShoreTM1TrxStats
 class ShoreTM1Env : public ShoreEnv
 {
 public:
-    typedef trx_worker_t<ShoreTM1Env>   tm1_worker_t;
-    typedef tm1_worker_t                Worker;
-    typedef tm1_worker_t*               WorkerPtr;
-    typedef vector<WorkerPtr>           WorkerPool;
-    typedef WorkerPool::iterator        WorkerIt;
-
     typedef std::map<pthread_t, ShoreTM1TrxStats*> statmap_t;
 
     class table_builder_t;
     class table_creator_t;
 
 protected:       
-
-    WorkerPool      _workers;            // list of worker threads
-    int             _worker_cnt;         
-
     // scaling factors
     int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
     pthread_mutex_t _scaling_mutex;
@@ -171,7 +161,7 @@ public:
 
     /** Construction  */
     ShoreTM1Env(string confname)
-        : ShoreEnv(confname), _worker_cnt(0),
+        : ShoreEnv(confname), 
           _scaling_factor(TM1_DEF_SF),
           _queried_factor(TM1_DEF_QF)
     { 
@@ -245,20 +235,6 @@ public:
     DECLARE_TRX(upd_loc);
     DECLARE_TRX(ins_call_fwd);
     DECLARE_TRX(del_call_fwd);
-
-
-    const int upd_worker_cnt();
-
-    // accesses a worker from the pool
-    inline tm1_worker_t* tm1worker(const int idx) { 
-        assert (idx>=0);
-        return (_workers[idx%_worker_cnt]); 
-    } 
-
-    //// request atomic trash stack
-    typedef atomic_class_stack<trx_request_t> RequestStack;
-    RequestStack _request_pool;
-    
 
     // for thread-local stats
     virtual void env_thread_init();

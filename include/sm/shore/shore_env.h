@@ -304,9 +304,7 @@ public:
 
 
 
-/******** Exported variables ********/
-
-class base_worker_t;
+//******** Exported variables ********//
 
 class ShoreEnv;
 extern ShoreEnv* _g_shore_env;

@@ -33,7 +33,7 @@
 #ifndef __SHORE_TM1_CLIENT_H
 #define __SHORE_TM1_CLIENT_H
 
-
+#include "sm/shore/shore_client.h"
 #include "workload/tm1/shore_tm1_env.h"
 
 
@@ -56,7 +56,6 @@ private:
     // workload parameters
     ShoreTM1Env* _tm1db;
     int _selid;
-    trx_worker_t<ShoreTM1Env>* _worker;
     int _qf;
     
 public:
@@ -72,11 +71,6 @@ public:
     {
         assert (env);
         assert (_id>=0 && _qf>0);
-
-        // pick worker thread
-        _worker = _tm1db->tm1worker(_id);
-        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
-        assert (_worker);
     }
 
     ~baseline_tm1_client_t() { }
