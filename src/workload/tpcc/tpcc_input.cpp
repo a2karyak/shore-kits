@@ -47,7 +47,7 @@ ENTER_NAMESPACE(tpcc);
 
 // uncomment line below to produce "safe" (tested code paths) inputs
 #undef USE_SAFE_PATHS
-#define USE_SAFE_PATHS 
+//#define USE_SAFE_PATHS 
 
 // uncomment line below to generate NewOrder inputs for rollback
 #undef USE_NO_NORD_INPUTS_FOR_ROLLBACK
@@ -60,7 +60,7 @@ ENTER_NAMESPACE(tpcc);
 
 // prints out warnings about the configuration
 #ifdef USE_SAME_INPUT
-#warning TPCC - Uses trxs with same input
+#warning TPCC - Uses xcts with same input
 #endif
 
 #ifdef USE_SAFE_PATHS

@@ -1457,22 +1457,26 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
 		if (e.is_error()) { goto done; }
 	    }
 
-            int  c_id_list[17];
+            vector<int>  c_id_list;
+            int  id = 0;
             int  count = 0;
             bool eof;
 
             e = c_iter->next(_pssm, eof, *prcust);
             if (e.is_error()) { goto done; }
             while (!eof) {
+                // push the retrieved customer id to the vector
+                ++count;
+                prcust->get_value(0, id);            
+                c_id_list.push_back(id);
 
-                // put the retrieved customer id to the list
-                prcust->get_value(0, c_id_list[count++]);            
                 TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-next\n", xct_id);
                 e = c_iter->next(_pssm, eof, *prcust);
                 if (e.is_error()) { goto done; }
             }
+            assert (count);
 
-            // find the customer id in the middle of the list
+            // find the customer id in the middle of the list            
             pstin._c_id = c_id_list[(count+1)/2-1];
         }
         assert (pstin._c_id>0);

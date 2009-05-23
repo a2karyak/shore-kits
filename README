@@ -121,8 +121,8 @@ a. Re-populate a database:
 
 In case of errors during powerruns, it is faster to re-populate a new database 
 than wait for recovery to finish. Shore when it starts always first tries
-to recover. Therefore, the log files should be deleted if the user wants to
-re-populate a benchmark database.
+to recover. Therefore, before the re-population of a benchmark database the log 
+files should be deleted.
 
 - Set db-clobberdev=1 at shore.conf
 - Delete any log files at the corresponding log directory (files at <db-config>-log dir)
@@ -135,10 +135,10 @@ re-populate a benchmark database.
 4. Known Bugs
 -----------------------
 
-BUG-1:. The probes using an iteration on TPCC.C_NAME_INDEX cause a seg fault. 
-Until fixed define USE_SAFE_PATHS in src/workload/tpcc/tpcc_input.cpp
+BUG-1: Cannot update fields included at indexes - delete and insert again.
 
-BUG-2: Only the last field of an index can be of varialbe length
+BUG-2: Only the last field of an index can be of variable length
+
 
 
 
