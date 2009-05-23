@@ -523,8 +523,8 @@ protected:
 }; // EOF ShoreEnv
 
 
-EXIT_NAMESPACE(shore);
 
+EXIT_NAMESPACE(shore);
 
 #endif /* __SHORE_ENV_H */
 

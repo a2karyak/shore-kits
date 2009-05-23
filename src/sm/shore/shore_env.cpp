@@ -36,17 +36,15 @@
 #include "sm/shore/shore_helper_loader.h"
 
 
-
 ENTER_NAMESPACE(shore);
 
 
-
-/** Exported variables */
+// Exported variables //
 
 ShoreEnv* _g_shore_env;
 
 
-/** Exported functions */
+// Exported functions //
 
 
 

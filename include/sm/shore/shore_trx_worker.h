@@ -411,7 +411,6 @@ const int trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
     
 
 
-
 EXIT_NAMESPACE(shore);
 
 #endif /** __SHORE_TRX_WORKER_H */

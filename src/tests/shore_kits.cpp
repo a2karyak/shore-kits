@@ -31,8 +31,7 @@
  *
  */
 
-#include "tests/common/tester_shore_shell.h"
-#include "sm/shore/shore_helper_loader.h"
+#include "sm/shore/shore_shell.h"
 
 #include "workload/tpcc/shore_tpcc_env.h"
 #include "workload/tpcc/shore_tpcc_client.h"

@@ -23,15 +23,15 @@
 
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_shore_shell.h
+/** @file:   shore_shell.h
  *
  *  @brief:  Abstract shell class for Shore environments 
  *
  *  @author: Ippokratis Pandis, Sept 2008
  */
 
-#ifndef __TESTER_SHORE_SHELL_H
-#define __TESTER_SHORE_SHELL_H
+#ifndef __SHORE_SHELL_H
+#define __SHORE_SHELL_H
 
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
@@ -49,8 +49,8 @@
 #include "sm/shore/shore_client.h"
 
 
+ENTER_NAMESPACE(shore);
 
-using namespace shore;
 using std::map;
 
 
@@ -81,33 +81,6 @@ const int DF_WARMUP_QUERIED_SF = 10;
 
 /*********************************************************************
  *
- *  @class: shore_guard_t
- *
- *  @brief: Ensures that the Shore environment gets closed
- *
- *********************************************************************/
-
-template<>
-inline void guard<ShoreEnv>::action(ShoreEnv* ptr) {
-    if (ptr) {
-        ptr->stop();
-	close_smt_t* clt = new close_smt_t(ptr, c_str("clt"));
-	assert (clt);
-	clt->fork(); // pointer is deleted by clt thread
-	clt->join();
-	int rv = clt->_rv;
-	if (rv) {
-	    TRACE( TRACE_ALWAYS, "Error in closing thread...\n");
-	}
-	delete (clt);
-	clt = NULL;
-    }
-}
-
-
-
-/*********************************************************************
- *
  *  @class: fake_io_delay_cmd_t
  *
  *  @brief: Handler for the "iodelay" command
@@ -126,7 +99,6 @@ struct fake_iodelay_cmd_t : public command_handler_t {
     void usage();
     const string desc() { return (string("Sets the fake I/O disk delay")); }
 };
-
 
 
 
@@ -153,7 +125,8 @@ class shore_shell_t : public shell_t
 {
 protected:
 
-    guard<ShoreEnv> _env;
+    ShoreEnv* _env;
+
     processorid_t _start_prs_id;
     processorid_t _current_prs_id;    
 
@@ -187,10 +160,26 @@ public:
         if(sigaction(SIGALRM, &sa, &sa_old) < 0)
             exit(1);        
     }
-    virtual ~shore_shell_t() { }    
+
+    virtual ~shore_shell_t() 
+    { 
+        if (_env) {
+            _env->stop();
+            close_smt_t* clt = new close_smt_t(_env, c_str("clt"));
+            assert (clt);
+            clt->fork(); // pointer is deleted by clt thread
+            clt->join();
+            int rv = clt->_rv;
+            if (rv) {
+                fprintf( stderr, "Error in closing thread...\n");
+            }
+            delete (clt);
+            clt = NULL;
+        }
+    }
 
     // access methods
-    ShoreEnv* db() { return(_env.get()); }
+    ShoreEnv* db() { return(_env); }
 
     // shell interface
     virtual int process_command(const char* command, const char* command_tag);
@@ -261,6 +250,7 @@ protected:
 }; // EOF: shore_shell_t
 
 
+EXIT_NAMESPACE(shore);
 
 #endif /* __TESTER_SHORE_SHELL_H */
 

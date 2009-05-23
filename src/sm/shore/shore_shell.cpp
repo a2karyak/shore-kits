@@ -23,16 +23,17 @@
 
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_shore_shell.cpp
+/** @file:   shore_shell.cpp
  *
  *  @brief:  Implementation of shell class for Shore environments
  *
  *  @author: Ippokratis Pandis, Sept 2008
  */
 
-#include "tests/common/tester_shore_shell.h"
+#include "sm/shore/shore_shell.h"
 
-using namespace shore;
+
+ENTER_NAMESPACE(shore);
 
 
 extern "C" void alarm_handler(int sig) {
@@ -47,6 +48,7 @@ int _theSF = DF_SF;
 
 
 //// shore_shell_t interface ////
+
 
 
 /******************************************************************** 
@@ -865,4 +867,7 @@ const int fake_iodelay_cmd_t::handle(const char* cmd)
     }
     return (SHELL_NEXT_CONTINUE);
 }
+
+
+EXIT_NAMESPACE(shore);
 

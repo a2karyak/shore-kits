@@ -14,7 +14,7 @@ INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include
 
 # List of libraries
 lib_LIBRARIES = \
-   lib/libtest.a lib/libworkload.a lib/libsm.a lib/libutil.a
+   lib/libworkload.a lib/libsm.a lib/libutil.a
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -82,7 +82,9 @@ SM_SHORE = \
    $(SM)/shore/shore_env.cpp \
    $(SM)/shore/shore_helper_loader.cpp \
    $(SM)/shore/shore_client.cpp \
-   $(SM)/shore/shore_worker.cpp
+   $(SM)/shore/shore_worker.cpp \
+   $(SM)/shore/shore_shell.cpp
+
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
@@ -135,45 +137,15 @@ lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHOR
 
 
 
-################################################################################
-#
-# src/tests/common
-#
-################################################################################
-
-STC = $(top_srcdir)/src/tests/common
-
-lib_libtest_a_CXXFLAGS = $(AM_CXXFLAGS)
-
-lib_libtest_a_SOURCES = \
-   $(STC)/tester_shore_shell.cpp
-
-
 
 ################################################################################
 #
-# src/tests/
+# shore_kits exec
 #
 ################################################################################
 
-ST = $(top_srcdir)/src/tests
-
-TEST_LIBS = lib/libtest.a $(LDADD)
-
-#########
-#
-# SOURCES
-#
-#########
+ST=$(top_srcdir)/src/tests
 
 shore_kits_SOURCES = $(ST)/shore_kits.cpp
-
-
-#######
-#
-# CXXFLAGS/LDADD
-#
-#######
-
 shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-shore_kits_LDADD = $(TEST_LIBS) -lreadline
+shore_kits_LDADD = $(LDADD)

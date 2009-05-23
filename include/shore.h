@@ -47,6 +47,9 @@
 #include "sm/shore/shore_env.h"
 
 #include "sm/shore/shore_client.h"
+#include "sm/shore/shore_trx_worker.h"
+#include "sm/shore/shore_worker.h"
+#include "sm/shore/shore_shell.h"
 
 
 #endif /** __SHORE_H */
