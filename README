@@ -6,7 +6,9 @@ TOC:
 
 1. Installing
 2. Running
-3. Contact
+3. Notes
+4. Known bugs
+5. Contact
 
 
 
@@ -42,15 +44,16 @@ a. Edit shore.conf
 -----------------------
 
 In order to populate a new database set db-clobberdev=1. 
-If opening an already populated database set db-clobberdev=0.
+(if opening an already populated database set db-clobberdev=0.)
+Follow instructions at shore.conf.
+
 
 
 b. Run shore_kits
 -----------------------
 
 #> ./shore_kits
-...
-(tpcc-base)
+
 
 
 c. List of commands
@@ -110,7 +113,36 @@ Assuming a 10wh TPC-C database.
 
 
 -----------------------
-3. Contact
+3. Notes
+-----------------------
+
+a. Re-populate a database:
+-----------------------
+
+In case of errors during powerruns, it is faster to re-populate a new database 
+than wait for recovery to finish. Shore when it starts always first tries
+to recover. Therefore, the log files should be deleted if the user wants to
+re-populate a benchmark database.
+
+- Set db-clobberdev=1 at shore.conf
+- Delete any log files at the corresponding log directory (files at <db-config>-log dir)
+- Run shore_kits
+- Reset db-clobberdev=0 *before* re-running shore_kits
+
+
+
+-----------------------
+4. Known Bugs
+-----------------------
+
+B1. The probes using an iteration on TPCC.C_NAME_INDEX cause a seg fault. 
+Until fixed define USE_SAFE_PATHS in src/workload/tpcc/tpcc_input.cpp
+
+
+
+
+-----------------------
+5. Contact
 -----------------------
 
 For any issues, reporting bugs etc. please send email to:

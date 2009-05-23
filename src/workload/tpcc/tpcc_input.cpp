@@ -45,17 +45,17 @@ ENTER_NAMESPACE(tpcc);
 // uncomment line below to use produce the same input
 //#define USE_SAME_INPUT
 
-// uncomment line below to produce "safe" (tested code paths) input
+// uncomment line below to produce "safe" (tested code paths) inputs
 #undef USE_SAFE_PATHS
 #define USE_SAFE_PATHS 
 
-// uncomment line below to use inputs for rollback
-#undef USE_GENERATE_INPUTS_FOR_ROLLBACK
-//#define USE_GENERATE_INPUTS_FOR_ROLLBACK
+// uncomment line below to generate NewOrder inputs for rollback
+#undef USE_NO_NORD_INPUTS_FOR_ROLLBACK
+//#define USE_NO_NORD_INPUTS_FOR_ROLLBACK
 
-// uncomment line below to query local WHs only
-//#undef USE_ONLY_LOCAL_WHS
-#define USE_ONLY_LOCAL_WHS
+// uncomment line below to query only local WHs
+#undef USE_ONLY_LOCAL_WHS
+//#define USE_ONLY_LOCAL_WHS
 
 
 // prints out warnings about the configuration
@@ -64,11 +64,11 @@ ENTER_NAMESPACE(tpcc);
 #endif
 
 #ifdef USE_SAFE_PATHS
-#warning TPCC - Uses safe paths (no CUST_IDX_PROBES)
+#warning TPCC - Does not generate xcts that probe C_NAME_IDX
 #endif
 
-#ifdef USE_GENERATE_INPUTS_FOR_ROLLBACK
-#warning TPCC - Generates aborting xcts
+#ifdef USE_NO_NORD_INPUTS_FOR_ROLLBACK
+#warning TPCC - Does not generate aborting NewOrder xcts
 #endif
 
 #ifdef USE_ONLY_LOCAL_WHS
@@ -177,7 +177,7 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
 #endif        
     }
 
-#ifdef USE_GENERATE_INPUTS_FOR_ROLLBACK
+#ifndef USE_NO_NORD_INPUTS_FOR_ROLLBACK
     if (noin._rbk == 1) {   
         // generate an input that it will cause a rollback
         noin.items[noin._ol_cnt-1]._ol_i_id = -1;

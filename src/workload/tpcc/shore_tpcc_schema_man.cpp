@@ -169,7 +169,7 @@ w_rc_t customer_man_impl::cust_get_iter_by_index(ss_m* db,
 {
     assert (ptuple);
 
-    /* find the index */
+    // find the index
     assert (_ptable);
     index_desc_t* pindex = _ptable->find_index("C_NAME_INDEX");
     assert (pindex);

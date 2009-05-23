@@ -20,12 +20,12 @@ lib_LIBRARIES = \
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
 
 
-TESTS = \
+FE = \
    shore_kits
 
 
 
-bin_PROGRAMS = $(TESTS)
+bin_PROGRAMS = $(FE)
 
 ################################################################################
 #
