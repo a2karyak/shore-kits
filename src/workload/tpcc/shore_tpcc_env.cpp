@@ -384,7 +384,7 @@ void ShoreTPCCEnv::set_qf(const int aQF)
 {
     if ((aQF >= 0) && (aQF <= _scaling_factor)) {
         CRITICAL_SECTION( cs, _queried_mutex);
-        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
+        TRACE( TRACE_DEBUG, "New Queried Factor: %d\n", aQF);
         _queried_factor = aQF;
     }
     else {
@@ -398,7 +398,7 @@ void ShoreTPCCEnv::set_sf(const int aSF)
 
     if (aSF > 0) {
         CRITICAL_SECTION( cs, _scaling_mutex);
-        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
+        TRACE( TRACE_DEBUG, "New Scaling factor: %d\n", aSF);
         _scaling_factor = aSF;
     }
     else {

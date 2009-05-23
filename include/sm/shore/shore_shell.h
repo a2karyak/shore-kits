@@ -104,6 +104,7 @@ struct fake_iodelay_cmd_t : public command_handler_t {
 
 
 
+
 /*********************************************************************
  *
  *  @abstract class: shore_shell_t
@@ -131,7 +132,8 @@ protected:
     processorid_t _current_prs_id;    
 
     // supported cmds
-    guard<fake_iodelay_cmd_t> _fakeioer;
+    guard<fake_iodelay_cmd_t> _fakeioer;   
+
 
     // supported trxs
     typedef map<int,string>            mapSupTrxs;
@@ -182,6 +184,7 @@ public:
     ShoreEnv* db() { return(_env); }
 
     // shell interface
+    virtual void pre_process_cmd();
     virtual int process_command(const char* command, const char* command_tag);
     virtual int print_usage(const char* command);
     virtual int SIGINT_handler();
@@ -199,7 +202,10 @@ public:
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
 
-    virtual const int register_commands()=0;
+    virtual const int register_commands()
+    {
+        return (0);
+    }
 
 
     // Instanciate and close the Shore environment

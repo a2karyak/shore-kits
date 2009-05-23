@@ -135,10 +135,10 @@ re-populate a benchmark database.
 4. Known Bugs
 -----------------------
 
-B1. The probes using an iteration on TPCC.C_NAME_INDEX cause a seg fault. 
+BUG-1:. The probes using an iteration on TPCC.C_NAME_INDEX cause a seg fault. 
 Until fixed define USE_SAFE_PATHS in src/workload/tpcc/tpcc_input.cpp
 
-B2. Only the last field of an index can be of varialbe length
+BUG-2: Only the last field of an index can be of varialbe length
 
 
 

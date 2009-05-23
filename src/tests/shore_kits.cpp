@@ -148,7 +148,7 @@ public:
             _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
         const int handle(const char* cmd) { 
             assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Print info about the state of db instance")); }
+        const string desc() { return (string("Prints info about the state of db instance")); }
     };
     guard<info_cmd_t> _informer;
 
@@ -161,7 +161,7 @@ public:
             _name = string("stats"); _aliases.push_back("stats"); _aliases.push_back("st"); }
         const int handle(const char* cmd) { 
             assert (_pdb); _pdb->statistics(); return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Print statistics")); }
+        const string desc() { return (string("Prints gathered statistics")); }
     };
     guard<stats_cmd_t> _stater;
 
@@ -174,14 +174,58 @@ public:
             _name = string("dump"); _aliases.push_back("dump"); _aliases.push_back("d"); }
         const int handle(const char* cmd) { 
             assert (_pdb); _pdb->dump(); return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Dump db instance data")); }
+        const string desc() { return (string("Dumps db instance data")); }
     };
     guard<dump_cmd_t> _dumper;
     
 
+    // @class: {measure,test,trxs}_cmd_t
+    // @brief: Hack so that the three basic commands (measure,test,trxs)
+    //         also appear at help.
+    struct measure_cmd_t : public command_handler_t {
+        kit_t* _kit;
+        measure_cmd_t(kit_t* akit) : _kit(akit) { }
+        void setaliases() { _name = string("measure"); 
+            _aliases.push_back("measure"); _aliases.push_back("m"); }
+        const int handle(const char* cmd) { 
+            _kit->pre_process_cmd();
+            return (_kit->process_cmd_MEASURE(cmd,cmd)); }
+        void usage() { _kit->usage_cmd_MEASURE(); }
+        const string desc() { return string("Duration-based Measument (powerrun)"); }
+    };
+    guard<measure_cmd_t> _measurer;
+
+    struct test_cmd_t : public command_handler_t {
+        kit_t* _kit;
+        test_cmd_t(kit_t* akit) : _kit(akit) { }
+        void setaliases() { _name = string("test"); _aliases.push_back("test"); }
+        const int handle(const char* cmd) { 
+            _kit->pre_process_cmd();
+            return (_kit->process_cmd_TEST(cmd,cmd)); }
+        void usage() { _kit->usage_cmd_TEST(); }
+        const string desc() { return string("NumOfXcts-based Measument (powerrun)"); }
+    };
+    guard<test_cmd_t> _tester;
+
+    struct trxs_cmd_t : public command_handler_t {
+        kit_t* _kit;
+        trxs_cmd_t(kit_t* akit) : _kit(akit) { }
+        void setaliases() { _name = string("trxs"); _aliases.push_back("trxs"); }
+        const int handle(const char* cmd) { 
+            _kit->pre_process_cmd();
+            return (_kit->process_cmd_TRXS(cmd,cmd)); }
+        void usage() { TRACE( TRACE_ALWAYS, "usage: trxs\n"); }
+        const string desc() { return string("Lists the avaiable transactions in the benchmark"); }
+    };
+    guard<trxs_cmd_t> _trxser;
+
+
+
     virtual const int register_commands() 
     {
-        // FROM TESTER_SHORE_SHELL
+        shore_shell_t::register_commands();
+
+        // FROM SHORE_SHELL
         _fakeioer = new fake_iodelay_cmd_t(_dbinst);
         _fakeioer->setaliases();
         add_cmd(_fakeioer.get());
@@ -203,6 +247,21 @@ public:
         _dumper = new dump_cmd_t(_dbinst);
         _dumper->setaliases();
         add_cmd(_dumper.get());
+
+
+        // JUST FOR 'help' cmd
+        _measurer = new measure_cmd_t(this);
+        _measurer->setaliases();
+        add_cmd(_measurer.get());
+
+        _tester = new test_cmd_t(this);
+        _tester->setaliases();
+        add_cmd(_tester.get());
+
+        _trxser = new trxs_cmd_t(this);
+        _trxser->setaliases();
+        add_cmd(_trxser.get());
+
 
         return (0);
     }
@@ -384,9 +443,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay);
 
         // flush the log before the next iteration
-        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        TRACE( TRACE_DEBUG, "db checkpoint - start\n");
         _env->checkpoint();
-        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
+        TRACE( TRACE_ALWAYS, "Checkpoint\n");
     }
 
     // set measurement state
@@ -461,9 +520,9 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay);
 	       
         // flush the log before the next iteration
-        TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
+        TRACE( TRACE_DEBUG, "db checkpoint - start\n");
         _env->checkpoint();
-        TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
+        TRACE( TRACE_ALWAYS, "Checkpoint\n");
     }
 
 

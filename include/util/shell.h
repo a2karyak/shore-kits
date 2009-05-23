@@ -97,7 +97,7 @@ struct help_cmd_t : public command_handler_t {
         TRACE( TRACE_ALWAYS, "HELP       - prints usage\n"); 
         TRACE( TRACE_ALWAYS, "HELP <cmd> - prints detailed help for <cmd>\n"); 
     }
-    const string desc() { return (string("Help")); }              
+    const string desc() { return (string("Help - Use 'help <cmd>' for usage of specific cmd")); }              
     void list_cmds();
 }; 
 

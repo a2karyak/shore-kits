@@ -147,7 +147,7 @@ void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread,
                                            const eBindingType abt)
 {
     // Print out configuration
-    TRACE( TRACE_ALWAYS, "\n\n" \
+    TRACE( TRACE_ALWAYS, "\n" \
            "QueriedSF:     (%d)\n" \
            "SpreadThreads: (%s)\n" \
            "Binding:       (%s)\n" \
@@ -167,7 +167,7 @@ void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread,
                                         const eBindingType abt)
 {
     // Print out configuration
-    TRACE( TRACE_ALWAYS, "\n\n"
+    TRACE( TRACE_ALWAYS, "\n"
            "QueriedSF:      (%d)\n" \
            "Spread Threads: (%s)\n" \
            "Binding:        (%s)\n" \
@@ -319,6 +319,28 @@ void shore_shell_t::usage_cmd_LOAD()
 
 /******************************************************************** 
  *
+ *  @fn:    pre_process_cmd
+ *
+ *  @brief: Does some cleanup before executing any cmd
+ *
+ ********************************************************************/
+
+void shore_shell_t::pre_process_cmd()
+{
+    _g_canceled = false;
+
+    _current_prs_id = _start_prs_id;
+
+    // make sure any previous abort is cleared
+    base_client_t::resume_test();
+
+    // print processor usage info
+    _cpustater->myinfo.reset();
+}
+
+
+/******************************************************************** 
+ *
  *  @fn:    process_command
  *
  *  @brief: Catches the {TEST/MEASURE/WARMUP} cmds
@@ -328,16 +350,7 @@ void shore_shell_t::usage_cmd_LOAD()
 int shore_shell_t::process_command(const char* cmd,
                                    const char* cmd_tag)
 {
-    _g_canceled = false;
-
-    _current_prs_id = _start_prs_id;
-
-    // make sure any previous abort is cleared
-    base_client_t::resume_test();
-
-
-    // print processor usage info
-    _cpustater->myinfo.reset();
+    pre_process_cmd();
 
     // TRXS cmd
     if (strcasecmp(cmd_tag, "TRXS") == 0) {
@@ -485,7 +498,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
 
     // Print out configuration
-    TRACE( TRACE_ALWAYS, "\n\n" \
+    TRACE( TRACE_ALWAYS, "\n" \
            "Queried SF   : %d\n" \
            "Num of Trxs  : %d\n" \
            "Duration     : %d\n" \
@@ -665,14 +678,6 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     int tmp_iterations       = iterations;
     eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
     eBindingType tmp_binding = binding;
-
-    // update the SF
-    int tmp_sf = ev->getSysVarInt("sf");
-    if (tmp_sf) {
-        TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
-        _theSF = tmp_sf;
-    }
-
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d %d",
@@ -687,6 +692,13 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     {
         usage_cmd_MEASURE();
         return (SHELL_NEXT_CONTINUE);
+    }
+
+    // update the SF
+    int tmp_sf = ev->getSysVarInt("sf");
+    if (tmp_sf) {
+        TRACE( TRACE_DEBUG, "Updated SF (%d)\n", tmp_sf);
+        _theSF = tmp_sf;
     }
 
 
