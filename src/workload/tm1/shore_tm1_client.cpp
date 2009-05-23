@@ -74,8 +74,16 @@ const int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 w_rc_t baseline_tm1_client_t::run_one_xct(int xct_type, int xctid) 
 {
     trx_result_tuple_t atrt;
+
+    // pick a valid sf
+    register int selsf = _selid;
+    if (_selid==0) 
+        selsf = URand(1,_qf);     
+    // decide which ID inside that SF to use
+    register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+
     W_DO(_tm1db->db()->begin_xct());
-    return _tm1db->run_one_xct(xctid, xct_type, _selid, atrt);
+    return _tm1db->run_one_xct(xctid, xct_type, selid, atrt);
 }
 
 
