@@ -350,25 +350,26 @@ void ShoreTM1Env::table_builder_t::work()
     W_COERCE(_env->db()->begin_xct());
 
     // add _count number of Subscribers (with the corresponding AI, SF, and CF entries)
+    int last_commit = 0;
     for (subsadded=0; subsadded<_count; ++subsadded) {
+    again:
 	int sub_id = _start + subsadded;
 
         // insert row
 	e = _env->xct_populate_one(sub_id);
 
 	if(e.is_error()) {
+	    W_COERCE(_env->db()->abort_xct());
+	    if(e.err_num() == smlevel_0::eDEADLOCK) {
+		W_COERCE(_env->db()->begin_xct());
+		subsadded = last_commit + 1;
+		goto again;
+	    }
 	    stringstream os;
 	    os << e << ends;
 	    string str = os.str();
 	    TRACE( TRACE_ALWAYS, "Unable to Insert Subscriber (%d) due to:\n%s\n",
                    sub_id, str.c_str());
-	    
-	    w_rc_t e2 = _env->db()->abort_xct();
-	    if(e2.is_error()) {
-		TRACE( TRACE_ALWAYS, "Unable to Abort trx at Subscriber (%d) due to [0x%x]\n", 
-		       sub_id, e2.err_num());
-                assert (0); // shouldn't happen
-	    }
 	}
 
         // Output some information
@@ -396,6 +397,7 @@ void ShoreTM1Env::table_builder_t::work()
                 }
             }
 
+	    last_commit = subsadded;
             commitmark += TM1_LOADING_COMMIT_INTERVAL;
 
             W_COERCE(_env->db()->begin_xct());
