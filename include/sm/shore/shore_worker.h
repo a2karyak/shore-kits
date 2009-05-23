@@ -357,12 +357,12 @@ public:
 
             case (WC_ACTIVE):
 
-                _env->env_thread_init(this);
+                _env->env_thread_init();
 
                 // does the real work
                 rval = work_ACTIVE();
 
-                _env->env_thread_fini(this);
+                _env->env_thread_fini();
 
                 if (rval)
                     return;

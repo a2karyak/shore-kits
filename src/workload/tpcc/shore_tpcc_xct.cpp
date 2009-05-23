@@ -53,13 +53,13 @@ ENTER_NAMESPACE(tpcc);
 
 static __thread ShoreTPCCTrxStats my_stats;
 
-void ShoreTPCCEnv::env_thread_init(base_worker_t* aworker)
+void ShoreTPCCEnv::env_thread_init()
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap[pthread_self()] = &my_stats;
 }
 
-void ShoreTPCCEnv::env_thread_fini(base_worker_t* aworker)
+void ShoreTPCCEnv::env_thread_fini()
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap.erase(pthread_self());

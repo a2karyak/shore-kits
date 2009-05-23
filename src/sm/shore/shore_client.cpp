@@ -50,6 +50,9 @@ void base_client_t::abort_test() {
 void base_client_t::resume_test() {
     _abort_test = false;
 }
+bool base_client_t::is_test_aborted() {
+    return _abort_test;
+}
 
 
 
@@ -111,6 +114,8 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     int batchsz=1;
 
     client_ready();
+
+    _env->env_thread_init();
     
     // retrieve the default batch size and think time
     batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
@@ -120,48 +125,26 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         TRACE( TRACE_ALWAYS, "error: Batchsz=%d && ThinkTime=%d\n", batchsz, _think_time);
     }
 
-    switch (_measure_type) {
+    bool time_based = _measure_type == MT_TIME_DUR;
+    assert(time_based || _measure_type == MT_NUM_OF_TRXS);
+    
+    while( (time_based? _env->get_measure() != MST_DONE : i < num_xct)
+	   && !is_test_aborted())
+	{
+	    if(_env->get_measure() == MST_PAUSE) {
+		usleep(10000);
+		continue;
+	    }
+	    
+	    run_one_xct(xct_type, i++);
+	    
+	    // exponentially-distributed think time
+	    if(_think_time > 0)
+		usleep(int(-_think_time*::log(sthread_t::drand())));
+	}
 
-        // case of number-of-trxs-based measurement
-    case (MT_NUM_OF_TRXS):
-
-        // submit a batch of num_xct trxs
-        submit_batch(xct_type, i, num_xct);
-        // wait for the batch to complete
-        // note: in the test case there is no double buffering
-        _cp->wait[_cp->index].wait();
-        break;
-
-        // case of duration-based measurement
-    case (MT_TIME_DUR):
-	
-	// submit the first two batches...
-	submit_batch(xct_type, i, batchsz);
-	submit_batch(xct_type, i, batchsz);
-
-	// main loop
-        while (true) {
-	    // wait for the first to complete
-            TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", i, _cp->wait[1-_cp->index]);
-	    _cp->wait[1-_cp->index].wait();
-
-	    // check for exit...
-	    if(_abort_test || _env->get_measure() == MST_DONE)
-		break;
-
-	    // submit a replacement batch...
-	    submit_batch(xct_type, i, batchsz);
-        }
-	
-	// wait for the last batch to complete...
-        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", i, _cp->wait[1-_cp->index]);
-	_cp->wait[_cp->index].wait();	
-        break;
-
-    default:
-        assert (0); // UNSUPPORTED MEASUREMENT TYPE
-        break;
-    }
+    _env->env_thread_fini();
+    
     return (RCOK);
 }
 

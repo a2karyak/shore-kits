@@ -69,38 +69,9 @@ const int baseline_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
  
 w_rc_t baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid) 
 {
-    // 1. Initiate and detach from transaction
-    tid_t atid;   
-    W_DO(_tpcbdb->db()->begin_xct(atid));
-    xct_t* pxct = smthread_t::me()->xct();
-    assert (pxct);
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-    detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
-    
-    // 2. Set input
     trx_result_tuple_t atrt;
-    bool bWake = false;
-    if (_cp->take_one) {
-        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d)\n", atid);
-        atrt.set_notify(_cp->wait+_cp->index);
-        bWake = true;
-    }
-
-    // pick a valid ID
-    int selid = _selid;
-    if (_selid==0) 
-        selid = URand(0,_qf); 
-
-    // 3. Get one action from the trash stack
-    assert (_tpcbdb);
-    trx_request_t* arequest = new (_tpcbdb->_request_pool) trx_request_t;
-    arequest->set(pxct,atid,xctid,atrt,xct_type,selid);
-
-    // 4. enqueue to worker thread
-    assert (_worker);
-    _worker->enqueue(arequest,bWake);
-    return (RCOK);
+    W_DO(_tpcbdb->db()->begin_xct());
+    return _tpcbdb->run_one_xct(xctid, xct_type, _selid, atrt);
 }
 
 

@@ -397,7 +397,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
     _dbinst->set_qf(iQueriedSF);
 
     Client* testers[MAX_NUM_OF_THR];
-    for (int j=0; j<iIterations; j++) {
+    for (int j=0; j<iIterations && !base_client_t::is_test_aborted(); j++) {
 
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iIterations);
@@ -411,6 +411,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
 
         // set measurement state to measure - start counting everything
         _env->set_measure(MST_MEASURE);
+	usleep(10000); // let all the threads come back
 	stopwatch_t timer;
 
         // 1. create and fork client clients
@@ -443,6 +444,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay);
 
         // flush the log before the next iteration
+	_env->set_measure(MST_PAUSE);
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "Checkpoint\n");

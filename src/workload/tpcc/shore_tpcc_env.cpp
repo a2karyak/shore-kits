@@ -207,7 +207,7 @@ void ShoreTPCCEnv::table_builder_t::work()
 const int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = envVar::instance()->getSysname();
+    _sysname = "baseline";
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema

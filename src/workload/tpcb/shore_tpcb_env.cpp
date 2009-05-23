@@ -55,7 +55,7 @@ ENTER_NAMESPACE(tpcb);
 const int ShoreTPCBEnv::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
+    _sysname = "baseline";
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
