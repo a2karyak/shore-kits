@@ -1433,7 +1433,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
 
     { // make gotos safe
 
-        /* 1a. select customer based on name */
+        // 1a. select customer based on name //
         if (pstin._c_id == 0) {
             /* SELECT  c_id, c_first
              * FROM customer
@@ -1472,13 +1472,13 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
                 if (e.is_error()) { goto done; }
             }
 
-            /* find the customer id in the middle of the list */
+            // find the customer id in the middle of the list
             pstin._c_id = c_id_list[(count+1)/2-1];
         }
         assert (pstin._c_id>0);
 
 
-        /* 1. probe the customer */
+        // 1. probe the customer //
 
         /* SELECT c_first, c_middle, c_last, c_balance
          * FROM customer

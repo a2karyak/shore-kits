@@ -156,9 +156,11 @@ public:
         _desc[0].setup(SQL_INT,    "C_ID");
         _desc[1].setup(SQL_INT,    "C_D_ID");       
         _desc[2].setup(SQL_INT,    "C_W_ID");       
+        //_desc[5].setup(SQL_VARCHAR,   "C_FIRST", TPCC_C_FIRST_SZ);   
         _desc[3].setup(SQL_CHAR,   "C_FIRST", 16);  
         _desc[4].setup(SQL_CHAR,   "C_MIDDLE", 2);  
         _desc[5].setup(SQL_CHAR,   "C_LAST", 16);   
+        //_desc[5].setup(SQL_VARCHAR,   "C_LAST", TPCC_C_LAST_SZ);   
         _desc[6].setup(SQL_CHAR,   "C_STREET1", 20);
         _desc[7].setup(SQL_CHAR,   "C_STREET2", 20);
         _desc[8].setup(SQL_CHAR,   "C_CITY", 20);   
