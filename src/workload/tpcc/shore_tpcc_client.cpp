@@ -23,14 +23,14 @@
 
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   tester_shore_env.cpp
+/** @file:   shore_tpcc_client.cpp
  *
  *  @brief:  Implementation of the client for the TPCC benchmark
  *
  *  @author: Ippokratis Pandis, July 2008
  */
 
-#include "tests/common/tester_shore_client.h"
+#include "workload/tpcc/shore_tpcc_client.h"
 
 ENTER_NAMESPACE(tpcc);
 

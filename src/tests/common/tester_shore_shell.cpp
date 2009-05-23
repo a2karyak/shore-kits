@@ -25,13 +25,12 @@
 
 /** @file:   tester_shore_shell.cpp
  *
- *  @brief:  Implementation of shell class for testing Shore environments
+ *  @brief:  Implementation of shell class for Shore environments
  *
  *  @author: Ippokratis Pandis, Sept 2008
  */
 
 #include "tests/common/tester_shore_shell.h"
-#include "tests/common/tester_shore_client.h"
 
 using namespace shore;
 

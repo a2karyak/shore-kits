@@ -25,16 +25,17 @@
 
 /** @file:   shore_kits.cpp
  *
- *  @brief:  Test shore kits
+ *  @brief:  Shore kits
  *
  *  @author: Ippokratis Pandis, Sept 2008
  *
  */
 
-#include "tests/common.h"
+#include "tests/common/tester_shore_shell.h"
 #include "sm/shore/shore_helper_loader.h"
 
 #include "workload/tpcc/shore_tpcc_env.h"
+#include "workload/tpcc/shore_tpcc_client.h"
 
 #include "workload/tm1/shore_tm1_env.h"
 #include "workload/tm1/shore_tm1_client.h"

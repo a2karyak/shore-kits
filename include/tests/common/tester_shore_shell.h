@@ -25,7 +25,7 @@
 
 /** @file:   tester_shore_shell.h
  *
- *  @brief:  Abstract shell class for testing Shore environments 
+ *  @brief:  Abstract shell class for Shore environments 
  *
  *  @author: Ippokratis Pandis, Sept 2008
  */
@@ -44,9 +44,13 @@
 #endif
 
 #include "util/shell.h"
-#include "tests/common/tester_shore_client.h"
 #include "sm/shore/shore_env.h"
+#include "sm/shore/shore_helper_loader.h"
+#include "sm/shore/shore_client.h"
 
+
+
+using namespace shore;
 using std::map;
 
 

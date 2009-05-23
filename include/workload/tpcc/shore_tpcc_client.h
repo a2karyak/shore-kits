@@ -23,7 +23,7 @@
 
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   test_shore_client.h
+/** @file:   shore_tpcc_client.h
  *
  *  @brief:  Defines the client for the TPCC benchmark
  *
