@@ -461,25 +461,6 @@ const int ShoreEnv::checkpoint()
 
 
 
-/****************************************************************** 
- *
- *  @fn:    set_{max/active}_cpu_count()
- *
- *  @brief: Setting new cpu counts
- *
- *  @note:  Setting max cpu count is disabled. This value can be set
- *          only at the config file.
- *
- ******************************************************************/
-
-void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt) 
-{
-    assert (actcpucnt);
-    atomic_swap_uint(&_active_cpu_count, actcpucnt);
-}
-
-
-
 /** Helper functions */
 
 
@@ -496,33 +477,9 @@ void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt)
 const int ShoreEnv::_set_sys_params()
 {
     int problem = 0;
-
-    // cpu info - first checks if valid input    
-    int tmp_max_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[1][0]].c_str());
-    int tmp_active_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[2][0]].c_str());    
-
-    if ((tmp_active_cpu_count>0) && (tmp_active_cpu_count<=tmp_max_cpu_count)) {
-        atomic_swap_uint(&_max_cpu_count,    tmp_max_cpu_count);
-        atomic_swap_uint(&_active_cpu_count, tmp_active_cpu_count);
-    }
-    else {
-        TRACE( TRACE_ALWAYS, 
-               "Incorrect CPU count input: Max (%d) - Active (%d)\n",
-               tmp_max_cpu_count, tmp_active_cpu_count);
-        problem=1;
-    }        
-    assert(_max_cpu_count);
-    assert(_active_cpu_count);
-    assert(_active_cpu_count<=_max_cpu_count);
-    print_cpus();
     return (problem);
 }
 
-
-void ShoreEnv::print_cpus() const { 
-    TRACE( TRACE_ALWAYS, "MaxCPU=(%d) - ActiveCPU=(%d)\n", 
-           _max_cpu_count, _active_cpu_count);
-}
 
 
 /****************************************************************** 

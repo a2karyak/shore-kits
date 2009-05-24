@@ -45,12 +45,6 @@
 
 #include <map>
 
-// for binding LWP to cores
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-
-
 
 #include "sm_vas.h"
 #include "util.h"
@@ -367,10 +361,6 @@ protected:
     ParamMap      _sm_opts;   // db-instance-specific options that are passed to Shore
     ParamMap      _dev_opts;  // db-instance-specific options    
 
-    // Processor info
-    volatile uint_t _max_cpu_count;    // hard limit
-    volatile uint_t _active_cpu_count; // soft limit
-
 
     // Stats
     env_stats_t        _env_stats; 
@@ -402,9 +392,7 @@ public:
           _statmap_mutex(thread_mutex_create()),
           _last_stats_mutex(thread_mutex_create()),
           _vol_mutex(thread_mutex_create()), _cname(confname),
-          _measure(MST_UNDEF),
-          _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
-          _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
+          _measure(MST_UNDEF)
     {
         _popts = new option_group_t(1);
         _pvid = new vid_t(1);
@@ -479,14 +467,6 @@ public:
     inline bool get_loaded_no_cs() { return (_loaded); }
     inline void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
     inline void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
-
-    // cpu count functions
-    void print_cpus() const;
-    inline const int get_max_cpu_count() const { return (_max_cpu_count); }
-    inline const int get_active_cpu_count() const { return (_active_cpu_count); }
-    void set_active_cpu_count(const uint_t actcpucnt);
-    // disabled - max_count can be set only on conf
-    //    void set_max_cpu_count(const int maxcpucnt); 
 
 
     // fake io delay interface

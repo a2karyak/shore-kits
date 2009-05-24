@@ -35,21 +35,11 @@
 #define __SHORE_CLIENT_H
 
 
-// for binding LWP to cores
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-
-
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
 
 ENTER_NAMESPACE(shore);
-
-
-// enumuration of different binding types
-enum eBindingType { BT_NONE=0, BT_NEXT=1, BT_SPREAD=2 };
 
 
 //// Default values for the environment ////
@@ -75,9 +65,6 @@ const int DF_DURATION              = 20;
 
 // default number of iterations
 const int DF_NUM_OF_ITERS          = 5;
-
-// default processor binding
-const eBindingType DF_BINDING_TYPE = BT_NONE;
 
 
 // Default values for the warmups //
@@ -144,10 +131,6 @@ protected:
 
     int _think_time; // in microseconds
 
-    // for processor binding
-    bool          _is_bound;
-    processorid_t _prs_id;
-
     int _id; // thread id
     int _rv;
 
@@ -155,18 +138,14 @@ public:
 
     base_client_t() 
         : thread_t("none"), _env(NULL), _measure_type(MT_UNDEF), 
-          _trxid(-1), _notrxs(-1), _think_time(0),
-          _is_bound(false), _prs_id(PBIND_NONE),
-          _rv(1)
+          _trxid(-1), _notrxs(-1), _think_time(0), _rv(1)
     { }
     
     base_client_t(c_str tname, const int id, ShoreEnv* env, 
                   const MeasurementType aType, const int trxid, 
-                  const int numOfTrxs,
-                  processorid_t aprsid = PBIND_NONE) 
+                  const int numOfTrxs) 
 	: thread_t(tname), _id(id), _env(env), _measure_type(aType), 
-          _trxid(trxid), _notrxs(numOfTrxs), _think_time(0),
-          _is_bound(false), _prs_id(aprsid), _rv(0)
+          _trxid(trxid), _notrxs(numOfTrxs), _think_time(0), _rv(0)
     {
         assert (_env);
         assert (_measure_type != MT_UNDEF);
@@ -178,16 +157,6 @@ public:
 
     // thread entrance
     void work() {
-
-        // 1. bind to the specified processor
-        if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-            TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
-            _is_bound = false;
-        }
-        else {
-            TRACE( TRACE_CPU_BINDING, "Binded to processor (%d)\n", _prs_id);
-            _is_bound = true;
-        }
 
         // 2. init env in not initialized
         if (!_env->is_initialized()) {
@@ -206,7 +175,6 @@ public:
     
     // access methods
     const int id() { return (_id); }
-    const bool is_bound() const { return (_is_bound); }
     inline int rv() { return (_rv); }
     
     // methods

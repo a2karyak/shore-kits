@@ -128,9 +128,6 @@ protected:
 
     ShoreEnv* _env;
 
-    processorid_t _start_prs_id;
-    processorid_t _current_prs_id;    
-
     // supported cmds
     guard<fake_iodelay_cmd_t> _fakeioer;   
 
@@ -142,16 +139,10 @@ protected:
 
     mapSupTrxs _sup_trxs;
 
-    // supported binding policies
-    typedef map<eBindingType,string>            mapBindPols;
-    typedef mapBindPols::iterator               mapBindPolsIt;    
-    mapBindPols _sup_bps;
-
 public:
 
-    shore_shell_t(const char* prompt, processorid_t acpustart = PBIND_NONE) 
-        : shell_t(prompt), 
-          _env(NULL), _start_prs_id(acpustart), _current_prs_id(acpustart)
+    shore_shell_t(const char* prompt) 
+        : shell_t(prompt), _env(NULL)
     {
         // install signal handler
         struct sigaction sa;
@@ -213,11 +204,8 @@ public:
 
     // supported trxs and binding policies
     virtual const int load_trxs_map(void)=0;
-    virtual const int load_bp_map(void)=0;
     void print_sup_trxs(void) const;
-    void print_sup_bp(void);
     const char* translate_trx(const int iSelectedTrx) const;
-    const char* translate_bp(const eBindingType abt);
 
 
     // virtual implementation of the {WARMUP/TEST/MEASURE} 
@@ -229,29 +217,21 @@ public:
 
     virtual int _cmd_TEST_impl(const int iQueriedSF, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
-                               const int iSelectedTrx, const int iIterations,
-                               const eBindingType abt)=0;
+                               const int iSelectedTrx, const int iIterations)=0;
     virtual int _cmd_MEASURE_impl(const int iQueriedSF, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
-                                  const int iSelectedTrx, const int iIterations,
-                                  const eBindingType abt)=0;    
-
-    // for the client processor binding policy
-    virtual processorid_t next_cpu(const eBindingType abt,
-                                   const processorid_t aprd);
+                                  const int iSelectedTrx, const int iIterations)=0;    
 
 
 protected:
     
     void print_MEASURE_info(const int iQueriedSF, const int iSpread, 
                             const int iNumOfThreads, const int iDuration,
-                            const int iSelectedTrx, const int iIterations,
-                            const eBindingType abt);
+                            const int iSelectedTrx, const int iIterations);
 
     void print_TEST_info(const int iQueriedSF, const int iSpread, 
                          const int iNumOfThreads, const int iNumOfTrxs,
-                         const int iSelectedTrx, const int iIterations,
-                         const eBindingType abt);
+                         const int iSelectedTrx, const int iIterations);
 
 }; // EOF: shore_shell_t
 

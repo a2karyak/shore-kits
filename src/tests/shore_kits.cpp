@@ -99,27 +99,23 @@ public:
     kit_t(const char* prompt) 
         : shore_shell_t(prompt)
     {
-        // load supported trxs and binding policies maps
+        // load supported trxs maps
         load_trxs_map();
-        load_bp_map();
     }
     ~kit_t() { }
 
 
     virtual const int inst_test_env(int argc, char* argv[]);
     virtual const int load_trxs_map(void);
-    virtual const int load_bp_map(void);
 
 
     // impl of supported commands
     virtual int _cmd_TEST_impl(const int iQueriedSF, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
-                               const int iSelectedTrx, const int iIterations,
-                               const eBindingType abt);
+                               const int iSelectedTrx, const int iIterations);
     virtual int _cmd_MEASURE_impl(const int iQueriedSF, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
-                                  const int iSelectedTrx, const int iIterations,
-                                  const eBindingType abt);    
+                                  const int iSelectedTrx, const int iIterations);    
 
     virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
 
@@ -289,18 +285,6 @@ const int kit_t<Client,DB>::load_trxs_map(void)
     return (Client::load_sup_xct(_sup_trxs));
 }
 
-template<class Client,class DB>
-const int kit_t<Client,DB>::load_bp_map(void)
-{
-    CRITICAL_SECTION(shell_cs,_lock);
-    // Basic binding policies
-    _sup_bps[BT_NONE]          = "NoBinding";
-    _sup_bps[BT_NEXT]          = "Adjacent";
-    _sup_bps[BT_SPREAD]        = "SpreadToCores";
-    return (_sup_bps.size());
-}
-
-
 /********************************************************************* 
  *
  *  @fn:      inst_test_env
@@ -342,13 +326,9 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
     _theSF = _dbinst->get_sf();
 
 
-    // 4. Load supported trxs and bps
+    // 4. Load supported trxs
     if (!load_trxs_map()) {
         TRACE( TRACE_ALWAYS, "No supported trxs...\nExiting...");
-        return (1);
-    }
-    if (!load_bp_map()) {
-        TRACE( TRACE_ALWAYS, "No supported binding policies...\nExiting...");
         return (1);
     }
 
@@ -385,12 +365,11 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
                                      const int iNumOfThreads, 
                                      const int iNumOfTrxs,
                                      const int iSelectedTrx, 
-                                     const int iIterations,
-                                     const eBindingType abt)
+                                     const int iIterations)
 {
     // print test information
     print_TEST_info(iQueriedSF, iSpread, iNumOfThreads, 
-                    iNumOfTrxs, iSelectedTrx, iIterations, abt);
+                    iNumOfTrxs, iSelectedTrx, iIterations);
 
     _dbinst->newrun();
     _dbinst->upd_sf();
@@ -402,8 +381,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iIterations);
 
-        // reset starting cpu and wh id
-        _current_prs_id = _start_prs_id;
+        // reset starting wh id
         int wh_id = 0;
 
         _env->reset_stats();
@@ -422,10 +400,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
 
             testers[i] = new Client(c_str("CL-%d",i), i, _dbinst, 
                                     MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs,
-                                    _current_prs_id, wh_id, iQueriedSF);
+                                    wh_id, iQueriedSF);
             assert (testers[i]);
             testers[i]->fork();
-            _current_prs_id = next_cpu(abt, _current_prs_id);
         }
 
         // 2. join the tester threads
@@ -464,12 +441,11 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
                                         const int iNumOfThreads, 
                                         const int iDuration,
                                         const int iSelectedTrx, 
-                                        const int iIterations,
-                                        const eBindingType abt)
+                                        const int iIterations)
 {
     // print measurement info
     print_MEASURE_info(iQueriedSF, iSpread, iNumOfThreads, iDuration, 
-                       iSelectedTrx, iIterations, abt);
+                       iSelectedTrx, iIterations);
 
     _dbinst->newrun();
     _dbinst->upd_sf();
@@ -477,8 +453,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
 
     // create and fork client threads
     Client* testers[MAX_NUM_OF_THR];
-    // reset starting cpu and wh id
-    _current_prs_id = _start_prs_id;
+    // reset starting wh id
     int wh_id = 0;
     
     // set measurement state
@@ -493,10 +468,9 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
 
         testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _dbinst, 
                                 MT_TIME_DUR, iSelectedTrx, 0,
-                                _current_prs_id, wh_id, iQueriedSF);
+                                wh_id, iQueriedSF);
         assert (testers[i]);
         testers[i]->fork();
-        _current_prs_id = next_cpu(abt, _current_prs_id);
     }
     
     // give them some time (2secs) to start-up
@@ -570,7 +544,6 @@ int main(int argc, char* argv[])
 
     TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS 
                //               | TRACE_NETWORK 
-               //               | TRACE_CPU_BINDING
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW

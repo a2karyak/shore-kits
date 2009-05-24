@@ -47,7 +47,6 @@
 #define TRACE_SYNC_LOCK            (unsigned int)(1 << 4)
 #define TRACE_THREAD_LIFE_CYCLE    (unsigned int)(1 << 5)
 #define TRACE_TEMP_FILE            (unsigned int)(1 << 6)
-#define TRACE_CPU_BINDING          (unsigned int)(1 << 7)
 #define TRACE_QUERY_RESULTS        (unsigned int)(1 << 8)
 #define TRACE_STATISTICS           (unsigned int)(1 << 9)
 #define TRACE_NETWORK              (unsigned int)(1 << 10)

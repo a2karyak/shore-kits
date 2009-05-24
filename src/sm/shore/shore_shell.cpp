@@ -53,9 +53,9 @@ int _theSF = DF_SF;
 
 /******************************************************************** 
  *
- *  @fn:    {trxs,bp}_map
+ *  @fn:    trxs_map
  *
- *  @brief: The supported trxs and binding policies maps
+ *  @brief: The supported trxs maps
  *
  ********************************************************************/
 
@@ -79,60 +79,6 @@ const char* shore_shell_t::translate_trx(const int iSelectedTrx) const
 }
 
 
-// BP - Binding Policies //
-
-void shore_shell_t::print_sup_bp(void) 
-{
-    TRACE( TRACE_ALWAYS, "Supported Binding Policies\n");
-    for (mapBindPolsIt cit= _sup_bps.begin();
-         cit != _sup_bps.end(); cit++)
-            TRACE( TRACE_ALWAYS, "%d -> %s\n", cit->first, cit->second.c_str());
-}
-
-const char* shore_shell_t::translate_bp(const eBindingType abt)
-{
-    mapBindPolsIt it = _sup_bps.find(abt);
-    if (it != _sup_bps.end())
-        return (it->second.c_str());
-    return ("Unsupported Binding Policy");
-}
-
-
-/****************************************************************** 
- *
- * @fn:    next_cpu()
- *
- * @brief: Decides what is the next cpu for the forking clients 
- *
- * @note:  This decision is based on:
- *         - abt                     - the selected binding type
- *         - aprd                    - the current cpu
- *         - _env->_max_cpu_count    - the maximum cpu count (hard-limit)
- *         - _env->_active_cpu_count - the active cpu count (soft-limit)
- *         - this->_start_prs_id     - the first assigned cpu for the table
- *
- ******************************************************************/
-
-processorid_t shore_shell_t::next_cpu(const eBindingType abt, 
-                                          const processorid_t aprd) 
-{
-    processorid_t nextprs;
-    switch (abt) {
-    case (BT_NONE):
-        return (PBIND_NONE);
-    case (BT_NEXT):
-        nextprs = ((aprd+1) % _env->get_active_cpu_count());
-        return (nextprs);
-    case (BT_SPREAD):
-        static const int NIAGARA_II_STEP = 8;
-        nextprs = ((aprd+NIAGARA_II_STEP) % _env->get_active_cpu_count());
-        return (nextprs);
-    }
-    assert (0); // Should not reach this point
-    return (nextprs);
-}
-
-
 /******************************************************************** 
  *
  *  @fn:    print_CMD_info
@@ -143,40 +89,34 @@ processorid_t shore_shell_t::next_cpu(const eBindingType abt,
 
 void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread, 
                                            const int iNumOfThreads, const int iDuration,
-                                           const int iSelectedTrx, const int iIterations,
-                                           const eBindingType abt)
+                                           const int iSelectedTrx, const int iIterations)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n" \
            "QueriedSF:     (%d)\n" \
            "SpreadThreads: (%s)\n" \
-           "Binding:       (%s)\n" \
            "NumOfThreads:  (%d)\n" \
            "Duration:      (%d)\n" \
            "Trx:           (%s)\n" \
            "Iterations:    (%d)\n",
            iQueriedSF, (iSpread ? "Yes" : "No"), 
-           translate_bp(abt),
            iNumOfThreads, iDuration, translate_trx(iSelectedTrx), 
            iIterations);
 }
 
 void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread, 
                                         const int iNumOfThreads, const int iNumOfTrxs,
-                                        const int iSelectedTrx, const int iIterations,
-                                        const eBindingType abt)
+                                        const int iSelectedTrx, const int iIterations)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n"
            "QueriedSF:      (%d)\n" \
            "Spread Threads: (%s)\n" \
-           "Binding:        (%s)\n" \
            "NumOfThreads:   (%d)\n" \
            "NumOfTrxs:      (%d)\n" \
            "Trx:            (%s)\n" \
            "Iterations:     (%d)\n",
            iQueriedSF, (iSpread ? "Yes" : "No"), 
-           translate_bp(abt),
            iNumOfThreads, iNumOfTrxs, translate_trx(iSelectedTrx),
            iIterations);
 }
@@ -205,31 +145,28 @@ int shore_shell_t::print_usage(const char* command)
            "<ITERATIONS>  : Number of iterations (Default=3) (optional)\n\n");
 
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
-           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
+           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The SF queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n\n");
 
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n" \
-           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
+           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The SF queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n");
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n\n");
     
     TRACE( TRACE_ALWAYS, "\n\nCurrently Scaling factor = (%d)\n", _theSF);
 
     print_sup_trxs();
-    print_sup_bp();
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -246,15 +183,14 @@ int shore_shell_t::print_usage(const char* command)
 void shore_shell_t::usage_cmd_TEST() 
 {
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
-           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
+           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The SF queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n\n");
 }
 
 
@@ -269,15 +205,14 @@ void shore_shell_t::usage_cmd_TEST()
 void shore_shell_t::usage_cmd_MEASURE() 
 {
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
-           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
+           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS>]\n" \
            "\nParameters:\n" \
            "<NUM_QUERIED> : The SF queried (queried factor)\n" \
            "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
            "<NUM_THRS>    : Number of threads used (optional)\n" \
            "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
            "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n\n");
 }
 
 
@@ -328,8 +263,6 @@ void shore_shell_t::usage_cmd_LOAD()
 void shore_shell_t::pre_process_cmd()
 {
     _g_canceled = false;
-
-    _current_prs_id = _start_prs_id;
 
     // make sure any previous abort is cleared
     base_client_t::resume_test();
@@ -547,8 +480,6 @@ int shore_shell_t::process_cmd_TEST(const char* command,
     int tmp_selectedTrxID    = selectedTrxID;
     int iterations           = ev->getVarInt("test-iterations",DF_NUM_OF_ITERS);
     int tmp_iterations       = iterations;
-    eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
-    eBindingType tmp_binding = binding;
 
 
     // update the SF
@@ -560,15 +491,14 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
     
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
                 &tmp_numOfTrxs,
                 &tmp_selectedTrxID,
-                &tmp_iterations,
-                &tmp_binding) < 2 ) 
+                &tmp_iterations) < 2 ) 
     {
         usage_cmd_TEST();
         return (SHELL_NEXT_CONTINUE);
@@ -622,21 +552,10 @@ int shore_shell_t::process_cmd_TEST(const char* command,
     if (tmp_iterations>0)
         iterations = tmp_iterations;
 
-    // 8- binding type   
-    mapBindPolsIt cit = _sup_bps.find(tmp_binding);
-    if (cit!= _sup_bps.end()) {
-        binding = tmp_binding;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Unsupported Binding\n");
-        return (SHELL_NEXT_CONTINUE);
-    }
-
 
     // call the virtual function that implements the test    
     return (_cmd_TEST_impl(numOfQueriedSF, spreadThreads, numOfThreads,
-                           numOfTrxs, selectedTrxID, iterations, 
-                           binding));
+                           numOfTrxs, selectedTrxID, iterations));
 }
 
 
@@ -676,19 +595,16 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     int tmp_selectedTrxID    = selectedTrxID;
     int iterations           = ev->getVarInt("measure-iterations",DF_NUM_OF_ITERS);
     int tmp_iterations       = iterations;
-    eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
-    eBindingType tmp_binding = binding;
     
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
                 &tmp_duration,
                 &tmp_selectedTrxID,
-                &tmp_iterations,
-                &tmp_binding) < 2 ) 
+                &tmp_iterations) < 2 ) 
     {
         usage_cmd_MEASURE();
         return (SHELL_NEXT_CONTINUE);
@@ -749,20 +665,9 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     if (tmp_iterations>0)
         iterations = tmp_iterations;
 
-    // 8- binding type   
-    mapBindPolsIt cit = _sup_bps.find(tmp_binding);
-    if (cit!= _sup_bps.end()) {
-        binding = tmp_binding;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Unsupported Binding\n");
-        return (SHELL_NEXT_CONTINUE);
-    }
-
     // call the virtual function that implements the measurement    
     return (_cmd_MEASURE_impl(numOfQueriedSF, spreadThreads, numOfThreads,
-                              duration, selectedTrxID, iterations,
-                              binding));
+                              duration, selectedTrxID, iterations));
 }
 
 

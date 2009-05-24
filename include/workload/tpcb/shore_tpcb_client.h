@@ -67,9 +67,8 @@ public:
 
     baseline_tpcb_client_t(c_str tname, const int id, ShoreTPCBEnv* env, 
                           const MeasurementType aType, const int trxid, 
-                          const int numOfTrxs, 
-                          processorid_t aprsid, const int selID, const int qf) 
-	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
+                          const int numOfTrxs, const int selID, const int qf) 
+	: base_client_t(tname,id,env,aType,trxid,numOfTrxs),
           _tpcbdb(env), _selid(selID), _qf(qf)
     {
         assert (env);
