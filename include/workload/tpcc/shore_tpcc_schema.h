@@ -424,11 +424,11 @@ public:
 	/* table schema */
 	_desc[0].setup(SQL_INT,    "S_I_ID");
 	_desc[1].setup(SQL_INT,    "S_W_ID");       
-	_desc[2].setup(SQL_INT,    "S_REMOTE_CNT"); /* prev [15] */
-	_desc[3].setup(SQL_INT,    "S_QUANTITY");   /* prev [2] */
-	_desc[4].setup(SQL_INT,    "S_ORDER_CNT");  /* prev [14] */
-	_desc[5].setup(SQL_INT,    "S_YTD");        /* prev [13] */
-	_desc[6].setup(SQL_CHAR,   "S_DIST0", 24);  /* prev [4] */
+	_desc[2].setup(SQL_INT,    "S_REMOTE_CNT"); // prev [15]
+	_desc[3].setup(SQL_INT,    "S_QUANTITY");   // prev [2]
+	_desc[4].setup(SQL_INT,    "S_ORDER_CNT");  // prev [14]
+	_desc[5].setup(SQL_INT,    "S_YTD");        // prev [13]
+	_desc[6].setup(SQL_CHAR,   "S_DIST0", 24);  // prev [4]
 	_desc[7].setup(SQL_CHAR,   "S_DIST1", 24);  
 	_desc[8].setup(SQL_CHAR,   "S_DIST2", 24);  
 	_desc[9].setup(SQL_CHAR,   "S_DIST3", 24);  
@@ -437,7 +437,7 @@ public:
 	_desc[12].setup(SQL_CHAR,  "S_DIST6", 24);  
 	_desc[13].setup(SQL_CHAR,  "S_DIST7", 24);  
 	_desc[14].setup(SQL_CHAR,  "S_DIST8", 24);  
-	_desc[15].setup(SQL_CHAR,  "S_DIST9", 24);      /* prev [12] */
+	_desc[15].setup(SQL_CHAR,  "S_DIST9", 24);   // prev [12]
         //	_desc[13].setup(SQL_SMALLINT, "S_YTD");        
         //	_desc[14].setup(SQL_SMALLINT, "S_ORDER_CNT");  
         //	_desc[15].setup(SQL_SMALLINT, "S_REMOTE_CNT"); 

@@ -21,7 +21,7 @@
 ENTER_NAMESPACE(tpcc);
 
 
-/** Exported data structures */
+//// Exported data structures /////
 
 
 /*********************************************************************
@@ -93,6 +93,10 @@ struct new_order_input_t
 
 
 // IP: The following two structs are used by DoraNewOrder
+// Instead of copying the whole NewOrder input the actions that do not use any 
+// item they use no_item_nord_input which contains only the basic fields. 
+// On the other hand, the actions that use only one item, they use with_item_nord_input
+// which contains the basic fields and one item.
 
 // IP: General input for the no Item-related NewOrder actions
 struct no_item_nord_input_t
