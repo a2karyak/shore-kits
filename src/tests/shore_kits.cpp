@@ -555,7 +555,6 @@ int main(int argc, char* argv[])
     initsysnamemap();
     initbenchmarkmap();
     envVar* ev = envVar::instance();       
-    string sysname = ev->getSysname();
     string benchmarkname = ev->getSysVar("benchmark");
 
 
@@ -563,48 +562,23 @@ int main(int argc, char* argv[])
     guard<shore_shell_t> kit = NULL;
 
 
-    TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", 
-           benchmarkname.c_str(),
-           sysname.c_str());
+    TRACE( TRACE_ALWAYS, "Starting (%s) kit\n", 
+           benchmarkname.c_str());
 
 
     // TPC-C
     if (benchmarkname.compare("tpcc")==0) {
-        switch (mSysnameValue[sysname]) {
-        case snBaseline:
-            // shore.conf is set for Baseline
-            kit = new baselineTPCCKit("(tpcc-base) ");
-            break;
-        default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            return (2);        
-        }
+            kit = new baselineTPCCKit("(tpcc) ");
     }
 
     // TM1
     if (benchmarkname.compare("tm1")==0) {
-        switch (mSysnameValue[sysname]) {
-        case snBaseline:
-            // shore.conf is set for Baseline
-            kit = new baselineTM1Kit("(tm1-base) ");
-            break;
-        default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            return (3);        
-        }
+            kit = new baselineTM1Kit("(tm1) ");
     }
 
     // TPC-B
     if (benchmarkname.compare("tpcb")==0) {
-        switch (mSysnameValue[sysname]) {
-        case snBaseline:
-            // shore.conf is set for Baseline
-            kit = new baselineTPCBKit("(tpcb-base) ");
-            break;
-        default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            return (3);        
-        }
+            kit = new baselineTPCBKit("(tpcb) ");
     }
 
     assert (kit.get());
