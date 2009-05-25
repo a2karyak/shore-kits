@@ -54,16 +54,16 @@ w_rc_t mid_nord_rvp::run()
     register int whid     = _in._wh_id;
 
     // 1. Setup the final RVP
-    final_nord_rvp* frvp = _penv->new_final_nord_rvp(_tid,_xct,_xct_id,_result,intratrx,total,_actions);
+    final_nord_rvp* frvp = _penv->new_final_nord_rvp(_tid,_xct,_xct_id,_result,_actions);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 2. Generate and enqueue the (Midway->Final) actions
     //
-    // 1     - INS_ORD
-    // 1     - INS_NORD
-    // OLCNT - INS_OL
+    // 1 - INS_ORD
+    // 1 - INS_NORD
+    // 1 - INS_OL
 
     {
         // 2a. Generate the no-item-input
@@ -78,9 +78,13 @@ w_rc_t mid_nord_rvp::run()
         ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_tid,_xct,frvp,anoitin);
         irpImpl* my_nord_part = _penv->nor()->myPart(whid-1);
 
+        // 2d. Insert (OL) - used to be OL_CNT actions
+        ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_tid,_xct,frvp,_in);
+        irpImpl* my_ol_part = _penv->oli()->myPart(whid-1);
+
+
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
-
         if (my_ord_part->enqueue(ins_ord_nord,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_ORD_NORD\n");
             assert (0); 
@@ -90,42 +94,20 @@ w_rc_t mid_nord_rvp::run()
         // NORD_PART_CS
         CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
         ord_part_cs.exit();
-
         if (my_nord_part->enqueue(ins_nord_nord,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_NORD_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
-
-        // 2d. OL_CNT x Insert (OL)
-
-        with_item_nord_input_t awithitin;
-        ins_ol_nord_action* ins_ol_nord = NULL;
-        irpImpl* my_ol_part = NULL;
-
-        for (int i=0; i<olcnt; i++) {
-            
-            // 2e. Generate the with-item-input
-            _in.get_with_item_input(awithitin,i);
-                
-            // 2f. Generate the action
-            ins_ol_nord = _penv->new_ins_ol_nord_action(_tid,_xct,frvp,awithitin);
-
-            {
-                my_ol_part = _penv->oli()->myPart(whid-1); // IP: It will try to lock the same partition OLCNT times
-
-                // ITEM_PART_CS
-                CRITICAL_SECTION(oli_part_cs, my_ol_part->_enqueue_lock);
-
-                if (my_ol_part->enqueue(ins_ol_nord,_bWake)) {
-                    TRACE( TRACE_DEBUG, "Problem in enqueueing INS_OL_NORD-%d\n", i);
-                    assert (0); 
-                    return (RC(de_PROBLEM_ENQUEUE));
-                }
-            }
+        // OLI_PART_CS
+        CRITICAL_SECTION(oli_part_cs, my_ol_part->_enqueue_lock);
+        nord_part_cs.exit();
+        if (my_ol_part->enqueue(ins_ol_nord,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_OL_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
         }    
-    
     }
     
     return (RCOK);
@@ -377,11 +359,14 @@ done:
 
 // R_ITEM_NORD_ACTION
 
+#warning Only 1 field (WH) determines the ITEM table accesses! Not 2 nor item-id!
+
 void r_item_nord_action::calc_keys() 
 {
+    // !!! IP: Correct is to use the _ol_supply_wh_id !!!
     set_read_only();
-    _down.push_back(_in.item._ol_i_id);
-    _up.push_back(_in.item._ol_i_id);
+    _down.push_back(_in._wh_id);
+    _up.push_back(_in._wh_id);
 }
 
 w_rc_t r_item_nord_action::trx_exec() 
@@ -401,40 +386,45 @@ w_rc_t r_item_nord_action::trx_exec()
     { // make gotos safe
 
         // 1. Probe item (read-only)
-        register int ol_i_id = _in.item._ol_i_id;
-        register int ol_supply_w_id = _in.item._ol_supply_wh_id;
+        register int idx=0;
 
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:r-item (%d)\n", 
+               _tid, _in._ol_cnt);
 
-        /* SELECT i_price, i_name, i_data
-         * FROM item
-         * WHERE i_id = :ol_i_id
-         *
-         * plan: index probe on "I_INDEX"
-         */
+        // IP: The new version of the r-tem does all the work in a single action
+        for (idx=0; idx<_in._ol_cnt; idx++) {
+
+            register int ol_i_id = _in.items[idx]._ol_i_id;
+            register int ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
+            assert (_in._wh_id==ol_supply_w_id); // IP: only local NewOrders
+
+            /* SELECT i_price, i_name, i_data
+             * FROM item
+             * WHERE i_id = :ol_i_id
+             *
+             * plan: index probe on "I_INDEX"
+             */
         
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl (%d)\n", 
-               _tid, ol_i_id);
+            TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
+                   _tid, idx, ol_i_id);
 
 #ifndef ONLYDORA
-        e = _penv->item_man()->it_index_probe_nl(_penv->db(), 
-                                                 pritem, 
-                                                 ol_i_id);
+            e = _penv->item_man()->it_index_probe_nl(_penv->db(), 
+                                                     pritem, 
+                                                     ol_i_id);
 #endif
 
-        if (e.is_error()) { goto done; }
+            if (e.is_error()) { goto done; }
 
-        // 2. Update midway RVP 
+            // 2a. Calculate the item amount
+            pritem->get_value(4, _in.items[idx]._aitem.I_DATA, 51);
+            pritem->get_value(3, _in.items[idx]._aitem.I_PRICE);
+            pritem->get_value(2, _in.items[idx]._aitem.I_NAME, 25);        
+            _in.items[idx]._item_amount = _in.items[idx]._aitem.I_PRICE * _in.items[idx]._ol_quantity; 
 
-        // 2a. Calculate the item amount
-        tpcc_item_tuple* pitem = &_in.item._aitem;
-        pritem->get_value(4, pitem->I_DATA, 51);
-        pritem->get_value(3, pitem->I_PRICE);
-        pritem->get_value(2, pitem->I_NAME, 25);        
-        _in.item._item_amount = pitem->I_PRICE * _in.item._ol_quantity; 
-
-        // 2b. Update RVP data
-        _prvp->_in.items[_in._ol_idx]._item_amount = _in.item._item_amount;
-
+            // 2b. Update RVP data
+            _prvp->_in.items[idx]._item_amount = _in.items[idx]._item_amount;
+        }
     } // goto
 
 #ifdef PRINT_TRX_RESULTS
@@ -483,6 +473,9 @@ w_rc_t upd_sto_nord_action::trx_exec()
         register int ol_i_id=0;
         register int ol_supply_w_id=0;
 
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:upd-stock (%d)\n", 
+               _tid, _in._ol_cnt);
+
         // IP: The new version of the upd-stock does all the work in a single action
         for (idx=0; idx<_in._ol_cnt; idx++) {
 
@@ -500,8 +493,8 @@ w_rc_t upd_sto_nord_action::trx_exec()
             
             tpcc_stock_tuple* pstock = &_prvp->_in.items[idx]._astock;
             tpcc_item_tuple*  pitem  = &_prvp->_in.items[idx]._aitem;
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl (%d) (%d)\n", 
-                   _tid, ol_supply_w_id, ol_i_id);
+            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
+                   _tid, idx, ol_supply_w_id, ol_i_id);
 
 #ifndef ONLYDORA
             e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, 
@@ -535,14 +528,13 @@ w_rc_t upd_sto_nord_action::trx_exec()
                 assert (0); // Should not happen
             }
 
-
             /* UPDATE stock
              * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
              * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
              */
 
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl (%d) (%d)\n", 
-                   _tid, pstock->S_W_ID, pstock->S_I_ID);
+            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
+                   _tid, idx, pstock->S_W_ID, pstock->S_I_ID);
 
 #ifndef ONLYDORA
             e = _penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, 
@@ -750,33 +742,41 @@ w_rc_t ins_ol_nord_action::trx_exec()
     { // make gotos safe
 
         // 1. insert row to ORDER_LINE
+        register int idx = 0;
 
-        /* INSERT INTO order_line
-         * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
-         *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
-         */
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:ins-ol (%d)\n", 
+               _tid, _in._ol_cnt);
 
-        prol->set_value(0, _in._d_next_o_id);
-        prol->set_value(1, _in._d_id);
-        prol->set_value(2, _in._wh_id);
-        prol->set_value(3, _in._ol_idx+1);
-        prol->set_value(4, _in.item._ol_i_id);
-        prol->set_value(5, _in.item._ol_supply_wh_id);
-        prol->set_value(6, _in._tstamp);
-        prol->set_value(7, _in.item._ol_quantity);
-        prol->set_value(8, _in.item._item_amount);
-        prol->set_value(9, _in.item._astock.S_DIST[6+_in._d_id]);
+        for (idx=0; idx<_in._ol_cnt; idx++) {
 
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:ol-add-tuple (%d) (%d) (%d) (%d)\n", 
-               _tid, _in._wh_id, _in._d_id, _in._d_next_o_id, _in._ol_idx+1);
+            /* INSERT INTO order_line
+             * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
+             *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
+             */
+
+            prol->set_value(0, _in._d_next_o_id);
+            prol->set_value(1, _in._d_id);
+            prol->set_value(2, _in._wh_id);
+            prol->set_value(3, idx+1);
+            prol->set_value(4, _in.items[idx]._ol_i_id);
+            prol->set_value(5, _in.items[idx]._ol_supply_wh_id);
+            prol->set_value(6, _in._tstamp);
+            prol->set_value(7, _in.items[idx]._ol_quantity);
+            prol->set_value(8, _in.items[idx]._item_amount);
+            prol->set_value(9, _in.items[idx]._astock.S_DIST[6+_in._d_id]);
+
+            TRACE( TRACE_TRX_FLOW, 
+                   "App: %d NO:ol-add-tuple-%d (%d) (%d) (%d) (%d)\n", 
+                   _tid, idx, _in._wh_id, _in._d_id, _in._d_next_o_id, 
+                   _in.items[idx]._ol_i_id);
 
 #ifndef ONLYDORA
-        e = _penv->order_line_man()->add_tuple(_penv->db(), prol, NL);
+            e = _penv->order_line_man()->add_tuple(_penv->db(), prol, NL);
 #endif
 
-        if (e.is_error()) { goto done; }
-
+            if (e.is_error()) { goto done; }
+        }
+        
     } // goto
 
 #ifdef PRINT_TRX_RESULTS

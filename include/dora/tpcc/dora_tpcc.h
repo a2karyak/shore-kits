@@ -307,9 +307,9 @@ public:
     ////////////////////
 
 
-    DECLARE_DORA_MIDWAY_DYNAMIC_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t);
+    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t);
 
-    DECLARE_DORA_FINAL_DYNAMIC_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp);
+    DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp);
 
 
     // Start -> Midway
@@ -319,9 +319,9 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,with_item_nord_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,new_order_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,no_item_nord_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,new_order_input_t);
 
 
     // Midway -> Final
@@ -329,7 +329,7 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,rvp_t,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,with_item_nord_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,new_order_input_t);
 
 
 private:

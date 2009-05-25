@@ -34,9 +34,9 @@ using namespace tpcc;
 //
 
 
-DECLARE_DORA_EMPTY_MIDWAY_DYNAMIC_RVP_CLASS(mid_nord_rvp,DoraTPCCEnv,new_order_input_t);
+DECLARE_DORA_EMPTY_MIDWAY_RVP_CLASS(mid_nord_rvp,DoraTPCCEnv,new_order_input_t,5,5);
 
-DECLARE_DORA_FINAL_DYNAMIC_RVP_CLASS(final_nord_rvp,DoraTPCCEnv);
+DECLARE_DORA_FINAL_RVP_CLASS(final_nord_rvp,DoraTPCCEnv,3,8);
 
 
 
@@ -56,7 +56,6 @@ DECLARE_DORA_FINAL_DYNAMIC_RVP_CLASS(final_nord_rvp,DoraTPCCEnv);
 // 
 
 
-// Midway - NO-Item
 DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_wh_nord_action,int,DoraTPCCEnv,mid_nord_rvp,no_item_nord_input_t,1);
 
 DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_dist_nord_action,int,DoraTPCCEnv,mid_nord_rvp,no_item_nord_input_t,2);
@@ -64,13 +63,13 @@ DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_dist_nord_action,int,DoraTPCCEnv,mid_nord
 // !!! 2 fields only (WH,DI) determine the CUSTOMER table accesses, not 3 !!!
 DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_cust_nord_action,int,DoraTPCCEnv,mid_nord_rvp,no_item_nord_input_t,2);
 
+// !!! The items reading is performed as a single action (instead of OLCNT)
+// !!! 1 field only (WH) determines the ITEM table accesses, not 2 and not ITEM !!!
+DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_item_nord_action,int,DoraTPCCEnv,mid_nord_rvp,new_order_input_t,1);
 
-// Midway - Item
-DECLARE_DORA_ACTION_WITH_RVP_CLASS(r_item_nord_action,int,DoraTPCCEnv,mid_nord_rvp,with_item_nord_input_t,1);
-
-// !!! The stock updating is performed as a single action (instead of OLCNT)
+// !!! The stocks updating is performed as a single action (instead of OLCNT)
 // !!! 1 field only (WH) determines the STOCK table accesses, not 2 !!!
-DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_sto_nord_action,int,DoraTPCCEnv,mid_nord_rvp,no_item_nord_input_t,1);
+DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_sto_nord_action,int,DoraTPCCEnv,mid_nord_rvp,new_order_input_t,1);
 
 
 
@@ -82,9 +81,6 @@ DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_sto_nord_action,int,DoraTPCCEnv,mid_nord_
 // (8) ins_ol_nord_action
 //
 
-
-// Final - NO-Item
-
 // !!! 2 fields only (WH,DI) determine the ORDER table accesses, not 3 !!!
 DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_ord_nord_action,int,DoraTPCCEnv,no_item_nord_input_t,2);
 
@@ -93,10 +89,8 @@ DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_ord_nord_action,int,DoraTPCCEnv,no_item_nor
 DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_nord_nord_action,int,DoraTPCCEnv,no_item_nord_input_t,2);
 
 
-// Final - Item
-
 // !!! 2 fields only (WH,DI) determine the ORDERLINE table accesses, not 3 !!!
-DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_ol_nord_action,int,DoraTPCCEnv,with_item_nord_input_t,2);
+DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_ol_nord_action,int,DoraTPCCEnv,new_order_input_t,2);
 
 
 

@@ -281,7 +281,7 @@ w_rc_t r_ol_stock_action::trx_exec()
 
             if (e.is_error()) { goto done; }
 
-            /* put the value into the sorted buffer */
+            // put the value into the sorted buffer
             int temp_oid, temp_iid;
             int temp_wid, temp_did;        
 
@@ -305,12 +305,12 @@ w_rc_t r_ol_stock_action::trx_exec()
         assert (ol_sorter.count());
 #endif
 
-        /* 2b. Sort orderline tuples on i_id */
+        // 2b. Sort orderline tuples on i_id
         sort_iter_impl ol_list_sort_iter(_penv->db(), &ol_list, &ol_sorter);
         int last_i_id = -1;
         int count = 0;
 
-        /* 2c. Load the vector with pairs of w_id, and i_it notify rvp */
+        // 2c. Load the vector with pairs of w_id, and i_it notify rvp
         assert (_prvp->_in._pvwi == NULL);
         _prvp->_in._pvwi = new TwoIntVec();       
         assert (_prvp->_in._pvwi);
@@ -321,7 +321,7 @@ w_rc_t r_ol_stock_action::trx_exec()
         
         while (!eof) {
 
-            /* use the index to find the corresponding stock tuple */
+            // use the index to find the corresponding stock tuple
             rsb.get_value(0, i_id);
             rsb.get_value(1, w_id);
 
@@ -385,8 +385,7 @@ w_rc_t r_st_stock_action::trx_exec()
 
     { // make gotos safe
 
-
-        /* 2c. Nested loop join order_line with stock */
+        // 2c. Nested loop join order_line with stock
         assert (_in._pvwi);
         for (TwoIntVecIt it = _in._pvwi->begin(); it != _in._pvwi->end(); ++it) {
 
@@ -410,7 +409,7 @@ w_rc_t r_st_stock_action::trx_exec()
             prst->get_value(3, quantity);
 
             if (quantity < _in._threshold) {
-                /* Do join on the two tuples */
+                // Do join on the two tuples
 
                 /* the work is to count the number of unique item id. We keep
                  * two pieces of information here: the last item id and the

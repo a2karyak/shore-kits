@@ -487,7 +487,7 @@ public:
             if (!_key_ll_m->acquire(*it)) {
                 // if a key cannot be acquired, return false
                 TRACE( TRACE_TRX_FLOW, "Cannot acquire for (%d)\n", 
-                       (*it).tid());
+                       *((*it).tid()));
                 bResult = false;
             }
         }

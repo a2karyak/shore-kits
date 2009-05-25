@@ -112,13 +112,10 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
 
     // 3. Calculate intratrx and total
     register int olcnt    = anoin._ol_cnt;
-    register int intratrx = anoin._ol_cnt + 4;
     register int whid     = anoin._wh_id;
     
-
     // 4. Setup the midway RVP
-    mid_nord_rvp* midrvp = new_mid_nord_rvp(atid,pxct,xct_id,atrt,
-                                            anoin,intratrx,intratrx,bWake);
+    mid_nord_rvp* midrvp = new_mid_nord_rvp(atid,pxct,xct_id,atrt,anoin,bWake);
 
     // 5. Enqueue all the actions
 
@@ -137,7 +134,10 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
         upd_dist_nord_action* upd_dist_nord = new_upd_dist_nord_action(atid,pxct,midrvp,anoitin);
         irpImpl* my_dist_part = dis()->myPart(whid-1);
 
-        upd_sto_nord_action* upd_sto_nord = new_upd_sto_nord_action(atid,pxct,midrvp,anoitin);
+        r_item_nord_action* r_item_nord = new_r_item_nord_action(atid,pxct,midrvp,anoin);
+        irpImpl* my_item_part = ite()->myPart(whid-1);
+
+        upd_sto_nord_action* upd_sto_nord = new_upd_sto_nord_action(atid,pxct,midrvp,anoin);
         irpImpl* my_sto_part = sto()->myPart(whid-1);
 
         // WH_PART_CS
@@ -168,40 +168,25 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
+                
+        // ITEM_PART_CS
+        CRITICAL_SECTION(item_part_cs, my_item_part->_enqueue_lock);
+        dist_part_cs.exit();
+
+        if (my_item_part->enqueue(r_item_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_ITEM_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
 
         // STO_PART_CS
         CRITICAL_SECTION(sto_part_cs, my_sto_part->_enqueue_lock);
-        dist_part_cs.exit();
+        item_part_cs.exit();
 
         if (my_sto_part->enqueue(upd_sto_nord,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_STO_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
-        }
-
-
-        TRACE( TRACE_TRX_FLOW, "Submitting (%d) r-item actions\n", olcnt);
-        
-        with_item_nord_input_t awithitin;
-        r_item_nord_action* r_item_nord = NULL;
-        irpImpl* my_item_part = NULL;
-        for (int i=0; i<olcnt; i++) {
-
-            anoin.get_with_item_input(awithitin,i);
-            r_item_nord = new_r_item_nord_action(atid,pxct,midrvp,awithitin);
-
-            {
-                my_item_part = ite()->myPart(whid-1);
-                
-                // ITEM_PART_CS
-                CRITICAL_SECTION(item_part_cs, my_item_part->_enqueue_lock);
-
-                if (my_item_part->enqueue(r_item_nord,bWake)) {
-                    TRACE( TRACE_DEBUG, "Problem in enqueueing R_ITEM_NORD-%d\n", i);
-                    assert (0); 
-                    return (RC(de_PROBLEM_ENQUEUE));
-                }
-            }
         }
     }
     return (RCOK); 

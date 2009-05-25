@@ -164,6 +164,7 @@ private:
     int _amount;
     tatas_lock _amount_lock;
     final_del_rvp* _final_rvp;
+
 public:
     mid2_del_rvp() : rvp_t(), _cache(NULL), _ptpccenv(NULL), 
                      _c_id(-1), _amount(-1) { }

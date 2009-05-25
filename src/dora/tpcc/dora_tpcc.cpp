@@ -492,9 +492,9 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_cust_del_action,rvp_t,delivery_input_t,int,DoraT
 // TPC-C NEWORDER
 
 // RVP
-DEFINE_DORA_MIDWAY_DYNAMIC_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t,DoraTPCCEnv);
+DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t,DoraTPCCEnv);
 
-DEFINE_DORA_FINAL_DYNAMIC_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp,DoraTPCCEnv);
+DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp,DoraTPCCEnv);
 
 
 // Start -> Midway
@@ -504,9 +504,9 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,mid_nord_rvp,no_item_nord_input
 
 DEFINE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,with_item_nord_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,new_order_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,new_order_input_t,int,DoraTPCCEnv);
 
 
 // Midway -> Final
@@ -514,7 +514,7 @@ DEFINE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,rvp_t,no_item_nord_input_t,int,D
 
 DEFINE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,rvp_t,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,with_item_nord_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,new_order_input_t,int,DoraTPCCEnv);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
