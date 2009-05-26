@@ -461,7 +461,7 @@ w_rc_t upd_sto_nord_action::trx_exec()
     row_impl<stock_t>* prst = _penv->stock_man()->get_tuple();
     assert (prst);
 
-    rep_row_t areprow(_penv->item_man()->ts());
+    rep_row_t areprow(_penv->stock_man()->ts());
     areprow.set(_penv->stock_desc()->maxsize()); 
     prst->_rep = &areprow;
 
