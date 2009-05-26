@@ -25,8 +25,6 @@ a. Prerequisites
 
 #> ln -s <shore-mt-dir> ~/apps/shore 
 
-
-
 b. Compiling
 -----------------------
 
@@ -34,7 +32,16 @@ b. Compiling
 #> CXX=CC ./configure
 #> gmake -j
 
+NOTE: It is also possible to configure shore-kits to use an arbitrary
+      copy of shore-mt by configuring SHORE_HOME as an argument to the
+      configure
 
+#> CXX=CC ./configure SHORE_HOME=<shore-mt-dir>
+
+
+NOTE: We know of no reason shore-kits should not run on any posix
+      platform, but shore-mt currently supports only on 64-bit sparc
+      solaris so we have not tested anywhere else.
 
 -----------------------
 2. Running
@@ -63,12 +70,12 @@ i. The three basic commands for running experiments:
 
 measure - Executes a specific workload for a specific duration.
           The user can set the number of clients, whether the requests will be spread, the
-          number of iterations, the scaling factor, and the thread binding policy.
+          number of iterations, and the scaling factor.
 
 
 test    - For a specific workload each client executes a specific number of transactions.
           The user can set the number of clients, whether the requests will be spread, the
-          number of iterations, the scaling factor, and the thread binding policy.
+          number of iterations, and the scaling factor.
           WARNING: The 'test' command is innacurate in terms of the reported throughput.
 
 trxs    - Lists the transactions supported by the current workload.
@@ -150,5 +157,4 @@ For any issues, reporting bugs etc. please send email to:
 
 shoremt@listes.epfl.ch
 
-
-
+Note that support is provided on a best-effort basis only.
