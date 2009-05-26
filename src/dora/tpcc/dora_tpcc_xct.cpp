@@ -1,0 +1,600 @@
+/* -*- mode:C++; c-basic-offset:4 -*- */
+
+/** @file:   dora_tpcc_xct.cpp
+ *
+ *  @brief:  Declaration of the Shore DORA transactions
+ *
+ *  @author: Ippokratis Pandis, Sept 2008
+ */
+
+
+#include "dora/tpcc/dora_mbench.h"
+#include "dora/tpcc/dora_payment.h"
+#include "dora/tpcc/dora_order_status.h"
+#include "dora/tpcc/dora_stock_level.h"
+#include "dora/tpcc/dora_delivery.h"
+#include "dora/tpcc/dora_new_order.h"
+
+#include "dora/tpcc/dora_tpcc.h"
+
+
+ENTER_NAMESPACE(dora);
+
+using namespace shore;
+using namespace tpcc;
+
+
+typedef range_partition_impl<int>   irpImpl; 
+
+
+/******** Exported functions  ********/
+
+
+/********
+ ******** Caution: The functions below should be invoked inside
+ ********          the context of a smthread
+ ********/
+
+
+/******************************************************************** 
+ *
+ * TPC-C DORA TRXS
+ *
+ * (1) The dora_XXX functions are wrappers to the real transactions
+ * (2) The xct_dora_XXX functions are the implementation of the transactions
+ *
+ ********************************************************************/
+
+
+/******************************************************************** 
+ *
+ * TPC-C DORA TRXs Wrappers
+ *
+ * @brief: They are wrappers to the functions that execute the transaction
+ *         body. Their responsibility is to:
+ *
+ *         1. Prepare the corresponding input
+ *         2. Check the return of the trx function and abort the trx,
+ *            if something went wrong
+ *         3. Update the tpcc db environment statistics
+ *
+ ********************************************************************/
+
+
+
+// --- without input specified --- //
+
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,new_order);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,payment);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,order_status);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,delivery);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,stock_level);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,mbench_wh);
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCCEnv,mbench_cust);
+
+
+
+
+// --- with input specified --- //
+
+/******************************************************************** 
+ *
+ * DORA TPC-C NEW_ORDER
+ *
+ ********************************************************************/
+
+
+w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
+                                   trx_result_tuple_t& atrt, 
+                                   new_order_input_t& anoin,
+                                   const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    
+    // IP: for now, cannot handle remote WHs
+    assert (anoin._all_local==1);
+
+    // 3. Calculate intratrx and total
+    register int olcnt    = anoin._ol_cnt;
+    register int whid     = anoin._wh_id;
+    
+    // 4. Setup the midway RVP
+    mid_nord_rvp* midrvp = new_mid_nord_rvp(atid,pxct,xct_id,atrt,anoin,bWake);
+
+    // 5. Enqueue all the actions
+
+    {
+        // 5a. Generate the inputs
+        no_item_nord_input_t anoitin;
+        anoin.get_no_item_input(anoitin);
+        
+        // 5b. Generate the actions
+        r_wh_nord_action* r_wh_nord = new_r_wh_nord_action(atid,pxct,midrvp,anoitin);
+        irpImpl* my_wh_part = whs()->myPart(whid-1);
+
+        r_cust_nord_action* r_cust_nord = new_r_cust_nord_action(atid,pxct,midrvp,anoitin);
+        irpImpl* my_cust_part = cus()->myPart(whid-1);
+
+        upd_dist_nord_action* upd_dist_nord = new_upd_dist_nord_action(atid,pxct,midrvp,anoitin);
+        irpImpl* my_dist_part = dis()->myPart(whid-1);
+
+        r_item_nord_action* r_item_nord = new_r_item_nord_action(atid,pxct,midrvp,anoin);
+        irpImpl* my_item_part = ite()->myPart(whid-1);
+
+        upd_sto_nord_action* upd_sto_nord = new_upd_sto_nord_action(atid,pxct,midrvp,anoin);
+        irpImpl* my_sto_part = sto()->myPart(whid-1);
+
+        // WH_PART_CS
+        CRITICAL_SECTION(wh_part_cs, my_wh_part->_enqueue_lock);
+
+        if (my_wh_part->enqueue(r_wh_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_WH_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // CUST_PART_CS
+        CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
+        wh_part_cs.exit();
+
+        if (my_cust_part->enqueue(r_cust_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_CUST_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // DIST_PART_CS
+        CRITICAL_SECTION(dist_part_cs, my_dist_part->_enqueue_lock);
+        cust_part_cs.exit();
+
+        if (my_dist_part->enqueue(upd_dist_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+                
+        // ITEM_PART_CS
+        CRITICAL_SECTION(item_part_cs, my_item_part->_enqueue_lock);
+        dist_part_cs.exit();
+
+        if (my_item_part->enqueue(r_item_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_ITEM_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // STO_PART_CS
+        CRITICAL_SECTION(sto_part_cs, my_sto_part->_enqueue_lock);
+        item_part_cs.exit();
+
+        if (my_sto_part->enqueue(upd_sto_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_STO_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK); 
+}
+
+
+
+/******************************************************************** 
+ *
+ * DORA TPC-C PAYMENT
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
+                                 trx_result_tuple_t& atrt, 
+                                 payment_input_t& apin,
+                                 const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 3. Setup the next RVP
+    // PH1 consists of 3 packets
+    midway_pay_rvp* rvp = new_midway_pay_rvp(atid,pxct,xct_id,atrt,apin,bWake);
+    
+    // 3. Generate the actions    
+    upd_wh_pay_action* pay_upd_wh     = new_upd_wh_pay_action(atid,pxct,rvp,apin);
+    upd_dist_pay_action* pay_upd_dist = new_upd_dist_pay_action(atid,pxct,rvp,apin);
+    upd_cust_pay_action* pay_upd_cust = new_upd_cust_pay_action(atid,pxct,rvp,apin);
+
+
+    // For each action
+    // 4a. Decide about partition
+    // 4b. Enqueue
+    //
+    // All the enqueues should appear atomic
+    // That is, there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    {
+        int wh = apin._home_wh_id-1;
+
+        // first, figure out to which partitions to enqueue
+        irpImpl* my_wh_part   = whs()->myPart(wh);
+        irpImpl* my_dist_part = dis()->myPart(wh);
+        irpImpl* my_cust_part = cus()->myPart(wh);
+
+        // then, start enqueueing
+
+        // WH_PART_CS
+        CRITICAL_SECTION(wh_part_cs, my_wh_part->_enqueue_lock);
+            
+        if (my_wh_part->enqueue(pay_upd_wh,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_WH\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // DIS_PART_CS
+        CRITICAL_SECTION(dis_part_cs, my_dist_part->_enqueue_lock);
+        wh_part_cs.exit();
+
+        if (my_dist_part->enqueue(pay_upd_dist,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_DIST\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // CUS_PART_CS
+        CRITICAL_SECTION(cus_part_cs, my_cust_part->_enqueue_lock);
+        dis_part_cs.exit();
+
+        if (my_cust_part->enqueue(pay_upd_cust,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing PAY_UPD_CUST\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK); 
+}
+
+
+
+/******************************************************************** 
+ *
+ * DORA TPC-C ORDER_STATUS
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
+                                      trx_result_tuple_t& atrt, 
+                                      order_status_input_t& aordstin,
+                                      const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);    
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 2. Setup the next RVP
+    // PH1 consists of 1 packet
+    mid1_ordst_rvp* mid1_rvp = new_mid1_ordst_rvp(atid,pxct,xct_id,atrt,aordstin,bWake);
+    
+    // 3. Generate the action
+    r_cust_ordst_action* r_cust = new_r_cust_ordst_action(atid,pxct,mid1_rvp,aordstin);
+
+    // For each action
+    // 4a. Decide about partition
+    // 4b. Enqueue
+
+    {
+        int wh = aordstin._wh_id-1;
+
+        // first, figure out to which partitions to enqueue
+        irpImpl* my_cust_part = cus()->myPart(wh);
+
+        // CUST_PART_CS
+        CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
+            
+        if (my_cust_part->enqueue(r_cust,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing ORDST_R_CUST\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK); 
+}
+
+
+
+/******************************************************************** 
+ *
+ * DORA TPC-C DELIVERY
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
+                                  trx_result_tuple_t& atrt, 
+                                  delivery_input_t& adelin,
+                                  const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 3. Setup the final RVP
+    final_del_rvp* frvp = new_final_del_rvp(atid,pxct,xct_id,atrt);
+
+    // 4. Setup the next RVP and actions
+    // PH1 consists of DISTRICTS_PER_WAREHOUSE actions
+    for (int i=0;i<DISTRICTS_PER_WAREHOUSE;i++) {
+        // 4a. Generate an RVP
+        mid1_del_rvp* rvp = new_mid1_del_rvp(atid,pxct,xct_id,frvp->result(),adelin,bWake);
+        rvp->postset(frvp,i);
+    
+        // 4b. Generate an action
+        del_nord_del_action* del_del_nord = new_del_nord_del_action(atid,pxct,rvp,adelin);
+        del_del_nord->postset(i);
+
+
+        // For each action
+        // 5a. Decide about partition
+        // 5b. Enqueue
+        //
+        // All the enqueues should appear atomic
+        // That is, there should be a total order across trxs 
+        // (it terms of the sequence actions are enqueued)
+
+        {
+            int wh = adelin._wh_id-1;
+
+            // first, figure out to which partitions to enqueue
+            irpImpl* my_nord_part = nor()->myPart(wh);
+
+            // then, start enqueueing
+
+            // NORD_PART_CS
+            CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
+
+            if (my_nord_part->enqueue(del_del_nord,bWake)) {
+                TRACE( TRACE_DEBUG, "Problem in enqueueing DEL_DEL_NORD-%d\n", i);
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+        }
+    }
+
+    return (RCOK); 
+}
+
+
+
+/******************************************************************** 
+ *
+ * DORA TPC-C STOCK LEVEL
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
+                                     trx_result_tuple_t& atrt, 
+                                     stock_level_input_t& astoin,
+                                     const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 3. Setup the next RVP
+    // PH1 consists of 1 packet
+    mid1_stock_rvp* rvp = new_mid1_stock_rvp(atid,pxct,xct_id,atrt,astoin,bWake);
+    
+    // 4. Generate the action
+    r_dist_stock_action* stock_r_dist = new_r_dist_stock_action(atid,pxct,rvp,astoin);
+
+    // For each action
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    //
+    // All the enqueues should appear atomic
+    // That is, there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    {
+        int wh = astoin._wh_id-1;
+
+        // first, figure out to which partitions to enqueue
+        irpImpl* my_dist_part = dis()->myPart(wh);
+
+        // then, start enqueueing
+
+        // DIS_PART_CS
+        CRITICAL_SECTION(dis_part_cs, my_dist_part->_enqueue_lock);
+
+        if (my_dist_part->enqueue(stock_r_dist,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing STOCK_R_DIST\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK); 
+}
+
+
+
+
+/******************************************************************** 
+ *
+ * DORA MBENCHES
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id, 
+                                   trx_result_tuple_t& atrt, 
+                                   mbench_wh_input_t& in,
+                                   const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+    //    W_DO(_pssm->set_lock_cache_enable(false);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    smthread_t::me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+
+    // 3. Setup the final RVP
+    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
+
+    // 4. Generate the actions
+    upd_wh_mb_action* upd_wh = new_upd_wh_mb_action(atid,pxct,frvp,in);
+
+    // For each action
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    //
+    // All the enqueues should appear atomic
+    // That is, there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    {        
+        irpImpl* mypartition = whs()->myPart(in._wh_id-1);
+
+        // WH_PART_CS
+        CRITICAL_SECTION(wh_part_cs, mypartition->_enqueue_lock);
+        if (mypartition->enqueue(upd_wh,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_WH_MB\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK); 
+}
+
+w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     mbench_cust_input_t& in,
+                                     const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 3. Setup the final RVP
+    final_mb_rvp* frvp = new_final_mb_rvp(atid,pxct,xct_id,atrt);
+    
+    // 4. Generate the actions
+    upd_cust_mb_action* upd_cust = new_upd_cust_mb_action(atid,pxct,frvp,in);
+
+    // For each action
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    //
+    // All the enqueues should appear atomic
+    // That is, there should be a total order across trxs 
+    // (it terms of the sequence actions are enqueued)
+
+    {
+        irpImpl* mypartition = cus()->myPart(in._wh_id-1);
+        
+        // CUS_PART_CS
+        CRITICAL_SECTION(cus_part_cs, mypartition->_enqueue_lock);
+        if (mypartition->enqueue(upd_cust,bWake)) { 
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_CUST\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+
+    return (RCOK); 
+}
+
+
+EXIT_NAMESPACE(dora);
