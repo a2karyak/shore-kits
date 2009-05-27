@@ -3,9 +3,9 @@
 
 # Shore related 
 SHORE = $(SHORE_HOME)/src
-SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW   -DW_LARGEFILE
-SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS)
-SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc
+SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE
+SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS) -I$(SHORE_HOME)/../ppmcs
+SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc -L$(SHORE_HOME)/../ppmcs -lppmcs
 
 
 
@@ -13,8 +13,17 @@ SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -
 INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include
 
 # List of libraries
-lib_LIBRARIES = \
-   lib/libworkload.a lib/libsm.a lib/libutil.a
+if USE_DORA
+   # Add DORA libraries
+   lib_LIBRARIES = \
+      lib/libdoraworkload.a lib/libdora.a \
+      lib/libworkload.a lib/libsm.a lib/libutil.a
+else
+   # Without DORA
+   lib_LIBRARIES = \
+      lib/libworkload.a lib/libsm.a lib/libutil.a
+endif
+
 
 # GLOBAL ld
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
@@ -24,8 +33,8 @@ FE = \
    shore_kits
 
 
-
 bin_PROGRAMS = $(FE)
+
 
 ################################################################################
 #
@@ -135,6 +144,66 @@ lib_libworkload_a_SOURCES = \
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
+
+
+
+##### USE_DORA ######
+if USE_DORA
+
+################################################################################
+#
+# src/dora/
+#
+################################################################################
+
+SD=$(top_srcdir)/src/dora
+DO_BASE = \
+   $(SD)/lockman.cpp \
+   $(SD)/action.cpp \
+   $(SD)/partition.cpp \
+   $(SD)/rvp.cpp
+
+
+lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+
+lib_libdora_a_SOURCES = \
+   $(DO_BASE)
+
+
+
+################################################################################
+#
+# src/dora/{workload}/
+#
+################################################################################
+
+SDW=$(top_srcdir)/src/dora/
+DW_TPCC = \
+   $(SDW)/tpcc/dora_payment.cpp \
+   $(SDW)/tpcc/dora_new_order.cpp \
+   $(SDW)/tpcc/dora_order_status.cpp \
+   $(SDW)/tpcc/dora_stock_level.cpp \
+   $(SDW)/tpcc/dora_delivery.cpp \
+   $(SDW)/tpcc/dora_mbench.cpp \
+   $(SDW)/tpcc/dora_tpcc.cpp \
+   $(SDW)/tpcc/dora_tpcc_xct.cpp
+
+DW_TM1 = \
+   $(SDW)/tm1/dora_tm1_impl.cpp \
+   $(SDW)/tm1/dora_tm1.cpp \
+   $(SDW)/tm1/dora_tm1_xct.cpp
+
+
+lib_libdoraworkload_a_SOURCES = \
+   $(DW_TPCC) \
+   $(DW_TM1)
+
+
+lib_libdoraworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/dora $(SHORE_INCLUDES)
+
+
+endif
+##### EOF USE_DORA ######
 
 
 
