@@ -78,11 +78,18 @@ w_rc_t table_desc_t::create_table(ss_m* db)
     while (index) {
 	stid_t iid;
 
+#ifdef CFG_DORA
+        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s) (%s)\n",
+               index->name(), 
+               (index->is_partitioned() ? "part" : "no part"), 
+               (index->is_unique() ? "unique" : "no unique"),
+               (index->is_relaxed() ? "relaxed" : "no relaxed"));
+#else
         TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s)\n",
                index->name(), 
                (index->is_partitioned() ? "part" : "no part"), 
                (index->is_unique() ? "unique" : "no unique"));
-               
+#endif               
 
         /* create index */
 	if(index->is_partitioned()) {
@@ -91,7 +98,11 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				      (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
 				      ss_m::t_regular,
 				      index_keydesc(index),
+#ifdef CFG_DORA
+				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+#else
 				      ss_m::t_cc_kvl,
+#endif
 				      iid));
 		index->set_fid(i, iid);
 		
@@ -114,7 +125,11 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				  (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
 				  ss_m::t_regular,
 				  index_keydesc(index),
+#ifdef CFG_DORA
+				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+#else
 				  ss_m::t_cc_kvl,
+#endif
 				  iid));
 	    index->set_fid(0, iid);
 
@@ -158,17 +173,19 @@ bool table_desc_t::create_index(const char* name,
                                 const int* fields,
                                 const int num,
                                 const bool unique,
-                                const bool primary)
+                                const bool primary,
+                                const bool nolock)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
-                                             unique, primary);
+                                             unique, primary, nolock);
 
     // check the validity of the index
     for (int i=0; i<num; i++)  {
         assert(fields[i] >= 0 && fields[i] < _field_count);
 
         // only the last field in the index can be variable lengthed
-        // IP: I am not sure if this is still true after the changes in shoremt
+#warning IP: I am not sure if still only the last field in the index can be variable lengthed
+
         if (_desc[fields[i]].is_variable_length() && i != num-1) {
             assert(false);
         }
@@ -189,9 +206,10 @@ bool table_desc_t::create_index(const char* name,
 bool table_desc_t::create_primary_idx(const char* name,
 				      int partitions,
                                       const int* fields,
-                                      const int num)
+                                      const int num,
+                                      const bool nolock)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true);
+    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
 
     // check the validity of the index
     for (int i=0; i<num; i++) {

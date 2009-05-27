@@ -144,6 +144,22 @@ public:
             // create index sub_nbr_index on (sub_nbr)
             create_index("SUB_NBR_IDX", 0, keys2, 1, true, false);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+        
+            // create unique index s_index on (s_id)
+            // last param (nolock) is set to true
+            create_primary_idx("S_IDX_NL", 0, keys1, 1, true);
+
+            // create index sub_nbr_index on (sub_nbr)
+            // last param (nolock) is set to true
+            create_index("SUB_NBR_IDX_NL", 0, keys2, 1, true, false, true);
+        }       
+#endif
+
     }
 
 }; // EOF: subscriber_t
@@ -185,6 +201,18 @@ public:
             // create unique index ai_index on (s_id, ai_type)
             create_primary_idx("AI_IDX", 0, keys, 2);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index ai_index on (s_id, ai_type)
+            // last param (nolock) is set to true
+            create_primary_idx("AI_IDX_NL", 0, keys, 2, true);
+        }
+#endif
+
     }
 
 }; // EOF: access_info_t
@@ -225,6 +253,18 @@ public:
             // create unique index sf_idx on (s_id, sf_type)
             create_primary_idx("SF_IDX", 0, keys, 2);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index sf_idx on (s_id, sf_type)
+            // last param (nolock) is set to true
+            create_primary_idx("SF_IDX_NL", 0, keys, 2, true);
+        }
+#endif
+
     }
 
 }; // EOF: special_facility_t
@@ -258,6 +298,18 @@ public:
             // create unique index cf_idx on (s_id, sf_type, start_time)
             create_primary_idx("CF_IDX", 0, keys, 3);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index cf_idx on (s_id, sf_type, start_time)
+            // last param (nolock) is set to true
+            create_primary_idx("CF_IDX_NL", 0, keys, 3, true);
+        }
+#endif
+
     }
 
 }; // EOF: call_forwarding_t

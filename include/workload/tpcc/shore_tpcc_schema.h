@@ -109,6 +109,18 @@ public:
             // create unique index w_index on (w_id)
             create_primary_idx("W_INDEX", 0, keys, 1);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index w_index on (w_id)
+            // last param (nolock) is set to true
+            create_primary_idx("W_INDEX_NL", 0, keys, 1, true);
+        }
+#endif
+
     }
 }; // EOF: warehouse_t
 
@@ -141,6 +153,18 @@ public:
             // create unique index d_index on (d_id, w_id)
             create_primary_idx("D_INDEX", 0, keys, 2);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index d_index on (d_id, w_id)
+            // last param (nolock) is set to true
+            create_primary_idx("D_INDEX_NL", 0, keys, 2, true);
+        }
+#endif
+
     }
 }; // EOF: district_t
 
@@ -192,6 +216,22 @@ public:
             // create index c_name_index on (w_id, d_id, last, first, id)
             create_index("C_NAME_INDEX", 0, keys2, 5, false);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index c_index on (w_id, d_id, c_id)
+            // last param (nolock) is set to true
+            create_primary_idx("C_INDEX_NL", 0, keys1, 3, true);
+
+            // create index c_name_index on (w_id, d_id, last, first, id)
+            // last param (nolock) is set to true
+            create_index("C_NAME_INDEX_NL", 0, keys2, 5, false, false, true);     
+        }
+#endif
+
     }
 }; // EOF: customer_t
 
@@ -238,6 +278,18 @@ public:
             // create unique index no_index on (w_id, d_id, o_id)
             create_primary_idx("NO_INDEX", 0, keys, 3);
         } 
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index no_index on (w_id, d_id, o_id)
+            // last param (nolock) is set to true
+            create_primary_idx("NO_INDEX_NL", 0, keys, 3, true);        
+        }
+#endif
+
     }
 }; // EOF: new_order_t
 
@@ -273,6 +325,22 @@ public:
             // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
             create_index("O_CUST_INDEX", 0, keys2, 4);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+            
+            // create unique index o_index on (w_id, d_id, o_id)
+            // last param (nolock) is set to true
+            create_index("O_INDEX_NL", 0, keys1, 3, true, false, true);
+            
+            // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
+            // last param (nolock) is set to true
+            create_index("O_CUST_INDEX_NL", 0, keys2, 4, true, false, true);
+        }
+#endif
+
     }
 }; // EOF: order_t
 
@@ -305,6 +373,18 @@ public:
             // create unique index ol_index on (w_id, d_id, o_id, ol_number)
             create_primary_idx("OL_INDEX", 10, keys, 4);
         }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index ol_index on (w_id, d_id, o_id, ol_number)
+            // last param (nolock) is set to true
+            create_primary_idx("OL_INDEX_NL", 10, keys, 4, true);
+        }
+#endif
+
     }
 }; // EOF: order_line_t
 
@@ -332,6 +412,18 @@ public:
             // create unique index on i_index on (i_id)
             create_primary_idx("I_INDEX", 0, keys, 1);
         } 
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+
+            // create unique index on i_index on (i_id)
+            // last param (nolock) is set to true        
+            create_primary_idx("I_INDEX_NL", 0, keys, 1, true);
+        }
+#endif
+
     }
 }; // EOF: item_t
 
@@ -370,6 +462,18 @@ public:
             // create unique index s_index on (w_id, i_id)
             create_primary_idx("S_INDEX", 0, keys, 2);
         } 
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+            
+            // create unique index s_index on (w_id, i_id)
+            // last param (nolock) is set to true
+            create_primary_idx("S_INDEX_NL", 0, keys, 2, true);
+        }
+#endif
+
     }
 }; // EOF: stock_t
 

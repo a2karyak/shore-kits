@@ -174,12 +174,14 @@ public:
                         const int* fields,
                         const int num,
                         const bool unique=true,
-                        const bool primary=false);
+                        const bool primary=false,
+                        const bool nolock=false);
 
     bool   create_primary_idx(const char* name,
 			      int partitions,
                               const int* fields,
-                              const int num);
+                              const int num,
+                              const bool nolock=false);
 
 
     /* ------------------------ */
