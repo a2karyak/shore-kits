@@ -42,6 +42,14 @@
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "workload/tpcb/shore_tpcb_client.h"
 
+#ifdef CFG_DORA
+#include "dora.h"
+#include "dora/tpcc/dora_tpcc.h"
+#include "dora/tpcc/dora_tpcc_client.h"
+#include "dora/tm1/dora_tm1.h"
+#include "dora/tm1/dora_tm1_client.h"
+using namespace dora;
+#endif
 
 using namespace shore;
 
@@ -50,11 +58,36 @@ using namespace tm1;
 using namespace tpcb;
 
 
+
+//////////////////////////////
+// Prints out configuration info
+#ifdef CFG_DORA
+#warning Configuration: DORA enabled
+#endif
+
+#ifdef CFG_SLI
+#warning Configuration: SLI enabled
+#endif
+
+#ifdef CFG_ELR
+#warning Configuration: ELR enabled
+#endif
+
+#ifdef CFG_EMB_CL
+#warning Configuration: Embedded clients enabled
+#endif
+
+
+
+
 //////////////////////////////
 
-
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline };
+enum SysnameValue { snBaseline
+#ifdef CFG_DORA
+                    , snDORA 
+#endif
+};
 
 // Map to associate string with then enum values
 
@@ -63,9 +96,10 @@ static map<string,SysnameValue> mSysnameValue;
 void initsysnamemap() 
 {
     mSysnameValue["baseline"] = snBaseline;
+#ifdef CFG_DORA
+    mSysnameValue["dora"] =     snDORA;
+#endif
 }
-
-
 
 //////////////////////////////
 
@@ -230,6 +264,11 @@ public:
         _fakeioer->setaliases();
         add_cmd(_fakeioer.get());
 
+#ifdef CFG_SLI
+        _slier = new sli_enable_cmd_t(_dbinst);
+        _slier->setaliases();
+        add_cmd(_slier.get());
+#endif
 
         // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_dbinst);
@@ -553,11 +592,19 @@ int kit_t<Client,DB>::process_cmd_LOAD(const char* command,
 }
 
 
-//////////////////////////////
+///////////////////////////////
+// Declare the possible kits //
 
+// Baseline
 typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
 typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
+
+#ifdef CFG_DORA
+typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
+typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
+//typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
+#endif
 
 //////////////////////////////
 
@@ -600,6 +647,12 @@ int main(int argc, char* argv[])
             // shore.conf is set for Baseline
             kit = new baselineTPCCKit("(tpcc-base) ");
             break;
+#ifdef CFG_DORA
+        case snDORA:
+            // shore.conf is set for DORA
+            kit = new doraTPCCKit("(tpcc-dora) ");
+            break;
+#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
             return (2);        
@@ -613,6 +666,12 @@ int main(int argc, char* argv[])
             // shore.conf is set for Baseline
             kit = new baselineTM1Kit("(tm1-base) ");
             break;
+#ifdef CFG_DORA
+        case snDORA:
+            // shore.conf is set for DORA
+            kit = new doraTM1Kit("(tm1-dora) ");
+            break;
+#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
             return (3);        
@@ -626,6 +685,13 @@ int main(int argc, char* argv[])
             // shore.conf is set for Baseline
             kit = new baselineTPCBKit("(tpcb-base) ");
             break;
+#ifdef CFG_DORA
+        case snDORA:
+            // shore.conf is set for DORA
+            assert (0); // IP: Not implemented yet
+            //kit = new doraTPCBKit("(tpcb-dora) ");
+            break;
+#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
             return (3);        

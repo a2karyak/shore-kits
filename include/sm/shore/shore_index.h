@@ -73,6 +73,7 @@ private:
     int*            _key;                      /* index of fields in the base table */
     bool            _unique;                   /* whether allow duplicates or not */
     bool            _primary;                  /* is it primary or not */
+    bool            _nolock;                   /* is it using locking or not */ 
 
     index_desc_t*   _next;                     /* linked list of all indices */
 
@@ -93,9 +94,9 @@ public:
     /* ------------------- */
 
     index_desc_t(const char* name, const int fieldcnt, int partitions, const int* fields,
-                 bool unique=true, bool primary=false)
+                 bool unique=true, bool primary=false, bool nolock=false)
         : _base(name, fieldcnt),
-          _unique(unique), _primary(primary),
+          _unique(unique), _primary(primary), _nolock(nolock),
           _next(NULL), _maxkeysize(0),
 	  _partition_count((partitions > 0)? partitions : 1), _partition_stids(0)
     {
@@ -178,6 +179,7 @@ public:
 
     inline bool is_unique() const { return (_unique); }
     inline bool is_primary() const { return (_primary); }
+    inline bool is_relaxed() const { return (_nolock); }
     inline bool is_partitioned() const { return _partition_count > 1; }
 
     inline int  get_partition_count() const { return _partition_count; }

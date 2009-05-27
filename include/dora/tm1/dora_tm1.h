@@ -65,6 +65,8 @@ class r_sub_dcf_action;
 class del_cf_dcf_action;
 
 
+// Look also include/workload/tm1/tm1_const.h
+const int TM1_SUBS_PER_DORA_PART = 10000;
 
 
 /******************************************************************** 

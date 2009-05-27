@@ -58,6 +58,10 @@ ENTER_NAMESPACE(shore);
 //#define WORKER_VERY_VERBOSE_STATS
 
 
+// Define this flag to dump traces of record accesses
+#undef ACCESS_RECORD_TRACE
+//#define ACCESS_RECORD_TRACE
+
 const int WAITING_WINDOW = 5; // keep track the last 5 seconds
 
 
@@ -86,6 +90,9 @@ struct worker_stats_t
     int _condex_sleep;
     int _failed_sleep;
 
+    int _early_aborts;
+    int _mid_aborts;
+
 #ifdef WORKER_VERBOSE_STATS
     void update_served(const double serve_time_ms);
     double _serving_total;   // in msecs
@@ -109,7 +116,8 @@ struct worker_stats_t
         : _processed(0), _problems(0),
           _served_waiting(0),
           _checked_input(0), _served_input(0),
-          _condex_sleep(0), _failed_sleep(0)
+          _condex_sleep(0), _failed_sleep(0),
+          _early_aborts(0), _mid_aborts(0)
 #ifdef WORKER_VERBOSE_STATS
         , _waiting_total(0), _serving_total(0), 
           _rvp_exec(0), _rvp_notify(0)
@@ -152,12 +160,9 @@ class base_worker_t : public thread_t
 protected:
 
     // status variables
-    eWorkerControl volatile  _control;
-    tatas_lock               _control_lock;
-    eDataOwnerState volatile _data_owner;
-    tatas_lock               _data_owner_lock;
+    volatile eWorkerControl  _control;
+    volatile eDataOwnerState _data_owner;
     eWorkingState volatile   _ws;
-    tatas_lock               _ws_lock;
 
     // cond var for sleeping instead of looping after a while
     condex                   _notify;
@@ -176,6 +181,9 @@ protected:
     bool                     _is_bound;
     processorid_t            _prs_id;
 
+    // sli
+    int                      _use_sli;
+
     // states
     virtual const int _work_PAUSED_impl();
     virtual const int _work_ACTIVE_impl()=0;
@@ -187,11 +195,11 @@ protected:
 
 public:
 
-    base_worker_t(ShoreEnv* env, c_str tname, processorid_t aprsid) 
+    base_worker_t(ShoreEnv* env, c_str tname, processorid_t aprsid, const int use_sli) 
         : thread_t(tname), 
           _env(env),
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
-          _next(NULL), _is_bound(false), _prs_id(aprsid)
+          _next(NULL), _is_bound(false), _prs_id(aprsid), _use_sli(use_sli)
     {
         assert (_env);        
     }
@@ -212,75 +220,83 @@ public:
     // data owner state
     void set_data_owner_state(const eDataOwnerState ados) {
         assert ((ados==DOS_ALONE)||(ados==DOS_MULTIPLE));
-        CRITICAL_SECTION(dos_cs, _data_owner_lock);
-        _data_owner = ados;
+        atomic_swap(&_data_owner, ados);
     }
 
     const bool is_alone_owner() { return (*&_data_owner==DOS_ALONE); }
 
-    // working state
+    // @brief: Set working state
+    // @note:  This function can be called also by other threads
+    //         (other than the worker)
     inline eWorkingState set_ws(const eWorkingState new_ws) {
-        CRITICAL_SECTION(ws_cs, _ws_lock);
         eWorkingState old_ws = *&_ws;
+        while (old_ws!=new_ws) {
 
-        if ((old_ws==WS_COMMIT_Q)&&(new_ws!=WS_LOOP)) {
-            // ignore notice if flag is already set to commit
-            return (old_ws); 
-        }
-        _ws=new_ws;
-        ws_cs.exit();
-        if ((old_ws==WS_SLEEP)&&(new_ws!=WS_SLEEP)) {
-            // wake up if sleeping
-            //membar_producer();
-            condex_wakeup();
+            // Do not change WS, if it is already set to commit
+            if ((old_ws==WS_COMMIT_Q)&&(new_ws!=WS_LOOP)) { return (old_ws); }
+            
+            // Update WS
+            eWorkingState cur_ws = atomic_cas(&_ws,old_ws,new_ws);           
+            if (cur_ws == old_ws) {
+                // If cas successful, then wake up worker if sleeping
+                if ((old_ws==WS_SLEEP)&&(new_ws!=WS_SLEEP)) { condex_wakeup(); }
+                return (old_ws);
+            }
 
+            // Keep on trying
+            // Update old_ws because in the meantime someone may have
+            // changed the WS (and for example woke up the sleeping worker)
+            old_ws = cur_ws;
         }
         return (old_ws);
     }
 
-    inline eWorkingState get_ws() { return (*&_ws); }
+    inline const eWorkingState get_ws() { return (*&_ws); }
 
 
     inline const bool can_continue(const eWorkingState my_ws) {
-        //    CRITICAL_SECTION(ws_cs, _ws_lock);
         return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
     }
-
-
-    inline const bool can_continue_cs(const eWorkingState my_ws) {
-        CRITICAL_SECTION(ws_cs, _ws_lock);
-        return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
-    }
-
 
     inline const bool is_sleeping(void) {
         return (*&_ws==WS_SLEEP);
     }
    
 
-    // sleep-wake up
+
+    // Condex functions in order to sleep/wakeup worker //
+
+    // This function is called when the worker decides it is time to sleep
     inline const int condex_sleep() { 
         // can sleep only if in WS_LOOP
-        // (if on WS_COMMIT_Q or WS_INPUT_Q mode means that a
-        //  COMMIT or INPUT action were enqueued during this
+        // (if on WS_COMMIT_Q or WS_INPUT_Q it means that a
+        //  COMMIT or INPUT action was enqueued during this
         //  LOOP so there is no need to sleep).
-        CRITICAL_SECTION(ws_cs, _ws_lock);
-        if (*&_ws==WS_LOOP) {
-            _ws=WS_SLEEP;
-            ws_cs.exit();
-            _notify.wait();
-            ++_stats._condex_sleep;
-            return (1);
+        eWorkingState old_ws = *&_ws;
+        while (old_ws==WS_LOOP) {
+            eWorkingState cur_ws = atomic_cas(&_ws,old_ws,WS_SLEEP);
+            if (cur_ws == old_ws) {
+                // If cas successful, then sleep
+                _notify.wait();
+                ++_stats._condex_sleep;
+                return (1);
+            }
+
+            // Keep on trying
+            old_ws = cur_ws;
         }
         ++_stats._failed_sleep;
-        return (0); 
+        return (0);
     }
 
 
-    inline void condex_wakeup() { 
-        assert (*&_ws!=WS_SLEEP); // the caller should have already changed it
+    // @note: The caller thread should have already changed the WS 
+    //        before calling this function
+    inline void condex_wakeup() {         
+        //assert (*&_ws!=WS_SLEEP); 
         _notify.signal(); 
     }
+
 
 
     // working states //
@@ -303,16 +319,15 @@ public:
         // |------------------------------------|
         //
         {
-            CRITICAL_SECTION(wtcs, _control_lock);
             if ((*&_control == WC_PAUSED) && 
                 ((awc == WC_ACTIVE) || (awc == WC_STOPPED))) {
-                _control = awc;
+                atomic_swap(&_control, awc);
                 return (true);
             }
 
             if ((*&_control == WC_ACTIVE) && 
                 ((awc == WC_PAUSED) || (awc == WC_STOPPED))) {
-                _control = awc;
+                atomic_swap(&_control, awc);
                 return (true);
             }
         }
@@ -344,6 +359,11 @@ public:
 
     // thread entrance
     inline void work() {
+
+#ifdef CFG_SLI
+        // 3. set SLI option
+        ss_m::set_sli_enabled(_use_sli);
+#endif
 
         int rval = 0;
 
@@ -388,6 +408,15 @@ public:
 
     worker_stats_t get_stats() { return (*&_stats); }
     void reset_stats() { _stats.reset(); }
+
+
+#ifdef ACCESS_RECORD_TRACE
+    ofstream _trace_file;
+    vector<string> _events;
+    void create_trace_dir(string dir);
+    void open_trace_file();
+    void close_trace_file();
+#endif
 
 private:
 

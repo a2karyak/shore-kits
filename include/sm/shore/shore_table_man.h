@@ -203,6 +203,14 @@ public:
         return (index_probe(db, pidx, ptuple, EX, LATCH_EX));
     }
 
+    /* probe idx in NL (& LATCH_SH) mode */
+    inline w_rc_t   index_probe_nl(ss_m* db,
+                                   index_desc_t* pidx,
+                                   table_tuple*  ptuple)
+    {
+        return (index_probe(db, pidx, ptuple, NL, LATCH_SH));
+    }
+
     /* probe primary idx */
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
@@ -216,7 +224,7 @@ public:
     // by name probes
 
 
-    /* idx probe - based on idx name */
+    // idx probe - based on idx name //
     inline w_rc_t   index_probe_by_name(ss_m* db, 
                                         const char*  idx_name, 
                                         table_tuple* ptuple,
@@ -227,13 +235,22 @@ public:
         return (index_probe(db, pindex, ptuple, lock_mode, latch_mode));
     }
 
-    /* probe idx in EX (& LATCH_EX) mode - based on idx name */
+    // probe idx in EX (& LATCH_EX) mode - based on idx name //
     inline w_rc_t   index_probe_forupdate_by_name(ss_m* db, 
                                                   const char* idx_name,
                                                   table_tuple* ptuple) 
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
 	return (index_probe_forupdate(db, pindex, ptuple));
+    }
+
+    // probe idx in NL (& LATCH_NL) mode - based on idx name //
+    inline w_rc_t   index_probe_nl_by_name(ss_m* db, 
+                                           const char* idx_name,
+                                           table_tuple* ptuple) 
+    { 
+	index_desc_t* pindex = _ptable->find_index(idx_name);
+	return (index_probe_nl(db, pindex, ptuple));
     }
 
 
@@ -952,6 +969,17 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     bool     found = false;
     smsize_t len = sizeof(rid_t);
 
+#ifdef CFG_DORA
+    // 0. if index created with NO-LOCK option (DORA) then:
+    //    - ignore lock mode (use NL)
+    //    - find_assoc ignoring any locks
+    bool bIgnoreLocks = false;
+    if (pindex->is_relaxed()) {
+        lock_mode   = NL;
+        bIgnoreLocks = true;
+    }
+#endif
+
     // 1. ensure valid index
     W_DO(pindex->check_fid(db));
 
@@ -961,19 +989,15 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 
     int pnum = get_pnum(pindex, ptuple);
 
-    // This is for mainstream shore-lomond
-    //
-    //     W_DO(ss_m::find_assoc(pindex->fid(pnum),
-    // 			  vec_t(ptuple->_rep->_dest, key_sz),
-    // 			  &(ptuple->_rid),
-    // 			  len,
-    // 			  found));
-
     W_DO(ss_m::find_assoc(pindex->fid(pnum),
     			  vec_t(ptuple->_rep->_dest, key_sz),
     			  &(ptuple->_rid),
     			  len,
-    			  found));
+    			  found
+#ifdef CFG_DORA
+                          ,bIgnoreLocks
+#endif
+                          ));
     
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
@@ -1034,6 +1058,11 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
     // 1. find the file
     W_DO(_ptable->check_fid(db));
 
+#ifdef CFG_DORA
+    // 2. figure out what mode will be used
+    bool bIgnoreLocks = false;
+    if (lm==NL) bIgnoreLocks = true;
+#endif
 
     // 3. append the tuple
     int tsz = format(ptuple, *ptuple->_rep);
@@ -1042,7 +1071,11 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
                         ptuple->_rid,
-                        serial_t::null));
+                        serial_t::null
+#ifdef CFG_DORA
+                        ,bIgnoreLocks
+#endif
+                        ));
 
     // 4. update the indexes
     index_desc_t* index = _ptable->indexes();
@@ -1056,7 +1089,11 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
         W_DO(index->find_fid(db, pnum));
 	W_DO(db->create_assoc(index->fid(pnum),
                               vec_t(ptuple->_rep->_dest, ksz),
-                              vec_t(&(ptuple->_rid), sizeof(rid_t))));
+                              vec_t(&(ptuple->_rid), sizeof(rid_t))
+#ifdef CFG_DORA
+                              ,bIgnoreLocks
+#endif
+                              ));
 
         // move to next index
 	index = index->next();
@@ -1095,6 +1132,14 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     // 0. figure out what mode will be used
     latch_mode_t pin_latch_mode = LATCH_EX;
 
+#ifdef CFG_DORA
+    bool bIgnoreLocks = false;
+    if (lm==NL) {
+        //        pin_latch_mode = LATCH_SH;
+        bIgnoreLocks = true;
+    }
+#endif
+
     // 1. pin record
     pin_i pin;
     W_DO(pin.pin(ptuple->rid(), 0, lm, pin_latch_mode));
@@ -1118,8 +1163,12 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     }
 
     // 2b. else, simply update
-    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
-    //rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
+    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0
+#ifdef CFG_DORA
+                        ,bIgnoreLocks
+#endif
+                        );
+
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
     // 3. unpin
@@ -1154,6 +1203,11 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 
     rid_t todelete = ptuple->rid();
 
+#ifdef CFG_DORA
+    // 1. figure out what mode will be used
+    bool bIgnoreLocks = false;
+    if (lm==NL) bIgnoreLocks = true;
+#endif
 
     // 2. delete all the corresponding index entries
     index_desc_t* pindex = _ptable->indexes();
@@ -1167,14 +1221,22 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 	W_DO(pindex->find_fid(db, pnum));
 	W_DO(db->destroy_assoc(pindex->fid(pnum),
                                vec_t(ptuple->_rep->_dest, key_sz),
-                               vec_t(&(todelete), sizeof(rid_t))));
+                               vec_t(&(todelete), sizeof(rid_t))
+#ifdef CFG_DORA
+                               ,bIgnoreLocks
+#endif
+                               ));
 
         // move to next index
 	pindex = pindex->next();
     }
 
     // 3. delete the tuple
-    W_DO(db->destroy_rec(todelete));
+    W_DO(db->destroy_rec(todelete
+#ifdef CFG_DORA
+                         ,bIgnoreLocks
+#endif
+                         ));
 
     // invalidate tuple
     ptuple->set_rid(rid_t::null);

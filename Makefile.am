@@ -177,7 +177,7 @@ lib_libdora_a_SOURCES = \
 #
 ################################################################################
 
-SDW=$(top_srcdir)/src/dora/
+SDW=$(top_srcdir)/src/dora
 DW_TPCC = \
    $(SDW)/tpcc/dora_payment.cpp \
    $(SDW)/tpcc/dora_new_order.cpp \
@@ -186,13 +186,14 @@ DW_TPCC = \
    $(SDW)/tpcc/dora_delivery.cpp \
    $(SDW)/tpcc/dora_mbench.cpp \
    $(SDW)/tpcc/dora_tpcc.cpp \
-   $(SDW)/tpcc/dora_tpcc_xct.cpp
+   $(SDW)/tpcc/dora_tpcc_xct.cpp \
+   $(SDW)/tpcc/dora_tpcc_client.cpp
 
 DW_TM1 = \
    $(SDW)/tm1/dora_tm1_impl.cpp \
    $(SDW)/tm1/dora_tm1.cpp \
-   $(SDW)/tm1/dora_tm1_xct.cpp
-
+   $(SDW)/tm1/dora_tm1_xct.cpp \
+   $(SDW)/tm1/dora_tm1_client.cpp
 
 lib_libdoraworkload_a_SOURCES = \
    $(DW_TPCC) \

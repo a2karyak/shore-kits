@@ -23,8 +23,6 @@
 
 #include "sm/shore/shore_env.h"
 
-#include "stages/tpcc/common/tpcc_random.h"
-
 #include "util/stl_pooled_alloc.h"
 
 

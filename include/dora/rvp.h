@@ -12,7 +12,7 @@
 #define __DORA_RVP_H
 
 #include "sm/shore/shore_env.h"
-#include "core/trx_packet.h"
+#include "sm/shore/shore_trx_worker.h"
 
 #include "util/countdown.h"
 
@@ -20,7 +20,6 @@
 
 ENTER_NAMESPACE(dora);
 
-using namespace qpipe;
 using namespace shore;
 
 

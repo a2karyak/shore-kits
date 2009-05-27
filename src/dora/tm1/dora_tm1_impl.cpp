@@ -23,11 +23,6 @@ using namespace tm1;
 ENTER_NAMESPACE(dora);
 
 
-#ifdef MIDWAY_ABORTS
-#warning Midway aborts enabled
-#endif
-
-
 /******************************************************************** 
  *
  * DORA TM1 GET_SUB_DATA
@@ -210,9 +205,7 @@ w_rc_t r_sf_gnd_action::trx_exec()
                "App: %d GND:sf-idx-nl (%d) (%d)\n", 
                _tid, _in._s_id, _in._sf_type);
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
 #ifndef ONLYDORA
         e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, 
@@ -283,9 +276,7 @@ w_rc_t r_cf_gnd_action::trx_exec()
 
     { // make gotos safe
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
 #ifndef ONLYDORA
         // 1. Retrieve the call forwarding destination            
@@ -305,9 +296,7 @@ w_rc_t r_cf_gnd_action::trx_exec()
 
         while (!eof) {
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
             // check the retrieved CF e_time                
             prcf->get_value(3, acf.END_TIME);
@@ -489,9 +478,7 @@ w_rc_t upd_sub_usd_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sub-idx-nl (%d)\n", _tid, _in._s_id);
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
 #ifndef ONLYDORA
         e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
@@ -500,10 +487,7 @@ w_rc_t upd_sub_usd_action::trx_exec()
 
         prsub->set_value(2, _in._a_bit);
 
-
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
 #ifndef ONLYDORA        
         e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
@@ -846,9 +830,7 @@ w_rc_t r_sf_icf_action::trx_exec()
          * plan: iter index on "SF_IDX"
          */
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
         
         // 1. Retrieve SpecialFacility (Read-only)
 #ifndef ONLYDORA        
@@ -867,9 +849,7 @@ w_rc_t r_sf_icf_action::trx_exec()
 
         while (!eof) {
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
             // check the retrieved SF sf_type
             prsf->get_value(1, asf.SF_TYPE);
@@ -940,9 +920,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
                "App: %d ICF:cf-idx-nl (%d) (%d) (%d)\n", 
                _tid, _in._s_id, _in._sf_type, _in._s_time);
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
 #ifndef ONLYDORA
         e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
@@ -962,9 +940,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid);
 
-#ifdef MIDWAY_ABORTS
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-#endif
 
 #ifndef ONLYDORA
         e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
