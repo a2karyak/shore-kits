@@ -298,7 +298,7 @@ AC_ARG_ENABLE(elr,
 [case "${enableval}" in
   yes) elr=true ;;
   no)  elr=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-elr) ;;
+  *) elr=true ;;
 esac],[elr=false])
 AM_CONDITIONAL(ADD_OPT_ELR, test x$elr = xtrue)
 
@@ -311,6 +311,27 @@ else
      AC_MSG_RESULT(no)
 fi
 # --- EOF ELR ---   
+
+
+# --- EMBEDDED CLIENTS ---
+AC_MSG_CHECKING(whether to use embedded clients)
+AC_ARG_WITH(embclients, 
+[ --enable-embclients   Use embedded clients],
+[case "${enableval}" in
+  yes) embclients=true ;;
+  no)  embclients=false ;;
+  *) embclients=false ;;
+esac],[embclients=false])
+AM_CONDITIONAL(USE_EMBEDDED_CLIENTS, test x$embclients = xtrue)
+
+if test "$embclients" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES embclients"
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF EMBEDDED CLIENTS ---   
 
 # ----------- EOF Shore-kit features -------------
 
