@@ -263,6 +263,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES dora"
      AC_MSG_WARN([Dora enabled. Should check if Shore-mt is Dora-compatible])
+     AC_DEFINE(CFG_DORA)
 else
      AC_MSG_RESULT(no)
 fi
@@ -285,6 +286,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES sli"
      AC_MSG_WARN([SLI enabled. Should check if Shore-mt is SLI-compatible])
+     AC_DEFINE(CFG_SLI)
 else
      AC_MSG_RESULT(no)
 fi
@@ -307,6 +309,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES elr"
      AC_MSG_WARN([ELR enabled. Should check if Shore-mt is ELR-compatible])
+     AC_DEFINE(CFG_ELR)
 else
      AC_MSG_RESULT(no)
 fi
@@ -328,6 +331,7 @@ if test "$embclients" = true
 then 
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES embclients"
+     AC_DEFINE(CFG_EMB_CL)
 else
      AC_MSG_RESULT(no)
 fi
