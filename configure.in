@@ -2,7 +2,7 @@ m4_pattern_allow([^AC_PACKAGE])
 
 # configure.in for shmtclient         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
-AC_INIT(THIS_IS_SHORE_KITS,2.0)
+AC_INIT(THIS_IS_SHORE_KITS,2.1)
 
 # make sure I have not forgotten to run autoconf
 if test configure -ot configure.in; then
@@ -69,7 +69,7 @@ if test "$KITS_CXX" = "CC"; then
    KITS_CXX_VERSION="$cc_major.$cc_mid"
    AC_MSG_RESULT($KITS_CXX_VERSION)
 
-   # *** Checking the compiler version (cc>=5.9)
+   # *** Checking the compiler version (CC>=5.8)
    reqcc_major=5
    reqcc_mid=8
    if test $cc_major -lt $reqcc_major -o $cc_mid -lt $reqcc_mid; then
