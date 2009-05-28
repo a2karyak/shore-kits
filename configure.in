@@ -319,7 +319,7 @@ fi
 # --- EMBEDDED CLIENTS ---
 AC_MSG_CHECKING(whether to use embedded clients)
 AC_ARG_ENABLE(embclients, 
-[ --enable-embclients   Use embedded clients],
+[ --enable-embclients   Use embedded clients - cannot be combined with --enable-dora],
 [case "${enableval}" in
   yes) embclients=true ;;
   no)  embclients=false ;;
@@ -332,6 +332,12 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES embclients"
      AC_DEFINE(CFG_EMB_CL)
+
+     # Special case: cannot allow Dora and EmbClients
+     if test "$dora" = true
+     then
+        AC_MSG_ERROR(Cannot have embedded clients with Dora)
+     fi
 else
      AC_MSG_RESULT(no)
 fi
