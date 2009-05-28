@@ -706,9 +706,14 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
     pool_sz=0;
 
     if (sz>0) {
+
         // 1. generate the head of standby pool
 
+#ifdef CFG_SLI
         int use_sli = envVar::instance()->getVarInt("db-worker-sli",0);
+#else
+        int use_sli = 0;
+#endif
 
         // (ip) We can play with the binding of the standby threads
         pworker = _generate_worker(_prs_id, 
@@ -772,7 +777,11 @@ const int partition_t<DataType>::_generate_primary()
 
     envVar* pe = envVar::instance();
 
+#ifdef CFG_SLI
     int use_sli = pe->getVarInt("db-worker-sli",0);
+#else
+    int use_sli = 0;
+#endif
 
     Worker* pworker = _generate_worker(_prs_id, 
                                        c_str("%s-P-%d-PRI",_table->name(), _part_id),
