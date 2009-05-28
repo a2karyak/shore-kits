@@ -72,7 +72,7 @@ if test "$KITS_CXX" = "CC"; then
    # *** Checking the compiler version (cc>=5.9)
    reqcc_major=5
    reqcc_mid=8
-   if test $cc_major -lt $reqcc_major -o $cc_mid -le $reqcc_mid; then
+   if test $cc_major -lt $reqcc_major -o $cc_mid -lt $reqcc_mid; then
       AC_MSG_WARN([CXX Compiler $KITS_CXX version $KITS_CXX_VERSION is currently not supported by Shore-kits])
       AC_MSG_WARN([Compiled successfully with cc Compiler $reqcc_major.$reqcc_mid or higher])
    fi   
@@ -368,10 +368,10 @@ if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
 
 # optimize *a lot* flags - normal
-     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+#     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
 
 # regular debugging flags
-#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
+    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
 
 # debugging flags + datarace
 #    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
