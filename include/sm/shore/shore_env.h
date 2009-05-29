@@ -181,7 +181,7 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 #define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx)               \
     w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID) { \
-        trx##_input_t in = create_##trx##_input(_scaling_factor, specificID);                   \
+        trx##_input_t in = create_##trx##_input(_queried_factor, specificID);                   \
         return (run_##trx(xct_id, atrt, in)); }
 
 
@@ -322,7 +322,7 @@ extern ShoreEnv* _g_shore_env;
  *
  ********************************************************************/
 
-enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE };
+enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE, MST_PAUSE };
 
 
 /******************************************************************** 
@@ -502,8 +502,8 @@ public:
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
     // for thread-local stats
-    virtual void env_thread_init(base_worker_t* aworker)=0;
-    virtual void env_thread_fini(base_worker_t* aworker)=0;   
+    virtual void env_thread_init()=0;
+    virtual void env_thread_fini()=0;   
 
     // throughput printing
     virtual void print_throughput(const int iQueriedSF, 
