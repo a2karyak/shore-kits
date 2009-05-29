@@ -310,11 +310,11 @@ w_rc_t upd_cust_pay_action::trx_exec()
                 index_scan_iter_impl<customer_t>* tmp_c_iter;
 
 
-                e = _ptpccenv->customer_man()->cust_get_iter_by_index(_ptpccenv->db(), 
-                                                                      tmp_c_iter, prcust, 
-                                                                      lowrep, highrep,
-                                                                      c_w, c_d, _pin._c_last);
-
+                e = _ptpccenv->customer_man()->cust_get_iter_by_index_nl(_ptpccenv->db(), 
+                                                                         tmp_c_iter, prcust, 
+                                                                         lowrep, highrep,
+                                                                         c_w, c_d, _pin._c_last);
+                
                 c_iter = tmp_c_iter;
                 if (e.is_error()) { goto done; }
             }
