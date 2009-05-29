@@ -200,7 +200,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
             }
 
             vector<int> v_c_id;
-            int  a_c_id;
+            int  a_c_id = 0;
             int  count = 0;
             bool eof;
 
@@ -210,13 +210,14 @@ w_rc_t r_cust_ordst_action::trx_exec()
                 // push the retrieved customer id to the vector
                 ++count;
                 prcust->get_value(0, a_c_id);
+                v_c_id.push_back(a_c_id);
 
-                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-next (%d)\n", 
-                       _tid, a_c_id);
+                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-next\n", _tid);
                 e = c_iter->next(_penv->db(), eof, *prcust);
                 if (e.is_error()) { goto done; }
             }
-            
+            assert (count);
+
             // 1b. find the customer id in the middle of the list
             _in._c_id = v_c_id[(count+1)/2-1];
 #endif
