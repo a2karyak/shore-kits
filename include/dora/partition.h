@@ -601,7 +601,7 @@ void partition_t<DataType>::prepareNewRun()
     // This should happen only if the size of the map exceeds
     // a certain value
     if (_plm->keystouched() > D_MIN_KEYS_TOUCHED) {
-        TRACE( TRACE_ALWAYS, "Cleaning LockMap (%s-%d) with (%d) keys\n",
+        TRACE( TRACE_DEBUG, "Cleaning LockMap (%s-%d) with (%d) keys\n",
                _table->name(), _part_id, _plm->keystouched());
         _plm->reset();
     }

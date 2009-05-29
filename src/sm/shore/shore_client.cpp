@@ -50,7 +50,9 @@ void base_client_t::abort_test() {
 void base_client_t::resume_test() {
     _abort_test = false;
 }
-
+bool base_client_t::is_test_aborted() {
+    return (_abort_test);
+}
 
 
 /********************************************************************* 

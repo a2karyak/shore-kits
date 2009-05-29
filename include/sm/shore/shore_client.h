@@ -228,6 +228,7 @@ public:
 
     static void abort_test();
     static void resume_test();
+    static bool is_test_aborted();
 
     // every client class should implement this functions
     static const int load_sup_xct(mapSupTrxs& map) {
