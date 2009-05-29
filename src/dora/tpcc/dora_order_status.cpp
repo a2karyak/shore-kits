@@ -13,14 +13,13 @@
 #include "dora/tpcc/dora_order_status.h"
 #include "dora/tpcc/dora_tpcc.h"
 
-
 using namespace dora;
 using namespace shore;
 using namespace tpcc;
 
 
-
 ENTER_NAMESPACE(dora);
+
 
 //#define PRINT_TRX_RESULTS
 
@@ -220,12 +219,13 @@ w_rc_t r_cust_ordst_action::trx_exec()
 
             // 1b. find the customer id in the middle of the list
             _in._c_id = v_c_id[(count+1)/2-1];
+            c_id = _in._c_id;
 #endif
         }
         assert (_in._c_id>0);
 
 
-        /* 2. probe the customer */
+        // 2. probe the customer
 
         /* SELECT c_first, c_middle, c_last, c_balance
          * FROM customer
@@ -250,6 +250,9 @@ w_rc_t r_cust_ordst_action::trx_exec()
         prcust->get_value(4,  acust.C_MIDDLE, 3);
         prcust->get_value(5,  acust.C_LAST, 17);
         prcust->get_value(16, acust.C_BALANCE);
+
+        // 3. Update the RVP
+        _prvp->_in._c_id = _in._c_id;
 
     } // goto
 
@@ -327,10 +330,12 @@ w_rc_t r_ord_ordst_action::trx_exec()
 
         tpcc_order_tuple aorder;
         bool eof;
+        register uint cnt = 0;
 
         e = o_iter->next(_penv->db(), eof, *prord);
         if (e.is_error()) { goto done; }
         while (!eof) {
+            ++cnt;
             prord->get_value(0, aorder.O_ID);
             prord->get_value(4, aorder.O_ENTRY_D);
             prord->get_value(5, aorder.O_CARRIER_ID);
@@ -339,7 +344,8 @@ w_rc_t r_ord_ordst_action::trx_exec()
             e = o_iter->next(_penv->db(), eof, *prord);
             if (e.is_error()) { goto done; }
         }
-     
+        assert (cnt); // should have read at least one entry
+
         // we should have retrieved a valid id and ol_cnt for the order               
         assert (aorder.O_ID);
         assert (aorder.O_OL_CNT);
