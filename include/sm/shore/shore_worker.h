@@ -79,19 +79,17 @@ const int WAITING_WINDOW = 5; // keep track the last 5 seconds
 
 struct worker_stats_t
 {
-    int _processed;
-    int _problems;
+    uint _processed;
+    uint _problems;
 
-    int _served_waiting;
-
-    int _checked_input;
-    int _served_input;
+    uint _served_input;
+    uint _served_waiting;
     
-    int _condex_sleep;
-    int _failed_sleep;
+    uint _condex_sleep;
+    uint _failed_sleep;
 
-    int _early_aborts;
-    int _mid_aborts;
+    uint _early_aborts;
+    uint _mid_aborts;
 
 #ifdef WORKER_VERBOSE_STATS
     void update_served(const double serve_time_ms);
@@ -99,14 +97,16 @@ struct worker_stats_t
 
     void update_rvp_exec_time(const double rvp_exec_time);
     void update_rvp_notify_time(const double rvp_notify_time);
-    double _rvp_exec;
-    double _rvp_notify;
+    uint   _rvp_exec;
+    double _rvp_exec_time;
+    double _rvp_notify_time;
 
     void update_waited(const double queue_time);
     double _waiting_total; // not only the last WAITING_WINDOW secs
+
 #ifdef WORKER_VERY_VERBOSE_STATS
     double _ww[WAITING_WINDOW];
-    int _ww_idx; // index on the ww (waiting window) ring
+    uint _ww_idx; // index on the ww (waiting window) ring
     stopwatch_t _for_last_change;
     double _last_change;
 #endif 
@@ -114,13 +114,12 @@ struct worker_stats_t
 
     worker_stats_t() 
         : _processed(0), _problems(0),
-          _served_waiting(0),
-          _checked_input(0), _served_input(0),
+          _served_waiting(0), _served_input(0),
           _condex_sleep(0), _failed_sleep(0),
           _early_aborts(0), _mid_aborts(0)
 #ifdef WORKER_VERBOSE_STATS
         , _waiting_total(0), _serving_total(0), 
-          _rvp_exec(0), _rvp_notify(0)
+          _rvp_exec(0), _rvp_exec_time(0), _rvp_notify_time(0)
 #ifdef WORKER_VERY_VERBOSE_STATS
         , _ww_idx(0), _last_change(0)
 #endif
@@ -377,12 +376,12 @@ public:
 
             case (WC_ACTIVE):
 
-                _env->env_thread_init(this);
+                _env->env_thread_init();
 
                 // does the real work
                 rval = work_ACTIVE();
 
-                _env->env_thread_fini(this);
+                _env->env_thread_fini();
 
                 if (rval)
                     return;

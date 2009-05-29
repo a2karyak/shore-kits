@@ -57,42 +57,77 @@ ENTER_NAMESPACE(shore);
 
 void worker_stats_t::print_stats() const
 {
-    TRACE( TRACE_STATISTICS, "Processed      (%d)\n", _processed);
-    TRACE( TRACE_STATISTICS, "Failure rate   (%d) \t%.1f%%\n", 
-           _problems, (double)(100*_problems)/(double)_processed);
+    uint executed = _processed - _early_aborts;
 
-    TRACE( TRACE_STATISTICS, "Input checked  (%d)\n", _checked_input);
+    // How many requests were "touched" by this worker
+    TRACE( TRACE_STATISTICS, "Processed       (%d)\n", _processed);
 
-    TRACE( TRACE_STATISTICS, "Input served   (%d) \t%.1f%%\n", 
-           _served_input, (double)(100*_served_input)/(double)_checked_input);
+    // How many requests were actually processed (touched - early aborts)
+    TRACE( TRACE_STATISTICS, "Executed        (%d) \t%.1f%%\n", 
+           executed, (double)(100*executed)/(double)_processed);
 
-    TRACE( TRACE_STATISTICS, "Wait served    (%d) \t%.1f%%\n", 
-           _served_waiting, (double)(100*_served_waiting)/(double)_checked_input);
+    // Total (problems/touched) and real failure (problems/executed) rate 
+    TRACE( TRACE_STATISTICS, "Failure rate    (%d) \t%.1f%% \t%.1f%%\n", 
+           _problems, (double)(100*_problems)/(double)_processed, 
+           (double)(100*_problems)/(double)executed);
+
+    // How many packets were executed right from the input queue
+    // If that value is ~100% it means that this worker is the bottleneck
+    TRACE( TRACE_STATISTICS, "Input served    (%d) \t%.1f%%\n", 
+           _served_input, (double)(100*_served_input)/(double)_processed);
+
+    // How many packets had to wait on a lock before being executed 
+    // If that value is ~100% it means that this worker is not the bottleneck
+    // or/and that is has been assigned to few objects (e.g. partition small)
+    TRACE( TRACE_STATISTICS, "Wait served     (%d) \t%.1f%%\n", 
+           _served_waiting, (double)(100*_served_waiting)/(double)_processed);
     
-    TRACE( TRACE_STATISTICS, "Early aborts   (%d) \t%.1f%%\n", 
-           _early_aborts, (double)(100*_early_aborts)/(double)_checked_input);
+    // How many requests were already aborted when they were checked by this worker
+    TRACE( TRACE_STATISTICS, "Early aborts    (%d) \t%.1f%%\n", 
+           _early_aborts, (double)(100*_early_aborts)/(double)_processed);
 
-    TRACE( TRACE_STATISTICS, "Midway aborts  (%d) \t%.1f%%\n", 
-           _mid_aborts, (double)(100*_mid_aborts)/(double)_checked_input);
+    // How many requests were aborted (by another worker) while this worker
+    // was executing them
+    TRACE( TRACE_STATISTICS, "Midway aborts   (%d) \t%.1f%% \t%.1f%%\n", 
+           _mid_aborts, (double)(100*_mid_aborts)/(double)_processed,
+           (double)(100*_mid_aborts)/(double)executed);
 
-    TRACE( TRACE_STATISTICS, "Sleeped        (%d) \t%.1f%%\n", 
-           _condex_sleep, (double)(100*_condex_sleep)/(double)_checked_input);
+    // How many times this worker thread used the cond var to sleep
+    // If that value is ~0% it means that this worker is the bottleneck. 
+    // On the other hand, the larger the value it means the more sys time is added
+    // to the system by this worker. One solution could be to assign more work to it
+    TRACE( TRACE_STATISTICS, "Sleeped         (%d) \t%.1f%%\n", 
+           _condex_sleep, (double)(100*_condex_sleep)/(double)_processed);
 
-    TRACE( TRACE_STATISTICS, "Failed sleeped (%d) \t%.1f%%\n", 
-           _failed_sleep, (double)(100*_failed_sleep)/(double)_checked_input);
+    // How many times this worker thread had decided to sleep but it didn't, 
+    // because a new request arrived. Non-negligible value to this statistic means
+    // that this worker is close to start waking-sleeping. Potentially, can be
+    // assigned more work
+    TRACE( TRACE_STATISTICS, "Failed sleep   (%d) \t%.1f%%\n", 
+           _failed_sleep, (double)(100*_failed_sleep)/(double)_processed);
 
 
 #ifdef WORKER_VERBOSE_STATS
 
-    TRACE( TRACE_STATISTICS, "Avg Action     (%.3fms)\n", 
-           _serving_total/(double)(_processed-_early_aborts));
+    // Average time to execute an request
+    TRACE( TRACE_STATISTICS, "Avg Action     (%.3fms) \t(%.3fms)\n", 
+           _serving_total/(double)_processed, _serving_total/(double)executed);
+
+    // Average time to execute an RVP per RVPs executed when this worker was
+    // the last caller.
+    TRACE( TRACE_STATISTICS, "Avg RVP exec   (%.3fms)\n", 
+           _rvp_exec_time/(double)_rvp_exec);
+
+    // Average time to notify after an RVP per RVPs executed when this worker was
+    // the last caller
+    TRACE( TRACE_STATISTICS, "Avg RVP notify (%.3fms)\n", 
+           _rvp_notify_time/(double)_rvp_exec);
     
-    TRACE( TRACE_STATISTICS, "Avg RVP exec   (%.3fms)\n", _rvp_exec/(double)_processed);
-    TRACE( TRACE_STATISTICS, "Avg RVP notify (%.3fms)\n", _rvp_notify/(double)_processed);
-    
+    // Average waiting time in queue per request
     TRACE( TRACE_STATISTICS, "Avg in queue   (%.3f)\n", _waiting_total/(double)_processed);
 
 #ifdef WORKER_VERY_VERBOSE_STATS
+    // Prints out the average waiting time window 
     for (int i=1; i<WAITING_WINDOW; i++) {
         TRACE( TRACE_STATISTICS, "(%d -> %d). Wait (%.2f)\n",
                i, i+1, _ww[(_ww_idx+i)%WAITING_WINDOW]);        
@@ -107,10 +142,8 @@ worker_stats_t::operator+= (worker_stats_t const& rhs)
     _processed += rhs._processed;
     _problems  += rhs._problems;
 
-    _served_waiting += rhs._served_waiting;
-
-    _checked_input += rhs._checked_input;
     _served_input  += rhs._served_input;
+    _served_waiting += rhs._served_waiting;
 
     _condex_sleep += rhs._condex_sleep;
     _failed_sleep += rhs._failed_sleep;
@@ -122,8 +155,9 @@ worker_stats_t::operator+= (worker_stats_t const& rhs)
     _waiting_total += rhs._waiting_total;
     _serving_total += rhs._serving_total;
 
-    _rvp_exec   += rhs._rvp_exec;
-    _rvp_notify += rhs._rvp_notify;
+    _rvp_exec        += rhs._rvp_exec;
+    _rvp_exec_time   += rhs._rvp_exec_time;
+    _rvp_notify_time += rhs._rvp_notify_time;
     
 #ifdef WORKER_VERY_VERBOSE_STATS
     for (int i=0; i<WAITING_WINDOW; i++) _ww[i] += rhs._ww[i];
@@ -141,10 +175,8 @@ void worker_stats_t::reset()
     _processed = 0;
     _problems  = 0;
 
-    _served_waiting  = 0;
-
-    _checked_input = 0;
     _served_input  = 0;
+    _served_waiting  = 0;
 
     _condex_sleep = 0;
     _failed_sleep = 0;
@@ -157,7 +189,8 @@ void worker_stats_t::reset()
     _serving_total = 0;
 
     _rvp_exec = 0;
-    _rvp_notify = 0;
+    _rvp_exec_time = 0;
+    _rvp_notify_time = 0;
     
 #ifdef WORKER_VERY_VERBOSE_STATS
     for (int i=0; i<WAITING_WINDOW; i++) _ww[i] = 0;
@@ -193,12 +226,13 @@ void worker_stats_t::update_served(const double serve_time_ms)
 
 void worker_stats_t::update_rvp_exec_time(const double rvp_exec_time_ms)
 {
-    _rvp_exec += rvp_exec_time_ms;
+    _rvp_exec_time += rvp_exec_time_ms;
+    ++_rvp_exec;
 }
 
 void worker_stats_t::update_rvp_notify_time(const double rvp_notify_time_ms)
 {
-    _rvp_notify += rvp_notify_time_ms;
+    _rvp_notify_time += rvp_notify_time_ms;
 }
 
 #endif // WORKER_VERBOSE_STATS
@@ -315,7 +349,7 @@ const bool base_worker_t::abort_one_trx(xct_t* axct)
 
 void base_worker_t::stats() 
 { 
-    if (_stats._checked_input < 10) {
+    if (_stats._processed < 10) {
         // don't print partitions which have served too few actions
         TRACE( TRACE_DEBUG, "(%s) few data\n", thread_name().data());
     }

@@ -187,7 +187,7 @@ public:
             _ppvec[i]->stlsize(stl_sz);
         }
 
-        if (ws_gathered._checked_input > 10) {
+        if (ws_gathered._processed > 10) {
             TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
 
             // print worker stats

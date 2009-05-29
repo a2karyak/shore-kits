@@ -166,8 +166,6 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
         // 4. check if it can execute the particular action
         if (apa) {
             TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid());
-            ++_stats._checked_input;
-
             if (apa->trx_acq_locks()) {
                 // 4b. if it can acquire all the locks, 
                 //     go ahead and serve this action
