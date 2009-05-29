@@ -11,6 +11,7 @@
 #ifndef __DORA_RANGE_PARTITION_H
 #define __DORA_RANGE_PARTITION_H
 
+
 #include <cstdio>
 
 #include "util.h"
@@ -20,16 +21,11 @@
 #include "dora/key.h"
 #include "dora/action.h"
 
-
-//#include "dora.h"
-
-
+using namespace shore;
 
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
 
 
 

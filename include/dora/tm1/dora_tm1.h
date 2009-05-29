@@ -11,6 +11,7 @@
 #ifndef __DORA_TM1_H
 #define __DORA_TM1_H
 
+
 #include <cstdio>
 
 #include "tls.h"
@@ -19,12 +20,12 @@
 #include "workload/tm1/shore_tm1_env.h"
 #include "dora.h"
 
+using namespace shore;
+using namespace tm1;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
-using namespace tm1;
 
 
 // Forward declarations

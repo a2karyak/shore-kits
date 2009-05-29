@@ -34,7 +34,6 @@
 
 #include "workload/tpcc/shore_tpcc_schema_man.h"
 
-
 using namespace shore;
 using namespace tpcc;
 

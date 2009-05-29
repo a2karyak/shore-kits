@@ -34,7 +34,6 @@
 
 #include "workload/tpcb/shore_tpcb_schema_man.h"
 
-
 using namespace shore;
 using namespace tpcb;
 

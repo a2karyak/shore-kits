@@ -10,14 +10,11 @@
  *  @author: Ippokratis Pandis, Oct 2008
  */
 
-
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_tpcc.h"
 
-
 using namespace shore;
 using namespace tpcc;
-
 
 
 ENTER_NAMESPACE(dora);
@@ -116,7 +113,7 @@ w_rc_t upd_wh_pay_action::trx_exec()
 
     { // make gotos safe
 
-        /* 1. retrieve warehouse for update */
+        // 1. retrieve warehouse for update
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:wh-idx-nl (%d)\n", 
                _tid, _pin._home_wh_id);
@@ -188,7 +185,7 @@ w_rc_t upd_dist_pay_action::trx_exec()
 
     { // make gotos safe
 
-        /* 1. retrieve district for update */
+        // 1. retrieve district for update
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:dist-idx-nl (%d) (%d)\n", 
                _tid, _pin._home_wh_id, _pin._home_d_id);
@@ -338,7 +335,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
             }
             assert (count);
 
-            /* find the customer id in the middle of the list */
+            // find the customer id in the middle of the list
             _pin._c_id = v_c_id[(count+1)/2-1];
         }
         assert (_pin._c_id>0);
@@ -445,6 +442,9 @@ w_rc_t upd_cust_pay_action::trx_exec()
                                                                 NULL);
 #endif
             if (e.is_error()) { goto done; }
+
+            // 3. Update the RVP
+            _m_rvp->_pin._c_id = _pin._c_id;
         }
 
     } // goto

@@ -12,11 +12,9 @@
 
 #include "dora/tpcc/dora_new_order.h"
 
-
 using namespace dora;
 using namespace shore;
 using namespace tpcc;
-
 
 
 ENTER_NAMESPACE(dora);

@@ -10,14 +10,11 @@
  *  @author: Ippokratis Pandis, Feb 2009
  */
 
-
 #include "dora/tm1/dora_tm1_impl.h"
 #include "dora/tm1/dora_tm1.h"
 
-
 using namespace shore;
 using namespace tm1;
-
 
 
 ENTER_NAMESPACE(dora);

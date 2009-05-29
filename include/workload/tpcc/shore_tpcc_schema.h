@@ -34,6 +34,7 @@
 #ifndef __SHORE_TPCC_SCHEMA_H
 #define __SHORE_TPCC_SCHEMA_H
 
+
 #include <math.h>
 
 #include "sm_vas.h"

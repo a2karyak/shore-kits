@@ -35,7 +35,6 @@
 
 #include "workload/tpcc/tpcc_random.h"
 
-
 using namespace shore;
 
 

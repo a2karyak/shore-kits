@@ -23,7 +23,6 @@
 
 #include "workload/tm1/shore_tm1_schema_man.h"
 
-
 using namespace shore;
 using namespace tm1;
 

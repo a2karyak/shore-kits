@@ -13,6 +13,7 @@
 #ifndef __DORA_PART_TABLE_H
 #define __DORA_PART_TABLE_H
 
+
 #include <cstdio>
 
 #include "util.h"
@@ -22,11 +23,11 @@
 
 #include "dora.h"
 
+using namespace shore;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
 
 
 /******************************************************************** 

@@ -34,13 +34,13 @@
 #ifndef __SHORE_TPCB_SCHEMA_H
 #define __SHORE_TPCB_SCHEMA_H
 
+
 #include <math.h>
 
 #include "sm_vas.h"
 #include "util.h"
 
 #include "sm/shore/shore_table_man.h"
-
 
 using namespace shore;
 

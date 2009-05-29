@@ -13,11 +13,9 @@
 #include "dora/tpcc/dora_stock_level.h"
 #include "dora/tpcc/dora_tpcc.h"
 
-
 using namespace dora;
 using namespace shore;
 using namespace tpcc;
-
 
 
 ENTER_NAMESPACE(dora);

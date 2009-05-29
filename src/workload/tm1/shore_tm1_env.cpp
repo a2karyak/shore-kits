@@ -33,7 +33,6 @@
 #include "workload/tm1/shore_tm1_env.h"
 #include "sm/shore/shore_helper_loader.h"
 
-
 using namespace shore;
 
 

@@ -34,6 +34,7 @@
 #ifndef __SHORE_TPCB_ENV_H
 #define __SHORE_TPCB_ENV_H
 
+
 #include "sm_vas.h"
 #include "util.h"
 
@@ -47,7 +48,6 @@
 #include <map>
 
 using namespace shore;
-
 
 
 ENTER_NAMESPACE(tpcb);

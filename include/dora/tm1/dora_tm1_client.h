@@ -33,13 +33,15 @@
 #ifndef __DORA_TM1_CLIENT_H
 #define __DORA_TM1_CLIENT_H
 
+
 #include "workload/tm1/tm1_const.h"
 #include "dora/tm1/dora_tm1.h"
+
+using namespace shore;
 
 
 ENTER_NAMESPACE(dora);
 
-using namespace shore;
 
 
 /******************************************************************** 

@@ -11,6 +11,7 @@
 #ifndef __DORA_RVP_H
 #define __DORA_RVP_H
 
+
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_trx_worker.h"
 
@@ -18,9 +19,11 @@
 
 #include "dora.h"
 
+using namespace shore;
+
+
 ENTER_NAMESPACE(dora);
 
-using namespace shore;
 
 
 /******************************************************************** 

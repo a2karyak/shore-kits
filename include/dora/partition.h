@@ -11,6 +11,7 @@
 #ifndef __DORA_PARTITION_H
 #define __DORA_PARTITION_H
 
+
 #include <cstdio>
 
 #include "util.h"
@@ -21,11 +22,11 @@
 #include "dora/lockman.h"
 #include "dora.h"
 
+using namespace shore;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
 
 
 /******************************************************************** 

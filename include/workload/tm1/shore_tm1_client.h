@@ -36,10 +36,11 @@
 
 #include "workload/tm1/shore_tm1_env.h"
 
+using namespace shore;
+
 
 ENTER_NAMESPACE(tm1);
 
-using namespace shore;
 
 
 /******************************************************************** 

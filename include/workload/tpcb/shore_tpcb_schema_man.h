@@ -34,8 +34,8 @@
 #ifndef __SHORE_TPCB_SCHEMA_MANAGER_H
 #define __SHORE_TPCB_SCHEMA_MANAGER_H
 
-#include "workload/tpcb/shore_tpcb_schema.h"
 
+#include "workload/tpcb/shore_tpcb_schema.h"
 
 using namespace shore;
 

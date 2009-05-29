@@ -33,6 +33,7 @@
 #ifndef __SHORE_TPCC_ENV_H
 #define __SHORE_TPCC_ENV_H
 
+
 #include "sm_vas.h"
 #include "util.h"
 
@@ -47,13 +48,12 @@
 
 #include <map>
 
+using std::map;
 using namespace shore;
 
 
 ENTER_NAMESPACE(tpcc);
 
-
-using std::map;
 
 
 

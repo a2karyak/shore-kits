@@ -7,6 +7,7 @@
  *  @author: Ippokratis Pandis, Oct 2008
  */
 
+#include "tls.h"
 
 #include "dora/tpcc/dora_tpcc.h"
 
@@ -17,12 +18,8 @@
 #include "dora/tpcc/dora_delivery.h"
 #include "dora/tpcc/dora_new_order.h"
 
-#include "tls.h"
-
-
 using namespace shore;
 using namespace tpcc;
-
 
 
 ENTER_NAMESPACE(dora);

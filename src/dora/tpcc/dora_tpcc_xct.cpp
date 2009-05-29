@@ -7,7 +7,6 @@
  *  @author: Ippokratis Pandis, Sept 2008
  */
 
-
 #include "dora/tpcc/dora_mbench.h"
 #include "dora/tpcc/dora_payment.h"
 #include "dora/tpcc/dora_order_status.h"
@@ -17,11 +16,11 @@
 
 #include "dora/tpcc/dora_tpcc.h"
 
-
-ENTER_NAMESPACE(dora);
-
 using namespace shore;
 using namespace tpcc;
+
+
+ENTER_NAMESPACE(dora);
 
 
 typedef range_partition_impl<int>   irpImpl; 

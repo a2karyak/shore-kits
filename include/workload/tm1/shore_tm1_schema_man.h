@@ -34,8 +34,8 @@
 #ifndef __SHORE_TM1_SCHEMA_MANAGER_H
 #define __SHORE_TM1_SCHEMA_MANAGER_H
 
-#include "workload/tm1/shore_tm1_schema.h"
 
+#include "workload/tm1/shore_tm1_schema.h"
 
 using namespace shore;
 

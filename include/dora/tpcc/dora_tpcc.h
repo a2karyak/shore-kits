@@ -11,6 +11,7 @@
 #ifndef __DORA_TPCC_H
 #define __DORA_TPCC_H
 
+
 #include <cstdio>
 
 #include "tls.h"
@@ -19,12 +20,12 @@
 #include "workload/tpcc/shore_tpcc_env.h"
 #include "dora.h"
 
+using namespace shore;
+using namespace tpcc;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
-using namespace tpcc;
 
 
 // Forward declarations

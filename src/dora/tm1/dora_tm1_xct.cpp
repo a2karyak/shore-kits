@@ -7,16 +7,14 @@
  *  @author: Ippokratis Pandis, Feb 2009
  */
 
-
 #include "dora/tm1/dora_tm1_impl.h"
-
 #include "dora/tm1/dora_tm1.h"
-
-
-ENTER_NAMESPACE(dora);
 
 using namespace shore;
 using namespace tm1;
+
+
+ENTER_NAMESPACE(dora);
 
 
 typedef range_partition_impl<int>   irpImpl; 

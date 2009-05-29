@@ -19,12 +19,12 @@
 #include "workload/tpcc/shore_tpcc_env.h"
 #include "dora/tpcc/dora_tpcc.h"
 
+using namespace shore;
+using namespace tpcc;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
-using namespace tpcc;
 
 
 //
@@ -54,7 +54,6 @@ private:
     // data needed for the next phase
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple  _adist;
-    payment_input_t      _pin;
 public:
     midway_pay_rvp() : rvp_t(), _cache(NULL), _ptpccenv(NULL) { }
     ~midway_pay_rvp() { _cache=NULL; _ptpccenv=NULL; }
@@ -76,6 +75,7 @@ public:
     inline void giveback() { assert (_cache); 
         _cache->giveback(this); }    
 
+    payment_input_t      _pin;
     tpcc_warehouse_tuple* wh() { return (&_awh); }
     tpcc_district_tuple* dist() { return (&_adist); }    
 

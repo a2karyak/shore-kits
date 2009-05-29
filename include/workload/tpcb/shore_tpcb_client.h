@@ -36,11 +36,11 @@
 
 #include "workload/tpcb/shore_tpcb_env.h"
 
+using namespace shore;
+
 
 ENTER_NAMESPACE(tpcb);
 
-
-using namespace shore;
 
 
 

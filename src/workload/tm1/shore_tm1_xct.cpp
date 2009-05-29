@@ -36,7 +36,6 @@
 #include <numeric>
 #include <algorithm>
 
-
 using namespace shore;
 
 

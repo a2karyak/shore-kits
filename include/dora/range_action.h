@@ -11,12 +11,14 @@
 #ifndef __DORA_RANGE_ACTION_H
 #define __DORA_RANGE_ACTION_H
 
+
 #include "dora/action.h"
+
+using namespace shore;
 
 
 ENTER_NAMESPACE(dora);
 
-using namespace shore;
 
 
 /******************************************************************** 

@@ -33,13 +33,15 @@
 #ifndef __SHORE_TPCC_CLIENT_H
 #define __SHORE_TPCC_CLIENT_H
 
+
 #include "workload/tpcc/tpcc_const.h"
 #include "workload/tpcc/shore_tpcc_env.h"
+
+using namespace shore;
 
 
 ENTER_NAMESPACE(tpcc);
 
-using namespace shore;
 
 
 /******************************************************************** 

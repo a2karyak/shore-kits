@@ -16,11 +16,10 @@
 #include "dora.h"
 #include "sm/shore/shore_worker.h"
 
+using namespace shore;
+
 
 ENTER_NAMESPACE(dora);
-
-
-using namespace shore;
 
 
 

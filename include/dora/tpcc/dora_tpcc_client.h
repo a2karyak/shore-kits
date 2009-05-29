@@ -33,13 +33,15 @@
 #ifndef __DORA_TPCC_CLIENT_H
 #define __DORA_TPCC_CLIENT_H
 
+
 #include "workload/tpcc/tpcc_const.h"
 #include "dora/tpcc/dora_tpcc.h"
+
+using namespace shore;
 
 
 ENTER_NAMESPACE(dora);
 
-using namespace shore;
 
 
 /******************************************************************** 

@@ -35,7 +35,6 @@
 #include "sm/shore/shore_helper_loader.h"
 #include <atomic.h>
 
-
 using namespace shore;
 
 

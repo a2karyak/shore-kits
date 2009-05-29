@@ -10,7 +10,6 @@
 #include "dora/rvp.h"
 #include "dora/action.h"
 
-
 using namespace dora;
 
 

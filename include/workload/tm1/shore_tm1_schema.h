@@ -33,6 +33,7 @@
 #ifndef __SHORE_TM1_SCHEMA_H
 #define __SHORE_TM1_SCHEMA_H
 
+
 #include <math.h>
 
 #include "sm_vas.h"
@@ -41,7 +42,6 @@
 #include "workload/tm1/tm1_const.h"
 
 #include "sm/shore/shore_table_man.h"
-
 
 using namespace shore;
 

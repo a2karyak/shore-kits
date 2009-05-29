@@ -34,9 +34,9 @@
 #ifndef __SHORE_TPCC_SCHEMA_MANAGER_H
 #define __SHORE_TPCC_SCHEMA_MANAGER_H
 
+
 #include "workload/tpcc/tpcc_struct.h"
 #include "workload/tpcc/shore_tpcc_schema.h"
-
 
 using namespace shore;
 

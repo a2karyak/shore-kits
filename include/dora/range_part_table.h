@@ -14,11 +14,11 @@
 
 #include "dora.h"
 
+using namespace shore;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
 
 
 /******************************************************************** 

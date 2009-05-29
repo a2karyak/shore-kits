@@ -17,7 +17,6 @@ using namespace shore;
 using namespace tpcc;
 
 
-
 ENTER_NAMESPACE(dora);
 
 

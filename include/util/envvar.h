@@ -33,6 +33,7 @@
 #ifndef __UTIL_ENVVAR_H
 #define __UTIL_ENVVAR_H
 
+
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,7 +43,6 @@
 #include <cstdio>
 #include <cstring>
 #endif
-
 
 #include <iostream>
 

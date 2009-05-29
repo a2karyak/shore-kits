@@ -33,6 +33,7 @@
 #ifndef __UTIL_SHELL_H
 #define __UTIL_SHELL_H
 
+
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,7 +58,6 @@
 #include "util/prcinfo.h"
 
 #include "util.h"
-
 
 using namespace std;
 

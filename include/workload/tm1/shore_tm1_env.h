@@ -33,6 +33,7 @@
 #ifndef __SHORE_TM1_ENV_H
 #define __SHORE_TM1_ENV_H
 
+
 #include "sm_vas.h"
 #include "util.h"
 
@@ -46,15 +47,11 @@
 
 #include <map>
 
+using std::map;
 using namespace shore;
 
 
 ENTER_NAMESPACE(tm1);
-
-
-using std::map;
-
-
 
 
 

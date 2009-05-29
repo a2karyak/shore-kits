@@ -19,12 +19,12 @@
 #include "workload/tm1/shore_tm1_env.h"
 #include "dora/tm1/dora_tm1.h"
 
+using namespace shore;
+using namespace tm1;
+
 
 ENTER_NAMESPACE(dora);
 
-
-using namespace shore;
-using namespace tm1;
 
 
 /******************************************************************** 

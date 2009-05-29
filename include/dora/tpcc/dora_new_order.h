@@ -18,12 +18,13 @@
 #include "dora/tpcc/dora_tpcc.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 
+using namespace shore;
+using namespace tpcc;
+
 
 ENTER_NAMESPACE(dora);
 
 
-using namespace shore;
-using namespace tpcc;
 
 
 //
