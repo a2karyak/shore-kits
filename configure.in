@@ -108,7 +108,7 @@ else
    reqgcc_major=4
    reqgcc_mid=0
    if test $gcc_major -lt $reqgcc_major -o $gcc_mid -lt $reqgcc_mid; then
-      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $KITS_CXX_VERSION is currently not supported by Shore-mt-client])
+      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $KITS_CXX_VERSION is currently not supported by Shore-kits])
       AC_MSG_WARN([Compiled successfully with GCC Compiler $reqgcc_major.$reqgcc_mid or higher])
    fi   
 fi 
