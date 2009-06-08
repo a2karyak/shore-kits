@@ -421,8 +421,7 @@ AC_OUTPUT()
 AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
 
 # show the user what the variables have been set to
-cat <<EOF
-
+cat <<EOF | tee tmpcfg.txt
 Shore Kits configuration:
   Version:         KITS_VERSION   $KITS_VERSION
   Home:            KITS_HOME      $KITS_HOME	
