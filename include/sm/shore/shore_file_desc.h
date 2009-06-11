@@ -2,10 +2,10 @@
      Shore-kits -- Benchmark implementations for Shore-MT
    
                        Copyright (c) 2007-2009
-      Data Intensive Applications and Systems Labaratory (DIAS)
                Ecole Polytechnique Federale de Lausanne
-   
-                         All Rights Reserved.
+
+                       Copyright (c) 2007-2008
+                      Carnegie-Mellon University
    
    Permission to use, copy, modify and distribute this software and
    its documentation is hereby granted, provided that both the
@@ -20,8 +20,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-/* -*- mode:C++; c-basic-offset:4 -*- */
 
 /** @file:   shore_file_desc.h
  *
