@@ -269,4 +269,4 @@ inline void sort_iter_impl::reset()
 EXIT_NAMESPACE(shore);
 
 
-#endif // __SHORE_SORT_BUF
+#endif /* __SHORE_SORT_BUF_H */

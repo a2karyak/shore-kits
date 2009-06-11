@@ -237,5 +237,5 @@ protected:
 
 EXIT_NAMESPACE(shore);
 
-#endif /* __TESTER_SHORE_SHELL_H */
+#endif /* __SHORE_SHELL_H */
 

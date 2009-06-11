@@ -116,4 +116,4 @@ unsigned int trace_get();
 #define TRACE_GET() trace_get()
 
 
-#endif // __UTIL_TRACE_H
+#endif /** __UTIL_TRACE_H */

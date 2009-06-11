@@ -29,7 +29,6 @@
  *  @author: Ippokratis Pandis, Feb 2009
  */
 
-
 #ifndef __TM1_INPUT_H
 #define __TM1_INPUT_H
 
@@ -339,5 +338,5 @@ const int random_tm1_xct_type(const int selected);
 EXIT_NAMESPACE(tm1);
 
 
-#endif
+#endif /* __TM1_INPUT_H */
 

@@ -38,5 +38,5 @@
 
 #endif // __GCC
 
-
 #endif /** __UTIL_COMPAT_H */
+

@@ -68,4 +68,4 @@ private:
 typedef countdown_t* countdownPtr;
 
 
-#endif /* __UTIL_COUNTDOWN_H */
+#endif /** __UTIL_COUNTDOWN_H */

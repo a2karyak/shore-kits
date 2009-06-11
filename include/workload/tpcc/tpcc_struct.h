@@ -387,4 +387,4 @@ struct tpcc_warehouse_tuple_key {
 
 EXIT_NAMESPACE(tpcc);
 
-#endif
+#endif /* __TPCC_STRUCT_H */

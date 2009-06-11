@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 #ifndef __DECIMAL_H
 #define __DECIMAL_H
 
@@ -157,4 +158,5 @@ inline decimal operator/(double a, decimal const &b) {
 }
 
 
-#endif
+#endif /** __DECIMAL_H */
+

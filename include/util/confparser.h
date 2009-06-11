@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 // Copyright (c) 2004 Richard J. Wagner
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -293,5 +294,4 @@ void ConfigFile::add( string key, const T& value )
     return;
 }
 
-
-#endif  /* __UTIL_CONFPARSER_H */
+#endif  /** __UTIL_CONFPARSER_H */

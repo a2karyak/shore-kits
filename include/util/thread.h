@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 #ifndef __THREAD_H
 #define __THREAD_H
 
@@ -316,4 +317,4 @@ struct thread_local {
 extern __thread thread_pool* THREAD_POOL;
 
 
-#endif  /* __THREAD_H */
+#endif  /** __THREAD_H */

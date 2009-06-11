@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 #ifndef __RANDGEN_H
 #define __RANDGEN_H
 
@@ -100,9 +101,7 @@ public:
         } while(bits - val + (n-1) < 0);
         
         return val;
-    }
-    
+    }  
 };
 
-
-#endif
+#endif /** __RANDGEN_H */

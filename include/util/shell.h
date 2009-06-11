@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file:   shell.h
  *
  *  @brief:  Abstract shell class for the test cases
@@ -253,7 +254,5 @@ public:
 
 }; // EOF: shell_t
 
-
-
-#endif /* __UTIL_SHELL_H */
+#endif /** __UTIL_SHELL_H */
 

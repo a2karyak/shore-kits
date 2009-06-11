@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file:   random_input.h
  *
  *  @brief:  Declaration of the (common) random functions, used for the
@@ -53,11 +54,8 @@ const void URandFillStrCaps(char* dest, const int sz);
 const void URandFillStrNumbx(char* dest, const int sz);
 
 
-
-
 /* use this for allocation of NULL-terminated strings */
 #define STRSIZE(x)(x+1)
 
 
-
-#endif
+#endif /** __UTIL_RANDOM_INPUT_H */

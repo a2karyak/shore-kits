@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 #ifndef __UTIL_CMD_TRACE_H
 #define __UTIL_CMD_TRACE_H
 
@@ -59,7 +60,6 @@ private:
     void print_known_types();
 
 }; // EOF: trace_cmd_t
-
 
 #endif /** __UTIL_CMD_TRACE_H */
 

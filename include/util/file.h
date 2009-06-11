@@ -95,4 +95,4 @@ public:
 /* } */
 
 
-#endif
+#endif /** __RAII_FILE_H */

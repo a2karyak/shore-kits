@@ -224,4 +224,4 @@ struct create_volume_xct
 
 EXIT_NAMESPACE(shore);
 
-#endif
+#endif /* __SHORE_TOOLS_H */

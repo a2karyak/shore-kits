@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file:   envvar.h
  *
  *  @brief:  "environment variables" singleton class
@@ -161,7 +162,5 @@ public:
 
 }; // EOF: envVar
 
-
-
-#endif /* __UTIL_ENVVAR_H */
+#endif /** __UTIL_ENVVAR_H */
 

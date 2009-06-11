@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file  atomic_ops.h 
  *
  *  @brief Provides typesafe atomic operations in a compiler- and machine-agnostic way
@@ -148,4 +149,4 @@ T atomic_swap(T volatile* target, T new_value) {
 };
 
 
-#endif
+#endif /* __ATOMIC_OPS_H */

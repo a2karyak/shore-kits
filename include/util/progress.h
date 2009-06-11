@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file progress.h
  *
  *  @brief Declaration of progress helper functions
@@ -44,5 +45,4 @@ void progress_reset(unsigned long* indicator);
 void progress_update(unsigned long* indicator);
 void progress_done(const char* tablename);
 
-#endif
-
+#endif /** __UTIL_PROGRESS_H */

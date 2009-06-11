@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file:   prcinfo.h
  * 
  *  @brief:  Processor usage information
@@ -33,14 +34,12 @@
 /*
  * Prints all field resource, usage and microstat accounting fields
  *
- * @note: Taken from -  http://safari.oreilly.com/0131482092/app02lev1sec2 
+ * @note: Taken from -  http://safari.oreilly.com/0131482092/app02lev1sec2
  *
  */
 
-
 #ifndef __UTIL_PRCINFO_H
 #define __UTIL_PRCINFO_H
-
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -86,7 +85,6 @@ struct processinfo_t
     const int print();
     const int reset();
 
-
     static void hr_min_sec(char*, long);
     static void prtime(string label, timestruc_t* ts);
     static void prtime(string label, long long& delay);
@@ -94,11 +92,6 @@ struct processinfo_t
     static void tsadd(timestruc_t* result, timestruc_t* a, timestruc_t* b);
     static void tssub(timestruc_t* result, timestruc_t* a, timestruc_t* b);
 
-
 }; // EOF: processinfo_t
-
-
-
-
 
 #endif /** __UTIL_PRCINFO_H */

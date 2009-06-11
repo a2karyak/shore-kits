@@ -22,12 +22,12 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 #ifndef __NAMESPACE_H
 #define __NAMESPACE_H
 
 #define ENTER_NAMESPACE(ns) namespace ns {
 
-#define EXIT_NAMESPACE(ns) }
-    
+#define EXIT_NAMESPACE(ns) }    
 
-#endif
+#endif /** __NAMESPACE_H */

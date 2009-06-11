@@ -142,4 +142,3 @@ public:
 EXIT_NAMESPACE(shore);
 
 #endif /** __SHORE_TRX_WORKER_H */
-

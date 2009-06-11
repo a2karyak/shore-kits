@@ -57,4 +57,3 @@ int generate_cust_last(int select, char* dest);
 EXIT_NAMESPACE(tpcc);
 
 #endif /* __TPCC_RANDOM_H */
-

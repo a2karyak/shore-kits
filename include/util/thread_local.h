@@ -138,5 +138,5 @@ public:
 
 #endif // 0
 
-#endif /** __THREAD_LOCAL_H */
 
+#endif /** __THREAD_LOCAL_H */

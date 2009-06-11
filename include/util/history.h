@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 #ifndef __UTIL_HISTORY_H
 #define __UTIL_HISTORY_H
 
@@ -34,6 +35,5 @@ bool history_open();
 bool history_close();
 
 #endif
-
 
 #endif /** __UTIL_HISTORY_H */

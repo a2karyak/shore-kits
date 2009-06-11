@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file exception.h
  * 
  *  @brief Miscellaneous exception-related helper functions
@@ -139,4 +140,4 @@ inline void unreachable() {
 #define unreachable() throw "Unreachable"
 #endif
 
-#endif
+#endif /** __EXCEPTION_H */

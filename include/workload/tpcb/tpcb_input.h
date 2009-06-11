@@ -104,5 +104,5 @@ populate_db_input_t create_populate_db_input(int SF,
 EXIT_NAMESPACE(tpcb);
 
 
-#endif
+#endif /* __TPCB_INPUT_H */
 

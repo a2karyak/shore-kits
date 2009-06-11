@@ -22,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 /** @file time_util.h
  * 
  *  @brief Miscellaneous time-related utilities
@@ -53,8 +54,6 @@ int datepart(char const* str, const time_t *pt);
 time_t datestr_to_timet(char const* str);
 char* timet_to_datestr(time_t time);
 
-
-
 /** time_t manipulation functions
  *
  *  @note These function use the Unix timezone functions
@@ -71,6 +70,4 @@ time_t time_add_year(time_t time, int years);
 time_t time_day_begin(time_t t);
 time_t time_day_end(time_t t);
 
-
-
-#endif
+#endif /** __TIME_UTIL_H */

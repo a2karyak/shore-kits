@@ -144,4 +144,4 @@ public:
 
 
 
-#endif
+#endif /** __C_STR_H */
