@@ -23,7 +23,7 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
+#ifndef __THREAD_LOCAL_H
 #define __THREAD_LOCAL_H
 
 #if 0
@@ -136,5 +136,7 @@ public:
     operator T&() { return *get(); }
 };
 
-#endif
-#endif
+#endif // 0
+
+#endif /** __THREAD_LOCAL_H */
+

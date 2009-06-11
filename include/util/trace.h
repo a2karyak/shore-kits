@@ -23,7 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
 /** @file trace.h
  *
  *  @brief Tracing module.
@@ -115,7 +114,6 @@ unsigned int trace_get();
  * @return void
  */
 #define TRACE_GET() trace_get()
-
 
 
 #endif // __UTIL_TRACE_H

@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 /** @file workload/tpcc/common/tpcc_random.cpp
  *  
  *  @brief Functions used for the generation of the inputs for 

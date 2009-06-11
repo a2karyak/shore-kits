@@ -370,9 +370,8 @@ Shore Kits configuration:
   Version:         KITS_VERSION   $KITS_VERSION
   Home:            KITS_HOME      $KITS_HOME	
   Features:        KITS_FEATURES  $KITS_FEATURES
-  CC Compiler:     CC             $CC    
   CXX Compiler:    CXX            $CXX
-  CC version       CXX_VERSION    $KITS_CXX_VERSION
+  CXX version       CXX_VERSION    $KITS_CXX_VERSION
   Shore-mt home:   SHORE_HOME     $SHORE_HOME
   Architecture/OS: ARCHOS         $ARCHOS
 EOF

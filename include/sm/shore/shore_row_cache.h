@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 /** @file:   shore_row_cache.h
  *
  *  @brief:  Cache for tuples (row_impl<>) used in Shore

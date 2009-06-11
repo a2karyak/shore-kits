@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 /** @file:   shore_tm1_env.h
  *
  *  @brief:  Definition of the Shore TM1 environment

@@ -23,8 +23,8 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
-#define _GUARD_H
+#ifndef __GUARD_H
+#define __GUARD_H
 
 #include <cstdio>
 #include <cassert>
@@ -401,6 +401,4 @@ struct fd_guard_t : guard_base_t<int, fd_guard_t> {
 };
 
 
-
-
-#endif
+#endif /* __GUARD_H */

@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 /** @file:   shore_tpcb_env.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TPC-B transactions

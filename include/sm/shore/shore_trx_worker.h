@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 /** @file:  shore_trx_result.h
  *
  *  @author Ippokratis Pandis, Nov 2008

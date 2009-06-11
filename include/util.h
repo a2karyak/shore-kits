@@ -23,7 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
 #ifndef __UTIL_H
 #define __UTIL_H
 

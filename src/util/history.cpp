@@ -23,8 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
-
 #include "util/history.h"
 #include "util/c_str.h"
 #include "util/trace.h"

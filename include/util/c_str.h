@@ -23,7 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
 #ifndef __C_STR_H
 #define __C_STR_H
 

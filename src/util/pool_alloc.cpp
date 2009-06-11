@@ -23,7 +23,7 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
+#include "util/pool_alloc.h"
 #include "util/sync.h"
 
 #ifdef __SUNPRO_CC

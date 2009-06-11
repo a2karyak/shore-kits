@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 // Copyright (c) 2004 Richard J. Wagner
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy

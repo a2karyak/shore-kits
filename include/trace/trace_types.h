@@ -23,7 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
 /** @file trace_types.h
  *
  *  @brief Lists all TRACE types. Each of these should be a bit
@@ -60,4 +59,4 @@
 
 
 
-#endif
+#endif /** __TRACE_TYPES_H */

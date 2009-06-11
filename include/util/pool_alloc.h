@@ -23,7 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
 #ifndef __POOL_ALLOC_H
 #define __POOL_ALLOC_H
 
@@ -119,4 +118,4 @@ struct static_initialize_pool_alloc { static_initialize_pool_alloc(); };
 static static_initialize_pool_alloc pool_alloc_swatchz;
 
 
-#endif
+#endif /* __POOL_ALLOC_H */

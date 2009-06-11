@@ -23,7 +23,7 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
+/** @file:   shore_tm1_xct.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TM1 transactions
  *

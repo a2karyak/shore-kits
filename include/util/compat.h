@@ -23,7 +23,8 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
+#ifndef __UTIL_COMPAT_H
+#define __UTIL_COMPAT_H
 
 #ifdef __GCC
 
@@ -35,7 +36,7 @@
 #define __PRETTY_FUNCTION__ __func__
 #define __FUNCTION__ __func__
 
-#endif
+#endif // __GCC
 
 
-#endif
+#endif /** __UTIL_COMPAT_H */

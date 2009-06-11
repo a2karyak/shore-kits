@@ -23,8 +23,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-
-
 #include "util.h"
 #include "util/config.h"
 #include "util/command/tracer.h"

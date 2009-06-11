@@ -22,8 +22,6 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
-
-
 /** @file trace_force.h
  *
  *  @brief Exports TRACE_FORCE(). TRACE_FORCE() should only be invoked
