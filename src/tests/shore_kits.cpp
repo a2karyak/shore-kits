@@ -496,6 +496,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay);
 	       
         // flush the log before the next iteration
+	_env->set_measure(MST_PAUSE);
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "Checkpoint\n");
