@@ -33,11 +33,18 @@ STAMP=$(date +"%F-%Hh%Mm%Ss")
 DIR=$BASE_DIR/run-$NAME-$XCT.$STAMP
 OUTFILE=$DIR/run.out
 
-TRXSHELL="tests/shore_kits"
+TRXSHELL="shore_kits"
 #TRXSHELL="tests/tpcc_kit_shell"
+
+#DBX="/opt/SSX0903/bin/dbx"
+DBX="dbx"
 
 mkdir -p $DIR
 
-CMD="source $SCRIPT $DIR $NAME $XCT $* | dbx $TRXSHELL 2>&1 | tee $OUTFILE"
+# remove log 
+echo rm log/*
+rm log/*
+
+CMD="source $SCRIPT $DIR $NAME $XCT $* | $DBX $TRXSHELL 2>&1 | tee $OUTFILE"
 echo "$CMD" | tee $OUTFILE
-($SCRIPT $DIR $NAME $XCT $* | dbx $TRXSHELL) 2>&1 | tee -a $OUTFILE
+($SCRIPT $DIR $NAME $XCT $* | $DBX $TRXSHELL) 2>&1 | tee -a $OUTFILE

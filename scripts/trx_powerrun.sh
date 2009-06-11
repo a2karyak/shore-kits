@@ -38,16 +38,12 @@ command()
 
 ### kit
 
+# instead of warmup we set clobberdev = 1 (load a new database each time) 
+# and sleep for the:
+# TM1 : 180secs (3mins)
+# TPCC: TBD
 
-
-#warmup
-command measure $HIGH 0 20 10 $XCT 2
-sleep 20
-
-# TPC-C Warmup
-# sleep 60
-# command measure $HIGH 0 36 60 $XCT 3
-# sleep 200
+sleep 180
 
 
 run_one ()
@@ -70,7 +66,7 @@ run_one ()
 
 # tm1-dora sequence
 #CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78 84 92 96 100)
-CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64)
+CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64)
 
 for i in ${CLIENT_SEQ[@]}; do
     if [ $i -ge $LOW ]; then

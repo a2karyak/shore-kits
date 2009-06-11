@@ -44,7 +44,7 @@ CONTENTION=$(parenthize "$ATOMIC || $PPMCS || $SPIN || $OCC_RWLOCK || $MUTEX")
 DORA=$(is_leaf "dora.*")
 
 
-er_print -limit 25 \
+er_print -limit 5 \
     -filters "$BASE" -functions \
     -filters "$BASE && $CONTENTION" -functions \
     -filters "$BASE && $LM" -functions \

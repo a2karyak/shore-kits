@@ -29,9 +29,14 @@ STAMP=$(date +"%F-%Hh%Mm%Ss")
 OUTFILE=$BASE_DIR/perf-$NAME-$XCT.$STAMP.out
 
 EXPSHELL="scripts/trx_powerrun.sh"
-TRXSHELL="tests/shore_kits"
+TRXSHELL="shore_kits"
 
 mkdir -p $BASE_DIR
+
+# remove log 
+echo rm log/*
+rm log/*
+
 
 CMD="source $EXPSHELL $LOW $HIGH $XCT $TIME $ITER | $TRXSHELL 2>&1 | tee $OUTFILE"
 echo "$CMD" | tee $OUTFILE

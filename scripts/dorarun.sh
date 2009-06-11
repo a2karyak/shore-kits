@@ -3,7 +3,6 @@
 #@file:   dorarun.sh 
 #
 #@brief:  Does a dbx run for DORA
-#@note:   Assumes that the db is already populated
 #
 #@author: Ryan Johnson
 #@author: Ippokratis Pandis
@@ -54,12 +53,16 @@ command collector archive off # we'll manually link in later...
 #command assign show_sli_lock_info=0
 command cont
 
-# this sleep needs to be long enough to load the db!
-# (ip) No need for db loading
-sleep 60
+# instead of warmup we set clobberdev = 1 (load a new database each time) 
+# and sleep for the:
+# TM1 : 180secs (3mins)
+# TPCC: TBD
+
+sleep 600
+
 
 ### kit
-command measure $SF 0 10 30 $WARMUP_MIX 3
+#command measure $SF 0 10 30 $WARMUP_MIX 1
 command break
 command collector disable
 
@@ -95,13 +98,9 @@ run_one ()
 
 # tm1-dora sequence
 #CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78)
-#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64)
-CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52)
+#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52)
 
-#CLIENT_SEQ=(58 64)
-
-#!! dora-payment seq
-#CLIENT_SEQ=(10 20 40 60 80 100 120)
+CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64)
 
 for i in ${CLIENT_SEQ[@]}; do
     run_one $i
