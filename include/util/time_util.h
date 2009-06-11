@@ -6,6 +6,8 @@
 
                        Copyright (c) 2007-2008
                       Carnegie-Mellon University
+
+                         All Rights Reserved.
    
    Permission to use, copy, modify and distribute this software and
    its documentation is hereby granted, provided that both the
@@ -20,6 +22,7 @@
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
+
 
 /** @file time_util.h
  * 
