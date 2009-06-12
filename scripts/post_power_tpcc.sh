@@ -14,6 +14,8 @@ EXPFILE=$1; shift
 
 echo "TPS"
 cat $EXPFILE | ggrep -e "TPS" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+echo "AvgCPU"
+cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//'
 
 exit
 

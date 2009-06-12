@@ -14,6 +14,8 @@ EXPFILE=$1; shift
 
 echo "MQTh"
 cat $EXPFILE | ggrep -e "MQTh" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+echo "AvgCPU"
+cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//'
 echo "SuccessRate"
 cat $EXPFILE | grep "Success" | uniq | sed 's/^.*(//' | sed -e 's/..$//'
 

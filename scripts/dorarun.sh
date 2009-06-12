@@ -55,10 +55,10 @@ command cont
 
 # instead of warmup we set clobberdev = 1 (load a new database each time) 
 # and sleep for the:
-# TM1 : 180secs (3mins)
+# TM1 : 480secs (8mins)
 # TPCC: TBD
 
-sleep 600
+sleep 480
 
 
 ### kit

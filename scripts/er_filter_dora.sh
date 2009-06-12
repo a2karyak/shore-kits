@@ -44,6 +44,26 @@ CONTENTION=$(parenthize "$ATOMIC || $PPMCS || $SPIN || $OCC_RWLOCK || $MUTEX")
 DORA=$(is_leaf "dora.*")
 
 
+echo " "
+echo " "
+echo " "
+echo " "
+date +"%r"
+echo "$1"
+echo " "
+echo " "
+echo " "
+echo " "
+
+
+# echo "$BASE"
+# echo "$BASE && $CONTENTION"
+# echo "$BASE && $LM"
+# echo "$BASE && $LM && $CONTENTION"
+# echo "$BASE && $LOGM"
+# echo "$BASE && $LOGM && $CONTENTION"
+
+
 er_print -limit 5 \
     -filters "$BASE" -functions \
     -filters "$BASE && $CONTENTION" -functions \
