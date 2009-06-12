@@ -30,7 +30,6 @@
  *  @author: Ryan Johnson (ryanjohn)
  */
 
-
 #include "util/countdown.h"
 
 

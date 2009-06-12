@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_row_cache.h
  *
  *  @brief:  Cache for tuples (row_impl<>) used in Shore

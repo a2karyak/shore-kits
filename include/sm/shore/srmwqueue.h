@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:  srmwqueue.h
  *
  *  @brief: A single-reader, multiple-writer queue.
