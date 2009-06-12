@@ -450,6 +450,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         _env->reset_stats();
         //xct_stats statsb = shell_get_xct_stats();
 
+        // reset cpu monitor
+        _g_cpumon->reset();
+
         // set measurement state to measure - start counting everything
         _env->set_measure(MST_MEASURE);
 	stopwatch_t timer;
@@ -481,7 +484,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
 
 	double delay = timer.time();
         //xct_stats stats = shell_get_xct_stats();
-        _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay);
+        _g_cpumon->pause();
+        _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
+                               _g_cpumon->get_avg_usage());
 
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
@@ -559,13 +564,13 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
 	sleep(iDuration);
 
 	double delay = timer.time();
+        _g_cpumon->pause();
 	TRACE(TRACE_ALWAYS, "end measurement\n");
-        _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay);
+        _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
+                               _g_cpumon->get_avg_usage());
 	       
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
-        _g_cpumon->pause();
-        _g_cpumon->print_avg_usage();
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "Checkpoint\n");

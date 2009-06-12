@@ -509,7 +509,8 @@ public:
     virtual void print_throughput(const int iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
-                                  const double delay)=0;
+                                  const double delay,
+                                  const double avgcpuusage)=0;
 
     virtual void reset_stats()=0;
     

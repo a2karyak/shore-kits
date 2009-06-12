@@ -245,7 +245,8 @@ public:
     virtual void print_throughput(const int iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
-                                  const double delay);
+                                  const double delay,
+                                  const double avgcpuusage);
 
 
 
