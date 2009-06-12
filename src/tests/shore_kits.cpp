@@ -79,6 +79,8 @@ using namespace tpcb;
 
 
 
+cpumonitor_t* _g_cpumon;
+
 
 //////////////////////////////
 
@@ -513,17 +515,15 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
     _dbinst->upd_sf();
     _dbinst->set_qf(iQueriedSF);
 
-    // create and fork client threads
     Client* testers[MAX_NUM_OF_THR];
-    // reset starting cpu and wh id
-    _current_prs_id = _start_prs_id;
+    _current_prs_id = _start_prs_id;     // reset starting cpu and wh id
     int wh_id = 0;
     
-    // set measurement state
+    // 1. prepare for measurement
     _env->set_measure(MST_WARMUP);
     shell_expect_clients(iNumOfThreads);
-    
-    // 1. create and fork client threads
+
+    // 2. create and fork client threads
     for (int i=0; i<iNumOfThreads; i++) {
         // create & fork testing threads
         if (iSpread)
@@ -535,7 +535,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         assert (testers[i]);
         testers[i]->fork();
         _current_prs_id = next_cpu(abt, _current_prs_id);
-    }
+    }        
     
     // give them some time (2secs) to start-up
     shell_await_clients();
@@ -546,6 +546,9 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         sleep(1);
         TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
                (j+1), iIterations);
+
+        // reset cpu monitor
+        _g_cpumon->reset();
 
         // set measurement state
 	TRACE(TRACE_ALWAYS, "begin measurement\n");
@@ -561,11 +564,12 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
 	       
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
+        _g_cpumon->pause();
+        _g_cpumon->print_avg_usage();
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "Checkpoint\n");
     }
-
 
     // 3. join the tester threads
     _env->set_measure(MST_DONE);
@@ -582,6 +586,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
 
     // set measurement state
     _env->set_measure(MST_DONE);
+
     return (SHELL_NEXT_CONTINUE);
 }
 
@@ -702,11 +707,14 @@ int main(int argc, char* argv[])
 
     assert (kit.get());
 
+    // 2. Create and fork the cpu monitor   
+    _g_cpumon = new cpumonitor_t();
+    assert (_g_cpumon);
+    _g_cpumon->fork();
 
-    // 2. Instanciate and start the Shore environment
+    // 3. Instanciate and start the Shore environment
     if (kit->inst_test_env(argc, argv))
         return (4);
-
 
     // 4. Make sure data is loaded
     w_rc_t rcl = kit->db()->loaddata();
@@ -714,16 +722,21 @@ int main(int argc, char* argv[])
         return (5);
     }
 
-    // set the global variable to the kit's db - for alarm() to work
+    // 5. Set the global variable to the kit's db - for alarm() to work
     _g_shore_env = kit->db();
 
-    // 5. Start processing commands
+    // 6. Start processing commands
     kit->start();
 
-    // 6. Dump the statistics before exiting
+    // 7. Dump the statistics before exiting
     kit->db()->statistics();
 
-    // 7. the Shore environment will close at the destructor of the kit
+    // 8. Stop, join, and delete the cpu monitor
+    _g_cpumon->stop();
+    _g_cpumon->join();
+    delete (_g_cpumon);
+
+    // 9. the Shore environment will close at the destructor of the kit
     return (0);
 }
 

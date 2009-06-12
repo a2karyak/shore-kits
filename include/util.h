@@ -55,6 +55,7 @@
 #include "util/cache.h"
 #include "util/random_input.h"
 #include "util/atomic_ops.h"
+#include "util/cpustat.h"
 
 
 #endif /** __UTIL_H */
