@@ -60,7 +60,8 @@ UTIL = \
         $(SU)/prcinfo.cpp \
         $(SU)/stl_pool.cpp \
         $(SU)/random_input.cpp \
-        $(SU)/shell.cpp
+        $(SU)/shell.cpp \
+        $(SU)/cpustat.cpp
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \
