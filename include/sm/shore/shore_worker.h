@@ -403,7 +403,8 @@ public:
 
     void stats(); 
 
-    worker_stats_t get_stats() { return (*&_stats); }
+    worker_stats_t get_stats();
+    
     void reset_stats() { _stats.reset(); }
 
 

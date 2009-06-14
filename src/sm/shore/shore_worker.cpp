@@ -364,6 +364,23 @@ void base_worker_t::stats()
 
 
 
+worker_stats_t base_worker_t::get_stats() 
+{ 
+#if 0
+    if (_stats._processed < 10) {
+        // don't print partitions which have served too few actions
+        TRACE( TRACE_STATISTICS, "(%s) few data\n", thread_name().data());
+    }
+    else {
+        TRACE( TRACE_STATISTICS, "(%s)\n", thread_name().data());
+        _stats.print_stats(); 
+    }       
+#endif
+    return (*&_stats); 
+}
+
+
+
 
 
 /****************************************************************** 
