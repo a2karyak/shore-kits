@@ -28,7 +28,7 @@
 #include "dora/range_part_table.h"
 
 #ifdef CFG_DORA_LOGGER
-#include "dora/dora_logger.h"
+#include "dora/logger.h"
 #endif
 
 
