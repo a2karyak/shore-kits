@@ -413,8 +413,7 @@ namespace shore {
 
 
 
-
-
+static const int MILLION = 1000000;
 
 /********************************************************************* 
  *
@@ -489,8 +488,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
 	double delay = timer.time();
         //xct_stats stats = shell_get_xct_stats();
         _g_cpumon->pause();
+        ulong_t miochs = _cpustater->myinfo.iochars()/MILLION;
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               _g_cpumon->get_avg_usage());
+                               miochs, _g_cpumon->get_avg_usage());
 
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
@@ -547,8 +547,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
     }        
     
     // give them some time (2secs) to start-up
-    shell_await_clients();
-    
+    shell_await_clients();    
     
     // 2. run iterations
     for (int j=0; j<iIterations && !base_client_t::is_test_aborted(); j++) {
@@ -570,8 +569,9 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
 	double delay = timer.time();
         _g_cpumon->pause();
 	TRACE(TRACE_ALWAYS, "end measurement\n");
+        ulong_t miochs = _cpustater->myinfo.iochars()/MILLION;
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               _g_cpumon->get_avg_usage());
+                               miochs, _g_cpumon->get_avg_usage());
 	       
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
