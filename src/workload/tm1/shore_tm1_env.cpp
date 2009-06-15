@@ -281,7 +281,7 @@ struct ShoreTM1Env::table_creator_t : public thread_t
         assert (loaders);
         assert (subs_per_worker);
         assert (preloads_per_worker>=0);
-        assert (subs_per_worker<=preloads_per_worker);
+        assert (subs_per_worker>=preloads_per_worker);
     }
     virtual void work();
 
