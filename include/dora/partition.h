@@ -19,7 +19,7 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
 
-#include "dora/lockman.h"
+#include "dora/key.h"
 #include "dora.h"
 
 using namespace shore;

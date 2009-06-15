@@ -18,6 +18,7 @@
 
 #include "util.h"
 #include "workload/tm1/shore_tm1_env.h"
+#include "dora/dora_env.h"
 #include "dora.h"
 
 using namespace shore;
@@ -78,35 +79,12 @@ const int TM1_SUBS_PER_DORA_PART = 10000;
  *
  ********************************************************************/
 
-class DoraTM1Env : public ShoreTM1Env
+class DoraTM1Env : public ShoreTM1Env, public DoraEnv
 {
-public:
-
-    typedef range_partition_impl<int>   irpImpl; 
-    typedef range_part_table_impl<int>  irpTableImpl;
-
-    typedef irpImpl::RangeAction  irpAction;
-
-    typedef vector<irpTableImpl*>       irpTablePtrVector;
-    typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
-
-private:
-
-    // a vector of pointers to integer-range-partitioned tables
-    irpTablePtrVector _irptp_vec;    
-
-    // tm1 setup variables
-    int _starting_cpu;
-    int _cpu_table_step;
-    int _cpu_range;
-    int _sf;
-
-    int _dora_sf;
-
 public:
     
     DoraTM1Env(string confname)
-        : ShoreTM1Env(confname)
+        : ShoreTM1Env(confname), DoraEnv()
     { }
 
     virtual ~DoraTM1Env() 
@@ -126,34 +104,12 @@ public:
     const int newrun();
     const int set(envVarMap* vars);
     const int dump();
-    virtual const int conf();
-    virtual const int info();    
-    virtual const int statistics();    
+    const int info();    
+    const int statistics();    
+    const int conf();
 
 
-
-    //// Client API
-    
-    // enqueues action, false on error
-    inline const int enqueue(irpAction* paction,
-                             const bool bWake, 
-                             irpTableImpl* ptable, 
-                             const int part_pos) 
-    {
-        assert (paction);
-        assert (ptable);
-        return (ptable->enqueue(paction, bWake, part_pos));
-    }
-
-
-
-    //// Partition-related methods
-
-    inline irpImpl* table_part(const int table_pos, const int part_pos) {
-        assert (table_pos<_irptp_vec.size());        
-        return (_irptp_vec[table_pos]->get_part(part_pos));
-    }
-
+    //// Partition-related
 
     inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
         // partitioning function
@@ -161,7 +117,8 @@ public:
     }      
 
 
-    //// DORA TM1 TABLE PARTITIONS
+    //// DORA TM1 - PARTITIONED TABLES
+
     DECLARE_DORA_PARTS(sub);
     DECLARE_DORA_PARTS(ai);
     DECLARE_DORA_PARTS(sf);
@@ -169,12 +126,7 @@ public:
 
 
 
-    //// DORA TM1 TRXs
-
-    //// DORA TM1 ACTIONs and RVPs generating functions
-
-    typedef vector<base_action_t*> baseActionsList;
-    
+    //// DORA TM1 - TRXs   
 
 
     ////////////////
@@ -267,17 +219,8 @@ public:
     DECLARE_DORA_ACTION_GEN_FUNC(r_sub_dcf_action,mid_dcf_rvp,del_call_fwd_input_t);
 
     DECLARE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t);
-
-
-private:
-
-    // algorithm for deciding the distribution of tables 
-    const processorid_t _next_cpu(const processorid_t& aprd,
-                                  const irpTableImpl* atable,
-                                  const int step=DF_CPU_STEP_TABLES);
         
 }; // EOF: DoraTM1Env
-
 
 
 EXIT_NAMESPACE(dora);

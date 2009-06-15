@@ -56,12 +56,12 @@ template <class DataType>
 class range_partition_impl : public partition_t<DataType>
 {
 public:
-    
+
+    typedef typename key_wrapper_t<DataType>     Key;    
+    typedef typename action_t<DataType>          Action;
     typedef range_action_impl<DataType> RangeAction;
 
-    typedef typename action_t<DataType>          Action;
-    typedef typename key_wrapper_t<DataType>     Key;
-    //    using partition_t<DataType>::Key;
+
 
 private:
 

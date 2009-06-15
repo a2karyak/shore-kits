@@ -35,6 +35,9 @@ ENTER_NAMESPACE(dora);
 template <class DataType>
 class range_action_impl : public action_t<DataType>
 {
+public:
+    typedef key_wrapper_t<DataType>  Key;
+
 protected:
 
     // the range of keys

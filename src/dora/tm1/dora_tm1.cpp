@@ -270,62 +270,27 @@ const int DoraTM1Env::info()
  *
  *  @fn:    statistics
  *
- *  @brief: Prints statistics for DORA 
+ *  @brief: Prints statistics for DORA-TM1
  *
  ********************************************************************/
 
 const int DoraTM1Env::statistics() 
 {
+    // DORA STATS
+    TRACE( TRACE_STATISTICS, "----- DORA -----\n");
     int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
+    TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
     for (int i=0;i<sz;++i) {
         _irptp_vec[i]->statistics();
     }
+    return (0);
 
-    // first print any parent statistics
+    // TM1 STATS
+    TRACE( TRACE_STATISTICS, "----- TM1  -----\n");
     ShoreTM1Env::statistics();
 
     return (0);
 }
-
-
-
-
-
-/****************************************************************** 
- *
- * @fn:    _next_cpu()
- *
- * @brief: Deciding the distribution of tables
- *
- * @note:  Very simple (just increases processor id by DF_CPU_STEP) 
-
- * @note:  This decision  can be based among others on:
- *
- *         - aprd                    - the current cpu
- *         - this->_max_cpu_count    - the maximum cpu count (hard-limit)
- *         - this->_active_cpu_count - the active cpu count (soft-limit)
- *         - this->_start_prs_id     - the first assigned cpu for the table
- *         - this->_prs_range        - a range of cpus assigned for the table
- *         - this->_sf               - the scaling factor of the tm1-db
- *         - this->_vec.size()       - the number of tables
- *         - atable                  - the current table
- *
- ******************************************************************/
-
-const processorid_t DoraTM1Env::_next_cpu(const processorid_t& aprd,
-                                           const irpTableImpl* atable,
-                                           const int step)
-{    
-    int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
-    if (binding==0)
-        return (PBIND_NONE);
-
-    processorid_t nextprs = ((aprd+step) % this->get_active_cpu_count());
-    //TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
-    return (nextprs);
-}
-
 
 
 

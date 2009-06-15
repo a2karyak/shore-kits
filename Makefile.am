@@ -162,7 +162,8 @@ DO_BASE = \
    $(SD)/lockman.cpp \
    $(SD)/action.cpp \
    $(SD)/partition.cpp \
-   $(SD)/rvp.cpp
+   $(SD)/rvp.cpp \
+   $(SD)/dora_env.cpp
 
 
 lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)

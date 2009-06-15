@@ -18,6 +18,7 @@
 
 #include "util.h"
 #include "workload/tpcc/shore_tpcc_env.h"
+#include "dora/dora_env.h"
 #include "dora.h"
 
 using namespace shore;
@@ -91,35 +92,10 @@ class ins_ol_nord_action;
  *
  ********************************************************************/
 
-class DoraTPCCEnv : public ShoreTPCCEnv
+class DoraTPCCEnv : public ShoreTPCCEnv, public DoraEnv
 {
 public:
-
-    typedef range_partition_impl<int>   irpImpl; 
-    typedef range_part_table_impl<int>  irpTableImpl;
-
-    typedef irpImpl::RangeAction  irpAction;
-
-    typedef vector<irpTableImpl*>       irpTablePtrVector;
-    typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
-
-private:
-
-    // a vector of pointers to integer-range-partitioned tables
-    irpTablePtrVector _irptp_vec;    
-
-
-    // tpcc setup variables
-    int _starting_cpu;
-    int _cpu_table_step;
-    int _cpu_range;
-    int _sf;
-
-    int _dora_sf;
-
-public:
     
-
     DoraTPCCEnv(string confname)
         : ShoreTPCCEnv(confname)
     { }
@@ -141,34 +117,9 @@ public:
     const int newrun();
     const int set(envVarMap* vars);
     const int dump();
-    virtual const int conf();
-    virtual const int info();    
-    virtual const int statistics();    
-
-
-
-
-    //// Client API
-    
-    // enqueues action, false on error
-    inline const int enqueue(irpAction* paction, 
-                             const bool bWake,
-                             irpTableImpl* ptable, 
-                             const int part_pos) 
-    {
-        assert (paction);
-        assert (ptable);
-        return (ptable->enqueue(paction, bWake, part_pos));
-    }
-
-
-
-    //// Partition-related methods
-
-    inline irpImpl* table_part(const int table_pos, const int part_pos) {
-        assert (table_pos<_irptp_vec.size());        
-        return (_irptp_vec[table_pos]->get_part(part_pos));
-    }
+    const int info();    
+    const int statistics();    
+    const int conf();
 
 
     //// DORA TPCC TABLE PARTITIONS
@@ -183,7 +134,6 @@ public:
     DECLARE_DORA_PARTS(sto);
 
 
-
     //// DORA TPCC TRXs
 
     DECLARE_DORA_TRX(new_order);
@@ -194,13 +144,7 @@ public:
 
     DECLARE_DORA_TRX(mbench_wh);
     DECLARE_DORA_TRX(mbench_cust);
-
-
-
-    //// DORA TPCC ACTIONs and RVPs generating functions
-
-    typedef vector<base_action_t*> baseActionsList;
-    
+   
 
 
     //////////////
@@ -230,8 +174,6 @@ public:
     DECLARE_DORA_ACTION_GEN_FUNC(upd_cust_pay_action,midway_pay_rvp,payment_input_t);
 
     DECLARE_DORA_ACTION_GEN_FUNC(ins_hist_pay_action,rvp_t,payment_input_t);
-    //const tpcc_warehouse_tuple& awh
-    //const tpcc_district_tuple& adist
 
 
 
@@ -332,13 +274,6 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,new_order_input_t);
 
-
-private:
-
-    // algorithm for deciding the distribution of tables 
-    const processorid_t _next_cpu(const processorid_t& aprd,
-                                  const irpTableImpl* atable,
-                                  const int step=DF_CPU_STEP_TABLES);
         
 }; // EOF: DoraTPCCEnv
 
