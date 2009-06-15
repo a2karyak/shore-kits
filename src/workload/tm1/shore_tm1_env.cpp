@@ -278,9 +278,10 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 	: thread_t("TM1-Table-Creator"), _env(env),
           _loaders(loaders),_subs_per_worker(subs_per_worker),_preloads_per_worker(preloads_per_worker)
     { 
-        assert(loaders);
-        assert(subs_per_worker);
-        assert(preloads_per_worker>=0);
+        assert (loaders);
+        assert (subs_per_worker);
+        assert (preloads_per_worker>=0);
+        assert (subs_per_worker<=preloads_per_worker);
     }
     virtual void work();
 
@@ -448,7 +449,8 @@ w_rc_t ShoreTM1Env::loaddata()
         return (RCOK);
     }        
 
-    // 1. create the loader threads
+
+    // 1. Create tables and load a number of records to each table
 
     /* partly (no) thanks to Shore's next key index locking, and
        partly due to page latch and SMO issues, we have ridiculous
@@ -460,22 +462,35 @@ w_rc_t ShoreTM1Env::loaddata()
      */
     
     int loaders_to_use = envVar::instance()->getVarInt("db-loaders",TM1_LOADERS_TO_USE);
+    int creator_loaders_to_use = loaders_to_use;
     w_assert1( loaders_to_use <= TM1_MAX_NUM_OF_LOADERS);
-    int preloads_per_worker = envVar::instance()->getVarInt("db-record-preloads",TM1_SUBS_TO_PRELOAD);
 
     int total_subs = _scaling_factor*TM1_SUBS_PER_SF;
-
     w_assert1((total_subs % loaders_to_use) == 0);
 
     int subs_per_worker = total_subs/loaders_to_use;    
+
+    int preloads_per_worker = envVar::instance()->getVarInt("db-record-preloads",TM1_SUBS_TO_PRELOAD);
+    
+    // Special case for very small databases where the preloads is larger than 
+    // the total subs per worker. In that case the table creator does all the work
+    // (no parallel loaders) 
+    if (subs_per_worker<preloads_per_worker) { 
+        preloads_per_worker = subs_per_worker;
+        loaders_to_use = 0;
+    }
+
     time_t tstart = time(NULL);
 
     {
 	guard<table_creator_t> tc;
-	tc = new table_creator_t(this, loaders_to_use, subs_per_worker, preloads_per_worker);
+	tc = new table_creator_t(this, creator_loaders_to_use, subs_per_worker, preloads_per_worker);
 	tc->fork();
 	tc->join();
     }
+
+
+    // 2. Fire up the loader threads
     
     /* This number is really flexible. Basically, it just needs to be
        high enough to give good parallelism, while remaining low
@@ -496,14 +511,14 @@ w_rc_t ShoreTM1Env::loaddata()
     }
 
 
-    /* 4. join the loading threads */
+    // 3. Join the loading threads
     time_t tstop = time(NULL);
 
-    /* 5. print stats */
+    // 4. Print stats
     TRACE( TRACE_STATISTICS, "Loading finished. %d subscribers loaded in (%d) secs...\n",
            total_subs, (tstop - tstart));
 
-    /* 6. notify that the env is loaded */
+    // 5. Notify that the env is loaded
     _loaded = true;
 
     return (RCOK);
