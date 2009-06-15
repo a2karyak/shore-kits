@@ -117,7 +117,6 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
 
     // 1. check if signalled to stop
     while (get_control() == WC_ACTIVE) {
-        assert (_partition);
         
         // reset the flags for the new loop
         apa = NULL;

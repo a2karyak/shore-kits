@@ -73,6 +73,10 @@ using namespace tpcb;
 #warning Configuration: ELR enabled
 #endif
 
+#ifdef CFG_DORA_LOGGER
+#warning Configuration: DORA-LOGGER enabled
+#endif
+
 #ifdef CFG_EMB_CL
 #warning Configuration: Embedded clients enabled
 #endif

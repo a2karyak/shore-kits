@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   lockman.cpp
+/** @file:   rvp.cpp
  *
  *  @brief:  Implementation of Rendezvous points for DORA
  *
@@ -10,7 +10,8 @@
 #include "dora/rvp.h"
 #include "dora/action.h"
 
-using namespace dora;
+
+ENTER_NAMESPACE(dora);
 
 
 
@@ -140,7 +141,13 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     else {
 
 #ifndef ONLYDORA
+#ifdef CFG_DORA_LOGGER
+        // IP: TODO should call the new version of commit that 
+        //     enqueues the xct* to the list of flushing xcts
+        rcdec = penv->db()->commit_xct();   
+#else        
         rcdec = penv->db()->commit_xct();    
+#endif
 #endif
 
         if (rcdec.is_error()) {
@@ -171,3 +178,6 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
         TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
     return (rcdec);
 }
+
+
+EXIT_NAMESPACE(dora);

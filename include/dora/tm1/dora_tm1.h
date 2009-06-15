@@ -85,11 +85,22 @@ public:
     
     DoraTM1Env(string confname)
         : ShoreTM1Env(confname), DoraEnv()
-    { }
+    { 
+#ifdef CFG_DORA_LOGGER
+        fprintf(stderr, "Starting dora-logger\n");
+        // IP: sli?
+        _logger = new dora_logger_t(this, c_str("dora-logger")); 
+#endif
+    }
 
     virtual ~DoraTM1Env() 
     { 
         stop();
+
+#ifdef CFG_DORA_LOGGER
+        fprintf(stderr, "Stopping dora-logger...\n");
+        _logger->join();
+#endif
     }
 
 

@@ -46,7 +46,7 @@ protected:
     rvp_t*         _prvp;
 
     // trx-specific
-    xct_t*         _xct; // Not the owner
+    xct_t*         _xct;
     tid_t          _tid;
 
     int            _keys_needed;

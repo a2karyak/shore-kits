@@ -24,6 +24,10 @@
 #include "dora/action.h"
 #include "dora/partition.h"
 
+#ifdef CFG_DORA_LOGGER
+#include "dora/logger.h"
+#endif
+
 using namespace shore;
 
 ENTER_NAMESPACE(dora);
@@ -67,7 +71,7 @@ protected:
 
 #ifdef CFG_DORA_LOGGER
     // The dora-logger thread
-    
+    guard<dora_logger_t> _logger;
 #endif
 
 public:
