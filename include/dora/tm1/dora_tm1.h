@@ -99,6 +99,7 @@ public:
 
 #ifdef CFG_DORA_LOGGER
         fprintf(stderr, "Stopping dora-logger...\n");
+        _logger->stop();
         _logger->join();
 #endif
     }

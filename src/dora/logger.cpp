@@ -45,12 +45,15 @@ const int dora_logger_t::_work_ACTIVE_impl()
     xct_t* pxct = NULL;
 
     // 1. check if signalled to stop
-    while (get_control() == WC_ACTIVE) {
+    while (get_control() == WC_ACTIVE) {        
 
         // reset the flags for the new loop
         pxct = NULL;
         set_ws(WS_LOOP);
         
+        TRACE( TRACE_ALWAYS, "Looping\n");
+        sleep(1);
+
         // committed actions
 
         // IP: TODO
@@ -108,6 +111,9 @@ const int dora_logger_t::_work_ACTIVE_impl()
 
 
     }
+
+    TRACE( TRACE_ALWAYS, "Exiting\n");
+
     return (0);
 }
 
