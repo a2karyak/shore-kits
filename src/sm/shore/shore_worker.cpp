@@ -238,6 +238,67 @@ void worker_stats_t::update_rvp_notify_time(const double rvp_notify_time_ms)
 #endif // WORKER_VERBOSE_STATS
 
 
+
+/****************************************************************** 
+ *
+ * base_worker_t
+ * 
+ ******************************************************************/
+
+/****************************************************************** 
+ *
+ * @fn:     work()
+ *
+ * @brief:  Worker thread entrance. Implements a simple state machine
+ * 
+ ******************************************************************/
+
+void base_worker_t::work() 
+{   
+#ifdef CFG_SLI
+    // 1. set SLI option
+    ss_m::set_sli_enabled(_use_sli);
+#endif
+
+    int rval = 0;
+
+    // state machine
+    while (true) {
+        switch (get_control()) {
+        case (WC_PAUSED):
+            if (work_PAUSED())
+                return;
+            break;
+
+        case (WC_ACTIVE):
+
+            _env->env_thread_init();
+
+            // does the real work
+            rval = work_ACTIVE();
+
+            _env->env_thread_fini();
+
+            if (rval)
+                return;
+            break;
+
+        case (WC_STOPPED): // exits
+            work_STOPPED();
+            return;
+            break;
+
+        default:
+            assert(0); // should not be in any other state
+        }
+    }
+}
+
+
+
+
+
+
 /****************************************************************** 
  *
  * @fn:     _work_PAUSED_impl()

@@ -152,6 +152,8 @@ struct worker_stats_t
  * 
  ********************************************************************/
 
+class ShoreEnv;
+
 class base_worker_t : public thread_t 
 {
 protected:
@@ -198,7 +200,6 @@ public:
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
           _next(NULL), _is_bound(false), _prs_id(aprsid), _use_sli(use_sli)
     {
-        assert (_env);        
     }
 
     virtual ~base_worker_t() { }    
@@ -355,47 +356,7 @@ public:
     inline const int work_STOPPED() { return (_work_STOPPED_impl()); }
 
     // thread entrance
-    inline void work() {
-
-#ifdef CFG_SLI
-        // 3. set SLI option
-        ss_m::set_sli_enabled(_use_sli);
-#endif
-
-        int rval = 0;
-
-        // state machine
-        while (true) {
-            switch (get_control()) {
-            case (WC_PAUSED):
-                if (work_PAUSED())
-                    return;
-                break;
-
-            case (WC_ACTIVE):
-
-                _env->env_thread_init();
-
-                // does the real work
-                rval = work_ACTIVE();
-
-                _env->env_thread_fini();
-
-                if (rval)
-                    return;
-                break;
-
-            case (WC_STOPPED): // exits
-                work_STOPPED();
-                return;
-                break;
-
-            default:
-                assert(0); // should not be in any other state
-            }
-        }
-    }
-
+    void work();
 
     // helper //    
 
