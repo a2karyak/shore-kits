@@ -112,6 +112,7 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
                                    const int iSpread, 
                                    const int iNumOfThreads, 
                                    const double delay,
+                                   const ulong_t mioch,
                                    const double avgcpuusage)
 {
     CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
@@ -135,13 +136,14 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
            "Trxs Dld:     (%d)\n"                   \
            "Success Rate: (%.1f%%)\n"               \
            "Secs:         (%.2f)\n"                 \
+           "IOChars:      (%.2fM/s)\n"      \
            "AvgCPUs:      (%.1f) (%.1f%%)\n"        \
            "MQTh/s:       (%.2f)\n",
            iQueriedSF, 
            (iSpread ? "Yes" : "No"),
            iNumOfThreads, trxs_att, trxs_abt, trxs_dld,
            ((double)100*(trxs_att-trxs_abt-trxs_dld))/(double)trxs_att,
-           delay, avgcpuusage, 100*avgcpuusage/64,
+           delay, mioch/delay, avgcpuusage, 100*avgcpuusage/64,
            (trxs_att-trxs_abt-trxs_dld)/delay);
 }
 

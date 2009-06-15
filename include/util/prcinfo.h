@@ -34,7 +34,8 @@
 /*
  * Prints all field resource, usage and microstat accounting fields
  *
- * @note: Taken from -  http://safari.oreilly.com/0131482092/app02lev1sec2 
+ * @note: Taken from - http://my.safaribooksonline.com/0131482092/app02lev1sec2
+ * @note: Look also  - http://docs.sun.com/app/docs/doc/816-5174/proc-4
  *
  */
 
@@ -84,9 +85,9 @@ struct processinfo_t
     ~processinfo_t();
 
     // prints information and resets
-    const int print();
     const int reset();
-
+    const int print();
+    const ulong_t iochars();
 
     static void hr_min_sec(char*, long);
     static void prtime(string label, timestruc_t* ts);
@@ -95,11 +96,6 @@ struct processinfo_t
     static void tsadd(timestruc_t* result, timestruc_t* a, timestruc_t* b);
     static void tssub(timestruc_t* result, timestruc_t* a, timestruc_t* b);
 
-
 }; // EOF: processinfo_t
-
-
-
-
 
 #endif /** __UTIL_PRCINFO_H */

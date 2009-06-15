@@ -112,6 +112,7 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
                                     const int iSpread, 
                                     const int iNumOfThreads, 
                                     const double delay,
+                                    const ulong_t mioch,
                                     const double avgcpuusage)
 {
     CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
@@ -127,22 +128,23 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
     int trxs_dld  = current_stats.deadlocked.total();    
     int nords_com = current_stats.attempted.new_order - current_stats.failed.new_order - current_stats.deadlocked.new_order;
 
-    TRACE( TRACE_ALWAYS, "*******\n"            \
-           "QueriedSF: (%d)\n"                   \
-           "Spread:    (%s)\n"                   \
-           "Threads:   (%d)\n"                   \
-           "Trxs Att:  (%d)\n"                   \
-           "Trxs Abt:  (%d)\n"                   \
-           "Trxs Dld:  (%d)\n"                   \
-           "NOrd Com:  (%d)\n"                   \
-           "Secs:      (%.2f)\n"                 \
-           "AvgCPUs:   (%.1f)\n"                 \
-           "TPS:       (%.2f)\n"                 \
+    TRACE( TRACE_ALWAYS, "*******\n"                \
+           "QueriedSF: (%d)\n"                      \
+           "Spread:    (%s)\n"                      \
+           "Threads:   (%d)\n"                      \
+           "Trxs Att:  (%d)\n"                      \
+           "Trxs Abt:  (%d)\n"                      \
+           "Trxs Dld:  (%d)\n"                      \
+           "NOrd Com:  (%d)\n"                      \
+           "Secs:      (%.2f)\n"                    \
+           "IOChars:   (%.2fM/s)\n"                 \
+           "AvgCPUs:   (%.1f) (%.1f%%)\n"           \
+           "TPS:       (%.2f)\n"                    \
            "tpm-C:     (%.2f)\n",
            iQueriedSF, 
            (iSpread ? "Yes" : "No"),
            iNumOfThreads, trxs_att, trxs_abt, trxs_dld, nords_com, 
-           delay, avgcpuusage,
+           delay, mioch/delay, avgcpuusage, 100*avgcpuusage/64,
            (trxs_att-trxs_abt-trxs_dld)/delay,
            60*nords_com/delay);
 }

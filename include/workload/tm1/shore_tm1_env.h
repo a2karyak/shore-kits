@@ -216,6 +216,7 @@ public:
                                   const int iSpread, 
                                   const int iNumOfThreads,
                                   const double delay,
+                                  const ulong_t mioch,
                                   const double avgcpuusage);
 
     // Public methods //    

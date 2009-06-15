@@ -111,6 +111,7 @@ void ShoreTPCBEnv::print_throughput(const int iQueriedSF,
                                     const int iSpread, 
                                     const int iNumOfThreads, 
                                     const double delay,
+                                    const ulong_t mioch,
                                     const double avgcpuusage)
 {
     CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
@@ -133,12 +134,13 @@ void ShoreTPCBEnv::print_throughput(const int iQueriedSF,
            "Trxs Abt:  (%d)\n"                   \
            "Trxs Dld:  (%d)\n"                   \
            "Secs:      (%.2f)\n"                 \
-           "AvgCPUs:   (%.1f)\n"                 \
+           "IOChars:   (%.2fM/s)\n"      \
+           "AvgCPUs:   (%.1f) (%.1f%%)\n"        \
            "TPS:       (%.2f)\n",
            iQueriedSF, 
            (iSpread ? "Yes" : "No"),
            iNumOfThreads, trxs_att, trxs_abt, trxs_dld,
-           delay, avgcpuusage,
+           delay, mioch/delay, avgcpuusage, 100*avgcpuusage/64,
            (trxs_att-trxs_abt-trxs_dld)/delay);
 }
 

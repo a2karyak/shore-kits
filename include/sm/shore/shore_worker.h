@@ -335,17 +335,17 @@ public:
     }
     
     // commands
-    inline void stop() {    
+    void stop() {    
         set_control(WC_STOPPED);
         if (is_sleeping()) _notify.signal();
     }
 
-    inline void start() {
+    void start() {
         set_control(WC_ACTIVE);
         if (is_sleeping()) _notify.signal();
     }
 
-    inline void pause() {
+    void pause() {
         set_control(WC_PAUSED);
         if (is_sleeping()) _notify.signal();
     }        
