@@ -81,6 +81,9 @@ using namespace tpcb;
 #warning Configuration: Embedded clients enabled
 #endif
 
+#ifdef CFG_DLOG
+#warning Configuration: DLOG enabled
+#endif
 
 
 cpumonitor_t* _g_cpumon;

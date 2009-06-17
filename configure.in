@@ -241,18 +241,19 @@ AC_MSG_RESULT($KITS_HOME)
 # Give a list of features with the defaults
 KITS_FEATURES=""
 
-# There are three supported options:
-# (1) --enable-dora        : includes dora files, sets CFG_DORA
-# (2) --enable-sli         : sets CFG_SLI
-# (3) --enable-elr         : sets CFG_ELR
-# (4) --enable-doralogger  : sets CFG_DORA_LOGGER, enables also ELR
-# (5) --enable-embclients  : sets CFG_EMB_CL
+# There are six supported options:
+# (1) --enable-dora       : includes dora files, (sets USE_DORA=1), defines CFG_DORA
+# (2) --enable-sli        : defines CFG_SLI
+# (3) --enable-elr        : defines CFG_ELR
+# (4) --enable-dlog       : defines CFG_DLOG (distributed log)
+# (5) --enable-doralogger : defines CFG_DORA_LOGGER, enables also ELR
+# (6) --enable-embclients : defines CFG_EMB_CL
 
 
 # --- DORA ---
 AC_MSG_CHECKING(whether to enable Dora)
 AC_ARG_ENABLE(dora, 
-[ --enable-dora   Enable DORA],
+[  --enable-dora           Enable DORA],
 [case "${enableval}" in
   yes) dora=true ;;
   no)  dora=false ;;
@@ -275,7 +276,7 @@ fi
 # --- SLI ---
 AC_MSG_CHECKING(whether to enable SLI option)
 AC_ARG_ENABLE(sli, 
-[ --enable-sli   Enable SLI option],
+[  --enable-sli            Enable SLI option],
 [case "${enableval}" in
   yes) sli=true ;;
   no)  sli=false ;;
@@ -298,7 +299,7 @@ fi
 # --- ELR ---
 AC_MSG_CHECKING(whether to enable ELR option)
 AC_ARG_ENABLE(elr, 
-[ --enable-elr   Enable ELR option],
+[  --enable-elr            Enable ELR option],
 [case "${enableval}" in
   yes) elr=true ;;
   no)  elr=false ;;
@@ -317,6 +318,28 @@ else
 fi
 # --- EOF ELR ---   
 
+
+# --- DLOG ---
+AC_MSG_CHECKING(whether to use dlog)
+AC_ARG_ENABLE(dlog, 
+[  --enable-dlog           Enable dlog (distributed log)],
+[case "${enableval}" in
+  yes) dlog=true ;;
+  no)  dlog=false ;;
+  *) dlog=true ;;
+esac],[dlog=false])
+AM_CONDITIONAL(ADD_OPT_DLOG, test x$dlog = xtrue)
+
+if test "$dlog" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES dlog"
+     AC_MSG_WARN([DLOG enabled. Should check if Shore-mt is DLOG-compatible])
+     AC_DEFINE(CFG_DLOG)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF DLOG ---   
 
 
 # --- DORALOGGER ---
@@ -351,7 +374,7 @@ fi
 # --- EMBEDDED CLIENTS ---
 AC_MSG_CHECKING(whether to use embedded clients)
 AC_ARG_ENABLE(embclients, 
-[ --enable-embclients   Use embedded clients - cannot be combined with --enable-dora],
+[  --enable-embclients     Use embedded clients - cannot be combined with --enable-dora],
 [case "${enableval}" in
   yes) embclients=true ;;
   no)  embclients=false ;;

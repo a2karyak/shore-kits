@@ -2,15 +2,16 @@
 
 
 # Shore related 
-SHORE = $(SHORE_HOME)/src
+SHORE_SRC = $(SHORE_HOME)/src
 SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE
-SHORE_INCLUDES = -I$(SHORE)/fc -I$(SHORE)/sm -I$(SHORE)/common -I$(SHORE)/sthread -I$(SHORE)/../config $(SHORE_CXXFLAGS) -I$(SHORE_HOME)/../ppmcs
-SHORE_LDADD = -L$(SHORE)/fc -L$(SHORE)/sm -L$(SHORE)/common -L$(SHORE)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc -L$(SHORE_HOME)/../ppmcs -lppmcs
+SHORE_INCLUDES = -I$(SHORE_SRC)/fc -I$(SHORE_SRC)/sm -I$(SHORE_SRC)/common -I$(SHORE_SRC)/sthread -I$(SHORE_SRC)/../config -I$(SHORE_HOME)/../ppmcs $(SHORE_CXXFLAGS)
+SHORE_LDADD = -L$(SHORE_SRC)/fc -L$(SHORE_SRC)/sm -L$(SHORE_SRC)/common -L$(SHORE_SRC)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc -L$(SHORE_HOME)/../ppmcs -lppmcs
 
+### -L$(SHORE_HOME)/../ppmcs
 
-
-# GLOBAL includes
+# GLOBAL includes/ld
 INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
 
 # List of libraries
 if USE_DORA
@@ -24,14 +25,8 @@ else
       lib/libworkload.a lib/libsm.a lib/libutil.a
 endif
 
-
-# GLOBAL ld
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
-
-
 FE = \
    shore_kits
-
 
 bin_PROGRAMS = $(FE)
 
