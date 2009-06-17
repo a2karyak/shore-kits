@@ -1,13 +1,13 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   logger.h
+/** @file:   flusher.h
  *
- *  @brief:  The dora-logger.
+ *  @brief:  The dora-flusher.
  *
  *  @author: Ippokratis Pandis, Jun 2008
  */
 
-#include "dora/logger.h"
+#include "dora/flusher.h"
 
 ENTER_NAMESPACE(dora);
 
@@ -22,7 +22,7 @@ ENTER_NAMESPACE(dora);
  * 
  ******************************************************************/
 
-const int dora_logger_t::_work_ACTIVE_impl()
+const int dora_flusher_t::_work_ACTIVE_impl()
 {    
     //    TRACE( TRACE_DEBUG, "Activating...\n");
     int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
@@ -50,64 +50,53 @@ const int dora_logger_t::_work_ACTIVE_impl()
         // reset the flags for the new loop
         pxct = NULL;
         set_ws(WS_LOOP);
-        
-        TRACE( TRACE_ALWAYS, "Looping\n");
-        sleep(1);
 
-        // committed actions
+        // 2. first release any committed actions
+        while (_partition->has_committed()) {           
 
-        // IP: TODO
-
-        // THE COMMITTED ACTIONS BECOME FLUSHED XCT*
-        // THE INPUT ACTIONS BECOME FLUSHING XCT*
-
-
-//         // 2. first release any committed actions
-//         while (_partition->has_committed()) {           
-
-//             // 2a. get the first committed
-//             apa = _partition->dequeue_commit();
-//             assert (apa);
-//             TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
+            // 2a. get the first committed
+            apa = _partition->dequeue_commit();
+            assert (apa);
+            TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
             
-//             // 2b. release the locks acquired for this action
-//             apa->trx_rel_locks(actionReadyList,actionPromotedList);
-//             TRACE( TRACE_TRX_FLOW, "Received (%d) ready\n", actionReadyList.size());
+            // 2b. release the locks acquired for this action
+            apa->trx_rel_locks(actionReadyList,actionPromotedList);
+            TRACE( TRACE_TRX_FLOW, "Received (%d) ready\n", actionReadyList.size());
 
-//             // 2c. the action has done its cycle, and can be deleted
-//             apa->giveback();
-//             apa = NULL;
+            // 2c. the action has done its cycle, and can be deleted
+            apa->giveback();
+            apa = NULL;
 
-//             // 2d. serve any ready to execute actions 
-//             //     (those actions became ready due to apa's lock releases)
-//             for (BaseActionPtrIt it=actionReadyList.begin(); it!=actionReadyList.end(); ++it) {
-//                 _serve_action(*it);
-//                 ++_stats._served_waiting;
-//             }
+            // 2d. serve any ready to execute actions 
+            //     (those actions became ready due to apa's lock releases)
+            for (BaseActionPtrIt it=actionReadyList.begin(); it!=actionReadyList.end(); ++it) {
+                _serve_action(*it);
+                ++_stats._served_waiting;
+            }
 
-//             // clear the two lists
-//             actionReadyList.clear();
-//             actionPromotedList.clear();
-//         }            
+            // clear the two lists
+            actionReadyList.clear();
+            actionPromotedList.clear();
+        }            
 
-//         // new (input) actions
+        // new (input) actions
 
-//         // 3. dequeue an action from the (main) input queue
+        // 3. dequeue an action from the (main) input queue
 
-//         // @note: it will spin inside the queue or (after a while) wait on a cond var
+        // @note: it will spin inside the queue or (after a while) wait on a cond var
 
-//         apa = _partition->dequeue();
+        apa = _partition->dequeue();
 
-//         // 4. check if it can execute the particular action
-//         if (apa) {
-//             TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid());
-//             if (apa->trx_acq_locks()) {
-//                 // 4b. if it can acquire all the locks, 
-//                 //     go ahead and serve this action
-//                 _serve_action(apa);
-//                 ++_stats._served_input;
-//             }
-//         }
+        // 4. check if it can execute the particular action
+        if (apa) {
+            TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid());
+            if (apa->trx_acq_locks()) {
+                // 4b. if it can acquire all the locks, 
+                //     go ahead and serve this action
+                _serve_action(apa);
+                ++_stats._served_input;
+            }
+        }
 
 
     }

@@ -1,8 +1,8 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   logger.h
+/** @file:   flusher.h
  *
- *  @brief:  Specialization of a worker thread that acts as the dora-logger.
+ *  @brief:  Specialization of a worker thread that acts as the dora-flusher.
  *
  *  @author: Ippokratis Pandis, Jun 2008
  */
@@ -17,15 +17,15 @@
    The thread that it is responsible for the execution of the transaction, or in DORA's
    case the thread that executes the final-rvp, instead of having to ctx waiting for
    the log-flush to finish, it transfers the control to another specialized worker thread,
-   called dora-logger. 
-   The dora-logger, peaks all the transactions whose log-flush has finished, and they are
+   called dora-flusher. 
+   The dora-flusher, peaks all the transactions whose log-flush has finished, and they are
    runnable again, and finalizes the work, notifying the client etc... The code looks like:
 
    dora-worker that executes final-rvp:
    { ... commit();
-   dora-logger->enqueue_flushing(pxct); } 
+   dora-flusher->enqueue_flushing(pxct); } 
    
-   dora-logger:
+   dora-flusher:
    while (true) {
    if (has_flushed()) {
       xct* pxct = flushed_queue->get_one();
@@ -33,11 +33,11 @@
    else { !! move all newly ready xct from flushing_queue }
 
    In order to enable this mechanism Shore-kits needs to be configured with:
-   --enable-dora --enable-elr --enable-dora-logger
+   --enable-dora --enable-elr --enable-dora-flusher
 */
 
-#ifndef __DORA_LOGGER_H
-#define __DORA_LOGGER_H
+#ifndef __DORA_FLUSHER_H
+#define __DORA_FLUSHER_H
 
 
 #include "dora.h"
@@ -51,13 +51,13 @@ ENTER_NAMESPACE(dora);
 
 /******************************************************************** 
  *
- * @class: dora_logger_t
+ * @class: dora_flusher_t
  *
  * @brief: A template-based class for the worker threads
  * 
  ********************************************************************/
 
-class dora_logger_t : public base_worker_t
+class dora_flusher_t : public base_worker_t
 {   
 public:
     typedef srmwqueue<xct_t*>          Queue;
@@ -77,7 +77,7 @@ private:
 
 public:
 
-    dora_logger_t(ShoreEnv* env, c_str tname,
+    dora_flusher_t(ShoreEnv* env, c_str tname,
                   processorid_t aprsid = PBIND_NONE, const int use_sli = 0) 
         : base_worker_t(env, tname, aprsid, use_sli)
     { 
@@ -85,12 +85,14 @@ public:
 
         _pxct_flushing_pool = new Pool(sizeof(xct_t*),expected_sz);
         _flushing = new Queue(_pxct_flushing_pool.get());
+        assert (_flushing->get());
 
         _pxct_flushed_pool = new Pool(sizeof(xct_t*),expected_sz);
         _flushed = new Queue(_pxct_flushed_pool.get());        
+        assert (_flushed->get());
     }
 
-    ~dora_logger_t() 
+    ~dora_flusher_t() 
     { 
         _flushing.done();
         _pxct_flushing_pool.done();
@@ -98,10 +100,16 @@ public:
         _pxct_flushed_pool.done();
     }
 
-}; // EOF: dora_logger_t
+    //// Access methods
+
+    inline enqueue_flushing(xct_t* axct) { _flushing.push(axct, true); }
+    inline enqueue_flushed(xct_t* axct) { _flushed.push(axct, true); }
+    
+
+}; // EOF: dora_flusher_t
 
 
 EXIT_NAMESPACE(dora);
 
-#endif /** __DORA_LOGGER_H */
+#endif /** __DORA_FLUSHER_H */
 
