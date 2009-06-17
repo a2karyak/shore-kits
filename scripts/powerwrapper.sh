@@ -34,8 +34,8 @@ TRXSHELL="shore_kits"
 mkdir -p $BASE_DIR
 
 # remove log 
-echo rm log/*
-rm log/*
+echo rm -rf log/*
+rm -rf log/*
 
 
 CMD="source $EXPSHELL $LOW $HIGH $XCT $TIME $ITER | $TRXSHELL 2>&1 | tee $OUTFILE"
