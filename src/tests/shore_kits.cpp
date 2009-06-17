@@ -495,6 +495,11 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
                                miochs, _g_cpumon->get_avg_usage());
 
+        const load_values_t load = _cpustater->myinfo.getload();
+        TRACE( TRACE_ALWAYS, "AbsLoad = (%.2f)\n", load.run_tm/delay);
+        _cpustater->myinfo.print();
+        
+
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");
@@ -575,6 +580,11 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         ulong_t miochs = _cpustater->myinfo.iochars()/MILLION;
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
                                miochs, _g_cpumon->get_avg_usage());
+
+        const load_values_t load = _cpustater->myinfo.getload();
+        TRACE( TRACE_ALWAYS, "\nCpuLoad = (%.2f)\nAbsLoad = (%.2f)\n", 
+               (load.run_tm+load.wait_tm)/load.run_tm, load.run_tm/delay);
+        _cpustater->myinfo.print();
 	       
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);

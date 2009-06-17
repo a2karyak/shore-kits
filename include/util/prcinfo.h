@@ -70,6 +70,15 @@
 using namespace std;
 
 
+struct load_values_t
+{
+    double run_tm;  // RunningTime = User time + System time + Other Trap time
+    double wait_tm; // Time in runqueue
+    load_values_t() : run_tm(0), wait_tm(0) { }
+    ~load_values_t() { }
+};
+
+
 struct processinfo_t 
 {
     int _fd;
@@ -88,6 +97,9 @@ struct processinfo_t
     const int reset();
     const int print();
     const ulong_t iochars();
+    const load_values_t getload();
+
+    static const double trans(timestruc_t ats);
 
     static void hr_min_sec(char*, long);
     static void prtime(string label, timestruc_t* ts);
