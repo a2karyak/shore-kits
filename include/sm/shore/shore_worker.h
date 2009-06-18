@@ -49,7 +49,7 @@ ENTER_NAMESPACE(shore);
 
 // Use this to enable verbode stats for worker threads
 #undef WORKER_VERBOSE_STATS
-#define WORKER_VERBOSE_STATS
+//#define WORKER_VERBOSE_STATS
 
 // ditto
 #undef WORKER_VERY_VERBOSE_STATS
