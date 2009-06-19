@@ -9,6 +9,7 @@
 
 #include "dora/rvp.h"
 #include "dora/action.h"
+#include "dora/dora_env.h"
 
 
 ENTER_NAMESPACE(dora);
@@ -111,12 +112,10 @@ const int terminal_rvp_t::notify()
  *
  ******************************************************************/
 
-w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
+w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 {
-    assert (penv);
-
-    // attach to this xct
 #ifndef ONLYDORA
+    // attach to this xct
     assert (_xct);
     smthread_t::me()->attach_xct(_xct);
 #endif
@@ -126,7 +125,14 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     if (_decision == AD_ABORT) {
 
 #ifndef ONLYDORA
-        rcdec = penv->db()->abort_xct();
+#ifdef CFG_DORA_FLUSHER
+        // 1. Call pre-abort
+        // 2. Enqueue to dora-flusher->flushing
+        rcdec = db->begin_abort_xct(_dummy_stats);
+        denv->enqueue_flushing(this);
+#else
+        rcdec = db->abort_xct();
+#endif
 #endif
 
         if (rcdec.is_error()) {
@@ -141,12 +147,14 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
     else {
 
 #ifndef ONLYDORA
-#ifdef CFG_DORA_LOGGER
-        // IP: TODO should call the new version of commit that 
-        //     enqueues the xct* to the list of flushing xcts
-        rcdec = penv->db()->commit_xct();   
+#ifdef CFG_DORA_FLUSHER
+        // 1. Call pre-commit
+        // 2. Enqueue to dora-flusher->flushing
+        rcdec = db->begin_commit_xct(_dummy_stats);
+        denv->enqueue_flushing(this);
 #else        
-        rcdec = penv->db()->commit_xct();    
+
+        rcdec = db->commit_xct();    
 #endif
 #endif
 
@@ -156,7 +164,8 @@ w_rc_t terminal_rvp_t::_run(ShoreEnv* penv)
             upd_aborted_stats(); // hook - update aborted stats
 
 #ifndef ONLYDORA
-            w_rc_t eabort = penv->db()->abort_xct();
+            assert (0); // IP: TODO: Need to check if this can be done with dora-flusher
+            w_rc_t eabort = db->abort_xct();
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                        _tid, eabort.err_num());

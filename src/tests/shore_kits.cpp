@@ -65,16 +65,16 @@ using namespace tpcb;
 #warning Configuration: DORA enabled
 #endif
 
+#ifdef CFG_DORA_FLUSHER
+#warning Configuration: DORA-FLUSHER enabled
+#endif
+
 #ifdef CFG_SLI
 #warning Configuration: SLI enabled
 #endif
 
 #ifdef CFG_ELR
 #warning Configuration: ELR enabled
-#endif
-
-#ifdef CFG_DORA_LOGGER
-#warning Configuration: DORA-LOGGER enabled
 #endif
 
 #ifdef CFG_EMB_CL

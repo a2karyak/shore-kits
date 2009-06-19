@@ -72,7 +72,7 @@ w_rc_t midway_pay_rvp::run()
 
 w_rc_t final_pay_rvp::run() 
 {
-    return (_run(_ptpccenv)); 
+    return (_run(_ptpccenv->db(),_ptpccenv)); 
 }
 
 void final_pay_rvp::upd_committed_stats() 

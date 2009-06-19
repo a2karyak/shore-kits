@@ -279,11 +279,15 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
             r_code = de_WORKER_RUN_RVP;
         }
 
+#ifndef CFG_DORA_FLUSHER
+        // If enabled, the logflusher is the one who will notify
+        // and giveback the RVP
+
         // enqueue committed actions
-        int comActions = aprvp->notify();
-            
+        int comActions = aprvp->notify();            
         // delete rvp
         aprvp->giveback();
+#endif
         aprvp = NULL;
     }
 #ifdef WORKER_VERBOSE_STATS

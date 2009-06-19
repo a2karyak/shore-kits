@@ -24,6 +24,9 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
+class DoraEnv;
+
+
 /******************************************************************** 
  *
  * @class: rvp_t
@@ -89,9 +92,19 @@ public:
     { 
         _set(atid, axct, axctid, presult,
              intra_trx_cnt, total_actions);
+
+#ifdef CFG_DORA_FLUSHER
+        _dummy_stats = 0;
+#endif
     }
 
-    virtual ~rvp_t() { _xct = NULL; }    
+    virtual ~rvp_t() { 
+        _xct = NULL; 
+
+#ifdef CFG_DORA_FLUSHER
+        if (_dummy_stats) delete (_dummy_stats);
+#endif
+    }    
 
     // copying allowed
     rvp_t(const rvp_t& rhs)
@@ -114,6 +127,11 @@ public:
     const int append_actions(const baseActionsList& actionList);
     const int add_action(base_action_t* paction);
 
+
+#ifdef CFG_DORA_FLUSHER
+    // needed for begin-/end-commit
+    sm_stats_info_t*     _dummy_stats;
+#endif
 
     inline bool post(bool is_error=false) { 
         if (is_error) abort();        
@@ -226,7 +244,7 @@ public:
 
 protected:
 
-    w_rc_t _run(ShoreEnv* penv);
+    w_rc_t _run(ss_m* db, DoraEnv* denv);
 
 }; // EOF: terminal_rvp_t
 

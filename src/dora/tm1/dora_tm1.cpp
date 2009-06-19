@@ -50,9 +50,11 @@ const int cf_KEY_EST  = 3750;
 
 const int DoraTM1Env::start()
 {
-    // 1. Creates partitioned tables
-    // 2. Adds them to the vector
-    // 3. Resets each table
+    // 1. Read configuration
+    // 2. Create partitioned tables
+    // 3. Add them to the vector
+    // 4. Reset each table
+    // 5. Start logger
 
     conf(); // re-configure
 
@@ -82,6 +84,9 @@ const int DoraTM1Env::start()
     for (int i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->reset();
     }
+
+    TRACE( TRACE_ALWAYS, "Starting flusher\n");
+    _flusher->start();
 
     set_dbc(DBC_ACTIVE);
     return (0);

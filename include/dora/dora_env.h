@@ -24,8 +24,8 @@
 #include "dora/action.h"
 #include "dora/partition.h"
 
-#ifdef CFG_DORA_LOGGER
-#include "dora/logger.h"
+#ifdef CFG_DORA_FLUSHER
+#include "dora/flusher.h"
 #endif
 
 using namespace shore;
@@ -69,9 +69,9 @@ protected:
 
     int _dora_sf;
 
-#ifdef CFG_DORA_LOGGER
-    // The dora-logger thread
-    guard<dora_logger_t> _logger;
+#ifdef CFG_DORA_FLUSHER
+    // The dora-flusher thread
+    guard<dora_flusher_t> _flusher;
 #endif
 
 public:
@@ -94,6 +94,14 @@ public:
     }
 
 
+
+    //// Flusher-related
+#ifdef CFG_DORA_FLUSHER
+    inline void enqueue_flushing(rvp_t* arvp) {
+        assert (_flusher.get());
+        _flusher->enqueue_flushing(arvp);
+    }
+#endif
 
     //// Partition-related methods
 

@@ -133,8 +133,7 @@ w_rc_t mid2_del_rvp::run()
  ********************************************************************/
 
 w_rc_t final_del_rvp::run() {
-    assert (_ptpccenv); 
-    return (_run(_ptpccenv)); 
+    return (_run(_ptpccenv->db(),_ptpccenv)); 
 }
 
 void final_del_rvp::upd_committed_stats() 

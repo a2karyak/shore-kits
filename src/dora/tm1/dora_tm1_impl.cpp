@@ -152,6 +152,9 @@ done:
  *
  ********************************************************************/
 
+
+#warning TODO: make a serial version of TM1-GetNewDest
+
 DEFINE_DORA_FINAL_RVP_CLASS(final_gnd_rvp,get_new_dest);
 
 
@@ -427,6 +430,8 @@ done:
  * DORA TM1 UPD_SUB_DATA
  *
  ********************************************************************/
+
+#warning TODO: make a serial version of TM1-UpdSubData
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_usd_rvp,upd_sub_data);
 

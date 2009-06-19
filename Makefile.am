@@ -160,8 +160,8 @@ DO_BASE = \
    $(SD)/rvp.cpp \
    $(SD)/dora_env.cpp
 
-if USE_DORALOGGER
-DO_BASE += $(SD)/logger.cpp
+if USE_DORAFLUSHER
+DO_BASE += $(SD)/flusher.cpp
 endif
 
 lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)

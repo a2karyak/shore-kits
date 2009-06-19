@@ -242,12 +242,12 @@ AC_MSG_RESULT($KITS_HOME)
 KITS_FEATURES=""
 
 # There are six supported options:
-# (1) --enable-dora       : includes dora files, (sets USE_DORA=1), defines CFG_DORA
-# (2) --enable-sli        : defines CFG_SLI
-# (3) --enable-elr        : defines CFG_ELR
-# (4) --enable-dlog       : defines CFG_DLOG (distributed log)
-# (5) --enable-doralogger : defines CFG_DORA_LOGGER, enables also ELR
-# (6) --enable-embclients : defines CFG_EMB_CL
+# (1) --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
+# (2) --enable-doraflusher : defines CFG_DORA_FLUSHER
+# (3) --enable-sli         : defines CFG_SLI
+# (4) --enable-elr         : defines CFG_ELR
+# (5) --enable-dlog        : defines CFG_DLOG (distributed log)
+# (6) --enable-embclients  : defines CFG_EMB_CL
 
 
 # --- DORA ---
@@ -273,6 +273,60 @@ fi
 # --- EOF DORA ---
 
 
+# --- ELR ---
+AC_MSG_CHECKING(whether to enable ELR option)
+AC_ARG_ENABLE(elr, 
+[  --enable-elr            Enable ELR option],
+[case "${enableval}" in
+  yes) elr=true ;;
+  no)  elr=false ;;
+  *) elr=true ;;
+esac],[elr=false])
+AM_CONDITIONAL(ADD_OPT_ELR, test x$elr = xtrue)
+
+if test "$elr" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES elr"
+     AC_MSG_WARN([ELR enabled. Should check if Shore-mt is ELR-compatible])
+     AC_DEFINE(CFG_ELR)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF ELR ---   
+
+
+# --- DORAFLUSHER ---
+AC_MSG_CHECKING(whether to enable DORA-FLUSHER option)
+AC_ARG_ENABLE(dflusher, 
+[  --enable-dflusher       Enable DORA-FLUSHER option],
+[case "${enableval}" in
+  yes) dflusher=true ;;
+  no)  dflusher=false ;;
+  *) dflusher=true ;;
+esac],[dflusher=false])
+AM_CONDITIONAL(USE_DORAFLUSHER, test x$dflusher = xtrue)
+
+if test "$dflusher" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES dflusher"
+     AC_MSG_WARN([DORA-FLUSHER enabled. Should check if Shore-mt has pre-/meta-commit & abort])
+     AC_DEFINE(CFG_DORA_FLUSHER)
+
+     # Special case: warn about DORA-FLUSHER without ELR
+     if test "$elr" = false
+     then
+        AC_MSG_WARN(DORA-FLUSHER without ERL)
+     fi
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF DORAFLUSHER ---   
+
+
+
+
 # --- SLI ---
 AC_MSG_CHECKING(whether to enable SLI option)
 AC_ARG_ENABLE(sli, 
@@ -295,28 +349,6 @@ else
 fi
 # --- EOF SLI --- 
 
-
-# --- ELR ---
-AC_MSG_CHECKING(whether to enable ELR option)
-AC_ARG_ENABLE(elr, 
-[  --enable-elr            Enable ELR option],
-[case "${enableval}" in
-  yes) elr=true ;;
-  no)  elr=false ;;
-  *) elr=true ;;
-esac],[elr=false])
-AM_CONDITIONAL(ADD_OPT_ELR, test x$elr = xtrue)
-
-if test "$elr" = true
-then 
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES elr"
-     AC_MSG_WARN([ELR enabled. Should check if Shore-mt is ELR-compatible])
-     AC_DEFINE(CFG_ELR)
-else
-     AC_MSG_RESULT(no)
-fi
-# --- EOF ELR ---   
 
 
 # --- DLOG ---
@@ -341,34 +373,6 @@ else
 fi
 # --- EOF DLOG ---   
 
-
-# --- DORALOGGER ---
-AC_MSG_CHECKING(whether to enable DORA-LOGGER option)
-AC_ARG_ENABLE(doralogger, 
-[ --enable-doralogger   Enable DORA-LOGGER option],
-[case "${enableval}" in
-  yes) doralogger=true ;;
-  no)  doralogger=false ;;
-  *) doralogger=true ;;
-esac],[doralogger=false])
-AM_CONDITIONAL(USE_DORALOGGER, test x$doralogger = xtrue)
-
-if test "$doralogger" = true
-then 
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES doralogger"
-     AC_MSG_WARN([DORA-LOGGER enabled. Should check if Shore-mt is ELR-compatible])
-     AC_DEFINE(CFG_DORA_LOGGER)
-
-     # Special case: cannot allow DORA-LOGGER without ELR
-     if test "$elr" = false
-     then
-        AC_MSG_ERROR(Cannot have DORA-LOGGER without ERL)
-     fi
-else
-     AC_MSG_RESULT(no)
-fi
-# --- EOF DORALOGGER ---   
 
 
 # --- EMBEDDED CLIENTS ---

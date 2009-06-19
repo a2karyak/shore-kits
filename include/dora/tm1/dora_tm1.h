@@ -86,10 +86,11 @@ public:
     DoraTM1Env(string confname)
         : ShoreTM1Env(confname), DoraEnv()
     { 
-#ifdef CFG_DORA_LOGGER
-        fprintf(stderr, "Starting dora-logger\n");
+#ifdef CFG_DORA_FLUSHER
         // IP: sli?
-        _logger = new dora_logger_t(this, c_str("dora-logger")); 
+        _flusher = new dora_flusher_t(this, c_str("dora-flusher")); 
+        assert(_flusher.get());
+        _flusher->fork();
 #endif
     }
 
@@ -97,10 +98,10 @@ public:
     { 
         stop();
 
-#ifdef CFG_DORA_LOGGER
-        fprintf(stderr, "Stopping dora-logger...\n");
-        _logger->stop();
-        _logger->join();
+#ifdef CFG_DORA_FLUSHER
+        fprintf(stderr, "Stopping dora-flusher...\n");
+        _flusher->stop();
+        _flusher->join();
 #endif
     }
 
