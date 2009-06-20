@@ -1,10 +1,14 @@
- #!/bin/bash
+#!/bin/bash
 
 #@file:   er_filter_dora.sh 
 #@brief:  Post-processing script for the output of dbx, for DORA 
 #
 #@author: Ryan Johnson
 #@author: Ippokratis Pandis
+#
+#@typical usage:
+#find EXPDBX/ -name "*.er" | grep -v startup | xargs -n 1 ../scripts/er_filter_dora.sh | tee dump.csv
+#
 
 in_stack()
 {
@@ -71,4 +75,5 @@ er_print -limit 5 \
     -filters "$BASE && $LM && $CONTENTION" -functions \
     -filters "$BASE && $LOGM" -functions \
     -filters "$BASE && $LOGM && $CONTENTION" -functions \
+    -filters "$BASE && $DORA" -functions \
     $@
