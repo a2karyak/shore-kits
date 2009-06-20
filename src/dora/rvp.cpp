@@ -84,6 +84,29 @@ const int rvp_t::add_action(base_action_t* paction)
 }
 
 
+
+/****************************************************************** 
+ *
+ * @fn:    notify_client()
+ *
+ * @brief: If it is time, notifies the client (signals client's cond var) 
+ *
+ ******************************************************************/
+
+void rvp_t::notify_client() 
+{
+    // signal cond var
+    if(_result.get_notify()) {
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
+               _tid, _result.get_notify());
+	_result.get_notify()->signal();
+    }
+    else
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
+}
+
+
+
 /****************************************************************** 
  *
  * @fn:    notify()
@@ -129,6 +152,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         // 1. Call pre-abort
         // 2. Enqueue to dora-flusher->flushing
         rcdec = db->begin_abort_xct(_dummy_stats);
+        smthread_t::me()->detach_xct(_xct);
         denv->enqueue_flushing(this);
 #else
         rcdec = db->abort_xct();
@@ -151,6 +175,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         // 1. Call pre-commit
         // 2. Enqueue to dora-flusher->flushing
         rcdec = db->begin_commit_xct(_dummy_stats);
+        smthread_t::me()->detach_xct(_xct);
         denv->enqueue_flushing(this);
 #else        
 
@@ -178,15 +203,14 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         }
     }               
 
-    // signal cond var
-    if(_result.get_notify()) {
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", _tid, _result.get_notify());
-	_result.get_notify()->signal();
-    }
-    else
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
+#ifdef CFG_DORA_FLUSHER
+    // If dora-flusher is enabled then it is its responsibility to
+    // notify the client
+    notify_client();
+#endif
     return (rcdec);
 }
+ 
 
 
 EXIT_NAMESPACE(dora);

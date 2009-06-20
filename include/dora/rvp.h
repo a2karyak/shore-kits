@@ -80,6 +80,10 @@ protected:
         _result = presult;
 
         _actions.reserve(total_actions);
+
+#ifdef CFG_DORA_FLUSHER
+        _dummy_stats = 0;
+#endif
     }
 
 public:
@@ -102,7 +106,10 @@ public:
         _xct = NULL; 
 
 #ifdef CFG_DORA_FLUSHER
-        if (_dummy_stats) delete (_dummy_stats);
+        if (_dummy_stats) { 
+            delete (_dummy_stats);
+            _dummy_stats = 0;
+        }
 #endif
     }    
 
@@ -172,6 +179,9 @@ public:
     // for midway rvps it should be a noop
     virtual const int notify() { return(0); } 
 
+    // notifies the client
+    void notify_client();
+
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
 
@@ -194,6 +204,13 @@ public:
         // clear contents
         _actions.erase(_actions.begin(),_actions.end());
         _xct = NULL;
+
+#ifdef CFG_DORA_FLUSHER
+        if (_dummy_stats) { 
+            delete (_dummy_stats);
+            _dummy_stats = 0;
+        }
+#endif
     }
 
     
@@ -237,7 +254,7 @@ public:
 
     // interface
     virtual w_rc_t run()=0;   // default action on rvp - commit trx           
-    const int notify();       // notifies for committed actions
+    const int notify();       // notifies for committed actions    
 
     virtual void upd_committed_stats()=0; // update the committed trx stats
     virtual void upd_aborted_stats()=0;   // update the committed trx stats

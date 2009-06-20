@@ -499,7 +499,6 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         TRACE( TRACE_ALWAYS, "AbsLoad = (%.2f)\n", load.run_tm/delay);
         _cpustater->myinfo.print();
         
-
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");

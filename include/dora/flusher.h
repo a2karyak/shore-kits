@@ -54,6 +54,30 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
+
+/******************************************************************** 
+ *
+ * @struct: dora_flusher_stats_t
+ *
+ * @brief:  Various statistics for the dora-flusher
+ * 
+ ********************************************************************/
+
+struct dora_flusher_stats_t 
+{
+    uint _finalized;
+    uint _flushes;
+    
+    dora_flusher_stats_t() : _finalized(0), _flushes(0) { }
+    ~dora_flusher_stats_t() { }
+
+    void print() const;
+    void reset();
+
+}; // EOF: dora_flusher_stats_t
+
+
+
 /******************************************************************** 
  *
  * @class: dora_flusher_t
@@ -66,9 +90,10 @@ class dora_flusher_t : public base_worker_t
 {   
 public:
     typedef srmwqueue<rvp_t>    Queue;
-    typedef Queue::ActionVecIt  QueueIterator;
 
 private:
+
+    dora_flusher_stats_t _flusher_stats;
 
     guard<Queue> _flushing;
     guard<Queue> _flushed;
@@ -80,37 +105,15 @@ private:
 
     const int _work_ACTIVE_impl(); 
 
+    void enqueue_flushed(rvp_t* arvp) { _flushed->push(arvp, true); }
+
 public:
 
     dora_flusher_t(ShoreEnv* env, c_str tname,
-                  processorid_t aprsid = PBIND_NONE, const int use_sli = 0) 
-        : base_worker_t(env, tname, aprsid, use_sli)
-    { 
-        int expected_sz = 50*60;
+                   processorid_t aprsid = PBIND_NONE, const int use_sli = 0);
+    ~dora_flusher_t();
 
-        _pxct_flushing_pool = new Pool(sizeof(xct_t*),expected_sz);
-        _flushing = new Queue(_pxct_flushing_pool.get());
-        assert (_flushing.get());
-        _flushing->set(WS_INPUT_Q,this,2000,0);  // do 2000 loops before sleep
-
-        _pxct_flushed_pool = new Pool(sizeof(xct_t*),expected_sz);
-        _flushed = new Queue(_pxct_flushed_pool.get());        
-        assert (_flushed.get());
-        _flushed->set(WS_COMMIT_Q,this,0,0);        
-    }
-
-    ~dora_flusher_t() 
-    { 
-        _flushing.done();
-        _pxct_flushing_pool.done();
-        _flushed.done();
-        _pxct_flushed_pool.done();
-    }
-
-    //// Access methods
-
-    inline void enqueue_flushing(rvp_t* arvp) { _flushed->push(arvp, true); }
-    
+    inline void enqueue_flushing(rvp_t* arvp) { _flushing->push(arvp, true); }    
 
 }; // EOF: dora_flusher_t
 
