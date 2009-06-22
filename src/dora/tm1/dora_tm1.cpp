@@ -85,8 +85,10 @@ const int DoraTM1Env::start()
         _irptp_vec[i]->reset();
     }
 
+#ifdef CFG_DORA_FLUSHER
     TRACE( TRACE_ALWAYS, "Starting flusher\n");
     _flusher->start();
+#endif
 
     set_dbc(DBC_ACTIVE);
     return (0);
