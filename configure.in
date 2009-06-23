@@ -130,7 +130,8 @@ fi
 #	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
          -Wcast-align -Wextra -Wfloat-equal \
-	 -Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
+	 -Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT \
+         -Wno-return-type"
 
 LDFLAGS="-lnsl -ldl -lm -lpthread -lreadline "
 
