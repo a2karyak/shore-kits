@@ -34,7 +34,8 @@
 /*
  * Prints all field resource, usage and microstat accounting fields
  *
- * @note: Taken from -  http://safari.oreilly.com/0131482092/app02lev1sec2 
+ * @note: Taken from - http://my.safaribooksonline.com/0131482092/app02lev1sec2
+ * @note: Look also  - http://docs.sun.com/app/docs/doc/816-5174/proc-4
  *
  */
 
@@ -45,7 +46,13 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+
+#ifdef __sparcv9
 #include <procfs.h>
+#else
+#include <linux/proc_fs.h>
+#endif
+
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -69,6 +76,15 @@
 using namespace std;
 
 
+struct load_values_t
+{
+    double run_tm;  // RunningTime = User time + System time + Other Trap time
+    double wait_tm; // Time in runqueue
+    load_values_t() : run_tm(0), wait_tm(0) { }
+    ~load_values_t() { }
+};
+
+
 struct processinfo_t 
 {
     int _fd;
@@ -84,9 +100,12 @@ struct processinfo_t
     ~processinfo_t();
 
     // prints information and resets
-    const int print();
     const int reset();
+    const int print();
+    const ulong_t iochars();
+    const load_values_t getload();
 
+    static const double trans(timestruc_t ats);
 
     static void hr_min_sec(char*, long);
     static void prtime(string label, timestruc_t* ts);
@@ -95,11 +114,6 @@ struct processinfo_t
     static void tsadd(timestruc_t* result, timestruc_t* a, timestruc_t* b);
     static void tssub(timestruc_t* result, timestruc_t* a, timestruc_t* b);
 
-
 }; // EOF: processinfo_t
-
-
-
-
 
 #endif /** __UTIL_PRCINFO_H */

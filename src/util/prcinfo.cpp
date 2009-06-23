@@ -75,13 +75,12 @@ const int processinfo_t::reset()
     // re-reads the prusage
     if (read(_fd, &_prusage, sizeof(_prusage)) != sizeof(_prusage)) {
         TRACE( TRACE_ALWAYS, "Reading prusage error\n");
-        return (2);        
+        return (2);
     }
 
     // reset for next call
     _old_prusage = _prusage;
     _timer.reset();
-
 
     return (0);
 }
@@ -96,11 +95,10 @@ const int processinfo_t::print()
     // re-reads the prusage
     if (read(_fd, &_prusage, sizeof(_prusage)) != sizeof(_prusage)) {
         TRACE( TRACE_ALWAYS, "Reading prusage error\n");
-        return (2);        
+        return (2);
     }
 
     // Calculates the difference
-
     
     // USAGE COUNTERS
 
@@ -143,18 +141,18 @@ const int processinfo_t::print()
     tssub(&pr_stoptime, &_prusage.pr_stoptime, &_old_prusage.pr_stoptime);
 
     printf("*** Usage Counters *** \n");
-    printf("Minor Faults:................. %ld\n", pr_minf);
-    printf("Major Faults:................. %ld\n", pr_majf);
-    printf("Swaps:........................ %ld\n", pr_nswap);
-    printf("Input Blocks:................. %ld\n", pr_inblk);
-    printf("Output Blocks:................ %ld\n", pr_oublk);
-    printf("STREAMS Messages Sent:........ %ld\n", pr_msnd);
-    printf("STREAMS Messages Received:.... %ld\n", pr_mrcv);
-    printf("Signals:...................... %ld\n", pr_sigs);
-    printf("Voluntary Context Switches:... %ld\n", pr_vctx);
-    printf("Involuntary Context Switches:. %ld\n", pr_ictx);
-    printf("System Calls:................. %ld\n", pr_sysc);
-    printf("Read/Write Characters:........ %ld\n", pr_ioch);
+    printf("Minor Faults:................. %lu\n", pr_minf);
+    printf("Major Faults:................. %lu\n", pr_majf);
+    printf("Swaps:........................ %lu\n", pr_nswap);
+    printf("Input Blocks:................. %lu\n", pr_inblk);
+    printf("Output Blocks:................ %lu\n", pr_oublk);
+    printf("STREAMS Messages Sent:........ %lu\n", pr_msnd);
+    printf("STREAMS Messages Received:.... %lu\n", pr_mrcv);
+    printf("Signals:...................... %lu\n", pr_sigs);
+    printf("Voluntary Context Switches:... %lu\n", pr_vctx);
+    printf("Involuntary Context Switches:. %lu\n", pr_ictx);
+    printf("System Calls:................. %lu\n", pr_sysc);
+    printf("Read/Write Characters:........ %lu\n", pr_ioch);
     printf("*** Process Times *** \n");
 
     long long delay = _timer.time_us();
@@ -173,10 +171,71 @@ const int processinfo_t::print()
     // reset for next call
     _old_prusage = _prusage;
     _timer.reset();
-
-    return (0);   
+    return (0);
 }
 
+
+
+const load_values_t processinfo_t::getload()
+{
+    load_values_t load;
+    if (!_is_ok) return (load);
+
+    // goes to the beginning of "file"
+    lseek(_fd, 0, SEEK_SET);
+
+    // re-reads the prusage
+    if (read(_fd, &_prusage, sizeof(_prusage)) != sizeof(_prusage)) {
+        TRACE( TRACE_ALWAYS, "Reading prusage error\n");
+        return (load);
+    }
+
+    // Running = user time + system time + other trap time
+    // Total = Running + waiting for a cpu in the runqueue
+    // Load = (Running+Total)/Running
+
+    timestruc_t pr_utime;    /* user level CPU time */
+    timestruc_t pr_stime;    /* system call CPU time */
+    timestruc_t pr_ttime;    /* other system trap CPU time */
+    timestruc_t pr_wtime;    /* wait-cpu (latency) time */
+
+    tssub(&pr_utime, &_prusage.pr_utime, &_old_prusage.pr_utime);
+    tssub(&pr_stime, &_prusage.pr_stime, &_old_prusage.pr_stime);
+    tssub(&pr_ttime, &_prusage.pr_ttime, &_old_prusage.pr_ttime);
+    tssub(&pr_wtime, &_prusage.pr_wtime, &_old_prusage.pr_wtime);
+
+    load.run_tm = trans(pr_utime);
+    load.run_tm += trans(pr_stime);
+    load.run_tm += trans(pr_ttime);
+    load.wait_tm = trans(pr_wtime);
+    return (load);
+}
+
+
+const ulong_t processinfo_t::iochars()
+{
+    if (!_is_ok) return (1);
+
+    // goes to the beginning of "file"
+    lseek(_fd, 0, SEEK_SET);
+
+    // re-reads the prusage
+    if (read(_fd, &_prusage, sizeof(_prusage)) != sizeof(_prusage)) {
+        TRACE( TRACE_ALWAYS, "Reading prusage error\n");
+        return (2);
+    }
+    
+    ulong_t pr_ioch   = _prusage.pr_ioch - _old_prusage.pr_ioch;         /* chars read and written */
+    return (pr_ioch);
+}
+
+
+const double processinfo_t::trans(timestruc_t ats)
+{
+    static const double BILLION = 1000000000;
+    double ad = ats.tv_sec + (ats.tv_nsec/BILLION);
+    return (ad);
+}
 
 
 void processinfo_t::tsadd(timestruc_t* result, timestruc_t *a, timestruc_t *b)
@@ -230,6 +289,3 @@ void processinfo_t::prtime(string label, long long& delay)
     hr_min_sec(buf, delay*1e-6);
     cerr << label << buf << "." << delay/100000 << endl;
 }
-
-
-
