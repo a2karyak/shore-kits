@@ -36,8 +36,7 @@
 #ifndef __SHORE_ROW_CACHE_H
 #define __SHORE_ROW_CACHE_H
 
-// sparcv9 only at the moment
-#include <atomic.h>
+#include <w_defines.h>
 
 #include "util/guard.h"
 

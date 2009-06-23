@@ -37,7 +37,6 @@
 #include <cassert>
 
 #include <w_defines.h>
-//#include <atomic.h>
 
 struct countdown_t 
 {

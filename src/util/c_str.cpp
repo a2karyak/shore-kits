@@ -31,9 +31,7 @@
 #include "util/guard.h"
 #include <stdio.h>
 
-#ifdef __sparcv9
-#include <atomic.h>
-#endif
+#include <w_defines.h>
 
 #include "util/pool_alloc.h"
 

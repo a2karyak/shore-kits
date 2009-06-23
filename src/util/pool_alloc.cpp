@@ -25,9 +25,7 @@
 #include "util/pool_alloc.h"
 #include "util/sync.h"
 
-#ifdef __SUNPRO_CC
-#include <atomic.h>
-#endif
+#include <w_defines.h>
 
 #ifdef __SUNPRO_CC
 #include <stdlib.h>

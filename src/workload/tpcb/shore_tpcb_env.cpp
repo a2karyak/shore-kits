@@ -33,7 +33,8 @@
 
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "sm/shore/shore_helper_loader.h"
-#include <atomic.h>
+
+#include <w_defines.h>
 
 
 using namespace shore;

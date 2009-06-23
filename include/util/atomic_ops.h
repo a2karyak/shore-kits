@@ -35,11 +35,7 @@
 #define __ATOMIC_OPS_H
 
 
-#if defined(__sparcv9)
-#include <atomic.h>
-#else
-// use compiler intrinsics
-#endif
+#include <w_defines.h>
 
 /** ATOMIC COMPARE-AND-SWAP **/
 template<class T, int size=sizeof(T)>
