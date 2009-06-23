@@ -35,7 +35,9 @@
 #define __UTIL_COUNTDOWN_H
 
 #include <cassert>
-#include <atomic.h>
+
+#include <w_defines.h>
+//#include <atomic.h>
 
 struct countdown_t 
 {
