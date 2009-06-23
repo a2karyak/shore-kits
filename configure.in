@@ -2,16 +2,21 @@ m4_pattern_allow([^AC_PACKAGE])
 
 # configure.in for shmtclient         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
-AC_INIT(THIS_IS_SHORE_MT_CLIENT,2.0)
+AC_INIT(THIS_IS_SHORE_KITS,2.1)
+
+# make sure I have not forgotten to run autoconf
+if test configure -ot configure.in; then
+  AC_MSG_RESULT(configure is older than configure.in; running autoconf)
+  autoconf
+  ./configure
+  exit
+fi 
 
 # find system type (using this macro means we must include
 # the files install-sh, config.sub, and config.guess (all from
 # the autoconf distribution) in our source tree!)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
-
-AC_SUBST(KITS_FEATURES_DEFINES) 
-AC_SUBST(NEWLINE)
 
 AC_PREREQ(2.50)
 AC_PROG_CXX
@@ -22,20 +27,11 @@ AC_MSG_NOTICE(Configuring Shore Kits)
 # Set here the version numbers
 KITS_VERSION_MAJOR="shore-kits"
 KITS_VERSION_MINOR=2
-KITS_VERSION_REV=0
+KITS_VERSION_REV=1
 KITS_VERSION=$KITS_VERSION_MAJOR.$KITS_VERSION_MINOR.$KITS_VERSION_REV
-
-# make sure I haven't forgotten to run autoconf
-if test configure -ot configure.in; then
-  AC_MSG_RESULT(configure is older than configure.in; running autoconf)
-  autoconf
-  ./configure
-  exit
-fi 
 
 # check for egrep
 AC_PROG_EGREP
-
 
 # debugging diagnostic; set to 'echo' to debug or 'true' for production
 diagnostic() {
@@ -55,10 +51,6 @@ binaryExists() {
 
 
 # ---------- Compiler Checking ----------
-KITS_CC=`echo $CC |  sed 's/.*\///'`
-AC_MSG_CHECKING(CC)
-AC_MSG_RESULT($KITS_CC)
-
 KITS_CXX=`echo $CXX |  sed 's/.*\///'`
 AC_MSG_CHECKING(CXX)
 AC_MSG_RESULT($KITS_CXX)
@@ -66,29 +58,27 @@ AC_MSG_RESULT($KITS_CXX)
 KITS_CXX_VERSION="0.0"
 
 
-if test "$KITS_CC" = "cc"; then
-   # ------ (SUN) C/C++ compiler ------
+if test "$KITS_CXX" = "CC"; then
+   # ------ (SUN) C++ compiler ------
 
    # cc version
-   #AC_MSG_CHECKING(compiler version)
-   #cc_ver=`$CXX -V | grep 'C++' | sed 's/^.*C++ //'`
-   #cc_major=`echo $gcc_ver | sed 's/\..*$//'`
-   #[cc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
-   #KITS_CXX_VERSION="$cc_major.$cc_mid"
-   #AC_MSG_RESULT($KITS_CXX_VERSION)
+   AC_MSG_CHECKING(compiler version)
+   cc_ver=`$CXX -V 2>&1 | grep 'C++' | sed 's/^.*C++ //' | sed 's/ .*//'`
+   cc_major=`echo $cc_ver | sed 's/\..*$//'`
+   [cc_mid=`echo $cc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
+   KITS_CXX_VERSION="$cc_major.$cc_mid"
+   AC_MSG_RESULT($KITS_CXX_VERSION)
 
-   # *** Checking the compiler version (cc>=5.9)
+   # *** Checking the compiler version (CC>=5.8)
    reqcc_major=5
    reqcc_mid=8
-   #if test $cc_major -lt $reqcc_major -o $cc_mid -le $reqcc_mid; then
-      #AC_MSG_WARN([CC Compiler $KITS_CC version $KITS_CXX_VERSION is currently not supported by Shore-mt-client])
-      #AC_MSG_WARN([Compiled successfully with cc Compiler $reqcc_major.$reqcc_mid or higher])
-   #fi   
+   if test $cc_major -lt $reqcc_major -o $cc_mid -lt $reqcc_mid; then
+      AC_MSG_WARN([CXX Compiler $KITS_CXX version $KITS_CXX_VERSION is currently not supported by Shore-kits])
+      AC_MSG_WARN([Compiled successfully with cc Compiler $reqcc_major.$reqcc_mid or higher])
+   fi   
 
 else
-   # ------ GNU C/C++ compiler ------
-   echo "using GCC"
-
+   # ------ GNU C++ compiler ------
    # gcc
    if binaryExists g++33; then
       GCC_COMPILER=g++
@@ -106,7 +96,7 @@ else
    # gcc version
    AC_MSG_CHECKING(compiler version)
 
-   gcc_ver=`$GCC_COMPILER --version | grep 'g++' | sed 's/^.*(GCC) //'`
+   gcc_ver=`$GCC_COMPILER --version | grep 'g++' | sed 's/^.*(.*) //'`
    gcc_major=`echo $gcc_ver | sed 's/\..*$//'`
    [gcc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
    [gcc_minor=`echo $gcc_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/ .*$//'`]
@@ -114,19 +104,127 @@ else
    KITS_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
    AC_MSG_RESULT($KITS_CXX_VERSION)
 
-   # *** Checking the compiler version (g++>=4)
+   # *** Checking the compiler version (g++>=4.1)
    reqgcc_major=4
-   reqgcc_mid=0
+   reqgcc_mid=1
    if test $gcc_major -lt $reqgcc_major -o $gcc_mid -lt $reqgcc_mid; then
-      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $KITS_CXX_VERSION is currently not supported by Shore-mt-client])
+      AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $KITS_CXX_VERSION is currently not supported by Shore-kits])
       AC_MSG_WARN([Compiled successfully with GCC Compiler $reqgcc_major.$reqgcc_mid or higher])
    fi   
 fi 
-# ---------- End of Compiler Checking ----------
+# ---------- EOF Compiler Checking ----------
 
 
 
-# ----------- Shore-mt-client required libraries -------------
+# ----------- Platform-specific code -------------
+
+
+# basic flags/libs every arch needs
+
+#DEBUG_FLAGS="-O0"
+#PROFILE_FLAGS="-pg -O0"
+#OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+#OPT_DEBUG_FLAGS="-O3 -fno-inline"
+CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
+        -Wall -Wcast-align -Wextra -Wfloat-equal \
+	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
+
+LDFLAGS="-lnsl -ldl -lm -lpthread "
+
+
+# $target is typically processor-vendor-os
+case "$target" in
+  # linux on i386
+  *i386*linux*)
+    AC_MSG_RESULT(configuring for linux/i386)
+    ARCHOS=i386_LINUX
+    CPU_FLAGS="-march=pentium4"
+    ;;
+
+
+  # linux on itanium? (not implem)
+  *ia64*linux*)
+    AC_MSG_RESULT(configuring for linux/ia64)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=IA64_LINUX
+    CPU_FLAGS="-mtune=itanium2"
+    ;;
+
+  # linux on x86_64
+  *x86_64*linux*)
+    AC_MSG_RESULT(configuring for linux/x86_64)
+
+    ARCHOS=x86_64_LINUX
+    CPU_FLAGS="-mtune=native -march=native"
+    ;;
+
+  # linux on power5
+  *ppc*linux*)
+    AC_MSG_RESULT(configuring for linux/ppc)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=PPC_LINUX
+    CPU_FLAGS="-mcpu=power5"
+    ;;
+
+
+  # linux on power5-ppc64
+  *powerpc64*linux*)
+    AC_MSG_RESULT(configuring for linux/ppc64)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=PPC64_LINUX
+    CPU_FLAGS="-mcpu=powerpc64"
+    ;;
+    
+  # Sparc Solaris
+  *sparc*sun*)
+    AC_MSG_RESULT(configuring for sparc/sun)    
+    ARCHOS=SPARC_SUN
+    LDFLAGS="$LDFLAGS -lsocket -lkstat -lrt -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
+
+    # optimize *a lot* flags - normal
+    #     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+    # regular debugging flags
+    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
+    # debugging flags + datarace
+    #    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
+
+    ;;
+
+  # x86 Cygwin
+  *686*cygwin*)
+    AC_MSG_RESULT(configuring for i686/cygwin)
+    AC_MSG_ERROR(not ready)    
+    ARCHOS=x86_LINUX
+    ;;
+
+ *)
+    AC_MSG_ERROR([
+      Unsupported platform $target -- sorry.
+      SunOS/sparcv9, Linux/x86_64, Linux/i386
+      currently are supported platforms.
+    ])
+    ;;
+esac
+
+
+# Adding curses lib
+if test "$ARCHOS" = "SPARC_SUN"; then
+   LDFLAGS="$LDFLAGS -lcurses"
+else
+   LDFLAGS="$LDFLAGS -lncurses"
+fi
+
+
+# Create output directory
+if ! test -d "obj/$ARCHOS"; then 
+   mkdir -p "obj/$ARCHOS"
+   AC_MSG_NOTICE([Creating output directory obj/$ARCHOS])
+fi
+# ----------- EOF Platform-specific code -------------
+
+
+
+# ----------- Shore-mt target dir -------------
 # $target is typically processor-vendor-os
 case "$target" in
   # Sparc Solaris
@@ -139,7 +237,7 @@ case "$target" in
     ;;
 
   *ia64*)
-    SHORE_HOME_DEFAULT="$HOME/work/apps/shore"
+    SHORE_HOME_DEFAULT="$HOME/apps/shore"
     ;;
 
  *)
@@ -147,25 +245,16 @@ case "$target" in
     ;;
 esac
 
-# getting user parameters
+# check user input
 AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
 
-
-# this specifies the root of the source tree; it's just the
-# directory where ./configure runs, except on cygwin, which
-# overrides this below
-AC_MSG_CHECKING(Home directory)
-KITS_HOME=`pwd`
-AC_MSG_RESULT($KITS_HOME)
-
-
-# SHORE
+# if no user param for Shore-mt target dir, then set default
 AC_MSG_CHECKING(Shore directory)
 if test -z $SHORE_HOME; then
     SHORE_HOME=$SHORE_HOME_DEFAULT
 fi
 
-# check if valid shore dir
+# check if valid Shore-mt target dir
 if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
     AC_ERROR([
             Not valid Shore directory at $SHORE_HOME;
@@ -173,120 +262,189 @@ if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
 fi
 
 AC_MSG_RESULT($SHORE_HOME)
+# ----------- EOF Shore-mt target dir -------------
 
 
 
-# ----------- platform-specific code -------------
-# $target is typically processor-vendor-os
-case "$target" in
-  # linux on x86
-  *86*linux*)
-    AC_MSG_RESULT(configuring for linux/x86)
-
-    ARCHOS=x86_LINUX
-    CPU_FLAGS="-march=pentium4"
-    ;;
-
-  # linux on itanium? (not implem)
-  *ia64*linux*)
-    AC_MSG_RESULT(configuring for linux/ia64)
-
-    ARCHOS=IA64_LINUX
-    CPU_FLAGS="-mtune=itanium2"
-    ;;
-
-  # linux on power5
-  *ppc*linux*)
-    AC_MSG_RESULT(configuring for linux/power5)
-
-    ARCHOS=PPC_LINUX
-    CPU_FLAGS="-mcpu=power5"
-    ;;
+# ----------- Root of source tree -------------
+# this specifies the root of the source tree; it's just the
+# directory where ./configure runs, except on cygwin, which
+# overrides this below
+AC_MSG_CHECKING(Home directory)
+KITS_HOME=`pwd`
+AC_MSG_RESULT($KITS_HOME)
+# ----------- EOF Root of source tree -------------
 
 
-  # linux on power5-ppc64
-  *powerpc64*linux*)
-    AC_MSG_RESULT(configuring for linux/powerpc64)
 
-    ARCHOS=PPC64_LINUX
-    CPU_FLAGS="-mcpu=powerpc64"
-    ;;
-    
-  # Sparc Solaris
-  *sparc*sun*)
-    AC_MSG_RESULT(configuring for sparc/sun)
-    
-    ARCHOS=SPARC_SUN
-    ;;
-
-  # x86 Cygwin
-  *686*cygwin*)
-    AC_MSG_RESULT(configuring for i686/cygwin)
-    
-    ARCHOS=x86_LINUX
-    ;;
-
- *)
-    AC_MSG_ERROR([
-      Unsupported platform $target -- sorry.
-      Linux/x86, Linux/IA64, Linux/PPC
-      currently are supported platforms.
-    ])
-    ;;
-esac
-
-# Create output directory
-if ! test -d "obj/$ARCHOS"; then 
-   mkdir --parents "obj/$ARCHOS"
-   AC_MSG_NOTICE([Creating output directory obj/$ARCHOS])
-fi
-
-
-NEWLINE="\\
-"
-
-# Shore-mt Client FEATURES
+# ----------- Shore-kits features -------------
 # Give a list of features with the defaults
-
-features="$features shore=yes"  # configure for shore 
-
 KITS_FEATURES=""
-KITS_NOFEATURES=""
 
-# iterate over all features
-for f_val in $features
-do
-   f=`echo $f_val | sed -e s%=.*$%%`
-   AC_MSG_CHECKING(whether to use Shore-mt-client feature $f)
-   # default value from "features"
-   defval=`echo $f_val | sed -e s%^.*=%%`
-   # current value
-   getcurval="echo \${with_$f:=$defval}"
-   curval=`eval $getcurval`
-   AC_MSG_RESULT($curval)
-   if test $curval = yes ;then
-      KITS_FEATURES="$KITS_FEATURES $f"
-   else
-      KITS_NOFEATURES="$KITS_NOFEATURES $f"
-   fi
-done
+# There are six supported options:
+# (1) --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
+# (2) --enable-doraflusher : defines CFG_DORA_FLUSHER
+# (3) --enable-sli         : defines CFG_SLI
+# (4) --enable-elr         : defines CFG_ELR
+# (5) --enable-dlog        : defines CFG_DLOG (distributed log)
+# (6) --enable-embclients  : defines CFG_EMB_CL
 
 
-echo $KITS_FEATURES
+# --- DORA ---
+AC_MSG_CHECKING(whether to enable Dora)
+AC_ARG_ENABLE(dora, 
+[  --enable-dora           Enable DORA],
+[case "${enableval}" in
+  yes) dora=true ;;
+  no)  dora=false ;;
+  *) dora=true ;;
+esac],[dora=false])
+AM_CONDITIONAL(USE_DORA, test x$dora = xtrue)
+
+if test "$dora" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES dora"
+     AC_MSG_WARN([Dora enabled. Should check if Shore-mt is Dora-compatible])
+     AC_DEFINE(CFG_DORA)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF DORA ---
 
 
-## Now produce the KITS_FEATURES_DEFINES
-KITS_FEATURES_DEFINES=""
-# Convert to upper  case
-[ac_toupper="'[a-z]' '[A-Z]'"]
-for f in `echo $KITS_FEATURES | tr $ac_toupper`
-do
-   KITS_FEATURES_DEFINES="${KITS_FEATURES_DEFINES}@NEWLINE@export USE_$f=yes"
-done
-for f in `echo $KITS_NOFEATURES | tr $ac_toupper`
-do
-   KITS_FEATURES_DEFINES="${KITS_FEATURES_DEFINES}@NEWLINE@export USE_$f="
-done
+# --- ELR ---
+AC_MSG_CHECKING(whether to enable ELR option)
+AC_ARG_ENABLE(elr, 
+[  --enable-elr            Enable ELR option],
+[case "${enableval}" in
+  yes) elr=true ;;
+  no)  elr=false ;;
+  *) elr=true ;;
+esac],[elr=false])
+AM_CONDITIONAL(ADD_OPT_ELR, test x$elr = xtrue)
+
+if test "$elr" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES elr"
+     AC_MSG_WARN([ELR enabled. Should check if Shore-mt is ELR-compatible])
+     AC_DEFINE(CFG_ELR)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF ELR ---   
+
+
+# --- DORAFLUSHER ---
+AC_MSG_CHECKING(whether to enable DORA-FLUSHER option)
+AC_ARG_ENABLE(dflusher, 
+[  --enable-dflusher       Enable DORA-FLUSHER option],
+[case "${enableval}" in
+  yes) dflusher=true ;;
+  no)  dflusher=false ;;
+  *) dflusher=true ;;
+esac],[dflusher=false])
+AM_CONDITIONAL(USE_DORAFLUSHER, test x$dflusher = xtrue)
+
+if test "$dflusher" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES dflusher"
+     AC_MSG_WARN([DORA-FLUSHER enabled. Should check if Shore-mt has pre-/meta-commit & abort])
+     AC_DEFINE(CFG_DORA_FLUSHER)
+
+     # Special case: warn about DORA-FLUSHER without ELR
+     if test "$elr" = false
+     then
+        AC_MSG_WARN(DORA-FLUSHER without ERL)
+     fi
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF DORAFLUSHER ---   
+
+
+
+
+# --- SLI ---
+AC_MSG_CHECKING(whether to enable SLI option)
+AC_ARG_ENABLE(sli, 
+[  --enable-sli            Enable SLI option],
+[case "${enableval}" in
+  yes) sli=true ;;
+  no)  sli=false ;;
+  *) sli=true ;;
+esac],[sli=false])
+AM_CONDITIONAL(ADD_OPT_SLI, test x$sli = xtrue)
+
+if test "$sli" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES sli"
+     AC_MSG_WARN([SLI enabled. Should check if Shore-mt is SLI-compatible])
+     AC_DEFINE(CFG_SLI)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF SLI --- 
+
+
+
+# --- DLOG ---
+AC_MSG_CHECKING(whether to use dlog)
+AC_ARG_ENABLE(dlog, 
+[  --enable-dlog           Enable dlog (distributed log)],
+[case "${enableval}" in
+  yes) dlog=true ;;
+  no)  dlog=false ;;
+  *) dlog=true ;;
+esac],[dlog=false])
+AM_CONDITIONAL(ADD_OPT_DLOG, test x$dlog = xtrue)
+
+if test "$dlog" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES dlog"
+     AC_MSG_WARN([DLOG enabled. Should check if Shore-mt is DLOG-compatible])
+     AC_DEFINE(CFG_DLOG)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF DLOG ---   
+
+
+
+# --- EMBEDDED CLIENTS ---
+AC_MSG_CHECKING(whether to use embedded clients)
+AC_ARG_ENABLE(embclients, 
+[  --enable-embclients     Use embedded clients - cannot be combined with --enable-dora],
+[case "${enableval}" in
+  yes) embclients=true ;;
+  no)  embclients=false ;;
+  *) embclients=false ;;
+esac],[embclients=false])
+AM_CONDITIONAL(USE_EMBEDDED_CLIENTS, test x$embclients = xtrue)
+
+if test "$embclients" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES embclients"
+     AC_DEFINE(CFG_EMB_CL)
+
+     # Special case: cannot allow Dora and EmbClients
+     if test "$dora" = true
+     then
+        AC_MSG_ERROR(Cannot have embedded clients with Dora)
+     fi
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF EMBEDDED CLIENTS ---   
+
+
+# ----------- EOF Shore-kit features -------------
+
 
 
 # ----------------- finish up -------------------
@@ -299,39 +457,6 @@ AC_SUBST(KITS_VERSION_MAJOR)
 AC_SUBST(KITS_VERSION_MINOR)
 AC_SUBST(KITS_VERSION_REV)
 AC_SUBST(KITS_VERSION)
-
-# basic flags/libs every arch needs
-
-# *** PROFILE_FLAGS CAUSES DEADLOCK ON crete.db.cs.cmu.edu ***
-#DEBUG_FLAGS="-O0"
-#PROFILE_FLAGS="-pg -O0"
-OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
-#OPT_DEBUG_FLAGS="-O3 -fno-inline"
-CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
-        -Wall -Wcast-align -Wextra -Wfloat-equal \
-	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
-
-LDFLAGS="-lnsl -ldl -lm -lpthread "
-
-if test "$ARCHOS" = "SPARC_SUN"; then
-    LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
-
-# optimize *a lot* flags - normal
-     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
-
-# regular debugging flags
-#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
-
-# debugging flags + datarace
-#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
-fi
-
-# Adding curses lib
-if test "$ARCHOS" = "SPARC_SUN"; then
-   LDFLAGS="$LDFLAGS -lcurses"
-else
-   LDFLAGS="$LDFLAGS -lncurses"
-fi
 
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
@@ -364,15 +489,13 @@ AC_OUTPUT()
 AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
 
 # show the user what the variables have been set to
-cat <<EOF
-
+cat <<EOF | tee tmpcfg.txt
 Shore Kits configuration:
   Version:         KITS_VERSION   $KITS_VERSION
   Home:            KITS_HOME      $KITS_HOME	
   Features:        KITS_FEATURES  $KITS_FEATURES
-  CC Compiler:     CC             $CC    
-  CXX Compiler:    CXX            $CXX
-  CC version       CXX_VERSION    $KITS_CXX_VERSION
   Shore-mt home:   SHORE_HOME     $SHORE_HOME
+  CXX compiler:    CXX            $CXX
+  CXX version:     CXX_VERSION    $KITS_CXX_VERSION
   Architecture/OS: ARCHOS         $ARCHOS
 EOF
