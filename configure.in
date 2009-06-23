@@ -125,11 +125,14 @@ fi
 #PROFILE_FLAGS="-pg -O0"
 #OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
+#CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
+#        -Wall -Wcast-align -Wextra -Wfloat-equal \
+#	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
-        -Wall -Wcast-align -Wextra -Wfloat-equal \
-	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
+         -Wcast-align -Wextra -Wfloat-equal \
+	 -Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
 
-LDFLAGS="-lnsl -ldl -lm -lpthread "
+LDFLAGS="-lnsl -ldl -lm -lpthread -lreadline "
 
 
 # $target is typically processor-vendor-os
@@ -153,6 +156,8 @@ case "$target" in
   # linux on x86_64
   *x86_64*linux*)
     AC_MSG_RESULT(configuring for linux/x86_64)
+
+    CXXFLAGS="$CXXFLAGS -lreadline "
 
     ARCHOS=x86_64_LINUX
     CPU_FLAGS="-mtune=native -march=native"
@@ -226,24 +231,7 @@ fi
 
 # ----------- Shore-mt target dir -------------
 # $target is typically processor-vendor-os
-case "$target" in
-  # Sparc Solaris
-  *sparc*sun*)
-    SHORE_HOME_DEFAULT="$HOME/apps/shore"
-    ;;
-
-  *ppc*)
-    SHORE_HOME_DEFAULT="/usr/software/shore"
-    ;;
-
-  *ia64*)
-    SHORE_HOME_DEFAULT="$HOME/apps/shore"
-    ;;
-
- *)
-    SHORE_HOME_DEFAULT="/usr/software/shore"
-    ;;
-esac
+SHORE_HOME_DEFAULT="$HOME/apps/shore"
 
 # check user input
 AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)

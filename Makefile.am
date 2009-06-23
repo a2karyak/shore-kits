@@ -17,7 +17,7 @@ lib_LIBRARIES = \
    lib/libworkload.a lib/libsm.a lib/libutil.a
 
 # GLOBAL ld
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD)
 
 
 FE = \
