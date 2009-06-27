@@ -38,6 +38,7 @@
 #include "util/namespace.h"
 
 #include "sm/shore/shore_env.h"
+#include "sm/shore/shore_trx_worker.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -76,7 +77,7 @@ public:
     ~trx_smthread_t() { }
 
     // thread entrance
-    void trx_smthread_t::run()
+    void run()
     {
         // trx executing function, as well as, environment and input
         // should not be NULL
