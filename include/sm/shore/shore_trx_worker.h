@@ -49,8 +49,8 @@ const int NO_VALID_TRX_ID = -1;
 enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
 		COMMITTED, ROLLBACKED };
 
-static char* sTrxStates[6] = { "Undef", "Unsubmitted", "Submitted",
-                               "Poissoned", "Committed", "Rollbacked" };
+static const char* sTrxStates[6] = { "Undef", "Unsubmitted", "Submitted",
+                                     "Poissoned", "Committed", "Rollbacked" };
 
 
 /** Helper functions */
@@ -59,7 +59,7 @@ static char* sTrxStates[6] = { "Undef", "Unsubmitted", "Submitted",
  *  @brief Displays in a friendly way a TrxState
  */
 
-inline char* translate_state(TrxState aState) {
+inline const char* translate_state(TrxState aState) {
     assert ((aState >= 0) && (aState < 6));
     return (sTrxStates[aState]);
 }
@@ -120,7 +120,7 @@ public:
     inline void set_id(const int aID) { R_ID = aID; }
 
     inline TrxState get_state() { return (R_STATE); }
-    inline char* say_state() { return (translate_state(R_STATE)); }
+    inline const char* say_state() { return (translate_state(R_STATE)); }
     inline void set_state(TrxState aState) { 
        assert ((aState >= UNDEF) && (aState <= ROLLBACKED));
        R_STATE = aState;
