@@ -154,6 +154,10 @@ struct rep_row_t
  *
  * --------------------------------------------------------------- */
 
+#ifndef __SUNPRO_CC
+typedef intptr_t offset_t;
+#endif
+
 struct table_row_t 
 {    
     int            _field_cnt;    /* number of fields */
