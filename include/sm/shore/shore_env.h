@@ -47,6 +47,8 @@
 
 
 #include "sm_vas.h"
+#include <w_defines.h>
+
 #include "util.h"
 
 
@@ -151,15 +153,15 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     inline table*    abbrv##_desc() { return (_p##abbrv##_desc.get()); }
 
 
-#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                   \
+#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                    \
     w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in) { \
         TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
-        ++my_stats.attempted.##trx;                                     \
+        ++my_stats.attempted.trx;                                       \
         w_rc_t e = xct_##trx(xct_id, atrt, in);                         \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
-                ++my_stats.failed.##trx;                                \
-            else ++my_stats.deadlocked.##trx##;                         \
+                ++my_stats.failed.trx;                                  \
+            else ++my_stats.deadlocked.trx;                             \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
             w_rc_t e2 = _pssm->abort_xct();                           \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
@@ -180,9 +182,9 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 
 #define DEFINE_TRX_STATS(cname,trx)                                   \
-    void cname::_inc_##trx##_att()    { ++my_stats.attempted.##trx; } \
-    void cname::_inc_##trx##_failed() { ++my_stats.failed.##trx; }    \
-    void cname::_inc_##trx##_dld() { ++my_stats.deadlocked.##trx; }
+    void cname::_inc_##trx##_att()    { ++my_stats.attempted.trx; } \
+    void cname::_inc_##trx##_failed() { ++my_stats.failed.trx; }    \
+    void cname::_inc_##trx##_dld() { ++my_stats.deadlocked.trx; }
 
 
 #define DEFINE_TRX(cname,trx)                        \
