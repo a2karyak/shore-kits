@@ -48,9 +48,13 @@ UTIL = \
         $(SU)/countdown.cpp \
         $(SU)/confparser.cpp \
         $(SU)/envvar.cpp \
-        $(SU)/prcinfo.cpp \
         $(SU)/random_input.cpp \
+        $(SU)/w_strlcpy.cpp \
         $(SU)/shell.cpp
+
+if SPARC_MACHINE
+UTIL += $(SU)/prcinfo.cpp
+endif
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \
