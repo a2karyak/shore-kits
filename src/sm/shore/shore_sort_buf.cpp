@@ -118,7 +118,7 @@ void sort_man_impl::init()
     _tuple_size = 0;
 
     //for (int i=0; i<_tuple_count; i++)
-    for (int i=0; i<_ptable->field_count(); i++)
+    for (uint_t i=0; i<_ptable->field_count(); i++)
         _tuple_size += _ptable->desc(i)->fieldmaxsize();
 
     /* allocate size for MIN_TUPLES_FOR_SORT tuples */

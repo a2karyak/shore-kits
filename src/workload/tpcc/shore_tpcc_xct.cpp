@@ -182,7 +182,7 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
 static char alnum[] =
     "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-static char *last_name_parts[] =
+static const char *last_name_parts[] =
     {
 	"BAR",
 	"OUGHT",
@@ -512,7 +512,7 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, trx_result_tuple_t 
 	    int stock_num = stock_base + i;
 	    int qty = rand_integer(10, 100);
 	    create_a_string_with_original(stock_data, 26, 50, 10);
-	    for(int j=0; j < sizeof(stock_dist)/sizeof(stock_dist[0]); j++) 
+	    for(uint_t j=0; j < sizeof(stock_dist)/sizeof(stock_dist[0]); j++) 
 		create_random_a_string(stock_dist[j], 24, 24);
 	
 	    // insert stock
@@ -1680,7 +1680,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
 
     std::vector<int> dlist(DISTRICTS_PER_WAREHOUSE);
 
-    for(int i=0; i < dlist.size(); i++)
+    for(uint_t i=0; i < dlist.size(); i++)
         dlist[i] = i+1;
 
     if(SPLIT_TRX)

@@ -215,8 +215,8 @@ public:
 
     const int maxsize(); /* maximum requirement for disk format */
 
-    inline field_desc_t* desc(int descidx) {
-        assert ((descidx>=0) && (descidx<_field_count));
+    inline field_desc_t* desc(const uint_t descidx) {
+        assert (descidx<_field_count);
         assert (_desc);
         return (&(_desc[descidx]));
     }    
@@ -296,7 +296,7 @@ public:
 
 inline int table_desc_t::find_field_by_name(const char* field_name) const
 {
-    for (int i=0; i<_field_count; i++) {
+    for (uint_t i=0; i<_field_count; i++) {
         if (strcmp(field_name, _desc[i].name())==0) 
             return (i);
     }
@@ -321,7 +321,7 @@ inline const char* table_desc_t::index_keydesc(index_desc_t* idx)
         return (idx->_keydesc);
 
     // else set the index keydesc
-    for (int i=0; i<idx->field_count(); i++) {
+    for (uint_t i=0; i<idx->field_count(); i++) {
         strcat(idx->_keydesc, _desc[idx->key_index(i)].keydesc());
     }
     return (idx->_keydesc);
@@ -381,7 +381,7 @@ inline const int table_desc_t::maxsize()
     uint_t size = 0;
     uint_t var_count = 0;
     uint_t null_count = 0;
-    for (int i=0; i<_field_count; i++) {
+    for (uint_t i=0; i<_field_count; i++) {
         size += _desc[i].fieldmaxsize();
         if (_desc[i].allow_null()) null_count++;
         if (_desc[i].is_variable_length()) var_count++;

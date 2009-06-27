@@ -224,7 +224,7 @@ void table_desc_t::print_desc(ostream& os)
 {
     os << "Schema for table " << _name << endl;
     os << "Numer of fields: " << _field_count << endl;
-    for (int i=0; i<_field_count; i++) {
+    for (uint_t i=0; i<_field_count; i++) {
 	_desc[i].print_desc(os);
     }
 }

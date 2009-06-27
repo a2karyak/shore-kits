@@ -107,7 +107,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 	    
 	    // exponentially-distributed think time
 	    if(_think_time > 0)
-		usleep(int(-_think_time*::log(sthread_t::drand())));
+		usleep(int(-_think_time*(sthread_t::drand())));
 	}
 
     _env->env_thread_fini();

@@ -74,7 +74,11 @@ public:
 
     static int  size() { return sizeof(time_t); }
     void string(char* dest, const int len) const {
+#ifdef __SUNPRO_CC
 	ctime_r(&_time, dest, len);
+#else
+	ctime_r(&_time, dest);
+#endif
 	dest[len-1] = '\0';
     }
 
@@ -126,7 +130,7 @@ private:
     bool       _allow_null;               /* allow null? */
     bool       _is_setup;                 /* is setup? */
 
-    const char* field_desc_t::_set_keydesc();
+    const char* _set_keydesc();
 
 public:
 
@@ -960,7 +964,7 @@ inline time_t field_value_t::get_time_value() const
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_FLOAT);
-    return (_value._float);
+    return ((time_t)_value._float);
 }
 
 inline timestamp_t& field_value_t::get_tstamp_value() const

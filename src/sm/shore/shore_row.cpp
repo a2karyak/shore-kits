@@ -44,7 +44,6 @@ using namespace shore;
 void table_row_t::print_values(ostream& os)
 {
     assert (_is_setup);
-    //  cout << "Number of fields: " << _field_count << endl;
     for (int i=0; i<_field_cnt; i++) {
 	_pvalues[i].print_value(os);
 	if (i != _field_cnt) os << DELIM_CHAR;

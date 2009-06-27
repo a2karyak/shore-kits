@@ -70,7 +70,7 @@ class sort_buffer_t : public table_desc_t
 {
 public:
 
-    sort_buffer_t(int field_count)
+    sort_buffer_t(const uint_t field_count)
         : table_desc_t("SORT_BUF", field_count)
     { 
     }
@@ -80,9 +80,9 @@ public:
     }
 
     /* set the schema - accepts only fixed length */
-    void setup(const int index, sqltype_t type, const int len = 0) 
+    void setup(const uint_t index, sqltype_t type, const int len = 0) 
     {
-        assert((index>=0) && (index<_field_count));
+        assert(index<_field_count);
         _desc[index].setup(type, "", len);
         assert(!_desc[index].is_variable_length());
         assert(!_desc[index].allow_null());
@@ -181,7 +181,8 @@ private:
 public:
 
     sort_iter_impl(ss_m* db, sort_buffer_t* psortbuf, sort_man_impl* psortman)
-        : tuple_iter_t(db, psortbuf, NL, false), _manager(psortman), _index(0)
+        : tuple_iter_t<sort_buffer_t, int, row_impl<sort_buffer_t> >(db, psortbuf, NL, false), 
+          _manager(psortman), _index(0)
     { 
         assert (_manager);
         assert (_file);

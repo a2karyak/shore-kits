@@ -231,9 +231,11 @@ const int shell_t::_register_commands()
     _tracer->setaliases();
     add_cmd(_tracer.get());
 
+#ifdef __sparcv9
     _cpustater = new cpustat_cmd_t();        
     _cpustater->setaliases();
     add_cmd(_cpustater.get());
+#endif
 
     _confer = new conf_cmd_t();        
     _confer->setaliases();
@@ -427,12 +429,13 @@ void conf_cmd_t::usage(void)
 }
 
 
+
+#ifdef __sparcv9
 /*********************************************************************
  *
  *  CPUSTAT
  *
  *********************************************************************/
-
 void cpustat_cmd_t::setaliases() 
 {    
     _name = string("cpu");
@@ -450,3 +453,4 @@ void cpustat_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "CPUSTAT - Prints cpu usage for the process\n");
 }
+#endif

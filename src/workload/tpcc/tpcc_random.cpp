@@ -136,8 +136,8 @@ int NURand(int A, int low, int high) {
  *  @return The length of the created string. 0 on errors.
  */
 
-char* CUST_LAST[10] = { "BAR", "OUGHT", "ABLE", "PRI", "PRES", "ESE",
-                        "ANTI", "CALLY", "ATION", "EING" };
+const char* CUST_LAST[10] = { "BAR", "OUGHT", "ABLE", "PRI", "PRES", "ESE",
+                              "ANTI", "CALLY", "ATION", "EING" };
 
 
 int generate_cust_last(int select, char* dest) 
