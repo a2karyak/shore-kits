@@ -50,19 +50,19 @@ ENTER_NAMESPACE(shore);
 
 /******** Exported constants ********/
 
-const int MAX_FNAME_LEN     = 40;
-const int MAX_TABLENAME_LEN = 40;
-const int MAX_FIELDNAME_LEN = 40;
+const unsigned int MAX_FNAME_LEN     = 40;
+const unsigned int MAX_TABLENAME_LEN = 40;
+const unsigned int MAX_FIELDNAME_LEN = 40;
 
-const int MAX_KEYDESC_LEN   = 40;
-const int MAX_FILENAME_LEN  = 100;
+const unsigned int MAX_KEYDESC_LEN   = 40;
+const unsigned int MAX_FILENAME_LEN  = 100;
 
-const int MAX_BODY_SIZE     = 1024;
+const unsigned int MAX_BODY_SIZE     = 1024;
 
 #define  DELIM_CHAR            '|'
 
-const int COMMIT_ACTION_COUNT           = 2000;   /* 2K */
-const int COMMIT_ACTION_COUNT_WITH_ITER = 500000; /* 500K */
+const unsigned int COMMIT_ACTION_COUNT           = 2000;   /* 2K */
+const unsigned int COMMIT_ACTION_COUNT_WITH_ITER = 500000; /* 500K */
 
 #define  MIN_SMALLINT     0
 #define  MAX_SMALLINT     1<<15
@@ -103,7 +103,7 @@ protected:
 
     pthread_mutex_t _fschema_mutex;        // file schema mutex
     char            _name[MAX_FNAME_LEN];  // file name
-    int             _field_count;          // # of fields
+    uint_t          _field_count;          // # of fields
 
     vid_t           _vid;                  // volume id
     stid_t          _root_iid;             // root id
@@ -117,7 +117,7 @@ public:
     /* --- construction --- */
     /* -------------------- */
 
-    file_desc_t(const char* name, const int fcnt)
+    file_desc_t(const char* name, const uint_t fcnt)
         : _field_count(fcnt), _fid(stid_t::null),
           _vid(vid_t::null), _root_iid(stid_t::null)
     {
@@ -126,8 +126,14 @@ public:
         pthread_mutex_init(&_fschema_mutex, NULL);
 
         // Copy name
-	if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+#ifndef __GNUC__
+	if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#else
+        if(w_strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#endif
 	    throw "file_desc_t::_name too long!\n";
+        }
+
     }
 
     virtual ~file_desc_t() 
@@ -145,7 +151,7 @@ public:
     void          set_fid(stid_t fid) { _fid = fid; }
     vid_t         vid() { return _vid; }   
     stid_t        root_iid() { return _root_iid; }
-    const int     field_count() const { return _field_count; } 
+    const uint_t  field_count() const { return (_field_count); } 
 
     bool          is_fid_valid() const { return (_fid != stid_t::null); }
     bool          is_vid_valid() { return (_vid != vid_t::null); }
@@ -195,8 +201,13 @@ public:
                 const file_type_t ftype = FT_REGULAR)
         : _fid(fid), _ftype(ftype)
     {
-	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+#ifndef __GNUC__
+	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#else
+        if(w_strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#endif
 	    throw "file_info_t::_fname too long!\n";
+        }
     }
 
     // TODO REMOVE no argument consturctor
