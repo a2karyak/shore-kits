@@ -139,10 +139,13 @@ LDFLAGS="-lnsl -ldl -lm -lpthread -lreadline "
 # $target is typically processor-vendor-os
 case "$target" in
   # linux on i386
-  *i386*linux*)
-    AC_MSG_RESULT(configuring for linux/i386)
+  *i*86*linux*)
+    AC_MSG_RESULT(configuring for linux/i*86)
     ARCHOS=i386_LINUX
-    CPU_FLAGS="-march=pentium4"
+    OS=LINUX
+
+    ## building with -m64    
+    CXXFLAGS="$CXXFLAGS -DARCH_LP64 -m64 "
     ;;
 
 
@@ -151,16 +154,18 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/ia64)
     AC_MSG_ERROR(not ready)
     ARCHOS=IA64_LINUX
+    OS=LINUX
+
     CPU_FLAGS="-mtune=itanium2"
     ;;
 
   # linux on x86_64
   *x86_64*linux*)
     AC_MSG_RESULT(configuring for linux/x86_64)
+    ARCHOS=x86_64_LINUX
+    OS=LINUX
 
     CXXFLAGS="$CXXFLAGS -lreadline "
-
-    ARCHOS=x86_64_LINUX
     CPU_FLAGS="-mtune=native -march=native"
     ;;
 
@@ -169,6 +174,8 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/ppc)
     AC_MSG_ERROR(not ready)
     ARCHOS=PPC_LINUX
+    OS=LINUX
+
     CPU_FLAGS="-mcpu=power5"
     ;;
 
@@ -178,6 +185,8 @@ case "$target" in
     AC_MSG_RESULT(configuring for linux/ppc64)
     AC_MSG_ERROR(not ready)
     ARCHOS=PPC64_LINUX
+    OS=LINUX
+
     CPU_FLAGS="-mcpu=powerpc64"
     ;;
     
@@ -185,6 +194,8 @@ case "$target" in
   *sparc*sun*)
     AC_MSG_RESULT(configuring for sparc/sun)    
     ARCHOS=SPARC_SUN
+    OS=SUN
+
     LDFLAGS="$LDFLAGS -lsocket -lkstat -lrt -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
 
     # optimize *a lot* flags - normal
@@ -201,6 +212,8 @@ case "$target" in
     AC_MSG_RESULT(configuring for i686/cygwin)
     AC_MSG_ERROR(not ready)    
     ARCHOS=x86_LINUX
+    OS=LINUX
+
     ;;
 
  *)
@@ -226,6 +239,11 @@ if ! test -d "obj/$ARCHOS"; then
    mkdir -p "obj/$ARCHOS"
    AC_MSG_NOTICE([Creating output directory obj/$ARCHOS])
 fi
+
+AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
+AM_CONDITIONAL(LINUX_OS, test "$OS" = "LINUX")
+
+
 # ----------- EOF Platform-specific code -------------
 
 
@@ -475,7 +493,6 @@ AC_CONFIG_FILES([ Makefile ])
 
 AC_OUTPUT()
 
-AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
 
 # show the user what the variables have been set to
 cat <<EOF | tee tmpcfg.txt
@@ -487,4 +504,9 @@ Shore Kits configuration:
   CXX compiler:    CXX            $CXX
   CXX version:     CXX_VERSION    $KITS_CXX_VERSION
   Architecture/OS: ARCHOS         $ARCHOS
+EOF
+
+cat <<EOF >> tmpcfg.txt
+  CXXFLAGS  $CXXFLAGS
+  LDFLAGS   $LDFLAGS
 EOF
