@@ -54,7 +54,6 @@
 #include "util/command/command_handler.h"
 #include "util/command/tracer.h"
 #include "util/envvar.h"
-#include "util/prcinfo.h"
 
 #include "util.h"
 
@@ -130,6 +129,7 @@ struct conf_cmd_t : public command_handler_t {
 };
 
 
+#ifdef __sparcv9
 struct cpustat_cmd_t : public command_handler_t {
     processinfo_t myinfo;
     void setaliases();
@@ -137,7 +137,7 @@ struct cpustat_cmd_t : public command_handler_t {
     void usage();
     const string desc() { return (string("Process cpu usage/statitics")); }
 };
-
+#endif
 
 
 struct echo_cmd_t : public command_handler_t {
@@ -194,10 +194,12 @@ protected:
     guard<env_cmd_t>  _enver;
     guard<conf_cmd_t> _confer;
     guard<trace_cmd_t>   _tracer;
-    guard<cpustat_cmd_t> _cpustater;
     guard<echo_cmd_t> _echoer;
     guard<break_cmd_t> _breaker;
 
+#ifdef __sparcv9
+    guard<cpustat_cmd_t> _cpustater;
+#endif
 
     const int _register_commands();    
 

@@ -267,8 +267,10 @@ void shore_shell_t::pre_process_cmd()
     // make sure any previous abort is cleared
     base_client_t::resume_test();
 
+#ifdef __sparcv9
     // print processor usage info
     _cpustater->myinfo.reset();
+#endif
 }
 
 
