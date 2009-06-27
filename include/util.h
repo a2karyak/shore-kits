@@ -48,10 +48,16 @@
 #include "util/confparser.h"
 #include "util/envvar.h"
 #include "util/shell.h"
-#include "util/prcinfo.h"
 #include "util/condex.h"
 #include "util/random_input.h"
 #include "util/atomic_ops.h"
 
+#ifdef __sparcv9
+#include "util/prcinfo.h"
+#endif
+
+#ifdef __GNUC__
+#include "util/w_strlcpy.h"
+#endif
 
 #endif /** __UTIL_H */

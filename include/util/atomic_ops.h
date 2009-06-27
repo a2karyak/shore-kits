@@ -140,7 +140,6 @@ struct atomic_swap_helper<T, sizeof(uint64_t)> {
 };
 
 
-#warning IP: should look at this atomic_swap implementation
 #if 0
 // IP: It is already defined at w_defines.h
 template<class T>
