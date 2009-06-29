@@ -100,7 +100,7 @@ public:
     
 
     double to_double() const {
-	return _value/100.;
+	return ((double)_value/(double)100);
     }
     long long to_long() const {
 	return (_value+50)/100;

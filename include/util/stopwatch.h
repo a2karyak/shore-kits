@@ -47,10 +47,10 @@ public:
         return mark - old_mark;
     }
     double time_ms() {
-        return time_us()*1e-3;
+        return (double)(time_us()*1e-3);
     }
     double time() {
-        return time_us()*1e-6;
+        return (double)(time_us()*1e-6);
     }
     long long now() {
         gettimeofday(&tv, NULL);

@@ -569,7 +569,7 @@ void ShoreEnv::readconfig(string conf_file)
 
 const int ShoreEnv::restart()
 {
-    TRACE( TRACE_DEBUG, "Restarting (%s)...\n", _sysname);
+    TRACE( TRACE_DEBUG, "Restarting (%s)...\n", _sysname.c_str());
     stop();
     conf();
     _set_sys_params();
