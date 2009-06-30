@@ -46,7 +46,7 @@ public:
     void init();
     void close() { }
 
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
 
     void setaliases();
     void usage();

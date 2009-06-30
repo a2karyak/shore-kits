@@ -77,7 +77,7 @@ void trace_cmd_t::init()
 
 
 
-const int trace_cmd_t::handle(const char* cmd)
+int trace_cmd_t::handle(const char* cmd)
 {
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char tag[SERVER_COMMAND_BUFFER_SIZE];

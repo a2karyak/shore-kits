@@ -95,7 +95,7 @@ struct fake_iodelay_cmd_t : public command_handler_t {
     void setaliases() { 
         _name = string("iodelay"); 
         _aliases.push_back("iodelay"); _aliases.push_back("io"); }
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
     const string desc() { return (string("Sets the fake I/O disk delay")); }
 };
@@ -193,7 +193,7 @@ public:
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
 
-    virtual const int register_commands()
+    virtual int register_commands()
     {
         return (0);
     }

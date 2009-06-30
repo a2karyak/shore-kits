@@ -395,11 +395,11 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
     int iterations          = ev->getVarInt("test-iterations",DF_WARMUP_ITERS);
     int tmp_iterations      = iterations;
 
+    char atmp_cmd[100];
 
-    
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d",
-                &command_tag,
+                atmp_cmd,
                 &tmp_numOfQueriedSF,
                 &tmp_numOfTrxs,
                 &tmp_duration,
@@ -491,10 +491,11 @@ int shore_shell_t::process_cmd_TEST(const char* command,
         _theSF = tmp_sf;
     }
 
+    char atmp_cmd[100];
     
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d",
-                &command_tag,
+                atmp_cmd,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
@@ -597,10 +598,12 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     int tmp_selectedTrxID    = selectedTrxID;
     int iterations           = ev->getVarInt("measure-iterations",DF_NUM_OF_ITERS);
     int tmp_iterations       = iterations;
-    
+
+    char atmp_cmd[100];
+
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d %d %d",
-                &command_tag,
+                atmp_cmd,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
@@ -767,11 +770,11 @@ void fake_iodelay_cmd_t::usage(void)
            "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
 }
 
-const int fake_iodelay_cmd_t::handle(const char* cmd)
+int fake_iodelay_cmd_t::handle(const char* cmd)
 {
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char iodelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%s %s", &cmd_tag, &iodelay_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", cmd_tag, iodelay_tag) < 2) {
         // prints all the env
         usage();
         return (SHELL_NEXT_CONTINUE);

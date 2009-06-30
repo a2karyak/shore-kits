@@ -191,7 +191,7 @@ void ShoreTPCCEnv::table_builder_t::work()
 	if(nval % UNIT_PER_WH == 0)
 	    fprintf(stderr, ".\n");
     }
-    fprintf(stderr, "Finished loading units %d .. %d \n", _start, _start+_count);
+    fprintf(stderr, "Finished loading units %ld .. %ld \n", _start, _start+_count);
 
 }
 

@@ -41,7 +41,7 @@ public:
 
     void init() { assert(0); }
     void close() { assert(0); }
-    const int handle(const char* cmd) { return (SHELL_NEXT_CONTINUE); }
+    int handle(const char* cmd) { return (SHELL_NEXT_CONTINUE); }
     void setaliases() { assert(0); }
     void usage() { assert(0); }
     const string desc() { return (string("")); }               

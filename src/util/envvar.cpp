@@ -64,7 +64,7 @@ string envVar::_readConfVar(const string& sParam, const string& sDefValue)
 
 
 // sets a new parameter
-const int envVar::setVar(const string& sParam, const string& sValue)
+int envVar::setVar(const string& sParam, const string& sValue)
 {
     if ((!sParam.empty())&&(!sValue.empty())) {
         TRACE( TRACE_DEBUG, "(%s) (%s)\n", sParam.c_str(), sValue.c_str());
@@ -75,7 +75,7 @@ const int envVar::setVar(const string& sParam, const string& sValue)
     return (0);
 }
 
-const int envVar::setVarInt(const string& sParam, const int& iValue)
+int envVar::setVarInt(const string& sParam, const int& iValue)
 {    
     return (setVar(sParam,_toString(iValue)));
 }
@@ -83,7 +83,7 @@ const int envVar::setVarInt(const string& sParam, const int& iValue)
 
 
 // refreshes all the env vars from the conf file
-const int envVar::refreshVars(void)
+int envVar::refreshVars(void)
 {
     TRACE( TRACE_DEBUG, "Refreshing environment variables\n");
     CRITICAL_SECTION(evm_cs,_lock);
@@ -158,7 +158,7 @@ string envVar::getSysVar(string sParam)
     return (getVar(config,"invalid"));
 }
 
-const int envVar::getSysVarInt(string sParam)
+int envVar::getSysVarInt(string sParam)
 {
     string config = getVar("db-config","invalid");
     config = config + "-" + sParam;
@@ -192,7 +192,7 @@ void envVar::setConfFile(const string& sConfFile)
 
 
 // parses a SET request
-const int envVar::parseOneSetReq(const string& in)
+int envVar::parseOneSetReq(const string& in)
 {
     string param;
     string value;
@@ -218,7 +218,7 @@ const int envVar::parseOneSetReq(const string& in)
 
 
 // parses a string of (multiple) SET requests
-const int envVar::parseSetReq(const string& in)
+int envVar::parseSetReq(const string& in)
 {
     int cnt=0;
 

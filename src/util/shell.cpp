@@ -122,7 +122,7 @@ int shell_t::process_one()
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     CRITICAL_SECTION(sh_cs,_lock);
 
-    if ( sscanf(cmd, "%s", &cmd_tag) < 1) {
+    if ( sscanf(cmd, "%s", cmd_tag) < 1) {
         _helper->list_cmds();
         return (SHELL_NEXT_CONTINUE);
     }
@@ -160,7 +160,7 @@ int shell_t::process_one()
  *
  *********************************************************************/
 
-const int shell_t::add_cmd(command_handler_t* acmd) 
+int shell_t::add_cmd(command_handler_t* acmd) 
 {
     assert (acmd);
     assert (!acmd->name().empty());
@@ -197,7 +197,7 @@ const int shell_t::add_cmd(command_handler_t* acmd)
 }
 
        
-const int shell_t::init_cmds()
+int shell_t::init_cmds()
 {
     CRITICAL_SECTION(sh_cs,_lock);
     for (cmdMapIt it = _cmds.begin(); it != _cmds.end(); ++it) {
@@ -206,7 +206,7 @@ const int shell_t::init_cmds()
     return (0);
 }
 
-const int shell_t::close_cmds()
+int shell_t::close_cmds()
 {
     CRITICAL_SECTION(sh_cs,_lock);
     for (cmdMapIt it = _cmds.begin(); it != _cmds.end(); ++it) {
@@ -223,7 +223,7 @@ const int shell_t::close_cmds()
  *********************************************************************/
 
 
-const int shell_t::_register_commands() 
+int shell_t::_register_commands() 
 {
     // add own
 
@@ -310,11 +310,11 @@ void help_cmd_t::list_cmds()
     }
 }
 
-const int help_cmd_t::handle(const char* cmd) 
+int help_cmd_t::handle(const char* cmd) 
 {
     char help_tag[SERVER_COMMAND_BUFFER_SIZE];
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%s %s", &help_tag, &cmd_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", help_tag, cmd_tag) < 2) {
         // prints the list of commands
         list_cmds();
         return (SHELL_NEXT_CONTINUE);
@@ -350,7 +350,7 @@ void set_cmd_t::setaliases()
     _aliases.push_back("s");
 }
 
-const int set_cmd_t::handle(const char* cmd) 
+int set_cmd_t::handle(const char* cmd) 
 {
     assert (ev);
     ev->parseSetReq(cmd);
@@ -380,12 +380,12 @@ void env_cmd_t::setaliases()
     _aliases.push_back("e");
 }
 
-const int env_cmd_t::handle(const char* cmd)
+int env_cmd_t::handle(const char* cmd)
 {    
     assert (ev);
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char env_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%s %s", &cmd_tag, &env_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", cmd_tag, env_tag) < 2) {
         // prints all the env
         ev->printVars();    
         return (SHELL_NEXT_CONTINUE);
@@ -417,7 +417,7 @@ void conf_cmd_t::setaliases()
     _aliases.push_back("c");
 }
 
-const int conf_cmd_t::handle(const char* cmd)
+int conf_cmd_t::handle(const char* cmd)
 {    
     ev->refreshVars();
     return (SHELL_NEXT_CONTINUE);

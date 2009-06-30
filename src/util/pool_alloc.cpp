@@ -65,7 +65,7 @@ namespace {
 	delete pl;
     }
     
-    struct {
+    struct TLP {
 	pthread_key_t ptkey;
 	void init() {
 	    // WARNING: not thread safe! (must call it during static initialization)

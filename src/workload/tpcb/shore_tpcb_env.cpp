@@ -234,7 +234,7 @@ void ShoreTPCBEnv::table_builder_t::work() {
 		    i, str.c_str());
 	}
     }
-    fprintf(stderr, "Finished loading account groups %d .. %d \n", _start, _start+_count);
+    fprintf(stderr, "Finished loading account groups %ld .. %ld\n", _start, _start+_count);
 }
 
 
@@ -292,7 +292,7 @@ void  ShoreTPCBEnv::table_creator_t::work() {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
 	trx_result_tuple_t out;
-	fprintf(stderr, "Populating %d a_ids starting with %d\n", TPCB_ACCOUNTS_CREATED_PER_POP_XCT, a_id);
+	fprintf(stderr, "Populating %d a_ids starting with %ld\n", TPCB_ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 	W_COERCE(_env->db()->begin_xct());
 	W_COERCE(_env->xct_populate_db(a_id, out, in));
     }

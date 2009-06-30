@@ -81,7 +81,7 @@ class envVar;
 
 struct quit_cmd_t : public command_handler_t {
     void setaliases();
-    const int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
+    int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
     const string desc() { return (string("Quit")); }               
 };
 
@@ -91,7 +91,7 @@ struct help_cmd_t : public command_handler_t {
     help_cmd_t(cmdMap* pcmds) : _pcmds(pcmds) { assert(pcmds); }
     ~help_cmd_t() { }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage() { 
         TRACE( TRACE_ALWAYS, "HELP       - prints usage\n"); 
         TRACE( TRACE_ALWAYS, "HELP <cmd> - prints detailed help for <cmd>\n"); 
@@ -105,7 +105,7 @@ struct set_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
     const string desc() { return (string("Sets env vars")); }               
 };
@@ -114,7 +114,7 @@ struct env_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
     const string desc() { return (string("Prints env vars")); }               
 };
@@ -123,7 +123,7 @@ struct conf_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
     const string desc() { return (string("Rereads env vars")); }               
 };
@@ -142,7 +142,7 @@ struct cpustat_cmd_t : public command_handler_t {
 
 struct echo_cmd_t : public command_handler_t {
     void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
-    const int handle(const char* cmd) {
+    int handle(const char* cmd) {
         printf("%s\n", cmd+strlen("echo "));
         return (SHELL_NEXT_CONTINUE);
     }
@@ -154,7 +154,7 @@ struct echo_cmd_t : public command_handler_t {
 
 struct break_cmd_t : public command_handler_t {
     void setaliases() { _name = string("break"); _aliases.push_back("break"); }
-    const int handle(const char* cmd) {
+    int handle(const char* cmd) {
         raise(SIGINT);
         return (SHELL_NEXT_CONTINUE);
     }
@@ -201,7 +201,7 @@ protected:
     guard<cpustat_cmd_t> _cpustater;
 #endif
 
-    const int _register_commands();    
+    int _register_commands();    
 
 protected:
 
@@ -232,7 +232,7 @@ public:
 
     static shell_t* &instance() { static shell_t* _instance; return _instance; }
 
-    const int get_command_cnt() { return (_cmd_counter); }
+    int get_command_cnt() { return (_cmd_counter); }
 
     static void sig_handler(int sig) {
 	assert(sig == SIGINT && instance());	
@@ -241,10 +241,10 @@ public:
     }
 
     // should register own commands
-    virtual const int register_commands()=0;
-    const int add_cmd(command_handler_t* acmd);
-    const int init_cmds();
-    const int close_cmds();
+    virtual int register_commands()=0;
+    int add_cmd(command_handler_t* acmd);
+    int init_cmds();
+    int close_cmds();
 
     // basic shell functionality    
     //    virtual int process_command(const char* cmd, const char* cmd_tag)=0;

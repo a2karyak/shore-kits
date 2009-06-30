@@ -128,7 +128,7 @@ public:
         ~restart_cmd_t() { }
         void setaliases() { 
             _name = string("restart"); _aliases.push_back("restart"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->stop(); _pdb->start(); 
             return (SHELL_NEXT_CONTINUE); }
         const string desc() { return (string("Restart")); }               
@@ -142,7 +142,7 @@ public:
         ~info_cmd_t() { }
         void setaliases() { 
             _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
         const string desc() { return (string("Prints info about the state of db instance")); }
     };
@@ -155,7 +155,7 @@ public:
         ~stats_cmd_t() { }
         void setaliases() { 
             _name = string("stats"); _aliases.push_back("stats"); _aliases.push_back("st"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->statistics(); return (SHELL_NEXT_CONTINUE); }
         const string desc() { return (string("Prints gathered statistics")); }
     };
@@ -168,7 +168,7 @@ public:
         ~dump_cmd_t() { }
         void setaliases() { 
             _name = string("dump"); _aliases.push_back("dump"); _aliases.push_back("d"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->dump(); return (SHELL_NEXT_CONTINUE); }
         const string desc() { return (string("Dumps db instance data")); }
     };
@@ -183,7 +183,7 @@ public:
         measure_cmd_t(kit_t* akit) : _kit(akit) { }
         void setaliases() { _name = string("measure"); 
             _aliases.push_back("measure"); _aliases.push_back("m"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             _kit->pre_process_cmd();
             return (_kit->process_cmd_MEASURE(cmd,cmd)); }
         void usage() { _kit->usage_cmd_MEASURE(); }
@@ -195,7 +195,7 @@ public:
         kit_t* _kit;
         test_cmd_t(kit_t* akit) : _kit(akit) { }
         void setaliases() { _name = string("test"); _aliases.push_back("test"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             _kit->pre_process_cmd();
             return (_kit->process_cmd_TEST(cmd,cmd)); }
         void usage() { _kit->usage_cmd_TEST(); }
@@ -207,7 +207,7 @@ public:
         kit_t* _kit;
         trxs_cmd_t(kit_t* akit) : _kit(akit) { }
         void setaliases() { _name = string("trxs"); _aliases.push_back("trxs"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             _kit->pre_process_cmd();
             return (_kit->process_cmd_TRXS(cmd,cmd)); }
         void usage() { TRACE( TRACE_ALWAYS, "usage: trxs\n"); }
@@ -217,7 +217,7 @@ public:
 
 
 
-    virtual const int register_commands() 
+    virtual int register_commands() 
     {
         shore_shell_t::register_commands();
 
