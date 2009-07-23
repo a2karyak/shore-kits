@@ -68,11 +68,11 @@ acct_update_input_t create_acct_update_input(int sf,
     // 85 - 15 local Branch
     if (URand(0,100)>85) {
         // remote branch
-        auin.a_id = URand(0,sf) + URand(0,TPCB_ACCOUNTS_PER_BRANCH);
+        auin.a_id = URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH + URand(0,TPCB_ACCOUNTS_PER_BRANCH);
     }
     else {
         // local branch
-        auin.a_id = auin.b_id + URand(0,TPCB_ACCOUNTS_PER_BRANCH);
+        auin.a_id = auin.b_id*TPCB_ACCOUNTS_PER_BRANCH + URand(0,TPCB_ACCOUNTS_PER_BRANCH);
     }
         
     auin.delta = URand(0,2000000) - 1000000;
