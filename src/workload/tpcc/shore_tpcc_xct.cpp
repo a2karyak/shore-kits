@@ -925,7 +925,9 @@ w_rc_t ShoreTPCCEnv::xct_new_order(const int xct_id,
             prst->get_value(3, astock.S_QUANTITY);
             astock.S_QUANTITY -= pnoin.items[item_cnt]._ol_quantity;
             if (astock.S_QUANTITY < 10) astock.S_QUANTITY += 91;
-            prst->get_value(6+pnoin._d_id, astock.S_DIST[6+pnoin._d_id], 25);
+
+            prst->get_value(6+pnoin._d_id, astock.S_DIST[pnoin._d_id], 25);
+
             prst->get_value(16, astock.S_DATA, 51);
 
             char c_s_brand_generic;
@@ -967,7 +969,8 @@ w_rc_t ShoreTPCCEnv::xct_new_order(const int xct_id,
             prol->set_value(6, pnoin._tstamp);
             prol->set_value(7, pnoin.items[item_cnt]._ol_quantity);
             prol->set_value(8, item_amount);
-            prol->set_value(9, astock.S_DIST[6+pnoin._d_id]);
+
+            prol->set_value(9, astock.S_DIST[pnoin._d_id]);
 
             TRACE( TRACE_TRX_FLOW, 
                    "App: %d NO:ol-add-tuple (%d) (%d) (%d) (%d)\n", 
