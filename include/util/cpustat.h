@@ -128,7 +128,7 @@ public:
     }
 
     ~cpumonitor_t() { 
-        if (*&_setup != CPS_NOTSET) {            
+        if (*&_state != CPS_NOTSET) {            
             pthread_mutex_destroy(&_mutex);
             pthread_cond_destroy(&_cond);
             kstat_close(_pkc);
