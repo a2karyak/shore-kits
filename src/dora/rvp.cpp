@@ -189,8 +189,12 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
             upd_aborted_stats(); // hook - update aborted stats
 
 #ifndef ONLYDORA
+#ifdef CFG_DORA_FLUSHER
             assert (0); // IP: TODO: Need to check if this can be done with dora-flusher
+            w_rc_t eabort = db->begin_abort_xct();
+#else
             w_rc_t eabort = db->abort_xct();
+#endif
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                        _tid, eabort.err_num());
@@ -203,7 +207,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         }
     }               
 
-#ifdef CFG_DORA_FLUSHER
+#ifndef CFG_DORA_FLUSHER
     // If dora-flusher is enabled then it is its responsibility to
     // notify the client
     notify_client();
