@@ -119,7 +119,12 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
  *
  ********************************************************************/
 
-enum eActionDecision { AD_UNDECIDED = 0x1, AD_ABORT = 0x2, AD_DEADLOCK = 0x3, AD_COMMIT = 0x4, AD_DIE = 0x5 };
+enum 
+eActionDecision { AD_UNDECIDED = 0x1, 
+                  AD_ABORT = 0x2, 
+                  AD_DEADLOCK = 0x3, 
+                  AD_COMMIT = 0x4, 
+                  AD_DIE = 0x5 };
 
 
 
@@ -135,7 +140,11 @@ enum eActionDecision { AD_UNDECIDED = 0x1, AD_ABORT = 0x2, AD_DEADLOCK = 0x3, AD
  *
  ********************************************************************/
 
-enum ePartitionPolicy { PP_UNDEF, PP_RANGE, PP_HASH, PP_PREFIX };
+enum 
+ePartitionPolicy { PP_UNDEF = 0x0, 
+                   PP_RANGE, 
+                   PP_HASH, 
+                   PP_PREFIX };
 
 
 
@@ -194,9 +203,9 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 // Table Partitions
 
-#define DECLARE_DORA_PARTS(abbrv)               \
-    guard<irpTableImpl> _##abbrv##_irpt;        \
-    int _sf_per_part_##abbrv;                   \
+#define DECLARE_DORA_PARTS(abbrv)                                       \
+    guard<irpTableImpl> _##abbrv##_irpt;                                \
+    int _sf_per_part_##abbrv;                                           \
     inline irpTableImpl* abbrv() { return (_##abbrv##_irpt.get()); }
 
 
@@ -556,15 +565,30 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 
 
-            
+// Check if a Midway RVP is Aborted
+
+
+// If xct has already aborted then it calls immediately the next rvp
+// to abort and execute its code. 
+// In the majority of cases it is the final-rvp code
+#define CHECK_MIDWAY_RVP_ABORTED(nextrvp)                               \
+    if (isAborted()) {                                                  \
+        nextrvp->abort();                                               \
+        w_rc_t e = nextrvp->run();                                      \
+        if (e.is_error()) {                                             \
+            TRACE( TRACE_ALWAYS,                                        \
+                   "Problem running rvp for xct (%d) [0x%x]\n",         \
+                   _tid, e.err_num()); }                                \
+        nextrvp->notify();                                              \
+        nextrvp->giveback();                                            \
+        nextrvp = NULL;                                                 \
+        return (e); }
 
 
 
 const int DF_ACTION_CACHE_SZ = 100;
 
 
-
-
 EXIT_NAMESPACE(dora);
 
-#endif /* __DORA_COMMON_H */
+#endif // __DORA_COMMON_H
