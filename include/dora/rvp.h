@@ -147,20 +147,8 @@ public:
 
     // decides to abort this trx
     inline const ushort_t abort() { 
-        ushort_t old_value = *&_decision;
-        while (true) {
-            ushort_t new_value = AD_ABORT;
-            ushort_t cur_value = atomic_cas_ushort(&_decision, old_value, new_value);
-            if (cur_value == old_value) {
-                // successful cas
-                return (new_value);
-            }
-            // try, try again
-            old_value = cur_value;
-        }
-
-        // should not reach this point
-        assert(0);
+        ushort_t new_value = AD_ABORT;
+        ushort_t old_value = atomic_swap_ushort(&_decision, new_value);
         return (*&_decision);
     }
 
