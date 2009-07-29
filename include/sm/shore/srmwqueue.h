@@ -164,7 +164,7 @@ struct srmwqueue
         }
 
         // don't try to wake on every call. let for some requests to batch up
-        if ((queue_sz > _thres) || bWake) {        
+        if ((queue_sz >= _thres) || bWake) {        
             // wake up if assigned worker thread sleeping
             _owner->set_ws(_my_ws);
         }
