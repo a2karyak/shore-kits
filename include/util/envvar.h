@@ -127,11 +127,11 @@ public:
     static envVar* instance() { static envVar _instance; return (&_instance); }
 
     // refreshes all the env vars from the conf file
-    const int refreshVars(void);
+    int refreshVars(void);
 
     // sets a new parameter
-    const int setVar(const string& sParam, const string& sValue);
-    const int setVarInt(const string& sParam, const int& iValue);
+    int setVar(const string& sParam, const string& sValue);
+    int setVarInt(const string& sParam, const int& iValue);
 
     // retrieves a specific param from the map. if not found, searches the conf file
     // and updates the map
@@ -150,15 +150,16 @@ public:
     void printVars(void);
 
     // parses a SET request
-    const int parseOneSetReq(const string& in);
+    int parseOneSetReq(const string& in);
     
     // parses a string of SET requests
-    const int parseSetReq(const string& in);
+    int parseSetReq(const string& in);
 
     // gets db-config and then <db-config>-system
+    int setConfiguration(string sConfiguration);
     string getSysname();
     string getSysVar(string sParam);
-    const int getSysVarInt(string sParam);
+    int getSysVarInt(string sParam);
 
 }; // EOF: envVar
 

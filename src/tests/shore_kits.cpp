@@ -385,8 +385,8 @@ const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
 
     // 3. set SF - if param valid
     assert (_dbinst);
-    if (argc>1) {
-        int queriedSF = atoi(argv[1]);
+    if (argc>2) {
+        int queriedSF = atoi(argv[2]);
         _dbinst->set_qf(queriedSF);
     }
     _theSF = _dbinst->get_sf();
@@ -656,10 +656,18 @@ int main(int argc, char* argv[])
                //| TRACE_DEBUG
                );
 
+    // 0. First check if there is any particular configuration selected
+    envVar* ev = envVar::instance();
+    if (argc>1) { 
+        string config = argv[1];
+        ev->setConfiguration(config);
+    }
+
+
     // 1. Get env vars
     initsysnamemap();
     initbenchmarkmap();
-    envVar* ev = envVar::instance();       
+
     string sysname = ev->getSysname();
     string benchmarkname = ev->getSysVar("benchmark");
 

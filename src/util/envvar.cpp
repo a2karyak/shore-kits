@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   envvar.cpp
  *
  *  @brief:  "environment variables" singleton class
@@ -45,7 +43,8 @@
 
 // helper: reads the conf file for a specific param
 // !!! the caller should have the lock !!!
-string envVar::_readConfVar(const string& sParam, const string& sDefValue)
+string 
+envVar::_readConfVar(const string& sParam, const string& sDefValue)
 {
     if (sParam.empty()||sDefValue.empty()) {
         TRACE( TRACE_ALWAYS, "Invalid Param or Value input\n");
@@ -64,7 +63,8 @@ string envVar::_readConfVar(const string& sParam, const string& sDefValue)
 
 
 // sets a new parameter
-const int envVar::setVar(const string& sParam, const string& sValue)
+int 
+envVar::setVar(const string& sParam, const string& sValue)
 {
     if ((!sParam.empty())&&(!sValue.empty())) {
         TRACE( TRACE_DEBUG, "(%s) (%s)\n", sParam.c_str(), sValue.c_str());
@@ -75,7 +75,9 @@ const int envVar::setVar(const string& sParam, const string& sValue)
     return (0);
 }
 
-const int envVar::setVarInt(const string& sParam, const int& iValue)
+
+int 
+envVar::setVarInt(const string& sParam, const int& iValue)
 {    
     return (setVar(sParam,_toString(iValue)));
 }
@@ -83,7 +85,8 @@ const int envVar::setVarInt(const string& sParam, const int& iValue)
 
 
 // refreshes all the env vars from the conf file
-const int envVar::refreshVars(void)
+int 
+envVar::refreshVars(void)
 {
     TRACE( TRACE_DEBUG, "Refreshing environment variables\n");
     CRITICAL_SECTION(evm_cs,_lock);
@@ -96,7 +99,8 @@ const int envVar::refreshVars(void)
 
 // checks the map for a specific param
 // if it doesn't find it checks also the config file
-string envVar::getVar(const string& sParam, const string& sDefValue)
+string 
+envVar::getVar(const string& sParam, const string& sDefValue)
 {
     if (sParam.empty()) {
         TRACE( TRACE_ALWAYS, "Invalid Param input\n");
@@ -112,7 +116,8 @@ string envVar::getVar(const string& sParam, const string& sDefValue)
     return (it->second);
 }
 
-int envVar::getVarInt(const string& sParam, const int& iDefValue)
+int 
+envVar::getVarInt(const string& sParam, const int& iDefValue)
 {
     return (atoi(getVar(sParam,_toString(iDefValue)).c_str()));
 }
@@ -120,7 +125,8 @@ int envVar::getVarInt(const string& sParam, const int& iDefValue)
 
 
 // checks if a specific param is set at the map or (fallback) the conf file
-void envVar::checkVar(const string& sParam)
+void 
+envVar::checkVar(const string& sParam)
 {
     string r;
     CRITICAL_SECTION(evm_cs,_lock);
@@ -143,22 +149,31 @@ void envVar::checkVar(const string& sParam)
 }
 
 
-string envVar::getSysname()
+/*************************************************
+ * 
+ * System-related variables
+ *
+ *************************************************/
+
+string 
+envVar::getSysname()
 {
-    //string config = getVar("db-config","invalid");
-    //config = config + "-system";
     string system = "system";
     return (getSysVar(system));
 }
 
-string envVar::getSysVar(string sParam)
+
+string 
+envVar::getSysVar(string sParam)
 {
     string config = getVar("db-config","invalid");
     config = config + "-" + sParam;
     return (getVar(config,"invalid"));
 }
 
-const envVar::getSysVarInt(string sParam)
+
+int 
+envVar::getSysVarInt(string sParam)
 {
     string config = getVar("db-config","invalid");
     config = config + "-" + sParam;
@@ -166,6 +181,11 @@ const envVar::getSysVarInt(string sParam)
 }
 
 
+int 
+envVar::setConfiguration(string sConfiguration)
+{
+    return (setVar("db-config",sConfiguration));
+}
 
 
 // prints all the env vars
@@ -180,7 +200,8 @@ void envVar::printVars(void)
 
 
 // sets as input another conf file
-void envVar::setConfFile(const string& sConfFile)
+void 
+envVar::setConfFile(const string& sConfFile)
 {
     assert (!sConfFile.empty());
     CRITICAL_SECTION(evm_cs,_lock);
@@ -192,7 +213,8 @@ void envVar::setConfFile(const string& sConfFile)
 
 
 // parses a SET request
-const int envVar::parseOneSetReq(const string& in)
+int 
+envVar::parseOneSetReq(const string& in)
 {
     string param;
     string value;
@@ -218,7 +240,8 @@ const int envVar::parseOneSetReq(const string& in)
 
 
 // parses a string of (multiple) SET requests
-const int envVar::parseSetReq(const string& in)
+int 
+envVar::parseSetReq(const string& in)
 {
     int cnt=0;
 
