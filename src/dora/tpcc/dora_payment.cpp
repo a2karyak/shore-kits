@@ -34,13 +34,17 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-w_rc_t midway_pay_rvp::run() 
+w_rc_t 
+midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
 #ifndef ONLYDORA
     assert (_xct);
 #endif
     final_pay_rvp* frvp = _ptpccenv->new_final_pay_rvp(_tid,_xct,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate and enqueue action
     ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_tid,_xct,frvp,_pin);
@@ -70,17 +74,20 @@ w_rc_t midway_pay_rvp::run()
  *
  ********************************************************************/
 
-w_rc_t final_pay_rvp::run() 
+w_rc_t 
+final_pay_rvp::run() 
 {
     return (_run(_ptpccenv->db(),_ptpccenv)); 
 }
 
-void final_pay_rvp::upd_committed_stats() 
+void 
+final_pay_rvp::upd_committed_stats() 
 {
     _ptpccenv->_inc_payment_att();
 }                     
 
-void final_pay_rvp::upd_aborted_stats() 
+void 
+final_pay_rvp::upd_aborted_stats() 
 {
     _ptpccenv->_inc_payment_failed();
 }                     
@@ -98,7 +105,15 @@ void final_pay_rvp::upd_aborted_stats()
  *
  ********************************************************************/
 
-w_rc_t upd_wh_pay_action::trx_exec() 
+void 
+upd_wh_pay_action::calc_keys() 
+{
+    _down.push_back(_pin._home_wh_id);
+    _up.push_back(_pin._home_wh_id);
+}
+
+w_rc_t 
+upd_wh_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -170,7 +185,19 @@ done:
     return (e);
 }
 
-w_rc_t upd_dist_pay_action::trx_exec() 
+
+
+void 
+upd_dist_pay_action::calc_keys() 
+{
+    _down.push_back(_pin._home_wh_id);
+    _down.push_back(_pin._home_d_id);
+    _up.push_back(_pin._home_wh_id);
+    _up.push_back(_pin._home_d_id);
+}
+
+w_rc_t 
+upd_dist_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -251,7 +278,8 @@ done:
 
 
 
-void upd_cust_pay_action::calc_keys() 
+void 
+upd_cust_pay_action::calc_keys() 
 {
     _down.push_back(_pin._home_wh_id);
     _down.push_back(_pin._home_d_id);
@@ -259,7 +287,8 @@ void upd_cust_pay_action::calc_keys()
     _up.push_back(_pin._home_d_id);
 }
 
-w_rc_t upd_cust_pay_action::trx_exec() 
+w_rc_t 
+upd_cust_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 
@@ -461,7 +490,16 @@ done:
     return (e);
 }
 
-w_rc_t ins_hist_pay_action::trx_exec() 
+
+
+void 
+ins_hist_pay_action::calc_keys() {
+    _down.push_back(_pin._home_wh_id);
+    _up.push_back(_pin._home_wh_id);
+}
+
+w_rc_t 
+ins_hist_pay_action::trx_exec() 
 {
     assert (_ptpccenv);
 

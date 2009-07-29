@@ -38,7 +38,8 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
  *
  ********************************************************************/
 
-w_rc_t mid_nord_rvp::run() 
+w_rc_t 
+mid_nord_rvp::run() 
 {
     // 1. Setup the next RVP
 #ifndef ONLYDORA
@@ -53,6 +54,13 @@ w_rc_t mid_nord_rvp::run()
 
     // 1. Setup the final RVP
     final_nord_rvp* frvp = _penv->new_final_nord_rvp(_tid,_xct,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
+    // By now the d_next_o_id should have been set - sanity check
+    assert (_in._d_next_o_id!=-1);
+
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -141,7 +149,8 @@ w_rc_t mid_nord_rvp::run()
 
 // R_WH_NORD_ACTION
 
-void r_wh_nord_action::calc_keys() 
+void 
+r_wh_nord_action::calc_keys() 
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -149,7 +158,8 @@ void r_wh_nord_action::calc_keys()
 }
 
 
-w_rc_t r_wh_nord_action::trx_exec() 
+w_rc_t 
+r_wh_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -201,7 +211,8 @@ done:
 
 // R_CUST_NORD_ACTION
 
-void r_cust_nord_action::calc_keys() 
+void 
+r_cust_nord_action::calc_keys() 
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -211,7 +222,8 @@ void r_cust_nord_action::calc_keys()
 }
 
 
-w_rc_t r_cust_nord_action::trx_exec() 
+w_rc_t 
+r_cust_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -270,7 +282,8 @@ done:
 
 // UPD_DIST_NORD_ACTION
 
-void upd_dist_nord_action::calc_keys() 
+void 
+upd_dist_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
@@ -278,7 +291,8 @@ void upd_dist_nord_action::calc_keys()
     _up.push_back(_in._d_id);
 }
 
-w_rc_t upd_dist_nord_action::trx_exec() 
+w_rc_t 
+upd_dist_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -338,7 +352,9 @@ w_rc_t upd_dist_nord_action::trx_exec()
 
         // 3. Update midway RVP 
         _prvp->_in._d_next_o_id = next_o_id;            
-
+//         TRACE(TRACE_ALWAYS, 
+//               "(%d) %d %d %d\n", 
+//               _tid, _in._wh_id, _in._d_id, next_o_id);
     } // goto
 
 #ifdef PRINT_TRX_RESULTS
@@ -357,9 +373,8 @@ done:
 
 // R_ITEM_NORD_ACTION
 
-#warning Only 1 field (WH) determines the ITEM table accesses! Not 2 nor item-id!
-
-void r_item_nord_action::calc_keys() 
+void 
+r_item_nord_action::calc_keys() 
 {
     // !!! IP: Correct is to use the _ol_supply_wh_id !!!
     set_read_only();
@@ -367,7 +382,8 @@ void r_item_nord_action::calc_keys()
     _up.push_back(_in._wh_id);
 }
 
-w_rc_t r_item_nord_action::trx_exec() 
+w_rc_t 
+r_item_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -441,9 +457,8 @@ done:
 
 // UPD_STO_NORD_ACTION
 
-#warning Only 1 field (WH) determines the STOCK table accesses! Not 2.
-
-void upd_sto_nord_action::calc_keys() 
+void 
+upd_sto_nord_action::calc_keys() 
 {
     // !!! IP: Correct is to use the _ol_supply_wh_id !!!
     _down.push_back(_in._wh_id);
@@ -451,7 +466,8 @@ void upd_sto_nord_action::calc_keys()
 }
 
 
-w_rc_t upd_sto_nord_action::trx_exec() 
+w_rc_t 
+upd_sto_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -481,7 +497,6 @@ w_rc_t upd_sto_nord_action::trx_exec()
             ol_i_id = _prvp->_in.items[idx]._ol_i_id;
             ol_supply_w_id = _prvp->_in.items[idx]._ol_supply_wh_id;
 
-
             /* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
              * FROM stock
              * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
@@ -509,7 +524,10 @@ w_rc_t upd_sto_nord_action::trx_exec()
             prst->get_value(3, pstock->S_QUANTITY);
             pstock->S_QUANTITY -= _prvp->_in.items[idx]._ol_quantity;
             if (pstock->S_QUANTITY < 10) pstock->S_QUANTITY += 91;
-            prst->get_value(6+_in._d_id, pstock->S_DIST[6+_in._d_id], 25);
+
+            //prst->get_value(6+_in._d_id, pstock->S_DIST[6+_in._d_id], 25);
+            prst->get_value(6+_in._d_id, pstock->S_DIST[_in._d_id], 25);
+
             prst->get_value(16, pstock->S_DATA, 51);
 
             char c_s_brand_generic;
@@ -521,9 +539,11 @@ w_rc_t upd_sto_nord_action::trx_exec()
             prst->get_value(4, pstock->S_ORDER_CNT);
             pstock->S_ORDER_CNT++;
 
+
             if (_in._wh_id != _prvp->_in.items[idx]._ol_supply_wh_id) { 
                 pstock->S_REMOTE_CNT++;
-                assert (0); // Should not happen
+                // Should not happen, because we have disabled the remote xcts
+                assert (0); 
             }
 
             /* UPDATE stock
@@ -578,9 +598,8 @@ done:
 // INS_ORD_NORD_ACTION
 
 
-#warning Only 2 fields (WH,DI) determine the ORDER table accesses! Not 3.
-
-void ins_ord_nord_action::calc_keys() 
+void 
+ins_ord_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
@@ -589,7 +608,8 @@ void ins_ord_nord_action::calc_keys()
 }
 
 
-w_rc_t ins_ord_nord_action::trx_exec() 
+w_rc_t 
+ins_ord_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -648,9 +668,8 @@ done:
 // INS_NORD_NORD_ACTION
 
 
-#warning Only 2 fields (WH,DI) determine the NEW-ORDER table accesses! Not 3.
-
-void ins_nord_nord_action::calc_keys() 
+void 
+ins_nord_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
@@ -659,7 +678,8 @@ void ins_nord_nord_action::calc_keys()
 }
 
 
-w_rc_t ins_nord_nord_action::trx_exec() 
+w_rc_t 
+ins_nord_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -712,9 +732,8 @@ done:
 // INS_OL_NORD_ACTION
 
 
-#warning Only 2 fields (WH,DI) determine the ORDERLINE table accesses! Not 3.
-
-void ins_ol_nord_action::calc_keys() 
+void 
+ins_ol_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
@@ -723,7 +742,8 @@ void ins_ol_nord_action::calc_keys()
 }
 
 
-w_rc_t ins_ol_nord_action::trx_exec() 
+w_rc_t 
+ins_ol_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -761,7 +781,9 @@ w_rc_t ins_ol_nord_action::trx_exec()
             prol->set_value(6, _in._tstamp);
             prol->set_value(7, _in.items[idx]._ol_quantity);
             prol->set_value(8, _in.items[idx]._item_amount);
-            prol->set_value(9, _in.items[idx]._astock.S_DIST[6+_in._d_id]);
+
+            //prol->set_value(9, _in.items[idx]._astock.S_DIST[6+_in._d_id]);
+            prol->set_value(9, _in.items[idx]._astock.S_DIST[_in._d_id]);
 
             TRACE( TRACE_TRX_FLOW, 
                    "App: %d NO:ol-add-tuple-%d (%d) (%d) (%d) (%d)\n", 

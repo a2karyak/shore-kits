@@ -54,6 +54,8 @@ const int baseline_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_DELIVERY]     = "TPCC-Delivery";
     stmap[XCT_STOCK_LEVEL]  = "TPCC-StockLevel";
 
+    stmap[XCT_LITTLE_MIX]   = "TPCC-LittleMix";
+
     // Microbenchmarks
     stmap[XCT_MBENCH_WH]    = "TPCC-MBench-WHs";
     stmap[XCT_MBENCH_CUST]  = "TPCC-MBench-CUSTs";

@@ -45,6 +45,8 @@ w_rc_t mid1_del_rvp::run()
     mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_tid,_xct,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
     rvp2->postset(_d_id,_final_rvp);
 
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(rvp2);
 
     // 2. Generate and enqueue actions
     upd_ord_del_action* del_upd_ord = _ptpccenv->new_upd_ord_del_action(_tid,_xct,rvp2,_din);
@@ -98,6 +100,9 @@ w_rc_t mid2_del_rvp::run()
     //    so it needs to only append the actions
     assert (_final_rvp);
     _final_rvp->append_actions(_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(_final_rvp);
 
     // 2. Generate and enqueue action
     upd_cust_del_action* del_upd_cust = _ptpccenv->new_upd_cust_del_action(_tid,_xct,_final_rvp,_din);

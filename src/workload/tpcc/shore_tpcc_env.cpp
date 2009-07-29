@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcc_env.cpp
  *
  *  @brief:  Declaration of the Shore TPC-C environment (database)
@@ -53,9 +51,10 @@ struct ShoreTPCCEnv::checkpointer_t : public thread_t
 {
     ShoreTPCCEnv* _env;
     checkpointer_t(ShoreTPCCEnv* env) 
-        : thread_t("TPC-C Load Checkpointer"), _env(env) { }
+        : thread_t("TPC-C-Chkpt"), _env(env) { }
     virtual void work();
 };
+
 
 class ShoreTPCCEnv::table_builder_t : public thread_t 
 {
@@ -64,17 +63,19 @@ class ShoreTPCCEnv::table_builder_t : public thread_t
     long _count;
     int* _cids;
 public:
-    table_builder_t(ShoreTPCCEnv* env, long start, long count, int* cids)
-	: thread_t("TPC-C Loader"), _env(env), _start(start), _count(count), _cids(cids) { }
+    table_builder_t(ShoreTPCCEnv* env, const int id, long start, long count, int* cids)
+	: thread_t(c_str("TPC-C-Loader-%d",id)), 
+          _env(env), _start(start), _count(count), _cids(cids) { }
     virtual void work();
 };
+
 
 struct ShoreTPCCEnv::table_creator_t : public thread_t 
 {
     ShoreTPCCEnv* _env;
     int _sf;
     table_creator_t(ShoreTPCCEnv* env, int sf)
-	: thread_t("TPC-C Table Creator"), _env(env), _sf(sf) { }
+	: thread_t("TPC-C-Creator"), _env(env), _sf(sf) { }
     virtual void work();
 };
 
@@ -144,8 +145,11 @@ static void gen_cid_array(int* cid_array) {
     }
 }
 
+
 static unsigned long units_completed = 0;
-void ShoreTPCCEnv::table_builder_t::work() 
+
+void 
+ShoreTPCCEnv::table_builder_t::work() 
 {
     w_rc_t e = RCOK;
 
@@ -190,8 +194,9 @@ void ShoreTPCCEnv::table_builder_t::work()
 	if(nval % UNIT_PER_WH == 0)
 	    fprintf(stderr, ".\n");
     }
-    fprintf(stderr, "Finished loading units %d .. %d \n", _start, _start+_count);
-
+    TRACE( TRACE_ALWAYS, 
+           "Finished loading units %d .. %d \n", 
+           _start, _start+_count);
 }
 
 
@@ -456,7 +461,7 @@ const int ShoreTPCCEnv::upd_worker_cnt()
 
 w_rc_t ShoreTPCCEnv::loaddata() 
 {
-    /* 0. lock the loading status and the scaling factor */
+    // 0. lock the loading status and the scaling factor
     CRITICAL_SECTION(load_cs, _load_mutex);
     if (_loaded) {
         TRACE( TRACE_TRX_FLOW, 
@@ -469,19 +474,19 @@ w_rc_t ShoreTPCCEnv::loaddata()
     int cid_array[ORDERS_PER_DIST];
     gen_cid_array(cid_array);
 
-    /* 1. create the loader threads */
-    int num_tbl = SHORE_TPCC_TABLES;
-
-    // P-Loader
+    // 1. The table creator creates the tables and loads the first records per table
     {
 	guard<table_creator_t> tc;
 	tc = new table_creator_t(this, _scaling_factor);
 	tc->fork();
 	tc->join();
     }
+
+    // 2. Fire up a checkpointer thread
     guard<checkpointer_t> chk(new checkpointer_t(this));
     chk->fork();
-    
+
+    // 3. Fire up the loader threads
     int loaders_to_use = envVar::instance()->getVarInt("db-loaders",10);
     array_guard_t< guard<table_builder_t> > loaders(new guard<table_builder_t>[loaders_to_use]);
     long total_units = _scaling_factor*UNIT_PER_WH;
@@ -490,22 +495,25 @@ w_rc_t ShoreTPCCEnv::loaddata()
     long units_per_thread = (total_units + loaders_to_use-1)/loaders_to_use;
     long divisor = ORDERS_PER_DIST/ORDERS_PER_UNIT;
     units_per_thread = ((units_per_thread + divisor-1)/divisor)*divisor;
+
     for(int i=0; i < loaders_to_use; i++) {
 	long start = i*units_per_thread;
 	long count = (start+units_per_thread > total_units)? total_units-start : units_per_thread;
-	loaders[i] = new table_builder_t(this, start, count, cid_array);
+	loaders[i] = new table_builder_t(this, i, start, count, cid_array);
 	loaders[i]->fork();
     }
-    for(int i=0; i < loaders_to_use; i++)
+
+    for(int i=0; i < loaders_to_use; i++) {
 	loaders[i]->join();
+    }
 
     time_t tstop = time(NULL);
 
-    /* 5. print stats */
+    // 4. Print stats
     TRACE( TRACE_STATISTICS, "Loading finished. %d table loaded in (%d) secs...\n",
-           num_tbl, (tstop - tstart));
+           SHORE_TPCC_TABLES, (tstop - tstart));
 
-    /* 6. notify that the env is loaded */
+    // 5. notify that the env is loaded
     _loaded = true;
     chk->join();
 
@@ -526,60 +534,7 @@ w_rc_t ShoreTPCCEnv::loaddata()
 
 w_rc_t ShoreTPCCEnv::check_consistency()
 {
-    /* 1. create the checker threads */
-    int num_tbl = SHORE_TPCC_TABLES;
-    int cnt = 0;
-
-    guard<thread_t> checkers[SHORE_TPCC_TABLES];
-
-    // manually create the loading threads
-    checkers[0] = new wh_checker_t(c_str("chk-WH"), _pssm, 
-                                   _pwarehouse_man, _pwarehouse_desc.get());
-    checkers[1] = new dist_checker_t(c_str("chk-DIST"), _pssm, 
-                                     _pdistrict_man, _pdistrict_desc.get());
-    checkers[2] = new st_checker_t(c_str("chk-ST"), _pssm, 
-                                   _pstock_man, _pstock_desc.get());
-    checkers[3] = new ol_checker_t(c_str("chk-OL"), _pssm, 
-                                   _porder_line_man, _porder_line_desc.get());
-    checkers[4] = new cust_checker_t(c_str("chk-CUST"), _pssm, 
-                                     _pcustomer_man, _pcustomer_desc.get());
-    checkers[5] = new hist_checker_t(c_str("chk-HIST"), _pssm, 
-                                     _phistory_man, _phistory_desc.get());
-    checkers[6] = new ord_checker_t(c_str("chk-ORD"), _pssm, 
-                                    _porder_man, _porder_desc.get());
-    checkers[7] = new no_checker_t(c_str("chk-NO"), _pssm, 
-                                   _pnew_order_man, _pnew_order_desc.get());
-    checkers[8] = new it_checker_t(c_str("chk-IT"), _pssm, 
-                                   _pitem_man, _pitem_desc.get());
-
-#if 1
-    /* 2. fork the threads */
-    cnt = 0;
-    time_t tstart = time(NULL);
-    for(int i=0; i<num_tbl; i++) {
-	checkers[i]->fork();
-    }
-
-    /* 3. join the threads */
-    cnt = 0;
-    for(int i=0; i < num_tbl; i++) {
-	checkers[i]->join();
-    }    
-    time_t tstop = time(NULL);
-#else
-    /* 2. fork & join the threads SERIALLY */
-    cnt = 0;
-    time_t tstart = time(NULL);
-    for(int i=0; i<num_tbl; i++) {
-	checkers[i]->fork();
-	checkers[i]->join();
-    }
-    time_t tstop = time(NULL);
-#endif
-    /* 4. print stats */
-    TRACE( TRACE_DEBUG, "Checking finished in (%d) secs...\n",
-           (tstop - tstart));
-    TRACE( TRACE_DEBUG, "%d tables checked...\n", num_tbl);
+    assert (0); // IP: Disabled
     return (RCOK);
 }
 

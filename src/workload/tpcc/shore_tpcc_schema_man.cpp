@@ -35,7 +35,9 @@
 #include "workload/tpcc/shore_tpcc_schema_man.h"
 
 using namespace shore;
-using namespace tpcc;
+
+
+ENTER_NAMESPACE(tpcc);
 
 
 
@@ -51,37 +53,44 @@ using namespace tpcc;
 /* ----------------- */
 
 
-w_rc_t warehouse_man_impl::wh_index_probe(ss_m* db,
-                                          warehouse_tuple* ptuple,
-                                          const int w_id)
+w_rc_t 
+warehouse_man_impl::wh_index_probe(ss_m* db,
+                                   warehouse_tuple* ptuple,
+                                   const int w_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, w_id);
     return (index_probe_by_name(db, "W_INDEX", ptuple));
 }
 
-w_rc_t warehouse_man_impl::wh_index_probe_forupdate(ss_m* db,
-                                                    warehouse_tuple* ptuple,
-                                                    const int w_id)
+
+w_rc_t 
+warehouse_man_impl::wh_index_probe_forupdate(ss_m* db,
+                                             warehouse_tuple* ptuple,
+                                             const int w_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, w_id);
     return (index_probe_forupdate_by_name(db, "W_INDEX", ptuple));
 }
 
-w_rc_t warehouse_man_impl::wh_index_probe_nl(ss_m* db,
-                                             warehouse_tuple* ptuple,
-                                             const int w_id)
+
+w_rc_t 
+warehouse_man_impl::wh_index_probe_nl(ss_m* db,
+                                      warehouse_tuple* ptuple,
+                                      const int w_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, w_id);
     return (index_probe_nl_by_name(db, "W_INDEX_NL", ptuple));
 }
 
-w_rc_t warehouse_man_impl::wh_update_ytd(ss_m* db,
-                                         warehouse_tuple* ptuple,
-                                         const double amount,
-                                         lock_mode_t lm)
+
+w_rc_t 
+warehouse_man_impl::wh_update_ytd(ss_m* db,
+                                  warehouse_tuple* ptuple,
+                                  const double amount,
+                                  lock_mode_t lm)
 { 
     // 1. increases the ytd of the warehouse and updates the table
 
@@ -96,9 +105,11 @@ w_rc_t warehouse_man_impl::wh_update_ytd(ss_m* db,
     return (RCOK);
 }
 
-w_rc_t warehouse_man_impl::wh_update_ytd_nl(ss_m* db,
-                                            warehouse_tuple* ptuple,
-                                            const double amount)
+
+w_rc_t 
+warehouse_man_impl::wh_update_ytd_nl(ss_m* db,
+                                     warehouse_tuple* ptuple,
+                                     const double amount)
 { 
     return (wh_update_ytd(db,ptuple,amount,NL));
 }
@@ -802,3 +813,6 @@ w_rc_t  stock_man_impl::st_update_tuple_nl(ss_m* db,
 {
     return (st_update_tuple(db,ptuple,pstock,NL));
 }
+
+
+EXIT_NAMESPACE(tpcc);

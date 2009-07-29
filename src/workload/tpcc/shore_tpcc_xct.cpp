@@ -272,8 +272,9 @@ int NUrand_val ( int A, int x, int y, int C ) {
  *
  *  @note: Cannot use on strings of length less than 8. Lower limit must be > 8
  */
-int create_a_string_with_original( char *out_buffer, int length_lo,
-				   int length_hi, int percent_to_set )
+int 
+create_a_string_with_original( char *out_buffer, int length_lo,
+                               int length_hi, int percent_to_set )
 {
     int actual_length, start_pos ;
 
@@ -288,6 +289,7 @@ int create_a_string_with_original( char *out_buffer, int length_lo,
     return (actual_length);
 }
 
+
 /** @fn: create_random_last_name
  *
  *  @brief: create_random_last_name generates a random number from 0 to 999
@@ -295,7 +297,10 @@ int create_a_string_with_original( char *out_buffer, int length_lo,
  *    with each digit of the generated number. the three strings are
  *    concatenated to generate the name
  */
-int create_random_last_name(char *out_buffer, int cust_num) {
+int 
+create_random_last_name(char *out_buffer, 
+                        int cust_num) 
+{
     int random_num;
 
     if (cust_num == 0)
@@ -312,7 +317,11 @@ int create_random_last_name(char *out_buffer, int cust_num) {
     return(strlen(out_buffer));
 }
 
-w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int xct_id, trx_result_tuple_t &trt, populate_baseline_input_t& pbin)
+
+w_rc_t 
+ShoreTPCCEnv::xct_populate_baseline(const int xct_id, 
+                                    trx_result_tuple_t &trt, 
+                                    populate_baseline_input_t& pbin)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -398,7 +407,11 @@ w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int xct_id, trx_result_tuple_t 
     return e;
 }
 
-w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, trx_result_tuple_t &trt, populate_one_unit_input_t& pbuin)
+
+w_rc_t 
+ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, 
+                                    trx_result_tuple_t &trt, 
+                                    populate_one_unit_input_t& pbuin)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -680,8 +693,9 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, trx_result_tuple_t 
  *
  *********************************************************************/
 
-w_rc_t ShoreTPCCEnv::run_one_xct(const int xctid, int xct_type, 
-                                 const int whid, trx_result_tuple_t& trt)
+w_rc_t 
+ShoreTPCCEnv::run_one_xct(const int xctid, int xct_type, 
+                          const int whid, trx_result_tuple_t& trt)
 {
     // if BASELINE TPC-C MIX
     if (xct_type == XCT_MIX) {        
@@ -700,8 +714,15 @@ w_rc_t ShoreTPCCEnv::run_one_xct(const int xctid, int xct_type,
     case XCT_DELIVERY:
         return (run_delivery(xctid,trt,whid));
     case XCT_STOCK_LEVEL:
-        //return (run_payment(xctid,trt,whid));;
         return (run_stock_level(xctid,trt,whid));
+
+        // Little Mix (NewOrder/Payment 50%-50%)
+    case XCT_LITTLE_MIX:
+        if (URand(1,100)>50)
+            return (run_new_order(xctid,trt,whid));
+        else
+            return (run_payment(xctid,trt,whid));
+
 
         // MBENCH BASELINE
     case XCT_MBENCH_WH:
@@ -753,9 +774,10 @@ DEFINE_TRX(ShoreTPCCEnv,mbench_cust);
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCCEnv::xct_new_order(const int xct_id, 
-                                   trx_result_tuple_t& trt,
-                                   new_order_input_t& pnoin)
+w_rc_t 
+ShoreTPCCEnv::xct_new_order(const int xct_id, 
+                            trx_result_tuple_t& trt,
+                            new_order_input_t& pnoin)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -881,7 +903,7 @@ w_rc_t ShoreTPCCEnv::xct_new_order(const int xct_id,
 
         for (int item_cnt=0; item_cnt<pnoin._ol_cnt; item_cnt++) {
 
-            /* 4. for all items read item, and update stock, and order line */
+            // 4. for all items read item, and update stock, and order line
             register int ol_i_id = pnoin.items[item_cnt]._ol_i_id;
             register int ol_supply_w_id = pnoin.items[item_cnt]._ol_supply_wh_id;
 
@@ -930,7 +952,10 @@ w_rc_t ShoreTPCCEnv::xct_new_order(const int xct_id,
             prst->get_value(3, astock.S_QUANTITY);
             astock.S_QUANTITY -= pnoin.items[item_cnt]._ol_quantity;
             if (astock.S_QUANTITY < 10) astock.S_QUANTITY += 91;
-            prst->get_value(6+pnoin._d_id, astock.S_DIST[6+pnoin._d_id], 25);
+
+            //prst->get_value(6+pnoin._d_id, astock.S_DIST[6+pnoin._d_id], 25);
+            prst->get_value(6+pnoin._d_id, astock.S_DIST[pnoin._d_id], 25);
+
             prst->get_value(16, astock.S_DATA, 51);
 
             char c_s_brand_generic;
@@ -972,7 +997,9 @@ w_rc_t ShoreTPCCEnv::xct_new_order(const int xct_id,
             prol->set_value(6, pnoin._tstamp);
             prol->set_value(7, pnoin.items[item_cnt]._ol_quantity);
             prol->set_value(8, item_amount);
-            prol->set_value(9, astock.S_DIST[6+pnoin._d_id]);
+
+            //prol->set_value(9, astock.S_DIST[6+pnoin._d_id]);
+            prol->set_value(9, astock.S_DIST[pnoin._d_id]);
 
             TRACE( TRACE_TRX_FLOW, 
                    "App: %d NO:ol-add-tuple (%d) (%d) (%d) (%d)\n", 

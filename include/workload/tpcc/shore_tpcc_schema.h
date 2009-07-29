@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcc_schema.h
  *
  *  @brief:  Declaration of the TPC-C tables
@@ -479,19 +477,7 @@ public:
 }; // EOF: stock_t
 
 
-// checkers
-typedef table_checking_smt_impl<warehouse_t>  wh_checker_t;
-typedef table_checking_smt_impl<district_t>   dist_checker_t;
-typedef table_checking_smt_impl<stock_t>      st_checker_t;
-typedef table_checking_smt_impl<order_line_t> ol_checker_t;
-typedef table_checking_smt_impl<customer_t>   cust_checker_t;
-typedef table_checking_smt_impl<history_t>    hist_checker_t;
-typedef table_checking_smt_impl<order_t>      ord_checker_t;
-typedef table_checking_smt_impl<new_order_t>  no_checker_t;
-typedef table_checking_smt_impl<item_t>       it_checker_t;
-
-
 
 EXIT_NAMESPACE(tpcc);
 
-#endif /* __SHORE_TPCC_SCHEMA_H */
+#endif // __SHORE_TPCC_SCHEMA_H

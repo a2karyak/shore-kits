@@ -89,6 +89,8 @@ const int XCT_ORDER_STATUS  = 3;
 const int XCT_DELIVERY      = 4;
 const int XCT_STOCK_LEVEL   = 5;
 
+const int XCT_LITTLE_MIX    = 9;
+
 
 const int XCT_MBENCH_WH   = 11;
 const int XCT_MBENCH_CUST = 12;

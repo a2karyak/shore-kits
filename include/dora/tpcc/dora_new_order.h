@@ -85,7 +85,6 @@ DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_sto_nord_action,int,DoraTPCCEnv,mid_nord_
 // !!! 2 fields only (WH,DI) determine the ORDER table accesses, not 3 !!!
 DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_ord_nord_action,int,DoraTPCCEnv,no_item_nord_input_t,2);
 
-
 // !!! 2 fields only (WH,DI) determine the NEW-ORDER table accesses, not 3 !!!
 DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_nord_nord_action,int,DoraTPCCEnv,no_item_nord_input_t,2);
 

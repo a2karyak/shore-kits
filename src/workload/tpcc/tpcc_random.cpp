@@ -72,8 +72,8 @@ int random(int low, int high, randgen_t* rp) {
  *  @brief Generates a uniform random number between (low) and (high)
  */
 
-int URand(int low, int high) {
-
+int URand(int low, int high) 
+{
   thread_t* self = thread_get_self();
   assert (self);
   randgen_t* randgenp = self->randgen();
@@ -98,8 +98,8 @@ int URand(int low, int high) {
  *  @brief Generates a non-uniform random number
  */
 
-int NURand(int A, int low, int high) {
-
+int NURand(int A, int low, int high) 
+{
   thread_t* self = thread_get_self();
   assert (self);
   randgen_t* randgenp = self->randgen();
@@ -197,8 +197,11 @@ int random_xct_type(int selected)
 	return XCT_ORDER_STATUS;
 
     sum+=PROB_DELIVERY;
-    if (random_type < sum)
-	return XCT_DELIVERY;
+    if (random_type < sum) {
+#warning Disabling Delivery from the TPC-C Mix. Running Payment instead
+        return XCT_PAYMENT;
+        //return XCT_DELIVERY;
+    }
 
     sum+=PROB_STOCK_LEVEL;
     if (random_type < sum)

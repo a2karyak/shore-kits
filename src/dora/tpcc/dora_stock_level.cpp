@@ -50,6 +50,9 @@ w_rc_t mid1_stock_rvp::run()
 #endif
     mid2_stock_rvp* rvp2 = _penv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
 
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(rvp2);
+
     // 2. Generate and enqueue action
     r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_tid,_xct,rvp2,_in);
 
@@ -88,6 +91,9 @@ w_rc_t mid2_stock_rvp::run()
     // 1. Set the final RVP
     final_stock_rvp* frvp = _penv->new_final_stock_rvp(_tid,_xct,_xct_id,_result,_actions);
 
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
     // 2. Generate the action
     r_st_stock_action* r_st = _penv->new_r_st_stock_action(_tid,_xct,frvp,_in);
 
@@ -119,7 +125,8 @@ w_rc_t mid2_stock_rvp::run()
  *
  ********************************************************************/
 
-void r_dist_stock_action::calc_keys()
+void 
+r_dist_stock_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -128,7 +135,9 @@ void r_dist_stock_action::calc_keys()
     _up.push_back(_in._d_id);
 }
 
-w_rc_t r_dist_stock_action::trx_exec() 
+
+w_rc_t 
+r_dist_stock_action::trx_exec() 
 {
     assert (_penv);
 
@@ -187,9 +196,8 @@ done:
 
 
 
-#warning Only 2 fields (WH,DI) determine the ORDERLINE table accesses! Not 3.
-
-void r_ol_stock_action::calc_keys()
+void 
+r_ol_stock_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -198,7 +206,9 @@ void r_ol_stock_action::calc_keys()
     _up.push_back(_in._d_id);
 }
 
-w_rc_t r_ol_stock_action::trx_exec() 
+
+w_rc_t 
+r_ol_stock_action::trx_exec() 
 {
     assert (_penv);
 
@@ -348,16 +358,18 @@ done:
 }
 
 
-#warning Only 1 field (WH) determines the STOCK table accesses! Not 2.
 
-void r_st_stock_action::calc_keys()
+void 
+r_st_stock_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _up.push_back(_in._wh_id);
 }
 
-w_rc_t r_st_stock_action::trx_exec() 
+
+w_rc_t 
+r_st_stock_action::trx_exec() 
 {
     assert (_penv);
 

@@ -184,11 +184,9 @@ public:
     ~upd_wh_pay_action() { }
     w_rc_t trx_exec();    
     midway_pay_rvp* _m_rvp;
-    void calc_keys() {
-        _down.push_back(_pin._home_wh_id);
-        _up.push_back(_pin._home_wh_id);
-    }
-    inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp, 
+    void calc_keys();
+    inline void set(const tid_t& atid, xct_t* axct, 
+                    midway_pay_rvp* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
@@ -216,12 +214,7 @@ public:
     ~upd_dist_pay_action() { }
     w_rc_t trx_exec();    
     midway_pay_rvp* _m_rvp;
-    void calc_keys() {
-        _down.push_back(_pin._home_wh_id);
-        _down.push_back(_pin._home_d_id);
-        _up.push_back(_pin._home_wh_id);
-        _up.push_back(_pin._home_d_id);
-    }
+    void calc_keys();
     inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* amrvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -251,7 +244,8 @@ public:
     w_rc_t trx_exec();   
     midway_pay_rvp* _m_rvp;
     void calc_keys();
-    inline void set(const tid_t& atid, xct_t* axct, midway_pay_rvp* prvp, 
+    inline void set(const tid_t& atid, xct_t* axct, 
+                    midway_pay_rvp* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
@@ -259,7 +253,7 @@ public:
         _m_rvp = prvp;
         assert (pc);
         _cache = pc;
-        _pay_act_set(atid,axct,prvp,3,pin,penv);  // key is (WH|DIST|CUST)
+        _pay_act_set(atid,axct,prvp,2,pin,penv);  // key is (WH|DIST)
     }
     inline void giveback() { 
         assert (_cache); 
@@ -280,11 +274,9 @@ public:
     w_rc_t trx_exec();    
     tpcc_warehouse_tuple _awh;
     tpcc_district_tuple _adist;    
-    void calc_keys() {
-        _down.push_back(_pin._home_wh_id);
-        _up.push_back(_pin._home_wh_id);
-    }
-    inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    void calc_keys();
+    inline void set(const tid_t& atid, xct_t* axct, 
+                    rvp_t* prvp, 
                     const payment_input_t& pin,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {

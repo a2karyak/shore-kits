@@ -52,6 +52,9 @@ w_rc_t mid1_ordst_rvp::run()
     // 1. Setup the next RVP
     mid2_ordst_rvp* mid2_rvp = _penv->new_mid2_ordst_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
 
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(mid2_rvp);
+
     // 2. Generate the action
     r_ord_ordst_action* r_ord = _penv->new_r_ord_ordst_action(_tid,_xct,mid2_rvp,_in);
 
@@ -95,6 +98,9 @@ w_rc_t mid2_ordst_rvp::run()
     // 1. Setup the next RVP
     final_ordst_rvp* frvp = _penv->new_final_ordst_rvp(_tid,_xct,_xct_id,_result,_actions);
 
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
     // 2. Generate the action
     r_ol_ordst_action* r_ol = _penv->new_r_ol_ordst_action(_tid,_xct,frvp,_in);
 
@@ -132,9 +138,8 @@ w_rc_t mid2_ordst_rvp::run()
  *
  ********************************************************************/
 
-#warning Only 2 fields (WH,DI) determine the CUSTOMER table accesses! Not 3.
-
-void r_cust_ordst_action::calc_keys()
+void 
+r_cust_ordst_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -144,7 +149,8 @@ void r_cust_ordst_action::calc_keys()
 }
 
 
-w_rc_t r_cust_ordst_action::trx_exec() 
+w_rc_t 
+r_cust_ordst_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -270,10 +276,8 @@ done:
 
 
 
-
-#warning Only 2 fields (WH,DI) determine the ORDER table accesses! Not 3.
-
-void r_ord_ordst_action::calc_keys()
+void 
+r_ord_ordst_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -283,7 +287,8 @@ void r_ord_ordst_action::calc_keys()
 }
 
 
-w_rc_t r_ord_ordst_action::trx_exec() 
+w_rc_t 
+r_ord_ordst_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -350,7 +355,9 @@ w_rc_t r_ord_ordst_action::trx_exec()
         assert (aorder.O_ID);
         assert (aorder.O_OL_CNT);
 
-        TRACE( TRACE_TRX_FLOW, "App: %d ORDST: (%d) (%d)\n", _tid, aorder.O_ID, aorder.O_OL_CNT);
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d ORDST: (%d) (%d)\n", 
+               _tid, aorder.O_ID, aorder.O_OL_CNT);
 
         // need to update the RVP
         _prvp->_in._o_id = aorder.O_ID;
@@ -371,10 +378,8 @@ done:
 }
 
 
-
-#warning Only 2 fields (WH,DI) determine the ORDERLINE table accesses! Not 3.
-
-void r_ol_ordst_action::calc_keys()
+void 
+r_ol_ordst_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
@@ -384,7 +389,8 @@ void r_ol_ordst_action::calc_keys()
 }
 
 
-w_rc_t r_ol_ordst_action::trx_exec() 
+w_rc_t 
+r_ol_ordst_action::trx_exec() 
 {
     assert (_penv);
 

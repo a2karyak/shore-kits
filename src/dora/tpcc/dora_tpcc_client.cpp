@@ -43,6 +43,8 @@ const int XCT_DORA_ORDER_STATUS  = 103;
 const int XCT_DORA_DELIVERY      = 104;
 const int XCT_DORA_STOCK_LEVEL   = 105;
 
+const int XCT_DORA_LITTLE_MIX    = 109;
+
 const int XCT_DORA_MBENCH_WH   = 111;
 const int XCT_DORA_MBENCH_CUST = 112;
 
@@ -65,6 +67,9 @@ const int dora_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_DORA_ORDER_STATUS] = "DORA-TPCC-OrderStatus";
     stmap[XCT_DORA_DELIVERY]     = "DORA-TPCC-Delivery";
     stmap[XCT_DORA_STOCK_LEVEL]  = "DORA-TPCC-StockLevel";
+
+    // A Mix of 50%-50% NewOrder & Payment
+    stmap[XCT_DORA_LITTLE_MIX]   = "DORA-TPCC-LittleMix";
 
     // Microbenchmarks
     stmap[XCT_DORA_MBENCH_WH]    = "DORA-TPCC-MBench-WHs";
@@ -119,6 +124,13 @@ w_rc_t dora_tpcc_client_t::run_one_xct(int xct_type, int xctid)
         return (_tpccdb->dora_delivery(xctid,atrt,whid,bWake));
     case XCT_DORA_STOCK_LEVEL:
         return (_tpccdb->dora_stock_level(xctid,atrt,whid,bWake));
+
+        // Little Mix (NewOrder/Payment 50%-50%)
+    case XCT_DORA_LITTLE_MIX:
+        if (URand(1,100)>50)
+            return (_tpccdb->dora_new_order(xctid,atrt,whid,true));
+        else
+            return (_tpccdb->dora_payment(xctid,atrt,whid,true));
 
         // MBENCH DORA
     case XCT_DORA_MBENCH_WH:

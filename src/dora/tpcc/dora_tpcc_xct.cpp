@@ -364,6 +364,13 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
 
     xct_t* pxct = smthread_t::me()->xct();
 
+
+    assert (0); // TODO!
+#warning DORA DELIVERY needs revise! 
+#warning DORA DEL-CUST key should be 2 (WH|DI)
+#warning DORA DEL-ORD  key should be 2 (WH|DI)
+
+
     // 2. Detatch self from xct
 #ifndef ONLYDORA
     assert (pxct);
@@ -463,7 +470,7 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
 
     {
         int wh = astoin._wh_id-1;
-
+        
         // first, figure out to which partitions to enqueue
         irpImpl* my_dist_part = dis()->myPart(wh);
 
