@@ -56,6 +56,7 @@ public:
     {
         assert (_field_count>0);
 
+
         // setup partitions
         Key partDown;
         Key partUp;
@@ -74,8 +75,8 @@ public:
             _ppvec[parts_added]->resize(partDown,partUp);
             ++parts_added;
         }
-        TRACE( TRACE_DEBUG, "Table (%s) - (%d) partitions\n", _table->name(), parts_added);
-        
+        TRACE( TRACE_DEBUG, "Table (%s) - (%d) partitions\n", 
+               _table->name(), parts_added);        
     }
 
     ~range_part_table_impl() { }    

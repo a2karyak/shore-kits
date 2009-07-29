@@ -403,10 +403,19 @@ public:
     // returns (true) if all locks are clean
     const bool is_clean() {
         // clear all entries
+        bool isClean = true;
+        uint dirtyCount = 0;
         for (LLMapIt it=_ll_map->begin(); it!=_ll_map->end(); ++it) {
-            if (!it->second.is_clean()) return (false);
+            if (!it->second.is_clean()) {
+                ++dirtyCount;
+                //isClean = false;
+                it->second.reset();
+            }
         }
-        return (true);
+        if (dirtyCount) {
+            TRACE( TRACE_ALWAYS, "(%d) dirty locks\n", dirtyCount);
+        }
+        return (isClean);
     }
 
     void dump() const {
@@ -489,7 +498,7 @@ public:
                 bResult = false;
             }
         }
-        assert(i); // makes sure that the action acquires at least one key
+        assert(i); // makes sure that the action tries to acquire at least one key
         return (bResult);
     }
 

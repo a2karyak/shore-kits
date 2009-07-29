@@ -236,6 +236,10 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
                 ++_stats._mid_aborts;
             }
             else {
+
+//                 TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
+//                        paction->tid(), e.err_num());
+
                 TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
                        paction->tid(), e.err_num());
                 

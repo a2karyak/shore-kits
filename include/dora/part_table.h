@@ -178,7 +178,7 @@ public:
         TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
 
         worker_stats_t ws_gathered;
-        int stl_sz;
+        int stl_sz = 0;
 
         for (int i=0; i<_ppvec.size(); i++) {
             // gather worker statistics

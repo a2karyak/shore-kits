@@ -22,7 +22,8 @@ ENTER_NAMESPACE(dora);
  *
  ******************************************************************/
 
-rvp_t& rvp_t::operator=(const rvp_t& rhs)
+rvp_t& 
+rvp_t::operator=(const rvp_t& rhs)
 {
     if (this != &rhs) {
         _set(rhs._tid,rhs._xct,rhs._xct_id,rhs._result,
@@ -40,7 +41,8 @@ rvp_t& rvp_t::operator=(const rvp_t& rhs)
  *
  ******************************************************************/
 
-const int rvp_t::copy_actions(const baseActionsList& actionList)
+const int 
+rvp_t::copy_actions(const baseActionsList& actionList)
 {
     _actions.reserve(actionList.size());
     _actions.assign(actionList.begin(),actionList.end()); // copy list content
@@ -58,7 +60,8 @@ const int rvp_t::copy_actions(const baseActionsList& actionList)
  *
  ******************************************************************/
 
-const int rvp_t::append_actions(const baseActionsList& actionList)
+const int 
+rvp_t::append_actions(const baseActionsList& actionList)
 {
     CRITICAL_SECTION(action_cs, _actions_lock);
     // append new actionList to the end of the list
@@ -75,7 +78,8 @@ const int rvp_t::append_actions(const baseActionsList& actionList)
  *
  ******************************************************************/
 
-const int rvp_t::add_action(base_action_t* paction) 
+const int 
+rvp_t::add_action(base_action_t* paction) 
 {
     assert (paction);
     assert (this==paction->rvp());
@@ -93,7 +97,8 @@ const int rvp_t::add_action(base_action_t* paction)
  *
  ******************************************************************/
 
-void rvp_t::notify_client() 
+void 
+rvp_t::notify_client() 
 {
     // signal cond var
     if(_result.get_notify()) {
@@ -115,7 +120,8 @@ void rvp_t::notify_client()
  *
  ******************************************************************/
 
-const int terminal_rvp_t::notify()
+const int 
+terminal_rvp_t::notify()
 {
     for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it)
         (*it)->notify();
@@ -135,7 +141,8 @@ const int terminal_rvp_t::notify()
  *
  ******************************************************************/
 
-w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
+w_rc_t 
+terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 {
 #ifndef ONLYDORA
     // attach to this xct
