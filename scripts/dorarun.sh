@@ -79,12 +79,14 @@ run_one ()
     CLIENTS=$1
     
     EXPNAME=$SELECTEDDB-$XCT-$(printf "%02d" $CLIENTS)cl.100.er
-### dbx
+
+    ### dbx
     command collector store experiment $EXPNAME
     command collector enable
     command cont
     # make sure to get all the measurements before continuing!
-    sleep $((30+TIME*ITER))
+    sleep $((60+TIME*ITER))
+    sleep $CLIENTS
     
     ### kit
     command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
