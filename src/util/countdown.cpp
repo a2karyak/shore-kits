@@ -33,7 +33,9 @@
 #include "util/countdown.h"
 
 
-void countdown_t::reset(const int newcount)
+
+void 
+countdown_t::reset(const int newcount)
 {
     // previous usage should have finished
     // previous usage may succeeded (0) or failed (CD_ERROR)
@@ -41,7 +43,9 @@ void countdown_t::reset(const int newcount)
     _state = newcount*CD_NUMBER;
 }
 
-bool countdown_t::post(bool is_error) 
+
+bool 
+countdown_t::post(bool is_error) 
 {
     int old_value = *&_state;
     while (old_value >= 2*CD_NUMBER) {

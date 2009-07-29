@@ -48,6 +48,8 @@
 #include "dora/tpcc/dora_tpcc_client.h"
 #include "dora/tm1/dora_tm1.h"
 #include "dora/tm1/dora_tm1_client.h"
+#include "dora/tpcb/dora_tpcb.h"
+#include "dora/tpcb/dora_tpcb_client.h"
 using namespace dora;
 #endif
 
@@ -424,16 +426,17 @@ static const int MILLION = 1000000;
  *
  *********************************************************************/
 
-/** cmd: TEST **/
+// cmd: TEST
 
 template<class Client,class DB>
-int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF, 
-                                     const int iSpread,
-                                     const int iNumOfThreads, 
-                                     const int iNumOfTrxs,
-                                     const int iSelectedTrx, 
-                                     const int iIterations,
-                                     const eBindingType abt)
+int 
+kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF, 
+                                 const int iSpread,
+                                 const int iNumOfThreads, 
+                                 const int iNumOfTrxs,
+                                 const int iSelectedTrx, 
+                                 const int iIterations,
+                                 const eBindingType abt)
 {
     // print test information
     print_TEST_info(iQueriedSF, iSpread, iNumOfThreads, 
@@ -512,16 +515,18 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
 }
 
 
-/** cmd: MEASURE **/
+
+// cmd: MEASURE
 
 template<class Client,class DB>
-int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF, 
-                                        const int iSpread,
-                                        const int iNumOfThreads, 
-                                        const int iDuration,
-                                        const int iSelectedTrx, 
-                                        const int iIterations,
-                                        const eBindingType abt)
+int 
+kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF, 
+                                    const int iSpread,
+                                    const int iNumOfThreads, 
+                                    const int iDuration,
+                                    const int iSelectedTrx, 
+                                    const int iIterations,
+                                    const eBindingType abt)
 {
     // print measurement info
     print_MEASURE_info(iQueriedSF, iSpread, iNumOfThreads, iDuration, 
@@ -545,7 +550,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
         if (iSpread)
             wh_id = (i%iQueriedSF)+1;
 
-        testers[i] = new Client(c_str("%s-%d", _cmd_prompt,i), i, _dbinst, 
+        testers[i] = new Client(c_str("CL-%d",i), i, _dbinst, 
                                 MT_TIME_DUR, iSelectedTrx, 0,
                                 _current_prs_id, wh_id, iQueriedSF);
         assert (testers[i]);
@@ -631,7 +636,7 @@ typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
 #ifdef CFG_DORA
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
 typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
-//typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
+typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 #endif
 
 //////////////////////////////
@@ -716,8 +721,7 @@ int main(int argc, char* argv[])
 #ifdef CFG_DORA
         case snDORA:
             // shore.conf is set for DORA
-            assert (0); // IP: Not implemented yet
-            //kit = new doraTPCBKit("(tpcb-dora) ");
+            kit = new doraTPCBKit("(tpcb-dora) ");
             break;
 #endif
         default:

@@ -39,25 +39,21 @@
 #include "util.h"
 
 
-/** Exported helper functions */
-
-const int   URand(const int low, const int high);
-const bool  URandBool();
-const short URandShort(const short low, const short high);
+int   URand(const int low, const int high);
+bool  URandBool();
+short URandShort(const short low, const short high);
 
 
 const char CAPS_CHAR_ARRAY[]  = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 const char NUMBERS_CHAR_ARRAY[] = { "012345789" }; 
 
 
-const void URandFillStrCaps(char* dest, const int sz);
-const void URandFillStrNumbx(char* dest, const int sz);
+void URandFillStrCaps(char* dest, const int sz);
+void URandFillStrNumbx(char* dest, const int sz);
 
 
-
-
-/* use this for allocation of NULL-terminated strings */
-#define STRSIZE(x)(x+1)
+// use this for allocation of NULL-terminated strings
+#define STRSIZE(x) (x+1)
 
 
 
