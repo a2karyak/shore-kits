@@ -25,10 +25,11 @@
 
 /** @file:   shore_tpcb_env.h
  *
- *  @brief:  Definition of the Shore TPC-C environment
+ *  @brief:  Definition of the Shore TPC-B environment
  *
- *  @author: Ryan Johnson, Feb 2009
- *  @author: Ippokratis Pandis, Feb 2009
+ *  @author: Ryan Johnson      (ryanjohn)
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @date:   July 2009
  */
 
 #ifndef __SHORE_TPCB_ENV_H
@@ -149,7 +150,10 @@ protected:
 
 private:
     w_rc_t _post_init_impl();
-    
+
+    w_rc_t _pad_BRANCHES();
+    w_rc_t _pad_TELLERS();
+
 public:    
 
     /** Construction  */
@@ -226,8 +230,11 @@ public:
     w_rc_t run_one_xct(const int xctid, int xct_type, const int whid, 
                        trx_result_tuple_t& trt);
 
-    DECLARE_TRX(populate_db);
+    // transactions
     DECLARE_TRX(acct_update);
+
+    // database population
+    DECLARE_TRX(populate_db);
 
 
     const int upd_worker_cnt();

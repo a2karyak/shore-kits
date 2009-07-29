@@ -11,7 +11,7 @@ SHORE_LDADD = -L$(SHORE_SRC)/fc -L$(SHORE_SRC)/sm -L$(SHORE_SRC)/common -L$(SHOR
 
 # GLOBAL includes/ld
 INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -lreadline
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(HOME)/apps/readline/ -lreadline
 
 # List of libraries
 if USE_DORA
@@ -195,9 +195,16 @@ DW_TM1 = \
    $(SDW)/tm1/dora_tm1_xct.cpp \
    $(SDW)/tm1/dora_tm1_client.cpp
 
+DW_TPCB = \
+   $(SDW)/tpcb/dora_tpcb_impl.cpp \
+   $(SDW)/tpcb/dora_tpcb.cpp \
+   $(SDW)/tpcb/dora_tpcb_xct.cpp \
+   $(SDW)/tpcb/dora_tpcb_client.cpp
+
 lib_libdoraworkload_a_SOURCES = \
    $(DW_TPCC) \
-   $(DW_TM1)
+   $(DW_TM1) \
+   $(DW_TPCB)
 
 
 lib_libdoraworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/dora $(SHORE_INCLUDES)

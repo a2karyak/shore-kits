@@ -27,8 +27,9 @@
  *
  *  @brief:  Implementation of the Baseline Shore TPC-B transactions
  *
- *  @author: Ryan Johnson, Feb 2009
- *  @author: Ippokratis Pandis, Feb 2009
+ *  @author: Ryan Johnson      (ryanjohn)
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @date:   Feb 2009
  */
 
 #include "workload/tpcb/shore_tpcb_env.h"
@@ -177,7 +178,7 @@ w_rc_t ShoreTPCBEnv::run_one_xct(const int xctid,
 {
     switch (xct_type) {
     case XCT_TPCB_ACCT_UPDATE:
-	return run_acct_update(xctid, trt, whid);
+	return (run_acct_update(xctid, trt, whid));
     default:
         assert (0); // UNKNOWN TRX-ID
     }
@@ -227,7 +228,6 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
     assert (_loaded);
 
     // account update trx touches 4 tables:
-    // branch, teller, account, and history -- just like TPC-C payment:
     // branch, teller, account, and history
 
     // get table tuples from the caches
@@ -262,10 +262,9 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
     { // make gotos safe
 
 	double total;
-	
-	/*
-	  1. Update account
-	*/
+
+
+        // 1. Update account
 	e = _paccount_man->a_index_probe_forupdate(_pssm, pracct, ppin.a_id);
         if (e.is_error()) { goto done; }
 
@@ -274,10 +273,8 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
 	e = _paccount_man->update_tuple(_pssm, pracct);
 	if (e.is_error()) { goto done; }
 
-	
-	/*
-	  2. Write to History
-	*/
+
+        // 2. Write to History
 	prhist->set_value(0, ppin.b_id);
 	prhist->set_value(1, ppin.t_id);
 	prhist->set_value(2, ppin.a_id);
@@ -288,9 +285,7 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
         if (e.is_error()) { goto done; }
 
 	
-	/*
-	  3. Update teller
-	 */
+        // 3. Update teller
 	e = _pteller_man->t_index_probe_forupdate(_pssm, prt, ppin.t_id);
         if (e.is_error()) { goto done; }
 
@@ -300,9 +295,7 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
 	if (e.is_error()) { goto done; }
 
 	
-	/*
-	  4. Update branch
-	 */
+        // 4. Update branch
 	e = _pbranch_man->b_index_probe_forupdate(_pssm, prb, ppin.b_id);
         if (e.is_error()) { goto done; }
 
@@ -310,12 +303,9 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
 	prb->set_value(1, total + ppin.delta);
 	e = _pbranch_man->update_tuple(_pssm, prb);
 	if (e.is_error()) { goto done; }
-	
 
 
-        /*
-	  5. commit
-	*/
+        // 5. commit
         e = _pssm->commit_xct();
         if (e.is_error()) { goto done; }
 
@@ -323,7 +313,6 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
 
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -333,7 +322,6 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
     pracct->print_tuple();
     prhist->print_tuple();
 #endif
-
 
 done:
     // return the tuples to the cache
@@ -349,9 +337,10 @@ done:
 
 
 
-w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id, 
-				     trx_result_tuple_t& trt,
-                                     populate_db_input_t& ppin)
+w_rc_t 
+ShoreTPCBEnv::xct_populate_db(const int xct_id, 
+                              trx_result_tuple_t& trt,
+                              populate_db_input_t& ppin)
 {
     w_rc_t e = RCOK;
 
@@ -405,7 +394,8 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id,
 		e = _pbranch_man->add_tuple(_pssm, prb);
 		if (e.is_error()) { goto done; }
 	    }
-	    fprintf(stderr, "Loaded %d branches\n", ppin._sf);
+	    TRACE( TRACE_STATISTICS, "Loaded %d branches\n", 
+                   ppin._sf);
 	    
 	    for(int i=0; i < ppin._sf*TPCB_TELLERS_PER_BRANCH; i++) {
 		prt->set_value(0, i);
@@ -415,7 +405,8 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id,
 		e = _pteller_man->add_tuple(_pssm, prt);
 		if (e.is_error()) { goto done; }
 	    }
-	    fprintf(stderr, "Loaded %d tellers\n", ppin._sf*TPCB_TELLERS_PER_BRANCH);
+	    TRACE( TRACE_STATISTICS, "Loaded %d tellers\n", 
+                   ppin._sf*TPCB_TELLERS_PER_BRANCH);
 	}
 	else {
 	    /*
@@ -432,7 +423,6 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id,
 	    }
 	}
 
-
         /*
 	  Commit
 	*/
@@ -443,7 +433,6 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id,
 
     // if we reached this point everything went ok
     trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 

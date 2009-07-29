@@ -21,14 +21,13 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcb_schema.h
  *
- *  @brief:  Declaration of the TPC-C tables
+ *  @brief:  Declaration of the TPC-B tables
  *
- *  @author: Ippokratis Pandis, January 2008
- *
+ *  @author: Ryan Johnson      (ryanjohn)
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @date:   Feb 2009
  */
 
 #ifndef __SHORE_TPCB_SCHEMA_H
@@ -82,19 +81,26 @@ public:
         _desc[1].setup(SQL_FLOAT, "B_BALANCE");
         _desc[2].setup(SQL_CHAR,  "B_PADDING", 100-sizeof(int)-sizeof(double));
 
-        int  keys[1] = { 0 }; // IDX { B_ID }
+        int  keys1[1] = { 0 }; // IDX { B_ID }
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
-        // baseline - regular indexes
-	assert (idxs_created==0);
-	idxs_created=1;
-	TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+        // baseline - Regular indexes
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 	
-	// create unique index w_index on (w_id)
-	create_primary_idx("B_INDEX", 0, keys, 1);
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index b_index on (b_id)
+            create_primary_idx("B_INDEX", 0, keys1, 1);
+        }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+        
+            // create unique index s_index on (s_id)
+            // last param (nolock) is set to true
+            create_primary_idx("B_IDX_NL", 0, keys1, 1, true);
+        }       
+#endif
     }
 }; // EOF: branch_t
 
@@ -112,18 +118,26 @@ public:
         _desc[2].setup(SQL_FLOAT, "T_BALANCE");
         _desc[3].setup(SQL_CHAR,  "T_PADDING", 100-2*sizeof(int) - sizeof(double));
 
-        int keys[1] = { 0 }; // IDX { T_ID }
+        int keys1[1] = { 0 }; // IDX { T_ID }
 
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
-	assert (idxs_created==0);
-	idxs_created=1;
-	TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+        // baseline - Regular indexes
+        if (sysname.compare("baseline")==0) {
+            TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 	
-	// create unique index d_index on (d_id, w_id)
-	create_primary_idx("T_INDEX", 0, keys, 1);
-        assert (idxs_created==1); // make sure that idxs were created
+            // create unique index t_index on (t_id)
+            create_primary_idx("T_INDEX", 0, keys1, 1);
+        }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+        
+            // create unique index s_index on (t_id)
+            // last param (nolock) is set to true
+            create_primary_idx("T_IDX_NL", 0, keys1, 1, true);
+        }       
+#endif
     }
 }; // EOF: teller_t
 
@@ -143,18 +157,24 @@ public:
 
         int keys1[1] = {0 }; // IDX { A_ID }
 
-
-        // depending on the system name, create the corresponding indexes 
-        int idxs_created = 0;
-
-        // baseline - regular indexes
-            assert (idxs_created==0);
-            idxs_created=1;
+        // baseline - Regular indexes
+        if (sysname.compare("baseline")==0) {
             TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-
-            // create unique index c_index on (w_id, d_id, c_id)
+	
+            // create unique index t_index on (a_id)
             create_primary_idx("A_INDEX", 0, keys1, 1);
-        assert (idxs_created==1); // make sure that idxs were created
+        }
+
+#ifdef CFG_DORA
+        // dora - NL indexes
+        if (sysname.compare("dora")==0) {
+            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
+        
+            // create unique index s_index on (a_id)
+            // last param (nolock) is set to true
+            create_primary_idx("A_IDX_NL", 0, keys1, 1, true);
+        }       
+#endif
     }
 }; // EOF: account_t
 
@@ -170,21 +190,13 @@ public:
         _desc[0].setup(SQL_INT,   "H_B_ID");
         _desc[1].setup(SQL_INT,   "H_T_ID");  
         _desc[2].setup(SQL_INT,   "H_A_ID"); 
-        _desc[3].setup(SQL_FLOAT, "H_DELTA");   /* old: INT */
-        _desc[4].setup(SQL_FLOAT, "H_TIME");     /* old: TIME */
+        _desc[3].setup(SQL_FLOAT, "H_DELTA");   
+        _desc[4].setup(SQL_FLOAT, "H_TIME");        
         _desc[5].setup(SQL_CHAR,  "H_PADDING", 50-3*sizeof(int)-2*sizeof(double)); 
 
         // NO INDEXES
     }
 }; // EOF: history_t
-
-
-
-// checkers
-typedef table_checking_smt_impl<branch_t>  b_checker_t;
-typedef table_checking_smt_impl<teller_t>   t_checker_t;
-typedef table_checking_smt_impl<account_t>   a_checker_t;
-typedef table_checking_smt_impl<history_t>    hist_checker_t;
 
 
 

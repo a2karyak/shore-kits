@@ -47,6 +47,20 @@
 ENTER_NAMESPACE(tpcb);
 
 
+// Uncomment below to execute only local xcts
+#undef  ONLY_LOCAL_TCPB
+#define ONLY_LOCAL_TCPB
+
+#ifdef  ONLY_LOCAL_TCPB
+#warning TPCB = Uses only local xcts
+const int LOCAL_TPCB = 100;
+#else
+// Modify this value to control the percentage of remote xcts
+// The default value is 85 (15% are remote xcts)
+const int LOCAL_TPCB = 85;
+#endif
+
+
 /* ------------------- */
 /* --- ACCT_UPDATE --- */
 /* ------------------- */
@@ -59,21 +73,23 @@ acct_update_input_t create_acct_update_input(int sf,
 
     acct_update_input_t auin;
 
-    if (specificBr>=0)
+    if (specificBr>=0) {
         auin.b_id = specificBr;
-    else
+    }
+    else {
         auin.b_id = URand(0,sf);
+    }
         
-    auin.t_id = auin.b_id * TPCB_TELLERS_PER_BRANCH + URand(0,TPCB_TELLERS_PER_BRANCH);
+    auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + URand(0,TPCB_TELLERS_PER_BRANCH-1);
 
     // 85 - 15 local Branch
-    if (URand(0,100)>85) {
+    if (URand(0,100)>LOCAL_TPCB) {
         // remote branch
-        auin.a_id = URand(0,sf) + URand(0,TPCB_ACCOUNTS_PER_BRANCH);
+        auin.a_id = (URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH) + URand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
     }
     else {
         // local branch
-        auin.a_id = auin.b_id + URand(0,TPCB_ACCOUNTS_PER_BRANCH);
+        auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + URand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
     }
         
     auin.delta = URand(0,2000000) - 1000000;

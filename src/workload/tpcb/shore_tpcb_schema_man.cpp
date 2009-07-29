@@ -35,7 +35,9 @@
 #include "workload/tpcb/shore_tpcb_schema_man.h"
 
 using namespace shore;
-using namespace tpcb;
+
+
+ENTER_NAMESPACE(tpcb);
 
 
 /*********************************************************************
@@ -50,27 +52,50 @@ using namespace tpcb;
 /* ----------------- */
 
 
-w_rc_t branch_man_impl::b_index_probe_forupdate(ss_m* db,
-						branch_tuple* ptuple,
-						const int b_id)
+w_rc_t 
+branch_man_impl::b_index_probe_forupdate(ss_m* db,
+                                         branch_tuple* ptuple,
+                                         const int b_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, b_id);
     return (index_probe_forupdate_by_name(db, "B_INDEX", ptuple));
 }
 
+w_rc_t 
+branch_man_impl::b_idx_nl(ss_m* db,
+                          branch_tuple* ptuple,
+                          const int b_id)
+{
+    assert (ptuple);
+    ptuple->set_value(0, b_id);
+    return (index_probe_forupdate_by_name(db, "B_IDX_NL", ptuple));
+}
+
+
 /* ---------------- */
 /* --- TELLER --- */
 /* ---------------- */
 
 
-w_rc_t teller_man_impl::t_index_probe_forupdate(ss_m* db,
-						teller_tuple* ptuple,
-						const int t_id)
+w_rc_t 
+teller_man_impl::t_index_probe_forupdate(ss_m* db,
+                                         teller_tuple* ptuple,
+                                         const int t_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, t_id);
     return (index_probe_forupdate_by_name(db, "T_INDEX", ptuple));
+}
+
+w_rc_t 
+teller_man_impl::t_idx_nl(ss_m* db,
+                          teller_tuple* ptuple,
+                          const int t_id)
+{
+    assert (ptuple);    
+    ptuple->set_value(0, t_id);
+    return (index_probe_forupdate_by_name(db, "T_IDX_NL", ptuple));
 }
 
 
@@ -79,12 +104,25 @@ w_rc_t teller_man_impl::t_index_probe_forupdate(ss_m* db,
 /* --- ACCOUNT --- */
 /* ---------------- */
 
-w_rc_t account_man_impl::a_index_probe_forupdate(ss_m* db,
-						account_tuple* ptuple,
-						const int a_id)
+w_rc_t 
+account_man_impl::a_index_probe_forupdate(ss_m* db,
+                                          account_tuple* ptuple,
+                                          const int a_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, a_id);
     return (index_probe_forupdate_by_name(db, "A_INDEX", ptuple));
 }
 
+w_rc_t 
+account_man_impl::a_idx_nl(ss_m* db,
+                           account_tuple* ptuple,
+                           const int a_id)
+{
+    assert (ptuple);    
+    ptuple->set_value(0, a_id);
+    return (index_probe_forupdate_by_name(db, "A_IDX_NL", ptuple));
+}
+
+
+EXIT_NAMESPACE(tpcb);
