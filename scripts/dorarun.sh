@@ -10,11 +10,11 @@
 # Modified for DORA. It does not spread threads (SF==CLIENTS)
 # Removed the SLI option
 
-# args: <dir> <name> <xctid> <sf> <length> <iterations> <warmup_mix>
+# args: <dir> <name> <xctid> <sf> <length> <iterations> <warmup_mix> <sleeptime>
 
-if [ $# -lt 7 ]; then
+if [ $# -lt 8 ]; then
     echo "Invalid args: $0 $*" >&2
-    echo "Usage: $0 <dir> <name> <xctid> <sf> <measure-time> <measure-iters> <warmup-trx>" >&2
+    echo "Usage: $0 <dir> <name> <xctid> <sf> <measure-time> <measure-iters> <warmup-trx> <sleeptime>" >&2
     echo " " >&2
     echo "Wrapper script does not pass: <sf> <measure-time> <measure-iters> <warmup-trx>" >&2
     exit 1
@@ -22,12 +22,13 @@ fi
 
 
 DIR=$1; shift
-NAME=$1; shift
+SELECTEDDB=$1; shift
 XCT=$1; shift
 SF=$1; shift
 TIME=$1; shift
 ITER=$1; shift
 WARMUP_MIX=$1; shift
+SLEEPTIME=$1; shift
 
 command()
 {
@@ -42,7 +43,7 @@ command collector store directory $DIR
 command collector store experiment $START_EXP
 command collector enable
 command stop in main
-command run
+command run $SELECTEDDB
 command collector disable
 command collector archive off # we'll manually link in later...
 
@@ -58,12 +59,13 @@ command cont
 # TM1 : 6mins  (100sf)
 # sleep 360
 # TPCC: 20mins (100wh)
-sleep 1200
+#sleep 1200
 # TPCC: 10mins (50wh)
 # sleep 600
 # TPCB: 4mins  (100sf)
 #sleep 250
 
+sleep $SLEEPTIME
 
 
 ### kit
@@ -71,15 +73,12 @@ sleep 1200
 command break
 command collector disable
 
-#sleep 30
-
-
 run_one ()
 {
     # <clients>>
     CLIENTS=$1
     
-    EXPNAME=$NAME-$XCT-$(printf "%02d" $CLIENTS)cl.100.er
+    EXPNAME=$SELECTEDDB-$XCT-$(printf "%02d" $CLIENTS)cl.100.er
 ### dbx
     command collector store experiment $EXPNAME
     command collector enable
@@ -94,6 +93,12 @@ run_one ()
     # link in the archive from the base experiment
     (cd $DIR/$EXPNAME; rm -r archives; ln -s ../$START_EXP/archives)
 }
+
+
+# # Universal
+CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74 78)
+
+
 
 ###########################################################
 #
@@ -117,7 +122,7 @@ run_one ()
 ###########################################################
 
 # TPC-C - DORA
-CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 50 54 58)
+#CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 50 54 58)
 #CLIENT_SEQ=(28 32 36 40 44 48 50)
 
 # TPC-B - DORA

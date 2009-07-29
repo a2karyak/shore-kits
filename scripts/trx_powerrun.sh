@@ -4,13 +4,13 @@
 #@brief:  For a specific xct it executes powerruns for a set of different clients
 #@author: Ippokratis Pandis
 
-# args: <low> <high> <xctid> <time> <iter>
+# args: <low> <high> <xctid> <time> <iter> <sleeptime>
 usage()
 {
-    echo "Usage: $0 <low> <high> <xctid> <time> <iter>" >&2
+    echo "Usage: $0 <low> <high> <xctid> <time> <iter> <sleeptime>" >&2
 }
 
-if [ $# -lt 5 ]; then
+if [ $# -lt 6 ]; then
     echo "Invalid args: $0 $*" >&2
     usage
     exit 1
@@ -21,6 +21,7 @@ HIGH=$1; shift
 XCT=$1; shift
 TIME=$1; shift
 ITER=$1; shift
+SLEEPTIME=$1; shift
 
 
 if [ $HIGH -lt $LOW ]; then
@@ -28,7 +29,6 @@ if [ $HIGH -lt $LOW ]; then
     usage
     exit 1
 fi
-
 
 command()
 {
@@ -43,13 +43,15 @@ command()
 # TM1 : 5mins   (100sf)
 #sleep 300
 # TPCC: 20mins  (100wh)
- sleep 1200
+#sleep 1200
 # TPCC: 12mins  (50/60wh)
 #sleep 720
 # TPCB: 4mins   (100wh)
 # sleep 250
 # TPCB: 2mins   (60wh)
 # sleep 120
+
+sleep $SLEEPTIME
 
 
 run_one ()
@@ -63,6 +65,10 @@ run_one ()
     # make sure to get all the measurements before continuing!
     sleep $((5+TIME*ITER))
 }
+
+
+# # Universal
+CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74 78)
 
 
 ###########################################################
@@ -87,7 +93,7 @@ run_one ()
 ###########################################################
 
 # TPC-C - DORA
-CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 50 54 58)
+#CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 50 54 58)
 #CLIENT_SEQ=(28 32 36 40 44 48 50)
 
 # TPC-B - DORA
