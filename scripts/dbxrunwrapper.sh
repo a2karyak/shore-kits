@@ -21,6 +21,15 @@
 if [ $# -lt 4 ]; then
     echo "Usage: $0 <base-dir> <workload-name> <xctid> <run-script> [args for run-script...]" >&2
     echo -e "\t the run-script will be passed the output-dir, workload-name, the xctid, and any remaining args" >&2
+    echo " " >&2
+    echo "Examples:" >&2
+    echo "BASE-TM1: SEQ=(24 26 20) ; for trx in \${SEQ[@]}; do ./scripts/dbxrunwrapper.sh EXPDBX base-tm1 \$trx ./scripts/dorarun.sh 100 30 3 \$trx; done"
+    echo "DORA-TM1: for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh EXPDBX dora-tm1 \$trx ./scripts/dorarun.sh 100 30 3 \$trx; done"
+    echo " " >&2
+    echo "!!! Make sure that shore.conf has the correct configuration for your experiment !!!" >&2
+    echo "Current configuration:" >&2
+    cat $SHORECONF | grep "^db-config" >&2
+    echo " " >&2
     exit 1
 fi
 
@@ -41,9 +50,12 @@ DBX="dbx"
 
 mkdir -p $DIR
 
-# remove log 
-echo rm log/*
-rm log/*
+# # remove dlog 
+# echo rm -rf log/*
+# rm -rf log/*
+echo rm -rf unilog/*
+rm -rf unilog/*
+
 
 CMD="source $SCRIPT $DIR $NAME $XCT $* | $DBX $TRXSHELL 2>&1 | tee $OUTFILE"
 echo "$CMD" | tee $OUTFILE

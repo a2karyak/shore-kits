@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#@file:   scripts/post_power_tm1.sh 
-#@brief:  Post-processing output of powerwrapper for TM1
+#@file:   scripts/post_power.sh 
+#@brief:  Post-processing output of powerwrapper
 #@author: Ippokratis Pandis
 
 # args: <file>
@@ -12,14 +12,20 @@ fi
 
 EXPFILE=$1; shift
 
-echo "MQTh"
-cat $EXPFILE | ggrep -e "MQTh" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+### TPCC/TPCB have TPS, while TM1 has MQTh
+echo "Throughput"
+cat $EXPFILE | ggrep -e "TPS" -e "MQTH" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+
 echo "AvgCPU"
 cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//'
+
 echo "CpuLoad"
 cat $EXPFILE | ggrep -e "CpuLoad" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+
+### TM1 has also SuccessRate
 echo "SuccessRate"
 cat $EXPFILE | grep "Success" | uniq | sed 's/^.*(//' | sed -e 's/..$//'
+
 
 exit
 

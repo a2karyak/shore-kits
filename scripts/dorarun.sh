@@ -55,10 +55,15 @@ command cont
 
 # instead of warmup we set clobberdev = 1 (load a new database each time) 
 # and sleep for the:
-# TM1 : 480secs (8mins)
-# TPCC: TBD
+# TM1 : 6mins  (100sf)
+# sleep 360
+# TPCC: 20mins (100wh)
+sleep 1200
+# TPCC: 10mins (50wh)
+# sleep 600
+# TPCB: 4mins  (100sf)
+#sleep 250
 
-sleep 480
 
 
 ### kit
@@ -80,7 +85,7 @@ run_one ()
     command collector enable
     command cont
     # make sure to get all the measurements before continuing!
-    sleep $((20+TIME*ITER))
+    sleep $((30+TIME*ITER))
     
     ### kit
     command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
@@ -90,17 +95,39 @@ run_one ()
     (cd $DIR/$EXPNAME; rm -r archives; ln -s ../$START_EXP/archives)
 }
 
-# tm1-sli sequence
+###########################################################
+#
+# BASELINE 
+#
+###########################################################
+
+# TM1-SLI
 #CLIENT_SEQ=(1 3 7 15 23 31 35 39 43 47 51 55 59 63)
 
-# test
-#CLIENT_SEQ=(1 3)
+# TPCC/TPCB/TM1 - BASE
+#CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64 68 74 78)
+#CLIENT_SEQ=(68 72 76 80 84)
 
-# tm1-dora sequence
-#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52 58 64 68 74 78)
-#CLIENT_SEQ=(1 2 4 8 16 24 32 40 46 52)
 
-CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64)
+
+###########################################################
+#
+# DORA 
+#
+###########################################################
+
+# TPC-C - DORA
+CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 50 54 58)
+#CLIENT_SEQ=(28 32 36 40 44 48 50)
+
+# TPC-B - DORA
+#CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48)
+
+# TM1-RO - DORA
+#CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64 68)
+
+# TM1-RW (UpdSubData,UpdLocation) - DORA
+#CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64 68 72 76 78 82 84)
 
 for i in ${CLIENT_SEQ[@]}; do
     run_one $i
@@ -118,4 +145,4 @@ command quit
 command kill
 command exit
 exit
-    
+
