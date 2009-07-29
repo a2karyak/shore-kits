@@ -24,7 +24,9 @@
 #include "workload/tm1/shore_tm1_schema_man.h"
 
 using namespace shore;
-using namespace tm1;
+
+
+ENTER_NAMESPACE(tm1);
 
 
 /*********************************************************************
@@ -39,27 +41,30 @@ using namespace tm1;
 /* ------------------- */
 
 
-w_rc_t sub_man_impl::sub_idx_probe(ss_m* db,
-                                   sub_tuple* ptuple,
-                                   const int s_id)
+w_rc_t 
+sub_man_impl::sub_idx_probe(ss_m* db,
+                            sub_tuple* ptuple,
+                            const int s_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
     return (index_probe_by_name(db, "S_IDX", ptuple));
 }
 
-w_rc_t sub_man_impl::sub_idx_upd(ss_m* db,
-                                 sub_tuple* ptuple,
-                                 const int s_id)
+w_rc_t 
+sub_man_impl::sub_idx_upd(ss_m* db,
+                          sub_tuple* ptuple,
+                          const int s_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
     return (index_probe_forupdate_by_name(db, "S_IDX", ptuple));
 }
 
-w_rc_t sub_man_impl::sub_idx_nl(ss_m* db,
-                                sub_tuple* ptuple,
-                                const int s_id)
+w_rc_t 
+sub_man_impl::sub_idx_nl(ss_m* db,
+                         sub_tuple* ptuple,
+                         const int s_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -68,27 +73,30 @@ w_rc_t sub_man_impl::sub_idx_nl(ss_m* db,
 
 
 
-w_rc_t sub_man_impl::sub_nbr_idx_probe(ss_m* db,
-                                       sub_tuple* ptuple,
-                                       const char* s_nbr)
+w_rc_t 
+sub_man_impl::sub_nbr_idx_probe(ss_m* db,
+                                sub_tuple* ptuple,
+                                const char* s_nbr)
 {
     assert (ptuple);    
     ptuple->set_value(1, s_nbr);
     return (index_probe_by_name(db, "SUB_NBR_IDX", ptuple));
 }
 
-w_rc_t sub_man_impl::sub_nbr_idx_upd(ss_m* db,
-                                     sub_tuple* ptuple,
-                                     const char* s_nbr)
+w_rc_t 
+sub_man_impl::sub_nbr_idx_upd(ss_m* db,
+                              sub_tuple* ptuple,
+                              const char* s_nbr)
 {
     assert (ptuple);    
     ptuple->set_value(1, s_nbr);
     return (index_probe_forupdate_by_name(db, "SUB_NBR_IDX", ptuple));
 }
 
-w_rc_t sub_man_impl::sub_nbr_idx_nl(ss_m* db,
-                                    sub_tuple* ptuple,
-                                    const char* s_nbr)
+w_rc_t 
+sub_man_impl::sub_nbr_idx_nl(ss_m* db,
+                             sub_tuple* ptuple,
+                             const char* s_nbr)
 {
     assert (ptuple);    
     ptuple->set_value(1, s_nbr);
@@ -102,9 +110,10 @@ w_rc_t sub_man_impl::sub_nbr_idx_nl(ss_m* db,
 /* ------------------- */
 
 
-w_rc_t ai_man_impl::ai_idx_probe(ss_m* db,
-                                 ai_tuple* ptuple,
-                                 const int s_id, const short ai_type)
+w_rc_t 
+ai_man_impl::ai_idx_probe(ss_m* db,
+                          ai_tuple* ptuple,
+                          const int s_id, const short ai_type)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -112,9 +121,10 @@ w_rc_t ai_man_impl::ai_idx_probe(ss_m* db,
     return (index_probe_by_name(db, "AI_IDX", ptuple));
 }
 
-w_rc_t ai_man_impl::ai_idx_upd(ss_m* db,
-                               ai_tuple* ptuple,
-                               const int s_id, const short ai_type)
+w_rc_t 
+ai_man_impl::ai_idx_upd(ss_m* db,
+                        ai_tuple* ptuple,
+                        const int s_id, const short ai_type)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -122,9 +132,10 @@ w_rc_t ai_man_impl::ai_idx_upd(ss_m* db,
     return (index_probe_forupdate_by_name(db, "AI_IDX", ptuple));
 }
 
-w_rc_t ai_man_impl::ai_idx_nl(ss_m* db,
-                              ai_tuple* ptuple,
-                              const int s_id, const short ai_type)
+w_rc_t 
+ai_man_impl::ai_idx_nl(ss_m* db,
+                       ai_tuple* ptuple,
+                       const int s_id, const short ai_type)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -139,9 +150,10 @@ w_rc_t ai_man_impl::ai_idx_nl(ss_m* db,
 /* ------------------------ */
 
 
-w_rc_t sf_man_impl::sf_idx_probe(ss_m* db,
-                                 sf_tuple* ptuple,
-                                 const int s_id, const short sf_type)
+w_rc_t 
+sf_man_impl::sf_idx_probe(ss_m* db,
+                          sf_tuple* ptuple,
+                          const int s_id, const short sf_type)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -149,9 +161,10 @@ w_rc_t sf_man_impl::sf_idx_probe(ss_m* db,
     return (index_probe_by_name(db, "SF_IDX", ptuple));
 }
 
-w_rc_t sf_man_impl::sf_idx_upd(ss_m* db,
-                               sf_tuple* ptuple,
-                               const int s_id, const short sf_type)
+w_rc_t 
+sf_man_impl::sf_idx_upd(ss_m* db,
+                        sf_tuple* ptuple,
+                        const int s_id, const short sf_type)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -159,9 +172,10 @@ w_rc_t sf_man_impl::sf_idx_upd(ss_m* db,
     return (index_probe_forupdate_by_name(db, "SF_IDX", ptuple));
 }
 
-w_rc_t sf_man_impl::sf_idx_nl(ss_m* db,
-                              sf_tuple* ptuple,
-                              const int s_id, const short sf_type)
+w_rc_t 
+sf_man_impl::sf_idx_nl(ss_m* db,
+                       sf_tuple* ptuple,
+                       const int s_id, const short sf_type)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -172,14 +186,15 @@ w_rc_t sf_man_impl::sf_idx_nl(ss_m* db,
 
 
 
-w_rc_t sf_man_impl::sf_get_idx_iter(ss_m* db,
-                                    sf_idx_iter* &iter,
-                                    sf_tuple* ptuple,
-                                    rep_row_t &replow,
-                                    rep_row_t &rephigh,
-                                    const int sub_id,
-                                    lock_mode_t alm,
-                                    bool need_tuple)
+w_rc_t 
+sf_man_impl::sf_get_idx_iter(ss_m* db,
+                             sf_idx_iter* &iter,
+                             sf_tuple* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
+                             const int sub_id,
+                             lock_mode_t alm,
+                             bool need_tuple)
 {
     assert (ptuple);
 
@@ -215,13 +230,14 @@ w_rc_t sf_man_impl::sf_get_idx_iter(ss_m* db,
 }
 
 
-w_rc_t sf_man_impl::sf_get_idx_iter_nl(ss_m* db,
-                                       sf_idx_iter* &iter,
-                                       sf_tuple* ptuple,
-                                       rep_row_t &replow,
-                                       rep_row_t &rephigh,
-                                       const int sub_id,
-                                       bool need_tuple)
+w_rc_t 
+sf_man_impl::sf_get_idx_iter_nl(ss_m* db,
+                                sf_idx_iter* &iter,
+                                sf_tuple* ptuple,
+                                rep_row_t &replow,
+                                rep_row_t &rephigh,
+                                const int sub_id,
+                                bool need_tuple)
 {
     return (sf_get_idx_iter(db,iter,ptuple,replow,rephigh,sub_id,NL,need_tuple));
 }
@@ -234,10 +250,11 @@ w_rc_t sf_man_impl::sf_get_idx_iter_nl(ss_m* db,
 /* ----------------------- */
 
 
-w_rc_t cf_man_impl::cf_idx_probe(ss_m* db,
-                                 cf_tuple* ptuple,
-                                 const int s_id, const short sf_type, 
-                                 const short stime)
+w_rc_t 
+cf_man_impl::cf_idx_probe(ss_m* db,
+                          cf_tuple* ptuple,
+                          const int s_id, const short sf_type, 
+                          const short stime)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -246,10 +263,11 @@ w_rc_t cf_man_impl::cf_idx_probe(ss_m* db,
     return (index_probe_by_name(db, "CF_IDX", ptuple));
 }
 
-w_rc_t cf_man_impl::cf_idx_upd(ss_m* db,
-                               cf_tuple* ptuple,
-                               const int s_id, const short sf_type, 
-                               const short stime)
+w_rc_t 
+cf_man_impl::cf_idx_upd(ss_m* db,
+                        cf_tuple* ptuple,
+                        const int s_id, const short sf_type, 
+                        const short stime)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -258,10 +276,11 @@ w_rc_t cf_man_impl::cf_idx_upd(ss_m* db,
     return (index_probe_forupdate_by_name(db, "CF_IDX", ptuple));
 }
 
-w_rc_t cf_man_impl::cf_idx_nl(ss_m* db,
-                              cf_tuple* ptuple,
-                              const int s_id, const short sf_type, 
-                              const short stime)
+w_rc_t 
+cf_man_impl::cf_idx_nl(ss_m* db,
+                       cf_tuple* ptuple,
+                       const int s_id, const short sf_type, 
+                       const short stime)
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
@@ -273,16 +292,17 @@ w_rc_t cf_man_impl::cf_idx_nl(ss_m* db,
 
 
 
-w_rc_t cf_man_impl::cf_get_idx_iter(ss_m* db,
-                                    cf_idx_iter* &iter,
-                                    cf_tuple* ptuple,
-                                    rep_row_t &replow,
-                                    rep_row_t &rephigh,
-                                    const int sub_id,
-                                    const short sf_type,
-                                    const short s_time,
-                                    lock_mode_t alm,
-                                    bool need_tuple)
+w_rc_t 
+cf_man_impl::cf_get_idx_iter(ss_m* db,
+                             cf_idx_iter* &iter,
+                             cf_tuple* ptuple,
+                             rep_row_t &replow,
+                             rep_row_t &rephigh,
+                             const int sub_id,
+                             const short sf_type,
+                             const short s_time,
+                             lock_mode_t alm,
+                             bool need_tuple)
 {
     assert (ptuple);
 
@@ -320,15 +340,19 @@ w_rc_t cf_man_impl::cf_get_idx_iter(ss_m* db,
 }
 
 
-w_rc_t cf_man_impl::cf_get_idx_iter_nl(ss_m* db,
-                                       cf_idx_iter* &iter,
-                                       cf_tuple* ptuple,
-                                       rep_row_t &replow,
-                                       rep_row_t &rephigh,
-                                       const int sub_id,
-                                       const short sf_type,
-                                       const short s_time,
-                                       bool need_tuple)
+w_rc_t 
+cf_man_impl::cf_get_idx_iter_nl(ss_m* db,
+                                cf_idx_iter* &iter,
+                                cf_tuple* ptuple,
+                                rep_row_t &replow,
+                                rep_row_t &rephigh,
+                                const int sub_id,
+                                const short sf_type,
+                                const short s_time,
+                                bool need_tuple)
 {
     return (cf_get_idx_iter(db,iter,ptuple,replow,rephigh,sub_id,sf_type,s_time,NL,need_tuple));
 }
+
+
+EXIT_NAMESPACE(tm1);

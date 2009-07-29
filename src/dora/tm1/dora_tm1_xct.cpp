@@ -4,7 +4,8 @@
  *
  *  @brief:  Declaration of the DORA TM1 transactions
  *
- *  @author: Ippokratis Pandis, Feb 2009
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @date:   Feb 2009
  */
 
 #include "dora/tm1/dora_tm1_impl.h"
@@ -74,10 +75,11 @@ DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,del_call_fwd);
  *
  ********************************************************************/
 
-w_rc_t DoraTM1Env::dora_get_sub_data(const int xct_id, 
-                                     trx_result_tuple_t& atrt, 
-                                     get_sub_data_input_t& in,
-                                     const bool bWake)
+w_rc_t 
+DoraTM1Env::dora_get_sub_data(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              get_sub_data_input_t& in,
+                              const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -128,11 +130,61 @@ w_rc_t DoraTM1Env::dora_get_sub_data(const int xct_id,
  * DORA TM1 GET_NEW_DEST
  *
  ********************************************************************/
+#ifdef TM1GND2
 
-w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id, 
-                                     trx_result_tuple_t& atrt, 
-                                     get_new_dest_input_t& in,
-                                     const bool bWake)
+w_rc_t 
+DoraTM1Env::dora_get_new_dest(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              get_new_dest_input_t& in,
+                              const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    smthread_t::me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 3. Setup the next RVP
+    // PH1 consists of 1 action
+    mid_gnd_rvp* rvp = new_mid_gnd_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+
+    // 4. Generate the action
+    r_sf_gnd_action* r_sf = new_r_sf_gnd_action(atid,pxct,rvp,in);
+
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    {        
+        irpImpl* my_sf_part = decide_part(sf(),in._s_id);
+
+        // SF_PART_CS
+        CRITICAL_SECTION(sf_part_cs, my_sf_part->_enqueue_lock);
+        if (my_sf_part->enqueue(r_sf,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_SF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK); 
+}
+
+#else
+
+w_rc_t 
+DoraTM1Env::dora_get_new_dest(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              get_new_dest_input_t& in,
+                              const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -185,7 +237,7 @@ w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id,
 
     return (RCOK); 
 }
-
+#endif
 
 
 
@@ -195,10 +247,11 @@ w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t DoraTM1Env::dora_get_acc_data(const int xct_id, 
-                                     trx_result_tuple_t& atrt, 
-                                     get_acc_data_input_t& in,
-                                     const bool bWake)
+w_rc_t 
+DoraTM1Env::dora_get_acc_data(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              get_acc_data_input_t& in,
+                              const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -248,6 +301,56 @@ w_rc_t DoraTM1Env::dora_get_acc_data(const int xct_id,
  * DORA TM1 UPD_SUB_DATA
  *
  ********************************************************************/
+#ifdef TM1USD2
+
+w_rc_t 
+DoraTM1Env::dora_upd_sub_data(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              upd_sub_data_input_t& in,
+                              const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    smthread_t::me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+
+    // 3. Setup the next RVP
+    // PH1 consists of 1 action
+    mid_usd_rvp* rvp = new_mid_usd_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+
+    // 4. Generate the action
+    upd_sf_usd_action* upd_sf = new_upd_sf_usd_action(atid,pxct,rvp,in);
+
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    {        
+        irpImpl* my_sf_part = decide_part(sf(),in._s_id);
+
+        // SF_PART_CS
+        CRITICAL_SECTION(sf_part_cs, my_sf_part->_enqueue_lock);
+        if (my_sf_part->enqueue(upd_sf,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_SF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK); 
+}
+
+#else
+
 
 w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id, 
                                      trx_result_tuple_t& atrt, 
@@ -306,6 +409,7 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
     return (RCOK); 
 }
 
+#endif
 
 /******************************************************************** 
  *
@@ -313,10 +417,11 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t DoraTM1Env::dora_upd_loc(const int xct_id, 
-                                trx_result_tuple_t& atrt, 
-                                upd_loc_input_t& in,
-                                const bool bWake)
+w_rc_t 
+DoraTM1Env::dora_upd_loc(const int xct_id, 
+                         trx_result_tuple_t& atrt, 
+                         upd_loc_input_t& in,
+                         const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -367,10 +472,11 @@ w_rc_t DoraTM1Env::dora_upd_loc(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id, 
-                                     trx_result_tuple_t& atrt, 
-                                     ins_call_fwd_input_t& in,
-                                     const bool bWake)
+w_rc_t 
+DoraTM1Env::dora_ins_call_fwd(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              ins_call_fwd_input_t& in,
+                              const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -390,15 +496,18 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
     
     // 3. Setup the next RVP
-    // PH1 consists of 1 packet
-    mid_icf_rvp* rvp = new_mid_icf_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+    // PH1 consists of 1 action
+#ifdef TM1ICF2
+    mid1_icf_rvp* rvp = new_mid1_icf_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+#else
+    mid_icf_rvp* rvp = new_mid_icf_rvp(atid,pxct,xct_id,atrt,in,bWake);
+#endif
 
     // 4. Generate the action
     r_sub_icf_action* r_sub = new_r_sub_icf_action(atid,pxct,rvp,in);
 
-    // 6a. Decide about partition
-    // 6b. Enqueue
-
+    // 5a. Decide about partition
+    // 5b. Enqueue
     {        
         irpImpl* my_sub_part = decide_part(sub(),in._s_id);
 
@@ -410,10 +519,8 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
             return (RC(de_PROBLEM_ENQUEUE));
         }
     }
-
     return (RCOK); 
 }
-
 
 
 /******************************************************************** 
@@ -422,10 +529,11 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id, 
-                                     trx_result_tuple_t& atrt, 
-                                     del_call_fwd_input_t& in,
-                                     const bool bWake)
+w_rc_t 
+DoraTM1Env::dora_del_call_fwd(const int xct_id, 
+                              trx_result_tuple_t& atrt, 
+                              del_call_fwd_input_t& in,
+                              const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -445,7 +553,7 @@ w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
     
     // 3. Setup the next RVP
-    // PH1 consists of 1 packet
+    // PH1 consists of 1 action
     mid_dcf_rvp* rvp = new_mid_dcf_rvp(atid,pxct,xct_id,atrt,in,bWake);    
 
     // 4. Generate the action

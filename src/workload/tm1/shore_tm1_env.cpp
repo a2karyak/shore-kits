@@ -463,13 +463,11 @@ w_rc_t ShoreTM1Env::loaddata()
     
     int loaders_to_use = envVar::instance()->getVarInt("db-loaders",TM1_LOADERS_TO_USE);
     int creator_loaders_to_use = loaders_to_use;
-    w_assert1( loaders_to_use <= TM1_MAX_NUM_OF_LOADERS);
 
     int total_subs = _scaling_factor*TM1_SUBS_PER_SF;
-    w_assert1((total_subs % loaders_to_use) == 0);
-
-    int subs_per_worker = total_subs/loaders_to_use;    
-
+    assert ((total_subs % loaders_to_use) == 0);
+   
+    int subs_per_worker = total_subs/loaders_to_use; 
     int preloads_per_worker = envVar::instance()->getVarInt("db-record-preloads",TM1_SUBS_TO_PRELOAD);
     
     // Special case for very small databases where the preloads is larger than 
@@ -497,7 +495,8 @@ w_rc_t ShoreTM1Env::loaddata()
        enough not to cause too much contention. Ryan pulled '40' out of
        thin air.
      */
-    table_builder_t* loaders[TM1_MAX_NUM_OF_LOADERS];
+
+    array_guard_t< guard<table_builder_t> > loaders(new guard<table_builder_t>[loaders_to_use]);
     for (int i=0; i<loaders_to_use; i++) {
 	// the preloader thread picked up a first set of subscribers...
 	int start = i*subs_per_worker + preloads_per_worker;

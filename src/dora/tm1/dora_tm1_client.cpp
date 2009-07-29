@@ -130,6 +130,8 @@ w_rc_t dora_tm1_client_t::run_one_xct(int xct_type, int xctid)
         return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid,bWake));
     case XCT_TM1_DORA_DEL_CALL_FWD:
         return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,bWake));
+
+        // Mix
     case XCT_TM1_DORA_CALL_FWD_MIX:
         // evenly pick one of the {Ins/Del}CallFwd
         if (URand(1,100)>50)

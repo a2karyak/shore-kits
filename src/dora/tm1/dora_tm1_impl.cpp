@@ -38,7 +38,8 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_gsd_rvp,get_sub_data);
  ********************************************************************/
 
 
-void r_sub_gsd_action::calc_keys()
+void 
+r_sub_gsd_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._s_id);
@@ -47,7 +48,8 @@ void r_sub_gsd_action::calc_keys()
 
 
 
-w_rc_t r_sub_gsd_action::trx_exec() 
+w_rc_t 
+r_sub_gsd_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -152,8 +154,44 @@ done:
  *
  ********************************************************************/
 
+#ifdef TM1GND2
 
-#warning TODO: make a serial version of TM1-GetNewDest
+w_rc_t 
+mid_gnd_rvp::run() 
+{
+#ifndef ONLYDORA
+    assert (_xct);
+#endif
+
+    // 1. Setup the final RVP
+    final_gnd_rvp* frvp = _penv->new_final_gnd_rvp(_tid,_xct,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
+    // 3. Generate the action
+    r_cf_gnd_action* r_cf = _penv->new_r_cf_gnd_action(_tid,_xct,frvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    typedef range_partition_impl<int>   irpImpl; 
+
+    // 4a. Decide about partition
+    // 4b. Enqueue
+    {        
+        irpImpl* my_cf_part = _penv->decide_part(_penv->cf(),_in._s_id);
+
+        // CF_PART_CS
+        CRITICAL_SECTION(cf_part_cs, my_cf_part->_enqueue_lock);
+        if (my_cf_part->enqueue(r_cf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_CF_GND\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK);
+}
+
+#endif
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_gnd_rvp,get_new_dest);
 
@@ -205,7 +243,9 @@ w_rc_t r_sf_gnd_action::trx_exec()
                "App: %d GND:sf-idx-nl (%d) (%d)\n", 
                _tid, _in._s_id, _in._sf_type);
 
+#ifndef TM1GND2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
 #ifndef ONLYDORA
         e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, 
@@ -276,7 +316,9 @@ w_rc_t r_cf_gnd_action::trx_exec()
 
     { // make gotos safe
 
+#ifndef TM1GND2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
 #ifndef ONLYDORA
         // 1. Retrieve the call forwarding destination            
@@ -296,7 +338,9 @@ w_rc_t r_cf_gnd_action::trx_exec()
 
         while (!eof) {
 
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#ifndef TM1GND2
+            if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
             // check the retrieved CF e_time                
             prcf->get_value(3, acf.END_TIME);
@@ -431,7 +475,44 @@ done:
  *
  ********************************************************************/
 
-#warning TODO: make a serial version of TM1-UpdSubData
+#ifdef TM1USD2
+
+w_rc_t 
+mid_usd_rvp::run() 
+{
+#ifndef ONLYDORA
+    assert (_xct);
+#endif
+
+    // 1. Setup the final RVP
+    final_usd_rvp* frvp = _penv->new_final_usd_rvp(_tid,_xct,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
+    // 3. Generate the action
+    upd_sub_usd_action* upd_sub = _penv->new_upd_sub_usd_action(_tid,_xct,frvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    typedef range_partition_impl<int>   irpImpl; 
+
+    // 4a. Decide about partition
+    // 4b. Enqueue
+    {        
+        irpImpl* my_sub_part = _penv->decide_part(_penv->sub(),_in._s_id);
+
+        // SUB_PART_CS
+        CRITICAL_SECTION(sub_part_cs, my_sub_part->_enqueue_lock);
+        if (my_sub_part->enqueue(upd_sub,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_SUB_USD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK);
+}
+
+#endif
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_usd_rvp,upd_sub_data);
 
@@ -446,14 +527,16 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_usd_rvp,upd_sub_data);
  ********************************************************************/
 
 
-void upd_sub_usd_action::calc_keys()
+void 
+upd_sub_usd_action::calc_keys()
 {
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
 }
 
 
-w_rc_t upd_sub_usd_action::trx_exec() 
+w_rc_t 
+upd_sub_usd_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -480,7 +563,9 @@ w_rc_t upd_sub_usd_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sub-idx-nl (%d)\n", _tid, _in._s_id);
 
+#ifndef TM1USD2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
 #ifndef ONLYDORA
         e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
@@ -489,7 +574,9 @@ w_rc_t upd_sub_usd_action::trx_exec()
 
         prsub->set_value(2, _in._a_bit);
 
+#ifndef TM1USD2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
 #ifndef ONLYDORA        
         e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
@@ -511,7 +598,8 @@ done:
 
 
 
-void upd_sf_usd_action::calc_keys()
+void 
+upd_sf_usd_action::calc_keys()
 {
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
@@ -521,7 +609,8 @@ void upd_sf_usd_action::calc_keys()
 }
 
 
-w_rc_t upd_sf_usd_action::trx_exec() 
+w_rc_t 
+upd_sf_usd_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -595,7 +684,8 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_ul_rvp,upd_loc);
  ********************************************************************/
 
 
-void upd_sub_ul_action::calc_keys()
+void 
+upd_sub_ul_action::calc_keys()
 {
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
@@ -674,7 +764,85 @@ done:
  *
  ********************************************************************/
 
-w_rc_t mid_icf_rvp::run() 
+#ifdef TM1ICF2
+
+w_rc_t 
+mid1_icf_rvp::run() 
+{
+#ifndef ONLYDORA
+    assert (_xct);
+#endif
+
+    // 1. Setup the next RVP
+    // PH2 consists of 1 action
+    mid2_icf_rvp* rvp = _penv->new_mid2_icf_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(rvp);
+
+    // 2. Generate the action
+    r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_tid,_xct,rvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    typedef range_partition_impl<int>   irpImpl; 
+
+    // 3a. Decide about partition
+    // 3b. Enqueue
+    {        
+        irpImpl* my_sf_part = _penv->decide_part(_penv->sf(),_in._s_id);
+
+        // SF_PART_CS
+        CRITICAL_SECTION(sf_part_cs, my_sf_part->_enqueue_lock);
+        if (my_sf_part->enqueue(r_sf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_SF_ICF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK);
+}
+
+
+w_rc_t 
+mid2_icf_rvp::run() 
+{
+#ifndef ONLYDORA
+    assert (_xct);
+#endif
+
+    // 1. Setup the final RVP
+    // PH3 consists of 1 action
+    final_icf_rvp* frvp = _penv->new_final_icf_rvp(_tid,_xct,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
+    // 3. Generate the action
+    ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_tid,_xct,frvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    typedef range_partition_impl<int>   irpImpl; 
+
+    // 4a. Decide about partition
+    // 4b. Enqueue
+    {        
+        irpImpl* my_cf_part = _penv->decide_part(_penv->cf(),_in._s_id);
+
+        // CF_PART_CS
+        CRITICAL_SECTION(cf_part_cs, my_cf_part->_enqueue_lock);
+        if (my_cf_part->enqueue(ins_cf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_CF_ICF\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK);
+}
+
+#else
+
+w_rc_t 
+mid_icf_rvp::run() 
 {
 #ifndef ONLYDORA
     assert (_xct);
@@ -682,6 +850,9 @@ w_rc_t mid_icf_rvp::run()
 
     // 1. Setup the final RVP
     final_icf_rvp* frvp = _penv->new_final_icf_rvp(_tid,_xct,_xct_id,_result,_actions);    
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate the actions
     r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_tid,_xct,frvp,_in);
@@ -707,7 +878,7 @@ w_rc_t mid_icf_rvp::run()
 
         // CF_PART_CS
         CRITICAL_SECTION(cf_part_cs, my_cf_part->_enqueue_lock);
-        cf_part_cs.exit();
+        sf_part_cs.exit();
         if (my_cf_part->enqueue(ins_cf,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_CF_ICF\n");
             assert (0); 
@@ -718,6 +889,7 @@ w_rc_t mid_icf_rvp::run()
     return (RCOK);
 }
 
+#endif
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_icf_rvp,ins_call_fwd);
 
@@ -832,8 +1004,10 @@ w_rc_t r_sf_icf_action::trx_exec()
          * plan: iter index on "SF_IDX"
          */
 
+#ifndef TM1ICF2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
-        
+#endif        
+
         // 1. Retrieve SpecialFacility (Read-only)
 #ifndef ONLYDORA        
         guard<index_scan_iter_impl<special_facility_t> > sf_iter;
@@ -851,7 +1025,9 @@ w_rc_t r_sf_icf_action::trx_exec()
 
         while (!eof) {
 
+#ifndef TM1ICF2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
             // check the retrieved SF sf_type
             prsf->get_value(1, asf.SF_TYPE);
@@ -922,7 +1098,9 @@ w_rc_t ins_cf_icf_action::trx_exec()
                "App: %d ICF:cf-idx-nl (%d) (%d) (%d)\n", 
                _tid, _in._s_id, _in._sf_type, _in._s_time);
 
+#ifndef TM1ICF2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
 #ifndef ONLYDORA
         e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
@@ -942,7 +1120,9 @@ w_rc_t ins_cf_icf_action::trx_exec()
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid);
 
+#ifndef TM1ICF2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+#endif
 
 #ifndef ONLYDORA
         e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
@@ -987,6 +1167,9 @@ w_rc_t mid_dcf_rvp::run()
 
     // 1. Setup the final RVP
     final_dcf_rvp* frvp = _penv->new_final_dcf_rvp(_tid,_xct,_xct_id,_result,_actions);    
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate the actions
     del_cf_dcf_action* del_cf = _penv->new_del_cf_dcf_action(_tid,_xct,frvp,_in);

@@ -661,7 +661,7 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
     { // make gotos safe
 
-        /* 1. retrieve SpecialFacility (read-only) */
+        // 1. Retrieve SpecialFacility (read-only)
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GND:sf-idx-probe (%d) (%d)\n", 
                xct_id, gndin._s_id, gndin._sf_type);
@@ -671,17 +671,18 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
         prsf->get_value(2, asf.IS_ACTIVE);
 
-        if (asf.IS_ACTIVE) {
-            // Active special facility
-            // Retrieve the call forwarding destination            
 
+        //    If it is and active special facility
+        // 2. Retrieve the call forwarding destination (read-only)
+        if (asf.IS_ACTIVE) {
             guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
 	    {
 		index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter\n", xct_id);
 		e = _pcf_man->cf_get_idx_iter(_pssm, tmp_cf_iter, prcf,
                                               lowrep, highrep,
-                                              gndin._s_id, gndin._sf_type, gndin._s_time);
+                                              gndin._s_id, gndin._sf_type, 
+                                              gndin._s_time);
 		cf_iter = tmp_cf_iter;
 		if (e.is_error()) { goto done; }
 	    }
@@ -710,7 +711,6 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
             e = RC(se_NO_CURRENT_TUPLE); 
             goto done;
         }
-
 
         // COMMIT
         e = _pssm->commit_xct();
@@ -880,7 +880,9 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         // IP: Moving the Upd(SF) first because it is the only 
         //     operation on this trx that may fail
 
-        /* 2. Update SpecialFacility */
+        //#warning baseline::upd_sub_data does first the Upd(SF) and then Upd(Sub)
+
+        // 1. Update SpecialFacility
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sf-idx-upd (%d) (%d)\n", 
                xct_id, usdin._s_id, usdin._sf_type);
@@ -893,11 +895,9 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         e = _psf_man->update_tuple(_pssm, prsf);
 
         if (e.is_error()) { goto done; }
+      
 
-        
-
-
-        /* 1. Update Subscriber */
+        // 2. Update Subscriber
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sub-idx-upd (%d)\n", 
                xct_id, usdin._s_id);
@@ -910,7 +910,6 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         e = _psub_man->update_tuple(_pssm, prsub);
 
         if (e.is_error()) { goto done; }
-
 
 
         // COMMIT
@@ -1089,7 +1088,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
 
     { // make gotos safe
 
-        /* 1. Retrieve Subscriber (Read-only) */
+        // 1. Retrieve Subscriber (Read-only)
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ICF:sub-nbr-idx (%d)\n", 
                xct_id, icfin._s_id);
@@ -1100,7 +1099,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
         prsub->get_value(0, icfin._s_id);
 
         
-        /* 2. Retrieve SpecialFacility (Read-only) */
+        // 2. Retrieve SpecialFacility (Read-only)
         
         guard<index_scan_iter_impl<special_facility_t> > sf_iter;
         {
@@ -1136,38 +1135,36 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
         if (bFound == false) { 
             e = RC(se_NO_CURRENT_TUPLE); 
             goto done; 
-        } 
-        else {
+        }
 
-            /* 3. Check if it can successfully insert */
-            TRACE( TRACE_TRX_FLOW, 
-                   "App: %d ICF:cf-idx-probe (%d) (%d) (%d)\n", 
-                   xct_id, icfin._s_id, icfin._sf_type, icfin._s_time);
-            e = _pcf_man->cf_idx_probe(_pssm, prcf, 
-                                       icfin._s_id, icfin._sf_type, icfin._s_time);
+        // 3. Check if it can successfully insert
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d ICF:cf-idx-probe (%d) (%d) (%d)\n", 
+               xct_id, icfin._s_id, icfin._sf_type, icfin._s_time);
+        e = _pcf_man->cf_idx_probe(_pssm, prcf, 
+                                   icfin._s_id, icfin._sf_type, icfin._s_time);
             
-            // idx probes return se_TUPLE_NOT_FOUND
-            if (e.err_num() == se_TUPLE_NOT_FOUND) { 
+        // idx probes return se_TUPLE_NOT_FOUND
+        if (e.err_num() == se_TUPLE_NOT_FOUND) { 
 
-                /* 4. Insert */                
-                prcf->set_value(0, icfin._s_id);
-                prcf->set_value(1, icfin._sf_type);
-                prcf->set_value(2, icfin._s_time);
-                prcf->set_value(3, icfin._e_time);
-                prcf->set_value(4, icfin._numberx);                
-                prcf->set_value(5, "padding");
+            // 4. Insert Call Forwarding record
+            prcf->set_value(0, icfin._s_id);
+            prcf->set_value(1, icfin._sf_type);
+            prcf->set_value(2, icfin._s_time);
+            prcf->set_value(3, icfin._e_time);
+            prcf->set_value(4, icfin._numberx);                
+            prcf->set_value(5, "padding");
                 
-                TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
+            TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
 
-                e = _pcf_man->add_tuple(_pssm, prcf);
+            e = _pcf_man->add_tuple(_pssm, prcf);
 
-                if (e.is_error()) { goto done; }
-            }             
-            else {
-                // in any other case it should fail
-                e = RC(se_CANNOT_INSERT_TUPLE);
-                goto done;
-            }
+            if (e.is_error()) { goto done; }
+        }             
+        else {
+            // in any other case it should fail
+            e = RC(se_CANNOT_INSERT_TUPLE);
+            goto done;
         }
         
         // COMMIT
