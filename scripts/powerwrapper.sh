@@ -19,24 +19,12 @@ SHORECONF="shore.conf"
 
 # args: <base-dir> <selecteddb> <low> <high> <xctid> <time> <iter> <sleeptime>
 if [ $# -lt 8 ]; then
-    echo "Usage: $0 <base-dir> <selecteddb> <low-cl> <high-cl> <xctid> <time> <iter> <sleeptime>" >&2
+    echo "Usage: $0 <base-dir> <selecteddb> <low-cl> <high-cl> <xctid> <time> <iter> <sleeptime> <clientset>" >&2
     echo " " >&2
     echo "Examples:" >&2
-    echo "BASE-TM1: for ((trx=20; trx <= 26; trx++)); do ./scripts/powerwrapper.sh EXP tm1-100-nl 1 80 \$trx 30 3 300; done" >&2
-    echo "DORA-TM1: for ((trx=220; trx <= 226; trx++)); do ./scripts/powerwrapper.sh EXP tm1-100 1 80 \$trx 30 3 300; done" >&2
-    echo "SEQ=(224 226 200) ; for trx in \${SEQ[@]}; do ./scripts/powerwrapper.sh EXP tm1-100 1 80 \$trx 30 3 300; done" >&2
-    echo " " >&2
-    echo "!!! Make sure that shore.conf has the correct configuration for your experiment !!!" >&2
-    echo "Current configuration:" >&2
-    cat $SHORECONF | grep "^db-config" >&2
-    echo " " >&2
-    echo "!!! Make sure that $EXPSHELL will sleep enough for the database to populate !!!" >&2
-    echo "Current sleep:" >&2
-    cat $EXPSHELL | grep "^sleep" >&2
-    echo " " >&2
-    echo "!!! Make sure that $EXPSHELL has the right sequence of clients for your experiment !!!" >&2
-    echo "Current sequence:" >&2
-    cat $EXPSHELL | grep "^CLIENT_SEQ=" >&2
+    echo "BASE-TM1: for ((trx=20; trx <= 26; trx++)); do ./scripts/powerwrapper.sh EXP tm1-100-nl 1 80 \$trx 30 3 300 large ; done" >&2
+    echo "DORA-TM1: for ((trx=220; trx <= 226; trx++)); do ./scripts/powerwrapper.sh EXP tm1-100 1 80 \$trx 30 3 300 large ; done" >&2
+    echo "SEQ=(224 226 200) ; for trx in \${SEQ[@]}; do ./scripts/powerwrapper.sh EXP tm1-100 1 80 \$trx 30 3 300 large ; done" >&2
     echo " " >&2
     exit 1
 fi
@@ -49,6 +37,7 @@ XCT=$1; shift
 TIME=$1; shift
 ITER=$1; shift
 SLEEPTIME=$1; shift
+CLIENTSET=$1; shift
 
 STAMP=$(date +"%F-%Hh%Mm%Ss")
 OUTFILE=$BASE_DIR/perf-$SELECTEDDB-$XCT.$STAMP.out
@@ -70,5 +59,5 @@ CMD="source $EXPSHELL $LOW $HIGH $XCT $TIME $ITER | $TRXSHELL $SELECTEDDB 2>&1 |
 echo "$CMD" | tee $OUTFILE
 echo "Configuration" | tee -a $OUTFILE
 cat shore.conf | grep "^$SELECTEDDB" | tee -a $OUTFILE 
-($EXPSHELL $LOW $HIGH $XCT $TIME $ITER $SLEEPTIME | $TRXSHELL $SELECTEDDB) 2>&1 | tee -a $OUTFILE
+($EXPSHELL $LOW $HIGH $XCT $TIME $ITER $SLEEPTIME $CLIENTSET | $TRXSHELL $SELECTEDDB) 2>&1 | tee -a $OUTFILE
 

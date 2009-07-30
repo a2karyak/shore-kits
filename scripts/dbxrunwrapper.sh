@@ -19,15 +19,15 @@
 
 
 # args: <output-dir> <selecteddb> <xctid> <run-script> [<run-script-args>]
-#                                                      <sf> <duration> <iteration> <warmuptrx> <sleeptime>
+#                                                      <sf> <duration> <iteration> <warmuptrx> <sleeptime> <clientset>
 if [ $# -lt 4 ]; then
     echo "Usage: $0 <base-dir> <selecteddb> <xctid> <run-script> [args for run-script...]" >&2
-    echo "                                                       <sf> <duration> <iterations> <warmuptrx> <sleeptime>" >&2
+    echo "                                                       <sf> <duration> <iterations> <warmuptrx> <sleeptime> <clientset>" >&2
     echo "The run-script will be passed the <base-dir> <selecteddb> <xctid> and any remaining args" >&2
     echo " " >&2
     echo "Examples:" >&2
-    echo "BASE-TM1: SEQ=(24 26 20) ; for trx in \${SEQ[@]}; do ./scripts/dbxrunwrapper.sh EXPDBX tm1-100 \$trx ./scripts/dorarun.sh 100 30 3 \$trx 300; done"
-    echo "DORA-TM1: for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh EXPDBX tm1-100-nl \$trx ./scripts/dorarun.sh 100 30 3 \$trx 300; done"
+    echo "BASE-TM1: SEQ=(24 26 20) ; for trx in \${SEQ[@]}; do ./scripts/dbxrunwrapper.sh EXPDBX tm1-100 \$trx ./scripts/dorarun.sh 100 30 3 \$trx 300 large ; done"
+    echo "DORA-TM1: for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh EXPDBX tm1-100-nl \$trx ./scripts/dorarun.sh 100 30 3 \$trx 300 large ; done"
     echo " " >&2
     echo "!!! Make sure that shore.conf has the correct <selecteddb> for your experiment !!!" >&2
     echo " " >&2

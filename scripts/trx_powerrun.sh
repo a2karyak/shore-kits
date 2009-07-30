@@ -7,10 +7,10 @@
 # args: <low> <high> <xctid> <time> <iter> <sleeptime>
 usage()
 {
-    echo "Usage: $0 <low> <high> <xctid> <time> <iter> <sleeptime>" >&2
+    echo "Usage: $0 <low> <high> <xctid> <time> <iter> <sleeptime> <clientset>" >&2
 }
 
-if [ $# -lt 6 ]; then
+if [ $# -lt 7 ]; then
     echo "Invalid args: $0 $*" >&2
     usage
     exit 1
@@ -22,7 +22,7 @@ XCT=$1; shift
 TIME=$1; shift
 ITER=$1; shift
 SLEEPTIME=$1; shift
-
+CLIENTSET=$1; shift
 
 if [ $HIGH -lt $LOW ]; then
     echo "Invalid Input: $LOW $HIGH" >&2    
@@ -69,6 +69,27 @@ run_one ()
 
 # # Universal
 CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74 78)
+
+
+## Small
+if [ "$CLIENTSET" = "small" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48)
+fi
+
+## Medium
+if [ "$CLIENTSET" = "medium" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60)
+fi
+
+## Large
+if [ "$CLIENTSET" = "large" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78)
+fi
+
+## ExtraLarge
+if [ "$CLIENTSET" = "extralarge" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78 82 86 90 94 98)
+fi
 
 
 ###########################################################

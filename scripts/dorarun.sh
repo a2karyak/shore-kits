@@ -10,11 +10,11 @@
 # Modified for DORA. It does not spread threads (SF==CLIENTS)
 # Removed the SLI option
 
-# args: <dir> <name> <xctid> <sf> <length> <iterations> <warmup_mix> <sleeptime>
+# args: <dir> <name> <xctid> <sf> <length> <iterations> <warmup_mix> <sleeptime> <clientset>
 
-if [ $# -lt 8 ]; then
+if [ $# -lt 9 ]; then
     echo "Invalid args: $0 $*" >&2
-    echo "Usage: $0 <dir> <name> <xctid> <sf> <measure-time> <measure-iters> <warmup-trx> <sleeptime>" >&2
+    echo "Usage: $0 <dir> <name> <xctid> <sf> <measure-time> <measure-iters> <warmup-trx> <sleeptime> <clientset>" >&2
     echo " " >&2
     echo "Wrapper script does not pass: <sf> <measure-time> <measure-iters> <warmup-trx>" >&2
     exit 1
@@ -29,6 +29,8 @@ TIME=$1; shift
 ITER=$1; shift
 WARMUP_MIX=$1; shift
 SLEEPTIME=$1; shift
+CLIENTSET=$1; shift
+
 
 command()
 {
@@ -98,7 +100,29 @@ run_one ()
 
 
 # # Universal
-CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74 78)
+CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78)
+
+
+## Small
+if [ "$CLIENTSET" = "small" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48)
+fi
+
+## Medium
+if [ "$CLIENTSET" = "medium" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60)
+fi
+
+## Large
+if [ "$CLIENTSET" = "large" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78)
+fi
+
+## ExtraLarge
+if [ "$CLIENTSET" = "extralarge" ]; then
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78 82 86 90 94 98)
+fi
+
 
 
 
