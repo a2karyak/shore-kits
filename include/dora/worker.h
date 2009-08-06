@@ -255,6 +255,7 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 #ifndef ONLYDORA
         detach_xct(paction->xct());
 #endif
+
     }
     else {
         r_code = de_EARLY_ABORT;

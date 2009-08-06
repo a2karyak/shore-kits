@@ -36,6 +36,7 @@ class final_gsd_rvp;
 class r_sub_gsd_action;
 
 // TM1 GetNewDest
+//#undef TM1GND2
 #define TM1GND2
 #ifdef TM1GND2
 class final_gnd_rvp;
@@ -53,6 +54,7 @@ class final_gad_rvp;
 class r_ai_gad_action;
 
 // TM1 UpdSubData
+//#undef TM1USD2
 #define TM1USD2
 #ifdef TM1USD2
 class final_usd_rvp;
@@ -70,6 +72,7 @@ class final_ul_rvp;
 class upd_sub_ul_action;
 
 // TM1 InsCallFwd
+//#undef TM1ICF2
 #define TM1ICF2
 #ifdef TM1ICF2
 class final_icf_rvp;

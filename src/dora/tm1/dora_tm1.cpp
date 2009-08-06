@@ -332,6 +332,8 @@ DEFINE_DORA_ACTION_GEN_FUNC(r_sf_gnd_action,mid_gnd_rvp,get_new_dest_input_t,int
 
 DEFINE_DORA_ACTION_GEN_FUNC(r_cf_gnd_action,rvp_t,get_new_dest_input_t,int,DoraTM1Env);
 #else
+
+#warning OLD-GetNewDest !!
 DEFINE_DORA_FINAL_RVP_GEN_FUNC(final_gnd_rvp,DoraTM1Env);
 
 DEFINE_DORA_ACTION_GEN_FUNC(r_sf_gnd_action,rvp_t,get_new_dest_input_t,int,DoraTM1Env);
@@ -360,6 +362,8 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_sf_usd_action,mid_usd_rvp,upd_sub_data_input_t,i
 
 DEFINE_DORA_ACTION_GEN_FUNC(upd_sub_usd_action,rvp_t,upd_sub_data_input_t,int,DoraTM1Env);
 #else
+
+#warning OLD-UpdSubData !!
 DEFINE_DORA_FINAL_RVP_GEN_FUNC(final_usd_rvp,DoraTM1Env);
 
 DEFINE_DORA_ACTION_GEN_FUNC(upd_sub_usd_action,rvp_t,upd_sub_data_input_t,int,DoraTM1Env);
@@ -389,7 +393,11 @@ DEFINE_DORA_ACTION_GEN_FUNC(r_sub_icf_action,mid1_icf_rvp,ins_call_fwd_input_t,i
 DEFINE_DORA_ACTION_GEN_FUNC(r_sf_icf_action,mid2_icf_rvp,ins_call_fwd_input_t,int,DoraTM1Env);
 
 DEFINE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t,int,DoraTM1Env);
+
 #else
+
+#warning OLD-InsCallFwd !!
+
 DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_icf_rvp,ins_call_fwd_input_t,DoraTM1Env);
 DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp,DoraTM1Env);
 
