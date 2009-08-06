@@ -55,8 +55,8 @@ using namespace std;
 // constants
 const int SHELL_COMMAND_BUFFER_SIZE = 64;
 const int SHELL_NEXT_CONTINUE       = 1;
-const int SHELL_NEXT_QUIT           = 2;
-
+const int SHELL_NEXT_DISCONNECT     = 2; // used in network mode
+const int SHELL_NEXT_QUIT           = 3;
 
 
 class command_handler_t 
@@ -68,6 +68,7 @@ public:
 protected:
     aliasList _aliases;
     string _name;
+
 public:
 
     command_handler_t() {         

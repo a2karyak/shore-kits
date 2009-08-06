@@ -56,6 +56,7 @@ UTIL = \
         $(SU)/stl_pool.cpp \
         $(SU)/random_input.cpp \
         $(SU)/shell.cpp \
+        $(SU)/tcp.cpp \
         $(SU)/cpustat.cpp
 
 UTIL_CMD = \

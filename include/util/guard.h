@@ -21,9 +21,8 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-#ifndef _GUARD_H
-#define _GUARD_H
+#ifndef __UTIL_GUARD_H
+#define __UTIL_GUARD_H
 
 #include <cstdio>
 #include <cassert>
@@ -377,8 +376,10 @@ struct file_guard_t : pointer_guard_base_t<FILE, file_guard_t> {
     {
     }
     static void guard_action(FILE *ptr) {
-        if(ptr && fclose(ptr)) 
-            TRACE(TRACE_ALWAYS, "fclose failed in guard destructor");
+        if(ptr && fclose(ptr)) {
+            TRACE(TRACE_ALWAYS, 
+                  "fclose failed in guard destructor");
+        }
     }
 };
 
@@ -400,6 +401,5 @@ struct fd_guard_t : guard_base_t<int, fd_guard_t> {
 };
 
 
+#endif // __UTIL_GUARD_H
 
-
-#endif

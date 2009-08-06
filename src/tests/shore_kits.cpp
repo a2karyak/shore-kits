@@ -141,8 +141,8 @@ private:
 
 public:
 
-    kit_t(const char* prompt) 
-        : shore_shell_t(prompt)
+    kit_t(const char* prompt, const bool netmode, const int port) 
+        : shore_shell_t(prompt,netmode,port)
     {
         // load supported trxs and binding policies maps
         load_trxs_map();
@@ -658,21 +658,41 @@ int main(int argc, char* argv[])
 
     // 0. First check if there is any particular configuration selected
     envVar* ev = envVar::instance();
-    if (argc>1) { 
-        string config = argv[1];
-        ev->setConfiguration(config);
+
+    // 1. Get options
+    bool netmode = false;
+    int netport = 0;
+    string config;
+    int c = 0;
+    while ((c = getopt(argc,argv,"np:c:")) != -1) {
+        switch (c) {
+        case 'n':
+            TRACE( TRACE_ALWAYS, "NETMODE\n");
+            netmode = true;
+            break;
+        case 'p':
+            TRACE( TRACE_ALWAYS, "PORT (%d)\n", atoi(optarg));
+            netport = atoi(optarg);
+            break;
+        case 'c':
+            TRACE( TRACE_ALWAYS, "CONFIG (%s)\n", optarg);
+            config = (string)optarg;
+            ev->setConfiguration(config);
+            break;
+        default:
+            TRACE( TRACE_ALWAYS, "Wrong parameter\n");
+            return (2);
+        }
     }
 
-
-    // 1. Get env vars
+    // 2. Get env vars
     initsysnamemap();
     initbenchmarkmap();
 
     string sysname = ev->getSysname();
     string benchmarkname = ev->getSysVar("benchmark");
 
-
-    // 2. Initialize shell
+    // 3. Initialize shell
     guard<shore_shell_t> kit = NULL;
 
 
@@ -686,17 +706,17 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
-            kit = new baselineTPCCKit("(tpcc-base) ");
+            kit = new baselineTPCCKit("(tpcc-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
             // shore.conf is set for DORA
-            kit = new doraTPCCKit("(tpcc-dora) ");
+            kit = new doraTPCCKit("(tpcc-dora) ",netmode,netport);
             break;
 #endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            return (2);        
+            return (3);
         }
     }
 
@@ -705,17 +725,17 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
-            kit = new baselineTM1Kit("(tm1-base) ");
+            kit = new baselineTM1Kit("(tm1-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
             // shore.conf is set for DORA
-            kit = new doraTM1Kit("(tm1-dora) ");
+            kit = new doraTM1Kit("(tm1-dora) ",netmode,netport);
             break;
 #endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            return (3);        
+            return (4);
         }
     }
 
@@ -724,17 +744,17 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             // shore.conf is set for Baseline
-            kit = new baselineTPCBKit("(tpcb-base) ");
+            kit = new baselineTPCBKit("(tpcb-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
             // shore.conf is set for DORA
-            kit = new doraTPCBKit("(tpcb-dora) ");
+            kit = new doraTPCBKit("(tpcb-dora) ",netmode,netport);
             break;
 #endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
-            return (3);        
+            return (5);
         }
     }
 
@@ -746,20 +766,25 @@ int main(int argc, char* argv[])
     _g_cpumon->fork();
 
     // 3. Instanciate and start the Shore environment
-    if (kit->inst_test_env(argc, argv))
-        return (4);
+    if (kit->inst_test_env(argc, argv)) {
+        return (6);
+    }
 
     // 4. Make sure data is loaded
     w_rc_t rcl = kit->db()->loaddata();
     if (rcl.is_error()) {
-        return (5);
+        return (7);
     }
 
     // 5. Set the global variable to the kit's db - for alarm() to work
     _g_shore_env = kit->db();
 
     // 6. Start processing commands
-    kit->start();
+    int start = kit->start();
+    if (start < 0) {
+        TRACE( TRACE_ALWAYS, "Error in starting shell\n");
+        return (8);
+    }
 
     // 7. Dump the statistics before exiting
     kit->db()->statistics();

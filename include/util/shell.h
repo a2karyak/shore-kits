@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shell.h
  *
  *  @brief:  Abstract shell class for the test cases
@@ -45,6 +43,12 @@
 #endif
 
 #include <map>
+
+
+#include <sys/types.h>  // for socket
+#include <sys/socket.h> 
+#include <netdb.h>      // for clientaddr structures
+
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -87,6 +91,13 @@ struct quit_cmd_t : public command_handler_t {
 };
 
 
+struct disconnect_cmd_t : public command_handler_t {
+    void setaliases();
+    const int handle(const char* cmd) { return (SHELL_NEXT_DISCONNECT); }
+    const string desc() { return (string("Disconnect client")); }
+};
+
+
 struct help_cmd_t : public command_handler_t {
     cmdMap* _pcmds; // pointer to the supported commands
     help_cmd_t(cmdMap* pcmds) : _pcmds(pcmds) { assert(pcmds); }
@@ -111,6 +122,7 @@ struct set_cmd_t : public command_handler_t {
     const string desc() { return (string("Sets env vars")); }               
 };
 
+
 struct env_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
@@ -119,6 +131,7 @@ struct env_cmd_t : public command_handler_t {
     void usage();
     const string desc() { return (string("Prints env vars")); }               
 };
+
 
 struct conf_cmd_t : public command_handler_t {
     envVar* ev;
@@ -139,7 +152,6 @@ struct cpustat_cmd_t : public command_handler_t {
 };
 
 
-
 struct echo_cmd_t : public command_handler_t {
     void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
     const int handle(const char* cmd) {
@@ -149,7 +161,6 @@ struct echo_cmd_t : public command_handler_t {
     void usage() { TRACE( TRACE_ALWAYS, "usage: echo <string>\n"); }
     const string desc() { return string("Echoes its input arguments to the screen"); }
 };
-
 
 
 struct break_cmd_t : public command_handler_t {
@@ -189,6 +200,7 @@ protected:
 
     // cmds
     guard<quit_cmd_t> _quiter;
+    guard<disconnect_cmd_t> _disconnecter;
     guard<help_cmd_t> _helper;
     guard<set_cmd_t>  _seter;
     guard<env_cmd_t>  _enver;
@@ -198,39 +210,45 @@ protected:
     guard<echo_cmd_t> _echoer;
     guard<break_cmd_t> _breaker;
 
-
     const int _register_commands();    
 
-protected:
-
     mcs_lock _lock;
-    cmdMap _cmds;
-    cmdMap _aliases;
-    bool _processing_command;
+    cmdMap   _cmds;
+    cmdMap   _aliases;
+    bool     _processing_command;
 
-    char* _cmd_prompt;
+    array_guard_t<char> _cmd_prompt;
     int   _cmd_counter;
-    
+
+    // For network mode
+    const bool   _net_mode;
+    const uint_t _net_port;
+
+    file_guard_t _in_stream;
+    int _listen_fd;
+
+    struct sockaddr_in _client_addr;
+    int _client_len;
+    int _conn_fd;
+
+    int _net_conn_cnt;
+
 public:
 
-    shell_t(const char* prompt = SCLIENT_PROMPT, bool save_history = true) 
-        : _cmd_counter(0), _save_history(save_history), 
-          _state(SHELL_NEXT_CONTINUE), _processing_command(false)
-    {
-        _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
-        if (prompt) strncpy(_cmd_prompt, prompt, strlen(prompt));
-        _register_commands();
+    shell_t(const char* prompt = SCLIENT_PROMPT, 
+            const bool save_history = true,
+            const bool net_mode = false,
+            const uint_t net_port = SCLIENT_NET_MODE_LISTEN_PORT);
+
+    virtual ~shell_t() { }
+
+    static shell_t* &instance() { 
+        static shell_t* _instance; return _instance; 
     }
 
-    virtual ~shell_t() { 
-        if (_cmd_prompt) delete [] _cmd_prompt;
-        _cmd_prompt = NULL;
+    const int get_command_cnt() { 
+        return (_cmd_counter); 
     }
-
-
-    static shell_t* &instance() { static shell_t* _instance; return _instance; }
-
-    const int get_command_cnt() { return (_cmd_counter); }
 
     static void sig_handler(int sig) {
 	assert(sig == SIGINT && instance());	
@@ -245,11 +263,11 @@ public:
     const int close_cmds();
 
     // basic shell functionality    
-    //    virtual int process_command(const char* cmd, const char* cmd_tag)=0;
-
     virtual int SIGINT_handler() { return (ECANCELED); /* exit immediately */ }     
     int start();
-    int process_one();
+    int process_readline();
+    int process_network();
+    int process_one(char* cmd);
     virtual int process_command(const char* command, const char* command_tag)=0;
 
 }; // EOF: shell_t

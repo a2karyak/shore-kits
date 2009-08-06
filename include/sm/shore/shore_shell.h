@@ -141,15 +141,19 @@ protected:
     mapSupTrxs _sup_trxs;
 
     // supported binding policies
-    typedef map<eBindingType,string>            mapBindPols;
-    typedef mapBindPols::iterator               mapBindPolsIt;    
+    typedef map<eBindingType,string>   mapBindPols;
+    typedef mapBindPols::iterator      mapBindPolsIt;    
     mapBindPols _sup_bps;
 
 public:
 
-    shore_shell_t(const char* prompt, processorid_t acpustart = PBIND_NONE) 
-        : shell_t(prompt), 
-          _env(NULL), _start_prs_id(acpustart), _current_prs_id(acpustart)
+    shore_shell_t(const char* prompt, 
+                  const bool netmode,
+                  const int netport,                  
+                  processorid_t acpustart = PBIND_NONE) 
+        : shell_t(prompt,true,netmode,netport), 
+          _env(NULL), 
+          _start_prs_id(acpustart), _current_prs_id(acpustart)
     {
         // install signal handler
         struct sigaction sa;
@@ -157,8 +161,9 @@ public:
         sa.sa_flags = 0;
         sigemptyset(&sa.sa_mask);
         sa.sa_handler = &alarm_handler;
-        if(sigaction(SIGALRM, &sa, &sa_old) < 0)
+        if(sigaction(SIGALRM, &sa, &sa_old) < 0) {
             exit(1);        
+        }
     }
 
     virtual ~shore_shell_t() 

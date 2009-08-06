@@ -21,36 +21,19 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file chomp.cpp
+/** @file:   tcp.h
  *
- *  @brief Implementation of the chomp helper function
+ *  @brief:  Exports simple functions to set up TCP client and server
+ *           connections.
  *
- *  @author Naju Mancheril (ngm)
+ *  @author: Naju Mancheril (ngm)
  */
 
-#include "util/chomp.h"
+#ifndef __UTIL_TCP_H
+#define __UTIL_TCP_H
 
+int open_listenfd(int port);
+int open_clientfd(const char* hostname, int port);
 
-#ifdef __SUNPRO_CC
-#include <string.h>
-#else
-#include <cstring>
-#endif
+#endif // __UTIL_TCP_H
 
-
-#ifndef __GCC
-using std::strlen;
-#endif
-
-void chomp_newline(char* str) {
-    int len = strlen(str);
-    if ( str[len-1] == '\n' )
-        str[len-1] = '\0';
-}
-
-
-void chomp_carriage_return(char* str) {
-    int len = strlen(str);
-    if ( str[len-1] == '\r' )
-        str[len-1] = '\0';
-}
