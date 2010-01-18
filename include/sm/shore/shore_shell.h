@@ -99,6 +99,32 @@ struct fake_iodelay_cmd_t : public command_handler_t {
 };
 
 
+#ifdef CFG_SLI
+
+/*********************************************************************
+ *
+ *  @class: sli_cmd_t
+ *
+ *  @brief: Handler for the "sli" command
+ *
+ *********************************************************************/
+
+// cmd - SLI
+struct sli_cmd_t : public command_handler_t {
+    bool _enabled;
+    ShoreEnv* _env;
+    sli_cmd_t(ShoreEnv* env) : _env(env), _enabled(false) { };
+    ~sli_cmd_t() { }
+    void setaliases() { 
+        _name = string("sli"); 
+        _aliases.push_back("sli"); }
+    const int handle(const char* cmd);
+    void usage();
+    const string desc() { return (string("Enables/disables SLI")); }
+};
+
+#endif // CFG_SLI
+
 
 
 
@@ -132,6 +158,9 @@ protected:
     // supported cmds
     guard<fake_iodelay_cmd_t> _fakeioer;   
 
+#ifdef CFG_SLI
+    guard<sli_cmd_t> _slier;
+#endif // CFG_SLI
 
     // supported trxs
     typedef map<int,string>            mapSupTrxs;

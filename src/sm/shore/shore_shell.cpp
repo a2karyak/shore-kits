@@ -881,5 +881,29 @@ const int fake_iodelay_cmd_t::handle(const char* cmd)
 }
 
 
+#ifdef CFG_SLI
+
+/*********************************************************************
+ *
+ *  sli_cmd_t: "sli" command
+ *
+ *********************************************************************/
+
+void sli_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "SLI Usage:\n\n"       \
+           "*** sli\n\n");
+}
+
+const int sli_cmd_t::handle(const char* cmd)
+{
+    _enabled = !_enabled;    
+    _env->db()->set_sli_enabled(_enabled);
+    TRACE( TRACE_ALWAYS, "SLI=%d\n", _enabled);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+#endif // CFG_SLI
+
 EXIT_NAMESPACE(shore);
 

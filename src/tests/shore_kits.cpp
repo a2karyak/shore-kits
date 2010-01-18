@@ -276,10 +276,10 @@ public:
         add_cmd(_fakeioer.get());
 
 #ifdef CFG_SLI
-        _slier = new sli_enable_cmd_t(_dbinst);
+        _slier = new sli_cmd_t(_dbinst);
         _slier->setaliases();
         add_cmd(_slier.get());
-#endif
+#endif // CFG_SLI
 
         // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_dbinst);
