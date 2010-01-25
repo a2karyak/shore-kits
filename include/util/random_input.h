@@ -37,16 +37,24 @@
 
 
 #include "util.h"
-
+#include "zipfian.h"
 
 int   URand(const int low, const int high);
 bool  URandBool();
 short URandShort(const short low, const short high);
-
+int   UZRand(const int low, const int high); //URand with zipfian
 
 const char CAPS_CHAR_ARRAY[]  = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 const char NUMBERS_CHAR_ARRAY[] = { "012345789" }; 
 
+//Zipfian related params
+static bool enable_zipf=0;
+static double zipf_s=0.5;
+
+//Zipfian related functions
+static void setZipfParams(double s);
+static void enableZipf();
+static void disableZipf();
 
 void URandFillStrCaps(char* dest, const int sz);
 void URandFillStrNumbx(char* dest, const int sz);

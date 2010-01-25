@@ -70,7 +70,8 @@ get_sub_data_input_t create_get_sub_data_input(int sf,
     if (specificSub>0)
         gsdin._s_id = specificSub;
     else
-        gsdin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+    //    gsdin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+	    gsdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
     return (gsdin);
 }
 
@@ -103,7 +104,8 @@ get_new_dest_input_t create_get_new_dest_input(int sf,
     if (specificSub>0)
         gndin._s_id = specificSub;
     else
-        gndin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+        //gndin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+	gndin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
     gndin._sf_type = URand(1,4);
     gndin._s_time = URand(0,2) * 8;
@@ -136,7 +138,8 @@ get_acc_data_input_t create_get_acc_data_input(int sf,
     if (specificSub>0)
         gadin._s_id = specificSub;
     else
-        gadin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+   //     gadin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+	gadin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
     gadin._ai_type = URand(1,4);
     return (gadin);
@@ -168,7 +171,8 @@ upd_sub_data_input_t create_upd_sub_data_input(int sf,
     if (specificSub>0)
         usdin._s_id = specificSub;
     else
-        usdin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+//        usdin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+        usdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
     usdin._sf_type = URand(1,4);
     usdin._a_bit = URandBool();
@@ -202,7 +206,8 @@ upd_loc_input_t create_upd_loc_input(int sf,
     if (specificSub>0)
         ulin._s_id = specificSub;
     else
-        ulin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+//        ulin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+        ulin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
    
     sprintf(ulin._sub_nbr,"%015d",ulin._s_id);
     ulin._vlr_loc = URand(0,(2<<16)-1);
@@ -238,7 +243,8 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int sf,
     if (specificSub>0)
         icfin._s_id = specificSub;
     else
-        icfin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+//        icfin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+        icfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
     sprintf(icfin._sub_nbr,"%015d",icfin._s_id);
     icfin._sf_type = URand(1,4);
@@ -274,7 +280,8 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
     if (specificSub>0)
         dcfin._s_id = specificSub;
     else
-        dcfin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+//        dcfin._s_id = URand(1,sf*TM1_SUBS_PER_SF);
+        dcfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
     sprintf(dcfin._sub_nbr,"%015d",dcfin._s_id);
     dcfin._sf_type = URand(1,4);
