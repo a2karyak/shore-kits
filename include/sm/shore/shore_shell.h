@@ -127,6 +127,32 @@ struct sli_cmd_t : public command_handler_t {
 
 
 
+#ifdef CFG_ELR
+
+/*********************************************************************
+ *
+ *  @class: elr_cmd_t
+ *
+ *  @brief: Handler for the "elr" command
+ *
+ *********************************************************************/
+
+// cmd - ELR
+struct elr_cmd_t : public command_handler_t {
+    bool _enabled;
+    ShoreEnv* _env;
+    elr_cmd_t(ShoreEnv* env) : _env(env), _enabled(false) { };
+    ~elr_cmd_t() { }
+    void setaliases() { 
+        _name = string("elr"); 
+        _aliases.push_back("elr"); }
+    const int handle(const char* cmd);
+    void usage();
+    const string desc() { return (string("Enables/disables ELR")); }
+};
+
+#endif // CFG_ELR
+
 
 
 /*********************************************************************
@@ -161,6 +187,10 @@ protected:
 #ifdef CFG_SLI
     guard<sli_cmd_t> _slier;
 #endif // CFG_SLI
+
+#ifdef CFG_ELR
+    guard<elr_cmd_t> _elrer;
+#endif // CFG_ELR
 
     // supported trxs
     typedef map<int,string>            mapSupTrxs;
@@ -218,7 +248,7 @@ public:
     // shell interface
     virtual void pre_process_cmd();
     virtual int process_command(const char* command, const char* command_tag);
-    virtual int print_usage(const char* command);
+    virtual const int print_usage(const char* command);
     virtual int SIGINT_handler();
 
     // supported commands and their usage

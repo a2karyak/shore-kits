@@ -81,7 +81,8 @@ const char* shore_shell_t::translate_trx(const int iSelectedTrx) const
 
 // BP - Binding Policies //
 
-void shore_shell_t::print_sup_bp(void) 
+void 
+shore_shell_t::print_sup_bp(void) 
 {
     TRACE( TRACE_ALWAYS, "Supported Binding Policies\n");
     for (mapBindPolsIt cit= _sup_bps.begin();
@@ -89,7 +90,8 @@ void shore_shell_t::print_sup_bp(void)
             TRACE( TRACE_ALWAYS, "%d -> %s\n", cit->first, cit->second.c_str());
 }
 
-const char* shore_shell_t::translate_bp(const eBindingType abt)
+const char* 
+shore_shell_t::translate_bp(const eBindingType abt)
 {
     mapBindPolsIt it = _sup_bps.find(abt);
     if (it != _sup_bps.end())
@@ -113,8 +115,9 @@ const char* shore_shell_t::translate_bp(const eBindingType abt)
  *
  ******************************************************************/
 
-processorid_t shore_shell_t::next_cpu(const eBindingType abt, 
-                                          const processorid_t aprd) 
+processorid_t 
+shore_shell_t::next_cpu(const eBindingType abt, 
+                        const processorid_t aprd) 
 {
     processorid_t nextprs;
     switch (abt) {
@@ -141,10 +144,11 @@ processorid_t shore_shell_t::next_cpu(const eBindingType abt,
  *
  ********************************************************************/
 
-void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread, 
-                                           const int iNumOfThreads, const int iDuration,
-                                           const int iSelectedTrx, const int iIterations,
-                                           const eBindingType abt)
+void 
+shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread, 
+                                  const int iNumOfThreads, const int iDuration,
+                                  const int iSelectedTrx, const int iIterations,
+                                  const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n" \
@@ -161,10 +165,12 @@ void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread,
            iIterations);
 }
 
-void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread, 
-                                        const int iNumOfThreads, const int iNumOfTrxs,
-                                        const int iSelectedTrx, const int iIterations,
-                                        const eBindingType abt)
+
+void 
+shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread, 
+                               const int iNumOfThreads, const int iNumOfTrxs,
+                               const int iSelectedTrx, const int iIterations,
+                               const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n"
@@ -190,7 +196,8 @@ void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread,
  *
  ********************************************************************/
 
-int shore_shell_t::print_usage(const char* command) 
+const int 
+shore_shell_t::print_usage(const char* command) 
 {
     assert (command);
 
@@ -243,7 +250,8 @@ int shore_shell_t::print_usage(const char* command)
  *
  ********************************************************************/
 
-void shore_shell_t::usage_cmd_TEST() 
+void 
+shore_shell_t::usage_cmd_TEST() 
 {
     TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
            "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
@@ -266,7 +274,8 @@ void shore_shell_t::usage_cmd_TEST()
  *
  ********************************************************************/
 
-void shore_shell_t::usage_cmd_MEASURE() 
+void 
+shore_shell_t::usage_cmd_MEASURE() 
 {
     TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
            "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
@@ -289,7 +298,8 @@ void shore_shell_t::usage_cmd_MEASURE()
  *
  ********************************************************************/
 
-void shore_shell_t::usage_cmd_WARMUP() 
+void 
+shore_shell_t::usage_cmd_WARMUP() 
 {
     TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
            "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
@@ -309,7 +319,8 @@ void shore_shell_t::usage_cmd_WARMUP()
  *
  ********************************************************************/
 
-void shore_shell_t::usage_cmd_LOAD() 
+void 
+shore_shell_t::usage_cmd_LOAD() 
 {
     TRACE( TRACE_ALWAYS, "LOAD Usage:\n\n" \
            "*** load\n");
@@ -325,7 +336,8 @@ void shore_shell_t::usage_cmd_LOAD()
  *
  ********************************************************************/
 
-void shore_shell_t::pre_process_cmd()
+void 
+shore_shell_t::pre_process_cmd()
 {
     _g_canceled = false;
 
@@ -347,8 +359,9 @@ void shore_shell_t::pre_process_cmd()
  *
  ********************************************************************/
 
-int shore_shell_t::process_command(const char* cmd,
-                                   const char* cmd_tag)
+int 
+shore_shell_t::process_command(const char* cmd,
+                               const char* cmd_tag)
 {
     pre_process_cmd();
 
@@ -396,8 +409,9 @@ int shore_shell_t::process_command(const char* cmd,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_TRXS(const char* command, 
-                                    const char* command_tag)
+int 
+shore_shell_t::process_cmd_TRXS(const char* command, 
+                                const char* command_tag)
 {
     print_sup_trxs();
     return (SHELL_NEXT_CONTINUE);
@@ -412,8 +426,9 @@ int shore_shell_t::process_cmd_TRXS(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_LOAD(const char* command, 
-                                    const char* command_tag)
+int 
+shore_shell_t::process_cmd_LOAD(const char* command, 
+                                const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -436,8 +451,9 @@ int shore_shell_t::process_cmd_LOAD(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_WARMUP(const char* command, 
-                                      const char* command_tag)
+int 
+shore_shell_t::process_cmd_WARMUP(const char* command, 
+                                  const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -460,8 +476,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
     int iterations          = ev->getVarInt("test-iterations",DF_WARMUP_ITERS);
     int tmp_iterations      = iterations;
 
-
-    
+ 
     // Parses new test run data
     if ( sscanf(command, "%s %d %d %d %d",
                 &command_tag,
@@ -520,8 +535,9 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_TEST(const char* command, 
-                                    const char* command_tag)
+int 
+shore_shell_t::process_cmd_TEST(const char* command, 
+                                const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -596,7 +612,8 @@ int shore_shell_t::process_cmd_TEST(const char* command,
         //if (spreadThreads && (numOfThreads > numOfQueriedSF))
         //numOfThreads = numOfQueriedSF;
         if (spreadThreads && ((numOfThreads % numOfQueriedSF)!=0)) {
-            TRACE( TRACE_ALWAYS, "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
+            TRACE( TRACE_ALWAYS, 
+                   "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
                    numOfQueriedSF, numOfThreads);
         }
     }
@@ -649,8 +666,9 @@ int shore_shell_t::process_cmd_TEST(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_MEASURE(const char* command, 
-                                       const char* command_tag)
+int 
+shore_shell_t::process_cmd_MEASURE(const char* command, 
+                                   const char* command_tag)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -723,7 +741,8 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
         //if (spreadThreads && (numOfThreads > numOfQueriedSF))
         //numOfThreads = numOfQueriedSF;
         if (spreadThreads && ((numOfThreads % numOfQueriedSF)!=0)) {
-            TRACE( TRACE_ALWAYS, "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
+            TRACE( TRACE_ALWAYS, 
+                   "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
                    numOfQueriedSF, numOfThreads);
         }
     }
@@ -774,7 +793,8 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::SIGINT_handler() 
+int 
+shore_shell_t::SIGINT_handler() 
 {
     if(_processing_command && !_g_canceled) {
 	_g_canceled = true;
@@ -795,10 +815,11 @@ int shore_shell_t::SIGINT_handler()
  *
  ********************************************************************/
 
-int shore_shell_t::_cmd_WARMUP_impl(const int iQueriedSF, 
-                                    const int iTrxs, 
-                                    const int iDuration, 
-                                    const int iIterations)
+int 
+shore_shell_t::_cmd_WARMUP_impl(const int iQueriedSF, 
+                                const int iTrxs, 
+                                const int iDuration, 
+                                const int iIterations)
 {
     TRACE( TRACE_ALWAYS, "warming up...\n");
 
@@ -824,7 +845,8 @@ int shore_shell_t::_cmd_WARMUP_impl(const int iQueriedSF,
  *
  ********************************************************************/
 
-int shore_shell_t::_cmd_LOAD_impl()
+int 
+shore_shell_t::_cmd_LOAD_impl()
 {
     TRACE( TRACE_ALWAYS, "loading...\n");
 
@@ -852,7 +874,8 @@ int shore_shell_t::_cmd_LOAD_impl()
  *
  *********************************************************************/
 
-void fake_iodelay_cmd_t::usage(void)
+void 
+fake_iodelay_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "IODELAY Usage:\n\n"                               \
            "*** iodelay <DELAY>\n"                      \
@@ -860,7 +883,8 @@ void fake_iodelay_cmd_t::usage(void)
            "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
 }
 
-const int fake_iodelay_cmd_t::handle(const char* cmd)
+const int 
+fake_iodelay_cmd_t::handle(const char* cmd)
 {
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char iodelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
@@ -889,13 +913,15 @@ const int fake_iodelay_cmd_t::handle(const char* cmd)
  *
  *********************************************************************/
 
-void sli_cmd_t::usage(void)
+void 
+sli_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "SLI Usage:\n\n"       \
            "*** sli\n\n");
 }
 
-const int sli_cmd_t::handle(const char* cmd)
+const int 
+sli_cmd_t::handle(const char* cmd)
 {
     _enabled = !_enabled;    
     _env->db()->set_sli_enabled(_enabled);
@@ -904,6 +930,36 @@ const int sli_cmd_t::handle(const char* cmd)
 }
 
 #endif // CFG_SLI
+
+
+
+#ifdef CFG_ELR
+
+/*********************************************************************
+ *
+ *  elr_cmd_t: "elr" command
+ *
+ *********************************************************************/
+
+void 
+elr_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "ELR Usage:\n\n"       \
+           "*** elr\n\n");
+}
+
+const int 
+elr_cmd_t::handle(const char* cmd)
+{
+    _enabled = !_enabled;    
+    _env->db()->set_elr_enabled(_enabled);
+    TRACE( TRACE_ALWAYS, "ELR=%d\n", _enabled);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+#endif // CFG_ELR
+
+
 
 EXIT_NAMESPACE(shore);
 

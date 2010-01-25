@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_kits.cpp
  *
  *  @brief:  Shore kits
@@ -280,6 +278,12 @@ public:
         _slier->setaliases();
         add_cmd(_slier.get());
 #endif // CFG_SLI
+
+#ifdef CFG_ELR
+        _elrer = new elr_cmd_t(_dbinst);
+        _elrer->setaliases();
+        add_cmd(_elrer.get());
+#endif // CFG_ELR
 
         // TEMPLATE-BASED
         _restarter = new restart_cmd_t(_dbinst);
