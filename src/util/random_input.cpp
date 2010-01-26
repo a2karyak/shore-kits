@@ -51,6 +51,12 @@ int URand(const int low, const int high)
 //If enableZip is set to 1 then return zipfian else returns uniform
 int UZRand(const int low, const int high)
 {
+	return ( enableZipf? ( ZRand(low,high) ):( URand(low,high) ));
+}
+
+//Zipfian between low and high
+int ZRand(const int low, const int high)
+{
 	zipfian myZipf(high-low+2,zipf_s);	
 	
 	thread_t* self = thread_get_self();
@@ -59,7 +65,7 @@ int UZRand(const int low, const int high)
 	assert (randgenp);
 	double u = (double)randgenp->rand(10000)/double(10000);
 	
-	return ( enableZipf? ( myZipf.next(u)+low-1 ):( URand(low,high) ));
+	return (myZipf.next(u)+low-1);
 }
 
 
