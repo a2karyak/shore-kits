@@ -43,13 +43,14 @@ int   URand(const int low, const int high);
 bool  URandBool();
 short URandShort(const short low, const short high);
 int   UZRand(const int low, const int high); //URand with zipfian
+int   ZRand(const int low, const int high);
 
 const char CAPS_CHAR_ARRAY[]  = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 const char NUMBERS_CHAR_ARRAY[] = { "012345789" }; 
 
 //Zipfian related params
-static bool enable_zipf=0;
-static double zipf_s=0.5;
+static bool enable_zipf=0;//0
+static double zipf_s=2;//0.5
 
 //Zipfian related functions
 static void setZipfParams(double s);
