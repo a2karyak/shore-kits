@@ -48,52 +48,16 @@ int URand(const int low, const int high)
 }
 
 
-//If enableZip is set to 1 then return zipfian else returns uniform
-int UZRand(const int low, const int high)
-{
-	return ( enableZipf? ( ZRand(low,high) ):( URand(low,high) ));
-}
 
-//Zipfian between low and high
-int ZRand(const int low, const int high)
-{
-	zipfian myZipf(high-low+2,zipf_s);	
-	
-	thread_t* self = thread_get_self();
-	assert (self);
-	randgen_t* randgenp = self->randgen();
-	assert (randgenp);
-	double u = (double)randgenp->rand(10000)/double(10000);
-	
-	return (myZipf.next(u)+low-1);
-}
-
-
-static void setZipfParams(double s)
-{
-	zipf_s=s;
-}
-
-static void enableZipf()
-{
-	enable_zipf=1;
-}	
-
-static void disableZipf()
-{
-	enable_zipf=0;
-}
-
-
-
-bool URandBool()
+bool 
+URandBool()
 {
     return (URand(0,1) ? true : false);
 }
 
 
-
-short URandShort(const short low, const short high) 
+short 
+URandShort(const short low, const short high) 
 {
   thread_t* self = thread_get_self();
   assert (self);
@@ -105,7 +69,8 @@ short URandShort(const short low, const short high)
 }
 
 
-void URandFillStrCaps(char* dest, const int sz)
+void 
+URandFillStrCaps(char* dest, const int sz)
 {
     assert (dest);
     for (int i=0; i<sz; i++) {
@@ -114,12 +79,50 @@ void URandFillStrCaps(char* dest, const int sz)
 }
 
 
-void URandFillStrNumbx(char* dest, const int sz)
+void 
+URandFillStrNumbx(char* dest, const int sz)
 {
     assert (dest);
     for (int i=0; i<sz; i++) {
         dest[i] = NUMBERS_CHAR_ARRAY[URand(0,sizeof(NUMBERS_CHAR_ARRAY)-1)];
     }
 }
+
+
+#define USE_ZIPF 1
+
+bool _g_enableZipf = false;
+double _g_ZipfS = 0.0;
+
+//If enableZip is set to 1 then return zipfian else returns uniform
+int UZRand(const int low, const int high)
+{
+#ifdef USE_ZIPF
+	return ( _g_enableZipf? ( ZRand(low,high) ):( URand(low,high) ));
+#else
+        return URand(low,high);
+#endif
+}
+
+//Zipfian between low and high
+int ZRand(const int low, const int high)
+{
+	zipfian myZipf(high-low+2,_g_ZipfS);
+	
+	thread_t* self = thread_get_self();
+	assert (self);
+	randgen_t* randgenp = self->randgen();
+	assert (randgenp);
+	double u = (double)randgenp->rand(10000)/double(10000);
+	
+	return (myZipf.next(u)+low-1);
+}
+
+void setZipf(const bool isEnabled, const double s)
+{
+    _g_enableZipf = isEnabled;
+    _g_ZipfS = s;
+}
+
 
 

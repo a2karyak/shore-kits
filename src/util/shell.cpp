@@ -439,6 +439,10 @@ shell_t::_register_commands()
     _breaker->setaliases();
     add_cmd(_breaker.get());
 
+    _zipfer = new zipf_cmd_t();        
+    _zipfer->setaliases();
+    add_cmd(_zipfer.get());
+
 
     return (0);
 }
@@ -665,4 +669,52 @@ cpustat_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, 
            "CPUSTAT - Prints cpu usage for the process\n");
+}
+
+
+
+/*********************************************************************
+ *
+ *  ZIPF
+ *
+ *********************************************************************/
+
+void 
+zipf_cmd_t::setaliases() 
+{ 
+    _name = string("zipf"); 
+    _aliases.push_back("zipf"); 
+    _aliases.push_back("z"); 
+}
+
+const int 
+zipf_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char s_tag[SERVER_COMMAND_BUFFER_SIZE];
+    if ( sscanf(cmd, "%s %s", &cmd_tag, &s_tag) < 2) {
+        _is_enabled = false;
+    }
+    else {
+        _s = atof(s_tag);
+        _is_enabled = true;
+    }
+
+    TRACE( TRACE_ALWAYS, "Setting Zipf. Enabled=%d. S=%.2f\n", _is_enabled, _s);
+    setZipf(_is_enabled,_s);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void
+zipf_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS,
+           "zipf [<s>] - Without arguments, disables zipf input generation.\n" \
+           "           - With arguments, enabled zipf and sets \"s\"\n");
+}
+
+const string
+zipf_cmd_t::desc()
+{
+    return string("Enables/Disables zipfian distribution on the random input generation");
 }

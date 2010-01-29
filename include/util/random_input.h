@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   random_input.h
  *
  *  @brief:  Declaration of the (common) random functions, used for the
@@ -48,22 +46,18 @@ int   ZRand(const int low, const int high);
 const char CAPS_CHAR_ARRAY[]  = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 const char NUMBERS_CHAR_ARRAY[] = { "012345789" }; 
 
-//Zipfian related params
-static bool enable_zipf=0;//0
-static double zipf_s=2;//0.5
-
-//Zipfian related functions
-static void setZipfParams(double s);
-static void enableZipf();
-static void disableZipf();
-
 void URandFillStrCaps(char* dest, const int sz);
 void URandFillStrNumbx(char* dest, const int sz);
-
 
 // use this for allocation of NULL-terminated strings
 #define STRSIZE(x) (x+1)
 
 
+//Zipfian related params
+extern bool _g_enableZipf;
+extern double _g_ZipfS;
 
-#endif
+//Zipfian related functions
+void setZipf(const bool isEnabled, const double s);
+
+#endif // __UTIL_RANDOM_INPUT_H

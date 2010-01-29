@@ -60,6 +60,7 @@
 #include "util/command/tracer.h"
 #include "util/envvar.h"
 #include "util/prcinfo.h"
+#include "util/random_input.h"
 
 #include "util.h"
 
@@ -175,6 +176,18 @@ struct break_cmd_t : public command_handler_t {
 };
 
 
+struct zipf_cmd_t : public command_handler_t {
+    double _s;
+    bool _is_enabled;
+    zipf_cmd_t() : _s(0.0), _is_enabled(false) { };
+    ~zipf_cmd_t() { };
+    void setaliases();
+    const int handle(const char* cmd);
+    void usage();
+    const string desc();
+};
+
+
 
 
 /*********************************************************************
@@ -209,6 +222,7 @@ protected:
     guard<cpustat_cmd_t> _cpustater;
     guard<echo_cmd_t> _echoer;
     guard<break_cmd_t> _breaker;
+    guard<zipf_cmd_t> _zipfer;
 
     const int _register_commands();    
 

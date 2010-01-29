@@ -41,10 +41,11 @@
 
 
 #include "workload/tm1/tm1_input.h"
+
 #define USE_UZRAND_FOR_SF
 
 #ifdef USE_UZRAND_FOR_SF
-#warning Using UZRand implementation for generating skewd workloads of Zipfian is enabled. Skewness can be controlled by the shell.
+#warning Using UZRand for generating skewed Zipfian inputs. Skewness can be controlled by the 'zipf' shell command.
 #endif
 
 ENTER_NAMESPACE(tm1);	
