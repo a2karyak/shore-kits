@@ -279,6 +279,10 @@ public:
         add_cmd(_slier.get());
 #endif // CFG_SLI
 
+        _logger = new log_cmd_t(_dbinst);
+        _logger->setaliases();
+        add_cmd(_logger.get());
+
 #ifdef CFG_ELR
         _elrer = new elr_cmd_t(_dbinst);
         _elrer->setaliases();

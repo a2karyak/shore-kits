@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_shell.cpp
  *
  *  @brief:  Implementation of shell class for Shore environments
@@ -932,6 +930,61 @@ sli_cmd_t::handle(const char* cmd)
 #endif // CFG_SLI
 
 
+/*********************************************************************
+ *
+ *  log_cmd_t: "log" command
+ *
+ *********************************************************************/
+
+log_cmd_t::log_cmd_t(ShoreEnv* env, const uint level)
+    : _env(env), _level(level)
+{ 
+}
+
+void 
+log_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "LOG Usage:\n\n"                               \
+           "*** log <MECHANISM>\n"                                      \
+           "\nLogging mechanisms:\n"                                    \
+           "0: Baseline\n"                                              \
+           "1: DecoupledMemory\n"                                       \
+           "2: Vanilla C-array\n"                                       \
+           "3: DecoupledMemory + Vanilla C-array\n"                     \
+           "4: DecoupledMemory + Vanilla C-array + DecoupledExpose\n\n");
+}
+
+const int 
+log_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char level_tag[SERVER_COMMAND_BUFFER_SIZE];
+
+    if ( sscanf(cmd, "%s %s", &cmd_tag, &level_tag) < 2) {
+        usage();
+    }
+    else {
+        _level = atoi(level_tag);
+        _env->db()->set_log_mech(_level);
+        TRACE( TRACE_ALWAYS, "Logging=%d\n", _level);
+    }
+
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void 
+log_cmd_t::setaliases() { 
+    _name = string("log"); 
+    _aliases.push_back("log");
+    _aliases.push_back("l");
+}
+
+const string 
+log_cmd_t::desc() 
+{ 
+    return (string("Sets the logging mechanism")); 
+}
+
 
 #ifdef CFG_ELR
 
@@ -958,7 +1011,6 @@ elr_cmd_t::handle(const char* cmd)
 }
 
 #endif // CFG_ELR
-
 
 
 EXIT_NAMESPACE(shore);

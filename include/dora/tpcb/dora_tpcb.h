@@ -65,7 +65,7 @@ public:
 #ifdef CFG_DORA_LOGGER
         fprintf(stderr, "Starting dora-logger\n");
         // IP: sli?
-        _logger = new dora_logger_t(this, c_str("dora-logger")); 
+        _doralogger = new dora_logger_t(this, c_str("dora-logger")); 
 #endif
     }
 
@@ -75,8 +75,8 @@ public:
 
 #ifdef CFG_DORA_LOGGER
         fprintf(stderr, "Stopping dora-logger...\n");
-        _logger->stop();
-        _logger->join();
+        _doralogger->stop();
+        _doralogger->join();
 #endif
     }
 

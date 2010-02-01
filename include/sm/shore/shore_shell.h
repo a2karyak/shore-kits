@@ -126,6 +126,27 @@ struct sli_cmd_t : public command_handler_t {
 #endif // CFG_SLI
 
 
+/*********************************************************************
+ *
+ *  @class: log_cmd_t
+ *
+ *  @brief: Handler for the "log" command, which sets the logging 
+ *          mechanism to one of the predefined levels.
+ *
+ *********************************************************************/
+
+// cmd - logger
+struct log_cmd_t : public command_handler_t {
+    ShoreEnv* _env;
+    uint _level; 
+    log_cmd_t(ShoreEnv* env, const uint level=0);
+    ~log_cmd_t() { }
+    void setaliases();
+    const int handle(const char* cmd);
+    void usage();
+    const string desc();
+};
+
 
 #ifdef CFG_ELR
 
@@ -152,7 +173,6 @@ struct elr_cmd_t : public command_handler_t {
 };
 
 #endif // CFG_ELR
-
 
 
 /*********************************************************************
@@ -187,6 +207,8 @@ protected:
 #ifdef CFG_SLI
     guard<sli_cmd_t> _slier;
 #endif // CFG_SLI
+
+    guard<log_cmd_t> _logger;
 
 #ifdef CFG_ELR
     guard<elr_cmd_t> _elrer;

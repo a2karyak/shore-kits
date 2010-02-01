@@ -716,5 +716,5 @@ zipf_cmd_t::usage()
 const string
 zipf_cmd_t::desc()
 {
-    return string("Enables/Disables zipfian distribution on the random input generation");
+    return string("Enables/Disables zipfian input generation");
 }
