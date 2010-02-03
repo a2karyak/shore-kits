@@ -21,7 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
 /** @file:   shore_tm1_xct.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TM1 transactions

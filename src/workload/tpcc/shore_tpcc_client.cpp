@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcc_client.cpp
  *
  *  @brief:  Implementation of the client for the TPCC benchmark
@@ -41,7 +39,8 @@ ENTER_NAMESPACE(tpcc);
  *
  *********************************************************************/
 
-const int baseline_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
+const int 
+baseline_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -75,36 +74,30 @@ const int baseline_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
  *
  *********************************************************************/
  
-w_rc_t baseline_tpcc_client_t::run_one_xct(int xct_type, int xctid) 
-{
-    // 1. Initiate and detach from transaction
-    tid_t atid;   
-    W_DO(_tpccdb->db()->begin_xct(atid));
-    xct_t* pxct = smthread_t::me()->xct();
-    assert (pxct);
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-    detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
-    
-    // 2. Set input
+w_rc_t 
+baseline_tpcc_client_t::run_one_xct(int xct_type, int xctid) 
+{    
+    // Set input
     trx_result_tuple_t atrt;
     bool bWake = false;
     if (_cp->take_one) {
-        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d)\n", atid);
+        TRACE( TRACE_TRX_FLOW, "Sleeping\n");
         atrt.set_notify(_cp->wait+_cp->index);
         bWake = true;
     }
-    // pick a valid wh id
+
+    // Pick a valid WH
     int whid = _wh;
     if (_wh==0) 
         whid = URand(1,_qf); 
 
-    // 3. Get one action from the trash stack
+    // Get one action from the trash stack
     assert (_tpccdb);
     trx_request_t* arequest = new (_tpccdb->_request_pool) trx_request_t;
-    arequest->set(pxct,atid,xctid,atrt,xct_type,whid);    
+    tid_t atid;
+    arequest->set(NULL,atid,xctid,atrt,xct_type,whid);    
 
-    // 4. enqueue to worker thread
+    // Enqueue to worker thread
     assert (_worker);
     _worker->enqueue(arequest,bWake);
     return (RCOK);

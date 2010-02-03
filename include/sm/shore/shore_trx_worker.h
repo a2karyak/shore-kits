@@ -87,8 +87,6 @@ private:
    
 public:
 
-    /** construction - destruction */
-
     trx_result_tuple_t() { reset(UNDEF, -1, NULL); }
 
     trx_result_tuple_t(TrxState aTrxState, int anID, condex* apcx = NULL) { 
@@ -97,18 +95,18 @@ public:
 
     ~trx_result_tuple_t() { }
 
-    /** @fn copy constructor */
+    // @fn copy constructor
     trx_result_tuple_t(const trx_result_tuple_t& t) {
 	reset(t.R_STATE, t.R_ID, t._notify);
     }      
 
-    /** @fn copy assingment */
+    // @fn copy assingment
     trx_result_tuple_t& operator=(const trx_result_tuple_t& t) {        
         reset(t.R_STATE, t.R_ID, t._notify);        
         return (*this);
     }
     
-    /** @fn equality operator */
+    // @fn equality operator
     friend bool operator==(const trx_result_tuple_t& t, 
                            const trx_result_tuple_t& s) 
     {       
@@ -116,7 +114,7 @@ public:
     }
 
 
-    /** Access methods */
+    // Access methods
     condex* get_notify() const { return (_notify); }
     void set_notify(condex* notify) { _notify = notify; }
     
@@ -179,7 +177,7 @@ struct trx_request_t
     void set(xct_t* axct, tid_t atid, const int axctid,
              trx_result_tuple_t& aresult, const int axcttype, const int aspecid)
     {
-        assert (xct);
+        //assert (xct);
         _xct = axct;
         _tid = atid;
         _xct_id = axctid;
@@ -196,7 +194,7 @@ struct trx_request_t
  *
  * @brief: The baseline system worker threads
  *
- * @template class SubShoreEnv should be a ShoreEnv-derived class
+ * @note:  Template class SubShoreEnv should be a ShoreEnv-derived class
  * 
  ********************************************************************/
 
@@ -235,6 +233,7 @@ public:
         _actionpool = new Pool(sizeof(Request*),REQUESTS_PER_WORKER_POOL_SZ);
         _pqueue = new Queue( _actionpool.get() );
     }
+
     ~trx_worker_t() 
     { 
         _pqueue = NULL;
@@ -261,7 +260,8 @@ public:
  ********************************************************************/
 
 template <class SubShoreEnv>
-void trx_worker_t<SubShoreEnv>::enqueue(Request* arequest, const bool bWake)
+void 
+trx_worker_t<SubShoreEnv>::enqueue(Request* arequest, const bool bWake)
 {
     //assert (arequest);
     _pqueue->push(arequest,bWake);
@@ -280,13 +280,12 @@ void trx_worker_t<SubShoreEnv>::enqueue(Request* arequest, const bool bWake)
  ******************************************************************/
 
 template <class SubShoreEnv>
-const int trx_worker_t<SubShoreEnv>::_work_ACTIVE_impl()
+const int 
+trx_worker_t<SubShoreEnv>::_work_ACTIVE_impl()
 {    
-    //    TRACE( TRACE_DEBUG, "Activating...\n");
-
     // bind to the specified processor
-    //if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-    if (processor_bind(P_LWPID, P_MYID, PBIND_NONE, NULL)) { // no-binding
+    _prs_id = PBIND_NONE;
+    if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) { //PBIND_NONE
         TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
         _is_bound = false;
     }
@@ -295,29 +294,25 @@ const int trx_worker_t<SubShoreEnv>::_work_ACTIVE_impl()
         _is_bound = true;
     }
 
-    // state (WC_ACTIVE)
-
-    // Start serving actions from the partition
     w_rc_t e;
     Request* ar = NULL;
 
-    // 1. check if signalled to stop
+    // Check if signalled to stop
     while (get_control() == WC_ACTIVE) {
         
-        // reset the flags for the new loop
+        // Reset the flags for the new loop
         ar = NULL;
         set_ws(WS_LOOP);
 
-        // new (input) actions
-
-        // 2. dequeue a request from the (main) input queue
-        // it will spin inside the queue or (after a while) wait on a cond var
+        // Dequeue a request from the (main) input queue
+        // It will spin inside the queue or (after a while) wait on a cond var
         ar = _pqueue->pop();
 
-        // 3. execute the particular request
+        // Execute the particular request and deallocate it
         if (ar) {
             _serve_action(ar);
             ++_stats._served_input;
+            _db->_request_pool.destroy(ar);
         }
     }
     return (0);
@@ -340,14 +335,27 @@ const int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
 {
     // 1. attach to xct
     assert (prequest);
-    smthread_t::me()->attach_xct(prequest->_xct);
-    TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", prequest->_tid);
+    //smthread_t::me()->attach_xct(prequest->_xct);
+    tid_t atid;
+    w_rc_t e = _db->db()->begin_xct(atid);
+    if (e.is_error()) {
+        TRACE( TRACE_TRX_FLOW, "Problem beginning xct [0x%x]\n",
+               e.err_num());
+        ++_stats._problems;
+        return (1);
+    }          
+
+    xct_t* pxct = smthread_t::me()->xct();
+    assert (pxct);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    prequest->_xct = pxct;
+    prequest->_tid = atid;
             
     // 2. serve action
-    w_rc_t e = _db->run_one_xct(prequest->_xct_id,
-                                prequest->_xct_type,
-                                prequest->_spec_id,
-                                prequest->_result);
+    e = _db->run_one_xct(prequest->_xct_id,
+                         prequest->_xct_type,
+                         prequest->_spec_id,
+                         prequest->_result);
     if (e.is_error()) {
         TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) (%d) [0x%x]\n",
                prequest->_tid, prequest->_xct_id, e.err_num());
@@ -366,14 +374,15 @@ const int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
  *
  * @fn:     _pre_STOP_impl()
  *
- * @brief:  Goes over the queue and aborts any unprocessed request
+ * @brief:  Goes over all the requests in the two queues and aborts 
+ *          any unprocessed request
  * 
  ******************************************************************/
 
 template <class SubShoreEnv>
-const int trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
+const int 
+trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
 {
-    // 1. go over all requests
     Request* pr;
     int reqs_read  = 0;
     int reqs_write = 0;
@@ -381,14 +390,14 @@ const int trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
 
     assert (_pqueue);
 
-    // go over the readers list
+    // Go over the readers list
     for (; _pqueue->_read_pos != _pqueue->_for_readers->end(); _pqueue->_read_pos++) {
         pr = *(_pqueue->_read_pos);
         ++reqs_read;
         if (abort_one_trx(pr->_xct)) ++reqs_abt;
     }
 
-    // go over the writers list
+    // Go over the writers list
     {
         CRITICAL_SECTION(q_cs, _pqueue->_lock);
         for (_pqueue->_read_pos = _pqueue->_for_writers->begin();

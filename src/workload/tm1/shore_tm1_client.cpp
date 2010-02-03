@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tm1_client.cpp
  *
  *  @brief:  Implementation of the client for the TM1 benchmark
@@ -41,7 +39,8 @@ ENTER_NAMESPACE(tm1);
  *
  *********************************************************************/
 
-const int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
+const int 
+baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -67,45 +66,37 @@ const int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
  *  @brief: Baseline client - Entry point for running one trx 
  *
  *  @note:  The execution of this trx will not be stopped even if the
- *          measure internal has expired.
+ *          measure interval has expired.
  *
  *********************************************************************/
  
-w_rc_t baseline_tm1_client_t::run_one_xct(int xct_type, int xctid) 
+w_rc_t 
+baseline_tm1_client_t::run_one_xct(int xct_type, int xctid) 
 {
-    // 1. Initiate and detach from transaction
-    tid_t atid;   
-    W_DO(_tm1db->db()->begin_xct(atid));
-    xct_t* pxct = smthread_t::me()->xct();
-    assert (pxct);
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
-    detach_xct(pxct);
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
-    
-    // 2. Set input
+    // Set input    
     trx_result_tuple_t atrt;
     bool bWake = false;
     if (_cp->take_one) {
-        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d)\n", atid);
+        TRACE( TRACE_TRX_FLOW, "Sleeping\n");
         atrt.set_notify(_cp->wait+_cp->index);
         bWake = true;
     }
 
-    // pick a valid sf
+    // Pick a valid sf
     register int selsf = _selid;
     if (_selid==0) 
         selsf = URand(1,_qf); 
 
-    // decide which ID inside that SF to use
+    // Decide which ID inside that SF to use
     register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
 
-
-    // 3. Get one action from the trash stack
+    // Get one action from the trash stack
     assert (_tm1db);
     trx_request_t* arequest = new (_tm1db->_request_pool) trx_request_t;
-    arequest->set(pxct,atid,xctid,atrt,xct_type,selid);
+    tid_t atid;
+    arequest->set(NULL,atid,xctid,atrt,xct_type,selid);
 
-    // 4. enqueue to worker thread
+    // Enqueue to the worker thread
     assert (_worker);
     _worker->enqueue(arequest,bWake);
     return (RCOK);
