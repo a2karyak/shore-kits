@@ -395,22 +395,7 @@ protected:
     
 public:
 
-    // Construction  //
-    ShoreEnv(string confname) 
-        : db_iface(),
-          _pssm(NULL), 
-          _initialized(false), _init_mutex(thread_mutex_create()),
-          _loaded(false), _load_mutex(thread_mutex_create()),
-          _statmap_mutex(thread_mutex_create()),
-          _last_stats_mutex(thread_mutex_create()),
-          _vol_mutex(thread_mutex_create()), _cname(confname),
-          _measure(MST_UNDEF),
-          _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
-          _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
-    {
-        _popts = new option_group_t(1);
-        _pvid = new vid_t(1);
-    }
+    ShoreEnv(string confname);
 
     virtual ~ShoreEnv() 
     {         
@@ -514,7 +499,13 @@ public:
                                   const double avgcpuusage)=0;
 
     virtual void reset_stats()=0;
-    
+
+#ifdef CFG_SLI
+    bool isSLIEnabled() const { return (_bUseSLI); }
+    void setSLIEnabled(const bool bUseSLI) { _bUseSLI = bUseSLI; }
+protected:
+    bool _bUseSLI;    
+#endif    
 
 protected:
    

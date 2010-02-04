@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file shore_env.cpp
  *
  *  @brief Implementation of a Shore environment (database)
@@ -67,6 +65,27 @@ void env_stats_t::print_env_stats() const
 }
 
 
+
+
+ShoreEnv::ShoreEnv(string confname)
+    : db_iface(),
+      _pssm(NULL), 
+      _initialized(false), _init_mutex(thread_mutex_create()),
+      _loaded(false), _load_mutex(thread_mutex_create()),
+      _statmap_mutex(thread_mutex_create()),
+      _last_stats_mutex(thread_mutex_create()),
+      _vol_mutex(thread_mutex_create()), _cname(confname),
+      _measure(MST_UNDEF),
+      _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
+      _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
+{
+#ifdef CFG_SLI
+    _bUseSLI = envVar::instance()->getVarInt("db-worker-sli",0);
+    fprintf(stdout, "SLI= %s\n", (_bUseSLI ? "enabled" : "disabled"));
+#endif
+    _popts = new option_group_t(1);
+    _pvid = new vid_t(1);
+}
 
 /********
  ******** Caution: The functions below should be invoked inside

@@ -923,6 +923,7 @@ sli_cmd_t::handle(const char* cmd)
 {
     _enabled = !_enabled;    
     _env->db()->set_sli_enabled(_enabled);
+    _env->setSLIEnabled(_enabled);
     TRACE( TRACE_ALWAYS, "SLI=%d\n", _enabled);
     return (SHELL_NEXT_CONTINUE);
 }
