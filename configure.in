@@ -234,8 +234,15 @@ LDFLAGS="-lnsl -ldl -lm -lpthread"
 
 if test "$ARCHOS" = "SPARC_SUN"; then
     LDFLAGS="$LDFLAGS -lsocket -lrt -L/usr/local/lib/sparcv9"
-    CXXFLAGS="-xtarget=ultraT1 -xarch=v9 -features=extensions -xO5 -xs -g0 -mt -lpthread -library=stlport4"
+
+# optimize *a lot* flags
+    CXXFLAGS="-xarch=native -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+
+# regular debugging flags
+#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
+
 fi
+
 
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
