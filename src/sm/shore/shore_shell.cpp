@@ -947,12 +947,12 @@ log_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "LOG Usage:\n\n"                               \
            "*** log <MECHANISM>\n"                                      \
-           "\nLogging mechanisms:\n"                                    \
-           "0: Baseline\n"                                              \
-           "1: DecoupledMemory\n"                                       \
-           "2: Vanilla C-array\n"                                       \
-           "3: DecoupledMemory + Vanilla C-array\n"                     \
-           "4: DecoupledMemory + Vanilla C-array + DecoupledExpose\n\n");
+           "\nLogging options (some combinations may not be possible):\n" \
+           "0x01: Use Decoupled Memory\n"                                \
+           "0x02: Use MCS\n"                                             \
+           "0x04: Use C-array\n"                                         \
+           "0x08: Use FastPath\n"                                        \
+           "0x10: Use Expose\n\n");
 }
 
 const int 
