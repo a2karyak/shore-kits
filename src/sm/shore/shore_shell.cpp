@@ -945,14 +945,20 @@ log_cmd_t::log_cmd_t(ShoreEnv* env, const uint level)
 void 
 log_cmd_t::usage(void)
 {
-    TRACE( TRACE_ALWAYS, "LOG Usage:\n\n"                               \
-           "*** log <MECHANISM>\n"                                      \
-           "\nLogging options (some combinations may not be possible):\n" \
-           "0x01: Use Decoupled Memory\n"                                \
-           "0x02: Use MCS\n"                                             \
-           "0x04: Use C-array\n"                                         \
-           "0x08: Use FastPath\n"                                        \
-           "0x10: Use Expose\n\n");
+    TRACE( TRACE_ALWAYS, "LOG Usage:\n\n"
+           "*** log <feature-list>\n"
+	   "\n"
+           "<feature-list> is a case- and order-insensitive string containing zero or more\n"
+	   "of the following logging features (note dependencies):\n"
+	   "	C: C-Array\n"
+	   "	    F: Fastpath\n"
+	   "	    L: Print LSN groups (not fully implemented yet)\n"
+	   "	D: Decoupled memcpy\n"
+	   "	    M: MCS exposer\n"
+	   "	        E: Exposure groups\n"
+	   "	            X: Print Exposure groups (not fully implemented yet)\n"
+	   "\n"
+	   );
 }
 
 const int 
@@ -965,9 +971,15 @@ log_cmd_t::handle(const char* cmd)
         usage();
     }
     else {
-        _level = atoi(level_tag);
-        _env->db()->set_log_mech(_level);
-        TRACE( TRACE_ALWAYS, "Logging=%d\n", _level);
+	if(strcasecmp("get", level_tag)) {
+	    rc_t err = _env->db()->set_log_features(level_tag);
+	    if(err.is_error()) {
+		TRACE( TRACE_ALWAYS, "*** Invalid feature set: %s ***", level_tag);
+	    }
+	}
+	char const* level = _env->db()->get_log_features();
+        TRACE( TRACE_ALWAYS, "Enabled log features: %s\n", level);
+	delete[] level;
     }
 
     return (SHELL_NEXT_CONTINUE);
