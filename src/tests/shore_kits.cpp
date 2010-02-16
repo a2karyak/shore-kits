@@ -40,6 +40,10 @@
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "workload/tpcb/shore_tpcb_client.h"
 
+#ifdef CFG_SIMICS
+#include "util/simics-magic-instruction.h"
+#endif
+
 #ifdef CFG_DORA
 #include "dora.h"
 #include "dora/tpcc/dora_tpcc.h"
@@ -83,6 +87,10 @@ using namespace tpcb;
 
 #ifdef CFG_DLOG
 #warning Configuration: DLOG enabled
+#endif
+
+#ifdef CFG_SIMICS
+#warning Configuration: With SIMICS MAGIC INSTRUCTIONS
 #endif
 
 
@@ -654,6 +662,10 @@ typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 int main(int argc, char* argv[]) 
 {
     thread_init();
+
+#ifdef CFG_SIMICS
+    MAGIC_BREAKPOINT;
+#endif
 
     TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS 
                //               | TRACE_NETWORK 
