@@ -112,7 +112,11 @@ int ShoreTPCBEnv::start()
 
     WorkerPtr aworker;
     for (int i=0; i<_worker_cnt; i++) {
+#ifdef CFG_SLI
         aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
+#else
+        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,0);
+#endif
         _workers.push_back(aworker);
         aworker->init(lc);
         aworker->start();
