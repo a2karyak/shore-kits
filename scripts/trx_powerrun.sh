@@ -4,13 +4,13 @@
 #@brief:  For a specific xct it executes powerruns for a set of different clients
 #@author: Ippokratis Pandis
 
-# args: <low> <high> <xctid> <time> <iter> <sleeptime>
+# args: <low> <high> <xctid> <time> <iter> <sleeptime> <clientset> <logtype>
 usage()
 {
-    echo "Usage: $0 <low> <high> <xctid> <time> <iter> <sleeptime> <clientset>" >&2
+    echo "Usage: $0 <low> <high> <xctid> <time> <iter> <sleeptime> <clientset> <logtype>" >&2
 }
 
-if [ $# -lt 7 ]; then
+if [ $# -lt 8 ]; then
     echo "Invalid args: $0 $*" >&2
     usage
     exit 1
@@ -23,6 +23,7 @@ TIME=$1; shift
 ITER=$1; shift
 SLEEPTIME=$1; shift
 CLIENTSET=$1; shift
+LOGTYPE=$1; shift
 
 if [ $HIGH -lt $LOW ]; then
     echo "Invalid Input: $LOW $HIGH" >&2    
@@ -58,8 +59,13 @@ run_one ()
 {
     # <clients>
     CLIENTS=$1
-    
-    ### kit
+
+    ### KIT
+
+    ### Set logging mechanism
+    command log $LOGTYPE
+
+    ### run a measurement
     command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
 
     # make sure to get all the measurements before continuing!
@@ -78,7 +84,7 @@ fi
 
 ## Medium
 if [ "$CLIENTSET" = "medium" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 63)
 fi
 
 ## Large
