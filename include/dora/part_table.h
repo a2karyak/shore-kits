@@ -29,7 +29,6 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
-
 /******************************************************************** 
  *
  * @class: part_table_t
@@ -188,7 +187,7 @@ public:
             _ppvec[i]->stlsize(stl_sz);
         }
 
-        if (ws_gathered._processed > 10) {
+        if (ws_gathered._processed > MINIMUM_PROCESSED) {
             TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
 
             // print worker stats

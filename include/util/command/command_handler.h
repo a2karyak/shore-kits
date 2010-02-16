@@ -84,7 +84,7 @@ public:
     virtual void close() { /* default do nothing */ };
 
     // by default should return SHELL_NEXT_CONTINUE
-    virtual const int handle(const char* cmd)=0; 
+    virtual int handle(const char* cmd)=0; 
 
     // should push_back() a set of aliases
     // the first one is the basic command name    
@@ -96,7 +96,7 @@ public:
     virtual void usage() { /* default do nothing */ };
 
     // should return short description
-    virtual const string desc()=0;
+    virtual string desc()=0;
 
 }; // EOF: command_handler_t
 

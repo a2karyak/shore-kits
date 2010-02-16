@@ -257,10 +257,10 @@ LogicalLock::acquire(ActionLockReq& alr)
         return (false);
     }
 
-    // Until now we have allowing SH requests to bypass any waiting EX. 
-    // That has been working fine in mixed workloads, like TM1-Mix, where
-    // the SH requests where many more than the EX ones. 
-    // However, in mixed workloads like TPCC-Mix where the SH and EX requests
+    // Until now we have been allowing SH requests to bypass any waiting EX. 
+    // That has been working fine in workloads, like TM1-Mix, where
+    // the SH requests where much more than the EX ones. 
+    // However, in mixed workloads, like TPCC-Mix, where the SH and EX requests
     // are 50%-50% this leads to starvation and deadlocks!
     // The deadlocks are caused because the FIFO execution principle BREAKS! 
 #warning IP: Checking list of waiters first    

@@ -104,7 +104,7 @@ ShoreEnv::ShoreEnv(string confname)
  *
  *********************************************************************/
 
-const int ShoreEnv::init() 
+int ShoreEnv::init() 
 {
     CRITICAL_SECTION(cs,_init_mutex);
     if (_initialized) {
@@ -167,7 +167,7 @@ const int ShoreEnv::init()
  *
  *********************************************************************/
 
-const int ShoreEnv::close() 
+int ShoreEnv::close() 
 {
     CRITICAL_SECTION(cs, _init_mutex);
     if (!_initialized) {
@@ -191,7 +191,7 @@ const int ShoreEnv::close()
  *
  ********************************************************************/
 
-const int ShoreEnv::statistics() 
+int ShoreEnv::statistics() 
 {
     CRITICAL_SECTION(cs, _init_mutex);
     if (!_initialized) {
@@ -478,13 +478,13 @@ int ShoreEnv::start_sm()
 
 const int ShoreEnv::checkpoint() 
 {    
-    db_log_smt_t* flusher = new db_log_smt_t(c_str("flusher"), this);
-    assert (flusher);
-    flusher->fork();
-    flusher->join(); 
-    int rv = flusher->rv();
-    delete (flusher);
-    flusher = NULL;
+    db_log_smt_t* checkpointer = new db_log_smt_t(c_str("checkpointer"), this);
+    assert (checkpointer);
+    checkpointer->fork();
+    checkpointer->join(); 
+    int rv = checkpointer->rv();
+    delete (checkpointer);
+    checkpointer = NULL;
     return (rv);
 }
 
@@ -639,7 +639,7 @@ void ShoreEnv::readconfig(string conf_file)
  *
  ******************************************************************/
 
-const int ShoreEnv::restart()
+int ShoreEnv::restart()
 {
     TRACE( TRACE_DEBUG, "Restarting (%s)...\n", _sysname);
     stop();
@@ -658,7 +658,7 @@ const int ShoreEnv::restart()
  *
  ******************************************************************/
 
-const int ShoreEnv::conf() 
+int ShoreEnv::conf() 
 {
     TRACE( TRACE_DEBUG, "ShoreEnv configuration\n");
     
@@ -735,8 +735,8 @@ const int ShoreEnv::enable_fake_disk_latency(const int adelay)
  *  @brief Dumps the data
  */
 
-const int ShoreEnv::dump() {
-
+int ShoreEnv::dump() 
+{
     TRACE( TRACE_DEBUG, "~~~~~~~~~~~~~~~~~~~~~\n");    
     TRACE( TRACE_DEBUG, "Dumping Shore Data\n");
 

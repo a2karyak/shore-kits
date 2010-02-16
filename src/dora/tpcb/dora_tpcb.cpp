@@ -35,6 +35,31 @@ const int hi_KEY_EST  = 100;
 
 
 
+
+/****************************************************************** 
+ *
+ * @fn:    construction/destruction
+ *
+ * @brief: If configured, it creates and starts the flusher 
+ *
+ ******************************************************************/
+    
+DoraTPCBEnv::DoraTPCBEnv(string confname)
+    : ShoreTPCBEnv(confname)
+{ 
+#ifdef CFG_FLUSHER
+    _flusher = new dora_flusher_t(this, c_str("DFlusher")); 
+    assert(_flusher.get());
+    _flusher->fork();
+#endif
+}
+
+DoraTPCBEnv::~DoraTPCBEnv() 
+{ 
+    stop();
+}
+
+
 /****************************************************************** 
  *
  * @fn:    start()
@@ -49,14 +74,16 @@ const int hi_KEY_EST  = 100;
  *
  ******************************************************************/
 
-const int 
-DoraTPCBEnv::start()
+int DoraTPCBEnv::start()
 {
     // 1. Creates partitioned tables
     // 2. Adds them to the vector
     // 3. Resets each table
 
     conf(); // re-configure
+
+    // Call the pre-start procedure of the dora environment
+    DoraEnv::_start();
 
     processorid_t icpu(_starting_cpu);
 
@@ -99,7 +126,7 @@ DoraTPCBEnv::start()
  *
  ******************************************************************/
 
-const int DoraTPCBEnv::stop()
+int DoraTPCBEnv::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
@@ -121,9 +148,9 @@ const int DoraTPCBEnv::stop()
  *
  ******************************************************************/
 
-const int DoraTPCBEnv::resume()
+int DoraTPCBEnv::resume()
 {
-    assert (0); // TODO (ip)
+    assert (0); // IP: Not implement yet
     set_dbc(DBC_ACTIVE);
     return (0);
 }
@@ -138,8 +165,7 @@ const int DoraTPCBEnv::resume()
  *
  ******************************************************************/
 
-const int 
-DoraTPCBEnv::pause()
+int DoraTPCBEnv::pause()
 {
     assert (0); // TODO (ip)
     set_dbc(DBC_PAUSED);
@@ -156,8 +182,7 @@ DoraTPCBEnv::pause()
  *
  ******************************************************************/
 
-const int 
-DoraTPCBEnv::conf()
+int DoraTPCBEnv::conf()
 {
     ShoreTPCBEnv::conf();
 
@@ -199,7 +224,7 @@ DoraTPCBEnv::conf()
  *
  ******************************************************************/
 
-const int DoraTPCBEnv::newrun()
+int DoraTPCBEnv::newrun()
 {
     TRACE( TRACE_DEBUG, "Preparing for new run...\n");
     for (int i=0; i<_irptp_vec.size(); i++) {
@@ -218,7 +243,7 @@ const int DoraTPCBEnv::newrun()
  *
  ******************************************************************/
 
-const int DoraTPCBEnv::set(envVarMap* vars)
+int DoraTPCBEnv::set(envVarMap* vars)
 {
     TRACE( TRACE_DEBUG, "Reading set...\n");
     for (envVarConstIt cit = vars->begin(); cit != vars->end(); ++cit)
@@ -238,7 +263,7 @@ const int DoraTPCBEnv::set(envVarMap* vars)
  *
  ******************************************************************/
 
-const int DoraTPCBEnv::dump()
+int DoraTPCBEnv::dump()
 {
     int sz=_irptp_vec.size();
     TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
@@ -257,7 +282,7 @@ const int DoraTPCBEnv::dump()
  *
  ******************************************************************/
 
-const int DoraTPCBEnv::info()
+int DoraTPCBEnv::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
     int sz=_irptp_vec.size();
@@ -278,7 +303,7 @@ const int DoraTPCBEnv::info()
  *
  ********************************************************************/
 
-const int DoraTPCBEnv::statistics() 
+int DoraTPCBEnv::statistics() 
 {
     // DORA STATS
     TRACE( TRACE_STATISTICS, "----- DORA -----\n");

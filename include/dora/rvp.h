@@ -80,10 +80,6 @@ protected:
         _result = presult;
 
         _actions.reserve(total_actions);
-
-#ifdef CFG_DORA_FLUSHER
-        _dummy_stats = 0;
-#endif
     }
 
 public:
@@ -96,21 +92,10 @@ public:
     { 
         _set(atid, axct, axctid, presult,
              intra_trx_cnt, total_actions);
-
-#ifdef CFG_DORA_FLUSHER
-        _dummy_stats = 0;
-#endif
     }
 
     virtual ~rvp_t() { 
         _xct = NULL; 
-
-#ifdef CFG_DORA_FLUSHER
-        if (_dummy_stats) { 
-            delete (_dummy_stats);
-            _dummy_stats = 0;
-        }
-#endif
     }    
 
     // copying allowed
@@ -130,15 +115,9 @@ public:
     inline tid_t  tid() const { return (_tid); }
 
     // Actions-related
-    const int copy_actions(const baseActionsList& actionList);
-    const int append_actions(const baseActionsList& actionList);
-    const int add_action(base_action_t* paction);
-
-
-#ifdef CFG_DORA_FLUSHER
-    // needed for begin-/end-commit
-    sm_stats_info_t*     _dummy_stats;
-#endif
+    int copy_actions(const baseActionsList& actionList);
+    int append_actions(const baseActionsList& actionList);
+    int add_action(base_action_t* paction);
 
     inline bool post(bool is_error=false) { 
         if (is_error) abort();        
@@ -146,16 +125,14 @@ public:
     }
 
     // decides to abort this trx
-    inline const ushort_t abort() { 
-        ushort_t new_value = AD_ABORT;
-        ushort_t old_value = atomic_swap_ushort(&_decision, new_value);
+    inline ushort_t abort() { 
+        _decision = AD_ABORT;
         return (*&_decision);
     }
 
-    inline const bool isAborted() {
+    inline bool isAborted() {
         return (*&_decision == AD_ABORT);
     }
-
 
     // INTERFACE 
 
@@ -165,7 +142,7 @@ public:
     // notifies for any committed actions 
     // only the final_rvps may notify
     // for midway rvps it should be a noop
-    virtual const int notify() { return(0); } 
+    virtual int notify() { return(0); } 
 
     // notifies the client
     void notify_client();
@@ -192,13 +169,6 @@ public:
         // clear contents
         _actions.erase(_actions.begin(),_actions.end());
         _xct = NULL;
-
-#ifdef CFG_DORA_FLUSHER
-        if (_dummy_stats) { 
-            delete (_dummy_stats);
-            _dummy_stats = 0;
-        }
-#endif
     }
 
     
@@ -225,7 +195,7 @@ public:
     terminal_rvp_t(const tid_t& atid, xct_t* axct, const int axctid, 
                    trx_result_tuple_t &presult, 
                    const int intra_trx_cnt, const int total_actions) 
-        : rvp_t(atid, axct, axctid, presult, intra_trx_cnt, total_actions) 
+        : rvp_t(atid, axct, axctid, presult, intra_trx_cnt, total_actions)
     { }
 
     terminal_rvp_t(const terminal_rvp_t& rhs)
@@ -240,12 +210,18 @@ public:
 
     virtual ~terminal_rvp_t() { }
 
-    // interface
+
+#ifdef CFG_FLUSHER
+    lsn_t _my_last_lsn;
+    inline lsn_t my_last_lsn() { return (_my_last_lsn); }
+#endif
+
+    // INTERFACE
     virtual w_rc_t run()=0;   // default action on rvp - commit trx           
-    const int notify();       // notifies for committed actions    
+    int notify();       // notifies for committed actions    
 
     virtual void upd_committed_stats()=0; // update the committed trx stats
-    virtual void upd_aborted_stats()=0;   // update the committed trx stats
+    virtual void upd_aborted_stats()=0;   // update the aborted trx stats
 
 protected:
 

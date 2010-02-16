@@ -96,30 +96,22 @@ class DoraTPCCEnv : public ShoreTPCCEnv, public DoraEnv
 {
 public:
     
-    DoraTPCCEnv(string confname)
-        : ShoreTPCCEnv(confname)
-    { }
-
-    virtual ~DoraTPCCEnv() 
-    { 
-        stop();
-    }
-
-
+    DoraTPCCEnv(string confname);
+    virtual ~DoraTPCCEnv();
 
     //// Control Database
 
     // {Start/Stop/Resume/Pause} the system 
-    const int start();
-    const int stop();
-    const int resume();
-    const int pause();
-    const int newrun();
-    const int set(envVarMap* vars);
-    const int dump();
-    const int info();    
-    const int statistics();    
-    const int conf();
+    int start();
+    int stop();
+    int resume();
+    int pause();
+    int newrun();
+    int set(envVarMap* vars);
+    int dump();
+    int info();    
+    int statistics();    
+    int conf();
 
 
     //// DORA TPCC TABLE PARTITIONS

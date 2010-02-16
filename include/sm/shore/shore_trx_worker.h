@@ -214,12 +214,12 @@ private:
     guard<Pool>          _actionpool;
 
     // states
-    const int _work_ACTIVE_impl(); 
+    int _work_ACTIVE_impl(); 
 
-    const int _pre_STOP_impl();
+    int _pre_STOP_impl();
 
     // serves one action
-    const int _serve_action(Request* prequest);
+    int _serve_action(Request* prequest);
 
 public:
 
@@ -280,8 +280,7 @@ trx_worker_t<SubShoreEnv>::enqueue(Request* arequest, const bool bWake)
  ******************************************************************/
 
 template <class SubShoreEnv>
-const int 
-trx_worker_t<SubShoreEnv>::_work_ACTIVE_impl()
+int trx_worker_t<SubShoreEnv>::_work_ACTIVE_impl()
 {    
     // bind to the specified processor
     _prs_id = PBIND_NONE;
@@ -331,7 +330,7 @@ trx_worker_t<SubShoreEnv>::_work_ACTIVE_impl()
  ******************************************************************/
 
 template <class SubShoreEnv>
-const int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
+int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
 {
     // 1. attach to xct
     assert (prequest);
@@ -380,8 +379,7 @@ const int trx_worker_t<SubShoreEnv>::_serve_action(Request* prequest)
  ******************************************************************/
 
 template <class SubShoreEnv>
-const int 
-trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
+int trx_worker_t<SubShoreEnv>::_pre_STOP_impl()
 {
     Request* pr;
     int reqs_read  = 0;

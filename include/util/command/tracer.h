@@ -46,11 +46,11 @@ public:
     void init();
     void close() { }
 
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
 
     void setaliases();
     void usage();
-    const string desc() { return (string("Manipulates tracing level")); }               
+    string desc() { return (string("Manipulates tracing level")); }               
 
 private:
     

@@ -27,7 +27,7 @@
 #include "dora/range_partition.h"
 #include "dora/range_part_table.h"
 
-#ifdef CFG_DORA_FLUSHER
+#ifdef CFG_FLUSHER
 #include "dora/flusher.h"
 #endif
 

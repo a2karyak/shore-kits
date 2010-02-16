@@ -307,7 +307,7 @@ void base_worker_t::work()
  * 
  ******************************************************************/
 
-const int base_worker_t::_work_PAUSED_impl()
+int base_worker_t::_work_PAUSED_impl()
 {
     //    TRACE( TRACE_DEBUG, "Pausing...\n");
 
@@ -333,7 +333,7 @@ const int base_worker_t::_work_PAUSED_impl()
  * 
  ******************************************************************/
 
-const int base_worker_t::_work_STOPPED_impl()
+int base_worker_t::_work_STOPPED_impl()
 {
     //    TRACE( TRACE_DEBUG, "Stopping...\n");
 
@@ -408,7 +408,7 @@ const bool base_worker_t::abort_one_trx(xct_t* axct)
 
 void base_worker_t::stats() 
 { 
-    if (_stats._processed < 10) {
+    if (_stats._processed < MINIMUM_PROCESSED) {
         // don't print partitions which have served too few actions
         TRACE( TRACE_DEBUG, "(%s) few data\n", thread_name().data());
     }
@@ -426,7 +426,7 @@ void base_worker_t::stats()
 worker_stats_t base_worker_t::get_stats() 
 { 
 #if 0
-    if (_stats._processed < 10) {
+    if (_stats._processed < MINIMUM_PROCESSED) {
         // don't print partitions which have served too few actions
         TRACE( TRACE_STATISTICS, "(%s) few data\n", thread_name().data());
     }

@@ -243,7 +243,7 @@ KITS_FEATURES=""
 
 # There are six supported options:
 # (1) --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
-# (2) --enable-doraflusher : defines CFG_DORA_FLUSHER
+# (2) --enable-flusher     : defines CFG_FLUSHER
 # (3) --enable-sli         : defines CFG_SLI
 # (4) --enable-elr         : defines CFG_ELR
 # (5) --enable-dlog        : defines CFG_DLOG (distributed log)
@@ -296,28 +296,28 @@ fi
 # --- EOF ELR ---   
 
 
-# --- DORAFLUSHER ---
-AC_MSG_CHECKING(whether to enable DORA-FLUSHER option)
-AC_ARG_ENABLE(dflusher, 
-[  --enable-dflusher       Enable DORA-FLUSHER option],
+# --- FLUSHER ---
+AC_MSG_CHECKING(whether to enable FLUSHER/GROUPCOMMIT option)
+AC_ARG_ENABLE(flusher, 
+[  --enable-flusher        Enable FLUSHER/GROUPCOMMIT option],
 [case "${enableval}" in
-  yes) dflusher=true ;;
-  no)  dflusher=false ;;
-  *) dflusher=true ;;
-esac],[dflusher=false])
-AM_CONDITIONAL(USE_DORAFLUSHER, test x$dflusher = xtrue)
+  yes) flusher=true ;;
+  no)  flusher=false ;;
+  *) flusher=true ;;
+esac],[flusher=false])
+AM_CONDITIONAL(USE_FLUSHER, test x$flusher = xtrue)
 
-if test "$dflusher" = true
+if test "$flusher" = true
 then 
      AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES dflusher"
-     AC_MSG_WARN([DORA-FLUSHER enabled. Should check if Shore-mt has pre-/meta-commit & abort])
-     AC_DEFINE(CFG_DORA_FLUSHER)
+     KITS_FEATURES="$KITS_FEATURES flusher"
+     AC_MSG_WARN([FLUSHER enabled.])
+     AC_DEFINE(CFG_FLUSHER)
 
-     # Special case: warn about DORA-FLUSHER without ELR
+     # Special case: warn about FLUSHER without ELR
      if test "$elr" = false
      then
-        AC_MSG_WARN(DORA-FLUSHER without ERL)
+        AC_MSG_WARN(FLUSHER without ERL)
      fi
 else
      AC_MSG_RESULT(no)
@@ -364,6 +364,9 @@ AM_CONDITIONAL(ADD_OPT_DLOG, test x$dlog = xtrue)
 
 if test "$dlog" = true
 then 
+     # Disabling DLOG option
+     AC_MSG_ERROR(DLOG option not allowed)
+
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES dlog"
      AC_MSG_WARN([DLOG enabled. Should check if Shore-mt is DLOG-compatible])

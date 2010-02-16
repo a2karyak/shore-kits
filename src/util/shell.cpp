@@ -80,8 +80,7 @@ shell_t::shell_t(const char* prompt,
  *
  *********************************************************************/
 
-int 
-shell_t::start() 
+int shell_t::start() 
 {
     // 1. Install SIGINT handler
     instance() = this;
@@ -157,8 +156,7 @@ shell_t::start()
  *
  *********************************************************************/
 
-int 
-shell_t::process_readline()
+int shell_t::process_readline()
 {
     assert (!_net_mode);
 
@@ -184,8 +182,7 @@ shell_t::process_readline()
  *
  *********************************************************************/
 
-int 
-shell_t::process_network()
+int shell_t::process_network()
 {
     assert (_net_mode);
     assert (_listen_fd>=0);
@@ -250,8 +247,7 @@ shell_t::process_network()
  *
  *********************************************************************/
 
-int 
-shell_t::process_one(char* acmd) 
+int shell_t::process_one(char* acmd) 
 {
     // 1. Make sure that there is a command to process
     assert (acmd);
@@ -300,8 +296,7 @@ shell_t::process_one(char* acmd)
  *
  *********************************************************************/
 
-const int 
-shell_t::add_cmd(command_handler_t* acmd) 
+int shell_t::add_cmd(command_handler_t* acmd) 
 {
     assert (acmd);
     assert (!acmd->name().empty());
@@ -356,8 +351,7 @@ shell_t::add_cmd(command_handler_t* acmd)
  *
  *********************************************************************/
        
-const int 
-shell_t::init_cmds()
+int shell_t::init_cmds()
 {
     CRITICAL_SECTION(sh_cs,_lock);
     for (cmdMapIt it = _cmds.begin(); it != _cmds.end(); ++it) {
@@ -377,8 +371,7 @@ shell_t::init_cmds()
  *
  *********************************************************************/
 
-const int 
-shell_t::close_cmds()
+int shell_t::close_cmds()
 {
     CRITICAL_SECTION(sh_cs,_lock);
     for (cmdMapIt it = _cmds.begin(); it != _cmds.end(); ++it) {
@@ -398,8 +391,7 @@ shell_t::close_cmds()
  *
  *********************************************************************/
 
-const int 
-shell_t::_register_commands() 
+int shell_t::_register_commands() 
 {
     // add own
 
@@ -463,8 +455,7 @@ shell_t::_register_commands()
  *
  *********************************************************************/
 
-void 
-quit_cmd_t::setaliases() 
+void quit_cmd_t::setaliases() 
 {
     _name = string("quit");
     _aliases.push_back("quit");
@@ -494,8 +485,7 @@ disconnect_cmd_t::setaliases()
  *
  *********************************************************************/
 
-void 
-help_cmd_t::setaliases() 
+void help_cmd_t::setaliases() 
 {
     _name = string("help");
     _aliases.push_back("help");
@@ -503,8 +493,7 @@ help_cmd_t::setaliases()
 }
 
 
-void 
-help_cmd_t::list_cmds()
+void help_cmd_t::list_cmds()
 {
     TRACE( TRACE_ALWAYS, 
            "Available commands (help <cmd>): \n\n");
@@ -514,8 +503,8 @@ help_cmd_t::list_cmds()
     }
 }
 
-const int 
-help_cmd_t::handle(const char* cmd) 
+
+int help_cmd_t::handle(const char* cmd) 
 {
     char help_tag[SERVER_COMMAND_BUFFER_SIZE];
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];    
@@ -541,8 +530,7 @@ help_cmd_t::handle(const char* cmd)
  *
  *********************************************************************/
 
-void 
-set_cmd_t::setaliases() 
+void set_cmd_t::setaliases() 
 {    
     _name = string("set");
     _aliases.push_back("set");
@@ -550,8 +538,7 @@ set_cmd_t::setaliases()
 }
 
 
-const int 
-set_cmd_t::handle(const char* cmd) 
+int set_cmd_t::handle(const char* cmd) 
 {
     assert (ev);
     ev->parseSetReq(cmd);
@@ -559,8 +546,7 @@ set_cmd_t::handle(const char* cmd)
 }
 
 
-void 
-set_cmd_t::usage(void)
+void set_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "SET Usage:\n\n"                               \
            "*** set [<PARAM_NAME=PARAM_VALUE>*]\n"                      \
@@ -576,8 +562,7 @@ set_cmd_t::usage(void)
  *
  *********************************************************************/
 
-void 
-env_cmd_t::setaliases() 
+void env_cmd_t::setaliases() 
 {    
     _name = string("env");
     _aliases.push_back("env");
@@ -585,8 +570,7 @@ env_cmd_t::setaliases()
 }
 
 
-const int 
-env_cmd_t::handle(const char* cmd)
+int env_cmd_t::handle(const char* cmd)
 {    
     assert (ev);
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
@@ -601,8 +585,7 @@ env_cmd_t::handle(const char* cmd)
 }
 
 
-void 
-env_cmd_t::usage(void)
+void env_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, "ENV Usage:\n\n"                               \
            "*** env [PARAM]\n"                      \
@@ -618,8 +601,7 @@ env_cmd_t::usage(void)
  *
  *********************************************************************/
 
-void 
-conf_cmd_t::setaliases() 
+void conf_cmd_t::setaliases() 
 {    
     _name = string("conf");
     _aliases.push_back("conf");
@@ -627,16 +609,14 @@ conf_cmd_t::setaliases()
 }
 
 
-const int 
-conf_cmd_t::handle(const char* cmd)
+int conf_cmd_t::handle(const char* cmd)
 {    
     ev->refreshVars();
     return (SHELL_NEXT_CONTINUE);
 }
 
 
-void 
-conf_cmd_t::usage(void)
+void conf_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, 
            "CONF - Tries to reread all the set env vars from the config file\n");
@@ -649,23 +629,20 @@ conf_cmd_t::usage(void)
  *
  *********************************************************************/
 
-void 
-cpustat_cmd_t::setaliases() 
+void cpustat_cmd_t::setaliases() 
 {    
     _name = string("cpu");
     _aliases.push_back("cpu");
     _aliases.push_back("cpustats");
 }
 
-const int 
-cpustat_cmd_t::handle(const char* cmd)
+int cpustat_cmd_t::handle(const char* cmd)
 {    
     myinfo.print();
     return (SHELL_NEXT_CONTINUE);
 }
 
-void 
-cpustat_cmd_t::usage(void)
+void cpustat_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, 
            "CPUSTAT - Prints cpu usage for the process\n");
@@ -679,16 +656,14 @@ cpustat_cmd_t::usage(void)
  *
  *********************************************************************/
 
-void 
-zipf_cmd_t::setaliases() 
+void zipf_cmd_t::setaliases() 
 { 
     _name = string("zipf"); 
     _aliases.push_back("zipf"); 
     _aliases.push_back("z"); 
 }
 
-const int 
-zipf_cmd_t::handle(const char* cmd)
+int zipf_cmd_t::handle(const char* cmd)
 {
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char s_tag[SERVER_COMMAND_BUFFER_SIZE];
@@ -705,16 +680,15 @@ zipf_cmd_t::handle(const char* cmd)
     return (SHELL_NEXT_CONTINUE);
 }
 
-void
-zipf_cmd_t::usage()
+
+void zipf_cmd_t::usage()
 {
     TRACE( TRACE_ALWAYS,
            "zipf [<s>] - Without arguments, disables zipf input generation.\n" \
            "           - With arguments, enabled zipf and sets \"s\"\n");
 }
 
-const string
-zipf_cmd_t::desc()
+string zipf_cmd_t::desc()
 {
     return string("Enables/Disables zipfian input generation");
 }

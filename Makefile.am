@@ -161,7 +161,7 @@ DO_BASE = \
    $(SD)/rvp.cpp \
    $(SD)/dora_env.cpp
 
-if USE_DORAFLUSHER
+if USE_FLUSHER
 DO_BASE += $(SD)/flusher.cpp
 endif
 

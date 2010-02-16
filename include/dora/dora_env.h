@@ -24,7 +24,7 @@
 #include "dora/action.h"
 #include "dora/partition.h"
 
-#ifdef CFG_DORA_FLUSHER
+#ifdef CFG_FLUSHER
 #include "dora/flusher.h"
 #endif
 
@@ -69,16 +69,16 @@ protected:
 
     int _dora_sf;
 
-#ifdef CFG_DORA_FLUSHER
+#ifdef CFG_FLUSHER
     // The dora-flusher thread
     guard<dora_flusher_t> _flusher;
 #endif
 
 public:
     
-    DoraEnv() { }
+    DoraEnv();
 
-    virtual ~DoraEnv() { }
+    virtual ~DoraEnv();
 
     //// Client API
     
@@ -94,12 +94,10 @@ public:
     }
 
 
-
-    //// Flusher-related
-#ifdef CFG_DORA_FLUSHER
-    inline void enqueue_flushing(rvp_t* arvp) {
+#ifdef CFG_FLUSHER
+    inline void enqueue_toflush(terminal_rvp_t* arvp) {
         assert (_flusher.get());
-        _flusher->enqueue_flushing(arvp);
+        _flusher->enqueue_toflush(arvp);
     }
 #endif
 
@@ -110,13 +108,17 @@ public:
         return (_irptp_vec[table_pos]->get_part(part_pos));
     }
 
+    const int statistics();
+
 protected:
 
+    int _start();
+
     // algorithm for deciding the distribution of tables 
-    const processorid_t _next_cpu(const processorid_t& aprd,
-                                  const irpTableImpl* atable,
-                                  const int step=DF_CPU_STEP_TABLES);
-        
+    processorid_t _next_cpu(const processorid_t& aprd,
+                            const irpTableImpl* atable,
+                            const int step=DF_CPU_STEP_TABLES);
+    
 }; // EOF: DoraEnv
 
 

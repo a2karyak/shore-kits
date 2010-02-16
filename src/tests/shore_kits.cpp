@@ -65,8 +65,8 @@ using namespace tpcb;
 #warning Configuration: DORA enabled
 #endif
 
-#ifdef CFG_DORA_FLUSHER
-#warning Configuration: DORA-FLUSHER enabled
+#ifdef CFG_FLUSHER
+#warning Configuration: FLUSHER/GROUPCOMMIT enabled
 #endif
 
 #ifdef CFG_SLI
@@ -175,10 +175,10 @@ public:
         ~restart_cmd_t() { }
         void setaliases() { 
             _name = string("restart"); _aliases.push_back("restart"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->stop(); _pdb->start(); 
             return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Restart")); }               
+        string desc() { return (string("Restart")); }               
     };
     guard<restart_cmd_t> _restarter;
 
@@ -189,9 +189,9 @@ public:
         ~info_cmd_t() { }
         void setaliases() { 
             _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Prints info about the state of db instance")); }
+        string desc() { return (string("Prints info about the state of db instance")); }
     };
     guard<info_cmd_t> _informer;
 
@@ -202,9 +202,9 @@ public:
         ~stats_cmd_t() { }
         void setaliases() { 
             _name = string("stats"); _aliases.push_back("stats"); _aliases.push_back("st"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->statistics(); return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Prints gathered statistics")); }
+        string desc() { return (string("Prints gathered statistics")); }
     };
     guard<stats_cmd_t> _stater;
 
@@ -215,9 +215,9 @@ public:
         ~dump_cmd_t() { }
         void setaliases() { 
             _name = string("dump"); _aliases.push_back("dump"); _aliases.push_back("d"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             assert (_pdb); _pdb->dump(); return (SHELL_NEXT_CONTINUE); }
-        const string desc() { return (string("Dumps db instance data")); }
+        string desc() { return (string("Dumps db instance data")); }
     };
     guard<dump_cmd_t> _dumper;
     
@@ -230,11 +230,11 @@ public:
         measure_cmd_t(kit_t* akit) : _kit(akit) { }
         void setaliases() { _name = string("measure"); 
             _aliases.push_back("measure"); _aliases.push_back("m"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             _kit->pre_process_cmd();
             return (_kit->process_cmd_MEASURE(cmd,cmd)); }
         void usage() { _kit->usage_cmd_MEASURE(); }
-        const string desc() { return string("Duration-based Measument (powerrun)"); }
+        string desc() { return string("Duration-based Measument (powerrun)"); }
     };
     guard<measure_cmd_t> _measurer;
 
@@ -242,11 +242,11 @@ public:
         kit_t* _kit;
         test_cmd_t(kit_t* akit) : _kit(akit) { }
         void setaliases() { _name = string("test"); _aliases.push_back("test"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             _kit->pre_process_cmd();
             return (_kit->process_cmd_TEST(cmd,cmd)); }
         void usage() { _kit->usage_cmd_TEST(); }
-        const string desc() { return string("NumOfXcts-based Measument (powerrun)"); }
+        string desc() { return string("NumOfXcts-based Measument (powerrun)"); }
     };
     guard<test_cmd_t> _tester;
 
@@ -254,17 +254,17 @@ public:
         kit_t* _kit;
         trxs_cmd_t(kit_t* akit) : _kit(akit) { }
         void setaliases() { _name = string("trxs"); _aliases.push_back("trxs"); }
-        const int handle(const char* cmd) { 
+        int handle(const char* cmd) { 
             _kit->pre_process_cmd();
             return (_kit->process_cmd_TRXS(cmd,cmd)); }
         void usage() { TRACE( TRACE_ALWAYS, "usage: trxs\n"); }
-        const string desc() { return string("Lists the avaiable transactions in the benchmark"); }
+        string desc() { return string("Lists the avaiable transactions in the benchmark"); }
     };
     guard<trxs_cmd_t> _trxser;
 
 
 
-    virtual const int register_commands() 
+    virtual int register_commands() 
     {
         shore_shell_t::register_commands();
 
@@ -507,7 +507,8 @@ kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
                                miochs, _g_cpumon->get_avg_usage());
 
         const load_values_t load = _cpustater->myinfo.getload();
-        TRACE( TRACE_ALWAYS, "AbsLoad = (%.2f)\n", load.run_tm/delay);
+        TRACE( TRACE_ALWAYS, "\nCpuLoad = (%.2f)\nAbsLoad = (%.2f)\n", 
+               (load.run_tm+load.wait_tm)/load.run_tm, load.run_tm/delay);
         _cpustater->myinfo.print();
         
         // flush the log before the next iteration
@@ -656,7 +657,7 @@ int main(int argc, char* argv[])
 
     TRACE_SET( TRACE_ALWAYS | TRACE_STATISTICS 
                //               | TRACE_NETWORK 
-               //               | TRACE_CPU_BINDING
+               //| TRACE_CPU_BINDING
                //              | TRACE_QUERY_RESULTS
                //              | TRACE_PACKET_FLOW
                //               | TRACE_RECORD_FLOW

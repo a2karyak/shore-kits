@@ -59,11 +59,7 @@ template<class DataType> class action_t;
 
 
 
-
-
 // ENUMS
-
-
 
 
 /******************************************************************** 
@@ -105,9 +101,6 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
 
 
 
-
-
-
 /******************************************************************** 
  *
  * @enum:  eActionDecision
@@ -116,15 +109,18 @@ static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
  *
  * @note:  Abort - if something goes wrong with own action
  *         Die - if some other action (of the same trx) decides to abort
+ *         
+ *         Propagate - The xct has completed, but the client and the 
+ *                     other workers need to be notified
  *
  ********************************************************************/
 
-enum 
-eActionDecision { AD_UNDECIDED = 0x1, 
-                  AD_ABORT = 0x2, 
-                  AD_DEADLOCK = 0x3, 
-                  AD_COMMIT = 0x4, 
-                  AD_DIE = 0x5 };
+enum eActionDecision { AD_UNDECIDED = 0x1, 
+                       AD_ABORT = 0x2, 
+                       AD_DEADLOCK = 0x3, 
+                       AD_COMMIT = 0x4, 
+                       AD_DIE = 0x5,
+                       AD_PROPAGATE = 0x6};
 
 
 
@@ -140,12 +136,10 @@ eActionDecision { AD_UNDECIDED = 0x1,
  *
  ********************************************************************/
 
-enum 
-ePartitionPolicy { PP_UNDEF = 0x0, 
-                   PP_RANGE, 
-                   PP_HASH, 
-                   PP_PREFIX };
-
+enum ePartitionPolicy { PP_UNDEF = 0x0, 
+                        PP_RANGE, 
+                        PP_HASH, 
+                        PP_PREFIX };
 
 
 

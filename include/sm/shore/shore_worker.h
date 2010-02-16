@@ -62,6 +62,8 @@ ENTER_NAMESPACE(shore);
 
 const int WAITING_WINDOW = 5; // keep track the last 5 seconds
 
+// A worker needs to have processed at least 10 packets to print its own stats
+const uint MINIMUM_PROCESSED = 10; 
 
 
 /******************************************************************** 
@@ -184,10 +186,10 @@ protected:
     int                      _use_sli;
 
     // states
-    virtual const int _work_PAUSED_impl();
-    virtual const int _work_ACTIVE_impl()=0;
-    virtual const int _work_STOPPED_impl();
-    virtual const int _pre_STOP_impl()=0;
+    virtual int _work_PAUSED_impl();
+    virtual int _work_ACTIVE_impl()=0;
+    virtual int _work_STOPPED_impl();
+    virtual int _pre_STOP_impl()=0;
 
 
     void _print_stats_impl() const;
@@ -351,9 +353,9 @@ public:
     }        
 
     // state implementation
-    inline const int work_PAUSED()  { return (_work_PAUSED_impl());  }        
-    inline const int work_ACTIVE()  { return (_work_ACTIVE_impl());  }
-    inline const int work_STOPPED() { return (_work_STOPPED_impl()); }
+    inline int work_PAUSED()  { return (_work_PAUSED_impl());  }        
+    inline int work_ACTIVE()  { return (_work_ACTIVE_impl());  }
+    inline int work_STOPPED() { return (_work_STOPPED_impl()); }
 
     // thread entrance
     void work();

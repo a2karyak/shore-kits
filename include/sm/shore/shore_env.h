@@ -281,21 +281,21 @@ public:
 
     // DB INTERFACE     
 
-    virtual const int conf()=0;    
-    virtual const int set(envVarMap* vars)=0;    
-    virtual const int load_schema()=0;
-    virtual const int init()=0;
-    virtual const int open()=0;
-    virtual const int close()=0;
-    virtual const int start()=0;
-    virtual const int stop()=0;
-    virtual const int restart()=0;
-    virtual const int pause()=0;
-    virtual const int resume()=0;    
-    virtual const int newrun()=0;    
-    virtual const int statistics()=0;    
-    virtual const int dump()=0;    
-    virtual const int info()=0;    
+    virtual int conf()=0;    
+    virtual int set(envVarMap* vars)=0;    
+    virtual int load_schema()=0;
+    virtual int init()=0;
+    virtual int open()=0;
+    virtual int close()=0;
+    virtual int start()=0;
+    virtual int stop()=0;
+    virtual int restart()=0;
+    virtual int pause()=0;
+    virtual int resume()=0;    
+    virtual int newrun()=0;    
+    virtual int statistics()=0;    
+    virtual int dump()=0;    
+    virtual int info()=0;    
     
 }; // EOF: db_iface
 
@@ -410,27 +410,27 @@ public:
 
     // DB INTERFACE
 
-    virtual const int conf();
-    virtual const int set(envVarMap* vars) { return(0); /* do nothing */ };
-    virtual const int init();
-    virtual const int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
-    virtual const int open() { return(0); /* do nothing */ };
-    virtual const int close();
-    virtual const int start() { return(0); /* do nothing */ };
-    virtual const int stop() { return(0); /* do nothing */ };
-    virtual const int restart();
-    virtual const int pause() { return(0); /* do nothing */ };
-    virtual const int resume() { return(0); /* do nothing */ };    
-    virtual const int newrun()=0;
-    virtual const int statistics();
-    virtual const int dump();
-    virtual const int info()=0;    
+    virtual int conf();
+    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int init();
+    virtual int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
+    virtual int open() { return(0); /* do nothing */ };
+    virtual int close();
+    virtual int start() { return(0); /* do nothing */ };
+    virtual int stop() { return(0); /* do nothing */ };
+    virtual int restart();
+    virtual int pause() { return(0); /* do nothing */ };
+    virtual int resume() { return(0); /* do nothing */ };    
+    virtual int newrun()=0;
+    virtual int statistics();
+    virtual int dump();
+    virtual int info()=0;    
 
 
     // Loads the database schema after the config file is read, and before the storage
     // manager is started.
     // Should return >0 on error
-    virtual const int load_schema()=0; 
+    virtual int load_schema()=0; 
 
     virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;
@@ -467,7 +467,7 @@ public:
     inline void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
     inline void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
 
-    // cpu count functions
+    // CPU count functions
     void print_cpus() const;
     inline const int get_max_cpu_count() const { return (_max_cpu_count); }
     inline const int get_active_cpu_count() const { return (_active_cpu_count); }
@@ -476,21 +476,21 @@ public:
     //    void set_max_cpu_count(const int maxcpucnt); 
 
 
-    // fake io delay interface
+    // Fake io delay interface
     const int disable_fake_disk_latency();
     const int enable_fake_disk_latency(const int adelay);
 
-    // does a log flush
+    // Takes a checkpoint (forces dirty pages)
     const int checkpoint();
 
     inline string sysname() { return (_sysname); }
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
-    // for thread-local stats
+    // For thread-local stats
     virtual void env_thread_init()=0;
     virtual void env_thread_fini()=0;   
 
-    // throughput printing
+    // Throughput printing
     virtual void print_throughput(const int iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
@@ -500,12 +500,24 @@ public:
 
     virtual void reset_stats()=0;
 
+
+
+    
 #ifdef CFG_SLI
+public:
     bool isSLIEnabled() const { return (_bUseSLI); }
     void setSLIEnabled(const bool bUseSLI) { _bUseSLI = bUseSLI; }
 protected:
     bool _bUseSLI;    
 #endif    
+
+#ifdef CFG_ELR
+public:
+    bool isELREnabled() const { return (_bUseELR); }
+    void setELREnabled(const bool bUseELR) { _bUseELR = bUseELR; }
+protected:
+    bool _bUseELR;
+#endif
 
 protected:
    

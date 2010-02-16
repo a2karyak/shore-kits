@@ -93,9 +93,9 @@ struct fake_iodelay_cmd_t : public command_handler_t {
     void setaliases() { 
         _name = string("iodelay"); 
         _aliases.push_back("iodelay"); _aliases.push_back("io"); }
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Sets the fake I/O disk delay")); }
+    string desc() { return (string("Sets the fake I/O disk delay")); }
 };
 
 
@@ -118,9 +118,9 @@ struct sli_cmd_t : public command_handler_t {
     void setaliases() { 
         _name = string("sli"); 
         _aliases.push_back("sli"); }
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Enables/disables SLI")); }
+    string desc() { return (string("Enables/disables SLI")); }
 };
 
 #endif // CFG_SLI
@@ -142,9 +142,9 @@ struct log_cmd_t : public command_handler_t {
     log_cmd_t(ShoreEnv* env, const uint level=0);
     ~log_cmd_t() { }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc();
+    string desc();
 };
 
 
@@ -167,9 +167,9 @@ struct elr_cmd_t : public command_handler_t {
     void setaliases() { 
         _name = string("elr"); 
         _aliases.push_back("elr"); }
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Enables/disables ELR")); }
+    string desc() { return (string("Enables/disables ELR")); }
 };
 
 #endif // CFG_ELR
@@ -286,10 +286,7 @@ public:
     virtual void usage_cmd_WARMUP();    
     virtual void usage_cmd_LOAD();    
 
-    virtual const int register_commands()
-    {
-        return (0);
-    }
+    virtual int register_commands() { return (0); }
 
 
     // Instanciate and close the Shore environment

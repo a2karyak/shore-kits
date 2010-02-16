@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 #ifndef __THREAD_H
 #define __THREAD_H
 
@@ -48,6 +46,16 @@
 
 
 DEFINE_EXCEPTION(ThreadException);
+
+
+// Macro that tries to bind a thread to a specific CPU
+#define TRY_TO_BIND(cpu,boundflag)                                      \
+    if (processor_bind(P_LWPID, P_MYID, cpu, NULL)) {                   \
+       TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", cpu);  \
+       boundflag = false; }                                             \
+    else {                                                              \
+    TRACE( TRACE_CPU_BINDING, "Binded to processor (%d)\n", cpu);       \
+    boundflag = true; }
 
 
 #ifndef __GCC

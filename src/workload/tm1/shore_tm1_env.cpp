@@ -47,7 +47,7 @@ ENTER_NAMESPACE(tm1);
  *
  ********************************************************************/ 
 
-const int ShoreTM1Env::load_schema()
+int ShoreTM1Env::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = envVar::instance()->getSysname();
@@ -78,7 +78,7 @@ const int ShoreTM1Env::load_schema()
  *
  ********************************************************************/
 
-const int ShoreTM1Env::info()
+int ShoreTM1Env::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
@@ -95,7 +95,7 @@ const int ShoreTM1Env::info()
  *
  ********************************************************************/
 
-const int ShoreTM1Env::statistics() 
+int ShoreTM1Env::statistics() 
 {
     // read the current trx statistics
     CRITICAL_SECTION(cs, _statmap_mutex);
@@ -152,7 +152,7 @@ const int ShoreTM1Env::statistics()
  *
  ********************************************************************/
 
-const int ShoreTM1Env::start()
+int ShoreTM1Env::start()
 {
     upd_sf();
     upd_worker_cnt();
@@ -185,7 +185,7 @@ const int ShoreTM1Env::start()
  *
  ********************************************************************/
 
-const int ShoreTM1Env::stop()
+int ShoreTM1Env::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
     info();
@@ -530,7 +530,7 @@ w_rc_t ShoreTM1Env::loaddata()
  *
  ******************************************************************/
 
-const int ShoreTM1Env::conf()
+int ShoreTM1Env::conf()
 {
     // reread the params
     ShoreEnv::conf();
@@ -547,7 +547,7 @@ const int ShoreTM1Env::conf()
  *
  *********************************************************************/ 
 
-const int ShoreTM1Env::post_init() 
+int ShoreTM1Env::post_init() 
 {
     return (0);
 }

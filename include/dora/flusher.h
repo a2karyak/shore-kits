@@ -4,41 +4,54 @@
  *
  *  @brief:  Specialization of a worker thread that acts as the dora-flusher.
  *
- *  @author: Ippokratis Pandis, Jun 2008
+ *  @author: Ippokratis Pandis, Feb 2010
  */
 
 
 /**
-   Log flushing is a major source of ctxs (context switches). The higher the throughput
-   of the system, the larger the number of ctxs due to log flushes, and the more 
-   unnecessary work done due to those ctxs. In order to reduce the high rate of ctxs, 
-   in DORA we break the final step (commit or abort) of the execution of each transaction 
-   to two different phases: the work until the log-flush, and the rest. The commit() and
-   abort() calls are broken to begin_commit()/end_commit() and begin_abort()/end_abort().
-   The thread that it is responsible for the execution of the transaction, or in DORA's
-   case the thread that executes the final-rvp, instead of having to ctx waiting for
-   the log-flush to finish, it transfers the control to another specialized worker thread,
-   called dora-flusher. 
-   The dora-flusher, peaks all the transactions whose log-flush has finished, and they are
-   runnable again, and finalizes the work, notifying the client etc... If there are no 
-   other runnable trxs it calls to flush_all (flush until current gsn). The code looks 
-   like:
+   Log flushing is a major source of context switches, as well as, of an 
+   unexpected but definitely non-scalable problem with the notification of the 
+   sleepers on cond vars, which makes almost impossible to saturate workloads 
+   like TM1-UpdLocation with very high commit rate that put pressure on the log.
+
+   In order to alleviate the problem with the high rate of context switches and 
+   the overuse of condition variables in DORA, we implement a staged group
+   commit mechanism. The thread that executes the final-rvp of each transaction 
+   calls a lazy commit and does not context switch until the corresponding flush 
+   completes. Instead it transfers the control to another specialized worker 
+   thread, called dora-flusher. 
+
+   The dora-flusher, monitors the statistics (how many transactions are in the 
+   group unflushed, what is the size of the unflushed log, how much time it has 
+   passed since the last flush) and makes a decision on when to flush. Typically, 
+   if up to T msecs or N bytes or K xcts are unflushed a call to flush is 
+   triggered.  
+
+   The dora-flusher needs to do some short additional work per xct. It can either 
+   notify back the worker thread that executed the corresponding final-rvp 
+   that the flush had completed, and then to be responsibility of the worker thread 
+   to do the xct clean-up (enqueue back to committed queues and notify client).
+   Or it can give it to notifier thread to do the notifications. 
+   The code looks like:
 
    dora-worker that executes final-rvp:
-   { ... begin_commit_xct();
-   dora-flusher->enqueue_flushing(pxct); } 
+   {  ...
+      commit_xct(lazy);
+      dora-flusher->enqueue_toflush(pxct); } 
+
    
    dora-flusher:
    while (true) {
-   if (has_flushed()) {
-      xct* pxct = flushed_queue->get_one();
-      { ... pxct->finalize(); notify_client(); }
-   if (has_flushing()) {
-      move from flushing to flushed;} 
-   { if (!has_flushed()) flush_all(); }
+      if (time_to_flush()) {
+         flush_all();
+         while (pxct = toflush_queue->get_one()) {
+            pxct->notify_final_rvp(); 
+         }
+      }
+   }
 
    In order to enable this mechanism Shore-kits needs to be configured with:
-   --enable-dora --enable-dora-flusher
+   --enable-dora --enable-dflusher
 */
 
 #ifndef __DORA_FLUSHER_H
@@ -53,6 +66,8 @@ using namespace shore;
 
 ENTER_NAMESPACE(dora);
 
+// Fwd decl
+class dora_notifier_t;
 
 
 /******************************************************************** 
@@ -65,11 +80,19 @@ ENTER_NAMESPACE(dora);
 
 struct dora_flusher_stats_t 
 {
-    uint _finalized;
-    uint _flushes;
+    uint   served;
+    uint   flushes;
+
+    long   logsize;
+    uint   alreadyFlushed;
+    uint   waiting;
+
+    uint trigByXcts;
+    uint trigBySize;
+    uint trigByTimeout;
     
-    dora_flusher_stats_t() : _finalized(0), _flushes(0) { }
-    ~dora_flusher_stats_t() { }
+    dora_flusher_stats_t();
+    ~dora_flusher_stats_t();
 
     void print() const;
     void reset();
@@ -82,40 +105,85 @@ struct dora_flusher_stats_t
  *
  * @class: dora_flusher_t
  *
- * @brief: A template-based class for the worker threads
+ * @brief: A class for the DFlusher that implements group commit (and
+ *         batch flushing) in DORA
  * 
  ********************************************************************/
 
 class dora_flusher_t : public base_worker_t
 {   
 public:
-    typedef srmwqueue<rvp_t>    Queue;
+    typedef srmwqueue<terminal_rvp_t>    Queue;
 
 private:
 
-    dora_flusher_stats_t _flusher_stats;
+    dora_flusher_stats_t _stats;
+
+    guard<dora_notifier_t> _notifier;
+
+    guard<Queue> _toflush;
+    guard<Pool> _pxct_toflush_pool;
 
     guard<Queue> _flushing;
-    guard<Queue> _flushed;
-
     guard<Pool> _pxct_flushing_pool;
-    guard<Pool> _pxct_flushed_pool;
 
-    const int _pre_STOP_impl() { return(0); }
+    // Taken from shore/sm/log.h
+    static long floor(long offset, long block_size) { return (offset/block_size)*block_size; }
+    static long ceil(long offset, long block_size) { return floor(offset + block_size - 1, block_size); }
 
-    const int _work_ACTIVE_impl(); 
-
-    void enqueue_flushed(rvp_t* arvp) { _flushed->push(arvp, true); }
+    long _logpart_sz;
+    long _log_diff(const lsn_t& head, const lsn_t& tail);
+    
+    int _pre_STOP_impl();
+    int _work_ACTIVE_impl(); 
 
 public:
 
     dora_flusher_t(ShoreEnv* env, c_str tname,
-                   processorid_t aprsid = PBIND_NONE, const int use_sli = 0);
+                   processorid_t aprsid = PBIND_NONE, 
+                   const int use_sli = 0);
     ~dora_flusher_t();
 
-    inline void enqueue_flushing(rvp_t* arvp) { _flushing->push(arvp, true); }    
+    inline void enqueue_toflush(terminal_rvp_t* arvp) { _toflush->push(arvp,true); }
+
+    int statistics();  
 
 }; // EOF: dora_flusher_t
+
+
+
+/******************************************************************** 
+ *
+ * @class: dora_notifier_t
+ *
+ * @brief: The notifier for flushed xcts. No need to enqueue them back
+ *         to the worker of the final-rvp
+ * 
+ ********************************************************************/
+
+class dora_notifier_t : public base_worker_t
+{   
+public:
+    typedef srmwqueue<terminal_rvp_t>    Queue;
+
+private:
+
+    guard<Queue> _tonotify;
+    guard<Pool> _pxct_tonotify_pool;
+    
+    int _pre_STOP_impl();
+    int _work_ACTIVE_impl(); 
+
+public:
+
+    dora_notifier_t(ShoreEnv* env, c_str tname,
+                    processorid_t aprsid = PBIND_NONE, 
+                    const int use_sli = 0);
+    ~dora_notifier_t();
+
+    inline void enqueue_tonotify(terminal_rvp_t* arvp) { _tonotify->push(arvp,true); }
+
+}; // EOF: dora_notifier_t
 
 
 EXIT_NAMESPACE(dora);

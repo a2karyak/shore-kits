@@ -43,8 +43,7 @@
 
 // helper: reads the conf file for a specific param
 // !!! the caller should have the lock !!!
-string 
-envVar::_readConfVar(const string& sParam, const string& sDefValue)
+string envVar::_readConfVar(const string& sParam, const string& sDefValue)
 {
     if (sParam.empty()||sDefValue.empty()) {
         TRACE( TRACE_ALWAYS, "Invalid Param or Value input\n");
@@ -63,8 +62,7 @@ envVar::_readConfVar(const string& sParam, const string& sDefValue)
 
 
 // sets a new parameter
-int 
-envVar::setVar(const string& sParam, const string& sValue)
+int envVar::setVar(const string& sParam, const string& sValue)
 {
     if ((!sParam.empty())&&(!sValue.empty())) {
         TRACE( TRACE_DEBUG, "(%s) (%s)\n", sParam.c_str(), sValue.c_str());
@@ -76,8 +74,7 @@ envVar::setVar(const string& sParam, const string& sValue)
 }
 
 
-int 
-envVar::setVarInt(const string& sParam, const int& iValue)
+int envVar::setVarInt(const string& sParam, const int& iValue)
 {    
     return (setVar(sParam,_toString(iValue)));
 }
@@ -85,8 +82,7 @@ envVar::setVarInt(const string& sParam, const int& iValue)
 
 
 // refreshes all the env vars from the conf file
-int 
-envVar::refreshVars(void)
+int envVar::refreshVars(void)
 {
     TRACE( TRACE_DEBUG, "Refreshing environment variables\n");
     CRITICAL_SECTION(evm_cs,_lock);
@@ -99,8 +95,7 @@ envVar::refreshVars(void)
 
 // checks the map for a specific param
 // if it doesn't find it checks also the config file
-string 
-envVar::getVar(const string& sParam, const string& sDefValue)
+string envVar::getVar(const string& sParam, const string& sDefValue)
 {
     if (sParam.empty()) {
         TRACE( TRACE_ALWAYS, "Invalid Param input\n");
@@ -116,8 +111,7 @@ envVar::getVar(const string& sParam, const string& sDefValue)
     return (it->second);
 }
 
-int 
-envVar::getVarInt(const string& sParam, const int& iDefValue)
+int envVar::getVarInt(const string& sParam, const int& iDefValue)
 {
     return (atoi(getVar(sParam,_toString(iDefValue)).c_str()));
 }
@@ -125,8 +119,7 @@ envVar::getVarInt(const string& sParam, const int& iDefValue)
 
 
 // checks if a specific param is set at the map or (fallback) the conf file
-void 
-envVar::checkVar(const string& sParam)
+void envVar::checkVar(const string& sParam)
 {
     string r;
     CRITICAL_SECTION(evm_cs,_lock);
@@ -155,16 +148,14 @@ envVar::checkVar(const string& sParam)
  *
  *************************************************/
 
-string 
-envVar::getSysname()
+string envVar::getSysname()
 {
     string system = "system";
     return (getSysVar(system));
 }
 
 
-string 
-envVar::getSysVar(string sParam)
+string envVar::getSysVar(string sParam)
 {
     string config = getVar("db-config","invalid");
     config = config + "-" + sParam;
@@ -172,8 +163,7 @@ envVar::getSysVar(string sParam)
 }
 
 
-int 
-envVar::getSysVarInt(string sParam)
+int envVar::getSysVarInt(string sParam)
 {
     string config = getVar("db-config","invalid");
     config = config + "-" + sParam;
@@ -181,8 +171,7 @@ envVar::getSysVarInt(string sParam)
 }
 
 
-int 
-envVar::setConfiguration(string sConfiguration)
+int envVar::setConfiguration(string sConfiguration)
 {
     return (setVar("db-config",sConfiguration));
 }
@@ -200,8 +189,7 @@ void envVar::printVars(void)
 
 
 // sets as input another conf file
-void 
-envVar::setConfFile(const string& sConfFile)
+void envVar::setConfFile(const string& sConfFile)
 {
     assert (!sConfFile.empty());
     CRITICAL_SECTION(evm_cs,_lock);
@@ -213,8 +201,7 @@ envVar::setConfFile(const string& sConfFile)
 
 
 // parses a SET request
-int 
-envVar::parseOneSetReq(const string& in)
+int envVar::parseOneSetReq(const string& in)
 {
     string param;
     string value;
@@ -240,8 +227,7 @@ envVar::parseOneSetReq(const string& in)
 
 
 // parses a string of (multiple) SET requests
-int 
-envVar::parseSetReq(const string& in)
+int envVar::parseSetReq(const string& in)
 {
     int cnt=0;
 

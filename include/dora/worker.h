@@ -44,12 +44,12 @@ private:
     Partition*     _partition;
 
     // states
-    const int _work_ACTIVE_impl(); 
+    int _work_ACTIVE_impl(); 
 
-    const int _pre_STOP_impl() { assert(_partition); return (_partition->abort_all_enqueued()); }
+    int _pre_STOP_impl() { assert(_partition); return (_partition->abort_all_enqueued()); }
 
     // serves one action
-    const int _serve_action(base_action_t* paction);
+    int _serve_action(base_action_t* paction);
 
 public:
 
@@ -89,7 +89,7 @@ public:
  ******************************************************************/
 
 template <class DataType>
-inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
+inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
 {    
     //    TRACE( TRACE_DEBUG, "Activating...\n");
     int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
@@ -132,6 +132,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
             apa = _partition->dequeue_commit();
             assert (apa);
             TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
+
             
             // 2b. release the locks acquired for this action
             apa->trx_rel_locks(actionReadyList,actionPromotedList);
@@ -188,7 +189,7 @@ inline const int dora_worker_t<DataType>::_work_ACTIVE_impl()
  ******************************************************************/
 
 template <class DataType>
-const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
+int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 {
     // 0. make sure that the action has all the keys it needs
     assert (paction);
@@ -237,9 +238,6 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
             }
             else {
 
-//                 TRACE( TRACE_ALWAYS, "Problem running xct (%d) [0x%x]\n",
-//                        paction->tid(), e.err_num());
-
                 TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
                        paction->tid(), e.err_num());
                 
@@ -265,13 +263,14 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
 
 #ifdef WORKER_VERBOSE_STATS
-        stopwatch_t rvp_time;
+    stopwatch_t rvp_time;
 #endif
 
-    // 6. finalize processing        
+    // 6. Finalize processing        
     if (aprvp->post(is_error)) {
-        // last caller
-        // execute the code of this rendez-vous point
+        // Last caller
+
+        // 6a. Execute the code of this rendez-vous point
         e = aprvp->run();            
 
 #ifdef WORKER_VERBOSE_STATS
@@ -284,17 +283,21 @@ const int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
             r_code = de_WORKER_RUN_RVP;
         }
 
-#ifndef CFG_DORA_FLUSHER
-        // If enabled, the logflusher is the one who will notify
-        // and giveback the RVP
+#ifndef CFG_FLUSHER
+        // If the DFlusher is not enabled, then the notification
+        // for the completed xct and final-rvp giveback is done
+        // by the worker. Otherwise, the DFlusher is the one who 
+        // will do those.
 
         // enqueue committed actions
         int comActions = aprvp->notify();            
         // delete rvp
-        aprvp->giveback();
+        aprvp->giveback();        
 #endif
+
         aprvp = NULL;
     }
+
 #ifdef WORKER_VERBOSE_STATS
         _stats.update_rvp_notify_time(rvp_time.time_ms());
 #endif

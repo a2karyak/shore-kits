@@ -112,43 +112,23 @@ class DoraTM1Env : public ShoreTM1Env, public DoraEnv
 {
 public:
     
-    DoraTM1Env(string confname)
-        : ShoreTM1Env(confname), DoraEnv()
-    { 
-#ifdef CFG_DORA_FLUSHER
-        // IP: sli?
-        _flusher = new dora_flusher_t(this, c_str("dora-flusher")); 
-        assert(_flusher.get());
-        _flusher->fork();
-#endif
-    }
-
-    virtual ~DoraTM1Env() 
-    { 
-        stop();
-
-#ifdef CFG_DORA_FLUSHER
-        fprintf(stderr, "Stopping dora-flusher...\n");
-        _flusher->stop();
-        _flusher->join();
-#endif
-    }
-
+    DoraTM1Env(string confname);
+    virtual ~DoraTM1Env();
 
 
     //// Control Database
 
     // {Start/Stop/Resume/Pause} the system 
-    const int start();
-    const int stop();
-    const int resume();
-    const int pause();
-    const int newrun();
-    const int set(envVarMap* vars);
-    const int dump();
-    const int info();    
-    const int statistics();    
-    const int conf();
+    int start();
+    int stop();
+    int resume();
+    int pause();
+    int newrun();
+    int set(envVarMap* vars);
+    int dump();
+    int info();    
+    int statistics();    
+    int conf();
 
 
     //// Partition-related

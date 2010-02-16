@@ -87,15 +87,15 @@ class envVar;
 
 struct quit_cmd_t : public command_handler_t {
     void setaliases();
-    const int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
-    const string desc() { return (string("Quit")); }               
+    int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
+    string desc() { return (string("Quit")); }               
 };
 
 
 struct disconnect_cmd_t : public command_handler_t {
     void setaliases();
-    const int handle(const char* cmd) { return (SHELL_NEXT_DISCONNECT); }
-    const string desc() { return (string("Disconnect client")); }
+    int handle(const char* cmd) { return (SHELL_NEXT_DISCONNECT); }
+    string desc() { return (string("Disconnect client")); }
 };
 
 
@@ -104,12 +104,12 @@ struct help_cmd_t : public command_handler_t {
     help_cmd_t(cmdMap* pcmds) : _pcmds(pcmds) { assert(pcmds); }
     ~help_cmd_t() { }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage() { 
         TRACE( TRACE_ALWAYS, "HELP       - prints usage\n"); 
         TRACE( TRACE_ALWAYS, "HELP <cmd> - prints detailed help for <cmd>\n"); 
     }
-    const string desc() { return (string("Help - Use 'help <cmd>' for usage of specific cmd")); }              
+    string desc() { return (string("Help - Use 'help <cmd>' for usage of specific cmd")); }              
     void list_cmds();
 }; 
 
@@ -118,9 +118,9 @@ struct set_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Sets env vars")); }               
+    string desc() { return (string("Sets env vars")); }               
 };
 
 
@@ -128,9 +128,9 @@ struct env_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Prints env vars")); }               
+    string desc() { return (string("Prints env vars")); }               
 };
 
 
@@ -138,41 +138,41 @@ struct conf_cmd_t : public command_handler_t {
     envVar* ev;
     void init() { ev = envVar::instance(); }
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Rereads env vars")); }               
+    string desc() { return (string("Rereads env vars")); }               
 };
 
 
 struct cpustat_cmd_t : public command_handler_t {
     processinfo_t myinfo;
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc() { return (string("Process cpu usage/statitics")); }
+    string desc() { return (string("Process cpu usage/statitics")); }
 };
 
 
 struct echo_cmd_t : public command_handler_t {
     void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
-    const int handle(const char* cmd) {
+    int handle(const char* cmd) {
         printf("%s\n", cmd+strlen("echo "));
         return (SHELL_NEXT_CONTINUE);
     }
     void usage() { TRACE( TRACE_ALWAYS, "usage: echo <string>\n"); }
-    const string desc() { return string("Echoes its input arguments to the screen"); }
+    string desc() { return string("Echoes its input arguments to the screen"); }
 };
 
 
 struct break_cmd_t : public command_handler_t {
     void setaliases() { _name = string("break"); _aliases.push_back("break"); }
-    const int handle(const char* cmd) {
+    int handle(const char* cmd) {
         raise(SIGINT);
         return (SHELL_NEXT_CONTINUE);
     }
     void usage() { TRACE( TRACE_ALWAYS, "usage: break\n"); }
-    const string desc() { return string("Breaks into a debugger by raising ^C " \
-                                        "(terminates program if no debugger is active)"); }
+    string desc() { return string("Breaks into a debugger by raising ^C " \
+                                  "(terminates program if no debugger is active)"); }
 };
 
 
@@ -182,9 +182,9 @@ struct zipf_cmd_t : public command_handler_t {
     zipf_cmd_t() : _s(0.0), _is_enabled(false) { };
     ~zipf_cmd_t() { };
     void setaliases();
-    const int handle(const char* cmd);
+    int handle(const char* cmd);
     void usage();
-    const string desc();
+    string desc();
 };
 
 
@@ -224,7 +224,7 @@ protected:
     guard<break_cmd_t> _breaker;
     guard<zipf_cmd_t> _zipfer;
 
-    const int _register_commands();    
+    int _register_commands();    
 
     mcs_lock _lock;
     cmdMap   _cmds;
@@ -260,7 +260,7 @@ public:
         static shell_t* _instance; return _instance; 
     }
 
-    const int get_command_cnt() { 
+    int get_command_cnt() { 
         return (_cmd_counter); 
     }
 
@@ -271,10 +271,10 @@ public:
     }
 
     // should register own commands
-    virtual const int register_commands()=0;
-    const int add_cmd(command_handler_t* acmd);
-    const int init_cmds();
-    const int close_cmds();
+    virtual int register_commands()=0;
+    int add_cmd(command_handler_t* acmd);
+    int init_cmds();
+    int close_cmds();
 
     // basic shell functionality    
     virtual int SIGINT_handler() { return (ECANCELED); /* exit immediately */ }     

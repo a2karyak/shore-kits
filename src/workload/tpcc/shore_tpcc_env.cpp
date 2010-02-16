@@ -208,7 +208,7 @@ ShoreTPCCEnv::table_builder_t::work()
  *
  ********************************************************************/ 
 
-const int ShoreTPCCEnv::load_schema()
+int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = envVar::instance()->getSysname();
@@ -249,7 +249,7 @@ const int ShoreTPCCEnv::load_schema()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::info()
+int ShoreTPCCEnv::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
@@ -266,7 +266,7 @@ const int ShoreTPCCEnv::info()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::statistics() 
+int ShoreTPCCEnv::statistics() 
 {
     // read the current trx statistics
     CRITICAL_SECTION(cs, _statmap_mutex);
@@ -323,7 +323,7 @@ const int ShoreTPCCEnv::statistics()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::start()
+int ShoreTPCCEnv::start()
 {
     upd_sf();
     upd_worker_cnt();
@@ -356,7 +356,7 @@ const int ShoreTPCCEnv::start()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::stop()
+int ShoreTPCCEnv::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
     info();
@@ -562,8 +562,10 @@ w_rc_t ShoreTPCCEnv::warmup()
  *
  ********************************************************************/
 
-const int ShoreTPCCEnv::dump()
+int ShoreTPCCEnv::dump()
 {
+    assert (0); // IP: Not implemented yet
+
 //     table_man_t* ptable_man = NULL;
 //     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
 //         table_man_iter != _table_man_list.end(); table_man_iter++)
@@ -575,7 +577,7 @@ const int ShoreTPCCEnv::dump()
 }
 
 
-const int ShoreTPCCEnv::conf()
+int ShoreTPCCEnv::conf()
 {
     // reread the params
     ShoreEnv::conf();
@@ -599,7 +601,7 @@ const int ShoreTPCCEnv::conf()
  *
  *********************************************************************/
 
-const int ShoreTPCCEnv::post_init() 
+int ShoreTPCCEnv::post_init() 
 {
     conf();
     TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");

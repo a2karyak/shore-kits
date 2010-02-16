@@ -59,42 +59,22 @@ class DoraTPCBEnv : public ShoreTPCBEnv, public DoraEnv
 {
 public:
     
-    DoraTPCBEnv(string confname)
-        : ShoreTPCBEnv(confname), DoraEnv()
-    { 
-#ifdef CFG_DORA_LOGGER
-        fprintf(stderr, "Starting dora-logger\n");
-        // IP: sli?
-        _doralogger = new dora_logger_t(this, c_str("dora-logger")); 
-#endif
-    }
-
-    virtual ~DoraTPCBEnv() 
-    { 
-        stop();
-
-#ifdef CFG_DORA_LOGGER
-        fprintf(stderr, "Stopping dora-logger...\n");
-        _doralogger->stop();
-        _doralogger->join();
-#endif
-    }
-
-
+    DoraTPCBEnv(string confname);
+    virtual ~DoraTPCBEnv();
 
     //// Control Database
 
     // {Start/Stop/Resume/Pause} the system 
-    const int start();
-    const int stop();
-    const int resume();
-    const int pause();
-    const int newrun();
-    const int set(envVarMap* vars);
-    const int dump();
-    const int info();    
-    const int statistics();    
-    const int conf();
+    int start();
+    int stop();
+    int resume();
+    int pause();
+    int newrun();
+    int set(envVarMap* vars);
+    int dump();
+    int info();    
+    int statistics();    
+    int conf();
 
 
     //// Partition-related

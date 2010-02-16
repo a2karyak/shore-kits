@@ -320,7 +320,8 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
+const int 
+partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
 {
     //assert(verify(*pAction)); // TODO: Enable this
 //     if (!verify(*pAction)) {
@@ -348,7 +349,8 @@ const int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
  ******************************************************************/
 
 template <class DataType>
-action_t<DataType>* partition_t<DataType>::dequeue()
+action_t<DataType>* 
+partition_t<DataType>::dequeue()
 {
     return (_input_queue->pop());
 }
@@ -365,7 +367,8 @@ action_t<DataType>* partition_t<DataType>::dequeue()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
+const int 
+partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 {
     assert (pAction->get_partition()==this);
 
@@ -386,14 +389,12 @@ const int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWak
  ******************************************************************/
 
 template <class DataType>
-action_t<DataType>* partition_t<DataType>::dequeue_commit()
+action_t<DataType>* 
+partition_t<DataType>::dequeue_commit()
 {
     //assert (has_committed());
     return (_committed_queue->pop());
 }
-
-
-
 
 
 
@@ -408,7 +409,8 @@ action_t<DataType>* partition_t<DataType>::dequeue_commit()
  ******************************************************************/
 
 template <class DataType>
-void partition_t<DataType>::stop()
+void 
+partition_t<DataType>::stop()
 {        
     // 2. stop the worker & standby threads
     _stop_threads();
@@ -438,8 +440,9 @@ void partition_t<DataType>::stop()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::reset(const processorid_t aprsid,
-                                       const int poolsz)
+const int 
+partition_t<DataType>::reset(const processorid_t aprsid,
+                             const int poolsz)
 {        
     TRACE( TRACE_DEBUG, "part (%s-%d) - pool (%d) - cpu (%d)\n", 
            _table->name(), _part_id, poolsz, aprsid);
@@ -502,7 +505,8 @@ const int partition_t<DataType>::reset(const processorid_t aprsid,
  ******************************************************************/
 
 template <class DataType>
-const ePATState partition_t<DataType>::get_pat_state() 
+const ePATState 
+partition_t<DataType>::get_pat_state() 
 { 
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     return (_pat_state); 
@@ -522,7 +526,8 @@ const ePATState partition_t<DataType>::get_pat_state()
  ******************************************************************/
 
 template <class DataType>
-const ePATState partition_t<DataType>::dec_active_thr() 
+const ePATState 
+partition_t<DataType>::dec_active_thr() 
 {
     assert (_pat_count>1);
     assert (_pat_state==PATS_MULTIPLE);
@@ -549,7 +554,8 @@ const ePATState partition_t<DataType>::dec_active_thr()
  ******************************************************************/
 
 template <class DataType>
-const ePATState partition_t<DataType>::inc_active_thr() 
+const ePATState 
+partition_t<DataType>::inc_active_thr() 
 {
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     _pat_count++;
@@ -574,7 +580,8 @@ const ePATState partition_t<DataType>::inc_active_thr()
  ******************************************************************/
 
 template <class DataType>
-void partition_t<DataType>::prepareNewRun() 
+void 
+partition_t<DataType>::prepareNewRun() 
 {
     // 1. Needs to spin until worker is done "cleaning" 
     // left-over actions/logical locks
@@ -625,7 +632,8 @@ void partition_t<DataType>::prepareNewRun()
  ******************************************************************/
 
 template <class DataType>
-inline const int partition_t<DataType>::_start_owner()
+inline const int 
+partition_t<DataType>::_start_owner()
 {
     assert (_owner);
     _owner->start();
@@ -642,7 +650,8 @@ inline const int partition_t<DataType>::_start_owner()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::_stop_threads()
+const int 
+partition_t<DataType>::_stop_threads()
 {
     int i = 0;
 
@@ -696,9 +705,10 @@ const int partition_t<DataType>::_stop_threads()
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::_generate_standby_pool(const int sz,
-                                                        int& pool_sz,
-                                                        const processorid_t aprsid)
+const int 
+partition_t<DataType>::_generate_standby_pool(const int sz,
+                                              int& pool_sz,
+                                              const processorid_t aprsid)
 {
     assert (_standby==NULL); // prevent losing thread pointer 
 
@@ -772,7 +782,8 @@ const int partition_t<DataType>::_generate_standby_pool(const int sz,
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::_generate_primary() 
+const int 
+partition_t<DataType>::_generate_primary() 
 {
     assert (_owner==NULL); // prevent losing thread pointer 
 
@@ -833,9 +844,10 @@ const int partition_t<DataType>::_generate_primary()
  ******************************************************************/
 
 template <class DataType>
-inline dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const processorid_t prsid,
-                                                                        c_str strname,
-                                                                        const use_sli) 
+inline dora_worker_t<DataType>* 
+partition_t<DataType>::_generate_worker(const processorid_t prsid,
+                                        c_str strname,
+                                        const use_sli) 
 {
     // 1. create worker thread
     // 2. set self as worker's partition
@@ -855,7 +867,8 @@ inline dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const pr
  ******************************************************************/
 
 template <class DataType>
-const int partition_t<DataType>::abort_all_enqueued()
+const int 
+partition_t<DataType>::abort_all_enqueued()
 {
     // 1. go over all requests
     Action* pa;

@@ -50,7 +50,7 @@ ENTER_NAMESPACE(tpcb);
  *
  ********************************************************************/ 
 
-const int ShoreTPCBEnv::load_schema()
+int ShoreTPCBEnv::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
@@ -81,7 +81,7 @@ const int ShoreTPCBEnv::load_schema()
  *
  ********************************************************************/
 
-const int ShoreTPCBEnv::info()
+int ShoreTPCBEnv::info()
 {
     TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
@@ -97,7 +97,7 @@ const int ShoreTPCBEnv::info()
  *
  ********************************************************************/
 
-const int ShoreTPCBEnv::start()
+int ShoreTPCBEnv::start()
 {
     upd_sf();
     upd_worker_cnt();
@@ -130,7 +130,7 @@ const int ShoreTPCBEnv::start()
  *
  ********************************************************************/
 
-const int ShoreTPCBEnv::stop()
+int ShoreTPCBEnv::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
     info();
@@ -264,8 +264,8 @@ class ShoreTPCBEnv::table_builder_t : public thread_t
     long _count;
 
 public:
-    table_builder_t(ShoreTPCBEnv* env, int sf, long start, long count)
-	: thread_t("TPC-B loader"), 
+    table_builder_t(ShoreTPCBEnv* env, int id, int sf, long start, long count)
+	: thread_t(c_str("TPC-B-Loader-%d",id)), 
           _env(env), _sf(sf), _start(start), _count(count) 
     { }
 
@@ -274,6 +274,8 @@ public:
 }; // EOF: table_builder_t
 
 
+const uint branchesPerRound = 5; // Update branch count every 5 rounds  
+static uint volatile iBranchesLoaded = 0;
 void ShoreTPCBEnv::table_builder_t::work() 
 {
     w_rc_t e;
@@ -282,10 +284,6 @@ void ShoreTPCBEnv::table_builder_t::work()
 	long a_id = _start + i;
 	populate_db_input_t in(_sf, a_id);
 	trx_result_tuple_t out;
-
-	//fprintf(stderr, ".");
-	//fprintf(stderr, "Populating %d a_ids starting with %d\n", 
-        //ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 
     retry:
 	W_COERCE(_env->db()->begin_xct());
@@ -303,6 +301,12 @@ void ShoreTPCBEnv::table_builder_t::work()
                    "Eek! Unable to populate db for index %d due to:\n%s\n",
                    i, str.c_str());
 	}
+
+        if ((i % (branchesPerRound*TPCB_ACCOUNTS_PER_BRANCH)) == 0) {
+            atomic_add_int(&iBranchesLoaded, branchesPerRound);
+            TRACE(TRACE_ALWAYS, "%d branches loaded so far...\n",
+                  iBranchesLoaded);
+        }
     }
     TRACE( TRACE_STATISTICS, 
            "Finished loading account groups %d .. %d \n", 
@@ -334,8 +338,7 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
 }; // EOF: table_creator_t
 
 
-void 
-ShoreTPCBEnv::table_creator_t::work() 
+void ShoreTPCBEnv::table_creator_t::work() 
 {
     // 1. Create the tables
     W_COERCE(_env->db()->begin_xct());
@@ -433,11 +436,11 @@ ShoreTPCBEnv::loaddata()
        thin air.
      */
     array_guard_t< guard<table_builder_t> > loaders(new guard<table_builder_t>[loaders_to_use]);
-    for(long i=0; i < loaders_to_use; i++) {
+    for(int i=0; i < loaders_to_use; i++) {
 	// the preloader thread picked up that first set of accounts...
 	long start = accts_per_worker*i+TPCB_ACCOUNTS_CREATED_PER_POP_XCT;
 	long count = accts_per_worker-TPCB_ACCOUNTS_CREATED_PER_POP_XCT;
-	loaders[i] = new table_builder_t(this, _scaling_factor, start, count);
+	loaders[i] = new table_builder_t(this, i, _scaling_factor, start, count);
 	loaders[i]->fork();
     }
 
@@ -471,8 +474,7 @@ ShoreTPCBEnv::loaddata()
  *
  ******************************************************************/
 
-w_rc_t 
-ShoreTPCBEnv::check_consistency()
+w_rc_t ShoreTPCBEnv::check_consistency()
 {
     // not loaded from files, so no inconsistency possible
     return RCOK;
@@ -488,8 +490,7 @@ ShoreTPCBEnv::check_consistency()
  *
  ******************************************************************/
 
-w_rc_t 
-ShoreTPCBEnv::warmup()
+w_rc_t ShoreTPCBEnv::warmup()
 {
     return (check_consistency());
 }
@@ -503,9 +504,10 @@ ShoreTPCBEnv::warmup()
  *
  ********************************************************************/
 
-const int 
-ShoreTPCBEnv::dump()
+int ShoreTPCBEnv::dump()
 {
+    assert (0); // IP: not implemented yet
+
 //     table_man_t* ptable_man = NULL;
 //     for(table_man_list_iter table_man_iter = _table_man_list.begin(); 
 //         table_man_iter != _table_man_list.end(); table_man_iter++)
@@ -517,8 +519,7 @@ ShoreTPCBEnv::dump()
 }
 
 
-const int 
-ShoreTPCBEnv::conf()
+int ShoreTPCBEnv::conf()
 {
     // reread the params
     ShoreEnv::conf();
@@ -534,8 +535,7 @@ ShoreTPCBEnv::conf()
  *
  *********************************************************************/
 
-const int 
-ShoreTPCBEnv::post_init() 
+int ShoreTPCBEnv::post_init() 
 {
     conf();
     TRACE( TRACE_ALWAYS, "Checking for BRANCH/TELLER record padding...\n");
@@ -565,8 +565,7 @@ ShoreTPCBEnv::post_init()
  *
  *********************************************************************/ 
 
-w_rc_t 
-ShoreTPCBEnv::_post_init_impl() 
+w_rc_t ShoreTPCBEnv::_post_init_impl() 
 {
     //#warning IP - Adding padding also for the TPC-B TELLERS table
     W_DO(_pad_BRANCHES());
@@ -583,8 +582,7 @@ ShoreTPCBEnv::_post_init_impl()
  *
  *********************************************************************/ 
 
-w_rc_t 
-ShoreTPCBEnv::_pad_BRANCHES()
+w_rc_t ShoreTPCBEnv::_pad_BRANCHES()
 {
     ss_m* db = this->db();
     
@@ -720,8 +718,7 @@ ShoreTPCBEnv::_pad_BRANCHES()
  *
  *********************************************************************/ 
 
-w_rc_t 
-ShoreTPCBEnv::_pad_TELLERS()
+w_rc_t ShoreTPCBEnv::_pad_TELLERS()
 {
     ss_m* db = this->db();
 

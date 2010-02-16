@@ -216,20 +216,20 @@ public:
 
     // DB INTERFACE
 
-    virtual const int set(envVarMap* vars) { return(0); /* do nothing */ };
-    virtual const int open() { return(0); /* do nothing */ };
-    virtual const int pause() { return(0); /* do nothing */ };
-    virtual const int resume() { return(0); /* do nothing */ };    
-    virtual const int newrun() { return(0); /* do nothing */ };
+    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int open() { return(0); /* do nothing */ };
+    virtual int pause() { return(0); /* do nothing */ };
+    virtual int resume() { return(0); /* do nothing */ };    
+    virtual int newrun() { return(0); /* do nothing */ };
 
-    virtual const int post_init();
-    virtual const int load_schema();
+    virtual int post_init();
+    virtual int load_schema();
 
-    virtual const int conf();
-    virtual const int start();
-    virtual const int stop();
-    virtual const int info();
-    virtual const int statistics();    
+    virtual int conf();
+    virtual int start();
+    virtual int stop();
+    virtual int info();
+    virtual int statistics();    
     
 
     // --- scaling and querying factor --- //
@@ -240,7 +240,7 @@ public:
     inline int get_sf() { return (_scaling_factor); }
     const int upd_sf();
 
-    const int dump();
+    int dump();
 
     virtual void print_throughput(const int iQueriedSF, 
                                   const int iSpread, 

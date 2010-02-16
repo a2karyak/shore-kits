@@ -22,8 +22,7 @@ ENTER_NAMESPACE(dora);
  *
  ******************************************************************/
 
-rvp_t& 
-rvp_t::operator=(const rvp_t& rhs)
+rvp_t& rvp_t::operator=(const rvp_t& rhs)
 {
     if (this != &rhs) {
         _set(rhs._tid,rhs._xct,rhs._xct_id,rhs._result,
@@ -41,8 +40,7 @@ rvp_t::operator=(const rvp_t& rhs)
  *
  ******************************************************************/
 
-const int 
-rvp_t::copy_actions(const baseActionsList& actionList)
+int rvp_t::copy_actions(const baseActionsList& actionList)
 {
     _actions.reserve(actionList.size());
     _actions.assign(actionList.begin(),actionList.end()); // copy list content
@@ -60,8 +58,7 @@ rvp_t::copy_actions(const baseActionsList& actionList)
  *
  ******************************************************************/
 
-const int 
-rvp_t::append_actions(const baseActionsList& actionList)
+int rvp_t::append_actions(const baseActionsList& actionList)
 {
     CRITICAL_SECTION(action_cs, _actions_lock);
     // append new actionList to the end of the list
@@ -78,8 +75,7 @@ rvp_t::append_actions(const baseActionsList& actionList)
  *
  ******************************************************************/
 
-const int 
-rvp_t::add_action(base_action_t* paction) 
+int rvp_t::add_action(base_action_t* paction) 
 {
     assert (paction);
     assert (this==paction->rvp());
@@ -97,8 +93,7 @@ rvp_t::add_action(base_action_t* paction)
  *
  ******************************************************************/
 
-void 
-rvp_t::notify_client() 
+void rvp_t::notify_client() 
 {
     // signal cond var
     if(_result.get_notify()) {
@@ -120,8 +115,7 @@ rvp_t::notify_client()
  *
  ******************************************************************/
 
-const int 
-terminal_rvp_t::notify()
+int terminal_rvp_t::notify()
 {
     for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it)
         (*it)->notify();
@@ -141,8 +135,7 @@ terminal_rvp_t::notify()
  *
  ******************************************************************/
 
-w_rc_t 
-terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
+w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 {
 #ifndef ONLYDORA
     // attach to this xct
@@ -154,16 +147,10 @@ terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
     w_rc_t rcdec;
     if (_decision == AD_ABORT) {
 
-#ifndef ONLYDORA
-#ifdef CFG_DORA_FLUSHER
-        // 1. Call pre-abort
-        // 2. Enqueue to dora-flusher->flushing
-        rcdec = db->begin_abort_xct(_dummy_stats);
-        smthread_t::me()->detach_xct(_xct);
-        denv->enqueue_flushing(this);
-#else
+#ifndef ONLYDORA        
+        // We cannot abort lazily because log rollback works on 
+        // disk-resident records
         rcdec = db->abort_xct();
-#endif
 #endif
 
         if (rcdec.is_error()) {
@@ -172,20 +159,25 @@ terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         }
         else {
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid);
-            upd_aborted_stats(); // hook - update aborted stats
+            upd_aborted_stats();
         }
+
+#ifdef CFG_FLUSHER
+        // If DFlusher is enabled we need to notify client here.
+        // The clients of the commmitted xcts will be notified 
+        // by the DNotifier thread
+        notify_client();
+#endif
     }
     else {
 
 #ifndef ONLYDORA
-#ifdef CFG_DORA_FLUSHER
-        // 1. Call pre-commit
-        // 2. Enqueue to dora-flusher->flushing
-        rcdec = db->begin_commit_xct(_dummy_stats);
-        smthread_t::me()->detach_xct(_xct);
-        denv->enqueue_flushing(this);
+#ifdef CFG_FLUSHER
+        // DF1. Commit lazily
+        lsn_t xctLastLsn;
+        rcdec = db->commit_xct(true,&xctLastLsn);
+        this->_my_last_lsn = xctLastLsn;
 #else        
-
         rcdec = db->commit_xct();    
 #endif
 #endif
@@ -193,15 +185,10 @@ terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
                    _tid, rcdec.err_num());
-            upd_aborted_stats(); // hook - update aborted stats
-
+            upd_aborted_stats();
 #ifndef ONLYDORA
-#ifdef CFG_DORA_FLUSHER
-            assert (0); // IP: TODO: Need to check if this can be done with dora-flusher
-            w_rc_t eabort = db->begin_abort_xct();
-#else
             w_rc_t eabort = db->abort_xct();
-#endif
+
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                        _tid, eabort.err_num());
@@ -209,19 +196,23 @@ terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 #endif
         }
         else {
+#ifdef CFG_FLUSHER
+            // DF2. Enqueue to the "to flush" queue of DFlusher             
+            denv->enqueue_toflush(this);
+#else
             TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid);
-            upd_committed_stats(); // hook - update committed stats
+            upd_committed_stats();
+#endif
         }
-    }               
+    }    
 
-#ifndef CFG_DORA_FLUSHER
-    // If dora-flusher is enabled then it is its responsibility to
-    // notify the client
+#ifndef CFG_FLUSHER
+    // If DFlusher is disabled, then the last thing to do is to notify the
+    // client. Otherwise, we will not notify the client here, but only after we 
+    // know that the xct had been flushed
     notify_client();
 #endif
     return (rcdec);
 }
- 
-
 
 EXIT_NAMESPACE(dora);

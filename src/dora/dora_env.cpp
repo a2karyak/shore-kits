@@ -15,6 +15,68 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    DoraEnv construction/destruction
+ *
+ *  @brief: Prints statistics for DORA Env. If DFlusher is enabled,
+ *          it prints those stats. 
+ *
+ ********************************************************************/
+
+DoraEnv::DoraEnv()
+{
+}
+
+DoraEnv::~DoraEnv()
+{
+#ifdef CFG_FLUSHER
+        fprintf(stderr, "Stopping dora-flusher...\n");
+        _flusher->stop();
+        _flusher->join();
+#endif
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    statistics
+ *
+ *  @brief: Prints statistics for DORA Env. If DFlusher is enabled,
+ *          it prints those stats. 
+ *
+ ********************************************************************/
+
+const int DoraEnv::statistics()
+{
+#ifdef CFG_FLUSHER
+    _flusher->statistics();
+#endif
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    _start()
+ *
+ * @brief: If configured, starts the flusher
+ *
+ * @note:  Should be called before the start function of the specific
+ *         DORA environment instance
+ *
+ ******************************************************************/
+
+int DoraEnv::_start()
+{
+#ifdef CFG_FLUSHER
+    fprintf(stderr, "Starting dora-flusher...\n");      
+    _flusher->start();
+#endif    
+    return (0);
+}
+
 /****************************************************************** 
  *
  * @fn:    _next_cpu()
@@ -22,7 +84,7 @@ ENTER_NAMESPACE(dora);
  * @brief: Deciding the distribution of tables
  *
  * @note:  Very simple (just increases processor id by DF_CPU_STEP) 
-
+ *
  * @note:  This decision  can be based among others on:
  *
  *         - aprd                    - the current cpu
@@ -36,9 +98,9 @@ ENTER_NAMESPACE(dora);
  *
  ******************************************************************/
 
-const processorid_t DoraEnv::_next_cpu(const processorid_t& aprd,
-                                       const irpTableImpl* atable,
-                                       const int step)
+processorid_t DoraEnv::_next_cpu(const processorid_t& aprd,
+                                 const irpTableImpl* atable,
+                                 const int step)
 {    
     int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
     if (binding==0)
