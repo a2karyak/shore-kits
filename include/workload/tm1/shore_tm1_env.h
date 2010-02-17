@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tm1_env.h
  *
  *  @brief:  Definition of the Shore TM1 environment
@@ -198,12 +196,10 @@ public:
     virtual int start();
     virtual int stop();
     virtual int info();
-    virtual int statistics();    
-    
+    virtual int statistics();        
 
     virtual w_rc_t warmup() { return(RCOK); /* do nothing */ };
     virtual w_rc_t check_consistency() { return(RCOK); /* do nothing */ };
-
 
     // --- scaling and querying factor --- //
     void set_qf(const int aQF);

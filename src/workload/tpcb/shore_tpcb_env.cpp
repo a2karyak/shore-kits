@@ -89,6 +89,33 @@ int ShoreTPCBEnv::info()
 }
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    statistics
+ *
+ *  @brief: Prints statistics for TM1 
+ *
+ ********************************************************************/
+
+int ShoreTPCBEnv::statistics() 
+{
+    // read the current trx statistics
+    CRITICAL_SECTION(cs, _statmap_mutex);
+    ShoreTPCBTrxStats rval;
+    rval -= rval; // dirty hack to set all zeros
+    for (statmap_t::iterator it=_statmap.begin(); it != _statmap.end(); ++it) 
+	rval += *it->second;
+
+    TRACE( TRACE_STATISTICS, "AcctUpd. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.acct_update,
+           rval.failed.acct_update,
+           rval.deadlocked.acct_update);
+
+    return (0);
+}
+
+
 /******************************************************************** 
  *
  *  @fn:    start()
@@ -351,7 +378,6 @@ void ShoreTPCBEnv::table_creator_t::work()
     W_COERCE(_env->_paccount_desc->create_table(_env->db()));
     W_COERCE(_env->_phistory_desc->create_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
-
     
     // 2. Create 10k accounts in each partition to buffer 
     //    workers from each other
@@ -419,6 +445,10 @@ ShoreTPCBEnv::loaddata()
     long total_accounts = _scaling_factor*TPCB_ACCOUNTS_PER_BRANCH;
     w_assert1((total_accounts % loaders_to_use) == 0);
     long accts_per_worker = total_accounts/loaders_to_use;
+
+    // Adjust the number of loaders to use, if the scaling factor is very small
+    // and the total_accounts < #loaders* accounts_per_branch
+    if (_scaling_factor<loaders_to_use) loaders_to_use = _scaling_factor;
     
     time_t tstart = time(NULL);
 

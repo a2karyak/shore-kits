@@ -190,7 +190,7 @@ public:
     virtual int start();
     virtual int stop();
     virtual int info();
-
+    virtual int statistics(); 
 
     // --- scaling and querying factor --- //
     void print_sf(void);

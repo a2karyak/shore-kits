@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcc_env.h
  *
  *  @brief:  Definition of the Shore TPC-C environment

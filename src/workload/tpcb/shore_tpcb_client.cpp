@@ -40,8 +40,7 @@ ENTER_NAMESPACE(tpcb);
  *
  *********************************************************************/
 
-const int 
-baseline_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
+const int baseline_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -64,8 +63,7 @@ baseline_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
  *
  *********************************************************************/
  
-w_rc_t 
-baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid) 
+w_rc_t baseline_tpcb_client_t::run_one_xct(int xct_type, int xctid) 
 {
     // Set input
     trx_result_tuple_t atrt;

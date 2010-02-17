@@ -96,10 +96,11 @@ int rvp_t::add_action(base_action_t* paction)
 void rvp_t::notify_client() 
 {
     // signal cond var
-    if(_result.get_notify()) {
+    condex* pcondex = _result.get_notify();
+    if(pcondex) {
         TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
-               _tid, _result.get_notify());
-	_result.get_notify()->signal();
+               _tid, pcondex);
+	pcondex->signal();
     }
     else
         TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);

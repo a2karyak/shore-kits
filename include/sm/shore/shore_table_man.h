@@ -63,6 +63,10 @@ ENTER_NAMESPACE(shore);
 
 
 
+#define DECLARE_TABLE_SCHEMA(tablename)         \
+    class tablename : public table_desc_t {     \
+    public: tablename(string sysname); }
+
 
 /* ---------------------------------------------------------------
  *

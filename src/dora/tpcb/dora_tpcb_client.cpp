@@ -72,13 +72,10 @@ w_rc_t dora_tpcb_client_t::run_one_xct(int xct_type, int xctid)
     // if DORA TPCB MIX
     bool bWake = false;
 
-    // pick a valid sf
-    register int selid = _selid;
-
-    // IP: There is no TPCB-Mix
-    if (_selid==0) {
-        assert(0);
-    }
+    // Pick a valid sf
+    int selid = _selid;
+    if (_selid==0)
+        selid = URand(1,_qf);
 
     trx_result_tuple_t atrt;
     if (_cp->take_one) {

@@ -114,6 +114,7 @@ SW=$(top_srcdir)/src/workload
 WL_TPCC_SHORE = \
    $(SW)/tpcc/tpcc_random.cpp \
    $(SW)/tpcc/tpcc_input.cpp \
+   $(SW)/tpcc/shore_tpcc_schema.cpp \
    $(SW)/tpcc/shore_tpcc_schema_man.cpp \
    $(SW)/tpcc/shore_tpcc_env.cpp \
    $(SW)/tpcc/shore_tpcc_xct.cpp \
@@ -121,6 +122,7 @@ WL_TPCC_SHORE = \
 
 WL_TM1_SHORE = \
    $(SW)/tm1/tm1_input.cpp \
+   $(SW)/tm1/shore_tm1_schema.cpp \
    $(SW)/tm1/shore_tm1_schema_man.cpp \
    $(SW)/tm1/shore_tm1_env.cpp \
    $(SW)/tm1/shore_tm1_xct.cpp \
@@ -128,6 +130,7 @@ WL_TM1_SHORE = \
 
 WL_TPCB_SHORE = \
    $(SW)/tpcb/tpcb_input.cpp \
+   $(SW)/tpcb/shore_tpcb_schema.cpp \
    $(SW)/tpcb/shore_tpcb_schema_man.cpp \
    $(SW)/tpcb/shore_tpcb_env.cpp \
    $(SW)/tpcb/shore_tpcb_xct.cpp \
