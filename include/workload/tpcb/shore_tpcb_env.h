@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcb_env.h
  *
  *  @brief:  Definition of the Shore TPC-B environment
@@ -124,11 +122,6 @@ struct ShoreTPCBTrxStats
 class ShoreTPCBEnv : public ShoreEnv
 {
 public:
-    typedef trx_worker_t<ShoreTPCBEnv> tpcb_worker_t;        
-    typedef tpcb_worker_t              Worker;
-    typedef tpcb_worker_t*             WorkerPtr;
-    typedef vector<WorkerPtr>          WorkerPool;
-    typedef WorkerPool::iterator       WorkerIt;
 
     typedef std::map<pthread_t, ShoreTPCBTrxStats*> statmap_t;
 
@@ -136,19 +129,8 @@ public:
     class table_creator_t;
     struct checkpointer_t;
 
-protected:       
-
-    WorkerPool      _workers;            // list of worker threads
-    int             _worker_cnt;         
-
-    // scaling factors
-    int             _scaling_factor; /* scaling factor - SF=1 -> 100MB database */
-    pthread_mutex_t _scaling_mutex;
-    int             _queried_factor; /* queried factor - how many of the WHs queried */
-    pthread_mutex_t _queried_mutex;
-    
-
 private:
+
     w_rc_t _post_init_impl();
 
     w_rc_t _pad_BRANCHES();
@@ -156,23 +138,17 @@ private:
 
 public:    
 
-    /** Construction  */
+    // Construction
     ShoreTPCBEnv(string confname)
-        : ShoreEnv(confname), _worker_cnt(0),
-          _scaling_factor(100), 
-          _queried_factor(100)
+        : ShoreEnv(confname)
     {
         // read the scaling factor from the configuration file
-        pthread_mutex_init(&_scaling_mutex, NULL);
-        pthread_mutex_init(&_queried_mutex, NULL);
+        _scaling_factor=100;
+        _queried_factor=100;
     }
 
 
-    virtual ~ShoreTPCBEnv() 
-    {
-        pthread_mutex_destroy(&_scaling_mutex);
-        pthread_mutex_destroy(&_queried_mutex);                
-    }
+    virtual ~ShoreTPCBEnv() { }
 
 
     // DB INTERFACE
@@ -191,14 +167,6 @@ public:
     virtual int stop();
     virtual int info();
     virtual int statistics(); 
-
-    // --- scaling and querying factor --- //
-    void print_sf(void);
-    void set_qf(const int aQF);
-    inline int get_qf() { return (_queried_factor); }
-    void set_sf(const int aSF);
-    inline int get_sf() { return (_scaling_factor); }
-    const int upd_sf();
 
     int dump();
 
@@ -227,27 +195,13 @@ public:
 
     // --- kit baseline trxs --- //
 
-    w_rc_t run_one_xct(const int xctid, int xct_type, const int whid, 
-                       trx_result_tuple_t& trt);
+    w_rc_t run_one_xct(Request* prequest);
 
     // transactions
     DECLARE_TRX(acct_update);
 
     // database population
     DECLARE_TRX(populate_db);
-
-
-    const int upd_worker_cnt();
-
-    // accesses a worker from the pool
-    inline tpcb_worker_t* tpcbworker(const int idx) { 
-        assert (idx>=0);
-        return (_workers[idx%_worker_cnt]); 
-    } 
-
-    //// request atomic trash stack
-    typedef atomic_class_stack<trx_request_t> RequestStack;
-    RequestStack _request_pool;
 
     // for thread-local stats
     virtual void env_thread_init();
@@ -259,7 +213,7 @@ public:
     // snapshot taken at the beginning of each experiment    
     ShoreTPCBTrxStats _last_stats;
     virtual void reset_stats();
-    const ShoreTPCBTrxStats _get_stats();
+    ShoreTPCBTrxStats _get_stats();
 
 
 }; // EOF ShoreTPCBEnv

@@ -209,7 +209,7 @@ void  field_value_t::print_value(ostream & os)
  *
  *********************************************************************/
 
-const int field_value_t::get_debug_str(char* &buf)
+int field_value_t::get_debug_str(char* &buf)
 {
     assert (_pfield_desc);
 

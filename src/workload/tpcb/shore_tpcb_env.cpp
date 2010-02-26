@@ -112,137 +112,30 @@ int ShoreTPCBEnv::statistics()
            rval.failed.acct_update,
            rval.deadlocked.acct_update);
 
+    ShoreEnv::statistics();
+
     return (0);
 }
 
 
 /******************************************************************** 
  *
- *  @fn:    start()
+ *  @fn:    start/stop
  *
- *  @brief: Starts the tpcb env
+ *  @brief: Simply call the corresponding functions of shore_env 
  *
  ********************************************************************/
 
 int ShoreTPCBEnv::start()
 {
-    upd_sf();
-    upd_worker_cnt();
-
-    assert (_workers.empty());
-
-    TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
-    info();
-
-    // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
-
-    WorkerPtr aworker;
-    for (int i=0; i<_worker_cnt; i++) {
-#ifdef CFG_SLI
-        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
-#else
-        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,0);
-#endif
-        _workers.push_back(aworker);
-        aworker->init(lc);
-        aworker->start();
-        aworker->fork();
-    }
-    return (0);
+    return (ShoreEnv::start());
 }
-
-
-/******************************************************************** 
- *
- *  @fn:    stop()
- *
- *  @brief: Stops the tpcb env
- *
- ********************************************************************/
 
 int ShoreTPCBEnv::stop()
 {
-    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
-    info();
-
-    int i=0;
-    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
-        i++;
-        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
-        if (*it) {
-            (*it)->stop();
-            (*it)->join();
-            delete (*it);
-        }
-    }
-    _workers.clear();
-    return (0);
+    return (ShoreEnv::stop());
 }
 
-
-/******************************************************************** 
- *
- *  @fn:    set_sf/qf
- *
- *  @brief: Set the scaling and queried factors
- *
- ********************************************************************/
-
-void ShoreTPCBEnv::set_qf(const int aQF)
-{
-    if ((aQF >= 0) && (aQF <= _scaling_factor)) {
-        CRITICAL_SECTION( cs, _queried_mutex);
-        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
-        _queried_factor = aQF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
-    }
-}
-
-
-void ShoreTPCBEnv::set_sf(const int aSF)
-{
-
-    if (aSF > 0) {
-        CRITICAL_SECTION( cs, _scaling_mutex);
-        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
-        _scaling_factor = aSF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
-    }
-}
-
-const int ShoreTPCBEnv::upd_sf()
-{
-    // update whs
-    int tmp_sf = envVar::instance()->getSysVarInt("sf");
-    assert (tmp_sf);
-    set_sf(tmp_sf);
-    set_qf(tmp_sf);
-    //print_sf();
-    return (_scaling_factor);
-}
-
-
-void ShoreTPCBEnv::print_sf(void)
-{
-    TRACE( TRACE_ALWAYS, "*** ShoreTPCBEnv ***\n");
-    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
-    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
-}
-
-
-const int ShoreTPCBEnv::upd_worker_cnt()
-{
-    // update worker thread cnt
-    int workers = envVar::instance()->getVarInt("db-workers",0);
-    assert (workers);
-    _worker_cnt = workers;
-    return (_worker_cnt);
-}
 
 
 /****************************************************************** 
@@ -314,11 +207,9 @@ void ShoreTPCBEnv::table_builder_t::work()
     for(int i=0; i < _count; i += TPCB_ACCOUNTS_CREATED_PER_POP_XCT) {
 	long a_id = _start + i;
 	populate_db_input_t in(_sf, a_id);
-	trx_result_tuple_t out;
-
     retry:
 	W_COERCE(_env->db()->begin_xct());
-	e = _env->xct_populate_db(a_id, out, in);
+	e = _env->xct_populate_db(a_id, in);
 	if(e.is_error()) {
 	    W_COERCE(_env->db()->abort_xct());
 
@@ -384,11 +275,10 @@ void ShoreTPCBEnv::table_creator_t::work()
     for(long i=-1; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
-	trx_result_tuple_t out;
 	TRACE( TRACE_STATISTICS, "Populating %d a_ids starting with %d\n", 
                TPCB_ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 	W_COERCE(_env->db()->begin_xct());
-	W_COERCE(_env->xct_populate_db(a_id, out, in));
+	W_COERCE(_env->xct_populate_db(a_id, in));
     }
 
     // 3. Before returning, run the post initialization phase 

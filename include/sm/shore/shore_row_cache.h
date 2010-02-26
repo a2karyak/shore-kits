@@ -34,7 +34,6 @@
 #ifndef __SHORE_ROW_CACHE_H
 #define __SHORE_ROW_CACHE_H
 
-// sparcv9 only at the moment
 #include <atomic.h>
 
 #include "util/guard.h"
@@ -104,6 +103,7 @@ public:
         mylink head;
         mylink* node = NULL;
 
+#ifdef CFG_CACHES
         // create (init_count) objects, and push them to the cache
         for (int i=0; i<init_count; i++) {
             table_tuple* u = borrow();
@@ -117,6 +117,7 @@ public:
             node = node->_next;
             delete (head._next);
         }
+#endif
     }
 
     
@@ -143,6 +144,7 @@ public:
      */
     table_tuple* borrow() 
     {
+#ifdef CFG_CACHES
 #ifdef CACHE_STATS
         atomic_inc_uint(&_tuple_requests);
 #endif
@@ -157,13 +159,21 @@ public:
         table_tuple* temp = new (this) table_tuple();
         temp->setup(_ptable);
 	return (temp);
+
+#else
+        // Calls malloc instead, for debugging purposes
+        table_tuple* temp = new table_tuple();
+        temp->setup(_ptable);
+        return (temp);
+#endif
     }
     
-    /* Returns an object to the cache. The object is reset and put on the
+    /* Return an object to the cache. The object is reset and put on the
      * free list.
      */
     void giveback(table_tuple* ptn) 
     {        
+#ifdef CFG_CACHES
         assert (ptn);
         assert (ptn->_ptable == _ptable);
 
@@ -175,6 +185,9 @@ public:
         
         // give it back
         push(u.v);
+#else
+        delete (ptn);
+#endif
     }    
 
 

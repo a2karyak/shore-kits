@@ -30,7 +30,7 @@
 
 
 #include "sm/shore/shore_worker.h"
-
+#include "sm/shore/shore_env.h"
 
 ENTER_NAMESPACE(shore);
 
@@ -383,7 +383,7 @@ int base_worker_t::_work_STOPPED_impl()
  * 
  ******************************************************************/
 
-const bool base_worker_t::abort_one_trx(xct_t* axct) 
+bool base_worker_t::abort_one_trx(xct_t* axct) 
 {    
     assert (_env);
     assert (axct);

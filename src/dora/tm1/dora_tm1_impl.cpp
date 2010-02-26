@@ -156,21 +156,20 @@ done:
 
 #ifdef TM1GND2
 
-w_rc_t 
-mid_gnd_rvp::run() 
+w_rc_t mid_gnd_rvp::run() 
 {
 #ifndef ONLYDORA
     assert (_xct);
 #endif
 
     // 1. Setup the final RVP
-    final_gnd_rvp* frvp = _penv->new_final_gnd_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_gnd_rvp* frvp = _penv->new_final_gnd_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 3. Generate the action
-    r_cf_gnd_action* r_cf = _penv->new_r_cf_gnd_action(_tid,_xct,frvp,_in);
+    r_cf_gnd_action* r_cf = _penv->new_r_cf_gnd_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -477,21 +476,20 @@ done:
 
 #ifdef TM1USD2
 
-w_rc_t 
-mid_usd_rvp::run() 
+w_rc_t mid_usd_rvp::run() 
 {
 #ifndef ONLYDORA
     assert (_xct);
 #endif
 
     // 1. Setup the final RVP
-    final_usd_rvp* frvp = _penv->new_final_usd_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_usd_rvp* frvp = _penv->new_final_usd_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 3. Generate the action
-    upd_sub_usd_action* upd_sub = _penv->new_upd_sub_usd_action(_tid,_xct,frvp,_in);
+    upd_sub_usd_action* upd_sub = _penv->new_upd_sub_usd_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -775,13 +773,13 @@ mid1_icf_rvp::run()
 
     // 1. Setup the next RVP
     // PH2 consists of 1 action
-    mid2_icf_rvp* rvp = _penv->new_mid2_icf_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
+    mid2_icf_rvp* rvp = _penv->new_mid2_icf_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(rvp);
 
     // 2. Generate the action
-    r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_tid,_xct,rvp,_in);
+    r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_xct,_tid,rvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -812,13 +810,13 @@ mid2_icf_rvp::run()
 
     // 1. Setup the final RVP
     // PH3 consists of 1 action
-    final_icf_rvp* frvp = _penv->new_final_icf_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_icf_rvp* frvp = _penv->new_final_icf_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 3. Generate the action
-    ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_tid,_xct,frvp,_in);
+    ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -849,14 +847,14 @@ mid_icf_rvp::run()
 #endif
 
     // 1. Setup the final RVP
-    final_icf_rvp* frvp = _penv->new_final_icf_rvp(_tid,_xct,_xct_id,_result,_actions);    
+    final_icf_rvp* frvp = _penv->new_final_icf_rvp(_xct,_tid,_xct_id,_result,_actions);    
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate the actions
-    r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_tid,_xct,frvp,_in);
-    ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_tid,_xct,frvp,_in);
+    r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_xct,_tid,frvp,_in);
+    ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -1166,13 +1164,13 @@ w_rc_t mid_dcf_rvp::run()
 #endif
 
     // 1. Setup the final RVP
-    final_dcf_rvp* frvp = _penv->new_final_dcf_rvp(_tid,_xct,_xct_id,_result,_actions);    
+    final_dcf_rvp* frvp = _penv->new_final_dcf_rvp(_xct,_tid,_xct_id,_result,_actions);    
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate the actions
-    del_cf_dcf_action* del_cf = _penv->new_del_cf_dcf_action(_tid,_xct,frvp,_in);
+    del_cf_dcf_action* del_cf = _penv->new_del_cf_dcf_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 

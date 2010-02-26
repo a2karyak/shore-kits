@@ -236,7 +236,7 @@ public:
 
     // input for normal actions
     // enqueues action, 0 on success
-    const int enqueue(Action* pAction, const bool bWake);
+    int enqueue(Action* pAction, const bool bWake);
     Action* dequeue();
     inline const int has_input(void) const { 
         return (!_input_queue->is_empty()); 
@@ -246,7 +246,7 @@ public:
     }
 
     // deque of actions to be committed
-    const int enqueue_commit(Action* apa, const bool bWake=true);
+    int enqueue_commit(Action* apa, const bool bWake=true);
     Action* dequeue_commit();
     inline const int has_committed(void) const { 
         return (!_committed_queue->is_empty()); 
@@ -320,8 +320,7 @@ protected:
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
+int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
 {
     //assert(verify(*pAction)); // TODO: Enable this
 //     if (!verify(*pAction)) {
@@ -367,11 +366,9 @@ partition_t<DataType>::dequeue()
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
+int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 {
     assert (pAction->get_partition()==this);
-
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
            pAction->tid(), _table->name(), _part_id);
     _committed_queue->push(pAction,bWake);

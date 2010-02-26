@@ -270,7 +270,7 @@ public:
     // shell interface
     virtual void pre_process_cmd();
     virtual int process_command(const char* command, const char* command_tag);
-    virtual const int print_usage(const char* command);
+    virtual int print_usage(const char* command);
     virtual int SIGINT_handler();
 
     // supported commands and their usage
@@ -290,11 +290,11 @@ public:
 
 
     // Instanciate and close the Shore environment
-    virtual const int inst_test_env(int argc, char* argv[])=0;
+    virtual int inst_test_env(int argc, char* argv[])=0;
 
     // supported trxs and binding policies
-    virtual const int load_trxs_map(void)=0;
-    virtual const int load_bp_map(void)=0;
+    virtual int load_trxs_map(void)=0;
+    virtual int load_bp_map(void)=0;
     void print_sup_trxs(void) const;
     void print_sup_bp(void);
     const char* translate_trx(const int iSelectedTrx) const;

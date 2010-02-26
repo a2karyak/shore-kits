@@ -57,7 +57,7 @@ const int XCT_TM1_DORA_DEL_CALL_FWD  = 228;
  *
   *********************************************************************/
 
-const int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
+int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -77,16 +77,16 @@ const int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 
 /********************************************************************* 
  *
- *  @fn:    run_one_xct
+ *  @fn:    submit_one
  *
- *  @brief: DORA TM1 client - Entry point for running one trx 
+ *  @brief: Entry point for running one DORA TM1 xct 
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure internal has expired.
  *
  *********************************************************************/
  
-w_rc_t dora_tm1_client_t::run_one_xct(int xct_type, int xctid) 
+w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid) 
 {
     // if DORA TM1 MIX
     bool bWake = false;

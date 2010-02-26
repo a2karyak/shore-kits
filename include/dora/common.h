@@ -252,18 +252,18 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Midway RVP without previous actions transfer
 
 #define DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(rvpname,inputname)             \
-    rvpname* new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                            trx_result_tuple_t& presult, const inputname& in, const bool bWake)
 
 
 #define DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(rvpname,inputname,classname)    \
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
-    rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                                       trx_result_tuple_t& presult, const inputname& in, \
                                       const bool bWake) {               \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
         assert (myrvp);                                                 \
-        myrvp->set(atid,axct,axctid,presult,in,bWake,this,my_##rvpname##_cache->_cache.get()); \
+        myrvp->set(axct,atid,axctid,presult,in,bWake,this,my_##rvpname##_cache->_cache.get()); \
         return (myrvp); }
 
 
@@ -271,20 +271,20 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Dynamic Midway RVP without previous actions transfer
 
 #define DECLARE_DORA_MIDWAY_DYNAMIC_RVP_GEN_FUNC(rvpname,inputname)     \
-    rvpname* new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                            trx_result_tuple_t& presult, const inputname& in, \
                            const int intratrx, const int total, const bool bWake)
 
 
 #define DEFINE_DORA_MIDWAY_DYNAMIC_RVP_GEN_FUNC(rvpname,inputname,classname) \
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
-    rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                                       trx_result_tuple_t& presult, const inputname& in, \
                                       const int intratrx, const int total, \
                                       const bool bWake) {               \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
         assert (myrvp);                                                 \
-        myrvp->set(atid,axct,axctid,presult,in,bWake,this,              \
+        myrvp->set(axct,atid,axctid,presult,in,bWake,this,              \
                    my_##rvpname##_cache->_cache.get(),                  \
                    intratrx,total);                                     \
         return (myrvp); }
@@ -294,18 +294,18 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Midway RVP with previous actions transfer
 
 #define DECLARE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(rvpname,inputname)   \
-    rvpname* new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                            trx_result_tuple_t& presult, const inputname& in, \
                            baseActionsList& actions, const bool bWake)
 
 #define DEFINE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(rvpname,inputname,classname)    \
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
-    rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                                       trx_result_tuple_t& presult, const inputname& in, \
                                       baseActionsList& actions, const bool bWake) { \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
         assert (myrvp);                                                 \
-        myrvp->set(atid,axct,axctid,presult,in,bWake,this,my_##rvpname##_cache->_cache.get()); \
+        myrvp->set(axct,atid,axctid,presult,in,bWake,this,my_##rvpname##_cache->_cache.get()); \
         myrvp->copy_actions(actions);                                   \
         return (myrvp); }
 
@@ -316,17 +316,17 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // @note: the final rvps do not need an input
 
 #define DECLARE_DORA_FINAL_RVP_GEN_FUNC(rvpname)                        \
-    rvpname* new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                            trx_result_tuple_t& presult)
 
 
 #define DEFINE_DORA_FINAL_RVP_GEN_FUNC(rvpname,classname)               \
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
-    rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                                       trx_result_tuple_t& presult) {    \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
         assert (myrvp);                                                 \
-        myrvp->set(atid,axct,axctid,presult,this,my_##rvpname##_cache->_cache.get()); \
+        myrvp->set(axct,atid,axctid,presult,this,my_##rvpname##_cache->_cache.get()); \
         return (myrvp); }
 
 
@@ -334,17 +334,17 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Final RVP with previous actions transfer
 
 #define DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(rvpname)              \
-    rvpname* new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                            trx_result_tuple_t& presult, baseActionsList& actions)
 
 
 #define DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(rvpname,classname)     \
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
-    rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                                       trx_result_tuple_t& presult, baseActionsList& actions) { \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
-        assert (myrvp);                                              \
-        myrvp->set(atid,axct,axctid,presult,this,my_##rvpname##_cache->_cache.get()); \
+        assert (myrvp);                                                 \
+        myrvp->set(axct,atid,axctid,presult,this,my_##rvpname##_cache->_cache.get()); \
         myrvp->copy_actions(actions);                                   \
         return (myrvp); }
 
@@ -353,7 +353,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Dynamic Final RVP with previous actions transfer
 
 #define DECLARE_DORA_FINAL_DYNAMIC_RVP_WITH_PREV_GEN_FUNC(rvpname)      \
-    rvpname* new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                            trx_result_tuple_t& presult,                 \
                            const int intratrx, const int total,         \
                            baseActionsList& actions)
@@ -361,13 +361,13 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 #define DEFINE_DORA_FINAL_DYNAMIC_RVP_WITH_PREV_GEN_FUNC(rvpname,classname) \
     DECLARE_TLS_RVP_CACHE(rvpname);                                     \
-    rvpname* classname::new_##rvpname(const tid_t& atid, xct_t* axct, const int axctid, \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
                                       trx_result_tuple_t& presult,      \
                                       const int intratrx, const int total, \
                                       baseActionsList& actions) {       \
         rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
         assert (myrvp);                                                 \
-        myrvp->set(atid,axct,axctid,presult,this,                       \
+        myrvp->set(axct,atid,axctid,presult,this,                       \
                    my_##rvpname##_cache->_cache.get(),                  \
                    intratrx,total);                                     \
         myrvp->copy_actions(actions);                                   \
@@ -379,15 +379,15 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Actions
 
 #define DECLARE_DORA_ACTION_GEN_FUNC(actioname,rvpname,inputname)       \
-    actioname* new_##actioname(const tid_t& atid, xct_t* axct, rvpname* prvp, const inputname& in)
+    actioname* new_##actioname(xct_t* axct, const tid_t& atid, rvpname* prvp, const inputname& in)
 
 
 #define DEFINE_DORA_ACTION_GEN_FUNC(actioname,rvpname,inputname,actiontype,classname) \
     DECLARE_TLS_ACTION_CACHE(actioname,actiontype);                     \
-    actioname* classname::new_##actioname(const tid_t& atid, xct_t* axct, rvpname* prvp, const inputname& in) { \
+    actioname* classname::new_##actioname(xct_t* axct, const tid_t& atid, rvpname* prvp, const inputname& in) { \
         actioname* myaction = my_##actioname##_cache->_cache->borrow(); \
         assert (myaction);                                              \
-        myaction->set(atid,axct,prvp,in,this,my_##actioname##_cache->_cache.get()); \
+        myaction->set(axct,atid,prvp,in,this,my_##actioname##_cache->_cache.get()); \
         prvp->add_action(myaction);                                     \
         return (myaction); }
 
@@ -414,11 +414,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     public:                                                             \
             cname() : terminal_rvp_t(), _cache(NULL), _penv(NULL) { }   \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
-            inline void set(const tid_t& atid, xct_t* axct, const int axctid, \
+            inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc) { \
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
-                _set(atid,axct,axctid,presult,intratrx,total); }        \
+                _set(axct,atid,axctid,presult,intratrx,total); }        \
             inline void giveback() {                                    \
                 assert (_penv); _cache->giveback(this); }               \
             w_rc_t run();                                               \
@@ -436,12 +436,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     public:                                                             \
             cname() : terminal_rvp_t(), _cache(NULL), _penv(NULL) { }   \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
-            inline void set(const tid_t& atid, xct_t* axct, const int axctid, \
+            inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc, \
                             const int intratrx, const int total) {      \
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
-                _set(atid,axct,axctid,presult,intratrx,total); }        \
+                _set(axct,atid,axctid,presult,intratrx,total); }        \
             inline void giveback() {                                    \
                 assert (_penv); _cache->giveback(this); }               \
             w_rc_t run();                                               \
@@ -468,7 +468,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             cname() : rvp_t(), _cache(NULL), _penv(NULL) { }            \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inputname _in;                                              \
-            inline void set(const tid_t& atid, xct_t* axct, const int axctid, \
+            inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
                             trx_result_tuple_t& presult,                \
                             const inputname& in, const bool bWake,      \
                             envname* penv, rvp_cache* pc) {             \
@@ -476,7 +476,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                 _bWake = bWake;                                         \
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
-                _set(atid,axct,axctid,presult,intratrx,total); }        \
+                _set(axct,atid,axctid,presult,intratrx,total); }        \
             inline void giveback() {                                    \
                 assert (_penv); _cache->giveback(this); }               \
             w_rc_t run(); }
@@ -494,7 +494,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             cname() : rvp_t(), _cache(NULL), _penv(NULL) { }            \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inputname _in;                                              \
-            inline void set(const tid_t& atid, xct_t* axct, const int axctid, \
+            inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
                             trx_result_tuple_t& presult,                \
                             const inputname& in, const bool bWake,      \
                             envname* penv, rvp_cache* pc,               \
@@ -503,7 +503,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                 _bWake = bWake;                                         \
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
-                _set(atid,axct,axctid,presult,intratrx,total); }        \
+                _set(axct,atid,axctid,presult,intratrx,total); }        \
             inline void giveback() {                                    \
                 assert (_penv); _cache->giveback(this); }               \
             w_rc_t run(); }
@@ -524,12 +524,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             ~aname() { }                                                \
             inline void giveback() {                                    \
                 assert (_cache); _cache->giveback(this); }              \
-            inline void set(const tid_t& atid, xct_t* axct, rvp_t* prvp, \
+            inline void set(xct_t* axct, const tid_t& atid, rvp_t* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
                 assert (pc); _cache = pc;                               \
                 assert (penv); _penv = penv;                            \
                 _in = in;                                               \
-                _range_act_set(atid,axct,prvp,keylen); }                \
+                _range_act_set(axct,atid,prvp,keylen); }                \
             w_rc_t trx_exec();                                          \
             void calc_keys(); }
 
@@ -547,13 +547,13 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             ~aname() { }                                                \
             inline void giveback() {                                    \
                 assert (_cache); _cache->giveback(this); }              \
-            inline void set(const tid_t& atid, xct_t* axct, rvpname* prvp, \
+            inline void set(xct_t* axct, const tid_t& atid, rvpname* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
                 assert (pc); _cache = pc;                               \
                 assert (prvp); _prvp = prvp;                            \
                 assert (penv); _penv = penv;                            \
                 _in = in;                                               \
-                _range_act_set(atid,axct,prvp,keylen); }                \
+                _range_act_set(axct,atid,prvp,keylen); }                \
             w_rc_t trx_exec();                                          \
             void calc_keys(); }
 

@@ -78,11 +78,11 @@ public:
     ~dora_tm1_client_t() { }
 
     // every client class should implement this function
-    static const int load_sup_xct(mapSupTrxs& map);
+    static int load_sup_xct(mapSupTrxs& map);
 
     // INTERFACE 
 
-    w_rc_t run_one_xct(int xct_type, int xctid);    
+    w_rc_t submit_one(int xct_type, int xctid);    
     
 }; // EOF: dora_tm1_client_t
 

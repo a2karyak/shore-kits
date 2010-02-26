@@ -44,12 +44,12 @@ protected:
     Key _down;
     Key _up;
 
-    inline void _range_act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void _range_act_set(xct_t* axct, const tid_t& atid, rvp_t* prvp, 
                                const int keylen) 
     {
         // the range action has two keys: 
         // the low and hi value that determine the range
-        _act_set(atid,axct,prvp,2); 
+        _act_set(axct,atid,prvp,2); 
         assert (keylen);
         _down.reserve(keylen);
         _up.reserve(keylen);

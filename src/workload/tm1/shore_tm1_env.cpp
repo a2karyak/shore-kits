@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tm1_env.cpp
  *
  *  @brief:  Declaration of the Shore TM1 environment (database)
@@ -66,6 +64,26 @@ int ShoreTM1Env::load_schema()
     _pcf_man  = new cf_man_impl(_pcf_desc.get());
         
     return (0);
+}
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    start/stop
+ *
+ *  @brief: Simply call the corresponding functions of shore_env 
+ *
+ ********************************************************************/
+
+int ShoreTM1Env::start()
+{
+    return (ShoreEnv::start());
+}
+
+int ShoreTM1Env::stop()
+{
+    return (ShoreEnv::stop());
 }
 
 
@@ -139,125 +157,11 @@ int ShoreTM1Env::statistics()
            rval.failed.del_call_fwd,
            rval.deadlocked.del_call_fwd);
 
+    ShoreEnv::statistics();
+
     return (0);
 }
 
-
-
-/******************************************************************** 
- *
- *  @fn:    start()
- *
- *  @brief: Starts the tm1 env
- *
- ********************************************************************/
-
-int ShoreTM1Env::start()
-{
-    upd_sf();
-    upd_worker_cnt();
-
-    assert (_workers.empty());
-
-    TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
-    info();
-
-    // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
-
-    WorkerPtr aworker;
-    for (int i=0; i<_worker_cnt; i++) {
-#ifdef CFG_SLI
-        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
-#else
-        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,0);
-#endif
-        _workers.push_back(aworker);
-        aworker->init(lc);
-        aworker->start();
-        aworker->fork();
-    }
-    return (0);
-}
-
-
-/******************************************************************** 
- *
- *  @fn:    stop()
- *
- *  @brief: Stops the tm1 env
- *
- ********************************************************************/
-
-int ShoreTM1Env::stop()
-{
-    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
-    info();
-
-    int i=0;
-    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
-        i++;
-        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
-        if (*it) {
-            (*it)->stop();
-            (*it)->join();
-            delete (*it);
-        }
-    }
-    _workers.clear();
-    return (0);
-}
-
-
-/******************************************************************** 
- *
- *  @fn:    set_sf
- *
- *  @brief: Set the scaling factor
- *
- ********************************************************************/
-
-void ShoreTM1Env::set_qf(const int aQF)
-{
-    if ((aQF >= 0) && (aQF <= _scaling_factor)) {
-        CRITICAL_SECTION( cs, _queried_mutex);
-        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
-        _queried_factor = aQF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
-    }
-}
-
-void ShoreTM1Env::set_sf(const int aSF)
-{
-
-    if (aSF > 0) {
-        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
-        _scaling_factor = aSF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
-    }
-}
-
-const int ShoreTM1Env::upd_sf()
-{
-    int tmp_sf = envVar::instance()->getSysVarInt("sf");
-    assert (tmp_sf);
-    set_sf(tmp_sf);
-    return (_scaling_factor);
-}
-
-
-const int ShoreTM1Env::upd_worker_cnt()
-{
-    // update worker thread cnt
-    int workers = envVar::instance()->getVarInt("db-workers",0);
-    assert (workers);
-    _worker_cnt = workers;
-    return (_worker_cnt);
-}
 
 
 
@@ -396,7 +300,8 @@ void ShoreTM1Env::table_builder_t::work()
 	    
                 w_rc_t e2 = _env->db()->abort_xct();
                 if(e2.is_error()) {
-                    TRACE( TRACE_ALWAYS, "Unable to abort trx for Subscriber (%d) due to [0x%x]\n", 
+                    TRACE( TRACE_ALWAYS, 
+                           "Unable to abort trx for Subscriber (%d) due to [0x%x]\n", 
                            sub_id, e2.err_num());
                 }
             }
@@ -555,6 +460,7 @@ int ShoreTM1Env::post_init()
 {
     return (0);
 }
+
 
 w_rc_t ShoreTM1Env::_post_init_impl() 
 {

@@ -157,9 +157,9 @@ public:
     ~kit_t() { }
 
 
-    virtual const int inst_test_env(int argc, char* argv[]);
-    virtual const int load_trxs_map(void);
-    virtual const int load_bp_map(void);
+    virtual int inst_test_env(int argc, char* argv[]);
+    virtual int load_trxs_map(void);
+    virtual int load_bp_map(void);
 
 
     // impl of supported commands
@@ -348,7 +348,7 @@ public:
  *********************************************************************/
 
 template<class Client,class DB>
-const int kit_t<Client,DB>::load_trxs_map(void)
+int kit_t<Client,DB>::load_trxs_map(void)
 {
     CRITICAL_SECTION(shell_cs,_lock);
     // gets the supported trxs from the client
@@ -356,7 +356,7 @@ const int kit_t<Client,DB>::load_trxs_map(void)
 }
 
 template<class Client,class DB>
-const int kit_t<Client,DB>::load_bp_map(void)
+int kit_t<Client,DB>::load_bp_map(void)
 {
     CRITICAL_SECTION(shell_cs,_lock);
     // Basic binding policies
@@ -379,7 +379,7 @@ const int kit_t<Client,DB>::load_bp_map(void)
  *********************************************************************/
 
 template<class Client,class DB>
-const int kit_t<Client,DB>::inst_test_env(int argc, char* argv[]) 
+int kit_t<Client,DB>::inst_test_env(int argc, char* argv[]) 
 {    
     // 1. Instanciate the Shore Environment
     _env = _dbinst = new DB(SHORE_CONF_FILE);

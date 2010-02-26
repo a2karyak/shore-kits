@@ -189,7 +189,7 @@ void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread,
  *
  ********************************************************************/
 
-const int shore_shell_t::print_usage(const char* command) 
+int shore_shell_t::print_usage(const char* command) 
 {
     assert (command);
 

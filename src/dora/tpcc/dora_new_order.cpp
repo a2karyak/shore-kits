@@ -53,7 +53,7 @@ mid_nord_rvp::run()
     register int whid     = _in._wh_id;
 
     // 1. Setup the final RVP
-    final_nord_rvp* frvp = _penv->new_final_nord_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_nord_rvp* frvp = _penv->new_final_nord_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
@@ -77,15 +77,15 @@ mid_nord_rvp::run()
         _in.get_no_item_input(anoitin);
 
         // 2b. Insert (ORD)
-        ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_tid,_xct,frvp,anoitin);
+        ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,frvp,anoitin);
         irpImpl* my_ord_part = _penv->ord()->myPart(whid-1);
 
         // 2c. Insert (NORD)
-        ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_tid,_xct,frvp,anoitin);
+        ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_xct,_tid,frvp,anoitin);
         irpImpl* my_nord_part = _penv->nor()->myPart(whid-1);
 
         // 2d. Insert (OL) - used to be OL_CNT actions
-        ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_tid,_xct,frvp,_in);
+        ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_xct,_tid,frvp,_in);
         irpImpl* my_ol_part = _penv->oli()->myPart(whid-1);
 
 

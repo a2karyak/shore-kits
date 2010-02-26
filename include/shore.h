@@ -21,12 +21,11 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 #ifndef __SHORE_H
 #define __SHORE_H
 
 #include "sm/shore/common.h"
+#include "sm/shore/shore_reqs.h"
 #include "sm/shore/shore_worker.h"
 #include "sm/shore/srmwqueue.h"
 
@@ -50,6 +49,5 @@
 #include "sm/shore/shore_trx_worker.h"
 #include "sm/shore/shore_worker.h"
 #include "sm/shore/shore_shell.h"
-
 
 #endif /** __SHORE_H */

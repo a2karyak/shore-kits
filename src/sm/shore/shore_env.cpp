@@ -31,6 +31,8 @@
 
 #include "util/confparser.h"
 #include "sm/shore/shore_env.h"
+#include "sm/shore/shore_trx_worker.h"
+#include "sm/shore/shore_flusher.h"
 #include "sm/shore/shore_helper_loader.h"
 
 
@@ -67,6 +69,15 @@ void env_stats_t::print_env_stats() const
 
 
 
+/******************************************************************** 
+ *
+ *  @class: ShoreEnv
+ *
+ *  @brief: The base class for all the environments (== databases) 
+ *          in Shore-MT
+ *
+ ********************************************************************/
+
 ShoreEnv::ShoreEnv(string confname)
     : db_iface(),
       _pssm(NULL), 
@@ -77,15 +88,141 @@ ShoreEnv::ShoreEnv(string confname)
       _vol_mutex(thread_mutex_create()), _cname(confname),
       _measure(MST_UNDEF),
       _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
-      _active_cpu_count(SHORE_DEF_NUM_OF_CORES)
+      _active_cpu_count(SHORE_DEF_NUM_OF_CORES),
+      _worker_cnt(0)
 {
+    _popts = new option_group_t(1);
+    _pvid = new vid_t(1);
+
+    pthread_mutex_init(&_scaling_mutex, NULL);
+    pthread_mutex_init(&_queried_mutex, NULL);
+
 #ifdef CFG_SLI
     _bUseSLI = envVar::instance()->getVarInt("db-worker-sli",0);
     fprintf(stdout, "SLI= %s\n", (_bUseSLI ? "enabled" : "disabled"));
 #endif
-    _popts = new option_group_t(1);
-    _pvid = new vid_t(1);
 }
+
+
+ShoreEnv::~ShoreEnv()
+{         
+    if (dbc()!=DBC_STOPPED) stop();
+    pthread_mutex_destroy(&_init_mutex);
+    pthread_mutex_destroy(&_statmap_mutex);
+    pthread_mutex_destroy(&_last_stats_mutex);
+    pthread_mutex_destroy(&_load_mutex);
+    pthread_mutex_destroy(&_vol_mutex);
+
+    pthread_mutex_destroy(&_scaling_mutex);
+    pthread_mutex_destroy(&_queried_mutex);
+}
+
+
+bool ShoreEnv::is_initialized() { 
+    CRITICAL_SECTION(cs, _init_mutex); 
+    return (_initialized); 
+}
+
+bool ShoreEnv::is_loaded() { 
+    CRITICAL_SECTION(cs, _load_mutex);
+    return (_loaded); 
+}
+
+
+int ShoreEnv::get_max_cpu_count() const 
+{ 
+    return (_max_cpu_count); 
+}
+
+int ShoreEnv::get_active_cpu_count() const 
+{ 
+    return (_active_cpu_count); 
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    Related to Scaling and querying factor
+ *
+ *  @brief: Scaling factor (sf) - The size of the entire database
+ *          Queried factor (qf) - The part of the database accessed at a run
+ *
+ ********************************************************************/
+
+void ShoreEnv::set_qf(const uint aQF)
+{
+    if ((aQF>0) && (aQF<=_scaling_factor)) {
+        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
+        _queried_factor = aQF;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
+    }
+}
+
+int ShoreEnv::get_qf() const
+{
+    return (_queried_factor);
+}
+
+
+void ShoreEnv::set_sf(const uint aSF)
+{
+    if (aSF > 0) {
+        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
+        _scaling_factor = aSF;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
+    }
+}
+
+int ShoreEnv::get_sf() const
+{
+    return (_scaling_factor);
+}
+
+int ShoreEnv::upd_sf()
+{
+    uint tmp_sf = envVar::instance()->getSysVarInt("sf");
+    assert (tmp_sf);
+    set_sf(tmp_sf);
+    return (_scaling_factor);
+}
+
+void ShoreEnv::print_sf() const
+{
+    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
+    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
+}
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    Related to environment workers
+ *
+ *  @brief: Each environment has a set of worker threads
+ *
+ ********************************************************************/
+
+uint ShoreEnv::upd_worker_cnt()
+{
+    // update worker thread cnt
+    uint workers = envVar::instance()->getVarInt("db-workers",0);
+    assert (workers);
+    _worker_cnt = workers;
+    return (_worker_cnt);
+}
+
+
+trx_worker_t* ShoreEnv::worker(const uint idx)
+{
+    return (_workers[idx%_worker_cnt]);
+}
+
+
+
 
 /********
  ******** Caution: The functions below should be invoked inside
@@ -159,6 +296,96 @@ int ShoreEnv::init()
 
 /*********************************************************************
  *
+ *  @fn:     start
+ *
+ *  @brief:  Starts the Shore environment
+ *           Updates the scaling/queried factors and starts the workers 
+ *
+ *  @return: 0 on success, non-zero otherwise
+ *
+ *********************************************************************/
+
+int ShoreEnv::start() 
+{
+    upd_sf();
+    upd_worker_cnt();
+
+    assert (_workers.empty());
+
+    TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
+    info();
+
+    // read from env params the loopcnt
+    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
+
+#ifdef CFG_FLUSHER
+    _start_flusher();
+#endif
+
+    WorkerPtr aworker;
+    for (int i=0; i<_worker_cnt; i++) {
+#ifdef CFG_SLI
+        aworker = new Worker(this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
+#else
+        aworker = new Worker(this,c_str("work-%d", i),PBIND_NONE,0);
+#endif
+        _workers.push_back(aworker);
+        aworker->init(lc);
+        aworker->start();
+        aworker->fork();
+    }
+    return (0);
+}
+
+
+
+/*********************************************************************
+ *
+ *  @fn:     stop
+ *
+ *  @brief:  Stops the Shore environment
+ *
+ *  @return: 0 on success, non-zero otherwise
+ *
+ *********************************************************************/
+
+int ShoreEnv::stop() 
+{
+    // Check if initialized
+    CRITICAL_SECTION(cs, _init_mutex);
+    if (!_initialized) {
+        cerr << "Environment not initialized..." << endl;
+        return (1);
+    }
+
+    // Stop workers
+    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
+    info();
+
+    int i=0;
+    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
+        i++;
+        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
+        if (*it) {
+            (*it)->stop();
+            (*it)->join();
+            delete (*it);
+        }
+    }
+    _workers.clear();
+
+#ifdef CFG_FLUSHER
+    _stop_flusher();
+#endif
+
+    // If reached this point the Shore environment is closed
+    return (0);
+}
+
+
+
+/*********************************************************************
+ *
  *  @fn:     close
  *
  *  @brief:  Closes the Shore environment
@@ -169,12 +396,32 @@ int ShoreEnv::init()
 
 int ShoreEnv::close() 
 {
+    // Check if initialized
     CRITICAL_SECTION(cs, _init_mutex);
     if (!_initialized) {
         cerr << "Environment not initialized..." << endl;
         return (1);
     }
 
+
+    // Stop workers
+    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
+    //info();
+
+    int i=0;
+    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
+        i++;
+        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
+        if (*it) {
+            (*it)->stop();
+            (*it)->join();
+            delete (*it);
+        }
+    }
+    _workers.clear();
+
+
+    // Close Shore-MT
     close_sm();
     _initialized = false;
 
@@ -199,10 +446,16 @@ int ShoreEnv::statistics()
         return (1);
     }
 
-    gatherstats_sm();
+#ifdef CFG_FLUSHER
+    if (_base_flusher) _base_flusher->statistics();
+#endif
+    
 
     // If reached this point the Shore environment is closed
     return (0);
+
+    gatherstats_sm();
+    return (1);
 }
 
 
@@ -476,10 +729,13 @@ int ShoreEnv::start_sm()
  *
  *********************************************************************/
 
-const int ShoreEnv::checkpoint() 
+int ShoreEnv::checkpoint() 
 {    
     db_log_smt_t* checkpointer = new db_log_smt_t(c_str("checkpointer"), this);
     assert (checkpointer);
+    TRACE( TRACE_ALWAYS, "TO CHECKPOINT\n");
+    sleep(3); // sleep few seconds before starting the checkpoint
+    TRACE( TRACE_ALWAYS, "TO CHECKPOINT now\n");
     checkpointer->fork();
     checkpointer->join(); 
     int rv = checkpointer->rv();
@@ -522,7 +778,7 @@ void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt)
  *
  ******************************************************************/
 
-const int ShoreEnv::_set_sys_params()
+int ShoreEnv::_set_sys_params()
 {
     int problem = 0;
 
@@ -689,7 +945,7 @@ int ShoreEnv::conf()
  *
  ******************************************************************/
 
-const int ShoreEnv::disable_fake_disk_latency() 
+int ShoreEnv::disable_fake_disk_latency() 
 {
     // Disabling fake io delay, if any
     w_rc_t e = _pssm->disable_fake_disk_latency(*_pvid);
@@ -704,7 +960,7 @@ const int ShoreEnv::disable_fake_disk_latency()
     return (0);
 }
 
-const int ShoreEnv::enable_fake_disk_latency(const int adelay) 
+int ShoreEnv::enable_fake_disk_latency(const int adelay) 
 {
     if (!adelay>0) return (1);
 
@@ -730,10 +986,13 @@ const int ShoreEnv::enable_fake_disk_latency(const int adelay)
 
 
 
-/** @fn dump
+/****************************************************************** 
  *
- *  @brief Dumps the data
- */
+ *  @fn:    dump()
+ *
+ *  @brief: Dumps the data
+ *
+ ******************************************************************/
 
 int ShoreEnv::dump() 
 {
@@ -746,6 +1005,58 @@ int ShoreEnv::dump()
     return (0);
 }
 
+
+
+#ifdef CFG_FLUSHER
+
+/****************************************************************** 
+ *
+ *  @fn:    start_flusher()
+ *
+ *  @brief: Starts the baseline flusher
+ *
+ ******************************************************************/
+
+int ShoreEnv::_start_flusher()
+{
+    _base_flusher = new flusher_t(this,c_str("base-flusher"));
+    assert (_base_flusher);
+    _base_flusher->fork();
+    _base_flusher->start();
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ *  @fn:    stop_flusher()
+ *
+ *  @brief: Stops the baseline flusher
+ *
+ ******************************************************************/
+
+int ShoreEnv::_stop_flusher()
+{
+    _base_flusher->stop();
+    _base_flusher->join();
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ *  @fn:    to_base_flusher()
+ *
+ *  @brief: Enqueues a request to the base flusher
+ *
+ ******************************************************************/
+
+void ShoreEnv::to_base_flusher(Request* ar)
+{
+    _base_flusher->enqueue_toflush(ar);
+}
+
+#endif
 
 
 EXIT_NAMESPACE(shore);

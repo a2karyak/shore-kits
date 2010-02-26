@@ -41,13 +41,13 @@ midway_pay_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    final_pay_rvp* frvp = _ptpccenv->new_final_pay_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_pay_rvp* frvp = _ptpccenv->new_final_pay_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate and enqueue action
-    ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_tid,_xct,frvp,_pin);
+    ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_xct,_tid,frvp,_pin);
     ins_hist_pay->postset(_awh,_adist);
     typedef range_partition_impl<int>   irpImpl; 
     irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);

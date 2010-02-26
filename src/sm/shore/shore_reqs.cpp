@@ -21,65 +21,54 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file:   shore_tm1_client.h
+/** @file:   shore_reqs.cpp
  *
- *  @brief:  Defines the client for the TM1 benchmark
+ *  @brief:  Structures that represent user requests
  *
- *  @author: Ippokratis Pandis, Feb 2009
+ *  @author: Ippokratis Pandis, Feb 2010
  */
 
-#ifndef __SHORE_TM1_CLIENT_H
-#define __SHORE_TM1_CLIENT_H
+
+#include "sm/shore/shore_trx_worker.h"
 
 
-#include "workload/tm1/shore_tm1_env.h"
-
-using namespace shore;
-
-
-ENTER_NAMESPACE(tm1);
-
+ENTER_NAMESPACE(shore);
 
 
 /******************************************************************** 
  *
- * @enum:  baseline_tm1_client_t
+ * @fn:    translate_state
  *
- * @brief: The Baseline TM1 kit smthread-based test client class
+ * @brief: Displays in a friendly way a TrxState
  *
  ********************************************************************/
 
-class baseline_tm1_client_t : public base_client_t 
+char* translate_state(TrxState aState) {
+    assert ((aState >= 0) && (aState < 6));
+    return (sTrxStates[aState]);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    notify_client()
+ *
+ * @brief: If it is time, notifies the client (signals client's cond var) 
+ *
+ ******************************************************************/
+
+void base_request_t::notify_client() 
 {
-private:
-
-    int _selid;
-    trx_worker_t* _worker;
-    int _qf;
-    
-public:
-
-    baseline_tm1_client_t() { }     
-
-    baseline_tm1_client_t(c_str tname, const int id, ShoreTM1Env* env, 
-                          const MeasurementType aType, const int trxid, 
-                          const int numOfTrxs, 
-                          processorid_t aprsid, const int selID, const int qf);
-
-    ~baseline_tm1_client_t() { }
-
-    // every client class should implement this function
-    static int load_sup_xct(mapSupTrxs& map);
-
-    // INTERFACE 
-
-    w_rc_t submit_one(int xct_type, int xctid);    
-
-}; // EOF: baseline_tm1_client_t
+    // signal cond var
+    condex* pcondex = _result.get_notify();
+    if (pcondex) {
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
+               _tid, pcondex);
+	pcondex->signal();
+    }
+    else
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
+}
 
 
-
-EXIT_NAMESPACE(tm1);
-
-
-#endif /** __SHORE_TM1_CLIENT_H */
+EXIT_NAMESPACE(shore);

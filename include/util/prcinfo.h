@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   prcinfo.h
  * 
  *  @brief:  Processor usage information
@@ -94,12 +92,12 @@ struct processinfo_t
     ~processinfo_t();
 
     // prints information and resets
-    const int reset();
-    const int print();
-    const ulong_t iochars();
-    const load_values_t getload();
+    int reset();
+    int print();
+    ulong_t iochars();
+    load_values_t getload();
 
-    static const double trans(timestruc_t ats);
+    static double trans(timestruc_t ats);
 
     static void hr_min_sec(char*, long);
     static void prtime(string label, timestruc_t* ts);

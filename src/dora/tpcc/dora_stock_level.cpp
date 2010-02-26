@@ -48,13 +48,13 @@ w_rc_t mid1_stock_rvp::run()
 #ifndef ONLYDORA
     assert (_xct);
 #endif
-    mid2_stock_rvp* rvp2 = _penv->new_mid2_stock_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
+    mid2_stock_rvp* rvp2 = _penv->new_mid2_stock_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(rvp2);
 
     // 2. Generate and enqueue action
-    r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_tid,_xct,rvp2,_in);
+    r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_xct,_tid,rvp2,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
     typedef range_partition_impl<int>   irpImpl; 
@@ -89,13 +89,13 @@ w_rc_t mid2_stock_rvp::run()
 #endif
 
     // 1. Set the final RVP
-    final_stock_rvp* frvp = _penv->new_final_stock_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_stock_rvp* frvp = _penv->new_final_stock_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate the action
-    r_st_stock_action* r_st = _penv->new_r_st_stock_action(_tid,_xct,frvp,_in);
+    r_st_stock_action* r_st = _penv->new_r_st_stock_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
     typedef range_partition_impl<int>   irpImpl; 

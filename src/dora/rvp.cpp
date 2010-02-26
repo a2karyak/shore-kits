@@ -25,7 +25,7 @@ ENTER_NAMESPACE(dora);
 rvp_t& rvp_t::operator=(const rvp_t& rhs)
 {
     if (this != &rhs) {
-        _set(rhs._tid,rhs._xct,rhs._xct_id,rhs._result,
+        _set(rhs._xct,rhs._tid,rhs._xct_id,rhs._result,
              rhs._countdown.remaining(),rhs._actions.size());
         copy_actions(rhs._actions);
     }
@@ -91,6 +91,8 @@ int rvp_t::add_action(base_action_t* paction)
  *
  * @brief: If it is time, notifies the client (signals client's cond var) 
  *
+ * @note:  Duplicated at shore_trx_worker.h (trx_request_t::notify_client())
+ *
  ******************************************************************/
 
 void rvp_t::notify_client() 
@@ -118,6 +120,8 @@ void rvp_t::notify_client()
 
 int terminal_rvp_t::notify()
 {
+#warning (IP) Perf. Improvement --> Should do the optimization not to enqueue_committed your own action!
+
     for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it)
         (*it)->notify();
     return (_actions.size());
@@ -164,10 +168,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         }
 
 #ifdef CFG_FLUSHER
-        // If DFlusher is enabled we need to notify client here.
-        // The clients of the commmitted xcts will be notified 
-        // by the DNotifier thread
-        notify_client();
+        notify_on_abort();
 #endif
     }
     else {
@@ -177,7 +178,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         // DF1. Commit lazily
         lsn_t xctLastLsn;
         rcdec = db->commit_xct(true,&xctLastLsn);
-        this->_my_last_lsn = xctLastLsn;
+        set_last_lsn(xctLastLsn);
 #else        
         rcdec = db->commit_xct();    
 #endif
@@ -194,6 +195,10 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                        _tid, eabort.err_num());
             }
+#endif
+
+#ifdef CFG_FLUSHER
+            notify_on_abort();
 #endif
         }
         else {
@@ -215,5 +220,40 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 #endif
     return (rcdec);
 }
+
+
+
+#ifdef CFG_FLUSHER
+
+/****************************************************************** 
+ *
+ * @fn:    notify_on_abort()
+ *
+ * @brief: Only if DFlusher is enabled. Notifies partitions (for actions) 
+ *         and client about aborted xcts
+ *
+ * @CAREFUL: It calls giveback() so it should be the LAST
+ *           time we touch this rvp
+ *
+ ******************************************************************/
+
+void terminal_rvp_t::notify_on_abort()
+{
+    // If DFlusher is enabled
+    // Do the notification of the committed actions and 
+    // release the local locks here.
+
+    // After we aborted the xct we need to notify the client and the partitions.
+    // The notification of the commmitted xcts will be done by the DNotifier thread.
+
+    notify_client();
+    notify();
+
+    TRACE( TRACE_TRX_FLOW, "Giving back aborted (%d)\n", _tid);
+
+    giveback();
+}
+
+#endif
 
 EXIT_NAMESPACE(dora);

@@ -112,11 +112,10 @@ void ShoreTPCCEnv::table_creator_t::work()
     W_COERCE(_env->_pstock_desc->create_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
 
-    /* do the first transaction */
-    trx_result_tuple_t out;
+    // do the first transaction
     populate_baseline_input_t in = {_sf};
     W_COERCE(_env->db()->begin_xct());
-    W_COERCE(_env->xct_populate_baseline(0, out, in));
+    W_COERCE(_env->xct_populate_baseline(0, in));
 
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_post_init_impl());
@@ -129,10 +128,9 @@ void ShoreTPCCEnv::table_creator_t::work()
     for(long i=-1; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
-	trx_result_tuple_t out;
 	fprintf(stderr, "Populating %d a_ids starting with %d\n", ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 	W_COERCE(_env->db()->begin_xct());
-	W_COERCE(_env->xct_populate_db(&in, a_id, out));
+	W_COERCE(_env->xct_populate_db(&in, a_id));
     }
 #endif
 }
@@ -175,10 +173,9 @@ ShoreTPCCEnv::table_builder_t::work()
 	bool overlap = (start_dist*UNIT_PER_DIST < _start) || (end_dist*UNIT_PER_DIST >= _start+_count);
 	int *cids = overlap? _cids : cid_array+0;
 	populate_one_unit_input_t in = {tid, cids};
-	trx_result_tuple_t out;
     retry:
 	W_COERCE(_env->db()->begin_xct());
-	e = _env->xct_populate_one_unit(tid, out, in);
+	e = _env->xct_populate_one_unit(tid, in);
 	if(e.is_error()) {
 	    W_COERCE(_env->db()->abort_xct());
 	    if(e.err_num() == smlevel_0::eDEADLOCK)
@@ -310,6 +307,8 @@ int ShoreTPCCEnv::statistics()
            rval.failed.mbench_cust,
            rval.deadlocked.mbench_cust);
 
+    ShoreEnv::statistics();
+
     return (0);
 }
 
@@ -317,132 +316,21 @@ int ShoreTPCCEnv::statistics()
 
 /******************************************************************** 
  *
- *  @fn:    start()
+ *  @fn:    start/stop
  *
- *  @brief: Starts the tpcc env
+ *  @brief: Simply call the corresponding functions of shore_env 
  *
  ********************************************************************/
 
 int ShoreTPCCEnv::start()
 {
-    upd_sf();
-    upd_worker_cnt();
-
-    assert (_workers.empty());
-
-    TRACE( TRACE_ALWAYS, "Starting (%s)\n", _sysname.c_str());      
-    info();
-
-    // read from env params the loopcnt
-    int lc = envVar::instance()->getVarInt("db-worker-queueloops",0);    
-
-    WorkerPtr aworker;
-    for (int i=0; i<_worker_cnt; i++) {
-#ifdef CFG_SLI
-        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
-#else
-        aworker = new Worker(this,this,c_str("work-%d", i),PBIND_NONE,0);
-#endif
-        _workers.push_back(aworker);
-        aworker->init(lc);
-        aworker->start();
-        aworker->fork();
-    }
-    return (0);
+    return (ShoreEnv::start());
 }
-
-
-/******************************************************************** 
- *
- *  @fn:    stop()
- *
- *  @brief: Stops the tpcc env
- *
- ********************************************************************/
 
 int ShoreTPCCEnv::stop()
 {
-    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
-    info();
-
-    int i=0;
-    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
-        i++;
-        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
-        if (*it) {
-            (*it)->stop();
-            (*it)->join();
-            delete (*it);
-        }
-    }
-    _workers.clear();
-    return (0);
+    return (ShoreEnv::stop());
 }
-
-
-/******************************************************************** 
- *
- *  @fn:    set_sf/qf
- *
- *  @brief: Set the scaling and queried factors
- *
- ********************************************************************/
-
-void ShoreTPCCEnv::set_qf(const int aQF)
-{
-    if ((aQF >= 0) && (aQF <= _scaling_factor)) {
-        CRITICAL_SECTION( cs, _queried_mutex);
-        TRACE( TRACE_DEBUG, "New Queried Factor: %d\n", aQF);
-        _queried_factor = aQF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
-    }
-}
-
-
-void ShoreTPCCEnv::set_sf(const int aSF)
-{
-
-    if (aSF > 0) {
-        CRITICAL_SECTION( cs, _scaling_mutex);
-        TRACE( TRACE_DEBUG, "New Scaling factor: %d\n", aSF);
-        _scaling_factor = aSF;
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
-    }
-}
-
-const int ShoreTPCCEnv::upd_sf()
-{
-    // update whs
-    int tmp_sf = envVar::instance()->getSysVarInt("sf");
-    assert (tmp_sf);
-    set_sf(tmp_sf);
-    set_qf(tmp_sf);
-    //print_sf();
-    return (_scaling_factor);
-}
-
-
-void ShoreTPCCEnv::print_sf(void)
-{
-    TRACE( TRACE_ALWAYS, "*** ShoreTPCCEnv ***\n");
-    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
-    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
-}
-
-
-const int ShoreTPCCEnv::upd_worker_cnt()
-{
-    // update worker thread cnt
-    int workers = envVar::instance()->getVarInt("db-workers",0);
-    assert (workers);
-    _worker_cnt = workers;
-    return (_worker_cnt);
-}
-
 
 
 

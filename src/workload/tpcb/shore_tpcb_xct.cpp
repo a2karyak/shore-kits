@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcb_env.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TPC-B transactions
@@ -74,7 +72,7 @@ void ShoreTPCBEnv::env_thread_fini()
  *
  ********************************************************************/
 
-const ShoreTPCBTrxStats ShoreTPCBEnv::_get_stats()
+ShoreTPCBTrxStats ShoreTPCBEnv::_get_stats()
 {
     CRITICAL_SECTION(cs, _statmap_mutex);
     ShoreTPCBTrxStats rval;
@@ -164,25 +162,24 @@ void ShoreTPCBEnv::print_throughput(const int iQueriedSF,
  *
  *  @fn:    run_one_xct
  *
- *  @brief: Baseline client - Entry point for running one trx 
+ *  @brief: Initiates the execution of one TPC-B xct
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure internal has expired.
  *
  *********************************************************************/
 
-w_rc_t ShoreTPCBEnv::run_one_xct(const int xctid,
-                                 int xct_type,
-                                 const int whid, 
-                                 trx_result_tuple_t& trt)
+w_rc_t ShoreTPCBEnv::run_one_xct(Request* prequest)
 {
-    switch (xct_type) {
-    case XCT_TPCB_ACCT_UPDATE:
-	return (run_acct_update(xctid, trt, whid));
-    default:
-        assert (0); // UNKNOWN TRX-ID
-    }
-    return (RCOK);
+//     switch (xct_type) {
+//     case XCT_TPCB_ACCT_UPDATE:
+
+	return (run_acct_update(prequest));
+
+//     default:
+//         assert (0); // UNKNOWN TRX-ID
+//     }
+//     return (RCOK);
 }
 
 
@@ -217,7 +214,6 @@ DEFINE_TRX(ShoreTPCBEnv,populate_db);
  *
  ********************************************************************/
 w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      acct_update_input_t& ppin)
 {
     w_rc_t e = RCOK;
@@ -243,9 +239,6 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
     row_impl<history_t>* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -304,15 +297,7 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
 	e = _pbranch_man->update_tuple(_pssm, prb);
 	if (e.is_error()) { goto done; }
 
-
-        // 5. commit
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -337,10 +322,8 @@ done:
 
 
 
-w_rc_t 
-ShoreTPCBEnv::xct_populate_db(const int xct_id, 
-                              trx_result_tuple_t& trt,
-                              populate_db_input_t& ppin)
+w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id, 
+                                     populate_db_input_t& ppin)
 {
     w_rc_t e = RCOK;
 
@@ -366,8 +349,6 @@ ShoreTPCBEnv::xct_populate_db(const int xct_id,
     row_impl<history_t>* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -423,16 +404,12 @@ ShoreTPCBEnv::xct_populate_db(const int xct_id,
 	    }
 	}
 
-        /*
-	  Commit
-	*/
+        // The database loader which calls this xct does not use the xct wrapper,
+        // so it should do the commit here
         e = _pssm->commit_xct();
         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 

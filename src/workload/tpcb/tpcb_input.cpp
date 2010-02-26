@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:  tpcb_input.cpp
  *
  *  @brief: Implementation of the (common) inputs for the TPCB trxs
@@ -73,11 +71,12 @@ acct_update_input_t create_acct_update_input(int sf,
 
     acct_update_input_t auin;
 
-    if (specificBr>=0) {
-        auin.b_id = specificBr;
+    // The TPC-B branches start from 0 (0..SF-1)
+    if (specificBr>0) {
+        auin.b_id = specificBr-1;
     }
     else {
-        auin.b_id = URand(0,sf);
+        auin.b_id = URand(0,sf-1);
     }
         
     auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + URand(0,TPCB_TELLERS_PER_BRANCH-1);

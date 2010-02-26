@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   prcinfo.cpp
  * 
  *  @brief:  Implementation of a process information class
@@ -65,7 +63,7 @@ processinfo_t::~processinfo_t() {
 }
 
 
-const int processinfo_t::reset()
+int processinfo_t::reset()
 {
     if (!_is_ok) return (1);
 
@@ -85,7 +83,7 @@ const int processinfo_t::reset()
     return (0);
 }
 
-const int processinfo_t::print()
+int processinfo_t::print()
 {
     if (!_is_ok) return (1);
 
@@ -176,7 +174,7 @@ const int processinfo_t::print()
 
 
 
-const load_values_t processinfo_t::getload()
+load_values_t processinfo_t::getload()
 {
     load_values_t load;
     if (!_is_ok) return (load);
@@ -212,7 +210,7 @@ const load_values_t processinfo_t::getload()
 }
 
 
-const ulong_t processinfo_t::iochars()
+ulong_t processinfo_t::iochars()
 {
     if (!_is_ok) return (1);
 
@@ -230,7 +228,7 @@ const ulong_t processinfo_t::iochars()
 }
 
 
-const double processinfo_t::trans(timestruc_t ats)
+double processinfo_t::trans(timestruc_t ats)
 {
     static const double BILLION = 1000000000;
     double ad = ats.tv_sec + (ats.tv_nsec/BILLION);

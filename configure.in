@@ -407,11 +407,35 @@ fi
 # --- EOF EMBEDDED CLIENTS ---   
 
 
+# --- CACHES (default==true) ---
+AC_MSG_CHECKING(whether to use caches)
+AC_ARG_ENABLE(caches, 
+[  --enable-caches         Enable caches],
+[case "${enableval}" in
+  yes) caches=true ;;
+  no)  caches=false ;;
+  *) caches=true ;;
+esac],[caches=false])
+AM_CONDITIONAL(ADD_OPT_CACHES, test x$caches = xtrue)
+
+if test "$caches" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES caches"
+     AC_DEFINE(CFG_CACHES)
+else
+     AC_MSG_RESULT(no)
+     AC_MSG_WARN([!!! Should used only for debugging purposes !!!])
+fi
+# --- EOF CACHES ---   
+
+
+
 
 # --- SIMICS MAGIC INSTRUCTIONS ---
 AC_MSG_CHECKING(whether to add the Simics magic instructions)
 AC_ARG_ENABLE(simics, 
-[  --enable-simics        Use Simics magic instructions],
+[  --enable-simics         Use Simics magic instructions],
 [case "${enableval}" in
   yes) simics=true ;;
   no)  simics=false ;;

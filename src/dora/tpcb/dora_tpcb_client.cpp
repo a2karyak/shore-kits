@@ -45,7 +45,7 @@ const int XCT_TPCB_DORA_ACCT_UPDATE   = 331;
  *
   *********************************************************************/
 
-const int dora_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
+int dora_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -58,24 +58,25 @@ const int dora_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
 
 /********************************************************************* 
  *
- *  @fn:    run_one_xct
+ *  @fn:    submit_one
  *
- *  @brief: DORA TPCB client - Entry point for running one trx 
+ *  @brief: Entry point for running one DORA TPC-B xct 
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure internal has expired.
  *
  *********************************************************************/
  
-w_rc_t dora_tpcb_client_t::run_one_xct(int xct_type, int xctid) 
+w_rc_t dora_tpcb_client_t::submit_one(int xct_type, int xctid) 
 {
     // if DORA TPCB MIX
     bool bWake = false;
 
     // Pick a valid sf
     int selid = _selid;
-    if (_selid==0)
-        selid = URand(1,_qf);
+
+//     if (_selid==0)
+//         selid = URand(1,_qf);
 
     trx_result_tuple_t atrt;
     if (_cp->take_one) {

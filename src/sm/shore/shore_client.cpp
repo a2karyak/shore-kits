@@ -77,7 +77,7 @@ void base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz)
             _cp->take_one = true;
             _cp->index = 1-_cp->index;
         }
-        run_one_xct(xct_type, trx_cnt++);
+        submit_one(xct_type, trx_cnt++);
         _cp->take_one = false;
     }
 }

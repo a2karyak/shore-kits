@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file shore_env.h
  *
  *  @brief Definition of a Shore environment (database)
@@ -50,11 +48,10 @@
 #include <sys/processor.h>
 #include <sys/procset.h>
 
-
-
 #include "sm_vas.h"
 #include "util.h"
 
+#include "shore_reqs.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -140,13 +137,18 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 
 
+/****************************************************************** 
+ *
+ * MACROS used in _env, _schema, _xct files
+ *
+ ******************************************************************/
 
 #define DECLARE_TRX(trx) \
-    w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
-    w_rc_t run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID);    \
-    w_rc_t xct_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in);       \
-    void   _inc_##trx##_att();  \
-    void   _inc_##trx##_failed(); \
+    w_rc_t run_##trx(Request* prequest, trx##_input_t& in);             \
+    w_rc_t run_##trx(Request* prequest);                                \
+    w_rc_t xct_##trx(const int xct_id, trx##_input_t& in);              \
+    void   _inc_##trx##_att();                                          \
+    void   _inc_##trx##_failed();                                       \
     void   _inc_##trx##_dld()
 
 
@@ -157,32 +159,67 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     inline table*    abbrv##_desc() { return (_p##abbrv##_desc.get()); }
 
 
-#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                   \
-    w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, trx##_input_t& in) { \
+#ifdef CFG_FLUSHER // ***** Mainstream FLUSHER ***** //
+// Commits lazily
+
+#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                    \
+    w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
+        int xct_id = prequest->xct_id();                                \
         TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
         ++my_stats.attempted.##trx;                                     \
-        w_rc_t e = xct_##trx(xct_id, atrt, in);                         \
+        w_rc_t e = xct_##trx(xct_id, in);                               \
+        if (!e.is_error()) {                                            \
+            lsn_t xctLastLsn;                                           \
+            e = _pssm->commit_xct(true,&xctLastLsn);                    \
+            prequest->set_last_lsn(xctLastLsn); }                       \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
                 ++my_stats.failed.##trx;                                \
             else ++my_stats.deadlocked.##trx##;                         \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
-            w_rc_t e2 = _pssm->abort_xct();                           \
+            w_rc_t e2 = _pssm->abort_xct();                             \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
-            if (atrt.get_notify()) atrt.get_notify()->signal();       \
-            if ((*&_measure)!=MST_MEASURE) return (e);                \
-            _env_stats.inc_trx_att();                                 \
-            return (e); }                                             \
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", xct_id);       \
-        if (atrt.get_notify()) atrt.get_notify()->signal();           \
-        if ((*&_measure)!=MST_MEASURE) return (RCOK);                 \
-        _env_stats.inc_trx_com();                                     \
+            prequest->notify_client();                                  \
+            if ((*&_measure)!=MST_MEASURE) return (e);                  \
+            _env_stats.inc_trx_att();                                   \
+            return (e); }                                               \
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) to flush\n", xct_id);          \
+        to_base_flusher(prequest);                                        \
         return (RCOK); }
 
-#define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx)               \
-    w_rc_t cname::run_##trx(const int xct_id, trx_result_tuple_t& atrt, const int specificID) { \
-        trx##_input_t in = create_##trx##_input(_queried_factor, specificID);                   \
-        return (run_##trx(xct_id, atrt, in)); }
+#else // ***** NO FLUSHER ***** //
+
+#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                    \
+    w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
+        int xct_id = prequest->xct_id();                                \
+        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
+        ++my_stats.attempted.##trx;                                     \
+        w_rc_t e = xct_##trx(xct_id, in);                               \
+        if (!e.is_error()) { e = _pssm->commit_xct(); }                 \
+        if (e.is_error()) {                                             \
+            if (e.err_num() != smlevel_0::eDEADLOCK)                    \
+                ++my_stats.failed.##trx;                                \
+            else ++my_stats.deadlocked.##trx##;                         \
+            TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
+            w_rc_t e2 = _pssm->abort_xct();                             \
+            if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
+            prequest->notify_client();                                  \
+            if ((*&_measure)!=MST_MEASURE) return (e);                  \
+            _env_stats.inc_trx_att();                                   \
+            return (e); }                                               \
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) completed\n", xct_id);         \
+        prequest->notify_client();                                      \
+        if ((*&_measure)!=MST_MEASURE) return (RCOK);                   \
+        _env_stats.inc_trx_com();                                       \
+        return (RCOK); }
+
+#endif // ***** EOF: CFG_FLUSHER ***** //
+
+
+#define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx)                 \
+    w_rc_t cname::run_##trx(Request* prequest) {                        \
+        trx##_input_t in = create_##trx##_input(_queried_factor, prequest->selectedID()); \
+        return (run_##trx(prequest, in)); }
 
 
 #define DEFINE_TRX_STATS(cname,trx)                                   \
@@ -301,14 +338,15 @@ public:
 
 
 
-
+// Forward decl
+class base_worker_t;
+class trx_worker_t;
+class flusher_t;
+class ShoreEnv;
 
 
 /******** Exported variables ********/
 
-class base_worker_t;
-
-class ShoreEnv;
 extern ShoreEnv* _g_shore_env;
 
 
@@ -338,6 +376,14 @@ class ShoreEnv : public db_iface
 {
 public:
     typedef map<string,string> ParamMap;
+
+    typedef trx_request_t Request;
+    typedef atomic_class_stack<Request> RequestStack;
+
+    typedef trx_worker_t                Worker;
+    typedef trx_worker_t*               WorkerPtr;
+    typedef vector<WorkerPtr>           WorkerPool;
+    typedef WorkerPool::iterator        WorkerIt;
 
 protected:       
 
@@ -370,8 +416,29 @@ protected:
     ParamMap      _dev_opts;  // db-instance-specific options    
 
     // Processor info
-    volatile uint_t _max_cpu_count;    // hard limit
-    volatile uint_t _active_cpu_count; // soft limit
+    uint_t _max_cpu_count;    // hard limit
+    uint_t _active_cpu_count; // soft limit
+
+
+    // List of worker threads
+    WorkerPool      _workers;    
+    uint            _worker_cnt;         
+
+    // Scaling factors
+    //
+    // @note: The scaling factors of any environment is an integer value 
+    //        So we are putting them on shore_env
+    // 
+    // In various environments: 
+    //
+    // TM1:  SF=1 --> 15B   (10K Subscribers)
+    // TPCB: SF=1 --> 20MB  (1 Branch)
+    // TPCC: SF=1 --> 130MB (1 Warehouse)
+    //       
+    int             _scaling_factor; 
+    pthread_mutex_t _scaling_mutex;
+    int             _queried_factor;
+    pthread_mutex_t _queried_mutex;
 
 
     // Stats
@@ -387,6 +454,7 @@ protected:
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
 
+
     // Storage manager access functions
     int  configure_sm();
     int  start_sm();
@@ -396,16 +464,7 @@ protected:
 public:
 
     ShoreEnv(string confname);
-
-    virtual ~ShoreEnv() 
-    {         
-        if (dbc()!=DBC_STOPPED) stop();
-        pthread_mutex_destroy(&_init_mutex);
-        pthread_mutex_destroy(&_statmap_mutex);
-        pthread_mutex_destroy(&_last_stats_mutex);
-        pthread_mutex_destroy(&_load_mutex);
-        pthread_mutex_destroy(&_vol_mutex);
-    }
+    virtual ~ShoreEnv();
 
 
     // DB INTERFACE
@@ -416,8 +475,8 @@ public:
     virtual int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
     virtual int open() { return(0); /* do nothing */ };
     virtual int close();
-    virtual int start() { return(0); /* do nothing */ };
-    virtual int stop() { return(0); /* do nothing */ };
+    virtual int start();
+    virtual int stop();
     virtual int restart();
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    
@@ -440,55 +499,60 @@ public:
     inline ss_m* db() { return(_pssm); }
     inline vid_t* vid() { return(_pvid); }
 
-
-    inline bool is_initialized() { 
-        CRITICAL_SECTION(cs, _init_mutex); 
-        return (_initialized); 
-    }
-
-    inline bool is_loaded() { 
-        CRITICAL_SECTION(cs, _load_mutex);
-        return (_loaded); 
-    }
-
+    bool is_initialized();
+    bool is_loaded();
     
     void set_measure(const MeasurementState aMeasurementState) {
         //assert (aMeasurementState != MST_UNDEF);
         atomic_swap(&_measure, aMeasurementState);
     }
-    inline const MeasurementState get_measure() { return (*&_measure); }
+    inline MeasurementState get_measure() { return (*&_measure); }
 
 
-    inline pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }
-    inline pthread_mutex_t* get_vol_mutex() { return (&_vol_mutex); }
-    inline pthread_mutex_t* get_load_mutex() { return (&_load_mutex); }
-    inline bool get_init_no_cs() { return (_initialized); }
-    inline bool get_loaded_no_cs() { return (_loaded); }
-    inline void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
-    inline void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
+    pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }
+    pthread_mutex_t* get_vol_mutex() { return (&_vol_mutex); }
+    pthread_mutex_t* get_load_mutex() { return (&_load_mutex); }
+    bool get_init_no_cs() { return (_initialized); }
+    bool get_loaded_no_cs() { return (_loaded); }
+    void set_init_no_cs(const bool b_is_init) { _initialized = b_is_init; }
+    void set_loaded_no_cs(const bool b_is_loaded) { _loaded = b_is_loaded; }
 
     // CPU count functions
     void print_cpus() const;
-    inline const int get_max_cpu_count() const { return (_max_cpu_count); }
-    inline const int get_active_cpu_count() const { return (_active_cpu_count); }
+    int get_max_cpu_count() const;
+    int get_active_cpu_count() const;
     void set_active_cpu_count(const uint_t actcpucnt);
     // disabled - max_count can be set only on conf
     //    void set_max_cpu_count(const int maxcpucnt); 
 
+    // --- scaling and querying factor --- //
+    void set_qf(const uint aQF);
+    int get_qf() const;
+    void set_sf(const uint aSF);
+    int get_sf() const;
+    int upd_sf();
+    void print_sf() const;
 
-    // Fake io delay interface
-    const int disable_fake_disk_latency();
-    const int enable_fake_disk_latency(const int adelay);
+    // Environment workers
+    uint upd_worker_cnt();
+    trx_worker_t* worker(const uint idx);        
 
-    // Takes a checkpoint (forces dirty pages)
-    const int checkpoint();
-
-    inline string sysname() { return (_sysname); }
-    env_stats_t* get_env_stats() { return (&_env_stats); }
+    // Request atomic trash stack
+    RequestStack _request_pool;
 
     // For thread-local stats
     virtual void env_thread_init()=0;
     virtual void env_thread_fini()=0;   
+
+    // Fake io delay interface
+    int disable_fake_disk_latency();
+    int enable_fake_disk_latency(const int adelay);
+
+    // Takes a checkpoint (forces dirty pages)
+    int checkpoint();
+
+    string sysname() { return (_sysname); }
+    env_stats_t* get_env_stats() { return (&_env_stats); }
 
     // Throughput printing
     virtual void print_throughput(const int iQueriedSF, 
@@ -500,8 +564,8 @@ public:
 
     virtual void reset_stats()=0;
 
-
-
+    // Run one transaction
+    virtual w_rc_t run_one_xct(Request* prequest)=0;
     
 #ifdef CFG_SLI
 public:
@@ -519,10 +583,19 @@ protected:
     bool _bUseELR;
 #endif
 
+
+#ifdef CFG_FLUSHER
+    guard<flusher_t>   _base_flusher;
+    virtual int        _start_flusher();
+    virtual int        _stop_flusher();
+    void               to_base_flusher(Request* ar);
+#endif
+
+
 protected:
    
     // returns 0 on success
-    const int _set_sys_params();
+    int _set_sys_params();
 
 
 }; // EOF ShoreEnv

@@ -73,7 +73,7 @@ void ShoreTM1Env::env_thread_fini()
  *
  ********************************************************************/
 
-const ShoreTM1TrxStats ShoreTM1Env::_get_stats()
+ShoreTM1TrxStats ShoreTM1Env::_get_stats()
 {
     CRITICAL_SECTION(cs, _statmap_mutex);
     ShoreTM1TrxStats rval;
@@ -163,45 +163,45 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
  *
  *  @fn:    run_one_xct
  *
- *  @brief: Baseline client - Entry point for running one trx 
+ *  @brief: Initiates the execution of one TM1 xct
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure internal has expired.
  *
  *********************************************************************/
 
-w_rc_t ShoreTM1Env::run_one_xct(const int xctid, int xct_type, 
-                                const int specificID, trx_result_tuple_t& trt)
+w_rc_t ShoreTM1Env::run_one_xct(Request* prequest)
 {
+    assert (prequest);
+
     // if BASELINE TM1 MIX
-    if (xct_type == XCT_TM1_MIX) {        
-        xct_type = random_tm1_xct_type(smthread_t::me()->rand()%100);
+    if (prequest->type() == XCT_TM1_MIX) {        
+        prequest->set_type(random_tm1_xct_type(smthread_t::me()->rand()%100));
     }
     
-    switch (xct_type) {
+    switch (prequest->type()) {
         
         // TM1 BASELINE
     case XCT_TM1_GET_SUB_DATA:
-        return (run_get_sub_data(xctid,trt,specificID));
+        return (run_get_sub_data(prequest));
     case XCT_TM1_GET_NEW_DEST:
-        return (run_get_new_dest(xctid,trt,specificID));
+        return (run_get_new_dest(prequest));
     case XCT_TM1_GET_ACC_DATA:
-        return (run_get_acc_data(xctid,trt,specificID));
+        return (run_get_acc_data(prequest));
     case XCT_TM1_UPD_SUB_DATA:
-        return (run_upd_sub_data(xctid,trt,specificID));
+        return (run_upd_sub_data(prequest));
     case XCT_TM1_UPD_LOCATION:
-        return (run_upd_loc(xctid,trt,specificID));
+        return (run_upd_loc(prequest));
     case XCT_TM1_INS_CALL_FWD:
-        return (run_ins_call_fwd(xctid,trt,specificID));
+        return (run_ins_call_fwd(prequest));
     case XCT_TM1_DEL_CALL_FWD:
-        return (run_del_call_fwd(xctid,trt,specificID));
+        return (run_del_call_fwd(prequest));
     case XCT_TM1_CALL_FWD_MIX:
         // evenly pick one of the {Ins/Del}CallFwd
         if (URand(1,100)>50)
-            return (run_ins_call_fwd(xctid,trt,specificID));
+            return (run_ins_call_fwd(prequest));
         else
-            return (run_del_call_fwd(xctid,trt,specificID));
-
+            return (run_del_call_fwd(prequest));
 
     default:
         assert (0); // UNKNOWN TRX-ID
@@ -480,7 +480,6 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      get_sub_data_input_t& gsdin)
 {
     w_rc_t e = RCOK;
@@ -495,8 +494,6 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_psub_man->ts());
 
     // allocate space for the table representations
@@ -570,13 +567,10 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
 
 
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -602,7 +596,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      get_new_dest_input_t& gndin)
 {
     w_rc_t e = RCOK;
@@ -619,9 +612,6 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
     row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
     assert (prcf);
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
 
     // allocate space for the larger of the 2 table representations
     rep_row_t areprow(_pcf_man->ts());
@@ -712,14 +702,10 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
         }
 
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -747,7 +733,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      get_acc_data_input_t& gadin)
 {
     w_rc_t e = RCOK;
@@ -762,8 +747,6 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
     row_impl<access_info_t>* prai = _pai_man->get_tuple();
     assert (prai);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pai_man->ts());
 
     // allocate space for the table representations
@@ -800,13 +783,10 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 
 
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -831,7 +811,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      upd_sub_data_input_t& usdin)
 {
     w_rc_t e = RCOK;
@@ -849,8 +828,6 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
     row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
     assert (prsf);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_psub_man->ts());
 
     // allocate space for the larger table representation
@@ -912,13 +889,10 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
 
 
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -945,7 +919,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id, 
-                                trx_result_tuple_t& trt,
                                 upd_loc_input_t& ulin)
 {
     w_rc_t e = RCOK;
@@ -960,8 +933,6 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_psub_man->ts());
 
     // allocate space for the larger table representation
@@ -994,13 +965,10 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
 
 
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1025,7 +993,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      ins_call_fwd_input_t& icfin)
 {
     w_rc_t e = RCOK;
@@ -1046,8 +1013,6 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_psub_man->ts());
 
     // allocate space for the larger table representation
@@ -1167,13 +1132,10 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
         }
         
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1201,7 +1163,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      del_call_fwd_input_t& dcfin)
 {
     w_rc_t e = RCOK;
@@ -1219,8 +1180,6 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
     row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_psub_man->ts());
 
     // allocate space for the larger table representation
@@ -1276,13 +1235,10 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
 
 
         // COMMIT
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
+//         e = _pssm->commit_xct();
+//         if (e.is_error()) { goto done; }
 
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 

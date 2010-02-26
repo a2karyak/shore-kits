@@ -12,6 +12,7 @@
 #define __DORA_RVP_H
 
 
+#include "sm/shore/shore_reqs.h"
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_trx_worker.h"
 
@@ -38,7 +39,7 @@ class DoraEnv;
  *
  ********************************************************************/
 
-class rvp_t
+struct rvp_t : public base_request_t
 {
 public:
 
@@ -52,67 +53,52 @@ protected:
     countdown_t       _countdown;
     ushort_t volatile _decision;
 
-    // trx-specific
-    xct_t*              _xct; // Not the owner
-    tid_t               _tid;
-    trx_result_tuple_t  _result;
-    int                 _xct_id;
-
     // list of actions that report to this rvp
-    baseActionsList     _actions;
-    tatas_lock          _actions_lock;
+    baseActionsList   _actions;
+    tatas_lock        _actions_lock;
 
-    // set rvp
-    void _set(const tid_t& atid, xct_t* axct, const int axctid,
+    void _set(xct_t* pxct, const tid_t& atid, const int axctid,
               const trx_result_tuple_t& presult, 
               const int intra_trx_cnt, const int total_actions) 
     { 
+        base_request_t::set(pxct,atid,axctid,presult);
+
 #ifndef ONLYDORA
-        assert (axct);
+        assert (pxct);
 #endif
+
         assert (intra_trx_cnt>0);
         assert (total_actions>=intra_trx_cnt);
         _countdown.reset(intra_trx_cnt);
         _decision = AD_UNDECIDED;
-        _tid = atid;
-        _xct = axct;
-        _xct_id = axctid;
-        _result = presult;
 
         _actions.reserve(total_actions);
     }
 
 public:
 
-    rvp_t() : _xct(NULL) { }
+    rvp_t() : base_request_t() { }
 
-    rvp_t(const tid_t& atid, xct_t* axct, const int axctid,
+    rvp_t(xct_t* axct, const tid_t& atid, const int axctid,
           const trx_result_tuple_t& presult, 
           const int intra_trx_cnt, const int total_actions) 
     { 
-        _set(atid, axct, axctid, presult,
-             intra_trx_cnt, total_actions);
+        _set(axct, atid, axctid, 
+             presult, intra_trx_cnt, total_actions);
     }
 
-    virtual ~rvp_t() { 
-        _xct = NULL; 
-    }    
+    virtual ~rvp_t() { }    
 
     // copying allowed
     rvp_t(const rvp_t& rhs)
     {
-        _set(rhs._tid, rhs._xct, rhs._xct_id, rhs._result,
+        _set(rhs._xct, rhs._tid, rhs._xct_id, rhs._result,
              rhs._countdown.remaining(), rhs._actions.size());
         copy_actions(rhs._actions);
     }
     rvp_t& operator=(const rvp_t& rhs);
 
     trx_result_tuple_t result() { return (_result); }
-
-
-    // TRX-ID-related
-    inline xct_t* xct() const { return (_xct); }
-    inline tid_t  tid() const { return (_tid); }
 
     // Actions-related
     int copy_actions(const baseActionsList& actionList);
@@ -149,7 +135,6 @@ public:
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
-
 
 
     // CACHEABLE INTERFACE
@@ -192,10 +177,10 @@ public:
 
     terminal_rvp_t() : rvp_t() { }
 
-    terminal_rvp_t(const tid_t& atid, xct_t* axct, const int axctid, 
+    terminal_rvp_t(xct_t* axct, const tid_t& atid, const int axctid, 
                    trx_result_tuple_t &presult, 
                    const int intra_trx_cnt, const int total_actions) 
-        : rvp_t(atid, axct, axctid, presult, intra_trx_cnt, total_actions)
+        : rvp_t(axct, atid, axctid, presult, intra_trx_cnt, total_actions)
     { }
 
     terminal_rvp_t(const terminal_rvp_t& rhs)
@@ -212,8 +197,7 @@ public:
 
 
 #ifdef CFG_FLUSHER
-    lsn_t _my_last_lsn;
-    inline lsn_t my_last_lsn() { return (_my_last_lsn); }
+    void notify_on_abort();
 #endif
 
     // INTERFACE

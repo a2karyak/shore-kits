@@ -50,13 +50,13 @@ w_rc_t mid1_ordst_rvp::run()
 #endif
 
     // 1. Setup the next RVP
-    mid2_ordst_rvp* mid2_rvp = _penv->new_mid2_ordst_rvp(_tid,_xct,_xct_id,_result,_in,_actions,_bWake);
+    mid2_ordst_rvp* mid2_rvp = _penv->new_mid2_ordst_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(mid2_rvp);
 
     // 2. Generate the action
-    r_ord_ordst_action* r_ord = _penv->new_r_ord_ordst_action(_tid,_xct,mid2_rvp,_in);
+    r_ord_ordst_action* r_ord = _penv->new_r_ord_ordst_action(_xct,_tid,mid2_rvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 
@@ -96,13 +96,13 @@ w_rc_t mid2_ordst_rvp::run()
 #endif
 
     // 1. Setup the next RVP
-    final_ordst_rvp* frvp = _penv->new_final_ordst_rvp(_tid,_xct,_xct_id,_result,_actions);
+    final_ordst_rvp* frvp = _penv->new_final_ordst_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(frvp);
 
     // 2. Generate the action
-    r_ol_ordst_action* r_ol = _penv->new_r_ol_ordst_action(_tid,_xct,frvp,_in);
+    r_ol_ordst_action* r_ol = _penv->new_r_ol_ordst_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
     typedef range_partition_impl<int>   irpImpl; 

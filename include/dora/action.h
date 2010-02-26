@@ -63,7 +63,7 @@ protected:
 #endif
 
     // base action init
-    inline void _base_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void _base_set(xct_t* axct, const tid_t& atid, rvp_t* prvp, 
                           const int numkeys, const bool ro, const bool keysset) 
     {
         _tid = atid;
@@ -201,11 +201,11 @@ protected:
     // pointer to the partition
     Partition*  _partition;
 
-    inline void _act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void _act_set(xct_t* axct, const tid_t& atid, rvp_t* prvp, 
                          const int numkeys, 
                          const bool ro=false, const bool keysset=false)
     {
-        _base_set(atid,axct,prvp,numkeys,ro,keysset);
+        _base_set(axct,atid,prvp,numkeys,ro,keysset);
 
         assert (numkeys);
         _keys.reserve(numkeys);

@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcc_xct.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TPC-C transactions
@@ -74,7 +72,7 @@ void ShoreTPCCEnv::env_thread_fini()
  *
  ********************************************************************/
 
-const ShoreTPCCTrxStats ShoreTPCCEnv::_get_stats()
+ShoreTPCCTrxStats ShoreTPCCEnv::_get_stats()
 {
     CRITICAL_SECTION(cs, _statmap_mutex);
     ShoreTPCCTrxStats rval;
@@ -258,10 +256,12 @@ static int create_random_n_string( char *out_buffer, int length_lo, int length_h
     return (actual_length);
 }
 
-/** @fn: NUrand_val */
+
+// @fn: NUrand_val
 int NUrand_val ( int A, int x, int y, int C ) {
     return((((rand_integer(0,A)|rand_integer(x,y))+C)%(y-x+1))+x);
 }
+
 
 /** @fn: create_a_string_with_original
  * 
@@ -272,9 +272,9 @@ int NUrand_val ( int A, int x, int y, int C ) {
  *
  *  @note: Cannot use on strings of length less than 8. Lower limit must be > 8
  */
-int 
-create_a_string_with_original( char *out_buffer, int length_lo,
-                               int length_hi, int percent_to_set )
+
+int create_a_string_with_original( char *out_buffer, int length_lo,
+                                   int length_hi, int percent_to_set )
 {
     int actual_length, start_pos ;
 
@@ -297,9 +297,8 @@ create_a_string_with_original( char *out_buffer, int length_lo,
  *    with each digit of the generated number. the three strings are
  *    concatenated to generate the name
  */
-int 
-create_random_last_name(char *out_buffer, 
-                        int cust_num) 
+
+int create_random_last_name(char *out_buffer, int cust_num) 
 {
     int random_num;
 
@@ -318,10 +317,8 @@ create_random_last_name(char *out_buffer,
 }
 
 
-w_rc_t 
-ShoreTPCCEnv::xct_populate_baseline(const int xct_id, 
-                                    trx_result_tuple_t &trt, 
-                                    populate_baseline_input_t& pbin)
+w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int xct_id, 
+                                           populate_baseline_input_t& pbin)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -333,9 +330,8 @@ ShoreTPCCEnv::xct_populate_baseline(const int xct_id,
     row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
-    // not sure which of the above 2 is biggest, but customer is bigger than all of them!
+    // not sure which of the Warehouse and District is bigger, 
+    // but customer is bigger than both
     rep_row_t areprow(_pcustomer_man->ts());
     prwh->_rep = &areprow;
     prdist->_rep = &areprow;
@@ -395,11 +391,10 @@ ShoreTPCCEnv::xct_populate_baseline(const int xct_id,
 		if(e.is_error()) { goto done; }
 	    }
 	}
-	
+
+        // Should do the commit here, called by the loaded
 	e = _pssm->commit_xct();
-	if(e.is_error()) { goto done; }
-	
-	trt.set_state(COMMITTED);
+	if(e.is_error()) { goto done; }	
     }
  done:
     _pwarehouse_man->give_tuple(prwh);
@@ -408,10 +403,8 @@ ShoreTPCCEnv::xct_populate_baseline(const int xct_id,
 }
 
 
-w_rc_t 
-ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, 
-                                    trx_result_tuple_t &trt, 
-                                    populate_one_unit_input_t& pbuin)
+w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, 
+                                           populate_one_unit_input_t& pbuin)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -438,8 +431,6 @@ ShoreTPCCEnv::xct_populate_one_unit(const int xct_id,
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
     assert (pritem);
     
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 8 table representations
@@ -654,10 +645,9 @@ ShoreTPCCEnv::xct_populate_one_unit(const int xct_id,
 	    if(e.is_error()) { goto done; }
 	}
 
-	e = _pssm->commit_xct();
-	if(e.is_error()) { goto done; }
-
-	trt.set_state(COMMITTED);
+        // Should do the commit here, called by the loaded
+        e = _pssm->commit_xct();
+ 	if(e.is_error()) { goto done; }
     }
  done:
     _pcustomer_man->give_tuple(prcust);
@@ -686,49 +676,47 @@ ShoreTPCCEnv::xct_populate_one_unit(const int xct_id,
  *
  *  @fn:    run_one_xct
  *
- *  @brief: Baseline client - Entry point for running one trx 
+ *  @brief: Initiates the execution of one TPC-C xct
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure internal has expired.
  *
  *********************************************************************/
 
-w_rc_t 
-ShoreTPCCEnv::run_one_xct(const int xctid, int xct_type, 
-                          const int whid, trx_result_tuple_t& trt)
+w_rc_t ShoreTPCCEnv::run_one_xct(Request* prequest)
 {
     // if BASELINE TPC-C MIX
-    if (xct_type == XCT_MIX) {        
-        xct_type = random_xct_type(smthread_t::me()->rand()%100);
+    if (prequest->type() == XCT_MIX) {
+        prequest->set_type(random_xct_type(smthread_t::me()->rand()%100));
     }
     
-    switch (xct_type) {
+    switch (prequest->type()) {
         
         // TPC-C BASELINE
     case XCT_NEW_ORDER:
-        return (run_new_order(xctid,trt,whid));
+        return (run_new_order(prequest));
     case XCT_PAYMENT:
-        return (run_payment(xctid,trt,whid));;
+        return (run_payment(prequest));;
     case XCT_ORDER_STATUS:
-        return (run_order_status(xctid,trt,whid));
+        return (run_order_status(prequest));
     case XCT_DELIVERY:
-        return (run_delivery(xctid,trt,whid));
+        return (run_delivery(prequest));
     case XCT_STOCK_LEVEL:
-        return (run_stock_level(xctid,trt,whid));
+        return (run_stock_level(prequest));
 
         // Little Mix (NewOrder/Payment 50%-50%)
     case XCT_LITTLE_MIX:
         if (URand(1,100)>50)
-            return (run_new_order(xctid,trt,whid));
+            return (run_new_order(prequest));
         else
-            return (run_payment(xctid,trt,whid));
+            return (run_payment(prequest));
 
 
         // MBENCH BASELINE
     case XCT_MBENCH_WH:
-        return (run_mbench_wh(xctid,trt,whid));
+        return (run_mbench_wh(prequest));
     case XCT_MBENCH_CUST:
-        return (run_mbench_cust(xctid,trt,whid)); 
+        return (run_mbench_cust(prequest)); 
     default:
         assert (0); // UNKNOWN TRX-ID
     }
@@ -776,7 +764,6 @@ DEFINE_TRX(ShoreTPCCEnv,mbench_cust);
 
 w_rc_t 
 ShoreTPCCEnv::xct_new_order(const int xct_id, 
-                            trx_result_tuple_t& trt,
                             new_order_input_t& pnoin)
 {
     // ensure a valid environment
@@ -812,8 +799,6 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
 
     w_rc_t e = RCOK;
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 8 table representations
@@ -1043,15 +1028,7 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
         e = _pnew_order_man->add_tuple(_pssm, prno);
         if (e.is_error()) { goto done; }
 
-        /* 6. finalize trx */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1091,7 +1068,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id, 
-                                 trx_result_tuple_t& trt,
                                  payment_input_t& ppin)
 {
     // ensure a valid environment    
@@ -1117,8 +1093,6 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
 
     w_rc_t e = RCOK;
 
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -1370,16 +1344,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
         e = _phistory_man->add_tuple(_pssm, prhist);
         if (e.is_error()) { goto done; }
 
-
-        /* 4. commit */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1415,7 +1380,6 @@ done:
 
 
 w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id, 
-                                      trx_result_tuple_t& trt,
                                       order_status_input_t& pstin)
 {
     // ensure a valid environment    
@@ -1439,9 +1403,6 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
     assert (prol);
 
     w_rc_t e = RCOK;
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 3 table representations
@@ -1615,15 +1576,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
             if (e.is_error()) { goto done; }
         }
 
-        /* 4. commit */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1659,7 +1612,6 @@ done:
 unsigned int delivery_abort_ctr = 0;
 
 w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id, 
-                                  trx_result_tuple_t& trt,
                                   delivery_input_t& pdin)
 {
     // ensure a valid environment    
@@ -1688,9 +1640,6 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
     assert (prcust);
 
     w_rc_t e = RCOK;
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -1871,6 +1820,9 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
             if (e.is_error()) { goto done; }
 
 	    if(SPLIT_TRX && dlist.size()) {
+#ifdef CFG_FLUSHER
+                #warning TPCC-Delivery does not do the intermediate commits lazily
+#endif
 		e = _pssm->commit_xct();
 		if (e.is_error()) { goto done; }
 		e = _pssm->begin_xct();
@@ -1878,15 +1830,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
 	    }
         }
 
-        /* 4. commit */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1928,7 +1872,6 @@ done:
  ********************************************************************/
 
 w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id, 
-                                     trx_result_tuple_t& trt,
                                      stock_level_input_t& pslin)
 {
     // ensure a valid environment    
@@ -1948,9 +1891,6 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
     assert (prst);
 
     w_rc_t e = RCOK;
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pdistrict_man->ts());
 
     // allocate space for the biggest of the 3 table representations
@@ -2112,15 +2052,8 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
             e = ol_list_sort_iter.next(_pssm, eof, rsb);
             if (e.is_error()) { goto done; }
         }
-  
-        /* 3. commit */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
 
-    } // goto
- 
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
+    } // goto 
 
 #ifdef PRINT_TRX_RESULTS
         // at the end of the transaction 
@@ -2157,7 +2090,6 @@ done:
 
 
 w_rc_t ShoreTPCCEnv::xct_mbench_wh(const int xct_id, 
-                                   trx_result_tuple_t& trt, 
                                    mbench_wh_input_t& mbin)
 {
     // ensure a valid environment    
@@ -2173,9 +2105,6 @@ w_rc_t ShoreTPCCEnv::xct_mbench_wh(const int xct_id,
     assert (prwh);
     
     w_rc_t e = RCOK;
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pwarehouse_man->ts());
 
     // allocate space for the biggest of the 4 table representations
@@ -2216,14 +2145,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_wh(const int xct_id,
         prwh->get_value(5, awh.W_STATE, 3);
         prwh->get_value(6, awh.W_ZIP, 10);
 
-        /* 4. commit */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -2249,7 +2171,6 @@ done:
 
 
 w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id, 
-                                     trx_result_tuple_t& trt, 
                                      mbench_cust_input_t& mcin)
 {
     // ensure a valid environment    
@@ -2263,9 +2184,6 @@ w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id,
     assert (prcust);
     
     w_rc_t e = RCOK;
-
-    trt.set_id(xct_id);
-    trt.set_state(UNSUBMITTED);
     rep_row_t areprow(_pcustomer_man->ts());
 
     // allocate space for the table representation
@@ -2363,15 +2281,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id,
             if (e.is_error()) { goto done; }
         }
 
-        /* 4. commit */
-        e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
-
     } // goto
-
-    // if we reached this point everything went ok
-    trt.set_state(COMMITTED);
-
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 

@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_field.h
  *
  *  @brief:  Description and current value of a field (column)
@@ -356,7 +354,7 @@ struct field_value_t
     /* ----------------- */
 
     void      print_value(ostream& os = cout);
-    const int get_debug_str(char* &buf);
+    int get_debug_str(char* &buf);
 
 }; // EOF: field_value_t
 

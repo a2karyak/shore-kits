@@ -99,10 +99,10 @@ DoraTM1Env::dora_get_sub_data(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
-    final_gsd_rvp* frvp = new_final_gsd_rvp(atid,pxct,xct_id,atrt);    
+    final_gsd_rvp* frvp = new_final_gsd_rvp(pxct,atid,xct_id,atrt);    
 
     // 4. Generate the actions
-    r_sub_gsd_action* r_sub = new_r_sub_gsd_action(atid,pxct,frvp,in);
+    r_sub_gsd_action* r_sub = new_r_sub_gsd_action(pxct,atid,frvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -157,10 +157,10 @@ DoraTM1Env::dora_get_new_dest(const int xct_id,
 
     // 3. Setup the next RVP
     // PH1 consists of 1 action
-    mid_gnd_rvp* rvp = new_mid_gnd_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+    mid_gnd_rvp* rvp = new_mid_gnd_rvp(pxct,atid,xct_id,atrt,in,bWake);    
 
     // 4. Generate the action
-    r_sf_gnd_action* r_sf = new_r_sf_gnd_action(atid,pxct,rvp,in);
+    r_sf_gnd_action* r_sf = new_r_sf_gnd_action(pxct,atid,rvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -204,11 +204,11 @@ DoraTM1Env::dora_get_new_dest(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
-    final_gnd_rvp* frvp = new_final_gnd_rvp(atid,pxct,xct_id,atrt);    
+    final_gnd_rvp* frvp = new_final_gnd_rvp(pxct,atid,xct_id,atrt);    
 
     // 4. Generate the actions
-    r_sf_gnd_action* r_sf = new_r_sf_gnd_action(atid,pxct,frvp,in);
-    r_cf_gnd_action* r_cf = new_r_cf_gnd_action(atid,pxct,frvp,in);
+    r_sf_gnd_action* r_sf = new_r_sf_gnd_action(pxct,atid,frvp,in);
+    r_cf_gnd_action* r_cf = new_r_cf_gnd_action(pxct,atid,frvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -271,10 +271,10 @@ DoraTM1Env::dora_get_acc_data(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
-    final_gad_rvp* frvp = new_final_gad_rvp(atid,pxct,xct_id,atrt);    
+    final_gad_rvp* frvp = new_final_gad_rvp(pxct,atid,xct_id,atrt);    
 
     // 4. Generate the actions
-    r_ai_gad_action* r_ai = new_r_ai_gad_action(atid,pxct,frvp,in);
+    r_ai_gad_action* r_ai = new_r_ai_gad_action(pxct,atid,frvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -328,10 +328,10 @@ DoraTM1Env::dora_upd_sub_data(const int xct_id,
 
     // 3. Setup the next RVP
     // PH1 consists of 1 action
-    mid_usd_rvp* rvp = new_mid_usd_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+    mid_usd_rvp* rvp = new_mid_usd_rvp(pxct,atid,xct_id,atrt,in,bWake);    
 
     // 4. Generate the action
-    upd_sf_usd_action* upd_sf = new_upd_sf_usd_action(atid,pxct,rvp,in);
+    upd_sf_usd_action* upd_sf = new_upd_sf_usd_action(pxct,atid,rvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -375,11 +375,11 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
-    final_usd_rvp* frvp = new_final_usd_rvp(atid,pxct,xct_id,atrt);    
+    final_usd_rvp* frvp = new_final_usd_rvp(pxct,atid,xct_id,atrt);    
 
     // 4. Generate the actions
-    upd_sub_usd_action* upd_sub = new_upd_sub_usd_action(atid,pxct,frvp,in);
-    upd_sf_usd_action* upd_sf = new_upd_sf_usd_action(atid,pxct,frvp,in);
+    upd_sub_usd_action* upd_sub = new_upd_sub_usd_action(pxct,atid,frvp,in);
+    upd_sf_usd_action* upd_sf = new_upd_sf_usd_action(pxct,atid,frvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -441,10 +441,10 @@ DoraTM1Env::dora_upd_loc(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
-    final_ul_rvp* frvp = new_final_ul_rvp(atid,pxct,xct_id,atrt);    
+    final_ul_rvp* frvp = new_final_ul_rvp(pxct,atid,xct_id,atrt);    
 
     // 4. Generate the actions
-    upd_sub_ul_action* upd_sub = new_upd_sub_ul_action(atid,pxct,frvp,in);
+    upd_sub_ul_action* upd_sub = new_upd_sub_ul_action(pxct,atid,frvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -498,13 +498,13 @@ DoraTM1Env::dora_ins_call_fwd(const int xct_id,
     // 3. Setup the next RVP
     // PH1 consists of 1 action
 #ifdef TM1ICF2
-    mid1_icf_rvp* rvp = new_mid1_icf_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+    mid1_icf_rvp* rvp = new_mid1_icf_rvp(pxct,atid,xct_id,atrt,in,bWake);    
 #else
-    mid_icf_rvp* rvp = new_mid_icf_rvp(atid,pxct,xct_id,atrt,in,bWake);
+    mid_icf_rvp* rvp = new_mid_icf_rvp(pxct,atid,xct_id,atrt,in,bWake);
 #endif
 
     // 4. Generate the action
-    r_sub_icf_action* r_sub = new_r_sub_icf_action(atid,pxct,rvp,in);
+    r_sub_icf_action* r_sub = new_r_sub_icf_action(pxct,atid,rvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue
@@ -554,10 +554,10 @@ DoraTM1Env::dora_del_call_fwd(const int xct_id,
     
     // 3. Setup the next RVP
     // PH1 consists of 1 action
-    mid_dcf_rvp* rvp = new_mid_dcf_rvp(atid,pxct,xct_id,atrt,in,bWake);    
+    mid_dcf_rvp* rvp = new_mid_dcf_rvp(pxct,atid,xct_id,atrt,in,bWake);    
 
     // 4. Generate the action
-    r_sub_dcf_action* r_sub = new_r_sub_dcf_action(atid,pxct,rvp,in);
+    r_sub_dcf_action* r_sub = new_r_sub_dcf_action(pxct,atid,rvp,in);
 
     // 6a. Decide about partition
     // 6b. Enqueue

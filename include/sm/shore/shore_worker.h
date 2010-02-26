@@ -41,8 +41,7 @@
 
 
 #include "util.h"
-#include "shore.h"
-
+#include "sm/shore/common.h"
 
 ENTER_NAMESPACE(shore);
 
@@ -362,7 +361,7 @@ public:
 
     // helper //    
 
-    const bool abort_one_trx(xct_t* axct);
+    bool abort_one_trx(xct_t* axct);
 
     void stats(); 
 
@@ -386,7 +385,6 @@ private:
     void operator=(base_worker_t const &);
     
 }; // EOF: base_worker_t
-
 
 EXIT_NAMESPACE(shore);
 

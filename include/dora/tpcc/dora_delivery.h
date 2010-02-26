@@ -56,7 +56,7 @@ public:
     ~final_del_rvp() { _cache=NULL; _ptpccenv=NULL; }
 
     // access methods
-    inline void set(const tid_t& atid, xct_t* axct, const int axctid,
+    inline void set(xct_t* axct, const tid_t& atid, const int axctid,
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
@@ -64,7 +64,8 @@ public:
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;
-        _set(atid,axct,axctid,presult,DISTRICTS_PER_WAREHOUSE,4*DISTRICTS_PER_WAREHOUSE);
+        _set(axct,atid,axctid,presult,
+             DISTRICTS_PER_WAREHOUSE,4*DISTRICTS_PER_WAREHOUSE);
     }
     inline void giveback() { 
         assert (_ptpccenv); 
@@ -107,7 +108,7 @@ public:
         _o_id = -1; }
 
     // access methods
-    inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
+    inline void set(xct_t* axct, const tid_t& atid, const int& axctid,
                     trx_result_tuple_t& presult, 
                     const delivery_input_t& din, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
@@ -118,7 +119,7 @@ public:
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;
-        _set(atid,axct,axctid,presult,1,1); // 1 intratrx - 1 total actions
+        _set(axct,atid,axctid,presult,1,1); // 1 intratrx - 1 total actions
     }
     inline void postset(final_del_rvp* prvp, const int d_id)
     {
@@ -172,7 +173,7 @@ public:
         _c_id = -1; _amount = -1; }
 
     // access methods
-    inline void set(const tid_t& atid, xct_t* axct, const int& axctid,
+    inline void set(xct_t* axct, const tid_t& atid, const int& axctid,
                     trx_result_tuple_t& presult, 
                     const delivery_input_t& din, const bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
@@ -182,7 +183,7 @@ public:
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;
-        _set(atid,axct,axctid,presult,2,3); // 2 intratrx - 3 total actions
+        _set(axct,atid,axctid,presult,2,3); // 2 intratrx - 3 total actions
     }
     inline void postset(const int d_id,final_del_rvp* prvp)
     {
@@ -234,12 +235,12 @@ protected:
     delivery_input_t _din;
     int _d_id;
 
-    inline void _del_act_set(const tid_t& atid, xct_t* axct, rvp_t* prvp, 
+    inline void _del_act_set(xct_t* axct, const tid_t& atid, rvp_t* prvp, 
                              const int keylen, const delivery_input_t& din, 
                              const int did,
                              DoraTPCCEnv* penv) 
     {
-        _range_act_set(atid,axct,prvp,keylen); 
+        _range_act_set(axct,atid,prvp,keylen); 
         _din = din;
         _d_id = did;
         assert (penv);
@@ -273,7 +274,7 @@ public:
         _up.push_back(_din._wh_id);
         _up.push_back(_d_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, 
+    inline void set(xct_t* axct, const tid_t& atid, 
                     mid1_del_rvp* pmid1_rvp, 
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -282,7 +283,7 @@ public:
         _pmid1_rvp = pmid1_rvp;
         assert (pc);
         _cache = pc;
-        _del_act_set(atid,axct,pmid1_rvp,2,din,0,penv);  // key is (WH|D)
+        _del_act_set(axct,atid,pmid1_rvp,2,din,0,penv);  // key is (WH|D)
     }
     inline void postset(const int d_id)
     {
@@ -316,7 +317,7 @@ public:
         _up.push_back(_d_id);
         _down.push_back(_o_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, 
+    inline void set(xct_t* axct, const tid_t& atid, 
                     mid2_del_rvp* pmid2_rvp, 
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -325,7 +326,7 @@ public:
         _pmid2_rvp = pmid2_rvp;
         assert (pc);
         _cache = pc;
-        _del_act_set(atid,axct,pmid2_rvp,3,din,0,penv);  // key is (WH|D|ORD)
+        _del_act_set(axct,atid,pmid2_rvp,3,din,0,penv);  // key is (WH|D|ORD)
     }
     inline void postset(const int d_id, const int o_id)
     {
@@ -360,7 +361,7 @@ public:
         _up.push_back(_d_id);
         _down.push_back(_o_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, 
+    inline void set(xct_t* axct, const tid_t& atid, 
                     mid2_del_rvp* pmid2_rvp, 
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
@@ -369,7 +370,7 @@ public:
         _pmid2_rvp = pmid2_rvp;
         assert (pc);
         _cache = pc;
-        _del_act_set(atid,axct,pmid2_rvp,3,din,0,penv);  // key is (WH|D|ORD)
+        _del_act_set(axct,atid,pmid2_rvp,3,din,0,penv);  // key is (WH|D|ORD)
     }
     inline void postset(const int d_id, const int o_id)
     {
@@ -404,14 +405,14 @@ public:
         _up.push_back(_d_id);
         _down.push_back(_c_id);
     }
-    inline void set(const tid_t& atid, xct_t* axct, 
+    inline void set(xct_t* axct, const tid_t& atid, 
                     rvp_t* prvp,
                     const delivery_input_t& din,
                     DoraTPCCEnv* penv, act_cache* pc) 
     {
         assert (pc);
         _cache = pc;
-        _del_act_set(atid,axct,prvp,3,din,0,penv);  // key is (WH|D|C)
+        _del_act_set(axct,atid,prvp,3,din,0,penv);  // key is (WH|D|C)
     }
     inline void postset(const int d_id, const int c_id, const int amount)
     {

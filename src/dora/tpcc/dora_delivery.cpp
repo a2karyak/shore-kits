@@ -42,17 +42,17 @@ w_rc_t mid1_del_rvp::run()
     assert (_xct);
 #endif
 
-    mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_tid,_xct,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
+    mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
     rvp2->postset(_d_id,_final_rvp);
 
     // 2. Check if aborted during previous phase
     CHECK_MIDWAY_RVP_ABORTED(rvp2);
 
     // 2. Generate and enqueue actions
-    upd_ord_del_action* del_upd_ord = _ptpccenv->new_upd_ord_del_action(_tid,_xct,rvp2,_din);
+    upd_ord_del_action* del_upd_ord = _ptpccenv->new_upd_ord_del_action(_xct,_tid,rvp2,_din);
     del_upd_ord->postset(_d_id,_o_id);
 
-    upd_oline_del_action* del_upd_oline = _ptpccenv->new_upd_oline_del_action(_tid,_xct,rvp2,_din);
+    upd_oline_del_action* del_upd_oline = _ptpccenv->new_upd_oline_del_action(_xct,_tid,rvp2,_din);
     del_upd_oline->postset(_d_id,_o_id);
 
 
@@ -105,7 +105,7 @@ w_rc_t mid2_del_rvp::run()
     CHECK_MIDWAY_RVP_ABORTED(_final_rvp);
 
     // 2. Generate and enqueue action
-    upd_cust_del_action* del_upd_cust = _ptpccenv->new_upd_cust_del_action(_tid,_xct,_final_rvp,_din);
+    upd_cust_del_action* del_upd_cust = _ptpccenv->new_upd_cust_del_action(_xct,_tid,_final_rvp,_din);
     del_upd_cust->postset(_d_id,_c_id,_amount);
 
     typedef range_partition_impl<int>   irpImpl; 

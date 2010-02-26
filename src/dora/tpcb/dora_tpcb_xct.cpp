@@ -93,13 +93,13 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
-    final_au_rvp* frvp = new_final_au_rvp(atid,pxct,xct_id,atrt);    
+    final_au_rvp* frvp = new_final_au_rvp(pxct,atid,xct_id,atrt);    
 
     // 4. Generate the actions
-    upd_br_action* upd_br = new_upd_br_action(atid,pxct,frvp,in);
-    upd_te_action* upd_te = new_upd_te_action(atid,pxct,frvp,in);
-    upd_ac_action* upd_ac = new_upd_ac_action(atid,pxct,frvp,in);
-    ins_hi_action* ins_hi = new_ins_hi_action(atid,pxct,frvp,in);
+    upd_br_action* upd_br = new_upd_br_action(pxct,atid,frvp,in);
+    upd_te_action* upd_te = new_upd_te_action(pxct,atid,frvp,in);
+    upd_ac_action* upd_ac = new_upd_ac_action(pxct,atid,frvp,in);
+    ins_hi_action* ins_hi = new_ins_hi_action(pxct,atid,frvp,in);
 
     // 5a. Decide about partition
     // 5b. Enqueue

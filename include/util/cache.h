@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   cache.h
  *
  *  @brief:  Template-based cache objects
@@ -33,8 +31,6 @@
 #ifndef __UTIL_OBJECT_CACHE_H
 #define __UTIL_OBJECT_CACHE_H
 
-
-// sparcv9 only at the moment
 #include <atomic.h>
 
 #include "atomic_trash_stack.h"
@@ -108,7 +104,6 @@ private:
     int _object_setups;
 #endif              
 
-
     // start with a non-empty pool, so that threads don't race
     // at the beginning
     struct mylink {
@@ -146,6 +141,7 @@ public:
         mylink head;
         mylink* node = NULL;
 
+#ifdef CFG_CACHES
         // create (init_count) objects, and push them to the cache
         for (int i=0; i<init_count; i++) {
             Object* u = borrow();
@@ -159,6 +155,7 @@ public:
             node = node->_next;
             delete (head._next);
         }
+#endif
     }
 
     
@@ -183,6 +180,7 @@ public:
     // Ask for an unused object, if cache empty allocate and return a new one
     Object* borrow() 
     {
+#ifdef CFG_CACHES
 #ifdef CACHE_STATS
         CRITICAL_SECTION( rcs, _requests_lock);
         ++_object_requests;
@@ -199,6 +197,12 @@ public:
         Object* temp = new (*this) Object();
         temp->setup(_stl_pools);
         return (temp);
+#else
+        // Calls malloc, should used only for debugging purposes
+        Object* temp = new Object();
+        temp->setup(_stl_pools);
+        return (temp);
+#endif
     }
     
 
@@ -206,6 +210,7 @@ public:
     // free list.
     void giveback(Object* pobj) 
     {        
+#ifdef CFG_CACHES
         assert (pobj);
         
         // avoid pointer aliasing problems with the optimizer
@@ -216,6 +221,9 @@ public:
         
         // give it back
         push(u.v);
+#else
+        delete (pobj);
+#endif
     }    
 
 

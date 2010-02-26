@@ -25,7 +25,7 @@
 #include "dora/partition.h"
 
 #ifdef CFG_FLUSHER
-#include "dora/flusher.h"
+#include "dora/dflusher.h"
 #endif
 
 using namespace shore;
@@ -108,7 +108,7 @@ public:
         return (_irptp_vec[table_pos]->get_part(part_pos));
     }
 
-    const int statistics();
+    int statistics();
 
 protected:
 

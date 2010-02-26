@@ -263,7 +263,6 @@ LogicalLock::acquire(ActionLockReq& alr)
     // However, in mixed workloads, like TPCC-Mix, where the SH and EX requests
     // are 50%-50% this leads to starvation and deadlocks!
     // The deadlocks are caused because the FIFO execution principle BREAKS! 
-#warning IP: Checking list of waiters first    
     
     // 3. Check list of waiters
     for (ActionLockReqListIt it=_waiters.begin(); it!=_waiters.end(); ++it) {

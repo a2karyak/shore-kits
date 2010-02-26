@@ -48,7 +48,7 @@ DoraEnv::~DoraEnv()
  *
  ********************************************************************/
 
-const int DoraEnv::statistics()
+int DoraEnv::statistics()
 {
 #ifdef CFG_FLUSHER
     _flusher->statistics();

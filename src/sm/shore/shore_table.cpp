@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file shore_table.cpp
  *
  *  @brief Implementation of shore_table class
@@ -168,14 +166,13 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 
 #warning Only the last field of an index can be of variable length
 
-bool 
-table_desc_t::create_index(const char* name,
-                           int partitions,
-                           const int* fields,
-                           const int num,
-                           const bool unique,
-                           const bool primary,
-                           const bool nolock)
+bool table_desc_t::create_index(const char* name,
+                                int partitions,
+                                const int* fields,
+                                const int num,
+                                const bool unique,
+                                const bool primary,
+                                const bool nolock)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
                                              unique, primary, nolock);

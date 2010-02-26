@@ -148,40 +148,38 @@ public:
     /* --- formatting operations --- */
     /* ----------------------------- */
 
-    /* format tuple */
-    const int  format(table_tuple* ptuple, 
-                      rep_row_t &arep);
+    // format tuple
+    int  format(table_tuple* ptuple, rep_row_t &arep);
 
-    /* load tuple from input buffer */
-    const bool load(table_tuple* ptuple,
-                    const char* string);
+    // load tuple from input buffer
+    bool load(table_tuple* ptuple, const char* string);
 
-    /* disk space needed for tuple */
-    const int  size(table_tuple* ptuple) const; 
+    // disk space needed for tuple
+    int  size(table_tuple* ptuple) const; 
 
-    /* format the key value */
-    const int  format_key(index_desc_t* pindex, 
-                          table_tuple* ptuple, 
-                          rep_row_t &arep);
+    // format the key value
+    int  format_key(index_desc_t* pindex, 
+                    table_tuple* ptuple, 
+                    rep_row_t &arep);
 
-    /* load key index from input buffer */
-    const bool load_key(const char* string,
-                        index_desc_t* pindex,
-                        table_tuple* ptuple);
+    // load key index from input buffer 
+    bool load_key(const char* string,
+                  index_desc_t* pindex,
+                  table_tuple* ptuple);
 
-    /* set indexed fields of the row to minimum */
-    const int  min_key(index_desc_t* pindex, 
-                       table_tuple* ptuple, 
-                       rep_row_t &arep);
+    // set indexed fields of the row to minimum
+    int  min_key(index_desc_t* pindex, 
+                 table_tuple* ptuple, 
+                 rep_row_t &arep);
 
-    /* set indexed fields of the row to maximum */
-    const int  max_key(index_desc_t* pindex, 
-                       table_tuple* ptuple, 
-                       rep_row_t &arep);
+    // set indexed fields of the row to maximum
+    int  max_key(index_desc_t* pindex, 
+                 table_tuple* ptuple, 
+                 rep_row_t &arep);
 
-    /* length of the formatted key */
-    const int  key_size(index_desc_t* pindex, 
-                        const table_tuple* ptuple) const;
+    // length of the formatted key
+    int  key_size(index_desc_t* pindex, 
+                  const table_tuple* ptuple) const;
 
 
     int get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const;
@@ -190,14 +188,14 @@ public:
     /* --- access through index --- */
     /* ---------------------------- */
 
-    /* idx probe */
+    // idx probe
     inline w_rc_t   index_probe(ss_m* db,
                                 index_desc_t* pidx,
                                 table_tuple*  ptuple,
                                 lock_mode_t   lock_mode = SH,          /* one of: NL, SH, EX */
                                 latch_mode_t  latch_mode = LATCH_SH);  /* one of: LATCH_SH, LATCH_EX */
     
-    /* probe idx in EX (& LATCH_EX) mode */
+    // probe idx in EX (& LATCH_EX) mode
     inline w_rc_t   index_probe_forupdate(ss_m* db,
                                    index_desc_t* pidx,
                                    table_tuple*  ptuple)
@@ -582,8 +580,8 @@ public:
  *********************************************************************/
 
 template <class TableDesc>
-const int table_man_impl<TableDesc>::format(table_tuple* ptuple,
-                                            rep_row_t &arep)
+int table_man_impl<TableDesc>::format(table_tuple* ptuple,
+                                      rep_row_t &arep)
 {
     // Format the data field by field
 
@@ -705,8 +703,8 @@ const int table_man_impl<TableDesc>::format(table_tuple* ptuple,
  *********************************************************************/
 
 template <class TableDesc>
-const bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
-                                           const char* data)
+bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
+                                     const char* data)
 {
     // Read the data field by field
 
@@ -788,9 +786,9 @@ const bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
  ******************************************************************/
 
 template <class TableDesc>
-inline const int table_man_impl<TableDesc>::format_key(index_desc_t* pindex,
-                                                       table_tuple* ptuple,
-                                                       rep_row_t &arep)
+inline int table_man_impl<TableDesc>::format_key(index_desc_t* pindex,
+                                                 table_tuple* ptuple,
+                                                 rep_row_t &arep)
 {
     assert (_ptable);
     assert (pindex);
@@ -844,9 +842,9 @@ inline const int table_man_impl<TableDesc>::format_key(index_desc_t* pindex,
  *********************************************************************/
 
 template <class TableDesc>
-const bool table_man_impl<TableDesc>::load_key(const char* string,
-                                               index_desc_t* pindex,
-                                               table_tuple* ptuple)
+bool table_man_impl<TableDesc>::load_key(const char* string,
+                                         index_desc_t* pindex,
+                                         table_tuple* ptuple)
 {
     assert (_ptable);
     assert (pindex);
@@ -876,9 +874,9 @@ const bool table_man_impl<TableDesc>::load_key(const char* string,
  ******************************************************************/
 
 template <class TableDesc>
-inline const int table_man_impl<TableDesc>::min_key(index_desc_t* pindex, 
-                                                    table_tuple* ptuple,
-                                                    rep_row_t &arep)
+inline int table_man_impl<TableDesc>::min_key(index_desc_t* pindex, 
+                                              table_tuple* ptuple,
+                                              rep_row_t &arep)
 {
     assert (_ptable);
     for (int i=0; i<pindex->field_count(); i++) {
@@ -890,9 +888,9 @@ inline const int table_man_impl<TableDesc>::min_key(index_desc_t* pindex,
 
 
 template <class TableDesc>
-inline const int table_man_impl<TableDesc>::max_key(index_desc_t* pindex, 
-                                                    table_tuple* ptuple,
-                                                    rep_row_t &arep)
+inline int table_man_impl<TableDesc>::max_key(index_desc_t* pindex, 
+                                              table_tuple* ptuple,
+                                              rep_row_t &arep)
 {
     assert (_ptable);
     for (int i=0; i<pindex->field_count(); i++) {
@@ -920,8 +918,8 @@ inline const int table_man_impl<TableDesc>::max_key(index_desc_t* pindex,
  ******************************************************************/
 
 template <class TableDesc>
-inline const int table_man_impl<TableDesc>::key_size(index_desc_t* pindex, 
-                                                     const table_tuple*) const
+inline int table_man_impl<TableDesc>::key_size(index_desc_t* pindex, 
+                                               const table_tuple*) const
 {
     assert (_ptable);
     return (_ptable->index_maxkeysize(pindex));
@@ -1023,7 +1021,7 @@ int table_man_impl<TableDesc>::get_pnum(index_desc_t* pindex, table_tuple const*
 
     int first_key;
     ptuple->get_value(pindex->key_index(0), first_key);
-    return first_key % pindex->get_partition_count();
+    return (first_key % pindex->get_partition_count());
 }
 
 

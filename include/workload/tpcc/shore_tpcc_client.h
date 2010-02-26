@@ -56,9 +56,8 @@ class baseline_tpcc_client_t : public base_client_t
 {
 private:
     // workload parameters
-    ShoreTPCCEnv* _tpccdb;    
     int _wh;
-    trx_worker_t<ShoreTPCCEnv>* _worker;
+    trx_worker_t* _worker;
     int _qf;
     
 
@@ -69,27 +68,16 @@ public:
     baseline_tpcc_client_t(c_str tname, const int id, ShoreTPCCEnv* env, 
                            const MeasurementType aType, const int trxid, 
                            const int numOfTrxs, 
-                           processorid_t aprsid, const int sWH, const int qf) 
-	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
-          _tpccdb(env), _wh(sWH), _qf(qf)
-    {
-        assert (env);
-        assert (_wh>=0 && _qf>0);
-
-        // pick worker thread
-        _worker = _tpccdb->trxworker(_id);
-        TRACE( TRACE_DEBUG, "Picked worker (%s)\n", _worker->thread_name().data());
-        assert (_worker);
-    }
+                           processorid_t aprsid, const int sWH, const int qf);
 
     ~baseline_tpcc_client_t() { }
 
     // every client class should implement this function
-    static const int load_sup_xct(mapSupTrxs& map);
+    static int load_sup_xct(mapSupTrxs& map);
 
     // INTERFACE 
 
-    w_rc_t run_one_xct(int xct_type, int xctid);    
+    w_rc_t submit_one(int xct_type, int xctid);    
 
 }; // EOF: baseline_tpcc_client_t
 

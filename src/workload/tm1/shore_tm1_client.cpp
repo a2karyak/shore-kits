@@ -39,8 +39,26 @@ ENTER_NAMESPACE(tm1);
  *
  *********************************************************************/
 
-const int 
-baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
+baseline_tm1_client_t::baseline_tm1_client_t(c_str tname, const int id, 
+                                             ShoreTM1Env* env, 
+                                             const MeasurementType aType, 
+                                             const int trxid, 
+                                             const int numOfTrxs, 
+                                             processorid_t aprsid, 
+                                             const int selID, const int qf) 
+    : base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
+      _selid(selID), _qf(qf)
+{
+    assert (env);
+    assert (_id>=0 && _qf>0);
+
+    // pick worker thread
+    _worker = _env->worker(_id);
+    assert (_worker);
+}
+
+
+int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -61,17 +79,16 @@ baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 
 /********************************************************************* 
  *
- *  @fn:    run_one_xct
+ *  @fn:    submit_one
  *
- *  @brief: Baseline client - Entry point for running one trx 
+ *  @brief: Entry point for running one TM1 xct 
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure interval has expired.
  *
  *********************************************************************/
  
-w_rc_t 
-baseline_tm1_client_t::run_one_xct(int xct_type, int xctid) 
+w_rc_t baseline_tm1_client_t::submit_one(int xct_type, int xctid) 
 {
     // Set input    
     trx_result_tuple_t atrt;
@@ -91,8 +108,7 @@ baseline_tm1_client_t::run_one_xct(int xct_type, int xctid)
     register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
 
     // Get one action from the trash stack
-    assert (_tm1db);
-    trx_request_t* arequest = new (_tm1db->_request_pool) trx_request_t;
+    trx_request_t* arequest = new (_env->_request_pool) trx_request_t;
     tid_t atid;
     arequest->set(NULL,atid,xctid,atrt,xct_type,selid);
 

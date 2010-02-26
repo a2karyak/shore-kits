@@ -55,7 +55,7 @@ const int XCT_DORA_MBENCH_CUST = 112;
  *
   *********************************************************************/
 
-const int dora_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
+int dora_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
 {
     // clears the supported trx map and loads its own
     stmap.clear();
@@ -80,16 +80,16 @@ const int dora_tpcc_client_t::load_sup_xct(mapSupTrxs& stmap)
 
 /********************************************************************* 
  *
- *  @fn:    run_one_xct
+ *  @fn:    submit_one
  *
- *  @brief: DORA client - Entry point for running one trx 
+ *  @brief: Entry point for running one DORA TPC-C xct 
  *
  *  @note:  The execution of this trx will not be stopped even if the
  *          measure internal has expired.
  *
  *********************************************************************/
  
-w_rc_t dora_tpcc_client_t::run_one_xct(int xct_type, int xctid) 
+w_rc_t dora_tpcc_client_t::submit_one(int xct_type, int xctid) 
 {
     // if DORA TPC-C MIX
     bool bWake = false;

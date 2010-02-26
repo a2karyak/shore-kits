@@ -79,18 +79,25 @@ lib_libutil_a_SOURCES = \
 ################################################################################
 
 SM=$(top_srcdir)/src/sm
-SM_SHORE = \
-   $(SM)/shore/shore_file_desc.cpp \
-   $(SM)/shore/shore_field.cpp \
-   $(SM)/shore/shore_table.cpp \
-   $(SM)/shore/shore_row.cpp \
-   $(SM)/shore/shore_sort_buf.cpp \
-   $(SM)/shore/shore_env.cpp \
-   $(SM)/shore/shore_helper_loader.cpp \
-   $(SM)/shore/shore_client.cpp \
-   $(SM)/shore/shore_worker.cpp \
-   $(SM)/shore/shore_shell.cpp
+SMS=$(top_srcdir)/src/sm/shore
 
+SM_SHORE = \
+   $(SMS)/shore_file_desc.cpp \
+   $(SMS)/shore_field.cpp \
+   $(SMS)/shore_table.cpp \
+   $(SMS)/shore_row.cpp \
+   $(SMS)/shore_sort_buf.cpp \
+   $(SMS)/shore_reqs.cpp \
+   $(SMS)/shore_env.cpp \
+   $(SMS)/shore_helper_loader.cpp \
+   $(SMS)/shore_client.cpp \
+   $(SMS)/shore_worker.cpp \
+   $(SMS)/shore_trx_worker.cpp \
+   $(SMS)/shore_shell.cpp
+
+if USE_FLUSHER
+SM_SHORE += $(SMS)/shore_flusher.cpp
+endif
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
@@ -165,7 +172,7 @@ DO_BASE = \
    $(SD)/dora_env.cpp
 
 if USE_FLUSHER
-DO_BASE += $(SD)/flusher.cpp
+DO_BASE += $(SD)/dflusher.cpp
 endif
 
 lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)

@@ -229,12 +229,13 @@ public:
     static bool is_test_aborted();
 
     // every client class should implement this functions
-    static const int load_sup_xct(mapSupTrxs& map) {
+    static int load_sup_xct(mapSupTrxs& map) {
         map.clear(); return (map.size());
     }
 
     // INTERFACE    
-    virtual w_rc_t run_one_xct(int xct_type, int num_xct)=0;
+
+    virtual w_rc_t submit_one(int xct_type, int num_xct)=0;
 
 
     // debugging 

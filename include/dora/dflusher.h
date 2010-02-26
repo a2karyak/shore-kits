@@ -1,6 +1,6 @@
 /* -*- mode:C++; c-basic-offset:4 -*- */
 
-/** @file:   flusher.h
+/** @file:   dora_flusher.h
  *
  *  @brief:  Specialization of a worker thread that acts as the dora-flusher.
  *
@@ -42,12 +42,22 @@
    
    dora-flusher:
    while (true) {
+      rvp* prvp = toflush->dequeue();
+      flushing->enqueue(rvp);
       if (time_to_flush()) {
          flush_all();
-         while (pxct = toflush_queue->get_one()) {
-            pxct->notify_final_rvp(); 
+         while (!flushing->is_empty()) {
+            prvp = flushing->dequeue();
+            notifier->enqueue(prvp);
          }
       }
+   }
+
+   dora-notifier:
+   while (true) {
+      rvp* prvp = tonotify->dequeue();
+      prvp->notify();
+      prvp->notify_client();
    }
 
    In order to enable this mechanism Shore-kits needs to be configured with:
@@ -60,6 +70,7 @@
 
 #include "dora.h"
 #include "sm/shore/shore_worker.h"
+#include "sm/shore/shore_flusher.h"
 
 using namespace shore;
 
@@ -68,38 +79,6 @@ ENTER_NAMESPACE(dora);
 
 // Fwd decl
 class dora_notifier_t;
-
-
-/******************************************************************** 
- *
- * @struct: dora_flusher_stats_t
- *
- * @brief:  Various statistics for the dora-flusher
- * 
- ********************************************************************/
-
-struct dora_flusher_stats_t 
-{
-    uint   served;
-    uint   flushes;
-
-    long   logsize;
-    uint   alreadyFlushed;
-    uint   waiting;
-
-    uint trigByXcts;
-    uint trigBySize;
-    uint trigByTimeout;
-    
-    dora_flusher_stats_t();
-    ~dora_flusher_stats_t();
-
-    void print() const;
-    void reset();
-
-}; // EOF: dora_flusher_stats_t
-
-
 
 /******************************************************************** 
  *
@@ -117,7 +96,7 @@ public:
 
 private:
 
-    dora_flusher_stats_t _stats;
+    flusher_stats_t _stats;
 
     guard<dora_notifier_t> _notifier;
 
@@ -126,13 +105,6 @@ private:
 
     guard<Queue> _flushing;
     guard<Pool> _pxct_flushing_pool;
-
-    // Taken from shore/sm/log.h
-    static long floor(long offset, long block_size) { return (offset/block_size)*block_size; }
-    static long ceil(long offset, long block_size) { return floor(offset + block_size - 1, block_size); }
-
-    long _logpart_sz;
-    long _log_diff(const lsn_t& head, const lsn_t& tail);
     
     int _pre_STOP_impl();
     int _work_ACTIVE_impl(); 
