@@ -94,7 +94,6 @@ w_rc_t baseline_tm1_client_t::submit_one(int xct_type, int xctid)
     trx_result_tuple_t atrt;
     bool bWake = false;
     if (_cp->take_one) {
-        TRACE( TRACE_TRX_FLOW, "Sleeping\n");
         atrt.set_notify(_cp->wait+_cp->index);
         bWake = true;
     }

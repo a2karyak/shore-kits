@@ -733,9 +733,9 @@ int ShoreEnv::checkpoint()
 {    
     db_log_smt_t* checkpointer = new db_log_smt_t(c_str("checkpointer"), this);
     assert (checkpointer);
-    TRACE( TRACE_ALWAYS, "TO CHECKPOINT\n");
-    sleep(3); // sleep few seconds before starting the checkpoint
-    TRACE( TRACE_ALWAYS, "TO CHECKPOINT now\n");
+    //TRACE( TRACE_ALWAYS, "TO CHECKPOINT\n");
+    //sleep(3); // sleep few seconds before starting the checkpoint
+    //TRACE( TRACE_ALWAYS, "TO CHECKPOINT now\n");
     checkpointer->fork();
     checkpointer->join(); 
     int rv = checkpointer->rv();

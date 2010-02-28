@@ -162,6 +162,7 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 #ifdef CFG_FLUSHER // ***** Mainstream FLUSHER ***** //
 // Commits lazily
 
+
 #define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                    \
     w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
         int xct_id = prequest->xct_id();                                \
@@ -183,8 +184,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
             if ((*&_measure)!=MST_MEASURE) return (e);                  \
             _env_stats.inc_trx_att();                                   \
             return (e); }                                               \
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) to flush\n", xct_id);          \
-        to_base_flusher(prequest);                                        \
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) (%d) to flush\n", xct_id, prequest->tid()); \
+        to_base_flusher(prequest);                                      \
         return (RCOK); }
 
 #else // ***** NO FLUSHER ***** //

@@ -218,14 +218,15 @@ int flusher_t::_work_ACTIVE_impl()
                 xctlsn = preq->my_last_lsn();
 
                 TRACE( TRACE_TRX_FLOW, 
-                       "TID (%d) lastLSN (%d) durableLSN (%d)\n",
+                       "Xct (%d) lastLSN (%d) durableLSN (%d)\n",
                        preq->tid(), xctlsn, maxlsn);
 
                 // If the xct is already durable (had been flushed) then
                 // notify client
                 if (durablelsn > xctlsn) {
-                    preq->notify_client();
                     _stats.alreadyFlushed++;
+                    preq->notify_client();
+                    _env->_request_pool.destroy(preq);
                 }
                 else {
                     // Otherwise, add the rvp to the syncing (in-flight) list,
@@ -235,6 +236,9 @@ int flusher_t::_work_ACTIVE_impl()
                     waiting++;
                 }
             }
+            // else {
+            //     assert (get_control() != WC_ACTIVE);
+            // }
 
             bSleepNext = false;
             _stats.served++;
@@ -308,6 +312,7 @@ int flusher_t::_work_ACTIVE_impl()
             xctlsn = preq->my_last_lsn();
             assert (xctlsn < durablelsn);
             preq->notify_client();
+            _env->_request_pool.destroy(preq);
         }
     }
     return (0);

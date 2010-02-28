@@ -108,7 +108,10 @@ int trx_worker_t::_work_ACTIVE_impl()
         if (ar) {
             _serve_action(ar);
             ++_stats._served_input;
+
+#ifndef CFG_FLUSHER
             _env->_request_pool.destroy(ar);
+#endif
         }
     }
     return (0);

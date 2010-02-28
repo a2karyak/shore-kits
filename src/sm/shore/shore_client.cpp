@@ -119,7 +119,9 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     _think_time = envVar::instance()->getVarInt("db-cl-thinktime",THINK_TIME);
 
     if ((_think_time>0) && (batchsz>1)) {
-        TRACE( TRACE_ALWAYS, "error: Batchsz=%d && ThinkTime=%d\n", batchsz, _think_time);
+        TRACE( TRACE_ALWAYS, "error: Batchsz=%d && ThinkTime=%d\n", 
+               batchsz, _think_time);
+        assert(0);
     }
 
     switch (_measure_type) {
@@ -144,7 +146,8 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 	// main loop
         while (true) {
 	    // wait for the first to complete
-            TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", i, _cp->wait[1-_cp->index]);
+            TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", 
+                   i, &_cp->wait[1-_cp->index]);
 	    _cp->wait[1-_cp->index].wait();
 
 	    // check for exit...
@@ -156,7 +159,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         }
 	
 	// wait for the last batch to complete...
-        TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", i, _cp->wait[1-_cp->index]);
+        TRACE( TRACE_TRX_FLOW, "Sleeping on (%x)\n", &_cp->wait[1-_cp->index]);
 	_cp->wait[_cp->index].wait();	
         break;
 
@@ -164,6 +167,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         assert (0); // UNSUPPORTED MEASUREMENT TYPE
         break;
     }
+    TRACE( TRACE_TRX_FLOW, "Exiting...\n");
     return (RCOK);
 }
 
