@@ -159,6 +159,8 @@ foreach $entries (@theEntriesPerClient)
     $totalEntries+=$entries;
 }
 
+printf "\n";
+
 # print "TotalEntries: " . $totalEntries . "\n";
 
 # print "TheValues\n";
@@ -191,6 +193,8 @@ my $stat;
 my $stMean=0;
 my $stStd=0;
 my $stStdPer=0;
+
+printf("\n");
 
 foreach $entries (@theEntriesPerClient) 
 {
