@@ -58,6 +58,7 @@ const int LOCAL_TPCB = 100;
 const int LOCAL_TPCB = 85;
 #endif
 
+#warning TPCB: Using UZRand for generating skewed Zipfian inputs. Skewness can be controlled by the 'zipf' shell command.
 
 /* ------------------- */
 /* --- ACCT_UPDATE --- */
@@ -76,19 +77,19 @@ acct_update_input_t create_acct_update_input(int sf,
         auin.b_id = specificBr-1;
     }
     else {
-        auin.b_id = URand(0,sf-1);
+        auin.b_id = UZRand(0,sf-1);
     }
         
-    auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + URand(0,TPCB_TELLERS_PER_BRANCH-1);
+    auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + UZRand(0,TPCB_TELLERS_PER_BRANCH-1);
 
     // 85 - 15 local Branch
     if (URand(0,100)>LOCAL_TPCB) {
         // remote branch
-        auin.a_id = (URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH) + URand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+        auin.a_id = (URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
     }
     else {
         // local branch
-        auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + URand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+        auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
     }
         
     auin.delta = URand(0,2000000) - 1000000;
