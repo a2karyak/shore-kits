@@ -1,9 +1,34 @@
 #!/opt/csw/bin/perl
 
-#@file:   rowize.pl
-#@brief:  Gets the results of a measurement and puts all the collected values for 
-#         each run to the same row 
-#@author: Ippokratis Pandis
+#@file:    rowize.pl
+#
+#@brief:   Gets the results of a measurement and puts all collected values for 
+#          all the run with the same number of clients to the same row, calculating
+#          the average value, the standard deviation and the percentage of the 
+#          standard deviation to the average.
+#
+#@note:    Each parsed type (e.g., Throughput) should start with "+++" (e.g., "++ Throughput")
+#          Each run should have a header with the second word "measue" (e.g., "(tm1-base) measure ...")
+#          All the collected values should be on a separate line (e.g., 140.34)
+#
+#@example: ++ Throughput
+#          tm1-base) measure 1 1 1 30 24
+#          1024.24
+#          1001.95
+#          tm1-base) measure 4 1 4 30 24
+#          4024.56
+#          4021.56
+#          ++ UserTime
+#          tm1-base) measure 1 1 1 30 24
+#          104.2
+#          121.9
+#          tm1-base) measure 4 1 4 30 24
+#          404.5
+#          401.6
+#
+#@author:  Ippokratis Pandis
+#
+#@date:    Feb 2010
 
 use strict;
 use Getopt::Std;
@@ -66,8 +91,8 @@ foreach $line (<INFILE>) {
 # Check if it is a new tag (measured type)
     if (lc($value) eq "++")
     {
-        printf 'TAG -> %d. %s', $mvalues, $tag;
-        printf "\n";
+        # printf 'TAG -> %d. %s', $mvalues, $tag;
+        # printf "\n";
         $mvalues=$mvalues+1;
         push(@theTags,$tag);
         if ($mvalues == 2)
@@ -82,13 +107,13 @@ foreach $line (<INFILE>) {
 # It will zero the number of entries per measurem
     if (($mvalues == 1) && (lc($tag) eq "measure"))
     {
-        printf 'CL  -> %d. %d', $runs, $clients;
-        printf "\n";
-        $runs=$runs+1;
+        # printf 'CL  -> %d. %d', $runs, $clients;
+        # printf "\n";
+        $runs+=1;
         push(@theClients,$clients);
 
-        printf 'ENT -> %d. %d', $runs-1, $entries;
-        printf "\n";
+        # printf 'ENT -> %d. %d', $runs-1, $entries;
+        # printf "\n";
         push(@theEntriesPerClient,$entries);
         $entries=0;
     }
@@ -96,48 +121,66 @@ foreach $line (<INFILE>) {
 # It will count the number of entries per measurement
     if (($mvalues == 1) && (lc($tag) ne "measure") && (lc($value) ne "++"))
     {
-        printf 'ENT -> %d. %d', $clients, $entries;
-        printf "\n";
-        $entries=$entries+1;
+        # printf 'ENT -> %d. %d', $clients, $entries;
+        # printf "\n";
+        $entries+=1;
     }
 
 # It will store all the values (non tags or measure)
     if ((lc($tag) ne "measure") && (lc($value) ne "++"))
     {
-        printf 'VAL -> %d. %d', $valueCnt, $value;
-        printf "\n";
-        $valueCnt=$valueCnt+1;
+        # printf 'VAL -> %d. %d', $valueCnt, $value;
+        # printf "\n";
+        $valueCnt+=1;
         push(@theValues,$value);
     }
 }
 
-# At the end print everything
-print "\n";
-
 #add at the head of theTags array the Clients tag
 #unshift(@theTags,"Clients");
-print "TheTags:\n";
-print "@theTags";
-print "\n";
+# print "TheTags:\n";
+# print "@theTags";
+# print "\n";
 
-print "TheClients\n";
-print "@theClients";
-print "\n";
+# print "TheClients\n";
+# print "@theClients";
+# print "\n";
 
 #remove the first element of theEntriesPerClient array
 shift(@theEntriesPerClient);
-print "TheEntriesPerClient\n";
-print "@theEntriesPerClient";
-print "\n";
-
-print "TheValues\n";
-print "@theValues";
-print "\n";
-
-print "\n-------------------------------------\n";
+# print "TheEntriesPerClient\n";
+# print "@theEntriesPerClient";
+# print "\n";
 
 # Calculate the totalEntries
-my $totalEntries += $_ foreach @theEntriesPerClient;
+my $totalEntries=0;
+foreach $entries (@theEntriesPerClient)
+{
+    $totalEntries+=$entries;
+}
+
+# print "TotalEntries: " . $totalEntries . "\n";
+
+# print "TheValues\n";
+# print "@theValues";
+# print "\n";
+
+
+# # Calculate the totalValues
+# my $totalValues=0;
+# foreach $value (@theValues)
+# {
+#     $totalValues+=1;
+# }
+# print "TotalValues: " . $totalValues . "\n";
+
+
+# Write the header
+print "Clients ";
+foreach $tag (@theTags)
+{
+    print $tag . " StdDev StdDev% ";
+}
 
 my $sumEntries=0;
 my $offsetClient=0;
@@ -147,39 +190,49 @@ my $tagCnt=0;
 my $stat;
 my $stMean=0;
 my $stStd=0;
+my $stStdPer=0;
 
 foreach $entries (@theEntriesPerClient) 
 {
     printf $theClients[$offsetClient] . " ";
+    $tagCnt=0;
 
     foreach $tag (@theTags)
     {
         $offsetValue=($totalEntries*$tagCnt)+$sumEntries;
         $clients=0;
         $stat = Statistics::Descriptive::Full->new();
+
         while ($clients < $entries)
         {         
             $value=$theValues[$offsetValue];
                        
             $stat->add_data($value);
 
-            $clients=$clients+1;
-            $offsetValue=$offsetValue+1;
+            $clients+=1;
+            $offsetValue+=1;
         }
         
         $stMean=$stat->mean();
         $stStd=$stat->standard_deviation();
 
-        printf("T=%s M=%.2f StD=%.2f | ",$tag,$stMean,$stStd);        
+        # avoid division by zero
+        if ($stMean==0)
+        {
+            $stStdPer=0;
+        }
+        else
+        {
+            $stStdPer=(100*$stStd/$stMean);
+        }
+
+        printf("%.2f %.2f %.1f\% ",$stMean,$stStd,$stStdPer);        
         
-        $tagCnt=$tagCnt+1;
+        $tagCnt+=1;
     }
+
+    printf("\n");
     
-    $sumEntries=$sumEntries+$entries;
-    $offsetClient=$offsetClient+1;
-    print "\n\n";
+    $sumEntries+=$entries;
+    $offsetClient+=1;
 }
-
-
-
-print "\n-------------------------------------\n";    

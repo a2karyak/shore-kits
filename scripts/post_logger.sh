@@ -12,34 +12,38 @@ fi
 
 EXPFILE=$1; shift
 
-OUTFILE=filter.$EXPFILE
-echo $OUTFILE
+FILTERFILE=filter.`basename $EXPFILE`
+echo $FILTERFILE
 
 ### TPCC/TPCB have TPS, while TM1 has MQTh
-echo "++ Throughput" | tee $OUTFILE
-cat $EXPFILE | ggrep -e "TPS" -e "MQTh" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//' | tee -a $OUTFILE
+echo "++ Throughput" | tee $FILTERFILE
+cat $EXPFILE | ggrep -e "TPS" -e "MQTh" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//' | tee -a $FILTERFILE
 
-echo "++ AvgCPU" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//' | tee -a $OUTFILE
+echo "++ AvgCPU" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//' | tee -a $FILTERFILE
 
-echo "++ CpuLoad" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "CpuLoad" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//' | tee -a $OUTFILE
+echo "++ CpuLoad" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "CpuLoad" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//' | tee -a $FILTERFILE
 
-echo "++ Voluntary Ctx" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "Voluntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
+echo "++ VoluntaryCtx" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "Voluntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $FILTERFILE
 
-echo "++ Involuntary Ctx" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "Involuntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
+echo "++ InvoluntaryCtx" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "Involuntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $FILTERFILE
 
-echo "++ Total User" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "Total User" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
+echo "++ TotalUser" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "Total User" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $FILTERFILE
 
-echo "++ Total System" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "Total System" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
+echo "++ TotalSystem" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "Total System" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $FILTERFILE
 
-echo "++ Other System" | tee -a $OUTFILE
-cat $EXPFILE | ggrep -e "Other System" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
+echo "++ OtherSystem" | tee -a $FILTERFILE
+cat $EXPFILE | ggrep -e "Other System" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $FILTERFILE
 
-#rm $OUTFILE
+
+ROWIZEPERL="scripts/rowize.pl"
+perl $ROWIZEPERL -f $FILTERFILE
+
+rm $FILTERFILE
 exit
 
