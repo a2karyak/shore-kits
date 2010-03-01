@@ -12,26 +12,34 @@ fi
 
 EXPFILE=$1; shift
 
+OUTFILE=filter.$EXPFILE
+echo $OUTFILE
+
 ### TPCC/TPCB have TPS, while TM1 has MQTh
-echo "Throughput"
-cat $EXPFILE | ggrep -e "TPS" -e "MQTh" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+echo "++ Throughput" | tee $OUTFILE
+cat $EXPFILE | ggrep -e "TPS" -e "MQTh" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//' | tee -a $OUTFILE
 
-echo "AvgCPU"
-cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//'
+echo "++ AvgCPU" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "AvgCPU" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/..$//' | tee -a $OUTFILE
 
-echo "CpuLoad"
-cat $EXPFILE | ggrep -e "CpuLoad" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//'
+echo "++ CpuLoad" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "CpuLoad" -e "measure" | grep -v "measurement" | sed 's/^.*(//' | sed -e 's/.$//' | tee -a $OUTFILE
 
-echo "Voluntary Ctx"
-cat $EXPFILE | ggrep -e "Voluntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //'
+echo "++ Voluntary Ctx" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "Voluntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
 
-echo "Involuntary Ctx"
-cat $EXPFILE | ggrep -e "Involuntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //'
+echo "++ Involuntary Ctx" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "Involuntary" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
 
-### TM1 has also SuccessRate
-echo "SuccessRate"
-cat $EXPFILE | grep "Success" | uniq | sed 's/^.*(//' | sed -e 's/..$//'
+echo "++ Total User" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "Total User" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
 
+echo "++ Total System" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "Total System" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
 
+echo "++ Other System" | tee -a $OUTFILE
+cat $EXPFILE | ggrep -e "Other System" -e "measure" | grep -v "measurement" | sed 's/^.*\. //' | tee -a $OUTFILE
+
+#rm $OUTFILE
 exit
 
