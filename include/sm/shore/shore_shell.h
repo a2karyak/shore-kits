@@ -99,6 +99,20 @@ struct fake_iodelay_cmd_t : public command_handler_t {
 };
 
 
+// cmd - LOGDELAY
+struct fake_logdelay_cmd_t : public command_handler_t {
+    ShoreEnv* _env;
+    fake_logdelay_cmd_t(ShoreEnv* env) : _env(env) { };
+    ~fake_logdelay_cmd_t() { }
+    void setaliases() { 
+        _name = string("logdelay"); 
+        _aliases.push_back("logdelay"); }
+    int handle(const char* cmd);
+    void usage();
+    string desc() { return (string("Sets the fake log disk delay")); }
+};
+
+
 #ifdef CFG_SLI
 
 /*********************************************************************
@@ -203,6 +217,7 @@ protected:
 
     // supported cmds
     guard<fake_iodelay_cmd_t> _fakeioer;   
+    guard<fake_logdelay_cmd_t> _fakelogdelayer;   
 
 #ifdef CFG_SLI
     guard<sli_cmd_t> _slier;

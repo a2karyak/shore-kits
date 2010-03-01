@@ -881,6 +881,64 @@ int fake_iodelay_cmd_t::handle(const char* cmd)
 }
 
 
+/*********************************************************************
+ *
+ *  fake_io_delay_cmd_t: "logdelay" command
+ *
+ *********************************************************************/
+
+void fake_logdelay_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "LOGDELAY Usage:\n\n"                           \
+           "*** logdelay <DELAY>\n"                                      \
+           "\nParameters:\n"                                            \
+           "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
+}
+
+int fake_logdelay_cmd_t::handle(const char* cmd)
+{
+    char logdelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
+    if ( sscanf(cmd, "%*s %s", &logdelay_tag) < 1) {
+        // prints all the pssm
+        usage();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    
+    if(0 == strcasecmp("on", logdelay_tag)) {
+	W_COERCE(ss_m::enable_fake_log_latency());
+    }
+    else if(0 == strcasecmp("off", logdelay_tag)) {
+	W_COERCE(ss_m::disable_fake_log_latency());
+    }
+    else if(0 == strcasecmp("get", logdelay_tag)) {
+	// do nothing...
+    }
+    else {
+	int delay = atoi(logdelay_tag);
+	if(delay < 0 || delay > 1000*1000) {
+	    usage();
+	}
+	else {
+	    W_COERCE(ss_m::set_fake_log_latency(delay));
+	    if (!delay>0) {
+		W_COERCE(ss_m::disable_fake_log_latency());
+		W_COERCE(ss_m::set_fake_log_latency(0));
+	    }
+	    else {
+		W_COERCE(ss_m::set_fake_log_latency(delay));
+		W_COERCE(ss_m::enable_fake_log_latency());
+	    }
+	}
+    }
+
+    int tmp=0;
+    bool enabled = false;
+    W_COERCE(ss_m::get_fake_log_latency(enabled, tmp));
+    TRACE( TRACE_ALWAYS, "LOGDELAY=%d (%s)\n", tmp, enabled? "enabled" : "disabled");
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
 #ifdef CFG_SLI
 
 /*********************************************************************

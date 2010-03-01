@@ -281,6 +281,10 @@ public:
         _fakeioer->setaliases();
         add_cmd(_fakeioer.get());
 
+        _fakelogdelayer = new fake_logdelay_cmd_t(_dbinst);
+        _fakelogdelayer->setaliases();
+        add_cmd(_fakelogdelayer.get());
+
 #ifdef CFG_SLI
         _slier = new sli_cmd_t(_dbinst);
         _slier->setaliases();
