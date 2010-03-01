@@ -10,8 +10,8 @@ SHORE_LDADD = -L$(SHORE_SRC)/fc -L$(SHORE_SRC)/sm -L$(SHORE_SRC)/common -L$(SHOR
 ### -L$(SHORE_HOME)/../ppmcs
 
 # GLOBAL includes/ld
-INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(HOME)/apps/readline/ -lreadline
+INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I/opt/csw/include
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L/opt/csw/lib/sparcv9 -lreadline
 
 # List of libraries
 if USE_DORA
@@ -29,6 +29,9 @@ FE = \
    shore_kits
 
 bin_PROGRAMS = $(FE)
+
+debug-shore.so: debug-shore.cpp
+	$(CXXCOMPILE) -xcode=pic13 -G -o $@ $<
 
 
 ################################################################################
