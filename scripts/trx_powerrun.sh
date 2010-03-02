@@ -62,6 +62,9 @@ run_one ()
 
     ### KIT
 
+    ### Set SLI
+    command sli
+
     ### Set logging mechanism
     command log $LOGTYPE
 
@@ -70,6 +73,9 @@ run_one ()
 
     # make sure to get all the measurements before continuing!
     sleep $((5+TIME*ITER))
+
+    ### reset sli so in the next round it will be set again
+    command sli 
 }
 
 
