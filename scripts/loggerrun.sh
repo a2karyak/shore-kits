@@ -76,6 +76,10 @@ sleep $SLEEPTIME
 
 
 ### kit
+command elr
+command sli
+command restart
+
 #command measure $SF 0 10 30 $WARMUP_MIX 1
 command break
 command collector disable
@@ -96,8 +100,6 @@ run_one ()
     sleep $CLIENTS
     
     ### kit
-    command elr
-    command sli
     command log $LOGTYPE
 
     ## SPREAD
@@ -106,8 +108,6 @@ run_one ()
     ## NO-SPREAD
     command measure $CLIENTS 0 $CLIENTS $TIME $XCT $ITER
 
-    command sli
-    command elr
     command break
     command collector disable
     # link in the archive from the base experiment
