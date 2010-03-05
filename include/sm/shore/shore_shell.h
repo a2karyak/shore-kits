@@ -109,7 +109,22 @@ struct fake_logdelay_cmd_t : public command_handler_t {
         _aliases.push_back("logdelay"); }
     int handle(const char* cmd);
     void usage();
-    string desc() { return (string("Sets the fake log disk delay")); }
+    string desc();
+};
+
+
+// cmd - ASYNCH
+struct asynch_cmd_t : public command_handler_t {
+    bool _enabled;
+    ShoreEnv* _env;
+    asynch_cmd_t(ShoreEnv* env) : _env(env), _enabled(false) { };
+    ~asynch_cmd_t() { }
+    void setaliases() { 
+        _name = string("asynch"); 
+        _aliases.push_back("asynch"); }
+    int handle(const char* cmd);
+    void usage();
+    string desc();
 };
 
 
@@ -224,6 +239,7 @@ protected:
 #endif // CFG_SLI
 
     guard<log_cmd_t> _logger;
+    guard<asynch_cmd_t> _asyncher;
 
 #ifdef CFG_ELR
     guard<elr_cmd_t> _elrer;

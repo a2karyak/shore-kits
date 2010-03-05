@@ -196,7 +196,9 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
         TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
         ++my_stats.attempted.##trx;                                     \
         w_rc_t e = xct_##trx(xct_id, in);                               \
-        if (!e.is_error()) { e = _pssm->commit_xct(); }                 \
+        if (!e.is_error()) {                                            \
+            if (isAsynchCommit()) e = _pssm->commit_xct(true);          \
+            else e = _pssm->commit_xct(); }                             \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
                 ++my_stats.failed.##trx;                                \
@@ -567,6 +569,13 @@ public:
 
     // Run one transaction
     virtual w_rc_t run_one_xct(Request* prequest)=0;
+
+
+
+    // Control whether asynchronous commit will be used
+    inline bool isAsynchCommit() const { return (_asynch_commit); }
+    void setAsynchCommit(const bool bAsynch);
+
     
 #ifdef CFG_SLI
 public:
@@ -592,12 +601,12 @@ protected:
     void               to_base_flusher(Request* ar);
 #endif
 
-
 protected:
    
     // returns 0 on success
     int _set_sys_params();
 
+    bool _asynch_commit;    
 
 }; // EOF ShoreEnv
 

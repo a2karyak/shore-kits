@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file tpcc_input.cpp
  *
  *  @brief Implementation of the (common) inputs for the TPC-C trxs

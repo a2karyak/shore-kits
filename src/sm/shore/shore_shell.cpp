@@ -895,6 +895,11 @@ void fake_logdelay_cmd_t::usage(void)
            "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
 }
 
+string fake_logdelay_cmd_t::desc(void)
+{
+    return string("Sets the fake log disk delay");
+}
+
 int fake_logdelay_cmd_t::handle(const char* cmd)
 {
     char logdelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
@@ -935,6 +940,33 @@ int fake_logdelay_cmd_t::handle(const char* cmd)
     bool enabled = false;
     W_COERCE(ss_m::get_fake_log_latency(enabled, tmp));
     TRACE( TRACE_ALWAYS, "LOGDELAY=%d (%s)\n", tmp, enabled? "enabled" : "disabled");
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+/*********************************************************************
+ *
+ *  asynch_cmd_t: "asynch" command
+ *
+ *********************************************************************/
+
+void asynch_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "Asynch Usage:\n\n"       \
+           "*** asynch\n\n");
+}
+
+
+string asynch_cmd_t::desc(void)
+{
+    return (string("Sets the fake log disk delay"));
+}
+
+int asynch_cmd_t::handle(const char* cmd)
+{
+    _enabled = !_enabled;    
+    _env->setAsynchCommit(_enabled);
+    TRACE( TRACE_ALWAYS, "AsynchCommit=%d\n", _enabled);
     return (SHELL_NEXT_CONTINUE);
 }
 

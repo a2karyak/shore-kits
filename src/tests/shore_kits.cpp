@@ -299,6 +299,10 @@ public:
         _logger->setaliases();
         add_cmd(_logger.get());
 
+        _asyncher = new asynch_cmd_t(_dbinst);
+        _asyncher->setaliases();
+        add_cmd(_asyncher.get());
+
 #ifdef CFG_ELR
         _elrer = new elr_cmd_t(_dbinst);
         _elrer->setaliases();

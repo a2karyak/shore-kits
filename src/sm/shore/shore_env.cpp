@@ -1007,6 +1007,22 @@ int ShoreEnv::dump()
 
 
 
+/****************************************************************** 
+ *
+ *  @fn:    setAsynchCommit()
+ *
+ *  @brief: Sets whether asynchronous commit will be used or not
+ *
+ ******************************************************************/
+
+void ShoreEnv::setAsynchCommit(const bool bAsynch)
+{
+    _asynch_commit = bAsynch;
+}
+
+
+
+
 #ifdef CFG_FLUSHER
 
 /****************************************************************** 
