@@ -93,6 +93,10 @@ using namespace tpcb;
 #warning Configuration: With SIMICS MAGIC INSTRUCTIONS
 #endif
 
+#ifdef CFG_CACHES
+#warning Configuration: With Object CACHES
+#endif
+
 
 cpumonitor_t* _g_cpumon;
 
