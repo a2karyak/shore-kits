@@ -66,7 +66,11 @@ my $mvalues=0;
 my $line;
 my $value;
 my $valueCnt=0;
+
+# Characteristics of each run
 my $tag;
+my $sf;
+my $spread;
 my $clients;
 my $entries;
 
@@ -86,7 +90,7 @@ open INFILE, "<", "$infile" or die "Cannot open file $infile.";
 # Count the number of runs (runs)
 foreach $line (<INFILE>) {
 
-    ($value, $tag, $clients) = split(' ',$line);
+    ($value, $tag, $sf, $spread, $clients) = split(' ',$line);
 
 # Check if it is a new tag (measured type)
     if (lc($value) eq "++")

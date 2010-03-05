@@ -62,7 +62,10 @@ run_one ()
 
     ### KIT
 
-    ### Set SLI
+    ### Set elr
+    command elr
+
+    ### Set sli
     command sli
 
     ### Set logging mechanism
@@ -74,8 +77,11 @@ run_one ()
     # make sure to get all the measurements before continuing!
     sleep $((5+TIME*ITER))
 
-    ### reset sli so in the next round it will be set again
-    command sli 
+    ### Reset sli so in the next round it will be set again 
+    command sli
+
+    ### Reset elr so in the next round it will be set again
+    command elr
 }
 
 
@@ -95,12 +101,12 @@ fi
 
 ## Large
 if [ "$CLIENTSET" = "large" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 62 64 68 74 78)
 fi
 
 ## ExtraLarge
 if [ "$CLIENTSET" = "extralarge" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78 82 86 90 94 98)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 62 64 68 74 78 82 86 90 94 98)
 fi
 
 

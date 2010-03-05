@@ -8,14 +8,17 @@
 # typical usage: 
 #
 # SLI-TM1
-# for ((trx=20; trx <= 26; trx++)); do ./scripts/dbxrunwrapper.sh sli tm1 $trx ./scripts/slirun.sh 10000 10 3 20 300; done
+# for ((trx=20; trx <= 26; trx++)); do ./scripts/dbxrunwrapper.sh sli tm1 $trx ./scripts/slirun.sh 10000 10 3 $trx 300 large; done
 #
 # DORA-TM1
-# for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh exp tm1dora $trx ./scripts/dorarun.sh 100 30 3 200 300; done
+# for ((trx=220; trx <= 226; trx++)); do ./scripts/dbxrunwrapper.sh exp tm1dora $trx ./scripts/dorarun.sh 100 30 3 $trx 300 large; done
 # !! Note for DORA-TM1
 # Cannot distinguish between DORA and BASELINE. Therefore, 
 # (1) Edit shore.conf to point to the correct configuration (DORA or BASELINE)
 # (2) Fire up test with different selected database (doratm1, basetm1)
+#
+# LOGGER-TM1
+# ./scripts/dbxrunwrapper.sh EXPDBX/FLUSHER tm1-100 25 ./scripts/loggerrun.sh 100 30 3 360 large 0
 
 
 # args: <output-dir> <selecteddb> <xctid> <run-script> [<run-script-args>]
@@ -44,17 +47,13 @@ DIR=$BASE_DIR/run-$SELECTEDDB-$XCT.$STAMP
 OUTFILE=$DIR/run.out
 
 TRXSHELL="shore_kits"
-
-#DBX="/opt/SSX0903/bin/dbx"
 DBX="dbx"
 
 mkdir -p $DIR
 
-# # remove log/unilong 
+# remove log 
 echo rm -rf log/*
 rm -rf log/*
-echo rm -rf unilog/*
-rm -rf unilog/*
 
 # # remove databases !
 rm databases/*

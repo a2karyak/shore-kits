@@ -7,7 +7,7 @@
 #@author: Ippokratis Pandis
 #
 #@note:   Typical usage to a directory with .er files from dbxwrapper:
-#         find . -name "*.er" | grep -v startup | xargs -n 1 ../scripts/er_filter_logger.sh 0 
+#         find . -name "*.er" | grep -v startup | sort | xargs -n 1 ../scripts/er_filter_logger.sh 0 
 #
 
 # args: <is_dora> <er file>

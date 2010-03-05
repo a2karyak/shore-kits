@@ -99,7 +99,13 @@ run_one ()
     command elr
     command sli
     command log $LOGTYPE
-    command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
+
+    ## SPREAD
+    #command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
+
+    ## NO-SPREAD
+    command measure $CLIENTS 0 $CLIENTS $TIME $XCT $ITER
+
     command sli
     command elr
     command break
@@ -112,6 +118,11 @@ run_one ()
 # # Universal
 CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 62 64 68)
 
+
+## Special
+if [ "$CLIENTSET" = "special" ]; then
+    CLIENT_SEQ=(44 48 52 56 60 62 64)
+fi
 
 ## Small
 if [ "$CLIENTSET" = "small" ]; then
