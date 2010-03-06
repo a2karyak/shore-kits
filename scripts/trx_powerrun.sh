@@ -54,34 +54,24 @@ command()
 
 sleep $SLEEPTIME
 
+command elr
+command sli
+#command asynch
+command restart
 
 run_one ()
 {
     # <clients>
     CLIENTS=$1
 
-    ### KIT
-
-    ### Set elr
-    command elr
-
-    ### Set sli
-    command sli
-
     ### Set logging mechanism
     command log $LOGTYPE
 
     ### run a measurement
-    command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
+    command measure 100 0 $CLIENTS $TIME $XCT $ITER
 
     # make sure to get all the measurements before continuing!
     sleep $((5+TIME*ITER))
-
-    ### Reset sli so in the next round it will be set again 
-    command sli
-
-    ### Reset elr so in the next round it will be set again
-    command elr
 }
 
 
