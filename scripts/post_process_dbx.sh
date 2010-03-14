@@ -34,11 +34,11 @@ echo
 
 # ## Runs the filters and prints out everything to dbx-dumpfile ($DBXDUMPFILE)
 
-# #for Baseline: find . -name "*.er" | grep -v startup | xargs -n 1 ../scripts/er_filter_dora.sh 0
+# #for Baseline: find . -name "*.er" | grep -v startup | sort | xargs -n 1 ../scripts/er_filter_dora.sh 0
 
-# echo "find $PROFILERDATADIR -name "*.er" | grep -v startup | xargs -n 1 ../scripts/er_filter_dora.sh $ISDORA | tee $DBXDUMPFILE"
+# echo "find $PROFILERDATADIR -name "*.er" | grep -v startup | sort |xargs -n 1 ../scripts/er_filter_dora.sh $ISDORA | tee $DBXDUMPFILE"
 
-# find $PROFILERDATADIR -name "*.er" | grep -v startup | tee $DBXDUMPFILE
+# find $PROFILERDATADIR -name "*.er" | grep -v startup | sort | tee $DBXDUMPFILE
 
 
 ## Greps only the Totals for each filter to ($ONLYTOTALS)
