@@ -31,11 +31,6 @@ DoraEnv::DoraEnv()
 
 DoraEnv::~DoraEnv()
 {
-#ifdef CFG_FLUSHER
-        fprintf(stderr, "Stopping dora-flusher...\n");
-        _flusher->stop();
-        _flusher->join();
-#endif
 }
 
 
@@ -68,12 +63,37 @@ int DoraEnv::statistics()
  *
  ******************************************************************/
 
-int DoraEnv::_start()
+int DoraEnv::_start(ShoreEnv* penv)
 {
 #ifdef CFG_FLUSHER
-    fprintf(stderr, "Starting dora-flusher...\n");      
+    TRACE( TRACE_ALWAYS, "Creating dora-flusher...\n");
+    _flusher = new dora_flusher_t(penv, c_str("DFlusher")); 
+    assert(_flusher.get());
+    _flusher->fork();
     _flusher->start();
-#endif    
+#endif
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    _stop()
+ *
+ * @brief: If configured, stops the flusher
+ *
+ * @note:  Should be called after the stop function of the specific
+ *         DORA environment instance
+ *
+ ******************************************************************/
+
+int DoraEnv::_stop()
+{
+#ifdef CFG_FLUSHER
+    TRACE( TRACE_ALWAYS, "Stopping dora-flusher...\n");
+    _flusher->stop();
+    _flusher->join();
+#endif
     return (0);
 }
 

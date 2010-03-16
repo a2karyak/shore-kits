@@ -45,11 +45,6 @@ const int cf_KEY_EST  = 3750;
 DoraTM1Env::DoraTM1Env(string confname)
     : ShoreTM1Env(confname), DoraEnv()
 { 
-#ifdef CFG_FLUSHER
-    _flusher = new dora_flusher_t(this, c_str("DFlusher")); 
-    assert(_flusher.get());
-    _flusher->fork();
-#endif
 }
 
 DoraTM1Env::~DoraTM1Env()
@@ -84,7 +79,7 @@ int DoraTM1Env::start()
     conf(); // re-configure
 
     // Call the pre-start procedure of the dora environment
-    DoraEnv::_start();
+    DoraEnv::_start(this);
 
     processorid_t icpu(_starting_cpu);
 
@@ -134,6 +129,10 @@ int DoraTM1Env::stop()
         _irptp_vec[i]->stop();
     }
     _irptp_vec.clear();
+
+    // Call the meta-stop procedure of the dora environment
+    DoraEnv::_stop();
+
     set_dbc(DBC_STOPPED);
     return (0);
 }

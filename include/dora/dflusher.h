@@ -111,7 +111,7 @@ private:
 
 public:
 
-    dora_flusher_t(ShoreEnv* env, c_str tname,
+    dora_flusher_t(ShoreEnv* penv, c_str tname,
                    processorid_t aprsid = PBIND_NONE, 
                    const int use_sli = 0);
     ~dora_flusher_t();

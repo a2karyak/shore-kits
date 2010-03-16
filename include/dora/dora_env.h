@@ -112,7 +112,8 @@ public:
 
 protected:
 
-    int _start();
+    int _start(ShoreEnv* penv);
+    int _stop();
 
     // algorithm for deciding the distribution of tables 
     processorid_t _next_cpu(const processorid_t& aprd,

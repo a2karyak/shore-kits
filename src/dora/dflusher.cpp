@@ -21,11 +21,11 @@ ENTER_NAMESPACE(dora);
 
 const int DFLUSHER_BUFFER_EXPECTED_SZ = 3000; // pulling this out of the thin air
 
-dora_flusher_t::dora_flusher_t(ShoreEnv* env, 
+dora_flusher_t::dora_flusher_t(ShoreEnv* penv, 
                                c_str tname,
                                processorid_t aprsid, 
                                const int use_sli) 
-    : base_worker_t(env, tname, aprsid, use_sli)
+    : base_worker_t(penv, tname, aprsid, use_sli)
 { 
 #warning ****** DORA FLUSHER IS WRONG - IT DOES NOT CALL rvp::notify() on aborted xcts *******
 

@@ -47,11 +47,6 @@ const int hi_KEY_EST  = 100;
 DoraTPCBEnv::DoraTPCBEnv(string confname)
     : ShoreTPCBEnv(confname)
 { 
-#ifdef CFG_FLUSHER
-    _flusher = new dora_flusher_t(this, c_str("DFlusher")); 
-    assert(_flusher.get());
-    _flusher->fork();
-#endif
 }
 
 DoraTPCBEnv::~DoraTPCBEnv() 
@@ -83,7 +78,7 @@ int DoraTPCBEnv::start()
     conf(); // re-configure
 
     // Call the pre-start procedure of the dora environment
-    DoraEnv::_start();
+    DoraEnv::_start(this);
 
     processorid_t icpu(_starting_cpu);
 
@@ -133,6 +128,10 @@ int DoraTPCBEnv::stop()
         _irptp_vec[i]->stop();
     }
     _irptp_vec.clear();
+
+    // Call the meta-stop procedure of the dora environment
+    DoraEnv::_stop();
+
     set_dbc(DBC_STOPPED);
     return (0);
 }
