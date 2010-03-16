@@ -105,7 +105,7 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
     // 5b. Enqueue
 
     {        
-        irpImpl* my_br_part = decide_part(br(),(in.b_id-1));
+        irpImpl* my_br_part = decide_part(br(),in.b_id);
         assert (my_br_part);
         irpImpl* my_te_part = decide_part(te(),((in.t_id)/TPCB_TELLERS_PER_BRANCH - 1));
         assert (my_te_part);
