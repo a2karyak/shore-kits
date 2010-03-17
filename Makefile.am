@@ -1,5 +1,5 @@
 # -*- makefile -*-
-INCLUDES = -I$(top_srcdir)/include
+INCLUDES = -I$(top_srcdir)/include -I/usr/local/include -I/opt/csw/include
 
 lib_LIBRARIES = \
    lib/libtest.a lib/libworkload.a lib/libscheduler.a \
@@ -333,19 +333,22 @@ SE = $(top_srcdir)/src/server
 # FIXME: FRJ: hack to make CC find <ltdl.h> on lomond. Shouldn't hurt anybody else...
 # FIXME: IP: anothe hack to find <ltdl.h> on ia64. Shouldn't hurt anybody else...
 #qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include -I/usr/share/libtool/libltdl
-qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/local/include/readline -I/usr/share/libtool/libltdl
+#qpipe_CXXFLAGS = $(AM_CXX_FLAGS) -I/usr/share/libtool/libltdl
+qpipe_CXXFLAGS = $(AM_CXX_FLAGS)
 
-qpipe_LDADD = $(LDADD) \
+qpipe_LDADD = $(LDADD) -L/opt/csw/lib/sparcv9 \
 	-lreadline \
-	-lltdl \
 	-lcurses
+
+#	-lltdl
 
 COMMANDS = \
    $(SE)/command/printer.cpp \
-   $(SE)/command/load_handler.cpp \
    $(SE)/command/tpch_handler.cpp \
    $(SE)/command/tracer.cpp \
    $(SE)/command/sharing.cpp
+
+#    $(SE)/command/load_handler.cpp
 
 qpipe_SOURCES = \
    $(SE)/server.cpp \
