@@ -84,9 +84,9 @@ public:
         if ((n & -n) == n) {  
             // i.e., n is a power of 2
 #ifdef USE_STHREAD_RAND
-            return (int)((n * (uint64_t)k) / (RAND_MAX+1));
+            return (int)((n * (uint64_t)k) / RAND_MAX);
 #else
-            return (int)((n * (uint64_t)rand()) / (RAND_MAX+1));
+            return (int)((n * (uint64_t)rand()) / RAND_MAX);
 #endif
         }
 

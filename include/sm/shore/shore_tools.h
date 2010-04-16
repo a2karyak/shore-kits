@@ -74,7 +74,7 @@ public:
     ~trx_smthread_t() { }
 
     // thread entrance
-    void trx_smthread_t::run()
+    void run()
     {
         // trx executing function, as well as, environment and input
         // should not be NULL

@@ -136,8 +136,8 @@ int NURand(int A, int low, int high)
  *  @return The length of the created string. 0 on errors.
  */
 
-char* CUST_LAST[10] = { "BAR", "OUGHT", "ABLE", "PRI", "PRES", "ESE",
-                        "ANTI", "CALLY", "ATION", "EING" };
+const char* CUST_LAST[10] = { "BAR", "OUGHT", "ABLE", "PRI", "PRES", "ESE",
+                              "ANTI", "CALLY", "ATION", "EING" };
 
 
 int generate_cust_last(int select, char* dest) 
@@ -151,7 +151,7 @@ int generate_cust_last(int select, char* dest)
   i2 = ((select % 100) - i3) / 10;
   i1 = (select - (select % 100)) / 100;
 
-  int iLen = strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]) + 1;
+  int iLen = (int)(strlen(CUST_LAST[i1]) + strlen(CUST_LAST[i2]) + strlen(CUST_LAST[i3]) + 1);
 
   assert (iLen < 17);   // C_LAST is char[16]
   

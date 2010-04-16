@@ -58,7 +58,7 @@ public:
 	
 	// Whoever creates me owns all the data, and can dole it out as they choose
 	block(char const* name)
-	    : _bitmap(~0ull), _name(name)
+	    : _bitmap(~0ul), _name(name)
 	{
 	}
 	header* get_header(int index, bitmap range);

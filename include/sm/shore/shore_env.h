@@ -61,8 +61,8 @@ using std::map;
 
 
 
-/******** Constants ********/
 
+/******** Constants ********/
 
 const int SHORE_DEF_NUM_OF_CORES     = 32; // default number of cores
 
@@ -167,7 +167,7 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
         int xct_id = prequest->xct_id();                                \
         TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
-        ++my_stats.attempted.##trx;                                     \
+        ++my_stats.attempted.trx;                                       \
         w_rc_t e = xct_##trx(xct_id, in);                               \
         if (!e.is_error()) {                                            \
             lsn_t xctLastLsn;                                           \
@@ -175,8 +175,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
             prequest->set_last_lsn(xctLastLsn); }                       \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
-                ++my_stats.failed.##trx;                                \
-            else ++my_stats.deadlocked.##trx##;                         \
+                ++my_stats.failed.trx;                                  \
+            else ++my_stats.deadlocked.trx;                             \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
             w_rc_t e2 = _pssm->abort_xct();                             \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
@@ -194,15 +194,15 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
         int xct_id = prequest->xct_id();                                \
         TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
-        ++my_stats.attempted.##trx;                                     \
+        ++my_stats.attempted.trx;                                       \
         w_rc_t e = xct_##trx(xct_id, in);                               \
         if (!e.is_error()) {                                            \
             if (isAsynchCommit()) e = _pssm->commit_xct(true);          \
             else e = _pssm->commit_xct(); }                             \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
-                ++my_stats.failed.##trx;                                \
-            else ++my_stats.deadlocked.##trx##;                         \
+                ++my_stats.failed.trx;                                  \
+            else ++my_stats.deadlocked.trx;                             \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
             w_rc_t e2 = _pssm->abort_xct();                             \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
@@ -226,9 +226,9 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 
 #define DEFINE_TRX_STATS(cname,trx)                                   \
-    void cname::_inc_##trx##_att()    { ++my_stats.attempted.##trx; } \
-    void cname::_inc_##trx##_failed() { ++my_stats.failed.##trx; }    \
-    void cname::_inc_##trx##_dld() { ++my_stats.deadlocked.##trx; }
+    void cname::_inc_##trx##_att()    { ++my_stats.attempted.trx; }   \
+    void cname::_inc_##trx##_failed() { ++my_stats.failed.trx; }      \
+    void cname::_inc_##trx##_dld() { ++my_stats.deadlocked.trx; }
 
 
 #define DEFINE_TRX(cname,trx)                        \
@@ -352,7 +352,7 @@ class ShoreEnv;
 
 extern ShoreEnv* _g_shore_env;
 
-
+extern int ssm_max_small_rec;
 
 
 /******************************************************************** 

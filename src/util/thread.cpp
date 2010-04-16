@@ -115,7 +115,8 @@ thread_t::thread_t(const c_str &name)
 #ifndef USE_SMTHREAD_AS_BASE
     : _thread_name(name), _delete_me(true)
 #else
-      : smthread_t(t_regular), _thread_name(name), _delete_me(true), _ppool(NULL)
+      : smthread_t(t_regular, name.data()), 
+      _thread_name(name), _delete_me(true), _ppool(NULL)
 #endif
 {
     // do nothing...

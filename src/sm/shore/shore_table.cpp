@@ -178,7 +178,7 @@ bool table_desc_t::create_index(const char* name,
                                              unique, primary, nolock);
 
     // check the validity of the index
-    for (int i=0; i<num; i++)  {
+    for (uint_t i=0; i<num; i++)  {
         assert(fields[i] >= 0 && fields[i] < _field_count);
 
         // only the last field in the index can be variable lengthed
@@ -211,7 +211,7 @@ table_desc_t::create_primary_idx(const char* name,
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
 
     // check the validity of the index
-    for (int i=0; i<num; i++) {
+    for (uint_t i=0; i<num; i++) {
         assert(fields[i] >= 0 && fields[i] < _field_count);
 
         // only the last field in the index can be variable lengthed
@@ -241,7 +241,7 @@ void table_desc_t::print_desc(ostream& os)
 {
     os << "Schema for table " << _name << endl;
     os << "Numer of fields: " << _field_count << endl;
-    for (int i=0; i<_field_count; i++) {
+    for (uint_t i=0; i<_field_count; i++) {
 	_desc[i].print_desc(os);
     }
 }

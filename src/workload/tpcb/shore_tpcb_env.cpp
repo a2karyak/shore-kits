@@ -231,7 +231,7 @@ void ShoreTPCBEnv::table_builder_t::work()
         }
     }
     TRACE( TRACE_STATISTICS, 
-           "Finished loading account groups %d .. %d \n", 
+           "Finished loading account groups %ld .. %ld \n", 
            _start, _start+_count);
 }
 
@@ -275,7 +275,7 @@ void ShoreTPCBEnv::table_creator_t::work()
     for(long i=-1; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
-	TRACE( TRACE_STATISTICS, "Populating %d a_ids starting with %d\n", 
+	TRACE( TRACE_STATISTICS, "Populating %ld a_ids starting with %ld\n", 
                TPCB_ACCOUNTS_CREATED_PER_POP_XCT, a_id);
 	W_COERCE(_env->db()->begin_xct());
 	W_COERCE(_env->xct_populate_db(a_id, in));

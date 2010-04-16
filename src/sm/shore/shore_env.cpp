@@ -434,7 +434,7 @@ int ShoreEnv::close()
  *
  *  @fn:    statistics
  *
- *  @brief: Prints "du"-like statistics for the SM
+ *  @brief: Prints statistics for the SM
  *
  ********************************************************************/
 
@@ -897,7 +897,7 @@ void ShoreEnv::readconfig(string conf_file)
 
 int ShoreEnv::restart()
 {
-    TRACE( TRACE_DEBUG, "Restarting (%s)...\n", _sysname);
+    TRACE( TRACE_DEBUG, "Restarting (%s)...\n", _sysname.c_str());
     stop();
     conf();
     _set_sys_params();

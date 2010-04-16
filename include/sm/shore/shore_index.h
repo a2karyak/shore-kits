@@ -100,7 +100,7 @@ public:
     {
         // Copy the indexes of keys
         _key = new int[_base._field_count];
-        for (int i=0; i<_base._field_count; i++) _key[i] = fields[i];
+        for (uint_t i=0; i<_base._field_count; i++) _key[i] = fields[i];
 
         memset(_keydesc, 0, MAX_KEYDESC_LEN);
 
@@ -129,7 +129,7 @@ public:
     /* --------------------------------- */
 
     const char*	name() const { return _base.name(); }
-    const int   field_count() const { return _base.field_count(); }
+    const uint_t field_count() const { return _base.field_count(); }
     
 
 
@@ -212,8 +212,8 @@ public:
 
     /* --- index manipulation --- */
 
-    int key_index(int index) const {
-	assert (index >=0 && index < _base._field_count);
+    int key_index(const uint_t index) const {
+	assert (index < _base._field_count);
 	return (_key[index]);
     }
 

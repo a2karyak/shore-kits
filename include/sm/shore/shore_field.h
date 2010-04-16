@@ -124,7 +124,7 @@ private:
     bool       _allow_null;               /* allow null? */
     bool       _is_setup;                 /* is setup? */
 
-    const char* field_desc_t::_set_keydesc();
+    const char* _set_keydesc();
 
 public:
 
@@ -958,7 +958,7 @@ inline time_t field_value_t::get_time_value() const
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_FLOAT);
-    return (_value._float);
+    return ((time_t)_value._float);
 }
 
 inline timestamp_t& field_value_t::get_tstamp_value() const

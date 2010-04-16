@@ -217,7 +217,8 @@ public:
                                         lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
                                         latch_mode_t latch_mode = LATCH_SH) /* one of: LATCH_SH, LATCH_EX */
     {
-        return (index_probe(db, _primary_idx, ptuple, lock_mode, latch_mode));
+        assert (_ptable && _ptable->_primary_idx);
+        return (index_probe(db, _ptable->_primary_idx, ptuple, lock_mode, latch_mode));
     }
 
 
@@ -355,6 +356,7 @@ class table_scan_iter_impl :
 public:
     typedef row_impl<TableDesc> table_tuple;
     typedef table_man_impl<TableDesc> table_manager;
+    typedef tuple_iter_t<TableDesc, scan_file_i, row_impl<TableDesc> > table_iter;
 
 private:
 
@@ -370,13 +372,15 @@ public:
                          TableDesc* ptable,
                          table_manager* pmanager,
                          lock_mode_t alm) 
-        : tuple_iter_t(db, ptable, alm, true), _pmanager(pmanager)
+        : table_iter(db, ptable, alm, true), _pmanager(pmanager)
     { 
         assert (_pmanager);
-        W_COERCE(open_scan(_db)); 
+        W_COERCE(open_scan(db));
     }
         
-    ~table_scan_iter_impl() { close_scan(); }
+    ~table_scan_iter_impl() { 
+        tuple_iter_t<TableDesc, scan_file_i, row_impl<TableDesc> >::close_scan(); 
+    }
 
 
     /* ------------------------ */
@@ -384,10 +388,13 @@ public:
     /* ------------------------ */
 
     w_rc_t open_scan(ss_m* db) {
-        if (!_opened) {
+        if (!table_iter::_opened) {
+            assert (db);
             W_DO(_file->check_fid(db));
-            _scan = new scan_file_i(_file->fid(), ss_m::t_cc_record, false, _lm);
-            _opened = true;
+            table_iter::_scan = new scan_file_i(table_iter::_file->fid(), 
+                                                ss_m::t_cc_record, 
+                                                false, table_iter::_lm);
+            table_iter::_opened = true;
         }
         return (RCOK);
     }
@@ -396,16 +403,16 @@ public:
     pin_i* cursor() {
         pin_i *rval;
         bool eof;
-        _scan->cursor(rval, eof);
+        table_iter::_scan->cursor(rval, eof);
         return (eof? NULL : rval);
     }
 
 
     w_rc_t next(ss_m* db, bool& eof, table_tuple& tuple) {
         assert (_pmanager);
-        if (!_opened) open_scan(db);
+        if (!table_iter::_opened) open_scan(db);
         pin_i* handle;
-        W_DO(_scan->next(handle, 0, eof));
+        W_DO(table_iter::_scan->next(handle, 0, eof));
         if (!eof) {
             if (!_pmanager->load(&tuple, handle->body()))
                 return RC(se_WRONG_DISK_DATA);
@@ -434,6 +441,7 @@ class index_scan_iter_impl :
 public:
     typedef row_impl<TableDesc> table_tuple;
     typedef table_man_impl<TableDesc> table_manager;
+    typedef tuple_iter_t<index_desc_t, scan_index_i, row_impl<TableDesc> > index_iter;
 
 private:
     table_manager* _pmanager;
@@ -450,7 +458,7 @@ public:
                          table_manager* pmanager,
                          lock_mode_t alm,    // alm = SH
                          bool need_tuple)    // need_tuple = false
-        : tuple_iter_t(db, pindex, alm, true), 
+        : index_iter(db, pindex, alm, true), 
           _pmanager(pmanager), _need_tuple(need_tuple)
     { 
         assert (_pmanager);
@@ -470,14 +478,16 @@ public:
                          scan_index_i::cmp_t cmp1, const cvec_t& bound1,
                          scan_index_i::cmp_t cmp2, const cvec_t& bound2,
                          const int maxkeysize) 
-        : tuple_iter_t(db, pindex, alm, true), 
+        : index_iter(db, pindex, alm, true), 
           _pmanager(pmanager), _need_tuple(need_tuple)
     { 
         assert (_pmanager);
         W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2, maxkeysize));
     }
         
-    ~index_scan_iter_impl() { close_scan(); };
+    ~index_scan_iter_impl() { 
+        index_iter::close_scan(); 
+    };
 
 
     /* ------------------------ */        
@@ -489,20 +499,22 @@ public:
                      scan_index_i::cmp_t c2, const cvec_t& bound2,
                      const int maxkeysize)
     {                    
-        if (!_opened) {
+        if (!index_iter::_opened) {
 
             // 1. figure out what concurrency will be used
             // !! according to shore-mt/src/scan.h:82 
             //    t_cc_kvl  - IS lock on the index and SH key-value locks on every entry encountered
             //    t_cc_none - IS lock on the index and no other locks
             ss_m::concurrency_t cc = ss_m::t_cc_kvl;
-            if (_lm==NL) cc = ss_m::t_cc_none;
+            if (index_iter::_lm==NL) cc = ss_m::t_cc_none;
 
             // 2. open the cursor
-            W_DO(_file->check_fid(db));
-            _scan = new scan_index_i(_file->fid(pnum), c1, bound1, c2, bound2,
-                                     false, cc, _lm);
-            _opened = true;
+            W_DO(index_iter::_file->check_fid(db));
+            index_iter::_scan = new scan_index_i(index_iter::_file->fid(pnum), 
+                                                 c1, bound1, c2, bound2,
+                                                 false, cc, 
+                                                 index_iter::_lm);
+            index_iter::_opened = true;
         }
 
         return (RCOK);
@@ -510,14 +522,15 @@ public:
 
     w_rc_t next(ss_m* db, bool& eof, table_tuple& tuple) 
     {
-        assert (_opened);
+        assert (index_iter::_opened);
         assert (_pmanager);
         assert (tuple._rep);
 
-        W_DO(_scan->next(eof));
+        W_DO(index_iter::_scan->next(eof));
 
         if (!eof) {
-            int key_sz = _pmanager->format_key(_file, &tuple, *tuple._rep);
+            int key_sz = _pmanager->format_key(index_iter::_file, 
+                                               &tuple, *tuple._rep);
             assert (tuple._rep->_dest); // if dest == NULL there is an invalid key
 
             vec_t    key(tuple._rep->_dest, key_sz);
@@ -527,15 +540,16 @@ public:
             smsize_t klen = 0;
             smsize_t elen = sizeof(rid_t);
 
-            W_DO(_scan->curr(&key, klen, &record, elen));
+            W_DO(index_iter::_scan->curr(&key, klen, &record, elen));
             tuple.set_rid(rid);
             
-            _pmanager->load_key((const char*)key.ptr(0), _file, &tuple);
+            _pmanager->load_key((const char*)key.ptr(0), 
+                                index_iter::_file, &tuple);
             //tuple.load_key(key.ptr(0), _file);
 
             if (_need_tuple) {
                 pin_i  pin;
-                W_DO(pin.pin(rid, 0, _lm));
+                W_DO(pin.pin(rid, 0, index_iter::_lm));
                 if (!_pmanager->load(&tuple, pin.body()))
                     return RC(se_WRONG_DISK_DATA);
                 pin.unpin();
@@ -610,7 +624,7 @@ int table_man_impl<TableDesc>::format(table_tuple* ptuple,
 
 
     // loop over all the varialbe-sized fields and add their real size (set at ::set())
-    for (int i=0; i<_ptable->field_count(); i++) {
+    for (uint_t i=0; i<_ptable->field_count(); i++) {
 
 	if (ptuple->_pvalues[i].is_variable_length()) {
             // If it is of VARIABLE length, then if the value is null
@@ -648,7 +662,7 @@ int table_man_impl<TableDesc>::format(table_tuple* ptuple,
 
     register int null_index = -1;
     // iterate over all fields
-    for (int i=0; i<_ptable->field_count(); i++) {
+    for (uint_t i=0; i<_ptable->field_count(); i++) {
 
         // Check if the field can be NULL. 
         // If it can be NULL, increase the null_index, and 
@@ -725,7 +739,7 @@ bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
     // 2. Read the data field by field
 
     int null_index = -1;
-    for (int i=0; i<_ptable->field_count(); i++) {
+    for (uint_t i=0; i<_ptable->field_count(); i++) {
 
         // Check if the field can be NULL.
         // If it can be NULL, increase the null_index,
@@ -805,7 +819,7 @@ inline int table_man_impl<TableDesc>::format_key(index_desc_t* pindex,
 
     /* 3. write the buffer */
     register offset_t offset = 0;
-    for (int i=0; i<pindex->field_count(); i++) {
+    for (uint_t i=0; i<pindex->field_count(); i++) {
         register int ix = pindex->key_index(i);
         register field_value_t* pfv = &ptuple->_pvalues[ix];
 
@@ -851,8 +865,8 @@ bool table_man_impl<TableDesc>::load_key(const char* string,
     assert (string);
 
     register int offset = 0;
-    for (int i=0; i<pindex->field_count(); i++) {
-	register int field_index = pindex->key_index(i);
+    for (uint_t i=0; i<pindex->field_count(); i++) {
+	register uint_t field_index = pindex->key_index(i);
         register int size = ptuple->_pvalues[field_index].maxsize();
         ptuple->_pvalues[field_index].set_value(string + offset, size);
         offset += size;
@@ -879,8 +893,8 @@ inline int table_man_impl<TableDesc>::min_key(index_desc_t* pindex,
                                               rep_row_t &arep)
 {
     assert (_ptable);
-    for (int i=0; i<pindex->field_count(); i++) {
-	int field_index = pindex->key_index(i);
+    for (uint_t i=0; i<pindex->field_count(); i++) {
+	uint_t field_index = pindex->key_index(i);
 	ptuple->_pvalues[field_index].set_min_value();
     }
     return (format_key(pindex, ptuple, arep));
@@ -893,8 +907,8 @@ inline int table_man_impl<TableDesc>::max_key(index_desc_t* pindex,
                                               rep_row_t &arep)
 {
     assert (_ptable);
-    for (int i=0; i<pindex->field_count(); i++) {
-	int field_index = pindex->key_index(i);
+    for (uint_t i=0; i<pindex->field_count(); i++) {
+	uint_t field_index = pindex->key_index(i);
 	ptuple->_pvalues[field_index].set_max_value();
     }
     return (format_key(pindex, ptuple, arep));
@@ -929,7 +943,7 @@ inline int table_man_impl<TableDesc>::key_size(index_desc_t* pindex,
     //    for the VARCHARs.
     int size = 0;
     register int ix = 0;
-    for (int i=0; i<index->field_count(); i++) {
+    for (uint_t i=0; i<index->field_count(); i++) {
         ix = index->key_index(i);
         size += prow->_pvalues[ix].maxsize();
     }
@@ -1152,7 +1166,8 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db,
     // 2a. if updated record cannot fit in the previous spot
     w_rc_t rc;
     if (current_size < tsz) {
-        rc = pin.append_rec(zvec_t(tsz - current_size));
+        zvec_t azv(tsz - current_size);
+        rc = pin.append_rec(azv);
 
         // on error unpin 
         if (rc.is_error()) {
@@ -1387,14 +1402,14 @@ w_rc_t table_man_impl<TableDesc>::check_all_indexes_together(ss_m* db)
 
             if (rc.is_error()) {
                 TRACE( TRACE_ALWAYS, "Index probe error in (%s) (%s) (%d)\n", 
-                       _ptable->name(), pindex->name(), tablerid);
+                       _ptable->name(), pindex->name(), idx_cnt);
                 cerr << "Due to " << rc << endl;
                 return RC(se_INCONSISTENT_INDEX);
             }            
 
             if (tablerid != tuple.rid()) {
-                TRACE( TRACE_ALWAYS, "Inconsistent index... (%d)-(%d)",
-                       tablerid, tuple.rid());
+                TRACE( TRACE_ALWAYS, "Inconsistent index... (%d)",
+                       idx_cnt);
                 return RC(se_INCONSISTENT_INDEX);
             }
             pindex = pindex->next();
@@ -1473,13 +1488,15 @@ w_rc_t table_man_impl<TableDesc>::check_index(ss_m* db,
     bool eof = false;
     table_tuple tuple(_ptable);
     W_DO(iter->next(db, eof, tuple));
+    uint_t tcount=0;
     while (!eof) {
         // remember the rid just scanned
         rid_t tablerid = tuple.rid();
 	W_DO(index_probe(db, pindex, &tuple));
+        ++tcount;
 	if (tablerid != tuple.rid()) {
-            TRACE( TRACE_ALWAYS, "Inconsistent index... (%d)-(%d)",
-                   tablerid, tuple.rid());
+            TRACE( TRACE_ALWAYS, "Inconsistent index... (%d)",
+                   tcount);
             return RC(se_INCONSISTENT_INDEX);
 	}
 	W_DO(iter->next(db, eof, tuple));
