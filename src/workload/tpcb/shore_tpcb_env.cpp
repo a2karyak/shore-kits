@@ -83,7 +83,7 @@ int ShoreTPCBEnv::load_schema()
 
 int ShoreTPCBEnv::info()
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
+    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
     return (0);
 }
@@ -189,7 +189,7 @@ class ShoreTPCBEnv::table_builder_t : public thread_t
 
 public:
     table_builder_t(ShoreTPCBEnv* env, int id, int sf, long start, long count)
-	: thread_t(c_str("TPC-B-Loader-%d",id)), 
+	: thread_t(c_str("TPC-B L-%d",id)), 
           _env(env), _sf(sf), _start(start), _count(count) 
     { }
 
@@ -242,7 +242,7 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
     long _psize;
     long _pcount;
     table_creator_t(ShoreTPCBEnv* env, int sf, long psize, long pcount)
-	: thread_t("TPC-B Table Creator"), _env(env), _sf(sf), _psize(psize), _pcount(pcount) { }
+	: thread_t("TPC-B C"), _env(env), _sf(sf), _psize(psize), _pcount(pcount) { }
     virtual void work();
 
 }; // EOF: table_creator_t
@@ -292,8 +292,7 @@ void ShoreTPCBEnv::table_creator_t::work()
  *
  ******************************************************************/
 
-w_rc_t 
-ShoreTPCBEnv::loaddata() 
+w_rc_t ShoreTPCBEnv::loaddata() 
 {
     // 0. Lock the loading status and the scaling factor
     CRITICAL_SECTION(load_cs, _load_mutex);
@@ -364,7 +363,7 @@ ShoreTPCBEnv::loaddata()
     time_t tstop = time(NULL);
 
     // 5. Print stats
-    TRACE( TRACE_STATISTICS, "Loading finished. %d branches loaded in (%d) secs...\n",
+    TRACE( TRACE_STATISTICS, "Loading finished. %.1f branches loaded in (%d) secs...\n",
            _scaling_factor, (tstop - tstart));
 
     // 6. notify that the env is loaded

@@ -448,10 +448,11 @@ protected:
     // TM1:  SF=1 --> 15B   (10K Subscribers)
     // TPCB: SF=1 --> 20MB  (1 Branch)
     // TPCC: SF=1 --> 130MB (1 Warehouse)
+    // TPCH: SF=1 --> 250MB (1 Warehouse)
     //       
-    int             _scaling_factor; 
+    double             _scaling_factor; 
     pthread_mutex_t _scaling_mutex;
-    int             _queried_factor;
+    double             _queried_factor;
     pthread_mutex_t _queried_mutex;
 
 

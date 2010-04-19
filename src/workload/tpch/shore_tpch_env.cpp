@@ -104,7 +104,7 @@ struct ShoreTPCHEnv::table_creator_t : public thread_t
 
     table_creator_t(ShoreTPCHEnv* env, const double sf, const int loader_count,
                     const int parts_per_thread, const int custs_per_thread)
-	: thread_t("TPC-H Creator"), 
+	: thread_t("TPC-H C"), 
           _env(env), _sf(sf), 
           _loader_count(loader_count),
           _parts_per_thread(parts_per_thread),
@@ -240,10 +240,9 @@ void ShoreTPCHEnv::table_builder_t::work()
  ********************************************************************/ 
 
 ShoreTPCHEnv::ShoreTPCHEnv(string confname)
-    : ShoreEnv(confname), 
-      _scaling_factor(TPCH_SCALING_FACTOR)
+    : ShoreEnv(confname)
 {
-    pthread_mutex_init(&_scaling_mutex, NULL);
+    _scaling_factor = TPCH_SCALING_FACTOR;
     
     // 1. Call the function that initializes the dbgen
     dbgen_init();
@@ -252,7 +251,6 @@ ShoreTPCHEnv::ShoreTPCHEnv(string confname)
 
 ShoreTPCHEnv::~ShoreTPCHEnv() 
 {
-    pthread_mutex_destroy(&_scaling_mutex);
 }
 
 

@@ -98,7 +98,7 @@ int ShoreTM1Env::stop()
 
 int ShoreTM1Env::info()
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
+    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
     return (0);
 }
@@ -183,7 +183,7 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 
     table_creator_t(ShoreTM1Env* env, 
                     const int loaders, const int subs_per_worker, const int preloads_per_worker)
-	: thread_t("TM1-Table-Creator"), _env(env),
+	: thread_t("TM1 C"), _env(env),
           _loaders(loaders),_subs_per_worker(subs_per_worker),_preloads_per_worker(preloads_per_worker)
     { 
         assert (loaders);
@@ -238,7 +238,7 @@ class ShoreTM1Env::table_builder_t : public thread_t
     int _count;
 public:
     table_builder_t(ShoreTM1Env* env, int loaderid, int sf, int start, int count)
-	: thread_t(c_str("TM1-Loader-%d",loaderid)), 
+	: thread_t(c_str("TM1 L-%d",loaderid)), 
           _env(env), _loader_id(loaderid), _start(start), _count(count) 
     { }
     virtual void work();

@@ -82,7 +82,7 @@ int DoraTPCBEnv::start()
 
     processorid_t icpu(_starting_cpu);
 
-    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d) - DORA_SF=(%d)...\n", 
+    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%.1f) - DORA_SF=(%.1f)...\n", 
            _scaling_factor, _sf);    
 
 
@@ -283,7 +283,7 @@ int DoraTPCBEnv::dump()
 
 int DoraTPCBEnv::info()
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
+    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     int sz=_irptp_vec.size();
     TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
     for (int i=0;i<sz;++i) {

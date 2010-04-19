@@ -205,13 +205,8 @@ public:
 
     class table_builder_t;
     class table_creator_t;
-    class checkpointer_t;
+    struct checkpointer_t;
 
-protected:       
-    // scaling factors
-    double          _scaling_factor; // scaling factor - SF=1 -> 1GB database
-    pthread_mutex_t _scaling_mutex;
-    double          _queried_factor; // queried factor == scaling factor
 private:
 
     w_rc_t _post_init_impl();
@@ -245,6 +240,9 @@ public:
     virtual int info();
     virtual int statistics();    
 
+    w_rc_t warmup();
+    w_rc_t check_consistency();
+
     int dump();
 
     virtual void print_throughput(const double iQueriedSF, 
@@ -254,13 +252,10 @@ public:
                                   const ulong_t mioch,
                                   const double avgcpuusage);
 
-
     // Public methods //    
 
     // --- operations over tables --- //
     w_rc_t loaddata();  
-    w_rc_t warmup();
-    w_rc_t check_consistency();
     
     // TPCH Tables
     DECLARE_TABLE(nation_t,nation_man_impl,nation);

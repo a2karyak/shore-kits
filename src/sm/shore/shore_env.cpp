@@ -184,7 +184,7 @@ double ShoreEnv::get_sf() const
 
 double ShoreEnv::upd_sf()
 {
-    uint tmp_sf = envVar::instance()->getSysVarInt("sf");
+    double tmp_sf = envVar::instance()->getSysVarDouble("sf");
     assert (tmp_sf);
     set_sf(tmp_sf);
     return (_scaling_factor);

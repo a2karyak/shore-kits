@@ -318,7 +318,7 @@ int DoraTPCCEnv::dump()
 
 int DoraTPCCEnv::info()
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%d)\n", _scaling_factor);
+    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     int sz=_irptp_vec.size();
     TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
     for (int i=0;i<sz;++i) {
