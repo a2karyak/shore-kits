@@ -58,7 +58,7 @@ private:
     // workload parameters
     DoraTPCCEnv* _tpccdb;    
     int _wh;
-    int _qf;
+    double _qf;
 
 public:
 
@@ -67,7 +67,7 @@ public:
     dora_tpcc_client_t(c_str tname, const int id, DoraTPCCEnv* env, 
                        const MeasurementType aType, const int trxid, 
                        const int numOfTrxs, 
-                       processorid_t aprsid, const int sWH, const int qf)  
+                       processorid_t aprsid, const int sWH, const double qf)  
 	: base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
           _tpccdb(env), _wh(sWH), _qf(qf)
     {

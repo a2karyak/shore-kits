@@ -210,19 +210,7 @@ void ShoreTPCBEnv::table_builder_t::work()
     retry:
 	W_COERCE(_env->db()->begin_xct());
 	e = _env->xct_populate_db(a_id, in);
-	if(e.is_error()) {
-	    W_COERCE(_env->db()->abort_xct());
-
-	    if(e.err_num() == smlevel_0::eDEADLOCK)
-		goto retry;
-	    
-	    stringstream os;
-	    os << e << ends;
-	    string str = os.str();
-	    TRACE( TRACE_ALWAYS, 
-                   "Eek! Unable to populate db for index %d due to:\n%s\n",
-                   i, str.c_str());
-	}
+        CHECK_XCT_RETURN(e,retry);
 
         if ((i % (branchesPerRound*TPCB_ACCOUNTS_PER_BRANCH)) == 0) {
             atomic_add_int(&iBranchesLoaded, branchesPerRound);

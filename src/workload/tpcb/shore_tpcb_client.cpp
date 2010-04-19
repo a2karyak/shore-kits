@@ -46,7 +46,7 @@ baseline_tpcb_client_t::baseline_tpcb_client_t(c_str tname, const int id,
                                                const int trxid, 
                                                const int numOfTrxs, 
                                                processorid_t aprsid, 
-                                               const int selID, const int qf) 
+                                               const int selID, const double qf) 
     : base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
       _selid(selID), _qf(qf)
 {

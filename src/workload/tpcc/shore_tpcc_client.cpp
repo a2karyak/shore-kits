@@ -46,7 +46,7 @@ baseline_tpcc_client_t::baseline_tpcc_client_t(c_str tname, const int id,
                                                const int trxid, 
                                                const int numOfTrxs, 
                                                processorid_t aprsid, 
-                                               const int sWH, const int qf) 
+                                               const int sWH, const double qf) 
     : base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
       _wh(sWH), _qf(qf)
 {

@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   envvar.h
  *
  *  @brief:  "environment variables" singleton class
@@ -137,7 +135,8 @@ public:
     // and updates the map
     // @note: after this call the map will have an entry about sParam
     string getVar(const string& sParam, const string& sDefValue);  
-    int getVarInt(const string& sParam, const int& iDefValue);  
+    int    getVarInt(const string& sParam, const int& iDefValue);  
+    double getVarDouble(const string& sParam, const double& iDefValue);
 
     // checks if a specific param is set at the map, or, if not at the map, at the conf file
     // @note: this call does not update the map 
@@ -159,7 +158,8 @@ public:
     int setConfiguration(string sConfiguration);
     string getSysname();
     string getSysVar(string sParam);
-    int getSysVarInt(string sParam);
+    int    getSysVarInt(string sParam);
+    double getSysVarDouble(string sParam);
 
 }; // EOF: envVar
 

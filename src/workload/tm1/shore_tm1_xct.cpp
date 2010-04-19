@@ -107,7 +107,7 @@ void ShoreTM1Env::reset_stats()
  *
  ********************************************************************/
 
-void ShoreTM1Env::print_throughput(const int iQueriedSF, 
+void ShoreTM1Env::print_throughput(const double iQueriedSF, 
                                    const int iSpread, 
                                    const int iNumOfThreads, 
                                    const double delay,
@@ -126,8 +126,8 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
     int trxs_abt  = current_stats.failed.total();
     int trxs_dld  = current_stats.deadlocked.total();
 
-    TRACE( TRACE_ALWAYS, "*******\n"            \
-           "SF:           (%d)\n"                   \
+    TRACE( TRACE_ALWAYS, "*******\n"                \
+           "SF:           (%.1f)\n"                 \
            "Spread:       (%s)\n"                   \
            "Threads:      (%d)\n"                   \
            "Trxs Att:     (%d)\n"                   \
@@ -135,7 +135,7 @@ void ShoreTM1Env::print_throughput(const int iQueriedSF,
            "Trxs Dld:     (%d)\n"                   \
            "Success Rate: (%.1f%%)\n"               \
            "Secs:         (%.2f)\n"                 \
-           "IOChars:      (%.2fM/s)\n"      \
+           "IOChars:      (%.2fM/s)\n"              \
            "AvgCPUs:      (%.1f) (%.1f%%)\n"        \
            "MQTh/s:       (%.2f)\n",
            iQueriedSF, 

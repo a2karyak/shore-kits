@@ -60,7 +60,7 @@ extern bool volatile _g_canceled;
 
 // default database size (scaling factor)
 const int DF_SF            = 10;
-extern int _theSF;
+extern double    _theSF;
 
 // Default values for the power-runs //
 
@@ -335,15 +335,15 @@ public:
     // virtual implementation of the {WARMUP/TEST/MEASURE} 
     // WARMUP/LOAD are virtual
     // TEST/MEASURE are pure virtual
-    virtual int _cmd_WARMUP_impl(const int iQueriedSF, const int iTrxs, 
+    virtual int _cmd_WARMUP_impl(const double iQueriedSF, const int iTrxs, 
                                  const int iDuration, const int iIterations);
     virtual int _cmd_LOAD_impl(void);
 
-    virtual int _cmd_TEST_impl(const int iQueriedSF, const int iSpread,
+    virtual int _cmd_TEST_impl(const double iQueriedSF, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
                                const eBindingType abt)=0;
-    virtual int _cmd_MEASURE_impl(const int iQueriedSF, const int iSpread,
+    virtual int _cmd_MEASURE_impl(const double iQueriedSF, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const eBindingType abt)=0;    
@@ -355,12 +355,12 @@ public:
 
 protected:
     
-    void print_MEASURE_info(const int iQueriedSF, const int iSpread, 
+    void print_MEASURE_info(const double iQueriedSF, const int iSpread, 
                             const int iNumOfThreads, const int iDuration,
                             const int iSelectedTrx, const int iIterations,
                             const eBindingType abt);
 
-    void print_TEST_info(const int iQueriedSF, const int iSpread, 
+    void print_TEST_info(const double iQueriedSF, const int iSpread, 
                          const int iNumOfThreads, const int iNumOfTrxs,
                          const int iSelectedTrx, const int iIterations,
                          const eBindingType abt);

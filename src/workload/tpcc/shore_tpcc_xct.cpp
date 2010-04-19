@@ -106,7 +106,7 @@ void ShoreTPCCEnv::reset_stats()
  *
  ********************************************************************/
 
-void ShoreTPCCEnv::print_throughput(const int iQueriedSF, 
+void ShoreTPCCEnv::print_throughput(const double iQueriedSF, 
                                     const int iSpread, 
                                     const int iNumOfThreads, 
                                     const double delay,
@@ -127,7 +127,7 @@ void ShoreTPCCEnv::print_throughput(const int iQueriedSF,
     int nords_com = current_stats.attempted.new_order - current_stats.failed.new_order - current_stats.deadlocked.new_order;
 
     TRACE( TRACE_ALWAYS, "*******\n"                \
-           "QueriedSF: (%d)\n"                      \
+           "QueriedSF: (%.1f)\n"                    \
            "Spread:    (%s)\n"                      \
            "Threads:   (%d)\n"                      \
            "Trxs Att:  (%d)\n"                      \

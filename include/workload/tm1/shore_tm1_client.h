@@ -52,10 +52,9 @@ ENTER_NAMESPACE(tm1);
 class baseline_tm1_client_t : public base_client_t 
 {
 private:
-
     int _selid;
     trx_worker_t* _worker;
-    int _qf;
+    double _qf;
     
 public:
 
@@ -64,7 +63,7 @@ public:
     baseline_tm1_client_t(c_str tname, const int id, ShoreTM1Env* env, 
                           const MeasurementType aType, const int trxid, 
                           const int numOfTrxs, 
-                          processorid_t aprsid, const int selID, const int qf);
+                          processorid_t aprsid, const int selID, const double qf);
 
     ~baseline_tm1_client_t() { }
 

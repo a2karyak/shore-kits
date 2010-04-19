@@ -106,7 +106,7 @@ void ShoreTPCBEnv::reset_stats()
  *
  ********************************************************************/
 
-void ShoreTPCBEnv::print_throughput(const int iQueriedSF, 
+void ShoreTPCBEnv::print_throughput(const double iQueriedSF, 
                                     const int iSpread, 
                                     const int iNumOfThreads, 
                                     const double delay,
@@ -126,14 +126,14 @@ void ShoreTPCBEnv::print_throughput(const int iQueriedSF,
     int trxs_dld  = current_stats.deadlocked.total();
 
     TRACE( TRACE_ALWAYS, "*******\n"             \
-           "QueriedSF: (%d)\n"                   \
+           "QueriedSF: (%.1f)\n"                 \
            "Spread:    (%s)\n"                   \
            "Threads:   (%d)\n"                   \
            "Trxs Att:  (%d)\n"                   \
            "Trxs Abt:  (%d)\n"                   \
            "Trxs Dld:  (%d)\n"                   \
            "Secs:      (%.2f)\n"                 \
-           "IOChars:   (%.2fM/s)\n"      \
+           "IOChars:   (%.2fM/s)\n"              \
            "AvgCPUs:   (%.1f) (%.1f%%)\n"        \
            "TPS:       (%.2f)\n",
            iQueriedSF, 

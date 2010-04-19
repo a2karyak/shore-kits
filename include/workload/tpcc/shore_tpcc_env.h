@@ -197,7 +197,7 @@ public:
     
     int dump();
 
-    virtual void print_throughput(const int iQueriedSF, 
+    virtual void print_throughput(const double iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
                                   const double delay,

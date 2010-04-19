@@ -149,40 +149,40 @@ int ShoreEnv::get_active_cpu_count() const
  *
  ********************************************************************/
 
-void ShoreEnv::set_qf(const uint aQF)
+void ShoreEnv::set_qf(const double aQF)
 {
     if ((aQF>0) && (aQF<=_scaling_factor)) {
-        TRACE( TRACE_ALWAYS, "New Queried Factor: %d\n", aQF);
+        TRACE( TRACE_ALWAYS, "New Queried Factor: %.1f\n", aQF);
         _queried_factor = aQF;
     }
     else {
-        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %d\n", aQF);
+        TRACE( TRACE_ALWAYS, "Invalid queried factor input: %.1f\n", aQF);
     }
 }
 
-int ShoreEnv::get_qf() const
+double ShoreEnv::get_qf() const
 {
     return (_queried_factor);
 }
 
 
-void ShoreEnv::set_sf(const uint aSF)
+void ShoreEnv::set_sf(const double aSF)
 {
-    if (aSF > 0) {
-        TRACE( TRACE_ALWAYS, "New Scaling factor: %d\n", aSF);
+    if (aSF > 0.0) {
+        TRACE( TRACE_ALWAYS, "New Scaling factor: %.1f\n", aSF);
         _scaling_factor = aSF;
     }
     else {
-        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %d\n", aSF);
+        TRACE( TRACE_ALWAYS, "Invalid scaling factor input: %.1f\n", aSF);
     }
 }
 
-int ShoreEnv::get_sf() const
+double ShoreEnv::get_sf() const
 {
     return (_scaling_factor);
 }
 
-int ShoreEnv::upd_sf()
+double ShoreEnv::upd_sf()
 {
     uint tmp_sf = envVar::instance()->getSysVarInt("sf");
     assert (tmp_sf);
@@ -192,8 +192,8 @@ int ShoreEnv::upd_sf()
 
 void ShoreEnv::print_sf() const
 {
-    TRACE( TRACE_ALWAYS, "Scaling Factor = (%d)\n", get_sf());
-    TRACE( TRACE_ALWAYS, "Queried Factor = (%d)\n", get_qf());
+    TRACE( TRACE_ALWAYS, "Scaling Factor = (%.1f)\n", get_sf());
+    TRACE( TRACE_ALWAYS, "Queried Factor = (%.1f)\n", get_qf());
 }
 
 

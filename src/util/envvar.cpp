@@ -116,6 +116,14 @@ int envVar::getVarInt(const string& sParam, const int& iDefValue)
     return (atoi(getVar(sParam,_toString(iDefValue)).c_str()));
 }
 
+double envVar::getVarDouble(const string& sParam, const double& iDefValue)
+{
+    char* endp;
+    double d;
+    string r = getVar(sParam,_toString(iDefValue));
+    d = strtod(r.c_str(), &endp);
+    return (d);
+}
 
 
 // checks if a specific param is set at the map or (fallback) the conf file
@@ -168,6 +176,13 @@ int envVar::getSysVarInt(string sParam)
     string config = getVar("db-config","invalid");
     config = config + "-" + sParam;
     return (getVarInt(config,0));
+}
+
+double envVar::getSysVarDouble(string sParam)
+{
+    string config = getVar("db-config","invalid");
+    config = config + "-" + sParam;
+    return (getVarDouble(config,0.0));
 }
 
 

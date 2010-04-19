@@ -237,6 +237,17 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     DEFINE_TRX_STATS(cname,trx)
 
 
+#define CHECK_XCT_RETURN(rc,retry)                              \
+    if (rc.is_error()) {                                        \
+        W_COERCE(_env->db()->abort_xct());                      \
+        if (e.err_num() == smlevel_0::eDEADLOCK) {              \
+            goto retry; }                                       \
+        stringstream os; os << rc << ends;                      \
+        string str = os.str();                                  \
+        TRACE( TRACE_ALWAYS,                                    \
+               "Eek! Unable to populate db due to: \n%s\n",     \
+               str.c_str());                                    \
+        assert (0); return; }
 
 
 
@@ -529,11 +540,11 @@ public:
     //    void set_max_cpu_count(const int maxcpucnt); 
 
     // --- scaling and querying factor --- //
-    void set_qf(const uint aQF);
-    int get_qf() const;
-    void set_sf(const uint aSF);
-    int get_sf() const;
-    int upd_sf();
+    void set_qf(const double aQF);
+    double get_qf() const;
+    void set_sf(const double aSF);
+    double get_sf() const;
+    double upd_sf();
     void print_sf() const;
 
     // Environment workers
@@ -558,7 +569,7 @@ public:
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
     // Throughput printing
-    virtual void print_throughput(const int iQueriedSF, 
+    virtual void print_throughput(const double iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
                                   const double delay,

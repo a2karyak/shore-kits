@@ -181,7 +181,7 @@ public:
     virtual w_rc_t warmup() { return(RCOK); /* do nothing */ };
     virtual w_rc_t check_consistency() { return(RCOK); /* do nothing */ };
 
-    virtual void print_throughput(const int iQueriedSF, 
+    virtual void print_throughput(const double iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
                                   const double delay,

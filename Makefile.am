@@ -146,11 +146,36 @@ WL_TPCB_SHORE = \
    $(SW)/tpcb/shore_tpcb_xct.cpp \
    $(SW)/tpcb/shore_tpcb_client.cpp
 
+WL_TPCH_SHORE = \
+   $(SW)/tpch/tpch_random.cpp \
+   $(SW)/tpch/tpch_input.cpp \
+   $(SW)/tpch/shore_tpch_schema.cpp \
+   $(SW)/tpch/shore_tpch_schema_man.cpp \
+   $(SW)/tpch/shore_tpch_env.cpp \
+   $(SW)/tpch/shore_tpch_xct.cpp \
+   $(SW)/tpch/shore_tpch_client.cpp
+
+WL_TPCH_DBGEN_SHORE = \
+   $(SW)/tpch/dbgen/build.cpp \
+   $(SW)/tpch/dbgen/driver.cpp \
+   $(SW)/tpch/dbgen/bm_utils.cpp \
+   $(SW)/tpch/dbgen/rnd.cpp \
+   $(SW)/tpch/dbgen/print.cpp \
+   $(SW)/tpch/dbgen/load_stub.cpp \
+   $(SW)/tpch/dbgen/bcd2.cpp \
+   $(SW)/tpch/dbgen/speed_seed.cpp \
+   $(SW)/tpch/dbgen/text.cpp \
+   $(SW)/tpch/dbgen/permute.cpp \
+   $(SW)/tpch/dbgen/rng64.cpp
+
+
 lib_libworkload_a_SOURCES = \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
    $(WL_TM1_SHORE) \
-   $(WL_TPCB_SHORE)
+   $(WL_TPCB_SHORE) \
+   $(WL_TPCH_DBGEN_SHORE) \
+   $(WL_TPCH_SHORE)
 
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 

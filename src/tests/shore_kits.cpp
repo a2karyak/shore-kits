@@ -40,6 +40,9 @@
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "workload/tpcb/shore_tpcb_client.h"
 
+#include "workload/tpch/shore_tpch_env.h"
+#include "workload/tpch/shore_tpch_client.h"
+
 #ifdef CFG_SIMICS
 #include "util/simics-magic-instruction.h"
 #endif
@@ -60,6 +63,7 @@ using namespace shore;
 using namespace tpcc;
 using namespace tm1;
 using namespace tpcb;
+using namespace tpch;
 
 
 
@@ -126,7 +130,7 @@ void initsysnamemap()
 
 
 // Value-definitions of the different Benchmarks
-enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB };
+enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH };
 
 // Map to associate string with then enum values
 
@@ -137,6 +141,7 @@ void initbenchmarkmap()
     mBenchmarkValue["tpcc"]  = bmTPCC;
     mBenchmarkValue["tm1"]   = bmTM1;
     mBenchmarkValue["tpcb"]  = bmTPCB;
+    mBenchmarkValue["tpch"]  = bmTPCH;
 }
 
 
@@ -167,11 +172,11 @@ public:
 
 
     // impl of supported commands
-    virtual int _cmd_TEST_impl(const int iQueriedSF, const int iSpread,
+    virtual int _cmd_TEST_impl(const double iQueriedSF, const int iSpread,
                                const int iNumOfThreads, const int iNumOfTrxs,
                                const int iSelectedTrx, const int iIterations,
                                const eBindingType abt);
-    virtual int _cmd_MEASURE_impl(const int iQueriedSF, const int iSpread,
+    virtual int _cmd_MEASURE_impl(const double iQueriedSF, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
                                   const eBindingType abt);    
@@ -458,7 +463,7 @@ static const int MILLION = 1000000;
 
 template<class Client,class DB>
 int 
-kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF, 
+kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF, 
                                  const int iSpread,
                                  const int iNumOfThreads, 
                                  const int iNumOfTrxs,
@@ -497,8 +502,9 @@ kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
         // 1. create and fork client clients
         for (int i=0; i<iNumOfThreads; i++) {
             // create & fork testing threads
-            if (iSpread)
-                wh_id = (i%iQueriedSF)+1;
+            if (iSpread) {
+                wh_id = (i%(int)iQueriedSF)+1;
+            }
 
             testers[i] = new Client(c_str("CL-%d",i), i, _dbinst, 
                                     MT_NUM_OF_TRXS, iSelectedTrx, iNumOfTrxs,
@@ -549,7 +555,7 @@ kit_t<Client,DB>::_cmd_TEST_impl(const int iQueriedSF,
 
 template<class Client,class DB>
 int 
-kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF, 
+kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF, 
                                     const int iSpread,
                                     const int iNumOfThreads, 
                                     const int iDuration,
@@ -576,8 +582,9 @@ kit_t<Client,DB>::_cmd_MEASURE_impl(const int iQueriedSF,
     // 2. create and fork client threads
     for (int i=0; i<iNumOfThreads; i++) {
         // create & fork testing threads
-        if (iSpread)
-            wh_id = (i%iQueriedSF)+1;
+        if (iSpread) {
+            wh_id = (i%(int)iQueriedSF)+1;
+        }
 
         testers[i] = new Client(c_str("CL-%d",i), i, _dbinst, 
                                 MT_TIME_DUR, iSelectedTrx, 0,
@@ -661,6 +668,7 @@ int kit_t<Client,DB>::process_cmd_LOAD(const char* command,
 typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
 typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
+typedef kit_t<baseline_tpch_client_t,ShoreTPCHEnv> baselineTPCHKit;
 
 #ifdef CFG_DORA
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
@@ -738,12 +746,10 @@ int main(int argc, char* argv[])
     if (benchmarkname.compare("tpcc")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            // shore.conf is set for Baseline
             kit = new baselineTPCCKit("(tpcc-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            // shore.conf is set for DORA
             kit = new doraTPCCKit("(tpcc-dora) ",netmode,netport);
             break;
 #endif
@@ -757,12 +763,10 @@ int main(int argc, char* argv[])
     if (benchmarkname.compare("tm1")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            // shore.conf is set for Baseline
             kit = new baselineTM1Kit("(tm1-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            // shore.conf is set for DORA
             kit = new doraTM1Kit("(tm1-dora) ",netmode,netport);
             break;
 #endif
@@ -776,13 +780,29 @@ int main(int argc, char* argv[])
     if (benchmarkname.compare("tpcb")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            // shore.conf is set for Baseline
             kit = new baselineTPCBKit("(tpcb-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            // shore.conf is set for DORA
             kit = new doraTPCBKit("(tpcb-dora) ",netmode,netport);
+            break;
+#endif
+        default:
+            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            return (5);
+        }
+    }
+
+    // TPC-H
+    if (benchmarkname.compare("tpch")==0) {
+        switch (mSysnameValue[sysname]) {
+        case snBaseline:
+            kit = new baselineTPCHKit("(tpch-base) ",netmode,netport);
+            break;
+#ifdef CFG_DORA
+        case snDORA:
+            assert (0); // TODO
+            //kit = new doraTPCBKit("(tpcb-dora) ",netmode,netport);
             break;
 #endif
         default:
@@ -830,5 +850,3 @@ int main(int argc, char* argv[])
     // 9. the Shore environment will close at the destructor of the kit
     return (0);
 }
-
-

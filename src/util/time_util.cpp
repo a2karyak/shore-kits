@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file time_util.cpp
  * 
  *  @brief Miscellaneous time-related utilities
@@ -40,15 +38,18 @@
 #endif 
 
 
-/** time conversion functions */
+/******************************************************************** 
+ *
+ *  @fn:     datepart
+ *
+ *  @brief:  Returns the date part of the time parameter
+ *
+ *  @return: A time_t value containing @time plus the weeks added.
+ *
+ ********************************************************************/
 
-
-/** @fn datepart
- * 
- *  @brief Returns the date part of the time parameter
- */
-
-int datepart(char const* str, const time_t *pt) {
+int datepart(char const* str, const time_t *pt)
+{
     struct tm tm_struct;
 
     localtime_r(pt, &tm_struct);
@@ -61,16 +62,25 @@ int datepart(char const* str, const time_t *pt) {
 }
 
 
-/** @fn datestr_to_timet
- *
- *  @brief Converts a string to corresponding time_t
- */
 
-time_t datestr_to_timet(char const* str) {
-    // str in yyyy-mm-dd format
+
+/******************************************************************** 
+ *
+ *  @fn:     str_to_timet
+ *
+ *  @brief:  Converts a string in format YYYY-MM-DD to corresponding time_t object
+ *
+ *  @return: A time_t value containing @time plus the weeks added.
+ *
+ ********************************************************************/
+
+time_t 
+str_to_timet(char const* str) 
+{
+    // String in YYYY-MM-DD format
     tm time_str;
-    int count = sscanf(str, "%d-%d-%d", &time_str.tm_year,
-                       &time_str.tm_mon, &time_str.tm_mday);
+    int count = sscanf(str, "%d-%d-%d", 
+                       &time_str.tm_year, &time_str.tm_mon, &time_str.tm_mday);
     assert(count == 3);
     time_str.tm_year -= 1900;
     time_str.tm_mon--;
@@ -83,154 +93,174 @@ time_t datestr_to_timet(char const* str) {
 }
 
 
-/** @fn timet_to_datestr
+/******************************************************************** 
  *
- *  @brief Converts a time_t object to a string
- */
+ *  @fn:     timet_to_str
+ *
+ *  @brief:  Converts a time_t object to a string with format YYYY-MM-DD
+ *
+ ********************************************************************/
 
-char* timet_to_datestr(time_t time) {
-    struct tm tm;
-    memset(&tm, 0, sizeof(tm));
-    localtime_r(&time, &tm);
-    char* result = new char[strlen("09/09/2009\n")+1];
-    sprintf(result, "%04d-%02d-%02d\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
-    return result;
+void
+timet_to_str(char* dst, time_t time) 
+{
+    struct tm atm;
+    localtime_r(&time, &atm);
+    sprintf(dst, "%04d-%02d-%02d\n", 
+            atm.tm_year+1900, atm.tm_mon+1, atm.tm_mday);
 }
 
 
 
 
-/** time_t manipulation functions.
+
+/******************************************************************** 
+ *
+ *  time_t manipulation functions.
  *
  *  @note The functions below use the Unix timezone functions like mktime()
  *         and localtime_r()
- */
+ *
+ ********************************************************************/
 
 
+// First day of the reformation, counted from 1 Jan 1
+#define REFORMATION_DAY 639787
 
-/* First day of the reformation, counted from 1 Jan 1 */
-#define REFORMATION_DAY 639787	
-
-/* They corrected out 11 days */
+// They corrected out 11 days
 #define MISSING_DAYS 11
 
-/* First day of reformation */
+// First day of reformation
 #define THURSDAY 4
 
-/* Offset value; 1 Jan 1 was a Saturday */
+// Offset value; 1 Jan 1 was a Saturday
 #define SATURDAY 6
 
 
-/* @name days_in_month
- * @brief Number of days in a month, using 0 (Jan) to 11 (Dec). For leap years,
- *   add 1 to February (month 1). 
- */
+/******************************************************************** 
+ *
+ *  @fn:     days_in_month
+ *
+ *  @brief:  Number of days in a month, using 0 (Jan) to 11 (Dec). 
+ *           For leap years, add 1 to February (month 1). 
+ *
+ *  @return: A time_t value containing @time plus the weeks added.
+ *
+ ********************************************************************/
 
 static const int days_in_month[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 
-/**
- * time_add_day:
- * @time: A time_t value.
- * @days: Number of days to add.
+/******************************************************************** 
  *
- * Adds a day onto the time, using local time.
- * Note that if clocks go forward due to daylight savings time, there are
- * some non-existent local times, so the hour may be changed to make it a
- * valid time. This also means that it may not be wise to keep calling
- * time_add_day() to step through a certain period - if the hour gets changed
- * to make it valid time, any further calls to time_add_day() will also return
- * this hour, which may not be what you want.
+ *  @fn:     time_add_day
  *
- * Return value: a time_t value containing @time plus the days added.
- */
+ *  @brief:  Adds the given number of weeks to a time value.
+ *
+ *  @note:   Adds a day onto the time, using local time.
+ *           Note that if clocks go forward due to daylight savings time, there
+ *           are some non-existent local times, so the hour may be changed to 
+ *           make it a valid time. This also means that it may not be wise to 
+ *           keep calling time_add_day() to step through a certain period - if 
+ *           the hour gets changed to make it valid time, any further calls to 
+ *           time_add_day() will also return this hour, which may not be what 
+ *           you want.
+ *
+ *  @return: A time_t value containing @time plus the days added.
+ *
+ ********************************************************************/
 
-time_t time_add_day (time_t time, int days) {
+time_t 
+time_add_day (time_t time, int days) 
+{
     struct tm tm;
 
     localtime_r(&time, &tm);
     tm.tm_mday += days;
-    tm.tm_isdst = -1;
-    
+    tm.tm_isdst = -1;    
     time_t calendar_time = mktime (&tm);
 
     return calendar_time;
 }
 
 
-
-/**
- * time_add_week:
- * @time: A time_t value.
- * @weeks: Number of weeks to add.
+/******************************************************************** 
  *
- * Adds the given number of weeks to a time value.
+ *  @fn:     time_add_week
  *
- * Return value: a time_t value containing @time plus the weeks added.
- */
+ *  @brief:  Adds the given number of weeks to a time value.
+ *
+ *  @return: A time_t value containing @time plus the weeks added.
+ *
+ ********************************************************************/
 
-time_t time_add_week (time_t time, int weeks) {
-
-	return time_add_day (time, weeks * 7);
+time_t 
+time_add_week (time_t time, int weeks) 
+{
+    return time_add_day (time, weeks * 7);
 }
 
 
-
-/**
- * time_add_month:
- * @time: A time_t value.
- * @months: Number of months to add.
+/******************************************************************** 
  *
- * Adds the given number of months to a time value.
+ *  @fn:     time_add_month
  *
- * Return value: a time_t value containing @time plus the months added.
- */
+ *  @brief:  Adds the given number of months to a time value.
+ *
+ *  @return: A time_t value containing @time plus the months added.
+ *
+ ********************************************************************/
 
-time_t time_add_month (time_t time, int months) {
-
+time_t 
+time_add_month (time_t time, int months) 
+{
     struct tm tm;
+
     localtime_r(&time, &tm);
     tm.tm_mon += months;
     tm.tm_isdst = -1;
+
     return mktime(&tm);
 }
 
 
-
-/**
- * time_add_year:
- * @time: A time_t value.
- * @years: Number of years to add.
+/******************************************************************** 
  *
- * Adds the given number of years to a time value.
+ *  @fn:     time_add_year
  *
- * Return value: a time_t value containing @time plus the years added.
- */
+ *  @brief:  Adds the given number of years to a time value.
+ *
+ *  @return: A time_t value containing @time plus the years added.
+ *
+ ********************************************************************/
 
-time_t time_add_year (time_t time, int years) {
-
+time_t 
+time_add_year (time_t time, int years) 
+{
     struct tm tm;
+
     localtime_r(&time, &tm);
     tm.tm_year += years;
     tm.tm_isdst = -1;
+
     return mktime(&tm);
 }
 
 
-
-/**
- * time_day_begin:
- * @t: A time_t value.
+/******************************************************************** 
  *
- * Returns the start of the day, according to the local time.
+ *  @fn:     time_day_begin
  *
- * Return value: the time corresponding to the beginning of the day.
- */
+ *  @brief:  Returns the start of the day, according to the local time.
+ *
+ *  @return: The time corresponding to the beginning of the day.
+ *
+ ********************************************************************/
 
-time_t time_day_begin (time_t t) {
-
+time_t 
+time_day_begin (time_t t) 
+{
   struct tm tm;
   
   localtime_r(&t, &tm);
@@ -241,20 +271,21 @@ time_t time_day_begin (time_t t) {
 }
 
 
-
-/**
- * time_day_end:
- * @t: A time_t value.
+/******************************************************************** 
  *
- * Returns the end of the day, according to the local time.
+ *  @fn:     time_day_end
  *
- * Return value: the time corresponding to the end of the day.
- */
+ *  @brief:  Returns the end of the day, according to the local time.
+ *
+ *  @return: The time corresponding to the end of the day.
+ *
+ ********************************************************************/
 
-time_t time_day_end (time_t t) {
-
-  struct tm tm;
-  
+time_t 
+time_day_end (time_t t)
+{
+    struct tm tm;
+    
   localtime_r(&t, &tm);
   tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
   tm.tm_mday++;
@@ -262,5 +293,3 @@ time_t time_day_end (time_t t) {
   
   return mktime (&tm);
 }
-
-

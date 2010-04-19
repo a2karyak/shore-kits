@@ -45,7 +45,7 @@ baseline_tm1_client_t::baseline_tm1_client_t(c_str tname, const int id,
                                              const int trxid, 
                                              const int numOfTrxs, 
                                              processorid_t aprsid, 
-                                             const int selID, const int qf) 
+                                             const int selID, const double qf) 
     : base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
       _selid(selID), _qf(qf)
 {
@@ -100,8 +100,9 @@ w_rc_t baseline_tm1_client_t::submit_one(int xct_type, int xctid)
 
     // Pick a valid sf
     register int selsf = _selid;
-    if (_selid==0) 
-        selsf = URand(1,_qf); 
+    if (_selid==0) {
+        selsf = URand(1,_qf);
+    }
 
     // Decide which ID inside that SF to use
     register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);

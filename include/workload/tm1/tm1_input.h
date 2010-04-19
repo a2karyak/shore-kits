@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   tm1_input.h
  *
  *  @brief:  Declaration of the (common) inputs for the TM1 trxs

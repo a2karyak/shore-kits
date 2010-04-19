@@ -277,5 +277,4 @@ call_forwarding_t::call_forwarding_t(string sysname) :
 }
 
 
-
 EXIT_NAMESPACE(tm1);

@@ -58,7 +58,7 @@ private:
     // workload parameters
     int _wh;
     trx_worker_t* _worker;
-    int _qf;
+    double _qf;
     
 
 public:
@@ -68,7 +68,7 @@ public:
     baseline_tpcc_client_t(c_str tname, const int id, ShoreTPCCEnv* env, 
                            const MeasurementType aType, const int trxid, 
                            const int numOfTrxs, 
-                           processorid_t aprsid, const int sWH, const int qf);
+                           processorid_t aprsid, const int sWH, const double qf);
 
     ~baseline_tpcc_client_t() { }
 

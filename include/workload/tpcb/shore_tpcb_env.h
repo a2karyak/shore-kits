@@ -170,7 +170,7 @@ public:
 
     int dump();
 
-    virtual void print_throughput(const int iQueriedSF, 
+    virtual void print_throughput(const double iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
                                   const double delay,
@@ -197,10 +197,10 @@ public:
 
     w_rc_t run_one_xct(Request* prequest);
 
-    // transactions
+    // Transactions
     DECLARE_TRX(acct_update);
 
-    // database population
+    // Database population
     DECLARE_TRX(populate_db);
 
     // for thread-local stats

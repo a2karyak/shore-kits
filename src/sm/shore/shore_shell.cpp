@@ -42,7 +42,7 @@ bool volatile _g_canceled = false;
 
 
 
-int _theSF = DF_SF;
+double _theSF = DF_SF;
 
 
 //// shore_shell_t interface ////
@@ -139,14 +139,14 @@ processorid_t shore_shell_t::next_cpu(const eBindingType abt,
  *
  ********************************************************************/
 
-void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread, 
+void shore_shell_t::print_MEASURE_info(const double iQueriedSF, const int iSpread, 
                                        const int iNumOfThreads, const int iDuration,
                                        const int iSelectedTrx, const int iIterations,
                                        const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n" \
-           "QueriedSF:     (%d)\n" \
+           "QueriedSF:     (%.1f)\n" \
            "SpreadThreads: (%s)\n" \
            "Binding:       (%s)\n" \
            "NumOfThreads:  (%d)\n" \
@@ -160,14 +160,14 @@ void shore_shell_t::print_MEASURE_info(const int iQueriedSF, const int iSpread,
 }
 
 
-void shore_shell_t::print_TEST_info(const int iQueriedSF, const int iSpread, 
+void shore_shell_t::print_TEST_info(const double iQueriedSF, const int iSpread, 
                                     const int iNumOfThreads, const int iNumOfTrxs,
                                     const int iSelectedTrx, const int iIterations,
                                     const eBindingType abt)
 {
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n"
-           "QueriedSF:      (%d)\n" \
+           "QueriedSF:      (%.1f)\n" \
            "Spread Threads: (%s)\n" \
            "Binding:        (%s)\n" \
            "NumOfThreads:   (%d)\n" \
@@ -450,18 +450,18 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    int numOfQueriedSF      = ev->getVarInt("test-num-queried",DF_WARMUP_QUERIED_SF);
-    int tmp_numOfQueriedSF  = numOfQueriedSF;
-    int numOfTrxs           = ev->getVarInt("test-num-trxs",DF_WARMUP_TRX_PER_THR);
-    int tmp_numOfTrxs       = numOfTrxs;
-    int duration            = ev->getVarInt("measure-duration",DF_WARMUP_DURATION);
-    int tmp_duration        = duration;
-    int iterations          = ev->getVarInt("test-iterations",DF_WARMUP_ITERS);
-    int tmp_iterations      = iterations;
+    double numOfQueriedSF      = ev->getVarDouble("test-num-queried",DF_WARMUP_QUERIED_SF);
+    double tmp_numOfQueriedSF  = numOfQueriedSF;
+    int numOfTrxs              = ev->getVarInt("test-num-trxs",DF_WARMUP_TRX_PER_THR);
+    int tmp_numOfTrxs          = numOfTrxs;
+    int duration               = ev->getVarInt("measure-duration",DF_WARMUP_DURATION);
+    int tmp_duration           = duration;
+    int iterations             = ev->getVarInt("test-iterations",DF_WARMUP_ITERS);
+    int tmp_iterations         = iterations;
 
  
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d",
+    if ( sscanf(command, "%s %a %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_numOfTrxs,
@@ -476,10 +476,12 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
     // OPTIONAL Parameters
 
     // 1- number of queried scaling factor - numOfQueriedSF
-    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF)) {
         numOfQueriedSF = tmp_numOfQueriedSF;
-    else
+    }
+    else {
         numOfQueriedSF = _theSF;
+    }
     assert (numOfQueriedSF <= _theSF);
     
     // 2- number of trxs - numOfTrxs
@@ -497,7 +499,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
     // Print out configuration
     TRACE( TRACE_ALWAYS, "\n" \
-           "Queried SF   : %d\n" \
+           "Queried SF   : %.1f\n" \
            "Num of Trxs  : %d\n" \
            "Duration     : %d\n" \
            "Iterations   : %d\n", 
@@ -533,32 +535,32 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    int numOfQueriedSF      = ev->getVarInt("test-num-queried",DF_NUM_OF_QUERIED_SF);
-    int tmp_numOfQueriedSF  = numOfQueriedSF;
-    int spreadThreads        = ev->getVarInt("test-spread",DF_SPREAD_THREADS);
-    int tmp_spreadThreads    = spreadThreads;
-    int numOfThreads         = ev->getVarInt("test-num-threads",DF_NUM_OF_THR);
-    int tmp_numOfThreads     = numOfThreads;
-    int numOfTrxs            = ev->getVarInt("test-num-trxs",DF_TRX_PER_THR);
-    int tmp_numOfTrxs        = numOfTrxs;
-    int selectedTrxID        = ev->getVarInt("test-trx-id",DF_TRX_ID);
-    int tmp_selectedTrxID    = selectedTrxID;
-    int iterations           = ev->getVarInt("test-iterations",DF_NUM_OF_ITERS);
-    int tmp_iterations       = iterations;
-    eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
-    eBindingType tmp_binding = binding;
+    double numOfQueriedSF      = ev->getVarDouble("test-num-queried",DF_NUM_OF_QUERIED_SF);
+    double tmp_numOfQueriedSF  = numOfQueriedSF;
+    int spreadThreads          = ev->getVarInt("test-spread",DF_SPREAD_THREADS);
+    int tmp_spreadThreads      = spreadThreads;
+    int numOfThreads           = ev->getVarInt("test-num-threads",DF_NUM_OF_THR);
+    int tmp_numOfThreads       = numOfThreads;
+    int numOfTrxs              = ev->getVarInt("test-num-trxs",DF_TRX_PER_THR);
+    int tmp_numOfTrxs          = numOfTrxs;
+    int selectedTrxID          = ev->getVarInt("test-trx-id",DF_TRX_ID);
+    int tmp_selectedTrxID      = selectedTrxID;
+    int iterations             = ev->getVarInt("test-iterations",DF_NUM_OF_ITERS);
+    int tmp_iterations         = iterations;
+    eBindingType binding       = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
+    eBindingType tmp_binding   = binding;
 
 
     // update the SF
-    int tmp_sf = ev->getSysVarInt("sf");
+    double tmp_sf = ev->getSysVarDouble("sf");
     if (tmp_sf) {
-        TRACE( TRACE_STATISTICS, "Updated SF (%d)\n", tmp_sf);
+        TRACE( TRACE_STATISTICS, "Updated SF (%.1f)\n", tmp_sf);
         _theSF = tmp_sf;
     }
 
     
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %a %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
@@ -576,10 +578,12 @@ int shore_shell_t::process_cmd_TEST(const char* command,
     // REQUIRED Parameters
 
     // 1- number of queried Scaling factor - numOfQueriedSF
-    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF)) {
         numOfQueriedSF = tmp_numOfQueriedSF;
-    else
+    }
+    else {
         numOfQueriedSF = _theSF;
+    }
     assert (numOfQueriedSF <= _theSF);
 
 
@@ -593,9 +597,9 @@ int shore_shell_t::process_cmd_TEST(const char* command,
         numOfThreads = tmp_numOfThreads;
         //if (spreadThreads && (numOfThreads > numOfQueriedSF))
         //numOfThreads = numOfQueriedSF;
-        if (spreadThreads && ((numOfThreads % numOfQueriedSF)!=0)) {
+        if (spreadThreads && ((numOfThreads % (int)numOfQueriedSF)!=0)) {
             TRACE( TRACE_ALWAYS, 
-                   "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
+                   "\n!!! Warning QueriedSF=(%.1f) and Threads=(%d) - not spread uniformly!!!\n",
                    numOfQueriedSF, numOfThreads);
         }
     }
@@ -663,23 +667,23 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    int numOfQueriedSF      = ev->getVarInt("measure-num-queried",DF_NUM_OF_QUERIED_SF);
-    int tmp_numOfQueriedSF  = numOfQueriedSF;
-    int spreadThreads        = ev->getVarInt("measure-spread",DF_SPREAD_THREADS);
-    int tmp_spreadThreads    = spreadThreads;
-    int numOfThreads         = ev->getVarInt("measure-num-threads",DF_NUM_OF_THR);
-    int tmp_numOfThreads     = numOfThreads;
-    int duration             = ev->getVarInt("measure-duration",DF_DURATION);
-    int tmp_duration         = duration;
-    int selectedTrxID        = ev->getVarInt("measure-trx-id",DF_TRX_ID);
-    int tmp_selectedTrxID    = selectedTrxID;
-    int iterations           = ev->getVarInt("measure-iterations",DF_NUM_OF_ITERS);
-    int tmp_iterations       = iterations;
-    eBindingType binding     = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
-    eBindingType tmp_binding = binding;
+    double numOfQueriedSF      = ev->getVarDouble("measure-num-queried",DF_NUM_OF_QUERIED_SF);
+    double tmp_numOfQueriedSF  = numOfQueriedSF;
+    int spreadThreads          = ev->getVarInt("measure-spread",DF_SPREAD_THREADS);
+    int tmp_spreadThreads      = spreadThreads;
+    int numOfThreads           = ev->getVarInt("measure-num-threads",DF_NUM_OF_THR);
+    int tmp_numOfThreads       = numOfThreads;
+    int duration               = ev->getVarInt("measure-duration",DF_DURATION);
+    int tmp_duration           = duration;
+    int selectedTrxID          = ev->getVarInt("measure-trx-id",DF_TRX_ID);
+    int tmp_selectedTrxID      = selectedTrxID;
+    int iterations             = ev->getVarInt("measure-iterations",DF_NUM_OF_ITERS);
+    int tmp_iterations         = iterations;
+    eBindingType binding       = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
+    eBindingType tmp_binding   = binding;
     
     // Parses new test run data
-    if ( sscanf(command, "%s %d %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %a %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
@@ -694,9 +698,9 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     }
 
     // update the SF
-    int tmp_sf = ev->getSysVarInt("sf");
+    double tmp_sf = ev->getSysVarDouble("sf");
     if (tmp_sf) {
-        TRACE( TRACE_DEBUG, "Updated SF (%d)\n", tmp_sf);
+        TRACE( TRACE_DEBUG, "Updated SF (%.1f)\n", tmp_sf);
         _theSF = tmp_sf;
     }
 
@@ -704,10 +708,12 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     // REQUIRED Parameters
 
     // 1- number of queried warehouses - numOfQueriedSF
-    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF))
+    if ((tmp_numOfQueriedSF>0) && (tmp_numOfQueriedSF<=_theSF)) {
         numOfQueriedSF = tmp_numOfQueriedSF;
-    else
+    }
+    else {
         numOfQueriedSF = _theSF;
+    }
     assert (numOfQueriedSF <= _theSF);
 
 
@@ -721,9 +727,9 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
         numOfThreads = tmp_numOfThreads;
         //if (spreadThreads && (numOfThreads > numOfQueriedSF))
         //numOfThreads = numOfQueriedSF;
-        if (spreadThreads && ((numOfThreads % numOfQueriedSF)!=0)) {
+        if (spreadThreads && ((numOfThreads % (int)numOfQueriedSF)!=0)) {
             TRACE( TRACE_ALWAYS, 
-                   "\n!!! Warning QueriedSF=(%d) and Threads=(%d) - not spread uniformly!!!\n",
+                   "\n!!! Warning QueriedSF=(%.1f) and Threads=(%d) - not spread uniformly!!!\n",
                    numOfQueriedSF, numOfThreads);
         }
     }
@@ -795,7 +801,7 @@ int shore_shell_t::SIGINT_handler()
  *
  ********************************************************************/
 
-int shore_shell_t::_cmd_WARMUP_impl(const int iQueriedSF, 
+int shore_shell_t::_cmd_WARMUP_impl(const double iQueriedSF, 
                                     const int iTrxs, 
                                     const int iDuration, 
                                     const int iIterations)

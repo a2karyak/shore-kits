@@ -176,20 +176,13 @@ ShoreTPCCEnv::table_builder_t::work()
     retry:
 	W_COERCE(_env->db()->begin_xct());
 	e = _env->xct_populate_one_unit(tid, in);
-	if(e.is_error()) {
-	    W_COERCE(_env->db()->abort_xct());
-	    if(e.err_num() == smlevel_0::eDEADLOCK)
-		goto retry;
-	    
-	    stringstream os;
-	    os << e << ends;
-	    string str = os.str();
-	    fprintf(stderr, "Eek! Unable to populate db for index %d due to:\n%s\n",
-		    i, str.c_str());
-	}
+
+        CHECK_XCT_RETURN(e,retry);
+
 	long nval = atomic_inc_64_nv(&units_completed);
-	if(nval % UNIT_PER_WH == 0)
+	if(nval % UNIT_PER_WH == 0) {
 	    fprintf(stderr, ".\n");
+        }
     }
     TRACE( TRACE_ALWAYS, 
            "Finished loading units %d .. %d \n", 
