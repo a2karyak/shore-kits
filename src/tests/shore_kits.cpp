@@ -101,6 +101,10 @@ using namespace tpch;
 #warning Configuration: With Object CACHES
 #endif
 
+#ifdef CFG_BT
+#warning Configuration: Backtracing enabled
+#endif
+
 
 cpumonitor_t* _g_cpumon;
 
@@ -294,6 +298,12 @@ public:
         _fakelogdelayer->setaliases();
         add_cmd(_fakelogdelayer.get());
 
+#ifdef CFG_BT
+	_bter = new bt_cmd_t(_dbinst);
+	_bter->setaliases();
+	add_cmd(_bter.get());
+#endif
+	
 #ifdef CFG_SLI
         _slier = new sli_cmd_t(_dbinst);
         _slier->setaliases();

@@ -155,6 +155,31 @@ struct sli_cmd_t : public command_handler_t {
 #endif // CFG_SLI
 
 
+#ifdef CFG_BT
+/*********************************************************************
+ *
+ *  @class: bt_cmd_t
+ *
+ *  @brief: Handler for the "bt" command
+ *
+ *********************************************************************/
+
+// cmd - BT
+struct bt_cmd_t : public command_handler_t {
+    bool _enabled;
+    ShoreEnv* _env;
+    bt_cmd_t(ShoreEnv* env) : _env(env), _enabled(false) { };
+    ~bt_cmd_t() { }
+    void setaliases() { 
+        _name = string("bt"); 
+        _aliases.push_back("bt"); }
+    int handle(const char* cmd);
+    void usage();
+    string desc() { return (string("Enables/disables/prints collection of backtrace information")); }
+};
+
+#endif // CFG_BT
+
 /*********************************************************************
  *
  *  @class: log_cmd_t
@@ -234,16 +259,20 @@ protected:
     guard<fake_iodelay_cmd_t> _fakeioer;   
     guard<fake_logdelay_cmd_t> _fakelogdelayer;   
 
+#ifdef CFG_BT
+    guard<bt_cmd_t> _bter;
+#endif
+
 #ifdef CFG_SLI
     guard<sli_cmd_t> _slier;
-#endif // CFG_SLI
+#endif
 
     guard<log_cmd_t> _logger;
     guard<asynch_cmd_t> _asyncher;
 
 #ifdef CFG_ELR
     guard<elr_cmd_t> _elrer;
-#endif // CFG_ELR
+#endif
 
     // supported trxs
     typedef map<int,string>            mapSupTrxs;

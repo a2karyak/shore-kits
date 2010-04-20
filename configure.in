@@ -249,6 +249,7 @@ KITS_FEATURES=""
 # (5) --enable-dlog        : defines CFG_DLOG (distributed log)
 # (6) --enable-embclients  : defines CFG_EMB_CL
 # (7) --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
+# (8) --enable-bt          : enables backtracing facility. defines CFG_BT
 
 
 # --- DORA ---
@@ -453,6 +454,29 @@ else
      AC_MSG_RESULT(no)
 fi
 # --- EOF SIMICS MAGIC INSTRUCTIONS ---   
+
+
+# --- BACKTRACING ---
+AC_MSG_CHECKING(whether to enable backtracing)
+AC_ARG_ENABLE(bt, 
+[  --enable-bt         Enable backtracing],
+[case "${enableval}" in
+  yes) bt=true ;;
+  no)  bt=false ;;
+  *) bt=false ;;
+esac],[bt=false])
+AM_CONDITIONAL(USE_BT, test x$bt = xtrue)
+
+if test "$bt" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES backtracing"
+     AC_MSG_WARN([Enabling backtracing])
+     AC_DEFINE(CFG_BT)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF BACKTRACING ---   
 
 
 # ----------- EOF Shore-kit features -------------

@@ -31,6 +31,11 @@
 #include "sm/shore/shore_shell.h"
 
 
+#ifdef CFG_BT
+#include "backtrace.h"
+#endif
+
+
 ENTER_NAMESPACE(shore);
 
 
@@ -1001,6 +1006,61 @@ int sli_cmd_t::handle(const char* cmd)
 }
 
 #endif // CFG_SLI
+
+
+#ifdef CFG_BT
+
+/*********************************************************************
+ *
+ *  bt_cmd_t: "bt" command
+ *
+ *********************************************************************/
+
+void bt_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "BT Usage:\n\n"       \
+           "*** bt [on|off|print fname]\n\n");
+}
+
+int bt_cmd_t::handle(const char* cmd)
+{
+#define CMDLEN 10
+#define FNLEN 100
+    char subcmd[CMDLEN+1];
+    char fname[FNLEN+1];
+    int count = sscanf(cmd, "%*s %10s %100s", subcmd, fname);
+    switch(count) {
+    case 0:
+	backtrace_set_enabled(!backtrace_get_enabled());
+	break;
+    case 1:
+	if(0 == strcmp("on", subcmd))
+	    backtrace_set_enabled(true);
+	else if(0 == strcmp("off", subcmd))
+	    backtrace_set_enabled(false);
+	else {
+	    TRACE(TRACE_ALWAYS, "Invalid argument: %s\n", cmd);
+	}
+	break;
+    case 2:
+	if(0 == strcmp("print", subcmd)) {
+	    if(0 < strlen(fname)) {
+		FILE* f = fopen(fname, "w");
+		backtrace_print_all(f);
+		fclose(f);
+	    }
+	    break;
+	}
+	// else fall through
+    default:
+	TRACE(TRACE_ALWAYS, "Invalid argument: %s\n", cmd);
+	break;
+    }
+    TRACE( TRACE_ALWAYS, "BT=%d\n", backtrace_get_enabled());
+    return (SHELL_NEXT_CONTINUE);
+}
+
+#endif // CFG_BT
 
 
 /*********************************************************************
