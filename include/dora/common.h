@@ -560,11 +560,30 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 
 // Check if a Midway RVP is Aborted
-
-
+//
 // If xct has already aborted then it calls immediately the next rvp
 // to abort and execute its code. 
 // In the majority of cases it is the final-rvp code
+
+#ifdef CFG_FLUSHER // ***** Mainstream FLUSHER ***** //
+
+// If DFlusher is enabled, the rvp notification and giveback take place at 
+// terminal_rvp_t::notify_on_abort
+
+#define CHECK_MIDWAY_RVP_ABORTED(nextrvp)                               \
+    if (isAborted()) {                                                  \
+        nextrvp->abort();                                               \
+        w_rc_t e = nextrvp->run();                                      \
+        if (e.is_error()) {                                             \
+            TRACE( TRACE_ALWAYS,                                        \
+                   "Problem running rvp for xct (%d) [0x%x]\n",         \
+                   _tid, e.err_num()); }                                \
+        nextrvp = NULL;                                                 \
+        return (e); }
+
+
+#else // ***** NO FLUSHER ***** //
+
 #define CHECK_MIDWAY_RVP_ABORTED(nextrvp)                               \
     if (isAborted()) {                                                  \
         nextrvp->abort();                                               \
@@ -578,6 +597,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
         nextrvp = NULL;                                                 \
         return (e); }
 
+#endif // ***** EOF: CFG_FLUSHER ***** //
 
 
 const int DF_ACTION_CACHE_SZ = 100;
