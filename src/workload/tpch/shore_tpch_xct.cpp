@@ -698,7 +698,8 @@ w_rc_t ShoreTPCHEnv::run_one_xct(Request* prequest)
     case XCT_TPCH_Q14:
         return (run_q14(prequest));;
     default:
-        assert (0); // UNKNOWN TRX-ID
+        //assert (0); // UNKNOWN TRX-ID
+        TRACE( TRACE_ALWAYS, "Unknown transaction\n");
     }
     return (RCOK);
 }

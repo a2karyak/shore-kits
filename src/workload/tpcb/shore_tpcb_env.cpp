@@ -150,7 +150,7 @@ struct ShoreTPCBEnv::checkpointer_t : public thread_t
 {
     ShoreTPCBEnv* _env;
     checkpointer_t(ShoreTPCBEnv* env) 
-        : thread_t("TPC-B Load Chkpt"), _env(env) 
+        : thread_t("LD Chkpt"), _env(env) 
     { }
     virtual void work();
 };
@@ -189,7 +189,7 @@ class ShoreTPCBEnv::table_builder_t : public thread_t
 
 public:
     table_builder_t(ShoreTPCBEnv* env, int id, int sf, long start, long count)
-	: thread_t(c_str("TPC-B L-%d",id)), 
+	: thread_t(c_str("LD-%d",id)), 
           _env(env), _sf(sf), _start(start), _count(count) 
     { }
 
@@ -242,7 +242,7 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
     long _psize;
     long _pcount;
     table_creator_t(ShoreTPCBEnv* env, int sf, long psize, long pcount)
-	: thread_t("TPC-B C"), _env(env), _sf(sf), _psize(psize), _pcount(pcount) { }
+	: thread_t("CR"), _env(env), _sf(sf), _psize(psize), _pcount(pcount) { }
     virtual void work();
 
 }; // EOF: table_creator_t

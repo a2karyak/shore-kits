@@ -64,7 +64,7 @@ class ShoreTPCCEnv::table_builder_t : public thread_t
     int* _cids;
 public:
     table_builder_t(ShoreTPCCEnv* env, const int id, long start, long count, int* cids)
-	: thread_t(c_str("TPC-C L-%d",id)), 
+	: thread_t(c_str("LD-%d",id)), 
           _env(env), _start(start), _count(count), _cids(cids) { }
     virtual void work();
 };
@@ -75,7 +75,7 @@ struct ShoreTPCCEnv::table_creator_t : public thread_t
     ShoreTPCCEnv* _env;
     int _sf;
     table_creator_t(ShoreTPCCEnv* env, int sf)
-	: thread_t("TPC-C C"), _env(env), _sf(sf) { }
+	: thread_t("CR"), _env(env), _sf(sf) { }
     virtual void work();
 };
 

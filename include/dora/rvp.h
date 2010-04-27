@@ -130,8 +130,8 @@ public:
     // for midway rvps it should be a noop
     virtual int notify() { return(0); } 
 
-    // notifies the client
-    void notify_client();
+//     // notifies the client
+//     void notify_client();
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;

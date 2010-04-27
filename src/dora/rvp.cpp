@@ -85,28 +85,29 @@ int rvp_t::add_action(base_action_t* paction)
 
 
 
-/****************************************************************** 
- *
- * @fn:    notify_client()
- *
- * @brief: If it is time, notifies the client (signals client's cond var) 
- *
- * @note:  Duplicated at shore_trx_worker.h (trx_request_t::notify_client())
- *
- ******************************************************************/
+// /****************************************************************** 
+//  *
+//  * @fn:    notify_client()
+//  *
+//  * @brief: If it is time, notifies the client (signals client's cond var) 
+//  *
+//  * @note:  Duplicated at shore_trx_worker.h (trx_request_t::notify_client())
+//  *
+//  ******************************************************************/
 
-void rvp_t::notify_client() 
-{
-    // signal cond var
-    condex* pcondex = _result.get_notify();
-    if(pcondex) {
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
-               _tid, pcondex);
-	pcondex->signal();
-    }
-    else
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
-}
+// void rvp_t::notify_client() 
+// {
+//     // signal cond var
+//     condex* pcondex = _result.get_notify();
+//     if(pcondex) {
+//         TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
+//                _tid, pcondex);
+// 	pcondex->signal();
+//         _result.set_notify(NULL);
+//     }
+//     else
+//         TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
+// }
 
 
 
@@ -120,7 +121,7 @@ void rvp_t::notify_client()
 
 int terminal_rvp_t::notify()
 {
-#warning (IP) Perf. Improvement --> Should do the optimization not to enqueue_committed your own action!
+#warning (IP) Perf. optimization --> Do not enqueue_committed your own action!
 
     for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it)
         (*it)->notify();
