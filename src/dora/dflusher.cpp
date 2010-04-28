@@ -27,8 +27,6 @@ dora_flusher_t::dora_flusher_t(ShoreEnv* penv,
                                const int use_sli) 
     : base_worker_t(penv, tname, aprsid, use_sli)
 { 
-#warning ****** DORA FLUSHER IS WRONG - IT DOES NOT CALL rvp::notify() on aborted xcts *******
-
     _pxct_toflush_pool = new Pool(sizeof(xct_t*),DFLUSHER_BUFFER_EXPECTED_SZ);
     _toflush = new Queue(_pxct_toflush_pool.get());
     assert (_toflush.get());
