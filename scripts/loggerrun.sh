@@ -75,10 +75,10 @@ command cont
 sleep $SLEEPTIME
 
 
-### kit
-command elr
-command sli
-command restart
+# ### kit
+# command elr
+# command sli
+# command restart
 
 #command measure $SF 0 10 30 $WARMUP_MIX 1
 command break
@@ -102,11 +102,10 @@ run_one ()
     ### kit
     command log $LOGTYPE
 
-    ## SPREAD
-    #command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
-
     ## NO-SPREAD
-    command measure $CLIENTS 0 $CLIENTS $TIME $XCT $ITER
+    #command measure $CLIENTS 0 $CLIENTS $TIME $XCT $ITER
+    ## SPREAD
+    command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
 
     command break
     command collector disable
@@ -115,7 +114,7 @@ run_one ()
 }
 
 
-# # Universal
+## Default
 CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 62 64 68)
 
 
@@ -126,7 +125,7 @@ fi
 
 ## Small
 if [ "$CLIENTSET" = "small" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44)
 fi
 
 ## Medium
@@ -144,42 +143,6 @@ if [ "$CLIENTSET" = "extralarge" ]; then
     CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 74 78 82 86 90 94 98)
 fi
 
-
-
-
-###########################################################
-#
-# BASELINE 
-#
-###########################################################
-
-# TM1-SLI
-#CLIENT_SEQ=(1 3 7 15 23 31 35 39 43 47 51 55 59 63)
-
-# TPCC/TPCB/TM1 - BASE
-#CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64 68 74 78)
-#CLIENT_SEQ=(68 72 76 80 84)
-
-
-
-###########################################################
-#
-# DORA 
-#
-###########################################################
-
-# TPC-C - DORA
-#CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 50 54 58)
-#CLIENT_SEQ=(28 32 36 40 44 48 50)
-
-# TPC-B - DORA
-#CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48)
-
-# TM1-RO - DORA
-#CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64 68)
-
-# TM1-RW (UpdSubData,UpdLocation) - DORA
-#CLIENT_SEQ=(1 4 8 16 24 32 36 40 44 48 52 56 58 64 68 72 76 78 82 84)
 
 for i in ${CLIENT_SEQ[@]}; do
     run_one $i

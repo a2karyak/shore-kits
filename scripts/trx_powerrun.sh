@@ -54,10 +54,12 @@ command()
 
 sleep $SLEEPTIME
 
-command elr
-command sli
-#command asynch
-command restart
+### Turn any of the ELR, SLI, ASYNCH by uncommenting the corresponding like and the restart
+# command elr
+# command sli
+# command asynch
+# command restart
+
 
 run_one ()
 {
@@ -67,31 +69,34 @@ run_one ()
     ### Set logging mechanism
     command log $LOGTYPE
 
-    ### run a measurement
-    command measure 100 0 $CLIENTS $TIME $XCT $ITER
+    ### NO-SPREAD
+    #command measure 100 0 $CLIENTS $TIME $XCT $ITER
+    ### SPREAD
+    command measure $CLIENTS 1 $CLIENTS $TIME $XCT $ITER
 
     # make sure to get all the measurements before continuing!
     sleep $((5+TIME*ITER))
 }
 
 
-# # Universal
-CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74 78)
+
+## Default
+CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74)
 
 
 ## Small
 if [ "$CLIENTSET" = "small" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44)
 fi
 
 ## Medium
 if [ "$CLIENTSET" = "medium" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 63)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60)
 fi
 
 ## Large
 if [ "$CLIENTSET" = "large" ]; then
-    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 62 64 68 74 78)
+    CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 62 64 68 74)
 fi
 
 ## ExtraLarge
