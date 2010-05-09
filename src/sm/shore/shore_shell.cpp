@@ -466,7 +466,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
  
     // Parses new test run data
-    if ( sscanf(command, "%s %a %d %d %d",
+    if ( sscanf(command, "%s %lf %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_numOfTrxs,
@@ -565,7 +565,7 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
     
     // Parses new test run data
-    if ( sscanf(command, "%s %a %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %lf %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
@@ -688,7 +688,7 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     eBindingType tmp_binding   = binding;
     
     // Parses new test run data
-    if ( sscanf(command, "%s %a %d %d %d %d %d %d",
+    if ( sscanf(command, "%s %lf %d %d %d %d %d %d",
                 &command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
