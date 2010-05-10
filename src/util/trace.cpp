@@ -36,15 +36,7 @@
 #include "util/trace.h"              /* for prototypes */
 #include "util/sync.h"
 
-
-#ifdef __SUNPRO_CC
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdio>
-#include <cstring>
-#endif
-
+#include "k_defines.h"
 
 /* internal data structures */
 #if 0

@@ -44,13 +44,16 @@ ENTER_NAMESPACE(shore);
  *********************************************************************/
 
 static bool _abort_test = false;
-void base_client_t::abort_test() {
+void base_client_t::abort_test() 
+{
     _abort_test = true;
 }
-void base_client_t::resume_test() {
+void base_client_t::resume_test() 
+{
     _abort_test = false;
 }
-bool base_client_t::is_test_aborted() {
+bool base_client_t::is_test_aborted() 
+{
     return (_abort_test);
 }
 
@@ -64,22 +67,23 @@ bool base_client_t::is_test_aborted() {
  *
  *********************************************************************/
 
-void base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz) 
+w_rc_t base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_sz) 
 {       
     assert (batch_sz);
     assert (_cp);
     for(int j=1; j <= batch_sz; j++) {
 
         // adding think time
-        //usleep(_think_time);
+        //usleep(int(_think_time*(sthread_t::drand())));
 
         if (j == batch_sz) {
             _cp->take_one = true;
             _cp->index = 1-_cp->index;
         }
-        submit_one(xct_type, trx_cnt++);
+        W_COERCE(submit_one(xct_type, trx_cnt++));
         _cp->take_one = false;
     }
+    return (RCOK);
 }
 
 static pthread_mutex_t client_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -130,7 +134,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     case (MT_NUM_OF_TRXS):
 
         // submit a batch of num_xct trxs
-        submit_batch(xct_type, i, num_xct);
+        W_COERCE(submit_batch(xct_type, i, num_xct));
         // wait for the batch to complete
         // note: in the test case there is no double buffering
         _cp->wait[_cp->index].wait();
@@ -140,8 +144,8 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     case (MT_TIME_DUR):
 	
 	// submit the first two batches...
-	submit_batch(xct_type, i, batchsz);
-	submit_batch(xct_type, i, batchsz);
+	W_COERCE(submit_batch(xct_type, i, batchsz));
+	W_COERCE(submit_batch(xct_type, i, batchsz));
 
 	// main loop
         while (true) {
@@ -155,7 +159,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 		break;
 
 	    // submit a replacement batch...
-	    submit_batch(xct_type, i, batchsz);
+	    W_COERCE(submit_batch(xct_type, i, batchsz));
         }
 	
 	// wait for the last batch to complete...

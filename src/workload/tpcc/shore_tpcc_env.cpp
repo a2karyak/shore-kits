@@ -146,8 +146,7 @@ static void gen_cid_array(int* cid_array) {
 
 static unsigned long units_completed = 0;
 
-void 
-ShoreTPCCEnv::table_builder_t::work() 
+void ShoreTPCCEnv::table_builder_t::work() 
 {
     w_rc_t e = RCOK;
 
@@ -185,7 +184,7 @@ ShoreTPCCEnv::table_builder_t::work()
         }
     }
     TRACE( TRACE_ALWAYS, 
-           "Finished loading units %d .. %d \n", 
+           "Finished loading units %ld .. %ld \n", 
            _start, _start+_count);
 }
 

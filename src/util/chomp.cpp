@@ -30,13 +30,7 @@
 
 #include "util/chomp.h"
 
-
-#ifdef __SUNPRO_CC
-#include <string.h>
-#else
-#include <cstring>
-#endif
-
+#include "k_defines.h"
 
 #ifndef __GCC
 using std::strlen;

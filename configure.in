@@ -96,7 +96,7 @@ else
    # gcc version
    AC_MSG_CHECKING(compiler version)
 
-   gcc_ver=`$GCC_COMPILER --version | grep 'g++' | sed 's/^.*(GCC) //'`
+   gcc_ver=`$GCC_COMPILER --version | grep 'g++' | sed 's/^.*(.*) //'`
    gcc_major=`echo $gcc_ver | sed 's/\..*$//'`
    [gcc_mid=`echo $gcc_ver | sed 's/[0-9]\.//' | sed 's/\..*$//'`]
    [gcc_minor=`echo $gcc_ver | sed 's/^[0-9]\.[0-9]\.//' | sed 's/ .*$//'`]
@@ -104,9 +104,9 @@ else
    KITS_CXX_VERSION="$gcc_major.$gcc_mid.$gcc_minor"
    AC_MSG_RESULT($KITS_CXX_VERSION)
 
-   # *** Checking the compiler version (g++>=4)
+   # *** Checking the compiler version (g++>=4.1)
    reqgcc_major=4
-   reqgcc_mid=0
+   reqgcc_mid=1
    if test $gcc_major -lt $reqgcc_major -o $gcc_mid -lt $reqgcc_mid; then
       AC_MSG_WARN([GCC Compiler $GCC_COMPILER version $KITS_CXX_VERSION is currently not supported by Shore-kits])
       AC_MSG_WARN([Compiled successfully with GCC Compiler $reqgcc_major.$reqgcc_mid or higher])
@@ -116,94 +116,28 @@ fi
 
 
 
-# ----------- Platform-specific code -------------
-# $target is typically processor-vendor-os
-case "$target" in
-  # linux on x86
-  *86*linux*)
-    AC_MSG_RESULT(configuring for linux/x86)
 
-    ARCHOS=x86_LINUX
-    CPU_FLAGS="-march=pentium4"
-    ;;
-
-  # linux on itanium? (not implem)
-  *ia64*linux*)
-    AC_MSG_RESULT(configuring for linux/ia64)
-
-    ARCHOS=IA64_LINUX
-    CPU_FLAGS="-mtune=itanium2"
-    ;;
-
-  # linux on power5
-  *ppc*linux*)
-    AC_MSG_RESULT(configuring for linux/power5)
-
-    ARCHOS=PPC_LINUX
-    CPU_FLAGS="-mcpu=power5"
-    ;;
-
-
-  # linux on power5-ppc64
-  *powerpc64*linux*)
-    AC_MSG_RESULT(configuring for linux/powerpc64)
-
-    ARCHOS=PPC64_LINUX
-    CPU_FLAGS="-mcpu=powerpc64"
-    ;;
-    
-  # Sparc Solaris
-  *sparc*sun*)
-    AC_MSG_RESULT(configuring for sparc/sun)
-    
-    ARCHOS=SPARC_SUN
-    ;;
-
-  # x86 Cygwin
-  *686*cygwin*)
-    AC_MSG_RESULT(configuring for i686/cygwin)
-    
-    ARCHOS=x86_LINUX
-    ;;
-
- *)
-    AC_MSG_ERROR([
-      Unsupported platform $target -- sorry.
-      Linux/x86, Cygwin/x86, Linux/IA64, Linux/PPC, SunOS/Sparc
-      currently are supported platforms.
-    ])
-    ;;
-esac
-
-# Create output directory
-if ! test -d "obj/$ARCHOS"; then 
-   mkdir -p "obj/$ARCHOS"
-   AC_MSG_NOTICE([Creating output directory obj/$ARCHOS])
+# ----------- Readline location -------------
+READLINE_HOME_DEFAULT="/usr"
+AC_ARG_VAR(READLINE_HOME, Location of Readline Installation; default is $READLINE_HOME_DEFAULT)
+AC_MSG_CHECKING(Readline location)
+if test -z $READLINE_HOME; then
+    READLINE_HOME=$READLINE_HOME_DEFAULT
 fi
-# ----------- EOF Platform-specific code -------------
+# check if valid readline target dir
+if ! test -d $READLINE_HOME -a -f $READLINE_HOME/include/readline/readline.h; then
+    AC_ERROR([
+            Not valid readline include directory at $READLINE_HOME/include;
+            Please run ./configure READLINE_HOME=where readline/readline.h is located])
+fi
 
+AC_MSG_RESULT($READLINE_HOME)
+# ----------- EOF Readline location -------------
 
 
 # ----------- Shore-mt target dir -------------
 # $target is typically processor-vendor-os
-case "$target" in
-  # Sparc Solaris
-  *sparc*sun*)
-    SHORE_HOME_DEFAULT="$HOME/apps/shore"
-    ;;
-
-  *ppc*)
-    SHORE_HOME_DEFAULT="/usr/software/shore"
-    ;;
-
-  *ia64*)
-    SHORE_HOME_DEFAULT="$HOME/apps/shore"
-    ;;
-
- *)
-    SHORE_HOME_DEFAULT="/usr/software/shore"
-    ;;
-esac
+SHORE_HOME_DEFAULT="$HOME/apps/shore"
 
 # check user input
 AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
@@ -216,9 +150,15 @@ fi
 
 # check if valid Shore-mt target dir
 if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
+    if ! test -d $SHORE_HOME -a -f $SHORE_HOME/include/sm_vas.h; then
+    AC_ERROR([
+            Not valid installed Shore directory at $SHORE_HOME;
+            Please run ./configure SHORE_HOME=where shore is located])
+    else
     AC_ERROR([
             Not valid Shore directory at $SHORE_HOME;
             Please run ./configure SHORE_HOME=where shore is located])
+    fi
 fi
 
 AC_MSG_RESULT($SHORE_HOME)
@@ -237,20 +177,157 @@ AC_MSG_RESULT($KITS_HOME)
 
 
 
+
+# ----------- Platform-specific code -------------
+
+
+# basic flags/libs every arch needs
+
+# Careful, the flags below are mutually exclusive, define only of the three
+#DEBUG_FLAGS="-g -O0"
+#PROFILE_FLAGS="-pg -O0"
+OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
+#OPT_DEBUG_FLAGS="-O3 -fno-inline"
+
+CXXFLAGS="$DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
+         -Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
+	 -Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
+
+LDFLAGS="-lnsl -ldl -lm -lpthread -lreadline -lrt "
+
+
+# $target is typically processor-vendor-os
+case "$target" in
+  # linux on i386
+  *i*86*linux*)
+    AC_MSG_RESULT(configuring for linux/i*86)
+    ARCHOS=i386_LINUX
+    OS=LINUX
+
+    ## building with -m64    
+    # CXXFLAGS="$CXXFLAGS -DARCH_LP64 -m64 "
+    CXXFLAGS="$CXXFLAGS -UARCH_LP64 -m32 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 "
+    ;;
+
+  # linux on itanium? (not implem)
+  *ia64*linux*)
+    AC_MSG_RESULT(configuring for linux/ia64)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=IA64_LINUX
+    OS=LINUX
+
+    CPU_FLAGS="-mtune=itanium2"
+    ;;
+
+  # linux on x86_64
+  *x86_64*linux*)
+    AC_MSG_RESULT(configuring for linux/x86_64)
+    ARCHOS=x86_64_LINUX
+    OS=LINUX
+
+    CXXFLAGS="$CXXFLAGS -DARCH_LP64 -m64 -lreadline "
+    CPU_FLAGS="-mtune=native -march=native"    
+    ;;
+
+  # linux on power5
+  *ppc*linux*)
+    AC_MSG_RESULT(configuring for linux/ppc)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=PPC_LINUX
+    OS=LINUX
+
+    CPU_FLAGS="-mcpu=power5"
+    ;;
+
+
+  # linux on power5-ppc64
+  *powerpc64*linux*)
+    AC_MSG_RESULT(configuring for linux/ppc64)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=PPC64_LINUX
+    OS=LINUX
+
+    CPU_FLAGS="-mcpu=powerpc64"
+    ;;
+
+    
+  # Sparc Solaris
+  *sparc*sun*)
+    AC_MSG_RESULT(configuring for sparc/sun)    
+    ARCHOS=SPARC_SUN
+    OS=SUN
+
+    LDFLAGS="$LDFLAGS -lsocket -lkstat -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
+
+    # optimize *a lot* flags - normal
+    #CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+      
+    # regular debugging flags
+    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
+
+    # debugging flags + datarace
+    #    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
+
+    ;;
+
+
+  # x86 Cygwin
+  *686*cygwin*)
+    AC_MSG_RESULT(configuring for i686/cygwin)
+    AC_MSG_ERROR(not ready)
+    ARCHOS=x86_LINUX
+    OS=LINUX
+
+    ;;
+
+ *)
+    AC_MSG_ERROR([
+      Unsupported platform $target -- sorry.
+      SunOS/sparcv9, Linux/x86_64, Linux/i386 
+      currently are supported platforms.
+    ])
+    ;;
+esac
+
+
+# Adding curses lib
+if test "$ARCHOS" = "SPARC_SUN"; then
+   LDFLAGS="$LDFLAGS -lcurses"
+else
+   LDFLAGS="$LDFLAGS -lncurses"
+fi
+
+
+# Create output directory
+if ! test -d "obj/$ARCHOS"; then 
+   mkdir -p "obj/$ARCHOS"
+   AC_MSG_NOTICE([Creating output directory obj/$ARCHOS])
+fi
+
+AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
+AM_CONDITIONAL(LINUX_OS, test "$OS" = "LINUX")
+
+# ----------- EOF Platform-specific code -------------
+
+
+
+
 # ----------- Shore-kits features -------------
 # Give a list of features with the defaults
 KITS_FEATURES=""
 
-# There are six supported options:
-# (1) --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
-# (2) --enable-flusher     : defines CFG_FLUSHER
-# (3) --enable-sli         : defines CFG_SLI
-# (4) --enable-elr         : defines CFG_ELR
-# (5) --enable-dlog        : defines CFG_DLOG (distributed log)
-# (6) --enable-embclients  : defines CFG_EMB_CL
-# (7) --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
-# (8) --enable-bt          : enables backtracing facility. defines CFG_BT
-# (9) --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
+# There are 10 supported options:
+# (1)  --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
+# (2)  --enable-flusher     : defines CFG_FLUSHER
+# (3)  --enable-sli         : defines CFG_SLI
+# (4)  --enable-elr         : defines CFG_ELR
+# (5)  --enable-dlog        : defines CFG_DLOG (distributed log)
+# (6)  --enable-embclients  : defines CFG_EMB_CL
+# (7)  --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
+# (8)  --enable-bt          : enables backtracing facility. defines CFG_BT
+# (9)  --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
+
+# (10) --enable-shore6      : If compiling against shore-storage-manager-6.X.X (the x86_64 port)
 
 # --- DORA ---
 AC_MSG_CHECKING(whether to enable Dora)
@@ -502,6 +579,33 @@ fi
 # --- EOF QPIPE ---   
 
 
+# --- Shore MT or SM-6.X.X ---
+SHORE_TYPE=""
+AC_MSG_CHECKING(whether using Shore-MT or Shore-SM-6.X.X)
+AC_ARG_ENABLE(shore6, 
+[  --enable-shore6      Enable Shore-SM-6.X.X],
+[case "${enableval}" in
+  yes) shore6=true ;;
+  no)  shore6=false ;;
+  *) shore6=false ;;
+esac],[shore6=false])
+AM_CONDITIONAL(USE_SHORE_6, test x$shore6 = xtrue)
+
+if test "$shore6" = true
+then 
+     AC_MSG_RESULT(yes)
+     SHORE_TYPE="Shore-SM-6.X.X"
+     AC_MSG_WARN([Using Shore-SM-6.X.X])
+     AC_DEFINE(CFG_SHORE_6)
+else
+     AC_MSG_RESULT(no)
+     SHORE_TYPE="Shore-MT"
+     AC_MSG_WARN([Using Shore-MT])
+     AC_DEFINE(CFG_SHORE_MT)
+fi
+# --- EOF Shore MT or SM-6.X.X ---
+
+
 # ----------- EOF Shore-kit features -------------
 
 
@@ -516,38 +620,6 @@ AC_SUBST(KITS_VERSION_MAJOR)
 AC_SUBST(KITS_VERSION_MINOR)
 AC_SUBST(KITS_VERSION_REV)
 AC_SUBST(KITS_VERSION)
-
-# basic flags/libs every arch needs
-
-#DEBUG_FLAGS="-O0"
-#PROFILE_FLAGS="-pg -O0"
-OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
-#OPT_DEBUG_FLAGS="-O3 -fno-inline"
-CXXFLAGS="-g $DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
-        -Wall -Wcast-align -Wextra -Wfloat-equal \
-	-Wno-invalid-offsetof -Wconversion -Wno-system-headers -D_REENTRANT"
-
-LDFLAGS="-lnsl -ldl -lm -lpthread "
-
-if test "$ARCHOS" = "SPARC_SUN"; then
-    LDFLAGS="$LDFLAGS -lsocket -lkstat -lrt -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
-
-# optimize *a lot* flags - normal
-     CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
-
-# regular debugging flags
-#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
-
-# debugging flags + datarace
-#    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
-fi
-
-# Adding curses lib
-if test "$ARCHOS" = "SPARC_SUN"; then
-   LDFLAGS="$LDFLAGS -lcurses"
-else
-   LDFLAGS="$LDFLAGS -lncurses"
-fi
 
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
@@ -577,15 +649,15 @@ AC_CONFIG_FILES([ Makefile ])
 
 AC_OUTPUT()
 
-AM_CONDITIONAL(SPARC_MACHINE, test "$ARCHOS" = "SPARC_SUN")
-
 # show the user what the variables have been set to
 cat <<EOF | tee tmpcfg.txt
 Shore Kits configuration:
   Version:         KITS_VERSION   $KITS_VERSION
   Home:            KITS_HOME      $KITS_HOME	
   Features:        KITS_FEATURES  $KITS_FEATURES
-  Shore-mt home:   SHORE_HOME     $SHORE_HOME
+  Shore SM home:   SHORE_HOME     $SHORE_HOME
+  Shore SM type:   SHORE_TYPE     $SHORE_TYPE
+  Readline home:   READLINE_HOME  $READLINE_HOME
   CXX compiler:    CXX            $CXX
   CXX version:     CXX_VERSION    $KITS_CXX_VERSION
   Architecture/OS: ARCHOS         $ARCHOS

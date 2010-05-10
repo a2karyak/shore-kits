@@ -21,23 +21,45 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file store_string.h
+/** @file:   k_defines.h
  *
- *  @brief String manipulation functions
+ *  @brief:  Defines the correct includes, atomic primitives, etc..
+ *           Used so that a single shore-kits codebase to compile with
+ *           both Shore-MT and Shore-SM-6.X.X (the x86_64 or Nancy's port)
  *
- *  @author Ippokratis Pandis (ipandis)
+ *  @author: Ippokratis Pandis, May 2010
+ *
  */
 
-#ifndef __UTIL_STORE_STRING_H
-#define __UTIL_STORE_STRING_H
+#ifndef __KITS_DEFINES_H
+#define __KITS_DEFINES_H
 
-#include "k_defines.h"
+// If we use the x86-ported branch (aka Nancy's branch) then w_defines.h should
+// be included instead of atomic.h
 
-#define FILL_STRING(dest, src) strncpy(dest, src, sizeof(dest))
+#ifdef CFG_SHORE_6
 
-void store_string(char* dest, char* src);
+#include <w_defines.h>
+#include <atomic_templates.h>
 
-void store_string(char* dest, const char* src);
+#else // CFG_SHORE_MT
 
+#include <atomic.h>
 
 #endif
+
+
+#ifdef __SUNPRO_CC
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#else
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <cstdarg>
+#endif
+
+
+#endif /** __KITS_DEFINES_H */

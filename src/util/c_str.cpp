@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 #include <stdarg.h>
 
 #include "util/c_str.h"
@@ -31,9 +29,7 @@
 #include "util/guard.h"
 #include <stdio.h>
 
-#ifdef __sparcv9
-#include <atomic.h>
-#endif
+#include "k_defines.h"
 
 #include "util/pool_alloc.h"
 

@@ -87,7 +87,12 @@
 
 
 #include "util.h"
+
+#ifdef CFG_SHORE_6
+#include "atomic_class_pool.h"
+#else
 #include "atomic_trash_stack.h"
+#endif
 
 #include "shore_field.h"
 
@@ -107,7 +112,12 @@ ENTER_NAMESPACE(shore);
  *
  * --------------------------------------------------------------- */
 
+#ifdef CFG_SHORE_6
+typedef atomic_class_pool<char> ats_char_t;
+typedef intptr_t offset_t;
+#else
 typedef atomic_class_stack<char> ats_char_t;
+#endif
 
 struct rep_row_t 
 {    

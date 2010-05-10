@@ -222,7 +222,7 @@ public:
         return (run_xcts(_trxid, _notrxs).err_num());
     }
        
-    void submit_batch(int xct_type, int& trx_cnt, const int batch_size);
+    w_rc_t submit_batch(int xct_type, int& trx_cnt, const int batch_size);
 
     static void abort_test();
     static void resume_test();

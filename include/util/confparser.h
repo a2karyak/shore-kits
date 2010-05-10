@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 // Copyright (c) 2004 Richard J. Wagner
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -72,11 +70,7 @@
 
 #include "util/namespace.h"
 
-#ifdef __SUNPRO_CC
-#include <string.h>
-#else
-#include <cstring>
-#endif
+#include "k_defines.h"
 
 #include <map>
 #include <iostream>
@@ -86,7 +80,8 @@
 
 using std::string;
 
-struct ConfigOption {
+struct ConfigOption 
+{
     string _opt_name;
     string _opt_config_entry;
     string _opt_default_value;
@@ -100,7 +95,8 @@ struct ConfigOption {
 }; // EOF: ConfigOption
 
 
-class ConfigFile {
+class ConfigFile 
+{
     // Data
 protected:
     string myDelimiter;  // separator between key and value

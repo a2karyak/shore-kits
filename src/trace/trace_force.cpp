@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file trace_force.cpp
  *
  *  @brief trace_force_() is no longer used since we started using
@@ -36,17 +34,7 @@
 
 #include "trace/trace_force.h" /* for prototypes */
 
-#ifdef __SUNPRO_CC
-#include <stdarg.h>  
-#include <stdio.h>   
-#include <string.h>
-#else
-#include <cstdarg>      /* for va_list */
-#include <cstdio>       /* for stdout, stderr */
-#include <cstring>      /* for strlen() */
-#endif
-
-
+#include "k_defines.h"
 
 /* internal constants */
 

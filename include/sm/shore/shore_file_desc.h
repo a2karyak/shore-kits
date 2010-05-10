@@ -126,8 +126,13 @@ public:
         pthread_mutex_init(&_fschema_mutex, NULL);
 
         // Copy name
-	if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+#ifndef __GNUC__
+	if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#else
+        if(w_strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#endif
 	    throw "file_desc_t::_name too long!\n";
+        }
     }
 
     virtual ~file_desc_t() 
@@ -198,8 +203,13 @@ public:
           _record_size(std::pair<int,int>(0,0)),
           _first_rid(0, shrid_t(0,0,0))      
     {
-	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+#ifndef __GNUC__
+	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#else
+	if(w_strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#endif
 	    throw "file_info_t::_fname too long!\n";
+        }
     }
 
     // TODO REMOVE no argument consturctor

@@ -32,10 +32,7 @@
 
 #include <cassert>
 
-#ifdef __SUNPRO_CC
-#include <strings.h>
-#include <stdio.h>
-#endif 
+#include "k_defines.h"
 
 
 /******************************************************************** 

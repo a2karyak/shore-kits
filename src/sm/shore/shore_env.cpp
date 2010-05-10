@@ -518,6 +518,10 @@ int ShoreEnv::close_sm()
         }
     }
 
+    // Final stats
+    //TRACE( TRACE_ALWAYS, "Final sm stats ...\n");
+    //gatherstats_sm();
+
     /** @note According to 
      *  http://www.cs.wisc.edu/shore/1.0/ssmapi/node3.html
      *  destroying the ss_m instance causes the SSM to shutdown
@@ -536,8 +540,11 @@ int ShoreEnv::close_sm()
 
 void ShoreEnv::gatherstats_sm()
 {
-    sm_du_stats_t stats;
-    memset(&stats, 0, sizeof(stats));
+    // sm_du_stats_t stats;
+    // memset(&stats, 0, sizeof(stats));
+    
+    sm_stats_info_t stats;
+    ss_m::gather_stats(stats);
     
     //    ss_m::gather_stats(stats, false);
     cout << stats << endl;
@@ -619,6 +626,8 @@ int ShoreEnv::configure_sm()
  *  @return: 0 on success, non-zero otherwise
  *
  ******************************************************************/
+int /*shore::*/ssm_max_small_rec;
+sm_config_info_t  sm_config_info;
 
 int ShoreEnv::start_sm()
 {
@@ -652,7 +661,8 @@ int ShoreEnv::start_sm()
 
 	// create and mount device
 	// http://www.cs.wisc.edu/shore/1.0/man/device.ssm.html
-	W_COERCE(_pssm->format_dev(device, quota, true));
+        ss_m::smksize_t smquota = quota;
+	W_COERCE(_pssm->format_dev(device, smquota, true));
         TRACE( TRACE_DEBUG, "Formatting device completed...\n");
 
         // mount it...
@@ -708,9 +718,13 @@ int ShoreEnv::start_sm()
     int ioLatency = ev->getVarInt("shore-fakeiodelay",0);
     TRACE( TRACE_DEBUG, "I/O delay latency set: (%d)\n", ioLatency);
     W_COERCE(_pssm->set_fake_disk_latency(*_pvid,ioLatency));
-
     
     // Using the physical ID interface
+
+    // Get the configuration info so we have the max size of a small record
+    // for use in _post_init_impl()
+    if (ss_m::config_info(sm_config_info).is_error()) return (1);
+    shore::ssm_max_small_rec = sm_config_info.max_small_rec;
 
 
     // If we reached this point the sm has started correctly

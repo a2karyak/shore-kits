@@ -31,20 +31,13 @@
 #ifndef __SHORE_SHELL_H
 #define __SHORE_SHELL_H
 
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#endif
+#include "k_defines.h"
 
 #include "util/shell.h"
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_helper_loader.h"
 #include "sm/shore/shore_client.h"
+
 
 
 ENTER_NAMESPACE(shore);

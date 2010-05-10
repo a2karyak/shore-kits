@@ -54,9 +54,8 @@
 
 #include "util.h"
 
-#ifdef __sparcv9
-#include <atomic.h>
-#endif
+#include "k_defines.h"
+
 
 struct cpu_measurement 
 {

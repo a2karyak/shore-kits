@@ -72,7 +72,13 @@ public:
 
     static int  size() { return sizeof(time_t); }
     void string(char* dest, const int len) const {
+#ifdef _POSIX_PTHREAD_SEMANTICS
+	ctime_r(&_time, dest);
+#elif defined(SOLARIS2)
 	ctime_r(&_time, dest, len);
+#else
+	ctime_r(&_time, dest);
+#endif
 	dest[len-1] = '\0';
     }
 

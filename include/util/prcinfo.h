@@ -44,22 +44,20 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+
+#ifdef __sparcv9
 #include <procfs.h>
+#else
+#include <linux/proc_fs.h>
+#endif
+
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <math.h>
 
-#ifdef __SUNPRO_CC
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#else
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#endif
+#include "k_defines.h"
 
 #include "util/stopwatch.h"
 

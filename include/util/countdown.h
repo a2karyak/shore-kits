@@ -21,13 +21,11 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   countdown.h
  *
  *  @brief:  Atomic countdown class
  *
- *  @author: Ryan Johnson (ryanjohn)
+ *  @author: Ryan Johnson
  *
  */
 
@@ -35,7 +33,8 @@
 #define __UTIL_COUNTDOWN_H
 
 #include <cassert>
-#include <atomic.h>
+
+#include "k_defines.h"
 
 struct countdown_t 
 {

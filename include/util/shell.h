@@ -31,16 +31,7 @@
 #ifndef __UTIL_SHELL_H
 #define __UTIL_SHELL_H
 
-
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#endif
+#include "k_defines.h"
 
 #include <map>
 

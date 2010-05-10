@@ -52,7 +52,12 @@
 
 #include "sm_vas.h"
 #include "util.h"
+
+#ifdef CFG_SHORE_6
+#include "block_alloc.h"
+#else
 #include "atomic_trash_stack.h"
+#endif
 
 #include "shore_table.h"
 #include "shore_row_impl.h"

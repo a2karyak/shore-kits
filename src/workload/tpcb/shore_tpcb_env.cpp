@@ -25,14 +25,15 @@
  *
  *  @brief:  Declaration of the Shore TPC-C environment (database)
  *
- *  @author: Ryan Johnson      (ruanjohn)
+ *  @author: Ryan Johnson      (ryanjohn)
  *  @author: Ippokratis Pandis (ipandis)
  *  @date:   Feb 2009
  */
 
 #include "workload/tpcb/shore_tpcb_env.h"
 #include "sm/shore/shore_helper_loader.h"
-#include <atomic.h>
+
+#include "k_defines.h"
 
 using namespace shore;
 

@@ -21,6 +21,14 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
+/** @file:   shore.h
+ *
+ *  @brief:  Includes all the Shore-related files
+ *
+ *  @author: Ippokratis Pandis
+ *
+ */
+
 #ifndef __SHORE_H
 #define __SHORE_H
 

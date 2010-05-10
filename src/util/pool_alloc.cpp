@@ -21,23 +21,14 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
 #include "util/pool_alloc.h"
 #include "util/sync.h"
 
-#ifdef __SUNPRO_CC
-#include <atomic.h>
-#endif
+#include "k_defines.h"
 
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#endif
 #include <new>
 #include <vector>
+
 
 #ifdef DEBUG_ALLOC
 #include <cstdio>

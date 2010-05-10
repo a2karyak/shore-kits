@@ -34,7 +34,7 @@
 #ifndef __SHORE_ROW_CACHE_H
 #define __SHORE_ROW_CACHE_H
 
-#include <atomic.h>
+#include "k_defines.h"
 
 #include "util/guard.h"
 

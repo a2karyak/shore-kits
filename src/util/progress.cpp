@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file progress.cpp
  *
  *  @brief Implementation of progress helper functions
@@ -32,13 +30,7 @@
 
 #include "util/progress.h"
 
-#ifdef __SUNPRO_CC
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdio>
-#include <cstring>
-#endif
+#include "k_defines.h"
 
 /* definitions of exported helper functions */
 

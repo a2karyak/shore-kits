@@ -25,14 +25,7 @@
 #include "util/config.h"
 #include "util/command/tracer.h"
 
-#ifdef __SUNPRO_CC
-#include <string.h>
-#include <stdio.h>
-#else
-#include <cstring>
-#include <cstdio>
-#endif
-
+#include "k_defines.h"
 
 /* definitions of exported methods */
 

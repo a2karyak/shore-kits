@@ -31,7 +31,7 @@
 #ifndef __UTIL_OBJECT_CACHE_H
 #define __UTIL_OBJECT_CACHE_H
 
-#include <atomic.h>
+#include "k_defines.h"
 
 #include "atomic_trash_stack.h"
 #include "util/guard.h"

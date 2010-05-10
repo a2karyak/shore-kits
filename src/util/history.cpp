@@ -21,30 +21,18 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
-
 #include "util/history.h"
 #include "util/c_str.h"
 #include "util/trace.h"
 
 
-
 /*
   This whole module is only necessary if we are using readline.
 */
+
 #if USE_READLINE
 
-
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#endif
+#include "k_defines.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>

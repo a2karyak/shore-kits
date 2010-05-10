@@ -46,14 +46,19 @@
 #include "util/confparser.h"
 #include "util/envvar.h"
 #include "util/shell.h"
-#include "util/prcinfo.h"
 #include "util/condex.h"
 #include "util/stl_pooled_alloc.h"
 #include "util/stl_pool.h"
 #include "util/cache.h"
 #include "util/random_input.h"
 #include "util/atomic_ops.h"
+#include "util/w_strlcpy.h"
 #include "util/cpustat.h"
+
+#ifdef SPARC_MACHINE
+#include "util/prcinfo.h"
+#endif
+
 
 
 // Needed by QPipe

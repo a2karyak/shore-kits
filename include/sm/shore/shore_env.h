@@ -31,15 +31,8 @@
 #ifndef __SHORE_ENV_H
 #define __SHORE_ENV_H
 
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#endif
+#include "k_defines.h"
+#include "sm_vas.h"
 
 #include <map>
 
@@ -48,7 +41,6 @@
 #include <sys/processor.h>
 #include <sys/procset.h>
 
-#include "sm_vas.h"
 #include "util.h"
 
 #include "shore_reqs.h"
@@ -58,8 +50,6 @@ ENTER_NAMESPACE(shore);
 
 
 using std::map;
-
-
 
 
 /******** Constants ********/
@@ -323,7 +313,7 @@ public:
     typedef envVarMap::const_iterator envVarConstIt;
 
 private:
-    volatile eDBControl _dbc;
+    volatile unsigned int _dbc;
 
 public:
 
@@ -334,11 +324,12 @@ public:
 
     // Access methods
 
-    const eDBControl dbc() { return(*&_dbc); }
+    eDBControl dbc() { return (eDBControl(*&_dbc)); }
     
     void set_dbc(const eDBControl adbc) {
         assert (adbc!=DBC_UNDEF);
-        atomic_swap(&_dbc, adbc);
+        unsigned int tmp = adbc;
+        atomic_swap_uint(&_dbc, tmp);
     }
     
 
@@ -472,7 +463,7 @@ protected:
     env_stats_t        _env_stats; 
 
     // Measurement state
-    MeasurementState volatile _measure;
+    volatile unsigned int _measure;
 
     // system name
     string          _sysname;
@@ -531,9 +522,10 @@ public:
     
     void set_measure(const MeasurementState aMeasurementState) {
         //assert (aMeasurementState != MST_UNDEF);
-        atomic_swap(&_measure, aMeasurementState);
+        unsigned int tmp = aMeasurementState;
+        atomic_swap_uint(&_measure, tmp);
     }
-    inline MeasurementState get_measure() { return (*&_measure); }
+    inline MeasurementState get_measure() { return (MeasurementState(*&_measure)); }
 
 
     pthread_mutex_t* get_init_mutex() { return (&_init_mutex); }

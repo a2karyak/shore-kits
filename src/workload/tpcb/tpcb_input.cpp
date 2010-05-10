@@ -26,20 +26,9 @@
  *  @brief: Implementation of the (common) inputs for the TPCB trxs
  */
 
-
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#endif
-
+#include "k_defines.h"
 
 #include "workload/tpcb/tpcb_input.h"
-
 
 
 ENTER_NAMESPACE(tpcb);

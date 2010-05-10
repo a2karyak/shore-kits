@@ -1,30 +1,55 @@
 # -*- makefile -*-
 
-
 # Shore related 
 SHORE_SRC = $(SHORE_HOME)/src
-SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE
-SHORE_INCLUDES = -I$(SHORE_SRC)/fc -I$(SHORE_SRC)/sm -I$(SHORE_SRC)/common -I$(SHORE_SRC)/sthread -I$(SHORE_SRC)/../config -I$(SHORE_HOME)/../ppmcs $(SHORE_CXXFLAGS)
-SHORE_LDADD = -L$(SHORE_SRC)/fc -L$(SHORE_SRC)/sm -L$(SHORE_SRC)/common -L$(SHORE_SRC)/sthread -lsm -lsthread -lfc -lcommon -lmtmalloc -L$(SHORE_HOME)/../ppmcs -lppmcs
+SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE -D_POSIX_PTHREAD_SEMANTICS
 
-### -L$(SHORE_HOME)/../ppmcs
+SHORE_INCLUDES = -I$(SHORE_SRC)/fc -I$(SHORE_SRC)/sm -I$(SHORE_SRC)/common -I$(SHORE_SRC)/sthread -I$(SHORE_SRC)/../config $(SHORE_CXXFLAGS)
+
+if USE_SHORE_6
+SHORE_INCLUDES += -I$(SHORE_SRC)/atomic_ops
+else
+SHORE_INCLUDES += -I$(SHORE_HOME)/../ppmcs
+endif
+
+SHORE_LDADD = -L$(SHORE_SRC)/fc -L$(SHORE_SRC)/sm -L$(SHORE_SRC)/common -L$(SHORE_SRC)/sthread -lsm -lcommon -lsthread -lfc
+### -lmtmalloc <-- which malloc library will be included is responsibility of configure
+
+if USE_SHORE_6
+SHORE_LDADD += -L$(SHORE_SRC)/atomic_ops -latomic_ops
+else
+SHORE_LDADD += -L$(SHORE_HOME)/../ppmcs -lppmcs
+endif
+
+
+# Readline includes
+if SPARC_MACHINE
+READLINE_INCLUDE = $(READLINE_HOME)/include
+READLINE_LIBS = $(READLINE_HOME)/lib/sparcv9
+# READLINE_INCLUDE = /opt/csw/include
+# READLINE_LIBS = /opt/csw/lib/sparcv9
+else
+READLINE_INCLUDE = $(READLINE_HOME)/include
+READLINE_LIBS = $(READLINE_HOME)/lib
+endif
+
 
 # GLOBAL includes/ld
-INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I/opt/csw/include
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L/opt/csw/lib/sparcv9 -lreadline
+INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I$(READLINE_INCLUDE)
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline
 
 # List of libraries
 
 if USE_DORA
-   DORA_LIBS = lib/libdoraworkload.a lib/libdora.a
+DORA_LIBS = lib/libdoraworkload.a lib/libdora.a
 else
-   DORA_LIBS = 
+DORA_LIBS = 
 endif
 
 if USE_QPIPE
-   QPIPE_LIBS = lib/libqpipe.a lib/libqpipeutil.a
+QPIPE_LIBS = lib/libqpipe.a lib/libqpipeutil.a
 else
-   QPIPE_LIBS =
+QPIPE_LIBS =
 endif
 
 lib_LIBRARIES = $(DORA_LIBS) \
@@ -60,12 +85,16 @@ UTIL = \
         $(SU)/countdown.cpp \
         $(SU)/confparser.cpp \
         $(SU)/envvar.cpp \
-        $(SU)/prcinfo.cpp \
         $(SU)/stl_pool.cpp \
         $(SU)/random_input.cpp \
         $(SU)/shell.cpp \
         $(SU)/tcp.cpp \
+        $(SU)/w_strlcpy.cpp \
         $(SU)/cpustat.cpp
+
+if SPARC_MACHINE
+UTIL += $(SU)/prcinfo.cpp
+endif
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \

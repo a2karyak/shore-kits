@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   command_handler.h
  *
  *  @brief:  Interface each shell command should implement 
@@ -34,15 +32,7 @@
 #ifndef __CMD_HANDLER_H
 #define __CMD_HANDLER_H
 
-#ifdef __SUNPRO_CC
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#endif
+#include "k_defines.h"
 
 #include <vector>
 

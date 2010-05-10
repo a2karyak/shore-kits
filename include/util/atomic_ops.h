@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-// -*- mode:c++; c-basic-offset:4 -*-
-
 /** @file  atomic_ops.h 
  *
  *  @brief Provides typesafe atomic operations in a compiler- and machine-agnostic way
@@ -34,12 +32,7 @@
 #ifndef __ATOMIC_OPS_H
 #define __ATOMIC_OPS_H
 
-
-#if defined(__sparcv9)
-#include <atomic.h>
-#else
-// use compiler intrinsics
-#endif
+#include "k_defines.h"
 
 /** ATOMIC COMPARE-AND-SWAP **/
 template<class T, int size=sizeof(T)>
