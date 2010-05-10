@@ -175,7 +175,7 @@ public:
     virtual int conf();
     virtual int start();
     virtual int stop();
-    virtual int info();
+    virtual int info() const;
     virtual int statistics();        
 
     virtual w_rc_t warmup() { return(RCOK); /* do nothing */ };

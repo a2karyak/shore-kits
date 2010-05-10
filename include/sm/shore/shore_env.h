@@ -21,11 +21,11 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file shore_env.h
+/** @file:   shore_env.h
  *
- *  @brief Definition of a Shore environment (database)
+ *  @brief:  Definition of a Shore environment (database)
  *
- *  @author Ippokratis Pandis (ipandis)
+ *  @author: Ippokratis Pandis (ipandis)
  */
 
 #ifndef __SHORE_ENV_H
@@ -64,7 +64,7 @@ using std::map;
 
 /******** Constants ********/
 
-const int SHORE_DEF_NUM_OF_CORES     = 32; // default number of cores
+const int SHORE_DEF_NUM_OF_CORES     = 64; // default number of cores
 
 const int SHORE_NUM_OF_RETRIES       = 3;
 
@@ -143,13 +143,13 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
  *
  ******************************************************************/
 
-#define DECLARE_TRX(trx) \
-    w_rc_t run_##trx(Request* prequest, trx##_input_t& in);             \
-    w_rc_t run_##trx(Request* prequest);                                \
-    w_rc_t xct_##trx(const int xct_id, trx##_input_t& in);              \
-    void   _inc_##trx##_att();                                          \
-    void   _inc_##trx##_failed();                                       \
-    void   _inc_##trx##_dld()
+#define DECLARE_TRX(trxlid) \
+    w_rc_t run_##trxlid(Request* prequest, trxlid##_input_t& in);       \
+    w_rc_t run_##trxlid(Request* prequest);                             \
+    w_rc_t xct_##trxlid(const int xct_id, trxlid##_input_t& in);        \
+    void   _inc_##trxlid##_att();                                       \
+    void   _inc_##trxlid##_failed();                                    \
+    void   _inc_##trxlid##_dld()
 
 
 #define DECLARE_TABLE(table,manimpl,abbrv)                              \
@@ -159,24 +159,35 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     inline table*    abbrv##_desc() { return (_p##abbrv##_desc.get()); }
 
 
+
+// There may be multiple implementations of the same transaction on the
+// same enviroment. For example, we have the conventional TPC-H queries 
+// and the QPipe ones. On the other hand, to run a transaction we need
+// to know the name of the implementation the user selected to run, and
+// the name of the transaction whose input will be generated and statistics 
+// will be updated.  
+//
+// In order to achieve this discrimination, the "trxlid" identifies
+// logically that transaction (for example TPC-H Q1), and the "trximpl" 
+// identifies the implementation which is going to be used. 
+
 #ifdef CFG_FLUSHER // ***** Mainstream FLUSHER ***** //
 // Commits lazily
 
-
-#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                    \
-    w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
+#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trxlid,trximpl)         \
+    w_rc_t cname::run_##trximpl(Request* prequest, trxlid##_input_t& in) { \
         int xct_id = prequest->xct_id();                                \
-        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
-        ++my_stats.attempted.trx;                                       \
-        w_rc_t e = xct_##trx(xct_id, in);                               \
+        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trximpl);       \
+        _inc_##trxlid##_att();                                          \
+        w_rc_t e = xct_##trximpl(xct_id, in);                           \
         if (!e.is_error()) {                                            \
             lsn_t xctLastLsn;                                           \
             e = _pssm->commit_xct(true,&xctLastLsn);                    \
             prequest->set_last_lsn(xctLastLsn); }                       \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
-                ++my_stats.failed.trx;                                  \
-            else ++my_stats.deadlocked.trx;                             \
+                _inc_##trxlid##_failed();                               \
+            else _inc_##trxlid##_dld();                                 \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
             w_rc_t e2 = _pssm->abort_xct();                             \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
@@ -190,19 +201,19 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 #else // ***** NO FLUSHER ***** //
 
-#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx)                    \
-    w_rc_t cname::run_##trx(Request* prequest, trx##_input_t& in) {     \
+#define DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trxlid,trximpl)         \
+    w_rc_t cname::run_##trximpl(Request* prequest, trxlid##_input_t& in) { \
         int xct_id = prequest->xct_id();                                \
-        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trx);           \
-        ++my_stats.attempted.trx;                                       \
-        w_rc_t e = xct_##trx(xct_id, in);                               \
+        TRACE( TRACE_TRX_FLOW, "%d. %s ...\n", xct_id, #trximpl);       \
+        _inc_##trxlid##_att();                                          \
+        w_rc_t e = xct_##trximpl(xct_id, in);                           \
         if (!e.is_error()) {                                            \
             if (isAsynchCommit()) e = _pssm->commit_xct(true);          \
             else e = _pssm->commit_xct(); }                             \
         if (e.is_error()) {                                             \
             if (e.err_num() != smlevel_0::eDEADLOCK)                    \
-                ++my_stats.failed.trx;                                  \
-            else ++my_stats.deadlocked.trx;                             \
+                _inc_##trxlid##_failed();                               \
+            else _inc_##trxlid##_dld();                                 \
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted [0x%x]\n", xct_id, e.err_num()); \
             w_rc_t e2 = _pssm->abort_xct();                             \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
@@ -219,21 +230,22 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 #endif // ***** EOF: CFG_FLUSHER ***** //
 
 
-#define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx)                 \
-    w_rc_t cname::run_##trx(Request* prequest) {                        \
-        trx##_input_t in = create_##trx##_input(_queried_factor, prequest->selectedID()); \
-        return (run_##trx(prequest, in)); }
+#define DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trxlid,trximpl)      \
+    w_rc_t cname::run_##trximpl(Request* prequest) {                    \
+        trxlid##_input_t in = create_##trxlid##_input(_queried_factor, prequest->selectedID()); \
+        return (run_##trximpl(prequest, in)); }
 
 
-#define DEFINE_TRX_STATS(cname,trx)                                   \
-    void cname::_inc_##trx##_att()    { ++my_stats.attempted.trx; }   \
-    void cname::_inc_##trx##_failed() { ++my_stats.failed.trx; }      \
-    void cname::_inc_##trx##_dld() { ++my_stats.deadlocked.trx; }
+#define DEFINE_TRX_STATS(cname,trxlid)                                  \
+    void cname::_inc_##trxlid##_att()    { ++my_stats.attempted.trxlid; } \
+    void cname::_inc_##trxlid##_failed() { ++my_stats.failed.trxlid; }  \
+    void cname::_inc_##trxlid##_dld() { ++my_stats.deadlocked.trxlid; }
 
 
-#define DEFINE_TRX(cname,trx)                        \
-    DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx); \
-    DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx);    \
+// In the common case, there is a single implementation per transaction
+#define DEFINE_TRX(cname,trx)                                   \
+    DEFINE_RUN_WITHOUT_INPUT_TRX_WRAPPER(cname,trx,trx);        \
+    DEFINE_RUN_WITH_INPUT_TRX_WRAPPER(cname,trx,trx);           \
     DEFINE_TRX_STATS(cname,trx)
 
 
@@ -346,7 +358,7 @@ public:
     virtual int newrun()=0;    
     virtual int statistics()=0;    
     virtual int dump()=0;    
-    virtual int info()=0;    
+    virtual int info() const=0;
     
 }; // EOF: db_iface
 
@@ -498,7 +510,7 @@ public:
     virtual int newrun()=0;
     virtual int statistics();
     virtual int dump();
-    virtual int info()=0;    
+    virtual int info() const=0;
 
 
     // Loads the database schema after the config file is read, and before the storage

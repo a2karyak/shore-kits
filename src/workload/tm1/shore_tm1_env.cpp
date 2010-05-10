@@ -96,7 +96,7 @@ int ShoreTM1Env::stop()
  *
  ********************************************************************/
 
-int ShoreTM1Env::info()
+int ShoreTM1Env::info() const
 {
     TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);

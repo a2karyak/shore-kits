@@ -81,7 +81,7 @@ int ShoreTPCBEnv::load_schema()
  *
  ********************************************************************/
 
-int ShoreTPCBEnv::info()
+int ShoreTPCBEnv::info() const
 {
     TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     TRACE( TRACE_ALWAYS, "Workers = (%d)\n", _worker_cnt);
