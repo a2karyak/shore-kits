@@ -476,13 +476,12 @@ public:
                          lock_mode_t alm,
                          bool need_tuple,
                          scan_index_i::cmp_t cmp1, const cvec_t& bound1,
-                         scan_index_i::cmp_t cmp2, const cvec_t& bound2,
-                         const int maxkeysize) 
+                         scan_index_i::cmp_t cmp2, const cvec_t& bound2) 
         : index_iter(db, pindex, alm, true), 
           _pmanager(pmanager), _need_tuple(need_tuple)
     { 
         assert (_pmanager);
-        W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2, maxkeysize));
+        W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2));
     }
         
     ~index_scan_iter_impl() { 
@@ -496,8 +495,7 @@ public:
 
     w_rc_t open_scan(ss_m* db, int pnum,
                      scan_index_i::cmp_t c1, const cvec_t& bound1,
-                     scan_index_i::cmp_t c2, const cvec_t& bound2,
-                     const int maxkeysize)
+                     scan_index_i::cmp_t c2, const cvec_t& bound2)
     {                    
         if (!index_iter::_opened) {
 
@@ -937,18 +935,6 @@ inline int table_man_impl<TableDesc>::key_size(index_desc_t* pindex,
 {
     assert (_ptable);
     return (_ptable->index_maxkeysize(pindex));
-
-#if 0
-    // !! Old implementation, which uses not the maximum size
-    //    for the VARCHARs.
-    int size = 0;
-    register int ix = 0;
-    for (uint_t i=0; i<index->field_count(); i++) {
-        ix = index->key_index(i);
-        size += prow->_pvalues[ix].maxsize();
-    }
-    return (size);
-#endif
 }
 
 
@@ -1312,8 +1298,7 @@ w_rc_t table_man_impl<TableDesc>::get_iter_for_index_scan(ss_m* db,
 	pnum = key0 % index->get_partition_count();
     }
     iter = new index_scan_iter_impl<TableDesc>(db, index, this, alm, need_tuple);
-    W_DO(iter->open_scan(db, pnum, c1, bound1, c2, bound2, 
-                         _ptable->index_maxkeysize(index)));
+    W_DO(iter->open_scan(db, pnum, c1, bound1, c2, bound2));
     if (iter->opened())  return (RCOK);
     return RC(se_OPEN_SCAN_ERROR);
 }
