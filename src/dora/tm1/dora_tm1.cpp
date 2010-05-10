@@ -237,26 +237,6 @@ int DoraTM1Env::newrun()
 
 /****************************************************************** 
  *
- * @fn:    set()
- *
- * @brief: Given a map of strings it updates the db environment
- *
- ******************************************************************/
-
-int DoraTM1Env::set(envVarMap* vars)
-{
-    TRACE( TRACE_DEBUG, "Reading set...\n");
-    for (envVarConstIt cit = vars->begin(); cit != vars->end(); ++cit)
-        TRACE( TRACE_DEBUG, "(%s) (%s)\n", 
-               cit->first.c_str(), 
-               cit->second.c_str());
-    TRACE( TRACE_DEBUG, "*** unimplemented ***\n");
-    return (0);
-}
-
-
-/****************************************************************** 
- *
  * @fn:    dump()
  *
  * @brief: Dumps information about all the tables and partitions
@@ -282,7 +262,7 @@ int DoraTM1Env::dump()
  *
  ******************************************************************/
 
-int DoraTM1Env::info()
+int DoraTM1Env::info() const
 {
     TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     int sz=_irptp_vec.size();
