@@ -21,14 +21,9 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
-
 #include "util.h"
 #include "util/config.h"
 #include "util/command/tracer.h"
-
-
 
 #ifdef __SUNPRO_CC
 #include <string.h>
@@ -65,6 +60,7 @@ void trace_cmd_t::init()
     ADD_TYPE(TRACE_TEMP_FILE);
     ADD_TYPE(TRACE_CPU_BINDING);
     ADD_TYPE(TRACE_QUERY_RESULTS);
+    ADD_TYPE(TRACE_QUERY_PROGRESS);
     ADD_TYPE(TRACE_STATISTICS);
     ADD_TYPE(TRACE_NETWORK);
     ADD_TYPE(TRACE_RESPONSE_TIME);
