@@ -150,10 +150,10 @@ struct thread_pool
  *
  ***********************************************************************/
 
-#ifndef USE_SMTHREAD_AS_BASE
-class thread_t 
+#ifdef USE_SMTHREAD_AS_BASE
+class thread_t : public smthread_t 
 #else
-class thread_t : public smthread_t
+class thread_t
 #endif
 {
 private:

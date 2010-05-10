@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 #include "util/thread.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -112,11 +110,11 @@ static thread_pool default_thread_pool(1<<30);
  ***********************************************************************/
 
 thread_t::thread_t(const c_str &name)
-#ifndef USE_SMTHREAD_AS_BASE
-    : _thread_name(name), _delete_me(true)
-#else
-      : smthread_t(t_regular, name.data()), 
+#ifdef USE_SMTHREAD_AS_BASE
+    : smthread_t(t_regular, name.data()), 
       _thread_name(name), _delete_me(true), _ppool(NULL)
+#else
+      : _thread_name(name), _delete_me(true)
 #endif
 {
     // do nothing...
@@ -152,7 +150,7 @@ void thread_t::reset_rand() {
  *
  *********************************************************************/
 
-inline void thread_t::run()
+void thread_t::run()
 { 
     setupthr(); // Setups the pool and the TLS variables
     
@@ -165,7 +163,7 @@ inline void thread_t::run()
 }
 
 
-inline void thread_t::setupthr()
+void thread_t::setupthr()
 {
     if(!_ppool)
 	_ppool = &default_thread_pool;
@@ -221,8 +219,8 @@ thread_t* thread_get_self(void)
 
 pthread_t thread_create(thread_t* t, thread_pool* pool)
 {
-    int err;
     pthread_t tid;
+    int err;
     pthread_attr_t pattr;
 
     // create a new kernel schedulable thread
@@ -433,7 +431,8 @@ void* start_thread(void* thread_object)
 
 
 // NOTE: we can't call thread_xxx methods because they call us
-void thread_pool::start() {
+void thread_pool::start() 
+{
 #ifndef DISABLE_THREAD_POOL
     int err = pthread_mutex_lock(&_lock);
     THROW_IF(ThreadException, err);
@@ -448,7 +447,8 @@ void thread_pool::start() {
 #endif
 }
 
-void thread_pool::stop() {
+void thread_pool::stop() 
+{
 #ifndef DISABLE_THREAD_POOL
     int err = pthread_mutex_lock(&_lock);
     THROW_IF(ThreadException, err);
@@ -466,8 +466,9 @@ static void setup_thread(thread_args* args)
     thread_t* thread  = args->t;
     thread_pool* pool = args->p;
 
-    if(!pool)
+    if (!pool) {
 	pool = &default_thread_pool;
+    }
 
     // past this point the thread should belong to a pool
     assert (pool);
