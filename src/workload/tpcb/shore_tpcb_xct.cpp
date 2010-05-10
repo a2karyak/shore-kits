@@ -295,7 +295,6 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id,
 	prb->get_value(1, total);
 	prb->set_value(1, total + ppin.delta);
 	e = _pbranch_man->update_tuple(_pssm, prb);
-	if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -407,7 +406,6 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id,
         // The database loader which calls this xct does not use the xct wrapper,
         // so it should do the commit here
         e = _pssm->commit_xct();
-        if (e.is_error()) { goto done; }
 
     } // goto
 
