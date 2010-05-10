@@ -43,6 +43,10 @@
 #include "workload/tpch/shore_tpch_schema_man.h"
 #include "workload/tpch/tpch_input.h"
 
+#ifdef CFG_QPIPE
+#include "qpipe.h"
+#endif
+
 #include <map>
 
 using namespace shore;
@@ -58,8 +62,12 @@ using std::map;
 // Sets the scaling factor of the TPC-H database
 // @note Some data structures base their size on this value
 
-const TPCH_SCALING_FACTOR = 1;
+const double TPCH_SCALING_FACTOR = 1;
 
+
+// For the population
+const long CUST_POP_UNIT = 10;
+const long PART_POP_UNIT = 10;
 
 /****************************************************************** 
  *
@@ -235,7 +243,7 @@ public:
     virtual int conf();
     virtual int start();
     virtual int stop();
-    virtual int info();
+    virtual int info() const;
     virtual int statistics();    
 
     w_rc_t warmup();
@@ -272,17 +280,71 @@ public:
 
     // QUERIES (Transactions)
     DECLARE_TRX(q1);
+    DECLARE_TRX(q2);
+    DECLARE_TRX(q3);
+    DECLARE_TRX(q4);
+    DECLARE_TRX(q5);
     DECLARE_TRX(q6);
+    DECLARE_TRX(q7);
+    DECLARE_TRX(q8);
+    DECLARE_TRX(q9);
+    DECLARE_TRX(q10);
+    DECLARE_TRX(q11);
     DECLARE_TRX(q12);
+    DECLARE_TRX(q13);
     DECLARE_TRX(q14);
+    DECLARE_TRX(q15);
+    DECLARE_TRX(q16);
+    DECLARE_TRX(q17);
+    DECLARE_TRX(q18);
+    DECLARE_TRX(q19);
+    DECLARE_TRX(q20);
+    DECLARE_TRX(q21);
+    DECLARE_TRX(q22);
 
     // QUERIES for the non-partition aligned benchmark
     DECLARE_TRX(qNP);
 
     // Database population
     DECLARE_TRX(populate_baseline);
-    DECLARE_TRX(populate_one_part);
-    DECLARE_TRX(populate_one_cust);
+    DECLARE_TRX(populate_some_parts);
+    DECLARE_TRX(populate_some_custs);
+
+
+#ifdef CFG_QPIPE
+private:
+    guard<policy_t> _sched_policy;
+
+public:
+    policy_t* get_sched_policy();
+    policy_t* set_sched_policy(const char* spolicy);
+    w_rc_t run_one_qpipe_xct(Request* prequest);
+
+    // QPipe QUERIES (Transactions)
+    DECLARE_QPIPE_TRX(q1);
+    DECLARE_QPIPE_TRX(q2);
+    DECLARE_QPIPE_TRX(q3);
+    DECLARE_QPIPE_TRX(q4);
+    DECLARE_QPIPE_TRX(q5);
+    DECLARE_QPIPE_TRX(q6);
+    DECLARE_QPIPE_TRX(q7);
+    DECLARE_QPIPE_TRX(q8);
+    DECLARE_QPIPE_TRX(q9);
+    DECLARE_QPIPE_TRX(q10);
+    DECLARE_QPIPE_TRX(q11);
+    DECLARE_QPIPE_TRX(q12);
+    DECLARE_QPIPE_TRX(q13);
+    DECLARE_QPIPE_TRX(q14);
+    DECLARE_QPIPE_TRX(q15);
+    DECLARE_QPIPE_TRX(q16);
+    DECLARE_QPIPE_TRX(q17);
+    DECLARE_QPIPE_TRX(q18);
+    DECLARE_QPIPE_TRX(q19);
+    DECLARE_QPIPE_TRX(q20);
+    DECLARE_QPIPE_TRX(q21);
+    DECLARE_QPIPE_TRX(q22);
+#endif
+
 
     // for thread-local stats
     virtual void env_thread_init();
@@ -294,7 +356,7 @@ public:
     // snapshot taken at the beginning of each experiment    
     ShoreTPCHTrxStats _last_stats;
     virtual void reset_stats();
-    const ShoreTPCHTrxStats _get_stats();
+    ShoreTPCHTrxStats _get_stats();
     
 }; // EOF ShoreTPCHEnv
  

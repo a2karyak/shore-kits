@@ -250,7 +250,7 @@ KITS_FEATURES=""
 # (6) --enable-embclients  : defines CFG_EMB_CL
 # (7) --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
 # (8) --enable-bt          : enables backtracing facility. defines CFG_BT
-
+# (9) --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
 
 # --- DORA ---
 AC_MSG_CHECKING(whether to enable Dora)
@@ -324,7 +324,7 @@ then
 else
      AC_MSG_RESULT(no)
 fi
-# --- EOF DORAFLUSHER ---   
+# --- EOF FLUSHER ---   
 
 
 
@@ -477,6 +477,29 @@ else
      AC_MSG_RESULT(no)
 fi
 # --- EOF BACKTRACING ---   
+
+
+# --- QPIPE ---
+AC_MSG_CHECKING(whether to enable qpipe)
+AC_ARG_ENABLE(qpipe, 
+[  --enable-qpipe      Enable QPipe],
+[case "${enableval}" in
+  yes) qpipe=true ;;
+  no)  qpipe=false ;;
+  *) qpipe=false ;;
+esac],[qpipe=false])
+AM_CONDITIONAL(USE_QPIPE, test x$qpipe = xtrue)
+
+if test "$qpipe" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES qpipe"
+     AC_MSG_WARN([Enabling QPipe])
+     AC_DEFINE(CFG_QPIPE)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF QPIPE ---   
 
 
 # ----------- EOF Shore-kit features -------------

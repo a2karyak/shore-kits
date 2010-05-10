@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file tpch_input.h
  *
  *  @brief Declaration of the (common) inputs for the TPC-H trxs
@@ -41,6 +39,44 @@
 ENTER_NAMESPACE(tpch);
 
 // Inputs for the Queries
+
+struct q2_input_t { };
+struct q3_input_t { };
+struct q4_input_t { };
+struct q5_input_t { };
+struct q7_input_t { };
+struct q8_input_t { };
+struct q9_input_t { };
+struct q10_input_t { };
+struct q11_input_t { };
+struct q13_input_t { };
+struct q15_input_t { };
+struct q16_input_t { };
+struct q17_input_t { };
+struct q18_input_t { };
+struct q19_input_t { };
+struct q20_input_t { };
+struct q21_input_t { };
+struct q22_input_t { };
+
+q2_input_t create_q2_input(const double sf, const int specificWH);
+q3_input_t create_q3_input(const double sf, const int specificWH);
+q4_input_t create_q4_input(const double sf, const int specificWH);
+q5_input_t create_q5_input(const double sf, const int specificWH);
+q7_input_t create_q7_input(const double sf, const int specificWH);
+q8_input_t create_q8_input(const double sf, const int specificWH);
+q9_input_t create_q9_input(const double sf, const int specificWH);
+q10_input_t create_q10_input(const double sf, const int specificWH);
+q11_input_t create_q11_input(const double sf, const int specificWH);
+q13_input_t create_q13_input(const double sf, const int specificWH);
+q15_input_t create_q15_input(const double sf, const int specificWH);
+q16_input_t create_q16_input(const double sf, const int specificWH);
+q17_input_t create_q17_input(const double sf, const int specificWH);
+q18_input_t create_q18_input(const double sf, const int specificWH); 
+q19_input_t create_q19_input(const double sf, const int specificWH); 
+q20_input_t create_q20_input(const double sf, const int specificWH); 
+q21_input_t create_q21_input(const double sf, const int specificWH);
+q22_input_t create_q22_input(const double sf, const int specificWH);
 
 
 /******************************************************************** 
@@ -154,13 +190,13 @@ struct populate_baseline_input_t
 };
 
 
-struct populate_one_part_input_t 
+struct populate_some_parts_input_t 
 {
     int _partid;
 };
 
 
-struct populate_one_cust_input_t 
+struct populate_some_custs_input_t 
 {
     int _custid;
 };

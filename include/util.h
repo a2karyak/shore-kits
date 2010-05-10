@@ -56,4 +56,20 @@
 #include "util/cpustat.h"
 
 
+// Needed by QPipe
+#ifdef CFG_QPIPE
+#include "util/exception.h"
+#include "util/resource_pool.h"
+#include "util/resource_releaser.h"
+#include "util/resource_declare.h"
+//#include "util/hash_functions.h"
+#include "util/acounter.h"
+#include "util/static_list.h"
+#include "util/alignedops.h"
+#include "util/rio.h"
+#include "util/fnv.h"
+#include "util/tmpfile.h"
+#include "util/busy_delay.h"
+#endif
+
 #endif /** __UTIL_H */

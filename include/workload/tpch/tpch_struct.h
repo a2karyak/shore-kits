@@ -312,7 +312,7 @@ struct tpch_orders_tuple
 {
     int      O_ORDERKEY;
     int      O_CUSTKEY;
-    char     O_ORDERSTATUS   [STRSIZE(1)];
+    char     O_ORDERSTATUS;
     decimal  O_TOTALPRICE;
 
 //     time_t   O_ORDERDATE;
@@ -334,7 +334,7 @@ struct tpch_orders_tuple_key
 struct tpch_orders_tuple_body 
 {
     int      O_CUSTKEY;
-    char     O_ORDERSTATUS   [STRSIZE(1)];
+    char     O_ORDERSTATUS;
     decimal  O_TOTALPRICE;
 
 //     time_t   O_ORDERDATE;
@@ -360,8 +360,8 @@ struct tpch_lineitem_tuple
     double  L_EXTENDEDPRICE;
     double  L_DISCOUNT;
     double  L_TAX;
-    char    L_RETURNFLAG    [STRSIZE(1)];
-    char    L_LINESTATUS    [STRSIZE(1)];
+    char    L_RETURNFLAG;
+    char    L_LINESTATUS;
 
 //     time_t  L_SHIPDATE;
 //     time_t  L_COMMITDATE;
@@ -402,8 +402,8 @@ struct tpch_lineitem_tuple_body
     int	    L_EXTENDEDPRICE;
     int	    L_DISCOUNT;
     int	    L_TAX;
-    char    L_RETURNFLAG    [STRSIZE(1)];
-    char    L_LINESTATUS    [STRSIZE(1)];
+    char    L_RETURNFLAG;
+    char    L_LINESTATUS;
 
 //     time_t  L_SHIPDATE;
 //     time_t  L_COMMITDATE;

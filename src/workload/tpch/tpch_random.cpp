@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file workload/tpch/common/tpch_random.cpp
  *  
  *  @brief Functions used for the generation of the inputs for 
@@ -108,20 +106,6 @@ int NURand(int A, int low, int high) {
   return ( (((random(0, A, randgenp) | random(low, high, randgenp)) 
              + random(0, A, randgenp)) 
             % (high - low + 1)) + low );
-}
-
-/******************************************************************************* 
- * 
- *  @func:  random_xct_type
- *  
- *  @brief: Translates or picks a random xct type given the benchmark 
- *          specification
- *
- *******************************************************************************/
-
-int random_xct_type(int selected)
-{
-	return 1;
 }
 
 EXIT_NAMESPACE(tpch);

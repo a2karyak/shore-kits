@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpch_xct.cpp
  *
  *  @brief:  Implementation of the Baseline Shore TPC-H transactions
@@ -65,15 +63,13 @@ ENTER_NAMESPACE(tpch);
 
 static __thread ShoreTPCHTrxStats my_stats;
 
-void 
-ShoreTPCHEnv::env_thread_init()
+void ShoreTPCHEnv::env_thread_init()
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap[pthread_self()] = &my_stats;
 }
 
-void 
-ShoreTPCHEnv::env_thread_fini()
+void ShoreTPCHEnv::env_thread_fini()
 {
     CRITICAL_SECTION(stat_mutex_cs, _statmap_mutex);
     _statmap.erase(pthread_self());
@@ -88,8 +84,7 @@ ShoreTPCHEnv::env_thread_fini()
  *
  ********************************************************************/
 
-const ShoreTPCHTrxStats 
-ShoreTPCHEnv::_get_stats()
+ShoreTPCHTrxStats ShoreTPCHEnv::_get_stats()
 {
     CRITICAL_SECTION(cs, _statmap_mutex);
     ShoreTPCHTrxStats rval;
@@ -108,8 +103,7 @@ ShoreTPCHEnv::_get_stats()
  *
  ********************************************************************/
 
-void 
-ShoreTPCHEnv::reset_stats()
+void ShoreTPCHEnv::reset_stats()
 {
     CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
     _last_stats = _get_stats();
@@ -221,16 +215,12 @@ void ShoreTPCHEnv::print_throughput(const double iQueriedSF,
  *
  ********************************************************************/
 
-#undef  DO_TPCH_LOAD
-#define DO_TPCH_LOAD
-
 #undef  DO_PRINT_TPCH_RECS
 //#define DO_PRINT_TPCH_RECS
 
 // Populates one nation
-w_rc_t 
-ShoreTPCHEnv::_gen_one_nation(const int id, 
-                              rep_row_t& areprow)
+w_rc_t ShoreTPCHEnv::_gen_one_nation(const int id, 
+                                     rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
     row_impl<nation_t>*   prna = _pnation_man->get_tuple();
@@ -258,9 +248,8 @@ ShoreTPCHEnv::_gen_one_nation(const int id,
 
 
 // Populates one region
-w_rc_t 
-ShoreTPCHEnv::_gen_one_region(const int id, 
-                              rep_row_t& areprow)
+w_rc_t ShoreTPCHEnv::_gen_one_region(const int id, 
+                                     rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
     row_impl<region_t>*   prre = _pregion_man->get_tuple();
@@ -288,9 +277,8 @@ ShoreTPCHEnv::_gen_one_region(const int id,
 
 
 // Populates one supplier
-w_rc_t 
-ShoreTPCHEnv::_gen_one_supplier(const int id, 
-                                rep_row_t& areprow)
+w_rc_t ShoreTPCHEnv::_gen_one_supplier(const int id, 
+                                       rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
     row_impl<supplier_t>* prsu = _psupplier_man->get_tuple();
@@ -325,9 +313,8 @@ ShoreTPCHEnv::_gen_one_supplier(const int id,
 
 
 // Populates one part and the corresponding partsupp
-w_rc_t 
-ShoreTPCHEnv::_gen_one_part_based(const int id, 
-                                  rep_row_t& areprow)
+w_rc_t ShoreTPCHEnv::_gen_one_part_based(const int id, 
+                                         rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
     row_impl<part_t>*     prpa = _ppart_man->get_tuple();
@@ -396,9 +383,8 @@ ShoreTPCHEnv::_gen_one_part_based(const int id,
 
 
 // Populates one customer and the corresponding orders and lineitems
-w_rc_t 
-ShoreTPCHEnv::_gen_one_cust_based(const int id, 
-                                  rep_row_t& areprow)
+w_rc_t ShoreTPCHEnv::_gen_one_cust_based(const int id, 
+                                         rep_row_t& areprow)
 {
     w_rc_t e = RCOK;    
     row_impl<customer_t>* prcu = _pcustomer_man->get_tuple();
@@ -490,7 +476,9 @@ ShoreTPCHEnv::_gen_one_cust_based(const int id,
                 prli->set_value(5, (double)ao.l[j].eprice);
                 prli->set_value(6, (double)ao.l[j].discount);
                 prli->set_value(7, (double)ao.l[j].tax);
+                //prli->set_value(8, ao.l[j].rflag[0]);
                 prli->set_value(8, ao.l[j].rflag);
+                //prli->set_value(9, ao.l[j].lstatus[0]);
                 prli->set_value(9, ao.l[j].lstatus);
                 prli->set_value(10, ao.l[j].cdate);
                 prli->set_value(11, ao.l[j].sdate);
@@ -519,9 +507,8 @@ ShoreTPCHEnv::_gen_one_cust_based(const int id,
  *
  ********************************************************************/
 
-w_rc_t 
-ShoreTPCHEnv::xct_populate_baseline(const int xct_id, 
-                                    populate_baseline_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_populate_baseline(const int xct_id, 
+                                           populate_baseline_input_t& in)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -533,7 +520,6 @@ ShoreTPCHEnv::xct_populate_baseline(const int xct_id,
 
     w_rc_t e = RCOK;
 
-#ifdef DO_TPCH_LOAD
     // 2. Build the small tables
     TRACE( TRACE_ALWAYS, "Building NATION !!!\n");
 
@@ -557,7 +543,6 @@ ShoreTPCHEnv::xct_populate_baseline(const int xct_id,
         e = _gen_one_supplier(i, areprow);
     }
     if(e.is_error()) { return (e); }
-#endif
 
 
     TRACE( TRACE_ALWAYS, "Starting PARTS !!!\n");
@@ -569,9 +554,7 @@ ShoreTPCHEnv::xct_populate_baseline(const int xct_id,
         TRACE( TRACE_ALWAYS, "Parts %d .. %d\n", start, end);
             
         for (int j=start; j<end; ++j) {
-#ifdef DO_TPCH_LOAD
             e = _gen_one_part_based(j,areprow);
-#endif
             if(e.is_error()) { return (e); }
         }            
     }
@@ -583,26 +566,25 @@ ShoreTPCHEnv::xct_populate_baseline(const int xct_id,
     for (int i=0; i < in._loader_count; ++i) {
         long start = i*in._custs_per_thread;
         long end = start + in._divisor - 1;
-        TRACE( TRACE_ALWAYS, "Custs %d .. %d\n", start, end);
+        TRACE( TRACE_ALWAYS, "[%d/%d] Custs %d .. %d\n", 
+               i, in._loader_count,
+               start, end);
             
         for (int j=start; j<end; ++j) {
-#ifdef DO_TPCH_LOAD
             e = _gen_one_cust_based(j,areprow);
-#endif
             if(e.is_error()) { return (e); }
         }
     }
 
     e = _pssm->commit_xct();
-    if(e.is_error()) { return (e); }
-
     return (e);
 }
 
 
-w_rc_t 
-ShoreTPCHEnv::xct_populate_one_part(const int xct_id, 
-                                    populate_one_part_input_t& in)
+// We pass on the parameter (xct_id) the number of parts to be populated
+// and on the parameter (in) the starting id
+w_rc_t ShoreTPCHEnv::xct_populate_some_parts(const int xct_id, 
+                                             populate_some_parts_input_t& in)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -613,25 +595,23 @@ ShoreTPCHEnv::xct_populate_one_part(const int xct_id,
     areprow.set(_ppartsupp_desc->maxsize());
 
     w_rc_t e = RCOK;
-
     int id = in._partid;
 
-#ifdef DO_TPCH_LOAD
-    e = _gen_one_part_based(id, areprow);
-#endif
-
-    if(e.is_error()) { return (e); }
+    // Generate (xct_id) parts
+    for (id=in._partid; id<in._partid+xct_id; id++) {
+        e = _gen_one_part_based(id, areprow);
+        if(e.is_error()) { return (e); }
+    }
 
     e = _pssm->commit_xct();
-    if(e.is_error()) { return (e); }
-
     return (e);
 }
 
 
-w_rc_t 
-ShoreTPCHEnv::xct_populate_one_cust(const int xct_id, 
-                                    populate_one_cust_input_t& in)
+// We pass on the parameter (xct_id) the number of customers to be populated
+// and on the parameter (in) the starting id
+w_rc_t ShoreTPCHEnv::xct_populate_some_custs(const int xct_id, 
+                                             populate_some_custs_input_t& in)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -642,18 +622,16 @@ ShoreTPCHEnv::xct_populate_one_cust(const int xct_id,
     areprow.set(_pcustomer_desc->maxsize()); 
 
     w_rc_t e = RCOK;
-
     int id = in._custid;
 
-#ifdef DO_TPCH_LOAD
-    e = _gen_one_cust_based(id, areprow);
-#endif
-    if(e.is_error()) { return (e); }
+    // Generate (xct_id) customers
+    for (id=in._custid; id<in._custid+xct_id; id++) {
+        e = _gen_one_cust_based(id, areprow);
+        if (e.is_error()) { return (e); }
+    }
 
     e = _pssm->commit_xct();
-    if(e.is_error()) { return (e); }
-        
-    return e;
+    return (e);
 } 
 
 
@@ -681,9 +659,15 @@ ShoreTPCHEnv::xct_populate_one_cust(const int xct_id,
 
 w_rc_t ShoreTPCHEnv::run_one_xct(Request* prequest)
 {
+#ifdef CFG_QPIPE
+    if (prequest->type() >= XCT_QPIPE_TPCH_MIX) {
+        return (run_one_qpipe_xct(prequest));
+    }
+#endif
+
     // if BASELINE TPC-H MIX
     if (prequest->type() == XCT_TPCH_MIX) {
-        prequest->set_type(random_xct_type(smthread_t::me()->rand()%100));
+        prequest->set_type(XCT_TPCH_MIX + smthread_t::me()->rand()%22);
     }
 
     switch (prequest->type()) {
@@ -691,15 +675,74 @@ w_rc_t ShoreTPCHEnv::run_one_xct(Request* prequest)
         // TPC-H BASELINE
     case XCT_TPCH_Q1:
         return (run_q1(prequest));
+
+    case XCT_TPCH_Q2:
+        return (run_q2(prequest));
+
+    case XCT_TPCH_Q3:
+        return (run_q3(prequest));
+
+    case XCT_TPCH_Q4:
+        return (run_q4(prequest));
+
+    case XCT_TPCH_Q5:
+        return (run_q5(prequest));
+
     case XCT_TPCH_Q6:
         return (run_q6(prequest));;
+
+    case XCT_TPCH_Q7:
+        return (run_q7(prequest));
+
+    case XCT_TPCH_Q8:
+        return (run_q8(prequest));
+
+    case XCT_TPCH_Q9:
+        return (run_q9(prequest));
+
+    case XCT_TPCH_Q10:
+        return (run_q10(prequest));
+
+    case XCT_TPCH_Q11:
+        return (run_q11(prequest));
+
     case XCT_TPCH_Q12:
         return (run_q12(prequest));;
+
+    case XCT_TPCH_Q13:
+        return (run_q13(prequest));
+
     case XCT_TPCH_Q14:
         return (run_q14(prequest));;
+
+    case XCT_TPCH_Q15:
+        return (run_q15(prequest));
+
+    case XCT_TPCH_Q16:
+        return (run_q16(prequest));
+
+    case XCT_TPCH_Q17:
+        return (run_q17(prequest));
+
+    case XCT_TPCH_Q18:
+        return (run_q18(prequest));
+
+    case XCT_TPCH_Q19:
+        return (run_q19(prequest));
+
+    case XCT_TPCH_Q20:
+        return (run_q20(prequest));
+
+    case XCT_TPCH_Q21:
+        return (run_q21(prequest));
+
+    case XCT_TPCH_Q22:
+        return (run_q22(prequest));
+
     default:
         //assert (0); // UNKNOWN TRX-ID
         TRACE( TRACE_ALWAYS, "Unknown transaction\n");
+        assert(0);
     }
     return (RCOK);
 }
@@ -723,9 +766,27 @@ w_rc_t ShoreTPCHEnv::run_one_xct(Request* prequest)
 // --- without input specified --- //
 
 DEFINE_TRX(ShoreTPCHEnv,q1);
+DEFINE_TRX(ShoreTPCHEnv,q2);
+DEFINE_TRX(ShoreTPCHEnv,q3);
+DEFINE_TRX(ShoreTPCHEnv,q4);
+DEFINE_TRX(ShoreTPCHEnv,q5);
 DEFINE_TRX(ShoreTPCHEnv,q6);
+DEFINE_TRX(ShoreTPCHEnv,q7);
+DEFINE_TRX(ShoreTPCHEnv,q8);
+DEFINE_TRX(ShoreTPCHEnv,q9);
+DEFINE_TRX(ShoreTPCHEnv,q10);
+DEFINE_TRX(ShoreTPCHEnv,q11);
 DEFINE_TRX(ShoreTPCHEnv,q12);
+DEFINE_TRX(ShoreTPCHEnv,q13);
 DEFINE_TRX(ShoreTPCHEnv,q14);
+DEFINE_TRX(ShoreTPCHEnv,q15);
+DEFINE_TRX(ShoreTPCHEnv,q16);
+DEFINE_TRX(ShoreTPCHEnv,q17);
+DEFINE_TRX(ShoreTPCHEnv,q18);
+DEFINE_TRX(ShoreTPCHEnv,q19);
+DEFINE_TRX(ShoreTPCHEnv,q20);
+DEFINE_TRX(ShoreTPCHEnv,q21);
+DEFINE_TRX(ShoreTPCHEnv,q22);
 
 
 // uncomment the line below if want to dump (part of) the trx results
@@ -738,29 +799,33 @@ DEFINE_TRX(ShoreTPCHEnv,q14);
  *
  ********************************************************************/
 
-class q1_group_by_key_t 
+struct q1_group_by_key_t 
 {
-public:
-    char return_flag[2];
-    char linestatus[2];
+    char return_flag;
+    char linestatus;
 
-    q1_group_by_key_t(char * flag, char *status)
+    q1_group_by_key_t(char flag, char status)
     {
-        memcpy(return_flag, flag, 2);
-        memcpy(linestatus, status, 2);
+        return_flag = flag;
+        linestatus = status;
+        //memcpy(return_flag, flag, 2);
+        //memcpy(linestatus, status, 2);
     };
 
     q1_group_by_key_t(const q1_group_by_key_t& rhs)
     {
-        memcpy(return_flag, rhs.return_flag, 2);
-        memcpy(linestatus, rhs.linestatus, 2);
+        return_flag = rhs.return_flag;
+        linestatus = rhs.linestatus;
+        //memcpy(return_flag, rhs.return_flag, 2);
+        //memcpy(linestatus, rhs.linestatus, 2);
     };
 
     q1_group_by_key_t& operator=(const q1_group_by_key_t& rhs)
     {
-        memcpy(return_flag, rhs.return_flag, 2);
-        memcpy(linestatus, rhs.linestatus, 2);
-
+        return_flag = rhs.return_flag;
+        linestatus = rhs.linestatus;
+        //memcpy(return_flag, rhs.return_flag, 2);
+        //memcpy(linestatus, rhs.linestatus, 2);
         return (*this);
     };
 };
@@ -772,9 +837,9 @@ public:
                      const q1_group_by_key_t& lhs, 
                      const q1_group_by_key_t& rhs) const
     {
-        return ((lhs.return_flag[0] < rhs.return_flag[0]) ||
-                ((lhs.return_flag[0] == rhs.return_flag[0]) &&
-                 (lhs.linestatus[0] < rhs.linestatus[0]))
+        return ((lhs.return_flag < rhs.return_flag) ||
+                ((lhs.return_flag == rhs.return_flag) &&
+                 (lhs.linestatus < rhs.linestatus))
 		);
     }
 };
@@ -823,8 +888,8 @@ public:
 
 struct q1_output_ele_t 
 {
-    char l_returnflag[2];
-    char l_linestatus[2];
+    char l_returnflag;
+    char l_linestatus;
     int sum_qty;
     int sum_base_price;
     decimal sum_disc_price;
@@ -923,11 +988,10 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
             prlineitem->get_value(5, aline.L_EXTENDEDPRICE);
             prlineitem->get_value(6, aline.L_DISCOUNT);
             prlineitem->get_value(7, aline.L_TAX);
-            prlineitem->get_value(8, aline.L_RETURNFLAG, 2);
-            prlineitem->get_value(9, aline.L_LINESTATUS, 2);
+            prlineitem->get_value(8, aline.L_RETURNFLAG);
+            prlineitem->get_value(9, aline.L_LINESTATUS);
             prlineitem->get_value(10, aline.L_SHIPDATE, 15);
 
-            // IP: Needs to convert the string of SHIPDATE to time_t
             time_t the_shipdate = str_to_timet(aline.L_SHIPDATE);
 
             if (the_shipdate <= pq1in.l_shipdate) {
@@ -958,8 +1022,8 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
 
         q1_output_ele_t q1_output_ele;
         for (it = q1_result.begin(); it != q1_result.end(); it ++) {
-            memcpy(q1_output_ele.l_returnflag, (*it).first.return_flag, 2);
-            memcpy(q1_output_ele.l_linestatus, (*it).first.linestatus, 2);
+            q1_output_ele.l_returnflag = (*it).first.return_flag;
+            q1_output_ele.l_linestatus = (*it).first.linestatus;
             q1_output_ele.sum_qty = (*it).second.sum_qty;
             q1_output_ele.sum_base_price = (*it).second.sum_base_price;
             q1_output_ele.sum_disc_price = (*it).second.sum_disc_price;
@@ -970,10 +1034,22 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
             q1_output_ele.count_order = (*it).second.count;
 
             q1_output.push_back(q1_output_ele);
+
+
+            TRACE( TRACE_QUERY_RESULTS, "%s|%s|%d|%d|%.2f|%.2f|%.2f|%.2f|%.2f|%d\n",
+                   q1_output_ele.l_returnflag,
+                   q1_output_ele.l_linestatus,
+                   q1_output_ele.sum_qty,
+                   q1_output_ele.sum_base_price,
+                   q1_output_ele.sum_disc_price,
+                   q1_output_ele.sum_charge,
+                   q1_output_ele.avg_qty,
+                   q1_output_ele.avg_price,
+                   q1_output_ele.avg_disc,
+                   q1_output_ele.count_order);
+
         }
 
-        e = _pssm->commit_xct();
-        if (e.is_error()) {goto done;}
     } // goto
 
  done:    
@@ -987,6 +1063,78 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
 
 /******************************************************************** 
  *
+ * TPC-H Q2
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q2(const int xct_id, 
+                            q2_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q3
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q3(const int xct_id, 
+                            q3_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q4
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q4(const int xct_id, 
+                            q4_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q5
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q5(const int xct_id, 
+                            q5_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
  * TPC-H Q6
  *
  ********************************************************************/
@@ -995,9 +1143,8 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
  * l_extendedprice l_discount l_shipdate l_quantity
  */
 
-w_rc_t 
-ShoreTPCHEnv::xct_q6(const int xct_id, 
-                     q6_input_t& pq6in)
+w_rc_t ShoreTPCHEnv::xct_q6(const int xct_id, 
+                            q6_input_t& pq6in)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1101,6 +1248,95 @@ ShoreTPCHEnv::xct_q6(const int xct_id,
 
 }; // EOF: Q6 
 
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q7
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q7(const int xct_id, 
+                            q7_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q8
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q8(const int xct_id, 
+                            q8_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q9
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q9(const int xct_id, 
+                            q9_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q10
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q10(const int xct_id, 
+                             q10_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q11
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q11(const int xct_id, 
+                             q11_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
 
 
 
@@ -1231,6 +1467,25 @@ w_rc_t ShoreTPCHEnv::xct_q12(const int xct_id,
 }
 
 
+/******************************************************************** 
+ *
+ * TPC-H Q13
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q13(const int xct_id, 
+                             q13_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+
 
 /******************************************************************** 
  *
@@ -1251,6 +1506,152 @@ w_rc_t ShoreTPCHEnv::xct_q14(const int xct_id,
 
     return (RC(smlevel_0::eNOTIMPLEMENTED));
 }
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q15
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q15(const int xct_id, 
+                             q15_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q16
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q16(const int xct_id, 
+                             q16_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q17
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q17(const int xct_id, 
+                             q17_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q18
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q18(const int xct_id, 
+                             q18_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q19
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q19(const int xct_id, 
+                             q19_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q20
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q20(const int xct_id, 
+                             q20_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q21
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q21(const int xct_id, 
+                             q21_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
+
+/******************************************************************** 
+ *
+ * TPC-H Q22
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCHEnv::xct_q22(const int xct_id, 
+                             q22_input_t& in)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+
 
 
 

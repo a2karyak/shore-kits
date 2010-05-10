@@ -14,16 +14,21 @@ INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I/opt
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L/opt/csw/lib/sparcv9 -lreadline
 
 # List of libraries
+
 if USE_DORA
-   # Add DORA libraries
-   lib_LIBRARIES = \
-      lib/libdoraworkload.a lib/libdora.a \
-      lib/libworkload.a lib/libsm.a lib/libutil.a
+   DORA_LIBS = lib/libdoraworkload.a lib/libdora.a
 else
-   # Without DORA
-   lib_LIBRARIES = \
-      lib/libworkload.a lib/libsm.a lib/libutil.a
+   DORA_LIBS = 
 endif
+
+if USE_QPIPE
+   QPIPE_LIBS = lib/libqpipe.a lib/libqpipeutil.a
+else
+   QPIPE_LIBS =
+endif
+
+lib_LIBRARIES = $(DORA_LIBS) \
+      lib/libworkload.a $(QPIPE_LIBS) lib/libsm.a lib/libutil.a
 
 FE = \
    shore_kits
@@ -96,6 +101,7 @@ SM_SHORE = \
    $(SMS)/shore_client.cpp \
    $(SMS)/shore_worker.cpp \
    $(SMS)/shore_trx_worker.cpp \
+   $(SMS)/shore_iter.cpp \
    $(SMS)/shore_shell.cpp
 
 if USE_FLUSHER
@@ -168,6 +174,10 @@ WL_TPCH_DBGEN_SHORE = \
    $(SW)/tpch/dbgen/permute.cpp \
    $(SW)/tpch/dbgen/rng64.cpp
 
+WL_TPCH_QPIPE = \
+   $(SW)/tpch/qpipe_tpch_xct.cpp \
+   $(SW)/tpch/qpipe/qpipe_q1.cpp
+
 
 lib_libworkload_a_SOURCES = \
    $(WL_SG_TPCC_SHORE) \
@@ -177,8 +187,99 @@ lib_libworkload_a_SOURCES = \
    $(WL_TPCH_DBGEN_SHORE) \
    $(WL_TPCH_SHORE)
 
+if USE_QPIPE
+lib_libworkload_a_SOURCES += $(WL_TPCH_QPIPE)
+endif
+
+
 lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
+
+
+
+##### USE_QPIPE ######
+if USE_QPIPE
+
+################################################################################
+#
+# src/util/ *** Needed by QPipe ***
+#
+################################################################################
+
+QPIPE_UTIL = \
+	$(SU)/busy_delay.cpp \
+	$(SU)/rio.cpp \
+	$(SU)/resource_pool.cpp \
+	$(SU)/static_list_node.cpp \
+	$(SU)/static_list.cpp \
+	$(SU)/fileops.cpp \
+	$(SU)/alignedops.cpp \
+	$(SU)/tmpfile.cpp \
+	$(SU)/fnv.cpp
+
+# 	$(SU)/static_hash_map.cpp
+
+lib_libqpipeutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
+
+lib_libqpipeutil_a_SOURCES = \
+	$(QPIPE_UTIL)
+
+
+
+
+################################################################################
+#
+# src/qpipe
+#
+################################################################################
+
+SQP=$(top_srcdir)/src/qpipe
+
+QPIPE_SCHEDULER = \
+   $(SQP)/scheduler/cpu_set.cpp \
+   $(SQP)/scheduler/cpu.cpp
+
+QPIPE_CORE = \
+   $(SQP)/core/tuple_fifo_directory.cpp \
+   $(SQP)/core/stage_container.cpp \
+   $(SQP)/core/dispatcher.cpp \
+   $(SQP)/core/packet.cpp \
+   $(SQP)/core/tuple.cpp \
+   $(SQP)/core/tuple_fifo.cpp
+
+QPIPE_STAGES = \
+   $(SQP)/stages/merge.cpp \
+   $(SQP)/stages/bnl_in.cpp \
+   $(SQP)/stages/hash_join.cpp \
+   $(SQP)/stages/partial_aggregate.cpp \
+   $(SQP)/stages/tscan.cpp \
+   $(SQP)/stages/fdump.cpp \
+   $(SQP)/stages/sieve.cpp \
+   $(SQP)/stages/echo.cpp \
+   $(SQP)/stages/pipe_hash_join.cpp \
+   $(SQP)/stages/aggregate.cpp \
+   $(SQP)/stages/sorted_in.cpp \
+   $(SQP)/stages/func_call.cpp \
+   $(SQP)/stages/sort.cpp \
+   $(SQP)/stages/hash_aggregate.cpp \
+   $(SQP)/stages/delay_writer.cpp \
+   $(SQP)/stages/bnl_join.cpp \
+   $(SQP)/stages/fscan.cpp \
+   $(SQP)/stages/register_stage_containers.cpp
+
+QPIPE_COMMON = \
+   $(SQP)/common/process_query.cpp
+
+lib_libqpipe_a_SOURCES = \
+   $(QPIPE_SCHEDULER) \
+   $(QPIPE_CORE) \
+   $(QPIPE_STAGES) \
+   $(QPIPE_COMMON)
+
+lib_libqpipe_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/qpipe $(SHORE_INCLUDES)
+
+endif
+##### EOF USE_QPIPE ######
 
 
 
@@ -251,6 +352,8 @@ lib_libdoraworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/dora $(SHOR
 
 endif
 ##### EOF USE_DORA ######
+
+
 
 
 

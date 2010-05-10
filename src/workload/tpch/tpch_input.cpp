@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file tpch_input.cpp
  *
  *  @brief Implementation of the (common) inputs for the TPC-H trxs
@@ -42,6 +40,27 @@
 using namespace dbgentpch; // for random MODES etc..
 
 ENTER_NAMESPACE(tpch);
+
+
+
+q2_input_t create_q2_input(const double sf, const int specificWH) { q2_input_t a; return a; }
+q3_input_t create_q3_input(const double sf, const int specificWH) { q3_input_t a; return a; }
+q4_input_t create_q4_input(const double sf, const int specificWH) { q4_input_t a; return a; }
+q5_input_t create_q5_input(const double sf, const int specificWH) { q5_input_t a; return a; }
+q7_input_t create_q7_input(const double sf, const int specificWH) { q7_input_t a; return a; }
+q8_input_t create_q8_input(const double sf, const int specificWH) { q8_input_t a; return a; }
+q9_input_t create_q9_input(const double sf, const int specificWH) { q9_input_t a; return a; }
+q10_input_t create_q10_input(const double sf, const int specificWH) { q10_input_t a; return a; }
+q11_input_t create_q11_input(const double sf, const int specificWH) { q11_input_t a; return a; }
+q13_input_t create_q13_input(const double sf, const int specificWH) { q13_input_t a; return a; }
+q15_input_t create_q15_input(const double sf, const int specificWH) { q15_input_t a; return a; }
+q16_input_t create_q16_input(const double sf, const int specificWH) { q16_input_t a; return a; }
+q17_input_t create_q17_input(const double sf, const int specificWH) { q17_input_t a; return a; }
+q18_input_t create_q18_input(const double sf, const int specificWH) { q18_input_t a; return a; }
+q19_input_t create_q19_input(const double sf, const int specificWH) { q19_input_t a; return a; }
+q20_input_t create_q20_input(const double sf, const int specificWH) { q20_input_t a; return a; }
+q21_input_t create_q21_input(const double sf, const int specificWH) { q21_input_t a; return a; }
+q22_input_t create_q22_input(const double sf, const int specificWH) { q22_input_t a; return a; }
 
 
 

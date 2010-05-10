@@ -94,6 +94,39 @@ int baseline_tpch_client_t::load_sup_xct(mapSupTrxs& stmap)
 //     stmap[XCT_TPCH_Q21]          = "TPCH-Q21";
 //     stmap[XCT_TPCH_Q22]          = "TPCH-Q22";
 
+
+
+#ifdef CFG_QPIPE
+
+    stmap[XCT_QPIPE_TPCH_MIX]               = "QPIPE-TPCH-MIX";
+
+    uint qpipebase = XCT_QPIPE_TPCH_MIX - XCT_TPCH_MIX;
+    stmap[qpipebase + XCT_TPCH_Q1]          = "QPIPE-TPCH-Q1";
+
+    // stmap[qpipebase + XCT_TPCH_Q2]          = "QPIPE-TPCH-Q2";
+    // stmap[qpipebase + XCT_TPCH_Q3]          = "QPIPE-TPCH-Q3";
+    // stmap[qpipebase + XCT_TPCH_Q4]          = "QPIPE-TPCH-Q4";
+    // stmap[qpipebase + XCT_TPCH_Q5]          = "QPIPE-TPCH-Q5";
+    // stmap[qpipebase + XCT_TPCH_Q6]          = "QPIPE-TPCH-Q6";
+    // stmap[qpipebase + XCT_TPCH_Q7]          = "QPIPE-TPCH-Q7";
+    // stmap[qpipebase + XCT_TPCH_Q8]          = "QPIPE-TPCH-Q8";
+    // stmap[qpipebase + XCT_TPCH_Q9]          = "QPIPE-TPCH-Q9";
+    // stmap[qpipebase + XCT_TPCH_Q10]         = "QPIPE-TPCH-Q10";
+    // stmap[qpipebase + XCT_TPCH_Q11]         = "QPIPE-TPCH-Q11";
+    // stmap[qpipebase + XCT_TPCH_Q12]         = "QPIPE-TPCH-Q12";
+    // stmap[qpipebase + XCT_TPCH_Q13]         = "QPIPE-TPCH-Q13";
+    // stmap[qpipebase + XCT_TPCH_Q14]         = "QPIPE-TPCH-Q14";
+    // stmap[qpipebase + XCT_TPCH_Q15]         = "QPIPE-TPCH-Q15";
+    // stmap[qpipebase + XCT_TPCH_Q16]         = "QPIPE-TPCH-Q16";
+    // stmap[qpipebase + XCT_TPCH_Q17]         = "QPIPE-TPCH-Q17";
+    // stmap[qpipebase + XCT_TPCH_Q18]         = "QPIPE-TPCH-Q18";
+    // stmap[qpipebase + XCT_TPCH_Q19]         = "QPIPE-TPCH-Q19";
+    // stmap[qpipebase + XCT_TPCH_Q20]         = "QPIPE-TPCH-Q20";
+    // stmap[qpipebase + XCT_TPCH_Q21]         = "QPIPE-TPCH-Q21";
+    // stmap[qpipebase + XCT_TPCH_Q22]         = "QPIPE-TPCH-Q22";
+
+#endif
+
     
     return (stmap.size());
 }

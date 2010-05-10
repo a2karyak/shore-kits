@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   tpch_const.h
  *
  *  @brief:  Constants needed by the TPC-H kit
@@ -103,9 +101,7 @@ const int XCT_TPCH_Q21      = 61;
 const int XCT_TPCH_Q22      = 62;
 
 
-
-// Translates or picks a random xct type given the benchmark specification
-int random_xct_type(int selected);
+const int XCT_QPIPE_TPCH_MIX      = 1040;
 
 
 EXIT_NAMESPACE(tpch);

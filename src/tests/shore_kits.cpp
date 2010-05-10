@@ -55,7 +55,6 @@
 #include "dora/tm1/dora_tm1_client.h"
 #include "dora/tpcb/dora_tpcb.h"
 #include "dora/tpcb/dora_tpcb_client.h"
-using namespace dora;
 #endif
 
 using namespace shore;
@@ -66,11 +65,11 @@ using namespace tpcb;
 using namespace tpch;
 
 
-
 //////////////////////////////
 // Prints out configuration info
 #ifdef CFG_DORA
 #warning Configuration: DORA enabled
+using namespace dora;
 #endif
 
 #ifdef CFG_FLUSHER
@@ -103,6 +102,10 @@ using namespace tpch;
 
 #ifdef CFG_BT
 #warning Configuration: Backtracing enabled
+#endif
+
+#ifdef CFG_QPIPE
+#warning Configuration: QPipe enabled
 #endif
 
 

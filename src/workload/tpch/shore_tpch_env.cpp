@@ -180,21 +180,24 @@ void ShoreTPCHEnv::table_builder_t::work()
     w_rc_t e = RCOK;
 
     // 1. Load Part-related (~140MB)
-    for(int i=_part_start ; i < _part_end; i++) {
+    for(int i=_part_start ; i < _part_end; i+=PART_POP_UNIT) {
 	while(_env->get_measure() != MST_MEASURE) {
-	    usleep(10000);
+	    usleep(1000);
 	}
 
 	long tid = i;
-	populate_one_part_input_t in = {tid};
+	populate_some_parts_input_t in = {tid};
+
+        tid = std::min(_part_end-i,PART_POP_UNIT);
 
     retrypart:
 	W_COERCE(_env->db()->begin_xct());
-	e = _env->xct_populate_one_part(tid, in);
+
+	e = _env->xct_populate_some_parts(tid, in);
 
         CHECK_XCT_RETURN(e,retrypart);
 
-	long nval = atomic_inc_64_nv(&part_completed);
+	long nval = atomic_add_64_nv(&part_completed,tid);
 	if (nval % PART_COUNT == 0) {
             TRACE( TRACE_ALWAYS, "Parts %d/%d (%.0f%%)\n", 
                    nval, (int)(_sf*PART_UNIT_PER_SF),
@@ -205,21 +208,24 @@ void ShoreTPCHEnv::table_builder_t::work()
     TRACE( TRACE_ALWAYS, "Finished Parts %d .. %d \n", _part_start, _part_end);
 
     // 2. Load Cust-related (~825MB)
-    for(int i=_cust_start ; i < _cust_end; i++) {
+    for (uint i=_cust_start ; i < _cust_end; i+=CUST_POP_UNIT) {
 	while(_env->get_measure() != MST_MEASURE) {
-	    usleep(10000);
+	    usleep(1000);
 	}
 
 	long tid = i;
-	populate_one_cust_input_t in = {tid};
+	populate_some_custs_input_t in = {tid};
+
+        tid = std::min(_cust_end-i,CUST_POP_UNIT);
 
     retrycust:
 	W_COERCE(_env->db()->begin_xct());
-	e = _env->xct_populate_one_cust(tid, in);
+
+	e = _env->xct_populate_some_custs(tid, in);
 
         CHECK_XCT_RETURN(e,retrycust);
 
-	long nval = atomic_inc_64_nv(&cust_completed);
+	long nval = atomic_add_64_nv(&cust_completed,tid);
 	if (nval % PART_COUNT == 0) {
             TRACE( TRACE_ALWAYS, "Customers %d/%d (%.0f%%)\n", 
                    nval, (int)(_sf*CUST_UNIT_PER_SF),
@@ -243,9 +249,15 @@ ShoreTPCHEnv::ShoreTPCHEnv(string confname)
     : ShoreEnv(confname)
 {
     _scaling_factor = TPCH_SCALING_FACTOR;
-    
-    // 1. Call the function that initializes the dbgen
-    dbgen_init();
+
+#ifdef CFG_QPIPE
+    // Set the default scheduling policy. We will worry later about changing
+    // that, possibly through the shell
+    set_sched_policy(NULL);
+
+    // Register stage containers
+    register_stage_containers();
+#endif
 }
 
 
@@ -285,6 +297,56 @@ int ShoreTPCHEnv::load_schema()
 }
 
 
+#ifdef CFG_QPIPE
+
+/******************************************************************** 
+ *
+ *  @fn:    {set,get}_sched_policy()
+ *
+ ********************************************************************/
+
+policy_t* ShoreTPCHEnv::get_sched_policy()
+{
+    CRITICAL_SECTION(init_cs,_load_mutex);
+    return (_sched_policy.get());
+}
+
+policy_t* ShoreTPCHEnv::set_sched_policy(const char* spolicy)
+{
+    CRITICAL_SECTION(init_cs,_load_mutex);
+    if (spolicy) {
+
+        TRACE( TRACE_ALWAYS, "Setting policy (%s)\n", spolicy);
+        
+        if ( !strcmp(spolicy, "OS") ) {
+            _sched_policy = new policy_os_t();
+            return (_sched_policy);
+        }
+
+        if ( !strcmp(spolicy, "RR_CPU") ) {
+            _sched_policy = new policy_rr_cpu_t();
+            return (_sched_policy);
+        }
+
+        if ( !strcmp(spolicy, "QUERY_CPU") ) {
+            _sched_policy = new policy_query_cpu_t();
+            return (_sched_policy);
+        }
+
+        if ( !strcmp(spolicy, "RR_MODULE") ) {
+            _sched_policy = new policy_rr_module_t();
+            return (_sched_policy);
+        }
+    }
+    // Use the default scheduling policy (let the OS choose) 
+    TRACE( TRACE_ALWAYS, "Default scheduling policy (OS)\n");
+    _sched_policy = new policy_os_t();
+    return (_sched_policy);
+}
+
+#endif //CFG_QPIPE
+
+
 /******************************************************************** 
  *
  *  @fn:    info()
@@ -293,7 +355,7 @@ int ShoreTPCHEnv::load_schema()
  *
  ********************************************************************/
 
-int ShoreTPCHEnv::info()
+int ShoreTPCHEnv::info() const
 {
     TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
     return (0);
@@ -362,6 +424,10 @@ w_rc_t ShoreTPCHEnv::loaddata()
         return (RCOK);
     }        
     CRITICAL_SECTION(scale_cs, _scaling_mutex);
+
+    // 1. Call the function that initializes the dbgen
+    dbgen_init();
+
 
     time_t tstart = time(NULL);
 
