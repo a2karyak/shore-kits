@@ -90,9 +90,9 @@ nation_t::nation_t(string sysname) :
 {
     // table schema
     _desc[0].setup(SQL_INT,   "N_NATIONKEY");
-    _desc[1].setup(SQL_CHAR,  "N_NAME", 25);
+    _desc[1].setup(SQL_FIXCHAR,  "N_NAME", 25);
     _desc[2].setup(SQL_INT,   "N_REGIONKEY");
-    _desc[3].setup(SQL_CHAR,  "N_COMMENT", 152);
+    _desc[3].setup(SQL_FIXCHAR,  "N_COMMENT", 152);
 
     int keys[1] = { 0 }; // IDX { N_NATIONKEY }
 
@@ -116,8 +116,8 @@ region_t::region_t(string sysname) :
 {
     // table schema
     _desc[0].setup(SQL_INT,   "R_REGIONKEY");     
-    _desc[1].setup(SQL_CHAR,  "R_NAME", 25);
-    _desc[2].setup(SQL_CHAR,  "R_COMMENT", 25);
+    _desc[1].setup(SQL_FIXCHAR,  "R_NAME", 25);
+    _desc[2].setup(SQL_FIXCHAR,  "R_COMMENT", 25);
 
     int keys[1] = { 0 }; // IDX { R_REGIONKEY }
 
@@ -135,12 +135,12 @@ supplier_t::supplier_t(string sysname) :
 {
     // table schema
     _desc[0].setup(SQL_INT,   "S_SUPPKEY");
-    _desc[1].setup(SQL_CHAR,  "S_NAME", 25);
-    _desc[2].setup(SQL_CHAR,  "S_ADDRESS", 40);
+    _desc[1].setup(SQL_FIXCHAR,  "S_NAME", 25);
+    _desc[2].setup(SQL_FIXCHAR,  "S_ADDRESS", 40);
     _desc[3].setup(SQL_INT,   "S_NATIONKEY");
-    _desc[4].setup(SQL_CHAR,  "S_PHONE", 15);
+    _desc[4].setup(SQL_FIXCHAR,  "S_PHONE", 15);
     _desc[5].setup(SQL_FLOAT, "S_ACCTBAL");
-    _desc[6].setup(SQL_CHAR,  "S_COMMENT", 101);
+    _desc[6].setup(SQL_FIXCHAR,  "S_COMMENT", 101);
 
     int keys[1] = {0}; // IDX { S_SUPPKEY}
 				
@@ -163,14 +163,14 @@ part_t::part_t(string sysname) :
 {
     // table schema
     _desc[0].setup(SQL_INT,   "P_PARTKEY");
-    _desc[1].setup(SQL_CHAR,  "P_NAME", 55);  
-    _desc[2].setup(SQL_CHAR,  "P_MFGR", 25); 
-    _desc[3].setup(SQL_CHAR,  "P_BRAND", 10);   
-    _desc[4].setup(SQL_CHAR,  "P_TYPE", 25);    
+    _desc[1].setup(SQL_FIXCHAR,  "P_NAME", 55);  
+    _desc[2].setup(SQL_FIXCHAR,  "P_MFGR", 25); 
+    _desc[3].setup(SQL_FIXCHAR,  "P_BRAND", 10);   
+    _desc[4].setup(SQL_FIXCHAR,  "P_TYPE", 25);    
     _desc[5].setup(SQL_INT,   "P_SIZE");    
-    _desc[6].setup(SQL_CHAR,  "P_CONTAINER", 10);  
+    _desc[6].setup(SQL_FIXCHAR,  "P_CONTAINER", 10);  
     _desc[7].setup(SQL_FLOAT, "P_RETAILPRICE"); 
-    _desc[8].setup(SQL_CHAR,  "P_COMMENT", 23);
+    _desc[8].setup(SQL_FIXCHAR,  "P_COMMENT", 23);
                                 
     int keys[1] = { 0 }; // IDX { P_PARTKEY }
         
@@ -189,7 +189,7 @@ partsupp_t::partsupp_t(string sysname) :
     _desc[1].setup(SQL_INT,    "PS_SUPPKEY");       
     _desc[2].setup(SQL_INT,    "PS_AVAILQTY");
     _desc[3].setup(SQL_FLOAT,  "PS_SUPPLYCOST");  
-    _desc[4].setup(SQL_CHAR,   "PS_COMMENT", 199); 
+    _desc[4].setup(SQL_FIXCHAR,   "PS_COMMENT", 199); 
         
     int keys[2] = { 0, 1 }; // IDX { PS_PARTKEY, PS_SUPPKEY }
                 
@@ -216,13 +216,13 @@ customer_t::customer_t(string sysname) :
 {
     // table schema
     _desc[0].setup(SQL_INT,    "C_CUSTKEY");
-    _desc[1].setup(SQL_CHAR,   "C_NAME", 25);       
-    _desc[2].setup(SQL_CHAR,   "C_ADDRESS", 40);       
+    _desc[1].setup(SQL_FIXCHAR,   "C_NAME", 25);       
+    _desc[2].setup(SQL_FIXCHAR,   "C_ADDRESS", 40);       
     _desc[3].setup(SQL_INT,    "C_NATIONKEY");  
-    _desc[4].setup(SQL_CHAR,   "C_PHONE", 15);  
+    _desc[4].setup(SQL_FIXCHAR,   "C_PHONE", 15);  
     _desc[5].setup(SQL_FLOAT,  "C_ACCTBAL");   
-    _desc[6].setup(SQL_CHAR,   "C_MKTSEGMENT", 10);
-    _desc[7].setup(SQL_CHAR,   "C_COMMENT", 117);
+    _desc[6].setup(SQL_FIXCHAR,   "C_MKTSEGMENT", 10);
+    _desc[7].setup(SQL_FIXCHAR,   "C_COMMENT", 117);
 
     int keys[1] = { 0 }; // IDX { C_CUSTKEY }
         
@@ -246,13 +246,13 @@ orders_t::orders_t(string sysname) :
     // table schema
     _desc[0].setup(SQL_INT,   "O_ORDERKEY");
     _desc[1].setup(SQL_INT,   "O_CUSTKEY");       
-    _desc[2].setup(SQL_INT,   "O_ORDERSTATUS");       
+    _desc[2].setup(SQL_CHAR,   "O_ORDERSTATUS");       
     _desc[3].setup(SQL_FLOAT, "O_TOTALPRICE");       
-    _desc[4].setup(SQL_CHAR,  "O_ORDERDATE", 15);
-    _desc[5].setup(SQL_CHAR,  "O_ORDERPRIORITY", 15); 
-    _desc[6].setup(SQL_CHAR,  "O_CLERK", 15);
+    _desc[4].setup(SQL_FIXCHAR,  "O_ORDERDATE", 15);
+    _desc[5].setup(SQL_FIXCHAR,  "O_ORDERPRIORITY", 15); 
+    _desc[6].setup(SQL_FIXCHAR,  "O_CLERK", 15);
     _desc[7].setup(SQL_INT,   "O_SHIPPRIORITY");
-    _desc[8].setup(SQL_CHAR,  "O_COMMENT", 79);
+    _desc[8].setup(SQL_FIXCHAR,  "O_COMMENT", 79);
 
     int keys[1] = { 0 }; // IDX { O_ORDERKEY }
         
@@ -283,14 +283,14 @@ lineitem_t::lineitem_t(string sysname) :
     _desc[5].setup(SQL_FLOAT,  "L_EXTENDEDPRICE");
     _desc[6].setup(SQL_FLOAT,  "L_DISCOUNT");
     _desc[7].setup(SQL_FLOAT,  "L_TAX");
-    _desc[8].setup(SQL_CHAR,   "L_RETURNFLAG", 1);
-    _desc[9].setup(SQL_CHAR,   "L_LINESTATUS", 1);
-    _desc[10].setup(SQL_CHAR,  "L_SHIPDATE", 15);
-    _desc[11].setup(SQL_CHAR,  "L_COMMITDATE", 15);
-    _desc[12].setup(SQL_CHAR,  "L_RECEIPTDATE", 15);
-    _desc[13].setup(SQL_CHAR,  "L_SHIPINSTRUCT", 25);
-    _desc[14].setup(SQL_CHAR,  "L_SHIPMODE", 10);
-    _desc[15].setup(SQL_CHAR,  "L_COMMENT", 44);
+    _desc[8].setup(SQL_CHAR,   "L_RETURNFLAG");
+    _desc[9].setup(SQL_CHAR,   "L_LINESTATUS");
+    _desc[10].setup(SQL_FIXCHAR,  "L_SHIPDATE", 15);
+    _desc[11].setup(SQL_FIXCHAR,  "L_COMMITDATE", 15);
+    _desc[12].setup(SQL_FIXCHAR,  "L_RECEIPTDATE", 15);
+    _desc[13].setup(SQL_FIXCHAR,  "L_SHIPINSTRUCT", 25);
+    _desc[14].setup(SQL_FIXCHAR,  "L_SHIPMODE", 10);
+    _desc[15].setup(SQL_FIXCHAR,  "L_COMMENT", 44);
 
     int keys[2] = {0, 3}; // IDX { L_ORDERKEY, L_LINENUMBER }
 

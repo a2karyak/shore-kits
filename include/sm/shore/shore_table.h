@@ -120,18 +120,18 @@ class table_desc_t : public file_desc_t
 {
 protected:
 
-  /* ------------------- */
-  /* --- table schema -- */
-  /* ------------------- */
+    /* ------------------- */
+    /* --- table schema -- */
+    /* ------------------- */
+    
+    field_desc_t*   _desc;               // schema - set of field descriptors
+    
+    index_desc_t*   _indexes;            // indexes on the table
+    index_desc_t*   _primary_idx;        // pointer to primary idx
   
-  field_desc_t*   _desc;               // schema - set of field descriptors
-  
-  index_desc_t*   _indexes;            // indexes on the table
-  index_desc_t*   _primary_idx;        // pointer to primary idx
-  
-  volatile uint_t _maxsize;            // max tuple size for this table, shortcut
-
-  int find_field_by_name(const char* field_name) const;
+    volatile uint_t _maxsize;            // max tuple size for this table, shortcut
+    
+    int find_field_by_name(const char* field_name) const;
 
 public:
 
@@ -213,7 +213,7 @@ public:
     /* --- for the conversion between disk format and memory format --- */
     /* ---------------------------------------------------------------- */
 
-    const int maxsize(); /* maximum requirement for disk format */
+    uint_t maxsize(); /* maximum requirement for disk format */
 
     inline field_desc_t* desc(const uint_t descidx) {
         assert (descidx<_field_count);
@@ -371,7 +371,7 @@ inline const int table_desc_t::index_maxkeysize(index_desc_t* idx) const
  *
  ******************************************************************/
 
-inline const int table_desc_t::maxsize()
+inline uint_t table_desc_t::maxsize()
 {
     // shortcut not to re-compute maxsize
     if (*&_maxsize)

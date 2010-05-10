@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_row_impl.h
  *
  *  @brief:  Base class for tuples used in Shore
@@ -31,10 +29,6 @@
  *
  *  @author: Ippokratis Pandis, January 2008
  *
- */
-
-/* shore_row_impl.h contains the template-based base class (tuple_impl) 
- * for operations on tuples stored in Shore. 
  */
 
 #ifndef __SHORE_ROW_IMPL_H

@@ -69,7 +69,7 @@ branch_t::branch_t(string sysname) :
     /* table schema */
     _desc[0].setup(SQL_INT,   "B_ID");
     _desc[1].setup(SQL_FLOAT, "B_BALANCE");
-    _desc[2].setup(SQL_CHAR,  "B_PADDING", 100-sizeof(int)-sizeof(double));
+    _desc[2].setup(SQL_FIXCHAR,  "B_PADDING", 100-sizeof(int)-sizeof(double));
     
     int  keys1[1] = { 0 }; // IDX { B_ID }
     
@@ -101,7 +101,7 @@ teller_t::teller_t(string sysname) :
     _desc[0].setup(SQL_INT,   "T_ID");     
     _desc[1].setup(SQL_INT,   "T_B_ID");   
     _desc[2].setup(SQL_FLOAT, "T_BALANCE");
-    _desc[3].setup(SQL_CHAR,  "T_PADDING", 100-2*sizeof(int) - sizeof(double));
+    _desc[3].setup(SQL_FIXCHAR,  "T_PADDING", 100-2*sizeof(int) - sizeof(double));
     
     int keys1[1] = { 0 }; // IDX { T_ID }
 
@@ -134,7 +134,7 @@ account_t::account_t(string sysname) :
     _desc[0].setup(SQL_INT,    "A_ID");
     _desc[1].setup(SQL_INT,    "A_B_ID");       
     _desc[2].setup(SQL_FLOAT,  "A_BALANCE");  
-    _desc[3].setup(SQL_CHAR,   "A_PADDING", 100-2*sizeof(int)-sizeof(double));  
+    _desc[3].setup(SQL_FIXCHAR,   "A_PADDING", 100-2*sizeof(int)-sizeof(double));  
     
     int keys1[1] = {0 }; // IDX { A_ID }
 
@@ -173,7 +173,7 @@ history_t::history_t(string sysname) :
         _desc[2].setup(SQL_INT,   "H_A_ID"); 
         _desc[3].setup(SQL_FLOAT, "H_DELTA");   /* old: INT */
         _desc[4].setup(SQL_FLOAT, "H_TIME");     /* old: TIME */
-        _desc[5].setup(SQL_CHAR,  "H_PADDING", 50-3*sizeof(int)-2*sizeof(double)); 
+        _desc[5].setup(SQL_FIXCHAR,  "H_PADDING", 50-3*sizeof(int)-2*sizeof(double)); 
 
         // NO INDEXES
     }

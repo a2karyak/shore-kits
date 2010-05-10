@@ -110,7 +110,7 @@ subscriber_t::subscriber_t(string sysname) :
 
     int padding_sz = 100-10*sizeof(bool)-20*sizeof(short)-3*sizeof(int)
         -TM1_SUB_NBR_SZ*sizeof(char);
-    _desc[34].setup(SQL_CHAR,       "S_PADDING", padding_sz);
+    _desc[34].setup(SQL_FIXCHAR,       "S_PADDING", padding_sz);
         
 
     int keys1[1] = { 0 }; // IDX { S_ID }
@@ -155,13 +155,13 @@ access_info_t::access_info_t(string sysname) :
     _desc[1].setup(SQL_SMALLINT,   "AI_TYPE");    // SMALLINT (1,4)   - (AI.S_ID,AI.AI_TYPE) is PRIMARY KEY
     _desc[2].setup(SQL_SMALLINT,   "DATA1");      // SMALLINT (0,255)
     _desc[3].setup(SQL_SMALLINT,   "DATA2");     
-    _desc[4].setup(SQL_CHAR,       "DATA3", TM1_AI_DATA3_SZ);   // CHAR (3). [A-Z]
-    _desc[5].setup(SQL_CHAR,       "DATA4", TM1_AI_DATA4_SZ);   // CHAR (5). [A-Z]
+    _desc[4].setup(SQL_FIXCHAR,       "DATA3", TM1_AI_DATA3_SZ);   // CHAR (3). [A-Z]
+    _desc[5].setup(SQL_FIXCHAR,       "DATA4", TM1_AI_DATA4_SZ);   // CHAR (5). [A-Z]
 
 
     int padding_sz = 50-3*sizeof(short)-1*sizeof(int)
         -(TM1_AI_DATA3_SZ+TM1_AI_DATA4_SZ)*sizeof(char);
-    _desc[6].setup(SQL_CHAR,       "AI_PADDING", padding_sz);
+    _desc[6].setup(SQL_FIXCHAR,       "AI_PADDING", padding_sz);
 
 
     // There are between 1 and 4 Acess_Info records per Subscriber.
@@ -202,11 +202,11 @@ special_facility_t::special_facility_t(string sysname) :
     _desc[2].setup(SQL_BIT,        "IS_ACTIVE");    // BIT (0,1). 85% is 1 - 15% is 0
     _desc[3].setup(SQL_SMALLINT,   "ERROR_CNTRL");  // SMALLINT (0,255)
     _desc[4].setup(SQL_SMALLINT,   "DATA_A");       
-    _desc[5].setup(SQL_CHAR,       "DATA_B", TM1_SF_DATA_B_SZ);  // CHAR (5) [A-Z] 
+    _desc[5].setup(SQL_FIXCHAR,       "DATA_B", TM1_SF_DATA_B_SZ);  // CHAR (5) [A-Z] 
 
     int padding_sz = 50-1*sizeof(bool)-3*sizeof(short)-1*sizeof(int)
         -TM1_SF_DATA_B_SZ*sizeof(char);
-    _desc[6].setup(SQL_CHAR,       "SF_PADDING", padding_sz);
+    _desc[6].setup(SQL_FIXCHAR,       "SF_PADDING", padding_sz);
 
 
     // There are between 1 and 4 Special_Facility records per Subscriber.
@@ -246,11 +246,11 @@ call_forwarding_t::call_forwarding_t(string sysname) :
     _desc[1].setup(SQL_SMALLINT,   "SF_TYPE");     // REF SF.SF_TYPE
     _desc[2].setup(SQL_SMALLINT,   "START_TIME");  // SMALLINT {0,8,16}
     _desc[3].setup(SQL_SMALLINT,   "END_TIME");    // SMALLINT START_TIME + URAND(1,8)
-    _desc[4].setup(SQL_CHAR,       "NUMBERX", TM1_CF_NUMBERX_SZ); // CHAR (15) [0-9]
+    _desc[4].setup(SQL_FIXCHAR,       "NUMBERX", TM1_CF_NUMBERX_SZ); // CHAR (15) [0-9]
 
 
     int padding_sz = 50-3*sizeof(short)-1*sizeof(int)-TM1_CF_NUMBERX_SZ*sizeof(char);
-    _desc[5].setup(SQL_CHAR,       "CF_PADDING", padding_sz);
+    _desc[5].setup(SQL_FIXCHAR,       "CF_PADDING", padding_sz);
 
 
     int keys[3] = { 0, 1, 2 }; // IDX { S_ID, SF_TYPE, START_TIME }

@@ -23,7 +23,7 @@
 
 /** @file:   shore_row.h
  *
- *  @brief:  Base class for rows of tables stored in Shore
+ *  @brief:  Base class for records (rows) of tables in Shore
  *
  *  @note:   tuple_row_t - row of a table
  *
@@ -112,8 +112,12 @@ typedef atomic_class_stack<char> ats_char_t;
 struct rep_row_t 
 {    
     char* _dest;       /* pointer to a buffer */
-    int   _bufsz;      /* buffer size */
+    uint   _bufsz;     /* buffer size */
     ats_char_t* _pts;  /* pointer to a trash stack */
+
+    rep_row_t()
+        : _dest(NULL), _bufsz(0), _pts(NULL)
+    { }
 
     rep_row_t(ats_char_t* apts) 
         : _dest(NULL), _bufsz(0), _pts(apts)
@@ -121,7 +125,7 @@ struct rep_row_t
         assert (_pts);
     }
 
-    rep_row_t(char* &dest, int &bufsz, ats_char_t* apts) 
+    rep_row_t(char* &dest, uint &bufsz, ats_char_t* apts) 
         : _dest(dest), _bufsz(0), _pts(apts)
     {
         assert (_pts);
@@ -135,10 +139,10 @@ struct rep_row_t
         }
     }
 
-    void set(const int new_bufsz);
+    void set(const uint nsz);
 
-    //    static int _static_format_mallocs;
-
+    void set_ts(ats_char_t* apts, const uint nsz);
+    
 }; // EOF: rep_row_t
 
 
@@ -154,7 +158,7 @@ struct rep_row_t
 
 struct table_row_t 
 {    
-    int            _field_cnt;    /* number of fields */
+    uint           _field_cnt;    /* number of fields */
     bool           _is_setup;     /* flag if already setup */
     
     rid_t          _rid;          /* record id */    
@@ -164,8 +168,7 @@ struct table_row_t
     offset_t _fixed_offset;
     offset_t _var_slot_offset;
     offset_t _var_offset;
-    int      _null_count;
-
+    uint     _null_count;
 
     rep_row_t*     _rep;          /* a pointer to a row representation struct */
 
@@ -193,43 +196,45 @@ struct table_row_t
 
     inline rid_t rid() const { return (_rid); }
     inline void  set_rid(const rid_t& rid) { _rid = rid; }
-    inline const bool  is_rid_valid() const { return (_rid != rid_t::null); }
+    inline bool  is_rid_valid() const { return (_rid != rid_t::null); }
 
-    inline const offset_t get_fixed_offset() const { return (_fixed_offset); }
-    inline const offset_t get_var_slot_offset() const { return (_var_slot_offset); }
-    inline const offset_t get_var_offset() const { return (_var_offset); }
-    inline const int get_null_count() const { return (_null_count); }
+    inline offset_t get_fixed_offset() const { return (_fixed_offset); }
+    inline offset_t get_var_slot_offset() const { return (_var_slot_offset); }
+    inline offset_t get_var_offset() const { return (_var_offset); }
+    inline uint get_null_count() const { return (_null_count); }
 
-    const int size() const;
+    uint size() const;
 
 
     /* ------------------------ */
     /* --- set field values --- */
     /* ------------------------ */
     
-    void set_null(const int idx);
-    void set_value(const int idx, const int v);
-    void set_value(const int idx, const bool v);
-    void set_value(const int idx, const short v);
-    void set_value(const int idx, const double v);
-    void set_value(const int idx, const decimal v);
-    void set_value(const int idx, const time_t v);
-    void set_value(const int idx, const char* string);
-    void set_value(const int idx, const timestamp_t& time);
+    void set_null(const uint idx);
+    void set_value(const uint idx, const int v);
+    void set_value(const uint idx, const bool v);
+    void set_value(const uint idx, const short v);
+    void set_value(const uint idx, const double v);
+    void set_value(const uint idx, const decimal v);
+    void set_value(const uint idx, const time_t v);
+    void set_value(const uint idx, const char v);
+    void set_value(const uint idx, const char* string);
+    void set_value(const uint idx, const timestamp_t& time);
 
 
     /* ------------------------ */
     /* --- get field values --- */
     /* ------------------------ */
 
-    bool get_value(const int idx, int& value) const;
-    bool get_value(const int idx, bool& value) const;
-    bool get_value(const int idx, short& value) const;
-    bool get_value(const int idx, char* buffer, const int bufsize) const;
-    bool get_value(const int idx, double& value) const;
-    bool get_value(const int idx, decimal& value) const;
-    bool get_value(const int idx, time_t& value) const;
-    bool get_value(const int idx, timestamp_t& value) const;
+    bool get_value(const uint idx, int& dest) const;
+    bool get_value(const uint idx, bool& dest) const;
+    bool get_value(const uint idx, short& dest) const;
+    bool get_value(const uint idx, char& dest) const;
+    bool get_value(const uint idx, char* destbuf, const int bufsize) const;
+    bool get_value(const uint idx, double& dest) const;
+    bool get_value(const uint idx, decimal& dest) const;
+    bool get_value(const uint idx, time_t& dest) const;
+    bool get_value(const uint idx, timestamp_t& dest) const;
 
 
     /* ----------------- */
@@ -263,84 +268,17 @@ struct table_row_t
         }
     }
 
-
-
 }; // EOF: table_row_t
-
-
-
-/******************************************************************
- * 
- * struct rep_row_t methods 
- *
- ******************************************************************/
-
-inline void rep_row_t::set(const int new_bufsz)
-{
-    if ((!_dest) || (_bufsz < new_bufsz)) {
-
-        char* tmp = _dest;
-
-        // Using the trash stack
-        assert (_pts);
-        _dest = new(*_pts) char(new_bufsz);
-
-        if (tmp) {
-            //            delete [] tmp;
-            _pts->destroy(tmp);
-            tmp = NULL;
-        } 
-        _bufsz = _pts->nbytes();
-    }
-
-    // in any case, clean up the buffer
-    memset (_dest, 0, new_bufsz);
-}
-
 
 
 /******************************************************************
  * 
  * class table_row_t methods 
  *
- ******************************************************************/
-
-
-/****************************************************************** 
- *
- *  @fn:    size()
- *
- *  @brief: Return the actual size of the tuple in disk format
+ * @brief: The {set,get}_value() functions are very frequently called.
+ *         Therefore, they have been inlined here.
  *
  ******************************************************************/
-
-inline const int table_row_t::size() const
-{
-    assert (_is_setup);
-
-    int size = 0;
-
-    /* for a fixed length field, it just takes as much as the
-     * space for the value itself to store.
-     * for a variable length field, we store as much as the data
-     * and the offset to tell the length of the data.
-     * Of course, there is a bit for each nullable field.
-     */
-
-    for (int i=0; i<_field_cnt; i++) {
-	if (_pvalues[i]._pfield_desc->allow_null()) {
-	    if (_pvalues[i].is_null()) continue;
-	}
-	if (_pvalues[i].is_variable_length()) {
-	    size += _pvalues[i].realsize();
-	    size += sizeof(offset_t);
-	}
-	else size += _pvalues[i].maxsize();
-    }
-    if (_null_count) size += (_null_count >> 3) + 1;
-    return (size);
-}
-
 
 
 /******************************************************************
@@ -349,70 +287,78 @@ inline const int table_row_t::size() const
  *
  ******************************************************************/
     
-inline void table_row_t::set_null(const int idx) 
+inline void table_row_t::set_null(const uint idx) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_null();
 }
 
-inline void table_row_t::set_value(const int idx, const int v) 
+inline void table_row_t::set_value(const uint idx, const int v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_int_value(v);
 }
 
-inline void table_row_t::set_value(const int idx, const bool v) 
+inline void table_row_t::set_value(const uint idx, const bool v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_bit_value(v);
 }
 
-inline void table_row_t::set_value(const int idx, const short v) 
+inline void table_row_t::set_value(const uint idx, const short v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_smallint_value(v);
 }
 
-inline void table_row_t::set_value(const int idx, const double v) 
+inline void table_row_t::set_value(const uint idx, const double v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_float_value(v);
 }
 
-inline void table_row_t::set_value(const int idx, const decimal v) 
+inline void table_row_t::set_value(const uint idx, const decimal v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_decimal_value(v);
 }
 
-inline void table_row_t::set_value(const int idx, const time_t v) 
+inline void table_row_t::set_value(const uint idx, const time_t v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
-    assert (_is_setup && _pvalues[idx].is_setup());
+    assert (idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_time_value(v);
 }
 
-inline void table_row_t::set_value(const int idx, const char* string) 
+inline void table_row_t::set_value(const uint idx, const char v) 
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
+    assert (_pvalues[idx].is_setup());
+    _pvalues[idx].set_char_value(v);
+}
+
+inline void table_row_t::set_value(const uint idx, const char* string) 
+{
+    assert (_is_setup);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
 
     register sqltype_t sqlt = _pvalues[idx].field_desc()->type();
-    assert (sqlt == SQL_VARCHAR || sqlt == SQL_CHAR );
+    assert (sqlt == SQL_VARCHAR || sqlt == SQL_FIXCHAR );
 
     int len = strlen(string);
     if ( sqlt == SQL_VARCHAR ) { 
@@ -425,10 +371,10 @@ inline void table_row_t::set_value(const int idx, const char* string)
     }
 }
 
-inline void table_row_t::set_value(const int idx, const timestamp_t& time)
+inline void table_row_t::set_value(const uint idx, const timestamp_t& time)
 {
     assert (_is_setup);
-    assert (idx >= 0 && idx < _field_cnt);
+    assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
     _pvalues[idx].set_value(&time, 0);
 }
@@ -441,109 +387,122 @@ inline void table_row_t::set_value(const int idx, const timestamp_t& time)
  *
  ******************************************************************/
 
-inline bool table_row_t::get_value(const int index,
-                                   int& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   int& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
-        value = 0;
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        dest = 0;
         return false;
     }
-    value = _pvalues[index].get_int_value();
+    dest = _pvalues[idx].get_int_value();
     return true;
 }
 
-inline bool table_row_t::get_value(const int index,
-                                   bool& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   bool& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
-        value = false;
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        dest = false;
         return false;
     }
-    value = _pvalues[index].get_bit_value();
+    dest = _pvalues[idx].get_bit_value();
     return true;
 }
 
-inline bool table_row_t::get_value(const int index,
-                                   short& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   short& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
-        value = 0;
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        dest = 0;
         return false;
     }
-    value = _pvalues[index].get_smallint_value();
+    dest = _pvalues[idx].get_smallint_value();
     return true;
 }
 
-inline bool table_row_t::get_value(const int index,
-                                    char* buffer,
-                                    const int bufsize) const
+inline bool table_row_t::get_value(const uint idx,
+                                   char& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
-        buffer[0] = '\0';
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        dest = 0;
+        return false;
+    }
+    dest = _pvalues[idx].get_char_value();
+    return true;
+}
+
+inline bool table_row_t::get_value(const uint idx,
+                                   char* destbuf,
+                                   const int bufsize) const
+{
+    assert (_is_setup);
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        destbuf[0] = '\0';
         return (false);
     }
     // if variable length
-    int sz = MIN(bufsize-1, _pvalues[index]._max_size);
-    _pvalues[index].get_string_value(buffer, sz);
-    buffer[sz] ='\0';
+    int sz = MIN(bufsize-1, _pvalues[idx]._max_size);
+    _pvalues[idx].get_string_value(destbuf, sz);
+    destbuf[sz] ='\0';
     return (true);
 }
 
-inline bool table_row_t::get_value(const int index,
-                                   double& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   double& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
-        value = 0;
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        dest = 0;
         return false;
     }
-    value = _pvalues[index].get_float_value();
+    dest = _pvalues[idx].get_float_value();
     return true;
 }
 
-inline bool table_row_t::get_value(const int index,
-                                   decimal& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   decimal& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
-        value = decimal(0);
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
+        dest = decimal(0);
         return false;        
     }
-    value = _pvalues[index].get_decimal_value();
+    dest = _pvalues[idx].get_decimal_value();
     return true;
 }
 
-inline bool table_row_t::get_value(const int index,
-                                   time_t& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   time_t& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
         return false;
     }
-    value = _pvalues[index].get_time_value();
+    dest = _pvalues[idx].get_time_value();
     return true;
 }
 
-inline bool table_row_t::get_value(const int index,
-                                    timestamp_t& value) const
+inline bool table_row_t::get_value(const uint idx,
+                                   timestamp_t& dest) const
 {
     assert (_is_setup);
-    assert(index >= 0 && index < _field_cnt);
-    if (_pvalues[index].is_null()) {
+    assert(idx < _field_cnt);
+    if (_pvalues[idx].is_null()) {
         return false;
     }
-    value = _pvalues[index].get_tstamp_value();
+    dest = _pvalues[idx].get_tstamp_value();
     return true;
 }
 

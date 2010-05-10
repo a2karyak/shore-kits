@@ -85,12 +85,12 @@ warehouse_t::warehouse_t(string sysname) :
 {
     /* table schema */
     _desc[0].setup(SQL_INT,   "W_ID");
-    _desc[1].setup(SQL_CHAR,  "W_NAME", 10);
-    _desc[2].setup(SQL_CHAR,  "W_STREET1", 20);
-    _desc[3].setup(SQL_CHAR,  "W_STREET2", 20);
-    _desc[4].setup(SQL_CHAR,  "W_CITY", 20);   
-    _desc[5].setup(SQL_CHAR,  "W_STATE", 2);
-    _desc[6].setup(SQL_CHAR,  "W_ZIP", 9);
+    _desc[1].setup(SQL_FIXCHAR,  "W_NAME", 10);
+    _desc[2].setup(SQL_FIXCHAR,  "W_STREET1", 20);
+    _desc[3].setup(SQL_FIXCHAR,  "W_STREET2", 20);
+    _desc[4].setup(SQL_FIXCHAR,  "W_CITY", 20);   
+    _desc[5].setup(SQL_FIXCHAR,  "W_STATE", 2);
+    _desc[6].setup(SQL_FIXCHAR,  "W_ZIP", 9);
     _desc[7].setup(SQL_FLOAT, "W_TAX");   
     _desc[8].setup(SQL_FLOAT, "W_YTD");  /* DECIMAL(12,2) */
 
@@ -125,12 +125,12 @@ district_t::district_t(string sysname) :
     /* table schema */
     _desc[0].setup(SQL_INT,   "D_ID");     
     _desc[1].setup(SQL_INT,   "D_W_ID");   
-    _desc[2].setup(SQL_CHAR,  "D_NAME", 10);    /* VARCHAR(10) */
-    _desc[3].setup(SQL_CHAR,  "D_STREET1", 20);
-    _desc[4].setup(SQL_CHAR,  "D_STREET2", 20);
-    _desc[5].setup(SQL_CHAR,  "D_CITY", 20);
-    _desc[6].setup(SQL_CHAR,  "D_STATE", 2); 
-    _desc[7].setup(SQL_CHAR,  "D_ZIP", 9);   
+    _desc[2].setup(SQL_FIXCHAR,  "D_NAME", 10);    /* VARCHAR(10) */
+    _desc[3].setup(SQL_FIXCHAR,  "D_STREET1", 20);
+    _desc[4].setup(SQL_FIXCHAR,  "D_STREET2", 20);
+    _desc[5].setup(SQL_FIXCHAR,  "D_CITY", 20);
+    _desc[6].setup(SQL_FIXCHAR,  "D_STATE", 2); 
+    _desc[7].setup(SQL_FIXCHAR,  "D_ZIP", 9);   
     _desc[8].setup(SQL_FLOAT, "D_TAX");    
     _desc[9].setup(SQL_FLOAT, "D_YTD");         /* DECIMAL(12,2) */
     _desc[10].setup(SQL_INT,  "D_NEXT_O_ID");
@@ -165,26 +165,26 @@ customer_t::customer_t(string sysname) :
     _desc[1].setup(SQL_INT,    "C_D_ID");       
     _desc[2].setup(SQL_INT,    "C_W_ID");       
     //_desc[5].setup(SQL_VARCHAR,   "C_FIRST", TPCC_C_FIRST_SZ);   
-    _desc[3].setup(SQL_CHAR,   "C_FIRST", 16);  
-    _desc[4].setup(SQL_CHAR,   "C_MIDDLE", 2);  
-    _desc[5].setup(SQL_CHAR,   "C_LAST", 16);   
+    _desc[3].setup(SQL_FIXCHAR,   "C_FIRST", 16);  
+    _desc[4].setup(SQL_FIXCHAR,   "C_MIDDLE", 2);  
+    _desc[5].setup(SQL_FIXCHAR,   "C_LAST", 16);   
     //_desc[5].setup(SQL_VARCHAR,   "C_LAST", TPCC_C_LAST_SZ);   
-    _desc[6].setup(SQL_CHAR,   "C_STREET1", 20);
-    _desc[7].setup(SQL_CHAR,   "C_STREET2", 20);
-    _desc[8].setup(SQL_CHAR,   "C_CITY", 20);   
-    _desc[9].setup(SQL_CHAR,   "C_STATE", 2);   
-    _desc[10].setup(SQL_CHAR,  "C_ZIP", 9);     
-    _desc[11].setup(SQL_CHAR,  "C_PHONE", 16);  
+    _desc[6].setup(SQL_FIXCHAR,   "C_STREET1", 20);
+    _desc[7].setup(SQL_FIXCHAR,   "C_STREET2", 20);
+    _desc[8].setup(SQL_FIXCHAR,   "C_CITY", 20);   
+    _desc[9].setup(SQL_FIXCHAR,   "C_STATE", 2);   
+    _desc[10].setup(SQL_FIXCHAR,  "C_ZIP", 9);     
+    _desc[11].setup(SQL_FIXCHAR,  "C_PHONE", 16);  
     _desc[12].setup(SQL_FLOAT, "C_SINCE");           
-    _desc[13].setup(SQL_CHAR,  "C_CREDIT", 2);  
+    _desc[13].setup(SQL_FIXCHAR,  "C_CREDIT", 2);  
     _desc[14].setup(SQL_FLOAT, "C_CREDIT_LIM");      
     _desc[15].setup(SQL_FLOAT, "C_DISCOUNT");
     _desc[16].setup(SQL_FLOAT, "C_BALANCE");         
     _desc[17].setup(SQL_FLOAT, "C_YTD_PAYMENT");     
     _desc[18].setup(SQL_FLOAT, "C_LAST_PAYMENT");    
     _desc[19].setup(SQL_INT,   "C_PAYMENT_CNT");     
-    _desc[20].setup(SQL_CHAR,  "C_DATA_1", 250);
-    _desc[21].setup(SQL_CHAR,  "C_DATA_2", 250);     
+    _desc[20].setup(SQL_FIXCHAR,  "C_DATA_1", 250);
+    _desc[21].setup(SQL_FIXCHAR,  "C_DATA_2", 250);     
 
     int keys1[3] = {2, 1, 0 }; // IDX { C_W_ID, C_D_ID, C_ID }
 
@@ -229,7 +229,7 @@ history_t::history_t(string sysname) :
     _desc[4].setup(SQL_INT,   "H_W_ID");    
     _desc[5].setup(SQL_FLOAT, "H_DATE");    
     _desc[6].setup(SQL_FLOAT, "H_AMOUNT");  
-    _desc[7].setup(SQL_CHAR,  "H_DATA", 25); 
+    _desc[7].setup(SQL_FIXCHAR,  "H_DATA", 25); 
 
     // NO INDEXES
 }
@@ -327,7 +327,7 @@ order_line_t::order_line_t(string sysname) :
     _desc[6].setup(SQL_FLOAT,  "OL_DELIVERY_D");   
     _desc[7].setup(SQL_INT,    "OL_QUANTITY");   
     _desc[8].setup(SQL_INT,    "OL_AMOUNT");
-    _desc[9].setup(SQL_CHAR,   "OL_DIST_INFO", 25);
+    _desc[9].setup(SQL_FIXCHAR,   "OL_DIST_INFO", 25);
 
     int keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
@@ -359,9 +359,9 @@ item_t::item_t(string sysname) :
     /* table schema */
     _desc[0].setup(SQL_INT,  "I_ID");
     _desc[1].setup(SQL_INT,  "I_IM_ID");
-    _desc[2].setup(SQL_CHAR, "I_NAME", 24);   
+    _desc[2].setup(SQL_FIXCHAR, "I_NAME", 24);   
     _desc[3].setup(SQL_INT,  "I_PRICE");
-    _desc[4].setup(SQL_CHAR, "I_DATA", 50);
+    _desc[4].setup(SQL_FIXCHAR, "I_DATA", 50);
 	
     int keys[1] = {0}; // IDX { I_ID }
 
@@ -397,17 +397,17 @@ stock_t::stock_t(string sysname) :
     _desc[3].setup(SQL_INT,    "S_QUANTITY");  
     _desc[4].setup(SQL_INT,    "S_ORDER_CNT"); 
     _desc[5].setup(SQL_INT,    "S_YTD");       
-    _desc[6].setup(SQL_CHAR,   "S_DIST0", 24); 
-    _desc[7].setup(SQL_CHAR,   "S_DIST1", 24);  
-    _desc[8].setup(SQL_CHAR,   "S_DIST2", 24);  
-    _desc[9].setup(SQL_CHAR,   "S_DIST3", 24);  
-    _desc[10].setup(SQL_CHAR,  "S_DIST4", 24);  
-    _desc[11].setup(SQL_CHAR,  "S_DIST5", 24);  
-    _desc[12].setup(SQL_CHAR,  "S_DIST6", 24);  
-    _desc[13].setup(SQL_CHAR,  "S_DIST7", 24);  
-    _desc[14].setup(SQL_CHAR,  "S_DIST8", 24);  
-    _desc[15].setup(SQL_CHAR,  "S_DIST9", 24);
-    _desc[16].setup(SQL_CHAR,  "S_DATA", 50); 
+    _desc[6].setup(SQL_FIXCHAR,   "S_DIST0", 24); 
+    _desc[7].setup(SQL_FIXCHAR,   "S_DIST1", 24);  
+    _desc[8].setup(SQL_FIXCHAR,   "S_DIST2", 24);  
+    _desc[9].setup(SQL_FIXCHAR,   "S_DIST3", 24);  
+    _desc[10].setup(SQL_FIXCHAR,  "S_DIST4", 24);  
+    _desc[11].setup(SQL_FIXCHAR,  "S_DIST5", 24);  
+    _desc[12].setup(SQL_FIXCHAR,  "S_DIST6", 24);  
+    _desc[13].setup(SQL_FIXCHAR,  "S_DIST7", 24);  
+    _desc[14].setup(SQL_FIXCHAR,  "S_DIST8", 24);  
+    _desc[15].setup(SQL_FIXCHAR,  "S_DIST9", 24);
+    _desc[16].setup(SQL_FIXCHAR,  "S_DATA", 50); 
 
     int keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
 

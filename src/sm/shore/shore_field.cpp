@@ -53,6 +53,9 @@ void  field_desc_t::print_desc(ostream & os)
     case SQL_SMALLINT:
 	os << "Type: SMALLINT \t size: " << sizeof(short) << endl;
 	break;
+    case SQL_CHAR:
+	os << "Type: CHAR \t size: " << sizeof(char) << endl;
+	break;
     case SQL_INT:
 	os << "Type: INT \t size: " << sizeof(int) << endl;
 	break;
@@ -65,7 +68,7 @@ void  field_desc_t::print_desc(ostream & os)
     case  SQL_VARCHAR:
 	os << "Type: VARCHAR \t size: " << _size << endl;
 	break;
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
 	os << "Type: CHAR \t size: " << _size << endl;
 	break;
     case SQL_NUMERIC:
@@ -122,6 +125,7 @@ bool field_value_t::load_value_from_file(ifstream & is,
     switch (_pfield_desc->type()) {
     case SQL_BIT:       _value._bit = atoi(string); break;
     case SQL_SMALLINT:  _value._smallint = atoi(string); break;
+    case SQL_CHAR:      _value._char = atoi(string); break;
     case SQL_INT:       _value._int = atoi(string); break;
     case SQL_FLOAT:     _value._float = atof(string); break;
     case SQL_TIME:      break;
@@ -130,7 +134,7 @@ bool field_value_t::load_value_from_file(ifstream & is,
         set_var_string_value(string+1, strlen(string)-1);
         break;
     }
-    case SQL_CHAR:  {
+    case SQL_FIXCHAR:  {
         if (string[0] == '\"') string[strlen(string)-1] = '\0';
         set_fixed_string_value(string+1, strlen(string)-1);
         break;
@@ -169,6 +173,9 @@ void  field_value_t::print_value(ostream & os)
     case SQL_SMALLINT:
 	os <<_value._smallint;
 	break;
+    case SQL_CHAR:
+	os <<_value._char;
+	break;
     case SQL_INT:
 	os << _value._int;
 	break;
@@ -181,7 +188,7 @@ void  field_value_t::print_value(ostream & os)
 	os << mstr;
 	break;
     case SQL_VARCHAR:
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
 	os << "\"";
 	for (int i=0; i<_real_size; i++) {
 	    if (_value._string[i]) os << _value._string[i];
@@ -229,6 +236,9 @@ int field_value_t::get_debug_str(char* &buf)
     case SQL_SMALLINT:
         sprintf(buf, "SQL_SMALLINT: \t%d", _value._smallint);
 	break;
+    case SQL_CHAR:
+        sprintf(buf, "SQL_CHAR: \t%s", _value._char);
+	break;
     case SQL_INT:
         sprintf(buf, "SQL_INT:      \t%d", _value._int);
 	break;
@@ -244,7 +254,7 @@ int field_value_t::get_debug_str(char* &buf)
         strcat(buf, "SQL_VARCHAR:  \t");
         strncat(buf, _value._string, _real_size);
         break;
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
         strcat(buf, "SQL_CHAR:     \t");
         strncat(buf, _value._string, _real_size);
 	break;

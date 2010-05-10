@@ -94,9 +94,11 @@ enum  sqltype_t
     SQL_SMALLINT,   /* SMALLINT */
     SQL_INT,        /* INTEGER */
     SQL_FLOAT,      /* FLOAT */
-    SQL_VARCHAR,    /* VARCHAR */
-    SQL_CHAR,       /* CHAR */
-    SQL_TIME,       /* TIMESTAMP */      /* Deprecated, use SQL_FLOAT instead */
+    SQL_CHAR,       /* CHAR */           // A single char, could have been a smallint
+    SQL_FIXCHAR,    /* FIXCHAR */        // Fixed size string
+    SQL_VARCHAR,    /* VARCHAR */        // Variable size string
+    SQL_TIME,       /* TIMESTAMP */      // Deprecated, use SQL_FLOAT instead
+
     SQL_NUMERIC,    /* NUMERIC */        /* Not tested */
     SQL_SNUMERIC    /* SIGNED NUMERIC */ /* Not tested */
 
@@ -218,10 +220,11 @@ struct field_value_t
     union s_field_value_t {
 	bool         _bit;      /* BIT */
 	short        _smallint; /* SMALLINT */
+	char         _char;     /* CHAR */
 	int          _int;      /* INT */
 	double       _float;    /* FLOAT */
 	timestamp_t* _time;     /* TIME or DATE */
-	char*        _string;   /* CHAR, VARCHAR, NUMERIC */
+	char*        _string;   /* FIXCHAR, VARCHAR, NUMERIC */
     }   _value;   
 
     char* _data;      /* buffer for _value._time or _value._string */
@@ -323,23 +326,25 @@ struct field_value_t
     bool   copy_value(void* data) const;
 
 
-    /* set current value */
+    // Set current value
     void   set_value(const void* data, const int length);
     void   set_int_value(const int data);
     void   set_bit_value(const bool data);
     void   set_smallint_value(const short data);
     void   set_float_value(const double data);
     void   set_decimal_value(const decimal data);
-    void   set_time_value(const time_t data);    
+    void   set_time_value(const time_t data);
     void   set_tstamp_value(const timestamp_t& data);
+    void   set_char_value(const char data);
     void   set_fixed_string_value(const char* string, const int len);
     void   set_var_string_value(const char* string, const int len);
 
 
-    /* get current value */
+    // Get current value
     int          get_int_value() const;
     short        get_smallint_value() const;
     bool         get_bit_value() const;
+    char         get_char_value() const;
     void         get_string_value(char* string, const int bufsize) const;
     double       get_float_value() const;
     decimal      get_decimal_value() const;
@@ -394,6 +399,9 @@ inline void field_desc_t::setup(sqltype_t type,
     case SQL_SMALLINT:
         _size = sizeof(short);
         break;
+    case SQL_CHAR:
+        _size = sizeof(char);
+        break;
     case SQL_INT:
         _size = sizeof(int);
         break;
@@ -403,7 +411,7 @@ inline void field_desc_t::setup(sqltype_t type,
     case SQL_TIME:
         _size = sizeof(timestamp_t);
         break;    
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
     case SQL_VARCHAR:
@@ -443,13 +451,17 @@ inline const char* field_desc_t::_set_keydesc()
     //if (!_keydesc) _keydesc = (char*)malloc( MAX_KEYDESC_LEN );
   
     switch (_type) {
-    case SQL_BIT:       sprintf(_keydesc, "i%d", _size); break;
-    case SQL_SMALLINT:  sprintf(_keydesc, "i%d", _size); break;
-    case SQL_INT:       sprintf(_keydesc, "i%d", _size); break;
+    case SQL_BIT:
+    case SQL_SMALLINT:  
+    case SQL_CHAR:  
+    case SQL_INT:       
+        sprintf(_keydesc, "i%d", _size); break;
+
     case SQL_FLOAT:     sprintf(_keydesc, "f%d", _size); break;
-    case SQL_TIME:      sprintf(_keydesc, "b%d", _size); break;
     case SQL_VARCHAR:   sprintf(_keydesc, "b*%d", _size); break;
-    case SQL_CHAR:
+
+    case SQL_TIME:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
         sprintf(_keydesc, "b%d", _size);  break;
@@ -492,6 +504,9 @@ inline void field_value_t::setup(field_desc_t* pfd)
     case SQL_SMALLINT:
         _max_size = sizeof(short);
         break;
+    case SQL_CHAR:
+        _max_size = sizeof(char);
+        break;
     case SQL_INT:
         _max_size = sizeof(int);
         break;
@@ -517,7 +532,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
          */
         _value._string = _data;
         break;
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
         sz = _pfield_desc->fieldmaxsize(); 
@@ -566,6 +581,9 @@ inline void field_value_t::reset()
     case SQL_SMALLINT:
         _value._smallint = 0;
         break;
+    case SQL_CHAR:
+        _value._char = 0;
+        break;
     case SQL_INT:
         _value._int = 0;
         break;
@@ -574,7 +592,7 @@ inline void field_value_t::reset()
         break;    
     case SQL_TIME:
     case SQL_VARCHAR:
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
         if (_data && _data_size)
@@ -639,6 +657,7 @@ inline void field_value_t::set_value(const void* data,
     switch (_pfield_desc->type()) {
     case SQL_BIT:
     case SQL_SMALLINT:
+    case SQL_CHAR:
     case SQL_INT:
     case SQL_FLOAT:
 	memcpy(&_value, data, _max_size); 
@@ -649,7 +668,7 @@ inline void field_value_t::set_value(const void* data,
     case SQL_VARCHAR:
 	set_var_string_value((const char*)data, length); 
         break;
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
 	_real_size = MIN(length, _max_size);
@@ -682,6 +701,9 @@ inline void field_value_t::set_min_value()
     case SQL_SMALLINT:
 	_value._smallint = MIN_SMALLINT;
 	break;
+    case SQL_CHAR:
+	_value._char = MIN_SMALLINT;
+	break;
     case SQL_INT:
 	_value._int = MIN_INT;
 	break;
@@ -689,7 +711,7 @@ inline void field_value_t::set_min_value()
 	_value._float = MIN_FLOAT;
 	break;
     case SQL_VARCHAR:
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
 	_data[0] = '\0';
@@ -714,6 +736,9 @@ inline void field_value_t::set_max_value()
     case SQL_SMALLINT:
 	_value._smallint = MAX_SMALLINT;
 	break;
+    case SQL_CHAR:
+	_value._char = MAX_SMALLINT;
+	break;
     case SQL_INT:
 	_value._int = MAX_INT;
 	break;
@@ -721,7 +746,7 @@ inline void field_value_t::set_max_value()
 	_value._float = MAX_FLOAT;
 	break;
     case SQL_VARCHAR:
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
 	memset(_data, 'z', _data_size);
 	_value._string = _data;
 	break;
@@ -758,6 +783,9 @@ inline bool field_value_t::copy_value(void* data) const
     case SQL_SMALLINT:
         memcpy(data, &_value._smallint, _max_size);
         break;
+    case SQL_CHAR:
+        memcpy(data, &_value._char, _max_size);
+        break;
     case SQL_INT:
         memcpy(data, &_value._int, _max_size);
         break;
@@ -770,7 +798,7 @@ inline bool field_value_t::copy_value(void* data) const
     case SQL_VARCHAR:
         memcpy(data, _value._string, _real_size);
         break;
-    case SQL_CHAR:
+    case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
         memcpy(data, _value._string, _real_size);
@@ -813,6 +841,14 @@ inline void field_value_t::set_smallint_value(const short data)
     assert (_pfield_desc->type() == SQL_SMALLINT);
     _null_flag = false;
     _value._smallint = data;
+}
+
+inline void field_value_t::set_char_value(const char data)
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_CHAR);
+    _null_flag = false;
+    _value._char = data;
 }
 
 inline void field_value_t::set_float_value(const double data)
@@ -860,7 +896,7 @@ inline void field_value_t::set_fixed_string_value(const char* string,
                                                   const int len)
 {
     assert (_pfield_desc);
-    assert (_pfield_desc->type() == SQL_CHAR || 
+    assert (_pfield_desc->type() == SQL_FIXCHAR || 
             _pfield_desc->type() == SQL_NUMERIC || 
             _pfield_desc->type() == SQL_SNUMERIC);
     /** if fixed length string then the data buffer has already 
@@ -928,11 +964,18 @@ inline short field_value_t::get_smallint_value() const
     return (_value._smallint);
 }
 
+inline char field_value_t::get_char_value() const
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_CHAR);
+    return (_value._char);
+}
+
 inline void field_value_t::get_string_value(char* buffer,
                                             const int bufsize) const
 {
     assert (_pfield_desc);
-    assert (_pfield_desc->type() == SQL_CHAR || 
+    assert (_pfield_desc->type() == SQL_FIXCHAR || 
             _pfield_desc->type() == SQL_VARCHAR ||
             _pfield_desc->type() == SQL_NUMERIC || 
             _pfield_desc->type() == SQL_SNUMERIC);

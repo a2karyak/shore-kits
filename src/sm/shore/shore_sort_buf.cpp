@@ -83,6 +83,15 @@ int compare_bit(const void* d1, const void* d2)
     return (-1);
 }
 
+int compare_char(const void* d1, const void* d2)
+{
+    char data1 = *((char*)d1);
+    char data2 = *((char*)d2);
+    if (data1 > data2) return (1);
+    if (data1 == data2) return (0);
+    return (-1);
+}
+
 
 template <typename T>
 int compare(const void* d1, const void* d2)
@@ -238,6 +247,8 @@ void sort_man_impl::sort()
         qsort(_sort_buf, _tuple_count, _tuple_size, compare_bit); break;
     case SQL_SMALLINT:
         qsort(_sort_buf, _tuple_count, _tuple_size, compare_smallint); break;
+    case SQL_CHAR:
+        qsort(_sort_buf, _tuple_count, _tuple_size, compare_char); break;
     case SQL_INT:
         qsort(_sort_buf, _tuple_count, _tuple_size, compare_int); break;
     default: 

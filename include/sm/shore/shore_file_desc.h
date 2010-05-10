@@ -78,7 +78,8 @@ const unsigned int COMMIT_ACTION_COUNT_WITH_ITER = 500000;
  *  The list can be expanded.
  */
 
-enum file_type_t {
+enum file_type_t 
+{
     FT_REGULAR,
     FT_PRIMARY_IDX,
     FT_IDX,
@@ -95,7 +96,8 @@ enum file_type_t {
  *
  *  --------------------------------------------------------------- */
 
-class file_desc_t {
+class file_desc_t 
+{
     friend class index_desc_t;
 protected:
 
@@ -174,7 +176,8 @@ public:
  * 
  *  --------------------------------------------------------------- */
 
-class file_info_t {
+class file_info_t 
+{
 private:
     char              _fname[MAX_FNAME_LEN]; // file name
     file_type_t        _ftype;               // {regular,primary idx, idx, ...}
