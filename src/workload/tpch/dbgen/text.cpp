@@ -278,7 +278,7 @@ dbg_text(char *tgt, int min, int max, int sd)
   int nLifeNoise = 0;
   int txtPoolIndicator = TEXT_POOL_PROGRESS;
    
-  if (!bInit) {
+  while (!bInit) {
 
     cp = &szTextPool[0];
     TRACE( TRACE_ALWAYS, "Preloading text ..\n");

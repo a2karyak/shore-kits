@@ -125,7 +125,7 @@ permute_dist(distribution *d, long stream,
       //}
     }
 
-    if (!bInit) {
+    while (!bInit) {
       dist = d;
       bInit = true;
     }

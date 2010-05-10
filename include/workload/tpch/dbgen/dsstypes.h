@@ -75,8 +75,8 @@ typedef struct
     DSS_HUGE  eprice;
     DSS_HUGE  discount;
     DSS_HUGE  tax;
-    char      rflag[1];
-    char      lstatus[1];
+    char      rflag;
+    char      lstatus;
     char      cdate[DATE_LEN];
     char      sdate[DATE_LEN];
     char      rdate[DATE_LEN];

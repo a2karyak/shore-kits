@@ -259,8 +259,10 @@ pr_line(void *vo, int mode)
       PR_MONEY(fp_l, &o->l[i].eprice);
       PR_MONEY(fp_l, &o->l[i].discount);
       PR_MONEY(fp_l, &o->l[i].tax);
-      PR_CHR(fp_l, &o->l[i].rflag[0]);
-      PR_CHR(fp_l, &o->l[i].lstatus[0]);
+      //PR_CHR(fp_l, &o->l[i].rflag[0]);
+      PR_CHR(fp_l, &o->l[i].rflag);
+      //PR_CHR(fp_l, &o->l[i].lstatus[0]);
+      PR_CHR(fp_l, &o->l[i].lstatus);
       PR_STR(fp_l, o->l[i].sdate, DATE_LEN);
       PR_STR(fp_l, o->l[i].cdate, DATE_LEN);
       PR_STR(fp_l, o->l[i].rdate, DATE_LEN);
@@ -580,8 +582,10 @@ vrf_line(void *vo, int mode)
       VRF_MONEY(LINE, o->l[i].eprice);
       VRF_MONEY(LINE, o->l[i].discount);
       VRF_MONEY(LINE, o->l[i].tax);
-      VRF_CHR(LINE, o->l[i].rflag[0]);
-      VRF_CHR(LINE, o->l[i].lstatus[0]);
+      //VRF_CHR(LINE, o->l[i].rflag[0]);
+      VRF_CHR(LINE, o->l[i].rflag);
+      //VRF_CHR(LINE, o->l[i].lstatus[0]);
+      VRF_CHR(LINE, o->l[i].lstatus);
       VRF_STR(LINE, o->l[i].sdate);
       VRF_STR(LINE, o->l[i].cdate);
       VRF_STR(LINE, o->l[i].rdate);

@@ -114,7 +114,7 @@ mk_cust(DSS_HUGE n_cust, customer_t *c)
   static int bInit = 0;
   static char szFormat[100];
 	
-  if (!bInit) {
+  while (!bInit) {
     TRACE( TRACE_ALWAYS, "Init mk_cust ..\n");
     sprintf(szFormat, C_NAME_FMT, 9, HUGE_FORMAT + 1);
     bInit = 1;
@@ -174,7 +174,7 @@ mk_order(DSS_HUGE index, order_t *o, long upd_num)
   static int bInit = 0;
   static char szFormat[100];
 	
-  if (!bInit) {
+  while (!bInit) {
     TRACE( TRACE_ALWAYS, "Init mk_order ..\n");
     sprintf(szFormat, O_CLRK_FMT, 9, HUGE_FORMAT + 1);
     bInit = 1;
@@ -258,19 +258,23 @@ mk_order(DSS_HUGE index, order_t *o, long upd_num)
     
 		
     if (julian(r_date) <= CURRENTDATE)  {
-      pick_str(&l_rflag_set, L_RFLG_SD, tmp_str);
-      o->l[lcnt].rflag[0] = *tmp_str;
+        pick_str(&l_rflag_set, L_RFLG_SD, tmp_str);
+        //o->l[lcnt].rflag[0] = *tmp_str;
+        o->l[lcnt].rflag = tmp_str[0];
     }
     else {
-      o->l[lcnt].rflag[0] = 'N';
+        //o->l[lcnt].rflag[0] = 'N';
+        o->l[lcnt].rflag = 'N';
     }
 		
     if (julian(s_date) <= CURRENTDATE)  {
-      ocnt++;
-      o->l[lcnt].lstatus[0] = 'F';
+        ocnt++;
+        //o->l[lcnt].lstatus[0] = 'F';
+        o->l[lcnt].lstatus = 'F';
     }
     else {
-      o->l[lcnt].lstatus[0] = 'O';
+        //o->l[lcnt].lstatus[0] = 'O';
+        o->l[lcnt].lstatus = 'O';
     }
   }
 	
@@ -281,6 +285,12 @@ mk_order(DSS_HUGE index, order_t *o, long upd_num)
   if (ocnt == o->lines) {
     o->orderstatus = 'F';
   }
+
+  
+  for (uint i=0; i<TOTDATE; i++) {
+      free (asc_date[i]);
+  }
+  free(asc_date);
 	
   return (0);
 }
