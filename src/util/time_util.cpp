@@ -74,8 +74,7 @@ int datepart(char const* str, const time_t *pt)
  *
  ********************************************************************/
 
-time_t 
-str_to_timet(char const* str) 
+time_t str_to_timet(char const* str) 
 {
     // String in YYYY-MM-DD format
     tm time_str;
@@ -101,8 +100,7 @@ str_to_timet(char const* str)
  *
  ********************************************************************/
 
-void
-timet_to_str(char* dst, time_t time) 
+void timet_to_str(char* dst, time_t time) 
 {
     struct tm atm;
     localtime_r(&time, &atm);
