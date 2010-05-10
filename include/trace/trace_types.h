@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file trace_types.h
  *
  *  @brief Lists all TRACE types. Each of these should be a bit
@@ -49,13 +47,14 @@
 #define TRACE_TEMP_FILE            (unsigned int)(1 << 6)
 #define TRACE_CPU_BINDING          (unsigned int)(1 << 7)
 #define TRACE_QUERY_RESULTS        (unsigned int)(1 << 8)
-#define TRACE_STATISTICS           (unsigned int)(1 << 9)
-#define TRACE_NETWORK              (unsigned int)(1 << 10)
-#define TRACE_RESPONSE_TIME        (unsigned int)(1 << 11)
-#define TRACE_WORK_SHARING         (unsigned int)(1 << 12)
-#define TRACE_TRX_FLOW             (unsigned int)(1 << 13)
-#define TRACE_KEY_COMP             (unsigned int)(1 << 14)
-#define TRACE_RECORD_FLOW          (unsigned int)(1 << 15)
+#define TRACE_QUERY_PROGRESS       (unsigned int)(1 << 9)
+#define TRACE_STATISTICS           (unsigned int)(1 << 10)
+#define TRACE_NETWORK              (unsigned int)(1 << 11)
+#define TRACE_RESPONSE_TIME        (unsigned int)(1 << 12)
+#define TRACE_WORK_SHARING         (unsigned int)(1 << 13)
+#define TRACE_TRX_FLOW             (unsigned int)(1 << 14)
+#define TRACE_KEY_COMP             (unsigned int)(1 << 15)
+#define TRACE_RECORD_FLOW          (unsigned int)(1 << 16)
 #define TRACE_DEBUG                (unsigned int)(1 << 31)
 
 
