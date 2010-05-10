@@ -25,8 +25,8 @@
  *
  *  @brief:  Base class for iterators over certain set of tuples
  *
- *  @author: Mengzhi Wang, April 2001
  *  @author: Ippokratis Pandis, January 2008
+ *  @author: Mengzhi Wang, April 2001
  *
  */
 
@@ -37,12 +37,91 @@
 #include "util.h"
 
 #include "sm/shore/shore_error.h"
+#include "sm/shore/shore_file_desc.h"
+#include "sm/shore/shore_index.h"
 
 
 ENTER_NAMESPACE(shore);
 
 
 /****************************************************************** 
+ *
+ *  @class: simple_table_iter_t
+ *
+ *  @brief: Class that can be used for Shore table scans
+ *
+ ******************************************************************/
+
+class simple_table_iter_t 
+{
+protected:
+    ss_m*         _db;
+    bool          _opened;  // whether the init is successful
+    file_desc_t*  _file;
+    lock_mode_t   _lm;
+
+    guard<scan_file_i>  _scanner;
+    
+public:
+
+    simple_table_iter_t(ss_m* db, file_desc_t* file, lock_mode_t alm);
+    ~simple_table_iter_t();
+
+    bool opened() const { return (_opened); }
+
+    w_rc_t open_scan(); 
+
+    w_rc_t next(bool& eof, pin_i*& handle);
+
+    w_rc_t close_scan();
+
+    pin_i* cursor();
+
+}; // EOF: simple_table_iter_t
+
+
+
+/****************************************************************** 
+ *
+ *  @class: simple_index_iter_t
+ *
+ *  @brief: Class that can be used for Shore index scans
+ *
+ ******************************************************************/
+
+class simple_index_iter_t 
+{
+protected:
+    ss_m*         _db;
+    bool          _opened;  // whether the init is successful
+    index_desc_t* _idx;
+    lock_mode_t   _lm;
+
+    uint                 _pnum;
+
+    guard<scan_index_i>  _scanner;
+    
+public:
+
+    simple_index_iter_t(ss_m* db, index_desc_t* file, lock_mode_t alm);
+    ~simple_index_iter_t();
+
+    bool opened() const { return (_opened); }
+
+    w_rc_t open_scan(uint pnum,
+                     scan_index_i::cmp_t c1, const cvec_t& bound1,
+                     scan_index_i::cmp_t c2, const cvec_t& bound2);
+
+    w_rc_t next(bool& eof, rid_t& rid);
+
+    w_rc_t close_scan();
+
+}; // EOF: simple_index_iter_t
+
+
+
+/****************************************************************** 
+ *
  *  @class: tuple_iter
  *
  *  @brief: Abstract class which is the base for table and index 
