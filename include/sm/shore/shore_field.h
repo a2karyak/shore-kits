@@ -162,26 +162,26 @@ public:
         return (_name); 
     }
 
-    inline const bool is_variable_length(sqltype_t type) const { 
+    inline bool is_variable_length(sqltype_t type) const { 
         //assert (_is_setup);
         return (type == SQL_VARCHAR); 
     }
 
-    inline const bool is_variable_length() const { 
+    inline bool is_variable_length() const { 
         return (is_variable_length(_type)); 
     }
 
-    inline const int fieldmaxsize() const { 
+    inline uint_t fieldmaxsize() const { 
         //assert (_is_setup);
         return (_size); 
     }
 
-    inline const sqltype_t type() const { 
+    inline sqltype_t type() const { 
         //assert (_is_setup);
         return (_type); 
     }
 
-    inline const bool allow_null() const { 
+    inline bool allow_null() const { 
         //assert (_is_setup);
         return (_allow_null); 
     }
@@ -234,9 +234,9 @@ struct field_value_t
     }   _value;   
 
     char* _data;      /* buffer for _value._time or _value._string */
-    int   _data_size; /* allocated size of the data buffer (watermark) */
-    int   _real_size; /* current size of the value */
-    int   _max_size;  /* maximum possible size of the buffer (shortcut) */
+    uint_t   _data_size; /* allocated size of the data buffer (watermark) */
+    uint_t   _real_size; /* current size of the value */
+    uint_t   _max_size;  /* maximum possible size of the buffer (shortcut) */
 
 
     /* -------------------- */
@@ -286,13 +286,13 @@ struct field_value_t
     }
 
     /* return realsize of value */
-    inline int realsize() const { 
+    inline uint_t realsize() const { 
         assert (_pfield_desc);
         return (_real_size);
     }
 
     /* return maxsize of value */
-    inline int maxsize() const { 
+    inline uint_t maxsize() const { 
         assert (_pfield_desc);
         return (_max_size);
     }
@@ -304,7 +304,7 @@ struct field_value_t
 
    
     /* allocate the space for _data */
-    void alloc_space(const int size);
+    void alloc_space(const uint_t size);
 
     /* set min/max allowed value */
     void set_min_value();
@@ -333,7 +333,7 @@ struct field_value_t
 
 
     // Set current value
-    void   set_value(const void* data, const int length);
+    void   set_value(const void* data, const uint length);
     void   set_int_value(const int data);
     void   set_bit_value(const bool data);
     void   set_smallint_value(const short data);
@@ -342,8 +342,8 @@ struct field_value_t
     void   set_time_value(const time_t data);
     void   set_tstamp_value(const timestamp_t& data);
     void   set_char_value(const char data);
-    void   set_fixed_string_value(const char* string, const int len);
-    void   set_var_string_value(const char* string, const int len);
+    void   set_fixed_string_value(const char* string, const uint len);
+    void   set_var_string_value(const char* string, const uint len);
 
 
     // Get current value
@@ -351,7 +351,7 @@ struct field_value_t
     short        get_smallint_value() const;
     bool         get_bit_value() const;
     char         get_char_value() const;
-    void         get_string_value(char* string, const int bufsize) const;
+    void         get_string_value(char* string, const uint bufsize) const;
     double       get_float_value() const;
     decimal      get_decimal_value() const;
     time_t       get_time_value() const;
@@ -501,7 +501,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
         return;
 
     _pfield_desc = pfd;
-    register int sz = 0;
+    register uint_t sz = 0;
 
     switch (_pfield_desc->type()) {
     case SQL_BIT:
@@ -579,7 +579,6 @@ inline void field_value_t::reset()
     //assert (_pfield_desc);
 
     _null_flag = true;
-    register int sz = 0;
     switch (_pfield_desc->type()) {
     case SQL_BIT:
         _value._bit = false;
@@ -601,8 +600,7 @@ inline void field_value_t::reset()
     case SQL_FIXCHAR:
     case SQL_NUMERIC:
     case SQL_SNUMERIC:
-        if (_data && _data_size)
-            memset(_data, 0, _data_size);
+        if (_data && _data_size) memset(_data, 0, _data_size);
     }
 }
 
@@ -620,7 +618,7 @@ inline void field_value_t::reset()
  *
  *********************************************************************/
 
-inline void field_value_t::alloc_space(const int len)
+inline void field_value_t::alloc_space(const uint_t len)
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_VARCHAR);
@@ -655,7 +653,7 @@ inline void field_value_t::alloc_space(const int len)
  *********************************************************************/
 
 inline void field_value_t::set_value(const void* data,
-                                     const int length)
+                                     const uint length)
 {
     assert (_pfield_desc);
     _null_flag = false;
@@ -780,7 +778,6 @@ inline bool field_value_t::copy_value(void* data) const
 {
     assert (_pfield_desc);
     assert (!_null_flag);
-    assert (_real_size>=0);
 
     switch (_pfield_desc->type()) {
     case SQL_BIT:
@@ -899,7 +896,7 @@ inline void field_value_t::set_tstamp_value(const timestamp_t& data)
  *********************************************************************/
 
 inline void field_value_t::set_fixed_string_value(const char* string,
-                                                  const int len)
+                                                  const uint len)
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_FIXCHAR || 
@@ -927,7 +924,7 @@ inline void field_value_t::set_fixed_string_value(const char* string,
  *********************************************************************/
 
 inline void field_value_t::set_var_string_value(const char* string,
-                                                const int len)
+                                                const uint len)
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_VARCHAR);
@@ -978,7 +975,7 @@ inline char field_value_t::get_char_value() const
 }
 
 inline void field_value_t::get_string_value(char* buffer,
-                                            const int bufsize) const
+                                            const uint bufsize) const
 {
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_FIXCHAR || 

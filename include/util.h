@@ -53,9 +53,10 @@
 #include "util/random_input.h"
 #include "util/atomic_ops.h"
 #include "util/w_strlcpy.h"
-#include "util/cpustat.h"
 
-#ifdef SPARC_MACHINE
+
+#ifdef __sparcv9
+#include "util/cpustat.h"
 #include "util/prcinfo.h"
 #endif
 

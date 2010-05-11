@@ -48,7 +48,8 @@
 #ifdef __sparcv9
 #include <procfs.h>
 #else
-#include <linux/proc_fs.h>
+//#include <linux/proc_fs.h>
+#include <sys/procfs.h>
 #endif
 
 #include <stdio.h>

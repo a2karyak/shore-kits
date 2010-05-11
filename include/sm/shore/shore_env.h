@@ -36,11 +36,6 @@
 
 #include <map>
 
-// for binding LWP to cores
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-
 #include "util.h"
 
 #include "shore_reqs.h"
@@ -395,12 +390,12 @@ public:
     typedef map<string,string> ParamMap;
 
     typedef trx_request_t Request;
-    typedef atomic_class_stack<Request> RequestStack;
+    typedef atomic_class_stack<trx_request_t> RequestStack;
 
     typedef trx_worker_t                Worker;
     typedef trx_worker_t*               WorkerPtr;
     typedef vector<WorkerPtr>           WorkerPool;
-    typedef WorkerPool::iterator        WorkerIt;
+    typedef vector<WorkerPtr>::iterator WorkerIt;
 
 protected:       
 
@@ -488,7 +483,7 @@ public:
     // DB INTERFACE
 
     virtual int conf();
-    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     virtual int init();
     virtual int post_init() { return (0); /* do nothing */ }; // Should return >0 on error
     virtual int open() { return(0); /* do nothing */ };

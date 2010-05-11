@@ -190,14 +190,14 @@ void  field_value_t::print_value(ostream & os)
     case SQL_VARCHAR:
     case SQL_FIXCHAR:
 	os << "\"";
-	for (int i=0; i<_real_size; i++) {
+	for (uint i=0; i<_real_size; i++) {
 	    if (_value._string[i]) os << _value._string[i];
 	}
 	os << "\"";
 	break;
     case SQL_NUMERIC:
     case SQL_SNUMERIC: {
-	for (int i=0; i<_real_size; i++) {
+	for (uint i=0; i<_real_size; i++) {
 	    if (_value._string[i]) os << _value._string[i];
 	}
 	break;
@@ -220,7 +220,7 @@ int field_value_t::get_debug_str(char* &buf)
 {
     assert (_pfield_desc);
 
-    int sz = _max_size;
+    uint_t sz = _max_size;
     buf = new char[MAX_LINE_LENGTH];
     memset(buf, '\0', MAX_LINE_LENGTH);
 

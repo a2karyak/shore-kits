@@ -128,8 +128,8 @@ public:
     /* --- exposed inherited methods --- */
     /* --------------------------------- */
 
-    const char*	name() const { return _base.name(); }
-    const uint_t field_count() const { return _base.field_count(); }
+    const char*  name() const { return _base.name(); }
+    uint_t field_count() const { return _base.field_count(); }
     
 
 

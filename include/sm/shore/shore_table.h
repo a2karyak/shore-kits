@@ -205,8 +205,8 @@ public:
         _primary_idx = idx; 
     }
 
-    const char* index_keydesc(index_desc_t* idx);
-    const int   index_maxkeysize(index_desc_t* index) const; /* max index key size */
+    char* index_keydesc(index_desc_t* idx);
+    int   index_maxkeysize(index_desc_t* index) const; /* max index key size */
 
 
     /* ---------------------------------------------------------------- */
@@ -314,7 +314,7 @@ inline int table_desc_t::find_field_by_name(const char* field_name) const
  *
  ******************************************************************/
 
-inline const char* table_desc_t::index_keydesc(index_desc_t* idx)
+inline char* table_desc_t::index_keydesc(index_desc_t* idx)
 {
     CRITICAL_SECTION(idx_kd_cs, idx->_keydesc_lock);
     if (strlen(idx->_keydesc)>1) // is key_desc is already set
@@ -340,7 +340,7 @@ inline const char* table_desc_t::index_keydesc(index_desc_t* idx)
  *
  ******************************************************************/
 
-inline const int table_desc_t::index_maxkeysize(index_desc_t* idx) const
+inline int table_desc_t::index_maxkeysize(index_desc_t* idx) const
 {
     register uint_t size = 0;
     if ((size = idx->get_keysize()) > 0) {

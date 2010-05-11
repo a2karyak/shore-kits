@@ -49,9 +49,6 @@
 
 #include "util/command/command_handler.h"
 #include "util/command/tracer.h"
-#include "util/envvar.h"
-#include "util/prcinfo.h"
-#include "util/random_input.h"
 
 #include "util.h"
 
@@ -78,14 +75,14 @@ class envVar;
 
 struct quit_cmd_t : public command_handler_t {
     void setaliases();
-    int handle(const char* cmd) { return (SHELL_NEXT_QUIT); }
+    int handle(const char* /* cmd */) { return (SHELL_NEXT_QUIT); }
     string desc() { return (string("Quit")); }               
 };
 
 
 struct disconnect_cmd_t : public command_handler_t {
     void setaliases();
-    int handle(const char* cmd) { return (SHELL_NEXT_DISCONNECT); }
+    int handle(const char* /* cmd */) { return (SHELL_NEXT_DISCONNECT); }
     string desc() { return (string("Disconnect client")); }
 };
 
@@ -135,6 +132,7 @@ struct conf_cmd_t : public command_handler_t {
 };
 
 
+#ifdef __sparcv9
 struct cpustat_cmd_t : public command_handler_t {
     processinfo_t myinfo;
     void setaliases();
@@ -142,7 +140,7 @@ struct cpustat_cmd_t : public command_handler_t {
     void usage();
     string desc() { return (string("Process cpu usage/statitics")); }
 };
-
+#endif
 
 struct echo_cmd_t : public command_handler_t {
     void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
@@ -157,7 +155,7 @@ struct echo_cmd_t : public command_handler_t {
 
 struct break_cmd_t : public command_handler_t {
     void setaliases() { _name = string("break"); _aliases.push_back("break"); }
-    int handle(const char* cmd) {
+    int handle(const char* /* cmd */) {
         raise(SIGINT);
         return (SHELL_NEXT_CONTINUE);
     }
@@ -210,7 +208,11 @@ protected:
     guard<env_cmd_t>  _enver;
     guard<conf_cmd_t> _confer;
     guard<trace_cmd_t>   _tracer;
+
+#ifdef __sparcv9
     guard<cpustat_cmd_t> _cpustater;
+#endif
+
     guard<echo_cmd_t> _echoer;
     guard<break_cmd_t> _breaker;
     guard<zipf_cmd_t> _zipfer;

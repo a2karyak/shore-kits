@@ -240,7 +240,7 @@ struct table_row_t
     bool get_value(const uint idx, bool& dest) const;
     bool get_value(const uint idx, short& dest) const;
     bool get_value(const uint idx, char& dest) const;
-    bool get_value(const uint idx, char* destbuf, const int bufsize) const;
+    bool get_value(const uint idx, char* destbuf, const uint bufsize) const;
     bool get_value(const uint idx, double& dest) const;
     bool get_value(const uint idx, decimal& dest) const;
     bool get_value(const uint idx, time_t& dest) const;
@@ -265,8 +265,7 @@ struct table_row_t
     /* clear the tuple and prepare it for re-use */
     void reset() { 
         assert (_is_setup);
-        //        assert (_ptable);
-        for (int i=0; i<_field_cnt; i++)
+        for (uint_t i=0; i<_field_cnt; i++)
             _pvalues[i].reset();
     }        
 
@@ -451,7 +450,7 @@ inline bool table_row_t::get_value(const uint idx,
 
 inline bool table_row_t::get_value(const uint idx,
                                    char* destbuf,
-                                   const int bufsize) const
+                                   const uint bufsize) const
 {
     assert (_is_setup);
     assert(idx < _field_cnt);
@@ -460,7 +459,7 @@ inline bool table_row_t::get_value(const uint idx,
         return (false);
     }
     // if variable length
-    int sz = MIN(bufsize-1, _pvalues[idx]._max_size);
+    uint_t sz = MIN(bufsize-1, _pvalues[idx]._max_size);
     _pvalues[idx].get_string_value(destbuf, sz);
     destbuf[sz] ='\0';
     return (true);

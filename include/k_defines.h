@@ -42,9 +42,17 @@
 #include <w_defines.h>
 #include <atomic_templates.h>
 
+#include "sm_vas.h"
+typedef queue_based_lock_t mcs_lock;
+
 #else // CFG_SHORE_MT
 
 #include <atomic.h>
+
+// for binding LWP to cores
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
 
 #endif
 

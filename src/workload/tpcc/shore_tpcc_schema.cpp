@@ -218,7 +218,7 @@ customer_t::customer_t(string sysname) :
 
 }
 
-history_t::history_t(string sysname) : 
+history_t::history_t(string /* sysname */) : 
     table_desc_t("HISTORY", TPCC_HISTORY_FCOUNT) 
 {
     /* table schema */

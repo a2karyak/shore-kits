@@ -33,7 +33,12 @@
 
 #include "k_defines.h"
 
+#ifdef CFG_SHORE_6
+#include "atomic_class_pool.h"
+#else
 #include "atomic_trash_stack.h"
+#endif
+
 #include "util/guard.h"
 #include "util/stl_pooled_alloc.h"
 

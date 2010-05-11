@@ -49,6 +49,8 @@
 #include "util/guard.h"
 #include "util/confparser.h"
 
+#include "util.h"
+
 using namespace std;
 
 

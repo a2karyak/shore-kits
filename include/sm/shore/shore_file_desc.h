@@ -118,8 +118,8 @@ public:
     /* -------------------- */
 
     file_desc_t(const char* name, const uint_t fcnt)
-        : _field_count(fcnt), _fid(stid_t::null),
-          _vid(vid_t::null), _root_iid(stid_t::null)
+        : _field_count(fcnt), _vid(vid_t::null), 
+          _root_iid(stid_t::null), _fid(stid_t::null)
     {
         assert (fcnt>0);
 
@@ -150,7 +150,7 @@ public:
     void          set_fid(stid_t fid) { _fid = fid; }
     vid_t         vid() { return _vid; }   
     stid_t        root_iid() { return _root_iid; }
-    const uint_t  field_count() const { return _field_count; } 
+    uint_t        field_count() const { return _field_count; } 
 
     bool          is_fid_valid() const { return (_fid != stid_t::null); }
     bool          is_vid_valid() { return (_vid != vid_t::null); }
@@ -199,9 +199,10 @@ public:
     file_info_t(const stid_t& fid,
                 const char* fname, 
                 const file_type_t ftype = FT_REGULAR)
-        : _fid(fid), _ftype(ftype),
+        : _ftype(ftype),
           _record_size(std::pair<int,int>(0,0)),
-          _first_rid(0, shrid_t(0,0,0))      
+          _first_rid(0, shrid_t(0,0,0)),
+          _fid(fid)
     {
 #ifndef __GNUC__
 	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
