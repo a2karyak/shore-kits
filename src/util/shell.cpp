@@ -32,6 +32,7 @@
 #include "util/shell.h"
 #include "util/chomp.h"
 #include "util/tcp.h"
+#include "util/envvar.h"
 
 
 void sig_handler_fwd(int sig)
@@ -532,6 +533,11 @@ int help_cmd_t::handle(const char* cmd)
  *
  *********************************************************************/
 
+void set_cmd_t::init() 
+{ 
+    ev = envVar::instance(); 
+}
+
 void set_cmd_t::setaliases() 
 {    
     _name = string("set");
@@ -563,6 +569,11 @@ void set_cmd_t::usage(void)
  *  ENV
  *
  *********************************************************************/
+
+void env_cmd_t::init() 
+{ 
+    ev = envVar::instance(); 
+}
 
 void env_cmd_t::setaliases() 
 {    
@@ -602,6 +613,11 @@ void env_cmd_t::usage(void)
  *  CONF
  *
  *********************************************************************/
+
+void conf_cmd_t::init() 
+{ 
+    ev = envVar::instance(); 
+}
 
 void conf_cmd_t::setaliases() 
 {    

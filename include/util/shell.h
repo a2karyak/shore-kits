@@ -104,7 +104,7 @@ struct help_cmd_t : public command_handler_t {
 
 struct set_cmd_t : public command_handler_t {
     envVar* ev;
-    void init() { ev = envVar::instance(); }
+    void init();
     void setaliases();
     int handle(const char* cmd);
     void usage();
@@ -114,7 +114,7 @@ struct set_cmd_t : public command_handler_t {
 
 struct env_cmd_t : public command_handler_t {
     envVar* ev;
-    void init() { ev = envVar::instance(); }
+    void init();
     void setaliases();
     int handle(const char* cmd);
     void usage();
@@ -124,7 +124,7 @@ struct env_cmd_t : public command_handler_t {
 
 struct conf_cmd_t : public command_handler_t {
     envVar* ev;
-    void init() { ev = envVar::instance(); }
+    void init();
     void setaliases();
     int handle(const char* cmd);
     void usage();

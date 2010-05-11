@@ -24,12 +24,17 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+
+#ifdef __sparcv9
+#include "util/prcinfo.h"
+#endif
+
+#include "util/namespace.h"
 #include "util/compat.h"
 #include "util/c_str.h"
 #include "util/decimal.h"
 #include "util/exception.h"
 #include "util/guard.h"
-#include "util/namespace.h"
 #include "util/stopwatch.h"
 #include "util/sync.h"
 #include "util/thread.h"
@@ -54,12 +59,9 @@
 #include "util/atomic_ops.h"
 #include "util/w_strlcpy.h"
 
-
 #ifdef __sparcv9
 #include "util/cpustat.h"
-#include "util/prcinfo.h"
 #endif
-
 
 
 // Needed by QPipe
