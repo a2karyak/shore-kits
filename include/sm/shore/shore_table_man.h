@@ -395,7 +395,7 @@ public:
     w_rc_t open_scan(ss_m* db) {
         if (!table_iter::_opened) {
             assert (db);
-            W_DO(_file->check_fid(db));
+            W_DO(table_iter::_file->check_fid(db));
             table_iter::_scan = new scan_file_i(table_iter::_file->fid(), 
                                                 ss_m::t_cc_record, 
                                                 false, table_iter::_lm);
@@ -523,7 +523,7 @@ public:
         return (RCOK);
     }
 
-    w_rc_t next(ss_m* db, bool& eof, table_tuple& tuple) 
+    w_rc_t next(ss_m* /* db */, bool& eof, table_tuple& tuple) 
     {
         assert (index_iter::_opened);
         assert (_pmanager);
@@ -1075,8 +1075,10 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
     W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
-                        ptuple->_rid,
-                        serial_t::null
+                        ptuple->_rid
+#ifndef CFG_SHORE_6
+                        ,serial_t::null
+#endif
 #ifdef CFG_DORA
                         ,bIgnoreLocks
 #endif
@@ -1124,7 +1126,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
  *********************************************************************/
 
 template <class TableDesc>
-w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* db, 
+w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */, 
                                                table_tuple* ptuple,
                                                lock_mode_t  lm)
 {

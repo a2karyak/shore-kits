@@ -237,7 +237,7 @@ class ShoreTM1Env::table_builder_t : public thread_t
     int _start;
     int _count;
 public:
-    table_builder_t(ShoreTM1Env* env, int loaderid, int sf, int start, int count)
+    table_builder_t(ShoreTM1Env* env, int loaderid, int start, int count)
 	: thread_t(c_str("LD-%d",loaderid)), 
           _env(env), _loader_id(loaderid), _start(start), _count(count) 
     { }
@@ -410,7 +410,7 @@ w_rc_t ShoreTM1Env::loaddata()
 	// the preloader thread picked up a first set of subscribers...
 	int start = i*subs_per_worker + preloads_per_worker;
 	int count = subs_per_worker - preloads_per_worker;
-	loaders[i] = new table_builder_t(this, i, _scaling_factor, start, count);
+	loaders[i] = new table_builder_t(this, i, start, count);
 	loaders[i]->fork();
     }
     

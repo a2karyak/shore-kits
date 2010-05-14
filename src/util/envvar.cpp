@@ -224,13 +224,13 @@ int envVar::parseOneSetReq(const string& in)
 
     size_t sepos = in.find(valuesep);
     if(sepos == string::npos) {
-        TRACE( TRACE_DEBUG, "(%s) is malformed\n", in);
+        TRACE( TRACE_DEBUG, "(%s) is malformed\n", in.c_str());
         return(1);
     }
     param = in.substr(0, sepos);
     value = in.substr(sepos+1);
     if (value.empty()) {
-        TRACE( TRACE_DEBUG, "(%s) is malformed\n", in);
+        TRACE( TRACE_DEBUG, "(%s) is malformed\n", in.c_str());
         return(2);
     }
     TRACE( TRACE_DEBUG, "%s -> %s\n", param.c_str(), value.c_str()); 

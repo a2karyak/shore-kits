@@ -169,16 +169,16 @@ public:
     // create an index on the table
     bool   create_index(const char* name,
 			int partitions,
-                        const int* fields,
-                        const int num,
+                        const uint* fields,
+                        const uint num,
                         const bool unique=true,
                         const bool primary=false,
                         const bool nolock=false);
 
     bool   create_primary_idx(const char* name,
 			      int partitions,
-                              const int* fields,
-                              const int num,
+                              const uint* fields,
+                              const uint num,
                               const bool nolock=false);
 
 

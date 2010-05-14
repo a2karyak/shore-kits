@@ -81,14 +81,7 @@ int trx_worker_t::_work_ACTIVE_impl()
 {    
     // bind to the specified processor
     _prs_id = PBIND_NONE;
-    if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) { //PBIND_NONE
-        TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
-        _is_bound = false;
-    }
-    else {
-        TRACE( TRACE_CPU_BINDING, "Binded to processor (%d)\n", _prs_id);
-        _is_bound = true;
-    }
+    TRY_TO_BIND(_prs_id,_is_bound);
 
     w_rc_t e;
     Request* ar = NULL;
@@ -147,7 +140,7 @@ int trx_worker_t::_serve_action(Request* prequest)
 
     xct_t* pxct = smthread_t::me()->xct();
     assert (pxct);
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
     prequest->_xct = pxct;
     prequest->_tid = atid;
             
@@ -155,7 +148,7 @@ int trx_worker_t::_serve_action(Request* prequest)
     e = _env->run_one_xct(prequest);
     if (e.is_error()) {
         TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) (%d) [0x%x]\n",
-               prequest->_tid, prequest->_xct_id, e.err_num());
+               prequest->_tid.get_lo(), prequest->_xct_id, e.err_num());
         ++_stats._problems;
         return (1);
     }          

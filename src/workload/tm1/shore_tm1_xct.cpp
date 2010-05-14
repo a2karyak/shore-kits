@@ -122,9 +122,9 @@ void ShoreTM1Env::print_throughput(const double iQueriedSF,
     // now calculate the diff
     current_stats -= _last_stats;
         
-    int trxs_att  = current_stats.attempted.total();
-    int trxs_abt  = current_stats.failed.total();
-    int trxs_dld  = current_stats.deadlocked.total();
+    uint trxs_att  = current_stats.attempted.total();
+    uint trxs_abt  = current_stats.failed.total();
+    uint trxs_dld  = current_stats.deadlocked.total();
 
     TRACE( TRACE_ALWAYS, "*******\n"                \
            "SF:           (%.1f)\n"                 \

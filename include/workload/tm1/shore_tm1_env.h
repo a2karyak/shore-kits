@@ -63,13 +63,13 @@ ENTER_NAMESPACE(tm1);
 
 struct ShoreTM1TrxCount
 {
-    int get_sub_data;
-    int get_new_dest;
-    int get_acc_data;
-    int upd_sub_data;
-    int upd_loc;
-    int ins_call_fwd;
-    int del_call_fwd;
+    uint get_sub_data;
+    uint get_new_dest;
+    uint get_acc_data;
+    uint upd_sub_data;
+    uint upd_loc;
+    uint ins_call_fwd;
+    uint del_call_fwd;
 
     ShoreTM1TrxCount& operator+=(ShoreTM1TrxCount const& rhs) {
         get_sub_data += rhs.get_sub_data;
@@ -93,7 +93,7 @@ struct ShoreTM1TrxCount
 	return (*this);
     }
 
-    const int total() const {
+    uint total() const {
         return (get_sub_data+get_new_dest+get_acc_data+
                 upd_sub_data+upd_loc+ins_call_fwd+del_call_fwd);
     }
@@ -163,7 +163,7 @@ public:
 
     // DB INTERFACE
 
-    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     virtual int open() { return(0); /* do nothing */ };
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    

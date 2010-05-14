@@ -329,10 +329,7 @@ del_call_fwd_input_t create_del_call_fwd_input(int SF,
 /* --- translates or picks a random xct type given the benchmark specification --- */
 
 
-const int random_tm1_xct_type(const int selected);
-
-
-
+int random_tm1_xct_type(const int selected);
 
 
 EXIT_NAMESPACE(tm1);

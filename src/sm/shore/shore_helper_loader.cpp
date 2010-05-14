@@ -43,7 +43,8 @@ using namespace shore;
 void db_init_smt_t::work()
 {
     if (!_env->is_initialized()) {
-        if (_rv = _env->init()) {
+        _rv = _env->init();
+        if (_rv) {
             // Couldn't initialize the Shore environment
             // cannot proceed
             TRACE( TRACE_ALWAYS, "Couldn't initialize Shore...\n");
@@ -60,7 +61,9 @@ void db_init_smt_t::work()
 void db_log_smt_t::work() 
 {
     assert (_env);
+#ifndef CFG_SHORE_6
     _env->db()->flushlog();
+#endif
     _rv = 0;
 }
 

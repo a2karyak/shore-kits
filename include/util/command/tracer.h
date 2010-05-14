@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 #ifndef __UTIL_CMD_TRACE_H
 #define __UTIL_CMD_TRACE_H
 
@@ -50,7 +48,7 @@ public:
 
     void setaliases();
     void usage();
-    string desc() { return (string("Manipulates tracing level")); }               
+    string desc() const { return (string("Manipulates tracing level")); }               
 
 private:
     

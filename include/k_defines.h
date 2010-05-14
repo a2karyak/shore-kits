@@ -45,14 +45,16 @@
 #include "sm_vas.h"
 typedef queue_based_lock_t mcs_lock;
 
+#include "atomic_container.h"
+typedef atomic_container atomic_stack;
+
+#include "atomic_class_pool.h"
+//typedef atomic_class_pool atomic_class_stack;
+#define atomic_class_stack atomic_class_pool
+
 #else // CFG_SHORE_MT
 
 #include <atomic.h>
-
-// for binding LWP to cores
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
 
 #endif
 
@@ -69,5 +71,24 @@ typedef queue_based_lock_t mcs_lock;
 #include <cstdarg>
 #endif
 
+
+#ifndef __spacrv9
+
+typedef int processorid_t;
+const int PBIND_NONE = -1;
+// const int P_LWPID = 0;
+// const int P_MYID = 0;
+
+// // IP: on non-SunOS/sparcv9 we disable processor_bind
+// #define processorid_bind(A,B,C,D) NULL
+
+#else
+
+// for binding LWP to cores
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
+
+#endif
 
 #endif /** __KITS_DEFINES_H */

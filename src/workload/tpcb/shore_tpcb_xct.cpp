@@ -121,9 +121,9 @@ void ShoreTPCBEnv::print_throughput(const double iQueriedSF,
     // now calculate the diff
     current_stats -= _last_stats;
         
-    int trxs_att  = current_stats.attempted.total();
-    int trxs_abt  = current_stats.failed.total();
-    int trxs_dld  = current_stats.deadlocked.total();
+    uint trxs_att  = current_stats.attempted.total();
+    uint trxs_abt  = current_stats.failed.total();
+    uint trxs_dld  = current_stats.deadlocked.total();
 
     TRACE( TRACE_ALWAYS, "*******\n"             \
            "QueriedSF: (%.1f)\n"                 \
@@ -213,7 +213,7 @@ DEFINE_TRX(ShoreTPCBEnv,populate_db);
  * TPC-B Acct Update
  *
  ********************************************************************/
-w_rc_t ShoreTPCBEnv::xct_acct_update(const int xct_id, 
+w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */, 
                                      acct_update_input_t& ppin)
 {
     w_rc_t e = RCOK;
@@ -321,7 +321,7 @@ done:
 
 
 
-w_rc_t ShoreTPCBEnv::xct_populate_db(const int xct_id, 
+w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */, 
                                      populate_db_input_t& ppin)
 {
     w_rc_t e = RCOK;

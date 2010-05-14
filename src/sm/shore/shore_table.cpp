@@ -168,8 +168,8 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 
 bool table_desc_t::create_index(const char* name,
                                 int partitions,
-                                const int* fields,
-                                const int num,
+                                const uint* fields,
+                                const uint num,
                                 const bool unique,
                                 const bool primary,
                                 const bool nolock)
@@ -179,7 +179,7 @@ bool table_desc_t::create_index(const char* name,
 
     // check the validity of the index
     for (uint_t i=0; i<num; i++)  {
-        assert(fields[i] >= 0 && fields[i] < _field_count);
+        assert(fields[i] < _field_count);
 
         // only the last field in the index can be variable lengthed
 #warning IP: I am not sure if still only the last field in the index can be variable lengthed
@@ -201,18 +201,17 @@ bool table_desc_t::create_index(const char* name,
 }
 
 
-bool 
-table_desc_t::create_primary_idx(const char* name,
-                                 int partitions,
-                                 const int* fields,
-                                 const int num,
-                                 const bool nolock)
+bool table_desc_t::create_primary_idx(const char* name,
+                                      int partitions,
+                                      const uint* fields,
+                                      const uint num,
+                                      const bool nolock)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
 
     // check the validity of the index
     for (uint_t i=0; i<num; i++) {
-        assert(fields[i] >= 0 && fields[i] < _field_count);
+        assert(fields[i] < _field_count);
 
         // only the last field in the index can be variable lengthed
         if (_desc[fields[i]].is_variable_length() && i != num-1) {
@@ -248,7 +247,8 @@ void table_desc_t::print_desc(ostream& os)
 
 
 #include <strstream>
-char const* db_pretty_print(table_desc_t const* ptdesc, int i=0, char const* s=0) {
+char const* db_pretty_print(table_desc_t const* ptdesc, int /* i=0 */, char const* /* s=0 */) 
+{
     static char data[1024];
     std::strstream inout(data, sizeof(data));
     ((table_desc_t*)ptdesc)->print_desc(inout);

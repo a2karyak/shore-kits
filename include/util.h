@@ -25,10 +25,7 @@
 #define __UTIL_H
 
 
-#ifdef __sparcv9
 #include "util/prcinfo.h"
-#endif
-
 #include "util/namespace.h"
 #include "util/compat.h"
 #include "util/c_str.h"
@@ -58,10 +55,7 @@
 #include "util/random_input.h"
 #include "util/atomic_ops.h"
 #include "util/w_strlcpy.h"
-
-#ifdef __sparcv9
 #include "util/cpustat.h"
-#endif
 
 
 // Needed by QPipe

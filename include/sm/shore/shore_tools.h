@@ -35,6 +35,8 @@
 #include "sm_vas.h"
 #include "util/namespace.h"
 
+#include "sm/shore/shore_file_desc.h"
+
 #include "sm/shore/shore_env.h"
 
 

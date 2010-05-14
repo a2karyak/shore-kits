@@ -33,7 +33,7 @@
 
 // constructor opens the file and gets the 
 processinfo_t::processinfo_t(const bool printatexit) 
-    : _is_ok(0), _print_at_exit(printatexit)
+    : _print_at_exit(printatexit), _is_ok(0)
 {
     string pathname = "/proc/self/usage";
     if ((_fd = open(pathname.c_str(), O_RDONLY)) < 0) {

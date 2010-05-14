@@ -104,7 +104,7 @@ static thread_pool default_thread_pool(1<<30);
 thread_t::thread_t(const c_str &name)
 #ifdef USE_SMTHREAD_AS_BASE
     : smthread_t(t_regular, name.data()), 
-      _thread_name(name), _delete_me(true), _ppool(NULL)
+      _thread_name(name), _ppool(NULL), _delete_me(true)
 #else
       : _thread_name(name), _delete_me(true)
 #endif

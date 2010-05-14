@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   lockman.cpp
  *
@@ -127,9 +148,8 @@ LogicalLock::LogicalLock(ActionLockReq& anowner)
  *
  ********************************************************************/ 
 
-const int 
-LogicalLock::release(BaseActionPtr anowner, 
-                     BaseActionPtrList& promotedList)
+int LogicalLock::release(BaseActionPtr anowner, 
+                         BaseActionPtrList& promotedList)
 {
     assert (anowner);
     bool found = false;    
@@ -211,8 +231,7 @@ LogicalLock::release(BaseActionPtr anowner,
  *
  ********************************************************************/ 
 
-const bool 
-LogicalLock::acquire(ActionLockReq& alr)
+bool LogicalLock::acquire(ActionLockReq& alr)
 {
     assert (alr.action());
 
@@ -309,8 +328,7 @@ LogicalLock::acquire(ActionLockReq& alr)
  *
  ********************************************************************/ 
 
-const bool 
-LogicalLock::_head_can_acquire()
+bool LogicalLock::_head_can_acquire()
 {
     if (_waiters.empty()) return (false); // no waiters
     return (DoraLockModeMatrix[_dlm][_waiters.front().dlm()]);
@@ -328,8 +346,7 @@ LogicalLock::_head_can_acquire()
  *
  ********************************************************************/ 
 
-const bool 
-LogicalLock::_upd_dlm()
+bool LogicalLock::_upd_dlm()
 {
     // 1. Check if there are any Owners
     if (_owners.empty()) {
@@ -382,8 +399,7 @@ LogicalLock::_upd_dlm()
  *
  ********************************************************************/ 
 
-const bool 
-LogicalLock::is_clean() const
+bool LogicalLock::is_clean() const
 {
     bool isClean = (_owners.empty()) && (_waiters.empty()) && (_dlm == DL_CC_NOLOCK);
 

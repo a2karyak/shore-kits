@@ -100,8 +100,8 @@ template <typename Object>
 class object_cache_t : protected atomic_stack
 {
 private:
-    Pool** _stl_pools;
-    const int _nbytes;
+    Pool**       _stl_pools;
+    const uint_t _nbytes;
    
 #ifdef CACHE_STATS    
     // stats

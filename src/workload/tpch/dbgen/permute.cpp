@@ -62,7 +62,7 @@ DSS_HUGE NextRand(DSS_HUGE seed);
 long *permute(long *set, int cnt, long stream, DSS_HUGE& source, long* cs);
 long *permute_dist(distribution *d, long stream, DSS_HUGE& source, distribution* cd);
 long seed;
-char *eol[2] = {" ", "},"};
+const char *eol[2] = {" ", "},"};
 extern seed_t Seed[];
 #ifdef TEST
 tdef tdefs = { NULL };
@@ -111,16 +111,15 @@ long *
 permute_dist(distribution *d, long stream, 
              DSS_HUGE& source, distribution* cd)
 {
-  static bInit = false;
+  static bool bInit = false;
   static distribution *dist = NULL;
-  int i;
 	
   if (d != NULL) {
     if (d->permute == (long *)NULL) {
       d->permute = (long *)malloc(sizeof(long) * DIST_SIZE(d));
       MALLOC_CHECK(d->permute);
       //IP: permute does the same 
-      //for (i=0; i < DIST_SIZE(d); i++) {
+      //for (int i=0; i < DIST_SIZE(d); i++) {
       //   *(d->permute + i) = i;
       //}
     }

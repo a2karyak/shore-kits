@@ -101,7 +101,7 @@ const string SHORE_DB_SM_OPTIONS[][3]  = {
     { "-sm_logdir", "logdir", "log" },
     { "-sm_logsize", "logsize", "0" },
     { "-sm_logbufsize", "logbufsize", "0" },
-    { "-sm_logcount", "logcount", "10" },
+    { "-sm_logcount", "logcount", "10" },      /*** IP: Remove -sm_logcount no dlog anymore... ****/
 };
 
 const int    SHORE_NUM_DB_SM_OPTIONS   = 5;
@@ -458,7 +458,7 @@ protected:
     env_stats_t        _env_stats; 
 
     // Measurement state
-    volatile unsigned int _measure;
+    volatile uint _measure;
 
     // system name
     string          _sysname;

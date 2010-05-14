@@ -34,11 +34,8 @@
 
 #include <cstdio>
 
-// for binding LWP to cores
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
 
+#include "k_defines.h"
 
 #include "util.h"
 #include "sm/shore/common.h"
@@ -106,19 +103,20 @@ struct worker_stats_t
 #ifdef WORKER_VERY_VERBOSE_STATS
     double _ww[WAITING_WINDOW];
     uint _ww_idx; // index on the ww (waiting window) ring
-    stopwatch_t _for_last_change;
     double _last_change;
+    stopwatch_t _for_last_change;
 #endif 
 #endif
 
     worker_stats_t() 
         : _processed(0), _problems(0),
-          _served_waiting(0), _served_input(0),
+          _served_input(0), _served_waiting(0),
           _condex_sleep(0), _failed_sleep(0),
           _early_aborts(0), _mid_aborts(0)
 #ifdef WORKER_VERBOSE_STATS
-        , _waiting_total(0), _serving_total(0), 
-          _rvp_exec(0), _rvp_exec_time(0), _rvp_notify_time(0)
+        , _serving_total(0), 
+          _rvp_exec(0), _rvp_exec_time(0), _rvp_notify_time(0), 
+          _waiting_total(0)
 #ifdef WORKER_VERY_VERBOSE_STATS
         , _ww_idx(0), _last_change(0)
 #endif
@@ -197,8 +195,8 @@ public:
 
     base_worker_t(ShoreEnv* env, c_str tname, processorid_t aprsid, const int use_sli) 
         : thread_t(tname), 
-          _env(env),
           _control(WC_PAUSED), _data_owner(DOS_UNDEF), _ws(WS_UNDEF),
+          _env(env),
           _next(NULL), _is_bound(false), _prs_id(aprsid), _use_sli(use_sli)
     {
     }
@@ -222,7 +220,7 @@ public:
         atomic_swap(&_data_owner, ados);
     }
 
-    const bool is_alone_owner() { return (*&_data_owner==DOS_ALONE); }
+    bool is_alone_owner() { return (*&_data_owner==DOS_ALONE); }
 
     // @brief: Set working state
     // @note:  This function can be called also by other threads
@@ -250,14 +248,14 @@ public:
         return (old_ws);
     }
 
-    inline const eWorkingState get_ws() { return (*&_ws); }
+    inline eWorkingState get_ws() { return (*&_ws); }
 
 
-    inline const bool can_continue(const eWorkingState my_ws) {
+    inline bool can_continue(const eWorkingState my_ws) {
         return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
     }
 
-    inline const bool is_sleeping(void) {
+    inline bool is_sleeping(void) {
         return (*&_ws==WS_SLEEP);
     }
    
@@ -266,7 +264,7 @@ public:
     // Condex functions in order to sleep/wakeup worker //
 
     // This function is called when the worker decides it is time to sleep
-    inline const int condex_sleep() { 
+    inline int condex_sleep() { 
         // can sleep only if in WS_LOOP
         // (if on WS_COMMIT_Q or WS_INPUT_Q it means that a
         //  COMMIT or INPUT action was enqueued during this

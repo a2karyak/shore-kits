@@ -121,9 +121,9 @@ void ShoreTPCCEnv::print_throughput(const double iQueriedSF,
     // now calculate the diff
     current_stats -= _last_stats;
         
-    int trxs_att  = current_stats.attempted.total();
-    int trxs_abt  = current_stats.failed.total();
-    int trxs_dld  = current_stats.deadlocked.total();    
+    uint trxs_att  = current_stats.attempted.total();
+    uint trxs_abt  = current_stats.failed.total();
+    uint trxs_dld  = current_stats.deadlocked.total();    
     int nords_com = current_stats.attempted.new_order - current_stats.failed.new_order - current_stats.deadlocked.new_order;
 
     TRACE( TRACE_ALWAYS, "*******\n"                \
@@ -317,7 +317,7 @@ int create_random_last_name(char *out_buffer, int cust_num)
 }
 
 
-w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int xct_id, 
+w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int /* xct_id */, 
                                            populate_baseline_input_t& pbin)
 {
     // ensure a valid environment
@@ -403,7 +403,7 @@ w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int xct_id,
 }
 
 
-w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id, 
+w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int /* xct_id */, 
                                            populate_one_unit_input_t& pbuin)
 {
     // ensure a valid environment
@@ -590,7 +590,7 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int xct_id,
 	*/
 	for(int i=0; i < CUST_PER_UNIT; i++) {
 	    char cust_last[17];
-	    char cust_middle[3];
+	    //char cust_middle[3];
 	    char cust_first[17];
 	    char cust_street_1[21];
 	    char cust_street_2[21];
@@ -1206,8 +1206,8 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
                                                        c_w, c_d, ppin._c_id);
         if (e.is_error()) { goto done; }
 
-        double c_balance, c_ytd_payment;
-        int    c_payment_cnt;
+        //double c_balance, c_ytd_payment;
+        //int    c_payment_cnt;
         tpcc_customer_tuple acust;
 
         // retrieve customer
@@ -2214,9 +2214,6 @@ w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id,
                                                        mcin._c_id);
         if (e.is_error()) { goto done; }
 
-
-        double c_balance, c_ytd_payment;
-        int    c_payment_cnt;
         tpcc_customer_tuple acust;
 
         // retrieve customer

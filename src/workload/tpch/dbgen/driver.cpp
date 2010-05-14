@@ -243,7 +243,7 @@ int *pids;
  */
 
 void
-stop_proc (int signum)
+stop_proc (int /* signum */)
 {
   exit (0);
 }
@@ -374,7 +374,7 @@ gen_tbl (int tnum, DSS_HUGE start, DSS_HUGE count, long upd_num)
         case ORDER_LINE: 
           mk_order (i, &o, upd_num % 10000);
 
-          if (insert_segments  && (upd_num > 0))
+          if (insert_segments  && (upd_num > 0)) {
             if((upd_num / 10000) < residual_rows)
               {
                 if((++rows_this_segment) > rows_per_segment) 
@@ -391,60 +391,84 @@ gen_tbl (int tnum, DSS_HUGE start, DSS_HUGE count, long upd_num)
                     upd_num += 10000;
                   }
               }
+          }
 
-          if (set_seeds == 0)
-            if (validate)
+          if (set_seeds == 0) {
+            if (validate) {
               tdefs[tnum].verify(&o, 0);
-            else
+            }
+            else {
               tdefs[tnum].loader[direct] (&o, upd_num);
+            }
+          }
           break;
+
         case SUPP:
           mk_supp (i, &supp);
-          if (set_seeds == 0)
-            if (validate)
+          if (set_seeds == 0) {
+            if (validate) {
               tdefs[tnum].verify(&supp, 0);
-            else
+            }
+            else {
               tdefs[tnum].loader[direct] (&supp, upd_num);
+            }
+          }
           break;
+
         case CUST:
           mk_cust (i, &cust);
-          if (set_seeds == 0)
-            if (validate)
+          if (set_seeds == 0) {
+            if (validate) {
               tdefs[tnum].verify(&cust, 0);
-            else
+            }
+            else {
               tdefs[tnum].loader[direct] (&cust, upd_num);
+            }
+          }
           break;
+
         case PSUPP:
         case PART:
         case PART_PSUPP: 
           mk_part (i, &part);
-          if (set_seeds == 0)
-            if (validate)
+          if (set_seeds == 0) {
+            if (validate) {
               tdefs[tnum].verify(&part, 0);
-            else
+            }
+            else {
               tdefs[tnum].loader[direct] (&part, upd_num);
+            }
+          }
           break;
+
         case NATION:
           mk_nation (i, &code);
-          if (set_seeds == 0)
-            if (validate)
+          if (set_seeds == 0) {
+            if (validate) {
               tdefs[tnum].verify(&code, 0);
-            else
+            }
+            else {
               tdefs[tnum].loader[direct] (&code, 0);
+            }
+          }
           break;
+
         case REGION:
           mk_region (i, &code);
-          if (set_seeds == 0)
-            if (validate)
+          if (set_seeds == 0) {
+            if (validate) {
               tdefs[tnum].verify(&code, 0);
-            else
+            }
+            else {
               tdefs[tnum].loader[direct] (&code, 0);
+            }
+          }
           break;
         }
       row_stop(tnum);
       if (set_seeds && (i % tdefs[tnum].base) < 2)
         {
-          printf("\nSeeds for %s at rowcount %ld\n", tdefs[tnum].comment, i);
+          printf("\nSeeds for %s at rowcount %lld\n", tdefs[tnum].comment, i);
           dump_seeds(tnum);
         }
     }
@@ -509,10 +533,8 @@ usage (void)
  * assumes the existance of getopt() to clean up the command 
  * line handling
  */
-int
-dbgen_init ()
+int dbgen_init ()
 {
-  DSS_HUGE i;
 	
   table = (1 << CUST) |
     (1 << SUPP) |
@@ -552,7 +574,7 @@ dbgen_init ()
   load_dists ();
 
 #ifdef RNG_TEST
-  for (i=0; i <= MAX_STREAM; i++)
+  for (DSS_HUGE i=0; i <= MAX_STREAM; i++)
     Seed[i].nCalls = 0;
 #endif
 

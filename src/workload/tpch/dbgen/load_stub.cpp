@@ -52,8 +52,7 @@ prep_direct(char*)
   return(0);
 }
 
-int 
-hd_cust (FILE *f)
+int hd_cust (FILE* /* f */)
 {
   static int count = 0;
 
@@ -63,8 +62,7 @@ hd_cust (FILE *f)
   return(0);
 }
 
-int 
-ld_cust (void *cp, int mode)
+int ld_cust (void* /* cp */, int /* mode */)
 {
   
   static int count = 0;
@@ -77,8 +75,7 @@ ld_cust (void *cp, int mode)
   return(0);
 }
 
-int 
-hd_part (FILE *f)
+int hd_part (FILE* /* f */)
 {
   static int count = 0;
 
@@ -88,10 +85,9 @@ hd_part (FILE *f)
   return(0);
 }
 
-int 
-ld_part (void *vpp, int mode)
+int ld_part (void* /* vpp */, int /* mode */)
 {
-  part_t* pp = (part_t*)vpp;
+  //part_t* pp = (part_t*)vpp; // IP: Unused
   static int count = 0;
 
   if (! count++)
@@ -100,10 +96,9 @@ ld_part (void *vpp, int mode)
   return(0);
 }
 
-int 
-ld_psupp (void *vpp, int mode)
+int ld_psupp (void* /* vpp */, int /* mode */)
 {
-  part_t* pp = (part_t*)vpp;
+  //part_t* pp = (part_t*)vpp; // IP: Unused
   static int count = 0;
 
   if (! count++)
@@ -116,8 +111,7 @@ ld_psupp (void *vpp, int mode)
 }
 
 
-int 
-hd_supp (FILE *f)
+int hd_supp (FILE* /* f */)
 {
   static int count = 0;
 
@@ -127,10 +121,9 @@ hd_supp (FILE *f)
   return(0);
 }
 
-int 
-ld_supp (void *vsp, int mode)
+int ld_supp (void* /* vsp */, int /* mode */)
 {
-  supplier_t* sp = (supplier_t*)vsp;
+  //supplier_t* sp = (supplier_t*)vsp; // IP: Unused
   static int count = 0;
 
   if (! count++)
@@ -142,8 +135,7 @@ ld_supp (void *vsp, int mode)
 }
 
 
-int 
-hd_order (FILE *f)
+int hd_order (FILE* /* f */)
 {
   static int count = 0;
 
@@ -153,10 +145,9 @@ hd_order (FILE *f)
   return(0);
 }
 
-int 
-ld_order (void *vp, int mode)
+int ld_order (void* /* vp */, int /* mode */)
 {
-  order_t* p = (order_t*)vp;
+  //order_t* p = (order_t*)vp; // IP: Unused
   static int count = 0;
 
   if (! count++)
@@ -167,9 +158,9 @@ ld_order (void *vp, int mode)
   return(0);
 }
 
-ld_line (void *vp, int mode)
+int ld_line (void* /* vp */, int /* mode */)
 {
-  order_t* p = (order_t*)vp;
+  // order_t* p = (order_t*)vp; // IP: Unused
   static int count = 0;
 
   if (! count++)
@@ -182,8 +173,7 @@ ld_line (void *vp, int mode)
 
 
 
-int 
-hd_psupp (FILE *f)
+int hd_psupp (FILE* /* f */)
 {
   static int count = 0;
 
@@ -196,8 +186,7 @@ hd_psupp (FILE *f)
 }
 
 
-int 
-hd_line (FILE *f)
+int hd_line (FILE* /* f */)
 {
   static int count = 0;
 
@@ -207,8 +196,7 @@ hd_line (FILE *f)
   return(0);
 }
 
-int 
-hd_nation (FILE *f)
+int hd_nation (FILE* /* f */)
 {
   static int count = 0;
 
@@ -218,10 +206,9 @@ hd_nation (FILE *f)
   return(0);
 }
 
-int 
-ld_nation (void *vcp, int mode)
+int ld_nation (void* /* vcp */, int /* mode */)
 {
-  code_t* cp = (code_t*)vcp;
+  //code_t* cp = (code_t*)vcp; // IP: Unused
   static int count = 0;
 
   if (! count++)
@@ -232,8 +219,7 @@ ld_nation (void *vcp, int mode)
   return(0);
 }
 
-int 
-hd_region (FILE *f)
+int hd_region (FILE* /* f */)
 {
   static int count = 0;
 
@@ -243,10 +229,9 @@ hd_region (FILE *f)
   return(0);
 }
 
-int 
-ld_region (void *vcp, int mode)
+int ld_region (void* /* vcp */, int /* mode */)
 {
-  code_t* cp = (code_t*)vcp;
+  // code_t* cp = (code_t*)vcp; // IP: Unused
   static int count = 0;
 
   if (! count++)

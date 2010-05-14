@@ -64,6 +64,7 @@ shell_t::shell_t(const char* prompt,
 {
     // 1. Set prompt
     _cmd_prompt = new char[SHELL_COMMAND_BUFFER_SIZE];
+    memset(_cmd_prompt,0,SHELL_COMMAND_BUFFER_SIZE);
     if (prompt) strncpy(_cmd_prompt, prompt, strlen(prompt));
     _register_commands();
 }
@@ -250,7 +251,6 @@ int shell_t::process_network()
 
 int shell_t::process_one(char* acmd) 
 {
-    // 1. Make sure that there is a command to process
     assert (acmd);
 
     // 2. Lock shell
@@ -258,7 +258,7 @@ int shell_t::process_one(char* acmd)
     CRITICAL_SECTION(sh_cs,_lock);
 
     // 3. Get command tag
-    if ( sscanf(acmd, "%s", &cmd_tag) < 1) {
+    if ( sscanf(acmd, "%s", cmd_tag) < 1) {
         _helper->list_cmds();
         return (SHELL_NEXT_CONTINUE);
     }
@@ -274,10 +274,11 @@ int shell_t::process_one(char* acmd)
 
     // 6. Process command
     _processing_command = true;
-    int rval;
+    int rval=0;
     cmdMapIt cmdit = _aliases.find(cmd_tag);
     if (cmdit == _aliases.end()) {
-        rval = process_command(acmd, cmd_tag);
+        TRACE( TRACE_ALWAYS, "Unknown command (%s)\n", cmd_tag);
+        rval = SHELL_NEXT_CONTINUE;
     }
     else {
         rval = cmdit->second->handle(acmd);
@@ -394,50 +395,17 @@ int shell_t::close_cmds()
 
 int shell_t::_register_commands() 
 {
-    // add own
+    REGISTER_CMD(trace_cmd_t,_tracer);
+    REGISTER_CMD(cpustat_cmd_t,_cpustater);
+    REGISTER_CMD(conf_cmd_t,_confer);
+    REGISTER_CMD(env_cmd_t,_enver);
+    REGISTER_CMD(set_cmd_t,_seter);
+    REGISTER_CMD(quit_cmd_t,_quiter);
+    REGISTER_CMD(echo_cmd_t,_echoer);
+    REGISTER_CMD(break_cmd_t,_breaker);
+    REGISTER_CMD(zipf_cmd_t,_zipfer);
 
-    _tracer = new trace_cmd_t();        
-    _tracer->setaliases();
-    add_cmd(_tracer.get());
-
-#ifdef __sparcv9
-    _cpustater = new cpustat_cmd_t();        
-    _cpustater->setaliases();
-    add_cmd(_cpustater.get());
-#endif
-
-    _confer = new conf_cmd_t();        
-    _confer->setaliases();
-    add_cmd(_confer.get());
-
-    _enver = new env_cmd_t();        
-    _enver->setaliases();
-    add_cmd(_enver.get());
-
-    _seter = new set_cmd_t();        
-    _seter->setaliases();
-    add_cmd(_seter.get());
-
-    _helper = new help_cmd_t(&_cmds);        
-    _helper->setaliases();
-    add_cmd(_helper.get());
-
-    _quiter = new quit_cmd_t();        
-    _quiter->setaliases();
-    add_cmd(_quiter.get());
-
-    _echoer = new echo_cmd_t();        
-    _echoer->setaliases();
-    add_cmd(_echoer.get());
-
-    _breaker = new break_cmd_t();        
-    _breaker->setaliases();
-    add_cmd(_breaker.get());
-
-    _zipfer = new zipf_cmd_t();        
-    _zipfer->setaliases();
-    add_cmd(_zipfer.get());
-
+    REGISTER_CMD_PARAM(help_cmd_t,_helper,&_cmds);
 
     return (0);
 }
@@ -511,7 +479,7 @@ int help_cmd_t::handle(const char* cmd)
 {
     char help_tag[SERVER_COMMAND_BUFFER_SIZE];
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%s %s", &help_tag, &cmd_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", help_tag, cmd_tag) < 2) {
         // prints the list of commands
         list_cmds();
         return (SHELL_NEXT_CONTINUE);
@@ -588,7 +556,7 @@ int env_cmd_t::handle(const char* cmd)
     assert (ev);
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char env_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%s %s", &cmd_tag, &env_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", cmd_tag, env_tag) < 2) {
         // prints all the env
         ev->printVars();    
         return (SHELL_NEXT_CONTINUE);
@@ -627,7 +595,7 @@ void conf_cmd_t::setaliases()
 }
 
 
-int conf_cmd_t::handle(const char* cmd)
+int conf_cmd_t::handle(const char* /* cmd */)
 {    
     ev->refreshVars();
     return (SHELL_NEXT_CONTINUE);
@@ -640,7 +608,7 @@ void conf_cmd_t::usage(void)
            "CONF - Tries to reread all the set env vars from the config file\n");
 }
 
-#ifdef __sparcv9
+
 /*********************************************************************
  *
  *  CPUSTAT
@@ -654,7 +622,7 @@ void cpustat_cmd_t::setaliases()
     _aliases.push_back("cpustats");
 }
 
-int cpustat_cmd_t::handle(const char* cmd)
+int cpustat_cmd_t::handle(const char* /* cmd */)
 {    
     myinfo.print();
     return (SHELL_NEXT_CONTINUE);
@@ -665,8 +633,6 @@ void cpustat_cmd_t::usage(void)
     TRACE( TRACE_ALWAYS, 
            "CPUSTAT - Prints cpu usage for the process\n");
 }
-
-#endif
 
 
 
@@ -687,7 +653,7 @@ int zipf_cmd_t::handle(const char* cmd)
 {
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char s_tag[SERVER_COMMAND_BUFFER_SIZE];
-    if ( sscanf(cmd, "%s %s", &cmd_tag, &s_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", cmd_tag, s_tag) < 2) {
         _is_enabled = false;
     }
     else {
@@ -708,7 +674,7 @@ void zipf_cmd_t::usage()
            "           - With arguments, enabled zipf and sets \"s\"\n");
 }
 
-string zipf_cmd_t::desc()
+string zipf_cmd_t::desc() const
 {
     return string("Enables/Disables zipfian input generation");
 }

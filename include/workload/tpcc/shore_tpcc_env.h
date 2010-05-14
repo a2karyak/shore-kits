@@ -68,14 +68,14 @@ ENTER_NAMESPACE(tpcc);
 
 struct ShoreTPCCTrxCount 
 {
-    int new_order;
-    int payment;
-    int order_status;
-    int delivery;
-    int stock_level;
+    uint new_order;
+    uint payment;
+    uint order_status;
+    uint delivery;
+    uint stock_level;
 
-    int mbench_wh;
-    int mbench_cust;
+    uint mbench_wh;
+    uint mbench_cust;
 
     ShoreTPCCTrxCount& operator+=(ShoreTPCCTrxCount const& rhs) {
         new_order += rhs.new_order; 
@@ -99,7 +99,7 @@ struct ShoreTPCCTrxCount
 	return (*this);
     }
 
-    const int total() const {
+    uint total() const {
         return (new_order+payment+order_status+delivery+stock_level+
                 mbench_wh+mbench_cust);
     }
@@ -180,7 +180,7 @@ public:
 
     // DB INTERFACE
 
-    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     virtual int open() { return(0); /* do nothing */ };
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    

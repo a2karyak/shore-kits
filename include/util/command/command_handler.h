@@ -61,10 +61,8 @@ protected:
 
 public:
 
-    command_handler_t() {         
-    }
+    command_handler_t() { }
     virtual ~command_handler_t() { }
-
 
     // COMMAND INTERFACE
 
@@ -79,14 +77,14 @@ public:
     // should push_back() a set of aliases
     // the first one is the basic command name    
     virtual void setaliases()=0;
-    string name() { return (_name); }
+    string name() const { return (_name); }
     aliasList* aliases() { return (&_aliases); }
 
     // should print usage
     virtual void usage() { /* default do nothing */ };
 
     // should return short description
-    virtual string desc()=0;
+    virtual string desc() const=0;
 
 }; // EOF: command_handler_t
 

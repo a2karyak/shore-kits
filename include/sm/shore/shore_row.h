@@ -135,11 +135,11 @@ struct rep_row_t
         assert (_pts);
     }
 
-    rep_row_t(char* &dest, uint &bufsz, ats_char_t* apts) 
-        : _dest(dest), _bufsz(0), _pts(apts)
-    {
-        assert (_pts);
-    }
+//     rep_row_t(char* &dest, uint &bufsz, ats_char_t* apts) 
+//         : _dest(dest), _bufsz(0), _pts(apts)
+//     {
+//         assert (_pts);
+//     }
 
     ~rep_row_t() {
         if (_dest) {

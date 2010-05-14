@@ -39,18 +39,54 @@
 ENTER_NAMESPACE(shore);
 
 
-extern "C" void alarm_handler(int sig) {
+extern "C" void alarm_handler(int /* sig */) 
+{
     _g_shore_env->set_measure(MST_DONE);
 }
 
 bool volatile _g_canceled = false;
 
-
-
 double _theSF = DF_SF;
 
 
 //// shore_shell_t interface ////
+
+
+shore_shell_t::shore_shell_t(const char* prompt, 
+                             const bool netmode,
+                             const int netport,                  
+                             processorid_t acpustart) 
+    : shell_t(prompt,true,netmode,netport), 
+      _env(NULL), 
+      _start_prs_id(acpustart), _current_prs_id(acpustart)
+{
+    // install signal handler
+    struct sigaction sa;
+    struct sigaction sa_old;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_handler = &alarm_handler;
+    if(sigaction(SIGALRM, &sa, &sa_old) < 0) {
+        exit(1);        
+    }
+}
+
+shore_shell_t::~shore_shell_t() 
+{ 
+    if (_env) {
+        _env->stop();
+        close_smt_t* clt = new close_smt_t(_env, c_str("clt"));
+        assert (clt);
+        clt->fork(); // pointer is deleted by clt thread
+        clt->join();
+        int rv = clt->_rv;
+        if (rv) {
+            fprintf( stderr, "Error in closing thread...\n");
+        }
+        delete (clt);
+        clt = NULL;
+    }
+}
 
 
 
@@ -239,86 +275,6 @@ int shore_shell_t::print_usage(const char* command)
 }
 
 
-/******************************************************************** 
- *
- *  @fn:    usage_cmd_TEST
- *
- *  @brief: Prints the usage for TEST cmd
- *
- ********************************************************************/
-
-void shore_shell_t::usage_cmd_TEST() 
-{
-    TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
-           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
-           "\nParameters:\n" \
-           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
-           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
-           "<NUM_THRS>    : Number of threads used (optional)\n" \
-           "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
-           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
-}
-
-
-/******************************************************************** 
- *
- *  @fn:    usage_cmd_MEASURE
- *
- *  @brief: Prints the usage for MEASURE cmd
- *
- ********************************************************************/
-
-void shore_shell_t::usage_cmd_MEASURE() 
-{
-    TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
-           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
-           "\nParameters:\n" \
-           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
-           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
-           "<NUM_THRS>    : Number of threads used (optional)\n" \
-           "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
-           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
-           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
-}
-
-
-/******************************************************************** 
- *
- *  @fn:    usage_cmd_WARMUP
- *
- *  @brief: Prints the usage for WARMUP cmd
- *
- ********************************************************************/
-
-void shore_shell_t::usage_cmd_WARMUP() 
-{
-    TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
-           "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
-           "\nParameters:\n" \
-           "<NUM_QUERIED> : The SF queried (Default=10) (optional)\n" \
-           "<NUM_TRXS>    : Number of transactions per thread (Default=1000) (optional)\n" \
-           "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
-           "<ITERATIONS>  : Number of iterations (Default=3) (optional)\n\n");
-}
-
-
-/******************************************************************** 
- *
- *  @fn:    usage_cmd_LOAD
- *
- *  @brief: Prints the usage for LOAD cmd
- *
- ********************************************************************/
-
-void shore_shell_t::usage_cmd_LOAD() 
-{
-    TRACE( TRACE_ALWAYS, "LOAD Usage:\n\n" \
-           "*** load\n");
-}
-
 
 
 /******************************************************************** 
@@ -338,76 +294,10 @@ void shore_shell_t::pre_process_cmd()
     // make sure any previous abort is cleared
     base_client_t::resume_test();
 
-#ifdef __sparcv9
     // print processor usage info
     _cpustater->myinfo.reset();
-#endif
 }
 
-
-/******************************************************************** 
- *
- *  @fn:    process_command
- *
- *  @brief: Catches the {TEST/MEASURE/WARMUP} cmds
- *
- ********************************************************************/
-
-int shore_shell_t::process_command(const char* cmd,
-                                   const char* cmd_tag)
-{
-    pre_process_cmd();
-
-    // TRXS cmd
-    if (strcasecmp(cmd_tag, "TRXS") == 0) {
-        return (process_cmd_TRXS(cmd, cmd_tag));
-    }
-
-    // LOAD cmd
-    if (strcasecmp(cmd_tag, "LOAD") == 0) {
-        return (process_cmd_LOAD(cmd, cmd_tag));
-    }
-
-    // WARMUP cmd
-    if (strcasecmp(cmd_tag, "WARMUP") == 0) {
-        return (process_cmd_WARMUP(cmd, cmd_tag));
-    }
-    
-    // TEST cmd
-    if (strcasecmp(cmd_tag, "TEST") == 0) {
-        return (process_cmd_TEST(cmd, cmd_tag));
-    }
-
-    // MEASURE cmd
-    if (strcasecmp(cmd_tag, "MEASURE") == 0) {
-        return (process_cmd_MEASURE(cmd, cmd_tag));
-    }
-    else {
-        TRACE( TRACE_ALWAYS, "Unknown command (%s)\n", cmd);
-        //print_usage(cmd_tag);
-        return (SHELL_NEXT_CONTINUE);
-    }        
-
-    assert (0); // should never reach this point
-    return (SHELL_NEXT_CONTINUE);
-}
-
-
-
-/******************************************************************** 
- *
- *  @fn:    process_cmd_TRXS
- *
- *  @brief: Parses the TRXS cmd and calls the virtual impl function
- *
- ********************************************************************/
-
-int shore_shell_t::process_cmd_TRXS(const char* command, 
-                                    const char* command_tag)
-{
-    print_sup_trxs();
-    return (SHELL_NEXT_CONTINUE);
-}
 
 
 /******************************************************************** 
@@ -418,8 +308,7 @@ int shore_shell_t::process_cmd_TRXS(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_LOAD(const char* command, 
-                                    const char* command_tag)
+int shore_shell_t::process_cmd_LOAD(const char* /* command */)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -442,8 +331,7 @@ int shore_shell_t::process_cmd_LOAD(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_WARMUP(const char* command, 
-                                      const char* command_tag)
+int shore_shell_t::process_cmd_WARMUP(const char* command)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -457,7 +345,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
     // 0. Parse Parameters
     envVar* ev = envVar::instance();
-    double numOfQueriedSF      = ev->getVarDouble("test-num-queried",DF_WARMUP_QUERIED_SF);
+    double numOfQueriedSF      = ev->getVarDouble("test-num-queried",DF_NUM_OF_QUERIED_SF);
     double tmp_numOfQueriedSF  = numOfQueriedSF;
     int numOfTrxs              = ev->getVarInt("test-num-trxs",DF_WARMUP_TRX_PER_THR);
     int tmp_numOfTrxs          = numOfTrxs;
@@ -468,14 +356,15 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
 
  
     // Parses new test run data
+    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
     if ( sscanf(command, "%s %lf %d %d %d",
-                &command_tag,
+                command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_numOfTrxs,
                 &tmp_duration,
                 &tmp_iterations) < 1 ) 
     {
-        usage_cmd_WARMUP();
+        TRACE( TRACE_ALWAYS, "Wrong input. Type (help warmup)\n"); 
         return (SHELL_NEXT_CONTINUE);
     }
 
@@ -527,8 +416,7 @@ int shore_shell_t::process_cmd_WARMUP(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_TEST(const char* command, 
-                                    const char* command_tag)
+int shore_shell_t::process_cmd_TEST(const char* command)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -560,15 +448,16 @@ int shore_shell_t::process_cmd_TEST(const char* command,
 
     // update the SF
     double tmp_sf = ev->getSysVarDouble("sf");
-    if (tmp_sf) {
+    if (tmp_sf>0) {
         TRACE( TRACE_STATISTICS, "Updated SF (%.1f)\n", tmp_sf);
         _theSF = tmp_sf;
     }
 
     
     // Parses new test run data
+    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
     if ( sscanf(command, "%s %lf %d %d %d %d %d %d",
-                &command_tag,
+                command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
@@ -577,7 +466,7 @@ int shore_shell_t::process_cmd_TEST(const char* command,
                 &tmp_iterations,
                 &tmp_binding) < 2 ) 
     {
-        usage_cmd_TEST();
+        TRACE( TRACE_ALWAYS, "Wrong input. Type (help test)\n"); 
         return (SHELL_NEXT_CONTINUE);
     }
 
@@ -659,8 +548,7 @@ int shore_shell_t::process_cmd_TEST(const char* command,
  *
  ********************************************************************/
 
-int shore_shell_t::process_cmd_MEASURE(const char* command, 
-                                       const char* command_tag)
+int shore_shell_t::process_cmd_MEASURE(const char* command)
 {
     assert (_env);
     assert (_env->is_initialized());
@@ -690,8 +578,9 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
     eBindingType tmp_binding   = binding;
     
     // Parses new test run data
+    char command_tag[SERVER_COMMAND_BUFFER_SIZE];
     if ( sscanf(command, "%s %lf %d %d %d %d %d %d",
-                &command_tag,
+                command_tag,
                 &tmp_numOfQueriedSF,
                 &tmp_spreadThreads,
                 &tmp_numOfThreads,
@@ -700,13 +589,13 @@ int shore_shell_t::process_cmd_MEASURE(const char* command,
                 &tmp_iterations,
                 &tmp_binding) < 2 ) 
     {
-        usage_cmd_MEASURE();
+        TRACE( TRACE_ALWAYS, "Wrong input. Type (help measure)\n"); 
         return (SHELL_NEXT_CONTINUE);
     }
 
     // update the SF
     double tmp_sf = ev->getSysVarDouble("sf");
-    if (tmp_sf) {
+    if (tmp_sf>0) {
         TRACE( TRACE_DEBUG, "Updated SF (%.1f)\n", tmp_sf);
         _theSF = tmp_sf;
     }
@@ -808,10 +697,10 @@ int shore_shell_t::SIGINT_handler()
  *
  ********************************************************************/
 
-int shore_shell_t::_cmd_WARMUP_impl(const double iQueriedSF, 
-                                    const int iTrxs, 
-                                    const int iDuration, 
-                                    const int iIterations)
+int shore_shell_t::_cmd_WARMUP_impl(const double /* iQueriedSF */, 
+                                    const int /* iTrxs */, 
+                                    const int /* iDuration */, 
+                                    const int /* iIterations */)
 {
     TRACE( TRACE_ALWAYS, "warming up...\n");
 
@@ -855,29 +744,200 @@ int shore_shell_t::_cmd_LOAD_impl()
 
 
 
-//// EOF: shore_shell_t functions ////
+//// EOF: shore_shell_t commands ////
+
+
+int shore_shell_t::register_commands() 
+{
+    REGISTER_CMD_PARAM(restart_cmd_t,_restarter,_env);
+    REGISTER_CMD_PARAM(info_cmd_t,_informer,_env);
+    REGISTER_CMD_PARAM(stats_cmd_t,_stater,_env);
+    REGISTER_CMD_PARAM(dump_cmd_t,_dumper,_env);
+    REGISTER_CMD_PARAM(fake_iodelay_cmd_t,_fakeioer,_env);
+
+#ifndef CFG_SHORE_6
+    REGISTER_CMD_PARAM(fake_logdelay_cmd_t,_fakelogdelayer,_env);
+    REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
+#endif
+
+    REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
+	
+#ifdef CFG_SLI
+    REGISTER_CMD_PARAM(sli_cmd_t,_slier,_env);
+#endif
+
+#ifdef CFG_ELR
+    REGISTER_CMD_PARAM(elr_cmd_t,_elrer,_env);
+#endif
+
+#ifdef CFG_BT
+    REGISTER_CMD_PARAM(bt_cmd_t,_bter,_env);
+#endif
+
+    REGISTER_CMD_PARAM(measure_cmd_t,_measurer,this);
+    REGISTER_CMD_PARAM(test_cmd_t,_tester,this);
+    REGISTER_CMD_PARAM(warmup_cmd_t,_warmuper,this);
+    REGISTER_CMD_PARAM(load_cmd_t,_loader,this);
+    REGISTER_CMD_PARAM(trxs_cmd_t,_trxser,this);
+
+    return (0);
+}
+
+
+
 
 
 
 /*********************************************************************
  *
- *  fake_io_delay_cmd_t: "iodelay" command
+ *  "restart" command
  *
  *********************************************************************/
 
-void fake_iodelay_cmd_t::usage(void)
+void restart_cmd_t::setaliases() 
+{ 
+    _name = string("restart"); 
+    _aliases.push_back("restart"); 
+}
+
+int restart_cmd_t::handle(const char* /* cmd */) 
+{ 
+    assert (_env); 
+    _env->stop(); 
+    _env->start(); 
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void restart_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "usage: info\n"); 
+}
+    
+string restart_cmd_t::desc() const 
+{ 
+    return (string("Restart")); 
+}  
+
+
+
+
+/*********************************************************************
+ *
+ *  "info" command
+ *
+ *********************************************************************/
+
+void info_cmd_t::setaliases() 
+{ 
+    _name = string("info"); 
+    _aliases.push_back("info"); 
+    _aliases.push_back("i"); 
+}
+
+int info_cmd_t::handle(const char* /* cmd */) 
+{ 
+    assert (_env); 
+    _env->info(); 
+    return (SHELL_NEXT_CONTINUE); 
+}
+
+void info_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "usage: info\n"); 
+}
+
+string info_cmd_t::desc() const 
+{ 
+    return (string("Prints info about the state of db instance")); 
+}
+
+
+
+
+/*********************************************************************
+ *
+ *  "stats" command
+ *
+ *********************************************************************/
+
+void stats_cmd_t::setaliases() 
+{ 
+    _name = string("stats"); 
+    _aliases.push_back("stats"); 
+    _aliases.push_back("st"); 
+}
+
+int stats_cmd_t::handle(const char* /* cmd */) 
+{ 
+    assert (_env); 
+    _env->statistics(); 
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void stats_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "usage: stats\n"); 
+}
+    
+string stats_cmd_t::desc() const 
 {
-    TRACE( TRACE_ALWAYS, "IODELAY Usage:\n\n"                           \
-           "*** iodelay <DELAY>\n"                                      \
-           "\nParameters:\n"                                            \
-           "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
+    return (string("Prints gathered statistics")); 
+}
+
+
+
+
+/*********************************************************************
+ *
+ *  "dump" command
+ *
+ *********************************************************************/
+
+void dump_cmd_t::setaliases() 
+{ 
+    _name = string("dump"); 
+    _aliases.push_back("dump"); 
+    _aliases.push_back("d"); 
+}
+
+int dump_cmd_t::handle(const char* /* cmd */) 
+{ 
+    assert (_env); 
+    _env->dump(); 
+    return (SHELL_NEXT_CONTINUE); 
+}
+
+void dump_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "usage: dump\n"); 
+}
+
+string dump_cmd_t::desc() const 
+{ 
+    return (string("Dumps db instance data")); 
+}
+    
+
+
+
+/*********************************************************************
+ *
+ *  "iodelay" command
+ *
+ *********************************************************************/
+
+void fake_iodelay_cmd_t::setaliases() 
+{ 
+    _name = string("iodelay"); 
+    _aliases.push_back("iodelay"); 
+    _aliases.push_back("io"); 
 }
 
 int fake_iodelay_cmd_t::handle(const char* cmd)
 {
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
     char iodelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%s %s", &cmd_tag, &iodelay_tag) < 2) {
+    if ( sscanf(cmd, "%s %s", cmd_tag, iodelay_tag) < 2) {
         // prints all the env
         usage();
         return (SHELL_NEXT_CONTINUE);
@@ -894,29 +954,38 @@ int fake_iodelay_cmd_t::handle(const char* cmd)
 }
 
 
-/*********************************************************************
- *
- *  fake_io_delay_cmd_t: "logdelay" command
- *
- *********************************************************************/
-
-void fake_logdelay_cmd_t::usage(void)
+void fake_iodelay_cmd_t::usage(void)
 {
-    TRACE( TRACE_ALWAYS, "LOGDELAY Usage:\n\n"                           \
-           "*** logdelay <DELAY>\n"                                      \
+    TRACE( TRACE_ALWAYS, "IODELAY Usage:\n\n"                           \
+           "*** iodelay <DELAY>\n"                                      \
            "\nParameters:\n"                                            \
            "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
 }
 
-string fake_logdelay_cmd_t::desc(void)
-{
-    return string("Sets the fake log disk delay");
+string fake_iodelay_cmd_t::desc() const 
+{ 
+    return (string("Sets the fake I/O disk delay")); 
+}
+
+
+
+#ifndef CFG_SHORE_6
+/*********************************************************************
+ *
+ *  "fake_logdelay" command
+ *
+ *********************************************************************/
+
+void fake_logdelay_cmd_t::setaliases() 
+{ 
+    _name = string("logdelay"); 
+    _aliases.push_back("logdelay"); 
 }
 
 int fake_logdelay_cmd_t::handle(const char* cmd)
 {
     char logdelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%*s %s", &logdelay_tag) < 1) {
+    if ( sscanf(cmd, "%*s %s", logdelay_tag) < 1) {
         // prints all the pssm
         usage();
         return (SHELL_NEXT_CONTINUE);
@@ -956,26 +1025,102 @@ int fake_logdelay_cmd_t::handle(const char* cmd)
     return (SHELL_NEXT_CONTINUE);
 }
 
+void fake_logdelay_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS, "LOGDELAY Usage:\n\n"                           \
+           "*** logdelay <DELAY>\n"                                      \
+           "\nParameters:\n"                                            \
+           "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
+}
+
+string fake_logdelay_cmd_t::desc() const
+{
+    return string("Sets the fake log disk delay");
+}
+
+
+
 
 /*********************************************************************
  *
- *  asynch_cmd_t: "asynch" command
+ *  "log" command
  *
  *********************************************************************/
 
-void asynch_cmd_t::usage(void)
-{
-    TRACE( TRACE_ALWAYS, "Asynch Usage:\n\n"       \
-           "*** asynch\n\n");
+void log_cmd_t::setaliases() 
+{ 
+    _name = string("log"); 
+    _aliases.push_back("log");
+    _aliases.push_back("l");
 }
 
-
-string asynch_cmd_t::desc(void)
+int log_cmd_t::handle(const char* cmd)
 {
-    return (string("Sets the fake log disk delay"));
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char level_tag[SERVER_COMMAND_BUFFER_SIZE];
+
+    if ( sscanf(cmd, "%s %s", cmd_tag, level_tag) < 2) {
+        usage();
+    }
+    else {
+	if(strcasecmp("get", level_tag)) {
+	    rc_t err = _env->db()->set_log_features(level_tag);
+	    if(err.is_error()) {
+		TRACE( TRACE_ALWAYS, "*** Invalid feature set: %s ***", level_tag);
+	    }
+	}
+	char const* level = _env->db()->get_log_features();
+        TRACE( TRACE_ALWAYS, "Enabled log features: %s\n", level);
+	delete[] level;
+    }
+
+    return (SHELL_NEXT_CONTINUE);
 }
 
-int asynch_cmd_t::handle(const char* cmd)
+void log_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "LOG Usage:\n\n"
+           "*** log <feature-list>\n"
+	   "\n"
+           "<feature-list> is a case- and order-insensitive string containing zero or more\n"
+	   "of the following logging features (note dependencies):\n"
+	   "	C: C-Array\n"
+	   "	    F: Fastpath\n"
+	   "	    L: Print LSN groups (not fully implemented yet)\n"
+	   "	D: Decoupled memcpy\n"
+	   "	    M: MCS exposer\n"
+	   "	        E: Exposure groups\n"
+	   "	            X: Print Exposure groups (not fully implemented yet)\n"
+	   "\n"
+	   );
+}
+
+string log_cmd_t::desc() const
+{ 
+    return (string("Sets the logging mechanism")); 
+}
+#endif // CFG_SHORE_6
+
+
+
+
+/*********************************************************************
+ *
+ *  "asynch" command
+ *
+ *********************************************************************/
+
+asynch_cmd_t::asynch_cmd_t(ShoreEnv* env) 
+    : _env(env), _enabled(false) 
+{ }
+
+void asynch_cmd_t::setaliases() 
+{ 
+    _name = string("asynch"); 
+    _aliases.push_back("asynch"); 
+}
+
+int asynch_cmd_t::handle(const char* /* cmd */)
 {
     _enabled = !_enabled;    
     _env->setAsynchCommit(_enabled);
@@ -983,19 +1128,36 @@ int asynch_cmd_t::handle(const char* cmd)
     return (SHELL_NEXT_CONTINUE);
 }
 
+void asynch_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS, "Asynch Usage:\n\n"       \
+           "*** asynch\n\n");
+}
+
+
+string asynch_cmd_t::desc() const
+{
+    return (string("Sets the fake log disk delay"));
+}
+
+
+
 
 #ifdef CFG_SLI
-
 /*********************************************************************
  *
- *  sli_cmd_t: "sli" command
+ *  "sli" command
  *
  *********************************************************************/
 
-void sli_cmd_t::usage(void)
-{
-    TRACE( TRACE_ALWAYS, "SLI Usage:\n\n"       \
-           "*** sli\n\n");
+sli_cmd_t::sli_cmd_t(ShoreEnv* env) 
+    : _env(env), _enabled(false) 
+{ }
+
+void sli_cmd_t::setaliases() 
+{ 
+    _name = string("sli"); 
+    _aliases.push_back("sli"); 
 }
 
 int sli_cmd_t::handle(const char* cmd)
@@ -1007,21 +1169,77 @@ int sli_cmd_t::handle(const char* cmd)
     return (SHELL_NEXT_CONTINUE);
 }
 
+void sli_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS, "SLI Usage:\n\n"       \
+           "*** sli\n\n");
+}
+
+string sli_cmd_t::desc() const 
+{ 
+    return (string("Enables/disables SLI")); 
+}
 #endif // CFG_SLI
 
 
-#ifdef CFG_BT
 
+
+#ifdef CFG_ELR
 /*********************************************************************
  *
- *  bt_cmd_t: "bt" command
+ *  "elr" command
  *
  *********************************************************************/
 
-void bt_cmd_t::usage(void)
+elr_cmd_t::elr_cmd_t(ShoreEnv* env) 
+    : _env(env), _enabled(false) 
+{ }
+
+void elr_cmd_t::setaliases() 
+{ 
+    _name = string("elr"); 
+    _aliases.push_back("elr"); 
+}
+
+int elr_cmd_t::handle(const char* cmd)
 {
-    TRACE( TRACE_ALWAYS, "BT Usage:\n\n"       \
-           "*** bt [on|off|print fname]\n\n");
+    _enabled = !_enabled;    
+    _env->db()->set_elr_enabled(_enabled);
+    _env->setELREnabled(_enabled);
+    TRACE( TRACE_ALWAYS, "ELR=%d\n", _enabled);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void elr_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "ELR Usage:\n\n"       \
+           "*** elr\n\n");
+}
+
+string elr_cmd_t::desc() const 
+{ 
+    return (string("Enables/disables ELR")); 
+}
+#endif // CFG_ELR
+
+
+
+
+#ifdef CFG_BT
+/*********************************************************************
+ *
+ *  "bt" command
+ *
+ *********************************************************************/
+
+bt_cmd_t::bt_cmd_t(ShoreEnv* env) 
+    : _env(env), _enabled(false) 
+{ }
+
+bt_cmd_t::setaliases() 
+{ 
+    _name = string("bt"); 
+    _aliases.push_back("bt"); 
 }
 
 int bt_cmd_t::handle(const char* cmd)
@@ -1062,97 +1280,199 @@ int bt_cmd_t::handle(const char* cmd)
     return (SHELL_NEXT_CONTINUE);
 }
 
+void bt_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS, "BT Usage:\n\n"        \
+           "*** bt [on|off|print fname]\n\n");
+}
+
+string bt_cmd_t::desc() const 
+{
+    return (string("Enables/disables/prints collection of backtrace information"));
+}
 #endif // CFG_BT
 
 
-/*********************************************************************
- *
- *  log_cmd_t: "log" command
- *
- *********************************************************************/
 
-log_cmd_t::log_cmd_t(ShoreEnv* env, const uint level)
-    : _env(env), _level(level)
-{ 
-}
-
-void log_cmd_t::usage(void)
-{
-    TRACE( TRACE_ALWAYS, "LOG Usage:\n\n"
-           "*** log <feature-list>\n"
-	   "\n"
-           "<feature-list> is a case- and order-insensitive string containing zero or more\n"
-	   "of the following logging features (note dependencies):\n"
-	   "	C: C-Array\n"
-	   "	    F: Fastpath\n"
-	   "	    L: Print LSN groups (not fully implemented yet)\n"
-	   "	D: Decoupled memcpy\n"
-	   "	    M: MCS exposer\n"
-	   "	        E: Exposure groups\n"
-	   "	            X: Print Exposure groups (not fully implemented yet)\n"
-	   "\n"
-	   );
-}
-
-int log_cmd_t::handle(const char* cmd)
-{
-    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
-    char level_tag[SERVER_COMMAND_BUFFER_SIZE];
-
-    if ( sscanf(cmd, "%s %s", &cmd_tag, &level_tag) < 2) {
-        usage();
-    }
-    else {
-	if(strcasecmp("get", level_tag)) {
-	    rc_t err = _env->db()->set_log_features(level_tag);
-	    if(err.is_error()) {
-		TRACE( TRACE_ALWAYS, "*** Invalid feature set: %s ***", level_tag);
-	    }
-	}
-	char const* level = _env->db()->get_log_features();
-        TRACE( TRACE_ALWAYS, "Enabled log features: %s\n", level);
-	delete[] level;
-    }
-
-    return (SHELL_NEXT_CONTINUE);
-}
-
-void log_cmd_t::setaliases() { 
-    _name = string("log"); 
-    _aliases.push_back("log");
-    _aliases.push_back("l");
-}
-
-string log_cmd_t::desc() 
-{ 
-    return (string("Sets the logging mechanism")); 
-}
-
-
-#ifdef CFG_ELR
 
 /*********************************************************************
  *
- *  elr_cmd_t: "elr" command
+ *  "measure" command
  *
  *********************************************************************/
 
-void elr_cmd_t::usage(void)
+void measure_cmd_t::setaliases() 
 {
-    TRACE( TRACE_ALWAYS, "ELR Usage:\n\n"       \
-           "*** elr\n\n");
+    _name = string("measure"); 
+    _aliases.push_back("measure"); 
+    _aliases.push_back("m"); 
 }
 
-int elr_cmd_t::handle(const char* cmd)
+int measure_cmd_t::handle(const char* cmd) 
 {
-    _enabled = !_enabled;    
-    _env->db()->set_elr_enabled(_enabled);
-    _env->setELREnabled(_enabled);
-    TRACE( TRACE_ALWAYS, "ELR=%d\n", _enabled);
-    return (SHELL_NEXT_CONTINUE);
+    _kit->pre_process_cmd();
+    return (_kit->process_cmd_MEASURE(cmd)); 
 }
 
-#endif // CFG_ELR
+void measure_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "MEASURE Usage:\n\n"                           \
+           "*** measure <NUM_QUERIED> [<SPREAD> <NUM_THRS> <DURATION> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
+           "\nParameters:\n"                                            \
+           "<NUM_QUERIED> : The SF queried (queried factor)\n"          \
+           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
+           "<NUM_THRS>    : Number of threads used (optional)\n"        \
+           "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
+           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
+           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
+}
+
+string measure_cmd_t::desc() const 
+{
+    return string("Duration-based Measurement (powerrun)");
+}
+
+
+
+
+/*********************************************************************
+ *
+ *  "test" command
+ *
+ *********************************************************************/
+
+void test_cmd_t::setaliases() 
+{ 
+    _name = string("test"); 
+    _aliases.push_back("test"); 
+}
+
+int test_cmd_t::handle(const char* cmd) 
+{
+    _kit->pre_process_cmd();
+    return (_kit->process_cmd_TEST(cmd));
+}
+
+void test_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS, "TEST Usage:\n\n" \
+           "*** test <NUM_QUERIED> [<SPREAD> <NUM_THRS> <NUM_TRXS> <TRX_ID> <ITERATIONS> <BINDING>]\n" \
+           "\nParameters:\n" \
+           "<NUM_QUERIED> : The SF queried (queried factor)\n" \
+           "<SPREAD>      : Whether to spread threads (0=No, Other=Yes, Default=No) (optional)\n" \
+           "<NUM_THRS>    : Number of threads used (optional)\n" \
+           "<NUM_TRXS>    : Number of transactions per thread (optional)\n" \
+           "<TRX_ID>      : Transaction ID to be executed (0=mix) (optional)\n" \
+           "<ITERATIONS>  : Number of iterations (Default=5) (optional)\n" \
+           "<BINDING>     : Binding Type (Default=0-No binding) (optional)\n\n");
+}
+
+string test_cmd_t::desc() const 
+{
+    return string("NumOfXcts-based Measument (powerrun)");
+}
+
+
+
+
+/*********************************************************************
+ *
+ *  "warmup" command
+ *
+ *********************************************************************/
+
+void warmup_cmd_t::setaliases()
+{
+    _name = string("warmup"); 
+    _aliases.push_back("warmup");
+}
+
+int warmup_cmd_t::handle(const char* cmd) 
+{ 
+    _kit->pre_process_cmd();
+    return (_kit->process_cmd_WARMUP(cmd)); 
+}
+
+void warmup_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "WARMUP Usage:\n\n" \
+           "*** warmup [<NUM_QUERIED> <NUM_TRXS> <DURATION> <ITERATIONS>]\n" \
+           "\nParameters:\n" \
+           "<NUM_QUERIED> : The SF queried (Default=10) (optional)\n" \
+           "<NUM_TRXS>    : Number of transactions per thread (Default=1000) (optional)\n" \
+           "<DURATION>    : Duration of experiment in secs (Default=20) (optional)\n" \
+           "<ITERATIONS>  : Number of iterations (Default=3) (optional)\n\n");
+}
+
+string warmup_cmd_t::desc() const 
+{
+    return string("Does a preselected warmup run");
+}
+
+
+
+
+/*********************************************************************
+ *
+ *  "load" command
+ *
+ *********************************************************************/
+
+void load_cmd_t::setaliases()
+{
+    _name = string("load"); 
+    _aliases.push_back("load");
+}
+
+int load_cmd_t::handle(const char* cmd) 
+{ 
+    _kit->pre_process_cmd();
+    return (_kit->process_cmd_LOAD(cmd)); 
+}
+
+void load_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "LOAD Usage:\n\n" \
+           "*** load\n");
+}
+
+string load_cmd_t::desc() const 
+{
+    return string("Loads a database for the benchmark");
+}
+
+
+
+
+/*********************************************************************
+ *
+ *  "trxs" command
+ *
+ *********************************************************************/
+
+void trxs_cmd_t::setaliases()
+{
+    _name = string("trxs"); 
+    _aliases.push_back("trxs");
+}
+
+int trxs_cmd_t::handle(const char* /* cmd */) 
+{ 
+    _kit->print_sup_trxs();
+    return (SHELL_NEXT_CONTINUE); 
+}
+
+void trxs_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "usage: trxs\n"); 
+}
+
+string trxs_cmd_t::desc() const 
+{
+    return string("Lists the available transactions in the benchmark");
+}
+
 
 
 EXIT_NAMESPACE(shore);

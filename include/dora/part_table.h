@@ -105,7 +105,7 @@ public:
 
     // Access methods //
     PartitionPtrVector* get_vector() const { return (&_ppvec); }
-    Partition* get_part(const int pos) const {
+    Partition* get_part(const uint pos) const {
         assert (pos<_ppvec.size());
         return (_ppvec[pos]);
     }
@@ -114,21 +114,21 @@ public:
     //// Control table ////
 
     // configure partitions
-    virtual const int config(const int apcnt);
+    virtual int config(const int apcnt);
 
     // add one partition
-    virtual const int add_one_part(Partition* apartition) {
+    virtual int add_one_part(Partition* apartition) {
         return (_add_one_part(apartition));
     }
 
     // create one partition
-    virtual const int create_one_part();
+    virtual int create_one_part();
 
     // reset all partitions
-    virtual const int reset();
+    virtual int reset();
 
     // move to another range of processors
-    const int move(const processorid_t aprs, const int arange) {
+    int move(const processorid_t aprs, const int arange) {
         {
             CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
             // 1. update processor and range
@@ -143,7 +143,7 @@ public:
     virtual processorid_t next_cpu(const processorid_t& aprd);
 
     // stops all partitions
-    const int stop() {
+    int stop() {
         for (int i=0; i<_ppvec.size(); i++) {
             _ppvec[i]->stop();
             delete (_ppvec[i]);
@@ -153,7 +153,7 @@ public:
     }
 
     // prepares all partitions for a new run
-    const int prepareNewRun() {
+    int prepareNewRun() {
         for (int i=0; i<_ppvec.size(); i++)
             _ppvec[i]->prepareNewRun();
         return (0);
@@ -163,7 +163,7 @@ public:
     /////  Action-related methods
 
     // enqueues action, false on error
-    inline const int enqueue(Action* paction, const bool bWake, const int part) {
+    inline int enqueue(Action* paction, const bool bWake, const int part) {
         assert (part<_pcnt);
         return (_ppvec[part]->enqueue(paction,bWake));
     }
@@ -213,8 +213,8 @@ public:
 
 private:
 
-    const int _create_one_part();
-    const int _add_one_part(Partition* apartition);
+    int _create_one_part();
+    int _add_one_part(Partition* apartition);
 
 }; // EOF: part_table_t
 
@@ -233,7 +233,7 @@ private:
  ******************************************************************/
 
 template <typename Partition>
-const int part_table_t<Partition>::config(const int apcnt)
+int part_table_t<Partition>::config(const int apcnt)
 {
     assert (_env);
     assert (_table);
@@ -258,7 +258,7 @@ const int part_table_t<Partition>::config(const int apcnt)
  ******************************************************************/
 
 template <typename Partition>
-inline const int part_table_t<Partition>::create_one_part()
+inline int part_table_t<Partition>::create_one_part()
 {
     return (_create_one_part());
 }
@@ -275,7 +275,7 @@ inline const int part_table_t<Partition>::create_one_part()
  ******************************************************************/
 
 template <typename Partition>
-const int part_table_t<Partition>::reset()
+int part_table_t<Partition>::reset()
 {
     TRACE( TRACE_DEBUG, "Reseting (%s)...\n", _table->name());
     _next_prs_id = _start_prs_id;
@@ -334,7 +334,7 @@ processorid_t part_table_t<Partition>::next_cpu(const processorid_t& aprd)
  ******************************************************************/
 
 template <typename Partition>
-const int part_table_t<Partition>::_create_one_part()
+int part_table_t<Partition>::_create_one_part()
 {
     //    TRACE( TRACE_DEBUG, "(%s) creating one partition...\n", _table->name());  
     assert (0); // TODO
@@ -354,7 +354,7 @@ const int part_table_t<Partition>::_create_one_part()
  ******************************************************************/
 
 template <typename Partition>
-const int part_table_t<Partition>::_add_one_part(Partition* apartition)
+int part_table_t<Partition>::_add_one_part(Partition* apartition)
 {
     assert (apartition);
     CRITICAL_SECTION(conf_cs, _pcgf_lock);

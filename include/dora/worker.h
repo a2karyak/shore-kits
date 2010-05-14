@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:  worker.h
  *
@@ -91,20 +112,9 @@ public:
 template <class DataType>
 inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
 {    
-    //    TRACE( TRACE_DEBUG, "Activating...\n");
     int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
     if (binding==0) _prs_id = PBIND_NONE;
-
-    // bind to the specified processor
-    if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-        //if (processor_bind(P_LWPID, P_MYID, PBIND_NONE, NULL)) { // no-binding
-        TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
-        _is_bound = false;
-    }
-    else {
-        TRACE( TRACE_CPU_BINDING, "Binded to processor (%d)\n", _prs_id);
-        _is_bound = true;
-    }
+    TRY_TO_BIND(_prs_id,_is_bound);
 
     // state (WC_ACTIVE)
 

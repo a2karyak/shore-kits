@@ -73,17 +73,30 @@ typedef cmdMap::iterator cmdMapIt;
 class envVar;
 
 
+
+#define REGISTER_CMD(cmdtype,cmdname)                   \
+    cmdname = new cmdtype();                            \
+    cmdname->setaliases();                              \
+    add_cmd(cmdname.get())
+
+#define REGISTER_CMD_PARAM(cmdtype,cmdname,paramname)   \
+    cmdname = new cmdtype(paramname);                   \
+    cmdname->setaliases();                              \
+    add_cmd(cmdname.get())
+
+
+
 struct quit_cmd_t : public command_handler_t {
     void setaliases();
     int handle(const char* /* cmd */) { return (SHELL_NEXT_QUIT); }
-    string desc() { return (string("Quit")); }               
+    string desc() const { return (string("Quit")); }               
 };
 
 
 struct disconnect_cmd_t : public command_handler_t {
     void setaliases();
     int handle(const char* /* cmd */) { return (SHELL_NEXT_DISCONNECT); }
-    string desc() { return (string("Disconnect client")); }
+    string desc() const { return (string("Disconnect client")); }
 };
 
 
@@ -97,7 +110,7 @@ struct help_cmd_t : public command_handler_t {
         TRACE( TRACE_ALWAYS, "HELP       - prints usage\n"); 
         TRACE( TRACE_ALWAYS, "HELP <cmd> - prints detailed help for <cmd>\n"); 
     }
-    string desc() { return (string("Help - Use 'help <cmd>' for usage of specific cmd")); }              
+    string desc() const { return (string("Help - Use 'help <cmd>' for usage of specific cmd")); }
     void list_cmds();
 }; 
 
@@ -108,7 +121,7 @@ struct set_cmd_t : public command_handler_t {
     void setaliases();
     int handle(const char* cmd);
     void usage();
-    string desc() { return (string("Sets env vars")); }               
+    string desc() const { return (string("Sets env vars")); }               
 };
 
 
@@ -118,7 +131,7 @@ struct env_cmd_t : public command_handler_t {
     void setaliases();
     int handle(const char* cmd);
     void usage();
-    string desc() { return (string("Prints env vars")); }               
+    string desc() const { return (string("Prints env vars")); }               
 };
 
 
@@ -128,19 +141,17 @@ struct conf_cmd_t : public command_handler_t {
     void setaliases();
     int handle(const char* cmd);
     void usage();
-    string desc() { return (string("Rereads env vars")); }               
+    string desc() const { return (string("Rereads env vars")); }               
 };
 
 
-#ifdef __sparcv9
 struct cpustat_cmd_t : public command_handler_t {
     processinfo_t myinfo;
     void setaliases();
     int handle(const char* cmd);
     void usage();
-    string desc() { return (string("Process cpu usage/statitics")); }
+    string desc() const { return (string("Process cpu usage/statitics")); }
 };
-#endif
 
 struct echo_cmd_t : public command_handler_t {
     void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
@@ -149,7 +160,7 @@ struct echo_cmd_t : public command_handler_t {
         return (SHELL_NEXT_CONTINUE);
     }
     void usage() { TRACE( TRACE_ALWAYS, "usage: echo <string>\n"); }
-    string desc() { return string("Echoes its input arguments to the screen"); }
+    string desc() const { return string("Echoes its input arguments to the screen"); }
 };
 
 
@@ -160,7 +171,7 @@ struct break_cmd_t : public command_handler_t {
         return (SHELL_NEXT_CONTINUE);
     }
     void usage() { TRACE( TRACE_ALWAYS, "usage: break\n"); }
-    string desc() { return string("Breaks into a debugger by raising ^C " \
+    string desc() const { return string("Breaks into a debugger by raising ^C " \
                                   "(terminates program if no debugger is active)"); }
 };
 
@@ -173,7 +184,7 @@ struct zipf_cmd_t : public command_handler_t {
     void setaliases();
     int handle(const char* cmd);
     void usage();
-    string desc();
+    string desc() const;
 };
 
 
@@ -197,39 +208,20 @@ class shell_t
 {
 protected:
 
+    array_guard_t<char> _cmd_prompt;
+    int   _cmd_counter;
+
     bool  _save_history;
     int   _state;
-
-    // cmds
-    guard<quit_cmd_t> _quiter;
-    guard<disconnect_cmd_t> _disconnecter;
-    guard<help_cmd_t> _helper;
-    guard<set_cmd_t>  _seter;
-    guard<env_cmd_t>  _enver;
-    guard<conf_cmd_t> _confer;
-    guard<trace_cmd_t>   _tracer;
-
-#ifdef __sparcv9
-    guard<cpustat_cmd_t> _cpustater;
-#endif
-
-    guard<echo_cmd_t> _echoer;
-    guard<break_cmd_t> _breaker;
-    guard<zipf_cmd_t> _zipfer;
-
-    int _register_commands();    
 
     mcs_lock _lock;
     cmdMap   _cmds;
     cmdMap   _aliases;
     bool     _processing_command;
 
-    array_guard_t<char> _cmd_prompt;
-    int   _cmd_counter;
-
     // For network mode
-    const bool   _net_mode;
-    const uint_t _net_port;
+    bool   _net_mode;
+    uint_t _net_port;
 
     file_guard_t _in_stream;
     int _listen_fd;
@@ -239,6 +231,23 @@ protected:
     int _conn_fd;
 
     int _net_conn_cnt;
+
+
+    // cmds
+    guard<quit_cmd_t> _quiter;
+    guard<disconnect_cmd_t> _disconnecter;
+    guard<help_cmd_t> _helper;
+    guard<set_cmd_t>  _seter;
+    guard<env_cmd_t>  _enver;
+    guard<conf_cmd_t> _confer;
+    guard<trace_cmd_t>   _tracer;
+    guard<cpustat_cmd_t> _cpustater;
+
+    guard<echo_cmd_t> _echoer;
+    guard<break_cmd_t> _breaker;
+    guard<zipf_cmd_t> _zipfer;
+
+    int _register_commands();    
 
 public:
 
@@ -275,7 +284,6 @@ public:
     int process_readline();
     int process_network();
     int process_one(char* cmd);
-    virtual int process_command(const char* command, const char* command_tag)=0;
 
 }; // EOF: shell_t
 

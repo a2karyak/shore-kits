@@ -100,7 +100,7 @@ struct row_impl : public table_row_t
         register int fixed_size = 0;
 
         // setup each field and calculate offsets along the way
-        for (int i=0; i<_field_cnt; i++) {
+        for (uint i=0; i<_field_cnt; i++) {
             _pvalues[i].setup(ptd->desc(i));
 
             // count variable- and fixed-sized fields
@@ -121,7 +121,6 @@ struct row_impl : public table_row_t
         _var_slot_offset = _fixed_offset + fixed_size; 
         // offset for variable length field values
         _var_offset = _var_slot_offset + sizeof(offset_t)*var_count;
-
 
         _is_setup = true;
         return (0);

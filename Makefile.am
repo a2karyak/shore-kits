@@ -89,12 +89,9 @@ UTIL = \
         $(SU)/random_input.cpp \
         $(SU)/shell.cpp \
         $(SU)/tcp.cpp \
-        $(SU)/w_strlcpy.cpp
-
-if SPARC_MACHINE
-UTIL += $(SU)/prcinfo.cpp \
+        $(SU)/w_strlcpy.cpp \
+	$(SU)/prcinfo.cpp \
         $(SU)/cpustat.cpp
-endif
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \

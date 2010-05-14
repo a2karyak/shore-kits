@@ -50,6 +50,9 @@ struct srmwqueue
 {
     typedef typename PooledVec<Action*>::Type ActionVec;
     typedef typename ActionVec::iterator ActionVecIt;
+    
+    // owner thread
+    base_worker_t* _owner;
 
     guard<ActionVec> _for_writers;
     guard<ActionVec> _for_readers;
@@ -62,13 +65,9 @@ struct srmwqueue
     int _loops; // how many loops (spins) it will do before going to sleep (1=sleep immediately)
     int _thres; // threshold value before waking up
 
-    
-    // owner thread
-    base_worker_t* _owner;
-
-    srmwqueue(Pool* actionPtrPool) : 
-        _empty(true), _my_ws(WS_UNDEF), _owner(NULL),
-        _loops(0), _thres(0)
+    srmwqueue(Pool* actionPtrPool) 
+        : _owner(NULL), _empty(true), _my_ws(WS_UNDEF), 
+          _loops(0), _thres(0)
     { 
         assert (actionPtrPool);
         _for_writers = new ActionVec(actionPtrPool);
@@ -89,7 +88,7 @@ struct srmwqueue
     }
 
     // returns true if the passed control is the same
-    const bool is_control(base_worker_t* athread) const { return (_owner==athread); }  
+    bool is_control(base_worker_t* athread) const { return (_owner==athread); }  
 
     // !!! @note: should be called only by the reader !!!
     inline int is_empty(void) const {

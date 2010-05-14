@@ -113,9 +113,9 @@ subscriber_t::subscriber_t(string sysname) :
     _desc[34].setup(SQL_FIXCHAR,       "S_PADDING", padding_sz);
         
 
-    int keys1[1] = { 0 }; // IDX { S_ID }
+    uint keys1[1] = { 0 }; // IDX { S_ID }
 
-    int keys2[2] = { 1 }; // IDX { SUB_NBR }
+    uint keys2[2] = { 1 }; // IDX { SUB_NBR }
 
 
     // baseline - Regular indexes
@@ -169,7 +169,7 @@ access_info_t::access_info_t(string sysname) :
     // 25% Subscribers with two records
     // etc...
 
-    int keys[2] = { 0, 1 }; // IDX { S_ID, AI_TYPE }
+    uint keys[2] = { 0, 1 }; // IDX { S_ID, AI_TYPE }
 
     // baseline - Regular indexes
     if (sysname.compare("baseline")==0) {
@@ -214,7 +214,7 @@ special_facility_t::special_facility_t(string sysname) :
     // 25% Subscribers with two sf
     // etc...
 
-    int keys[2] = { 0, 1 }; // IDX { S_ID, SF_TYPE }
+    uint keys[2] = { 0, 1 }; // IDX { S_ID, SF_TYPE }
 
     // baseline - Regular indexes
     if (sysname.compare("baseline")==0) {
@@ -253,7 +253,7 @@ call_forwarding_t::call_forwarding_t(string sysname) :
     _desc[5].setup(SQL_FIXCHAR,       "CF_PADDING", padding_sz);
 
 
-    int keys[3] = { 0, 1, 2 }; // IDX { S_ID, SF_TYPE, START_TIME }
+    uint keys[3] = { 0, 1, 2 }; // IDX { S_ID, SF_TYPE, START_TIME }
 
     // baseline - Regular indexes
     if (sysname.compare("baseline")==0) {

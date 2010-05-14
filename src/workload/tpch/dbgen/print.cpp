@@ -103,8 +103,11 @@ print_prep(int table, int update)
   return(res);
 }
 
-int
-dbg_print(int format, FILE *target, void *data, int len, int sep)
+int dbg_print(int format, FILE *target, void *data, int len, int 
+#ifdef EOL_HANDLING
+          sep
+#endif
+          )
 {
   int dollars,
     cents;
@@ -146,9 +149,9 @@ dbg_print(int format, FILE *target, void *data, int len, int sep)
       dollars = cents / 100;
       cents %= 100;
       if (columnar)
-        fprintf(target, "%12ld.%02ld", dollars, cents);
+        fprintf(target, "%12d.%02d", dollars, cents);
       else
-        fprintf(target, "%ld.%02ld", dollars, cents);
+        fprintf(target, "%d.%02d", dollars, cents);
       break;
     case DT_CHR:
       if (columnar)
@@ -167,8 +170,7 @@ dbg_print(int format, FILE *target, void *data, int len, int sep)
   return(0);
 }
 
-int
-pr_cust(void *vc, int mode)
+int pr_cust(void *vc, int /* mode */)
 {
   customer_t* c = (customer_t*)vc;
 
@@ -293,8 +295,7 @@ pr_order_line(void *vo, int mode)
 /*
  * print the given part
  */
-int
-pr_part(void *vp, int mode)
+int pr_part(void *vp, int /* mode */)
 {
   part_t* part = (part_t*)vp;
   static FILE *p_fp = NULL;
@@ -466,10 +467,10 @@ pr_drange(int tbl, DSS_HUGE min, DSS_HUGE cnt, long num)
       if (gen_sql)
         {
           fprintf(dfp, 
-                  "delete from %s where %s between %ld and %ld;\n",
+                  "delete from %s where %s between %lld and %lld;\n",
                   tdefs[ORDER].name, "o_orderkey", start, last);
           fprintf(dfp, 
-                  "delete from %s where %s between %ld and %ld;\n",
+                  "delete from %s where %s between %lld and %lld;\n",
                   tdefs[LINE].name, "l_orderkey", start, last);
           fprintf(dfp, "commit work;\n");
         }
@@ -520,8 +521,7 @@ pr_drange(int tbl, DSS_HUGE min, DSS_HUGE cnt, long num)
  * instead of generating the actual contents of the tables. Meant to allow large scale data 
  * validation without requiring a large amount of storage
  */
-int
-vrf_cust(void *vc, int mode)
+int vrf_cust(void *vc, int /* mode */)
 {
   customer_t* c = (customer_t*)vc;
 
@@ -542,8 +542,7 @@ vrf_cust(void *vc, int mode)
 /*
  * print the numbered order 
  */
-int
-vrf_order(void *vo, int mode)
+int vrf_order(void *vo, int /* mode */)
 {
   order_t* o = (order_t*)vo;
 
@@ -565,8 +564,7 @@ vrf_order(void *vo, int mode)
 /*
  * print an order's lineitems
  */
-int
-vrf_line(void *vo, int mode)
+int vrf_line(void *vo, int /* mode */)
 {
   order_t* o = (order_t*)vo;
   int i;
@@ -615,8 +613,7 @@ vrf_order_line(void *vo, int mode)
 /*
  * print the given part
  */
-int
-vrf_part(void *vp, int mode)
+int vrf_part(void *vp, int /* mode */)
 {
   part_t* part = (part_t*)vp;
 
@@ -638,8 +635,7 @@ vrf_part(void *vp, int mode)
 /*
  * print the given part's suppliers
  */
-int
-vrf_psupp(void *vp, int mode)
+int vrf_psupp(void *vp, int /* mode */)
 {
   part_t* part = (part_t*)vp;
   long      i;
@@ -672,8 +668,7 @@ vrf_part_psupp(void *vp, int mode)
   return(0);
 }
 
-int
-vrf_supp(void *vs, int mode)
+int vrf_supp(void *vs, int /* mode */)
 {
   supplier_t* supp = (supplier_t*)vs;
 
@@ -690,8 +685,7 @@ vrf_supp(void *vs, int mode)
   return(0);
 }
 
-int
-vrf_nation(void *vc, int mode)
+int vrf_nation(void *vc, int /* mode */)
 {
   code_t* c = (code_t*)vc;
 
@@ -705,8 +699,7 @@ vrf_nation(void *vc, int mode)
   return(0);
 }
 
-int
-vrf_region(void *vc, int mode)
+int vrf_region(void *vc, int /* mode */)
 {
   code_t* c = (code_t*)vc;  
   

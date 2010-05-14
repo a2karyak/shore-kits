@@ -52,13 +52,13 @@ namespace {
 	pool_list* pl = (pool_list*) arg;
 	if(!pl)
 	    return;
-	for(int i=0; i < pl->size(); i++)
+	for(uint i=0; i < pl->size(); i++)
 	    delete pl->at(i);
 
 	delete pl;
     }
     
-    struct {
+    struct s_thread_local_pools {
 	pthread_key_t ptkey;
 	void init() {
 	    // WARNING: not thread safe! (must call it during static initialization)

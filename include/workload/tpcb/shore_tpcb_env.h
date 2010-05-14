@@ -67,8 +67,8 @@ using std::map;
 
 struct ShoreTPCBTrxCount
 {
-    int acct_update;
-    int populate_db;
+    uint acct_update;
+    uint populate_db;
 
     ShoreTPCBTrxCount& operator+=(ShoreTPCBTrxCount const& rhs) {
         acct_update += rhs.acct_update;        
@@ -80,7 +80,7 @@ struct ShoreTPCBTrxCount
 	return (*this);
     }
 
-    const int total() const {
+    uint total() const {
         return (acct_update);
     }
     
@@ -153,7 +153,7 @@ public:
 
     // DB INTERFACE
 
-    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     virtual int open() { return(0); /* do nothing */ };
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    

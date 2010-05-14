@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   lockmap.h
  *
@@ -98,7 +119,7 @@ struct ActionLockReq
     }
 
     // access methods
-    inline const eDoraLockMode dlm() { return (_dlm); }
+    inline eDoraLockMode dlm() { return (_dlm); }
     inline base_action_t* action() { return (_action); }
     inline tid_t* tid() { return (&_tid); }
 
@@ -195,29 +216,29 @@ struct LogicalLock
     ~LogicalLock() { }
 
 
-    const eDoraLockMode       dlm() const { return (_dlm); }
-    const ActionLockReqVec&   owners() const { return (_owners); }
-    const ActionLockReqList&  waiters() const { return (_waiters); }
+    eDoraLockMode       dlm() const { return (_dlm); }
+    ActionLockReqVec&   owners() const { return (_owners); }
+    ActionLockReqList&  waiters() const { return (_waiters); }
 
 
     // acquire operation
     // if it fails, it enqueues the trx_ll_entry to the queue of waiters
     // and returns false
-    const bool acquire(ActionLockReq& alr);
+    bool acquire(ActionLockReq& alr);
 
 
     // release operation, appends to the list of promoted actions and returns the
     // number of promoted. The lock manager should
     // (1) associate the promoted with the particular key in the trx-to-key map
     // (2) decide which of those are ready to run and return them to the worker
-    const int release(BaseActionPtr anowner, BaseActionPtrList& promotedList);
+    int release(BaseActionPtr anowner, BaseActionPtrList& promotedList);
 
 
     // is clean
     // returns true if no locked
-    const bool is_clean() const;
-    const bool has_owners() const  { return (!_owners.empty()); }
-    const bool has_waiters() const { return (!_waiters.empty()); }
+    bool is_clean() const;
+    bool has_owners() const  { return (!_owners.empty()); }
+    bool has_waiters() const { return (!_waiters.empty()); }
 
     void reset();
     
@@ -229,10 +250,10 @@ private:
     ActionLockReqList   _waiters;   // list of waiters - we want to push/pop both sides
 
     // can acquire
-    const bool _head_can_acquire();
+    bool _head_can_acquire();
 
     // update lock mode
-    const bool _upd_dlm();
+    bool _upd_dlm();
 
 }; // EOF: struct LogicalLock
 
@@ -332,7 +353,7 @@ public:
 
     // acquire, return true on success
     // false means not compatible
-    inline const bool acquire(KALReq& akalr) 
+    inline bool acquire(KALReq& akalr) 
     {
         bool bAcquire = false;
 
@@ -362,7 +383,7 @@ public:
     }
                 
     // release        
-    inline const int release(const Key& aKey, 
+    inline int release(const Key& aKey, 
                              BaseActionPtr paction,
                              BaseActionPtrList& promotedList) 
     {        
@@ -398,10 +419,10 @@ public:
     }
 
     // return the number of keys
-    const int keystouched() const { return (_ll_map->size()); }
+    int keystouched() const { return (_ll_map->size()); }
 
     // returns (true) if all locks are clean
-    const bool is_clean() {
+    bool is_clean() {
         // clear all entries
         bool isClean = true;
         uint dirtyCount = 0;
@@ -484,7 +505,7 @@ public:
     // @fn:     acquire_all()
     // @brief:  Tries to acquire all the locks from a list of keys on behalf of a trx.
     // @return: (true) on success
-    inline const bool acquire_all(KALReqVec& akalrvec) 
+    inline bool acquire_all(KALReqVec& akalrvec) 
     {
         bool bResult = true;
         int i=0;
@@ -506,7 +527,7 @@ public:
     // @fn:     release_all(Action*,BaseActionPtrList&,BaseActionPtrList&)
     // @brief:  Releases all the LLs help by a particular trx
     // @return: Returns a list of actions that are ready to run
-    inline const int release_all(Action* paction, 
+    inline int release_all(Action* paction, 
                                  BaseActionPtrList& readyList, 
                                  BaseActionPtrList& promotedList) 
     {
@@ -541,12 +562,12 @@ public:
 
     //// Debugging ////
 
-    const int keystouched() const { return (_key_ll_m->keystouched()); }
+    int keystouched() const { return (_key_ll_m->keystouched()); }
 
     void reset() { _key_ll_m->reset(); }
     void dump() { _key_ll_m->dump(); }
 
-    const bool is_clean()    { return (_key_ll_m->is_clean()); }
+    bool is_clean()    { return (_key_ll_m->is_clean()); }
 
 }; // EOF: struct lock_man_t
 

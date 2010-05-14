@@ -237,7 +237,7 @@ int field_value_t::get_debug_str(char* &buf)
         sprintf(buf, "SQL_SMALLINT: \t%d", _value._smallint);
 	break;
     case SQL_CHAR:
-        sprintf(buf, "SQL_CHAR: \t%s", _value._char);
+        sprintf(buf, "SQL_CHAR: \t%d", _value._char);
 	break;
     case SQL_INT:
         sprintf(buf, "SQL_INT:      \t%d", _value._int);

@@ -741,7 +741,7 @@ inline void field_value_t::set_max_value()
 	_value._smallint = MAX_SMALLINT;
 	break;
     case SQL_CHAR:
-	_value._char = MAX_SMALLINT;
+	_value._char = 'z';
 	break;
     case SQL_INT:
 	_value._int = MAX_INT;

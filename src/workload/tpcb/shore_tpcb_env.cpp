@@ -304,9 +304,6 @@ w_rc_t ShoreTPCBEnv::loaddata()
     }        
     CRITICAL_SECTION(scale_cs, _scaling_mutex);
 
-    int num_tbl = 4;
-    int cnt = 0;
-
     // 1. Create and fire up the checkpointing threads
     guard<checkpointer_t> chk(new checkpointer_t(this));
     chk->fork();
@@ -573,7 +570,11 @@ w_rc_t ShoreTPCBEnv::_pad_BRANCHES()
 		vec_t dvec(handle->body(), bsize);
 		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(br_fid, hvec, PADDED_SIZE, dvec, new_rid));
-		W_DO(db->append_rec(new_rid, pvec, false));
+		W_DO(db->append_rec(new_rid, pvec
+#ifndef CFG_SHORE_6
+                                    , false
+#endif
+                                    ));
 
                 // mark the old record for deletion
 		hit_list.push_back(handle->rid());
@@ -708,7 +709,11 @@ w_rc_t ShoreTPCBEnv::_pad_TELLERS()
 		vec_t dvec(handle->body(), bsize);
 		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(te_fid, hvec, PADDED_SIZE, dvec, new_rid));
-		W_DO(db->append_rec(new_rid, pvec, false));
+		W_DO(db->append_rec(new_rid, pvec
+#ifndef CFG_SHORE_6
+                                    , false
+#endif
+                                    ));
 
                 // mark the old record for deletion
 		hit_list.push_back(handle->rid());

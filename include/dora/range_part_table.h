@@ -81,7 +81,7 @@ public:
 
     ~range_part_table_impl() { }    
 
-    const int create_one_part();
+    int create_one_part();
 
     inline rpImpl* myPart(const int asf) {
         return (_ppvec[asf/_sfs_per_part]);
@@ -99,7 +99,7 @@ public:
  ******************************************************************/
 
 template <class DataType>
-const int range_part_table_impl<DataType>::create_one_part()
+int range_part_table_impl<DataType>::create_one_part()
 {   
     CRITICAL_SECTION(conf_cs, _pcgf_lock);
     ++_pcnt;        
@@ -118,8 +118,8 @@ const int range_part_table_impl<DataType>::create_one_part()
 
     // 2. update next cpu
     {
-        CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
-        _next_prs_id = next_cpu(_next_prs_id);
+        CRITICAL_SECTION(next_prs_cs, part_table_t< range_partition_impl<DataType> >::_next_prs_lock);
+        _next_prs_id = part_table_t< range_partition_impl<DataType> >::next_cpu(_next_prs_id);
     }
     return (0);
 }

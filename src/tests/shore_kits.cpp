@@ -174,8 +174,8 @@ public:
 
 
     virtual int inst_test_env(int argc, char* argv[]);
-    virtual int load_trxs_map(void);
-    virtual int load_bp_map(void);
+    virtual int load_trxs_map();
+    virtual int load_bp_map();
 
 
     // impl of supported commands
@@ -186,181 +186,7 @@ public:
     virtual int _cmd_MEASURE_impl(const double iQueriedSF, const int iSpread,
                                   const int iNumOfThreads, const int iDuration,
                                   const int iSelectedTrx, const int iIterations,
-                                  const eBindingType abt);    
-
-    virtual int process_cmd_LOAD(const char* command, const char* command_tag);        
-
-
-
-    // cmd - RESTART
-    struct restart_cmd_t : public command_handler_t {
-        DB* _pdb;
-        restart_cmd_t(DB* adb) : _pdb(adb) { };
-        ~restart_cmd_t() { }
-        void setaliases() { 
-            _name = string("restart"); _aliases.push_back("restart"); }
-        int handle(const char* cmd) { 
-            assert (_pdb); _pdb->stop(); _pdb->start(); 
-            return (SHELL_NEXT_CONTINUE); }
-        string desc() { return (string("Restart")); }               
-    };
-    guard<restart_cmd_t> _restarter;
-
-    // cmd - INFO
-    struct info_cmd_t : public command_handler_t {
-        DB* _pdb;
-        info_cmd_t(DB* adb) : _pdb(adb) { };
-        ~info_cmd_t() { }
-        void setaliases() { 
-            _name = string("info"); _aliases.push_back("info"); _aliases.push_back("i"); }
-        int handle(const char* cmd) { 
-            assert (_pdb); _pdb->info(); return (SHELL_NEXT_CONTINUE); }
-        string desc() { return (string("Prints info about the state of db instance")); }
-    };
-    guard<info_cmd_t> _informer;
-
-    // cmd - STATS
-    struct stats_cmd_t : public command_handler_t {
-        DB* _pdb;
-        stats_cmd_t(DB* adb) : _pdb(adb) { };
-        ~stats_cmd_t() { }
-        void setaliases() { 
-            _name = string("stats"); _aliases.push_back("stats"); _aliases.push_back("st"); }
-        int handle(const char* cmd) { 
-            assert (_pdb); _pdb->statistics(); return (SHELL_NEXT_CONTINUE); }
-        string desc() { return (string("Prints gathered statistics")); }
-    };
-    guard<stats_cmd_t> _stater;
-
-    // cmd - DUMP
-    struct dump_cmd_t : public command_handler_t {
-        DB* _pdb;
-        dump_cmd_t(DB* adb) : _pdb(adb) { };
-        ~dump_cmd_t() { }
-        void setaliases() { 
-            _name = string("dump"); _aliases.push_back("dump"); _aliases.push_back("d"); }
-        int handle(const char* cmd) { 
-            assert (_pdb); _pdb->dump(); return (SHELL_NEXT_CONTINUE); }
-        string desc() { return (string("Dumps db instance data")); }
-    };
-    guard<dump_cmd_t> _dumper;
-    
-
-    // @class: {measure,test,trxs}_cmd_t
-    // @brief: Hack so that the three basic commands (measure,test,trxs)
-    //         also appear at help.
-    struct measure_cmd_t : public command_handler_t {
-        kit_t* _kit;
-        measure_cmd_t(kit_t* akit) : _kit(akit) { }
-        void setaliases() { _name = string("measure"); 
-            _aliases.push_back("measure"); _aliases.push_back("m"); }
-        int handle(const char* cmd) { 
-            _kit->pre_process_cmd();
-            return (_kit->process_cmd_MEASURE(cmd,cmd)); }
-        void usage() { _kit->usage_cmd_MEASURE(); }
-        string desc() { return string("Duration-based Measument (powerrun)"); }
-    };
-    guard<measure_cmd_t> _measurer;
-
-    struct test_cmd_t : public command_handler_t {
-        kit_t* _kit;
-        test_cmd_t(kit_t* akit) : _kit(akit) { }
-        void setaliases() { _name = string("test"); _aliases.push_back("test"); }
-        int handle(const char* cmd) { 
-            _kit->pre_process_cmd();
-            return (_kit->process_cmd_TEST(cmd,cmd)); }
-        void usage() { _kit->usage_cmd_TEST(); }
-        string desc() { return string("NumOfXcts-based Measument (powerrun)"); }
-    };
-    guard<test_cmd_t> _tester;
-
-    struct trxs_cmd_t : public command_handler_t {
-        kit_t* _kit;
-        trxs_cmd_t(kit_t* akit) : _kit(akit) { }
-        void setaliases() { _name = string("trxs"); _aliases.push_back("trxs"); }
-        int handle(const char* cmd) { 
-            _kit->pre_process_cmd();
-            return (_kit->process_cmd_TRXS(cmd,cmd)); }
-        void usage() { TRACE( TRACE_ALWAYS, "usage: trxs\n"); }
-        string desc() { return string("Lists the avaiable transactions in the benchmark"); }
-    };
-    guard<trxs_cmd_t> _trxser;
-
-
-
-    virtual int register_commands() 
-    {
-        shore_shell_t::register_commands();
-
-        // FROM SHORE_SHELL
-        _fakeioer = new fake_iodelay_cmd_t(_dbinst);
-        _fakeioer->setaliases();
-        add_cmd(_fakeioer.get());
-
-        _fakelogdelayer = new fake_logdelay_cmd_t(_dbinst);
-        _fakelogdelayer->setaliases();
-        add_cmd(_fakelogdelayer.get());
-
-#ifdef CFG_BT
-	_bter = new bt_cmd_t(_dbinst);
-	_bter->setaliases();
-	add_cmd(_bter.get());
-#endif
-	
-#ifdef CFG_SLI
-        _slier = new sli_cmd_t(_dbinst);
-        _slier->setaliases();
-        add_cmd(_slier.get());
-#endif // CFG_SLI
-
-        _logger = new log_cmd_t(_dbinst);
-        _logger->setaliases();
-        add_cmd(_logger.get());
-
-        _asyncher = new asynch_cmd_t(_dbinst);
-        _asyncher->setaliases();
-        add_cmd(_asyncher.get());
-
-#ifdef CFG_ELR
-        _elrer = new elr_cmd_t(_dbinst);
-        _elrer->setaliases();
-        add_cmd(_elrer.get());
-#endif // CFG_ELR
-
-        // TEMPLATE-BASED
-        _restarter = new restart_cmd_t(_dbinst);
-        _restarter->setaliases();
-        add_cmd(_restarter.get());
-
-        _informer = new info_cmd_t(_dbinst);
-        _informer->setaliases();
-        add_cmd(_informer.get());
-
-        _stater = new stats_cmd_t(_dbinst);
-        _stater->setaliases();
-        add_cmd(_stater.get());
-
-        _dumper = new dump_cmd_t(_dbinst);
-        _dumper->setaliases();
-        add_cmd(_dumper.get());
-
-
-        // JUST FOR 'help' cmd
-        _measurer = new measure_cmd_t(this);
-        _measurer->setaliases();
-        add_cmd(_measurer.get());
-
-        _tester = new test_cmd_t(this);
-        _tester->setaliases();
-        add_cmd(_tester.get());
-
-        _trxser = new trxs_cmd_t(this);
-        _trxser->setaliases();
-        add_cmd(_trxser.get());
-
-
-        return (0);
-    }
+                                  const eBindingType abt);
 
 }; // EOF: kit_t
 
@@ -449,7 +275,7 @@ int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
     }
 
     // 5. Now that everything is set, register any additional commands
-    register_commands();
+    shore_shell_t::register_commands();
 
     // 6. Start the VAS
     return (_dbinst->start());
@@ -475,14 +301,13 @@ static const int MILLION = 1000000;
 // cmd: TEST
 
 template<class Client,class DB>
-int 
-kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF, 
-                                 const int iSpread,
-                                 const int iNumOfThreads, 
-                                 const int iNumOfTrxs,
-                                 const int iSelectedTrx, 
-                                 const int iIterations,
-                                 const eBindingType abt)
+int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF, 
+                                     const int iSpread,
+                                     const int iNumOfThreads, 
+                                     const int iNumOfTrxs,
+                                     const int iSelectedTrx, 
+                                     const int iIterations,
+                                     const eBindingType abt)
 {
     // print test information
     print_TEST_info(iQueriedSF, iSpread, iNumOfThreads, 
@@ -567,14 +392,13 @@ kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
 // cmd: MEASURE
 
 template<class Client,class DB>
-int 
-kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF, 
-                                    const int iSpread,
-                                    const int iNumOfThreads, 
-                                    const int iDuration,
-                                    const int iSelectedTrx, 
-                                    const int iIterations,
-                                    const eBindingType abt)
+int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF, 
+                                        const int iSpread,
+                                        const int iNumOfThreads, 
+                                        const int iDuration,
+                                        const int iSelectedTrx, 
+                                        const int iIterations,
+                                        const eBindingType abt)
 {
     // print measurement info
     print_MEASURE_info(iQueriedSF, iSpread, iNumOfThreads, iDuration, 
@@ -665,14 +489,6 @@ kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
     return (SHELL_NEXT_CONTINUE);
 }
 
-template<class Client,class DB>
-int kit_t<Client,DB>::process_cmd_LOAD(const char* command, 
-                                       const char* command_tag)
-{
-    TRACE( TRACE_DEBUG, "Not implemented\n");
-    return (SHELL_NEXT_CONTINUE);
-}
-
 
 ///////////////////////////////
 // Declare the possible kits //
@@ -689,7 +505,7 @@ typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
 typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 #endif
 
-//////////////////////////////
+////////////////////////////////
 
 
 int main(int argc, char* argv[]) 
@@ -815,7 +631,7 @@ int main(int argc, char* argv[])
 #ifdef CFG_DORA
         case snDORA:
             assert (0); // TODO
-            //kit = new doraTPCBKit("(tpcb-dora) ",netmode,netport);
+            //kit = new doraTPCHKit("(tpch-dora) ",netmode,netport);
             break;
 #endif
         default:

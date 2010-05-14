@@ -89,7 +89,7 @@ public:
 
     virtual w_rc_t trx_exec()=0;
 
-    virtual const int trx_upd_keys()
+    virtual int trx_upd_keys()
     {
         if (_keys_set) return (1); // if already set do not recalculate        
 

@@ -47,7 +47,11 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __sparcv9
 #include <kstat.h>
+#endif
+
 #include <unistd.h>
 #include <vector>
 #include <pthread.h>
@@ -84,7 +88,9 @@ struct cpu_measurement
 
 struct kstat_entry 
 {
+#ifdef __sparcv9
     kstat_t*	ksp;
+#endif
     long	offset;
     cpu_measurement measured[2];
 };
@@ -101,6 +107,10 @@ private:
     std::vector<kstat_entry> _entries;
     int _interval_usec;
     double _interval_sec;
+
+#ifndef __sparcv9
+    typedef int kstat_ctl_t;
+#endif
     kstat_ctl_t* _pkc;
 
     void _setup(const double interval_sec);
@@ -114,25 +124,10 @@ private:
     pthread_mutex_t _mutex;
     pthread_cond_t _cond;
         
-
 public:
 
-    cpumonitor_t(const double interval_sec = 1) // default interval 1 sec
-        : thread_t("cpumon"), 
-          _interval_usec(0), _interval_sec(interval_sec), _state(CPS_NOTSET),
-          _total_usage(0), _num_usage_readings(0), _avg_usage(0),
-          _pkc(NULL)
-    { 
-        _setup(interval_sec);
-    }
-
-    ~cpumonitor_t() { 
-        if (*&_state != CPS_NOTSET) {            
-            pthread_mutex_destroy(&_mutex);
-            pthread_cond_destroy(&_cond);
-            kstat_close(_pkc);
-        }
-    }
+    cpumonitor_t(const double interval_sec = 1); // default interval 1 sec
+    ~cpumonitor_t();
 
     // Thread entrance
     void work();
@@ -145,13 +140,7 @@ public:
 
     // Access methods
     double get_avg_usage() { return (*&_avg_usage); }
-    void print_avg_usage() { 
-        double au = *&_avg_usage;
-        double entriessz = _entries.size();
-        TRACE( TRACE_STATISTICS, 
-               "\nAvgCPU:       (%.1f) (%.1f%%)\n",
-               au, 100*(au/entriessz));
-    }
+    void print_avg_usage();
 
 }; // EOF cpumonitor_t
 

@@ -68,7 +68,7 @@ class index_desc_t
 private:
     file_desc_t _base;
 
-    int*            _key;                      /* index of fields in the base table */
+    uint*           _key;                      /* index of fields in the base table */
     bool            _unique;                   /* whether allow duplicates or not */
     bool            _primary;                  /* is it primary or not */
     bool            _nolock;                   /* is it using locking or not */ 
@@ -91,7 +91,7 @@ public:
     /* --- constructor --- */
     /* ------------------- */
 
-    index_desc_t(const char* name, const int fieldcnt, int partitions, const int* fields,
+    index_desc_t(const char* name, const int fieldcnt, int partitions, const uint* fields,
                  bool unique=true, bool primary=false, bool nolock=false)
         : _base(name, fieldcnt),
           _unique(unique), _primary(primary), _nolock(nolock),
@@ -99,7 +99,7 @@ public:
 	  _partition_count((partitions > 0)? partitions : 1), _partition_stids(0)
     {
         // Copy the indexes of keys
-        _key = new int[_base._field_count];
+        _key = new uint[_base._field_count];
         for (uint_t i=0; i<_base._field_count; i++) _key[i] = fields[i];
 
         memset(_keydesc, 0, MAX_KEYDESC_LEN);

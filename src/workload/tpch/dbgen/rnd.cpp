@@ -105,8 +105,7 @@ dss_random(DSS_HUGE *tgt, DSS_HUGE lower, DSS_HUGE upper, long stream)
   return;
 }
 
-void
-row_start(int t)	\
+void row_start(int /* t */)                     \
 {
   int i;
   for (i=0; i <= MAX_STREAM; i++) 
@@ -131,7 +130,7 @@ row_stop(int t)	\
       { 
         if (set_seeds && (Seed[i].usage > Seed[i].boundary))
           {
-            fprintf(stderr, "\nSEED CHANGE: seed[%d].usage = %d\n", 
+            fprintf(stderr, "\nSEED CHANGE: seed[%d].usage = %lld\n", 
                     i, Seed[i].usage); 
             Seed[i].boundary = Seed[i].usage;
           } 
@@ -156,7 +155,7 @@ dump_seeds(int tbl)
 #ifdef RNG_TEST
       printf("%d(%ld):\t%ld\n", i, Seed[i].nCalls, Seed[i].value);
 #else
-  printf("%d:\t%ld\n", i, Seed[i].value);
+  printf("%d:\t%lld\n", i, Seed[i].value);
 #endif
   return;
 }

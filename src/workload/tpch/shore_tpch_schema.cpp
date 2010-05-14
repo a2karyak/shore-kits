@@ -94,9 +94,9 @@ nation_t::nation_t(string sysname) :
     _desc[2].setup(SQL_INT,   "N_REGIONKEY");
     _desc[3].setup(SQL_FIXCHAR,  "N_COMMENT", 152);
 
-    int keys[1] = { 0 }; // IDX { N_NATIONKEY }
+    uint keys[1] = { 0 }; // IDX { N_NATIONKEY }
 
-    int fkeys[1] = { 2 }; // IDX { N_REGIONKEY }
+    uint fkeys[1] = { 2 }; // IDX { N_REGIONKEY }
 
     // depending on the system name, create the corresponding indexes 
 
@@ -119,7 +119,7 @@ region_t::region_t(string sysname) :
     _desc[1].setup(SQL_FIXCHAR,  "R_NAME", 25);
     _desc[2].setup(SQL_FIXCHAR,  "R_COMMENT", 25);
 
-    int keys[1] = { 0 }; // IDX { R_REGIONKEY }
+    uint keys[1] = { 0 }; // IDX { R_REGIONKEY }
 
     // baseline - Regular 
     if (sysname.compare("baseline")==0) {
@@ -142,9 +142,9 @@ supplier_t::supplier_t(string sysname) :
     _desc[5].setup(SQL_FLOAT, "S_ACCTBAL");
     _desc[6].setup(SQL_FIXCHAR,  "S_COMMENT", 101);
 
-    int keys[1] = {0}; // IDX { S_SUPPKEY}
+    uint keys[1] = {0}; // IDX { S_SUPPKEY}
 				
-    int fkeys[1] = {3}; // IDX { S_NATIONKEY }
+    uint fkeys[1] = {3}; // IDX { S_NATIONKEY }
                                 
     // baseline - Regular
     if (sysname.compare("baseline")==0) {
@@ -172,7 +172,7 @@ part_t::part_t(string sysname) :
     _desc[7].setup(SQL_FLOAT, "P_RETAILPRICE"); 
     _desc[8].setup(SQL_FIXCHAR,  "P_COMMENT", 23);
                                 
-    int keys[1] = { 0 }; // IDX { P_PARTKEY }
+    uint keys[1] = { 0 }; // IDX { P_PARTKEY }
         
     if (sysname.compare("baseline") == 0) {
         TRACE(TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
@@ -191,11 +191,11 @@ partsupp_t::partsupp_t(string sysname) :
     _desc[3].setup(SQL_FLOAT,  "PS_SUPPLYCOST");  
     _desc[4].setup(SQL_FIXCHAR,   "PS_COMMENT", 199); 
         
-    int keys[2] = { 0, 1 }; // IDX { PS_PARTKEY, PS_SUPPKEY }
+    uint keys[2] = { 0, 1 }; // IDX { PS_PARTKEY, PS_SUPPKEY }
                 
-    int fkeys1[1] = { 0 }; // IDX { PS_PARTKEY }
+    uint fkeys1[1] = { 0 }; // IDX { PS_PARTKEY }
         
-    int fkeys2[1] = { 1 }; // IDX { PS_SUPPEKY }
+    uint fkeys2[1] = { 1 }; // IDX { PS_SUPPEKY }
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
@@ -224,9 +224,9 @@ customer_t::customer_t(string sysname) :
     _desc[6].setup(SQL_FIXCHAR,   "C_MKTSEGMENT", 10);
     _desc[7].setup(SQL_FIXCHAR,   "C_COMMENT", 117);
 
-    int keys[1] = { 0 }; // IDX { C_CUSTKEY }
+    uint keys[1] = { 0 }; // IDX { C_CUSTKEY }
         
-    int fkeys[1] = { 3 }; // IDX { C_NATIONKEY }
+    uint fkeys[1] = { 3 }; // IDX { C_NATIONKEY }
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
@@ -254,9 +254,9 @@ orders_t::orders_t(string sysname) :
     _desc[7].setup(SQL_INT,   "O_SHIPPRIORITY");
     _desc[8].setup(SQL_FIXCHAR,  "O_COMMENT", 79);
 
-    int keys[1] = { 0 }; // IDX { O_ORDERKEY }
+    uint keys[1] = { 0 }; // IDX { O_ORDERKEY }
         
-    int fkeys[1] = { 1 }; // IDX { O_CUSTKEY }
+    uint fkeys[1] = { 1 }; // IDX { O_CUSTKEY }
          
 
     // baseline - regular indexes
@@ -292,13 +292,13 @@ lineitem_t::lineitem_t(string sysname) :
     _desc[14].setup(SQL_FIXCHAR,  "L_SHIPMODE", 10);
     _desc[15].setup(SQL_FIXCHAR,  "L_COMMENT", 44);
 
-    int keys[2] = {0, 3}; // IDX { L_ORDERKEY, L_LINENUMBER }
+    uint keys[2] = {0, 3}; // IDX { L_ORDERKEY, L_LINENUMBER }
 
-    int fkeys1[1] = { 0 }; // IDX { L_ORDERKEY }
+    uint fkeys1[1] = { 0 }; // IDX { L_ORDERKEY }
 
-    int fkeys2[2] = {1, 2}; // IDX { L_PARTKEY, L_SUPPKEY }
+    uint fkeys2[2] = {1, 2}; // IDX { L_PARTKEY, L_SUPPKEY }
 
-    int keys2[1] = {10}; // IDX { L_SHIPDATE }
+    uint keys2[1] = {10}; // IDX { L_SHIPDATE }
 
 
     // baseline - regular indexes

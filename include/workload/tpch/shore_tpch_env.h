@@ -163,7 +163,7 @@ struct ShoreTPCHTrxCount
         return (*this);
     }
 
-    const int total() const {
+    uint total() const {
         return (q1+q2+q3+q4+q5+q6+q7+q8+q9+q10+
                 q11+q12+q13+q14+q15+q16+q17+q18+q19+q20+
                 q21+q22+
@@ -231,7 +231,7 @@ public:
 
     // DB INTERFACE
 
-    virtual int set(envVarMap* vars) { return(0); /* do nothing */ };
+    virtual int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     virtual int open() { return(0); /* do nothing */ };
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    

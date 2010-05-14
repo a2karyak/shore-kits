@@ -87,32 +87,31 @@ public:
     inline rvp_t* rvp() { return (_prvp); }
     inline xct_t* xct() { return (_xct); }    
     inline tid_t  tid() { return (_tid); }
-    inline const tid_t tid() const { return (_tid); }
+    inline tid_t tid() const { return (_tid); }
 
     // read only
-    inline const bool is_read_only() { return (_read_only==true); }
+    inline bool is_read_only() { return (_read_only==true); }
     inline void set_read_only() { 
         assert (!_keys_set); // this can happen only if keys are not set yet
         _read_only = true;
     }
 
     // needed keys operations
-    inline const int needed() { return (_keys_needed); }
-    inline const bool are_keys_set() { return (_keys_set); }
+    //inline const int needed() { return (_keys_needed); }
 
-    inline const bool is_ready() { 
+    inline bool is_ready() { 
         // if it does not need any other keys, 
         // it is ready to proceed
         return (_keys_needed==0);
     }
 
-    inline const int setkeys(const int numLocks = 1) {
+    inline int setkeys(const int numLocks = 1) {
         assert (numLocks);
         _keys_needed = numLocks;
         return (_keys_needed);
     } 
 
-    inline const bool gotkeys(const int numLocks = 1) {
+    inline bool gotkeys(const int numLocks = 1) {
         // called when acquired a number of locks
         // decreases the needed keys counter 
         // and returns if it is ready to proceed        
@@ -141,14 +140,14 @@ public:
     virtual w_rc_t trx_exec()=0;          
 
     // acquires the required locks in order to proceed
-    virtual const bool trx_acq_locks()=0;
+    virtual bool trx_acq_locks()=0;
 
     // releases acquired locks
-    virtual const int trx_rel_locks(BaseActionPtrList& readyList, 
+    virtual int trx_rel_locks(BaseActionPtrList& readyList, 
                                     BaseActionPtrList& promotedList)=0;
 
     // hook to update the keys for this action
-    virtual const int trx_upd_keys()=0; 
+    virtual int trx_upd_keys()=0; 
 
     // enqueues self on the committed list of committed actions
     virtual void notify()=0; 
@@ -158,7 +157,7 @@ public:
 
 #ifdef WORKER_VERBOSE_STATS
     inline void mark_enqueue() { _since_enqueue.reset(); }
-    inline const double waited() { return (_since_enqueue.time()); }
+    inline double waited() { return (_since_enqueue.time()); }
 #endif
 
 }; // EOF: base_action_t
@@ -255,15 +254,15 @@ public:
 
     virtual w_rc_t trx_exec()=0;
 
-    const bool trx_acq_locks() 
+    bool trx_acq_locks() 
     {
         assert (_partition);
         trx_upd_keys();
         return (_partition->acquire(_requests));
     }
 
-    const int trx_rel_locks(BaseActionPtrList& readyList, 
-                            BaseActionPtrList& promotedList)
+    int trx_rel_locks(BaseActionPtrList& readyList, 
+                      BaseActionPtrList& promotedList)
     {
         assert (_partition);
         assert (_keys_set); // at this point the keys should already be set (at trx_acq_locks)
@@ -272,7 +271,7 @@ public:
     }
 
 
-    virtual const int trx_upd_keys()=0;
+    virtual int trx_upd_keys()=0;
 
     void notify() 
     {

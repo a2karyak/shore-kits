@@ -32,12 +32,7 @@
 #ifndef __SHORE_CLIENT_H
 #define __SHORE_CLIENT_H
 
-
-// for binding LWP to cores
-#include <sys/types.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-
+#include "k_defines.h"
 
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_helper_loader.h"
@@ -168,9 +163,9 @@ public:
                   const MeasurementType aType, const int trxid, 
                   const int numOfTrxs,
                   processorid_t aprsid = PBIND_NONE) 
-	: thread_t(tname), _id(id), _env(env), _measure_type(aType), 
+	: thread_t(tname), _env(env), _measure_type(aType), 
           _trxid(trxid), _notrxs(numOfTrxs), _think_time(0),
-          _is_bound(false), _prs_id(aprsid), _rv(0)
+          _is_bound(false), _prs_id(aprsid), _id(id), _rv(0)
     {
         assert (_env);
         assert (_measure_type != MT_UNDEF);
@@ -184,15 +179,7 @@ public:
     // thread entrance
     void work() {
 
-        // 1. bind to the specified processor
-        if (processor_bind(P_LWPID, P_MYID, _prs_id, NULL)) {
-            TRACE( TRACE_CPU_BINDING, "Cannot bind to processor (%d)\n", _prs_id);
-            _is_bound = false;
-        }
-        else {
-            TRACE( TRACE_CPU_BINDING, "Binded to processor (%d)\n", _prs_id);
-            _is_bound = true;
-        }
+        TRY_TO_BIND(_prs_id,_is_bound);
 
         // 2. init env in not initialized
         if (!_env->is_initialized()) {
@@ -210,13 +197,13 @@ public:
     }
     
     // access methods
-    const int id() { return (_id); }
-    const bool is_bound() const { return (_is_bound); }
+    int id() { return (_id); }
+    bool is_bound() const { return (_is_bound); }
     inline int rv() { return (_rv); }
     
     // methods
     w_rc_t run_xcts(int xct_type, int num_xct);
-    const int powerrun() {
+    int powerrun() {
         w_rc_t rc = _env->loaddata();
         if(rc.is_error()) return rc.err_num();
         return (run_xcts(_trxid, _notrxs).err_num());

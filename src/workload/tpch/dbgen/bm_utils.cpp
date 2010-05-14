@@ -101,8 +101,7 @@ extern seed_t Seed[];
  * env_config: look for a environmental variable setting and return its
  * value; otherwise return the default supplied
  */
-const char     *
-env_config(const char *var, const char *dflt)
+const char* env_config(const char* /* var */, const char *dflt)
 {
   return (dflt);
 }

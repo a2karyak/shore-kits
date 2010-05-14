@@ -385,28 +385,29 @@ mk_supp(DSS_HUGE index, supplier_t *s)
   return (0);
 }
 
-struct
+struct monthEnum
 {
   const char     *mdes;
   long      days;
   long      dcnt;
-}         months[] =
-		
-  {
-    {NULL, 0, 0},
-    {"JAN", 31, 31},
-    {"FEB", 28, 59},
-    {"MAR", 31, 90},
-    {"APR", 30, 120},
-    {"MAY", 31, 151},
-    {"JUN", 30, 181},
-    {"JUL", 31, 212},
-    {"AUG", 31, 243},
-    {"SEP", 30, 273},
-    {"OCT", 31, 304},
-    {"NOV", 30, 334},
-    {"DEC", 31, 365}
-  };
+};         
+
+monthEnum months[13] =		
+    {
+        {NULL, 0, 0},
+        {"JAN", 31, 31},
+        {"FEB", 28, 59},
+        {"MAR", 31, 90},
+        {"APR", 30, 120},
+        {"MAY", 31, 151},
+        {"JUN", 30, 181},
+        {"JUL", 31, 212},
+        {"AUG", 31, 243},
+        {"SEP", 30, 273},
+        {"OCT", 31, 304},
+        {"NOV", 30, 334},
+        {"DEC", 31, 365}
+    };
 
 	
 long

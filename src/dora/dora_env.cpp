@@ -34,6 +34,13 @@ DoraEnv::~DoraEnv()
 }
 
 
+irpImpl* DoraEnv::table_part(const uint table_pos, const uint part_pos) 
+{
+    assert (table_pos<_irptp_vec.size());        
+    return (_irptp_vec[table_pos]->get_part(part_pos));
+}
+
+
 /******************************************************************** 
  *
  *  @fn:    statistics

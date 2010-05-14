@@ -41,6 +41,20 @@
 #include "shore_row_impl.h"
 
 
+
+// these guys need to access the underlying object cache
+
+using namespace shore;
+
+template <class T> class row_cache_t;
+
+template <class T> 
+void* operator new(size_t, row_cache_t<T>*);
+
+template <class T> 
+void operator delete(void*, row_cache_t<T>*);
+
+
 ENTER_NAMESPACE(shore);
 
 
@@ -60,8 +74,8 @@ public:
     typedef row_impl<TableDesc> table_tuple;
 
 private:
-    TableDesc* _ptable; 
-    const int _nbytes;
+    TableDesc*   _ptable; 
+    const uint_t _nbytes;
 
 #ifdef CACHE_STATS    
     // stats
@@ -79,39 +93,31 @@ private:
         ~mylink() { }
     };        
 
-    
-    table_tuple* _do_alloc() 
-    {
-        vpn u = { malloc(_nbytes) };
-        if (!u.v) u.v = null();
-        table_tuple* pobj = (table_tuple*)prepare(u);
-	return (pobj);
-    }
 
 public:
 
-    row_cache_t(TableDesc* ptable, int init_count=DEFAULT_INIT_ROW_COUNT) 
-        : atomic_stack(-sizeof(ptr)),_nbytes(sizeof(table_tuple)+sizeof(ptr)),
-          _ptable(ptable)
+    row_cache_t(TableDesc* ptable, uint init_count=DEFAULT_INIT_ROW_COUNT) 
+        : atomic_stack((int)-sizeof(ptr)),
+          _ptable(ptable),
+          _nbytes((uint_t)sizeof(table_tuple)+(uint_t)sizeof(ptr))
 #ifdef CACHE_STATS
         , _tuple_requests(0), _tuple_setups(0)
 #endif
     { 
         assert (_ptable);
-        assert (init_count >= 0); 
 
         mylink head;
         mylink* node = NULL;
 
 #ifdef CFG_CACHES
         // create (init_count) objects, and push them to the cache
-        for (int i=0; i<init_count; i++) {
+        for (uint i=0; i<init_count; i++) {
             table_tuple* u = borrow();
             node = new mylink(u,head._next);
             head._next = node;
         }
 
-        for (int i=0; i<init_count; i++) {
+        for (uint i=0; i<init_count; i++) {
             giveback(node->_pobj);
             head._next = node;
             node = node->_next;
@@ -200,14 +206,30 @@ public:
     }
 #endif 
 
-    // these guys need to access the underlying object cache
-    template <typename T> 
-    friend void* operator new(size_t, row_cache_t<T>*);
+    
+    table_tuple* _do_alloc() 
+    {
+        vpn u = { malloc(_nbytes) };
+        if (!u.v) u.v = null();
+        table_tuple* pobj = (table_tuple*)prepare(u);
+	return (pobj);
+    }
 
-    template <typename T> 
-    friend void operator delete(void*, row_cache_t<T>*);
+    uint_t nbytes() { return (_nbytes); }
+
+//     // these guys need to access the underlying object cache
+//     template <typename T> 
+//     friend void* operator new(size_t, row_cache_t<T>*);
+
+//     template <typename T> 
+//     friend void operator delete(void*, row_cache_t<T>*);
+
 
 }; // EOF: row_cache_t
+
+
+
+EXIT_NAMESPACE(shore);
 
 
 
@@ -216,9 +238,9 @@ public:
  */
 
 template <typename T>
-inline void* operator new(size_t nbytes, row_cache_t<T>* cache) 
+inline void* operator new(size_t nbytes, shore::row_cache_t<T>* cache) 
 {
-    assert(cache->_nbytes >= nbytes);
+    assert(cache->nbytes() >= nbytes);
     return (cache->_do_alloc());
 }
 
@@ -229,15 +251,12 @@ inline void* operator new(size_t nbytes, row_cache_t<T>* cache)
    must still call cache::destroy()
  */
 template <typename T>
-inline void operator delete(void* ptr, row_cache_t<T>* cache) 
+inline void operator delete(void* ptr, shore::row_cache_t<T>* cache) 
 {
-    typedef row_impl<T> table_tuple;
+    typedef shore::row_impl<T> table_tuple;
     cache->giveback((table_tuple*)ptr);
 }
 
-
-
-EXIT_NAMESPACE(shore);
 
 
 #endif /* __SHORE_ROW_CACHE_H */

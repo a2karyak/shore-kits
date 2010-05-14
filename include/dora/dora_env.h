@@ -83,10 +83,10 @@ public:
     //// Client API
     
     // enqueues action, false on error
-    inline const int enqueue(irpAction* paction,
-                             const bool bWake, 
-                             irpTableImpl* ptable, 
-                             const int part_pos) 
+    inline int enqueue(irpAction* paction,
+                       const bool bWake, 
+                       irpTableImpl* ptable, 
+                       const int part_pos) 
     {
         assert (paction);
         assert (ptable);
@@ -103,11 +103,7 @@ public:
 
     //// Partition-related methods
 
-    inline irpImpl* table_part(const int table_pos, const int part_pos) {
-        assert (table_pos<_irptp_vec.size());        
-        return (_irptp_vec[table_pos]->get_part(part_pos));
-    }
-
+    irpImpl* table_part(const uint table_pos, const uint part_pos);
     int statistics();
 
 protected:

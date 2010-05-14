@@ -144,8 +144,8 @@ struct key_wrapper_t
     }
 
     // friend function
-    template<class DataType> friend std::ostream& operator<< (std::ostream& os, 
-                                                              const key_wrapper_t<DataType>& rhs);
+    template<class T> friend std::ostream& operator<< (std::ostream& os, 
+                                                       const key_wrapper_t<T>& rhs);
 
 
 

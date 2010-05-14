@@ -30,6 +30,7 @@
 #endif
 
 #include "k_defines.h"
+#include "util/namespace.h"
 
 #include "compat.h"
 

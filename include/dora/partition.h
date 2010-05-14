@@ -171,20 +171,20 @@ public:
 
     //// Access methods ////
 
-    const int part_id() const { return (_part_id); }
-    const table_desc_t* table() const { return (_table); } 
+    int part_id() const { return (_part_id); }
+    table_desc_t* table() const { return (_table); } 
 
     // partition policy
-    const ePartitionPolicy get_part_policy() { return (_part_policy); }
+    ePartitionPolicy get_part_policy() { return (_part_policy); }
     void set_part_policy(const ePartitionPolicy aPartPolicy) {
         assert (aPartPolicy!=PP_UNDEF);
         _part_policy = aPartPolicy;
     }
 
     // partition state and active threads
-    const ePATState get_pat_state();
-    const ePATState dec_active_thr();
-    const ePATState inc_active_thr();
+    ePATState get_pat_state();
+    ePATState dec_active_thr();
+    ePATState inc_active_thr();
 
     // get lock manager
     LockManager* plm() { return (_plm); }
@@ -197,8 +197,8 @@ public:
 
 
     // resets/initializes the partition, possibly to a new processor
-    virtual const int reset(const processorid_t aprsid = PBIND_NONE,
-                            const int standby_sz = DF_NUM_OF_STANDBY_THRS);
+    virtual int reset(const processorid_t aprsid = PBIND_NONE,
+                      const int standby_sz = DF_NUM_OF_STANDBY_THRS);
 
 
     // stops the partition
@@ -213,21 +213,21 @@ public:
 
 
     // releases a trx
-    inline const int release(Action* action,
-                             BaseActionPtrList& readyList, 
-                             BaseActionPtrList& promotedList) 
+    inline int release(Action* action,
+                       BaseActionPtrList& readyList, 
+                       BaseActionPtrList& promotedList) 
     { 
         return (_plm->release_all(action,readyList,promotedList)); 
     }
 
-    inline const bool acquire(KALReqVec& akalvec) 
+    inline bool acquire(KALReqVec& akalvec) 
     {
         return (_plm->acquire_all(akalvec));
     }
 
 
     // returns true if action can be enqueued in this partition
-    virtual const bool verify(Action& action)=0;
+    virtual bool verify(Action& action)=0;
 
 
     // enqueue lock needed to enforce an ordering across trxs
@@ -238,25 +238,24 @@ public:
     // enqueues action, 0 on success
     int enqueue(Action* pAction, const bool bWake);
     Action* dequeue();
-    inline const int has_input(void) const { 
+    inline int has_input(void) const { 
         return (!_input_queue->is_empty()); 
     }    
-    const bool is_input_owner(base_worker_t* aworker) {
+    bool is_input_owner(base_worker_t* aworker) {
         return (_input_queue->is_control(aworker));
     }
 
     // deque of actions to be committed
     int enqueue_commit(Action* apa, const bool bWake=true);
     Action* dequeue_commit();
-    inline const int has_committed(void) const { 
+    inline int has_committed(void) const { 
         return (!_committed_queue->is_empty()); 
     }
-    const bool is_committed_owner(base_worker_t* aworker) {
+    bool is_committed_owner(base_worker_t* aworker) {
         return (_committed_queue->is_control(aworker));
     }
 
-
-    const int abort_all_enqueued();
+    int abort_all_enqueued();
 
 
 
@@ -288,17 +287,17 @@ public:
 private:                
 
     // thread control
-    const int _start_owner();
-    const int _stop_threads();
-    const int _generate_primary();
-    const int _generate_standby_pool(const int sz, 
-                                     int& pool_sz,
-                                     const processorid_t aprsid = PBIND_NONE);
+    int _start_owner();
+    int _stop_threads();
+    int _generate_primary();
+    int _generate_standby_pool(const int sz, 
+                               int& pool_sz,
+                               const processorid_t aprsid = PBIND_NONE);
     Worker* _generate_worker(const processorid_t aprsid, c_str wname, const int use_sli);    
 
 protected:    
 
-    const int isFree(Key akey, eDoraLockMode lmode);
+    int isFree(Key akey, eDoraLockMode lmode);
 
 
 }; // EOF: partition_t
@@ -437,9 +436,8 @@ partition_t<DataType>::stop()
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::reset(const processorid_t aprsid,
-                             const int poolsz)
+int partition_t<DataType>::reset(const processorid_t aprsid,
+                                 const int poolsz)
 {        
     TRACE( TRACE_DEBUG, "part (%s-%d) - pool (%d) - cpu (%d)\n", 
            _table->name(), _part_id, poolsz, aprsid);
@@ -502,8 +500,7 @@ partition_t<DataType>::reset(const processorid_t aprsid,
  ******************************************************************/
 
 template <class DataType>
-const ePATState 
-partition_t<DataType>::get_pat_state() 
+ePATState partition_t<DataType>::get_pat_state() 
 { 
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     return (_pat_state); 
@@ -523,8 +520,7 @@ partition_t<DataType>::get_pat_state()
  ******************************************************************/
 
 template <class DataType>
-const ePATState 
-partition_t<DataType>::dec_active_thr() 
+ePATState partition_t<DataType>::dec_active_thr() 
 {
     assert (_pat_count>1);
     assert (_pat_state==PATS_MULTIPLE);
@@ -551,8 +547,7 @@ partition_t<DataType>::dec_active_thr()
  ******************************************************************/
 
 template <class DataType>
-const ePATState 
-partition_t<DataType>::inc_active_thr() 
+ePATState partition_t<DataType>::inc_active_thr() 
 {
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     _pat_count++;
@@ -629,8 +624,7 @@ partition_t<DataType>::prepareNewRun()
  ******************************************************************/
 
 template <class DataType>
-inline const int 
-partition_t<DataType>::_start_owner()
+inline int partition_t<DataType>::_start_owner()
 {
     assert (_owner);
     _owner->start();
@@ -647,8 +641,7 @@ partition_t<DataType>::_start_owner()
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::_stop_threads()
+int partition_t<DataType>::_stop_threads()
 {
     int i = 0;
 
@@ -702,10 +695,9 @@ partition_t<DataType>::_stop_threads()
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::_generate_standby_pool(const int sz,
-                                              int& pool_sz,
-                                              const processorid_t aprsid)
+int partition_t<DataType>::_generate_standby_pool(const int sz,
+                                                  int& pool_sz,
+                                                  const processorid_t aprsid)
 {
     assert (_standby==NULL); // prevent losing thread pointer 
 
@@ -779,8 +771,7 @@ partition_t<DataType>::_generate_standby_pool(const int sz,
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::_generate_primary() 
+int partition_t<DataType>::_generate_primary() 
 {
     assert (_owner==NULL); // prevent losing thread pointer 
 
@@ -864,8 +855,7 @@ partition_t<DataType>::_generate_worker(const processorid_t prsid,
  ******************************************************************/
 
 template <class DataType>
-const int 
-partition_t<DataType>::abort_all_enqueued()
+int partition_t<DataType>::abort_all_enqueued()
 {
     // 1. go over all requests
     Action* pa;

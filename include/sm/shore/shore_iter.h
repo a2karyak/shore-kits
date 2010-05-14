@@ -89,6 +89,8 @@ public:
  *
  ******************************************************************/
 
+class index_desc_t;
+
 class simple_index_iter_t 
 {
 protected:

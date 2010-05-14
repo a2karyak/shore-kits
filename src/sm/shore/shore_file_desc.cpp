@@ -52,7 +52,7 @@ using namespace shore;
  *          most likely will be called only once.
  */
  
-w_rc_t file_desc_t::find_root_iid(ss_m* db)
+w_rc_t file_desc_t::find_root_iid(ss_m* /* db */)
 {
 #if 0 
     // Disabled returns the single vid

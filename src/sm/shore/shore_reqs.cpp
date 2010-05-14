@@ -35,20 +35,6 @@
 ENTER_NAMESPACE(shore);
 
 
-/******************************************************************** 
- *
- * @fn:    translate_state
- *
- * @brief: Displays in a friendly way a TrxState
- *
- ********************************************************************/
-
-char* translate_state(TrxState aState) {
-    assert ((aState >= 0) && (aState < 6));
-    return (sTrxStates[aState]);
-}
-
-
 /****************************************************************** 
  *
  * @fn:    notify_client()
@@ -63,12 +49,12 @@ void base_request_t::notify_client()
     condex* pcondex = _result.get_notify();
     if (pcondex) {
         TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
-               _tid, pcondex);
+               _tid.get_lo(), pcondex);
 	pcondex->signal();
         _result.set_notify(NULL);
     }
     else
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid.get_lo());
 }
 
 

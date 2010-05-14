@@ -133,9 +133,9 @@ void ShoreTPCHEnv::print_throughput(const double iQueriedSF,
     // now calculate the diff
     current_stats -= _last_stats;
 	       
-    int trxs_att  = current_stats.attempted.total();
-    int trxs_abt  = current_stats.failed.total();
-    int trxs_dld  = current_stats.deadlocked.total();    
+    uint trxs_att  = current_stats.attempted.total();
+    uint trxs_abt  = current_stats.failed.total();
+    uint trxs_dld  = current_stats.deadlocked.total();    
 
     TRACE( TRACE_ALWAYS, "*******\n"             \
            "QueriedSF: (%.1f)\n"                 \
@@ -507,7 +507,7 @@ w_rc_t ShoreTPCHEnv::_gen_one_cust_based(const int id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_populate_baseline(const int xct_id, 
+w_rc_t ShoreTPCHEnv::xct_populate_baseline(const int /* xct_id */, 
                                            populate_baseline_input_t& in)
 {
     // ensure a valid environment
@@ -901,7 +901,7 @@ struct q1_output_ele_t
 };
 
 
-w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id, 
+w_rc_t ShoreTPCHEnv::xct_q1(const int /* xct_id */, 
                             q1_input_t& pq1in)
 {
     // ensure a valid environment
@@ -1036,16 +1036,16 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
             q1_output.push_back(q1_output_ele);
 
 
-            TRACE( TRACE_QUERY_RESULTS, "%s|%s|%d|%d|%.2f|%.2f|%.2f|%.2f|%.2f|%d\n",
+            TRACE( TRACE_QUERY_RESULTS, "%d|%d|%d|%d|%.2f|%.2f|%.2f|%.2f|%.2f|%d\n",
                    q1_output_ele.l_returnflag,
                    q1_output_ele.l_linestatus,
                    q1_output_ele.sum_qty,
                    q1_output_ele.sum_base_price,
-                   q1_output_ele.sum_disc_price,
-                   q1_output_ele.sum_charge,
-                   q1_output_ele.avg_qty,
-                   q1_output_ele.avg_price,
-                   q1_output_ele.avg_disc,
+                   q1_output_ele.sum_disc_price.to_double(),
+                   q1_output_ele.sum_charge.to_double(),
+                   q1_output_ele.avg_qty.to_double(),
+                   q1_output_ele.avg_price.to_double(),
+                   q1_output_ele.avg_disc.to_double(),
                    q1_output_ele.count_order);
 
         }
@@ -1067,8 +1067,8 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q2(const int xct_id, 
-                            q2_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q2(const int /* xct_id */, 
+                            q2_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1085,8 +1085,8 @@ w_rc_t ShoreTPCHEnv::xct_q2(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q3(const int xct_id, 
-                            q3_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q3(const int /* xct_id */, 
+                            q3_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1103,8 +1103,8 @@ w_rc_t ShoreTPCHEnv::xct_q3(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q4(const int xct_id, 
-                            q4_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q4(const int /* xct_id */, 
+                            q4_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1121,8 +1121,8 @@ w_rc_t ShoreTPCHEnv::xct_q4(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q5(const int xct_id, 
-                            q5_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q5(const int /* xct_id */, 
+                            q5_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1143,7 +1143,7 @@ w_rc_t ShoreTPCHEnv::xct_q5(const int xct_id,
  * l_extendedprice l_discount l_shipdate l_quantity
  */
 
-w_rc_t ShoreTPCHEnv::xct_q6(const int xct_id, 
+w_rc_t ShoreTPCHEnv::xct_q6(const int /* xct_id */, 
                             q6_input_t& pq6in)
 {
     // ensure a valid environment
@@ -1256,8 +1256,8 @@ w_rc_t ShoreTPCHEnv::xct_q6(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q7(const int xct_id, 
-                            q7_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q7(const int /* xct_id */, 
+                            q7_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1274,8 +1274,8 @@ w_rc_t ShoreTPCHEnv::xct_q7(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q8(const int xct_id, 
-                            q8_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q8(const int /* xct_id */, 
+                            q8_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1292,8 +1292,8 @@ w_rc_t ShoreTPCHEnv::xct_q8(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q9(const int xct_id, 
-                            q9_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q9(const int /* xct_id */, 
+                            q9_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1310,8 +1310,8 @@ w_rc_t ShoreTPCHEnv::xct_q9(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q10(const int xct_id, 
-                             q10_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q10(const int /* xct_id */, 
+                             q10_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1328,8 +1328,8 @@ w_rc_t ShoreTPCHEnv::xct_q10(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q11(const int xct_id, 
-                             q11_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q11(const int /* xct_id */, 
+                             q11_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1426,7 +1426,7 @@ w_rc_t ShoreTPCHEnv::xct_q11(const int xct_id,
 // }
 
 
-w_rc_t ShoreTPCHEnv::xct_q12(const int xct_id, 
+w_rc_t ShoreTPCHEnv::xct_q12(const int /* xct_id */, 
                              q12_input_t& in)
 {
     // ensure a valid environment
@@ -1473,8 +1473,8 @@ w_rc_t ShoreTPCHEnv::xct_q12(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q13(const int xct_id, 
-                             q13_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q13(const int /* xct_id */, 
+                             q13_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1493,7 +1493,7 @@ w_rc_t ShoreTPCHEnv::xct_q13(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q14(const int xct_id, 
+w_rc_t ShoreTPCHEnv::xct_q14(const int /* xct_id */, 
                              q14_input_t& in)
 {
     // ensure a valid environment
@@ -1515,8 +1515,8 @@ w_rc_t ShoreTPCHEnv::xct_q14(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q15(const int xct_id, 
-                             q15_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q15(const int /* xct_id */, 
+                             q15_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1533,8 +1533,8 @@ w_rc_t ShoreTPCHEnv::xct_q15(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q16(const int xct_id, 
-                             q16_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q16(const int /* xct_id */, 
+                             q16_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1551,8 +1551,8 @@ w_rc_t ShoreTPCHEnv::xct_q16(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q17(const int xct_id, 
-                             q17_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q17(const int /* xct_id */, 
+                             q17_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1569,8 +1569,8 @@ w_rc_t ShoreTPCHEnv::xct_q17(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q18(const int xct_id, 
-                             q18_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q18(const int /* xct_id */, 
+                             q18_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1587,8 +1587,8 @@ w_rc_t ShoreTPCHEnv::xct_q18(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q19(const int xct_id, 
-                             q19_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q19(const int /* xct_id */, 
+                             q19_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1605,8 +1605,8 @@ w_rc_t ShoreTPCHEnv::xct_q19(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q20(const int xct_id, 
-                             q20_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q20(const int /* xct_id */, 
+                             q20_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1623,8 +1623,8 @@ w_rc_t ShoreTPCHEnv::xct_q20(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q21(const int xct_id, 
-                             q21_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q21(const int /* xct_id */, 
+                             q21_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -1641,8 +1641,8 @@ w_rc_t ShoreTPCHEnv::xct_q21(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_q22(const int xct_id, 
-                             q22_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_q22(const int /* xct_id */, 
+                             q22_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);

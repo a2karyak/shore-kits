@@ -160,13 +160,13 @@ void ShoreTPCCEnv::table_builder_t::work()
     int cid_array[ORDERS_PER_DIST];
     gen_cid_array(cid_array);
 
-    int last_wh = 1;
+    //int last_wh = 1;
     for(int i=0 ; i < _count; i++) {
 	while(_env->get_measure() != MST_MEASURE)
 	    usleep(10000);
 	
 	long tid = _start + i;
-	int my_dist = tid/UNIT_PER_DIST;
+	//int my_dist = tid/UNIT_PER_DIST;
 	int start_dist = (tid + UNIT_PER_DIST - 1)/UNIT_PER_DIST;
 	int end_dist = (tid + UNIT_PER_DIST)/UNIT_PER_DIST;
 	bool overlap = (start_dist*UNIT_PER_DIST < _start) || (end_dist*UNIT_PER_DIST >= _start+_count);
@@ -584,7 +584,11 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		vec_t dvec(handle->body(), bsize);
 		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(wh_fid, hvec, PADDED_SIZE, dvec, new_rid));
-		W_DO(db->append_rec(new_rid, pvec, false));
+		W_DO(db->append_rec(new_rid, pvec
+#ifndef CFG_SHORE_6
+                                    , false
+#endif
+                                    ));
 
                 // mark the old record for deletion
 		hit_list.push_back(handle->rid());

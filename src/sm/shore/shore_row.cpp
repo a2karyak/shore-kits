@@ -34,7 +34,7 @@
 
 
 #include <strstream>
-char const* db_pretty_print(shore::table_row_t const* rec, int i=0, char const* s=0)
+char const* db_pretty_print(shore::table_row_t const* rec, int /* i=0 */, char const* /* s=0 */)
 {
     static char data[1024];
     std::strstream inout(data, sizeof(data));
@@ -191,7 +191,7 @@ void table_row_t::print_tuple_no_tracing()
     
     char* sbuf = NULL;
     int sz = 0;
-    for (int i=0; i<_field_cnt; i++) {
+    for (uint i=0; i<_field_cnt; i++) {
         sz = _pvalues[i].get_debug_str(sbuf);
         if (sbuf) {
             fprintf( stderr, "%d. %s (%d)\n", i, sbuf, sz);

@@ -39,6 +39,8 @@
 ENTER_NAMESPACE(shore);
 
 
+#warning IP: TODO pass arbitrary -sm_* options from shore.conf to shore
+
 // Exported variables //
 
 ShoreEnv* _g_shore_env;
@@ -85,11 +87,12 @@ ShoreEnv::ShoreEnv(string confname)
       _loaded(false), _load_mutex(thread_mutex_create()),
       _statmap_mutex(thread_mutex_create()),
       _last_stats_mutex(thread_mutex_create()),
-      _vol_mutex(thread_mutex_create()), _cname(confname),
-      _measure(MST_UNDEF),
+      _vol_mutex(thread_mutex_create()), 
+      _cname(confname),
       _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
       _active_cpu_count(SHORE_DEF_NUM_OF_CORES),
-      _worker_cnt(0)
+      _worker_cnt(0),
+      _measure(MST_UNDEF)
 {
     _popts = new option_group_t(1);
     _pvid = new vid_t(1);
@@ -185,7 +188,7 @@ double ShoreEnv::get_sf() const
 double ShoreEnv::upd_sf()
 {
     double tmp_sf = envVar::instance()->getSysVarDouble("sf");
-    assert (tmp_sf);
+    assert (tmp_sf>0);
     set_sf(tmp_sf);
     return (_scaling_factor);
 }
@@ -323,7 +326,7 @@ int ShoreEnv::start()
 #endif
 
     WorkerPtr aworker;
-    for (int i=0; i<_worker_cnt; i++) {
+    for (uint i=0; i<_worker_cnt; i++) {
 #ifdef CFG_SLI
         aworker = new Worker(this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
 #else
@@ -866,7 +869,7 @@ void ShoreEnv::readconfig(string conf_file)
 
     // Parse SYSTEM parameters
     TRACE( TRACE_DEBUG, "Reading SYS options\n");
-    for (i; i<SHORE_NUM_SYS_OPTIONS; i++) {
+    for (i=0; i<SHORE_NUM_SYS_OPTIONS; i++) {
         tmp = ev->getVar(SHORE_SYS_OPTIONS[i][0],SHORE_SYS_OPTIONS[i][1]);
         _sys_opts[SHORE_SYS_OPTIONS[i][0]] = tmp;
     }

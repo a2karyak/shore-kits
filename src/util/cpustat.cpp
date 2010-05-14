@@ -33,6 +33,39 @@
 #include "util/cpustat.h"
 
 
+
+cpumonitor_t::cpumonitor_t(const double interval_sec)
+    : thread_t("cpumon"), 
+      _interval_usec(0), _interval_sec(interval_sec), _pkc(NULL),
+      _total_usage(0), _num_usage_readings(0), _avg_usage(0), _state(CPS_NOTSET)
+{ 
+    _setup(interval_sec);
+}
+
+
+cpumonitor_t::~cpumonitor_t() 
+{ 
+    if (*&_state != CPS_NOTSET) {            
+        pthread_mutex_destroy(&_mutex);
+        pthread_cond_destroy(&_cond);
+        
+#ifdef __sparcv9
+        kstat_close(_pkc);
+#endif
+    }
+}
+
+
+void cpumonitor_t::print_avg_usage() 
+{ 
+    double au = *&_avg_usage;
+    double entriessz = _entries.size();
+    TRACE( TRACE_STATISTICS, 
+           "\nAvgCPU:       (%.1f) (%.1f%%)\n",
+           au, 100*(au/entriessz));
+}
+
+
 void cpumonitor_t::_setup(const double interval_sec) 
 {
     _entries.clear();
@@ -60,6 +93,7 @@ void cpumonitor_t::_setup(const double interval_sec)
     // - find and stash the offset of the cpu::sys:cpu_nsec_idle entry
     // - take the first measurement
 
+#ifdef __sparcv9
     _pkc = kstat_open();
     for(kstat_t* ksp=_pkc->kc_chain; ksp; ksp=ksp->ks_next) {
 	if(strcmp(ksp->ks_module, "cpu") == 0 && strcmp(ksp->ks_name, "sys") == 0) {
@@ -73,7 +107,11 @@ void cpumonitor_t::_setup(const double interval_sec)
 		}
 	    }
 	}
-    }    
+    }
+#else
+#warning IP: Disabling the kstat-related at cpustat
+#endif
+
     _state = CPS_PAUSE;
 }
 
@@ -82,7 +120,6 @@ void cpumonitor_t::work()
 {
     if (*&_state==CPS_NOTSET) _setup(_interval_sec);
     assert (*&_state!=CPS_NOTSET);
-    assert (_pkc);
     
     bool first_time = true;
     struct timespec start;
@@ -93,17 +130,22 @@ void cpumonitor_t::work()
     
     long new_measurement = 0;
     cpu_measurement totals = {0,0};
-    int i=0;
-    kstat_entry* e = NULL;
-    int kid;
-    kstat_named_t* kn = NULL;
-    cpu_measurement m = {0,0};
+
     double entries_sz = _entries.size();
     double inuse = 0;        
     int error = 0;
     struct timespec ts = start;
     
     static long const BILLION = 1000*1000*1000;
+
+#ifdef __sparcv9
+    assert (_pkc);
+    int i=0;
+    kstat_entry* e = NULL;
+    int kid;
+    cpu_measurement m = {0,0};
+    kstat_named_t* kn = NULL;
+#endif
 
     pthread_mutex_lock(&_mutex);
     clock_gettime(CLOCK_REALTIME, &start);
@@ -120,6 +162,8 @@ void cpumonitor_t::work()
 
             // get the new measurement
             totals.clear();
+
+#ifdef __sparcv9
             for(i=0; i<entries_sz; i++) {
                 e = &_entries[i];
                 kid = kstat_read(_pkc, e->ksp, 0);
@@ -129,6 +173,7 @@ void cpumonitor_t::work()
                 m -= e->measured[last_measurement];
                 totals += m;
             }
+#endif
 
             // record usage if not paused
             if ((!first_time) && (astate==CPS_RUNNING)) {

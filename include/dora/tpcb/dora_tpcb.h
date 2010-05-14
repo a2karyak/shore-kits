@@ -70,7 +70,7 @@ public:
     int resume();
     int pause();
     int newrun();
-    int set(envVarMap* vars) { return(0); /* do nothing */ };
+    int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     int dump();
     int info() const;    
     int statistics();    

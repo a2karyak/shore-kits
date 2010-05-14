@@ -94,7 +94,7 @@ warehouse_t::warehouse_t(string sysname) :
     _desc[7].setup(SQL_FLOAT, "W_TAX");   
     _desc[8].setup(SQL_FLOAT, "W_YTD");  /* DECIMAL(12,2) */
 
-    int  keys[1] = { 0 }; // IDX { W_ID }
+    uint  keys[1] = { 0 }; // IDX { W_ID }
 
     // depending on the system name, create the corresponding indexes 
 
@@ -135,7 +135,7 @@ district_t::district_t(string sysname) :
     _desc[9].setup(SQL_FLOAT, "D_YTD");         /* DECIMAL(12,2) */
     _desc[10].setup(SQL_INT,  "D_NEXT_O_ID");
 
-    int keys[2] = { 0, 1 }; // IDX { D_ID, D_W_ID }
+    uint keys[2] = { 0, 1 }; // IDX { D_ID, D_W_ID }
 
     // baseline - Regular 
     if (sysname.compare("baseline")==0) {
@@ -186,9 +186,9 @@ customer_t::customer_t(string sysname) :
     _desc[20].setup(SQL_FIXCHAR,  "C_DATA_1", 250);
     _desc[21].setup(SQL_FIXCHAR,  "C_DATA_2", 250);     
 
-    int keys1[3] = {2, 1, 0 }; // IDX { C_W_ID, C_D_ID, C_ID }
+    uint keys1[3] = {2, 1, 0 }; // IDX { C_W_ID, C_D_ID, C_ID }
 
-    int keys2[5] = {2, 1, 5, 3, 0}; // IDX { C_W_ID, C_D_ID, C_LAST, C_FIRST, C_ID }
+    uint keys2[5] = {2, 1, 5, 3, 0}; // IDX { C_W_ID, C_D_ID, C_LAST, C_FIRST, C_ID }
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
@@ -243,7 +243,7 @@ new_order_t::new_order_t(string sysname) :
     _desc[1].setup(SQL_INT, "NO_D_ID");
     _desc[2].setup(SQL_INT, "NO_W_ID");
 
-    int keys[3] = {2, 1, 0}; // IDX { NO_W_ID, NO_D_ID, NO_O_ID }
+    uint keys[3] = {2, 1, 0}; // IDX { NO_W_ID, NO_D_ID, NO_O_ID }
 
     // baseline - Regular
     if (sysname.compare("baseline")==0) {
@@ -280,9 +280,9 @@ order_t::order_t(string sysname) :
     _desc[6].setup(SQL_INT,   "O_OL_CNT");   
     _desc[7].setup(SQL_INT,   "O_ALL_LOCAL");
 
-    int keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID }
+    uint keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID }
 
-    int keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
+    uint keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
 
 
     // baseline - regular indexes
@@ -329,7 +329,7 @@ order_line_t::order_line_t(string sysname) :
     _desc[8].setup(SQL_INT,    "OL_AMOUNT");
     _desc[9].setup(SQL_FIXCHAR,   "OL_DIST_INFO", 25);
 
-    int keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
+    uint keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
@@ -363,7 +363,7 @@ item_t::item_t(string sysname) :
     _desc[3].setup(SQL_INT,  "I_PRICE");
     _desc[4].setup(SQL_FIXCHAR, "I_DATA", 50);
 	
-    int keys[1] = {0}; // IDX { I_ID }
+    uint keys[1] = {0}; // IDX { I_ID }
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
@@ -409,7 +409,7 @@ stock_t::stock_t(string sysname) :
     _desc[15].setup(SQL_FIXCHAR,  "S_DIST9", 24);
     _desc[16].setup(SQL_FIXCHAR,  "S_DATA", 50); 
 
-    int keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
+    uint keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {

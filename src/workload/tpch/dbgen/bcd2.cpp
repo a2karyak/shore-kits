@@ -157,18 +157,19 @@ bcd2_mul(long *bcd_low, long *bcd_high, long multiplier)
         carry = 0;
         for (udigit=0; udigit < 14; udigit++)
             {
-            m2 = GET_DIGIT(udigit, tmp_lo, tmp_hi);
-            res = m1 * m2;
-            res += carry;
-            if (udigit + ldigit < 14)
+              m2 = GET_DIGIT(udigit, tmp_lo, tmp_hi);
+              res = m1 * m2;
+              res += carry;
+              if (udigit + ldigit < 14)
                 {
-                carry = GET_DIGIT(udigit + ldigit, *bcd_low, *bcd_high);
-                res += carry;
+                  carry = GET_DIGIT(udigit + ldigit, *bcd_low, *bcd_high);
+                  res += carry;
                 }
-            carry = res / 10;
-            res %= 10;
-            if (udigit + ldigit < 14)
+              carry = res / 10;
+              res %= 10;
+              if (udigit + ldigit < 14) {
                 SET_DIGIT(res, udigit + ldigit, bcd_low, bcd_high);
+              }
             }
         }
     return(carry);
