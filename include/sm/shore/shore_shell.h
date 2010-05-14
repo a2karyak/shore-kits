@@ -87,7 +87,7 @@ DECLARE_ENV_CMD(fake_iodelay);
 
 #ifndef CFG_SHORE_6
 DECLARE_ENV_CMD(fake_logdelay);
-DECLARE_ENV_CMD(log,uint);
+DECLARE_ENV_CMD(log);
 #endif
 
 

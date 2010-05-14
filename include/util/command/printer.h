@@ -40,7 +40,7 @@ public:
     void close() { assert(0); }
     int handle(const char* /* cmd */) { return (SHELL_NEXT_CONTINUE); }
     void setaliases() { assert(0); }
-    void usage() const { assert(0); }
+    void usage() { assert(0); }
     string desc() const { return (string("")); }               
 
 }; // EOF: printer_t

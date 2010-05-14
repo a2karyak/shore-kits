@@ -69,8 +69,7 @@ struct pretty_printer
 
 
 
-static void 
-_print_logical_lock_maps(std::ostream &out, LogicalLock const &ll) 
+static void _print_logical_lock_maps(std::ostream &out, LogicalLock& ll) 
 {
     int o = ll.owners().size();
     int w = ll.waiters().size();
@@ -89,7 +88,7 @@ _print_logical_lock_maps(std::ostream &out, LogicalLock const &ll)
 
 
 char const* 
-db_pretty_print(LogicalLock const* ll, int i=0, char const* s=0) 
+db_pretty_print(LogicalLock* ll, int i=0, char const* s=0) 
 {
     static pretty_printer pp;
     _print_logical_lock_maps(pp, *ll);
@@ -405,7 +404,7 @@ bool LogicalLock::is_clean() const
 
     // Prints out the LogicalLock (for debugging)
     if (!isClean) { 
-        cout << *this;
+        TRACE(TRACE_ALWAYS, "LogicalLock is dirty\n");
     }
 
     return (isClean);
@@ -434,7 +433,7 @@ LogicalLock::reset()
 
 
 std::ostream& 
-operator<<(std::ostream& os, const LogicalLock& rhs) 
+operator<<(std::ostream& os, LogicalLock& rhs) 
 {
     os << "lock:   " << rhs.dlm() << endl; 
     os << "owners: " << rhs.owners().size() << endl; 

@@ -72,7 +72,7 @@ typedef atomic_container atomic_stack;
 #endif
 
 
-#ifndef __spacrv9
+#ifndef __sparcv9
 
 typedef int processorid_t;
 const int PBIND_NONE = -1;

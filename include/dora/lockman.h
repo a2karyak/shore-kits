@@ -77,7 +77,7 @@ struct actionLLEntry;
 std::ostream& operator<<(std::ostream& os, const actionLLEntry& rhs);
 
 struct LogicalLock;
-std::ostream& operator<<(std::ostream& os, const LogicalLock& rhs);
+std::ostream& operator<<(std::ostream& os, LogicalLock& rhs);
 
 
 /******************************************************************** 
@@ -217,8 +217,8 @@ struct LogicalLock
 
 
     eDoraLockMode       dlm() const { return (_dlm); }
-    ActionLockReqVec&   owners() const { return (_owners); }
-    ActionLockReqList&  waiters() const { return (_waiters); }
+    ActionLockReqVec&   owners()  { return (_owners); }
+    ActionLockReqList&  waiters() { return (_waiters); }
 
 
     // acquire operation
@@ -430,6 +430,7 @@ public:
             if (!it->second.is_clean()) {
                 ++dirtyCount;
                 //isClean = false;
+                cout << it->second;
                 it->second.reset();
             }
         }
@@ -439,10 +440,10 @@ public:
         return (isClean);
     }
 
-    void dump() const {
+    void dump() {
         int sz = _ll_map->size();
         TRACE( TRACE_DEBUG, "Keys (%d)\n", sz);
-        for (LLMapCit it=_ll_map->begin(); it!=_ll_map->end(); ++it) {
+        for (LLMapIt it=_ll_map->begin(); it!=_ll_map->end(); ++it) {
             cout << "K (" << it->first << ")\nL\n"; 
             cout << it->second << "\n";
         }
