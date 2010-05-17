@@ -187,7 +187,7 @@ int LogicalLock::release(BaseActionPtr anowner,
                     
                     // 7. Add head of waiters to the promoted list 
                     //    (which will be returned)
-                    TRACE( TRACE_TRX_FLOW, "(%d) promoting (%d)\n", atid, action->tid());
+                    TRACE( TRACE_TRX_FLOW, "(%d) promoting (%d)\n", atid, action->tid().get_lo());
                     promotedList.push_back(action);
 
                     // 8. Add head of waiters to the owners list
@@ -292,7 +292,7 @@ bool LogicalLock::acquire(ActionLockReq& alr)
         if (!DoraLockModeMatrix[wdlm][alr.dlm()]) {
             TRACE( TRACE_TRX_FLOW,
                    "(%d) conflicting waiter. Waiter (%d). Me (%d)\n",
-                   *alr.tid(), wdlm, alr.dlm());
+                   *alr.tid().get_lo(), wdlm, alr.dlm());
             
             // put it at the tail of the waiters
             _waiters.push_back(alr);
@@ -311,7 +311,7 @@ bool LogicalLock::acquire(ActionLockReq& alr)
 
     TRACE( TRACE_TRX_FLOW, 
            "(%d) got it. Owners (%d). LM (%d)\n",
-           *alr.tid(), _owners.size(), _dlm);
+           *alr.tid().get_lo(), _owners.size(), _dlm);
 
     return (true);
 }
