@@ -36,13 +36,15 @@
 
 #include "dora/key.h"
 #include "dora/rvp.h"
+#include "dora/base_action.h"
+#include "dora/logical_lock.h"
 #include "dora/action.h"
-
 #include "dora/lockman.h"
 
-#include "dora/worker.h"
 #include "dora/partition.h"
 #include "dora/part_table.h"
+
+#include "dora/worker.h"
 
 #include "dora/range_action.h"
 #include "dora/range_partition.h"
