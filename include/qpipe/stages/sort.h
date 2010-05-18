@@ -166,11 +166,11 @@ private:
     };
 
     
-    typedef map<int, run_list_t> run_map_t;
-    typedef list<merge_t> merge_list_t;
-    typedef map<int, merge_list_t> merge_map_t;
-    typedef merge_packet_t::buffer_list_t buffer_list_t;
-    typedef vector<hint_tuple_pair_t> hint_vector_t;
+    typedef std::map<int, run_list_t> run_map_t;
+    typedef std::list<merge_t> merge_list_t;
+    typedef std::map<int, merge_list_t> merge_map_t;
+    typedef typename merge_packet_t::buffer_list_t buffer_list_t;
+    typedef std::vector<hint_tuple_pair_t> hint_vector_t;
 
 
     // used to communicate with the monitor thread

@@ -232,7 +232,7 @@ private:
     };
 
     
-    typedef vector<partition_t> partition_list_t;
+    typedef std::vector<partition_t> partition_list_t;
 
 
     struct left_action_t {

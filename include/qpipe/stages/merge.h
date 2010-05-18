@@ -42,7 +42,7 @@ using namespace qpipe;
 struct merge_packet_t : public packet_t {
 
     static const c_str PACKET_TYPE;
-    typedef vector<tuple_fifo*> buffer_list_t;
+    typedef std::vector<tuple_fifo*> buffer_list_t;
     
     buffer_list_t _input_buffers;
     guard<key_extractor_t> _extract;
