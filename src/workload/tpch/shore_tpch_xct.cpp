@@ -286,7 +286,7 @@ w_rc_t ShoreTPCHEnv::_gen_one_supplier(const int id,
     prsu->_rep = &areprow;
 
     dbgentpch::supplier_t as;
-    mk_supp(id, &as);
+     mk_supp(id, &as);
 
 #ifdef DO_PRINT_TPCH_RECS
     if (id%100==0) {

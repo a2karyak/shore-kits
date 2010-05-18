@@ -889,8 +889,8 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
         for (int item_cnt=0; item_cnt<pnoin._ol_cnt; item_cnt++) {
 
             // 4. for all items read item, and update stock, and order line
-            register int ol_i_id = pnoin.items[item_cnt]._ol_i_id;
-            register int ol_supply_w_id = pnoin.items[item_cnt]._ol_supply_wh_id;
+            int ol_i_id = pnoin.items[item_cnt]._ol_i_id;
+            int ol_supply_w_id = pnoin.items[item_cnt]._ol_supply_wh_id;
 
 
             /* SELECT i_price, i_name, i_data
@@ -1387,8 +1387,8 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    register int w_id = pstin._wh_id;
-    register int d_id = pstin._d_id;
+    int w_id = pstin._wh_id;
+    int d_id = pstin._d_id;
 
     // order_status trx touches 3 tables: 
     // customer, order and orderline
@@ -1621,8 +1621,8 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
 
     static bool const SPLIT_TRX = false;
     
-    register int w_id       = pdin._wh_id;
-    register int carrier_id = pdin._carrier_id; 
+    int w_id       = pdin._wh_id;
+    int carrier_id = pdin._carrier_id; 
     time_t ts_start = time(NULL);
 
     // delivery trx touches 4 tables: 

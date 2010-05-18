@@ -32,13 +32,13 @@
 #define __SHORE_TPCB_CLIENT_H
 
 
+#include "sm/shore/shore_client.h"
+
 #include "workload/tpcb/shore_tpcb_env.h"
 
 using namespace shore;
 
-
 ENTER_NAMESPACE(tpcb);
-
 
 
 /******************************************************************** 

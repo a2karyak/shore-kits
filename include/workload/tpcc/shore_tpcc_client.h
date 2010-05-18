@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_tpcc_client.h
  *
  *  @brief:  Defines the client for the TPCC benchmark
@@ -34,14 +32,14 @@
 #define __SHORE_TPCC_CLIENT_H
 
 
+#include "sm/shore/shore_client.h"
+
 #include "workload/tpcc/tpcc_const.h"
 #include "workload/tpcc/shore_tpcc_env.h"
 
 using namespace shore;
 
-
 ENTER_NAMESPACE(tpcc);
-
 
 
 /******************************************************************** 

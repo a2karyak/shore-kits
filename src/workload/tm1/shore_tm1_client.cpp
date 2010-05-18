@@ -99,13 +99,13 @@ w_rc_t baseline_tm1_client_t::submit_one(int xct_type, int xctid)
     }
 
     // Pick a valid sf
-    register int selsf = _selid;
+    int selsf = _selid;
     if (_selid==0) {
         selsf = URand(1,_qf);
     }
 
     // Decide which ID inside that SF to use
-    register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+    int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
 
     // Get one action from the trash stack
     trx_request_t* arequest = new (_env->_request_pool) trx_request_t;

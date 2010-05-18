@@ -32,6 +32,8 @@
 #define __SHORE_TM1_CLIENT_H
 
 
+#include "sm/shore/shore_client.h"
+
 #include "workload/tm1/shore_tm1_env.h"
 
 using namespace shore;

@@ -39,7 +39,7 @@ ENTER_NAMESPACE(tpcb);
 #define ONLY_LOCAL_TCPB
 
 #ifdef  ONLY_LOCAL_TCPB
-#warning TPCB = Uses only local xcts
+#warning TPCB uses only local xcts
 const int LOCAL_TPCB = 100;
 #else
 // Modify this value to control the percentage of remote xcts
@@ -47,7 +47,7 @@ const int LOCAL_TPCB = 100;
 const int LOCAL_TPCB = 85;
 #endif
 
-#warning TPCB: Using UZRand for generating skewed Zipfian inputs. Skewness can be controlled by the 'zipf' shell command.
+#warning TPCB uses UZRand for generating skewed Zipfian inputs. Skewness can be controlled by the 'zipf' shell command.
 
 /* ------------------- */
 /* --- ACCT_UPDATE --- */
