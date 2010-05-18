@@ -250,6 +250,7 @@ pthread_mutex_t thread_mutex_create(const pthread_mutexattr_t* attr)
 
         ptr_mutex_attr = &mutex_attr;
 #else
+        (void) mutex_attr; // Keep gcc happy
 	ptr_mutex_attr = attr;
 #endif
     }
