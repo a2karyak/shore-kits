@@ -495,7 +495,7 @@ int ShoreEnv::close_sm()
     TRACE( TRACE_ALWAYS, "Dismounting all devices...\n");
 
     // check if any active xcts
-    register int activexcts = ss_m::num_active_xcts();
+    int activexcts = ss_m::num_active_xcts();
     if (activexcts) {
         TRACE (TRACE_ALWAYS, "\n*** Warning (%d) active xcts. Cannot dismount!!\n",
                activexcts);

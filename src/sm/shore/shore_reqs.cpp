@@ -53,8 +53,10 @@ void base_request_t::notify_client()
 	pcondex->signal();
         _result.set_notify(NULL);
     }
-    else
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid.get_lo());
+    else {
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", 
+               _tid.get_lo());
+    }
 }
 
 

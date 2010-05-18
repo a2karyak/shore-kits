@@ -342,7 +342,7 @@ inline char* table_desc_t::index_keydesc(index_desc_t* idx)
 
 inline int table_desc_t::index_maxkeysize(index_desc_t* idx) const
 {
-    register uint_t size = 0;
+    uint_t size = 0;
     if ((size = idx->get_keysize()) > 0) {
         // keysize has already been calculated
         // just return that value
@@ -350,7 +350,7 @@ inline int table_desc_t::index_maxkeysize(index_desc_t* idx) const
     }
     
     // needs to calculate the (max)key for that index
-    register uint_t ix = 0;
+    uint_t ix = 0;
     for (uint_t i=0; i<idx->field_count(); i++) {
         ix = idx->key_index(i);
         size += _desc[ix].fieldmaxsize();

@@ -33,11 +33,22 @@
 
 
 
-#include <strstream>
+// #include <strstream>
+// char const* db_pretty_print(shore::table_row_t const* rec, int /* i=0 */, char const* /* s=0 */)
+// {
+//     static char data[1024];
+//     std::strstream inout(data, sizeof(data));
+//     ((shore::table_row_t*)rec)->print_values(inout);
+//     inout << std::ends;
+//     return data;
+// }
+
+#include <sstream>
 char const* db_pretty_print(shore::table_row_t const* rec, int /* i=0 */, char const* /* s=0 */)
 {
     static char data[1024];
-    std::strstream inout(data, sizeof(data));
+    std::stringstream inout(data,stringstream::in | stringstream::out);
+    //std::strstream inout(data, sizeof(data));
     ((shore::table_row_t*)rec)->print_values(inout);
     inout << std::ends;
     return data;

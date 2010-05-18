@@ -606,24 +606,24 @@ int table_man_impl<TableDesc>::format(table_tuple* ptuple,
     // 1. Get the pre-calculated offsets
 
     // current offset for fixed length field values
-    register offset_t fixed_offset = ptuple->get_fixed_offset();
+    offset_t fixed_offset = ptuple->get_fixed_offset();
 
     // current offset for variable length field slots
-    register offset_t var_slot_offset = ptuple->get_var_slot_offset();
+    offset_t var_slot_offset = ptuple->get_var_slot_offset();
 
     // current offset for variable length field values
-    register offset_t var_offset = ptuple->get_var_offset();
+    offset_t var_offset = ptuple->get_var_offset();
 
     
 
     // 2. calculate the total space of the tuple
     //   (tupsize)    : total space of the tuple 
 
-    register int tupsize    = 0;
+    int tupsize    = 0;
 
     // look at shore_row_impl.h:100
-    register int null_count = ptuple->get_null_count();
-    register int fixed_size = ptuple->get_var_slot_offset() - ptuple->get_fixed_offset();
+    int null_count = ptuple->get_null_count();
+    int fixed_size = ptuple->get_var_slot_offset() - ptuple->get_fixed_offset();
 
 
     // loop over all the varialbe-sized fields and add their real size (set at ::set())
@@ -663,7 +663,7 @@ int table_man_impl<TableDesc>::format(table_tuple* ptuple,
 
     // 4. Copy the fields to the array, field by field
 
-    register int null_index = -1;
+    int null_index = -1;
     // iterate over all fields
     for (uint_t i=0; i<_ptable->field_count(); i++) {
 
@@ -683,7 +683,7 @@ int table_man_impl<TableDesc>::format(table_tuple* ptuple,
         // and increase the var_offset.
 	if (ptuple->_pvalues[i].is_variable_length()) {
 	    ptuple->_pvalues[i].copy_value(arep._dest + var_offset);
-            register int offset = ptuple->_pvalues[i].realsize(); 
+            int offset = ptuple->_pvalues[i].realsize(); 
 	    var_offset += offset;
 
 	    // set the offset 
@@ -729,14 +729,13 @@ bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
     // 1. Get the pre-calculated offsets
 
     // current offset for fixed length field values
-    register offset_t fixed_offset = ptuple->get_fixed_offset();
+    offset_t fixed_offset = ptuple->get_fixed_offset();
 
     // current offset for variable length field slots
-    register offset_t var_slot_offset = ptuple->get_var_slot_offset();
+    offset_t var_slot_offset = ptuple->get_var_slot_offset();
 
     // current offset for variable length field values
-    register offset_t var_offset = ptuple->get_var_offset();
-
+    offset_t var_offset = ptuple->get_var_offset();
 
 
     // 2. Read the data field by field
@@ -811,20 +810,20 @@ inline int table_man_impl<TableDesc>::format_key(index_desc_t* pindex,
     assert (pindex);
     assert (ptuple);
 
-    /* 1. calculate the key size */
+    // 1. calculate the key size
     int isz = key_size(pindex, ptuple);
     assert (isz);
 
     
-    /* 2. allocate buffer space, if necessary */
+    // 2. allocate buffer space, if necessary
     arep.set(isz);
 
 
-    /* 3. write the buffer */
-    register offset_t offset = 0;
+    // 3. write the buffer
+    offset_t offset = 0;
     for (uint_t i=0; i<pindex->field_count(); i++) {
-        register int ix = pindex->key_index(i);
-        register field_value_t* pfv = &ptuple->_pvalues[ix];
+        int ix = pindex->key_index(i);
+        field_value_t* pfv = &ptuple->_pvalues[ix];
 
         // copy value
         if (!pfv->copy_value(arep._dest+offset)) {
@@ -867,10 +866,10 @@ bool table_man_impl<TableDesc>::load_key(const char* string,
     assert (pindex);
     assert (string);
 
-    register int offset = 0;
+    int offset = 0;
     for (uint_t i=0; i<pindex->field_count(); i++) {
-	register uint_t field_index = pindex->key_index(i);
-        register int size = ptuple->_pvalues[field_index].maxsize();
+        uint_t field_index = pindex->key_index(i);
+        uint_t size = ptuple->_pvalues[field_index].maxsize();
         ptuple->_pvalues[field_index].set_value(string + offset, size);
         offset += size;
     }

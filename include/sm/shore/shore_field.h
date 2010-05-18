@@ -501,7 +501,7 @@ inline void field_value_t::setup(field_desc_t* pfd)
         return;
 
     _pfield_desc = pfd;
-    register uint_t sz = 0;
+    uint_t sz = 0;
 
     switch (_pfield_desc->type()) {
     case SQL_BIT:

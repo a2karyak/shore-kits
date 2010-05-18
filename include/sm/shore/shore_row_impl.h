@@ -96,8 +96,8 @@ struct row_impl : public table_row_t
         assert (_field_cnt>0);
         _pvalues = new field_value_t[_field_cnt];
 
-        register int var_count  = 0;
-        register int fixed_size = 0;
+        uint var_count  = 0;
+        uint fixed_size = 0;
 
         // setup each field and calculate offsets along the way
         for (uint i=0; i<_field_cnt; i++) {

@@ -246,11 +246,22 @@ void table_desc_t::print_desc(ostream& os)
 }
 
 
-#include <strstream>
+// #include <strstream>
+// char const* db_pretty_print(table_desc_t const* ptdesc, int /* i=0 */, char const* /* s=0 */) 
+// {
+//     static char data[1024];
+//     std::strstream inout(data, sizeof(data));
+//     ((table_desc_t*)ptdesc)->print_desc(inout);
+//     inout << std::ends;
+//     return data;
+// }
+
+#include <sstream>
 char const* db_pretty_print(table_desc_t const* ptdesc, int /* i=0 */, char const* /* s=0 */) 
 {
     static char data[1024];
-    std::strstream inout(data, sizeof(data));
+    std::stringstream inout(data, stringstream::in | stringstream::out);
+    //std::strstream inout(data, sizeof(data));
     ((table_desc_t*)ptdesc)->print_desc(inout);
     inout << std::ends;
     return data;

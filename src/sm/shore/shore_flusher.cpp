@@ -219,7 +219,7 @@ int flusher_t::_work_ACTIVE_impl()
 
                 TRACE( TRACE_TRX_FLOW, 
                        "Xct (%d) lastLSN (%d) durableLSN (%d)\n",
-                       preq->tid(), xctlsn, maxlsn);
+                       preq->tid().get_lo(), xctlsn, maxlsn);
 
                 // If the xct is already durable (had been flushed) then
                 // notify client

@@ -366,7 +366,7 @@ inline void table_row_t::set_value(const uint idx, const char* string)
     assert (idx < _field_cnt);
     assert (_pvalues[idx].is_setup());
 
-    register sqltype_t sqlt = _pvalues[idx].field_desc()->type();
+    sqltype_t sqlt = _pvalues[idx].field_desc()->type();
     assert (sqlt == SQL_VARCHAR || sqlt == SQL_FIXCHAR );
 
     int len = strlen(string);

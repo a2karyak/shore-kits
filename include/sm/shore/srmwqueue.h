@@ -39,7 +39,8 @@
 #include <vector>
 
 #include "util.h"
-#include "shore.h"
+#include "sm/shore/common.h"
+#include "sm/shore/shore_worker.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -152,7 +153,7 @@ struct srmwqueue
 
     inline void push(Action* a, const bool bWake) {
         //assert (a);
-        register int queue_sz;
+        int queue_sz;
 
         // push action
         {

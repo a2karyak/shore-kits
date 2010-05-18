@@ -180,7 +180,7 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
             if ((*&_measure)!=MST_MEASURE) return (e);                  \
             _env_stats.inc_trx_att();                                   \
             return (e); }                                               \
-        TRACE( TRACE_TRX_FLOW, "Xct (%d) (%d) to flush\n", xct_id, prequest->tid()); \
+        TRACE( TRACE_TRX_FLOW, "Xct (%d) (%d) to flush\n", xct_id, prequest->tid().get_lo()); \
         to_base_flusher(prequest);                                      \
         return (RCOK); }
 
@@ -387,15 +387,15 @@ enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE, MST_PAUSE 
 class ShoreEnv : public db_iface
 {
 public:
-    typedef map<string,string> ParamMap;
+    typedef std::map<string,string> ParamMap;
 
     typedef trx_request_t Request;
     typedef atomic_class_stack<trx_request_t> RequestStack;
 
     typedef trx_worker_t                Worker;
     typedef trx_worker_t*               WorkerPtr;
-    typedef vector<WorkerPtr>           WorkerPool;
-    typedef vector<WorkerPtr>::iterator WorkerIt;
+    typedef std::vector<WorkerPtr>           WorkerPool;
+    typedef std::vector<WorkerPtr>::iterator WorkerIt;
 
 protected:       
 

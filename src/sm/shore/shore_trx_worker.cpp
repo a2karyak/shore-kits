@@ -31,7 +31,7 @@
 
 
 #include "sm/shore/shore_trx_worker.h"
-
+#include "sm/shore/shore_env.h"
 
 ENTER_NAMESPACE(shore);
 
