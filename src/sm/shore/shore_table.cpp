@@ -97,9 +97,9 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				      ss_m::t_regular,
 				      index_keydesc(index),
 #ifdef CFG_DORA
-				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im),
 #else
-				      ss_m::t_cc_kvl,
+				      ss_m::t_cc_im,
 #endif
 				      iid));
 		index->set_fid(i, iid);
@@ -124,9 +124,9 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				  ss_m::t_regular,
 				  index_keydesc(index),
 #ifdef CFG_DORA
-				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_kvl),
+				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im),
 #else
-				  ss_m::t_cc_kvl,
+				  ss_m::t_cc_im,
 #endif
 				  iid));
 	    index->set_fid(0, iid);

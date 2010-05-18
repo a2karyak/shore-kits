@@ -508,7 +508,7 @@ public:
             // !! according to shore-mt/src/scan.h:82 
             //    t_cc_kvl  - IS lock on the index and SH key-value locks on every entry encountered
             //    t_cc_none - IS lock on the index and no other locks
-            ss_m::concurrency_t cc = ss_m::t_cc_kvl;
+            ss_m::concurrency_t cc = ss_m::t_cc_im;
             if (index_iter::_lm==NL) cc = ss_m::t_cc_none;
 
             // 2. open the cursor
