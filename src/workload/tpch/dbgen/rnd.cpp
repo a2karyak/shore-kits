@@ -93,6 +93,13 @@
 ENTER_NAMESPACE(dbgentpch);
 
 
+// IP: Keep GCC happy
+long     nA = 16807;     /* the multiplier */
+long     nM = 2147483647;/* the modulus == 2^31 - 1 */
+long     nQ = 127773;    /* the quotient nM / nA */
+long     nR = 2836;      /* the remainder nM % nA */
+
+
 const char *env_config PROTO((const char *tag, const char *dflt));
 void NthElement(DSS_HUGE, DSS_HUGE *);
 

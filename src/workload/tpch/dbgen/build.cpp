@@ -57,6 +57,8 @@
 
 ENTER_NAMESPACE(dbgentpch);
 
+char lnoise[4] = {'|', '/', '-', '\\' }; // IP: Keep GCC happy
+
 
 #define LEAP_ADJ(yr, mnth)                      \
   ((LEAP(yr) && (mnth) >= 2) ? 1 : 0)

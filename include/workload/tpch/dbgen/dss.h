@@ -125,7 +125,10 @@ extern int dbgen_init();
 
 #define INTERNAL_ERROR(p)  {fprintf(stderr,"%s", p); assert(0);}
 #define LN_CNT  4
-static char lnoise[4] = {'|', '/', '-', '\\' };
+
+extern char lnoise[4];
+//static char lnoise[4] = {'|', '/', '-', '\\' };
+
 #define LIFENOISE(n, var)                                               \
   if (verbose > 0) fprintf(stderr, "%c\b", lnoise[(var%LN_CNT)])
 
@@ -490,6 +493,8 @@ extern tdef tdefs[];
 #define DT_HUGE		3
 #define DT_KEY		4
 #define DT_MONEY	5
+
+#undef  DT_CHR
 #define DT_CHR		6
 
 int dbg_print(int dt, FILE *tgt, void *data, int len, int eol);
