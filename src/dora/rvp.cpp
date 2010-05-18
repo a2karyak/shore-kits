@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   rvp.cpp
  *
@@ -8,19 +29,43 @@
  */
 
 #include "dora/rvp.h"
-#include "dora/action.h"
 #include "dora/dora_env.h"
-
 
 ENTER_NAMESPACE(dora);
 
 
+/****************************************************************** 
+ *
+ * @class: rvp_t base rendez-vous class
+ *
+ ******************************************************************/
+
+rvp_t::rvp_t() 
+    : base_request_t() 
+{ }
+
+rvp_t::rvp_t(xct_t* axct, const tid_t& atid, const int axctid,
+             const trx_result_tuple_t& presult, 
+             const int intra_trx_cnt, const int total_actions) 
+{ 
+    _set(axct, atid, axctid, 
+         presult, intra_trx_cnt, total_actions);
+}
+
 
 /****************************************************************** 
  *
- * @fn:    assignment operator
+ * @fn:    copying allowed
  *
  ******************************************************************/
+
+rvp_t::rvp_t(const rvp_t& rhs)
+    : base_request_t()
+{
+    _set(rhs._xct, rhs._tid, rhs._xct_id, rhs._result,
+         rhs._countdown.remaining(), rhs._actions.size());
+    copy_actions(rhs._actions);
+}
 
 rvp_t& rvp_t::operator=(const rvp_t& rhs)
 {
@@ -161,10 +206,10 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
-                   _tid, rcdec.err_num());
+                   _tid.get_lo(), rcdec.err_num());
         }
         else {
-            TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid.get_lo());
             upd_aborted_stats();
         }
 
@@ -187,14 +232,14 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
-                   _tid, rcdec.err_num());
+                   _tid.get_lo(), rcdec.err_num());
             upd_aborted_stats();
 #ifndef ONLYDORA
             w_rc_t eabort = db->abort_xct();
 
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
-                       _tid, eabort.err_num());
+                       _tid.get_lo(), eabort.err_num());
             }
 #endif
 
@@ -207,7 +252,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
             // DF2. Enqueue to the "to flush" queue of DFlusher             
             denv->enqueue_toflush(this);
 #else
-            TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid.get_lo());
             upd_committed_stats();
 #endif
         }
@@ -250,7 +295,7 @@ void terminal_rvp_t::notify_on_abort()
     notify_client();
     notify();
 
-    TRACE( TRACE_TRX_FLOW, "Giving back aborted (%d)\n", _tid);
+    TRACE( TRACE_TRX_FLOW, "Giving back aborted (%d)\n", _tid.get_lo());
 
     giveback();
 }

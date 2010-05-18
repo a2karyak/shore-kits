@@ -104,7 +104,7 @@ int DoraTM1Env::start()
 
 
     TRACE( TRACE_DEBUG, "Starting tables...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    for (uint_t i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->reset();
     }
 
@@ -125,7 +125,7 @@ int DoraTM1Env::start()
 int DoraTM1Env::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    for (uint i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->stop();
     }
     _irptp_vec.clear();
@@ -227,7 +227,7 @@ int DoraTM1Env::conf()
 int DoraTM1Env::newrun()
 {
     TRACE( TRACE_DEBUG, "Preparing for new run...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    for (uint i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->prepareNewRun();
     }
     return (0);
@@ -245,9 +245,9 @@ int DoraTM1Env::newrun()
 
 int DoraTM1Env::dump()
 {
-    int sz=_irptp_vec.size();
+    uint sz=_irptp_vec.size();
     TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0; i<sz; i++) {
+    for (uint i=0; i<sz; i++) {
         _irptp_vec[i]->dump();
     }
     return (0);
@@ -287,9 +287,9 @@ int DoraTM1Env::statistics()
 {
     // DORA STATS
     TRACE( TRACE_STATISTICS, "----- DORA -----\n");
-    int sz=_irptp_vec.size();
+    uint sz=_irptp_vec.size();
     TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
+    for (uint i=0;i<sz;++i) {
         _irptp_vec[i]->statistics();
     }
     DoraEnv::statistics();

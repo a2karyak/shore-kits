@@ -67,17 +67,16 @@
 #ifndef __DORA_FLUSHER_H
 #define __DORA_FLUSHER_H
 
-
-#include "dora.h"
 #include "sm/shore/shore_worker.h"
 #include "sm/shore/shore_flusher.h"
 
-using namespace shore;
+#include "dora/rvp.h"
 
+using namespace shore;
 
 ENTER_NAMESPACE(dora);
 
-// Fwd decl
+
 class dora_notifier_t;
 
 /******************************************************************** 

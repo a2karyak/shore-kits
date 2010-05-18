@@ -29,6 +29,7 @@
  *  @author: Ippokratis Pandis, Jun 2009
  */
 
+#include "dora/common.h"
 #include "dora/dora_env.h"
 
 using namespace shore;
@@ -146,7 +147,7 @@ int DoraEnv::_stop()
  ******************************************************************/
 
 processorid_t DoraEnv::_next_cpu(const processorid_t& aprd,
-                                 const irpTableImpl* atable,
+                                 const irpTableImpl* /* atable */,
                                  const int step)
 {    
     int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);

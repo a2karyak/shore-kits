@@ -100,7 +100,7 @@ r_sub_gsd_action::trx_exec()
 
         // 1. retrieve Subscriber (read-only)
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d GSD:sub-idx-nl (%d)\n", _tid, _in._s_id);
+               "App: %d GSD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
 
 #ifndef ONLYDORA
         e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
@@ -192,7 +192,7 @@ w_rc_t mid_gnd_rvp::run()
     // 3. Generate the action
     r_cf_gnd_action* r_cf = _penv->new_r_cf_gnd_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 4a. Decide about partition
@@ -261,7 +261,7 @@ w_rc_t r_sf_gnd_action::trx_exec()
         // 1. retrieve SpecialFacility (read-only)
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GND:sf-idx-nl (%d) (%d)\n", 
-               _tid, _in._s_id, _in._sf_type);
+               _tid.get_lo(), _in._s_id, _in._sf_type);
 
 #ifndef TM1GND2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
@@ -345,7 +345,7 @@ w_rc_t r_cf_gnd_action::trx_exec()
         guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
         {
             index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-nl\n", _tid.get_lo());
             e = _penv->cf_man()->cf_get_idx_iter_nl(_penv->db(), tmp_cf_iter, prcf,
                                                     lowrep, highrep,
                                                     _in._s_id, _in._sf_type, _in._s_time);
@@ -367,11 +367,12 @@ w_rc_t r_cf_gnd_action::trx_exec()
             if (acf.END_TIME > _in._e_time) {
                 prcf->get_value(4, acf.NUMBERX, 17);
                 TRACE( TRACE_TRX_FLOW, "App: %d GND: found (%d) (%d) (%s)\n", 
-                       _tid, _in._e_time, acf.END_TIME, acf.NUMBERX);
+                       _tid.get_lo(), _in._e_time, acf.END_TIME, acf.NUMBERX);
                 bFound = true;
             }
             
-            TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", 
+                   _tid.get_lo());
             e = cf_iter->next(_penv->db(), eof, *prcf);
             if (e.is_error()) { goto done; }
         }
@@ -456,7 +457,7 @@ w_rc_t r_ai_gad_action::trx_exec()
         // 1. retrieve AccessInfo (read-only)
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GAD:ai-idx-nl (%d) (%d)\n", 
-               _tid, _in._s_id, _in._ai_type);
+               _tid.get_lo(), _in._s_id, _in._ai_type);
 
 #ifndef ONLYDORA
         e = _penv->ai_man()->ai_idx_nl(_penv->db(), prai, 
@@ -512,7 +513,7 @@ w_rc_t mid_usd_rvp::run()
     // 3. Generate the action
     upd_sub_usd_action* upd_sub = _penv->new_upd_sub_usd_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 4a. Decide about partition
@@ -580,7 +581,7 @@ upd_sub_usd_action::trx_exec()
 
         // 1. Update Subscriber
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sub-idx-nl (%d)\n", _tid, _in._s_id);
+               "App: %d USD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
 
 #ifndef TM1USD2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
@@ -656,7 +657,7 @@ upd_sf_usd_action::trx_exec()
         // 2. Update SpecialFacility
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sf-idx-nl (%d) (%d)\n", 
-               _tid, _in._s_id, _in._sf_type);
+               _tid.get_lo(), _in._s_id, _in._sf_type);
 
 #ifndef ONLYDORA
         e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type);
@@ -736,13 +737,13 @@ w_rc_t upd_sub_ul_action::trx_exec()
 
         // 1. Probe Subscriber through sec index
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d UL:sub-nbr-idx-nl (%d)\n", _tid, _in._s_id);
+               "App: %d UL:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
 #ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
 #endif
         if (e.is_error()) { goto done; }
 
-        register int probed_sid;
+        int probed_sid;
         prsub->get_value(0, probed_sid);
         if (probed_sid != _in._s_id) {
             TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
@@ -802,7 +803,7 @@ mid1_icf_rvp::run()
     // 2. Generate the action
     r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_xct,_tid,rvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
@@ -839,7 +840,7 @@ mid2_icf_rvp::run()
     // 3. Generate the action
     ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 4a. Decide about partition
@@ -877,7 +878,7 @@ mid_icf_rvp::run()
     r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_xct,_tid,frvp,_in);
     ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
@@ -951,13 +952,13 @@ w_rc_t r_sub_icf_action::trx_exec()
 
         // 1. Probe Subscriber sec index
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid, _in._s_id);
+               "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
 #ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
 #endif
         if (e.is_error()) { goto done; }
 
-        register int probed_sid;
+        int probed_sid;
         prsub->get_value(0, probed_sid);
         if (probed_sid != _in._s_id) {
             TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
@@ -1032,7 +1033,7 @@ w_rc_t r_sf_icf_action::trx_exec()
         guard<index_scan_iter_impl<special_facility_t> > sf_iter;
         {
             index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-nl\n", _tid.get_lo());
             e = _penv->sf_man()->sf_get_idx_iter_nl(_penv->db(), tmp_sf_iter, prsf,
                                                     lowrep, highrep, _in._s_id);
             sf_iter = tmp_sf_iter;
@@ -1053,12 +1054,12 @@ w_rc_t r_sf_icf_action::trx_exec()
 
             if (asf.SF_TYPE == _in._sf_type) {
                 TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
-                       _tid, _in._s_id, asf.SF_TYPE);
+                       _tid.get_lo(), _in._s_id, asf.SF_TYPE);
                 bFound = true;
                 break;
             }
             
-            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", _tid.get_lo());
             e = sf_iter->next(_penv->db(), eof, *prsf);
             if (e.is_error()) { goto done; }
         }            
@@ -1115,7 +1116,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
         // 3. Check if it can successfully insert CallForwarding entry
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ICF:cf-idx-nl (%d) (%d) (%d)\n", 
-               _tid, _in._s_id, _in._sf_type, _in._s_time);
+               _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
 
 #ifndef TM1ICF2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
@@ -1137,7 +1138,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
             prcf->set_value(4, _in._numberx);                
             prcf->set_value(5, "padding");
                 
-            TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid);
+            TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid.get_lo());
 
 #ifndef TM1ICF2
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
@@ -1193,7 +1194,7 @@ w_rc_t mid_dcf_rvp::run()
     // 2. Generate the actions
     del_cf_dcf_action* del_cf = _penv->new_del_cf_dcf_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
@@ -1255,13 +1256,13 @@ w_rc_t r_sub_dcf_action::trx_exec()
 
         // 1. Probe Subscriber sec index
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d DCF:sub-nbr-idx-nl (%d)\n", _tid, _in._s_id);
+               "App: %d DCF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
 #ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
 #endif
         if (e.is_error()) { goto done; }
 
-        register int probed_sid;
+        int probed_sid;
         prsub->get_value(0, probed_sid);
         if (probed_sid != _in._s_id) {
             TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
@@ -1324,7 +1325,7 @@ w_rc_t del_cf_dcf_action::trx_exec()
         // 2. Delete CallForwarding record
         TRACE( TRACE_TRX_FLOW, 
                "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
-               _tid, _in._s_id, _in._sf_type, _in._s_time);
+               _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
 
 #ifndef ONLYDORA
         e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
@@ -1333,7 +1334,7 @@ w_rc_t del_cf_dcf_action::trx_exec()
         if (e.is_error()) { goto done; }
 
 
-        TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", _tid); 
+        TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", _tid.get_lo()); 
 
 #ifndef ONLYDORA
         e = _penv->cf_man()->delete_tuple(_penv->db(), prcf, NL);

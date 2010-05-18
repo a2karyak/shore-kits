@@ -42,7 +42,11 @@ w_rc_t mid1_del_rvp::run()
     assert (_xct);
 #endif
 
-    mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
+    //mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
+    //mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,NULL,_din,_actions,_bWake);
+    mid2_del_rvp* rvp2 = NULL; 
+    assert (0); // NOT IMPLEMENTED!!                                   ^^^^
+
     rvp2->postset(_d_id,_final_rvp);
 
     // 2. Check if aborted during previous phase
@@ -63,7 +67,7 @@ w_rc_t mid1_del_rvp::run()
         irpImpl* my_ord_part = _ptpccenv->ord()->myPart(wh);
         irpImpl* my_oline_part = _ptpccenv->oli()->myPart(wh);
 
-        TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid, _d_id);
+        TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid.get_lo(), _d_id);
         
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
@@ -114,7 +118,7 @@ w_rc_t mid2_del_rvp::run()
         int wh = _din._wh_id-1;
         irpImpl* my_cust_part = _ptpccenv->cus()->myPart(wh);
 
-        TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid, _d_id);
+        TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid.get_lo(), _d_id);
         
         // CUST_PART_CS
         CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
@@ -197,7 +201,7 @@ w_rc_t del_nord_del_action::trx_exec()
          * plan: index scan on "NO_INDEX"
          */
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx-nl (%d) (%d)\n", 
-               _tid, _din._wh_id, _d_id);
+               _tid.get_lo(), _din._wh_id, _d_id);
 
 #ifndef ONLYDORA    
         guard<index_scan_iter_impl<new_order_t> > no_iter;
@@ -236,7 +240,7 @@ w_rc_t del_nord_del_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-delete-by-index-nl (%d) (%d) (%d)\n", 
-               _tid, _din._wh_id, _d_id, no_o_id);
+               _tid.get_lo(), _din._wh_id, _d_id, no_o_id);
 
         e = _ptpccenv->new_order_man()->no_delete_by_index_nl(_ptpccenv->db(), 
                                                               prno, 
@@ -291,7 +295,7 @@ w_rc_t upd_ord_del_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:ord-idx-probe-upd (%d) (%d) (%d)\n", 
-               _tid, _din._wh_id, _d_id, _o_id);
+               _tid.get_lo(), _din._wh_id, _d_id, _o_id);
         
         prord->set_value(0, _o_id);
         prord->set_value(2, _d_id);
@@ -367,7 +371,7 @@ w_rc_t upd_oline_del_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d DEL:ol-iter-probe-by-idx-nl (%d) (%d) (%d)\n", 
-               _tid, _din._wh_id, _d_id, _o_id);
+               _tid.get_lo(), _din._wh_id, _d_id, _o_id);
 
         int total_amount = 0;
 
@@ -456,7 +460,7 @@ w_rc_t upd_cust_del_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
-               _tid, _din._wh_id, _d_id, _c_id);
+               _tid.get_lo(), _din._wh_id, _d_id, _c_id);
 
 #ifndef ONLYDORA
         e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(),

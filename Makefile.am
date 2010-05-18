@@ -320,10 +320,10 @@ if USE_DORA
 
 SD=$(top_srcdir)/src/dora
 DO_BASE = \
-   $(SD)/lockman.cpp \
-   $(SD)/action.cpp \
-   $(SD)/partition.cpp \
+   $(SD)/base_action.cpp \
    $(SD)/rvp.cpp \
+   $(SD)/logical_lock.cpp \
+   $(SD)/partition.cpp \
    $(SD)/dora_env.cpp
 
 if USE_FLUSHER

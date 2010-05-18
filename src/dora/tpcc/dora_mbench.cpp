@@ -65,7 +65,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
 
         /* 1. retrieve warehouse for update */
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:wh-idx-nl (%d)\n", _tid, _in._wh_id);
+               "App: %d PAY:wh-idx-nl (%d)\n", _tid.get_lo(), _in._wh_id);
 
 #ifndef ONLYDORA
         e = _penv->warehouse_man()->wh_index_probe_nl(_penv->db(), prwh, _in._wh_id);
@@ -85,7 +85,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
-               _tid, _in._wh_id);
+               _tid.get_lo(), _in._wh_id);
 
 #ifndef ONLYDORA
         e = _penv->warehouse_man()->wh_update_ytd_nl(_penv->db(), prwh, 
@@ -167,7 +167,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
-               _tid, _in._wh_id, _in._d_id, _in._c_id);
+               _tid.get_lo(), _in._wh_id, _in._d_id, _in._c_id);
 
 #ifndef ONLYDORA
         e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust, 
@@ -176,9 +176,6 @@ w_rc_t upd_cust_mb_action::trx_exec()
 
         if (e.is_error()) { goto done; }
 
-    
-        double c_balance, c_ytd_payment;
-        int    c_payment_cnt;
         tpcc_customer_tuple acust;
 
         // retrieve customer
@@ -230,7 +227,8 @@ w_rc_t upd_cust_mb_action::trx_exec()
             strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
             strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple-nl\n", 
+                   _tid.get_lo());
 
 #ifndef ONLYDORA
             e = _penv->customer_man()->cust_update_tuple_nl(_penv->db(), 
@@ -242,7 +240,8 @@ w_rc_t upd_cust_mb_action::trx_exec()
             if (e.is_error()) { goto done; }
         }
         else { /* good customer */
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple-nl\n", 
+                   _tid.get_lo());
 
 #ifndef ONLYDORA
             e = _penv->customer_man()->cust_update_tuple_nl(_penv->db(), 

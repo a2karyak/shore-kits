@@ -25,8 +25,7 @@
  *
  *  @brief:  Defines the client for the DORA TPCB benchmark
  *
- *  @author: Ippokratis Pandis (ipandis)
- *  @date:   July 2009
+ *  @author: Ippokratis Pandis, July 2009
  */
 
 #ifndef __DORA_TPCB_CLIENT_H

@@ -52,7 +52,7 @@ private:
     DoraTPCCEnv* _ptpccenv;
     rvp_cache* _cache;
 public:
-    final_del_rvp() : terminal_rvp_t(), _cache(NULL), _ptpccenv(NULL) { }
+    final_del_rvp() : terminal_rvp_t(), _ptpccenv(NULL), _cache(NULL) { }
     ~final_del_rvp() { _cache=NULL; _ptpccenv=NULL; }
 
     // access methods
@@ -175,7 +175,7 @@ public:
     // access methods
     inline void set(xct_t* axct, const tid_t& atid, const int& axctid,
                     trx_result_tuple_t& presult, 
-                    const delivery_input_t& din, const bWake,
+                    const delivery_input_t& din, const bool bWake,
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
         _din = din;

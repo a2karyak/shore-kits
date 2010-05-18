@@ -41,9 +41,7 @@
 #include "util.h"
 #include "shore.h"
 
-#include "dora/key.h"
-#include "dora/action.h"
-#include "dora/partition.h"
+#include "dora/range_part_table.h"
 
 #ifdef CFG_FLUSHER
 #include "dora/dflusher.h"
@@ -72,7 +70,7 @@ public:
 
     typedef irpImpl::RangeAction  irpAction;
 
-    typedef vector<irpTableImpl*>       irpTablePtrVector;
+    typedef std::vector<irpTableImpl*>       irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
 
     typedef vector<base_action_t*> baseActionsList;

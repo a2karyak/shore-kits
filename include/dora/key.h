@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   key.h
  *
@@ -15,8 +36,6 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
-#include "dora.h"
 
 #include "sm/shore/shore_env.h"
 
@@ -50,7 +69,7 @@ template<typename DataType>
 struct key_wrapper_t
 {
     //typedef typename PooledVec<DataType>::Type        DataVec;
-    typedef vector<DataType>        DataVec;
+    typedef std::vector<DataType>        DataVec;
     typedef typename DataVec::iterator       DataVecIt;
     typedef typename DataVec::const_iterator DataVecCit;
 
@@ -157,7 +176,7 @@ template<typename DataType>
 std::ostream& operator<< (std::ostream& os,
                           const key_wrapper_t<DataType>& rhs)
 {
-    typedef key_wrapper_t<DataType>::DataVecCit KeyDataIt;
+    typedef typename key_wrapper_t<DataType>::DataVecCit KeyDataIt;
     for (KeyDataIt it = rhs._key_v.begin(); it != rhs._key_v.end(); ++it) {
         os << (*it) << "|";
     }
@@ -181,11 +200,11 @@ std::ostream& operator<< (std::ostream& os,
 
 
 // less
-template<class DataType>
+template<typename DataType>
 inline bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rhs) const 
 {
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
-    for (int i = 0; i <_key_v.size(); ++i) {
+    for (uint i = 0; i <_key_v.size(); ++i) {
         // goes over the key fields until one inequality is found
         if (_key_v[i]==rhs._key_v[i])
             continue;
@@ -195,11 +214,11 @@ inline bool key_wrapper_t<DataType>::operator<(const key_wrapper_t<DataType>& rh
 }
 
 // equal
-template<class DataType>
+template<typename DataType>
 inline bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& rhs) const 
 {    
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
-    for (int i=0; i<_key_v.size(); i++) {
+    for (uint i=0; i<_key_v.size(); i++) {
         // goes over the key fields until one inequality is found
         if (_key_v[i]==rhs._key_v[i])
             continue;
@@ -209,11 +228,11 @@ inline bool key_wrapper_t<DataType>::operator==(const key_wrapper_t<DataType>& r
 }
 
 // less or equal
-template<class DataType>
+template<typename DataType>
 inline bool key_wrapper_t<DataType>::operator<=(const key_wrapper_t<DataType>& rhs) const 
 {
     assert (_key_v.size()<=rhs._key_v.size()); // not necesserily of the same length
-    for (int i=0; i<_key_v.size(); i++) {
+    for (uint i=0; i<_key_v.size(); i++) {
         // goes over the key fields
         if (_key_v[i]==rhs._key_v[i])
             continue;

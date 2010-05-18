@@ -56,7 +56,7 @@ w_rc_t mid1_stock_rvp::run()
     // 2. Generate and enqueue action
     r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_xct,_tid,rvp2,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
     typedef range_partition_impl<int>   irpImpl; 
 
     {
@@ -97,7 +97,7 @@ w_rc_t mid2_stock_rvp::run()
     // 2. Generate the action
     r_st_stock_action* r_st = _penv->new_r_st_stock_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
     typedef range_partition_impl<int>   irpImpl; 
 
     { 
@@ -151,8 +151,8 @@ r_dist_stock_action::trx_exec()
 
     w_rc_t e = RCOK;
 
-    register int w_id = _in._wh_id;
-    register int d_id = _in._d_id;
+    int w_id = _in._wh_id;
+    int d_id = _in._d_id;
 
     { // make gotos safe
     
@@ -166,7 +166,7 @@ r_dist_stock_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d STO:dist-idx-probe (%d) (%d)\n", 
-               _tid, w_id, d_id);
+               _tid.get_lo(), w_id, d_id);
 
 #ifndef ONLYDORA
         e = _penv->district_man()->dist_index_probe_nl(_penv->db(), prdist, w_id, d_id);
@@ -241,9 +241,9 @@ r_ol_stock_action::trx_exec()
     w_rc_t e = RCOK;
     bool eof;
 
-    register int w_id = _in._wh_id;
-    register int d_id = _in._d_id;
-    register int i_id = -1;
+    int w_id = _in._wh_id;
+    int d_id = _in._d_id;
+    int i_id = -1;
 
     { // make gotos safe 
 
@@ -267,7 +267,7 @@ r_ol_stock_action::trx_exec()
         /* 2a. Index scan on order_line table. */
 
         TRACE( TRACE_TRX_FLOW, "App: %d STO:ol-iter-by-idx (%d) (%d) (%d) (%d)\n", 
-               _tid, w_id, d_id, _in._next_o_id-20, _in._next_o_id);
+               _tid.get_lo(), w_id, d_id, _in._next_o_id-20, _in._next_o_id);
     
 #ifndef ONLYDORA
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
@@ -306,7 +306,7 @@ r_ol_stock_action::trx_exec()
             ol_sorter.add_tuple(rsb);
 
             TRACE( TRACE_TRX_FLOW, "App: %d STO:ol-iter-next (%d) (%d) (%d) (%d)\n", 
-                   _tid, temp_wid, temp_did, temp_oid, temp_iid);
+                   _tid.get_lo(), temp_wid, temp_did, temp_oid, temp_iid);
   
             e = ol_iter->next(_penv->db(), eof, *prol);
         }
@@ -315,9 +315,7 @@ r_ol_stock_action::trx_exec()
 
         // 2b. Sort orderline tuples on i_id
         sort_iter_impl ol_list_sort_iter(_penv->db(), &ol_list, &ol_sorter);
-        int last_i_id = -1;
-        int count = 0;
-
+        
         // 2c. Load the vector with pairs of w_id, and i_it notify rvp
         assert (_prvp->_in._pvwi == NULL);
         _prvp->_in._pvwi = new TwoIntVec();       
@@ -334,7 +332,7 @@ r_ol_stock_action::trx_exec()
             rsb.get_value(1, w_id);
 
             TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe (%d) (%d)\n", 
-                   _tid, w_id, i_id);
+                   _tid.get_lo(), w_id, i_id);
             
             // add pair to vector
             _prvp->_in._pvwi->push_back(pair<int,int>(w_id,i_id));            
@@ -368,8 +366,7 @@ r_st_stock_action::calc_keys()
 }
 
 
-w_rc_t 
-r_st_stock_action::trx_exec() 
+w_rc_t r_st_stock_action::trx_exec() 
 {
     assert (_penv);
 
@@ -385,10 +382,10 @@ r_st_stock_action::trx_exec()
 
     int input_w_id = _in._wh_id;
 
-    register int w_id = 0;
-    register int d_id = 0;
-    register int i_id = 0;
-    register int quantity = 0;
+    int w_id = 0;
+    //int d_id = 0;
+    int i_id = 0;
+    int quantity = 0;
 
     int last_i_id = -1;
     int count = 0;
@@ -407,7 +404,7 @@ r_st_stock_action::trx_exec()
             assert (input_w_id == w_id); 
 
             TRACE( TRACE_TRX_FLOW, "App: %d STO:st-idx-probe-nl (%d) (%d)\n", 
-                   _tid, w_id, i_id);
+                   _tid.get_lo(), w_id, i_id);
 
             // 2d. Index probe the Stock
 #ifndef ONLYDORA
@@ -432,8 +429,7 @@ r_st_stock_action::trx_exec()
                 }
             
                 TRACE( TRACE_TRX_FLOW, "App: %d STO:found-one (%d) (%d) (%d) (%d)\n", 
-                       _tid, w_id, i_id, quantity, count);
-
+                       _tid.get_lo(), w_id, i_id, quantity, count);
             }
         }
 
@@ -454,8 +450,6 @@ done:
 
     return (e);
 }
-
-
 
 
 EXIT_NAMESPACE(dora);

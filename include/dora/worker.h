@@ -33,9 +33,10 @@
 #ifndef __DORA_WORKER_H
 #define __DORA_WORKER_H
 
-
-#include "dora.h"
 #include "sm/shore/shore_worker.h"
+
+#include "dora/partition.h"
+#include "dora/action.h"
 
 using namespace shore;
 
@@ -141,7 +142,7 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
             // 2a. get the first committed
             apa = _partition->dequeue_commit();
             assert (apa);
-            TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid());
+            TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid().get_lo());
 
             
             // 2b. release the locks acquired for this action
@@ -174,7 +175,7 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
 
         // 4. check if it can execute the particular action
         if (apa) {
-            TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid());
+            TRACE( TRACE_TRX_FLOW, "Input trx (%d)\n", apa->tid().get_lo());
             if (apa->trx_acq_locks()) {
                 // 4b. if it can acquire all the locks, 
                 //     go ahead and serve this action
@@ -226,7 +227,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 #ifndef ONLYDORA
         attach_xct(paction->xct());
 #endif
-        TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid());
+        TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid().get_lo());
 
 #ifdef WORKER_VERBOSE_STATS
         stopwatch_t serving_time;
@@ -243,13 +244,13 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
             if (e.err_num() == de_MIDWAY_ABORT) {
                 r_code = de_MIDWAY_ABORT;
-                TRACE( TRACE_TRX_FLOW, "Midway abort (%d)\n", paction->tid());
+                TRACE( TRACE_TRX_FLOW, "Midway abort (%d)\n", paction->tid().get_lo());
                 ++_stats._mid_aborts;
             }
             else {
 
                 TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) [0x%x]\n",
-                       paction->tid(), e.err_num());
+                       paction->tid().get_lo(), e.err_num());
                 
                 is_error = true;
                 r_code = de_WORKER_RUN_XCT;
@@ -259,7 +260,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         }          
 
         // 5. detach from trx
-        TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid());
+        TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid().get_lo());
 #ifndef ONLYDORA
         detach_xct(paction->xct());
 #endif
@@ -267,7 +268,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     }
     else {
         r_code = de_EARLY_ABORT;
-        TRACE( TRACE_TRX_FLOW, "Early abort (%d)\n", paction->tid());
+        TRACE( TRACE_TRX_FLOW, "Early abort (%d)\n", paction->tid().get_lo());
         ++_stats._early_aborts;
     }
 
@@ -289,7 +290,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
         if (e.is_error()) {
             TRACE( TRACE_ALWAYS, "Problem running rvp for xct (%d) [0x%x]\n",
-                   paction->tid(), e.err_num());
+                   paction->tid().get_lo(), e.err_num());
             r_code = de_WORKER_RUN_RVP;
         }
 
@@ -300,7 +301,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
         // will do those.
 
         // enqueue committed actions
-        int comActions = aprvp->notify();            
+        aprvp->notify();            
         // delete rvp
         aprvp->giveback();        
 #endif
@@ -317,8 +318,6 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
     return (r_code);
 }
-
-
 
 
 

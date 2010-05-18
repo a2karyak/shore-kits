@@ -137,7 +137,7 @@ int dora_flusher_t::_work_ACTIVE_impl()
 
                 TRACE( TRACE_TRX_FLOW, 
                        "TID (%d) lastLSN (%d) durableLSN (%d)\n",
-                       prvp->tid(), xctlsn, maxlsn);
+                       prvp->tid().get_lo(), xctlsn, maxlsn);
 
                 // If the xct is already durable (had been flushed) then
                 // send it directly back to the executor of its final-rvp

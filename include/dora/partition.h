@@ -1,12 +1,32 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
-/** @file partition.h
+/** @file:   partition.h
  *
- *  @brief Encapsulation of each table partition in DORA
+ *  @brief:  Encapsulation of each table partition in DORA
  *
- *  @author Ippokratis Pandis (ipandis)
+ *  @author: Ippokratis Pandis, Oct 2008
  */
-
 
 #ifndef __DORA_PARTITION_H
 #define __DORA_PARTITION_H
@@ -18,9 +38,9 @@
 
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
+#include "sm/shore/srmwqueue.h"
 
-#include "dora/key.h"
-#include "dora.h"
+#include "dora/lockman.h"
 
 using namespace shore;
 
@@ -28,6 +48,7 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
+template<typename DataType> class dora_worker_t;
 
 /******************************************************************** 
  *
@@ -63,12 +84,12 @@ public:
     typedef action_t<DataType>         Action;
     typedef dora_worker_t<DataType>    Worker;
     typedef srmwqueue<Action>          Queue;
-    typedef typename key_wrapper_t<DataType>    Key;
-    typedef typename lock_man_t<DataType>       LockManager;
+    typedef key_wrapper_t<DataType>    Key;
+    typedef lock_man_t<DataType>       LockManager;
 
     typedef KALReq_t<DataType> KALReq;
     //typedef typename PooledVec<KALReq>::Type     KALReqVec;
-    typedef vector<KALReq>     KALReqVec;
+    typedef std::vector<KALReq>     KALReqVec;
 
 
 protected:
@@ -88,7 +109,7 @@ protected:
     Worker*       _owner;        // primary owner
     tatas_lock    _owner_lock;
 
-    Worker*   _standby;      // standby pool
+    Worker*       _standby;      // standby pool
     int           _standby_cnt;
     tatas_lock    _standby_lock;
 
@@ -141,9 +162,10 @@ public:
                 const int apartid = 0, 
                 processorid_t aprsid = PBIND_NONE) 
         : _env(env), _table(ptable), 
-          _part_policy(PP_UNDEF), _pat_state(PATS_UNDEF), _pat_count(0),
+          _part_id(apartid), _part_policy(PP_UNDEF), 
+          _pat_state(PATS_UNDEF), _pat_count(0),
           _owner(NULL), _standby(NULL), _standby_cnt(DF_NUM_OF_STANDBY_THRS),
-          _part_id(apartid), _prs_id(aprsid)          
+          _prs_id(aprsid)          
     {
         assert (_env);
         assert (_table);
@@ -369,7 +391,7 @@ int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 {
     assert (pAction->get_partition()==this);
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
-           pAction->tid(), _table->name(), _part_id);
+           pAction->tid().get_lo(), _table->name(), _part_id);
     _committed_queue->push(pAction,bWake);
     return (0);
 }
@@ -697,7 +719,7 @@ int partition_t<DataType>::_stop_threads()
 template <class DataType>
 int partition_t<DataType>::_generate_standby_pool(const int sz,
                                                   int& pool_sz,
-                                                  const processorid_t aprsid)
+                                                  const processorid_t /* aprsid */)
 {
     assert (_standby==NULL); // prevent losing thread pointer 
 
@@ -835,7 +857,7 @@ template <class DataType>
 inline dora_worker_t<DataType>* 
 partition_t<DataType>::_generate_worker(const processorid_t prsid,
                                         c_str strname,
-                                        const use_sli) 
+                                        const int use_sli) 
 {
     // 1. create worker thread
     // 2. set self as worker's partition

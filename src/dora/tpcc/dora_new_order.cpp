@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   dora_new_order.cpp
  *
@@ -27,7 +48,6 @@ ENTER_NAMESPACE(dora);
 // (2) midway_nord_rvp
 //
 
-
 DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
 
 
@@ -38,8 +58,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
  *
  ********************************************************************/
 
-w_rc_t 
-mid_nord_rvp::run() 
+w_rc_t mid_nord_rvp::run() 
 {
     // 1. Setup the next RVP
 #ifndef ONLYDORA
@@ -47,10 +66,10 @@ mid_nord_rvp::run()
 #endif
 
     // 0. Calculate the intratrx/total number of actions
-    register int olcnt    = _in._ol_cnt;
-    register int intratrx = _in._ol_cnt + 2;
-    register int total    = (2*_in._ol_cnt) + 6;
-    register int whid     = _in._wh_id;
+//     register int olcnt    = _in._ol_cnt;
+//     register int intratrx = _in._ol_cnt + 2;
+//     register int total    = (2*_in._ol_cnt) + 6;
+    int whid     = _in._wh_id;
 
     // 1. Setup the final RVP
     final_nord_rvp* frvp = _penv->new_final_nord_rvp(_xct,_tid,_xct_id,_result,_actions);
@@ -62,7 +81,7 @@ mid_nord_rvp::run()
     assert (_in._d_next_o_id!=-1);
 
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
     typedef range_partition_impl<int>   irpImpl; 
 
     // 2. Generate and enqueue the (Midway->Final) actions
@@ -183,7 +202,7 @@ r_wh_nord_action::trx_exec()
          */
 
         // 1. retrieve warehouse (read-only)
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:wh-idx-nl (%d)\n", _tid, _in._wh_id);
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:wh-idx-nl (%d)\n", _tid.get_lo(), _in._wh_id);
 
 #ifndef ONLYDORA
         e = _penv->warehouse_man()->wh_index_probe_nl(_penv->db(), 
@@ -249,7 +268,7 @@ r_cust_nord_action::trx_exec()
         // 1. retrieve customer (read-only)
         TRACE( TRACE_TRX_FLOW, 
                "App: %d NO:cust-idx-nl (%d) (%d) (%d)\n", 
-               _tid, _in._wh_id, _in._d_id, _in._c_id);
+               _tid.get_lo(), _in._wh_id, _in._d_id, _in._c_id);
 
 #ifndef ONLYDORA
         e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust,
@@ -318,7 +337,7 @@ upd_dist_nord_action::trx_exec()
         // 1. retrieve district for update
         TRACE( TRACE_TRX_FLOW, 
                "App: %d NO:dist-idx-nl (%d) (%d)\n", 
-               _tid, _in._wh_id, _in._d_id);
+               _tid.get_lo(), _in._wh_id, _in._d_id);
 
 #ifndef ONLYDORA
         e = _penv->district_man()->dist_index_probe_nl(_penv->db(), 
@@ -338,9 +357,10 @@ upd_dist_nord_action::trx_exec()
          */
 
         // 2. Update next_o_id
-        register const int next_o_id = _prvp->_in._adist.D_NEXT_O_ID;
+        const int next_o_id = _prvp->_in._adist.D_NEXT_O_ID;
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:dist-upd-next-o-id-nl (%d)\n", _tid, next_o_id);
+               "App: %d NO:dist-upd-next-o-id-nl (%d)\n", 
+               _tid.get_lo(), next_o_id);
 
 #ifndef ONLYDORA
         e = _penv->district_man()->dist_update_next_o_id_nl(_penv->db(), 
@@ -400,16 +420,16 @@ r_item_nord_action::trx_exec()
     { // make gotos safe
 
         // 1. Probe item (read-only)
-        register int idx=0;
+        int idx=0;
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:r-item (%d)\n", 
-               _tid, _in._ol_cnt);
+               _tid.get_lo(), _in._ol_cnt);
 
         // IP: The new version of the r-tem does all the work in a single action
         for (idx=0; idx<_in._ol_cnt; idx++) {
 
-            register int ol_i_id = _in.items[idx]._ol_i_id;
-            register int ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
+            int ol_i_id = _in.items[idx]._ol_i_id;
+            int ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
             assert (_in._wh_id==ol_supply_w_id); // IP: only local NewOrders
 
             /* SELECT i_price, i_name, i_data
@@ -420,7 +440,7 @@ r_item_nord_action::trx_exec()
              */
         
             TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
-                   _tid, idx, ol_i_id);
+                   _tid.get_lo(), idx, ol_i_id);
 
 #ifndef ONLYDORA
             e = _penv->item_man()->it_index_probe_nl(_penv->db(), 
@@ -483,12 +503,12 @@ upd_sto_nord_action::trx_exec()
 
     { // make gotos safe
 
-        register int idx=0;
-        register int ol_i_id=0;
-        register int ol_supply_w_id=0;
+        int idx=0;
+        int ol_i_id=0;
+        int ol_supply_w_id=0;
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:upd-stock (%d)\n", 
-               _tid, _in._ol_cnt);
+               _tid.get_lo(), _in._ol_cnt);
 
         // IP: The new version of the upd-stock does all the work in a single action
         for (idx=0; idx<_in._ol_cnt; idx++) {
@@ -507,7 +527,7 @@ upd_sto_nord_action::trx_exec()
             tpcc_stock_tuple* pstock = &_prvp->_in.items[idx]._astock;
             tpcc_item_tuple*  pitem  = &_prvp->_in.items[idx]._aitem;
             TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
-                   _tid, idx, ol_supply_w_id, ol_i_id);
+                   _tid.get_lo(), idx, ol_supply_w_id, ol_i_id);
 
 #ifndef ONLYDORA
             e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, 
@@ -552,7 +572,7 @@ upd_sto_nord_action::trx_exec()
              */
 
             TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
-                   _tid, idx, pstock->S_W_ID, pstock->S_I_ID);
+                   _tid.get_lo(), idx, pstock->S_W_ID, pstock->S_I_ID);
 
 #ifndef ONLYDORA
             e = _penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, 
@@ -641,7 +661,7 @@ ins_ord_nord_action::trx_exec()
         prord->set_value(7, _in._all_local);
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:ord-add-tuple-nl (%d)\n", 
-               _tid, _in._d_next_o_id);
+               _tid.get_lo(), _in._d_next_o_id);
 
 #ifndef ONLYDORA
         e = _penv->order_man()->add_tuple(_penv->db(), prord, NL);
@@ -705,7 +725,7 @@ ins_nord_nord_action::trx_exec()
         prno->set_value(2, _in._wh_id);
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:nord-add-tuple (%d) (%d) (%d)\n", 
-               _tid, _in._wh_id, _in._d_id, _in._d_next_o_id);
+               _tid.get_lo(), _in._wh_id, _in._d_id, _in._d_next_o_id);
     
 #ifndef ONLYDORA
         e = _penv->new_order_man()->add_tuple(_penv->db(), prno, NL);
@@ -760,10 +780,10 @@ ins_ol_nord_action::trx_exec()
     { // make gotos safe
 
         // 1. insert row to ORDER_LINE
-        register int idx = 0;
+        int idx = 0;
 
         TRACE( TRACE_TRX_FLOW, "App: %d NO:ins-ol (%d)\n", 
-               _tid, _in._ol_cnt);
+               _tid.get_lo(), _in._ol_cnt);
 
         for (idx=0; idx<_in._ol_cnt; idx++) {
 
@@ -787,7 +807,7 @@ ins_ol_nord_action::trx_exec()
 
             TRACE( TRACE_TRX_FLOW, 
                    "App: %d NO:ol-add-tuple-%d (%d) (%d) (%d) (%d)\n", 
-                   _tid, idx, _in._wh_id, _in._d_id, _in._d_next_o_id, 
+                   _tid.get_lo(), idx, _in._wh_id, _in._d_id, _in._d_next_o_id, 
                    _in.items[idx]._ol_i_id);
 
 #ifndef ONLYDORA

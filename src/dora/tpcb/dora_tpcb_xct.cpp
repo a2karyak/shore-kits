@@ -81,7 +81,7 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -90,7 +90,7 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
     final_au_rvp* frvp = new_final_au_rvp(pxct,atid,xct_id,atrt);    

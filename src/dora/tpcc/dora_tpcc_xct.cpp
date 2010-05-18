@@ -94,7 +94,7 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -103,15 +103,14 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
     assert (pxct);
     me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     
     // IP: for now, cannot handle remote WHs
     assert (anoin._all_local==1);
 
     // 3. Calculate intratrx and total
-    register int olcnt    = anoin._ol_cnt;
-    register int whid     = anoin._wh_id;
+    int whid     = anoin._wh_id;
     
     // 4. Setup the midway RVP
     mid_nord_rvp* midrvp = new_mid_nord_rvp(pxct,atid,xct_id,atrt,anoin,bWake);
@@ -210,7 +209,7 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -219,7 +218,7 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
     assert (pxct);
     me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the next RVP
     // PH1 consists of 3 packets
@@ -301,7 +300,7 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);    
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());    
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -310,7 +309,7 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
     assert (pxct);
     me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 2. Setup the next RVP
     // PH1 consists of 1 packet
@@ -360,15 +359,13 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
 
     assert (0); // TODO!
-#warning DORA DELIVERY needs revise! 
-#warning DORA DEL-CUST key should be 2 (WH|DI)
-#warning DORA DEL-ORD  key should be 2 (WH|DI)
+#warning TODO:  DEL-CUST key should be 2 (WH|DI) and DEL-ORD  key should be 2 (WH|DI)
 
 
     // 2. Detatch self from xct
@@ -376,7 +373,7 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
     assert (pxct);
     me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
     final_del_rvp* frvp = new_final_del_rvp(pxct,atid,xct_id,atrt);
@@ -385,7 +382,9 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
     // PH1 consists of DISTRICTS_PER_WAREHOUSE actions
     for (int i=0;i<DISTRICTS_PER_WAREHOUSE;i++) {
         // 4a. Generate an RVP
-        mid1_del_rvp* rvp = new_mid1_del_rvp(pxct,atid,xct_id,frvp->result(),adelin,bWake);
+        //mid1_del_rvp* rvp = new_mid1_del_rvp(pxct,atid,xct_id,frvp->result(),adelin,bWake);
+        mid1_del_rvp* rvp = NULL;
+        assert (0); // IP: Not implemented
         rvp->postset(frvp,i);
     
         // 4b. Generate an action
@@ -442,7 +441,7 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -451,7 +450,7 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
     assert (pxct);
     me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the next RVP
     // PH1 consists of 1 packet
@@ -510,7 +509,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     W_DO(_pssm->begin_xct(atid));
     //    W_DO(_pssm->set_lock_cache_enable(false);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -519,7 +518,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
 
     // 3. Setup the final RVP
@@ -562,7 +561,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
 #ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
 #endif
-    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -571,7 +570,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
     assert (pxct);
     me()->detach_xct(pxct);
 #endif
-    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
     final_mb_rvp* frvp = new_final_mb_rvp(pxct,atid,xct_id,atrt);

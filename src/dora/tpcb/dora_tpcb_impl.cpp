@@ -78,13 +78,13 @@ upd_br_action::trx_exec()
 
         // 1. Probe Branches
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:b-idx-nl (%d)\n", _tid, _in.b_id);
+               "App: %d UA:b-idx-nl (%d)\n", _tid.get_lo(), _in.b_id);
 #ifndef ONLYDORA
         e = _penv->branch_man()->b_idx_nl(_penv->db(), prb, _in.b_id);
 #endif
         if (e.is_error()) { goto done; }
 
-        register double total;
+        double total;
         prb->get_value(1, total);
         prb->set_value(1, total + _in.delta);
 
@@ -145,13 +145,13 @@ upd_te_action::trx_exec()
 
         // 1. Probe Tellers
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:t-idx-nl (%d)\n", _tid, _in.t_id);
+               "App: %d UA:t-idx-nl (%d)\n", _tid.get_lo(), _in.t_id);
 #ifndef ONLYDORA
         e = _penv->teller_man()->t_idx_nl(_penv->db(), prt, _in.t_id);
 #endif
         if (e.is_error()) { goto done; }
 
-        register double total;
+        double total;
         prt->get_value(2, total);
         prt->set_value(2, total + _in.delta);
 
@@ -212,13 +212,13 @@ upd_ac_action::trx_exec()
 
         // 1. Probe Accounts
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:a-idx-nl (%d)\n", _tid, _in.a_id);
+               "App: %d UA:a-idx-nl (%d)\n", _tid.get_lo(), _in.a_id);
 #ifndef ONLYDORA
         e = _penv->account_man()->a_idx_nl(_penv->db(), pra, _in.a_id);
 #endif
         if (e.is_error()) { goto done; }
 
-        register double total;
+        double total;
         pra->get_value(2, total);
         pra->set_value(2, total + _in.delta);
 
@@ -284,7 +284,7 @@ ins_hi_action::trx_exec()
 	prh->set_value(5, "padding");
 
         TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:ins-hi\n", _tid);
+               "App: %d UA:ins-hi\n", _tid.get_lo());
 #ifndef ONLYDORA        
         e = _penv->history_man()->add_tuple(_penv->db(), prh, NL);
 #endif

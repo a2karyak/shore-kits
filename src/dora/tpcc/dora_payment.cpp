@@ -52,7 +52,7 @@ midway_pay_rvp::run()
     typedef range_partition_impl<int>   irpImpl; 
     irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
 
     // HIS_PART_CS
     CRITICAL_SECTION(his_part_cs, hist_part->_enqueue_lock);
@@ -131,7 +131,7 @@ upd_wh_pay_action::trx_exec()
         // 1. retrieve warehouse for update
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:wh-idx-nl (%d)\n", 
-               _tid, _pin._home_wh_id);
+               _tid.get_lo(), _pin._home_wh_id);
 
 
 #ifndef ONLYDORA
@@ -152,7 +152,7 @@ upd_wh_pay_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
-               _tid, _pin._home_wh_id);
+               _tid.get_lo(), _pin._home_wh_id);
 
 #ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
@@ -215,7 +215,7 @@ upd_dist_pay_action::trx_exec()
         // 1. retrieve district for update
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:dist-idx-nl (%d) (%d)\n", 
-               _tid, _pin._home_wh_id, _pin._home_d_id);
+               _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
 
 #ifndef ONLYDORA
         e = _ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), prdist,
@@ -227,7 +227,7 @@ upd_dist_pay_action::trx_exec()
 
 #ifdef ACCESS_RECORD_TRACE
         stringstream st;
-        register int di = 10*(_pin._home_wh_id - 1) + _pin._home_d_id;
+        int di = 10*(_pin._home_wh_id - 1) + _pin._home_d_id;
         st << di;
         _ptpccenv->add_rat(st.str());
 #endif        
@@ -244,7 +244,7 @@ upd_dist_pay_action::trx_exec()
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
-               _tid, _pin._home_wh_id, _pin._home_d_id);
+               _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
 
 #ifndef ONLYDORA
         e = _ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
@@ -329,7 +329,7 @@ upd_cust_pay_action::trx_exec()
             rep_row_t highrep(_ptpccenv->customer_man()->ts());
 
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
-                   _tid, _pin._c_last);
+                   _tid.get_lo(), _pin._c_last);
 
             guard<index_scan_iter_impl<customer_t> > c_iter;
             {
@@ -358,7 +358,7 @@ upd_cust_pay_action::trx_exec()
                 v_c_id.push_back(a_c_id);
 
                 TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", 
-                       _tid, a_c_id);
+                       _tid.get_lo(), a_c_id);
                 e = c_iter->next(_ptpccenv->db(), eof, *prcust);
                 if (e.is_error()) { goto done; }
             }
@@ -385,7 +385,7 @@ upd_cust_pay_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
-               _tid, c_w, c_d, _pin._c_id);
+               _tid.get_lo(), c_w, c_d, _pin._c_id);
 
 #ifndef ONLYDORA
         e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
@@ -394,8 +394,6 @@ upd_cust_pay_action::trx_exec()
 
         if (e.is_error()) { goto done; }    
     
-        double c_balance, c_ytd_payment;
-        int    c_payment_cnt;
         tpcc_customer_tuple acust;
 
         // retrieve customer
@@ -448,7 +446,8 @@ upd_cust_pay_action::trx_exec()
             strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
             strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
 
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", 
+                   _tid.get_lo());
 
 #ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
@@ -461,7 +460,8 @@ upd_cust_pay_action::trx_exec()
             if (e.is_error()) { goto done; }
         }
         else { /* good customer */
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", 
+                   _tid.get_lo());
 
 #ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
@@ -536,7 +536,8 @@ ins_hist_pay_action::trx_exec()
 
     { // make goto safe 
 
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", _tid);
+        TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", 
+               _tid.get_lo());
 
 #ifndef ONLYDORA
         e = _ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist, NL);

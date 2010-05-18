@@ -23,7 +23,7 @@
 
 /** @file:   common.h
  *
- *  @brief:  Common classes, defines and enums
+ *  @brief:  Common constants, defines and enums
  *
  *  @author: Ippokratis Pandis, Oct 2008
  *
@@ -66,20 +66,6 @@ const int DF_NUM_OF_STANDBY_THRS         = 0; // TODO: (ip) assume main-memory
 
 
 
-// CLASSES
-
-
-class rvp_t;
-class terminal_rvp_t;
-
-template<class DataType> class partition_t;
-template<class DataType> class dora_worker_t;
-
-class base_action_t;
-template<class DataType> class action_t;
-
-
-
 // ENUMS
 
 
@@ -103,8 +89,8 @@ enum eDoraLockMode {
     DL_CC_MODES     = 3 // @careful: Not an actual lock mode
 };
 
-static eDoraLockMode DoraLockModeArray[DL_CC_MODES] =
-    { DL_CC_NOLOCK, DL_CC_SHARED, DL_CC_EXCL };
+// static eDoraLockMode DoraLockModeArray[DL_CC_MODES] =
+//     { DL_CC_NOLOCK, DL_CC_SHARED, DL_CC_EXCL };
 
 
 
@@ -114,9 +100,11 @@ static eDoraLockMode DoraLockModeArray[DL_CC_MODES] =
  *
  ********************************************************************/
 
-static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
-                                                            {1, 1, 0},
-                                                            {1, 0, 0} };
+extern int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES];
+
+// static int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
+//                                                             {1, 1, 0},
+//                                                             {1, 0, 0} };
 
 
 
@@ -197,11 +185,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 #define DECLARE_ACTION_CACHE(Type,Datatype)             \
     struct Type##_cache  {                              \
+            array_guard_t<PoolPtr> _poolArray;          \
             guard<object_cache_t<Type> > _cache;        \
             guard<Pool> _keyPtrPool;                    \
             guard<Pool> _kalReqPool;                    \
             guard<Pool> _dtPool;                        \
-            array_guard_t<PoolPtr> _poolArray;          \
             Type##_cache() {                            \
                 _poolArray = new PoolPtr[3];            \
                 _cache = new object_cache_t<Type>(_poolArray.get()); }  \
@@ -433,7 +421,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             envname* _penv;                                             \
             rvp_cache* _cache;                                          \
     public:                                                             \
-            cname() : terminal_rvp_t(), _cache(NULL), _penv(NULL) { }   \
+            cname() : terminal_rvp_t(), _penv(NULL), _cache(NULL) { }   \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc) { \
@@ -455,7 +443,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             envname* _penv;                                             \
             rvp_cache* _cache;                                          \
     public:                                                             \
-            cname() : terminal_rvp_t(), _cache(NULL), _penv(NULL) { }   \
+            cname() : terminal_rvp_t(), _penv(NULL), _cache(NULL) { }   \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc, \
@@ -486,7 +474,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             rvp_cache* _cache;                                          \
             bool _bWake;                                                \
     public:                                                             \
-            cname() : rvp_t(), _cache(NULL), _penv(NULL) { }            \
+            cname() : rvp_t(), _penv(NULL), _cache(NULL) { }            \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inputname _in;                                              \
             inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
@@ -512,7 +500,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             rvp_cache* _cache;                                          \
             bool _bWake;                                                \
     public:                                                             \
-            cname() : rvp_t(), _cache(NULL), _penv(NULL) { }            \
+            cname() : rvp_t(), _penv(NULL), _cache(NULL) { }            \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
             inputname _in;                                              \
             inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
@@ -598,7 +586,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
         if (e.is_error()) {                                             \
             TRACE( TRACE_ALWAYS,                                        \
                    "Problem running rvp for xct (%d) [0x%x]\n",         \
-                   _tid, e.err_num()); }                                \
+                   _tid.get_lo(), e.err_num()); }                       \
         nextrvp = NULL;                                                 \
         return (e); }
 
@@ -612,7 +600,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
         if (e.is_error()) {                                             \
             TRACE( TRACE_ALWAYS,                                        \
                    "Problem running rvp for xct (%d) [0x%x]\n",         \
-                   _tid, e.err_num()); }                                \
+                   _tid.get_lo(), e.err_num()); }                       \
         nextrvp->notify();                                              \
         nextrvp->giveback();                                            \
         nextrvp = NULL;                                                 \

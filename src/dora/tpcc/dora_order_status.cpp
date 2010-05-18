@@ -58,14 +58,14 @@ w_rc_t mid1_ordst_rvp::run()
     // 2. Generate the action
     r_ord_ordst_action* r_ord = _penv->new_r_ord_ordst_action(_xct,_tid,mid2_rvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
 
     {        
-        register int wh = _in._wh_id - 1;
+        int wh = _in._wh_id - 1;
         irpImpl* my_ord_part = _penv->ord()->myPart(wh);
 
         // ORD_PART_CS
@@ -104,14 +104,14 @@ w_rc_t mid2_ordst_rvp::run()
     // 2. Generate the action
     r_ol_ordst_action* r_ol = _penv->new_r_ol_ordst_action(_xct,_tid,frvp,_in);
 
-    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid);    
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
     typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
 
     {        
-        register int wh = _in._wh_id - 1;
+        int wh = _in._wh_id - 1;
         irpImpl* my_oli_part = _penv->oli()->myPart(wh);
 
         // OLI_PART_CS
@@ -168,9 +168,9 @@ r_cust_ordst_action::trx_exec()
     lowrep.set(_penv->customer_desc()->maxsize()); 
     highrep.set(_penv->customer_desc()->maxsize()); 
 
-    register int w_id = _in._wh_id;
-    register int d_id = _in._d_id;
-    register int c_id = _in._c_id;
+    int w_id = _in._wh_id;
+    int d_id = _in._d_id;
+    int c_id = _in._c_id;
 
     { // make gotos safe
 
@@ -195,7 +195,8 @@ r_cust_ordst_action::trx_exec()
             guard<index_scan_iter_impl<customer_t> > c_iter;
             {
                 index_scan_iter_impl<customer_t>* tmp_c_iter;
-                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-by-name-idx-nl\n", _tid);
+                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-by-name-idx-nl\n", 
+                       _tid.get_lo());
 
                 e = _penv->customer_man()->cust_get_iter_by_index_nl(_penv->db(), tmp_c_iter, prcust,
                                                                      lowrep, highrep,
@@ -217,7 +218,8 @@ r_cust_ordst_action::trx_exec()
                 prcust->get_value(0, a_c_id);
                 v_c_id.push_back(a_c_id);
 
-                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-next\n", _tid);
+                TRACE( TRACE_TRX_FLOW, "App: %d ORDST:cust-iter-next\n", 
+                       _tid.get_lo());
                 e = c_iter->next(_penv->db(), eof, *prcust);
                 if (e.is_error()) { goto done; }
             }
@@ -242,7 +244,7 @@ r_cust_ordst_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ORDST:cust-idx-nl (%d) (%d) (%d)\n", 
-               _tid, w_id, d_id, c_id);
+               _tid.get_lo(), w_id, d_id, c_id);
 
 #ifndef ONLYDORA
         e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust, 
@@ -306,9 +308,9 @@ r_ord_ordst_action::trx_exec()
     lowrep.set(_penv->order_desc()->maxsize()); 
     highrep.set(_penv->order_desc()->maxsize()); 
 
-    register int w_id = _in._wh_id;
-    register int d_id = _in._d_id;
-    register int c_id = _in._c_id;
+    int w_id = _in._wh_id;
+    int d_id = _in._d_id;
+    int c_id = _in._c_id;
 
     { // make gotos safe
 
@@ -325,7 +327,7 @@ r_ord_ordst_action::trx_exec()
         guard<index_scan_iter_impl<order_t> > o_iter;
         {
             index_scan_iter_impl<order_t>* tmp_o_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ord-iter-by-idx-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ord-iter-by-idx-nl\n", _tid.get_lo());
             e = _penv->order_man()->ord_get_iter_by_index_nl(_penv->db(), tmp_o_iter, prord,
                                                              lowrep, highrep,
                                                              w_id, d_id, c_id);
@@ -335,7 +337,7 @@ r_ord_ordst_action::trx_exec()
 
         tpcc_order_tuple aorder;
         bool eof;
-        register uint cnt = 0;
+        uint cnt = 0;
 
         e = o_iter->next(_penv->db(), eof, *prord);
         if (e.is_error()) { goto done; }
@@ -357,7 +359,7 @@ r_ord_ordst_action::trx_exec()
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ORDST: (%d) (%d)\n", 
-               _tid, aorder.O_ID, aorder.O_OL_CNT);
+               _tid.get_lo(), aorder.O_ID, aorder.O_OL_CNT);
 
         // need to update the RVP
         _prvp->_in._o_id = aorder.O_ID;
@@ -410,9 +412,9 @@ r_ol_ordst_action::trx_exec()
 
     w_rc_t e = RCOK;
 
-    register int w_id = _in._wh_id;
-    register int d_id = _in._d_id;
-    register int o_id = _in._o_id;
+    int w_id = _in._wh_id;
+    int d_id = _in._d_id;
+    int o_id = _in._o_id;
 
     { // make gotos safe 
      
@@ -429,7 +431,7 @@ r_ol_ordst_action::trx_exec()
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
         {
             index_scan_iter_impl<order_line_t>* tmp_ol_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ol-iter-by-idx-nl\n", _tid);
+            TRACE( TRACE_TRX_FLOW, "App: %d ORDST:ol-iter-by-idx-nl\n", _tid.get_lo());
             e = _penv->order_line_man()->ol_get_probe_iter_by_index_nl(_penv->db(), 
                                                                        tmp_ol_iter, prol,
                                                                        lowrep, highrep,
@@ -453,7 +455,7 @@ r_ol_ordst_action::trx_exec()
 
 #ifdef PRINT_TRX_RESULTS
             TRACE( TRACE_TRX_FLOW, "App: %d ORDST: (%d) %d - %d - %d - %d\n", 
-                   _tid, 
+                   _tid.get_lo(), 
                    i, porderlines[i].OL_I_ID, porderlines[i].OL_SUPPLY_W_ID,
                    porderlines[i].OL_QUANTITY, porderlines[i].OL_AMOUNT);
 #endif
@@ -462,7 +464,7 @@ r_ol_ordst_action::trx_exec()
             e = ol_iter->next(_penv->db(), eof, *prol);
             if (e.is_error()) { goto done; }
         }
-        TRACE( TRACE_TRX_FLOW, "App: %d ORDST: found (%d)\n", _tid, i);
+        TRACE( TRACE_TRX_FLOW, "App: %d ORDST: found (%d)\n", _tid.get_lo(), i);
 #endif
 
     } // goto 

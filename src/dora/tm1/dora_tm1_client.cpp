@@ -96,7 +96,7 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
     }
 
     // pick a valid sf
-    register int selsf = _selid;
+    int selsf = _selid;
 
     // decide which SF to use
     if (_selid==0) {
@@ -105,7 +105,7 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
     }
 
     // decide which ID inside that SF to use
-    register int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+    int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
 
     trx_result_tuple_t atrt;
     if (_cp->take_one) {

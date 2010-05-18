@@ -1,10 +1,31 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
-/** @file range_action.h
+/** @file:   range_action.h
  *
- *  @brief Encapsulation of each range-based actions
+ *  @brief:  Encapsulation of each range-based actions
  *
- *  @author Ippokratis Pandis, Oct 2008
+ *  @author: Ippokratis Pandis, Oct 2008
  */
 
 
@@ -15,7 +36,6 @@
 #include "dora/action.h"
 
 using namespace shore;
-
 
 ENTER_NAMESPACE(dora);
 
@@ -37,6 +57,8 @@ class range_action_impl : public action_t<DataType>
 {
 public:
     typedef key_wrapper_t<DataType>  Key;
+    typedef action_t<DataType>       Action;
+    typedef KALReq_t<DataType>       KALReq;
 
 protected:
 
@@ -49,7 +71,7 @@ protected:
     {
         // the range action has two keys: 
         // the low and hi value that determine the range
-        _act_set(axct,atid,prvp,2); 
+        Action::_act_set(axct,atid,prvp,2); 
         assert (keylen);
         _down.reserve(keylen);
         _up.reserve(keylen);
@@ -58,18 +80,18 @@ protected:
 public:
 
     range_action_impl()
-        : action_t<DataType>()
+        : Action()
     { }
 
     range_action_impl(const range_action_impl& rhs)
-        : action_t<DataType>(rhs), _down(rhs._down), _up(rhs._up)
+        : Action(rhs), _down(rhs._down), _up(rhs._up)
     { assert (0); }
 
     range_action_impl operator=(const range_action_impl& rhs)
     {
         if (this != &rhs) {
-            assert (0); // IP: to check
-            action_t<DataType>::operator=(rhs);
+            assert (0); // IP: TODO check
+            Action::operator=(rhs);
             _down = rhs._down;
             _up = rhs._up;
         }
@@ -91,29 +113,30 @@ public:
 
     virtual int trx_upd_keys()
     {
-        if (_keys_set) return (1); // if already set do not recalculate        
+        if (base_action_t::_keys_set) return (1); // if already set do not recalculate
 
         calc_keys();
 
-        assert (_keys.empty()); // make sure using an empty action
-        _keys.push_back(&_down);
-        _keys.push_back(&_up);
+        assert (Action::_keys.empty()); // make sure using an empty action
+        Action::_keys.push_back(&_down);
+        Action::_keys.push_back(&_up);
 
-        register eDoraLockMode req_lm = DL_CC_EXCL;
-        if (is_read_only()) req_lm = DL_CC_SHARED;
+        eDoraLockMode req_lm = DL_CC_EXCL;
+        if (base_action_t::is_read_only()) req_lm = DL_CC_SHARED;
 
-        setkeys(1); // indicates that it needs only 1 key
-        _requests.push_back(KALReq(this,req_lm,&_down)); // range action
+        base_action_t::setkeys(1); // indicates that it needs only 1 key
+        KALReq akr(this,req_lm,&_down);
+        Action::_requests.push_back(akr); // range action
 
-        _keys_set = 1;
+        base_action_t::_keys_set = 1;
         return (0);
     }
 
     virtual void giveback()=0;
 
-    virtual void setup(Pool** stl_pool_list)
+    virtual void setup(Pool** /* stl_pool_list */)
     {
-        //        action_t<DataType>::setup(stl_pool_list);
+        //        Action::setup(stl_pool_list);
 
         // it must have 3 pool lists
         // stl_pool_list[0]: KeyPtr pool
@@ -127,7 +150,7 @@ public:
 
     virtual void reset()
     {
-        action_t<DataType>::reset();
+        Action::reset();
 
         // clear contents
         _down.reset();

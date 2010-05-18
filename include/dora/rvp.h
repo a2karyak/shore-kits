@@ -1,10 +1,31 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
-/** @file rvp.h
+/** @file:   rvp.h
  *
- *  @brief Rendezvous points
+ *  @brief:  Rendezvous points
  *
- *  @author Ippokratis Pandis, Oct 2008
+ *  @author: Ippokratis Pandis, Oct 2008
  */
 
 
@@ -18,12 +39,12 @@
 
 #include "util/countdown.h"
 
-#include "dora.h"
+#include "dora/common.h"
+#include "dora/base_action.h"
 
 using namespace shore;
 
 ENTER_NAMESPACE(dora);
-
 
 class DoraEnv;
 
@@ -44,7 +65,7 @@ struct rvp_t : public base_request_t
 public:
 
     //typedef PooledVec<base_action_t*>::Type    baseActionsList;
-    typedef vector<base_action_t*>    baseActionsList;
+    typedef std::vector<dora::base_action_t*>    baseActionsList;
     typedef baseActionsList::iterator baseActionsIt;
 
 protected:
@@ -77,25 +98,16 @@ protected:
 
 public:
 
-    rvp_t() : base_request_t() { }
+    rvp_t();
 
     rvp_t(xct_t* axct, const tid_t& atid, const int axctid,
           const trx_result_tuple_t& presult, 
-          const int intra_trx_cnt, const int total_actions) 
-    { 
-        _set(axct, atid, axctid, 
-             presult, intra_trx_cnt, total_actions);
-    }
+          const int intra_trx_cnt, const int total_actions);
 
     virtual ~rvp_t() { }    
 
     // copying allowed
-    rvp_t(const rvp_t& rhs)
-    {
-        _set(rhs._xct, rhs._tid, rhs._xct_id, rhs._result,
-             rhs._countdown.remaining(), rhs._actions.size());
-        copy_actions(rhs._actions);
-    }
+    rvp_t(const rvp_t& rhs);
     rvp_t& operator=(const rvp_t& rhs);
 
     trx_result_tuple_t result() { return (_result); }
@@ -103,7 +115,7 @@ public:
     // Actions-related
     int copy_actions(const baseActionsList& actionList);
     int append_actions(const baseActionsList& actionList);
-    int add_action(base_action_t* paction);
+    int add_action(dora::base_action_t* paction);
 
     inline bool post(bool is_error=false) { 
         if (is_error) abort();        

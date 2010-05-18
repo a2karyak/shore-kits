@@ -103,7 +103,7 @@ int DoraTPCBEnv::start()
 
 
     TRACE( TRACE_DEBUG, "Starting tables...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    for (uint i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->reset();
     }
 
@@ -124,7 +124,7 @@ int DoraTPCBEnv::start()
 int DoraTPCBEnv::stop()
 {
     TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    for (uint i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->stop();
     }
     _irptp_vec.clear();
@@ -226,7 +226,7 @@ int DoraTPCBEnv::conf()
 int DoraTPCBEnv::newrun()
 {
     TRACE( TRACE_DEBUG, "Preparing for new run...\n");
-    for (int i=0; i<_irptp_vec.size(); i++) {
+    for (uint i=0; i<_irptp_vec.size(); i++) {
         _irptp_vec[i]->prepareNewRun();
     }
     return (0);

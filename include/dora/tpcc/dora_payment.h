@@ -101,7 +101,7 @@ private:
     DoraTPCCEnv* _ptpccenv;
     rvp_cache* _cache;
 public:
-    final_pay_rvp() : terminal_rvp_t(), _cache(NULL), _ptpccenv(NULL) { }
+    final_pay_rvp() : terminal_rvp_t(), _ptpccenv(NULL), _cache(NULL) { }
     ~final_pay_rvp() { _cache=NULL; _ptpccenv=NULL; }
 
     // access methods

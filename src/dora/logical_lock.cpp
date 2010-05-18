@@ -21,23 +21,40 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file:   lockman.cpp
+/** @file:   logical_lock.cpp
  *
- *  @brief:  Implementation of a Lock manager for DORA partitions
+ *  @brief:  Logical lock class used by DORA
  *
  *  @author: Ippokratis Pandis, Oct 2008
  */
 
 
-#include "dora/lockman.h"
-#include "dora/action.h"
+#include "dora/logical_lock.h"
 
 
 ENTER_NAMESPACE(dora);
 
 
+
+
+
+/******************************************************************** 
+ *
+ * Lock compatibility Matrix
+ *
+ ********************************************************************/
+
+int DoraLockModeMatrix[DL_CC_MODES][DL_CC_MODES] = { {1, 1, 1},
+                                                     {1, 1, 0},
+                                                     {1, 0, 0} };
+
+
 #undef LOCKDEBUG
 #define LOCKDEBUG
+
+typedef PooledList<ActionLockReq>::Type     ActionLockReqList;
+typedef ActionLockReqList::iterator         ActionLockReqListIt;
+typedef ActionLockReqList::const_iterator   ActionLockReqListCit;
 
 
 /******************************************************************** 
@@ -72,7 +89,7 @@ struct pretty_printer
 static void _print_logical_lock_maps(std::ostream &out, LogicalLock& ll) 
 {
     int o = ll.owners().size();
-    int w = ll.waiters().size();
+    //int w = ll.waiters().size();
     out << "Owners " << o << endl;
     int i=0;
     for (i=0; i<o; ++i) {
@@ -87,8 +104,7 @@ static void _print_logical_lock_maps(std::ostream &out, LogicalLock& ll)
 }
 
 
-char const* 
-db_pretty_print(LogicalLock* ll, int i=0, char const* s=0) 
+char const* db_pretty_print(LogicalLock* ll, int /* i=0 */, char const* /* s=0 */) 
 {
     static pretty_printer pp;
     _print_logical_lock_maps(pp, *ll);
@@ -96,17 +112,15 @@ db_pretty_print(LogicalLock* ll, int i=0, char const* s=0)
 }
 
 
-static void 
-_print_key(std::ostream &out, key_wrapper_t<int> const &key) 
+static void _print_key(std::ostream &out, key_wrapper_t<int> const &key) 
 {    
-    for (int i=0; i<key._key_v.size(); ++i) {
+    for (uint i=0; i<key._key_v.size(); ++i) {
         out << key._key_v.at(i) << endl;
     }
 }
 
 
-char const* 
-db_pretty_print(key_wrapper_t<int> const* key, int i=0, char const* s=0) 
+char const* db_pretty_print(key_wrapper_t<int> const* key, int /* i=0 */, char const* /* s=0 */) 
 {
     static pretty_printer pp;
     _print_key(pp, *key);
@@ -159,7 +173,8 @@ int LogicalLock::release(BaseActionPtr anowner,
     for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
         tid_t* ownertid = (*it).tid();
         assert (ownertid);
-        TRACE( TRACE_TRX_FLOW, "Checking (%d) - Owner (%d)\n", atid, *ownertid);
+        TRACE( TRACE_TRX_FLOW, "Checking (%d) - Owner (%d)\n", 
+               atid.get_lo(), ownertid->get_lo());
 
         // 2. Check if trx in the list of Owners
         if (atid==*ownertid) {
@@ -175,7 +190,7 @@ int LogicalLock::release(BaseActionPtr anowner,
                 //    check if can upgrade some of the waiters.
                 TRACE( TRACE_TRX_FLOW, 
                        "Release of (%d). Onwers (%d). Updated dlm to (%d)\n", 
-                       atid, _owners.size(), _dlm);
+                       atid.get_lo(), _owners.size(), _dlm);
                 BaseActionPtr action = NULL;
 
                 // 6. Promote all the waiters that can be upgraded to owners.
@@ -187,7 +202,8 @@ int LogicalLock::release(BaseActionPtr anowner,
                     
                     // 7. Add head of waiters to the promoted list 
                     //    (which will be returned)
-                    TRACE( TRACE_TRX_FLOW, "(%d) promoting (%d)\n", atid, action->tid().get_lo());
+                    TRACE( TRACE_TRX_FLOW, "(%d) promoting (%d)\n", 
+                           atid.get_lo(), action->tid().get_lo());
                     promotedList.push_back(action);
 
                     // 8. Add head of waiters to the owners list
@@ -201,13 +217,13 @@ int LogicalLock::release(BaseActionPtr anowner,
                     _upd_dlm();
                     TRACE( TRACE_TRX_FLOW,
                            "Release of (%d). Owners (%d). Promoted (%d). New dlm is (%d)\n",
-                           atid, _owners.size(), ipromoted, _dlm);
+                           atid.get_lo(), _owners.size(), ipromoted, _dlm);
                 }
             }
 
             TRACE( TRACE_TRX_FLOW,
                    "Release of (%d). Owners (%d). Promoted (%d). Final dlm is (%d)\n",
-                   atid, _owners.size(), ipromoted, _dlm);
+                   atid.get_lo(), _owners.size(), ipromoted, _dlm);
             break;
         }
     }    
@@ -288,11 +304,11 @@ bool LogicalLock::acquire(ActionLockReq& alr)
         // Note: The search should be from the head of the list of the
         //       waiters to the tail, because all the compatible waiters
         //       have already been promoted to owners.
-        register eDoraLockMode wdlm = (*it).dlm();
+        eDoraLockMode wdlm = (*it).dlm();
         if (!DoraLockModeMatrix[wdlm][alr.dlm()]) {
             TRACE( TRACE_TRX_FLOW,
                    "(%d) conflicting waiter. Waiter (%d). Me (%d)\n",
-                   *alr.tid().get_lo(), wdlm, alr.dlm());
+                   alr.tid()->get_lo(), wdlm, alr.dlm());
             
             // put it at the tail of the waiters
             _waiters.push_back(alr);
@@ -311,7 +327,7 @@ bool LogicalLock::acquire(ActionLockReq& alr)
 
     TRACE( TRACE_TRX_FLOW, 
            "(%d) got it. Owners (%d). LM (%d)\n",
-           *alr.tid().get_lo(), _owners.size(), _dlm);
+           alr.tid()->get_lo(), _owners.size(), _dlm);
 
     return (true);
 }
@@ -437,7 +453,7 @@ operator<<(std::ostream& os, LogicalLock& rhs)
 {
     os << "lock:   " << rhs.dlm() << endl; 
     os << "owners: " << rhs.owners().size() << endl; 
-    for (int i=0; i<rhs.owners().size(); ++i) {
+    for (uint i=0; i<rhs.owners().size(); ++i) {
         os << rhs.owners()[i] << endl;
     }
 

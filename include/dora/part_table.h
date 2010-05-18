@@ -1,12 +1,33 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
-/** @file   part_table.h
+/** @file:   part_table.h
  *
- *  @brief  Declaration of each table in DORA, 
+ *  @brief:  Declaration of each table in DORA, 
  *
- *  @note   Implemented as a vector of partitions and a routing
+ *  @note:   Implemented as a vector of partitions and a routing table
  *
- *  @author Ippokratis Pandis, Oct 2008
+ *  @author: Ippokratis Pandis, Oct 2008
  */
 
 
@@ -21,7 +42,7 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
 
-#include "dora.h"
+#include "dora/partition.h"
 
 using namespace shore;
 
@@ -42,8 +63,8 @@ class part_table_t
 {
 public:
 
-    typedef vector<Partition*> PartitionPtrVector;
-    typedef typename vector<Partition*>::iterator pvpIt;
+    typedef std::vector<Partition*> PartitionPtrVector;
+    typedef typename std::vector<Partition*>::iterator pvpIt;
     typedef typename Partition::Action Action;
 
 protected:
@@ -83,11 +104,10 @@ public:
                  const int keyEstimation,
                  const int sfsperpart,
                  const int totalsfs) 
-        : _env(env), _table(ptable), 
+        : _env(env), _table(ptable), _pcnt(0), 
           _start_prs_id(aprs), _next_prs_id(aprs), 
           _prs_range(acpurange), _key_estimation(keyEstimation), 
-          _sfs_per_part(sfsperpart), _total_sf(totalsfs),
-          _pcnt(0)
+          _sfs_per_part(sfsperpart), _total_sf(totalsfs)
     {
         assert (_env);
         assert (_table);        
@@ -144,7 +164,7 @@ public:
 
     // stops all partitions
     int stop() {
-        for (int i=0; i<_ppvec.size(); i++) {
+        for (uint i=0; i<_ppvec.size(); i++) {
             _ppvec[i]->stop();
             delete (_ppvec[i]);
         }
@@ -154,7 +174,7 @@ public:
 
     // prepares all partitions for a new run
     int prepareNewRun() {
-        for (int i=0; i<_ppvec.size(); i++)
+        for (uint i=0; i<_ppvec.size(); i++)
             _ppvec[i]->prepareNewRun();
         return (0);
     }
@@ -179,7 +199,7 @@ public:
         worker_stats_t ws_gathered;
         int stl_sz = 0;
 
-        for (int i=0; i<_ppvec.size(); i++) {
+        for (uint i=0; i<_ppvec.size(); i++) {
             // gather worker statistics
             _ppvec[i]->statistics(ws_gathered);
 
@@ -207,7 +227,7 @@ public:
     void dump() const {
         TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
         TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
-        for (int i=0; i<_ppvec.size(); i++)
+        for (uint i=0; i<_ppvec.size(); i++)
             _ppvec[i]->dump();
     }        
 
@@ -279,7 +299,7 @@ int part_table_t<Partition>::reset()
 {
     TRACE( TRACE_DEBUG, "Reseting (%s)...\n", _table->name());
     _next_prs_id = _start_prs_id;
-    for (int i=0; i<_ppvec.size(); i++) {
+    for (uint i=0; i<_ppvec.size(); i++) {
         _ppvec[i]->reset(_next_prs_id);
         CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
         _next_prs_id = next_cpu(_next_prs_id);
