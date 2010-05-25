@@ -235,9 +235,10 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 
 #define CHECK_XCT_RETURN(rc,retry)                              \
-    if (rc.is_error()) {                                        \
+    if (rc.is_error()) {						\
+	TRACE( TRACE_ALWAYS, "Error 0x%x\n", rc.err_num());		\
         W_COERCE(_env->db()->abort_xct());                      \
-        if (e.err_num() == smlevel_0::eDEADLOCK) {              \
+        if (rc.err_num() == smlevel_0::eDEADLOCK) {              \
             goto retry; }                                       \
         stringstream os; os << rc << ends;                      \
         string str = os.str();                                  \
