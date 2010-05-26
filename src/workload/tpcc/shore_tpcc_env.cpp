@@ -172,11 +172,16 @@ void ShoreTPCCEnv::table_builder_t::work()
 	bool overlap = (start_dist*UNIT_PER_DIST < _start) || (end_dist*UNIT_PER_DIST >= _start+_count);
 	int *cids = overlap? _cids : cid_array+0;
 	populate_one_unit_input_t in = {tid, cids};
+	long log_space_needed = 0;
     retry:
 	W_COERCE(_env->db()->begin_xct());
+	if(log_space_needed > 0) {
+	    // request some extra so we don't hit the exact situation as before
+	    W_COERCE(_env->db()->xct_reserve_log_space(10*log_space_needed/9));
+	}
 	e = _env->xct_populate_one_unit(tid, in);
 
-        CHECK_XCT_RETURN(e,retry);
+        CHECK_XCT_RETURN(e,log_space_needed,retry);
 
 	long nval = atomic_inc_64_nv(&units_completed);
 	if(nval % UNIT_PER_WH == 0) {

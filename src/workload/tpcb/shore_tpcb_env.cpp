@@ -208,10 +208,14 @@ void ShoreTPCBEnv::table_builder_t::work()
     for(int i=0; i < _count; i += TPCB_ACCOUNTS_CREATED_PER_POP_XCT) {
 	long a_id = _start + i;
 	populate_db_input_t in(_sf, a_id);
+	long log_space_needed = 0;
     retry:
 	W_COERCE(_env->db()->begin_xct());
+	if(log_space_needed > 0) {
+	    W_COERCE(_env->db()->xct_reserve_log_space(log_space_needed));
+	}
 	e = _env->xct_populate_db(a_id, in);
-        CHECK_XCT_RETURN(e,retry);
+        CHECK_XCT_RETURN(e,log_space_needed,retry);
 
         if ((i % (branchesPerRound*TPCB_ACCOUNTS_PER_BRANCH)) == 0) {
             atomic_add_int(&iBranchesLoaded, branchesPerRound);

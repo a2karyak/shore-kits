@@ -234,18 +234,27 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     DEFINE_TRX_STATS(cname,trx)
 
 
-#define CHECK_XCT_RETURN(rc,retry)                              \
+#define CHECK_XCT_RETURN(rc,needed_next_time,retry)			\
     if (rc.is_error()) {						\
-	TRACE( TRACE_ALWAYS, "Error 0x%x\n", rc.err_num());		\
-        W_COERCE(_env->db()->abort_xct());                      \
-        if (rc.err_num() == smlevel_0::eDEADLOCK) {              \
-            goto retry; }                                       \
-        stringstream os; os << rc << ends;                      \
-        string str = os.str();                                  \
-        TRACE( TRACE_ALWAYS,                                    \
-               "Eek! Unable to populate db due to: \n%s\n",     \
-               str.c_str());                                    \
-        assert (0); return; }
+	TRACE( TRACE_ALWAYS, "Error %x\n", rc.err_num());		\
+	long used = _env->db()->xct_log_space_needed();			\
+	W_COERCE(_env->db()->abort_xct());				\
+	switch(rc.err_num()) {						\
+	case smlevel_0::eDEADLOCK:					\
+	    goto retry;							\
+	case smlevel_0::eOUTOFLOGSPACE:					\
+	    needed_next_time = used;					\
+	    goto retry;							\
+	default:							\
+	    stringstream os; os << rc << ends;				\
+	    string str = os.str();					\
+	    TRACE( TRACE_ALWAYS,					\
+		   "Eek! Unable to populate db due to: \n%s\n",		\
+		   str.c_str());					\
+	    W_FATAL(rc.err_num());					\
+	}								\
+    }
+
 
 
 
