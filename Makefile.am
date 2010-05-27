@@ -202,7 +202,9 @@ WL_TPCH_DBGEN_SHORE = \
 
 WL_TPCH_QPIPE = \
    $(SW)/tpch/qpipe_tpch_xct.cpp \
-   $(SW)/tpch/qpipe/qpipe_q1.cpp
+   $(SW)/tpch/qpipe/qpipe_q1.cpp \
+   $(SW)/tpch/qpipe/qpipe_q4.cpp \   
+   $(SW)/tpch/qpipe/qpipe_q6.cpp
 
 
 lib_libworkload_a_SOURCES = \
