@@ -231,19 +231,6 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q3(const int xct_id,
 
 /******************************************************************** 
  *
- * QPIPE Q4
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q4(const int xct_id, 
-                                  q4_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q4 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
  * QPIPE Q5
  *
  ********************************************************************/
@@ -261,12 +248,13 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q5(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_qpipe_q6(const int xct_id, 
+/*w_rc_t ShoreTPCHEnv::xct_qpipe_q6(const int xct_id,
                                   q6_input_t& in)
 {
     TRACE( TRACE_ALWAYS, "********** Q6 *********\n");
     return (RC(smlevel_0::eNOTIMPLEMENTED)); 
 }
+*/
 
 /******************************************************************** 
  *

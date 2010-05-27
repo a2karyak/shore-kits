@@ -47,7 +47,7 @@ ENTER_NAMESPACE(tpch);
  ********************************************************************/
 
 // the tuples after tablescan projection
-struct projected_lineitem_tuple {
+struct q1_projected_lineitem_tuple {
     decimal L_QUANTITY;
     decimal L_EXTENDEDPRICE;
     decimal L_DISCOUNT;
@@ -58,7 +58,7 @@ struct projected_lineitem_tuple {
 
 
 // the final aggregated tuples
-struct aggregate_tuple {
+struct q1_aggregate_tuple {
     decimal L_SUM_QTY;
     decimal L_SUM_BASE_PRICE;
     decimal L_SUM_DISC_PRICE;
@@ -98,7 +98,8 @@ public:
         : tuple_filter_t(tpchdb->lineitem_desc()->maxsize()), _tpchdb(tpchdb)
           //: tuple_filter_t(sizeof(tpch_lineitem_tuple)), _tpchdb(tpchdb)
     {
-        // Get a lineitem tupple from the tuple cache and allocate space
+
+    	// Get a lineitem tupple from the tuple cache and allocate space
         _prline = _tpchdb->lineitem_man()->get_tuple();
         _rr.set_ts(_tpchdb->lineitem_man()->ts(),
                    _tpchdb->lineitem_desc()->maxsize());
@@ -113,7 +114,14 @@ public:
 	_t = str_to_timet("1998-12-01");
         DELTA = 60 + smthread_t::me()->rand()%61;
 	_t = time_add_day(_t, -DELTA); // 1998-12-01 - DELTA days
-    }
+
+#define PRINT_Q1_PREDICATES
+#ifdef PRINT_Q1_PREDICATES
+	char date[15];
+	timet_to_str(&date[0],_t);
+	TRACE(TRACE_QUERY_RESULTS, "Random predicates: Shipdate: %s\n", date);
+#endif
+	}
 
     ~q1_tscan_filter_t()
     {
@@ -129,6 +137,7 @@ public:
         if (!_tpchdb->lineitem_man()->load(_prline, input.data)) {
             assert(false); // RC(se_WRONG_DISK_DATA)
         }
+
 
         _prline->get_value(10, _lineitem.L_SHIPDATE, 15);
         _shipdate = str_to_timet(_lineitem.L_SHIPDATE);        
@@ -148,8 +157,8 @@ public:
     // Projection
     void project(tuple_t &d, const tuple_t &s) {        
 
-        projected_lineitem_tuple *dest;
-        dest = aligned_cast<projected_lineitem_tuple>(d.data);
+        q1_projected_lineitem_tuple *dest;
+        dest = aligned_cast<q1_projected_lineitem_tuple>(d.data);
 
         _prline->get_value(4, _lineitem.L_QUANTITY);
         _prline->get_value(5, _lineitem.L_EXTENDEDPRICE);
@@ -172,6 +181,7 @@ public:
         dest->L_TAX = _lineitem.L_TAX;
         dest->L_RETURNFLAG = _lineitem.L_RETURNFLAG;
         dest->L_LINESTATUS = _lineitem.L_LINESTATUS;
+
     }
 
     q1_tscan_filter_t* clone() const {
@@ -189,15 +199,15 @@ public:
 struct q1_key_extract_t : public key_extractor_t 
 {
     q1_key_extract_t()
-        : key_extractor_t(sizeof(char)*2, offsetof(projected_lineitem_tuple, L_RETURNFLAG))
+        : key_extractor_t(sizeof(char)*2, offsetof(q1_projected_lineitem_tuple, L_RETURNFLAG))
     {
         assert(sizeof(char) == 1);
     }
 
     int extract_hint(const char* tuple_data) const {
         // store the return flag and line status in the 
-        projected_lineitem_tuple *item;
-        item = aligned_cast<projected_lineitem_tuple>(tuple_data);
+        q1_projected_lineitem_tuple *item;
+        item = aligned_cast<q1_projected_lineitem_tuple>(tuple_data);
 
         int result = (item->L_RETURNFLAG << 8) + item->L_LINESTATUS;
 
@@ -220,20 +230,21 @@ private:
 public:
   
     q1_count_aggregate_t()
-        : tuple_aggregate_t(sizeof(aggregate_tuple))
+        : tuple_aggregate_t(sizeof(q1_aggregate_tuple))
     {
     }
 
     key_extractor_t* key_extractor() { return &_extractor; }
 
     void aggregate(char* agg_data, const tuple_t &s) {
-        projected_lineitem_tuple *src;
-        src = aligned_cast<projected_lineitem_tuple>(s.data);
-        aggregate_tuple* tuple = aligned_cast<aggregate_tuple>(agg_data);
+        q1_projected_lineitem_tuple *src;
+        src = aligned_cast<q1_projected_lineitem_tuple>(s.data);
+        q1_aggregate_tuple* tuple = aligned_cast<q1_aggregate_tuple>(agg_data);
 
         // cache resused values for convenience
         decimal L_EXTENDEDPRICE = src->L_EXTENDEDPRICE;
-        decimal L_DISCOUNT = src->L_DISCOUNT;
+        decimal L_DISCOUNT = src->L_DISCOUNT/100;
+#warning MA: Discount from TPCH dbgen is created between 0 and 100 instead between 0 and 1.
         decimal L_QUANTITY = src->L_QUANTITY;
         decimal L_DISC_PRICE = L_EXTENDEDPRICE * (1 - L_DISCOUNT);
 
@@ -257,9 +268,9 @@ public:
     }
     
     void finish(tuple_t &d, const char* agg_data) {
-        aggregate_tuple *dest;
-        dest = aligned_cast<aggregate_tuple>(d.data);
-        aggregate_tuple* tuple = aligned_cast<aggregate_tuple>(agg_data);
+        q1_aggregate_tuple *dest;
+        dest = aligned_cast<q1_aggregate_tuple>(d.data);
+        q1_aggregate_tuple* tuple = aligned_cast<q1_aggregate_tuple>(agg_data);
         
         *dest = *tuple;
         // compute averages
@@ -288,8 +299,8 @@ public:
     }
     
     virtual void process(const tuple_t& output) {
-        aggregate_tuple *tuple;
-        tuple = aligned_cast<aggregate_tuple>(output.data);
+        q1_aggregate_tuple *tuple;
+        tuple = aligned_cast<q1_aggregate_tuple>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** %.2f\t%.2f\t%.2f\n",
               tuple->L_SUM_QTY.to_double(),
               tuple->L_SUM_BASE_PRICE.to_double(),
@@ -310,13 +321,39 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q1(const int xct_id,
 {
     TRACE( TRACE_ALWAYS, "********** Q1 *********\n");
 
+    /*
+select
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
+from
+	lineitem
+where
+	l_shipdate <= date '1998-12-01' - interval '72' day 
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus
+;
+     */
+
+    
     policy_t* dp = this->get_sched_policy();
     xct_t* pxct = smthread_t::me()->xct();
     
-  
+
     // TSCAN PACKET
     tuple_fifo* tscan_out_buffer =
-        new tuple_fifo(sizeof(projected_lineitem_tuple));
+        new tuple_fifo(sizeof(q1_projected_lineitem_tuple));
     tscan_packet_t* q1_tscan_packet =
         new tscan_packet_t("TSCAN LINEITEM",
                            tscan_out_buffer,
@@ -327,9 +364,10 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q1(const int xct_id,
                            /*, SH */
                            );
 
+
     // AGG PACKET CREATION
     tuple_fifo* agg_output_buffer =
-        new tuple_fifo(sizeof(aggregate_tuple));
+        new tuple_fifo(sizeof(q1_aggregate_tuple));
     packet_t* q1_agg_packet = 
         new partial_aggregate_packet_t("AGG Q1",
                                        agg_output_buffer,
