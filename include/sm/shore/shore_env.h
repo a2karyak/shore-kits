@@ -234,6 +234,8 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
     DEFINE_TRX_STATS(cname,trx)
 
 
+#ifdef USE_SHORE_6
+
 #define CHECK_XCT_RETURN(rc,needed_next_time,retry)			\
     if (rc.is_error()) {						\
 	TRACE( TRACE_ALWAYS, "Error %x\n", rc.err_num());		\
@@ -255,6 +257,30 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 	}								\
     }
 
+#else
+
+#define CHECK_XCT_RETURN(rc,needed_next_time,retry)			\
+    if (rc.is_error()) {						\
+	TRACE( TRACE_ALWAYS, "Error %x\n", rc.err_num());		\
+	long used = 0;                                                  \
+	W_COERCE(_env->db()->abort_xct());				\
+	switch(rc.err_num()) {						\
+	case smlevel_0::eDEADLOCK:					\
+	    goto retry;							\
+	case smlevel_0::eOUTOFLOGSPACE:					\
+	    needed_next_time = used;					\
+	    goto retry;							\
+	default:							\
+	    stringstream os; os << rc << ends;				\
+	    string str = os.str();					\
+	    TRACE( TRACE_ALWAYS,					\
+		   "Eek! Unable to populate db due to: \n%s\n",		\
+		   str.c_str());					\
+	    W_FATAL(rc.err_num());					\
+	}								\
+    }
+
+#endif
 
 
 

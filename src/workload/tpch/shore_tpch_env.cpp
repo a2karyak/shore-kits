@@ -163,9 +163,11 @@ void ShoreTPCHEnv::table_creator_t::work()
     long log_space_needed = 0;
  retrybaseline:
     W_COERCE(_env->db()->begin_xct());
+#ifdef USE_SHORE_6
     if(log_space_needed > 0) {
 	W_COERCE(_env->db()->xct_reserve_log_space(log_space_needed));
     }
+#endif
     e = _env->xct_populate_baseline(0, in);
 
     CHECK_XCT_RETURN(e,log_space_needed,retrybaseline);
@@ -197,10 +199,11 @@ void ShoreTPCHEnv::table_builder_t::work()
 	long log_space_needed = 0;
     retrypart:
 	W_COERCE(_env->db()->begin_xct());
+#ifdef USE_SHORE_6
 	if(log_space_needed > 0) {
 	    W_COERCE(_env->db()->xct_reserve_log_space(log_space_needed));
 	}
-
+#endif
 	e = _env->xct_populate_some_parts(tid, in);
 
         CHECK_XCT_RETURN(e,log_space_needed,retrypart);
@@ -229,10 +232,11 @@ void ShoreTPCHEnv::table_builder_t::work()
 	long log_space_needed = 0;
     retrycust:
 	W_COERCE(_env->db()->begin_xct());
+#ifdef USE_SHORE_6
 	if(log_space_needed > 0) {
 	    W_COERCE(_env->db()->xct_reserve_log_space(log_space_needed));
 	}
-
+#endif
 	e = _env->xct_populate_some_custs(tid, in);
 
         CHECK_XCT_RETURN(e,log_space_needed,retrycust);

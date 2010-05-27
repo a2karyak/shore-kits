@@ -211,9 +211,11 @@ void ShoreTPCBEnv::table_builder_t::work()
 	long log_space_needed = 0;
     retry:
 	W_COERCE(_env->db()->begin_xct());
+#ifdef USE_SHORE_6
 	if(log_space_needed > 0) {
 	    W_COERCE(_env->db()->xct_reserve_log_space(log_space_needed));
 	}
+#endif
 	e = _env->xct_populate_db(a_id, in);
         CHECK_XCT_RETURN(e,log_space_needed,retry);
 
