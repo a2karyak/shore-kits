@@ -124,7 +124,7 @@ void tscan_stage_t::process_packet()
     pin_i* handle(NULL);
     uint pcnt=0;
     uint  tsz(packet->_table->maxsize());
-    char* tbd=0;
+    //char* tbd=0;
 
     w_rc_t e = tscanner.next(eof,handle);
     while (!e.is_error() && !eof) {
@@ -132,9 +132,10 @@ void tscan_stage_t::process_packet()
         //TRACE( TRACE_ALWAYS, "(%d) (%d)\n", tsz, handle->body_size());
 
         // Copy the record out of the SM
-        tbd = new char[tsz];        
-        memcpy(tbd,handle->body(),tsz);
-        tuple_t at(tbd,tsz);
+        //tbd = new char[tsz];        
+        //memcpy(tbd,handle->body(),tsz);
+        tuple_t at((char*)handle->body(),tsz);
+#warning MA:Check that this does not break anything.
         adaptor->output(at);
 
         e = tscanner.next(eof,handle);

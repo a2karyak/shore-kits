@@ -212,7 +212,7 @@ void sort_stage_t::start_new_merges() {
     run_map_t::iterator level_it = _run_map.begin();
     while(level_it != _run_map.end()) {
 
-        int level = level_it->first;
+	int level = level_it->first;
 	TRACE(TRACE_DEBUG, "Running on level %d\n", level);
 
         
@@ -354,11 +354,13 @@ tuple_fifo *sort_stage_t::monitor_merge_packets() {
     // always in a critical section, but usually blocked on cond_wait
     critical_section_t cs(_monitor._lock);
     while(1) {
-    
         // wait for a merge to finish
         if(_monitor.wait_holding_lock())
-            return NULL;
-
+	{
+	    pthread_exit(NULL);
+#warning "MA: Seems to be working but we have to verify nothing breaks, also changed the next return to pthread_exit"
+	    //return NULL;
+	}
         // find the finished merge run(s)
         check_finished_merges();
 
@@ -367,9 +369,14 @@ tuple_fifo *sort_stage_t::monitor_merge_packets() {
 
         // have we started the final merge? The worker thread will take care of it
         merge_map_t::iterator merge = _merge_map.begin();
+
         if(merge != _merge_map.end() && merge->first < 0)
-            return merge->second.front()._signal_buffer;
+	{
+	    pthread_exit(&merge->second.front()._signal_buffer);
+	    //return merge->second.front()._signal_buffer;
+	}
     }
+    return NULL;//Put here to be able to compile
 }
 
 
@@ -492,6 +499,7 @@ void sort_stage_t::process_packet() {
     // wait for the output buffer from the final merge to arrive
     tuple_fifo* merge_output = thread_join<tuple_fifo>(_monitor_thread);
     _monitor_thread = 0;
+
     if(merge_output == NULL)
         THROW1(QPipeException, "Merge failed. Terminating Sort");
     
