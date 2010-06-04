@@ -181,6 +181,7 @@ WL_TPCB_SHORE = \
 WL_TPCH_SHORE = \
    $(SW)/tpch/tpch_random.cpp \
    $(SW)/tpch/tpch_input.cpp \
+   $(SW)/tpch/tpch_util.cpp \
    $(SW)/tpch/shore_tpch_schema.cpp \
    $(SW)/tpch/shore_tpch_schema_man.cpp \
    $(SW)/tpch/shore_tpch_env.cpp \
@@ -203,9 +204,13 @@ WL_TPCH_DBGEN_SHORE = \
 WL_TPCH_QPIPE = \
    $(SW)/tpch/qpipe_tpch_xct.cpp \
    $(SW)/tpch/qpipe/qpipe_q1.cpp \
-   $(SW)/tpch/qpipe/qpipe_q4.cpp \   
-   $(SW)/tpch/qpipe/qpipe_q6.cpp
-
+   $(SW)/tpch/qpipe/qpipe_q4.cpp \
+   $(SW)/tpch/qpipe/qpipe_q6.cpp \
+   $(SW)/tpch/qpipe/qpipe_q12.cpp \
+   $(SW)/tpch/qpipe/qpipe_q13.cpp 
+#   $(SW)/tpch/qpipe/qpipe_q14.cpp 
+#   $(SW)/tpch/qpipe/qpipe_q16.cpp 
+#   $(SW)/tpch/qpipe/qpipe_q19.cpp 
 
 lib_libworkload_a_SOURCES = \
    $(WL_SG_TPCC_SHORE) \
@@ -243,9 +248,9 @@ QPIPE_UTIL = \
 	$(SU)/fileops.cpp \
 	$(SU)/alignedops.cpp \
 	$(SU)/tmpfile.cpp \
+	$(SU)/static_hash_map.cpp \
 	$(SU)/fnv.cpp
 
-# 	$(SU)/static_hash_map.cpp
 
 lib_libqpipeutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
 
@@ -296,7 +301,8 @@ QPIPE_STAGES = \
    $(SQP)/stages/register_stage_containers.cpp
 
 QPIPE_COMMON = \
-   $(SQP)/common/process_query.cpp
+   $(SQP)/common/process_query.cpp \
+   $(SQP)/common/predicates.cpp
 
 lib_libqpipe_a_SOURCES = \
    $(QPIPE_SCHEDULER) \
