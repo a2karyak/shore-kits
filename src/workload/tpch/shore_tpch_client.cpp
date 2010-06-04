@@ -113,7 +113,7 @@ int baseline_tpch_client_t::load_sup_xct(mapSupTrxs& stmap)
     // stmap[qpipebase + XCT_TPCH_Q9]          = "QPIPE-TPCH-Q9";
     // stmap[qpipebase + XCT_TPCH_Q10]         = "QPIPE-TPCH-Q10";
     // stmap[qpipebase + XCT_TPCH_Q11]         = "QPIPE-TPCH-Q11";
-    // stmap[qpipebase + XCT_TPCH_Q12]         = "QPIPE-TPCH-Q12";
+     stmap[qpipebase + XCT_TPCH_Q12]         = "QPIPE-TPCH-Q12";
     // stmap[qpipebase + XCT_TPCH_Q13]         = "QPIPE-TPCH-Q13";
     // stmap[qpipebase + XCT_TPCH_Q14]         = "QPIPE-TPCH-Q14";
     // stmap[qpipebase + XCT_TPCH_Q15]         = "QPIPE-TPCH-Q15";

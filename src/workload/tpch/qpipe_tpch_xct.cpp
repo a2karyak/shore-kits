@@ -327,12 +327,13 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q11(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_qpipe_q12(const int xct_id, 
+/*w_rc_t ShoreTPCHEnv::xct_qpipe_q12(const int xct_id, 
                                   q12_input_t& in)
 {
     TRACE( TRACE_ALWAYS, "********** Q12 *********\n");
     return (RC(smlevel_0::eNOTIMPLEMENTED)); 
 }
+*/
 
 /******************************************************************** 
  *
