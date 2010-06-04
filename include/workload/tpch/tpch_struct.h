@@ -47,6 +47,20 @@ ENTER_NAMESPACE(tpch);
 #define STRSIZE(x) (x+1)
 
 
+//Exported structures
+
+enum tpch_l_shipmode {
+    REG_AIR,
+    AIR,
+    RAIL,
+    TRUCK,
+    MAIL,
+    FOB,
+    SHIP,
+    END_SHIPMODE
+};
+
+
 // TPC-H constants
 
 const int NO_NATIONS = 25;

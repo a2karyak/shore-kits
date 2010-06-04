@@ -44,7 +44,6 @@ ENTER_NAMESPACE(tpch);
 
 q2_input_t create_q2_input(const double /* sf */, const int /* specificWH */) { q2_input_t a; return a; }
 q3_input_t create_q3_input(const double /* sf */, const int /* specificWH */) { q3_input_t a; return a; }
-q4_input_t create_q4_input(const double /* sf */, const int /* specificWH */) { q4_input_t a; return a; }
 q5_input_t create_q5_input(const double /* sf */, const int /* specificWH */) { q5_input_t a; return a; }
 q7_input_t create_q7_input(const double /* sf */, const int /* specificWH */) { q7_input_t a; return a; }
 q8_input_t create_q8_input(const double /* sf */, const int /* specificWH */) { q8_input_t a; return a; }
@@ -85,9 +84,9 @@ q1_input_t  create_q1_input(const double /* sf */,
 
     struct tm shipdate;
 
-    shipdate.tm_year = 1998;
-    shipdate.tm_mon = 12;
-    shipdate.tm_mday = URand(60, 120);
+    shipdate.tm_year = 98;//since 1900
+    shipdate.tm_mon = 11;//month starts from 0
+    shipdate.tm_mday = 1-URand(60, 120);//day starts from 1
     shipdate.tm_hour = 0;
     shipdate.tm_min = 0;
     shipdate.tm_sec = 0;
@@ -97,6 +96,47 @@ q1_input_t  create_q1_input(const double /* sf */,
     q1_input.l_shipdate = mktime(&shipdate);
 
     return (q1_input);
+};
+
+
+
+/******************************************************************** 
+ *
+ *  Q4
+ *
+ ********************************************************************/
+
+
+q4_input_t& q4_input_t::operator=(const q4_input_t& rhs)
+{
+    o_orderdate = rhs.o_orderdate;
+    return (*this);
+};
+
+
+q4_input_t  create_q4_input(const double /* sf */, 
+                            const int /* specificWH */)
+{
+    q4_input_t q4_input;
+
+    struct tm orderdate;
+
+    int month=URand(0,57);
+    int year=month/12;
+    month=month%12;
+
+    orderdate.tm_year = 93+year;
+    orderdate.tm_mon = month;
+    orderdate.tm_mday = 1;
+    orderdate.tm_hour = 0;
+    orderdate.tm_min = 0;
+    orderdate.tm_sec = 0;
+
+    // The format: YYYY-MM-DD
+  
+    q4_input.o_orderdate = mktime(&orderdate);
+
+    return (q4_input);
 };
 
 
@@ -125,9 +165,8 @@ q6_input_t    create_q6_input(const double /* sf */,
     struct tm shipdate;
 
     //random() % 5 + 1993;
-    shipdate.tm_year = URand(1993, 1997);
-
-    shipdate.tm_mon = 1;
+    shipdate.tm_year = URand(93, 97);//year starts from 1900
+    shipdate.tm_mon = 0;//month starts from 0
     shipdate.tm_mday = 1;
     shipdate.tm_hour = 0;
     shipdate.tm_min = 0;
@@ -135,7 +174,7 @@ q6_input_t    create_q6_input(const double /* sf */,
     q6_input.l_shipdate = mktime(&shipdate);
 
     //random() % 2 + 24;
-    q6_input.l_quantity = URand(24, 25);
+    q6_input.l_quantity = (double)URand(24, 25);
 
     //random() % 8 + 2
     q6_input.l_discount = ((double)(URand(2,9))) / (double)100.0;
@@ -161,8 +200,8 @@ q6_input_t    create_q6_input(const double /* sf */,
 
 q12_input_t& q12_input_t::operator=(const q12_input_t& rhs)
 {    
-    strncpy(l_shipmode1,rhs.l_shipmode1,11);
-    strncpy(l_shipmode2,rhs.l_shipmode2,11);
+    l_shipmode1=rhs.l_shipmode1;
+    l_shipmode2=rhs.l_shipmode2;
     l_receiptdate = rhs.l_receiptdate;
     return (*this);
 };
@@ -173,16 +212,18 @@ q12_input_t    create_q12_input(const double /* sf */,
 {
     q12_input_t q12_input;
 
-    pick_str(&l_smode_set, L_SMODE_SD, q12_input.l_shipmode1);
-    pick_str(&l_smode_set, L_SMODE_SD, q12_input.l_shipmode2);
+    //pick_str(&l_smode_set, L_SMODE_SD, q12_input.l_shipmode1);
+    //pick_str(&l_smode_set, L_SMODE_SD, q12_input.l_shipmode2);
+    q12_input.l_shipmode1=URand(0,END_SHIPMODE-1);
+    q12_input.l_shipmode2=(q12_input.l_shipmode1+URand(0,END_SHIPMODE-2)+1)%END_SHIPMODE;
 
     struct tm receiptdate;
 
     // Random year [1993 .. 1997]
-    receiptdate.tm_year = URand(1993, 1997);
+    receiptdate.tm_year = URand(93, 97);
 
     // First of January
-    receiptdate.tm_mon = 1;
+    receiptdate.tm_mon = 0;
     receiptdate.tm_mday = 1;
     receiptdate.tm_hour = 0;
     receiptdate.tm_min = 0;

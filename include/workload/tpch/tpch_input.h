@@ -42,7 +42,6 @@ ENTER_NAMESPACE(tpch);
 
 struct q2_input_t { };
 struct q3_input_t { };
-struct q4_input_t { };
 struct q5_input_t { };
 struct q7_input_t { };
 struct q8_input_t { };
@@ -61,7 +60,6 @@ struct q22_input_t { };
 
 q2_input_t create_q2_input(const double sf, const int specificWH);
 q3_input_t create_q3_input(const double sf, const int specificWH);
-q4_input_t create_q4_input(const double sf, const int specificWH);
 q5_input_t create_q5_input(const double sf, const int specificWH);
 q7_input_t create_q7_input(const double sf, const int specificWH);
 q8_input_t create_q8_input(const double sf, const int specificWH);
@@ -99,15 +97,32 @@ q1_input_t    create_q1_input(const double sf,
 
 /******************************************************************** 
  *
+ *  Q4
+ *
+ ********************************************************************/
+
+struct q4_input_t 
+{
+    time_t o_orderdate;
+    q4_input_t& operator=(const q4_input_t& rhs);
+};
+
+q4_input_t    create_q4_input(const double sf, 
+                              const int specificWH = 0);
+
+
+
+/******************************************************************** 
+ *
  *  Q6
  *
  ********************************************************************/
 
 struct q6_input_t 
 {
-    time_t l_shipdate;
-    int    l_quantity;
-    float  l_discount;
+    time_t l_shipdate;//small value
+    double l_quantity;
+    double l_discount;
 
     q6_input_t& operator=(const q6_input_t& rhs);
 };
@@ -125,8 +140,8 @@ q6_input_t    create_q6_input(const double sf,
 
 struct q12_input_t 
 {
-    char   l_shipmode1 [STRSIZE(10)];
-    char   l_shipmode2 [STRSIZE(10)];
+    int l_shipmode1; //should be tpch_l_shipmode?
+    int l_shipmode2; //should be tpch_l_shipmode?
     time_t l_receiptdate; 
 
     q12_input_t& operator=(const q12_input_t& rhs);
