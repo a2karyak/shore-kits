@@ -29,8 +29,10 @@
  *  @date:   
  */
 
+
 #include "workload/tpch/shore_tpch_env.h"
 #include "qpipe.h"
+
 
 using namespace shore;
 using namespace qpipe;
@@ -253,11 +255,6 @@ public:
 class q4_tscan_orders_filter_t : public tuple_filter_t
 {
 private:
-    /*Variables needed to check the selection predicates*/
-    /*dicsount and quantity can be used directly in the code*/
-    time_t _t_geq;
-    time_t _t_low;
-
     ShoreTPCHEnv* _tpchdb;
     row_impl<orders_t>* _prorder;
     rep_row_t _rr;
@@ -267,15 +264,14 @@ private:
     /*The columns needed for the selection*/
     time_t _orderdate;
 
-    /* No Random Predicates */
     /* Random Predicates */
     /* TPC-H Specification 2.7.3 */
-
     /* MONTH randomly selected within [1-1993, 10-1997]*/
-    int MONTH;
+    q4_input_t* q4_input;
+    time_t _last_o_orderdate;
 public:
 
-    q4_tscan_orders_filter_t(ShoreTPCHEnv* tpchdb)
+    q4_tscan_orders_filter_t(ShoreTPCHEnv* tpchdb, q4_input_t &in)
         : tuple_filter_t(tpchdb->orders_desc()->maxsize()), _tpchdb(tpchdb)
     {
     	// Get an orders tupple from the tuple cache and allocate space
@@ -285,15 +281,22 @@ public:
         _prorder->_rep = &_rr;
 
         // Generate the random predicates
-		/* Predicate:
-			o_orderdate >= date '[DATE]'
-			and o_orderdate < date '[DATE]' + interval '3' month
-			DATE is the first day of a randomly selected month between the first month of 1993 and the 10th month of 1997.
-		*/
-		MONTH=smthread_t::me()->rand()%59;
-		_t_geq = str_to_timet("1993-01-01");
-		_t_geq = time_add_month(_t_geq, MONTH);
-		_t_low = time_add_month(_t_geq, 3); // 3 months later
+	/* Predicate:
+		o_orderdate >= date '[DATE]'
+		and o_orderdate < date '[DATE]' + interval '3' month
+		DATE is the first day of a randomly selected month between the first month of 1993 and the 10th month of 1997.
+	*/
+	q4_input=&in;
+	struct tm date;
+	gmtime_r(&(q4_input->o_orderdate), &date);
+	date.tm_year ++;
+	_last_o_orderdate=mktime(&date);
+
+	//char date1[15];
+	//char date2[15];
+	//timet_to_str(date1,q4_input->o_orderdate);
+	//timet_to_str(date2,_last_o_orderdate);
+	//TRACE ( TRACE_ALWAYS, "Dates: %s - %s\n",date1, date2);
     }
 
     ~q4_tscan_orders_filter_t()
@@ -316,12 +319,12 @@ public:
 
 
         // Return true if it passes the filter
-		if  ( _orderdate >= _t_geq && _orderdate < _t_low ) {
-			TRACE(TRACE_RECORD_FLOW, "+ %s (between %s and %s)\n", _orders.O_ORDERDATE, _t_geq, _t_low);
+		if  ( _orderdate >= q4_input->o_orderdate && _orderdate < _last_o_orderdate ) {
+			TRACE(TRACE_RECORD_FLOW, "+ %s (between %s and %s)\n", _orders.O_ORDERDATE, q4_input->o_orderdate, _last_o_orderdate);
 			return (true);
 		}
 		else {
-			TRACE(TRACE_RECORD_FLOW, ". %s (not between %s and %s)\n", _orders.O_ORDERDATE, _t_geq, _t_low);
+			TRACE(TRACE_RECORD_FLOW, ". %s (not between %s and %s)\n", _orders.O_ORDERDATE, q4_input->o_orderdate, _last_o_orderdate );
 			return (false);
 		}
     }
@@ -355,8 +358,8 @@ public:
     c_str to_string() const {
         char date1[15];
         char date2[15];
-        timet_to_str(date1, _t_geq);
-        timet_to_str(date2, _t_low);
+        timet_to_str(date1, q4_input->o_orderdate);
+        timet_to_str(date2, _last_o_orderdate);
         c_str result("select O_ORDERKEY, O_ORDERPRIORITY "
                      "where O_ORDERDATE >= %s and O_ORDERDATE < %s",
                      date1, date2);
@@ -423,7 +426,7 @@ struct q4_join_t : public tuple_join_t {
     	q4_projected_orders_tuple* tuple = aligned_cast<q4_projected_orders_tuple>(left.data);
         *aligned_cast<int>(dest.data) = tuple->O_ORDERPRIORITY;
 
-        TRACE ( TRACE_ALWAYS, "JOIN %d %d\n",tuple->O_ORDERPRIORITY,tuple->O_ORDERKEY);
+        //TRACE ( TRACE_ALWAYS, "JOIN %d %d\n",tuple->O_ORDERPRIORITY,tuple->O_ORDERKEY);
 
     }
 
@@ -436,6 +439,33 @@ struct q4_join_t : public tuple_join_t {
     }
 };
 
+
+struct q4_count_aggregate_t : public tuple_aggregate_t {
+    default_key_extractor_t _extractor;
+    
+    q4_count_aggregate_t()
+        : tuple_aggregate_t(sizeof(q4_aggregate_tuple))
+    {
+    }
+    virtual key_extractor_t* key_extractor() { return &_extractor; }
+    
+    virtual void aggregate(char* agg_data, const tuple_t &) {
+        q4_aggregate_tuple* agg = aligned_cast<q4_aggregate_tuple>(agg_data);
+        agg->O_COUNT++;
+    }
+
+    virtual void finish(tuple_t &d, const char* agg_data) {
+        memcpy(d.data, agg_data, tuple_size());
+    }
+    virtual q4_count_aggregate_t* clone() const {
+        return new q4_count_aggregate_t(*this);
+    }
+    virtual c_str to_string() const {
+        return "q4_count_aggregate_t";
+    }
+};
+
+
 class tpch_q4_process_tuple_t : public process_tuple_t
 {
 public:
@@ -447,10 +477,11 @@ public:
 
     virtual void process(const tuple_t& output) {
         //TODO
-    	q4_projected_lineitem_tuple *tuple;
-        tuple = aligned_cast<q4_projected_lineitem_tuple>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "*** %d\n",
-              tuple->L_ORDERKEY);
+    	q4_aggregate_tuple *tuple;
+        tuple = aligned_cast<q4_aggregate_tuple>(output.data);
+        TRACE(TRACE_QUERY_RESULTS, "*** %d-%d\n",
+              tuple->O_ORDERPRIORITY,
+              tuple->O_COUNT);
     }
 };
 
@@ -509,7 +540,7 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q4(const int xct_id,
     tuple_fifo* buffer = new tuple_fifo(sizeof(q4_projected_lineitem_tuple));
     key_extractor_t* extractor = new q4_extractor_lineitem_t();
     key_compare_t* compare = new q4_compare_lineitem_t();
-    packet_t* sort_packet = new sort_packet_t("Q4_SORT LINEITEM",
+    packet_t* q4_sort_packet = new sort_packet_t("Q4_SORT LINEITEM",
                                               buffer,
                                               q4_linitem_sort_filter,
                                               extractor,
@@ -525,7 +556,7 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q4(const int xct_id,
                                new trivial_filter_t(q4_distinct_output->tuple_size()),
                                new q4_distinct_t(),
                                new q4_distinct_t::q4_distinct_key_extractor_t(),
-                               sort_packet);
+                               q4_sort_packet);
 
     // TSCAN PACKET ON ORDERS
     tuple_fifo* tscan_orders_out =
@@ -533,7 +564,7 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q4(const int xct_id,
     tscan_packet_t* q4_tscan_orders_packet =
         new tscan_packet_t("TSCAN ORDERS",
 						   tscan_orders_out,
-                           new q4_tscan_orders_filter_t(this),
+                           new q4_tscan_orders_filter_t(this,in),
                            this->db(),
                            _porders_desc.get(),
                            pxct
@@ -548,26 +579,39 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q4(const int xct_id,
 												   q4_join_out,
                                                    filter,
                                                    q4_tscan_orders_packet,
-                                                   q4_tscan_lineitem_packet,
+                                                   q4_distinct_packet,
                                                    q4_join);
 
 
+    // sort/aggregate in one step
+    tuple_filter_t* q4_agg_filter = new trivial_filter_t(sizeof(q4_aggregate_tuple));
+    tuple_fifo* q4_agg_buffer = new tuple_fifo(sizeof(q4_aggregate_tuple));
+    tuple_aggregate_t *q4_aggregate = new q4_count_aggregate_t();
+    packet_t* q4_agg_packet;
+    q4_agg_packet = new partial_aggregate_packet_t("O_ORDERPRIORITY COUNT",
+                                                q4_agg_buffer,
+                                                q4_agg_filter,
+                                                q4_join_packet,
+                                                q4_aggregate,
+                                                new default_key_extractor_t(),
+                                                new int_key_compare_t());
 
 
 
     qpipe::query_state_t* qs = dp->query_state_create();
     //q4_*****->assign_query_state(qs);
-    //q4_tscan_orders_packet->assign_query_state(qs);
+    q4_tscan_orders_packet->assign_query_state(qs);
     q4_tscan_lineitem_packet->assign_query_state(qs);
-    sort_packet->assign_query_state(qs);
+    q4_sort_packet->assign_query_state(qs);
     q4_distinct_packet->assign_query_state(qs);
-    //q4_join_packet->assign_query_state(qs);
+    q4_join_packet->assign_query_state(qs);
+    q4_agg_packet->assign_query_state(qs);
 
     // Dispatch packet
     tpch_q4_process_tuple_t pt;
     //LAST PACKET
-    //process_query(q4_join_packet, pt);//TODO
-    process_query(q4_distinct_packet, pt);//TODO
+    process_query(q4_agg_packet, pt);//TODO
+    //process_query(q4_distinct_packet, pt);//TODO
     dp->query_state_destroy(qs);
 
 

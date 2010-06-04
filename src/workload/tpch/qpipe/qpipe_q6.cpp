@@ -61,18 +61,18 @@ where
 
 // the tuples after tablescan projection
 struct q6_projected_lineitem_tuple {
-    decimal L_EXTENDEDPRICE;
-    decimal L_DISCOUNT;
+    double L_EXTENDEDPRICE;
+    double L_DISCOUNT;
 };
 
 // the tuples after sieve
 struct q6_multiplied_lineitem_tuple {
-    decimal L_EXTENDEDPRICE_MUL_DISCOUNT;
+    double L_EXTENDEDPRICE_MUL_DISCOUNT;
 };
 
 // the final aggregated tuples
 struct q6_aggregate_tuple {
-    decimal L_SUM_REVENUE;
+    double L_SUM_REVENUE;
 	int L_COUNT;
 };
 
@@ -81,12 +81,6 @@ struct q6_aggregate_tuple {
 class q6_tscan_filter_t : public tuple_filter_t 
 {
 private:
-    /*Variables needed to check the selection predicates*/
-    /*dicsount and quantity can be used directly in the code*/
-    time_t _t_geq;
-    time_t _t_low;
-
-
     ShoreTPCHEnv* _tpchdb;
     row_impl<lineitem_t>* _prline;
     rep_row_t _rr;
@@ -95,23 +89,16 @@ private:
     tpch_lineitem_tuple _lineitem;
     /*The columns needed for the selection*/
     time_t _shipdate;
-    decimal _discount;
-    decimal _quantity;
+    double _discount;
+    double _quantity;
 
     /* Random Predicates */
     /* TPC-H Specification 2.9.3 */
-
-    /* YEAR randomly selected within [1993, 1997]*/
-    int YEAR;
-    /* DISCOUNT randomly selected within [0.02, 0.09]*/
-    decimal DISCOUNT;
-    /* QUANTITY randomly selected within [24, 25]*/
-    decimal QUANTITY;
-	
-
+    q6_input_t* q6_input;
+    time_t _last_l_shipdate;
 public:
 
-    q6_tscan_filter_t(ShoreTPCHEnv* tpchdb)
+    q6_tscan_filter_t(ShoreTPCHEnv* tpchdb, q6_input_t &in)
         : tuple_filter_t(tpchdb->lineitem_desc()->maxsize()), _tpchdb(tpchdb)
           //: tuple_filter_t(sizeof(tpch_lineitem_tuple)), _tpchdb(tpchdb)
     {
@@ -122,24 +109,24 @@ public:
                    _tpchdb->lineitem_desc()->maxsize());
         _prline->_rep = &_rr;
 
-
         // Generate the random predicates
-
 	/* Predicate:
    	   l_shipdate >= 'YEAR-01-01'
  	   and l_shipdate < 'YEAR-01-01' + interval '1' year
 	   and l_discount between DISCOUNT - 0.01 and DISCOUNT + 0.01
 	   and l_quantity < QUANTITY
 	*/        
-	YEAR=smthread_t::me()->rand()%5;
-	_t_geq = str_to_timet("1993-01-01");
-	_t_geq = time_add_year(_t_geq, YEAR); // 1993-01-01 + [0 to 4] years
-	_t_low = time_add_year(_t_geq, 1); // 1 year later
-	
-	DISCOUNT=(decimal)(.02+.01*(decimal)(smthread_t::me()->rand()%8)); //0.02 to 0.09
+	q6_input=&in;
+      	struct tm date;
+	gmtime_r(&(q6_input->l_shipdate), &date);
+	date.tm_year ++;
+	_last_l_shipdate=mktime(&date);
 
-	QUANTITY=(decimal)(24+smthread_t::me()->rand()%2); //24 or 25
-        TRACE(TRACE_QUERY_RESULTS, "Random predicates: Year: %d, Discount: %lf, Quantity: %lf\n", YEAR+1993, DISCOUNT.to_double(), QUANTITY.to_double());
+	//char date1[15];
+	//char date2[15];
+	//timet_to_str(date1,q6_input->l_shipdate);
+	//timet_to_str(date2,_last_l_shipdate);
+	//TRACE(TRACE_ALWAYS, "Random predicates: Date: %s-%s, Discount: %lf, Quantity: %lf\n", date1, date2, q6_input->l_discount, q6_input->l_quantity);
     }
 
     ~q6_tscan_filter_t()
@@ -168,9 +155,9 @@ public:
 
 
         // Return true if it passes the filter
-		if  ( _shipdate >= _t_geq && _shipdate < _t_low && _discount>=(DISCOUNT-0.01) &&
-				_discount<=(DISCOUNT+0.01) && _quantity<QUANTITY) {
-			//TRACE(TRACE_RECORD_FLOW	, "Random predicates: Year: %d, Discount: %lf, Quantity: %lf\n", YEAR+1993, DISCOUNT.to_double(), QUANTITY.to_double());
+		if  ( _shipdate >= q6_input->l_shipdate && _shipdate < _last_l_shipdate && _discount>=(q6_input->l_discount-0.01) &&
+				_discount<=(q6_input->l_discount+0.01) && _quantity<q6_input->l_quantity) {
+
 			TRACE(TRACE_RECORD_FLOW, "+ %s, %lf, %lf\n", _lineitem.L_SHIPDATE, _lineitem.L_DISCOUNT, _lineitem.L_QUANTITY);
 			return (true);
 		}
@@ -204,14 +191,16 @@ public:
     }
 
     c_str to_string() const {
-        return c_str("q6_tscan_filter_t(%d, %lf, %lf)", YEAR+1993, DISCOUNT.to_double(), QUANTITY.to_double());
+	char date[15];
+	timet_to_str(date,q6_input->l_shipdate);
+        return c_str("q6_tscan_filter_t(%s, %lf, %lf)", date, q6_input->l_discount, q6_input->l_quantity);
     }
 };
 
 
 //Multiplication
 /**
- * @brief This sieve receives a decimal[2] and output a decimal.
+ * @brief This sieve receives a double[2] and output a double.
  */
 class q6_sieve_t : public tuple_sieve_t {
 
@@ -223,8 +212,8 @@ public:
     }
 
     virtual bool pass(tuple_t& dest, const tuple_t &src) {
-        decimal* in = aligned_cast<decimal>(src.data);
-        decimal* out = aligned_cast<decimal>(dest.data);
+        double* in = aligned_cast<double>(src.data);
+        double* out = aligned_cast<double>(dest.data);
         *out = in[0] * in[1];
         return true;
     }
@@ -278,7 +267,7 @@ public:
 
     virtual void aggregate(char* agg_data, const tuple_t& src) {
     	q6_aggregate_tuple* agg = aligned_cast<q6_aggregate_tuple>(agg_data);
-    	decimal * d = aligned_cast<decimal>(src.data);
+    	double * d = aligned_cast<double>(src.data);
         agg->L_COUNT++;
         agg->L_SUM_REVENUE += *d;
     }
@@ -288,7 +277,7 @@ public:
     	q6_aggregate_tuple* output = aligned_cast<q6_aggregate_tuple>(dest.data);
         output->L_COUNT = agg->L_COUNT;
         output->L_SUM_REVENUE = agg->L_SUM_REVENUE;
-        TRACE (TRACE_QUERY_RESULTS, "Average Revenue: %lf\n",output->L_SUM_REVENUE.to_double()/(double)output->L_COUNT);
+        TRACE (TRACE_QUERY_RESULTS, "Average Revenue: %lf\n",output->L_SUM_REVENUE/(double)output->L_COUNT);
     }
 
     virtual q6_aggregate_t* clone() const {
@@ -316,7 +305,7 @@ public:
         q6_aggregate_tuple *tuple;
         tuple = aligned_cast<q6_aggregate_tuple>(output.data);
         TRACE(TRACE_QUERY_RESULTS, "*** %.2f\n",
-              tuple->L_SUM_REVENUE.to_double());
+              tuple->L_SUM_REVENUE);
     }
 };
 
@@ -369,7 +358,7 @@ where
 #ifdef USE_ECHO
                            new trivial_filter_t(tscan_output->tuple_size()),
 #else
-                           new q6_tscan_filter_t(this),
+                           new q6_tscan_filter_t(this, in),
 #endif
                            this->db(),
                            _plineitem_desc.get(),
@@ -384,7 +373,7 @@ where
     echo_packet_t *q6_echo_packet =
         new echo_packet_t("Q6PIPE_ECHO_PACKET",
                           echo_output,
-                          new q6_tscan_filter_t(this),
+                          new q6_tscan_filter_t(this, in),
                           q6_tscan_packet);
 #endif
     

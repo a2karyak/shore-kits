@@ -77,8 +77,6 @@ struct q1_aggregate_tuple {
 class q1_tscan_filter_t : public tuple_filter_t 
 {
 private:
-    time_t _t;
-
     ShoreTPCHEnv* _tpchdb;
     row_impl<lineitem_t>* _prline;
     rep_row_t _rr;
@@ -88,13 +86,12 @@ private:
 
     /* Random Predicates */
     /* TPC-H Specification 2.3.0 */
-
     /* DELTA random within [60 .. 120] */
-    int DELTA;
-
+    /*Random predicates computed in src/workload/tpch/tpch_input.cpp*/
+    q1_input_t* q1_input;
 public:
 
-    q1_tscan_filter_t(ShoreTPCHEnv* tpchdb) 
+    q1_tscan_filter_t(ShoreTPCHEnv* tpchdb, q1_input_t &in) 
         : tuple_filter_t(tpchdb->lineitem_desc()->maxsize()), _tpchdb(tpchdb)
           //: tuple_filter_t(sizeof(tpch_lineitem_tuple)), _tpchdb(tpchdb)
     {
@@ -105,23 +102,15 @@ public:
                    _tpchdb->lineitem_desc()->maxsize());
         _prline->_rep = &_rr;
 
-
-        // Generate the random predicates
-
-	/* Predicate:
+	/* Random predicates read from input
 	   L_SHIPDATE <= 1998-12-01 - DELTA DAYS
 	*/        
-	_t = str_to_timet("1998-12-01");
-        DELTA = 60 + smthread_t::me()->rand()%61;
-	_t = time_add_day(_t, -DELTA); // 1998-12-01 - DELTA days
+	q1_input=&in;
 
-#define PRINT_Q1_PREDICATES
-#ifdef PRINT_Q1_PREDICATES
-	char date[15];
-	timet_to_str(&date[0],_t);
-	TRACE(TRACE_QUERY_RESULTS, "Random predicates: Shipdate: %s\n", date);
-#endif
-	}
+	//char date[15];
+	//timet_to_str(date,q1_input->l_shipdate);
+	//TRACE (TRACE_ALWAYS,"Random predicates: %s\n", date);
+    }
 
     ~q1_tscan_filter_t()
     {
@@ -143,7 +132,7 @@ public:
         _shipdate = str_to_timet(_lineitem.L_SHIPDATE);        
 
         // Return true if it passes the filter
-	if  ( _shipdate <= _t ) {
+	if  ( _shipdate <= q1_input->l_shipdate ) {
             TRACE(TRACE_RECORD_FLOW, "+ %s\n", _lineitem.L_SHIPDATE);
 	    return (true);
 	}
@@ -189,7 +178,9 @@ public:
     }
 
     c_str to_string() const {
-        return c_str("q1_tscan_filter_t(%d)", DELTA);
+	char date[15];
+	timet_to_str(date,q1_input->l_shipdate);
+        return c_str("q1_tscan_filter_t(%s)",date);
     }
 };
 
@@ -357,7 +348,7 @@ order by
     tscan_packet_t* q1_tscan_packet =
         new tscan_packet_t("TSCAN LINEITEM",
                            tscan_out_buffer,
-                           new q1_tscan_filter_t(this),
+                           new q1_tscan_filter_t(this,in),
                            this->db(),
                            _plineitem_desc.get(),
                            pxct
@@ -390,4 +381,4 @@ order by
 }
 
 
-EXIT_NAMESPACE(qpipe);
+EXIT_NAMESPACE(tpch);
