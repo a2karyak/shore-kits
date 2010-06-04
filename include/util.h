@@ -64,7 +64,7 @@
 #include "util/resource_pool.h"
 #include "util/resource_releaser.h"
 #include "util/resource_declare.h"
-//#include "util/hash_functions.h"
+#include "util/hash_functions.h"
 #include "util/acounter.h"
 #include "util/static_list.h"
 #include "util/alignedops.h"

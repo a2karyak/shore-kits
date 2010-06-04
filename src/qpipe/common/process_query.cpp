@@ -23,7 +23,7 @@
 
 #include "qpipe/core/tuple_fifo.h"
 #include "qpipe/core/dispatcher.h"
-#include "qpipe//common/process_query.h"
+#include "qpipe/common/process_query.h"
 #include "util.h"
 
 ENTER_NAMESPACE(qpipe);
