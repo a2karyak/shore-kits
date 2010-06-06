@@ -135,20 +135,20 @@ AC_MSG_RESULT($READLINE_HOME)
 # ----------- EOF Readline location -------------
 
 
-# ----------- Shore-mt target dir -------------
+# ----------- Shore-SM target dir -------------
 # $target is typically processor-vendor-os
 SHORE_HOME_DEFAULT="$HOME/apps/shore"
 
 # check user input
 AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
 
-# if no user param for Shore-mt target dir, then set default
+# if no user param for Shore-SM target dir, then set default
 AC_MSG_CHECKING(Shore directory)
 if test -z $SHORE_HOME; then
     SHORE_HOME=$SHORE_HOME_DEFAULT
 fi
 
-# check if valid Shore-mt target dir
+# check if valid Shore-SM target dir
 if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
     if ! test -d $SHORE_HOME -a -f $SHORE_HOME/include/sm_vas.h; then
     AC_ERROR([
@@ -162,7 +162,7 @@ if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
 fi
 
 AC_MSG_RESULT($SHORE_HOME)
-# ----------- EOF Shore-mt target dir -------------
+# ----------- EOF Shore-SM target dir -------------
 
 
 
@@ -181,19 +181,19 @@ AC_MSG_RESULT($KITS_HOME)
 # ----------- Platform-specific code -------------
 
 
-# basic flags/libs every arch needs
+# Basic flags/libs every arch needs
 
-# Careful, the flags below are mutually exclusive, define only of the three
-#DEBUG_FLAGS="-g -O0"
-#PROFILE_FLAGS="-pg -O0"
+# Careful, some of the flags below are mutually exclusive,for example cannot have
+# the DEBUG and OPT flags together.
+DEBUG_FLAGS="-g -O0"
+PROFILE_FLAGS="-pg -O0"
 OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
 
-CXXFLAGS="$DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS \
-         -Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
+CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
 
-LDFLAGS="-lnsl -ldl -lm -lpthread -lreadline -lrt "
+LDFLAGS="-lnsl -ldl -lm -lpthread -lrt "
 
 
 # $target is typically processor-vendor-os
@@ -225,7 +225,7 @@ case "$target" in
     ARCHOS=x86_64_LINUX
     OS=LINUX
 
-    CXXFLAGS="$CXXFLAGS -DARCH_LP64 -m64 -lreadline "
+    CXXFLAGS="$CXXFLAGS -DARCH_LP64 -m64 "
     CPU_FLAGS="-mtune=native -march=native"    
     ;;
 
@@ -257,16 +257,16 @@ case "$target" in
     ARCHOS=SPARC_SUN
     OS=SUN
 
-    LDFLAGS="$LDFLAGS -lsocket -lkstat -L/usr/local/lib/sparcv9 -lcurses -lmtmalloc"
+    LDFLAGS="$LDFLAGS -lsocket -lkstat -L/usr/local/lib/sparcv9 -lmtmalloc"
 
     # optimize *a lot* flags - normal
-    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
+    OPT_FLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
       
     # regular debugging flags
-    #CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
+    DEBUG_FLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -mt -lpthread -library=stlport4"
 
     # debugging flags + datarace
-    #    CXXFLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
+    #    DEBUG_FLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xs -g -xdebugformat=stabs -xinstrument=datarace -mt -lpthread -library=stlport4"
 
     ;;
 
@@ -298,6 +298,70 @@ else
 fi
 
 
+
+# ----------- Compilation options -------------
+# Get a list of compilation options (debug,profile,optimize)
+MAX_COMP="maximum"
+COMP_OPTIONS=""
+
+# There are 2 supported options
+# (1)  --enable-debug      : Compile for debugging (-g)
+# (2)  --enable-profile    : Compile for profiling (e.g., -pg for oprofile)
+#
+# If none of the two is enabled then the (default) compilation will be with
+# the maximum optimizations possible (e.g., -O3 or -xO4)
+
+# --- DEBUG ---
+AC_MSG_CHECKING(whether will compile for debugging)
+AC_ARG_ENABLE(debug, 
+[  --enable-debug          Compile for debugging (-g)],
+[case "${enableval}" in
+  yes) debug=true ;;
+  no)  debug=false ;;
+  *) debug=false ;;
+esac],[debug=false])
+
+if test "$debug" = true
+then 
+     AC_MSG_RESULT(yes)
+     COMP_OPTIONS="$COMP_OPTIONS debug"
+     OPT_FLAGS=""
+     MAX_COMP=""
+else
+     AC_MSG_RESULT(no)
+     DEBUG_FLAGS=""
+fi
+# --- EOF DEBUG ---
+
+# --- PROFILE ---
+AC_MSG_CHECKING(whether will compile for profiling)
+AC_ARG_ENABLE(profile, 
+[  --enable-profile        Compile for profiling (-pg)],
+[case "${enableval}" in
+  yes) profile=true ;;
+  no)  profile=false ;;
+  *) profile=false ;;
+esac],[profile=false])
+
+if test "$profile" = true
+then 
+     AC_MSG_RESULT(yes)
+     COMP_OPTIONS="$COMP_OPTIONS profile"
+     OPT_FLAGS=""
+     MAX_COMP=""
+else
+     AC_MSG_RESULT(no)
+     PROFILE_FLAGS=""
+fi
+# --- EOF PROFILE ---
+
+# Prepend to CXXFLAGS the selected {DEBUG,PROFILE,OPT,CPU}_FLAGS
+
+CXXFLAGS="$DEBUG_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS $CXXFLAGS"
+
+# ----------- Eof Compilation options ---------
+
+
 # Create output directory
 if ! test -d "obj/$ARCHOS"; then 
    mkdir -p "obj/$ARCHOS"
@@ -316,18 +380,44 @@ AM_CONDITIONAL(LINUX_OS, test "$OS" = "LINUX")
 # Give a list of features with the defaults
 KITS_FEATURES=""
 
-# There are 10 supported options:
-# (1)  --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
-# (2)  --enable-flusher     : defines CFG_FLUSHER
-# (3)  --enable-sli         : defines CFG_SLI
-# (4)  --enable-elr         : defines CFG_ELR
-# (5)  --enable-dlog        : defines CFG_DLOG (distributed log)
-# (6)  --enable-embclients  : defines CFG_EMB_CL
-# (7)  --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
-# (8)  --enable-bt          : enables backtracing facility. defines CFG_BT
-# (9)  --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
+# There are 8 supported options:
+# (1)  --enable-shore6      : If compiling against shore-storage-manager-6.X.X (the x86_64 port)
+# (2)  --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
+# (3)  --enable-elr         : defines CFG_ELR
+# (4)  --enable-flusher     : defines CFG_FLUSHER
+# (5)  --enable-sli         : defines CFG_SLI
+# (6)  --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
+# (7)  --enable-bt          : enables backtracing facility. defines CFG_BT
+# (8)  --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
 
-# (10) --enable-shore6      : If compiling against shore-storage-manager-6.X.X (the x86_64 port)
+
+
+# --- Shore MT or SM-6.X.X ---
+SHORE_TYPE=""
+AC_MSG_CHECKING(whether using Shore-MT or Shore-SM-6.X.X)
+AC_ARG_ENABLE(shore6, 
+[  --enable-shore6         Enable Shore-SM-6.X.X],
+[case "${enableval}" in
+  yes) shore6=true ;;
+  no)  shore6=false ;;
+  *) shore6=false ;;
+esac],[shore6=false])
+AM_CONDITIONAL(USE_SHORE_6, test x$shore6 = xtrue)
+
+if test "$shore6" = true
+then 
+     AC_MSG_RESULT(yes)
+     SHORE_TYPE="Shore-SM-6.X.X"
+     AC_MSG_WARN([Using Shore-SM-6.X.X])
+     AC_DEFINE(CFG_SHORE_6)
+else
+     AC_MSG_RESULT(no)
+     SHORE_TYPE="Shore-MT"
+     AC_MSG_WARN([Using Shore-MT])
+     AC_DEFINE(CFG_SHORE_MT)
+fi
+# --- EOF Shore MT or SM-6.X.X ---
+
 
 # --- DORA ---
 AC_MSG_CHECKING(whether to enable Dora)
@@ -344,7 +434,7 @@ if test "$dora" = true
 then 
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES dora"
-     AC_MSG_WARN([Dora enabled. Should check if Shore-mt is Dora-compatible])
+     AC_MSG_WARN([Dora enabled. Should check if Shore-SM is Dora-compatible])
      AC_DEFINE(CFG_DORA)
 else
      AC_MSG_RESULT(no)
@@ -367,7 +457,7 @@ if test "$elr" = true
 then 
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES elr"
-     AC_MSG_WARN([ELR enabled. Should check if Shore-mt is ELR-compatible])
+     AC_MSG_WARN([ELR enabled. Should check if Shore-SM is ELR-compatible])
      AC_DEFINE(CFG_ELR)
 else
      AC_MSG_RESULT(no)
@@ -404,8 +494,6 @@ fi
 # --- EOF FLUSHER ---   
 
 
-
-
 # --- SLI ---
 AC_MSG_CHECKING(whether to enable SLI option)
 AC_ARG_ENABLE(sli, 
@@ -421,68 +509,12 @@ if test "$sli" = true
 then 
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES sli"
-     AC_MSG_WARN([SLI enabled. Should check if Shore-mt is SLI-compatible])
+     AC_MSG_WARN([SLI enabled. Should check if Shore-SM is SLI-compatible])
      AC_DEFINE(CFG_SLI)
 else
      AC_MSG_RESULT(no)
 fi
 # --- EOF SLI --- 
-
-
-
-# --- DLOG ---
-AC_MSG_CHECKING(whether to use dlog)
-AC_ARG_ENABLE(dlog, 
-[  --enable-dlog           Enable dlog (distributed log)],
-[case "${enableval}" in
-  yes) dlog=true ;;
-  no)  dlog=false ;;
-  *) dlog=true ;;
-esac],[dlog=false])
-AM_CONDITIONAL(ADD_OPT_DLOG, test x$dlog = xtrue)
-
-if test "$dlog" = true
-then 
-     # Disabling DLOG option
-     AC_MSG_ERROR(DLOG option not allowed)
-
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES dlog"
-     AC_MSG_WARN([DLOG enabled. Should check if Shore-mt is DLOG-compatible])
-     AC_DEFINE(CFG_DLOG)
-else
-     AC_MSG_RESULT(no)
-fi
-# --- EOF DLOG ---   
-
-
-
-# --- EMBEDDED CLIENTS ---
-AC_MSG_CHECKING(whether to use embedded clients)
-AC_ARG_ENABLE(embclients, 
-[  --enable-embclients     Use embedded clients - cannot be combined with --enable-dora],
-[case "${enableval}" in
-  yes) embclients=true ;;
-  no)  embclients=false ;;
-  *) embclients=false ;;
-esac],[embclients=false])
-AM_CONDITIONAL(USE_EMBEDDED_CLIENTS, test x$embclients = xtrue)
-
-if test "$embclients" = true
-then 
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES embclients"
-     AC_DEFINE(CFG_EMB_CL)
-
-     # Special case: cannot allow Dora and EmbClients
-     if test "$dora" = true
-     then
-        AC_MSG_ERROR(Cannot have embedded clients with Dora)
-     fi
-else
-     AC_MSG_RESULT(no)
-fi
-# --- EOF EMBEDDED CLIENTS ---   
 
 
 # --- CACHES (default==true) ---
@@ -493,7 +525,7 @@ AC_ARG_ENABLE(caches,
   yes) caches=true ;;
   no)  caches=false ;;
   *) caches=true ;;
-esac],[caches=false])
+esac],[caches=true])
 AM_CONDITIONAL(ADD_OPT_CACHES, test x$caches = xtrue)
 
 if test "$caches" = true
@@ -503,11 +535,9 @@ then
      AC_DEFINE(CFG_CACHES)
 else
      AC_MSG_RESULT(no)
-     AC_MSG_WARN([!!! Should used only for debugging purposes !!!])
+     AC_MSG_WARN([Used for debugging purposes])
 fi
 # --- EOF CACHES ---   
-
-
 
 
 # --- SIMICS MAGIC INSTRUCTIONS ---
@@ -546,6 +576,11 @@ AM_CONDITIONAL(USE_BT, test x$bt = xtrue)
 
 if test "$bt" = true
 then 
+     # Shore-SM-6 does not support backtracing yet
+     if test "$shore6" = true
+     then
+        AC_MSG_ERROR(Shore-SM-6 does not support backtracing yet)
+     fi
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES backtracing"
      AC_MSG_WARN([Enabling backtracing])
@@ -577,33 +612,6 @@ else
      AC_MSG_RESULT(no)
 fi
 # --- EOF QPIPE ---   
-
-
-# --- Shore MT or SM-6.X.X ---
-SHORE_TYPE=""
-AC_MSG_CHECKING(whether using Shore-MT or Shore-SM-6.X.X)
-AC_ARG_ENABLE(shore6, 
-[  --enable-shore6         Enable Shore-SM-6.X.X],
-[case "${enableval}" in
-  yes) shore6=true ;;
-  no)  shore6=false ;;
-  *) shore6=false ;;
-esac],[shore6=false])
-AM_CONDITIONAL(USE_SHORE_6, test x$shore6 = xtrue)
-
-if test "$shore6" = true
-then 
-     AC_MSG_RESULT(yes)
-     SHORE_TYPE="Shore-SM-6.X.X"
-     AC_MSG_WARN([Using Shore-SM-6.X.X])
-     AC_DEFINE(CFG_SHORE_6)
-else
-     AC_MSG_RESULT(no)
-     SHORE_TYPE="Shore-MT"
-     AC_MSG_WARN([Using Shore-MT])
-     AC_DEFINE(CFG_SHORE_MT)
-fi
-# --- EOF Shore MT or SM-6.X.X ---
 
 
 # ----------- EOF Shore-kit features -------------
@@ -661,6 +669,7 @@ Shore Kits configuration:
   CXX compiler:    CXX            $CXX
   CXX version:     CXX_VERSION    $KITS_CXX_VERSION
   Architecture/OS: ARCHOS         $ARCHOS
+  Compilation:     COMP_OPTIONS   $MAX_COMP$COMP_OPTIONS
   CXXFLAGS         $CXXFLAGS
   LDFLAGS          $LDFLAGS
-EOF
+EOF 
