@@ -527,9 +527,7 @@ int main(int argc, char* argv[])
     string config;
     int c = 0;
 
-#warning ADD A COMMAND OPTION TO CLOBBER (-n)
-
-    while ((c = getopt(argc,argv,"np:c:")) != -1) {
+    while ((c = getopt(argc,argv,"dnp:c:")) != -1) {
         switch (c) {
         case 'n':
             TRACE( TRACE_ALWAYS, "NETMODE\n");
@@ -543,6 +541,10 @@ int main(int argc, char* argv[])
             TRACE( TRACE_ALWAYS, "CONFIG (%s)\n", optarg);
             config = (string)optarg;
             ev->setConfiguration(config);
+            break;
+        case 'd':
+            TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
+            ev->setVarInt("db-clobberdev",1);
             break;
         default:
             TRACE( TRACE_ALWAYS, "Wrong parameter\n");
