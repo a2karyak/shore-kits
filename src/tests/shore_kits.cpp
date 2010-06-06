@@ -84,14 +84,6 @@ using namespace dora;
 #warning Configuration: ELR enabled
 #endif
 
-#ifdef CFG_EMB_CL
-#warning Configuration: Embedded clients enabled
-#endif
-
-#ifdef CFG_DLOG
-#warning Configuration: DLOG enabled
-#endif
-
 #ifdef CFG_SIMICS
 #warning Configuration: With SIMICS MAGIC INSTRUCTIONS
 #endif
@@ -534,6 +526,9 @@ int main(int argc, char* argv[])
     int netport = 0;
     string config;
     int c = 0;
+
+#warning ADD A COMMAND OPTION TO CLOBBER (-n)
+
     while ((c = getopt(argc,argv,"np:c:")) != -1) {
         switch (c) {
         case 'n':

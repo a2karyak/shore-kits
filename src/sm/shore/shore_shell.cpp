@@ -1160,7 +1160,7 @@ void sli_cmd_t::setaliases()
     _aliases.push_back("sli"); 
 }
 
-int sli_cmd_t::handle(const char* cmd)
+int sli_cmd_t::handle(const char* /* cmd */)
 {
     _enabled = !_enabled;    
     _env->db()->set_sli_enabled(_enabled);
@@ -1201,7 +1201,7 @@ void elr_cmd_t::setaliases()
     _aliases.push_back("elr"); 
 }
 
-int elr_cmd_t::handle(const char* cmd)
+int elr_cmd_t::handle(const char* /* cmd */)
 {
     _enabled = !_enabled;    
     _env->db()->set_elr_enabled(_enabled);

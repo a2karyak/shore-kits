@@ -90,9 +90,9 @@ int dora_flusher_t::_work_ACTIVE_impl()
     TRY_TO_BIND(_prs_id,_is_bound);
 
     // read configuration 
-    int maxGroupSize = ev->getVarInt("flusher-group-size",DFLUSHER_GROUP_SIZE_THRESHOLD);
-    int maxLogSize = ev->getVarInt("flusher-log-size",DFLUSHER_LOG_SIZE_THRESHOLD);
-    int maxTimeIntervalusec = ev->getVarInt("flusher-timeout",DFLUSHER_TIME_THRESHOLD);
+    uint maxGroupSize = ev->getVarInt("flusher-group-size",DFLUSHER_GROUP_SIZE_THRESHOLD);
+    uint maxLogSize = ev->getVarInt("flusher-log-size",DFLUSHER_LOG_SIZE_THRESHOLD);
+    uint maxTimeIntervalusec = ev->getVarInt("flusher-timeout",DFLUSHER_TIME_THRESHOLD);
 
     uint waiting = 0;
     terminal_rvp_t* prvp = NULL;   
@@ -137,7 +137,7 @@ int dora_flusher_t::_work_ACTIVE_impl()
 
                 TRACE( TRACE_TRX_FLOW, 
                        "TID (%d) lastLSN (%d) durableLSN (%d)\n",
-                       prvp->tid().get_lo(), xctlsn, maxlsn);
+                       prvp->tid().get_lo(), xctlsn.lo(), maxlsn.lo());
 
                 // If the xct is already durable (had been flushed) then
                 // send it directly back to the executor of its final-rvp

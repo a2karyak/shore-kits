@@ -194,9 +194,9 @@ int flusher_t::_work_ACTIVE_impl()
     TRY_TO_BIND(_prs_id,_is_bound);
 
     // read configuration 
-    int maxGroupSize = ev->getVarInt("flusher-group-size",FLUSHER_GROUP_SIZE_THRESHOLD);
-    int maxLogSize = ev->getVarInt("flusher-log-size",FLUSHER_LOG_SIZE_THRESHOLD);
-    int maxTimeIntervalusec = ev->getVarInt("flusher-timeout",FLUSHER_TIME_THRESHOLD);
+    uint maxGroupSize = ev->getVarInt("flusher-group-size",FLUSHER_GROUP_SIZE_THRESHOLD);
+    uint maxLogSize = ev->getVarInt("flusher-log-size",FLUSHER_LOG_SIZE_THRESHOLD);
+    uint maxTimeIntervalusec = ev->getVarInt("flusher-timeout",FLUSHER_TIME_THRESHOLD);
 
     uint waiting = 0;
     trx_request_t* preq = NULL;   
@@ -241,7 +241,7 @@ int flusher_t::_work_ACTIVE_impl()
 
                 TRACE( TRACE_TRX_FLOW, 
                        "Xct (%d) lastLSN (%d) durableLSN (%d)\n",
-                       preq->tid().get_lo(), xctlsn, maxlsn);
+                       preq->tid().get_lo(), xctlsn.lo(), maxlsn.lo());
 
                 // If the xct is already durable (had been flushed) then
                 // notify client
