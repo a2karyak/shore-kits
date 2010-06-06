@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file shore_file_desc.cpp
  *
  *  @brief Implementation of base class for describing
@@ -36,12 +34,37 @@
 #include "sm/shore/shore_file_desc.h"
 #include "sm/shore/shore_index.h"
 
-using namespace shore;
+ENTER_NAMESPACE(shore);
 
 
-/* ---------------------------------- */
-/* --- @class file_desc_t methods --- */
-/* ---------------------------------- */
+/* -------------------------- */
+/* --- @class file_desc_t --- */
+/* -------------------------- */
+
+
+file_desc_t::file_desc_t(const char* name, const uint_t fcnt)
+    : _field_count(fcnt), _vid(vid_t::null), 
+      _root_iid(stid_t::null), _fid(stid_t::null)
+{
+    assert (fcnt>0);
+
+    pthread_mutex_init(&_fschema_mutex, NULL);
+
+    // Copy name
+    memset(_name,0,MAX_FNAME_LEN);
+#ifndef __GNUC__
+    if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#else
+    if(w_strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+#endif
+	throw "file_desc_t::_name too long!\n";
+    }
+}
+
+file_desc_t::~file_desc_t() 
+{ 
+    pthread_mutex_destroy(&_fschema_mutex);
+}
 
 
 /** @fn:    find_root_iid 
@@ -148,3 +171,5 @@ w_rc_t index_desc_t::find_fid(ss_m* db, int pnum) {
     }
 }
 
+
+EXIT_NAMESPACE(shore);

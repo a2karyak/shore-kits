@@ -117,29 +117,8 @@ public:
     /* --- construction --- */
     /* -------------------- */
 
-    file_desc_t(const char* name, const uint_t fcnt)
-        : _field_count(fcnt), _vid(vid_t::null), 
-          _root_iid(stid_t::null), _fid(stid_t::null)
-    {
-        assert (fcnt>0);
-
-        pthread_mutex_init(&_fschema_mutex, NULL);
-
-        // Copy name
-#ifndef __GNUC__
-	if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
-#else
-        if(w_strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
-#endif
-	    throw "file_desc_t::_name too long!\n";
-        }
-    }
-
-    virtual ~file_desc_t() 
-    { 
-        pthread_mutex_destroy(&_fschema_mutex);
-    }
-
+    file_desc_t(const char* name, const uint_t fcnt);
+    virtual ~file_desc_t();
 
     /* ---------------------- */
     /* --- access methods --- */
