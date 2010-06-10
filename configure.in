@@ -259,6 +259,9 @@ case "$target" in
 
     LDFLAGS="$LDFLAGS -lsocket -lkstat -L/usr/local/lib/sparcv9 -lmtmalloc"
 
+    # On Sparc and CC we need to use completely different compilation flags
+    CXXFLAGS="" 
+
     # optimize *a lot* flags - normal
     OPT_FLAGS="-xarch=sparcvis2 -m64 -features=extensions,zla -xthreadvar=no%dynamic -xdebugformat=stabs -xs -g0 -xO4 -mt -lpthread -library=stlport4"
       
@@ -672,4 +675,4 @@ Shore Kits configuration:
   Compilation:     COMP_OPTIONS   $MAX_COMP$COMP_OPTIONS
   CXXFLAGS         $CXXFLAGS
   LDFLAGS          $LDFLAGS
-EOF 
+EOF
