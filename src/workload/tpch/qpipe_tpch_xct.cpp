@@ -113,7 +113,7 @@ w_rc_t ShoreTPCHEnv::run_one_qpipe_xct(Request* prequest)
     int type = prequest->type();
     assert (type >= XCT_QPIPE_TPCH_MIX);
     if (type == XCT_QPIPE_TPCH_MIX) {
-        type = smthread_t::me()->rand()%22;
+        type = abs(smthread_t::me()->rand()%22);
         //prequest->set_type(XCT_TPCH_MIX + smthread_t::me()->rand()%22);
     }
     else {

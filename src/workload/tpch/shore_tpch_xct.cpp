@@ -667,7 +667,7 @@ w_rc_t ShoreTPCHEnv::run_one_xct(Request* prequest)
 
     // if BASELINE TPC-H MIX
     if (prequest->type() == XCT_TPCH_MIX) {
-        prequest->set_type(XCT_TPCH_MIX + smthread_t::me()->rand()%22);
+        prequest->set_type(XCT_TPCH_MIX + abs(smthread_t::me()->rand()%22));
     }
 
     switch (prequest->type()) {

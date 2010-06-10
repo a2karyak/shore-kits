@@ -78,7 +78,7 @@ public:
         assert(n > 0);
 
 #ifdef USE_STHREAD_RAND       
-        int k = sthread_t::me()->rand();
+        int k = abs(sthread_t::me()->rand());
 #endif
 
         if ((n & -n) == n) {  
