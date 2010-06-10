@@ -99,6 +99,8 @@ int DoraEnv::_start(ShoreEnv* penv)
     assert(_flusher.get());
     _flusher->fork();
     _flusher->start();
+#else
+    (void)penv;
 #endif
     return (0);
 }

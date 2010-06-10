@@ -252,6 +252,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
             // DF2. Enqueue to the "to flush" queue of DFlusher             
             denv->enqueue_toflush(this);
 #else
+            (void)denv;
             TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid.get_lo());
             upd_committed_stats();
 #endif
