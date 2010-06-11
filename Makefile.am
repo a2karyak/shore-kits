@@ -206,8 +206,8 @@ WL_TPCH_QPIPE = \
    $(SW)/tpch/qpipe/qpipe_q1.cpp \
    $(SW)/tpch/qpipe/qpipe_q4.cpp \
    $(SW)/tpch/qpipe/qpipe_q6.cpp \
-   $(SW)/tpch/qpipe/qpipe_q12.cpp \
-   $(SW)/tpch/qpipe/qpipe_q13.cpp 
+   $(SW)/tpch/qpipe/qpipe_q12.cpp 
+#   $(SW)/tpch/qpipe/qpipe_q13.cpp 
 #   $(SW)/tpch/qpipe/qpipe_q14.cpp 
 #   $(SW)/tpch/qpipe/qpipe_q16.cpp 
 #   $(SW)/tpch/qpipe/qpipe_q19.cpp 
