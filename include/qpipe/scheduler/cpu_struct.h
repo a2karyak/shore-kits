@@ -56,6 +56,20 @@ struct cpu_s
      integer id for each CPU so we can print them */
   int cpu_unique_id;
 
+#ifdef FOUND_LINUX
+  /* GNU Linux */
+
+  /* detected GNU Linux */
+  /** One of the operations we would like to provide on a CPU is the
+      ability of a thread to bind to it. We implement processor
+      binding in Linux using the hard affinity library functions
+      provided by glibc. This cpu_set_t should be initialized to
+      contain a single CPU (this one). */
+    os_cpu_set_t cpu_set;
+ 
+#else
+//#ifdef FOUND_SOLARIS
+  /* Sun Solaris */
   
   /* detected Sun Solaris */
   /** One of the operations we would like to provide on a CPU is the
@@ -68,6 +82,7 @@ struct cpu_s
       a specified ID is available for binding. Rather than throw the
       returned information away, we store it. */
   processor_info_t cpu_proc_info;
+#endif  
 
 };
 

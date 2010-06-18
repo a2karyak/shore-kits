@@ -29,14 +29,21 @@
 
 
 #include "qpipe/stages/pipe_hash_join.h"
-#include "qpipe/stages/hash_join.h"
-
 #include <cstring>
 #include <algorithm>
 
-#include "util/hashtable.h"
+#if defined(linux) || defined(__linux)
+/*GNU found*/
+#include <ext/hash_set>
+using __gnu_cxx::hashtable;
+using __gnu_cxx::hash_set;
+#else
+/*Solaris*/
 #include <hash_set>
 using std::hash_set;
+using std::hashtable;
+#endif
+
 
 
 ENTER_NAMESPACE(qpipe);
@@ -53,7 +60,7 @@ const c_str pipe_hash_join_stage_t::DEFAULT_STAGE_NAME = "PIPE_HASH_JOIN";
 
 struct extractkey_t {
     size_t _offset;
-    
+   
     extractkey_t(tuple_join_t* join, bool left)
 	: _offset(left? join->left_key_offset() : join->right_key_offset())
     {
@@ -96,9 +103,15 @@ struct hashfcn_t {
 
 
 typedef hash_set<char*, hashfcn_t, equalbytes_t>::allocator_type alloc_t;
-typedef std::hashtable<char *, const char *,
-                       hashfcn_t, extractkey_t,
-                       equalbytes_t, alloc_t> tuple_hash_t;
+
+typedef hashtable<char *, const char *,
+                  hashfcn_t, extractkey_t,
+                  equalbytes_t, alloc_t> tuple_hash_t;
+
+// typedef hashtable<char *, const char *,
+//                   extractkey_t,
+//                   equalbytes_t, equalbytes_t, 
+//                   hashfcn_t> tuple_hash_t;
 
 
 void pipe_hash_join_stage_t::process_packet() {
@@ -128,8 +141,12 @@ void pipe_hash_join_stage_t::process_packet() {
     hashfcn_t hf(_join->key_size());
 
     // init the hash tables
+    // tuple_hash_t left_hash(10001, left_ke, eq, eq, hf);
+    // tuple_hash_t right_hash(10001, right_ke, eq, eq, hf);
+
     tuple_hash_t left_hash(10001, hf, eq, left_ke);
     tuple_hash_t right_hash(10001, hf, eq, right_ke);
+
 
     // and the page store
     page_trash_stack left_pages;

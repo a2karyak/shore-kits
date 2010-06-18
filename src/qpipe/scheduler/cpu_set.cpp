@@ -38,7 +38,24 @@
 
 ENTER_NAMESPACE(qpipe);
 
+/* operating system specific */
+
+/* GNU Linux */
+#ifdef FOUND_LINUX
+
+static void cpu_set_copy( os_cpu_set_t* dst, os_cpu_set_t* src );
+static void cpu_set_init_Linux(cpu_set_p cpu_set);
+
+#else
+/* Sun Solaris */
+//#ifdef FOUND_SOLARIS
+
 static void cpu_set_init_Solaris(cpu_set_p cpu_set);
+
+#endif
+
+
+
 
 
 /* definitions of exported functions */
@@ -56,9 +73,18 @@ static void cpu_set_init_Solaris(cpu_set_p cpu_set);
  */
 void cpu_set_init(cpu_set_p cpu_set)
 {  
+  /* GNU Linux */
+#ifdef FOUND_LINUX
+  /* detected GNU Linux */
+  cpu_set_init_Linux( cpu_set );
+  return;
+#else  
+  /* Sun Solaris */
+  //#ifdef FOUND_SOLARIS
   /* detected Sun Solaris Linux */
   cpu_set_init_Solaris( cpu_set );
   return;
+#endif
 }
 
 
@@ -131,11 +157,117 @@ void cpu_set_finish(cpu_set_p cpu_set)
   cpu_set->cpuset_cpus = NULL;
 }
 
+/* definition of internal helper functions */
 
+
+/* GNU Linux */
+#ifdef FOUND_LINUX
+
+/* detected GNU Linux */
+
+/**
+ *  @brief Copy a Linux cpu_set_t.
+ *
+ *  @param dst Will be the copy.
+ *
+ *  @param src The source (will be copied).
+ *
+ *  @return void
+ */
+static void cpu_set_copy( os_cpu_set_t* dst, os_cpu_set_t* src )
+{
+  int i;
+
+  CPU_ZERO( dst );
+  for (i = 0; i < CPU_SETSIZE; i++)
+    if ( CPU_ISSET(i, src) )
+      CPU_SET(i, dst);
+}
 
 
 /**
- *  @brief Solaris-specific version of do_cpu_set_init().
+ *  @brief Linux-specific version of do_cpu_set_init().
+ *
+ *  @param cpu_set The CPU set.
+ *
+ *  @return 0 on success. Negative value on error.
+ */
+static void cpu_set_init_Linux(cpu_set_p cpu_set)
+{
+
+  int i;
+  os_cpu_set_t original_affinity_set;
+  int num_cpus = sysconf(_SC_NPROCESSORS_CONF);
+
+  
+  
+  /* get current affinity set so we can restore it when we're done */
+  if ( sched_getaffinity( 0, sizeof(os_cpu_set_t), &original_affinity_set ) )
+      throw EXCEPTION2(ThreadException,
+                       "sched_getaffinity() failed with %s",
+                       errno_to_str().data());
+
+  /* test restoration */
+  if ( sched_setaffinity( 0, sizeof(os_cpu_set_t), &original_affinity_set ) )
+      throw EXCEPTION2(ThreadException,
+                       "sched_setaffinity() failed with %s",
+                       errno_to_str().data());
+
+
+  /* allocate cpus */
+  cpu_t cpus = 
+    (cpu_t)malloc( num_cpus * sizeof(struct cpu_s) );
+  if ( cpus == NULL )
+    throw EXCEPTION1(BadAlloc, "cpu array");
+
+  for (i = 0; i < num_cpus; i++)
+    /* initialize fields */
+    CPU_ZERO( &cpus[i].cpu_set );
+
+
+
+  /* find the CPUs on the system */
+  int num_found = 0;
+  int cpu_num;
+  for (cpu_num = 0; ; cpu_num++)
+  {
+    os_cpu_set_t test_set;
+    CPU_ZERO( &test_set );
+    CPU_SET ( cpu_num, &test_set );
+
+    if ( !sched_setaffinity( 0, sizeof(os_cpu_set_t), &test_set ) )
+    {
+      /* found a new CPU */
+      cpus[num_found].cpu_unique_id = cpu_num;
+      cpu_set_copy( &cpus[num_found].cpu_set, &test_set );
+      num_found++;
+      if ( num_found == num_cpus )
+        break;
+    }
+  }  
+
+  
+
+  /* restore original affinity set */
+  if ( sched_setaffinity( 0, sizeof(os_cpu_set_t), &original_affinity_set ) )
+      throw EXCEPTION2(ThreadException,
+                       "sched_setaffinity() failed with %s",
+                       errno_to_str().data());
+  
+  
+  /* return parameters */
+  cpu_set->cpuset_num_cpus = num_cpus;
+  cpu_set->cpuset_cpus     = cpus;
+}
+
+#else
+
+/* Sun Solaris */
+//#ifdef FOUND_SOLARIS
+/* detected Sun Solaris */
+
+/**
+ *  @brief
  *
  *  @param cpu_set The CPU set.
  *
@@ -192,6 +324,11 @@ static void cpu_set_init_Solaris(cpu_set_p cpu_set)
   cpu_set->cpuset_num_cpus = num_cpus;
   cpu_set->cpuset_cpus     = cpus;
 }
+
+#endif
+
+
+
 
 EXIT_NAMESPACE(qpipe);
 

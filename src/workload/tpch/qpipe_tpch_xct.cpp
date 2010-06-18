@@ -209,8 +209,8 @@ w_rc_t ShoreTPCHEnv::run_one_qpipe_xct(Request* prequest)
  *
  ********************************************************************/
 
-w_rc_t ShoreTPCHEnv::xct_qpipe_q2(const int xct_id, 
-                                  q2_input_t& in)
+w_rc_t ShoreTPCHEnv::xct_qpipe_q2(const int /* xct_id */, 
+                                  q2_input_t& /* in */)
 {
     TRACE( TRACE_ALWAYS, "********** Q2 *********\n");
     return (RC(smlevel_0::eNOTIMPLEMENTED)); 

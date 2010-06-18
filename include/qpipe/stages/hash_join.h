@@ -34,6 +34,10 @@
 #include "qpipe/core.h"
 #include "util/hashtable.h"
 
+#if defined(linux) || defined(__linux)
+#include <ext/hash_set>
+#endif
+
 #include <string>
 
 using std::string;
@@ -45,6 +49,7 @@ ENTER_NAMESPACE(qpipe);
 
 #define HASH_JOIN_STAGE_NAME  "HASH_JOIN"
 #define HASH_JOIN_PACKET_TYPE "HASH_JOIN"
+
 
 
 /********************
@@ -204,8 +209,7 @@ private:
         size_t operator()(const char *key) const {
             return fnv_hash(key, _len);
         }
-    };
-
+    };    
 
     typedef hashtable<char *,
                       const char *,

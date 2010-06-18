@@ -23,9 +23,18 @@
 
 #include "qpipe/stages/hash_aggregate.h"
 
+#if defined(linux) || defined(__linux)
+/*GNU found*/
+#include <ext/hash_set>
+using __gnu_cxx::hashtable;
+using __gnu_cxx::hash_set;
+#else
+/*Solaris*/
 #include <hash_set>
-using std::hashtable;
 using std::hash_set;
+using std::hashtable;
+#endif
+
 
 const c_str hash_aggregate_packet_t::PACKET_TYPE = "HASH_AGGREGATE";
 
