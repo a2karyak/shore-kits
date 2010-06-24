@@ -35,6 +35,17 @@
 
 using namespace shore;
 
+ENTER_NAMESPACE(shore);
+DEFINE_ROW_CACHE_TLS(tpcc, warehouse);
+DEFINE_ROW_CACHE_TLS(tpcc, district);
+DEFINE_ROW_CACHE_TLS(tpcc, stock);
+DEFINE_ROW_CACHE_TLS(tpcc, order_line);
+DEFINE_ROW_CACHE_TLS(tpcc, customer);
+DEFINE_ROW_CACHE_TLS(tpcc, history);
+DEFINE_ROW_CACHE_TLS(tpcc, order);
+DEFINE_ROW_CACHE_TLS(tpcc, new_order);
+DEFINE_ROW_CACHE_TLS(tpcc, item);
+EXIT_NAMESPACE(shore);
 
 ENTER_NAMESPACE(tpcc);
 

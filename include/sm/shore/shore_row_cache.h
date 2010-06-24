@@ -35,228 +35,61 @@
 #define __SHORE_ROW_CACHE_H
 
 #include "k_defines.h"
-
-#include "util/guard.h"
-
+#include "block_alloc.h"
 #include "shore_row_impl.h"
-
-
-
-// these guys need to access the underlying object cache
-
-using namespace shore;
-
-template <class T> class row_cache_t;
-
-template <class T> 
-void* operator new(size_t, row_cache_t<T>*);
-
-template <class T> 
-void operator delete(void*, row_cache_t<T>*);
 
 
 ENTER_NAMESPACE(shore);
 
-
-
-// define cache stats to get some statistics about the tuple cache
-#undef CACHE_STATS
-//#define CACHE_STATS
-
-
-const int DEFAULT_INIT_ROW_COUNT = 50;
-
-
 template <class TableDesc>
-class row_cache_t : protected atomic_stack
+class row_cache_t 
 {
 public:    
     typedef row_impl<TableDesc> table_tuple;
 
+    struct tuple_factory {
+	// WARNING: manually assign non-NULL before using the cache... Or Else
+	static TableDesc* &ptable() {
+	    static TableDesc* _ptable;
+	    return _ptable;
+	}
+	static table_tuple* construct(void* ptr) {
+	    return new(ptr) table_tuple(ptable());
+	}
+
+	static void reset(table_tuple* t) {
+	    assert (t->_ptable == ptable());
+	    t->reset();
+	}
+	
+	// TODO: figure out how to build in the areprow stuff?
+	static table_tuple* init(table_tuple* t) { return t; }
+    };
+    
 private:
-    TableDesc*   _ptable; 
-    const uint_t _nbytes;
-
-#ifdef CACHE_STATS    
-    // stats
-    volatile uint_t _tuple_requests; 
-    volatile uint_t _tuple_setups;
-#endif              
-
-    // start with a non-empty pool, so that threads don't race
-    // at the beginning
-    struct mylink {
-        table_tuple* _pobj;
-        mylink* _next;
-        mylink() : _pobj(NULL), _next(NULL) { }
-        mylink(table_tuple* obj, mylink* next) : _pobj(obj), _next(next) { }
-        ~mylink() { }
-    };        
-
+    typedef object_cache<table_tuple, tuple_factory> Cache;
+    Cache	  _cache;
 
 public:
 
-    row_cache_t(TableDesc* ptable, uint init_count=DEFAULT_INIT_ROW_COUNT) 
-        : atomic_stack((int)-sizeof(ptr)),
-          _ptable(ptable),
-          _nbytes((uint_t)sizeof(table_tuple)+(uint_t)sizeof(ptr))
-#ifdef CACHE_STATS
-        , _tuple_requests(0), _tuple_setups(0)
-#endif
-    { 
-        assert (_ptable);
-
-        mylink head;
-        mylink* node = NULL;
-
-#ifdef CFG_CACHES
-        // create (init_count) objects, and push them to the cache
-        for (uint i=0; i<init_count; i++) {
-            table_tuple* u = borrow();
-            node = new mylink(u,head._next);
-            head._next = node;
-        }
-
-        for (uint i=0; i<init_count; i++) {
-            giveback(node->_pobj);
-            head._next = node;
-            node = node->_next;
-            delete (head._next);
-        }
-#endif
-    }
-
-    
-    /* Destroys the cache, calling the destructor for all the objects 
-     * it is hoarding.
-     */
-    ~row_cache_t() 
-    {
-        vpn val;
-        void* v = NULL;
-        int icount = 0;
-        while ( (v=pop()) ) {
-            val.v = v;
-            val.n += +_offset; // back up to the real
-            ((table_tuple*)v)->~table_tuple();
-            free(val.v);
-            ++icount;
-        }
-
-        TRACE( TRACE_TRX_FLOW, "Deleted: (%d) (%s)\n", icount, _ptable->name());
-    }
-
     /* Return an unused object, if cache empty allocate and return a new one
      */
-    table_tuple* borrow() 
-    {
-#ifdef CFG_CACHES
-#ifdef CACHE_STATS
-        atomic_inc_uint(&_tuple_requests);
-#endif
+    table_tuple* borrow() { return _cache.acquire(); }
 
-        void* val = pop();
-        if (val) return ((table_tuple*)(val));
-
-#ifdef CACHE_STATS
-        atomic_inc_uint(&_tuple_setups);
-#endif
-
-        table_tuple* temp = new (this) table_tuple();
-        temp->setup(_ptable);
-	return (temp);
-
-#else
-        // Calls malloc instead, for debugging purposes
-        table_tuple* temp = new table_tuple();
-        temp->setup(_ptable);
-        return (temp);
-#endif
-    }
-    
-    /* Return an object to the cache. The object is reset and put on the
+    /* Returns an object to the cache. The object is reset and put on the
      * free list.
      */
+    static
     void giveback(table_tuple* ptn) 
     {        
-#ifdef CFG_CACHES
         assert (ptn);
-        assert (ptn->_ptable == _ptable);
-
-        // avoid pointer aliasing problems with the optimizer
-        union { table_tuple* t; void* v; } u = {ptn};
-
-        // reset the object
-        u.t->reset();
-        
-        // give it back
-        push(u.v);
-#else
-        delete (ptn);
-#endif
-    }    
-
-
-#ifdef CACHE_STATS    
-    uint_t  setup_count() { return (*&_tuple_setups); }
-    uint_t  request_count() { return (*&_tuple_requests); }
-    void print_stats() {
-        TRACE( TRACE_STATISTICS, "Requests: (%d)\n", *&_tuple_requests);
-        TRACE( TRACE_STATISTICS, "Setups  : (%d)\n", *&_tuple_setups);
+	Cache::release(ptn);
     }
-#endif 
-
     
-    table_tuple* _do_alloc() 
-    {
-        vpn u = { malloc(_nbytes) };
-        if (!u.v) u.v = null();
-        table_tuple* pobj = (table_tuple*)prepare(u);
-	return (pobj);
-    }
-
-    uint_t nbytes() { return (_nbytes); }
-
-//     // these guys need to access the underlying object cache
-//     template <typename T> 
-//     friend void* operator new(size_t, row_cache_t<T>*);
-
-//     template <typename T> 
-//     friend void operator delete(void*, row_cache_t<T>*);
-
-
 }; // EOF: row_cache_t
 
 
-
 EXIT_NAMESPACE(shore);
-
-
-
-/* Usage: Object* pobj = new (object_cache_t<Object>) Object(...)
-   when finished, call object_cache_t<Object>::destroy(pobj) instead of delete.
- */
-
-template <typename T>
-inline void* operator new(size_t nbytes, shore::row_cache_t<T>* cache) 
-{
-    assert(cache->nbytes() >= nbytes);
-    return (cache->_do_alloc());
-}
-
-
-/* Called automatically by the compiler if T's constructor throws
-   (otherwise memory would leak).
-   Unfortunately, there is no "delete (cache)" syntax in C++ so the user
-   must still call cache::destroy()
- */
-template <typename T>
-inline void operator delete(void* ptr, shore::row_cache_t<T>* cache) 
-{
-    typedef shore::row_impl<T> table_tuple;
-    cache->giveback((table_tuple*)ptr);
-}
-
 
 
 #endif /* __SHORE_ROW_CACHE_H */

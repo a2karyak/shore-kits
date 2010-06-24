@@ -34,6 +34,14 @@
 using namespace shore;
 
 
+ENTER_NAMESPACE(shore);
+DEFINE_ROW_CACHE_TLS(tm1, sub);
+DEFINE_ROW_CACHE_TLS(tm1, ai);
+DEFINE_ROW_CACHE_TLS(tm1, sf);
+DEFINE_ROW_CACHE_TLS(tm1, cf);
+EXIT_NAMESPACE(shore);
+
+
 ENTER_NAMESPACE(tm1);
 
 

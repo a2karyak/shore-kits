@@ -37,6 +37,12 @@
 
 using namespace shore;
 
+ENTER_NAMESPACE(shore);
+DEFINE_ROW_CACHE_TLS(tpcb, branch);
+DEFINE_ROW_CACHE_TLS(tpcb, teller);
+DEFINE_ROW_CACHE_TLS(tpcb, account);
+DEFINE_ROW_CACHE_TLS(tpcb, history);
+EXIT_NAMESPACE(shore);
 
 ENTER_NAMESPACE(tpcb);
 

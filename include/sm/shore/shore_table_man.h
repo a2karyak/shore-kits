@@ -120,10 +120,27 @@ public:
     typedef row_cache_t<TableDesc> row_cache;
 
 protected:
+    
+    /* Place-holder until we clean up the code
 
-    TableDesc* _ptable;      /* pointer back to the table description */
-    guard<row_cache> _pcache;      /* pointer to a tuple cache */
-    guard<ats_char_t> _pts;  /* trash stack */
+       WARNING: forward decl only... must be specialized manually for
+       each instance we create
+    */
+    struct pcache_link {
+	static row_cache* tls_get();
+	operator row_cache*() { return tls_get(); }
+	row_cache* operator->() { return tls_get(); }
+    };
+
+#define _DEFINE_ROW_CACHE_TLS(table_man, tls_name) \
+    DECLARE_TLS(table_man::row_cache, tls_name);   \
+    template<> table_man::row_cache* table_man::pcache_link::tls_get() { return tls_name; }
+#define DEFINE_ROW_CACHE_TLS(ns, name)		\
+    _DEFINE_ROW_CACHE_TLS(ns::name##_man_impl, ns##name##_cache)
+
+    TableDesc* _ptable;       /* pointer back to the table description */
+    pcache_link _pcache; /* pointer to a tuple cache */
+    guard<ats_char_t> _pts;   /* trash stack */
 
 
 public:
@@ -133,17 +150,15 @@ public:
     /* ------------------- */
 
     table_man_impl(TableDesc* aTableDesc, 
-                   int row_count=DEFAULT_INIT_ROW_COUNT,
                    bool construct_cache=true)
         : _ptable(aTableDesc)
     {
         assert (_ptable);
-        assert (row_count>=0);
+
+	row_cache::tuple_factory::ptable() = aTableDesc;
 
         // init tuple cache
         if (construct_cache) {
-            _pcache = new row_cache(_ptable, row_count);
-
             // init trash stack            
             _pts = new ats_char_t(_ptable->maxsize());
         }

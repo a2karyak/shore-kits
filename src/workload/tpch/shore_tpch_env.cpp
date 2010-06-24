@@ -41,6 +41,18 @@ using namespace shore;
 using namespace dbgentpch;
 
 
+ENTER_NAMESPACE(shore);
+DEFINE_ROW_CACHE_TLS(tpch, nation);
+DEFINE_ROW_CACHE_TLS(tpch, region);
+DEFINE_ROW_CACHE_TLS(tpch, part);
+DEFINE_ROW_CACHE_TLS(tpch, supplier);
+DEFINE_ROW_CACHE_TLS(tpch, partsupp);
+DEFINE_ROW_CACHE_TLS(tpch, customer);
+DEFINE_ROW_CACHE_TLS(tpch, orders);
+DEFINE_ROW_CACHE_TLS(tpch, lineitem);
+EXIT_NAMESPACE(shore);
+
+
 ENTER_NAMESPACE(tpch);
 
 

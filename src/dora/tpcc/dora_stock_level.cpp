@@ -235,7 +235,7 @@ r_ol_stock_action::trx_exec()
     ol_list.setup(1, SQL_INT);  /* OL_W_ID */
     ol_list.setup(2, SQL_INT);  /* OL_D_ID */
     ol_list.setup(3, SQL_INT);  /* OL_O_ID */
-    sort_man_impl ol_sorter(&ol_list, &sortrep, 2);
+    sort_man_impl ol_sorter(&ol_list, &sortrep);
     row_impl<sort_buffer_t> rsb(&ol_list);
 
     w_rc_t e = RCOK;
