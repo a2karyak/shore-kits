@@ -377,9 +377,7 @@ AC_ARG_ENABLE(dbgsymbols,
   *) dbgsymbols=false ;;
 esac],[dbgsymbols=false])
 
-# -o "$debug" = true -o "$profile" = true
-
-if test "$dbgsymbols" = true
+if test "$dbgsymbols" = true -o "$debug" = true -o "$profile" = true
 then 
      AC_MSG_RESULT(yes)
      COMP_OPTIONS="$COMP_OPTIONS dbgsymbols"
