@@ -168,12 +168,10 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 #define DECLARE_RVP_CACHE(Type)                         \
     struct Type##_cache   {                             \
-            guard< object_cache_t<Type> > _cache;       \
-            array_guard_t<PoolPtr> _poolArray;          \
-            Type##_cache() {                            \
-                _poolArray = new PoolPtr[1];            \
-                _cache = new object_cache_t<Type>(_poolArray.get()); }  \
-            ~Type##_cache() { _cache.done(); _poolArray.done(); } };
+        guard< object_cache_t<Type> > _cache;           \
+        Type##_cache() {                                \
+            _cache = new object_cache_t<Type>(); }      \
+        ~Type##_cache() { _cache.done(); } };
 
 
 #define DECLARE_TLS_RVP_CACHE(Type)              \
@@ -183,17 +181,15 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 // ACTION cache
 
-#define DECLARE_ACTION_CACHE(Type,Datatype)             \
-    struct Type##_cache  {                              \
-            array_guard_t<PoolPtr> _poolArray;          \
-            guard<object_cache_t<Type> > _cache;        \
-            guard<Pool> _keyPtrPool;                    \
-            guard<Pool> _kalReqPool;                    \
-            guard<Pool> _dtPool;                        \
-            Type##_cache() {                            \
-                _poolArray = new PoolPtr[3];            \
-                _cache = new object_cache_t<Type>(_poolArray.get()); }  \
-            ~Type##_cache() { _cache.done(); _poolArray.done(); } };
+#define DECLARE_ACTION_CACHE(Type,Datatype)                             \
+    struct Type##_cache  {                                              \
+        guard<object_cache_t<Type> > _cache;                            \
+        guard<Pool> _keyPtrPool;                                        \
+        guard<Pool> _kalReqPool;                                        \
+        guard<Pool> _dtPool;                                            \
+        Type##_cache() {                                                \
+            _cache = new object_cache_t<Type>(); }                      \
+        ~Type##_cache() { _cache.done(); } };
 
 
 

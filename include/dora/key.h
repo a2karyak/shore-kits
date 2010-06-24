@@ -137,14 +137,8 @@ struct key_wrapper_t
     // CACHEABLE INTERFACE
 
 
-    void setup(Pool** stl_pool_alloc_list) 
+    void init() 
     {
-        assert (stl_pool_alloc_list);
-
-        // it must have 1 pool lists: 
-        // stl_pool_list[0]: DataType pool
-//         assert (stl_pool_alloc_list[0]); 
-//         _key_v = new DataVec( stl_pool_alloc_list[0] );
     }
 
     void reset() 

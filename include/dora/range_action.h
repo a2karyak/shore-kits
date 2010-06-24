@@ -134,18 +134,8 @@ public:
 
     virtual void giveback()=0;
 
-    virtual void setup(Pool** /* stl_pool_list */)
+    virtual void init()
     {
-        //        Action::setup(stl_pool_list);
-
-        // it must have 3 pool lists
-        // stl_pool_list[0]: KeyPtr pool
-        // stl_pool_list[1]: KALReq pool
-        // stl_pool_list[2]: DataType pool (for the Keys)
-//         assert (stl_pool_list[2]);         
-
-//         _down = new Key( stl_pool_list[2] );
-//         _up = new Key( stl_pool_list[2] );
     }
 
     virtual void reset()

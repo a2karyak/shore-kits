@@ -151,14 +151,8 @@ public:
 
     // CACHEABLE INTERFACE
 
-    void setup(Pool** stl_pool_alloc_list) 
+    void init() 
     {
-        assert (stl_pool_alloc_list);
-
-        // it must have 1 pool lists: 
-        // stl_pool_alloc_list[0]: base_action_t* pool
-        // assert (stl_pool_alloc_list[0]); 
-        //_actions = new baseActionsList( stl_pool_alloc_list[0] );
     }
 
     void reset() 

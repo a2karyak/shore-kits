@@ -63,6 +63,7 @@ public:
 	}
 	
 	// TODO: figure out how to build in the areprow stuff?
+        // IP: The areprow stuff should use another block allocator for char*[some-max-size]
 	static table_tuple* init(table_tuple* t) { return t; }
     };
     

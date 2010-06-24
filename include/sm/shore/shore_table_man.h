@@ -338,23 +338,13 @@ public:
 
     inline table_tuple* get_tuple() 
     {
-        //assert (_pcache);
         return (_pcache->borrow());
     }
     
 
     inline void give_tuple(table_tuple* ptt) 
     {
-        //assert (_pcache);
         _pcache->giveback(ptt);
-    }
-
-    void print_cache_stats() 
-    {
-        assert (_pcache);
-        TRACE( TRACE_STATISTICS, "(%s) tuple cache statistics\n", 
-               _ptable->name());
-        //_pcache->print_stats();
     }
 
 }; // EOF: table_man_impl

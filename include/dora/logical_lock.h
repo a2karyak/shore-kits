@@ -293,12 +293,8 @@ protected:
     // pool for KeyLL nodes
     guard<Pool> _keyll_pool;
 
-    // pool for Keys
-    //guard<Pool> _key_pool;
-
     // cache of Keys
     guard< object_cache_t<Key> > _key_cache;
-    array_guard_t<Pool*> _key_pool_array;
 
 public:
 
@@ -310,16 +306,7 @@ public:
         assert (_keyll_pool);
         _ll_map = new LLMap(std::less<Key>(),_keyll_pool.get());
 
-        // setup Key cache
-        // _key_pool = new Pool(sizeof(Key), 1000);
-        // assert (_key_pool);
-
-        _key_pool_array = new Pool*[1];
-        assert (_key_pool_array);
-
-        //_key_pool_array[0] = _key_pool.get();
-
-        _key_cache = new object_cache_t<Key>(_key_pool_array.get());
+        _key_cache = new object_cache_t<Key>();
         assert (_key_cache);
     }
 
@@ -330,8 +317,6 @@ public:
         
         // remove cache
         _key_cache.done();
-        //_key_pool.done();
-        _key_pool_array.done();
 
         _ll_map.done();
         _keyll_pool.done();

@@ -166,17 +166,8 @@ public:
     virtual void giveback()=0;                            
 
 
-    virtual void setup(Pool** stl_pool_alloc_list) 
+    virtual void setup() 
     {
-        assert (stl_pool_alloc_list);
-
-        // it must have 2 pool lists: 
-        // stl_pool_list[0]: KeyPtr pool
-        // stl_pool_list[1]: KALReq pool
-//         assert (stl_pool_alloc_list[0] && stl_pool_alloc_list[1]); 
-
-//         _keys = new KeyPtrVec( stl_pool_alloc_list[0] );
-//         _requests = new KALReqVec( stl_pool_alloc_list[1] );        
     }
 
     virtual void reset() 
