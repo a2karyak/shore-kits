@@ -90,8 +90,15 @@ UTIL = \
         $(SU)/shell.cpp \
         $(SU)/tcp.cpp \
         $(SU)/w_strlcpy.cpp \
-	$(SU)/prcinfo.cpp \
         $(SU)/cpustat.cpp
+
+
+UTIL +=	$(SU)/prcinfo.cpp
+# if SPARC_MACHINE
+# UTIL +=	$(SU)/prcinfo.cpp
+# else
+# UTIL +=	$(SU)/topinfo.cpp
+# endif
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \

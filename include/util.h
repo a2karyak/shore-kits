@@ -25,7 +25,6 @@
 #define __UTIL_H
 
 
-#include "util/prcinfo.h"
 #include "util/namespace.h"
 #include "util/compat.h"
 #include "util/c_str.h"
@@ -47,7 +46,6 @@
 #include "util/countdown.h"
 #include "util/confparser.h"
 #include "util/envvar.h"
-#include "util/shell.h"
 #include "util/condex.h"
 #include "util/stl_pooled_alloc.h"
 #include "util/stl_pool.h"
@@ -57,6 +55,14 @@
 #include "util/w_strlcpy.h"
 #include "util/cpustat.h"
 
+#include "util/prcinfo.h"
+// #ifdef __sparcv9
+// #include "util/prcinfo.h"
+// #else
+// #include "util/topinfo.h"
+// #endif
+
+#include "util/shell.h"
 
 // Needed by QPipe
 #ifdef CFG_QPIPE
