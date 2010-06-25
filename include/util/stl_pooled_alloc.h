@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   stl_pooled_alloc.cpp
  * 
  *  @brief:  A simple poolled allocator
@@ -39,6 +37,7 @@
 
 #include "stl_pool.h"
 #include <cassert>
+#include <vector>
 #include <list>
 #include <set>
 #include <map>
