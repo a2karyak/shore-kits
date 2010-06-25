@@ -71,6 +71,8 @@ struct ShoreTM1TrxCount
     uint ins_call_fwd;
     uint del_call_fwd;
 
+    uint get_sub_nbr;
+
     ShoreTM1TrxCount& operator+=(ShoreTM1TrxCount const& rhs) {
         get_sub_data += rhs.get_sub_data;
         get_new_dest += rhs.get_new_dest;
@@ -79,6 +81,9 @@ struct ShoreTM1TrxCount
         upd_loc += rhs.upd_loc;
         ins_call_fwd += rhs.ins_call_fwd;
         del_call_fwd += rhs.del_call_fwd;
+
+        get_sub_nbr += rhs.get_sub_nbr;
+
 	return (*this);
     }
 
@@ -90,12 +95,16 @@ struct ShoreTM1TrxCount
         upd_loc -= rhs.upd_loc;
         ins_call_fwd -= rhs.ins_call_fwd;
         del_call_fwd -= rhs.del_call_fwd;
+
+        get_sub_nbr -= rhs.get_sub_nbr;
+
 	return (*this);
     }
 
     uint total() const {
         return (get_sub_data+get_new_dest+get_acc_data+
-                upd_sub_data+upd_loc+ins_call_fwd+del_call_fwd);
+                upd_sub_data+upd_loc+ins_call_fwd+del_call_fwd+
+                get_sub_nbr);
     }
     
 }; // EOF: ShoreTM1TrxCount
@@ -212,6 +221,8 @@ public:
     DECLARE_TRX(upd_loc);
     DECLARE_TRX(ins_call_fwd);
     DECLARE_TRX(del_call_fwd);
+
+    DECLARE_TRX(get_sub_nbr);
     
     // for thread-local stats
     virtual void env_thread_init();

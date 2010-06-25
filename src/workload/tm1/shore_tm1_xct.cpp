@@ -489,7 +489,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 1 table:
+    // Touches 1 table:
     // Subscriber
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
@@ -605,7 +605,7 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 2 tables:
+    // Touches 2 tables:
     // SpecialFacility and CallForwarding
     row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
     assert (prsf);
@@ -672,8 +672,8 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
                                               lowrep, highrep,
                                               gndin._s_id, gndin._sf_type, 
                                               gndin._s_time);
-		cf_iter = tmp_cf_iter;
 		if (e.is_error()) { goto done; }
+		cf_iter = tmp_cf_iter;
 	    }
 
             e = cf_iter->next(_pssm, eof, *prcf);
@@ -742,7 +742,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 1 table:
+    // Touches 1 table:
     // AccessInfo
     row_impl<access_info_t>* prai = _pai_man->get_tuple();
     assert (prai);
@@ -820,7 +820,7 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 2 tables:
+    // Touches 2 tables:
     // Subscriber, SpecialFacility
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
@@ -885,8 +885,6 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         
         e = _psub_man->update_tuple(_pssm, prsub);
 
-        if (e.is_error()) { goto done; }
-
 
         // COMMIT
 //         e = _pssm->commit_xct();
@@ -928,7 +926,7 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 1 table:
+    // Touches 1 table:
     // Subscriber
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
@@ -960,9 +958,6 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
         prsub->set_value(33, ulin._vlr_loc);
         
         e = _psub_man->update_tuple(_pssm, prsub);
-
-        if (e.is_error()) { goto done; }
-
 
         // COMMIT
 //         e = _pssm->commit_xct();
@@ -1002,7 +997,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 3 tables:
+    // Touches 3 tables:
     // Subscriber, SpecialFacility, CallForwarding
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
@@ -1172,7 +1167,7 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
     assert (_initialized);
     assert (_loaded);
 
-    // get_sub_data touches 2 tables:
+    // Touches 2 tables:
     // Subscriber, CallForwarding
     row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
     assert (prsub);
@@ -1231,8 +1226,6 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
 
         e = _pcf_man->delete_tuple(_pssm, prcf);
 
-        if (e.is_error()) { goto done; }        
-
 
         // COMMIT
 //         e = _pssm->commit_xct();
@@ -1256,6 +1249,95 @@ done:
 
 } // EOF: DEL_CALL_FWD
 
+
+
+
+/******************************************************************** 
+ *
+ * TM1 GET_SUB_NBR
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id, 
+                                    get_sub_nbr_input_t& gsnin)
+{
+    w_rc_t e = RCOK;
+
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // Touches 1 table:
+    // Subscriber
+    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    assert (prsub);
+
+    rep_row_t areprow(_psub_man->ts());
+    // allocate space for the larger table representation
+    areprow.set(_psub_desc->maxsize()); 
+    prsub->_rep = &areprow;
+
+    rep_row_t lowrep(_psub_man->ts());
+    rep_row_t highrep(_psub_man->ts());
+    lowrep.set(_psub_desc->maxsize()); 
+    highrep.set(_psub_desc->maxsize()); 
+
+    bool eof;
+    uint range = get_rec_to_access();
+
+    int sid, vlrloc;
+    
+
+    /* SELECT s_id, msc_location
+     * FROM   Subscriber
+     * WHERE  sub_nbr >= <sub_nbr rndstr as s1>
+     * AND    sub_nbr <  (s1 + <range>);
+     *
+     * plan: index probe on "SUB_NBR_IDX"
+     */
+
+    { // make gotos safe
+
+        // 1. Secondary index access to Subscriber using sub_nbr and range
+        guard<index_scan_iter_impl<subscriber_t> > sub_iter;
+        {
+            index_scan_iter_impl<subscriber_t>* tmp_sub_iter;
+            TRACE( TRACE_TRX_FLOW, 
+                   "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
+                   xct_id, gsnin._s_id, range);
+            e = _psub_man->sub_get_idx_iter(_pssm, tmp_sub_iter, prsub, 
+                                            lowrep,highrep,
+                                            gsnin._s_id,range,
+                                            SH,     /* read-only access */
+                                            true);  /* retrieve record  */
+            if (e.is_error()) { goto done; }                   
+            sub_iter = tmp_sub_iter;
+        }
+
+        // 2. Read all the returned records
+        e = sub_iter->next(_pssm, eof, *prsub);
+        if (e.is_error()) { goto done; }
+
+        while (!eof) {
+            prsub->get_value(0, sid);
+            prsub->get_value(33, vlrloc);
+            
+            TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
+                   xct_id, sid, vlrloc);
+
+            e = sub_iter->next(_pssm, eof, *prsub);
+            if (e.is_error()) { goto done; }            
+        }
+
+    } // goto
+
+done:    
+    // return the tuples to the cache
+    _psub_man->give_tuple(prsub);
+    return (e);
+
+} // EOF: GET_SUB_NBR
 
 
 EXIT_NAMESPACE(tm1);

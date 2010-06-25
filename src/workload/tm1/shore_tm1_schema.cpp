@@ -22,8 +22,7 @@
 */
 
 /** @file:   shore_tm1_schema.h
- *
- *  @brief:  Declaration of the Telecom One (TM1) benchmark tables
+ * *  @brief:  Declaration of the Telecom One (TM1) benchmark tables
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
@@ -115,7 +114,7 @@ subscriber_t::subscriber_t(string sysname) :
 
     uint keys1[1] = { 0 }; // IDX { S_ID }
 
-    uint keys2[2] = { 1 }; // IDX { SUB_NBR }
+    uint keys2[1] = { 1 }; // IDX { SUB_NBR }
 
 
     // baseline - Regular indexes
@@ -139,9 +138,17 @@ subscriber_t::subscriber_t(string sysname) :
             // last param (nolock) is set to true
             create_primary_idx("S_IDX_NL", 0, keys1, 1, true);
 
+
+#ifdef USE_DORA_EXT_IDX
+            // create the index on sub_nbr extended with the key information
+            uint keys2_ext[2] = { 1, 0 }; // IDX { SUB_NBR, S_ID }
+            create_index("SUB_NBR_IDX_NL", 0, keys2_ext, 1, true, false, true);
+#else
             // create index sub_nbr_index on (sub_nbr)
             // last param (nolock) is set to true
             create_index("SUB_NBR_IDX_NL", 0, keys2, 1, true, false, true);
+#endif
+
         }       
 #endif
 }

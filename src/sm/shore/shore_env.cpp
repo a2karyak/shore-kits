@@ -100,8 +100,11 @@ ShoreEnv::ShoreEnv(string confname)
     pthread_mutex_init(&_scaling_mutex, NULL);
     pthread_mutex_init(&_queried_mutex, NULL);
 
+    envVar* ev = envVar::instance();
+    _rec_to_acc = ev->getVarInt("records-to-access",1);
+
 #ifdef CFG_SLI
-    _bUseSLI = envVar::instance()->getVarInt("db-worker-sli",0);
+    _bUseSLI = ev->getVarInt("db-worker-sli",0);
     fprintf(stdout, "SLI= %s\n", (_bUseSLI ? "enabled" : "disabled"));
 #endif
 }
@@ -187,7 +190,8 @@ double ShoreEnv::get_sf() const
 
 double ShoreEnv::upd_sf()
 {
-    double tmp_sf = envVar::instance()->getSysVarDouble("sf");
+    envVar* ev = envVar::instance();
+    double tmp_sf = ev->getSysVarDouble("sf");
     assert (tmp_sf>0);
     set_sf(tmp_sf);
     return (_scaling_factor);

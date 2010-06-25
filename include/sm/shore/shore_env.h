@@ -503,6 +503,8 @@ protected:
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
 
+    // Used for some benchmarks - number of records to access
+    volatile uint _rec_to_acc;
 
     // Storage manager access functions
     int  configure_sm();
@@ -613,6 +615,9 @@ public:
                                   const double avgcpuusage)=0;
 
     virtual void reset_stats()=0;
+
+    inline uint get_rec_to_access() { return *&_rec_to_acc; }
+
 
     // Run one transaction
     virtual w_rc_t run_one_xct(Request* prequest)=0;

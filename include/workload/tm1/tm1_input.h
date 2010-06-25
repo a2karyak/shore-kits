@@ -289,6 +289,30 @@ struct del_call_fwd_input_t
 
 
 
+/*********************************************************************
+ * 
+ * get_sub_nbr_input_t
+ *
+ * Input for any GET_SUB_NBR transaction
+ *
+ *********************************************************************/
+
+struct get_sub_nbr_input_t 
+{
+    /**
+     *  @brief GET_SUB_NBR transaction inputs:
+     *  
+     *  1) S_ID    int   [1 .. SF] : subscriber id
+     */
+
+    int     _s_id;           /* input: URand(1,SF) */
+    
+    get_sub_nbr_input_t& operator= (const get_sub_nbr_input_t& rhs);
+
+}; // EOF get_sub_nbr_input_t
+
+
+
 /////////////////////////////////////////////////////////////
 //
 // @brief: Declaration of functions that generate the inputs 
@@ -323,6 +347,9 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int SF,
 
 del_call_fwd_input_t create_del_call_fwd_input(int SF, 
                                                int specificSub = 0);
+
+get_sub_nbr_input_t create_get_sub_nbr_input(int SF, 
+                                             int specificSub = 0);
 
 
 

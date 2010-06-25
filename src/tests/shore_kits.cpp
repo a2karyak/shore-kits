@@ -526,8 +526,9 @@ int main(int argc, char* argv[])
     int netport = 0;
     string config;
     int c = 0;
+    int iRange = 0;
 
-    while ((c = getopt(argc,argv,"dnp:c:")) != -1) {
+    while ((c = getopt(argc,argv,"dnp:c:x:")) != -1) {
         switch (c) {
         case 'n':
             TRACE( TRACE_ALWAYS, "NETMODE\n");
@@ -546,8 +547,13 @@ int main(int argc, char* argv[])
             TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
             ev->setVarInt("db-clobberdev",1);
             break;
+        case 'x':
+            TRACE( TRACE_ALWAYS, "RANGE (%d)\n", atoi(optarg));            
+            iRange = atoi(optarg);
+            ev->setVarInt("records-to-access",iRange);
+            break;
         default:
-            TRACE( TRACE_ALWAYS, "Wrong parameter\n");
+            TRACE( TRACE_ALWAYS, "Wrong parameter accepted: dnp:c:x:\n");
             return (2);
         }
     }

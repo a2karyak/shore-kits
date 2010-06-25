@@ -52,6 +52,7 @@ ENTER_NAMESPACE(tm1);
 class sub_man_impl : public table_man_impl<subscriber_t>
 {
     typedef row_impl<subscriber_t> sub_tuple;
+    typedef index_scan_iter_impl<subscriber_t> sub_idx_iter;
 
 public:
 
@@ -85,6 +86,29 @@ public:
     w_rc_t sub_nbr_idx_nl(ss_m* db, 
                           sub_tuple* ptuple, 
                           const char* s_nbr);
+
+
+
+    /* --- access specific tuples with iter  --- */
+    w_rc_t sub_get_idx_iter(ss_m* db,
+                            sub_idx_iter* &iter,
+                            sub_tuple* ptuple,
+                            rep_row_t &replow,
+                            rep_row_t &rephigh,
+                            const int sub_id,
+                            const uint range,
+                            lock_mode_t alm = SH,
+                            bool need_tuple = true);
+
+    w_rc_t sub_get_idx_iter_nl(ss_m* db,
+                               sub_idx_iter* &iter,
+                               sub_tuple* ptuple,
+                               rep_row_t &replow,
+                               rep_row_t &rephigh,
+                               const int sub_id,
+                               const uint range,
+                               bool need_tuple = true);
+    
     
 }; // EOF: sub_man_impl
 

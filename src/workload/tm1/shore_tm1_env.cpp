@@ -69,7 +69,7 @@ int ShoreTM1Env::load_schema()
     _psub_man = new sub_man_impl(_psub_desc.get());
     _pai_man  = new ai_man_impl(_pai_desc.get());
     _psf_man  = new sf_man_impl(_psf_desc.get());
-    _pcf_man  = new cf_man_impl(_pcf_desc.get());
+    _pcf_man  = new cf_man_impl(_pcf_desc.get());   
         
     return (0);
 }
@@ -164,6 +164,11 @@ int ShoreTM1Env::statistics()
            rval.attempted.del_call_fwd,
            rval.failed.del_call_fwd,
            rval.deadlocked.del_call_fwd);
+
+    TRACE( TRACE_STATISTICS, "GetSubNbr. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.get_sub_nbr,
+           rval.failed.get_sub_nbr,
+           rval.deadlocked.get_sub_nbr);
 
     ShoreEnv::statistics();
 

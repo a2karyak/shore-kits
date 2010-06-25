@@ -40,8 +40,7 @@ ENTER_NAMESPACE(tm1);
 /* -------------------- */
 
 
-get_sub_data_input_t& 
-get_sub_data_input_t::operator= (const get_sub_data_input_t& rhs) 
+get_sub_data_input_t& get_sub_data_input_t::operator= (const get_sub_data_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     return (*this);
@@ -70,8 +69,7 @@ get_sub_data_input_t create_get_sub_data_input(int sf,
 /* -------------------- */
 
 
-get_new_dest_input_t& 
-get_new_dest_input_t::operator= (const get_new_dest_input_t& rhs) 
+get_new_dest_input_t& get_new_dest_input_t::operator= (const get_new_dest_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     _sf_type = rhs._sf_type;
@@ -105,8 +103,7 @@ get_new_dest_input_t create_get_new_dest_input(int sf,
 /* --- GET_ACC_DATA --- */
 /* -------------------- */
 
-get_acc_data_input_t& 
-get_acc_data_input_t::operator= (const get_acc_data_input_t& rhs) 
+get_acc_data_input_t& get_acc_data_input_t::operator= (const get_acc_data_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     _ai_type = rhs._ai_type;
@@ -135,8 +132,7 @@ get_acc_data_input_t create_get_acc_data_input(int sf,
 /* --- UPD_SUB_DATA --- */
 /* -------------------- */
 
-upd_sub_data_input_t& 
-upd_sub_data_input_t::operator= (const upd_sub_data_input_t& rhs) 
+upd_sub_data_input_t& upd_sub_data_input_t::operator= (const upd_sub_data_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     _sf_type = rhs._sf_type;
@@ -170,8 +166,7 @@ upd_sub_data_input_t create_upd_sub_data_input(int sf,
 /* --------------- */
 
 
-upd_loc_input_t& 
-upd_loc_input_t::operator= (const upd_loc_input_t& rhs) 
+upd_loc_input_t& upd_loc_input_t::operator= (const upd_loc_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     store_string(_sub_nbr, rhs._sub_nbr);
@@ -203,8 +198,7 @@ upd_loc_input_t create_upd_loc_input(int sf,
 /* -------------------- */
 
 
-ins_call_fwd_input_t& 
-ins_call_fwd_input_t::operator= (const ins_call_fwd_input_t& rhs) 
+ins_call_fwd_input_t& ins_call_fwd_input_t::operator= (const ins_call_fwd_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     store_string(_sub_nbr, rhs._sub_nbr);
@@ -241,8 +235,7 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int sf,
 /* --- DEL_CALL_FWD --- */
 /* -------------------- */
 
-del_call_fwd_input_t& 
-del_call_fwd_input_t::operator= (const del_call_fwd_input_t& rhs) 
+del_call_fwd_input_t& del_call_fwd_input_t::operator= (const del_call_fwd_input_t& rhs) 
 {
     _s_id = rhs._s_id;
     store_string(_sub_nbr, rhs._sub_nbr);
@@ -269,6 +262,38 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
     dcfin._s_time = URand(0,2) * 8;
     return (dcfin);
 }
+
+
+
+/* ------------------- */
+/* --- GET_SUB_NBR --- */
+/* ------------------- */
+
+
+get_sub_nbr_input_t& get_sub_nbr_input_t::operator= (const get_sub_nbr_input_t& rhs) 
+{
+    _s_id = rhs._s_id;
+    return (*this);
+}
+
+
+get_sub_nbr_input_t create_get_sub_nbr_input(int sf, 
+                                             int specificSub)
+{
+    assert (sf>0);
+
+    get_sub_nbr_input_t gsnin;
+
+    if (specificSub>0)
+        gsnin._s_id = specificSub;
+    else
+	gsnin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+
+    return (gsnin);
+}
+
+
+
 
 
 
