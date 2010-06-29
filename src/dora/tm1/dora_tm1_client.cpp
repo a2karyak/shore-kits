@@ -49,6 +49,7 @@ const int XCT_TM1_DORA_CALL_FWD_MIX  = 226;
 const int XCT_TM1_DORA_INS_CALL_FWD  = 227;
 const int XCT_TM1_DORA_DEL_CALL_FWD  = 228;
 
+const int XCT_TM1_DORA_GET_SUB_NBR   = 230;
 
 
 /********************************************************************* 
@@ -72,6 +73,10 @@ int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_DORA_CALL_FWD_MIX]    = "DORA-TM1-CallFwd-Mix";
     stmap[XCT_TM1_DORA_INS_CALL_FWD]    = "DORA-TM1-InsCallFwd";
     stmap[XCT_TM1_DORA_DEL_CALL_FWD]    = "DORA-TM1-DelCallFwd";
+
+    stmap[XCT_TM1_DORA_GET_SUB_NBR]     = "DORA-TM1-GetSubNbr";
+
+
     return (stmap.size());
 }
 
@@ -138,6 +143,10 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
             return (_tm1db->dora_ins_call_fwd(xctid,atrt,selid,true)); // always wake in the mix
         else
             return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,true));
+
+    case XCT_TM1_DORA_GET_SUB_NBR:
+        assert(0); // IP: TODO
+        //return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,bWake));
 
 
     default:

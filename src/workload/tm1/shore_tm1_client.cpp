@@ -73,6 +73,9 @@ int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_CALL_FWD_MIX]    = "TM1-CallFwd-Mix";
     stmap[XCT_TM1_INS_CALL_FWD]    = "TM1-InsCallFwd";
     stmap[XCT_TM1_DEL_CALL_FWD]    = "TM1-DelCallFwd";
+
+    stmap[XCT_TM1_GET_SUB_NBR]    = "TM1-GetSubNbr";
+
     return (stmap.size());
 }
 

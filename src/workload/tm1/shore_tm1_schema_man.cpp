@@ -125,6 +125,7 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
 
     // SUB_NBR_IDX: {1}
 
+    // Low bound
     sprintf(aSubNbr,"%015d",sub_id);
     ptuple->set_value(1, aSubNbr);
 
@@ -133,11 +134,12 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
     if (alm == NL) ptuple->set_value(0, 0);
 #endif
 
-    sprintf(aSubNbr,"%015d",(sub_id+range));
-    ptuple->set_value(1, aSubNbr);
-    
     lowsz = format_key(pindex, ptuple, replow);
     assert (replow._dest);
+
+    // High bound
+    sprintf(aSubNbr,"%015d",(sub_id+range));
+    ptuple->set_value(1, aSubNbr);
 
 #ifdef USE_DORA_EXT_IDX
     if (alm == NL) ptuple->set_value(0, MAX_INT); // largest S_ID

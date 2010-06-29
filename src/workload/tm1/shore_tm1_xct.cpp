@@ -203,6 +203,9 @@ w_rc_t ShoreTM1Env::run_one_xct(Request* prequest)
         else
             return (run_del_call_fwd(prequest));
 
+    case XCT_TM1_GET_SUB_NBR:
+        return (run_get_sub_nbr(prequest));
+
     default:
         assert (0); // UNKNOWN TRX-ID
     }
@@ -234,6 +237,7 @@ DEFINE_TRX(ShoreTM1Env,upd_loc);
 DEFINE_TRX(ShoreTM1Env,ins_call_fwd);
 DEFINE_TRX(ShoreTM1Env,del_call_fwd);
 
+DEFINE_TRX(ShoreTM1Env,get_sub_nbr);
 
 
 // uncomment the line below if want to dump (part of) the trx results

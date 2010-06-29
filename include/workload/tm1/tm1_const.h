@@ -114,6 +114,8 @@ const int XCT_TM1_CALL_FWD_MIX  = 26;
 const int XCT_TM1_INS_CALL_FWD  = 27;
 const int XCT_TM1_DEL_CALL_FWD  = 28;
 
+const int XCT_TM1_GET_SUB_NBR   = 29;
+
 
 
 
