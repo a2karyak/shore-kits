@@ -261,7 +261,7 @@ public:
 
 void ShoreTM1Env::table_builder_t::work() 
 {
-    assert (_count>0);
+    assert (_count>=0);
     
     w_rc_t e = RCOK;
     int commitmark = 0;
