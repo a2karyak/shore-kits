@@ -59,8 +59,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_gsd_rvp,get_sub_data);
  ********************************************************************/
 
 
-void 
-r_sub_gsd_action::calc_keys()
+void r_sub_gsd_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._s_id);
@@ -69,8 +68,7 @@ r_sub_gsd_action::calc_keys()
 
 
 
-w_rc_t 
-r_sub_gsd_action::trx_exec() 
+w_rc_t r_sub_gsd_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -547,16 +545,14 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_usd_rvp,upd_sub_data);
  ********************************************************************/
 
 
-void 
-upd_sub_usd_action::calc_keys()
+void upd_sub_usd_action::calc_keys()
 {
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
 }
 
 
-w_rc_t 
-upd_sub_usd_action::trx_exec() 
+w_rc_t upd_sub_usd_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -618,8 +614,7 @@ done:
 
 
 
-void 
-upd_sf_usd_action::calc_keys()
+void upd_sf_usd_action::calc_keys()
 {
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
@@ -629,8 +624,7 @@ upd_sf_usd_action::calc_keys()
 }
 
 
-w_rc_t 
-upd_sf_usd_action::trx_exec() 
+w_rc_t upd_sf_usd_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -704,8 +698,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_ul_rvp,upd_loc);
  ********************************************************************/
 
 
-void 
-upd_sub_ul_action::calc_keys()
+void upd_sub_ul_action::calc_keys()
 {
     _down.push_back(_in._s_id);
     _up.push_back(_in._s_id);
@@ -786,8 +779,7 @@ done:
 
 #ifdef TM1ICF2
 
-w_rc_t 
-mid1_icf_rvp::run() 
+w_rc_t mid1_icf_rvp::run() 
 {
 #ifndef ONLYDORA
     assert (_xct);
@@ -823,8 +815,7 @@ mid1_icf_rvp::run()
 }
 
 
-w_rc_t 
-mid2_icf_rvp::run() 
+w_rc_t mid2_icf_rvp::run() 
 {
 #ifndef ONLYDORA
     assert (_xct);
@@ -861,8 +852,7 @@ mid2_icf_rvp::run()
 
 #else
 
-w_rc_t 
-mid_icf_rvp::run() 
+w_rc_t mid_icf_rvp::run() 
 {
 #ifndef ONLYDORA
     assert (_xct);
@@ -1353,6 +1343,114 @@ done:
     _penv->cf_man()->give_tuple(prcf);
     return (e);
 }
+
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 GET_SUB_NBR
+ *
+ ********************************************************************/
+
+DEFINE_DORA_FINAL_RVP_CLASS(final_gsn_rvp,get_sub_nbr);
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 GET_SUB_NBR ACTIONS
+ *
+ * (1) R-SUB
+ *
+ ********************************************************************/
+
+
+void r_sub_gsn_action::calc_keys()
+{
+    set_read_only();
+    _down.push_back(_in._s_id);
+    _up.push_back(_in._s_id);
+}
+
+
+
+w_rc_t r_sub_gsn_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    assert (prsub);
+
+    rep_row_t areprow(_penv->sub_man()->ts());
+    areprow.set(_penv->sub_desc()->maxsize()); 
+    prsub->_rep = &areprow;
+
+
+    rep_row_t lowrep(_penv->sub_man()->ts());
+    rep_row_t highrep(_penv->sub_man()->ts());
+    lowrep.set(_penv->sub_desc()->maxsize()); 
+    highrep.set(_penv->sub_desc()->maxsize()); 
+
+    bool eof;
+    int sid, vlrloc;
+
+
+
+    /* SELECT s_id, msc_location
+     * FROM   Subscriber
+     * WHERE  sub_nbr >= <sub_nbr rndstr as s1>
+     * AND    sub_nbr <  (s1 + <range>);
+     *
+     * plan: index probe on "SUB_NBR_IDX"
+     */
+
+    { // make gotos safe
+
+        // 1. Secondary index access to Subscriber using sub_nbr and range
+        guard<index_scan_iter_impl<subscriber_t> > sub_iter;
+        {
+            index_scan_iter_impl<subscriber_t>* tmp_sub_iter;
+            TRACE( TRACE_TRX_FLOW, 
+                   "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
+                   _tid.get_lo(), _in._s_id, _in._range);
+
+            e = _penv->sub_man()->sub_get_idx_iter(_penv->db(), 
+                                                   tmp_sub_iter, 
+                                                   prsub, 
+                                                   lowrep,highrep,
+                                                   _in._s_id,
+                                                   _in._range,
+                                                   NL,
+                                                   true);
+            if (e.is_error()) { goto done; }                   
+            sub_iter = tmp_sub_iter;
+        }
+
+        // 2. Read all the returned records
+        e = sub_iter->next(_penv->db(), eof, *prsub);
+        if (e.is_error()) { goto done; }
+        
+        while (!eof) {
+            prsub->get_value(0, sid);
+            prsub->get_value(33, vlrloc);
+            
+            TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
+                   _tid.get_lo(), sid, vlrloc);
+
+            e = sub_iter->next(_penv->db(), eof, *prsub);
+            if (e.is_error()) { goto done; }            
+        }
+
+    } // goto
+
+done:
+    // give back the tuple
+    _penv->sub_man()->give_tuple(prsub);
+    return (e);
+}
+
 
 
 

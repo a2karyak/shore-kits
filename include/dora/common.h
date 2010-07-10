@@ -355,6 +355,28 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 
 
+// Dynamic Final RVP w/o previous actions
+
+#define DECLARE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(rvpname)                \
+    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
+                           trx_result_tuple_t& presult,                 \
+                           const int intratrx)
+
+
+#define DEFINE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(rvpname,classname)       \
+    DECLARE_TLS_RVP_CACHE(rvpname);                                     \
+    rvpname* classname::new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
+                                      trx_result_tuple_t& presult,      \
+                                      const int intratrx) {             \
+        rvpname* myrvp = my_##rvpname##_cache->_cache->borrow();        \
+        assert (myrvp);                                                 \
+        myrvp->set(axct,atid,axctid,presult,this,                       \
+                   my_##rvpname##_cache->_cache.get(),                  \
+                   intratrx,intratrx);                                  \
+        return (myrvp); }
+
+
+
 // Dynamic Final RVP with previous actions transfer
 
 #define DECLARE_DORA_FINAL_DYNAMIC_RVP_WITH_PREV_GEN_FUNC(rvpname)      \

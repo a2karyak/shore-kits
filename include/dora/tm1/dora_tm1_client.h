@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   dora_tm1_client.h
  *
  *  @brief:  Defines the client for the DORA TM1 benchmark

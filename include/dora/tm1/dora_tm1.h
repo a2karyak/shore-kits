@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   dora_tm1.h
  *
@@ -95,6 +116,10 @@ class mid_dcf_rvp;
 class r_sub_dcf_action;
 class del_cf_dcf_action;
 
+// TM1 GetSubNbr
+class final_gsn_rvp;
+class r_sub_gsn_action;
+
 
 // Look also include/workload/tm1/tm1_const.h
 const int TM1_SUBS_PER_DORA_PART = 10000;
@@ -166,9 +191,10 @@ public:
     ////////////////
     // GetNewDest //
     ////////////////
-#ifdef TM1GND2
+
     DECLARE_DORA_TRX(get_new_dest);
 
+#ifdef TM1GND2
     DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_gnd_rvp,get_new_dest_input_t);
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_gnd_rvp);
 
@@ -176,8 +202,6 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_cf_gnd_action,rvp_t,get_new_dest_input_t);
 #else
-    DECLARE_DORA_TRX(get_new_dest);
-
     DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_gnd_rvp);
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_sf_gnd_action,rvp_t,get_new_dest_input_t);
@@ -200,9 +224,10 @@ public:
     ////////////////
     // UpdSubData //
     ////////////////
-#ifdef TM1USD2
+
     DECLARE_DORA_TRX(upd_sub_data);
 
+#ifdef TM1USD2
     DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_usd_rvp,upd_sub_data_input_t);
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_usd_rvp);
 
@@ -210,8 +235,6 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(upd_sub_usd_action,rvp_t,upd_sub_data_input_t);
 #else
-    DECLARE_DORA_TRX(upd_sub_data);
-
     DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_usd_rvp);
 
     DECLARE_DORA_ACTION_GEN_FUNC(upd_sub_usd_action,rvp_t,upd_sub_data_input_t);
@@ -234,9 +257,10 @@ public:
     ////////////////
     // InsCallFwd //
     ////////////////
-#ifdef TM1ICF2
+
     DECLARE_DORA_TRX(ins_call_fwd);
 
+#ifdef TM1ICF2
     DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid1_icf_rvp,ins_call_fwd_input_t);
     DECLARE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(mid2_icf_rvp,ins_call_fwd_input_t);
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp);
@@ -246,8 +270,6 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t);
 #else
-    DECLARE_DORA_TRX(ins_call_fwd);
-
     DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_icf_rvp,ins_call_fwd_input_t);
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp);
 
@@ -270,6 +292,19 @@ public:
     DECLARE_DORA_ACTION_GEN_FUNC(r_sub_dcf_action,mid_dcf_rvp,del_call_fwd_input_t);
 
     DECLARE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t);
+
+
+
+    ////////////////
+    // GetSubNbr  //
+    ////////////////
+
+    DECLARE_DORA_TRX(get_sub_nbr);
+
+    DECLARE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(final_gsn_rvp);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_sub_gsn_action,rvp_t,get_sub_nbr_input_t);
+
         
 }; // EOF: DoraTM1Env
 

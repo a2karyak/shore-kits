@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   dora_tm1_client.cpp
  *
  *  @brief:  Implementation of the DORA client for the TM1 benchmark
@@ -145,8 +143,7 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
             return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,true));
 
     case XCT_TM1_DORA_GET_SUB_NBR:
-        assert(0); // IP: TODO
-        //return (_tm1db->dora_del_call_fwd(xctid,atrt,selid,bWake));
+        return (_tm1db->dora_get_sub_nbr(xctid,atrt,selid,bWake));
 
 
     default:

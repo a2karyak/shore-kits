@@ -86,6 +86,8 @@ DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,upd_loc);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,ins_call_fwd);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,del_call_fwd);
 
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,get_sub_nbr);
+
 
 
 // --- with input specified --- //
@@ -96,11 +98,10 @@ DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,del_call_fwd);
  *
  ********************************************************************/
 
-w_rc_t 
-DoraTM1Env::dora_get_sub_data(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              get_sub_data_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_get_sub_data(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     get_sub_data_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -153,11 +154,10 @@ DoraTM1Env::dora_get_sub_data(const int xct_id,
  ********************************************************************/
 #ifdef TM1GND2
 
-w_rc_t 
-DoraTM1Env::dora_get_new_dest(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              get_new_dest_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     get_new_dest_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -201,11 +201,10 @@ DoraTM1Env::dora_get_new_dest(const int xct_id,
 
 #else
 
-w_rc_t 
-DoraTM1Env::dora_get_new_dest(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              get_new_dest_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     get_new_dest_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -268,11 +267,10 @@ DoraTM1Env::dora_get_new_dest(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t 
-DoraTM1Env::dora_get_acc_data(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              get_acc_data_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_get_acc_data(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     get_acc_data_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -324,11 +322,10 @@ DoraTM1Env::dora_get_acc_data(const int xct_id,
  ********************************************************************/
 #ifdef TM1USD2
 
-w_rc_t 
-DoraTM1Env::dora_upd_sub_data(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              upd_sub_data_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     upd_sub_data_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -438,11 +435,10 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t 
-DoraTM1Env::dora_upd_loc(const int xct_id, 
-                         trx_result_tuple_t& atrt, 
-                         upd_loc_input_t& in,
-                         const bool bWake)
+w_rc_t DoraTM1Env::dora_upd_loc(const int xct_id, 
+                                trx_result_tuple_t& atrt, 
+                                upd_loc_input_t& in,
+                                const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -493,11 +489,10 @@ DoraTM1Env::dora_upd_loc(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t 
-DoraTM1Env::dora_ins_call_fwd(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              ins_call_fwd_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     ins_call_fwd_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -550,11 +545,10 @@ DoraTM1Env::dora_ins_call_fwd(const int xct_id,
  *
  ********************************************************************/
 
-w_rc_t 
-DoraTM1Env::dora_del_call_fwd(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              del_call_fwd_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     del_call_fwd_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -593,6 +587,81 @@ DoraTM1Env::dora_del_call_fwd(const int xct_id,
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
+    }
+
+    return (RCOK); 
+}
+
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 GET_SUB_NBR
+ *
+ ********************************************************************/
+
+w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id, 
+                                    trx_result_tuple_t& atrt, 
+                                    get_sub_nbr_input_t& in,
+                                    const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    smthread_t::me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
+
+
+    // Find out how many actions need to be produced
+    uint intratrx = 1; 
+    int inRange = get_rec_to_access(); // the range of the index scan
+    uint left = TM1_SUBS_PER_SF - (in._s_id / TM1_SUBS_PER_SF); // how many left in the first partition
+    vector<uint> rangeVec;
+
+    rangeVec.push_back(left);
+    inRange -= left;
+
+    while (inRange > 0) {
+        rangeVec.push_back(min(inRange,TM1_SUBS_PER_SF));
+        intratrx++;
+        inRange -= TM1_SUBS_PER_SF;
+    }
+
+    
+    // Setup the final RVP with the correct intratrx
+    final_gsn_rvp* frvp = new_final_gsn_rvp(pxct,atid,xct_id,atrt,intratrx);    
+    
+    // Generate and enqueue the actions
+    for (vector<uint>::iterator vit = rangeVec.begin(); vit < rangeVec.end(); vit++) {
+        in._range = *vit; // pass the info about the resized action
+        r_sub_gsn_action* r_sub = new_r_sub_gsn_action(pxct,atid,frvp,in);
+        
+        // Find partition and enqueue
+        {        
+            irpImpl* my_sub_part = decide_part(sub(),in._s_id);
+
+            // SUB_PART_CS
+            CRITICAL_SECTION(sub_part_cs, my_sub_part->_enqueue_lock);
+            if (my_sub_part->enqueue(r_sub,bWake)) {
+                TRACE( TRACE_DEBUG, "Problem in enqueueing R_SUB_GSN\n");
+                assert (0); 
+                return (RC(de_PROBLEM_ENQUEUE));
+            }
+        }
+
+        // Move the start of the next action
+        in._s_id = *vit;
     }
 
     return (RCOK); 

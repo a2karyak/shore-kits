@@ -1,4 +1,25 @@
-/* -*- mode:C++; c-basic-offset:4 -*- */
+/* -*- mode:C++; c-basic-offset:4 -*-
+     Shore-kits -- Benchmark implementations for Shore-MT
+   
+                       Copyright (c) 2007-2009
+      Data Intensive Applications and Systems Labaratory (DIAS)
+               Ecole Polytechnique Federale de Lausanne
+   
+                         All Rights Reserved.
+   
+   Permission to use, copy, modify and distribute this software and
+   its documentation is hereby granted, provided that both the
+   copyright notice and this permission notice appear in all copies of
+   the software, derivative works or modified versions, and any
+   portions thereof, and that both notices appear in supporting
+   documentation.
+   
+   This code is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
+   DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
+   RESULTING FROM THE USE OF THIS SOFTWARE.
+*/
 
 /** @file:   dora_tm1.cpp
  *
@@ -401,7 +422,6 @@ DEFINE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t,int,Dor
 #else
 
 #warning OLD-InsCallFwd !!
-
 DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_icf_rvp,ins_call_fwd_input_t,DoraTM1Env);
 DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp,DoraTM1Env);
 
@@ -422,6 +442,17 @@ DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_dcf_rvp,DoraTM1Env);
 DEFINE_DORA_ACTION_GEN_FUNC(r_sub_dcf_action,mid_dcf_rvp,del_call_fwd_input_t,int,DoraTM1Env);
 
 DEFINE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t,int,DoraTM1Env);
+
+
+
+///////////////
+// GetSubNbr //
+///////////////
+
+DEFINE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(final_gsn_rvp,DoraTM1Env);
+
+DEFINE_DORA_ACTION_GEN_FUNC(r_sub_gsn_action,rvp_t,get_sub_nbr_input_t,int,DoraTM1Env);
+
 
 
 

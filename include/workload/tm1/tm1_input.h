@@ -306,6 +306,8 @@ struct get_sub_nbr_input_t
      */
 
     int     _s_id;           /* input: URand(1,SF) */
+
+    uint _range;
     
     get_sub_nbr_input_t& operator= (const get_sub_nbr_input_t& rhs);
 

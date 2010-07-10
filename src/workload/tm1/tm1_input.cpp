@@ -273,6 +273,7 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
 get_sub_nbr_input_t& get_sub_nbr_input_t::operator= (const get_sub_nbr_input_t& rhs) 
 {
     _s_id = rhs._s_id;
+    _range = rhs._range;
     return (*this);
 }
 
