@@ -1085,7 +1085,7 @@ int main22 (int ac, char **av)
 					rowcnt = tdefs[i].base;
                                 }
 				if(i==PART){
-				    rowcnt = tdefs[i].base * (floor(1+log((double)(scale))/(log(2))));
+				  rowcnt = tdefs[i].base * (floor(1+log((double)(scale))/(log(2.))));
 				}
 				if(i==DATE){
 				    rowcnt = tdefs[i].base;
