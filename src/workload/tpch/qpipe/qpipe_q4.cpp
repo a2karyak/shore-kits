@@ -165,7 +165,7 @@ public:
 
 
     // Projection
-    void project(tuple_t &d, const tuple_t &s) {
+    void project(tuple_t &d, const tuple_t &/*s*/) {
 
         q4_projected_lineitem_tuple *dest;
         dest = aligned_cast<q4_projected_lineitem_tuple>(d.data);
@@ -331,7 +331,7 @@ public:
 
 
     // Projection
-    void project(tuple_t &d, const tuple_t &s) {
+    void project(tuple_t &d, const tuple_t &/*s*/) {
 
         q4_projected_orders_tuple *dest;
         dest = aligned_cast<q4_projected_orders_tuple>(d.data);

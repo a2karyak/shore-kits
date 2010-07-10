@@ -43,6 +43,9 @@
 #include "workload/tpch/shore_tpch_env.h"
 #include "workload/tpch/shore_tpch_client.h"
 
+#include "workload/ssb/shore_ssb_env.h"
+#include "workload/ssb/shore_ssb_client.h"
+
 #ifdef CFG_SIMICS
 #include "util/simics-magic-instruction.h"
 #endif
@@ -63,6 +66,7 @@ using namespace tpcc;
 using namespace tm1;
 using namespace tpcb;
 using namespace tpch;
+using namespace ssb;
 
 
 //////////////////////////////
@@ -129,7 +133,7 @@ void initsysnamemap()
 
 
 // Value-definitions of the different Benchmarks
-enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH };
+enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH , bmSSB };
 
 // Map to associate string with then enum values
 
@@ -141,6 +145,7 @@ void initbenchmarkmap()
     mBenchmarkValue["tm1"]   = bmTM1;
     mBenchmarkValue["tpcb"]  = bmTPCB;
     mBenchmarkValue["tpch"]  = bmTPCH;
+    mBenchmarkValue["ssb"]  = bmSSB;
 }
 
 
@@ -490,6 +495,7 @@ typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
 typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
 typedef kit_t<baseline_tpch_client_t,ShoreTPCHEnv> baselineTPCHKit;
+typedef kit_t<baseline_ssb_client_t,ShoreSSBEnv> baselineSSBKit;
 
 #ifdef CFG_DORA
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
@@ -643,6 +649,24 @@ int main(int argc, char* argv[])
         }
     }
 
+    // SSB
+    if (benchmarkname.compare("ssb")==0) {
+        switch (mSysnameValue[sysname]) {
+        case snBaseline:
+            kit = new baselineSSBKit("(ssb-base) ",netmode,netport);
+            break;
+#ifdef CFG_DORA
+        case snDORA:
+            assert (0); // TODO
+            //kit = new doraSSBKit("(ssb-dora) ",netmode,netport);
+            break;
+#endif
+        default:
+            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            return (5);
+        }
+    }
+
     assert (kit.get());
 
     // 2. Create and fork the cpu monitor   
@@ -650,11 +674,13 @@ int main(int argc, char* argv[])
     assert (_g_cpumon);
     _g_cpumon->fork();
 
+    TRACE ( TRACE_ALWAYS, "Start Shore Environment\n" );
     // 3. Instanciate and start the Shore environment
     if (kit->inst_test_env(argc, argv)) {
         return (6);
     }
 
+    TRACE ( TRACE_ALWAYS, "Make sure data is loaded\n" );
     // 4. Make sure data is loaded
     w_rc_t rcl = kit->db()->loaddata();
     if (rcl.is_error()) {
@@ -664,6 +690,7 @@ int main(int argc, char* argv[])
     // 5. Set the global variable to the kit's db - for alarm() to work
     _g_shore_env = kit->db();
 
+    TRACE ( TRACE_ALWAYS, "Start processing commands\n" );
     // 6. Start processing commands
     int start = kit->start();
     if (start < 0) {

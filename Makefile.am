@@ -214,10 +214,42 @@ WL_TPCH_QPIPE = \
    $(SW)/tpch/qpipe/qpipe_q4.cpp \
    $(SW)/tpch/qpipe/qpipe_q6.cpp \
    $(SW)/tpch/qpipe/qpipe_q12.cpp 
-#   $(SW)/tpch/qpipe/qpipe_q13.cpp 
+#    $(SW)/tpch/qpipe/qpipe_q13.cpp 
 #   $(SW)/tpch/qpipe/qpipe_q14.cpp 
 #   $(SW)/tpch/qpipe/qpipe_q16.cpp 
 #   $(SW)/tpch/qpipe/qpipe_q19.cpp 
+
+WL_SSB_SHORE = \
+   $(SW)/ssb/ssb_random.cpp \
+   $(SW)/ssb/ssb_input.cpp \
+   $(SW)/ssb/ssb_util.cpp \
+   $(SW)/ssb/shore_ssb_schema.cpp \
+   $(SW)/ssb/shore_ssb_schema_man.cpp \
+   $(SW)/ssb/shore_ssb_env.cpp \
+   $(SW)/ssb/shore_ssb_xct.cpp \
+   $(SW)/ssb/shore_ssb_client.cpp
+
+WL_SSB_DBGEN_SHORE = \
+   $(SW)/ssb/dbgen/ssb_build.cpp \
+   $(SW)/ssb/dbgen/ssb_driver.cpp \
+   $(SW)/ssb/dbgen/ssb_bm_utils.cpp \
+   $(SW)/ssb/dbgen/ssb_rnd.cpp \
+   $(SW)/ssb/dbgen/ssb_print.cpp \
+   $(SW)/ssb/dbgen/ssb_load_stub.cpp \
+   $(SW)/ssb/dbgen/ssb_bcd2.cpp \
+   $(SW)/ssb/dbgen/ssb_speed_seed.cpp \
+   $(SW)/ssb/dbgen/ssb_text.cpp \
+   $(SW)/ssb/dbgen/ssb_permute.cpp 
+
+WL_SSB_QPIPE = \
+   $(SW)/ssb/qpipe_ssb_xct.cpp \
+   $(SW)/ssb/qpipe/qpipe_q1_1.cpp \
+   $(SW)/ssb/qpipe/qpipe_qdate.cpp \
+   $(SW)/ssb/qpipe/qpipe_qpart.cpp \
+   $(SW)/ssb/qpipe/qpipe_qsupplier.cpp \
+   $(SW)/ssb/qpipe/qpipe_qcustomer.cpp \
+   $(SW)/ssb/qpipe/qpipe_qlineorder.cpp 
+
 
 lib_libworkload_a_SOURCES = \
    $(WL_SG_TPCC_SHORE) \
@@ -225,10 +257,13 @@ lib_libworkload_a_SOURCES = \
    $(WL_TM1_SHORE) \
    $(WL_TPCB_SHORE) \
    $(WL_TPCH_DBGEN_SHORE) \
-   $(WL_TPCH_SHORE)
+   $(WL_TPCH_SHORE) \
+   $(WL_SSB_DBGEN_SHORE) \
+   $(WL_SSB_SHORE)
 
 if USE_QPIPE
 lib_libworkload_a_SOURCES += $(WL_TPCH_QPIPE)
+lib_libworkload_a_SOURCES += $(WL_SSB_QPIPE)
 endif
 
 
