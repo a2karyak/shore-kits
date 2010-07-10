@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file workload/tpch/common/tpch_random.h
  *  
  *  @brief Functions used for the generation of the inputs for

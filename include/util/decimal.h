@@ -21,7 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
 #ifndef __DECIMAL_H
 #define __DECIMAL_H
 

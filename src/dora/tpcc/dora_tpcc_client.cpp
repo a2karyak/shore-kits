@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   dora_tpcc_client.cpp
  *
  *  @brief:  Implementation of the DORA client for the TPCC benchmark

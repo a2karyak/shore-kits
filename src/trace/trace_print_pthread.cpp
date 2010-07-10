@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file trace_print_pthread.cpp
  *
  *  @brief Implements trace_print_pthread(). Unfortunately, POSIX does

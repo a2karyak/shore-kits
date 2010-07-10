@@ -21,10 +21,8 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
-#ifndef _STOPWATCH_H
-#define _STOPWATCH_H
+#ifndef __UTIL_STOPWATCH_H
+#define __UTIL_STOPWATCH_H
 
 #include <sys/time.h>
 

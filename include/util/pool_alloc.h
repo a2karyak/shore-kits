@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 #ifndef __POOL_ALLOC_H
 #define __POOL_ALLOC_H
 

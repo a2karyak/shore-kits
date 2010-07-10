@@ -21,10 +21,8 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
-#ifndef _SYNC_H
-#define _SYNC_H
+#ifndef __UTIL_SYNC_H
+#define __UTIL_SYNC_H
 
 #include "util/thread.h"
 

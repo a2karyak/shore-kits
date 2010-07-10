@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file shore_sort_buf.cpp
  *
  *  @brief Implementation of comparison functions for sort_buffer_t 
