@@ -48,7 +48,6 @@ struct q8_input_t { };
 struct q9_input_t { };
 struct q10_input_t { };
 struct q11_input_t { };
-struct q13_input_t { };
 struct q15_input_t { };
 struct q16_input_t { };
 struct q17_input_t { };
@@ -66,7 +65,6 @@ q8_input_t create_q8_input(const double sf, const int specificWH);
 q9_input_t create_q9_input(const double sf, const int specificWH);
 q10_input_t create_q10_input(const double sf, const int specificWH);
 q11_input_t create_q11_input(const double sf, const int specificWH);
-q13_input_t create_q13_input(const double sf, const int specificWH);
 q15_input_t create_q15_input(const double sf, const int specificWH);
 q16_input_t create_q16_input(const double sf, const int specificWH);
 q17_input_t create_q17_input(const double sf, const int specificWH);
@@ -149,6 +147,26 @@ struct q12_input_t
 
 q12_input_t    create_q12_input(const double sf, 
                                 const int specificWH = 0);
+
+
+/******************************************************************** 
+ *
+ *  Q13
+ *
+ ********************************************************************/
+
+struct q13_input_t 
+{
+    char WORD1[15];
+    char WORD2[15];
+
+    q13_input_t& operator=(const q13_input_t& rhs);
+};
+
+q13_input_t    create_q13_input(const double sf, 
+                                const int specificWH = 0);
+
+
 
 
 /******************************************************************** 
