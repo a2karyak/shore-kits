@@ -50,7 +50,6 @@ q8_input_t create_q8_input(const double /* sf */, const int /* specificWH */) { 
 q9_input_t create_q9_input(const double /* sf */, const int /* specificWH */) { q9_input_t a; return a; }
 q10_input_t create_q10_input(const double /* sf */, const int /* specificWH */) { q10_input_t a; return a; }
 q11_input_t create_q11_input(const double /* sf */, const int /* specificWH */) { q11_input_t a; return a; }
-q13_input_t create_q13_input(const double /* sf */, const int /* specificWH */) { q13_input_t a; return a; }
 q15_input_t create_q15_input(const double /* sf */, const int /* specificWH */) { q15_input_t a; return a; }
 q16_input_t create_q16_input(const double /* sf */, const int /* specificWH */) { q16_input_t a; return a; }
 q17_input_t create_q17_input(const double /* sf */, const int /* specificWH */) { q17_input_t a; return a; }
@@ -238,6 +237,45 @@ q12_input_t    create_q12_input(const double /* sf */,
 
 /******************************************************************** 
  *
+ *  Q13
+ *
+ *  o_comment: WORD1 randomly selected from: special, pending, unusual, express
+ *             WORD2 randomly selected from: packages, requests, accounts, deposits
+ *
+ ********************************************************************/
+
+
+q13_input_t& q13_input_t::operator=(const q13_input_t& rhs)
+{
+    strcpy(WORD1,rhs.WORD1);
+    strcpy(WORD2,rhs.WORD2);
+    return (*this);
+};
+
+
+q13_input_t    create_q13_input(const double /* sf */, 
+                                const int /* specificWH */)
+{
+    q13_input_t q13_input;
+
+    int num_first_entries, num_second_entries;
+    //WORD1 randomly selected from: special, pending, unusual, express
+    //WORD2 randomly selected from: packages, requests, accounts, deposits
+    static char const* FIRST[] = {"special", "pending", "unusual", "express"};
+    static char const* SECOND[] = {"packages", "requests", "accounts", "deposits"};
+
+    num_first_entries  = sizeof(FIRST)/sizeof(FIRST[0]);
+    num_second_entries = sizeof(SECOND)/sizeof(SECOND[0]);
+
+    strcpy(q13_input.WORD1,FIRST[URand(1,num_first_entries)-1]);
+    strcpy(q13_input.WORD2,SECOND[URand(1,num_second_entries)-1]);
+
+    return (q13_input);
+};
+
+
+/******************************************************************** 
+ *
  *  Q14
  *
  *  l_shipdate: The first day of a month randomly selected from a
@@ -261,10 +299,10 @@ q14_input_t    create_q14_input(const double /* sf */,
     struct tm shipdate;
 
     // Random year within [1993 .. 1997]
-    shipdate.tm_year = URand(1993, 1997);
+    shipdate.tm_year = URand(93, 97);
 
     // Random month ([1 .. 12])
-    shipdate.tm_mon = URand(1,12);
+    shipdate.tm_mon = URand(0,11);
 
     // First day
     shipdate.tm_mday = 1;

@@ -342,8 +342,6 @@ public:
         char number[2];
         strncpy(number,_orders.O_ORDERPRIORITY,1);
 
-
-
         TRACE( TRACE_RECORD_FLOW, "%d, %s\n",
         		_orders.O_ORDERKEY,
         		_orders.O_ORDERPRIORITY);
