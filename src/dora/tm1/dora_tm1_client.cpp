@@ -47,7 +47,7 @@ const int XCT_TM1_DORA_CALL_FWD_MIX  = 226;
 const int XCT_TM1_DORA_INS_CALL_FWD  = 227;
 const int XCT_TM1_DORA_DEL_CALL_FWD  = 228;
 
-const int XCT_TM1_DORA_GET_SUB_NBR   = 230;
+const int XCT_TM1_DORA_GET_SUB_NBR   = 229;
 
 
 /********************************************************************* 

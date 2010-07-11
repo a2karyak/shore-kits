@@ -626,14 +626,14 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
     // Find out how many actions need to be produced
     uint intratrx = 1; 
     int inRange = get_rec_to_access(); // the range of the index scan
-    uint left = TM1_SUBS_PER_SF - (in._s_id / TM1_SUBS_PER_SF); // how many left in the first partition
+    int left = TM1_SUBS_PER_SF - (in._s_id % TM1_SUBS_PER_SF); // how many left in the first partition
     vector<uint> rangeVec;
 
-    rangeVec.push_back(left);
+    rangeVec.push_back(std::min(left,inRange));
     inRange -= left;
 
     while (inRange > 0) {
-        rangeVec.push_back(min(inRange,TM1_SUBS_PER_SF));
+        rangeVec.push_back(std::min(inRange,TM1_SUBS_PER_SF));
         intratrx++;
         inRange -= TM1_SUBS_PER_SF;
     }
@@ -660,8 +660,8 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
             }
         }
 
-        // Move the start of the next action
-        in._s_id = *vit;
+        // Move to the start of the next partition
+        in._s_id += *vit;
     }
 
     return (RCOK); 
