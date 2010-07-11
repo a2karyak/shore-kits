@@ -201,8 +201,11 @@ public:
     ~sort_stage_t() {
 
         // make sure the monitor thread exits before we do...
-        if(_monitor_thread)
-            thread_join<void>(_monitor_thread);
+        if(_monitor_thread) {
+            //thread_join<void>(_monitor_thread);
+	    //MA: Have to make sure it is not breaking anything
+	    pthread_kill(_monitor_thread,SIGKILL);
+	}
         
         // also, remove any remaining temp files
         merge_map_t::iterator level_it=_merge_map.begin();
