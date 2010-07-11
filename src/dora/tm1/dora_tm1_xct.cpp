@@ -632,10 +632,15 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
     rangeVec.push_back(std::min(left,inRange));
     inRange -= left;
 
-    while (inRange > 0) {
-        rangeVec.push_back(std::min(inRange,TM1_SUBS_PER_SF));
+    uint start = in._s_id + left;
+    uint step = 0;    
+
+    while ((inRange > 0) && (start<TM1_SUBS_PER_SF*_scaling_factor)) {
+        step = std::min(inRange,TM1_SUBS_PER_SF);
+        rangeVec.push_back(step);
         intratrx++;
         inRange -= TM1_SUBS_PER_SF;
+        start += step;
     }
 
     
@@ -660,8 +665,13 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
             }
         }
 
-        // Move to the start of the next partition
+        // Move to the start of the next partition, if that's "out of bounds" (larger than the 
+        // largest s_id in the database, then stop
         in._s_id += *vit;
+
+        // if (in._s_id >= (TM1_SUBS_PER_SF*_scaling_factor)) {
+        //     TRACE( TRACE_ALWAYS, "Out of bounds (%d) (%d)\n", atid.get_lo(), in._s_id);
+        // }        
     }
 
     return (RCOK); 
