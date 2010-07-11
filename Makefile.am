@@ -213,11 +213,11 @@ WL_TPCH_QPIPE = \
    $(SW)/tpch/qpipe/qpipe_q1.cpp \
    $(SW)/tpch/qpipe/qpipe_q4.cpp \
    $(SW)/tpch/qpipe/qpipe_q6.cpp \
-   $(SW)/tpch/qpipe/qpipe_q12.cpp 
-#    $(SW)/tpch/qpipe/qpipe_q13.cpp 
-#   $(SW)/tpch/qpipe/qpipe_q14.cpp 
-#   $(SW)/tpch/qpipe/qpipe_q16.cpp 
-#   $(SW)/tpch/qpipe/qpipe_q19.cpp 
+   $(SW)/tpch/qpipe/qpipe_q12.cpp \
+   $(SW)/tpch/qpipe/qpipe_q13.cpp \
+   $(SW)/tpch/qpipe/qpipe_q14.cpp \
+   $(SW)/tpch/qpipe/qpipe_q16.cpp \
+   $(SW)/tpch/qpipe/qpipe_q19.cpp 
 
 WL_SSB_SHORE = \
    $(SW)/ssb/ssb_random.cpp \
@@ -244,6 +244,7 @@ WL_SSB_DBGEN_SHORE = \
 WL_SSB_QPIPE = \
    $(SW)/ssb/qpipe_ssb_xct.cpp \
    $(SW)/ssb/qpipe/qpipe_q1_1.cpp \
+   $(SW)/ssb/qpipe/qpipe_q3_2.cpp \
    $(SW)/ssb/qpipe/qpipe_qdate.cpp \
    $(SW)/ssb/qpipe/qpipe_qpart.cpp \
    $(SW)/ssb/qpipe/qpipe_qsupplier.cpp \

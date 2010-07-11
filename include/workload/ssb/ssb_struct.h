@@ -327,7 +327,7 @@ struct ssb_lineitem_tuple_body
     int     LO_EXTENDEDPRICE;
     int     LO_ORDTOTALPRICE;
     int     LO_DISCOUNT;
-    float   LO_REVENUE;
+    double   LO_REVENUE;
     int     LO_SUPPLYCOST;
     int     LO_TAX;
     int     LO_COMMIDATE;

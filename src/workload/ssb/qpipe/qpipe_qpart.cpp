@@ -51,7 +51,7 @@ typedef struct ssb_part_tuple projected_tuple;
 
 struct count_tuple
 {
-    int COUNT;
+    long COUNT;
 };
 
 

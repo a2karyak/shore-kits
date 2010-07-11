@@ -93,7 +93,7 @@ int baseline_ssb_client_t::load_sup_xct(mapSupTrxs& stmap)
 //     stmap[qpipebase + XCT_SSB_Q2_2]           = "QPIPE-SSB-Q2_2";
 //     stmap[qpipebase + XCT_SSB_Q2_3]           = "QPIPE-SSB-Q2_3";
 //     stmap[qpipebase + XCT_SSB_Q3_1]           = "QPIPE-SSB-Q3_1";
-//     stmap[qpipebase + XCT_SSB_Q3_2]           = "QPIPE-SSB-Q3_2";
+     stmap[qpipebase + XCT_SSB_Q3_2]           = "QPIPE-SSB-Q3_2";
 //     stmap[qpipebase + XCT_SSB_Q3_3]           = "QPIPE-SSB-Q3_3";
 //     stmap[qpipebase + XCT_SSB_Q3_4]           = "QPIPE-SSB-Q3_4";
 //     stmap[qpipebase + XCT_SSB_Q4_1]           = "QPIPE-SSB-Q4_1";
