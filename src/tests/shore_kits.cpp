@@ -495,7 +495,10 @@ typedef kit_t<baseline_tpcc_client_t,ShoreTPCCEnv> baselineTPCCKit;
 typedef kit_t<baseline_tm1_client_t,ShoreTM1Env> baselineTM1Kit;
 typedef kit_t<baseline_tpcb_client_t,ShoreTPCBEnv> baselineTPCBKit;
 typedef kit_t<baseline_tpch_client_t,ShoreTPCHEnv> baselineTPCHKit;
+
+#ifdef CFG_QPIPE
 typedef kit_t<baseline_ssb_client_t,ShoreSSBEnv> baselineSSBKit;
+#endif
 
 #ifdef CFG_DORA
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
@@ -649,6 +652,7 @@ int main(int argc, char* argv[])
         }
     }
 
+#ifdef CFG_QPIPE
     // SSB
     if (benchmarkname.compare("ssb")==0) {
         switch (mSysnameValue[sysname]) {
@@ -666,6 +670,7 @@ int main(int argc, char* argv[])
             return (5);
         }
     }
+#endif
 
     assert (kit.get());
 
