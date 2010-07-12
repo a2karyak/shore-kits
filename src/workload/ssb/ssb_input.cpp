@@ -32,6 +32,7 @@
 
 #include "util.h"
 #include "workload/ssb/ssb_random.h" 
+#include "workload/ssb/ssb_util.h" 
 #include "workload/ssb/ssb_input.h"
 
 #include "workload/ssb/dbgen/dss.h"
@@ -74,25 +75,28 @@ q4_3_input_t create_q4_3_input(const double /*sf*/, const int /*specificWH*/) {q
 
 q3_2_input_t& q3_2_input_t::operator=(const q3_2_input_t& rhs)
 {
-    YEAR_LO = rhs.YEAR_LO;
-    YEAR_HI = rhs.YEAR_HI;
+    _year_lo = rhs._year_lo;
+    _year_hi = rhs._year_hi;
     
-    //strcpy(NATION,rhs.NATION);
+    strcpy(_nation,rhs._nation);
     
     return (*this);
-};
+}
 
 
 q3_2_input_t create_q3_2_input(const double /*sf*/, const int /*specificWH*/)
 {
     q3_2_input_t q3_2_in;
-    int _nation;
+    int _id_nation;
     
-    q3_2_in.YEAR_LO=1992;//=URand(1992,1998);
-    q3_2_in.YEAR_HI=1993;//=URand(a.YEAR_LO,1998);
-    _nation=URand(0,24);
+    q3_2_in._year_lo=URand(1992,1998);
+    q3_2_in._year_hi=URand(q3_2_in._year_lo,1998);
+    _id_nation=URand(0,24);
+    get_nation(q3_2_in._nation,(ssb_nation)_id_nation);
     
-    //strcpy(q3_2_in.NATION,"UNITED STATES");
+    printf("q3_2_in: %d %d %s\n",q3_2_in._year_lo,q3_2_in._year_hi,q3_2_in._nation);
+    //printf("ENUM: %d %d",ALGERIA,VIETNAM);
+    //strcpy(q3_2_in._nation,"UNITED STATES");
     
     return q3_2_in;
 }

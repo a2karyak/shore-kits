@@ -49,6 +49,12 @@ ENTER_NAMESPACE(ssb);
 // the tuples after tablescan projection
 typedef struct ssb_customer_tuple projected_tuple;
 
+struct nation_tuple
+{
+    int  C_NATION_PREFIX;
+    char C_NATION[16];
+};
+
 struct count_tuple
 {
     int COUNT;
@@ -102,20 +108,21 @@ public:
     // Projection
     void project(tuple_t &d, const tuple_t &s) {        
 
-        projected_tuple *dest;
-        dest = aligned_cast<projected_tuple>(d.data);
+        //        projected_tuple *dest;
+        //dest = aligned_cast<projected_tuple>(d.data);
+        nation_tuple *dest;
+        dest = aligned_cast<nation_tuple>(d.data);
 
-        _prcust->get_value(0, _customer.C_CUSTKEY);
-        _prcust->get_value(1, _customer.C_NAME,25);
-
-
-        TRACE( TRACE_RECORD_FLOW, "%d|%s --d\n",
-               _customer.C_CUSTKEY,
-               _customer.C_NAME);
+        _prcust->get_value(4, _customer.C_NATION_PREFIX);
+        _prcust->get_value(5, _customer.C_NATION,15);
 
 
-        dest->C_CUSTKEY = _customer.C_CUSTKEY;
-        strcpy(dest->C_NAME,_customer.C_NAME);
+        TRACE( TRACE_RECORD_FLOW, "NATIONS: %s --d\n",
+               _customer.C_NATION);
+
+
+        dest->C_NATION_PREFIX = _customer.C_NATION_PREFIX;
+        strcpy(dest->C_NATION,_customer.C_NATION);
     }
 
     customer_tscan_filter_t* clone() const {

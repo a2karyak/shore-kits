@@ -109,9 +109,9 @@ q1_input_t    create_q1_input(const double sf,
 
 struct q3_2_input_t 
 {
-    int YEAR_LO;
-    int YEAR_HI;
-    char NATION[16];
+    int _year_lo;
+    int _year_hi;
+    char _nation[16];
 
     q3_2_input_t& operator=(const q3_2_input_t& rhs);
 };

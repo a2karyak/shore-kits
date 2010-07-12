@@ -60,6 +60,34 @@ enum ssb_l_shipmode {
     END_SHIPMODE
 };
 
+enum ssb_nation{
+    ALGERIA,
+    ARGENTINA,
+    BRAZIL,
+    CANADA,
+    CHINA,
+    EGYPT,
+    ETHIOPIA,
+    FRANCE,
+    GERMANY,
+    INDIA,
+    INDONESIA,
+    IRAN,
+    IRAQ,
+    JAPAN,
+    JORDAN,
+    KENYA,
+    MOROCCO,
+    MOZAMBIQUE,
+    PERU,
+    ROMANIA,
+    RUSSIA,
+    SAUDI_ARABIA,
+    UNITED_KINGDOM,
+    UNITED_STATES,
+    VIETNAM
+};
+
 
 // SSB constants
 

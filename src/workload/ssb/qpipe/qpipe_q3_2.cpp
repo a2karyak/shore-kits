@@ -106,7 +106,7 @@ typedef struct join_tuple projected_tuple;
 
 
 
-class lineorder_tscan_filter_t : public tuple_filter_t 
+class q3_2_lineorder_tscan_filter_t : public tuple_filter_t 
 {
 private:
     ShoreSSBEnv* _ssbdb;
@@ -117,7 +117,7 @@ private:
 
 public:
 
-    lineorder_tscan_filter_t(ShoreSSBEnv* ssbdb)//,q3_2_input_t &in) 
+    q3_2_lineorder_tscan_filter_t(ShoreSSBEnv* ssbdb)//,q3_2_input_t &in) 
         : tuple_filter_t(ssbdb->lineorder_desc()->maxsize()), _ssbdb(ssbdb)
     {
 
@@ -129,7 +129,7 @@ public:
 
     }
 
-    ~lineorder_tscan_filter_t()
+    ~q3_2_lineorder_tscan_filter_t()
     {
         // Give back the lineorder tuple 
         _ssbdb->lineorder_man()->give_tuple(_prline);
@@ -173,17 +173,17 @@ public:
 
     }
 
-    lineorder_tscan_filter_t* clone() const {
-        return new lineorder_tscan_filter_t(*this);
+    q3_2_lineorder_tscan_filter_t* clone() const {
+        return new q3_2_lineorder_tscan_filter_t(*this);
     }
 
     c_str to_string() const {
-        return c_str("lineorder_tscan_filter_t()");
+        return c_str("q3_2_lineorder_tscan_filter_t()");
     }
 };
 
 
-class customer_tscan_filter_t : public tuple_filter_t 
+class q3_2_customer_tscan_filter_t : public tuple_filter_t 
 {
 private:
     ShoreSSBEnv* _ssbdb;
@@ -196,7 +196,7 @@ private:
     char NATION[16];
 public:
 
-    customer_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
+    q3_2_customer_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
         : tuple_filter_t(ssbdb->customer_desc()->maxsize()), _ssbdb(ssbdb)
     {
 
@@ -210,7 +210,7 @@ public:
 	strcpy(NATION,"UNITED STATES");
     }
 
-    ~customer_tscan_filter_t()
+    ~q3_2_customer_tscan_filter_t()
     {
         // Give back the customer tuple 
         _ssbdb->customer_man()->give_tuple(_prcust);
@@ -260,17 +260,17 @@ public:
         strcpy(dest->C_CITY,_customer.C_CITY);
     }
 
-    customer_tscan_filter_t* clone() const {
-        return new customer_tscan_filter_t(*this);
+    q3_2_customer_tscan_filter_t* clone() const {
+        return new q3_2_customer_tscan_filter_t(*this);
     }
 
     c_str to_string() const {
-        return c_str("customer_tscan_filter_t()");
+        return c_str("q3_2_customer_tscan_filter_t()");
     }
 };
 
 
-class supplier_tscan_filter_t : public tuple_filter_t 
+class q3_2_supplier_tscan_filter_t : public tuple_filter_t 
 {
 private:
     ShoreSSBEnv* _ssbdb;
@@ -283,7 +283,7 @@ private:
     char NATION[16];
 public:
 
-    supplier_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
+    q3_2_supplier_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
         : tuple_filter_t(ssbdb->supplier_desc()->maxsize()), _ssbdb(ssbdb)
     {
 
@@ -297,7 +297,7 @@ public:
 	strcpy(NATION,"UNITED STATES");
     }
 
-    ~supplier_tscan_filter_t()
+    ~q3_2_supplier_tscan_filter_t()
     {
         // Give back the supplier tuple 
         _ssbdb->supplier_man()->give_tuple(_prsupp);
@@ -348,18 +348,18 @@ public:
         strcpy(dest->S_CITY,_supplier.S_CITY);
     }
 
-    supplier_tscan_filter_t* clone() const {
-        return new supplier_tscan_filter_t(*this);
+    q3_2_supplier_tscan_filter_t* clone() const {
+        return new q3_2_supplier_tscan_filter_t(*this);
     }
 
     c_str to_string() const {
-        return c_str("supplier_tscan_filter_t()");
+        return c_str("q3_2_supplier_tscan_filter_t()");
     }
 };
 
 
 
-class date_tscan_filter_t : public tuple_filter_t 
+class q3_2_date_tscan_filter_t : public tuple_filter_t 
 {
 private:
     ShoreSSBEnv* _ssbdb;
@@ -374,7 +374,7 @@ private:
 
 public:
 
-    date_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
+    q3_2_date_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
         : tuple_filter_t(ssbdb->date_desc()->maxsize()), _ssbdb(ssbdb)
     {
 
@@ -388,7 +388,7 @@ public:
 	YEAR_HIGH=1997;
     }
 
-    ~date_tscan_filter_t()
+    ~q3_2_date_tscan_filter_t()
     {
         // Give back the date tuple 
         _ssbdb->date_man()->give_tuple(_prdate);
@@ -440,12 +440,12 @@ public:
         dest->D_YEAR=_date.D_YEAR;
     }
 
-    date_tscan_filter_t* clone() const {
-        return new date_tscan_filter_t(*this);
+    q3_2_date_tscan_filter_t* clone() const {
+        return new q3_2_date_tscan_filter_t(*this);
     }
 
     c_str to_string() const {
-        return c_str("date_tscan_filter_t()");
+        return c_str("q3_2_date_tscan_filter_t()");
     }
 };
 
@@ -658,7 +658,7 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
         tscan_packet_t* lo_tscan_packet =
         new tscan_packet_t("TSCAN LINEORDER",
                            lo_out_buffer,
-                           new lineorder_tscan_filter_t(this),
+                           new q3_2_lineorder_tscan_filter_t(this),
                            this->db(),
                            _plineorder_desc.get(),
                            pxct
@@ -669,7 +669,7 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
         tscan_packet_t* c_tscan_packet =
         new tscan_packet_t("TSCAN CUSTOMER",
                            c_out_buffer,
-                           new customer_tscan_filter_t(this,in),
+                           new q3_2_customer_tscan_filter_t(this,in),
                            this->db(),
                            _pcustomer_desc.get(),
                            pxct
@@ -680,7 +680,7 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
         tscan_packet_t* s_tscan_packet =
         new tscan_packet_t("TSCAN SUPPLIER",
                            s_out_buffer,
-                           new supplier_tscan_filter_t(this,in),
+                           new q3_2_supplier_tscan_filter_t(this,in),
                            this->db(),
                            _psupplier_desc.get(),
                            pxct
@@ -691,7 +691,7 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
         tscan_packet_t* d_tscan_packet =
         new tscan_packet_t("TSCAN DATE",
                            d_out_buffer,
-                           new date_tscan_filter_t(this,in),
+                           new q3_2_date_tscan_filter_t(this,in),
                            this->db(),
                            _pdate_desc.get(),
                            pxct
@@ -736,12 +736,12 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
                                new trivial_filter_t(agg_output->tuple_size()),
                                new count_aggregate_t(),
                                new int_key_extractor_t(),
-                               date_tscan_packet);
+                               q3_2_date_tscan_packet);
     
         new partial_aggregate_packet_t(c_str("COUNT_AGGREGATE"),
                                agg_output,
                                new trivial_filter_t(agg_output->tuple_size()),
-                               qlineorder_tscan_packet,
+                               q3_2_lineorder_tscan_packet,
                                new count_aggregate_t(),
                                new default_key_extractor_t(),
                                new int_key_compare_t());
