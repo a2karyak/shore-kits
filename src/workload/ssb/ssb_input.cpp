@@ -58,7 +58,6 @@ q2_1_input_t create_q2_1_input(const double /*sf*/, const int /*specificWH*/) {q
 q2_2_input_t create_q2_2_input(const double /*sf*/, const int /*specificWH*/) {q2_2_input_t a;return a;}
 q2_3_input_t create_q2_3_input(const double /*sf*/, const int /*specificWH*/) {q2_3_input_t a;return a;}
 q3_1_input_t create_q3_1_input(const double /*sf*/, const int /*specificWH*/) {q3_1_input_t a;return a;}
-q3_2_input_t create_q3_2_input(const double /*sf*/, const int /*specificWH*/) {q3_2_input_t a;return a;}
 q3_3_input_t create_q3_3_input(const double /*sf*/, const int /*specificWH*/) {q3_3_input_t a;return a;}
 q3_4_input_t create_q3_4_input(const double /*sf*/, const int /*specificWH*/) {q3_4_input_t a;return a;}
 q4_1_input_t create_q4_1_input(const double /*sf*/, const int /*specificWH*/) {q4_1_input_t a;return a;}
@@ -66,6 +65,36 @@ q4_2_input_t create_q4_2_input(const double /*sf*/, const int /*specificWH*/) {q
 q4_3_input_t create_q4_3_input(const double /*sf*/, const int /*specificWH*/) {q4_3_input_t a;return a;}
 
 
+/******************************************************************** 
+ *
+ *  Q3_2
+ *
+ ********************************************************************/
+
+
+q3_2_input_t& q3_2_input_t::operator=(const q3_2_input_t& rhs)
+{
+    YEAR_LO = rhs.YEAR_LO;
+    YEAR_HI = rhs.YEAR_HI;
+    strcpy(NATION,rhs.NATION);
+    
+    return (*this);
+};
+
+
+q3_2_input_t create_q3_2_input(const double /*sf*/, const int /*specificWH*/)
+{
+    q3_2_input_t a;
+    int nation;
+    
+    a.YEAR_LO=1992;//=URand(1992,1998);
+    a.YEAR_HI=1993;//=URand(a.YEAR_LO,1998);
+    nation=URand(0,24);
+    
+    strcpy(a.NATION,"UNITED STATED");
+    
+    return a;
+}
 
 
 EXIT_NAMESPACE(ssb);

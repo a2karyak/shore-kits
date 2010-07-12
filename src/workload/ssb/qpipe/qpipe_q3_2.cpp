@@ -73,6 +73,23 @@ struct d_tuple
   int D_YEAR;
 };
 
+struct join_d_tuple
+{
+  int LO_CUSTKEY;
+  int LO_SUPPKEY;
+  int D_YEAR;
+  double LO_REVENUE;
+};
+
+struct join_d_s_tuple
+{
+  int LO_CUSTKEY;
+  char S_CITY[11];
+  int D_YEAR;
+  double LO_REVENUE;
+};
+
+
 struct join_tuple
 {
   char C_CITY[11];
@@ -81,10 +98,11 @@ struct join_tuple
   double LO_REVENUE;
 };
 
-struct projected_tuple
+/*struct projected_tuple
 {
   int KEY;
-};
+  };*/
+typedef struct join_tuple projected_tuple;
 
 
 
@@ -209,14 +227,18 @@ public:
 
         _prcust->get_value(5, _customer.C_NATION, 15);
 
-        TRACE( TRACE_RECORD_FLOW, "NATION |%s --d\n",
-               _customer.C_NATION);
-	
 	if (strcmp(_customer.C_NATION,NATION)==0)
-	  return (true);
+	    {
+		TRACE( TRACE_RECORD_FLOW, "+ NATION |%s --d\n",
+		       _customer.C_NATION);
+		return (true);
+	    }
 	else
-	  return (false);
-
+	    {
+		TRACE( TRACE_RECORD_FLOW, ". NATION |%s --d\n",
+		       _customer.C_NATION);
+		return (false);
+	    }
     }
 
     
@@ -292,13 +314,19 @@ public:
 
         _prsupp->get_value(5, _supplier.S_NATION, 15);
 
-        TRACE( TRACE_RECORD_FLOW, "NATION |%s --d\n",
-               _supplier.S_NATION);
 
 	if (strcmp(_supplier.S_NATION,NATION)==0)
-	  return (true);
+	    {
+		TRACE( TRACE_RECORD_FLOW, "+ NATION |%s --d\n",
+		       _supplier.S_NATION);
+		return (true);
+	    }
 	else
-	  return (false);
+	    {
+		TRACE( TRACE_RECORD_FLOW, ". NATION |%s --d\n",
+		       _supplier.S_NATION);
+		return (false);
+	    }
     }
 
     
@@ -377,13 +405,19 @@ public:
 
         _prdate->get_value(4, _date.D_YEAR);
 
-        TRACE( TRACE_RECORD_FLOW, "YEAR |%d --d\n",
-               _date.D_YEAR);
 	
 	if (_date.D_YEAR>=YEAR_LOW && _date.D_YEAR<=YEAR_HIGH)
-	  return (true);
+	    {
+		TRACE( TRACE_RECORD_FLOW, "+ YEAR |%d --d\n",
+		       _date.D_YEAR);
+		return (true);
+	    }
 	else
-	  return (false);
+	    {
+		TRACE( TRACE_RECORD_FLOW, ". YEAR |%d --d\n",
+		       _date.D_YEAR);
+		return (false);
+	    }
 
     }
 
@@ -415,8 +449,138 @@ public:
     }
 };
 
+//Natural join
+// left is lineorder, right is date
+struct lo_d_join_t : public tuple_join_t {
 
 
+    lo_d_join_t ()
+        : tuple_join_t(sizeof(lo_tuple),
+                       offsetof(lo_tuple, LO_ORDERDATE),
+                       sizeof(d_tuple),
+                       offsetof(d_tuple, D_DATEKEY),
+                       sizeof(int),
+                       sizeof(join_d_tuple))
+    {
+    }
+
+
+    virtual void join(tuple_t &dest,
+                      const tuple_t &left,
+                      const tuple_t &right)
+    {
+        // KLUDGE: this projection should go in a separate filter class
+    	lo_tuple* lo = aligned_cast<lo_tuple>(left.data);
+    	d_tuple* d = aligned_cast<d_tuple>(right.data);
+	join_d_tuple* ret = aligned_cast<join_d_tuple>(dest.data);
+	
+	ret->LO_CUSTKEY = lo->LO_CUSTKEY;
+	ret->LO_SUPPKEY = lo->LO_SUPPKEY;
+	ret->LO_REVENUE = lo->LO_REVENUE;
+
+	ret->D_YEAR = d->D_YEAR;
+
+        TRACE ( TRACE_RECORD_FLOW, "JOIN %d %d %d %lf\n",ret->LO_CUSTKEY, ret->LO_SUPPKEY, ret->D_YEAR, ret->LO_REVENUE);
+
+    }
+
+    virtual lo_d_join_t*  clone() const {
+        return new lo_d_join_t(*this);
+    }
+
+    virtual c_str to_string() const {
+        return "join LINEORDER and DATE, select LO_CUSTKEY, LO_SUPPKEY, D_YEAR, LO_REVENUE";
+    }
+};
+
+//Natural join
+// left is lineorder, date right is supplier
+struct lo_d_s_join_t : public tuple_join_t {
+
+
+    lo_d_s_join_t ()
+        : tuple_join_t(sizeof(join_d_tuple),
+                       offsetof(join_d_tuple, LO_SUPPKEY),
+                       sizeof(s_tuple),
+                       offsetof(s_tuple, S_SUPPKEY),
+                       sizeof(int),
+                       sizeof(join_d_s_tuple))
+    {
+    }
+
+
+    virtual void join(tuple_t &dest,
+                      const tuple_t &left,
+                      const tuple_t &right)
+    {
+        // KLUDGE: this projection should go in a separate filter class
+    	join_d_tuple* jo = aligned_cast<join_d_tuple>(left.data);
+    	s_tuple* s = aligned_cast<s_tuple>(right.data);
+	join_d_s_tuple* ret = aligned_cast<join_d_s_tuple>(dest.data);
+	
+	ret->LO_CUSTKEY = jo->LO_CUSTKEY;
+	ret->D_YEAR = jo->D_YEAR;
+	ret->LO_REVENUE = jo->LO_REVENUE;
+
+	
+	strcpy(ret->S_CITY,s->S_CITY);
+	
+        TRACE ( TRACE_RECORD_FLOW, "JOIN %d {%s} %d %lf\n",ret->LO_CUSTKEY, ret->S_CITY, ret->D_YEAR, ret->LO_REVENUE);
+
+    }
+
+    virtual lo_d_s_join_t* clone() const {
+        return new lo_d_s_join_t(*this);
+    }
+
+    virtual c_str to_string() const {
+        return "join LINEORDER and DATE and SUPPLIER, select LO_CUSTKEY, S_CITY, D_YEAR, LO_REVENUE";
+    }
+};
+
+//Natural join
+// left is lineorder, date, supplier right is customer
+struct q3_2_join_t : public tuple_join_t {
+
+
+    q3_2_join_t ()
+        : tuple_join_t(sizeof(join_d_s_tuple),
+                       offsetof(join_d_s_tuple, LO_CUSTKEY),
+                       sizeof(c_tuple),
+                       offsetof(c_tuple, C_CUSTKEY),
+                       sizeof(int),
+                       sizeof(join_tuple))
+    {
+    }
+
+
+    virtual void join(tuple_t &dest,
+                      const tuple_t &left,
+                      const tuple_t &right)
+    {
+        // KLUDGE: this projection should go in a separate filter class
+    	join_d_s_tuple* jo = aligned_cast<join_d_s_tuple>(left.data);
+    	c_tuple* c = aligned_cast<c_tuple>(right.data);
+	join_tuple* ret = aligned_cast<join_tuple>(dest.data);
+	
+	strcpy(ret->S_CITY,jo->S_CITY);
+	ret->D_YEAR = jo->D_YEAR;
+	ret->LO_REVENUE = jo->LO_REVENUE;
+
+	strcpy(ret->C_CITY,c->C_CITY);
+
+        TRACE ( TRACE_RECORD_FLOW, "JOIN {%s} {%s} %d %lf\n",ret->C_CITY, ret->S_CITY, ret->D_YEAR, ret->LO_REVENUE);
+
+    }
+
+    virtual q3_2_join_t* clone() const {
+        return new q3_2_join_t(*this);
+    }
+
+    virtual c_str to_string() const {
+        return "join LINEORDER and DATE and SUPPLIER and CUSTOMER, select C_CITY, S_CITY, D_YEAR, LO_REVENUE";
+    }
+};
 
 
 /*struct count_aggregate_t : public tuple_aggregate_t {
@@ -458,14 +622,16 @@ public:
         
     void begin() {
         TRACE(TRACE_QUERY_RESULTS, "*** q3_2 ANSWER ...\n");
-        TRACE(TRACE_QUERY_RESULTS, "*** SUM_QTY\tSUM_BASE\tSUM_DISC...\n");
+        TRACE(TRACE_QUERY_RESULTS, "*** ...\n");
     }
     
     virtual void process(const tuple_t& output) {
         projected_tuple *tuple;
         tuple = aligned_cast<projected_tuple>(output.data);
-        TRACE(TRACE_QUERY_RESULTS, "%d --\n",
-	      tuple->KEY);
+        TRACE ( TRACE_QUERY_RESULTS, "PROCESS {%s} {%s} %d %lf\n",tuple->C_CITY, tuple->S_CITY, tuple->D_YEAR, tuple->LO_REVENUE);
+
+        /*TRACE(TRACE_QUERY_RESULTS, "%d --\n",
+	  tuple->KEY);*/
     }
 };
 
@@ -498,8 +664,71 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
                            pxct
                            //, SH 
                            );
+	//CUSTOMER
+	tuple_fifo* c_out_buffer = new tuple_fifo(sizeof(c_tuple));
+        tscan_packet_t* c_tscan_packet =
+        new tscan_packet_t("TSCAN CUSTOMER",
+                           c_out_buffer,
+                           new customer_tscan_filter_t(this,in),
+                           this->db(),
+                           _pcustomer_desc.get(),
+                           pxct
+                           //, SH 
+                           );
+	//SUPPLIER
+	tuple_fifo* s_out_buffer = new tuple_fifo(sizeof(s_tuple));
+        tscan_packet_t* s_tscan_packet =
+        new tscan_packet_t("TSCAN SUPPLIER",
+                           s_out_buffer,
+                           new supplier_tscan_filter_t(this,in),
+                           this->db(),
+                           _psupplier_desc.get(),
+                           pxct
+                           //, SH 
+                           );
+	//DATE
+	tuple_fifo* d_out_buffer = new tuple_fifo(sizeof(d_tuple));
+        tscan_packet_t* d_tscan_packet =
+        new tscan_packet_t("TSCAN DATE",
+                           d_out_buffer,
+                           new date_tscan_filter_t(this,in),
+                           this->db(),
+                           _pdate_desc.get(),
+                           pxct
+                           //, SH 
+                           );
 
 
+	//JOIN Lineorder and Date
+	tuple_fifo* join_lo_d_out = new tuple_fifo(sizeof(join_d_tuple));
+	packet_t* join_lo_d_packet =
+	    new hash_join_packet_t("Lineorder - Date JOIN",
+				   join_lo_d_out,
+				   new trivial_filter_t(sizeof(join_d_tuple)),
+				   lo_tscan_packet,
+				   d_tscan_packet,
+				   new lo_d_join_t() );
+
+	//JOIN Lineorder and Date and Supplier
+	tuple_fifo* join_lo_d_s_out = new tuple_fifo(sizeof(join_d_s_tuple));
+	packet_t* join_lo_d_s_packet =
+	    new hash_join_packet_t("Lineorder - Date - Supplier JOIN",
+				   join_lo_d_s_out,
+				   new trivial_filter_t(sizeof(join_d_s_tuple)),
+				   join_lo_d_packet,
+				   s_tscan_packet,
+				   new lo_d_s_join_t() );
+	
+	//JOIN Lineorder and Date and Supplier and Customer
+	tuple_fifo* join_out = new tuple_fifo(sizeof(join_tuple));
+	packet_t* join_packet =
+	    new hash_join_packet_t("Lineorder - Date - Supplier - Customer JOIN",
+				   join_out,
+				   new trivial_filter_t(sizeof(join_tuple)),
+				   join_lo_d_s_packet,
+				   c_tscan_packet,
+				   new q3_2_join_t() );
+	
     /*    tuple_fifo* agg_output = new tuple_fifo(sizeof(count_tuple));
     aggregate_packet_t* agg_packet =
                 new aggregate_packet_t(c_str("COUNT_AGGREGATE"),
@@ -519,11 +748,17 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
     */
     qpipe::query_state_t* qs = dp->query_state_create();
     lo_tscan_packet->assign_query_state(qs);
+    s_tscan_packet->assign_query_state(qs);
+    c_tscan_packet->assign_query_state(qs);
+    d_tscan_packet->assign_query_state(qs);
+    join_lo_d_packet->assign_query_state(qs);
+    join_lo_d_s_packet->assign_query_state(qs);
+    join_packet->assign_query_state(qs);
     //agg_packet->assign_query_state(qs);
         
     // Dispatch packet
     ssb_q3_2_process_tuple_t pt;
-    process_query(lo_tscan_packet, pt);
+    process_query(join_packet, pt);
     dp->query_state_destroy(qs);
 
     return (RCOK); 

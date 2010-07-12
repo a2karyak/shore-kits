@@ -52,7 +52,7 @@ struct q2_1_input_t { };
 struct q2_2_input_t { };
 struct q2_3_input_t { };
 struct q3_1_input_t { };
-struct q3_2_input_t { };
+//struct q3_2_input_t { };
 struct q3_3_input_t { };
 struct q3_4_input_t { };
 struct q4_1_input_t { };
@@ -96,6 +96,26 @@ struct q1_input_t
 };
 
 q1_input_t    create_q1_input(const double sf, 
+                              const int specificWH = 0);
+
+*/
+
+/******************************************************************** 
+ *
+ *  Q3_2-SSB example
+ *
+ ********************************************************************/
+
+
+struct q3_2_input_t 
+{
+    int YEAR_LO;
+    int YEAR_HI;
+    char NATION[16];
+    q3_2_input_t& operator=(const q3_2_input_t& rhs);
+};
+
+q3_2_input_t    create_q3_2_input(const double sf, 
                               const int specificWH = 0);
 
 */
