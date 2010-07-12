@@ -442,8 +442,8 @@ int shore_shell_t::process_cmd_TEST(const char* command)
     int tmp_selectedTrxID      = selectedTrxID;
     int iterations             = ev->getVarInt("test-iterations",DF_NUM_OF_ITERS);
     int tmp_iterations         = iterations;
-    eBindingType binding       = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
-    eBindingType tmp_binding   = binding;
+    int binding       = DF_BINDING_TYPE;//ev->getVarInt("test-cl-binding",DF_BINDING_TYPE);
+    int tmp_binding   = binding;
 
 
     // update the SF
@@ -522,7 +522,7 @@ int shore_shell_t::process_cmd_TEST(const char* command)
         iterations = tmp_iterations;
 
     // 8- binding type   
-    mapBindPolsIt cit = _sup_bps.find(tmp_binding);
+    mapBindPolsIt cit = _sup_bps.find(eBindingType(tmp_binding));
     if (cit!= _sup_bps.end()) {
         binding = tmp_binding;
     }
@@ -535,7 +535,7 @@ int shore_shell_t::process_cmd_TEST(const char* command)
     // call the virtual function that implements the test    
     return (_cmd_TEST_impl(numOfQueriedSF, spreadThreads, numOfThreads,
                            numOfTrxs, selectedTrxID, iterations, 
-                           binding));
+                           eBindingType(binding)));
 }
 
 
@@ -574,8 +574,8 @@ int shore_shell_t::process_cmd_MEASURE(const char* command)
     int tmp_selectedTrxID      = selectedTrxID;
     int iterations             = ev->getVarInt("measure-iterations",DF_NUM_OF_ITERS);
     int tmp_iterations         = iterations;
-    eBindingType binding       = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
-    eBindingType tmp_binding   = binding;
+    int binding       = DF_BINDING_TYPE;//ev->getVarInt("measure-cl-binding",DF_BINDING_TYPE);
+    int tmp_binding   = binding;
     
     // Parses new test run data
     char command_tag[SERVER_COMMAND_BUFFER_SIZE];
@@ -652,7 +652,7 @@ int shore_shell_t::process_cmd_MEASURE(const char* command)
         iterations = tmp_iterations;
 
     // 8- binding type   
-    mapBindPolsIt cit = _sup_bps.find(tmp_binding);
+    mapBindPolsIt cit = _sup_bps.find(eBindingType(tmp_binding));
     if (cit!= _sup_bps.end()) {
         binding = tmp_binding;
     }
@@ -664,7 +664,7 @@ int shore_shell_t::process_cmd_MEASURE(const char* command)
     // call the virtual function that implements the measurement    
     return (_cmd_MEASURE_impl(numOfQueriedSF, spreadThreads, numOfThreads,
                               duration, selectedTrxID, iterations,
-                              binding));
+                              eBindingType(binding)));
 }
 
 
