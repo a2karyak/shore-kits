@@ -70,7 +70,12 @@ void topinfo_t::reset()
 }
 
 
-// CPU
+
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//  CPU - information about the CPU utilization                            //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
 
 int topinfo_t::update_cpu()
 {
@@ -79,7 +84,7 @@ int topinfo_t::update_cpu()
 }
 
 
-voidtopinfo_t::print_cpu()
+void topinfo_t::print_cpu()
 {
     update_cpu();
 
@@ -102,8 +107,15 @@ voidtopinfo_t::print_cpu()
     _old_cpu = _cpu;
 }
 
+double top
 
-// MEMORY 
+
+
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//  MEMORY - information about the memory usage                            //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
 
 int topinfo_t::update_mem()
 {
@@ -134,7 +146,13 @@ voidtopinfo_t::print_mem()
 }
 
 
-// PROCLIST
+
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//  PROCLIST - information about the processes in the system               //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+
 
 int topinfo_t::update_proclist()
 {
@@ -153,7 +171,11 @@ void topinfo_t::print_proclist()
 }
 
 
-// FS
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+//  FS - file system information                                           //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
 
 int topinfo_t::register_fs(const string& mountpath)
 {
