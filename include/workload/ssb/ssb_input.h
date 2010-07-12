@@ -71,7 +71,7 @@ q2_1_input_t create_q2_1_input(const double sf, const int specificWH);
 q2_2_input_t create_q2_2_input(const double sf, const int specificWH);
 q2_3_input_t create_q2_3_input(const double sf, const int specificWH);
 q3_1_input_t create_q3_1_input(const double sf, const int specificWH);
-q3_2_input_t create_q3_2_input(const double sf, const int specificWH);
+//q3_2_input_t create_q3_2_input(const double sf, const int specificWH);
 q3_3_input_t create_q3_3_input(const double sf, const int specificWH);
 q3_4_input_t create_q3_4_input(const double sf, const int specificWH);
 q4_1_input_t create_q4_1_input(const double sf, const int specificWH);
@@ -112,13 +112,12 @@ struct q3_2_input_t
     int YEAR_LO;
     int YEAR_HI;
     char NATION[16];
+
     q3_2_input_t& operator=(const q3_2_input_t& rhs);
 };
 
 q3_2_input_t    create_q3_2_input(const double sf, 
                               const int specificWH = 0);
-
-*/
 
 
 /******************************************************************** 

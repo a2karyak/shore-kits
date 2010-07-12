@@ -76,7 +76,8 @@ q3_2_input_t& q3_2_input_t::operator=(const q3_2_input_t& rhs)
 {
     YEAR_LO = rhs.YEAR_LO;
     YEAR_HI = rhs.YEAR_HI;
-    strcpy(NATION,rhs.NATION);
+    
+    //strcpy(NATION,rhs.NATION);
     
     return (*this);
 };
@@ -84,16 +85,16 @@ q3_2_input_t& q3_2_input_t::operator=(const q3_2_input_t& rhs)
 
 q3_2_input_t create_q3_2_input(const double /*sf*/, const int /*specificWH*/)
 {
-    q3_2_input_t a;
-    int nation;
+    q3_2_input_t q3_2_in;
+    int _nation;
     
-    a.YEAR_LO=1992;//=URand(1992,1998);
-    a.YEAR_HI=1993;//=URand(a.YEAR_LO,1998);
-    nation=URand(0,24);
+    q3_2_in.YEAR_LO=1992;//=URand(1992,1998);
+    q3_2_in.YEAR_HI=1993;//=URand(a.YEAR_LO,1998);
+    _nation=URand(0,24);
     
-    strcpy(a.NATION,"UNITED STATED");
+    //strcpy(q3_2_in.NATION,"UNITED STATES");
     
-    return a;
+    return q3_2_in;
 }
 
 
