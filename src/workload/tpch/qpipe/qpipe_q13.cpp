@@ -477,4 +477,4 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q13(const int xct_id,
 }
 
 
-EXIT_NAMESPACE(qpipe);
+EXIT_NAMESPACE(tpch);
