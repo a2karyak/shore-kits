@@ -258,13 +258,11 @@ lib_libworkload_a_SOURCES = \
    $(WL_TM1_SHORE) \
    $(WL_TPCB_SHORE) \
    $(WL_TPCH_DBGEN_SHORE) \
-   $(WL_TPCH_SHORE) \
-   $(WL_SSB_DBGEN_SHORE) \
-   $(WL_SSB_SHORE)
+   $(WL_TPCH_SHORE)
 
 if USE_QPIPE
 lib_libworkload_a_SOURCES += $(WL_TPCH_QPIPE)
-lib_libworkload_a_SOURCES += $(WL_SSB_QPIPE)
+lib_libworkload_a_SOURCES += $(WL_SSB_QPIPE) $(WL_SSB_DBGEN_SHORE) $(WL_SSB_SHORE)
 endif
 
 
