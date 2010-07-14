@@ -163,7 +163,8 @@ foreach $entries (@theEntriesPerClient)
     $totalEntries+=$entries;
 }
 
-printf "\n";
+#printf "\n";
+printf "$infile\n";
 
 # print "TotalEntries: " . $totalEntries . "\n";
 
