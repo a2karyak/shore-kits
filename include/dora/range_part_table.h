@@ -32,10 +32,11 @@
 #ifndef __DORA_RANGE_PART_TABLE_H
 #define __DORA_RANGE_PART_TABLE_H
 
-
+#include "util/key_ranges_map.h"
 
 #include "dora/part_table.h"
 #include "dora/range_partition.h"
+
 
 using namespace shore;
 
@@ -108,7 +109,9 @@ public:
     int create_one_part();
 
     inline rpImpl* myPart(const int asf) {
-        return (PartTable::_ppvec[asf/PartTable::_sfs_per_part]);
+        //FIX ME FIX ME;
+        return (PartTable::_ppvec[_rangeMap(asf)]);
+        //return (PartTable::_ppvec[asf/PartTable::_sfs_per_part]);
     }
 
 }; // EOF: range_part_table_impl

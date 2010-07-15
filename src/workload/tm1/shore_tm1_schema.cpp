@@ -22,7 +22,8 @@
 */
 
 /** @file:   shore_tm1_schema.h
- * *  @brief:  Declaration of the Telecom One (TM1) benchmark tables
+ * 
+ *  @brief:  Declaration of the Telecom One (TM1) benchmark tables
  *
  *  @author: Ippokratis Pandis, Feb 2009
  */
@@ -253,7 +254,7 @@ call_forwarding_t::call_forwarding_t(string sysname) :
     _desc[1].setup(SQL_SMALLINT,   "SF_TYPE");     // REF SF.SF_TYPE
     _desc[2].setup(SQL_SMALLINT,   "START_TIME");  // SMALLINT {0,8,16}
     _desc[3].setup(SQL_SMALLINT,   "END_TIME");    // SMALLINT START_TIME + URAND(1,8)
-    _desc[4].setup(SQL_FIXCHAR,       "NUMBERX", TM1_CF_NUMBERX_SZ); // CHAR (15) [0-9]
+    _desc[4].setup(SQL_FIXCHAR,    "NUMBERX", TM1_CF_NUMBERX_SZ); // CHAR (15) [0-9]
 
 
     int padding_sz = 50-3*sizeof(short)-1*sizeof(int)-TM1_CF_NUMBERX_SZ*sizeof(char);
