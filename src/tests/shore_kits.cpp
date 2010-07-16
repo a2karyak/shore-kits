@@ -667,7 +667,7 @@ int main(int argc, char* argv[])
     assert (kit.get());
 
     // 2. Create and fork the process monitor
-#ifdef SPARC_MACHINE
+#ifdef __sparcv9
     _g_mon = new sunos_procmonitor_t();
 #else
     // The Linux monitor does not need to run as a separate thread

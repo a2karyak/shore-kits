@@ -55,7 +55,7 @@
 #include "util/w_strlcpy.h"
 #include "util/procstat.h"
 
-#ifdef SPARC_MACHINE
+#ifdef __sparcv9
 #include "util/sunos_procstat.h"
 #include "util/prcinfo.h"
 #else

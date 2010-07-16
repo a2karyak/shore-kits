@@ -31,6 +31,7 @@
  */
 
 #include "util/sunos_procstat.h"
+#include "util.h"
 
 sunos_procmonitor_t::sunos_procmonitor_t(const double interval_sec)
     : procmonitor_t("sunos-mon",interval_sec), _pkc(NULL)

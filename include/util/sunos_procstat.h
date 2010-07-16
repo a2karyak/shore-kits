@@ -53,7 +53,6 @@ class sunos_procmonitor_t : public procmonitor_t
 { 
 private: 
 
-    typedef int kstat_ctl_t;
     kstat_ctl_t* _pkc;
 
     std::vector<kstat_entry> _entries;

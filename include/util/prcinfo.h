@@ -67,7 +67,7 @@ struct processinfo_t
     bool _print_at_exit;
     int _is_ok;
 
-    uint _ncpu;
+    uint _ncpus;
 
     processinfo_t(const bool printatexit = false);
     ~processinfo_t();
