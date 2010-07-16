@@ -93,14 +93,16 @@ struct quit_cmd_t : public command_handler_t {
 };
 
 
-struct disconnect_cmd_t : public command_handler_t {
+struct disconnect_cmd_t : public command_handler_t 
+{
     void setaliases();
     int handle(const char* /* cmd */) { return (SHELL_NEXT_DISCONNECT); }
     string desc() const { return (string("Disconnect client")); }
 };
 
 
-struct help_cmd_t : public command_handler_t {
+struct help_cmd_t : public command_handler_t 
+{
     cmdMap* _pcmds; // pointer to the supported commands
     help_cmd_t(cmdMap* pcmds) : _pcmds(pcmds) { assert(pcmds); }
     ~help_cmd_t() { }
@@ -115,7 +117,8 @@ struct help_cmd_t : public command_handler_t {
 }; 
 
 
-struct set_cmd_t : public command_handler_t {
+struct set_cmd_t : public command_handler_t 
+{
     envVar* ev;
     void init();
     void setaliases();
@@ -125,7 +128,8 @@ struct set_cmd_t : public command_handler_t {
 };
 
 
-struct env_cmd_t : public command_handler_t {
+struct env_cmd_t : public command_handler_t 
+{
     envVar* ev;
     void init();
     void setaliases();
@@ -135,7 +139,8 @@ struct env_cmd_t : public command_handler_t {
 };
 
 
-struct conf_cmd_t : public command_handler_t {
+struct conf_cmd_t : public command_handler_t 
+{
     envVar* ev;
     void init();
     void setaliases();
@@ -144,14 +149,6 @@ struct conf_cmd_t : public command_handler_t {
     string desc() const { return (string("Rereads env vars")); }               
 };
 
-
-struct cpustat_cmd_t : public command_handler_t {
-    processinfo_t myinfo;
-    void setaliases();
-    int handle(const char* cmd);
-    void usage();
-    string desc() const { return (string("Process cpu usage/statitics")); }
-};
 
 struct echo_cmd_t : public command_handler_t {
     void setaliases() { _name = string("echo"); _aliases.push_back("echo"); }
@@ -241,7 +238,6 @@ protected:
     guard<env_cmd_t>  _enver;
     guard<conf_cmd_t> _confer;
     guard<trace_cmd_t>   _tracer;
-    guard<cpustat_cmd_t> _cpustater;
 
     guard<echo_cmd_t> _echoer;
     guard<break_cmd_t> _breaker;

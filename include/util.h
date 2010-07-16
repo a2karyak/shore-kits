@@ -53,14 +53,15 @@
 #include "util/random_input.h"
 #include "util/atomic_ops.h"
 #include "util/w_strlcpy.h"
-#include "util/cpustat.h"
+#include "util/procstat.h"
 
+#ifdef SPARC_MACHINE
+#include "util/sunos_procstat.h"
 #include "util/prcinfo.h"
-// #ifdef __sparcv9
-// #include "util/prcinfo.h"
-// #else
-// #include "util/topinfo.h"
-// #endif
+#else
+#include "util/linux_procstat.h"
+#include "util/topinfo.h"
+#endif
 
 #include "util/shell.h"
 

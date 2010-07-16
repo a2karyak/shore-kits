@@ -49,8 +49,6 @@ using std::map;
 
 /******** Constants ********/
 
-const int SHORE_DEF_NUM_OF_CORES     = 64; // default number of cores
-
 const int SHORE_NUM_OF_RETRIES       = 3;
 
 #define SHORE_TABLE_DATA_DIR  "databases"
@@ -396,6 +394,8 @@ class ShoreEnv;
 /******** Exported variables ********/
 
 extern ShoreEnv* _g_shore_env;
+
+extern procmonitor_t* _g_mon;
 
 extern int ssm_max_small_rec;
 

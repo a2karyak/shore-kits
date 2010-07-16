@@ -43,7 +43,10 @@ ENTER_NAMESPACE(shore);
 
 // Exported variables //
 
-ShoreEnv* _g_shore_env;
+ShoreEnv* _g_shore_env = NULL;
+
+procmonitor_t* _g_mon = NULL;
+
 
 
 // Exported functions //
@@ -89,8 +92,8 @@ ShoreEnv::ShoreEnv(string confname)
       _last_stats_mutex(thread_mutex_create()),
       _vol_mutex(thread_mutex_create()), 
       _cname(confname),
-      _max_cpu_count(SHORE_DEF_NUM_OF_CORES), 
-      _active_cpu_count(SHORE_DEF_NUM_OF_CORES),
+      _max_cpu_count(0),
+      _active_cpu_count(0),
       _worker_cnt(0),
       _measure(MST_UNDEF)
 {
@@ -113,6 +116,7 @@ ShoreEnv::ShoreEnv(string confname)
 ShoreEnv::~ShoreEnv()
 {         
     if (dbc()!=DBC_STOPPED) stop();
+
     pthread_mutex_destroy(&_init_mutex);
     pthread_mutex_destroy(&_statmap_mutex);
     pthread_mutex_destroy(&_last_stats_mutex);
@@ -124,12 +128,14 @@ ShoreEnv::~ShoreEnv()
 }
 
 
-bool ShoreEnv::is_initialized() { 
+bool ShoreEnv::is_initialized() 
+{ 
     CRITICAL_SECTION(cs, _init_mutex); 
     return (_initialized); 
 }
 
-bool ShoreEnv::is_loaded() { 
+bool ShoreEnv::is_loaded() 
+{ 
     CRITICAL_SECTION(cs, _load_mutex);
     return (_loaded); 
 }
@@ -793,7 +799,7 @@ void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt)
  *
  *  @fn:     _set_sys_params()
  *
- *  @brief:  Sets system params set in the configuration file
+ *  @brief:  Sets system params
  *
  *  @return: Returns 0 on success
  *
@@ -801,27 +807,26 @@ void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt)
 
 int ShoreEnv::_set_sys_params()
 {
-    int problem = 0;
+    // First check if can get the number of processors from the procmonitor
+    if (_g_mon) {
+        _max_cpu_count = _g_mon->get_num_of_cpus();
+    }
 
-    // cpu info - first checks if valid input    
-    int tmp_max_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[1][0]].c_str());
-    int tmp_active_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[2][0]].c_str());    
+    // procmonitor returns 0 if it cannot find the number of processors
+    if (_max_cpu_count==0) {
+        _max_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[1][0]].c_str());
+    }
 
-    if ((tmp_active_cpu_count>0) && (tmp_active_cpu_count<=tmp_max_cpu_count)) {
-        atomic_swap_uint(&_max_cpu_count,    tmp_max_cpu_count);
-        atomic_swap_uint(&_active_cpu_count, tmp_active_cpu_count);
+    // Set active CPU info
+    uint tmp_active_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[2][0]].c_str());    
+    if (tmp_active_cpu_count>_max_cpu_count) {
+        _active_cpu_count = _max_cpu_count;
     }
     else {
-        TRACE( TRACE_ALWAYS, 
-               "Incorrect CPU count input: Max (%d) - Active (%d)\n",
-               tmp_max_cpu_count, tmp_active_cpu_count);
-        problem=1;
-    }        
-    assert(_max_cpu_count);
-    assert(_active_cpu_count);
-    assert(_active_cpu_count<=_max_cpu_count);
+        _active_cpu_count = tmp_active_cpu_count;
+    }
     print_cpus();
-    return (problem);
+    return (0);
 }
 
 

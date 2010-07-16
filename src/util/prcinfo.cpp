@@ -28,13 +28,29 @@
  *  @author: Ippokratis Pandis, Nov 2008
  */
 
+
+/*
+ * Prints all field resource, usage and microstat accounting fields
+ *
+ * @note: Taken from - http://my.safaribooksonline.com/0131482092/app02lev1sec2
+ * @note: Look also  - http://docs.sun.com/app/docs/doc/816-5174/proc-4
+ *
+ * Also, for the number of processors available look at 
+ * http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
+ */
+
+
 #include "util/prcinfo.h"
 #include "util/trace.h"
+
+#include <unistd.h>
+#include <stdio.h>
 
 // constructor opens the file and gets the 
 processinfo_t::processinfo_t(const bool printatexit) 
     : _print_at_exit(printatexit), _is_ok(0)
 {
+    // Open process microaccount information file
     string pathname = "/proc/self/usage";
     if ((_fd = open(pathname.c_str(), O_RDONLY)) < 0) {
         // not good
@@ -54,7 +70,10 @@ processinfo_t::processinfo_t(const bool printatexit)
             _timer.reset();
             _is_ok = 1;
         }
-    }   
+    }
+
+    // Get the number of processors
+    _ncpus = sysconf( _SC_NPROCESSORS_ONLN );
 }
 
 processinfo_t::~processinfo_t() { 
@@ -173,10 +192,15 @@ int processinfo_t::print()
 }
 
 
+uint processinfo_t::get_num_of_cpus()
+{   
+    return (_ncpus);
+}
 
-load_values_t processinfo_t::getload()
+
+cpu_load_values_t processinfo_t::get_load()
 {
-    load_values_t load;
+    cpu_load_values_t load;
     if (!_is_ok) return (load);
 
     // goes to the beginning of "file"

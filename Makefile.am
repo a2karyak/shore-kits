@@ -22,21 +22,27 @@ SHORE_LDADD += -L$(SHORE_HOME)/../ppmcs -lppmcs
 endif
 
 
-# Readline includes
 if SPARC_MACHINE
+# Readline includes
 READLINE_INCLUDE = $(READLINE_HOME)/include
 READLINE_LIBS = $(READLINE_HOME)/lib/sparcv9
 # READLINE_INCLUDE = /opt/csw/include
 # READLINE_LIBS = /opt/csw/lib/sparcv9
+
+PROCSTAT_INCLUDES = 
+PROCSTAT_LIBS = 
 else
 READLINE_INCLUDE = $(READLINE_HOME)/include
 READLINE_LIBS = $(READLINE_HOME)/lib
+
+PROCSTAT_INCLUDES = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/include/libgtop-2.0
+PROCSTAT_LIBS = -lgtop-2.0
 endif
 
 
 # GLOBAL includes/ld
-INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I$(READLINE_INCLUDE)
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline
+INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I$(READLINE_INCLUDE) $(PROCSTAT_INCLUDES)
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline $(PROCSTAT_LIBS)
 
 # List of libraries
 
@@ -90,15 +96,15 @@ UTIL = \
         $(SU)/shell.cpp \
         $(SU)/tcp.cpp \
         $(SU)/w_strlcpy.cpp \
-        $(SU)/cpustat.cpp
+	$(SU)/procstat.cpp
 
-
-UTIL +=	$(SU)/prcinfo.cpp
-# if SPARC_MACHINE
-# UTIL +=	$(SU)/prcinfo.cpp
-# else
-# UTIL +=	$(SU)/topinfo.cpp
-# endif
+if SPARC_MACHINE
+UTIL +=	$(SU)/sunos_procstat.cpp \
+        $(SU)/prcinfo.cpp
+else
+UTIL +=	$(SU)/linux_procstat.cpp \
+        $(SU)/topinfo.cpp
+endif
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \
