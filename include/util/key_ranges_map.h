@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <map>
-#include "util.h"
+
+//#include "../../../sm/src/sthread/sthread.h"
+//#include "util.h"
 
 using namespace std;
 
@@ -18,7 +20,7 @@ private:
       int _minKey;
       int _maxKey;
       // for thread safety multiple readers/single writer lock
-      occ_rwlock* _rwlock;
+      //occ_rwlock _rwlock;
 
       typedef map<int,int>::iterator keysIter;
 
