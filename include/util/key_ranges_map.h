@@ -3,8 +3,7 @@
 
 #include <iostream>
 #include <map>
-#include <vector>
-#include <utility>
+#include "util.h"
 
 using namespace std;
 
@@ -13,22 +12,19 @@ class key_ranges_map
 
 private:
 
-      // tid -> range_init_key // TODO: think about how to handle this
-      map<int,vector<int> > _partitionMap;
-      // offset -> range_init_key
-      // map<int,int> _offsetMap;
       // range_init_key -> range_end_key
       map<int,int> _keyRangesMap;
       int _numPartitions;
       int _minKey;
       int _maxKey;
+      // for thread safety multiple readers/single writer lock
+      occ_rwlock* _rwlock;
 
       typedef map<int,int>::iterator keysIter;
-      typedef map<int,vector<int> >::iterator partitionMapIter;
 
 public:
 
-  // TODO: the first argument ipo talked about
+  // equally partitions the given key range ([minKey,maxKey]) depending on the given partition number
   key_ranges_map(int minKey, int maxKey, int numPartitions);
   // makes equal length partitions from scratch
   void makeEqualPartitions();
@@ -39,12 +35,10 @@ public:
   // puts the given partition into previous partition
   void deletePartition(int partition);
   // gets the partition number of the given key
-  // TODO: not sure about what should this return though
   int getPartititionWithKey(int key);
-  // gets the key range of the given partition
-  // pair<int,int> getPartitition(int partition);
-  // setters, TODO: decide what to do after you set these values, what seems reasonable to me
-  // is change the partition structre as less as possible because later with dynamic load
+  // setters
+  // TODO: decide what to do after you set these values, what seems reasonable to me
+  // is change the partition structure as less as possible because later with dynamic load
   // balancing things should adjust properly
   void setNumPartitions(int numPartitions);
   void setMinKey(int minKey);

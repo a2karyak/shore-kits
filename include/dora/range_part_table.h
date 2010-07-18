@@ -110,8 +110,8 @@ public:
 
     inline rpImpl* myPart(const int asf) {
         //FIX ME FIX ME;
-        return (PartTable::_ppvec[_rangeMap(asf)]);
-        //return (PartTable::_ppvec[asf/PartTable::_sfs_per_part]);
+        // TODO: return (PartTable::_ppvec[_rangeMap(asf)]);
+        return (PartTable::_ppvec[asf/PartTable::_sfs_per_part]);
     }
 
 }; // EOF: range_part_table_impl
