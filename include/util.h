@@ -54,6 +54,7 @@
 #include "util/atomic_ops.h"
 #include "util/w_strlcpy.h"
 #include "util/cpustat.h"
+#include "util/key_ranges_map.h"
 
 #include "util/prcinfo.h"
 // #ifdef __sparcv9

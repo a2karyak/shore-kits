@@ -1,6 +1,5 @@
-#include <iostream>
 
-#include "../../include/util/key_ranges_map.h"
+#include "util/key_ranges_map.h"
 
 /** key_ranges_map interface */
 
@@ -14,7 +13,7 @@ void key_ranges_map::makeEqualPartitions()
 	int range = (_maxKey - _minKey) / _numPartitions;
 	int currentLower = 0;
 	int currentUpper = _minKey;
-//	_rwlock.acquire_write();
+	_rwlock.acquire_write();
 	_keyRangesMap.clear();
 	for (int i = 0; i < _numPartitions; i++) {
 		currentLower = currentUpper;
@@ -22,14 +21,14 @@ void key_ranges_map::makeEqualPartitions()
 		_keyRangesMap[currentLower] = currentUpper;
 	}
 	_keyRangesMap[currentLower] = _maxKey + 1;
-//	_rwlock.release_write();
+	_rwlock.release_write();
 }
 
 void key_ranges_map::addPartition(int key)
 {
 	int partitionNum = 0;
 	keysIter iter;
-//	_rwlock.acquire_write();
+	_rwlock.acquire_write();
 	for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
 		if (key > iter->first && key < iter->second) {
 			_keyRangesMap[key] = iter->second;
@@ -39,14 +38,14 @@ void key_ranges_map::addPartition(int key)
 		}
 		partitionNum++;
 	}
-//	_rwlock.release_write();
+	_rwlock.release_write();
 }
 
 void key_ranges_map::deletePartitionWithKey(int key)
 {
 	keysIter iter;
 	int prevKey = 0;
-//	_rwlock.acquire_write();
+	_rwlock.acquire_write();
 	for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
 		if (key >= iter->first && key < iter->second) {
 			if (iter == _keyRangesMap.begin()) {
@@ -60,18 +59,18 @@ void key_ranges_map::deletePartitionWithKey(int key)
 		}
 		prevKey = iter->first;
 	}
-//	_rwlock.release_write();
+	_rwlock.release_write();
 }
 
 void key_ranges_map::deletePartition(int partition)
 {
 	keysIter iter;
 	int i;
-//	_rwlock.acquire_read();
+	_rwlock.acquire_read();
 	for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i
 			< partition; ++iter, i++)
 		;
-//	_rwlock.release_read();
+	_rwlock.release_read();
 	if (iter != _keyRangesMap.end())
 		deletePartitionWithKey(iter->first);
 }
@@ -80,57 +79,53 @@ int key_ranges_map::getPartititionWithKey(int key)
 {
 	keysIter iter;
 	int partitionNum = 0;
-//	_rwlock.acquire_read();
+	_rwlock.acquire_read();
 	for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
 		if (key >= iter->first && key < iter->second) {
 			return partitionNum;
 		}
 		partitionNum++;
 	}
-//	_rwlock.release_read();
+	_rwlock.release_read();
 }
-
-//pair<int,int> key_ranges_map::getPartitition(int partition) {
-//  return pair<int, int>(_offsetMap[partition], _keyRangesMap[_offsetMap[partition]]);
-//}
 
 void key_ranges_map::printPartitions()
 {
 	keysIter iter;
 	int i = 0;
-//	_rwlock.acquire_read();
+	_rwlock.acquire_read();
 	for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter, i++)
 		cout << "Partition: " << i << "\tStartKey: " << iter->first
 				<< "\tEndKey: " << iter->second << endl;
-//	_rwlock.release_read();
+	_rwlock.release_read();
 }
 
 void key_ranges_map::setNumPartitions(int numPartitions)
 {
-//	_rwlock.acquire_write();
+	_rwlock.acquire_write();
 	_numPartitions = numPartitions;
 	// TODO: update partitions
-//	_rwlock.release_write();
+	_rwlock.release_write();
 }
 
 void key_ranges_map::setMinKey(int minKey)
 {
-//	_rwlock.acquire_write();
+	_rwlock.acquire_write();
 	_minKey = minKey;
 	keysIter iter = _keyRangesMap.begin();
 	_keyRangesMap[_minKey] = iter->second;
 	_keyRangesMap.erase(iter);
-//	_rwlock.release_write();
+	_rwlock.release_write();
 }
 
 void key_ranges_map::setMaxKey(int maxKey)
 {
-//	_rwlock.acquire_write();
+	_rwlock.acquire_write();
 	_maxKey = maxKey;
 	keysIter iter = _keyRangesMap.end();
 	iter--;
 	iter->second = _maxKey + 1;
-//	_rwlock.release_write();
+	_rwlock.release_write();
 }
 
 int main(void)
