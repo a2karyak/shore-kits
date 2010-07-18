@@ -14,7 +14,7 @@ class key_ranges_map
 private:
 
       // range_init_key -> range_end_key
-      map<int,int> _keyRangesMap;
+      map<int,int, std::greater<int> > _keyRangesMap;
       int _numPartitions;
       int _minKey;
       int _maxKey;
@@ -36,7 +36,8 @@ public:
   // puts the given partition into previous partition
   void deletePartition(int partition);
   // gets the partition number of the given key
-  int getPartititionWithKey(int key);
+  int getPartitionWithKey(int key);
+  int operator()(int key);
   // setters
   // TODO: decide what to do after you set these values, what seems reasonable to me
   // is change the partition structure as less as possible because later with dynamic load

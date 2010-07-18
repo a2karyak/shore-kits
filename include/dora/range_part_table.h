@@ -67,6 +67,9 @@ private:
     // range-partition field count
     int _field_count;
     
+    // key ranges map
+    // key_ranges_map _rangeMap;
+
 public:
 
     range_part_table_impl(ShoreEnv* env, table_desc_t* ptable,
@@ -109,8 +112,8 @@ public:
     int create_one_part();
 
     inline rpImpl* myPart(const int asf) {
-        //FIX ME FIX ME;
-        // TODO: return (PartTable::_ppvec[_rangeMap(asf)]);
+        // return (PartTable::_ppvec[_rangeMap(asf)]);
+        //TODO: delete this when you're sure it works
         return (PartTable::_ppvec[asf/PartTable::_sfs_per_part]);
     }
 
