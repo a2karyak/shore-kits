@@ -1,6 +1,8 @@
 
 #include "util/key_ranges_map.h"
 
+//#include "../../include/util/key_ranges_map.h"
+
 /** key_ranges_map interface */
 
 key_ranges_map::key_ranges_map(int minKey, int maxKey, int numPartitions)
@@ -79,11 +81,47 @@ int key_ranges_map::getPartitionWithKey(int key)
 	_rwlock.acquire_read();
 	for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
 		if (key >= iter->first && key < iter->second) {
+			_rwlock.release_read();
 			return partitionNum;
 		}
 		partitionNum++;
 	}
-	_rwlock.release_read();
+	// TODO: indicate error because key is not in the map
+}
+
+vector<int> key_ranges_map::getPartitions(int key1, bool key1Included, int key2, bool key2Included) {
+	vector<int> partitions;
+	// find the partition key1 is in
+	int partition1 = getPartitionWithKey(key1);
+	// find the partition key2 is in
+	int partition2 = getPartitionWithKey(key2);
+	// check corner cases
+	if(!key1Included) {
+	  keysIter iter1 = _keyRangesMap.lower_bound(key1);
+	  if(iter1->second == key1+1)
+	    partition1--;
+	}
+	if(!key2Included) {
+	  keysIter iter2 = _keyRangesMap.lower_bound(key2);
+	  if(iter2->first == key2)
+	    partition2++;
+	}
+	for(int i = partition2; i<=partition1; i++)
+	  partitions.push_back(i);
+	return partitions;
+}
+
+pair<int, int> key_ranges_map::getBoundaries(int partition) {
+  pair<int,int> keyRange;
+  keysIter iter;
+  int i;
+  _rwlock.acquire_read();
+  for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i< partition; ++iter, i++)
+    ;
+  _rwlock.release_read();
+  keyRange.first = iter->first;
+  keyRange.second = iter->second;
+  return keyRange;
 }
 
 void key_ranges_map::printPartitions()
@@ -127,34 +165,70 @@ void key_ranges_map::setMaxKey(int maxKey)
 
 int main(void)
 {
+	cout << "key_ranges_map(10, 100, 10)" << endl;
 	key_ranges_map* KeyMap = new key_ranges_map(10, 100, 10);
 	(*KeyMap).printPartitions();
 	cout << endl;
 
+	cout << "addPartition(60)" << endl;
 	(*KeyMap).addPartition(60);
 	(*KeyMap).printPartitions();
 	cout << endl;
 
+	cout << "deletePartitionWithKey(20)" << endl;
 	(*KeyMap).deletePartitionWithKey(20);
 	(*KeyMap).printPartitions();
 	cout << endl;
 
+	cout << "deletePartition(9)" << endl;
 	(*KeyMap).deletePartition(9);
 	(*KeyMap).printPartitions();
 	cout << endl;
 
+	cout << "getPartitionWithKey(70)" << endl;
 	cout << (*KeyMap).getPartitionWithKey(70) << endl;
 	cout << endl;
 
 	cout << (*KeyMap)(70) << endl;
 	cout << endl;
 
+	cout << "setMinKey(6)" << endl;
 	(*KeyMap).setMinKey(6);
 	(*KeyMap).printPartitions();
 	cout << endl;
 
+	cout << "setMaxKey(110)" << endl;
 	(*KeyMap).setMaxKey(110);
 	(*KeyMap).printPartitions();
+	cout << endl;
+
+	cout << "[36, 64]" << endl;
+	vector<int> v = (*KeyMap).getPartitions(36,true,64,true);
+	for(int i=0; i < v.size(); i++)
+	  cout << v[i] << " " << endl;
+	cout << endl;
+
+	cout << "(36, 64]" << endl;
+	v = (*KeyMap).getPartitions(36,false,64,true);
+	for(int i=0; i < v.size(); i++)
+	  cout << v[i] << " " << endl;
+	cout << endl;
+
+	cout << "[36, 64)" << endl;
+	v = (*KeyMap).getPartitions(36,true,64,false);
+	for(int i=0; i < v.size(); i++)
+	  cout << v[i] << " " << endl;
+	cout << endl;
+
+	cout << "(36, 64)" << endl;
+	v = (*KeyMap).getPartitions(36,false,64,false);
+	for(int i=0; i < v.size(); i++)
+	  cout << v[i] << " " << endl;
+	cout << endl;
+
+	cout << "get range of partition 3" << endl;
+	pair<int,int> p = (*KeyMap).getBoundaries(3);
+	cout << "[" << p.first << ", " << p.second << ")" << endl;
 	cout << endl;
 
 	return 0;
