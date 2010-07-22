@@ -118,8 +118,11 @@ class del_cf_dcf_action;
 
 // TM1 GetSubNbr
 class final_gsn_rvp;
+#ifndef USE_DORA_EXT_IDX
 class r_sub_gsn_action;
-
+#else
+class r_sub_gsn_acc_action;
+#endif
 
 // Look also include/workload/tm1/tm1_const.h
 const int TM1_SUBS_PER_DORA_PART = 10000;
@@ -199,7 +202,6 @@ public:
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_gnd_rvp);
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_sf_gnd_action,mid_gnd_rvp,get_new_dest_input_t);
-
     DECLARE_DORA_ACTION_GEN_FUNC(r_cf_gnd_action,rvp_t,get_new_dest_input_t);
 #else
     DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_gnd_rvp);
@@ -232,7 +234,6 @@ public:
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_usd_rvp);
 
     DECLARE_DORA_ACTION_GEN_FUNC(upd_sf_usd_action,mid_usd_rvp,upd_sub_data_input_t);
-
     DECLARE_DORA_ACTION_GEN_FUNC(upd_sub_usd_action,rvp_t,upd_sub_data_input_t);
 #else
     DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_usd_rvp);
@@ -267,14 +268,12 @@ public:
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_sub_icf_action,mid1_icf_rvp,ins_call_fwd_input_t);
     DECLARE_DORA_ACTION_GEN_FUNC(r_sf_icf_action,mid2_icf_rvp,ins_call_fwd_input_t);
-
     DECLARE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t);
 #else
     DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_icf_rvp,ins_call_fwd_input_t);
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_icf_rvp);
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_sub_icf_action,mid_icf_rvp,ins_call_fwd_input_t);
-
     DECLARE_DORA_ACTION_GEN_FUNC(r_sf_icf_action,rvp_t,ins_call_fwd_input_t);
     DECLARE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t);
 #endif
@@ -290,7 +289,6 @@ public:
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_dcf_rvp);
 
     DECLARE_DORA_ACTION_GEN_FUNC(r_sub_dcf_action,mid_dcf_rvp,del_call_fwd_input_t);
-
     DECLARE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t);
 
 
@@ -302,8 +300,11 @@ public:
     DECLARE_DORA_TRX(get_sub_nbr);
 
     DECLARE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(final_gsn_rvp);
-
+#ifndef USE_DORA_EXT_IDX
     DECLARE_DORA_ACTION_GEN_FUNC(r_sub_gsn_action,rvp_t,get_sub_nbr_input_t);
+#else
+    DECLARE_DORA_ACTION_GEN_FUNC(r_sub_gsn_acc_action,rvp_t,get_sub_nbr_input_t);    
+#endif
 
         
 }; // EOF: DoraTM1Env

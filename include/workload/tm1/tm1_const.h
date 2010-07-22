@@ -40,7 +40,7 @@ ENTER_NAMESPACE(tm1);
 // Define the USE_DORA_EXT_IDX in order to create the "correct"
 // SUB_NBR_IDX (with the  
 #undef  USE_DORA_EXT_IDX
-#define USE_DORA_EXT_IDX
+//#define USE_DORA_EXT_IDX
 
 
 // the scaling factor unit (arbitrarily chosen)

@@ -159,19 +159,14 @@ w_rc_t mid2_ordst_rvp::run()
  *
  ********************************************************************/
 
-void 
-r_cust_ordst_action::calc_keys()
+void r_cust_ordst_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-
-w_rc_t 
-r_cust_ordst_action::trx_exec() 
+w_rc_t r_cust_ordst_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -298,20 +293,15 @@ done:
 }
 
 
-
-void 
-r_ord_ordst_action::calc_keys()
+void r_ord_ordst_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
 
-w_rc_t 
-r_ord_ordst_action::trx_exec() 
+w_rc_t r_ord_ordst_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -401,19 +391,14 @@ done:
 }
 
 
-void 
-r_ol_ordst_action::calc_keys()
+void r_ol_ordst_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-
-w_rc_t 
-r_ol_ordst_action::trx_exec() 
+w_rc_t r_ol_ordst_action::trx_exec() 
 {
     assert (_penv);
 

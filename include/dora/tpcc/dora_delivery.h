@@ -292,8 +292,6 @@ public:
     void calc_keys() {
         _down.push_back(_din._wh_id);
         _down.push_back(_d_id);
-        _up.push_back(_din._wh_id);
-        _up.push_back(_d_id);
     }
     inline void set(xct_t* axct, const tid_t& atid, 
                     mid1_del_rvp* pmid1_rvp, 
@@ -334,8 +332,6 @@ public:
         _down.push_back(_din._wh_id);
         _down.push_back(_d_id);
         _down.push_back(_o_id);
-        _up.push_back(_din._wh_id);
-        _up.push_back(_d_id);
         _down.push_back(_o_id);
     }
     inline void set(xct_t* axct, const tid_t& atid, 
@@ -378,9 +374,6 @@ public:
         _down.push_back(_din._wh_id);
         _down.push_back(_d_id);
         _down.push_back(_o_id);
-        _up.push_back(_din._wh_id);
-        _up.push_back(_d_id);
-        _down.push_back(_o_id);
     }
     inline void set(xct_t* axct, const tid_t& atid, 
                     mid2_del_rvp* pmid2_rvp, 
@@ -421,9 +414,6 @@ public:
     void calc_keys() {
         _down.push_back(_din._wh_id);
         _down.push_back(_d_id);
-        _down.push_back(_c_id);
-        _up.push_back(_din._wh_id);
-        _up.push_back(_d_id);
         _down.push_back(_c_id);
     }
     inline void set(xct_t* axct, const tid_t& atid, 

@@ -46,7 +46,7 @@ rvp_t::rvp_t()
 
 rvp_t::rvp_t(xct_t* axct, const tid_t& atid, const int axctid,
              const trx_result_tuple_t& presult, 
-             const int intra_trx_cnt, const int total_actions) 
+             const uint intra_trx_cnt, const uint total_actions) 
 { 
     _set(axct, atid, axctid, 
          presult, intra_trx_cnt, total_actions);

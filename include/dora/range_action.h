@@ -63,8 +63,11 @@ public:
 protected:
 
     // the range of keys
+    bool _isRange;
+    void set_is_range() { _isRange = true; }
+
     Key _down;
-    Key _up;
+    vector<Key> _key_list;
 
     inline void _range_act_set(xct_t* axct, const tid_t& atid, rvp_t* prvp, 
                                const int keylen) 
@@ -74,17 +77,19 @@ protected:
         Action::_act_set(axct,atid,prvp,2); 
         assert (keylen);
         _down.reserve(keylen);
-        _up.reserve(keylen);
     }
 
 public:
 
+    // By default, the action is supposed to access a single Key (point not range access)
+
     range_action_impl()
-        : Action()
+        : Action(), _isRange(false)
     { }
 
     range_action_impl(const range_action_impl& rhs)
-        : Action(rhs), _down(rhs._down), _up(rhs._up)
+        : Action(rhs), _isRange(rhs._isRange), 
+          _down(rhs._down), _key_list(rhs._key_list)
     { assert (0); }
 
     range_action_impl operator=(const range_action_impl& rhs)
@@ -92,18 +97,14 @@ public:
         if (this != &rhs) {
             assert (0); // IP: TODO check
             Action::operator=(rhs);
+            _isRange = rhs._isRange;
             _down = rhs._down;
-            _up = rhs._up;
+            _key_list = rhs._key_list;
         }
         return (*this);
     }
 
-    virtual ~range_action_impl() 
-    { 
-//         if (_down) delete (_down);
-//         if (_up) delete (_up);
-    }    
-    
+    virtual ~range_action_impl() { }    
 
     // INTERFACE 
 
@@ -111,32 +112,58 @@ public:
 
     virtual w_rc_t trx_exec()=0;
 
+
+    // There are two types of actions that inherit from this class:
+    // 
+    // Point accesses - Need to lock only one Key
+    //
+    // Range accesses - need to lock multiple Keys from this partition
+    // In that case the population of the _requests is done by the real 
+    // action, at the calc_keys() 
     virtual int trx_upd_keys()
     {
         if (base_action_t::_keys_set) return (1); // if already set do not recalculate
 
+        // The hook for the real action to populate the keys needed
         calc_keys();
-
-        assert (Action::_keys.empty()); // make sure using an empty action
-        Action::_keys.push_back(&_down);
-        Action::_keys.push_back(&_up);
 
         eDoraLockMode req_lm = DL_CC_EXCL;
         if (base_action_t::is_read_only()) req_lm = DL_CC_SHARED;
 
-        base_action_t::setkeys(1); // indicates that it needs only 1 key
-        KALReq akr(this,req_lm,&_down);
-        Action::_requests.push_back(akr); // range action
+        if (_isRange) {
+            // Range access - need to lock a list of Keys
 
-        base_action_t::_keys_set = 1;
+            // !!! WARNING WARNING WARNING !!!
+            //
+            // No element should be added to the _key_list *after* this point.
+            // We are using the address of the element at the vector. If
+            // we add any entry then the address reference may be invalidated
+            // and Bad Things WILL Happen (tm).
+            //
+            // !!! WARNING WARNING WARNING !!!
+
+            uint range = _key_list.size();
+            base_action_t::setkeys(range);            
+            for (uint i=0; i<range; i++) {
+                KALReq akr(this,req_lm,&_key_list[i]);
+                Action::_requests.push_back(akr);
+            }
+            base_action_t::_keys_set = range;
+        }
+        else {
+            // Point access - need to lock only one Key
+            Action::_keys.push_back(&_down);
+            base_action_t::setkeys(1); // It needs only 1 key
+            KALReq akr(this,req_lm,&_down);
+            Action::_requests.push_back(akr);
+            base_action_t::_keys_set = 1; // The 1 key it needed is set
+        }
         return (0);
     }
 
     virtual void giveback()=0;
 
-    virtual void init()
-    {
-    }
+    virtual void init() { }
 
     virtual void reset()
     {
@@ -144,7 +171,7 @@ public:
 
         // clear contents
         _down.reset();
-        _up.reset();
+        _key_list.clear();
     }
 
 }; // EOF: range_action_impl

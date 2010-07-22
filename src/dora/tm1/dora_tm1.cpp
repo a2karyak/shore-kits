@@ -450,9 +450,11 @@ DEFINE_DORA_ACTION_GEN_FUNC(del_cf_dcf_action,rvp_t,del_call_fwd_input_t,int,Dor
 ///////////////
 
 DEFINE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(final_gsn_rvp,DoraTM1Env);
-
+#ifndef USE_DORA_EXT_IDX
 DEFINE_DORA_ACTION_GEN_FUNC(r_sub_gsn_action,rvp_t,get_sub_nbr_input_t,int,DoraTM1Env);
-
+#else
+DEFINE_DORA_ACTION_GEN_FUNC(r_sub_gsn_acc_action,rvp_t,get_sub_nbr_input_t,int,DoraTM1Env);
+#endif
 
 
 

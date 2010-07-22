@@ -544,11 +544,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     private:                                                            \
             typedef object_cache_t<aname> act_cache;                    \
             envname* _penv;                                             \
-            inputname _in;                                              \
             act_cache* _cache;                                          \
     public:                                                             \
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
+            inputname _in;                                              \
             inline void giveback() {                                    \
                 assert (_cache); _cache->giveback(this); }              \
             inline void set(xct_t* axct, const tid_t& atid, rvp_t* prvp, \
@@ -566,12 +566,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     private:                                                            \
             typedef object_cache_t<aname> act_cache;                    \
             envname* _penv;                                             \
-            inputname _in;                                              \
             rvpname* _prvp;                                             \
             act_cache* _cache;                                          \
     public:                                                             \
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
+            inputname _in;                                              \
             inline void giveback() {                                    \
                 assert (_cache); _cache->giveback(this); }              \
             inline void set(xct_t* axct, const tid_t& atid, rvpname* prvp, \

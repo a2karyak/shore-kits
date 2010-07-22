@@ -80,19 +80,16 @@ protected:
 
     void _set(xct_t* pxct, const tid_t& atid, const int axctid,
               const trx_result_tuple_t& presult, 
-              const int intra_trx_cnt, const int total_actions) 
+              const uint intra_trx_cnt, const uint total_actions) 
     { 
         base_request_t::set(pxct,atid,axctid,presult);
 
 #ifndef ONLYDORA
         assert (pxct);
 #endif
-
-        assert (intra_trx_cnt>0);
         assert (total_actions>=intra_trx_cnt);
         _countdown.reset(intra_trx_cnt);
         _decision = AD_UNDECIDED;
-
         _actions.reserve(total_actions);
     }
 
@@ -102,7 +99,7 @@ public:
 
     rvp_t(xct_t* axct, const tid_t& atid, const int axctid,
           const trx_result_tuple_t& presult, 
-          const int intra_trx_cnt, const int total_actions);
+          const uint intra_trx_cnt, const uint total_actions);
 
     virtual ~rvp_t() { }    
 
@@ -130,6 +127,13 @@ public:
 
     inline bool isAborted() {
         return (*&_decision == AD_ABORT);
+    }
+    
+    // update the expected intraTrx and action counts
+    inline void resize(const uint intra_trx_cnt, const uint total_actions) {
+        // Should only grow
+        _countdown.reset(intra_trx_cnt);
+        _actions.reserve(total_actions);
     }
 
     // INTERFACE 
