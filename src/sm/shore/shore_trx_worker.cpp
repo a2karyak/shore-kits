@@ -63,7 +63,7 @@ trx_worker_t::~trx_worker_t()
 
 void trx_worker_t::init(const int lc) 
 {
-    _pqueue->set(WS_INPUT_Q,this,lc,0);
+    _pqueue->setqueue(WS_INPUT_Q,this,lc,0);
 }
 
 

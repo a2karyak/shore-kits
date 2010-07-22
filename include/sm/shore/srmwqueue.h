@@ -79,7 +79,7 @@ struct srmwqueue
 
 
     // sets the pointer of the queue to the controls of a specific worker thread
-    void set(eWorkingState aws, base_worker_t* owner, const int& loops, const int& thres) 
+    void setqueue(eWorkingState aws, base_worker_t* owner, const int& loops, const int& thres) 
     {
         CRITICAL_SECTION(q_cs, _lock);
         _my_ws = aws;

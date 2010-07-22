@@ -678,8 +678,8 @@ int partition_t<DataType>::_stop_threads()
     _owner = NULL; // join()?
 
     // reset queues' worker control pointers
-    _input_queue->set(WS_UNDEF,NULL,0,0); 
-    _committed_queue->set(WS_UNDEF,NULL,0,0); 
+    _input_queue->setqueue(WS_UNDEF,NULL,0,0); 
+    _committed_queue->setqueue(WS_UNDEF,NULL,0,0); 
 
 
     // standy
@@ -832,8 +832,8 @@ int partition_t<DataType>::_generate_primary()
     //TRACE( TRACE_ALWAYS, "%s %d %d\n", _table->name(), thres_inp_q, thres_com_q);
 
     // pass worker thread controls to the two queues
-    _input_queue->set(WS_INPUT_Q,_owner,lc,thres_inp_q);  
-    _committed_queue->set(WS_COMMIT_Q,_owner,lc,thres_com_q);  
+    _input_queue->setqueue(WS_INPUT_Q,_owner,lc,thres_inp_q);  
+    _committed_queue->setqueue(WS_COMMIT_Q,_owner,lc,thres_com_q);  
 
     _owner->fork();
 
