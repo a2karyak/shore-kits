@@ -283,6 +283,9 @@ public:
     w_rc_t    update_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
     w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
 
+    // Direct access through the rid
+    w_rc_t    read_tuple(table_tuple* ptuple, lock_mode_t lm = SH);
+
 
     /* ------------------------------------------- */
     /* --- iterators for index and table scans --- */
@@ -558,8 +561,10 @@ public:
             if (_need_tuple) {
                 pin_i  pin;
                 W_DO(pin.pin(rid, 0, index_iter::_lm));
-                if (!_pmanager->load(&tuple, pin.body()))
+                if (!_pmanager->load(&tuple, pin.body())) {
+                    pin.unpin();
                     return RC(se_WRONG_DISK_DATA);
+                }
                 pin.unpin();
             }
         }    
@@ -1014,7 +1019,10 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     pin_i pin;
     W_DO(pin.pin(ptuple->rid(), 0, lock_mode, latch_mode));
 
-    if (!load(ptuple, pin.body())) return RC(se_WRONG_DISK_DATA);
+    if (!load(ptuple, pin.body())) {
+        pin.unpin();
+        return RC(se_WRONG_DISK_DATA);
+    }
     pin.unpin();
   
     return (RCOK);
@@ -1252,6 +1260,39 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 
     // invalidate tuple
     ptuple->set_rid(rid_t::null);
+    return (RCOK);
+}
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    read_tuple
+ *
+ *  @brief: Read a tuple directly through its RID
+ *
+ *  @note:  This function should be called in the context of a trx
+ *          The passed RID should be valid.
+ *
+ *********************************************************************/
+
+template <class TableDesc>
+w_rc_t table_man_impl<TableDesc>::read_tuple(table_tuple* ptuple,
+                                             lock_mode_t lm)
+{
+    assert (_ptable);
+    assert (ptuple);
+
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+
+    pin_i  pin;
+    W_DO(pin.pin(ptuple->rid(), 0, lm));
+    if (!load(ptuple, pin.body())) {
+        pin.unpin();
+        return RC(se_WRONG_DISK_DATA);
+    }
+    pin.unpin();
+
     return (RCOK);
 }
 
@@ -1581,7 +1622,10 @@ w_rc_t table_man_impl<TableDesc>::scan_index(ss_m* db,
     while (!eof) {	
 	pin_i  pin;
 	W_DO(pin.pin(row.rid(), 0));
-	if (!load(&row, pin.body())) return RC(se_WRONG_DISK_DATA);
+	if (!load(&row, pin.body())) {
+            pin.unpin();
+            return RC(se_WRONG_DISK_DATA);
+        }
 	pin.unpin();
         row.print_values();
 
