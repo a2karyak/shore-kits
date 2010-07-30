@@ -13,6 +13,15 @@
 
 using namespace std;
 
+// For map<char*,char*> to compare char*
+struct cmp_str_greater
+{
+  bool operator()(char const *a, char const *b)
+  {
+    return strcmp(a,b) > 0;
+  }
+};
+
 class key_ranges_map
 {
  private:
@@ -21,7 +30,7 @@ class key_ranges_map
   typedef cvec_t Key;
 
   // range_init_key -> range_end_key
-  map<char*, char*, std::greater<char*> > _keyRangesMap;
+  map<char*, char*, cmp_str_greater > _keyRangesMap;
   int _numPartitions;
   char* _minKey;
   char* _maxKey;
@@ -53,7 +62,7 @@ class key_ranges_map
   // returns the list of partitionIDs that covers [key1, key2], (key1, key2], [key1, key2), or (key1, key2) ranges
   vector<int> getPartitions(const Key& key1, bool key1Included, const Key& key2, bool key2Included);
   // returns the range boundaries of the partition
-  void getBoundaries(int partition, pair<cvec_t, cvec_t>& range);
+  void getBoundaries(int partition, pair<cvec_t, cvec_t>& keyRange);
   // setters
   // TODO: decide what to do after you set these values, what seems reasonable to me
   // is change the partition structure as less as possible because later with dynamic load

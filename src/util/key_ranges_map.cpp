@@ -5,6 +5,8 @@
 
 key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, int numPartitions)
   : _numPartitions(numPartitions) {
+  _minKey = (char*) malloc(minKey.size());
+  _maxKey = (char*) malloc(maxKey.size());
   _minKey = _getKey(minKey);
   _maxKey = _getKey(maxKey);
   makeEqualPartitions();
@@ -12,7 +14,7 @@ key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, int numPart
 
 inline char* key_ranges_map::_getKey(const Key& key)
 {
-  void* keyP;
+  void* keyP = malloc(key.size());
   key.copy_to(keyP);
   return (char*) keyP;
 }
