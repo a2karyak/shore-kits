@@ -168,17 +168,14 @@ w_rc_t mid_nord_rvp::run()
 
 // R_WH_NORD_ACTION
 
-void 
-r_wh_nord_action::calc_keys() 
+void r_wh_nord_action::calc_keys() 
 {
     set_read_only();
     _down.push_back(_in._wh_id);
-    _up.push_back(_in._wh_id);
 }
 
 
-w_rc_t 
-r_wh_nord_action::trx_exec() 
+w_rc_t r_wh_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -230,19 +227,15 @@ done:
 
 // R_CUST_NORD_ACTION
 
-void 
-r_cust_nord_action::calc_keys() 
+void r_cust_nord_action::calc_keys() 
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
 
-w_rc_t 
-r_cust_nord_action::trx_exec() 
+w_rc_t r_cust_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -301,17 +294,13 @@ done:
 
 // UPD_DIST_NORD_ACTION
 
-void 
-upd_dist_nord_action::calc_keys() 
+void upd_dist_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-w_rc_t 
-upd_dist_nord_action::trx_exec() 
+w_rc_t upd_dist_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -393,17 +382,14 @@ done:
 
 // R_ITEM_NORD_ACTION
 
-void 
-r_item_nord_action::calc_keys() 
+void r_item_nord_action::calc_keys() 
 {
     // !!! IP: Correct is to use the _ol_supply_wh_id !!!
     set_read_only();
     _down.push_back(_in._wh_id);
-    _up.push_back(_in._wh_id);
 }
 
-w_rc_t 
-r_item_nord_action::trx_exec() 
+w_rc_t r_item_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -477,17 +463,13 @@ done:
 
 // UPD_STO_NORD_ACTION
 
-void 
-upd_sto_nord_action::calc_keys() 
+void upd_sto_nord_action::calc_keys() 
 {
     // !!! IP: Correct is to use the _ol_supply_wh_id !!!
     _down.push_back(_in._wh_id);
-    _up.push_back(_in._wh_id);
 }
 
-
-w_rc_t 
-upd_sto_nord_action::trx_exec() 
+w_rc_t upd_sto_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -618,18 +600,13 @@ done:
 // INS_ORD_NORD_ACTION
 
 
-void 
-ins_ord_nord_action::calc_keys() 
+void ins_ord_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-
-w_rc_t 
-ins_ord_nord_action::trx_exec() 
+w_rc_t ins_ord_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -688,18 +665,13 @@ done:
 // INS_NORD_NORD_ACTION
 
 
-void 
-ins_nord_nord_action::calc_keys() 
+void ins_nord_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-
-w_rc_t 
-ins_nord_nord_action::trx_exec() 
+w_rc_t ins_nord_nord_action::trx_exec() 
 {
     assert (_penv);
 
@@ -752,18 +724,14 @@ done:
 // INS_OL_NORD_ACTION
 
 
-void 
-ins_ol_nord_action::calc_keys() 
+void ins_ol_nord_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
 
-w_rc_t 
-ins_ol_nord_action::trx_exec() 
+w_rc_t ins_ol_nord_action::trx_exec() 
 {
     assert (_penv);
 

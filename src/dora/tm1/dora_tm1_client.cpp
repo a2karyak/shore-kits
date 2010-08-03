@@ -72,8 +72,11 @@ int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap[XCT_TM1_DORA_INS_CALL_FWD]    = "DORA-TM1-InsCallFwd";
     stmap[XCT_TM1_DORA_DEL_CALL_FWD]    = "DORA-TM1-DelCallFwd";
 
+#ifndef USE_DORA_EXT_IDX
     stmap[XCT_TM1_DORA_GET_SUB_NBR]     = "DORA-TM1-GetSubNbr";
-
+#else
+    stmap[XCT_TM1_DORA_GET_SUB_NBR]     = "DORA-TM1-GetSubNbr-Ext";
+#endif
 
     return (stmap.size());
 }

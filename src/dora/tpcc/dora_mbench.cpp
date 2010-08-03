@@ -62,7 +62,6 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_mb_rvp,mbench_wh);
 void upd_wh_mb_action::calc_keys() 
 {
     _down.push_back(_in._wh_id);
-    _up.push_back(_in._wh_id);
 }
 
 
@@ -151,9 +150,6 @@ void upd_cust_mb_action::calc_keys()
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
     _down.push_back(_in._c_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
-    _up.push_back(_in._c_id);
 }
 
 

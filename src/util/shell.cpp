@@ -389,14 +389,13 @@ int shell_t::close_cmds()
  *  @fn:    _register_commands()
  *  
  *  @brief: Registers the basic set of functions for every shell (such
- *          as {trace,cpustat,conf,env,set,quit,echo,break})
+ *          as {trace,conf,env,set,quit,echo,break})
  *
  *********************************************************************/
 
 int shell_t::_register_commands() 
 {
     REGISTER_CMD(trace_cmd_t,_tracer);
-    REGISTER_CMD(cpustat_cmd_t,_cpustater);
     REGISTER_CMD(conf_cmd_t,_confer);
     REGISTER_CMD(env_cmd_t,_enver);
     REGISTER_CMD(set_cmd_t,_seter);
@@ -606,32 +605,6 @@ void conf_cmd_t::usage(void)
 {
     TRACE( TRACE_ALWAYS, 
            "CONF - Tries to reread all the set env vars from the config file\n");
-}
-
-
-/*********************************************************************
- *
- *  CPUSTAT
- *
- *********************************************************************/
-
-void cpustat_cmd_t::setaliases() 
-{    
-    _name = string("cpu");
-    _aliases.push_back("cpu");
-    _aliases.push_back("cpustats");
-}
-
-int cpustat_cmd_t::handle(const char* /* cmd */)
-{    
-    myinfo.print();
-    return (SHELL_NEXT_CONTINUE);
-}
-
-void cpustat_cmd_t::usage(void)
-{
-    TRACE( TRACE_ALWAYS, 
-           "CPUSTAT - Prints cpu usage for the process\n");
 }
 
 

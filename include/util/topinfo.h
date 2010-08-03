@@ -23,7 +23,9 @@
 
 /** @file:   topinfo.h
  * 
- *  @brief:  Processor usage information
+ *  @brief:  Processor usage information for Linux environments.
+ *
+ *  @note:   It needs the glibtop2-dev library installed!
  *
  *  @note:   There are two versions of the processor usage information.
  *           This one is specific for linux and needs the glibtop library.
@@ -44,13 +46,10 @@
 #include <math.h>
 
 #include "util/stopwatch.h"
+#include "util/procstat.h"
 
 #include <iostream>
 #include <vector>
-
-// The Linux (actually the !__sparcv9) version
-
-#ifndef __sparcv9
 
 /*
  * @note: Taken from 
@@ -75,9 +74,6 @@ struct topinfo_t
 {
 private:
 
-    topinfo_t();
-    ~topinfo_t() { };
-
     glibtop*         _conf;
 
     glibtop_cpu      _cpu;
@@ -92,7 +88,7 @@ private:
     glibtop_mountentry* _mount_entries;
 
 
-    int _reg_fs;
+    uint _reg_fs;
     vector<string> _v_reg_mount;
     vector<glibtop_fsusage> _v_fs;
     vector<glibtop_fsusage> _v_old_fs;
@@ -102,15 +98,19 @@ private:
 
 public:
 
-    static topinfo_t* instance() 
-    { 
-        static topinfo_t _instance;
-        return (&_instance);
-    }
+    topinfo_t();
+    ~topinfo_t();
+
+    void print_stats();
 
     // CPU
-    int  update_cpu();
-    void print_cpu();
+    int    update_cpu();
+    double get_avg_usage();
+    void   print_avg_usage();
+    uint   get_num_of_cpus();
+
+    cpu_load_values_t get_load();
+
 
     // MEMORY
     int  update_mem();
@@ -124,12 +124,13 @@ public:
     int  register_fs(const string& mountpath);
     int  update_fs();
     void print_fs(const double delay);
+
+    ulong_t iochars();
+
     
     void reset();
 
 }; // EOF: topinfo_t
 
-
-#endif // !__sparcv9
 
 #endif // __UTIL_TOPINFO_H

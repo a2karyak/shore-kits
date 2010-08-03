@@ -35,9 +35,6 @@
 #include "util/trace.h"
 #include <cassert>
 
-
-#ifndef __sparcv9
-
 topinfo_t::topinfo_t()
     : _reg_fs(0)
 {
@@ -48,11 +45,15 @@ topinfo_t::topinfo_t()
 
 
     _mount_entries = glibtop_get_mountlist(&_mount_list,1);
-    for (int i=0; i< _mount_list.number; ++i) {
+    for (uint i=0; i< _mount_list.number; ++i) {
         TRACE( TRACE_DEBUG, "%d: %d %s %s %s\n",
                i, _mount_entries[i].dev, _mount_entries[i].devname,
                _mount_entries[i].mountdir, _mount_entries[i].type);
     }
+}
+
+topinfo_t::~topinfo_t()
+{
 }
 
 
@@ -70,6 +71,15 @@ void topinfo_t::reset()
 }
 
 
+// Prints all the stats it can get
+void topinfo_t::print_stats()
+{
+    // print_avg_usage();
+    // print_mem();
+    // print_proclist();
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 //                                                                         //
@@ -84,7 +94,7 @@ int topinfo_t::update_cpu()
 }
 
 
-void topinfo_t::print_cpu()
+void topinfo_t::print_avg_usage()
 {
     update_cpu();
 
@@ -107,8 +117,33 @@ void topinfo_t::print_cpu()
     _old_cpu = _cpu;
 }
 
-double top
 
+double topinfo_t::get_avg_usage()
+{
+    update_cpu();
+
+    double cpus = _conf->ncpu+1;
+    double total = (double) (_cpu.total-_old_cpu.total);
+    double idle  = (double) (_cpu.idle-_old_cpu.idle);
+
+    // store the read cpu info for the next iteration
+    _old_cpu = _cpu;    
+
+    return( (total-idle)*cpus/total );
+}
+
+uint topinfo_t::get_num_of_cpus()
+{
+    return(_conf->ncpu+1);
+}
+
+cpu_load_values_t topinfo_t::get_load()
+{
+    cpu_load_values_t load;
+    load.run_tm = (double)  (_cpu.total-_old_cpu.total);
+    load.wait_tm = 0.;
+    return (load);
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -126,7 +161,7 @@ int topinfo_t::update_mem()
 
 const int MBYTE = 1024*1024;
 
-voidtopinfo_t::print_mem()
+void topinfo_t::print_mem()
 {
     TRACE( TRACE_STATISTICS, "MEMORY INFO:\n:" );
     TRACE( TRACE_STATISTICS, "Memory Total   : %ld MB\n" , 
@@ -156,7 +191,8 @@ voidtopinfo_t::print_mem()
 
 int topinfo_t::update_proclist()
 {
-    int which,arg;
+    int which = 0;
+    int arg = 0;
     glibtop_get_proclist(&_proclist,which,arg);
     return (0);
 }
@@ -237,7 +273,7 @@ void topinfo_t::print_fs(const double delay)
     guint64 bread, bwrite;
 
     // 2. Print info
-    for (int i=0; i<_reg_fs; ++i) {
+    for (uint i=0; i<_reg_fs; ++i) {
         
         afsusage = _v_fs[i];
         oldfsusage = _v_old_fs[i];
@@ -266,4 +302,8 @@ void topinfo_t::print_fs(const double delay)
 }
 
 
-#endif // !__sparcv9
+ulong_t topinfo_t::iochars()
+{
+    // IP: TODO
+    return (0);
+}

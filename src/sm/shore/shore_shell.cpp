@@ -38,6 +38,7 @@
 
 ENTER_NAMESPACE(shore);
 
+// Globals 
 
 extern "C" void alarm_handler(int /* sig */) 
 {
@@ -294,8 +295,7 @@ void shore_shell_t::pre_process_cmd()
     // make sure any previous abort is cleared
     base_client_t::resume_test();
 
-    // print processor usage info
-    _cpustater->myinfo.reset();
+    _g_mon->stat_reset();
 }
 
 

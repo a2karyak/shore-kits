@@ -63,7 +63,6 @@ void r_sub_gsd_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._s_id);
-    _up.push_back(_in._s_id);
 }
 
 
@@ -231,8 +230,6 @@ void r_sf_gnd_action::calc_keys()
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
-    _up.push_back(_in._s_id);
-    _up.push_back(sftype);
 }
 
 
@@ -302,9 +299,6 @@ void r_cf_gnd_action::calc_keys()
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
     _down.push_back(stime);
-    _up.push_back(_in._s_id);
-    _up.push_back(sftype);
-    _up.push_back(stime);
 }
 
 
@@ -420,8 +414,6 @@ void r_ai_gad_action::calc_keys()
     int aitype = _in._ai_type;
     _down.push_back(_in._s_id);
     _down.push_back(aitype);
-    _up.push_back(_in._s_id);
-    _up.push_back(aitype);
 }
 
 
@@ -548,7 +540,6 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_usd_rvp,upd_sub_data);
 void upd_sub_usd_action::calc_keys()
 {
     _down.push_back(_in._s_id);
-    _up.push_back(_in._s_id);
 }
 
 
@@ -619,8 +610,6 @@ void upd_sf_usd_action::calc_keys()
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
-    _up.push_back(_in._s_id);
-    _up.push_back(sftype);
 }
 
 
@@ -701,7 +690,6 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_ul_rvp,upd_loc);
 void upd_sub_ul_action::calc_keys()
 {
     _down.push_back(_in._s_id);
-    _up.push_back(_in._s_id);
 }
 
 
@@ -919,7 +907,6 @@ void r_sub_icf_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._s_id);
-    _up.push_back(_in._s_id);
 }
 
 
@@ -976,8 +963,6 @@ void r_sf_icf_action::calc_keys()
     int sftype = _in._sf_type;
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
-    _up.push_back(_in._s_id);
-    _up.push_back(sftype);
 }
 
 
@@ -1081,9 +1066,6 @@ void ins_cf_icf_action::calc_keys()
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
     _down.push_back(stime);
-    _up.push_back(_in._s_id);
-    _up.push_back(sftype);
-    _up.push_back(stime);
 }
 
 
@@ -1223,7 +1205,6 @@ void r_sub_dcf_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._s_id);
-    _up.push_back(_in._s_id);
 }
 
 
@@ -1281,9 +1262,6 @@ void del_cf_dcf_action::calc_keys()
     _down.push_back(_in._s_id);
     _down.push_back(sftype);
     _down.push_back(stime);
-    _up.push_back(_in._s_id);
-    _up.push_back(sftype);
-    _up.push_back(stime);
 }
 
 
@@ -1359,19 +1337,40 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_gsn_rvp,get_sub_nbr);
  *
  * DORA TM1 GET_SUB_NBR ACTIONS
  *
- * (1) R-SUB
+ * The are two implementations of the GET_SUB_NBR transaction.
+ *
+ * Case 1: R-SUB - does the index probe and record retrieval here 
+ *
+ * Case 2: R-SUB-ACC - the index probe has been made by the dispatcher
+ *                     here it does only the record retrieval.
  *
  ********************************************************************/
 
-
+#ifndef USE_DORA_EXT_IDX
 void r_sub_gsn_action::calc_keys()
 {
+    // This is a read-only action
     set_read_only();
-    _down.push_back(_in._s_id);
-    _up.push_back(_in._s_id);
+
+    // This action is not accessing a single key
+    set_is_range(); 
+
+    // Iterate the range of values and put an entry for each value  
+    _key_list.reserve(_in._range);
+    int sid;
+    for (uint i=0; i<_in._range; i++) {
+        range_action_impl<int>::Key aKey;
+        sid = _in._s_id + i;
+        aKey.push_back(sid);
+        range_action_impl<int>::_key_list.push_back(aKey);
+    }
+
+    // !!! BUG BUG BUG !!!
+    // It does not handle correctly the case when a key in the range is
+    // is already locked
+    // !!! BUG BUG BUG !!!
+#warning Look at lock_man_t::acquire_all() !!!
 }
-
-
 
 w_rc_t r_sub_gsn_action::trx_exec() 
 {
@@ -1451,7 +1450,68 @@ done:
     return (e);
 }
 
+#else
 
+void r_sub_gsn_acc_action::calc_keys()
+{
+    set_read_only();
+    set_secondary();
+
+    // This action is not accessing a single key
+    // Iterate the range of values and put an entry for each value  
+    set_is_range(); 
+    _key_list.reserve(_in._pairs.size());
+    typedef vector< pair<int,rid_t> >::iterator pair_iterator;
+    for (pair_iterator it=_in._pairs.begin(); it!=_in._pairs.end(); it++) {
+        range_action_impl<int>::Key aKey;
+        aKey.push_back((*it).first);
+        range_action_impl<int>::_key_list.push_back(aKey);
+    }
+}
+
+
+w_rc_t r_sub_gsn_acc_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    assert (prsub);
+
+    rep_row_t areprow(_penv->sub_man()->ts());
+    areprow.set(_penv->sub_desc()->maxsize()); 
+    prsub->_rep = &areprow;
+    int vlrloc;
+
+    { // make gotos safe
+
+        typedef vector< pair<int,rid_t> >::iterator pair_iterator;
+        rid_t arid;
+        for (pair_iterator it=_in._pairs.begin(); it!=_in._pairs.end(); it++) {
+            arid = (*it).second;
+
+            // Access directly the record
+            prsub->set_rid(arid);
+            e = _penv->sub_man()->read_tuple(prsub,NL);
+            if (e.is_error()) { goto done; }
+
+            prsub->get_value(33, vlrloc);
+            
+            TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
+                   _tid.get_lo(), (*it).first, vlrloc);
+        }
+
+    } // goto
+
+done:
+    // give back the tuple
+    _penv->sub_man()->give_tuple(prsub);
+    return (e);
+}
+
+#endif
 
 
 EXIT_NAMESPACE(dora);

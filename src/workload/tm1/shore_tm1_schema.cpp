@@ -141,9 +141,11 @@ subscriber_t::subscriber_t(string sysname) :
 
 
 #ifdef USE_DORA_EXT_IDX
-            // create the index on sub_nbr extended with the key information
+            // Create the index on sub_nbr extended with the key information.
+            // This index will be accessed arbitrarily by multiple threads. 
+            // Therefore, normal concurrency control will be used.  
             uint keys2_ext[2] = { 1, 0 }; // IDX { SUB_NBR, S_ID }
-            create_index("SUB_NBR_IDX_NL", 0, keys2_ext, 1, true, false, true);
+            create_index("SUB_NBR_IDX", 0, keys2_ext, 1, true, false);
 #else
             // create index sub_nbr_index on (sub_nbr)
             // last param (nolock) is set to true

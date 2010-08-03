@@ -146,19 +146,14 @@ w_rc_t mid2_stock_rvp::run()
  *
  ********************************************************************/
 
-void 
-r_dist_stock_action::calc_keys()
+void r_dist_stock_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-
-w_rc_t 
-r_dist_stock_action::trx_exec() 
+w_rc_t r_dist_stock_action::trx_exec() 
 {
     assert (_penv);
 
@@ -217,19 +212,14 @@ done:
 
 
 
-void 
-r_ol_stock_action::calc_keys()
+void r_ol_stock_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
     _down.push_back(_in._d_id);
-    _up.push_back(_in._wh_id);
-    _up.push_back(_in._d_id);
 }
 
-
-w_rc_t 
-r_ol_stock_action::trx_exec() 
+w_rc_t r_ol_stock_action::trx_exec() 
 {
     assert (_penv);
 
@@ -378,14 +368,11 @@ done:
 
 
 
-void 
-r_st_stock_action::calc_keys()
+void r_st_stock_action::calc_keys()
 {
     set_read_only();
     _down.push_back(_in._wh_id);
-    _up.push_back(_in._wh_id);
 }
-
 
 w_rc_t r_st_stock_action::trx_exec() 
 {
@@ -404,7 +391,6 @@ w_rc_t r_st_stock_action::trx_exec()
     int input_w_id = _in._wh_id;
 
     int w_id = 0;
-    //int d_id = 0;
     int i_id = 0;
     int quantity = 0;
 

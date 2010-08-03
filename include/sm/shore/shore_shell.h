@@ -34,13 +34,16 @@
 #include "k_defines.h"
 
 #include "util/shell.h"
+
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_helper_loader.h"
 #include "sm/shore/shore_client.h"
 
 
-
 ENTER_NAMESPACE(shore);
+
+
+// Globals
 
 using std::map;
 

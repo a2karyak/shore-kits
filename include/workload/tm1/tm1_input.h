@@ -306,8 +306,12 @@ struct get_sub_nbr_input_t
      */
 
     int     _s_id;           /* input: URand(1,SF) */
+    uint    _range;
 
-    uint _range;
+#ifdef USE_DORA_EXT_IDX
+    // The list of rids that need to be accessed, used by DORA secondary actions
+    vector< pair<int,rid_t> > _pairs; 
+#endif
     
     get_sub_nbr_input_t& operator= (const get_sub_nbr_input_t& rhs);
 

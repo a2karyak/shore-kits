@@ -21,42 +21,46 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file:   cpustat.cpp
+/** @file:   sunos_procstat.cpp
  *
  *  @brief:  Implementation of a class that provides information about
- *           cpu usage during runs
+ *           the CPU usage during runs at SunOS 
  *
  *  @author: Ippokratis Pandis (ipandis)
  *  @author: Ryan Johnson (ryanjohn)
  */
 
-#include "util/cpustat.h"
+#include "util/sunos_procstat.h"
+#include "util.h"
 
-
-
-cpumonitor_t::cpumonitor_t(const double interval_sec)
-    : thread_t("cpumon"), 
-      _interval_usec(0), _interval_sec(interval_sec), _pkc(NULL),
-      _total_usage(0), _num_usage_readings(0), _avg_usage(0), _state(CPS_NOTSET)
+sunos_procmonitor_t::sunos_procmonitor_t(const double interval_sec)
+    : procmonitor_t("sunos-mon",interval_sec), _pkc(NULL)
 { 
     _setup(interval_sec);
 }
 
 
-cpumonitor_t::~cpumonitor_t() 
+sunos_procmonitor_t::~sunos_procmonitor_t() 
 { 
     if (*&_state != CPS_NOTSET) {            
-        pthread_mutex_destroy(&_mutex);
-        pthread_cond_destroy(&_cond);
-        
-#ifdef __sparcv9
         kstat_close(_pkc);
-#endif
     }
 }
 
 
-void cpumonitor_t::print_avg_usage() 
+//// Interface
+
+void sunos_procmonitor_t::stat_reset()
+{
+    _prcinfo.reset();
+}
+
+double sunos_procmonitor_t::get_avg_usage() 
+{ 
+    return (*&_avg_usage); 
+}
+
+void sunos_procmonitor_t::print_avg_usage() 
 { 
     double au = *&_avg_usage;
     double entriessz = _entries.size();
@@ -65,35 +69,42 @@ void cpumonitor_t::print_avg_usage()
            au, 100*(au/entriessz));
 }
 
-
-void cpumonitor_t::_setup(const double interval_sec) 
+void sunos_procmonitor_t::print_ext_stats()
 {
+    _prcinfo.print();
+}
+
+ulong_t sunos_procmonitor_t::iochars()
+{
+    return (_prcinfo.iochars());
+}
+
+uint sunos_procmonitor_t::get_num_of_cpus()
+{
+    return (_prcinfo.get_num_of_cpus());
+}
+
+cpu_load_values_t sunos_procmonitor_t::get_load()
+{
+    return (_prcinfo.get_load());
+}
+
+
+//// Private functions 
+
+void sunos_procmonitor_t::_setup(const double interval_sec) 
+{
+    procmonitor_t::_setup(interval_sec);
+
     _entries.clear();
     _entries.reserve(64); 
-
-    // set interval
-    assert (interval_sec>0);
-    _interval_usec = int(interval_sec*1e6);
-
-    if (interval_sec<1)
-        TRACE( TRACE_DEBUG, "CPU usage updated every (%0.3f) msec\n", 
-               _interval_usec/1000.);
-    else
-	TRACE( TRACE_DEBUG, "CPU usage(updated every (%0.6f) sec\n", 
-               _interval_usec/1000./1000);
-
-    // setup cond
-    pthread_mutex_init(&_mutex, NULL);
-    pthread_cond_init(&_cond, NULL);  
-
-
+    
     // get set up
     // - open the kstat
     // - find and stash all the cpu::sys kstats
     // - find and stash the offset of the cpu::sys:cpu_nsec_idle entry
     // - take the first measurement
 
-#ifdef __sparcv9
     _pkc = kstat_open();
     for(kstat_t* ksp=_pkc->kc_chain; ksp; ksp=ksp->ks_next) {
 	if(strcmp(ksp->ks_module, "cpu") == 0 && strcmp(ksp->ks_name, "sys") == 0) {
@@ -108,15 +119,10 @@ void cpumonitor_t::_setup(const double interval_sec)
 	    }
 	}
     }
-#else
-#warning IP: Disabling the kstat-related at cpustat
-#endif
-
-    _state = CPS_PAUSE;
 }
 
 
-void cpumonitor_t::work() 
+void sunos_procmonitor_t::work() 
 {
     if (*&_state==CPS_NOTSET) _setup(_interval_sec);
     assert (*&_state!=CPS_NOTSET);
@@ -138,14 +144,12 @@ void cpumonitor_t::work()
     
     static long const BILLION = 1000*1000*1000;
 
-#ifdef __sparcv9
     assert (_pkc);
     int i=0;
     kstat_entry* e = NULL;
     int kid;
     cpu_measurement m = {0,0};
     kstat_named_t* kn = NULL;
-#endif
 
     pthread_mutex_lock(&_mutex);
     clock_gettime(CLOCK_REALTIME, &start);
@@ -163,7 +167,6 @@ void cpumonitor_t::work()
             // get the new measurement
             totals.clear();
 
-#ifdef __sparcv9
             for(i=0; i<entries_sz; i++) {
                 e = &_entries[i];
                 kid = kstat_read(_pkc, e->ksp, 0);
@@ -173,16 +176,10 @@ void cpumonitor_t::work()
                 m -= e->measured[last_measurement];
                 totals += m;
             }
-#endif
 
             // record usage if not paused
             if ((!first_time) && (astate==CPS_RUNNING)) {
                 inuse = entries_sz - entries_sz*totals.cpu_nsec_idle/totals.timestamp;
-
-#if 0
-                TRACE( TRACE_DEBUG, "%.1f \t%.1f%%\n", 
-                       inuse, 100*inuse/entries_sz);
-#endif
 
                 // update total usage and calculate average
                 ++_num_usage_readings;
@@ -201,12 +198,6 @@ void cpumonitor_t::work()
             
             // sleep periodically until next measurement
             while(true) {
-
-#if 0
-                TRACE(TRACE_DEBUG, "Waiting from %f until %f\n",
-                      start.tv_sec + start.tv_nsec/1e9,
-                      ts.tv_sec + ts.tv_nsec/1e9);
-#endif
 
                 error = pthread_cond_timedwait(&_cond, &_mutex, &ts);
                 clock_gettime(CLOCK_REALTIME, &start);

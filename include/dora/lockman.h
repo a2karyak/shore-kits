@@ -110,6 +110,22 @@ public:
             // request to acquire all the locks for this partition
             ++i;
             if (!_key_ll_m->acquire(*it)) {
+
+                // !!! WARNING WARNING WARNING !!!
+                //
+                // It works correctly only when it wants to acquire a single Lock.
+                // Not correct when it wants to acquire a list of Locks.
+                //
+                //
+                // It should ignore that it failed to acquire one, keep on
+                // trying to acquire the rest of the list, and then come back on
+                // the not acquired one. Also, the resume algorithm needs to
+                // be modified. That is, when an action is promoted, because a
+                // lock it was waiting for got released, it should make sure that
+                // all the keys are now acquired.
+                //
+                // !!! WARNING WARNING WARNING !!!
+
                 // if a key cannot be acquired, return false
                 TRACE( TRACE_TRX_FLOW, "Cannot acquire for (%d)\n", 
                        ((*it).tid()->get_lo()));
@@ -136,7 +152,6 @@ public:
         for (KALReqIt it=paction->requests()->begin(); it!=paction->requests()->end(); ++it) {
             Key* pkey = (*it).key();
             _key_ll_m->release(*pkey,paction,promotedList);
-            //pkey->drop();
         }
 
         // 2. Iterate over all the promoted actions

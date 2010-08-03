@@ -274,6 +274,11 @@ get_sub_nbr_input_t& get_sub_nbr_input_t::operator= (const get_sub_nbr_input_t& 
 {
     _s_id = rhs._s_id;
     _range = rhs._range;
+
+#ifdef USE_DORA_EXT_IDX
+    _pairs = rhs._pairs;
+#endif    
+
     return (*this);
 }
 

@@ -81,6 +81,9 @@ protected:
     // flag showing that this action has set its keys
     bool           _keys_set;
 
+    // flag set if action is secondary
+    bool           _secondary;
+
 
 #ifdef WORKER_VERBOSE_STATS
     stopwatch_t    _since_enqueue;
@@ -96,12 +99,14 @@ protected:
         _keys_needed = numkeys;
         _read_only = ro;
         _keys_set = false;
+        _secondary =false;
     }
 
 public:
 
     base_action_t() :
-        _prvp(NULL), _xct(NULL), _keys_needed(0), _read_only(false), _keys_set(0)
+        _prvp(NULL), _xct(NULL), _keys_needed(0), 
+        _read_only(false), _keys_set(0), _secondary(false)
     { }
 
     virtual ~base_action_t() { }
@@ -114,11 +119,17 @@ public:
     inline tid_t tid() const { return (_tid); }
 
     // read only
-    inline bool is_read_only() { return (_read_only==true); }
+    inline bool is_read_only() { return (_read_only); }
     inline void set_read_only() { 
         assert (!_keys_set); // this can happen only if keys are not set yet
         _read_only = true;
     }
+
+
+    // secondary action - There is a list of RIDs that can be accessed directly,
+    //                    once the locks are acquired.
+    inline bool is_secondary() { return (_secondary); }
+    inline void set_secondary() { _secondary = true; }
 
     // needed keys operations
     //inline const int needed() { return (_keys_needed); }
@@ -152,7 +163,8 @@ public:
         : _prvp(rhs._prvp), _xct(rhs._xct), 
           _tid(rhs._tid), _keys_needed(rhs._keys_needed),
           _read_only(rhs._read_only),
-          _keys_set(rhs._keys_set)
+          _keys_set(rhs._keys_set),
+          _secondary(rhs._secondary)
     { }
 
     base_action_t& operator=(base_action_t const& rhs);

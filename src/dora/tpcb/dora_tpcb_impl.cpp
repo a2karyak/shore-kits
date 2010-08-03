@@ -67,7 +67,6 @@ void
 upd_br_action::calc_keys()
 {
     _down.push_back(_in.b_id);
-    _up.push_back(_in.b_id);
 }
 
 
@@ -134,7 +133,6 @@ void
 upd_te_action::calc_keys()
 {
     _down.push_back(_in.t_id);
-    _up.push_back(_in.t_id);
 }
 
 
@@ -201,7 +199,6 @@ void
 upd_ac_action::calc_keys()
 {
     _down.push_back(_in.a_id);
-    _up.push_back(_in.a_id);
 }
 
 
@@ -268,7 +265,6 @@ void
 ins_hi_action::calc_keys()
 {
     _down.push_back(_in.a_id);
-    _up.push_back(_in.a_id);
 }
 
 

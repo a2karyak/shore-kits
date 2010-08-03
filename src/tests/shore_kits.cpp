@@ -105,9 +105,6 @@ using namespace dora;
 #endif
 
 
-cpumonitor_t* _g_cpumon;
-
-
 //////////////////////////////
 
 // Value-definitions of the different Sysnames
@@ -325,10 +322,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
         int wh_id = 0;
 
         _env->reset_stats();
-        //xct_stats statsb = shell_get_xct_stats();
 
-        // reset cpu monitor
-        _g_cpumon->reset();
+        // reset monitor stats
+        _g_mon->cntr_reset();
 
         // set measurement state to measure - start counting everything
         _env->set_measure(MST_MEASURE);
@@ -362,15 +358,13 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
 
 	double delay = timer.time();
         //xct_stats stats = shell_get_xct_stats();
-        _g_cpumon->pause();
-        ulong_t miochs = _cpustater->myinfo.iochars()/MILLION;
+        _g_mon->cntr_pause();
+        ulong_t miochs = _g_mon->iochars()/MILLION;
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               miochs, _g_cpumon->get_avg_usage());
+                               miochs, _g_mon->get_avg_usage());
 
-        const load_values_t load = _cpustater->myinfo.getload();
-        TRACE( TRACE_ALWAYS, "\nCpuLoad = (%.2f)\nAbsLoad = (%.2f)\n", 
-               (load.run_tm+load.wait_tm)/load.run_tm, load.run_tm/delay);
-        _cpustater->myinfo.print();
+        _g_mon->print_load(delay);
+        _g_mon->print_ext_stats();
         
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
@@ -438,7 +432,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
                (j+1), iIterations);
 
         // reset cpu monitor
-        _g_cpumon->reset();
+        _g_mon->cntr_reset();
 
         // set measurement state
 	TRACE(TRACE_ALWAYS, "begin measurement\n");
@@ -449,16 +443,14 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
 	sleep(iDuration);
 
 	double delay = timer.time();
-        _g_cpumon->pause();
+        _g_mon->cntr_pause();
 	TRACE(TRACE_ALWAYS, "end measurement\n");
-        ulong_t miochs = _cpustater->myinfo.iochars()/MILLION;
+        ulong_t miochs = _g_mon->iochars()/MILLION;
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               miochs, _g_cpumon->get_avg_usage());
+                               miochs, _g_mon->get_avg_usage());
 
-        const load_values_t load = _cpustater->myinfo.getload();
-        TRACE( TRACE_ALWAYS, "\nCpuLoad = (%.2f)\nAbsLoad = (%.2f)\n", 
-               (load.run_tm+load.wait_tm)/load.run_tm, load.run_tm/delay);
-        _cpustater->myinfo.print();
+        _g_mon->print_load(delay);
+        _g_mon->print_ext_stats();
 	       
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
@@ -674,10 +666,14 @@ int main(int argc, char* argv[])
 
     assert (kit.get());
 
-    // 2. Create and fork the cpu monitor   
-    _g_cpumon = new cpumonitor_t();
-    assert (_g_cpumon);
-    _g_cpumon->fork();
+    // 2. Create and fork the process monitor
+#ifdef __sparcv9
+    _g_mon = new sunos_procmonitor_t();
+#else
+    // The Linux monitor does not need to run as a separate thread
+    _g_mon = new linux_procmonitor_t(); 
+#endif
+    _g_mon->fork();
 
     TRACE ( TRACE_ALWAYS, "Start Shore Environment\n" );
     // 3. Instanciate and start the Shore environment
@@ -707,9 +703,9 @@ int main(int argc, char* argv[])
     kit->db()->statistics();
 
     // 8. Stop, join, and delete the cpu monitor
-    _g_cpumon->stop();
-    _g_cpumon->join();
-    delete (_g_cpumon);
+    _g_mon->cntr_stop();
+    _g_mon->join();
+    delete (_g_mon);
 
     // 9. the Shore environment will close at the destructor of the kit
     return (0);

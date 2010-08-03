@@ -139,7 +139,8 @@ void ShoreTPCBEnv::print_throughput(const double iQueriedSF,
            iQueriedSF, 
            (iSpread ? "Yes" : "No"),
            iNumOfThreads, trxs_att, trxs_abt, trxs_dld,
-           delay, mioch/delay, avgcpuusage, 100*avgcpuusage/64,
+           delay, mioch/delay, avgcpuusage, 
+           100*avgcpuusage/get_max_cpu_count(),
            (trxs_att-trxs_abt-trxs_dld)/delay);
 }
 
