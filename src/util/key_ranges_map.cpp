@@ -3,7 +3,7 @@
 
 /** key_ranges_map interface */
 
-key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, int numPartitions)
+key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, uint numPartitions)
   : _numPartitions(numPartitions) {
   _minKey = (char*) malloc(minKey.size());
   _maxKey = (char*) malloc(maxKey.size());
@@ -56,10 +56,10 @@ void key_ranges_map::deletePartitionWithKey(const Key& key)
   _deletePartitionWithKey(_getKey(key));
 }
 
-void key_ranges_map::deletePartition(int partition)
+void key_ranges_map::deletePartition(uint partition)
 {
   keysIter iter;
-  int i;
+  uint i;
   _rwlock.acquire_read();
   for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i < partition; ++iter, i++)
     ;
@@ -82,24 +82,24 @@ inline void key_ranges_map::_deletePartitionWithKey(char* key)
   _rwlock.release_write();
 }
 
-int key_ranges_map::operator()(const Key& key)
+uint key_ranges_map::operator()(const Key& key)
 {
   return getPartitionWithKey(key);
 }
 
-int key_ranges_map::getPartitionWithKey(const Key& key)
+uint key_ranges_map::getPartitionWithKey(const Key& key)
 {
   return _getPartitionWithKey(_getKey(key));
 }
 
-inline int key_ranges_map::_getPartitionWithKey(char* key)
+inline uint key_ranges_map::_getPartitionWithKey(char* key)
 {
   // TODO: if this just wants the init_key as the return value
   // you can easily change it to
   // keysIter iter = _keyRangesMap.lower_bound(key);
   // return iter->first;
   keysIter iter;
-  int partitionNum = 0;
+  uint partitionNum = 0;
   _rwlock.acquire_read();
   for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
     if (strcmp(key, iter->first) >= 0  && strcmp(key, iter->second) < 0) {
@@ -111,13 +111,13 @@ inline int key_ranges_map::_getPartitionWithKey(char* key)
   // TODO: indicate error because key is not in the map
 }
 
-vector<int> key_ranges_map::getPartitions(const Key& key1, bool key1Included, const Key& key2, bool key2Included) {
-  vector<int> partitions;
+vector<uint> key_ranges_map::getPartitions(const Key& key1, bool key1Included, const Key& key2, bool key2Included) {
+  vector<uint> partitions;
   // find the partition key1 is in
-  int partition1 = getPartitionWithKey(key1);
+  uint partition1 = getPartitionWithKey(key1);
   // TODO: actually you're doing redundant work here, if key1<key2 then you can continue the iteration from where key2 is left off
   // find the partition key2 is in
-  int partition2 = getPartitionWithKey(key2);
+  uint partition2 = getPartitionWithKey(key2);
   // TODO: check corner cases
   /*
   if(!key1Included) {
@@ -131,14 +131,14 @@ vector<int> key_ranges_map::getPartitions(const Key& key1, bool key1Included, co
       partition2++;
   }
   */
-  for(int i = partition2; i<=partition1; i++)
+  for(uint i = partition2; i<=partition1; i++)
     partitions.push_back(i);
   return partitions;
 }
 
-void key_ranges_map::getBoundaries(int partition, pair<cvec_t, cvec_t>& keyRange) {
+void key_ranges_map::getBoundaries(uint partition, pair<cvec_t, cvec_t>& keyRange) {
   keysIter iter;
-  int i;
+  uint i;
   _rwlock.acquire_read();
   for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i< partition; ++iter, i++)
     ;
@@ -151,7 +151,7 @@ void key_ranges_map::getBoundaries(int partition, pair<cvec_t, cvec_t>& keyRange
 void key_ranges_map::printPartitions()
 {
   keysIter iter;
-  int i = 0;
+  uint i = 0;
   _rwlock.acquire_read();
   for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter, i++)
     cout << "Partition: " << i << "\tStartKey: " << iter->first
@@ -159,7 +159,7 @@ void key_ranges_map::printPartitions()
   _rwlock.release_read();
 }
 
-void key_ranges_map::setNumPartitions(int numPartitions)
+void key_ranges_map::setNumPartitions(uint numPartitions)
 {
   _rwlock.acquire_write();
   _numPartitions = numPartitions;
