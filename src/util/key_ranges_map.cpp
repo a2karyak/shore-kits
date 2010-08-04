@@ -38,8 +38,8 @@ key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, uint numPar
 {
     _minKey = (char*) malloc(minKey.size());
     _maxKey = (char*) malloc(maxKey.size());
-    _minKey = _getKey(minKey);
-    _maxKey = _getKey(maxKey);
+    minKey.copy_to(_minKey);
+    maxKey.copy_to(_maxKey);
     makeEqualPartitions();
 }
 
@@ -59,13 +59,14 @@ key_ranges_map::~key_ranges_map()
     _rwlock.release_write();    
 }
 
-
-inline char* key_ranges_map::_getKey(const Key& key)
+/*
+inline void key_ranges_map::_getKey(const Key& key, char* keyS)
 {
-    void* keyP = malloc(key.size());
-    key.copy_to(keyP);
-    return (char*) keyP;
+    //void* keyP = malloc(key.size());
+    key.copy_to(keyS);
+    //return (char*) keyP;
 }
+*/
 
 void key_ranges_map::makeEqualPartitions()
 {
@@ -88,7 +89,8 @@ void key_ranges_map::makeEqualPartitions()
 
 void key_ranges_map::addPartition(const Key& key)
 {
-    char* keyS = _getKey(key);
+    char* keyS = (char*) malloc(key.size());
+    key.copy_to(keyS);
     _rwlock.acquire_write();
     keysIter iter = _keyRangesMap.lower_bound(keyS);
     if (iter != _keyRangesMap.end()) {
@@ -101,7 +103,10 @@ void key_ranges_map::addPartition(const Key& key)
 
 void key_ranges_map::deletePartitionWithKey(const Key& key)
 {
-    _deletePartitionWithKey(_getKey(key));
+    char* keyS = (char*) malloc(key.size());
+    key.copy_to(keyS);
+    _deletePartitionWithKey(keyS);
+    free (keyS);
 }
 
 void key_ranges_map::deletePartition(uint partition)
@@ -137,11 +142,8 @@ uint key_ranges_map::operator()(const Key& key)
 
 uint key_ranges_map::getPartitionWithKey(const Key& key)
 {
-    return _getPartitionWithKey(_getKey(key));
-}
-
-inline uint key_ranges_map::_getPartitionWithKey(char* key)
-{
+    char* keyS = (char*) malloc(key.size());
+    key.copy_to(keyS);
     // TODO: if this just wants the init_key as the return value
     // you can easily change it to
     // keysIter iter = _keyRangesMap.lower_bound(key);
@@ -150,8 +152,9 @@ inline uint key_ranges_map::_getPartitionWithKey(char* key)
     uint partitionNum = 0;
     _rwlock.acquire_read();
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
-        if (strcmp(key, iter->first) >= 0  && strcmp(key, iter->second) < 0) {
+        if (strcmp(keyS, iter->first) >= 0  && strcmp(keyS, iter->second) < 0) {
             _rwlock.release_read();
+	    free (keyS);
             return partitionNum;
         }
         partitionNum++;
@@ -219,7 +222,7 @@ void key_ranges_map::setNumPartitions(uint numPartitions)
 void key_ranges_map::setMinKey(const Key& minKey)
 {  
     _rwlock.acquire_write();
-    _minKey = _getKey(minKey);
+    minKey.copy_to(_minKey);
     keysIter iter = _keyRangesMap.end();
     iter--;
     _keyRangesMap[_minKey] = iter->second;
@@ -230,7 +233,7 @@ void key_ranges_map::setMinKey(const Key& minKey)
 void key_ranges_map::setMaxKey(const Key& maxKey)
 {
     _rwlock.acquire_write();
-    _maxKey = _getKey(maxKey);
+    maxKey.copy_to(_maxKey);
     keysIter iter = _keyRangesMap.begin();
     // TODO: here the iter->second is included in the range, so this should be fixed
     iter->second = _maxKey;

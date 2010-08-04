@@ -73,9 +73,9 @@ private:
     // puts the partition "key" is in into the previous partition
     void _deletePartitionWithKey(char* key);
     // gets the partition number of the given key
-    uint _getPartitionWithKey(char* key);
+    //uint _getPartitionWithKey(char* key);
     // gets the string that describes the content of the key
-    char* _getKey(const Key& key);
+    //void _getKey(const Key& key, char* keyS);
 
 public:
   
