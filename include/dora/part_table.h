@@ -23,7 +23,7 @@
 
 /** @file:   part_table.h
  *
- *  @brief:  Declaration of each table in DORA, 
+ *  @brief:  Declaration of each table in DORA.
  *
  *  @note:   Implemented as a vector of partitions and a routing table
  *
@@ -64,7 +64,6 @@ class part_table_t
 public:
 
     typedef std::vector<Partition*> PartitionPtrVector;
-    typedef typename std::vector<Partition*>::iterator pvpIt;
     typedef typename Partition::Action Action;
 
 protected:
