@@ -131,11 +131,11 @@ w_rc_t key_ranges_map::_addPartition(char* sKey, lpid_t& root)
     return (r);
 }
 
-w_rc_t key_ranges_map::addPartition(const Key& key)
+w_rc_t key_ranges_map::addPartition(const Key& key, lpid_t& root)
 {
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
-    return (_addPartition(keyS);
+    return (_addPartition(keyS,root));
 }
 
 
