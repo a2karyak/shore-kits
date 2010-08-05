@@ -23,10 +23,18 @@
 
 /** @file:   key_ranges_map.cpp
  *
- *  @brief:  Implementation of a map of key ranges to partitions. 
+ *  @brief:  Implementation of a map of key ranges to partitions used by
+ *           baseline MRBTrees.
  *
- *  @author: Pinar Tozun, July 2010
+ *  @notes:  The keys are Shore-mt cvec_t. Thread-safe.  
+ *
+ *  @date:   July 2010
+ *
+ *  @author: Pinar Tozun (pinar)
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Ryan Johnson (ryanjohn)
  */
+
 
 #include "util/key_ranges_map.h"
 //#include "../../include/util/key_ranges_map.h"
@@ -40,7 +48,11 @@ key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, uint numPar
     _maxKey = (char*) malloc(maxKey.size());
     minKey.copy_to(_minKey);
     maxKey.copy_to(_maxKey);
+
     makeEqualPartitions();
+
+    free (_minKey);
+    free (_maxKey);
 }
 
 
@@ -68,9 +80,21 @@ inline void key_ranges_map::_getKey(const Key& key, char* keyS)
 }
 */
 
+
+
+/****************************************************************** 
+ *
+ * @fn:    makeEqualPartitions()
+ *
+ * @brief: ?
+ *
+ ******************************************************************/
+
 void key_ranges_map::makeEqualPartitions()
 {
     // TODO: discuss/think about what to do here
+    assert (0);
+
     /*
       int range = (_maxKey - _minKey) / _numPartitions;
       int currentLower = 0;
@@ -85,10 +109,23 @@ void key_ranges_map::makeEqualPartitions()
       _keyRangesMap[currentLower] = _maxKey + 1;
       _rwlock.release_write();
     */
+
 }
 
-void key_ranges_map::addPartition(const Key& key)
+
+/****************************************************************** 
+ *
+ * @fn:    addPartition()
+ *
+ * @brief: Splits the partition where "key" belongs to two partitions. 
+ *         The start of the second partition is the "key".
+ *
+ ******************************************************************/
+
+w_rc_t key_ranges_map::addPartition(const Key& key)
 {
+    w_rc_t r = RCOK;
+
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
     _rwlock.acquire_write();
@@ -97,50 +134,85 @@ void key_ranges_map::addPartition(const Key& key)
         _keyRangesMap[keyS] = iter->second;
         _keyRangesMap[iter->first] = keyS;
         _numPartitions++;
-    } // TODO: else give an error message
+    }
+    else {
+        r = RC(mrb_PARTITION_NOT_FOUND);
+    }
     _rwlock.release_write();
+    return (r);
 }
 
-void key_ranges_map::deletePartitionWithKey(const Key& key)
+
+/****************************************************************** 
+ *
+ * @fn:    deletePartition{,ByKey}()
+ *
+ * @brief: Deletes a partition, by merging it with the partition which
+ *         is before that, based either on a partition identified or
+ *         a key.
+ *
+ ******************************************************************/
+
+w_rc_t key_ranges_map::_deletePartitionByKey(char* key)
 {
+#warning IP: Pinar what happens if it is the left-most partition?
+    w_rc_t r = RCOK;
+
+    _rwlock.acquire_write();
+    keysIter iter = _keyRangesMap.lower_bound(key);
+#warning IP: Pinar what happens if it does not find a partition?
+
+    ++iter;
+    if(iter == _keyRangesMap.end()) {
+        // If the given key is in the last partition
+        --iter; 
+    }
+    _keyRangesMap[iter->first] = _keyRangesMap[iter->second];
+    --iter;
+    _keyRangesMap.erase(iter);
+    _numPartitions--;
+    _rwlock.release_write();
+    return (r);
+}
+
+w_rc_t key_ranges_map::deletePartitionByKey(const Key& key)
+{
+    w_rc_t r = RCOK;
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
-    _deletePartitionWithKey(keyS);
+    r = _deletePartitionWithKey(keyS);
     free (keyS);
+    return (r);
 }
 
-void key_ranges_map::deletePartition(uint partition)
+w_rc_t key_ranges_map::deletePartition(lpid_t pid)
 {
+    w_rc_t r = RCOK;
+
+#warning IP: This one needs rewriting
     keysIter iter;
     uint i;
     _rwlock.acquire_read();
     for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i < partition; ++iter, i++)
         ;
     _rwlock.release_read();
-    if (iter != _keyRangesMap.end())
-        _deletePartitionWithKey(iter->first);
+    if (iter != _keyRangesMap.end()) {
+        r = _deletePartitionWithKey(iter->first);
+    }
+
+    return (r);
 }
 
-inline void key_ranges_map::_deletePartitionWithKey(char* key)
-{
-    _rwlock.acquire_write();
-    keysIter iter = _keyRangesMap.lower_bound(key);
-    ++iter;
-    if(iter == _keyRangesMap.end())
-        --iter; // handles if the given key is in the last partition
-    _keyRangesMap[iter->first] = _keyRangesMap[iter->second];
-    --iter;
-    _keyRangesMap.erase(iter);
-    _numPartitions--;
-    _rwlock.release_write();
-}
 
-uint key_ranges_map::operator()(const Key& key)
-{
-    return getPartitionWithKey(key);
-}
+/****************************************************************** 
+ *
+ * @fn:    getPartitionByKey()
+ *
+ * @brief: Returns the partition which a particular key belongs to
+ *
+ ******************************************************************/
 
-uint key_ranges_map::getPartitionWithKey(const Key& key)
+w_rc_t key_ranges_map::getPartitionByKey(const Key& key, lpid_t& pid)
 {
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
@@ -155,14 +227,39 @@ uint key_ranges_map::getPartitionWithKey(const Key& key)
         if (strcmp(keyS, iter->first) >= 0  && strcmp(keyS, iter->second) < 0) {
             _rwlock.release_read();
 	    free (keyS);
-            return partitionNum;
+            pid = partitionNum;
+            return (RCOK); // found
         }
         partitionNum++;
     }
-    // TODO: indicate error because key is not in the map
+    // If reached this point the key is not in the map, returns error.
+    free (keyS);
+    return (RC(mrb_PARTITION_NOT_FOUND));
 }
 
-vector<uint> key_ranges_map::getPartitions(const Key& key1, bool key1Included, const Key& key2, bool key2Included) {
+w_rc_t key_ranges_map::operator()(const Key& key, lpid_t& pid)
+{
+    return (getPartitionWithKey(key,pid));
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    getPartitions()
+ *
+ * @brief: Returns the list of partitions that cover one of the key ranges:
+ *         [key1, key2], (key1, key2], [key1, key2), or (key1, key2) 
+ *
+ ******************************************************************/
+
+w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included, 
+                                     const Key& key2, bool key2Included,
+                                     vector<lpid_t>& pidVec) 
+{
+    w_rc_t r = RCOK;
+  
+#warning IP: This needs rewrite
     vector<uint> partitions;
     // find the partition key1 is in
     uint partition1 = getPartitionWithKey(key1);
@@ -182,12 +279,26 @@ vector<uint> key_ranges_map::getPartitions(const Key& key1, bool key1Included, c
       partition2++;
       }
     */
-    for(uint i = partition2; i<=partition1; i++)
+    for(uint i = partition2; i<=partition1; i++) {
         partitions.push_back(i);
-    return partitions;
+    }
+
+    pidVec = partitions;
+
+    return (r);
 }
 
-void key_ranges_map::getBoundaries(uint partition, pair<cvec_t, cvec_t>& keyRange) {
+
+/****************************************************************** 
+ *
+ * @fn:    getBoundaries()
+ *
+ * @brief: Returns the range boundaries of a partition
+ *
+ ******************************************************************/
+
+w_rc_t key_ranges_map::getBoundaries(uint partition, pair<cvec_t, cvec_t>& keyRange) 
+{
     keysIter iter;
     uint i;
     _rwlock.acquire_read();
@@ -197,7 +308,17 @@ void key_ranges_map::getBoundaries(uint partition, pair<cvec_t, cvec_t>& keyRang
     // TODO: Not sure whether this is correct, should check
     keyRange.first.put(iter->first, sizeof(iter->first));
     keyRange.second.put(iter->second, sizeof(iter->second));
+
+    return (RCOK);
 }
+
+
+
+/****************************************************************** 
+ *
+ * Helper functions
+ *
+ ******************************************************************/
 
 void key_ranges_map::printPartitions()
 {

@@ -23,11 +23,16 @@
 
 /** @file:   key_ranges_map.h
  *
- *  @brief:  Definition of a map of key ranges to partitions. 
+ *  @brief:  Definition of a map of key ranges to partitions used by
+ *           baseline MRBTrees.
  *
- *  @notes:  The keys are Shore-mt cvec_t. It is Thread-safe.  
+ *  @notes:  The keys are Shore-mt cvec_t. Thread-safe.  
  *
- *  @author: Pinar Tozun, July 2010
+ *  @date:   July 2010
+ *
+ *  @author: Pinar Tozun (pinar)
+ *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Ryan Johnson (ryanjohn)
  */
 
 
@@ -46,6 +51,19 @@
 
 using namespace std;
 
+
+/******************************************************************** 
+ *
+ * @brief: Error codes returned by MRBTrees
+ *
+ ********************************************************************/
+
+enum {
+    mrb_PARTITION_NOT_FOUND    = 0x830001
+};
+
+
+
 // For map<char*,char*> to compare char*
 struct cmp_str_greater
 {
@@ -54,6 +72,20 @@ struct cmp_str_greater
         return strcmp(a,b) > 0;
     }
 };
+
+
+/******************************************************************** 
+ *
+ * @class: key_ranges_map
+ *
+ * @brief: A map of key ranges to partitions. This structure is used
+ *         by the multi-rooted B-tree (MRBTree). 
+ *
+ * @note:  The specific implementation indentifies each partition through
+ *         the lpid_t of the root of the corresponding sub-tree. Hence,
+ *         this implementation is for the Baseline MRBTree (non-DORA).
+ *
+ ********************************************************************/
 
 class key_ranges_map
 {
@@ -67,11 +99,14 @@ private:
     uint _numPartitions;
     char* _minKey;
     char* _maxKey;
+
     // for thread safety multiple readers/single writer lock
     occ_rwlock _rwlock;
 
-    // puts the partition "key" is in into the previous partition
-    void _deletePartitionWithKey(char* key);
+    // Delete the partition where "key" belongs, by merging it with the 
+    // previous partition
+    w_rc_t _deletePartitionByKey(char* key);
+
     // gets the partition number of the given key
     //uint _getPartitionWithKey(char* key);
     // gets the string that describes the content of the key
@@ -84,21 +119,38 @@ public:
     ~key_ranges_map();
 
 
-    // makes equal length partitions from scratch
+    // Makes equal length partitions from scratch
     void makeEqualPartitions();
-    // splits the partition "key" is in into two starting from the "key"
-    void addPartition(const Key& key);
-    // puts the partition "key" is in into the previous partition
-    void deletePartitionWithKey(const Key& key);
-    // puts the given partition into previous partition
-    void deletePartition(uint partition);
-    // gets the partition number of the given key
-    uint getPartitionWithKey(const Key& key);
-    uint operator()(const Key& key);
-    // returns the list of partitionIDs that covers [key1, key2], (key1, key2], [key1, key2), or (key1, key2) ranges
-    vector<uint> getPartitions(const Key& key1, bool key1Included, const Key& key2, bool key2Included);
-    // returns the range boundaries of the partition
-    void getBoundaries(uint partition, pair<cvec_t, cvec_t>& keyRange);
+
+    // Splits the partition where "key" belongs to two partitions. The start of 
+    // the second partition is the "key".
+    w_rc_t addPartition(const Key& key);
+
+    // Deletes the partition where "key" belong by merging it with the previous 
+    // partition
+    w_rc_t deletePartitionByKey(const Key& key);
+
+    // Deletes the given partition (identified by the pid), by merging it with 
+    // the previous partition
+    w_rc_t deletePartition(lpid_t apid);
+
+    // Gets the partition id of the given key.
+    //
+    // @note: In the baseline version of the MRBTree each partition is identified
+    //        by the lpid_t of the root of the corresponding sub-tree. In the 
+    //        DORA version each partition can also be identified by a partition-id 
+    w_rc_t getPartitionByKey(const Key& key, lpid_t& pid);
+    w_rc_t operator()(const Key& key, lpid_t& pid);
+
+    // Returns the list of partitions that cover: 
+    // [key1, key2], (key1, key2], [key1, key2), or (key1, key2) ranges
+    w_rc_t getPartitions(const Key& key1, bool key1Included, 
+                         const Key& key2, bool key2Included,                         
+                         vector<lpid_t>& pidVec);
+
+    // Returns the range boundaries of a partition
+    w_rc_t getBoundaries(lpid_t partition, pair<cvec_t, cvec_t>& keyRange);
+
     // setters
     // TODO: decide what to do after you set these values, what seems reasonable to me
     // is change the partition structure as less as possible because later with dynamic load
@@ -106,6 +158,7 @@ public:
     void setNumPartitions(uint numPartitions);
     void setMinKey(const Key& minKey);
     void setMaxKey(const Key& maxKey);
+
     // for debugging
     void printPartitions(); 
     
