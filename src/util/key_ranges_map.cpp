@@ -111,12 +111,9 @@ void key_ranges_map::makeEqualPartitions()
  *
  ******************************************************************/
 
-w_rc_t key_ranges_map::addPartition(const Key& key, lpid_t& root)
+w_rc_t key_ranges_map::_addPartition(char* sKey, lpid_t& root)
 {
     w_rc_t r = RCOK;
-
-    char* keyS = (char*) malloc(key.size());
-    key.copy_to(keyS);
 
     _rwlock.acquire_write();
     keysIter iter = _keyRangesMap.lower_bound(keyS);
@@ -132,6 +129,13 @@ w_rc_t key_ranges_map::addPartition(const Key& key, lpid_t& root)
     _rwlock.release_write();
 
     return (r);
+}
+
+w_rc_t key_ranges_map::addPartition(const Key& key)
+{
+    char* keyS = (char*) malloc(key.size());
+    key.copy_to(keyS);
+    return (_addPartition(keyS);
 }
 
 
@@ -158,10 +162,10 @@ w_rc_t key_ranges_map::_deletePartitionByKey(char* key)
     lpid_t root1 = iter->second;
     ++iter;
     if(iter == _keyRangesMap.end()) {
-#warning IP: Pinar what happens if it is the left-most partition?
 	// TODO: this case can be handled here either by
 	// (1) giving an error or
 	// (2) adding this partition to the partition that comes before this one
+#warning IP: We should go with case 2. If it is the only partition left then it should not allow to be deleted. 
 	// However, for the case 2, we should also check whether there is a partition that comes
 	// after this one :)
 	// In the initial implementation I was doing case 2 without checking

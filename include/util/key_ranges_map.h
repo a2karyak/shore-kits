@@ -103,9 +103,15 @@ private:
     // for thread safety multiple readers/single writer lock
     occ_rwlock _rwlock;
 
+protected:
+
+    // Splits the partition where "key" belongs to two partitions. The start of 
+    // the second partition is the "key".
+    virtual w_rc_t _addPartition(char* sKey);
+
     // Delete the partition where "key" belongs, by merging it with the 
     // previous partition
-    w_rc_t _deletePartitionByKey(char* key);
+    virtual w_rc_t _deletePartitionByKey(char* sKey);
 
 public:
   
