@@ -59,7 +59,9 @@ using namespace std;
  ********************************************************************/
 
 enum {
-    mrb_PARTITION_NOT_FOUND    = 0x830001
+    mrb_PARTITION_NOT_FOUND    = 0x830001,
+    mrb_LAST_PARTITION    = 0x830002,
+    mrb_KEY_BOUNDARIES_NOT_ORDERED    = 0x830003
 };
 
 

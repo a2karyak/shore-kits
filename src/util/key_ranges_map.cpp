@@ -66,8 +66,8 @@ key_ranges_map::~key_ranges_map()
     }
     // TODO: here make sure that these are not freed twice
     // if you assing _minKey/_maxKey to some value in the map then after the map is freed they are gone
-    free (_minKey);
-    //free (_maxKey);
+    //free (_minKey);
+    free (_maxKey);
     _rwlock.release_write();    
 }
 
@@ -111,7 +111,7 @@ void key_ranges_map::makeEqualPartitions()
  *
  ******************************************************************/
 
-w_rc_t key_ranges_map::_addPartition(char* sKey, lpid_t& root)
+w_rc_t key_ranges_map::_addPartition(char* keyS, lpid_t& root)
 {
     w_rc_t r = RCOK;
 
@@ -157,23 +157,26 @@ w_rc_t key_ranges_map::_deletePartitionByKey(char* key)
     keysIter iter = _keyRangesMap.lower_bound(key);
 
     if(iter == _keyRangesMap.end()) {
+	// partition not found, return an error
 	return (RC(mrb_PARTITION_NOT_FOUND));
     }
     lpid_t root1 = iter->second;
     ++iter;
     if(iter == _keyRangesMap.end()) {
-	// TODO: this case can be handled here either by
-	// (1) giving an error or
-	// (2) adding this partition to the partition that comes before this one
-#warning IP: We should go with case 2. If it is the only partition left then it should not allow to be deleted. 
-	// However, for the case 2, we should also check whether there is a partition that comes
-	// after this one :)
-	// In the initial implementation I was doing case 2 without checking
+	--iter;
+	if(iter == _keyRangesMap.begin()) {
+	    // partition is the last partition, cannot be deleted
+	    return (RC(mrb_LAST_PARTITION));
+	}
+	lpid_t root2 = root1;
+	--iter;
+	root1 = iter->second;
     }
-
-    lpid_t root2 = iter->second;
+    else {
+	lpid_t root2 = iter->second;
+	--iter;
+    }
     // TODO: call some function from shore that merges root1&root2
-    --iter;
     //iter->second = NULL;
     _keyRangesMap.erase(iter);
     _numPartitions--;
@@ -261,7 +264,8 @@ w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included,
     w_rc_t r = RCOK;
     
     if(key2 < key1) {
-	// TODO: return error if the bounds are not given correctly
+	// return error if the bounds are not given correctly
+	return (RC(mrb_KEY_BOUNDARIES_NOT_ORDERED));
     }  
     char* key1S = (char*) malloc(key1.size());
     key1.copy_to(key1S);
