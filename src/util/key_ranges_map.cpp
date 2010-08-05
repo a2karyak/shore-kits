@@ -37,7 +37,6 @@
 
 
 #include "util/key_ranges_map.h"
-//#include "../../include/util/key_ranges_map.h"
 
 /** key_ranges_map interface */
 
@@ -50,9 +49,6 @@ key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, uint numPar
     maxKey.copy_to(_maxKey);
 
     makeEqualPartitions();
-
-    free (_minKey);
-    free (_maxKey);
 }
 
 
@@ -66,21 +62,14 @@ key_ranges_map::~key_ranges_map()
         TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\tEnd (%s)\n",
                i, iter->first, iter->second);
         free (iter->first);
-        free (iter->second);
+        //free (iter->second);
     }
+    // TODO: here make sure that these are not freed twice
+    // if you assing _minKey/_maxKey to some value in the map then after the map is freed they are gone
+    free (_minKey);
+    //free (_maxKey);
     _rwlock.release_write();    
 }
-
-/*
-inline void key_ranges_map::_getKey(const Key& key, char* keyS)
-{
-    //void* keyP = malloc(key.size());
-    key.copy_to(keyS);
-    //return (char*) keyP;
-}
-*/
-
-
 
 /****************************************************************** 
  *
@@ -122,23 +111,26 @@ void key_ranges_map::makeEqualPartitions()
  *
  ******************************************************************/
 
-w_rc_t key_ranges_map::addPartition(const Key& key)
+w_rc_t key_ranges_map::addPartition(const Key& key, lpid_t& root)
 {
     w_rc_t r = RCOK;
 
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
+
     _rwlock.acquire_write();
     keysIter iter = _keyRangesMap.lower_bound(keyS);
     if (iter != _keyRangesMap.end()) {
-        _keyRangesMap[keyS] = iter->second;
-        _keyRangesMap[iter->first] = keyS;
+	//root = new lpid_t();
+	// TODO: call a function from shore to initialize lpid_t
+        //_keyRangesMap[keyS] = root;
         _numPartitions++;
     }
     else {
         r = RC(mrb_PARTITION_NOT_FOUND);
     }
     _rwlock.release_write();
+
     return (r);
 }
 
@@ -155,23 +147,34 @@ w_rc_t key_ranges_map::addPartition(const Key& key)
 
 w_rc_t key_ranges_map::_deletePartitionByKey(char* key)
 {
-#warning IP: Pinar what happens if it is the left-most partition?
     w_rc_t r = RCOK;
 
     _rwlock.acquire_write();
     keysIter iter = _keyRangesMap.lower_bound(key);
-#warning IP: Pinar what happens if it does not find a partition?
 
+    if(iter == _keyRangesMap.end()) {
+	return (RC(mrb_PARTITION_NOT_FOUND));
+    }
+    lpid_t root1 = iter->second;
     ++iter;
     if(iter == _keyRangesMap.end()) {
-        // If the given key is in the last partition
-        --iter; 
+#warning IP: Pinar what happens if it is the left-most partition?
+	// TODO: this case can be handled here either by
+	// (1) giving an error or
+	// (2) adding this partition to the partition that comes before this one
+	// However, for the case 2, we should also check whether there is a partition that comes
+	// after this one :)
+	// In the initial implementation I was doing case 2 without checking
     }
-    _keyRangesMap[iter->first] = _keyRangesMap[iter->second];
+
+    lpid_t root2 = iter->second;
+    // TODO: call some function from shore that merges root1&root2
     --iter;
+    //iter->second = NULL;
     _keyRangesMap.erase(iter);
     _numPartitions--;
     _rwlock.release_write();
+
     return (r);
 }
 
@@ -180,7 +183,7 @@ w_rc_t key_ranges_map::deletePartitionByKey(const Key& key)
     w_rc_t r = RCOK;
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
-    r = _deletePartitionWithKey(keyS);
+    r = _deletePartitionByKey(keyS);
     free (keyS);
     return (r);
 }
@@ -189,15 +192,17 @@ w_rc_t key_ranges_map::deletePartition(lpid_t pid)
 {
     w_rc_t r = RCOK;
 
-#warning IP: This one needs rewriting
     keysIter iter;
-    uint i;
     _rwlock.acquire_read();
-    for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i < partition; ++iter, i++)
-        ;
+    for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
+        if (iter->second == pid)
+	    break;
+    }
     _rwlock.release_read();
     if (iter != _keyRangesMap.end()) {
-        r = _deletePartitionWithKey(iter->first);
+        r = _deletePartitionByKey(iter->first);
+    } else {
+	return (RC(mrb_PARTITION_NOT_FOUND));
     }
 
     return (r);
@@ -216,30 +221,22 @@ w_rc_t key_ranges_map::getPartitionByKey(const Key& key, lpid_t& pid)
 {
     char* keyS = (char*) malloc(key.size());
     key.copy_to(keyS);
-    // TODO: if this just wants the init_key as the return value
-    // you can easily change it to
-    // keysIter iter = _keyRangesMap.lower_bound(key);
-    // return iter->first;
-    keysIter iter;
-    uint partitionNum = 0;
+
     _rwlock.acquire_read();
-    for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
-        if (strcmp(keyS, iter->first) >= 0  && strcmp(keyS, iter->second) < 0) {
-            _rwlock.release_read();
-	    free (keyS);
-            pid = partitionNum;
-            return (RCOK); // found
-        }
-        partitionNum++;
-    }
-    // If reached this point the key is not in the map, returns error.
+    keysIter iter = _keyRangesMap.lower_bound(keyS);
     free (keyS);
-    return (RC(mrb_PARTITION_NOT_FOUND));
+    if(iter == _keyRangesMap.end()) {
+	// the key is not in the map, returns error.
+	return (RC(mrb_PARTITION_NOT_FOUND));
+    }
+    pid = iter->second;
+    _rwlock.release_read();
+    return (RCOK);    
 }
 
 w_rc_t key_ranges_map::operator()(const Key& key, lpid_t& pid)
 {
-    return (getPartitionWithKey(key,pid));
+    return (getPartitionByKey(key,pid));
 }
 
 
@@ -258,32 +255,34 @@ w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included,
                                      vector<lpid_t>& pidVec) 
 {
     w_rc_t r = RCOK;
-  
-#warning IP: This needs rewrite
-    vector<uint> partitions;
-    // find the partition key1 is in
-    uint partition1 = getPartitionWithKey(key1);
-    // TODO: actually you're doing redundant work here, if key1<key2 then you can continue the iteration from where key2 is left off
-    // find the partition key2 is in
-    uint partition2 = getPartitionWithKey(key2);
-    // TODO: check corner cases
-    /*
-      if(!key1Included) {
-      keysIter iter1 = _keyRangesMap.lower_bound(key1);
-      if(iter1->second == key1+1)
-      partition1--;
-      }
-      if(!key2Included) {
-      keysIter iter2 = _keyRangesMap.lower_bound(key2);
-      if(iter2->first == key2)
-      partition2++;
-      }
-    */
-    for(uint i = partition2; i<=partition1; i++) {
-        partitions.push_back(i);
-    }
+    
+    if(key2 < key1) {
+	// TODO: return error if the bounds are not given correctly
+    }  
+    char* key1S = (char*) malloc(key1.size());
+    key1.copy_to(key1S);
+    char* key2S = (char*) malloc(key2.size());
+    key2.copy_to(key2S);
 
-    pidVec = partitions;
+    _rwlock.acquire_read();
+    keysIter iter1 = _keyRangesMap.lower_bound(key1S);
+    keysIter iter2 = _keyRangesMap.lower_bound(key2S);
+    if (iter1 == _keyRangesMap.end() || iter2 == _keyRangesMap.end()) {
+	// at least one of the keys is not in the map, returns error.
+	return (RC(mrb_PARTITION_NOT_FOUND));
+    }
+    // TODO: think about how to check key1 not being included
+    // the corner case here is that when key1 is the last key from the its partition
+    // if it's not included then we shouldn't take that partition
+    // but how to check the last key of a partition ??
+    while (iter1 != iter2) {
+	pidVec.push_back(iter1->second);
+	iter1++;
+    }
+    // check for !key2Included
+    if(key2Included || strcmp(iter1->first,key2S)!=0)
+	pidVec.push_back(iter1->second);
+    _rwlock.release_read();
 
     return (r);
 }
@@ -297,17 +296,27 @@ w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included,
  *
  ******************************************************************/
 
-w_rc_t key_ranges_map::getBoundaries(uint partition, pair<cvec_t, cvec_t>& keyRange) 
+w_rc_t key_ranges_map::getBoundaries(lpid_t pid, pair<cvec_t, cvec_t>& keyRange) 
 {
     keysIter iter;
-    uint i;
+
     _rwlock.acquire_read();
-    for (i = 0, iter = _keyRangesMap.begin(); iter != _keyRangesMap.end() && i< partition; ++iter, i++)
-        ;
+    for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
+        if (iter->second == pid)
+	    break;
+    }
     _rwlock.release_read();
+    
+    if(iter == _keyRangesMap.end()) {
+	// the pid is not in the map, returns error.
+	return (RC(mrb_PARTITION_NOT_FOUND));
+    }
     // TODO: Not sure whether this is correct, should check
     keyRange.first.put(iter->first, sizeof(iter->first));
-    keyRange.second.put(iter->second, sizeof(iter->second));
+    iter++;
+    if(iter == _keyRangesMap.end()) // check whether it is the last range
+	keyRange.second.put(_maxKey, sizeof(_maxKey));
+    else  keyRange.second.put(iter->first, sizeof(iter->first));
 
     return (RCOK);
 }
@@ -325,6 +334,7 @@ void key_ranges_map::printPartitions()
     keysIter iter;
     uint i = 0;
     _rwlock.acquire_read();
+# warning: pinar: this warning is given when this compiles "cannot pass objects of non-POD type ‘class lpid_t’ through ‘...’; call will abort at runtime"
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter, i++) {
         TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\tEnd (%s)\n",
                i, iter->first, iter->second);
@@ -346,8 +356,9 @@ void key_ranges_map::setMinKey(const Key& minKey)
     minKey.copy_to(_minKey);
     keysIter iter = _keyRangesMap.end();
     iter--;
-    _keyRangesMap[_minKey] = iter->second;
-    _keyRangesMap.erase(iter);
+    //_keyRangesMap[_minKey] = iter->second;
+    //iter->second = NULL;
+    //_keyRangesMap.erase(iter);
     _rwlock.release_write();
 }
 
@@ -355,9 +366,6 @@ void key_ranges_map::setMaxKey(const Key& maxKey)
 {
     _rwlock.acquire_write();
     maxKey.copy_to(_maxKey);
-    keysIter iter = _keyRangesMap.begin();
-    // TODO: here the iter->second is included in the range, so this should be fixed
-    iter->second = _maxKey;
     _rwlock.release_write();
 }
 

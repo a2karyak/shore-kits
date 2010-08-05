@@ -64,7 +64,7 @@ enum {
 
 
 
-// For map<char*,char*> to compare char*
+// For map<char*,lpid_t> to compare char*
 struct cmp_str_greater
 {
     bool operator()(char const *a, char const *b)
@@ -91,11 +91,11 @@ class key_ranges_map
 {
 private:
 
-    typedef map<char*, char*>::iterator keysIter;
+    typedef map<char*, lpid_t>::iterator keysIter;
     typedef cvec_t Key;
 
     // range_init_key -> range_end_key
-    map<char*, char*, cmp_str_greater > _keyRangesMap;
+    map<char*, lpid_t, cmp_str_greater > _keyRangesMap;
     uint _numPartitions;
     char* _minKey;
     char* _maxKey;
@@ -107,11 +107,6 @@ private:
     // previous partition
     w_rc_t _deletePartitionByKey(char* key);
 
-    // gets the partition number of the given key
-    //uint _getPartitionWithKey(char* key);
-    // gets the string that describes the content of the key
-    //void _getKey(const Key& key, char* keyS);
-
 public:
   
     // TODO: equally partitions the given key range ([minKey,maxKey]) depending on the given partition number
@@ -119,20 +114,20 @@ public:
     ~key_ranges_map();
 
 
-    // Makes equal length partitions from scratch
+    // TODO: Makes equal length partitions from scratch
     void makeEqualPartitions();
 
     // Splits the partition where "key" belongs to two partitions. The start of 
     // the second partition is the "key".
-    w_rc_t addPartition(const Key& key);
+    w_rc_t addPartition(const Key& key, lpid_t& root);
 
-    // Deletes the partition where "key" belong by merging it with the previous 
+    // Deletes the partition where "key" belongs by merging it with the previous 
     // partition
     w_rc_t deletePartitionByKey(const Key& key);
 
     // Deletes the given partition (identified by the pid), by merging it with 
     // the previous partition
-    w_rc_t deletePartition(lpid_t apid);
+    w_rc_t deletePartition(lpid_t pid);
 
     // Gets the partition id of the given key.
     //
@@ -149,7 +144,7 @@ public:
                          vector<lpid_t>& pidVec);
 
     // Returns the range boundaries of a partition
-    w_rc_t getBoundaries(lpid_t partition, pair<cvec_t, cvec_t>& keyRange);
+    w_rc_t getBoundaries(lpid_t pid, pair<cvec_t, cvec_t>& keyRange);
 
     // setters
     // TODO: decide what to do after you set these values, what seems reasonable to me
