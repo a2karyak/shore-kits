@@ -59,8 +59,7 @@ key_ranges_map::~key_ranges_map()
     uint i=0;
     _rwlock.acquire_write();
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter, ++i) {
-        TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\tEnd (%s)\n",
-               i, iter->first, iter->second);
+        TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\n", i, iter->first);
         free (iter->first);
         //free (iter->second);
     }
@@ -118,9 +117,9 @@ w_rc_t key_ranges_map::_addPartition(char* keyS, lpid_t& root)
     _rwlock.acquire_write();
     keysIter iter = _keyRangesMap.lower_bound(keyS);
     if (iter != _keyRangesMap.end()) {
-	//root = new lpid_t();
+	root = lpid_t();
 	// TODO: call a function from shore to initialize lpid_t
-        //_keyRangesMap[keyS] = root;
+        _keyRangesMap[keyS] = root;
         _numPartitions++;
     }
     else {
@@ -149,12 +148,12 @@ w_rc_t key_ranges_map::addPartition(const Key& key, lpid_t& root)
  *
  ******************************************************************/
 
-w_rc_t key_ranges_map::_deletePartitionByKey(char* key)
+w_rc_t key_ranges_map::_deletePartitionByKey(char* keyS)
 {
     w_rc_t r = RCOK;
 
     _rwlock.acquire_write();
-    keysIter iter = _keyRangesMap.lower_bound(key);
+    keysIter iter = _keyRangesMap.lower_bound(keyS);
 
     if(iter == _keyRangesMap.end()) {
 	// partition not found, return an error
@@ -177,7 +176,6 @@ w_rc_t key_ranges_map::_deletePartitionByKey(char* key)
 	--iter;
     }
     // TODO: call some function from shore that merges root1&root2
-    //iter->second = NULL;
     _keyRangesMap.erase(iter);
     _numPartitions--;
     _rwlock.release_write();
@@ -342,10 +340,8 @@ void key_ranges_map::printPartitions()
     keysIter iter;
     uint i = 0;
     _rwlock.acquire_read();
-# warning: pinar: this warning is given when this compiles "cannot pass objects of non-POD type ‘class lpid_t’ through ‘...’; call will abort at runtime"
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter, i++) {
-        TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\tEnd (%s)\n",
-               i, iter->first, iter->second);
+        TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\n", i, iter->first);
     }
     _rwlock.release_read();
 }
@@ -364,9 +360,8 @@ void key_ranges_map::setMinKey(const Key& minKey)
     minKey.copy_to(_minKey);
     keysIter iter = _keyRangesMap.end();
     iter--;
-    //_keyRangesMap[_minKey] = iter->second;
-    //iter->second = NULL;
-    //_keyRangesMap.erase(iter);
+    _keyRangesMap[_minKey] = iter->second;
+    _keyRangesMap.erase(iter);
     _rwlock.release_write();
 }
 

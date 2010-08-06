@@ -109,11 +109,11 @@ protected:
 
     // Splits the partition where "key" belongs to two partitions. The start of 
     // the second partition is the "key".
-    virtual w_rc_t _addPartition(char* sKey, lpid_t& root);
+    virtual w_rc_t _addPartition(char* keyS, lpid_t& root);
 
     // Delete the partition where "key" belongs, by merging it with the 
     // previous partition
-    virtual w_rc_t _deletePartitionByKey(char* sKey);
+    virtual w_rc_t _deletePartitionByKey(char* keyS);
 
 public:
   
