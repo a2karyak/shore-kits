@@ -61,14 +61,14 @@ key_ranges_map::~key_ranges_map()
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter, ++i) {
         TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\n", i, iter->first);
         free (iter->first);
-        //free (iter->second);
     }
     // TODO: here make sure that these are not freed twice
-    // if you assing _minKey/_maxKey to some value in the map then after the map is freed they are gone
+    // if you assesing _minKey/_maxKey to some value in the map then after the map is freed they are gone
     //free (_minKey);
     free (_maxKey);
     _rwlock.release_write();    
 }
+
 
 /****************************************************************** 
  *
@@ -196,15 +196,19 @@ w_rc_t key_ranges_map::deletePartitionByKey(const Key& key)
 w_rc_t key_ranges_map::deletePartition(lpid_t pid)
 {
     w_rc_t r = RCOK;
+    bool bFound = false;
 
     keysIter iter;
     _rwlock.acquire_read();
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
-        if (iter->second == pid)
+        if (iter->second == pid) {
+            bFound = true;
 	    break;
+        }
     }
     _rwlock.release_read();
-    if (iter != _keyRangesMap.end()) {
+
+    if (bFound) {
         r = _deletePartitionByKey(iter->first);
     } else {
 	return (RC(mrb_PARTITION_NOT_FOUND));
@@ -305,24 +309,32 @@ w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included,
 w_rc_t key_ranges_map::getBoundaries(lpid_t pid, pair<cvec_t, cvec_t>& keyRange) 
 {
     keysIter iter;
+    bool bFound = false;
 
     _rwlock.acquire_read();
     for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
-        if (iter->second == pid)
+        if (iter->second == pid) {
+            bFound = true;
 	    break;
+        }
     }
     _rwlock.release_read();
     
-    if(iter == _keyRangesMap.end()) {
+    if(!bFound) {
 	// the pid is not in the map, returns error.
 	return (RC(mrb_PARTITION_NOT_FOUND));
     }
+
     // TODO: Not sure whether this is correct, should check
     keyRange.first.put(iter->first, sizeof(iter->first));
     iter++;
-    if(iter == _keyRangesMap.end()) // check whether it is the last range
+    if(iter == _keyRangesMap.end()) { 
+        // check whether it is the last range
 	keyRange.second.put(_maxKey, sizeof(_maxKey));
-    else  keyRange.second.put(iter->first, sizeof(iter->first));
+    }
+    else {
+        keyRange.second.put(iter->first, sizeof(iter->first));
+    }
 
     return (RCOK);
 }

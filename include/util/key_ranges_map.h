@@ -102,10 +102,10 @@ private:
     char* _minKey;
     char* _maxKey;
 
+protected:
+
     // for thread safety multiple readers/single writer lock
     occ_rwlock _rwlock;
-
-protected:
 
     // Splits the partition where "key" belongs to two partitions. The start of 
     // the second partition is the "key".
@@ -120,7 +120,6 @@ public:
     // TODO: equally partitions the given key range ([minKey,maxKey]) depending on the given partition number
     key_ranges_map(const Key& minKey, const Key& maxKey, uint numPartitions);	
     ~key_ranges_map();
-
 
     // TODO: Makes equal length partitions from scratch
     void makeEqualPartitions();
