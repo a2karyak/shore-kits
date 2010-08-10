@@ -153,6 +153,9 @@ public:
     // Returns the range boundaries of a partition
     w_rc_t getBoundaries(lpid_t pid, pair<cvec_t, cvec_t>& keyRange);
 
+    // Returns a vector with the key boundaries for all the partitions
+    w_rc_t getBoundariesVec(vector< pair<char*,char*> >& keyBoundariesVec);
+
     // setters
     // TODO: decide what to do after you set these values, what seems reasonable to me
     // is change the partition structure as less as possible because later with dynamic load

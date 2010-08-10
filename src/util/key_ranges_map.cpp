@@ -340,6 +340,34 @@ w_rc_t key_ranges_map::getBoundaries(lpid_t pid, pair<cvec_t, cvec_t>& keyRange)
 }
 
 
+/****************************************************************** 
+ *
+ * @fn:    getBoundariesVec()
+ *
+ * @brief: Returns a vector with the key boundaries for all the partitions
+ *
+ ******************************************************************/
+
+w_rc_t key_ranges_map::getBoundariesVec(vector< pair<char*,char*> >& keyBoundariesVec)
+{
+    keysIter iter;
+    pair<char*, char*> keyPair;
+    keyPair.second = NULL;
+
+    _rwlock.acquire_read();
+    for (iter = _keyRangesMap.begin(); iter != _keyRangesMap.end(); ++iter) {
+        keyPair.first = iter->first;
+        if (!keyBoundariesVec.empty()) {
+            // Visit the last entry and update the upper boundary
+            keyBoundariesVec.back().second = iter->first;
+        }
+        // Add entry to the vector
+        keyBoundariesVec.push_back(keyPair);
+    }
+    _rwlock.release_read();
+    return (RCOK);
+}
+
 
 /****************************************************************** 
  *
@@ -384,6 +412,7 @@ void key_ranges_map::setMaxKey(const Key& maxKey)
     _rwlock.release_write();
 }
 
+#if 0
 int main(void)
 {
     // TODO: update the test
@@ -456,3 +485,4 @@ int main(void)
     */
     return 0;
 }
+#endif
