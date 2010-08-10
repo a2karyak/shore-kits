@@ -141,12 +141,12 @@ bool ShoreEnv::is_loaded()
 }
 
 
-int ShoreEnv::get_max_cpu_count() const 
+uint ShoreEnv::get_max_cpu_count() const 
 { 
     return (_max_cpu_count); 
 }
 
-int ShoreEnv::get_active_cpu_count() const 
+uint ShoreEnv::get_active_cpu_count() const 
 { 
     return (_active_cpu_count); 
 }
@@ -830,7 +830,8 @@ int ShoreEnv::_set_sys_params()
 }
 
 
-void ShoreEnv::print_cpus() const { 
+void ShoreEnv::print_cpus() const 
+{ 
     TRACE( TRACE_ALWAYS, "MaxCPU=(%d) - ActiveCPU=(%d)\n", 
            _max_cpu_count, _active_cpu_count);
 }

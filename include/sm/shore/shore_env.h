@@ -464,8 +464,8 @@ protected:
     ParamMap      _dev_opts;  // db-instance-specific options    
 
     // Processor info
-    uint_t _max_cpu_count;    // hard limit
-    uint_t _active_cpu_count; // soft limit
+    uint _max_cpu_count;    // hard limit
+    uint _active_cpu_count; // soft limit
 
 
     // List of worker threads
@@ -571,9 +571,9 @@ public:
 
     // CPU count functions
     void print_cpus() const;
-    int get_max_cpu_count() const;
-    int get_active_cpu_count() const;
-    void set_active_cpu_count(const uint_t actcpucnt);
+    uint get_max_cpu_count() const;
+    uint get_active_cpu_count() const;
+    void set_active_cpu_count(const uint actcpucnt);
     // disabled - max_count can be set only on conf
     //    void set_max_cpu_count(const int maxcpucnt); 
 

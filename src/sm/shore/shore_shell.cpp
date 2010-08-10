@@ -164,7 +164,7 @@ processorid_t shore_shell_t::next_cpu(const eBindingType abt,
         nextprs = ((aprd+1) % _env->get_active_cpu_count());
         return (nextprs);
     case (BT_SPREAD):
-        static const int NIAGARA_II_STEP = 8;
+        static const uint NIAGARA_II_STEP = 8;
         nextprs = ((aprd+NIAGARA_II_STEP) % _env->get_active_cpu_count());
         return (nextprs);
     }
