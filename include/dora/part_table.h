@@ -25,7 +25,9 @@
  *
  *  @brief:  Declaration of each table in DORA.
  *
- *  @note:   Implemented as a vector of partitions and a routing table
+ *  @note:   Implemented as a vector of partitions. The routing information 
+ *           (for example, table in the case of range partitioning) is stored
+ *           at the specific sub-class (for example, range_part_table_impl)
  *
  *  @author: Ippokratis Pandis, Oct 2008
  */
@@ -42,7 +44,7 @@
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
 
-#include "dora/partition.h"
+#include "dora/base_partition.h"
 
 using namespace shore;
 
@@ -54,17 +56,16 @@ ENTER_NAMESPACE(dora);
  *
  * @class: part_table_t
  *
- * @brief: Class for representing a table as a set of (data) partitions
+ * @brief: Abstract class for representing a table as a set of (data) partitions
  *
  ********************************************************************/
 
-template <typename Partition>
 class part_table_t
 {
 public:
 
-    typedef std::vector<Partition*> PartitionPtrVector;
-    typedef typename Partition::Action Action;
+    typedef vector<base_partition_t*> PartitionPtrVector;
+    typedef base_partition_t          Partition;
 
 protected:
 
@@ -73,318 +74,76 @@ protected:
 
     // the vector of partitions
     PartitionPtrVector _ppvec;
-
-    int                _pcnt;
+    uint               _pcnt;
     tatas_lock         _pcgf_lock;
 
     // processor binding
     processorid_t      _start_prs_id;
     processorid_t      _next_prs_id;
-    int                _prs_range;
+    uint               _prs_range;
     tatas_lock         _next_prs_lock;
 
-
     // per partition key estimation
-    int                _key_estimation;
+    uint               _key_estimation;
 
-    // for the enqueue function
-    int                _sfs_per_part; 
-    int                _total_sf; 
-
-    // TODO: 
-    // mapping table - which is build at runtime
-    
-
+    // boundaries of possible key value, used for the enqueue function
+    cvec_t _min;
+    cvec_t _max;
+   
 public:
 
     part_table_t(ShoreEnv* env, table_desc_t* ptable,
                  const processorid_t aprs,
-                 const int acpurange,
-                 const int keyEstimation,
-                 const int sfsperpart,
-                 const int totalsfs) 
-        : _env(env), _table(ptable), _pcnt(0), 
-          _start_prs_id(aprs), _next_prs_id(aprs), 
-          _prs_range(acpurange), _key_estimation(keyEstimation), 
-          _sfs_per_part(sfsperpart), _total_sf(totalsfs)
-    {
-        assert (_env);
-        assert (_table);        
-        assert (aprs<=_env->get_max_cpu_count());
-        assert (acpurange<=_env->get_active_cpu_count());
-        assert (_key_estimation);
-        assert (_total_sf && _sfs_per_part);
-        if (_sfs_per_part > _total_sf) _sfs_per_part=_total_sf;
-        fprintf(stdout, "Creating (%d/%d=%.1f) (%s) parts\n",
-                _total_sf, _sfs_per_part, (double)_total_sf/(double)_sfs_per_part, _table->name());
-    }
+                 const uint acpurange,
+                 const uint keyEstimation,
+                 const cvec_t& minKey,
+                 const cvec_t& maxKey,
+                 const uint pnum);
 
-    virtual ~part_table_t() { }    
+    virtual ~part_table_t();
 
 
     // Access methods //
-    PartitionPtrVector* get_vector() const { return (&_ppvec); }
-    Partition* get_part(const uint pos) const {
-        assert (pos<_ppvec.size());
-        return (_ppvec[pos]);
-    }
-
+    PartitionPtrVector* get_vector();
+    Partition* get_part(const uint pos);
 
     //// Control table ////
 
-    // configure partitions
-    virtual int config(const int apcnt);
+    // stops all partitions
+    w_rc_t stop();
 
-    // add one partition
-    virtual int add_one_part(Partition* apartition) {
-        return (_add_one_part(apartition));
-    }
+    // prepares all partitions for a new run
+    w_rc_t prepareNewRun();
 
-    // create one partition
-    virtual int create_one_part();
+    // Return the appropriate partition. This decision is based on the type
+    // of the partitioning scheme used
+    virtual base_partition_t* getPartByKey(const cvec_t& key)=0;
+
+
+    //// CPU placement ////
 
     // reset all partitions
-    virtual int reset();
-
+    virtual w_rc_t reset();
+    
     // move to another range of processors
-    int move(const processorid_t aprs, const int arange) {
-        {
-            CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
-            // 1. update processor and range
-            _start_prs_id = aprs;
-            _prs_range = arange;
-        }
-        // 2. reset
-        return (reset());
-    }
+    w_rc_t move(const processorid_t aprs, const uint acpurange);
 
     // decide the next processor
     virtual processorid_t next_cpu(const processorid_t& aprd);
 
-    // stops all partitions
-    int stop() {
-        for (uint i=0; i<_ppvec.size(); i++) {
-            _ppvec[i]->stop();
-            delete (_ppvec[i]);
-        }
-        _ppvec.clear();
-        return (0);
-    }
 
-    // prepares all partitions for a new run
-    int prepareNewRun() {
-        for (uint i=0; i<_ppvec.size(); i++)
-            _ppvec[i]->prepareNewRun();
-        return (0);
-    }
-
-
-    /////  Action-related methods
-
-    // enqueues action, false on error
-    inline int enqueue(Action* paction, const bool bWake, const int part) {
-        assert (part<_pcnt);
-        return (_ppvec[part]->enqueue(paction,bWake));
-    }
-
-
-
-    // For debugging
+    //// For debugging ////
 
     // information
-    void statistics() const {
-        TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
-
-        worker_stats_t ws_gathered;
-        int stl_sz = 0;
-
-        for (uint i=0; i<_ppvec.size(); i++) {
-            // gather worker statistics
-            _ppvec[i]->statistics(ws_gathered);
-
-            // gather dora-related structures statistics
-            _ppvec[i]->stlsize(stl_sz);
-        }
-
-        if (ws_gathered._processed > MINIMUM_PROCESSED) {
-            TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
-
-            // print worker stats
-            ws_gathered.print_and_reset();
-            // print dora stl stats
-            TRACE( TRACE_STATISTICS, "stl.entries (%d)\n", stl_sz);
-        }
-    }        
+    void statistics() const;
 
     // information
-    void info() const {
-        TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
-        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
-    }        
+    void info() const;
 
     // dumps information
-    void dump() const {
-        TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
-        TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
-        for (uint i=0; i<_ppvec.size(); i++)
-            _ppvec[i]->dump();
-    }        
-
-private:
-
-    int _create_one_part();
-    int _add_one_part(Partition* apartition);
+    void dump() const;
 
 }; // EOF: part_table_t
-
-
-
-/** partition_t interface */
-
-
-
-/****************************************************************** 
- *
- * @fn:    config()
- *
- * @brief: Configures the partitions
- *
- ******************************************************************/
-
-template <typename Partition>
-int part_table_t<Partition>::config(const int apcnt)
-{
-    assert (_env);
-    assert (_table);
-    assert (apcnt);
-
-    TRACE( TRACE_DEBUG, "Configuring...\n");
-
-    for (int i=0; i<apcnt; i++) {
-        create_one_part();
-    }
-    return (0);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:    create_one_part()
- *
- * @brief: Creates one partition and adds it to the vector
- *
- ******************************************************************/
-
-template <typename Partition>
-inline int part_table_t<Partition>::create_one_part()
-{
-    return (_create_one_part());
-}
-
-
-/****************************************************************** 
- *
- * @fn:    reset()
- *
- * @brief: Resets the partitions
- *
- * @note:  Applies the partition distribution function (next_cpu())
- *
- ******************************************************************/
-
-template <typename Partition>
-int part_table_t<Partition>::reset()
-{
-    TRACE( TRACE_DEBUG, "Reseting (%s)...\n", _table->name());
-    _next_prs_id = _start_prs_id;
-    for (uint i=0; i<_ppvec.size(); i++) {
-        _ppvec[i]->reset(_next_prs_id);
-        CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
-        _next_prs_id = next_cpu(_next_prs_id);
-    }    
-    return (0);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:    next_cpu()
- *
- * @brief: The partition distribution function
- *
- * @note:  Very simple (just increases processor id by one) 
- *
- * @note:  This decision  can be based among others on:
- *
- *         - aprd                    - the current cpu
- *         - _env->_max_cpu_count    - the maximum cpu count (hard-limit)
- *         - _env->_active_cpu_count - the active cpu count (soft-limit)
- *         - this->_start_prs_id     - the first assigned cpu for the table
- *         - this->_prs_range        - a range of cpus assigned for the table
- *
- ******************************************************************/
-
-template <typename Partition>
-processorid_t part_table_t<Partition>::next_cpu(const processorid_t& aprd) 
-{
-    int binding = envVar::instance()->getVarInt("dora-cpu-binding",0);
-    if (binding==0)
-        return (PBIND_NONE);
-
-    int partition_step = envVar::instance()->getVarInt("dora-cpu-partition-step",
-                                                       DF_CPU_STEP_PARTITIONS);    
-    processorid_t nextprs = ((aprd+partition_step) % _env->get_active_cpu_count());
-    return (nextprs);
-}
-
-
-
-/** part_table_t helpers */
-
-
-/****************************************************************** 
- *
- * @fn:    _create_one_part()
- *
- * @brief: Creates one partition
- *
- ******************************************************************/
-
-template <typename Partition>
-int part_table_t<Partition>::_create_one_part()
-{
-    //    TRACE( TRACE_DEBUG, "(%s) creating one partition...\n", _table->name());  
-    assert (0); // TODO
-    return (0);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:     _add_one_part()
- *
- * @brief:  Add one partition
- *
- * @return: 0 on success
- *
- ******************************************************************/
-
-template <typename Partition>
-int part_table_t<Partition>::_add_one_part(Partition* apartition)
-{
-    assert (apartition);
-    CRITICAL_SECTION(conf_cs, _pcgf_lock);
-    _ppvec.push_back(apartition);
-    ++_pcnt;
-    return (0);
-}
-
-
-
-
 
 EXIT_NAMESPACE(dora);
 

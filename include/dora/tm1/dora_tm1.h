@@ -161,10 +161,10 @@ public:
 
     //// Partition-related
 
-    inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
-        // partitioning function
-        return (atable->myPart(aid / TM1_SUBS_PER_DORA_PART));
-    }      
+    // inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
+    //     partitioning function
+    //     return (atable->myPart(aid / TM1_SUBS_PER_DORA_PART));
+    // }      
 
 
     //// DORA TM1 - PARTITIONED TABLES

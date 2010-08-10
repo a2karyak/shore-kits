@@ -174,7 +174,7 @@ public:
 
     //// Debugging ////
 
-    int keystouched() const { return (_key_ll_m->keystouched()); }
+    uint keystouched() const { return (_key_ll_m->keystouched()); }
 
     void reset() { _key_ll_m->reset(); }
     void dump() { _key_ll_m->dump(); }

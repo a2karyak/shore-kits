@@ -99,11 +99,11 @@ public:
 
     //// Partition-related
 
-    inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
-        //TRACE( TRACE_STATISTICS, "X=%d AID=%d\n", atable, aid);
-        // partitioning function
-        return (atable->myPart(aid));
-    }      
+    // inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
+    //     //TRACE( TRACE_STATISTICS, "X=%d AID=%d\n", atable, aid);
+    //     // partitioning function
+    //     return (atable->myPart(aid));
+    // }      
 
 
     //// DORA TPCB - PARTITIONED TABLES

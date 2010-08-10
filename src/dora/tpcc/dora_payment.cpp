@@ -55,8 +55,7 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-w_rc_t 
-midway_pay_rvp::run() 
+w_rc_t midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
 #ifndef ONLYDORA
@@ -70,8 +69,8 @@ midway_pay_rvp::run()
     // 2. Generate and enqueue action
     ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_xct,_tid,frvp,_pin);
     ins_hist_pay->postset(_awh,_adist);
-    typedef range_partition_impl<int>   irpImpl; 
-    irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);
+    typedef range_partition_i<int>   irpImpl; 
+    irpImpl* hist_part = _ptpccenv->decide_part(_ptpccenv->his(),_pin._home_wh_id-1);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
 

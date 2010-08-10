@@ -36,6 +36,7 @@ using namespace shore;
 
 ENTER_NAMESPACE(dora);
 
+typedef range_partition_i<int> irpImpl;
 
 
 /******************************************************************** 
@@ -53,12 +54,20 @@ DoraEnv::DoraEnv()
 DoraEnv::~DoraEnv()
 { }
 
-typedef range_partition_impl<int> irpImpl;
+
+
+/******************************************************************** 
+ *
+ *  @fn:    table_part
+ *
+ *  @brief: Return partition (part_pos) of table (table_pos)
+ *
+ ********************************************************************/
 
 irpImpl* DoraEnv::table_part(const uint table_pos, const uint part_pos) 
 {
     assert (table_pos<_irptp_vec.size());        
-    return (_irptp_vec[table_pos]->get_part(part_pos));
+    return (_irptp_vec[table_pos]->getPartByIdx(part_pos));
 }
 
 
@@ -71,8 +80,16 @@ irpImpl* DoraEnv::table_part(const uint table_pos, const uint part_pos)
  *
  ********************************************************************/
 
-int DoraEnv::statistics()
+int DoraEnv::_statistics(ShoreEnv* /* penv */)
 {
+    // DORA STATS
+    TRACE( TRACE_STATISTICS, "----- DORA -----\n");
+    uint sz=_irptp_vec.size();
+    TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
+    for (uint i=0;i<sz;++i) {
+        _irptp_vec[i]->statistics();
+    }
+
 #ifdef CFG_FLUSHER
     _flusher->statistics();
 #endif
@@ -82,50 +99,127 @@ int DoraEnv::statistics()
 
 /****************************************************************** 
  *
- * @fn:    _start()
+ * @fn:    _post_start()
  *
- * @brief: If configured, starts the flusher
+ * @brief: Resets the tables and starts the flusher, if using one.
  *
  * @note:  Should be called before the start function of the specific
  *         DORA environment instance
  *
  ******************************************************************/
 
-int DoraEnv::_start(ShoreEnv* penv)
+int DoraEnv::_post_start(ShoreEnv* penv)
 {
 #ifdef CFG_FLUSHER
+    // Start the flusher
     TRACE( TRACE_ALWAYS, "Creating dora-flusher...\n");
     _flusher = new dora_flusher_t(penv, c_str("DFlusher")); 
     assert(_flusher.get());
     _flusher->fork();
     _flusher->start();
-#else
-    (void)penv;
 #endif
+
+    // Reset the tables
+    for (uint_t i=0; i<_irptp_vec.size(); i++) {
+        _irptp_vec[i]->reset();
+    }
+
+    penv->set_dbc(DBC_ACTIVE);
     return (0);
 }
 
 
 /****************************************************************** 
  *
- * @fn:    _stop()
+ * @fn:    _post_stop()
  *
- * @brief: If configured, stops the flusher
+ * @brief: Stops the tables and the flusher, if using one.
  *
  * @note:  Should be called after the stop function of the specific
- *         DORA environment instance
+ *         DORA environment instance, if any.
  *
  ******************************************************************/
 
-int DoraEnv::_stop()
+int DoraEnv::_post_stop(ShoreEnv* penv)
 {
+    // Stopping the tables
+    TRACE( TRACE_ALWAYS, "Stopping...\n");
+    for (uint i=0; i<_irptp_vec.size(); i++) {
+        _irptp_vec[i]->stop();
+    }
+    _irptp_vec.clear();
+
 #ifdef CFG_FLUSHER
+    // Stopping the flusher
     TRACE( TRACE_ALWAYS, "Stopping dora-flusher...\n");
     _flusher->stop();
     _flusher->join();
 #endif
+
+    penv->set_dbc(DBC_STOPPED);
     return (0);
 }
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    _newrun()
+ *
+ * @brief: Calls the prepareNewRun for all the tables
+ *
+ ******************************************************************/
+
+int DoraEnv::_newrun(ShoreEnv* /* penv */)
+{
+    TRACE( TRACE_DEBUG, "Preparing for new run...\n");
+    for (uint i=0; i<_irptp_vec.size(); i++) {
+        _irptp_vec[i]->prepareNewRun();
+    }
+    return (0);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    _dump()
+ *
+ * @brief: Calls the dump for all the tables
+ *
+ ******************************************************************/
+
+int DoraEnv::_dump(ShoreEnv* /* penv */)
+{
+    uint sz=_irptp_vec.size();
+    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
+    for (uint i=0; i<sz; i++) {
+        _irptp_vec[i]->dump();
+    }
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    _info()
+ *
+ * @brief: Calls the info for all the tables
+ *
+ ******************************************************************/
+
+int DoraEnv::_info(const ShoreEnv* penv) const
+{
+    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", penv->get_sf());
+    uint sz=_irptp_vec.size();
+    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
+    for (uint i=0;i<sz;++i) {
+        _irptp_vec[i]->info();
+    }
+    return (0);
+}
+
+
 
 /****************************************************************** 
  *

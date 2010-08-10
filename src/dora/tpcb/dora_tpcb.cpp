@@ -43,16 +43,16 @@ ENTER_NAMESPACE(dora);
 
 
 // max field counts for (int) keys of tpcb tables
-const int br_IRP_KEY  = 1;
-const int te_IRP_KEY  = 1;
-const int ac_IRP_KEY  = 1;
-const int hi_IRP_KEY  = 1;
+const uint br_IRP_KEY  = 1;
+const uint te_IRP_KEY  = 1;
+const uint ac_IRP_KEY  = 1;
+const uint hi_IRP_KEY  = 1;
 
 // key estimations for each partition of the tpcb tables
-const int br_KEY_EST  = 100;
-const int te_KEY_EST  = 100;
-const int ac_KEY_EST  = 100;
-const int hi_KEY_EST  = 100;
+const uint br_KEY_EST  = 100;
+const uint te_KEY_EST  = 100;
+const uint ac_KEY_EST  = 100;
+const uint hi_KEY_EST  = 100;
 
 
 
@@ -97,38 +97,25 @@ int DoraTPCBEnv::start()
     // 3. Resets each table
 
     conf(); // re-configure
-
-    // Call the pre-start procedure of the dora environment
-    DoraEnv::_start(this);
-
     processorid_t icpu(_starting_cpu);
 
     TRACE( TRACE_STATISTICS, "Creating tables. SF=(%.1f) - DORA_SF=(%.1f)...\n", 
            _scaling_factor, _sf);    
 
-
     // BRANCH
     GENERATE_DORA_PARTS(br,branch);
-
 
     // TELLER
     GENERATE_DORA_PARTS(te,teller);
 
-
     // ACCOUNT
     GENERATE_DORA_PARTS(ac,account);
-
 
     // HISTORY
     GENERATE_DORA_PARTS(hi,history);
 
-
-    TRACE( TRACE_DEBUG, "Starting tables...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->reset();
-    }
-
-    set_dbc(DBC_ACTIVE);
+    // Call the post-start procedure of the dora environment
+    DoraEnv::_post_start(this);
     return (0);
 }
 
@@ -144,20 +131,9 @@ int DoraTPCBEnv::start()
 
 int DoraTPCBEnv::stop()
 {
-    TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->stop();
-    }
-    _irptp_vec.clear();
-
-    // Call the meta-stop procedure of the dora environment
-    DoraEnv::_stop();
-
-    set_dbc(DBC_STOPPED);
-    return (0);
+    // Call the post-stop procedure of the dora environment
+    return (DoraEnv::_post_stop(this));
 }
-
-
 
 
 /****************************************************************** 
@@ -246,11 +222,7 @@ int DoraTPCBEnv::conf()
 
 int DoraTPCBEnv::newrun()
 {
-    TRACE( TRACE_DEBUG, "Preparing for new run...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->prepareNewRun();
-    }
-    return (0);
+    return (DoraEnv::_newrun(this));
 }
 
 
@@ -264,12 +236,7 @@ int DoraTPCBEnv::newrun()
 
 int DoraTPCBEnv::dump()
 {
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0; i<sz; i++) {
-        _irptp_vec[i]->dump();
-    }
-    return (0);
+    return (DoraEnv::_dump(this));
 }
 
 
@@ -283,15 +250,8 @@ int DoraTPCBEnv::dump()
 
 int DoraTPCBEnv::info() const
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
-        _irptp_vec[i]->info();
-    }
-    return (0);
+    return (DoraEnv::_info(this));
 }
-
 
 
 /******************************************************************** 
@@ -304,23 +264,14 @@ int DoraTPCBEnv::info() const
 
 int DoraTPCBEnv::statistics() 
 {
-    // DORA STATS
-    TRACE( TRACE_STATISTICS, "----- DORA -----\n");
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
-        _irptp_vec[i]->statistics();
-    }
+    DoraEnv::_statistics(this);
     return (0);
 
     // TPCB STATS
     TRACE( TRACE_STATISTICS, "----- TPCB  -----\n");
     ShoreTPCBEnv::statistics();
-
     return (0);
 }
-
-
 
 
 

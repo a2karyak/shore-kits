@@ -44,7 +44,7 @@ using namespace tpcc;
 ENTER_NAMESPACE(dora);
 
 
-typedef range_partition_impl<int>   irpImpl; 
+typedef range_partition_i<int>   irpImpl; 
 
 
 /******** Exported functions  ********/
@@ -145,19 +145,19 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
         
         // 5b. Generate the actions
         r_wh_nord_action* r_wh_nord = new_r_wh_nord_action(pxct,atid,midrvp,anoitin);
-        irpImpl* my_wh_part = whs()->myPart(whid-1);
+        irpImpl* my_wh_part = decide_part(whs(),whid-1);
 
         r_cust_nord_action* r_cust_nord = new_r_cust_nord_action(pxct,atid,midrvp,anoitin);
-        irpImpl* my_cust_part = cus()->myPart(whid-1);
+        irpImpl* my_cust_part = decide_part(cus(),whid-1);
 
         upd_dist_nord_action* upd_dist_nord = new_upd_dist_nord_action(pxct,atid,midrvp,anoitin);
-        irpImpl* my_dist_part = dis()->myPart(whid-1);
+        irpImpl* my_dist_part = decide_part(dis(),whid-1);
 
         r_item_nord_action* r_item_nord = new_r_item_nord_action(pxct,atid,midrvp,anoin);
-        irpImpl* my_item_part = ite()->myPart(whid-1);
+        irpImpl* my_item_part = decide_part(ite(),whid-1);
 
         upd_sto_nord_action* upd_sto_nord = new_upd_sto_nord_action(pxct,atid,midrvp,anoin);
-        irpImpl* my_sto_part = sto()->myPart(whid-1);
+        irpImpl* my_sto_part = decide_part(sto(),whid-1);
 
         // WH_PART_CS
         CRITICAL_SECTION(wh_part_cs, my_wh_part->_enqueue_lock);
@@ -263,9 +263,9 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
         int wh = apin._home_wh_id-1;
 
         // first, figure out to which partitions to enqueue
-        irpImpl* my_wh_part   = whs()->myPart(wh);
-        irpImpl* my_dist_part = dis()->myPart(wh);
-        irpImpl* my_cust_part = cus()->myPart(wh);
+        irpImpl* my_wh_part   = decide_part(whs(),wh);
+        irpImpl* my_dist_part = decide_part(dis(),wh);
+        irpImpl* my_cust_part = decide_part(cus(),wh);
 
         // then, start enqueueing
 
@@ -347,7 +347,7 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
         int wh = aordstin._wh_id-1;
 
         // first, figure out to which partitions to enqueue
-        irpImpl* my_cust_part = cus()->myPart(wh);
+        irpImpl* my_cust_part = decide_part(cus(),wh);
 
         // CUST_PART_CS
         CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
@@ -425,7 +425,7 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
             int wh = adelin._wh_id-1;
 
             // first, figure out to which partitions to enqueue
-            irpImpl* my_nord_part = nor()->myPart(wh);
+            irpImpl* my_nord_part = decide_part(nor(),wh);
 
             // then, start enqueueing
 
@@ -492,7 +492,7 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
         int wh = astoin._wh_id-1;
         
         // first, figure out to which partitions to enqueue
-        irpImpl* my_dist_part = dis()->myPart(wh);
+        irpImpl* my_dist_part = decide_part(dis(),wh);
 
         // then, start enqueueing
 
@@ -557,7 +557,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_wh(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {        
-        irpImpl* mypartition = whs()->myPart(in._wh_id-1);
+        irpImpl* mypartition = decide_part(whs(),in._wh_id-1);
 
         // WH_PART_CS
         CRITICAL_SECTION(wh_part_cs, mypartition->_enqueue_lock);
@@ -608,7 +608,7 @@ w_rc_t DoraTPCCEnv::dora_mbench_cust(const int xct_id,
     // (it terms of the sequence actions are enqueued)
 
     {
-        irpImpl* mypartition = cus()->myPart(in._wh_id-1);
+        irpImpl* mypartition = decide_part(cus(),in._wh_id-1);
         
         // CUS_PART_CS
         CRITICAL_SECTION(cus_part_cs, mypartition->_enqueue_lock);

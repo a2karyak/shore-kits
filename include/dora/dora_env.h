@@ -41,7 +41,7 @@
 #include "util.h"
 #include "shore.h"
 
-#include "dora/range_part_table.h"
+#include "dora/range_table_i.h"
 
 #ifdef CFG_FLUSHER
 #include "dora/dflusher.h"
@@ -57,7 +57,12 @@ ENTER_NAMESPACE(dora);
  * @class: dora_env
  *
  * @brief: Generic container class for all the data partitions for
- *         DORA databases
+ *         DORA databases. 
+ *
+ * @note:  All the DORA databases so far use range partitioning over a 
+ *         single integer (the SF number) as the identifier. This version 
+ *         of DoraEnv is customized for this. That is, the partitioning 
+ *         is only range, and DataType = int.
  *
  ********************************************************************/
 
@@ -65,15 +70,15 @@ class DoraEnv
 {
 public:
 
-    typedef range_partition_impl<int>   irpImpl; 
-    typedef range_part_table_impl<int>  irpTableImpl;
+    typedef range_partition_i<int>      irpImpl; 
+    typedef range_table_i<int>          irpTableImpl;
 
-    typedef irpImpl::RangeAction  irpAction;
+    typedef irpImpl::RangeAction        irpAction;
 
-    typedef std::vector<irpTableImpl*>       irpTablePtrVector;
+    typedef std::vector<irpTableImpl*>  irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
 
-    typedef vector<base_action_t*> baseActionsList;
+    typedef vector<base_action_t*>      baseActionsList;
 
 protected:
 
@@ -101,7 +106,7 @@ public:
 
     //// Client API
     
-    // enqueues action, false on error
+    // Enqueues action, non zero on error
     inline int enqueue(irpAction* paction,
                        const bool bWake, 
                        irpTableImpl* ptable, 
@@ -111,6 +116,12 @@ public:
         assert (ptable);
         return (ptable->enqueue(paction, bWake, part_pos));
     }
+
+    // Return the partition responsible for the specific integer identifier
+    inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
+        cvec_t acv(&aid,sizeof(int));
+        return (atable->getPartByCVKey(acv));
+    }      
 
 
 #ifdef CFG_FLUSHER
@@ -123,12 +134,16 @@ public:
     //// Partition-related methods
 
     irpImpl* table_part(const uint table_pos, const uint part_pos);
-    int statistics();
+
 
 protected:
 
-    int _start(ShoreEnv* penv);
-    int _stop();
+    int _post_start(ShoreEnv* penv);
+    int _post_stop(ShoreEnv* penv);
+    int _newrun(ShoreEnv* penv);
+    int _dump(ShoreEnv* penv);
+    int _info(const ShoreEnv* penv) const;
+    int _statistics(ShoreEnv* penv);
 
     // algorithm for deciding the distribution of tables 
     processorid_t _next_cpu(const processorid_t& aprd,

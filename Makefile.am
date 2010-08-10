@@ -26,8 +26,6 @@ if SPARC_MACHINE
 # Readline includes
 READLINE_INCLUDE = $(READLINE_HOME)/include
 READLINE_LIBS = $(READLINE_HOME)/lib/sparcv9
-# READLINE_INCLUDE = /opt/csw/include
-# READLINE_LIBS = /opt/csw/lib/sparcv9
 
 PROCSTAT_INCLUDES = 
 PROCSTAT_LIBS = 
@@ -376,10 +374,14 @@ if USE_DORA
 
 SD=$(top_srcdir)/src/dora
 DO_BASE = \
+   $(SD)/dkey_ranges_map.cpp \
    $(SD)/base_action.cpp \
    $(SD)/rvp.cpp \
    $(SD)/logical_lock.cpp \
+   $(SD)/base_partition.cpp \
    $(SD)/partition.cpp \
+   $(SD)/part_table.cpp \
+   $(SD)/range_part_table.cpp \
    $(SD)/dora_env.cpp
 
 if USE_FLUSHER

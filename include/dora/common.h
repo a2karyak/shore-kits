@@ -43,7 +43,6 @@
 ENTER_NAMESPACE(dora);
 
 
-
 using std::vector;
 using std::pair;
 
@@ -53,16 +52,16 @@ using std::pair;
 
 // The minimum number of keys the need to be touched in order the corresponding
 // lock manager to clear the entries in the map before each new run
-const int D_MIN_KEYS_TOUCHED     = 10000;     
+const uint D_MIN_KEYS_TOUCHED     = 10000;     
 
 
-const int DF_CPU_RANGE           = 8;         // cpu range for each table
-const int DF_CPU_STARTING        = 2;         // starting cpu
-const int DF_CPU_STEP_TABLES     = 16;        // next-cpu among different tables
-const int DF_CPU_STEP_PARTITIONS = 2;         // next-cpu among partitions of the same table
+const uint DF_CPU_RANGE           = 8;         // cpu range for each table
+const uint DF_CPU_STARTING        = 2;         // starting cpu
+const uint DF_CPU_STEP_TABLES     = 16;        // next-cpu among different tables
+const uint DF_CPU_STEP_PARTITIONS = 2;         // next-cpu among partitions of the same table
 
-const int DF_NUM_OF_PARTITIONS_PER_TABLE = 1; // number of partitions per table
-const int DF_NUM_OF_STANDBY_THRS         = 0; // TODO: (ip) assume main-memory 
+const uint DF_NUM_OF_PARTITIONS_PER_TABLE = 1; // number of partitions per table
+const uint DF_NUM_OF_STANDBY_THRS         = 0; // IP: assuming main-memory 
 
 
 
@@ -204,19 +203,21 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 #define DECLARE_DORA_PARTS(abbrv)                                       \
     guard<irpTableImpl> _##abbrv##_irpt;                                \
-    int _sf_per_part_##abbrv;                                           \
+    uint _sf_per_part_##abbrv;                                          \
     inline irpTableImpl* abbrv() { return (_##abbrv##_irpt.get()); }
 
 
 #define GENERATE_DORA_PARTS(abbrv,tablename)                            \
-    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_IRP_KEY, abbrv##_KEY_EST, _sf_per_part_##abbrv, _sf); \
+    { int z=0; cvec_t mink(&z,sizeof(int)); cvec_t maxk(&_sf,sizeof(int)); \
+    uint pnum = _sf/_sf_per_part_##abbrv;                               \
+    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_KEY_EST, mink, maxk, pnum); \
     if (!_##abbrv##_irpt) {                                             \
         TRACE( TRACE_ALWAYS, "Problem in creating irp-table\n");        \
-        assert (0);                                                     \
-        return (de_GEN_TABLE); }                                        \
+        assert (0); return (de_GEN_TABLE); }                            \
     _irptp_vec.push_back(_##abbrv##_irpt.get());                        \
-    icpu = _next_cpu(icpu, _##abbrv##_irpt, _cpu_table_step)
+    icpu = _next_cpu(icpu, _##abbrv##_irpt, _cpu_table_step);}
 
+//    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_IRP_KEY, abbrv##_KEY_EST, mink, maxk, pnum);
 
 
 

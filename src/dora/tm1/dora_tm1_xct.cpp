@@ -38,16 +38,11 @@
 
 using namespace shore;
 using namespace tm1;
-
 using namespace std;
 
 ENTER_NAMESPACE(dora);
 
-
-typedef range_partition_impl<int>   irpImpl; 
-
-
-/******** Exported functions  ********/
+typedef range_partition_i<int>   irpImpl; 
 
 
 /********

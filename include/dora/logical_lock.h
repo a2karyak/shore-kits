@@ -391,7 +391,7 @@ public:
     }
 
     // return the number of keys
-    int keystouched() const { return (_ll_map->size()); }
+    uint keystouched() const { return (_ll_map->size()); }
 
     // returns (true) if all locks are clean
     bool is_clean() {

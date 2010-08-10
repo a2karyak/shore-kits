@@ -39,7 +39,7 @@ using namespace tpcb;
 ENTER_NAMESPACE(dora);
 
 
-typedef range_partition_impl<int>   irpImpl; 
+typedef range_partition_i<int>   irpImpl; 
 
 
 /******** Exported functions  ********/

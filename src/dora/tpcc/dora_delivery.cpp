@@ -80,13 +80,12 @@ w_rc_t mid1_del_rvp::run()
     upd_oline_del_action* del_upd_oline = _ptpccenv->new_upd_oline_del_action(_xct,_tid,rvp2,_din);
     del_upd_oline->postset(_d_id,_o_id);
 
-
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     {
         int wh = _din._wh_id-1;
-        irpImpl* my_ord_part = _ptpccenv->ord()->myPart(wh);
-        irpImpl* my_oline_part = _ptpccenv->oli()->myPart(wh);
+        irpImpl* my_ord_part = _ptpccenv->decide_part(_ptpccenv->ord(),wh);
+        irpImpl* my_oline_part = _ptpccenv->decide_part(_ptpccenv->oli(),wh);
 
         TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid.get_lo(), _d_id);
         
@@ -133,11 +132,11 @@ w_rc_t mid2_del_rvp::run()
     upd_cust_del_action* del_upd_cust = _ptpccenv->new_upd_cust_del_action(_xct,_tid,_final_rvp,_din);
     del_upd_cust->postset(_d_id,_c_id,_amount);
 
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     {
         int wh = _din._wh_id-1;
-        irpImpl* my_cust_part = _ptpccenv->cus()->myPart(wh);
+        irpImpl* my_cust_part = _ptpccenv->decide_part(_ptpccenv->cus(),wh);
 
         TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid.get_lo(), _d_id);
         

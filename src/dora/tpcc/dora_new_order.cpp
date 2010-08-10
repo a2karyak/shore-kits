@@ -82,7 +82,7 @@ w_rc_t mid_nord_rvp::run()
 
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     // 2. Generate and enqueue the (Midway->Final) actions
     //
@@ -97,15 +97,15 @@ w_rc_t mid_nord_rvp::run()
 
         // 2b. Insert (ORD)
         ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,frvp,anoitin);
-        irpImpl* my_ord_part = _penv->ord()->myPart(whid-1);
+        irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),whid-1);
 
         // 2c. Insert (NORD)
         ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_xct,_tid,frvp,anoitin);
-        irpImpl* my_nord_part = _penv->nor()->myPart(whid-1);
+        irpImpl* my_nord_part = _penv->decide_part(_penv->nor(),whid-1);
 
         // 2d. Insert (OL) - used to be OL_CNT actions
         ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_xct,_tid,frvp,_in);
-        irpImpl* my_ol_part = _penv->oli()->myPart(whid-1);
+        irpImpl* my_ol_part = _penv->decide_part(_penv->oli(),whid-1);
 
 
         // ORD_PART_CS

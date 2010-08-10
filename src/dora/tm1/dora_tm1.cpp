@@ -42,16 +42,16 @@ ENTER_NAMESPACE(dora);
 
 
 // max field counts for (int) keys of tm1 tables
-const int sub_IRP_KEY = 1;
-const int ai_IRP_KEY  = 2;
-const int sf_IRP_KEY  = 2;
-const int cf_IRP_KEY  = 3;
+const uint sub_IRP_KEY = 1;
+const uint ai_IRP_KEY  = 2;
+const uint sf_IRP_KEY  = 2;
+const uint cf_IRP_KEY  = 3;
 
 // key estimations for each partition of the tm1 tables
-const int sub_KEY_EST = 1000;
-const int ai_KEY_EST  = 2500;
-const int sf_KEY_EST  = 2500;
-const int cf_KEY_EST  = 3750;
+const uint sub_KEY_EST = 1000;
+const uint ai_KEY_EST  = 2500;
+const uint sf_KEY_EST  = 2500;
+const uint cf_KEY_EST  = 3750;
 
 
 
@@ -98,41 +98,27 @@ int DoraTM1Env::start()
     // 5. Start logger
 
     conf(); // re-configure
-
-    // Call the pre-start procedure of the dora environment
-    DoraEnv::_start(this);
-
     processorid_t icpu(_starting_cpu);
 
     TRACE( TRACE_STATISTICS, "Creating tables. SF=(%.1f) - DORA_SF=(%.1f)...\n", 
            _scaling_factor, _sf);    
 
-
     // SUBSCRIBER
     GENERATE_DORA_PARTS(sub,sub);
-
 
     // ACCESS INFO
     GENERATE_DORA_PARTS(ai,ai);
 
-
     // SPECIAL FACILITY
     GENERATE_DORA_PARTS(sf,sf);
-
 
     // CALL FORWARDING
     GENERATE_DORA_PARTS(cf,cf);
 
-
-    TRACE( TRACE_DEBUG, "Starting tables...\n");
-    for (uint_t i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->reset();
-    }
-
-    set_dbc(DBC_ACTIVE);
+    // Call the post-start procedure of the dora environment
+    DoraEnv::_post_start(this);
     return (0);
 }
-
 
 
 /****************************************************************** 
@@ -145,20 +131,9 @@ int DoraTM1Env::start()
 
 int DoraTM1Env::stop()
 {
-    TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->stop();
-    }
-    _irptp_vec.clear();
-
-    // Call the meta-stop procedure of the dora environment
-    DoraEnv::_stop();
-
-    set_dbc(DBC_STOPPED);
-    return (0);
+    // Call the post-stop procedure of the dora environment
+    return (DoraEnv::_post_stop(this));
 }
-
-
 
 
 /****************************************************************** 
@@ -177,7 +152,6 @@ int DoraTM1Env::resume()
 }
 
 
-
 /****************************************************************** 
  *
  * @fn:    pause()
@@ -192,7 +166,6 @@ int DoraTM1Env::pause()
     set_dbc(DBC_PAUSED);
     return (0);
 }
-
 
 
 /****************************************************************** 
@@ -234,9 +207,6 @@ int DoraTM1Env::conf()
 }
 
 
-
-
-
 /****************************************************************** 
  *
  * @fn:    newrun()
@@ -247,13 +217,8 @@ int DoraTM1Env::conf()
 
 int DoraTM1Env::newrun()
 {
-    TRACE( TRACE_DEBUG, "Preparing for new run...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->prepareNewRun();
-    }
-    return (0);
+    return (DoraEnv::_newrun(this));
 }
-
 
 
 /****************************************************************** 
@@ -266,12 +231,7 @@ int DoraTM1Env::newrun()
 
 int DoraTM1Env::dump()
 {
-    uint sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (uint i=0; i<sz; i++) {
-        _irptp_vec[i]->dump();
-    }
-    return (0);
+    return (DoraEnv::_dump(this));
 }
 
 
@@ -285,15 +245,8 @@ int DoraTM1Env::dump()
 
 int DoraTM1Env::info() const
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
-        _irptp_vec[i]->info();
-    }
-    return (0);
+    return (DoraEnv::_info(this));
 }
-
 
 
 /******************************************************************** 
@@ -306,25 +259,15 @@ int DoraTM1Env::info() const
 
 int DoraTM1Env::statistics() 
 {
-    // DORA STATS
-    TRACE( TRACE_STATISTICS, "----- DORA -----\n");
-    uint sz=_irptp_vec.size();
-    TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
-    for (uint i=0;i<sz;++i) {
-        _irptp_vec[i]->statistics();
-    }
-    DoraEnv::statistics();
+    DoraEnv::_statistics(this);
     return (0);
 
     // TM1 STATS
     // disabled
     TRACE( TRACE_STATISTICS, "----- TM1  -----\n");
     ShoreTM1Env::statistics();
-
     return (0);
 }
-
-
 
 
 

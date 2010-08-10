@@ -80,14 +80,14 @@ w_rc_t mid1_ordst_rvp::run()
     r_ord_ordst_action* r_ord = _penv->new_r_ord_ordst_action(_xct,_tid,mid2_rvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
 
     {        
         int wh = _in._wh_id - 1;
-        irpImpl* my_ord_part = _penv->ord()->myPart(wh);
+        irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),wh);
 
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
@@ -126,14 +126,14 @@ w_rc_t mid2_ordst_rvp::run()
     r_ol_ordst_action* r_ol = _penv->new_r_ol_ordst_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
 
     {        
         int wh = _in._wh_id - 1;
-        irpImpl* my_oli_part = _penv->oli()->myPart(wh);
+        irpImpl* my_oli_part = _penv->decide_part(_penv->oli(),wh);
 
         // OLI_PART_CS
         CRITICAL_SECTION(oli_part_cs, my_oli_part->_enqueue_lock);
