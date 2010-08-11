@@ -80,11 +80,11 @@ key_ranges_map::~key_ranges_map()
 
 void key_ranges_map::makeEqualPartitions()
 {
+    _rwlock.acquire_write();
     int minKey = atoi(_minKey);
     int maxKey = atoi(_maxKey);
     int range = (maxKey - minKey) / _numPartitions;
     lpid_t root;
-    _rwlock.acquire_write();
     _keyRangesMap.clear();
     for (uint i = 0, lowerKey = minKey; i < _numPartitions; i++, lowerKey = lowerKey + range) {
 	char* key = (char*) malloc(sizeof(int)*8+1);
