@@ -111,28 +111,28 @@ uint key_ranges_map::makeEqualPartitions(const Key& minKey, const Key& maxKey,
 
     uint partsCreated = 0; // In case it cannot divide to numParts partitions
 
-    // Tread the cvec_t's as integers
-    double dmin = (double)(*(int*)_minKey);
-    double dmax = (double)(*(int*)_maxKey);
+    // Treat the cvec_t's as integers
+    int dmin = *(int*)_minKey;
+    int dmax = *(int*)_maxKey;
 
     // TODO: This may assert if min/max keys not of equal lenght. If minKey longer
     //       then the corresponding int value will be larger than the maxKey. It
     //       should do some normalization (for example, append zeroes to the max).
     assert (!(dmin>dmax)); 
 
-    double range = (dmax-dmin)/(double)numParts;
+    int range = (dmax-dmin)/numParts;
     lpid_t subtreeroot;
 
     _keyRangesMap.clear();
-    for (double lowerKey=dmin; lowerKey<=dmax; lowerKey+=range, ++partsCreated) {
+    for (int lowerKey=dmin; (lowerKey<dmax) || ((lowerKey==dmax)&&(partsCreated==0)); lowerKey+=range, ++partsCreated) {
 	char* key = (char*) malloc(keysz+1);
         memset(key,0,keysz+1); 
-	snprintf(key, keysz, "%f", lowerKey);
+	snprintf(key, keysz, "%d", lowerKey);
 
         // TODO: call shore to create sub-tree and use the return lpid_t
 	subtreeroot = lpid_t();
        
-_keyRangesMap[key] = subtreeroot;
+        _keyRangesMap[key] = subtreeroot;
     }
     _rwlock.release_write();
     assert (partsCreated != 0); // Should have created at least one partition
