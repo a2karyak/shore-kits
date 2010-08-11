@@ -42,7 +42,6 @@
 
 using namespace shore;
 
-
 ENTER_NAMESPACE(dora);
 
 
@@ -78,17 +77,6 @@ public:
     ~range_table_t();
 
     virtual w_rc_t create_one_part(const uint idx, const cvec_t& down, const cvec_t& up);
-    
-    // Return a pointer to the partition responsible for a specific key
-    // This is the main access method
-    inline base_partition_t* getPartByKey(const cvec_t& key) {
-        uint idx=0;
-        w_rc_t r = _prMap->getPartitionByKey(key,idx);
-        if (r.is_error()) {
-            return (NULL);
-        }
-        return (PartTable::_ppvec[idx]);
-    }
 
     // Wrapper of the getPartitionByKey. Returns the idx of the partition
     // in the array.
@@ -96,11 +84,13 @@ public:
         return (_prMap->getPartitionByKey(key,idx));
     }
 
+    // Return the min/max values
+    w_rc_t getMin(cvec_t& acv) const;
+    w_rc_t getMax(cvec_t& acv) const;
+
 protected:
 
-    virtual base_partition_t* _create_one_part(const uint idx, 
-                                               const cvec_t& down, 
-                                               const cvec_t& up)=0;
+    virtual w_rc_t _create_one_part(const uint idx, const cvec_t& down, const cvec_t& up)=0;
 
 }; // EOF: range_table_t
 

@@ -56,9 +56,16 @@ class range_table_i : public range_table_t
 {
 public:
 
-    typedef key_wrapper_t<DataType>     Key;
+    typedef key_wrapper_t<DataType>     DKey;
     typedef action_t<DataType>          Action;
     typedef range_partition_i<DataType> rpImpl;
+
+    typedef vector< range_partition_i<DataType>* >           rpImplPtrVector;
+
+protected:
+   
+    // The vector of the partitions
+    rpImplPtrVector _pvec;
 
 public:
 
@@ -70,14 +77,20 @@ public:
                   const cvec_t& maxKey,
                   const uint pnum)
         : range_table_t(env,ptable,aprs,acpurange,keyEstimation,minKey,maxKey,pnum)
-    { }
+    { 
+        // Initialize the vector
+        _pvec.reserve(pnum);
+        for (uint i=0; i<pnum; i++) {
+            _pvec[i] = NULL;
+        }
+    }
 
     ~range_table_i() { }
 
     // Return a pointer to the partition implementation responsible for a 
     // specific DORA key.
     // This is the function that does the translation of a DORA key to a cvec_t
-    inline rpImpl* getPartByDKey(const Key& key) {
+    inline rpImpl* getPartByDKey(const DKey& key) {
         return (_getPartByKey(key.toCVec()));
     }
 
@@ -89,7 +102,7 @@ public:
 
     // Return a pointer to the partition based on the partition index
     inline rpImpl* getPartByIdx(const uint idx) {
-        return ((rpImpl*)(PartTable::_ppvec[idx]));
+        return (_pvec[idx]);
     }
 
     // Enqueues action, false on error
@@ -100,10 +113,7 @@ public:
 
 protected:
 
-    base_partition_t* _create_one_part(const uint idx, 
-                                       const cvec_t& down, 
-                                       const cvec_t& up);
-
+    w_rc_t _create_one_part(const uint idx, const cvec_t& down, const cvec_t& up);
 
     // Return a pointer to the partition responsible for a specific key    
     inline rpImpl* _getPartByKey(const cvec_t& key) {
@@ -122,21 +132,33 @@ protected:
  *
  * @fn:    _create_one_part()
  *
- * @brief: Creates one partition (template-based)
+ * @brief: Creates one (template-based) partition and adds it to the
+ *         vector
+ *
+ * @note:  Assumes that a mutex is already held by the caller 
  *
  ******************************************************************/
 
 template <class DataType>
-base_partition_t* range_table_i<DataType>::_create_one_part(const uint idx,
-                                                            const cvec_t& down, 
-                                                            const cvec_t& up)
+w_rc_t range_table_i<DataType>::_create_one_part(const uint idx,
+                                                 const cvec_t& down,
+                                                 const cvec_t& up)
 {   
-    return (new rpImpl(PartTable::_env, PartTable::_table,
-                       PartTable::_key_estimation, 
-                       idx, down, up,
-                       PartTable::_next_prs_id));
-}
+    // Create the partition
+    rpImpl* prp = new rpImpl(PartTable::_env, PartTable::_table,
+                             PartTable::_key_estimation, 
+                             idx, down, up,
+                             PartTable::_next_prs_id);
+    if (!prp) {
+        TRACE( TRACE_ALWAYS, "Problem in creating partition (%d)\n", idx);
+        return (RC(de_GEN_PARTITION));
+    }
 
+    // Update the vectors
+    PartTable::_bppvec.push_back(prp);
+    _pvec[idx] = prp;
+    return (RCOK);
+}
 
 EXIT_NAMESPACE(dora);
 

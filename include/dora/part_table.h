@@ -64,31 +64,27 @@ class part_table_t
 {
 public:
 
-    typedef vector<base_partition_t*> PartitionPtrVector;
-    typedef base_partition_t          Partition;
-
+    typedef vector<base_partition_t*> BasePartitionPtrVector;
+    
 protected:
 
-    ShoreEnv*          _env;    
-    table_desc_t*      _table;
+    ShoreEnv*                _env;    
+    table_desc_t*            _table;
 
-    // the vector of partitions
-    PartitionPtrVector _ppvec;
-    uint               _pcnt;
-    tatas_lock         _pcgf_lock;
+    tatas_lock               _lock;
+
+    uint                     _pcnt;             // Partition count
+
+    // Vector of pointer to base partitions
+    BasePartitionPtrVector   _bppvec;
 
     // processor binding
     processorid_t      _start_prs_id;
     processorid_t      _next_prs_id;
     uint               _prs_range;
-    tatas_lock         _next_prs_lock;
 
     // per partition key estimation
     uint               _key_estimation;
-
-    // boundaries of possible key value, used for the enqueue function
-    cvec_t _min;
-    cvec_t _max;
    
 public:
 
@@ -103,21 +99,24 @@ public:
     virtual ~part_table_t();
 
 
-    // Access methods //
-    PartitionPtrVector* get_vector();
-    Partition* get_part(const uint pos);
-
     //// Control table ////
 
-    // stops all partitions
-    w_rc_t stop();
+    // Stops all partitions
+    virtual w_rc_t stop();
 
-    // prepares all partitions for a new run
-    w_rc_t prepareNewRun();
+    // Prepares all partitions for a new run
+    virtual w_rc_t prepareNewRun();
 
     // Return the appropriate partition. This decision is based on the type
     // of the partitioning scheme used
-    virtual base_partition_t* getPartByKey(const cvec_t& key)=0;
+    virtual w_rc_t getPartIdxByKey(const cvec_t& key, uint& idx)=0;
+
+    // Return the min/max values
+    // Those functions are abstract because the min/max values are stored in the
+    // data structure the sub-class uses for the partitioning. For example, the
+    // range partitioning table stores this information in the dkey_range_map.
+    virtual w_rc_t getMin(cvec_t& acv) const=0;
+    virtual w_rc_t getMax(cvec_t& acv) const=0;
 
 
     //// CPU placement ////

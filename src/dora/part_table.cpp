@@ -59,13 +59,9 @@ part_table_t::part_table_t(ShoreEnv* env, table_desc_t* ptable,
 {
     assert (_env);
     assert (_table);        
-    assert (aprs<=_env->get_max_cpu_count());
-    assert (acpurange<=_env->get_active_cpu_count());
 
     // Check the key boundaries
     assert (minKey <= maxKey);
-    _min.set(minKey);
-    _max.set(maxKey);
 }
 
 
@@ -73,23 +69,6 @@ part_table_t::~part_table_t()
 { 
 }
 
-
-/****************************************************************** 
- *
- * Access methods
- *
- ******************************************************************/
-
-vector<base_partition_t*>* part_table_t::get_vector() 
-{ 
-    return (&_ppvec); 
-}
-
-base_partition_t* part_table_t::get_part(const uint pos) 
-{
-    assert (pos<_ppvec.size());
-    return (_ppvec[pos]);
-}
 
 
 /****************************************************************** 
@@ -101,11 +80,12 @@ base_partition_t* part_table_t::get_part(const uint pos)
 // Stop all partitions
 w_rc_t part_table_t::stop() 
 {
-    for (uint i=0; i<_ppvec.size(); i++) {
-        _ppvec[i]->stop();
-        delete (_ppvec[i]);
+    CRITICAL_SECTION(ptcs, _lock);
+    for (uint i=0; i<_bppvec.size(); i++) {
+        _bppvec[i]->stop();
+        delete (_bppvec[i]);
     }
-    _ppvec.clear();
+    _bppvec.clear();
     return (RCOK);
 }
 
@@ -113,20 +93,12 @@ w_rc_t part_table_t::stop()
 // Prepare all partitions for a new run
 w_rc_t part_table_t::prepareNewRun() 
 {
-    for (uint i=0; i<_ppvec.size(); i++) {
-        _ppvec[i]->prepareNewRun();
+    CRITICAL_SECTION(ptcs, _lock);
+    for (uint i=0; i<_bppvec.size(); i++) {
+        _bppvec[i]->prepareNewRun();
     }
     return (RCOK);
 }
-
-
-// /////  Action-related methods
-
-// // enqueues action, false on error
-// inline int enqueue(Action* paction, const bool bWake, const int part) {
-//     assert (part<_pcnt);
-//     return (_ppvec[part]->enqueue(paction,bWake));
-// }
 
 
 /****************************************************************** 
@@ -141,16 +113,15 @@ w_rc_t part_table_t::prepareNewRun()
 
 w_rc_t part_table_t::reset()
 {
+    CRITICAL_SECTION(ptcs, _lock);
     TRACE( TRACE_DEBUG, "Reseting (%s)...\n", _table->name());
     _next_prs_id = _start_prs_id;
-    for (uint i=0; i<_ppvec.size(); i++) {
-        _ppvec[i]->reset(_next_prs_id,-1);
-        CRITICAL_SECTION(next_prs_cs, _next_prs_lock);
+    for (uint i=0; i<_bppvec.size(); i++) {
+        _bppvec[i]->reset(_next_prs_id,-1);
         _next_prs_id = next_cpu(_next_prs_id);
     }    
     return (RCOK);
 }
-
 
 
 /****************************************************************** 
@@ -166,10 +137,12 @@ w_rc_t part_table_t::reset()
 
 w_rc_t part_table_t::move(const processorid_t aprs, const uint arange) 
 {
-    // Update processor and range
-    _start_prs_id = aprs;
-    _prs_range = arange;
-
+    {
+        // Update starting processor and range
+        CRITICAL_SECTION(ptcs, _lock);
+        _start_prs_id = aprs;
+        _prs_range = arange;
+    }
     // Call reset so that the workers to move to the new range
     return (reset());
 }
@@ -222,12 +195,12 @@ void part_table_t::statistics() const
     worker_stats_t ws_gathered;
     uint stl_sz = 0;
 
-    for (uint i=0; i<_ppvec.size(); i++) {
+    for (uint i=0; i<_bppvec.size(); i++) {
         // gather worker statistics
-        _ppvec[i]->statistics(ws_gathered);
+        _bppvec[i]->statistics(ws_gathered);
 
         // gather dora-related structures statistics
-        _ppvec[i]->stlsize(stl_sz);
+        _bppvec[i]->stlsize(stl_sz);
     }
 
     if (ws_gathered._processed > MINIMUM_PROCESSED) {
@@ -252,11 +225,10 @@ void part_table_t::dump() const
 {
     TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
     TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
-    for (uint i=0; i<_ppvec.size(); i++) {
-        _ppvec[i]->dump();
+    for (uint i=0; i<_bppvec.size(); i++) {
+        _bppvec[i]->dump();
     }
 }        
-
 
 
 EXIT_NAMESPACE(dora);

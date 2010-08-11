@@ -59,7 +59,7 @@ range_table_t::range_table_t(ShoreEnv* env, table_desc_t* ptable,
     fprintf(stdout, "Creating (%d) (%s) parts\n", _pcnt, _table->name());
 
     // Create the key-range map   
-    _prMap = new dkey_ranges_map(PartTable::_min,PartTable::_max,pnum);
+    _prMap = new dkey_ranges_map(minKey,maxKey,pnum);
 
     // Setup partitions based on the boundaries created in the key-range map 
     typedef vector< pair<char*,char*> >           boundariesVector;
@@ -96,33 +96,53 @@ range_table_t::~range_table_t()
  *
  * @fn:    create_one_part()
  *
- * @brief: Creates one partition and adds it to the vector
+ * @brief: Creates one partition and adds it to the vectors
  *
  ******************************************************************/
 
 w_rc_t range_table_t::create_one_part(const uint idx, const cvec_t& down, const cvec_t& up)
 {   
-    CRITICAL_SECTION(conf_cs, PartTable::_pcgf_lock);
+    w_rc_t r = RCOK;
+    CRITICAL_SECTION(conf_cs, PartTable::_lock);
 
-    // Create a new partition object
-    base_partition_t* pbp = _create_one_part(idx,down,up);
+    // Create a new partition object with a specific index
+    r = _create_one_part(idx,down,up);
 
-    if (!pbp) {
+    if (r.is_error()) {
         TRACE( TRACE_ALWAYS, "Problem in creating partition (%d) for (%s)\n", 
                PartTable::_pcnt, PartTable::_table->name());
-        assert (0); // should not happen
         return (RC(de_GEN_PARTITION));
     }
-    assert (pbp);
-    PartTable::_ppvec.push_back(pbp);
 
     // Update next cpu
-    {
-        CRITICAL_SECTION(next_prs_cs, PartTable::_next_prs_lock);
-        PartTable::_next_prs_id = PartTable::next_cpu(PartTable::_next_prs_id);
-    }
+    PartTable::_next_prs_id = PartTable::next_cpu(PartTable::_next_prs_id);
 
     ++PartTable::_pcnt;
+    return (r);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    get{Min/Max}
+ *
+ * @brief: Return the minimum/maximum allowed cvec_t for the specific
+ *         table.
+ *
+ ******************************************************************/
+
+w_rc_t range_table_t::getMin(cvec_t& acv) const
+{
+    char* mk = _prMap->getMinKey();
+    acv.set(mk,strlen(mk));
+    return (RCOK);
+}
+
+w_rc_t range_table_t::getMax(cvec_t& acv) const
+{
+    char* mk = _prMap->getMaxKey();
+    acv.set(mk,strlen(mk));
     return (RCOK);
 }
 

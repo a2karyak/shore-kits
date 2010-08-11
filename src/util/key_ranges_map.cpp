@@ -408,6 +408,23 @@ void key_ranges_map::setMaxKey(const Key& maxKey)
     _rwlock.release_write();
 }
 
+
+uint key_ranges_map::getNumPartitions() const
+{
+    return (_numPartitions);
+}
+
+char* key_ranges_map::getMinKey() const
+{
+    return (_minKey);
+}
+
+char* key_ranges_map::getMaxKey() const
+{
+    return (_maxKey);
+}
+
+
 #if 0
 int main(void)
 {

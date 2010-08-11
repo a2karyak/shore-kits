@@ -164,6 +164,11 @@ public:
     void setMinKey(const Key& minKey);
     void setMaxKey(const Key& maxKey);
 
+    // getters
+    uint getNumPartitions() const;
+    char* getMinKey() const;
+    char* getMaxKey() const;
+
     // for debugging
     void printPartitions(); 
     
