@@ -74,30 +74,26 @@ key_ranges_map::~key_ranges_map()
  *
  * @fn:    makeEqualPartitions()
  *
- * @brief: ?
+ * @brief: Makes equal length partitions from scratch
  *
  ******************************************************************/
 
 void key_ranges_map::makeEqualPartitions()
 {
-    // TODO: discuss/think about what to do here
-    assert (0);
-
-    /*
-      int range = (_maxKey - _minKey) / _numPartitions;
-      int currentLower = 0;
-      int currentUpper = _minKey;
-      _rwlock.acquire_write();
-      _keyRangesMap.clear();
-      for (int i = 0; i < _numPartitions; i++) {
-      currentLower = currentUpper;
-      currentUpper = currentLower + range;
-      _keyRangesMap[currentLower] = currentUpper;
-      }
-      _keyRangesMap[currentLower] = _maxKey + 1;
-      _rwlock.release_write();
-    */
-
+    int minKey = atoi(_minKey);
+    int maxKey = atoi(_maxKey);
+    int range = (maxKey - minKey) / _numPartitions;
+    lpid_t root;
+    _rwlock.acquire_write();
+    _keyRangesMap.clear();
+    for (uint i = 0, lowerKey = minKey; i < _numPartitions; i++, lowerKey = lowerKey + range) {
+	char* key = (char*) malloc(sizeof(int)*8+1);
+	sprintf(key, "%d", lowerKey);
+	root = lpid_t();
+	// TODO: call a function from shore to initialize lpid_t
+	_keyRangesMap[key] = root;
+    }
+    _rwlock.release_write();
 }
 
 

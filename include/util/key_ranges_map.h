@@ -121,7 +121,7 @@ public:
     key_ranges_map(const Key& minKey, const Key& maxKey, uint numPartitions);	
     ~key_ranges_map();
 
-    // TODO: Makes equal length partitions from scratch
+    // Makes equal length partitions from scratch
     void makeEqualPartitions();
 
     // Splits the partition where "key" belongs to two partitions. The start of 
