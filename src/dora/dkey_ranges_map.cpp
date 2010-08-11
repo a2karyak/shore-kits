@@ -42,7 +42,7 @@
 ENTER_NAMESPACE(dora);
 
 dkey_ranges_map::dkey_ranges_map(const Key& minKey, const Key& maxKey, 
-                                 uint numPartitions)
+                                 const uint numPartitions)
     : key_ranges_map(minKey,maxKey,numPartitions), _maxpnum(0)
 {
 }

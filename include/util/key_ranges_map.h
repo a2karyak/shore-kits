@@ -116,13 +116,22 @@ protected:
     virtual w_rc_t _deletePartitionByKey(char* keyS);
 
 public:
-  
-    // TODO: equally partitions the given key range ([minKey,maxKey]) depending on the given partition number
-    key_ranges_map(const Key& minKey, const Key& maxKey, uint numPartitions);	
+
+    //// Construction ////
+    // Calls one of the initialization functions
+
+    key_ranges_map(const Key& minKey, const Key& maxKey, const uint numParts);
     ~key_ranges_map();
 
+
+    ////  Initialization ////
+    // The default initialization creates numParts partitions of equal size
+
     // Makes equal length partitions from scratch
-    void makeEqualPartitions();
+    uint makeEqualPartitions(const Key& minKey, const Key& maxKey, const uint numParts);
+
+
+    ////  Map management ////
 
     // Splits the partition where "key" belongs to two partitions. The start of 
     // the second partition is the "key".
@@ -156,7 +165,7 @@ public:
     // Returns a vector with the key boundaries for all the partitions
     w_rc_t getBoundariesVec(vector< pair<char*,char*> >& keyBoundariesVec);
 
-    // setters
+    // Setters
     // TODO: decide what to do after you set these values, what seems reasonable to me
     // is change the partition structure as less as possible because later with dynamic load
     // balancing things should adjust properly
@@ -164,13 +173,20 @@ public:
     void setMinKey(const Key& minKey);
     void setMaxKey(const Key& maxKey);
 
-    // getters
+    // Getters
     uint getNumPartitions() const;
     char* getMinKey() const;
     char* getMaxKey() const;
 
     // for debugging
     void printPartitions(); 
+
+
+private:
+
+    // Helper functions
+    uint _distributeSpace(const char* A, const char* B, const uint sz, 
+                          const uint parts, char** subparts);
     
 }; // EOF: key_ranges_map
 

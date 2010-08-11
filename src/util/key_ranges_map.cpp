@@ -38,23 +38,31 @@
 
 #include "util/key_ranges_map.h"
 
-/** key_ranges_map interface */
 
-key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, uint numPartitions)
-    : _numPartitions(numPartitions) 
+/****************************************************************** 
+ *
+ * Construction/Destruction
+ *
+ * @brief: The constuctor calls the default initialization function
+ * @brief: The destructor needs to free all the malloc'ed keys
+ *
+ ******************************************************************/
+
+key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, const uint numParts)
 {
-    _minKey = (char*) malloc(minKey.size());
-    _maxKey = (char*) malloc(maxKey.size());
-    minKey.copy_to(_minKey);
-    maxKey.copy_to(_maxKey);
+    // TODO: call a function that makes sure that no such store exists 
 
-    makeEqualPartitions();
+    // TODO: create a store
+    
+    // Calls the default initialization. 
+    uint p = makeEqualPartitions(minKey,maxKey,numParts);
+    fprintf (stdout, "%d partitions created", p);
 }
 
 
 key_ranges_map::~key_ranges_map()
 {
-    // Delete the allocated keys
+    // Delete the allocated keys in the map
     keysIter iter;
     uint i=0;
     _rwlock.acquire_write();
@@ -62,9 +70,9 @@ key_ranges_map::~key_ranges_map()
         TRACE( TRACE_DEBUG, "Partition %d\tStart (%s)\n", i, iter->first);
         free (iter->first);
     }
-    // TODO: here make sure that these are not freed twice
-    // if you assesing _minKey/_maxKey to some value in the map then after the map is freed they are gone
-    //free (_minKey);
+
+    // Delete the boundary keys
+    free (_minKey);
     free (_maxKey);
     _rwlock.release_write();    
 }
@@ -72,29 +80,130 @@ key_ranges_map::~key_ranges_map()
 
 /****************************************************************** 
  *
- * @fn:    makeEqualPartitions()
+ * @fn:     makeEqualPartitions()
  *
- * @brief: Makes equal length partitions from scratch
+ * @brief:  Makes equal length partitions from scratch
+ *
+ * @return: The number of partitions that were actually created
  *
  ******************************************************************/
 
-void key_ranges_map::makeEqualPartitions()
+uint key_ranges_map::makeEqualPartitions(const Key& minKey, const Key& maxKey, 
+                                         const uint numParts)
 {
+    assert (minKey<=maxKey);
+
+    // TODO: make sure that the store does not have any entries (isClean())
+
+    // TODO: call _distributeSpace!
+
     _rwlock.acquire_write();
-    int minKey = atoi(_minKey);
-    int maxKey = atoi(_maxKey);
-    int range = (maxKey - minKey) / _numPartitions;
-    lpid_t root;
+
+    // Set min/max keys
+    uint minsz = minKey.size();
+    uint maxsz = maxKey.size();    
+    _minKey = (char*) malloc(minsz);
+    _maxKey = (char*) malloc(maxsz);    
+    minKey.copy_to(_minKey);
+    maxKey.copy_to(_maxKey);
+
+    uint keysz = max(minsz,maxsz); // Use that many chars for the keys entries
+
+    uint partsCreated = 0; // In case it cannot divide to numParts partitions
+
+    // Tread the cvec_t's as integers
+    double dmin = (double)(*(int*)_minKey);
+    double dmax = (double)(*(int*)_maxKey);
+
+    // TODO: This may assert if min/max keys not of equal lenght. If minKey longer
+    //       then the corresponding int value will be larger than the maxKey. It
+    //       should do some normalization (for example, append zeroes to the max).
+    assert (!(dmin>dmax)); 
+
+    double range = (dmax-dmin)/(double)numParts;
+    lpid_t subtreeroot;
+
     _keyRangesMap.clear();
-    for (uint i = 0, lowerKey = minKey; i < _numPartitions; i++, lowerKey = lowerKey + range) {
-	char* key = (char*) malloc(sizeof(int)*8+1);
-	sprintf(key, "%d", lowerKey);
-	root = lpid_t();
-	// TODO: call a function from shore to initialize lpid_t
-	_keyRangesMap[key] = root;
+    for (double lowerKey=dmin; lowerKey<=dmax; lowerKey+=range, ++partsCreated) {
+	char* key = (char*) malloc(keysz+1);
+        memset(key,0,keysz+1); 
+	snprintf(key, keysz, "%f", lowerKey);
+
+        // TODO: call shore to create sub-tree and use the return lpid_t
+	subtreeroot = lpid_t();
+       
+_keyRangesMap[key] = subtreeroot;
     }
     _rwlock.release_write();
+    assert (partsCreated != 0); // Should have created at least one partition
+    return (partsCreated);
 }
+
+
+
+/****************************************************************** 
+ *
+ * @fn:      _distributeSpace()
+ *
+ * @brief:   Helper function, which tries to evenly distribute the space between
+ *           two strings to a certain number of subspaces
+ *
+ * @param:   const char* A    - The beginning of the space
+ * @param:   const char* B    - The end of the space
+ * @param:   const uint sz    - The common size of the two strings
+ * @param:   const uint parts - The number of partitions which should be created
+ * @param:   char** subparts  - An array of strings with the boundaries of the
+ *                              distribution
+ * 
+ * @returns: The number of partitions actually created
+ *
+ ******************************************************************/
+
+uint key_ranges_map::_distributeSpace(const char* A, 
+                                      const char* B, 
+                                      const uint sz, 
+                                      const uint parts, 
+                                      char** subparts)
+{
+    return (0); // IP: TODO!
+    
+    // IP: The code below it won't compile but it should be close to.
+    //     This will be called only at the initialization so we don't
+    //     care about performance!
+
+    // uint pcreated = 0;
+
+    // assert (strncmp(A,B,sz)); // It should A<B
+    // subparts = (char**)malloc(parts*sizeof(char*));
+
+    // uint base=0;
+    // while ((A[base] == B[base]) && (base<sz)) {
+    //     // discard the common prefixes
+    //     base++; 
+    // }
+
+    // // find the [base+idx] space which can be divided evenly
+    // uint idx=0;
+    // uint ia=0;
+    // uint ib=0;
+    // uint range=0;
+    // do {
+    //     // Get an integer value for the substrings and check if they
+    //     // can be divided evenly
+    //     ia = atoi(substring(A,base, base+idx));
+    //     ib = atoi(substring(B,base,base+idx));
+    //     range = (ib-ia)/subparts;
+    // } while ((range==0) && ((base+idx)<sz));
+        
+    // // create the strings
+    // char* lower = strdup(A);
+    // while (strncmp(lower,B,sz) && (pcreated<parts)) {
+    //     subparts[pcreated++] = strdup(lower);
+    //     lower[base..base+idx] = lower[base..base+idx] + range;		
+    // }
+    // return (pcreated);
+}
+
 
 
 /****************************************************************** 

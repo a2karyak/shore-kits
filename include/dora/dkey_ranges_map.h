@@ -84,11 +84,12 @@ private:
 
     occ_rwlock _bimapLock;
 
+    // A watermark for assigning unique partition numbers
     volatile uint _maxpnum;
 
 public:
   
-    dkey_ranges_map(const Key& minKey, const Key& maxKey, uint numParts);
+    dkey_ranges_map(const Key& minKey, const Key& maxKey, const uint numParts);
     ~dkey_ranges_map();
 
     // Splits the partition where "key" belongs to two partitions. The start of 
