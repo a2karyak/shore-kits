@@ -45,6 +45,8 @@
 #include <vector>
 #include <utility>
 
+#include <math.h>
+
 #include "util.h"
 
 #include "sm_vas.h"
@@ -96,7 +98,7 @@ private:
     typedef map<char*, lpid_t>::iterator keysIter;
     typedef cvec_t Key;
 
-    // range_init_key -> range_end_key
+    // range_init_key -> root of the corresponding subtree
     map<char*, lpid_t, cmp_str_greater > _keyRangesMap;
     uint _numPartitions;
     char* _minKey;
@@ -155,7 +157,7 @@ public:
 
     // Returns the list of partitions that cover: 
     // [key1, key2], (key1, key2], [key1, key2), or (key1, key2) ranges
-    w_rc_t getPartitions(const Key& key1, bool key1Included, 
+    w_rc_t getPartitions(const Key& key1, bool key1Included,
                          const Key& key2, bool key2Included,                         
                          vector<lpid_t>& pidVec);
 
@@ -168,7 +170,7 @@ public:
     // Setters
     // TODO: decide what to do after you set these values, what seems reasonable to me
     // is change the partition structure as less as possible because later with dynamic load
-    // balancing things should adjust properly
+    // balancing things should adjust properly, also check the corner cases for min&max kes
     void setNumPartitions(uint numPartitions);
     void setMinKey(const Key& minKey);
     void setMaxKey(const Key& maxKey);
@@ -185,7 +187,7 @@ public:
 private:
 
     // Helper functions
-    uint _distributeSpace(const char* A, const char* B, const uint sz, 
+    uint _distributeSpace(const char* A, const char* B, const int sz, 
                           const uint parts, char** subparts);
     
 }; // EOF: key_ranges_map

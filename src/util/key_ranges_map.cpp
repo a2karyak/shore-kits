@@ -51,12 +51,13 @@
 key_ranges_map::key_ranges_map(const Key& minKey, const Key& maxKey, const uint numParts)
 {
     // TODO: call a function that makes sure that no such store exists 
+    // pinar: ?
 
     // TODO: create a store
     
     // Calls the default initialization. 
-    uint p = makeEqualPartitions(minKey,maxKey,numParts);
-    fprintf (stdout, "%d partitions created", p);
+    _numPartitions = makeEqualPartitions(minKey,maxKey,numParts);
+    fprintf (stdout, "%d partitions created", _numPartitions);
 }
 
 
@@ -94,8 +95,11 @@ uint key_ranges_map::makeEqualPartitions(const Key& minKey, const Key& maxKey,
     assert (minKey<=maxKey);
 
     // TODO: make sure that the store does not have any entries (isClean())
-
-    // TODO: call _distributeSpace!
+    // pinar: i thought this function can be called when we want to have equal partitions from
+    //        scratch without caring about already existing partitions. it will be like restart.
+    //        first delete all the partitions and recreate them.
+    //        otherwise, we can turn this into a private function that is called by the constructor
+    //        so the store will be clean.
 
     _rwlock.acquire_write();
 
@@ -107,34 +111,37 @@ uint key_ranges_map::makeEqualPartitions(const Key& minKey, const Key& maxKey,
     minKey.copy_to(_minKey);
     maxKey.copy_to(_maxKey);
 
-    uint keysz = max(minsz,maxsz); // Use that many chars for the keys entries
+    uint keysz = min(minsz,maxsz); // Use that many chars for the keys entries
 
     uint partsCreated = 0; // In case it cannot divide to numParts partitions
 
-    // Treat the cvec_t's as integers
-    int dmin = *(int*)_minKey;
-    int dmax = *(int*)_maxKey;
+    uint base=0;
+    while (_minKey[base] == _maxKey[base]) {
+         // discard the common prefixes
+         base++; 
+    }
 
-    // TODO: This may assert if min/max keys not of equal lenght. If minKey longer
-    //       then the corresponding int value will be larger than the maxKey. It
-    //       should do some normalization (for example, append zeroes to the max).
-    assert (!(dmin>dmax)); 
+    // To not to have integer overflow while computing the space between two strings
+    uint sz = (keysz - base < 4) ? (keysz - base) : 4;
+    char** subParts = (char**)malloc(numParts*sizeof(char*));
+    char* A = (char*) malloc(base+sz+1);
+    char* B = (char*) malloc(base+sz+1);
+    partsCreated = _distributeSpace(strncpy(A, _minKey, base+sz), strncpy(B, _maxKey, base+sz),
+				    sz, numParts, subParts);
+    free(A);
+    free(B);
 
-    int range = (dmax-dmin)/numParts;
+    // put the partitions to map
     lpid_t subtreeroot;
-
     _keyRangesMap.clear();
-    for (int lowerKey=dmin; (lowerKey<dmax) || ((lowerKey==dmax)&&(partsCreated==0)); lowerKey+=range, ++partsCreated) {
-	char* key = (char*) malloc(keysz+1);
-        memset(key,0,keysz+1); 
-	snprintf(key, keysz, "%d", lowerKey);
-
+    for(uint i = 0; i < partsCreated; i++) { 
         // TODO: call shore to create sub-tree and use the return lpid_t
 	subtreeroot = lpid_t();
-       
-        _keyRangesMap[key] = subtreeroot;
+        _keyRangesMap[subParts[i]] = subtreeroot;
     }
+
     _rwlock.release_write();
+
     assert (partsCreated != 0); // Should have created at least one partition
     return (partsCreated);
 }
@@ -150,9 +157,9 @@ uint key_ranges_map::makeEqualPartitions(const Key& minKey, const Key& maxKey,
  *
  * @param:   const char* A    - The beginning of the space
  * @param:   const char* B    - The end of the space
- * @param:   const uint sz    - The common size of the two strings
+ * @param:   const int sz    - The common size of the two strings
  * @param:   const uint parts - The number of partitions which should be created
- * @param:   char** subparts  - An array of strings with the boundaries of the
+ * @param:   char** subParts  - An array of strings with the boundaries of the
  *                              distribution
  * 
  * @returns: The number of partitions actually created
@@ -161,47 +168,70 @@ uint key_ranges_map::makeEqualPartitions(const Key& minKey, const Key& maxKey,
 
 uint key_ranges_map::_distributeSpace(const char* A, 
                                       const char* B, 
-                                      const uint sz, 
-                                      const uint parts, 
-                                      char** subparts)
+                                      const int sz, 
+                                      const uint partitions, 
+                                      char** subParts)
 {
-    return (0); // IP: TODO!
+    assert (strcmp(A,B)); // It should A<B
+
+    uint numASCII = 95;
+    uint startASCII = 31;
+    int totalSize = strlen(A);
+
+    // compute the space between two strings
+    uint space = 0;
+    for(int i=totalSize-1, j=0; i>totalSize-sz-1; i--,j++)
+	space = space + ((int) B[i] - (int) A[i]) * (int) pow(numASCII, j);
+
+    // find the approximate range each partitions should keep
+    uint range = space / partitions;
+   
+    // compute the partitions
+    char* currentKey = (char*) malloc(totalSize+1);
+    char* nextKey = (char*) malloc(totalSize+1);
+    strcpy(nextKey, A);
     
-    // IP: The code below it won't compile but it should be close to.
-    //     This will be called only at the initialization so we don't
-    //     care about performance!
+    uint currentDest;
+    int currentCharPos;
+    uint div;
+    uint rmd;
+    uint pcreated = 0;
+    
+    // first partition
+    subParts[pcreated] = (char*) malloc(totalSize+1);
+    strcpy(subParts[pcreated], nextKey);
 
-    // uint pcreated = 0;
+    // other partitions
+    for(pcreated = 1; pcreated < partitions; pcreated++) {
+	strcpy(currentKey, nextKey);
+	currentCharPos=totalSize-1;
+	div = range;
 
-    // assert (strncmp(A,B,sz)); // It should A<B
-    // subparts = (char**)malloc(parts*sizeof(char*));
+	do {
+	    currentDest = (int) currentKey[currentCharPos] - startASCII + div;
+	    div = currentDest / numASCII;
+	    rmd = currentDest - div*numASCII;
+	    nextKey[currentCharPos] = (char) rmd + startASCII;
+	    currentCharPos--;
+	} while(div > numASCII);
+   
+	if(div != 0) {
+	    nextKey[currentCharPos] = (char) ((int) currentKey[currentCharPos] + div);
+	    currentCharPos--;
+	}
+      
+	for(; currentCharPos >= totalSize-sz-1; currentCharPos--) {
+	    nextKey[currentCharPos] = currentKey[currentCharPos];
+	}
 
-    // uint base=0;
-    // while ((A[base] == B[base]) && (base<sz)) {
-    //     // discard the common prefixes
-    //     base++; 
-    // }
+	subParts[pcreated] = (char*) malloc(totalSize+1);
+	strcpy(subParts[pcreated], nextKey);
+    }
 
-    // // find the [base+idx] space which can be divided evenly
-    // uint idx=0;
-    // uint ia=0;
-    // uint ib=0;
-    // uint range=0;
-    // do {
-    //     // Get an integer value for the substrings and check if they
-    //     // can be divided evenly
-    //     ia = atoi(substring(A,base, base+idx));
-    //     ib = atoi(substring(B,base,base+idx));
-    //     range = (ib-ia)/subparts;
-    // } while ((range==0) && ((base+idx)<sz));
-        
-    // // create the strings
-    // char* lower = strdup(A);
-    // while (strncmp(lower,B,sz) && (pcreated<parts)) {
-    //     subparts[pcreated++] = strdup(lower);
-    //     lower[base..base+idx] = lower[base..base+idx] + range;		
-    // }
-    // return (pcreated);
+    free(currentKey);
+    free(nextKey);
+    
+    return pcreated;
 }
 
 
@@ -364,7 +394,7 @@ w_rc_t key_ranges_map::operator()(const Key& key, lpid_t& pid)
  *
  ******************************************************************/
 
-w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included, 
+w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included,
                                      const Key& key2, bool key2Included,
                                      vector<lpid_t>& pidVec) 
 {
@@ -386,10 +416,6 @@ w_rc_t key_ranges_map::getPartitions(const Key& key1, bool key1Included,
 	// at least one of the keys is not in the map, returns error.
 	return (RC(mrb_PARTITION_NOT_FOUND));
     }
-    // TODO: think about how to check key1 not being included
-    // the corner case here is that when key1 is the last key from the its partition
-    // if it's not included then we shouldn't take that partition
-    // but how to check the last key of a partition ??
     while (iter1 != iter2) {
 	pidVec.push_back(iter1->second);
 	iter1++;
@@ -495,7 +521,6 @@ void key_ranges_map::setNumPartitions(uint numPartitions)
 {
     _rwlock.acquire_write();
     _numPartitions = numPartitions;
-    // TODO: update partitions
     _rwlock.release_write();
 }
 
@@ -516,7 +541,6 @@ void key_ranges_map::setMaxKey(const Key& maxKey)
     maxKey.copy_to(_maxKey);
     _rwlock.release_write();
 }
-
 
 uint key_ranges_map::getNumPartitions() const
 {
