@@ -39,7 +39,10 @@
 #ifndef __DORA_DKEY_RANGES_MAP_H
 #define __DORA_DKEY_RANGES_MAP_H
 
-#include "util/key_ranges_map.h"
+//#include "util/key_ranges_map.h"
+
+#include "sm_vas.h"
+#include "util.h"
 
 using namespace std;
 
