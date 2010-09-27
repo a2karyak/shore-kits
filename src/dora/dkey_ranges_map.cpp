@@ -110,7 +110,10 @@ w_rc_t dkey_ranges_map::deletePartition(const uint aPartNum)
 
     // Delete the partition
     lpid_t pid = (*it).second;
-    r = key_ranges_map::deletePartition(pid);
+    
+    // TODO (IP): Understand what deletePartition does in key_range_map
+    assert (false); 
+    //r = key_ranges_map::deletePartition(pid);
     
     // If successful, remove the delete partition entry from the two maps 
     if (!r.is_error()) {

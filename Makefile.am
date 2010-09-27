@@ -94,8 +94,9 @@ UTIL = \
         $(SU)/shell.cpp \
         $(SU)/tcp.cpp \
         $(SU)/w_strlcpy.cpp \
-        $(SU)/key_ranges_map.cpp \
 	$(SU)/procstat.cpp
+
+##       $(SU)/key_ranges_map.cpp - moved to shore-sm
 
 if SPARC_MACHINE
 UTIL +=	$(SU)/sunos_procstat.cpp \
