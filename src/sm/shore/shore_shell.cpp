@@ -32,7 +32,9 @@
 
 
 #ifdef CFG_BT
+#ifndef CFG_SHORE_6
 #include "backtrace.h"
+#endif
 #endif
 
 
@@ -1236,12 +1238,13 @@ bt_cmd_t::bt_cmd_t(ShoreEnv* env)
     : _env(env), _enabled(false) 
 { }
 
-bt_cmd_t::setaliases() 
+void bt_cmd_t::setaliases() 
 { 
     _name = string("bt"); 
     _aliases.push_back("bt"); 
 }
 
+#ifndef CFG_SHORE_6
 int bt_cmd_t::handle(const char* cmd)
 {
 #define CMDLEN 10
@@ -1290,6 +1293,41 @@ string bt_cmd_t::desc() const
 {
     return (string("Enables/disables/prints collection of backtrace information"));
 }
+
+#else
+
+int bt_cmd_t::handle(const char* cmd)
+{
+#define CMDLEN 10
+    uint plevel=0;
+    int count = sscanf(cmd, "%*s %ud", &plevel);
+    switch(count) {
+    case 0:
+	usage();
+	break;
+    case 1:
+        ss_m::set_plp_tracing(plevel);
+        TRACE( TRACE_ALWAYS, "PLEVEL=%d\n", plevel);
+        break;
+    default:
+	TRACE(TRACE_ALWAYS, "Invalid argument: %s\n", cmd);
+	break;
+    }
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void bt_cmd_t::usage()
+{
+    TRACE( TRACE_ALWAYS, "BT Usage:\n\n"        \
+           "*** bt <tracing-level (int)>\n\n");
+}
+
+string bt_cmd_t::desc() const 
+{
+    return (string("Enables/disables PLP tracing at shore-sm-6"));
+}
+
+#endif // CFG_SHORE_6
 #endif // CFG_BT
 
 

@@ -608,11 +608,6 @@ AM_CONDITIONAL(USE_BT, test x$bt = xtrue)
 
 if test "$bt" = true
 then 
-     # Shore-SM-6 does not support backtracing yet
-     if test "$shore6" = true
-     then
-        AC_MSG_ERROR(Shore-SM-6 does not support backtracing yet)
-     fi
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES backtracing"
      AC_MSG_WARN([Enabling backtracing])
