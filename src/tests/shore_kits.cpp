@@ -501,6 +501,19 @@ typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 ////////////////////////////////
 
 
+void usage()
+{
+    TRACE( TRACE_ALWAYS, "\n\nAccepted parameters:\n" \
+           "-c <db>    : Use the <db> configuration from shore.conf\n" \
+           "-d         : Clobber the existing database, if any\n" \
+           "-n         : Run in network mode (netmode)\n" \
+           "-p <port>  : If in netmode, listen to port <port>\n" \
+           "-x <range> : Use <range> in range-based transactions\n" \
+           "-h         : Show usage (this message)\n\n" \
+           "If no parameters set, it will read the configuration from shore.conf\n");
+}
+
+
 int main(int argc, char* argv[]) 
 {
     thread_init();
@@ -529,7 +542,7 @@ int main(int argc, char* argv[])
     int c = 0;
     int iRange = 0;
 
-    while ((c = getopt(argc,argv,"dnp:c:x:")) != -1) {
+    while ((c = getopt(argc,argv,"c:dnp:x:h")) != -1) {
         switch (c) {
         case 'n':
             TRACE( TRACE_ALWAYS, "NETMODE\n");
@@ -553,8 +566,12 @@ int main(int argc, char* argv[])
             iRange = atoi(optarg);
             ev->setVarInt("records-to-access",iRange);
             break;
+        case 'h':
+            usage();
+            return (2);
+            break;
         default:
-            TRACE( TRACE_ALWAYS, "Wrong parameter accepted: dnp:c:x:\n");
+            TRACE( TRACE_ALWAYS, "Wrong parameter accepted: c:dnp:x:h\n");
             return (2);
         }
     }

@@ -40,6 +40,29 @@ using namespace shore;
  *
  ******************************************************************/
 
+table_desc_t::table_desc_t(const char* name, int fieldcnt)
+    : file_desc_t(name, fieldcnt), 
+      _indexes(NULL), 
+      _primary_idx(NULL),
+      _maxsize(0)
+{
+    // Create placeholders for the field descriptors
+    _desc = new field_desc_t[fieldcnt];
+}
+    
+
+table_desc_t::~table_desc_t() 
+{
+    if (_desc) {
+        delete [] _desc;
+    }
+
+    if (_indexes) {
+        delete _indexes;
+    }
+}
+
+
 
 /* ----------------------------------------- */
 /* --- create physical table and indexes --- */
@@ -56,13 +79,15 @@ using namespace shore;
 
 w_rc_t table_desc_t::create_table(ss_m* db)
 {
-    if (!is_vid_valid() || !is_root_valid())
+    if (!is_vid_valid() || !is_root_valid()) {
 	W_DO(find_root_iid(db));
+    }
 
-    /* create the table */
+    // Create the table
     W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
+    TRACE( TRACE_STATISTICS, "%s %d\n", name(), fid().store);
 
-    /* add table entry to the metadata tree */
+    // Add table entry to the metadata tree
     file_info_t file;
     file.set_ftype(FT_REGULAR);
     file.set_fid(_fid);
@@ -71,25 +96,12 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 			    vec_t(&file, sizeof(file_info_t))));
     
 
-    /* create all the indexes of the table */
+    // Create all the indexes of the table
     index_desc_t* index = _indexes;
     while (index) {
 	stid_t iid;
 
-#ifdef CFG_DORA
-        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s) (%s)\n",
-               index->name(), 
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"),
-               (index->is_relaxed() ? "relaxed" : "no relaxed"));
-#else
-        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s)\n",
-               index->name(), 
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"));
-#endif               
-
-        /* create index */
+        // Create index
 	if(index->is_partitioned()) {
 	    for(int i=0; i < index->get_partition_count(); i++) {
 		W_DO(db->create_index(_vid,
@@ -131,19 +143,37 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				  iid));
 	    index->set_fid(0, iid);
 
-	    /* add index entry to the metadata tree */
-	    if (index->is_primary())
+	    // Add index entry to the metadata tree
+	    if (index->is_primary()) {
 		file.set_ftype(FT_PRIMARY_IDX);
-	    else
+            }
+	    else {
 		file.set_ftype(FT_IDX);
+            }
 
 	    file.set_fid(iid);
 	    W_DO(db->create_assoc(root_iid(),
 				  vec_t(index->name(), strlen(index->name())),
 				  vec_t(&file, sizeof(file_info_t))));
-	}
+
+
+        // Print info
+#ifdef CFG_DORA
+        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s)\n",
+               index->name(), iid.store,
+               (index->is_partitioned() ? "part" : "no part"), 
+               (index->is_unique() ? "unique" : "no unique"),
+               (index->is_relaxed() ? "relaxed" : "no relaxed"));
+#else
+        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s)\n",
+               index->name(), iid.store,
+               (index->is_partitioned() ? "part" : "no part"), 
+               (index->is_unique() ? "unique" : "no unique"));
+#endif               
+        
+	}      
 	
-        /* move to next index */
+        // Move to next index
 	index = index->next();
     }
     

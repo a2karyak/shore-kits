@@ -139,24 +139,8 @@ public:
     /* --- Constructor --- */
     /* ------------------- */
 
-    table_desc_t(const char* name, int fieldcnt)
-        : file_desc_t(name, fieldcnt), 
-          _indexes(NULL), 
-          _primary_idx(NULL),
-          _maxsize(0)
-    {
-        // Create placeholders for the field descriptors
-	_desc = new field_desc_t[fieldcnt];
-    }
-    
-    virtual ~table_desc_t() 
-    {
-        if (_desc)
-            delete [] _desc;
-
-        if (_indexes)
-            delete _indexes;
-    }
+    table_desc_t(const char* name, int fieldcnt);    
+    virtual ~table_desc_t();
 
 
     /* --------------------------------------- */
