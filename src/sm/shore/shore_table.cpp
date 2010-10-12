@@ -128,6 +128,22 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 		W_DO(db->create_assoc(root_iid(),
 				      vec_t(tmp, strlen(tmp)),
 				      vec_t(&file, sizeof(file_info_t))));
+
+
+                // Print info
+#ifdef CFG_DORA
+                TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s)\n",
+                       tmp, iid.store,
+                       (index->is_partitioned() ? "part" : "no part"), 
+                       (index->is_unique() ? "unique" : "no unique"),
+                       (index->is_relaxed() ? "relaxed" : "no relaxed"));
+#else
+                TRACE( TRACE_STATISTICS, "%s %d (%s) (%s)\n",
+                       tmp, iid.store,
+                       (index->is_partitioned() ? "part" : "no part"), 
+                       (index->is_unique() ? "unique" : "no unique"));
+#endif               
+
 	    }
 	}
 	else {

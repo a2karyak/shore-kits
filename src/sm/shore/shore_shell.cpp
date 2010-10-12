@@ -754,6 +754,7 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(restart_cmd_t,_restarter,_env);
     REGISTER_CMD_PARAM(info_cmd_t,_informer,_env);
     REGISTER_CMD_PARAM(stats_cmd_t,_stater,_env);
+    REGISTER_CMD_PARAM(smstats_cmd_t,_smstater,_env);
     REGISTER_CMD_PARAM(dump_cmd_t,_dumper,_env);
     REGISTER_CMD_PARAM(fake_iodelay_cmd_t,_fakeioer,_env);
 
@@ -884,6 +885,37 @@ void stats_cmd_t::usage()
 string stats_cmd_t::desc() const 
 {
     return (string("Prints gathered statistics")); 
+}
+
+
+
+/*********************************************************************
+ *
+ *  "smstats" command
+ *
+ *********************************************************************/
+
+void smstats_cmd_t::setaliases() 
+{ 
+    _name = string("smstats"); 
+    _aliases.push_back("smst"); 
+}
+
+int smstats_cmd_t::handle(const char* /* cmd */) 
+{ 
+    assert (_env); 
+    _env->gatherstats_sm(); 
+    return (SHELL_NEXT_CONTINUE);
+}
+
+void smstats_cmd_t::usage() 
+{ 
+    TRACE( TRACE_ALWAYS, "usage: smstats\n"); 
+}
+    
+string smstats_cmd_t::desc() const 
+{
+    return (string("Prints gathered statistics from the SM")); 
 }
 
 

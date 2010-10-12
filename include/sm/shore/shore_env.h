@@ -510,7 +510,6 @@ protected:
     int  configure_sm();
     int  start_sm();
     int  close_sm();
-    void gatherstats_sm();
     
 public:
 
@@ -599,6 +598,9 @@ public:
     // Fake io delay interface
     int disable_fake_disk_latency();
     int enable_fake_disk_latency(const int adelay);
+
+    // Collects and print statistics from the SM
+    void gatherstats_sm();
 
     // Takes a checkpoint (forces dirty pages)
     int checkpoint();

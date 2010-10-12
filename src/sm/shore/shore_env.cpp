@@ -461,17 +461,12 @@ int ShoreEnv::statistics()
 
 #ifdef CFG_FLUSHER
     if (_base_flusher) _base_flusher->statistics();
-#endif
-    
+#endif    
 
     // If reached this point the Shore environment is closed
+    //gatherstats_sm();
     return (0);
-
-    gatherstats_sm();
-    return (1);
 }
-
-
 
 
 
@@ -546,10 +541,13 @@ int ShoreEnv::close_sm()
 }
 
 
-/** @fn    gatherstats_sm
+/******************************************************************** 
  *
- *  @brief Collects statistics from the sm
- */ 
+ *  @fn:     gatherstats_sm
+ *
+ *  @brief:  Collects and prints statistics from the sm
+ *
+ ********************************************************************/
 
 void ShoreEnv::gatherstats_sm()
 {
@@ -557,9 +555,9 @@ void ShoreEnv::gatherstats_sm()
     // memset(&stats, 0, sizeof(stats));
     
     sm_stats_info_t stats;
-    ss_m::gather_stats(stats);
-    
+    ss_m::gather_stats(stats);    
     //    ss_m::gather_stats(stats, false);
+
     cout << stats << endl;
 }
 

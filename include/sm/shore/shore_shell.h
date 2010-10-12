@@ -85,6 +85,7 @@ const int DF_TRX_ID                = -1;
 DECLARE_ENV_CMD(restart);
 DECLARE_ENV_CMD(info);
 DECLARE_ENV_CMD(stats);
+DECLARE_ENV_CMD(smstats);
 DECLARE_ENV_CMD(dump);
 DECLARE_ENV_CMD(fake_iodelay);
 
@@ -208,6 +209,7 @@ protected:
     guard<restart_cmd_t>        _restarter;
     guard<info_cmd_t>           _informer;
     guard<stats_cmd_t>          _stater;
+    guard<smstats_cmd_t>          _smstater;
     guard<dump_cmd_t>           _dumper;
     guard<fake_iodelay_cmd_t>   _fakeioer;   
 
