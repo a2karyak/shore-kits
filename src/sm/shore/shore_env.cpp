@@ -549,6 +549,8 @@ int ShoreEnv::close_sm()
  *
  ********************************************************************/
 
+static sm_stats_info_t oldstats;
+
 void ShoreEnv::gatherstats_sm()
 {
     // sm_du_stats_t stats;
@@ -556,9 +558,13 @@ void ShoreEnv::gatherstats_sm()
     
     sm_stats_info_t stats;
     ss_m::gather_stats(stats);    
-    //    ss_m::gather_stats(stats, false);
 
-    cout << stats << endl;
+    sm_stats_info_t diff = stats;
+    diff -= _last_sm_stats;
+
+    // Print the diff and save the latest reading
+    cout << diff << endl;
+    _last_sm_stats = stats;
 }
 
 
