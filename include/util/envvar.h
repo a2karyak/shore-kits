@@ -150,6 +150,7 @@ public:
     // gets db-config and then <db-config>-system
     int setConfiguration(string sConfiguration);
     string getSysname();
+    int    setSysname(const string& sysName);
     string getSysVar(string sParam);
     int    getSysVarInt(string sParam);
     double getSysVarDouble(string sParam);
