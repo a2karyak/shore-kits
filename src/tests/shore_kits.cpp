@@ -108,10 +108,12 @@ using namespace dora;
 //////////////////////////////
 
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline
-#ifdef CFG_DORA
-                    , snDORA 
-#endif
+enum SysnameValue { snBaseline,
+                    snMRBT,  /* Baseline+MRBT */
+                    snDORA,
+                    snPLPA,  /* DORA+MRBT + No changes to heap */
+                    snPLPP,  /* DORA+MRBT + Heap pages per partition */
+                    snPLPL   /* DORA+MRBT + Heap pages per leaf */
 };
 
 // Map to associate string with then enum values
@@ -121,9 +123,11 @@ static map<string,SysnameValue> mSysnameValue;
 void initsysnamemap() 
 {
     mSysnameValue["baseline"] = snBaseline;
-#ifdef CFG_DORA
-    mSysnameValue["dora"] =     snDORA;
-#endif
+    mSysnameValue["mrbt"]     = snMRBT;
+    mSysnameValue["dora"]     = snDORA;
+    mSysnameValue["plpa"]     = snPLPA;
+    mSysnameValue["plpp"]     = snPLPP;
+    mSysnameValue["plpl"]     = snPLPL;
 }
 
 //////////////////////////////
@@ -525,36 +529,41 @@ int main(int argc, char* argv[])
     // 1. Get options
     bool netmode = false;
     int netport = 0;
-    string config;
+    string config, system;
     int c = 0;
-    int iRange = 0;
+    int iRange = 0;    
 
-    while ((c = getopt(argc,argv,"dnp:c:x:")) != -1) {
+    while ((c = getopt(argc,argv,"dnp:c:x:s:")) != -1) {
         switch (c) {
+        case 'd':
+            TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
+            ev->setVarInt("db-clobberdev",1);
+            break;
         case 'n':
             TRACE( TRACE_ALWAYS, "NETMODE\n");
             netmode = true;
             break;
         case 'p':
-            TRACE( TRACE_ALWAYS, "PORT (%d)\n", atoi(optarg));
             netport = atoi(optarg);
+            TRACE( TRACE_ALWAYS, "PORT (%d)\n", netport);
             break;
         case 'c':
             TRACE( TRACE_ALWAYS, "CONFIG (%s)\n", optarg);
             config = (string)optarg;
             ev->setConfiguration(config);
             break;
-        case 'd':
-            TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
-            ev->setVarInt("db-clobberdev",1);
+        case 's':
+            TRACE( TRACE_ALWAYS, "SYSTEM (%s)\n", optarg);
+            system = (string)optarg;
+            ev->setSysname(system);
             break;
         case 'x':
-            TRACE( TRACE_ALWAYS, "RANGE (%d)\n", atoi(optarg));            
             iRange = atoi(optarg);
+            TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
             ev->setVarInt("records-to-access",iRange);
             break;
         default:
-            TRACE( TRACE_ALWAYS, "Wrong parameter accepted: dnp:c:x:\n");
+            TRACE( TRACE_ALWAYS, "Wrong parameter accepted: dnp:c:x:s:\n");
             return (2);
         }
     }
@@ -565,20 +574,25 @@ int main(int argc, char* argv[])
 
     string sysname = ev->getSysname();
     string benchmarkname = ev->getSysVar("benchmark");
+    string dbname; 
+    bool dbnameset = false;
 
     // 3. Initialize shell
     guard<shore_shell_t> kit = NULL;
-
 
     TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", 
            benchmarkname.c_str(),
            sysname.c_str());
 
-
+    return (0);
     // TPC-C
     if (benchmarkname.compare("tpcc")==0) {
+        dbname = "tpcc-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
+            dbname += "base"; dbnameset=true;
+        case snMRBT:
+            dbname += "mrbt";
             kit = new baselineTPCCKit("(tpcc-base) ",netmode,netport);
             break;
 #ifdef CFG_DORA
@@ -587,7 +601,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (3);
         }
     }
@@ -604,7 +618,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (4);
         }
     }
@@ -621,7 +635,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
@@ -639,7 +653,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
@@ -658,7 +672,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
