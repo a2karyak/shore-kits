@@ -198,8 +198,9 @@ void ShoreTPCCEnv::table_builder_t::work()
         CHECK_XCT_RETURN(e,log_space_needed,retry);
 
 	long nval = atomic_inc_64_nv(&units_completed);
+        long sofar = nval / UNIT_PER_WH;
 	if(nval % UNIT_PER_WH == 0) {
-	    fprintf(stderr, ".\n");
+	    fprintf(stderr, "%lu\n", sofar);
         }
     }
     TRACE( TRACE_ALWAYS, 
