@@ -412,7 +412,7 @@ AM_CONDITIONAL(LINUX_OS, test "$OS" = "LINUX")
 # Give a list of features with the defaults
 KITS_FEATURES=""
 
-# There are 8 supported options:
+# Supported options:
 # (1)  --enable-shore6      : If compiling against shore-storage-manager-6.X.X (the x86_64 port)
 # (2)  --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
 # (3)  --enable-elr         : defines CFG_ELR
@@ -421,6 +421,7 @@ KITS_FEATURES=""
 # (6)  --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
 # (7)  --enable-bt          : enables backtracing facility. defines CFG_BT
 # (8)  --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
+# (9)  --enable-hacks       : enables the hacks (e.g., the padding in WH,DI of TPC-C, and the partitioned OL_IDX)
 
 
 
@@ -616,6 +617,30 @@ else
      AC_MSG_RESULT(no)
 fi
 # --- EOF BACKTRACING ---   
+
+
+
+# --- HACKS ---
+AC_MSG_CHECKING(whether to enable the hacks)
+AC_ARG_ENABLE(hack, 
+[  --enable-hack            Enable hacks],
+[case "${enableval}" in
+  yes) hack=true ;;
+  no)  hack=false ;;
+  *) hack=false ;;
+esac],[hack=false])
+AM_CONDITIONAL(USE_HACK, test x$hack = xtrue)
+
+if test "$hack" = true
+then 
+     AC_MSG_RESULT(yes)
+     KITS_FEATURES="$KITS_FEATURES hacks"
+     AC_MSG_WARN([Enabling hacks])
+     AC_DEFINE(CFG_HACK)
+else
+     AC_MSG_RESULT(no)
+fi
+# --- EOF HACKS ---   
 
 
 # --- QPIPE ---

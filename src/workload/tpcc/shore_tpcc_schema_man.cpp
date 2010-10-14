@@ -602,15 +602,15 @@ w_rc_t order_line_man_impl::ol_get_range_iter_by_index(ss_m* db,
 {
     assert (ptuple);
 
-    // OL_INDEX - { 2, 1, 0, 3 } = { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
+    // OL_IDX - { 2, 1, 0, 3 } = { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
     /* pointer to the index */
     assert (_ptable);
     index_desc_t* pindex = NULL;
     if (alm == NL) 
-        pindex = _ptable->find_index("OL_INDEX_NL");
+        pindex = _ptable->find_index("OL_IDX_NL");
     else
-        pindex = _ptable->find_index("OL_INDEX");
+        pindex = _ptable->find_index("OL_IDX");
     assert (pindex);
 
     /* get the lowest key value */
@@ -667,15 +667,15 @@ w_rc_t order_line_man_impl::ol_get_probe_iter_by_index(ss_m* db,
 {
     assert (ptuple);
 
-    // OL_INDEX - { 2, 1, 0, 3 } = { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
+    // OL_IDX - { 2, 1, 0, 3 } = { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
     /* find index */
     assert (_ptable);
     index_desc_t* pindex = NULL;
     if (alm == NL) 
-        pindex = _ptable->find_index("OL_INDEX_NL");
+        pindex = _ptable->find_index("OL_IDX_NL");
     else
-        pindex = _ptable->find_index("OL_INDEX");
+        pindex = _ptable->find_index("OL_IDX");
     assert (pindex);
 
     ptuple->set_value(0, o_id);

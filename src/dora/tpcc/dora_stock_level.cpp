@@ -266,7 +266,7 @@ w_rc_t r_ol_stock_action::trx_exec()
          *       AND s_w_id = :w_id AND s_i_id = ol_i_id
          *       AND s_quantity < :threshold;
          *
-         *   Plan: 1. index scan on OL_INDEX 
+         *   Plan: 1. index scan on OL_IDX 
          *         2. sort ol tuples in the order of i_id from 1
          *         3. index scan on S_INDEX
          *         4. fetch stock with sargable on quantity from 3

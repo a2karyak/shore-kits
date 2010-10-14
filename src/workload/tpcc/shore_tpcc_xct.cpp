@@ -1546,7 +1546,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
          * FROM order_line 
          * WHERE ol_w_id = :H00003 AND ol_d_id = :H00004 AND ol_o_id = :H00016 
          *
-         * plan: index scan on "OL_INDEX"
+         * plan: index scan on "OL_IDX"
          */
 
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
@@ -1758,7 +1758,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
              * UPDATE ORDER_LINE SET ol_delivery_d = :curr_tmstmp
              * WHERE ol_w_id = :w_id AND ol_d_id = :no_d_id AND ol_o_id = :no_o_id;
              *
-             * plan: index scan on "OL_INDEX"
+             * plan: index scan on "OL_IDX"
              */
 
 
@@ -1931,7 +1931,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
          *       AND s_w_id = :w_id AND s_i_id = ol_i_id
          *       AND s_quantity < :threshold;
          *
-         *   Plan: 1. index scan on OL_INDEX 
+         *   Plan: 1. index scan on OL_IDX 
          *         2. sort ol tuples in the order of i_id from 1
          *         3. index scan on S_INDEX
          *         4. fetch stock with sargable on quantity from 3

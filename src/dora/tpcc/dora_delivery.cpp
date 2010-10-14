@@ -386,7 +386,7 @@ w_rc_t upd_oline_del_action::trx_exec()
          * UPDATE ORDER_LINE SET ol_delivery_d = :curr_tmstmp
          * WHERE ol_w_id = :w_id AND ol_d_id = :no_d_id AND ol_o_id = :no_o_id;
          *
-         * plan: index scan on "OL_INDEX"
+         * plan: index scan on "OL_IDX"
          */
 
 

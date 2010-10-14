@@ -331,12 +331,18 @@ order_line_t::order_line_t(string sysname) :
 
     uint keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
 
+    int numIdxPartitions = 0;
+#ifdef CFG_HACK
+    // Creating 10 indexes in order to be able to have parallel SMOs
+    numIdxPartitions = 10; 
+#endif
+    
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index ol_index on (w_id, d_id, o_id, ol_number)
-        create_primary_idx("OL_INDEX", 10, keys, 4);
+        create_primary_idx("OL_IDX", numIdxPartitions, keys, 4);
     }
 
 #ifdef CFG_DORA
@@ -346,7 +352,7 @@ order_line_t::order_line_t(string sysname) :
 
             // create unique index ol_index on (w_id, d_id, o_id, ol_number)
             // last param (nolock) is set to true
-            create_primary_idx("OL_INDEX_NL", 10, keys, 4, true);
+            create_primary_idx("OL_IDX_NL", numIdxPartitions, keys, 4, true);
         }
 #endif
 

@@ -430,7 +430,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
          * FROM order_line 
          * WHERE ol_w_id = :H00003 AND ol_d_id = :H00004 AND ol_o_id = :H00016 
          *
-         * plan: index scan on "OL_INDEX"
+         * plan: index scan on "OL_IDX"
          */
 
 #ifndef ONLYDORA

@@ -488,9 +488,12 @@ int ShoreTPCBEnv::post_init()
 
 w_rc_t ShoreTPCBEnv::_post_init_impl() 
 {
+#ifdef CFG_HACK
+    TRACE (TRACE_ALWAYS, "Padding BRANCHES and TELLERS");
     //#warning IP - Adding padding also for the TPC-B TELLERS table
     W_DO(_pad_BRANCHES());
     W_DO(_pad_TELLERS());
+#endif    
     return (RCOK);
 }
 

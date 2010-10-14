@@ -535,6 +535,11 @@ int ShoreTPCCEnv::post_init()
 
 w_rc_t ShoreTPCCEnv::_post_init_impl() 
 {
+#ifndef CFG_HACK
+    return (RCOK);
+#endif
+
+    TRACE (TRACE_ALWAYS, "Padding WAREHOUSES");
     ss_m* db = this->db();
     
     // lock the WH table 
