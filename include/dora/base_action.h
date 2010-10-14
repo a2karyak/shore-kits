@@ -157,6 +157,9 @@ public:
         return (_keys_needed==0);
     }
 
+    inline bool are_keys_set() { return (_keys_set); }
+    inline void keys_set(const bool are_set = true) { _keys_set = are_set; }
+
 
     // copying allowed
     base_action_t(base_action_t const& rhs)
