@@ -60,6 +60,10 @@ public:
     ~branch_man_impl() { }
 
     // --- access specific tuples  ---
+    w_rc_t b_index_probe(ss_m* db,
+			 branch_tuple* ptuple,
+			 const int b_id);
+
     w_rc_t b_index_probe_forupdate(ss_m* db, 
 				   branch_tuple* ptuple, 
 				   const int b_id);

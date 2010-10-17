@@ -119,6 +119,41 @@ int ShoreTPCBEnv::statistics()
            rval.failed.acct_update,
            rval.deadlocked.acct_update);
 
+    TRACE( TRACE_STATISTICS, "MbenchInsertOnly. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_insert_only,
+           rval.failed.mbench_insert_only,
+           rval.deadlocked.mbench_insert_only);
+
+    TRACE( TRACE_STATISTICS, "MbenchDeleteOnly. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_delete_only,
+           rval.failed.mbench_delete_only,
+           rval.deadlocked.mbench_delete_only);
+
+    TRACE( TRACE_STATISTICS, "MbenchProbeOnly. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_probe_only,
+           rval.failed.mbench_probe_only,
+           rval.deadlocked.mbench_probe_only);
+
+    TRACE( TRACE_STATISTICS, "MbenchInsertDelte. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_insert_delete,
+           rval.failed.mbench_insert_delete,
+           rval.deadlocked.mbench_insert_delete);
+
+    TRACE( TRACE_STATISTICS, "MbenchInsertProbe. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_insert_probe,
+           rval.failed.mbench_insert_probe,
+           rval.deadlocked.mbench_insert_probe);
+
+    TRACE( TRACE_STATISTICS, "MbenchDeleteProbe. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_delete_probe,
+           rval.failed.mbench_delete_probe,
+           rval.deadlocked.mbench_delete_probe);
+
+    TRACE( TRACE_STATISTICS, "MbenchMix. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.mbench_mix,
+           rval.failed.mbench_mix,
+           rval.deadlocked.mbench_mix);
+
     ShoreEnv::statistics();
 
     return (0);

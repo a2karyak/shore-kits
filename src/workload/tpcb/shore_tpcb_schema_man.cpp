@@ -49,6 +49,16 @@ ENTER_NAMESPACE(tpcb);
 /* --- BRANCH --- */
 /* ----------------- */
 
+w_rc_t
+branch_man_impl::b_index_probe(ss_m* db,
+			       branch_tuple* ptuple,
+			       const int b_id)
+{
+    assert (ptuple);
+    ptuple->set_value(0, b_id);
+    return (index_probe_by_name(db, "B_INDEX", ptuple));
+}
+
 
 w_rc_t 
 branch_man_impl::b_index_probe_forupdate(ss_m* db,

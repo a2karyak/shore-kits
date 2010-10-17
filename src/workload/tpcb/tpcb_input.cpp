@@ -103,4 +103,146 @@ populate_db_input_t create_populate_db_input(int sf,
 
 
 
+
+/* -------------------------- */
+/* --- MBENCH_INSERT_ONLY --- */
+/* -------------------------- */
+
+
+mbench_insert_only_input_t create_mbench_insert_only_input(int sf, 
+							   int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_insert_only_input_t mioin;
+
+
+    // The TPC-B branches start from 0 (0..SF-1)
+    if (specificBr>0) {
+        mioin.b_id = specificBr-1;
+    }
+    else {
+        mioin.b_id = UZRand(0,sf-1);
+    }
+        
+    return (mioin);
+}
+
+
+
+
+/* -------------------------- */
+/* --- MBENCH_DELETE_ONLY --- */
+/* -------------------------- */
+
+
+mbench_delete_only_input_t create_mbench_delete_only_input(int sf, 
+							   int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_delete_only_input_t mdoin;
+    mdoin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+
+    return (mdoin);
+}
+
+
+
+
+/* ------------------------- */
+/* --- MBENCH_PROBE_ONLY --- */
+/* ------------------------- */
+
+
+mbench_probe_only_input_t create_mbench_probe_only_input(int sf, 
+							 int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_probe_only_input_t mpoin;
+    mpoin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+
+    return (mpoin);
+}
+
+
+
+
+/* ---------------------------- */
+/* --- MBENCH_INSERT_DELETE --- */
+/* ---------------------------- */
+
+
+mbench_insert_delete_input_t create_mbench_insert_delete_input(int sf, 
+							       int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_insert_delete_input_t midin;
+    midin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+
+    return (midin);
+}
+
+
+
+
+/* --------------------------- */
+/* --- MBENCH_INSERT_PROBE --- */
+/* --------------------------- */
+
+
+mbench_insert_probe_input_t create_mbench_insert_probe_input(int sf, 
+							     int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_insert_probe_input_t mipin;
+    mipin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+
+    return (mipin);
+}
+
+
+
+
+/* --------------------------- */
+/* --- MBENCH_DELETE_PROBE --- */
+/* --------------------------- */
+
+
+mbench_delete_probe_input_t create_mbench_delete_probe_input(int sf, 
+							     int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_delete_probe_input_t mdpin;
+    mdpin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+
+    return (mdpin);
+}
+
+
+
+
+/* ------------------ */
+/* --- MBENCH_MIX --- */
+/* ------------------ */
+
+
+mbench_mix_input_t create_mbench_mix_input(int sf, 
+					   int specificBr)
+{
+    assert (sf>0);
+    
+    mbench_mix_input_t mmin;
+    mmin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+
+    return (mmin);
+}
+
+
+
+
 EXIT_NAMESPACE(tpcb);
