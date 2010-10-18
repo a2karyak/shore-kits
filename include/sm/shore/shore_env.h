@@ -490,6 +490,12 @@ protected:
     pthread_mutex_t _queried_mutex;
 
 
+    // The insert/delete/probe frequencies for microbenchmarks
+    int _insert_freq;
+    int _delete_freq;
+    int _probe_freq;
+
+
     // Stats
     env_stats_t        _env_stats; 
     sm_stats_info_t    _last_sm_stats;
@@ -584,6 +590,9 @@ public:
     double get_sf() const;
     double upd_sf();
     void print_sf() const;
+
+    // -- insert/delete/probe frequencies for microbenchmarks -- //
+    void set_freqs(int insert_freq = 0, int delete_freq = 0, int probe_freq = 0);
 
     // Environment workers
     uint upd_worker_cnt();

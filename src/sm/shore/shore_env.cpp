@@ -213,6 +213,20 @@ void ShoreEnv::print_sf() const
 
 /******************************************************************** 
  *
+ *  @fn:    Related to microbenchmarks
+ *
+ *  @brief: Set the insert/delete/probe frequencies
+ *
+ ********************************************************************/
+void ShoreEnv::set_freqs(int insert_freq, int delete_freq, int probe_freq) 
+{
+    _insert_freq = insert_freq;
+    _delete_freq = delete_freq;
+    _probe_freq = probe_freq;
+}
+
+/******************************************************************** 
+ *
  *  @fn:    Related to environment workers
  *
  *  @brief: Each environment has a set of worker threads

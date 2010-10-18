@@ -174,6 +174,8 @@ w_rc_t ShoreTPCBEnv::run_one_xct(Request* prequest)
 {
     assert (prequest);
 
+    int rand;
+
     switch (prequest->type()) {
 
 	// TPC-B BASELINE
@@ -188,14 +190,32 @@ w_rc_t ShoreTPCBEnv::run_one_xct(Request* prequest)
      case XCT_TPCB_MBENCH_PROBE_ONLY:
 	 return (run_mbench_probe_only(prequest));
      case XCT_TPCB_MBENCH_INSERT_DELETE:
-	 return (run_mbench_insert_delete(prequest));
+        if (URand(1,100)>50)
+            return (run_mbench_insert_only(prequest));
+        else
+            return (run_mbench_delete_only(prequest));
+	//return (run_mbench_insert_delete(prequest));
      case XCT_TPCB_MBENCH_INSERT_PROBE:
-	 return (run_mbench_insert_probe(prequest));
+        if (URand(1,100)>50)
+            return (run_mbench_insert_only(prequest));
+        else
+            return (run_mbench_probe_only(prequest));
+	// return (run_mbench_insert_probe(prequest));
      case XCT_TPCB_MBENCH_DELETE_PROBE:
-	 return (run_mbench_delete_probe(prequest));
+        if (URand(1,100)>50)
+            return (run_mbench_delete_only(prequest));
+        else
+            return (run_mbench_probe_only(prequest));
+	// return (run_mbench_delete_probe(prequest));
      case XCT_TPCB_MBENCH_MIX:
-	 return (run_mbench_mix(prequest));
-
+	 rand = URand(1,100); 
+        if (rand>33)
+            return (run_mbench_insert_only(prequest));
+        else if(rand>66)
+            return (run_mbench_delete_only(prequest));	 
+	else 
+	    return (run_mbench_probe_only(prequest));
+	// return (run_mbench_mix(prequest));
 
      default:
 	 assert (0); // UNKNOWN TRX-ID
@@ -546,7 +566,11 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_only(const int /* xct_id */,
 
     { // make gotos safe
 
-	// 1. delete a tupple from branches 
+	// 1. retrive a tupple from branches
+	e = _pbranch_man->b_index_probe(_pssm, prb, mdoin.b_id);
+	if (e.is_error()) { goto done; }
+
+	// 2. delete a tupple from branches
 	e = _pbranch_man->delete_tuple(_pssm, prb);
 	if (e.is_error()) { goto done; }
 	
@@ -768,7 +792,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_probe(const int /* xct_id */,
 
     { // make gotos safe
 
-	// 1. retrive the inserted tupple from branches
+	// 1. retrive a tupple from branches
 	e = _pbranch_man->b_index_probe(_pssm, prb, mdpin.b_id);
 	if (e.is_error()) { goto done; }
 

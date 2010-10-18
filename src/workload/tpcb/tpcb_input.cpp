@@ -30,7 +30,6 @@
 
 #include "workload/tpcb/tpcb_input.h"
 
-
 ENTER_NAMESPACE(tpcb);
 
 
@@ -108,6 +107,7 @@ populate_db_input_t create_populate_db_input(int sf,
 /* --- MBENCH_INSERT_ONLY --- */
 /* -------------------------- */
 
+volatile unsigned long branchcnt = 0;
 
 mbench_insert_only_input_t create_mbench_insert_only_input(int sf, 
 							   int specificBr)
@@ -116,14 +116,9 @@ mbench_insert_only_input_t create_mbench_insert_only_input(int sf,
     
     mbench_insert_only_input_t mioin;
 
+    atomic_inc_64_nv(&branchcnt);
 
-    // The TPC-B branches start from 0 (0..SF-1)
-    if (specificBr>0) {
-        mioin.b_id = specificBr-1;
-    }
-    else {
-        mioin.b_id = UZRand(0,sf-1);
-    }
+    mioin.b_id = sf+branchcnt;
         
     return (mioin);
 }
@@ -140,9 +135,9 @@ mbench_delete_only_input_t create_mbench_delete_only_input(int sf,
 							   int specificBr)
 {
     assert (sf>0);
-    
     mbench_delete_only_input_t mdoin;
-    mdoin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+    mdoin.b_id = sf+branchcnt;
+    atomic_dec_64_nv(&branchcnt);
 
     return (mdoin);
 }
@@ -161,7 +156,7 @@ mbench_probe_only_input_t create_mbench_probe_only_input(int sf,
     assert (sf>0);
     
     mbench_probe_only_input_t mpoin;
-    mpoin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+    mpoin.b_id = URand(0,sf+branchcnt);
 
     return (mpoin);
 }
@@ -218,7 +213,7 @@ mbench_delete_probe_input_t create_mbench_delete_probe_input(int sf,
     assert (sf>0);
     
     mbench_delete_probe_input_t mdpin;
-    mdpin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+    mdpin.b_id = create_mbench_delete_only_input(sf, specificBr).b_id;
 
     return (mdpin);
 }
