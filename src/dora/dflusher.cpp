@@ -51,12 +51,12 @@ dora_flusher_t::dora_flusher_t(ShoreEnv* penv,
     _pxct_toflush_pool = new Pool(sizeof(xct_t*),DFLUSHER_BUFFER_EXPECTED_SZ);
     _toflush = new Queue(_pxct_toflush_pool.get());
     assert (_toflush.get());
-    _toflush->set(WS_COMMIT_Q,this,2000,0);  // wake-up immediately, spin 2000
+    _toflush->setqueue(WS_COMMIT_Q,this,2000,0);  // wake-up immediately, spin 2000
 
     _pxct_flushing_pool = new Pool(sizeof(xct_t*),DFLUSHER_BUFFER_EXPECTED_SZ);
     _flushing = new Queue(_pxct_flushing_pool.get());
     assert (_flushing.get());
-    _flushing->set(WS_COMMIT_Q,this,0,0);  // wake-up immediately
+    _flushing->setqueue(WS_COMMIT_Q,this,0,0);  // wake-up immediately
 
     // Create and start the notifier
     fprintf(stdout, "Starting dora-notifier...\n");
@@ -319,7 +319,7 @@ dora_notifier_t::dora_notifier_t(ShoreEnv* env,
     _pxct_tonotify_pool = new Pool(sizeof(xct_t*),DFLUSHER_BUFFER_EXPECTED_SZ);
     _tonotify = new Queue(_pxct_tonotify_pool.get());
     assert (_tonotify.get());
-    _tonotify->set(WS_COMMIT_Q,this,0,0);  // wake-up immediately
+    _tonotify->setqueue(WS_COMMIT_Q,this,0,0);  // wake-up immediately
 }
 
 dora_notifier_t::~dora_notifier_t() 

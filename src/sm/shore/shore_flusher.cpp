@@ -139,12 +139,12 @@ flusher_t::flusher_t(ShoreEnv* env,
     _pxct_toflush_pool = new Pool(sizeof(xct_t*),FLUSHER_BUFFER_EXPECTED_SZ);
     _toflush = new Queue(_pxct_toflush_pool.get());
     assert (_toflush.get());
-    _toflush->set(WS_COMMIT_Q,this,2000,0);  // wake-up immediately, spin 2000
+    _toflush->setqueue(WS_COMMIT_Q,this,2000,0);  // wake-up immediately, spin 2000
 
     _pxct_flushing_pool = new Pool(sizeof(xct_t*),FLUSHER_BUFFER_EXPECTED_SZ);
     _flushing = new Queue(_pxct_flushing_pool.get());
     assert (_flushing.get());
-    _flushing->set(WS_COMMIT_Q,this,0,0);  // wake-up immediately
+    _flushing->setqueue(WS_COMMIT_Q,this,0,0);  // wake-up immediately
 }
 
 flusher_t::~flusher_t() 
