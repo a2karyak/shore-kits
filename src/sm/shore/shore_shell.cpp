@@ -759,12 +759,12 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(fake_iodelay_cmd_t,_fakeioer,_env);
     REGISTER_CMD_PARAM(freq_cmd_t,_freqer,_env);
 
+    REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
+    REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
+
 #ifndef CFG_SHORE_6
     REGISTER_CMD_PARAM(fake_logdelay_cmd_t,_fakelogdelayer,_env);
-    REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
 #endif
-
-    REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
 	
 #ifdef CFG_SLI
     REGISTER_CMD_PARAM(sli_cmd_t,_slier,_env);
@@ -1068,7 +1068,6 @@ string freq_cmd_t::desc() const
 }
 
 
-
 #ifndef CFG_SHORE_6
 /*********************************************************************
  *
@@ -1084,6 +1083,11 @@ void fake_logdelay_cmd_t::setaliases()
 
 int fake_logdelay_cmd_t::handle(const char* cmd)
 {
+#ifdef CFG_SHORE_6
+    TRACE( TRACE_ALWAYS, "In Shore-SM doing nothing\n"); 
+    return (SHELL_NEXT_CONTINUE);
+#endif
+
     char logdelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
     if ( sscanf(cmd, "%*s %s", logdelay_tag) < 1) {
         // prints all the pssm
@@ -1138,6 +1142,7 @@ string fake_logdelay_cmd_t::desc() const
     return string("Sets the fake log disk delay");
 }
 
+#endif
 
 
 
@@ -1199,9 +1204,6 @@ string log_cmd_t::desc() const
 { 
     return (string("Sets the logging mechanism")); 
 }
-#endif // CFG_SHORE_6
-
-
 
 
 /*********************************************************************
