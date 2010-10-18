@@ -490,12 +490,6 @@ protected:
     pthread_mutex_t _queried_mutex;
 
 
-    // The insert/delete/probe frequencies for microbenchmarks
-    int _insert_freq;
-    int _delete_freq;
-    int _probe_freq;
-
-
     // Stats
     env_stats_t        _env_stats; 
     sm_stats_info_t    _last_sm_stats;
@@ -512,6 +506,11 @@ protected:
 
     // Used for some benchmarks - number of records to access
     volatile uint _rec_to_acc;
+
+    // The insert/delete/probe frequencies for microbenchmarks
+    int _insert_freq;
+    int _delete_freq;
+    int _probe_freq;
 
     // Storage manager access functions
     int  configure_sm();

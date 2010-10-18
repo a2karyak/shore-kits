@@ -88,6 +88,7 @@ DECLARE_ENV_CMD(stats);
 DECLARE_ENV_CMD(smstats);
 DECLARE_ENV_CMD(dump);
 DECLARE_ENV_CMD(fake_iodelay);
+DECLARE_ENV_CMD(freq);
 
 #ifndef CFG_SHORE_6
 DECLARE_ENV_CMD(fake_logdelay);
@@ -212,6 +213,7 @@ protected:
     guard<smstats_cmd_t>          _smstater;
     guard<dump_cmd_t>           _dumper;
     guard<fake_iodelay_cmd_t>   _fakeioer;   
+    guard<freq_cmd_t>           _freqer;
 
 #ifndef CFG_SHORE_6
     guard<fake_logdelay_cmd_t>  _fakelogdelayer;   

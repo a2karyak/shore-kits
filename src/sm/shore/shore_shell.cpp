@@ -757,6 +757,7 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(smstats_cmd_t,_smstater,_env);
     REGISTER_CMD_PARAM(dump_cmd_t,_dumper,_env);
     REGISTER_CMD_PARAM(fake_iodelay_cmd_t,_fakeioer,_env);
+    REGISTER_CMD_PARAM(freq_cmd_t,_freqer,_env);
 
 #ifndef CFG_SHORE_6
     REGISTER_CMD_PARAM(fake_logdelay_cmd_t,_fakelogdelayer,_env);
@@ -999,6 +1000,71 @@ void fake_iodelay_cmd_t::usage(void)
 string fake_iodelay_cmd_t::desc() const 
 { 
     return (string("Sets the fake I/O disk delay")); 
+}
+
+
+
+/*********************************************************************
+ *
+ *  "freq" command
+ *
+ *  Sets the frequencies in the INS/DEL/PROBE mix workloads
+ *
+ *********************************************************************/
+
+void freq_cmd_t::setaliases() 
+{ 
+    _name = string("freq"); 
+    _aliases.push_back("freq"); 
+}
+
+int freq_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char sInsertFreq[SERVER_COMMAND_BUFFER_SIZE];    
+    char sDeleteFreq[SERVER_COMMAND_BUFFER_SIZE];    
+
+    if ( sscanf(cmd, "%s %s %s", cmd_tag, sInsertFreq, sDeleteFreq) < 3) {
+        // prints all the env
+        usage();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    assert (_env);
+
+    int insert_freq = atoi(sInsertFreq);
+    int delete_freq = atoi(sDeleteFreq);
+
+    // Insert freq is [0,100]
+    insert_freq= (insert_freq<0) ? 0 : insert_freq;
+    insert_freq= (insert_freq>100) ? 100 : insert_freq;
+    
+    // Delete freq is [0,100-insert_freq]                
+    delete_freq= (delete_freq<0) ? 0 : delete_freq;
+    delete_freq= (insert_freq+delete_freq>100) ? (100-insert_freq)  : delete_freq;
+
+    // Probe is the rest, [0,100-insert_freq-delete_freq]               
+    int probe_freq = 100-insert_freq-delete_freq;
+
+    TRACE( TRACE_ALWAYS, "Setting frequencies I=%d%% D=%d%% P=%d%%\n",
+           insert_freq, delete_freq, probe_freq);
+    _env->set_freqs( insert_freq, delete_freq, probe_freq);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+void freq_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "FREQ Usage:\n\n"                              \
+           "*** freq <INSERT_FREQ> <DELETE_FREQ>\n"                     \
+           "\nParameters:\n"                                            \
+           "<INSERT_FREQ> - The frequency of the insertions\n"          \
+           "<DELETE_FREQ> - The frequency of the deletions\n"           \
+           "(The PROB_FREQ wil be 100-INS-DEL)\n\n");
+}
+
+string freq_cmd_t::desc() const 
+{ 
+    return (string("Sets the frequency of INS/DEL/PROBES, used by some workloads")); 
 }
 
 

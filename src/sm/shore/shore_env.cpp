@@ -95,7 +95,8 @@ ShoreEnv::ShoreEnv(string confname)
       _max_cpu_count(0),
       _active_cpu_count(0),
       _worker_cnt(0),
-      _measure(MST_UNDEF)
+      _measure(MST_UNDEF),
+      _insert_freq(0),_delete_freq(0),_probe_freq(100)
 {
     _popts = new option_group_t(1);
     _pvid = new vid_t(1);
@@ -220,6 +221,10 @@ void ShoreEnv::print_sf() const
  ********************************************************************/
 void ShoreEnv::set_freqs(int insert_freq, int delete_freq, int probe_freq) 
 {
+    assert ((insert_freq>=0) && (insert_freq<=100));
+    assert ((delete_freq>=0) && (delete_freq<=100));
+    assert ((probe_freq>=0) && (probe_freq<=100));
+
     _insert_freq = insert_freq;
     _delete_freq = delete_freq;
     _probe_freq = probe_freq;
