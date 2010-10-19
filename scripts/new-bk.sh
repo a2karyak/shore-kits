@@ -34,7 +34,8 @@ BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree
 
 # certain classes of sleep time are unimportant
 / pthread_cond_wait $(any __1cFshoreNbase_client_tIrun_xcts __1cEbf_mK_clean_buf __1cOchkpt_thread_tDrun __1cUpage_writer_thread_tDrun __1cFshoreJsrmwqueue __1cIlog_coreMflush_daemon __1cFshoreTshell_await_clients)/ $(blame ignore)
-/ pthread_cond_timedwait __1cTsunos_procmonitor_t/ $(blame ignore)
+/ pthread_cond_timedwait $(any __1cTsunos_procmonitor_t __1cTbf_cleaner_thread_t)/ $(blame ignore)
+/ ___nanosleep/ $(blame ignore)
 
 # snag CATALOG stuff first because we want to include any
 # latching/locking it causes
