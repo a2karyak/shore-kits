@@ -108,12 +108,11 @@ using namespace dora;
 //////////////////////////////
 
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline,
-                    snMRBT,  /* Baseline+MRBT */
-                    snDORA,
-                    snPLPA,  /* DORA+MRBT + No changes to heap */
-                    snPLPP,  /* DORA+MRBT + Heap pages per partition */
-                    snPLPL   /* DORA+MRBT + Heap pages per leaf */
+enum SysnameValue { snBaseline = 0x0,
+                    snDORA     = 0x1,
+                    snPLPA     = 0x2,  /* DORA+MRBT + No changes to heap */
+                    snPLPP     = 0x4,  /* DORA+MRBT + Heap pages per partition */
+                    snPLPL     = 0x8   /* DORA+MRBT + Heap pages per leaf */
 };
 
 // Map to associate string with then enum values
@@ -123,7 +122,6 @@ static map<string,SysnameValue> mSysnameValue;
 void initsysnamemap() 
 {
     mSysnameValue["baseline"] = snBaseline;
-    mSysnameValue["mrbt"]     = snMRBT;
     mSysnameValue["dora"]     = snDORA;
     mSysnameValue["plpa"]     = snPLPA;
     mSysnameValue["plpp"]     = snPLPP;
@@ -504,6 +502,20 @@ typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 
 ////////////////////////////////
 
+void usage() 
+{
+    TRACE( TRACE_ALWAYS, "\nAccepted parameters:\n"                       \
+           "-r            : Clobbber existing database\n"               \
+           "-n            : Start in network mode (listens to port)\n"  \
+           "-p <PORT>     : Listen to specific port\n"                  \
+           "-c <CONFIG>   : Use specific configuration\n"               \
+           "-x <RANGE>    : Use specific range (in some workloads)\n"   \
+           "-s <SYSTEM>   : Start specific system (e.g.,Baseline,DORA,...)\n" \
+           "-d <PHYSICAL> : Use specific physical design (Normal,Hack,MRBT)\n" \
+           "-h            : Print this message and exit\n");
+}
+
+
 
 int main(int argc, char* argv[]) 
 {
@@ -523,19 +535,23 @@ int main(int argc, char* argv[])
                //| TRACE_DEBUG
                );
 
-    // 0. First check if there is any particular configuration selected
+    // Check if there is any particular configuration selected
     envVar* ev = envVar::instance();
 
-    // 1. Get options
+    // Get options
     bool netmode = false;
     int netport = 0;
-    string config, system;
+    string config, system, physical;
     int c = 0;
     int iRange = 0;    
 
-    while ((c = getopt(argc,argv,"dnp:c:x:s:")) != -1) {
+    while ((c = getopt(argc,argv,"rnp:c:x:s:d:h")) != -1) {
         switch (c) {
-        case 'd':
+        case 'h':
+            usage();
+            return(0);
+            break;
+        case 'r':
             TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
             ev->setVarInt("db-clobberdev",1);
             break;
@@ -555,7 +571,12 @@ int main(int argc, char* argv[])
         case 's':
             TRACE( TRACE_ALWAYS, "SYSTEM (%s)\n", optarg);
             system = (string)optarg;
-            ev->setSysname(system);
+            ev->setSysName(system);
+            break;
+        case 'd':
+            TRACE( TRACE_ALWAYS, "PHYSICAL DESIGN (%s)\n", optarg);
+            physical = (string)optarg;
+            ev->setSysDesign(physical);
             break;
         case 'x':
             iRange = atoi(optarg);
@@ -568,36 +589,48 @@ int main(int argc, char* argv[])
         }
     }
 
-    // 2. Get env vars
+    // Get env vars
     initsysnamemap();
     initbenchmarkmap();
 
-    string sysname = ev->getSysname();
+    string sysname = ev->getSysName();
     string benchmarkname = ev->getSysVar("benchmark");
-    string dbname; 
-    bool dbnameset = false;
+
+    // Decide the physical design
+    physical = ev->getSysDesign();    
+    //     uint4_t pd = PD_NORMAL;
+    //     if (physical.compare("normal"))   { pd = PD_NORMAL; }
+    //     if (physical.compare("hack"))     { pd = PD_PADDED; }
+    //     if (physical.compare("mrbtnorm")) { pd = PD_MRBT_NORMAL; }
+    //     if (physical.compare("mrbtpart")) { pd = PD_MRBT_PART; }
+    //     if (physical.compare("mrbtleaf")) { pd = PD_MRBT_LEAF; }
+
+    string dbname;
 
     // 3. Initialize shell
     guard<shore_shell_t> kit = NULL;
 
-    TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", 
+    TRACE( TRACE_ALWAYS, "Starting (%s-%s-%s) kit\n", 
            benchmarkname.c_str(),
+           physical.c_str(),
            sysname.c_str());
 
-    return (0);
+
     // TPC-C
     if (benchmarkname.compare("tpcc")==0) {
-        dbname = "tpcc-";
+        dbname = "(tpcc-" + physical + "-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            dbname += "base"; dbnameset=true;
-        case snMRBT:
-            dbname += "mrbt";
-            kit = new baselineTPCCKit("(tpcc-base) ",netmode,netport);
+            dbname += "base) ";
+            kit = new baselineTPCCKit(dbname.c_str(),netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            kit = new doraTPCCKit("(tpcc-dora) ",netmode,netport);
+        case snPLPA:
+        case snPLPP:
+        case snPLPL:
+            dbname += "dora) ";
+            kit = new doraTPCCKit(dbname.c_str(),netmode,netport);
             break;
 #endif
         default:
@@ -608,13 +641,19 @@ int main(int argc, char* argv[])
 
     // TM1
     if (benchmarkname.compare("tm1")==0) {
+        dbname = "(tatp-" + physical + "-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTM1Kit("(tm1-base) ",netmode,netport);
+            dbname += "base) ";
+            kit = new baselineTM1Kit(dbname.c_str(),netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            kit = new doraTM1Kit("(tm1-dora) ",netmode,netport);
+        case snPLPA:
+        case snPLPP:
+        case snPLPL:
+            dbname += "dora) ";
+            kit = new doraTM1Kit(dbname.c_str(),netmode,netport);
             break;
 #endif
         default:
@@ -625,13 +664,19 @@ int main(int argc, char* argv[])
 
     // TPC-B
     if (benchmarkname.compare("tpcb")==0) {
+        dbname = "(tpcb-" + physical + "-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTPCBKit("(tpcb-base) ",netmode,netport);
+            dbname += "base) ";
+            kit = new baselineTPCBKit(dbname.c_str(),netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            kit = new doraTPCBKit("(tpcb-dora) ",netmode,netport);
+        case snPLPA:
+        case snPLPP:
+        case snPLPL:
+            dbname += "dora) ";
+            kit = new doraTPCBKit(dbname.c_str(),netmode,netport);
             break;
 #endif
         default:

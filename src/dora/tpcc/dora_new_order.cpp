@@ -195,7 +195,7 @@ w_rc_t r_wh_nord_action::trx_exec()
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         // 1. retrieve warehouse (read-only)
@@ -255,7 +255,7 @@ w_rc_t r_cust_nord_action::trx_exec()
          * FROM customer
          * WHERE w_id = :w_id AND c_d_id = :d_id AND c_id = :c_id
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         // 1. retrieve customer (read-only)
@@ -320,7 +320,7 @@ w_rc_t upd_dist_nord_action::trx_exec()
          * FROM district
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *
-         * plan: index probe on "D_INDEX"
+         * plan: index probe on "D_IDX"
          */
 
         // 1. retrieve district for update
@@ -422,7 +422,7 @@ w_rc_t r_item_nord_action::trx_exec()
              * FROM item
              * WHERE i_id = :ol_i_id
              *
-             * plan: index probe on "I_INDEX"
+             * plan: index probe on "I_IDX"
              */
         
             TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
@@ -503,7 +503,7 @@ w_rc_t upd_sto_nord_action::trx_exec()
              * FROM stock
              * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
              *
-             * plan: index probe on "S_INDEX"
+             * plan: index probe on "S_IDX"
              */
             
             tpcc_stock_tuple* pstock = &_prvp->_in.items[idx]._astock;

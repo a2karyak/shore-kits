@@ -80,10 +80,10 @@ ENTER_NAMESPACE(tpcc);
  */
 
 
-warehouse_t::warehouse_t(string sysname) : 
+warehouse_t::warehouse_t(const uint4_t& pd) : 
     table_desc_t("WAREHOUSE", TPCC_WAREHOUSE_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "W_ID");
     _desc[1].setup(SQL_FIXCHAR,  "W_NAME", 10);
     _desc[2].setup(SQL_FIXCHAR,  "W_STREET1", 20);
@@ -94,35 +94,17 @@ warehouse_t::warehouse_t(string sysname) :
     _desc[7].setup(SQL_FLOAT, "W_TAX");   
     _desc[8].setup(SQL_FLOAT, "W_YTD");  /* DECIMAL(12,2) */
 
+    // create unique index w_idx on (w_id)
     uint  keys[1] = { 0 }; // IDX { W_ID }
-
-    // depending on the system name, create the corresponding indexes 
-
-    // baseline - Regular 
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-        // create unique index w_index on (w_id)
-        create_primary_idx("W_INDEX", 0, keys, 1);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-
-            // create unique index w_index on (w_id)
-            // last param (nolock) is set to true
-            create_primary_idx("W_INDEX_NL", 0, keys, 1, true);
-        }
-#endif
-
+    create_primary_idx("W_IDX", 0, keys, 1, pd);
 }
 
 
-district_t::district_t(string sysname) : 
+
+district_t::district_t(const uint4_t& pd) : 
     table_desc_t("DISTRICT", TPCC_DISTRICT_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "D_ID");     
     _desc[1].setup(SQL_INT,   "D_W_ID");   
     _desc[2].setup(SQL_FIXCHAR,  "D_NAME", 10);    /* VARCHAR(10) */
@@ -135,32 +117,17 @@ district_t::district_t(string sysname) :
     _desc[9].setup(SQL_FLOAT, "D_YTD");         /* DECIMAL(12,2) */
     _desc[10].setup(SQL_INT,  "D_NEXT_O_ID");
 
+    // create unique index d_index on (d_id, w_id)
     uint keys[2] = { 0, 1 }; // IDX { D_ID, D_W_ID }
-
-    // baseline - Regular 
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name); 
-        // create unique index d_index on (d_id, w_id)
-        create_primary_idx("D_INDEX", 0, keys, 2);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-
-            // create unique index d_index on (d_id, w_id)
-            // last param (nolock) is set to true
-            create_primary_idx("D_INDEX_NL", 0, keys, 2, true);
-        }
-#endif
-
+    create_primary_idx("D_IDX", 0, keys, 2, pd);
 }
 
-customer_t::customer_t(string sysname) : 
+
+
+customer_t::customer_t(const uint4_t& pd) : 
     table_desc_t("CUSTOMER", TPCC_CUSTOMER_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,    "C_ID");
     _desc[1].setup(SQL_INT,    "C_D_ID");       
     _desc[2].setup(SQL_INT,    "C_W_ID");       
@@ -186,42 +153,23 @@ customer_t::customer_t(string sysname) :
     _desc[20].setup(SQL_FIXCHAR,  "C_DATA_1", 250);
     _desc[21].setup(SQL_FIXCHAR,  "C_DATA_2", 250);     
 
+
+    // create unique index c_index on (w_id, d_id, c_id)
     uint keys1[3] = {2, 1, 0 }; // IDX { C_W_ID, C_D_ID, C_ID }
+    create_primary_idx("C_IDX", 0, keys1, 3, pd);
 
+    
+    // create index c_name_index on (w_id, d_id, last, first, id)
     uint keys2[5] = {2, 1, 5, 3, 0}; // IDX { C_W_ID, C_D_ID, C_LAST, C_FIRST, C_ID }
-
-    // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
- 
-        // create unique index c_index on (w_id, d_id, c_id)
-        create_primary_idx("C_INDEX", 0, keys1, 3);
- 
-        // create index c_name_index on (w_id, d_id, last, first, id)
-        create_index("C_NAME_INDEX", 0, keys2, 5, false);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-
-            // create unique index c_index on (w_id, d_id, c_id)
-            // last param (nolock) is set to true
-            create_primary_idx("C_INDEX_NL", 0, keys1, 3, true);
-
-            // create index c_name_index on (w_id, d_id, last, first, id)
-            // last param (nolock) is set to true
-            create_index("C_NAME_INDEX_NL", 0, keys2, 5, false, false, true);     
-        }
-#endif
-
+    create_index("C_NAME_IDX", 0, keys2, 5, false, false, pd);
 }
 
-history_t::history_t(string /* sysname */) : 
+
+
+history_t::history_t(const uint4_t& /* pd */) : 
     table_desc_t("HISTORY", TPCC_HISTORY_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "H_C_ID");
     _desc[1].setup(SQL_INT,   "H_C_D_ID");  
     _desc[2].setup(SQL_INT,   "H_C_W_ID"); 
@@ -235,42 +183,26 @@ history_t::history_t(string /* sysname */) :
 }
 
 
-new_order_t::new_order_t(string sysname) : 
+
+new_order_t::new_order_t(const uint4_t& pd) : 
     table_desc_t("NEW_ORDER", TPCC_NEW_ORDER_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT, "NO_O_ID");
     _desc[1].setup(SQL_INT, "NO_D_ID");
     _desc[2].setup(SQL_INT, "NO_W_ID");
 
+    // create unique index no_index on (w_id, d_id, o_id)
     uint keys[3] = {2, 1, 0}; // IDX { NO_W_ID, NO_D_ID, NO_O_ID }
-
-    // baseline - Regular
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
- 
-        // create unique index no_index on (w_id, d_id, o_id)
-        create_primary_idx("NO_INDEX", 0, keys, 3);
-    } 
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-
-            // create unique index no_index on (w_id, d_id, o_id)
-            // last param (nolock) is set to true
-            create_primary_idx("NO_INDEX_NL", 0, keys, 3, true);        
-        }
-#endif
-
+    create_primary_idx("NO_IDX", 0, keys, 3, pd);
 }
 
 
-order_t::order_t(string sysname) : 
+
+order_t::order_t(const uint4_t& pd) : 
     table_desc_t("ORDER", TPCC_ORDER_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "O_ID");
     _desc[1].setup(SQL_INT,   "O_C_ID");       
     _desc[2].setup(SQL_INT,   "O_D_ID");       
@@ -280,44 +212,22 @@ order_t::order_t(string sysname) :
     _desc[6].setup(SQL_INT,   "O_OL_CNT");   
     _desc[7].setup(SQL_INT,   "O_ALL_LOCAL");
 
+
+    // create unique index o_index on (w_id, d_id, o_id)
     uint keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID }
+    create_index("O_IDX", 0, keys1, 3, pd);
 
+    // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
     uint keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
-
-
-    // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
- 
-        // create unique index o_index on (w_id, d_id, o_id)
-        create_index("O_INDEX", 0, keys1, 3);
-             
-        // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
-        create_index("O_CUST_INDEX", 0, keys2, 4);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-            
-            // create unique index o_index on (w_id, d_id, o_id)
-            // last param (nolock) is set to true
-            create_index("O_INDEX_NL", 0, keys1, 3, true, false, true);
-            
-            // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
-            // last param (nolock) is set to true
-            create_index("O_CUST_INDEX_NL", 0, keys2, 4, true, false, true);
-        }
-#endif
-
+    create_index("O_CUST_IDX", 0, keys2, 4, true, false, pd);
 }
 
 
-order_line_t::order_line_t(string sysname) : 
+
+order_line_t::order_line_t(const uint4_t& pd) : 
     table_desc_t("ORDERLINE", TPCC_ORDER_LINE_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,    "OL_O_ID");
     _desc[1].setup(SQL_INT,    "OL_D_ID");      
     _desc[2].setup(SQL_INT,    "OL_W_ID");   
@@ -329,68 +239,34 @@ order_line_t::order_line_t(string sysname) :
     _desc[8].setup(SQL_INT,    "OL_AMOUNT");
     _desc[9].setup(SQL_FIXCHAR,   "OL_DIST_INFO", 25);
 
+    // create unique index ol_index on (w_id, d_id, o_id, ol_number)
     uint keys[4] = {2, 1, 0, 3}; // IDX { OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER }
-
-    // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
- 
-        // create unique index ol_index on (w_id, d_id, o_id, ol_number)
-        create_primary_idx("OL_INDEX", 10, keys, 4);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-
-            // create unique index ol_index on (w_id, d_id, o_id, ol_number)
-            // last param (nolock) is set to true
-            create_primary_idx("OL_INDEX_NL", 10, keys, 4, true);
-        }
-#endif
-
+    create_primary_idx("OL_IDX", 10, keys, 4, pd);
 }
 
 
-item_t::item_t(string sysname) : 
+
+item_t::item_t(const uint4_t& pd) : 
     table_desc_t("ITEM", TPCC_ITEM_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,  "I_ID");
     _desc[1].setup(SQL_INT,  "I_IM_ID");
     _desc[2].setup(SQL_FIXCHAR, "I_NAME", 24);   
     _desc[3].setup(SQL_INT,  "I_PRICE");
     _desc[4].setup(SQL_FIXCHAR, "I_DATA", 50);
-	
+
+    // create unique index on i_index on (i_id)	
     uint keys[1] = {0}; // IDX { I_ID }
-
-    // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-             
-        // create unique index on i_index on (i_id)
-        create_primary_idx("I_INDEX", 0, keys, 1);
-    } 
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-
-            // create unique index on i_index on (i_id)
-            // last param (nolock) is set to true        
-            create_primary_idx("I_INDEX_NL", 0, keys, 1, true);
-        }
-#endif
-
+    create_primary_idx("I_IDX", 0, keys, 1, pd);
 }
 
 
-stock_t::stock_t(string sysname) : 
+
+stock_t::stock_t(const uint4_t& pd) : 
     table_desc_t("STOCK", TPCC_STOCK_FCOUNT) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,    "S_I_ID");
     _desc[1].setup(SQL_INT,    "S_W_ID");       
     _desc[2].setup(SQL_INT,    "S_REMOTE_CNT");
@@ -409,27 +285,9 @@ stock_t::stock_t(string sysname) :
     _desc[15].setup(SQL_FIXCHAR,  "S_DIST9", 24);
     _desc[16].setup(SQL_FIXCHAR,  "S_DATA", 50); 
 
+    // create unique index s_index on (w_id, i_id)
     uint keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
-
-    // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
- 
-        // create unique index s_index on (w_id, i_id)
-        create_primary_idx("S_INDEX", 0, keys, 2);
-    } 
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-            
-            // create unique index s_index on (w_id, i_id)
-            // last param (nolock) is set to true
-            create_primary_idx("S_INDEX_NL", 0, keys, 2, true);
-        }
-#endif
-
+    create_primary_idx("S_IDX", 0, keys, 2, pd);
 }
 
 

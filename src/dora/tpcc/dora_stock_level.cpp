@@ -178,7 +178,7 @@ w_rc_t r_dist_stock_action::trx_exec()
          * FROM district
          * WHERE d_w_id = :w_id AND d_id = :d_id
          *
-         * (index scan on D_INDEX)
+         * (index scan on D_IDX)
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d STO:dist-idx-probe (%d) (%d)\n", 
@@ -266,9 +266,9 @@ w_rc_t r_ol_stock_action::trx_exec()
          *       AND s_w_id = :w_id AND s_i_id = ol_i_id
          *       AND s_quantity < :threshold;
          *
-         *   Plan: 1. index scan on OL_INDEX 
+         *   Plan: 1. index scan on OL_IDX 
          *         2. sort ol tuples in the order of i_id from 1
-         *         3. index scan on S_INDEX
+         *         3. index scan on S_IDX
          *         4. fetch stock with sargable on quantity from 3
          *         5. nljoin on 2 and 4
          *         6. unique on 5

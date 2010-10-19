@@ -219,19 +219,19 @@ void ShoreTPCCEnv::table_builder_t::work()
 int ShoreTPCCEnv::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = envVar::instance()->getSysname();
+    _sysname = envVar::instance()->getSysName();
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
-    _pwarehouse_desc  = new warehouse_t(_sysname);
-    _pdistrict_desc   = new district_t(_sysname);
-    _pcustomer_desc   = new customer_t(_sysname);
-    _phistory_desc    = new history_t(_sysname);
-    _pnew_order_desc  = new new_order_t(_sysname);
-    _porder_desc      = new order_t(_sysname);
-    _porder_line_desc = new order_line_t(_sysname);
-    _pitem_desc       = new item_t(_sysname);
-    _pstock_desc      = new stock_t(_sysname);
+    _pwarehouse_desc  = new warehouse_t(get_pd());
+    _pdistrict_desc   = new district_t(get_pd());
+    _pcustomer_desc   = new customer_t(get_pd());
+    _phistory_desc    = new history_t(get_pd());
+    _pnew_order_desc  = new new_order_t(get_pd());
+    _porder_desc      = new order_t(get_pd());
+    _porder_line_desc = new order_line_t(get_pd());
+    _pitem_desc       = new item_t(get_pd());
+    _pstock_desc      = new stock_t(get_pd());
 
 
     // initiate the table managers
@@ -507,19 +507,23 @@ int ShoreTPCCEnv::conf()
 int ShoreTPCCEnv::post_init() 
 {
     conf();
-    TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
 
-    W_COERCE(db()->begin_xct());
-    w_rc_t rc = _post_init_impl();
-    if(rc.is_error()) {
-	cerr << "-> WH padding failed with: " << rc << endl;
-	db()->abort_xct();
-	return (rc.err_num());
-    }
-    else {
-	TRACE( TRACE_ALWAYS, "-> Done\n");
-	db()->commit_xct();
-	return (0);
+    // If the database is set to be padded
+    if (get_pd() == PD_PADDED) {
+        TRACE( TRACE_ALWAYS, "Checking for WH record padding...\n");
+
+        W_COERCE(db()->begin_xct());
+        w_rc_t rc = _post_init_impl();
+        if(rc.is_error()) {
+            cerr << "-> WH padding failed with: " << rc << endl;
+            rc = db()->abort_xct();
+            return (rc.err_num());
+        }
+        else {
+            TRACE( TRACE_ALWAYS, "-> Done\n");
+            rc = db()->commit_xct();
+            return (0);
+        }
     }
 }
 

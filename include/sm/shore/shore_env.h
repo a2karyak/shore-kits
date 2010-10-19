@@ -39,6 +39,7 @@
 #include "util.h"
 
 #include "shore_reqs.h"
+#include "shore_file_desc.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -499,6 +500,10 @@ protected:
     // system name
     string          _sysname;
 
+    // physical design characteristics
+    uint4_t _pd;
+
+    
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
@@ -584,6 +589,11 @@ public:
     double get_sf() const;
     double upd_sf();
     void print_sf() const;
+
+    // Set physical design characteristics
+    uint4_t get_pd() const;
+    uint4_t set_pd(const physical_design_t& apd);
+    uint4_t add_pd(const physical_design_t& apd);
 
     // Environment workers
     uint upd_worker_cnt();

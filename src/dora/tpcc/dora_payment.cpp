@@ -162,7 +162,7 @@ w_rc_t upd_wh_pay_action::trx_exec()
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
@@ -249,7 +249,7 @@ w_rc_t upd_dist_pay_action::trx_exec()
          * FROM district
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *
-         * plan: index probe on "D_INDEX"
+         * plan: index probe on "D_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
@@ -324,7 +324,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
              * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * ORDER BY c_first
              *
-             * plan: index only scan on "C_NAME_INDEX"
+             * plan: index only scan on "C_NAME_IDX"
              */
 
             assert (_pin._v_cust_ident_selection <= 60);
@@ -385,7 +385,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
          * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
          * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -436,7 +436,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
              * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
              *
-             * plan: index probe on "C_INDEX"
+             * plan: index probe on "C_IDX"
              */
 
             // update the data

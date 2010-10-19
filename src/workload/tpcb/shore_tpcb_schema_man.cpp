@@ -50,24 +50,22 @@ ENTER_NAMESPACE(tpcb);
 /* ----------------- */
 
 
-w_rc_t 
-branch_man_impl::b_index_probe_forupdate(ss_m* db,
-                                         branch_tuple* ptuple,
-                                         const int b_id)
+w_rc_t branch_man_impl::b_index_probe_forupdate(ss_m* db,
+                                                branch_tuple* ptuple,
+                                                const int b_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, b_id);
-    return (index_probe_forupdate_by_name(db, "B_INDEX", ptuple));
+    return (index_probe_forupdate_by_name(db, "B_IDX", ptuple));
 }
 
-w_rc_t 
-branch_man_impl::b_idx_nl(ss_m* db,
-                          branch_tuple* ptuple,
-                          const int b_id)
+w_rc_t branch_man_impl::b_idx_nl(ss_m* db,
+                                 branch_tuple* ptuple,
+                                 const int b_id)
 {
     assert (ptuple);
     ptuple->set_value(0, b_id);
-    return (index_probe_forupdate_by_name(db, "B_IDX_NL", ptuple));
+    return (index_probe_forupdate_by_name(db, "B_IDX", ptuple));
 }
 
 
@@ -76,24 +74,22 @@ branch_man_impl::b_idx_nl(ss_m* db,
 /* ---------------- */
 
 
-w_rc_t 
-teller_man_impl::t_index_probe_forupdate(ss_m* db,
-                                         teller_tuple* ptuple,
-                                         const int t_id)
+w_rc_t teller_man_impl::t_index_probe_forupdate(ss_m* db,
+                                                teller_tuple* ptuple,
+                                                const int t_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, t_id);
-    return (index_probe_forupdate_by_name(db, "T_INDEX", ptuple));
+    return (index_probe_forupdate_by_name(db, "T_IDX", ptuple));
 }
 
-w_rc_t 
-teller_man_impl::t_idx_nl(ss_m* db,
-                          teller_tuple* ptuple,
-                          const int t_id)
+w_rc_t teller_man_impl::t_idx_nl(ss_m* db,
+                                 teller_tuple* ptuple,
+                                 const int t_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, t_id);
-    return (index_probe_forupdate_by_name(db, "T_IDX_NL", ptuple));
+    return (index_probe_forupdate_by_name(db, "T_IDX", ptuple));
 }
 
 
@@ -102,14 +98,13 @@ teller_man_impl::t_idx_nl(ss_m* db,
 /* --- ACCOUNT --- */
 /* ---------------- */
 
-w_rc_t 
-account_man_impl::a_index_probe_forupdate(ss_m* db,
-                                          account_tuple* ptuple,
-                                          const int a_id)
+w_rc_t account_man_impl::a_index_probe_forupdate(ss_m* db,
+                                                 account_tuple* ptuple,
+                                                 const int a_id)
 {
     assert (ptuple);    
     ptuple->set_value(0, a_id);
-    return (index_probe_forupdate_by_name(db, "A_INDEX", ptuple));
+    return (index_probe_forupdate_by_name(db, "A_IDX", ptuple));
 }
 
 w_rc_t 
@@ -119,7 +114,7 @@ account_man_impl::a_idx_nl(ss_m* db,
 {
     assert (ptuple);    
     ptuple->set_value(0, a_id);
-    return (index_probe_forupdate_by_name(db, "A_IDX_NL", ptuple));
+    return (index_probe_forupdate_by_name(db, "A_IDX", ptuple));
 }
 
 

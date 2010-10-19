@@ -55,10 +55,10 @@ ENTER_NAMESPACE(tm1);
 /* ------------------------------------------------- */
 
 
-DECLARE_TABLE_SCHEMA(subscriber_t);
-DECLARE_TABLE_SCHEMA(access_info_t);
-DECLARE_TABLE_SCHEMA(special_facility_t);
-DECLARE_TABLE_SCHEMA(call_forwarding_t);
+DECLARE_TABLE_SCHEMA_PD(subscriber_t);
+DECLARE_TABLE_SCHEMA_PD(access_info_t);
+DECLARE_TABLE_SCHEMA_PD(special_facility_t);
+DECLARE_TABLE_SCHEMA_PD(call_forwarding_t);
 
 
 EXIT_NAMESPACE(tm1);

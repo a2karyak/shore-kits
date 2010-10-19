@@ -101,7 +101,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
@@ -179,7 +179,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
          * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
          * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -230,7 +230,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
              * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
              *
-             * plan: index probe on "C_INDEX"
+             * plan: index probe on "C_IDX"
              */
 
             // update the data

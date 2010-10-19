@@ -66,6 +66,8 @@ const uint cf_KEY_EST  = 3750;
 DoraTM1Env::DoraTM1Env(string confname)
     : ShoreTM1Env(confname), DoraEnv()
 { 
+    // Update the physical design that it is a DORA environment
+    add_pd(PD_NOLOCK);
 }
 
 DoraTM1Env::~DoraTM1Env()

@@ -56,14 +56,14 @@ ENTER_NAMESPACE(tm1);
 int ShoreTM1Env::load_schema()
 {
     // get the sysname type from the configuration
-    _sysname = envVar::instance()->getSysname();
+    _sysname = envVar::instance()->getSysName();
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
-    _psub_desc  = new subscriber_t(_sysname);
-    _pai_desc   = new access_info_t(_sysname);
-    _psf_desc   = new special_facility_t(_sysname);
-    _pcf_desc   = new call_forwarding_t(_sysname);
+    _psub_desc  = new subscriber_t(get_pd());
+    _pai_desc   = new access_info_t(get_pd());
+    _psf_desc   = new special_facility_t(get_pd());
+    _pcf_desc   = new call_forwarding_t(get_pd());
 
     // initiate the table managers
     _psub_man = new sub_man_impl(_psub_desc.get());

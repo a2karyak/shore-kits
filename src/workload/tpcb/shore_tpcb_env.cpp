@@ -64,10 +64,10 @@ int ShoreTPCBEnv::load_schema()
     TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
     // create the schema
-    _pbranch_desc   = new branch_t(_sysname);
-    _pteller_desc   = new teller_t(_sysname);
-    _paccount_desc  = new account_t(_sysname);
-    _phistory_desc  = new history_t(_sysname);
+    _pbranch_desc   = new branch_t(get_pd());
+    _pteller_desc   = new teller_t(get_pd());
+    _paccount_desc  = new account_t(get_pd());
+    _phistory_desc  = new history_t(get_pd());
 
 
     // initiate the table managers
@@ -459,20 +459,25 @@ int ShoreTPCBEnv::conf()
 int ShoreTPCBEnv::post_init() 
 {
     conf();
-    TRACE( TRACE_ALWAYS, "Checking for BRANCH/TELLER record padding...\n");
 
-    W_COERCE(db()->begin_xct());
-    w_rc_t rc = _post_init_impl();
-    if(rc.is_error()) {
-	cerr << "-> BRANCH/TELLER padding failed with: " << rc << endl;
-	db()->abort_xct();
-	return (rc.err_num());
+    // If the database is set to be padded
+    if (get_pd() == PD_PADDED) {
+        TRACE( TRACE_ALWAYS, "Checking for BRANCH/TELLER record padding...\n");
+
+        W_COERCE(db()->begin_xct());
+        w_rc_t rc = _post_init_impl();
+        if(rc.is_error()) {
+            cerr << "-> BRANCH/TELLER padding failed with: " << rc << endl;
+            rc = db()->abort_xct();
+            return (rc.err_num());
+        }
+        else {
+            TRACE( TRACE_ALWAYS, "-> Done\n");
+            rc = db()->commit_xct();
+            return (rc.err_num());
+        }
     }
-    else {
-	TRACE( TRACE_ALWAYS, "-> Done\n");
-	db()->commit_xct();
-	return (0);
-    }
+    return (0);
 }
 
 

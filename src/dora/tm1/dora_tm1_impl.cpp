@@ -1105,7 +1105,10 @@ w_rc_t ins_cf_icf_action::trx_exec()
             prcf->set_value(2, _in._s_time);
             prcf->set_value(3, _in._e_time);
             prcf->set_value(4, _in._numberx);                
-            prcf->set_value(5, "padding");
+
+#ifdef CFG_HACK
+            prcf->set_value(5, "padding"); // PADDING
+#endif
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid.get_lo());
 

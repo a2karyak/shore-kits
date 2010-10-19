@@ -95,7 +95,8 @@ ShoreEnv::ShoreEnv(string confname)
       _max_cpu_count(0),
       _active_cpu_count(0),
       _worker_cnt(0),
-      _measure(MST_UNDEF)
+      _measure(MST_UNDEF),
+      _pd(PD_NORMAL)
 {
     _popts = new option_group_t(1);
     _pvid = new vid_t(1);
@@ -103,13 +104,35 @@ ShoreEnv::ShoreEnv(string confname)
     pthread_mutex_init(&_scaling_mutex, NULL);
     pthread_mutex_init(&_queried_mutex, NULL);
 
+    // Read configuration
     envVar* ev = envVar::instance();
-    _rec_to_acc = ev->getVarInt("records-to-access",1);
+
+    string physical = ev->getSysDesign();
+   
+    if (physical.compare("hack")==0) {
+        _pd = PD_PADDED;
+    }
+   
+    if (physical.compare("mrbtnorm")==0) {
+        _pd = PD_MRBT_NORMAL;
+    }
+
+    if (physical.compare("mrbtpart")==0) {
+        _pd = PD_MRBT_PART;
+    }
+
+    if (physical.compare("mrbtleaf")==0) {
+        _pd = PD_MRBT_LEAF;
+    }
+    
 
 #ifdef CFG_SLI
     _bUseSLI = ev->getVarInt("db-worker-sli",0);
     fprintf(stdout, "SLI= %s\n", (_bUseSLI ? "enabled" : "disabled"));
 #endif
+
+    // Used by some benchmarks
+    _rec_to_acc = ev->getVarInt("records-to-access",1);
 }
 
 
@@ -209,6 +232,32 @@ void ShoreEnv::print_sf() const
     TRACE( TRACE_ALWAYS, "Queried Factor = (%.1f)\n", get_qf());
 }
 
+
+
+/******************************************************************** 
+ *
+ *  @fn:    Related to physical design
+ *
+ ********************************************************************/
+
+uint4_t ShoreEnv::get_pd() const
+{
+    return (_pd);
+}
+
+uint4_t ShoreEnv::set_pd(const physical_design_t& apd)
+{
+    _pd = apd;
+    TRACE( TRACE_ALWAYS, "DB set to (%x)\n", _pd);
+    return (_pd);
+}
+
+uint4_t ShoreEnv::add_pd(const physical_design_t& apd)
+{
+    _pd |= apd;
+    TRACE( TRACE_ALWAYS, "DB set to (%x)\n", _pd);
+    return (_pd);
+}
 
 
 /******************************************************************** 

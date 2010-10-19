@@ -81,12 +81,13 @@ const int TM1_PROB_ACTIVE_SF_NO  = 15;
 
 /* --- number of fields per table --- */
 
-// @note It is the actual number of fields plus one for padding
+// @note It is the actual number of fields
+// @note When padding is used it should be +1
 
-const int TM1_SUB_FCOUNT  = 35; //34;
-const int TM1_AI_FCOUNT   = 7;  //6;
-const int TM1_SF_FCOUNT   = 7;  //6;
-const int TM1_CF_FCOUNT   = 6;  //5;
+const int TM1_SUB_FCOUNT  = 34;
+const int TM1_AI_FCOUNT   = 6; 
+const int TM1_SF_FCOUNT   = 6; 
+const int TM1_CF_FCOUNT   = 5; 
 
 
 // some field sizes

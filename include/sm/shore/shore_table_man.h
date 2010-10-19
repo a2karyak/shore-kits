@@ -73,6 +73,11 @@ ENTER_NAMESPACE(shore);
     public: tablename(string sysname); }
 
 
+#define DECLARE_TABLE_SCHEMA_PD(tablename)              \
+    class tablename : public table_desc_t {             \
+    public: tablename(const uint4_t& pd); }
+
+
 /* ---------------------------------------------------------------
  *
  * @brief: Macros for correct offset calculation

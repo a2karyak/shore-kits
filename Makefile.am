@@ -133,6 +133,7 @@ SM_SHORE = \
    $(SMS)/shore_field.cpp \
    $(SMS)/shore_table.cpp \
    $(SMS)/shore_row.cpp \
+   $(SMS)/shore_index.cpp \
    $(SMS)/shore_sort_buf.cpp \
    $(SMS)/shore_reqs.cpp \
    $(SMS)/shore_env.cpp \

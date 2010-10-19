@@ -46,6 +46,28 @@ using namespace shore;
 /* ----------------------------------------- */
 
 
+table_desc_t::table_desc_t(const char* name, int fieldcnt)
+    : file_desc_t(name, fieldcnt), 
+      _indexes(NULL), 
+      _primary_idx(NULL),
+      _maxsize(0)
+{
+    // Create placeholders for the field descriptors
+    _desc = new field_desc_t[fieldcnt];
+}
+    
+
+table_desc_t::~table_desc_t()
+{
+    if (_desc)
+        delete [] _desc;
+
+    if (_indexes)
+        delete _indexes;
+}
+
+
+
 /********************************************************************* 
  *
  *  @fn:    create_table
@@ -59,57 +81,63 @@ w_rc_t table_desc_t::create_table(ss_m* db)
     if (!is_vid_valid() || !is_root_valid())
 	W_DO(find_root_iid(db));
 
-    /* create the table */
+    // create the table
     W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
 
-    /* add table entry to the metadata tree */
+    // add table entry to the metadata tree
     file_info_t file;
-    file.set_ftype(FT_REGULAR);
+    file.set_ftype(FT_HEAP);
     file.set_fid(_fid);
     W_DO(ss_m::create_assoc(root_iid(),
 			    vec_t(name(), strlen(name())),
 			    vec_t(&file, sizeof(file_info_t))));
     
 
-    /* create all the indexes of the table */
+    // create all the indexes of the table
     index_desc_t* index = _indexes;
+    stid_t iid = stid_t::null;
+    ss_m::ndx_t smidx_type = ss_m::t_uni_btree;
+    ss_m::concurrency_t smidx_cc = ss_m::t_cc_im;
+    
     while (index) {
-	stid_t iid;
 
-#ifdef CFG_DORA
-        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s) (%s)\n",
+        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s) (%s) (%s)\n",
                index->name(), 
+               (index->is_mr() ? "mrbt" : "bt"),
                (index->is_partitioned() ? "part" : "no part"), 
                (index->is_unique() ? "unique" : "no unique"),
                (index->is_relaxed() ? "relaxed" : "no relaxed"));
-#else
-        TRACE( TRACE_ALWAYS, "IDX (%s) (%s) (%s)\n",
-               index->name(), 
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"));
-#endif               
 
-        /* create index */
+        // the type of index to create
+        if (index->is_mr()) {
+            // MRBTree
+            smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
+        }
+        else {
+            // Regular BTree
+            smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
+        }
+
+        // what kind of CC will be used
+        smidx_cc = index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im;
+
+        // if it is the primary, update file flag
+        if (index->is_primary()) {
+            file.set_ftype(FT_PRIMARY_IDX);
+        }
+        else {
+            file.set_ftype(FT_IDX);
+        }
+
+
+        // create one index or multiple, if the index is partitioned
 	if(index->is_partitioned()) {
 	    for(int i=0; i < index->get_partition_count(); i++) {
-		W_DO(db->create_index(_vid,
-				      (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
-				      ss_m::t_regular,
-				      index_keydesc(index),
-#ifdef CFG_DORA
-				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im),
-#else
-				      ss_m::t_cc_im,
-#endif
-				      iid));
+		W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+				      index_keydesc(index), smidx_cc, iid));
 		index->set_fid(i, iid);
 		
-		/* add index entry to the metadata tree */
-		if (index->is_primary())
-		    file.set_ftype(FT_PRIMARY_IDX);
-		else
-		    file.set_ftype(FT_IDX);
-		
+		// add index entry to the metadata tree		
 		file.set_fid(iid);
 		char tmp[100];
 		sprintf(tmp, "%s_%d", index->name(), i);
@@ -119,31 +147,18 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 	    }
 	}
 	else {
-	    W_DO(db->create_index(_vid,
-				  (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
-				  ss_m::t_regular,
-				  index_keydesc(index),
-#ifdef CFG_DORA
-				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im),
-#else
-				  ss_m::t_cc_im,
-#endif
-				  iid));
+	    W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+				  index_keydesc(index), smidx_cc, iid));
 	    index->set_fid(0, iid);
 
-	    /* add index entry to the metadata tree */
-	    if (index->is_primary())
-		file.set_ftype(FT_PRIMARY_IDX);
-	    else
-		file.set_ftype(FT_IDX);
-
+	    // add index entry to the metadata tree
 	    file.set_fid(iid);
 	    W_DO(db->create_assoc(root_iid(),
 				  vec_t(index->name(), strlen(index->name())),
 				  vec_t(&file, sizeof(file_info_t))));
 	}
 	
-        /* move to next index */
+        // move to the next index of the table
 	index = index->next();
     }
     
@@ -172,10 +187,10 @@ bool table_desc_t::create_index(const char* name,
                                 const uint num,
                                 const bool unique,
                                 const bool primary,
-                                const bool nolock)
+                                const uint4_t& pd)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
-                                             unique, primary, nolock);
+                                             unique, primary, pd);
 
     // check the validity of the index
     for (uint_t i=0; i<num; i++)  {
@@ -205,9 +220,10 @@ bool table_desc_t::create_primary_idx(const char* name,
                                       int partitions,
                                       const uint* fields,
                                       const uint num,
-                                      const bool nolock)
+                                      const uint4_t& pd)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
+    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
+                                             true, true, pd);
 
     // check the validity of the index
     for (uint_t i=0; i<num; i++) {

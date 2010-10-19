@@ -201,7 +201,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
              * WHERE c_last = :c_last AND c_w_id = :w_id AND c_d_id = :d_id
              * ORDER BY c_first
              *
-             * plan: index only scan on "C_NAME_INDEX"
+             * plan: index only scan on "C_NAME_IDX"
              */
 
             assert (_in._c_select <= 60);
@@ -255,7 +255,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
          * FROM customer
          * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :d_id
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -332,7 +332,7 @@ w_rc_t r_ord_ordst_action::trx_exec()
          * WHERE o_w_id = :w_id AND o_d_id = :d_id AND o_c_id = :o_c_id
          * ORDER BY o_id DESC
          *
-         * plan: index scan on "O_CUST_INDEX"
+         * plan: index scan on "O_CUST_IDX"
          */
      
         guard<index_scan_iter_impl<order_t> > o_iter;
@@ -430,7 +430,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
          * FROM order_line 
          * WHERE ol_w_id = :H00003 AND ol_d_id = :H00004 AND ol_o_id = :H00016 
          *
-         * plan: index scan on "OL_INDEX"
+         * plan: index scan on "OL_IDX"
          */
 
 #ifndef ONLYDORA

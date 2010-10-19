@@ -218,7 +218,7 @@ w_rc_t del_nord_del_action::trx_exec()
          * FROM new_order
          * WHERE no_d_id = :d_id AND no_w_id = :w_id
          *
-         * plan: index scan on "NO_INDEX"
+         * plan: index scan on "NO_IDX"
          */
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx-nl (%d) (%d)\n", 
                _tid.get_lo(), _din._wh_id, _d_id);
@@ -256,7 +256,7 @@ w_rc_t del_nord_del_action::trx_exec()
         /* DELETE FROM new_order
          * WHERE no_w_id = :w_id AND no_d_id = :d_id AND no_o_id = :no_o_id
          *
-         * plan: index scan on "NO_INDEX"
+         * plan: index scan on "NO_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-delete-by-index-nl (%d) (%d) (%d)\n", 
@@ -311,7 +311,7 @@ w_rc_t upd_ord_del_action::trx_exec()
          * SELECT o_c_id INTO :o_c_id FROM orders
          * WHERE o_id = :no_o_id AND o_w_id = :w_id AND o_d_id = :d_id;
          *
-         * plan: index probe on "O_INDEX"
+         * plan: index probe on "O_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:ord-idx-probe-upd (%d) (%d) (%d)\n", 
@@ -385,7 +385,7 @@ w_rc_t upd_oline_del_action::trx_exec()
          * UPDATE ORDER_LINE SET ol_delivery_d = :curr_tmstmp
          * WHERE ol_w_id = :w_id AND ol_d_id = :no_d_id AND ol_o_id = :no_o_id;
          *
-         * plan: index scan on "OL_INDEX"
+         * plan: index scan on "OL_IDX"
          */
 
 
@@ -476,7 +476,7 @@ w_rc_t upd_cust_del_action::trx_exec()
          * SET c_balance = c_balance + :total_amount, c_delivery_cnt = c_delivery_cnt + 1
          * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :no_d_id;
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
