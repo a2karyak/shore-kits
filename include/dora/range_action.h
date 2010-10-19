@@ -122,7 +122,7 @@ public:
     // action, at the calc_keys() 
     virtual int trx_upd_keys()
     {
-        if (base_action_t::_keys_set) return (1); // if already set do not recalculate
+        if (base_action_t::are_keys_set()) return (1); // if already set do not recalculate
 
         // The hook for the real action to populate the keys needed
         calc_keys();
@@ -148,7 +148,7 @@ public:
                 KALReq akr(this,req_lm,&_key_list[i]);
                 Action::_requests.push_back(akr);
             }
-            base_action_t::_keys_set = range;
+            base_action_t::keys_set(range);
         }
         else {
             // Point access - need to lock only one Key
@@ -156,7 +156,7 @@ public:
             base_action_t::setkeys(1); // It needs only 1 key
             KALReq akr(this,req_lm,&_down);
             Action::_requests.push_back(akr);
-            base_action_t::_keys_set = 1; // The 1 key it needed is set
+            base_action_t::keys_set(true); // The 1 key it needed is set
         }
         return (0);
     }
