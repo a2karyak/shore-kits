@@ -147,10 +147,13 @@ public:
     // parses a string of SET requests
     int parseSetReq(const string& in);
 
-    // gets db-config and then <db-config>-system
+    // gets db-config and then <db-config>-attribute
     int setConfiguration(string sConfiguration);
-    string getSysname();
-    int    setSysname(const string& sysName);
+    string getSysName();
+    int    setSysName(const string& sysName);
+    string getSysDesign();
+    int    setSysDesign(const string& sysDesign);
+
     string getSysVar(string sParam);
     int    getSysVarInt(string sParam);
     double getSysVarDouble(string sParam);
