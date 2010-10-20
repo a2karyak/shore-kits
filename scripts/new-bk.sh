@@ -27,7 +27,7 @@ function blame() {
 }
 
 gawk -f <(cat <<EOF
-BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree,heap,ssm,kits,misc}'"]=0; ') }
+BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree,heap,ssm,kits}'"]=0; ') }
 
 # grand total
 { totals["total"]+=\$1 }
@@ -73,6 +73,9 @@ BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree
 
 # SSM
 / $(any __1cTsunos_procmonitor_t __1cEss_m __1cGpage_pF __1cJw_error_t)/ $(blame ssm)
+
+# Client
+/ $(any __1cFshoreNbase_client_t)/ $(blame client)
 
 # DORA
 / $(any __1cEdoraKlock_man_t __1cEdoraLpartition_t __1cEdoraOdora_flusher_t __1cEdoraOterminal_rvp_t __1cEdoraPdora_notifier_t)/ $(blame dora)
