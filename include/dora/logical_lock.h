@@ -38,6 +38,7 @@
 #include <deque>
 
 #include "util/stl_pooled_alloc.h"
+#include "util/stl_block_alloc.h"
 
 #include "dora/common.h"
 #include "dora/dora_error.h"
@@ -264,6 +265,8 @@ private:
  *
  ********************************************************************/
 
+#define BLOCK_ALLOC_LLMAP
+
 static const int ENTRIES_PER_KEY_LL_MAP = 6000;
 
 template<class DataType>
@@ -277,12 +280,19 @@ public:
 
     typedef KALReq_t<DataType>              KALReq;
 
+#ifdef BLOCK_ALLOC_LLMAP
+    typedef typename map__block_alloc<Key,LogicalLock>::Type LLMap;
+#else
     typedef typename PooledMap<Key,LogicalLock>::Type  LLMap;
+#endif
+    
     typedef typename LLMap::iterator        LLMapIt;
     typedef typename LLMap::const_iterator  LLMapCit;
 
     typedef typename LLMap::value_type      LLMapVT;
+#ifndef BLOCK_ALLOC_LLMAP
     typedef _Rb_tree_node<LLMapVT> LLMapNode;
+#endif
 
 protected:
 
@@ -302,9 +312,13 @@ public:
     { 
         // setup Key-LL map
         assert (keyEstimation);
+#ifdef BLOCK_ALLOC_LLMAP
+	_ll_map = new LLMap;
+#else
         _keyll_pool = new Pool(sizeof(LLMapNode),  keyEstimation); 
         assert (_keyll_pool);
         _ll_map = new LLMap(std::less<Key>(),_keyll_pool.get());
+#endif
 
         _key_cache = new object_cache_t<Key>();
         assert (_key_cache);
