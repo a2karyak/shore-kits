@@ -59,7 +59,6 @@ branch_man_impl::b_index_probe(ss_m* db,
     return (index_probe_by_name(db, "B_INDEX", ptuple));
 }
 
-
 w_rc_t 
 branch_man_impl::b_index_probe_forupdate(ss_m* db,
                                          branch_tuple* ptuple,
@@ -111,6 +110,38 @@ teller_man_impl::t_idx_nl(ss_m* db,
 /* ---------------- */
 /* --- ACCOUNT --- */
 /* ---------------- */
+
+w_rc_t
+account_man_impl::a_index_probe(ss_m* db,
+				account_tuple* ptuple,
+				const int a_id,
+				const int b_id,
+				const double balance)
+{
+    assert (ptuple);
+    ptuple->set_value(0, a_id);
+    ptuple->set_value(1, b_id);
+    ptuple->set_value(2, balance);
+    return (index_probe_by_name(db, "A_INDEX", ptuple));
+}
+
+w_rc_t 
+account_man_impl::a_delete_by_index(ss_m* db,
+				    account_tuple* ptuple,
+				    const int a_id,
+				    const int b_id,
+				    const double balance)
+{
+    assert (ptuple);
+
+    ptuple->set_value(0, a_id);
+    ptuple->set_value(1, b_id);
+    ptuple->set_value(2, balance);
+//     W_DO(index_probe_forupdate_by_name(db, "A_INDEX", ptuple));
+    W_DO(delete_tuple(db, ptuple));
+
+    return (RCOK);
+}
 
 w_rc_t 
 account_man_impl::a_index_probe_forupdate(ss_m* db,

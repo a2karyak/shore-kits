@@ -120,6 +120,18 @@ public:
 				   account_tuple* ptuple, 
 				   const int a_id);
 
+    w_rc_t a_delete_by_index(ss_m* db,
+			     account_tuple* ptuple,
+			     const int a_id,
+			     const int b_id,
+			     const double balance);
+
+    w_rc_t a_index_probe(ss_m* db,
+			 account_tuple* ptuple,
+			 const int a_id,
+			 const int b_id,
+			 const double balance);
+
     w_rc_t a_idx_nl(ss_m* db, 
                     account_tuple* ptuple, 
                     const int a_id);

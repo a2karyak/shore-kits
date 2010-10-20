@@ -93,6 +93,8 @@ struct populate_db_input_t
 struct mbench_insert_only_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_insert_only_input_t() { }
 };
@@ -100,6 +102,8 @@ struct mbench_insert_only_input_t
 struct mbench_delete_only_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_delete_only_input_t() { }
 };
@@ -107,6 +111,8 @@ struct mbench_delete_only_input_t
 struct mbench_probe_only_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_probe_only_input_t() { }
 };
@@ -114,6 +120,8 @@ struct mbench_probe_only_input_t
 struct mbench_insert_delete_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_insert_delete_input_t() { }
 };
@@ -121,6 +129,8 @@ struct mbench_insert_delete_input_t
 struct mbench_insert_probe_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_insert_probe_input_t() { }
 };
@@ -128,6 +138,8 @@ struct mbench_insert_probe_input_t
 struct mbench_delete_probe_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_delete_probe_input_t() { }
 };
@@ -135,6 +147,8 @@ struct mbench_delete_probe_input_t
 struct mbench_mix_input_t 
 {
     int b_id;
+    int a_id;
+    double balance;
 
     mbench_mix_input_t() { }
 };

@@ -136,14 +136,21 @@ account_t::account_t(string sysname) :
     _desc[2].setup(SQL_FLOAT,  "A_BALANCE");  
     _desc[3].setup(SQL_FIXCHAR,   "A_PADDING", 100-2*sizeof(int)-sizeof(double));  
     
+#ifdef PLP_MBENCH
+#warning PLP MBench !!!!
+    uint keys1[3] = { 0, 1, 2};
+    uint nkeys = 3;
+#else
     uint keys1[1] = {0 }; // IDX { A_ID }
+    uint nkeys = 1;
+#endif
 
     // baseline - regular indexes
     if (sysname.compare("baseline")==0) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
         // create unique index c_index on (w_id, d_id, c_id)
-        create_primary_idx("A_INDEX", 0, keys1, 1);
+        create_primary_idx("A_INDEX", 0, keys1, nkeys);
     }
 
 #ifdef CFG_DORA
@@ -153,7 +160,7 @@ account_t::account_t(string sysname) :
         
             // create unique index s_index on (a_id)
             // last param (nolock) is set to true
-            create_primary_idx("A_IDX_NL", 0, keys1, 1, true);
+            create_primary_idx("A_IDX_NL", 0, keys1, nkeys, true);
         }       
 #endif
 

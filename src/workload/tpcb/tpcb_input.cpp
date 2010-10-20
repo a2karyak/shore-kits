@@ -107,7 +107,7 @@ populate_db_input_t create_populate_db_input(int sf,
 /* --- MBENCH_INSERT_ONLY --- */
 /* -------------------------- */
 
-volatile unsigned long branchcnt = 0;
+volatile unsigned long balance = 0; // TODO: not used not, to be removed later
 
 mbench_insert_only_input_t create_mbench_insert_only_input(int sf, 
 							   int specificBr)
@@ -116,9 +116,20 @@ mbench_insert_only_input_t create_mbench_insert_only_input(int sf,
     
     mbench_insert_only_input_t mioin;
 
-    atomic_inc_64_nv(&branchcnt);
+    //    atomic_inc_64_nv(&balance);
 
-    mioin.b_id = sf+branchcnt;
+    // The TPC-B branches start from 0 (0..SF-1)
+    if (specificBr>0) {
+        mioin.b_id = specificBr-1;
+    }
+    else {
+        mioin.b_id = UZRand(0,sf-1);
+    }
+        
+    // local branch
+    mioin.a_id = (mioin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+            
+    mioin.balance = URand(0,200000000) - 100000000;
         
     return (mioin);
 }
@@ -135,9 +146,21 @@ mbench_delete_only_input_t create_mbench_delete_only_input(int sf,
 							   int specificBr)
 {
     assert (sf>0);
+    
     mbench_delete_only_input_t mdoin;
-    mdoin.b_id = sf+branchcnt;
-    atomic_dec_64_nv(&branchcnt);
+
+    // The TPC-B branches start from 0 (0..SF-1)
+    if (specificBr>0) {
+        mdoin.b_id = specificBr-1;
+    }
+    else {
+        mdoin.b_id = UZRand(0,sf-1);
+    }
+        
+    // local branch
+    mdoin.a_id = (mdoin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+            
+    mdoin.balance = URand(0,2000000) - 1000000;
 
     return (mdoin);
 }
@@ -156,7 +179,19 @@ mbench_probe_only_input_t create_mbench_probe_only_input(int sf,
     assert (sf>0);
     
     mbench_probe_only_input_t mpoin;
-    mpoin.b_id = URand(0,sf+branchcnt);
+
+    // The TPC-B branches start from 0 (0..SF-1)
+    if (specificBr>0) {
+        mpoin.b_id = specificBr-1;
+    }
+    else {
+        mpoin.b_id = UZRand(0,sf-1);
+    }
+        
+    // local branch
+    mpoin.a_id = (mpoin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+            
+    mpoin.balance = URand(0,200000000) - 100000000;
 
     return (mpoin);
 }
@@ -175,7 +210,11 @@ mbench_insert_delete_input_t create_mbench_insert_delete_input(int sf,
     assert (sf>0);
     
     mbench_insert_delete_input_t midin;
-    midin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+    mbench_insert_only_input_t mioin;
+    mioin = create_mbench_insert_only_input(sf, specificBr);
+    midin.b_id = mioin.b_id;
+    midin.a_id = mioin.a_id;
+    midin.balance = mioin.balance;
 
     return (midin);
 }
@@ -194,7 +233,11 @@ mbench_insert_probe_input_t create_mbench_insert_probe_input(int sf,
     assert (sf>0);
     
     mbench_insert_probe_input_t mipin;
-    mipin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+    mbench_insert_only_input_t mioin;
+    mioin = create_mbench_insert_only_input(sf, specificBr);
+    mipin.b_id = mioin.b_id;
+    mipin.a_id = mioin.a_id;
+    mipin.balance = mioin.balance;
 
     return (mipin);
 }
@@ -213,7 +256,12 @@ mbench_delete_probe_input_t create_mbench_delete_probe_input(int sf,
     assert (sf>0);
     
     mbench_delete_probe_input_t mdpin;
-    mdpin.b_id = create_mbench_delete_only_input(sf, specificBr).b_id;
+    mbench_delete_only_input_t mdoin;
+    mdoin = create_mbench_delete_only_input(sf, specificBr);
+    mdpin.b_id = mdoin.b_id;
+    mdpin.a_id = mdoin.a_id;
+    mdpin.balance = mdoin.balance;
+
 
     return (mdpin);
 }
@@ -232,7 +280,11 @@ mbench_mix_input_t create_mbench_mix_input(int sf,
     assert (sf>0);
     
     mbench_mix_input_t mmin;
-    mmin.b_id = create_mbench_insert_only_input(sf, specificBr).b_id;
+    mbench_insert_only_input_t mioin;
+    mioin = create_mbench_insert_only_input(sf, specificBr);
+    mmin.b_id = mioin.b_id;
+    mmin.a_id = mioin.a_id;
+    mmin.balance = mioin.balance;
 
     return (mmin);
 }

@@ -190,31 +190,31 @@ w_rc_t ShoreTPCBEnv::run_one_xct(Request* prequest)
      case XCT_TPCB_MBENCH_PROBE_ONLY:
 	 return (run_mbench_probe_only(prequest));
      case XCT_TPCB_MBENCH_INSERT_DELETE:
-        if (URand(1,100)>50)
+        if (URand(1,100)>_delete_freq)
             return (run_mbench_insert_only(prequest));
         else
             return (run_mbench_delete_only(prequest));
 	//return (run_mbench_insert_delete(prequest));
      case XCT_TPCB_MBENCH_INSERT_PROBE:
-        if (URand(1,100)>50)
+        if (URand(1,100)>_probe_freq)
             return (run_mbench_insert_only(prequest));
         else
             return (run_mbench_probe_only(prequest));
 	// return (run_mbench_insert_probe(prequest));
      case XCT_TPCB_MBENCH_DELETE_PROBE:
-        if (URand(1,100)>50)
-            return (run_mbench_delete_only(prequest));
-        else
+        if (URand(1,100)>_delete_freq)
             return (run_mbench_probe_only(prequest));
+        else
+            return (run_mbench_delete_only(prequest));
 	// return (run_mbench_delete_probe(prequest));
      case XCT_TPCB_MBENCH_MIX:
 	 rand = URand(1,100); 
-        if (rand>33)
+        if (rand<=_insert_freq)
             return (run_mbench_insert_only(prequest));
-        else if(rand>66)
-            return (run_mbench_delete_only(prequest));	 
+        else if(rand<=_insert_freq+_probe_freq)
+            return (run_mbench_probe_only(prequest));	 
 	else 
-	    return (run_mbench_probe_only(prequest));
+	    return (run_mbench_delete_only(prequest));
 	// return (run_mbench_mix(prequest));
 
      default:
@@ -497,25 +497,26 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */,
     assert (_loaded);
 
     // mbench insert only trx touches 1 table:
-    // branch
+    // accounts
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
-    assert (prb);
+    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    assert (pracct);
 
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize()); 
-    prb->_rep = &areprow;
+    pracct->_rep = &areprow;
 
     { // make gotos safe
 
-	// 1. insert a tupple to branches
-	prb->set_value(0, mioin.b_id);
-	prb->set_value(1, 0.0);
-	prb->set_value(2, "padding");
-	e = _pbranch_man->add_tuple(_pssm, prb);
+	// 1. insert a tupple to accounts
+	pracct->set_value(0, mioin.a_id);
+	pracct->set_value(1, mioin.b_id);
+	pracct->set_value(2, mioin.balance);
+	pracct->set_value(3, "padding");
+	e = _paccount_man->add_tuple(_pssm, pracct);
 	if (e.is_error()) { goto done; }
 
     } // goto
@@ -523,12 +524,12 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */,
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
-    prb->print_tuple();
+    pracct->print_tuple();
 #endif
 
 done:
     // return the tuples to the cache
-    _pbranch_man->give_tuple(prb);
+    _paccount_man->give_tuple(pracct);
     return (e);
 
 } // EOF: MBENCH INSERT ONLY
@@ -551,40 +552,36 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_only(const int /* xct_id */,
     assert (_initialized);
     assert (_loaded);
 
-    // mbench delete only trx touches 1 table:
-    // branch
+    // mbench insert only trx touches 1 table:
+    // accounts
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
-    assert (prb);
+    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    assert (pracct);
 
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize()); 
-    prb->_rep = &areprow;
+    pracct->_rep = &areprow;
 
     { // make gotos safe
 
-	// 1. retrive a tupple from branches
-	e = _pbranch_man->b_index_probe(_pssm, prb, mdoin.b_id);
+	// 1. delete a tupple from accounts
+	e = _paccount_man->a_delete_by_index(_pssm, pracct, mdoin.a_id, mdoin.b_id, mdoin.balance);
 	if (e.is_error()) { goto done; }
 
-	// 2. delete a tupple from branches
-	e = _pbranch_man->delete_tuple(_pssm, prb);
-	if (e.is_error()) { goto done; }
-	
     } // goto
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
-    prb->print_tuple();
+    pracct->print_tuple();
 #endif
 
 done:
     // return the tuples to the cache
-    _pbranch_man->give_tuple(prb);
+    _paccount_man->give_tuple(pracct);
     return (e);
 
 } // EOF: MBENCH DELETE ONLY
@@ -607,23 +604,23 @@ w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */,
     assert (_initialized);
     assert (_loaded);
 
-    // mbench probe only trx touches 1 table:
-    // branch
+    // mbench insert only trx touches 1 table:
+    // accounts
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
-    assert (prb);
+    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    assert (pracct);
 
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize()); 
-    prb->_rep = &areprow;
+    pracct->_rep = &areprow;
 
     { // make gotos safe
 
-	// 1. retrieve a tupple from branches
-	e = _pbranch_man->b_index_probe(_pssm, prb, mpoin.b_id);
+	// 1. retrieve a tupple from accounts
+	e = _paccount_man->a_index_probe(_pssm, pracct, mpoin.a_id, mpoin.b_id, mpoin.balance);
 	if (e.is_error()) { goto done; }
 
     } // goto
@@ -631,19 +628,19 @@ w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */,
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
-    prb->print_tuple();
+    pracct->print_tuple();
 #endif
 
 done:
     // return the tuples to the cache
-    _pbranch_man->give_tuple(prb);
+    _paccount_man->give_tuple(pracct);
     return (e);
 
 } // EOF: MBENCH PROBE ONLY
 
 
 
-
+// TODO: has to be updated if decided to be used
 /******************************************************************** 
  *
  * TPC-B MBench Insert Delete
