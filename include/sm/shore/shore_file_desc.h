@@ -96,20 +96,22 @@ enum file_type_t  { FT_HEAP         = 0x0,
  *         currently supported options:
  *         PD_NORMAL      - vanilla structures
  *         PD_PADDED      - use padding to reduce contention
- *         PD_DORA        - have indexes without CC
  *         PD_MRBT_NORMAL - use MRBTrees with normal heap files
  *         PD_MRBT_PART   - use MRBTrees with partitioned heap files
  *         PD_MRBT_LEAF   - use MRBTrees with each heap page corresponding 
  *                          to one leaf MRBTree index page
+ *         PD_NOLOCK      - have indexes without CC
+ *         PD_NOLATCH     - have indexes without even latching
  *
  * --------------------------------------------------------------- */
 
 enum physical_design_t { PD_NORMAL      = 0x0,
                          PD_PADDED      = 0x1,
-                         PD_NOLOCK      = 0x2,
-                         PD_MRBT_NORMAL = 0x4,
-                         PD_MRBT_PART   = 0x8,
-                         PD_MRBT_LEAF   = 0x10
+                         PD_MRBT_NORMAL = 0x2,
+                         PD_MRBT_PART   = 0x4,
+                         PD_MRBT_LEAF   = 0x8,
+                         PD_NOLOCK      = 0x10,
+                         PD_NOLATCH     = 0x20
 };
 
 

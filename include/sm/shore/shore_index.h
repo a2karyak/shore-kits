@@ -73,6 +73,7 @@ private:
     bool            _primary;                  /* is it primary or not */
     bool            _nolock;                   /* is it using locking or not */ 
     bool            _mr;                       /* is it multi-rooted */ 
+    bool            _latchless;                /* does it use any latches at all */ 
 
     index_desc_t*   _next;                     /* linked list of all indices */
 
@@ -147,6 +148,7 @@ public:
     inline bool is_primary() const { return (_primary); }
     inline bool is_relaxed() const { return (_nolock); }
     inline bool is_mr() const { return (_mr); }
+    inline bool is_latchless() const { return (_latchless); }
     inline bool is_partitioned() const { return _partition_count > 1; }
 
     inline int  get_partition_count() const { return _partition_count; }

@@ -78,6 +78,14 @@ index_desc_t::index_desc_t(const char* name, const int fieldcnt,
     else {
         _nolock = false;
     }
+
+    // Check if Latch-less
+    if (pd & PD_NOLATCH) {
+        _latchless = true;
+    }
+    else {
+        _latchless = false;
+    }
 }
 
 
