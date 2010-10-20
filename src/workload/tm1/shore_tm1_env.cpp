@@ -211,7 +211,7 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 
 void  ShoreTM1Env::table_creator_t::work() 
 {
-    // 1. Create the tables
+    // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_psub_desc->create_table(_env->db()));
     W_COERCE(_env->_pai_desc->create_table(_env->db()));
@@ -219,7 +219,11 @@ void  ShoreTM1Env::table_creator_t::work()
     W_COERCE(_env->_pcf_desc->create_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
 
-    // 2. Preload (preloads_per_worker) records for each of the loaders
+    // IP: Dirty Dirty Hack - sets the boundaries for the partitions
+    int mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    
+
+    // Preload (preloads_per_worker) records for each of the loaders
     int sub_id = 0;
     for (int i=0; i<_loaders; i++) {
         W_COERCE(_env->db()->begin_xct());        
