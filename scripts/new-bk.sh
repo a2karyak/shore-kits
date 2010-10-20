@@ -24,13 +24,10 @@ function blame() {
     echo -n "{ "
     [ -n "$DUMP_SPLIT_DAT" ] && echo -n "print \$0 > \"test-$1.dat\"; "
     echo -n "totals[\"$1\"]+=\$1; next }"
+    echo -n "BEGIN { totals[\"$1\"]=0 }"
 }
 
 gawk -f <(cat <<EOF
-BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree,heap,ssm,kits}'"]=0; ') }
-
-# grand total
-{ totals["total"]+=\$1 }
 
 # certain classes of sleep time are unimportant
 / pthread_cond_wait $(any __1cFshoreNbase_client_tIrun_xcts __1cEbf_mK_clean_buf __1cOchkpt_thread_tDrun __1cUpage_writer_thread_tDrun __1cFshoreJsrmwqueue __1cIlog_coreMflush_daemon __1cFshoreTshell_await_clients __1cGcondex)/ $(blame ignore)
@@ -86,7 +83,7 @@ BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree
 # leftovers
 $(blame misc)
 
-END { for (c in totals) { print c,totals[c] }; print "net-total",totals["total"] - totals["ignore"]; }
+END { for (c in totals) { n=totals[c]; print c,n; total+=n }; print "total",total; print "net-total",total - totals["ignore"]; }
 EOF
 )
 
