@@ -126,7 +126,10 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
     actionReadyList.clear();
     actionPromotedList.clear();
 
-    // 1. check if signalled to stop
+    // Initiate the sdesc cache
+    me()->alloc_sdesc_cache();
+
+    // Check if signalled to stop
     while (get_control() == WC_ACTIVE) {
         
         // reset the flags for the new loop
@@ -184,6 +187,10 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
             }
         }
     }
+
+    // Release sdesc cache before exiting
+    me()->free_sdesc_cache();
+
     return (0);
 }
 

@@ -117,14 +117,24 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
     client_ready();
     
     // retrieve the default batch size and think time
-    batchsz = envVar::instance()->getVarInt("db-cl-batchsz",BATCH_SIZE);
-    _think_time = envVar::instance()->getVarInt("db-cl-thinktime",THINK_TIME);
+    envVar* ev = envVar::instance();
+    batchsz = ev->getVarInt("db-cl-batchsz",BATCH_SIZE);
+    _think_time = ev->getVarInt("db-cl-thinktime",THINK_TIME);
 
     if ((_think_time>0) && (batchsz>1)) {
         TRACE( TRACE_ALWAYS, "error: Batchsz=%d && ThinkTime=%d\n", 
                batchsz, _think_time);
         assert(0);
     }
+
+
+    // If in DORA (or at least not in Baseline) allocate an empty sdesc cache
+    // so that the xct does not allocate one. The DORA workers will do that.
+    string sysname = ev->getSysname();
+    if (sysname.compare("baseline")!=0) {
+        me()->alloc_sdesc_cache();
+    }
+    
 
     switch (_measure_type) {
 
@@ -170,6 +180,10 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         break;
     }
     TRACE( TRACE_TRX_FLOW, "Exiting...\n");
+    if (sysname.compare("baseline")!=0) {
+        me()->free_sdesc_cache();
+    }
+
     return (RCOK);
 }
 
