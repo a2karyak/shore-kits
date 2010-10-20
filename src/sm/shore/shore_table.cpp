@@ -133,8 +133,15 @@ w_rc_t table_desc_t::create_table(ss_m* db)
         // create one index or multiple, if the index is partitioned
 	if(index->is_partitioned()) {
 	    for(int i=0; i < index->get_partition_count(); i++) {
-		W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
-				      index_keydesc(index), smidx_cc, iid));
+                if (!index->is_mr()) {
+                    W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+                                          index_keydesc(index), smidx_cc, iid));
+                }
+                else {
+                    W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
+                                             index_keydesc(index), smidx_cc, iid,
+                                             index->is_latchless()));
+                }
 		index->set_fid(i, iid);
 		
 		// add index entry to the metadata tree		
@@ -147,8 +154,15 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 	    }
 	}
 	else {
-	    W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
-				  index_keydesc(index), smidx_cc, iid));
+            if (!index->is_mr()) {
+                W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+                                      index_keydesc(index), smidx_cc, iid));
+            }
+            else {
+                W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
+                                         index_keydesc(index), smidx_cc, iid,
+                                         index->is_latchless()));
+            }                
 	    index->set_fid(0, iid);
 
 	    // add index entry to the metadata tree
