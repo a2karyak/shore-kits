@@ -33,7 +33,7 @@ BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree
 { totals["total"]+=\$1 }
 
 # certain classes of sleep time are unimportant
-/ pthread_cond_wait $(any __1cFshoreNbase_client_tIrun_xcts __1cEbf_mK_clean_buf __1cOchkpt_thread_tDrun __1cUpage_writer_thread_tDrun __1cFshoreJsrmwqueue __1cIlog_coreMflush_daemon __1cFshoreTshell_await_clients)/ $(blame ignore)
+/ pthread_cond_wait $(any __1cFshoreNbase_client_tIrun_xcts __1cEbf_mK_clean_buf __1cOchkpt_thread_tDrun __1cUpage_writer_thread_tDrun __1cFshoreJsrmwqueue __1cIlog_coreMflush_daemon __1cFshoreTshell_await_clients __1cGcondex)/ $(blame ignore)
 / pthread_cond_timedwait $(any __1cTsunos_procmonitor_t __1cTbf_cleaner_thread_t)/ $(blame ignore)
 / ___nanosleep/ $(blame ignore)
 
@@ -41,11 +41,20 @@ BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree
 # latching/locking it causes
 / __1cFdir_m/ $(blame catalog)
 
+# latch contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* __1cHlatch_t/ $(blame latch-c)
+
 # latching
 / __1cHlatch_t/ $(blame latch)
 
+# physical lock contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock-pc)
+
+# logical lock contention
+/ $(any __lwp_park __lwp_unpark).* $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock-lc)
+
 # locking
-/ (__1cGlock_m|__1cLlock_core_m)/ $(blame lock)
+/ $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock)
 
 # bpool
 / $(any __1cEbf_m __1cJbf_core_m __1cUpage_writer_thread_t __1cTbf_cleaner_thread_t)/ $(blame bpool)
@@ -65,13 +74,16 @@ BEGIN { $(echo 'totals["'{misc,ignore,catalog,latch,lock,bpool,log,xct_mgt,btree
 # SSM
 / $(any __1cTsunos_procmonitor_t __1cEss_m __1cGpage_pF __1cJw_error_t)/ $(blame ssm)
 
+# DORA
+/ $(any __1cEdoraKlock_man_t __1cEdoraLpartition_t __1cEdoraOdora_flusher_t __1cEdoraOterminal_rvp_t __1cEdoraPdora_notifier_t)/ $(blame dora)
+
 # kits
 / __1cFshore/ $(blame kits)
 
 # leftovers
 $(blame misc)
 
-END { for (c in totals) { print c,totals[c] } }
+END { for (c in totals) { print c,totals[c] }; print "net-total",totals["total"] - totals["ignore"]; }
 EOF
 )
 
