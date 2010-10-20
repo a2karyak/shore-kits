@@ -1125,14 +1125,16 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
         W_DO(index->find_fid(db, pnum));
 
         if (index->is_mr()) {
-            RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
+            //RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
+            ss_m::el_filler ef;
+            ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
-                                     vec_t(ptuple->_rep->_dest, ksz),
-                                     vec_t(&(ptuple->_rid), sizeof(rid_t))
+                                     cvec_t(ptuple->_rep->_dest, ksz),
+                                     ef
 #ifdef CFG_DORA
                                      ,bIgnoreLocks
 #endif
-                                     reloc_func
+                                     , NULL // reloc_func
                                      ));
         }
         else {
