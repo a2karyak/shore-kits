@@ -137,6 +137,7 @@ protected:
 	row_cache* operator->() { return tls_get(); }
     };
 
+
 #define _DEFINE_ROW_CACHE_TLS(table_man, tls_name) \
     DECLARE_TLS(table_man::row_cache, tls_name);   \
     template<> table_man::row_cache* table_man::pcache_link::tls_get() { return tls_name; }
@@ -228,7 +229,7 @@ public:
         return (index_probe(db, pidx, ptuple, EX, LATCH_EX));
     }
 
-    /* probe idx in NL (& LATCH_SH) mode */
+    // probe idx in NL (& LATCH_SH) mode
     inline w_rc_t   index_probe_nl(ss_m* db,
                                    index_desc_t* pidx,
                                    table_tuple*  ptuple)
@@ -236,7 +237,7 @@ public:
         return (index_probe(db, pidx, ptuple, NL, LATCH_SH));
     }
 
-    /* probe primary idx */
+    // probe primary idx
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
                                         lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
@@ -247,7 +248,7 @@ public:
     }
 
 
-    // by name probes
+    // probes based on the name of the index
 
 
     // idx probe - based on idx name //
@@ -324,13 +325,6 @@ public:
     w_rc_t scan_index(ss_m* db, index_desc_t* pidx);
 
 
-    /* ----------------- */
-    /* --- debugging --- */
-    /* ----------------- */
-
-    w_rc_t print_table(ss_m* db); /* print the table on screen */
-
-
     /* ------------------------------ */
     /* --- trash stack operations --- */
     /* ------------------------------ */
@@ -354,6 +348,14 @@ public:
     {
         _pcache->giveback(ptt);
     }
+
+
+    /* ----------------- */
+    /* --- debugging --- */
+    /* ----------------- */
+
+    w_rc_t print_table(ss_m* db); /* print the table on screen */
+
 
 }; // EOF: table_man_impl
 
@@ -1129,7 +1131,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
             ss_m::el_filler ef;
             ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
-                                     cvec_t(ptuple->_rep->_dest, ksz),
+                                     vec_t(ptuple->_rep->_dest, ksz),
                                      ef
 #ifdef CFG_DORA
                                      ,bIgnoreLocks

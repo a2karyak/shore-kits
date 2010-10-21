@@ -162,6 +162,9 @@ w_rc_t table_desc_t::create_table(ss_m* db)
                 W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
                                          index_keydesc(index), smidx_cc, iid,
                                          index->is_latchless()));
+
+                // If we already know the partitioning set it up
+                W_DO(db->make_equal_partitions(iid,_minKey,_maxKey,_numParts));
             }                
 	    index->set_fid(0, iid);
 
@@ -257,6 +260,21 @@ bool table_desc_t::create_primary_idx(const char* name,
     _primary_idx = p_index;
 
     return (true);
+}
+
+
+/* ---------------------------------------------------- */
+/* --- partitioning information, used with MRBTrees --- */
+/* ---------------------------------------------------- */
+
+w_rc_t table_desc_t::set_partitioning(const vec_t& minKey, 
+                                      const vec_t& maxKey, 
+                                      uint numParts)
+{
+    _minKey.set(minKey);
+    _maxKey.set(maxKey);
+    _numParts = numParts;
+    return (RCOK);
 }
 
 

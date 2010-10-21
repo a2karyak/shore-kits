@@ -545,7 +545,7 @@ int main(int argc, char* argv[])
     int c = 0;
     int iRange = 0;    
 
-    while ((c = getopt(argc,argv,"rnp:c:x:s:d:h")) != -1) {
+    while ((c = getopt(argc,argv,"rnp:c:xg:s:d:h")) != -1) {
         switch (c) {
         case 'h':
             usage();
@@ -578,7 +578,10 @@ int main(int argc, char* argv[])
             physical = (string)optarg;
             ev->setSysDesign(physical);
             break;
-        case 'x':
+        // case 'x':
+        //     TRACE( TRACE_ALWAYS, "Enabling hacks\n");
+        //     ev->enableEnvVar("hacks");
+        case 'g':
             iRange = atoi(optarg);
             TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
             ev->setVarInt("records-to-access",iRange);

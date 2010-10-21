@@ -110,7 +110,23 @@ void ShoreTPCCEnv::checkpointer_t::work()
 
 void ShoreTPCCEnv::table_creator_t::work() 
 {
-    /* create the tables */
+    // Hack: sets the boundaries for the partitions
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = _sf+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+    _env->_pwarehouse_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pdistrict_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pcustomer_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pnew_order_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_porder_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pitem_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pstock_desc->set_partitioning(minKey,maxKey,mrbtparts);
+
+
+    // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pwarehouse_desc->create_table(_env->db()));
     W_COERCE(_env->_pdistrict_desc->create_table(_env->db()));

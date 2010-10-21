@@ -211,17 +211,24 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 
 void  ShoreTM1Env::table_creator_t::work() 
 {
+    // Hack: sets the boundaries for the partitions
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = _env->get_sf()+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+    _env->_psub_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pai_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_psf_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pcf_desc->set_partitioning(minKey,maxKey,mrbtparts);
+
     // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_psub_desc->create_table(_env->db()));
     W_COERCE(_env->_pai_desc->create_table(_env->db()));
     W_COERCE(_env->_psf_desc->create_table(_env->db()));
     W_COERCE(_env->_pcf_desc->create_table(_env->db()));
-    W_COERCE(_env->db()->commit_xct());
-
-    // IP: Dirty Dirty Hack - sets the boundaries for the partitions
-    int mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    
+    W_COERCE(_env->db()->commit_xct());    
 
     // Preload (preloads_per_worker) records for each of the loaders
     int sub_id = 0;

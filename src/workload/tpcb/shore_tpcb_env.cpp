@@ -263,7 +263,19 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
 
 void ShoreTPCBEnv::table_creator_t::work() 
 {
-    // 1. Create the tables
+    // Hack: sets the boundaries for the partitions
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = _sf+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+    _env->_pbranch_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_pteller_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_paccount_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _env->_phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);
+
+
+    // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pbranch_desc->create_table(_env->db()));
     W_COERCE(_env->_pteller_desc->create_table(_env->db()));
@@ -271,8 +283,8 @@ void ShoreTPCBEnv::table_creator_t::work()
     W_COERCE(_env->_phistory_desc->create_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
     
-    // 2. Create 10k accounts in each partition to buffer 
-    //    workers from each other
+    // Create 10k accounts in each partition to buffer 
+    // workers from each other
     for(long i=-1; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
@@ -282,7 +294,7 @@ void ShoreTPCBEnv::table_creator_t::work()
 	W_COERCE(_env->xct_populate_db(a_id, in));
     }
 
-    // 3. Before returning, run the post initialization phase 
+    // Before returning, run the post initialization phase 
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_post_init_impl());
     W_COERCE(_env->db()->commit_xct());
