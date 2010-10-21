@@ -56,6 +56,7 @@ public:
 	static table_tuple* construct(void* ptr) {
 	    return new(ptr) table_tuple(ptable());
 	}
+	static void destroy(table_tuple* t) { t->~table_tuple(); }
 
 	static void reset(table_tuple* t) {
 	    assert (t->_ptable == ptable());
