@@ -129,9 +129,9 @@ w_rc_t baseline_ssb_client_t::submit_one(int xct_type, int xctid)
     // Set input
     trx_result_tuple_t atrt;
     bool bWake = false;
-    if (_cp->take_one) {
+    if (condex* c = _cp->take_one()) {
         TRACE( TRACE_TRX_FLOW, "Sleeping\n");
-        atrt.set_notify(_cp->wait+_cp->index);
+        atrt.set_notify(c);
         bWake = true;
     }
 

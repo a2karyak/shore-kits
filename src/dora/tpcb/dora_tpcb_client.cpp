@@ -79,8 +79,8 @@ w_rc_t dora_tpcb_client_t::submit_one(int xct_type, int xctid)
 //         selid = URand(1,_qf);
 
     trx_result_tuple_t atrt;
-    if (_cp->take_one) {
-        atrt.set_notify(_cp->wait+_cp->index);
+    if (condex* c = _cp->take_one()) {
+        atrt.set_notify(c);
         bWake = true;
     }
     

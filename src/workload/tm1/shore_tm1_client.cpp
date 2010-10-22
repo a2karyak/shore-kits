@@ -96,8 +96,8 @@ w_rc_t baseline_tm1_client_t::submit_one(int xct_type, int xctid)
     // Set input    
     trx_result_tuple_t atrt;
     bool bWake = false;
-    if (_cp->take_one) {
-        atrt.set_notify(_cp->wait+_cp->index);
+    if (condex* c = _cp->take_one()) {
+        atrt.set_notify(c);
         bWake = true;
     }
 

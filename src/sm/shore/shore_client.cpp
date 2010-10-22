@@ -74,12 +74,9 @@ w_rc_t base_client_t::submit_batch(int xct_type, int& trx_cnt, const int batch_s
         // adding think time
         //usleep(int(_think_time*(sthread_t::drand())));
 
-        if (j == batch_sz) {
-            _cp->take_one = true;
-            _cp->index = 1-_cp->index;
-        }
+        if (j == batch_sz) 
+	    _cp->please_take_one();
         W_COERCE(submit_one(xct_type, trx_cnt++));
-        _cp->take_one = false;
     }
     return (RCOK);
 }
@@ -144,8 +141,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         // submit a batch of num_xct trxs
         W_COERCE(submit_batch(xct_type, i, num_xct));
         // wait for the batch to complete
-        // note: in the test case there is no double buffering
-        _cp->wait[_cp->index].wait();
+        _cp->wait();
         break;
 
         // case of duration-based measurement
@@ -158,9 +154,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 	// main loop
         while (true) {
 	    // wait for the first to complete
-            TRACE( TRACE_TRX_FLOW, "Sleeping on (%d) (%x)\n", 
-                   i, &_cp->wait[1-_cp->index]);
-	    _cp->wait[1-_cp->index].wait();
+	    _cp->wait();
 
 	    // check for exit...
 	    if(_abort_test || _env->get_measure() == MST_DONE)
@@ -171,8 +165,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
         }
 	
 	// wait for the last batch to complete...
-        TRACE( TRACE_TRX_FLOW, "Sleeping on (%x)\n", &_cp->wait[1-_cp->index]);
-	_cp->wait[_cp->index].wait();	
+	_cp->wait();	
         break;
 
     default:

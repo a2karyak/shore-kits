@@ -39,9 +39,10 @@ struct condex
 {
     pthread_cond_t _cond;
     pthread_mutex_t _lock;
-    bool _fired;
+    long _signals;
+    long _waits;
 
-    condex() : _fired(false) { 
+    condex() : _signals(0), _waits(0) { 
         if (pthread_cond_init(&_cond,NULL)) {
             assert (0); // failed to init cond var
         }
@@ -57,15 +58,15 @@ struct condex
 
     void signal() {
 	CRITICAL_SECTION(cs, _lock);
-	_fired = true;
+	_signals++;
 	pthread_cond_signal(&_cond);
     }
 
     void wait() {
 	CRITICAL_SECTION(cs, _lock);
-	while(!_fired)
+	_waits++;
+	while(_waits > _signals)
 	    pthread_cond_wait(&_cond,&_lock);
-	_fired = false;
     }
 
 }; // EOF: condex
@@ -83,13 +84,28 @@ struct condex
 
 struct condex_pair 
 {
-    condex wait[2];
-    int index;
-    bool take_one;
+    condex _wait[2];
+    long _requested;
+    long _wanted;
+    long _waited;
 
-    condex_pair() : index(0), take_one(false) { }
+    condex_pair() : _requested(0), _wanted(0), _waited(0) { }
 
     ~condex_pair() { }
+
+    void please_take_one() {
+	++_wanted;
+    }
+    condex* take_one() {
+	if(_wanted > _requested) {
+	    return &_wait[_requested++ % 2];
+	}
+	return NULL;
+    }
+    void wait() {
+	w_assert1(_waited < _requested);
+	_wait[_waited++ %2].wait();
+    }
 
 };  // EOF: condex_pair
 
