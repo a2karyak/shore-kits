@@ -45,20 +45,23 @@ EXIT_NAMESPACE(shore);
 ENTER_NAMESPACE(tm1);
 
 
-/** Exported functions */
-
 /******************************************************************** 
  *
  * ShoreTM1Env functions
  *
  ********************************************************************/ 
 
-int ShoreTM1Env::load_schema()
-{
-    // get the sysname type from the configuration
-    _sysname = envVar::instance()->getSysName();
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
+/******************************************************************** 
+ *
+ *  @fn:    load_schema()
+ *
+ *  @brief: Creates the table_desc_t and table_man_impl objects for 
+ *          each TM1 table
+ *
+ ********************************************************************/
 
+w_rc_t ShoreTM1Env::load_schema()
+{
     // create the schema
     _psub_desc  = new subscriber_t(get_pd());
     _pai_desc   = new access_info_t(get_pd());
@@ -71,7 +74,33 @@ int ShoreTM1Env::load_schema()
     _psf_man  = new sf_man_impl(_psf_desc.get());
     _pcf_man  = new cf_man_impl(_pcf_desc.get());   
         
-    return (0);
+    return (RCOK);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTM1Env::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    _psub_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pai_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _psf_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pcf_desc->set_partitioning(minKey,maxKey,mrbtparts);
+
+    return (RCOK);
 }
 
 
@@ -211,17 +240,6 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 
 void  ShoreTM1Env::table_creator_t::work() 
 {
-    // Hack: sets the boundaries for the partitions
-    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 0;
-    int maxKeyVal = _env->get_sf()+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
-    _env->_psub_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pai_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_psf_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pcf_desc->set_partitioning(minKey,maxKey,mrbtparts);
-
     // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_psub_desc->create_table(_env->db()));

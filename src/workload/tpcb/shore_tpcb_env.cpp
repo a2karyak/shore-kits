@@ -47,22 +47,24 @@ EXIT_NAMESPACE(shore);
 ENTER_NAMESPACE(tpcb);
 
 
-
-/** Exported functions */
-
-
 /******************************************************************** 
  *
  * ShoreTPCBEnv functions
  *
  ********************************************************************/ 
 
-int ShoreTPCBEnv::load_schema()
-{
-    // get the sysname type from the configuration
-    _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
+/******************************************************************** 
+ *
+ *  @fn:    load_schema()
+ *
+ *  @brief: Creates the table_desc_t and table_man_impl objects for 
+ *          each TPC-B table
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCBEnv::load_schema()
+{
     // create the schema
     _pbranch_desc   = new branch_t(get_pd());
     _pteller_desc   = new teller_t(get_pd());
@@ -76,8 +78,36 @@ int ShoreTPCBEnv::load_schema()
     _paccount_man  = new account_man_impl(_paccount_desc.get());
     _phistory_man  = new history_man_impl(_phistory_desc.get());
         
-    return (0);
+    return (RCOK);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCBEnv::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = get_sf()+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    _pbranch_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pteller_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _paccount_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);    
+
+    return (RCOK);
+}
+
 
 
 /******************************************************************** 
@@ -101,7 +131,7 @@ int ShoreTPCBEnv::info() const
  *
  *  @fn:    statistics
  *
- *  @brief: Prints statistics for TM1 
+ *  @brief: Prints statistics 
  *
  ********************************************************************/
 
@@ -263,19 +293,8 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
 
 void ShoreTPCBEnv::table_creator_t::work() 
 {
-    // Hack: sets the boundaries for the partitions
-    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 0;
-    int maxKeyVal = _sf+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
-    _env->_pbranch_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pteller_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_paccount_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);
-
-
-    // Create the tables
+    // Create the tables, if any partitioning is to be applied, that has already
+    // been set at update_partitioning()
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pbranch_desc->create_table(_env->db()));
     W_COERCE(_env->_pteller_desc->create_table(_env->db()));

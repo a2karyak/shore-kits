@@ -110,22 +110,6 @@ void ShoreTPCCEnv::checkpointer_t::work()
 
 void ShoreTPCCEnv::table_creator_t::work() 
 {
-    // Hack: sets the boundaries for the partitions
-    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 0;
-    int maxKeyVal = _sf+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
-    _env->_pwarehouse_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pdistrict_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pcustomer_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pnew_order_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_porder_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pitem_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _env->_pstock_desc->set_partitioning(minKey,maxKey,mrbtparts);
-
-
     // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pwarehouse_desc->create_table(_env->db()));
@@ -232,12 +216,18 @@ void ShoreTPCCEnv::table_builder_t::work()
  *
  ********************************************************************/ 
 
-int ShoreTPCCEnv::load_schema()
-{
-    // get the sysname type from the configuration
-    _sysname = envVar::instance()->getSysName();
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
+/******************************************************************** 
+ *
+ *  @fn:    load_schema()
+ *
+ *  @brief: Creates the table_desc_t and table_man_impl objects for 
+ *          each TPC-C table
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCCEnv::load_schema()
+{
     // create the schema
     _pwarehouse_desc  = new warehouse_t(get_pd());
     _pdistrict_desc   = new district_t(get_pd());
@@ -261,8 +251,40 @@ int ShoreTPCCEnv::load_schema()
     _pnew_order_man  = new new_order_man_impl(_pnew_order_desc.get());
     _pitem_man       = new item_man_impl(_pitem_desc.get());
                 
-    return (0);
+    return (RCOK);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-C tables
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCCEnv::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = get_sf()+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    _pwarehouse_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pdistrict_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pcustomer_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pnew_order_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _porder_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pitem_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    _pstock_desc->set_partitioning(minKey,maxKey,mrbtparts);
+
+    return (RCOK);
+}
+
 
 
 /******************************************************************** 

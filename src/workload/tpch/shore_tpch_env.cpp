@@ -295,7 +295,7 @@ ShoreTPCHEnv::~ShoreTPCHEnv()
 
 
 
-int ShoreTPCHEnv::load_schema()
+w_rc_t ShoreTPCHEnv::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = "baseline";
@@ -321,7 +321,7 @@ int ShoreTPCHEnv::load_schema()
     _porders_man   = new orders_man_impl(_porders_desc.get());
     _plineitem_man = new lineitem_man_impl(_plineitem_desc.get());
                 
-    return (0);
+    return (RCOK);
 }
 
 

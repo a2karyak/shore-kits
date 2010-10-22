@@ -289,7 +289,7 @@ ShoreSSBEnv::~ShoreSSBEnv()
 
 
 
-int ShoreSSBEnv::load_schema()
+w_rc_t ShoreSSBEnv::load_schema()
 {
     // get the sysname type from the configuration
     _sysname = "baseline";
@@ -309,7 +309,7 @@ int ShoreSSBEnv::load_schema()
     _pcustomer_man  = new customer_man_impl(_pcustomer_desc.get());
     _plineorder_man = new lineorder_man_impl(_plineorder_desc.get());
                 
-    return (0);
+    return (RCOK);
 }
 
 

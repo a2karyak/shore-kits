@@ -102,9 +102,6 @@ int DoraTM1Env::start()
     conf(); // re-configure
     processorid_t icpu(_starting_cpu);
 
-    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%.1f) - DORA_SF=(%.1f)...\n", 
-           _scaling_factor, _sf);    
-
     // SUBSCRIBER
     GENERATE_DORA_PARTS(sub,sub);
 
@@ -121,6 +118,34 @@ int DoraTM1Env::start()
     DoraEnv::_post_start(this);
     return (0);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t DoraTM1Env::update_partitioning() 
+{
+    // The number of partitions in the indexes should match the DORA 
+    // partitioning
+    int minKeyVal = 0;
+    int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    _psub_desc->set_partitioning(minKey,maxKey,_parts_sub);
+    _pai_desc->set_partitioning(minKey,maxKey,_parts_ai);
+    _psf_desc->set_partitioning(minKey,maxKey,_parts_sf);
+    _pcf_desc->set_partitioning(minKey,maxKey,_parts_cf);
+
+    return (RCOK);
+}
+
 
 
 /****************************************************************** 
@@ -182,28 +207,26 @@ int DoraTM1Env::conf()
 {
     ShoreTM1Env::conf();
 
-    TRACE( TRACE_DEBUG, "configuring dora-tm1\n");
-
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
+    _cpu_range = get_active_cpu_count();
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    _cpu_range = get_active_cpu_count();
+    // For each table read the ratio of partition per CPU and calculate the
+    // number of partition to create (depending the number of CPUs available).
+    double sub_PerCPU = ev->getVarDouble("dora-ratio-tm1-sub",0);
+    _parts_sub = ( sub_PerCPU>0 ? (_cpu_range * sub_PerCPU) : 1);
 
-    // For TM1 the DORA_SF is !not anymore! different than the SF of the database
-    // In particular, for each 'real' SF there is 1 DORA SF
-    _sf = upd_sf() * TM1_SUBS_PER_SF / TM1_SUBS_PER_DORA_PART;
+    double ai_PerCPU = ev->getVarDouble("dora-ratio-tm1-ai",0);
+    _parts_ai = ( ai_PerCPU>0 ? (_cpu_range * ai_PerCPU) : 1);
 
-    // Get DORA and per table partition SFs
-    _dora_sf = ev->getSysVarInt("dora-sf");
-    assert (_dora_sf);
+    double sf_PerCPU = ev->getVarDouble("dora-ratio-tm1-sf",0);
+    _parts_sf = ( sf_PerCPU>0 ? (_cpu_range * sf_PerCPU) : 1);
 
-    _sf_per_part_sub = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-sub",1);
-    _sf_per_part_ai  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-ai",1);
-    _sf_per_part_sf  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-sf",1);
-    _sf_per_part_cf  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-cf",1);        
+    double cf_PerCPU = ev->getVarDouble("dora-ratio-tm1-cf",0);
+    _parts_cf = ( cf_PerCPU>0 ? (_cpu_range * cf_PerCPU) : 1);
 
     return (0);
 }

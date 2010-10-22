@@ -113,8 +113,6 @@ int DoraTPCCEnv::start()
     conf(); // re-configure
     processorid_t icpu(_starting_cpu);
 
-    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%d)...\n", _sf);    
-
     // WAREHOUSE
     GENERATE_DORA_PARTS(whs,warehouse);
 
@@ -146,6 +144,37 @@ int DoraTPCCEnv::start()
     DoraEnv::_post_start(this);
     return (0);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCCEnv::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    int minKeyVal = 0;
+    int maxKeyVal = get_sf()+1;
+    vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    _pwarehouse_desc->set_partitioning(minKey,maxKey,_parts_whs);
+    _pdistrict_desc->set_partitioning(minKey,maxKey,_parts_dis);
+    _pcustomer_desc->set_partitioning(minKey,maxKey,_parts_cus);
+    _phistory_desc->set_partitioning(minKey,maxKey,_parts_his);
+    _pnew_order_desc->set_partitioning(minKey,maxKey,_parts_nor);
+    _porder_desc->set_partitioning(minKey,maxKey,_parts_ord);
+    _pitem_desc->set_partitioning(minKey,maxKey,_parts_ite);
+    _pstock_desc->set_partitioning(minKey,maxKey,_parts_sto);
+
+    return (RCOK);
+}
+
 
 
 /****************************************************************** 
@@ -206,30 +235,41 @@ int DoraTPCCEnv::conf()
 {
     ShoreTPCCEnv::conf();
 
-    TRACE( TRACE_DEBUG, "configuring dora-tpcc\n");
-
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
+    _cpu_range = get_active_cpu_count();
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    _cpu_range = get_active_cpu_count();
-    _sf = upd_sf();
+    // For each table read the ratio of partition per CPU and calculate the
+    // number of partition to create (depending the number of CPUs available).
+    double whs_PerCPU = ev->getVarDouble("dora-ratio-tpcc-whs",0);
+    _parts_whs = ( whs_PerCPU>0 ? (_cpu_range * whs_PerCPU) : 1);
 
-    // Get DORA and per table partition SFs
-    _dora_sf = ev->getSysVarInt("dora-sf");
-    assert (_dora_sf);
+    double dis_PerCPU = ev->getVarDouble("dora-ratio-tpcc-dis",0);
+    _parts_dis = ( dis_PerCPU>0 ? (_cpu_range * dis_PerCPU) : 1);
 
-    _sf_per_part_whs = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-wh",1);
-    _sf_per_part_dis = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-dist",1);
-    _sf_per_part_cus = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-cust",1);
-    _sf_per_part_his = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-hist",1);
-    _sf_per_part_nor = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-nord",1);
-    _sf_per_part_ord = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-ord",1);
-    _sf_per_part_ite = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-item",1);
-    _sf_per_part_oli = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-oline",1);
-    _sf_per_part_sto = _dora_sf * ev->getVarInt("dora-tpcc-wh-per-part-stock",1);
+    double cus_PerCPU = ev->getVarDouble("dora-ratio-tpcc-cus",0);
+    _parts_cus = ( cus_PerCPU>0 ? (_cpu_range * cus_PerCPU) : 1);
+
+    double his_PerCPU = ev->getVarDouble("dora-ratio-tpcc-his",0);
+    _parts_his = ( his_PerCPU>0 ? (_cpu_range * his_PerCPU) : 1);
+
+    double nor_PerCPU = ev->getVarDouble("dora-ratio-tpcc-nor",0);
+    _parts_nor = ( nor_PerCPU>0 ? (_cpu_range * nor_PerCPU) : 1);
+
+    double ord_PerCPU = ev->getVarDouble("dora-ratio-tpcc-ord",0);
+    _parts_ord = ( ord_PerCPU>0 ? (_cpu_range * ord_PerCPU) : 1);
+
+    double ite_PerCPU = ev->getVarDouble("dora-ratio-tpcc-ite",0);
+    _parts_ite = ( ite_PerCPU>0 ? (_cpu_range * ite_PerCPU) : 1);
+
+    double oli_PerCPU = ev->getVarDouble("dora-ratio-tpcc-oli",0);
+    _parts_oli = ( oli_PerCPU>0 ? (_cpu_range * oli_PerCPU) : 1);
+
+    double sto_PerCPU = ev->getVarDouble("dora-ratio-tpcc-sto",0);
+    _parts_sto = ( whs_PerCPU>0 ? (_cpu_range * sto_PerCPU) : 1);
     
     return (0);
 }

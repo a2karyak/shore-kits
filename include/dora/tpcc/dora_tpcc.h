@@ -49,7 +49,6 @@ using namespace tpcc;
 ENTER_NAMESPACE(dora);
 
 
-
 // Forward declarations
 
 // MBenches
@@ -134,6 +133,8 @@ public:
     int statistics();    
     int conf();
 
+    //// Partition-related
+    w_rc_t update_partitioning();
 
     //// DORA TPCC TABLE PARTITIONS
     DECLARE_DORA_PARTS(whs);

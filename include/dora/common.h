@@ -203,21 +203,18 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 #define DECLARE_DORA_PARTS(abbrv)                                       \
     guard<irpTableImpl> _##abbrv##_irpt;                                \
-    uint _sf_per_part_##abbrv;                                          \
+    uint _parts_##abbrv;                                                \
     inline irpTableImpl* abbrv() { return (_##abbrv##_irpt.get()); }
 
 
 #define GENERATE_DORA_PARTS(abbrv,tablename)                            \
-    { int z=0; cvec_t mink(&z,sizeof(int)); cvec_t maxk(&_sf,sizeof(int)); \
-    uint pnum = _sf/_sf_per_part_##abbrv;                               \
-    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_KEY_EST, mink, maxk, pnum); \
+    { int z=0; int sf=get_sf(); cvec_t mink(&z,sizeof(int)); cvec_t maxk(&sf,sizeof(int)); \
+    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_KEY_EST, mink, maxk, _parts_##abbrv); \
     if (!_##abbrv##_irpt) {                                             \
         TRACE( TRACE_ALWAYS, "Problem in creating irp-table\n");        \
         assert (0); return (de_GEN_TABLE); }                            \
     _irptp_vec.push_back(_##abbrv##_irpt.get());                        \
     icpu = _next_cpu(icpu, _##abbrv##_irpt, _cpu_table_step);}
-
-//    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_IRP_KEY, abbrv##_KEY_EST, mink, maxk, pnum);
 
 
 

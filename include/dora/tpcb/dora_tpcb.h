@@ -60,13 +60,6 @@ class upd_te_action;
 class ins_hi_action;
 
 
-// @note: The BranchID is the one that determines the DoraSF
-
-
-// Look also include/workload/tpcb/tpcb_const.h
-const int TPCB_BRANCH_PER_DORA_PART = 10000;
-
-
 /******************************************************************** 
  *
  * @class: dora_tpcb
@@ -98,12 +91,7 @@ public:
 
 
     //// Partition-related
-
-    // inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
-    //     //TRACE( TRACE_STATISTICS, "X=%d AID=%d\n", atable, aid);
-    //     // partitioning function
-    //     return (atable->myPart(aid));
-    // }      
+    w_rc_t update_partitioning();
 
 
     //// DORA TPCB - PARTITIONED TABLES

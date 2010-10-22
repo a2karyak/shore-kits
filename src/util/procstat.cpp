@@ -89,12 +89,14 @@ void procmonitor_t::_setup(const double interval_sec)
     assert (interval_sec>0);
     _interval_usec = int(interval_sec*1e6);
 
-    if (interval_sec<1)
+    if (interval_sec<1) {
         TRACE( TRACE_DEBUG, "CPU usage updated every (%0.3f) msec\n", 
                _interval_usec/1000.);
-    else
+    }
+    else {
 	TRACE( TRACE_DEBUG, "CPU usage(updated every (%0.6f) sec\n", 
                _interval_usec/1000./1000);
+    }
 
     // setup cond
     pthread_mutex_init(&_mutex, NULL);

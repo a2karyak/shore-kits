@@ -367,7 +367,7 @@ public:
 
     virtual int conf()=0;    
     virtual int set(envVarMap* vars)=0;    
-    virtual int load_schema()=0;
+    virtual w_rc_t load_schema()=0;
     virtual int init()=0;
     virtual int open()=0;
     virtual int close()=0;
@@ -502,7 +502,8 @@ protected:
 
     // physical design characteristics
     uint4_t _pd;
-
+    bool _enable_hacks;
+    
     
     // Helper functions
     void usage(option_group_t& options);
@@ -545,7 +546,7 @@ public:
     // Loads the database schema after the config file is read, and before the storage
     // manager is started.
     // Should return >0 on error
-    virtual int load_schema()=0; 
+    virtual w_rc_t load_schema()=0; 
 
     virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;
@@ -594,6 +595,9 @@ public:
     uint4_t get_pd() const;
     uint4_t set_pd(const physical_design_t& apd);
     uint4_t add_pd(const physical_design_t& apd);
+    bool check_hacks_enabled();
+    bool is_hacks_enabled() const;
+    virtual w_rc_t update_partitioning() { return (RCOK); }
 
     // Environment workers
     uint upd_worker_cnt();

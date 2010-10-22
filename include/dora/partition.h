@@ -644,13 +644,9 @@ int partition_t<DataType>::_generate_primary()
     _owner = pworker;
     _owner->set_data_owner_state(DOS_ALONE);
 
-    // read from env params the loopcnt
-    string sInpQ = c_str("%s-%s",_table->name(),"inp-q-sz").data();
-    string sComQ = c_str("%s-%s",_table->name(),"com-q-sz").data();
-
     int lc = pe->getVarInt("db-worker-queueloops",0);
-    int thres_inp_q = pe->getVarInt(sInpQ,0);
-    int thres_com_q = pe->getVarInt(sComQ,0);
+    int thres_inp_q = pe->getVarInt("dora-worker-inp-q-sz",0);
+    int thres_com_q = pe->getVarInt("dora-worker-com-q-sz",0);
 
     // it is safer the thresholds not to be larger than the client batch size
     int batch_sz = pe->getVarInt("db-cl-batchsz",0);

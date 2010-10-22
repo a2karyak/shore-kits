@@ -124,9 +124,6 @@ class r_sub_gsn_action;
 class r_sub_gsn_acc_action;
 #endif
 
-// Look also include/workload/tm1/tm1_const.h
-const int TM1_SUBS_PER_DORA_PART = 10000;
-
 
 /******************************************************************** 
  *
@@ -160,11 +157,7 @@ public:
 
 
     //// Partition-related
-
-    // inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
-    //     partitioning function
-    //     return (atable->myPart(aid / TM1_SUBS_PER_DORA_PART));
-    // }      
+    w_rc_t update_partitioning();
 
 
     //// DORA TM1 - PARTITIONED TABLES

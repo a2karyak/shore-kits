@@ -233,7 +233,7 @@ public:
     virtual int newrun() { return(0); /* do nothing */ };
 
     virtual int post_init();
-    virtual int load_schema();
+    virtual w_rc_t load_schema();
 
     virtual int conf();
     virtual int start();

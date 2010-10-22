@@ -236,7 +236,7 @@ int DoraEnv::_info(const ShoreEnv* penv) const
  *         - this->_active_cpu_count - the active cpu count (soft-limit)
  *         - this->_start_prs_id     - the first assigned cpu for the table
  *         - this->_prs_range        - a range of cpus assigned for the table
- *         - this->_sf               - the scaling factor of the tm1-db
+ *         - this->_sf               - the scaling factor of the db
  *         - this->_vec.size()       - the number of tables
  *         - atable                  - the current table
  *

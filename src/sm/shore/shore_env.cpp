@@ -109,22 +109,26 @@ ShoreEnv::ShoreEnv(string confname)
 
     string physical = ev->getSysDesign();
    
-    if (physical.compare("hack")==0) {
-        _pd = PD_PADDED;
-    }
    
+    if (physical.compare("normal")==0) {
+        _pd = PD_NORMAL;
+    }
     if (physical.compare("mrbtnorm")==0) {
         _pd = PD_MRBT_NORMAL;
     }
-
     if (physical.compare("mrbtpart")==0) {
         _pd = PD_MRBT_PART;
     }
-
     if (physical.compare("mrbtleaf")==0) {
         _pd = PD_MRBT_LEAF;
     }
-    
+
+    // Check about the hacks option
+    check_hacks_enabled();
+    if (is_hacks_enabled()) {
+        _pd |= PD_PADDED;
+    }
+
 
 #ifdef CFG_SLI
     _bUseSLI = ev->getVarInt("db-worker-sli",0);
@@ -259,6 +263,19 @@ uint4_t ShoreEnv::add_pd(const physical_design_t& apd)
     return (_pd);
 }
 
+bool ShoreEnv::check_hacks_enabled()
+{
+    // enable hachs by default
+    int he = envVar::instance()->getVarInt("physical-hacks-enable",0);
+    _enable_hacks = (he == 1 ? true : false);
+    return (_enable_hacks);
+}
+
+bool ShoreEnv::is_hacks_enabled() const
+{
+    return (_enable_hacks);
+}
+
 
 /******************************************************************** 
  *
@@ -328,15 +345,22 @@ int ShoreEnv::init()
     }
 
     // Load the database schema
-    if (load_schema()) {
+    if (load_schema().is_error()) {
         TRACE( TRACE_ALWAYS, "Error loading the database schema\n");
         return (3);
     }
+    
+    // Update partitioning information    
+    if (update_partitioning().is_error()) {
+        TRACE( TRACE_ALWAYS, "Error updating the partitioning info\n");
+        return (4);
+    }
+
 
     // Start the storage manager
     if (start_sm()) {
         TRACE( TRACE_ALWAYS, "Error starting Shore database\n");
-        return (4);
+        return (5);
     }
 
     // Call the (virtual) post-initialization function

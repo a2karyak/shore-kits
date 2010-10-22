@@ -89,9 +89,6 @@ protected:
     int _starting_cpu;
     int _cpu_table_step;
     int _cpu_range;
-    int _sf;
-
-    int _dora_sf;
 
 #ifdef CFG_FLUSHER
     // The dora-flusher thread

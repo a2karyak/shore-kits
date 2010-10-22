@@ -578,9 +578,10 @@ int main(int argc, char* argv[])
             physical = (string)optarg;
             ev->setSysDesign(physical);
             break;
-        // case 'x':
-        //     TRACE( TRACE_ALWAYS, "Enabling hacks\n");
-        //     ev->enableEnvVar("hacks");
+        case 'x':
+            TRACE( TRACE_ALWAYS, "Enabling hacks\n");
+            ev->setVarInt("physical-hacks-enable",1);
+            break;
         case 'g':
             iRange = atoi(optarg);
             TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
