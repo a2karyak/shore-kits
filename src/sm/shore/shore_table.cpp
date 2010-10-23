@@ -288,18 +288,22 @@ w_rc_t table_desc_t::set_partitioning(const char* sMinKey,
                                       uint numParts)
 {
     // Allocate for the two boundaries
-    _sMinKey = (char*)malloc(len1+1);
+    if (_sMinKeyLen < len1) {
+        if (_sMinKey) { free (_sMinKey); }
+        _sMinKey = (char*)malloc(len1+1);
+    }
     memset(_sMinKey,0,len1+1);
     memcpy(_sMinKey,sMinKey,len1);
     _sMinKeyLen = len1;
 
-    _sMaxKey = (char*)malloc(len2+1);
+    if (_sMaxKeyLen < len2) {
+        if (_sMaxKey) { free (_sMaxKey); }        
+        _sMaxKey = (char*)malloc(len2+1);
+    }
     memset(_sMaxKey,0,len2+1);
     memcpy(_sMaxKey,sMaxKey,len2);
     _sMaxKeyLen = len2;
 
-    // _sMinKey = (sMinKey);
-    // _sMaxKey = strdup(sMaxKey);
     _numParts = numParts;
     return (RCOK);
 }
