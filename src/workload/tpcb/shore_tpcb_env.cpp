@@ -97,13 +97,25 @@ w_rc_t ShoreTPCBEnv::update_partitioning()
     uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
     int minKeyVal = 0;
     int maxKeyVal = get_sf()+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
 
-    _pbranch_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _pteller_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _paccount_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);    
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int)+1);
+    memset(minKey,0,sizeof(int)+1);
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int)+1);
+    memset(minKey,0,sizeof(int)+1);
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);    
+
+    free (minKey);
+    free (maxKey);
 
     return (RCOK);
 }

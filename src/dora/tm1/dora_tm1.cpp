@@ -135,13 +135,23 @@ w_rc_t DoraTM1Env::update_partitioning()
     // partitioning
     int minKeyVal = 0;
     int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
 
-    _psub_desc->set_partitioning(minKey,maxKey,_parts_sub);
-    _pai_desc->set_partitioning(minKey,maxKey,_parts_ai);
-    _psf_desc->set_partitioning(minKey,maxKey,_parts_sf);
-    _pcf_desc->set_partitioning(minKey,maxKey,_parts_cf);
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _psub_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sub);
+    _pai_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ai);
+    _psf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sf);
+    _pcf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_cf);
+
+    free (minKey);
+    free (maxKey);
 
     return (RCOK);
 }

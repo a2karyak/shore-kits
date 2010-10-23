@@ -50,7 +50,9 @@ table_desc_t::table_desc_t(const char* name, int fieldcnt)
     : file_desc_t(name, fieldcnt), 
       _indexes(NULL), 
       _primary_idx(NULL),
-      _maxsize(0)
+      _maxsize(0),
+      _sMinKey(NULL),_sMinKeyLen(0),
+      _sMaxKey(NULL),_sMaxKeyLen(0)
 {
     // Create placeholders for the field descriptors
     _desc = new field_desc_t[fieldcnt];
@@ -64,6 +66,12 @@ table_desc_t::~table_desc_t()
 
     if (_indexes)
         delete _indexes;
+
+    if (_sMinKey)
+        delete _sMinKey;
+
+    if (_sMaxKey)
+        delete _sMaxKey;
 }
 
 
@@ -141,6 +149,10 @@ w_rc_t table_desc_t::create_table(ss_m* db)
                     W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
                                              index_keydesc(index), smidx_cc, iid,
                                              index->is_latchless()));
+                    // If we already know the partitioning set it up
+                    vec_t minv(_sMinKey,_sMinKeyLen);
+                    vec_t maxv(_sMaxKey,_sMaxKeyLen);
+                    W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
                 }
 		index->set_fid(i, iid);
 		
@@ -163,8 +175,10 @@ w_rc_t table_desc_t::create_table(ss_m* db)
                                          index_keydesc(index), smidx_cc, iid,
                                          index->is_latchless()));
 
-                // If we already know the partitioning set it up
-                W_DO(db->make_equal_partitions(iid,_minKey,_maxKey,_numParts));
+                // If we already know the partitioning set it up                
+                vec_t minv(_sMinKey,_sMinKeyLen);
+                vec_t maxv(_sMaxKey,_sMaxKeyLen);
+                W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
             }                
 	    index->set_fid(0, iid);
 
@@ -267,12 +281,25 @@ bool table_desc_t::create_primary_idx(const char* name,
 /* --- partitioning information, used with MRBTrees --- */
 /* ---------------------------------------------------- */
 
-w_rc_t table_desc_t::set_partitioning(const vec_t& minKey, 
-                                      const vec_t& maxKey, 
+w_rc_t table_desc_t::set_partitioning(const char* sMinKey, 
+                                      uint len1,
+                                      const char* sMaxKey,
+                                      uint len2,
                                       uint numParts)
 {
-    _minKey.set(minKey);
-    _maxKey.set(maxKey);
+    // Allocate for the two boundaries
+    _sMinKey = (char*)malloc(len1+1);
+    memset(_sMinKey,0,len1+1);
+    memcpy(_sMinKey,sMinKey,len1);
+    _sMinKeyLen = len1;
+
+    _sMaxKey = (char*)malloc(len2+1);
+    memset(_sMaxKey,0,len2+1);
+    memcpy(_sMaxKey,sMaxKey,len2);
+    _sMaxKeyLen = len2;
+
+    // _sMinKey = (sMinKey);
+    // _sMaxKey = strdup(sMaxKey);
     _numParts = numParts;
     return (RCOK);
 }

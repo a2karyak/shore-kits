@@ -133,8 +133,10 @@ protected:
     volatile uint_t _maxsize;            // max tuple size for this table, shortcut
     
     // Partitioning info (for MRBTrees)
-    vec_t _minKey;
-    vec_t _maxKey;
+    char*  _sMinKey;
+    uint   _sMinKeyLen;
+    char*  _sMaxKey;
+    uint   _sMaxKeyLen;
     uint  _numParts;
 
     int find_field_by_name(const char* field_name) const;
@@ -157,7 +159,9 @@ public:
     //        created (which is done at the create_table()) then this
     //        is the partitioning which will be used.
     
-    w_rc_t set_partitioning(const vec_t& minKey, const vec_t& maxKey, uint numParts);
+    w_rc_t set_partitioning(const char* sMinKey, uint len1, 
+                            const char* sMaxKey, uint len2, 
+                            uint numParts);
 
 
     /* --------------------------------------- */

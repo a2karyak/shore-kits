@@ -160,17 +160,27 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     // Pulling this partitioning out of the thin air
     int minKeyVal = 0;
     int maxKeyVal = get_sf()+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
 
-    _pwarehouse_desc->set_partitioning(minKey,maxKey,_parts_whs);
-    _pdistrict_desc->set_partitioning(minKey,maxKey,_parts_dis);
-    _pcustomer_desc->set_partitioning(minKey,maxKey,_parts_cus);
-    _phistory_desc->set_partitioning(minKey,maxKey,_parts_his);
-    _pnew_order_desc->set_partitioning(minKey,maxKey,_parts_nor);
-    _porder_desc->set_partitioning(minKey,maxKey,_parts_ord);
-    _pitem_desc->set_partitioning(minKey,maxKey,_parts_ite);
-    _pstock_desc->set_partitioning(minKey,maxKey,_parts_sto);
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _pwarehouse_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_whs);
+    _pdistrict_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_dis);
+    _pcustomer_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_cus);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_his);
+    _pnew_order_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_nor);
+    _porder_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ord);
+    _pitem_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ite);
+    _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sto);
+
+    free (minKey);
+    free (maxKey);
 
     return (RCOK);
 }

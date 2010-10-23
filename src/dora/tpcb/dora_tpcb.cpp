@@ -131,13 +131,23 @@ w_rc_t DoraTPCBEnv::update_partitioning()
     // Pulling this partitioning out of the thin air
     int minKeyVal = 0;
     int maxKeyVal = get_sf()+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
 
-    _pbranch_desc->set_partitioning(minKey,maxKey,_parts_br);
-    _pteller_desc->set_partitioning(minKey,maxKey,_parts_te);
-    _paccount_desc->set_partitioning(minKey,maxKey,_parts_ac);
-    _phistory_desc->set_partitioning(minKey,maxKey,_parts_hi);
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_br);
+    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_te);
+    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ac);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_hi);
+
+    free (minKey);
+    free (maxKey);
 
     return (RCOK);
 }

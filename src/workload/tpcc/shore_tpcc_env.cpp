@@ -270,17 +270,28 @@ w_rc_t ShoreTPCCEnv::update_partitioning()
     uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
     int minKeyVal = 0;
     int maxKeyVal = get_sf()+1;
-    vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
 
-    _pwarehouse_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _pdistrict_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _pcustomer_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _phistory_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _pnew_order_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _porder_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _pitem_desc->set_partitioning(minKey,maxKey,mrbtparts);
-    _pstock_desc->set_partitioning(minKey,maxKey,mrbtparts);
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+
+    _pwarehouse_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pdistrict_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pcustomer_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pnew_order_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _porder_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pitem_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+
+    free (minKey);
+    free (maxKey);
 
     return (RCOK);
 }
