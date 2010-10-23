@@ -306,7 +306,8 @@ struct env_stats_t
     inline uint_t inc_trx_att() { return (atomic_inc_uint_nv(&_ntrx_att)); }
     inline uint_t inc_trx_com() {
         atomic_inc_uint(&_ntrx_att);
-        return (atomic_inc_uint_nv(&_ntrx_com)); }
+        return (atomic_inc_uint_nv(&_ntrx_com)); 
+    }
 
 }; // EOF env_stats_t
 
@@ -616,6 +617,13 @@ public:
 
     string sysname() { return (_sysname); }
     env_stats_t* get_env_stats() { return (&_env_stats); }
+
+    // For temp throughput calculation
+    uint_t get_trx_att() const;
+    uint_t get_trx_com() const;
+
+    inline void inc_trx_att() { _env_stats.inc_trx_att(); }
+    inline void inc_trx_com() { _env_stats.inc_trx_com(); }
 
     // Throughput printing
     virtual void print_throughput(const double iQueriedSF, 

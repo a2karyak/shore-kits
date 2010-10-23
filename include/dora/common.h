@@ -227,7 +227,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#define DECLARE_DORA_TRX(trx)                   \
+#define DECLARE_DORA_TRX(trx)                                           \
     w_rc_t dora_##trx(const int xct_id, trx_result_tuple_t& atrt,       \
                       trx##_input_t& in, const bool bWake);             \
     w_rc_t dora_##trx(const int xct_id, trx_result_tuple_t& atrt,       \
@@ -478,9 +478,11 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 #define DEFINE_DORA_FINAL_RVP_CLASS(cname,trx)                          \
     w_rc_t cname::run() { return (_run(_penv->db(),_penv)); }           \
-    void cname::upd_committed_stats() { _penv->_inc_##trx##_att(); }    \
+    void cname::upd_committed_stats() {                                 \
+        _penv->_inc_##trx##_att(); _penv->inc_trx_com(); }              \
     void cname::upd_aborted_stats() {                                   \
-        _penv->_inc_##trx##_att(); _penv->_inc_##trx##_failed(); }
+        _penv->_inc_##trx##_att(); _penv->_inc_##trx##_failed();        \
+        _penv->inc_trx_att(); }
 
 
 
