@@ -135,6 +135,7 @@ void ShoreSSBEnv::checkpointer_t::work()
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
     }
+    _env->set_measure(MST_PAUSE);
 }
 
 
