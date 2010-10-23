@@ -798,6 +798,24 @@ int ShoreEnv::checkpoint()
 
 /****************************************************************** 
  *
+ *  @fn:    get_trx_{att,com}()
+ *
+ ******************************************************************/
+
+uint_t ShoreEnv::get_trx_att() const
+{
+    return (*&_env_stats._ntrx_att);
+}
+
+uint_t ShoreEnv::get_trx_com() const
+{
+    return (*&_env_stats._ntrx_com);
+}
+
+
+
+/****************************************************************** 
+ *
  *  @fn:    set_{max/active}_cpu_count()
  *
  *  @brief: Setting new cpu counts

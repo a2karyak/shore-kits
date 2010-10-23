@@ -105,7 +105,7 @@ public:
 
     // CPU
     int    update_cpu();
-    double get_avg_usage();
+    double get_avg_usage(bool bUpdateReading=true);
     void   print_avg_usage();
     uint   get_num_of_cpus();
 

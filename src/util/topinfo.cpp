@@ -118,7 +118,7 @@ void topinfo_t::print_avg_usage()
 }
 
 
-double topinfo_t::get_avg_usage()
+double topinfo_t::get_avg_usage(bool bUpdateReading)
 {
     update_cpu();
 
@@ -127,7 +127,9 @@ double topinfo_t::get_avg_usage()
     double idle  = (double) (_cpu.idle-_old_cpu.idle);
 
     // store the read cpu info for the next iteration
-    _old_cpu = _cpu;    
+    if (bUpdateReading) {
+        _old_cpu = _cpu;
+    }
 
     return( (total-idle)*cpus/total );
 }

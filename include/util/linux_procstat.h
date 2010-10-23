@@ -48,18 +48,15 @@ protected:
         
 public:
 
-    linux_procmonitor_t(const double interval_sec = 1);
+    linux_procmonitor_t(shore::ShoreEnv* env, 
+                        const double interval_sec = 1);
     ~linux_procmonitor_t();
-
-    // Thread entrance
-    void work();
-
 
     // procmonitor interface
 
     void     stat_reset();
 
-    double   get_avg_usage();
+    double   get_avg_usage(bool bUpdateReading=true);
     void     print_avg_usage();
     void     print_ext_stats();
     ulong_t  iochars();

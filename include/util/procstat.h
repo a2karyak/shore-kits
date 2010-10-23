@@ -105,6 +105,11 @@ struct cpu_measurement
  *
  *********************************************************************/
 
+// Fwd decl
+ENTER_NAMESPACE(shore);
+class ShoreEnv;
+EXIT_NAMESPACE(shore);
+
 // Control states for the thread that monitors the cpu usage
 enum eCPS { CPS_NOTSET, CPS_RESET, CPS_RUNNING, CPS_PAUSE, CPS_STOP };
 
@@ -127,15 +132,18 @@ protected:
     eCPS volatile _state; 
     virtual void _setup(const double interval_sec);
 
-        
+    shore::ShoreEnv* _env;
+    uint_t _last_reading;
+
 public:
 
     procmonitor_t(const char* name, 
-                 const double interval_sec = 1); // default interval 1 sec
+                  shore::ShoreEnv* env,
+                  const double interval_sec = 1); // default interval 1 sec
     virtual ~procmonitor_t();
 
     // Thread entrance
-    void work()=0;
+    void work();
 
     // Control
     void cntr_reset();
@@ -143,11 +151,17 @@ public:
     void cntr_resume();
     void cntr_stop();
 
+    virtual w_rc_t case_setup();
+    virtual w_rc_t case_reset();
+    virtual w_rc_t case_stop();
+    virtual w_rc_t case_tick();
+
+
     // Statistics -- INTERFACE
 
     virtual void     stat_reset()=0;
 
-    virtual double   get_avg_usage()=0;
+    virtual double   get_avg_usage(bool bUpdateReading)=0;
     virtual void     print_avg_usage()=0;
     virtual void     print_ext_stats()=0;
     virtual ulong_t  iochars()=0;
@@ -157,6 +171,9 @@ public:
     virtual cpu_load_values_t get_load()=0;
     void print_load(const double delay);
 
+    // Print perf data for the interval
+    void print_interval();
+    
 }; // EOF procmonitor_t
 
 #endif /** __UTIL_PROCSTAT_H */

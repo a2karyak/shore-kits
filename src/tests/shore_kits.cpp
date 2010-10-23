@@ -327,6 +327,7 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
         _g_mon->cntr_reset();
 
         // set measurement state to measure - start counting everything
+	TRACE(TRACE_ALWAYS, "begin measurement\n");
         _env->set_measure(MST_MEASURE);
 	stopwatch_t timer;
 
@@ -360,8 +361,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
         //xct_stats stats = shell_get_xct_stats();
         _g_mon->cntr_pause();
         ulong_t miochs = _g_mon->iochars()/MILLION;
+	TRACE(TRACE_ALWAYS, "end measurement\n");
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               miochs, _g_mon->get_avg_usage());
+                               miochs, _g_mon->get_avg_usage(true));
 
         _g_mon->print_load(delay);
         _g_mon->print_ext_stats();
@@ -447,7 +449,7 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
 	TRACE(TRACE_ALWAYS, "end measurement\n");
         ulong_t miochs = _g_mon->iochars()/MILLION;
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               miochs, _g_mon->get_avg_usage());
+                               miochs, _g_mon->get_avg_usage(true));
 
         _g_mon->print_load(delay);
         _g_mon->print_ext_stats();
@@ -683,47 +685,47 @@ int main(int argc, char* argv[])
 
     assert (kit.get());
 
-    // 2. Create and fork the process monitor
-#ifdef __sparcv9
-    _g_mon = new sunos_procmonitor_t();
-#else
-    // The Linux monitor does not need to run as a separate thread
-    _g_mon = new linux_procmonitor_t(); 
-#endif
-    _g_mon->fork();
-
-    TRACE ( TRACE_ALWAYS, "Start Shore Environment\n" );
-    // 3. Instanciate and start the Shore environment
+    // Instanciate and start the Shore environment
+    TRACE ( TRACE_ALWAYS, "Starting Shore Environment\n" );
     if (kit->inst_test_env(argc, argv)) {
         return (6);
     }
 
-    TRACE ( TRACE_ALWAYS, "Make sure data is loaded\n" );
-    // 4. Make sure data is loaded
+    // Make sure data is loaded
     w_rc_t rcl = kit->db()->loaddata();
     if (rcl.is_error()) {
         return (7);
     }
 
-    // 5. Set the global variable to the kit's db - for alarm() to work
+    // Set the global variable to the kit's db - for alarm() to work
     _g_shore_env = kit->db();
 
-    TRACE ( TRACE_ALWAYS, "Start processing commands\n" );
-    // 6. Start processing commands
+
+    // Create and fork the process monitor
+#ifdef __sparcv9
+    _g_mon = new sunos_procmonitor_t(kit->db());
+#else
+    _g_mon = new linux_procmonitor_t(kit->db()); 
+#endif
+    _g_mon->fork();
+
+
+    // Start processing commands
+    TRACE ( TRACE_ALWAYS, "Starting processing commands\n" );
     int start = kit->start();
     if (start < 0) {
         TRACE( TRACE_ALWAYS, "Error in starting shell\n");
         return (8);
     }
 
-    // 7. Dump the statistics before exiting
+    // Dump the statistics before exiting
     kit->db()->statistics();
 
-    // 8. Stop, join, and delete the cpu monitor
+    // Stop, join, and delete the cpu monitor
     _g_mon->cntr_stop();
     _g_mon->join();
     delete (_g_mon);
 
-    // 9. the Shore environment will close at the destructor of the kit
+    // The Shore environment will close at the destructor of the kit
     return (0);
 }

@@ -33,6 +33,14 @@
 
 #include "util.h"
 
+#include "sm/shore/shore_env.h"
+
+
+/*********************************************************************
+ *
+ *  @class: cpu_measurement
+ *
+ *********************************************************************/
 
 cpu_measurement& cpu_measurement::operator+=(cpu_measurement const &other) 
 {
@@ -67,12 +75,16 @@ void cpu_measurement::set(uint64_t snaptime, uint64_t nsec_idle)
  *
  *********************************************************************/
 
-procmonitor_t::procmonitor_t(const char* name, const double interval_sec)
+procmonitor_t::procmonitor_t(const char* name, 
+                             shore::ShoreEnv* env,
+                             const double interval_sec)
     : thread_t(name), _interval_usec(0), _interval_sec(interval_sec),
       _total_usage(0), _num_usage_readings(0), _avg_usage(0),
-      _state(CPS_NOTSET)
+      _state(CPS_NOTSET), _env(env), _last_reading(0)
 {
+    assert (env);
 }
+
 
 procmonitor_t::~procmonitor_t()
 {
@@ -82,6 +94,15 @@ procmonitor_t::~procmonitor_t()
     }
 }
 
+
+
+/*********************************************************************
+ *
+ *  @fn:    setup
+ *
+ *  @brief: Sets the interval 
+ *
+ *********************************************************************/
 
 void procmonitor_t::_setup(const double interval_sec) 
 {
@@ -104,6 +125,103 @@ void procmonitor_t::_setup(const double interval_sec)
 }
 
 
+
+/*********************************************************************
+ *
+ *  @fn:    print_load
+ *
+ *  @brief: Prints the average load
+ *
+ *********************************************************************/
+
+void procmonitor_t::work()
+{
+
+    if (*&_state==CPS_NOTSET) _setup(_interval_sec);
+    assert (*&_state!=CPS_NOTSET);
+
+    // Hook
+    case_setup();
+    
+    eCPS astate = *&_state;
+    int error = 0;
+    struct timespec start;
+
+    pthread_mutex_lock(&_mutex);
+    clock_gettime(CLOCK_REALTIME, &start);    
+
+    struct timespec ts = start;    
+    static long const BILLION = 1000*1000*1000;
+
+    while (true) {
+
+        astate = *&_state;
+            
+        switch (astate) {
+        case (CPS_RUNNING):
+        case (CPS_PAUSE):    // PAUSE behaves like RUNNING, but without recording data
+
+            // Hook
+            case_tick();
+        print_interval();
+
+            // Update secs/usecs
+            ts = start;
+            ts.tv_nsec += _interval_usec*1000;
+            if(ts.tv_nsec > BILLION) {
+                ts.tv_nsec -= BILLION;
+                ts.tv_sec++;
+            }            
+
+            // sleep periodically until next measurement
+            while(true) {
+
+                error = pthread_cond_timedwait(&_cond, &_mutex, &ts);
+                clock_gettime(CLOCK_REALTIME, &start);
+                if(start.tv_sec > ts.tv_sec || 
+                   (start.tv_sec == ts.tv_sec && start.tv_nsec > ts.tv_nsec))
+                    break;
+            }
+            start = ts;
+            break;
+
+
+        case (CPS_RESET):
+
+            // Hook
+            case_reset();
+
+            // clear
+            _total_usage = 0;
+            _num_usage_readings = 0;
+            _avg_usage = 0;
+            _state = CPS_RUNNING;
+            break;
+
+        case (CPS_STOP):
+
+            // Hook
+            case_stop();
+            return;
+
+        case (CPS_NOTSET): 
+        default:
+            assert(0); // invalid value 
+            break;
+        }
+    }
+}
+
+
+
+/*********************************************************************
+ *
+ *  @fn:    print_load
+ *
+ *  @brief: Prints the average load
+ *
+ *********************************************************************/
+
 void procmonitor_t::print_load(const double delay)
 {
     const cpu_load_values_t load = get_load();
@@ -116,8 +234,36 @@ void procmonitor_t::print_load(const double delay)
 }
 
 
+/*********************************************************************
+ *
+ *  @fn:    print_interval_throughput
+ *
+ *  @brief: Prints the throughput during the last interval
+ *
+ *********************************************************************/
 
-// Control
+void procmonitor_t::print_interval()
+{
+    uint_t att = _env->get_trx_att();    
+    if (_env->get_measure() == shore::MST_MEASURE) {
+        TRACE( TRACE_STATISTICS, "(%.1f) (%.1f)\n", 
+               get_avg_usage(false), 
+               (double)(att-_last_reading)/_interval_sec);
+    }
+    _last_reading=att;
+}
+
+
+
+/*********************************************************************
+ *
+ *  Control
+ *
+ *  - Updates to the state variable
+ *  - Signal handlers
+ *
+ *********************************************************************/
+
 void procmonitor_t::cntr_reset()  
 { 
     stat_reset();
@@ -137,4 +283,25 @@ void procmonitor_t::cntr_resume()
 void procmonitor_t::cntr_stop()   
 { 
     _state = CPS_STOP; 
+}
+
+
+w_rc_t procmonitor_t::case_setup() 
+{ 
+    return (RCOK); 
+}
+
+w_rc_t procmonitor_t::case_reset() 
+{ 
+    return (RCOK); 
+}
+
+w_rc_t procmonitor_t::case_stop() 
+{ 
+    return (RCOK); 
+}
+
+w_rc_t procmonitor_t::case_tick() 
+{ 
+    return (RCOK); 
 }

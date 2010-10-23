@@ -56,6 +56,7 @@ private:
     kstat_ctl_t* _pkc;
 
     std::vector<kstat_entry> _entries;
+    double _entries_sz;
 
     processinfo_t _prcinfo;
 
@@ -64,11 +65,14 @@ protected:
         
 public:
 
-    sunos_procmonitor_t(const double interval_sec = 1);
+    sunos_procmonitor_t(shore::ShoreEnv* env,
+                        const double interval_sec = 1);
     ~sunos_procmonitor_t();
 
-    // Thread entrance
-    void work();
+    // Hooks for the while loop
+    w_rc_t case_setup();
+    w_rc_t case_tick();
+    w_rc_t case_reset();
 
     // PROCSTAT interface
     void print_stats();
@@ -77,7 +81,7 @@ public:
 
     void     stat_reset();
 
-    double   get_avg_usage();
+    double   get_avg_usage(bool bUpdateReading=true);
     void     print_avg_usage();
     void     print_ext_stats();
     ulong_t  iochars();

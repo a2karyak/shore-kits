@@ -32,8 +32,11 @@
 #include "util/linux_procstat.h"
 
 
-linux_procmonitor_t::linux_procmonitor_t(const double interval_sec)
-    : procmonitor_t("linux-mon",interval_sec)
+// The Linux procmonitor is mostly just a wrapper for topinfo
+
+linux_procmonitor_t::linux_procmonitor_t(shore::ShoreEnv* env,
+                                         const double interval_sec)
+    : procmonitor_t("linux-mon",env,interval_sec)
 { 
     _setup(interval_sec);
 }
@@ -50,18 +53,12 @@ void linux_procmonitor_t::_setup(const double interval_sec)
 }
 
 
-void linux_procmonitor_t::work() 
-{
-    // Doing nothing here, 
-    // The Linux procmonitor is just a wrapper for topinfo
-}
-
-
 // procmonitor interface
 
-double linux_procmonitor_t::get_avg_usage()
+double linux_procmonitor_t::get_avg_usage(bool bUpdateReading)
 {
-    return (_topinfo.get_avg_usage());
+    // Just return current reading, do not reset
+    return (_topinfo.get_avg_usage(bUpdateReading));
 }
 
 void linux_procmonitor_t::print_avg_usage() 

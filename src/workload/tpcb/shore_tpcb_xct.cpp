@@ -621,15 +621,8 @@ w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */,
 
 	// 1. retrieve a tupple from accounts
 	e = _paccount_man->a_index_probe(_pssm, pracct, mpoin.a_id, mpoin.b_id, mpoin.balance);
-	if (e.is_error()) { goto done; }
-
+        if (e.is_error()) { goto done; }
     } // goto
-
-#ifdef PRINT_TRX_RESULTS
-    // at the end of the transaction 
-    // dumps the status of all the table rows used
-    pracct->print_tuple();
-#endif
 
 done:
     // return the tuples to the cache

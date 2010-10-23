@@ -33,8 +33,10 @@
 #include "util/sunos_procstat.h"
 #include "util.h"
 
-sunos_procmonitor_t::sunos_procmonitor_t(const double interval_sec)
-    : procmonitor_t("sunos-mon",interval_sec), _pkc(NULL)
+sunos_procmonitor_t::sunos_procmonitor_t(shore::ShoreEnv* env,
+                                         const double interval_sec)
+    : procmonitor_t("sunos-mon",env,interval_sec), 
+      _pkc(NULL), _entries_sz(0)
 { 
     _setup(interval_sec);
 }
@@ -55,7 +57,7 @@ void sunos_procmonitor_t::stat_reset()
     _prcinfo.reset();
 }
 
-double sunos_procmonitor_t::get_avg_usage() 
+double sunos_procmonitor_t::get_avg_usage(bool bUpdateReading) 
 { 
     return (*&_avg_usage); 
 }
@@ -122,111 +124,176 @@ void sunos_procmonitor_t::_setup(const double interval_sec)
 }
 
 
-void sunos_procmonitor_t::work() 
+// void sunos_procmonitor_t::work() 
+// {
+//     if (*&_state==CPS_NOTSET) _setup(_interval_sec);
+//     assert (*&_state!=CPS_NOTSET);
+    
+//     bool first_time = true;
+//     struct timespec start;
+
+//     long last_measurement = 1;
+
+//     eCPS astate = *&_state;
+    
+//     long new_measurement = 0;
+//     cpu_measurement totals = {0,0};
+
+//     double entries_sz = _entries.size();
+//     double inuse = 0;        
+//     int error = 0;
+//     struct timespec ts = start;
+    
+//     static long const BILLION = 1000*1000*1000;
+
+//     assert (_pkc);
+//     int i=0;
+//     kstat_entry* e = NULL;
+//     int kid;
+//     cpu_measurement m = {0,0};
+//     kstat_named_t* kn = NULL;
+
+//     pthread_mutex_lock(&_mutex);
+//     clock_gettime(CLOCK_REALTIME, &start);
+
+//     while (true) {
+
+//         astate = *&_state;
+            
+//         switch (astate) {
+//         case (CPS_RUNNING):
+//         case (CPS_PAUSE):    // PAUSE behaves like running without recording data
+            
+//             new_measurement = 1 - last_measurement;
+
+//         // get the new measurement
+//         totals.clear();
+
+//         for(i=0; i<entries_sz; i++) {
+//             e = &_entries[i];
+//             kid = kstat_read(_pkc, e->ksp, 0);
+//             kn = ((kstat_named_t*) e->ksp->ks_data) + e->offset;
+//             m.set(e->ksp->ks_snaptime, kn->value.ui64);
+//             e->measured[new_measurement] = m;
+//             m -= e->measured[last_measurement];
+//             totals += m;
+//         }
+
+//         // record usage if not paused
+//         if ((!first_time) && (astate==CPS_RUNNING)) {
+//             inuse = entries_sz - entries_sz*totals.cpu_nsec_idle/totals.timestamp;
+
+//             // update total usage and calculate average
+//             ++_num_usage_readings;
+//             _total_usage += inuse;
+//             _avg_usage = _total_usage/_num_usage_readings; 
+
+//             // Print temp throughput
+//             print_interval();
+//         }
+
+//         first_time = false;
+
+//         ts = start;
+//         ts.tv_nsec += _interval_usec*1000;
+//         if(ts.tv_nsec > BILLION) {
+//             ts.tv_nsec -= BILLION;
+//             ts.tv_sec++;
+//         }
+            
+//         // sleep periodically until next measurement
+//         while(true) {
+
+//             error = pthread_cond_timedwait(&_cond, &_mutex, &ts);
+//             clock_gettime(CLOCK_REALTIME, &start);
+//             if(start.tv_sec > ts.tv_sec || 
+//                (start.tv_sec == ts.tv_sec && start.tv_nsec > ts.tv_nsec))
+//                 break;
+//         }
+//         start = ts;
+//         last_measurement = new_measurement;
+//         break;
+
+//         case (CPS_RESET):
+//             // clear
+//             _total_usage = 0;
+//             _num_usage_readings = 0;
+//             _avg_usage = 0;
+//             first_time=true;
+//             last_measurement = 1;
+//             _state = CPS_RUNNING;
+//             break;
+
+//         case (CPS_STOP):
+//             return;
+
+//         case (CPS_NOTSET): 
+//         default:
+//             assert(0); // invalid value
+//         break;
+//         }
+//     }
+// }
+
+
+w_rc_t sunos_procmonitor_t::case_setup()
 {
-    if (*&_state==CPS_NOTSET) _setup(_interval_sec);
-    assert (*&_state!=CPS_NOTSET);
-    
     bool first_time = true;
-    struct timespec start;
-
-    long last_measurement = 1;
-
-    eCPS astate = *&_state;
-    
+    long last_measurement = 1;    
     long new_measurement = 0;
     cpu_measurement totals = {0,0};
-
-    double entries_sz = _entries.size();
     double inuse = 0;        
-    int error = 0;
-    struct timespec ts = start;
-    
-    static long const BILLION = 1000*1000*1000;
-
-    assert (_pkc);
-    int i=0;
     kstat_entry* e = NULL;
     int kid;
     cpu_measurement m = {0,0};
     kstat_named_t* kn = NULL;
 
-    pthread_mutex_lock(&_mutex);
-    clock_gettime(CLOCK_REALTIME, &start);
+    _entries_sz = _entries.size();
+    assert (_pkc);
 
-    while (true) {
-
-        astate = *&_state;
-            
-        switch (astate) {
-        case (CPS_RUNNING):
-        case (CPS_PAUSE):    // PAUSE behaves like running without recording data
-            
-            new_measurement = 1 - last_measurement;
-
-            // get the new measurement
-            totals.clear();
-
-            for(i=0; i<entries_sz; i++) {
-                e = &_entries[i];
-                kid = kstat_read(_pkc, e->ksp, 0);
-                kn = ((kstat_named_t*) e->ksp->ks_data) + e->offset;
-                m.set(e->ksp->ks_snaptime, kn->value.ui64);
-                e->measured[new_measurement] = m;
-                m -= e->measured[last_measurement];
-                totals += m;
-            }
-
-            // record usage if not paused
-            if ((!first_time) && (astate==CPS_RUNNING)) {
-                inuse = entries_sz - entries_sz*totals.cpu_nsec_idle/totals.timestamp;
-
-                // update total usage and calculate average
-                ++_num_usage_readings;
-                _total_usage += inuse;
-                _avg_usage = _total_usage/_num_usage_readings; 
-            }
-
-            first_time = false;
-
-            ts = start;
-            ts.tv_nsec += _interval_usec*1000;
-            if(ts.tv_nsec > BILLION) {
-                ts.tv_nsec -= BILLION;
-                ts.tv_sec++;
-            }
-            
-            // sleep periodically until next measurement
-            while(true) {
-
-                error = pthread_cond_timedwait(&_cond, &_mutex, &ts);
-                clock_gettime(CLOCK_REALTIME, &start);
-                if(start.tv_sec > ts.tv_sec || 
-                   (start.tv_sec == ts.tv_sec && start.tv_nsec > ts.tv_nsec))
-                    break;
-            }
-            start = ts;
-            last_measurement = new_measurement;
-            break;
-
-        case (CPS_RESET):
-            // clear
-            _total_usage = 0;
-            _num_usage_readings = 0;
-            _avg_usage = 0;
-            first_time=true;
-            last_measurement = 1;
-            _state = CPS_RUNNING;
-            break;
-
-        case (CPS_STOP):
-            return;
-
-        case (CPS_NOTSET): 
-        default:
-            assert(0); // invalid value
-            break;
-        }
-    }
+    return (RCOK);
 }
 
+
+w_rc_t sunos_procmonitor_t::case_tick()
+{
+            
+    new_measurement = 1 - last_measurement;
+
+    // get the new measurement
+    totals.clear();
+
+    for(int i=0; i<entries_sz; i++) {
+        e = &_entries[i];
+        kid = kstat_read(_pkc, e->ksp, 0);
+        kn = ((kstat_named_t*) e->ksp->ks_data) + e->offset;
+        m.set(e->ksp->ks_snaptime, kn->value.ui64);
+        e->measured[new_measurement] = m;
+        m -= e->measured[last_measurement];
+        totals += m;
+    }
+
+    // record usage if not paused
+    if ((!first_time) && (astate==CPS_RUNNING)) {
+        inuse = entries_sz - entries_sz*totals.cpu_nsec_idle/totals.timestamp;
+
+        // update total usage and calculate average
+        ++_num_usage_readings;
+        _total_usage += inuse;
+        _avg_usage = _total_usage/_num_usage_readings; 
+    }
+
+    first_time = false;
+    last_measurement = new_measurement;
+
+    return (RCOK);
+}
+
+
+w_rc_t sunos_procmonitor_t::case_reset()
+{
+    first_time=true;
+    last_measurement = 1;
+
+    return (RCOK);    
+}
