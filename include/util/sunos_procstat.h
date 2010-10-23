@@ -60,6 +60,17 @@ private:
 
     processinfo_t _prcinfo;
 
+    bool _first_time;
+    long _last_measurement;
+    long _new_measurement;
+    cpu_measurement _totals;
+    cpu_measurement _m;
+    double _inuse;
+    kstat_entry* _kse;
+    int _kid;
+    kstat_named_t* _kn;
+
+
 protected:
     void _setup(const double interval_sec);
         

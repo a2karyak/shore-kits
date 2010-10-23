@@ -36,7 +36,10 @@
 sunos_procmonitor_t::sunos_procmonitor_t(shore::ShoreEnv* env,
                                          const double interval_sec)
     : procmonitor_t("sunos-mon",env,interval_sec), 
-      _pkc(NULL), _entries_sz(0)
+      _pkc(NULL), _entries_sz(0),
+      _first_time(true), _last_measurement(1), _new_measurement(0),
+      _inuse(0), _kse(NULL), _kid(0), _kn(NULL)
+
 { 
     _setup(interval_sec);
 }
@@ -238,15 +241,15 @@ void sunos_procmonitor_t::_setup(const double interval_sec)
 
 w_rc_t sunos_procmonitor_t::case_setup()
 {
-    bool first_time = true;
-    long last_measurement = 1;    
-    long new_measurement = 0;
-    cpu_measurement totals = {0,0};
-    double inuse = 0;        
-    kstat_entry* e = NULL;
-    int kid;
-    cpu_measurement m = {0,0};
-    kstat_named_t* kn = NULL;
+    _first_time = true;
+    _last_measurement = 1;    
+    _new_measurement = 0;
+    _totals.set(0,0);
+    _m.set(0,0);
+    _inuse = 0;        
+    _kse = NULL;
+    _kid = 0;
+    _kn = NULL;
 
     _entries_sz = _entries.size();
     assert (_pkc);
@@ -256,35 +259,34 @@ w_rc_t sunos_procmonitor_t::case_setup()
 
 
 w_rc_t sunos_procmonitor_t::case_tick()
-{
-            
-    new_measurement = 1 - last_measurement;
+{            
+    _new_measurement = 1 - _last_measurement;
 
     // get the new measurement
-    totals.clear();
+    _totals.clear();
 
-    for(int i=0; i<entries_sz; i++) {
-        e = &_entries[i];
-        kid = kstat_read(_pkc, e->ksp, 0);
-        kn = ((kstat_named_t*) e->ksp->ks_data) + e->offset;
-        m.set(e->ksp->ks_snaptime, kn->value.ui64);
-        e->measured[new_measurement] = m;
-        m -= e->measured[last_measurement];
-        totals += m;
+    for(int i=0; i<_entries_sz; i++) {
+        _kse = &_entries[i];
+        _kid = kstat_read(_pkc, _kse->ksp, 0);
+        _kn = ((kstat_named_t*) _kse->ksp->ks_data) + _kse->offset;
+        _m.set(_kse->ksp->ks_snaptime, _kn->value.ui64);
+        _kse->measured[_new_measurement] = _m;
+        _m -= _kse->measured[_last_measurement];
+        _totals += _m;
     }
 
     // record usage if not paused
-    if ((!first_time) && (astate==CPS_RUNNING)) {
-        inuse = entries_sz - entries_sz*totals.cpu_nsec_idle/totals.timestamp;
+    if ((!_first_time) && (*&_state==CPS_RUNNING)) {
+        _inuse = _entries_sz - _entries_sz*_totals.cpu_nsec_idle/_totals.timestamp;
 
         // update total usage and calculate average
         ++_num_usage_readings;
-        _total_usage += inuse;
+        _total_usage += _inuse;
         _avg_usage = _total_usage/_num_usage_readings; 
     }
 
-    first_time = false;
-    last_measurement = new_measurement;
+    _first_time = false;
+    _last_measurement = _new_measurement;
 
     return (RCOK);
 }
@@ -292,8 +294,7 @@ w_rc_t sunos_procmonitor_t::case_tick()
 
 w_rc_t sunos_procmonitor_t::case_reset()
 {
-    first_time=true;
-    last_measurement = 1;
-
+    _first_time=true;
+    _last_measurement = 1;
     return (RCOK);    
 }

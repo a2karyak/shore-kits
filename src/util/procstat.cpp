@@ -163,7 +163,7 @@ void procmonitor_t::work()
 
             // Hook
             case_tick();
-        print_interval();
+            print_interval();
 
             // Update secs/usecs
             ts = start;
