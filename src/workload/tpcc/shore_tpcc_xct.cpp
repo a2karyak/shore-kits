@@ -430,7 +430,7 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int /* xct_id */,
     assert (prst);
 
     row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
-    assert (pritem);
+    assert (prol);
     
     rep_row_t areprow(_pcustomer_man->ts());
 

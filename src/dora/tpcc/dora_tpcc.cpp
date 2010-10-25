@@ -161,23 +161,29 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     int minKeyVal = 0;
     int maxKeyVal = get_sf()+1;
 
-    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
-
     char* minKey = (char*)malloc(sizeof(int));
+    memset(minKey,0,sizeof(int));
     memcpy(minKey,&minKeyVal,sizeof(int));
 
     char* maxKey = (char*)malloc(sizeof(int));
+    memset(minKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
+    // [ 0 .. #WH+1 )
+    // Warehouses,Districts,Customers,NewOrders,Orders,OrderLine,History,Stock
     _pwarehouse_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_whs);
     _pdistrict_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_dis);
     _pcustomer_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_cus);
-    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_his);
     _pnew_order_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_nor);
     _porder_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ord);
-    _pitem_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ite);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_his);
     _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sto);
+
+    // Items: [ 0 .. 100K+1 )
+    maxKeyVal = ITEMS + 1;
+    memset(maxKey,0,sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+    _pitem_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ite);
 
     free (minKey);
     free (maxKey);

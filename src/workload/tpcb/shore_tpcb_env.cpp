@@ -98,21 +98,31 @@ w_rc_t ShoreTPCBEnv::update_partitioning()
     int minKeyVal = 0;
     int maxKeyVal = get_sf()+1;
 
-    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
-
-    char* minKey = (char*)malloc(sizeof(int)+1);
-    memset(minKey,0,sizeof(int)+1);
+    char* minKey = (char*)malloc(sizeof(int));
+    memset(minKey,0,sizeof(int));
     memcpy(minKey,&minKeyVal,sizeof(int));
 
-    char* maxKey = (char*)malloc(sizeof(int)+1);
-    memset(minKey,0,sizeof(int)+1);
+    char* maxKey = (char*)malloc(sizeof(int));
+    memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
+    // Branches: [ 0 .. #Branches+1 )
     _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+
+    // History: does not have account we use the same with Branches
     _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);    
+
+    // Tellers:  [ 0 .. (#Branches*TPCB_TELLERS_PER_BRANCH)+1 )
+    maxKeyVal = (get_sf()*TPCB_TELLERS_PER_BRANCH)+1;
+    memset(maxKey,0,sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+
+    // Accounts: [ 0 .. (#Branches*TPCB_ACCOUNTS_PER_BRANCH)+1 )
+    maxKeyVal = (get_sf()*TPCB_ACCOUNTS_PER_BRANCH)+1;
+    memset(maxKey,0,sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
 
     free (minKey);
     free (maxKey);

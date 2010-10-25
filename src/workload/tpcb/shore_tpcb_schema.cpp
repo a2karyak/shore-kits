@@ -23,7 +23,7 @@
 
 /** @file:   shore_tpcb_schema.h
  *
- *  @brief:  Declaration of the TPC-C tables
+ *  @brief:  Declaration of the TPC-B tables
  *
  *  @author: Ippokratis Pandis, January 2008
  *

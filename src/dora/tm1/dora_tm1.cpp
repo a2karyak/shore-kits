@@ -138,11 +138,14 @@ w_rc_t DoraTM1Env::update_partitioning()
     // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
 
     char* minKey = (char*)malloc(sizeof(int));
+    memset(minKey,0,sizeof(int));
     memcpy(minKey,&minKeyVal,sizeof(int));
 
     char* maxKey = (char*)malloc(sizeof(int));
+    memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
+    // All the TM1 tables use the SUB_ID as the first column
     _psub_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sub);
     _pai_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ai);
     _psf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sf);

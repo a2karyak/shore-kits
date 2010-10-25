@@ -93,15 +93,15 @@ w_rc_t ShoreTM1Env::update_partitioning()
     int minKeyVal = 0;
     int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
 
-    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
-    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
-
     char* minKey = (char*)malloc(sizeof(int));
+    memset(minKey,0,sizeof(int));
     memcpy(minKey,&minKeyVal,sizeof(int));
 
     char* maxKey = (char*)malloc(sizeof(int));
+    memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
+    // All the TM1 tables use the SUB_ID as the first column
     _psub_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
     _pai_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
     _psf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);

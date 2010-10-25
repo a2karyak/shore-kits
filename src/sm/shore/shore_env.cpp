@@ -719,6 +719,9 @@ int ShoreEnv::configure_sm()
         return (2);
     }
 
+    upd_sf();
+    upd_worker_cnt();
+
     // If we reached this point the sm is configured correctly
     return (0);
 }

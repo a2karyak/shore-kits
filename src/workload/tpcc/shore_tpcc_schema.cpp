@@ -118,7 +118,11 @@ district_t::district_t(const uint4_t& pd) :
     _desc[10].setup(SQL_INT,  "D_NEXT_O_ID");
 
     // create unique index d_index on (d_id, w_id)
-    uint keys[2] = { 0, 1 }; // IDX { D_ID, D_W_ID }
+    //uint keys[2] = { 0, 1 }; // IDX { D_ID, D_W_ID }
+
+    // create unique index d_index on (w_id, d_id)
+    uint keys[2] = { 1, 0 }; // IDX { D_W_ID, D_ID }
+
     create_primary_idx("D_IDX", 0, keys, 2, pd);
 }
 
