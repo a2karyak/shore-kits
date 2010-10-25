@@ -528,7 +528,9 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */,
 	pracct->set_value(0, mioin.a_id);
 	pracct->set_value(1, mioin.b_id);
 	pracct->set_value(2, mioin.balance);
+#ifdef CFG_HACK
 	pracct->set_value(3, "padding");
+#endif
 	e = _paccount_man->add_tuple(_pssm, pracct);
 	if (e.is_error()) { goto done; }
 
