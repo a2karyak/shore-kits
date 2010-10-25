@@ -691,10 +691,19 @@ w_rc_t ShoreTPCBEnv::_pad_BRANCHES()
                     // updating it directly.
 		    int pnum = _pbranch_man->get_pnum(&br_idx[i], &row);
 		    stid_t fid = br_idx[i].fid(pnum);
-		    W_DO(db->destroy_assoc(fid, kvec, rvec));
 
-		    // now put the entry back with the new rid
-		    W_DO(db->create_assoc(fid, kvec, nrvec));
+		    if(br_idx[i].is_mr()) {
+			W_DO(db->destroy_mr_assoc(fid, kvec, rvec));
+			// now put the entry back with the new rid
+			ss_m::el_filler ef;
+			ef._el.put(nrvec);
+			W_DO(db->create_mr_assoc(fid, kvec, ef));
+		    } else {
+			W_DO(db->destroy_assoc(fid, kvec, rvec));
+			// now put the entry back with the new rid
+			W_DO(db->create_assoc(fid, kvec, nrvec));
+		    }
+		    
 		}
                 fprintf(stderr, ".");
 	    }
@@ -830,10 +839,19 @@ w_rc_t ShoreTPCBEnv::_pad_TELLERS()
                     // updating it directly.
 		    int pnum = _pteller_man->get_pnum(&te_idx[i], &row);
 		    stid_t fid = te_idx[i].fid(pnum);
-		    W_DO(db->destroy_assoc(fid, kvec, rvec));
 
-		    // now put the entry back with the new rid
-		    W_DO(db->create_assoc(fid, kvec, nrvec));
+		    if(te_idx[i].is_mr()) {
+			W_DO(db->destroy_mr_assoc(fid, kvec, rvec));
+			// now put the entry back with the new rid
+			ss_m::el_filler ef;
+			ef._el.put(nrvec);
+			W_DO(db->create_mr_assoc(fid, kvec, ef));
+		    } else {
+			W_DO(db->destroy_assoc(fid, kvec, rvec));
+			// now put the entry back with the new rid
+			W_DO(db->create_assoc(fid, kvec, nrvec));
+		    }
+
 		}
                 fprintf(stderr, ".");
 	    }

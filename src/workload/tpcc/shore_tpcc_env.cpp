@@ -686,10 +686,19 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		    */
 		    int pnum = _pwarehouse_man->get_pnum(&idx[i], &row);
 		    stid_t fid = idx[i].fid(pnum);
-		    W_DO(db->destroy_assoc(fid, kvec, rvec));
 
-		    // now put the entry back with the new rid
-		    W_DO(db->create_assoc(fid, kvec, nrvec));
+		    if(idx[i].is_mr()) {
+			W_DO(db->destroy_mr_assoc(fid, kvec, rvec));
+			// now put the entry back with the new rid
+			ss_m::el_filler ef;
+			ef._el.put(nrvec);
+			W_DO(db->create_mr_assoc(fid, kvec, ef));
+		    } else {
+			W_DO(db->destroy_assoc(fid, kvec, rvec));
+			// now put the entry back with the new rid
+			W_DO(db->create_assoc(fid, kvec, nrvec));
+		    }
+				    
 		}
                 fprintf(stderr, ".");
 	    }
