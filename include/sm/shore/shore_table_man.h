@@ -741,7 +741,8 @@ bool table_man_impl<TableDesc>::load(table_tuple* ptuple,
                                      const char* data)
 {
     // Read the data field by field
-
+    assert (ptuple);
+    assert (data);
 
     // 1. Get the pre-calculated offsets
 
