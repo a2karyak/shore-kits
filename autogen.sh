@@ -24,7 +24,7 @@ echo --enable-sli     -  Defines CFG_SLI
 echo --enable-qpipe   -  Includes QPipe files, defines CFG_QPIPE
 echo --enable-bt      -  Enables backtracing facility. defines CFG_BT
 echo --enable-simics  -  Adds the simics MAGIC instructions. defines CFG_SIMICS
-echo --enable-hacks   -  Enables physical design haks. Padding padding TPC-B tables, and partitioning indexes, such as OL_IDX
+echo --enable-hack    -  Enables physical design haks. Padding padding TPC-B tables, and partitioning indexes, such as OL_IDX
 echo   
 echo   
 echo There are 3 supported compilation options

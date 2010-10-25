@@ -194,6 +194,9 @@ PROFILE_FLAGS="-pg -O0"
 OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
 
+# Remember the user set CXXFLAGS
+USERCXXFLAGS="$CXXFLAGS"
+
 CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
 
@@ -389,7 +392,7 @@ fi
 
 # Prepend to CXXFLAGS the selected {DEBUG,DBGSYMBOLS,PROFILE,OPT,CPU}_FLAGS
 
-CXXFLAGS="$DEBUG_FLAGS $DBGSYMBOLS_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS $CXXFLAGS"
+CXXFLAGS="$DEBUG_FLAGS $DBGSYMBOLS_FLAGS $PROFILE_FLAGS $OPT_FLAGS $CPU_FLAGS $CXXFLAGS $USERCXXFLAGS"
 
 # ----------- Eof Compilation options ---------
 
