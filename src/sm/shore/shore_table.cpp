@@ -109,15 +109,6 @@ w_rc_t table_desc_t::create_table(ss_m* db)
     
     while (index) {
 
-        // Print info
-        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s) (%s) (%s)\n",
-               index->name(), iid.store,
-               (index->is_mr() ? "mrbt" : "normal"), 
-               (index->is_latchless() ? "no latch" : "latch"),
-               (index->is_relaxed() ? "relaxed" : "no relaxed"), 
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"));        
-
         // the type of index to create
         if (index->is_mr()) {
             // MRBTree
@@ -190,6 +181,15 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 				  vec_t(index->name(), strlen(index->name())),
 				  vec_t(&file, sizeof(file_info_t))));
         }
+
+        // Print info
+        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s) (%s) (%s)\n",
+               index->name(), iid.store,
+               (index->is_mr() ? "mrbt" : "normal"), 
+               (index->is_latchless() ? "no latch" : "latch"),
+               (index->is_relaxed() ? "relaxed" : "no relaxed"), 
+               (index->is_partitioned() ? "part" : "no part"), 
+               (index->is_unique() ? "unique" : "no unique"));        
 	
         // Move to the next index of the table
 	index = index->next();

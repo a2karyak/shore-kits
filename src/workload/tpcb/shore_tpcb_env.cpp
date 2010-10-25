@@ -234,7 +234,7 @@ struct ShoreTPCBEnv::checkpointer_t : public thread_t
 {
     ShoreTPCBEnv* _env;
     checkpointer_t(ShoreTPCBEnv* env) 
-        : thread_t("LD Chkpt"), _env(env) 
+        : thread_t("LDChkpt"), _env(env) 
     { }
     virtual void work();
 };

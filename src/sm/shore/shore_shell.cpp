@@ -1058,8 +1058,8 @@ void freq_cmd_t::usage(void)
            "*** freq <INSERT_FREQ> <DELETE_FREQ>\n"                     \
            "\nParameters:\n"                                            \
            "<INSERT_FREQ> - The frequency of the insertions\n"          \
-           "<DELETE_FREQ> - The frequency of the deletions\n"           \
-           "(The PROB_FREQ wil be 100-INS-DEL)\n\n");
+           "<DELETE_FREQ> - The frequency of the deletions\n\n"         \
+           "The PROB_FREQ wil be 100 - INSERT_FREQ - DELETE_FREQ\n\n");
 }
 
 string freq_cmd_t::desc() const 
