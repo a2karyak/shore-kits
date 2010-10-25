@@ -291,7 +291,8 @@ w_rc_t ShoreTPCCEnv::update_partitioning()
     _porder_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
     _pitem_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
     _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
+    _porder_line_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    
     free (minKey);
     free (maxKey);
 
