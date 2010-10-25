@@ -346,9 +346,9 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
         prsub->set_value(32, URand(0,(2<<16)-1));
         prsub->set_value(33, URand(0,(2<<16)-1));
 
-        // PADDING
-        prsub->set_value(34, "padding");
-
+#ifdef CFG_HACK
+        prsub->set_value(34, "padding");         // PADDING
+#endif
         
         e = _psub_man->add_tuple(_pssm, prsub);
         if (e.is_error()) { goto done; }
@@ -381,9 +381,9 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             prai->set_value(5, data4);      
 
 
-            // PADDING
-            prai->set_value(6, "padding");
-
+#ifdef CFG_HACK
+            prai->set_value(6, "padding");            // PADDING
+#endif
 
             e = _pai_man->add_tuple(_pssm, prai);
             if (e.is_error()) { goto done; }
@@ -415,9 +415,9 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             prsf->set_value(5, datab);
 
 
-            // PADDING
-            prsf->set_value(6, "padding");
-
+#ifdef CFG_HACK
+            prsf->set_value(6, "padding");            // PADDING
+#endif
 
             e = _psf_man->add_tuple(_pssm, prsf);
             if (e.is_error()) { goto done; }
@@ -452,8 +452,9 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
                 URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
                 prcf->set_value(4, numbx);                
 
-                // PADDING
-                prcf->set_value(5, "padding");
+#ifdef CFG_HACK
+                prcf->set_value(5, "padding");                // PADDING
+#endif
 
                 e = _pcf_man->add_tuple(_pssm, prcf);
                 if (e.is_error()) { goto done; }                
@@ -569,11 +570,6 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
 
         prsub->get_value(32, asub.MSC_LOCATION);
         prsub->get_value(33, asub.VLR_LOCATION);
-
-
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -703,12 +699,7 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
         if (!bFound) { 
             e = RC(se_NO_CURRENT_TUPLE); 
-            goto done;
         }
-
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -785,11 +776,6 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
         prai->get_value(3,  aai.DATA2);
         prai->get_value(4,  aai.DATA3, 5);
         prai->get_value(5,  aai.DATA4, 9);
-
-
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -890,11 +876,6 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         
         e = _psub_man->update_tuple(_pssm, prsub);
 
-
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
-
     } // goto
 
 #ifdef PRINT_TRX_RESULTS
@@ -963,10 +944,6 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
         prsub->set_value(33, ulin._vlr_loc);
         
         e = _psub_man->update_tuple(_pssm, prsub);
-
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -1117,23 +1094,19 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
             prcf->set_value(2, icfin._s_time);
             prcf->set_value(3, icfin._e_time);
             prcf->set_value(4, icfin._numberx);                
-            prcf->set_value(5, "padding");
+
+#ifdef CFG_HACK
+            prcf->set_value(5, "padding"); // PADDING
+#endif
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
 
             e = _pcf_man->add_tuple(_pssm, prcf);
-
-            if (e.is_error()) { goto done; }
         }             
         else {
             // in any other case it should fail
             e = RC(se_CANNOT_INSERT_TUPLE);
-            goto done;
-        }
-        
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
+        }        
 
     } // goto
 
@@ -1231,11 +1204,6 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
 
         e = _pcf_man->delete_tuple(_pssm, prcf);
 
-
-        // COMMIT
-//         e = _pssm->commit_xct();
-//         if (e.is_error()) { goto done; }
-
     } // goto
 
 #ifdef PRINT_TRX_RESULTS
@@ -1332,7 +1300,6 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
                    xct_id, sid, vlrloc);
 
             e = sub_iter->next(_pssm, eof, *prsub);
-            if (e.is_error()) { goto done; }            
         }
 
     } // goto

@@ -73,6 +73,11 @@ ENTER_NAMESPACE(shore);
     public: tablename(string sysname); }
 
 
+#define DECLARE_TABLE_SCHEMA_PD(tablename)              \
+    class tablename : public table_desc_t {             \
+    public: tablename(const uint4_t& pd); }
+
+
 /* ---------------------------------------------------------------
  *
  * @brief: Macros for correct offset calculation
@@ -131,6 +136,7 @@ protected:
 	operator row_cache*() { return tls_get(); }
 	row_cache* operator->() { return tls_get(); }
     };
+
 
 #define _DEFINE_ROW_CACHE_TLS(table_man, tls_name) \
     DECLARE_TLS(table_man::row_cache, tls_name);   \
@@ -223,7 +229,7 @@ public:
         return (index_probe(db, pidx, ptuple, EX, LATCH_EX));
     }
 
-    /* probe idx in NL (& LATCH_SH) mode */
+    // probe idx in NL (& LATCH_SH) mode
     inline w_rc_t   index_probe_nl(ss_m* db,
                                    index_desc_t* pidx,
                                    table_tuple*  ptuple)
@@ -231,7 +237,7 @@ public:
         return (index_probe(db, pidx, ptuple, NL, LATCH_SH));
     }
 
-    /* probe primary idx */
+    // probe primary idx
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
                                         lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
@@ -242,7 +248,7 @@ public:
     }
 
 
-    // by name probes
+    // probes based on the name of the index
 
 
     // idx probe - based on idx name //
@@ -319,13 +325,6 @@ public:
     w_rc_t scan_index(ss_m* db, index_desc_t* pidx);
 
 
-    /* ----------------- */
-    /* --- debugging --- */
-    /* ----------------- */
-
-    w_rc_t print_table(ss_m* db); /* print the table on screen */
-
-
     /* ------------------------------ */
     /* --- trash stack operations --- */
     /* ------------------------------ */
@@ -349,6 +348,14 @@ public:
     {
         _pcache->giveback(ptt);
     }
+
+
+    /* ----------------- */
+    /* --- debugging --- */
+    /* ----------------- */
+
+    w_rc_t print_table(ss_m* db); /* print the table on screen */
+
 
 }; // EOF: table_man_impl
 
@@ -983,36 +990,47 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     bool     found = false;
     smsize_t len = sizeof(rid_t);
 
-#ifdef CFG_DORA
-    // 0. if index created with NO-LOCK option (DORA) then:
-    //    - ignore lock mode (use NL)
-    //    - find_assoc ignoring any locks
+    // if index created with NO-LOCK option (e.g., DORA) then:
+    // - ignore lock mode (use NL)
+    // - find_assoc ignoring any locks
     bool bIgnoreLocks = false;
     if (pindex->is_relaxed()) {
         lock_mode   = NL;
         bIgnoreLocks = true;
     }
-#endif
 
-    // 1. ensure valid index
+    // ensure valid index
     W_DO(pindex->check_fid(db));
 
-    // 2. find the tuple in the index
+    // find the tuple in the index
     int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // if NULL invalid key
 
     int pnum = get_pnum(pindex, ptuple);
 
-    W_DO(ss_m::find_assoc(pindex->fid(pnum),
-    			  vec_t(ptuple->_rep->_dest, key_sz),
-    			  &(ptuple->_rid),
-    			  len,
-    			  found
+    if (pindex->is_mr()) {
+        W_DO(ss_m::find_mr_assoc(pindex->fid(pnum),
+                                 vec_t(ptuple->_rep->_dest, key_sz),
+                                 &(ptuple->_rid),
+                                 len,
+                                 found
 #ifdef CFG_DORA
-                          ,bIgnoreLocks
+                                 ,bIgnoreLocks
 #endif
-                          ));
-    
+                                 ));
+    }
+    else {
+        W_DO(ss_m::find_assoc(pindex->fid(pnum),
+                              vec_t(ptuple->_rep->_dest, key_sz),
+                              &(ptuple->_rid),
+                              len,
+                              found
+#ifdef CFG_DORA
+                              ,bIgnoreLocks
+#endif
+                              ));
+    }
+
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
     // 3. read the tuple
@@ -1030,7 +1048,8 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 
 
 template <class TableDesc>
-int table_man_impl<TableDesc>::get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const {
+int table_man_impl<TableDesc>::get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const 
+{
     assert(ptuple);
     assert(pindex);
     if(!pindex->is_partitioned())
@@ -1106,14 +1125,29 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 
 	int pnum = get_pnum(index, ptuple);
         W_DO(index->find_fid(db, pnum));
-	W_DO(db->create_assoc(index->fid(pnum),
-                              vec_t(ptuple->_rep->_dest, ksz),
-                              vec_t(&(ptuple->_rid), sizeof(rid_t))
-#ifdef CFG_DORA
-                              ,bIgnoreLocks
-#endif
-                              ));
 
+        if (index->is_mr()) {
+            //RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
+            ss_m::el_filler ef;
+            ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
+            W_DO(db->create_mr_assoc(index->fid(pnum),
+                                     vec_t(ptuple->_rep->_dest, ksz),
+                                     ef
+#ifdef CFG_DORA
+                                     ,bIgnoreLocks
+#endif
+                                     , NULL // reloc_func
+                                     ));
+        }
+        else {
+            W_DO(db->create_assoc(index->fid(pnum),
+                                  vec_t(ptuple->_rep->_dest, ksz),
+                                  vec_t(&(ptuple->_rid), sizeof(rid_t))
+#ifdef CFG_DORA
+                                  ,bIgnoreLocks
+#endif
+                                  ));
+        }
         // move to next index
 	index = index->next();
     }
@@ -1239,13 +1273,25 @@ w_rc_t table_man_impl<TableDesc>::delete_tuple(ss_m* db,
 
 	int pnum = get_pnum(pindex, ptuple);
 	W_DO(pindex->find_fid(db, pnum));
-	W_DO(db->destroy_assoc(pindex->fid(pnum),
-                               vec_t(ptuple->_rep->_dest, key_sz),
-                               vec_t(&(todelete), sizeof(rid_t))
+
+        if (pindex->is_mr()) {
+            W_DO(db->destroy_mr_assoc(pindex->fid(pnum),
+                                      vec_t(ptuple->_rep->_dest, key_sz),
+                                      vec_t(&(todelete), sizeof(rid_t))
 #ifdef CFG_DORA
-                               ,bIgnoreLocks
+                                      ,bIgnoreLocks
 #endif
-                               ));
+                                   ));
+        }
+        else {
+            W_DO(db->destroy_assoc(pindex->fid(pnum),
+                                   vec_t(ptuple->_rep->_dest, key_sz),
+                                   vec_t(&(todelete), sizeof(rid_t))
+#ifdef CFG_DORA
+                                   ,bIgnoreLocks
+#endif
+                                   ));
+        }
 
         // move to next index
 	pindex = pindex->next();

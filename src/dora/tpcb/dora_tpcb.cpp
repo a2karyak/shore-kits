@@ -43,16 +43,16 @@ ENTER_NAMESPACE(dora);
 
 
 // max field counts for (int) keys of tpcb tables
-const int br_IRP_KEY  = 1;
-const int te_IRP_KEY  = 1;
-const int ac_IRP_KEY  = 1;
-const int hi_IRP_KEY  = 1;
+const uint br_IRP_KEY  = 1;
+const uint te_IRP_KEY  = 1;
+const uint ac_IRP_KEY  = 1;
+const uint hi_IRP_KEY  = 1;
 
 // key estimations for each partition of the tpcb tables
-const int br_KEY_EST  = 100;
-const int te_KEY_EST  = 100;
-const int ac_KEY_EST  = 100;
-const int hi_KEY_EST  = 100;
+const uint br_KEY_EST  = 100;
+const uint te_KEY_EST  = 100;
+const uint ac_KEY_EST  = 100;
+const uint hi_KEY_EST  = 100;
 
 
 
@@ -97,40 +97,62 @@ int DoraTPCBEnv::start()
     // 3. Resets each table
 
     conf(); // re-configure
-
-    // Call the pre-start procedure of the dora environment
-    DoraEnv::_start(this);
-
     processorid_t icpu(_starting_cpu);
-
-    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%.1f) - DORA_SF=(%.1f)...\n", 
-           _scaling_factor, _sf);    
-
 
     // BRANCH
     GENERATE_DORA_PARTS(br,branch);
 
-
     // TELLER
     GENERATE_DORA_PARTS(te,teller);
-
 
     // ACCOUNT
     GENERATE_DORA_PARTS(ac,account);
 
-
     // HISTORY
     GENERATE_DORA_PARTS(hi,history);
 
-
-    TRACE( TRACE_DEBUG, "Starting tables...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->reset();
-    }
-
-    set_dbc(DBC_ACTIVE);
+    // Call the post-start procedure of the dora environment
+    DoraEnv::_post_start(this);
     return (0);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t DoraTPCBEnv::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    int minKeyVal = 0;
+    int maxKeyVal = get_sf()+1;
+
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_br);
+    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_te);
+    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ac);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_hi);
+
+    free (minKey);
+    free (maxKey);
+
+    return (RCOK);
+}
+
+
 
 
 
@@ -144,20 +166,9 @@ int DoraTPCBEnv::start()
 
 int DoraTPCBEnv::stop()
 {
-    TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->stop();
-    }
-    _irptp_vec.clear();
-
-    // Call the meta-stop procedure of the dora environment
-    DoraEnv::_stop();
-
-    set_dbc(DBC_STOPPED);
-    return (0);
+    // Call the post-stop procedure of the dora environment
+    return (DoraEnv::_post_stop(this));
 }
-
-
 
 
 /****************************************************************** 
@@ -206,28 +217,26 @@ int DoraTPCBEnv::conf()
 {
     ShoreTPCBEnv::conf();
 
-    TRACE( TRACE_DEBUG, "configuring dora-tpcb\n");
-
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
+    _cpu_range = get_active_cpu_count();
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    _cpu_range = get_active_cpu_count();
+    // For each table read the ratio of partition per CPU and calculate the
+    // number of partition to create (depending the number of CPUs available).
+    double br_PerCPU = ev->getVarDouble("dora-ratio-tpcb-br",0);
+    _parts_br = ( br_PerCPU>0 ? (_cpu_range * br_PerCPU) : 1);
 
-    // For TPCB the DORA_SF is !not anymore! different than the SF of the database
-    // In particular, for each 'real' SF there is 1 DORA SF
-    _sf = upd_sf(); // * TPCB_SUBS_PER_SF / TPCB_SUBS_PER_DORA_PART;
+    double te_PerCPU = ev->getVarDouble("dora-ratio-tpcb-te",0);
+    _parts_te = ( te_PerCPU>0 ? (_cpu_range * te_PerCPU) : 1);
 
-    // Get DORA and per table partition SFs
-    _dora_sf = ev->getSysVarInt("dora-sf");
-    assert (_dora_sf);
+    double ac_PerCPU = ev->getVarDouble("dora-ratio-tpcb-ac",0);
+    _parts_ac = ( ac_PerCPU>0 ? (_cpu_range * ac_PerCPU) : 1);
 
-    _sf_per_part_br  = _dora_sf * ev->getVarInt("dora-tpcb-sf-per-part-br",1);
-    _sf_per_part_te  = _dora_sf * ev->getVarInt("dora-tpcb-sf-per-part-te",1);
-    _sf_per_part_ac  = _dora_sf * ev->getVarInt("dora-tpcb-sf-per-part-ac",1);
-    _sf_per_part_hi  = _dora_sf * ev->getVarInt("dora-tpcb-sf-per-part-hi",1);        
+    double hi_PerCPU = ev->getVarDouble("dora-ratio-tpcb-hi",0);
+    _parts_hi = ( hi_PerCPU>0 ? (_cpu_range * hi_PerCPU) : 1);
 
     return (0);
 }
@@ -246,11 +255,7 @@ int DoraTPCBEnv::conf()
 
 int DoraTPCBEnv::newrun()
 {
-    TRACE( TRACE_DEBUG, "Preparing for new run...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->prepareNewRun();
-    }
-    return (0);
+    return (DoraEnv::_newrun(this));
 }
 
 
@@ -264,12 +269,7 @@ int DoraTPCBEnv::newrun()
 
 int DoraTPCBEnv::dump()
 {
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0; i<sz; i++) {
-        _irptp_vec[i]->dump();
-    }
-    return (0);
+    return (DoraEnv::_dump(this));
 }
 
 
@@ -283,15 +283,8 @@ int DoraTPCBEnv::dump()
 
 int DoraTPCBEnv::info() const
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
-        _irptp_vec[i]->info();
-    }
-    return (0);
+    return (DoraEnv::_info(this));
 }
-
 
 
 /******************************************************************** 
@@ -304,23 +297,14 @@ int DoraTPCBEnv::info() const
 
 int DoraTPCBEnv::statistics() 
 {
-    // DORA STATS
-    TRACE( TRACE_STATISTICS, "----- DORA -----\n");
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
-        _irptp_vec[i]->statistics();
-    }
+    DoraEnv::_statistics(this);
     return (0);
 
     // TPCB STATS
     TRACE( TRACE_STATISTICS, "----- TPCB  -----\n");
     ShoreTPCBEnv::statistics();
-
     return (0);
 }
-
-
 
 
 

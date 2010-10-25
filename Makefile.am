@@ -133,6 +133,7 @@ SM_SHORE = \
    $(SMS)/shore_field.cpp \
    $(SMS)/shore_table.cpp \
    $(SMS)/shore_row.cpp \
+   $(SMS)/shore_index.cpp \
    $(SMS)/shore_sort_buf.cpp \
    $(SMS)/shore_reqs.cpp \
    $(SMS)/shore_env.cpp \
@@ -375,10 +376,14 @@ if USE_DORA
 
 SD=$(top_srcdir)/src/dora
 DO_BASE = \
+   $(SD)/dkey_ranges_map.cpp \
    $(SD)/base_action.cpp \
    $(SD)/rvp.cpp \
    $(SD)/logical_lock.cpp \
+   $(SD)/base_partition.cpp \
    $(SD)/partition.cpp \
+   $(SD)/part_table.cpp \
+   $(SD)/range_part_table.cpp \
    $(SD)/dora_env.cpp
 
 if USE_FLUSHER

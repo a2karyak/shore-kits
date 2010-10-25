@@ -44,14 +44,13 @@ ENTER_NAMESPACE(dora);
 
 using std::vector;
 
-const char KS_DELIMETER[] = "|";
-
-
 template<typename DataType> struct key_wrapper_t;
 template<typename DataType> std::ostream& operator<< (std::ostream& os,
                                                       const key_wrapper_t<DataType>& rhs);
 
 
+// A key can constitue by up to 5 DataType entries
+const uint MAX_KEY_SIZE = 5; 
 
 /******************************************************************** 
  *
@@ -69,7 +68,7 @@ template<typename DataType>
 struct key_wrapper_t
 {
     //typedef typename PooledVec<DataType>::Type        DataVec;
-    typedef std::vector<DataType>        DataVec;
+    typedef std::vector<DataType>            DataVec;
     typedef typename DataVec::iterator       DataVecIt;
     typedef typename DataVec::const_iterator DataVecCit;
 
@@ -95,7 +94,6 @@ struct key_wrapper_t
         return (*this);
     }
     
-
     // destructor
     ~key_wrapper_t() { }
 
@@ -105,27 +103,58 @@ struct key_wrapper_t
     }
 
     // reserve vector space
-    inline void reserve(const int keysz) {
-        assert (keysz);
+    inline void reserve(const uint keysz) {
         _key_v.reserve(keysz);
     }
-
 
     // drops the key
     //inline void drop() { if (_key_v) delete (_key_v); }
 
-    inline void copy(const key_wrapper_t<DataType>& rhs) 
-    {
+    inline void copy(const key_wrapper_t<DataType>& rhs) {
         copy_vector(rhs._key_v);
     }
     
 
     // helper functions
-    inline void copy_vector(const DataVec& aVec) 
-    {
+    inline void copy_vector(const DataVec& aVec) {
         assert (_key_v.empty());
         _key_v.reserve(aVec.size());
         _key_v.assign(aVec.begin(),aVec.end()); // copy vector content
+    }
+
+    // Returns a corresponding cvec_t 
+    cvec_t toCVec() const {
+        cvec_t acv;
+        for (uint i=0; i<_key_v.size(); ++i) {
+            acv.put(&_key_v[i],sizeof(DataType));
+        }
+        return (acv);
+    }
+
+    // Sets the key based on a cvec_t
+    // Returns the number of DataTypes read
+    uint readCVec(const cvec_t& acv) {
+        // Clear key contents, if any
+        reset();
+        
+        // Read the cvec_t into a char*
+        uint sz = MAX_KEY_SIZE * sizeof(DataType);
+        char* co = (char*)malloc(sz);
+        size_t bwriten = acv.copy_to(co,sz);
+        size_t bread = 0;
+
+        // Read the DataTypes and insert them to the key vector
+        uint dtread = 0;
+        while (bread < bwriten) {
+            DataType adt = *(DataType*)(co[bread]);
+            _key_v.push_back(adt);
+
+            // move to next
+            bread += sizeof(DataType);
+            ++dtread;
+        }
+        free (co);
+        return (dtread);
     }
 
     // comparison operators
@@ -136,18 +165,12 @@ struct key_wrapper_t
 
     // CACHEABLE INTERFACE
 
+    void init() { }
 
-    void init() 
-    {
-    }
-
-    void reset() 
-    {
-        // clear contents
+    // Clear contents
+    void reset() {
         _key_v.erase(_key_v.begin(),_key_v.end());
     }
-
-
 
     string toString() {
         std::ostringstream out = string("");
@@ -160,10 +183,7 @@ struct key_wrapper_t
     template<class T> friend std::ostream& operator<< (std::ostream& os, 
                                                        const key_wrapper_t<T>& rhs);
 
-
-
 }; // EOF: struct key_wrapper_t
-
 
 
 template<typename DataType> 

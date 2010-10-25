@@ -188,7 +188,7 @@ public:
     virtual int newrun() { return(0); /* do nothing */ };
 
     virtual int post_init();
-    virtual int load_schema();
+    virtual w_rc_t load_schema();
 
     virtual int conf();
     virtual int start();
@@ -239,6 +239,9 @@ public:
 
     // Database population
     DECLARE_TRX(populate_db);
+
+    // Update the partitioning info, if any needed
+    virtual w_rc_t update_partitioning();
 
     // for thread-local stats
     virtual void env_thread_init();

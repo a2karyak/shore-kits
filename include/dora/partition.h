@@ -23,7 +23,7 @@
 
 /** @file:   partition.h
  *
- *  @brief:  Encapsulation of each table partition in DORA
+ *  @brief:  Template-based encapsulation of each table partition in DORA
  *
  *  @author: Ippokratis Pandis, Oct 2008
  */
@@ -32,14 +32,9 @@
 #define __DORA_PARTITION_H
 
 
-#include <cstdio>
+#include "dora/base_partition.h"
 
-#include "util.h"
-
-#include "sm/shore/shore_env.h"
-#include "sm/shore/shore_table.h"
 #include "sm/shore/srmwqueue.h"
-
 #include "dora/lockman.h"
 
 using namespace shore;
@@ -47,22 +42,7 @@ using namespace shore;
 
 ENTER_NAMESPACE(dora);
 
-
 template<typename DataType> class dora_worker_t;
-
-/******************************************************************** 
- *
- * @enum:  ePATState
- *
- * @brief: Working thread status for the partition
- *
- *         - PATS_SINGLE   : only the primary-owner thread is active
- *         - PATS_MULTIPLE : some of the standby threads are active
- *
- ********************************************************************/
-
-enum ePATState { PATS_UNDEF, PATS_SINGLE, PATS_MULTIPLE };
-
 
 const int ACTIONS_PER_INPUT_QUEUE_POOL_SZ = 60;
 const int ACTIONS_PER_COMMIT_QUEUE_POOL_SZ = 60;
@@ -77,7 +57,7 @@ const int ACTIONS_PER_COMMIT_QUEUE_POOL_SZ = 60;
  ********************************************************************/
 
 template <class DataType>
-class partition_t
+class partition_t : public base_partition_t
 {
 public:
 
@@ -87,34 +67,15 @@ public:
     typedef key_wrapper_t<DataType>    Key;
     typedef lock_man_t<DataType>       LockManager;
 
-    typedef KALReq_t<DataType> KALReq;
-    //typedef typename PooledVec<KALReq>::Type     KALReqVec;
+    typedef KALReq_t<DataType>      KALReq;
     typedef std::vector<KALReq>     KALReqVec;
-
+    //typedef typename PooledVec<KALReq>::Type     KALReqVec;
 
 protected:
 
-    ShoreEnv*       _env;    
-    table_desc_t*   _table;
-
-    int              _part_id;
-    ePartitionPolicy _part_policy;
-
-    // partition active thread state and count
-    ePATState volatile _pat_state; 
-    int volatile       _pat_count;
-    tatas_lock         _pat_count_lock;
-
     // pointers to primary owner and pool of standby worker threads
     Worker*       _owner;        // primary owner
-    tatas_lock    _owner_lock;
-
     Worker*       _standby;      // standby pool
-    int           _standby_cnt;
-    tatas_lock    _standby_lock;
-
-    // processor binding
-    processorid_t _prs_id;
 
     // lock manager for the partition
     guard<LockManager>  _plm;
@@ -154,32 +115,12 @@ protected:
     guard<Pool>     _actionptr_input_pool;
     guard<Pool>     _actionptr_commit_pool;
 
-
 public:
 
     partition_t(ShoreEnv* env, table_desc_t* ptable, 
-                const int keyEstimation,
-                const int apartid = 0, 
-                processorid_t aprsid = PBIND_NONE) 
-        : _env(env), _table(ptable), 
-          _part_id(apartid), _part_policy(PP_UNDEF), 
-          _pat_state(PATS_UNDEF), _pat_count(0),
-          _owner(NULL), _standby(NULL), _standby_cnt(DF_NUM_OF_STANDBY_THRS),
-          _prs_id(aprsid)          
-    {
-        assert (_env);
-        assert (_table);
-
-        _plm = new LockManager(keyEstimation);
-
-
-        _actionptr_input_pool = new Pool(sizeof(Action*),ACTIONS_PER_INPUT_QUEUE_POOL_SZ);
-        _input_queue = new Queue(_actionptr_input_pool.get());
-
-        _actionptr_commit_pool = new Pool(sizeof(Action*),ACTIONS_PER_COMMIT_QUEUE_POOL_SZ);
-        _committed_queue = new Queue(_actionptr_commit_pool.get());
-    }
-
+                const uint keyEstimation,
+                const uint apartid, 
+                const processorid_t aprsid);
 
     virtual ~partition_t() 
     { 
@@ -190,51 +131,16 @@ public:
         _actionptr_commit_pool.done();
     }    
 
-
-    //// Access methods ////
-
-    int part_id() const { return (_part_id); }
-    table_desc_t* table() const { return (_table); } 
-
-    // partition policy
-    ePartitionPolicy get_part_policy() { return (_part_policy); }
-    void set_part_policy(const ePartitionPolicy aPartPolicy) {
-        assert (aPartPolicy!=PP_UNDEF);
-        _part_policy = aPartPolicy;
-    }
-
-    // partition state and active threads
-    ePATState get_pat_state();
-    ePATState dec_active_thr();
-    ePATState inc_active_thr();
-
     // get lock manager
-    LockManager* plm() { return (_plm); }
+    inline LockManager* plm() { return (_plm); }
 
-    // get Owner thread
+    // get owner thread
     Worker* owner() { return (_owner); }
-
-
-    //// Partition Control ////
-
-
-    // resets/initializes the partition, possibly to a new processor
-    virtual int reset(const processorid_t aprsid = PBIND_NONE,
-                      const int standby_sz = DF_NUM_OF_STANDBY_THRS);
-
-
-    // stops the partition
-    virtual void stop();
-
-    // prepares the partition for a new run
-    virtual void prepareNewRun();
-
 
 
     //// Action-related methods ////
 
-
-    // releases a trx
+    // release a trx
     inline int release(Action* action,
                        BaseActionPtrList& readyList, 
                        BaseActionPtrList& promotedList) 
@@ -248,13 +154,11 @@ public:
     }
 
 
-    // returns true if action can be enqueued in this partition
-    virtual bool verify(Action& action)=0;
-
-
     // enqueue lock needed to enforce an ordering across trxs
     mcs_lock _enqueue_lock;
 
+    // returns true if action can be enqueued in this partition
+    virtual bool verify(Action& action)=0;
 
     // input for normal actions
     // enqueues action, 0 on success
@@ -280,31 +184,24 @@ public:
     int abort_all_enqueued();
 
 
+    //// Partition Interface ////
 
-    //// Debugging ////
+    // resets/initializes the partition, possibly to a new processor
+    virtual int reset(const processorid_t aprsid = PBIND_NONE,
+                      const uint standby_sz = DF_NUM_OF_STANDBY_THRS);
+
+    // stops the partition
+    virtual void stop();
+
+    // prepares the partition for a new run
+    virtual void prepareNewRun();
 
     // stats
-    void statistics(worker_stats_t& gather) {
-        assert (_owner); 
-        gather += _owner->get_stats();
-        _owner->reset_stats();
-    }
+    virtual void statistics(worker_stats_t& gather);
 
-    void stlsize(int& gather) {
-        assert (_plm); 
-        gather += _plm->keystouched();
-    }
+    virtual void dump();
 
-
-    // dumps information
-    void dump() {
-        TRACE( TRACE_DEBUG, "Policy            (%d)\n", _part_policy);
-        TRACE( TRACE_DEBUG, "Active Thr Status (%d)\n", _pat_state);
-        TRACE( TRACE_DEBUG, "Active Thr Count  (%d)\n", _pat_count);
-        _plm->dump();
-    }
-
-
+    void stlsize(uint& gather);
 
 private:                
 
@@ -312,8 +209,7 @@ private:
     int _start_owner();
     int _stop_threads();
     int _generate_primary();
-    int _generate_standby_pool(const int sz, 
-                               int& pool_sz,
+    int _generate_standby_pool(const uint sz, uint& pool_sz,
                                const processorid_t aprsid = PBIND_NONE);
     Worker* _generate_worker(const processorid_t aprsid, c_str wname, const int use_sli);    
 
@@ -321,12 +217,34 @@ protected:
 
     int isFree(Key akey, eDoraLockMode lmode);
 
-
 }; // EOF: partition_t
 
 
 
-/** partition_t interface */
+/****************************************************************** 
+ *
+ * Construction
+ *
+ * @note: Setups the queues and their corresponding pools
+ *
+ ******************************************************************/
+
+template <class DataType>
+partition_t<DataType>::partition_t(ShoreEnv* env, table_desc_t* ptable, 
+                                   const uint keyEstimation,
+                                   const uint apartid, 
+                                   const processorid_t aprsid) 
+    : base_partition_t(env,ptable,apartid,aprsid),
+      _owner(NULL), _standby(NULL)
+{
+    _plm = new LockManager(keyEstimation);
+
+    _actionptr_input_pool = new Pool(sizeof(Action*),ACTIONS_PER_INPUT_QUEUE_POOL_SZ);
+    _input_queue = new Queue(_actionptr_input_pool.get());
+
+    _actionptr_commit_pool = new Pool(sizeof(Action*),ACTIONS_PER_COMMIT_QUEUE_POOL_SZ);
+    _committed_queue = new Queue(_actionptr_commit_pool.get());
+}
 
 
 
@@ -407,8 +325,7 @@ int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
  ******************************************************************/
 
 template <class DataType>
-action_t<DataType>* 
-partition_t<DataType>::dequeue_commit()
+action_t<DataType>* partition_t<DataType>::dequeue_commit()
 {
     //assert (has_committed());
     return (_committed_queue->pop());
@@ -427,17 +344,16 @@ partition_t<DataType>::dequeue_commit()
  ******************************************************************/
 
 template <class DataType>
-void 
-partition_t<DataType>::stop()
+void partition_t<DataType>::stop()
 {        
-    // 2. stop the worker & standby threads
+    // Stop the worker & standby threads
     _stop_threads();
 
-    // 3. clear queues
+    // Clear queues
     _input_queue->clear();
     _committed_queue->clear();
     
-    // 4. reset lock-manager
+    // Reset lock-manager
     _plm->reset();
 }
 
@@ -459,30 +375,30 @@ partition_t<DataType>::stop()
 
 template <class DataType>
 int partition_t<DataType>::reset(const processorid_t aprsid,
-                                 const int poolsz)
+                                 const uint poolsz)
 {        
     TRACE( TRACE_DEBUG, "part (%s-%d) - pool (%d) - cpu (%d)\n", 
            _table->name(), _part_id, poolsz, aprsid);
 
-    // 1. stop the worker & standby threads
+    // Stop the worker & standby threads
     _stop_threads();
 
-    // 2. clear queues
+    // Clear queues
     _input_queue->clear();
     _committed_queue->clear();
     
-    // 3. reset lock-manager
+    // Reset lock-manager
     _plm->reset();
 
 
-    // 4. lock the primary and standby pool and generate workers
+    // Lock the primary and standby pool, and generate workers
     CRITICAL_SECTION(owner_cs, _owner_lock);
     CRITICAL_SECTION(standby_cs, _standby_lock);
     CRITICAL_SECTION(pat_cs, _pat_count_lock);    
 
     _prs_id = aprsid;
 
-    // generate primary
+    // Generate primary
     if (_generate_primary()) {
         TRACE (TRACE_ALWAYS, "part (%s-%d) Failed to generate primary thread\n",
                _table->name(), _part_id);
@@ -490,14 +406,11 @@ int partition_t<DataType>::reset(const processorid_t aprsid,
         return (de_GEN_PRIMARY_WORKER);
     }
 
-    // set a single active thread
+    // Set a single active thread
     _pat_count = 1;
     _pat_state = PATS_SINGLE;
 
-    // kick-off primary
-    _start_owner();
-
-    // generate standby pool   
+    // Generate standby pool   
     if (_generate_standby_pool(poolsz, _standby_cnt, aprsid)) {
         TRACE (TRACE_ALWAYS, "part (%s-%d) Failed to generate pool of (%d) threads\n",
                _table->name(), _part_id, poolsz);
@@ -505,81 +418,11 @@ int partition_t<DataType>::reset(const processorid_t aprsid,
                _table->name(), _part_id, _standby_cnt);
         return (de_GEN_STANDBY_POOL);
     }
+
+    // Kick-off primary
+    _start_owner();
     return (0);
 }    
-
-
-// active threads functions
-
-
-/****************************************************************** 
- *
- * @fn:    get_pat_state()
- *
- * @brief: Returns the state of the partition 
- *         (single or multiple threads active)
- *
- ******************************************************************/
-
-template <class DataType>
-ePATState partition_t<DataType>::get_pat_state() 
-{ 
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);
-    return (_pat_state); 
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:     dec_active_thr()
- *
- * @brief:  Decreases active thread count by 1.
- *          If thread_count is 1, changes state to PATS_SINGLE
- *
- * @return: Retuns the updated state of the partition
- *
- ******************************************************************/
-
-template <class DataType>
-ePATState partition_t<DataType>::dec_active_thr() 
-{
-    assert (_pat_count>1);
-    assert (_pat_state==PATS_MULTIPLE);
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);
-    _pat_count--;
-    if (_pat_count==1) {
-        _pat_state = PATS_SINGLE;
-        return (PATS_SINGLE);
-    }
-    assert (_pat_count>0);
-    return (PATS_MULTIPLE);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     inc_active_thr()
- *
- * @brief:  Increases active thread count by 1.
- *          If thread_count is >1, changes state to PATS_MULTIPLE
- *
- * @return: Retuns the updated state of the partition
- *
- ******************************************************************/
-
-template <class DataType>
-ePATState partition_t<DataType>::inc_active_thr() 
-{
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);
-    _pat_count++;
-    if (_pat_count>1) {
-        _pat_state = PATS_MULTIPLE;
-        return (PATS_MULTIPLE);
-    }
-    assert (_pat_count>0);
-    return (_pat_state);
-}
 
 
 /****************************************************************** 
@@ -594,11 +437,10 @@ ePATState partition_t<DataType>::inc_active_thr()
  ******************************************************************/
 
 template <class DataType>
-void 
-partition_t<DataType>::prepareNewRun() 
+void partition_t<DataType>::prepareNewRun() 
 {
-    // 1. Needs to spin until worker is done "cleaning" 
-    // left-over actions/logical locks
+    // Needs to spin until worker is done "cleaning" left-overs 
+    // (un-executed actions and logical locks)
     assert (_owner);
     while (!_owner->is_sleeping()) {
         // spin //
@@ -607,7 +449,8 @@ partition_t<DataType>::prepareNewRun()
         usleep(100);
     }
 
-    // 2. Make sure that no key is left locked    
+    // Make sure that no key is left locked
+    //
     // If the owner is sleeping it means that either it has finished
     // working and all the logical locks are clean, or there is a lock
     // waiting for actions executed by other partitions to finish.
@@ -615,11 +458,11 @@ partition_t<DataType>::prepareNewRun()
     // case should not be happening
     assert (_plm->is_clean());
 
-    // 3. Clear queues but not remove owner
+    // Clear queues but not remove owner
     _input_queue->clear(false); 
     _committed_queue->clear(false);
 
-    // 4. Reset lock manager map by removing all the entries.
+    // Reset lock manager map by removing all the entries.
     // This should happen only if the size of the map exceeds
     // a certain value
     if (_plm->keystouched() > D_MIN_KEYS_TOUCHED) {
@@ -628,11 +471,6 @@ partition_t<DataType>::prepareNewRun()
         _plm->reset();
     }
 }
-
-
-
-//// partition_t helper functions
-
 
 
 /****************************************************************** 
@@ -646,7 +484,7 @@ partition_t<DataType>::prepareNewRun()
  ******************************************************************/
 
 template <class DataType>
-inline int partition_t<DataType>::_start_owner()
+int partition_t<DataType>::_start_owner()
 {
     assert (_owner);
     _owner->start();
@@ -717,8 +555,7 @@ int partition_t<DataType>::_stop_threads()
  ******************************************************************/
 
 template <class DataType>
-int partition_t<DataType>::_generate_standby_pool(const int sz,
-                                                  int& pool_sz,
+int partition_t<DataType>::_generate_standby_pool(const uint sz, uint& pool_sz,
                                                   const processorid_t /* aprsid */)
 {
     assert (_standby==NULL); // prevent losing thread pointer 
@@ -729,15 +566,10 @@ int partition_t<DataType>::_generate_standby_pool(const int sz,
 
     if (sz>0) {
 
-        // 1. generate the head of standby pool
-
-#ifdef CFG_SLI
+        // Generate the head of standby pool
         int use_sli = envVar::instance()->getVarInt("db-worker-sli",0);
-#else
-        int use_sli = 0;
-#endif
 
-        // (ip) We can play with the binding of the standby threads
+        // IP: We can play with the binding of the standby threads
         pworker = _generate_worker(_prs_id, 
                                    c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz),
                                    use_sli);
@@ -754,9 +586,9 @@ int partition_t<DataType>::_generate_standby_pool(const int sz,
                                    
         TRACE( TRACE_DEBUG, "Head standby worker thread forked\n");  
 
-        // generate the rest of the pool
+        // Generate the rest of the pool
         for (pool_sz=1; pool_sz<sz; pool_sz++) {
-            // 2. generate worker
+            // Generate a worker
             pworker = _generate_worker(_prs_id,
                                        c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz),
                                        use_sli);
@@ -765,7 +597,7 @@ int partition_t<DataType>::_generate_standby_pool(const int sz,
                 return (de_GEN_WORKER);
             }
 
-            // 3. add to linked list
+            // Add to linked list
             pprev_worker->set_next(pworker);
             pprev_worker = pworker;
 
@@ -799,11 +631,7 @@ int partition_t<DataType>::_generate_primary()
 
     envVar* pe = envVar::instance();
 
-#ifdef CFG_SLI
     int use_sli = pe->getVarInt("db-worker-sli",0);
-#else
-    int use_sli = 0;
-#endif
 
     Worker* pworker = _generate_worker(_prs_id, 
                                        c_str("%s-P-%d-PRI",_table->name(), _part_id),
@@ -816,31 +644,22 @@ int partition_t<DataType>::_generate_primary()
     _owner = pworker;
     _owner->set_data_owner_state(DOS_ALONE);
 
-    // read from env params the loopcnt
-    string sInpQ = c_str("%s-%s",_table->name(),"inp-q-sz").data();
-    string sComQ = c_str("%s-%s",_table->name(),"com-q-sz").data();
-
     int lc = pe->getVarInt("db-worker-queueloops",0);
-    int thres_inp_q = pe->getVarInt(sInpQ,0);
-    int thres_com_q = pe->getVarInt(sComQ,0);
+    int thres_inp_q = pe->getVarInt("dora-worker-inp-q-sz",0);
+    int thres_com_q = pe->getVarInt("dora-worker-com-q-sz",0);
 
     // it is safer the thresholds not to be larger than the client batch size
     int batch_sz = pe->getVarInt("db-cl-batchsz",0);
     if (batch_sz < thres_inp_q) thres_inp_q = batch_sz;
     if (batch_sz < thres_com_q) thres_com_q = batch_sz;
 
-    //TRACE( TRACE_ALWAYS, "%s %d %d\n", _table->name(), thres_inp_q, thres_com_q);
-
     // pass worker thread controls to the two queues
     _input_queue->setqueue(WS_INPUT_Q,_owner,lc,thres_inp_q);  
     _committed_queue->setqueue(WS_COMMIT_Q,_owner,lc,thres_com_q);  
 
     _owner->fork();
-
-    //    TRACE( TRACE_DEBUG, "Owner worker thread forked\n");
     return (0);
 }
-
 
 
 /****************************************************************** 
@@ -854,18 +673,15 @@ int partition_t<DataType>::_generate_primary()
  ******************************************************************/
 
 template <class DataType>
-inline dora_worker_t<DataType>* 
-partition_t<DataType>::_generate_worker(const processorid_t prsid,
-                                        c_str strname,
-                                        const int use_sli) 
+dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const processorid_t prsid,
+                                                                 c_str strname,
+                                                                 const int use_sli) 
 {
     // 1. create worker thread
     // 2. set self as worker's partition
     Worker* pworker = new Worker(_env, this, strname, prsid, use_sli); 
     return (pworker);
 }
-
-
 
 
 /****************************************************************** 
@@ -914,6 +730,53 @@ int partition_t<DataType>::abort_all_enqueued()
                reqs_abt, reqs_read, reqs_write);
     }
     return (reqs_abt);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     statistics()
+ *
+ ******************************************************************/
+
+template <class DataType>
+void partition_t<DataType>::statistics(worker_stats_t& gather) 
+{
+    assert (_owner); 
+    gather += _owner->get_stats();
+    _owner->reset_stats();
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     stlsize()
+ *
+ * @brief:  The size of the map of the lock manager (aka local lock table)
+ *
+ ******************************************************************/
+
+template <class DataType>
+void partition_t<DataType>::stlsize(uint& gather) 
+{
+    assert (_plm); 
+    gather += _plm->keystouched();
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:     dump()
+ *
+ ******************************************************************/
+
+template <class DataType>
+void partition_t<DataType>::dump() 
+{
+    base_partition_t::dump();
+    _plm->dump();
 }
 
 

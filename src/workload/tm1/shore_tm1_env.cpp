@@ -45,25 +45,28 @@ EXIT_NAMESPACE(shore);
 ENTER_NAMESPACE(tm1);
 
 
-/** Exported functions */
-
 /******************************************************************** 
  *
  * ShoreTM1Env functions
  *
  ********************************************************************/ 
 
-int ShoreTM1Env::load_schema()
-{
-    // get the sysname type from the configuration
-    _sysname = envVar::instance()->getSysname();
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
+/******************************************************************** 
+ *
+ *  @fn:    load_schema()
+ *
+ *  @brief: Creates the table_desc_t and table_man_impl objects for 
+ *          each TM1 table
+ *
+ ********************************************************************/
 
+w_rc_t ShoreTM1Env::load_schema()
+{
     // create the schema
-    _psub_desc  = new subscriber_t(_sysname);
-    _pai_desc   = new access_info_t(_sysname);
-    _psf_desc   = new special_facility_t(_sysname);
-    _pcf_desc   = new call_forwarding_t(_sysname);
+    _psub_desc  = new subscriber_t(get_pd());
+    _pai_desc   = new access_info_t(get_pd());
+    _psf_desc   = new special_facility_t(get_pd());
+    _pcf_desc   = new call_forwarding_t(get_pd());
 
     // initiate the table managers
     _psub_man = new sub_man_impl(_psub_desc.get());
@@ -71,7 +74,43 @@ int ShoreTM1Env::load_schema()
     _psf_man  = new sf_man_impl(_psf_desc.get());
     _pcf_man  = new cf_man_impl(_pcf_desc.get());   
         
-    return (0);
+    return (RCOK);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTM1Env::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
+
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _psub_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pai_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _psf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pcf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+
+    free (minKey);
+    free (maxKey);
+
+    return (RCOK);
 }
 
 
@@ -211,15 +250,15 @@ struct ShoreTM1Env::table_creator_t : public thread_t
 
 void  ShoreTM1Env::table_creator_t::work() 
 {
-    // 1. Create the tables
+    // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_psub_desc->create_table(_env->db()));
     W_COERCE(_env->_pai_desc->create_table(_env->db()));
     W_COERCE(_env->_psf_desc->create_table(_env->db()));
     W_COERCE(_env->_pcf_desc->create_table(_env->db()));
-    W_COERCE(_env->db()->commit_xct());
+    W_COERCE(_env->db()->commit_xct());    
 
-    // 2. Preload (preloads_per_worker) records for each of the loaders
+    // Preload (preloads_per_worker) records for each of the loaders
     int sub_id = 0;
     for (int i=0; i<_loaders; i++) {
         W_COERCE(_env->db()->begin_xct());        

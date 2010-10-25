@@ -60,7 +60,7 @@ w_rc_t part_man_impl::p_index_probe(ss_m* db,
 	assert(ptuple);
 
 	ptuple->set_value(0, p_partkey);
-	return (index_probe_by_name(db, "P_INDEX", ptuple));
+	return (index_probe_by_name(db, "P_IDX", ptuple));
 }
 
 
@@ -75,7 +75,7 @@ w_rc_t supplier_man_impl::s_index_probe(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, s_suppkey);
-    return (index_probe_by_name(db, "S_INDEX", ptuple));
+    return (index_probe_by_name(db, "S_IDX", ptuple));
 }
 
 
@@ -137,7 +137,7 @@ w_rc_t customer_man_impl::c_index_probe(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, c_custkey);
-    return (index_probe_by_name(db, "C_INDEX", ptuple));
+    return (index_probe_by_name(db, "C_IDX", ptuple));
 }
 
 /*w_rc_t customer_man_impl::c_index_probe_by_name(ss_m* db,
@@ -162,7 +162,7 @@ w_rc_t date_man_impl::d_index_probe(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, d_datekey);
-    return (index_probe_by_name(db, "D_INDEX", ptuple));
+    return (index_probe_by_name(db, "D_IDX", ptuple));
 }
 
 
@@ -179,7 +179,7 @@ w_rc_t lineorder_man_impl::lo_index_probe(ss_m* db,
     assert (ptuple);
     ptuple->set_value(0, lo_orderkey);
     ptuple->set_value(1, lo_linenumber);
-    return (index_probe_by_name(db, "LO_INDEX", ptuple));
+    return (index_probe_by_name(db, "LO_IDX", ptuple));
 }
 
 
@@ -191,7 +191,7 @@ w_rc_t lineorder_man_impl::lo_index_probe(ss_m* db,
     assert (ptuple);
     ptuple->set_value(0, lo_orderkey);
     ptuple->set_value(1, lo_linenumber);
-    return (index_probe_by_name(db, "LO_INDEX", ptuple));
+    return (index_probe_by_name(db, "LO_IDX", ptuple));
 }
 
 

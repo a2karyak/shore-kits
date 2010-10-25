@@ -53,13 +53,12 @@ class sunos_procmonitor_t : public procmonitor_t
 { 
 private: 
 
+    processinfo_t _prcinfo;
+
     kstat_ctl_t* _pkc;
 
     std::vector<kstat_entry> _entries;
     double _entries_sz;
-
-    processinfo_t _prcinfo;
-
     bool _first_time;
     long _last_measurement;
     long _new_measurement;

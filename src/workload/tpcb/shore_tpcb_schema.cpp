@@ -63,78 +63,67 @@ ENTER_NAMESPACE(tpcb);
  */
 
 
-branch_t::branch_t(string sysname) : 
-        table_desc_t("BRANCH", 3) 
+branch_t::branch_t(const uint4_t& pd)
+#ifdef CFG_HACK
+    : table_desc_t("BRANCH", 3) 
+#else
+    : table_desc_t("BRANCH", 2) 
+#endif
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "B_ID");
     _desc[1].setup(SQL_FLOAT, "B_BALANCE");
+
+#ifdef CFG_HACK
+#warning Adding _PADDING fields in some of the TM1 and TPCB tables
     _desc[2].setup(SQL_FIXCHAR,  "B_PADDING", 100-sizeof(int)-sizeof(double));
-    
-    uint  keys1[1] = { 0 }; // IDX { B_ID }
-    
-    if (sysname.compare("baseline")==0) {
-	TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-	
-	// create unique index w_index on (b_id)
-	create_primary_idx("B_INDEX", 0, keys1, 1);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-        
-            // create unique index s_index on (s_id)
-            // last param (nolock) is set to true
-            create_primary_idx("B_IDX_NL", 0, keys1, 1, true);
-        }       
 #endif
+    
+    // create unique index b_idx on (b_id)
+    uint  keys1[1] = { 0 }; // IDX { B_ID }
+    create_primary_idx("B_IDX", 0, keys1, 1, pd);
+}
 
-    }
 
 
-teller_t::teller_t(string sysname) : 
-        table_desc_t("TELLER", 4) 
+teller_t::teller_t(const uint4_t& pd)
+#ifdef CFG_HACK
+    : table_desc_t("TELLER", 4) 
+#else
+    : table_desc_t("TELLER", 3) 
+#endif
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "T_ID");     
     _desc[1].setup(SQL_INT,   "T_B_ID");   
     _desc[2].setup(SQL_FLOAT, "T_BALANCE");
+
+#ifdef CFG_HACK
     _desc[3].setup(SQL_FIXCHAR,  "T_PADDING", 100-2*sizeof(int) - sizeof(double));
-    
-    uint keys1[1] = { 0 }; // IDX { T_ID }
-
-    // baseline - Regular indexes
-    if (sysname.compare("baseline")==0) {    
-	TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
-	
-	// create unique index d_index on (d_id, w_id)
-	create_primary_idx("T_INDEX", 0, keys1, 1);
-    }
-
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-        
-            // create unique index s_index on (t_id)
-            // last param (nolock) is set to true
-            create_primary_idx("T_IDX_NL", 0, keys1, 1, true);
-        }       
 #endif
 
-}; // EOF: teller_t
+    // create unique index t_idx on (t_id)    
+    uint keys1[1] = { 0 }; // IDX { T_ID }
+    create_primary_idx("T_IDX", 0, keys1, 1, pd);
+}
 
 
-account_t::account_t(string sysname) : 
-        table_desc_t("ACCOUNT", 4) 
+
+account_t::account_t(const uint4_t& pd)
+#ifdef CFG_HACK
+    : table_desc_t("ACCOUNT", 4) 
+#else
+    : table_desc_t("ACCOUNT", 3) 
+#endif
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,    "A_ID");
     _desc[1].setup(SQL_INT,    "A_B_ID");       
     _desc[2].setup(SQL_FLOAT,  "A_BALANCE");  
+
+#ifdef CFG_HACK
     _desc[3].setup(SQL_FIXCHAR,   "A_PADDING", 100-2*sizeof(int)-sizeof(double));  
+#endif
     
 #ifdef PLP_MBENCH
 #warning PLP MBench !!!!
@@ -145,39 +134,29 @@ account_t::account_t(string sysname) :
     uint nkeys = 1;
 #endif
 
-    // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
-        TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
+    // create unique index a_idx on (a_id)    
+    create_primary_idx("A_IDX", 0, keys1, nkeys, pd);
+}
 
-        // create unique index c_index on (w_id, d_id, c_id)
-        create_primary_idx("A_INDEX", 0, keys1, nkeys);
-    }
 
-#ifdef CFG_DORA
-        // dora - NL indexes
-        if (sysname.compare("dora")==0) {
-            TRACE( TRACE_DEBUG, "NoLock idxs for (%s)\n", _name);
-        
-            // create unique index s_index on (a_id)
-            // last param (nolock) is set to true
-            create_primary_idx("A_IDX_NL", 0, keys1, nkeys, true);
-        }       
+history_t::history_t(const uint4_t& /* pd */)
+#ifdef CFG_HACK
+    : table_desc_t("HISTORY", 6) 
+#else
+    : table_desc_t("HISTORY", 5) 
 #endif
-
-}; // EOF: account_t
-
-
-history_t::history_t(string /* sysname */) : 
-        table_desc_t("HISTORY", 6) 
 {
-    /* table schema */
+    // Schema
     _desc[0].setup(SQL_INT,   "H_B_ID");
     _desc[1].setup(SQL_INT,   "H_T_ID");  
     _desc[2].setup(SQL_INT,   "H_A_ID"); 
     _desc[3].setup(SQL_FLOAT, "H_DELTA");   /* old: INT */
-    _desc[4].setup(SQL_FLOAT, "H_TIME");     /* old: TIME */
+    _desc[4].setup(SQL_FLOAT, "H_TIME");    /* old: TIME */
+
+#ifdef CFG_HACK
     _desc[5].setup(SQL_FIXCHAR,  "H_PADDING", 50-3*sizeof(int)-2*sizeof(double)); 
-    
+#endif    
+
     // NO INDEXES
 }
 

@@ -25,130 +25,74 @@
  *
  *  @brief:  Range partitioned table class in DORA
  *
- *  @author: Ippokratis Pandis, Oct 2008
+ *  @date:   Oct 2008
+ *
+ *  @author: Ippokratis Pandis (ipandis)
  */
 
 
 #ifndef __DORA_RANGE_PART_TABLE_H
 #define __DORA_RANGE_PART_TABLE_H
 
-
+#include "dora/dkey_ranges_map.h"
 
 #include "dora/part_table.h"
-#include "dora/range_partition.h"
+#include "dora/base_partition.h"
+
 
 using namespace shore;
-
 
 ENTER_NAMESPACE(dora);
 
 
-
 /******************************************************************** 
  *
- * @class: range_par_table_impl
+ * @class: range_table_t
  *
- * @brief: Template-based class for a range data partitioned table
+ * @brief: Abstract class for a range data partitioned table
  *
  ********************************************************************/
 
-template <class DataType>
-class range_part_table_impl : public part_table_t< range_partition_impl<DataType> >
+class range_table_t : public part_table_t
 {
 public:
 
-    typedef part_table_t< range_partition_impl<DataType> > PartTable;
-    typedef range_partition_impl<DataType> rpImpl;
-    typedef key_wrapper_t<DataType>        Key;
+    typedef part_table_t PartTable;
 
-private:
-
-    // range-partition field count
-    int _field_count;
+protected:
     
+    // key ranges map - The DORA version
+    guard<dkey_ranges_map> _prMap;
+
 public:
 
-    range_part_table_impl(ShoreEnv* env, table_desc_t* ptable,
-                          const processorid_t aprs,
-                          const int arange,
-                          const int field_count,
-                          const int keyEstimation,
-                          const int sfsperpart,
-                          const int totalsf) 
-        : PartTable(env, ptable, aprs, arange, keyEstimation, sfsperpart, totalsf), 
-          _field_count(field_count)
-    {
-        assert (_field_count>0);
+    range_table_t(ShoreEnv* env, table_desc_t* ptable,
+                  const processorid_t aprs,  
+                  const uint acpurange,
+                  const uint keyEstimation,
+                  const cvec_t& minKey,   
+                  const cvec_t& maxKey,
+                  const uint pnum);
 
+    ~range_table_t();
 
-        // setup partitions
-        Key partDown;
-        Key partUp;
-        int aboundary=0;
+    virtual w_rc_t create_one_part(const uint idx, const cvec_t& down, const cvec_t& up);
 
-        // we are doing the partitioning based on the number of warehouses
-        int parts_added = 0;
-
-        for (int i=0; i<PartTable::_total_sf; i+=PartTable::_sfs_per_part) {
-            create_one_part();
-            partDown.reset();
-            partDown.push_back(i);
-            partUp.reset();
-            aboundary=i+PartTable::_sfs_per_part;
-            partUp.push_back(aboundary);
-            PartTable::_ppvec[parts_added]->resize(partDown,partUp);
-            ++parts_added;
-        }
-        TRACE( TRACE_DEBUG, "Table (%s) - (%d) partitions\n", 
-               PartTable::_table->name(), parts_added);        
+    // Wrapper of the getPartitionByKey. Returns the idx of the partition
+    // in the array.
+    inline w_rc_t getPartIdxByKey(const cvec_t& key,uint& idx) {
+        return (_prMap->getPartitionByKey(key,idx));
     }
 
-    ~range_part_table_impl() { }    
+    // Return the min/max values
+    w_rc_t getMin(cvec_t& acv) const;
+    w_rc_t getMax(cvec_t& acv) const;
 
-    int create_one_part();
+protected:
 
-    inline rpImpl* myPart(const int asf) {
-        return (PartTable::_ppvec[asf/PartTable::_sfs_per_part]);
-    }
+    virtual w_rc_t _create_one_part(const uint idx, const cvec_t& down, const cvec_t& up)=0;
 
-}; // EOF: range_part_table_impl
-
-
-/****************************************************************** 
- *
- * @fn:    create_one_part()
- *
- * @brief: Creates one partition and adds it to the vector
- *
- ******************************************************************/
-
-template <class DataType>
-int range_part_table_impl<DataType>::create_one_part()
-{   
-    CRITICAL_SECTION(conf_cs, PartTable::_pcgf_lock);
-    ++PartTable::_pcnt;        
-
-    // 1. a new partition object
-    rpImpl* aprpi = new rpImpl(PartTable::_env, PartTable::_table, _field_count, 
-                               PartTable::_key_estimation, PartTable::_pcnt, 
-                               PartTable::_next_prs_id);
-    if (!aprpi) {
-        TRACE( TRACE_ALWAYS, "Problem in creating partition (%d) for (%s)\n", 
-               PartTable::_pcnt, PartTable::_table->name());
-        assert (0); // should not happen
-        return (de_GEN_PARTITION);
-    }
-    assert (aprpi);
-    PartTable::_ppvec.push_back(aprpi);
-
-
-    // 2. update next cpu
-    {
-        CRITICAL_SECTION(next_prs_cs, PartTable::_next_prs_lock);
-        PartTable::_next_prs_id = PartTable::next_cpu(PartTable::_next_prs_id);
-    }
-    return (0);
-}
+}; // EOF: range_table_t
 
 
 EXIT_NAMESPACE(dora);

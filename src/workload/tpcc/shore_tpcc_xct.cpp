@@ -820,7 +820,7 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
      * FROM customer, warehouse
      * WHERE w_id = :w_id AND c_w_id = w_id AND c_d_id = :d_id AND c_id = :c_id
      *
-     * plan: index probe on "W_INDEX", index probe on "C_INDEX"
+     * plan: index probe on "W_IDX", index probe on "C_IDX"
      */
 
     { // make gotos safe
@@ -840,7 +840,7 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
          * FROM district
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *
-         * plan: index probe on "D_INDEX"
+         * plan: index probe on "D_IDX"
          */
 
         /* 2. retrieve district for update */
@@ -898,7 +898,7 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
              * FROM item
              * WHERE i_id = :ol_i_id
              *
-             * plan: index probe on "I_INDEX"
+             * plan: index probe on "I_IDX"
              */
 
             tpcc_item_tuple aitem;
@@ -919,7 +919,7 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
              * FROM stock
              * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
              *
-             * plan: index probe on "S_INDEX"
+             * plan: index probe on "S_IDX"
              */
 
             tpcc_stock_tuple astock;
@@ -1145,7 +1145,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
              * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * ORDER BY c_first
              *
-             * plan: index only scan on "C_NAME_INDEX"
+             * plan: index only scan on "C_NAME_IDX"
              */
 
             rep_row_t lowrep(_pcustomer_man->ts());
@@ -1196,7 +1196,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
          * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
          * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -1246,7 +1246,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
              * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
              *
-             * plan: index probe on "C_INDEX"
+             * plan: index probe on "C_IDX"
              */
 
             // update the data
@@ -1280,7 +1280,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
          * FROM district
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *
-         * plan: index probe on "D_INDEX"
+         * plan: index probe on "D_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:dist-upd-ytd (%d) (%d)\n", 
@@ -1304,7 +1304,7 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd (%d)\n", 
@@ -1433,7 +1433,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
              * WHERE c_last = :c_last AND c_w_id = :w_id AND c_d_id = :d_id
              * ORDER BY c_first
              *
-             * plan: index only scan on "C_NAME_INDEX"
+             * plan: index only scan on "C_NAME_IDX"
              */
 
             assert (pstin._c_select <= 60);
@@ -1481,7 +1481,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
          * FROM customer
          * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :d_id
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -1505,7 +1505,7 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
          * WHERE o_w_id = :w_id AND o_d_id = :d_id AND o_c_id = :o_c_id
          * ORDER BY o_id DESC
          *
-         * plan: index scan on "O_CUST_INDEX"
+         * plan: index scan on "O_CUST_IDX"
          */
      
         guard<index_scan_iter_impl<order_t> > o_iter;
@@ -1683,7 +1683,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
              * FROM new_order
              * WHERE no_d_id = :d_id AND no_w_id = :w_id
              *
-             * plan: index scan on "NO_INDEX"
+             * plan: index scan on "NO_IDX"
              */
             TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx (%d) (%d)\n", 
                    xct_id, w_id, d_id);
@@ -1717,7 +1717,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
             /* DELETE FROM new_order
              * WHERE no_w_id = :w_id AND no_d_id = :d_id AND no_o_id = :no_o_id
              *
-             * plan: index scan on "NO_INDEX"
+             * plan: index scan on "NO_IDX"
              */
 
             TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-delete-by-index (%d) (%d) (%d)\n", 
@@ -1734,7 +1734,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
              * SELECT o_c_id INTO :o_c_id FROM orders
              * WHERE o_id = :no_o_id AND o_w_id = :w_id AND o_d_id = :d_id;
              *
-             * plan: index probe on "O_INDEX"
+             * plan: index probe on "O_IDX"
              */
 
             TRACE( TRACE_TRX_FLOW, "App: %d DEL:ord-idx-probe-upd (%d) (%d) (%d)\n", 
@@ -1803,7 +1803,7 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
              * SET c_balance = c_balance + :total_amount, c_delivery_cnt = c_delivery_cnt + 1
              * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :no_d_id;
              *
-             * plan: index probe on "C_INDEX"
+             * plan: index probe on "C_IDX"
              */
 
             TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd (%d) (%d) (%d)\n", 
@@ -1909,7 +1909,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
          * FROM district
          * WHERE d_w_id = :w_id AND d_id = :d_id
          *
-         * (index scan on D_INDEX)
+         * (index scan on D_IDX)
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d STO:dist-idx-probe (%d) (%d)\n", 
@@ -1933,7 +1933,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
          *
          *   Plan: 1. index scan on OL_IDX 
          *         2. sort ol tuples in the order of i_id from 1
-         *         3. index scan on S_INDEX
+         *         3. index scan on S_IDX
          *         4. fetch stock with sargable on quantity from 3
          *         5. nljoin on 2 and 4
          *         6. unique on 5
@@ -2130,7 +2130,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_wh(const int xct_id,
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d MBWH:wh-update-ytd (%d)\n", 
@@ -2202,7 +2202,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id,
          * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
          * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -2252,7 +2252,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id,
              * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
              *
-             * plan: index probe on "C_INDEX"
+             * plan: index probe on "C_IDX"
              */
 
             // update the data

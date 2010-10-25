@@ -40,6 +40,8 @@ using namespace tm1;
 
 ENTER_NAMESPACE(dora);
 
+typedef range_partition_i<int>   irpImpl; 
+
 
 /******************************************************************** 
  *
@@ -190,7 +192,7 @@ w_rc_t mid_gnd_rvp::run()
     r_cf_gnd_action* r_cf = _penv->new_r_cf_gnd_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
+
 
     // 4a. Decide about partition
     // 4b. Enqueue
@@ -504,7 +506,6 @@ w_rc_t mid_usd_rvp::run()
     upd_sub_usd_action* upd_sub = _penv->new_upd_sub_usd_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
 
     // 4a. Decide about partition
     // 4b. Enqueue
@@ -784,7 +785,6 @@ w_rc_t mid1_icf_rvp::run()
     r_sf_icf_action* r_sf = _penv->new_r_sf_icf_action(_xct,_tid,rvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
@@ -820,7 +820,6 @@ w_rc_t mid2_icf_rvp::run()
     ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
 
     // 4a. Decide about partition
     // 4b. Enqueue
@@ -857,11 +856,9 @@ w_rc_t mid_icf_rvp::run()
     ins_cf_icf_action* ins_cf = _penv->new_ins_cf_icf_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
-
     {        
         irpImpl* my_sf_part = _penv->decide_part(_penv->sf(),_in._s_id);
         irpImpl* my_cf_part = _penv->decide_part(_penv->cf(),_in._s_id);
@@ -1108,7 +1105,10 @@ w_rc_t ins_cf_icf_action::trx_exec()
             prcf->set_value(2, _in._s_time);
             prcf->set_value(3, _in._e_time);
             prcf->set_value(4, _in._numberx);                
-            prcf->set_value(5, "padding");
+
+#ifdef CFG_HACK
+            prcf->set_value(5, "padding"); // PADDING
+#endif
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid.get_lo());
 
@@ -1167,11 +1167,9 @@ w_rc_t mid_dcf_rvp::run()
     del_cf_dcf_action* del_cf = _penv->new_del_cf_dcf_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
-
     {        
         irpImpl* my_cf_part = _penv->decide_part(_penv->cf(),_in._s_id);
 

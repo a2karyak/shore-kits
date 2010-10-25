@@ -298,9 +298,6 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
     pracct->_rep = &areprow;
     prhist->_rep = &areprow;
 
-//     /* 0. initiate transaction */
-//     W_DO(_pssm->begin_xct());
-
     { // make gotos safe
 
 	double total;
@@ -322,7 +319,11 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
 	prhist->set_value(2, ppin.a_id);
 	prhist->set_value(3, ppin.delta);
 	prhist->set_value(4, time(NULL));
-	prhist->set_value(5, "padding");
+
+#ifdef CFG_HACK
+	prhist->set_value(5, "padding"); // PADDING
+#endif
+
         e = _phistory_man->add_tuple(_pssm, prhist);
         if (e.is_error()) { goto done; }
 
@@ -419,7 +420,11 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
 	    for(int i=0; i < ppin._sf; i++) {
 		prb->set_value(0, i);
 		prb->set_value(1, 0.0);
-		prb->set_value(2, "padding");
+
+#ifdef CFG_HACK
+		prb->set_value(2, "padding"); // PADDING
+#endif
+
 		e = _pbranch_man->add_tuple(_pssm, prb);
 		if (e.is_error()) { goto done; }
 	    }
@@ -430,7 +435,11 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
 		prt->set_value(0, i);
 		prt->set_value(1, i/TPCB_TELLERS_PER_BRANCH);
 		prt->set_value(2, 0.0);
-		prt->set_value(3, "padding");
+
+#ifdef CFG_HACK
+		prt->set_value(3, "padding"); // PADDING
+#endif
+
 		e = _pteller_man->add_tuple(_pssm, prt);
 		if (e.is_error()) { goto done; }
 	    }
@@ -446,7 +455,11 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
 		pracct->set_value(0, a_id);
 		pracct->set_value(1, a_id/TPCB_ACCOUNTS_PER_BRANCH);
 		pracct->set_value(2, 0.0);
-		pracct->set_value(3, "padding");
+
+#ifdef CFG_HACK
+		pracct->set_value(3, "padding"); // PADDING
+#endif
+
 		e = _paccount_man->add_tuple(_pssm, pracct);
 		if (e.is_error()) { goto done; }
 	    }

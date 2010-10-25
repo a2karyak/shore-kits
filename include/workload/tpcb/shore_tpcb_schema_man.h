@@ -23,7 +23,7 @@
 
 /** @file:   shore_tpcb_schema_man.h
  *
- *  @brief:  Declaration of the TPC-C table managers
+ *  @brief:  Declaration of the TPC-B table managers
  *
  *  @author: Ippokratis Pandis, January 2008
  *
@@ -43,7 +43,7 @@ ENTER_NAMESPACE(tpcb);
 
 
 /* ------------------------------------------------------------------ */
-/* --- The managers of all the tables used in the TPC-C benchmark --- */
+/* --- The managers of all the tables used in the TPC-B benchmark --- */
 /* ------------------------------------------------------------------ */
 
 
@@ -118,23 +118,27 @@ public:
     // --- access specific tuples  ---
     w_rc_t a_index_probe_forupdate(ss_m* db, 
 				   account_tuple* ptuple, 
-				   const int a_id);
+				   const int a_id,
+                                   const int b_id = 0, // PLP_MBENCH
+                                   const double balance = 0);
 
     w_rc_t a_delete_by_index(ss_m* db,
 			     account_tuple* ptuple,
 			     const int a_id,
-			     const int b_id,
-			     const double balance);
+			     const int b_id = 0, // PLP_MBENCH
+			     const double balance = 0);
 
     w_rc_t a_index_probe(ss_m* db,
 			 account_tuple* ptuple,
 			 const int a_id,
-			 const int b_id,
-			 const double balance);
+			 const int b_id = 0, // PLP_MBENCH
+			 const double balance = 0);
 
     w_rc_t a_idx_nl(ss_m* db, 
                     account_tuple* ptuple, 
-                    const int a_id);
+                    const int a_id,
+                    const int b_id = 0, // PLP_MBENCH
+                    const double balance = 0);
 
 }; // EOF: account_man_impl
 

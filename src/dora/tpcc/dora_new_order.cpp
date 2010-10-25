@@ -82,7 +82,7 @@ w_rc_t mid_nord_rvp::run()
 
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     // 2. Generate and enqueue the (Midway->Final) actions
     //
@@ -97,15 +97,15 @@ w_rc_t mid_nord_rvp::run()
 
         // 2b. Insert (ORD)
         ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,frvp,anoitin);
-        irpImpl* my_ord_part = _penv->ord()->myPart(whid-1);
+        irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),whid-1);
 
         // 2c. Insert (NORD)
         ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_xct,_tid,frvp,anoitin);
-        irpImpl* my_nord_part = _penv->nor()->myPart(whid-1);
+        irpImpl* my_nord_part = _penv->decide_part(_penv->nor(),whid-1);
 
         // 2d. Insert (OL) - used to be OL_CNT actions
         ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_xct,_tid,frvp,_in);
-        irpImpl* my_ol_part = _penv->oli()->myPart(whid-1);
+        irpImpl* my_ol_part = _penv->decide_part(_penv->oli(),whid-1);
 
 
         // ORD_PART_CS
@@ -195,7 +195,7 @@ w_rc_t r_wh_nord_action::trx_exec()
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         // 1. retrieve warehouse (read-only)
@@ -255,7 +255,7 @@ w_rc_t r_cust_nord_action::trx_exec()
          * FROM customer
          * WHERE w_id = :w_id AND c_d_id = :d_id AND c_id = :c_id
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         // 1. retrieve customer (read-only)
@@ -320,7 +320,7 @@ w_rc_t upd_dist_nord_action::trx_exec()
          * FROM district
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *
-         * plan: index probe on "D_INDEX"
+         * plan: index probe on "D_IDX"
          */
 
         // 1. retrieve district for update
@@ -422,7 +422,7 @@ w_rc_t r_item_nord_action::trx_exec()
              * FROM item
              * WHERE i_id = :ol_i_id
              *
-             * plan: index probe on "I_INDEX"
+             * plan: index probe on "I_IDX"
              */
         
             TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
@@ -503,7 +503,7 @@ w_rc_t upd_sto_nord_action::trx_exec()
              * FROM stock
              * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
              *
-             * plan: index probe on "S_INDEX"
+             * plan: index probe on "S_IDX"
              */
             
             tpcc_stock_tuple* pstock = &_prvp->_in.items[idx]._astock;

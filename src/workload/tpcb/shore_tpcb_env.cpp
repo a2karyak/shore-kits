@@ -47,27 +47,29 @@ EXIT_NAMESPACE(shore);
 ENTER_NAMESPACE(tpcb);
 
 
-
-/** Exported functions */
-
-
 /******************************************************************** 
  *
  * ShoreTPCBEnv functions
  *
  ********************************************************************/ 
 
-int ShoreTPCBEnv::load_schema()
-{
-    // get the sysname type from the configuration
-    _sysname = _dev_opts[SHORE_DB_OPTIONS[4][0]];
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
 
+/******************************************************************** 
+ *
+ *  @fn:    load_schema()
+ *
+ *  @brief: Creates the table_desc_t and table_man_impl objects for 
+ *          each TPC-B table
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCBEnv::load_schema()
+{
     // create the schema
-    _pbranch_desc   = new branch_t(_sysname);
-    _pteller_desc   = new teller_t(_sysname);
-    _paccount_desc  = new account_t(_sysname);
-    _phistory_desc  = new history_t(_sysname);
+    _pbranch_desc   = new branch_t(get_pd());
+    _pteller_desc   = new teller_t(get_pd());
+    _paccount_desc  = new account_t(get_pd());
+    _phistory_desc  = new history_t(get_pd());
 
 
     // initiate the table managers
@@ -76,8 +78,48 @@ int ShoreTPCBEnv::load_schema()
     _paccount_man  = new account_man_impl(_paccount_desc.get());
     _phistory_man  = new history_man_impl(_phistory_desc.get());
         
-    return (0);
+    return (RCOK);
 }
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCBEnv::update_partitioning() 
+{
+    // Pulling this partitioning out of the thin air
+    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
+    int minKeyVal = 0;
+    int maxKeyVal = get_sf()+1;
+
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int)+1);
+    memset(minKey,0,sizeof(int)+1);
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int)+1);
+    memset(minKey,0,sizeof(int)+1);
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);    
+
+    free (minKey);
+    free (maxKey);
+
+    return (RCOK);
+}
+
 
 
 /******************************************************************** 
@@ -101,7 +143,7 @@ int ShoreTPCBEnv::info() const
  *
  *  @fn:    statistics
  *
- *  @brief: Prints statistics for TM1 
+ *  @brief: Prints statistics 
  *
  ********************************************************************/
 
@@ -299,7 +341,8 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
 
 void ShoreTPCBEnv::table_creator_t::work() 
 {
-    // 1. Create the tables
+    // Create the tables, if any partitioning is to be applied, that has already
+    // been set at update_partitioning()
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pbranch_desc->create_table(_env->db()));
     W_COERCE(_env->_pteller_desc->create_table(_env->db()));
@@ -307,8 +350,8 @@ void ShoreTPCBEnv::table_creator_t::work()
     W_COERCE(_env->_phistory_desc->create_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
     
-    // 2. Create 10k accounts in each partition to buffer 
-    //    workers from each other
+    // Create 10k accounts in each partition to buffer 
+    // workers from each other
     for(long i=-1; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
@@ -318,7 +361,7 @@ void ShoreTPCBEnv::table_creator_t::work()
 	W_COERCE(_env->xct_populate_db(a_id, in));
     }
 
-    // 3. Before returning, run the post initialization phase 
+    // Before returning, run the post initialization phase 
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_post_init_impl());
     W_COERCE(_env->db()->commit_xct());
@@ -495,20 +538,25 @@ int ShoreTPCBEnv::conf()
 int ShoreTPCBEnv::post_init() 
 {
     conf();
-    TRACE( TRACE_ALWAYS, "Checking for BRANCH/TELLER record padding...\n");
 
-    W_COERCE(db()->begin_xct());
-    w_rc_t rc = _post_init_impl();
-    if(rc.is_error()) {
-	cerr << "-> BRANCH/TELLER padding failed with: " << rc << endl;
-	db()->abort_xct();
-	return (rc.err_num());
+    // If the database is set to be padded
+    if (get_pd() & PD_PADDED) {
+        TRACE( TRACE_ALWAYS, "Checking for BRANCH/TELLER record padding...\n");
+
+        W_COERCE(db()->begin_xct());
+        w_rc_t rc = _post_init_impl();
+        if(rc.is_error()) {
+            cerr << "-> BRANCH/TELLER padding failed with: " << rc << endl;
+            rc = db()->abort_xct();
+            return (rc.err_num());
+        }
+        else {
+            TRACE( TRACE_ALWAYS, "-> Done\n");
+            rc = db()->commit_xct();
+            return (rc.err_num());
+        }
     }
-    else {
-	TRACE( TRACE_ALWAYS, "-> Done\n");
-	db()->commit_xct();
-	return (0);
-    }
+    return (0);
 }
 
 

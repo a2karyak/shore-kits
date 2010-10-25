@@ -39,6 +39,7 @@
 #include "util.h"
 
 #include "shore_reqs.h"
+#include "shore_file_desc.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -367,7 +368,7 @@ public:
 
     virtual int conf()=0;    
     virtual int set(envVarMap* vars)=0;    
-    virtual int load_schema()=0;
+    virtual w_rc_t load_schema()=0;
     virtual int init()=0;
     virtual int open()=0;
     virtual int close()=0;
@@ -465,8 +466,8 @@ protected:
     ParamMap      _dev_opts;  // db-instance-specific options    
 
     // Processor info
-    uint_t _max_cpu_count;    // hard limit
-    uint_t _active_cpu_count; // soft limit
+    uint _max_cpu_count;    // hard limit
+    uint _active_cpu_count; // soft limit
 
 
     // List of worker threads
@@ -501,6 +502,11 @@ protected:
     // system name
     string          _sysname;
 
+    // physical design characteristics
+    uint4_t _pd;
+    bool _enable_hacks;
+    
+    
     // Helper functions
     void usage(option_group_t& options);
     void readconfig(const string conf_file);
@@ -546,7 +552,7 @@ public:
     // Loads the database schema after the config file is read, and before the storage
     // manager is started.
     // Should return >0 on error
-    virtual int load_schema()=0; 
+    virtual w_rc_t load_schema()=0; 
 
     virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;
@@ -577,9 +583,10 @@ public:
 
     // CPU count functions
     void print_cpus() const;
-    int get_max_cpu_count() const;
-    int get_active_cpu_count() const;
-    void set_active_cpu_count(const uint_t actcpucnt);
+    uint get_max_cpu_count() const;
+    void set_max_cpu_count(const uint cpucnt);
+    uint get_active_cpu_count() const;
+    void set_active_cpu_count(const uint actcpucnt);
     // disabled - max_count can be set only on conf
     //    void set_max_cpu_count(const int maxcpucnt); 
 
@@ -590,6 +597,14 @@ public:
     double get_sf() const;
     double upd_sf();
     void print_sf() const;
+
+    // Set physical design characteristics
+    uint4_t get_pd() const;
+    uint4_t set_pd(const physical_design_t& apd);
+    uint4_t add_pd(const physical_design_t& apd);
+    bool check_hacks_enabled();
+    bool is_hacks_enabled() const;
+    virtual w_rc_t update_partitioning() { return (RCOK); }
 
     // -- insert/delete/probe frequencies for microbenchmarks -- //
     void set_freqs(int insert_freq = 0, int delete_freq = 0, int probe_freq = 0);

@@ -108,10 +108,11 @@ using namespace dora;
 //////////////////////////////
 
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline
-#ifdef CFG_DORA
-                    , snDORA 
-#endif
+enum SysnameValue { snBaseline = 0x0,
+                    snDORA     = 0x1,
+                    snPLPA     = 0x2,  /* DORA+MRBT + No changes to heap */
+                    snPLPP     = 0x4,  /* DORA+MRBT + Heap pages per partition */
+                    snPLPL     = 0x8   /* DORA+MRBT + Heap pages per leaf */
 };
 
 // Map to associate string with then enum values
@@ -121,9 +122,10 @@ static map<string,SysnameValue> mSysnameValue;
 void initsysnamemap() 
 {
     mSysnameValue["baseline"] = snBaseline;
-#ifdef CFG_DORA
-    mSysnameValue["dora"] =     snDORA;
-#endif
+    mSysnameValue["dora"]     = snDORA;
+    mSysnameValue["plpa"]     = snPLPA;
+    mSysnameValue["plpp"]     = snPLPP;
+    mSysnameValue["plpl"]     = snPLPL;
 }
 
 //////////////////////////////
@@ -502,17 +504,18 @@ typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 
 ////////////////////////////////
 
-
-void usage()
+void usage() 
 {
-    TRACE( TRACE_ALWAYS, "\n\nAccepted parameters:\n" \
-           "-c <db>    : Use the <db> configuration from shore.conf\n" \
-           "-d         : Clobber the existing database, if any\n" \
-           "-n         : Run in network mode (netmode)\n" \
-           "-p <port>  : If in netmode, listen to port <port>\n" \
-           "-x <range> : Use <range> in range-based transactions\n" \
-           "-h         : Show usage (this message)\n\n" \
-           "If no parameters set, it will read the configuration from shore.conf\n");
+    TRACE( TRACE_ALWAYS, "\nAccepted parameters:\n"                       \
+           "-r            : Clobbber existing database\n"               \
+           "-n            : Start in network mode (listens to port)\n"  \
+           "-p <PORT>     : Listen to specific port\n"                  \
+           "-c <CONFIG>   : Use specific configuration\n"               \
+           "-s <SYSTEM>   : Start specific system (baseline,dora,...)\n" \
+           "-d <PHYSICAL> : Use specific physical design (normal,mrbtnorm,...)\n" \
+           "-x            : Enable physical design hacks\n"   \
+           "-g <RANGE>    : Use specific range (in some workloads)\n"   \
+           "-h            : Print this message and exit\n");
 }
 
 
@@ -534,38 +537,52 @@ int main(int argc, char* argv[])
                //| TRACE_DEBUG
                );
 
-    // 0. First check if there is any particular configuration selected
+    // Check if there is any particular configuration selected
     envVar* ev = envVar::instance();
 
-    // 1. Get options
+    // Get options
     bool netmode = false;
     int netport = 0;
-    string config;
+    string config, system, physical;
     int c = 0;
-    int iRange = 0;
+    int iRange = 0;    
 
-    while ((c = getopt(argc,argv,"c:dnp:x:h")) != -1) {
+    while ((c = getopt(argc,argv,"rnp:c:s:d:xg:h")) != -1) {
         switch (c) {
+        case 'r':
+            TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
+            ev->setVarInt("db-clobberdev",1);
+            break;
         case 'n':
             TRACE( TRACE_ALWAYS, "NETMODE\n");
             netmode = true;
             break;
         case 'p':
-            TRACE( TRACE_ALWAYS, "PORT (%d)\n", atoi(optarg));
             netport = atoi(optarg);
+            TRACE( TRACE_ALWAYS, "PORT (%d)\n", netport);
             break;
         case 'c':
             TRACE( TRACE_ALWAYS, "CONFIG (%s)\n", optarg);
             config = (string)optarg;
             ev->setConfiguration(config);
             break;
+        case 's':
+            TRACE( TRACE_ALWAYS, "SYSTEM (%s)\n", optarg);
+            system = (string)optarg;
+            ev->setSysName(system);
+            break;
         case 'd':
-            TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
-            ev->setVarInt("db-clobberdev",1);
+            TRACE( TRACE_ALWAYS, "PHYSICAL DESIGN (%s)\n", optarg);
+            physical = (string)optarg;
+            ev->setSysDesign(physical);
             break;
         case 'x':
-            TRACE( TRACE_ALWAYS, "RANGE (%d)\n", atoi(optarg));            
+            TRACE( TRACE_ALWAYS, "Enabling hacks\n");
+            ev->setVarInt("physical-hacks-enable",1);
+            break;
+        case 'g':
             iRange = atoi(optarg);
+            TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
             ev->setVarInt("records-to-access",iRange);
             break;
         case 'h':
@@ -573,74 +590,97 @@ int main(int argc, char* argv[])
             return (2);
             break;
         default:
-            TRACE( TRACE_ALWAYS, "Wrong parameter accepted: c:dnp:x:h\n");
+            TRACE( TRACE_ALWAYS, "Wrong parameter. Accepted: rnp:c:xg:s:d:h\n");
             return (2);
         }
     }
 
-    // 2. Get env vars
+    // Get env vars
     initsysnamemap();
     initbenchmarkmap();
 
-    string sysname = ev->getSysname();
+    string sysname = ev->getSysName();
     string benchmarkname = ev->getSysVar("benchmark");
+
+    // Decide the physical design
+    physical = ev->getSysDesign();    
+
+    string dbname;
 
     // 3. Initialize shell
     guard<shore_shell_t> kit = NULL;
 
-
-    TRACE( TRACE_ALWAYS, "Starting (%s-%s) kit\n", 
+    TRACE( TRACE_ALWAYS, "Starting (%s-%s-%s) kit\n", 
            benchmarkname.c_str(),
+           physical.c_str(),
            sysname.c_str());
 
 
     // TPC-C
     if (benchmarkname.compare("tpcc")==0) {
+        dbname = "(tpcc-" + physical + "-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTPCCKit("(tpcc-base) ",netmode,netport);
+            dbname += "base) ";
+            kit = new baselineTPCCKit(dbname.c_str(),netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            kit = new doraTPCCKit("(tpcc-dora) ",netmode,netport);
+        case snPLPA:
+        case snPLPP:
+        case snPLPL:
+            dbname += "dora) ";
+            kit = new doraTPCCKit(dbname.c_str(),netmode,netport);
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (3);
         }
     }
 
     // TM1
     if (benchmarkname.compare("tm1")==0) {
+        dbname = "(tatp-" + physical + "-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTM1Kit("(tm1-base) ",netmode,netport);
+            dbname += "base) ";
+            kit = new baselineTM1Kit(dbname.c_str(),netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            kit = new doraTM1Kit("(tm1-dora) ",netmode,netport);
+        case snPLPA:
+        case snPLPP:
+        case snPLPL:
+            dbname += "dora) ";
+            kit = new doraTM1Kit(dbname.c_str(),netmode,netport);
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (4);
         }
     }
 
     // TPC-B
     if (benchmarkname.compare("tpcb")==0) {
+        dbname = "(tpcb-" + physical + "-";
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTPCBKit("(tpcb-base) ",netmode,netport);
+            dbname += "base) ";
+            kit = new baselineTPCBKit(dbname.c_str(),netmode,netport);
             break;
 #ifdef CFG_DORA
         case snDORA:
-            kit = new doraTPCBKit("(tpcb-dora) ",netmode,netport);
+        case snPLPA:
+        case snPLPP:
+        case snPLPL:
+            dbname += "dora) ";
+            kit = new doraTPCBKit(dbname.c_str(),netmode,netport);
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
@@ -658,7 +698,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
@@ -677,7 +717,7 @@ int main(int argc, char* argv[])
             break;
 #endif
         default:
-            TRACE( TRACE_ALWAYS, "Not supported system. Exiting...\n");
+            TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
@@ -708,6 +748,7 @@ int main(int argc, char* argv[])
     _g_mon = new linux_procmonitor_t(kit->db()); 
 #endif
     _g_mon->fork();
+    _g_shore_env->set_max_cpu_count(_g_mon->get_num_of_cpus());
 
 
     // Start processing commands

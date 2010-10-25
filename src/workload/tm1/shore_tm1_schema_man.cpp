@@ -65,7 +65,7 @@ w_rc_t sub_man_impl::sub_idx_nl(ss_m* db,
 {
     assert (ptuple);    
     ptuple->set_value(0, s_id);
-    return (index_probe_nl_by_name(db, "S_IDX_NL", ptuple));
+    return (index_probe_nl_by_name(db, "S_IDX", ptuple));
 }
 
 
@@ -94,7 +94,7 @@ w_rc_t sub_man_impl::sub_nbr_idx_nl(ss_m* db,
 {
     assert (ptuple);    
     ptuple->set_value(1, s_nbr);
-    return (index_probe_nl_by_name(db, "SUB_NBR_IDX_NL", ptuple));
+    return (index_probe_nl_by_name(db, "SUB_NBR_IDX", ptuple));
 }
 
 
@@ -111,13 +111,9 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
 {
     assert (ptuple);
 
-    /* find the index */
+    // find the index
     assert (_ptable);
-    index_desc_t* pindex = NULL;
-    if (alm == NL)
-        pindex = _ptable->find_index("SUB_NBR_IDX_NL");
-    else
-        pindex = _ptable->find_index("SUB_NBR_IDX");
+    index_desc_t* pindex = _ptable->find_index("SUB_NBR_IDX");
     assert (pindex);
 
     int lowsz, highsz;
@@ -208,7 +204,7 @@ w_rc_t ai_man_impl::ai_idx_nl(ss_m* db,
     assert (ptuple);    
     ptuple->set_value(0, s_id);
     ptuple->set_value(1, ai_type);
-    return (index_probe_nl_by_name(db, "AI_IDX_NL", ptuple));
+    return (index_probe_nl_by_name(db, "AI_IDX", ptuple));
 }
 
 
@@ -245,7 +241,7 @@ w_rc_t sf_man_impl::sf_idx_nl(ss_m* db,
     assert (ptuple);    
     ptuple->set_value(0, s_id);
     ptuple->set_value(1, sf_type);
-    return (index_probe_nl_by_name(db, "SF_IDX_NL", ptuple));
+    return (index_probe_nl_by_name(db, "SF_IDX", ptuple));
 }
 
 
@@ -262,13 +258,9 @@ w_rc_t sf_man_impl::sf_get_idx_iter(ss_m* db,
 {
     assert (ptuple);
 
-    /* find the index */
+    // find the index
     assert (_ptable);
-    index_desc_t* pindex = NULL;
-    if (alm == NL) 
-        pindex = _ptable->find_index("SF_IDX_NL");
-    else
-        pindex = _ptable->find_index("SF_IDX");        
+    index_desc_t* pindex = _ptable->find_index("SF_IDX");
     assert (pindex);
 
     // CF_IDX: { 0 - 1 }
@@ -346,7 +338,7 @@ w_rc_t cf_man_impl::cf_idx_nl(ss_m* db,
     ptuple->set_value(0, s_id);
     ptuple->set_value(1, sf_type);
     ptuple->set_value(2, stime);
-    return (index_probe_nl_by_name(db, "CF_IDX_NL", ptuple));
+    return (index_probe_nl_by_name(db, "CF_IDX", ptuple));
 }
 
 
@@ -365,13 +357,9 @@ w_rc_t cf_man_impl::cf_get_idx_iter(ss_m* db,
 {
     assert (ptuple);
 
-    /* find the index */
+    // find the index
     assert (_ptable);
-    index_desc_t* pindex = NULL;
-    if (alm == NL)
-        pindex = _ptable->find_index("CF_IDX_NL");
-    else
-        pindex = _ptable->find_index("CF_IDX");
+    index_desc_t* pindex = _ptable->find_index("CF_IDX");
     assert (pindex);
 
     // CF_IDX: {0 - 1 - 2}

@@ -88,7 +88,7 @@ supplier_t::supplier_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index s_index on (s_suppkey)
-        create_primary_idx("S_INDEX", 0, keys, 1);
+        create_primary_idx("S_IDX", 0, keys, 1);
     } 
 }
 
@@ -112,7 +112,7 @@ part_t::part_t(string sysname) :
     if (sysname.compare("baseline") == 0) {
         TRACE(TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
-        create_primary_idx("P_INDEX", 0, keys, 1);
+        create_primary_idx("P_IDX", 0, keys, 1);
     }
 }
 
@@ -140,7 +140,7 @@ customer_t::customer_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index c_index on (c_custkey)
-        create_primary_idx("C_INDEX", 0, keys, 1);
+        create_primary_idx("C_IDX", 0, keys, 1);
     }
 }
 
@@ -173,7 +173,7 @@ date_t::date_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index c_index on (c_custkey)
-        create_primary_idx("D_INDEX", 0, keys, 1);
+        create_primary_idx("D_IDX", 0, keys, 1);
     }
 }
 
@@ -213,7 +213,7 @@ lineorder_t::lineorder_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
         // create unique index l_index on ()
-        create_primary_idx("LO_INDEX", 0, keys, 2);
+        create_primary_idx("LO_IDX", 0, keys, 2);
 
         create_index("LO_IDX_ORDERKEY", 0, fkeys1, 1, false);
     }

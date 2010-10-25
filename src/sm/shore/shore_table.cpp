@@ -40,28 +40,34 @@ using namespace shore;
  *
  ******************************************************************/
 
+
 table_desc_t::table_desc_t(const char* name, int fieldcnt)
     : file_desc_t(name, fieldcnt), 
       _indexes(NULL), 
       _primary_idx(NULL),
-      _maxsize(0)
+      _maxsize(0),
+      _sMinKey(NULL),_sMinKeyLen(0),
+      _sMaxKey(NULL),_sMaxKeyLen(0)
 {
     // Create placeholders for the field descriptors
     _desc = new field_desc_t[fieldcnt];
 }
     
 
-table_desc_t::~table_desc_t() 
+table_desc_t::~table_desc_t()
 {
-    if (_desc) {
+    if (_desc)
         delete [] _desc;
-    }
 
-    if (_indexes) {
+    if (_indexes)
         delete _indexes;
-    }
-}
 
+    if (_sMinKey)
+        delete _sMinKey;
+
+    if (_sMaxKey)
+        delete _sMaxKey;
+}
 
 
 /* ----------------------------------------- */
@@ -89,107 +95,103 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 
     // Add table entry to the metadata tree
     file_info_t file;
-    file.set_ftype(FT_REGULAR);
+    file.set_ftype(FT_HEAP);
     file.set_fid(_fid);
     W_DO(ss_m::create_assoc(root_iid(),
 			    vec_t(name(), strlen(name())),
 			    vec_t(&file, sizeof(file_info_t))));
     
-
     // Create all the indexes of the table
     index_desc_t* index = _indexes;
+    stid_t iid = stid_t::null;
+    ss_m::ndx_t smidx_type = ss_m::t_uni_btree;
+    ss_m::concurrency_t smidx_cc = ss_m::t_cc_im;
+    
     while (index) {
-	stid_t iid;
 
-        // Create index
+        // Print info
+        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s) (%s) (%s)\n",
+               index->name(), iid.store,
+               (index->is_mr() ? "mrbt" : "normal"), 
+               (index->is_latchless() ? "no latch" : "latch"),
+               (index->is_relaxed() ? "relaxed" : "no relaxed"), 
+               (index->is_partitioned() ? "part" : "no part"), 
+               (index->is_unique() ? "unique" : "no unique"));        
+
+        // the type of index to create
+        if (index->is_mr()) {
+            // MRBTree
+            smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
+        }
+        else {
+            // Regular BTree
+            smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
+        }
+
+        // what kind of CC will be used
+        smidx_cc = index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im;
+
+        // if it is the primary, update file flag
+        if (index->is_primary()) {
+            file.set_ftype(FT_PRIMARY_IDX);
+        }
+        else {
+            file.set_ftype(FT_IDX);
+        }
+
+        // create one index or multiple, if the index is partitioned
 	if(index->is_partitioned()) {
 	    for(int i=0; i < index->get_partition_count(); i++) {
-		W_DO(db->create_index(_vid,
-				      (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
-				      ss_m::t_regular,
-				      index_keydesc(index),
-#ifdef CFG_DORA
-				      (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im),
-#else
-				      ss_m::t_cc_im,
-#endif
-				      iid));
+                if (!index->is_mr()) {
+                    W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+                                          index_keydesc(index), smidx_cc, iid));
+                }
+                else {
+                    W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
+                                             index_keydesc(index), smidx_cc, iid,
+                                             index->is_latchless()));
+                    // If we already know the partitioning set it up
+                    vec_t minv(_sMinKey,_sMinKeyLen);
+                    vec_t maxv(_sMaxKey,_sMaxKeyLen);
+                    W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
+                }
 		index->set_fid(i, iid);
 		
-		/* add index entry to the metadata tree */
-		if (index->is_primary())
-		    file.set_ftype(FT_PRIMARY_IDX);
-		else
-		    file.set_ftype(FT_IDX);
-		
+		// add index entry to the metadata tree		
 		file.set_fid(iid);
 		char tmp[100];
 		sprintf(tmp, "%s_%d", index->name(), i);
 		W_DO(db->create_assoc(root_iid(),
 				      vec_t(tmp, strlen(tmp)),
 				      vec_t(&file, sizeof(file_info_t))));
-
-
-                // Print info
-#ifdef CFG_DORA
-                TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s)\n",
-                       tmp, iid.store,
-                       (index->is_partitioned() ? "part" : "no part"), 
-                       (index->is_unique() ? "unique" : "no unique"),
-                       (index->is_relaxed() ? "relaxed" : "no relaxed"));
-#else
-                TRACE( TRACE_STATISTICS, "%s %d (%s) (%s)\n",
-                       tmp, iid.store,
-                       (index->is_partitioned() ? "part" : "no part"), 
-                       (index->is_unique() ? "unique" : "no unique"));
-#endif               
-
 	    }
 	}
 	else {
-	    W_DO(db->create_index(_vid,
-				  (index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree),
-				  ss_m::t_regular,
-				  index_keydesc(index),
-#ifdef CFG_DORA
-				  (index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im),
-#else
-				  ss_m::t_cc_im,
-#endif
-				  iid));
+
+            if (!index->is_mr()) {
+                W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+                                      index_keydesc(index), smidx_cc, iid));
+            }
+            else {
+                W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
+                                         index_keydesc(index), smidx_cc, iid,
+                                         index->is_latchless()));
+
+                // If we already know the partitioning set it up                
+                vec_t minv(_sMinKey,_sMinKeyLen);
+                vec_t maxv(_sMaxKey,_sMaxKeyLen);
+                W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
+            }                
 	    index->set_fid(0, iid);
 
 	    // Add index entry to the metadata tree
-	    if (index->is_primary()) {
-		file.set_ftype(FT_PRIMARY_IDX);
-            }
-	    else {
-		file.set_ftype(FT_IDX);
-            }
-
 	    file.set_fid(iid);
 	    W_DO(db->create_assoc(root_iid(),
 				  vec_t(index->name(), strlen(index->name())),
 				  vec_t(&file, sizeof(file_info_t))));
-
-
-        // Print info
-#ifdef CFG_DORA
-        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s)\n",
-               index->name(), iid.store,
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"),
-               (index->is_relaxed() ? "relaxed" : "no relaxed"));
-#else
-        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s)\n",
-               index->name(), iid.store,
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"));
-#endif               
-        
-	}      
+        }
 	
-        // Move to next index
+        // Move to the next index of the table
 	index = index->next();
     }
     
@@ -218,10 +220,10 @@ bool table_desc_t::create_index(const char* name,
                                 const uint num,
                                 const bool unique,
                                 const bool primary,
-                                const bool nolock)
+                                const uint4_t& pd)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
-                                             unique, primary, nolock);
+                                             unique, primary, pd);
 
     // check the validity of the index
     for (uint_t i=0; i<num; i++)  {
@@ -251,9 +253,10 @@ bool table_desc_t::create_primary_idx(const char* name,
                                       int partitions,
                                       const uint* fields,
                                       const uint num,
-                                      const bool nolock)
+                                      const uint4_t& pd)
 {
-    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, true, true, nolock);
+    index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
+                                             true, true, pd);
 
     // check the validity of the index
     for (uint_t i=0; i<num; i++) {
@@ -276,6 +279,38 @@ bool table_desc_t::create_primary_idx(const char* name,
 }
 
 
+/* ---------------------------------------------------- */
+/* --- partitioning information, used with MRBTrees --- */
+/* ---------------------------------------------------- */
+
+w_rc_t table_desc_t::set_partitioning(const char* sMinKey, 
+                                      uint len1,
+                                      const char* sMaxKey,
+                                      uint len2,
+                                      uint numParts)
+{
+    // Allocate for the two boundaries
+    if (_sMinKeyLen < len1) {
+        if (_sMinKey) { free (_sMinKey); }
+        _sMinKey = (char*)malloc(len1+1);
+    }
+    memset(_sMinKey,0,len1+1);
+    memcpy(_sMinKey,sMinKey,len1);
+    _sMinKeyLen = len1;
+
+    if (_sMaxKeyLen < len2) {
+        if (_sMaxKey) { free (_sMaxKey); }        
+        _sMaxKey = (char*)malloc(len2+1);
+    }
+    memset(_sMaxKey,0,len2+1);
+    memcpy(_sMaxKey,sMaxKey,len2);
+    _sMaxKeyLen = len2;
+
+    _numParts = numParts;
+    return (RCOK);
+}
+
+
 /* ----------------- */
 /* --- debugging --- */
 /* ----------------- */
@@ -291,16 +326,6 @@ void table_desc_t::print_desc(ostream& os)
     }
 }
 
-
-// #include <strstream>
-// char const* db_pretty_print(table_desc_t const* ptdesc, int /* i=0 */, char const* /* s=0 */) 
-// {
-//     static char data[1024];
-//     std::strstream inout(data, sizeof(data));
-//     ((table_desc_t*)ptdesc)->print_desc(inout);
-//     inout << std::ends;
-//     return data;
-// }
 
 #include <sstream>
 char const* db_pretty_print(table_desc_t const* ptdesc, int /* i=0 */, char const* /* s=0 */) 

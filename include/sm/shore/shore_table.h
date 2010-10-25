@@ -107,6 +107,7 @@
 ENTER_NAMESPACE(shore);
 
 
+
 /* ---------------------------------------------------------------
  *
  * @class: table_desc_t
@@ -131,6 +132,13 @@ protected:
   
     volatile uint_t _maxsize;            // max tuple size for this table, shortcut
     
+    // Partitioning info (for MRBTrees)
+    char*  _sMinKey;
+    uint   _sMinKeyLen;
+    char*  _sMaxKey;
+    uint   _sMaxKeyLen;
+    uint  _numParts;
+
     int find_field_by_name(const char* field_name) const;
 
 public:
@@ -141,6 +149,19 @@ public:
 
     table_desc_t(const char* name, int fieldcnt);    
     virtual ~table_desc_t();
+
+
+    /* ---------------------------------------------------- */
+    /* --- partitioning information, used with MRBTrees --- */
+    /* ---------------------------------------------------- */
+
+    // @note: If the partitioning is set *BEFORE* the indexes have been 
+    //        created (which is done at the create_table()) then this
+    //        is the partitioning which will be used.
+    
+    w_rc_t set_partitioning(const char* sMinKey, uint len1, 
+                            const char* sMaxKey, uint len2, 
+                            uint numParts);
 
 
     /* --------------------------------------- */
@@ -157,13 +178,13 @@ public:
                         const uint num,
                         const bool unique=true,
                         const bool primary=false,
-                        const bool nolock=false);
-
+                        const uint4_t& pd=PD_NORMAL);
+    
     bool   create_primary_idx(const char* name,
 			      int partitions,
                               const uint* fields,
                               const uint num,
-                              const bool nolock=false);
+                              const uint4_t& pd=PD_NORMAL);
 
 
     /* ------------------------ */

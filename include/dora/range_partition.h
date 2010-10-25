@@ -46,7 +46,6 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
-
 /******************************************************************** 
  *
  * @enum:  eRangePartitionState
@@ -58,10 +57,9 @@ ENTER_NAMESPACE(dora);
 enum eRangePartitionState { RPS_UNSET, RPS_SET };
 
 
-
 /******************************************************************** 
  *
- * @class: range_partition_impl
+ * @class: range_partition_i
  *
  * @brief: Template-based class for the range data partition
  *
@@ -70,7 +68,7 @@ enum eRangePartitionState { RPS_UNSET, RPS_SET };
  ********************************************************************/
 
 template <class DataType>
-class range_partition_impl : public partition_t<DataType>
+class range_partition_i : public partition_t<DataType>
 {
 public:
 
@@ -82,39 +80,22 @@ public:
 private:
 
     eRangePartitionState _rp_state;
-    int _part_field_cnt;
 
-    // the two bounds
+    // The two boundaries as D-keys
     Key _part_down;
     Key _part_up;
-
-    //guard<Pool> _keypool;
-
-    /** helper functions */
 
     bool _is_between(const Key& contDown, 
                      const Key& contUp) const;
 
 public:
 
-    range_partition_impl(ShoreEnv* env, table_desc_t* ptable,                          
-                         const int field_cnt,
-                         const int keyEstimation,
-                         const int apartid = 0, processorid_t aprsid = PBIND_NONE) 
-        : Partition(env, ptable, keyEstimation, apartid, aprsid),
-          _rp_state(RPS_UNSET),
-          _part_field_cnt(field_cnt)
-    {
-        assert (_part_field_cnt>0);
-        Partition::set_part_policy(PP_RANGE);
+    range_partition_i(ShoreEnv* env, table_desc_t* ptable,
+                      const uint keyEstimation,
+                      const uint apartid, const cvec_t& down, const cvec_t& up,
+                      const processorid_t aprsid = PBIND_NONE);
 
-//         _keypool = new Pool(sizeof(DataType),4);
-//         _down = new Key( _keypool.get() );
-//         _up = new Key ( _keypool.get() );
-    }
-
-
-    ~range_partition_impl() { }
+    ~range_partition_i() { }
 
     // sets new limits
     bool resize(const Key& downLimit, const Key& upLimit);
@@ -122,27 +103,50 @@ public:
     // returns true if action can be enqueued here
     bool verify(Action& rangeaction);
 
-}; // EOF: range_partition_impl
+}; // EOF: range_partition_i
 
 
-/** Helper functions */
+
+/****************************************************************** 
+ *
+ * Construction
+ *
+ * @note: Sets the down/up keys based on the passed cvec_t
+ *
+ ******************************************************************/
+
+template <class DataType>
+range_partition_i<DataType>::range_partition_i(ShoreEnv* env, 
+                                               table_desc_t* ptable,
+                                               const uint keyEstimation,
+                                               const uint apartid, 
+                                               const cvec_t& down, 
+                                               const cvec_t& up,
+                                               const processorid_t aprsid)
+    : Partition(env, ptable, keyEstimation, apartid, aprsid),
+      _rp_state(RPS_UNSET)
+{
+    Partition::set_part_policy(PP_RANGE);
+
+    // Set the down/up D-keys
+    _part_down.readCVec(down);    
+    _part_up.readCVec(up);
+}
 
 
 /****************************************************************** 
  *
  * @fn:    _is_between
  *
- * @brief: Returns true if (BaseDown < ContenderDown) (ContenderUp <= BaseUp)
+ * @brief: Returns true if (BaseDown <= ContenderDown) && (ContenderUp < BaseUp)
  *
  ******************************************************************/
 
 template <class DataType>
-bool range_partition_impl<DataType>::_is_between(const Key& contDown,
-                                                 const Key& contUp) const
+bool range_partition_i<DataType>::_is_between(const Key& contDown,
+                                              const Key& contUp) const
 {
-    assert (_part_down<=_part_up);
     assert (contDown<=contUp);
-    //    cout << "Checking (" << contDown << " - " << contUp << ") between (" << _down << " - " << _up << ")\n";
 
     // !!! WARNING !!!
     // The partition boundaries should always be on the left side 
@@ -162,8 +166,8 @@ bool range_partition_impl<DataType>::_is_between(const Key& contDown,
  ******************************************************************/
 
 template <class DataType>
-bool range_partition_impl<DataType>::resize(const Key& downLimit, 
-                                            const Key& upLimit) 
+bool range_partition_i<DataType>::resize(const Key& downLimit, 
+                                         const Key& upLimit) 
 {
     if (upLimit<downLimit) {
         TRACE( TRACE_ALWAYS, "Error in new bounds\n");
@@ -196,7 +200,7 @@ bool range_partition_impl<DataType>::resize(const Key& downLimit,
  ******************************************************************/
  
 template <class DataType>
-bool range_partition_impl<DataType>::verify(Action& rangeaction)
+bool range_partition_i<DataType>::verify(Action& rangeaction)
 {
     assert (_rp_state == RPS_SET);
     assert (rangeaction.keys()->size()==2);

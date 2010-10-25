@@ -42,30 +42,30 @@ ENTER_NAMESPACE(dora);
 
 
 // max field counts for (int) keys of tm1 tables
-const int sub_IRP_KEY = 1;
-const int ai_IRP_KEY  = 2;
-const int sf_IRP_KEY  = 2;
-const int cf_IRP_KEY  = 3;
+const uint sub_IRP_KEY = 1;
+const uint ai_IRP_KEY  = 2;
+const uint sf_IRP_KEY  = 2;
+const uint cf_IRP_KEY  = 3;
 
 // key estimations for each partition of the tm1 tables
-const int sub_KEY_EST = 1000;
-const int ai_KEY_EST  = 2500;
-const int sf_KEY_EST  = 2500;
-const int cf_KEY_EST  = 3750;
+const uint sub_KEY_EST = 1000;
+const uint ai_KEY_EST  = 2500;
+const uint sf_KEY_EST  = 2500;
+const uint cf_KEY_EST  = 3750;
 
 
 
 /****************************************************************** 
  *
- * @fn:    start()
- *
- * @brief: Starts the DORA TM1
+ *  The DORA TM1 environment
  *
  ******************************************************************/
 
 DoraTM1Env::DoraTM1Env(string confname)
     : ShoreTM1Env(confname), DoraEnv()
 { 
+    // Update the physical design that it is a DORA environment
+    add_pd(PD_NOLOCK);
 }
 
 DoraTM1Env::~DoraTM1Env()
@@ -98,39 +98,60 @@ int DoraTM1Env::start()
     // 5. Start logger
 
     conf(); // re-configure
-
-    // Call the pre-start procedure of the dora environment
-    DoraEnv::_start(this);
-
     processorid_t icpu(_starting_cpu);
-
-    TRACE( TRACE_STATISTICS, "Creating tables. SF=(%.1f) - DORA_SF=(%.1f)...\n", 
-           _scaling_factor, _sf);    
-
 
     // SUBSCRIBER
     GENERATE_DORA_PARTS(sub,sub);
 
-
     // ACCESS INFO
     GENERATE_DORA_PARTS(ai,ai);
-
 
     // SPECIAL FACILITY
     GENERATE_DORA_PARTS(sf,sf);
 
-
     // CALL FORWARDING
     GENERATE_DORA_PARTS(cf,cf);
 
-
-    TRACE( TRACE_DEBUG, "Starting tables...\n");
-    for (uint_t i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->reset();
-    }
-
-    set_dbc(DBC_ACTIVE);
+    // Call the post-start procedure of the dora environment
+    DoraEnv::_post_start(this);
     return (0);
+}
+
+
+
+/******************************************************************** 
+ *
+ *  @fn:    update_partitioning()
+ *
+ *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *
+ ********************************************************************/
+
+w_rc_t DoraTM1Env::update_partitioning() 
+{
+    // The number of partitions in the indexes should match the DORA 
+    // partitioning
+    int minKeyVal = 0;
+    int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
+
+    // vec_t minKey((char*)(&minKeyVal),sizeof(int));
+    // vec_t maxKey((char*)(&maxKeyVal),sizeof(int));
+
+    char* minKey = (char*)malloc(sizeof(int));
+    memcpy(minKey,&minKeyVal,sizeof(int));
+
+    char* maxKey = (char*)malloc(sizeof(int));
+    memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+    _psub_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sub);
+    _pai_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ai);
+    _psf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sf);
+    _pcf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_cf);
+
+    free (minKey);
+    free (maxKey);
+
+    return (RCOK);
 }
 
 
@@ -145,20 +166,9 @@ int DoraTM1Env::start()
 
 int DoraTM1Env::stop()
 {
-    TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->stop();
-    }
-    _irptp_vec.clear();
-
-    // Call the meta-stop procedure of the dora environment
-    DoraEnv::_stop();
-
-    set_dbc(DBC_STOPPED);
-    return (0);
+    // Call the post-stop procedure of the dora environment
+    return (DoraEnv::_post_stop(this));
 }
-
-
 
 
 /****************************************************************** 
@@ -177,7 +187,6 @@ int DoraTM1Env::resume()
 }
 
 
-
 /****************************************************************** 
  *
  * @fn:    pause()
@@ -194,7 +203,6 @@ int DoraTM1Env::pause()
 }
 
 
-
 /****************************************************************** 
  *
  * @fn:    conf()
@@ -207,34 +215,29 @@ int DoraTM1Env::conf()
 {
     ShoreTM1Env::conf();
 
-    TRACE( TRACE_DEBUG, "configuring dora-tm1\n");
-
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
+    _cpu_range = get_active_cpu_count();
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    _cpu_range = get_active_cpu_count();
+    // For each table read the ratio of partition per CPU and calculate the
+    // number of partition to create (depending the number of CPUs available).
+    double sub_PerCPU = ev->getVarDouble("dora-ratio-tm1-sub",0);
+    _parts_sub = ( sub_PerCPU>0 ? (_cpu_range * sub_PerCPU) : 1);
 
-    // For TM1 the DORA_SF is !not anymore! different than the SF of the database
-    // In particular, for each 'real' SF there is 1 DORA SF
-    _sf = upd_sf() * TM1_SUBS_PER_SF / TM1_SUBS_PER_DORA_PART;
+    double ai_PerCPU = ev->getVarDouble("dora-ratio-tm1-ai",0);
+    _parts_ai = ( ai_PerCPU>0 ? (_cpu_range * ai_PerCPU) : 1);
 
-    // Get DORA and per table partition SFs
-    _dora_sf = ev->getSysVarInt("dora-sf");
-    assert (_dora_sf);
+    double sf_PerCPU = ev->getVarDouble("dora-ratio-tm1-sf",0);
+    _parts_sf = ( sf_PerCPU>0 ? (_cpu_range * sf_PerCPU) : 1);
 
-    _sf_per_part_sub = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-sub",1);
-    _sf_per_part_ai  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-ai",1);
-    _sf_per_part_sf  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-sf",1);
-    _sf_per_part_cf  = _dora_sf * ev->getVarInt("dora-tm1-sf-per-part-cf",1);        
+    double cf_PerCPU = ev->getVarDouble("dora-ratio-tm1-cf",0);
+    _parts_cf = ( cf_PerCPU>0 ? (_cpu_range * cf_PerCPU) : 1);
 
     return (0);
 }
-
-
-
 
 
 /****************************************************************** 
@@ -247,13 +250,8 @@ int DoraTM1Env::conf()
 
 int DoraTM1Env::newrun()
 {
-    TRACE( TRACE_DEBUG, "Preparing for new run...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->prepareNewRun();
-    }
-    return (0);
+    return (DoraEnv::_newrun(this));
 }
-
 
 
 /****************************************************************** 
@@ -266,12 +264,7 @@ int DoraTM1Env::newrun()
 
 int DoraTM1Env::dump()
 {
-    uint sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (uint i=0; i<sz; i++) {
-        _irptp_vec[i]->dump();
-    }
-    return (0);
+    return (DoraEnv::_dump(this));
 }
 
 
@@ -285,15 +278,8 @@ int DoraTM1Env::dump()
 
 int DoraTM1Env::info() const
 {
-    TRACE( TRACE_ALWAYS, "SF      = (%.1f)\n", _scaling_factor);
-    int sz=_irptp_vec.size();
-    TRACE( TRACE_ALWAYS, "Tables  = (%d)\n", sz);
-    for (int i=0;i<sz;++i) {
-        _irptp_vec[i]->info();
-    }
-    return (0);
+    return (DoraEnv::_info(this));
 }
-
 
 
 /******************************************************************** 
@@ -306,25 +292,15 @@ int DoraTM1Env::info() const
 
 int DoraTM1Env::statistics() 
 {
-    // DORA STATS
-    TRACE( TRACE_STATISTICS, "----- DORA -----\n");
-    uint sz=_irptp_vec.size();
-    TRACE( TRACE_STATISTICS, "Tables  = (%d)\n", sz);
-    for (uint i=0;i<sz;++i) {
-        _irptp_vec[i]->statistics();
-    }
-    DoraEnv::statistics();
+    DoraEnv::_statistics(this);
     return (0);
 
     // TM1 STATS
     // disabled
     TRACE( TRACE_STATISTICS, "----- TM1  -----\n");
     ShoreTM1Env::statistics();
-
     return (0);
 }
-
-
 
 
 

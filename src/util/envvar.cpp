@@ -156,12 +156,31 @@ void envVar::checkVar(const string& sParam)
  *
  *************************************************/
 
-string envVar::getSysname()
+string envVar::getSysName()
 {
-    string system = "system";
-    return (getSysVar(system));
+    string sysName = "system";
+    return (getSysVar(sysName));
 }
 
+int envVar::setSysName(const string& sysName)
+{
+    string configsys = getVar("db-config","invalid");
+    configsys = configsys + "-system";
+    return (setVar(configsys,sysName));
+}
+
+string envVar::getSysDesign()
+{
+    string sysDesign = "design";
+    return (getSysVar(sysDesign));
+}
+
+int envVar::setSysDesign(const string& sysDesign)
+{
+    string configsys = getVar("db-config","invalid");
+    configsys = configsys + "-design";
+    return (setVar(configsys,sysDesign));
+}
 
 string envVar::getSysVar(string sParam)
 {

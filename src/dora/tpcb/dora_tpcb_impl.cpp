@@ -63,16 +63,13 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_au_rvp,acct_update);
  ********************************************************************/
 
 
-void 
-upd_br_action::calc_keys()
+void upd_br_action::calc_keys()
 {
     _down.push_back(_in.b_id);
 }
 
 
-
-w_rc_t 
-upd_br_action::trx_exec() 
+w_rc_t upd_br_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -112,7 +109,6 @@ upd_br_action::trx_exec()
 #ifndef ONLYDORA        
         e = _penv->branch_man()->update_tuple(_penv->db(), prb, NL);
 #endif
-        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -129,16 +125,14 @@ done:
 
 
 
-void 
-upd_te_action::calc_keys()
+void upd_te_action::calc_keys()
 {
     _down.push_back(_in.t_id);
 }
 
 
 
-w_rc_t 
-upd_te_action::trx_exec() 
+w_rc_t upd_te_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -178,7 +172,6 @@ upd_te_action::trx_exec()
 #ifndef ONLYDORA        
         e = _penv->teller_man()->update_tuple(_penv->db(), prt, NL);
 #endif
-        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -195,16 +188,14 @@ done:
 
 
 
-void 
-upd_ac_action::calc_keys()
+void upd_ac_action::calc_keys()
 {
     _down.push_back(_in.a_id);
 }
 
 
 
-w_rc_t 
-upd_ac_action::trx_exec() 
+w_rc_t upd_ac_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -244,7 +235,6 @@ upd_ac_action::trx_exec()
 #ifndef ONLYDORA        
         e = _penv->account_man()->update_tuple(_penv->db(), pra, NL);
 #endif
-        if (e.is_error()) { goto done; }
 
     } // goto
 
@@ -261,16 +251,14 @@ done:
 
 
 
-void 
-ins_hi_action::calc_keys()
+void ins_hi_action::calc_keys()
 {
     _down.push_back(_in.a_id);
 }
 
 
 
-w_rc_t 
-ins_hi_action::trx_exec() 
+w_rc_t ins_hi_action::trx_exec() 
 {
     assert (_penv);
     w_rc_t e = RCOK;
@@ -298,7 +286,10 @@ ins_hi_action::trx_exec()
 	prh->set_value(2, _in.a_id);
 	prh->set_value(3, _in.delta);
 	prh->set_value(4, time(NULL));
-	prh->set_value(5, "padding");
+
+#ifdef CFG_HACK
+	prh->set_value(5, "padding"); // PADDING
+#endif
 
         TRACE( TRACE_TRX_FLOW, 
                "App: %d UA:ins-hi\n", _tid.get_lo());

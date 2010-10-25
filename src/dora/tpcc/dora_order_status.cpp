@@ -80,14 +80,14 @@ w_rc_t mid1_ordst_rvp::run()
     r_ord_ordst_action* r_ord = _penv->new_r_ord_ordst_action(_xct,_tid,mid2_rvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
 
     {        
         int wh = _in._wh_id - 1;
-        irpImpl* my_ord_part = _penv->ord()->myPart(wh);
+        irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),wh);
 
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
@@ -126,14 +126,14 @@ w_rc_t mid2_ordst_rvp::run()
     r_ol_ordst_action* r_ol = _penv->new_r_ol_ordst_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     // 3a. Decide about partition
     // 3b. Enqueue
 
     {        
         int wh = _in._wh_id - 1;
-        irpImpl* my_oli_part = _penv->oli()->myPart(wh);
+        irpImpl* my_oli_part = _penv->decide_part(_penv->oli(),wh);
 
         // OLI_PART_CS
         CRITICAL_SECTION(oli_part_cs, my_oli_part->_enqueue_lock);
@@ -201,7 +201,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
              * WHERE c_last = :c_last AND c_w_id = :w_id AND c_d_id = :d_id
              * ORDER BY c_first
              *
-             * plan: index only scan on "C_NAME_INDEX"
+             * plan: index only scan on "C_NAME_IDX"
              */
 
             assert (_in._c_select <= 60);
@@ -255,7 +255,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
          * FROM customer
          * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :d_id
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -332,7 +332,7 @@ w_rc_t r_ord_ordst_action::trx_exec()
          * WHERE o_w_id = :w_id AND o_d_id = :d_id AND o_c_id = :o_c_id
          * ORDER BY o_id DESC
          *
-         * plan: index scan on "O_CUST_INDEX"
+         * plan: index scan on "O_CUST_IDX"
          */
      
         guard<index_scan_iter_impl<order_t> > o_iter;

@@ -96,6 +96,7 @@ ShoreEnv::ShoreEnv(string confname)
       _active_cpu_count(0),
       _worker_cnt(0),
       _measure(MST_UNDEF),
+      _pd(PD_NORMAL),
       _insert_freq(0),_delete_freq(0),_probe_freq(100)
 {
     _popts = new option_group_t(1);
@@ -104,13 +105,38 @@ ShoreEnv::ShoreEnv(string confname)
     pthread_mutex_init(&_scaling_mutex, NULL);
     pthread_mutex_init(&_queried_mutex, NULL);
 
+    // Read configuration
     envVar* ev = envVar::instance();
-    _rec_to_acc = ev->getVarInt("records-to-access",1);
+
+    string physical = ev->getSysDesign();   
+   
+    if (physical.compare("normal")==0) {
+        _pd = PD_NORMAL;
+    }
+    if (physical.compare("mrbtnorm")==0) {
+        _pd = PD_MRBT_NORMAL;
+    }
+    if (physical.compare("mrbtpart")==0) {
+        _pd = PD_MRBT_PART;
+    }
+    if (physical.compare("mrbtleaf")==0) {
+        _pd = PD_MRBT_LEAF;
+    }
+
+    // Check about the hacks option
+    check_hacks_enabled();
+    if (is_hacks_enabled()) {
+        _pd |= PD_PADDED;
+    }
+
 
 #ifdef CFG_SLI
     _bUseSLI = ev->getVarInt("db-worker-sli",0);
     fprintf(stdout, "SLI= %s\n", (_bUseSLI ? "enabled" : "disabled"));
 #endif
+
+    // Used by some benchmarks
+    _rec_to_acc = ev->getVarInt("records-to-access",1);
 }
 
 
@@ -142,12 +168,17 @@ bool ShoreEnv::is_loaded()
 }
 
 
-int ShoreEnv::get_max_cpu_count() const 
+void ShoreEnv::set_max_cpu_count(const uint cpucnt) 
+{ 
+    _max_cpu_count = ( cpucnt>0 ? cpucnt : _max_cpu_count);
+}
+
+uint ShoreEnv::get_max_cpu_count() const 
 { 
     return (_max_cpu_count); 
 }
 
-int ShoreEnv::get_active_cpu_count() const 
+uint ShoreEnv::get_active_cpu_count() const 
 { 
     return (_active_cpu_count); 
 }
@@ -214,8 +245,46 @@ void ShoreEnv::print_sf() const
 
 /******************************************************************** 
  *
- *  @fn:    Related to microbenchmarks
+ *  @fn:    Related to physical design
  *
+ ********************************************************************/
+
+uint4_t ShoreEnv::get_pd() const
+{
+    return (_pd);
+}
+
+uint4_t ShoreEnv::set_pd(const physical_design_t& apd)
+{
+    _pd = apd;
+    TRACE( TRACE_ALWAYS, "DB set to (%x)\n", _pd);
+    return (_pd);
+}
+
+uint4_t ShoreEnv::add_pd(const physical_design_t& apd)
+{
+    _pd |= apd;
+    TRACE( TRACE_ALWAYS, "DB set to (%x)\n", _pd);
+    return (_pd);
+}
+
+bool ShoreEnv::check_hacks_enabled()
+{
+    // enable hachs by default
+    int he = envVar::instance()->getVarInt("physical-hacks-enable",0);
+    _enable_hacks = (he == 1 ? true : false);
+    return (_enable_hacks);
+}
+
+bool ShoreEnv::is_hacks_enabled() const
+{
+    return (_enable_hacks);
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    Related to microbenchmarks
  *  @brief: Set the insert/delete/probe frequencies
  *
  ********************************************************************/
@@ -224,11 +293,11 @@ void ShoreEnv::set_freqs(int insert_freq, int delete_freq, int probe_freq)
     assert ((insert_freq>=0) && (insert_freq<=100));
     assert ((delete_freq>=0) && (delete_freq<=100));
     assert ((probe_freq>=0) && (probe_freq<=100));
-
     _insert_freq = insert_freq;
     _delete_freq = delete_freq;
     _probe_freq = probe_freq;
 }
+
 
 /******************************************************************** 
  *
@@ -298,15 +367,22 @@ int ShoreEnv::init()
     }
 
     // Load the database schema
-    if (load_schema()) {
+    if (load_schema().is_error()) {
         TRACE( TRACE_ALWAYS, "Error loading the database schema\n");
         return (3);
     }
+    
+    // Update partitioning information    
+    if (update_partitioning().is_error()) {
+        TRACE( TRACE_ALWAYS, "Error updating the partitioning info\n");
+        return (4);
+    }
+
 
     // Start the storage manager
     if (start_sm()) {
         TRACE( TRACE_ALWAYS, "Error starting Shore database\n");
-        return (4);
+        return (5);
     }
 
     // Call the (virtual) post-initialization function
@@ -848,11 +924,6 @@ void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt)
 
 int ShoreEnv::_set_sys_params()
 {
-    // First check if can get the number of processors from the procmonitor
-    if (_g_mon) {
-        _max_cpu_count = _g_mon->get_num_of_cpus();
-    }
-
     // procmonitor returns 0 if it cannot find the number of processors
     if (_max_cpu_count==0) {
         _max_cpu_count = atoi(_sys_opts[SHORE_SYS_OPTIONS[1][0]].c_str());
@@ -871,7 +942,8 @@ int ShoreEnv::_set_sys_params()
 }
 
 
-void ShoreEnv::print_cpus() const { 
+void ShoreEnv::print_cpus() const 
+{ 
     TRACE( TRACE_ALWAYS, "MaxCPU=(%d) - ActiveCPU=(%d)\n", 
            _max_cpu_count, _active_cpu_count);
 }

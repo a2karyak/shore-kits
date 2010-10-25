@@ -55,8 +55,7 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-w_rc_t 
-midway_pay_rvp::run() 
+w_rc_t midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
 #ifndef ONLYDORA
@@ -70,8 +69,8 @@ midway_pay_rvp::run()
     // 2. Generate and enqueue action
     ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_xct,_tid,frvp,_pin);
     ins_hist_pay->postset(_awh,_adist);
-    typedef range_partition_impl<int>   irpImpl; 
-    irpImpl* hist_part = _ptpccenv->his()->myPart(_pin._home_wh_id-1);
+    typedef range_partition_i<int>   irpImpl; 
+    irpImpl* hist_part = _ptpccenv->decide_part(_ptpccenv->his(),_pin._home_wh_id-1);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
 
@@ -163,7 +162,7 @@ w_rc_t upd_wh_pay_action::trx_exec()
          * FROM warehouse
          * WHERE w_id = :w_id
          *
-         * plan: index probe on "W_INDEX"
+         * plan: index probe on "W_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
@@ -250,7 +249,7 @@ w_rc_t upd_dist_pay_action::trx_exec()
          * FROM district
          * WHERE d_id = :d_id AND d_w_id = :w_id
          *
-         * plan: index probe on "D_INDEX"
+         * plan: index probe on "D_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
@@ -325,7 +324,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
              * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * ORDER BY c_first
              *
-             * plan: index only scan on "C_NAME_INDEX"
+             * plan: index only scan on "C_NAME_IDX"
              */
 
             assert (_pin._v_cust_ident_selection <= 60);
@@ -386,7 +385,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
          * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
          * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
          *
-         * plan: index probe on "C_INDEX"
+         * plan: index probe on "C_IDX"
          */
 
         TRACE( TRACE_TRX_FLOW, 
@@ -437,7 +436,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
              * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
              * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
              *
-             * plan: index probe on "C_INDEX"
+             * plan: index probe on "C_IDX"
              */
 
             // update the data

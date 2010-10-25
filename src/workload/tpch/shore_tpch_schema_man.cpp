@@ -57,7 +57,7 @@ w_rc_t nation_man_impl::n_index_probe(ss_m* db,
 {
     assert (ptuple);    
     ptuple->set_value(0, n_nationkey);
-    return (index_probe_by_name(db, "N_INDEX", ptuple));
+    return (index_probe_by_name(db, "N_IDX", ptuple));
 }
 
 
@@ -72,7 +72,7 @@ w_rc_t region_man_impl::r_index_probe(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, r_regionkey);
-    return (index_probe_by_name(db, "R_INDEX", ptuple));
+    return (index_probe_by_name(db, "R_IDX", ptuple));
 }
 
 /* ------------ */
@@ -81,12 +81,12 @@ w_rc_t region_man_impl::r_index_probe(ss_m* db,
 
 w_rc_t part_man_impl::p_index_probe(ss_m* db,
                                     part_tuple* ptuple,
-																		const int p_partkey)
+                                    const int p_partkey)
 {
 	assert(ptuple);
 
 	ptuple->set_value(0, p_partkey);
-	return (index_probe_by_name(db, "P_INDEX", ptuple));
+	return (index_probe_by_name(db, "P_IDX", ptuple));
 }
 
 
@@ -101,7 +101,7 @@ w_rc_t supplier_man_impl::s_index_probe(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, s_suppkey);
-    return (index_probe_by_name(db, "S_INDEX", ptuple));
+    return (index_probe_by_name(db, "S_IDX", ptuple));
 }
 
 
@@ -118,7 +118,7 @@ w_rc_t partsupp_man_impl::ps_index_probe(ss_m* db,
     assert (ptuple);
     ptuple->set_value(0, ps_partkey);
     ptuple->set_value(1, ps_suppkey);
-    return (index_probe_by_name(db, "S_INDEX", ptuple));
+    return (index_probe_by_name(db, "S_IDX", ptuple));
 }
 
 /* ---------------- */
@@ -139,10 +139,10 @@ w_rc_t partsupp_man_impl::ps_index_probe(ss_m* db,
 //
 //    // find the index
 //    assert (_ptable);
-//    index_desc_t* pindex = _ptable->find_index("C_NAME_INDEX");
+//    index_desc_t* pindex = _ptable->find_index("C_NAME_IDX");
 //    assert (pindex);
 //
-//    // C_NAME_INDEX: {2 - 1 - 5 - 3 - 0}
+//    // C_NAME_IDX: {2 - 1 - 5 - 3 - 0}
 //
 //    // prepare the key to be probed
 //    ptuple->set_value(0, 0);
@@ -177,7 +177,7 @@ w_rc_t customer_man_impl::c_index_probe(ss_m* db,
                                            const int c_custkey)
 {
     assert (ptuple);
-    return (c_index_probe_by_name(db, "C_INDEX", ptuple, c_custkey));
+    return (c_index_probe_by_name(db, "C_IDX", ptuple, c_custkey));
 }
 
 w_rc_t customer_man_impl::c_index_probe_by_name(ss_m* db,
@@ -209,7 +209,7 @@ w_rc_t orders_man_impl::o_get_iter_by_index(ss_m* db,
 
     /* find index */
     assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("O_INDEX");
+    index_desc_t* pindex = _ptable->find_index("O_IDX");
     assert (pindex);
 
     /* get the lowest key value */

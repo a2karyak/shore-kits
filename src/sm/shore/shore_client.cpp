@@ -127,7 +127,7 @@ w_rc_t base_client_t::run_xcts(int xct_type, int num_xct)
 
     // If in DORA (or at least not in Baseline) allocate an empty sdesc cache
     // so that the xct does not allocate one. The DORA workers will do that.
-    string sysname = ev->getSysname();
+    string sysname = ev->getSysName();
     if (sysname.compare("baseline")!=0) {
         me()->alloc_sdesc_cache();
     }

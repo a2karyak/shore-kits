@@ -78,10 +78,10 @@ w_rc_t mid1_stock_rvp::run()
     r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_xct,_tid,rvp2,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     {
-        irpImpl* ol_part = _penv->oli()->myPart(_in._wh_id-1);
+        irpImpl* ol_part = _penv->decide_part(_penv->oli(),_in._wh_id-1);
 
         // OLI_PART_CS
         CRITICAL_SECTION(oli_part_cs, ol_part->_enqueue_lock);
@@ -119,10 +119,10 @@ w_rc_t mid2_stock_rvp::run()
     r_st_stock_action* r_st = _penv->new_r_st_stock_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_impl<int>   irpImpl; 
+    typedef range_partition_i<int>   irpImpl; 
 
     { 
-        irpImpl* my_st_part = _penv->sto()->myPart(_in._wh_id-1);
+        irpImpl* my_st_part = _penv->decide_part(_penv->sto(),_in._wh_id-1);
 
         // STO_PART_CS
         CRITICAL_SECTION(sto_part_cs, my_st_part->_enqueue_lock);
@@ -178,7 +178,7 @@ w_rc_t r_dist_stock_action::trx_exec()
          * FROM district
          * WHERE d_w_id = :w_id AND d_id = :d_id
          *
-         * (index scan on D_INDEX)
+         * (index scan on D_IDX)
          */
 
         TRACE( TRACE_TRX_FLOW, "App: %d STO:dist-idx-probe (%d) (%d)\n", 
@@ -268,7 +268,7 @@ w_rc_t r_ol_stock_action::trx_exec()
          *
          *   Plan: 1. index scan on OL_IDX 
          *         2. sort ol tuples in the order of i_id from 1
-         *         3. index scan on S_INDEX
+         *         3. index scan on S_IDX
          *         4. fetch stock with sargable on quantity from 3
          *         5. nljoin on 2 and 4
          *         6. unique on 5

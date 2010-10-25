@@ -71,24 +71,53 @@ const unsigned int COMMIT_ACTION_COUNT_WITH_ITER = 500000;
 
 
 
-/** @enum file_type_t
+/* ---------------------------------------------------------------
  *
- *  @brief a file can be either a regular file, an primary index,
- *  a (secondary) index, etc... 
- *  The list can be expanded.
- */
+ *  @enum:  file_type_t
+ *
+ *  @brief: A file can be either a regular heap file, an index,
+ *          a (secondary) index, etc... 
+ *
+ * --------------------------------------------------------------- */
 
-enum file_type_t 
-{
-    FT_REGULAR,
-    FT_PRIMARY_IDX,
-    FT_IDX,
-    FT_NONE
+enum file_type_t  { FT_HEAP         = 0x0,
+                    FT_PRIMARY_IDX  = 0x1,
+                    FT_IDX          = 0x2,
+                    FT_NONE         = 0x4
+};
+
+
+
+/* ---------------------------------------------------------------
+ *
+ * @enum:  physical_design_t
+ *
+ * @brief: There are different options for the physical design. The
+ *         currently supported options:
+ *         PD_NORMAL      - vanilla structures
+ *         PD_PADDED      - use padding to reduce contention
+ *         PD_MRBT_NORMAL - use MRBTrees with normal heap files
+ *         PD_MRBT_PART   - use MRBTrees with partitioned heap files
+ *         PD_MRBT_LEAF   - use MRBTrees with each heap page corresponding 
+ *                          to one leaf MRBTree index page
+ *         PD_NOLOCK      - have indexes without CC
+ *         PD_NOLATCH     - have indexes without even latching
+ *
+ * --------------------------------------------------------------- */
+
+enum physical_design_t { PD_NORMAL      = 0x0,
+                         PD_PADDED      = 0x1,
+                         PD_MRBT_NORMAL = 0x2,
+                         PD_MRBT_PART   = 0x4,
+                         PD_MRBT_LEAF   = 0x8,
+                         PD_NOLOCK      = 0x10,
+                         PD_NOLATCH     = 0x20
 };
 
 
 
 /*  --------------------------------------------------------------
+ *
  *  @class file_desc_t
  *
  *  @brief class that describes any file (table/index). It provides
@@ -101,24 +130,30 @@ class file_desc_t
     friend class index_desc_t;
 protected:
 
-    pthread_mutex_t _fschema_mutex;        // file schema mutex
-    char            _name[MAX_FNAME_LEN];  // file name
-    uint_t          _field_count;          // # of fields
+    pthread_mutex_t   _fschema_mutex;        // file schema mutex
+    char              _name[MAX_FNAME_LEN];  // file name
+    uint_t            _field_count;          // # of fields
 
-    vid_t           _vid;                  // volume id
-    stid_t          _root_iid;             // root id
+    vid_t             _vid;                  // volume id
+    stid_t            _root_iid;             // root id
+
+    uint4_t           _pd;                   // info about the physical design
+
 
 public:
 
-    stid_t          _fid;                  // physical id of the file
+    stid_t            _fid;                  // physical id of the file
 
 
     /* -------------------- */
     /* --- construction --- */
     /* -------------------- */
 
-    file_desc_t(const char* name, const uint_t fcnt);
+    file_desc_t(const char* name, 
+                const uint_t fcnt, 
+                const uint4_t& apd = PD_NORMAL);
     virtual ~file_desc_t();
+
 
     /* ---------------------- */
     /* --- access methods --- */
@@ -130,6 +165,8 @@ public:
     vid_t         vid() { return _vid; }   
     stid_t        root_iid() { return _root_iid; }
     uint_t        field_count() const { return _field_count; } 
+
+    uint4_t       get_pd() const { return _pd; }
 
     bool          is_fid_valid() const { return (_fid != stid_t::null); }
     bool          is_vid_valid() { return (_vid != vid_t::null); }
@@ -153,17 +190,18 @@ public:
 
 
 /*  --------------------------------------------------------------
- ** @struct file_info_t
+ *
+ *  @struct file_info_t
  *
  *  @brief Structure that represents a Shore file in a volume. 
- *  This Key information for files goes to the root btree index.
+ *  This is the  Key information for files goes to the root btree index.
  * 
  *  --------------------------------------------------------------- */
 
 class file_info_t 
 {
 private:
-    char              _fname[MAX_FNAME_LEN]; // file name
+    char               _fname[MAX_FNAME_LEN]; // file name
     file_type_t        _ftype;               // {regular,primary idx, idx, ...}
     std::pair<int,int> _record_size;         // size of each column of the file record
 
@@ -177,31 +215,9 @@ public:
     // Constructor
     file_info_t(const stid_t& fid,
                 const char* fname, 
-                const file_type_t ftype = FT_REGULAR)
-        : _ftype(ftype),
-          _record_size(std::pair<int,int>(0,0)),
-          _first_rid(0, shrid_t(0,0,0)),
-          _fid(fid)
-    {
-#ifndef __GNUC__
-	if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
-#else
-	if(w_strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
-#endif
-	    throw "file_info_t::_fname too long!\n";
-        }
-    }
-
-    // TODO REMOVE no argument consturctor
-    file_info_t() : 
-        _ftype(FT_REGULAR),
-        _record_size(std::pair<int,int>(0,0)),
-        _first_rid(0, shrid_t(0,0,0)),
-        _cur_rid(0, shrid_t(0,0,0))
-    { }
-
+                const file_type_t ftype = FT_HEAP);
+    file_info_t();
     ~file_info_t() { }
-
 
     // Access methods
     void set_fid(const stid_t& fid) { _fid = fid; }

@@ -37,14 +37,20 @@
 ENTER_NAMESPACE(shore);
 
 
-/* -------------------------- */
-/* --- @class file_desc_t --- */
-/* -------------------------- */
 
+/******************************************************************** 
+ *
+ *  @class: file_desc_t
+ *
+ *  @brief: Contains the information needed to access a file in SM
+ *
+ ********************************************************************/
 
-file_desc_t::file_desc_t(const char* name, const uint_t fcnt)
+file_desc_t::file_desc_t(const char* name, 
+                         const uint_t fcnt,
+                         const uint4_t& apd)
     : _field_count(fcnt), _vid(vid_t::null), 
-      _root_iid(stid_t::null), _fid(stid_t::null)
+      _root_iid(stid_t::null), _pd(apd), _fid(stid_t::null)
 {
     assert (fcnt>0);
 
@@ -53,12 +59,13 @@ file_desc_t::file_desc_t(const char* name, const uint_t fcnt)
     // Copy name
     memset(_name,0,MAX_FNAME_LEN);
 #ifndef __GNUC__
-    if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+    if(strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
 #else
-    if(w_strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN) {
+    if(w_strlcpy(_name, name, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
 #endif
-	throw "file_desc_t::_name too long!\n";
-    }
+        {
+            throw "file_desc_t::_name too long!\n";
+        }
 }
 
 file_desc_t::~file_desc_t() 
@@ -67,13 +74,17 @@ file_desc_t::~file_desc_t()
 }
 
 
-/** @fn:    find_root_iid 
+
+/*********************************************************************
+ *
+ *  @fn:    find_root_iid 
  *
  *  @brief: Sets the volume fid and root iid.
  *
  *  @note:  Since it sets the static variables this function
- *          most likely will be called only once.
- */
+ *          most likely will be called only once
+ *
+ *********************************************************************/
  
 w_rc_t file_desc_t::find_root_iid(ss_m* /* db */)
 {
@@ -93,20 +104,24 @@ w_rc_t file_desc_t::find_root_iid(ss_m* /* db */)
     delete [] vid_list;
     _vid = vid;
 #else
-    // set the two static variables
+
+#warning IP: Still not multi-volume ready
     _vid = 1; /* explicitly set volume id = 1 */
+
 #endif
 
     W_DO(ss_m::vol_root_index(_vid, _root_iid));
-
     return RCOK;
 }
 
 
-/** @fn:    find_fid 
+/*********************************************************************
  *
- *  @brief: Sets the file fid given the file name.
- */
+ *  @fn:    find_fid 
+ *
+ *  @brief: Sets the file fid given the file name
+ *
+ *********************************************************************/
 
 w_rc_t file_desc_t::find_fid(ss_m* db)
 {
@@ -130,15 +145,13 @@ w_rc_t file_desc_t::find_fid(ss_m* db)
         cerr << "Problem finding table " << _name << endl;
         return RC(se_TABLE_NOT_FOUND);
     }
-
+    
     return RCOK;
 }
 
-/************************************************************************
- * FRJ: Dirty, nasty hack... but oh well!
- ***********************************************************************/
 
-w_rc_t index_desc_t::find_fid(ss_m* db, int pnum) {
+w_rc_t index_desc_t::find_fid(ss_m* db, int pnum) 
+{
     assert(pnum >= 0 && pnum < _partition_count);
     if(is_partitioned()) {
 	// if valid fid don't bother to lookup
@@ -158,7 +171,7 @@ w_rc_t index_desc_t::find_fid(ss_m* db, int pnum) {
 			      &info, infosize,
 			      found));
 	_partition_stids[pnum] = info.fid();
-    
+        
 	if (!found) {
 	    cerr << "Problem finding index " << tmp << endl;
 	    return RC(se_TABLE_NOT_FOUND);
@@ -170,6 +183,45 @@ w_rc_t index_desc_t::find_fid(ss_m* db, int pnum) {
 	return _base.find_fid(db);
     }
 }
+
+
+
+
+/******************************************************************** 
+ *
+ *  @class: file_info_t
+ *
+ *  @brief: Structure that representsa SM file in a volume
+ *
+ ********************************************************************/
+ 
+
+file_info_t::file_info_t(const stid_t& fid,
+                         const char* fname, 
+                         const file_type_t ftype)
+    : _ftype(ftype),
+      _record_size(std::pair<int,int>(0,0)),
+      _first_rid(0, shrid_t(0,0,0)),
+      _fid(fid)
+{
+
+#ifndef __GNUC__
+    if(strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+#else
+        if(w_strlcpy(_fname, fname, MAX_FNAME_LEN) >= MAX_FNAME_LEN)
+#endif
+            {
+                throw "file_info_t::_fname too long!\n";
+            }
+}
+
+file_info_t::file_info_t()
+    : _ftype(FT_HEAP),
+      _record_size(std::pair<int,int>(0,0)),
+      _first_rid(0, shrid_t(0,0,0)),
+      _cur_rid(0, shrid_t(0,0,0))
+{ }
+
 
 
 EXIT_NAMESPACE(shore);

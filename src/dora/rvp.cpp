@@ -168,8 +168,9 @@ int terminal_rvp_t::notify()
 {
 #warning (IP) Perf. optimization --> Do not enqueue_committed your own action!
 
-    for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it)
+    for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it) {
         (*it)->notify();
+    }
     return (_actions.size());
 }
 

@@ -72,6 +72,8 @@ private:
     bool            _unique;                   /* whether allow duplicates or not */
     bool            _primary;                  /* is it primary or not */
     bool            _nolock;                   /* is it using locking or not */ 
+    bool            _mr;                       /* is it multi-rooted */ 
+    bool            _latchless;                /* does it use any latches at all */ 
 
     index_desc_t*   _next;                     /* linked list of all indices */
 
@@ -91,37 +93,11 @@ public:
     /* --- constructor --- */
     /* ------------------- */
 
-    index_desc_t(const char* name, const int fieldcnt, int partitions, const uint* fields,
-                 bool unique=true, bool primary=false, bool nolock=false)
-        : _base(name, fieldcnt),
-          _unique(unique), _primary(primary), _nolock(nolock),
-          _next(NULL), _maxkeysize(0),
-	  _partition_count((partitions > 0)? partitions : 1), _partition_stids(0)
-    {
-        // Copy the indexes of keys
-        _key = new uint[_base._field_count];
-        for (uint_t i=0; i<_base._field_count; i++) _key[i] = fields[i];
-
-        memset(_keydesc, 0, MAX_KEYDESC_LEN);
-
-	// start setting up partitioning
-	if(is_partitioned()) {
-	    _partition_stids = new stid_t[_partition_count];
-	    for(int i=0; i < _partition_count; i++)
-		_partition_stids[i] = stid_t::null;
-	}
-    }
-
-    ~index_desc_t() { 
-        if (_key)
-            delete [] _key; 
-        
-        if (_next)
-            delete _next;
-	
-	if(_partition_stids)
-	    delete [] _partition_stids;
-    }
+    index_desc_t(const char* name, const int fieldcnt, 
+                 int partitions, const uint* fields,
+                 bool unique=true, bool primary=false, 
+                 const uint4_t& pd=PD_NORMAL);
+    ~index_desc_t();
 
 
     /* --------------------------------- */
@@ -152,7 +128,7 @@ public:
         return (RCOK);
     }
 
-    stid_t&	fid(int pnum) {
+    stid_t&	fid(int const pnum) {
 	assert(pnum >= 0 && pnum < _partition_count);
 	return is_partitioned()? _partition_stids[pnum] : _base.fid();
     }	
@@ -162,14 +138,7 @@ public:
 	assert(pnum >= 0 && pnum < _partition_count);
 	return is_partitioned()? _partition_stids[pnum] != stid_t::null : _base.is_fid_valid();
     }
-    void set_fid(int pnum, stid_t const &fid) {
-	assert(pnum >= 0 && pnum < _partition_count);
-	if(is_partitioned())
-	    _partition_stids[pnum] = fid;
-	else
-	    _base.set_fid(fid);
-    }
-	
+    void set_fid(int const pnum, stid_t const &fid);	
     
     /* ---------------------- */
     /* --- access methods --- */
@@ -178,44 +147,38 @@ public:
     inline bool is_unique() const { return (_unique); }
     inline bool is_primary() const { return (_primary); }
     inline bool is_relaxed() const { return (_nolock); }
+    inline bool is_mr() const { return (_mr); }
+    inline bool is_latchless() const { return (_latchless); }
     inline bool is_partitioned() const { return _partition_count > 1; }
 
     inline int  get_partition_count() const { return _partition_count; }
     inline int  get_keysize() { return (*&_maxkeysize); }
     inline void set_keysize(const uint_t sz) { atomic_swap_uint(&_maxkeysize, sz); }
 
+
     /* ---------------------------------- */
     /* --- index link list operations --- */
     /* ---------------------------------- */
 
-
-    index_desc_t* next() const { return _next; }
+    index_desc_t* next() const;
 
     // total number of indexes on the table
-    int index_count() const { 
-        return (_next ? _next->index_count()+1 : 1); 
-    }
+    int index_count() const;
 
     // insert a new index after the current index
-    void insert(index_desc_t* new_node) {
-	new_node->_next = _next;
-	_next = new_node;
-    }
+    void insert(index_desc_t* new_node);
 
     // find the index_desc_t by name
-    index_desc_t* find_by_name(const char* name) {
-	if (strcmp(name, _base._name) == 0) return (this);
-	if (_next) return _next->find_by_name(name);
-	return (NULL);
-    }
+    index_desc_t* find_by_name(const char* name);
+
+    int key_index(const uint_t index) const;
 
 
-    /* --- index manipulation --- */
+    /* ----------------- */
+    /* --- debugging --- */
+    /* ----------------- */
 
-    int key_index(const uint_t index) const {
-	assert (index < _base._field_count);
-	return (_key[index]);
-    }
+    void print_desc(ostream& os);
 
 }; // EOF: index_desc_t
 
