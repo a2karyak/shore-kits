@@ -509,6 +509,9 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */,
     assert (_initialized);
     assert (_loaded);
 
+    // // IP: DEBUG
+    // mioin.print();
+
     // mbench insert only trx touches 1 table:
     // accounts
 
@@ -619,6 +622,9 @@ w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */,
     assert (_initialized);
     assert (_loaded);
 
+    // // IP: DEBUG
+    // mpoin.print();
+
     // mbench insert only trx touches 1 table:
     // accounts
 
@@ -636,7 +642,12 @@ w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */,
 
 	// 1. retrieve a tupple from accounts
 	e = _paccount_man->a_index_probe(_pssm, pracct, mpoin.a_id, mpoin.b_id, mpoin.balance);
-        if (e.is_error()) { goto done; }
+        if (e.is_error() && (e.err_num() != se_TUPLE_NOT_FOUND)) { 
+            goto done; 
+        }
+        else {
+            e = RCOK;
+        }
     } // goto
 
 done:

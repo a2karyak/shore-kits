@@ -97,6 +97,8 @@ struct mbench_insert_only_input_t
     double balance;
 
     mbench_insert_only_input_t() { }
+
+    void print();
 };
 
 struct mbench_delete_only_input_t 
@@ -106,6 +108,8 @@ struct mbench_delete_only_input_t
     double balance;
 
     mbench_delete_only_input_t() { }
+
+    void print();
 };
 
 struct mbench_probe_only_input_t 
@@ -115,6 +119,8 @@ struct mbench_probe_only_input_t
     double balance;
 
     mbench_probe_only_input_t() { }
+
+    void print();
 };
 
 struct mbench_insert_delete_input_t 

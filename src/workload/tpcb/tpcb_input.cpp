@@ -134,6 +134,10 @@ mbench_insert_only_input_t create_mbench_insert_only_input(int sf,
     return (mioin);
 }
 
+void mbench_insert_only_input_t::print()
+{
+    TRACE( TRACE_ALWAYS, "%d %d %.2f\n", b_id, a_id, balance);
+}
 
 
 
@@ -165,6 +169,11 @@ mbench_delete_only_input_t create_mbench_delete_only_input(int sf,
     return (mdoin);
 }
 
+void mbench_delete_only_input_t::print()
+{
+    TRACE( TRACE_ALWAYS, "%d %d %.2f\n", b_id, a_id, balance);
+}
+
 
 
 
@@ -194,6 +203,11 @@ mbench_probe_only_input_t create_mbench_probe_only_input(int sf,
     mpoin.balance = URand(0,200000000) - 100000000;
 
     return (mpoin);
+}
+
+void mbench_probe_only_input_t::print()
+{
+    TRACE( TRACE_ALWAYS, "%d %d %.2f\n", b_id, a_id, balance);
 }
 
 
