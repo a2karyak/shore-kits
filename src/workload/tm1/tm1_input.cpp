@@ -300,6 +300,78 @@ get_sub_nbr_input_t create_get_sub_nbr_input(int sf,
 
 
 
+/* -------------------------- */
+/* --- INS_CALL_FWD_BENCH --- */
+/* ------------------------- */
+
+
+ins_call_fwd_bench_input_t& ins_call_fwd_bench_input_t::operator= (const ins_call_fwd_bench_input_t& rhs) 
+{
+    _s_id = rhs._s_id;
+    store_string(_sub_nbr, rhs._sub_nbr);
+    _sf_type = rhs._sf_type;
+    _s_time = rhs._s_time;
+    _e_time = rhs._e_time;
+    store_string(_numberx, rhs._numberx);
+    return (*this);
+}
+
+
+ins_call_fwd_bench_input_t create_ins_call_fwd_bench_input(int sf, 
+							   int specificSub)
+{
+    assert (sf>0);
+
+    ins_call_fwd_bench_input_t icfbin;
+
+    if (specificSub>0)
+        icfbin._s_id = specificSub;
+    else
+        icfbin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+
+    sprintf(icfbin._sub_nbr,"%015d",icfbin._s_id);
+    icfbin._sf_type = URand(1,4);
+    icfbin._s_time = URand(0,2) * 8;
+    icfbin._e_time = URand(1,24);
+    sprintf(icfbin._numberx,"%015d",URand(1,sf*TM1_SUBS_PER_SF));
+    return (icfbin);
+}
+
+
+/* -------------------------- */
+/* --- DEL_CALL_FWD_BENCH --- */
+/* -------------------------- */
+
+del_call_fwd_bench_input_t& del_call_fwd_bench_input_t::operator= (const del_call_fwd_bench_input_t& rhs) 
+{
+    _s_id = rhs._s_id;
+    store_string(_sub_nbr, rhs._sub_nbr);
+    _sf_type = rhs._sf_type;
+    _s_time = rhs._s_time;
+    return (*this);
+}
+
+
+del_call_fwd_bench_input_t create_del_call_fwd_bench_input(int sf, 
+							   int specificSub)
+{
+    assert (sf>0);
+
+    del_call_fwd_bench_input_t dcfbin;
+
+    if (specificSub>0)
+        dcfbin._s_id = specificSub;
+    else
+        dcfbin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+
+    sprintf(dcfbin._sub_nbr,"%015d",dcfbin._s_id);
+    dcfbin._sf_type = URand(1,4);
+    dcfbin._s_time = URand(0,2) * 8;
+    return (dcfbin);
+}
+
+
+
 
 
 

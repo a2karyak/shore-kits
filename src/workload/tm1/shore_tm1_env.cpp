@@ -82,7 +82,7 @@ w_rc_t ShoreTM1Env::load_schema()
  *
  *  @fn:    update_partitioning()
  *
- *  @brief: Applies the baseline partitioning to the TPC-B tables
+ *  @brief: Applies the baseline partitioning to the TM1 tables
  *
  ********************************************************************/
 
@@ -208,6 +208,16 @@ int ShoreTM1Env::statistics()
            rval.attempted.get_sub_nbr,
            rval.failed.get_sub_nbr,
            rval.deadlocked.get_sub_nbr);
+
+    TRACE( TRACE_STATISTICS, "InsCallFwdBench. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.ins_call_fwd_bench,
+           rval.failed.ins_call_fwd_bench,
+           rval.deadlocked.ins_call_fwd_bench);
+
+    TRACE( TRACE_STATISTICS, "DelCallFwdBench. Att (%d). Abt (%d). Dld (%d)\n",
+           rval.attempted.del_call_fwd_bench,
+           rval.failed.del_call_fwd_bench,
+           rval.deadlocked.del_call_fwd_bench);
 
     ShoreEnv::statistics();
 

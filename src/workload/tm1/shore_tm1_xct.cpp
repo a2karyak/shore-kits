@@ -207,6 +207,17 @@ w_rc_t ShoreTM1Env::run_one_xct(Request* prequest)
     case XCT_TM1_GET_SUB_NBR:
         return (run_get_sub_nbr(prequest));
 
+    case XCT_TM1_INS_CALL_FWD_BENCH:
+        return (run_ins_call_fwd_bench(prequest));
+    case XCT_TM1_DEL_CALL_FWD_BENCH:
+        return (run_del_call_fwd_bench(prequest));
+    case XCT_TM1_CALL_FWD_MIX_BENCH:
+        // evenly pick one of the {Ins/Del}CallFwdBench
+        if (URand(1,100)>50)
+            return (run_ins_call_fwd_bench(prequest));
+        else
+            return (run_del_call_fwd_bench(prequest));
+	
     default:
         assert (0); // UNKNOWN TRX-ID
     }
@@ -240,6 +251,8 @@ DEFINE_TRX(ShoreTM1Env,del_call_fwd);
 
 DEFINE_TRX(ShoreTM1Env,get_sub_nbr);
 
+DEFINE_TRX(ShoreTM1Env,ins_call_fwd_bench);
+DEFINE_TRX(ShoreTM1Env,del_call_fwd_bench);
 
 // uncomment the line below if want to dump (part of) the trx results
 //#define PRINT_TRX_RESULTS
@@ -1310,6 +1323,220 @@ done:
     return (e);
 
 } // EOF: GET_SUB_NBR
+
+
+
+
+/********************************************************************
+ *
+ * TM1 INS_CALL_FWD_BENCH
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
+					   ins_call_fwd_bench_input_t& icfbin)
+{
+    w_rc_t e = RCOK;
+
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // Touches 3 tables:
+    // Subscriber, SpecialFacility, CallForwarding
+    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    assert (prsub);
+
+    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    assert (prcf);
+
+    rep_row_t areprow(_psub_man->ts());
+
+    // allocate space for the larger table representation
+    areprow.set(_psub_desc->maxsize());
+    prsub->_rep = &areprow;
+    prcf->_rep = &areprow;
+
+
+    // try to insert to call_forwarding_t if the record to insert
+    // is not already there, otherwise delete the found record
+    { // make gotos safe
+
+	// 1. Retrieve Subscriber (Read-only)
+	TRACE( TRACE_TRX_FLOW,
+	       "App: %d ICFB:sub-nbr-idx (%d)\n",
+	       xct_id, icfbin._s_id);
+	e = _psub_man->sub_nbr_idx_probe(_pssm, prsub,
+					 icfbin._sub_nbr);
+	if (e.is_error()) { goto done; }
+
+	prsub->get_value(0, icfbin._s_id);
+
+
+	// 2. Check if it can successfully insert
+	TRACE( TRACE_TRX_FLOW,
+	       "App: %d ICFB:cf-idx-probe (%d) (%d) (%d)\n",
+	       xct_id, icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+	e = _pcf_man->cf_idx_probe(_pssm, prcf,
+				   icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+
+	// idx probes return se_TUPLE_NOT_FOUND
+	if (e.err_num() == se_TUPLE_NOT_FOUND) {
+	    
+	    // 3. Insert Call Forwarding record
+	    prcf->set_value(0, icfbin._s_id);
+	    prcf->set_value(1, icfbin._sf_type);
+	    prcf->set_value(2, icfbin._s_time);
+	    prcf->set_value(3, icfbin._e_time);
+	    prcf->set_value(4, icfbin._numberx);
+	    
+#ifdef CFG_HACK
+	    prcf->set_value(5, "padding"); // PADDING
+#endif
+	    
+	    TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
+	    
+	    e = _pcf_man->add_tuple(_pssm, prcf);
+	}
+	else { // 3. Delete Call Forwarding record if tuple found
+	    
+	    e = _pcf_man->cf_idx_upd(_pssm, prcf,
+				     icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+	    if (e.is_error()) { goto done; }
+	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
+	    e = _pcf_man->delete_tuple(_pssm, prcf);
+	}
+	
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction
+    // dumps the status of all the table rows used
+    prsub->print_tuple();
+    prcf->print_tuple();
+#endif
+    
+ done:
+    // return the tuples to the cache
+    _psub_man->give_tuple(prsub);
+    _pcf_man->give_tuple(prcf);
+    return (e);
+    
+} // EOF: INS_CALL_FWD_BENCH
+
+
+
+
+/********************************************************************
+ *
+ * TM1 DEL_CALL_FWD_BENCH
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
+					   del_call_fwd_bench_input_t& dcfbin)
+{
+    w_rc_t e = RCOK;
+    
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // Touches 2 tables:
+    // Subscriber, CallForwarding
+    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    assert (prsub);
+
+    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    assert (prcf);
+
+    rep_row_t areprow(_psub_man->ts());
+
+    // allocate space for the larger table representation
+    areprow.set(_psub_desc->maxsize());
+    prsub->_rep = &areprow;
+    prcf->_rep = &areprow;
+
+
+    /* SELECT <s_id bind subid s_id>
+     * FROM Subscriber
+     * WHERE sub_nbr = <sub_nbr rndstr>;
+     *
+     * plan: index probe on "SUB_NBR_IDX"
+     *
+     * DELETE FROM Call_Forwarding
+     * WHERE s_id = <s_id value subid>
+     * AND sf_type = <sf_type rnd>
+     * AND start_time = <start_time rnd>;
+     *
+     * plan: index probe on "CF_IDX"
+     */
+
+    { // make gotos safe
+	
+	/* 1. Retrieve Subscriber (Read-only) */
+	TRACE( TRACE_TRX_FLOW,
+	       "App: %d DCFB:sub-nbr-idx (%d)\n",
+		   xct_id, dcfbin._s_id);
+	
+	e = _psub_man->sub_nbr_idx_probe(_pssm, prsub,
+					 dcfbin._sub_nbr);
+	if (e.is_error()) { goto done; }
+
+	prsub->get_value(0, dcfbin._s_id);
+	
+
+	/* 2. Delete CallForwarding record */
+	TRACE( TRACE_TRX_FLOW,
+	       "App: %d DCFB:cf-idx-upd (%d) (%d) (%d)\n",
+	       xct_id, dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
+
+	e = _pcf_man->cf_idx_upd(_pssm, prcf,
+				 dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
+
+	if (e.is_error()) { // If record not found
+	    // 3. Insert Call Forwarding record
+	    prcf->set_value(0, dcfbin._s_id);
+	    prcf->set_value(1, dcfbin._sf_type);
+	    prcf->set_value(2, dcfbin._s_time);
+
+	    short atime = URand(1,24);
+	    prcf->set_value(3, atime);
+
+	    char numbx[TM1_CF_NUMBERX_SZ];
+	    URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
+	    prcf->set_value(4, numbx);
+
+#ifdef CFG_HACK
+	    prcf->set_value(5, "padding"); // PADDING
+#endif
+
+	    TRACE (TRACE_TRX_FLOW, "App: %d DCFB:ins-cf\n", xct_id);
+
+	    e = _pcf_man->add_tuple(_pssm, prcf);
+	} else {
+	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
+	    e = _pcf_man->delete_tuple(_pssm, prcf);
+	}
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction
+    // dumps the status of all the table rows used
+    prsub->print_tuple();
+    prcf->print_tuple();
+#endif
+
+
+ done:
+    // return the tuples to the cache
+    _psub_man->give_tuple(prsub);
+    _pcf_man->give_tuple(prcf);
+    return (e);
+    
+} // EOF: DEL_CALL_FWD_BENCH
 
 
 EXIT_NAMESPACE(tm1);

@@ -319,6 +319,70 @@ struct get_sub_nbr_input_t
 
 
 
+/*********************************************************************
+ * 
+ * ins_call_fwd_bench_input_t
+ *
+ * Input for any INSERT_CALL_FORWARDING_BENCH transaction
+ *
+ *********************************************************************/
+
+struct ins_call_fwd_bench_input_t 
+{
+    /**
+     *  @brief INSERT_CALL_FORWARDING_BENCH transaction inputs:
+     *  
+     *  1) S_ID    int   [1 .. SF] : subscriber id
+     *  2) SUB_NBR string[15] of [1 .. SF] : subscriber number
+     *  3) SF_TYPE short [1 .. 4]  : special facility type
+     *  4) S_TIME  short {0,8,16}  : start time
+     *  5) E_TIME  short [1 .. 24] : end time
+     *  6) NUMBERX string[15] of [1 .. SF] : number-X
+     */
+
+    int    _s_id;            /* input: URand(1,SF) */
+    char   _sub_nbr[15];     /* input: string(_s_id) */
+    short  _sf_type;         /* input: URand(1,4) */
+    short  _s_time;          /* input: URand(0,2)*8 */
+    short  _e_time;          /* input: URand(1,2x4) */
+    char   _numberx[15];     /* input: string(URand(1,SF)) */
+
+    ins_call_fwd_bench_input_t& operator= (const ins_call_fwd_bench_input_t& rhs);
+
+}; // EOF ins_call_fwd_bench_input_t
+
+
+
+/*********************************************************************
+ * 
+ * del_call_fwd_bench_input_t
+ *
+ * Input for any DELETE_CALL_FORWARDING_BENCH transaction
+ *
+ *********************************************************************/
+
+struct del_call_fwd_bench_input_t 
+{
+    /**
+     *  @brief DELETE_CALL_FORWARDING_BENCH transaction inputs:
+     *  
+     *  1) S_ID    int   [1 .. SF] : subscriber id
+     *  2) SUB_NBR string[15] of [1 .. SF] : subscriber number
+     *  3) SF_TYPE short [1 .. 4]  : special facility type
+     *  4) S_TIME  short {0,8,16}  : start time
+     */
+
+    int    _s_id;            /* input: URand(1,SF) */
+    char   _sub_nbr[15];     /* input: string(_s_id) */
+    short  _sf_type;         /* input: URand(1,4) */
+    short  _s_time;          /* input: URand(0,2)*8 */
+
+    del_call_fwd_bench_input_t& operator= (const del_call_fwd_bench_input_t& rhs);
+
+}; // EOF del_call_fwd_bench_input_t
+
+
+
 /////////////////////////////////////////////////////////////
 //
 // @brief: Declaration of functions that generate the inputs 
@@ -357,6 +421,13 @@ del_call_fwd_input_t create_del_call_fwd_input(int SF,
 get_sub_nbr_input_t create_get_sub_nbr_input(int SF, 
                                              int specificSub = 0);
 
+
+ins_call_fwd_bench_input_t create_ins_call_fwd_bench_input(int SF, 
+							   int specificSub = 0);
+
+
+del_call_fwd_bench_input_t create_del_call_fwd_bench_input(int SF, 
+							   int specificSub = 0);
 
 
 /* --- translates or picks a random xct type given the benchmark specification --- */

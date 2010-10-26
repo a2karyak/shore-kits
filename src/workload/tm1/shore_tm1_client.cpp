@@ -76,6 +76,10 @@ int baseline_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 
     stmap[XCT_TM1_GET_SUB_NBR]    = "TM1-GetSubNbr";
 
+    stmap[XCT_TM1_CALL_FWD_MIX_BENCH]    = "TM1-CallFwd-Mix-Bench";
+    stmap[XCT_TM1_INS_CALL_FWD_BENCH]    = "TM1-InsCallFwd-Bench";
+    stmap[XCT_TM1_DEL_CALL_FWD_BENCH]    = "TM1-DelCallFwd-Bench";
+
     return (stmap.size());
 }
 
