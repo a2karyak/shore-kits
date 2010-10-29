@@ -74,6 +74,7 @@ private:
     bool            _nolock;                   /* is it using locking or not */ 
     bool            _mr;                       /* is it multi-rooted */ 
     bool            _latchless;                /* does it use any latches at all */ 
+    bool            _rmapholder;               /* it is used only for the range mapping */
 
     index_desc_t*   _next;                     /* linked list of all indices */
 
@@ -96,7 +97,9 @@ public:
     index_desc_t(const char* name, const int fieldcnt, 
                  int partitions, const uint* fields,
                  bool unique=true, bool primary=false, 
-                 const uint4_t& pd=PD_NORMAL);
+                 const uint4_t& pd=PD_NORMAL,
+                 bool rmapholder=false);
+
     ~index_desc_t();
 
 
@@ -149,6 +152,7 @@ public:
     inline bool is_relaxed() const { return (_nolock); }
     inline bool is_mr() const { return (_mr); }
     inline bool is_latchless() const { return (_latchless); }
+    inline bool is_rmapholder() const { return (_rmapholder); }
     inline bool is_partitioned() const { return _partition_count > 1; }
 
     inline int  get_partition_count() const { return _partition_count; }

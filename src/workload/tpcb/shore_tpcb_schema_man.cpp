@@ -74,7 +74,7 @@ w_rc_t branch_man_impl::b_idx_nl(ss_m* db,
 {
     assert (ptuple);
     ptuple->set_value(0, b_id);
-    return (index_probe_forupdate_by_name(db, "B_IDX", ptuple));
+    return (index_probe_nl_by_name(db, "B_IDX", ptuple));
 }
 
 
@@ -98,7 +98,7 @@ w_rc_t teller_man_impl::t_idx_nl(ss_m* db,
 {
     assert (ptuple);    
     ptuple->set_value(0, t_id);
-    return (index_probe_forupdate_by_name(db, "T_IDX", ptuple));
+    return (index_probe_nl_by_name(db, "T_IDX", ptuple));
 }
 
 

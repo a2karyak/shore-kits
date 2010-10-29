@@ -171,6 +171,9 @@ bool ShoreEnv::is_loaded()
 void ShoreEnv::set_max_cpu_count(const uint cpucnt) 
 { 
     _max_cpu_count = ( cpucnt>0 ? cpucnt : _max_cpu_count);
+    if (_active_cpu_count>_max_cpu_count) {
+        _active_cpu_count = _max_cpu_count;
+    }
 }
 
 uint ShoreEnv::get_max_cpu_count() const 
@@ -906,8 +909,7 @@ uint_t ShoreEnv::get_trx_com() const
 
 void ShoreEnv::set_active_cpu_count(const uint_t actcpucnt) 
 {
-    assert (actcpucnt);
-    atomic_swap_uint(&_active_cpu_count, actcpucnt);
+    _active_cpu_count = ( actcpucnt>0 ? actcpucnt : _active_cpu_count );
 }
 
 

@@ -291,6 +291,8 @@ public:
                                   const int iSelectedTrx, const int iIterations,
                                   const eBindingType abt)=0;    
 
+    virtual w_rc_t prepareNewRun() { return (RCOK); }
+
     // for the client processor binding policy
     virtual processorid_t next_cpu(const eBindingType abt,
                                    const processorid_t aprd);

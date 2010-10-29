@@ -44,7 +44,8 @@ using namespace shore;
 index_desc_t::index_desc_t(const char* name, const int fieldcnt, 
                            int partitions, const uint* fields,
                            bool unique, bool primary, 
-                           const uint4_t& pd)
+                           const uint4_t& pd,
+                           bool rmapholder)
     : _base(name, fieldcnt, pd),
       _unique(unique), _primary(primary),
       _next(NULL), _maxkeysize(0),
@@ -86,19 +87,39 @@ index_desc_t::index_desc_t(const char* name, const int fieldcnt,
     else {
         _latchless = false;
     }
+
+    // Set the flag that it is only a RangeMap holder
+    if (rmapholder) {
+        if (!(pd & (PD_MRBT_NORMAL | PD_MRBT_PART | PD_MRBT_LEAF))
+            || is_partitioned()) {
+            // This empty index should be MRBT-* and not manually partitioned
+            assert(0);
+        }
+        else {
+            _rmapholder = true;
+        }
+    }   
+        
 }
 
 
 index_desc_t::~index_desc_t() 
 { 
-    if (_key)
+    if (_key) {
         delete [] _key; 
-        
-    if (_next)
+        _key = NULL;
+    }
+
+    // The deletes propagate to the next
+    if (_next) {
         delete _next;
+        _next = NULL;
+    }
 	
-    if(_partition_stids)
+    if(_partition_stids) {
         delete [] _partition_stids;
+        _partition_stids = NULL;
+    }
 }
 
 

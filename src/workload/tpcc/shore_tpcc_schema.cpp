@@ -96,7 +96,7 @@ warehouse_t::warehouse_t(const uint4_t& pd) :
 
     // create unique index w_idx on (w_id)
     uint  keys[1] = { 0 }; // IDX { W_ID }
-    create_primary_idx("W_IDX", 0, keys, 1, pd);
+    create_primary_idx_desc("W_IDX", 0, keys, 1, pd);
 }
 
 
@@ -123,7 +123,7 @@ district_t::district_t(const uint4_t& pd) :
     // create unique index d_index on (w_id, d_id)
     uint keys[2] = { 1, 0 }; // IDX { D_W_ID, D_ID }
 
-    create_primary_idx("D_IDX", 0, keys, 2, pd);
+    create_primary_idx_desc("D_IDX", 0, keys, 2, pd);
 }
 
 
@@ -160,12 +160,12 @@ customer_t::customer_t(const uint4_t& pd) :
 
     // create unique index c_index on (w_id, d_id, c_id)
     uint keys1[3] = {2, 1, 0 }; // IDX { C_W_ID, C_D_ID, C_ID }
-    create_primary_idx("C_IDX", 0, keys1, 3, pd);
+    create_primary_idx_desc("C_IDX", 0, keys1, 3, pd);
 
     
     // create index c_name_index on (w_id, d_id, last, first, id)
     uint keys2[5] = {2, 1, 5, 3, 0}; // IDX { C_W_ID, C_D_ID, C_LAST, C_FIRST, C_ID }
-    create_index("C_NAME_IDX", 0, keys2, 5, false, false, pd);
+    create_index_desc("C_NAME_IDX", 0, keys2, 5, false, false, pd);
 }
 
 
@@ -198,7 +198,7 @@ new_order_t::new_order_t(const uint4_t& pd) :
 
     // create unique index no_index on (w_id, d_id, o_id)
     uint keys[3] = {2, 1, 0}; // IDX { NO_W_ID, NO_D_ID, NO_O_ID }
-    create_primary_idx("NO_IDX", 0, keys, 3, pd);
+    create_primary_idx_desc("NO_IDX", 0, keys, 3, pd);
 }
 
 
@@ -219,11 +219,11 @@ order_t::order_t(const uint4_t& pd) :
 
     // create unique index o_index on (w_id, d_id, o_id)
     uint keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID }
-    create_index("O_IDX", 0, keys1, 3, pd);
+    create_index_desc("O_IDX", 0, keys1, 3, pd);
 
     // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
     uint keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
-    create_index("O_CUST_IDX", 0, keys2, 4, true, false, pd);
+    create_index_desc("O_CUST_IDX", 0, keys2, 4, true, false, pd);
 }
 
 
@@ -250,7 +250,7 @@ order_line_t::order_line_t(const uint4_t& pd) :
     // Creating 10 indexes in order to be able to have parallel SMOs
     numIdxPartitions = 10; 
 #endif
-    create_primary_idx("OL_IDX", numIdxPartitions, keys, 4, pd);
+    create_primary_idx_desc("OL_IDX", numIdxPartitions, keys, 4, pd);
 }
 
 
@@ -267,7 +267,7 @@ item_t::item_t(const uint4_t& pd) :
 
     // create unique index on i_index on (i_id)	
     uint keys[1] = {0}; // IDX { I_ID }
-    create_primary_idx("I_IDX", 0, keys, 1, pd);
+    create_primary_idx_desc("I_IDX", 0, keys, 1, pd);
 }
 
 
@@ -296,7 +296,7 @@ stock_t::stock_t(const uint4_t& pd) :
 
     // create unique index s_index on (w_id, i_id)
     uint keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
-    create_primary_idx("S_IDX", 0, keys, 2, pd);
+    create_primary_idx_desc("S_IDX", 0, keys, 2, pd);
 }
 
 

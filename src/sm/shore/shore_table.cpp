@@ -42,9 +42,8 @@ using namespace shore;
 
 
 table_desc_t::table_desc_t(const char* name, int fieldcnt)
-    : file_desc_t(name, fieldcnt), 
-      _indexes(NULL), 
-      _primary_idx(NULL),
+    : file_desc_t(name, fieldcnt), _db(NULL),
+      _indexes(NULL), _primary_idx(NULL),
       _maxsize(0),
       _sMinKey(NULL),_sMinKeyLen(0),
       _sMaxKey(NULL),_sMaxKeyLen(0)
@@ -56,17 +55,23 @@ table_desc_t::table_desc_t(const char* name, int fieldcnt)
 
 table_desc_t::~table_desc_t()
 {
-    if (_desc)
+    if (_desc) {
         delete [] _desc;
+        _desc = NULL;
+    }
 
-    if (_indexes)
+    if (_indexes) {
         delete _indexes;
+        _indexes = NULL;
+    }
 
-    if (_sMinKey)
+    if (_sMinKey) {
         delete _sMinKey;
+    }
 
-    if (_sMaxKey)
+    if (_sMaxKey) {
         delete _sMaxKey;
+    }
 }
 
 
@@ -77,14 +82,18 @@ table_desc_t::~table_desc_t()
 
 /********************************************************************* 
  *
- *  @fn:    create_table
+ *  @fn:    create_physical_table
  *
- *  @brief: Creates the physical table and all the corresponding indexes
+ *  @brief: Creates the physical table and calls for the (physical) creation of 
+ *          all the corresponding indexes
  *
  *********************************************************************/
 
-w_rc_t table_desc_t::create_table(ss_m* db)
+w_rc_t table_desc_t::create_physical_table(ss_m* db)
 {
+    assert (db);
+    _db = db;
+ 
     if (!is_vid_valid() || !is_root_valid()) {
 	W_DO(find_root_iid(db));
     }
@@ -100,96 +109,14 @@ w_rc_t table_desc_t::create_table(ss_m* db)
     W_DO(ss_m::create_assoc(root_iid(),
 			    vec_t(name(), strlen(name())),
 			    vec_t(&file, sizeof(file_info_t))));
-    
-    // Create all the indexes of the table
+
     index_desc_t* index = _indexes;
-    stid_t iid = stid_t::null;
-    ss_m::ndx_t smidx_type = ss_m::t_uni_btree;
-    ss_m::concurrency_t smidx_cc = ss_m::t_cc_im;
     
+    // Create all the indexes of the table    
     while (index) {
 
-        // the type of index to create
-        if (index->is_mr()) {
-            // MRBTree
-            smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
-        }
-        else {
-            // Regular BTree
-            smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
-        }
-
-        // what kind of CC will be used
-        smidx_cc = index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im;
-
-        // if it is the primary, update file flag
-        if (index->is_primary()) {
-            file.set_ftype(FT_PRIMARY_IDX);
-        }
-        else {
-            file.set_ftype(FT_IDX);
-        }
-
-        // create one index or multiple, if the index is partitioned
-	if(index->is_partitioned()) {
-	    for(int i=0; i < index->get_partition_count(); i++) {
-                if (!index->is_mr()) {
-                    W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
-                                          index_keydesc(index), smidx_cc, iid));
-                }
-                else {
-                    W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
-                                             index_keydesc(index), smidx_cc, iid,
-                                             index->is_latchless()));
-                    // If we already know the partitioning set it up
-                    vec_t minv(_sMinKey,_sMinKeyLen);
-                    vec_t maxv(_sMaxKey,_sMaxKeyLen);
-                    W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
-                }
-		index->set_fid(i, iid);
-		
-		// add index entry to the metadata tree		
-		file.set_fid(iid);
-		char tmp[100];
-		sprintf(tmp, "%s_%d", index->name(), i);
-		W_DO(db->create_assoc(root_iid(),
-				      vec_t(tmp, strlen(tmp)),
-				      vec_t(&file, sizeof(file_info_t))));
-	    }
-	}
-	else {
-
-            if (!index->is_mr()) {
-                W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
-                                      index_keydesc(index), smidx_cc, iid));
-            }
-            else {
-                W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
-                                         index_keydesc(index), smidx_cc, iid,
-                                         index->is_latchless()));
-
-                // If we already know the partitioning set it up                
-                vec_t minv(_sMinKey,_sMinKeyLen);
-                vec_t maxv(_sMaxKey,_sMaxKeyLen);
-                W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
-            }                
-	    index->set_fid(0, iid);
-
-	    // Add index entry to the metadata tree
-	    file.set_fid(iid);
-	    W_DO(db->create_assoc(root_iid(),
-				  vec_t(index->name(), strlen(index->name())),
-				  vec_t(&file, sizeof(file_info_t))));
-        }
-
-        // Print info
-        TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s) (%s) (%s)\n",
-               index->name(), iid.store,
-               (index->is_mr() ? "mrbt" : "normal"), 
-               (index->is_latchless() ? "no latch" : "latch"),
-               (index->is_relaxed() ? "relaxed" : "no relaxed"), 
-               (index->is_partitioned() ? "part" : "no part"), 
-               (index->is_unique() ? "unique" : "no unique"));        
+        // Create physically this index
+        W_DO(create_physical_index(db,index));
 	
         // Move to the next index of the table
 	index = index->next();
@@ -199,28 +126,175 @@ w_rc_t table_desc_t::create_table(ss_m* db)
 }
 
 
+
+/********************************************************************* 
+ *
+ *  @fn:    create_physical_index
+ *
+ *  @brief: Creates the physical index 
+ *
+ *********************************************************************/
+
+w_rc_t table_desc_t::create_physical_index(ss_m* db, index_desc_t* index)
+{
+    // Store info
+    file_info_t file;
+    
+    // Create all the indexes of the table
+    stid_t iid = stid_t::null;
+    ss_m::ndx_t smidx_type = ss_m::t_uni_btree;
+    ss_m::concurrency_t smidx_cc = ss_m::t_cc_im;
+
+    // the type of index to create
+    if (index->is_mr()) {
+        // MRBTree
+        smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
+    }
+    else {
+        // Regular BTree
+        smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
+    }
+
+    // what kind of CC will be used
+    smidx_cc = index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im;
+
+    // if it is the primary, update file flag
+    if (index->is_primary()) {
+        file.set_ftype(FT_PRIMARY_IDX);
+    }
+    else {
+        file.set_ftype(FT_IDX);
+    }
+
+    if (index->is_rmapholder()) {
+        file.set_ftype(FT_NONE);
+    }
+
+
+    // create one index or multiple, if the index is partitioned
+    if(index->is_partitioned()) {
+        for(int i=0; i < index->get_partition_count(); i++) {
+            if (!index->is_mr()) {
+                W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+                                      index_keydesc(index), smidx_cc, iid));
+            }
+            else {
+                W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
+                                         index_keydesc(index), smidx_cc, iid,
+                                         index->is_latchless()));
+
+                // If we already know the partitioning set it up
+                vec_t minv(_sMinKey,_sMinKeyLen);
+                vec_t maxv(_sMaxKey,_sMaxKeyLen);
+                W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
+            }
+            index->set_fid(i, iid);
+		
+            // add index entry to the metadata tree		
+            file.set_fid(iid);
+            char tmp[100];
+            sprintf(tmp, "%s_%d", index->name(), i);
+            W_DO(db->create_assoc(root_iid(),
+                                  vec_t(tmp, strlen(tmp)),
+                                  vec_t(&file, sizeof(file_info_t))));
+        }
+    }
+    else {
+
+        if (!index->is_mr()) {
+            W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+                                  index_keydesc(index), smidx_cc, iid));
+        }
+        else {
+            W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
+                                     index_keydesc(index), smidx_cc, iid,
+                                     index->is_latchless()));
+
+            // If we already know the partitioning set it up                
+            vec_t minv(_sMinKey,_sMinKeyLen);
+            vec_t maxv(_sMaxKey,_sMaxKeyLen);
+            W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
+        }                
+        index->set_fid(0, iid);
+
+        // Add index entry to the metadata tree
+        file.set_fid(iid);
+        W_DO(db->create_assoc(root_iid(),
+                              vec_t(index->name(), strlen(index->name())),
+                              vec_t(&file, sizeof(file_info_t))));
+    }
+
+    // Print info
+    TRACE( TRACE_STATISTICS, "%s %d (%s) (%s) (%s) (%s) (%s)\n",
+           index->name(), iid.store,
+           (index->is_mr() ? "mrbt" : "normal"), 
+           (index->is_latchless() ? "no latch" : "latch"),
+           (index->is_relaxed() ? "relaxed" : "no relaxed"), 
+           (index->is_partitioned() ? "part" : "no part"), 
+           (index->is_unique() ? "unique" : "no unique"));        
+           
+    return (RCOK);
+}
+
+
+
 /****************************************************************** 
  *  
- *  @fn:    create_index
+ *  @fn:    create_physical_empty_primary_idx_desc
  *
- *  @brief: Create a regular or primary index on the table
+ *  @brief: Creates the description of an empty MRBT index with the 
+ *          partitioning information, and physically adds it to the
+ *          sm
+ *
+ *  @note:  It is used for tables without any indexes or for tables
+ *          whose ex-primary index is manually partitioned (hacked) 
+ *
+ ******************************************************************/
+
+w_rc_t table_desc_t::create_physical_empty_primary_idx()
+{
+    // The table should have already been physically created
+    assert (_db);
+
+    string idxname = string(this->name()) + string("MRHolder");
+    uint key[1]={0};
+    index_desc_t* p_index = new index_desc_t(idxname.c_str(),1,0,key,
+                                             false,false,PD_MRBT_NORMAL,
+                                             true);
+    assert(p_index);
+
+    // make it the primary index
+    _primary_idx = p_index;
+
+    W_DO(create_physical_index(_db,p_index));
+
+    return (RCOK);
+}
+
+
+
+
+/****************************************************************** 
+ *  
+ *  @fn:    create_index_desc
+ *
+ *  @brief: Create the description of a regular or primary index on the table
  *
  *  @note:  This only creates the index decription for the index in memory. 
  *
  ******************************************************************/
 
-
 #warning Cannot update fields included at indexes - delete and insert again
 
 #warning Only the last field of an index can be of variable length
 
-bool table_desc_t::create_index(const char* name,
-                                int partitions,
-                                const uint* fields,
-                                const uint num,
-                                const bool unique,
-                                const bool primary,
-                                const uint4_t& pd)
+bool table_desc_t::create_index_desc(const char* name,
+                                     int partitions,
+                                     const uint* fields,
+                                     const uint num,
+                                     const bool unique,
+                                     const bool primary,
+                                     const uint4_t& pd)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
                                              unique, primary, pd);
@@ -249,11 +323,11 @@ bool table_desc_t::create_index(const char* name,
 }
 
 
-bool table_desc_t::create_primary_idx(const char* name,
-                                      int partitions,
-                                      const uint* fields,
-                                      const uint num,
-                                      const uint4_t& pd)
+bool table_desc_t::create_primary_idx_desc(const char* name,
+                                           int partitions,
+                                           const uint* fields,
+                                           const uint num,
+                                           const uint4_t& pd)
 {
     index_desc_t* p_index = new index_desc_t(name, num, partitions, fields, 
                                              true, true, pd);
@@ -277,6 +351,17 @@ bool table_desc_t::create_primary_idx(const char* name,
 
     return (true);
 }
+
+
+// Returns the stid of the primary index. If no primary index exists it
+// returns the stid of the table
+stid_t table_desc_t::get_primary_stid()
+{
+    stid_t stid = ( _primary_idx ? _primary_idx->fid(0) : fid() );
+    return (stid);
+}
+
+
 
 
 /* ---------------------------------------------------- */
@@ -309,6 +394,62 @@ w_rc_t table_desc_t::set_partitioning(const char* sMinKey,
     _numParts = numParts;
     return (RCOK);
 }
+
+
+// Accessing information about the main partitioning
+uint table_desc_t::pcnt() const
+{
+    return (_numParts);
+}
+
+char* table_desc_t::getMinKey() const
+{
+    return (_sMinKey);
+}
+
+uint table_desc_t::getMinKeyLen() const
+{
+    return (_sMinKeyLen);
+}
+
+char* table_desc_t::getMaxKey() const
+{
+    return (_sMaxKey);
+}
+
+uint table_desc_t::getMaxKeyLen() const
+{
+    return (_sMaxKeyLen);
+}
+
+
+/****************************************************************** 
+ *  
+ *  @fn:    get_main_rangemap
+ *
+ *  @brief: Returns a pointer to the RangeMap of the primary index. 
+ *          If there is no primary index, it creates an empty index 
+ *          with a RangeMap based on the partitioning info 
+ *
+ ******************************************************************/
+
+
+w_rc_t table_desc_t::get_main_rangemap(key_ranges_map*& rangemap)
+{
+    if (!_primary_idx || _primary_idx->is_partitioned()) {
+        // Create an empty "primary" index which is not manually partitioned
+        create_physical_empty_primary_idx();
+    }
+    assert (_primary_idx);
+
+    // Cannot have a manually (hacked) partitioned index as primary
+    // To do that, use an empty index as primary 
+    assert (!_primary_idx->is_partitioned());
+    
+    W_DO(ss_m::get_range_map(_primary_idx->fid(0),rangemap));
+    return (RCOK);
+}
+
 
 
 /* ----------------- */

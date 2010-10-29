@@ -185,7 +185,7 @@ public:
     virtual int open() { return(0); /* do nothing */ };
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    
-    virtual int newrun() { return(0); /* do nothing */ };
+    virtual w_rc_t newrun() { return(RCOK); /* do nothing */ };
 
     virtual int post_init();
     virtual w_rc_t load_schema();

@@ -120,7 +120,7 @@ subscriber_t::subscriber_t(const uint4_t& pd)
 
     // create unique index s_index on (s_id)
     uint keys1[1] = { 0 }; // IDX { S_ID }
-    create_primary_idx("S_IDX", 0, keys1, 1, pd);
+    create_primary_idx_desc("S_IDX", 0, keys1, 1, pd);
 
     // create unique secondary index sub_nbr_index on (sub_nbr)
     uint keys2[1] = { 1 }; // IDX { SUB_NBR }
@@ -131,11 +131,11 @@ subscriber_t::subscriber_t(const uint4_t& pd)
             // This index will be accessed arbitrarily by multiple threads. 
             // Therefore, normal concurrency control will be used.
             uint keys2_ext[2] = { 1, 0 }; // IDX { SUB_NBR, S_ID }
-            create_index("SUB_NBR_IDX", 0, keys2_ext, 1, true, false, (pd ^ PD_NOLOCK));
+            create_index_desc("SUB_NBR_IDX", 0, keys2_ext, 1, true, false, (pd ^ PD_NOLOCK));
     }
     else
 #endif
-        create_index("SUB_NBR_IDX", 0, keys2, 1, true, false, pd);
+        create_index_desc("SUB_NBR_IDX", 0, keys2, 1, true, false, pd);
 }
 
 
@@ -168,7 +168,7 @@ access_info_t::access_info_t(const uint4_t& pd)
 
     // create unique index ai_index on (s_id, ai_type)
     uint keys[2] = { 0, 1 }; // IDX { S_ID, AI_TYPE }
-    create_primary_idx("AI_IDX", 0, keys, 2, pd);
+    create_primary_idx_desc("AI_IDX", 0, keys, 2, pd);
 }
 
 
@@ -201,7 +201,7 @@ special_facility_t::special_facility_t(const uint4_t& pd)
 
     // create unique index sf_idx on (s_id, sf_type)
     uint keys[2] = { 0, 1 }; // IDX { S_ID, SF_TYPE }
-    create_primary_idx("SF_IDX", 0, keys, 2, pd);
+    create_primary_idx_desc("SF_IDX", 0, keys, 2, pd);
 }
 
 
@@ -227,7 +227,7 @@ call_forwarding_t::call_forwarding_t(const uint4_t& pd)
 
     // create unique index cf_idx on (s_id, sf_type, start_time)
     uint keys[3] = { 0, 1, 2 }; // IDX { S_ID, SF_TYPE, START_TIME }
-    create_primary_idx("CF_IDX", 0, keys, 3, pd);
+    create_primary_idx_desc("CF_IDX", 0, keys, 3, pd);
 }
 
 

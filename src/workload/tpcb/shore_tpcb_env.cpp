@@ -93,10 +93,15 @@ w_rc_t ShoreTPCBEnv::load_schema()
 
 w_rc_t ShoreTPCBEnv::update_partitioning() 
 {
+    // *** Reminder: The TPC-B records start their numbering from 0 ***
+
+    // First configure
+    conf();
+
     // Pulling this partitioning out of the thin air
     uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
     int minKeyVal = 0;
-    int maxKeyVal = get_sf()+1;
+    int maxKeyVal = get_sf();
 
     char* minKey = (char*)malloc(sizeof(int));
     memset(minKey,0,sizeof(int));
@@ -354,15 +359,15 @@ void ShoreTPCBEnv::table_creator_t::work()
     // Create the tables, if any partitioning is to be applied, that has already
     // been set at update_partitioning()
     W_COERCE(_env->db()->begin_xct());
-    W_COERCE(_env->_pbranch_desc->create_table(_env->db()));
-    W_COERCE(_env->_pteller_desc->create_table(_env->db()));
-    W_COERCE(_env->_paccount_desc->create_table(_env->db()));
-    W_COERCE(_env->_phistory_desc->create_table(_env->db()));
+    W_COERCE(_env->_pbranch_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pteller_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_paccount_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_phistory_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
     
     // Create 10k accounts in each partition to buffer 
     // workers from each other
-    for(long i=-1; i < _pcount; i++) {
+    for(long i=0; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
 	TRACE( TRACE_STATISTICS, "Populating %ld a_ids starting with %ld\n", 
@@ -583,7 +588,7 @@ int ShoreTPCBEnv::post_init()
 w_rc_t ShoreTPCBEnv::_post_init_impl() 
 {
 #ifdef CFG_HACK
-    TRACE (TRACE_ALWAYS, "Padding BRANCHES and TELLERS");
+    TRACE (TRACE_ALWAYS, "Padding BRANCHES and TELLERS\n");
     //#warning IP - Adding padding also for the TPC-B TELLERS table
     W_DO(_pad_BRANCHES());
     W_DO(_pad_TELLERS());

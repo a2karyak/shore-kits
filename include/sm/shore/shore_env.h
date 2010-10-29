@@ -381,7 +381,7 @@ public:
     virtual int restart()=0;
     virtual int pause()=0;
     virtual int resume()=0;    
-    virtual int newrun()=0;    
+    virtual w_rc_t newrun()=0;    
     virtual int statistics()=0;    
     virtual int dump()=0;    
     virtual int info() const=0;
@@ -552,7 +552,7 @@ public:
     virtual int restart();
     virtual int pause() { return(0); /* do nothing */ };
     virtual int resume() { return(0); /* do nothing */ };    
-    virtual int newrun()=0;
+    virtual w_rc_t newrun()=0;
     virtual int statistics();
     virtual int dump();
     virtual int info() const=0;

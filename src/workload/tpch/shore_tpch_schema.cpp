@@ -104,9 +104,9 @@ nation_t::nation_t(string sysname) :
     if (sysname.compare("baseline")==0) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
         // create unique index n_index on (n_nationkey)
-        create_primary_idx("N_IDX", 0, keys, 1);
+        create_primary_idx_desc("N_IDX", 0, keys, 1);
 
-        create_index("N_FK_REGION", 0, fkeys, 1, false);
+        create_index_desc("N_FK_REGION", 0, fkeys, 1, false);
     }
 }
 
@@ -125,7 +125,7 @@ region_t::region_t(string sysname) :
     if (sysname.compare("baseline")==0) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name); 
         // create unique index r_index on (r_regionkey)
-        create_primary_idx("R_IDX", 0, keys, 1);
+        create_primary_idx_desc("R_IDX", 0, keys, 1);
     }
 }
 
@@ -151,9 +151,9 @@ supplier_t::supplier_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index s_index on (s_suppkey)
-        create_primary_idx("S_IDX", 0, keys, 1);
+        create_primary_idx_desc("S_IDX", 0, keys, 1);
 
-        create_index("S_FK_NATION", 0, fkeys, 1, false);
+        create_index_desc("S_FK_NATION", 0, fkeys, 1, false);
     } 
 }
 
@@ -177,7 +177,7 @@ part_t::part_t(string sysname) :
     if (sysname.compare("baseline") == 0) {
         TRACE(TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
-        create_primary_idx("P_IDX", 0, keys, 1);
+        create_primary_idx_desc("P_IDX", 0, keys, 1);
     }
 }
 
@@ -202,11 +202,11 @@ partsupp_t::partsupp_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
         // create unique index ps_index on (ps_partkey)
-        create_primary_idx("PS_IDX", 0, keys, 2);
+        create_primary_idx_desc("PS_IDX", 0, keys, 2);
             
-        create_index("PS_FK_PART", 0, fkeys1, 1, false);
+        create_index_desc("PS_FK_PART", 0, fkeys1, 1, false);
             
-        create_index("PS_FK_SUPP", 0, fkeys2, 1, false);
+        create_index_desc("PS_FK_SUPP", 0, fkeys2, 1, false);
     }
 }
 
@@ -233,9 +233,9 @@ customer_t::customer_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index c_index on (c_custkey)
-        create_primary_idx("C_IDX", 0, keys, 1);
+        create_primary_idx_desc("C_IDX", 0, keys, 1);
  
-        create_index("C_FK_NATION", 0, fkeys, 1, false);
+        create_index_desc("C_FK_NATION", 0, fkeys, 1, false);
     }
 }
 
@@ -264,9 +264,9 @@ orders_t::orders_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index o_index on (o_orderkey)
-        create_primary_idx("O_IDX", 0, keys, 1);
+        create_primary_idx_desc("O_IDX", 0, keys, 1);
              
-        create_index("O_FK_CUSTKEY", 0, fkeys, 1, false);
+        create_index_desc("O_FK_CUSTKEY", 0, fkeys, 1, false);
     }
 }
 
@@ -306,12 +306,12 @@ lineitem_t::lineitem_t(string sysname) :
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
         // create unique index l_index on ()
-        create_primary_idx("L_IDX", 0, keys, 2);
+        create_primary_idx_desc("L_IDX", 0, keys, 2);
 
-        create_index("L_FK_ORDERKEY", 0, fkeys1, 1, false);
-        create_index("L_FK_PARKSUPP", 0, fkeys2, 2, false);
+        create_index_desc("L_FK_ORDERKEY", 0, fkeys1, 1, false);
+        create_index_desc("L_FK_PARKSUPP", 0, fkeys2, 2, false);
 
-        create_index("L_IDX_SHIPDATE", 0, keys2, 1, false);
+        create_index_desc("L_IDX_SHIPDATE", 0, keys2, 1, false);
     }
 }
 

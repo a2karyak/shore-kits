@@ -113,15 +113,15 @@ void ShoreTPCCEnv::table_creator_t::work()
 {
     // Create the tables
     W_COERCE(_env->db()->begin_xct());
-    W_COERCE(_env->_pwarehouse_desc->create_table(_env->db()));
-    W_COERCE(_env->_pdistrict_desc->create_table(_env->db()));
-    W_COERCE(_env->_pcustomer_desc->create_table(_env->db()));
-    W_COERCE(_env->_phistory_desc->create_table(_env->db()));
-    W_COERCE(_env->_pnew_order_desc->create_table(_env->db()));
-    W_COERCE(_env->_porder_desc->create_table(_env->db()));
-    W_COERCE(_env->_porder_line_desc->create_table(_env->db()));
-    W_COERCE(_env->_pitem_desc->create_table(_env->db()));
-    W_COERCE(_env->_pstock_desc->create_table(_env->db()));
+    W_COERCE(_env->_pwarehouse_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pdistrict_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pcustomer_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_phistory_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pnew_order_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_porder_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_porder_line_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pitem_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pstock_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
 
     // do the first transaction
@@ -268,9 +268,14 @@ w_rc_t ShoreTPCCEnv::load_schema()
 
 w_rc_t ShoreTPCCEnv::update_partitioning() 
 {
+    // *** Reminder: the numbering in TPC-C starts from 1
+
+    // First configure
+    conf();
+
     // Pulling this partitioning out of the thin air
     uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 0;
+    int minKeyVal = 1;
     int maxKeyVal = get_sf()+1;
 
     char* minKey = (char*)malloc(sizeof(int));
@@ -281,7 +286,7 @@ w_rc_t ShoreTPCCEnv::update_partitioning()
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
-    // [ 0 .. #WH+1 )
+    // [ 1 .. #WH+1 )
     // Warehouses,Districts,Customers,NewOrders,Orders,OrderLine,History,Stock
     _pwarehouse_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
     _pdistrict_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
@@ -293,7 +298,7 @@ w_rc_t ShoreTPCCEnv::update_partitioning()
     _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
 
 
-    // Items: [ 0 .. 100K+1 )
+    // Items: [ 1 .. 100K+1 )
     maxKeyVal = ITEMS + 1;
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));

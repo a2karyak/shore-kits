@@ -88,9 +88,14 @@ w_rc_t ShoreTM1Env::load_schema()
 
 w_rc_t ShoreTM1Env::update_partitioning() 
 {
+    // *** Reminder: The numbering in TM1 starts from 1. 
+
+    // First configure
+    conf();
+
     // Pulling this partitioning out of the thin air
     uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 0;
+    int minKeyVal = 1;
     int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
 
     char* minKey = (char*)malloc(sizeof(int));
@@ -262,10 +267,10 @@ void  ShoreTM1Env::table_creator_t::work()
 {
     // Create the tables
     W_COERCE(_env->db()->begin_xct());
-    W_COERCE(_env->_psub_desc->create_table(_env->db()));
-    W_COERCE(_env->_pai_desc->create_table(_env->db()));
-    W_COERCE(_env->_psf_desc->create_table(_env->db()));
-    W_COERCE(_env->_pcf_desc->create_table(_env->db()));
+    W_COERCE(_env->_psub_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pai_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_psf_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pcf_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());    
 
     // Preload (preloads_per_worker) records for each of the loaders

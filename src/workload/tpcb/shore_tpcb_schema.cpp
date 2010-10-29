@@ -81,7 +81,7 @@ branch_t::branch_t(const uint4_t& pd)
     
     // create unique index b_idx on (b_id)
     uint  keys1[1] = { 0 }; // IDX { B_ID }
-    create_primary_idx("B_IDX", 0, keys1, 1, pd);
+    create_primary_idx_desc("B_IDX", 0, keys1, 1, pd);
 }
 
 
@@ -104,7 +104,7 @@ teller_t::teller_t(const uint4_t& pd)
 
     // create unique index t_idx on (t_id)    
     uint keys1[1] = { 0 }; // IDX { T_ID }
-    create_primary_idx("T_IDX", 0, keys1, 1, pd);
+    create_primary_idx_desc("T_IDX", 0, keys1, 1, pd);
 }
 
 
@@ -135,7 +135,7 @@ account_t::account_t(const uint4_t& pd)
 #endif
 
     // create unique index a_idx on (a_id)    
-    create_primary_idx("A_IDX", 0, keys1, nkeys, pd);
+    create_primary_idx_desc("A_IDX", 0, keys1, nkeys, pd);
 }
 
 

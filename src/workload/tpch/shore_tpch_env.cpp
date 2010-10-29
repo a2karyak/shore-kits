@@ -157,14 +157,14 @@ void ShoreTPCHEnv::table_creator_t::work()
 
     // 1. Create the tables
     W_COERCE(_env->db()->begin_xct());
-    W_COERCE(_env->_pnation_desc->create_table(_env->db()));
-    W_COERCE(_env->_pregion_desc->create_table(_env->db()));
-    W_COERCE(_env->_ppart_desc->create_table(_env->db()));
-    W_COERCE(_env->_psupplier_desc->create_table(_env->db()));
-    W_COERCE(_env->_ppartsupp_desc->create_table(_env->db()));
-    W_COERCE(_env->_pcustomer_desc->create_table(_env->db()));
-    W_COERCE(_env->_porders_desc->create_table(_env->db()));
-    W_COERCE(_env->_plineitem_desc->create_table(_env->db()));
+    W_COERCE(_env->_pnation_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pregion_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_ppart_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_psupplier_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_ppartsupp_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_pcustomer_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_porders_desc->create_physical_table(_env->db()));
+    W_COERCE(_env->_plineitem_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
 
     // 2. Do the baseline transaction

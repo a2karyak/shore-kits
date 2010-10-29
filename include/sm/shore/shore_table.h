@@ -124,6 +124,8 @@ protected:
     /* ------------------- */
     /* --- table schema -- */
     /* ------------------- */
+
+    ss_m*           _db;                 // the SM
     
     field_desc_t*   _desc;               // schema - set of field descriptors
     
@@ -163,28 +165,46 @@ public:
                             const char* sMaxKey, uint len2, 
                             uint numParts);
 
+    // @note: Accessing information about the main partitioning scheme
+    uint  pcnt() const;
+    char* getMinKey() const;
+    uint  getMinKeyLen() const;
+    char* getMaxKey() const;
+    uint  getMaxKeyLen() const;
 
-    /* --------------------------------------- */
-    /* --- create physical table and index --- */
-    /* --------------------------------------- */
+    w_rc_t get_main_rangemap(key_ranges_map*& prangemap);
 
-    w_rc_t create_table(ss_m* db);
 
+    /* ----------------------------------------- */
+    /* --- create physical table and indexes --- */
+    /* ----------------------------------------- */
+
+    w_rc_t create_physical_table(ss_m* db);
+
+    w_rc_t create_physical_index(ss_m* db, index_desc_t* index);
+
+    w_rc_t create_physical_empty_primary_idx();
+
+
+    /* ----------------------------------------------------- */
+    /* --- create the logical description of the indexes --- */
+    /* ----------------------------------------------------- */
 
     // create an index on the table
-    bool   create_index(const char* name,
-			int partitions,
-                        const uint* fields,
-                        const uint num,
-                        const bool unique=true,
-                        const bool primary=false,
-                        const uint4_t& pd=PD_NORMAL);
+    bool   create_index_desc(const char* name,
+                             int partitions,
+                             const uint* fields,
+                             const uint num,
+                             const bool unique=true,
+                             const bool primary=false,
+                             const uint4_t& pd=PD_NORMAL);
     
-    bool   create_primary_idx(const char* name,
-			      int partitions,
-                              const uint* fields,
-                              const uint num,
-                              const uint4_t& pd=PD_NORMAL);
+    bool   create_primary_idx_desc(const char* name,
+                                   int partitions,
+                                   const uint* fields,
+                                   const uint num,
+                                   const uint4_t& pd=PD_NORMAL);
+
 
 
     /* ------------------------ */
@@ -202,6 +222,8 @@ public:
     int index_count() { return (_indexes->index_count()); } 
 
     index_desc_t* primary() { return (_primary_idx); }
+    stid_t get_primary_stid();
+
 
     /* sets primary index, the index itself should be already set to
      * primary and unique */
@@ -261,8 +283,6 @@ public:
     /* --- check consistency between the indexes and table --- */
     /* ------------------------------------------------------- */
 
-    /**  true:  consistent
-     *   false: inconsistent */
     virtual w_rc_t check_all_indexes_together(ss_m* db)=0;
     virtual bool   check_all_indexes(ss_m* db)=0;
     virtual w_rc_t check_index(ss_m* db, index_desc_t* pidx)=0;
