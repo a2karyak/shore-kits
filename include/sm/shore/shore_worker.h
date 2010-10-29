@@ -306,14 +306,15 @@ public:
         //
         // Allowed transition matrix:
         //
-        // |------------------------------------|
-        // |(new)   | PAUSED | ACTIVE | STOPPED |
-        // |(old)   |        |        |         |
-        // |------------------------------------|
-        // |PAUSED  |        |    Y   |    Y    |
-        // |ACTIVE  |   Y    |        |    Y    |
-        // |STOPPED |        |        |         |
-        // |------------------------------------|
+        // |------------------------------------------------|
+        // |(new)    | PAUSED | ACTIVE | STOPPED | RECOVERY |
+        // |(old)    |        |        |         |          |
+        // |-------------------------------------|----------|
+        // |PAUSED   |        |    Y   |    Y    |    Y     |
+        // |ACTIVE   |   Y    |        |    Y    |    Y     |
+        // |STOPPED  |        |        |    Y    |    Y     |
+        // |RECOVERY |   Y    |    Y   |    Y    |    Y     |
+        // |-------------------------------------|----------|
         //
         {
             if ((*&_control == WC_PAUSED) && 
@@ -324,6 +325,12 @@ public:
 
             if ((*&_control == WC_ACTIVE) && 
                 ((awc == WC_PAUSED) || (awc == WC_STOPPED))) {
+                atomic_swap(&_control, awc);
+                return (true);
+            }
+
+            // Can go to recovery at any point
+            if ((*&_control == WC_RECOVERY) || (awc == WC_RECOVERY)) {
                 atomic_swap(&_control, awc);
                 return (true);
             }
