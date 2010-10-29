@@ -35,8 +35,25 @@
 using namespace shore;
 
 
-/** Exported functions */
+/****************************************************************** 
+ *
+ *  @class: db_init_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used for initiating
+ *          the Shore environment
+ *
+ ******************************************************************/
+    
+db_init_smt_t::db_init_smt_t(c_str tname, ShoreEnv* db) 
+    : thread_t(tname), _env(db)
+{
+    assert (_env);
+}
 
+
+db_init_smt_t::~db_init_smt_t() 
+{ 
+}
 
 void db_init_smt_t::work()
 {
@@ -53,6 +70,22 @@ void db_init_smt_t::work()
     // if reached this point everything went ok
     TRACE( TRACE_DEBUG, "Shore initialized...\n");
     _rv = 0;
+}
+
+
+
+/****************************************************************** 
+ *
+ *  @class: db_log_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used for flushing 
+ *          the log
+ *
+ ******************************************************************/
+
+int db_init_smt_t::rv() 
+{ 
+    return (_rv); 
 }
 
 

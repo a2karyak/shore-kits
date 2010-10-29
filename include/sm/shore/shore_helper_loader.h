@@ -60,18 +60,10 @@ private:
 
 public:
     
-    db_init_smt_t(c_str tname, ShoreEnv* db) 
-	: thread_t(tname), _env(db)
-    {
-        assert (_env);
-    }
-
-    ~db_init_smt_t() { }
-
-    // thread entrance
+    db_init_smt_t(c_str tname, ShoreEnv* db);
+    ~db_init_smt_t();
     void work();
-
-    inline int rv() { return (_rv); }
+    int rv();
 
 }; // EOF: db_init_smt_t
 
