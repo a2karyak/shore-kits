@@ -82,7 +82,6 @@ procmonitor_t::procmonitor_t(const char* name,
       _total_usage(0), _num_usage_readings(0), _avg_usage(0),
       _state(CPS_NOTSET), _env(env), _last_reading(0)
 {
-    assert (env);
 }
 
 
@@ -246,6 +245,7 @@ void procmonitor_t::print_load(const double delay)
 
 void procmonitor_t::print_interval()
 {
+    assert(_env);
     uint_t att = _env->get_trx_att();    
     if (_env->get_measure() == shore::MST_MEASURE) {
         TRACE( TRACE_STATISTICS, "(%.1f) (%.1f)\n", 
@@ -306,4 +306,11 @@ w_rc_t procmonitor_t::case_stop()
 w_rc_t procmonitor_t::case_tick() 
 { 
     return (RCOK); 
+}
+
+
+void procmonitor_t::setEnv(shore::ShoreEnv* env)
+{
+    assert (env);
+    _env = env;
 }
