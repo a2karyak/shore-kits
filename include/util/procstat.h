@@ -138,7 +138,7 @@ protected:
 public:
 
     procmonitor_t(const char* name, 
-                  shore::ShoreEnv* env,
+                  shore::ShoreEnv* env = NULL,
                   const double interval_sec = 1); // default interval 1 sec
     virtual ~procmonitor_t();
 
@@ -156,6 +156,7 @@ public:
     virtual w_rc_t case_stop();
     virtual w_rc_t case_tick();
 
+    void setEnv(shore::ShoreEnv* env);
 
     // Statistics -- INTERFACE
 
