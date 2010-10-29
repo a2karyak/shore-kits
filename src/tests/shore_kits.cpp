@@ -184,6 +184,8 @@ public:
                                   const int iSelectedTrx, const int iIterations,
                                   const eBindingType abt);
 
+    virtual w_rc_t prepareNewRun() { assert(_dbinst); return(_dbinst->newrun()); }
+
 }; // EOF: kit_t
 
 
@@ -235,6 +237,8 @@ int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
 {    
     // 1. Instanciate the Shore Environment
     _env = _dbinst = new DB(SHORE_CONF_FILE);
+    assert (_g_mon);
+    _env->set_max_cpu_count(_g_mon->get_num_of_cpus());
 
     // 2. Initialize the Shore Environment
     // the initialization must be executed in a shore context
@@ -309,7 +313,6 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
     print_TEST_info(iQueriedSF, iSpread, iNumOfThreads, 
                     iNumOfTrxs, iSelectedTrx, iIterations, abt);
 
-    _dbinst->newrun();
     _dbinst->upd_sf();
     _dbinst->set_qf(iQueriedSF);
 
@@ -379,6 +382,13 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
 
     // set measurement state
     _env->set_measure(MST_DONE);
+
+    // Prepare for the next round
+    w_rc_t e = prepareNewRun();
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "!!! Problem preparing for the next run\n");
+    }
+
     return (SHELL_NEXT_CONTINUE);
 }
 
@@ -399,7 +409,6 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
     print_MEASURE_info(iQueriedSF, iSpread, iNumOfThreads, iDuration, 
                        iSelectedTrx, iIterations, abt);
 
-    _dbinst->newrun();
     _dbinst->upd_sf();
     _dbinst->set_qf(iQueriedSF);
 
@@ -479,6 +488,15 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
     // set measurement state
     _env->set_measure(MST_DONE);
 
+    TRACE( TRACE_ALWAYS, "Preparing for the next run\n");
+
+    // Prepare for the next round
+    w_rc_t e = prepareNewRun();
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "!!! Problem preparing for the next run\n");
+    }
+
+
     return (SHELL_NEXT_CONTINUE);
 }
 
@@ -511,7 +529,7 @@ void usage()
            "-n            : Start in network mode (listens to port)\n"  \
            "-p <PORT>     : Listen to specific port\n"                  \
            "-c <CONFIG>   : Use specific configuration\n"               \
-           "-s <SYSTEM>   : Start specific system (baseline,dora,...)\n" \
+           "-s <SYSTEM>   : Start specific system (baseline,dora,plp,plppart,plpleaf\n" \
            "-d <PHYSICAL> : Use specific physical design (normal,mrbtnorm,...)\n" \
            "-x            : Enable physical design hacks\n"   \
            "-g <RANGE>    : Use specific range (in some workloads)\n"   \
@@ -539,6 +557,9 @@ int main(int argc, char* argv[])
 
     // Check if there is any particular configuration selected
     envVar* ev = envVar::instance();
+
+    _g_shore_env = NULL;
+    _g_mon = NULL;
 
     // Get options
     bool netmode = false;
@@ -725,6 +746,14 @@ int main(int argc, char* argv[])
 
     assert (kit.get());
 
+    // Create and fork the process monitor
+#ifdef __sparcv9
+    _g_mon = new sunos_procmonitor_t(NULL);
+#else
+    _g_mon = new linux_procmonitor_t(NULL); 
+#endif
+    assert (_g_mon);
+
     // Instanciate and start the Shore environment
     TRACE ( TRACE_ALWAYS, "Starting Shore Environment\n" );
     if (kit->inst_test_env(argc, argv)) {
@@ -740,16 +769,17 @@ int main(int argc, char* argv[])
     // Set the global variable to the kit's db - for alarm() to work
     _g_shore_env = kit->db();
 
+    // Prepare for the next round
+    TRACE( TRACE_ALWAYS, "Preparing for the next run\n");
+    w_rc_t e = kit->prepareNewRun();
+    if (e.is_error()) {
+        TRACE( TRACE_ALWAYS, "!!! Problem preparing for the next run\n");
+        return (9);
+    }
 
-    // Create and fork the process monitor
-#ifdef __sparcv9
-    _g_mon = new sunos_procmonitor_t(kit->db());
-#else
-    _g_mon = new linux_procmonitor_t(kit->db()); 
-#endif
+    // Start the system monitoring thread
+    _g_mon->setEnv(kit->db());
     _g_mon->fork();
-    _g_shore_env->set_max_cpu_count(_g_mon->get_num_of_cpus());
-
 
     // Start processing commands
     TRACE ( TRACE_ALWAYS, "Starting processing commands\n" );
