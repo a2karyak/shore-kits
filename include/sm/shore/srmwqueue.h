@@ -96,17 +96,29 @@ struct srmwqueue
         return ((_read_pos == _for_readers->end()) && (*&_empty));
     }
 
+    // The expensive version which first locks, and then checks if empty
+    bool is_really_empty(void) 
+    {
+        CRITICAL_SECTION(cs, _lock);
+        bool isEmpty = ((_read_pos == _for_readers->end()) && (*&_empty));
+        if (isEmpty) { assert (_for_writers->empty()); }
+        return (isEmpty);
+    }
+
     // spins until new input is set
     bool wait_for_input() 
     {
         assert (_owner);
         int loopcnt = 0;
+        eWorkerControl wc = WC_ACTIVE;
 
         // 1. start spinning
 	while (*&_empty) {
 
+            wc = _owner->get_control(); 
+
             // 2. if thread was signalled to stop
-	    if (_owner->get_control() != WC_ACTIVE) {
+	    if ((wc != WC_ACTIVE) && (wc != WC_RECOVERY)) {
                 _owner->set_ws(WS_FINISHED);
 		return (false);
             }
