@@ -322,7 +322,11 @@ struct env_stats_t
  *
  ********************************************************************/
 
-enum eDBControl { DBC_UNDEF, DBC_PAUSED, DBC_ACTIVE, DBC_STOPPED };
+enum eDBControl { DBC_UNDEF =   0x1, 
+                  DBC_PAUSED =  0x2, 
+                  DBC_ACTIVE =  0x4, 
+                  DBC_STOPPED = 0x8 
+};
 
 
 /*********************************************************************
@@ -410,7 +414,12 @@ extern int ssm_max_small_rec;
  *
  ********************************************************************/
 
-enum MeasurementState { MST_UNDEF, MST_WARMUP, MST_MEASURE, MST_DONE, MST_PAUSE };
+enum MeasurementState { MST_UNDEF   = 0x0, 
+                        MST_WARMUP  = 0x1, 
+                        MST_MEASURE = 0x2, 
+                        MST_DONE    = 0x4, 
+                        MST_PAUSE   = 0x8 
+};
 
 
 /******************************************************************** 

@@ -80,10 +80,10 @@ const unsigned int COMMIT_ACTION_COUNT_WITH_ITER = 500000;
  *
  * --------------------------------------------------------------- */
 
-enum file_type_t  { FT_HEAP         = 0x0,
-                    FT_PRIMARY_IDX  = 0x1,
-                    FT_IDX          = 0x2,
-                    FT_NONE         = 0x4
+enum file_type_t  { FT_HEAP         = 0x1,
+                    FT_PRIMARY_IDX  = 0x2,
+                    FT_IDX          = 0x4,
+                    FT_NONE         = 0x8
 };
 
 
@@ -105,13 +105,13 @@ enum file_type_t  { FT_HEAP         = 0x0,
  *
  * --------------------------------------------------------------- */
 
-enum physical_design_t { PD_NORMAL      = 0x0,
-                         PD_PADDED      = 0x1,
-                         PD_MRBT_NORMAL = 0x2,
-                         PD_MRBT_PART   = 0x4,
-                         PD_MRBT_LEAF   = 0x8,
-                         PD_NOLOCK      = 0x10,
-                         PD_NOLATCH     = 0x20
+enum physical_design_t { PD_NORMAL      = 0x1,
+                         PD_PADDED      = 0x2,
+                         PD_MRBT_NORMAL = 0x4,
+                         PD_MRBT_PART   = 0x8,
+                         PD_MRBT_LEAF   = 0x10,
+                         PD_NOLOCK      = 0x20,
+                         PD_NOLATCH     = 0x40
 };
 
 

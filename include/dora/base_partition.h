@@ -59,7 +59,10 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-enum ePATState { PATS_UNDEF, PATS_SINGLE, PATS_MULTIPLE };
+enum ePATState { PATS_UNDEF    = 0x1, 
+                 PATS_SINGLE   = 0x2, 
+                 PATS_MULTIPLE = 0x4 
+};
 
 
 /******************************************************************** 

@@ -67,7 +67,12 @@ enum {
     de_WRONG_IDX_DATA          = 0x820032,
 
     de_EARLY_ABORT             = 0x820041,
-    de_MIDWAY_ABORT            = 0x820042
+    de_MIDWAY_ABORT            = 0x820042,
+
+    /** Problem in PLP/MRBTrees */
+    de_PLP_NOT_FOUND           = 0x820051,
+    de_LPID_NOT_FOUND          = 0x820052,
+    de_PARTID_NOT_FOUND        = 0x820053
 };
 
 

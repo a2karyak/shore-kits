@@ -41,10 +41,7 @@
 ENTER_NAMESPACE(shore);
 
 
-
-
 // CLASSES
-
 
 class base_worker_t;
 class base_action_t;
@@ -53,22 +50,23 @@ class base_action_t;
 
 // ENUMS
 
-
-
 /******************************************************************** 
  *
  * @enum:  eWorkerControl
  *
  * @brief: States for controling a worker thread 
  *
- * @note:  A thread initially is paused then it starts working until
- *         someone changes the status to stopped.
+ * @note:  A thread initially is paused then it starts working, until
+ *         someone changes the status to stopped. There is an extra
+ *         mode which is set during recovery.
  *
  ********************************************************************/
 
-enum eWorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
-
-
+enum eWorkerControl { WC_PAUSED   = 0x1,
+                      WC_ACTIVE   = 0x2, 
+                      WC_STOPPED  = 0x4, 
+                      WC_RECOVERY = 0x8
+};
 
 
 /******************************************************************** 
@@ -88,12 +86,13 @@ enum eWorkerControl { WC_PAUSED, WC_ACTIVE, WC_STOPPED };
  *
  ********************************************************************/
 
-enum eWorkingState { WS_UNDEF, 
-                     WS_LOOP, 
-                     WS_SLEEP, 
-                     WS_COMMIT_Q, 
-                     WS_INPUT_Q,
-                     WS_FINISHED };
+enum eWorkingState { WS_UNDEF    = 0x1, 
+                     WS_LOOP     = 0x2, 
+                     WS_SLEEP    = 0x4, 
+                     WS_COMMIT_Q = 0x8, 
+                     WS_INPUT_Q  = 0x10,
+                     WS_FINISHED = 0x20
+};
 
 
 /******************************************************************** 
@@ -104,7 +103,10 @@ enum eWorkingState { WS_UNDEF,
  *
  ********************************************************************/
 
-enum eDataOwnerState { DOS_UNDEF, DOS_ALONE, DOS_MULTIPLE };
+enum eDataOwnerState { DOS_UNDEF    = 0x1, 
+                       DOS_ALONE    = 0x2, 
+                       DOS_MULTIPLE = 0x3 
+};
 
 
 

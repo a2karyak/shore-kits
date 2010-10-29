@@ -50,8 +50,13 @@ const int NO_VALID_TRX_ID = -1;
  *
  ********************************************************************/
 
-enum TrxState { UNDEF, UNSUBMITTED, SUBMITTED, POISSONED, 
-		COMMITTED, ROLLBACKED };
+enum TrxState { UNDEF       = 0x0, 
+                UNSUBMITTED = 0x1, 
+                SUBMITTED   = 0x2, 
+                POISSONED   = 0x4, 
+		COMMITTED   = 0x8, 
+                ROLLBACKED  = 0x10 
+};
 
 
 /******************************************************************** 
