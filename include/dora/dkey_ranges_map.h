@@ -23,15 +23,12 @@
 
 /** @file:   dkey_ranges_map.h
  *
- *  @brief:  Definition of a map of key ranges to partitions used by
- *           DORA MRBTrees.
- *
- *  @notes:  The keys are Shore-mt cvec_t. Thread-safe.  
+ *  @brief:  Wrapper of the key_ranges_map, used by DORA
  *
  *  @date:   Aug 2010
  *
- *  @author: Pinar Tozun (pinar)
  *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Pinar Tozun (pinar)
  *  @author: Ryan Johnson (ryanjohn)
  */
 
@@ -39,12 +36,18 @@
 #ifndef __DORA_DKEY_RANGES_MAP_H
 #define __DORA_DKEY_RANGES_MAP_H
 
-//#include "util/key_ranges_map.h"
-
 #include "sm_vas.h"
 #include "util.h"
 
+#include "dora/dora_error.h"
+#include "dora/common.h"
+
+#include "sm/shore/shore_env.h"
+#include "sm/shore/shore_table.h"
+
 using namespace std;
+using namespace shore;
+
 
 ENTER_NAMESPACE(dora);
 
@@ -53,72 +56,90 @@ ENTER_NAMESPACE(dora);
  *
  * @class: dkey_ranges_map
  *
- * @brief: A map of key ranges to DORA partitions. This structure is used
- *         by the DORA version of the multi-rooted B-tree (DMRBTree). 
+ * @brief: Thin wrapper of the key_ranges_map
  *
- * @note:  The specific implementation indentifies each partition through
- *         a partition id (uint). Hence, this implementation is for DORA 
- *         MRBTrees.
+ * @note:  The key_ranges_map maps char* to lpid_t. We use the lpid_t.page
+ *         (which is a uint4_t) as the partition id.  
  *
  ********************************************************************/
 
-class dkey_ranges_map : public key_ranges_map
+class dkey_ranges_map
 {
-private:    
+private: 
 
-    typedef vector<lpid_t>              lpidVec;
-    typedef vector<lpid_t>::iterator    lpidVecIter;
-
-    typedef map<lpid_t, uint>           lpidPartMap;
-    typedef map<lpid_t, uint>::iterator lpidPartMapIter;
-
-    typedef map<uint, lpid_t>           partLpidMap;
-    typedef map<uint, lpid_t>::iterator partLpidMapIter;
-
-    typedef cvec_t Key;
-
-    // A simple birectional association of lpid_t to uint. 
-    // In the baseline key_ranges_map each sub-tree (partition) is identified
-    // by the lpid_t of the root of the corresponding sub-tree. 
-    // On the other hand, DORA needs a way to point to a partition. We use a
-    // simple uint which is the partition number.
-    lpidPartMap _lpidPartMap;
-    partLpidMap _partLpidMap;
-
-    occ_rwlock _bimapLock;
-
-    // A watermark for assigning unique partition numbers
-    volatile uint _maxpnum;
-
+    bool _isplp;    
+    key_ranges_map* _rmap;
+    sinfo_s _sinfo;
+    
 public:
-  
-    dkey_ranges_map(const Key& minKey, const Key& maxKey, const uint numParts);
+ 
+    // There are two constructors:
+    // One used by plain DORA, which is a main-memory data structure
+    // One used by PLP, which is a persistently stored range map
+    dkey_ranges_map(const stid_t& stid,
+                    const cvec_t& minKeyCV, 
+                    const cvec_t& maxKeyCV, 
+                    const uint numParts);
+    dkey_ranges_map(const stid_t& stid,key_ranges_map* pkrm);
     ~dkey_ranges_map();
 
-    // Splits the partition where "key" belongs to two partitions. The start of 
-    // the second partition is the "key".
-    w_rc_t addPartition(const Key& key, uint& pnum);
 
-    // Deletes the given partition (identified by the partition number), by 
-    // merging it with the previous partition
-    w_rc_t deletePartition(const uint pnum);
+    // Get the partition id for the given key, which is unscrambled
+    inline w_rc_t get_partition(const cvec_t& cvkey, lpid_t& lpid) {
+        return(_rmap->getPartitionByUnscrambledKey(_sinfo,cvkey,lpid));
+    }
 
-    // Gets the partition id of the given key.
-    //
-    // @note: In the DORA version each partition is identified by a partition-id 
-    w_rc_t getPartitionByKey(const Key& key, uint& pnum);
-    w_rc_t operator()(const Key& key, uint& pnum);
+    w_rc_t get_all_partitions(vector<lpid_t>& pidVec);
 
-    // Returns the list of partitions that cover: 
-    // [key1, key2], (key1, key2], [key1, key2), or (key1, key2) ranges
-    w_rc_t getPartitions(const Key& key1, bool key1Included, 
-                         const Key& key2, bool key2Included,                         
-                         vector<uint>& pnumVec);
 
-    // Returns the range boundaries of a partition
-    w_rc_t getBoundaries(uint pnum, pair<cvec_t, cvec_t>& keyRange);
+    // RangeMap maintenance
+    w_rc_t add_partition(const cvec_t& key, lpid_t& lpid);
+    w_rc_t delete_partition(const lpid_t& lpid);
+
+    // Returns true if they are same
+    bool is_same(const dkey_ranges_map& drm);
+
+private:
+
+    // Not allowed
+    dkey_ranges_map();
     
 }; // EOF: dkey_ranges_map
+
+
+
+
+/****************************************************************** 
+ *
+ *  @class: rangemap_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used just for
+ *          accessing the key_range_map of a specific store
+ *
+ ******************************************************************/
+
+class rangemap_smt_t : public thread_t 
+{
+private:
+    
+    ShoreEnv* _env;    
+    table_desc_t* _table;
+    uint _dtype;
+
+public:
+
+    dkey_ranges_map* _drm;
+    w_rc_t _rc;
+
+    rangemap_smt_t(ShoreEnv* env, table_desc_t* tabledesc, uint dtype);
+    ~rangemap_smt_t();
+    void work();
+    
+}; // EOF: rangemap_smt_t
+
+
+
+
 
 EXIT_NAMESPACE(dora);
 

@@ -23,69 +23,96 @@
 
 /** @file:   dkey_ranges_map.cpp
  *
- *  @brief:  Implementation of a map of key ranges to partitions used by
- *           DORA MRBTrees.
+ *  @brief:  Thin wrapper of the key_ranges_map
  *
- *  @notes:  The keys are Shore-mt cvec_t. Thread-safe.  
+ * @note:  The key_ranges_map maps char* to lpid_t. We use the lpid_t.page
+ *         (which is a uint4_t) as the partition id.  
  *
  *  @date:   Aug 2010
  *
- *  @author: Pinar Tozun (pinar)
  *  @author: Ippokratis Pandis (ipandis)
+ *  @author: Pinar Tozun (pinar)
  *  @author: Ryan Johnson (ryanjohn)
  */
 
 
 #include "dora/dkey_ranges_map.h"
 
+#include "sm/shore/shore_env.h"
+
 
 ENTER_NAMESPACE(dora);
 
-dkey_ranges_map::dkey_ranges_map(const Key& minKey, const Key& maxKey, 
-                                 const uint numPartitions)
-    : key_ranges_map(minKey,maxKey,numPartitions), _maxpnum(0)
+
+/****************************************************************** 
+ *
+ * Constructors
+ *
+ ******************************************************************/
+
+// This should be called when in plain DORA
+dkey_ranges_map::dkey_ranges_map(const stid_t& stid,
+                                 const cvec_t& minKey, 
+                                 const cvec_t& maxKey, 
+                                 const uint numParts)
+    : _isplp(false)
 {
+    w_rc_t e = ss_m::get_store_info(stid,_sinfo);
+    if (e.is_error()) {  assert(0); }
+    _rmap = new key_ranges_map(_sinfo,minKey,maxKey,numParts,false);
+}
+
+
+// This should be called when in PLP
+dkey_ranges_map::dkey_ranges_map(const stid_t& stid,
+                                 key_ranges_map* krm)
+    : _isplp(true), _rmap(krm)
+{
+    w_rc_t e = ss_m::get_store_info(stid,_sinfo);
+    if (e.is_error()) {  assert(0); }
 }
 
 dkey_ranges_map::~dkey_ranges_map()
 {
+    if ((!_isplp) && (_rmap)) {
+        delete (_rmap);
+        _rmap = NULL;
+    }
 }
-
 
 
 /****************************************************************** 
  *
- * @fn:    addPartition()
+ * @fn:    get_all_partitions()
+ *
+ * @brief: Returns the list of pids for all the partitions
+ *
+ ******************************************************************/
+
+w_rc_t dkey_ranges_map::get_all_partitions(vector<lpid_t>& pidVec)
+{
+    return(_rmap->getAllPartitions(pidVec));
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:    add_partition()
  *
  * @brief: Splits the partition where "key" belongs to two partitions. 
  *         The start of the second partition is the "key".
  *
- * @note:  Updates also the lpid->partNum map
- *
  ******************************************************************/
 
-w_rc_t dkey_ranges_map::addPartition(const Key& key, uint& pnum)
+w_rc_t dkey_ranges_map::add_partition(const cvec_t& key, lpid_t& lpid)
 {
-    // Add a partition
-    lpid_t apid;
-    W_DO(key_ranges_map::addPartition(key,apid));
-
-    // If successful, update the lpid->partNum associations
-    _rwlock.acquire_write();
-    uint nv = _maxpnum++;
-    _lpidPartMap[apid] = nv;
-    _partLpidMap[nv] = apid;
-    _rwlock.release_write();
-
-    pnum = nv;
-    
-    return (RCOK);
+    return(_rmap->addPartition(key,lpid));
 }
 
 
 /****************************************************************** 
  *
- * @fn:    deletePartition()
+ * @fn:    delete_partition()
  *
  * @brief: Deletes a partition based on the partition number.
  *
@@ -95,131 +122,93 @@ w_rc_t dkey_ranges_map::addPartition(const Key& key, uint& pnum)
  *
  ******************************************************************/
 
-w_rc_t dkey_ranges_map::deletePartition(const uint aPartNum)
+w_rc_t dkey_ranges_map::delete_partition(const lpid_t& /* lpid */)
 {
-    w_rc_t r = RCOK;
-
-    // Get the lpid_t of the partition to be deleted
-    _bimapLock.acquire_write();
-    partLpidMapIter it = _partLpidMap.find(aPartNum);
-    if (it == _partLpidMap.end()) {
-        // There is not partition with such number
-        _bimapLock.release_write();
-        return (RC(mrb_PARTITION_NOT_FOUND));
-    }
-
-    // Delete the partition
-    lpid_t pid = (*it).second;
-    
-    // TODO (IP): Understand what deletePartition does in key_range_map
-    assert (false); 
-    //r = key_ranges_map::deletePartition(pid);
-    
-    // If successful, remove the delete partition entry from the two maps 
-    if (!r.is_error()) {
-        _lpidPartMap.erase(pid);
-        _partLpidMap.erase(aPartNum);
-    }
-    _bimapLock.release_write();
-    return (r);
+    assert (0); // TODO check key_ranges_map API
+    //return(_rmap->deletePartition(lpid));
 }
 
 
 /****************************************************************** 
  *
- * @fn:    getPartitionByKey()
- *
- * @brief: Returns the partition which a particular key belongs to
+ * @fn:    is_same()
  *
  ******************************************************************/
 
-w_rc_t dkey_ranges_map::getPartitionByKey(const Key& key, uint& pnum)
+bool dkey_ranges_map::is_same(const dkey_ranges_map& drm) 
 {
-    w_rc_t r = RCOK;
+#warning IP: For now, is_same() checks only the number of partitions
+    return (_rmap->getNumPartitions() == drm._rmap->getNumPartitions());
+}
 
-    lpid_t pid;
-    r = key_ranges_map::getPartitionByKey(key,pid);
 
-    if (!r.is_error()) {
-        _bimapLock.acquire_read();
-        lpidPartMapIter it = _lpidPartMap.find(pid);
-        if (it != _lpidPartMap.end()) {
-            pnum = (*it).second;
+
+
+/****************************************************************** 
+ *
+ * @class: rangemap_smt_t
+ *
+ * @brief: Read the updated key map, depending on the flavor of DORA used 
+ *         (plain, plp*)
+ *         - If PLP*, from the sm::range_map
+ *         - If DORA, from the dkey_map
+ *
+ ******************************************************************/
+ 
+rangemap_smt_t::rangemap_smt_t(ShoreEnv* env, table_desc_t* tabledesc, uint dtype) 
+    : thread_t(c_str("RMS")), 
+      _env(env), _table(tabledesc), _dtype(dtype),
+      _drm(NULL), _rc(RCOK)
+{
+}
+
+rangemap_smt_t::~rangemap_smt_t() 
+{
+}
+
+void rangemap_smt_t::work()
+{
+    assert (_env);
+
+    tid_t atid;
+    _rc = _env->db()->begin_xct(atid);
+    
+    if (!_rc.is_error()) {
+
+        if (_dtype & DT_PLAIN) {
+            // Plain DORA. Need to populate a dkey_map, given the boundaries
+            // of the _table and the number of partitions
+        
+            stid_t stid = _table->get_primary_stid();
+            cvec_t mincv(_table->getMinKey(),_table->getMinKeyLen());
+            cvec_t maxcv(_table->getMaxKey(),_table->getMaxKeyLen());
+            uint pcnt = _table->pcnt();
+
+            _drm = new dkey_ranges_map(stid,mincv,maxcv,pcnt);
         }
         else {
-            // No such association exists
-            r = RC(mrb_PARTITION_NOT_FOUND);
-        }
-        _bimapLock.release_read();
-    }
-    return (r);
-}
+            if (_dtype & (DT_PLP_NORMAL | DT_PLP_PART | DT_PLP_PART)) {
+                // A PLP flavor. Read the possibly updated RangeMap from sm and 
+                // populate the corresponding dkey_map
 
-w_rc_t dkey_ranges_map::operator()(const Key& key, uint& pnum)
-{
-    return (getPartitionByKey(key,pnum));
-}
+                key_ranges_map* arm;
+                _rc = _table->get_main_rangemap(arm);
+                stid_t stid = _table->get_primary_stid();
 
-
-
-/****************************************************************** 
- *
- * @fn:    getPartitions()
- *
- * @brief: Returns the list of partitions that cover one of the key ranges:
- *         [key1, key2], (key1, key2], [key1, key2), or (key1, key2) 
- *
- ******************************************************************/
-
-w_rc_t dkey_ranges_map::getPartitions(const Key& key1, bool key1Included, 
-                                     const Key& key2, bool key2Included,
-                                     vector<uint>& pnumVec) 
-{
-    lpidVec vecPid;
-    W_DO(key_ranges_map::getPartitions(key1,key1Included,key2,key2Included,vecPid));
-
-    // Iterate over all the return lpid_t and add the to return vector
-    // the corresponding pnum.
-    if (!vecPid.empty()) {
-        lpidPartMapIter it;
-        _bimapLock.acquire_read();
-        for (lpidVecIter vecit = vecPid.begin(); vecit != vecPid.end(); ++vecit) {
-            it = _lpidPartMap.find(*vecit);
-            if (it == _lpidPartMap.end()) {
-                // It better be there
-                _bimapLock.release_read();
-                return (RC(mrb_PARTITION_NOT_FOUND));
+                _drm = new dkey_ranges_map(stid,arm);
             }
-            pnumVec.push_back((*it).second);
         }
-        _bimapLock.release_read();
     }
-    return (RCOK);
-}
 
-
-/****************************************************************** 
- *
- * @fn:    getBoundaries()
- *
- * @brief: Returns the range boundaries of a partition, identified by
- *         its partition number
- *
- ******************************************************************/
-
-w_rc_t dkey_ranges_map::getBoundaries(uint pnum, pair<cvec_t, cvec_t>& keyRange) 
-{
-    _bimapLock.acquire_read();
-    partLpidMapIter it = _partLpidMap.find(pnum);
-    if (it == _partLpidMap.end()) {
-        // No such association exists
-        _bimapLock.release_read();
-        return (RC(mrb_PARTITION_NOT_FOUND));
+    if (_rc.is_error()) {
+        _rc = _env->db()->abort_xct();
     }
-    lpid_t pid = (*it).second;
-    _bimapLock.release_read();
-    return (key_ranges_map::getBoundaries(pid,keyRange));
-}
+    else {
+        _rc = _env->db()->commit_xct();
+    }
+}    
+
+
 
 
 EXIT_NAMESPACE(dora);
