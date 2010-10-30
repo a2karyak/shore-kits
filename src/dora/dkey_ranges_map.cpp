@@ -126,6 +126,7 @@ w_rc_t dkey_ranges_map::delete_partition(const lpid_t& /* lpid */)
 {
     assert (0); // TODO check key_ranges_map API
     //return(_rmap->deletePartition(lpid));
+    return (RCOK);
 }
 
 
