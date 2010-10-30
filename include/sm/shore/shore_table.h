@@ -236,6 +236,8 @@ public:
     int   index_maxkeysize(index_desc_t* index) const; /* max index key size */
 
 
+
+
     /* ---------------------------------------------------------------- */
     /* --- for the conversion between disk format and memory format --- */
     /* ---------------------------------------------------------------- */

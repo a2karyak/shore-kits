@@ -1210,12 +1210,12 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */,
 
 #ifdef CFG_DORA
     bool bIgnoreLocks = false;
-    if (lm==NL) bIgnoreLocks = true;
+    if (lock_mode==NL) bIgnoreLocks = true;
 #endif
 
     // Pin record
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lm, heap_latch_mode));
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
     int current_size = pin.body_size();
 
     // 2. update record
@@ -1245,10 +1245,11 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */,
 
     // 2b. else, simply update
     if (system_mode & ( PD_MRBT_PART | PD_MRBT_LEAF )) {
-
-        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
-                            bIgnoreLocks, 
-                            heap_latch_mode);
+        bool bIgnoreLatches = false;
+        if (heap_latch_mode==LATCH_NL) bIgnoreLatches = true;
+        rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
+                                 bIgnoreLocks, 
+                                 bIgnoreLatches);
 
     }
     else {
