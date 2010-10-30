@@ -47,7 +47,6 @@
 #include "dora/worker.h"
 
 #include "dora/range_action.h"
-#include "dora/range_partition.h"
 #include "dora/range_part_table.h"
 
 #ifdef CFG_FLUSHER
