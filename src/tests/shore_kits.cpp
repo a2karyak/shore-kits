@@ -110,9 +110,7 @@ using namespace dora;
 // Value-definitions of the different Sysnames
 enum SysnameValue { snBaseline = 0x0,
                     snDORA     = 0x1,
-                    snPLPA     = 0x2,  /* DORA+MRBT + No changes to heap */
-                    snPLPP     = 0x4,  /* DORA+MRBT + Heap pages per partition */
-                    snPLPL     = 0x8   /* DORA+MRBT + Heap pages per leaf */
+                    snPLP      = 0x2
 };
 
 // Map to associate string with then enum values
@@ -123,9 +121,7 @@ void initsysnamemap()
 {
     mSysnameValue["baseline"] = snBaseline;
     mSysnameValue["dora"]     = snDORA;
-    mSysnameValue["plpa"]     = snPLPA;
-    mSysnameValue["plpp"]     = snPLPP;
-    mSysnameValue["plpl"]     = snPLPL;
+    mSysnameValue["plp"]      = snPLP;
 }
 
 //////////////////////////////
@@ -647,9 +643,7 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
-        case snPLPA:
-        case snPLPP:
-        case snPLPL:
+        case snPLP:
             dbname += "dora) ";
             kit = new doraTPCCKit(dbname.c_str(),netmode,netport);
             break;
@@ -670,9 +664,7 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
-        case snPLPA:
-        case snPLPP:
-        case snPLPL:
+        case snPLP:
             dbname += "dora) ";
             kit = new doraTM1Kit(dbname.c_str(),netmode,netport);
             break;
@@ -693,9 +685,7 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
-        case snPLPA:
-        case snPLPP:
-        case snPLPL:
+        case snPLP:
             dbname += "dora) ";
             kit = new doraTPCBKit(dbname.c_str(),netmode,netport);
             break;

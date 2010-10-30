@@ -85,6 +85,9 @@ bool DoraEnv::is_plp() const
 uint DoraEnv::update_pd(ShoreEnv* penv)
 {
     assert (penv);
+
+    // Check at what mode we run (DORA/PLP) 
+    _check_type();
     
     // All the DORA flavors do not use centralized locks
     penv->add_pd(PD_NOLOCK);
