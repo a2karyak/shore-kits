@@ -84,7 +84,8 @@ ENTER_NAMESPACE(shore);
  *
  * --------------------------------------------------------------- */
 
-#define VAR_SLOT(start, offset)   ((offset_t*)((start)+(offset)))
+//#define VAR_SLOT(start, offset)   ((offset_t*)((start)+(offset)))
+#define VAR_SLOT(start, offset)   ((start)+(offset))
 #define SET_NULL_FLAG(start, offset)                            \
     (*(char*)((start)+((offset)>>3))) &= (1<<((offset)>>3))
 #define IS_NULL_FLAG(start, offset)                     \
