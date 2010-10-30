@@ -15,6 +15,10 @@ fi
 echo configure args: $* > tmpcfg.txt
 
 
+# Remember the user set CXXFLAGS
+USERCXXFLAGS="$CXXFLAGS"
+#USERCXXFLAGS=""
+
 # find system type (using this macro means we must include
 # the files install-sh, config.sub, and config.guess (all from
 # the autoconf distribution) in our source tree!)
@@ -193,9 +197,6 @@ DEBUG_FLAGS="-g -O0"
 PROFILE_FLAGS="-pg -O0"
 OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
-
-# Remember the user set CXXFLAGS
-USERCXXFLAGS="$CXXFLAGS"
 
 CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
