@@ -219,33 +219,38 @@ public:
     inline w_rc_t   index_probe(ss_m* db,
                                 index_desc_t* pidx,
                                 table_tuple*  ptuple,
-                                lock_mode_t   lock_mode = SH,          /* one of: NL, SH, EX */
-                                latch_mode_t  latch_mode = LATCH_SH);  /* one of: LATCH_SH, LATCH_EX */
+                                lock_mode_t   lock_mode = SH,         /* One of: NL, SH, EX */
+                                latch_mode_t  heap_latch_mode = LATCH_SH,  /* For the Heap page. One of: LATCH_SH, LATCH_EX */
+                                const lpid_t& root = lpid_t::null);   /* Start of the search */
     
     // probe idx in EX (& LATCH_EX) mode
     inline w_rc_t   index_probe_forupdate(ss_m* db,
-                                   index_desc_t* pidx,
-                                   table_tuple*  ptuple)
+                                          index_desc_t* pidx,
+                                          table_tuple*  ptuple,
+                                          const lpid_t& root = lpid_t::null)
     {
-        return (index_probe(db, pidx, ptuple, EX, LATCH_EX));
+        return (index_probe(db, pidx, ptuple, EX, LATCH_EX, root));
     }
 
     // probe idx in NL (& LATCH_SH) mode
     inline w_rc_t   index_probe_nl(ss_m* db,
                                    index_desc_t* pidx,
-                                   table_tuple*  ptuple)
+                                   table_tuple*  ptuple,
+                                   latch_mode_t  heap_latch_mode = LATCH_SH,
+                                   const lpid_t& root = lpid_t::null)
     {
-        return (index_probe(db, pidx, ptuple, NL, LATCH_SH));
+        return (index_probe(db, pidx, ptuple, NL, heap_latch_mode, root));
     }
 
     // probe primary idx
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
-                                        lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
-                                        latch_mode_t latch_mode = LATCH_SH) /* one of: LATCH_SH, LATCH_EX */
+                                        lock_mode_t  lock_mode = SH,        
+                                        latch_mode_t heap_latch_mode = LATCH_SH,
+                                        const lpid_t& root = lpid_t::null)
     {
         assert (_ptable && _ptable->_primary_idx);
-        return (index_probe(db, _ptable->_primary_idx, ptuple, lock_mode, latch_mode));
+        return (index_probe(db, _ptable->_primary_idx, ptuple, lock_mode, heap_latch_mode, root));
     }
 
 
@@ -256,29 +261,33 @@ public:
     inline w_rc_t   index_probe_by_name(ss_m* db, 
                                         const char*  idx_name, 
                                         table_tuple* ptuple,
-                                        lock_mode_t  lock_mode = SH,        /* one of: NL, SH, EX */
-                                        latch_mode_t latch_mode = LATCH_SH) /* one of: LATCH_SH, LATCH_EX */
+                                        lock_mode_t  lock_mode = SH,      
+                                        latch_mode_t heap_latch_mode = LATCH_SH,
+                                        const lpid_t& root = lpid_t::null)
     {
         index_desc_t* pindex = _ptable->find_index(idx_name);
-        return (index_probe(db, pindex, ptuple, lock_mode, latch_mode));
+        return (index_probe(db, pindex, ptuple, lock_mode, heap_latch_mode, root));
     }
 
     // probe idx in EX (& LATCH_EX) mode - based on idx name //
     inline w_rc_t   index_probe_forupdate_by_name(ss_m* db, 
                                                   const char* idx_name,
-                                                  table_tuple* ptuple) 
+                                                  table_tuple* ptuple,
+                                                  const lpid_t& root = lpid_t::null) 
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
-	return (index_probe_forupdate(db, pindex, ptuple));
+	return (index_probe_forupdate(db, pindex, ptuple, root));
     }
 
     // probe idx in NL (& LATCH_NL) mode - based on idx name //
     inline w_rc_t   index_probe_nl_by_name(ss_m* db, 
                                            const char* idx_name,
-                                           table_tuple* ptuple) 
+                                           table_tuple* ptuple,
+                                           latch_mode_t  heap_latch_mode = LATCH_SH,
+                                           const lpid_t& root = lpid_t::null) 
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
-	return (index_probe_nl(db, pindex, ptuple));
+	return (index_probe_nl(db, pindex, ptuple, heap_latch_mode, root));
     }
 
 
@@ -286,8 +295,18 @@ public:
     /* --- tuple manipulation --- */
     /* -------------------------- */
 
-    w_rc_t    add_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
-    w_rc_t    update_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
+    w_rc_t    add_tuple(ss_m* db, 
+                        table_tuple*  ptuple, 
+                        lock_mode_t   lock_mode = EX,
+                        latch_mode_t  heap_latch_mode = LATCH_EX,
+                        const lpid_t& primary_root = lpid_t::null);
+
+    w_rc_t    update_tuple(ss_m* db, 
+                           table_tuple* ptuple, 
+                           lock_mode_t lock_mode = EX,
+                           uint system_mode = PD_NORMAL,
+                           latch_mode_t heap_latch_mode = LATCH_EX);
+
     w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
 
     // Direct access through the rid
@@ -982,7 +1001,8 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
                                               index_desc_t* pindex,
                                               table_tuple*  ptuple,
                                               lock_mode_t   lock_mode,
-                                              latch_mode_t  latch_mode)
+                                              latch_mode_t  heap_latch_mode, // If in PLP-leaf
+                                              const lpid_t& root)
 {
     assert (_ptable);
     assert (pindex);
@@ -1011,14 +1031,16 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
     int pnum = get_pnum(pindex, ptuple);
 
     if (pindex->is_mr()) {
+
+        // Do the probe
         W_DO(ss_m::find_mr_assoc(pindex->fid(pnum),
                                  vec_t(ptuple->_rep->_dest, key_sz),
                                  &(ptuple->_rid),
                                  len,
-                                 found
-#ifdef CFG_DORA
-                                 ,bIgnoreLocks
-#endif
+                                 found,
+                                 bIgnoreLocks,
+                                 pindex->is_latchless(),
+                                 root
                                  ));
     }
     else {
@@ -1037,14 +1059,13 @@ w_rc_t table_man_impl<TableDesc>::index_probe(ss_m* db,
 
     // 3. read the tuple
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, latch_mode));
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
 
     if (!load(ptuple, pin.body())) {
         pin.unpin();
         return RC(se_WRONG_DISK_DATA);
     }
     pin.unpin();
-  
     return (RCOK);
 }
 
@@ -1087,22 +1108,24 @@ int table_man_impl<TableDesc>::get_pnum(index_desc_t* pindex, table_tuple const*
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db, 
                                             table_tuple* ptuple,
-                                            lock_mode_t lm)
+                                            lock_mode_t lock_mode,
+                                            latch_mode_t heap_latch_mode,
+                                            const lpid_t& primary_root)
 {
     assert (_ptable);
     assert (ptuple);
     assert (ptuple->_rep);
 
-    // 1. find the file
+    // find the file
     W_DO(_ptable->check_fid(db));
 
 #ifdef CFG_DORA
-    // 2. figure out what mode will be used
+    // figure out what mode will be used
     bool bIgnoreLocks = false;
-    if (lm==NL) bIgnoreLocks = true;
-#endif
+    if (lock_mode==NL) bIgnoreLocks = true;
+#endif    
 
-    // 3. append the tuple
+    // append the tuple
     int tsz = format(ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // if NULL invalid
 
@@ -1116,8 +1139,7 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
                         ,bIgnoreLocks
 #endif
                         ));
-
-    // 4. update the indexes
+    // update the indexes
     index_desc_t* index = _ptable->indexes();
     int ksz = 0;
 
@@ -1134,11 +1156,11 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
             ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
                                      vec_t(ptuple->_rep->_dest, ksz),
-                                     ef
-#ifdef CFG_DORA
-                                     ,bIgnoreLocks
-#endif
-                                     , NULL // reloc_func
+                                     ef,
+                                     bIgnoreLocks,
+                                     index->is_latchless(),
+                                     NULL, // reloc_func
+                                     (index->is_primary() ? primary_root : lpid_t::null)
                                      ));
         }
         else {
@@ -1176,7 +1198,9 @@ w_rc_t table_man_impl<TableDesc>::add_tuple(ss_m* db,
 template <class TableDesc>
 w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */, 
                                                table_tuple* ptuple,
-                                               lock_mode_t  lm)
+                                               lock_mode_t  lock_mode,
+                                               uint         system_mode, // physical_design_t
+                                               latch_mode_t heap_latch_mode)
 {
     assert (_ptable);
     assert (ptuple);
@@ -1184,20 +1208,14 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */,
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
-    // 0. figure out what mode will be used
-    latch_mode_t pin_latch_mode = LATCH_EX;
-
 #ifdef CFG_DORA
     bool bIgnoreLocks = false;
-    if (lm==NL) {
-        //        pin_latch_mode = LATCH_SH;
-        bIgnoreLocks = true;
-    }
+    if (lm==NL) bIgnoreLocks = true;
 #endif
 
-    // 1. pin record
+    // Pin record
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lm, pin_latch_mode));
+    W_DO(pin.pin(ptuple->rid(), 0, lm, heap_latch_mode));
     int current_size = pin.body_size();
 
     // 2. update record
@@ -1208,7 +1226,13 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */,
     w_rc_t rc;
     if (current_size < tsz) {
         zvec_t azv(tsz - current_size);
-        rc = pin.append_rec(azv);
+
+        if (system_mode & ( PD_MRBT_PART | PD_MRBT_LEAF )) {
+            rc = pin.append_mrbt_rec(azv,heap_latch_mode);
+        }
+        else {
+            rc = pin.append_rec(azv);
+        }
 
         // on error unpin 
         if (rc.is_error()) {
@@ -1218,12 +1242,20 @@ w_rc_t table_man_impl<TableDesc>::update_tuple(ss_m* /* db */,
         W_DO(rc);
     }
 
+
     // 2b. else, simply update
-    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0
-#ifdef CFG_DORA
-                        ,bIgnoreLocks
-#endif
-                        );
+    if (system_mode & ( PD_MRBT_PART | PD_MRBT_LEAF )) {
+
+        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
+                            bIgnoreLocks, 
+                            heap_latch_mode);
+
+    }
+    else {
+
+        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0,
+                            bIgnoreLocks);
+    }
 
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
