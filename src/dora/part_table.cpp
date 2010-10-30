@@ -49,19 +49,14 @@ ENTER_NAMESPACE(dora);
 part_table_t::part_table_t(ShoreEnv* env, table_desc_t* ptable,
                            const processorid_t aprs,
                            const uint acpurange,
-                           const uint keyEstimation,
-                           const cvec_t& minKey,
-                           const cvec_t& maxKey,
-                           const uint pnum) 
-    : _env(env), _table(ptable), _pcnt(pnum),
+                           const uint keyEstimation) 
+    : _env(env), _table(ptable), 
       _start_prs_id(aprs), _next_prs_id(aprs), _prs_range(acpurange), 
       _key_estimation(keyEstimation)
 {
     assert (_env);
-    assert (_table);        
-
-    // Check the key boundaries
-    assert (minKey <= maxKey);
+    assert (_table);
+    _bppmap.clear();
 }
 
 
@@ -69,6 +64,11 @@ part_table_t::~part_table_t()
 { 
 }
 
+
+table_desc_t* part_table_t::table() const
+{
+    return (_table);
+}
 
 
 /****************************************************************** 
@@ -81,22 +81,39 @@ part_table_t::~part_table_t()
 w_rc_t part_table_t::stop() 
 {
     CRITICAL_SECTION(ptcs, _lock);
-    for (uint i=0; i<_bppvec.size(); i++) {
-        _bppvec[i]->stop();
-        delete (_bppvec[i]);
+
+    for (BPPMapIt it=_bppmap.begin(); it != _bppmap.end(); it++) {
+        (*it).second->stop();
+        delete (*it).second;
     }
-    _bppvec.clear();
+    _bppmap.clear();
     return (RCOK);
 }
 
 
-// Prepare all partitions for a new run
+/****************************************************************** 
+ *
+ * @fn:    prepareNewRun()
+ *
+ * @brief: Prepares all partitions for a new run
+ *
+ * @note:  There are two steps in this function:
+ *         (1) Every worker clears outstanding actions and LockMan
+ *         (2) Calls the (virtual) function to re-adjust partitions
+ *
+ ******************************************************************/
+
 w_rc_t part_table_t::prepareNewRun() 
 {
     CRITICAL_SECTION(ptcs, _lock);
-    for (uint i=0; i<_bppvec.size(); i++) {
-        _bppvec[i]->prepareNewRun();
+
+    // Clean up the old partitions
+    for (BPPMapIt it=_bppmap.begin(); it != _bppmap.end(); it++) {
+        W_DO((*it).second->prepareNewRun());
     }
+
+    // Adjust boundaries
+    W_DO(repartition());
     return (RCOK);
 }
 
@@ -114,10 +131,12 @@ w_rc_t part_table_t::prepareNewRun()
 w_rc_t part_table_t::reset()
 {
     CRITICAL_SECTION(ptcs, _lock);
+
     TRACE( TRACE_DEBUG, "Reseting (%s)...\n", _table->name());
     _next_prs_id = _start_prs_id;
-    for (uint i=0; i<_bppvec.size(); i++) {
-        _bppvec[i]->reset(_next_prs_id,-1);
+
+    for (BPPMapIt it=_bppmap.begin(); it != _bppmap.end(); it++) {
+        (*it).second->reset(_next_prs_id,-1);
         _next_prs_id = next_cpu(_next_prs_id);
     }    
     return (RCOK);
@@ -195,16 +214,16 @@ void part_table_t::statistics() const
     worker_stats_t ws_gathered;
     uint stl_sz = 0;
 
-    for (uint i=0; i<_bppvec.size(); i++) {
+    for (BPPMapCIt it=_bppmap.begin(); it != _bppmap.end(); it++) {
         // gather worker statistics
-        _bppvec[i]->statistics(ws_gathered);
+        (*it).second->statistics(ws_gathered);
 
         // gather dora-related structures statistics
-        _bppvec[i]->stlsize(stl_sz);
+        (*it).second->stlsize(stl_sz);
     }
 
     if (ws_gathered._processed > MINIMUM_PROCESSED) {
-        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
+        TRACE( TRACE_STATISTICS, "Parts (%d)\n", _table->pcnt());
 
         // print worker stats
         ws_gathered.print_and_reset();
@@ -217,16 +236,17 @@ void part_table_t::statistics() const
 void part_table_t::info() const 
 {
     TRACE( TRACE_STATISTICS, "Table (%s)\n", _table->name());
-    TRACE( TRACE_STATISTICS, "Parts (%d)\n", _pcnt);
+    TRACE( TRACE_STATISTICS, "Parts (%d)\n", _table->pcnt());
 }        
 
 
 void part_table_t::dump() const 
 {
     TRACE( TRACE_DEBUG, "Table (%s)\n", _table->name());
-    TRACE( TRACE_DEBUG, "Parts (%d)\n", _pcnt);
-    for (uint i=0; i<_bppvec.size(); i++) {
-        _bppvec[i]->dump();
+    TRACE( TRACE_DEBUG, "Parts (%d)\n", _table->pcnt());
+
+    for (BPPMapCIt it=_bppmap.begin(); it != _bppmap.end(); it++) {
+        (*it).second->dump();
     }
 }        
 

@@ -36,38 +36,75 @@ using namespace shore;
 
 ENTER_NAMESPACE(dora);
 
-typedef range_partition_i<int> irpImpl;
+typedef partition_t<int> irpImpl;
 
 
 /******************************************************************** 
  *
  *  @fn:    DoraEnv construction/destruction
  *
- *  @brief: Prints statistics for DORA Env. If DFlusher is enabled,
- *          it prints those stats. 
+ *  @brief: Depending on the type of the DORA system it updated the 
+ *          physical design characteristics of the Environment
  *
  ********************************************************************/
 
 DoraEnv::DoraEnv()
-{ }
+{ 
+    _check_type();
+}
+
 
 DoraEnv::~DoraEnv()
-{ }
+{ 
+}
+
 
 
 
 /******************************************************************** 
  *
- *  @fn:    table_part
- *
- *  @brief: Return partition (part_pos) of table (table_pos)
+ *  @fn:    Type related functions
  *
  ********************************************************************/
 
-irpImpl* DoraEnv::table_part(const uint table_pos, const uint part_pos) 
+uint DoraEnv::dtype() const
 {
-    assert (table_pos<_irptp_vec.size());        
-    return (_irptp_vec[table_pos]->getPartByIdx(part_pos));
+    return (_dtype);
+}
+
+bool DoraEnv::is_dora() const
+{
+    return (_dtype & DT_PLAIN);
+}
+
+bool DoraEnv::is_plp() const 
+{ 
+    return (_dtype & (DT_PLP_NORMAL | DT_PLP_PART | DT_PLP_PART)); 
+}
+
+uint DoraEnv::update_pd(ShoreEnv* penv)
+{
+    assert (penv);
+    
+    // All the DORA flavors do not use centralized locks
+    penv->add_pd(PD_NOLOCK);
+
+    if (_dtype & DT_PLP_NORMAL) {
+        penv->add_pd(PD_MRBT_NORMAL);
+        penv->add_pd(PD_NOLATCH);
+    }
+
+    if (_dtype & DT_PLP_PART) {
+        penv->add_pd(PD_MRBT_PART);
+        penv->add_pd(PD_NOLATCH);
+    }
+
+    if (_dtype & DT_PLP_LEAF) {
+        penv->add_pd(PD_MRBT_LEAF);
+        penv->add_pd(PD_NOLATCH);
+    }
+
+    return (_dtype);
 }
 
 
@@ -96,6 +133,44 @@ int DoraEnv::_statistics(ShoreEnv* /* penv */)
     return (0);
 }
 
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    _check_type()
+ *
+ * @brief: Reads the system name and sets the appropriate dtype
+ *
+ ******************************************************************/
+
+uint DoraEnv::_check_type()
+{
+    // Check what system is running
+    string sysname = envVar::instance()->getSysName();
+
+    if (sysname.compare("baseline")==0) {
+        assert(0); // Shouldn't be here
+    }
+
+    if (sysname.compare("dora")==0) {
+        _dtype = DT_PLAIN;
+    }
+
+    if (sysname.compare("plp")==0) {
+        _dtype = DT_PLP_NORMAL;
+    }
+
+    if (sysname.compare("plppart")==0) {
+        _dtype = DT_PLP_PART;
+    }
+
+    if (sysname.compare("plpleaf")==0) {
+        _dtype = DT_PLP_LEAF;
+    }    
+
+    return (_dtype);
+}
 
 /****************************************************************** 
  *
@@ -170,13 +245,13 @@ int DoraEnv::_post_stop(ShoreEnv* penv)
  *
  ******************************************************************/
 
-int DoraEnv::_newrun(ShoreEnv* /* penv */)
+w_rc_t DoraEnv::_newrun(ShoreEnv* /* penv */)
 {
     TRACE( TRACE_DEBUG, "Preparing for new run...\n");
     for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->prepareNewRun();
+        W_DO(_irptp_vec[i]->prepareNewRun());
     }
-    return (0);
+    return (RCOK);
 }
 
 

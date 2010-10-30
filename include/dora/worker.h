@@ -96,6 +96,8 @@ public:
         return (_partition);
     }
 
+    int doRecovery() { return (_work_ACTIVE_impl()); }
+
 }; // EOF: dora_worker_t
 
 
@@ -126,11 +128,13 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
     actionReadyList.clear();
     actionPromotedList.clear();
 
+    bool inRecovery = false;
+
     // Initiate the sdesc cache
     me()->alloc_sdesc_cache();
 
     // Check if signalled to stop
-    while (get_control() == WC_ACTIVE) {
+    while ((get_control() == WC_ACTIVE) || (inRecovery=(get_control() == WC_RECOVERY))) {
         
         // reset the flags for the new loop
         apa = NULL;
@@ -168,6 +172,10 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
             actionPromotedList.clear();
         }            
 
+        if (inRecovery) {
+            if (!_partition->has_input()) { goto loopexit; }
+        }
+
         // new (input) actions
 
         // 3. dequeue an action from the (main) input queue
@@ -188,9 +196,9 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
         }
     }
 
+ loopexit:
     // Release sdesc cache before exiting
     me()->free_sdesc_cache();
-
     return (0);
 }
 

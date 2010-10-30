@@ -52,6 +52,8 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
+
+
 /******************************************************************** 
  *
  * @class: dora_env
@@ -70,17 +72,19 @@ class DoraEnv
 {
 public:
 
-    typedef range_partition_i<int>      irpImpl; 
     typedef range_table_i<int>          irpTableImpl;
-
-    typedef irpImpl::RangeAction        irpAction;
-
     typedef std::vector<irpTableImpl*>  irpTablePtrVector;
     typedef irpTablePtrVector::iterator irpTablePtrVectorIt;
 
+    typedef partition_t<int>            irpImpl;
+    typedef action_t<int>               irpAction;
     typedef vector<base_action_t*>      baseActionsList;
 
 protected:
+
+    // The type of DORA environment: (plain) dora, (normal) plp, 
+    // plpp (plp-part), plpl (plp-leaf)
+    uint _dtype;
 
     // A vector of pointers to integer-range-partitioned tables
     irpTablePtrVector _irptp_vec;    
@@ -101,23 +105,21 @@ public:
 
     virtual ~DoraEnv();
 
+    // Type-related calls
+    uint dtype() const;
+    bool is_dora() const;
+    bool is_plp() const;
+
+
     //// Client API
-    
-    // Enqueues action, non zero on error
-    inline int enqueue(irpAction* paction,
-                       const bool bWake, 
-                       irpTableImpl* ptable, 
-                       const int part_pos) 
-    {
-        assert (paction);
-        assert (ptable);
-        return (ptable->enqueue(paction, bWake, part_pos));
-    }
 
     // Return the partition responsible for the specific integer identifier
     inline irpImpl* decide_part(irpTableImpl* atable, const int aid) {
-        cvec_t acv(&aid,sizeof(int));
-        return (atable->getPartByCVKey(acv));
+        cvec_t key((char*)&aid,sizeof(int));
+        lpid_t pid;
+        w_rc_t r = atable->getPartIdxByKey(key,pid);
+        if (r.is_error()) { assert(false); return (NULL); }
+        return (atable->get(pid.page));
     }      
 
 
@@ -128,16 +130,14 @@ public:
     }
 #endif
 
-    //// Partition-related methods
-
-    irpImpl* table_part(const uint table_pos, const uint part_pos);
-
-
 protected:
+
+    uint _check_type();
+    uint update_pd(ShoreEnv* penv);
 
     int _post_start(ShoreEnv* penv);
     int _post_stop(ShoreEnv* penv);
-    int _newrun(ShoreEnv* penv);
+    w_rc_t _newrun(ShoreEnv* penv);
     int _dump(ShoreEnv* penv);
     int _info(const ShoreEnv* penv) const;
     int _statistics(ShoreEnv* penv);

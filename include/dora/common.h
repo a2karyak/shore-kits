@@ -231,8 +231,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 
 #define GENERATE_DORA_PARTS(abbrv,tablename)                            \
-    { int z=0; int sf=get_sf(); cvec_t mink(&z,sizeof(int)); cvec_t maxk(&sf,sizeof(int)); \
-    _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), icpu, _cpu_range, abbrv##_KEY_EST, mink, maxk, _parts_##abbrv); \
+    { _##abbrv##_irpt = new irpTableImpl(this, tablename##_desc(), dtype(), icpu, _cpu_range, abbrv##_KEY_EST); \
     if (!_##abbrv##_irpt) {                                             \
         TRACE( TRACE_ALWAYS, "Problem in creating irp-table\n");        \
         assert (0); return (de_GEN_TABLE); }                            \

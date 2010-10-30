@@ -47,48 +47,154 @@ ENTER_NAMESPACE(dora);
  *
  ******************************************************************/
 
-range_table_t::range_table_t(ShoreEnv* env, table_desc_t* ptable,
+range_table_t::range_table_t(ShoreEnv* env, table_desc_t* ptable, const uint dtype,
                              const processorid_t aprs,
                              const uint acpurange,
-                             const uint keyEstimation,
-                             const cvec_t& minKey,
-                             const cvec_t& maxKey,
-                             const uint pnum) 
-    : part_table_t(env,ptable,aprs,acpurange,keyEstimation,minKey,maxKey,pnum)
+                             const uint keyEstimation) 
+    : part_table_t(env,ptable,aprs,acpurange,keyEstimation), _dtype(dtype)
 {
-    fprintf(stdout, "Creating (%d) (%s) parts\n", _pcnt, _table->name());
-
-    // Create the key-range map   
-    _prMap = new dkey_ranges_map(minKey,maxKey,pnum);
-
-    // Setup partitions based on the boundaries created in the key-range map 
-    typedef vector< pair<char*,char*> >           boundariesVector;
-    typedef vector< pair<char*,char*> >::iterator boundariesVectorIter;
-    boundariesVector bvec;
-    w_rc_t r = _prMap->getBoundariesVec(bvec);
-    if (r.is_error()) {
-        fprintf( stdout, "Error getting partition boundaries\n");
-        assert (0);
-    }
-
-    uint idx=0;
-    for (boundariesVectorIter it = bvec.begin(); it != bvec.end(); it++,++idx) {
-        char* pdown = (*it).first;
-        char* pup = (*it).second;
-        cvec_t cvdown(pdown,strlen(pdown));
-        cvec_t cvup(pup,strlen(pup));
-        r = create_one_part(idx,cvdown,cvup);
-        if (r.is_error()) {
-            fprintf( stdout, "Error creating partition (%s-%d)\n", 
-                     _table->name(),idx);
-            assert (0);
-        }
-    }
+    _prMap = NULL;
 }
 
 
 range_table_t::~range_table_t()
 {
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    repartition()
+ *
+ * @brief: This function does four things:
+ *         (1) Update the new range partitioning information
+ *         (2) Readjusts the boundaries of existis partitions
+ *         (3) Deletes partitions that are in excess
+ *         (4) Creates partitions if more need to be created
+ *
+ * @note:  Assumes that the partitioned table lock is being held by
+ *         the called (prepareNewRun())
+ *
+ ******************************************************************/
+
+w_rc_t range_table_t::repartition()
+{
+    // Read the updated partitioning information and if different from the
+    // one currently used, update.
+    dkey_ranges_map* drm = NULL;
+    W_DO(_get_updated_map(drm));
+    assert(drm);
+    if ((_prMap != NULL) && (_prMap->is_same(*drm))) {
+        TRACE( TRACE_STATISTICS, "Not partitioning changes in (%s)\n", 
+               _table->name());
+        delete (drm);
+        return (RCOK);
+    }
+
+    // There has been a change in partitioning information, go and modify 
+    // logical partitions
+    _prMap = drm;    
+    assert (_prMap);
+
+    // Save the old mapping to a temp map
+    BasePartitionPtrMap tmpmap = _bppmap;
+
+    // Clear the mapping and repopulate it
+    _bppmap.clear();
+
+    // Get a vector of the shpid_t (partition ids)
+    vector<lpid_t> pidVec;
+    W_DO(_prMap->get_all_partitions(pidVec));    
+
+    // Start iterating over all the old partitions 
+    // and setting the values to the new _bppvec
+    vector<lpid_t>::iterator pidIt =  pidVec.begin();
+    BPPMapIt oldPartIt = tmpmap.begin();
+    uint cnt=0;
+
+    while ((pidIt != pidVec.end()) && (oldPartIt != tmpmap.end())) {
+        // As long as we have both already created old partitions and new pids
+        // insert entries in the new map
+        // Essentially, we do a repositioning of the pointers in the map 
+        _bppmap[(*pidIt).page] = (*oldPartIt).second;
+        pidIt++;
+        oldPartIt++;
+        cnt++;
+    }
+
+    if (cnt>0) {
+        TRACE( TRACE_STATISTICS, "Repositioned (%d) (%s) partitions\n",
+               cnt, _table->name());
+        cnt=0;
+    }            
+               
+
+    while (oldPartIt != tmpmap.end()) {
+        // There are some old partitions that need to be stopped and destroyed
+        (*oldPartIt).second->stop();
+        delete ((*oldPartIt).second);
+        oldPartIt++;
+        cnt++;
+    }
+
+    if (cnt>0) {
+        TRACE( TRACE_STATISTICS, "Deleted (%d) (%s) partitions\n",
+               cnt, _table->name());
+        cnt=0;
+    }            
+
+
+    while (pidIt != pidVec.end()) {
+        // There are some partitions that need to be created
+
+        // The create_one_part() will create one partition and will put the
+        // pointer to the corresponding place of the map
+        base_partition_t* abp = NULL;
+        W_DO(create_one_part((*pidIt).page,abp)); 
+        assert (abp);
+        _bppmap[(*pidIt).page] = abp;
+        pidIt++;
+        cnt++;
+    }
+
+    if (cnt>0) {
+        TRACE( TRACE_STATISTICS, "Created (%d) (%s) partitions\n",
+               cnt, _table->name());
+        cnt=0;
+    }            
+    return (RCOK);
+}
+
+
+
+/****************************************************************** 
+ *
+ * @fn:    _get_updated_map()
+ *
+ * @brief: Read the updated key map, depending on the flavor of DORA used 
+ *         (plain, plp*)
+ *         - If PLP*, from the sm::range_map
+ *         - If DORA, from the dkey_map
+ *
+ ******************************************************************/
+
+w_rc_t range_table_t::_get_updated_map(dkey_ranges_map*& drm)
+{
+    w_rc_t r = RCOK;
+    
+    rangemap_smt_t* rsm = new rangemap_smt_t(_env,_table,_dtype);
+    assert (rsm);
+    rsm->fork();
+    rsm->join();
+
+    r = rsm->_rc;
+    if (!r.is_error()) { drm = rsm->_drm; }
+
+    delete(rsm);
+    rsm = NULL;
+
+    return (r);
 }
 
 
@@ -98,52 +204,25 @@ range_table_t::~range_table_t()
  *
  * @brief: Creates one partition and adds it to the vectors
  *
+ * @note:  Assumes that the partitioned table lock is being held by
+ *         the called (readjust())
+ *
  ******************************************************************/
 
-w_rc_t range_table_t::create_one_part(const uint idx, const cvec_t& down, const cvec_t& up)
+w_rc_t range_table_t::create_one_part(const shpid_t& pid, base_partition_t*& abp)
 {   
-    w_rc_t r = RCOK;
-    CRITICAL_SECTION(conf_cs, PartTable::_lock);
-
     // Create a new partition object with a specific index
-    r = _create_one_part(idx,down,up);
+    w_rc_t r = _create_one_part(pid,abp);
 
     if (r.is_error()) {
-        TRACE( TRACE_ALWAYS, "Problem in creating partition (%d) for (%s)\n", 
-               PartTable::_pcnt, PartTable::_table->name());
+        TRACE( TRACE_ALWAYS, "Problem in creating partition for (%s)\n", 
+               _table->name());
         return (RC(de_GEN_PARTITION));
-    }
+    }    
 
     // Update next cpu
     PartTable::_next_prs_id = PartTable::next_cpu(PartTable::_next_prs_id);
-
-    ++PartTable::_pcnt;
     return (r);
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:    get{Min/Max}
- *
- * @brief: Return the minimum/maximum allowed cvec_t for the specific
- *         table.
- *
- ******************************************************************/
-
-w_rc_t range_table_t::getMin(cvec_t& acv) const
-{
-    char* mk = _prMap->getMinKey();
-    acv.set(mk,strlen(mk));
-    return (RCOK);
-}
-
-w_rc_t range_table_t::getMax(cvec_t& acv) const
-{
-    char* mk = _prMap->getMaxKey();
-    acv.set(mk,strlen(mk));
-    return (RCOK);
 }
 
 

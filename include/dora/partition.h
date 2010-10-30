@@ -23,7 +23,7 @@
 
 /** @file:   partition.h
  *
- *  @brief:  Template-based encapsulation of each table partition in DORA
+ *  @brief:  Template-based class for each logical partition in DORA
  *
  *  @author: Ippokratis Pandis, Oct 2008
  */
@@ -118,9 +118,9 @@ protected:
 public:
 
     partition_t(ShoreEnv* env, table_desc_t* ptable, 
-                const uint keyEstimation,
                 const uint apartid, 
-                const processorid_t aprsid);
+                const processorid_t aprsid,
+                const uint keyEstimation);
 
     virtual ~partition_t() 
     { 
@@ -158,7 +158,7 @@ public:
     mcs_lock _enqueue_lock;
 
     // returns true if action can be enqueued in this partition
-    virtual bool verify(Action& action)=0;
+    virtual bool verify(Action& /* action */) { assert(0); /* TODO */ return (true); }
 
     // input for normal actions
     // enqueues action, 0 on success
@@ -194,7 +194,7 @@ public:
     virtual void stop();
 
     // prepares the partition for a new run
-    virtual void prepareNewRun();
+    virtual w_rc_t prepareNewRun();
 
     // stats
     virtual void statistics(worker_stats_t& gather);
@@ -231,9 +231,9 @@ protected:
 
 template <class DataType>
 partition_t<DataType>::partition_t(ShoreEnv* env, table_desc_t* ptable, 
-                                   const uint keyEstimation,
                                    const uint apartid, 
-                                   const processorid_t aprsid) 
+                                   const processorid_t aprsid,
+                                   const uint keyEstimation) 
     : base_partition_t(env,ptable,apartid,aprsid),
       _owner(NULL), _standby(NULL)
 {
@@ -437,7 +437,7 @@ int partition_t<DataType>::reset(const processorid_t aprsid,
  ******************************************************************/
 
 template <class DataType>
-void partition_t<DataType>::prepareNewRun() 
+w_rc_t partition_t<DataType>::prepareNewRun() 
 {
     // Needs to spin until worker is done "cleaning" left-overs 
     // (un-executed actions and logical locks)
@@ -449,6 +449,25 @@ void partition_t<DataType>::prepareNewRun()
         usleep(100);
     }
 
+    // --------------------------------------
+    // Enter recovery mode for that partition
+    eWorkerControl old_wc = _owner->get_control();
+    _owner->set_control(WC_RECOVERY);
+
+    // Clear queues but not remove owner
+    while (!_committed_queue->is_really_empty()) {
+        TRACE( TRACE_ALWAYS, "CommittedQueue of (%s-%d) not empty\n");
+        _owner->doRecovery();
+    }
+    _committed_queue->clear(false);
+
+    while (!_input_queue->is_really_empty()) {
+        TRACE( TRACE_ALWAYS, "InputQueue of (%s-%d) not empty\n");
+        _owner->doRecovery();
+    }
+    _input_queue->clear(false); 
+
+
     // Make sure that no key is left locked
     //
     // If the owner is sleeping it means that either it has finished
@@ -458,10 +477,6 @@ void partition_t<DataType>::prepareNewRun()
     // case should not be happening
     assert (_plm->is_clean());
 
-    // Clear queues but not remove owner
-    _input_queue->clear(false); 
-    _committed_queue->clear(false);
-
     // Reset lock manager map by removing all the entries.
     // This should happen only if the size of the map exceeds
     // a certain value
@@ -470,6 +485,11 @@ void partition_t<DataType>::prepareNewRun()
                _table->name(), _part_id, _plm->keystouched());
         _plm->reset();
     }
+
+    _owner->set_control(old_wc);
+    // Exit recovery mode
+    // --------------------------------------
+    return (RCOK);
 }
 
 
@@ -743,9 +763,10 @@ int partition_t<DataType>::abort_all_enqueued()
 template <class DataType>
 void partition_t<DataType>::statistics(worker_stats_t& gather) 
 {
-    assert (_owner); 
-    gather += _owner->get_stats();
-    _owner->reset_stats();
+    if (_owner) {
+        gather += _owner->get_stats();
+        _owner->reset_stats();
+    }
 }
 
 

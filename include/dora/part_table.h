@@ -64,19 +64,20 @@ class part_table_t
 {
 public:
 
-    typedef vector<base_partition_t*> BasePartitionPtrVector;
+    typedef map<shpid_t, base_partition_t*>           BasePartitionPtrMap;
+    typedef map<shpid_t, base_partition_t*>::iterator BPPMapIt;
+    typedef map<shpid_t, base_partition_t*>::const_iterator BPPMapCIt;
     
 protected:
 
     ShoreEnv*                _env;    
     table_desc_t*            _table;
+    // The partitioning information is stored a the table_desc_t (_table)
 
     tatas_lock               _lock;
 
-    uint                     _pcnt;             // Partition count
-
     // Vector of pointer to base partitions
-    BasePartitionPtrVector   _bppvec;
+    BasePartitionPtrMap   _bppmap;
 
     // processor binding
     processorid_t      _start_prs_id;
@@ -91,10 +92,7 @@ public:
     part_table_t(ShoreEnv* env, table_desc_t* ptable,
                  const processorid_t aprs,
                  const uint acpurange,
-                 const uint keyEstimation,
-                 const cvec_t& minKey,
-                 const cvec_t& maxKey,
-                 const uint pnum);
+                 const uint keyEstimation);
 
     virtual ~part_table_t();
 
@@ -108,16 +106,13 @@ public:
     virtual w_rc_t prepareNewRun();
 
     // Return the appropriate partition. This decision is based on the type
-    // of the partitioning scheme used
-    virtual w_rc_t getPartIdxByKey(const cvec_t& key, uint& idx)=0;
+    // of the partitioning scheme used and the DataType used for the routing 
+    virtual w_rc_t getPartIdxByKey(const cvec_t& cvkey, lpid_t& pid)=0;
 
-    // Return the min/max values
-    // Those functions are abstract because the min/max values are stored in the
-    // data structure the sub-class uses for the partitioning. For example, the
-    // range partitioning table stores this information in the dkey_range_map.
-    virtual w_rc_t getMin(cvec_t& acv) const=0;
-    virtual w_rc_t getMax(cvec_t& acv) const=0;
-
+    // Re-adjustss partitions. It is called before new runs to make sure
+    // that the logical partitions are in sync with the partitioning scheme
+    // used by the system.
+    virtual w_rc_t repartition()=0;
 
     //// CPU placement ////
 
@@ -130,6 +125,7 @@ public:
     // decide the next processor
     virtual processorid_t next_cpu(const processorid_t& aprd);
 
+    table_desc_t* table() const;
 
     //// For debugging ////
 

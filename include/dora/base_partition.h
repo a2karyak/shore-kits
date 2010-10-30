@@ -105,6 +105,7 @@ public:
     virtual ~base_partition_t();
 
     uint part_id() const { return (_part_id); }
+    void set_part_id(const uint pid);
     table_desc_t* table() const { return (_table); } 
 
     // partition policy
@@ -125,7 +126,7 @@ public:
     virtual void stop()=0;
 
     // prepares the partition for a new run
-    virtual void prepareNewRun()=0;
+    virtual w_rc_t prepareNewRun()=0;
 
     // stats
     virtual void statistics(worker_stats_t& gather)=0;

@@ -54,6 +54,11 @@ base_partition_t::~base_partition_t()
 }    
 
 
+void base_partition_t::set_part_id(const uint pid)
+{
+    _part_id = pid;
+}
+
 // Partition policy
 ePartitionPolicy base_partition_t::get_part_policy() 
 { 

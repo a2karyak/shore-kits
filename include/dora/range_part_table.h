@@ -60,37 +60,44 @@ public:
     typedef part_table_t PartTable;
 
 protected:
+
+    // Whether it is plain DORA or a PLP flavor
+    uint _dtype;
     
     // key ranges map - The DORA version
     guard<dkey_ranges_map> _prMap;
 
 public:
 
-    range_table_t(ShoreEnv* env, table_desc_t* ptable,
+    range_table_t(ShoreEnv* env, table_desc_t* ptable, const uint dtype,
                   const processorid_t aprs,  
                   const uint acpurange,
-                  const uint keyEstimation,
-                  const cvec_t& minKey,   
-                  const cvec_t& maxKey,
-                  const uint pnum);
+                  const uint keyEstimation);
 
     ~range_table_t();
 
-    virtual w_rc_t create_one_part(const uint idx, const cvec_t& down, const cvec_t& up);
+    virtual w_rc_t create_one_part(const shpid_t& pid, base_partition_t*& abp);
 
-    // Wrapper of the getPartitionByKey. Returns the idx of the partition
-    // in the array.
-    inline w_rc_t getPartIdxByKey(const cvec_t& key,uint& idx) {
-        return (_prMap->getPartitionByKey(key,idx));
+
+    // Wrappers of the getPartitionByKey. Return the idx of the partition
+    // in the array of base_partitions (_bppvec)
+
+    inline w_rc_t getPartIdxByKey(const cvec_t& cvkey, lpid_t& pid) {
+        return (_prMap->get_partition(cvkey,pid));
     }
 
-    // Return the min/max values
-    w_rc_t getMin(cvec_t& acv) const;
-    w_rc_t getMax(cvec_t& acv) const;
+    // Reads the updated range partitioning information (if plp* from the sm::range_map_keys,
+    // if dora from the dkeymap) and adjusts the boundaries of all logical partitions.
+    // If needed, creates new partitions.
+    w_rc_t repartition();
+
+private:
+
+    w_rc_t _get_updated_map(dkey_ranges_map*& drm);
 
 protected:
 
-    virtual w_rc_t _create_one_part(const uint idx, const cvec_t& down, const cvec_t& up)=0;
+    virtual w_rc_t _create_one_part(const shpid_t& pid, base_partition_t*& abp)=0;
 
 }; // EOF: range_table_t
 
