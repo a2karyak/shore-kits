@@ -471,7 +471,8 @@ public:
  *
  ******************************************************************/
 
-class dump_smt_t : public thread_t {
+class dump_smt_t : public thread_t 
+{
 private:
     ShoreEnv* _env;    
 
@@ -495,6 +496,33 @@ public:
     inline int retval() { return (_rv); }
     
 }; // EOF: dump_smt_t
+
+
+
+/****************************************************************** 
+ *
+ *  @class: abort_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used just for
+ *          aborting a list of transactions
+ *
+ ******************************************************************/
+
+class abort_smt_t : public thread_t 
+{
+private:
+    ShoreEnv* _env;    
+
+public:
+
+    vector<xct_t*>* _toabort;
+    uint _aborted;
+    
+    abort_smt_t(c_str tname, ShoreEnv* env, vector<xct_t*>& toabort);
+    ~abort_smt_t();
+    void work();
+    
+}; // EOF: abort_smt_t
 
 
 

@@ -228,7 +228,8 @@ struct LogicalLock
     bool has_owners() const  { return (!_owners.empty()); }
     bool has_waiters() const { return (!_waiters.empty()); }
 
-    void reset();
+
+    void abort_and_reset(vector<xct_t*>& toabort);
     
 private:
 
@@ -397,8 +398,9 @@ public:
     // reset map
     void reset() {
         // clear all entries
+        vector<xct_t*> toabort;
         for (LLMapIt it=_ll_map->begin(); it!=_ll_map->end(); ++it) {
-            it->second.reset();
+            it->second.abort_and_reset(toabort);
         }
         // clear map
         _ll_map->clear();
@@ -408,7 +410,7 @@ public:
     uint keystouched() const { return (_ll_map->size()); }
 
     // returns (true) if all locks are clean
-    bool is_clean() {
+    bool is_clean(vector<xct_t*>& toabort) {
         // clear all entries
         bool isClean = true;
         uint dirtyCount = 0;
@@ -416,8 +418,8 @@ public:
             if (!it->second.is_clean()) {
                 ++dirtyCount;
                 //isClean = false;
-                cout << it->second;
-                it->second.reset();
+                //cout << it->second;
+                it->second.abort_and_reset(toabort);
             }
         }
         if (dirtyCount) {

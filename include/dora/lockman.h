@@ -179,7 +179,9 @@ public:
     void reset() { _key_ll_m->reset(); }
     void dump() { _key_ll_m->dump(); }
 
-    bool is_clean()    { return (_key_ll_m->is_clean()); }
+    bool is_clean(vector<xct_t*>& toabort) { 
+        return (_key_ll_m->is_clean(toabort)); 
+    }
 
 }; // EOF: struct lock_man_t
 

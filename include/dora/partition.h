@@ -37,6 +37,9 @@
 #include "sm/shore/srmwqueue.h"
 #include "dora/lockman.h"
 
+#include "sm/shore/shore_helper_loader.h"
+
+
 using namespace shore;
 
 
@@ -446,7 +449,8 @@ w_rc_t partition_t<DataType>::prepareNewRun()
         // spin //
         TRACE( TRACE_ALWAYS, "Waiting for (%s-%d) to sleep\n", 
                _table->name(), _part_id);
-        usleep(100);
+        static uint HALF_MILLION = 500000;
+        usleep(HALF_MILLION); // sleep for a half a sec
     }
 
     // --------------------------------------
@@ -475,7 +479,19 @@ w_rc_t partition_t<DataType>::prepareNewRun()
     // waiting for actions executed by other partitions to finish.
     // This function is called before every new run. Hence, the latter
     // case should not be happening
-    assert (_plm->is_clean());
+    vector<xct_t*> toabort;
+    _plm->is_clean(toabort);
+    if (!toabort.empty()) {
+        // Fire up an smthread to abort the list
+        abort_smt_t* asmt = new abort_smt_t(c_str(_table->name()),_env,toabort);
+        assert(asmt);
+        asmt->fork();
+        asmt->join();
+        uint aborted = asmt->_aborted;
+        TRACE( TRACE_ALWAYS, "(%d) xcts aborted\n", aborted);
+        delete(asmt);
+        asmt = NULL;
+    }
 
     // Reset lock manager map by removing all the entries.
     // This should happen only if the size of the map exceeds

@@ -128,3 +128,52 @@ void dump_smt_t::work()
     _env->dump();
     _rv = 0;
 }
+
+
+
+/****************************************************************** 
+ *
+ *  @class: abort_smt_t
+ *
+ *  @brief: An smthread inherited class that it is used just for
+ *          aborting a list of transactions
+ *
+ ******************************************************************/
+    
+abort_smt_t::abort_smt_t(c_str tname, 
+                         ShoreEnv* env, 
+                         vector<xct_t*>& toabort)
+    : thread_t(tname), _env(env)
+{
+    assert(env);
+    _toabort = &toabort;
+}
+ 
+abort_smt_t::~abort_smt_t()
+{
+}
+
+void abort_smt_t::work()
+{
+    w_rc_t r = RCOK;
+    xct_t* victim = NULL;
+    me()->alloc_sdesc_cache();
+    for (vector<xct_t*>::iterator it = _toabort->begin();
+         it != _toabort->end(); ++it) {
+
+        victim = *it;
+        assert (victim);
+        _env->db()->attach_xct(victim);
+        r = _env->db()->abort_xct();
+        if (r.is_error()) {
+            TRACE( TRACE_ALWAYS, "Problem aborting (%x)\n", *it);
+        }
+        else {
+            _aborted++;
+        }
+    }
+    me()->free_sdesc_cache();
+}
+
+
+

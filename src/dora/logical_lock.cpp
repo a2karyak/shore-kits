@@ -417,27 +417,32 @@ bool LogicalLock::_upd_dlm()
 bool LogicalLock::is_clean() const
 {
     bool isClean = (_owners.empty()) && (_waiters.empty()) && (_dlm == DL_CC_NOLOCK);
-
-    // Prints out the LogicalLock (for debugging)
-    if (!isClean) { 
-        TRACE(TRACE_ALWAYS, "LogicalLock is dirty\n");
-    }
-
     return (isClean);
 }
 
 
 /******************************************************************** 
  *
- * @fn:     reset()
+ * @fn:     abort_and_reset()
  *
- * @brief:  Removes any entries from the owners and waiters, and sets lockmod
+ * @brief:  Adds the tid_t of the owner and waiter to the list of the
+ *          xcts to aborts. Removes any entries from the owners and waiters, 
+ *          and sets lockmode.
  *
  ********************************************************************/ 
 
-void 
-LogicalLock::reset()
+void LogicalLock::abort_and_reset(vector<xct_t*>& toabort)
 {
+    // Push tids for abortion
+
+    // Iterate over all Onwers
+    for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
+        xct_t* victim = (*it).action()->xct();
+        cout << (*it) << endl;
+        toabort.push_back(victim);
+    }
+    
+    // Update local state
     _owners.clear();
     _waiters.clear();
     _dlm = DL_CC_NOLOCK;
