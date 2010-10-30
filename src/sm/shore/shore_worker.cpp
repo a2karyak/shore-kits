@@ -268,6 +268,10 @@ void base_worker_t::work()
                 return;
             break;
 
+        case (WC_RECOVERY):
+            usleep(1000); // Sleep for a millisecond
+            break;
+
         case (WC_ACTIVE):
 
             _env->env_thread_init();
