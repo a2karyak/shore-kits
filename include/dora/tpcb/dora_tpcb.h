@@ -82,7 +82,7 @@ public:
     int stop();
     int resume();
     int pause();
-    int newrun();
+    w_rc_t newrun();
     int set(envVarMap* /* vars */) { return(0); /* do nothing */ };
     int dump();
     int info() const;    

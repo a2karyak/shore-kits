@@ -39,7 +39,7 @@ using namespace tpcb;
 ENTER_NAMESPACE(dora);
 
 
-typedef range_partition_i<int>   irpImpl; 
+typedef partition_t<int>   irpImpl; 
 
 
 /******** Exported functions  ********/
@@ -90,11 +90,10 @@ DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTPCBEnv,acct_update);
  *
  ********************************************************************/
 
-w_rc_t 
-DoraTPCBEnv::dora_acct_update(const int xct_id, 
-                              trx_result_tuple_t& atrt, 
-                              acct_update_input_t& in,
-                              const bool bWake)
+w_rc_t DoraTPCBEnv::dora_acct_update(const int xct_id, 
+                                     trx_result_tuple_t& atrt, 
+                                     acct_update_input_t& in,
+                                     const bool bWake)
 {
     // 1. Initiate transaction
     tid_t atid;   
@@ -124,16 +123,24 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
 
     // 5a. Decide about partition
     // 5b. Enqueue
-
-    {        
+    {
+        // *** Reminder: The TPC-B records start their numbering from 0 ***
         irpImpl* my_br_part = decide_part(br(),in.b_id);
         assert (my_br_part);
-        irpImpl* my_te_part = decide_part(te(),((in.t_id)/TPCB_TELLERS_PER_BRANCH - 1));
+        TRACE( TRACE_STATISTICS,"BR (%d) -> (%d)\n", in.b_id, my_br_part->part_id());
+
+        irpImpl* my_te_part = decide_part(te(),in.t_id);
         assert (my_te_part);
-        irpImpl* my_ac_part = decide_part(ac(),((in.a_id)/TPCB_ACCOUNTS_PER_BRANCH - 1));
+        TRACE( TRACE_STATISTICS,"TE (%d) -> (%d)\n", in.t_id, my_te_part->part_id());
+
+        irpImpl* my_ac_part = decide_part(ac(),in.a_id);
         assert (my_ac_part);
-        irpImpl* my_hi_part = decide_part(hi(),((in.a_id)/TPCB_ACCOUNTS_PER_BRANCH - 1));
+        TRACE( TRACE_STATISTICS,"AC (%d) -> (%d)\n", in.a_id, my_ac_part->part_id());
+
+        irpImpl* my_hi_part = decide_part(hi(),in.t_id);
         assert (my_hi_part);
+        TRACE( TRACE_STATISTICS,"HI (%d) -> (%d)\n", in.t_id, my_hi_part->part_id());
+        
 
         // BR_PART_CS
         CRITICAL_SECTION(br_part_cs, my_br_part->_enqueue_lock);
@@ -145,7 +152,7 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
 
         // TE_PART_CS
         CRITICAL_SECTION(te_part_cs, my_te_part->_enqueue_lock);
-        te_part_cs.exit();
+        br_part_cs.exit();
         if (my_te_part->enqueue(upd_te,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_TE\n");
             assert (0); 
@@ -154,7 +161,7 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
 
         // AC_PART_CS
         CRITICAL_SECTION(ac_part_cs, my_ac_part->_enqueue_lock);
-        ac_part_cs.exit();
+        te_part_cs.exit();
         if (my_ac_part->enqueue(upd_ac,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_AC\n");
             assert (0); 
@@ -163,7 +170,7 @@ DoraTPCBEnv::dora_acct_update(const int xct_id,
 
         // HI_PART_CS
         CRITICAL_SECTION(hi_part_cs, my_hi_part->_enqueue_lock);
-        hi_part_cs.exit();
+        ac_part_cs.exit();
         if (my_hi_part->enqueue(ins_hi,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_HI\n");
             assert (0); 

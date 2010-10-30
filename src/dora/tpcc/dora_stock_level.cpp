@@ -78,7 +78,7 @@ w_rc_t mid1_stock_rvp::run()
     r_ol_stock_action* r_ol_stock = _penv->new_r_ol_stock_action(_xct,_tid,rvp2,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_i<int>   irpImpl; 
+    typedef partition_t<int>   irpImpl; 
 
     {
         irpImpl* ol_part = _penv->decide_part(_penv->oli(),_in._wh_id-1);
@@ -119,7 +119,7 @@ w_rc_t mid2_stock_rvp::run()
     r_st_stock_action* r_st = _penv->new_r_st_stock_action(_xct,_tid,frvp,_in);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_i<int>   irpImpl; 
+    typedef partition_t<int>   irpImpl; 
 
     { 
         irpImpl* my_st_part = _penv->decide_part(_penv->sto(),_in._wh_id-1);

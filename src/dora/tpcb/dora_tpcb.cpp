@@ -68,6 +68,7 @@ const uint hi_KEY_EST  = 100;
 DoraTPCBEnv::DoraTPCBEnv(string confname)
     : ShoreTPCBEnv(confname)
 { 
+    update_pd(this);
 }
 
 DoraTPCBEnv::~DoraTPCBEnv() 
@@ -128,9 +129,14 @@ int DoraTPCBEnv::start()
 
 w_rc_t DoraTPCBEnv::update_partitioning() 
 {
+    // *** Reminder: The TPC-B records start their numbering from 0 ***
+
+    // First configure
+    conf();
+
     // Pulling this partitioning out of the thin air
     int minKeyVal = 0;
-    int maxKeyVal = get_sf()+1;
+    int maxKeyVal = get_sf();
 
     char* minKey = (char*)malloc(sizeof(int));
     memset(minKey,0,sizeof(int));
@@ -140,20 +146,21 @@ w_rc_t DoraTPCBEnv::update_partitioning()
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
-    // Branches: [ 0 .. #Branches+1 )
+    // Branches: [ 0 .. #Branches )
     _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_br);
-
-    // History: does not have account we use the same with Branches
-    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_hi);
+    
 
     // Tellers:  [ 0 .. (#Branches*TPCB_TELLERS_PER_BRANCH)+1 )
-    maxKeyVal = (get_sf()*TPCB_TELLERS_PER_BRANCH)+1;
+    maxKeyVal = (get_sf()*TPCB_TELLERS_PER_BRANCH);
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
     _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_te);
 
+    // History: does not have account we use the same with Branches
+    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_hi);
+
     // Accounts: [ 0 .. (#Branches*TPCB_ACCOUNTS_PER_BRANCH)+1 )
-    maxKeyVal = (get_sf()*TPCB_ACCOUNTS_PER_BRANCH)+1;
+    maxKeyVal = (get_sf()*TPCB_ACCOUNTS_PER_BRANCH);
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
     _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ac);
@@ -228,7 +235,7 @@ int DoraTPCBEnv::pause()
 int DoraTPCBEnv::conf()
 {
     ShoreTPCBEnv::conf();
-
+    _check_type();
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
@@ -236,19 +243,40 @@ int DoraTPCBEnv::conf()
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    // For each table read the ratio of partition per CPU and calculate the
-    // number of partition to create (depending the number of CPUs available).
-    double br_PerCPU = ev->getVarDouble("dora-ratio-tpcb-br",0);
-    _parts_br = ( br_PerCPU>0 ? (_cpu_range * br_PerCPU) : 1);
+    // For each table calculate the number of partition to create. 
+    // This decision depends on: 
+    // (a) The number of CPUs available
+    // (b) The ratio of partitions per CPU in the configuration (shore.conf)
+    // (c) The number of distinct values/records for the routing field, which 
+    //     depending on the table, the workload, and the scaling factor
 
-    double te_PerCPU = ev->getVarDouble("dora-ratio-tpcb-te",0);
-    _parts_te = ( te_PerCPU>0 ? (_cpu_range * te_PerCPU) : 1);
+    // In TPC-B we use different routing fields per table (opposed to TM1). 
+    // Hence, there is different recordEstimation per table.
+    uint recordEstimation = get_sf();
+    double br_PerCPU = ev->getVarDouble("dora-ratio-tpcb-br",1);
+    _parts_br = ( br_PerCPU>0 ? ceil(_cpu_range * br_PerCPU) : 1);
+    _parts_br = std::min(recordEstimation,_parts_br);
 
-    double ac_PerCPU = ev->getVarDouble("dora-ratio-tpcb-ac",0);
-    _parts_ac = ( ac_PerCPU>0 ? (_cpu_range * ac_PerCPU) : 1);
+    // Tellers
+    recordEstimation = get_sf()*TPCB_TELLERS_PER_BRANCH;
+    double te_PerCPU = ev->getVarDouble("dora-ratio-tpcb-te",1);
+    _parts_te = ( te_PerCPU>0 ? ceil(_cpu_range * te_PerCPU) : 1);
+    _parts_te = std::min(recordEstimation,_parts_te);
 
-    double hi_PerCPU = ev->getVarDouble("dora-ratio-tpcb-hi",0);
-    _parts_hi = ( hi_PerCPU>0 ? (_cpu_range * hi_PerCPU) : 1);
+    // Accounts
+    recordEstimation = get_sf()*TPCB_ACCOUNTS_PER_BRANCH;
+    double ac_PerCPU = ev->getVarDouble("dora-ratio-tpcb-ac",1);
+    _parts_ac = ( ac_PerCPU>0 ? ceil(_cpu_range * ac_PerCPU) : 1);
+    _parts_ac = std::min(recordEstimation,_parts_ac);
+
+    // History - uses the number of Tellers because it is quite 
+    //           flexible to partitioning (10 x #Branches)
+    recordEstimation = get_sf()*TPCB_ACCOUNTS_PER_BRANCH;
+    double hi_PerCPU = ev->getVarDouble("dora-ratio-tpcb-hi",1);
+    _parts_hi = ( hi_PerCPU>0 ? ceil(_cpu_range * hi_PerCPU) : 1);
+
+    TRACE( TRACE_STATISTICS,"Total number of partitions (%d)\n",
+           (_parts_br+_parts_te+_parts_ac+_parts_hi));
 
     return (0);
 }
@@ -265,7 +293,7 @@ int DoraTPCBEnv::conf()
  *
  ******************************************************************/
 
-int DoraTPCBEnv::newrun()
+w_rc_t DoraTPCBEnv::newrun()
 {
     return (DoraEnv::_newrun(this));
 }

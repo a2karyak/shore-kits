@@ -82,7 +82,7 @@ w_rc_t mid_nord_rvp::run()
 
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
-    typedef range_partition_i<int>   irpImpl; 
+    typedef partition_t<int>   irpImpl; 
 
     // 2. Generate and enqueue the (Midway->Final) actions
     //

@@ -82,6 +82,7 @@ const uint sto_KEY_EST = 1000;
 DoraTPCCEnv::DoraTPCCEnv(string confname)
     : ShoreTPCCEnv(confname)
 { 
+    update_pd(this);
 }
 
 DoraTPCCEnv::~DoraTPCCEnv() 
@@ -157,8 +158,13 @@ int DoraTPCCEnv::start()
 
 w_rc_t DoraTPCCEnv::update_partitioning() 
 {
+    // *** Reminder: the numbering in TPC-C starts from 1
+
+    // First configure
+    conf();
+
     // Pulling this partitioning out of the thin air
-    int minKeyVal = 0;
+    int minKeyVal = 1;
     int maxKeyVal = get_sf()+1;
 
     char* minKey = (char*)malloc(sizeof(int));
@@ -168,6 +174,26 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     char* maxKey = (char*)malloc(sizeof(int));
     memset(minKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
+
+
+#warning !!! IP: To have real PLP, the partitioning info should be decoupled by the order in the prefix tree !!!
+    // IP: 
+    // Right now we are limited to the range of value on the possible values
+    // the leading column of the index may take. In the case of TPC-C that is 
+    // the number of Warehouses (the primary keys of almost all the TPC-C tables 
+    // start with W_ID). That makes partitioning evenly difficult (e.g., how to
+    // partition a 10WH TPC-C database on a machine with 16 cores?) and it is not
+    // flexible. For example, we may have some semantic knowledge about the 
+    // distribution of values of another field, not necesserily the one in the
+    // leading column the index.
+    // In the DORA paper we say that the routing fields of a table may be chosen
+    // arbitrarily. However, in the current implementation we do not have that.
+    // Ideally, the DORA/PLP layer should be providing a value (integer) and 
+    // the KeyRangeMap would return a partition id. This value may *not* be the
+    // key. 
+    // The index scan performance will be affected. Because now if the partitioning
+    // is not according to the leading column, then we have to start multiple
+    // index scans.
 
     // [ 0 .. #WH+1 )
     // Warehouses,Districts,Customers,NewOrders,Orders,OrderLine,History,Stock
@@ -250,7 +276,7 @@ int DoraTPCCEnv::pause()
 int DoraTPCCEnv::conf()
 {
     ShoreTPCCEnv::conf();
-
+    _check_type();
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
@@ -258,34 +284,74 @@ int DoraTPCCEnv::conf()
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    // For each table read the ratio of partition per CPU and calculate the
-    // number of partition to create (depending the number of CPUs available).
+    // For each table calculate the number of partition to create. 
+    // This decision depends on: 
+    // (a) The number of CPUs available
+    // (b) The ratio of partitions per CPU in the configuration (shore.conf)
+    // (c) The number of distinct values/records for the routing field, which 
+    //     depending on the table, the workload, and the scaling factor
+
+    // In TPC-C, each table has different routing fields. Hence, there is 
+    // different recordEstimation per table.
+    uint recordEstimation = get_sf(); // == # of Warehouses
     double whs_PerCPU = ev->getVarDouble("dora-ratio-tpcc-whs",0);
     _parts_whs = ( whs_PerCPU>0 ? (_cpu_range * whs_PerCPU) : 1);
+    _parts_whs = std::min(recordEstimation,_parts_whs);
 
+    // Districts 
+    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double dis_PerCPU = ev->getVarDouble("dora-ratio-tpcc-dis",0);
     _parts_dis = ( dis_PerCPU>0 ? (_cpu_range * dis_PerCPU) : 1);
+    _parts_dis = std::min(recordEstimation,_parts_dis);
 
+    // Customers
+    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT;
     double cus_PerCPU = ev->getVarDouble("dora-ratio-tpcc-cus",0);
     _parts_cus = ( cus_PerCPU>0 ? (_cpu_range * cus_PerCPU) : 1);
+    _parts_cus = std::min(recordEstimation,_parts_cus);
 
-    double his_PerCPU = ev->getVarDouble("dora-ratio-tpcc-his",0);
-    _parts_his = ( his_PerCPU>0 ? (_cpu_range * his_PerCPU) : 1);
-
+    // NewOrders - Growing table. We use the number of Districts instead, because 
+    //             its primary key prefix is W_ID,D_ID,...
+    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE*NU_ORDERS_PER_DISTRICT;
     double nor_PerCPU = ev->getVarDouble("dora-ratio-tpcc-nor",0);
     _parts_nor = ( nor_PerCPU>0 ? (_cpu_range * nor_PerCPU) : 1);
+    _parts_nor = std::min(recordEstimation,_parts_nor);
 
+    // Orders - Growing table, treating is similarly with NewOrders
+    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double ord_PerCPU = ev->getVarDouble("dora-ratio-tpcc-ord",0);
     _parts_ord = ( ord_PerCPU>0 ? (_cpu_range * ord_PerCPU) : 1);
+    _parts_ord = std::min(recordEstimation,_parts_ord);
 
-    double ite_PerCPU = ev->getVarDouble("dora-ratio-tpcc-ite",0);
-    _parts_ite = ( ite_PerCPU>0 ? (_cpu_range * ite_PerCPU) : 1);
-
+    // OrderLines - Growing table, treating is similarly with NewOrders
+    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double oli_PerCPU = ev->getVarDouble("dora-ratio-tpcc-oli",0);
     _parts_oli = ( oli_PerCPU>0 ? (_cpu_range * oli_PerCPU) : 1);
+    _parts_oli = std::min(recordEstimation,_parts_oli);
 
+    // History - No primary key, we use the Districts because it is a 
+    //           quite flexible number (10 x #Warehouses)
+    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
+    double his_PerCPU = ev->getVarDouble("dora-ratio-tpcc-his",0);
+    _parts_his = ( his_PerCPU>0 ? (_cpu_range * his_PerCPU) : 1);
+    _parts_his = std::min(recordEstimation,_parts_his);
+
+    // Item - Constant == 100K
+    recordEstimation = ITEMS;
+    double ite_PerCPU = ev->getVarDouble("dora-ratio-tpcc-ite",0);
+    _parts_ite = ( ite_PerCPU>0 ? (_cpu_range * ite_PerCPU) : 1);
+    _parts_ite = std::min(recordEstimation,_parts_ite);
+
+    // Stocks
+    recordEstimation = get_sf()*STOCK_PER_WAREHOUSE;
     double sto_PerCPU = ev->getVarDouble("dora-ratio-tpcc-sto",0);
     _parts_sto = ( whs_PerCPU>0 ? (_cpu_range * sto_PerCPU) : 1);
+    _parts_sto = std::min(recordEstimation,_parts_sto);
+
+    TRACE( TRACE_STATISTICS,"Total number of partitions (%d)\n",
+           (_parts_whs+_parts_dis+_parts_cus+_parts_nor+
+            _parts_ord+_parts_oli+_parts_his+_parts_ite+
+            _parts_sto));
     
     return (0);
 }
@@ -299,7 +365,7 @@ int DoraTPCCEnv::conf()
  *
  ******************************************************************/
 
-int DoraTPCCEnv::newrun()
+w_rc_t DoraTPCCEnv::newrun()
 {
     return (DoraEnv::_newrun(this));
 }

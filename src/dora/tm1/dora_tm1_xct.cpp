@@ -43,7 +43,7 @@ using namespace std;
 
 ENTER_NAMESPACE(dora);
 
-typedef range_partition_i<int>   irpImpl; 
+typedef partition_t<int>   irpImpl; 
 
 
 /********

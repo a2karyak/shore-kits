@@ -44,9 +44,9 @@ ENTER_NAMESPACE(dora);
 
 /******************************************************************** 
  *
- * @enum:  dora_tm1_client_t
+ * @class: dora_tm1_client_t
  *
- * @brief: The Baseline TM1 kit smthread-based test client class
+ * @brief: The DORA TM1 kit smthread-based test client class
  *
  ********************************************************************/
 

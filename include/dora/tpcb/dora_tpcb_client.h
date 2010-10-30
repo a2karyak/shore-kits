@@ -43,9 +43,9 @@ ENTER_NAMESPACE(dora);
 
 /******************************************************************** 
  *
- * @enum:  dora_tpcb_client_t
+ * @class: dora_tpcb_client_t
  *
- * @brief: The Baseline TPC-B kit smthread-based test client class
+ * @brief: The DORA TPC-B kit smthread-based test client class
  *
  ********************************************************************/
 

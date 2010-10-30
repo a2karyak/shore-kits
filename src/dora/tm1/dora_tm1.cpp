@@ -64,8 +64,7 @@ const uint cf_KEY_EST  = 3750;
 DoraTM1Env::DoraTM1Env(string confname)
     : ShoreTM1Env(confname), DoraEnv()
 { 
-    // Update the physical design that it is a DORA environment
-    add_pd(PD_NOLOCK);
+    update_pd(this);
 }
 
 DoraTM1Env::~DoraTM1Env()
@@ -129,9 +128,14 @@ int DoraTM1Env::start()
 
 w_rc_t DoraTM1Env::update_partitioning() 
 {
+    // *** Reminder: The numbering in TM1 starts from 1. 
+
+    // First configure
+    conf();
+
     // The number of partitions in the indexes should match the DORA 
     // partitioning
-    int minKeyVal = 0;
+    int minKeyVal = 1;
     int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
 
     // vec_t minKey((char*)(&minKeyVal),sizeof(int));
@@ -218,6 +222,8 @@ int DoraTM1Env::conf()
 {
     ShoreTM1Env::conf();
 
+    _check_type();
+
     envVar* ev = envVar::instance();
 
     // Get CPU and binding configuration
@@ -225,19 +231,39 @@ int DoraTM1Env::conf()
     _starting_cpu = ev->getVarInt("dora-cpu-starting",DF_CPU_STEP_PARTITIONS);
     _cpu_table_step = ev->getVarInt("dora-cpu-table-step",DF_CPU_STEP_TABLES);
 
-    // For each table read the ratio of partition per CPU and calculate the
-    // number of partition to create (depending the number of CPUs available).
-    double sub_PerCPU = ev->getVarDouble("dora-ratio-tm1-sub",0);
-    _parts_sub = ( sub_PerCPU>0 ? (_cpu_range * sub_PerCPU) : 1);
+    // For each table calculate the number of partition to create. 
+    // This decision depends on: 
+    // (a) The number of CPUs available
+    // (b) The ratio of partitions per CPU in the configuration (shore.conf)
+    // (c) The number of distinct values/records for the routing field, which 
+    //     depending on the table, the workload, and the scaling factor
 
+    // Estimation of number of records. Actually, this is the number of
+    // distinct values the routing field can get. In TM1's case we are 
+    // using the SubscriberID.
+    uint recordEstimation = get_sf()*TM1_SUBS_PER_SF;
+    // User requested number of partitions
+    double sub_PerCPU = ev->getVarDouble("dora-ratio-tm1-sub",0);
+    _parts_sub = ( sub_PerCPU>0 ? ceil(_cpu_range * sub_PerCPU) : 1);
+    _parts_sub = std::min(recordEstimation,_parts_sub);
+
+    // AccessInfo
     double ai_PerCPU = ev->getVarDouble("dora-ratio-tm1-ai",0);
     _parts_ai = ( ai_PerCPU>0 ? (_cpu_range * ai_PerCPU) : 1);
+    _parts_ai = std::min(recordEstimation,_parts_ai);
 
+    // SpecialFacility
     double sf_PerCPU = ev->getVarDouble("dora-ratio-tm1-sf",0);
     _parts_sf = ( sf_PerCPU>0 ? (_cpu_range * sf_PerCPU) : 1);
+    _parts_sf = std::min(recordEstimation,_parts_sf);
 
+    // CallForwarding
     double cf_PerCPU = ev->getVarDouble("dora-ratio-tm1-cf",0);
     _parts_cf = ( cf_PerCPU>0 ? (_cpu_range * cf_PerCPU) : 1);
+    _parts_cf = std::min(recordEstimation,_parts_cf);
+
+    TRACE( TRACE_STATISTICS,"Total number of partitions (%d)\n",
+           (_parts_sub+_parts_ai+_parts_sf+_parts_cf));
 
     return (0);
 }
@@ -251,7 +277,7 @@ int DoraTM1Env::conf()
  *
  ******************************************************************/
 
-int DoraTM1Env::newrun()
+w_rc_t DoraTM1Env::newrun()
 {
     return (DoraEnv::_newrun(this));
 }
