@@ -50,7 +50,7 @@ ENTER_NAMESPACE(tpch);
 
 class nation_man_impl : public table_man_impl<nation_t>
 {
-    typedef row_impl<nation_t> nation_tuple;
+    typedef table_row_t nation_tuple;
 
 public:
 
@@ -70,7 +70,7 @@ public:
 
 class region_man_impl : public table_man_impl<region_t>
 {
-    typedef row_impl<region_t> region_tuple;
+    typedef table_row_t region_tuple;
 
 public:
 
@@ -89,7 +89,7 @@ public:
 
 class part_man_impl : public table_man_impl<part_t>
 {
-    typedef row_impl<part_t> part_tuple;
+    typedef table_row_t part_tuple;
 
 public:
 
@@ -108,7 +108,7 @@ public:
 
 class supplier_man_impl : public table_man_impl<supplier_t>
 {
-    typedef row_impl<supplier_t> supplier_tuple;
+    typedef table_row_t supplier_tuple;
     typedef table_scan_iter_impl<supplier_t> supplier_table_iter;
     typedef index_scan_iter_impl<supplier_t> supplier_index_iter;
 
@@ -133,7 +133,7 @@ public:
 
 class partsupp_man_impl : public table_man_impl<partsupp_t>
 {
-    typedef row_impl<partsupp_t> partsupp_tuple;
+    typedef table_row_t partsupp_tuple;
     typedef table_scan_iter_impl<partsupp_t> partsupp_table_iter;
     typedef index_scan_iter_impl<partsupp_t> partsupp_index_iter;
 
@@ -158,7 +158,7 @@ public:
 
 class customer_man_impl : public table_man_impl<customer_t>
 {
-    typedef row_impl<customer_t> customer_tuple;
+    typedef table_row_t customer_tuple;
     typedef table_scan_iter_impl<customer_t> customer_table_iter;
     typedef index_scan_iter_impl<customer_t> customer_index_iter;
 
@@ -195,7 +195,7 @@ public:
 
 class orders_man_impl : public table_man_impl<orders_t>
 {
-    typedef row_impl<orders_t> orders_tuple;
+    typedef table_row_t orders_tuple;
     typedef table_scan_iter_impl<orders_t> orders_table_iter;
     typedef index_scan_iter_impl<orders_t> orders_index_iter;
 
@@ -225,7 +225,7 @@ public:
 
 class lineitem_man_impl : public table_man_impl<lineitem_t>
 {
-    typedef row_impl<lineitem_t> lineitem_tuple;
+    typedef table_row_t lineitem_tuple;
     typedef table_scan_iter_impl<lineitem_t> lineitem_table_iter;
     typedef index_scan_iter_impl<lineitem_t> lineitem_index_iter;
 

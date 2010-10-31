@@ -76,7 +76,7 @@ w_rc_t r_sub_gsd_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
@@ -243,7 +243,7 @@ w_rc_t r_sf_gnd_action::trx_exec()
 
     // get table tuple from the cache
     // SpecialFacility
-    row_impl<special_facility_t>* prsf = _penv->sf_man()->get_tuple();
+    table_row_t* prsf = _penv->sf_man()->get_tuple();
     assert (prsf);
 
     rep_row_t areprow(_penv->sf_man()->ts());
@@ -312,7 +312,7 @@ w_rc_t r_cf_gnd_action::trx_exec()
 
     // get table tuple from the cache
     // CallForwarding
-    row_impl<call_forwarding_t>* prcf = _penv->cf_man()->get_tuple();
+    table_row_t* prcf = _penv->cf_man()->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_penv->cf_man()->ts());
@@ -427,7 +427,7 @@ w_rc_t r_ai_gad_action::trx_exec()
 
     // get table tuple from the cache
     // AccessInfo
-    row_impl<access_info_t>* prai = _penv->ai_man()->get_tuple();
+    table_row_t* prai = _penv->ai_man()->get_tuple();
     assert (prai);
 
     rep_row_t areprow(_penv->ai_man()->ts());
@@ -551,7 +551,7 @@ w_rc_t upd_sub_usd_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
@@ -621,7 +621,7 @@ w_rc_t upd_sf_usd_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<special_facility_t>* prsf = _penv->sf_man()->get_tuple();
+    table_row_t* prsf = _penv->sf_man()->get_tuple();
     assert (prsf);
 
     rep_row_t areprow(_penv->sf_man()->ts());
@@ -701,7 +701,7 @@ w_rc_t upd_sub_ul_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
@@ -914,7 +914,7 @@ w_rc_t r_sub_icf_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     // allocate space for the larger table representation
@@ -970,7 +970,7 @@ w_rc_t r_sf_icf_action::trx_exec()
 
     // get table tuple from the cache
     // SpecialFacility
-    row_impl<special_facility_t>* prsf = _penv->sf_man()->get_tuple();
+    table_row_t* prsf = _penv->sf_man()->get_tuple();
     assert (prsf);
 
     rep_row_t areprow(_penv->sf_man()->ts());
@@ -1073,7 +1073,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
 
     // get table tuple from the cache
     // CallForwarding
-    row_impl<call_forwarding_t>* prcf = _penv->cf_man()->get_tuple();
+    table_row_t* prcf = _penv->cf_man()->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_penv->cf_man()->ts());
@@ -1213,7 +1213,7 @@ w_rc_t r_sub_dcf_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     // allocate space for the larger table representation
@@ -1271,7 +1271,7 @@ w_rc_t del_cf_dcf_action::trx_exec()
 
     // get table tuple from the cache
     // CallForwarding
-    row_impl<call_forwarding_t>* prcf = _penv->cf_man()->get_tuple();
+    table_row_t* prcf = _penv->cf_man()->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_penv->cf_man()->ts());
@@ -1377,7 +1377,7 @@ w_rc_t r_sub_gsn_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());
@@ -1475,7 +1475,7 @@ w_rc_t r_sub_gsn_acc_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<subscriber_t>* prsub = _penv->sub_man()->get_tuple();
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_penv->sub_man()->ts());

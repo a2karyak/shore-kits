@@ -180,7 +180,7 @@ w_rc_t r_wh_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<warehouse_t>* prwh = _penv->warehouse_man()->get_tuple();
+    table_row_t* prwh = _penv->warehouse_man()->get_tuple();
     assert (prwh);
 
     rep_row_t areprow(_penv->warehouse_man()->ts());
@@ -240,7 +240,7 @@ w_rc_t r_cust_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<customer_t>* prcust = _penv->customer_man()->get_tuple();
+    table_row_t* prcust = _penv->customer_man()->get_tuple();
     assert (prcust);
 
     rep_row_t areprow(_penv->customer_man()->ts());
@@ -305,7 +305,7 @@ w_rc_t upd_dist_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<district_t>* prdist = _penv->district_man()->get_tuple();
+    table_row_t* prdist = _penv->district_man()->get_tuple();
     assert (prdist);
 
     rep_row_t areprow(_penv->district_man()->ts());
@@ -394,7 +394,7 @@ w_rc_t r_item_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<item_t>* pritem = _penv->item_man()->get_tuple();
+    table_row_t* pritem = _penv->item_man()->get_tuple();
     assert (pritem);
 
     rep_row_t areprow(_penv->item_man()->ts());
@@ -474,7 +474,7 @@ w_rc_t upd_sto_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<stock_t>* prst = _penv->stock_man()->get_tuple();
+    table_row_t* prst = _penv->stock_man()->get_tuple();
     assert (prst);
 
     rep_row_t areprow(_penv->stock_man()->ts());
@@ -611,7 +611,7 @@ w_rc_t ins_ord_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<order_t>* prord = _penv->order_man()->get_tuple();
+    table_row_t* prord = _penv->order_man()->get_tuple();
     assert (prord);
 
     rep_row_t areprow(_penv->order_man()->ts());
@@ -676,7 +676,7 @@ w_rc_t ins_nord_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<new_order_t>* prno = _penv->new_order_man()->get_tuple();
+    table_row_t* prno = _penv->new_order_man()->get_tuple();
     assert (prno);
 
     rep_row_t areprow(_penv->new_order_man()->ts());
@@ -736,7 +736,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<order_line_t>* prol = _penv->order_line_man()->get_tuple();
+    table_row_t* prol = _penv->order_line_man()->get_tuple();
     assert (prol);
 
     rep_row_t areprow(_penv->order_line_man()->ts());

@@ -50,7 +50,7 @@ ENTER_NAMESPACE(tpcc);
 
 class warehouse_man_impl : public table_man_impl<warehouse_t>
 {
-    typedef row_impl<warehouse_t> warehouse_tuple;
+    typedef table_row_t warehouse_tuple;
 
 public:
 
@@ -90,7 +90,7 @@ public:
 
 class district_man_impl : public table_man_impl<district_t>
 {
-    typedef row_impl<district_t> district_tuple;
+    typedef table_row_t district_tuple;
 
 public:
 
@@ -143,7 +143,7 @@ public:
 
 class customer_man_impl : public table_man_impl<customer_t>
 {
-    typedef row_impl<customer_t> customer_tuple;
+    typedef table_row_t customer_tuple;
     typedef table_scan_iter_impl<customer_t> customer_table_iter;
     typedef index_scan_iter_impl<customer_t> customer_index_iter;
 
@@ -236,7 +236,7 @@ public:
 
 class history_man_impl : public table_man_impl<history_t>
 {
-    typedef row_impl<history_t> history_tuple;
+    typedef table_row_t history_tuple;
 
 public:
 
@@ -251,7 +251,7 @@ public:
 
 class new_order_man_impl : public table_man_impl<new_order_t>
 {
-    typedef row_impl<new_order_t> new_order_tuple;
+    typedef table_row_t new_order_tuple;
     typedef table_scan_iter_impl<new_order_t> new_order_table_iter;
     typedef index_scan_iter_impl<new_order_t> new_order_index_iter;
 
@@ -304,7 +304,7 @@ public:
 
 class order_man_impl : public table_man_impl<order_t>
 {
-    typedef row_impl<order_t> order_tuple;
+    typedef table_row_t order_tuple;
     typedef table_scan_iter_impl<order_t> order_table_iter;
     typedef index_scan_iter_impl<order_t> order_index_iter;
 
@@ -356,7 +356,7 @@ public:
 
 class order_line_man_impl : public table_man_impl<order_line_t>
 {
-    typedef row_impl<order_line_t> order_line_tuple;
+    typedef table_row_t order_line_tuple;
     typedef table_scan_iter_impl<order_line_t> order_line_table_iter;
     typedef index_scan_iter_impl<order_line_t> order_line_index_iter;
 
@@ -422,7 +422,7 @@ public:
 
 class item_man_impl : public table_man_impl<item_t>
 {
-    typedef row_impl<item_t> item_tuple;
+    typedef table_row_t item_tuple;
     typedef table_scan_iter_impl<item_t> item_table_iter;
     typedef index_scan_iter_impl<item_t> item_index_iter;
 
@@ -456,7 +456,7 @@ public:
 
 class stock_man_impl : public table_man_impl<stock_t>
 {
-    typedef row_impl<stock_t> stock_tuple;
+    typedef table_row_t stock_tuple;
     typedef table_scan_iter_impl<stock_t> stock_table_iter;
     typedef index_scan_iter_impl<stock_t> stock_index_iter;
 

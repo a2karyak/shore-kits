@@ -21,8 +21,6 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/* -*- mode:C++; c-basic-offset:4 -*- */
-
 /** @file:   shore_ssb_schema_man.h
  *
  *  @brief:  Declaration of the SSB table managers
@@ -54,7 +52,7 @@ ENTER_NAMESPACE(ssb);
 
 class part_man_impl : public table_man_impl<part_t>
 {
-    typedef row_impl<part_t> part_tuple;
+    typedef table_row_t part_tuple;
 
 public:
 
@@ -73,7 +71,7 @@ public:
 
 class date_man_impl : public table_man_impl<date_t>
 {
-    typedef row_impl<date_t> date_tuple;
+    typedef table_row_t date_tuple;
 
 public:
 
@@ -93,9 +91,7 @@ public:
 
 class supplier_man_impl : public table_man_impl<supplier_t>
 {
-    typedef row_impl<supplier_t> supplier_tuple;
-    //    typedef table_scan_iter_impl<supplier_t> supplier_table_iter;
-    //    typedef index_scan_iter_impl<supplier_t> supplier_index_iter;
+    typedef table_row_t supplier_tuple;
 
 public:
 
@@ -120,9 +116,7 @@ public:
 
 class customer_man_impl : public table_man_impl<customer_t>
 {
-    typedef row_impl<customer_t> customer_tuple;
-    //    typedef table_scan_iter_impl<customer_t> customer_table_iter;
-    //    typedef index_scan_iter_impl<customer_t> customer_index_iter;
+    typedef table_row_t customer_tuple;
 
 public:
 
@@ -162,9 +156,7 @@ public:
 
 class lineorder_man_impl : public table_man_impl<lineorder_t>
 {
-    typedef row_impl<lineorder_t> lineorder_tuple;
-    //    typedef table_scan_iter_impl<lineorder_t> lineorder_table_iter;
-    //    typedef index_scan_iter_impl<lineorder_t> lineorder_index_iter;
+    typedef table_row_t lineorder_tuple;
 
 public:
 

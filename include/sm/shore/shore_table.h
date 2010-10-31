@@ -221,7 +221,7 @@ public:
     // # of indexes
     int index_count() { return (_indexes->index_count()); } 
 
-    index_desc_t* primary() { return (_primary_idx); }
+    index_desc_t* primary_idx() { return (_primary_idx); }
     stid_t get_primary_stid();
 
 
@@ -236,8 +236,6 @@ public:
     int   index_maxkeysize(index_desc_t* index) const; /* max index key size */
 
 
-
-
     /* ---------------------------------------------------------------- */
     /* --- for the conversion between disk format and memory format --- */
     /* ---------------------------------------------------------------- */
@@ -249,6 +247,7 @@ public:
         assert (_desc);
         return (&(_desc[descidx]));
     }    
+
 
 
     /* ----------------- */
@@ -274,11 +273,167 @@ typedef std::list<table_desc_t*> table_list_t;
 
 class table_man_t
 {
+protected:
+
+    table_desc_t* _ptable;       /* pointer back to the table description */
+
 public:
 
-    table_man_t() {}
+    typedef table_row_t table_tuple; 
+
+    table_man_t(table_desc_t* aTableDesc) 
+        : _ptable(aTableDesc)
+    {
+    }
 
     virtual ~table_man_t() {}
+
+
+    int get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const;
+
+
+    /* ---------------------------- */
+    /* --- access through index --- */
+    /* ---------------------------- */
+
+    // idx probe
+    w_rc_t index_probe(ss_m* db,
+                       index_desc_t* pidx,
+                       table_tuple*  ptuple,
+                       lock_mode_t   lock_mode = SH,         /* One of: NL, SH, EX */
+                       latch_mode_t  heap_latch_mode = LATCH_SH,  /* For the Heap page. One of: LATCH_SH, LATCH_EX */
+                       const lpid_t& root = lpid_t::null);   /* Start of the search */
+    
+    // probe idx in EX (& LATCH_EX) mode
+    inline w_rc_t   index_probe_forupdate(ss_m* db,
+                                          index_desc_t* pidx,
+                                          table_tuple*  ptuple,
+                                          const lpid_t& root = lpid_t::null)
+    {
+        return (index_probe(db, pidx, ptuple, EX, LATCH_EX, root));
+    }
+
+    // probe idx in NL (& LATCH_SH) mode
+    inline w_rc_t   index_probe_nl(ss_m* db,
+                                   index_desc_t* pidx,
+                                   table_tuple*  ptuple,
+                                   latch_mode_t  heap_latch_mode = LATCH_SH,
+                                   const lpid_t& root = lpid_t::null)
+    {
+        return (index_probe(db, pidx, ptuple, NL, heap_latch_mode, root));
+    }
+
+    // probe primary idx
+    inline w_rc_t   index_probe_primary(ss_m* db, 
+                                        table_tuple* ptuple, 
+                                        lock_mode_t  lock_mode = SH,        
+                                        latch_mode_t heap_latch_mode = LATCH_SH,
+                                        const lpid_t& root = lpid_t::null)
+    {
+        assert (_ptable && _ptable->primary_idx());
+        return (index_probe(db, _ptable->primary_idx(), ptuple, lock_mode, heap_latch_mode, root));
+    }
+
+
+    // probes based on the name of the index
+
+
+    // idx probe - based on idx name //
+    inline w_rc_t   index_probe_by_name(ss_m* db, 
+                                        const char*  idx_name, 
+                                        table_tuple* ptuple,
+                                        lock_mode_t  lock_mode = SH,      
+                                        latch_mode_t heap_latch_mode = LATCH_SH,
+                                        const lpid_t& root = lpid_t::null)
+    {
+        index_desc_t* pindex = _ptable->find_index(idx_name);
+        return (index_probe(db, pindex, ptuple, lock_mode, heap_latch_mode, root));
+    }
+
+    // probe idx in EX (& LATCH_EX) mode - based on idx name //
+    inline w_rc_t   index_probe_forupdate_by_name(ss_m* db, 
+                                                  const char* idx_name,
+                                                  table_tuple* ptuple,
+                                                  const lpid_t& root = lpid_t::null) 
+    { 
+	index_desc_t* pindex = _ptable->find_index(idx_name);
+	return (index_probe_forupdate(db, pindex, ptuple, root));
+    }
+
+    // probe idx in NL (& LATCH_NL) mode - based on idx name //
+    inline w_rc_t   index_probe_nl_by_name(ss_m* db, 
+                                           const char* idx_name,
+                                           table_tuple* ptuple,
+                                           latch_mode_t  heap_latch_mode = LATCH_SH,
+                                           const lpid_t& root = lpid_t::null) 
+    { 
+	index_desc_t* pindex = _ptable->find_index(idx_name);
+	return (index_probe_nl(db, pindex, ptuple, heap_latch_mode, root));
+    }
+
+
+    /* -------------------------- */
+    /* --- tuple manipulation --- */
+    /* -------------------------- */
+
+    w_rc_t    add_tuple(ss_m* db, 
+                        table_tuple*  ptuple, 
+                        lock_mode_t   lock_mode = EX,
+                        latch_mode_t  heap_latch_mode = LATCH_EX,
+                        const lpid_t& primary_root = lpid_t::null);
+
+    w_rc_t    update_tuple(ss_m* db, 
+                           table_tuple* ptuple, 
+                           lock_mode_t lock_mode = EX,
+                           uint system_mode = PD_NORMAL,
+                           latch_mode_t heap_latch_mode = LATCH_EX);
+
+    w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
+
+    // Direct access through the rid
+    w_rc_t    read_tuple(table_tuple* ptuple, lock_mode_t lm = SH);
+
+
+    
+    /* ----------------------------- */
+    /* --- formatting operations --- */
+    /* ----------------------------- */
+
+    // format tuple
+    int  format(table_tuple* ptuple, rep_row_t &arep);
+
+    // load tuple from input buffer
+    bool load(table_tuple* ptuple, const char* string);
+
+    // disk space needed for tuple
+    int  size(table_tuple* ptuple) const; 
+
+    // format the key value
+    int  format_key(index_desc_t* pindex, 
+                    table_tuple* ptuple, 
+                    rep_row_t &arep);
+
+    // load key index from input buffer 
+    bool load_key(const char* string,
+                  index_desc_t* pindex,
+                  table_tuple* ptuple);
+
+    // set indexed fields of the row to minimum
+    int  min_key(index_desc_t* pindex, 
+                 table_tuple* ptuple, 
+                 rep_row_t &arep);
+
+    // set indexed fields of the row to maximum
+    int  max_key(index_desc_t* pindex, 
+                 table_tuple* ptuple, 
+                 rep_row_t &arep);
+
+    // length of the formatted key
+    int  key_size(index_desc_t* pindex, 
+                  const table_tuple* ptuple) const;
+
+
+
 
 
     /* ------------------------------------------------------- */

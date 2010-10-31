@@ -67,7 +67,7 @@ class customer_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<customer_t>* _prcust;
+    table_row_t* _prcust;
     rep_row_t _rr;
 
     ssb_customer_tuple _customer;

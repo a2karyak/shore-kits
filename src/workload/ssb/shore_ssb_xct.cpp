@@ -233,7 +233,7 @@ w_rc_t ShoreSSBEnv::_gen_one_date(const int id,
                                      rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<date_t>*   prda = _pdate_man->get_tuple();
+    table_row_t*   prda = _pdate_man->get_tuple();
     assert (prda);
     prda->_rep = &areprow;
 
@@ -302,7 +302,7 @@ w_rc_t ShoreSSBEnv::_gen_one_supplier(const int id,
                                        rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<supplier_t>* prsu = _psupplier_man->get_tuple();
+    table_row_t* prsu = _psupplier_man->get_tuple();
     assert (prsu);
     prsu->_rep = &areprow;
 
@@ -353,7 +353,7 @@ w_rc_t ShoreSSBEnv::_gen_one_customer(const int id,
                                        rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<customer_t>* prcu = _pcustomer_man->get_tuple();
+    table_row_t* prcu = _pcustomer_man->get_tuple();
     assert (prcu);
     prcu->_rep = &areprow;
 
@@ -409,7 +409,7 @@ w_rc_t ShoreSSBEnv::_gen_one_part(const int id,
                                          rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<part_t>*     prpa = _ppart_man->get_tuple();
+    table_row_t*     prpa = _ppart_man->get_tuple();
     assert (prpa);
     prpa->_rep = &areprow;
 
@@ -464,7 +464,7 @@ w_rc_t ShoreSSBEnv::_gen_one_lineorder(const int id,
                                          rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<lineorder_t>*     prlo = _plineorder_man->get_tuple();
+    table_row_t*     prlo = _plineorder_man->get_tuple();
     assert (prlo);
     prlo->_rep = &areprow;
 

@@ -108,7 +108,7 @@ class q13_customer_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreTPCHEnv* _tpchdb;
-    row_impl<customer_t>* _prcustomer;
+    table_row_t* _prcustomer;
     rep_row_t _rr;
 
     /*One lineitem tuple*/
@@ -174,7 +174,7 @@ public:
 class q13_orders_tscan_filter_t : public tuple_filter_t {
 private:
     ShoreTPCHEnv* _tpchdb;
-    row_impl<orders_t>* _prorder;
+    table_row_t* _prorder;
     rep_row_t _rr;
 
     /*One lineitem tuple*/

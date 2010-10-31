@@ -61,7 +61,7 @@ class supplier_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<supplier_t>* _prsupp;
+    table_row_t* _prsupp;
     rep_row_t _rr;
 
     ssb_supplier_tuple _supplier;

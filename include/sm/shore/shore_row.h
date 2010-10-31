@@ -119,35 +119,25 @@ typedef intptr_t offset_t;
 typedef atomic_class_stack<char> ats_char_t;
 #endif
 
+
+/* ---------------------------------------------------------------
+ *
+ * @struct: rep_row_t
+ *
+ * @brief:  A scratchpad for writing the disk format of a tuple
+ *
+ * --------------------------------------------------------------- */
+
 struct rep_row_t 
 {    
     char* _dest;       /* pointer to a buffer */
     uint   _bufsz;     /* buffer size */
     ats_char_t* _pts;  /* pointer to a trash stack */
 
-    rep_row_t()
-        : _dest(NULL), _bufsz(0), _pts(NULL)
-    { }
 
-    rep_row_t(ats_char_t* apts) 
-        : _dest(NULL), _bufsz(0), _pts(apts)
-    { 
-        assert (_pts);
-    }
-
-//     rep_row_t(char* &dest, uint &bufsz, ats_char_t* apts) 
-//         : _dest(dest), _bufsz(0), _pts(apts)
-//     {
-//         assert (_pts);
-//     }
-
-    ~rep_row_t() {
-        if (_dest) {
-            //            delete [] _dest;
-            _pts->destroy(_dest);
-            _dest = NULL;
-        }
-    }
+    rep_row_t();
+    rep_row_t(ats_char_t* apts);
+    ~rep_row_t();
 
     void set(const uint nsz);
 
@@ -166,8 +156,12 @@ struct rep_row_t
  *
  * --------------------------------------------------------------- */
 
+class table_desc_t;
+
 struct table_row_t 
 {    
+    table_desc_t*  _ptable;       /* pointer back to the table description */
+
     uint           _field_cnt;    /* number of fields */
     bool           _is_setup;     /* flag if already setup */
     
@@ -187,18 +181,25 @@ struct table_row_t
     /* --- construction --- */
     /* -------------------- */
 
-    table_row_t() 
-        : _field_cnt(0), _is_setup(false), 
-          _rid(rid_t::null), _pvalues(NULL), 
-          _fixed_offset(0),_var_slot_offset(0),_var_offset(0),_null_count(0),
-          _rep(NULL)
-    { 
-    }
-        
-    virtual ~table_row_t() 
+    table_row_t();        
+    table_row_t(table_desc_t* ptd)
     {
-        freevalues();
+        assert (ptd);
+        setup(ptd);
     }
+
+    virtual ~table_row_t();
+
+
+
+    /* ----------------------------------------------------------------- */
+    /* --- setup row according to table description, asserts if NULL --- */
+    /* --- this setup is done only once, at the initialization of    --- */
+    /* --- the record in the cache                                   --- */
+    /* ----------------------------------------------------------------- */
+
+    int setup(table_desc_t* ptd);
+
 
     /* ---------------------- */
     /* --- access methods --- */

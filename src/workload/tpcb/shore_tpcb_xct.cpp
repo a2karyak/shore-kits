@@ -276,16 +276,16 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
     // branch, teller, account, and history
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
+    table_row_t* prb = _pbranch_man->get_tuple();
     assert (prb);
 
-    row_impl<teller_t>* prt = _pteller_man->get_tuple();
+    table_row_t* prt = _pteller_man->get_tuple();
     assert (prt);
 
-    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    table_row_t* pracct = _paccount_man->get_tuple();
     assert (pracct);
 
-    row_impl<history_t>* prhist = _phistory_man->get_tuple();
+    table_row_t* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -386,16 +386,16 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
     // branch, teller, account, and history -- just like TPC-C payment:
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
+    table_row_t* prb = _pbranch_man->get_tuple();
     assert (prb);
 
-    row_impl<teller_t>* prt = _pteller_man->get_tuple();
+    table_row_t* prt = _pteller_man->get_tuple();
     assert (prt);
 
-    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    table_row_t* pracct = _paccount_man->get_tuple();
     assert (pracct);
 
-    row_impl<history_t>* prhist = _phistory_man->get_tuple();
+    table_row_t* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -516,7 +516,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */,
     // accounts
 
     // get table tuples from the caches
-    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    table_row_t* pracct = _paccount_man->get_tuple();
     assert (pracct);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -574,7 +574,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_only(const int /* xct_id */,
     // accounts
 
     // get table tuples from the caches
-    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    table_row_t* pracct = _paccount_man->get_tuple();
     assert (pracct);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -629,7 +629,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */,
     // accounts
 
     // get table tuples from the caches
-    row_impl<account_t>* pracct = _paccount_man->get_tuple();
+    table_row_t* pracct = _paccount_man->get_tuple();
     assert (pracct);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -679,7 +679,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_delete(const int /* xct_id */,
     // branch
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
+    table_row_t* prb = _pbranch_man->get_tuple();
     assert (prb);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -738,7 +738,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_probe(const int /* xct_id */,
     // branch
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
+    table_row_t* prb = _pbranch_man->get_tuple();
     assert (prb);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -797,7 +797,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_probe(const int /* xct_id */,
     // branch
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
+    table_row_t* prb = _pbranch_man->get_tuple();
     assert (prb);
 
     rep_row_t areprow(_paccount_man->ts());
@@ -853,7 +853,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_mix(const int /* xct_id */,
     // branch
 
     // get table tuples from the caches
-    row_impl<branch_t>* prb = _pbranch_man->get_tuple();
+    table_row_t* prb = _pbranch_man->get_tuple();
     assert (prb);
 
     rep_row_t areprow(_paccount_man->ts());

@@ -325,10 +325,10 @@ w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int /* xct_id */,
     assert (_pssm);
     assert (_initialized);
 
-    row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
+    table_row_t* prwh = _pwarehouse_man->get_tuple();
     assert (prwh);
 
-    row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
+    table_row_t* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
     // not sure which of the Warehouse and District is bigger, 
@@ -411,25 +411,25 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int /* xct_id */,
     assert (_pssm);
     assert (_initialized);
 
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    table_row_t* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
-    row_impl<new_order_t>* prno = _pnew_order_man->get_tuple();
+    table_row_t* prno = _pnew_order_man->get_tuple();
     assert (prno);
 
-    row_impl<order_t>* prord = _porder_man->get_tuple();
+    table_row_t* prord = _porder_man->get_tuple();
     assert (prord);
 
-    row_impl<item_t>* pritem = _pitem_man->get_tuple();
+    table_row_t* pritem = _pitem_man->get_tuple();
     assert (pritem);
 
-    row_impl<history_t>* prhist = _phistory_man->get_tuple();
+    table_row_t* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
-    row_impl<stock_t>* prst = _pstock_man->get_tuple();
+    table_row_t* prst = _pstock_man->get_tuple();
     assert (prst);
 
-    row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
+    table_row_t* prol = _porder_line_man->get_tuple();
     assert (prol);
     
     rep_row_t areprow(_pcustomer_man->ts());
@@ -774,28 +774,28 @@ ShoreTPCCEnv::xct_new_order(const int xct_id,
 
     // new_order trx touches 8 tables:
     // warehouse, district, customer, neworder, order, item, stock, orderline
-    row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
+    table_row_t* prwh = _pwarehouse_man->get_tuple();
     assert (prwh);
 
-    row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
+    table_row_t* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    table_row_t* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
-    row_impl<new_order_t>* prno = _pnew_order_man->get_tuple();
+    table_row_t* prno = _pnew_order_man->get_tuple();
     assert (prno);
 
-    row_impl<order_t>* prord = _porder_man->get_tuple();
+    table_row_t* prord = _porder_man->get_tuple();
     assert (prord);
 
-    row_impl<item_t>* pritem = _pitem_man->get_tuple();
+    table_row_t* pritem = _pitem_man->get_tuple();
     assert (pritem);
 
-    row_impl<stock_t>* prst = _pstock_man->get_tuple();
+    table_row_t* prst = _pstock_man->get_tuple();
     assert (prst);
 
-    row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
+    table_row_t* prol = _porder_line_man->get_tuple();
     assert (prol);
 
     w_rc_t e = RCOK;
@@ -1080,16 +1080,16 @@ w_rc_t ShoreTPCCEnv::xct_payment(const int xct_id,
     // warehouse, district, customer, and history
 
     // get table tuples from the caches
-    row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
+    table_row_t* prwh = _pwarehouse_man->get_tuple();
     assert (prwh);
 
-    row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
+    table_row_t* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    table_row_t* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
-    row_impl<history_t>* prhist = _phistory_man->get_tuple();
+    table_row_t* prhist = _phistory_man->get_tuple();
     assert (prhist);
 
     w_rc_t e = RCOK;
@@ -1394,13 +1394,13 @@ w_rc_t ShoreTPCCEnv::xct_order_status(const int xct_id,
     // order_status trx touches 3 tables: 
     // customer, order and orderline
 
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    table_row_t* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
-    row_impl<order_t>* prord = _porder_man->get_tuple();
+    table_row_t* prord = _porder_man->get_tuple();
     assert (prord);
 
-    row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
+    table_row_t* prol = _porder_line_man->get_tuple();
     assert (prol);
 
     w_rc_t e = RCOK;
@@ -1628,16 +1628,16 @@ w_rc_t ShoreTPCCEnv::xct_delivery(const int xct_id,
 
     // delivery trx touches 4 tables: 
     // new_order, order, orderline, and customer
-    row_impl<new_order_t>* prno = _pnew_order_man->get_tuple();
+    table_row_t* prno = _pnew_order_man->get_tuple();
     assert (prno);
 
-    row_impl<order_t>* prord = _porder_man->get_tuple();
+    table_row_t* prord = _porder_man->get_tuple();
     assert (prord);
 
-    row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
+    table_row_t* prol = _porder_line_man->get_tuple();
     assert (prol);    
 
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    table_row_t* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
 
     w_rc_t e = RCOK;
@@ -1882,13 +1882,13 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
 
     // stock level trx touches 3 tables: 
     // district, orderline, and stock
-    row_impl<district_t>* prdist = _pdistrict_man->get_tuple();
+    table_row_t* prdist = _pdistrict_man->get_tuple();
     assert (prdist);
 
-    row_impl<order_line_t>* prol = _porder_line_man->get_tuple();
+    table_row_t* prol = _porder_line_man->get_tuple();
     assert (prol);
 
-    row_impl<stock_t>* prst = _pstock_man->get_tuple();
+    table_row_t* prst = _pstock_man->get_tuple();
     assert (prst);
 
     w_rc_t e = RCOK;
@@ -1972,7 +1972,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
         ol_list.setup(2, SQL_INT);  /* OL_D_ID */
         ol_list.setup(3, SQL_INT);  /* OL_O_ID */
         sort_man_impl ol_sorter(&ol_list, &sortrep);
-        row_impl<sort_buffer_t> rsb(&ol_list);
+        table_row_t rsb(&ol_list);
 
         // iterate over all selected orderlines and add them to the sorted buffer
         bool eof;
@@ -2102,7 +2102,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_wh(const int xct_id,
     // warehouse
 
     // get table tuples from the caches
-    row_impl<warehouse_t>* prwh = _pwarehouse_man->get_tuple();
+    table_row_t* prwh = _pwarehouse_man->get_tuple();
     assert (prwh);
     
     w_rc_t e = RCOK;
@@ -2181,7 +2181,7 @@ w_rc_t ShoreTPCCEnv::xct_mbench_cust(const int xct_id,
 
     // mbench trx touches 1 table: 
     // customer
-    row_impl<customer_t>* prcust = _pcustomer_man->get_tuple();
+    table_row_t* prcust = _pcustomer_man->get_tuple();
     assert (prcust);
     
     w_rc_t e = RCOK;

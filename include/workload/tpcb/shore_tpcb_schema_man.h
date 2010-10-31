@@ -49,7 +49,7 @@ ENTER_NAMESPACE(tpcb);
 
 class branch_man_impl : public table_man_impl<branch_t>
 {
-    typedef row_impl<branch_t> branch_tuple;
+    typedef table_row_t branch_tuple;
 
 public:
 
@@ -78,7 +78,7 @@ public:
 
 class teller_man_impl : public table_man_impl<teller_t>
 {
-    typedef row_impl<teller_t> teller_tuple;
+    typedef table_row_t teller_tuple;
 
 public:
 
@@ -103,7 +103,7 @@ public:
 
 class account_man_impl : public table_man_impl<account_t>
 {
-    typedef row_impl<account_t> account_tuple;
+    typedef table_row_t account_tuple;
     typedef table_scan_iter_impl<account_t> account_table_iter;
     typedef index_scan_iter_impl<account_t> account_index_iter;
 
@@ -147,7 +147,7 @@ public:
 
 class history_man_impl : public table_man_impl<history_t>
 {
-    typedef row_impl<history_t> history_tuple;
+    typedef table_row_t history_tuple;
 
 public:
 

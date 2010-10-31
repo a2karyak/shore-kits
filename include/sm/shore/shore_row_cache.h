@@ -36,8 +36,7 @@
 
 #include "k_defines.h"
 #include "block_alloc.h"
-#include "shore_row_impl.h"
-
+#include "sm/shore/shore_row.h"
 
 ENTER_NAMESPACE(shore);
 
@@ -45,7 +44,7 @@ template <class TableDesc>
 class row_cache_t 
 {
 public:    
-    typedef row_impl<TableDesc> table_tuple;
+    typedef table_row_t table_tuple;
 
     struct tuple_factory {
 	// WARNING: manually assign non-NULL before using the cache... Or Else

@@ -172,7 +172,7 @@ w_rc_t r_cust_ordst_action::trx_exec()
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    row_impl<customer_t>* prcust = _penv->customer_man()->get_tuple();
+    table_row_t* prcust = _penv->customer_man()->get_tuple();
     assert (prcust);
 
     rep_row_t areprow(_penv->customer_man()->ts());
@@ -307,7 +307,7 @@ w_rc_t r_ord_ordst_action::trx_exec()
     w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    row_impl<order_t>* prord = _penv->order_man()->get_tuple();
+    table_row_t* prord = _penv->order_man()->get_tuple();
     assert (prord);
 
     rep_row_t areprow(_penv->order_man()->ts());
@@ -404,7 +404,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
 
     // get table tuple from the cache
 
-    row_impl<order_line_t>* prol = _penv->order_line_man()->get_tuple();
+    table_row_t* prol = _penv->order_line_man()->get_tuple();
     assert(prol);
 
     rep_row_t areprow(_penv->order_line_man()->ts());

@@ -158,7 +158,7 @@ w_rc_t r_dist_stock_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<district_t>* prdist = _penv->district_man()->get_tuple();
+    table_row_t* prdist = _penv->district_man()->get_tuple();
     assert (prdist);
 
     rep_row_t areprow(_penv->district_man()->ts());
@@ -225,7 +225,7 @@ w_rc_t r_ol_stock_action::trx_exec()
 
     // get table tuple from the cache
 
-    row_impl<order_line_t>* prol = _penv->order_line_man()->get_tuple();
+    table_row_t* prol = _penv->order_line_man()->get_tuple();
     assert (prol);
 
     rep_row_t areprow(_penv->order_line_man()->ts());
@@ -247,7 +247,7 @@ w_rc_t r_ol_stock_action::trx_exec()
     ol_list.setup(2, SQL_INT);  /* OL_D_ID */
     ol_list.setup(3, SQL_INT);  /* OL_O_ID */
     sort_man_impl ol_sorter(&ol_list, &sortrep);
-    row_impl<sort_buffer_t> rsb(&ol_list);
+    table_row_t rsb(&ol_list);
 
     w_rc_t e = RCOK;
     bool eof;
@@ -379,7 +379,7 @@ w_rc_t r_st_stock_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    row_impl<stock_t>* prst = _penv->stock_man()->get_tuple();
+    table_row_t* prst = _penv->stock_man()->get_tuple();
     assert (prst);
 
     rep_row_t areprow(_penv->stock_man()->ts());

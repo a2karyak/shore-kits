@@ -104,7 +104,7 @@ class q12_lineitem_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreTPCHEnv* _tpchdb;
-    row_impl<lineitem_t>* _prline;
+    table_row_t* _prline;
     rep_row_t _rr;
 
     tpch_lineitem_tuple _lineitem;
@@ -216,7 +216,7 @@ class q12_orders_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreTPCHEnv* _tpchdb;
-    row_impl<orders_t>* _prorder;
+    table_row_t* _prorder;
     rep_row_t _rr;
 
     /*One lineitem tuple*/

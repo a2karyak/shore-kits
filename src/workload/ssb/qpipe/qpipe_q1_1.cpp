@@ -63,7 +63,7 @@ class part_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<part_t>* _prpart;
+    table_row_t* _prpart;
     rep_row_t _rr;
 
     ssb_part_tuple _part;
@@ -134,7 +134,7 @@ class date_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<date_t>* _prdate;
+    table_row_t* _prdate;
     rep_row_t _rr;
 
     ssb_date_tuple _date;
@@ -205,7 +205,7 @@ class lineorder_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<lineorder_t>* _prline;
+    table_row_t* _prline;
     rep_row_t _rr;
 
     ssb_lineorder_tuple _lineorder;

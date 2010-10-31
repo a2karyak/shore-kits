@@ -196,7 +196,7 @@ public:
 template <class TableDesc>
 class index_loading_smt_t : public thread_t 
 {
-    typedef row_impl<TableDesc> table_tuple;
+    typedef table_row_t table_tuple;
     typedef table_man_impl<TableDesc> table_manager;
 
 private:
@@ -389,7 +389,7 @@ public:
 template <class TableDesc>
 class table_checking_smt_impl : public table_checking_smt_t 
 {
-    typedef row_impl<TableDesc> table_tuple;
+    typedef table_row_t table_tuple;
     typedef table_man_impl<TableDesc> table_manager;
 
 private:

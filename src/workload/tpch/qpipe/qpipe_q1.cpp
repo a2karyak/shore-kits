@@ -78,7 +78,7 @@ class q1_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreTPCHEnv* _tpchdb;
-    row_impl<lineitem_t>* _prline;
+    table_row_t* _prline;
     rep_row_t _rr;
 
     tpch_lineitem_tuple _lineitem;

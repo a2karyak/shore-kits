@@ -292,7 +292,7 @@ void sort_man_impl::sort()
 w_rc_t sort_man_impl::get_sort_iter(ss_m* db,
                                     sort_iter_impl* &sort_iter)
 {
-    sort_iter = new sort_iter_impl(db, _ptable, this);
+    sort_iter = new sort_iter_impl(db, _pspecifictable, this);
     return (RCOK);
 }
      

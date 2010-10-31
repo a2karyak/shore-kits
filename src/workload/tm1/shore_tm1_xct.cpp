@@ -275,16 +275,16 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
     w_rc_t e = RCOK;
 
     // get table tuples from the caches
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    row_impl<access_info_t>* prai = _pai_man->get_tuple();
+    table_row_t* prai = _pai_man->get_tuple();
     assert (prai);
 
-    row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
+    table_row_t* prsf = _psf_man->get_tuple();
     assert (prsf);
 
-    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    table_row_t* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_psub_man->ts());
@@ -510,7 +510,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
 
     // Touches 1 table:
     // Subscriber
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_psub_man->ts());
@@ -621,10 +621,10 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
     // Touches 2 tables:
     // SpecialFacility and CallForwarding
-    row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
+    table_row_t* prsf = _psf_man->get_tuple();
     assert (prsf);
 
-    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    table_row_t* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
     // allocate space for the larger of the 2 table representations
@@ -753,7 +753,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 
     // Touches 1 table:
     // AccessInfo
-    row_impl<access_info_t>* prai = _pai_man->get_tuple();
+    table_row_t* prai = _pai_man->get_tuple();
     assert (prai);
 
     rep_row_t areprow(_pai_man->ts());
@@ -826,10 +826,10 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
 
     // Touches 2 tables:
     // Subscriber, SpecialFacility
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
+    table_row_t* prsf = _psf_man->get_tuple();
     assert (prsf);
 
     rep_row_t areprow(_psub_man->ts());
@@ -927,7 +927,7 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
 
     // Touches 1 table:
     // Subscriber
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_psub_man->ts());
@@ -994,13 +994,13 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
 
     // Touches 3 tables:
     // Subscriber, SpecialFacility, CallForwarding
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    row_impl<special_facility_t>* prsf = _psf_man->get_tuple();
+    table_row_t* prsf = _psf_man->get_tuple();
     assert (prsf);
 
-    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    table_row_t* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_psub_man->ts());
@@ -1160,10 +1160,10 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
 
     // Touches 2 tables:
     // Subscriber, CallForwarding
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    table_row_t* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_psub_man->ts());
@@ -1256,7 +1256,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
 
     // Touches 1 table:
     // Subscriber
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
     rep_row_t areprow(_psub_man->ts());
@@ -1345,10 +1345,10 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 
     // Touches 3 tables:
     // Subscriber, SpecialFacility, CallForwarding
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    table_row_t* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_psub_man->ts());
@@ -1446,10 +1446,10 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 
     // Touches 2 tables:
     // Subscriber, CallForwarding
-    row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+    table_row_t* prsub = _psub_man->get_tuple();
     assert (prsub);
 
-    row_impl<call_forwarding_t>* prcf = _pcf_man->get_tuple();
+    table_row_t* prcf = _pcf_man->get_tuple();
     assert (prcf);
 
     rep_row_t areprow(_psub_man->ts());

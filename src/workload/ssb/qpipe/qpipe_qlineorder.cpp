@@ -61,7 +61,7 @@ class lineorder_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<lineorder_t>* _prline;
+    table_row_t* _prline;
     rep_row_t _rr;
 
     ssb_lineorder_tuple _lineorder;

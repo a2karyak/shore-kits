@@ -45,7 +45,6 @@
 #include "sm/shore/shore_iter.h"
 #include "sm/shore/shore_msg.h"
 #include "sm/shore/shore_row.h"
-#include "sm/shore/shore_row_impl.h"
 #include "sm/shore/shore_row_cache.h"
 #include "sm/shore/shore_table.h"
 #include "sm/shore/shore_sort_buf.h"

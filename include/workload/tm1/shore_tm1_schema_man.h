@@ -49,7 +49,7 @@ ENTER_NAMESPACE(tm1);
 
 class sub_man_impl : public table_man_impl<subscriber_t>
 {
-    typedef row_impl<subscriber_t> sub_tuple;
+    typedef table_row_t sub_tuple;
     typedef index_scan_iter_impl<subscriber_t> sub_idx_iter;
 
 public:
@@ -114,7 +114,7 @@ public:
 
 class ai_man_impl : public table_man_impl<access_info_t>
 {
-    typedef row_impl<access_info_t> ai_tuple;
+    typedef table_row_t ai_tuple;
 
 public:
 
@@ -142,7 +142,7 @@ public:
 
 class sf_man_impl : public table_man_impl<special_facility_t>
 {
-    typedef row_impl<special_facility_t> sf_tuple;
+    typedef table_row_t sf_tuple;
     typedef index_scan_iter_impl<special_facility_t> sf_idx_iter;
 
 public:
@@ -191,7 +191,7 @@ public:
 
 class cf_man_impl : public table_man_impl<call_forwarding_t>
 {
-    typedef row_impl<call_forwarding_t> cf_tuple;
+    typedef table_row_t cf_tuple;
     typedef index_scan_iter_impl<call_forwarding_t> cf_idx_iter;
 
 public:

@@ -224,7 +224,7 @@ w_rc_t ShoreTPCHEnv::_gen_one_nation(const int id,
                                      rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<nation_t>*   prna = _pnation_man->get_tuple();
+    table_row_t*   prna = _pnation_man->get_tuple();
     assert (prna);
     prna->_rep = &areprow;
 
@@ -253,7 +253,7 @@ w_rc_t ShoreTPCHEnv::_gen_one_region(const int id,
                                      rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<region_t>*   prre = _pregion_man->get_tuple();
+    table_row_t*   prre = _pregion_man->get_tuple();
     assert (prre);
     prre->_rep = &areprow;
 
@@ -282,7 +282,7 @@ w_rc_t ShoreTPCHEnv::_gen_one_supplier(const int id,
                                        rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<supplier_t>* prsu = _psupplier_man->get_tuple();
+    table_row_t* prsu = _psupplier_man->get_tuple();
     assert (prsu);
     prsu->_rep = &areprow;
 
@@ -318,11 +318,11 @@ w_rc_t ShoreTPCHEnv::_gen_one_part_based(const int id,
                                          rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    row_impl<part_t>*     prpa = _ppart_man->get_tuple();
+    table_row_t*     prpa = _ppart_man->get_tuple();
     assert (prpa);
     prpa->_rep = &areprow;
 
-    row_impl<partsupp_t>* prps = _ppartsupp_man->get_tuple();
+    table_row_t* prps = _ppartsupp_man->get_tuple();
     assert (prps);
     prps->_rep = &areprow;
 
@@ -388,15 +388,15 @@ w_rc_t ShoreTPCHEnv::_gen_one_cust_based(const int id,
                                          rep_row_t& areprow)
 {
     w_rc_t e = RCOK;    
-    row_impl<customer_t>* prcu = _pcustomer_man->get_tuple();
+    table_row_t* prcu = _pcustomer_man->get_tuple();
     assert (prcu);
     prcu->_rep = &areprow;
 
-    row_impl<orders_t>*    pror = _porders_man->get_tuple();
+    table_row_t*    pror = _porders_man->get_tuple();
     assert (pror);
     pror->_rep = &areprow;
 
-    row_impl<lineitem_t>* prli = _plineitem_man->get_tuple();
+    table_row_t* prli = _plineitem_man->get_tuple();
     assert (prli);
     prli->_rep = &areprow;
 
@@ -912,7 +912,7 @@ w_rc_t ShoreTPCHEnv::xct_q1(const int /* xct_id */,
 
     // q1 trx touches 1 tables:
     // lineitem
-    row_impl<lineitem_t>* prlineitem = _plineitem_man->get_tuple();
+    table_row_t* prlineitem = _plineitem_man->get_tuple();
     assert (prlineitem);
 
     w_rc_t e = RCOK;
@@ -1154,7 +1154,7 @@ w_rc_t ShoreTPCHEnv::xct_q6(const int /* xct_id */,
 
     // q6 trx touches 1 tables:
     // lineitem
-    row_impl<lineitem_t>* prlineitem = _plineitem_man->get_tuple();
+    table_row_t* prlineitem = _plineitem_man->get_tuple();
     assert (prlineitem);
 
     w_rc_t e = RCOK;

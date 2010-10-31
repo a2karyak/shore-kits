@@ -110,7 +110,7 @@ class q3_2_lineorder_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<lineorder_t>* _prline;
+    table_row_t* _prline;
     rep_row_t _rr;
 
     ssb_lineorder_tuple _lineorder;
@@ -187,7 +187,7 @@ class q3_2_customer_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<customer_t>* _prcust;
+    table_row_t* _prcust;
     rep_row_t _rr;
 
     ssb_customer_tuple _customer;
@@ -274,7 +274,7 @@ class q3_2_supplier_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<supplier_t>* _prsupp;
+    table_row_t* _prsupp;
     rep_row_t _rr;
 
     ssb_supplier_tuple _supplier;
@@ -363,7 +363,7 @@ class q3_2_date_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<date_t>* _prdate;
+    table_row_t* _prdate;
     rep_row_t _rr;
 
     ssb_date_tuple _date;

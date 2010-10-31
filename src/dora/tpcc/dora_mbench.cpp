@@ -73,7 +73,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
     // warehouse
 
     // get table tuples from the caches
-    row_impl<warehouse_t>* prwh = _penv->warehouse_man()->get_tuple();
+    table_row_t* prwh = _penv->warehouse_man()->get_tuple();
     assert (prwh);
     rep_row_t areprow(_penv->warehouse_man()->ts());
     areprow.set(_penv->warehouse_desc()->maxsize()); 
@@ -160,7 +160,7 @@ w_rc_t upd_cust_mb_action::trx_exec()
     // mbench trx touches 1 table: customer
 
     // get table tuple from the cache
-    row_impl<customer_t>* prcust = _penv->customer_man()->get_tuple();
+    table_row_t* prcust = _penv->customer_man()->get_tuple();
     assert (prcust);
     rep_row_t areprow(_penv->customer_man()->ts());
     areprow.set(_penv->customer_desc()->maxsize()); 

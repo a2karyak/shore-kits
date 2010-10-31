@@ -59,7 +59,7 @@ class part_tscan_filter_t : public tuple_filter_t
 {
 private:
     ShoreSSBEnv* _ssbdb;
-    row_impl<part_t>* _prpart;
+    table_row_t* _prpart;
     rep_row_t _rr;
 
     ssb_part_tuple _part;

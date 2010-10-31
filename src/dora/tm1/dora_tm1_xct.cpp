@@ -732,7 +732,7 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
 
     {
         // get Subscriber table tuple from the cache
-        row_impl<subscriber_t>* prsub = _psub_man->get_tuple();
+        table_row_t* prsub = _psub_man->get_tuple();
         assert (prsub);
 
         rep_row_t areprow(_psub_man->ts());

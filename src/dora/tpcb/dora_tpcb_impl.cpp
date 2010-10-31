@@ -76,7 +76,7 @@ w_rc_t upd_br_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<branch_t>* prb = _penv->branch_man()->get_tuple();
+    table_row_t* prb = _penv->branch_man()->get_tuple();
     assert (prb);
 
     rep_row_t areprow(_penv->branch_man()->ts());
@@ -139,7 +139,7 @@ w_rc_t upd_te_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<teller_t>* prt = _penv->teller_man()->get_tuple();
+    table_row_t* prt = _penv->teller_man()->get_tuple();
     assert (prt);
 
     rep_row_t areprow(_penv->teller_man()->ts());
@@ -202,7 +202,7 @@ w_rc_t upd_ac_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<account_t>* pra = _penv->account_man()->get_tuple();
+    table_row_t* pra = _penv->account_man()->get_tuple();
     assert (pra);
 
     rep_row_t areprow(_penv->account_man()->ts());
@@ -265,7 +265,7 @@ w_rc_t ins_hi_action::trx_exec()
 
     // get table tuple from the cache
     // Subscriber
-    row_impl<history_t>* prh = _penv->history_man()->get_tuple();
+    table_row_t* prh = _penv->history_man()->get_tuple();
     assert (prh);
 
     rep_row_t areprow(_penv->account_man()->ts());
