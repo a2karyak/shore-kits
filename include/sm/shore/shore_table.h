@@ -303,38 +303,34 @@ public:
                        index_desc_t* pidx,
                        table_tuple*  ptuple,
                        const lock_mode_t lock_mode = SH,     /* One of: NL, SH, EX */
-                       const uint system_mode = PD_NORMAL,
                        const lpid_t& root = lpid_t::null);   /* Start of the search */
     
     // probe idx in EX (& LATCH_EX) mode
     inline w_rc_t   index_probe_forupdate(ss_m* db,
                                           index_desc_t* pidx,
                                           table_tuple*  ptuple,
-                                          const uint system_mode = PD_NORMAL,
                                           const lpid_t& root = lpid_t::null)
     {
-        return (index_probe(db, pidx, ptuple, EX, system_mode, root));
+        return (index_probe(db, pidx, ptuple, EX, root));
     }
 
     // probe idx in NL (& LATCH_SH) mode
     inline w_rc_t   index_probe_nl(ss_m* db,
                                    index_desc_t* pidx,
                                    table_tuple*  ptuple,
-                                   const uint system_mode = PD_NORMAL,
                                    const lpid_t& root = lpid_t::null)
     {
-        return (index_probe(db, pidx, ptuple, NL, system_mode, root));
+        return (index_probe(db, pidx, ptuple, NL, root));
     }
 
     // probe primary idx
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
                                         lock_mode_t  lock_mode = SH,        
-                                        const uint system_mode = PD_NORMAL,
                                         const lpid_t& root = lpid_t::null)
     {
         assert (_ptable && _ptable->primary_idx());
-        return (index_probe(db, _ptable->primary_idx(), ptuple, lock_mode, system_mode, root));
+        return (index_probe(db, _ptable->primary_idx(), ptuple, lock_mode, root));
     }
 
 
@@ -346,33 +342,30 @@ public:
                                         const char*  idx_name, 
                                         table_tuple* ptuple,
                                         lock_mode_t  lock_mode = SH,      
-                                        const uint system_mode = PD_NORMAL,
                                         const lpid_t& root = lpid_t::null)
     {
         index_desc_t* pindex = _ptable->find_index(idx_name);
-        return (index_probe(db, pindex, ptuple, lock_mode, system_mode, root));
+        return (index_probe(db, pindex, ptuple, lock_mode, root));
     }
 
     // probe idx in EX (& LATCH_EX) mode - based on idx name //
     inline w_rc_t   index_probe_forupdate_by_name(ss_m* db, 
                                                   const char* idx_name,
                                                   table_tuple* ptuple,
-                                                  const uint system_mode = PD_NORMAL,
                                                   const lpid_t& root = lpid_t::null) 
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
-	return (index_probe_forupdate(db, pindex, ptuple, system_mode, root));
+	return (index_probe_forupdate(db, pindex, ptuple, root));
     }
 
     // probe idx in NL (& LATCH_NL) mode - based on idx name //
     inline w_rc_t   index_probe_nl_by_name(ss_m* db, 
                                            const char* idx_name,
                                            table_tuple* ptuple,
-                                           latch_mode_t  heap_latch_mode = LATCH_SH,
                                            const lpid_t& root = lpid_t::null) 
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
-	return (index_probe_nl(db, pindex, ptuple, heap_latch_mode, root));
+	return (index_probe_nl(db, pindex, ptuple, root));
     }
 
 
@@ -383,7 +376,6 @@ public:
     w_rc_t    add_tuple(ss_m* db, 
                         table_tuple*  ptuple, 
                         const lock_mode_t   lock_mode = EX,
-                        const uint system_mode = PD_NORMAL,
                         const lpid_t& primary_root = lpid_t::null);
 
     w_rc_t    add_plp_tuple(ss_m* db, 
@@ -395,20 +387,17 @@ public:
     w_rc_t    delete_tuple(ss_m* db, 
                            table_tuple* ptuple, 
                            const lock_mode_t lock_mode = EX,
-                           const uint system_mode = PD_NORMAL,
                            const lpid_t& primary_root = lpid_t::null);
 
 
     // Direct access through the rid
     w_rc_t    update_tuple(ss_m* db, 
                            table_tuple* ptuple, 
-                           const lock_mode_t lock_mode = EX,
-                           const uint system_mode = PD_NORMAL);
+                           const lock_mode_t lock_mode = EX);
 
     // Direct access through the rid
     w_rc_t    read_tuple(table_tuple* ptuple, 
-                         const lock_mode_t lock_mode = SH,
-                         const uint system_mode = PD_NORMAL);
+                         const lock_mode_t lock_mode = SH);
 
 
     
