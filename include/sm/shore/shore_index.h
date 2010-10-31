@@ -72,7 +72,7 @@ private:
     bool            _unique;                   /* whether allow duplicates or not */
     bool            _primary;                  /* is it primary or not */
     bool            _nolock;                   /* is it using locking or not */ 
-    bool            _mr;                       /* is it multi-rooted */ 
+    uint            _mr;                       /* is it multi-rooted */ 
     bool            _latchless;                /* does it use any latches at all */ 
     bool            _rmapholder;               /* it is used only for the range mapping */
 
@@ -147,6 +147,7 @@ public:
     /* --- access methods --- */
     /* ---------------------- */
 
+    uint4_t get_pd() const { return (_base.get_pd()); }
     inline bool is_unique() const { return (_unique); }
     inline bool is_primary() const { return (_primary); }
     inline bool is_relaxed() const { return (_nolock); }

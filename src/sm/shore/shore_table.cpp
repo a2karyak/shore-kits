@@ -161,18 +161,46 @@ w_rc_t table_desc_t::create_physical_index(ss_m* db, index_desc_t* index)
     ss_m::ndx_t smidx_type = ss_m::t_uni_btree;
     ss_m::concurrency_t smidx_cc = ss_m::t_cc_im;
 
-    // the type of index to create
+    // Update the type of index to create
+    
+
     if (index->is_mr()) {
-        // MRBTree
-        smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
+        uint4_t pd = index->get_pd();
+        if (index->is_primary()) {
+            // only the primary index can be something other than a normal MRBT
+            // the other two options affect how the heap pages are accessed so
+            // we cannot have two indexes determining how the heap pages are.
+
+            if (pd & PD_MRBT_NORMAL) {
+                // Normal MRBTree
+                smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
+            }
+            else {
+                if (pd & PD_MRBT_PART) {
+                    // MRBTree where heap pages belong to a single partition
+                    smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree_p : ss_m::t_mrbtree_p;
+                }
+                else {
+                    assert (pd & PD_MRBT_LEAF);
+                    // MRBTree where heap pages belong to a single partition
+                    smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree_l : ss_m::t_mrbtree_l;
+                }
+            }
+        }
+        else {
+            // Normal MRBTree for non-primary index
+            smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
+        }            
     }
     else {
         // Regular BTree
         smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
     }
 
+
     // what kind of CC will be used
     smidx_cc = index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im;
+
 
     // if it is the primary, update file flag
     if (index->is_primary()) {
@@ -860,6 +888,22 @@ int table_man_t::key_size(index_desc_t* pindex,
 /* ---------------------------- */
 
 
+
+int table_man_t::get_pnum(index_desc_t* pindex, 
+                          table_tuple const* ptuple) const 
+{
+    assert(ptuple);
+    assert(pindex);
+    if(!pindex->is_partitioned())
+	return 0;
+
+    int first_key;
+    ptuple->get_value(pindex->key_index(0), first_key);
+    return (first_key % pindex->get_partition_count());
+}
+
+
+
 /********************************************************************* 
  *
  *  @fn:    index_probe
@@ -874,7 +918,7 @@ w_rc_t table_man_t::index_probe(ss_m* db,
                                 index_desc_t* pindex,
                                 table_tuple*  ptuple,
                                 lock_mode_t   lock_mode,
-                                latch_mode_t  heap_latch_mode, // If in PLP-leaf
+                                const uint    system_mode,
                                 const lpid_t& root)
 {
     assert (_ptable);
@@ -930,8 +974,10 @@ w_rc_t table_man_t::index_probe(ss_m* db,
 
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
-    // 3. read the tuple
+    // read the tuple
     pin_i pin;
+    latch_mode_t heap_latch_mode = LATCH_SH;
+    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) heap_latch_mode = LATCH_NL;
     W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
 
     if (!load(ptuple, pin.body())) {
@@ -941,21 +987,6 @@ w_rc_t table_man_t::index_probe(ss_m* db,
     pin.unpin();
     return (RCOK);
 }
-
-
-int table_man_t::get_pnum(index_desc_t* pindex, 
-                          table_tuple const* ptuple) const 
-{
-    assert(ptuple);
-    assert(pindex);
-    if(!pindex->is_partitioned())
-	return 0;
-
-    int first_key;
-    ptuple->get_value(pindex->key_index(0), first_key);
-    return (first_key % pindex->get_partition_count());
-}
-
 
 
 
@@ -980,10 +1011,14 @@ int table_man_t::get_pnum(index_desc_t* pindex,
 
 w_rc_t table_man_t::add_tuple(ss_m* db, 
                               table_tuple* ptuple,
-                              lock_mode_t lock_mode,
-                              latch_mode_t heap_latch_mode,
+                              const lock_mode_t lock_mode,
+                              const uint system_mode,
                               const lpid_t& primary_root)
 {
+    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) {
+        return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
+    }
+
     assert (_ptable);
     assert (ptuple);
     assert (ptuple->_rep);
@@ -991,26 +1026,25 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
     // find the file
     W_DO(_ptable->check_fid(db));
 
-#ifdef CFG_DORA
     // figure out what mode will be used
     bool bIgnoreLocks = false;
     if (lock_mode==NL) bIgnoreLocks = true;
-#endif    
+
 
     // append the tuple
     int tsz = format(ptuple, *ptuple->_rep);
     assert (ptuple->_rep->_dest); // if NULL invalid
 
-    W_DO(db->create_rec(_ptable->fid(), vec_t(), tsz,
+    W_DO(db->create_rec(_ptable->fid(), 
+                        vec_t(), 
+                        tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
                         ptuple->_rid
-#ifndef CFG_SHORE_6
-                        ,serial_t::null
-#endif
 #ifdef CFG_DORA
                         ,bIgnoreLocks
 #endif
                         ));
+
     // update the indexes
     index_desc_t* index = _ptable->indexes();
     int ksz = 0;
@@ -1052,88 +1086,160 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
 
 
 
+
 /********************************************************************* 
  *
- *  @fn:    update_tuple
+ *  @fn:    add_plp_tuple
  *
- *  @brief: Updates a tuple from a table
+ *  @brief: Inserts a tuple to a PLP table and all the indexes of the table
  *
  *  @note:  This function should be called in the context of a trx.
- *          The passed tuple should be valid.
- *          There is no need of updating the indexes.
+ *          The passed tuple should be formed. If everything goes as
+ *          expected the _rid of the tuple will be set. 
  *
- *  !!! In order to update a field included by an index !!!
- *  !!! the tuple should be deleted and inserted again  !!!
+ *  @note:  The process of inserting a record to a PLP table consists of the 
+ *          following 6 steps:
+ *
+ *          1) Call the create_mr_assoc of the primary MRBTree index
+ *          2) The create_mr_assoc will find the leaf where the key entry will go
+ *          3) It will call the el_filler_* callback to insert the record into the heap
+ *          4) Then, it will insert the entry into the MRBTree index
+ *          5) The call to create_mr_assoc will return
+ *          6) Insert the tuple to the remaining indexes
  *
  *********************************************************************/
 
-w_rc_t table_man_t::update_tuple(ss_m* /* db */, 
-                                 table_tuple* ptuple,
-                                 lock_mode_t  lock_mode,
-                                 uint         system_mode, // physical_design_t
-                                 latch_mode_t heap_latch_mode)
+el_filler_part::el_filler_part(size_t indexentrysz,
+                               ss_m* db,
+                               table_man_t* ptableman,
+                               table_tuple* ptuple,
+                               index_desc_t* pindex,
+                               bool bIgnoreLocks) 
+    : _db(db),_ptableman(ptableman), _ptuple(ptuple), _pindex(pindex),
+      _bIgnoreLocks(bIgnoreLocks)
 {
+    _el_size = indexentrysz;
+    assert (db);
+    assert (ptableman);
+    assert (ptuple);
+    assert (pindex);
+}
+
+
+rc_t el_filler_part::fill_el(vec_t& el, const lpid_t& leaf) 
+{
+
+    // Insert tuple in the heap file
+    int tsz = _ptableman->format(_ptuple, *_ptuple->_rep);
+    assert (_ptuple->_rep->_dest); // if NULL invalid
+    
+    // It locates the correct page, as returned in the call back, and 
+    // inserts the tuple there
+    rc_t rc = _db->find_page_and_create_mrbt_rec(_ptableman->table()->fid(),
+                                                 leaf,
+                                                 vec_t(), 
+                                                 tsz,
+                                                 vec_t(_ptuple->_rep->_dest, tsz),
+                                                 _ptuple->_rid,
+                                                 _bIgnoreLocks,
+                                                 true);
+    el.put(vec_t(&(_ptuple->_rid), sizeof(rid_t)));
+    // dirty dirty dirtyyyy
+    //
+    // PUT BACK THE KEY INTO _dest
+    //
+    // dirty dirty dirtyyyy
+
+    int ksz = _ptableman->format_key(_pindex, _ptuple, *_ptuple->_rep);
+    assert (_ptuple->_rep->_dest);
+
+    return rc;
+}
+
+
+w_rc_t table_man_t::add_plp_tuple(ss_m* db, 
+                                  table_tuple* ptuple,
+                                  const lock_mode_t lock_mode,
+                                  const uint system_mode,
+                                  const lpid_t& primary_root)
+{
+    assert (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF));
     assert (_ptable);
     assert (ptuple);
     assert (ptuple->_rep);
 
-    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+    // find the file
+    W_DO(_ptable->check_fid(db));
 
-#ifdef CFG_DORA
+    // figure out what lock mode will be used
     bool bIgnoreLocks = false;
     if (lock_mode==NL) bIgnoreLocks = true;
-#endif
 
-    // Pin record
-    pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
-    int current_size = pin.body_size();
+    // Insert corresponding record entry into the (primary) MRBTree
+    // The table should have a primary index and that index to be MRBT
+    index_desc_t* primary_index = _ptable->primary_idx();
+    assert (primary_index);
+    assert (primary_index->is_mr());
 
-    // 2. update record
-    int tsz = format(ptuple, *ptuple->_rep);
-    assert (ptuple->_rep->_dest); // if NULL invalid
+    int ksz = format_key(primary_index, ptuple, *ptuple->_rep);
+    assert (ptuple->_rep->_dest);
 
-    // 2a. if updated record cannot fit in the previous spot
-    w_rc_t rc;
-    if (current_size < tsz) {
-        zvec_t azv(tsz - current_size);
+    int pnum = get_pnum(primary_index, ptuple);
+    W_DO(primary_index->find_fid(db, pnum));
 
-        if (system_mode & ( PD_MRBT_PART | PD_MRBT_LEAF )) {
-            rc = pin.append_mrbt_rec(azv,heap_latch_mode);
+#warning TODO Implement the relocation callback function
+    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
+    el_filler_part part_filler(sizeof(rid_t),db,this,ptuple,primary_index,bIgnoreLocks);
+    W_DO(db->create_mr_assoc(primary_index->fid(pnum),
+                             vec_t(ptuple->_rep->_dest, ksz), // VEC_T OF INDEX ENTRY
+                             part_filler,
+                             bIgnoreLocks,
+                             primary_index->is_latchless(),
+                             reloc_func,
+                             primary_root));
+
+    // Update the remaining indexes
+    index_desc_t* index = _ptable->indexes();
+    while (index) {
+
+        // Skip it is the primary, because the record entry has already been 
+        // inserted there
+        if (index->is_primary()) {
+            // move to next index
+            index = index->next();
+            continue;
+        }        
+
+        ksz = format_key(index, ptuple, *ptuple->_rep);
+        assert (ptuple->_rep->_dest); // if dest == NULL there is invalid key
+
+        pnum = get_pnum(index, ptuple);
+        W_DO(index->find_fid(db, pnum));
+
+        if (index->is_mr()) {
+            ss_m::el_filler ef;
+            ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
+            W_DO(db->create_mr_assoc(index->fid(pnum),
+                                     vec_t(ptuple->_rep->_dest, ksz),
+                                     ef,
+                                     bIgnoreLocks,
+                                     index->is_latchless(),
+                                     NULL, // No relocation
+                                     lpid_t::null));
         }
         else {
-            rc = pin.append_rec(azv);
+            W_DO(db->create_assoc(index->fid(pnum),
+                                  vec_t(ptuple->_rep->_dest, ksz),
+                                  vec_t(&(ptuple->_rid), sizeof(rid_t))
+#ifdef CFG_DORA
+                                  ,bIgnoreLocks
+#endif
+                                  ));
         }
-
-        // on error unpin 
-        if (rc.is_error()) {
-            TRACE( TRACE_DEBUG, "Error updating (by append) record\n");
-            pin.unpin();
-        }
-        W_DO(rc);
+        // move to next index
+	index = index->next();
     }
-
-
-    // 2b. else, simply update
-    if (system_mode & ( PD_MRBT_PART | PD_MRBT_LEAF )) {
-        bool bIgnoreLatches = false;
-        if (heap_latch_mode==LATCH_NL) bIgnoreLatches = true;
-        rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
-                                 bIgnoreLocks, 
-                                 bIgnoreLatches);
-
-    }
-    else {
-
-        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0,
-                            bIgnoreLocks);
-    }
-
-    if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
-
-    // 3. unpin
-    pin.unpin();
-    return (rc);
+    return (RCOK);
 }
 
 
@@ -1152,7 +1258,9 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
 
 w_rc_t table_man_t::delete_tuple(ss_m* db, 
                                  table_tuple* ptuple,
-                                 lock_mode_t lm)
+                                 const lock_mode_t lock_mode,
+                                 const uint system_mode,
+                                 const lpid_t& primary_root)
 {
     assert (_ptable);
     assert (ptuple);
@@ -1162,13 +1270,12 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 
     rid_t todelete = ptuple->rid();
 
-#ifdef CFG_DORA
-    // 1. figure out what mode will be used
+    // figure out what mode will be used
     bool bIgnoreLocks = false;
-    if (lm==NL) bIgnoreLocks = true;
-#endif
+    if (lock_mode==NL) bIgnoreLocks = true;
 
-    // 2. delete all the corresponding index entries
+
+    // delete all the corresponding index entries
     index_desc_t* pindex = _ptable->indexes();
     int key_sz = 0;
 
@@ -1182,11 +1289,10 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
         if (pindex->is_mr()) {
             W_DO(db->destroy_mr_assoc(pindex->fid(pnum),
                                       vec_t(ptuple->_rep->_dest, key_sz),
-                                      vec_t(&(todelete), sizeof(rid_t))
-#ifdef CFG_DORA
-                                      ,bIgnoreLocks
-#endif
-                                   ));
+                                      vec_t(&(todelete), sizeof(rid_t)),
+                                      bIgnoreLocks,
+                                      pindex->is_latchless(),
+                                      (pindex->is_primary() ? primary_root : lpid_t::null)));
         }
         else {
             W_DO(db->destroy_assoc(pindex->fid(pnum),
@@ -1202,12 +1308,21 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 	pindex = pindex->next();
     }
 
-    // 3. delete the tuple
-    W_DO(db->destroy_rec(todelete
+
+    // delete the tuple
+    if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
+        W_DO(db->destroy_mrbt_rec( todelete,
+                                   bIgnoreLocks,
+                                   true));
+
+    }
+    else {
+        W_DO(db->destroy_rec(todelete
 #ifdef CFG_DORA
-                         ,bIgnoreLocks
+                             ,bIgnoreLocks
 #endif
-                         ));
+                             ));
+    }
 
     // invalidate tuple
     ptuple->set_rid(rid_t::null);
@@ -1216,27 +1331,126 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 
 
 
+
+
+/********************************************************************* 
+ *
+ *  @fn:    update_tuple
+ *
+ *  @brief: Updates a tuple from a table, using direct access through
+ *          its RID
+ *
+ *  @note:  This function should be called in the context of a trx.
+ *          The passed tuple rid() should be valid. 
+ *          There is no need of updating the indexes. That's why there
+ *          is not parameter to primary_root.
+ *
+ *  !!! In order to update a field included by an index !!!
+ *  !!! the tuple should be deleted and inserted again  !!!
+ *
+ *********************************************************************/
+
+w_rc_t table_man_t::update_tuple(ss_m* /* db */, 
+                                 table_tuple* ptuple,
+                                 const lock_mode_t  lock_mode,
+                                 const uint         system_mode) // physical_design_t
+{
+    assert (_ptable);
+    assert (ptuple);
+    assert (ptuple->_rep);
+
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+
+    bool bIgnoreLocks = false;
+    if (lock_mode==NL) bIgnoreLocks = true;
+
+    bool no_heap_latch = false;   
+    latch_mode_t heap_latch_mode = LATCH_EX;
+    if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
+        no_heap_latch = false;
+        heap_latch_mode = LATCH_NL;
+    }
+
+    // pin record
+    pin_i pin;
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
+    int current_size = pin.body_size();
+
+
+    // update record
+    int tsz = format(ptuple, *ptuple->_rep);
+    assert (ptuple->_rep->_dest); // if NULL invalid
+
+    // a. if updated record cannot fit in the previous spot
+    w_rc_t rc;
+    if (current_size < tsz) {
+        zvec_t azv(tsz - current_size);
+
+        if (no_heap_latch) {
+            rc = pin.append_mrbt_rec(azv,heap_latch_mode);
+        }
+        else {
+            rc = pin.append_rec(azv);
+        }
+
+        // on error unpin 
+        if (rc.is_error()) {
+            TRACE( TRACE_DEBUG, "Error updating (by append) record\n");
+            pin.unpin();
+        }
+        W_DO(rc);
+    }
+
+
+    // b. else, simply update
+    if (no_heap_latch) {
+        rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
+                                 bIgnoreLocks, 
+                                 true);
+    }
+    else {
+        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0,
+                            bIgnoreLocks);
+    }
+
+    if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
+
+    // 3. unpin
+    pin.unpin();
+    return (rc);
+}
+
+
+
 /********************************************************************* 
  *
  *  @fn:    read_tuple
  *
- *  @brief: Read a tuple directly through its RID
+ *  @brief: Access a tuple directly through its RID
  *
  *  @note:  This function should be called in the context of a trx
  *          The passed RID should be valid.
+ *          No index probe its involved that's why it does not get
+ *          any hint about the starting root pid.
  *
  *********************************************************************/
 
 w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
-                               lock_mode_t lm)
+                               const lock_mode_t lock_mode,
+                               const uint system_mode)
 {
     assert (_ptable);
     assert (ptuple);
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
+    latch_mode_t heap_latch_mode = LATCH_EX;
+    if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
+        heap_latch_mode = LATCH_NL;
+    }
+
     pin_i  pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lm));
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
     if (!load(ptuple, pin.body())) {
         pin.unpin();
         return RC(se_WRONG_DISK_DATA);

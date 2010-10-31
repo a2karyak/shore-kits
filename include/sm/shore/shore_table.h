@@ -289,6 +289,8 @@ public:
     virtual ~table_man_t() {}
 
 
+    table_desc_t* table() { return (_ptable); }
+
     int get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const;
 
 
@@ -300,38 +302,39 @@ public:
     w_rc_t index_probe(ss_m* db,
                        index_desc_t* pidx,
                        table_tuple*  ptuple,
-                       lock_mode_t   lock_mode = SH,         /* One of: NL, SH, EX */
-                       latch_mode_t  heap_latch_mode = LATCH_SH,  /* For the Heap page. One of: LATCH_SH, LATCH_EX */
+                       const lock_mode_t lock_mode = SH,     /* One of: NL, SH, EX */
+                       const uint system_mode = PD_NORMAL,
                        const lpid_t& root = lpid_t::null);   /* Start of the search */
     
     // probe idx in EX (& LATCH_EX) mode
     inline w_rc_t   index_probe_forupdate(ss_m* db,
                                           index_desc_t* pidx,
                                           table_tuple*  ptuple,
+                                          const uint system_mode = PD_NORMAL,
                                           const lpid_t& root = lpid_t::null)
     {
-        return (index_probe(db, pidx, ptuple, EX, LATCH_EX, root));
+        return (index_probe(db, pidx, ptuple, EX, system_mode, root));
     }
 
     // probe idx in NL (& LATCH_SH) mode
     inline w_rc_t   index_probe_nl(ss_m* db,
                                    index_desc_t* pidx,
                                    table_tuple*  ptuple,
-                                   latch_mode_t  heap_latch_mode = LATCH_SH,
+                                   const uint system_mode = PD_NORMAL,
                                    const lpid_t& root = lpid_t::null)
     {
-        return (index_probe(db, pidx, ptuple, NL, heap_latch_mode, root));
+        return (index_probe(db, pidx, ptuple, NL, system_mode, root));
     }
 
     // probe primary idx
     inline w_rc_t   index_probe_primary(ss_m* db, 
                                         table_tuple* ptuple, 
                                         lock_mode_t  lock_mode = SH,        
-                                        latch_mode_t heap_latch_mode = LATCH_SH,
+                                        const uint system_mode = PD_NORMAL,
                                         const lpid_t& root = lpid_t::null)
     {
         assert (_ptable && _ptable->primary_idx());
-        return (index_probe(db, _ptable->primary_idx(), ptuple, lock_mode, heap_latch_mode, root));
+        return (index_probe(db, _ptable->primary_idx(), ptuple, lock_mode, system_mode, root));
     }
 
 
@@ -343,21 +346,22 @@ public:
                                         const char*  idx_name, 
                                         table_tuple* ptuple,
                                         lock_mode_t  lock_mode = SH,      
-                                        latch_mode_t heap_latch_mode = LATCH_SH,
+                                        const uint system_mode = PD_NORMAL,
                                         const lpid_t& root = lpid_t::null)
     {
         index_desc_t* pindex = _ptable->find_index(idx_name);
-        return (index_probe(db, pindex, ptuple, lock_mode, heap_latch_mode, root));
+        return (index_probe(db, pindex, ptuple, lock_mode, system_mode, root));
     }
 
     // probe idx in EX (& LATCH_EX) mode - based on idx name //
     inline w_rc_t   index_probe_forupdate_by_name(ss_m* db, 
                                                   const char* idx_name,
                                                   table_tuple* ptuple,
+                                                  const uint system_mode = PD_NORMAL,
                                                   const lpid_t& root = lpid_t::null) 
     { 
 	index_desc_t* pindex = _ptable->find_index(idx_name);
-	return (index_probe_forupdate(db, pindex, ptuple, root));
+	return (index_probe_forupdate(db, pindex, ptuple, system_mode, root));
     }
 
     // probe idx in NL (& LATCH_NL) mode - based on idx name //
@@ -378,20 +382,33 @@ public:
 
     w_rc_t    add_tuple(ss_m* db, 
                         table_tuple*  ptuple, 
-                        lock_mode_t   lock_mode = EX,
-                        latch_mode_t  heap_latch_mode = LATCH_EX,
+                        const lock_mode_t   lock_mode = EX,
+                        const uint system_mode = PD_NORMAL,
                         const lpid_t& primary_root = lpid_t::null);
 
-    w_rc_t    update_tuple(ss_m* db, 
-                           table_tuple* ptuple, 
-                           lock_mode_t lock_mode = EX,
-                           uint system_mode = PD_NORMAL,
-                           latch_mode_t heap_latch_mode = LATCH_EX);
+    w_rc_t    add_plp_tuple(ss_m* db, 
+                            table_tuple*  ptuple, 
+                            const lock_mode_t lock_mode,
+                            const uint system_mode,
+                            const lpid_t& primary_root = lpid_t::null);
 
-    w_rc_t    delete_tuple(ss_m* db, table_tuple* ptuple, lock_mode_t lm = EX);
+    w_rc_t    delete_tuple(ss_m* db, 
+                           table_tuple* ptuple, 
+                           const lock_mode_t lock_mode = EX,
+                           const uint system_mode = PD_NORMAL,
+                           const lpid_t& primary_root = lpid_t::null);
+
 
     // Direct access through the rid
-    w_rc_t    read_tuple(table_tuple* ptuple, lock_mode_t lm = SH);
+    w_rc_t    update_tuple(ss_m* db, 
+                           table_tuple* ptuple, 
+                           const lock_mode_t lock_mode = EX,
+                           const uint system_mode = PD_NORMAL);
+
+    // Direct access through the rid
+    w_rc_t    read_tuple(table_tuple* ptuple, 
+                         const lock_mode_t lock_mode = SH,
+                         const uint system_mode = PD_NORMAL);
 
 
     
@@ -453,8 +470,34 @@ public:
 
     virtual w_rc_t print_table(ss_m* db)=0; /* print the table on screen */
 
-
 }; // EOF: table_man_t
+
+
+/* ---------------------------------------------------------------
+ *
+ * @class: el_filler_leaf
+ *
+ * @brief: The callback for inserting PLP tuples 
+ *
+ * --------------------------------------------------------------- */
+
+struct el_filler_part : public ss_m::el_filler
+{
+    typedef table_row_t table_tuple; 
+
+    el_filler_part(size_t indexentrysz,
+                   ss_m* db,
+                   table_man_t* ptable,
+                   table_tuple* ptuple,
+                   index_desc_t* pindex,
+                   bool bIgnoreLocks);
+    ss_m* _db;
+    table_man_t* _ptableman;
+    table_tuple* _ptuple;
+    index_desc_t* _pindex;
+    bool _bIgnoreLocks;
+    rc_t fill_el(vec_t& el, const lpid_t& leaf);
+};
 
 
 

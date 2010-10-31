@@ -64,7 +64,10 @@ index_desc_t::index_desc_t(const char* name, const int fieldcnt,
             _partition_stids[i] = stid_t::null;
     }
 
-    // Check if MRBT
+
+    // Update the flags depending on the physical type information
+
+    // Checf if MR (frequently asked)
     if (pd & (PD_MRBT_NORMAL | PD_MRBT_PART | PD_MRBT_LEAF)) {
         _mr = true;
     }
@@ -90,16 +93,14 @@ index_desc_t::index_desc_t(const char* name, const int fieldcnt,
 
     // Set the flag that it is only a RangeMap holder
     if (rmapholder) {
-        if (!(pd & (PD_MRBT_NORMAL | PD_MRBT_PART | PD_MRBT_LEAF))
-            || is_partitioned()) {
+        if (!(_mr) || is_partitioned()) {
             // This empty index should be MRBT-* and not manually partitioned
             assert(0);
         }
         else {
             _rmapholder = true;
         }
-    }   
-        
+    }           
 }
 
 
