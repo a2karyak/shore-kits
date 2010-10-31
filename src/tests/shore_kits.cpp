@@ -622,6 +622,7 @@ int main(int argc, char* argv[])
     // Decide the physical design
     physical = ev->getSysDesign();    
 
+    bool nameset=false;
     string dbname;
 
     // 3. Initialize shell
@@ -643,8 +644,9 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
+            dbname += "dora) "; nameset=true;
         case snPLP:
-            dbname += "dora) ";
+            if (!nameset) dbname += "plp) ";
             kit = new doraTPCCKit(dbname.c_str(),netmode,netport);
             break;
 #endif
@@ -664,8 +666,9 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
+            dbname += "dora) "; nameset=true;
         case snPLP:
-            dbname += "dora) ";
+            if (!nameset) dbname += "plp) ";
             kit = new doraTM1Kit(dbname.c_str(),netmode,netport);
             break;
 #endif
@@ -685,8 +688,9 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
+            dbname += "dora) "; nameset=true;
         case snPLP:
-            dbname += "dora) ";
+            if (!nameset) dbname += "plp) ";
             kit = new doraTPCBKit(dbname.c_str(),netmode,netport);
             break;
 #endif
@@ -704,6 +708,7 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
+            dbname += "dora) "; nameset=true;
             assert (0); // TODO
             //kit = new doraTPCHKit("(tpch-dora) ",netmode,netport);
             break;
@@ -723,6 +728,7 @@ int main(int argc, char* argv[])
             break;
 #ifdef CFG_DORA
         case snDORA:
+            dbname += "dora) "; nameset=true;
             assert (0); // TODO
             //kit = new doraSSBKit("(ssb-dora) ",netmode,netport);
             break;
