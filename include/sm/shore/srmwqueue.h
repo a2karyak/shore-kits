@@ -110,7 +110,7 @@ struct srmwqueue
     {
         assert (_owner);
         int loopcnt = 0;
-        eWorkerControl wc = WC_ACTIVE;
+        uint_t wc = WC_ACTIVE;
 
         // 1. start spinning
 	while (*&_empty) {
@@ -118,7 +118,8 @@ struct srmwqueue
             wc = _owner->get_control(); 
 
             // 2. if thread was signalled to stop
-	    if ((wc != WC_ACTIVE) && (wc != WC_RECOVERY)) {
+	    //if ((wc != WC_ACTIVE) && (wc != WC_RECOVERY)) {
+	    if (wc != WC_ACTIVE) {
                 _owner->set_ws(WS_FINISHED);
 		return (false);
             }
@@ -130,10 +131,10 @@ struct srmwqueue
             if (++loopcnt > _loops) {
                 loopcnt = 0;
     
-                TRACE( TRACE_TRX_FLOW, "Condex sleeping (%d)...\n", _my_ws);
+                //TRACE( TRACE_TRX_FLOW, "Condex sleeping (%d)...\n", _my_ws);
                 //assert (_my_ws==WS_INPUT_Q); // can sleep only on input queue
                 loopcnt = _owner->condex_sleep();
-                TRACE( TRACE_TRX_FLOW, "Condex woke (%d) (%d)...\n", _my_ws, loopcnt);
+                //TRACE( TRACE_TRX_FLOW, "Condex woke (%d) (%d)...\n", _my_ws, loopcnt);
 
                 // after it wakes up, should do the loop again.
                 // if something has been pushed then _empty will be false

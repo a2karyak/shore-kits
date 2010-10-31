@@ -158,9 +158,9 @@ class base_worker_t : public thread_t
 protected:
 
     // status variables
-    volatile eWorkerControl  _control;
+    volatile uint_t  _control;
     volatile eDataOwnerState _data_owner;
-    eWorkingState volatile   _ws;
+    uint_t volatile   _ws;
 
     // cond var for sleeping instead of looping after a while
     condex                   _notify;
@@ -225,15 +225,15 @@ public:
     // @brief: Set working state
     // @note:  This function can be called also by other threads
     //         (other than the worker)
-    inline eWorkingState set_ws(const eWorkingState new_ws) {
-        eWorkingState old_ws = *&_ws;
+    inline uint_t set_ws(const uint_t new_ws) {
+        uint_t old_ws = *&_ws;
         while (old_ws!=new_ws) {
 
             // Do not change WS, if it is already set to commit
             if ((old_ws==WS_COMMIT_Q)&&(new_ws!=WS_LOOP)) { return (old_ws); }
             
             // Update WS
-            eWorkingState cur_ws = atomic_cas(&_ws,old_ws,new_ws);           
+            uint_t cur_ws = atomic_cas(&_ws,old_ws,new_ws);           
             if (cur_ws == old_ws) {
                 // If cas successful, then wake up worker if sleeping
                 if ((old_ws==WS_SLEEP)&&(new_ws!=WS_SLEEP)) { condex_wakeup(); }
@@ -248,10 +248,10 @@ public:
         return (old_ws);
     }
 
-    inline eWorkingState get_ws() { return (*&_ws); }
+    inline uint_t get_ws() { return (*&_ws); }
 
 
-    inline bool can_continue(const eWorkingState my_ws) {
+    inline bool can_continue(const uint_t my_ws) {
         return ((*&_ws==my_ws)||(*&_ws==WS_LOOP));
     }
 
@@ -269,9 +269,9 @@ public:
         // (if on WS_COMMIT_Q or WS_INPUT_Q it means that a
         //  COMMIT or INPUT action was enqueued during this
         //  LOOP so there is no need to sleep).
-        eWorkingState old_ws = *&_ws;
+        uint_t old_ws = *&_ws;
         while (old_ws==WS_LOOP) {
-            eWorkingState cur_ws = atomic_cas(&_ws,old_ws,WS_SLEEP);
+            uint_t cur_ws = atomic_cas_uint(&_ws,old_ws,(uint_t)WS_SLEEP);
             if (cur_ws == old_ws) {
                 // If cas successful, then sleep
                 _notify.wait();
@@ -300,9 +300,9 @@ public:
 
 
     // thread control
-    inline eWorkerControl get_control() { return (*&_control); }
+    inline uint_t get_control() { return (*&_control); }
 
-    inline bool set_control(const eWorkerControl awc) {
+    inline bool set_control(const uint_t awc) {
         //
         // Allowed transition matrix:
         //

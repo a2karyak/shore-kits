@@ -455,8 +455,8 @@ w_rc_t partition_t<DataType>::prepareNewRun()
 
     // --------------------------------------
     // Enter recovery mode for that partition
-    eWorkerControl old_wc = _owner->get_control();
-    _owner->set_control(WC_RECOVERY);
+    // eWorkerControl old_wc = _owner->get_control();
+    // _owner->set_control(WC_RECOVERY);
 
     // Clear queues but not remove owner
     while (!_committed_queue->is_really_empty()) {
@@ -502,7 +502,7 @@ w_rc_t partition_t<DataType>::prepareNewRun()
         _plm->reset();
     }
 
-    _owner->set_control(old_wc);
+    //_owner->set_control(old_wc);
     // Exit recovery mode
     // --------------------------------------
     return (RCOK);

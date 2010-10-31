@@ -105,7 +105,7 @@ enum eWorkingState { WS_UNDEF    = 0x1,
 
 enum eDataOwnerState { DOS_UNDEF    = 0x1, 
                        DOS_ALONE    = 0x2, 
-                       DOS_MULTIPLE = 0x3 
+                       DOS_MULTIPLE = 0x4
 };
 
 

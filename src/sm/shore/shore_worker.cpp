@@ -263,13 +263,13 @@ void base_worker_t::work()
     // state machine
     while (true) {
         switch (get_control()) {
+
+        //     usleep(1000); // Sleep for a millisecond
+        //     break;
+
         case (WC_PAUSED):
             if (work_PAUSED())
                 return;
-            break;
-
-        case (WC_RECOVERY):
-            usleep(1000); // Sleep for a millisecond
             break;
 
         case (WC_ACTIVE):

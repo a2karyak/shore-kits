@@ -134,7 +134,7 @@ inline int dora_worker_t<DataType>::_work_ACTIVE_impl()
     me()->alloc_sdesc_cache();
 
     // Check if signalled to stop
-    while ((get_control() == WC_ACTIVE) || (inRecovery=(get_control() == WC_RECOVERY))) {
+    while ((get_control() & WC_ACTIVE) || (inRecovery=(get_control() == WC_RECOVERY))) {
         
         // reset the flags for the new loop
         apa = NULL;
