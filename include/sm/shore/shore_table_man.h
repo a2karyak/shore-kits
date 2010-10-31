@@ -274,9 +274,12 @@ public:
         if (!table_iter::_opened) {
             assert (db);
             W_DO(table_iter::_file->check_fid(db));
+            bool bIgnoreLatches = (table_iter::_file->get_pd() & (PD_MRBT_LEAF | PD_MRBT_PART) ? true : false);
             table_iter::_scan = new scan_file_i(table_iter::_file->fid(), 
                                                 ss_m::t_cc_record, 
-                                                false, table_iter::_lm);
+                                                false, 
+                                                table_iter::_lm,
+                                                bIgnoreLatches);
             table_iter::_opened = true;
         }
         return (RCOK);
@@ -394,7 +397,8 @@ public:
             index_iter::_scan = new scan_index_i(index_iter::_file->fid(pnum), 
                                                  c1, bound1, c2, bound2,
                                                  false, cc, 
-                                                 index_iter::_lm);
+                                                 index_iter::_lm,
+                                                 index_iter::_file->is_latchless());
             index_iter::_opened = true;
         }
 

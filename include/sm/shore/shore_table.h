@@ -491,6 +491,7 @@ struct el_filler_part : public ss_m::el_filler
 
 
 
+
 /****************************************************************** 
  *
  *  class table_desc_t methods 

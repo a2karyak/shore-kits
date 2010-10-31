@@ -918,13 +918,14 @@ w_rc_t table_man_t::index_probe(ss_m* db,
                                 index_desc_t* pindex,
                                 table_tuple*  ptuple,
                                 lock_mode_t   lock_mode,
-                                const uint    system_mode,
                                 const lpid_t& root)
 {
     assert (_ptable);
     assert (pindex);
     assert (ptuple); 
     assert (ptuple->_rep);
+
+    uint4_t system_mode = pindex->get_pd();
 
     bool     found = false;
     smsize_t len = sizeof(rid_t);
@@ -1012,16 +1013,16 @@ w_rc_t table_man_t::index_probe(ss_m* db,
 w_rc_t table_man_t::add_tuple(ss_m* db, 
                               table_tuple* ptuple,
                               const lock_mode_t lock_mode,
-                              const uint system_mode,
                               const lpid_t& primary_root)
 {
-    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) {
-        return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
-    }
-
     assert (_ptable);
     assert (ptuple);
     assert (ptuple->_rep);
+    uint4_t system_mode = _ptable->get_pd();
+
+    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) {
+        return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
+    }
 
     // find the file
     W_DO(_ptable->check_fid(db));
@@ -1164,9 +1165,6 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
                                   const lpid_t& primary_root)
 {
     assert (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF));
-    assert (_ptable);
-    assert (ptuple);
-    assert (ptuple->_rep);
 
     // find the file
     W_DO(_ptable->check_fid(db));
@@ -1259,7 +1257,6 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
 w_rc_t table_man_t::delete_tuple(ss_m* db, 
                                  table_tuple* ptuple,
                                  const lock_mode_t lock_mode,
-                                 const uint system_mode,
                                  const lpid_t& primary_root)
 {
     assert (_ptable);
@@ -1268,6 +1265,7 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
+    uint4_t system_mode = _ptable->get_pd();
     rid_t todelete = ptuple->rid();
 
     // figure out what mode will be used
@@ -1352,8 +1350,7 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 
 w_rc_t table_man_t::update_tuple(ss_m* /* db */, 
                                  table_tuple* ptuple,
-                                 const lock_mode_t  lock_mode,
-                                 const uint         system_mode) // physical_design_t
+                                 const lock_mode_t  lock_mode) // physical_design_t
 {
     assert (_ptable);
     assert (ptuple);
@@ -1361,6 +1358,7 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
+    uint4_t system_mode = _ptable->get_pd();
     bool bIgnoreLocks = false;
     if (lock_mode==NL) bIgnoreLocks = true;
 
@@ -1436,14 +1434,14 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
  *********************************************************************/
 
 w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
-                               const lock_mode_t lock_mode,
-                               const uint system_mode)
+                               const lock_mode_t lock_mode)
 {
     assert (_ptable);
     assert (ptuple);
 
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
+    uint4_t system_mode = _ptable->get_pd();
     latch_mode_t heap_latch_mode = LATCH_EX;
     if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
         heap_latch_mode = LATCH_NL;
