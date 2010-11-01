@@ -108,9 +108,9 @@ using namespace dora;
 //////////////////////////////
 
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline = 0x0,
-                    snDORA     = 0x1,
-                    snPLP      = 0x2
+enum SysnameValue { snBaseline = 0x1,
+                    snDORA     = 0x2,
+                    snPLP      = 0x4
 };
 
 // Map to associate string with then enum values
