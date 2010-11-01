@@ -1365,7 +1365,7 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
     bool no_heap_latch = false;   
     latch_mode_t heap_latch_mode = LATCH_EX;
     if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
-        no_heap_latch = false;
+        no_heap_latch = true;
         heap_latch_mode = LATCH_NL;
     }
 
