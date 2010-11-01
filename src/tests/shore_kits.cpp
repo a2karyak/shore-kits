@@ -518,6 +518,23 @@ typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
 
 ////////////////////////////////
 
+bool validatePhysical(string physical)
+{   
+    if (physical.compare("normal")==0) {
+        return (true);
+    }
+    if (physical.compare("mrbtnorm")==0) {
+        return (true);
+    }
+    if (physical.compare("mrbtpart")==0) {
+        return (true);
+    }
+    if (physical.compare("mrbtleaf")==0) {
+        return (true);
+    }
+    return (false);
+}
+
 void usage() 
 {
     TRACE( TRACE_ALWAYS, "\nAccepted parameters:\n"                       \
@@ -531,6 +548,7 @@ void usage()
            "-g <RANGE>    : Use specific range (in some workloads)\n"   \
            "-h            : Print this message and exit\n");
 }
+
 
 
 int main(int argc, char* argv[]) 
@@ -591,6 +609,11 @@ int main(int argc, char* argv[])
         case 'd':
             TRACE( TRACE_ALWAYS, "PHYSICAL DESIGN (%s)\n", optarg);
             physical = (string)optarg;
+            if (!validatePhysical(physical)) {
+                TRACE( TRACE_ALWAYS, "Unknown physical design (%s)\n",
+                       physical.c_str());
+                return(2);
+            }
             ev->setSysDesign(physical);
             break;
         case 'x':
