@@ -49,6 +49,10 @@ const int XCT_TM1_DORA_DEL_CALL_FWD  = 228;
 
 const int XCT_TM1_DORA_GET_SUB_NBR   = 229;
 
+const int XCT_TM1_DORA_CALL_FWD_MIX_BENCH  = 230;
+const int XCT_TM1_DORA_INS_CALL_FWD_BENCH  = 231;
+const int XCT_TM1_DORA_DEL_CALL_FWD_BENCH  = 232;
+
 
 /********************************************************************* 
  *
@@ -77,6 +81,10 @@ int dora_tm1_client_t::load_sup_xct(mapSupTrxs& stmap)
 #else
     stmap[XCT_TM1_DORA_GET_SUB_NBR]     = "DORA-TM1-GetSubNbr-Ext";
 #endif
+
+    stmap[XCT_TM1_DORA_CALL_FWD_MIX_BENCH]    = "DORA-TM1-CallFwdMixBench";
+    stmap[XCT_TM1_DORA_INS_CALL_FWD_BENCH]    = "DORA-TM1-InsCallFwdBench";
+    stmap[XCT_TM1_DORA_DEL_CALL_FWD_BENCH]    = "DORA-TM1-DelCallFwdBench";
 
     return (stmap.size());
 }
@@ -148,13 +156,15 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
     case XCT_TM1_DORA_GET_SUB_NBR:
         return (_tm1db->dora_get_sub_nbr(xctid,atrt,selid,bWake));
 
+    case XCT_TM1_DORA_INS_CALL_FWD_BENCH:
+        return (_tm1db->dora_ins_call_fwd_bench(xctid,atrt,selid,true));
+
 
     default:
         assert (0); // UNKNOWN TRX-ID
     }
     return (RCOK);
 }
-
 
 
 EXIT_NAMESPACE(dora);

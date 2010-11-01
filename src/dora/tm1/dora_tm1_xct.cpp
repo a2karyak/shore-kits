@@ -89,6 +89,7 @@ DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,del_call_fwd);
 
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,get_sub_nbr);
 
+DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,ins_call_fwd_bench);
 
 
 // --- with input specified --- //
@@ -577,7 +578,6 @@ w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id,
 
     // 6a. Decide about partition
     // 6b. Enqueue
-
     {        
         irpImpl* my_sub_part = decide_part(sub(),in._s_id);
 
@@ -590,6 +590,71 @@ w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id,
         }
     }
 
+    return (RCOK); 
+}
+
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 INS_CALL_FWD_BENCH
+ *
+ ********************************************************************/
+
+w_rc_t DoraTM1Env::dora_ins_call_fwd_bench(const int xct_id, 
+                                           trx_result_tuple_t& atrt, 
+                                           ins_call_fwd_bench_input_t& in,
+                                           const bool bWake)
+{
+    // 1. Initiate transaction
+    tid_t atid;   
+
+#ifndef ONLYDORA
+    W_DO(_pssm->begin_xct(atid));
+#endif
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+#ifndef ONLYDORA
+    assert (pxct);
+    smthread_t::me()->detach_xct(pxct);
+#endif
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
+    
+    // 3. Setup the next RVP
+    // PH1 consists of 1 action
+    final_icfb_rvp* rvp = new_final_icfb_rvp(pxct,atid,xct_id,atrt);
+
+    // 4. Generate the actions
+    r_sub_icfb_action* r_sub = new_r_sub_icfb_action(pxct,atid,rvp,in);
+    i_cf_icfb_action* i_cf = new_i_cf_icfb_action(pxct,atid,rvp,in);
+
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    {        
+        irpImpl* my_sub_part = decide_part(sub(),in._s_id);
+        irpImpl* my_cf_part = decide_part(cf(),in._s_id);
+
+        // SUB_PART_CS
+        CRITICAL_SECTION(sub_part_cs, my_sub_part->_enqueue_lock);
+        if (my_sub_part->enqueue(r_sub,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_SUB_ICFB\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+        // CF_PART_CS
+        CRITICAL_SECTION(cf_part_cs, my_cf_part->_enqueue_lock);
+        sub_part_cs.exit();
+        if (my_cf_part->enqueue(i_cf,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing I_CF_ICFB\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+
+    }
     return (RCOK); 
 }
 

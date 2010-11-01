@@ -110,6 +110,13 @@ class r_sf_icf_action;
 class ins_cf_icf_action;
 #endif
 
+// TM1 InsCallFwdBench (mbench)
+class final_icfb_rvp;
+class r_sub_icfb_action;
+class i_cf_icfb_action;
+
+
+
 // TM1 DelCallFwd
 class final_dcf_rvp;
 class mid_dcf_rvp;
@@ -270,6 +277,21 @@ public:
     DECLARE_DORA_ACTION_GEN_FUNC(r_sf_icf_action,rvp_t,ins_call_fwd_input_t);
     DECLARE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t);
 #endif
+
+
+
+    //////////////////////
+    // InsCallFwd-Bench //
+    //////////////////////
+
+    DECLARE_DORA_TRX(ins_call_fwd_bench);
+
+    DECLARE_DORA_FINAL_RVP_GEN_FUNC(final_icfb_rvp);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(r_sub_icfb_action,rvp_t,ins_call_fwd_bench_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(i_cf_icfb_action,rvp_t,ins_call_fwd_bench_input_t);
+
+
 
 
     ////////////////

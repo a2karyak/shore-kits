@@ -147,6 +147,19 @@ DECLARE_DORA_ACTION_NO_RVP_CLASS(ins_cf_icf_action,int,DoraTM1Env,ins_call_fwd_i
 #endif
 
 
+
+/******************************************************************** 
+ *
+ * DORA TM1 INS_CALL_FWD_BENCH
+ *
+ ********************************************************************/
+
+DECLARE_DORA_FINAL_RVP_CLASS(final_icfb_rvp,DoraTM1Env,2,2);
+
+DECLARE_DORA_ACTION_NO_RVP_CLASS(r_sub_icfb_action,int,DoraTM1Env,ins_call_fwd_bench_input_t,1);
+DECLARE_DORA_ACTION_NO_RVP_CLASS(i_cf_icfb_action,int,DoraTM1Env,ins_call_fwd_bench_input_t,3);
+
+
 /******************************************************************** 
  *
  * DORA TM1 DEL_CALL_FWD

@@ -1324,6 +1324,162 @@ done:
 
 /******************************************************************** 
  *
+ * DORA TM1 INS_CALL_FWD_BENCH
+ *
+ * (1) final_icfb_rvp
+ *
+ ********************************************************************/
+
+
+DEFINE_DORA_FINAL_RVP_CLASS(final_icfb_rvp,ins_call_fwd_bench);
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 INS_CALL_FWD_BENCH ACTIONS
+ *
+ * (1) R-SUB
+ * (2) I-CF
+ *
+ ********************************************************************/
+
+
+void r_sub_icfb_action::calc_keys()
+{
+    set_read_only();
+    _down.push_back(_in._s_id);
+}
+
+
+w_rc_t r_sub_icfb_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
+    assert (prsub);
+
+    // allocate space for the larger table representation
+    rep_row_t areprow(_penv->sub_man()->ts());
+    areprow.set(_penv->sub_desc()->maxsize()); 
+    prsub->_rep = &areprow;
+
+    { // make gotos safe
+
+        // 1. Probe Subscriber sec index
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+#ifndef ONLYDORA
+        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
+#endif
+        if (e.is_error()) { goto done; }
+
+        prsub->get_value(0, _in._s_id);
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // dumps the status of all the table rows used
+    prsub->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->sub_man()->give_tuple(prsub);
+    return (e);
+}
+
+
+
+void i_cf_icfb_action::calc_keys()
+{
+    int sftype = _in._sf_type;
+    int stime = _in._s_time;
+    _down.push_back(_in._s_id);
+    _down.push_back(sftype);
+    _down.push_back(stime);
+}
+
+
+w_rc_t i_cf_icfb_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // CallForwarding
+    table_row_t* prcf = _penv->cf_man()->get_tuple();
+    assert (prcf);
+
+    rep_row_t areprow(_penv->cf_man()->ts());
+    areprow.set(_penv->cf_desc()->maxsize()); 
+    prcf->_rep = &areprow;
+
+    { // make gotos safe
+
+        // 3. Check if it can successfully insert CallForwarding entry
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d ICFB:cf-idx-nl (%d) (%d) (%d)\n", 
+               _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
+
+#ifndef ONLYDORA
+        e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
+                                       _in._s_id, _in._sf_type, _in._s_time);
+#endif
+            
+        // idx probes return se_TUPLE_NOT_FOUND
+        if (e.err_num() == se_TUPLE_NOT_FOUND) { 
+
+            // 4. Insert
+            prcf->set_value(0, _in._s_id);
+            prcf->set_value(1, _in._sf_type);
+            prcf->set_value(2, _in._s_time);
+            prcf->set_value(3, _in._e_time);
+            prcf->set_value(4, _in._numberx);                
+
+#ifdef CFG_HACK
+            prcf->set_value(5, "padding"); // PADDING
+#endif
+                
+            TRACE (TRACE_TRX_FLOW, "App: %d ICFB:ins-cf\n", _tid.get_lo());
+
+#ifndef ONLYDORA
+        e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
+#endif
+            if (e.is_error()) { goto done; }
+        }             
+        else { // 3. Delete Call Forwarding record if tuple found
+	    
+	    e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf,
+                                           _in._s_id, _in._sf_type, _in._s_time);
+	    if (e.is_error()) { goto done; }
+	    TRACE (TRACE_TRX_FLOW, "App: %d ICFB:del-cf\n", _tid.get_lo());
+	    e = _penv->cf_man()->delete_tuple(_penv->db(), prcf, NL);
+	}
+	
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // dumps the status of all the table rows used
+    prcf->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->cf_man()->give_tuple(prcf);
+    return (e);
+}
+
+
+
+
+
+
+
+/******************************************************************** 
+ *
  * DORA TM1 GET_SUB_NBR
  *
  ********************************************************************/

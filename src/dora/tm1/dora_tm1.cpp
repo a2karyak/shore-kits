@@ -437,6 +437,18 @@ DEFINE_DORA_ACTION_GEN_FUNC(ins_cf_icf_action,rvp_t,ins_call_fwd_input_t,int,Dor
 #endif
 
 
+
+////////////////
+// InsCallFwd-Bench //
+////////////////
+
+DEFINE_DORA_FINAL_RVP_GEN_FUNC(final_icfb_rvp,DoraTM1Env);
+
+DEFINE_DORA_ACTION_GEN_FUNC(r_sub_icfb_action,rvp_t,ins_call_fwd_bench_input_t,int,DoraTM1Env);
+DEFINE_DORA_ACTION_GEN_FUNC(i_cf_icfb_action,rvp_t,ins_call_fwd_bench_input_t,int,DoraTM1Env);
+
+
+
 ////////////////
 // DelCallFwd //
 ////////////////
