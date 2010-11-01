@@ -69,7 +69,7 @@ class sort_buffer_t : public table_desc_t
 public:
 
     sort_buffer_t(const uint_t field_count)
-        : table_desc_t("SORT_BUF", field_count)
+        : table_desc_t("SORT_BUF", field_count, PD_NORMAL)
     { 
     }
 

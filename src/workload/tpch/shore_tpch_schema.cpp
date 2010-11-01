@@ -86,7 +86,7 @@ using namespace shore;
 ENTER_NAMESPACE(tpch);
 
 nation_t::nation_t(string sysname) : 
-    table_desc_t("NATION", TPCH_NATION_FCOUNT) 
+    table_desc_t("NATION", TPCH_NATION_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "N_NATIONKEY");
@@ -112,7 +112,7 @@ nation_t::nation_t(string sysname) :
 
 
 region_t::region_t(string sysname) : 
-    table_desc_t("REGION", TPCH_REGION_FCOUNT) 
+    table_desc_t("REGION", TPCH_REGION_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "R_REGIONKEY");     
@@ -131,7 +131,7 @@ region_t::region_t(string sysname) :
 
 
 supplier_t::supplier_t(string sysname) : 
-    table_desc_t("SUPPLIER", TPCH_SUPPLIER_FCOUNT) 
+    table_desc_t("SUPPLIER", TPCH_SUPPLIER_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "S_SUPPKEY");
@@ -159,7 +159,7 @@ supplier_t::supplier_t(string sysname) :
 
 
 part_t::part_t(string sysname) : 
-    table_desc_t("PART", TPCH_PART_FCOUNT) 
+    table_desc_t("PART", TPCH_PART_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "P_PARTKEY");
@@ -182,7 +182,7 @@ part_t::part_t(string sysname) :
 }
 
 partsupp_t::partsupp_t(string sysname) : 
-    table_desc_t("PARTSUPP", TPCH_PARTSUPP_FCOUNT) 
+    table_desc_t("PARTSUPP", TPCH_PARTSUPP_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,    "PS_PARTKEY");
@@ -212,7 +212,7 @@ partsupp_t::partsupp_t(string sysname) :
 
 
 customer_t::customer_t(string sysname) : 
-    table_desc_t("CUSTOMER", TPCH_CUSTOMER_FCOUNT) 
+    table_desc_t("CUSTOMER", TPCH_CUSTOMER_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,    "C_CUSTKEY");
@@ -241,7 +241,7 @@ customer_t::customer_t(string sysname) :
 
 
 orders_t::orders_t(string sysname) : 
-    table_desc_t("ORDERS", TPCH_ORDERS_FCOUNT) 
+    table_desc_t("ORDERS", TPCH_ORDERS_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "O_ORDERKEY");
@@ -272,7 +272,7 @@ orders_t::orders_t(string sysname) :
 
 
 lineitem_t::lineitem_t(string sysname) : 
-    table_desc_t("LINEITEM", TPCH_LINEITEM_FCOUNT) 
+    table_desc_t("LINEITEM", TPCH_LINEITEM_FCOUNT, PD_NORMAL) 
 {
     // table schema
     _desc[0].setup(SQL_INT,    "L_ORDERKEY");

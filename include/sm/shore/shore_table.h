@@ -149,7 +149,7 @@ public:
     /* --- Constructor --- */
     /* ------------------- */
 
-    table_desc_t(const char* name, int fieldcnt);    
+    table_desc_t(const char* name, int fieldcnt, uint4_t pd);
     virtual ~table_desc_t();
 
 

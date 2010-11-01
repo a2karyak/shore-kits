@@ -57,8 +57,8 @@ using namespace shore;
  ******************************************************************/
 
 
-table_desc_t::table_desc_t(const char* name, int fieldcnt)
-    : file_desc_t(name, fieldcnt), _db(NULL),
+table_desc_t::table_desc_t(const char* name, int fieldcnt, uint4_t pd)
+    : file_desc_t(name, fieldcnt, pd), _db(NULL),
       _indexes(NULL), _primary_idx(NULL),
       _maxsize(0),
       _sMinKey(NULL),_sMinKeyLen(0),

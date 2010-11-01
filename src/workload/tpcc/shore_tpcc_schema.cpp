@@ -81,7 +81,7 @@ ENTER_NAMESPACE(tpcc);
 
 
 warehouse_t::warehouse_t(const uint4_t& pd) : 
-    table_desc_t("WAREHOUSE", TPCC_WAREHOUSE_FCOUNT) 
+    table_desc_t("WAREHOUSE", TPCC_WAREHOUSE_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,   "W_ID");
@@ -102,7 +102,7 @@ warehouse_t::warehouse_t(const uint4_t& pd) :
 
 
 district_t::district_t(const uint4_t& pd) : 
-    table_desc_t("DISTRICT", TPCC_DISTRICT_FCOUNT) 
+    table_desc_t("DISTRICT", TPCC_DISTRICT_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,   "D_ID");     
@@ -129,7 +129,7 @@ district_t::district_t(const uint4_t& pd) :
 
 
 customer_t::customer_t(const uint4_t& pd) : 
-    table_desc_t("CUSTOMER", TPCC_CUSTOMER_FCOUNT) 
+    table_desc_t("CUSTOMER", TPCC_CUSTOMER_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,    "C_ID");
@@ -170,8 +170,8 @@ customer_t::customer_t(const uint4_t& pd) :
 
 
 
-history_t::history_t(const uint4_t& /* pd */) : 
-    table_desc_t("HISTORY", TPCC_HISTORY_FCOUNT) 
+history_t::history_t(const uint4_t& pd) : 
+    table_desc_t("HISTORY", TPCC_HISTORY_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,   "H_C_ID");
@@ -189,7 +189,7 @@ history_t::history_t(const uint4_t& /* pd */) :
 
 
 new_order_t::new_order_t(const uint4_t& pd) : 
-    table_desc_t("NEW_ORDER", TPCC_NEW_ORDER_FCOUNT) 
+    table_desc_t("NEW_ORDER", TPCC_NEW_ORDER_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT, "NO_O_ID");
@@ -204,7 +204,7 @@ new_order_t::new_order_t(const uint4_t& pd) :
 
 
 order_t::order_t(const uint4_t& pd) : 
-    table_desc_t("ORDER", TPCC_ORDER_FCOUNT) 
+    table_desc_t("ORDER", TPCC_ORDER_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,   "O_ID");
@@ -229,7 +229,7 @@ order_t::order_t(const uint4_t& pd) :
 
 
 order_line_t::order_line_t(const uint4_t& pd) : 
-    table_desc_t("ORDERLINE", TPCC_ORDER_LINE_FCOUNT) 
+    table_desc_t("ORDERLINE", TPCC_ORDER_LINE_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,    "OL_O_ID");
@@ -256,7 +256,7 @@ order_line_t::order_line_t(const uint4_t& pd) :
 
 
 item_t::item_t(const uint4_t& pd) : 
-    table_desc_t("ITEM", TPCC_ITEM_FCOUNT) 
+    table_desc_t("ITEM", TPCC_ITEM_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,  "I_ID");
@@ -273,7 +273,7 @@ item_t::item_t(const uint4_t& pd) :
 
 
 stock_t::stock_t(const uint4_t& pd) : 
-    table_desc_t("STOCK", TPCC_STOCK_FCOUNT) 
+    table_desc_t("STOCK", TPCC_STOCK_FCOUNT, pd) 
 {
     // Schema
     _desc[0].setup(SQL_INT,    "S_I_ID");

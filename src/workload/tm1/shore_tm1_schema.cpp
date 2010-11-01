@@ -66,9 +66,9 @@ ENTER_NAMESPACE(tm1);
 
 subscriber_t::subscriber_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("SUBSCRIBER", TM1_SUB_FCOUNT+1) 
+    : table_desc_t("SUBSCRIBER", TM1_SUB_FCOUNT+1, pd) 
 #else
-    : table_desc_t("SUBSCRIBER", TM1_SUB_FCOUNT) 
+    : table_desc_t("SUBSCRIBER", TM1_SUB_FCOUNT, pd) 
 #endif
 {
     // Schema
@@ -141,9 +141,9 @@ subscriber_t::subscriber_t(const uint4_t& pd)
 
 access_info_t::access_info_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("ACCESS_INFO", TM1_AI_FCOUNT+1) 
+    : table_desc_t("ACCESS_INFO", TM1_AI_FCOUNT+1, pd) 
 #else
-    : table_desc_t("ACCESS_INFO", TM1_AI_FCOUNT) 
+    : table_desc_t("ACCESS_INFO", TM1_AI_FCOUNT, pd) 
 #endif
 {
     // Schema
@@ -175,9 +175,9 @@ access_info_t::access_info_t(const uint4_t& pd)
 
 special_facility_t::special_facility_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("SPECIAL_FACILITY", TM1_SF_FCOUNT+1) 
+    : table_desc_t("SPECIAL_FACILITY", TM1_SF_FCOUNT+1, pd) 
 #else
-    : table_desc_t("SPECIAL_FACILITY", TM1_SF_FCOUNT) 
+    : table_desc_t("SPECIAL_FACILITY", TM1_SF_FCOUNT, pd) 
 #endif
 {
     // Schema
@@ -208,9 +208,9 @@ special_facility_t::special_facility_t(const uint4_t& pd)
 
 call_forwarding_t::call_forwarding_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("CALL_FORWARDING", TM1_CF_FCOUNT+1) 
+    : table_desc_t("CALL_FORWARDING", TM1_CF_FCOUNT+1, pd) 
 #else
-    : table_desc_t("CALL_FORWARDING", TM1_CF_FCOUNT)
+    : table_desc_t("CALL_FORWARDING", TM1_CF_FCOUNT, pd)
 #endif
 {
     // Schema

@@ -65,9 +65,9 @@ ENTER_NAMESPACE(tpcb);
 
 branch_t::branch_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("BRANCH", 3) 
+    : table_desc_t("BRANCH", 3, pd) 
 #else
-    : table_desc_t("BRANCH", 2) 
+      : table_desc_t("BRANCH", 2, pd) 
 #endif
 {
     // Schema
@@ -88,9 +88,9 @@ branch_t::branch_t(const uint4_t& pd)
 
 teller_t::teller_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("TELLER", 4) 
+    : table_desc_t("TELLER", 4, pd) 
 #else
-    : table_desc_t("TELLER", 3) 
+      : table_desc_t("TELLER", 3, pd) 
 #endif
 {
     // Schema
@@ -111,9 +111,9 @@ teller_t::teller_t(const uint4_t& pd)
 
 account_t::account_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("ACCOUNT", 4) 
+    : table_desc_t("ACCOUNT", 4, pd) 
 #else
-    : table_desc_t("ACCOUNT", 3) 
+      : table_desc_t("ACCOUNT", 3, pd) 
 #endif
 {
     // Schema
@@ -139,11 +139,11 @@ account_t::account_t(const uint4_t& pd)
 }
 
 
-history_t::history_t(const uint4_t& /* pd */)
+history_t::history_t(const uint4_t& pd)
 #ifdef CFG_HACK
-    : table_desc_t("HISTORY", 6) 
+    : table_desc_t("HISTORY", 6, pd) 
 #else
-    : table_desc_t("HISTORY", 5) 
+      : table_desc_t("HISTORY", 5, pd) 
 #endif
 {
     // Schema
