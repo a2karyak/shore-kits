@@ -367,7 +367,7 @@ void ShoreTPCBEnv::table_creator_t::work()
     
     // Create 10k accounts in each partition to buffer 
     // workers from each other
-    for(long i=0; i < _pcount; i++) {
+    for(long i=-1; i < _pcount; i++) {
 	long a_id = i*_psize;
 	populate_db_input_t in(_sf, a_id);
 	TRACE( TRACE_STATISTICS, "Populating %ld a_ids starting with %ld\n", 

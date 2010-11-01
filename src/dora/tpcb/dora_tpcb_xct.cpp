@@ -127,19 +127,19 @@ w_rc_t DoraTPCBEnv::dora_acct_update(const int xct_id,
         // *** Reminder: The TPC-B records start their numbering from 0 ***
         irpImpl* my_br_part = decide_part(br(),in.b_id);
         assert (my_br_part);
-        TRACE( TRACE_STATISTICS,"BR (%d) -> (%d)\n", in.b_id, my_br_part->part_id());
+        //        TRACE( TRACE_STATISTICS,"BR (%d) -> (%d)\n", in.b_id, my_br_part->part_id());
 
         irpImpl* my_te_part = decide_part(te(),in.t_id);
         assert (my_te_part);
-        TRACE( TRACE_STATISTICS,"TE (%d) -> (%d)\n", in.t_id, my_te_part->part_id());
+        //        TRACE( TRACE_STATISTICS,"TE (%d) -> (%d)\n", in.t_id, my_te_part->part_id());
 
         irpImpl* my_ac_part = decide_part(ac(),in.a_id);
         assert (my_ac_part);
-        TRACE( TRACE_STATISTICS,"AC (%d) -> (%d)\n", in.a_id, my_ac_part->part_id());
+        //        TRACE( TRACE_STATISTICS,"AC (%d) -> (%d)\n", in.a_id, my_ac_part->part_id());
 
         irpImpl* my_hi_part = decide_part(hi(),in.t_id);
         assert (my_hi_part);
-        TRACE( TRACE_STATISTICS,"HI (%d) -> (%d)\n", in.t_id, my_hi_part->part_id());
+        //        TRACE( TRACE_STATISTICS,"HI (%d) -> (%d)\n", in.t_id, my_hi_part->part_id());
         
 
         // BR_PART_CS
