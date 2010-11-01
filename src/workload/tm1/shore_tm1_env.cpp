@@ -273,6 +273,13 @@ void  ShoreTM1Env::table_creator_t::work()
     W_COERCE(_env->_pcf_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());    
 
+    // After they obtained their fid, register managers
+    _env->_psub_man->register_table_man();
+    _env->_pai_man->register_table_man();
+    _env->_psf_man->register_table_man();
+    _env->_pcf_man->register_table_man();
+
+
     // Preload (preloads_per_worker) records for each of the loaders
     int sub_id = 0;
     for (int i=0; i<_loaders; i++) {

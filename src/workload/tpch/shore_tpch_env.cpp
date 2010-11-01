@@ -155,7 +155,7 @@ void ShoreTPCHEnv::table_creator_t::work()
 //     fprintf(stdout, "LINEITEM: %d\n", sizeof(tpch_lineitem_tuple));
 
 
-    // 1. Create the tables
+    // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pnation_desc->create_physical_table(_env->db()));
     W_COERCE(_env->_pregion_desc->create_physical_table(_env->db()));
@@ -167,7 +167,19 @@ void ShoreTPCHEnv::table_creator_t::work()
     W_COERCE(_env->_plineitem_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
 
-    // 2. Do the baseline transaction
+
+    // After they obtained their fid, register managers
+    _env->_pnation_man->register_table_man();
+    _env->_pregion_man->register_table_man();
+    _env->_ppart_man->register_table_man();
+    _env->_psupplier_man->register_table_man();
+    _env->_ppartsupp_man->register_table_man();
+    _env->_pcustomer_man->register_table_man();
+    _env->_porders_man->register_table_man();
+    _env->_plineitem_man->register_table_man();
+
+
+    // Do the baseline transaction
     populate_baseline_input_t in = {_sf, _loader_count, DIVISOR, 
                                     _parts_per_thread, _custs_per_thread};
 

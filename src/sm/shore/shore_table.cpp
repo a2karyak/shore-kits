@@ -887,8 +887,6 @@ int table_man_t::key_size(index_desc_t* pindex,
 /* --- access through index --- */
 /* ---------------------------- */
 
-
-
 int table_man_t::get_pnum(index_desc_t* pindex, 
                           table_tuple const* ptuple) const 
 {
@@ -900,6 +898,17 @@ int table_man_t::get_pnum(index_desc_t* pindex,
     int first_key;
     ptuple->get_value(pindex->key_index(0), first_key);
     return (first_key % pindex->get_partition_count());
+}
+
+
+
+mcs_lock table_man_t::register_table_lock;
+std::map<stid_t, table_man_t*> table_man_t::stid_to_tableman;
+
+void table_man_t::register_table_man()
+{
+    CRITICAL_SECTION(regtablecs,register_table_lock);
+    stid_to_tableman[this->table()->fid()] = this;
 }
 
 
@@ -1155,6 +1164,51 @@ rc_t el_filler_part::fill_el(vec_t& el, const lpid_t& leaf)
     assert (_ptuple->_rep->_dest);
 
     return rc;
+}
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    relocate_records
+ *
+ *  @brief: It received a list of old and new rids and updates the secondary
+ *          indexes.
+ *
+ *********************************************************************/
+
+w_rc_t relocate_records(const stid_t&      stid,     
+                        vector<rid_t>&    old_rids, 
+                        vector<rid_t>&    new_rids)
+{
+    typedef vector<rid_t>::iterator RIDIt;
+
+    // Find the table_man_t object from the stid
+    table_man_t* my_table_man = table_man_t::stid_to_tableman[stid];
+    index_desc_t* pindex;
+    table_row_t atuple;
+    atuple.setup(my_table_man->table());
+
+    // Read each record into a table_tuple
+    RIDIt old_ridit = old_rids.begin();
+    RIDIt new_ridit = new_rids.begin();
+    for (; ((old_ridit != old_rids.end()) && (new_ridit != new_rids.end())); 
+         old_ridit++,new_ridit++) {
+        
+        // Read record
+        my_table_man->read_tuple(&atuple,NL);
+        
+        // Update indexes       
+        pindex = my_table_man->table()->indexes();
+        while (pindex) {
+            // Remove old entry
+            assert(0); // TODO
+
+            // Insert new
+        }
+    }
+
+
 }
 
 

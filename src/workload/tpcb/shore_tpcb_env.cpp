@@ -364,6 +364,12 @@ void ShoreTPCBEnv::table_creator_t::work()
     W_COERCE(_env->_paccount_desc->create_physical_table(_env->db()));
     W_COERCE(_env->_phistory_desc->create_physical_table(_env->db()));
     W_COERCE(_env->db()->commit_xct());
+
+    // After they obtained their fid, register managers
+    _env->_pbranch_man->register_table_man();
+    _env->_pteller_man->register_table_man();
+    _env->_paccount_man->register_table_man();
+    _env->_phistory_man->register_table_man();
     
     // Create 10k accounts in each partition to buffer 
     // workers from each other

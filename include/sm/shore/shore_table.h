@@ -288,6 +288,9 @@ public:
 
     virtual ~table_man_t() {}
 
+    static mcs_lock register_table_lock;
+    void register_table_man();
+    static std::map<stid_t, table_man_t*> stid_to_tableman;
 
     table_desc_t* table() { return (_ptable); }
 
@@ -383,7 +386,7 @@ public:
                             const lock_mode_t lock_mode,
                             const uint system_mode,
                             const lpid_t& primary_root = lpid_t::null);
-
+    
     w_rc_t    delete_tuple(ss_m* db, 
                            table_tuple* ptuple, 
                            const lock_mode_t lock_mode = EX,
@@ -488,6 +491,19 @@ struct el_filler_part : public ss_m::el_filler
     rc_t fill_el(vec_t& el, const lpid_t& leaf);
 };
 
+
+/* ---------------------------------------------------------------
+ *
+ * @class: relocate_records
+ *
+ * @brief: The registered callback function, which is called when 
+ *         PLP-Leaf moves records
+ *
+ * --------------------------------------------------------------- */
+
+w_rc_t relocate_records(const stid_t&      stid,     
+                        vector<rid_t>&    old_rids, 
+                        vector<rid_t>&    new_rids);
 
 
 
