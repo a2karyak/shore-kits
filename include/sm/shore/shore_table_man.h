@@ -434,7 +434,7 @@ public:
 
             if (_need_tuple) {
                 pin_i  pin;
-                W_DO(pin.pin(rid, 0, index_iter::_lm));
+                W_DO(pin.pin(rid, 0, index_iter::_lm, index_iter::_file->is_latchless()));
                 if (!_pmanager->load(&tuple, pin.body())) {
                     pin.unpin();
                     return RC(se_WRONG_DISK_DATA);
