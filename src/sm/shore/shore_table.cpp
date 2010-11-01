@@ -1207,8 +1207,7 @@ w_rc_t relocate_records(const stid_t&      stid,
             // Insert new
         }
     }
-
-
+    return (RCOK);
 }
 
 
