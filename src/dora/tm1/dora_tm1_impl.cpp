@@ -1452,9 +1452,9 @@ w_rc_t i_cf_icfb_action::trx_exec()
         }             
         else { // 3. Delete Call Forwarding record if tuple found
 	    
-	    e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf,
-                                           _in._s_id, _in._sf_type, _in._s_time);
-	    if (e.is_error()) { goto done; }
+// 	    e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf,
+//                                            _in._s_id, _in._sf_type, _in._s_time);
+// 	    if (e.is_error()) { goto done; }
 	    TRACE (TRACE_TRX_FLOW, "App: %d ICFB:del-cf\n", _tid.get_lo());
 	    e = _penv->cf_man()->delete_tuple(_penv->db(), prcf, NL);
 	}

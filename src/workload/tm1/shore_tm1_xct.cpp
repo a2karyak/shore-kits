@@ -1378,8 +1378,8 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 	TRACE( TRACE_TRX_FLOW,
 	       "App: %d ICFB:cf-idx-probe (%d) (%d) (%d)\n",
 	       xct_id, icfbin._s_id, icfbin._sf_type, icfbin._s_time);
-	e = _pcf_man->cf_idx_probe(_pssm, prcf,
-				   icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+	e = _pcf_man->cf_idx_upd(_pssm, prcf,
+                                 icfbin._s_id, icfbin._sf_type, icfbin._s_time);
 
 	// idx probes return se_TUPLE_NOT_FOUND
 	if (e.err_num() == se_TUPLE_NOT_FOUND) {
@@ -1401,9 +1401,9 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 	}
 	else { // 3. Delete Call Forwarding record if tuple found
 	    
-	    e = _pcf_man->cf_idx_upd(_pssm, prcf,
-				     icfbin._s_id, icfbin._sf_type, icfbin._s_time);
-	    if (e.is_error()) { goto done; }
+// 	    e = _pcf_man->cf_idx_upd(_pssm, prcf,
+// 				     icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+// 	    if (e.is_error()) { goto done; }
 	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
 	    e = _pcf_man->delete_tuple(_pssm, prcf);
 	}
