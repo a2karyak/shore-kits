@@ -84,9 +84,7 @@ protected:
     { 
         base_request_t::set(pxct,atid,axctid,presult);
 
-#ifndef ONLYDORA
         assert (pxct);
-#endif
         assert (total_actions>=intra_trx_cnt);
         _countdown.reset(intra_trx_cnt);
         _decision = AD_UNDECIDED;

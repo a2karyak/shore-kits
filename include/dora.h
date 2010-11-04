@@ -25,12 +25,6 @@
 #define __DORA_H
 
 
-// define the ONLYDORA if want to test the DORA mechanism without Shore-mt
-#undef ONLYDORA
-//#define ONLYDORA
-
-
-
 #include "dora/dora_error.h"
 #include "dora/common.h"
 

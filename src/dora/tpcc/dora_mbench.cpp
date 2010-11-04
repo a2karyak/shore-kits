@@ -87,10 +87,7 @@ w_rc_t upd_wh_mb_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, 
                "App: %d PAY:wh-idx-nl (%d)\n", _tid.get_lo(), _in._wh_id);
 
-#ifndef ONLYDORA
         e = _penv->warehouse_man()->wh_index_probe_nl(_penv->db(), prwh, _in._wh_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
 
@@ -107,11 +104,8 @@ w_rc_t upd_wh_mb_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
                _tid.get_lo(), _in._wh_id);
 
-#ifndef ONLYDORA
         e = _penv->warehouse_man()->wh_update_ytd_nl(_penv->db(), prwh, 
                                                      _in._amount);
-#endif 
-
         if (e.is_error()) { goto done; }
 
         tpcc_warehouse_tuple awh;
@@ -186,11 +180,8 @@ w_rc_t upd_cust_mb_action::trx_exec()
                "App: %d PAY:cust-idx-probe-forupdate-nl (%d) (%d) (%d)\n", 
                _tid.get_lo(), _in._wh_id, _in._d_id, _in._c_id);
 
-#ifndef ONLYDORA
         e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust, 
                                                            _in._wh_id, _in._d_id, _in._c_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         tpcc_customer_tuple acust;
@@ -247,27 +238,21 @@ w_rc_t upd_cust_mb_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:bad-cust-update-tuple-nl\n", 
                    _tid.get_lo());
 
-#ifndef ONLYDORA
             e = _penv->customer_man()->cust_update_tuple_nl(_penv->db(), 
                                                                 prcust, acust, 
                                                                 c_new_data_1, 
                                                                 c_new_data_2);
-#endif
-
             if (e.is_error()) { goto done; }
         }
         else { /* good customer */
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:good-cust-update-tuple-nl\n", 
                    _tid.get_lo());
 
-#ifndef ONLYDORA
             e = _penv->customer_man()->cust_update_tuple_nl(_penv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 NULL, 
                                                                 NULL);
-#endif
-
             if (e.is_error()) { goto done; }
         }
 

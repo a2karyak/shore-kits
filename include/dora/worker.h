@@ -239,9 +239,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
     if (!aprvp->isAborted()) {
 
         // 3. attach to xct
-#ifndef ONLYDORA
         attach_xct(paction->xct());
-#endif
         TRACE( TRACE_TRX_FLOW, "Attached to (%d)\n", paction->tid().get_lo());
 
 #ifdef WORKER_VERBOSE_STATS
@@ -276,9 +274,7 @@ int dora_worker_t<DataType>::_serve_action(base_action_t* paction)
 
         // 5. detach from trx
         TRACE( TRACE_TRX_FLOW, "Detaching from (%d)\n", paction->tid().get_lo());
-#ifndef ONLYDORA
         detach_xct(paction->xct());
-#endif
 
     }
     else {

@@ -58,9 +58,6 @@ ENTER_NAMESPACE(dora);
 w_rc_t midway_pay_rvp::run() 
 {
     // 1. Setup the next RVP
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
     final_pay_rvp* frvp = _ptpccenv->new_final_pay_rvp(_xct,_tid,_xct_id,_result,_actions);
 
     // 2. Check if aborted during previous phase
@@ -148,11 +145,8 @@ w_rc_t upd_wh_pay_action::trx_exec()
                _tid.get_lo(), _pin._home_wh_id);
 
 
-#ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
                                                           _pin._home_wh_id);      
-#endif
-
         if (e.is_error()) { goto done; }
 
         /* UPDATE warehouse SET w_ytd = wytd + :h_amount
@@ -168,12 +162,9 @@ w_rc_t upd_wh_pay_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
                _tid.get_lo(), _pin._home_wh_id);
 
-#ifndef ONLYDORA
         e = _ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
                                                          prwh, 
                                                          _pin._h_amount);
-#endif
-
         if (e.is_error()) { goto done; }
 
         tpcc_warehouse_tuple* awh = _m_rvp->wh();
@@ -226,11 +217,8 @@ w_rc_t upd_dist_pay_action::trx_exec()
                "App: %d PAY:dist-idx-nl (%d) (%d)\n", 
                _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
 
-#ifndef ONLYDORA
         e = _ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), prdist,
                                                            _pin._home_wh_id, _pin._home_d_id);    
-#endif
-
         if (e.is_error()) { goto done; }
 
 
@@ -255,12 +243,9 @@ w_rc_t upd_dist_pay_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
                _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
 
-#ifndef ONLYDORA
         e = _ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
                                                           prdist, 
                                                           _pin._h_amount);
-#endif
-
         if (e.is_error()) { goto done; }
 
         tpcc_district_tuple* adistr = _m_rvp->dist();
@@ -312,7 +297,6 @@ w_rc_t upd_cust_pay_action::trx_exec()
 
     { // make gotos safe
 
-#ifndef ONLYDORA
         if (_pin._v_cust_ident_selection <= 60) {
 
             // if (ppin->_c_id == 0) {
@@ -373,7 +357,6 @@ w_rc_t upd_cust_pay_action::trx_exec()
             _pin._c_id = v_c_id[(count+1)/2-1];
         }
         assert (_pin._c_id>0);
-#endif
 
 
         /* 3. retrieve customer for update */
@@ -392,11 +375,8 @@ w_rc_t upd_cust_pay_action::trx_exec()
                "App: %d PAY:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
                _tid.get_lo(), c_w, c_d, _pin._c_id);
 
-#ifndef ONLYDORA
         e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
                                                            c_w, c_d, _pin._c_id);
-#endif
-
         if (e.is_error()) { goto done; }    
     
         tpcc_customer_tuple acust;
@@ -454,27 +434,22 @@ w_rc_t upd_cust_pay_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", 
                    _tid.get_lo());
 
-#ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 c_new_data_1, 
                                                                 c_new_data_2);
-#endif
-
             if (e.is_error()) { goto done; }
         }
         else { /* good customer */
             TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", 
                    _tid.get_lo());
 
-#ifndef ONLYDORA
             e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
                                                                 prcust, 
                                                                 acust, 
                                                                 NULL, 
                                                                 NULL);
-#endif
             if (e.is_error()) { goto done; }
 
             // 3. Update the RVP
@@ -542,10 +517,7 @@ w_rc_t ins_hist_pay_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", 
                _tid.get_lo());
 
-#ifndef ONLYDORA
         e = _ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist, NL);
-#endif
-
         if (e.is_error()) { goto done; }
 
     } // goto 

@@ -59,10 +59,6 @@ ENTER_NAMESPACE(dora);
 w_rc_t mid1_del_rvp::run() 
 {
     // 1. Setup the next RVP
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     //mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
     //mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,NULL,_din,_actions,_bWake);
     mid2_del_rvp* rvp2 = NULL; 
@@ -223,7 +219,6 @@ w_rc_t del_nord_del_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx-nl (%d) (%d)\n", 
                _tid.get_lo(), _din._wh_id, _d_id);
 
-#ifndef ONLYDORA    
         guard<index_scan_iter_impl<new_order_t> > no_iter;
         {
             index_scan_iter_impl<new_order_t>* tmp_no_iter;
@@ -268,7 +263,6 @@ w_rc_t del_nord_del_action::trx_exec()
                                                               _d_id, 
                                                               no_o_id);
         if (e.is_error()) { goto done; }
-#endif
 
     } // goto
 
@@ -321,12 +315,9 @@ w_rc_t upd_ord_del_action::trx_exec()
         prord->set_value(2, _d_id);
         prord->set_value(3, _din._wh_id);
 
-#ifndef ONLYDORA
         e = _ptpccenv->order_man()->ord_update_carrier_by_index_nl(_ptpccenv->db(), 
                                                                    prord, 
                                                                    _din._carrier_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         int  c_id;
@@ -395,7 +386,6 @@ w_rc_t upd_oline_del_action::trx_exec()
 
         int total_amount = 0;
 
-#ifndef ONLYDORA
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
         {
             index_scan_iter_impl<order_line_t>* tmp_ol_iter;
@@ -430,7 +420,6 @@ w_rc_t upd_oline_del_action::trx_exec()
             e = ol_iter->next(_ptpccenv->db(), eof, *prol);
             if (e.is_error()) { goto done; }
         }
-#endif
 
         _pmid2_rvp->add_amount(total_amount);
 
@@ -482,25 +471,18 @@ w_rc_t upd_cust_del_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
                _tid.get_lo(), _din._wh_id, _d_id, _c_id);
 
-#ifndef ONLYDORA
         e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(),
                                                            prcust, 
                                                            _din._wh_id, 
                                                            _d_id, 
                                                            _c_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         double balance;
         prcust->get_value(16, balance);
         prcust->set_value(16, balance+_amount);
 
-#ifndef ONLYDORA
         e = _ptpccenv->customer_man()->update_tuple(_ptpccenv->db(), prcust, NL);
-#endif
-
-        if (e.is_error()) { goto done; }
 
     } // goto
 

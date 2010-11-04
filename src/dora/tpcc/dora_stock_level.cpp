@@ -66,9 +66,6 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_stock_rvp,stock_level);
 w_rc_t mid1_stock_rvp::run() 
 {
     // 1. Setup the next RVP
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
     mid2_stock_rvp* rvp2 = _penv->new_mid2_stock_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
 
     // 2. Check if aborted during previous phase
@@ -104,11 +101,6 @@ w_rc_t mid1_stock_rvp::run()
 
 w_rc_t mid2_stock_rvp::run() 
 {
-    // 1. Setup the next RVP
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Set the final RVP
     final_stock_rvp* frvp = _penv->new_final_stock_rvp(_xct,_tid,_xct_id,_result,_actions);
 
@@ -184,10 +176,7 @@ w_rc_t r_dist_stock_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d STO:dist-idx-probe (%d) (%d)\n", 
                _tid.get_lo(), w_id, d_id);
 
-#ifndef ONLYDORA
         e = _penv->district_man()->dist_index_probe_nl(_penv->db(), prdist, w_id, d_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         // pass the data to the RVP
@@ -280,7 +269,6 @@ w_rc_t r_ol_stock_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d STO:ol-iter-by-idx (%d) (%d) (%d) (%d)\n", 
                _tid.get_lo(), w_id, d_id, _in._next_o_id-20, _in._next_o_id);
     
-#ifndef ONLYDORA
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
 	{
 	    index_scan_iter_impl<order_line_t>* tmp_ol_iter;
@@ -322,7 +310,7 @@ w_rc_t r_ol_stock_action::trx_exec()
             e = ol_iter->next(_penv->db(), eof, *prol);
         }
         assert (ol_sorter.count());
-#endif
+
 
         // 2b. Sort orderline tuples on i_id
         sort_iter_impl ol_list_sort_iter(_penv->db(), &ol_list, &ol_sorter);
@@ -414,9 +402,7 @@ w_rc_t r_st_stock_action::trx_exec()
                    _tid.get_lo(), w_id, i_id);
 
             // 2d. Index probe the Stock
-#ifndef ONLYDORA
             e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, w_id, i_id);
-#endif
             if (e.is_error()) { goto done; }
 
             // check if stock quantity below threshold 

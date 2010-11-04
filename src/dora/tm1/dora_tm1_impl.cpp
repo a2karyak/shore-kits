@@ -101,9 +101,7 @@ w_rc_t r_sub_gsd_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GSD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
 
-#ifndef ONLYDORA
         e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
-#endif
         if (e.is_error()) { goto done; }
 
         tm1_sub_t asub;
@@ -178,10 +176,6 @@ done:
 
 w_rc_t mid_gnd_rvp::run() 
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the final RVP
     final_gnd_rvp* frvp = _penv->new_final_gnd_rvp(_xct,_tid,_xct_id,_result,_actions);
 
@@ -264,10 +258,8 @@ w_rc_t r_sf_gnd_action::trx_exec()
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
 #endif
 
-#ifndef ONLYDORA
         e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, 
                                        _in._s_id, _in._sf_type);
-#endif
         if (e.is_error()) { goto done; }
 
         prsf->get_value(2, asf.IS_ACTIVE);
@@ -334,7 +326,6 @@ w_rc_t r_cf_gnd_action::trx_exec()
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
 #endif
 
-#ifndef ONLYDORA
         // 1. Retrieve the call forwarding destination            
         guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
         {
@@ -370,7 +361,6 @@ w_rc_t r_cf_gnd_action::trx_exec()
             e = cf_iter->next(_penv->db(), eof, *prcf);
             if (e.is_error()) { goto done; }
         }
-#endif
 
         if (!bFound) { 
             e = RC(se_NO_CURRENT_TUPLE); 
@@ -451,10 +441,8 @@ w_rc_t r_ai_gad_action::trx_exec()
                "App: %d GAD:ai-idx-nl (%d) (%d)\n", 
                _tid.get_lo(), _in._s_id, _in._ai_type);
 
-#ifndef ONLYDORA
         e = _penv->ai_man()->ai_idx_nl(_penv->db(), prai, 
                                        _in._s_id, _in._ai_type);
-#endif
         if (e.is_error()) { goto done; }
 
         tm1_ai_t aai;
@@ -492,10 +480,6 @@ done:
 
 w_rc_t mid_usd_rvp::run() 
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the final RVP
     final_usd_rvp* frvp = _penv->new_final_usd_rvp(_xct,_tid,_xct_id,_result,_actions);
 
@@ -575,9 +559,7 @@ w_rc_t upd_sub_usd_action::trx_exec()
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
 #endif
 
-#ifndef ONLYDORA
         e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
-#endif
         if (e.is_error()) { goto done; }
 
         prsub->set_value(2, _in._a_bit);
@@ -586,9 +568,7 @@ w_rc_t upd_sub_usd_action::trx_exec()
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
 #endif
 
-#ifndef ONLYDORA        
         e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
-#endif
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -643,16 +623,12 @@ w_rc_t upd_sf_usd_action::trx_exec()
                "App: %d USD:sf-idx-nl (%d) (%d)\n", 
                _tid.get_lo(), _in._s_id, _in._sf_type);
 
-#ifndef ONLYDORA
         e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type);
-#endif
         if (e.is_error()) { goto done; }
 
         prsf->set_value(4, _in._a_data);
 
-#ifndef ONLYDORA        
         e = _penv->sf_man()->update_tuple(_penv->db(), prsf, NL);
-#endif
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -720,9 +696,7 @@ w_rc_t upd_sub_ul_action::trx_exec()
         // 1. Probe Subscriber through sec index
         TRACE( TRACE_TRX_FLOW, 
                "App: %d UL:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-#ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-#endif
         if (e.is_error()) { goto done; }
 
         int probed_sid;
@@ -735,9 +709,7 @@ w_rc_t upd_sub_ul_action::trx_exec()
         prsub->set_value(33, _in._vlr_loc);
 
         // 2. Update tuple
-#ifndef ONLYDORA        
         e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
-#endif
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -770,10 +742,6 @@ done:
 
 w_rc_t mid1_icf_rvp::run() 
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the next RVP
     // PH2 consists of 1 action
     mid2_icf_rvp* rvp = _penv->new_mid2_icf_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
@@ -805,10 +773,6 @@ w_rc_t mid1_icf_rvp::run()
 
 w_rc_t mid2_icf_rvp::run() 
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the final RVP
     // PH3 consists of 1 action
     final_icf_rvp* frvp = _penv->new_final_icf_rvp(_xct,_tid,_xct_id,_result,_actions);
@@ -841,10 +805,6 @@ w_rc_t mid2_icf_rvp::run()
 
 w_rc_t mid_icf_rvp::run() 
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the final RVP
     final_icf_rvp* frvp = _penv->new_final_icf_rvp(_xct,_tid,_xct_id,_result,_actions);    
 
@@ -927,9 +887,7 @@ w_rc_t r_sub_icf_action::trx_exec()
         // 1. Probe Subscriber sec index
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-#ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-#endif
         if (e.is_error()) { goto done; }
 
         int probed_sid;
@@ -1001,7 +959,6 @@ w_rc_t r_sf_icf_action::trx_exec()
 #endif        
 
         // 1. Retrieve SpecialFacility (Read-only)
-#ifndef ONLYDORA        
         guard<index_scan_iter_impl<special_facility_t> > sf_iter;
         {
             index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
@@ -1035,7 +992,6 @@ w_rc_t r_sf_icf_action::trx_exec()
             e = sf_iter->next(_penv->db(), eof, *prsf);
             if (e.is_error()) { goto done; }
         }            
-#endif
                 
         if (!bFound) { 
             e = RC(se_NO_CURRENT_TUPLE); 
@@ -1091,10 +1047,8 @@ w_rc_t ins_cf_icf_action::trx_exec()
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
 #endif
 
-#ifndef ONLYDORA
         e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
                                        _in._s_id, _in._sf_type, _in._s_time);
-#endif
             
         // idx probes return se_TUPLE_NOT_FOUND
         if (e.err_num() == se_TUPLE_NOT_FOUND) { 
@@ -1116,10 +1070,8 @@ w_rc_t ins_cf_icf_action::trx_exec()
         if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
 #endif
 
-#ifndef ONLYDORA
         e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
-#endif
-            if (e.is_error()) { goto done; }
+        if (e.is_error()) { goto done; }
         }             
         else {
             // in any other case it should fail
@@ -1153,10 +1105,6 @@ done:
 
 w_rc_t mid_dcf_rvp::run() 
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the final RVP
     final_dcf_rvp* frvp = _penv->new_final_dcf_rvp(_xct,_tid,_xct_id,_result,_actions);    
 
@@ -1226,9 +1174,7 @@ w_rc_t r_sub_dcf_action::trx_exec()
         // 1. Probe Subscriber sec index
         TRACE( TRACE_TRX_FLOW, 
                "App: %d DCF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-#ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-#endif
         if (e.is_error()) { goto done; }
 
         int probed_sid;
@@ -1293,18 +1239,14 @@ w_rc_t del_cf_dcf_action::trx_exec()
                "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
                _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
 
-#ifndef ONLYDORA
         e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
                                        _in._s_id, _in._sf_type, _in._s_time);
-#endif
         if (e.is_error()) { goto done; }
 
 
         TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", _tid.get_lo()); 
 
-#ifndef ONLYDORA
         e = _penv->cf_man()->delete_tuple(_penv->db(), prcf, NL);
-#endif
         if (e.is_error()) { goto done; }        
 
     } // goto
@@ -1371,9 +1313,7 @@ w_rc_t r_sub_icfb_action::trx_exec()
         // 1. Probe Subscriber sec index
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-#ifndef ONLYDORA
         e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-#endif
         if (e.is_error()) { goto done; }
 
         prsub->get_value(0, _in._s_id);
@@ -1424,10 +1364,8 @@ w_rc_t i_cf_icfb_action::trx_exec()
                "App: %d ICFB:cf-idx-nl (%d) (%d) (%d)\n", 
                _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
 
-#ifndef ONLYDORA
         e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
                                        _in._s_id, _in._sf_type, _in._s_time);
-#endif
             
         // idx probes return se_TUPLE_NOT_FOUND
         if (e.err_num() == se_TUPLE_NOT_FOUND) { 
@@ -1445,9 +1383,7 @@ w_rc_t i_cf_icfb_action::trx_exec()
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICFB:ins-cf\n", _tid.get_lo());
 
-#ifndef ONLYDORA
         e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
-#endif
             if (e.is_error()) { goto done; }
         }             
         else { // 3. Delete Call Forwarding record if tuple found

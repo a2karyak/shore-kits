@@ -66,10 +66,6 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_ordst_rvp,order_status);
 
 w_rc_t mid1_ordst_rvp::run()
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the next RVP
     mid2_ordst_rvp* mid2_rvp = _penv->new_mid2_ordst_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
 
@@ -112,10 +108,6 @@ w_rc_t mid1_ordst_rvp::run()
 
 w_rc_t mid2_ordst_rvp::run()
 {
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 1. Setup the next RVP
     final_ordst_rvp* frvp = _penv->new_final_ordst_rvp(_xct,_tid,_xct_id,_result,_actions);
 
@@ -207,7 +199,6 @@ w_rc_t r_cust_ordst_action::trx_exec()
             assert (_in._c_select <= 60);
             assert (_in._c_last);
 
-#ifndef ONLYDORA
             guard<index_scan_iter_impl<customer_t> > c_iter;
             {
                 index_scan_iter_impl<customer_t>* tmp_c_iter;
@@ -244,7 +235,6 @@ w_rc_t r_cust_ordst_action::trx_exec()
             // 1b. find the customer id in the middle of the list
             _in._c_id = v_c_id[(count+1)/2-1];
             c_id = _in._c_id;
-#endif
         }
         assert (_in._c_id>0);
 
@@ -262,11 +252,8 @@ w_rc_t r_cust_ordst_action::trx_exec()
                "App: %d ORDST:cust-idx-nl (%d) (%d) (%d)\n", 
                _tid.get_lo(), w_id, d_id, c_id);
 
-#ifndef ONLYDORA
         e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust, 
                                                        w_id, d_id, c_id);
-#endif
-
         if (e.is_error()) { goto done; }
             
         tpcc_customer_tuple acust;
@@ -433,7 +420,7 @@ w_rc_t r_ol_ordst_action::trx_exec()
          * plan: index scan on "OL_IDX"
          */
 
-#ifndef ONLYDORA
+
         guard<index_scan_iter_impl<order_line_t> > ol_iter;
         {
             index_scan_iter_impl<order_line_t>* tmp_ol_iter;
@@ -471,7 +458,6 @@ w_rc_t r_ol_ordst_action::trx_exec()
             if (e.is_error()) { goto done; }
         }
         TRACE( TRACE_TRX_FLOW, "App: %d ORDST: found (%d)\n", _tid.get_lo(), i);
-#endif
 
     } // goto 
 

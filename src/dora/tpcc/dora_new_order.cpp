@@ -60,11 +60,6 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
 
 w_rc_t mid_nord_rvp::run() 
 {
-    // 1. Setup the next RVP
-#ifndef ONLYDORA
-    assert (_xct);
-#endif
-
     // 0. Calculate the intratrx/total number of actions
 //     register int olcnt    = _in._ol_cnt;
 //     register int intratrx = _in._ol_cnt + 2;
@@ -201,11 +196,8 @@ w_rc_t r_wh_nord_action::trx_exec()
         // 1. retrieve warehouse (read-only)
         TRACE( TRACE_TRX_FLOW, "App: %d NO:wh-idx-nl (%d)\n", _tid.get_lo(), _in._wh_id);
 
-#ifndef ONLYDORA
         e = _penv->warehouse_man()->wh_index_probe_nl(_penv->db(), 
                                                       prwh, _in._wh_id);
-#endif
-
         if (e.is_error()) { goto done; }
         prwh->get_value(7, _prvp->_in._awh.W_TAX);
 
@@ -263,12 +255,9 @@ w_rc_t r_cust_nord_action::trx_exec()
                "App: %d NO:cust-idx-nl (%d) (%d) (%d)\n", 
                _tid.get_lo(), _in._wh_id, _in._d_id, _in._c_id);
 
-#ifndef ONLYDORA
         e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust,
                                                        _in._wh_id, _in._d_id, 
                                                        _in._c_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         prcust->get_value(15, _prvp->_in._acust.C_DISCOUNT);
@@ -328,12 +317,9 @@ w_rc_t upd_dist_nord_action::trx_exec()
                "App: %d NO:dist-idx-nl (%d) (%d)\n", 
                _tid.get_lo(), _in._wh_id, _in._d_id);
 
-#ifndef ONLYDORA
         e = _penv->district_man()->dist_index_probe_nl(_penv->db(), 
                                                        prdist, 
                                                        _in._wh_id, _in._d_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         prdist->get_value(8, _prvp->_in._adist.D_TAX);
@@ -351,12 +337,9 @@ w_rc_t upd_dist_nord_action::trx_exec()
                "App: %d NO:dist-upd-next-o-id-nl (%d)\n", 
                _tid.get_lo(), next_o_id);
 
-#ifndef ONLYDORA
         e = _penv->district_man()->dist_update_next_o_id_nl(_penv->db(), 
                                                             prdist, 
                                                             next_o_id);
-#endif
-
         if (e.is_error()) { goto done; }
 
         // 3. Update midway RVP 
@@ -428,12 +411,9 @@ w_rc_t r_item_nord_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
                    _tid.get_lo(), idx, ol_i_id);
 
-#ifndef ONLYDORA
             e = _penv->item_man()->it_index_probe_nl(_penv->db(), 
                                                      pritem, 
                                                      ol_i_id);
-#endif
-
             if (e.is_error()) { goto done; }
 
             // 2a. Calculate the item amount
@@ -511,11 +491,8 @@ w_rc_t upd_sto_nord_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
                    _tid.get_lo(), idx, ol_supply_w_id, ol_i_id);
 
-#ifndef ONLYDORA
             e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, 
                                                       ol_supply_w_id, ol_i_id);
-#endif
-
             if (e.is_error()) { goto done; }
 
             prst->get_value(0, pstock->S_I_ID);
@@ -556,11 +533,8 @@ w_rc_t upd_sto_nord_action::trx_exec()
             TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
                    _tid.get_lo(), idx, pstock->S_W_ID, pstock->S_I_ID);
 
-#ifndef ONLYDORA
             e = _penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, 
                                                        pstock);
-#endif
-
             if (e.is_error()) { goto done; }
 
             // update RVP
@@ -640,10 +614,7 @@ w_rc_t ins_ord_nord_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d NO:ord-add-tuple-nl (%d)\n", 
                _tid.get_lo(), _in._d_next_o_id);
 
-#ifndef ONLYDORA
         e = _penv->order_man()->add_tuple(_penv->db(), prord, NL);
-#endif
-
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -699,10 +670,7 @@ w_rc_t ins_nord_nord_action::trx_exec()
         TRACE( TRACE_TRX_FLOW, "App: %d NO:nord-add-tuple (%d) (%d) (%d)\n", 
                _tid.get_lo(), _in._wh_id, _in._d_id, _in._d_next_o_id);
     
-#ifndef ONLYDORA
         e = _penv->new_order_man()->add_tuple(_penv->db(), prno, NL);
-#endif
-
         if (e.is_error()) { goto done; }
 
     } // goto
@@ -778,10 +746,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
                    _tid.get_lo(), idx, _in._wh_id, _in._d_id, _in._d_next_o_id, 
                    _in.items[idx]._ol_i_id);
 
-#ifndef ONLYDORA
             e = _penv->order_line_man()->add_tuple(_penv->db(), prol, NL);
-#endif
-
             if (e.is_error()) { goto done; }
         }
         

@@ -108,18 +108,14 @@ w_rc_t DoraTM1Env::dora_get_sub_data(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
@@ -164,18 +160,14 @@ w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the next RVP
@@ -211,18 +203,14 @@ w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
@@ -277,18 +265,14 @@ w_rc_t DoraTM1Env::dora_get_acc_data(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
@@ -332,18 +316,14 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the next RVP
@@ -380,18 +360,14 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid);
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid);
 
     // 3. Setup the final RVP
@@ -445,18 +421,14 @@ w_rc_t DoraTM1Env::dora_upd_loc(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
@@ -499,18 +471,14 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
     
     // 3. Setup the next RVP
@@ -555,18 +523,14 @@ w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
     
     // 3. Setup the next RVP
@@ -609,18 +573,14 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd_bench(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
     
     // 3. Setup the next RVP
@@ -691,18 +651,14 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
 
@@ -782,9 +738,7 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
     // 1. Initiate transaction
     w_rc_t e = RCOK;
     tid_t atid;   
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
     xct_t* pxct = smthread_t::me()->xct();
 
@@ -867,10 +821,8 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
 
 
     // 3. Done accessing the database from the dispatcher. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 4. Sort the list of S_ID, RID pairs and iterate the list creating the 

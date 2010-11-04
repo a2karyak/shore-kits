@@ -98,18 +98,14 @@ w_rc_t DoraTPCBEnv::dora_acct_update(const int xct_id,
     // 1. Initiate transaction
     tid_t atid;   
 
-#ifndef ONLYDORA
     W_DO(_pssm->begin_xct(atid));
-#endif
     TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
 
     xct_t* pxct = smthread_t::me()->xct();
 
     // 2. Detatch self from xct
-#ifndef ONLYDORA
     assert (pxct);
     smthread_t::me()->detach_xct(pxct);
-#endif
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP

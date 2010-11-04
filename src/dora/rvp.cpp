@@ -189,21 +189,17 @@ int terminal_rvp_t::notify()
 
 w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 {
-#ifndef ONLYDORA
     // attach to this xct
     assert (_xct);
     smthread_t::me()->attach_xct(_xct);
-#endif
 
     // try to commit    
     w_rc_t rcdec;
     if (_decision == AD_ABORT) {
 
-#ifndef ONLYDORA        
         // We cannot abort lazily because log rollback works on 
         // disk-resident records
         rcdec = db->abort_xct();
-#endif
 
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
@@ -220,7 +216,6 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
     }
     else {
 
-#ifndef ONLYDORA
 #ifdef CFG_FLUSHER
         // DF1. Commit lazily
         lsn_t xctLastLsn;
@@ -229,20 +224,17 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 #else        
         rcdec = db->commit_xct();    
 #endif
-#endif
 
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
                    _tid.get_lo(), rcdec.err_num());
             upd_aborted_stats();
-#ifndef ONLYDORA
             w_rc_t eabort = db->abort_xct();
 
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                        _tid.get_lo(), eabort.err_num());
             }
-#endif
 
 #ifdef CFG_FLUSHER
             notify_on_abort();
