@@ -139,16 +139,12 @@ enum eActionDecision { AD_UNDECIDED = 0x1,
  *
  * @brief: Ther eare different types of the DORA system:
  *         DT_PLAIN       - normal DORA
- *         DT_PLP_NORMAL  - normal PLP (latch-less index page accesses)
- *         DT_PLP_LEAF    - PLP with 1-on-1 heap pages to index leafs
- *         DT_PLP_PART    - PLP with heap pages to partitions
+ *         DT_PLP         - for all PLPs
  *
  ********************************************************************/
 
 enum dora_types_t { DT_PLAIN      = 0x1,
-                    DT_PLP_NORMAL = 0x2,
-                    DT_PLP_LEAF   = 0x4,
-                    DT_PLP_PART   = 0x8
+                    DT_PLP        = 0x2
 };
 
 

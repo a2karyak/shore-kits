@@ -188,7 +188,7 @@ void rangemap_smt_t::work()
             _drm = new dkey_ranges_map(stid,mincv,maxcv,pcnt);
         }
         else {
-            if (_dtype & (DT_PLP_NORMAL | DT_PLP_PART | DT_PLP_PART)) {
+            if (_dtype & DT_PLP) {
                 // A PLP flavor. Read the possibly updated RangeMap from sm and 
                 // populate the corresponding dkey_map
 

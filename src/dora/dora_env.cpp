@@ -79,7 +79,7 @@ bool DoraEnv::is_dora() const
 
 bool DoraEnv::is_plp() const 
 { 
-    return (_dtype & (DT_PLP_NORMAL | DT_PLP_PART | DT_PLP_PART)); 
+    return (_dtype & DT_PLP); 
 }
 
 uint DoraEnv::update_pd(ShoreEnv* penv)
@@ -92,18 +92,7 @@ uint DoraEnv::update_pd(ShoreEnv* penv)
     // All the DORA flavors do not use centralized locks
     penv->add_pd(PD_NOLOCK);
 
-    if (_dtype & DT_PLP_NORMAL) {
-        penv->add_pd(PD_MRBT_NORMAL);
-        penv->add_pd(PD_NOLATCH);
-    }
-
-    if (_dtype & DT_PLP_PART) {
-        penv->add_pd(PD_MRBT_PART);
-        penv->add_pd(PD_NOLATCH);
-    }
-
-    if (_dtype & DT_PLP_LEAF) {
-        penv->add_pd(PD_MRBT_LEAF);
+    if (_dtype & DT_PLP) {
         penv->add_pd(PD_NOLATCH);
     }
 
@@ -161,16 +150,8 @@ uint DoraEnv::_check_type()
     }
 
     if (sysname.compare("plp")==0) {
-        _dtype = DT_PLP_NORMAL;
+        _dtype = DT_PLP;
     }
-
-    if (sysname.compare("plppart")==0) {
-        _dtype = DT_PLP_PART;
-    }
-
-    if (sysname.compare("plpleaf")==0) {
-        _dtype = DT_PLP_LEAF;
-    }    
 
     return (_dtype);
 }
