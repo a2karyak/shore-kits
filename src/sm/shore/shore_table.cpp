@@ -114,8 +114,17 @@ w_rc_t table_desc_t::create_physical_table(ss_m* db)
 	W_DO(find_root_iid(db));
     }
 
+
     // Create the table
-    W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
+    index_desc_t* index = _indexes;
+    uint4_t system_mode = index->get_pd(); // if it's plp-mrbtpart or mrbtleaf
+                                           // it should create and mrbt_file
+    
+    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) {
+        W_DO(db->create_mrbt_file(vid(), _fid, smlevel_3::t_regular));
+    } else {
+	W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
+    }
     TRACE( TRACE_STATISTICS, "%s %d\n", name(), fid().store);
 
     // Add table entry to the metadata tree
@@ -125,9 +134,8 @@ w_rc_t table_desc_t::create_physical_table(ss_m* db)
     W_DO(ss_m::create_assoc(root_iid(),
 			    vec_t(name(), strlen(name())),
 			    vec_t(&file, sizeof(file_info_t))));
-
-    index_desc_t* index = _indexes;
     
+
     // Create all the indexes of the table    
     while (index) {
 
