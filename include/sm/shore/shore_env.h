@@ -671,36 +671,40 @@ public:
     inline bool isAsynchCommit() const { return (_asynch_commit); }
     void setAsynchCommit(const bool bAsynch);
 
-    
-#ifdef CFG_SLI
+
+    // SLI
 public:
     bool isSLIEnabled() const { return (_bUseSLI); }
     void setSLIEnabled(const bool bUseSLI) { _bUseSLI = bUseSLI; }
 protected:
     bool _bUseSLI;    
-#endif    
 
-#ifdef CFG_ELR
+
+    // ELR
 public:
     bool isELREnabled() const { return (_bUseELR); }
     void setELREnabled(const bool bUseELR) { _bUseELR = bUseELR; }
 protected:
     bool _bUseELR;
-#endif
 
 
-#ifdef CFG_FLUSHER
+    // FLUSHER
+public: 
+    bool isFlusherEnabled() const { return (_bUseFlusher); }
+    void setFlusherEnabled(const bool bUseFlusher) { _bUseFlusher = bUseFlusher; }
+
+protected:
+    bool               _bUseFlusher;
     guard<flusher_t>   _base_flusher;
     virtual int        _start_flusher();
     virtual int        _stop_flusher();
     void               to_base_flusher(Request* ar);
-#endif
+
 
 protected:
    
     // returns 0 on success
     int _set_sys_params();
-
     bool _asynch_commit;    
 
 }; // EOF ShoreEnv

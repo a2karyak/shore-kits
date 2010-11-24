@@ -179,11 +179,9 @@ struct base_request_t
 
     void notify_client();
 
-#ifdef CFG_FLUSHER
     lsn_t        _my_last_lsn;
     inline void  set_last_lsn(const lsn_t& alsn) { _my_last_lsn = alsn; }
     inline lsn_t my_last_lsn() { return (_my_last_lsn); }
-#endif
 
 }; // EOF: base_request_t
 

@@ -43,9 +43,7 @@
 
 #include "dora/range_table_i.h"
 
-#ifdef CFG_FLUSHER
 #include "dora/dflusher.h"
-#endif
 
 using namespace shore;
 
@@ -94,10 +92,8 @@ protected:
     int _cpu_table_step;
     int _cpu_range;
 
-#ifdef CFG_FLUSHER
     // The dora-flusher thread
     guard<dora_flusher_t> _flusher;
-#endif
 
 public:
     
@@ -123,12 +119,11 @@ public:
     }      
 
 
-#ifdef CFG_FLUSHER
     inline void enqueue_toflush(terminal_rvp_t* arvp) {
         assert (_flusher.get());
         _flusher->enqueue_toflush(arvp);
     }
-#endif
+
 
 protected:
 

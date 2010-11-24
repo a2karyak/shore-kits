@@ -97,7 +97,8 @@ ShoreEnv::ShoreEnv(string confname)
       _worker_cnt(0),
       _measure(MST_UNDEF),
       _pd(PD_NORMAL),
-      _insert_freq(0),_delete_freq(0),_probe_freq(100)
+      _insert_freq(0),_delete_freq(0),_probe_freq(100),
+      _bUseSLI(false),_bUseELR(false),_bUseFlusher(false)
 {
     _popts = new option_group_t(1);
     _pvid = new vid_t(1);
@@ -130,10 +131,8 @@ ShoreEnv::ShoreEnv(string confname)
     }
 
 
-#ifdef CFG_SLI
     _bUseSLI = ev->getVarInt("db-worker-sli",0);
     fprintf(stdout, "SLI= %s\n", (_bUseSLI ? "enabled" : "disabled"));
-#endif
 
     // Used by some benchmarks
     _rec_to_acc = ev->getVarInt("records-to-access",1);
@@ -435,11 +434,7 @@ int ShoreEnv::start()
 
     WorkerPtr aworker;
     for (uint i=0; i<_worker_cnt; i++) {
-#ifdef CFG_SLI
         aworker = new Worker(this,c_str("work-%d", i),PBIND_NONE,_bUseSLI);
-#else
-        aworker = new Worker(this,c_str("work-%d", i),PBIND_NONE,0);
-#endif
         _workers.push_back(aworker);
         aworker->init(lc);
         aworker->start();
@@ -1167,8 +1162,6 @@ void ShoreEnv::setAsynchCommit(const bool bAsynch)
 
 
 
-#ifdef CFG_FLUSHER
-
 /****************************************************************** 
  *
  *  @fn:    start_flusher()
@@ -1215,8 +1208,6 @@ void ShoreEnv::to_base_flusher(Request* ar)
 {
     _base_flusher->enqueue_toflush(ar);
 }
-
-#endif
 
 
 EXIT_NAMESPACE(shore);

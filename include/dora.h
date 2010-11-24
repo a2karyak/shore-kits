@@ -24,7 +24,6 @@
 #ifndef __DORA_H
 #define __DORA_H
 
-
 #include "dora/dora_error.h"
 #include "dora/common.h"
 
@@ -43,9 +42,6 @@
 #include "dora/range_action.h"
 #include "dora/range_part_table.h"
 
-#ifdef CFG_FLUSHER
 #include "dora/dflusher.h"
-#endif
-
 
 #endif /** __DORA_H */
