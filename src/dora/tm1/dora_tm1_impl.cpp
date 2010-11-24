@@ -174,7 +174,7 @@ done:
 
 #ifdef TM1GND2
 
-w_rc_t mid_gnd_rvp::run() 
+w_rc_t mid_gnd_rvp::_run() 
 {
     // 1. Setup the final RVP
     final_gnd_rvp* frvp = _penv->new_final_gnd_rvp(_xct,_tid,_xct_id,_result,_actions);
@@ -478,7 +478,7 @@ done:
 
 #ifdef TM1USD2
 
-w_rc_t mid_usd_rvp::run() 
+w_rc_t mid_usd_rvp::_run() 
 {
     // 1. Setup the final RVP
     final_usd_rvp* frvp = _penv->new_final_usd_rvp(_xct,_tid,_xct_id,_result,_actions);
@@ -740,7 +740,7 @@ done:
 
 #ifdef TM1ICF2
 
-w_rc_t mid1_icf_rvp::run() 
+w_rc_t mid1_icf_rvp::_run() 
 {
     // 1. Setup the next RVP
     // PH2 consists of 1 action
@@ -771,7 +771,7 @@ w_rc_t mid1_icf_rvp::run()
 }
 
 
-w_rc_t mid2_icf_rvp::run() 
+w_rc_t mid2_icf_rvp::_run() 
 {
     // 1. Setup the final RVP
     // PH3 consists of 1 action
@@ -803,7 +803,7 @@ w_rc_t mid2_icf_rvp::run()
 
 #else
 
-w_rc_t mid_icf_rvp::run() 
+w_rc_t mid_icf_rvp::_run() 
 {
     // 1. Setup the final RVP
     final_icf_rvp* frvp = _penv->new_final_icf_rvp(_xct,_tid,_xct_id,_result,_actions);    
@@ -1103,7 +1103,7 @@ done:
  ********************************************************************/
 
 
-w_rc_t mid_dcf_rvp::run() 
+w_rc_t mid_dcf_rvp::_run() 
 {
     // 1. Setup the final RVP
     final_dcf_rvp* frvp = _penv->new_final_dcf_rvp(_xct,_tid,_xct_id,_result,_actions);    

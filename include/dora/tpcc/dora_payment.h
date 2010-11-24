@@ -93,15 +93,14 @@ public:
         _cache = pc;
         _set(axct,atid,axctid,presult,3,3);
     }
-    inline void giveback() { assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
     payment_input_t      _pin;
     tpcc_warehouse_tuple* wh() { return (&_awh); }
     tpcc_district_tuple* dist() { return (&_adist); }    
 
     // the interface
-    w_rc_t run();
+    w_rc_t _run();
 
 }; // EOF: midway_pay_rvp
 
@@ -136,9 +135,7 @@ public:
         _cache = pc;
         _set(axct,atid,axctid,presult,1,4);
     }
-    inline void giveback() { 
-        assert (_ptpccenv); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
     // interface
     w_rc_t run();
@@ -217,9 +214,7 @@ public:
         _cache = pc;
         _pay_act_set(axct,atid,prvp,1,pin,penv);  // key is (WH)
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
    
 }; // EOF: upd_wh_pay_action
 
@@ -246,9 +241,7 @@ public:
         _cache = pc;
         _pay_act_set(axct,atid,amrvp,2,pin,penv);  // key is (WH|DIST)
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
 }; // EOF: upd_wh_pay_action
 
@@ -276,9 +269,7 @@ public:
         _cache = pc;
         _pay_act_set(axct,atid,prvp,2,pin,penv);  // key is (WH|DIST)
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
 }; // EOF: upd_cust_pay_action
 
@@ -311,9 +302,7 @@ public:
         _awh = awh;
         _adist = adist;
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
 }; // EOF: ins_hist_pay_action
 

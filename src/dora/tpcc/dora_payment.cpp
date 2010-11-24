@@ -55,7 +55,7 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-w_rc_t midway_pay_rvp::run() 
+w_rc_t midway_pay_rvp::_run() 
 {
     // 1. Setup the next RVP
     final_pay_rvp* frvp = _ptpccenv->new_final_pay_rvp(_xct,_tid,_xct_id,_result,_actions);
@@ -93,7 +93,7 @@ w_rc_t midway_pay_rvp::run()
 
 w_rc_t final_pay_rvp::run() 
 {
-    return (_run(_ptpccenv->db(),_ptpccenv)); 
+    return (_run()); 
 }
 
 void final_pay_rvp::upd_committed_stats() 

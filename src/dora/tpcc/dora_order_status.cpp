@@ -64,7 +64,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_ordst_rvp,order_status);
  *
  ********************************************************************/
 
-w_rc_t mid1_ordst_rvp::run()
+w_rc_t mid1_ordst_rvp::_run()
 {
     // 1. Setup the next RVP
     mid2_ordst_rvp* mid2_rvp = _penv->new_mid2_ordst_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
@@ -106,7 +106,7 @@ w_rc_t mid1_ordst_rvp::run()
  *
  ********************************************************************/
 
-w_rc_t mid2_ordst_rvp::run()
+w_rc_t mid2_ordst_rvp::_run()
 {
     // 1. Setup the next RVP
     final_ordst_rvp* frvp = _penv->new_final_ordst_rvp(_xct,_tid,_xct_id,_result,_actions);

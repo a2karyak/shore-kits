@@ -58,7 +58,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
  *
  ********************************************************************/
 
-w_rc_t mid_nord_rvp::run() 
+w_rc_t mid_nord_rvp::_run() 
 {
     // 0. Calculate the intratrx/total number of actions
 //     register int olcnt    = _in._ol_cnt;

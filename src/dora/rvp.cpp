@@ -130,46 +130,81 @@ int rvp_t::add_action(base_action_t* paction)
 
 
 
-// /****************************************************************** 
-//  *
-//  * @fn:    notify_client()
-//  *
-//  * @brief: If it is time, notifies the client (signals client's cond var) 
-//  *
-//  * @note:  Duplicated at shore_trx_worker.h (trx_request_t::notify_client())
-//  *
-//  ******************************************************************/
+/****************************************************************** 
+ *
+ * @fn:    run()
+ *
+ * @brief: Call the _run() and then gives back the object
+ *
+ ******************************************************************/
 
-// void rvp_t::notify_client() 
-// {
-//     // signal cond var
-//     condex* pcondex = _result.get_notify();
-//     if(pcondex) {
-//         TRACE( TRACE_TRX_FLOW, "Xct (%d) notifying client (%x)\n", 
-//                _tid, pcondex);
-// 	pcondex->signal();
-//         _result.set_notify(NULL);
-//     }
-//     else
-//         TRACE( TRACE_TRX_FLOW, "Xct (%d) not notifying client\n", _tid);
-// }
+w_rc_t rvp_t::run()
+{
+    w_rc_t e = _run();
+    notify_partitions();
+    giveback();
+    return (e);
+}
 
+
+/******************************************************************** 
+ *
+ * @class: terminal_rvp_t
+ *
+ ********************************************************************/
+
+terminal_rvp_t::terminal_rvp_t() 
+    : rvp_t(), _db(NULL), _denv(NULL)
+{ 
+}
+
+terminal_rvp_t::terminal_rvp_t(ss_m* db, 
+                               DoraEnv* denv,
+                               xct_t* axct, 
+                               const tid_t& atid, 
+                               const int axctid, 
+                               trx_result_tuple_t &presult, 
+                               const int intra_trx_cnt, 
+                               const int total_actions) 
+    : rvp_t(axct, atid, axctid, presult, intra_trx_cnt, total_actions),
+      _db(db),_denv(denv)
+{ 
+}
+
+terminal_rvp_t::terminal_rvp_t(const terminal_rvp_t& rhs)
+    : rvp_t(rhs)
+{ 
+    _db = rhs._db;
+    _denv = rhs._denv;
+}
+
+terminal_rvp_t& terminal_rvp_t::operator=(const terminal_rvp_t& rhs)
+{
+    rvp_t::operator=(rhs);
+    _db = rhs._db;
+    _denv = rhs._denv;
+    return (*this);
+}
+
+terminal_rvp_t::~terminal_rvp_t() 
+{ 
+}
 
 
 /****************************************************************** 
  *
- * @fn:    notify()
+ * @fn:    notify_partitions()
  *
  * @brief: Notifies for any committed actions
  *
  ******************************************************************/
 
-int terminal_rvp_t::notify()
+int terminal_rvp_t::notify_partitions()
 {
 #warning (IP) Perf. optimization --> Do not enqueue_committed your own action!
 
     for (baseActionsIt it=_actions.begin(); it!=_actions.end(); ++it) {
-        (*it)->notify();
+        (*it)->notify_own_partition();
     }
     return (_actions.size());
 }
@@ -187,8 +222,11 @@ int terminal_rvp_t::notify()
  *
  ******************************************************************/
 
-w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
+w_rc_t terminal_rvp_t::_run()
 {
+    assert (_db);
+    assert (_denv);
+
     // attach to this xct
     assert (_xct);
     smthread_t::me()->attach_xct(_xct);
@@ -199,7 +237,7 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 
         // We cannot abort lazily because log rollback works on 
         // disk-resident records
-        rcdec = db->abort_xct();
+        rcdec = _db->abort_xct();
 
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
@@ -209,27 +247,23 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid.get_lo());
             upd_aborted_stats();
         }
-
-#ifdef CFG_FLUSHER
-        notify_on_abort();
-#endif
     }
     else {
 
 #ifdef CFG_FLUSHER
         // DF1. Commit lazily
         lsn_t xctLastLsn;
-        rcdec = db->commit_xct(true,&xctLastLsn);
+        rcdec = _db->commit_xct(true,&xctLastLsn);
         set_last_lsn(xctLastLsn);
 #else        
-        rcdec = db->commit_xct();    
+        rcdec = _db->commit_xct();    
 #endif
 
         if (rcdec.is_error()) {
             TRACE( TRACE_ALWAYS, "Xct (%d) commit failed [0x%x]\n",
                    _tid.get_lo(), rcdec.err_num());
             upd_aborted_stats();
-            w_rc_t eabort = db->abort_xct();
+            w_rc_t eabort = _db->abort_xct();
 
             if (eabort.is_error()) {
                 TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
@@ -243,9 +277,9 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
         else {
 #ifdef CFG_FLUSHER
             // DF2. Enqueue to the "to flush" queue of DFlusher             
-            denv->enqueue_toflush(this);
+            _denv->enqueue_toflush(this);
 #else
-            (void)denv;
+            (void)_denv;
             TRACE( TRACE_TRX_FLOW, "Xct (%d) committed\n", _tid.get_lo());
             upd_committed_stats();
 #endif
@@ -263,7 +297,6 @@ w_rc_t terminal_rvp_t::_run(ss_m* db, DoraEnv* denv)
 
 
 
-#ifdef CFG_FLUSHER
 
 /****************************************************************** 
  *
@@ -286,14 +319,12 @@ void terminal_rvp_t::notify_on_abort()
     // After we aborted the xct we need to notify the client and the partitions.
     // The notification of the commmitted xcts will be done by the DNotifier thread.
 
+    notify_partitions();
     notify_client();
-    notify();
 
     TRACE( TRACE_TRX_FLOW, "Giving back aborted (%d)\n", _tid.get_lo());
 
     giveback();
 }
-
-#endif
 
 EXIT_NAMESPACE(dora);

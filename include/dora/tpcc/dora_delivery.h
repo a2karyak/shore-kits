@@ -88,9 +88,7 @@ public:
         _set(axct,atid,axctid,presult,
              DISTRICTS_PER_WAREHOUSE,4*DISTRICTS_PER_WAREHOUSE);
     }
-    inline void giveback() { 
-        assert (_ptpccenv); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
     // interface
     w_rc_t run();
@@ -150,13 +148,12 @@ public:
         _final_rvp = prvp;
     }        
                         
-    inline void giveback() { assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
     void set_o_id(const int aoid) { _o_id = aoid; } 
 
     // the interface
-    w_rc_t run();
+    w_rc_t _run();
 
 }; // EOF: mid1_del_rvp
 
@@ -211,8 +208,7 @@ public:
         _d_id = d_id;
         _final_rvp = prvp;
     }
-    inline void giveback() { assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
 
     void add_amount(const int anamount) { 
         CRITICAL_SECTION(amount_cs, _amount_lock);
@@ -222,7 +218,7 @@ public:
     void set_c_id(const int c_id) { _c_id = c_id; }
 
     // the interface
-    w_rc_t run();
+    w_rc_t _run();
 
 }; // EOF: mid2_del_rvp
 
@@ -308,9 +304,7 @@ public:
     {
         _d_id = d_id;
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
    
 }; // EOF: del_nord_del_action
 
@@ -350,9 +344,7 @@ public:
         _d_id = d_id;
         _o_id = o_id;
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
    
 }; // EOF: upd_ord_del_action
 
@@ -391,9 +383,7 @@ public:
         _d_id = d_id;
         _o_id = o_id;
     }
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
    
 }; // EOF: upd_oline_del_action
 
@@ -432,9 +422,7 @@ public:
         _amount = amount;
     }
 
-    inline void giveback() { 
-        assert (_cache); 
-        _cache->giveback(this); }    
+    inline void giveback() { _cache->giveback(this); }    
    
 }; // EOF: upd_cust_del_action
 

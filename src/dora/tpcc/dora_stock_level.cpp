@@ -63,7 +63,7 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_stock_rvp,stock_level);
  *
  ********************************************************************/
 
-w_rc_t mid1_stock_rvp::run() 
+w_rc_t mid1_stock_rvp::_run() 
 {
     // 1. Setup the next RVP
     mid2_stock_rvp* rvp2 = _penv->new_mid2_stock_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
@@ -99,7 +99,7 @@ w_rc_t mid1_stock_rvp::run()
  *
  ********************************************************************/
 
-w_rc_t mid2_stock_rvp::run() 
+w_rc_t mid2_stock_rvp::_run() 
 {
     // 1. Set the final RVP
     final_stock_rvp* frvp = _penv->new_final_stock_rvp(_xct,_tid,_xct_id,_result,_actions);

@@ -56,7 +56,7 @@ ENTER_NAMESPACE(dora);
  *
  ********************************************************************/
 
-w_rc_t mid1_del_rvp::run() 
+w_rc_t mid1_del_rvp::_run() 
 {
     // 1. Setup the next RVP
     //mid2_del_rvp* rvp2 = _ptpccenv->new_mid2_del_rvp(_xct,_tid,_xct_id,_final_rvp->result(),_din,_actions,_bWake);
@@ -114,7 +114,7 @@ w_rc_t mid1_del_rvp::run()
  *
  ********************************************************************/
 
-w_rc_t mid2_del_rvp::run() 
+w_rc_t mid2_del_rvp::_run() 
 {
     // 1. the next rvp (final_rvp) is already set
     //    so it needs to only append the actions
@@ -157,8 +157,9 @@ w_rc_t mid2_del_rvp::run()
  *
  ********************************************************************/
 
-w_rc_t final_del_rvp::run() {
-    return (_run(_ptpccenv->db(),_ptpccenv)); 
+w_rc_t final_del_rvp::run() 
+{
+    return (_run()); 
 }
 
 void final_del_rvp::upd_committed_stats() 

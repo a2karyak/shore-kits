@@ -76,7 +76,7 @@ protected:
 
     // list of actions that report to this rvp
     baseActionsList   _actions;
-    tatas_lock        _actions_lock;
+    tatas_lock        _actions_lock;    
 
     void _set(xct_t* pxct, const tid_t& atid, const int axctid,
               const trx_result_tuple_t& presult, 
@@ -137,15 +137,12 @@ public:
     // INTERFACE 
 
     // default action on rvp - commit trx
-    virtual w_rc_t run()=0;  
+    w_rc_t run();
 
     // notifies for any committed actions 
     // only the final_rvps may notify
     // for midway rvps it should be a noop
-    virtual int notify() { return(0); } 
-
-//     // notifies the client
-//     void notify_client();
+    virtual int notify_partitions() { return(0); } 
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
@@ -164,6 +161,9 @@ public:
         _xct = NULL;
     }
 
+protected:
+
+    virtual w_rc_t _run()=0;        
     
 }; // EOF: rvp_t
 
@@ -181,43 +181,35 @@ public:
 
 class terminal_rvp_t : public rvp_t
 {
+protected:
+
+    ss_m* _db;
+    DoraEnv* _denv;
+
 public:
 
-    terminal_rvp_t() : rvp_t() { }
+    terminal_rvp_t();
 
-    terminal_rvp_t(xct_t* axct, const tid_t& atid, const int axctid, 
+    terminal_rvp_t(ss_m* db, DoraEnv* denv,
+                   xct_t* axct, const tid_t& atid, const int axctid, 
                    trx_result_tuple_t &presult, 
-                   const int intra_trx_cnt, const int total_actions) 
-        : rvp_t(axct, atid, axctid, presult, intra_trx_cnt, total_actions)
-    { }
+                   const int intra_trx_cnt, const int total_actions);
 
-    terminal_rvp_t(const terminal_rvp_t& rhs)
-        : rvp_t(rhs)
-    { }
+    terminal_rvp_t(const terminal_rvp_t& rhs);
+    terminal_rvp_t& operator=(const terminal_rvp_t& rhs);
 
-    terminal_rvp_t& operator=(const terminal_rvp_t& rhs) 
-    {
-        terminal_rvp_t::operator=(rhs);
-        return (*this);
-    }
+    virtual ~terminal_rvp_t();
 
-    virtual ~terminal_rvp_t() { }
-
-
-#ifdef CFG_FLUSHER
     void notify_on_abort();
-#endif
 
-    // INTERFACE
-    virtual w_rc_t run()=0;   // default action on rvp - commit trx           
-    int notify();       // notifies for committed actions    
+    int notify_partitions();  // notifies for committed actions    
 
     virtual void upd_committed_stats()=0; // update the committed trx stats
     virtual void upd_aborted_stats()=0;   // update the aborted trx stats
 
 protected:
 
-    w_rc_t _run(ss_m* db, DoraEnv* denv);
+    w_rc_t _run();
 
 }; // EOF: terminal_rvp_t
 

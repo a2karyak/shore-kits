@@ -462,9 +462,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
                 _set(axct,atid,axctid,presult,intratrx,total); }        \
-            inline void giveback() {                                    \
-                assert (_penv); _cache->giveback(this); }               \
-            w_rc_t run();                                               \
+            inline void giveback() { _cache->giveback(this); }          \
             void upd_committed_stats();                                 \
             void upd_aborted_stats(); }
 
@@ -485,15 +483,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
                 _set(axct,atid,axctid,presult,intratrx,total); }        \
-            inline void giveback() {                                    \
-                assert (_penv); _cache->giveback(this); }               \
-            w_rc_t run();                                               \
+            inline void giveback() { _cache->giveback(this); }          \
             void upd_committed_stats();                                 \
             void upd_aborted_stats(); }
 
 
 #define DEFINE_DORA_FINAL_RVP_CLASS(cname,trx)                          \
-    w_rc_t cname::run() { return (_run(_penv->db(),_penv)); }           \
     void cname::upd_committed_stats() {                                 \
         _penv->_inc_##trx##_att(); _penv->inc_trx_com(); }              \
     void cname::upd_aborted_stats() {                                   \
@@ -522,9 +517,8 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
                 _set(axct,atid,axctid,presult,intratrx,total); }        \
-            inline void giveback() {                                    \
-                assert (_penv); _cache->giveback(this); }               \
-            w_rc_t run(); }
+            inline void giveback() { _cache->giveback(this); }          \
+            w_rc_t _run(); }
 
 
 
@@ -549,9 +543,8 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
                 _set(axct,atid,axctid,presult,intratrx,total); }        \
-            inline void giveback() {                                    \
-                assert (_penv); _cache->giveback(this); }               \
-            w_rc_t run(); }
+            inline void giveback() { _cache->giveback(this); }          \
+            w_rc_t _run(); }
 
 
 
@@ -567,8 +560,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
             inputname _in;                                              \
-            inline void giveback() {                                    \
-                assert (_cache); _cache->giveback(this); }              \
+            inline void giveback() { _cache->giveback(this); }          \
             inline void set(xct_t* axct, const tid_t& atid, rvp_t* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
                 assert (pc); _cache = pc;                               \
@@ -590,8 +582,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
             aname() : range_action_impl<datatype>(), _penv(NULL) { }    \
             ~aname() { }                                                \
             inputname _in;                                              \
-            inline void giveback() {                                    \
-                assert (_cache); _cache->giveback(this); }              \
+            inline void giveback() { _cache->giveback(this); }          \
             inline void set(xct_t* axct, const tid_t& atid, rvpname* prvp, \
                             const inputname& in, envname* penv, act_cache* pc) { \
                 assert (pc); _cache = pc;                               \
@@ -610,10 +601,7 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // to abort and execute its code. 
 // In the majority of cases it is the final-rvp code
 
-#ifdef CFG_FLUSHER // ***** Mainstream FLUSHER ***** //
-
-// If DFlusher is enabled, the rvp notification and giveback take place at 
-// terminal_rvp_t::notify_on_abort
+// The RVP notification and giveback take place at the rvp::run 
 
 #define CHECK_MIDWAY_RVP_ABORTED(nextrvp)                               \
     if (isAborted()) {                                                  \
@@ -625,24 +613,6 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
                    _tid.get_lo(), e.err_num()); }                       \
         nextrvp = NULL;                                                 \
         return (e); }
-
-
-#else // ***** NO FLUSHER ***** //
-
-#define CHECK_MIDWAY_RVP_ABORTED(nextrvp)                               \
-    if (isAborted()) {                                                  \
-        nextrvp->abort();                                               \
-        w_rc_t e = nextrvp->run();                                      \
-        if (e.is_error()) {                                             \
-            TRACE( TRACE_ALWAYS,                                        \
-                   "Problem running rvp for xct (%d) [0x%x]\n",         \
-                   _tid.get_lo(), e.err_num()); }                       \
-        nextrvp->notify();                                              \
-        nextrvp->giveback();                                            \
-        nextrvp = NULL;                                                 \
-        return (e); }
-
-#endif // ***** EOF: CFG_FLUSHER ***** //
 
 
 const int DF_ACTION_CACHE_SZ = 100;
