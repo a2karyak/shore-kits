@@ -130,34 +130,48 @@ struct flusher_stats_t
  * 
  ********************************************************************/
 
+
+const int FLUSHER_BUFFER_EXPECTED_SZ    = 3000;   // pulling this out of the thin air
+const int FLUSHER_GROUP_SIZE_THRESHOLD  = 100;    // Flush every 100 xcts
+const int FLUSHER_LOG_SIZE_THRESHOLD    = 200000; // Flush every 200K
+const int FLUSHER_TIME_THRESHOLD        = 1000;   // Flush every 1000usec (msec)
+
+
 class flusher_t : public base_worker_t
 {   
 public:
-    typedef srmwqueue<trx_request_t>    Queue;
+    typedef srmwqueue<trx_request_t>    BaseQueue;
 
 private:
 
-    flusher_stats_t _stats;
-
     // It has two queues, one with the un-flushed xcts and one with those 
     // underway
-    guard<Queue> _toflush;
-    guard<Pool> _pxct_toflush_pool;
+    guard<BaseQueue> _base_toflush;
+    guard<BaseQueue> _base_flushing;
 
-    guard<Queue> _flushing;
+protected:
+
+    guard<Pool> _pxct_toflush_pool;
     guard<Pool> _pxct_flushing_pool;
+
+    flusher_stats_t _stats;
     
-    int _pre_STOP_impl();
+    virtual int _pre_STOP_impl();
     int _work_ACTIVE_impl(); 
+    virtual int _check_waiting(bool& bSleepNext, 
+                               const lsn_t& durablelsn, 
+                               lsn_t& maxlsn,
+                               uint& waiting);
+    virtual int _move_from_flushing(const lsn_t& durablelsn);
 
 public:
 
     flusher_t(ShoreEnv* env, c_str tname,
               processorid_t aprsid = PBIND_NONE, 
               const int use_sli = 0);
-    ~flusher_t();
+    virtual ~flusher_t();
 
-    inline void enqueue_toflush(trx_request_t* areq) { _toflush->push(areq,true); }
+    inline void enqueue_toflush(trx_request_t* areq) { _base_toflush->push(areq,true); }
 
     int statistics();  
 

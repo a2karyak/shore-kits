@@ -128,35 +128,33 @@ long flusher_stats_t::_log_diff(const lsn_t& head, const lsn_t& tail)
  * 
  ********************************************************************/
 
-const int FLUSHER_BUFFER_EXPECTED_SZ = 3000; // pulling this out of the thin air
-
 flusher_t::flusher_t(ShoreEnv* env, 
-                               c_str tname,
-                               processorid_t aprsid, 
-                               const int use_sli) 
+                     c_str tname,
+                     processorid_t aprsid, 
+                     const int use_sli) 
     : base_worker_t(env, tname, aprsid, use_sli)
 { 
     _pxct_toflush_pool = new Pool(sizeof(xct_t*),FLUSHER_BUFFER_EXPECTED_SZ);
-    _toflush = new Queue(_pxct_toflush_pool.get());
-    assert (_toflush.get());
-    _toflush->setqueue(WS_COMMIT_Q,this,2000,0);  // wake-up immediately, spin 2000
+    _base_toflush = new BaseQueue(_pxct_toflush_pool.get());
+    assert (_base_toflush.get());
+    _base_toflush->setqueue(WS_COMMIT_Q,this,2000,0);  // wake-up immediately, spin 2000
 
     _pxct_flushing_pool = new Pool(sizeof(xct_t*),FLUSHER_BUFFER_EXPECTED_SZ);
-    _flushing = new Queue(_pxct_flushing_pool.get());
-    assert (_flushing.get());
-    _flushing->setqueue(WS_COMMIT_Q,this,0,0);  // wake-up immediately
+    _base_flushing = new BaseQueue(_pxct_flushing_pool.get());
+    assert (_base_flushing.get());
+    _base_flushing->setqueue(WS_COMMIT_Q,this,0,0);  // wake-up immediately
 }
 
 flusher_t::~flusher_t() 
 { 
     // -- clear queues --
     // they better be empty by now
-    assert (_toflush->is_empty());
-    _toflush.done();
+    assert (_base_toflush->is_empty());
+    _base_toflush.done();
     _pxct_toflush_pool.done();
 
-    assert (_flushing->is_empty());
-    _flushing.done();
+    assert (_base_flushing->is_empty());
+    _base_flushing.done();
     _pxct_flushing_pool.done();
 }
 
@@ -182,10 +180,6 @@ int flusher_t::statistics()
  * 
  ******************************************************************/
 
-const int FLUSHER_GROUP_SIZE_THRESHOLD = 100; // Flush every 100 xcts
-const int FLUSHER_LOG_SIZE_THRESHOLD = 200000; // Flush every 200K
-const int FLUSHER_TIME_THRESHOLD = 1000; // Flush every 1000usec (msec)
-
 int flusher_t::_work_ACTIVE_impl()
 {    
     envVar* ev = envVar::instance();
@@ -199,8 +193,7 @@ int flusher_t::_work_ACTIVE_impl()
     uint maxTimeIntervalusec = ev->getVarInt("flusher-timeout",FLUSHER_TIME_THRESHOLD);
 
     uint waiting = 0;
-    trx_request_t* preq = NULL;   
-    lsn_t currlsn, durablelsn, xctlsn, maxlsn;
+    lsn_t durablelsn, maxlsn;
     bool bShouldFlush = false;
     long logWaiting = 0;
     struct timespec start, ts;
@@ -221,7 +214,6 @@ int flusher_t::_work_ACTIVE_impl()
     while (get_control() == WC_ACTIVE) {        
 
         // Reset the flags for the new loop
-        preq = NULL;
         set_ws(WS_LOOP);
         bShouldFlush = false;
 
@@ -229,42 +221,8 @@ int flusher_t::_work_ACTIVE_impl()
         _env->db()->get_durable_lsn(durablelsn);
         maxlsn = durablelsn;
 
-        // Check if there are xcts waiting at the "to flush" queue 
-        while ((!_toflush->is_empty()) || (bSleepNext)) {
-
-            // Pop and read the xct info 
-            preq = _toflush->pop();
-
-            // The only way for pop() to return NULL is when signalled to stop
-            if (preq) {
-                xctlsn = preq->my_last_lsn();
-
-                TRACE( TRACE_TRX_FLOW, 
-                       "Xct (%d) lastLSN (%d) durableLSN (%d)\n",
-                       preq->tid().get_lo(), xctlsn.lo(), maxlsn.lo());
-
-                // If the xct is already durable (had been flushed) then
-                // notify client
-                if (durablelsn > xctlsn) {
-                    _stats.alreadyFlushed++;
-                    preq->notify_client();
-                    _env->_request_pool.destroy(preq);
-                }
-                else {
-                    // Otherwise, add the rvp to the syncing (in-flight) list,
-                    // and update statistics
-                    maxlsn = std::max(maxlsn,xctlsn);
-                    _flushing->push(preq,false);
-                    waiting++;
-                }
-            }
-            // else {
-            //     assert (get_control() != WC_ACTIVE);
-            // }
-
-            bSleepNext = false;
-            _stats.served++;
-        }
+        // Check the list of waiting to flush xcts
+        _check_waiting(bSleepNext,durablelsn,maxlsn,waiting);
 
         // Decide whether to flush or not
         if (waiting >= maxGroupSize) {
@@ -328,17 +286,96 @@ int flusher_t::_work_ACTIVE_impl()
         // Notify all the clients
         
         // Re-read the durable lsn, just for sanity checking
-        _env->db()->get_durable_lsn(durablelsn);        
-        while (!_flushing->is_empty()) {
-            preq = _flushing->pop();
-            xctlsn = preq->my_last_lsn();
-            assert (xctlsn < durablelsn);
-            preq->notify_client();
-            _env->_request_pool.destroy(preq);
-        }
+        _env->db()->get_durable_lsn(durablelsn);
+        _move_from_flushing(durablelsn);
     }
     return (0);
 }
+
+
+/****************************************************************** 
+ *
+ * @fn:     _check_waiting()
+ *
+ * @brief:  Checks the list of xcts waiting at the "to flush" queue 
+ *
+ * @return: 0 on success
+ * 
+ ******************************************************************/
+
+int flusher_t::_check_waiting(bool& bSleepNext, 
+                              const lsn_t& durablelsn, 
+                              lsn_t& maxlsn,
+                              uint& waiting)
+{
+    trx_request_t* preq = NULL;   
+    lsn_t xctlsn;
+
+    // Check if there are xcts waiting at the "to flush" queue 
+    while ((!_base_toflush->is_empty()) || (bSleepNext)) {
+
+        // Pop and read the xct info 
+        preq = _base_toflush->pop();
+
+        // The only way for pop() to return NULL is when signalled to stop
+        if (preq) {
+            xctlsn = preq->my_last_lsn();
+
+            TRACE( TRACE_TRX_FLOW, 
+                   "Xct (%d) lastLSN (%d) durableLSN (%d)\n",
+                   preq->tid().get_lo(), xctlsn.lo(), maxlsn.lo());
+
+            // If the xct is already durable (had been flushed) then
+            // notify client
+            if (durablelsn > xctlsn) {
+                _stats.alreadyFlushed++;
+                preq->notify_client();
+                _env->_request_pool.destroy(preq);
+            }
+            else {
+                // Otherwise, add the rvp to the syncing (in-flight) list,
+                // and update statistics
+                maxlsn = std::max(maxlsn,xctlsn);
+                _base_flushing->push(preq,false);
+                waiting++;
+            }
+        }
+
+        bSleepNext = false;
+        _stats.served++;
+    }
+
+    return (0);
+}
+
+
+/****************************************************************** 
+ *
+ * @fn:     _move_from_flushing()
+ *
+ * @brief:  Called when we know that everyone on the "flushing" queue
+ *          is durable. In the baseline case, it notifies clients.
+ *
+ * @return: 0 on success
+ * 
+ ******************************************************************/
+
+int flusher_t::_move_from_flushing(const lsn_t& durablelsn)
+{
+    trx_request_t* preq = NULL;   
+    lsn_t xctlsn;
+    
+    while (!_base_flushing->is_empty()) {
+        preq = _base_flushing->pop();
+        xctlsn = preq->my_last_lsn();
+        assert (xctlsn < durablelsn);
+        preq->notify_client();
+        _env->_request_pool.destroy(preq);
+    }
+
+    return (0); 
+}
+
 
 
 /****************************************************************** 
@@ -357,16 +394,16 @@ int flusher_t::_pre_STOP_impl()
     trx_request_t* preq = NULL;
 
     // Notify the clients and clean up queues
-    while (!_flushing->is_empty()) {
+    while (!_base_flushing->is_empty()) {
         ++afterStop;
-        preq = _flushing->pop();
+        preq = _base_flushing->pop();
         preq->notify_client();
         _env->_request_pool.destroy(preq);
     }
 
-    while (!_toflush->is_empty()) {
+    while (!_base_toflush->is_empty()) {
         ++afterStop;
-        preq = _toflush->pop();
+        preq = _base_toflush->pop();
         preq->notify_client();
         _env->_request_pool.destroy(preq);
     }

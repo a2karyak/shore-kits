@@ -77,7 +77,7 @@
    dora-notifier:
    while (true) {
       rvp* prvp = tonotify->dequeue();
-      prvp->notify();
+      prvp->notify_partitions();
       prvp->notify_client();
    }
 
@@ -100,45 +100,46 @@ ENTER_NAMESPACE(dora);
 
 class dora_notifier_t;
 
+
 /******************************************************************** 
  *
  * @class: dora_flusher_t
  *
  * @brief: A class for the DFlusher that implements group commit (and
- *         batch flushing) in DORA
+ *         batch flushing) in DORA. It extends the shore_flusher, all
+ *         the logic on when to commit is shared across.
  * 
  ********************************************************************/
 
-class dora_flusher_t : public base_worker_t
+class dora_flusher_t : public flusher_t
 {   
 public:
-    typedef srmwqueue<terminal_rvp_t>    Queue;
+    typedef srmwqueue<terminal_rvp_t>    DoraQueue;
 
 private:
 
-    flusher_stats_t _stats;
-
     guard<dora_notifier_t> _notifier;
 
-    guard<Queue> _toflush;
-    guard<Pool> _pxct_toflush_pool;
+    guard<DoraQueue> _dora_toflush;
+    guard<DoraQueue> _dora_flushing;
 
-    guard<Queue> _flushing;
-    guard<Pool> _pxct_flushing_pool;
+protected:
     
-    int _pre_STOP_impl();
-    int _work_ACTIVE_impl(); 
+    virtual int _pre_STOP_impl();
+    virtual int _check_waiting(bool& bSleepNext, 
+                               const lsn_t& durablelsn, 
+                               lsn_t& maxlsn,
+                               uint& waiting);
+    virtual int _move_from_flushing(const lsn_t& durablelsn);
 
 public:
 
     dora_flusher_t(ShoreEnv* penv, c_str tname,
                    processorid_t aprsid = PBIND_NONE, 
                    const int use_sli = 0);
-    ~dora_flusher_t();
+    virtual ~dora_flusher_t();
 
-    inline void enqueue_toflush(terminal_rvp_t* arvp) { _toflush->push(arvp,true); }
-
-    int statistics();  
+    inline void enqueue_toflush(terminal_rvp_t* arvp) { _dora_toflush->push(arvp,true); }
 
 }; // EOF: dora_flusher_t
 
@@ -156,11 +157,11 @@ public:
 class dora_notifier_t : public base_worker_t
 {   
 public:
-    typedef srmwqueue<terminal_rvp_t>    Queue;
+    typedef srmwqueue<terminal_rvp_t>    DoraQueue;
 
 private:
 
-    guard<Queue> _tonotify;
+    guard<DoraQueue> _tonotify;
     guard<Pool> _pxct_tonotify_pool;
     
     int _pre_STOP_impl();
