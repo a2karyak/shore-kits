@@ -18,9 +18,7 @@ echo
 echo Supported configuration options
 echo --enable-shore6  -  If compiling against shore-sm-6.X.X
 echo --enable-dora    -  Includes DORA files, defines CFG_DORA
-echo --enable-elr     -  Defines CFG_ELR
 echo --enable-flusher -  Defines CFG_FLUSHER
-echo --enable-sli     -  Defines CFG_SLI
 echo --enable-qpipe   -  Includes QPipe files, defines CFG_QPIPE
 echo --enable-bt      -  Enables backtracing facility. defines CFG_BT
 echo --enable-simics  -  Adds the simics MAGIC instructions. defines CFG_SIMICS

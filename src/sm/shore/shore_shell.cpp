@@ -766,13 +766,8 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(fake_logdelay_cmd_t,_fakelogdelayer,_env);
 #endif
 	
-#ifdef CFG_SLI
     REGISTER_CMD_PARAM(sli_cmd_t,_slier,_env);
-#endif
-
-#ifdef CFG_ELR
     REGISTER_CMD_PARAM(elr_cmd_t,_elrer,_env);
-#endif
 
 #ifdef CFG_BT
     REGISTER_CMD_PARAM(bt_cmd_t,_bter,_env);
@@ -1244,8 +1239,6 @@ string asynch_cmd_t::desc() const
 
 
 
-
-#ifdef CFG_SLI
 /*********************************************************************
  *
  *  "sli" command
@@ -1281,12 +1274,10 @@ string sli_cmd_t::desc() const
 { 
     return (string("Enables/disables SLI")); 
 }
-#endif // CFG_SLI
 
 
 
 
-#ifdef CFG_ELR
 /*********************************************************************
  *
  *  "elr" command
@@ -1322,7 +1313,6 @@ string elr_cmd_t::desc() const
 { 
     return (string("Enables/disables ELR")); 
 }
-#endif // CFG_ELR
 
 
 

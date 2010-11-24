@@ -253,11 +253,7 @@ void worker_stats_t::update_rvp_notify_time(const double rvp_notify_time_ms)
 
 void base_worker_t::work() 
 {   
-#ifdef CFG_SLI
-    // 1. set SLI option
     ss_m::set_sli_enabled(_use_sli);
-#endif
-
     int rval = 0;
 
     // state machine

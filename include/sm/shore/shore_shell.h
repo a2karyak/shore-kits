@@ -113,13 +113,8 @@ DECLARE_ENV_CMD(log);
 
 DECLARE_ENV_ONOFF_CMD(asynch);
 
-#ifdef CFG_SLI
 DECLARE_ENV_ONOFF_CMD(sli);
-#endif // CFG_SLI
-
-#ifdef CFG_ELR
 DECLARE_ENV_ONOFF_CMD(elr);
-#endif // CFG_ELR
 
 #ifdef CFG_BT
 DECLARE_ENV_ONOFF_CMD(bt);
@@ -219,13 +214,8 @@ protected:
     guard<fake_logdelay_cmd_t>  _fakelogdelayer;   
 #endif
 
-#ifdef CFG_SLI
     guard<sli_cmd_t>            _slier;
-#endif
-
-#ifdef CFG_ELR
     guard<elr_cmd_t>            _elrer;
-#endif
 
 #ifdef CFG_BT
     guard<bt_cmd_t>             _bter;

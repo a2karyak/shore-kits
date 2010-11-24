@@ -419,9 +419,7 @@ KITS_FEATURES=""
 # Supported options:
 # (1)  --enable-shore6      : If compiling against shore-storage-manager-6.X.X (the x86_64 port)
 # (2)  --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
-# (3)  --enable-elr         : defines CFG_ELR
 # (4)  --enable-flusher     : defines CFG_FLUSHER
-# (5)  --enable-sli         : defines CFG_SLI
 # (6)  --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
 # (7)  --enable-bt          : enables backtracing facility. defines CFG_BT
 # (8)  --enable-simics      : adds the simics MAGIC instructions. defines CFG_SIMICS
@@ -479,28 +477,6 @@ fi
 # --- EOF DORA ---
 
 
-# --- ELR ---
-AC_MSG_CHECKING(whether to enable ELR option)
-AC_ARG_ENABLE(elr, 
-[  --enable-elr            Enable ELR option],
-[case "${enableval}" in
-  yes) elr=true ;;
-  no)  elr=false ;;
-  *) elr=true ;;
-esac],[elr=false])
-AM_CONDITIONAL(ADD_OPT_ELR, test x$elr = xtrue)
-
-if test "$elr" = true
-then 
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES elr"
-     AC_MSG_WARN([ELR enabled. Should check if Shore-SM is ELR-compatible])
-     AC_DEFINE(CFG_ELR)
-else
-     AC_MSG_RESULT(no)
-fi
-# --- EOF ELR ---   
-
 
 # --- FLUSHER ---
 AC_MSG_CHECKING(whether to enable FLUSHER/GROUPCOMMIT option)
@@ -529,29 +505,6 @@ else
      AC_MSG_RESULT(no)
 fi
 # --- EOF FLUSHER ---   
-
-
-# --- SLI ---
-AC_MSG_CHECKING(whether to enable SLI option)
-AC_ARG_ENABLE(sli, 
-[  --enable-sli            Enable SLI option],
-[case "${enableval}" in
-  yes) sli=true ;;
-  no)  sli=false ;;
-  *) sli=true ;;
-esac],[sli=false])
-AM_CONDITIONAL(ADD_OPT_SLI, test x$sli = xtrue)
-
-if test "$sli" = true
-then 
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES sli"
-     AC_MSG_WARN([SLI enabled. Should check if Shore-SM is SLI-compatible])
-     AC_DEFINE(CFG_SLI)
-else
-     AC_MSG_RESULT(no)
-fi
-# --- EOF SLI --- 
 
 
 # --- CACHES (default==true) ---

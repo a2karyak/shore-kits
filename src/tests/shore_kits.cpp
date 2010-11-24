@@ -80,13 +80,8 @@ using namespace dora;
 #warning Configuration: FLUSHER/GROUPCOMMIT enabled
 #endif
 
-#ifdef CFG_SLI
 #warning Configuration: SLI enabled
-#endif
-
-#ifdef CFG_ELR
 #warning Configuration: ELR enabled
-#endif
 
 #ifdef CFG_SIMICS
 #warning Configuration: With SIMICS MAGIC INSTRUCTIONS
