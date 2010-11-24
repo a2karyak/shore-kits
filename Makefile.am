@@ -136,6 +136,7 @@ SM_SHORE = \
    $(SMS)/shore_index.cpp \
    $(SMS)/shore_sort_buf.cpp \
    $(SMS)/shore_reqs.cpp \
+   $(SMS)/shore_flusher.cpp \
    $(SMS)/shore_env.cpp \
    $(SMS)/shore_helper_loader.cpp \
    $(SMS)/shore_client.cpp \
@@ -143,10 +144,6 @@ SM_SHORE = \
    $(SMS)/shore_trx_worker.cpp \
    $(SMS)/shore_iter.cpp \
    $(SMS)/shore_shell.cpp
-
-if USE_FLUSHER
-SM_SHORE += $(SMS)/shore_flusher.cpp
-endif
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
@@ -382,14 +379,11 @@ DO_BASE = \
    $(SD)/logical_lock.cpp \
    $(SD)/base_partition.cpp \
    $(SD)/partition.cpp \
+   $(SD)/dflusher.cpp \
    $(SD)/worker.cpp \
    $(SD)/part_table.cpp \
    $(SD)/range_part_table.cpp \
    $(SD)/dora_env.cpp
-
-if USE_FLUSHER
-DO_BASE += $(SD)/dflusher.cpp
-endif
 
 lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
