@@ -37,6 +37,7 @@
 #include "util.h"
 
 #include "dora/common.h"
+#include "dora/base_action.h"
 
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_table.h"
@@ -119,8 +120,22 @@ public:
 
     // Partition Interface //
 
+    // enqueue lock needed to enforce an ordering across trxs
+    mcs_lock _enqueue_lock;
+
+    // the status of the queues
+    virtual int has_input(void) const=0;
+    virtual int has_committed(void) const=0;
+
+    // dequeueing from the queues
+    virtual base_action_t* dequeue()=0;
+    virtual base_action_t* dequeue_commit()=0;
+
     // resets/initializes the partition, possibly to a new processor
     virtual int reset(const processorid_t aprsid, const uint standby_sz)=0;
+ 
+    // Goes over all the actions and aborts them
+    virtual int abort_all_enqueued()=0;
 
     // stops the partition
     virtual void stop()=0;

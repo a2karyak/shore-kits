@@ -382,6 +382,7 @@ DO_BASE = \
    $(SD)/logical_lock.cpp \
    $(SD)/base_partition.cpp \
    $(SD)/partition.cpp \
+   $(SD)/worker.cpp \
    $(SD)/part_table.cpp \
    $(SD)/range_part_table.cpp \
    $(SD)/dora_env.cpp

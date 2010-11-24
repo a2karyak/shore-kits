@@ -35,7 +35,9 @@
 #include "dora/base_partition.h"
 
 #include "sm/shore/srmwqueue.h"
+
 #include "dora/lockman.h"
+#include "dora/worker.h"
 
 #include "sm/shore/shore_helper_loader.h"
 
@@ -44,8 +46,6 @@ using namespace shore;
 
 
 ENTER_NAMESPACE(dora);
-
-template<typename DataType> class dora_worker_t;
 
 const int ACTIONS_PER_INPUT_QUEUE_POOL_SZ = 60;
 const int ACTIONS_PER_COMMIT_QUEUE_POOL_SZ = 60;
@@ -65,7 +65,7 @@ class partition_t : public base_partition_t
 public:
 
     typedef action_t<DataType>         Action;
-    typedef dora_worker_t<DataType>    Worker;
+    typedef dora_worker_t              Worker;
     typedef srmwqueue<Action>          Queue;
     typedef key_wrapper_t<DataType>    Key;
     typedef lock_man_t<DataType>       LockManager;
@@ -157,8 +157,8 @@ public:
     }
 
 
-    // enqueue lock needed to enforce an ordering across trxs
-    mcs_lock _enqueue_lock;
+
+    //// Partition Interface ////
 
     // returns true if action can be enqueued in this partition
     virtual bool verify(Action& /* action */) { assert(0); /* TODO */ return (true); }
@@ -166,7 +166,7 @@ public:
     // input for normal actions
     // enqueues action, 0 on success
     int enqueue(Action* pAction, const bool bWake);
-    Action* dequeue();
+    virtual base_action_t* dequeue();
     inline int has_input(void) const { 
         return (!_input_queue->is_empty()); 
     }    
@@ -176,7 +176,7 @@ public:
 
     // deque of actions to be committed
     int enqueue_commit(Action* apa, const bool bWake=true);
-    Action* dequeue_commit();
+    virtual base_action_t* dequeue_commit();
     inline int has_committed(void) const { 
         return (!_committed_queue->is_empty()); 
     }
@@ -184,14 +184,13 @@ public:
         return (_committed_queue->is_control(aworker));
     }
 
-    int abort_all_enqueued();
-
-
-    //// Partition Interface ////
 
     // resets/initializes the partition, possibly to a new processor
     virtual int reset(const processorid_t aprsid = PBIND_NONE,
                       const uint standby_sz = DF_NUM_OF_STANDBY_THRS);
+
+    // Goes over all the actions and aborts them
+    virtual int abort_all_enqueued();
 
     // stops the partition
     virtual void stop();
@@ -290,8 +289,7 @@ int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
  ******************************************************************/
 
 template <class DataType>
-action_t<DataType>* 
-partition_t<DataType>::dequeue()
+inline base_action_t* partition_t<DataType>::dequeue()
 {
     return (_input_queue->pop());
 }
@@ -328,7 +326,7 @@ int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
  ******************************************************************/
 
 template <class DataType>
-action_t<DataType>* partition_t<DataType>::dequeue_commit()
+inline base_action_t* partition_t<DataType>::dequeue_commit()
 {
     //assert (has_committed());
     return (_committed_queue->pop());
@@ -709,9 +707,9 @@ int partition_t<DataType>::_generate_primary()
  ******************************************************************/
 
 template <class DataType>
-dora_worker_t<DataType>* partition_t<DataType>::_generate_worker(const processorid_t prsid,
-                                                                 c_str strname,
-                                                                 const int use_sli) 
+dora_worker_t* partition_t<DataType>::_generate_worker(const processorid_t prsid,
+                                                       c_str strname,
+                                                       const int use_sli) 
 {
     // 1. create worker thread
     // 2. set self as worker's partition
