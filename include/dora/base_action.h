@@ -36,12 +36,8 @@
 
 #include "util.h"
 
-//#include "sm/shore/shore_worker.h"
-
 #include "dora/key.h"
 
-
-//#include "dora/rvp.h"
 //using namespace shore;
 
 ENTER_NAMESPACE(dora);
@@ -188,8 +184,8 @@ public:
     // hook to update the keys for this action
     virtual int trx_upd_keys()=0; 
 
-    // enqueues self on the committed list of committed actions
-    virtual void notify()=0; 
+    // enqueues self on the list of committed actions
+    virtual void notify_own_partition()=0; 
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;

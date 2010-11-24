@@ -157,7 +157,7 @@ public:
 
     virtual int trx_upd_keys()=0;
 
-    void notify() 
+    void notify_own_partition() 
     {
         assert (_partition);
         _partition->enqueue_commit(this);
