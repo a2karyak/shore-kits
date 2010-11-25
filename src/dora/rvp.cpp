@@ -158,18 +158,19 @@ terminal_rvp_t::terminal_rvp_t()
 { 
 }
 
-terminal_rvp_t::terminal_rvp_t(ss_m* db, 
-                               DoraEnv* denv,
-                               xct_t* axct, 
-                               const tid_t& atid, 
-                               const int axctid, 
-                               trx_result_tuple_t &presult, 
-                               const int intra_trx_cnt, 
-                               const int total_actions) 
-    : rvp_t(axct, atid, axctid, presult, intra_trx_cnt, total_actions),
-      _db(db),_denv(denv)
-{ 
-}
+// terminal_rvp_t::terminal_rvp_t(ss_m* db, 
+//                                DoraEnv* denv,
+//                                xct_t* axct, 
+//                                const tid_t& atid, 
+//                                const int axctid, 
+//                                trx_result_tuple_t &presult, 
+//                                const int intra_trx_cnt, 
+//                                const int total_actions) 
+//     : rvp_t(axct, atid, axctid, presult, intra_trx_cnt, total_actions),
+//       _db(db),_denv(denv)
+// { 
+//     assert(db);
+// }
 
 terminal_rvp_t::terminal_rvp_t(const terminal_rvp_t& rhs)
     : rvp_t(rhs)

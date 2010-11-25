@@ -190,15 +190,22 @@ public:
 
     terminal_rvp_t();
 
-    terminal_rvp_t(ss_m* db, DoraEnv* denv,
-                   xct_t* axct, const tid_t& atid, const int axctid, 
-                   trx_result_tuple_t &presult, 
-                   const int intra_trx_cnt, const int total_actions);
-
     terminal_rvp_t(const terminal_rvp_t& rhs);
     terminal_rvp_t& operator=(const terminal_rvp_t& rhs);
 
     virtual ~terminal_rvp_t();
+
+
+    void _set(ss_m* db, DoraEnv* denv,
+              xct_t* pxct, const tid_t& atid, const int axctid,
+              const trx_result_tuple_t& presult, 
+              const uint intra_trx_cnt, const uint total_actions) 
+    { 
+        rvp_t::_set(pxct,atid,axctid,presult,intra_trx_cnt,total_actions);
+        _db = db;
+        _denv = denv;
+    }
+
 
     void notify_on_abort();
 

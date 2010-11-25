@@ -337,7 +337,8 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // @note: the final rvps do not need an input
 
 #define DECLARE_DORA_FINAL_RVP_GEN_FUNC(rvpname)                        \
-    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct,                                 \
+                           const tid_t& atid, const int axctid,         \
                            trx_result_tuple_t& presult)
 
 
@@ -355,7 +356,8 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Final RVP with previous actions transfer
 
 #define DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(rvpname)              \
-    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct,                                 \
+                           const tid_t& atid, const int axctid,         \
                            trx_result_tuple_t& presult, baseActionsList& actions)
 
 
@@ -374,7 +376,8 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 // Dynamic Final RVP w/o previous actions
 
 #define DECLARE_DORA_FINAL_DYNAMIC_RVP_GEN_FUNC(rvpname)                \
-    rvpname* new_##rvpname(xct_t* axct, const tid_t& atid, const int axctid, \
+    rvpname* new_##rvpname(xct_t* axct,                                 \
+                           const tid_t& atid, const int axctid,         \
                            trx_result_tuple_t& presult,                 \
                            const int intratrx)
 
@@ -457,11 +460,12 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     public:                                                             \
             cname() : terminal_rvp_t(), _penv(NULL), _cache(NULL) { }   \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
-            inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
+            inline void set(xct_t* axct, const tid_t& atid,             \
+                            const int axctid,                           \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc) { \
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
-                _set(axct,atid,axctid,presult,intratrx,total); }        \
+                _set(penv->db(),penv,axct,atid,axctid,presult,intratrx,total); } \
             inline void giveback() { _cache->giveback(this); }          \
             void upd_committed_stats();                                 \
             void upd_aborted_stats(); }
@@ -477,12 +481,13 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
     public:                                                             \
             cname() : terminal_rvp_t(), _penv(NULL), _cache(NULL) { }   \
             ~cname() { _cache=NULL; _penv=NULL; }                       \
-            inline void set(xct_t* axct, const tid_t& atid, const int axctid, \
+            inline void set(xct_t* axct, const tid_t& atid,             \
+                            const int axctid,                           \
                             trx_result_tuple_t& presult, envname* penv, rvp_cache* pc, \
                             const int intratrx, const int total) {      \
                 assert (penv); _penv = penv;                            \
                 assert (pc); _cache = pc;                               \
-                _set(axct,atid,axctid,presult,intratrx,total); }        \
+                _set(penv->db(),penv,axct,atid,axctid,presult,intratrx,total); } \
             inline void giveback() { _cache->giveback(this); }          \
             void upd_committed_stats();                                 \
             void upd_aborted_stats(); }

@@ -125,7 +125,7 @@ public:
     ~final_pay_rvp() { _cache=NULL; _ptpccenv=NULL; }
 
     // access methods
-    inline void set(xct_t* axct, const tid_t& atid, const int axctid,
+    inline void set(xct_t* pxct, const tid_t& atid, const int axctid,
                     trx_result_tuple_t& presult, 
                     DoraTPCCEnv* penv, rvp_cache* pc) 
     { 
@@ -133,7 +133,7 @@ public:
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;
-        _set(axct,atid,axctid,presult,1,4);
+        _set(penv->db(),penv,pxct,atid,axctid,presult,1,4);
     }
     inline void giveback() { _cache->giveback(this); }    
 

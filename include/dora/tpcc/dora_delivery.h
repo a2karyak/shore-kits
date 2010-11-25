@@ -85,7 +85,7 @@ public:
         _ptpccenv = penv;
         assert (pc);
         _cache = pc;
-        _set(axct,atid,axctid,presult,
+        _set(penv->db(),penv,axct,atid,axctid,presult,
              DISTRICTS_PER_WAREHOUSE,4*DISTRICTS_PER_WAREHOUSE);
     }
     inline void giveback() { _cache->giveback(this); }    

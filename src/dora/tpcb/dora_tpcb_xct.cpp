@@ -109,7 +109,7 @@ w_rc_t DoraTPCBEnv::dora_acct_update(const int xct_id,
     TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
 
     // 3. Setup the final RVP
-    final_au_rvp* frvp = new_final_au_rvp(pxct,atid,xct_id,atrt);    
+    final_au_rvp* frvp = new_final_au_rvp(pxct,atid,xct_id,atrt);
 
     // 4. Generate the actions
     upd_br_action* upd_br = new_upd_br_action(pxct,atid,frvp,in);
