@@ -118,6 +118,9 @@ w_rc_t account_man_impl::a_index_probe(ss_m* db,
 #ifdef PLP_MBENCH
     ptuple->set_value(1, b_id);
     ptuple->set_value(2, balance);
+#else
+    (void)b_id;
+    (void)balance;
 #endif
     return (index_probe_by_name(db, "A_IDX", ptuple));
 }
@@ -133,6 +136,9 @@ w_rc_t account_man_impl::a_delete_by_index(ss_m* db,
 #ifdef PLP_MBENCH
     ptuple->set_value(1, b_id);
     ptuple->set_value(2, balance);
+#else
+    (void)b_id;
+    (void)balance;
 #endif
     W_DO(index_probe_forupdate_by_name(db, "A_IDX", ptuple));
     return (delete_tuple(db, ptuple));
@@ -149,6 +155,9 @@ w_rc_t account_man_impl::a_index_probe_forupdate(ss_m* db,
 #ifdef PLP_MBENCH
     ptuple->set_value(1, b_id);
     ptuple->set_value(2, balance);
+#else
+    (void)b_id;
+    (void)balance;
 #endif
     return (index_probe_forupdate_by_name(db, "A_IDX", ptuple));
 }
@@ -164,6 +173,9 @@ w_rc_t account_man_impl::a_idx_nl(ss_m* db,
 #ifdef PLP_MBENCH
     ptuple->set_value(1, b_id);
     ptuple->set_value(2, balance);
+#else
+    (void)b_id;
+    (void)balance;
 #endif
     return (index_probe_nl_by_name(db, "A_IDX", ptuple));
 }
