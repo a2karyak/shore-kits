@@ -473,7 +473,7 @@ public:
  *
  * --------------------------------------------------------------- */
 
-struct el_filler_part : public ss_m::el_filler
+struct el_filler_part : public el_filler
 {
     typedef table_row_t table_tuple; 
 
