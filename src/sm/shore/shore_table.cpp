@@ -117,10 +117,9 @@ w_rc_t table_desc_t::create_physical_table(ss_m* db)
 
     // Create the table
     index_desc_t* index = _indexes;
-    uint4_t system_mode = index->get_pd(); // if it's plp-mrbtpart or mrbtleaf
-                                           // it should create and mrbt_file
     
-    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) {
+    if (index && (index->get_pd() & (PD_MRBT_PART | PD_MRBT_LEAF))) {
+	// if it's plp-mrbtpart or mrbtleaf it should create and mrbt_file
         W_DO(db->create_mrbt_file(vid(), _fid, smlevel_3::t_regular));
     } else {
 	W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
@@ -1076,7 +1075,7 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
 
         if (index->is_mr()) {
             //RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
-            ss_m::el_filler ef;
+            el_filler ef;
             ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
                                      vec_t(ptuple->_rep->_dest, ksz),
@@ -1276,7 +1275,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
         W_DO(index->find_fid(db, pnum));
 
         if (index->is_mr()) {
-            ss_m::el_filler ef;
+            el_filler ef;
             ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
                                      vec_t(ptuple->_rep->_dest, ksz),
