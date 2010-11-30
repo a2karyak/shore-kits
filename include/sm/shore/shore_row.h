@@ -175,6 +175,7 @@ struct table_row_t
     uint     _null_count;
 
     rep_row_t*     _rep;          /* a pointer to a row representation struct */
+    rep_row_t*     _rep_key;      /* a pointer to a row-key representation struct */
 
 
     /* -------------------- */

@@ -1036,7 +1036,7 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
     assert (ptuple->_rep);
     uint4_t system_mode = _ptable->get_pd();
 
-    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) {
+    if ((system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) && (_ptable->primary_idx()->is_latchless())) {
         return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
     }
 
@@ -1161,15 +1161,7 @@ rc_t el_filler_part::fill_el(vec_t& el, const lpid_t& leaf)
                                                  _bIgnoreLocks,
                                                  true);
     el.put(vec_t(&(_ptuple->_rid), sizeof(rid_t)));
-    // dirty dirty dirtyyyy
-    //
-    // PUT BACK THE KEY INTO _dest
-    //
-    // dirty dirty dirtyyyy
-
-    int ksz = _ptableman->format_key(_pindex, _ptuple, *_ptuple->_rep);
-    assert (_ptuple->_rep->_dest);
-
+    
     return rc;
 }
 
@@ -1238,9 +1230,9 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
     index_desc_t* primary_index = _ptable->primary_idx();
     assert (primary_index);
     assert (primary_index->is_mr());
-
-    int ksz = format_key(primary_index, ptuple, *ptuple->_rep);
-    assert (ptuple->_rep->_dest);
+    
+    int ksz = format_key(primary_index, ptuple, *ptuple->_rep_key);
+    assert (ptuple->_rep_key->_dest);
 
     int pnum = get_pnum(primary_index, ptuple);
     W_DO(primary_index->find_fid(db, pnum));
@@ -1249,7 +1241,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
     ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
     el_filler_part part_filler(sizeof(rid_t),db,this,ptuple,primary_index,bIgnoreLocks);
     W_DO(db->create_mr_assoc(primary_index->fid(pnum),
-                             vec_t(ptuple->_rep->_dest, ksz), // VEC_T OF INDEX ENTRY
+                             vec_t(ptuple->_rep_key->_dest, ksz), // VEC_T OF INDEX ENTRY
                              part_filler,
                              bIgnoreLocks,
                              primary_index->is_latchless(),
@@ -1268,8 +1260,8 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
             continue;
         }        
 
-        ksz = format_key(index, ptuple, *ptuple->_rep);
-        assert (ptuple->_rep->_dest); // if dest == NULL there is invalid key
+        ksz = format_key(index, ptuple, *ptuple->_rep_key);
+        assert (ptuple->_rep_key->_dest); // if dest == NULL there is invalid key
 
         pnum = get_pnum(index, ptuple);
         W_DO(index->find_fid(db, pnum));
@@ -1278,7 +1270,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
             el_filler ef;
             ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
-                                     vec_t(ptuple->_rep->_dest, ksz),
+                                     vec_t(ptuple->_rep_key->_dest, ksz),
                                      ef,
                                      bIgnoreLocks,
                                      index->is_latchless(),
@@ -1287,7 +1279,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
         }
         else {
             W_DO(db->create_assoc(index->fid(pnum),
-                                  vec_t(ptuple->_rep->_dest, ksz),
+                                  vec_t(ptuple->_rep_key->_dest, ksz),
                                   vec_t(&(ptuple->_rid), sizeof(rid_t))
 #ifdef CFG_DORA
                                   ,bIgnoreLocks

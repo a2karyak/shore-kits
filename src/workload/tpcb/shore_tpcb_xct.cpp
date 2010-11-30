@@ -399,18 +399,24 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
     assert (prhist);
 
     rep_row_t areprow(_paccount_man->ts());
+    rep_row_t areprow_key(_paccount_man->ts_key());
 
     // allocate space for the biggest of the 4 table representations
-    areprow.set(_paccount_desc->maxsize()); 
+    areprow.set(_paccount_desc->maxsize());
+    areprow_key.set(_paccount_desc->maxsize());
 
     prb->_rep = &areprow;
     prt->_rep = &areprow;
     pracct->_rep = &areprow;
     prhist->_rep = &areprow;
+    prb->_rep_key = &areprow_key;
+    prt->_rep_key = &areprow_key;
+    pracct->_rep_key = &areprow_key;
+    prhist->_rep_key = &areprow_key;
 
 //     /* 0. initiate transaction */
 //     W_DO(_pssm->begin_xct());
-
+ 
     { // make gotos safe
 
 	if(ppin._first_a_id < 0) {

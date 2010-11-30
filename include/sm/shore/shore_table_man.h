@@ -130,7 +130,8 @@ protected:
     TableDesc* _pspecifictable;
     pcache_link _pcache; /* pointer to a tuple cache */
     guard<ats_char_t> _pts;   /* trash stack */
-
+    guard<ats_char_t> _pts_key;   /* trash stack for key */
+    
 
 public:
 
@@ -151,6 +152,7 @@ public:
         if (construct_cache) {
             // init trash stack            
             _pts = new ats_char_t(_ptable->maxsize());
+	    _pts_key = new ats_char_t(_ptable->maxsize());
         }
     }
 
@@ -193,6 +195,7 @@ public:
     /* ------------------------------ */
 
     ats_char_t* ts() { assert (_pts); return (_pts); }
+    ats_char_t* ts_key() { assert (_pts_key); return (_pts_key); }
 
 
     /* ------------------------------ */
